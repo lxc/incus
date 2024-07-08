@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-06-11 23:14-0400\n"
+"POT-Creation-Date: 2024-07-08 16:17-0400\n"
 "PO-Revision-Date: 2024-03-08 16:01+0000\n"
 "Last-Translator: montag451 <montag451@laposte.net>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -84,14 +84,15 @@ msgstr ""
 "###   source: default\n"
 "###   zfs.pool_name: default"
 
-#: cmd/incus/storage_volume.go:981
+#: cmd/incus/storage_volume.go:985
+#, fuzzy
 msgid ""
 "### This is a YAML representation of a storage volume.\n"
 "### Any line starting with a '# will be ignored.\n"
 "###\n"
 "### A storage volume consists of a set of configuration items.\n"
 "###\n"
-"### name: vol1\n"
+"### name: foo\n"
 "### type: custom\n"
 "### used_by: []\n"
 "### config:\n"
@@ -1010,7 +1011,7 @@ msgstr ""
 "Toutes les données seront perdues après avoir rejoint le cluster, voulez-"
 "vous continuer ?"
 
-#: cmd/incus/storage_volume.go:1555 cmd/incus/storage_volume.go:2541
+#: cmd/incus/storage_volume.go:1558 cmd/incus/storage_volume.go:2548
 msgid "All projects"
 msgstr "Tous les projets"
 
@@ -1068,18 +1069,19 @@ msgstr "Attribuer des interfaces réseaux à des instances"
 msgid "Attach network interfaces to profiles"
 msgstr "Attacher des interfaces réseaux aux profiles"
 
-#: cmd/incus/network.go:143
-msgid "Attach new network interfaces to instances"
-msgstr "Attacher de nouvelles interfaces aux instances"
-
 #: cmd/incus/storage_volume.go:162 cmd/incus/storage_volume.go:163
 #, fuzzy
-msgid "Attach new storage volumes to instances"
+msgid "Attach new custom storage volumes to instances"
 msgstr "Attribuer de nouveaux volumes de stockage à des instances"
 
 #: cmd/incus/storage_volume.go:253 cmd/incus/storage_volume.go:254
-msgid "Attach new storage volumes to profiles"
+#, fuzzy
+msgid "Attach new custom storage volumes to profiles"
 msgstr "Attacher de nouveaux volumes de stockage aux profiles"
+
+#: cmd/incus/network.go:143
+msgid "Attach new network interfaces to instances"
+msgstr "Attacher de nouvelles interfaces aux instances"
 
 #: cmd/incus/console.go:36
 msgid "Attach to instance consoles"
@@ -1145,17 +1147,17 @@ msgstr "Sauvegarder l'instance : %s"
 msgid "Backing up storage bucket: %s"
 msgstr "Sauvegarder le volume de stockage : %s"
 
-#: cmd/incus/storage_volume.go:2995
+#: cmd/incus/storage_volume.go:2993
 #, c-format
 msgid "Backing up storage volume: %s"
 msgstr "Sauvegarder le volume de stockage : %s"
 
 #: cmd/incus/export.go:191 cmd/incus/storage_bucket.go:1396
-#: cmd/incus/storage_volume.go:3072
+#: cmd/incus/storage_volume.go:3070
 msgid "Backup exported successfully!"
 msgstr "Export de la sauvegarde réussie !"
 
-#: cmd/incus/info.go:827 cmd/incus/storage_volume.go:1486
+#: cmd/incus/info.go:827 cmd/incus/storage_volume.go:1489
 msgid "Backups:"
 msgstr "Sauvegardes:"
 
@@ -1181,7 +1183,7 @@ msgid "Bad key=value pair: %q"
 msgstr "Mauvaise association clef=valeur: %q"
 
 #: cmd/incus/publish.go:191 cmd/incus/storage.go:169
-#: cmd/incus/storage_volume.go:650
+#: cmd/incus/storage_volume.go:651
 #, c-format
 msgid "Bad key=value pair: %s"
 msgstr "Mauvaise paire clé=valeur: %s"
@@ -1229,7 +1231,7 @@ msgstr "ANNULABLE"
 msgid "COMMON NAME"
 msgstr "NOM COMMUN"
 
-#: cmd/incus/storage_volume.go:1670
+#: cmd/incus/storage_volume.go:1673
 msgid "CONTENT-TYPE"
 msgstr "Type de contenu"
 
@@ -1327,7 +1329,7 @@ msgstr "Impossible de spécifier --project avec --all-projects"
 msgid "Can't specify a different remote for rename"
 msgstr "Impossible de spécifier un autre serveur distant pour un renommage"
 
-#: cmd/incus/list.go:620 cmd/incus/storage_volume.go:1680
+#: cmd/incus/list.go:620 cmd/incus/storage_volume.go:1683
 #: cmd/incus/warning.go:225
 msgid "Can't specify column L when not clustered"
 msgstr ""
@@ -1529,15 +1531,15 @@ msgstr "Le membre du cluster %s est supprimé du groupe %s"
 #: cmd/incus/storage_bucket.go:893 cmd/incus/storage_bucket.go:993
 #: cmd/incus/storage_bucket.go:1058 cmd/incus/storage_bucket.go:1194
 #: cmd/incus/storage_bucket.go:1268 cmd/incus/storage_bucket.go:1417
-#: cmd/incus/storage_volume.go:365 cmd/incus/storage_volume.go:583
-#: cmd/incus/storage_volume.go:688 cmd/incus/storage_volume.go:962
-#: cmd/incus/storage_volume.go:1188 cmd/incus/storage_volume.go:1322
-#: cmd/incus/storage_volume.go:1775 cmd/incus/storage_volume.go:1867
-#: cmd/incus/storage_volume.go:1959 cmd/incus/storage_volume.go:2121
-#: cmd/incus/storage_volume.go:2218 cmd/incus/storage_volume.go:2324
-#: cmd/incus/storage_volume.go:2450 cmd/incus/storage_volume.go:2663
-#: cmd/incus/storage_volume.go:2749 cmd/incus/storage_volume.go:2838
-#: cmd/incus/storage_volume.go:2930 cmd/incus/storage_volume.go:3094
+#: cmd/incus/storage_volume.go:365 cmd/incus/storage_volume.go:584
+#: cmd/incus/storage_volume.go:689 cmd/incus/storage_volume.go:966
+#: cmd/incus/storage_volume.go:1192 cmd/incus/storage_volume.go:1325
+#: cmd/incus/storage_volume.go:1778 cmd/incus/storage_volume.go:1870
+#: cmd/incus/storage_volume.go:1962 cmd/incus/storage_volume.go:2126
+#: cmd/incus/storage_volume.go:2225 cmd/incus/storage_volume.go:2331
+#: cmd/incus/storage_volume.go:2457 cmd/incus/storage_volume.go:2670
+#: cmd/incus/storage_volume.go:2756 cmd/incus/storage_volume.go:2836
+#: cmd/incus/storage_volume.go:2928 cmd/incus/storage_volume.go:3094
 msgid "Cluster member name"
 msgstr "Nom du membre du cluster"
 
@@ -1548,7 +1550,7 @@ msgstr "Clustering activé"
 #: cmd/incus/cluster.go:150 cmd/incus/config_trust.go:421
 #: cmd/incus/image.go:1099 cmd/incus/list.go:133 cmd/incus/network.go:1072
 #: cmd/incus/profile.go:725 cmd/incus/project.go:527 cmd/incus/storage.go:687
-#: cmd/incus/storage_volume.go:1554 cmd/incus/storage_volume.go:2540
+#: cmd/incus/storage_volume.go:1557 cmd/incus/storage_volume.go:2547
 #: cmd/incus/warning.go:93
 msgid "Columns"
 msgstr "Colonnes"
@@ -1616,7 +1618,7 @@ msgstr "L'option de configuration doit être dans le format CLÉ=VALEUR"
 #: cmd/incus/network_zone.go:637 cmd/incus/network_zone.go:1332
 #: cmd/incus/profile.go:600 cmd/incus/project.go:399 cmd/incus/storage.go:368
 #: cmd/incus/storage_bucket.go:361 cmd/incus/storage_bucket.go:1157
-#: cmd/incus/storage_volume.go:1107 cmd/incus/storage_volume.go:1139
+#: cmd/incus/storage_volume.go:1111 cmd/incus/storage_volume.go:1143
 #, c-format
 msgid "Config parsing error: %s"
 msgstr "Erreur lors de la lecture de la configuration : %s"
@@ -1634,11 +1636,11 @@ msgstr "Configurer le démon"
 msgid "Connecting to the daemon (attempt %d)"
 msgstr "Connexion au démon (tentative %d)"
 
-#: cmd/incus/storage_volume.go:584
+#: cmd/incus/storage_volume.go:585
 msgid "Content type, block or filesystem"
 msgstr "Type de contenu, bloc ou système de fichier"
 
-#: cmd/incus/storage_volume.go:1426
+#: cmd/incus/storage_volume.go:1429
 #, c-format
 msgid "Content type: %s"
 msgstr "Type de contenu : %s"
@@ -1655,6 +1657,11 @@ msgstr "Copie une instance avec état"
 #: cmd/incus/image.go:155
 msgid "Copy aliases from source"
 msgstr "Copier les alias depuis la source"
+
+#: cmd/incus/storage_volume.go:360 cmd/incus/storage_volume.go:361
+#, fuzzy
+msgid "Copy custom storage volumes"
+msgstr "Copie de l'image : %s"
 
 #: cmd/incus/image.go:147
 msgid "Copy images between servers"
@@ -1713,10 +1720,6 @@ msgstr ""
 #: cmd/incus/profile.go:274 cmd/incus/profile.go:275
 msgid "Copy profiles"
 msgstr "Copier les profiles"
-
-#: cmd/incus/storage_volume.go:360 cmd/incus/storage_volume.go:361
-msgid "Copy storage volumes"
-msgstr "Copier des volumes de stockage"
 
 #: cmd/incus/copy.go:57
 msgid "Copy the instance without its snapshots"
@@ -1962,7 +1965,7 @@ msgid "Create the instance with no profiles applied"
 msgstr "L'arrêt du conteneur a échoué !"
 
 #: cmd/incus/image.go:1005 cmd/incus/info.go:657
-#: cmd/incus/storage_volume.go:1440
+#: cmd/incus/storage_volume.go:1443
 #, c-format
 msgid "Created: %s"
 msgstr "Créé : %s"
@@ -2000,7 +2003,7 @@ msgstr "ADRESSE CIBLE PAR DÉFAUT"
 #: cmd/incus/network_zone.go:844 cmd/incus/operation.go:173
 #: cmd/incus/profile.go:747 cmd/incus/project.go:555 cmd/incus/storage.go:710
 #: cmd/incus/storage_bucket.go:540 cmd/incus/storage_bucket.go:864
-#: cmd/incus/storage_volume.go:1669
+#: cmd/incus/storage_volume.go:1672
 msgid "DESCRIPTION"
 msgstr "DESCRIPTION"
 
@@ -2039,7 +2042,7 @@ msgstr "État : %s"
 msgid "Default VLAN ID"
 msgstr "ID VLAN par défaut"
 
-#: cmd/incus/storage_bucket.go:1267 cmd/incus/storage_volume.go:2929
+#: cmd/incus/storage_bucket.go:1267 cmd/incus/storage_volume.go:2927
 #, fuzzy
 msgid "Define a compression algorithm: for backup or none"
 msgstr "Définir un algorithme de compression : pour image ou aucun"
@@ -2060,6 +2063,11 @@ msgstr "Supprime un groupe de serveurs"
 #, fuzzy
 msgid "Delete all warnings"
 msgstr "Récupération de l'image : %s"
+
+#: cmd/incus/storage_volume.go:685 cmd/incus/storage_volume.go:686
+#, fuzzy
+msgid "Delete custom storage volumes"
+msgstr "Copie de l'image : %s"
 
 #: cmd/incus/file.go:309 cmd/incus/file.go:310
 #, fuzzy
@@ -2152,15 +2160,10 @@ msgstr "Copie de l'image : %s"
 msgid "Delete storage pools"
 msgstr "Supprime les pool de stockage"
 
-#: cmd/incus/storage_volume.go:2446 cmd/incus/storage_volume.go:2447
+#: cmd/incus/storage_volume.go:2453 cmd/incus/storage_volume.go:2454
 #, fuzzy
 msgid "Delete storage volume snapshots"
 msgstr "Forcer le conteneur à s'arrêter"
-
-#: cmd/incus/storage_volume.go:684 cmd/incus/storage_volume.go:685
-#, fuzzy
-msgid "Delete storage volumes"
-msgstr "Copie de l'image : %s"
 
 #: cmd/incus/warning.go:357 cmd/incus/warning.go:358
 #, fuzzy
@@ -2302,32 +2305,42 @@ msgstr "Récupération de l'image : %s"
 #: cmd/incus/storage_bucket.go:1412 cmd/incus/storage_volume.go:56
 #: cmd/incus/storage_volume.go:163 cmd/incus/storage_volume.go:254
 #: cmd/incus/storage_volume.go:361 cmd/incus/storage_volume.go:576
-#: cmd/incus/storage_volume.go:685 cmd/incus/storage_volume.go:758
-#: cmd/incus/storage_volume.go:856 cmd/incus/storage_volume.go:953
-#: cmd/incus/storage_volume.go:1174 cmd/incus/storage_volume.go:1310
-#: cmd/incus/storage_volume.go:1472 cmd/incus/storage_volume.go:1556
-#: cmd/incus/storage_volume.go:1771 cmd/incus/storage_volume.go:1864
-#: cmd/incus/storage_volume.go:1944 cmd/incus/storage_volume.go:2107
-#: cmd/incus/storage_volume.go:2206 cmd/incus/storage_volume.go:2265
-#: cmd/incus/storage_volume.go:2314 cmd/incus/storage_volume.go:2447
-#: cmd/incus/storage_volume.go:2536 cmd/incus/storage_volume.go:2542
-#: cmd/incus/storage_volume.go:2660 cmd/incus/storage_volume.go:2747
-#: cmd/incus/storage_volume.go:2827 cmd/incus/storage_volume.go:2923
-#: cmd/incus/storage_volume.go:3089 cmd/incus/top.go:33 cmd/incus/version.go:22
+#: cmd/incus/storage_volume.go:686 cmd/incus/storage_volume.go:759
+#: cmd/incus/storage_volume.go:857 cmd/incus/storage_volume.go:954
+#: cmd/incus/storage_volume.go:1178 cmd/incus/storage_volume.go:1314
+#: cmd/incus/storage_volume.go:1475 cmd/incus/storage_volume.go:1559
+#: cmd/incus/storage_volume.go:1774 cmd/incus/storage_volume.go:1867
+#: cmd/incus/storage_volume.go:1947 cmd/incus/storage_volume.go:2110
+#: cmd/incus/storage_volume.go:2214 cmd/incus/storage_volume.go:2272
+#: cmd/incus/storage_volume.go:2321 cmd/incus/storage_volume.go:2454
+#: cmd/incus/storage_volume.go:2543 cmd/incus/storage_volume.go:2549
+#: cmd/incus/storage_volume.go:2667 cmd/incus/storage_volume.go:2754
+#: cmd/incus/storage_volume.go:2834 cmd/incus/storage_volume.go:2921
+#: cmd/incus/storage_volume.go:3087 cmd/incus/top.go:33 cmd/incus/version.go:22
 #: cmd/incus/warning.go:29 cmd/incus/warning.go:72 cmd/incus/warning.go:263
 #: cmd/incus/warning.go:304 cmd/incus/warning.go:358
 msgid "Description"
 msgstr "Description"
 
-#: cmd/incus/storage_volume.go:1413
+#: cmd/incus/storage_volume.go:1416
 #, fuzzy, c-format
 msgid "Description: %s"
 msgstr "Empreinte : %s"
 
-#: cmd/incus/storage_volume.go:366 cmd/incus/storage_volume.go:1776
+#: cmd/incus/storage_volume.go:366 cmd/incus/storage_volume.go:1779
 #, fuzzy
 msgid "Destination cluster member name"
 msgstr "Vous devez fournir le nom d'un conteneur pour : "
+
+#: cmd/incus/storage_volume.go:758 cmd/incus/storage_volume.go:759
+#, fuzzy
+msgid "Detach custom storage volumes from instances"
+msgstr "Clé de configuration invalide"
+
+#: cmd/incus/storage_volume.go:856 cmd/incus/storage_volume.go:857
+#, fuzzy
+msgid "Detach custom storage volumes from profiles"
+msgstr "Détacher les volumes de stockage des profils"
 
 #: cmd/incus/network.go:505 cmd/incus/network.go:506
 msgid "Detach network interfaces from instances"
@@ -2336,15 +2349,6 @@ msgstr "Détacher les interfaces réseaux des instances"
 #: cmd/incus/network.go:602 cmd/incus/network.go:603
 msgid "Detach network interfaces from profiles"
 msgstr "Détacher les interfaces réseau des profils"
-
-#: cmd/incus/storage_volume.go:757 cmd/incus/storage_volume.go:758
-#, fuzzy
-msgid "Detach storage volumes from instances"
-msgstr "Clé de configuration invalide"
-
-#: cmd/incus/storage_volume.go:855 cmd/incus/storage_volume.go:856
-msgid "Detach storage volumes from profiles"
-msgstr "Détacher les volumes de stockage des profils"
 
 #: cmd/incus/info.go:585 cmd/incus/info.go:597
 #, fuzzy, c-format
@@ -2659,9 +2663,18 @@ msgstr "Modifier la clé du bucket de stockage au format YAML"
 msgid "Edit storage pool configurations as YAML"
 msgstr "Modifier les configurations du pool de stockage au format YAML"
 
-#: cmd/incus/storage_volume.go:952 cmd/incus/storage_volume.go:953
+#: cmd/incus/storage_volume.go:953
 msgid "Edit storage volume configurations as YAML"
 msgstr "Modifier les configurations de volume de stockage au format YAML"
+
+#: cmd/incus/storage_volume.go:954
+msgid ""
+"Edit storage volume configurations as YAML\n"
+"\n"
+"If the type is not specified, incus assumes the type is \"custom\".\n"
+"Supported values for type are \"custom\", \"container\" and \"virtual-"
+"machine\"."
+msgstr ""
 
 #: cmd/incus/config_trust.go:274 cmd/incus/config_trust.go:275
 #, fuzzy
@@ -2671,7 +2684,7 @@ msgstr "Clé de configuration invalide"
 #: cmd/incus/cluster.go:187 cmd/incus/config_trust.go:447
 #: cmd/incus/image.go:1139 cmd/incus/list.go:632 cmd/incus/network.go:1113
 #: cmd/incus/profile.go:763 cmd/incus/project.go:565 cmd/incus/storage.go:722
-#: cmd/incus/storage_volume.go:1697 cmd/incus/warning.go:236
+#: cmd/incus/storage_volume.go:1700 cmd/incus/warning.go:236
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
@@ -2756,8 +2769,8 @@ msgstr "Erreur lors de la récupération des alias : %w"
 #: cmd/incus/network_load_balancer.go:507 cmd/incus/network_peer.go:553
 #: cmd/incus/network_zone.go:475 cmd/incus/network_zone.go:1163
 #: cmd/incus/profile.go:1083 cmd/incus/project.go:851 cmd/incus/storage.go:896
-#: cmd/incus/storage_bucket.go:634 cmd/incus/storage_volume.go:2035
-#: cmd/incus/storage_volume.go:2078
+#: cmd/incus/storage_bucket.go:634 cmd/incus/storage_volume.go:2038
+#: cmd/incus/storage_volume.go:2081
 #, c-format
 msgid "Error setting properties: %v"
 msgstr "Erreur lors du paramétrages des propriétés: %v"
@@ -2778,8 +2791,8 @@ msgstr "Erreur lors du déparamétrage des propriétés: %v"
 #: cmd/incus/network_peer.go:547 cmd/incus/network_zone.go:469
 #: cmd/incus/network_zone.go:1157 cmd/incus/profile.go:1077
 #: cmd/incus/project.go:845 cmd/incus/storage.go:890
-#: cmd/incus/storage_bucket.go:628 cmd/incus/storage_volume.go:2029
-#: cmd/incus/storage_volume.go:2072
+#: cmd/incus/storage_bucket.go:628 cmd/incus/storage_volume.go:2032
+#: cmd/incus/storage_volume.go:2075
 #, c-format
 msgid "Error unsetting property: %v"
 msgstr "Erreur dans le déparamétrage de la propriété: %v"
@@ -2916,8 +2929,8 @@ msgid "Expected a struct, got a %v"
 msgstr "Attendait une struct, a obtenu un %v"
 
 #: cmd/incus/info.go:813 cmd/incus/info.go:864 cmd/incus/snapshot.go:366
-#: cmd/incus/storage_volume.go:1473 cmd/incus/storage_volume.go:1523
-#: cmd/incus/storage_volume.go:2640
+#: cmd/incus/storage_volume.go:1476 cmd/incus/storage_volume.go:1526
+#: cmd/incus/storage_volume.go:2647
 #, fuzzy
 msgid "Expires at"
 msgstr "Expire : %s"
@@ -2948,7 +2961,7 @@ msgstr ""
 "La cible de sortie est facultative et par défaut dans le répertoire de "
 "travail."
 
-#: cmd/incus/storage_volume.go:2922 cmd/incus/storage_volume.go:2923
+#: cmd/incus/storage_volume.go:2920 cmd/incus/storage_volume.go:2921
 #, fuzzy
 msgid "Export custom storage volume"
 msgstr "Copie de l'image : %s"
@@ -2973,7 +2986,7 @@ msgstr "Copie de l'image : %s"
 msgid "Export storage buckets as tarball."
 msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
 
-#: cmd/incus/storage_volume.go:2926
+#: cmd/incus/storage_volume.go:2924
 #, fuzzy
 msgid "Export the volume without its snapshots"
 msgstr "Copiez le conteneur sans ses instantanés"
@@ -2983,7 +2996,7 @@ msgstr "Copiez le conteneur sans ses instantanés"
 msgid "Exporting backup of storage bucket: %s"
 msgstr "Copie de l'image : %s"
 
-#: cmd/incus/export.go:151 cmd/incus/storage_volume.go:3055
+#: cmd/incus/export.go:151 cmd/incus/storage_volume.go:3053
 #, fuzzy, c-format
 msgid "Exporting the backup: %s"
 msgstr "Import de l'image : %s"
@@ -3207,7 +3220,7 @@ msgstr "Échec de la création de la sauvegarde : %v"
 msgid "Failed to create certificate: %w"
 msgstr "Échec de la création du certificat : %w"
 
-#: cmd/incus/storage_volume.go:2990
+#: cmd/incus/storage_volume.go:2988
 #, c-format
 msgid "Failed to create storage volume backup: %w"
 msgstr "Échec de la création de la sauvegarde du volume de stockage : %w"
@@ -3223,7 +3236,7 @@ msgstr ""
 msgid "Failed to fetch storage bucket backup: %w"
 msgstr "Échec de la récupération de la sauvegarde de l'unité de stockage : %w"
 
-#: cmd/incus/storage_volume.go:3069
+#: cmd/incus/storage_volume.go:3067
 #, c-format
 msgid "Failed to fetch storage volume backup file: %w"
 msgstr ""
@@ -3476,8 +3489,8 @@ msgstr ""
 #: cmd/incus/operation.go:109 cmd/incus/profile.go:726 cmd/incus/project.go:529
 #: cmd/incus/project.go:1052 cmd/incus/remote.go:716 cmd/incus/snapshot.go:291
 #: cmd/incus/storage.go:689 cmd/incus/storage_bucket.go:474
-#: cmd/incus/storage_bucket.go:806 cmd/incus/storage_volume.go:1572
-#: cmd/incus/storage_volume.go:2557 cmd/incus/warning.go:94
+#: cmd/incus/storage_bucket.go:806 cmd/incus/storage_volume.go:1575
+#: cmd/incus/storage_volume.go:2564 cmd/incus/warning.go:94
 #, fuzzy
 msgid "Format (csv|json|table|yaml|compact)"
 msgstr "Format (csv|json|table|yaml|compact)"
@@ -3616,7 +3629,7 @@ msgstr "Copie de l'image : %s"
 msgid "Get the key as a storage property"
 msgstr "Copie de l'image : %s"
 
-#: cmd/incus/storage_volume.go:1189
+#: cmd/incus/storage_volume.go:1193
 #, fuzzy
 msgid "Get the key as a storage volume property"
 msgstr "Copie de l'image : %s"
@@ -3700,9 +3713,21 @@ msgstr "Clé de configuration invalide"
 msgid "Get values for storage pool configuration keys"
 msgstr "Obtenir les valeurs des clés de configuration du pool de stockage"
 
-#: cmd/incus/storage_volume.go:1173 cmd/incus/storage_volume.go:1174
+#: cmd/incus/storage_volume.go:1177
 msgid "Get values for storage volume configuration keys"
 msgstr "Obtenir les valeurs des clés de configuration du volume de stockage"
+
+#: cmd/incus/storage_volume.go:1178
+msgid ""
+"Get values for storage volume configuration keys\n"
+"\n"
+"If the type is not specified, incus assumes the type is \"custom\".\n"
+"Supported values for type are \"custom\", \"container\" and \"virtual-"
+"machine\".\n"
+"\n"
+"For snapshots, add the snapshot name (only if type is one of custom, "
+"container or virtual-machine)."
+msgstr ""
 
 #: cmd/incus/storage_volume.go:440
 #, c-format
@@ -3819,7 +3844,7 @@ msgid "If the image alias already exists, delete and create a new one"
 msgstr ""
 "Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
 
-#: cmd/incus/snapshot.go:91 cmd/incus/storage_volume.go:2323
+#: cmd/incus/snapshot.go:91 cmd/incus/storage_volume.go:2330
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 "Si l'instantané de l'image existe déjà, le supprimer d'abord puis le recréer"
@@ -3837,7 +3862,7 @@ msgstr ""
 msgid "Ignore any configured auto-expiry for the instance"
 msgstr "Ignorer toute expiration automatique configurée pour l'instance"
 
-#: cmd/incus/storage_volume.go:2322
+#: cmd/incus/storage_volume.go:2329
 msgid "Ignore any configured auto-expiry for the storage volume"
 msgstr ""
 "Ignorer toute expiration automatique configurée pour le volume de stockage"
@@ -3892,13 +3917,6 @@ msgstr "Image copiée avec succès !"
 msgid "Immediately attach to the console"
 msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
 
-#: cmd/incus/storage_volume.go:3089
-#, fuzzy
-msgid "Import backups of custom volumes including their snapshots."
-msgstr ""
-"Importer des sauvegardes de volumes personnalisés, y compris leurs "
-"instantanés."
-
 #: cmd/incus/import.go:27
 msgid "Import backups of instances including their snapshots."
 msgstr "Importer des sauvegardes d'instances, y compris leurs instantanés."
@@ -3908,9 +3926,14 @@ msgstr "Importer des sauvegardes d'instances, y compris leurs instantanés."
 msgid "Import backups of storage buckets."
 msgstr "Copie de l'image : %s"
 
-#: cmd/incus/storage_volume.go:3088
+#: cmd/incus/storage_volume.go:3086
 #, fuzzy
 msgid "Import custom storage volumes"
+msgstr "Copie de l'image : %s"
+
+#: cmd/incus/storage_volume.go:3087
+#, fuzzy
+msgid "Import custom storage volumes."
 msgstr "Copie de l'image : %s"
 
 #: cmd/incus/image.go:685
@@ -4036,7 +4059,7 @@ msgid "Invalid IP address or DNS name"
 msgstr "Le nom du conteneur est : %s"
 
 #: cmd/incus/export.go:113 cmd/incus/storage_bucket.go:1347
-#: cmd/incus/storage_volume.go:3023
+#: cmd/incus/storage_volume.go:3021
 #, fuzzy, c-format
 msgid "Invalid URL %q: %w"
 msgstr "Cible invalide %s"
@@ -4057,7 +4080,7 @@ msgid "Invalid arguments"
 msgstr "Cible invalide %s"
 
 #: cmd/incus/export.go:118 cmd/incus/storage_bucket.go:1352
-#: cmd/incus/storage_volume.go:3028
+#: cmd/incus/storage_volume.go:3026
 #, fuzzy, c-format
 msgid "Invalid backup name segment in path %q: %w"
 msgstr "Segment de nom de sauvegarde non valide dans le chemin %q : %w"
@@ -4166,9 +4189,9 @@ msgstr "Cible invalide %s"
 msgid "Invalid protocol: %s"
 msgstr "Cible invalide %s"
 
-#: cmd/incus/storage_volume.go:1021 cmd/incus/storage_volume.go:1238
-#: cmd/incus/storage_volume.go:1367 cmd/incus/storage_volume.go:2012
-#: cmd/incus/storage_volume.go:2883
+#: cmd/incus/storage_volume.go:1025 cmd/incus/storage_volume.go:1242
+#: cmd/incus/storage_volume.go:1370 cmd/incus/storage_volume.go:2015
+#: cmd/incus/storage_volume.go:2881
 #, fuzzy
 msgid "Invalid snapshot name"
 msgstr "Le nom du conteneur est : %s"
@@ -4231,7 +4254,7 @@ msgstr "ADRESSE D’ÉCOUTE"
 #: cmd/incus/list.go:616 cmd/incus/network.go:1303
 #: cmd/incus/network_forward.go:158 cmd/incus/network_load_balancer.go:161
 #: cmd/incus/operation.go:178 cmd/incus/storage_bucket.go:544
-#: cmd/incus/storage_volume.go:1676 cmd/incus/warning.go:221
+#: cmd/incus/storage_volume.go:1679 cmd/incus/warning.go:221
 msgid "LOCATION"
 msgstr "LOCALISATION"
 
@@ -4706,12 +4729,12 @@ msgstr "Copie de l'image : %s"
 msgid "List storage buckets"
 msgstr "Copie de l'image : %s"
 
-#: cmd/incus/storage_volume.go:2535 cmd/incus/storage_volume.go:2536
+#: cmd/incus/storage_volume.go:2542 cmd/incus/storage_volume.go:2543
 #, fuzzy
 msgid "List storage volume snapshots"
 msgstr "Forcer le conteneur à s'arrêter"
 
-#: cmd/incus/storage_volume.go:2542
+#: cmd/incus/storage_volume.go:2549
 msgid ""
 "List storage volume snapshots\n"
 "\n"
@@ -4729,12 +4752,12 @@ msgid ""
 "\t\tu - Number of references (used by)"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:1551
+#: cmd/incus/storage_volume.go:1554
 #, fuzzy
 msgid "List storage volumes"
 msgstr "Copie de l'image : %s"
 
-#: cmd/incus/storage_volume.go:1556
+#: cmd/incus/storage_volume.go:1559
 msgid ""
 "List storage volumes\n"
 "\n"
@@ -4821,7 +4844,7 @@ msgstr ""
 msgid "Load:"
 msgstr ""
 
-#: cmd/incus/info.go:649 cmd/incus/storage_volume.go:1429
+#: cmd/incus/info.go:649 cmd/incus/storage_volume.go:1432
 #, c-format
 msgid "Location: %s"
 msgstr ""
@@ -5118,7 +5141,7 @@ msgstr "Copie de l'image : %s"
 msgid "Manage storage pools and volumes"
 msgstr "Copie de l'image : %s"
 
-#: cmd/incus/storage_volume.go:2264 cmd/incus/storage_volume.go:2265
+#: cmd/incus/storage_volume.go:2271 cmd/incus/storage_volume.go:2272
 #, fuzzy
 msgid "Manage storage volume snapshots"
 msgstr "Copie de l'image : %s"
@@ -5373,15 +5396,15 @@ msgstr "Résumé manquant."
 #: cmd/incus/storage_bucket.go:917 cmd/incus/storage_bucket.go:1014
 #: cmd/incus/storage_bucket.go:1093 cmd/incus/storage_bucket.go:1216
 #: cmd/incus/storage_bucket.go:1291 cmd/incus/storage_volume.go:203
-#: cmd/incus/storage_volume.go:294 cmd/incus/storage_volume.go:614
-#: cmd/incus/storage_volume.go:721 cmd/incus/storage_volume.go:798
-#: cmd/incus/storage_volume.go:896 cmd/incus/storage_volume.go:1010
-#: cmd/incus/storage_volume.go:1227 cmd/incus/storage_volume.go:1603
-#: cmd/incus/storage_volume.go:1901 cmd/incus/storage_volume.go:1995
-#: cmd/incus/storage_volume.go:2155 cmd/incus/storage_volume.go:2372
-#: cmd/incus/storage_volume.go:2487 cmd/incus/storage_volume.go:2592
-#: cmd/incus/storage_volume.go:2702 cmd/incus/storage_volume.go:2787
-#: cmd/incus/storage_volume.go:2873
+#: cmd/incus/storage_volume.go:294 cmd/incus/storage_volume.go:615
+#: cmd/incus/storage_volume.go:722 cmd/incus/storage_volume.go:799
+#: cmd/incus/storage_volume.go:897 cmd/incus/storage_volume.go:1014
+#: cmd/incus/storage_volume.go:1231 cmd/incus/storage_volume.go:1606
+#: cmd/incus/storage_volume.go:1904 cmd/incus/storage_volume.go:1998
+#: cmd/incus/storage_volume.go:2160 cmd/incus/storage_volume.go:2379
+#: cmd/incus/storage_volume.go:2494 cmd/incus/storage_volume.go:2599
+#: cmd/incus/storage_volume.go:2709 cmd/incus/storage_volume.go:2794
+#: cmd/incus/storage_volume.go:2871
 #, fuzzy
 msgid "Missing pool name"
 msgstr "Nom de l'ensemble de stockage"
@@ -5408,12 +5431,12 @@ msgstr "Résumé manquant."
 msgid "Missing source profile name"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:403 cmd/incus/storage_volume.go:1811
+#: cmd/incus/storage_volume.go:403 cmd/incus/storage_volume.go:1814
 #, fuzzy
 msgid "Missing source volume name"
 msgstr "Copie de l'image : %s"
 
-#: cmd/incus/storage_volume.go:1356
+#: cmd/incus/storage_volume.go:1359
 #, fuzzy
 msgid "Missing storage pool name"
 msgstr "Nom de l'ensemble de stockage"
@@ -5456,7 +5479,7 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/network.go:562 cmd/incus/network.go:659
-#: cmd/incus/storage_volume.go:818 cmd/incus/storage_volume.go:915
+#: cmd/incus/storage_volume.go:819 cmd/incus/storage_volume.go:916
 #, fuzzy
 msgid "More than one device matches, specify the device name"
 msgstr "Plus d'un périphérique correspond, spécifier le nom du périphérique."
@@ -5470,6 +5493,11 @@ msgstr ""
 #, fuzzy
 msgid "Mount files from instances"
 msgstr "Création du conteneur"
+
+#: cmd/incus/storage_volume.go:1773 cmd/incus/storage_volume.go:1774
+#, fuzzy
+msgid "Move custom storage volumes between pools"
+msgstr "Copie de l'image : %s"
 
 #: cmd/incus/move.go:34
 #, fuzzy
@@ -5492,17 +5520,12 @@ msgid ""
 "versions.\n"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:1770 cmd/incus/storage_volume.go:1771
-#, fuzzy
-msgid "Move storage volumes between pools"
-msgstr "Copie de l'image : %s"
-
 #: cmd/incus/move.go:60
 #, fuzzy
 msgid "Move the instance without its snapshots"
 msgstr "Forcer le conteneur à s'arrêter"
 
-#: cmd/incus/storage_volume.go:1777
+#: cmd/incus/storage_volume.go:1780
 msgid "Move to a project different from the source"
 msgstr ""
 
@@ -5536,7 +5559,7 @@ msgstr "Vous devez fournir le nom d'un conteneur pour : "
 #: cmd/incus/network_zone.go:159 cmd/incus/network_zone.go:843
 #: cmd/incus/profile.go:745 cmd/incus/project.go:548 cmd/incus/remote.go:773
 #: cmd/incus/storage.go:708 cmd/incus/storage_bucket.go:539
-#: cmd/incus/storage_bucket.go:863 cmd/incus/storage_volume.go:1668
+#: cmd/incus/storage_bucket.go:863 cmd/incus/storage_volume.go:1671
 msgid "NAME"
 msgstr "NOM"
 
@@ -5592,8 +5615,8 @@ msgid "NVRM Version: %v"
 msgstr ""
 
 #: cmd/incus/info.go:811 cmd/incus/info.go:862 cmd/incus/snapshot.go:364
-#: cmd/incus/storage_volume.go:1471 cmd/incus/storage_volume.go:1521
-#: cmd/incus/storage_volume.go:2638
+#: cmd/incus/storage_volume.go:1474 cmd/incus/storage_volume.go:1524
+#: cmd/incus/storage_volume.go:2645
 #, fuzzy
 msgid "Name"
 msgstr "Nom : %s"
@@ -5659,7 +5682,7 @@ msgid "Name of the storage pool:"
 msgstr "Copie de l'image : %s"
 
 #: cmd/incus/info.go:632 cmd/incus/network.go:969
-#: cmd/incus/storage_volume.go:1411
+#: cmd/incus/storage_volume.go:1414
 #, c-format
 msgid "Name: %s"
 msgstr "Nom : %s"
@@ -5826,7 +5849,7 @@ msgstr ""
 msgid "No device found for this network"
 msgstr "Aucun périphérique existant pour ce réseau"
 
-#: cmd/incus/storage_volume.go:827 cmd/incus/storage_volume.go:924
+#: cmd/incus/storage_volume.go:828 cmd/incus/storage_volume.go:925
 #, fuzzy
 msgid "No device found for this storage volume"
 msgstr "Aucun périphérique existant pour ce réseau"
@@ -5847,11 +5870,11 @@ msgstr ""
 msgid "No storage backends available"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:417 cmd/incus/storage_volume.go:1820
+#: cmd/incus/storage_volume.go:417 cmd/incus/storage_volume.go:1823
 msgid "No storage pool for source volume specified"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:467 cmd/incus/storage_volume.go:1831
+#: cmd/incus/storage_volume.go:467 cmd/incus/storage_volume.go:1834
 msgid "No storage pool for target volume specified"
 msgstr ""
 
@@ -5893,13 +5916,13 @@ msgid "Only \"custom\" volumes can be attached to instances"
 msgstr ""
 "Seuls les volumes \"personnalisés\" peuvent être attachés aux conteneurs."
 
-#: cmd/incus/storage_volume.go:2977
+#: cmd/incus/storage_volume.go:2975
 #, fuzzy
 msgid "Only \"custom\" volumes can be exported"
 msgstr ""
 "Seuls les volumes \"personnalisés\" peuvent être attachés aux conteneurs."
 
-#: cmd/incus/storage_volume.go:2385
+#: cmd/incus/storage_volume.go:2392
 #, fuzzy
 msgid "Only \"custom\" volumes can be snapshotted"
 msgstr ""
@@ -5914,7 +5937,7 @@ msgstr "Seules les URLs https sont supportées par simplestreams"
 msgid "Only https:// is supported for remote image import"
 msgstr "Seul https:// est supporté par l'import d'images distantes."
 
-#: cmd/incus/storage_volume.go:1374
+#: cmd/incus/storage_volume.go:1377
 #, fuzzy
 msgid "Only instance or custom volumes are supported"
 msgstr ""
@@ -5935,7 +5958,7 @@ msgstr ""
 msgid "Operation %s deleted"
 msgstr "Le réseau %s a été supprimé"
 
-#: cmd/incus/info.go:866 cmd/incus/storage_volume.go:1525
+#: cmd/incus/info.go:866 cmd/incus/storage_volume.go:1528
 msgid "Optimized Storage"
 msgstr ""
 
@@ -5991,7 +6014,7 @@ msgstr "PROFILS"
 #: cmd/incus/image.go:1122 cmd/incus/list.go:576 cmd/incus/network.go:1092
 #: cmd/incus/network_acl.go:174 cmd/incus/network_zone.go:165
 #: cmd/incus/profile.go:746 cmd/incus/storage_bucket.go:548
-#: cmd/incus/storage_volume.go:1687 cmd/incus/top.go:341
+#: cmd/incus/storage_volume.go:1690 cmd/incus/top.go:341
 #: cmd/incus/warning.go:213
 msgid "PROJECT"
 msgstr ""
@@ -6118,7 +6141,7 @@ msgstr ""
 #: cmd/incus/network_zone.go:638 cmd/incus/network_zone.go:1333
 #: cmd/incus/profile.go:601 cmd/incus/project.go:400 cmd/incus/storage.go:369
 #: cmd/incus/storage_bucket.go:362 cmd/incus/storage_bucket.go:1158
-#: cmd/incus/storage_volume.go:1108 cmd/incus/storage_volume.go:1140
+#: cmd/incus/storage_volume.go:1112 cmd/incus/storage_volume.go:1144
 #, fuzzy
 msgid "Press enter to open the editor again or ctrl+c to abort change"
 msgstr "Appuyer sur Entrée pour ouvrir à nouveau l'éditeur"
@@ -6260,101 +6283,6 @@ msgstr ""
 #, fuzzy, c-format
 msgid "Protocol: %s"
 msgstr "Cible invalide %s"
-
-#: cmd/incus/storage_volume.go:2829
-msgid ""
-"Provide the type of the storage volume if it is not custom.\n"
-"\tSupported types are custom, image, container and virtual-machine.\n"
-"\n"
-"\tAdd the name of the snapshot if type is one of custom, container or "
-"virtual-machine.\n"
-"\n"
-"\tincus storage volume show default virtual-machine/data/snap0\n"
-"\t\tWill show the properties of snapshot \"snap0\" for a virtual machine "
-"called \"data\" in the \"default\" pool."
-msgstr ""
-
-#: cmd/incus/storage_volume.go:1312
-msgid ""
-"Provide the type of the storage volume if it is not custom.\n"
-"Supported types are custom, container and virtual-machine.\n"
-"\n"
-"incus storage volume info default data\n"
-"    Returns state information for a custom volume \"data\" in pool "
-"\"default\".\n"
-"\n"
-"incus storage volume info default virtual-machine/data\n"
-"    Returns state information for a virtual machine \"data\" in pool "
-"\"default\"."
-msgstr ""
-
-#: cmd/incus/storage_volume.go:1176
-msgid ""
-"Provide the type of the storage volume if it is not custom.\n"
-"Supported types are custom, image, container and virtual-machine.\n"
-"\n"
-"Add the name of the snapshot if type is one of custom, container or virtual-"
-"machine.\n"
-"\n"
-"incus storage volume get default data size\n"
-"    Returns the size of a custom volume \"data\" in pool \"default\".\n"
-"\n"
-"incus storage volume get default virtual-machine/data snapshots.expiry\n"
-"    Returns the snapshot expiration period for a virtual machine \"data\" in "
-"pool \"default\"."
-msgstr ""
-
-#: cmd/incus/storage_volume.go:2109
-msgid ""
-"Provide the type of the storage volume if it is not custom.\n"
-"Supported types are custom, image, container and virtual-machine.\n"
-"\n"
-"Add the name of the snapshot if type is one of custom, container or virtual-"
-"machine.\n"
-"\n"
-"incus storage volume show default data\n"
-"    Will show the properties of a custom volume called \"data\" in the "
-"\"default\" pool.\n"
-"\n"
-"incus storage volume show default container/data\n"
-"    Will show the properties of the filesystem for a container called "
-"\"data\" in the \"default\" pool."
-msgstr ""
-
-#: cmd/incus/storage_volume.go:955
-msgid ""
-"Provide the type of the storage volume if it is not custom.\n"
-"Supported types are custom, image, container and virtual-machine.\n"
-"\n"
-"incus storage volume edit [<remote>:]<pool> [<type>/]<volume> < volume.yaml\n"
-"    Update a storage volume using the content of pool.yaml."
-msgstr ""
-
-#: cmd/incus/storage_volume.go:1949
-msgid ""
-"Provide the type of the storage volume if it is not custom.\n"
-"Supported types are custom, image, container and virtual-machine.\n"
-"\n"
-"incus storage volume set default data size=1GiB\n"
-"    Sets the size of a custom volume \"data\" in pool \"default\" to 1 GiB.\n"
-"\n"
-"incus storage volume set default virtual-machine/data snapshots.expiry=7d\n"
-"    Sets the snapshot expiration period for a virtual machine \"data\" in "
-"pool \"default\" to seven days."
-msgstr ""
-
-#: cmd/incus/storage_volume.go:2208
-msgid ""
-"Provide the type of the storage volume if it is not custom.\n"
-"Supported types are custom, image, container and virtual-machine.\n"
-"\n"
-"incus storage volume unset default data size\n"
-"    Remotes the size/quota of a custom volume \"data\" in pool \"default\".\n"
-"\n"
-"incus storage volume unset default virtual-machine/data snapshots.expiry\n"
-"    Removes the snapshot expiration period for a virtual machine \"data\" in "
-"pool \"default\"."
-msgstr ""
 
 #: cmd/incus/config_trust.go:224
 #, fuzzy, c-format
@@ -6643,6 +6571,11 @@ msgstr ""
 msgid "Rename aliases"
 msgstr ""
 
+#: cmd/incus/storage_volume.go:1866 cmd/incus/storage_volume.go:1867
+#, fuzzy
+msgid "Rename custom storage volumes"
+msgstr "Copie de l'image : %s"
+
 #: cmd/incus/snapshot.go:384 cmd/incus/snapshot.go:385
 #, fuzzy
 msgid "Rename instance snapshots"
@@ -6679,22 +6612,17 @@ msgstr "Créé : %s"
 msgid "Rename remotes"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:2659 cmd/incus/storage_volume.go:2660
+#: cmd/incus/storage_volume.go:2666 cmd/incus/storage_volume.go:2667
 #, fuzzy
 msgid "Rename storage volume snapshots"
 msgstr "Forcer le conteneur à s'arrêter"
 
-#: cmd/incus/storage_volume.go:1863 cmd/incus/storage_volume.go:1864
-#, fuzzy
-msgid "Rename storage volumes"
-msgstr "Copie de l'image : %s"
-
-#: cmd/incus/storage_volume.go:1925
+#: cmd/incus/storage_volume.go:1928
 #, c-format
 msgid "Renamed storage volume from \"%s\" to \"%s\""
 msgstr ""
 
-#: cmd/incus/storage_volume.go:2731
+#: cmd/incus/storage_volume.go:2738
 #, fuzzy, c-format
 msgid "Renamed storage volume snapshot from \"%s\" to \"%s\""
 msgstr "Forcer le conteneur à s'arrêter"
@@ -6754,7 +6682,7 @@ msgstr ""
 msgid "Restore instance snapshots"
 msgstr "Forcer le conteneur à s'arrêter"
 
-#: cmd/incus/storage_volume.go:2746 cmd/incus/storage_volume.go:2747
+#: cmd/incus/storage_volume.go:2753 cmd/incus/storage_volume.go:2754
 #, fuzzy
 msgid "Restore storage volume snapshots"
 msgstr "Forcer le conteneur à s'arrêter"
@@ -7177,19 +7105,23 @@ msgid ""
 "    incus storage set [<remote>:]<pool> <key> <value>"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:1943
+#: cmd/incus/storage_volume.go:1946
 #, fuzzy
 msgid "Set storage volume configuration keys"
 msgstr "Clé de configuration invalide"
 
-#: cmd/incus/storage_volume.go:1944
+#: cmd/incus/storage_volume.go:1947
 msgid ""
 "Set storage volume configuration keys\n"
 "\n"
 "For backward compatibility, a single configuration key may still be set "
 "with:\n"
 "    incus storage volume set [<remote>:]<pool> [<type>/]<volume> <key> "
-"<value>"
+"<value>\n"
+"\n"
+"If the type is not specified, Incus assumes the type is \"custom\".\n"
+"Supported values for type are \"custom\", \"container\" and \"virtual-"
+"machine\"."
 msgstr ""
 
 #: cmd/incus/remote.go:983 cmd/incus/remote.go:984
@@ -7283,7 +7215,7 @@ msgstr "Copie de l'image : %s"
 msgid "Set the key as a storage property"
 msgstr "Copie de l'image : %s"
 
-#: cmd/incus/storage_volume.go:1960
+#: cmd/incus/storage_volume.go:1963
 #, fuzzy
 msgid "Set the key as a storage volume property"
 msgstr "Copie de l'image : %s"
@@ -7448,16 +7380,46 @@ msgstr "Afficher la configuration étendue"
 msgid "Show storage pool configurations and resources"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:2106 cmd/incus/storage_volume.go:2107
-#: cmd/incus/storage_volume.go:2826 cmd/incus/storage_volume.go:2827
+#: cmd/incus/storage_volume.go:2109
 #, fuzzy
 msgid "Show storage volume configurations"
 msgstr "Afficher la configuration étendue"
 
-#: cmd/incus/storage_volume.go:1309 cmd/incus/storage_volume.go:1310
+#: cmd/incus/storage_volume.go:2110
+msgid ""
+"Show storage volume configurations\n"
+"\n"
+"If the type is not specified, Incus assumes the type is \"custom\".\n"
+"Supported values for type are \"custom\", \"container\" and \"virtual-"
+"machine\".\n"
+"\n"
+"For snapshots, add the snapshot name (only if type is one of custom, "
+"container or virtual-machine)."
+msgstr ""
+
+#: cmd/incus/storage_volume.go:2834
+#, fuzzy
+msgid "Show storage volume snapshhot configurations"
+msgstr "Afficher la configuration étendue"
+
+#: cmd/incus/storage_volume.go:2833
+#, fuzzy
+msgid "Show storage volume snapshot configurations"
+msgstr "Afficher la configuration étendue"
+
+#: cmd/incus/storage_volume.go:1313
 #, fuzzy
 msgid "Show storage volume state information"
 msgstr "Afficher la configuration étendue"
+
+#: cmd/incus/storage_volume.go:1314
+msgid ""
+"Show storage volume state information\n"
+"\n"
+"If the type is not specified, Incus assumes the type is \"custom\".\n"
+"Supported values for type are \"custom\", \"container\" and \"virtual-"
+"machine\"."
+msgstr ""
 
 #: cmd/incus/remote.go:675 cmd/incus/remote.go:676
 #, fuzzy
@@ -7526,16 +7488,16 @@ msgstr "Taille : %.2f Mo"
 msgid "Size: %s"
 msgstr "État : %s"
 
-#: cmd/incus/storage_volume.go:2313 cmd/incus/storage_volume.go:2314
+#: cmd/incus/storage_volume.go:2320 cmd/incus/storage_volume.go:2321
 #, fuzzy
 msgid "Snapshot storage volumes"
 msgstr "Copie de l'image : %s"
 
-#: cmd/incus/storage_volume.go:2047
+#: cmd/incus/storage_volume.go:2050
 msgid "Snapshots are read-only and can't have their configuration changed"
 msgstr ""
 
-#: cmd/incus/info.go:780 cmd/incus/storage_volume.go:1450
+#: cmd/incus/info.go:780 cmd/incus/storage_volume.go:1453
 msgid "Snapshots:"
 msgstr "Instantanés :"
 
@@ -7684,12 +7646,12 @@ msgstr "Nom de l'ensemble de stockage"
 msgid "Storage pool to use or create"
 msgstr "Le réseau %s a été créé"
 
-#: cmd/incus/storage_volume.go:667
+#: cmd/incus/storage_volume.go:668
 #, fuzzy, c-format
 msgid "Storage volume %s created"
 msgstr "Profil %s créé"
 
-#: cmd/incus/storage_volume.go:741
+#: cmd/incus/storage_volume.go:742
 #, fuzzy, c-format
 msgid "Storage volume %s deleted"
 msgstr "Profil %s supprimé"
@@ -7704,7 +7666,7 @@ msgstr "Image copiée avec succès !"
 msgid "Storage volume moved successfully!"
 msgstr "Image copiée avec succès !"
 
-#: cmd/incus/storage_volume.go:2512
+#: cmd/incus/storage_volume.go:2519
 #, fuzzy, c-format
 msgid "Storage volume snapshot %s deleted from %s"
 msgstr "Profil %s supprimé"
@@ -7767,13 +7729,13 @@ msgstr ""
 #: cmd/incus/image_alias.go:236 cmd/incus/list.go:588 cmd/incus/network.go:1094
 #: cmd/incus/network.go:1299 cmd/incus/network_allocations.go:26
 #: cmd/incus/network_integration.go:459 cmd/incus/network_peer.go:157
-#: cmd/incus/operation.go:172 cmd/incus/storage_volume.go:1667
+#: cmd/incus/operation.go:172 cmd/incus/storage_volume.go:1670
 #: cmd/incus/warning.go:216
 msgid "TYPE"
 msgstr "TYPE"
 
 #: cmd/incus/info.go:812 cmd/incus/info.go:863 cmd/incus/snapshot.go:365
-#: cmd/incus/storage_volume.go:1522 cmd/incus/storage_volume.go:2639
+#: cmd/incus/storage_volume.go:1525 cmd/incus/storage_volume.go:2646
 #, fuzzy
 msgid "Taken at"
 msgstr "pris à %s"
@@ -7980,12 +7942,12 @@ msgstr "Vous devez fournir le nom d'un conteneur pour : "
 msgid "The property %q does not exist on the storage pool %q: %v"
 msgstr "Vous devez fournir le nom d'un conteneur pour : "
 
-#: cmd/incus/storage_volume.go:1285
+#: cmd/incus/storage_volume.go:1289
 #, fuzzy, c-format
 msgid "The property %q does not exist on the storage pool volume %q: %v"
 msgstr "Vous devez fournir le nom d'un conteneur pour : "
 
-#: cmd/incus/storage_volume.go:1257
+#: cmd/incus/storage_volume.go:1261
 #, c-format
 msgid ""
 "The property %q does not exist on the storage pool volume snapshot %s/%s: %v"
@@ -8036,7 +7998,7 @@ msgid "The server doesn't implement the newer v2 resources API"
 msgstr ""
 
 #: cmd/incus/network.go:576 cmd/incus/network.go:673
-#: cmd/incus/storage_volume.go:832 cmd/incus/storage_volume.go:929
+#: cmd/incus/storage_volume.go:833 cmd/incus/storage_volume.go:930
 msgid "The specified device doesn't exist"
 msgstr "Le périphérique indiqué n'existe pas"
 
@@ -8120,7 +8082,7 @@ msgstr ""
 msgid "Too many links"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:1435
+#: cmd/incus/storage_volume.go:1438
 #, fuzzy, c-format
 msgid "Total: %s"
 msgstr "Publié : %s"
@@ -8136,7 +8098,7 @@ msgstr ""
 msgid "Transceiver type: %s"
 msgstr "Transfert de l'image : %s"
 
-#: cmd/incus/storage_volume.go:1774
+#: cmd/incus/storage_volume.go:1777
 msgid "Transfer mode, one of pull (default), push or relay"
 msgstr ""
 
@@ -8202,7 +8164,7 @@ msgstr ""
 
 #: cmd/incus/image.go:1000 cmd/incus/info.go:299 cmd/incus/info.go:432
 #: cmd/incus/info.go:443 cmd/incus/info.go:643 cmd/incus/network.go:973
-#: cmd/incus/storage_volume.go:1420
+#: cmd/incus/storage_volume.go:1423
 #, fuzzy, c-format
 msgid "Type: %s"
 msgstr "Expire : %s"
@@ -8224,7 +8186,7 @@ msgstr "DATE DE PUBLICATION"
 msgid "URL"
 msgstr "URL"
 
-#: cmd/incus/project.go:1135 cmd/incus/storage_volume.go:1672
+#: cmd/incus/project.go:1135 cmd/incus/storage_volume.go:1675
 msgid "USAGE"
 msgstr ""
 
@@ -8242,7 +8204,7 @@ msgstr "Création du conteneur"
 #: cmd/incus/network_allocations.go:24 cmd/incus/network_integration.go:460
 #: cmd/incus/network_zone.go:161 cmd/incus/profile.go:748
 #: cmd/incus/project.go:556 cmd/incus/storage.go:712
-#: cmd/incus/storage_volume.go:1671
+#: cmd/incus/storage_volume.go:1674
 msgid "USED BY"
 msgstr "UTILISÉ PAR"
 
@@ -8283,7 +8245,7 @@ msgstr ""
 #: cmd/incus/cluster.go:193 cmd/incus/config_trust.go:455
 #: cmd/incus/image.go:1147 cmd/incus/list.go:647 cmd/incus/network.go:1119
 #: cmd/incus/profile.go:769 cmd/incus/project.go:571 cmd/incus/storage.go:728
-#: cmd/incus/storage_volume.go:1705 cmd/incus/warning.go:244
+#: cmd/incus/storage_volume.go:1708 cmd/incus/warning.go:244
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr ""
@@ -8407,10 +8369,19 @@ msgstr "Clé de configuration invalide"
 msgid "Unset storage pool configuration keys"
 msgstr "Clé de configuration invalide"
 
-#: cmd/incus/storage_volume.go:2205 cmd/incus/storage_volume.go:2206
+#: cmd/incus/storage_volume.go:2213
 #, fuzzy
 msgid "Unset storage volume configuration keys"
 msgstr "Clé de configuration invalide"
+
+#: cmd/incus/storage_volume.go:2214
+msgid ""
+"Unset storage volume configuration keys\n"
+"\n"
+"If the type is not specified, Incus assumes the type is \"custom\".\n"
+"Supported values for type are \"custom\", \"container\" and \"virtual-"
+"machine\"."
+msgstr ""
 
 #: cmd/incus/cluster.go:589
 msgid "Unset the key as a cluster property"
@@ -8473,7 +8444,7 @@ msgstr "Copie de l'image : %s"
 msgid "Unset the key as a storage property"
 msgstr "Copie de l'image : %s"
 
-#: cmd/incus/storage_volume.go:2219
+#: cmd/incus/storage_volume.go:2226
 #, fuzzy
 msgid "Unset the key as a storage volume property"
 msgstr "Copie de l'image : %s"
@@ -8521,12 +8492,12 @@ msgstr "Publié : %s"
 msgid "Upper devices"
 msgstr "Création du conteneur"
 
-#: cmd/incus/storage_volume.go:1433
+#: cmd/incus/storage_volume.go:1436
 #, c-format
 msgid "Usage: %s"
 msgstr "Utilisation : %s"
 
-#: cmd/incus/export.go:42 cmd/incus/storage_volume.go:2928
+#: cmd/incus/export.go:42 cmd/incus/storage_volume.go:2926
 msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool)"
 msgstr ""
@@ -8614,7 +8585,7 @@ msgstr "Version CUDA : %v"
 msgid "Version: %v"
 msgstr "Version CUDA : %v"
 
-#: cmd/incus/storage_volume.go:1524
+#: cmd/incus/storage_volume.go:1527
 msgid "Volume Only"
 msgstr ""
 
@@ -8796,7 +8767,7 @@ msgstr "vous devez spécifier un nom de conteneur source"
 msgid "You need to specify an image name or use --empty"
 msgstr "vous devez spécifier un nom d'image ou utilisez --empty"
 
-#: cmd/incus/storage_volume.go:854
+#: cmd/incus/storage_volume.go:855
 #, fuzzy
 msgid "[<remote:>]<pool> <volume> <profile> [<device name>]"
 msgstr ""
@@ -9658,7 +9629,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/storage_volume.go:3087
+#: cmd/incus/storage_volume.go:3085
 #, fuzzy
 msgid "[<remote>:]<pool> <backup file> [<volume name>]"
 msgstr ""
@@ -9737,7 +9708,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/storage_volume.go:1862
+#: cmd/incus/storage_volume.go:1865
 #, fuzzy
 msgid "[<remote>:]<pool> <old name> <new name>"
 msgstr ""
@@ -9745,7 +9716,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/storage_volume.go:682 cmd/incus/storage_volume.go:2534
+#: cmd/incus/storage_volume.go:683 cmd/incus/storage_volume.go:2541
 #, fuzzy
 msgid "[<remote>:]<pool> <volume>"
 msgstr ""
@@ -9753,7 +9724,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/storage_volume.go:756
+#: cmd/incus/storage_volume.go:757
 #, fuzzy
 msgid "[<remote>:]<pool> <volume> <instance> [<device name>]"
 msgstr ""
@@ -9769,7 +9740,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/storage_volume.go:2658
+#: cmd/incus/storage_volume.go:2665
 #, fuzzy
 msgid "[<remote>:]<pool> <volume> <old snapshot> <new snapshot>"
 msgstr ""
@@ -9781,7 +9752,7 @@ msgstr ""
 "Détruit les conteneurs ou les instantanés ainsi que toute donnée associée "
 "(configuration, instantanés, …)."
 
-#: cmd/incus/storage_volume.go:2444 cmd/incus/storage_volume.go:2745
+#: cmd/incus/storage_volume.go:2451 cmd/incus/storage_volume.go:2752
 #, fuzzy
 msgid "[<remote>:]<pool> <volume> <snapshot>"
 msgstr ""
@@ -9793,7 +9764,7 @@ msgstr ""
 "Détruit les conteneurs ou les instantanés ainsi que toute donnée associée "
 "(configuration, instantanés, …)."
 
-#: cmd/incus/storage_volume.go:2921
+#: cmd/incus/storage_volume.go:2919
 #, fuzzy
 msgid "[<remote>:]<pool> <volume> [<path>]"
 msgstr ""
@@ -9805,7 +9776,7 @@ msgstr ""
 "Détruit les conteneurs ou les instantanés ainsi que toute donnée associée "
 "(configuration, instantanés, …)."
 
-#: cmd/incus/storage_volume.go:2312
+#: cmd/incus/storage_volume.go:2319
 #, fuzzy
 msgid "[<remote>:]<pool> <volume> [<snapshot>]"
 msgstr ""
@@ -9825,7 +9796,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/storage_volume.go:2825
+#: cmd/incus/storage_volume.go:2832
 #, fuzzy
 msgid "[<remote>:]<pool> <volume>/<snapshot>"
 msgstr ""
@@ -9837,7 +9808,7 @@ msgstr ""
 "Détruit les conteneurs ou les instantanés ainsi que toute donnée associée "
 "(configuration, instantanés, …)."
 
-#: cmd/incus/storage_volume.go:1549
+#: cmd/incus/storage_volume.go:1552
 #, fuzzy
 msgid "[<remote>:]<pool> [<filter>...]"
 msgstr ""
@@ -9845,8 +9816,8 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/storage_volume.go:951 cmd/incus/storage_volume.go:1308
-#: cmd/incus/storage_volume.go:2105
+#: cmd/incus/storage_volume.go:952 cmd/incus/storage_volume.go:1312
+#: cmd/incus/storage_volume.go:2108
 #, fuzzy
 msgid "[<remote>:]<pool> [<type>/]<volume>"
 msgstr ""
@@ -9854,7 +9825,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/storage_volume.go:2204
+#: cmd/incus/storage_volume.go:2212
 #, fuzzy
 msgid "[<remote>:]<pool> [<type>/]<volume> <key>"
 msgstr ""
@@ -9862,7 +9833,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/storage_volume.go:1942
+#: cmd/incus/storage_volume.go:1945
 #, fuzzy
 msgid "[<remote>:]<pool> [<type>/]<volume> <key>=<value>..."
 msgstr ""
@@ -9870,7 +9841,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/storage_volume.go:1172
+#: cmd/incus/storage_volume.go:1176
 #, fuzzy
 msgid "[<remote>:]<pool> [<type>/]<volume>[/<snapshot>] <key>"
 msgstr ""
@@ -9882,7 +9853,7 @@ msgstr ""
 "Détruit les conteneurs ou les instantanés ainsi que toute donnée associée "
 "(configuration, instantanés, …)."
 
-#: cmd/incus/storage_volume.go:1768
+#: cmd/incus/storage_volume.go:1771
 #, fuzzy
 msgid "[<remote>:]<pool>/<volume> [<remote>:]<pool>/<volume>"
 msgstr ""
@@ -10633,26 +10604,96 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:578
 msgid ""
-"incus storage volume create p1 v1\n"
+"incus storage volume create default foo\n"
+"    Create custom storage volume \"foo\" in pool \"default\"\n"
 "\n"
-"incus storage volume create p1 v1 < config.yaml\n"
-"\tCreate storage volume v1 for pool p1 with configuration from config.yaml."
+"incus storage volume create default foo < config.yaml\n"
+"    Create custom storage volume \"foo\" in pool \"default\" with "
+"configuration from config.yaml"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3091
+#: cmd/incus/storage_volume.go:959
+msgid ""
+"incus storage volume edit default container/c1\n"
+"    Edit container storage volume \"c1\" in pool \"default\"\n"
+"\n"
+"incus storage volume edit default foo < volume.yaml\n"
+"    Edit custom storage volume \"foo\" in pool \"default\" using the content "
+"of volume.yaml"
+msgstr ""
+
+#: cmd/incus/storage_volume.go:1185
+msgid ""
+"incus storage volume get default data size\n"
+"    Returns the size of a custom volume \"data\" in pool \"default\"\n"
+"\n"
+"incus storage volume get default virtual-machine/data snapshots.expiry\n"
+"    Returns the snapshot expiration period for a virtual machine \"data\" in "
+"pool \"default\""
+msgstr ""
+
+#: cmd/incus/storage_volume.go:3089
 msgid ""
 "incus storage volume import default backup0.tar.gz\n"
-"\t\tCreate a new custom volume using backup0.tar.gz as the source."
+"    Create a new custom volume using backup0.tar.gz as the source\n"
+"\n"
+"incus storage volume import default some-installer.iso installer --type=iso\n"
+"    Create a new custom volume storing some-installer.iso for use as a CD-"
+"ROM image"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:2316
+#: cmd/incus/storage_volume.go:1319
 msgid ""
-"incus storage volume snapshot create default v1 snap0\n"
-"       Create a snapshot of \"v1\" in pool \"default\" called \"snap0\".\n"
+"incus storage volume info default foo\n"
+"    Returns state information for a custom volume \"foo\" in pool "
+"\"default\"\n"
 "\n"
-"incus storage volume snapshot create default v1 snap0 < config.yaml\n"
-"       Create a snapshot of \"v1\" in pool \"default\" called \"snap0\" with "
-"the configuration from \"config.yaml\"."
+"incus storage volume info default virtual-machine/v1\n"
+"    Returns state information for virtual machine \"v1\" in pool \"default\""
+msgstr ""
+
+#: cmd/incus/storage_volume.go:1955
+msgid ""
+"incus storage volume set default data size=1GiB\n"
+"    Sets the size of a custom volume \"data\" in pool \"default\" to 1 GiB\n"
+"\n"
+"incus storage volume set default virtual-machine/data snapshots.expiry=7d\n"
+"    Sets the snapshot expiration period for a virtual machine \"data\" in "
+"pool \"default\" to seven days"
+msgstr ""
+
+#: cmd/incus/storage_volume.go:2117
+msgid ""
+"incus storage volume show default foo\n"
+"    Will show the properties of custom volume \"foo\" in pool \"default\"\n"
+"\n"
+"incus storage volume show default virtual-machine/v1\n"
+"    Will show the properties of the virtual-machine volume \"v1\" in pool "
+"\"default\"\n"
+"\n"
+"incus storage volume show default container/c1\n"
+"    Will show the properties of the container volume \"c1\" in pool "
+"\"default\""
+msgstr ""
+
+#: cmd/incus/storage_volume.go:2323
+msgid ""
+"incus storage volume snapshot create default foo snap0\n"
+"    Create a snapshot of \"foo\" in pool \"default\" called \"snap0\"\n"
+"\n"
+"incus storage volume snapshot create default vol1 snap0 < config.yaml\n"
+"    Create a snapshot of \"foo\" in pool \"default\" called \"snap0\" with "
+"the configuration from \"config.yaml\""
+msgstr ""
+
+#: cmd/incus/storage_volume.go:2219
+msgid ""
+"incus storage volume unset default foo size\n"
+"    Removes the size/quota of custom volume \"foo\" in pool \"default\"\n"
+"\n"
+"incus storage volume unset default virtual-machine/v1 snapshots.expiry\n"
+"    Removes the snapshot expiration period of virtual machine volume \"v1\" "
+"in pool \"default\""
 msgstr ""
 
 #: cmd/incus/storage.go:547
@@ -10720,6 +10761,15 @@ msgstr "o"
 #: cmd/incus/image.go:1184 cmd/incus/project.go:223 cmd/incus/snapshot.go:256
 msgid "yes"
 msgstr "oui"
+
+#~ msgid "Copy storage volumes"
+#~ msgstr "Copier des volumes de stockage"
+
+#, fuzzy
+#~ msgid "Import backups of custom volumes including their snapshots."
+#~ msgstr ""
+#~ "Importer des sauvegardes de volumes personnalisés, y compris leurs "
+#~ "instantanés."
 
 #~ msgid "Console log:"
 #~ msgstr "Journaux console:"
