@@ -75,79 +75,73 @@ type dataItem struct {
 	combinedSha256 string
 }
 
-// get information about the data file.
-// metaFile is used to compute the combined hash.
-func (t *dataItem) get(metaFile *os.File, dataPath string) error {
-	// Open the data.
-	dataFile, err := os.Open(dataPath)
-	if err != nil {
-		return err
-	}
-
-	t.Path = dataPath
-
-	defer dataFile.Close()
+// parseImage parses the metadata and data, filling the dataItem struct.
+func (c *cmdAdd) parseImage(metaFile *os.File, dataFile *os.File) (*dataItem, error) {
+	item := dataItem{}
 
 	// Read the header.
-	_, t.Extension, _, err = archive.DetectCompressionFile(dataFile)
+	_, extension, _, err := archive.DetectCompressionFile(dataFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if t.Extension == ".squashfs" {
-		t.FileType = "squashfs"
-	} else if t.Extension == ".qcow2" {
-		t.FileType = "disk-kvm.img"
+	item.Extension = extension
+
+	if item.Extension == ".squashfs" {
+		item.FileType = "squashfs"
+	} else if item.Extension == ".qcow2" {
+		item.FileType = "disk-kvm.img"
 	} else {
-		return fmt.Errorf("Unsupported data type %q", t.Extension)
+		return nil, fmt.Errorf("Unsupported data type %q", item.Extension)
 	}
 
 	// Get the size.
 	dataStat, err := dataFile.Stat()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	t.Size = dataStat.Size()
+	item.Size = dataStat.Size()
 
 	// Get the sha256.
 	_, err = dataFile.Seek(0, 0)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	hash256 := sha256.New()
 	_, err = io.Copy(hash256, dataFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	t.Sha256 = fmt.Sprintf("%x", hash256.Sum(nil))
+	item.Sha256 = fmt.Sprintf("%x", hash256.Sum(nil))
 
 	// Get the combined sha256.
 	_, err = metaFile.Seek(0, 0)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	_, err = dataFile.Seek(0, 0)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	hash256 = sha256.New()
 	_, err = io.Copy(hash256, metaFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	_, err = io.Copy(hash256, dataFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	t.combinedSha256 = fmt.Sprintf("%x", hash256.Sum(nil))
-	return nil
+	item.combinedSha256 = fmt.Sprintf("%x", hash256.Sum(nil))
+
+	return &item, nil
 }
 
 // Run runs the actual command logic.
@@ -262,14 +256,23 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	var data dataItem
-
+	var data *dataItem
 	if !isUnifiedTarball {
-		err := data.get(metaFile, args[1])
+		// Open the data.
+		dataFile, err := os.Open(args[1])
+		if err != nil {
+			return err
+		}
+
+		defer dataFile.Close()
+
+		// Parse the content.
+		data, err = c.parseImage(metaFile, dataFile)
 		if err != nil {
 			return err
 		}
 	}
+
 	// Create the paths if missing.
 	err = os.MkdirAll("images", 0755)
 	if err != nil && !os.IsExist(err) {
@@ -412,6 +415,7 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
+
 	// Update the version.
 	product.Versions[versionName] = version
 
