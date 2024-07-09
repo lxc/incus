@@ -90,6 +90,9 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   # Handle tmpfs
   mount fstype=tmpfs,
 
+  # Handle devpts
+  mount fstype=devpts,
+
   # Allow limited modification of mount propagation
   mount options=(rw,slave) -> /,
   mount options=(rw,rslave) -> /,
