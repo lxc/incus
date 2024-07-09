@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-06-11 23:14-0400\n"
+"POT-Creation-Date: 2024-07-08 16:17-0400\n"
 "PO-Revision-Date: 2024-06-02 16:41+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -83,14 +83,15 @@ msgstr ""
 "###   source: /home/chb/mnt/lxd_test/default.img\n"
 "###   zfs.pool_name: default"
 
-#: cmd/incus/storage_volume.go:981
+#: cmd/incus/storage_volume.go:985
+#, fuzzy
 msgid ""
 "### This is a YAML representation of a storage volume.\n"
 "### Any line starting with a '# will be ignored.\n"
 "###\n"
 "### A storage volume consists of a set of configuration items.\n"
 "###\n"
-"### name: vol1\n"
+"### name: foo\n"
 "### type: custom\n"
 "### used_by: []\n"
 "### config:\n"
@@ -988,7 +989,7 @@ msgstr "エイリアス:"
 msgid "All existing data is lost when joining a cluster, continue?"
 msgstr "クラスターに join すると、すべてのデータが削除されます。続けますか?"
 
-#: cmd/incus/storage_volume.go:1555 cmd/incus/storage_volume.go:2541
+#: cmd/incus/storage_volume.go:1558 cmd/incus/storage_volume.go:2548
 msgid "All projects"
 msgstr "すべてのプロジェクト"
 
@@ -1045,17 +1046,19 @@ msgstr "インスタンスにネットワークインターフェースを追加
 msgid "Attach network interfaces to profiles"
 msgstr "プロファイルにネットワークインターフェースを追加します"
 
-#: cmd/incus/network.go:143
-msgid "Attach new network interfaces to instances"
-msgstr "新たなネットワークインターフェースをインスタンスに追加します"
-
 #: cmd/incus/storage_volume.go:162 cmd/incus/storage_volume.go:163
-msgid "Attach new storage volumes to instances"
+#, fuzzy
+msgid "Attach new custom storage volumes to instances"
 msgstr "新たにストレージボリュームをインスタンスに追加します"
 
 #: cmd/incus/storage_volume.go:253 cmd/incus/storage_volume.go:254
-msgid "Attach new storage volumes to profiles"
+#, fuzzy
+msgid "Attach new custom storage volumes to profiles"
 msgstr "新しいストレージボリュームをプロファイルに追加します"
+
+#: cmd/incus/network.go:143
+msgid "Attach new network interfaces to instances"
+msgstr "新たなネットワークインターフェースをインスタンスに追加します"
 
 #: cmd/incus/console.go:36
 msgid "Attach to instance consoles"
@@ -1119,17 +1122,17 @@ msgstr "インスタンスのバックアップ中: %s"
 msgid "Backing up storage bucket: %s"
 msgstr "ストレージバケット %s のバックアップを行います"
 
-#: cmd/incus/storage_volume.go:2995
+#: cmd/incus/storage_volume.go:2993
 #, c-format
 msgid "Backing up storage volume: %s"
 msgstr "ストレージボリュームのバックアップ中: %s"
 
 #: cmd/incus/export.go:191 cmd/incus/storage_bucket.go:1396
-#: cmd/incus/storage_volume.go:3072
+#: cmd/incus/storage_volume.go:3070
 msgid "Backup exported successfully!"
 msgstr "バックアップのエクスポートが成功しました!"
 
-#: cmd/incus/info.go:827 cmd/incus/storage_volume.go:1486
+#: cmd/incus/info.go:827 cmd/incus/storage_volume.go:1489
 msgid "Backups:"
 msgstr "バックアップ:"
 
@@ -1155,7 +1158,7 @@ msgid "Bad key=value pair: %q"
 msgstr "不適切な キー=値 のペア: %q"
 
 #: cmd/incus/publish.go:191 cmd/incus/storage.go:169
-#: cmd/incus/storage_volume.go:650
+#: cmd/incus/storage_volume.go:651
 #, c-format
 msgid "Bad key=value pair: %s"
 msgstr "不適切な キー=値 のペア: %s"
@@ -1203,7 +1206,7 @@ msgstr "CANCELABLE"
 msgid "COMMON NAME"
 msgstr "COMMON NAME"
 
-#: cmd/incus/storage_volume.go:1670
+#: cmd/incus/storage_volume.go:1673
 msgid "CONTENT-TYPE"
 msgstr "CONTENT-TYPE"
 
@@ -1299,7 +1302,7 @@ msgstr "--project と --all-project は同時に指定できません"
 msgid "Can't specify a different remote for rename"
 msgstr "リネームの場合は異なるリモートを指定できません"
 
-#: cmd/incus/list.go:620 cmd/incus/storage_volume.go:1680
+#: cmd/incus/list.go:620 cmd/incus/storage_volume.go:1683
 #: cmd/incus/warning.go:225
 msgid "Can't specify column L when not clustered"
 msgstr "クラスターでない場合はカラムとして L は指定できません"
@@ -1497,15 +1500,15 @@ msgstr "クラスターメンバー %s がグループ %s から削除されま�
 #: cmd/incus/storage_bucket.go:893 cmd/incus/storage_bucket.go:993
 #: cmd/incus/storage_bucket.go:1058 cmd/incus/storage_bucket.go:1194
 #: cmd/incus/storage_bucket.go:1268 cmd/incus/storage_bucket.go:1417
-#: cmd/incus/storage_volume.go:365 cmd/incus/storage_volume.go:583
-#: cmd/incus/storage_volume.go:688 cmd/incus/storage_volume.go:962
-#: cmd/incus/storage_volume.go:1188 cmd/incus/storage_volume.go:1322
-#: cmd/incus/storage_volume.go:1775 cmd/incus/storage_volume.go:1867
-#: cmd/incus/storage_volume.go:1959 cmd/incus/storage_volume.go:2121
-#: cmd/incus/storage_volume.go:2218 cmd/incus/storage_volume.go:2324
-#: cmd/incus/storage_volume.go:2450 cmd/incus/storage_volume.go:2663
-#: cmd/incus/storage_volume.go:2749 cmd/incus/storage_volume.go:2838
-#: cmd/incus/storage_volume.go:2930 cmd/incus/storage_volume.go:3094
+#: cmd/incus/storage_volume.go:365 cmd/incus/storage_volume.go:584
+#: cmd/incus/storage_volume.go:689 cmd/incus/storage_volume.go:966
+#: cmd/incus/storage_volume.go:1192 cmd/incus/storage_volume.go:1325
+#: cmd/incus/storage_volume.go:1778 cmd/incus/storage_volume.go:1870
+#: cmd/incus/storage_volume.go:1962 cmd/incus/storage_volume.go:2126
+#: cmd/incus/storage_volume.go:2225 cmd/incus/storage_volume.go:2331
+#: cmd/incus/storage_volume.go:2457 cmd/incus/storage_volume.go:2670
+#: cmd/incus/storage_volume.go:2756 cmd/incus/storage_volume.go:2836
+#: cmd/incus/storage_volume.go:2928 cmd/incus/storage_volume.go:3094
 msgid "Cluster member name"
 msgstr "クラスターメンバ名"
 
@@ -1516,7 +1519,7 @@ msgstr "クラスタリングが有効になりました"
 #: cmd/incus/cluster.go:150 cmd/incus/config_trust.go:421
 #: cmd/incus/image.go:1099 cmd/incus/list.go:133 cmd/incus/network.go:1072
 #: cmd/incus/profile.go:725 cmd/incus/project.go:527 cmd/incus/storage.go:687
-#: cmd/incus/storage_volume.go:1554 cmd/incus/storage_volume.go:2540
+#: cmd/incus/storage_volume.go:1557 cmd/incus/storage_volume.go:2547
 #: cmd/incus/warning.go:93
 msgid "Columns"
 msgstr "カラムレイアウト"
@@ -1581,7 +1584,7 @@ msgstr "設定は KEY=VALUE のフォーマットである必要があります"
 #: cmd/incus/network_zone.go:637 cmd/incus/network_zone.go:1332
 #: cmd/incus/profile.go:600 cmd/incus/project.go:399 cmd/incus/storage.go:368
 #: cmd/incus/storage_bucket.go:361 cmd/incus/storage_bucket.go:1157
-#: cmd/incus/storage_volume.go:1107 cmd/incus/storage_volume.go:1139
+#: cmd/incus/storage_volume.go:1111 cmd/incus/storage_volume.go:1143
 #, c-format
 msgid "Config parsing error: %s"
 msgstr "設定の構文エラー: %s"
@@ -1599,11 +1602,11 @@ msgstr "デーモンの設定"
 msgid "Connecting to the daemon (attempt %d)"
 msgstr "デーモンに接続しています (試行 %d)"
 
-#: cmd/incus/storage_volume.go:584
+#: cmd/incus/storage_volume.go:585
 msgid "Content type, block or filesystem"
 msgstr "ストレージボリュームのタイプ、block もしくは filesystem"
 
-#: cmd/incus/storage_volume.go:1426
+#: cmd/incus/storage_volume.go:1429
 #, c-format
 msgid "Content type: %s"
 msgstr "コンテンツタイプ: %s"
@@ -1620,6 +1623,11 @@ msgstr "ステートフルなインスタンスをステートレスにコピー
 #: cmd/incus/image.go:155
 msgid "Copy aliases from source"
 msgstr "ソースからエイリアスをコピーしました"
+
+#: cmd/incus/storage_volume.go:360 cmd/incus/storage_volume.go:361
+#, fuzzy
+msgid "Copy custom storage volumes"
+msgstr "新たにカスタムストレージボリュームをインポートします"
 
 #: cmd/incus/image.go:147
 msgid "Copy images between servers"
@@ -1676,10 +1684,6 @@ msgstr "プロファイルに継承されたデバイスをコピーし、設定
 #: cmd/incus/profile.go:274 cmd/incus/profile.go:275
 msgid "Copy profiles"
 msgstr "プロファイルをコピーします"
-
-#: cmd/incus/storage_volume.go:360 cmd/incus/storage_volume.go:361
-msgid "Copy storage volumes"
-msgstr "ストレージボリュームをコピーします"
 
 #: cmd/incus/copy.go:57
 msgid "Copy the instance without its snapshots"
@@ -1890,7 +1894,7 @@ msgid "Create the instance with no profiles applied"
 msgstr "プロファイルを適用しないインスタンスを作成します"
 
 #: cmd/incus/image.go:1005 cmd/incus/info.go:657
-#: cmd/incus/storage_volume.go:1440
+#: cmd/incus/storage_volume.go:1443
 #, c-format
 msgid "Created: %s"
 msgstr "作成日時: %s"
@@ -1927,7 +1931,7 @@ msgstr "DEFAULT TARGET ADDRESS"
 #: cmd/incus/network_zone.go:844 cmd/incus/operation.go:173
 #: cmd/incus/profile.go:747 cmd/incus/project.go:555 cmd/incus/storage.go:710
 #: cmd/incus/storage_bucket.go:540 cmd/incus/storage_bucket.go:864
-#: cmd/incus/storage_volume.go:1669
+#: cmd/incus/storage_volume.go:1672
 msgid "DESCRIPTION"
 msgstr "DESCRIPTION"
 
@@ -1967,7 +1971,7 @@ msgstr "状態: %s"
 msgid "Default VLAN ID"
 msgstr "デフォルト VLAN ID"
 
-#: cmd/incus/storage_bucket.go:1267 cmd/incus/storage_volume.go:2929
+#: cmd/incus/storage_bucket.go:1267 cmd/incus/storage_volume.go:2927
 msgid "Define a compression algorithm: for backup or none"
 msgstr "圧縮アルゴリズムを指定します: backup or none"
 
@@ -1987,6 +1991,11 @@ msgstr "クラスターグループを削除します"
 #: cmd/incus/warning.go:361
 msgid "Delete all warnings"
 msgstr "警告をすべて削除します"
+
+#: cmd/incus/storage_volume.go:685 cmd/incus/storage_volume.go:686
+#, fuzzy
+msgid "Delete custom storage volumes"
+msgstr "ストレージボリュームを削除します"
 
 #: cmd/incus/file.go:309 cmd/incus/file.go:310
 msgid "Delete files in instances"
@@ -2066,13 +2075,9 @@ msgstr "ストレージバケットを削除します"
 msgid "Delete storage pools"
 msgstr "ストレージプールを削除します"
 
-#: cmd/incus/storage_volume.go:2446 cmd/incus/storage_volume.go:2447
+#: cmd/incus/storage_volume.go:2453 cmd/incus/storage_volume.go:2454
 msgid "Delete storage volume snapshots"
 msgstr "ストレージボリュームのスナップショットを削除します"
-
-#: cmd/incus/storage_volume.go:684 cmd/incus/storage_volume.go:685
-msgid "Delete storage volumes"
-msgstr "ストレージボリュームを削除します"
 
 #: cmd/incus/warning.go:357 cmd/incus/warning.go:358
 msgid "Delete warning"
@@ -2213,31 +2218,41 @@ msgstr "警告を削除します"
 #: cmd/incus/storage_bucket.go:1412 cmd/incus/storage_volume.go:56
 #: cmd/incus/storage_volume.go:163 cmd/incus/storage_volume.go:254
 #: cmd/incus/storage_volume.go:361 cmd/incus/storage_volume.go:576
-#: cmd/incus/storage_volume.go:685 cmd/incus/storage_volume.go:758
-#: cmd/incus/storage_volume.go:856 cmd/incus/storage_volume.go:953
-#: cmd/incus/storage_volume.go:1174 cmd/incus/storage_volume.go:1310
-#: cmd/incus/storage_volume.go:1472 cmd/incus/storage_volume.go:1556
-#: cmd/incus/storage_volume.go:1771 cmd/incus/storage_volume.go:1864
-#: cmd/incus/storage_volume.go:1944 cmd/incus/storage_volume.go:2107
-#: cmd/incus/storage_volume.go:2206 cmd/incus/storage_volume.go:2265
-#: cmd/incus/storage_volume.go:2314 cmd/incus/storage_volume.go:2447
-#: cmd/incus/storage_volume.go:2536 cmd/incus/storage_volume.go:2542
-#: cmd/incus/storage_volume.go:2660 cmd/incus/storage_volume.go:2747
-#: cmd/incus/storage_volume.go:2827 cmd/incus/storage_volume.go:2923
-#: cmd/incus/storage_volume.go:3089 cmd/incus/top.go:33 cmd/incus/version.go:22
+#: cmd/incus/storage_volume.go:686 cmd/incus/storage_volume.go:759
+#: cmd/incus/storage_volume.go:857 cmd/incus/storage_volume.go:954
+#: cmd/incus/storage_volume.go:1178 cmd/incus/storage_volume.go:1314
+#: cmd/incus/storage_volume.go:1475 cmd/incus/storage_volume.go:1559
+#: cmd/incus/storage_volume.go:1774 cmd/incus/storage_volume.go:1867
+#: cmd/incus/storage_volume.go:1947 cmd/incus/storage_volume.go:2110
+#: cmd/incus/storage_volume.go:2214 cmd/incus/storage_volume.go:2272
+#: cmd/incus/storage_volume.go:2321 cmd/incus/storage_volume.go:2454
+#: cmd/incus/storage_volume.go:2543 cmd/incus/storage_volume.go:2549
+#: cmd/incus/storage_volume.go:2667 cmd/incus/storage_volume.go:2754
+#: cmd/incus/storage_volume.go:2834 cmd/incus/storage_volume.go:2921
+#: cmd/incus/storage_volume.go:3087 cmd/incus/top.go:33 cmd/incus/version.go:22
 #: cmd/incus/warning.go:29 cmd/incus/warning.go:72 cmd/incus/warning.go:263
 #: cmd/incus/warning.go:304 cmd/incus/warning.go:358
 msgid "Description"
 msgstr "説明"
 
-#: cmd/incus/storage_volume.go:1413
+#: cmd/incus/storage_volume.go:1416
 #, c-format
 msgid "Description: %s"
 msgstr "説明: %s"
 
-#: cmd/incus/storage_volume.go:366 cmd/incus/storage_volume.go:1776
+#: cmd/incus/storage_volume.go:366 cmd/incus/storage_volume.go:1779
 msgid "Destination cluster member name"
 msgstr "コピー先のクラスターメンバー名"
+
+#: cmd/incus/storage_volume.go:758 cmd/incus/storage_volume.go:759
+#, fuzzy
+msgid "Detach custom storage volumes from instances"
+msgstr "インスタンスからストレージボリュームを取り外します"
+
+#: cmd/incus/storage_volume.go:856 cmd/incus/storage_volume.go:857
+#, fuzzy
+msgid "Detach custom storage volumes from profiles"
+msgstr "プロファイルからストレージボリュームを取り外します"
 
 #: cmd/incus/network.go:505 cmd/incus/network.go:506
 msgid "Detach network interfaces from instances"
@@ -2246,14 +2261,6 @@ msgstr "インスタンスからネットワークインターフェースを取
 #: cmd/incus/network.go:602 cmd/incus/network.go:603
 msgid "Detach network interfaces from profiles"
 msgstr "プロファイルからネットワークインターフェースを取り外します"
-
-#: cmd/incus/storage_volume.go:757 cmd/incus/storage_volume.go:758
-msgid "Detach storage volumes from instances"
-msgstr "インスタンスからストレージボリュームを取り外します"
-
-#: cmd/incus/storage_volume.go:855 cmd/incus/storage_volume.go:856
-msgid "Detach storage volumes from profiles"
-msgstr "プロファイルからストレージボリュームを取り外します"
 
 #: cmd/incus/info.go:585 cmd/incus/info.go:597
 #, fuzzy, c-format
@@ -2549,9 +2556,18 @@ msgstr "ストレージバケットの設定をYAMLで編集します"
 msgid "Edit storage pool configurations as YAML"
 msgstr "ストレージプールの設定をYAMLで編集します"
 
-#: cmd/incus/storage_volume.go:952 cmd/incus/storage_volume.go:953
+#: cmd/incus/storage_volume.go:953
 msgid "Edit storage volume configurations as YAML"
 msgstr "ストレージボリュームの設定をYAMLで編集します"
+
+#: cmd/incus/storage_volume.go:954
+msgid ""
+"Edit storage volume configurations as YAML\n"
+"\n"
+"If the type is not specified, incus assumes the type is \"custom\".\n"
+"Supported values for type are \"custom\", \"container\" and \"virtual-"
+"machine\"."
+msgstr ""
 
 #: cmd/incus/config_trust.go:274 cmd/incus/config_trust.go:275
 msgid "Edit trust configurations as YAML"
@@ -2560,7 +2576,7 @@ msgstr "信頼済みクライアント設定をYAMLで編集します"
 #: cmd/incus/cluster.go:187 cmd/incus/config_trust.go:447
 #: cmd/incus/image.go:1139 cmd/incus/list.go:632 cmd/incus/network.go:1113
 #: cmd/incus/profile.go:763 cmd/incus/project.go:565 cmd/incus/storage.go:722
-#: cmd/incus/storage_volume.go:1697 cmd/incus/warning.go:236
+#: cmd/incus/storage_volume.go:1700 cmd/incus/warning.go:236
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
@@ -2641,8 +2657,8 @@ msgstr "エイリアスの取得に失敗しました: %w"
 #: cmd/incus/network_load_balancer.go:507 cmd/incus/network_peer.go:553
 #: cmd/incus/network_zone.go:475 cmd/incus/network_zone.go:1163
 #: cmd/incus/profile.go:1083 cmd/incus/project.go:851 cmd/incus/storage.go:896
-#: cmd/incus/storage_bucket.go:634 cmd/incus/storage_volume.go:2035
-#: cmd/incus/storage_volume.go:2078
+#: cmd/incus/storage_bucket.go:634 cmd/incus/storage_volume.go:2038
+#: cmd/incus/storage_volume.go:2081
 #, c-format
 msgid "Error setting properties: %v"
 msgstr "プロパティの設定でエラーが発生しました: %v"
@@ -2663,8 +2679,8 @@ msgstr "プロパティの削除でエラーが発生しました: %v"
 #: cmd/incus/network_peer.go:547 cmd/incus/network_zone.go:469
 #: cmd/incus/network_zone.go:1157 cmd/incus/profile.go:1077
 #: cmd/incus/project.go:845 cmd/incus/storage.go:890
-#: cmd/incus/storage_bucket.go:628 cmd/incus/storage_volume.go:2029
-#: cmd/incus/storage_volume.go:2072
+#: cmd/incus/storage_bucket.go:628 cmd/incus/storage_volume.go:2032
+#: cmd/incus/storage_volume.go:2075
 #, c-format
 msgid "Error unsetting property: %v"
 msgstr "プロパティの設定解除エラー: %v"
@@ -2785,8 +2801,8 @@ msgid "Expected a struct, got a %v"
 msgstr "構造体を期待しましたが、%v が返されました"
 
 #: cmd/incus/info.go:813 cmd/incus/info.go:864 cmd/incus/snapshot.go:366
-#: cmd/incus/storage_volume.go:1473 cmd/incus/storage_volume.go:1523
-#: cmd/incus/storage_volume.go:2640
+#: cmd/incus/storage_volume.go:1476 cmd/incus/storage_volume.go:1526
+#: cmd/incus/storage_volume.go:2647
 msgid "Expires at"
 msgstr "失効日時"
 
@@ -2813,7 +2829,7 @@ msgstr ""
 "\n"
 "出力先はオプショナルで、デフォルトは現在のディレクトリです。"
 
-#: cmd/incus/storage_volume.go:2922 cmd/incus/storage_volume.go:2923
+#: cmd/incus/storage_volume.go:2920 cmd/incus/storage_volume.go:2921
 msgid "Export custom storage volume"
 msgstr "カスタムストレージボリュームをエクスポートします"
 
@@ -2833,7 +2849,7 @@ msgstr "ストレージバケットをエクスポートします"
 msgid "Export storage buckets as tarball."
 msgstr "ストレージバケットを tarball 形式でエクスポートします。"
 
-#: cmd/incus/storage_volume.go:2926
+#: cmd/incus/storage_volume.go:2924
 msgid "Export the volume without its snapshots"
 msgstr ""
 "ボリュームをエクスポートします (スナップショットはエクスポートしません)"
@@ -2843,7 +2859,7 @@ msgstr ""
 msgid "Exporting backup of storage bucket: %s"
 msgstr "ストレージバケット %s のバックアップをエクスポートします"
 
-#: cmd/incus/export.go:151 cmd/incus/storage_volume.go:3055
+#: cmd/incus/export.go:151 cmd/incus/storage_volume.go:3053
 #, c-format
 msgid "Exporting the backup: %s"
 msgstr "バックアップのエクスポート中: %s"
@@ -3059,7 +3075,7 @@ msgstr "%q の作成に失敗しました: %w"
 msgid "Failed to create certificate: %w"
 msgstr "証明書の作成に失敗しました: %w"
 
-#: cmd/incus/storage_volume.go:2990
+#: cmd/incus/storage_volume.go:2988
 #, c-format
 msgid "Failed to create storage volume backup: %w"
 msgstr "ストレージボリュームのバックアップ作成に失敗しました: %w"
@@ -3074,7 +3090,7 @@ msgstr "移動元のインスタンスをコピーしたあとの削除に失敗
 msgid "Failed to fetch storage bucket backup: %w"
 msgstr "サーバー証明書ファイル %q のクローズに失敗しました: %w"
 
-#: cmd/incus/storage_volume.go:3069
+#: cmd/incus/storage_volume.go:3067
 #, c-format
 msgid "Failed to fetch storage volume backup file: %w"
 msgstr "ストレージボリュームのバックアップファイルの取得に失敗しました: %w"
@@ -3313,8 +3329,8 @@ msgstr ""
 #: cmd/incus/operation.go:109 cmd/incus/profile.go:726 cmd/incus/project.go:529
 #: cmd/incus/project.go:1052 cmd/incus/remote.go:716 cmd/incus/snapshot.go:291
 #: cmd/incus/storage.go:689 cmd/incus/storage_bucket.go:474
-#: cmd/incus/storage_bucket.go:806 cmd/incus/storage_volume.go:1572
-#: cmd/incus/storage_volume.go:2557 cmd/incus/warning.go:94
+#: cmd/incus/storage_bucket.go:806 cmd/incus/storage_volume.go:1575
+#: cmd/incus/storage_volume.go:2564 cmd/incus/warning.go:94
 msgid "Format (csv|json|table|yaml|compact)"
 msgstr "フォーマット (csv|json|table|yaml|compact)"
 
@@ -3449,7 +3465,7 @@ msgstr "ストレージバケットに対する鍵を作成します"
 msgid "Get the key as a storage property"
 msgstr "ストレージバケットに対する鍵を作成します"
 
-#: cmd/incus/storage_volume.go:1189
+#: cmd/incus/storage_volume.go:1193
 #, fuzzy
 msgid "Get the key as a storage volume property"
 msgstr "新しいストレージボリュームをプロファイルに追加します"
@@ -3520,9 +3536,24 @@ msgstr "ストレージバケットの設定値を取得します"
 msgid "Get values for storage pool configuration keys"
 msgstr "ストレージプールの設定値を取得します"
 
-#: cmd/incus/storage_volume.go:1173 cmd/incus/storage_volume.go:1174
+#: cmd/incus/storage_volume.go:1177
 msgid "Get values for storage volume configuration keys"
 msgstr "ストレージボリュームの設定値を取得します"
+
+#: cmd/incus/storage_volume.go:1178
+#, fuzzy
+msgid ""
+"Get values for storage volume configuration keys\n"
+"\n"
+"If the type is not specified, incus assumes the type is \"custom\".\n"
+"Supported values for type are \"custom\", \"container\" and \"virtual-"
+"machine\".\n"
+"\n"
+"For snapshots, add the snapshot name (only if type is one of custom, "
+"container or virtual-machine)."
+msgstr ""
+"lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
+"    pool.yaml の内容でストレージボリュームを更新します。"
 
 #: cmd/incus/storage_volume.go:440
 #, c-format
@@ -3632,7 +3663,7 @@ msgstr ""
 "存在するスナップショット名の場合は既存のスナップショットを削除したあとに新し"
 "いスナップショットを作成します"
 
-#: cmd/incus/snapshot.go:91 cmd/incus/storage_volume.go:2323
+#: cmd/incus/snapshot.go:91 cmd/incus/storage_volume.go:2330
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 "存在するスナップショット名の場合は既存のスナップショットを削除したあとに新し"
@@ -3649,7 +3680,7 @@ msgstr "初めてこのマシンで LXD を使う場合、lxd init と実行す�
 msgid "Ignore any configured auto-expiry for the instance"
 msgstr "設定されている自動でのインスタンスの有効期限設定を無視します"
 
-#: cmd/incus/storage_volume.go:2322
+#: cmd/incus/storage_volume.go:2329
 msgid "Ignore any configured auto-expiry for the storage volume"
 msgstr "設定されている自動でのストレージボリュームの有効期限設定を無視します"
 
@@ -3699,12 +3730,6 @@ msgstr "イメージの更新が成功しました!"
 msgid "Immediately attach to the console"
 msgstr "起動直後にインスタンスのコンソールに接続します"
 
-#: cmd/incus/storage_volume.go:3089
-msgid "Import backups of custom volumes including their snapshots."
-msgstr ""
-"カスタムボリュームのバックアップをスナップショットを含んだ状態でインポートし"
-"ます。"
-
 #: cmd/incus/import.go:27
 msgid "Import backups of instances including their snapshots."
 msgstr ""
@@ -3715,8 +3740,13 @@ msgstr ""
 msgid "Import backups of storage buckets."
 msgstr "新たにカスタムストレージボリュームをインポートします"
 
-#: cmd/incus/storage_volume.go:3088
+#: cmd/incus/storage_volume.go:3086
 msgid "Import custom storage volumes"
+msgstr "新たにカスタムストレージボリュームをインポートします"
+
+#: cmd/incus/storage_volume.go:3087
+#, fuzzy
+msgid "Import custom storage volumes."
 msgstr "新たにカスタムストレージボリュームをインポートします"
 
 #: cmd/incus/image.go:685
@@ -3835,7 +3865,7 @@ msgid "Invalid IP address or DNS name"
 msgstr "不正なスナップショット名"
 
 #: cmd/incus/export.go:113 cmd/incus/storage_bucket.go:1347
-#: cmd/incus/storage_volume.go:3023
+#: cmd/incus/storage_volume.go:3021
 #, fuzzy, c-format
 msgid "Invalid URL %q: %w"
 msgstr "不正なフォーマット %q"
@@ -3856,7 +3886,7 @@ msgid "Invalid arguments"
 msgstr "不正な引数 %q"
 
 #: cmd/incus/export.go:118 cmd/incus/storage_bucket.go:1352
-#: cmd/incus/storage_volume.go:3028
+#: cmd/incus/storage_volume.go:3026
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
 msgstr "パス %q に不正なバックアップ名のセグメントがあります: %w"
@@ -3963,9 +3993,9 @@ msgstr "不正な送り先 %s"
 msgid "Invalid protocol: %s"
 msgstr "不正なプロトコル: %s"
 
-#: cmd/incus/storage_volume.go:1021 cmd/incus/storage_volume.go:1238
-#: cmd/incus/storage_volume.go:1367 cmd/incus/storage_volume.go:2012
-#: cmd/incus/storage_volume.go:2883
+#: cmd/incus/storage_volume.go:1025 cmd/incus/storage_volume.go:1242
+#: cmd/incus/storage_volume.go:1370 cmd/incus/storage_volume.go:2015
+#: cmd/incus/storage_volume.go:2881
 msgid "Invalid snapshot name"
 msgstr "不正なスナップショット名"
 
@@ -4026,7 +4056,7 @@ msgstr "LISTEN ADDRESS"
 #: cmd/incus/list.go:616 cmd/incus/network.go:1303
 #: cmd/incus/network_forward.go:158 cmd/incus/network_load_balancer.go:161
 #: cmd/incus/operation.go:178 cmd/incus/storage_bucket.go:544
-#: cmd/incus/storage_volume.go:1676 cmd/incus/warning.go:221
+#: cmd/incus/storage_volume.go:1679 cmd/incus/warning.go:221
 msgid "LOCATION"
 msgstr "LOCATION"
 
@@ -4636,12 +4666,12 @@ msgstr "ストレージバケットの鍵を一覧表示します"
 msgid "List storage buckets"
 msgstr "ストレージバケットを一覧表示します"
 
-#: cmd/incus/storage_volume.go:2535 cmd/incus/storage_volume.go:2536
+#: cmd/incus/storage_volume.go:2542 cmd/incus/storage_volume.go:2543
 #, fuzzy
 msgid "List storage volume snapshots"
 msgstr "スナップショットからストレージボリュームをリストアします"
 
-#: cmd/incus/storage_volume.go:2542
+#: cmd/incus/storage_volume.go:2549
 #, fuzzy
 msgid ""
 "List storage volume snapshots\n"
@@ -4674,11 +4704,11 @@ msgstr ""
 "    u - （使用中の）リファレンス数\n"
 "    U - 現在のディスク使用量"
 
-#: cmd/incus/storage_volume.go:1551
+#: cmd/incus/storage_volume.go:1554
 msgid "List storage volumes"
 msgstr "ストレージボリュームを一覧表示します"
 
-#: cmd/incus/storage_volume.go:1556
+#: cmd/incus/storage_volume.go:1559
 msgid ""
 "List storage volumes\n"
 "\n"
@@ -4815,7 +4845,7 @@ msgstr "バックグラウンド操作の一覧表示、表示、削除を行い
 msgid "Load:"
 msgstr ""
 
-#: cmd/incus/info.go:649 cmd/incus/storage_volume.go:1429
+#: cmd/incus/info.go:649 cmd/incus/storage_volume.go:1432
 #, c-format
 msgid "Location: %s"
 msgstr "ロケーション: %s"
@@ -5098,7 +5128,7 @@ msgstr "ストレージバケットを管理します。"
 msgid "Manage storage pools and volumes"
 msgstr "ストレージプール、ストレージボリュームを管理します"
 
-#: cmd/incus/storage_volume.go:2264 cmd/incus/storage_volume.go:2265
+#: cmd/incus/storage_volume.go:2271 cmd/incus/storage_volume.go:2272
 #, fuzzy
 msgid "Manage storage volume snapshots"
 msgstr "ストレージボリュームを管理します"
@@ -5341,15 +5371,15 @@ msgstr "ピア名を指定する必要があります"
 #: cmd/incus/storage_bucket.go:917 cmd/incus/storage_bucket.go:1014
 #: cmd/incus/storage_bucket.go:1093 cmd/incus/storage_bucket.go:1216
 #: cmd/incus/storage_bucket.go:1291 cmd/incus/storage_volume.go:203
-#: cmd/incus/storage_volume.go:294 cmd/incus/storage_volume.go:614
-#: cmd/incus/storage_volume.go:721 cmd/incus/storage_volume.go:798
-#: cmd/incus/storage_volume.go:896 cmd/incus/storage_volume.go:1010
-#: cmd/incus/storage_volume.go:1227 cmd/incus/storage_volume.go:1603
-#: cmd/incus/storage_volume.go:1901 cmd/incus/storage_volume.go:1995
-#: cmd/incus/storage_volume.go:2155 cmd/incus/storage_volume.go:2372
-#: cmd/incus/storage_volume.go:2487 cmd/incus/storage_volume.go:2592
-#: cmd/incus/storage_volume.go:2702 cmd/incus/storage_volume.go:2787
-#: cmd/incus/storage_volume.go:2873
+#: cmd/incus/storage_volume.go:294 cmd/incus/storage_volume.go:615
+#: cmd/incus/storage_volume.go:722 cmd/incus/storage_volume.go:799
+#: cmd/incus/storage_volume.go:897 cmd/incus/storage_volume.go:1014
+#: cmd/incus/storage_volume.go:1231 cmd/incus/storage_volume.go:1606
+#: cmd/incus/storage_volume.go:1904 cmd/incus/storage_volume.go:1998
+#: cmd/incus/storage_volume.go:2160 cmd/incus/storage_volume.go:2379
+#: cmd/incus/storage_volume.go:2494 cmd/incus/storage_volume.go:2599
+#: cmd/incus/storage_volume.go:2709 cmd/incus/storage_volume.go:2794
+#: cmd/incus/storage_volume.go:2871
 msgid "Missing pool name"
 msgstr "ストレージプール名を指定する必要があります"
 
@@ -5374,11 +5404,11 @@ msgstr "プロファイル名を指定する必要があります"
 msgid "Missing source profile name"
 msgstr "コピー元のプロファイル名を指定する必要があります"
 
-#: cmd/incus/storage_volume.go:403 cmd/incus/storage_volume.go:1811
+#: cmd/incus/storage_volume.go:403 cmd/incus/storage_volume.go:1814
 msgid "Missing source volume name"
 msgstr "コピー元のボリューム名を指定する必要があります"
 
-#: cmd/incus/storage_volume.go:1356
+#: cmd/incus/storage_volume.go:1359
 msgid "Missing storage pool name"
 msgstr "ストレージプール名を指定する必要があります"
 
@@ -5422,7 +5452,7 @@ msgstr ""
 "デフォルトではすべてのタイプのメッセージをモニタリングします。"
 
 #: cmd/incus/network.go:562 cmd/incus/network.go:659
-#: cmd/incus/storage_volume.go:818 cmd/incus/storage_volume.go:915
+#: cmd/incus/storage_volume.go:819 cmd/incus/storage_volume.go:916
 msgid "More than one device matches, specify the device name"
 msgstr "複数のデバイスとマッチします。デバイス名を指定してください"
 
@@ -5435,6 +5465,11 @@ msgstr ""
 #: cmd/incus/file.go:1152 cmd/incus/file.go:1153
 msgid "Mount files from instances"
 msgstr "インスタンスからファイルをマウントします"
+
+#: cmd/incus/storage_volume.go:1773 cmd/incus/storage_volume.go:1774
+#, fuzzy
+msgid "Move custom storage volumes between pools"
+msgstr "プール間でストレージボリュームを移動します"
 
 #: cmd/incus/move.go:34
 #, fuzzy
@@ -5469,15 +5504,11 @@ msgstr ""
 "\n"
 "すべての LXD バージョンとの互換性のため、pull 転送モードがデフォルトです。\n"
 
-#: cmd/incus/storage_volume.go:1770 cmd/incus/storage_volume.go:1771
-msgid "Move storage volumes between pools"
-msgstr "プール間でストレージボリュームを移動します"
-
 #: cmd/incus/move.go:60
 msgid "Move the instance without its snapshots"
 msgstr "インスタンスを移動します。スナップショットは移動しません"
 
-#: cmd/incus/storage_volume.go:1777
+#: cmd/incus/storage_volume.go:1780
 msgid "Move to a project different from the source"
 msgstr "コピー／移動元とは異なるプロジェクトに移動します"
 
@@ -5512,7 +5543,7 @@ msgstr "インスタンス名を指定する必要があります: "
 #: cmd/incus/network_zone.go:159 cmd/incus/network_zone.go:843
 #: cmd/incus/profile.go:745 cmd/incus/project.go:548 cmd/incus/remote.go:773
 #: cmd/incus/storage.go:708 cmd/incus/storage_bucket.go:539
-#: cmd/incus/storage_bucket.go:863 cmd/incus/storage_volume.go:1668
+#: cmd/incus/storage_bucket.go:863 cmd/incus/storage_volume.go:1671
 msgid "NAME"
 msgstr "NAME"
 
@@ -5568,8 +5599,8 @@ msgid "NVRM Version: %v"
 msgstr "NVRM バージョン: %v"
 
 #: cmd/incus/info.go:811 cmd/incus/info.go:862 cmd/incus/snapshot.go:364
-#: cmd/incus/storage_volume.go:1471 cmd/incus/storage_volume.go:1521
-#: cmd/incus/storage_volume.go:2638
+#: cmd/incus/storage_volume.go:1474 cmd/incus/storage_volume.go:1524
+#: cmd/incus/storage_volume.go:2645
 msgid "Name"
 msgstr "名前"
 
@@ -5634,7 +5665,7 @@ msgid "Name of the storage pool:"
 msgstr "ストレージプールを作成します"
 
 #: cmd/incus/info.go:632 cmd/incus/network.go:969
-#: cmd/incus/storage_volume.go:1411
+#: cmd/incus/storage_volume.go:1414
 #, c-format
 msgid "Name: %s"
 msgstr "名前: %s"
@@ -5801,7 +5832,7 @@ msgstr ""
 msgid "No device found for this network"
 msgstr "このネットワークに対するデバイスがありません"
 
-#: cmd/incus/storage_volume.go:827 cmd/incus/storage_volume.go:924
+#: cmd/incus/storage_volume.go:828 cmd/incus/storage_volume.go:925
 msgid "No device found for this storage volume"
 msgstr "このストレージボリュームに対するデバイスがありません"
 
@@ -5821,11 +5852,11 @@ msgstr "マッチするルールが見つかりません"
 msgid "No storage backends available"
 msgstr "利用可能なストレージバックエンドがありません"
 
-#: cmd/incus/storage_volume.go:417 cmd/incus/storage_volume.go:1820
+#: cmd/incus/storage_volume.go:417 cmd/incus/storage_volume.go:1823
 msgid "No storage pool for source volume specified"
 msgstr "コピー元のボリュームに対するストレージプールが指定されていません"
 
-#: cmd/incus/storage_volume.go:467 cmd/incus/storage_volume.go:1831
+#: cmd/incus/storage_volume.go:467 cmd/incus/storage_volume.go:1834
 msgid "No storage pool for target volume specified"
 msgstr "コピー先のボリュームに対するストレージプールが指定されていません"
 
@@ -5869,11 +5900,11 @@ msgstr "OVN:"
 msgid "Only \"custom\" volumes can be attached to instances"
 msgstr "\"カスタム\" のボリュームのみがインスタンスにアタッチできます"
 
-#: cmd/incus/storage_volume.go:2977
+#: cmd/incus/storage_volume.go:2975
 msgid "Only \"custom\" volumes can be exported"
 msgstr "\"カスタム\" のボリュームのみがエクスポートできます"
 
-#: cmd/incus/storage_volume.go:2385
+#: cmd/incus/storage_volume.go:2392
 msgid "Only \"custom\" volumes can be snapshotted"
 msgstr "\"カスタム\" のボリュームのみがスナップショットを取得できます"
 
@@ -5885,7 +5916,7 @@ msgstr "simplestreams は https の URL のみサポートします"
 msgid "Only https:// is supported for remote image import"
 msgstr "リモートイメージのインポートは https:// のみをサポートします"
 
-#: cmd/incus/storage_volume.go:1374
+#: cmd/incus/storage_volume.go:1377
 msgid "Only instance or custom volumes are supported"
 msgstr "インスタンスもしくはカスタムボリュームのみをサポートしています"
 
@@ -5905,7 +5936,7 @@ msgstr ""
 msgid "Operation %s deleted"
 msgstr "バックグラウンド操作 %s を削除しました"
 
-#: cmd/incus/info.go:866 cmd/incus/storage_volume.go:1525
+#: cmd/incus/info.go:866 cmd/incus/storage_volume.go:1528
 msgid "Optimized Storage"
 msgstr "最適化されたストレージ"
 
@@ -5960,7 +5991,7 @@ msgstr "PROFILES"
 #: cmd/incus/image.go:1122 cmd/incus/list.go:576 cmd/incus/network.go:1092
 #: cmd/incus/network_acl.go:174 cmd/incus/network_zone.go:165
 #: cmd/incus/profile.go:746 cmd/incus/storage_bucket.go:548
-#: cmd/incus/storage_volume.go:1687 cmd/incus/top.go:341
+#: cmd/incus/storage_volume.go:1690 cmd/incus/top.go:341
 #: cmd/incus/warning.go:213
 msgid "PROJECT"
 msgstr "PROJECT"
@@ -6086,7 +6117,7 @@ msgstr "終了するには ctrl+c を押してください"
 #: cmd/incus/network_zone.go:638 cmd/incus/network_zone.go:1333
 #: cmd/incus/profile.go:601 cmd/incus/project.go:400 cmd/incus/storage.go:369
 #: cmd/incus/storage_bucket.go:362 cmd/incus/storage_bucket.go:1158
-#: cmd/incus/storage_volume.go:1108 cmd/incus/storage_volume.go:1140
+#: cmd/incus/storage_volume.go:1112 cmd/incus/storage_volume.go:1144
 msgid "Press enter to open the editor again or ctrl+c to abort change"
 msgstr ""
 "再度エディタを開くためには Enter キーを、変更を取り消すには ctrl+c を入力しま"
@@ -6224,131 +6255,6 @@ msgstr "プロパティが見つかりません"
 #, fuzzy, c-format
 msgid "Protocol: %s"
 msgstr "不正なプロトコル: %s"
-
-#: cmd/incus/storage_volume.go:2829
-#, fuzzy
-msgid ""
-"Provide the type of the storage volume if it is not custom.\n"
-"\tSupported types are custom, image, container and virtual-machine.\n"
-"\n"
-"\tAdd the name of the snapshot if type is one of custom, container or "
-"virtual-machine.\n"
-"\n"
-"\tincus storage volume show default virtual-machine/data/snap0\n"
-"\t\tWill show the properties of snapshot \"snap0\" for a virtual machine "
-"called \"data\" in the \"default\" pool."
-msgstr ""
-"lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
-"    pool.yaml の内容でストレージボリュームを更新します。"
-
-#: cmd/incus/storage_volume.go:1312
-#, fuzzy
-msgid ""
-"Provide the type of the storage volume if it is not custom.\n"
-"Supported types are custom, container and virtual-machine.\n"
-"\n"
-"incus storage volume info default data\n"
-"    Returns state information for a custom volume \"data\" in pool "
-"\"default\".\n"
-"\n"
-"incus storage volume info default virtual-machine/data\n"
-"    Returns state information for a virtual machine \"data\" in pool "
-"\"default\"."
-msgstr ""
-"lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
-"    pool.yaml の内容でストレージボリュームを更新します。"
-
-#: cmd/incus/storage_volume.go:1176
-msgid ""
-"Provide the type of the storage volume if it is not custom.\n"
-"Supported types are custom, image, container and virtual-machine.\n"
-"\n"
-"Add the name of the snapshot if type is one of custom, container or virtual-"
-"machine.\n"
-"\n"
-"incus storage volume get default data size\n"
-"    Returns the size of a custom volume \"data\" in pool \"default\".\n"
-"\n"
-"incus storage volume get default virtual-machine/data snapshots.expiry\n"
-"    Returns the snapshot expiration period for a virtual machine \"data\" in "
-"pool \"default\"."
-msgstr ""
-"カスタムでない場合、ストレージボリュームのタイプを指定します。\n"
-"サポートしているタイプは、custom, image, container, virtual-machine です。\n"
-"\n"
-"タイプが custom, container, virtual-machine のいずれかの場合、スナップショッ"
-"トの名前を追加します。\n"
-"\n"
-"incus storage volume get default data size\n"
-"    プール \"default\" 内のカスタムボリューム \"data\" のサイズを返します。\n"
-"\n"
-"incus storage volume get default virtual-machine/data snapshots.expiry\n"
-"    プール \"default\" 内の仮想マシン \"data\" のスナップショットの有効期限を"
-"返します。"
-
-#: cmd/incus/storage_volume.go:2109
-#, fuzzy
-msgid ""
-"Provide the type of the storage volume if it is not custom.\n"
-"Supported types are custom, image, container and virtual-machine.\n"
-"\n"
-"Add the name of the snapshot if type is one of custom, container or virtual-"
-"machine.\n"
-"\n"
-"incus storage volume show default data\n"
-"    Will show the properties of a custom volume called \"data\" in the "
-"\"default\" pool.\n"
-"\n"
-"incus storage volume show default container/data\n"
-"    Will show the properties of the filesystem for a container called "
-"\"data\" in the \"default\" pool."
-msgstr ""
-"lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
-"    pool.yaml の内容でストレージボリュームを更新します。"
-
-#: cmd/incus/storage_volume.go:955
-#, fuzzy
-msgid ""
-"Provide the type of the storage volume if it is not custom.\n"
-"Supported types are custom, image, container and virtual-machine.\n"
-"\n"
-"incus storage volume edit [<remote>:]<pool> [<type>/]<volume> < volume.yaml\n"
-"    Update a storage volume using the content of pool.yaml."
-msgstr ""
-"lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
-"    pool.yaml の内容でストレージボリュームを更新します。"
-
-#: cmd/incus/storage_volume.go:1949
-#, fuzzy
-msgid ""
-"Provide the type of the storage volume if it is not custom.\n"
-"Supported types are custom, image, container and virtual-machine.\n"
-"\n"
-"incus storage volume set default data size=1GiB\n"
-"    Sets the size of a custom volume \"data\" in pool \"default\" to 1 GiB.\n"
-"\n"
-"incus storage volume set default virtual-machine/data snapshots.expiry=7d\n"
-"    Sets the snapshot expiration period for a virtual machine \"data\" in "
-"pool \"default\" to seven days."
-msgstr ""
-"lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
-"    pool.yaml の内容でストレージボリュームを更新します。"
-
-#: cmd/incus/storage_volume.go:2208
-#, fuzzy
-msgid ""
-"Provide the type of the storage volume if it is not custom.\n"
-"Supported types are custom, image, container and virtual-machine.\n"
-"\n"
-"incus storage volume unset default data size\n"
-"    Remotes the size/quota of a custom volume \"data\" in pool \"default\".\n"
-"\n"
-"incus storage volume unset default virtual-machine/data snapshots.expiry\n"
-"    Removes the snapshot expiration period for a virtual machine \"data\" in "
-"pool \"default\"."
-msgstr ""
-"lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
-"    pool.yaml の内容でストレージボリュームを更新します。"
 
 #: cmd/incus/config_trust.go:224
 #, fuzzy, c-format
@@ -6625,6 +6531,11 @@ msgstr "クラスターメンバの名前を変更します"
 msgid "Rename aliases"
 msgstr "エイリアスの名前を変更します"
 
+#: cmd/incus/storage_volume.go:1866 cmd/incus/storage_volume.go:1867
+#, fuzzy
+msgid "Rename custom storage volumes"
+msgstr "ストレージボリューム名を変更します"
+
 #: cmd/incus/snapshot.go:384 cmd/incus/snapshot.go:385
 #, fuzzy
 msgid "Rename instance snapshots"
@@ -6660,21 +6571,17 @@ msgstr "プロジェクト名を変更します"
 msgid "Rename remotes"
 msgstr "リモートサーバ名を変更します"
 
-#: cmd/incus/storage_volume.go:2659 cmd/incus/storage_volume.go:2660
+#: cmd/incus/storage_volume.go:2666 cmd/incus/storage_volume.go:2667
 #, fuzzy
 msgid "Rename storage volume snapshots"
 msgstr "スナップショットからストレージボリュームをリストアします"
 
-#: cmd/incus/storage_volume.go:1863 cmd/incus/storage_volume.go:1864
-msgid "Rename storage volumes"
-msgstr "ストレージボリューム名を変更します"
-
-#: cmd/incus/storage_volume.go:1925
+#: cmd/incus/storage_volume.go:1928
 #, c-format
 msgid "Renamed storage volume from \"%s\" to \"%s\""
 msgstr "ストレージボリューム名 \"%s\" を \"%s\" に変更しました"
 
-#: cmd/incus/storage_volume.go:2731
+#: cmd/incus/storage_volume.go:2738
 #, fuzzy, c-format
 msgid "Renamed storage volume snapshot from \"%s\" to \"%s\""
 msgstr "ストレージボリューム名 \"%s\" を \"%s\" に変更しました"
@@ -6720,7 +6627,7 @@ msgstr ""
 msgid "Restore instance snapshots"
 msgstr "スナップショットからインスタンスをリストアします"
 
-#: cmd/incus/storage_volume.go:2746 cmd/incus/storage_volume.go:2747
+#: cmd/incus/storage_volume.go:2753 cmd/incus/storage_volume.go:2754
 msgid "Restore storage volume snapshots"
 msgstr "スナップショットからストレージボリュームをリストアします"
 
@@ -7193,11 +7100,11 @@ msgstr ""
 "後方互換性のため、単一の設定を行うには次の形式でも設定できます:\n"
 "    lxc storage set [<remote>:]<pool> <key> <value>"
 
-#: cmd/incus/storage_volume.go:1943
+#: cmd/incus/storage_volume.go:1946
 msgid "Set storage volume configuration keys"
 msgstr "ストレージボリュームの設定項目を設定します"
 
-#: cmd/incus/storage_volume.go:1944
+#: cmd/incus/storage_volume.go:1947
 #, fuzzy
 msgid ""
 "Set storage volume configuration keys\n"
@@ -7205,7 +7112,11 @@ msgid ""
 "For backward compatibility, a single configuration key may still be set "
 "with:\n"
 "    incus storage volume set [<remote>:]<pool> [<type>/]<volume> <key> "
-"<value>"
+"<value>\n"
+"\n"
+"If the type is not specified, Incus assumes the type is \"custom\".\n"
+"Supported values for type are \"custom\", \"container\" and \"virtual-"
+"machine\"."
 msgstr ""
 "ストレージボリュームを設定します\n"
 "\n"
@@ -7304,7 +7215,7 @@ msgstr "ストレージバケットに対する鍵を作成します"
 msgid "Set the key as a storage property"
 msgstr "ストレージバケットに対する鍵を作成します"
 
-#: cmd/incus/storage_volume.go:1960
+#: cmd/incus/storage_volume.go:1963
 #, fuzzy
 msgid "Set the key as a storage volume property"
 msgstr "新しいストレージボリュームをプロファイルに追加します"
@@ -7449,14 +7360,47 @@ msgstr "ストレージバケットの鍵の設定を表示する"
 msgid "Show storage pool configurations and resources"
 msgstr "ストレージプールの設定とリソースを表示します"
 
-#: cmd/incus/storage_volume.go:2106 cmd/incus/storage_volume.go:2107
-#: cmd/incus/storage_volume.go:2826 cmd/incus/storage_volume.go:2827
+#: cmd/incus/storage_volume.go:2109
 msgid "Show storage volume configurations"
 msgstr "ストレージボリュームの設定を表示する"
 
-#: cmd/incus/storage_volume.go:1309 cmd/incus/storage_volume.go:1310
+#: cmd/incus/storage_volume.go:2110
+#, fuzzy
+msgid ""
+"Show storage volume configurations\n"
+"\n"
+"If the type is not specified, Incus assumes the type is \"custom\".\n"
+"Supported values for type are \"custom\", \"container\" and \"virtual-"
+"machine\".\n"
+"\n"
+"For snapshots, add the snapshot name (only if type is one of custom, "
+"container or virtual-machine)."
+msgstr ""
+"lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
+"    pool.yaml の内容でストレージボリュームを更新します。"
+
+#: cmd/incus/storage_volume.go:2834
+#, fuzzy
+msgid "Show storage volume snapshhot configurations"
+msgstr "ストレージボリュームの設定を表示する"
+
+#: cmd/incus/storage_volume.go:2833
+#, fuzzy
+msgid "Show storage volume snapshot configurations"
+msgstr "ストレージボリュームの設定を表示する"
+
+#: cmd/incus/storage_volume.go:1313
 msgid "Show storage volume state information"
 msgstr "ストレージボリュームの状態を表示します"
+
+#: cmd/incus/storage_volume.go:1314
+msgid ""
+"Show storage volume state information\n"
+"\n"
+"If the type is not specified, Incus assumes the type is \"custom\".\n"
+"Supported values for type are \"custom\", \"container\" and \"virtual-"
+"machine\"."
+msgstr ""
 
 #: cmd/incus/remote.go:675 cmd/incus/remote.go:676
 msgid "Show the default remote"
@@ -7522,15 +7466,15 @@ msgstr "サイズ: %.2fMB"
 msgid "Size: %s"
 msgstr "サイズ: %s"
 
-#: cmd/incus/storage_volume.go:2313 cmd/incus/storage_volume.go:2314
+#: cmd/incus/storage_volume.go:2320 cmd/incus/storage_volume.go:2321
 msgid "Snapshot storage volumes"
 msgstr "ストレージボリュームのスナップショットを取得します"
 
-#: cmd/incus/storage_volume.go:2047
+#: cmd/incus/storage_volume.go:2050
 msgid "Snapshots are read-only and can't have their configuration changed"
 msgstr "スナップショットは読み取り専用です。設定を変更することはできません"
 
-#: cmd/incus/info.go:780 cmd/incus/storage_volume.go:1450
+#: cmd/incus/info.go:780 cmd/incus/storage_volume.go:1453
 msgid "Snapshots:"
 msgstr "スナップショット:"
 
@@ -7676,12 +7620,12 @@ msgstr "ストレージプール名"
 msgid "Storage pool to use or create"
 msgstr "ストレージプール %s を作成しました"
 
-#: cmd/incus/storage_volume.go:667
+#: cmd/incus/storage_volume.go:668
 #, c-format
 msgid "Storage volume %s created"
 msgstr "ストレージボリューム %s を作成しました"
 
-#: cmd/incus/storage_volume.go:741
+#: cmd/incus/storage_volume.go:742
 #, c-format
 msgid "Storage volume %s deleted"
 msgstr "ストレージボリューム %s を削除しました"
@@ -7694,7 +7638,7 @@ msgstr "ストレージボリュームのコピーが成功しました!"
 msgid "Storage volume moved successfully!"
 msgstr "ストレージボリュームの移動が成功しました!"
 
-#: cmd/incus/storage_volume.go:2512
+#: cmd/incus/storage_volume.go:2519
 #, fuzzy, c-format
 msgid "Storage volume snapshot %s deleted from %s"
 msgstr "ストレージボリューム %s を削除しました"
@@ -7754,13 +7698,13 @@ msgstr "TOKEN"
 #: cmd/incus/image_alias.go:236 cmd/incus/list.go:588 cmd/incus/network.go:1094
 #: cmd/incus/network.go:1299 cmd/incus/network_allocations.go:26
 #: cmd/incus/network_integration.go:459 cmd/incus/network_peer.go:157
-#: cmd/incus/operation.go:172 cmd/incus/storage_volume.go:1667
+#: cmd/incus/operation.go:172 cmd/incus/storage_volume.go:1670
 #: cmd/incus/warning.go:216
 msgid "TYPE"
 msgstr "TYPE"
 
 #: cmd/incus/info.go:812 cmd/incus/info.go:863 cmd/incus/snapshot.go:365
-#: cmd/incus/storage_volume.go:1522 cmd/incus/storage_volume.go:2639
+#: cmd/incus/storage_volume.go:1525 cmd/incus/storage_volume.go:2646
 msgid "Taken at"
 msgstr "取得日時"
 
@@ -7990,12 +7934,12 @@ msgstr "設定 %q はクラスタメンバー %q には存在しません"
 msgid "The property %q does not exist on the storage pool %q: %v"
 msgstr "設定 %q はクラスタメンバー %q には存在しません"
 
-#: cmd/incus/storage_volume.go:1285
+#: cmd/incus/storage_volume.go:1289
 #, fuzzy, c-format
 msgid "The property %q does not exist on the storage pool volume %q: %v"
 msgstr "設定 %q はクラスタメンバー %q には存在しません"
 
-#: cmd/incus/storage_volume.go:1257
+#: cmd/incus/storage_volume.go:1261
 #, c-format
 msgid ""
 "The property %q does not exist on the storage pool volume snapshot %s/%s: %v"
@@ -8053,7 +7997,7 @@ msgid "The server doesn't implement the newer v2 resources API"
 msgstr "サーバには新しい v2 resource API が実装されていません"
 
 #: cmd/incus/network.go:576 cmd/incus/network.go:673
-#: cmd/incus/storage_volume.go:832 cmd/incus/storage_volume.go:929
+#: cmd/incus/storage_volume.go:833 cmd/incus/storage_volume.go:930
 msgid "The specified device doesn't exist"
 msgstr "指定したデバイスが存在しません"
 
@@ -8156,7 +8100,7 @@ msgstr ""
 msgid "Too many links"
 msgstr "リンクが多すぎます"
 
-#: cmd/incus/storage_volume.go:1435
+#: cmd/incus/storage_volume.go:1438
 #, c-format
 msgid "Total: %s"
 msgstr "合計: %s"
@@ -8172,7 +8116,7 @@ msgstr "合計: %v"
 msgid "Transceiver type: %s"
 msgstr "トランシーバータイプ: %s"
 
-#: cmd/incus/storage_volume.go:1774
+#: cmd/incus/storage_volume.go:1777
 msgid "Transfer mode, one of pull (default), push or relay"
 msgstr "転送モード。pull, push, relay のいずれか(デフォルトはpull)"
 
@@ -8238,7 +8182,7 @@ msgstr ""
 
 #: cmd/incus/image.go:1000 cmd/incus/info.go:299 cmd/incus/info.go:432
 #: cmd/incus/info.go:443 cmd/incus/info.go:643 cmd/incus/network.go:973
-#: cmd/incus/storage_volume.go:1420
+#: cmd/incus/storage_volume.go:1423
 #, c-format
 msgid "Type: %s"
 msgstr "タイプ: %s"
@@ -8260,7 +8204,7 @@ msgstr "UPLOAD DATE"
 msgid "URL"
 msgstr "URL"
 
-#: cmd/incus/project.go:1135 cmd/incus/storage_volume.go:1672
+#: cmd/incus/project.go:1135 cmd/incus/storage_volume.go:1675
 msgid "USAGE"
 msgstr "USAGE"
 
@@ -8278,7 +8222,7 @@ msgstr "上位デバイス"
 #: cmd/incus/network_allocations.go:24 cmd/incus/network_integration.go:460
 #: cmd/incus/network_zone.go:161 cmd/incus/profile.go:748
 #: cmd/incus/project.go:556 cmd/incus/storage.go:712
-#: cmd/incus/storage_volume.go:1671
+#: cmd/incus/storage_volume.go:1674
 msgid "USED BY"
 msgstr "USED BY"
 
@@ -8318,7 +8262,7 @@ msgstr "クライアント %q の未知のチャンネルタイプ: %s"
 #: cmd/incus/cluster.go:193 cmd/incus/config_trust.go:455
 #: cmd/incus/image.go:1147 cmd/incus/list.go:647 cmd/incus/network.go:1119
 #: cmd/incus/profile.go:769 cmd/incus/project.go:571 cmd/incus/storage.go:728
-#: cmd/incus/storage_volume.go:1705 cmd/incus/warning.go:244
+#: cmd/incus/storage_volume.go:1708 cmd/incus/warning.go:244
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr "未知のカラム名の短縮形です '%c' ('%s' 中)"
@@ -8424,9 +8368,18 @@ msgstr "ストレージバケットの設定を削除します"
 msgid "Unset storage pool configuration keys"
 msgstr "ストレージプールの設定を削除します"
 
-#: cmd/incus/storage_volume.go:2205 cmd/incus/storage_volume.go:2206
+#: cmd/incus/storage_volume.go:2213
 msgid "Unset storage volume configuration keys"
 msgstr "ストレージボリュームの設定を削除します"
+
+#: cmd/incus/storage_volume.go:2214
+msgid ""
+"Unset storage volume configuration keys\n"
+"\n"
+"If the type is not specified, Incus assumes the type is \"custom\".\n"
+"Supported values for type are \"custom\", \"container\" and \"virtual-"
+"machine\"."
+msgstr ""
 
 #: cmd/incus/cluster.go:589
 msgid "Unset the key as a cluster property"
@@ -8489,7 +8442,7 @@ msgstr "ストレージバケットに対する鍵を作成します"
 msgid "Unset the key as a storage property"
 msgstr "ストレージバケットに対する鍵を作成します"
 
-#: cmd/incus/storage_volume.go:2219
+#: cmd/incus/storage_volume.go:2226
 #, fuzzy
 msgid "Unset the key as a storage volume property"
 msgstr "新しいストレージボリュームをプロファイルに追加します"
@@ -8537,12 +8490,12 @@ msgstr "アップロード日時: %s"
 msgid "Upper devices"
 msgstr "上位デバイス"
 
-#: cmd/incus/storage_volume.go:1433
+#: cmd/incus/storage_volume.go:1436
 #, c-format
 msgid "Usage: %s"
 msgstr "使い方: %s"
 
-#: cmd/incus/export.go:42 cmd/incus/storage_volume.go:2928
+#: cmd/incus/export.go:42 cmd/incus/storage_volume.go:2926
 msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool)"
 msgstr ""
@@ -8633,7 +8586,7 @@ msgstr "CUDA バージョン: %v"
 msgid "Version: %v"
 msgstr "CUDA バージョン: %v"
 
-#: cmd/incus/storage_volume.go:1524
+#: cmd/incus/storage_volume.go:1527
 msgid "Volume Only"
 msgstr "Volume Only"
 
@@ -8830,7 +8783,7 @@ msgid "You need to specify an image name or use --empty"
 msgstr ""
 "--target オプションを使うときはコピー先のインスタンス名を指定してください"
 
-#: cmd/incus/storage_volume.go:854
+#: cmd/incus/storage_volume.go:855
 msgid "[<remote:>]<pool> <volume> <profile> [<device name>]"
 msgstr "[<remote:>]<pool> <volume> <profile> [<device name>]"
 
@@ -9277,7 +9230,7 @@ msgstr "[<remote>:]<pool>"
 msgid "[<remote>:]<pool> <backup file> [<bucket>]"
 msgstr "[<remote>:]<pool> <backup file> [<volume name>]"
 
-#: cmd/incus/storage_volume.go:3087
+#: cmd/incus/storage_volume.go:3085
 msgid "[<remote>:]<pool> <backup file> [<volume name>]"
 msgstr "[<remote>:]<pool> <backup file> [<volume name>]"
 
@@ -9317,17 +9270,17 @@ msgstr "[<remote>:]<pool> <key>"
 msgid "[<remote>:]<pool> <key> <value>"
 msgstr "[<remote>:]<pool> <key> <value>"
 
-#: cmd/incus/storage_volume.go:1862
+#: cmd/incus/storage_volume.go:1865
 #, fuzzy
 msgid "[<remote>:]<pool> <old name> <new name>"
 msgstr "[<remote>:]<pool> <volume> <key>"
 
-#: cmd/incus/storage_volume.go:682 cmd/incus/storage_volume.go:2534
+#: cmd/incus/storage_volume.go:683 cmd/incus/storage_volume.go:2541
 #, fuzzy
 msgid "[<remote>:]<pool> <volume>"
 msgstr "[<remote>:]<pool> <volume> <key>"
 
-#: cmd/incus/storage_volume.go:756
+#: cmd/incus/storage_volume.go:757
 msgid "[<remote>:]<pool> <volume> <instance> [<device name>]"
 msgstr "[<remote>:]<pool> <volume> <instance> [<device name>]"
 
@@ -9335,20 +9288,20 @@ msgstr "[<remote>:]<pool> <volume> <instance> [<device name>]"
 msgid "[<remote>:]<pool> <volume> <instance> [<device name>] [<path>]"
 msgstr "[<remote>:]<pool> <volume> <instance> [<device name>] [<path>]"
 
-#: cmd/incus/storage_volume.go:2658
+#: cmd/incus/storage_volume.go:2665
 #, fuzzy
 msgid "[<remote>:]<pool> <volume> <old snapshot> <new snapshot>"
 msgstr "[<remote>:]<pool> <volume> <snapshot>"
 
-#: cmd/incus/storage_volume.go:2444 cmd/incus/storage_volume.go:2745
+#: cmd/incus/storage_volume.go:2451 cmd/incus/storage_volume.go:2752
 msgid "[<remote>:]<pool> <volume> <snapshot>"
 msgstr "[<remote>:]<pool> <volume> <snapshot>"
 
-#: cmd/incus/storage_volume.go:2921
+#: cmd/incus/storage_volume.go:2919
 msgid "[<remote>:]<pool> <volume> [<path>]"
 msgstr "[<remote>:]<pool> <volume> [<path>]"
 
-#: cmd/incus/storage_volume.go:2312
+#: cmd/incus/storage_volume.go:2319
 msgid "[<remote>:]<pool> <volume> [<snapshot>]"
 msgstr "[<remote>:]<pool> <volume> [<snapshot>]"
 
@@ -9356,37 +9309,37 @@ msgstr "[<remote>:]<pool> <volume> [<snapshot>]"
 msgid "[<remote>:]<pool> <volume> [key=value...]"
 msgstr "[<remote>:]<pool> <volume> [key=value...]"
 
-#: cmd/incus/storage_volume.go:2825
+#: cmd/incus/storage_volume.go:2832
 #, fuzzy
 msgid "[<remote>:]<pool> <volume>/<snapshot>"
 msgstr "[<remote>:]<pool> <volume>[/<snapshot>]"
 
-#: cmd/incus/storage_volume.go:1549
+#: cmd/incus/storage_volume.go:1552
 msgid "[<remote>:]<pool> [<filter>...]"
 msgstr "[<remote>:]<pool> [<filter>...]"
 
-#: cmd/incus/storage_volume.go:951 cmd/incus/storage_volume.go:1308
-#: cmd/incus/storage_volume.go:2105
+#: cmd/incus/storage_volume.go:952 cmd/incus/storage_volume.go:1312
+#: cmd/incus/storage_volume.go:2108
 #, fuzzy
 msgid "[<remote>:]<pool> [<type>/]<volume>"
 msgstr "[<remote>:]<pool> <volume>"
 
-#: cmd/incus/storage_volume.go:2204
+#: cmd/incus/storage_volume.go:2212
 #, fuzzy
 msgid "[<remote>:]<pool> [<type>/]<volume> <key>"
 msgstr "[<remote>:]<pool> <volume>"
 
-#: cmd/incus/storage_volume.go:1942
+#: cmd/incus/storage_volume.go:1945
 #, fuzzy
 msgid "[<remote>:]<pool> [<type>/]<volume> <key>=<value>..."
 msgstr "[<remote>:]<pool> <volume> <key>=<value>..."
 
-#: cmd/incus/storage_volume.go:1172
+#: cmd/incus/storage_volume.go:1176
 #, fuzzy
 msgid "[<remote>:]<pool> [<type>/]<volume>[/<snapshot>] <key>"
 msgstr "[<remote>:]<pool> <volume>[/<snapshot>] <key>"
 
-#: cmd/incus/storage_volume.go:1768
+#: cmd/incus/storage_volume.go:1771
 msgid "[<remote>:]<pool>/<volume> [<remote>:]<pool>/<volume>"
 msgstr "[<remote>:]<pool>/<volume> [<remote>:]<pool>/<volume>"
 
@@ -10228,39 +10181,129 @@ msgstr ""
 #: cmd/incus/storage_volume.go:578
 #, fuzzy
 msgid ""
-"incus storage volume create p1 v1\n"
+"incus storage volume create default foo\n"
+"    Create custom storage volume \"foo\" in pool \"default\"\n"
 "\n"
-"incus storage volume create p1 v1 < config.yaml\n"
-"\tCreate storage volume v1 for pool p1 with configuration from config.yaml."
+"incus storage volume create default foo < config.yaml\n"
+"    Create custom storage volume \"foo\" in pool \"default\" with "
+"configuration from config.yaml"
 msgstr ""
 "lxc init ubuntu:22.04 u1\n"
 "\n"
 "lxc init ubuntu:22.04 u1 < config.yaml\n"
 "    config.yaml の設定を使ってインスタンスを作成します"
 
-#: cmd/incus/storage_volume.go:3091
+#: cmd/incus/storage_volume.go:959
 #, fuzzy
+msgid ""
+"incus storage volume edit default container/c1\n"
+"    Edit container storage volume \"c1\" in pool \"default\"\n"
+"\n"
+"incus storage volume edit default foo < volume.yaml\n"
+"    Edit custom storage volume \"foo\" in pool \"default\" using the content "
+"of volume.yaml"
+msgstr ""
+"lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
+"    pool.yaml の内容でストレージボリュームを更新します。"
+
+#: cmd/incus/storage_volume.go:1185
+#, fuzzy
+msgid ""
+"incus storage volume get default data size\n"
+"    Returns the size of a custom volume \"data\" in pool \"default\"\n"
+"\n"
+"incus storage volume get default virtual-machine/data snapshots.expiry\n"
+"    Returns the snapshot expiration period for a virtual machine \"data\" in "
+"pool \"default\""
+msgstr ""
+"lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
+"    pool.yaml の内容でストレージボリュームを更新します。"
+
+#: cmd/incus/storage_volume.go:3089
 msgid ""
 "incus storage volume import default backup0.tar.gz\n"
-"\t\tCreate a new custom volume using backup0.tar.gz as the source."
+"    Create a new custom volume using backup0.tar.gz as the source\n"
+"\n"
+"incus storage volume import default some-installer.iso installer --type=iso\n"
+"    Create a new custom volume storing some-installer.iso for use as a CD-"
+"ROM image"
 msgstr ""
-"lxc storage volume import default backup0.tar.gz\n"
-"\t\tbackup0.tar.gz を使って新しいカスタムボリュームを作成します。"
 
-#: cmd/incus/storage_volume.go:2316
+#: cmd/incus/storage_volume.go:1319
 #, fuzzy
 msgid ""
-"incus storage volume snapshot create default v1 snap0\n"
-"       Create a snapshot of \"v1\" in pool \"default\" called \"snap0\".\n"
+"incus storage volume info default foo\n"
+"    Returns state information for a custom volume \"foo\" in pool "
+"\"default\"\n"
 "\n"
-"incus storage volume snapshot create default v1 snap0 < config.yaml\n"
-"       Create a snapshot of \"v1\" in pool \"default\" called \"snap0\" with "
-"the configuration from \"config.yaml\"."
+"incus storage volume info default virtual-machine/v1\n"
+"    Returns state information for virtual machine \"v1\" in pool \"default\""
+msgstr ""
+"lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
+"    pool.yaml の内容でストレージボリュームを更新します。"
+
+#: cmd/incus/storage_volume.go:1955
+#, fuzzy
+msgid ""
+"incus storage volume set default data size=1GiB\n"
+"    Sets the size of a custom volume \"data\" in pool \"default\" to 1 GiB\n"
+"\n"
+"incus storage volume set default virtual-machine/data snapshots.expiry=7d\n"
+"    Sets the snapshot expiration period for a virtual machine \"data\" in "
+"pool \"default\" to seven days"
+msgstr ""
+"lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
+"    pool.yaml の内容でストレージボリュームを更新します。"
+
+#: cmd/incus/storage_volume.go:2117
+#, fuzzy
+msgid ""
+"incus storage volume show default foo\n"
+"    Will show the properties of custom volume \"foo\" in pool \"default\"\n"
+"\n"
+"incus storage volume show default virtual-machine/v1\n"
+"    Will show the properties of the virtual-machine volume \"v1\" in pool "
+"\"default\"\n"
+"\n"
+"incus storage volume show default container/c1\n"
+"    Will show the properties of the container volume \"c1\" in pool "
+"\"default\""
+msgstr ""
+"lxc storage volume show default data\n"
+"    \"default\" プール内のカスタムボリューム \"data\" のプロパティを表示しま"
+"す。\n"
+"\n"
+"lxc storage volume show default container/data\n"
+"    \"default\" プール内のコンテナ \"data\" のファイルシステムプロパティを表"
+"示します。"
+
+#: cmd/incus/storage_volume.go:2323
+#, fuzzy
+msgid ""
+"incus storage volume snapshot create default foo snap0\n"
+"    Create a snapshot of \"foo\" in pool \"default\" called \"snap0\"\n"
+"\n"
+"incus storage volume snapshot create default vol1 snap0 < config.yaml\n"
+"    Create a snapshot of \"foo\" in pool \"default\" called \"snap0\" with "
+"the configuration from \"config.yaml\""
 msgstr ""
 "lxc init ubuntu:22.04 u1\n"
 "\n"
 "lxc init ubuntu:22.04 u1 < config.yaml\n"
 "    config.yaml の設定を使ってインスタンスを作成します"
+
+#: cmd/incus/storage_volume.go:2219
+#, fuzzy
+msgid ""
+"incus storage volume unset default foo size\n"
+"    Removes the size/quota of custom volume \"foo\" in pool \"default\"\n"
+"\n"
+"incus storage volume unset default virtual-machine/v1 snapshots.expiry\n"
+"    Removes the snapshot expiration period of virtual machine volume \"v1\" "
+"in pool \"default\""
+msgstr ""
+"lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
+"    pool.yaml の内容でストレージボリュームを更新します。"
 
 #: cmd/incus/storage.go:547
 msgid "info"
@@ -10328,6 +10371,130 @@ msgstr "y"
 #: cmd/incus/image.go:1184 cmd/incus/project.go:223 cmd/incus/snapshot.go:256
 msgid "yes"
 msgstr "yes"
+
+#, fuzzy
+#~ msgid ""
+#~ "\t\tincus storage volume show default virtual-machine/data/snap0\n"
+#~ "\t\tWill show the properties of snapshot \"snap0\" for a virtual machine "
+#~ "called \"data\" in the \"default\" pool."
+#~ msgstr ""
+#~ "lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
+#~ "    pool.yaml の内容でストレージボリュームを更新します。"
+
+#~ msgid "Copy storage volumes"
+#~ msgstr "ストレージボリュームをコピーします"
+
+#, fuzzy
+#~ msgid ""
+#~ "If type is not specified, incus assumes \"custom\"\n"
+#~ "Values for type can be custom, image, container and virtual-machine.\n"
+#~ "\n"
+#~ "incus storage volume set default data size=1GiB\n"
+#~ "    Sets the size of a custom volume \"data\" in pool \"default\" to 1 "
+#~ "GiB.\n"
+#~ "\n"
+#~ "incus storage volume set default virtual-machine/data snapshots."
+#~ "expiry=7d\n"
+#~ "    Sets the snapshot expiration period for a virtual machine \"data\" in "
+#~ "pool \"default\" to seven days."
+#~ msgstr ""
+#~ "lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
+#~ "    pool.yaml の内容でストレージボリュームを更新します。"
+
+#~ msgid "Import backups of custom volumes including their snapshots."
+#~ msgstr ""
+#~ "カスタムボリュームのバックアップをスナップショットを含んだ状態でインポート"
+#~ "します。"
+
+#, fuzzy
+#~ msgid ""
+#~ "incus storage volume create p1 v1\n"
+#~ "\n"
+#~ "incus storage volume create p1 v1 < config.yaml\n"
+#~ "\tCreate storage volume v1 for pool p1 with configuration from config."
+#~ "yaml."
+#~ msgstr ""
+#~ "lxc init ubuntu:22.04 u1\n"
+#~ "\n"
+#~ "lxc init ubuntu:22.04 u1 < config.yaml\n"
+#~ "    config.yaml の設定を使ってインスタンスを作成します"
+
+#, fuzzy
+#~ msgid ""
+#~ "incus storage volume edit [<remote>:]<pool> [<type>/]<volume> < volume."
+#~ "yaml\n"
+#~ "    Update a storage volume using the content of pool.yaml."
+#~ msgstr ""
+#~ "lxc storage edit [<remote>:]<pool> < pool.yaml\n"
+#~ "    pool.yaml の内容でストレージプールを更新します。"
+
+#, fuzzy
+#~ msgid ""
+#~ "incus storage volume import default backup0.tar.gz\n"
+#~ "\t\tCreate a new custom volume using backup0.tar.gz as the source."
+#~ msgstr ""
+#~ "lxc storage volume import default backup0.tar.gz\n"
+#~ "\t\tbackup0.tar.gz を使って新しいカスタムボリュームを作成します。"
+
+#~ msgid ""
+#~ "Provide the type of the storage volume if it is not custom.\n"
+#~ "Supported types are custom, image, container and virtual-machine.\n"
+#~ "\n"
+#~ "Add the name of the snapshot if type is one of custom, container or "
+#~ "virtual-machine.\n"
+#~ "\n"
+#~ "incus storage volume get default data size\n"
+#~ "    Returns the size of a custom volume \"data\" in pool \"default\".\n"
+#~ "\n"
+#~ "incus storage volume get default virtual-machine/data snapshots.expiry\n"
+#~ "    Returns the snapshot expiration period for a virtual machine \"data\" "
+#~ "in pool \"default\"."
+#~ msgstr ""
+#~ "カスタムでない場合、ストレージボリュームのタイプを指定します。\n"
+#~ "サポートしているタイプは、custom, image, container, virtual-machine で"
+#~ "す。\n"
+#~ "\n"
+#~ "タイプが custom, container, virtual-machine のいずれかの場合、スナップ"
+#~ "ショットの名前を追加します。\n"
+#~ "\n"
+#~ "incus storage volume get default data size\n"
+#~ "    プール \"default\" 内のカスタムボリューム \"data\" のサイズを返しま"
+#~ "す。\n"
+#~ "\n"
+#~ "incus storage volume get default virtual-machine/data snapshots.expiry\n"
+#~ "    プール \"default\" 内の仮想マシン \"data\" のスナップショットの有効期"
+#~ "限を返します。"
+
+#, fuzzy
+#~ msgid ""
+#~ "Provide the type of the storage volume if it is not custom.\n"
+#~ "Supported types are custom, image, container and virtual-machine.\n"
+#~ "\n"
+#~ "Add the name of the snapshot if type is one of custom, container or "
+#~ "virtual-machine.\n"
+#~ "\n"
+#~ "incus storage volume show default data\n"
+#~ "    Will show the properties of a custom volume called \"data\" in the "
+#~ "\"default\" pool.\n"
+#~ "\n"
+#~ "incus storage volume show default container/data\n"
+#~ "    Will show the properties of the filesystem for a container called "
+#~ "\"data\" in the \"default\" pool."
+#~ msgstr ""
+#~ "lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
+#~ "    pool.yaml の内容でストレージボリュームを更新します。"
+
+#, fuzzy
+#~ msgid ""
+#~ "Provide the type of the storage volume if it is not custom.\n"
+#~ "Supported types are custom, image, container and virtual-machine.\n"
+#~ "\n"
+#~ "incus storage volume edit [<remote>:]<pool> [<type>/]<volume> < volume."
+#~ "yaml\n"
+#~ "    Update a storage volume using the content of pool.yaml."
+#~ msgstr ""
+#~ "lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
+#~ "    pool.yaml の内容でストレージボリュームを更新します。"
 
 #, fuzzy
 #~ msgid ""
@@ -10499,23 +10666,6 @@ msgstr "yes"
 #, fuzzy
 #~ msgid "[<remote>:]<pool> [<type>/]<volume>[/<snapshot>] <key>=<value>..."
 #~ msgstr "[<remote>:]<pool> <volume>[/<snapshot>] <key>"
-
-#~ msgid ""
-#~ "lxc storage volume show default data\n"
-#~ "    Will show the properties of a custom volume called \"data\" in the "
-#~ "\"default\" pool.\n"
-#~ "\n"
-#~ "lxc storage volume show default container/data\n"
-#~ "    Will show the properties of the filesystem for a container called "
-#~ "\"data\" in the \"default\" pool."
-#~ msgstr ""
-#~ "lxc storage volume show default data\n"
-#~ "    \"default\" プール内のカスタムボリューム \"data\" のプロパティを表示し"
-#~ "ます。\n"
-#~ "\n"
-#~ "lxc storage volume show default container/data\n"
-#~ "    \"default\" プール内のコンテナ \"data\" のファイルシステムプロパティを"
-#~ "表示します。"
 
 #~ msgid "%v (interrupt two more times to force)"
 #~ msgstr ""
