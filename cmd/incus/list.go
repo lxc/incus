@@ -19,6 +19,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	config "github.com/lxc/incus/v6/shared/cliconfig"
 	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type column struct {
@@ -876,15 +877,21 @@ func (c *cmdList) diskUsageColumnData(cInfo api.InstanceFull) string {
 }
 
 func (c *cmdList) typeColumnData(cInfo api.InstanceFull) string {
-	if cInfo.Type == "" {
-		cInfo.Type = "container"
+	ret := strings.ToUpper(cInfo.Type)
+
+	if ret == "" {
+		ret = "CONTAINER"
+	}
+
+	if util.IsTrue(cInfo.ExpandedConfig["volatile.container.oci"]) {
+		ret = fmt.Sprintf("%s (%s)", ret, i18n.G("APP"))
 	}
 
 	if cInfo.Ephemeral {
-		return fmt.Sprintf("%s (%s)", strings.ToUpper(cInfo.Type), i18n.G("EPHEMERAL"))
+		ret = fmt.Sprintf("%s (%s)", ret, i18n.G("EPHEMERAL"))
 	}
 
-	return strings.ToUpper(cInfo.Type)
+	return ret
 }
 
 func (c *cmdList) numberSnapshotsColumnData(cInfo api.InstanceFull) string {
