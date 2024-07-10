@@ -153,6 +153,11 @@ func serverInitialConfiguration(client incus.InstanceServer) error {
 func serverSetupUser(uid uint32) error {
 	projectName := fmt.Sprintf("user-%d", uid)
 	networkName := fmt.Sprintf("incusbr-%d", uid)
+	if len(networkName) > 15 {
+		// For long UIDs, use a shorter slightly less descriptive interface name.
+		networkName = fmt.Sprintf("user-%d", uid)
+	}
+
 	userPath := internalUtil.VarPath("users", fmt.Sprintf("%d", uid))
 
 	// User account.
