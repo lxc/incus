@@ -2114,12 +2114,6 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		volatileSet["volatile.uuid.generation"] = genUUID
 	}
 
-	// Apply any volatile changes that need to be made.
-	err = d.VolatileSet(volatileSet)
-	if err != nil {
-		return "", nil, fmt.Errorf("Failed setting volatile keys: %w", err)
-	}
-
 	// Create the devices
 	nicID := -1
 	nvidiaDevices := []string{}
@@ -2328,6 +2322,11 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			return "", nil, err
 		}
 
+		// Mark the container as an OCI container if not already set.
+		if !util.IsTrue(d.expandedConfig["volatile.container.oci"]) {
+			volatileSet["volatile.container.oci"] = "true"
+		}
+
 		// Configure the entry point.
 		err = lxcSetConfigItem(cc, "lxc.execute.cmd", shellquote.Join(config.Process.Args...))
 		if err != nil {
@@ -2410,6 +2409,11 @@ ff02::2 ip6-allrouters
 		if err != nil {
 			return "", nil, err
 		}
+	} else {
+		// Clear OCI config key if present.
+		if d.expandedConfig["volatile.container.oci"] != "" {
+			volatileSet["volatile.container.oci"] = ""
+		}
 	}
 
 	// Load the LXC raw config.
@@ -2464,6 +2468,12 @@ ff02::2 ip6-allrouters
 		if err != nil {
 			return "", nil, fmt.Errorf("Failed taking startup snapshot: %w", err)
 		}
+	}
+
+	// Apply any volatile changes that need to be made.
+	err = d.VolatileSet(volatileSet)
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed setting volatile keys: %w", err)
 	}
 
 	// Update the backup.yaml file just before starting the instance process, but after all devices have been
