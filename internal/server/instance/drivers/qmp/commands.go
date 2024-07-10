@@ -61,6 +61,12 @@ type HotpluggableCPU struct {
 	Props CPUInstanceProperties `json:"props"`
 }
 
+// CPUModel contains information about a CPU model.
+type CPUModel struct {
+	Name  string         `json:"name"`
+	Flags map[string]any `json:"props"`
+}
+
 // QueryCPUs returns a list of CPUs.
 func (m *Monitor) QueryCPUs() ([]CPU, error) {
 	// Prepare the response.
@@ -89,6 +95,28 @@ func (m *Monitor) QueryHotpluggableCPUs() ([]HotpluggableCPU, error) {
 	}
 
 	return resp.Return, nil
+}
+
+// QueryCPUModel returns a CPUModel for the specified model name.
+func (m *Monitor) QueryCPUModel(model string) (*CPUModel, error) {
+	// Prepare the response.
+	var resp struct {
+		Return struct {
+			Model CPUModel `json:"model"`
+		} `json:"return"`
+	}
+
+	args := map[string]any{
+		"model": map[string]string{"name": model},
+		"type":  "full",
+	}
+
+	err := m.run("query-cpu-model-expansion", args, &resp)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to query CPU model: %w", err)
+	}
+
+	return &resp.Return.Model, nil
 }
 
 // Status returns the current VM status.
