@@ -1408,6 +1408,14 @@
 						}
 					},
 					{
+						"volatile.container.oci": {
+							"defaultdesc": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether the container is an OCI application container",
+							"type": "bool"
+						}
+					},
+					{
 						"volatile.cpu.nodes": {
 							"longdesc": "The NUMA node that was selected for the instance.",
 							"shortdesc": "Instance NUMA node",
