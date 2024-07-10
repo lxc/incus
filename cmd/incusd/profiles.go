@@ -768,10 +768,16 @@ func profilePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Check that the profile exists.
+		_, err = dbCluster.GetProfile(ctx, tx.Tx(), p.Name, name)
+		if err != nil {
+			return fmt.Errorf("Profile %q doesn't exist", name)
+		}
+
 		// Check that the name isn't already in use.
 		_, err = dbCluster.GetProfile(ctx, tx.Tx(), p.Name, req.Name)
 		if err == nil {
-			return fmt.Errorf("Name %q already in use", req.Name)
+			return fmt.Errorf("Profile %q already exists", req.Name)
 		}
 
 		return dbCluster.RenameProfile(ctx, tx.Tx(), p.Name, name, req.Name)
