@@ -42,6 +42,7 @@ func (s *OS) initDirs() error {
 
 		{filepath.Join(s.VarDir, "backups"), 0700},
 		{s.CacheDir, 0700},
+		{filepath.Join(s.CacheDir, "resources"), 0700},
 		{filepath.Join(s.VarDir, "database"), 0700},
 		{filepath.Join(s.VarDir, "devices"), 0711},
 		{filepath.Join(s.VarDir, "disks"), 0700},
