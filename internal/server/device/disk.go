@@ -629,7 +629,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 			return fmt.Errorf("Shared filesystem are incompatible with migration.stateful=true")
 		}
 
-		if d.config["pool"] == "" {
+		if d.config["pool"] == "" && !slices.Contains([]string{diskSourceCloudInit, diskSourceAgent}, d.config["source"]) {
 			return fmt.Errorf("Only Incus-managed disks are allowed with migration.stateful=true")
 		}
 
