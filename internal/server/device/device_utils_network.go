@@ -330,29 +330,36 @@ func networkCreateTap(hostName string, m deviceConfig.Device) (uint32, error) {
 	// The host side should always line up with the bridge to avoid accidentally lowering the bridge MTU.
 	// The instance side should use the configured MTU (if any), if not, it should match the host side.
 	var mtu uint32
-	if m["mtu"] != "" {
-		nicMTU, err := strconv.ParseUint(m["mtu"], 10, 32)
-		if err != nil {
-			return 0, fmt.Errorf("Invalid MTU specified: %w", err)
-		}
-
-		mtu = uint32(nicMTU)
-	}
+	var instanceMTU uint32
+	var parentMTU uint32
 
 	if m["parent"] != "" {
-		parentMTU, err := network.GetDevMTU(m["parent"])
+		mtu, err := network.GetDevMTU(m["parent"])
 		if err != nil {
 			return 0, fmt.Errorf("Failed to get the parent MTU: %w", err)
 		}
 
-		err = NetworkSetDevMTU(hostName, parentMTU)
+		parentMTU = uint32(mtu)
+	}
+
+	if m["mtu"] != "" {
+		mtu, err := strconv.ParseUint(m["mtu"], 10, 32)
 		if err != nil {
-			return 0, fmt.Errorf("Failed to set the MTU %d: %w", mtu, err)
+			return 0, fmt.Errorf("Invalid MTU specified: %w", err)
 		}
 
-		if mtu == 0 {
-			mtu = parentMTU
-		}
+		instanceMTU = uint32(mtu)
+	}
+
+	if instanceMTU > parentMTU {
+		mtu = instanceMTU
+	} else {
+		mtu = parentMTU
+	}
+
+	err = NetworkSetDevMTU(hostName, mtu)
+	if err != nil {
+		return 0, fmt.Errorf("Failed to set the MTU %d: %w", mtu, err)
 	}
 
 	// Set TX queue length on both ends.
