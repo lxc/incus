@@ -16,6 +16,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	config "github.com/lxc/incus/v6/shared/cliconfig"
 	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdInfo struct {
@@ -633,15 +634,20 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, nam
 
 	fmt.Printf(i18n.G("Status: %s")+"\n", strings.ToUpper(inst.Status))
 
-	if inst.Type == "" {
-		inst.Type = "container"
+	instType := inst.Type
+	if instType == "" {
+		instType = "container"
+	}
+
+	if util.IsTrue(inst.ExpandedConfig["volatile.container.oci"]) {
+		instType = fmt.Sprintf("%s (%s)", instType, i18n.G("application"))
 	}
 
 	if inst.Ephemeral {
-		fmt.Printf(i18n.G("Type: %s (ephemeral)")+"\n", inst.Type)
-	} else {
-		fmt.Printf(i18n.G("Type: %s")+"\n", inst.Type)
+		instType = fmt.Sprintf("%s (%s)", instType, i18n.G("ephemeral"))
 	}
+
+	fmt.Printf(i18n.G("Type: %s")+"\n", instType)
 
 	fmt.Printf(i18n.G("Architecture: %s")+"\n", inst.Architecture)
 

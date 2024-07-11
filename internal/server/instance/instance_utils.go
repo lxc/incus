@@ -642,6 +642,18 @@ func SuitableArchitectures(ctx context.Context, s *state.State, tx *db.ClusterTx
 				if err != nil {
 					return nil, err
 				}
+			} else if req.Source.Protocol == "oci" {
+				// Remote OCI registry.
+				remote, err = incus.ConnectOCI(req.Source.Server, &incus.ConnectionArgs{
+					TLSServerCert: req.Source.Certificate,
+					UserAgent:     version.UserAgent,
+					Proxy:         s.Proxy,
+					CachePath:     s.OS.CacheDir,
+					CacheExpiry:   time.Hour,
+				})
+				if err != nil {
+					return nil, err
+				}
 			} else {
 				return nil, api.StatusErrorf(http.StatusBadRequest, "Unsupported remote image server protocol %q", req.Source.Protocol)
 			}

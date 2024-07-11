@@ -1293,6 +1293,13 @@ The cluster group(s) that the instance was restricted to at creation time.
 This is used during re-scheduling events like an evacuation to keep the instance within the requested set.
 ```
 
+```{config:option} volatile.container.oci instance-volatile
+:defaultdesc: "`false`"
+:shortdesc: "Whether the container is an OCI application container"
+:type: "bool"
+
+```
+
 ```{config:option} volatile.cpu.nodes instance-volatile
 :shortdesc: "Instance NUMA node"
 :type: "string"

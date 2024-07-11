@@ -866,6 +866,14 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 
 	"security.syscalls.whitelist": validate.IsAny,
 
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.container.oci)
+	//
+	// ---
+	//  type: bool
+	//  defaultdesc: `false`
+	//  shortdesc: Whether the container is an OCI application container
+	"volatile.container.oci": validate.IsBool,
+
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.last_state.idmap)
 	//
 	// ---

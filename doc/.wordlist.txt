@@ -169,6 +169,7 @@ NICs
 NixOS
 NUMA
 NVRAM
+OCI
 OData
 OIDC
 OpenFGA

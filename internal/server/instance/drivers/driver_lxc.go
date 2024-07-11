@@ -29,7 +29,9 @@ import (
 	"github.com/flosch/pongo2"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/kballard/go-shellquote"
 	liblxc "github.com/lxc/go-lxc"
+	ociSpecs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/sftp"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
@@ -2112,12 +2114,6 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		volatileSet["volatile.uuid.generation"] = genUUID
 	}
 
-	// Apply any volatile changes that need to be made.
-	err = d.VolatileSet(volatileSet)
-	if err != nil {
-		return "", nil, fmt.Errorf("Failed setting volatile keys: %w", err)
-	}
-
 	// Create the devices
 	nicID := -1
 	nvidiaDevices := []string{}
@@ -2312,6 +2308,114 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		}
 	}
 
+	// Handle application containers.
+	if util.PathExists(filepath.Join(d.Path(), "config.json")) {
+		// Parse the OCI config.
+		data, err := os.ReadFile(filepath.Join(d.Path(), "config.json"))
+		if err != nil {
+			return "", nil, err
+		}
+
+		var config ociSpecs.Spec
+		err = json.Unmarshal([]byte(data), &config)
+		if err != nil {
+			return "", nil, err
+		}
+
+		// Mark the container as an OCI container if not already set.
+		if !util.IsTrue(d.expandedConfig["volatile.container.oci"]) {
+			volatileSet["volatile.container.oci"] = "true"
+		}
+
+		// Configure the entry point.
+		err = lxcSetConfigItem(cc, "lxc.execute.cmd", shellquote.Join(config.Process.Args...))
+		if err != nil {
+			return "", nil, err
+		}
+
+		err = lxcSetConfigItem(cc, "lxc.init.cwd", config.Process.Cwd)
+		if err != nil {
+			return "", nil, err
+		}
+
+		err = lxcSetConfigItem(cc, "lxc.init.uid", fmt.Sprintf("%d", config.Process.User.UID))
+		if err != nil {
+			return "", nil, err
+		}
+
+		err = lxcSetConfigItem(cc, "lxc.init.gid", fmt.Sprintf("%d", config.Process.User.GID))
+		if err != nil {
+			return "", nil, err
+		}
+
+		// Configure network handling.
+		err = os.MkdirAll(filepath.Join(d.Path(), "network"), 0711)
+		if err != nil {
+			return "", nil, err
+		}
+
+		err = os.MkdirAll(filepath.Join(d.RootfsPath(), "etc"), 0755)
+		if err != nil && !os.IsExist(err) {
+			return "", nil, err
+		}
+
+		err = os.WriteFile(filepath.Join(d.Path(), "network", "hosts"), []byte(fmt.Sprintf(`127.0.0.1   localhost
+127.0.1.1   %s
+
+::1     localhost ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+`, d.name)), 0644)
+		if err != nil {
+			return "", nil, err
+		}
+
+		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s etc/hosts none bind,create=file", filepath.Join(d.Path(), "network", "hosts")))
+		if err != nil {
+			return "", nil, err
+		}
+
+		err = os.WriteFile(filepath.Join(d.Path(), "network", "hostname"), []byte(fmt.Sprintf("%s\n", d.name)), 0644)
+		if err != nil {
+			return "", nil, err
+		}
+
+		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s etc/hostname none bind,create=file", filepath.Join(d.Path(), "network", "hostname")))
+		if err != nil {
+			return "", nil, err
+		}
+
+		f, err := os.Create(filepath.Join(d.Path(), "network", "resolv.conf"))
+		if err != nil {
+			return "", nil, err
+		}
+
+		err = f.Chmod(0644)
+		if err != nil {
+			f.Close()
+			return "", nil, err
+		}
+
+		f.Close()
+
+		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s etc/resolv.conf none bind,create=file", filepath.Join(d.Path(), "network", "resolv.conf")))
+		if err != nil {
+			return "", nil, err
+		}
+
+		err = lxcSetConfigItem(cc, "lxc.hook.start-host", fmt.Sprintf("/proc/%d/exe forknet dhcp %s", os.Getpid(), filepath.Join(d.Path(), "network")))
+		if err != nil {
+			return "", nil, err
+		}
+	} else {
+		// Clear OCI config key if present.
+		if d.expandedConfig["volatile.container.oci"] != "" {
+			volatileSet["volatile.container.oci"] = ""
+		}
+	}
+
 	// Load the LXC raw config.
 	err = d.loadRawLXCConfig(cc)
 	if err != nil {
@@ -2364,6 +2468,12 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		if err != nil {
 			return "", nil, fmt.Errorf("Failed taking startup snapshot: %w", err)
 		}
+	}
+
+	// Apply any volatile changes that need to be made.
+	err = d.VolatileSet(volatileSet)
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed setting volatile keys: %w", err)
 	}
 
 	// Update the backup.yaml file just before starting the instance process, but after all devices have been
@@ -4147,7 +4257,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	defer unlock()
 
 	// Setup a new operation
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionUpdate, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionUpdate, []operationlock.Action{operationlock.ActionCreate, operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
 	if err != nil {
 		return fmt.Errorf("Failed to create instance update operation: %w", err)
 	}
