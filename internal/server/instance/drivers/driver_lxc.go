@@ -8695,9 +8695,20 @@ func (d *lxc) getFSStats() (*metrics.MetricSet, error) {
 				return nil, fmt.Errorf("Failed to stat %s: %w", mountpoint, err)
 			}
 
-			isMounted := false
+			// Grab the pool information to compare.
+			poolStatfs, err := linux.StatVFS(internalUtil.VarPath("storage-pools", dev["pool"]))
+			if err != nil {
+				return nil, fmt.Errorf("Failed to stat %s: %w", mountpoint, err)
+			}
+
+			// Check if we have actual mount-specific information.
+			if statfs.Type == poolStatfs.Type && statfs.Blocks == poolStatfs.Blocks && statfs.Bfree == poolStatfs.Bfree && statfs.Bavail == poolStatfs.Bavail {
+				continue
+			}
 
 			// Check if mountPath is in mountMap
+			isMounted := false
+
 			for mountDev, mountInfo := range mountMap {
 				if mountInfo.Mountpoint != mountpoint {
 					continue
