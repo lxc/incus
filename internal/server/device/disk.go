@@ -102,7 +102,7 @@ func (d *disk) CanMigrate() bool {
 	}
 
 	// Remote disks are migratable.
-	if d.pool.Driver().Info().Remote {
+	if d.pool != nil && d.pool.Driver().Info().Remote {
 		return true
 	}
 
