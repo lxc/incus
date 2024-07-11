@@ -102,7 +102,12 @@ func (d *disk) CanMigrate() bool {
 	}
 
 	// Remote disks are migratable.
-	if d.pool.Driver().Info().Remote {
+	if d.pool != nil && d.pool.Driver().Info().Remote {
+		return true
+	}
+
+	// Virtual disks are migratable.
+	if !slices.Contains([]string{diskSourceCloudInit, diskSourceAgent}, d.config["source"]) {
 		return true
 	}
 
@@ -547,7 +552,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 					return fmt.Errorf("Failed checking if custom volume is exclusively attached to another instance: %w", err)
 				}
 
-				if remoteInstance != nil && remoteInstance.ID != instConf.ID() {
+				if dbVolume.ContentType != db.StoragePoolVolumeContentTypeNameISO && remoteInstance != nil && remoteInstance.ID != instConf.ID() {
 					return fmt.Errorf("Custom volume is already attached to an instance on a different node")
 				}
 
@@ -629,7 +634,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 			return fmt.Errorf("Shared filesystem are incompatible with migration.stateful=true")
 		}
 
-		if d.config["pool"] == "" {
+		if d.config["pool"] == "" && !slices.Contains([]string{diskSourceCloudInit, diskSourceAgent}, d.config["source"]) {
 			return fmt.Errorf("Only Incus-managed disks are allowed with migration.stateful=true")
 		}
 

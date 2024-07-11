@@ -84,8 +84,8 @@ func (c *cmdTop) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// These variables can be changed by the UI
-	refreshInterval := 5 * time.Second // default 5 seconds, could change this to a flag
-	sortingMethod := alphabetical      // default is alphabetical, could change this to a flag
+	refreshInterval := 10 * time.Second // default 10 seconds, could change this to a flag
+	sortingMethod := alphabetical       // default is alphabetical, could change this to a flag
 
 	// Start the ticker for periodic updates
 	ticker := time.NewTicker(refreshInterval)
@@ -228,13 +228,24 @@ type displayData struct {
 }
 
 func (dd *displayData) toStringArray(project bool) []string {
+	var memUsage string
+	var diskUsage string
+
+	if dd.memoryUsage > 0 {
+		memUsage = units.GetByteSizeStringIEC(int64(dd.memoryUsage), 2)
+	}
+
+	if dd.diskUsage > 0 {
+		diskUsage = units.GetByteSizeStringIEC(int64(dd.diskUsage), 2)
+	}
+
 	if project {
 		dataStringified := [5]string{
 			dd.project,
 			dd.instanceName,
 			fmt.Sprintf("%.2f", dd.cpuUsage),
-			units.GetByteSizeStringIEC(int64(dd.memoryUsage), 2),
-			units.GetByteSizeStringIEC(int64(dd.diskUsage), 2),
+			memUsage,
+			diskUsage,
 		}
 
 		return dataStringified[:]
@@ -243,8 +254,8 @@ func (dd *displayData) toStringArray(project bool) []string {
 	dataStringified := [4]string{
 		dd.instanceName,
 		fmt.Sprintf("%.2f", dd.cpuUsage),
-		units.GetByteSizeStringIEC(int64(dd.memoryUsage), 2),
-		units.GetByteSizeStringIEC(int64(dd.diskUsage), 2),
+		memUsage,
+		diskUsage,
 	}
 
 	return dataStringified[:]

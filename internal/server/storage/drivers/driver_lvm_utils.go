@@ -778,9 +778,16 @@ func (d *lvm) activateVolume(vol Volume) (bool, error) {
 	}
 
 	if !util.PathExists(volDevPath) {
-		_, err := subprocess.RunCommand("lvchange", "--activate", "y", "--ignoreactivationskip", volDevPath)
-		if err != nil {
-			return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volDevPath, err)
+		if d.clustered {
+			_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
+			if err != nil {
+				return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volDevPath, err)
+			}
+		} else {
+			_, err := subprocess.RunCommand("lvchange", "--activate", "y", "--ignoreactivationskip", volDevPath)
+			if err != nil {
+				return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volDevPath, err)
+			}
 		}
 
 		d.logger.Debug("Activated logical volume", logger.Ctx{"volName": vol.Name(), "dev": volDevPath})
