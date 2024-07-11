@@ -6793,7 +6793,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 
 	// Notify the shared disks that they're going to be accessed from another system.
 	for _, dev := range d.expandedDevices.Sorted() {
-		if dev.Config["type"] != "disk" || dev.Config["path"] == "/" {
+		if dev.Config["type"] != "disk" || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
 			continue
 		}
 
@@ -7305,7 +7305,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 		// Notify the shared disks that they're going to be accessed from another system.
 		for _, dev := range d.expandedDevices.Sorted() {
-			if dev.Config["type"] != "disk" || dev.Config["path"] == "/" {
+			if dev.Config["type"] != "disk" || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
 				continue
 			}
 
