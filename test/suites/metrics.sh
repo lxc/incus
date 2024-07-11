@@ -49,8 +49,8 @@ test_metrics() {
   incus config set core.metrics_authentication=false
   curl -k -s -X GET "https://${metrics_addr}/1.0/metrics" | grep "name=\"c1\""
 
-  # Filesystem metrics should contain instance type
-  curl -k -s -X GET "https://${metrics_addr}/1.0/metrics" | grep "incus_filesystem_avail_bytes" | grep "type=\"container\""
+  # Check that metrics contain instance type
+  curl -k -s -X GET "https://${metrics_addr}/1.0/metrics" | grep "incus_cpu_effective_total" | grep "type=\"container\""
 
   incus delete -f c1 c2
 }
