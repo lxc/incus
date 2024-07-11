@@ -9,7 +9,7 @@ import (
 )
 
 // Process struct. Has ability to set runtime arguments.
-type Process struct {}
+type Process struct{}
 
 // GetPid returns the pid for the given process object.
 func (p *Process) GetPid() (int64, error) {
