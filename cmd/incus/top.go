@@ -228,13 +228,24 @@ type displayData struct {
 }
 
 func (dd *displayData) toStringArray(project bool) []string {
+	var memUsage string
+	var diskUsage string
+
+	if dd.memoryUsage > 0 {
+		memUsage = units.GetByteSizeStringIEC(int64(dd.memoryUsage), 2)
+	}
+
+	if dd.diskUsage > 0 {
+		diskUsage = units.GetByteSizeStringIEC(int64(dd.diskUsage), 2)
+	}
+
 	if project {
 		dataStringified := [5]string{
 			dd.project,
 			dd.instanceName,
 			fmt.Sprintf("%.2f", dd.cpuUsage),
-			units.GetByteSizeStringIEC(int64(dd.memoryUsage), 2),
-			units.GetByteSizeStringIEC(int64(dd.diskUsage), 2),
+			memUsage,
+			diskUsage,
 		}
 
 		return dataStringified[:]
@@ -243,8 +254,8 @@ func (dd *displayData) toStringArray(project bool) []string {
 	dataStringified := [4]string{
 		dd.instanceName,
 		fmt.Sprintf("%.2f", dd.cpuUsage),
-		units.GetByteSizeStringIEC(int64(dd.memoryUsage), 2),
-		units.GetByteSizeStringIEC(int64(dd.diskUsage), 2),
+		memUsage,
+		diskUsage,
 	}
 
 	return dataStringified[:]
