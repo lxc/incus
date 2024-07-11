@@ -179,7 +179,7 @@ func DriverStatuses() map[instancetype.Type]*DriverStatus {
 				LastMessage: fmt.Sprintf("%v", driverInfo.Error),
 			}
 		} else {
-			logger.Info("Instance type operational", logger.Ctx{"type": driverInfo.Type, "driver": driverInfo.Name, "features": driverInfo.Features})
+			logger.Info("Instance type operational", logger.Ctx{"type": driverInfo.Type, "driver": driverInfo.Name})
 		}
 
 		driverStatuses[driverInfo.Type] = driverStatus
