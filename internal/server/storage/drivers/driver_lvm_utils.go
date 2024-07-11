@@ -778,8 +778,7 @@ func (d *lvm) activateVolume(vol Volume) (bool, error) {
 	}
 
 	if !util.PathExists(volDevPath) {
-		if d.clustered && vol.contentType == ContentTypeISO {
-			// When dealing with ISO images on a cluster, allow concurrent access as they're read-only.
+		if d.clustered {
 			_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
 			if err != nil {
 				return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volDevPath, err)
