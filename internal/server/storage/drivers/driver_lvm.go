@@ -126,7 +126,7 @@ func (d *lvm) Info() Info {
 		DirectIO:                     true,
 		IOUring:                      true,
 		MountedRoot:                  false,
-		Buckets:                      true,
+		Buckets:                      !d.isRemote(),
 	}
 }
 
