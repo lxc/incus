@@ -98,7 +98,7 @@ You can restore a custom storage volume to the state of any of its snapshots.
 To do so, you must first stop all instances that use the storage volume.
 Then use the following command:
 
-    incus storage volume restore <pool_name> <volume_name> <snapshot_name>
+    incus storage volume snapshot restore <pool_name> <volume_name> <snapshot_name>
 
 You can also restore a snapshot into a new custom storage volume, either in the same storage pool or in a different one (even a remote storage pool).
 To do so, use the following command:
