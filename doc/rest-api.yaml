@@ -29,7 +29,7 @@ definitions:
         description: Certificate represents a certificate
         properties:
             certificate:
-                description: The certificate itself, as PEM encoded X509
+                description: The certificate itself, as PEM encoded X509 (or as base64 encoded X509 on POST)
                 example: X509 PEM certificate
                 type: string
                 x-go-name: Certificate
@@ -109,7 +109,7 @@ definitions:
         description: CertificatePut represents the modifiable fields of a certificate
         properties:
             certificate:
-                description: The certificate itself, as PEM encoded X509
+                description: The certificate itself, as PEM encoded X509 (or as base64 encoded X509 on POST)
                 example: X509 PEM certificate
                 type: string
                 x-go-name: Certificate
@@ -149,7 +149,7 @@ definitions:
         description: CertificatesPost represents the fields of a new certificate
         properties:
             certificate:
-                description: The certificate itself, as PEM encoded X509
+                description: The certificate itself, as PEM encoded X509 (or as base64 encoded X509 on POST)
                 example: X509 PEM certificate
                 type: string
                 x-go-name: Certificate
