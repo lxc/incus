@@ -2047,8 +2047,8 @@ func (d *zfs) activateVolume(vol Volume) (bool, error) {
 		return false, nil // Nothing to do for non-block or non-block backed volumes.
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	dataset := d.dataset(vol, false)
 
@@ -2065,7 +2065,7 @@ func (d *zfs) activateVolume(vol Volume) (bool, error) {
 			return false, err
 		}
 
-		revert.Add(func() { _ = d.setDatasetProperties(dataset, fmt.Sprintf("volmode=%s", current)) })
+		reverter.Add(func() { _ = d.setDatasetProperties(dataset, fmt.Sprintf("volmode=%s", current)) })
 
 		// Wait up to 30 seconds for the device to appear.
 		ctx, cancel := context.WithTimeout(d.state.ShutdownCtx, 30*time.Second)
@@ -2078,7 +2078,7 @@ func (d *zfs) activateVolume(vol Volume) (bool, error) {
 
 		d.logger.Debug("Activated ZFS volume", logger.Ctx{"volName": vol.Name(), "dev": dataset})
 
-		revert.Success()
+		reverter.Success()
 		return true, nil
 	}
 
