@@ -63,7 +63,7 @@ func EnsureSchema(db *sql.DB, address string, dir string) (bool, error) {
 	apiExtensions := version.APIExtensionsCount()
 
 	backupDone := false
-	hook := func(ctx context.Context, version int, tx *sql.Tx) error {
+	hook := func(ctx context.Context, schemaVersion int, tx *sql.Tx) error {
 		// Check if this is a fresh instance.
 		isUpdate, err := schema.DoesSchemaTableExist(ctx, tx)
 		if err != nil {
@@ -105,10 +105,10 @@ func EnsureSchema(db *sql.DB, address string, dir string) (bool, error) {
 			backupDone = true
 		}
 
-		if version == -1 {
+		if schemaVersion == -1 {
 			logger.Debugf("Running pre-update queries from file for global DB schema")
 		} else {
-			logger.Debugf("Updating global DB schema from %d to %d", version, version+1)
+			logger.Debugf("Updating global DB schema from %d to %d", schemaVersion, schemaVersion+1)
 		}
 
 		return nil
