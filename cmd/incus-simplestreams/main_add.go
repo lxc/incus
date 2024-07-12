@@ -77,7 +77,9 @@ type dataItem struct {
 
 // parseImage parses the metadata and data, filling the dataItem struct.
 func (c *cmdAdd) parseImage(metaFile *os.File, dataFile *os.File) (*dataItem, error) {
-	item := dataItem{}
+	item := dataItem{
+		Path: dataFile.Name(),
+	}
 
 	// Read the header.
 	_, extension, _, err := archive.DetectCompressionFile(dataFile)
