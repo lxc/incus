@@ -1498,8 +1498,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	cpuType := "host"
 
-	// Get CPU flags if clustered and migration is enabled.
-	if d.state.ServerClustered && util.IsTrue(d.expandedConfig["migration.stateful"]) {
+	// Get CPU flags if clustered and migration is enabled (x86_64 only for now).
+	if d.architecture != osarch.ARCH_64BIT_INTEL_X86 && d.state.ServerClustered && util.IsTrue(d.expandedConfig["migration.stateful"]) {
 		cpuFlags, err := d.getClusterCPUFlags()
 		if err != nil {
 			op.Done(err)
@@ -8681,23 +8681,25 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		features["vhost_net"] = struct{}{}
 	}
 
-	// Get the host CPU model.
-	model, err := monitor.QueryCPUModel("kvm64")
-	if err != nil {
-		return nil, err
-	}
-
-	cpuFlags := map[string]bool{}
-	for k, v := range model.Flags {
-		value, ok := v.(bool)
-		if !ok {
-			continue
+	// Get the host CPU model (x86_64 only for now).
+	if hostArch != osarch.ARCH_64BIT_INTEL_X86 {
+		model, err := monitor.QueryCPUModel("kvm64")
+		if err != nil {
+			return nil, err
 		}
 
-		cpuFlags[k] = value
-	}
+		cpuFlags := map[string]bool{}
+		for k, v := range model.Flags {
+			value, ok := v.(bool)
+			if !ok {
+				continue
+			}
 
-	features["flags"] = cpuFlags
+			cpuFlags[k] = value
+		}
+
+		features["flags"] = cpuFlags
+	}
 
 	return features, nil
 }
