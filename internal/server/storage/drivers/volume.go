@@ -530,7 +530,7 @@ func (v Volume) ConfigSizeFromSource(srcVol Volume) (string, error) {
 		// directly usable with the same size setting without also rounding for this check.
 		// Because we are not altering the actual size returned to use for the new volume, this will not
 		// affect storage drivers that do not use rounding.
-		volSizeBytes = v.driver.roundVolumeBlockSizeBytes(volSizeBytes)
+		volSizeBytes = v.driver.roundVolumeBlockSizeBytes(v, volSizeBytes)
 
 		// The volume/pool specified size is smaller than image minimum size. We must not continue as
 		// these specified sizes provide protection against unpacking a massive image and filling the pool.

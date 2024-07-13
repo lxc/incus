@@ -88,7 +88,7 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 				}
 
 				// Round to block boundary.
-				poolVolSizeBytes = d.roundVolumeBlockSizeBytes(poolVolSizeBytes)
+				poolVolSizeBytes = d.roundVolumeBlockSizeBytes(vol, poolVolSizeBytes)
 
 				// If the cached volume size is different than the pool volume size, then we can't use the
 				// deleted cached image volume and instead we will rename it to a random UUID so it can't
@@ -163,11 +163,6 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 			return err
 		}
 	} else {
-		sizeBytes, err := units.ParseByteSizeString(vol.ConfigSize())
-		if err != nil {
-			return err
-		}
-
 		var opts []string
 
 		if vol.contentType == ContentTypeFS {
@@ -211,6 +206,13 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 			opts = append(opts, fmt.Sprintf("volblocksize=%d", sizeBytes))
 		}
 
+		sizeBytes, err := units.ParseByteSizeString(vol.ConfigSize())
+		if err != nil {
+			return err
+		}
+
+		sizeBytes = d.roundVolumeBlockSizeBytes(vol, sizeBytes)
+
 		// Create the volume dataset.
 		err = d.createVolume(d.dataset(vol, false), sizeBytes, opts...)
 		if err != nil {
@@ -218,15 +220,16 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 		}
 
 		if vol.contentType == ContentTypeFS {
-			// Wait half a second to give udev a chance to kick in.
-			time.Sleep(500 * time.Millisecond)
+			// Wait up to 30 seconds for the device to appear.
+			ctx, cancel := context.WithTimeout(d.state.ShutdownCtx, 30*time.Second)
+			defer cancel()
 
-			zfsFilesystem := vol.ConfigBlockFilesystem()
-
-			devPath, err := d.GetVolumeDiskPath(vol)
+			devPath, err := d.tryGetVolumeDiskPathFromDataset(ctx, d.dataset(vol, false))
 			if err != nil {
 				return err
 			}
+
+			zfsFilesystem := vol.ConfigBlockFilesystem()
 
 			_, err = makeFSType(devPath, zfsFilesystem, nil)
 			if err != nil {
@@ -730,14 +733,15 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 		var recvStderr bytes.Buffer
 		receiver.Stderr = &recvStderr
 
+		var sendStderr bytes.Buffer
+		sender.Stderr = &sendStderr
+
 		// Run the transfer.
 		err := receiver.Start()
 		if err != nil {
 			return fmt.Errorf("Failed starting ZFS receive: %w", err)
 		}
 
-		var sendStderr bytes.Buffer
-		sender.Stderr = &sendStderr
 		err = sender.Start()
 		if err != nil {
 			_ = receiver.Process.Kill()
@@ -746,10 +750,14 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 
 		senderErr := make(chan error)
 		go func() {
-			err = sender.Wait()
+			err := sender.Wait()
 			if err != nil {
 				_ = receiver.Process.Kill()
-				senderErr <- fmt.Errorf("Failed ZFS send: %w (%s)", err, sendStderr.String())
+
+				// This removes any newlines in the error message.
+				msg := strings.ReplaceAll(strings.TrimSpace(sendStderr.String()), "\n", " ")
+
+				senderErr <- fmt.Errorf("Failed ZFS send: %w (%s)", err, msg)
 				return
 			}
 
@@ -758,8 +766,12 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 
 		err = receiver.Wait()
 		if err != nil {
-			_ = receiver.Process.Kill()
-			return fmt.Errorf("Failed ZFS receive: %w (%s)", err, recvStderr.String())
+			_ = sender.Process.Kill()
+
+			// This removes any newlines in the error message.
+			msg := strings.ReplaceAll(strings.TrimSpace(recvStderr.String()), "\n", " ")
+
+			return fmt.Errorf("Failed ZFS receive: %w (%s)", err, msg)
 		}
 
 		err = <-senderErr
@@ -1277,39 +1289,61 @@ func (d *zfs) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, al
 			sender = exec.Command("zfs", args...)
 		}
 
-		var senderErrBuf bytes.Buffer
-		var receiverErrBuf bytes.Buffer
-
 		// Configure the pipes.
-		sender.Stderr = &senderErrBuf
 		receiver.Stdin, _ = sender.StdoutPipe()
 		receiver.Stdout = os.Stdout
-		receiver.Stderr = &receiverErrBuf
+
+		var recvStderr bytes.Buffer
+		receiver.Stderr = &recvStderr
+
+		var sendStderr bytes.Buffer
+		sender.Stderr = &sendStderr
 
 		// Run the transfer.
 		err := receiver.Start()
 		if err != nil {
-			return fmt.Errorf("Failed to receive stream: %w", err)
+			return fmt.Errorf("Failed starting ZFS receive: %w", err)
 		}
 
-		err = sender.Run()
+		err = sender.Start()
 		if err != nil {
-			// This removes any newlines in the error message.
-			msg := strings.ReplaceAll(senderErrBuf.String(), "\n", " ")
-
-			return fmt.Errorf("Failed to send stream %q: %s: %w", sender.String(), msg, err)
+			_ = receiver.Process.Kill()
+			return fmt.Errorf("Failed starting ZFS send: %w", err)
 		}
+
+		senderErr := make(chan error)
+		go func() {
+			err := sender.Wait()
+			if err != nil {
+				_ = receiver.Process.Kill()
+
+				// This removes any newlines in the error message.
+				msg := strings.ReplaceAll(strings.TrimSpace(sendStderr.String()), "\n", " ")
+
+				senderErr <- fmt.Errorf("Failed ZFS send: %w (%s)", err, msg)
+				return
+			}
+
+			senderErr <- nil
+		}()
 
 		err = receiver.Wait()
 		if err != nil {
+			_ = sender.Process.Kill()
+
 			// This removes any newlines in the error message.
-			msg := strings.ReplaceAll(receiverErrBuf.String(), "\n", " ")
+			msg := strings.ReplaceAll(strings.TrimSpace(recvStderr.String()), "\n", " ")
 
 			if strings.Contains(msg, "does not match incremental source") {
 				return ErrSnapshotDoesNotMatchIncrementalSource
 			}
 
-			return fmt.Errorf("Failed to wait for receiver: %s: %w", msg, err)
+			return fmt.Errorf("Failed ZFS receive: %w (%s)", err, msg)
+		}
+
+		err = <-senderErr
+		if err != nil {
+			return err
 		}
 
 		return nil
@@ -1655,7 +1689,7 @@ func (d *zfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 			return nil
 		}
 
-		sizeBytes = d.roundVolumeBlockSizeBytes(sizeBytes)
+		sizeBytes = d.roundVolumeBlockSizeBytes(vol, sizeBytes)
 
 		oldSizeBytesStr, err := d.getDatasetProperty(d.dataset(vol, false), "volsize")
 		if err != nil {
@@ -1814,6 +1848,23 @@ func (d *zfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 	}
 
 	return nil
+}
+
+// tryGetVolumeDiskPathFromDataset attempts to find the path of the block device for the given dataset.
+// It keeps retrying every half a second until the context is canceled or expires.
+func (d *zfs) tryGetVolumeDiskPathFromDataset(ctx context.Context, dataset string) (string, error) {
+	for {
+		if ctx.Err() != nil {
+			return "", fmt.Errorf("Failed to locate zvol for %q: %w", dataset, ctx.Err())
+		}
+
+		diskPath, err := d.getVolumeDiskPathFromDataset(dataset)
+		if err == nil {
+			return diskPath, nil
+		}
+
+		time.Sleep(500 * time.Millisecond)
+	}
 }
 
 func (d *zfs) getVolumeDiskPathFromDataset(dataset string) (string, error) {
@@ -1996,6 +2047,9 @@ func (d *zfs) activateVolume(vol Volume) (bool, error) {
 		return false, nil // Nothing to do for non-block or non-block backed volumes.
 	}
 
+	reverter := revert.New()
+	defer reverter.Fail()
+
 	dataset := d.dataset(vol, false)
 
 	// Check if already active.
@@ -2011,11 +2065,20 @@ func (d *zfs) activateVolume(vol Volume) (bool, error) {
 			return false, err
 		}
 
-		// Wait half a second to give udev a chance to kick in.
-		time.Sleep(500 * time.Millisecond)
+		reverter.Add(func() { _ = d.setDatasetProperties(dataset, fmt.Sprintf("volmode=%s", current)) })
+
+		// Wait up to 30 seconds for the device to appear.
+		ctx, cancel := context.WithTimeout(d.state.ShutdownCtx, 30*time.Second)
+		defer cancel()
+
+		_, err := d.tryGetVolumeDiskPathFromDataset(ctx, dataset)
+		if err != nil {
+			return false, fmt.Errorf("Failed to activate volume: %v", err)
+		}
 
 		d.logger.Debug("Activated ZFS volume", logger.Ctx{"volName": vol.Name(), "dev": dataset})
 
+		reverter.Success()
 		return true, nil
 	}
 

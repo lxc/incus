@@ -508,7 +508,7 @@ func (d *zfs) Update(changedConfig map[string]string) error {
 			return err
 		}
 
-		_, err = subprocess.RunCommand("zpool", "online", "-e", d.name, loopPath)
+		_, err = subprocess.RunCommand("zpool", "online", "-e", d.config["zfs.pool_name"], loopPath)
 		if err != nil {
 			return err
 		}
@@ -756,4 +756,18 @@ func (d *zfs) parseSource() (string, []string) {
 	}
 
 	return vdevType, strings.Split(devices, ",")
+}
+
+// roundVolumeBlockSizeBytes returns sizeBytes rounded up to the next multiple
+// of `vol`'s "zfs.blocksize".
+func (d *zfs) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) int64 {
+	minBlockSize, err := units.ParseByteSizeString(vol.ExpandedConfig("zfs.blocksize"))
+
+	// minBlockSize will be 0 if zfs.blocksize=""
+	if minBlockSize <= 0 || err != nil {
+		// 16KiB is the default volblocksize
+		minBlockSize = 16 * 1024
+	}
+
+	return roundAbove(minBlockSize, sizeBytes)
 }

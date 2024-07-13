@@ -818,22 +818,54 @@ func (d *btrfs) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, 
 		// Configure the pipes.
 		receiver.Stdin, _ = sender.StdoutPipe()
 		receiver.Stdout = os.Stdout
-		receiver.Stderr = os.Stderr
+
+		var recvStderr bytes.Buffer
+		receiver.Stderr = &recvStderr
+
+		var sendStderr bytes.Buffer
+		sender.Stderr = &sendStderr
 
 		// Run the transfer.
-		err = receiver.Start()
+		err := receiver.Start()
 		if err != nil {
-			return fmt.Errorf("Failed to receive stream: %w", err)
+			return fmt.Errorf("Failed starting BTRFS receive: %w", err)
 		}
 
-		err = sender.Run()
+		err = sender.Start()
 		if err != nil {
-			return fmt.Errorf("Failed to send stream %q: %w", sender.String(), err)
+			_ = receiver.Process.Kill()
+			return fmt.Errorf("Failed starting BTRFS send: %w", err)
 		}
+
+		senderErr := make(chan error)
+		go func() {
+			err := sender.Wait()
+			if err != nil {
+				_ = receiver.Process.Kill()
+
+				// This removes any newlines in the error message.
+				msg := strings.ReplaceAll(strings.TrimSpace(sendStderr.String()), "\n", " ")
+
+				senderErr <- fmt.Errorf("Failed BTRFS send: %w (%s)", err, msg)
+				return
+			}
+
+			senderErr <- nil
+		}()
 
 		err = receiver.Wait()
 		if err != nil {
-			return fmt.Errorf("Failed to wait for receiver: %w", err)
+			_ = sender.Process.Kill()
+
+			// This removes any newlines in the error message.
+			msg := strings.ReplaceAll(strings.TrimSpace(recvStderr.String()), "\n", " ")
+
+			return fmt.Errorf("Failed BTRFS receive: %w (%s)", err, msg)
+		}
+
+		err = <-senderErr
+		if err != nil {
+			return err
 		}
 
 		return nil

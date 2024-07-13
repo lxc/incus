@@ -114,7 +114,7 @@ func NewDeviceType(t string) (DeviceType, error) {
 	case "pci":
 		return TypePCI, nil
 	default:
-		return -1, fmt.Errorf("Invalid device type %s", t)
+		return -1, fmt.Errorf("Invalid device type %q", t)
 	}
 }
 

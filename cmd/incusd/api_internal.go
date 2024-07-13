@@ -654,7 +654,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 
 	if backupConf.Pool == nil {
 		// We don't know what kind of storage type the pool is.
-		return fmt.Errorf(`No storage pool struct in the backup file found. The storage pool needs to be recovered manually`)
+		return fmt.Errorf("No storage pool struct in the backup file found. The storage pool needs to be recovered manually")
 	}
 
 	// Try to retrieve the storage pool the instance supposedly lives on.

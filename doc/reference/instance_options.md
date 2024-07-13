@@ -173,7 +173,7 @@ Limiting huge pages is done through the `hugetlb` cgroup controller, which means
 (instance-options-limits-kernel)=
 ### Kernel resource limits
 
-Incus exposes a generic namespaced key `limits.kernel.*` that can be used to set resource limits for an instance.
+For container instances, Incus exposes a generic namespaced key `limits.kernel.*` that can be used to set resource limits.
 
 It is generic in the sense that Incus does not perform any validation on the resource that is specified following the `limits.kernel.*` prefix.
 Incus cannot know about all the possible resources that a given kernel supports.
@@ -197,7 +197,7 @@ For example, `RLIMIT_NOFILE` should be specified as `nofile`.
 A limit is specified as two colon-separated values that are either numeric or the word `unlimited` (for example, `limits.kernel.nofile=1000:2000`).
 A single value can be used as a shortcut to set both soft and hard limit to the same value (for example, `limits.kernel.nofile=3000`).
 
-A resource with no explicitly configured limit will inherit its limit from the process that starts up the instance.
+A resource with no explicitly configured limit will inherit its limit from the process that starts up the container.
 Note that this inheritance is not enforced by Incus but by the kernel.
 
 (instance-options-migration)=

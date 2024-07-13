@@ -87,6 +87,13 @@ cleanup() {
   echo "df -h output:"
   df -h
 
+  if [ "${TEST_RESULT}" != "success" ]; then
+    # dmesg may contain oops, IO errors, crashes, etc
+    echo "::group::dmesg logs"
+    journalctl --quiet --no-hostname --no-pager --boot=0 --lines=100 --dmesg
+    echo "::endgroup::"
+  fi
+
   if [ -n "${GITHUB_ACTIONS:-}" ]; then
     echo "==> Skipping cleanup (GitHub Action runner detected)"
   else
@@ -293,6 +300,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_image_acl "image acl"
     run_test test_cloud_init "cloud-init"
     run_test test_exec "exec"
+    run_test test_exec_exit_code "exec exit code"
     run_test test_concurrent_exec "concurrent exec"
     run_test test_concurrent "concurrent startup"
     run_test test_snapshots "container snapshots"

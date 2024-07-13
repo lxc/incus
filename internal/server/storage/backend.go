@@ -916,6 +916,12 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 			return err
 		}
 
+		// Save any changes that have occurred to the instance's config to the on-disk backup.yaml file.
+		err = b.UpdateInstanceBackupFile(inst, false, op)
+		if err != nil {
+			return fmt.Errorf("Failed updating backup file: %w", err)
+		}
+
 		// If the driver returned a post hook, run it now.
 		if volPostHook != nil {
 			// Initialize new volume containing root disk config supplied in instance.
@@ -4563,13 +4569,7 @@ func (b *backend) CreateCustomVolume(projectName string, volName string, desc st
 
 	// Get the volume name on storage.
 	volStorageName := project.StorageVolume(projectName, volName)
-
-	// Validate config.
 	vol := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageName, config)
-	err = b.driver.ValidateVolume(vol, false)
-	if err != nil {
-		return err
-	}
 
 	storagePoolSupported := false
 	for _, supportedType := range b.Driver().Info().VolumeTypes {
@@ -5360,7 +5360,7 @@ func (b *backend) UpdateCustomVolume(projectName string, volName string, newDesc
 
 		// Check that the volume's block.filesystem property isn't being changed.
 		if changedConfig["block.filesystem"] != "" {
-			return fmt.Errorf("Custom volume 'block.filesystem' property cannot be changed")
+			return fmt.Errorf(`Custom volume "block.filesystem" property cannot be changed`)
 		}
 
 		// Check for config changing that is not allowed when running instances are using it.
@@ -6941,13 +6941,13 @@ func (b *backend) BackupCustomVolume(projectName string, volName string, tarWrit
 	l.Debug("BackupCustomVolume started")
 	defer l.Debug("BackupCustomVolume finished")
 
-	// Get the volume name on storage.
-	volStorageName := project.StorageVolume(projectName, volName)
-
 	volume, err := VolumeDBGet(b, projectName, volName, drivers.VolumeTypeCustom)
 	if err != nil {
 		return err
 	}
+
+	// Get the volume name on storage.
+	volStorageName := project.StorageVolume(projectName, volume.Name)
 
 	contentDBType, err := VolumeContentTypeNameToContentType(volume.ContentType)
 	if err != nil {

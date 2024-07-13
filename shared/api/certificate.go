@@ -61,7 +61,7 @@ type CertificatePut struct {
 	// API extension: certificate_project
 	Projects []string `json:"projects" yaml:"projects"`
 
-	// The certificate itself, as PEM encoded X509
+	// The certificate itself, as PEM encoded X509 (or as base64 encoded X509 on POST)
 	// Example: X509 PEM certificate
 	//
 	// API extension: certificate_self_renewal
@@ -87,8 +87,8 @@ type Certificate struct {
 }
 
 // Writable converts a full Certificate struct into a CertificatePut struct (filters read-only fields).
-func (cert *Certificate) Writable() CertificatePut {
-	return cert.CertificatePut
+func (c *Certificate) Writable() CertificatePut {
+	return c.CertificatePut
 }
 
 // URL returns the URL for the certificate.

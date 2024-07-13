@@ -151,6 +151,10 @@ func validConfigKey(os *sys.OS, key string, value string, instanceType instancet
 		return err
 	}
 
+	if strings.HasPrefix(key, "limits.kernel.") && instanceType == instancetype.VM {
+		return fmt.Errorf("%s isn't supported for VMs", key)
+	}
+
 	if key == "raw.lxc" {
 		return lxcValidConfig(value)
 	}

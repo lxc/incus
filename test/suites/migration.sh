@@ -295,8 +295,48 @@ migration() {
   incus_remote copy l1:c1 l2:c2 --refresh
   incus_remote start l2:c2
   incus_remote file pull l2:c2/root/testfile1 .
+  [ "$(cat testfile1)" = "test" ]
   rm testfile1
   incus_remote stop -f l2:c2
+
+  # Change the files modification time by adding one nanosecond.
+  # Perform the change on the test runner since the busybox instances `touch` doesn't support setting nanoseconds.
+  incus_remote start l1:c1
+  c1_pid="$(incus_remote query l1:/1.0/instances/c1?recursion=1 | jq -r .state.pid)"
+  mtime_old="$(stat -c %y "/proc/${c1_pid}/root/root/testfile1")"
+  mtime_old_ns="$(date -d "$mtime_old" +%N | sed 's/^0*//')"
+
+  # Ensure the final nanoseconds are padded with zeros to create a valid format.
+  mtime_new_ns="$(printf "%09d\n" "$((mtime_old_ns+1))")"
+  mtime_new="$(date -d "$mtime_old" "+%Y-%m-%d %H:%M:%S.${mtime_new_ns} %z")"
+  incus_remote stop -f l1:c1
+
+  # Before setting the new mtime create a local copy too.
+  incus_remote copy l1:c1 l1:c2
+
+  # Change the modification time.
+  incus_remote start l1:c1
+  c1_pid="$(incus_remote query l1:/1.0/instances/c1?recursion=1 | jq -r .state.pid)"
+  touch -m -d "$mtime_new" "/proc/${c1_pid}/root/root/testfile1"
+  incus_remote stop -f l1:c1
+
+  # Starting from rsync 3.1.3 it should discover the change of +1 nanosecond.
+  # Check if the file got refreshed to a different remote.
+  incus_remote copy l1:c1 l2:c2 --refresh
+  incus_remote start l1:c1 l2:c2
+  c1_pid="$(incus_remote query l1:/1.0/instances/c1?recursion=1 | jq -r .state.pid)"
+  c2_pid="$(incus_remote query l2:/1.0/instances/c2?recursion=1 | jq -r .state.pid)"
+  [ "$(stat "/proc/${c1_pid}/root/root/testfile1" -c %y)" = "$(stat "/proc/${c2_pid}/root/root/testfile1" -c %y)" ]
+  incus_remote stop -f l1:c1 l2:c2
+
+  # Check if the file got refreshed locally.
+  incus_remote copy l1:c1 l1:c2 --refresh
+  incus_remote start l1:c1 l1:c2
+  c1_pid="$(incus_remote query l1:/1.0/instances/c1?recursion=1 | jq -r .state.pid)"
+  c2_pid="$(incus_remote query l1:/1.0/instances/c2?recursion=1 | jq -r .state.pid)"
+  [ "$(stat "/proc/${c1_pid}/root/root/testfile1" -c %y)" = "$(stat "/proc/${c2_pid}/root/root/testfile1" -c %y)" ]
+  incus_remote rm -f l1:c2
+  incus_remote stop -f l1:c1
 
   # This will create snapshot c1/snap0 with test device and expiry date.
   incus_remote config device add l1:c1 testsnapdev none

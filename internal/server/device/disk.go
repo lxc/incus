@@ -2697,3 +2697,29 @@ func (d *disk) cephCreds() (string, string) {
 
 	return clusterName, userName
 }
+
+// Remove cleans up the device when it is removed from an instance.
+func (d *disk) Remove() error {
+	// Remove the config.iso file for cloud-init config drives.
+	if d.config["source"] == diskSourceCloudInit {
+		pool, err := storagePools.LoadByInstance(d.state, d.inst)
+		if err != nil {
+			return err
+		}
+
+		_, err = pool.MountInstance(d.inst, nil)
+		if err != nil {
+			return err
+		}
+
+		defer func() { _ = pool.UnmountInstance(d.inst, nil) }()
+
+		isoPath := filepath.Join(d.inst.Path(), "config.iso")
+		err = os.Remove(isoPath)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("Failed removing %s file: %w", diskSourceCloudInit, err)
+		}
+	}
+
+	return nil
+}

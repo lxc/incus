@@ -654,7 +654,7 @@ func inRoutingTable(subnet *net.IPNet) bool {
 		// Get the mask
 		var mask net.IPMask
 		if filename == "ipv6_route" {
-			size, err := strconv.ParseInt(fmt.Sprintf("0x%s", fields[1]), 0, 64)
+			size, err := strconv.ParseInt(fields[1], 16, 0)
 			if err != nil {
 				continue
 			}

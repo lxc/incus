@@ -59,6 +59,12 @@ func StorageVolume(projectName string, storageVolumeName string) string {
 // name as separate variables.
 func StorageVolumeParts(projectStorageVolumeName string) (string, string) {
 	parts := strings.SplitN(projectStorageVolumeName, "_", 2)
+
+	// If the given name doesn't contain any project, only return the volume name.
+	if len(parts) == 1 {
+		return "", projectStorageVolumeName
+	}
+
 	return parts[0], parts[1]
 }
 
@@ -72,11 +78,6 @@ func StorageVolumeProject(c *db.Cluster, projectName string, volumeType int) (st
 	// Optimisation to avoid loading project record.
 	if volumeType == db.StoragePoolVolumeTypeImage {
 		return api.ProjectDefaultName, nil
-	}
-
-	// Non-custom volumes always use the project specified. Optimisation to avoid loading project record.
-	if volumeType != db.StoragePoolVolumeTypeCustom {
-		return projectName, nil
 	}
 
 	var project *api.Project

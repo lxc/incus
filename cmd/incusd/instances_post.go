@@ -738,7 +738,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 
 		inst, err := instance.LoadByProjectAndName(s, bInfo.Project, bInfo.Name)
 		if err != nil {
-			return fmt.Errorf("Load instance: %w", err)
+			return fmt.Errorf("Failed loading instance: %w", err)
 		}
 
 		// Clean up created instance if the post hook fails below.

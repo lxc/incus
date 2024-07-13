@@ -743,7 +743,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 
 					return nil
 				})
-				if err != nil && err.Error() != "This certificate already exists" {
+				if err != nil && !api.StatusErrorCheck(err, http.StatusConflict) {
 					return fmt.Errorf("Failed adding local trusted certificate %q (%s): %w", trustedCert.Name, trustedCert.Fingerprint, err)
 				}
 			}

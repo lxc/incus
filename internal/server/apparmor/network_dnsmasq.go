@@ -34,6 +34,9 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   {{ .varPath }}/networks/{{ .networkName }}/dnsmasq.leases rw,
   {{ .varPath }}/networks/{{ .networkName }}/dnsmasq.raw r,
 
+  # Allow to restart dnsmasq
+  signal (receive) set=("hup","kill"),
+
   # Logging path
   {{ .logPath }}/dnsmasq.{{ .networkName }}.log rw,
 
