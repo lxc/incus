@@ -21,6 +21,11 @@ Simple streams servers
   No special software is required to run such a server as it's only made of static files.
   The default `images:` server uses simplestreams.
 
+OCI registries
+: Application container registries that server OCI images.
+
+  The most common such registry is the `Docker Hub` that can be added with `incus remote add docker https://docker.io --protocol=oci`
+
 Public Incus servers
 : Incus servers that are used solely to serve images and do not run instances themselves.
 

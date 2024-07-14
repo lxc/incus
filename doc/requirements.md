@@ -37,6 +37,11 @@ Incus requires LXC 5.0.0 or higher with the following build options:
 To run recent version of various distributions, including Ubuntu, LXCFS
 should also be installed.
 
+## OCI
+
+To run OCI containers, Incus currently rely on both `skopeo` and `umoci`.
+Both tools should be available in the user's `PATH`.
+
 ## QEMU
 
 For virtual machines, QEMU 6.0 or higher is required.
