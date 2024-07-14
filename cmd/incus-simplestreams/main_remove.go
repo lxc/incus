@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -12,6 +13,8 @@ import (
 
 type cmdRemove struct {
 	global *cmdGlobal
+
+	flagVerbose bool
 }
 
 // Command generates the command definition.
@@ -25,8 +28,22 @@ func (c *cmdRemove) Command() *cobra.Command {
 This command locates the image from its fingerprint and removes it from the index.
 `)
 	cmd.RunE = c.Run
+	cmd.Flags().BoolVarP(&c.flagVerbose, "verbose", "v", false, "Show all information messages")
 
 	return cmd
+}
+
+func (c *cmdRemove) remove(path string) error {
+	if c.flagVerbose {
+		fmt.Printf("deleting: %s\n", path)
+	}
+
+	err := os.Remove(path)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	return nil
 }
 
 // Run runs the actual command logic.
@@ -67,47 +84,59 @@ func (c *cmdRemove) Run(cmd *cobra.Command, args []string) error {
 		for kVersion, version := range product.Versions {
 			// Get the metadata entry.
 			metaEntry, ok := version.Items["incus.tar.xz"]
-			if !ok {
-				// Image isn't using our normal structure.
-				continue
-			}
+			if ok {
+				if metaEntry.CombinedSha256DiskKvmImg == image.Fingerprint {
+					// Deleting a VM image.
+					err = c.remove(version.Items["disk-kvm.img"].Path)
+					if err != nil {
+						return err
+					}
 
-			if metaEntry.CombinedSha256DiskKvmImg == image.Fingerprint {
-				// Deleting a VM image.
-				err = os.Remove(version.Items["disk-kvm.img"].Path)
-				if err != nil && !os.IsNotExist(err) {
-					return err
+					delete(version.Items, "disk-kvm.img")
+					metaEntry.CombinedSha256DiskKvmImg = ""
+				} else if metaEntry.CombinedSha256SquashFs == image.Fingerprint {
+					// Deleting a container image.
+					err = c.remove(version.Items["squashfs"].Path)
+					if err != nil && !os.IsNotExist(err) {
+						return err
+					}
+
+					delete(version.Items, "squashfs")
+					metaEntry.CombinedSha256SquashFs = ""
+				} else {
+					continue
 				}
 
-				delete(version.Items, "disk-kvm.img")
-				metaEntry.CombinedSha256DiskKvmImg = ""
-			} else if metaEntry.CombinedSha256SquashFs == image.Fingerprint {
-				// Deleting a container image.
-				err = os.Remove(version.Items["squashfs"].Path)
-				if err != nil && !os.IsNotExist(err) {
-					return err
-				}
+				// Update the metadata entry.
+				version.Items["incus.tar.xz"] = metaEntry
 
-				delete(version.Items, "squashfs")
-				metaEntry.CombinedSha256SquashFs = ""
-			} else {
-				continue
+				// Delete the version if it's now empty.
+				if len(version.Items) == 1 {
+					err = c.remove(metaEntry.Path)
+					if err != nil {
+						return err
+					}
+
+					delete(product.Versions, kVersion)
+				}
 			}
 
-			// Update the metadata entry.
-			version.Items["incus.tar.xz"] = metaEntry
+			metaEntry, ok = version.Items["incus_combined.tar.gz"]
+			if ok {
+				if metaEntry.HashSha256 == image.Fingerprint {
+					err = c.remove(metaEntry.Path)
+					if err != nil {
+						return err
+					}
 
-			// Delete the version if it's now empty.
-			if len(version.Items) == 1 {
-				err = os.Remove(metaEntry.Path)
-				if err != nil && !os.IsNotExist(err) {
-					return err
+					delete(version.Items, "incus_combined.tar.gz")
 				}
 
-				delete(product.Versions, kVersion)
+				// Delete the version if it's now empty.
+				if len(version.Items) == 0 {
+					delete(product.Versions, kVersion)
+				}
 			}
-
-			break
 		}
 
 		if len(product.Versions) == 0 {
