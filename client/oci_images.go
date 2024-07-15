@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -55,6 +56,11 @@ func (r *ProtocolOCI) GetImagesWithFilter(filters []string) ([]api.Image, error)
 func (r *ProtocolOCI) GetImage(fingerprint string) (*api.Image, string, error) {
 	info, ok := r.cache[fingerprint]
 	if !ok {
+		_, err := exec.LookPath("skopeo")
+		if err != nil {
+			return nil, "", fmt.Errorf("OCI container handling requires \"skopeo\" be present on the system")
+		}
+
 		return nil, "", fmt.Errorf("Image not found")
 	}
 
@@ -93,6 +99,11 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 
 	info, ok := r.cache[fingerprint]
 	if !ok {
+		_, err := exec.LookPath("skopeo")
+		if err != nil {
+			return nil, fmt.Errorf("OCI container handling requires \"skopeo\" be present on the system")
+		}
+
 		return nil, fmt.Errorf("Image not found")
 	}
 
@@ -103,6 +114,11 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 
 	if os.Geteuid() != 0 {
 		return nil, fmt.Errorf("OCI image export currently requires root access")
+	}
+
+	_, err := exec.LookPath("umoci")
+	if err != nil {
+		return nil, fmt.Errorf("OCI container handling requires \"umoci\" be present on the system")
 	}
 
 	// Get some temporary storage.

@@ -190,6 +190,9 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, r *http.Reques
 
 	// If dealing with an OCI image, parse the configuration.
 	if args.Type == instancetype.Container && inst.LocalConfig()["image.type"] == "oci" {
+		// Reset the config to the post-generation one.
+		args.Config = inst.LocalConfig()
+
 		// Mount the instance.
 		_, err = pool.MountInstance(inst, nil)
 		if err != nil {
