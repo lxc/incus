@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -73,6 +74,11 @@ func (r *ProtocolOCI) GetImagesWithFilter(filters []string) ([]api.Image, error)
 func (r *ProtocolOCI) GetImage(fingerprint string) (*api.Image, string, error) {
 	info, ok := r.cache[fingerprint]
 	if !ok {
+		_, err := exec.LookPath("skopeo")
+		if err != nil {
+			return nil, "", fmt.Errorf("OCI container handling requires \"skopeo\" be present on the system")
+		}
+
 		return nil, "", fmt.Errorf("Image not found")
 	}
 
@@ -127,6 +133,11 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 	// Get the cached entry.
 	info, ok := r.cache[fingerprint]
 	if !ok {
+		_, err := exec.LookPath("skopeo")
+		if err != nil {
+			return nil, fmt.Errorf("OCI container handling requires \"skopeo\" be present on the system")
+		}
+
 		return nil, fmt.Errorf("Image not found")
 	}
 
