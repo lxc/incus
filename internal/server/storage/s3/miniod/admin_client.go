@@ -101,7 +101,7 @@ func (c *AdminClient) isMinIOClient() bool {
 		return false
 	}
 
-	if !strings.Contains(lines[0], "mc version") {
+	if !strings.Contains(lines[0], "mc version") && !strings.Contains(lines[0], "mcli version") {
 		return false
 	}
 
