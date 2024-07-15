@@ -107,6 +107,11 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		return nil, fmt.Errorf("OCI image export currently requires root access")
 	}
 
+	_, err := exec.LookPath("umoci")
+	if err != nil {
+		return nil, fmt.Errorf("OCI container handling requires \"umoci\" be present on the system")
+	}
+
 	// Get some temporary storage.
 	ociPath, err := os.MkdirTemp("", "incus-oci-")
 	if err != nil {
