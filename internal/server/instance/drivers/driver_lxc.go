@@ -2357,6 +2357,35 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			return "", nil, err
 		}
 
+		// Get all mounts so far.
+		lxcMounts := []string{"/dev", "/proc", "/sys", "/sys/fs/cgroup"}
+		for _, mount := range cc.ConfigItem("lxc.mount.entry") {
+			fields := strings.Split(mount, " ")
+			if len(fields) < 2 || fields[1][0] == '/' {
+				continue
+			}
+
+			lxcMounts = append(lxcMounts, fmt.Sprintf("/%s", fields[1]))
+		}
+
+		// Configure mounts.
+		for _, mount := range config.Mounts {
+			// We only support simple tmpfs at this stage.
+			if len(mount.UIDMappings) > 0 || len(mount.GIDMappings) > 0 || mount.Type != "tmpfs" {
+				continue
+			}
+
+			// Skip all our own mounts.
+			if slices.Contains(lxcMounts, mount.Destination) {
+				continue
+			}
+
+			err := lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s %s %s %s 0 0", mount.Source, strings.TrimLeft(mount.Destination, "/"), mount.Type, strings.Join(append(mount.Options, "create=dir"), ",")))
+			if err != nil {
+				return "", nil, err
+			}
+		}
+
 		// Configure network handling.
 		err = os.MkdirAll(filepath.Join(d.Path(), "network"), 0711)
 		if err != nil {
