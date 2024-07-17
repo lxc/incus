@@ -2328,9 +2328,18 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		}
 
 		// Configure the entry point.
-		err = lxcSetConfigItem(cc, "lxc.execute.cmd", shellquote.Join(config.Process.Args...))
-		if err != nil {
-			return "", nil, err
+		if len(config.Process.Args) > 0 && slices.Contains([]string{"/sbin/init", "/s6-init"}, config.Process.Args[0]) {
+			// For regular init systems, call them directly as PID1.
+			err = lxcSetConfigItem(cc, "lxc.init.cmd", shellquote.Join(config.Process.Args...))
+			if err != nil {
+				return "", nil, err
+			}
+		} else {
+			// For anything else, run them under our own PID1.
+			err = lxcSetConfigItem(cc, "lxc.execute.cmd", shellquote.Join(config.Process.Args...))
+			if err != nil {
+				return "", nil, err
+			}
 		}
 
 		err = lxcSetConfigItem(cc, "lxc.init.cwd", config.Process.Cwd)
@@ -2346,6 +2355,35 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		err = lxcSetConfigItem(cc, "lxc.init.gid", fmt.Sprintf("%d", config.Process.User.GID))
 		if err != nil {
 			return "", nil, err
+		}
+
+		// Get all mounts so far.
+		lxcMounts := []string{"/dev", "/proc", "/sys", "/sys/fs/cgroup"}
+		for _, mount := range cc.ConfigItem("lxc.mount.entry") {
+			fields := strings.Split(mount, " ")
+			if len(fields) < 2 || fields[1][0] == '/' {
+				continue
+			}
+
+			lxcMounts = append(lxcMounts, fmt.Sprintf("/%s", fields[1]))
+		}
+
+		// Configure mounts.
+		for _, mount := range config.Mounts {
+			// We only support simple tmpfs at this stage.
+			if len(mount.UIDMappings) > 0 || len(mount.GIDMappings) > 0 || mount.Type != "tmpfs" {
+				continue
+			}
+
+			// Skip all our own mounts.
+			if slices.Contains(lxcMounts, mount.Destination) {
+				continue
+			}
+
+			err := lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s %s %s %s 0 0", mount.Source, strings.TrimLeft(mount.Destination, "/"), mount.Type, strings.Join(append(mount.Options, "create=dir"), ",")))
+			if err != nil {
+				return "", nil, err
+			}
 		}
 
 		// Configure network handling.
