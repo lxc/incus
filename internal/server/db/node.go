@@ -161,12 +161,12 @@ func (n NodeInfo) ToAPI(ctx context.Context, tx *ClusterTx, args NodeInfoArgs) (
 		}
 
 		// Check if up to date.
-		n, err := localUtil.CompareVersions(maxVersion, n.Version())
+		ret, err := localUtil.CompareVersions(maxVersion, n.Version(), true)
 		if err != nil {
 			return nil, err
 		}
 
-		if n == 1 {
+		if ret == 1 {
 			result.Status = "Blocked"
 			result.Message = "Needs updating to newer version"
 		}
@@ -341,7 +341,7 @@ func (c *ClusterTx) NodeIsOutdated(ctx context.Context) (bool, error) {
 			continue
 		}
 
-		n, err := localUtil.CompareVersions(node.Version(), version)
+		n, err := localUtil.CompareVersions(node.Version(), version, true)
 		if err != nil {
 			return false, fmt.Errorf("Failed to compare with version of member %s: %w", node.Name, err)
 		}
