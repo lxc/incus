@@ -1014,7 +1014,7 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Connect to the local server.
-		target, err := incus.ConnectIncusUnix(s.OS.GetUnixSocket(), nil)
+		target, err := incus.ConnectIncusUnix("", nil)
 		if err != nil {
 			return response.InternalError(err)
 		}

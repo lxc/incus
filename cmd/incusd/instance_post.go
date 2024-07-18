@@ -564,7 +564,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 	// Handle pool and project moves.
 	if req.Project != "" || req.Pool != "" {
 		// Get a local client.
-		target, err := incus.ConnectIncusUnix(s.OS.GetUnixSocket(), nil)
+		target, err := incus.ConnectIncusUnix("", nil)
 		if err != nil {
 			return err
 		}
