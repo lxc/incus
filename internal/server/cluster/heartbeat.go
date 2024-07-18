@@ -46,8 +46,9 @@ type APIHeartbeatMember struct {
 
 // APIHeartbeatVersion contains max versions for all nodes in cluster.
 type APIHeartbeatVersion struct {
-	Schema        int
-	APIExtensions int
+	Schema           int
+	APIExtensions    int
+	MinAPIExtensions int
 }
 
 // NewAPIHearbeat returns initialized APIHeartbeat.
@@ -74,7 +75,7 @@ type APIHeartbeat struct {
 // Update updates an existing APIHeartbeat struct with the raft and all node states supplied.
 // If allNodes provided is an empty set then this is considered a non-full state list.
 func (hbState *APIHeartbeat) Update(fullStateList bool, raftNodes []db.RaftNode, allNodes []db.NodeInfo, offlineThreshold time.Duration) {
-	var maxSchemaVersion, maxAPIExtensionsVersion int
+	var maxSchemaVersion, maxAPIExtensionsVersion, minAPIExtensionsVersion int
 
 	if hbState.Members == nil {
 		hbState.Members = make(map[int64]APIHeartbeatMember)
@@ -115,14 +116,19 @@ func (hbState *APIHeartbeat) Update(fullStateList bool, raftNodes []db.RaftNode,
 			maxAPIExtensionsVersion = node.APIExtensions
 		}
 
+		if minAPIExtensionsVersion == 0 || node.APIExtensions < minAPIExtensionsVersion {
+			minAPIExtensionsVersion = node.APIExtensions
+		}
+
 		if node.Schema > maxSchemaVersion {
 			maxSchemaVersion = node.Schema
 		}
 	}
 
 	hbState.Version = APIHeartbeatVersion{
-		Schema:        maxSchemaVersion,
-		APIExtensions: maxAPIExtensionsVersion,
+		Schema:           maxSchemaVersion,
+		APIExtensions:    maxAPIExtensionsVersion,
+		MinAPIExtensions: minAPIExtensionsVersion,
 	}
 
 	if len(raftNodeMap) > 0 && hbState.cluster != nil {
