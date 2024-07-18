@@ -28,6 +28,8 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   # Network access
   network inet raw,
   network inet6 raw,
+  network unix stream,
+  network unix dgram,
 
   # Network-specific paths
   {{ .varPath }}/networks/{{ .networkName }}/dnsmasq.hosts/{,*} r,
