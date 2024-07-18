@@ -223,7 +223,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 	}
 
 	srv := api.ServerUntrusted{
-		APIExtensions: version.APIExtensions,
+		APIExtensions: version.APIExtensions[:d.apiExtensions],
 		APIStatus:     "stable",
 		APIVersion:    version.APIVersion,
 		Public:        false,

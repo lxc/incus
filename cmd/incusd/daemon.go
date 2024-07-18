@@ -168,6 +168,9 @@ type Daemon struct {
 	// OVN clients.
 	ovnnb *ovn.NB
 	ovnsb *ovn.SB
+
+	// API info.
+	apiExtensions int
 }
 
 // DaemonConfig holds configuration values for Daemon.
@@ -197,6 +200,7 @@ func newDaemon(config *DaemonConfig, os *sys.OS) *Daemon {
 		shutdownCtx:    shutdownCtx,
 		shutdownCancel: shutdownCancel,
 		shutdownDoneCh: make(chan error),
+		apiExtensions:  len(version.APIExtensions),
 	}
 
 	d.serverCert = func() *localtls.CertInfo { return d.serverCertInt }
@@ -2382,6 +2386,10 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 	if !heartbeatData.FullStateList || len(heartbeatData.Members) <= 0 {
 		logger.Error("Heartbeat member refresh task called with partial state list", logger.Ctx{"local": localClusterAddress})
 		return
+	}
+
+	if heartbeatData.Version.MinAPIExtensions > 0 && heartbeatData.Version.MinAPIExtensions != d.apiExtensions {
+		d.apiExtensions = heartbeatData.Version.MinAPIExtensions
 	}
 
 	// If the max version of the cluster has changed, check whether we need to upgrade.
