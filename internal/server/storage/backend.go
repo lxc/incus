@@ -1686,7 +1686,7 @@ func (b *backend) imageFiller(fingerprint string, op *operations.Operation) func
 			metadata := make(map[string]any)
 			tracker = &ioprogress.ProgressTracker{
 				Handler: func(percent, speed int64) {
-					operations.SetProgressMetadata(metadata, "create_instance_from_image_unpack", "Unpack", percent, 0, speed)
+					operations.SetProgressMetadata(metadata, "create_instance_from_image_unpack", "Unpacking image", percent, 0, speed)
 					_ = op.UpdateMetadata(metadata)
 				}}
 		}
