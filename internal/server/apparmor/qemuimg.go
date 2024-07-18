@@ -7,8 +7,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/lxc/incus/v6/internal/server/sys"
 	"github.com/lxc/incus/v6/shared/ioprogress"
@@ -108,6 +110,35 @@ func QemuImg(sysOS *sys.OS, cmd []string, imgPath string, dstPath string, tracke
 	err = p.Start(context.Background())
 	if err != nil {
 		return "", fmt.Errorf("Failed running qemu-img: %w", err)
+	}
+
+	if tracker != nil && tracker.Handler != nil {
+		go func() {
+			for {
+				time.Sleep(200 * time.Millisecond)
+
+				err := p.Signal(10)
+				if err != nil {
+					return
+				}
+
+				time.Sleep(200 * time.Millisecond)
+
+				output := buffer.String()
+				lines := strings.Split(output, "\n")
+				if len(lines) < 2 {
+					continue
+				}
+
+				lastLine := lines[len(lines)-2]
+				percent, err := strconv.ParseInt(strings.Split(strings.Split(strings.TrimLeft(lastLine, " ("), "/")[0], ".")[0], 10, 64)
+				if err != nil {
+					continue
+				}
+
+				tracker.Handler(percent, 0)
+			}
+		}()
 	}
 
 	_, err = p.Wait(context.Background())
