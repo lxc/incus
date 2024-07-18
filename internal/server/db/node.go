@@ -91,7 +91,6 @@ type NodeInfoArgs struct {
 // ToAPI returns an API entry.
 func (n NodeInfo) ToAPI(ctx context.Context, tx *ClusterTx, args NodeInfoArgs) (*api.ClusterMember, error) {
 	var err error
-	var maxVersion [2]int
 	var failureDomain string
 
 	domainID := args.MemberFailureDomains[n.Address]
@@ -155,6 +154,12 @@ func (n NodeInfo) ToAPI(ctx context.Context, tx *ClusterTx, args NodeInfoArgs) (
 		result.Status = "Offline"
 		result.Message = fmt.Sprintf("No heartbeat for %s (%s)", time.Since(n.Heartbeat), n.Heartbeat)
 	} else {
+		// Check for max DB schema and API extensions.
+		maxVersion, err := tx.GetNodeMaxVersion(ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		// Check if up to date.
 		n, err := localUtil.CompareVersions(maxVersion, n.Version())
 		if err != nil {
