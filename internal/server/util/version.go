@@ -15,9 +15,15 @@ import (
 // Return an error if inconsistent versions are detected, for example the first
 // member's schema is greater than the second's, but the number of extensions is
 // smaller.
-func CompareVersions(version1, version2 [2]int) (int, error) {
+func CompareVersions(version1, version2 [2]int, checkExtensions bool) (int, error) {
 	schema1, extensions1 := version1[0], version1[1]
 	schema2, extensions2 := version2[0], version2[1]
+
+	if !checkExtensions {
+		// Don't compare API extensions.
+		extensions1 = 0
+		extensions2 = 0
+	}
 
 	if schema1 == schema2 && extensions1 == extensions2 {
 		return 0, nil

@@ -250,7 +250,8 @@ func checkClusterIsUpgradable(ctx context.Context, tx *sql.Tx, target [2]int) er
 	}
 
 	for _, version := range versions {
-		n, err := daemonUtil.CompareVersions(target, version)
+		// Compare schema versions only.
+		n, err := daemonUtil.CompareVersions(target, version, false)
 		if err != nil {
 			return err
 		}
