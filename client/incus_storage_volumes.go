@@ -983,6 +983,10 @@ func (r *ProtocolIncus) CreateStoragePoolVolumeFromISO(pool string, args Storage
 		return nil, err
 	}
 
+	if args.Name == "" {
+		return nil, fmt.Errorf("Missing volume name")
+	}
+
 	path := fmt.Sprintf("/storage-pools/%s/volumes/custom", url.PathEscape(pool))
 
 	// Prepare the HTTP request.
@@ -996,10 +1000,7 @@ func (r *ProtocolIncus) CreateStoragePoolVolumeFromISO(pool string, args Storage
 		return nil, err
 	}
 
-	if args.Name == "" {
-		return nil, fmt.Errorf("Missing volume name")
-	}
-
+	req.GetBody = func() (io.ReadCloser, error) { return io.NopCloser(args.BackupFile), nil }
 	req.Header.Set("Content-Type", "application/octet-stream")
 	req.Header.Set("X-Incus-name", args.Name)
 	req.Header.Set("X-Incus-type", "iso")
@@ -1057,6 +1058,7 @@ func (r *ProtocolIncus) CreateStoragePoolVolumeFromBackup(pool string, args Stor
 		return nil, err
 	}
 
+	req.GetBody = func() (io.ReadCloser, error) { return io.NopCloser(args.BackupFile), nil }
 	req.Header.Set("Content-Type", "application/octet-stream")
 
 	if args.Name != "" {
