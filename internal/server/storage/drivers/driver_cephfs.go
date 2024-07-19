@@ -87,7 +87,7 @@ func (d *cephfs) Info() Info {
 		PreservesInodes:              false,
 		Remote:                       d.isRemote(),
 		VolumeTypes:                  []VolumeType{VolumeTypeCustom},
-		VolumeMultiNode:              true,
+		VolumeMultiNode:              d.isRemote(),
 		BlockBacking:                 false,
 		RunningCopyFreeze:            false,
 		DirectIO:                     true,
