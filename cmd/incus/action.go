@@ -430,6 +430,19 @@ func (c *cmdAction) Run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf(i18n.G("--console can't be used with --all"))
 		}
 
+		if len(names) > 1 {
+			idx := slices.Index(names, "vga")
+			idx2 := slices.Index(names, "console")
+			if idx == -1 || (idx2 != -1 && idx > idx2) {
+				idx = idx2
+			}
+
+			if idx != -1 {
+				c.flagConsole = names[idx]
+				names = append(names[0:idx], names[idx+1:]...)
+			}
+		}
+
 		if len(names) != 1 {
 			return fmt.Errorf(i18n.G("--console only works with a single instance"))
 		}
