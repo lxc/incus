@@ -149,9 +149,18 @@ func ConnectIfVolumeIsRemote(s *state.State, poolName string, projectName string
 			return nil, err
 		}
 
-		remoteInstance, err := storagePools.VolumeUsedByExclusiveRemoteInstancesWithProfiles(s, poolName, projectName, &dbVolume.StorageVolume)
-		if err != nil {
-			return nil, fmt.Errorf("Failed checking if volume %q is available: %w", volumeName, err)
+		// Find if volume is attached to a remote instance.
+		var remoteInstance *db.InstanceArgs
+		err = storagePools.VolumeUsedByInstanceDevices(s, poolName, projectName, &dbVolume.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
+			if dbInst.Node != s.ServerName {
+				remoteInstance = &dbInst
+				return db.ErrInstanceListStop // Stop the search, this volume is attached to a remote instance.
+			}
+
+			return nil
+		})
+		if err != nil && err != db.ErrInstanceListStop {
+			return nil, err
 		}
 
 		if remoteInstance != nil {
