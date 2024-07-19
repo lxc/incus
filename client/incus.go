@@ -151,7 +151,21 @@ func (r *ProtocolIncus) DoHTTP(req *http.Request) (*http.Response, error) {
 		return r.oidcClient.do(req)
 	}
 
-	return r.http.Do(req)
+	resp, err := r.http.Do(req)
+	if resp != nil && resp.StatusCode == http.StatusUseProxy && req.GetBody != nil {
+		// Reset the request body.
+		body, err := req.GetBody()
+		if err != nil {
+			return nil, err
+		}
+
+		req.Body = body
+
+		// Retry the request.
+		return r.http.Do(req)
+	}
+
+	return resp, err
 }
 
 // DoWebsocket performs a websocket connection, using OIDC authentication if set.
