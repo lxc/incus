@@ -964,8 +964,10 @@ func VolumeUsedByExclusiveRemoteInstancesWithProfiles(s *state.State, poolName s
 
 	info := pool.Driver().Info()
 
-	// Always return nil if the storage driver supports mounting volumes on multiple nodes at once.
-	if info.VolumeMultiNode {
+	// Always return nil if the storage driver supports mounting volumes
+	// on multiple nodes at once and we're not dealing with a filesystem volume
+	// on top of a block device.
+	if info.VolumeMultiNode && !(info.BlockBacking && vol.ContentType == "filesystem") {
 		return nil, nil
 	}
 
