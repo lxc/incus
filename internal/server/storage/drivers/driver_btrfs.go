@@ -101,6 +101,7 @@ func (d *btrfs) Info() Info {
 		PreservesInodes:              !d.state.OS.RunningInUserNS,
 		Remote:                       d.isRemote(),
 		VolumeTypes:                  []VolumeType{VolumeTypeBucket, VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
+		VolumeMultiNode:              d.isRemote(),
 		BlockBacking:                 false,
 		RunningCopyFreeze:            false,
 		DirectIO:                     true,
