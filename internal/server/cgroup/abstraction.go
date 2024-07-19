@@ -1068,6 +1068,12 @@ func (cg *CGroup) GetIOStats() (map[string]*IOStats, error) {
 					continue
 				}
 
+				// Skip unknown devices.
+				if statPart == "(unknown)" {
+					devID = ""
+					continue
+				}
+
 				if strings.Contains(statPart, ":") {
 					// Store the last dev ID as this works around a kernel bug where multiple dev IDs could appear on a single line.
 					devID = statPart
