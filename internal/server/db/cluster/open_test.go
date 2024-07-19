@@ -55,8 +55,8 @@ func TestEnsureSchema_ClusterNotUpgradable(t *testing.T) {
 				addNode(t, db, "1", schema, apiExtensions)
 				addNode(t, db, "2", schema, apiExtensions-1)
 			},
-			false, // The schema was not updated
-			"",    // No error is returned
+			true, // The schema was not updated
+			"",   // No error is returned
 		},
 		{
 			`this node's schema is behind`,
@@ -73,8 +73,8 @@ func TestEnsureSchema_ClusterNotUpgradable(t *testing.T) {
 				addNode(t, db, "1", schema, apiExtensions)
 				addNode(t, db, "2", schema, apiExtensions+1)
 			},
-			false,
-			"This cluster member's version is behind, please upgrade",
+			true,
+			"",
 		},
 		{
 			`inconsistent schema version and API extensions number`,
@@ -83,7 +83,7 @@ func TestEnsureSchema_ClusterNotUpgradable(t *testing.T) {
 				addNode(t, db, "2", schema+1, apiExtensions-1)
 			},
 			false,
-			"Cluster members have inconsistent versions",
+			"This cluster member's version is behind, please upgrade",
 		},
 	}
 

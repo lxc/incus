@@ -91,7 +91,6 @@ type NodeInfoArgs struct {
 // ToAPI returns an API entry.
 func (n NodeInfo) ToAPI(ctx context.Context, tx *ClusterTx, args NodeInfoArgs) (*api.ClusterMember, error) {
 	var err error
-	var maxVersion [2]int
 	var failureDomain string
 
 	domainID := args.MemberFailureDomains[n.Address]
@@ -155,13 +154,19 @@ func (n NodeInfo) ToAPI(ctx context.Context, tx *ClusterTx, args NodeInfoArgs) (
 		result.Status = "Offline"
 		result.Message = fmt.Sprintf("No heartbeat for %s (%s)", time.Since(n.Heartbeat), n.Heartbeat)
 	} else {
-		// Check if up to date.
-		n, err := localUtil.CompareVersions(maxVersion, n.Version())
+		// Check for max DB schema and API extensions.
+		maxVersion, err := tx.GetNodeMaxVersion(ctx)
 		if err != nil {
 			return nil, err
 		}
 
-		if n == 1 {
+		// Check if up to date.
+		ret, err := localUtil.CompareVersions(maxVersion, n.Version(), true)
+		if err != nil {
+			return nil, err
+		}
+
+		if ret == 1 {
 			result.Status = "Blocked"
 			result.Message = "Needs updating to newer version"
 		}
@@ -336,7 +341,7 @@ func (c *ClusterTx) NodeIsOutdated(ctx context.Context) (bool, error) {
 			continue
 		}
 
-		n, err := localUtil.CompareVersions(node.Version(), version)
+		n, err := localUtil.CompareVersions(node.Version(), version, true)
 		if err != nil {
 			return false, fmt.Errorf("Failed to compare with version of member %s: %w", node.Name, err)
 		}
