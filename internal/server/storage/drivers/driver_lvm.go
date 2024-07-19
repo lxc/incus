@@ -121,6 +121,7 @@ func (d *lvm) Info() Info {
 		PreservesInodes:              false,
 		Remote:                       d.isRemote(),
 		VolumeTypes:                  []VolumeType{VolumeTypeBucket, VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
+		VolumeMultiNode:              d.isRemote(),
 		BlockBacking:                 true,
 		RunningCopyFreeze:            true,
 		DirectIO:                     true,
