@@ -627,14 +627,14 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 
 	// convertBlockImage converts the qcow2 block image file into a raw block device. If needed it will attempt
 	// to enlarge the destination volume to accommodate the unpacked qcow2 image file.
-	convertBlockImage := func(v drivers.Volume, imgPath string, dstPath string) (int64, error) {
+	convertBlockImage := func(v drivers.Volume, imgPath string, dstPath string, tracker *ioprogress.ProgressTracker) (int64, error) {
 		// Get info about qcow2 file. Force input format to qcow2 so we don't rely on qemu-img's detection
 		// logic as that has been known to have vulnerabilities and we only support qcow2 images anyway.
 		// Use prlimit because qemu-img can consume considerable RAM & CPU time if fed a maliciously
 		// crafted disk image. Since cloud tenants are not to be trusted, ensure QEMU is limits to 1 GiB
 		// address space and 2 seconds CPU time, which ought to be more than enough for real world images.
 		cmd := []string{"prlimit", "--cpu=2", "--as=1073741824", "qemu-img", "info", "-f", "qcow2", "--output=json", imgPath}
-		imgJSON, err := apparmor.QemuImg(sysOS, cmd, imgPath, dstPath)
+		imgJSON, err := apparmor.QemuImg(sysOS, cmd, imgPath, dstPath, tracker)
 		if err != nil {
 			return -1, fmt.Errorf("Failed reading image info %q: %w", imgPath, err)
 		}
@@ -690,7 +690,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 
 		cmd = []string{
 			"nice", "-n19", // Run with low priority to reduce CPU impact on other processes.
-			"qemu-img", "convert", "-f", "qcow2", "-O", "raw",
+			"qemu-img", "convert", "-f", "qcow2", "-O", "raw", "-t", "writeback",
 		}
 
 		// Check for Direct I/O support.
@@ -713,8 +713,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 
 		cmd = append(cmd, imgPath, dstPath)
 
-		_, err = apparmor.QemuImg(sysOS, cmd, imgPath, dstPath)
-
+		_, err = apparmor.QemuImg(sysOS, cmd, imgPath, dstPath, tracker)
 		if err != nil {
 			return -1, fmt.Errorf("Failed converting image to raw at %q: %w", dstPath, err)
 		}
@@ -732,7 +731,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 		}
 
 		// Convert the qcow2 format to a raw block device.
-		imgSize, err = convertBlockImage(vol, imageRootfsFile, destBlockFile)
+		imgSize, err = convertBlockImage(vol, imageRootfsFile, destBlockFile, tracker)
 		if err != nil {
 			return -1, err
 		}
@@ -754,7 +753,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 		imgPath := filepath.Join(tempDir, "rootfs.img")
 
 		// Convert the qcow2 format to a raw block device.
-		imgSize, err = convertBlockImage(vol, imgPath, destBlockFile)
+		imgSize, err = convertBlockImage(vol, imgPath, destBlockFile, tracker)
 		if err != nil {
 			return -1, err
 		}

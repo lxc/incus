@@ -7,10 +7,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/lxc/incus/v6/internal/server/sys"
+	"github.com/lxc/incus/v6/shared/ioprogress"
 	"github.com/lxc/incus/v6/shared/subprocess"
 )
 
@@ -59,7 +62,7 @@ func (nwc *nullWriteCloser) Close() error {
 // The first element of the cmd slice is expected to be a priority limiting command (such as nice or prlimit) and
 // will be added as an allowed command to the AppArmor profile. The remaining elements of the cmd slice are
 // expected to be the qemu-img command and its arguments.
-func QemuImg(sysOS *sys.OS, cmd []string, imgPath string, dstPath string) (string, error) {
+func QemuImg(sysOS *sys.OS, cmd []string, imgPath string, dstPath string, tracker *ioprogress.ProgressTracker) (string, error) {
 	//It is assumed that command starts with a program which sets resource limits, like prlimit or nice
 	allowedCmds := []string{"qemu-img", cmd[0]}
 
@@ -107,6 +110,35 @@ func QemuImg(sysOS *sys.OS, cmd []string, imgPath string, dstPath string) (strin
 	err = p.Start(context.Background())
 	if err != nil {
 		return "", fmt.Errorf("Failed running qemu-img: %w", err)
+	}
+
+	if tracker != nil && tracker.Handler != nil {
+		go func() {
+			for {
+				time.Sleep(200 * time.Millisecond)
+
+				err := p.Signal(10)
+				if err != nil {
+					return
+				}
+
+				time.Sleep(200 * time.Millisecond)
+
+				output := buffer.String()
+				lines := strings.Split(output, "\n")
+				if len(lines) < 2 {
+					continue
+				}
+
+				lastLine := lines[len(lines)-2]
+				percent, err := strconv.ParseInt(strings.Split(strings.Split(strings.TrimLeft(lastLine, " ("), "/")[0], ".")[0], 10, 64)
+				if err != nil {
+					continue
+				}
+
+				tracker.Handler(percent, 0)
+			}
+		}()
 	}
 
 	_, err = p.Wait(context.Background())
