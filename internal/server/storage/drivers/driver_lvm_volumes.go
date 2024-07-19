@@ -431,16 +431,6 @@ func (d *lvm) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 
 	l := d.logger.AddContext(logger.Ctx{"dev": volDevPath, "size": fmt.Sprintf("%db", sizeBytes)})
 
-	// Activate volume if needed.
-	activated, err := d.activateVolume(vol)
-	if err != nil {
-		return err
-	}
-
-	if activated {
-		defer func() { _, _ = d.deactivateVolume(vol) }()
-	}
-
 	inUse := vol.MountInUse()
 
 	// Resize filesystem if needed.
@@ -456,6 +446,12 @@ func (d *lvm) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 				return ErrInUse // We don't allow online shrinking of filesytem volumes.
 			}
 
+			// Activate volume if needed.
+			_, err := d.activateVolume(vol)
+			if err != nil {
+				return err
+			}
+
 			// Shrink filesystem first.
 			// Pass allowUnsafeResize to allow disabling of filesystem resize safety checks.
 			// We do this as a separate step rather than passing -r to lvresize in resizeLogicalVolume
@@ -463,6 +459,13 @@ func (d *lvm) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 			// otherwise by passing -f to lvresize (required for other reasons) this would then pass
 			// -f onto resize2fs as well.
 			err = shrinkFileSystem(fsType, volDevPath, vol, sizeBytes, allowUnsafeResize)
+			if err != nil {
+				_, _ = d.deactivateVolume(vol)
+				return err
+			}
+
+			// Deactivate the volume if needed.
+			_, err = d.deactivateVolume(vol)
 			if err != nil {
 				return err
 			}
@@ -480,6 +483,16 @@ func (d *lvm) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 			if err != nil {
 				return err
 			}
+
+			// Activate the volume if needed.
+			_, err := d.activateVolume(vol)
+			if err != nil {
+				return err
+			}
+
+			defer func() {
+				_, _ = d.deactivateVolume(vol)
+			}()
 
 			// Grow the filesystem to fill block device.
 			err = growFileSystem(fsType, volDevPath, vol)
@@ -506,6 +519,16 @@ func (d *lvm) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 		if err != nil {
 			return err
 		}
+
+		// Activate the volume if needed.
+		_, err := d.activateVolume(vol)
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			_, _ = d.deactivateVolume(vol)
+		}()
 
 		// Move the VM GPT alt header to end of disk if needed (not needed in unsafe resize mode as it is
 		// expected the caller will do all necessary post resize actions themselves).
