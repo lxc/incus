@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
+	"strings"
 
 	"github.com/olekukonko/tablewriter"
 	"gopkg.in/yaml.v2"
@@ -21,8 +23,25 @@ const (
 	TableFormatCompact = "compact"
 )
 
+const (
+	// TableOptionNoHeader hides the table header when possible.
+	TableOptionNoHeader = "noheader"
+)
+
 // RenderTable renders tabular data in various formats.
 func RenderTable(format string, header []string, data [][]string, raw any) error {
+	fields := strings.SplitN(format, ",", 2)
+	format = fields[0]
+
+	var options []string
+	if len(fields) == 2 {
+		options = strings.Split(fields[1], ",")
+
+		if slices.Contains(options, TableOptionNoHeader) {
+			header = nil
+		}
+	}
+
 	switch format {
 	case TableFormatTable:
 		table := getBaseTable(header, data)
