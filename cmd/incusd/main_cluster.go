@@ -334,6 +334,8 @@ func (c *cmdClusterShow) Run(cmd *cobra.Command, args []string) error {
 
 type cmdClusterListDatabase struct {
 	global *cmdGlobal
+
+	flagFormat string
 }
 
 func (c *cmdClusterListDatabase) Command() *cobra.Command {
@@ -341,6 +343,7 @@ func (c *cmdClusterListDatabase) Command() *cobra.Command {
 	cmd.Use = "list-database"
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = "Print the addresses of the cluster members serving the database"
+	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", "Format (csv|json|table|yaml|compact)")
 
 	cmd.RunE = c.Run
 
@@ -366,7 +369,7 @@ func (c *cmdClusterListDatabase) Run(cmd *cobra.Command, args []string) error {
 		data[i] = []string{address}
 	}
 
-	_ = cli.RenderTable(cli.TableFormatTable, columns, data, nil)
+	_ = cli.RenderTable(c.flagFormat, columns, data, nil)
 
 	return nil
 }
