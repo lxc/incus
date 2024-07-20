@@ -690,7 +690,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 
 		cmd = []string{
 			"nice", "-n19", // Run with low priority to reduce CPU impact on other processes.
-			"qemu-img", "convert", "-f", "qcow2", "-O", "raw", "-t", "writeback",
+			"qemu-img", "convert", "-p", "-f", "qcow2", "-O", "raw", "-t", "writeback",
 		}
 
 		// Check for Direct I/O support.
