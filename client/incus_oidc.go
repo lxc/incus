@@ -20,6 +20,9 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// ErrOIDCExpired is returned when the token is expired and we can't retry the request ourselves.
+var ErrOIDCExpired = fmt.Errorf("OIDC token expired, please re-try the request")
+
 // setupOIDCClient initializes the OIDC (OpenID Connect) client with given tokens if it hasn't been set up already.
 // It also assigns the protocol's http client to the oidcClient's httpClient.
 func (r *ProtocolIncus) setupOIDCClient(token *oidc.Tokens[*oidc.IDTokenClaims]) {
@@ -119,12 +122,18 @@ func (o *oidcClient) do(req *http.Request) (*http.Response, error) {
 		return resp, nil
 	}
 
+	// Refresh the token.
 	err = o.refresh(issuer, clientID)
 	if err != nil {
 		err = o.authenticate(issuer, clientID, audience)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// If not dealing with something we can retry, return a clear error.
+	if req.Method != "GET" && req.GetBody == nil {
+		return resp, ErrOIDCExpired
 	}
 
 	// Set the new access token in the header.
