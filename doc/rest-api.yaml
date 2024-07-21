@@ -234,6 +234,14 @@ definitions:
         x-go-package: github.com/lxc/incus/v6/shared/api
     ClusterGroup:
         properties:
+            config:
+                additionalProperties:
+                    type: string
+                description: Cluster group configuration map
+                example:
+                    user.mykey: foo
+                type: object
+                x-go-name: Config
             description:
                 description: The description of the cluster group
                 example: amd64 servers
@@ -268,6 +276,14 @@ definitions:
         x-go-package: github.com/lxc/incus/v6/shared/api
     ClusterGroupPut:
         properties:
+            config:
+                additionalProperties:
+                    type: string
+                description: Cluster group configuration map
+                example:
+                    user.mykey: foo
+                type: object
+                x-go-name: Config
             description:
                 description: The description of the cluster group
                 example: amd64 servers
@@ -287,6 +303,14 @@ definitions:
         x-go-package: github.com/lxc/incus/v6/shared/api
     ClusterGroupsPost:
         properties:
+            config:
+                additionalProperties:
+                    type: string
+                description: Cluster group configuration map
+                example:
+                    user.mykey: foo
+                type: object
+                x-go-name: Config
             description:
                 description: The description of the cluster group
                 example: amd64 servers
