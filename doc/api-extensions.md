@@ -2521,3 +2521,9 @@ This adds support for both `io.bus` and `io.cache` to disks that are backed by a
 ## `instance_oci`
 
 Adds initial support for running OCI containers.
+
+## `clustering_groups_config`
+
+This introduces a standard key/value `config` option to clustering
+groups which will allow placing some restrictions or configuration on
+those groups.

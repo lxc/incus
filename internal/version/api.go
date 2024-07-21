@@ -427,6 +427,7 @@ var APIExtensions = []string{
 	"resources_cpu_flags",
 	"disk_io_bus_cache_filesystem",
 	"instance_oci",
+	"clustering_groups_config",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
