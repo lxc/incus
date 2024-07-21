@@ -110,6 +110,27 @@ var updates = map[int]schema.Update{
 	71: updateFromV70,
 	72: updateFromV71,
 	73: updateFromV72,
+	74: updateFromV73,
+}
+
+// updateFromV73 adds a config table to cluster groups.
+func updateFromV73(ctx context.Context, tx *sql.Tx) error {
+	q := `
+CREATE TABLE cluster_groups_config (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    cluster_group_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (cluster_group_id, key),
+    FOREIGN KEY (cluster_group_id) REFERENCES cluster_groups (id) ON DELETE CASCADE
+);
+`
+	_, err := tx.Exec(q)
+	if err != nil {
+		return fmt.Errorf("Failed adding cluster group config table: %w", err)
+	}
+
+	return nil
 }
 
 // updateFromV72 removes the openfga.store.model_id server config key.
