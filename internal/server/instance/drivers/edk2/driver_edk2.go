@@ -77,6 +77,22 @@ var architectureInstallations = map[int][]Installation{
 				{Code: "ovmf-x86_64-ms-code.bin", Vars: "ovmf-x86_64-ms-vars.bin"},
 			},
 		},
+	}, {
+		Path: "/usr/share/OVMF/x64",
+		Usage: map[FirmwareUsage][]FirmwarePair{
+			GENERIC: {
+				{Code: "OVMF_CODE.4m.fd", Vars: "OVMF_VARS.4m.fd"},
+				{Code: "OVMF_CODE.fd", Vars: "OVMF_VARS.fd"},
+			},
+			CSM: {
+				{Code: "OVMF_CODE.csm.4m.fd", Vars: "OVMF_VARS.4m.fd"},
+				{Code: "OVMF_CODE.csm.fd", Vars: "OVMF_VARS.fd"},
+			},
+			SECUREBOOT: {
+				{Code: "OVMF_CODE.secboot.4m.fd", Vars: "OVMF_VARS.4m.fd"},
+				{Code: "OVMF_CODE.secboot.fd", Vars: "OVMF_VARS.fd"},
+			},
+		},
 	}},
 	osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN: {{
 		Path: "/usr/share/AAVMF",
