@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"text/template"
-	"time"
 
 	"github.com/lxc/incus/v6/internal/server/sys"
 	"github.com/lxc/incus/v6/shared/ioprogress"
@@ -51,11 +51,37 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
 `))
 
 type nullWriteCloser struct {
-	*bytes.Buffer
+	io.Writer
 }
 
 func (nwc *nullWriteCloser) Close() error {
 	return nil
+}
+
+type writerFunc func([]byte) (int, error)
+
+func (w writerFunc) Write(b []byte) (n int, err error) {
+	return w(b)
+}
+
+func handleWriter(out io.Writer, hand func(int64, int64)) io.Writer {
+	var current int64
+	return writerFunc(func(b []byte) (int, error) {
+		n, _ := out.Write(b)
+		ss := strings.Split(strings.Trim(string(b), "(%) \t\n\v\f\r"), "/")
+		f, err := strconv.ParseFloat(ss[0], 64)
+		if err != nil {
+			return n, nil
+		}
+
+		percent := int64(f)
+		if percent != current {
+			current = percent
+			hand(percent, 0)
+		}
+
+		return n, nil
+	})
 }
 
 // QemuImg runs qemu-img with an AppArmor profile based on the imgPath and dstPath supplied.
@@ -100,45 +126,17 @@ func QemuImg(sysOS *sys.OS, cmd []string, imgPath string, dstPath string, tracke
 
 	var buffer bytes.Buffer
 	var output bytes.Buffer
-	p := subprocess.NewProcessWithFds(cmd[0], cmd[1:], nil, &nullWriteCloser{&output}, &nullWriteCloser{&buffer})
-	if err != nil {
-		return "", fmt.Errorf("Failed creating qemu-img subprocess: %w", err)
+	var writer io.Writer = &output
+	if tracker != nil && tracker.Handler != nil {
+		writer = handleWriter(&output, tracker.Handler)
 	}
 
+	p := subprocess.NewProcessWithFds(cmd[0], cmd[1:], nil, &nullWriteCloser{writer}, &nullWriteCloser{&buffer})
 	p.SetApparmor(profileName)
 
 	err = p.Start(context.Background())
 	if err != nil {
 		return "", fmt.Errorf("Failed running qemu-img: %w", err)
-	}
-
-	if tracker != nil && tracker.Handler != nil {
-		go func() {
-			for {
-				time.Sleep(200 * time.Millisecond)
-
-				err := p.Signal(10)
-				if err != nil {
-					return
-				}
-
-				time.Sleep(200 * time.Millisecond)
-
-				output := buffer.String()
-				lines := strings.Split(output, "\n")
-				if len(lines) < 2 {
-					continue
-				}
-
-				lastLine := lines[len(lines)-2]
-				percent, err := strconv.ParseInt(strings.Split(strings.Split(strings.TrimLeft(lastLine, " ("), "/")[0], ".")[0], 10, 64)
-				if err != nil {
-					continue
-				}
-
-				tracker.Handler(percent, 0)
-			}
-		}()
 	}
 
 	_, err = p.Wait(context.Background())
