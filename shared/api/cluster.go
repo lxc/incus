@@ -303,6 +303,12 @@ type ClusterGroupPut struct {
 	// List of members in this group
 	// Example: ["server01", "server02"]
 	Members []string `json:"members" yaml:"members"`
+
+	// Cluster group configuration map
+	// Example: {"user.mykey": "foo"}
+	//
+	// API extension: clustering_groups_config.
+	Config map[string]string `json:"config" yaml:"config"`
 }
 
 // Writable converts a full ClusterGroup struct into a ClusterGroupPut struct (filters read-only fields).

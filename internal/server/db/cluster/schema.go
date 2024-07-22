@@ -17,17 +17,25 @@ CREATE TABLE certificates (
     UNIQUE (fingerprint)
 );
 CREATE TABLE "certificates_projects" (
-	certificate_id INTEGER NOT NULL,
-	project_id INTEGER NOT NULL,
-	FOREIGN KEY (certificate_id) REFERENCES certificates (id) ON DELETE CASCADE,
-	FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE,
-	UNIQUE (certificate_id, project_id)
+    certificate_id INTEGER NOT NULL,
+    project_id INTEGER NOT NULL,
+    FOREIGN KEY (certificate_id) REFERENCES certificates (id) ON DELETE CASCADE,
+    FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE,
+    UNIQUE (certificate_id, project_id)
 );
 CREATE TABLE "cluster_groups" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name TEXT NOT NULL,
     description TEXT NOT NULL,
     UNIQUE (name)
+);
+CREATE TABLE cluster_groups_config (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    cluster_group_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (cluster_group_id, key),
+    FOREIGN KEY (cluster_group_id) REFERENCES cluster_groups (id) ON DELETE CASCADE
 );
 CREATE TABLE config (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -73,11 +81,11 @@ CREATE TABLE "images_nodes" (
     FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE
 );
 CREATE TABLE "images_profiles" (
-	image_id INTEGER NOT NULL,
-	profile_id INTEGER NOT NULL,
-	FOREIGN KEY (image_id) REFERENCES "images" (id) ON DELETE CASCADE,
-	FOREIGN KEY (profile_id) REFERENCES "profiles" (id) ON DELETE CASCADE,
-	UNIQUE (image_id, profile_id)
+    image_id INTEGER NOT NULL,
+    profile_id INTEGER NOT NULL,
+    FOREIGN KEY (image_id) REFERENCES "images" (id) ON DELETE CASCADE,
+    FOREIGN KEY (profile_id) REFERENCES "profiles" (id) ON DELETE CASCADE,
+    UNIQUE (image_id, profile_id)
 );
 CREATE INDEX images_project_id_idx ON images (project_id);
 CREATE TABLE "images_properties" (
@@ -241,58 +249,58 @@ CREATE TABLE "networks_config" (
     FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE
 );
 CREATE TABLE "networks_forwards" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_id INTEGER NOT NULL,
-	node_id INTEGER,
-	listen_address TEXT NOT NULL,
-	description TEXT NOT NULL,
-	ports TEXT NOT NULL,
-	UNIQUE (network_id, node_id, listen_address),
-	FOREIGN KEY (network_id) REFERENCES "networks" (id) ON DELETE CASCADE,
-	FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_id INTEGER NOT NULL,
+    node_id INTEGER,
+    listen_address TEXT NOT NULL,
+    description TEXT NOT NULL,
+    ports TEXT NOT NULL,
+    UNIQUE (network_id, node_id, listen_address),
+    FOREIGN KEY (network_id) REFERENCES "networks" (id) ON DELETE CASCADE,
+    FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE
 );
 CREATE TABLE "networks_forwards_config" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_forward_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	UNIQUE (network_forward_id, key),
-	FOREIGN KEY (network_forward_id) REFERENCES "networks_forwards" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_forward_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (network_forward_id, key),
+    FOREIGN KEY (network_forward_id) REFERENCES "networks_forwards" (id) ON DELETE CASCADE
 );
 CREATE TABLE networks_integrations (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	name TEXT NOT NULL,
-	description TEXT NOT NULL,
-	type INTEGER NOT NULL,
-	UNIQUE (name)
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    type INTEGER NOT NULL,
+    UNIQUE (name)
 );
 CREATE TABLE networks_integrations_config (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_integration_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	UNIQUE (network_integration_id, key),
-	FOREIGN KEY (network_integration_id) REFERENCES networks_integrations (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_integration_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (network_integration_id, key),
+    FOREIGN KEY (network_integration_id) REFERENCES networks_integrations (id) ON DELETE CASCADE
 );
 CREATE TABLE "networks_load_balancers" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_id INTEGER NOT NULL,
-	node_id INTEGER,
-	listen_address TEXT NOT NULL,
-	description TEXT NOT NULL,
-	backends TEXT NOT NULL,
-	ports TEXT NOT NULL,
-	UNIQUE (network_id, node_id, listen_address),
-	FOREIGN KEY (network_id) REFERENCES "networks" (id) ON DELETE CASCADE,
-	FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_id INTEGER NOT NULL,
+    node_id INTEGER,
+    listen_address TEXT NOT NULL,
+    description TEXT NOT NULL,
+    backends TEXT NOT NULL,
+    ports TEXT NOT NULL,
+    UNIQUE (network_id, node_id, listen_address),
+    FOREIGN KEY (network_id) REFERENCES "networks" (id) ON DELETE CASCADE,
+    FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE
 );
 CREATE TABLE "networks_load_balancers_config" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_load_balancer_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	UNIQUE (network_load_balancer_id, key),
-	FOREIGN KEY (network_load_balancer_id) REFERENCES "networks_load_balancers" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_load_balancer_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (network_load_balancer_id, key),
+    FOREIGN KEY (network_load_balancer_id) REFERENCES "networks_load_balancers" (id) ON DELETE CASCADE
 );
 CREATE TABLE "networks_nodes" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -304,62 +312,62 @@ CREATE TABLE "networks_nodes" (
     FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE
 );
 CREATE TABLE "networks_peers" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_id INTEGER NOT NULL,
-	name TEXT NOT NULL,
-	description TEXT NOT NULL,
-	target_network_project TEXT NULL,
-	target_network_name TEXT NULL,
-	target_network_id INTEGER NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    target_network_project TEXT NULL,
+    target_network_name TEXT NULL,
+    target_network_id INTEGER NULL,
     type INTEGER NOT NULL DEFAULT 0,
     target_network_integration_id INTEGER DEFAULT NULL REFERENCES networks_integrations (id) ON DELETE CASCADE,
-	UNIQUE (network_id, name),
-	UNIQUE (network_id, target_network_project, target_network_name),
-	UNIQUE (network_id, target_network_id),
-	FOREIGN KEY (network_id) REFERENCES "networks" (id) ON DELETE CASCADE
+    UNIQUE (network_id, name),
+    UNIQUE (network_id, target_network_project, target_network_name),
+    UNIQUE (network_id, target_network_id),
+    FOREIGN KEY (network_id) REFERENCES "networks" (id) ON DELETE CASCADE
 );
 CREATE TABLE "networks_peers_config" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_peer_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	UNIQUE (network_peer_id, key),
-	FOREIGN KEY (network_peer_id) REFERENCES "networks_peers" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_peer_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (network_peer_id, key),
+    FOREIGN KEY (network_peer_id) REFERENCES "networks_peers" (id) ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX networks_peers_unique_network_id_target_network_integration_id ON "networks_peers" (network_id, target_network_integration_id);
 CREATE UNIQUE INDEX networks_unique_network_id_node_id_key ON "networks_config" (network_id, IFNULL(node_id, -1), key);
 CREATE TABLE "networks_zones" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	project_id INTEGER NOT NULL,
-	name TEXT NOT NULL,
-	description TEXT NOT NULL,
-	UNIQUE (name),
-	FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    project_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    UNIQUE (name),
+    FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE
 );
 CREATE TABLE "networks_zones_config" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_zone_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	UNIQUE (network_zone_id, key),
-	FOREIGN KEY (network_zone_id) REFERENCES "networks_zones" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_zone_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (network_zone_id, key),
+    FOREIGN KEY (network_zone_id) REFERENCES "networks_zones" (id) ON DELETE CASCADE
 );
 CREATE TABLE "networks_zones_records" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_zone_id INTEGER NOT NULL,
-	name TEXT NOT NULL,
-	description TEXT NOT NULL,
-	entries TEXT NOT NULL,
-	UNIQUE (network_zone_id, name),
-	FOREIGN KEY (network_zone_id) REFERENCES networks_zones (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_zone_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    entries TEXT NOT NULL,
+    UNIQUE (network_zone_id, name),
+    FOREIGN KEY (network_zone_id) REFERENCES networks_zones (id) ON DELETE CASCADE
 );
 CREATE TABLE "networks_zones_records_config" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_zone_record_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	UNIQUE (network_zone_record_id, key),
-	FOREIGN KEY (network_zone_record_id) REFERENCES "networks_zones_records" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_zone_record_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (network_zone_record_id, key),
+    FOREIGN KEY (network_zone_record_id) REFERENCES "networks_zones_records" (id) ON DELETE CASCADE
 );
 CREATE TABLE "nodes" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -384,12 +392,12 @@ CREATE TABLE "nodes_cluster_groups" (
     UNIQUE (node_id, group_id)
 );
 CREATE TABLE "nodes_config" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	node_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE,
-	UNIQUE (node_id, key)
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    node_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE,
+    UNIQUE (node_id, key)
 );
 CREATE TABLE nodes_failure_domains (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -460,16 +468,16 @@ CREATE TABLE "projects_config" (
     UNIQUE (project_id, key)
 );
 CREATE TABLE "storage_buckets" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	name TEXT NOT NULL,
-	storage_pool_id INTEGER NOT NULL,
-	node_id INTEGER,
-	description TEXT NOT NULL,
-	project_id INTEGER NOT NULL,
-	UNIQUE (node_id, name),
-	FOREIGN KEY (storage_pool_id) REFERENCES "storage_pools" (id) ON DELETE CASCADE,
-	FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE,
-	FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT NOT NULL,
+    storage_pool_id INTEGER NOT NULL,
+    node_id INTEGER,
+    description TEXT NOT NULL,
+    project_id INTEGER NOT NULL,
+    UNIQUE (node_id, name),
+    FOREIGN KEY (storage_pool_id) REFERENCES "storage_pools" (id) ON DELETE CASCADE,
+    FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE,
+    FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE
 );
 CREATE TABLE "storage_buckets_backups" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -481,23 +489,23 @@ CREATE TABLE "storage_buckets_backups" (
     UNIQUE (storage_bucket_id, name)
 );
 CREATE TABLE "storage_buckets_config" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	storage_bucket_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	UNIQUE (storage_bucket_id, key),
-	FOREIGN KEY (storage_bucket_id) REFERENCES "storage_buckets" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    storage_bucket_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (storage_bucket_id, key),
+    FOREIGN KEY (storage_bucket_id) REFERENCES "storage_buckets" (id) ON DELETE CASCADE
 );
 CREATE TABLE "storage_buckets_keys" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	storage_bucket_id INTEGER NOT NULL,
-	name TEXT NOT NULL,
-	description TEXT NOT NULL,
-	access_key TEXT NOT NULL,
-	secret_key TEXT NOT NULL,
-	role TEXT NOT NULL,
-	UNIQUE (storage_bucket_id, name),
-	FOREIGN KEY (storage_bucket_id) REFERENCES "storage_buckets" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    storage_bucket_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    access_key TEXT NOT NULL,
+    secret_key TEXT NOT NULL,
+    role TEXT NOT NULL,
+    UNIQUE (storage_bucket_id, name),
+    FOREIGN KEY (storage_bucket_id) REFERENCES "storage_buckets" (id) ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX storage_buckets_unique_storage_pool_id_node_id_name ON "storage_buckets" (storage_pool_id, IFNULL(node_id, -1), name);
 CREATE TABLE "storage_pools" (
@@ -544,38 +552,38 @@ CREATE TABLE "storage_volumes" (
     FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE
 );
 CREATE VIEW storage_volumes_all (
-         id,
-         name,
-         storage_pool_id,
-         node_id,
-         type,
-         description,
-         project_id,
-         content_type,
-         creation_date) AS
-  SELECT id,
-         name,
-         storage_pool_id,
-         node_id,
-         type,
-         description,
-         project_id,
-         content_type,
-         creation_date
-    FROM storage_volumes UNION
-  SELECT storage_volumes_snapshots.id,
-         printf('%s/%s',
+    id,
+    name,
+    storage_pool_id,
+    node_id,
+    type,
+    description,
+    project_id,
+    content_type,
+    creation_date) AS
+        SELECT id,
+            name,
+            storage_pool_id,
+            node_id,
+            type,
+            description,
+            project_id,
+            content_type,
+            creation_date
+        FROM storage_volumes UNION
+            SELECT storage_volumes_snapshots.id,
+                printf('%s/%s',
     storage_volumes.name,
     storage_volumes_snapshots.name),
-         storage_volumes.storage_pool_id,
-         storage_volumes.node_id,
-         storage_volumes.type,
-         storage_volumes_snapshots.description,
-         storage_volumes.project_id,
-         storage_volumes.content_type,
-         storage_volumes_snapshots.creation_date
-    FROM storage_volumes
-    JOIN storage_volumes_snapshots ON storage_volumes.id = storage_volumes_snapshots.storage_volume_id;
+                storage_volumes.storage_pool_id,
+                storage_volumes.node_id,
+                storage_volumes.type,
+                storage_volumes_snapshots.description,
+                storage_volumes.project_id,
+                storage_volumes.content_type,
+                storage_volumes_snapshots.creation_date
+            FROM storage_volumes
+            JOIN storage_volumes_snapshots ON storage_volumes.id = storage_volumes_snapshots.storage_volume_id;
 CREATE TABLE "storage_volumes_backups" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     storage_volume_id INTEGER NOT NULL,
@@ -588,12 +596,12 @@ CREATE TABLE "storage_volumes_backups" (
     UNIQUE (storage_volume_id, name)
 );
 CREATE TRIGGER storage_volumes_check_id
-  BEFORE INSERT ON storage_volumes
-  WHEN NEW.id IN (SELECT id FROM storage_volumes_snapshots)
-  BEGIN
-    SELECT RAISE(FAIL,
-    "invalid ID");
-  END;
+    BEFORE INSERT ON storage_volumes
+    WHEN NEW.id IN (SELECT id FROM storage_volumes_snapshots)
+    BEGIN
+        SELECT RAISE(FAIL,
+        "invalid ID");
+    END;
 CREATE TABLE "storage_volumes_config" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     storage_volume_id INTEGER NOT NULL,
@@ -614,12 +622,12 @@ CREATE TABLE "storage_volumes_snapshots" (
     FOREIGN KEY (storage_volume_id) REFERENCES "storage_volumes" (id) ON DELETE CASCADE
 );
 CREATE TRIGGER storage_volumes_snapshots_check_id
-  BEFORE INSERT ON storage_volumes_snapshots
-  WHEN NEW.id IN (SELECT id FROM storage_volumes)
-  BEGIN
-    SELECT RAISE(FAIL,
-    "invalid ID");
-  END;
+    BEFORE INSERT ON storage_volumes_snapshots
+    WHEN NEW.id IN (SELECT id FROM storage_volumes)
+    BEGIN
+        SELECT RAISE(FAIL,
+        "invalid ID");
+    END;
 CREATE TABLE "storage_volumes_snapshots_config" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     storage_volume_snapshot_id INTEGER NOT NULL,
@@ -630,24 +638,24 @@ CREATE TABLE "storage_volumes_snapshots_config" (
 );
 CREATE UNIQUE INDEX storage_volumes_unique_storage_pool_id_node_id_project_id_name_type ON "storage_volumes" (storage_pool_id, IFNULL(node_id, -1), project_id, name, type);
 CREATE TABLE "warnings" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	node_id INTEGER,
-	project_id INTEGER,
-	entity_type_code INTEGER,
-	entity_id INTEGER,
-	uuid TEXT NOT NULL,
-	type_code INTEGER NOT NULL,
-	status INTEGER NOT NULL,
-	first_seen_date DATETIME NOT NULL,
-	last_seen_date DATETIME NOT NULL,
-	updated_date DATETIME,
-	last_message TEXT NOT NULL,
-	count INTEGER NOT NULL,
-	UNIQUE (uuid),
-	FOREIGN KEY (node_id) REFERENCES "nodes"(id) ON DELETE CASCADE,
-	FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    node_id INTEGER,
+    project_id INTEGER,
+    entity_type_code INTEGER,
+    entity_id INTEGER,
+    uuid TEXT NOT NULL,
+    type_code INTEGER NOT NULL,
+    status INTEGER NOT NULL,
+    first_seen_date DATETIME NOT NULL,
+    last_seen_date DATETIME NOT NULL,
+    updated_date DATETIME,
+    last_message TEXT NOT NULL,
+    count INTEGER NOT NULL,
+    UNIQUE (uuid),
+    FOREIGN KEY (node_id) REFERENCES "nodes"(id) ON DELETE CASCADE,
+    FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX warnings_unique_node_id_project_id_entity_type_code_entity_id_type_code ON warnings(IFNULL(node_id, -1), IFNULL(project_id, -1), entity_type_code, entity_id, type_code);
 
-INSERT INTO schema (version, updated_at) VALUES (73, strftime("%s"))
+INSERT INTO schema (version, updated_at) VALUES (74, strftime("%s"))
 `

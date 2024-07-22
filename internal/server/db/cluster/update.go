@@ -110,6 +110,27 @@ var updates = map[int]schema.Update{
 	71: updateFromV70,
 	72: updateFromV71,
 	73: updateFromV72,
+	74: updateFromV73,
+}
+
+// updateFromV73 adds a config table to cluster groups.
+func updateFromV73(ctx context.Context, tx *sql.Tx) error {
+	q := `
+CREATE TABLE cluster_groups_config (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    cluster_group_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (cluster_group_id, key),
+    FOREIGN KEY (cluster_group_id) REFERENCES cluster_groups (id) ON DELETE CASCADE
+);
+`
+	_, err := tx.Exec(q)
+	if err != nil {
+		return fmt.Errorf("Failed adding cluster group config table: %w", err)
+	}
+
+	return nil
 }
 
 // updateFromV72 removes the openfga.store.model_id server config key.
@@ -127,20 +148,20 @@ func updateFromV72(ctx context.Context, tx *sql.Tx) error {
 func updateFromV71(ctx context.Context, tx *sql.Tx) error {
 	q := `
 CREATE TABLE networks_integrations (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	name TEXT NOT NULL,
-	description TEXT NOT NULL,
-	type INTEGER NOT NULL,
-	UNIQUE (name)
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    type INTEGER NOT NULL,
+    UNIQUE (name)
 );
 
 CREATE TABLE networks_integrations_config (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_integration_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	UNIQUE (network_integration_id, key),
-	FOREIGN KEY (network_integration_id) REFERENCES networks_integrations (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_integration_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (network_integration_id, key),
+    FOREIGN KEY (network_integration_id) REFERENCES networks_integrations (id) ON DELETE CASCADE
 );
 
 ALTER TABLE networks_peers ADD COLUMN type INTEGER NOT NULL DEFAULT 0;
@@ -192,32 +213,32 @@ func updateFromV69(ctx context.Context, tx *sql.Tx) error {
 func updateFromV68(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.Exec(`
 CREATE TABLE networks_zones_records_new (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_zone_id INTEGER NOT NULL,
-	name TEXT NOT NULL,
-	description TEXT NOT NULL,
-	entries TEXT NOT NULL,
-	UNIQUE (network_zone_id, name),
-	FOREIGN KEY (network_zone_id) REFERENCES networks_zones (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_zone_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    entries TEXT NOT NULL,
+    UNIQUE (network_zone_id, name),
+    FOREIGN KEY (network_zone_id) REFERENCES networks_zones (id) ON DELETE CASCADE
 );
 
 CREATE TABLE networks_zones_records_config_new (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_zone_record_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	UNIQUE (network_zone_record_id, key),
-	FOREIGN KEY (network_zone_record_id) REFERENCES networks_zones_records_new (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_zone_record_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (network_zone_record_id, key),
+    FOREIGN KEY (network_zone_record_id) REFERENCES networks_zones_records_new (id) ON DELETE CASCADE
 );
 
-	INSERT INTO "networks_zones_records_new" SELECT * FROM "networks_zones_records";
-	INSERT INTO "networks_zones_records_config_new" SELECT * FROM "networks_zones_records_config";
+INSERT INTO "networks_zones_records_new" SELECT * FROM "networks_zones_records";
+INSERT INTO "networks_zones_records_config_new" SELECT * FROM "networks_zones_records_config";
 
-	DROP TABLE "networks_zones_records";
-	ALTER TABLE "networks_zones_records_new" RENAME TO "networks_zones_records";
+DROP TABLE "networks_zones_records";
+ALTER TABLE "networks_zones_records_new" RENAME TO "networks_zones_records";
 
-	DROP TABLE "networks_zones_records_config";
-	ALTER TABLE "networks_zones_records_config_new" RENAME TO "networks_zones_records_config";
+DROP TABLE "networks_zones_records_config";
+ALTER TABLE "networks_zones_records_config_new" RENAME TO "networks_zones_records_config";
 `)
 	if err != nil {
 		return fmt.Errorf("Failed altering network_zones_records schema: %w", err)
@@ -230,13 +251,13 @@ CREATE TABLE networks_zones_records_config_new (
 func updateFromV67(ctx context.Context, tx *sql.Tx) error {
 	// Find projects that have features.networks=true.
 	rows, err := tx.QueryContext(ctx, `
-		SELECT
-			projects.id
-		FROM projects
-		JOIN
-			projects_config ON projects_config.project_id = projects.id
-			AND projects_config.key = "features.networks"
-			AND projects_config.value = "true"
+SELECT
+    projects.id
+FROM projects
+JOIN
+    projects_config ON projects_config.project_id = projects.id
+    AND projects_config.key = "features.networks"
+    AND projects_config.value = "true"
 	`)
 	if err != nil {
 		return fmt.Errorf("Failed finding projects with features.networks=true: %w", err)
@@ -278,36 +299,36 @@ ALTER TABLE storage_volumes ADD COLUMN creation_date DATETIME NOT NULL DEFAULT "
 ALTER TABLE storage_volumes_snapshots ADD COLUMN creation_date DATETIME NOT NULL DEFAULT "0001-01-01T00:00:00Z";
 DROP VIEW storage_volumes_all;
 CREATE VIEW storage_volumes_all (
-         id,
-         name,
-         storage_pool_id,
-         node_id,
-         type,
-         description,
-         project_id,
-         content_type,
-         creation_date) AS
-  SELECT id,
-         name,
-         storage_pool_id,
-         node_id,
-         type,
-         description,
-         project_id,
-         content_type,
-         creation_date
-    FROM storage_volumes UNION
-  SELECT storage_volumes_snapshots.id,
-         printf('%s/%s', storage_volumes.name, storage_volumes_snapshots.name),
-         storage_volumes.storage_pool_id,
-         storage_volumes.node_id,
-         storage_volumes.type,
-         storage_volumes_snapshots.description,
-         storage_volumes.project_id,
-         storage_volumes.content_type,
-         storage_volumes_snapshots.creation_date
-    FROM storage_volumes
-    JOIN storage_volumes_snapshots ON storage_volumes.id = storage_volumes_snapshots.storage_volume_id;
+    id,
+    name,
+    storage_pool_id,
+    node_id,
+    type,
+    description,
+    project_id,
+    content_type,
+    creation_date) AS
+        SELECT id,
+            name,
+            storage_pool_id,
+            node_id,
+            type,
+            description,
+            project_id,
+            content_type,
+            creation_date
+        FROM storage_volumes UNION
+            SELECT storage_volumes_snapshots.id,
+                printf('%s/%s', storage_volumes.name, storage_volumes_snapshots.name),
+                storage_volumes.storage_pool_id,
+                storage_volumes.node_id,
+                storage_volumes.type,
+                storage_volumes_snapshots.description,
+                storage_volumes.project_id,
+                storage_volumes.content_type,
+                storage_volumes_snapshots.creation_date
+            FROM storage_volumes
+            JOIN storage_volumes_snapshots ON storage_volumes.id = storage_volumes_snapshots.storage_volume_id;
 `
 	_, err := tx.Exec(q)
 	if err != nil {
@@ -320,9 +341,9 @@ CREATE VIEW storage_volumes_all (
 // updateFromV65 fixes typo in cephobject.radosgw.endpoint* settings.
 func updateFromV65(ctx context.Context, tx *sql.Tx) error {
 	q := `
-	UPDATE storage_pools_config
-	SET key = REPLACE(key, "cephobject.radosgsw.endpoint", "cephobject.radosgw.endpoint")
-	WHERE key IN ("cephobject.radosgsw.endpoint", "cephobject.radosgsw.endpoint_cert_file")
+UPDATE storage_pools_config
+    SET key = REPLACE(key, "cephobject.radosgsw.endpoint", "cephobject.radosgw.endpoint")
+    WHERE key IN ("cephobject.radosgsw.endpoint", "cephobject.radosgsw.endpoint_cert_file")
 	`
 	_, err := tx.Exec(q)
 	if err != nil {
@@ -396,38 +417,38 @@ func updateFromV63(ctx context.Context, tx *sql.Tx) error {
 	// Create storage buckets tables.
 	_, err = tx.Exec(`
 CREATE TABLE IF NOT EXISTS "storage_buckets" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	name TEXT NOT NULL,
-	storage_pool_id INTEGER NOT NULL,
-	node_id INTEGER,
-	description TEXT NOT NULL,
-	project_id INTEGER NOT NULL,
-	UNIQUE (node_id, name),
-	FOREIGN KEY (storage_pool_id) REFERENCES "storage_pools" (id) ON DELETE CASCADE,
-	FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE,
-	FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT NOT NULL,
+    storage_pool_id INTEGER NOT NULL,
+    node_id INTEGER,
+    description TEXT NOT NULL,
+    project_id INTEGER NOT NULL,
+    UNIQUE (node_id, name),
+    FOREIGN KEY (storage_pool_id) REFERENCES "storage_pools" (id) ON DELETE CASCADE,
+    FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE,
+    FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX storage_buckets_unique_storage_pool_id_node_id_name ON "storage_buckets" (storage_pool_id, IFNULL(node_id, -1), name);
 
 CREATE TABLE "storage_buckets_config" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	storage_bucket_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	UNIQUE (storage_bucket_id, key),
-	FOREIGN KEY (storage_bucket_id) REFERENCES "storage_buckets" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    storage_bucket_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (storage_bucket_id, key),
+    FOREIGN KEY (storage_bucket_id) REFERENCES "storage_buckets" (id) ON DELETE CASCADE
 );
 
 CREATE TABLE "storage_buckets_keys" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	storage_bucket_id INTEGER NOT NULL,
-	name TEXT NOT NULL,
-	description TEXT NOT NULL,
-	access_key TEXT NOT NULL,
-	secret_key TEXT NOT NULL,
-	role TEXT NOT NULL,
-	UNIQUE (storage_bucket_id, name),
-	FOREIGN KEY (storage_bucket_id) REFERENCES "storage_buckets" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    storage_bucket_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    access_key TEXT NOT NULL,
+    secret_key TEXT NOT NULL,
+    role TEXT NOT NULL,
+    UNIQUE (storage_bucket_id, name),
+    FOREIGN KEY (storage_bucket_id) REFERENCES "storage_buckets" (id) ON DELETE CASCADE
 );
 `)
 	if err != nil {
@@ -443,16 +464,16 @@ CREATE TABLE "storage_buckets_keys" (
 func updateFromV62(ctx context.Context, tx *sql.Tx) error {
 	// Find the default project ID, and what it has features.networks config key set to (if at all).
 	rows := tx.QueryRowContext(ctx, `
-		SELECT
-			projects.id,
-			IFNULL(projects_config.key, "") as key,
-			IFNULL(projects_config.value, "") as value
-		FROM projects
-		LEFT JOIN
-			projects_config ON projects_config.project_id = projects.id
-			AND projects_config.key = "features.networks"
-		WHERE projects.name = "default"
-	`)
+SELECT
+    projects.id,
+    IFNULL(projects_config.key, "") as key,
+    IFNULL(projects_config.value, "") as value
+FROM projects
+LEFT JOIN
+    projects_config ON projects_config.project_id = projects.id
+    AND projects_config.key = "features.networks"
+WHERE projects.name = "default"
+`)
 
 	var defaultProjectID int64
 	var featureKey, featureValue string
@@ -491,9 +512,11 @@ CREATE TABLE "instances_config_new" (
     FOREIGN KEY (instance_id) REFERENCES "instances" (id) ON DELETE CASCADE,
     UNIQUE (instance_id, key)
 );
+
 INSERT INTO "instances_config_new" SELECT * FROM "instances_config";
 DROP TABLE "instances_config";
 ALTER TABLE "instances_config_new" RENAME TO "instances_config";
+
 CREATE TABLE "instances_devices_config_new" (
     id INTEGER primary key AUTOINCREMENT NOT NULL,
     instance_device_id INTEGER NOT NULL,
@@ -502,9 +525,11 @@ CREATE TABLE "instances_devices_config_new" (
     FOREIGN KEY (instance_device_id) REFERENCES "instances_devices" (id) ON DELETE CASCADE,
     UNIQUE (instance_device_id, key)
 );
+
 INSERT INTO "instances_devices_config_new" SELECT * FROM "instances_devices_config";
 DROP TABLE "instances_devices_config";
 ALTER TABLE "instances_devices_config_new" RENAME TO "instances_devices_config";
+
 CREATE TABLE "instances_snapshots_config_new" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     instance_snapshot_id INTEGER NOT NULL,
@@ -513,9 +538,11 @@ CREATE TABLE "instances_snapshots_config_new" (
     FOREIGN KEY (instance_snapshot_id) REFERENCES "instances_snapshots" (id) ON DELETE CASCADE,
     UNIQUE (instance_snapshot_id, key)
 );
+
 INSERT INTO "instances_snapshots_config_new" SELECT * FROM "instances_snapshots_config";
 DROP TABLE "instances_snapshots_config";
 ALTER TABLE "instances_snapshots_config_new" RENAME TO "instances_snapshots_config";
+
 CREATE TABLE "instances_snapshots_devices_config_new" (
     id INTEGER primary key AUTOINCREMENT NOT NULL,
     instance_snapshot_device_id INTEGER NOT NULL,
@@ -524,9 +551,11 @@ CREATE TABLE "instances_snapshots_devices_config_new" (
     FOREIGN KEY (instance_snapshot_device_id) REFERENCES "instances_snapshots_devices" (id) ON DELETE CASCADE,
     UNIQUE (instance_snapshot_device_id, key)
 );
+
 INSERT INTO "instances_snapshots_devices_config_new" SELECT * FROM "instances_snapshots_devices_config";
 DROP TABLE "instances_snapshots_devices_config";
 ALTER TABLE "instances_snapshots_devices_config_new" RENAME TO "instances_snapshots_devices_config";
+
 CREATE TABLE "networks_acls_config_new" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     network_acl_id INTEGER NOT NULL,
@@ -535,9 +564,11 @@ CREATE TABLE "networks_acls_config_new" (
     UNIQUE (network_acl_id, key),
     FOREIGN KEY (network_acl_id) REFERENCES "networks_acls" (id) ON DELETE CASCADE
 );
+
 INSERT INTO "networks_acls_config_new" SELECT * FROM "networks_acls_config";
 DROP TABLE "networks_acls_config";
 ALTER TABLE "networks_acls_config_new" RENAME TO "networks_acls_config";
+
 CREATE TABLE "networks_config_new" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     network_id INTEGER NOT NULL,
@@ -548,65 +579,78 @@ CREATE TABLE "networks_config_new" (
     FOREIGN KEY (network_id) REFERENCES "networks" (id) ON DELETE CASCADE,
     FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE
 );
+
 INSERT INTO "networks_config_new" SELECT * FROM "networks_config";
 DROP TABLE "networks_config";
 ALTER TABLE "networks_config_new" RENAME TO "networks_config";
+
 CREATE UNIQUE INDEX networks_unique_network_id_node_id_key ON "networks_config" (network_id, IFNULL(node_id, -1), key);
+
 CREATE TABLE "networks_forwards_config_new" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_forward_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	UNIQUE (network_forward_id, key),
-	FOREIGN KEY (network_forward_id) REFERENCES "networks_forwards" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_forward_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (network_forward_id, key),
+    FOREIGN KEY (network_forward_id) REFERENCES "networks_forwards" (id) ON DELETE CASCADE
 );
+
 INSERT INTO "networks_forwards_config_new" SELECT * FROM "networks_forwards_config";
 DROP TABLE "networks_forwards_config";
 ALTER TABLE "networks_forwards_config_new" RENAME TO "networks_forwards_config";
+
 CREATE TABLE "networks_peers_config_new" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_peer_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	UNIQUE (network_peer_id, key),
-	FOREIGN KEY (network_peer_id) REFERENCES "networks_peers" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_peer_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (network_peer_id, key),
+    FOREIGN KEY (network_peer_id) REFERENCES "networks_peers" (id) ON DELETE CASCADE
 );
+
 INSERT INTO "networks_peers_config_new" SELECT * FROM "networks_peers_config";
 DROP TABLE "networks_peers_config";
 ALTER TABLE "networks_peers_config_new" RENAME TO "networks_peers_config";
+
 CREATE TABLE "networks_zones_config_new" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_zone_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	UNIQUE (network_zone_id, key),
-	FOREIGN KEY (network_zone_id) REFERENCES "networks_zones" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_zone_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (network_zone_id, key),
+    FOREIGN KEY (network_zone_id) REFERENCES "networks_zones" (id) ON DELETE CASCADE
 );
+
 INSERT INTO "networks_zones_config_new" SELECT * FROM "networks_zones_config";
 DROP TABLE "networks_zones_config";
 ALTER TABLE "networks_zones_config_new" RENAME TO "networks_zones_config";
+
 CREATE TABLE networks_zones_records_config_new (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_zone_record_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	UNIQUE (network_zone_record_id, key),
-	FOREIGN KEY (network_zone_record_id) REFERENCES networks_zones_records (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_zone_record_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (network_zone_record_id, key),
+    FOREIGN KEY (network_zone_record_id) REFERENCES networks_zones_records (id) ON DELETE CASCADE
 );
+
 INSERT INTO "networks_zones_records_config_new" SELECT * FROM "networks_zones_records_config";
 DROP TABLE "networks_zones_records_config";
 ALTER TABLE "networks_zones_records_config_new" RENAME TO "networks_zones_records_config";
+
 CREATE TABLE "nodes_config_new" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	node_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE,
-	UNIQUE (node_id, key)
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    node_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE,
+    UNIQUE (node_id, key)
 );
+
 INSERT INTO "nodes_config_new" SELECT * FROM "nodes_config";
 DROP TABLE "nodes_config";
 ALTER TABLE "nodes_config_new" RENAME TO "nodes_config";
+
 CREATE TABLE "profiles_config_new" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     profile_id INTEGER NOT NULL,
@@ -615,9 +659,11 @@ CREATE TABLE "profiles_config_new" (
     UNIQUE (profile_id, key),
     FOREIGN KEY (profile_id) REFERENCES "profiles"(id) ON DELETE CASCADE
 );
+
 INSERT INTO "profiles_config_new" SELECT * FROM "profiles_config";
 DROP TABLE "profiles_config";
 ALTER TABLE "profiles_config_new" RENAME TO "profiles_config";
+
 CREATE TABLE "profiles_devices_config_new" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     profile_device_id INTEGER NOT NULL,
@@ -626,9 +672,11 @@ CREATE TABLE "profiles_devices_config_new" (
     UNIQUE (profile_device_id, key),
     FOREIGN KEY (profile_device_id) REFERENCES "profiles_devices" (id) ON DELETE CASCADE
 );
+
 INSERT INTO "profiles_devices_config_new" SELECT * FROM "profiles_devices_config";
 DROP TABLE "profiles_devices_config";
 ALTER TABLE "profiles_devices_config_new" RENAME TO "profiles_devices_config";
+
 CREATE TABLE "projects_config_new" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     project_id INTEGER NOT NULL,
@@ -637,9 +685,11 @@ CREATE TABLE "projects_config_new" (
     FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE,
     UNIQUE (project_id, key)
 );
+
 INSERT INTO "projects_config_new" SELECT * FROM "projects_config";
 DROP TABLE "projects_config";
 ALTER TABLE "projects_config_new" RENAME TO "projects_config";
+
 CREATE TABLE "storage_pools_config_new" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     storage_pool_id INTEGER NOT NULL,
@@ -650,10 +700,13 @@ CREATE TABLE "storage_pools_config_new" (
     FOREIGN KEY (storage_pool_id) REFERENCES "storage_pools" (id) ON DELETE CASCADE,
     FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE
 );
+
 INSERT INTO "storage_pools_config_new" SELECT * FROM "storage_pools_config";
 DROP TABLE "storage_pools_config";
 ALTER TABLE "storage_pools_config_new" RENAME TO "storage_pools_config";
+
 CREATE UNIQUE INDEX storage_pools_unique_storage_pool_id_node_id_key ON storage_pools_config (storage_pool_id, IFNULL(node_id, -1), key);
+
 CREATE TABLE "storage_volumes_config_new" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     storage_volume_id INTEGER NOT NULL,
@@ -662,9 +715,11 @@ CREATE TABLE "storage_volumes_config_new" (
     UNIQUE (storage_volume_id, key),
     FOREIGN KEY (storage_volume_id) REFERENCES "storage_volumes" (id) ON DELETE CASCADE
 );
+
 INSERT INTO "storage_volumes_config_new" SELECT * FROM "storage_volumes_config";
 DROP TABLE "storage_volumes_config";
 ALTER TABLE "storage_volumes_config_new" RENAME TO "storage_volumes_config";
+
 CREATE TABLE "storage_volumes_snapshots_config_new" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     storage_volume_snapshot_id INTEGER NOT NULL,
@@ -673,6 +728,7 @@ CREATE TABLE "storage_volumes_snapshots_config_new" (
     FOREIGN KEY (storage_volume_snapshot_id) REFERENCES "storage_volumes_snapshots" (id) ON DELETE CASCADE,
     UNIQUE (storage_volume_snapshot_id, key)
 );
+
 INSERT INTO "storage_volumes_snapshots_config_new" SELECT * FROM "storage_volumes_snapshots_config";
 DROP TABLE "storage_volumes_snapshots_config";
 ALTER TABLE "storage_volumes_snapshots_config_new" RENAME TO "storage_volumes_snapshots_config";
@@ -688,25 +744,25 @@ ALTER TABLE "storage_volumes_snapshots_config_new" RENAME TO "storage_volumes_sn
 func updateFromV60(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.Exec(`
 CREATE TABLE "networks_load_balancers" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_id INTEGER NOT NULL,
-	node_id INTEGER,
-	listen_address TEXT NOT NULL,
-	description TEXT NOT NULL,
-	backends TEXT NOT NULL,
-	ports TEXT NOT NULL,
-	UNIQUE (network_id, node_id, listen_address),
-	FOREIGN KEY (network_id) REFERENCES "networks" (id) ON DELETE CASCADE,
-	FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_id INTEGER NOT NULL,
+    node_id INTEGER,
+    listen_address TEXT NOT NULL,
+    description TEXT NOT NULL,
+    backends TEXT NOT NULL,
+    ports TEXT NOT NULL,
+    UNIQUE (network_id, node_id, listen_address),
+    FOREIGN KEY (network_id) REFERENCES "networks" (id) ON DELETE CASCADE,
+    FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE
 );
 
 CREATE TABLE "networks_load_balancers_config" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_load_balancer_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT NOT NULL,
-	UNIQUE (network_load_balancer_id, key),
-	FOREIGN KEY (network_load_balancer_id) REFERENCES "networks_load_balancers" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_load_balancer_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    UNIQUE (network_load_balancer_id, key),
+    FOREIGN KEY (network_load_balancer_id) REFERENCES "networks_load_balancers" (id) ON DELETE CASCADE
 );
 `)
 	if err != nil {
@@ -719,22 +775,22 @@ CREATE TABLE "networks_load_balancers_config" (
 func updateFromV59(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.Exec(`
 CREATE TABLE networks_zones_records (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_zone_id INTEGER NOT NULL,
-	name TEXT NOT NULL,
-	description TEXT NOT NULL,
-	entries TEXT NOT NULL,
-	UNIQUE (name),
-	FOREIGN KEY (network_zone_id) REFERENCES networks_zones (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_zone_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    entries TEXT NOT NULL,
+    UNIQUE (name),
+    FOREIGN KEY (network_zone_id) REFERENCES networks_zones (id) ON DELETE CASCADE
 );
 
 CREATE TABLE networks_zones_records_config (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_zone_record_id INTEGER NOT NULL,
-	key VARCHAR(255) NOT NULL,
-	value TEXT,
-	UNIQUE (network_zone_record_id, key),
-	FOREIGN KEY (network_zone_record_id) REFERENCES networks_zones_records (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_zone_record_id INTEGER NOT NULL,
+    key VARCHAR(255) NOT NULL,
+    value TEXT,
+    UNIQUE (network_zone_record_id, key),
+    FOREIGN KEY (network_zone_record_id) REFERENCES networks_zones_records (id) ON DELETE CASCADE
 );
 `)
 	if err != nil {
@@ -793,11 +849,11 @@ CREATE TABLE projects_new (
 INSERT INTO projects_new (id, name, description) SELECT id, name, IFNULL(description, '') FROM projects;
 
 CREATE TABLE certificates_projects_new (
-	certificate_id INTEGER NOT NULL,
-	project_id INTEGER NOT NULL,
-	FOREIGN KEY (certificate_id) REFERENCES certificates (id) ON DELETE CASCADE,
-	FOREIGN KEY (project_id) REFERENCES projects_new (id) ON DELETE CASCADE,
-	UNIQUE (certificate_id, project_id)
+    certificate_id INTEGER NOT NULL,
+    project_id INTEGER NOT NULL,
+    FOREIGN KEY (certificate_id) REFERENCES certificates (id) ON DELETE CASCADE,
+    FOREIGN KEY (project_id) REFERENCES projects_new (id) ON DELETE CASCADE,
+    UNIQUE (certificate_id, project_id)
 );
 
 INSERT INTO certificates_projects_new (certificate_id, project_id) SELECT certificate_id, project_id FROM certificates_projects;
@@ -822,7 +878,7 @@ CREATE TABLE images_new (
 );
 
 INSERT INTO images_new (id, fingerprint, filename, size, public, architecture, creation_date, expiry_date, upload_date, cached, last_use_date, auto_update, project_id, type)
-	SELECT id, fingerprint, filename, size, public, architecture, creation_date, expiry_date, upload_date, cached, last_use_date, auto_update, project_id, type FROM images;
+    SELECT id, fingerprint, filename, size, public, architecture, creation_date, expiry_date, upload_date, cached, last_use_date, auto_update, project_id, type FROM images;
 
 CREATE TABLE images_aliases_new (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -836,7 +892,7 @@ CREATE TABLE images_aliases_new (
 );
 
 INSERT INTO images_aliases_new (id, name, image_id, description, project_id)
-	SELECT id, name, image_id, IFNULL(description, ''), project_id FROM images_aliases;
+    SELECT id, name, image_id, IFNULL(description, ''), project_id FROM images_aliases;
 
 CREATE TABLE nodes_new (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -881,11 +937,11 @@ INSERT INTO profiles_new (id, name, description, project_id)
     SELECT id, name, IFNULL(description, ''), project_id FROM profiles;
 
 CREATE TABLE images_profiles_new (
-	image_id INTEGER NOT NULL,
-	profile_id INTEGER NOT NULL,
-	FOREIGN KEY (image_id) REFERENCES images_new (id) ON DELETE CASCADE,
-	FOREIGN KEY (profile_id) REFERENCES profiles_new (id) ON DELETE CASCADE,
-	UNIQUE (image_id, profile_id)
+    image_id INTEGER NOT NULL,
+    profile_id INTEGER NOT NULL,
+    FOREIGN KEY (image_id) REFERENCES images_new (id) ON DELETE CASCADE,
+    FOREIGN KEY (profile_id) REFERENCES profiles_new (id) ON DELETE CASCADE,
+    UNIQUE (image_id, profile_id)
 );
 
 INSERT INTO images_profiles_new (image_id, profile_id)
@@ -1104,27 +1160,27 @@ INSERT INTO networks_config_new (id, network_id, node_id, key, value)
     SELECT id, network_id, node_id, key, value FROM networks_config;
 
 CREATE TABLE networks_forwards_new (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_id INTEGER NOT NULL,
-	node_id INTEGER,
-	listen_address TEXT NOT NULL,
-	description TEXT NOT NULL,
-	ports TEXT NOT NULL,
-	UNIQUE (network_id, node_id, listen_address),
-	FOREIGN KEY (network_id) REFERENCES networks_new (id) ON DELETE CASCADE,
-	FOREIGN KEY (node_id) REFERENCES nodes_new (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_id INTEGER NOT NULL,
+    node_id INTEGER,
+    listen_address TEXT NOT NULL,
+    description TEXT NOT NULL,
+    ports TEXT NOT NULL,
+    UNIQUE (network_id, node_id, listen_address),
+    FOREIGN KEY (network_id) REFERENCES networks_new (id) ON DELETE CASCADE,
+    FOREIGN KEY (node_id) REFERENCES nodes_new (id) ON DELETE CASCADE
 );
 
 INSERT INTO networks_forwards_new (id, network_id, node_id, listen_address, description, ports)
     SELECT id, network_id, node_id, listen_address, IFNULL(description, ''), ports FROM networks_forwards;
 
 CREATE TABLE networks_forwards_config_new (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_forward_id INTEGER NOT NULL,
-	key VARCHAR(255) NOT NULL,
-	value TEXT,
-	UNIQUE (network_forward_id, key),
-	FOREIGN KEY (network_forward_id) REFERENCES networks_forwards_new (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_forward_id INTEGER NOT NULL,
+    key VARCHAR(255) NOT NULL,
+    value TEXT,
+    UNIQUE (network_forward_id, key),
+    FOREIGN KEY (network_forward_id) REFERENCES networks_forwards_new (id) ON DELETE CASCADE
 );
 
 INSERT INTO networks_forwards_config_new (id, network_forward_id, key, value)
@@ -1144,53 +1200,53 @@ INSERT INTO networks_nodes_new (id, network_id, node_id, state)
     SELECT id, network_id, node_id, state FROM networks_nodes;
 
 CREATE TABLE networks_peers_new (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_id INTEGER NOT NULL,
-	name TEXT NOT NULL,
-	description TEXT NOT NULL,
-	target_network_project TEXT NULL,
-	target_network_name TEXT NULL,
-	target_network_id INTEGER NULL,
-	UNIQUE (network_id, name),
-	UNIQUE (network_id, target_network_project, target_network_name),
-	UNIQUE (network_id, target_network_id),
-	FOREIGN KEY (network_id) REFERENCES networks_new (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    target_network_project TEXT NULL,
+    target_network_name TEXT NULL,
+    target_network_id INTEGER NULL,
+    UNIQUE (network_id, name),
+    UNIQUE (network_id, target_network_project, target_network_name),
+    UNIQUE (network_id, target_network_id),
+    FOREIGN KEY (network_id) REFERENCES networks_new (id) ON DELETE CASCADE
 );
 
 INSERT INTO networks_peers_new (id, network_id, name, description, target_network_project, target_network_name, target_network_id)
     SELECT id, network_id, name, IFNULL(description, ''), target_network_project, target_network_name, target_network_id FROM networks_peers;
 
 CREATE TABLE networks_peers_config_new (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_peer_id INTEGER NOT NULL,
-	key VARCHAR(255) NOT NULL,
-	value TEXT,
-	UNIQUE (network_peer_id, key),
-	FOREIGN KEY (network_peer_id) REFERENCES networks_peers_new (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_peer_id INTEGER NOT NULL,
+    key VARCHAR(255) NOT NULL,
+    value TEXT,
+    UNIQUE (network_peer_id, key),
+    FOREIGN KEY (network_peer_id) REFERENCES networks_peers_new (id) ON DELETE CASCADE
 );
 
 INSERT INTO networks_peers_config_new (id, network_peer_id, key, value)
     SELECT id, network_peer_id, key, value FROM networks_peers_config;
 
 CREATE TABLE networks_zones_new (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	project_id INTEGER NOT NULL,
-	name TEXT NOT NULL,
-	description TEXT NOT NULL,
-	UNIQUE (name),
-	FOREIGN KEY (project_id) REFERENCES projects_new (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    project_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    UNIQUE (name),
+    FOREIGN KEY (project_id) REFERENCES projects_new (id) ON DELETE CASCADE
 );
 
 INSERT INTO networks_zones_new (id, project_id, name, description)
     SELECT id, project_id, name, IFNULL(description, '') FROM networks_zones;
 
 CREATE TABLE networks_zones_config_new (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_zone_id INTEGER NOT NULL,
-	key VARCHAR(255) NOT NULL,
-	value TEXT,
-	UNIQUE (network_zone_id, key),
-	FOREIGN KEY (network_zone_id) REFERENCES networks_zones_new (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_zone_id INTEGER NOT NULL,
+    key VARCHAR(255) NOT NULL,
+    value TEXT,
+    UNIQUE (network_zone_id, key),
+    FOREIGN KEY (network_zone_id) REFERENCES networks_zones_new (id) ON DELETE CASCADE
 );
 
 INSERT INTO networks_zones_config_new (id, network_zone_id, key, value)
@@ -1208,12 +1264,12 @@ INSERT INTO nodes_cluster_groups_new (node_id, group_id)
     SELECT node_id, group_id FROM nodes_cluster_groups;
 
 CREATE TABLE nodes_config_new (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	node_id INTEGER NOT NULL,
-	key TEXT NOT NULL,
-	value TEXT,
-	FOREIGN KEY (node_id) REFERENCES nodes_new (id) ON DELETE CASCADE,
-	UNIQUE (node_id, key)
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    node_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT,
+    FOREIGN KEY (node_id) REFERENCES nodes_new (id) ON DELETE CASCADE,
+    UNIQUE (node_id, key)
 );
 
 INSERT INTO nodes_config_new (id, node_id, key, value)
@@ -1402,22 +1458,22 @@ INSERT INTO storage_volumes_snapshots_config_new (id, storage_volume_snapshot_id
     SELECT id, storage_volume_snapshot_id, key, value FROM storage_volumes_snapshots_config;
 
 CREATE TABLE warnings_new (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	node_id INTEGER,
-	project_id INTEGER,
-	entity_type_code INTEGER,
-	entity_id INTEGER,
-	uuid TEXT NOT NULL,
-	type_code INTEGER NOT NULL,
-	status INTEGER NOT NULL,
-	first_seen_date DATETIME NOT NULL,
-	last_seen_date DATETIME NOT NULL,
-	updated_date DATETIME,
-	last_message TEXT NOT NULL,
-	count INTEGER NOT NULL,
-	UNIQUE (uuid),
-	FOREIGN KEY (node_id) REFERENCES nodes_new(id) ON DELETE CASCADE,
-	FOREIGN KEY (project_id) REFERENCES projects_new (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    node_id INTEGER,
+    project_id INTEGER,
+    entity_type_code INTEGER,
+    entity_id INTEGER,
+    uuid TEXT NOT NULL,
+    type_code INTEGER NOT NULL,
+    status INTEGER NOT NULL,
+    first_seen_date DATETIME NOT NULL,
+    last_seen_date DATETIME NOT NULL,
+    updated_date DATETIME,
+    last_message TEXT NOT NULL,
+    count INTEGER NOT NULL,
+    UNIQUE (uuid),
+    FOREIGN KEY (node_id) REFERENCES nodes_new(id) ON DELETE CASCADE,
+    FOREIGN KEY (project_id) REFERENCES projects_new (id) ON DELETE CASCADE
 );
 
 INSERT INTO warnings_new (id, node_id, project_id, entity_type_code, entity_id, uuid, type_code, status, first_seen_date, last_seen_date, updated_date, last_message, count)
@@ -1534,51 +1590,51 @@ CREATE INDEX profiles_project_id_idx ON profiles (project_id);
 CREATE UNIQUE INDEX warnings_unique_node_id_project_id_entity_type_code_entity_id_type_code ON warnings(IFNULL(node_id, -1), IFNULL(project_id, -1), entity_type_code, entity_id, type_code);
 
 CREATE TRIGGER storage_volumes_check_id
-  BEFORE INSERT ON storage_volumes
-  WHEN NEW.id IN (SELECT id FROM storage_volumes_snapshots)
-  BEGIN
-    SELECT RAISE(FAIL,
-    "invalid ID");
-  END;
+    BEFORE INSERT ON storage_volumes
+    WHEN NEW.id IN (SELECT id FROM storage_volumes_snapshots)
+    BEGIN
+        SELECT RAISE(FAIL,
+        "invalid ID");
+    END;
 
 CREATE TRIGGER storage_volumes_snapshots_check_id
-  BEFORE INSERT ON storage_volumes_snapshots
-  WHEN NEW.id IN (SELECT id FROM storage_volumes)
-  BEGIN
-    SELECT RAISE(FAIL,
-    "invalid ID");
-  END;
+    BEFORE INSERT ON storage_volumes_snapshots
+    WHEN NEW.id IN (SELECT id FROM storage_volumes)
+    BEGIN
+        SELECT RAISE(FAIL,
+        "invalid ID");
+    END;
 
 CREATE VIEW storage_volumes_all (
-         id,
-         name,
-         storage_pool_id,
-         node_id,
-         type,
-         description,
-         project_id,
-         content_type) AS
-  SELECT id,
-         name,
-         storage_pool_id,
-         node_id,
-         type,
-         description,
-         project_id,
-         content_type
-    FROM storage_volumes UNION
-  SELECT storage_volumes_snapshots.id,
-         printf('%s/%s',
-    storage_volumes.name,
-    storage_volumes_snapshots.name),
-         storage_volumes.storage_pool_id,
-         storage_volumes.node_id,
-         storage_volumes.type,
-         storage_volumes_snapshots.description,
-         storage_volumes.project_id,
-         storage_volumes.content_type
-    FROM storage_volumes
-    JOIN storage_volumes_snapshots ON storage_volumes.id = storage_volumes_snapshots.storage_volume_id;
+    id,
+    name,
+    storage_pool_id,
+    node_id,
+    type,
+    description,
+    project_id,
+    content_type) AS
+        SELECT id,
+            name,
+            storage_pool_id,
+            node_id,
+            type,
+            description,
+            project_id,
+            content_type
+        FROM storage_volumes UNION
+            SELECT storage_volumes_snapshots.id,
+                printf('%s/%s',
+                    storage_volumes.name,
+                    storage_volumes_snapshots.name),
+                storage_volumes.storage_pool_id,
+                storage_volumes.node_id,
+                storage_volumes.type,
+                storage_volumes_snapshots.description,
+                storage_volumes.project_id,
+                storage_volumes.content_type
+            FROM storage_volumes
+            JOIN storage_volumes_snapshots ON storage_volumes.id = storage_volumes_snapshots.storage_volume_id;
 `)
 	if err != nil {
 		return fmt.Errorf("Could not add not null constraint to description field: %w", err)
@@ -1641,21 +1697,21 @@ INSERT INTO nodes_cluster_groups (node_id, group_id) SELECT id, 1 FROM nodes;
 func updateFromV52(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.Exec(`
 CREATE TABLE "networks_zones" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	project_id INTEGER NOT NULL,
-	name TEXT NOT NULL,
-	description TEXT NOT NULL,
-	UNIQUE (name),
-	FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    project_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    UNIQUE (name),
+    FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE
 );
 
 CREATE TABLE "networks_zones_config" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_zone_id INTEGER NOT NULL,
-	key VARCHAR(255) NOT NULL,
-	value TEXT,
-	UNIQUE (network_zone_id, key),
-	FOREIGN KEY (network_zone_id) REFERENCES "networks_zones" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_zone_id INTEGER NOT NULL,
+    key VARCHAR(255) NOT NULL,
+    value TEXT,
+    UNIQUE (network_zone_id, key),
+    FOREIGN KEY (network_zone_id) REFERENCES "networks_zones" (id) ON DELETE CASCADE
 );
 `)
 	if err != nil {
@@ -1669,26 +1725,26 @@ CREATE TABLE "networks_zones_config" (
 func updateFromV51(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.Exec(`
 CREATE TABLE "networks_peers" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_id INTEGER NOT NULL,
-	name TEXT NOT NULL,
-	description TEXT NOT NULL,
-	target_network_project TEXT NULL,
-	target_network_name TEXT NULL,
-	target_network_id INTEGER NULL,
-	UNIQUE (network_id, name),
-	UNIQUE (network_id, target_network_project, target_network_name),
-	UNIQUE (network_id, target_network_id),
-	FOREIGN KEY (network_id) REFERENCES "networks" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    target_network_project TEXT NULL,
+    target_network_name TEXT NULL,
+    target_network_id INTEGER NULL,
+    UNIQUE (network_id, name),
+    UNIQUE (network_id, target_network_project, target_network_name),
+    UNIQUE (network_id, target_network_id),
+    FOREIGN KEY (network_id) REFERENCES "networks" (id) ON DELETE CASCADE
 );
 
 CREATE TABLE "networks_peers_config" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_peer_id INTEGER NOT NULL,
-	key VARCHAR(255) NOT NULL,
-	value TEXT,
-	UNIQUE (network_peer_id, key),
-	FOREIGN KEY (network_peer_id) REFERENCES "networks_peers" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_peer_id INTEGER NOT NULL,
+    key VARCHAR(255) NOT NULL,
+    value TEXT,
+    UNIQUE (network_peer_id, key),
+    FOREIGN KEY (network_peer_id) REFERENCES "networks_peers" (id) ON DELETE CASCADE
 );
 `)
 	if err != nil {
@@ -1702,12 +1758,12 @@ CREATE TABLE "networks_peers_config" (
 func updateFromV50(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.Exec(`
 CREATE TABLE "nodes_config" (
-id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-node_id INTEGER NOT NULL,
-key TEXT NOT NULL,
-value TEXT,
-FOREIGN KEY (node_id) REFERENCES nodes (id) ON DELETE CASCADE,
-UNIQUE (node_id, key)
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    node_id INTEGER NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT,
+    FOREIGN KEY (node_id) REFERENCES nodes (id) ON DELETE CASCADE,
+    UNIQUE (node_id, key)
 );
 	`)
 
@@ -1722,24 +1778,24 @@ UNIQUE (node_id, key)
 func updateFromV49(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.Exec(`
 CREATE TABLE "networks_forwards" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_id INTEGER NOT NULL,
-	node_id INTEGER,
-	listen_address TEXT NOT NULL,
-	description TEXT NOT NULL,
-	ports TEXT NOT NULL,
-	UNIQUE (network_id, node_id, listen_address),
-	FOREIGN KEY (network_id) REFERENCES "networks" (id) ON DELETE CASCADE,
-	FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_id INTEGER NOT NULL,
+    node_id INTEGER,
+    listen_address TEXT NOT NULL,
+    description TEXT NOT NULL,
+    ports TEXT NOT NULL,
+    UNIQUE (network_id, node_id, listen_address),
+    FOREIGN KEY (network_id) REFERENCES "networks" (id) ON DELETE CASCADE,
+    FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE
 );
 
 CREATE TABLE "networks_forwards_config" (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	network_forward_id INTEGER NOT NULL,
-	key VARCHAR(255) NOT NULL,
-	value TEXT,
-	UNIQUE (network_forward_id, key),
-	FOREIGN KEY (network_forward_id) REFERENCES "networks_forwards" (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_forward_id INTEGER NOT NULL,
+    key VARCHAR(255) NOT NULL,
+    value TEXT,
+    UNIQUE (network_forward_id, key),
+    FOREIGN KEY (network_forward_id) REFERENCES "networks_forwards" (id) ON DELETE CASCADE
 );
 `)
 	if err != nil {
@@ -1752,8 +1808,7 @@ CREATE TABLE "networks_forwards_config" (
 // updateFromV48 renames the "pending" column to "state" in the "nodes" table.
 func updateFromV48(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.Exec(`
-ALTER TABLE nodes
-RENAME COLUMN pending TO state;
+ALTER TABLE nodes RENAME COLUMN pending TO state;
 `)
 	if err != nil {
 		return fmt.Errorf(`Failed to rename column "pending" to "state" in table "nodes": %w`, err)
@@ -1766,22 +1821,22 @@ RENAME COLUMN pending TO state;
 func updateFromV47(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.Exec(`
 CREATE TABLE warnings (
-	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	node_id INTEGER,
-	project_id INTEGER,
-	entity_type_code INTEGER,
-	entity_id INTEGER,
-	uuid TEXT NOT NULL,
-	type_code INTEGER NOT NULL,
-	status INTEGER NOT NULL,
-	first_seen_date DATETIME NOT NULL,
-	last_seen_date DATETIME NOT NULL,
-	updated_date DATETIME,
-	last_message TEXT NOT NULL,
-	count INTEGER NOT NULL,
-	UNIQUE (uuid),
-	FOREIGN KEY (node_id) REFERENCES nodes(id) ON DELETE CASCADE,
-	FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    node_id INTEGER,
+    project_id INTEGER,
+    entity_type_code INTEGER,
+    entity_id INTEGER,
+    uuid TEXT NOT NULL,
+    type_code INTEGER NOT NULL,
+    status INTEGER NOT NULL,
+    first_seen_date DATETIME NOT NULL,
+    last_seen_date DATETIME NOT NULL,
+    updated_date DATETIME,
+    last_message TEXT NOT NULL,
+    count INTEGER NOT NULL,
+    UNIQUE (uuid),
+    FOREIGN KEY (node_id) REFERENCES nodes(id) ON DELETE CASCADE,
+    FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
 );
 
 CREATE UNIQUE INDEX warnings_unique_node_id_project_id_entity_type_code_entity_id_type_code ON warnings(IFNULL(node_id, -1), IFNULL(project_id, -1), entity_type_code, entity_id, type_code);
@@ -1798,17 +1853,18 @@ func updateFromV46(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.Exec(`
 ALTER TABLE certificates ADD COLUMN restricted INTEGER NOT NULL DEFAULT 0;
 CREATE TABLE certificates_projects (
-	certificate_id INTEGER NOT NULL,
-	project_id INTEGER NOT NULL,
-	FOREIGN KEY (certificate_id) REFERENCES certificates (id) ON DELETE CASCADE,
-	FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE,
-	UNIQUE (certificate_id, project_id)
+    certificate_id INTEGER NOT NULL,
+    project_id INTEGER NOT NULL,
+    FOREIGN KEY (certificate_id) REFERENCES certificates (id) ON DELETE CASCADE,
+    FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE,
+    UNIQUE (certificate_id, project_id)
 );
+
 CREATE VIEW certificates_projects_ref (fingerprint, value) AS
-	SELECT certificates.fingerprint, projects.name FROM certificates_projects
-		JOIN certificates ON certificates.id=certificates_projects.certificate_id
-		JOIN projects ON projects.id=certificates_projects.project_id
-		ORDER BY projects.name;
+    SELECT certificates.fingerprint, projects.name FROM certificates_projects
+        JOIN certificates ON certificates.id=certificates_projects.certificate_id
+        JOIN projects ON projects.id=certificates_projects.project_id
+        ORDER BY projects.name;
 `)
 	if err != nil {
 		return fmt.Errorf("Failed extending certificates to support project restrictions: %w", err)
@@ -1990,8 +2046,9 @@ CREATE VIEW projects_used_by_ref (name,
 
 // updateFromV43 adds a unique index to the storage_pools_config and networks_config tables.
 func updateFromV43(ctx context.Context, tx *sql.Tx) error {
-	_, err := tx.Exec(`CREATE UNIQUE INDEX storage_pools_unique_storage_pool_id_node_id_key ON storage_pools_config (storage_pool_id, IFNULL(node_id, -1), key);
-		CREATE UNIQUE INDEX networks_unique_network_id_node_id_key ON networks_config (network_id, IFNULL(node_id, -1), key);
+	_, err := tx.Exec(`
+CREATE UNIQUE INDEX storage_pools_unique_storage_pool_id_node_id_key ON storage_pools_config (storage_pool_id, IFNULL(node_id, -1), key);
+CREATE UNIQUE INDEX networks_unique_network_id_node_id_key ON networks_config (network_id, IFNULL(node_id, -1), key);
 	`)
 	if err != nil {
 		return fmt.Errorf("Failed adding unique index to storage_pools_config and networks_config tables: %w", err)
@@ -2135,8 +2192,8 @@ func updateFromV41(ctx context.Context, tx *sql.Tx) error {
 // Add state column to storage_pools_nodes tables. Set existing row's state to 1 ("created").
 func updateFromV40(ctx context.Context, tx *sql.Tx) error {
 	stmt := `
-		ALTER TABLE storage_pools_nodes ADD COLUMN state INTEGER NOT NULL DEFAULT 0;
-		UPDATE storage_pools_nodes SET state = 1;
+ALTER TABLE storage_pools_nodes ADD COLUMN state INTEGER NOT NULL DEFAULT 0;
+UPDATE storage_pools_nodes SET state = 1;
 	`
 	_, err := tx.Exec(stmt)
 	return err
@@ -2145,8 +2202,8 @@ func updateFromV40(ctx context.Context, tx *sql.Tx) error {
 // Add state column to networks_nodes tables. Set existing row's state to 1 ("created").
 func updateFromV39(ctx context.Context, tx *sql.Tx) error {
 	stmt := `
-		ALTER TABLE networks_nodes ADD COLUMN state INTEGER NOT NULL DEFAULT 0;
-		UPDATE networks_nodes SET state = 1;
+ALTER TABLE networks_nodes ADD COLUMN state INTEGER NOT NULL DEFAULT 0;
+UPDATE networks_nodes SET state = 1;
 	`
 	_, err := tx.Exec(stmt)
 	return err
@@ -2235,8 +2292,8 @@ WITH storage_volumes_tmp (id, node_id)
 AS (
   SELECT storage_volumes.id, storage_pools_nodes.node_id
   FROM storage_volumes
-	JOIN storage_pools_nodes ON storage_pools_nodes.storage_pool_id=storage_volumes.storage_pool_id
-	JOIN storage_pools ON storage_pools.id=storage_volumes.storage_pool_id
+    JOIN storage_pools_nodes ON storage_pools_nodes.storage_pool_id=storage_volumes.storage_pool_id
+    JOIN storage_pools ON storage_pools.id=storage_volumes.storage_pool_id
   WHERE storage_pools.driver NOT IN ("ceph", "cephfs"))
 UPDATE storage_volumes
 SET node_id=(
@@ -2472,20 +2529,20 @@ ALTER TABLE storage_volumes_new RENAME TO storage_volumes;
 UPDATE storage_volumes
 SET node_id=null
 WHERE storage_volumes.id IN (
-  SELECT storage_volumes.id FROM storage_volumes
-  JOIN storage_pools ON storage_volumes.storage_pool_id=storage_pools.id
-  WHERE storage_pools.driver IN ("ceph", "cephfs")
+    SELECT storage_volumes.id FROM storage_volumes
+    JOIN storage_pools ON storage_volumes.storage_pool_id=storage_pools.id
+    WHERE storage_pools.driver IN ("ceph", "cephfs")
 );
 
 PRAGMA foreign_keys = ON;
 PRAGMA legacy_alter_table = OFF;
 
 CREATE TRIGGER storage_volumes_check_id
-  BEFORE INSERT ON storage_volumes
-  WHEN NEW.id IN (SELECT id FROM storage_volumes_snapshots)
-  BEGIN
-    SELECT RAISE(FAIL, "invalid ID");
-  END;
+    BEFORE INSERT ON storage_volumes
+    WHEN NEW.id IN (SELECT id FROM storage_volumes_snapshots)
+    BEGIN
+        SELECT RAISE(FAIL, "invalid ID");
+    END;
 `)
 	if err != nil {
 		return err
@@ -2620,8 +2677,9 @@ CREATE TABLE nodes_failure_domains (
     name TEXT NOT NULL,
     UNIQUE (name)
 );
+
 ALTER TABLE nodes
- ADD COLUMN failure_domain_id INTEGER DEFAULT NULL REFERENCES nodes_failure_domains (id) ON DELETE SET NULL;
+    ADD COLUMN failure_domain_id INTEGER DEFAULT NULL REFERENCES nodes_failure_domains (id) ON DELETE SET NULL;
 `
 	_, err := tx.Exec(stmts)
 	if err != nil {
@@ -2636,40 +2694,41 @@ func updateFromV30(ctx context.Context, tx *sql.Tx) error {
 	stmts := `ALTER TABLE storage_volumes ADD COLUMN content_type INTEGER NOT NULL DEFAULT 0;
 UPDATE storage_volumes SET content_type = 1 WHERE type = 3;
 UPDATE storage_volumes SET content_type = 1 WHERE storage_volumes.id IN (
-	SELECT storage_volumes.id
-	  FROM storage_volumes
-	  JOIN images ON storage_volumes.name = images.fingerprint
-	  WHERE images.type = 1
+    SELECT storage_volumes.id
+        FROM storage_volumes
+        JOIN images ON storage_volumes.name = images.fingerprint
+        WHERE images.type = 1
 );
+
 DROP VIEW storage_volumes_all;
 CREATE VIEW storage_volumes_all (
-         id,
-         name,
-         storage_pool_id,
-         node_id,
-         type,
-         description,
-         project_id,
-         content_type) AS
-  SELECT id,
-         name,
-         storage_pool_id,
-         node_id,
-         type,
-         description,
-         project_id,
-         content_type
-    FROM storage_volumes UNION
-  SELECT storage_volumes_snapshots.id,
-         printf('%s/%s', storage_volumes.name, storage_volumes_snapshots.name),
-         storage_volumes.storage_pool_id,
-         storage_volumes.node_id,
-         storage_volumes.type,
-         storage_volumes_snapshots.description,
-         storage_volumes.project_id,
-         storage_volumes.content_type
-    FROM storage_volumes
-    JOIN storage_volumes_snapshots ON storage_volumes.id = storage_volumes_snapshots.storage_volume_id;
+    id,
+    name,
+    storage_pool_id,
+    node_id,
+    type,
+    description,
+    project_id,
+    content_type) AS
+        SELECT id,
+            name,
+            storage_pool_id,
+            node_id,
+            type,
+            description,
+            project_id,
+            content_type
+        FROM storage_volumes UNION
+            SELECT storage_volumes_snapshots.id,
+                printf('%s/%s', storage_volumes.name, storage_volumes_snapshots.name),
+                storage_volumes.storage_pool_id,
+                storage_volumes.node_id,
+                storage_volumes.type,
+                storage_volumes_snapshots.description,
+                storage_volumes.project_id,
+                storage_volumes.content_type
+            FROM storage_volumes
+            JOIN storage_volumes_snapshots ON storage_volumes.id = storage_volumes_snapshots.storage_volume_id;
 `
 	_, err := tx.Exec(stmts)
 	if err != nil {
@@ -2683,30 +2742,29 @@ CREATE VIEW storage_volumes_all (
 func updateFromV29(ctx context.Context, tx *sql.Tx) error {
 	stmts := `
 DROP VIEW projects_used_by_ref;
-CREATE VIEW projects_used_by_ref (name,
-    value) AS
-  SELECT projects.name,
-    printf('/1.0/instances/%s?project=%s',
-    "instances".name,
-    projects.name)
-    FROM "instances" JOIN projects ON project_id=projects.id UNION
-  SELECT projects.name,
-    printf('/1.0/images/%s?project=%s',
-    images.fingerprint,
-    projects.name)
-    FROM images JOIN projects ON project_id=projects.id UNION
-  SELECT projects.name,
-    printf('/1.0/storage-pools/%s/volumes/custom/%s?project=%s&target=%s',
-    storage_pools.name,
-    storage_volumes.name,
-    projects.name,
-    nodes.name)
-    FROM storage_volumes JOIN storage_pools ON storage_pool_id=storage_pools.id JOIN nodes ON node_id=nodes.id JOIN projects ON project_id=projects.id WHERE storage_volumes.type=2 UNION
-  SELECT projects.name,
-    printf('/1.0/profiles/%s?project=%s',
-    profiles.name,
-    projects.name)
-    FROM profiles JOIN projects ON project_id=projects.id;
+CREATE VIEW projects_used_by_ref (name, value) AS
+    SELECT projects.name,
+        printf('/1.0/instances/%s?project=%s',
+        "instances".name,
+        projects.name)
+        FROM "instances" JOIN projects ON project_id=projects.id UNION
+    SELECT projects.name,
+        printf('/1.0/images/%s?project=%s',
+        images.fingerprint,
+        projects.name)
+        FROM images JOIN projects ON project_id=projects.id UNION
+    SELECT projects.name,
+        printf('/1.0/storage-pools/%s/volumes/custom/%s?project=%s&target=%s',
+        storage_pools.name,
+        storage_volumes.name,
+        projects.name,
+        nodes.name)
+        FROM storage_volumes JOIN storage_pools ON storage_pool_id=storage_pools.id JOIN nodes ON node_id=nodes.id JOIN projects ON project_id=projects.id WHERE storage_volumes.type=2 UNION
+    SELECT projects.name,
+        printf('/1.0/profiles/%s?project=%s',
+        profiles.name,
+        projects.name)
+        FROM profiles JOIN projects ON project_id=projects.id;
 `
 	_, err := tx.Exec(stmts)
 	return err
@@ -2757,8 +2815,8 @@ func updateFromV25(ctx context.Context, tx *sql.Tx) error {
 
 	sql := `
 SELECT id, name, storage_pool_id, node_id, type, coalesce(description, ''), project_id
-  FROM storage_volumes
- WHERE snapshot=1
+    FROM storage_volumes
+    WHERE snapshot=1
 `
 	if err != nil {
 		return fmt.Errorf("Failed to prepare volume snapshot query: %w", err)
@@ -2807,6 +2865,7 @@ CREATE TABLE "storage_volumes" (
     FOREIGN KEY (node_id) REFERENCES nodes (id) ON DELETE CASCADE,
     FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
 );
+
 ALTER TABLE storage_volumes_config RENAME TO old_storage_volumes_config;
 CREATE TABLE storage_volumes_config (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -2816,6 +2875,7 @@ CREATE TABLE storage_volumes_config (
     UNIQUE (storage_volume_id, key),
     FOREIGN KEY (storage_volume_id) REFERENCES storage_volumes (id) ON DELETE CASCADE
 );
+
 INSERT INTO storage_volumes(id, name, storage_pool_id, node_id, type, description, project_id)
    SELECT id, name, storage_pool_id, node_id, type, description, project_id FROM old_storage_volumes
      WHERE snapshot=0;
@@ -2824,6 +2884,7 @@ INSERT INTO storage_volumes_config
      WHERE storage_volume_id IN (SELECT id FROM storage_volumes);
 DROP TABLE old_storage_volumes;
 DROP TABLE old_storage_volumes_config;
+
 CREATE TABLE storage_volumes_snapshots (
     id INTEGER NOT NULL,
     storage_volume_id INTEGER NOT NULL,
@@ -2833,18 +2894,19 @@ CREATE TABLE storage_volumes_snapshots (
     UNIQUE (storage_volume_id, name),
     FOREIGN KEY (storage_volume_id) REFERENCES storage_volumes (id) ON DELETE CASCADE
 );
+
 CREATE TRIGGER storage_volumes_check_id
-  BEFORE INSERT ON storage_volumes
-  WHEN NEW.id IN (SELECT id FROM storage_volumes_snapshots)
-  BEGIN
-    SELECT RAISE(FAIL, "invalid ID");
-  END;
+    BEFORE INSERT ON storage_volumes
+    WHEN NEW.id IN (SELECT id FROM storage_volumes_snapshots)
+    BEGIN
+        SELECT RAISE(FAIL, "invalid ID");
+    END;
 CREATE TRIGGER storage_volumes_snapshots_check_id
-  BEFORE INSERT ON storage_volumes_snapshots
-  WHEN NEW.id IN (SELECT id FROM storage_volumes)
-  BEGIN
-    SELECT RAISE(FAIL, "invalid ID");
-  END;
+    BEFORE INSERT ON storage_volumes_snapshots
+    WHEN NEW.id IN (SELECT id FROM storage_volumes)
+    BEGIN
+        SELECT RAISE(FAIL, "invalid ID");
+    END;
 CREATE TABLE storage_volumes_snapshots_config (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     storage_volume_snapshot_id INTEGER NOT NULL,
@@ -2853,31 +2915,32 @@ CREATE TABLE storage_volumes_snapshots_config (
     FOREIGN KEY (storage_volume_snapshot_id) REFERENCES storage_volumes_snapshots (id) ON DELETE CASCADE,
     UNIQUE (storage_volume_snapshot_id, key)
 );
+
 CREATE VIEW storage_volumes_all (
-         id,
-         name,
-         storage_pool_id,
-         node_id,
-         type,
-         description,
-         project_id) AS
-  SELECT id,
-         name,
-         storage_pool_id,
-         node_id,
-         type,
-         description,
-         project_id
-    FROM storage_volumes UNION
-  SELECT storage_volumes_snapshots.id,
-         printf('%s/%s', storage_volumes.name, storage_volumes_snapshots.name),
-         storage_volumes.storage_pool_id,
-         storage_volumes.node_id,
-         storage_volumes.type,
-         storage_volumes_snapshots.description,
-         storage_volumes.project_id
-    FROM storage_volumes
-    JOIN storage_volumes_snapshots ON storage_volumes.id = storage_volumes_snapshots.storage_volume_id;
+    id,
+    name,
+    storage_pool_id,
+    node_id,
+    type,
+    description,
+    project_id) AS
+        SELECT id,
+            name,
+            storage_pool_id,
+            node_id,
+            type,
+            description,
+            project_id
+        FROM storage_volumes UNION
+            SELECT storage_volumes_snapshots.id,
+                printf('%s/%s', storage_volumes.name, storage_volumes_snapshots.name),
+                storage_volumes.storage_pool_id,
+                storage_volumes.node_id,
+                storage_volumes.type,
+                storage_volumes_snapshots.description,
+                storage_volumes.project_id
+            FROM storage_volumes
+            JOIN storage_volumes_snapshots ON storage_volumes.id = storage_volumes_snapshots.storage_volume_id;
 `
 	_, err = tx.Exec(stmts)
 	if err != nil {
@@ -3045,12 +3108,13 @@ func updateFromV21(ctx context.Context, tx *sql.Tx) error {
 	stmts := `
 ALTER TABLE images_profiles RENAME TO old_images_profiles;
 CREATE TABLE images_profiles (
-	image_id INTEGER NOT NULL,
-	profile_id INTEGER NOT NULL,
-	FOREIGN KEY (image_id) REFERENCES images (id) ON DELETE CASCADE,
-	FOREIGN KEY (profile_id) REFERENCES profiles (id) ON DELETE CASCADE,
-	UNIQUE (image_id, profile_id)
+    image_id INTEGER NOT NULL,
+    profile_id INTEGER NOT NULL,
+    FOREIGN KEY (image_id) REFERENCES images (id) ON DELETE CASCADE,
+    FOREIGN KEY (profile_id) REFERENCES profiles (id) ON DELETE CASCADE,
+    UNIQUE (image_id, profile_id)
 );
+
 INSERT INTO images_profiles SELECT * FROM old_images_profiles;
 DROP TABLE old_images_profiles;
 `
@@ -3062,29 +3126,30 @@ DROP TABLE old_images_profiles;
 func updateFromV20(ctx context.Context, tx *sql.Tx) error {
 	stmts := `
 CREATE TABLE images_profiles (
-	image_id INTEGER NOT NULL,
-	profile_id INTEGER NOT NULL,
-	FOREIGN KEY (image_id) REFERENCES images (id) ON DELETE CASCADE,
-	FOREIGN KEY (profile_id) REFERENCES profiles (id) ON DELETE CASCADE,
-	UNIQUE (image_id, profile_id)
+    image_id INTEGER NOT NULL,
+    profile_id INTEGER NOT NULL,
+    FOREIGN KEY (image_id) REFERENCES images (id) ON DELETE CASCADE,
+    FOREIGN KEY (profile_id) REFERENCES profiles (id) ON DELETE CASCADE,
+    UNIQUE (image_id, profile_id)
 );
+
 INSERT INTO images_profiles (image_id, profile_id)
-	SELECT images.id, profiles.id FROM images
-	JOIN profiles ON images.project_id = profiles.project_id
-	WHERE profiles.name = 'default';
+    SELECT images.id, profiles.id FROM images
+    JOIN profiles ON images.project_id = profiles.project_id
+    WHERE profiles.name = 'default';
 INSERT INTO images_profiles (image_id, profile_id)
-	SELECT images.id, profiles.id FROM projects_config AS R
-	JOIN projects_config AS S ON R.project_id = S.project_id
-	JOIN images ON images.project_id = R.project_id
-	JOIN profiles ON profiles.project_id = 1 AND profiles.name = "default"
-	WHERE R.key = "features.images" AND S.key = "features.profiles" AND R.value = "true" AND S.value != "true";
+    SELECT images.id, profiles.id FROM projects_config AS R
+    JOIN projects_config AS S ON R.project_id = S.project_id
+    JOIN images ON images.project_id = R.project_id
+    JOIN profiles ON profiles.project_id = 1 AND profiles.name = "default"
+    WHERE R.key = "features.images" AND S.key = "features.profiles" AND R.value = "true" AND S.value != "true";
 INSERT INTO images_profiles (image_id, profile_id)
-	SELECT images.id, profiles.id FROM projects_config AS R
-	JOIN projects_config AS S ON R.project_id = S.project_id
-	JOIN profiles ON profiles.project_id = R.project_id
-	JOIN images ON images.project_id = 1
-	WHERE R.key = "features.images" AND S.key = "features.profiles" AND R.value != "true" AND S.value = "true"
-		AND profiles.name = "default";
+    SELECT images.id, profiles.id FROM projects_config AS R
+    JOIN projects_config AS S ON R.project_id = S.project_id
+    JOIN profiles ON profiles.project_id = R.project_id
+    JOIN images ON images.project_id = 1
+    WHERE R.key = "features.images" AND S.key = "features.profiles" AND R.value != "true" AND S.value = "true"
+        AND profiles.name = "default";
 `
 	_, err := tx.Exec(stmts)
 	return err
@@ -3125,38 +3190,33 @@ func updateFromV19(ctx context.Context, tx *sql.Tx) error {
 func updateFromV18(ctx context.Context, tx *sql.Tx) error {
 	stmts := `
 DROP VIEW profiles_used_by_ref;
-CREATE VIEW profiles_used_by_ref (project,
-    name,
-    value) AS
-  SELECT projects.name,
-    profiles.name,
-    printf('/1.0/instances/%s?project=%s',
-    "instances".name,
-    instances_projects.name)
+CREATE VIEW profiles_used_by_ref (project, name, value) AS
+    SELECT projects.name,
+        profiles.name,
+        printf('/1.0/instances/%s?project=%s',
+        "instances".name,
+        instances_projects.name)
     FROM profiles
     JOIN projects ON projects.id=profiles.project_id
-    JOIN "instances_profiles"
-      ON "instances_profiles".profile_id=profiles.id
-    JOIN "instances"
-      ON "instances".id="instances_profiles".instance_id
-    JOIN projects AS instances_projects
-      ON instances_projects.id="instances".project_id;
+    JOIN "instances_profiles" ON "instances_profiles".profile_id=profiles.id
+    JOIN "instances" ON "instances".id="instances_profiles".instance_id
+    JOIN projects AS instances_projects ON instances_projects.id="instances".project_id;
+
 DROP VIEW projects_used_by_ref;
-CREATE VIEW projects_used_by_ref (name,
-    value) AS
-  SELECT projects.name,
-    printf('/1.0/instances/%s?project=%s',
-    "instances".name,
-    projects.name)
+CREATE VIEW projects_used_by_ref (name, value) AS
+    SELECT projects.name,
+        printf('/1.0/instances/%s?project=%s',
+        "instances".name,
+        projects.name)
     FROM "instances" JOIN projects ON project_id=projects.id UNION
-  SELECT projects.name,
-    printf('/1.0/images/%s',
-    images.fingerprint)
+    SELECT projects.name,
+        printf('/1.0/images/%s',
+        images.fingerprint)
     FROM images JOIN projects ON project_id=projects.id UNION
-  SELECT projects.name,
-    printf('/1.0/profiles/%s?project=%s',
-    profiles.name,
-    projects.name)
+    SELECT projects.name,
+        printf('/1.0/profiles/%s?project=%s',
+        profiles.name,
+        projects.name)
     FROM profiles JOIN projects ON project_id=projects.id;
 `
 	_, err := tx.Exec(stmts)
@@ -3222,43 +3282,42 @@ CREATE TABLE instances_snapshots_devices_config (
     UNIQUE (instance_snapshot_device_id, key)
 );
 CREATE VIEW instances_snapshots_config_ref (
-  project,
-  instance,
-  name,
-  key,
-  value) AS
-  SELECT
-    projects.name,
-    instances.name,
-    instances_snapshots.name,
-    instances_snapshots_config.key,
-    instances_snapshots_config.value
-  FROM instances_snapshots_config
-    JOIN instances_snapshots ON instances_snapshots.id=instances_snapshots_config.instance_snapshot_id
-    JOIN instances ON instances.id=instances_snapshots.instance_id
-    JOIN projects ON projects.id=instances.project_id;
+    project,
+    instance,
+    name,
+    key,
+    value) AS
+        SELECT
+            projects.name,
+            instances.name,
+            instances_snapshots.name,
+            instances_snapshots_config.key,
+            instances_snapshots_config.value
+        FROM instances_snapshots_config
+            JOIN instances_snapshots ON instances_snapshots.id=instances_snapshots_config.instance_snapshot_id
+            JOIN instances ON instances.id=instances_snapshots.instance_id
+            JOIN projects ON projects.id=instances.project_id;
 CREATE VIEW instances_snapshots_devices_ref (
-  project,
-  instance,
-  name,
-  device,
-  type,
-  key,
-  value) AS
-  SELECT
-    projects.name,
-    instances.name,
-    instances_snapshots.name,
-    instances_snapshots_devices.name,
-    instances_snapshots_devices.type,
-    coalesce(instances_snapshots_devices_config.key, ''),
-    coalesce(instances_snapshots_devices_config.value, '')
-  FROM instances_snapshots_devices
-    LEFT OUTER JOIN instances_snapshots_devices_config
-      ON instances_snapshots_devices_config.instance_snapshot_device_id=instances_snapshots_devices.id
-     JOIN instances ON instances.id=instances_snapshots.instance_id
-     JOIN projects ON projects.id=instances.project_id
-     JOIN instances_snapshots ON instances_snapshots.id=instances_snapshots_devices.instance_snapshot_id
+    project,
+    instance,
+    name,
+    device,
+    type,
+    key,
+    value) AS
+        SELECT
+            projects.name,
+            instances.name,
+            instances_snapshots.name,
+            instances_snapshots_devices.name,
+            instances_snapshots_devices.type,
+            coalesce(instances_snapshots_devices_config.key, ''),
+            coalesce(instances_snapshots_devices_config.value, '')
+        FROM instances_snapshots_devices
+            LEFT OUTER JOIN instances_snapshots_devices_config ON instances_snapshots_devices_config.instance_snapshot_device_id=instances_snapshots_devices.id
+            JOIN instances ON instances.id=instances_snapshots.instance_id
+            JOIN projects ON projects.id=instances.project_id
+            JOIN instances_snapshots ON instances_snapshots.id=instances_snapshots_devices.instance_snapshot_id
 `
 	_, err := tx.Exec(stmts)
 	if err != nil {
@@ -3330,8 +3389,8 @@ CREATE VIEW instances_snapshots_devices_ref (
 	configs := make([]instanceConfig, 0, count)
 	sql = `
 SELECT instances_config.id, instance_id, key, value
-  FROM instances_config JOIN instances ON instances_config.instance_id = instances.id
-  WHERE instances.type = 1
+    FROM instances_config JOIN instances ON instances_config.instance_id = instances.id
+    WHERE instances.type = 1
 `
 
 	err = query.Scan(ctx, tx, sql, func(scan func(dest ...any) error) error {
@@ -3381,8 +3440,8 @@ SELECT instances_config.id, instance_id, key, value
 	devices := make([]device, 0, count)
 	sql = `
 SELECT instances_devices.id, instance_id, instances_devices.name, instances_devices.type
-  FROM instances_devices JOIN instances ON instances_devices.instance_id = instances.id
-  WHERE instances.type = 1
+    FROM instances_devices JOIN instances ON instances_devices.instance_id = instances.id
+    WHERE instances.type = 1
 `
 
 	err = query.Scan(ctx, tx, sql, func(scan func(dest ...any) error) error {
@@ -3574,25 +3633,28 @@ ALTER TABLE containers_backups RENAME COLUMN container_id TO instance_id;
 ALTER TABLE containers_backups RENAME TO instances_backups;
 ALTER TABLE containers_config RENAME COLUMN container_id TO instance_id;
 ALTER TABLE containers_config RENAME TO instances_config;
+
 DROP VIEW containers_config_ref;
 CREATE VIEW instances_config_ref (project,
     node,
     name,
     key,
     value) AS
-   SELECT projects.name,
-    nodes.name,
-    instances.name,
-    instances_config.key,
-    instances_config.value
-     FROM instances_config
-       JOIN instances ON instances.id=instances_config.instance_id
-       JOIN projects ON projects.id=instances.project_id
-       JOIN nodes ON nodes.id=instances.node_id;
+        SELECT projects.name,
+            nodes.name,
+            instances.name,
+            instances_config.key,
+            instances_config.value
+        FROM instances_config
+            JOIN instances ON instances.id=instances_config.instance_id
+            JOIN projects ON projects.id=instances.project_id
+            JOIN nodes ON nodes.id=instances.node_id;
+
 ALTER TABLE containers_devices RENAME COLUMN container_id TO instance_id;
 ALTER TABLE containers_devices RENAME TO instances_devices;
 ALTER TABLE containers_devices_config RENAME COLUMN container_device_id TO instance_device_id;
 ALTER TABLE containers_devices_config RENAME TO instances_devices_config;
+
 DROP VIEW containers_devices_ref;
 CREATE VIEW instances_devices_ref (project,
     node,
@@ -3601,39 +3663,40 @@ CREATE VIEW instances_devices_ref (project,
     type,
     key,
     value) AS
-   SELECT projects.name,
-    nodes.name,
-    instances.name,
-          instances_devices.name,
-    instances_devices.type,
-          coalesce(instances_devices_config.key,
-    ''),
-    coalesce(instances_devices_config.value,
-    '')
-   FROM instances_devices
-     LEFT OUTER JOIN instances_devices_config ON instances_devices_config.instance_device_id=instances_devices.id
-     JOIN instances ON instances.id=instances_devices.instance_id
-     JOIN projects ON projects.id=instances.project_id
-     JOIN nodes ON nodes.id=instances.node_id;
+        SELECT projects.name,
+            nodes.name,
+            instances.name,
+            instances_devices.name,
+            instances_devices.type,
+            coalesce(instances_devices_config.key, ''),
+            coalesce(instances_devices_config.value, '')
+        FROM instances_devices
+        LEFT OUTER JOIN instances_devices_config ON instances_devices_config.instance_device_id=instances_devices.id
+        JOIN instances ON instances.id=instances_devices.instance_id
+        JOIN projects ON projects.id=instances.project_id
+        JOIN nodes ON nodes.id=instances.node_id;
+
 DROP INDEX containers_node_id_idx;
 CREATE INDEX instances_node_id_idx ON instances (node_id);
 ALTER TABLE containers_profiles RENAME COLUMN container_id TO instance_id;
 ALTER TABLE containers_profiles RENAME TO instances_profiles;
+
 DROP VIEW containers_profiles_ref;
 CREATE VIEW instances_profiles_ref (project,
     node,
     name,
     value) AS
-   SELECT projects.name,
-    nodes.name,
-    instances.name,
-    profiles.name
-     FROM instances_profiles
-       JOIN instances ON instances.id=instances_profiles.instance_id
-       JOIN profiles ON profiles.id=instances_profiles.profile_id
-       JOIN projects ON projects.id=instances.project_id
-       JOIN nodes ON nodes.id=instances.node_id
-     ORDER BY instances_profiles.apply_order;
+        SELECT projects.name,
+            nodes.name,
+            instances.name,
+            profiles.name
+        FROM instances_profiles
+        JOIN instances ON instances.id=instances_profiles.instance_id
+        JOIN profiles ON profiles.id=instances_profiles.profile_id
+        JOIN projects ON projects.id=instances.project_id
+        JOIN nodes ON nodes.id=instances.node_id
+        ORDER BY instances_profiles.apply_order;
+
 DROP INDEX containers_project_id_and_name_idx;
 DROP INDEX containers_project_id_and_node_id_and_name_idx;
 DROP INDEX containers_project_id_and_node_id_idx;
@@ -3642,23 +3705,21 @@ CREATE INDEX instances_project_id_and_name_idx ON instances (project_id, name);
 CREATE INDEX instances_project_id_and_node_id_and_name_idx ON instances (project_id, node_id, name);
 CREATE INDEX instances_project_id_and_node_id_idx ON instances (project_id, node_id);
 CREATE INDEX instances_project_id_idx ON instances (project_id);
+
 DROP VIEW profiles_used_by_ref;
 CREATE VIEW profiles_used_by_ref (project,
     name,
     value) AS
-  SELECT projects.name,
-    profiles.name,
-    printf('/1.0/containers/%s?project=%s',
-    "instances".name,
-    instances_projects.name)
-    FROM profiles
-    JOIN projects ON projects.id=profiles.project_id
-    JOIN "instances_profiles"
-      ON "instances_profiles".profile_id=profiles.id
-    JOIN "instances"
-      ON "instances".id="instances_profiles".instance_id
-    JOIN projects AS instances_projects
-      ON instances_projects.id="instances".project_id;
+        SELECT projects.name,
+            profiles.name,
+            printf('/1.0/containers/%s?project=%s',
+            "instances".name,
+            instances_projects.name)
+        FROM profiles
+        JOIN projects ON projects.id=profiles.project_id
+        JOIN "instances_profiles" ON "instances_profiles".profile_id=profiles.id
+        JOIN "instances" ON "instances".id="instances_profiles".instance_id
+        JOIN projects AS instances_projects ON instances_projects.id="instances".project_id;
 `
 	_, err := tx.Exec(stmts)
 	return err
@@ -3675,19 +3736,16 @@ DROP VIEW profiles_used_by_ref;
 CREATE VIEW profiles_used_by_ref (project,
     name,
     value) AS
-  SELECT projects.name,
-    profiles.name,
-    printf('/1.0/containers/%s?project=%s',
-    containers.name,
-    containers_projects.name)
-    FROM profiles
-    JOIN projects ON projects.id=profiles.project_id
-    JOIN containers_profiles
-      ON containers_profiles.profile_id=profiles.id
-    JOIN containers
-      ON containers.id=containers_profiles.container_id
-    JOIN projects AS containers_projects
-      ON containers_projects.id=containers.project_id;
+        SELECT projects.name,
+            profiles.name,
+            printf('/1.0/containers/%s?project=%s',
+            containers.name,
+            containers_projects.name)
+        FROM profiles
+        JOIN projects ON projects.id=profiles.project_id
+        JOIN containers_profiles ON containers_profiles.profile_id=profiles.id
+        JOIN containers ON containers.id=containers_profiles.container_id
+        JOIN projects AS containers_projects ON containers_projects.id=containers.project_id;
 `
 	_, err := tx.Exec(stmts)
 	return err
@@ -3762,9 +3820,9 @@ CREATE TABLE projects_config (
 );
 
 CREATE VIEW projects_config_ref (name, key, value) AS
-   SELECT projects.name, projects_config.key, projects_config.value
-     FROM projects_config
-     JOIN projects ON projects.id=projects_config.project_id;
+    SELECT projects.name, projects_config.key, projects_config.value
+        FROM projects_config
+        JOIN projects ON projects.id=projects_config.project_id;
 
 -- Insert the default project, with ID 1
 INSERT INTO projects (name, description) VALUES ('default', 'Default Incus project');
@@ -4064,12 +4122,12 @@ CREATE INDEX profiles_project_id_idx ON profiles (project_id);
 	// Create a view to easily query all resources using a certain project
 	stmt := fmt.Sprintf(`
 CREATE VIEW projects_used_by_ref (name, value) AS
-  SELECT projects.name, printf('%s', containers.name, projects.name)
-    FROM containers JOIN projects ON project_id=projects.id UNION
-  SELECT projects.name, printf('%s', images.fingerprint)
-    FROM images JOIN projects ON project_id=projects.id UNION
-  SELECT projects.name, printf('%s', profiles.name, projects.name)
-    FROM profiles JOIN projects ON project_id=projects.id
+    SELECT projects.name, printf('%s', containers.name, projects.name)
+        FROM containers JOIN projects ON project_id=projects.id UNION
+    SELECT projects.name, printf('%s', images.fingerprint)
+        FROM images JOIN projects ON project_id=projects.id UNION
+    SELECT projects.name, printf('%s', profiles.name, projects.name)
+        FROM profiles JOIN projects ON project_id=projects.id
 `, EntityURIs[TypeContainer], EntityURIs[TypeImage], EntityURIs[TypeProfile])
 	_, err = tx.Exec(stmt)
 	if err != nil {
@@ -4079,13 +4137,13 @@ CREATE VIEW projects_used_by_ref (name, value) AS
 	// Create a view to easily query all profiles used by a certain container
 	stmt = `
 CREATE VIEW containers_profiles_ref (project, node, name, value) AS
-   SELECT projects.name, nodes.name, containers.name, profiles.name
-     FROM containers_profiles
-       JOIN containers ON containers.id=containers_profiles.container_id
-       JOIN profiles ON profiles.id=containers_profiles.profile_id
-       JOIN projects ON projects.id=containers.project_id
-       JOIN nodes ON nodes.id=containers.node_id
-     ORDER BY containers_profiles.apply_order
+    SELECT projects.name, nodes.name, containers.name, profiles.name
+    FROM containers_profiles
+    JOIN containers ON containers.id=containers_profiles.container_id
+    JOIN profiles ON profiles.id=containers_profiles.profile_id
+    JOIN projects ON projects.id=containers.project_id
+    JOIN nodes ON nodes.id=containers.node_id
+    ORDER BY containers_profiles.apply_order
 `
 	_, err = tx.Exec(stmt)
 	if err != nil {
@@ -4095,11 +4153,11 @@ CREATE VIEW containers_profiles_ref (project, node, name, value) AS
 	// Create a view to easily query the config of a certain container.
 	stmt = `
 CREATE VIEW containers_config_ref (project, node, name, key, value) AS
-   SELECT projects.name, nodes.name, containers.name, containers_config.key, containers_config.value
-     FROM containers_config
-       JOIN containers ON containers.id=containers_config.container_id
-       JOIN projects ON projects.id=containers.project_id
-       JOIN nodes ON nodes.id=containers.node_id
+    SELECT projects.name, nodes.name, containers.name, containers_config.key, containers_config.value
+    FROM containers_config
+    JOIN containers ON containers.id=containers_config.container_id
+    JOIN projects ON projects.id=containers.project_id
+    JOIN nodes ON nodes.id=containers.node_id
 `
 	_, err = tx.Exec(stmt)
 	if err != nil {
@@ -4109,14 +4167,14 @@ CREATE VIEW containers_config_ref (project, node, name, key, value) AS
 	// Create a view to easily query the devices of a certain container.
 	stmt = `
 CREATE VIEW containers_devices_ref (project, node, name, device, type, key, value) AS
-   SELECT projects.name, nodes.name, containers.name,
-          containers_devices.name, containers_devices.type,
-          coalesce(containers_devices_config.key, ''), coalesce(containers_devices_config.value, '')
-   FROM containers_devices
-     LEFT OUTER JOIN containers_devices_config ON containers_devices_config.container_device_id=containers_devices.id
-     JOIN containers ON containers.id=containers_devices.container_id
-     JOIN projects ON projects.id=containers.project_id
-     JOIN nodes ON nodes.id=containers.node_id
+    SELECT projects.name, nodes.name, containers.name,
+           containers_devices.name, containers_devices.type,
+           coalesce(containers_devices_config.key, ''), coalesce(containers_devices_config.value, '')
+    FROM containers_devices
+    LEFT OUTER JOIN containers_devices_config ON containers_devices_config.container_device_id=containers_devices.id
+    JOIN containers ON containers.id=containers_devices.container_id
+    JOIN projects ON projects.id=containers.project_id
+    JOIN nodes ON nodes.id=containers.node_id
 `
 	_, err = tx.Exec(stmt)
 	if err != nil {
@@ -4126,10 +4184,10 @@ CREATE VIEW containers_devices_ref (project, node, name, device, type, key, valu
 	// Create a view to easily query the config of a certain profile.
 	stmt = `
 CREATE VIEW profiles_config_ref (project, name, key, value) AS
-   SELECT projects.name, profiles.name, profiles_config.key, profiles_config.value
-     FROM profiles_config
-     JOIN profiles ON profiles.id=profiles_config.profile_id
-     JOIN projects ON projects.id=profiles.project_id
+    SELECT projects.name, profiles.name, profiles_config.key, profiles_config.value
+    FROM profiles_config
+    JOIN profiles ON profiles.id=profiles_config.profile_id
+    JOIN projects ON projects.id=profiles.project_id
 `
 	_, err = tx.Exec(stmt)
 	if err != nil {
@@ -4139,13 +4197,13 @@ CREATE VIEW profiles_config_ref (project, name, key, value) AS
 	// Create a view to easily query the devices of a certain profile.
 	stmt = `
 CREATE VIEW profiles_devices_ref (project, name, device, type, key, value) AS
-   SELECT projects.name, profiles.name,
-          profiles_devices.name, profiles_devices.type,
-          coalesce(profiles_devices_config.key, ''), coalesce(profiles_devices_config.value, '')
-   FROM profiles_devices
-     LEFT OUTER JOIN profiles_devices_config ON profiles_devices_config.profile_device_id=profiles_devices.id
-     JOIN profiles ON profiles.id=profiles_devices.profile_id
-     JOIN projects ON projects.id=profiles.project_id
+    SELECT projects.name, profiles.name,
+           profiles_devices.name, profiles_devices.type,
+           coalesce(profiles_devices_config.key, ''), coalesce(profiles_devices_config.value, '')
+    FROM profiles_devices
+    LEFT OUTER JOIN profiles_devices_config ON profiles_devices_config.profile_device_id=profiles_devices.id
+    JOIN profiles ON profiles.id=profiles_devices.profile_id
+    JOIN projects ON projects.id=profiles.project_id
 `
 	_, err = tx.Exec(stmt)
 	if err != nil {
@@ -4155,7 +4213,7 @@ CREATE VIEW profiles_devices_ref (project, name, device, type, key, value) AS
 	// Create a view to easily query all resources using a certain profile
 	stmt = fmt.Sprintf(`
 CREATE VIEW profiles_used_by_ref (project, name, value) AS
-  SELECT projects.name, profiles.name, printf('%s', containers.name, projects.name)
+    SELECT projects.name, profiles.name, printf('%s', containers.name, projects.name)
     FROM profiles
     JOIN projects ON projects.id=profiles.project_id
     JOIN containers_profiles

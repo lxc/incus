@@ -3663,6 +3663,11 @@ func clusterGroupsPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	err = clusterGroupValidate(req.Config)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		obj := dbCluster.ClusterGroup{
 			Name:        req.Name,
@@ -3680,6 +3685,11 @@ func clusterGroupsPost(d *Daemon, r *http.Request) response.Response {
 			if err != nil {
 				return err
 			}
+		}
+
+		err = dbCluster.CreateClusterGroupConfig(ctx, tx.Tx(), groupID, req.Config)
+		if err != nil {
+			return err
 		}
 
 		return nil
@@ -3877,11 +3887,10 @@ func clusterGroupGet(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("This server is not clustered"))
 	}
 
-	var group *dbCluster.ClusterGroup
-
+	var apiGroup *api.ClusterGroup
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get the cluster group.
-		group, err = dbCluster.GetClusterGroup(ctx, tx.Tx(), name)
+		group, err := dbCluster.GetClusterGroup(ctx, tx.Tx(), name)
 		if err != nil {
 			return err
 		}
@@ -3896,15 +3905,15 @@ func clusterGroupGet(d *Daemon, r *http.Request) response.Response {
 			group.Nodes = append(group.Nodes, node.Node)
 		}
 
+		apiGroup, err = group.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
 		return response.SmartError(err)
-	}
-
-	apiGroup, err := group.ToAPI()
-	if err != nil {
-		return response.InternalError(err)
 	}
 
 	return response.SyncResponseETag(true, apiGroup, apiGroup.ClusterGroupPut)
@@ -4040,6 +4049,13 @@ func clusterGroupPut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	// Validate the config.
+	err = clusterGroupValidate(req.Config)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	// Update the database.
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		group, err := dbCluster.GetClusterGroup(ctx, tx.Tx(), name)
 		if err != nil {
@@ -4052,6 +4068,11 @@ func clusterGroupPut(d *Daemon, r *http.Request) response.Response {
 		}
 
 		err = dbCluster.UpdateClusterGroup(ctx, tx.Tx(), name, obj)
+		if err != nil {
+			return err
+		}
+
+		err = dbCluster.UpdateClusterGroupConfig(ctx, tx.Tx(), int64(group.ID), req.Config)
 		if err != nil {
 			return err
 		}
@@ -4171,13 +4192,13 @@ func clusterGroupPatch(d *Daemon, r *http.Request) response.Response {
 			dbClusterGroup.Nodes = append(dbClusterGroup.Nodes, node.Node)
 		}
 
+		clusterGroup, err = dbClusterGroup.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
-	if err != nil {
-		return response.SmartError(err)
-	}
-
-	clusterGroup, err = dbClusterGroup.ToAPI()
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -4201,6 +4222,23 @@ func clusterGroupPatch(d *Daemon, r *http.Request) response.Response {
 		req.Members = clusterGroup.Members
 	}
 
+	if req.Config == nil {
+		req.Config = clusterGroup.Config
+	} else {
+		for k, v := range clusterGroup.Config {
+			_, ok := req.Config[k]
+			if !ok {
+				req.Config[k] = v
+			}
+		}
+	}
+
+	// Validate the config.
+	err = clusterGroupValidate(req.Config)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		obj := dbCluster.ClusterGroup{
 			Name:        dbClusterGroup.Name,
@@ -4213,6 +4251,11 @@ func clusterGroupPatch(d *Daemon, r *http.Request) response.Response {
 		}
 
 		groupID, err := dbCluster.GetClusterGroupID(ctx, tx.Tx(), obj.Name)
+		if err != nil {
+			return err
+		}
+
+		err = dbCluster.UpdateClusterGroupConfig(ctx, tx.Tx(), groupID, req.Config)
 		if err != nil {
 			return err
 		}
@@ -4581,6 +4624,36 @@ func autoHealCluster(ctx context.Context, s *state.State, offlineMembers []db.No
 	}
 
 	logger.Info("Done healing cluster instances")
+
+	return nil
+}
+
+// clusterGroupValidate validates the configuration keys/values for cluster groups.
+func clusterGroupValidate(config map[string]string) error {
+	configKeys := map[string]func(value string) error{}
+
+	for k, v := range config {
+		// User keys are free for all.
+
+		// gendoc:generate(entity=cluster_group, group=common, key=user.*)
+		// User keys can be used in search.
+		// ---
+		//  type: string
+		//  shortdesc: Free form user key/value storage
+		if strings.HasPrefix(k, "user.") {
+			continue
+		}
+
+		validator, ok := configKeys[k]
+		if !ok {
+			return fmt.Errorf("Invalid cluster group configuration key %q", k)
+		}
+
+		err := validator(v)
+		if err != nil {
+			return fmt.Errorf("Invalid cluster group configuration key %q value", k)
+		}
+	}
 
 	return nil
 }

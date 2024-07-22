@@ -79,6 +79,34 @@ func (g *cmdGlobal) cmpClusterGroups(toComplete string) ([]string, cobra.ShellCo
 	return results, cmpDirectives
 }
 
+func (g *cmdGlobal) cmpClusterGroupConfigs(groupName string) ([]string, cobra.ShellCompDirective) {
+	// Parse remote
+	resources, err := g.ParseServers(groupName)
+	if err != nil || len(resources) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+	client := resource.server
+
+	cluster, _, err := client.GetCluster()
+	if err != nil || !cluster.Enabled {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	group, _, err := client.GetClusterGroup(groupName)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	var results []string
+	for k := range group.Config {
+		results = append(results, k)
+	}
+
+	return results, cobra.ShellCompDirectiveNoFileComp
+}
+
 func (g *cmdGlobal) cmpClusterMemberConfigs(memberName string) ([]string, cobra.ShellCompDirective) {
 	// Parse remote
 	resources, err := g.ParseServers(memberName)

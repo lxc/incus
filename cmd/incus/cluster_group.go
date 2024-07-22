@@ -58,6 +58,18 @@ func (c *cmdClusterGroup) Command() *cobra.Command {
 	clusterGroupRenameCmd := cmdClusterGroupRename{global: c.global, cluster: c.cluster}
 	cmd.AddCommand(clusterGroupRenameCmd.Command())
 
+	// Get
+	clusterGroupGetCmd := cmdClusterGroupGet{global: c.global, cluster: c.cluster}
+	cmd.AddCommand(clusterGroupGetCmd.Command())
+
+	// Set
+	clusterGroupSetCmd := cmdClusterGroupSet{global: c.global, cluster: c.cluster}
+	cmd.AddCommand(clusterGroupSetCmd.Command())
+
+	// Unset
+	clusterGroupUnsetCmd := cmdClusterGroupUnset{global: c.global, cluster: c.cluster, clusterSet: &clusterGroupSetCmd}
+	cmd.AddCommand(clusterGroupUnsetCmd.Command())
+
 	// Show
 	clusterGroupShowCmd := cmdClusterGroupShow{global: c.global, cluster: c.cluster}
 	cmd.AddCommand(clusterGroupShowCmd.Command())
@@ -782,4 +794,208 @@ func (c *cmdClusterGroupAdd) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// Get.
+type cmdClusterGroupGet struct {
+	global  *cmdGlobal
+	cluster *cmdCluster
+
+	flagIsProperty bool
+}
+
+// Command generates the command definition.
+func (c *cmdClusterGroupGet) Command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = usage("get", i18n.G("[<remote>:]<group> <key>"))
+	cmd.Short = i18n.G("Get values for cluster group configuration keys")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), cmd.Short)
+
+	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Get the key as a cluster group property"))
+	cmd.RunE = c.Run
+
+	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpClusterGroups(toComplete)
+		}
+
+		if len(args) == 1 {
+			return c.global.cmpClusterGroupConfigs(args[0])
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+// Run runs the actual command logic.
+func (c *cmdClusterGroupGet) Run(cmd *cobra.Command, args []string) error {
+	// Quick checks.
+	exit, err := c.global.CheckArgs(cmd, args, 2, 2)
+	if exit {
+		return err
+	}
+
+	// Parse remote
+	resources, err := c.global.ParseServers(args[0])
+	if err != nil {
+		return err
+	}
+
+	resource := resources[0]
+
+	// Get the group information
+	group, _, err := resource.server.GetClusterGroup(resource.name)
+	if err != nil {
+		return err
+	}
+
+	if c.flagIsProperty {
+		w := group.Writable()
+		res, err := getFieldByJsonTag(&w, args[1])
+		if err != nil {
+			return fmt.Errorf(i18n.G("The property %q does not exist on the cluster group %q: %v"), args[1], resource.name, err)
+		}
+
+		fmt.Printf("%v\n", res)
+		return nil
+	}
+
+	value, ok := group.Config[args[1]]
+	if !ok {
+		return fmt.Errorf(i18n.G("The key %q does not exist on cluster group %q"), args[1], resource.name)
+	}
+
+	fmt.Printf("%s\n", value)
+	return nil
+}
+
+// Set.
+type cmdClusterGroupSet struct {
+	global  *cmdGlobal
+	cluster *cmdCluster
+
+	flagIsProperty bool
+}
+
+// Command generates the command definition.
+func (c *cmdClusterGroupSet) Command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = usage("set", i18n.G("[<remote>:]<group> <key>=<value>..."))
+	cmd.Short = i18n.G("Set a cluster group's configuration keys")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), cmd.Short)
+
+	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a cluster group property"))
+	cmd.RunE = c.Run
+
+	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpClusterGroups(toComplete)
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+// Run runs the actual command logic.
+func (c *cmdClusterGroupSet) Run(cmd *cobra.Command, args []string) error {
+	// Quick checks.
+	exit, err := c.global.CheckArgs(cmd, args, 2, -1)
+	if exit {
+		return err
+	}
+
+	// Parse remote
+	resources, err := c.global.ParseServers(args[0])
+	if err != nil {
+		return err
+	}
+
+	resource := resources[0]
+
+	// Get the group information
+	group, _, err := resource.server.GetClusterGroup(resource.name)
+	if err != nil {
+		return err
+	}
+
+	// Get the new config keys
+	keys, err := getConfig(args[1:]...)
+	if err != nil {
+		return err
+	}
+
+	writable := group.Writable()
+	if c.flagIsProperty {
+		if cmd.Name() == "unset" {
+			for k := range keys {
+				err := unsetFieldByJsonTag(&writable, k)
+				if err != nil {
+					return fmt.Errorf(i18n.G("Error unsetting property: %v"), err)
+				}
+			}
+		} else {
+			err := unpackKVToWritable(&writable, keys)
+			if err != nil {
+				return fmt.Errorf(i18n.G("Error setting properties: %v"), err)
+			}
+		}
+	} else {
+		for k, v := range keys {
+			writable.Config[k] = v
+		}
+	}
+
+	return resource.server.UpdateClusterGroup(resource.name, writable, "")
+}
+
+// Unset.
+type cmdClusterGroupUnset struct {
+	global     *cmdGlobal
+	cluster    *cmdCluster
+	clusterSet *cmdClusterGroupSet
+
+	flagIsProperty bool
+}
+
+// Command generates the command definition.
+func (c *cmdClusterGroupUnset) Command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = usage("unset", i18n.G("[<remote>:]<group> <key>"))
+	cmd.Short = i18n.G("Unset a cluster group's configuration keys")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), cmd.Short)
+
+	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as a cluster group property"))
+	cmd.RunE = c.Run
+
+	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpClusterGroups(toComplete)
+		}
+
+		if len(args) == 1 {
+			return c.global.cmpClusterGroupConfigs(args[0])
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+// Run runs the actual command logic.
+func (c *cmdClusterGroupUnset) Run(cmd *cobra.Command, args []string) error {
+	// Quick checks.
+	exit, err := c.global.CheckArgs(cmd, args, 2, 2)
+	if exit {
+		return err
+	}
+
+	c.clusterSet.flagIsProperty = c.flagIsProperty
+
+	args = append(args, "")
+	return c.clusterSet.Run(cmd, args)
 }

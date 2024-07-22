@@ -26,6 +26,16 @@ For example, to add `server1` to the `gpu` group and also keep it in the `defaul
 
     incus cluster group add server1 gpu
 
+## Configuration options
+
+The following configuration options are available for cluster groups:
+
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group cluster_group-common start -->
+    :end-before: <!-- config group cluster_group-common end -->
+```
+
 ## Launch an instance on a cluster group member
 
 With cluster groups, you can target an instance to run on one of the members of the cluster group, instead of targeting it to run on a specific member.
