@@ -3877,11 +3877,10 @@ func clusterGroupGet(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("This server is not clustered"))
 	}
 
-	var group *dbCluster.ClusterGroup
-
+	var apiGroup *api.ClusterGroup
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get the cluster group.
-		group, err = dbCluster.GetClusterGroup(ctx, tx.Tx(), name)
+		group, err := dbCluster.GetClusterGroup(ctx, tx.Tx(), name)
 		if err != nil {
 			return err
 		}
@@ -3896,15 +3895,15 @@ func clusterGroupGet(d *Daemon, r *http.Request) response.Response {
 			group.Nodes = append(group.Nodes, node.Node)
 		}
 
+		apiGroup, err = group.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
 		return response.SmartError(err)
-	}
-
-	apiGroup, err := group.ToAPI()
-	if err != nil {
-		return response.InternalError(err)
 	}
 
 	return response.SyncResponseETag(true, apiGroup, apiGroup.ClusterGroupPut)
@@ -4171,13 +4170,13 @@ func clusterGroupPatch(d *Daemon, r *http.Request) response.Response {
 			dbClusterGroup.Nodes = append(dbClusterGroup.Nodes, node.Node)
 		}
 
+		clusterGroup, err = dbClusterGroup.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
-	if err != nil {
-		return response.SmartError(err)
-	}
-
-	clusterGroup, err = dbClusterGroup.ToAPI()
 	if err != nil {
 		return response.SmartError(err)
 	}

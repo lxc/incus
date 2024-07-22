@@ -1,6 +1,9 @@
 package cluster
 
 import (
+	"context"
+	"database/sql"
+
 	"github.com/lxc/incus/v6/shared/api"
 )
 
@@ -15,13 +18,13 @@ import (
 //go:generate mapper stmt -e cluster_group delete-by-Name table=cluster_groups
 //go:generate mapper stmt -e cluster_group update table=cluster_groups
 //
-//go:generate mapper method -i -e cluster_group GetMany
+//go:generate mapper method -i -e cluster_group GetMany references=Config
 //go:generate mapper method -i -e cluster_group GetOne
 //go:generate mapper method -i -e cluster_group ID
 //go:generate mapper method -i -e cluster_group Exists
 //go:generate mapper method -i -e cluster_group Rename
-//go:generate mapper method -i -e cluster_group Create
-//go:generate mapper method -i -e cluster_group Update
+//go:generate mapper method -i -e cluster_group Create references=Config
+//go:generate mapper method -i -e cluster_group Update references=Config
 //go:generate mapper method -i -e cluster_group DeleteOne-by-Name
 
 // ClusterGroup is a value object holding db-related details about a cluster group.
@@ -39,9 +42,16 @@ type ClusterGroupFilter struct {
 }
 
 // ToAPI returns an API entry.
-func (c *ClusterGroup) ToAPI() (*api.ClusterGroup, error) {
+func (c *ClusterGroup) ToAPI(ctx context.Context, tx *sql.Tx) (*api.ClusterGroup, error) {
+	// Get the config.
+	config, err := GetClusterGroupConfig(ctx, tx, c.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	result := api.ClusterGroup{
 		ClusterGroupPut: api.ClusterGroupPut{
+			Config:      config,
 			Description: c.Description,
 			Members:     c.Nodes,
 		},

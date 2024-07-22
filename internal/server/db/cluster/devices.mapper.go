@@ -90,7 +90,7 @@ func GetDevices(ctx context.Context, tx *sql.Tx, parent string, filters ...Devic
 	deviceObjectsLocal := strings.Replace(deviceObjects, "%s_id", fmt.Sprintf("%s_id", parent), -1)
 	fillParent := make([]any, strings.Count(deviceObjectsLocal, "%s"))
 	for i := range fillParent {
-		fillParent[i] = strings.Replace(parent, "_", "s_", -1) + "s"
+		fillParent[i] = strings.Replace(strings.Replace(parent, "_", "s_", -1), "clusters_", "cluster_", -1) + "s"
 	}
 
 	queryStr := fmt.Sprintf(deviceObjectsLocal, fillParent...)
@@ -175,7 +175,7 @@ func CreateDevices(ctx context.Context, tx *sql.Tx, parent string, objects map[s
 	deviceCreateLocal := strings.Replace(deviceCreate, "%s_id", fmt.Sprintf("%s_id", parent), -1)
 	fillParent := make([]any, strings.Count(deviceCreateLocal, "%s"))
 	for i := range fillParent {
-		fillParent[i] = strings.Replace(parent, "_", "s_", -1) + "s"
+		fillParent[i] = strings.Replace(strings.Replace(parent, "_", "s_", -1), "clusters_", "cluster_", -1) + "s"
 	}
 
 	queryStr := fmt.Sprintf(deviceCreateLocal, fillParent...)
@@ -237,7 +237,7 @@ func DeleteDevices(ctx context.Context, tx *sql.Tx, parent string, referenceID i
 	deviceDeleteLocal := strings.Replace(deviceDelete, "%s_id", fmt.Sprintf("%s_id", parent), -1)
 	fillParent := make([]any, strings.Count(deviceDeleteLocal, "%s"))
 	for i := range fillParent {
-		fillParent[i] = strings.Replace(parent, "_", "s_", -1) + "s"
+		fillParent[i] = strings.Replace(strings.Replace(parent, "_", "s_", -1), "clusters_", "cluster_", -1) + "s"
 	}
 
 	queryStr := fmt.Sprintf(deviceDeleteLocal, fillParent...)

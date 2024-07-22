@@ -176,6 +176,22 @@ func GetClusterGroups(ctx context.Context, tx *sql.Tx, filters ...ClusterGroupFi
 	return objects, nil
 }
 
+// GetClusterGroupConfig returns all available ClusterGroup Config
+// generator: cluster_group GetMany
+func GetClusterGroupConfig(ctx context.Context, tx *sql.Tx, clusterGroupID int, filters ...ConfigFilter) (map[string]string, error) {
+	clusterGroupConfig, err := GetConfig(ctx, tx, "cluster_group", filters...)
+	if err != nil {
+		return nil, err
+	}
+
+	config, ok := clusterGroupConfig[clusterGroupID]
+	if !ok {
+		config = map[string]string{}
+	}
+
+	return config, nil
+}
+
 // GetClusterGroup returns the cluster_group with the given key.
 // generator: cluster_group GetOne
 func GetClusterGroup(ctx context.Context, tx *sql.Tx, name string) (*ClusterGroup, error) {
@@ -298,6 +314,27 @@ func CreateClusterGroup(ctx context.Context, tx *sql.Tx, object ClusterGroup) (i
 	return id, nil
 }
 
+// CreateClusterGroupConfig adds new cluster_group Config to the database.
+// generator: cluster_group Create
+func CreateClusterGroupConfig(ctx context.Context, tx *sql.Tx, clusterGroupID int64, config map[string]string) error {
+	referenceID := int(clusterGroupID)
+	for key, value := range config {
+		insert := Config{
+			ReferenceID: referenceID,
+			Key:         key,
+			Value:       value,
+		}
+
+		err := CreateConfig(ctx, tx, "cluster_group", insert)
+		if err != nil {
+			return fmt.Errorf("Insert Config failed for ClusterGroup: %w", err)
+		}
+
+	}
+
+	return nil
+}
+
 // UpdateClusterGroup updates the cluster_group matching the given key parameters.
 // generator: cluster_group Update
 func UpdateClusterGroup(ctx context.Context, tx *sql.Tx, name string, object ClusterGroup) error {
@@ -323,6 +360,17 @@ func UpdateClusterGroup(ctx context.Context, tx *sql.Tx, name string, object Clu
 
 	if n != 1 {
 		return fmt.Errorf("Query updated %d rows instead of 1", n)
+	}
+
+	return nil
+}
+
+// UpdateClusterGroupConfig updates the cluster_group Config matching the given key parameters.
+// generator: cluster_group Update
+func UpdateClusterGroupConfig(ctx context.Context, tx *sql.Tx, clusterGroupID int64, config map[string]string) error {
+	err := UpdateConfig(ctx, tx, "cluster_group", int(clusterGroupID), config)
+	if err != nil {
+		return fmt.Errorf("Replace Config for ClusterGroup failed: %w", err)
 	}
 
 	return nil
