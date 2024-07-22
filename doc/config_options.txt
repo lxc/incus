@@ -16,6 +16,14 @@ User keys can be used in search.
 ```
 
 <!-- config group cluster-cluster end -->
+<!-- config group cluster_group-common start -->
+```{config:option} user.* cluster_group-common
+:shortdesc: "Free form user key/value storage"
+:type: "string"
+User keys can be used in search.
+```
+
+<!-- config group cluster_group-common end -->
 <!-- config group devices-disk start -->
 ```{config:option} boot.priority devices-disk
 :required: "no"
