@@ -317,12 +317,11 @@ test_property() {
 
   # Create a snap of the instance to set its expiration timestamp
   incus snapshot create foo s1
-  incus config set foo/s1 expires_at="2024-03-23T17:38:37.753398689-04:00" --property
-  incus config get foo/s1 expires_at --property | grep -q "2024-03-23 17:38:37.753398689 -0400 -0400"
-  incus config show foo/s1 | grep -q "expires_at: 2024-03-23T17:38:37.753398689-04:00"
+  incus config set foo/s1 expires_at="2050-01-01T10:10:10.753398689-04:00" --property
+  incus config get foo/s1 expires_at --property | grep -q "2050-01-01 10:10:10.753398689 -0400 -0400"
+  incus config show foo/s1 | grep -q "expires_at: 2050-01-01T10:10:10.753398689-04:00"
   incus config unset foo/s1 expires_at --property
   incus config show foo/s1 | grep -q "expires_at: 0001-01-01T00:00:00Z"
-
 
   # Create a storage volume, create a volume snapshot and set its expiration timestamp
   # shellcheck disable=2039,3043
