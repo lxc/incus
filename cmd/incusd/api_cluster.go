@@ -6,6 +6,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -51,6 +52,7 @@ import (
 	apiScriptlet "github.com/lxc/incus/v6/shared/api/scriptlet"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/osarch"
+	"github.com/lxc/incus/v6/shared/subprocess"
 	localtls "github.com/lxc/incus/v6/shared/tls"
 	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/validate"
@@ -4565,6 +4567,16 @@ func autoHealClusterTask(d *Daemon) (task.Func, task.Schedule) {
 				// healing offline trigger threshold.
 				if member.State == db.ClusterMemberStateEvacuated || !member.IsOffline(healingThreshold) {
 					continue
+				}
+
+				// As an extra safety net, make sure the dead system doesn't still respond on the network.
+				hostAddress, _, err := net.SplitHostPort(member.Address)
+				if err == nil {
+					_, err := subprocess.RunCommand("ping", "-w1", "-c1", "-n", "-q", hostAddress)
+					if err == nil {
+						// Server isn't fully dead, not risking auto-healing.
+						continue
+					}
 				}
 
 				offlineMembers = append(offlineMembers, member)
