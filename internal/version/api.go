@@ -426,6 +426,7 @@ var APIExtensions = []string{
 	"projects_force_delete",
 	"resources_cpu_flags",
 	"disk_io_bus_cache_filesystem",
+	"instances_lxcfs_per_instance",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

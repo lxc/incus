@@ -2517,3 +2517,9 @@ This exposes the CPU flags/extensions in our resources API to check the CPU feat
 ## `disk_io_bus_cache_filesystem`
 
 This adds support for both `io.bus` and `io.cache` to disks that are backed by a file system.
+
+## `instances_lxcfs_per_instance`
+
+This introduces a new `instances.lxcfs.per_instance` server
+configuration key to control whether to run LXCFS per instance instead
+of globally on the system.
