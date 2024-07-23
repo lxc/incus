@@ -825,14 +825,14 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		}
 
 		// Wait for the migration to complete.
-		err = destOp.Wait()
-		if err != nil {
-			return fmt.Errorf("Instance move to destination failed: %w", err)
-		}
-
 		err = sourceOp.Wait(context.Background())
 		if err != nil {
 			return fmt.Errorf("Instance move to destination failed on source: %w", err)
+		}
+
+		err = destOp.Wait()
+		if err != nil {
+			return fmt.Errorf("Instance move to destination failed: %w", err)
 		}
 
 		// Update the database post-migration.
