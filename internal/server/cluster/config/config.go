@@ -182,6 +182,11 @@ func (c *Config) InstancesPlacementScriptlet() string {
 	return c.m.GetString("instances.placement.scriptlet")
 }
 
+// InstancesLXCFSPerInstance returns whether LXCFS should be run on a per-instance basis.
+func (c *Config) InstancesLXCFSPerInstance() bool {
+	return c.m.GetBool("instances.lxcfs.per_instance")
+}
+
 // LokiServer returns all the Loki settings needed to connect to a server.
 func (c *Config) LokiServer() (string, string, string, string, string, string, []string, []string) {
 	var types []string
@@ -539,6 +544,23 @@ var ConfigSchema = config.Schema{
 	//  defaultdesc: `10`
 	//  shortdesc: When an unused cached remote image is flushed
 	"images.remote_cache_expiry": {Type: config.Int64, Default: "10"},
+
+	// gendoc:generate(entity=server, group=miscellaneous, key=instances.lxcfs.per_instance)
+	// LXCFS is used to provide overlays for common `/proc` and `/sys`
+	// files which reflect the resource limits applied to the container.
+	//
+	// It normally operates through a single file system mount on the host which is then shared by all containers.
+	// This is very efficient but comes with the downside that a crash of LXCFS will break all containers.
+	//
+	// With this option, it's now possible to run a LXCFS instance per
+	// container instead, using more system resources but reducing the impact
+	// of a crash.
+	// ---
+	//  type: bool
+	//  scope: global
+	//  defaultdesc: `false`
+	//  shortdesc: Whether to run LXCFS on a per-instance basis
+	"instances.lxcfs.per_instance": {Type: config.Bool, Validator: validate.Optional(validate.IsBool)},
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=instances.nic.host_name)
 	// Possible values are `random` and `mac`.
