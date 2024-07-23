@@ -6415,7 +6415,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 
 	// Check for stateful support.
 	if args.Live && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
-		return fmt.Errorf("Stateful migration requires migration.stateful to be set to true")
+		return fmt.Errorf("Live migration requires migration.stateful to be set to true")
 	}
 
 	// Wait for essential migration connections before negotiation.
