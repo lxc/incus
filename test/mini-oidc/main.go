@@ -47,7 +47,7 @@ func main() {
 		},
 	}
 
-	provider, err := op.NewOpenIDProvider(issuer, config, storage, op.WithAllowInsecure())
+	provider, err := op.NewProvider(config, storage, op.StaticIssuer(issuer), op.WithAllowInsecure())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
@@ -93,8 +93,6 @@ func userCodeHandler(storage *storage.Storage, w http.ResponseWriter, r *http.Re
 	}
 
 	fmt.Printf("%s => %s\n", userCode, name)
-
-	return
 }
 
 func username() string {

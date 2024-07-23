@@ -174,7 +174,7 @@ func CheckTrustState(cert x509.Certificate, trustedCerts map[string]x509.Certifi
 					return false, "" // CRL not signed by CA
 				}
 
-				for _, revoked := range crl.RevokedCertificates {
+				for _, revoked := range crl.RevokedCertificateEntries {
 					if cert.SerialNumber.Cmp(revoked.SerialNumber) == 0 {
 						return false, "" // Certificate is revoked, so not trusted anymore.
 					}

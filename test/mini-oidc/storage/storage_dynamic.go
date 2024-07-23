@@ -98,7 +98,7 @@ func (s *multiStorage) CreateAccessToken(ctx context.Context, request op.TokenRe
 
 // CreateAccessAndRefreshTokens implements the op.Storage interface
 // it will be called for all requests able to return an access and refresh token (Authorization Code Flow, Refresh Token Request)
-func (s *multiStorage) CreateAccessAndRefreshTokens(ctx context.Context, request op.TokenRequest, currentRefreshToken string) (accessTokenID string, newRefreshToken string, expiration time.Time, err error) {
+func (s *multiStorage) CreateAccessAndRefreshTokens(ctx context.Context, request op.TokenRequest, currentRefreshToken string) (string, string, time.Time, error) {
 	storage, err := s.storageFromContext(ctx)
 	if err != nil {
 		return "", "", time.Time{}, err
@@ -128,7 +128,7 @@ func (s *multiStorage) TerminateSession(ctx context.Context, userID string, clie
 
 // GetRefreshTokenInfo looks up a refresh token and returns the token id and user id.
 // If given something that is not a refresh token, it must return error.
-func (s *multiStorage) GetRefreshTokenInfo(ctx context.Context, clientID string, token string) (userID string, tokenID string, err error) {
+func (s *multiStorage) GetRefreshTokenInfo(ctx context.Context, clientID string, token string) (string, string, error) {
 	storage, err := s.storageFromContext(ctx)
 	if err != nil {
 		return "", "", err
@@ -239,7 +239,7 @@ func (s *multiStorage) SetIntrospectionFromToken(ctx context.Context, introspect
 
 // GetPrivateClaimsFromScopes implements the op.Storage interface
 // it will be called for the creation of a JWT access token to assert claims for custom scopes
-func (s *multiStorage) GetPrivateClaimsFromScopes(ctx context.Context, userID, clientID string, scopes []string) (claims map[string]any, err error) {
+func (s *multiStorage) GetPrivateClaimsFromScopes(ctx context.Context, userID, clientID string, scopes []string) (map[string]any, error) {
 	storage, err := s.storageFromContext(ctx)
 	if err != nil {
 		return nil, err

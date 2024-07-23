@@ -17,7 +17,7 @@ import (
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/lxc/incus/v6/client"
+	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/util"
 )
@@ -332,6 +332,8 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 		// Golang has deprecated all methods relating to PEM encryption due to a vulnerability.
 		// However, the weakness does not make PEM unsafe for our purposes as it pertains to password protection on the
 		// key file (client.key is only readable to the user in any case), so we'll ignore deprecation.
+		//nolint:all
+		//lint:ignore SA1019 see above for reason
 		isEncrypted := x509.IsEncryptedPEMBlock(pemKey) //nolint:staticcheck
 		isSSH := pemKey.Type == "OPENSSH PRIVATE KEY"
 		if isEncrypted || isSSH {
@@ -366,6 +368,8 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 					return nil, fmt.Errorf("Unsupported key type: %T", sshKey)
 				}
 			} else {
+				//nolint:all
+				//lint:ignore SA1019 see above for reason
 				derKey, err := x509.DecryptPEMBlock(pemKey, []byte(password)) //nolint:staticcheck
 				if err != nil {
 					return nil, err

@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	"github.com/lxc/incus/v6/client"
+	incus "github.com/lxc/incus/v6/client"
 	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/instance"
@@ -514,8 +514,6 @@ func (c *cmdSnapshotRestore) Run(cmd *cobra.Command, args []string) error {
 type cmdSnapshotShow struct {
 	global   *cmdGlobal
 	snapshot *cmdSnapshot
-
-	flagExpanded bool
 }
 
 func (c *cmdSnapshotShow) Command() *cobra.Command {

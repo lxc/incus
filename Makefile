@@ -23,7 +23,6 @@ else
 	COWSQL_PATH=$(GOPATH)/deps/cowsql
 endif
 
-	# raft
 .PHONY: default
 default: build
 
@@ -56,6 +55,7 @@ incus-migrate:
 
 .PHONY: deps
 deps:
+	# raft
 	@if [ ! -e "$(RAFT_PATH)" ]; then \
 		git clone --depth=1 "https://github.com/cowsql/raft" "$(RAFT_PATH)"; \
 	elif [ -e "$(RAFT_PATH)/.git" ]; then \

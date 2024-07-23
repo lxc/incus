@@ -1,6 +1,8 @@
 // Package response contains helpers for rendering HTTP responses.
 //
-//nolint:deadcode,unused
+//nolint:all
+//lint:file-ignore U1000 Ignore unused
+
 package response
 
 import (
