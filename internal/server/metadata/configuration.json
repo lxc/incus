@@ -2508,6 +2508,15 @@
 						}
 					},
 					{
+						"instances.lxcfs.per_instance": {
+							"defaultdesc": "`false`",
+							"longdesc": "LXCFS is used to provide overlays for common `/proc` and `/sys`\nfiles which reflect the resource limits applied to the container.\n\nIt normally operates through a single file system mount on the host which is then shared by all containers.\nThis is very efficient but comes with the downside that a crash of LXCFS will break all containers.\n\nWith this option, it's now possible to run a LXCFS instance per\ncontainer instead, using more system resources but reducing the impact\nof a crash.",
+							"scope": "global",
+							"shortdesc": "Whether to run LXCFS on a per-instance basis",
+							"type": "bool"
+						}
+					},
+					{
 						"instances.nic.host_name": {
 							"defaultdesc": "`random`",
 							"longdesc": "Possible values are `random` and `mac`.\n\nIf set to `random`, use the random host interface name as the host name.\nIf set to `mac`, generate a host name in the form `inc\u003cmac_address\u003e` (MAC without leading two digits).",

@@ -2263,6 +2263,22 @@ The events can be any combination of `lifecycle`, `logging`, and `network-acl`.
 Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.
 ```
 
+```{config:option} instances.lxcfs.per_instance server-miscellaneous
+:defaultdesc: "`false`"
+:scope: "global"
+:shortdesc: "Whether to run LXCFS on a per-instance basis"
+:type: "bool"
+LXCFS is used to provide overlays for common `/proc` and `/sys`
+files which reflect the resource limits applied to the container.
+
+It normally operates through a single file system mount on the host which is then shared by all containers.
+This is very efficient but comes with the downside that a crash of LXCFS will break all containers.
+
+With this option, it's now possible to run a LXCFS instance per
+container instead, using more system resources but reducing the impact
+of a crash.
+```
+
 ```{config:option} instances.nic.host_name server-miscellaneous
 :defaultdesc: "`random`"
 :scope: "global"
