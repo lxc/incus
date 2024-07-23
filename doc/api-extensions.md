@@ -2527,3 +2527,9 @@ Adds initial support for running OCI containers.
 This introduces a standard key/value `config` option to clustering
 groups which will allow placing some restrictions or configuration on
 those groups.
+
+## `instances_lxcfs_per_instance`
+
+This introduces a new `instances.lxcfs.per_instance` server
+configuration key to control whether to run LXCFS per instance instead
+of globally on the system.
