@@ -350,7 +350,49 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 			return projectName
 		}
 
-		objectName, err := auth.ObjectFromRequest(r, objectType, expandProject, expandFingerprint, muxVars...)
+		// Expansion function for volume location.
+		expandVolumeLocation := func(projectName string, poolName string, volumeTypeName string, volumeName string) string {
+			// The location field is only relevant in clusters.
+			if !d.serverClustered {
+				return ""
+			}
+
+			var err error
+			var nodes []db.NodeInfo
+			var poolID int64
+
+			// Convert the volume type name to our internal integer representation.
+			volumeType, err := storagePools.VolumeTypeNameToDBType(volumeTypeName)
+			if err != nil {
+				return ""
+			}
+
+			// Get the server list for the volume.
+			err = d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				poolID, err = tx.GetStoragePoolID(ctx, poolName)
+				if err != nil {
+					return err
+				}
+
+				nodes, err = tx.GetStorageVolumeNodes(ctx, poolID, projectName, volumeName, volumeType)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			})
+			if err != nil {
+				return ""
+			}
+
+			if len(nodes) != 1 {
+				return ""
+			}
+
+			return nodes[0].Name
+		}
+
+		objectName, err := auth.ObjectFromRequest(r, objectType, expandProject, expandFingerprint, expandVolumeLocation, muxVars...)
 		if err != nil {
 			return response.InternalError(fmt.Errorf("Failed to create authentication object: %w", err))
 		}
