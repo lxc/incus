@@ -2371,7 +2371,7 @@ func (d *qemu) deviceDetachPath(deviceName string, rawConfig deviceConfig.Device
 		}
 
 		if time.Now().After(waitUntil) {
-			return fmt.Errorf("Failed to detach path device after %v: %w", waitDuration, err)
+			return fmt.Errorf("Failed to detach path device after %v", waitDuration)
 		}
 	}
 
@@ -2413,7 +2413,7 @@ func (d *qemu) deviceDetachBlockDevice(deviceName string, rawConfig deviceConfig
 		}
 
 		if time.Now().After(waitUntil) {
-			return fmt.Errorf("Failed to detach block device after %v: %w", waitDuration, err)
+			return fmt.Errorf("Failed to detach block device after %v", waitDuration)
 		}
 	}
 
@@ -2610,7 +2610,7 @@ func (d *qemu) deviceDetachNIC(deviceName string) error {
 			}
 
 			if time.Now().After(waitUntil) {
-				return fmt.Errorf("Failed to detach NIC after %v: %w", waitDuration, err)
+				return fmt.Errorf("Failed to detach NIC after %v", waitDuration)
 			}
 
 			d.logger.Debug("Waiting for NIC device to be detached", logger.Ctx{"device": deviceName})
