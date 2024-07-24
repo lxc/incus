@@ -78,6 +78,7 @@ import (
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 	agentAPI "github.com/lxc/incus/v6/shared/api/agent"
+	"github.com/lxc/incus/v6/shared/ioprogress"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/osarch"
 	"github.com/lxc/incus/v6/shared/subprocess"
@@ -6148,7 +6149,7 @@ func (d *qemu) delete(force bool) error {
 }
 
 // Export publishes the instance.
-func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time.Time) (api.ImageMetadata, error) {
+func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time.Time, tracker *ioprogress.ProgressTracker) (api.ImageMetadata, error) {
 	ctxMap := logger.Ctx{
 		"created":   d.creationDate,
 		"ephemeral": d.ephemeral,
@@ -6360,7 +6361,7 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 	// Convert to qcow2 image.
 	cmd := []string{
 		"nice", "-n19", // Run with low priority to reduce CPU impact on other processes.
-		"qemu-img", "convert", "-f", "raw", "-O", "qcow2", "-c",
+		"qemu-img", "convert", "-p", "-f", "raw", "-O", "qcow2", "-c",
 	}
 
 	revert := revert.New()
@@ -6383,7 +6384,7 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 
 	cmd = append(cmd, mountInfo.DiskPath, fPath)
 
-	_, err = apparmor.QemuImg(d.state.OS, cmd, mountInfo.DiskPath, fPath, nil)
+	_, err = apparmor.QemuImg(d.state.OS, cmd, mountInfo.DiskPath, fPath, tracker)
 	if err != nil {
 		return meta, fmt.Errorf("Failed converting instance to qcow2: %w", err)
 	}

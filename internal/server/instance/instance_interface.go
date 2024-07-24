@@ -22,6 +22,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/idmap"
+	"github.com/lxc/incus/v6/shared/ioprogress"
 )
 
 // HookStart hook used when instance has started.
@@ -99,7 +100,7 @@ type Instance interface {
 	Update(newConfig db.InstanceArgs, userRequested bool) error
 
 	Delete(force bool) error
-	Export(w io.Writer, properties map[string]string, expiration time.Time) (api.ImageMetadata, error)
+	Export(w io.Writer, properties map[string]string, expiration time.Time, tracker *ioprogress.ProgressTracker) (api.ImageMetadata, error)
 
 	// Live configuration.
 	CGroup() (*cgroup.CGroup, error)
