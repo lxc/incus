@@ -2313,6 +2313,55 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		}
 	}
 
+	// Check if we should start a dedicated LXCFS.
+	if d.state.GlobalConfig.InstancesLXCFSPerInstance() {
+		if !util.PathExists(filepath.Join(d.RunPath(), "lxcfs", "proc")) {
+			// Make sure all the paths exist.
+			err := os.Mkdir(filepath.Join(d.DevicesPath(), "lxcfs"), 0711)
+			if err != nil && !os.IsExist(err) {
+				return "", nil, err
+			}
+
+			err = os.Mkdir(filepath.Join(d.RunPath(), "lxcfs"), 0700)
+			if err != nil && !os.IsExist(err) {
+				return "", nil, err
+			}
+
+			// Prepare a new LXCFS instance.
+			lxcfs, err := subprocess.NewProcess("lxcfs", []string{"-f",
+				"-p", filepath.Join(d.RunPath(), "lxcfs.pid"),
+				"--runtime-dir", filepath.Join(d.RunPath(), "lxcfs"),
+				filepath.Join(d.DevicesPath(), "lxcfs")}, "", "")
+			if err != nil {
+				return "", nil, err
+			}
+
+			// Start LXCFS.
+			err = lxcfs.Start(context.TODO())
+			if err != nil {
+				return "", nil, err
+			}
+
+			// Write down our process tracking.
+			err = lxcfs.Save(filepath.Join(d.RunPath(), "lxcfs.yaml"))
+			if err != nil {
+				return "", nil, err
+			}
+		}
+
+		// Over-mount the system LXCFS (if found).
+		for _, entry := range []string{"/var/lib/lxcfs", "/var/lib/incus-lxcfs"} {
+			if !util.PathExists(entry) {
+				continue
+			}
+
+			err = lxcSetConfigItem(cc, "lxc.hook.pre-mount", fmt.Sprintf("mount -o bind %s /var/lib/incus-lxcfs/", filepath.Join(d.DevicesPath(), "lxcfs")))
+			if err != nil {
+				return "", nil, err
+			}
+		}
+	}
+
 	// Load the LXC raw config.
 	err = d.loadRawLXCConfig(cc)
 	if err != nil {
@@ -3074,6 +3123,25 @@ func (d *lxc) onStop(args map[string]string) error {
 		if err != nil {
 			op.Done(fmt.Errorf("Failed to remove disk devices: %w", err))
 			return
+		}
+
+		// Stop dedicated LXCFS.
+		if util.PathExists(filepath.Join(d.DevicesPath(), "lxcfs", "proc")) && util.PathExists(filepath.Join(d.RunPath(), "lxcfs.yaml")) {
+			// Import the running LXCFS.
+			lxcfs, err := subprocess.ImportProcess(filepath.Join(d.RunPath(), "lxcfs.yaml"))
+			if err != nil && !os.IsExist(err) {
+				op.Done(fmt.Errorf("Failed to stop LXCFS: %w", err))
+				return
+			}
+
+			// Stop LXCFS.
+			err = lxcfs.Stop()
+			if err != nil && err != subprocess.ErrNotRunning {
+				op.Done(fmt.Errorf("Failed to stop LXCFS: %w", err))
+				return
+			}
+
+			_ = unix.Unmount(filepath.Join(d.DevicesPath(), "lxcfs"), unix.MNT_DETACH)
 		}
 
 		// Log and emit lifecycle if not user triggered
