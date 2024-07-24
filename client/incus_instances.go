@@ -550,7 +550,6 @@ func (r *ProtocolIncus) CreateInstanceFromBackup(args InstanceBackupArgs) (Opera
 		return nil, err
 	}
 
-	req.GetBody = func() (io.ReadCloser, error) { return io.NopCloser(args.BackupFile), nil }
 	req.Header.Set("Content-Type", "application/octet-stream")
 
 	if args.PoolName != "" {
@@ -1473,7 +1472,14 @@ func (r *ProtocolIncus) CreateInstanceFile(instanceName string, filePath string,
 		return err
 	}
 
-	req.GetBody = func() (io.ReadCloser, error) { return io.NopCloser(args.Content), nil }
+	req.GetBody = func() (io.ReadCloser, error) {
+		_, err := args.Content.Seek(0, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		return io.NopCloser(args.Content), nil
+	}
 
 	// Set the various headers
 	if args.UID > -1 {
@@ -2406,7 +2412,15 @@ func (r *ProtocolIncus) CreateInstanceTemplateFile(instanceName string, template
 		return err
 	}
 
-	req.GetBody = func() (io.ReadCloser, error) { return io.NopCloser(content), nil }
+	req.GetBody = func() (io.ReadCloser, error) {
+		_, err := content.Seek(0, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		return io.NopCloser(content), nil
+	}
+
 	req.Header.Set("Content-Type", "application/octet-stream")
 
 	// Send the request
