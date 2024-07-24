@@ -806,6 +806,21 @@ func (d *qemu) Shutdown(timeout time.Duration) error {
 		return err
 	}
 
+	// Wait 500ms for the first event to be received by the guest.
+	time.Sleep(500 * time.Millisecond)
+
+	// Send a second system_powerdown command (required to get Windows to shutdown).
+	err = monitor.Powerdown()
+	if err != nil {
+		if err == qmp.ErrMonitorDisconnect {
+			op.Done(nil)
+			return nil
+		}
+
+		op.Done(err)
+		return err
+	}
+
 	d.logger.Debug("Shutdown request sent to instance")
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
