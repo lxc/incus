@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-07-22 01:36-0400\n"
-"PO-Revision-Date: 2024-06-26 04:09+0000\n"
-"Last-Translator: Meng Zhuo <mengzhuo1203@gmail.com>\n"
+"PO-Revision-Date: 2024-07-25 07:09+0000\n"
+"Last-Translator: Sakiko <sakiko@anontokyo.co.uk>\n"
 "Language-Team: Chinese (Simplified) <https://hosted.weblate.org/projects/"
 "incus/cli/zh_Hans/>\n"
 "Language: zh_Hans\n"
@@ -17,21 +17,25 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.6-rc\n"
+"X-Generator: Weblate 5.7-dev\n"
 
 #: cmd/incus/info.go:438
+#, fuzzy
 msgid "  Chassis:"
-msgstr ""
+msgstr "  Chassis:"
 
 #: cmd/incus/info.go:478
+#, fuzzy
 msgid "  Firmware:"
-msgstr ""
+msgstr "  Firmware:"
 
 #: cmd/incus/info.go:458
+#, fuzzy
 msgid "  Motherboard:"
-msgstr ""
+msgstr "  Motherboard:"
 
 #: cmd/incus/storage_bucket.go:273 cmd/incus/storage_bucket.go:1065
+#, fuzzy
 msgid ""
 "### This is a YAML representation of a storage bucket.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -43,17 +47,18 @@ msgid ""
 "### config:\n"
 "###   size: \"61203283968\""
 msgstr ""
-"### 这是一个YAML格式的存储卷.\n"
-"### 任何开头带有‘#’的字符串将会被忽略.\n"
+"### This is a YAML representation of a storage bucket.\n"
+"### Any line starting with a '# will be ignored.\n"
 "###\n"
-"### 存储卷由一组配置项组成.\n"
-"###比如:\n"
+"### A storage bucket consists of a set of configuration items.\n"
+"###\n"
 "### name: bucket1\n"
 "### used_by: []\n"
 "### config:\n"
 "###   size: \"61203283968\""
 
 #: cmd/incus/storage.go:290
+#, fuzzy
 msgid ""
 "### This is a YAML representation of a storage pool.\n"
 "### Any line starting with a '#' will be ignored.\n"
@@ -69,12 +74,12 @@ msgid ""
 "###   source: default\n"
 "###   zfs.pool_name: default"
 msgstr ""
-"### 这是一个YAML格式的存储池.\n"
-"### 任何 开头为‘#’的字符串会被忽略.\n"
+"### This is a YAML representation of a storage pool.\n"
+"### Any line starting with a '#' will be ignored.\n"
 "###\n"
-"### 存储池由一组配置项组成.\n"
+"### A storage pool consists of a set of configuration items.\n"
 "###\n"
-"### 例子如下:\n"
+"### An example would look like:\n"
 "### name: default\n"
 "### driver: zfs\n"
 "### used_by: []\n"
@@ -97,38 +102,41 @@ msgid ""
 "### config:\n"
 "###   size: \"61203283968\""
 msgstr ""
-"### 这是一个YAML格式的存储卷.\n"
-"### 任何开头带有‘#’的字符串将会被忽略.\n"
+"### This is a YAML representation of a storage volume.\n"
+"### Any line starting with a '# will be ignored.\n"
 "###\n"
-"### 存储卷由一组配置项组成.\n"
-"###比如:\n"
-"### name: vol1\n"
+"### A storage volume consists of a set of configuration items.\n"
+"###\n"
+"### name: foo\n"
 "### type: custom\n"
 "### used_by: []\n"
 "### config:\n"
 "###   size: \"61203283968\""
 
 #: cmd/incus/config_trust.go:284
+#, fuzzy
 msgid ""
 "### This is a YAML representation of the certificate.\n"
 "### Any line starting with a '# will be ignored.\n"
 "###\n"
 "### Note that the fingerprint is shown but cannot be changed"
 msgstr ""
-"### 这是一个YAML格式的证书.\n"
-"### 任何开头带有‘#’的字符串将会被忽略.\n"
+"### This is a YAML representation of the certificate.\n"
+"### Any line starting with a '# will be ignored.\n"
 "###\n"
-"### 需注意不要更改下列显示的指纹"
+"### Note that the fingerprint is shown but cannot be changed"
 
 #: cmd/incus/cluster_group.go:432
+#, fuzzy
 msgid ""
 "### This is a YAML representation of the cluster group.\n"
 "### Any line starting with a '# will be ignored."
 msgstr ""
-"### 这是一个YAML格式的集群组.\n"
-"### 任何开头带有‘#’的字符串将会被忽略."
+"### This is a YAML representation of the cluster group.\n"
+"### Any line starting with a '# will be ignored."
 
 #: cmd/incus/config.go:117
+#, fuzzy
 msgid ""
 "### This is a YAML representation of the configuration.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -148,10 +156,10 @@ msgid ""
 "###\n"
 "### Note that the name is shown but cannot be changed"
 msgstr ""
-"### 这是一个YAML格式的配置\n"
-"### 任何开头带有‘#’的字符串将会被忽略.\n"
+"### This is a YAML representation of the configuration.\n"
+"### Any line starting with a '# will be ignored.\n"
 "###\n"
-"### 以下是一个配置的例子:\n"
+"### A sample configuration looks like:\n"
 "### name: instance1\n"
 "### profiles:\n"
 "### - default\n"
@@ -164,7 +172,7 @@ msgstr ""
 "###     type: disk\n"
 "### ephemeral: false\n"
 "###\n"
-"### 需要注意的是不要更改下列名字"
+"### Note that the name is shown but cannot be changed"
 
 #: cmd/incus/image.go:405
 msgid ""
@@ -229,6 +237,7 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/network_forward.go:616
+#, fuzzy
 msgid ""
 "### This is a YAML representation of the network forward.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -251,12 +260,13 @@ msgid ""
 "###\n"
 "### Note that the listen_address and location cannot be changed."
 msgstr ""
-"### 这是一个YAML格式的网络转发配置\n"
-"### 任何开头带有‘#’的字符串将会被忽略.\n"
+"### This is a YAML representation of the network forward.\n"
+"### Any line starting with a '# will be ignored.\n"
 "###\n"
-"### 一个网络转发配置应包含一个默认目标地址和若干可选的转发监听地址\n"
+"### A network forward consists of a default target address and optional set "
+"of port forwards for a listen address.\n"
 "###\n"
-"### 以下为网络转发的例子:\n"
+"### An example would look like:\n"
 "### listen_address: 192.0.2.1\n"
 "### config:\n"
 "###   target_address: 198.51.100.2\n"
@@ -269,19 +279,20 @@ msgstr ""
 "###   target_port: 80,81,8080-8090\n"
 "### location: server01\n"
 "###\n"
-"### 需要注意不要更改 listen_address 和 location。"
+"### Note that the listen_address and location cannot be changed."
 
 #: cmd/incus/network_integration.go:242
+#, fuzzy
 msgid ""
 "### This is a YAML representation of the network integration.\n"
 "### Any line starting with a '# will be ignored.\n"
 "###\n"
 "### Note that the name is shown but cannot be changed"
 msgstr ""
-"### 这是一个YAML格式的网络集成配置.\n"
-"### 任何开头带有‘#’的字符串将会被忽略.\n"
+"### This is a YAML representation of the network integration.\n"
+"### Any line starting with a '# will be ignored.\n"
 "###\n"
-"### 需注意不要更改下列的名字"
+"### Note that the name is shown but cannot be changed"
 
 #: cmd/incus/network_load_balancer.go:585
 #, fuzzy
@@ -541,19 +552,19 @@ msgid "%d (id: %d, online: %v, NUMA node: %v)"
 msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:651
-#, c-format
+#, c-format, fuzzy
 msgid "%q is not a block device"
-msgstr "%q 不是一个块设备"
+msgstr "%q is not a block device"
 
 #: cmd/incus/admin_init_interactive.go:788
-#, c-format
+#, c-format, fuzzy
 msgid "%q is not an IP address"
-msgstr "%q 不是一个IP地址"
+msgstr "%q is not an IP address"
 
 #: cmd/incus/admin_recover.go:209
-#, c-format
+#, c-format, fuzzy
 msgid "%s %q on pool %q in project %q (includes %d snapshots)"
-msgstr "%s %q 在池： %q 项目为： %q (包含 %d 快照)"
+msgstr "%s %q on pool %q in project %q (includes %d snapshots)"
 
 #: cmd/incus/image.go:1158
 #, c-format
@@ -571,9 +582,9 @@ msgid "%s (backend=%q, source=%q)"
 msgstr ""
 
 #: cmd/incus/file.go:1102
-#, c-format
+#, c-format, fuzzy
 msgid "%s is not a directory"
-msgstr "%s 不是一个目录"
+msgstr "%s is not a directory"
 
 #: cmd/incus/file.go:992
 #, c-format
