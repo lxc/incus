@@ -520,8 +520,6 @@ func (r *ProtocolIncus) CreateImage(image api.ImagesPost, args *ImageCreateArgs)
 		return nil, err
 	}
 
-	req.GetBody = func() (io.ReadCloser, error) { return io.NopCloser(body), nil }
-
 	// Setup the headers
 	req.Header.Set("Content-Type", contentType)
 	if image.Public {

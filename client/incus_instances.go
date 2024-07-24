@@ -550,7 +550,6 @@ func (r *ProtocolIncus) CreateInstanceFromBackup(args InstanceBackupArgs) (Opera
 		return nil, err
 	}
 
-	req.GetBody = func() (io.ReadCloser, error) { return io.NopCloser(args.BackupFile), nil }
 	req.Header.Set("Content-Type", "application/octet-stream")
 
 	if args.PoolName != "" {
