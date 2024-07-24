@@ -428,6 +428,7 @@ var APIExtensions = []string{
 	"disk_io_bus_cache_filesystem",
 	"instance_oci",
 	"clustering_groups_config",
+	"instances_lxcfs_per_instance",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
