@@ -80,7 +80,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 	fp := alias
 
 	// Attempt to resolve the alias
-	if slices.Contains([]string{"incus", "lxd", "oci", "simplestreams"}, protocol) {
+	if args.Server != "" && slices.Contains([]string{"incus", "lxd", "oci", "simplestreams"}, protocol) {
 		clientArgs := &incus.ConnectionArgs{
 			TLSServerCert: args.Certificate,
 			UserAgent:     version.UserAgent,
