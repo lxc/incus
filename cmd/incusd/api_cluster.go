@@ -2832,7 +2832,7 @@ func clusterNodeStatePost(d *Daemon, r *http.Request) response.Response {
 			return nil
 		}
 
-		migrateFunc := func(ctx context.Context, s *state.State, r *http.Request, inst instance.Instance, sourceMemberInfo *db.NodeInfo, targetMemberInfo *db.NodeInfo, live bool, startInstance bool, metadata map[string]any, op *operations.Operation) error {
+		migrateFunc := func(ctx context.Context, s *state.State, inst instance.Instance, sourceMemberInfo *db.NodeInfo, targetMemberInfo *db.NodeInfo, live bool, startInstance bool, metadata map[string]any, op *operations.Operation) error {
 			// Migrate the instance.
 			req := api.InstancePost{
 				Migration: true,
@@ -2874,7 +2874,16 @@ func clusterNodeStatePost(d *Daemon, r *http.Request) response.Response {
 			return nil
 		}
 
-		return evacuateClusterMember(s, d.gateway, r, req.Mode, stopFunc, migrateFunc)
+		run := func(op *operations.Operation) error {
+			return evacuateClusterMember(context.Background(), s, d.gateway, op, name, req.Mode, stopFunc, migrateFunc)
+		}
+
+		op, err := operations.OperationCreate(s, "", operations.OperationClassTask, operationtype.ClusterMemberEvacuate, nil, nil, run, nil, nil, r)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		return operations.OperationResponse(op)
 	} else if req.Action == "restore" {
 		return restoreClusterMember(d, r)
 	}
