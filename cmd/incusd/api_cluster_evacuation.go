@@ -16,7 +16,6 @@ import (
 
 	"github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/revert"
-	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/cluster"
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
@@ -36,91 +35,17 @@ import (
 )
 
 type evacuateStopFunc func(inst instance.Instance, action string) error
-type evacuateMigrateFunc func(ctx context.Context, s *state.State, r *http.Request, inst instance.Instance, sourceMemberInfo *db.NodeInfo, targetMemberInfo *db.NodeInfo, live bool, startInstance bool, metadata map[string]any, op *operations.Operation) error
+type evacuateMigrateFunc func(ctx context.Context, s *state.State, inst instance.Instance, sourceMemberInfo *db.NodeInfo, targetMemberInfo *db.NodeInfo, live bool, startInstance bool, metadata map[string]any, op *operations.Operation) error
 
 type evacuateOpts struct {
 	s               *state.State
 	gateway         *cluster.Gateway
-	r               *http.Request
 	instances       []instance.Instance
 	mode            string
 	srcMemberName   string
 	stopInstance    evacuateStopFunc
 	migrateInstance evacuateMigrateFunc
 	op              *operations.Operation
-}
-
-var internalClusterHealCmd = APIEndpoint{
-	Path: "cluster/heal/{name}",
-
-	Post: APIEndpointAction{Handler: internalClusterHeal, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
-}
-
-func internalClusterHeal(d *Daemon, r *http.Request) response.Response {
-	migrateFunc := func(ctx context.Context, s *state.State, r *http.Request, inst instance.Instance, sourceMemberInfo *db.NodeInfo, targetMemberInfo *db.NodeInfo, live bool, startInstance bool, metadata map[string]any, op *operations.Operation) error {
-		// This returns an error if the instance's storage pool is local.
-		// Since we only care about remote backed instances, this can be ignored and return nil instead.
-		poolName, err := inst.StoragePool()
-		if err != nil {
-			if api.StatusErrorCheck(err, http.StatusNotFound) {
-				return nil // We only care about remote backed instances.
-			}
-
-			return err
-		}
-
-		pool, err := storagePools.LoadByName(s, poolName)
-		if err != nil {
-			return err
-		}
-
-		// Nothing to do as the instance's pool is on remote storage.
-		if !pool.Driver().Info().Remote {
-			return nil
-		}
-
-		// Migrate the instance.
-		req := api.InstancePost{
-			Migration: true,
-		}
-
-		dest, err := cluster.Connect(targetMemberInfo.Address, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
-		if err != nil {
-			return err
-		}
-
-		dest = dest.UseProject(inst.Project().Name)
-		dest = dest.UseTarget(targetMemberInfo.Name)
-
-		migrateOp, err := dest.MigrateInstance(inst.Name(), req)
-		if err != nil {
-			return err
-		}
-
-		err = migrateOp.Wait()
-		if err != nil {
-			return err
-		}
-
-		if !startInstance || live {
-			return nil
-		}
-
-		// Start it back up on target.
-		startOp, err := dest.UpdateInstanceState(inst.Name(), api.InstanceStatePut{Action: "start"}, "")
-		if err != nil {
-			return err
-		}
-
-		err = startOp.Wait()
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	return evacuateClusterMember(d.State(), d.gateway, r, "migrate", nil, migrateFunc)
 }
 
 func evacuateClusterSetState(s *state.State, name string, newState int) error {
@@ -159,17 +84,13 @@ func evacuateClusterSetState(s *state.State, name string, newState int) error {
 // evacuateHostShutdownDefaultTimeout default timeout (in seconds) for waiting for clean shutdown to complete.
 const evacuateHostShutdownDefaultTimeout = 30
 
-func evacuateClusterMember(s *state.State, gateway *cluster.Gateway, r *http.Request, mode string, stopInstance evacuateStopFunc, migrateInstance evacuateMigrateFunc) response.Response {
-	nodeName, err := url.PathUnescape(mux.Vars(r)["name"])
-	if err != nil {
-		return response.SmartError(err)
-	}
-
-	// The instances are retrieved in a separate transaction, after the node is in EVACUATED state.
+func evacuateClusterMember(ctx context.Context, s *state.State, gateway *cluster.Gateway, op *operations.Operation, name string, mode string, stopInstance evacuateStopFunc, migrateInstance evacuateMigrateFunc) error {
+	// Get the instance list for the server being evacuated.
 	var dbInstances []dbCluster.Instance
-	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// If evacuating, consider only the instances on the node which needs to be evacuated.
-		dbInstances, err = dbCluster.GetInstances(ctx, tx.Tx(), dbCluster.InstanceFilter{Node: &nodeName})
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		dbInstances, err = dbCluster.GetInstances(ctx, tx.Tx(), dbCluster.InstanceFilter{Node: &name})
 		if err != nil {
 			return fmt.Errorf("Failed to get instances: %w", err)
 		}
@@ -177,66 +98,56 @@ func evacuateClusterMember(s *state.State, gateway *cluster.Gateway, r *http.Req
 		return nil
 	})
 	if err != nil {
-		return response.SmartError(err)
+		return err
 	}
 
+	// Load the instance structs.
 	instances := make([]instance.Instance, len(dbInstances))
-
 	for i, dbInst := range dbInstances {
 		inst, err := instance.LoadByProjectAndName(s, dbInst.Project, dbInst.Name)
 		if err != nil {
-			return response.SmartError(fmt.Errorf("Failed to load instance: %w", err))
+			return fmt.Errorf("Failed to load instance: %w", err)
 		}
 
 		instances[i] = inst
 	}
 
-	run := func(op *operations.Operation) error {
-		// Setup a reverter.
-		reverter := revert.New()
-		defer reverter.Fail()
+	// Setup a reverter.
+	reverter := revert.New()
+	defer reverter.Fail()
 
-		// Set node status to EVACUATED.
-		err := evacuateClusterSetState(s, nodeName, db.ClusterMemberStateEvacuated)
-		if err != nil {
-			return err
-		}
-
-		// Ensure node is put into its previous state if anything fails.
-		reverter.Add(func() {
-			_ = evacuateClusterSetState(s, nodeName, db.ClusterMemberStateCreated)
-		})
-
-		opts := evacuateOpts{
-			s:               s,
-			gateway:         gateway,
-			r:               r,
-			instances:       instances,
-			mode:            mode,
-			srcMemberName:   nodeName,
-			stopInstance:    stopInstance,
-			migrateInstance: migrateInstance,
-			op:              op,
-		}
-
-		err = evacuateInstances(context.Background(), opts)
-		if err != nil {
-			return err
-		}
-
-		// Stop networks after evacuation.
-		networkShutdown(s)
-
-		reverter.Success()
-		return nil
-	}
-
-	op, err := operations.OperationCreate(s, "", operations.OperationClassTask, operationtype.ClusterMemberEvacuate, nil, nil, run, nil, nil, r)
+	// Set cluster member status to EVACUATED.
+	err = evacuateClusterSetState(s, name, db.ClusterMemberStateEvacuated)
 	if err != nil {
-		return response.InternalError(err)
+		return err
 	}
 
-	return operations.OperationResponse(op)
+	reverter.Add(func() {
+		_ = evacuateClusterSetState(s, name, db.ClusterMemberStateCreated)
+	})
+
+	// Perform the evacuation.
+	opts := evacuateOpts{
+		s:               s,
+		gateway:         gateway,
+		instances:       instances,
+		mode:            mode,
+		srcMemberName:   name,
+		stopInstance:    stopInstance,
+		migrateInstance: migrateInstance,
+		op:              op,
+	}
+
+	err = evacuateInstances(ctx, opts)
+	if err != nil {
+		return err
+	}
+
+	// Stop networks after evacuation.
+	networkShutdown(s)
+
+	reverter.Success()
+	return nil
 }
 
 func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
@@ -297,7 +208,7 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 		}
 
 		start := isRunning || instanceShouldAutoStart(inst)
-		err = opts.migrateInstance(ctx, opts.s, opts.r, inst, sourceMemberInfo, targetMemberInfo, action == "live-migrate", start, metadata, opts.op)
+		err = opts.migrateInstance(ctx, opts.s, inst, sourceMemberInfo, targetMemberInfo, action == "live-migrate", start, metadata, opts.op)
 		if err != nil {
 			return err
 		}
@@ -718,10 +629,12 @@ func autoHealClusterTask(d *Daemon) (task.Func, task.Schedule) {
 		}
 
 		opRun := func(op *operations.Operation) error {
-			err := autoHealCluster(ctx, s, offlineMembers)
-			if err != nil {
-				logger.Error("Failed healing cluster instances", logger.Ctx{"err": err})
-				return err
+			for _, member := range offlineMembers {
+				err := healClusterMember(d, op, member.Name)
+				if err != nil {
+					logger.Error("Failed healing cluster instances", logger.Ctx{"server": member.Name, "err": err})
+					return err
+				}
 			}
 
 			return nil
@@ -749,23 +662,69 @@ func autoHealClusterTask(d *Daemon) (task.Func, task.Schedule) {
 	return f, task.Every(time.Minute)
 }
 
-func autoHealCluster(ctx context.Context, s *state.State, offlineMembers []db.NodeInfo) error {
-	logger.Info("Healing cluster instances")
-
-	dest, err := cluster.Connect(s.LocalConfig.ClusterAddress(), s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
-	if err != nil {
-		return err
-	}
-
-	for _, member := range offlineMembers {
-		logger.Info("Healing cluster member instances", logger.Ctx{"member": member.Name})
-		_, _, err = dest.RawQuery("POST", fmt.Sprintf("/internal/cluster/heal/%s", member.Name), nil, "")
+func healClusterMember(d *Daemon, op *operations.Operation, name string) error {
+	migrateFunc := func(ctx context.Context, s *state.State, inst instance.Instance, sourceMemberInfo *db.NodeInfo, targetMemberInfo *db.NodeInfo, live bool, startInstance bool, metadata map[string]any, op *operations.Operation) error {
+		// This returns an error if the instance's storage pool is local.
+		// Since we only care about remote backed instances, this can be ignored and return nil instead.
+		poolName, err := inst.StoragePool()
 		if err != nil {
-			return fmt.Errorf("Failed evacuating cluster member %q: %w", member.Name, err)
+			if api.StatusErrorCheck(err, http.StatusNotFound) {
+				return nil // We only care about remote backed instances.
+			}
+
+			return err
 		}
+
+		pool, err := storagePools.LoadByName(s, poolName)
+		if err != nil {
+			return err
+		}
+
+		// Nothing to do as the instance's pool is on remote storage.
+		if !pool.Driver().Info().Remote {
+			return nil
+		}
+
+		// Migrate the instance.
+		req := api.InstancePost{
+			Migration: true,
+		}
+
+		dest, err := cluster.Connect(targetMemberInfo.Address, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
+		if err != nil {
+			return err
+		}
+
+		dest = dest.UseProject(inst.Project().Name)
+		dest = dest.UseTarget(targetMemberInfo.Name)
+
+		migrateOp, err := dest.MigrateInstance(inst.Name(), req)
+		if err != nil {
+			return err
+		}
+
+		err = migrateOp.Wait()
+		if err != nil {
+			return err
+		}
+
+		if !startInstance || live {
+			return nil
+		}
+
+		// Start it back up on target.
+		startOp, err := dest.UpdateInstanceState(inst.Name(), api.InstanceStatePut{Action: "start"}, "")
+		if err != nil {
+			return err
+		}
+
+		err = startOp.Wait()
+		if err != nil {
+			return err
+		}
+
+		return nil
 	}
 
-	logger.Info("Done healing cluster instances")
-
-	return nil
+	return evacuateClusterMember(context.Background(), d.State(), d.gateway, op, name, "migrate", nil, migrateFunc)
 }
