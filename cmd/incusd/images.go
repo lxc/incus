@@ -1191,6 +1191,14 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 				if err != nil {
 					return fmt.Errorf("Add new image alias to the database: %w", err)
 				}
+
+				// Add the image alias to the authorizer.
+				err = s.Authorizer.AddImageAlias(r.Context(), projectName, alias.Name)
+				if err != nil {
+					logger.Error("Failed to add image alias to authorizer", logger.Ctx{"name": alias.Name, "project": projectName, "error": err})
+				}
+
+				s.Events.SendLifecycle(projectName, lifecycle.ImageAliasCreated.Event(alias.Name, projectName, op.Requestor(), logger.Ctx{"target": info.Fingerprint}))
 			}
 
 			return nil
