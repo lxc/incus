@@ -1202,7 +1202,7 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 		// Sync the images between each node in the cluster on demand
 		err = imageSyncBetweenNodes(context.TODO(), s, r, projectName, info.Fingerprint)
 		if err != nil {
-			return fmt.Errorf("Failed syncing image between nodes: %w", err)
+			return fmt.Errorf("Failed syncing image between servers: %w", err)
 		}
 
 		// Add the image to the authorizer.
@@ -4640,10 +4640,14 @@ func imageSyncBetweenNodes(ctx context.Context, s *state.State, r *http.Request,
 		return fmt.Errorf("Failed to get image: %w", err)
 	}
 
-	// Populate the copy arguments with properties from the source image.
-	args := incus.ImageCopyArgs{
-		Type:   image.Type,
-		Public: image.Public,
+	// Set up the image download request.
+	req := api.ImagesPost{
+		Source: &api.ImagesPostSource{
+			Fingerprint: image.Fingerprint,
+			Mode:        "pull",
+			Type:        "image",
+			Project:     project,
+		},
 	}
 
 	// Replicate on as many nodes as needed.
@@ -4677,8 +4681,8 @@ func imageSyncBetweenNodes(ctx context.Context, s *state.State, r *http.Request,
 		client = client.UseProject(project)
 
 		// Copy the image to the target server.
-		logger.Info("Copying image to member", logger.Ctx{"fingerprint": fingerprint, "address": targetNodeAddress, "project": project, "public": args.Public, "type": args.Type})
-		op, err := client.CopyImage(source, *image, &args)
+		logger.Info("Copying image to member", logger.Ctx{"fingerprint": fingerprint, "address": targetNodeAddress, "project": project})
+		op, err := client.CreateImage(req, nil)
 		if err != nil {
 			return fmt.Errorf("Failed to copy image to %q: %w", targetNodeAddress, err)
 		}
