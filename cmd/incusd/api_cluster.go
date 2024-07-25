@@ -1212,7 +1212,7 @@ func clusterNodesGet(d *Daemon, r *http.Request) response.Response {
 	recursion := localUtil.IsRecursionRequest(r)
 	s := d.State()
 
-	leaderAddress, err := d.gateway.LeaderAddress()
+	leaderAddress, err := s.Cluster.LeaderAddress()
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -1485,7 +1485,7 @@ func clusterNodeGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	leaderAddress, err := d.gateway.LeaderAddress()
+	leaderAddress, err := s.Cluster.LeaderAddress()
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -1621,7 +1621,7 @@ func updateClusterNode(s *state.State, gateway *cluster.Gateway, r *http.Request
 		return response.SmartError(err)
 	}
 
-	leaderAddress, err := gateway.LeaderAddress()
+	leaderAddress, err := s.Cluster.LeaderAddress()
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -1961,7 +1961,7 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 	// knowing what nodes are part of the raft cluster.
 	localClusterAddress := s.LocalConfig.ClusterAddress()
 
-	leader, err := d.gateway.LeaderAddress()
+	leader, err := s.Cluster.LeaderAddress()
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -2405,7 +2405,7 @@ func internalClusterPostAccept(d *Daemon, r *http.Request) response.Response {
 	// knowning what nodes are part of the raft cluster.
 	localClusterAddress := s.LocalConfig.ClusterAddress()
 
-	leader, err := d.gateway.LeaderAddress()
+	leader, err := s.Cluster.LeaderAddress()
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -2495,7 +2495,7 @@ func internalClusterPostRebalance(d *Daemon, r *http.Request) response.Response 
 	// up-to-date knowledge of what nodes are part of the raft cluster.
 	localClusterAddress := s.LocalConfig.ClusterAddress()
 
-	leader, err := d.gateway.LeaderAddress()
+	leader, err := s.Cluster.LeaderAddress()
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -2638,7 +2638,7 @@ func handoverMemberRole(s *state.State, gateway *cluster.Gateway) error {
 
 	// Find the cluster leader.
 findLeader:
-	leader, err := gateway.LeaderAddress()
+	leader, err := s.Cluster.LeaderAddress()
 	if err != nil {
 		return err
 	}
@@ -2728,7 +2728,7 @@ func internalClusterPostHandover(d *Daemon, r *http.Request) response.Response {
 	// authoritative knowledge of the current raft configuration.
 	localClusterAddress := s.LocalConfig.ClusterAddress()
 
-	leader, err := d.gateway.LeaderAddress()
+	leader, err := s.Cluster.LeaderAddress()
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -4422,7 +4422,7 @@ func evacuateClusterSelectTarget(ctx context.Context, s *state.State, gateway *c
 
 	// Run instance placement scriptlet if enabled.
 	if s.GlobalConfig.InstancesPlacementScriptlet() != "" {
-		leaderAddress, err := gateway.LeaderAddress()
+		leaderAddress, err := s.Cluster.LeaderAddress()
 		if err != nil {
 			return nil, nil, err
 		}
@@ -4489,7 +4489,7 @@ func autoHealClusterTask(d *Daemon) (task.Func, task.Schedule) {
 			return // Skip healing if it's disabled.
 		}
 
-		leader, err := d.gateway.LeaderAddress()
+		leader, err := s.Cluster.LeaderAddress()
 		if err != nil {
 			if errors.Is(err, cluster.ErrNodeIsNotClustered) {
 				return // Skip healing if not clustered.
