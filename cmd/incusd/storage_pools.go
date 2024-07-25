@@ -334,7 +334,13 @@ func storagePoolsPost(d *Daemon, r *http.Request) response.Response {
 			return response.BadRequest(err)
 		}
 
+		exists := false
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			_, err = tx.GetStoragePoolID(ctx, req.Name)
+			if err == nil {
+				exists = true
+			}
+
 			return tx.CreatePendingStoragePool(ctx, targetNode, req.Name, req.Driver, req.Config)
 		})
 		if err != nil {
@@ -343,6 +349,17 @@ func storagePoolsPost(d *Daemon, r *http.Request) response.Response {
 			}
 
 			return response.SmartError(err)
+		}
+
+		if !exists {
+			// Add the storage pool to the authorizer.
+			err = s.Authorizer.AddStoragePool(r.Context(), req.Name)
+			if err != nil {
+				logger.Error("Failed to add storage pool to authorizer", logger.Ctx{"name": req.Name, "error": err})
+			}
+
+			// Send out the lifecycle event.
+			s.Events.SendLifecycle(api.ProjectDefaultName, lc)
 		}
 
 		return resp
@@ -381,15 +398,16 @@ func storagePoolsPost(d *Daemon, r *http.Request) response.Response {
 		if err != nil {
 			return response.SmartError(err)
 		}
-	}
 
-	// Add the storage pool to the authorizer.
-	err = s.Authorizer.AddStoragePool(r.Context(), req.Name)
-	if err != nil {
-		logger.Error("Failed to add storage pool to authorizer", logger.Ctx{"name": req.Name, "error": err})
-	}
+		// Add the storage pool to the authorizer.
+		err = s.Authorizer.AddStoragePool(r.Context(), req.Name)
+		if err != nil {
+			logger.Error("Failed to add storage pool to authorizer", logger.Ctx{"name": req.Name, "error": err})
+		}
 
-	s.Events.SendLifecycle(api.ProjectDefaultName, lc)
+		// Send out the lifecycle event.
+		s.Events.SendLifecycle(api.ProjectDefaultName, lc)
+	}
 
 	return resp
 }
