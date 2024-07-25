@@ -407,6 +407,10 @@ func (ms *metricSet) getMetricValue(metricType metricType, instanceName string) 
 
 	if samples, exists := ms.set[metricType]; exists { // Check if metricType exists
 		for _, sample := range samples {
+			if (metricType == filesystemFreeBytes || metricType == filesystemSizeBytes) && sample.labels["mountpoint"] != "/" {
+				continue
+			}
+
 			if sample.labels["name"] == instanceName {
 				value += sample.value
 			}
