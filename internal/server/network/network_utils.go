@@ -778,8 +778,14 @@ func GetHostDevice(parent string, vlan string) string {
 		return parent
 	}
 
-	// If no VLANs are configured, use the default pattern
+	// If no VLANs are configured, use the default pattern.
 	defaultVlan := fmt.Sprintf("%s.%s", parent, vlan)
+
+	// Handle long interface names.
+	if len(defaultVlan) > 15 {
+		defaultVlan = fmt.Sprintf("incus-vlan-%s", vlan)
+	}
+
 	if !util.PathExists("/proc/net/vlan/config") {
 		return defaultVlan
 	}
