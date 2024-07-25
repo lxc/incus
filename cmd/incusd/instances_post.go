@@ -24,6 +24,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/instance/operationlock"
+	"github.com/lxc/incus/v6/internal/server/lifecycle"
 	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/request"
@@ -76,6 +77,14 @@ func ensureDownloadedImageFitWithinBudget(ctx context.Context, s *state.State, r
 	if err != nil {
 		return nil, err
 	}
+
+	// Add the image to the authorizer.
+	err = s.Authorizer.AddImage(s.ShutdownCtx, p.Name, imgDownloaded.Fingerprint)
+	if err != nil {
+		logger.Error("Failed to add image to authorizer", logger.Ctx{"fingerprint": imgDownloaded.Fingerprint, "project": p.Name, "error": err})
+	}
+
+	s.Events.SendLifecycle(p.Name, lifecycle.ImageCreated.Event(imgDownloaded.Fingerprint, p.Name, op.Requestor(), logger.Ctx{"type": imgDownloaded.Type}))
 
 	return imgDownloaded, nil
 }
