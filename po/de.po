@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-07-22 01:36-0400\n"
+"POT-Creation-Date: 2024-07-25 13:14-0400\n"
 "PO-Revision-Date: 2024-06-02 16:41+0000\n"
 "Last-Translator: Tobias Gerold <tobias@g3ro.eu>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
@@ -2167,8 +2167,8 @@ msgstr ""
 #: cmd/incus/cluster_group.go:267 cmd/incus/cluster_group.go:327
 #: cmd/incus/cluster_group.go:451 cmd/incus/cluster_group.go:533
 #: cmd/incus/cluster_group.go:618 cmd/incus/cluster_group.go:674
-#: cmd/incus/cluster_group.go:736 cmd/incus/cluster_group.go:811
-#: cmd/incus/cluster_group.go:884 cmd/incus/cluster_group.go:964
+#: cmd/incus/cluster_group.go:736 cmd/incus/cluster_group.go:812
+#: cmd/incus/cluster_group.go:887 cmd/incus/cluster_group.go:969
 #: cmd/incus/cluster_role.go:24 cmd/incus/cluster_role.go:51
 #: cmd/incus/cluster_role.go:115 cmd/incus/config.go:32 cmd/incus/config.go:95
 #: cmd/incus/config.go:388 cmd/incus/config.go:525 cmd/incus/config.go:751
@@ -2741,7 +2741,7 @@ msgstr "Fehler beim Dekodieren der Datei(en): %v"
 msgid "Error retrieving aliases: %w"
 msgstr "Fehler beim Abrufen des Aliase/Namen: %w"
 
-#: cmd/incus/cluster.go:562 cmd/incus/cluster_group.go:939
+#: cmd/incus/cluster.go:562 cmd/incus/cluster_group.go:943
 #: cmd/incus/config.go:641 cmd/incus/config.go:673 cmd/incus/network.go:1454
 #: cmd/incus/network_acl.go:540 cmd/incus/network_forward.go:521
 #: cmd/incus/network_integration.go:587 cmd/incus/network_load_balancer.go:507
@@ -2764,7 +2764,7 @@ msgstr "Fehler beim setzen der Größe des Terminals/der Konsole %s"
 msgid "Error unsetting properties: %v"
 msgstr "Fehler beim Löschen der Parameter: %v"
 
-#: cmd/incus/cluster.go:556 cmd/incus/cluster_group.go:933
+#: cmd/incus/cluster.go:556 cmd/incus/cluster_group.go:937
 #: cmd/incus/network.go:1448 cmd/incus/network_acl.go:534
 #: cmd/incus/network_forward.go:515 cmd/incus/network_integration.go:581
 #: cmd/incus/network_load_balancer.go:501 cmd/incus/network_peer.go:547
@@ -3503,7 +3503,7 @@ msgstr ""
 msgid "Get runtime information on networks"
 msgstr ""
 
-#: cmd/incus/cluster_group.go:813
+#: cmd/incus/cluster_group.go:814
 #, fuzzy
 msgid "Get the key as a cluster group property"
 msgstr "Anhalten des Containers fehlgeschlagen!"
@@ -3577,7 +3577,7 @@ msgstr "Anhalten des Containers fehlgeschlagen!"
 msgid "Get the key as an instance property"
 msgstr ""
 
-#: cmd/incus/cluster_group.go:810
+#: cmd/incus/cluster_group.go:811
 #, fuzzy
 msgid "Get values for cluster group configuration keys"
 msgstr "Profil %s erstellt\n"
@@ -6739,7 +6739,7 @@ msgstr ""
 "Optionen:\n"
 "\n"
 
-#: cmd/incus/cluster_group.go:883
+#: cmd/incus/cluster_group.go:886
 #, fuzzy
 msgid "Set a cluster group's configuration keys"
 msgstr "Alternatives config Verzeichnis."
@@ -7003,7 +7003,7 @@ msgstr "Setzt die uid der Datei beim Übertragen"
 msgid "Set the file's uid on push"
 msgstr "Setzt die uid der Datei beim Übertragen"
 
-#: cmd/incus/cluster_group.go:886
+#: cmd/incus/cluster_group.go:889
 #, fuzzy
 msgid "Set the key as a cluster group property"
 msgstr "Anhalten des Containers fehlgeschlagen!"
@@ -7526,9 +7526,9 @@ msgid "Store the instance state"
 msgstr "Herunterfahren des Containers erzwingen."
 
 #: cmd/incus/cluster.go:1360
-#, c-format
-msgid "Successfully updated cluster certificates for remote %s"
-msgstr ""
+#, fuzzy
+msgid "Successfully updated cluster certificates"
+msgstr "Akzeptiere Zertifikat"
 
 #: cmd/incus/info.go:232
 #, c-format
@@ -7687,7 +7687,7 @@ msgstr ""
 msgid "The is no config key to set on an instance snapshot."
 msgstr ""
 
-#: cmd/incus/cluster_group.go:865
+#: cmd/incus/cluster_group.go:867
 #, fuzzy, c-format
 msgid "The key %q does not exist on cluster group %q"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
@@ -7712,7 +7712,7 @@ msgstr ""
 msgid "The profile device doesn't exist"
 msgstr "entfernte Instanz %s existiert nicht"
 
-#: cmd/incus/cluster_group.go:856
+#: cmd/incus/cluster_group.go:858
 #, fuzzy, c-format
 msgid "The property %q does not exist on the cluster group %q: %v"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
@@ -8110,7 +8110,7 @@ msgstr "Unbekannter Befehl %s für Abbild"
 msgid "Unknown output type %q"
 msgstr "Unbekannter Befehl %s für Abbild"
 
-#: cmd/incus/cluster_group.go:963
+#: cmd/incus/cluster_group.go:968
 #, fuzzy
 msgid "Unset a cluster group's configuration keys"
 msgstr "Alternatives config Verzeichnis."
@@ -8226,7 +8226,7 @@ msgid ""
 "machine\"."
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/cluster_group.go:966
+#: cmd/incus/cluster_group.go:971
 #, fuzzy
 msgid "Unset the key as a cluster group property"
 msgstr "Anhalten des Containers fehlgeschlagen!"
@@ -8836,7 +8836,7 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/cluster_group.go:809 cmd/incus/cluster_group.go:962
+#: cmd/incus/cluster_group.go:810 cmd/incus/cluster_group.go:967
 #, fuzzy
 msgid "[<remote>:]<group> <key>"
 msgstr ""
@@ -8844,7 +8844,7 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/cluster_group.go:882
+#: cmd/incus/cluster_group.go:885
 #, fuzzy
 msgid "[<remote>:]<group> <key>=<value>..."
 msgstr ""
