@@ -1357,7 +1357,7 @@ func (c *cmdClusterUpdateCertificate) Run(cmd *cobra.Command, args []string) err
 	}
 
 	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Successfully updated cluster certificates for remote %s")+"\n", resource.remote)
+		fmt.Println(i18n.G("Successfully updated cluster certificates"))
 	}
 
 	return nil
