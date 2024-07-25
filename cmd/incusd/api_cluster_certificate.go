@@ -96,8 +96,8 @@ func clusterCertificatePut(d *Daemon, r *http.Request) response.Response {
 }
 
 func updateClusterCertificate(ctx context.Context, s *state.State, gateway *cluster.Gateway, r *http.Request, req api.ClusterCertificatePut) error {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	newClusterCertFilename := internalUtil.VarPath(acme.ClusterCertFilename)
 
@@ -105,7 +105,7 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 	if r == nil || !isClusterNotification(r) {
 		var err error
 
-		revert.Add(func() {
+		reverter.Add(func() {
 			_ = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
 				return tx.UpsertWarningLocalNode(ctx, "", -1, -1, warningtype.UnableToUpdateClusterCertificate, err.Error())
 			})
@@ -142,7 +142,7 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 
 		localClusterAddress := s.LocalConfig.ClusterAddress()
 
-		revert.Add(func() {
+		reverter.Add(func() {
 			// If distributing the new certificate fails, store the certificate. This new file will
 			// be considered when running the auto renewal again.
 			err := os.WriteFile(newClusterCertFilename, []byte(req.ClusterCertificate), 0600)
@@ -156,7 +156,7 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 			return err
 		}
 
-		var client incus.InstanceServer
+		var c incus.InstanceServer
 
 		for i := range members {
 			member := members[i]
@@ -165,26 +165,26 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 				continue
 			}
 
-			client, err = cluster.Connect(member.Address, s.Endpoints.NetworkCert(), s.ServerCert(), r, true)
+			c, err = cluster.Connect(member.Address, s.Endpoints.NetworkCert(), s.ServerCert(), r, true)
 			if err != nil {
 				return err
 			}
 
-			err = client.UpdateClusterCertificate(req, "")
+			err = c.UpdateClusterCertificate(req, "")
 			if err != nil {
 				return err
 			}
 
 			// When reverting the certificate, we need to connect to the cluster members using the
 			// new certificate otherwise we'll get a bad certificate error.
-			revert.Add(func() {
-				client, err := cluster.Connect(member.Address, newCertInfo, s.ServerCert(), r, true)
+			reverter.Add(func() {
+				c, err := cluster.Connect(member.Address, newCertInfo, s.ServerCert(), r, true)
 				if err != nil {
 					logger.Error("Failed to connect to cluster member", logger.Ctx{"address": member.Address, "err": err})
 					return
 				}
 
-				err = client.UpdateClusterCertificate(oldReq, "")
+				err = c.UpdateClusterCertificate(oldReq, "")
 				if err != nil {
 					logger.Error("Failed to update cluster certificate on cluster member", logger.Ctx{"address": member.Address, "err": err})
 				}
@@ -217,7 +217,7 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 	// Resolve warning of this type
 	_ = warnings.ResolveWarningsByLocalNodeAndType(s.DB.Cluster, warningtype.UnableToUpdateClusterCertificate)
 
-	revert.Success()
+	reverter.Success()
 
 	return nil
 }

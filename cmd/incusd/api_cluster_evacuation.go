@@ -123,7 +123,7 @@ func internalClusterHeal(d *Daemon, r *http.Request) response.Response {
 	return evacuateClusterMember(d.State(), d.gateway, r, "migrate", nil, migrateFunc)
 }
 
-func evacuateClusterSetState(s *state.State, name string, state int) error {
+func evacuateClusterSetState(s *state.State, name string, newState int) error {
 	return s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get the node.
 		node, err := tx.GetNodeByName(ctx, name)
@@ -136,10 +136,10 @@ func evacuateClusterSetState(s *state.State, name string, state int) error {
 		}
 
 		// Do nothing if the node is already in expected state.
-		if node.State == state {
-			if state == db.ClusterMemberStateEvacuated {
+		if node.State == newState {
+			if newState == db.ClusterMemberStateEvacuated {
 				return fmt.Errorf("Cluster member is already evacuated")
-			} else if state == db.ClusterMemberStateCreated {
+			} else if newState == db.ClusterMemberStateCreated {
 				return fmt.Errorf("Cluster member is already restored")
 			}
 
@@ -147,7 +147,7 @@ func evacuateClusterSetState(s *state.State, name string, state int) error {
 		}
 
 		// Set node status to requested value.
-		err = tx.UpdateNodeStatus(node.ID, state)
+		err = tx.UpdateNodeStatus(node.ID, newState)
 		if err != nil {
 			return fmt.Errorf("Failed to update cluster member status: %w", err)
 		}
@@ -193,8 +193,8 @@ func evacuateClusterMember(s *state.State, gateway *cluster.Gateway, r *http.Req
 
 	run := func(op *operations.Operation) error {
 		// Setup a reverter.
-		revert := revert.New()
-		defer revert.Fail()
+		reverter := revert.New()
+		defer reverter.Fail()
 
 		// Set node status to EVACUATED.
 		err := evacuateClusterSetState(s, nodeName, db.ClusterMemberStateEvacuated)
@@ -203,7 +203,7 @@ func evacuateClusterMember(s *state.State, gateway *cluster.Gateway, r *http.Req
 		}
 
 		// Ensure node is put into its previous state if anything fails.
-		revert.Add(func() {
+		reverter.Add(func() {
 			_ = evacuateClusterSetState(s, nodeName, db.ClusterMemberStateCreated)
 		})
 
@@ -227,7 +227,7 @@ func evacuateClusterMember(s *state.State, gateway *cluster.Gateway, r *http.Req
 		// Stop networks after evacuation.
 		networkShutdown(s)
 
-		revert.Success()
+		reverter.Success()
 		return nil
 	}
 
@@ -353,8 +353,8 @@ func restoreClusterMember(d *Daemon, r *http.Request) response.Response {
 
 	run := func(op *operations.Operation) error {
 		// Setup a reverter.
-		revert := revert.New()
-		defer revert.Fail()
+		reverter := revert.New()
+		defer reverter.Fail()
 
 		// Set node status to CREATED.
 		err := evacuateClusterSetState(s, originName, db.ClusterMemberStateCreated)
@@ -363,7 +363,7 @@ func restoreClusterMember(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Ensure node is put into its previous state if anything fails.
-		revert.Add(func() {
+		reverter.Add(func() {
 			_ = evacuateClusterSetState(s, originName, db.ClusterMemberStateEvacuated)
 		})
 
@@ -534,7 +534,7 @@ func restoreClusterMember(d *Daemon, r *http.Request) response.Response {
 			}
 		}
 
-		revert.Success()
+		reverter.Success()
 		return nil
 	}
 
