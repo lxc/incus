@@ -2750,6 +2750,16 @@ func imageDelete(d *Daemon, r *http.Request) response.Response {
 				return err
 			}
 
+			// Delete the aliases.
+			for _, alias := range imgInfo.Aliases {
+				err = s.Authorizer.DeleteImageAlias(s.ShutdownCtx, projectName, alias.Name)
+				if err != nil {
+					logger.Error("Failed to remove image alias from authorizer", logger.Ctx{"name": alias.Name, "project": projectName, "error": err})
+				}
+
+				s.Events.SendLifecycle(projectName, lifecycle.ImageAliasDeleted.Event(alias.Name, projectName, op.Requestor(), nil))
+			}
+
 			// Remove image from authorizer.
 			err = s.Authorizer.DeleteImage(s.ShutdownCtx, projectName, imgInfo.Fingerprint)
 			if err != nil {
