@@ -547,6 +547,7 @@ func (d *Daemon) State() *state.State {
 	return &state.State{
 		Authorizer:             d.authorizer,
 		BGP:                    d.bgp,
+		Cluster:                d.gateway,
 		DB:                     d.db,
 		DevIncusEvents:         d.devIncusEvents,
 		DevMonitor:             d.devmonitor,
