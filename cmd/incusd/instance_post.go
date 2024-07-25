@@ -314,7 +314,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 		// If no specific server and a placement scriplet exists, call it with the candidates.
 		if targetMemberInfo == nil && s.GlobalConfig.InstancesPlacementScriptlet() != "" {
-			leaderAddress, err := d.gateway.LeaderAddress()
+			leaderAddress, err := s.Cluster.LeaderAddress()
 			if err != nil {
 				return response.InternalError(err)
 			}
