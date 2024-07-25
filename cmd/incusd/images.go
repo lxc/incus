@@ -2279,6 +2279,19 @@ func autoUpdateImage(ctx context.Context, s *state.State, op *operations.Operati
 				continue
 			}
 		}
+
+		// Add the image to the authorizer.
+		err = s.Authorizer.AddImage(s.ShutdownCtx, projectName, info.Fingerprint)
+		if err != nil {
+			logger.Error("Failed to add image to authorizer", logger.Ctx{"fingerprint": info.Fingerprint, "project": projectName, "error": err})
+		}
+
+		var requestor *api.EventLifecycleRequestor
+		if op != nil {
+			requestor = op.Requestor()
+		}
+
+		s.Events.SendLifecycle(projectName, lifecycle.ImageCreated.Event(info.Fingerprint, projectName, requestor, logger.Ctx{"type": info.Type}))
 	}
 
 	// Image didn't change, nothing to do.

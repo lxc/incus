@@ -15,10 +15,8 @@ import (
 	internalIO "github.com/lxc/incus/v6/internal/io"
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/db/cluster"
-	"github.com/lxc/incus/v6/internal/server/lifecycle"
 	"github.com/lxc/incus/v6/internal/server/locking"
 	"github.com/lxc/incus/v6/internal/server/operations"
-	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/internal/server/state"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
@@ -617,21 +615,6 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 	}
 
 	logger.Info("Image downloaded", ctxMap)
-
-	var requestor *api.EventLifecycleRequestor
-	if op != nil {
-		requestor = op.Requestor()
-	} else if r != nil {
-		requestor = request.CreateRequestor(r)
-	}
-
-	// Add the image to the authorizer.
-	err = s.Authorizer.AddImage(s.ShutdownCtx, args.ProjectName, info.Fingerprint)
-	if err != nil {
-		logger.Error("Failed to add image to authorizer", logger.Ctx{"fingerprint": info.Fingerprint, "project": args.ProjectName, "error": err})
-	}
-
-	s.Events.SendLifecycle(args.ProjectName, lifecycle.ImageCreated.Event(info.Fingerprint, args.ProjectName, requestor, logger.Ctx{"type": info.Type}))
 
 	return info, nil
 }
