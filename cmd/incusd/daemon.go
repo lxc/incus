@@ -1701,7 +1701,7 @@ func (d *Daemon) startClusterTasks() {
 	d.taskClusterHeartbeat = d.clusterTasks.Add(cluster.HeartbeatTask(d.gateway))
 
 	// Auto-sync images across the cluster (hourly)
-	d.clusterTasks.Add(autoSyncImagesTask(d))
+	d.clusterTasks.Add(autoSyncImagesTask(d.State()))
 
 	// Remove orphaned operations
 	d.clusterTasks.Add(autoRemoveOrphanedOperationsTask(d))
