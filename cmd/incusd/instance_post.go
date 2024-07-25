@@ -366,8 +366,8 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 	// If the user requested a specific server group, make sure we can have it recorded.
 	var targetGroupName string
-	if strings.HasPrefix(target, "@") {
-		targetGroupName = strings.TrimPrefix(target, "@")
+	if strings.HasPrefix(target, targetGroupPrefix) {
+		targetGroupName = strings.TrimPrefix(target, targetGroupPrefix)
 	}
 
 	// Check that we're not requested to move to the same location we're currently on.
