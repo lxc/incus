@@ -444,6 +444,11 @@ func imgPostRemoteInfo(ctx context.Context, s *state.State, r *http.Request, req
 		return nil, err
 	}
 
+	// If just dealing with an internal copy, we're done here.
+	if isClusterNotification(r) && req.Source.Server == "" {
+		return info, nil
+	}
+
 	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		var id int
 
