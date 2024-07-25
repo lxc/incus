@@ -2741,6 +2741,14 @@ func imageDelete(d *Daemon, r *http.Request) response.Response {
 			if err != nil {
 				return err
 			}
+
+			// Remove image from authorizer.
+			err = s.Authorizer.DeleteImage(s.ShutdownCtx, projectName, imgInfo.Fingerprint)
+			if err != nil {
+				logger.Error("Failed to remove image from authorizer", logger.Ctx{"fingerprint": imgInfo.Fingerprint, "project": projectName, "error": err})
+			}
+
+			s.Events.SendLifecycle(projectName, lifecycle.ImageDeleted.Event(imgInfo.Fingerprint, projectName, op.Requestor(), nil))
 		}
 
 		var poolIDs []int64
@@ -2791,14 +2799,6 @@ func imageDelete(d *Daemon, r *http.Request) response.Response {
 
 		// Remove main image file from disk.
 		imageDeleteFromDisk(imgInfo.Fingerprint)
-
-		// Remove image from authorizer.
-		err = s.Authorizer.DeleteImage(s.ShutdownCtx, projectName, imgInfo.Fingerprint)
-		if err != nil {
-			logger.Error("Failed to remove image from authorizer", logger.Ctx{"fingerprint": imgInfo.Fingerprint, "project": projectName, "error": err})
-		}
-
-		s.Events.SendLifecycle(projectName, lifecycle.ImageDeleted.Event(imgInfo.Fingerprint, projectName, op.Requestor(), nil))
 
 		return nil
 	}
