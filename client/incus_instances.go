@@ -626,6 +626,9 @@ func (r *ProtocolIncus) tryCreateInstance(req api.InstancesPost, urls []string, 
 	operation := req.Source.Operation
 
 	// Forward targetOp to remote op
+	chConnect := make(chan error, 1)
+	chWait := make(chan error, 1)
+
 	go func() {
 		success := false
 		var errors []remoteOperationResult
@@ -665,13 +668,35 @@ func (r *ProtocolIncus) tryCreateInstance(req api.InstancesPost, urls []string, 
 			break
 		}
 
-		if !success {
-			rop.err = remoteOperationError("Failed instance creation", errors)
+		if success {
+			chConnect <- nil
+			close(chConnect)
+		} else {
+			chConnect <- remoteOperationError("Failed instance creation", errors)
+			close(chConnect)
+
 			if op != nil {
 				_ = op.Cancel()
 			}
 		}
+	}()
 
+	if op != nil {
+		go func() {
+			chWait <- op.Wait()
+			close(chWait)
+		}()
+	}
+
+	go func() {
+		var err error
+
+		select {
+		case err = <-chConnect:
+		case err = <-chWait:
+		}
+
+		rop.err = err
 		close(rop.chDone)
 	}()
 
