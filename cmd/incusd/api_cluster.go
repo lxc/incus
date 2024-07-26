@@ -2302,19 +2302,28 @@ again:
 			continue
 		}
 
-		logger.Info("Changing cluster member role", logger.Ctx{"name": node.Name, "role": node.Role})
+		reachable := cluster.HasConnectivity(s.Endpoints.NetworkCert(), s.ServerCert(), address, true)
 
 		if node.Role != db.RaftSpare {
-			continue
-		}
+			if !reachable {
+				// The server isn't ready to be promoted yet, try again next time.
+				return nil
+			}
 
-		if cluster.HasConnectivity(s.Endpoints.NetworkCert(), s.ServerCert(), address, true) {
+			logger.Info("Promoting cluster member", logger.Ctx{"name": node.Name, "role": node.Role})
 			break
 		}
 
+		if reachable {
+			// Don't demote reachable servers.
+			break
+		}
+
+		logger.Info("Demoting cluster member", logger.Ctx{"name": node.Name, "role": node.Role})
+
 		err := gateway.DemoteOfflineNode(node.ID)
 		if err != nil {
-			return fmt.Errorf("Demote offline node %s: %w", node.Address, err)
+			return fmt.Errorf("Failed to demote cluster member %q: %w", node.Name, err)
 		}
 
 		goto again
@@ -2323,11 +2332,6 @@ again:
 	// Then handle the promotions.
 	err = changeMemberRole(s, r, address, nodes)
 	if err != nil {
-		if api.StatusErrorCheck(err, http.StatusServiceUnavailable) {
-			// The server isn't ready to be promoted yet, try again next time.
-			return nil
-		}
-
 		return err
 	}
 
