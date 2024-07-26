@@ -107,7 +107,7 @@ func (d *disk) CanMigrate() bool {
 	}
 
 	// Virtual disks are migratable.
-	if !slices.Contains([]string{diskSourceCloudInit, diskSourceAgent}, d.config["source"]) {
+	if slices.Contains([]string{diskSourceCloudInit, diskSourceAgent}, d.config["source"]) {
 		return true
 	}
 
