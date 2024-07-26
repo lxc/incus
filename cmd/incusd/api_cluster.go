@@ -2302,14 +2302,14 @@ again:
 			continue
 		}
 
-		if cluster.HasConnectivity(s.Endpoints.NetworkCert(), s.ServerCert(), address) {
-			break
-		}
-
 		logger.Info("Changing cluster member role", logger.Ctx{"name": node.Name, "role": node.Role})
 
 		if node.Role != db.RaftSpare {
 			continue
+		}
+
+		if cluster.HasConnectivity(s.Endpoints.NetworkCert(), s.ServerCert(), address, true) {
+			break
 		}
 
 		err := gateway.DemoteOfflineNode(node.ID)

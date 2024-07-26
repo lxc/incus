@@ -480,7 +480,7 @@ func (g *Gateway) TransferLeadership() error {
 			return err
 		}
 
-		if !HasConnectivity(g.networkCert, g.state().ServerCert(), address) {
+		if !HasConnectivity(g.networkCert, g.state().ServerCert(), address, false) {
 			continue
 		}
 
