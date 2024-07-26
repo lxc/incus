@@ -761,7 +761,7 @@ func (d *zfs) parseSource() (string, []string) {
 
 // roundVolumeBlockSizeBytes returns sizeBytes rounded up to the next multiple
 // of `vol`'s "zfs.blocksize".
-func (d *zfs) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) int64 {
+func (d *zfs) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) (int64, error) {
 	minBlockSize, err := units.ParseByteSizeString(vol.ExpandedConfig("zfs.blocksize"))
 
 	// minBlockSize will be 0 if zfs.blocksize=""
@@ -770,5 +770,5 @@ func (d *zfs) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) int64 {
 		minBlockSize = 16 * 1024
 	}
 
-	return roundAbove(minBlockSize, sizeBytes)
+	return roundAbove(minBlockSize, sizeBytes), nil
 }
