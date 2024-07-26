@@ -2298,7 +2298,7 @@ again:
 
 	// Process demotions of offline nodes immediately.
 	for _, node := range nodes {
-		if node.Address != address || node.Role != db.RaftSpare {
+		if node.Address != address {
 			continue
 		}
 
@@ -2306,7 +2306,12 @@ again:
 			break
 		}
 
-		logger.Info("Demoting offline member during rebalance", logger.Ctx{"candidateAddress": node.Address})
+		logger.Info("Changing cluster member role", logger.Ctx{"name": node.Name, "role": node.Role})
+
+		if node.Role != db.RaftSpare {
+			continue
+		}
+
 		err := gateway.DemoteOfflineNode(node.ID)
 		if err != nil {
 			return fmt.Errorf("Demote offline node %s: %w", node.Address, err)
@@ -2315,10 +2320,14 @@ again:
 		goto again
 	}
 
-	// Tell the node to promote itself.
-	logger.Info("Promoting member during rebalance", logger.Ctx{"candidateAddress": address})
+	// Then handle the promotions.
 	err = changeMemberRole(s, r, address, nodes)
 	if err != nil {
+		if api.StatusErrorCheck(err, http.StatusServiceUnavailable) {
+			// The server isn't ready to be promoted yet, try again next time.
+			return nil
+		}
+
 		return err
 	}
 

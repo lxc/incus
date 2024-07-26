@@ -349,7 +349,7 @@ func (c *Cluster) transaction(ctx context.Context, f func(context.Context, *Clus
 			// If the query timed out it likely means that the leader has abruptly become unreachable.
 			// Now that this query has been cancelled, a leader election should have taken place by now.
 			// So let's retry the transaction once more in case the global database is now available again.
-			logger.Warn("Transaction timed out. Retrying once", logger.Ctx{"member": c.nodeID, "err": err})
+			logger.Debug("Transaction timed out, will be retried", logger.Ctx{"member": c.nodeID, "err": err})
 			return query.Transaction(ctx, c.db, txFunc)
 		}
 
