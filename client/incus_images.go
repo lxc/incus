@@ -222,6 +222,12 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 		ctype = "application/octet-stream"
 	}
 
+	// Check the image type.
+	imageType := response.Header.Get("X-Incus-Type")
+	if imageType == "" {
+		imageType = "incus"
+	}
+
 	// Handle the data
 	body := response.Body
 	if req.ProgressHandler != nil {
@@ -295,7 +301,7 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 
 		// Check the hash
 		hash := fmt.Sprintf("%x", sha256.Sum(nil))
-		if !strings.HasPrefix(hash, fingerprint) {
+		if imageType != "oci" && !strings.HasPrefix(hash, fingerprint) {
 			return nil, fmt.Errorf("Image fingerprint doesn't match. Got %s expected %s", hash, fingerprint)
 		}
 
@@ -323,7 +329,7 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 
 	// Check the hash
 	hash := fmt.Sprintf("%x", sha256.Sum(nil))
-	if !strings.HasPrefix(hash, fingerprint) {
+	if imageType != "oci" && !strings.HasPrefix(hash, fingerprint) {
 		return nil, fmt.Errorf("Image fingerprint doesn't match. Got %s expected %s", hash, fingerprint)
 	}
 

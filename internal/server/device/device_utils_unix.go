@@ -278,7 +278,7 @@ func unixDeviceSetup(s *state.State, devicesPath string, typePrefix string, devi
 		// Remove the device type and name prefix, leaving just the encoded dest path.
 		idx := strings.LastIndex(devName, ".")
 		if idx == -1 {
-			return fmt.Errorf("Invalid device name \"%s\"", devName)
+			continue
 		}
 
 		encRelDestFile := devName[idx+1:]
@@ -422,7 +422,7 @@ func unixDeviceRemove(devicesPath string, typePrefix string, deviceName string, 
 		// Remove the device type and name prefix, leaving just the encoded dest path.
 		idx := strings.LastIndex(otherDev, ".")
 		if idx == -1 {
-			return fmt.Errorf("Invalid device name \"%s\"", otherDev)
+			continue
 		}
 
 		encRelDestFile := otherDev[idx+1:]
