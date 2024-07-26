@@ -590,7 +590,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 			select {
 			case <-d.setupChan:
 			default:
-				response := response.Unavailable(fmt.Errorf("Daemon setup in progress"))
+				response := response.Unavailable(fmt.Errorf("Daemon is starting up"))
 				_ = response.Render(w)
 				return
 			}
@@ -2336,8 +2336,6 @@ func (d *Daemon) heartbeatHandler(w http.ResponseWriter, r *http.Request, isLead
 		return
 	}
 
-	localClusterAddress := s.LocalConfig.ClusterAddress()
-
 	if hbData.FullStateList {
 		// If there is an ongoing heartbeat round (and by implication this is the leader), then this could
 		// be a problem because it could be broadcasting the stale member state information which in turn
@@ -2357,7 +2355,7 @@ func (d *Daemon) heartbeatHandler(w http.ResponseWriter, r *http.Request, isLead
 			return
 		}
 
-		logger.Info("Partial heartbeat received", logger.Ctx{"local": localClusterAddress})
+		logger.Debug("Partial heartbeat received")
 	}
 
 	// Refresh cluster member resource info cache.
@@ -2454,7 +2452,7 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 	}
 
 	if d.hasMemberStateChanged(heartbeatData) {
-		logger.Info("Cluster member state has changed", logger.Ctx{"local": localClusterAddress})
+		logger.Info("Cluster status has changed, refreshing")
 
 		// Refresh cluster certificates cached.
 		updateCertificateCache(d)

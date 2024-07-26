@@ -518,7 +518,7 @@ func (g *Gateway) DemoteOfflineNode(raftID uint64) error {
 
 // Shutdown this gateway, stopping the gRPC server and possibly the raft factory.
 func (g *Gateway) Shutdown() error {
-	logger.Infof("Stop database gateway")
+	logger.Debugf("Stop database gateway")
 
 	var err error
 	if g.server != nil {
@@ -1050,7 +1050,7 @@ func dqliteNetworkDial(ctx context.Context, name string, addr string, g *Gateway
 	revert.Add(func() { _ = conn.Close() })
 
 	l := logger.AddContext(logger.Ctx{"name": name, "local": conn.LocalAddr(), "remote": conn.RemoteAddr()})
-	l.Info("Dqlite connected outbound")
+	l.Debug("Dqlite connected outbound")
 
 	remoteTCP, err := tcp.ExtractConn(conn)
 	if err != nil {
@@ -1142,8 +1142,8 @@ func runDqliteProxy(stopCh chan struct{}, bindAddress string, acceptCh chan net.
 // Accepts name argument that can be used to identify the connection in the logs.
 func dqliteProxy(name string, stopCh chan struct{}, remote net.Conn, local net.Conn) {
 	l := logger.AddContext(logger.Ctx{"name": name, "local": remote.LocalAddr(), "remote": remote.RemoteAddr()})
-	l.Info("Dqlite proxy started")
-	defer l.Info("Dqlite proxy stopped")
+	l.Debug("Dqlite proxy started")
+	defer l.Debug("Dqlite proxy stopped")
 
 	remoteTCP, err := tcp.ExtractConn(remote)
 	if err != nil {
@@ -1209,7 +1209,7 @@ func dqliteProxy(name string, stopCh chan struct{}, remote net.Conn, local net.C
 
 	if errs[0] != nil || errs[1] != nil {
 		err := dqliteProxyError{first: errs[0], second: errs[1]}
-		l.Warn("Dqlite proxy failed", logger.Ctx{"err": err})
+		l.Debug("Dqlite proxy failed", logger.Ctx{"err": err})
 	}
 }
 

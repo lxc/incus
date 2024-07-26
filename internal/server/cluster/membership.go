@@ -649,7 +649,7 @@ func NotifyHeartbeat(state *state.State, gateway *Gateway) {
 	}()
 
 	// Notify all other members of the change in membership.
-	logger.Info("Sending member change notification heartbeat to all members", logger.Ctx{"local": localClusterAddress})
+	logger.Info("Notifying cluster members of local role change")
 	for _, member := range members {
 		if member.Address == localClusterAddress {
 			continue
@@ -695,11 +695,8 @@ func Rebalance(state *state.State, gateway *Gateway, unavailableMembers []string
 		return "", nodes, nil
 	}
 
-	localClusterAddress := state.LocalConfig.ClusterAddress()
-
 	// Check if we have a spare node that we can promote to the missing role.
 	candidateAddress := candidates[0].Address
-	logger.Info("Found cluster member whose role needs to be changed", logger.Ctx{"candidateAddress": candidateAddress, "newRole": role, "local": localClusterAddress})
 
 	for i, node := range nodes {
 		if node.Address == candidateAddress {
@@ -801,7 +798,7 @@ func Assign(state *state.State, gateway *Gateway, nodes []db.RaftNode) error {
 	}
 
 assign:
-	logger.Info("Changing local dqlite raft role", logger.Ctx{"id": info.ID, "local": info.Address, "role": info.Role})
+	logger.Info("Changing local database role", logger.Ctx{"role": info.Role})
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
