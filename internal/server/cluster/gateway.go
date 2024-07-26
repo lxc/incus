@@ -1118,7 +1118,7 @@ func DqliteLog(l client.LogLevel, format string, a ...any) {
 	case client.LogInfo:
 		logger.Debugf(format, a...)
 	case client.LogWarn:
-		logger.Warnf(format, a...)
+		logger.Debugf(format, a...)
 	case client.LogError:
 		logger.Errorf(format, a...)
 	}
