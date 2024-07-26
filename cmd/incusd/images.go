@@ -4106,6 +4106,14 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 		return response.ForwardedResponse(client, r)
 	}
 
+	// Set image type header.
+	headers := map[string]string{}
+
+	headers["X-Incus-Type"] = "incus"
+	if imgInfo.Properties != nil && imgInfo.Properties["type"] == "oci" {
+		headers["X-Incus-Type"] = "oci"
+	}
+
 	imagePath := internalUtil.VarPath("images", imgInfo.Fingerprint)
 	rootfsPath := imagePath + ".rootfs"
 
@@ -4141,7 +4149,7 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 		files[1].Path = rootfsPath
 		files[1].Filename = filename
 
-		return response.FileResponse(r, files, nil)
+		return response.FileResponse(r, files, headers)
 	}
 
 	files := make([]response.FileResponseEntry, 1)
@@ -4152,7 +4160,7 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(projectName, lifecycle.ImageRetrieved.Event(imgInfo.Fingerprint, projectName, requestor, nil))
 
-	return response.FileResponse(r, files, nil)
+	return response.FileResponse(r, files, headers)
 }
 
 // swagger:operation POST /1.0/images/{fingerprint}/export images images_export_post
