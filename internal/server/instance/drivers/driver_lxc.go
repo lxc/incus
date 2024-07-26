@@ -2329,7 +2329,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		}
 
 		// Configure the entry point.
-		if len(config.Process.Args) > 0 && slices.Contains([]string{"/sbin/init", "/s6-init"}, config.Process.Args[0]) {
+		if len(config.Process.Args) > 0 && slices.Contains([]string{"/init", "/sbin/init", "/s6-init"}, config.Process.Args[0]) {
 			// For regular init systems, call them directly as PID1.
 			err = lxcSetConfigItem(cc, "lxc.init.cmd", shellquote.Join(config.Process.Args...))
 			if err != nil {
