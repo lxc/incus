@@ -302,9 +302,13 @@ func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, 
 		// Connect to remote concurrently and add to active listeners if successful.
 		wg.Add(1)
 		go func(m APIHeartbeatMember) {
+			defer wg.Done()
 			l := logger.AddContext(logger.Ctx{"local": localAddress, "remote": m.Address})
 
-			defer wg.Done()
+			if !HasConnectivity(endpoints.NetworkCert(), serverCert(), m.Address, true) {
+				return
+			}
+
 			listener, err := eventsConnect(m.Address, endpoints.NetworkCert(), serverCert())
 			if err != nil {
 				l.Warn("Failed adding member event listener client", logger.Ctx{"err": err})
