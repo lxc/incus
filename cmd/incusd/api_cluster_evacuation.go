@@ -165,8 +165,20 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 		action := inst.CanMigrate()
 
 		// Apply overrides.
-		if opts.mode != "" && opts.mode != "auto" {
-			action = opts.mode
+		if opts.mode != "" {
+			if opts.mode == "heal" {
+				// Source server is dead, live-migration isn't an option.
+				if action == "live-migrate" {
+					action = "migrate"
+				}
+
+				if action != "migrate" {
+					// We can only migrate instances or leave them as they are.
+					continue
+				}
+			} else if opts.mode != "auto" {
+				action = opts.mode
+			}
 		}
 
 		// Stop the instance if needed.
@@ -680,7 +692,7 @@ func healClusterMember(d *Daemon, op *operations.Operation, name string) error {
 			return err
 		}
 
-		// Nothing to do as the instance's pool is on remote storage.
+		// Ignore anything using a local storage pool.
 		if !pool.Driver().Info().Remote {
 			return nil
 		}
@@ -708,7 +720,7 @@ func healClusterMember(d *Daemon, op *operations.Operation, name string) error {
 			return err
 		}
 
-		if !startInstance || live {
+		if !startInstance {
 			return nil
 		}
 
