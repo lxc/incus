@@ -38,7 +38,7 @@ func acmeProvideChallenge(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if s.ServerClustered {
-		leader, err := d.gateway.LeaderAddress()
+		leader, err := s.Cluster.LeaderAddress()
 		if err != nil {
 			return response.SmartError(err)
 		}
@@ -84,7 +84,7 @@ func autoRenewCertificate(ctx context.Context, d *Daemon, force bool) error {
 
 	// If we are clustered, let the leader handle the certificate renewal.
 	if s.ServerClustered {
-		leader, err := d.gateway.LeaderAddress()
+		leader, err := s.Cluster.LeaderAddress()
 		if err != nil {
 			return err
 		}

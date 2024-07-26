@@ -280,7 +280,17 @@ func UpdateTrust(serverCert *localtls.CertInfo, serverName string, targetAddress
 }
 
 // HasConnectivity probes the member with the given address for connectivity.
-func HasConnectivity(networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, address string) bool {
+func HasConnectivity(networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, address string, apiCheck bool) bool {
+	if apiCheck {
+		c, err := Connect(address, networkCert, serverCert, nil, true)
+		if err != nil {
+			return false
+		}
+
+		_, _, err = c.GetServer()
+		return err == nil
+	}
+
 	config, err := tlsClientConfig(networkCert, serverCert)
 	if err != nil {
 		return false

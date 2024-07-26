@@ -545,28 +545,29 @@ func (d *Daemon) State() *state.State {
 	d.globalConfigMu.Unlock()
 
 	return &state.State{
-		ShutdownCtx:            d.shutdownCtx,
-		DB:                     d.db,
+		Authorizer:             d.authorizer,
 		BGP:                    d.bgp,
+		Cluster:                d.gateway,
+		DB:                     d.db,
+		DevIncusEvents:         d.devIncusEvents,
+		DevMonitor:             d.devmonitor,
 		DNS:                    d.dns,
-		OS:                     d.os,
 		Endpoints:              d.endpoints,
 		Events:                 d.events,
-		DevIncusEvents:         d.devIncusEvents,
 		Firewall:               d.firewall,
-		Proxy:                  d.proxy,
-		ServerCert:             d.serverCert,
-		UpdateCertificateCache: func() { updateCertificateCache(d) },
-		InstanceTypes:          instanceTypes,
-		DevMonitor:             d.devmonitor,
 		GlobalConfig:           globalConfig,
+		InstanceTypes:          instanceTypes,
 		LocalConfig:            localConfig,
-		ServerName:             d.serverName,
-		ServerClustered:        d.serverClustered,
-		StartTime:              d.startTime,
-		Authorizer:             d.authorizer,
+		OS:                     d.os,
 		OVNNB:                  d.ovnnb,
 		OVNSB:                  d.ovnsb,
+		Proxy:                  d.proxy,
+		ServerCert:             d.serverCert,
+		ServerClustered:        d.serverClustered,
+		ServerName:             d.serverName,
+		ShutdownCtx:            d.shutdownCtx,
+		StartTime:              d.startTime,
+		UpdateCertificateCache: func() { updateCertificateCache(d) },
 	}
 }
 
@@ -589,7 +590,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 			select {
 			case <-d.setupChan:
 			default:
-				response := response.Unavailable(fmt.Errorf("Daemon setup in progress"))
+				response := response.Unavailable(fmt.Errorf("Daemon is starting up"))
 				_ = response.Render(w)
 				return
 			}
@@ -1700,10 +1701,10 @@ func (d *Daemon) startClusterTasks() {
 	d.taskClusterHeartbeat = d.clusterTasks.Add(cluster.HeartbeatTask(d.gateway))
 
 	// Auto-sync images across the cluster (hourly)
-	d.clusterTasks.Add(autoSyncImagesTask(d))
+	d.clusterTasks.Add(autoSyncImagesTask(d.State()))
 
 	// Remove orphaned operations
-	d.clusterTasks.Add(autoRemoveOrphanedOperationsTask(d))
+	d.clusterTasks.Add(autoRemoveOrphanedOperationsTask(d.State()))
 
 	// Perform automatic evacuation for offline cluster members
 	d.clusterTasks.Add(autoHealClusterTask(d))
@@ -2335,8 +2336,6 @@ func (d *Daemon) heartbeatHandler(w http.ResponseWriter, r *http.Request, isLead
 		return
 	}
 
-	localClusterAddress := s.LocalConfig.ClusterAddress()
-
 	if hbData.FullStateList {
 		// If there is an ongoing heartbeat round (and by implication this is the leader), then this could
 		// be a problem because it could be broadcasting the stale member state information which in turn
@@ -2356,7 +2355,7 @@ func (d *Daemon) heartbeatHandler(w http.ResponseWriter, r *http.Request, isLead
 			return
 		}
 
-		logger.Info("Partial heartbeat received", logger.Ctx{"local": localClusterAddress})
+		logger.Debug("Partial heartbeat received")
 	}
 
 	// Refresh cluster member resource info cache.
@@ -2453,7 +2452,7 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 	}
 
 	if d.hasMemberStateChanged(heartbeatData) {
-		logger.Info("Cluster member state has changed", logger.Ctx{"local": localClusterAddress})
+		logger.Info("Cluster status has changed, refreshing")
 
 		// Refresh cluster certificates cached.
 		updateCertificateCache(d)

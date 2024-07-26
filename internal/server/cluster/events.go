@@ -292,7 +292,7 @@ func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, 
 			listenersLock.Unlock()
 
 			// Log after releasing listenersLock to avoid deadlock on listenersLock with EventHubPush.
-			logger.Info("Removed inactive member event listener client", logger.Ctx{"local": localAddress, "remote": hbMember.Address})
+			logger.Debug("Removed inactive member event listener client", logger.Ctx{"address": hbMember.Address})
 		} else {
 			listenersLock.Unlock()
 		}
@@ -302,9 +302,13 @@ func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, 
 		// Connect to remote concurrently and add to active listeners if successful.
 		wg.Add(1)
 		go func(m APIHeartbeatMember) {
+			defer wg.Done()
 			l := logger.AddContext(logger.Ctx{"local": localAddress, "remote": m.Address})
 
-			defer wg.Done()
+			if !HasConnectivity(endpoints.NetworkCert(), serverCert(), m.Address, true) {
+				return
+			}
+
 			listener, err := eventsConnect(m.Address, endpoints.NetworkCert(), serverCert())
 			if err != nil {
 				l.Warn("Failed adding member event listener client", logger.Ctx{"err": err})
@@ -333,7 +337,7 @@ func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, 
 			listenersLock.Unlock()
 
 			// Log after releasing listenersLock to avoid deadlock on listenersLock with EventHubPush.
-			l.Info("Added member event listener client")
+			l.Debug("Added member event listener client")
 		}(hbMember)
 	}
 
@@ -364,11 +368,11 @@ func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, 
 
 	// Log the listeners removed after releasing listenersLock.
 	for _, removedAddress := range removedAddresses {
-		logger.Info("Removed old member event listener client", logger.Ctx{"local": localAddress, "remote": removedAddress})
+		logger.Debug("Removed old member event listener client", logger.Ctx{"address": removedAddress})
 	}
 
 	if len(hbMembers) > 1 && len(keepListeners) <= 0 {
-		logger.Error("No active cluster event listener clients", logger.Ctx{"local": localAddress})
+		logger.Warn("No active cluster event listener clients")
 	}
 }
 

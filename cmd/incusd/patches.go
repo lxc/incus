@@ -345,10 +345,12 @@ func patchNetworkACLRemoveDefaults(name string, d *Daemon) error {
 // patchDBNodesAutoInc re-creates the nodes table id column as AUTOINCREMENT.
 // Its done as a patch rather than a schema update so we can use PRAGMA foreign_keys = OFF without a transaction.
 func patchDBNodesAutoInc(name string, d *Daemon) error {
+	s := d.State()
+
 	for {
 		// Only apply patch if schema needs it.
 		var schemaSQL string
-		row := d.State().DB.Cluster.DB().QueryRow("SELECT sql FROM sqlite_master WHERE name = 'nodes'")
+		row := s.DB.Cluster.DB().QueryRow("SELECT sql FROM sqlite_master WHERE name = 'nodes'")
 		err := row.Scan(&schemaSQL)
 		if err != nil {
 			return err
@@ -369,7 +371,7 @@ func patchDBNodesAutoInc(name string, d *Daemon) error {
 			return err
 		}
 
-		leaderAddress, err := d.gateway.LeaderAddress()
+		leaderAddress, err := s.Cluster.LeaderAddress()
 		if err != nil {
 			if errors.Is(err, cluster.ErrNodeIsNotClustered) {
 				break // Apply change on standalone node.
@@ -387,7 +389,7 @@ func patchDBNodesAutoInc(name string, d *Daemon) error {
 	}
 
 	// Apply patch.
-	_, err := d.State().DB.Cluster.DB().Exec(`
+	_, err := s.DB.Cluster.DB().Exec(`
 PRAGMA foreign_keys=OFF; -- So that integrity doesn't get in the way for now.
 PRAGMA legacy_alter_table = ON; -- So that views referencing this table don't block change.
 
@@ -782,7 +784,7 @@ func patchStorageRenameCustomISOBlockVolumes(name string, d *Daemon) error {
 		return err
 	}
 
-	leaderAddress, err := d.gateway.LeaderAddress()
+	leaderAddress, err := s.Cluster.LeaderAddress()
 	if err != nil {
 		// If we're not clustered, we're the leader.
 		if errors.Is(err, cluster.ErrNodeIsNotClustered) {

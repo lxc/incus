@@ -314,7 +314,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 		// If no specific server and a placement scriplet exists, call it with the candidates.
 		if targetMemberInfo == nil && s.GlobalConfig.InstancesPlacementScriptlet() != "" {
-			leaderAddress, err := d.gateway.LeaderAddress()
+			leaderAddress, err := s.Cluster.LeaderAddress()
 			if err != nil {
 				return response.InternalError(err)
 			}
@@ -366,8 +366,8 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 	// If the user requested a specific server group, make sure we can have it recorded.
 	var targetGroupName string
-	if strings.HasPrefix(target, "@") {
-		targetGroupName = strings.TrimPrefix(target, "@")
+	if strings.HasPrefix(target, targetGroupPrefix) {
+		targetGroupName = strings.TrimPrefix(target, targetGroupPrefix)
 	}
 
 	// Check that we're not requested to move to the same location we're currently on.

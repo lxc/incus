@@ -716,7 +716,7 @@ func (d *lvm) MountVolume(vol Volume, op *operations.Operation) error {
 
 			d.logger.Debug("Mounted logical volume", logger.Ctx{"volName": vol.name, "dev": volDevPath, "path": mountPath, "options": mountOptions})
 		}
-	} else if vol.contentType == ContentTypeBlock {
+	} else if vol.contentType == ContentTypeBlock || vol.contentType == ContentTypeISO {
 		// For VMs, mount the filesystem volume.
 		if vol.IsVMBlock() {
 			fsVol := vol.NewVMBlockFilesystemVolume()
@@ -771,8 +771,8 @@ func (d *lvm) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operat
 		}
 
 		ourUnmount = true
-	} else if vol.contentType == ContentTypeBlock {
-		// For VMs, unmount the filesystem volume.
+	} else if vol.contentType == ContentTypeBlock || vol.contentType == ContentTypeISO {
+		// For VMs and ISOs, unmount the filesystem volume.
 		if vol.IsVMBlock() {
 			fsVol := vol.NewVMBlockFilesystemVolume()
 			ourUnmount, err = d.UnmountVolume(fsVol, false, op)

@@ -1155,13 +1155,11 @@ func operationWebsocketGet(d *Daemon, r *http.Request) response.Response {
 	return operations.ForwardedOperationWebSocket(r, id, source)
 }
 
-func autoRemoveOrphanedOperationsTask(d *Daemon) (task.Func, task.Schedule) {
+func autoRemoveOrphanedOperationsTask(s *state.State) (task.Func, task.Schedule) {
 	f := func(ctx context.Context) {
-		s := d.State()
-
 		localClusterAddress := s.LocalConfig.ClusterAddress()
 
-		leader, err := d.gateway.LeaderAddress()
+		leader, err := s.Cluster.LeaderAddress()
 		if err != nil {
 			if errors.Is(err, cluster.ErrNodeIsNotClustered) {
 				return // No error if not clustered.

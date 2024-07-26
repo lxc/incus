@@ -24,6 +24,10 @@ import (
 	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
+type clusterGateway interface {
+	LeaderAddress() (string, error)
+}
+
 // State is a gateway to the two main stateful components, the database
 // and the operating system. It's typically used by model entities such as
 // containers, volumes, etc. in order to perform changes.
@@ -36,6 +40,9 @@ type State struct {
 
 	// BGP server
 	BGP *bgp.Server
+
+	// Cluster
+	Cluster clusterGateway
 
 	// DNS server
 	DNS *dns.Server
