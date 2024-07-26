@@ -225,25 +225,27 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Checks for running instances.
-	if inst.IsRunning() && (req.Pool != "" || req.Project != "" || target != "") {
-		// Stateless migrations need the instance stopped.
-		if !req.Live {
-			return response.BadRequest(fmt.Errorf("Instance must be stopped to be moved statelessly"))
-		}
+	if inst.IsRunning() {
+		if req.Pool != "" || req.Project != "" || target != "" {
+			// Stateless migrations need the instance stopped.
+			if !req.Live {
+				return response.BadRequest(fmt.Errorf("Instance must be stopped to be moved statelessly"))
+			}
 
-		// Storage pool changes require a stopped instance.
-		if req.Pool != "" {
-			return response.BadRequest(fmt.Errorf("Instance must be stopped to be moved across storage pools"))
-		}
+			// Storage pool changes require a stopped instance.
+			if req.Pool != "" {
+				return response.BadRequest(fmt.Errorf("Instance must be stopped to be moved across storage pools"))
+			}
 
-		// Project changes require a stopped instance.
-		if req.Project != "" {
-			return response.BadRequest(fmt.Errorf("Instance must be stopped to be moved across projects"))
-		}
+			// Project changes require a stopped instance.
+			if req.Project != "" {
+				return response.BadRequest(fmt.Errorf("Instance must be stopped to be moved across projects"))
+			}
 
-		// Name changes require a stopped instance.
-		if req.Name != "" {
-			return response.BadRequest(fmt.Errorf("Instance must be stopped to change their names"))
+			// Name changes require a stopped instance.
+			if req.Name != "" {
+				return response.BadRequest(fmt.Errorf("Instance must be stopped to change their names"))
+			}
 		}
 	} else {
 		// Clear Live flag if instance isn't running.
