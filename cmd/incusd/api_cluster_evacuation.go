@@ -675,6 +675,9 @@ func autoHealClusterTask(d *Daemon) (task.Func, task.Schedule) {
 }
 
 func healClusterMember(d *Daemon, op *operations.Operation, name string) error {
+	logger.Info("Starting cluster healing", logger.Ctx{"server": name})
+	defer logger.Info("Completed cluster healing", logger.Ctx{"server": name})
+
 	migrateFunc := func(ctx context.Context, s *state.State, inst instance.Instance, sourceMemberInfo *db.NodeInfo, targetMemberInfo *db.NodeInfo, live bool, startInstance bool, metadata map[string]any, op *operations.Operation) error {
 		// This returns an error if the instance's storage pool is local.
 		// Since we only care about remote backed instances, this can be ignored and return nil instead.
@@ -745,6 +748,10 @@ func healClusterMember(d *Daemon, op *operations.Operation, name string) error {
 		if err == nil {
 			return nil
 		}
+	}
+
+	if err != nil {
+		logger.Error("Failed to heal cluster member", logger.Ctx{"server": name, "err": err})
 	}
 
 	return err
