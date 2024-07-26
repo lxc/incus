@@ -738,5 +738,14 @@ func healClusterMember(d *Daemon, op *operations.Operation, name string) error {
 		return nil
 	}
 
-	return evacuateClusterMember(context.Background(), d.State(), d.gateway, op, name, "migrate", nil, migrateFunc)
+	// Attempt up to 5 evacuations.
+	var err error
+	for i := 0; i < 5; i++ {
+		err = evacuateClusterMember(context.Background(), d.State(), d.gateway, op, name, "heal", nil, migrateFunc)
+		if err == nil {
+			return nil
+		}
+	}
+
+	return err
 }
