@@ -964,10 +964,7 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 		}
 
 		go func() {
-			_, err := io.Copy(pipeWrite, stateConn)
-			if err != nil {
-				d.logger.Warn("Failed reading from state connection", logger.Ctx{"err": err})
-			}
+			_, _ = io.Copy(pipeWrite, stateConn)
 
 			_ = pipeRead.Close()
 			_ = pipeWrite.Close()
@@ -6426,8 +6423,8 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 
 // MigrateSend is not currently supported.
 func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
-	d.logger.Info("Migration send starting")
-	defer d.logger.Info("Migration send stopped")
+	d.logger.Debug("Migration send starting")
+	defer d.logger.Debug("Migration send stopped")
 
 	// Check for stateful support.
 	if args.Live && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
@@ -7004,8 +7001,8 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 }
 
 func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
-	d.logger.Info("Migration receive starting")
-	defer d.logger.Info("Migration receive stopped")
+	d.logger.Debug("Migration receive starting")
+	defer d.logger.Debug("Migration receive stopped")
 
 	// Wait for essential migration connections before negotiation.
 	connectionsCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
