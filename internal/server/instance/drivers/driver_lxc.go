@@ -3249,7 +3249,7 @@ func (d *lxc) Freeze() error {
 
 	// Check if the CGroup is available
 	if !d.state.OS.CGInfo.Supports(cgroup.Freezer, cg) {
-		d.logger.Info("Unable to freeze container (lack of kernel support)", ctxMap)
+		d.logger.Warn("Unable to freeze container (lack of kernel support)", ctxMap)
 		return nil
 	}
 
@@ -3299,7 +3299,7 @@ func (d *lxc) Unfreeze() error {
 
 	// Check if the CGroup is available
 	if !d.state.OS.CGInfo.Supports(cgroup.Freezer, cg) {
-		d.logger.Info("Unable to unfreeze container (lack of kernel support)", ctxMap)
+		d.logger.Warn("Unable to unfreeze container (lack of kernel support)", ctxMap)
 		return nil
 	}
 
@@ -5352,8 +5352,8 @@ fi
 }
 
 func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
-	d.logger.Info("Migration send starting")
-	defer d.logger.Info("Migration send stopped")
+	d.logger.Debug("Migration send starting")
+	defer d.logger.Debug("Migration send stopped")
 
 	// Wait for essential migration connections before negotiation.
 	connectionsCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -5939,8 +5939,8 @@ func (d *lxc) resetContainerDiskIdmap(srcIdmap *idmap.Set) error {
 }
 
 func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
-	d.logger.Info("Migration receive starting")
-	defer d.logger.Info("Migration receive stopped")
+	d.logger.Debug("Migration receive starting")
+	defer d.logger.Debug("Migration receive stopped")
 
 	// Wait for essential migration connections before negotiation.
 	connectionsCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -6663,7 +6663,7 @@ func (d *lxc) migrate(args *instance.CriuMigrationArgs) error {
 	if migrateErr != nil {
 		log, err2 := getCRIULogErrors(finalStateDir, prettyCmd)
 		if err2 == nil {
-			d.logger.Info("Failed migrating container", ctxMap)
+			d.logger.Warn("Failed migrating container", ctxMap)
 			migrateErr = fmt.Errorf("%s %s failed\n%s", args.Function, prettyCmd, log)
 		}
 
