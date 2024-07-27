@@ -383,6 +383,11 @@ func (s *httpServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func setCORSHeaders(rw http.ResponseWriter, req *http.Request, config *clusterConfig.Config) {
+	// Check if we have a working config.
+	if config == nil {
+		return
+	}
+
 	allowedOrigin := config.HTTPSAllowedOrigin()
 	origin := req.Header.Get("Origin")
 	if allowedOrigin != "" && origin != "" {
