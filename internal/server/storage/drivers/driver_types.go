@@ -18,6 +18,7 @@ type Info struct {
 	DirectIO                     bool         // Whether the driver supports direct I/O.
 	IOUring                      bool         // Whether the driver supports io_uring.
 	MountedRoot                  bool         // Whether the pool directory itself is a mount.
+	Deactivate                   bool         // Whether an unmount action is required prior to removing the pool.
 }
 
 // VolumeFiller provides a struct for filling a volume.
