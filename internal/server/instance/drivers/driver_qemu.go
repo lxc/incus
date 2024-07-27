@@ -4779,8 +4779,6 @@ func (d *qemu) Stop(stateful bool) error {
 			return err
 		}
 
-		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceStopped.Event(d, nil))
-
 		op.Done(nil)
 		return nil
 	}
