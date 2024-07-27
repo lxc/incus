@@ -4913,7 +4913,7 @@ func (b *backend) migrationIndexHeaderSend(l logger.Logger, indexHeaderVersion u
 			return nil, fmt.Errorf("Failed negotiating migration options: %w", err)
 		}
 
-		l.Info("Received migration index header response", logger.Ctx{"response": fmt.Sprintf("%+v", infoResp), "version": indexHeaderVersion})
+		l.Debug("Received migration index header response", logger.Ctx{"response": fmt.Sprintf("%+v", infoResp), "version": indexHeaderVersion})
 	}
 
 	return &infoResp, nil
@@ -4938,7 +4938,7 @@ func (b *backend) migrationIndexHeaderReceive(l logger.Logger, indexHeaderVersio
 			return nil, fmt.Errorf("Failed decoding migration index header: %w", err)
 		}
 
-		l.Info("Received migration index header, sending response", logger.Ctx{"version": indexHeaderVersion})
+		l.Debug("Received migration index header, sending response", logger.Ctx{"version": indexHeaderVersion})
 
 		infoResp := localMigration.InfoResponse{StatusCode: http.StatusOK, Refresh: &refresh}
 		headerJSON, err := json.Marshal(infoResp)
