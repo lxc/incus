@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"sync"
 	"time"
@@ -115,6 +116,7 @@ var eventHubAddresses []string
 var eventHubPushCh = make(chan api.Event, 10) // Buffer size to accommodate slow consumers before dropping events.
 var eventHubPushChTimeout = time.Duration(time.Second)
 var listeners = map[string]*eventListenerClient{}
+var listenersUnavailable = map[string]bool{}
 var listenersNotify = map[chan struct{}][]string{}
 var listenersLock sync.Mutex
 var listenersUpdateLock sync.Mutex
@@ -149,6 +151,11 @@ func EventListenerWait(ctx context.Context, address string) error {
 		return nil
 	}
 
+	if listenersUnavailable[address] {
+		listenersLock.Unlock()
+		return fmt.Errorf("Server isn't ready yet")
+	}
+
 	listenAddresses := []string{address}
 
 	// Check if operating in event hub mode and if one of the event hub connections is available.
@@ -181,7 +188,11 @@ func EventListenerWait(ctx context.Context, address string) error {
 	case <-connected:
 		return nil
 	case <-ctx.Done():
-		return ctx.Err()
+		if ctx.Err() != nil {
+			return fmt.Errorf("Missing event connection with target cluster member")
+		}
+
+		return nil
 	}
 }
 
@@ -306,6 +317,9 @@ func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, 
 			l := logger.AddContext(logger.Ctx{"local": localAddress, "remote": m.Address})
 
 			if !HasConnectivity(endpoints.NetworkCert(), serverCert(), m.Address, true) {
+				listenersLock.Lock()
+				listenersUnavailable[m.Address] = true
+				listenersLock.Unlock()
 				return
 			}
 
@@ -325,6 +339,7 @@ func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, 
 
 			listenersLock.Lock()
 			listeners[m.Address] = listener
+			listenersUnavailable[m.Address] = false
 
 			// Indicate to any notifiers waiting for this member's address that it is connected.
 			for connected, notifyAddresses := range listenersNotify {

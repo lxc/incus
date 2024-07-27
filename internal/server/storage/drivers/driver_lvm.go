@@ -128,6 +128,7 @@ func (d *lvm) Info() Info {
 		IOUring:                      true,
 		MountedRoot:                  false,
 		Buckets:                      !d.isRemote(),
+		Deactivate:                   d.isRemote(),
 	}
 }
 
@@ -490,6 +491,11 @@ func (d *lvm) Delete(op *operations.Operation) error {
 
 		// Remove volume group if needed.
 		if removeVg {
+			if d.clustered {
+				// Wait for the locks we just released to clear.
+				time.Sleep(10 * time.Second)
+			}
+
 			_, err := subprocess.TryRunCommand("vgremove", "-f", d.config["lvm.vg_name"])
 			if err != nil {
 				return fmt.Errorf("Failed to delete the volume group for the lvm storage pool: %w", err)
@@ -684,7 +690,7 @@ func (d *lvm) Mount() (bool, error) {
 
 	// If clustered LVM, start lock manager.
 	if d.clustered {
-		_, err := subprocess.RunCommand("vgchange", "--lockstart")
+		_, err := subprocess.RunCommand("vgchange", "--lockstart", d.config["lvm.vg_name"])
 		if err != nil {
 			return false, fmt.Errorf("Error starting lock manager: %w", err)
 		}
@@ -744,6 +750,13 @@ func (d *lvm) Mount() (bool, error) {
 // Unmount unmounts the storage pool (this does nothing).
 // LVM doesn't currently support unmounting, please see https://github.com/lxc/incus/issues/9278
 func (d *lvm) Unmount() (bool, error) {
+	if d.clustered {
+		_, err := subprocess.RunCommand("vgchange", "--lockstop", d.config["lvm.vg_name"])
+		if err != nil {
+			return false, fmt.Errorf("Error stopping lock manager: %w", err)
+		}
+	}
+
 	return false, nil
 }
 
@@ -803,8 +816,12 @@ func (d *lvm) GetResources() (*api.ResourcesStoragePool, error) {
 
 // roundVolumeBlockSizeBytes returns sizeBytes rounded up to the next multiple
 // of the volume group extent size.
-func (d *lvm) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) int64 {
+func (d *lvm) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) (int64, error) {
 	// Get the volume group's physical extent size, and use that as minimum size.
-	vgExtentSize, _ := d.volumeGroupExtentSize(d.config["lvm.vg_name"])
-	return roundAbove(vgExtentSize, sizeBytes)
+	vgExtentSize, err := d.volumeGroupExtentSize(d.config["lvm.vg_name"])
+	if err != nil {
+		return -1, err
+	}
+
+	return roundAbove(vgExtentSize, sizeBytes), nil
 }

@@ -57,6 +57,7 @@ var architectureInstallations = map[int][]Installation{
 				{Code: "OVMF_CODE.fd", Vars: "qemu.nvram"},
 			},
 			CSM: {
+				{Code: "seabios.bin", Vars: "seabios.bin"},
 				{Code: "OVMF_CODE.4MB.CSM.fd", Vars: "OVMF_VARS.4MB.CSM.fd"},
 				{Code: "OVMF_CODE.csm.4m.fd", Vars: "OVMF_VARS.4m.fd"},
 				{Code: "OVMF_CODE.2MB.CSM.fd", Vars: "OVMF_VARS.2MB.CSM.fd"},
@@ -68,13 +69,15 @@ var architectureInstallations = map[int][]Installation{
 		Path: "/usr/share/qemu",
 		Usage: map[FirmwareUsage][]FirmwarePair{
 			GENERIC: {
-				{Code: "seabios.bin", Vars: "seabios.bin"},
 				{Code: "ovmf-x86_64-4m-code.bin", Vars: "ovmf-x86_64-4m-vars.bin"},
 				{Code: "ovmf-x86_64.bin", Vars: "ovmf-x86_64-code.bin"},
 			},
 			SECUREBOOT: {
 				{Code: "ovmf-x86_64-ms-4m-vars.bin", Vars: "ovmf-x86_64-ms-4m-code.bin"},
 				{Code: "ovmf-x86_64-ms-code.bin", Vars: "ovmf-x86_64-ms-vars.bin"},
+			},
+			CSM: {
+				{Code: "seabios.bin", Vars: "seabios.bin"},
 			},
 		},
 	}, {

@@ -200,16 +200,6 @@ func (c *cmdImageCopy) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Revert project for `sourceServer` which may have been overwritten
-	// by `--project` flag in `GetImageServer` method
-	remote := conf.Remotes[remoteName]
-	if remote.Protocol == "incus" && !remote.Public {
-		d, ok := sourceServer.(incus.InstanceServer)
-		if ok {
-			sourceServer = d.UseProject(remote.Project)
-		}
-	}
-
 	// Parse destination remote
 	resources, err := c.global.ParseServers(args[1])
 	if err != nil {
@@ -228,8 +218,12 @@ func (c *cmdImageCopy) Run(cmd *cobra.Command, args []string) error {
 		imageType = "virtual-machine"
 	}
 
+	// Set the correct project on target.
+	remote := conf.Remotes[resources[0].remote]
 	if c.flagTargetProject != "" {
 		destinationServer = destinationServer.UseProject(c.flagTargetProject)
+	} else if remote.Protocol == "incus" {
+		destinationServer = destinationServer.UseProject(remote.Project)
 	}
 
 	// Copy the image
