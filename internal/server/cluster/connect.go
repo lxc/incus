@@ -35,7 +35,7 @@ func Connect(address string, networkCert *localtls.CertInfo, serverCert *localtl
 		defer cancel()
 		err := EventListenerWait(ctx, address)
 		if err != nil {
-			return nil, fmt.Errorf("Missing event connection with target cluster member")
+			return nil, err
 		}
 	}
 
