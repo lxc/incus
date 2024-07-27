@@ -1011,6 +1011,21 @@ func storagePoolDelete(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
+	// If the pool requires deactivation, go through it first.
+	if !clusterNotification && pool.Driver().Info().Remote && pool.Driver().Info().Deactivate {
+		err = notifier(func(client incus.InstanceServer) error {
+			_, _, err := client.GetServer()
+			if err != nil {
+				return err
+			}
+
+			return client.DeleteStoragePool(pool.Name())
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	if pool.LocalStatus() != api.StoragePoolStatusPending {
 		err = pool.Delete(clientType, nil)
 		if err != nil {
@@ -1024,15 +1039,18 @@ func storagePoolDelete(d *Daemon, r *http.Request) response.Response {
 		return response.EmptySyncResponse
 	}
 
-	// If we are clustered, also notify all other nodes.
-	err = notifier(func(client incus.InstanceServer) error {
-		_, _, err := client.GetServer()
-		if err != nil {
-			return err
-		}
+	// If clustered and dealing with a normal pool, notify all other nodes.
+	if !pool.Driver().Info().Remote || !pool.Driver().Info().Deactivate {
+		err = notifier(func(client incus.InstanceServer) error {
+			_, _, err := client.GetServer()
+			if err != nil {
+				return err
+			}
 
-		return client.DeleteStoragePool(pool.Name())
-	})
+			return client.DeleteStoragePool(pool.Name())
+		})
+	}
+
 	if err != nil {
 		return response.SmartError(err)
 	}

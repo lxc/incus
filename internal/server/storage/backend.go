@@ -353,12 +353,14 @@ func (b *backend) Delete(clientType request.ClientType, op *operations.Operation
 	}
 
 	if clientType != request.ClientTypeNormal && b.driver.Info().Remote {
-		if b.driver.Info().MountedRoot {
+		if b.driver.Info().Deactivate || b.driver.Info().MountedRoot {
 			_, err := b.driver.Unmount()
 			if err != nil {
 				return err
 			}
-		} else {
+		}
+
+		if !b.driver.Info().MountedRoot {
 			// Remote storage may have leftover entries caused by
 			// volumes that were moved or delete while a particular system was offline.
 			err := os.RemoveAll(path)
