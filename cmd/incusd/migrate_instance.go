@@ -87,16 +87,16 @@ func (s *migrationSourceWs) Do(state *state.State, migrateOp *operations.Operati
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*10)
 	defer cancel()
 
-	l.Info("Waiting for migration control connection on source")
+	l.Debug("Waiting for migration control connection on source")
 
 	_, err := s.conns[api.SecretNameControl].WebSocket(ctx)
 	if err != nil {
 		return fmt.Errorf("Failed waiting for migration control connection on source: %w", err)
 	}
 
-	l.Info("Migration control connection established on source")
+	l.Debug("Migration control connection established on source")
 
-	defer l.Info("Migration channels disconnected on source")
+	defer l.Debug("Migration channels disconnected on source")
 	defer s.disconnect()
 
 	stateConnFunc := func(ctx context.Context) (io.ReadWriteCloser, error) {
@@ -215,16 +215,16 @@ func (c *migrationSink) Do(state *state.State, instOp *operationlock.InstanceOpe
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*10)
 	defer cancel()
 
-	l.Info("Waiting for migration control connection on target")
+	l.Debug("Waiting for migration control connection on target")
 
 	_, err := c.conns[api.SecretNameControl].WebSocket(ctx)
 	if err != nil {
 		return fmt.Errorf("Failed waiting for migration control connection on target: %w", err)
 	}
 
-	l.Info("Migration control connection established on target")
+	l.Debug("Migration control connection established on target")
 
-	defer l.Info("Migration channels disconnected on target")
+	defer l.Debug("Migration channels disconnected on target")
 
 	if c.push {
 		defer c.disconnect()
