@@ -213,11 +213,27 @@ The builds for other operating systems include only the client, not the server.
 
 ```{group-tab} macOS
 
+**Homebrew**
+
 Incus publishes builds of the Incus client for macOS through [Homebrew](https://brew.sh/).
 
 To install the feature branch of Incus, run:
 
     brew install incus
+
+**Colima**
+
+Incus is supported as a runtime on [Colima](https://github.com/abiosoft/colima).
+
+Install Colima with:
+
+    brew install colima
+
+Start Colima with Incus as runtime with:
+
+    colima start --runtime incus
+
+For any Colima related issues, please [file an issue](https://github.com/abiosoft/colima/issues/new/choose) in the project repository.
 ```
 
 ```{group-tab} Windows
