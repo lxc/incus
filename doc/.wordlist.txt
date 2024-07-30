@@ -43,6 +43,7 @@ Chocolatey
 CIDR
 CLI
 COPR
+Colima
 Cowsql
 CPUs
 CRIU
