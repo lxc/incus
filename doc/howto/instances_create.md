@@ -137,3 +137,27 @@ You should now see the installer. After the installation is done, you need to de
     incus storage volume detach <pool> iso-volume iso-vm
 
 Now the VM can be rebooted, and it will boot from disk.
+
+### Install the Incus Agent into virtual machine instances
+
+In order for features like direct command execution (`incus exec`), file transfers (`incus file`) and detailed usage metrics (`incus info`)
+to work properly with virtual machines, an agent software is provided by Incus.
+
+The virtual machine images from the [images](https://images.linuxcontainers.org) remote are pre-configured to load that agent on startup.
+
+For other virtual machines, you may want to manually install the agent.
+
+```{note}
+The Incus Agent is currently available only on Linux virtual machines.
+```
+
+Incus provides the agent through a remote `9p` file system with mount name `config`.
+To install the agent, you'll need to get access to the virtual machine and run the following commands:
+
+    mount -t 9p config /mnt
+    cd /mnt
+    ./install.sh
+
+The first line will mount the remote file system on the mount point `/mnt`.
+The subsequent commands will run the installation script `install.sh` to install and run the Incus Agent.
+You need to perform this task once.
