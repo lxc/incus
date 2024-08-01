@@ -1028,6 +1028,11 @@ func (n *ovn) allocateUplinkPortIPs(uplinkNet Network, routerMAC net.HardwareAdd
 	routerExtPortIPv4 := net.ParseIP(n.config[ovnVolatileUplinkIPv4])
 	routerExtPortIPv6 := net.ParseIP(n.config[ovnVolatileUplinkIPv6])
 
+	// Check if uplink is viable at all.
+	if uplinkIPv4Net == nil && uplinkIPv6Net == nil {
+		return nil, fmt.Errorf("Uplink network doesn't have IPv4 or IPv6 configured")
+	}
+
 	// Decide whether we need to allocate new IP(s) and go to the expense of retrieving all allocated IPs.
 	if (uplinkIPv4Net != nil && routerExtPortIPv4 == nil) || (uplinkIPv6Net != nil && routerExtPortIPv6 == nil) {
 		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
