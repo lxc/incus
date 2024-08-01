@@ -591,7 +591,7 @@ func (c *cmdNetworkLoadBalancerEdit) helpTemplate() string {
 ### An example would look like:
 ### listen_address: 192.0.2.1
 ### config:
-###   target_address: 198.51.100.2
+###   user.foo: bar
 ### description: test desc
 ### backends:
 ### - name: backend1
