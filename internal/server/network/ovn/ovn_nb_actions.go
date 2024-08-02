@@ -1581,8 +1581,8 @@ func (o *NB) GetLogicalSwitchPortUUID(ctx context.Context, portName OVNSwitchPor
 func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, portName OVNSwitchPort, opts *OVNSwitchPortOpts, mayExist bool) error {
 	// Prepare the new switch port entry.
 	logicalSwitchPort := ovnNB.LogicalSwitchPort{
-		Name:        string(portName),
-		UUID:        "lsp",
+		Name: string(portName),
+		UUID: "lsp",
 	}
 
 	// Check if the entry already exists.
