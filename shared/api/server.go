@@ -155,6 +155,8 @@ type ServerPut struct {
 //
 // swagger:model
 type ServerUntrusted struct {
+	ServerPut `yaml:",inline"`
+
 	// List of supported API extensions
 	// Read only: true
 	// Example: ["etag", "patch", "network", "storage"]
@@ -192,7 +194,6 @@ type ServerUntrusted struct {
 //
 // swagger:model
 type Server struct {
-	ServerPut       `yaml:",inline"`
 	ServerUntrusted `yaml:",inline"`
 
 	// The current API user identifier
