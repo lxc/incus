@@ -503,6 +503,20 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 			if err != nil {
 				return response.SmartError(err)
 			}
+
+			// Create the authorization entry and advertise the network as existing.
+			err = s.Authorizer.AddNetwork(r.Context(), projectName, req.Name)
+			if err != nil {
+				logger.Error("Failed to add network to authorizer", logger.Ctx{"name": req.Name, "project": projectName, "error": err})
+			}
+
+			n, err := network.LoadByName(s, projectName, req.Name)
+			if err != nil {
+				return response.SmartError(fmt.Errorf("Failed loading network: %w", err))
+			}
+
+			requestor := request.CreateRequestor(r)
+			s.Events.SendLifecycle(projectName, lifecycle.NetworkCreated.Event(n, requestor, nil))
 		}
 
 		err = networksPostCluster(r.Context(), s, projectName, netInfo, req, clientType, netType)
