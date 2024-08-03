@@ -5735,6 +5735,14 @@ definitions:
                 readOnly: true
                 type: array
                 x-go-name: AuthMethods
+            config:
+                additionalProperties:
+                    type: string
+                description: Server configuration map (refer to doc/server.md)
+                example:
+                    core.https_address: :8443
+                type: object
+                x-go-name: Config
             public:
                 description: Whether the server is public-only (only public endpoints are implemented)
                 example: false

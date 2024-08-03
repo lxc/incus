@@ -109,3 +109,9 @@ The following server options configure server-specific settings for {ref}`instan
     :start-after: <!-- config group server-miscellaneous start -->
     :end-before: <!-- config group server-miscellaneous end -->
 ```
+
+(server-options-user)=
+## User options
+
+Additional user defined configuration keys are available within the `user.` namespace.
+Note that keys starting with `user.ui.` are used for web UI configuration options and are visible even to unauthenticated users.

@@ -160,6 +160,21 @@ func (o *Verifier) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (o *Verifier) Logout(w http.ResponseWriter, r *http.Request) {
+	// Attempt to get the provider.
+	provider, _ := o.getProvider(r)
+
+	// Attempt to get the token.
+	var token string
+	cookie, err := r.Cookie("oidc_id")
+	if err == nil {
+		token = cookie.Value
+	}
+
+	// Attempt to end the OIDC session.
+	if provider != nil && token != "" {
+		_, _ = rp.EndSession(r.Context(), provider, token, fmt.Sprintf("https://%s", r.Host), "")
+	}
+
 	// Access token.
 	accessCookie := http.Cookie{
 		Name:     "oidc_access",
@@ -171,6 +186,18 @@ func (o *Verifier) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &accessCookie)
+
+	// ID token.
+	idCookie := http.Cookie{
+		Name:     "oidc_id",
+		Path:     "/",
+		Secure:   true,
+		HttpOnly: false,
+		SameSite: http.SameSiteStrictMode,
+		Expires:  time.Unix(0, 0),
+	}
+
+	http.SetCookie(w, &idCookie)
 
 	// Refresh token.
 	refreshCookie := http.Cookie{
@@ -217,6 +244,20 @@ func (o *Verifier) Callback(w http.ResponseWriter, r *http.Request) {
 			}
 
 			http.SetCookie(w, &refreshCookie)
+		}
+
+		// ID token.
+		if tokens.IDToken != "" {
+			idCookie := http.Cookie{
+				Name:     "oidc_id",
+				Value:    tokens.IDToken,
+				Path:     "/",
+				Secure:   true,
+				HttpOnly: false,
+				SameSite: http.SameSiteStrictMode,
+			}
+
+			http.SetCookie(w, &idCookie)
 		}
 
 		// Send to the UI.

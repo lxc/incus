@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/revert"
@@ -214,6 +215,12 @@ var api10 = []APIEndpoint{
 func api10Get(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
+	// Pull the full server config.
+	fullSrvConfig, err := daemonConfigRender(s)
+	if err != nil {
+		return response.InternalError(err)
+	}
+
 	// Get the authentication methods.
 	authMethods := []string{api.AuthenticationMethodTLS}
 
@@ -231,13 +238,21 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 		AuthMethods:   authMethods,
 	}
 
+	// Populate the untrusted config (user.ui.XYZ).
+	srv.Config = map[string]string{}
+	for k, v := range fullSrvConfig {
+		if strings.HasPrefix(k, "user.ui.") {
+			srv.Config[k] = v
+		}
+	}
+
 	// If untrusted, return now
 	if d.checkTrustedClient(r) != nil {
 		return response.SyncResponseETag(true, srv, nil)
 	}
 
 	// If not authorized, return now.
-	err := s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanView)
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanView)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -379,10 +394,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 
 	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanEdit)
 	if err == nil {
-		fullSrv.Config, err = daemonConfigRender(s)
-		if err != nil {
-			return response.InternalError(err)
-		}
+		fullSrv.Config = fullSrvConfig
 	} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
 		return response.SmartError(err)
 	}
