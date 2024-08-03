@@ -45,7 +45,7 @@ For the `lvm` driver, snapshot creation is quick, but restoring snapshots is eff
 
 Use the following command to create a snapshot for a custom storage volume:
 
-    incus storage volume snapshot <pool_name> <volume_name> [<snapshot_name>]
+    incus storage volume snapshot create <pool_name> <volume_name> [<snapshot_name>]
 
 <!-- Include start create snapshot options -->
 Add the `--reuse` flag in combination with a snapshot name to replace an existing snapshot.
