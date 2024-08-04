@@ -10,10 +10,13 @@ type ClusterMemberAction string
 
 // All supported lifecycle events for cluster members.
 const (
-	ClusterMemberAdded   = ClusterMemberAction(api.EventLifecycleClusterMemberAdded)
-	ClusterMemberRemoved = ClusterMemberAction(api.EventLifecycleClusterMemberRemoved)
-	ClusterMemberUpdated = ClusterMemberAction(api.EventLifecycleClusterMemberUpdated)
-	ClusterMemberRenamed = ClusterMemberAction(api.EventLifecycleClusterMemberRenamed)
+	ClusterMemberAdded     = ClusterMemberAction(api.EventLifecycleClusterMemberAdded)
+	ClusterMemberEvacuated = ClusterMemberAction(api.EventLifecycleClusterMemberEvacuated)
+	ClusterMemberHealed    = ClusterMemberAction(api.EventLifecycleClusterMemberHealed)
+	ClusterMemberRemoved   = ClusterMemberAction(api.EventLifecycleClusterMemberRemoved)
+	ClusterMemberRenamed   = ClusterMemberAction(api.EventLifecycleClusterMemberRenamed)
+	ClusterMemberRestored  = ClusterMemberAction(api.EventLifecycleClusterMemberRestored)
+	ClusterMemberUpdated   = ClusterMemberAction(api.EventLifecycleClusterMemberUpdated)
 )
 
 // Event creates the lifecycle event for an action on a cluster member.
