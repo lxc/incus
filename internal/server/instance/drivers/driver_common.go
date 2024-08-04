@@ -888,7 +888,7 @@ func (d *common) onStopOperationSetup(target string) (*operationlock.InstanceOpe
 	// If there is another ongoing operation that isn't in our inheritable list, wait until that has finished
 	// before proceeding to run the hook.
 	op := operationlock.Get(d.Project().Name, d.Name())
-	if op != nil && !op.ActionMatch(operationlock.ActionStart, operationlock.ActionRestart, operationlock.ActionStop, operationlock.ActionRestore) {
+	if op != nil && !op.ActionMatch(operationlock.ActionStart, operationlock.ActionRestart, operationlock.ActionStop, operationlock.ActionRestore, operationlock.ActionMigrate) {
 		d.logger.Debug("Waiting for existing operation lock to finish before running hook", logger.Ctx{"action": op.Action()})
 		_ = op.Wait(context.Background())
 		op = nil
