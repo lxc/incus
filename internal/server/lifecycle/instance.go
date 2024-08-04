@@ -30,6 +30,7 @@ const (
 	InstanceDeleted          = InstanceAction(api.EventLifecycleInstanceDeleted)
 	InstanceRenamed          = InstanceAction(api.EventLifecycleInstanceRenamed)
 	InstanceUpdated          = InstanceAction(api.EventLifecycleInstanceUpdated)
+	InstanceMigrated         = InstanceAction(api.EventLifecycleInstanceMigrated)
 	InstanceExec             = InstanceAction(api.EventLifecycleInstanceExec)
 	InstanceConsole          = InstanceAction(api.EventLifecycleInstanceConsole)
 	InstanceConsoleRetrieved = InstanceAction(api.EventLifecycleInstanceConsoleRetrieved)
