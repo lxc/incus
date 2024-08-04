@@ -2733,7 +2733,7 @@ func (d *lxc) Stop(stateful bool) error {
 	}
 
 	// Setup a new operation
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionStop, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore}, false, true)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionStop, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore, operationlock.ActionMigrate}, false, true)
 	if err != nil {
 		if errors.Is(err, operationlock.ErrNonReusuableSucceeded) {
 			// An existing matching operation has now succeeded, return.
@@ -5355,12 +5355,19 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	d.logger.Debug("Migration send starting")
 	defer d.logger.Debug("Migration send stopped")
 
+	// Setup a new operation.
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionMigrate, nil, false, true)
+	if err != nil {
+		return err
+	}
+
 	// Wait for essential migration connections before negotiation.
 	connectionsCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
 	filesystemConn, err := args.FilesystemConn(connectionsCtx)
 	if err != nil {
+		op.Done(err)
 		return err
 	}
 
@@ -5368,13 +5375,16 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	if args.Live {
 		stateConn, err = args.StateConn(connectionsCtx)
 		if err != nil {
+			op.Done(err)
 			return err
 		}
 	}
 
 	pool, err := storagePools.LoadByInstance(d.state, d)
 	if err != nil {
-		return fmt.Errorf("Failed loading instance: %w", err)
+		err := fmt.Errorf("Failed loading instance: %w", err)
+		op.Done(err)
+		return err
 	}
 
 	// The refresh argument passed to MigrationTypes() is always set to false here.
@@ -5382,7 +5392,9 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	// sink/receiver will know this, and adjust the migration types accordingly.
 	poolMigrationTypes := pool.MigrationTypes(storagePools.InstanceContentType(d), false, args.Snapshots)
 	if len(poolMigrationTypes) == 0 {
-		return fmt.Errorf("No source migration types available")
+		err := fmt.Errorf("No source migration types available")
+		op.Done(err)
+		return err
 	}
 
 	// Convert the pool's migration type options to an offer header to target.
@@ -5412,7 +5424,9 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	// Add idmap info to source header for containers.
 	idmapset, err := d.DiskIdmap()
 	if err != nil {
-		return fmt.Errorf("Failed getting container disk idmap: %w", err)
+		err := fmt.Errorf("Failed getting container disk idmap: %w", err)
+		op.Done(err)
+		return err
 	} else if idmapset != nil {
 		offerHeader.Idmap = make([]*migration.IDMapType, 0, len(idmapset.Entries))
 		for _, ctnIdmap := range idmapset.Entries {
@@ -5430,7 +5444,9 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 
 	srcConfig, err := pool.GenerateInstanceBackupConfig(d, args.Snapshots, d.op)
 	if err != nil {
-		return fmt.Errorf("Failed generating instance migration config: %w", err)
+		err := fmt.Errorf("Failed generating instance migration config: %w", err)
+		op.Done(err)
+		return err
 	}
 
 	// If we are copying snapshots, retrieve a list of snapshots from source volume.
@@ -5448,7 +5464,9 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	d.logger.Debug("Sending migration offer to target")
 	err = args.ControlSend(offerHeader)
 	if err != nil {
-		return fmt.Errorf("Failed sending migration offer: %w", err)
+		err := fmt.Errorf("Failed sending migration offer: %w", err)
+		op.Done(err)
+		return err
 	}
 
 	// Receive response from target.
@@ -5456,7 +5474,9 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	respHeader := &migration.MigrationHeader{}
 	err = args.ControlReceive(respHeader)
 	if err != nil {
-		return fmt.Errorf("Failed receiving migration offer response: %w", err)
+		err := fmt.Errorf("Failed receiving migration offer response: %w", err)
+		op.Done(err)
+		return err
 	}
 
 	d.logger.Debug("Got migration offer response from target")
@@ -5464,7 +5484,9 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	// Negotiated migration types.
 	migrationTypes, err := localMigration.MatchTypes(respHeader, migration.MigrationFSType_RSYNC, poolMigrationTypes)
 	if err != nil {
-		return fmt.Errorf("Failed to negotiate migration type: %w", err)
+		err := fmt.Errorf("Failed to negotiate migration type: %w", err)
+		op.Done(err)
+		return err
 	}
 
 	volSourceArgs := &localMigration.VolumeSourceArgs{
@@ -5797,7 +5819,16 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 			}
 		}
 
-		return err
+		if err != nil {
+			op.Done(err)
+			return err
+		}
+
+		op.Done(nil)
+
+		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceMigrated.Event(d, nil))
+
+		return nil
 	}
 }
 
