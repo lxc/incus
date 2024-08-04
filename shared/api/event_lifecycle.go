@@ -48,6 +48,7 @@ const (
 	EventLifecycleInstanceMetadataTemplateDeleted   = "instance-metadata-template-deleted"
 	EventLifecycleInstanceMetadataTemplateRetrieved = "instance-metadata-template-retrieved"
 	EventLifecycleInstanceMetadataUpdated           = "instance-metadata-updated"
+	EventLifecycleInstanceMigrated                  = "instance-migrated"
 	EventLifecycleInstancePaused                    = "instance-paused"
 	EventLifecycleInstanceReady                     = "instance-ready"
 	EventLifecycleInstanceRenamed                   = "instance-renamed"
