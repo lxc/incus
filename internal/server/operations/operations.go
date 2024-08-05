@@ -216,6 +216,11 @@ func (op *Operation) SetRequestor(r *http.Request) {
 	op.requestor = request.CreateRequestor(r)
 }
 
+// CopyRequestor sets a requestor to match that of another operation.
+func (op *Operation) CopyRequestor(otherOp *Operation) {
+	op.requestor = otherOp.requestor
+}
+
 // Requestor returns the initial requestor for this operation.
 func (op *Operation) Requestor() *api.EventLifecycleRequestor {
 	return op.requestor
