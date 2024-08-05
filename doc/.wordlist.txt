@@ -20,6 +20,7 @@ backported
 balancer
 balancers
 benchmarking
+BFD
 BGP
 bibi
 BitLocker
@@ -71,6 +72,7 @@ Ebit
 eBPF
 ECDHE
 ECDSA
+ECMP
 EDK
 EiB
 Eibit
