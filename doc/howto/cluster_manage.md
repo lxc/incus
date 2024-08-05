@@ -77,11 +77,25 @@ When the evacuated server is available again, use the [`incus cluster restore`](
 This command also moves the evacuated instances back from the servers that were temporarily holding them.
 
 (cluster-automatic-evacuation)=
-### Automatic evacuation
+### Cluster healing
 
-If you set the {config:option}`server-cluster:cluster.healing_threshold` configuration to a non-zero value, instances are automatically evacuated if a cluster member goes offline.
+Incus can automatically detect and recover from a broken server. This is done by setting the {config:option}`server-cluster:cluster.healing_threshold` configuration to a non-zero value.
+Instances are automatically evacuated to other servers after the leader has marked a cluster member has offline.
 
-When the evacuated server is available again, you must manually restore it.
+When the broken server is available again, you must manually restore it as if it had been manually evacuated.
+
+```{note}
+This automatic cluster healing only applies to instances on shared storage and which don't use any local devices.
+```
+
+```{warning}
+Enabling this feature can come at the risk of data corruption should a server be deemed offline as a result of partial connectivity issues.
+Incus considers a server to be offline when it fails to respond to heartbeat packets and when it also fails to respond to ICMP packets.
+
+It's critical to ensure that a server which is considered offline is in fact offline and isn't still running its instances.
+One way to automatically achieve this is to have a piece of software monitor Incus for a `cluster-member-healed` event and promptly cut the
+power to the server in question by interacting with its BMC or PDU.
+```
 
 (cluster-manage-delete-members)=
 ## Delete cluster members
