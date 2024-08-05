@@ -15,6 +15,7 @@ import (
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/state"
 	"github.com/lxc/incus/v6/shared/api"
@@ -140,11 +141,11 @@ func validDevices(state *state.State, p api.Project, instanceType instancetype.T
 	return nil
 }
 
-func create(s *state.State, args db.InstanceArgs, p api.Project) (instance.Instance, revert.Hook, error) {
+func create(s *state.State, args db.InstanceArgs, p api.Project, op *operations.Operation) (instance.Instance, revert.Hook, error) {
 	if args.Type == instancetype.Container {
-		return lxcCreate(s, args, p)
+		return lxcCreate(s, args, p, op)
 	} else if args.Type == instancetype.VM {
-		return qemuCreate(s, args, p)
+		return qemuCreate(s, args, p, op)
 	}
 
 	return nil, nil, fmt.Errorf("Instance type invalid")
