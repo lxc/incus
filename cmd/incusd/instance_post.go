@@ -204,7 +204,8 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 	// Handle simple instance renaming.
 	if !req.Migration {
-		run := func(*operations.Operation) error {
+		run := func(op *operations.Operation) error {
+			inst.SetOperation(op)
 			return inst.Rename(req.Name, true)
 		}
 
@@ -404,6 +405,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 		// Setup the instance move operation.
 		run := func(op *operations.Operation) error {
+			inst.SetOperation(op)
 			return migrateInstance(context.TODO(), s, inst, req, sourceMemberInfo, targetMemberInfo, targetGroupName, op)
 		}
 
@@ -784,6 +786,8 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		if err != nil {
 			return err
 		}
+
+		sourceOp.CopyRequestor(op)
 
 		// Start the migration source.
 		err = sourceOp.Start()
