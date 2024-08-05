@@ -21,6 +21,7 @@ import (
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/internal/server/db/operationtype"
 	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/lifecycle"
 	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/internal/server/scriptlet"
@@ -147,6 +148,11 @@ func evacuateClusterMember(ctx context.Context, s *state.State, gateway *cluster
 	networkShutdown(s)
 
 	reverter.Success()
+
+	if mode != "heal" {
+		s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.ClusterMemberEvacuated.Event(name, op.Requestor(), nil))
+	}
+
 	return nil
 }
 
@@ -458,6 +464,9 @@ func restoreClusterMember(d *Daemon, r *http.Request) response.Response {
 		}
 
 		reverter.Success()
+
+		s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.ClusterMemberRestored.Event(originName, op.Requestor(), nil))
+
 		return nil
 	}
 
@@ -675,6 +684,8 @@ func autoHealClusterTask(d *Daemon) (task.Func, task.Schedule) {
 }
 
 func healClusterMember(d *Daemon, op *operations.Operation, name string) error {
+	s := d.State()
+
 	logger.Info("Starting cluster healing", logger.Ctx{"server": name})
 	defer logger.Info("Completed cluster healing", logger.Ctx{"server": name})
 
@@ -744,15 +755,14 @@ func healClusterMember(d *Daemon, op *operations.Operation, name string) error {
 	// Attempt up to 5 evacuations.
 	var err error
 	for i := 0; i < 5; i++ {
-		err = evacuateClusterMember(context.Background(), d.State(), d.gateway, op, name, "heal", nil, migrateFunc)
+		err = evacuateClusterMember(context.Background(), s, d.gateway, op, name, "heal", nil, migrateFunc)
 		if err == nil {
+			s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.ClusterMemberHealed.Event(name, op.Requestor(), nil))
+
 			return nil
 		}
 	}
 
-	if err != nil {
-		logger.Error("Failed to heal cluster member", logger.Ctx{"server": name, "err": err})
-	}
-
+	logger.Error("Failed to heal cluster member", logger.Ctx{"server": name, "err": err})
 	return err
 }
