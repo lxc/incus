@@ -506,6 +506,8 @@ func snapshotPut(s *state.State, r *http.Request, snapInst instance.Instance) re
 
 		// Update instance configuration
 		do = func(op *operations.Operation) error {
+			snapInst.SetOperation(op)
+
 			args := db.InstanceArgs{
 				Architecture: snapInst.Architecture(),
 				Config:       snapInst.LocalConfig(),
@@ -684,6 +686,7 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 		resources["instances_snapshots"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", parentName, "snapshots", snapName)}
 
 		run := func(op *operations.Operation) error {
+			ws.instance.SetOperation(op)
 			return ws.Do(s, op)
 		}
 
@@ -733,6 +736,7 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 	}
 
 	rename := func(op *operations.Operation) error {
+		snapInst.SetOperation(op)
 		return snapInst.Rename(fullName, false)
 	}
 
@@ -776,6 +780,7 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 //	    $ref: "#/responses/InternalServerError"
 func snapshotDelete(s *state.State, r *http.Request, snapInst instance.Instance) response.Response {
 	remove := func(op *operations.Operation) error {
+		snapInst.SetOperation(op)
 		return snapInst.Delete(false)
 	}
 
