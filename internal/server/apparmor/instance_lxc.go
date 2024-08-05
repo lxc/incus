@@ -37,6 +37,12 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   deny /proc/sys/fs/binfmt_misc/{,**} rwklx,
 {{- end }}
 
+{{- if .zfs_delegation }}
+
+  # Handle binfmt
+  mount fstype=zfs,
+{{- end }}
+
   # Handle cgroupfs
   mount options=(ro,nosuid,nodev,noexec,remount,strictatime) -> /sys/fs/cgroup/,
 

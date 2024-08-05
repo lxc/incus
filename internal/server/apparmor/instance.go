@@ -10,6 +10,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/edk2"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/project"
+	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
 	"github.com/lxc/incus/v6/internal/server/sys"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
@@ -28,6 +29,7 @@ type instance interface {
 	RunPath() string
 	Path() string
 	DevicesPath() string
+	IsPrivileged() bool
 }
 
 // InstanceProfileName returns the instance's AppArmor profile name.
@@ -188,6 +190,7 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			"nesting":             util.IsTrue(inst.ExpandedConfig()["security.nesting"]),
 			"raw":                 rawContent,
 			"unprivileged":        util.IsFalseOrEmpty(inst.ExpandedConfig()["security.privileged"]) || sysOS.RunningInUserNS,
+			"zfs_delegation":      !inst.IsPrivileged() && storageDrivers.ZFSSupportsDelegation() && util.PathExists("/dev/zfs"),
 		})
 		if err != nil {
 			return "", err
