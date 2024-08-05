@@ -158,6 +158,8 @@ func (s *execWs) Connect(op *operations.Operation, r *http.Request, w http.Respo
 }
 
 func (s *execWs) Do(op *operations.Operation) error {
+	s.instance.SetOperation(op)
+
 	// Once this function ends ensure that any connected websockets are closed.
 	defer func() {
 		s.connsLock.Lock()
@@ -703,6 +705,8 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	run := func(op *operations.Operation) error {
+		inst.SetOperation(op)
+
 		metadata := jmap.Map{}
 
 		var err error
