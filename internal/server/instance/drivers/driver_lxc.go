@@ -167,7 +167,7 @@ func lxcStatusCode(state liblxc.State) api.StatusCode {
 
 // lxcCreate creates the DB storage records and sets up instance devices.
 // Returns a revert fail function that can be used to undo this function if a subsequent step fails.
-func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project) (instance.Instance, revert.Hook, error) {
+func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operations.Operation) (instance.Instance, revert.Hook, error) {
 	revert := revert.New()
 	defer revert.Fail()
 
@@ -175,6 +175,7 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project) (instance.In
 	d := &lxc{
 		common: common{
 			state: s,
+			op:    op,
 
 			architecture: args.Architecture,
 			creationDate: args.CreationDate,
@@ -6453,7 +6454,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 					}
 
 					// Create the snapshot instance.
-					_, snapInstOp, cleanup, err := instance.CreateInternal(d.state, *snapArgs, true, false)
+					_, snapInstOp, cleanup, err := instance.CreateInternal(d.state, *snapArgs, d.op, true, false)
 					if err != nil {
 						return fmt.Errorf("Failed creating instance snapshot record %q: %w", snapArgs.Name, err)
 					}

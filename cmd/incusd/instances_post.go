@@ -138,7 +138,7 @@ func createFromImage(s *state.State, r *http.Request, p api.Project, profiles []
 			return err
 		}
 
-		return instanceCreateFinish(s, req, args)
+		return instanceCreateFinish(s, req, args, op)
 	}
 
 	resources := map[string][]api.URL{}
@@ -186,12 +186,12 @@ func createFromNone(s *state.State, r *http.Request, projectName string, profile
 
 	run := func(op *operations.Operation) error {
 		// Actually create the instance.
-		_, err := instanceCreateAsEmpty(s, args)
+		_, err := instanceCreateAsEmpty(s, args, op)
 		if err != nil {
 			return err
 		}
 
-		return instanceCreateFinish(s, req, args)
+		return instanceCreateFinish(s, req, args, op)
 	}
 
 	resources := map[string][]api.URL{}
@@ -323,7 +323,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		// Note: At this stage we do not yet know if snapshots are going to be received and so we cannot
 		// create their DB records. This will be done if needed in the migrationSink.Do() function called
 		// as part of the operation below.
-		inst, instOp, cleanup, err = instance.CreateInternal(s, args, true, false)
+		inst, instOp, cleanup, err = instance.CreateInternal(s, args, nil, true, false)
 		if err != nil {
 			return response.InternalError(fmt.Errorf("Failed creating instance record: %w", err))
 		}
@@ -387,7 +387,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		instOp.Done(nil) // Complete operation that was created earlier, to release lock.
 		runRevert.Success()
 
-		return instanceCreateFinish(s, req, args)
+		return instanceCreateFinish(s, req, args, op)
 	}
 
 	resources := map[string][]api.URL{}
@@ -554,7 +554,7 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 			return err
 		}
 
-		return instanceCreateFinish(s, req, args)
+		return instanceCreateFinish(s, req, args, op)
 	}
 
 	resources := map[string][]api.URL{}
@@ -764,7 +764,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 
 		runRevert.Success()
 
-		return instanceCreateFinish(s, &req, db.InstanceArgs{Name: bInfo.Name, Project: bInfo.Project})
+		return instanceCreateFinish(s, &req, db.InstanceArgs{Name: bInfo.Name, Project: bInfo.Project}, op)
 	}
 
 	resources := map[string][]api.URL{}
@@ -1322,7 +1322,7 @@ func clusterCopyContainerInternal(ctx context.Context, s *state.State, r *http.R
 	return createFromMigration(ctx, s, nil, projectName, profiles, req)
 }
 
-func instanceCreateFinish(s *state.State, req *api.InstancesPost, args db.InstanceArgs) error {
+func instanceCreateFinish(s *state.State, req *api.InstancesPost, args db.InstanceArgs, op *operations.Operation) error {
 	if req == nil || !req.Start {
 		return nil
 	}
@@ -1332,6 +1332,8 @@ func instanceCreateFinish(s *state.State, req *api.InstancesPost, args db.Instan
 	if err != nil {
 		return fmt.Errorf("Failed to load the instance: %w", err)
 	}
+
+	inst.SetOperation(op)
 
 	return inst.Start(false)
 }

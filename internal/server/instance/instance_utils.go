@@ -29,6 +29,7 @@ import (
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/instance/operationlock"
+	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/internal/server/seccomp"
 	"github.com/lxc/incus/v6/internal/server/state"
 	"github.com/lxc/incus/v6/internal/server/sys"
@@ -51,7 +52,7 @@ var Load func(s *state.State, args db.InstanceArgs, p api.Project) (Instance, er
 
 // Create is linked from instance/drivers.create to allow difference instance types to be created.
 // Returns a revert fail function that can be used to undo this function if a subsequent step fails.
-var Create func(s *state.State, args db.InstanceArgs, p api.Project) (Instance, revert.Hook, error)
+var Create func(s *state.State, args db.InstanceArgs, p api.Project, op *operations.Operation) (Instance, revert.Hook, error)
 
 func exclusiveConfigKeys(key1 string, key2 string, config map[string]string) (val string, ok bool, err error) {
 	if config[key1] != "" && config[key2] != "" {
@@ -731,7 +732,7 @@ func ValidName(instanceName string, isSnapshot bool) error {
 // Returns the created instance, along with a "create" operation lock that needs to be marked as Done once the
 // instance is fully completed, and a revert fail function that can be used to undo this function if a subsequent
 // step fails.
-func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool, checkArchitecture bool) (Instance, *operationlock.InstanceOperation, revert.Hook, error) {
+func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operation, clearLogDir bool, checkArchitecture bool) (Instance, *operationlock.InstanceOperation, revert.Hook, error) {
 	revert := revert.New()
 	defer revert.Fail()
 
@@ -851,12 +852,12 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool, chec
 	}
 
 	// Prevent concurrent create requests for same instance.
-	op, err := operationlock.Create(args.Project, args.Name, operationlock.ActionCreate, false, false)
+	opl, err := operationlock.Create(args.Project, args.Name, operationlock.ActionCreate, false, false)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	revert.Add(func() { op.Done(err) })
+	revert.Add(func() { opl.Done(err) })
 
 	var dbInst cluster.Instance
 	var p *api.Project
@@ -1015,7 +1016,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool, chec
 			return tx.DeleteInstance(ctx, dbInst.Project, dbInst.Name)
 		})
 	})
-	inst, cleanup, err := Create(s, args, *p)
+	inst, cleanup, err := Create(s, args, *p, op)
 	if err != nil {
 		logger.Error("Failed initializing instance", logger.Ctx{"project": args.Project, "instance": args.Name, "type": args.Type, "err": err})
 		return nil, nil, nil, fmt.Errorf("Failed initializing instance: %w", err)
@@ -1031,7 +1032,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool, chec
 
 	cleanup = revert.Clone().Fail
 	revert.Success()
-	return inst, op, cleanup, err
+	return inst, opl, cleanup, err
 }
 
 // NextSnapshotName finds the next snapshot for an instance.
