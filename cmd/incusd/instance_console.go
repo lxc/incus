@@ -195,6 +195,8 @@ func (s *consoleWs) connectVGA(op *operations.Operation, r *http.Request, w http
 }
 
 func (s *consoleWs) Do(op *operations.Operation) error {
+	s.instance.SetOperation(op)
+
 	switch s.protocol {
 	case instance.ConsoleTypeConsole:
 		return s.doConsole(op)

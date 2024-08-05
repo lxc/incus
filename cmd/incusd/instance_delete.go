@@ -83,14 +83,15 @@ func instanceDelete(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Instance is running"))
 	}
 
-	rmct := func(op *operations.Operation) error {
+	run := func(op *operations.Operation) error {
+		inst.SetOperation(op)
 		return inst.Delete(false)
 	}
 
 	resources := map[string][]api.URL{}
 	resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", name)}
 
-	op, err := operations.OperationCreate(s, projectName, operations.OperationClassTask, operationtype.InstanceDelete, resources, nil, rmct, nil, nil, r)
+	op, err := operations.OperationCreate(s, projectName, operations.OperationClassTask, operationtype.InstanceDelete, resources, nil, run, nil, nil, r)
 	if err != nil {
 		return response.InternalError(err)
 	}

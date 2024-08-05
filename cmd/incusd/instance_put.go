@@ -155,6 +155,7 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 
 		// Update container configuration
 		do = func(op *operations.Operation) error {
+			inst.SetOperation(op)
 			defer unlock()
 
 			args := db.InstanceArgs{
@@ -181,7 +182,7 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 		do = func(op *operations.Operation) error {
 			defer unlock()
 
-			return instanceSnapRestore(s, projectName, name, configRaw.Restore, configRaw.Stateful)
+			return instanceSnapRestore(s, projectName, name, configRaw.Restore, configRaw.Stateful, op)
 		}
 
 		opType = operationtype.SnapshotRestore
@@ -199,7 +200,7 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 	return operations.OperationResponse(op)
 }
 
-func instanceSnapRestore(s *state.State, projectName string, name string, snap string, stateful bool) error {
+func instanceSnapRestore(s *state.State, projectName string, name string, snap string, stateful bool, op *operations.Operation) error {
 	// normalize snapshot name
 	if !internalInstance.IsSnapshot(snap) {
 		snap = name + internalInstance.SnapshotDelimiter + snap
@@ -210,6 +211,8 @@ func instanceSnapRestore(s *state.State, projectName string, name string, snap s
 		return err
 	}
 
+	inst.SetOperation(op)
+
 	source, err := instance.LoadByProjectAndName(s, projectName, snap)
 	if err != nil {
 		switch {
@@ -219,6 +222,7 @@ func instanceSnapRestore(s *state.State, projectName string, name string, snap s
 			return err
 		}
 	}
+	source.SetOperation(op)
 
 	// Generate a new `volatile.uuid.generation` to differentiate this instance restored from a snapshot from the original instance.
 	source.LocalConfig()["volatile.uuid.generation"] = uuid.New().String()

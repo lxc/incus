@@ -308,6 +308,8 @@ func (d *common) Snapshots() ([]instance.Instance, error) {
 			return nil, err
 		}
 
+		snapInst.SetOperation(d.op)
+
 		snapshots = append(snapshots, instance.Instance(snapInst))
 	}
 
@@ -533,7 +535,7 @@ func (d *common) expandConfig() error {
 // restartCommon handles the common part of instance restarts.
 func (d *common) restartCommon(inst instance.Instance, timeout time.Duration) error {
 	// Setup a new operation for the stop/shutdown phase.
-	op, err := operationlock.Create(d.Project().Name, d.Name(), operationlock.ActionRestart, true, true)
+	op, err := operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionRestart, true, true)
 	if err != nil {
 		return fmt.Errorf("Create restart operation: %w", err)
 	}
@@ -597,7 +599,7 @@ func (d *common) restartCommon(inst instance.Instance, timeout time.Duration) er
 	}
 
 	// Setup a new operation for the start phase.
-	op, err = operationlock.Create(d.Project().Name, d.Name(), operationlock.ActionRestart, true, true)
+	op, err = operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionRestart, true, true)
 	if err != nil {
 		return fmt.Errorf("Create restart (for start) operation: %w", err)
 	}
@@ -719,7 +721,7 @@ func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time
 	}
 
 	// Create the snapshot.
-	snap, snapInstOp, cleanup, err := instance.CreateInternal(d.state, args, true, true)
+	snap, snapInstOp, cleanup, err := instance.CreateInternal(d.state, args, d.op, true, true)
 	if err != nil {
 		return fmt.Errorf("Failed creating instance snapshot record %q: %w", name, err)
 	}
@@ -902,7 +904,7 @@ func (d *common) onStopOperationSetup(target string) (*operationlock.InstanceOpe
 			action = operationlock.ActionRestart
 		}
 
-		op, err = operationlock.Create(d.Project().Name, d.Name(), action, false, false)
+		op, err = operationlock.Create(d.Project().Name, d.Name(), d.op, action, false, false)
 		if err != nil {
 			return nil, fmt.Errorf("Failed creating %q operation: %w", action, err)
 		}

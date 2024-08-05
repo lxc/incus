@@ -195,7 +195,7 @@ func qemuInstantiate(s *state.State, args db.InstanceArgs, expandedDevices devic
 
 // qemuCreate creates a new storage volume record and returns an initialized Instance.
 // Returns a revert fail function that can be used to undo this function if a subsequent step fails.
-func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project) (instance.Instance, revert.Hook, error) {
+func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operations.Operation) (instance.Instance, revert.Hook, error) {
 	revert := revert.New()
 	defer revert.Fail()
 
@@ -203,6 +203,7 @@ func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project) (instance.I
 	d := &qemu{
 		common: common{
 			state: s,
+			op:    op,
 
 			architecture: args.Architecture,
 			creationDate: args.CreationDate,
@@ -677,6 +678,11 @@ func (d *qemu) onStop(target string) error {
 	// Unlock on return
 	defer op.Done(nil)
 
+	// Set operation if missing.
+	if d.op == nil {
+		d.op = op.GetOperation()
+	}
+
 	// Wait for QEMU process to end (to avoiding racing start when restarting).
 	// Wait up to 5 minutes to allow for flushing any pending data to disk.
 	d.logger.Debug("Waiting for VM process to finish")
@@ -766,7 +772,7 @@ func (d *qemu) Shutdown(timeout time.Duration) error {
 	// Allow reuse when creating a new stop operation. This allows the Stop() function to inherit operation.
 	// Allow reuse of a reusable ongoing stop operation as Shutdown() may be called earlier, which allows reuse
 	// of its operations. This allow for multiple Shutdown() attempts.
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionStop, []operationlock.Action{operationlock.ActionRestart}, true, true)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStop, []operationlock.Action{operationlock.ActionRestart}, true, true)
 	if err != nil {
 		if errors.Is(err, operationlock.ErrNonReusuableSucceeded) {
 			// An existing matching operation has now succeeded, return.
@@ -1210,7 +1216,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	// Setup a new operation if needed.
 	if op == nil {
-		op, err = operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionStart, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
+		op, err = operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStart, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
 		if err != nil {
 			if errors.Is(err, operationlock.ErrNonReusuableSucceeded) {
 				// An existing matching operation has now succeeded, return.
@@ -4749,7 +4755,7 @@ func (d *qemu) Stop(stateful bool) error {
 	// Don't allow reuse when creating a new stop operation. This prevents other operations from intefering.
 	// Allow reuse of a reusable ongoing stop operation as Shutdown() may be called first, which allows reuse
 	// of its operations. This allow for Stop() to inherit from Shutdown() where instance is stuck.
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionStop, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore, operationlock.ActionMigrate}, false, true)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStop, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore, operationlock.ActionMigrate}, false, true)
 	if err != nil {
 		if errors.Is(err, operationlock.ErrNonReusuableSucceeded) {
 			// An existing matching operation has now succeeded, return.
@@ -4961,7 +4967,7 @@ func (d *qemu) Snapshot(name string, expiry time.Time, stateful bool) error {
 
 // Restore restores an instance snapshot.
 func (d *qemu) Restore(source instance.Instance, stateful bool) error {
-	op, err := operationlock.Create(d.Project().Name, d.Name(), operationlock.ActionRestore, false, false)
+	op, err := operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionRestore, false, false)
 	if err != nil {
 		return fmt.Errorf("Failed to create instance restore operation: %w", err)
 	}
@@ -5011,7 +5017,7 @@ func (d *qemu) Restore(source instance.Instance, stateful bool) error {
 		}
 
 		// Refresh the operation as that one is now complete.
-		op, err = operationlock.Create(d.Project().Name, d.Name(), operationlock.ActionRestore, false, false)
+		op, err = operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionRestore, false, false)
 		if err != nil {
 			return fmt.Errorf("Failed to create instance restore operation: %w", err)
 		}
@@ -5278,7 +5284,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 	defer unlock()
 
 	// Setup a new operation.
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionUpdate, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionUpdate, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
 	if err != nil {
 		return fmt.Errorf("Failed to create instance update operation: %w", err)
 	}
@@ -6006,7 +6012,7 @@ func (d *qemu) Delete(force bool) error {
 	defer unlock()
 
 	// Setup a new operation.
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionDelete, nil, false, false)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionDelete, nil, false, false)
 	if err != nil {
 		return fmt.Errorf("Failed to create instance delete operation: %w", err)
 	}
@@ -6430,7 +6436,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	}
 
 	// Setup a new operation.
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionMigrate, nil, false, true)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionMigrate, nil, false, true)
 	if err != nil {
 		return err
 	}
@@ -7321,7 +7327,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 					}
 
 					// Create the snapshot instance.
-					_, snapInstOp, cleanup, err := instance.CreateInternal(d.state, *snapArgs, true, false)
+					_, snapInstOp, cleanup, err := instance.CreateInternal(d.state, *snapArgs, d.op, true, false)
 					if err != nil {
 						return fmt.Errorf("Failed creating instance snapshot record %q: %w", snapArgs.Name, err)
 					}
@@ -7954,7 +7960,7 @@ func (d *qemu) LockExclusive() (*operationlock.InstanceOperation, error) {
 	}
 
 	// Prevent concurrent operations the instance.
-	op, err := operationlock.Create(d.Project().Name, d.Name(), operationlock.ActionCreate, false, false)
+	op, err := operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionCreate, false, false)
 	if err != nil {
 		return nil, err
 	}
