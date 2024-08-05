@@ -155,6 +155,7 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 
 		// Update container configuration
 		do = func(op *operations.Operation) error {
+			inst.SetOperation(op)
 			defer unlock()
 
 			args := db.InstanceArgs{
