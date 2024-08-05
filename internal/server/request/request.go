@@ -42,6 +42,12 @@ func CreateRequestor(r *http.Request) *api.EventLifecycleRequestor {
 		requestor.Address = val
 	}
 
+	// Strip port from address.
+	host, _, err := net.SplitHostPort(requestor.Address)
+	if err == nil {
+		requestor.Address = host
+	}
+
 	return requestor
 }
 
