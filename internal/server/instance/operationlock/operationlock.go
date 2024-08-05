@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/shared/logger"
 )
@@ -52,13 +53,14 @@ type InstanceOperation struct {
 	instanceName      string
 	reusable          bool
 	instanceInitiated bool
+	op                *operations.Operation
 }
 
 // Create creates a new operation lock for an Instance if one does not already exist and returns it.
 // The lock will be released after TimeoutDefault or when Done() is called, which ever occurs first.
 // If createReusuable is set as true then future lock attempts can specify the reuseExisting argument as true
 // which will then trigger a reset of the timeout to TimeoutDefault on the existing lock and return it.
-func Create(projectName string, instanceName string, action Action, createReusuable bool, reuseExisting bool) (*InstanceOperation, error) {
+func Create(projectName string, instanceName string, apiOp *operations.Operation, action Action, createReusuable bool, reuseExisting bool) (*InstanceOperation, error) {
 	if projectName == "" || instanceName == "" {
 		return nil, fmt.Errorf("Invalid project or instance name")
 	}
@@ -85,6 +87,7 @@ func Create(projectName string, instanceName string, action Action, createReusua
 	op.action = action
 	op.reusable = createReusuable
 	op.chanDone = make(chan error)
+	op.op = apiOp
 
 	instanceOperations[opKey] = op
 	logger.Debug("Instance operation lock created", logger.Ctx{"project": op.projectName, "instance": op.instanceName, "action": op.action, "reusable": op.reusable})
@@ -106,12 +109,12 @@ func Create(projectName string, instanceName string, action Action, createReusua
 //
 // Returns ErrWaitedForMatching if it waited for a matching operation to finish and it's finished successfully and
 // so didn't return create a new operation.
-func CreateWaitGet(projectName string, instanceName string, action Action, inheritableActions []Action, createReusuable bool, reuseExisting bool) (*InstanceOperation, error) {
+func CreateWaitGet(projectName string, instanceName string, apiOp *operations.Operation, action Action, inheritableActions []Action, createReusuable bool, reuseExisting bool) (*InstanceOperation, error) {
 	op := Get(projectName, instanceName)
 
 	// No existing operation, call create.
 	if op == nil {
-		op, err := Create(projectName, instanceName, action, createReusuable, reuseExisting)
+		op, err := Create(projectName, instanceName, apiOp, action, createReusuable, reuseExisting)
 		return op, err
 	}
 
@@ -136,7 +139,7 @@ func CreateWaitGet(projectName string, instanceName string, action Action, inher
 	}
 
 	// Send the rest to Create to try and create a new operation.
-	op, err := Create(projectName, instanceName, action, createReusuable, reuseExisting)
+	op, err := Create(projectName, instanceName, apiOp, action, createReusuable, reuseExisting)
 
 	return op, err
 }
@@ -229,4 +232,14 @@ func (op *InstanceOperation) GetInstanceInitiated() bool {
 	}
 
 	return op.instanceInitiated
+}
+
+// GetOperation gets the API background operation.
+func (op *InstanceOperation) GetOperation() *operations.Operation {
+	// This function can be called on a nil struct.
+	if op == nil {
+		return nil
+	}
+
+	return op.op
 }

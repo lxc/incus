@@ -840,7 +840,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 	}
 
 	// Prevent concurrent create requests for same instance.
-	opl, err := operationlock.Create(args.Project, args.Name, operationlock.ActionCreate, false, false)
+	opl, err := operationlock.Create(args.Project, args.Name, op, operationlock.ActionCreate, false, false)
 	if err != nil {
 		return nil, nil, nil, err
 	}

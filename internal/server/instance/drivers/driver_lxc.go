@@ -2480,7 +2480,7 @@ func (d *lxc) Start(stateful bool) error {
 	}
 
 	// Setup a new operation.
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionStart, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStart, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
 	if err != nil {
 		if errors.Is(err, operationlock.ErrNonReusuableSucceeded) {
 			// An existing matching operation has now succeeded, return.
@@ -2734,7 +2734,7 @@ func (d *lxc) Stop(stateful bool) error {
 	}
 
 	// Setup a new operation
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionStop, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore, operationlock.ActionMigrate}, false, true)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStop, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore, operationlock.ActionMigrate}, false, true)
 	if err != nil {
 		if errors.Is(err, operationlock.ErrNonReusuableSucceeded) {
 			// An existing matching operation has now succeeded, return.
@@ -2910,7 +2910,7 @@ func (d *lxc) Shutdown(timeout time.Duration) error {
 	}
 
 	// Setup a new operation
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionStop, []operationlock.Action{operationlock.ActionRestart}, true, true)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStop, []operationlock.Action{operationlock.ActionRestart}, true, true)
 	if err != nil {
 		if errors.Is(err, operationlock.ErrNonReusuableSucceeded) {
 			// An existing matching operation has now succeeded, return.
@@ -3071,6 +3071,11 @@ func (d *lxc) onStop(args map[string]string) error {
 	go func(d *lxc, target string, op *operationlock.InstanceOperation) {
 		d.fromHook = false
 		err = nil
+
+		// Set operation if missing.
+		if d.op == nil {
+			d.op = op.GetOperation()
+		}
 
 		// Unlock on return
 		defer op.Done(nil)
@@ -3623,7 +3628,7 @@ func (d *lxc) Snapshot(name string, expiry time.Time, stateful bool) error {
 func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool) error {
 	var ctxMap logger.Ctx
 
-	op, err := operationlock.Create(d.Project().Name, d.Name(), operationlock.ActionRestore, false, false)
+	op, err := operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionRestore, false, false)
 	if err != nil {
 		return fmt.Errorf("Failed to create instance restore operation: %w", err)
 	}
@@ -3669,7 +3674,7 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool) error {
 		}
 
 		// Refresh the operation as that one is now complete.
-		op, err = operationlock.Create(d.Project().Name, d.Name(), operationlock.ActionRestore, false, false)
+		op, err = operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionRestore, false, false)
 		if err != nil {
 			return fmt.Errorf("Failed to create instance restore operation: %w", err)
 		}
@@ -3844,7 +3849,7 @@ func (d *lxc) Delete(force bool) error {
 	defer unlock()
 
 	// Setup a new operation.
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionDelete, nil, false, false)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionDelete, nil, false, false)
 	if err != nil {
 		return fmt.Errorf("Failed to create instance delete operation: %w", err)
 	}
@@ -4217,7 +4222,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	defer unlock()
 
 	// Setup a new operation
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionUpdate, []operationlock.Action{operationlock.ActionCreate, operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionUpdate, []operationlock.Action{operationlock.ActionCreate, operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
 	if err != nil {
 		return fmt.Errorf("Failed to create instance update operation: %w", err)
 	}
@@ -5357,7 +5362,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	defer d.logger.Debug("Migration send stopped")
 
 	// Setup a new operation.
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), operationlock.ActionMigrate, nil, false, true)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionMigrate, nil, false, true)
 	if err != nil {
 		return err
 	}
@@ -8260,7 +8265,7 @@ func (d *lxc) LockExclusive() (*operationlock.InstanceOperation, error) {
 	}
 
 	// Prevent concurrent operations the instance.
-	op, err := operationlock.Create(d.Project().Name, d.Name(), operationlock.ActionCreate, false, false)
+	op, err := operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionCreate, false, false)
 	if err != nil {
 		return nil, err
 	}
