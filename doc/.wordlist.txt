@@ -26,6 +26,7 @@ BitLocker
 bool
 bootable
 BPF
+BMC
 Btrfs
 bugfix
 bugfixes
@@ -188,6 +189,7 @@ OVS
 Pbit
 PCI
 PCIe
+PDU
 peerings
 Permalink
 PFs
