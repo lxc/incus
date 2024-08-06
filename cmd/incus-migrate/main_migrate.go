@@ -303,6 +303,7 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 		}
 
 		config.Project = project
+		server = server.UseProject(config.Project)
 	} else {
 		config.Project = api.ProjectDefaultName
 	}
