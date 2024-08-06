@@ -429,6 +429,7 @@ var APIExtensions = []string{
 	"instance_oci",
 	"clustering_groups_config",
 	"instances_lxcfs_per_instance",
+	"clustering_groups_vm_cpu_definition",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
