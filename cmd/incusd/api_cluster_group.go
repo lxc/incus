@@ -21,6 +21,8 @@ import (
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/osarch"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 var targetGroupPrefix = "@"
@@ -844,6 +846,28 @@ func clusterGroupValidateName(name string) error {
 // clusterGroupValidate validates the configuration keys/values for cluster groups.
 func clusterGroupValidate(config map[string]string) error {
 	configKeys := map[string]func(value string) error{}
+
+	// Add architecture keys.
+	for _, arch := range osarch.SupportedArchitectures() {
+		// gendoc:generate(entity=cluster_group, group=common, key=instances.vm.cpu.ARCHITECTURE.baseline)
+		// The CPU base architecture name as can be found through `qemu -cpu ?`.
+		//
+		// This can be a generic definition like `qemu64` or `kvm64`, or it can be a specific hardware architecture like `EPYC-v2`.
+		// It's important to ensure that all servers in the group match that baseline.
+		// ---
+		//  type: string
+		//  shortdesc: CPU base architecture name
+		configKeys[fmt.Sprintf("instances.vm.cpu.%s.baseline", arch)] = validate.Optional(validate.IsAny)
+
+		// gendoc:generate(entity=cluster_group, group=common, key=instances.vm.cpu.ARCHITECTURE.flags)
+		// A comma separated list of CPU flags to add on top of CPU baseline or a list of flags to remove from it.
+		//
+		// To remove a flag, use `-flag`.
+		// ---
+		//  type: string
+		//  shortdesc: CPU flags to add/remove to/from the baseline
+		configKeys[fmt.Sprintf("instances.vm.cpu.%s.flags", arch)] = validate.Optional(validate.IsListOf(validate.IsAny))
+	}
 
 	for k, v := range config {
 		// User keys are free for all.
