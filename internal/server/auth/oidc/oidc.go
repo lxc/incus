@@ -103,30 +103,33 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 			return "", &AuthError{err}
 		}
 
-		// Update the access token cookie.
-		accessCookie := http.Cookie{
-			Name:     "oidc_access",
-			Value:    tokens.AccessToken,
-			Path:     "/",
-			Secure:   true,
-			HttpOnly: false,
-			SameSite: http.SameSiteStrictMode,
-		}
-
-		http.SetCookie(w, &accessCookie)
-
-		// Update the refresh token cookie.
-		if tokens.RefreshToken != "" {
-			refreshCookie := http.Cookie{
-				Name:     "oidc_refresh",
-				Value:    tokens.RefreshToken,
+		// If we have a ResponseWriter, refresh the cookies.
+		if w != nil {
+			// Update the access token cookie.
+			accessCookie := http.Cookie{
+				Name:     "oidc_access",
+				Value:    tokens.AccessToken,
 				Path:     "/",
 				Secure:   true,
 				HttpOnly: false,
 				SameSite: http.SameSiteStrictMode,
 			}
 
-			http.SetCookie(w, &refreshCookie)
+			http.SetCookie(w, &accessCookie)
+
+			// Update the refresh token cookie.
+			if tokens.RefreshToken != "" {
+				refreshCookie := http.Cookie{
+					Name:     "oidc_refresh",
+					Value:    tokens.RefreshToken,
+					Path:     "/",
+					Secure:   true,
+					HttpOnly: false,
+					SameSite: http.SameSiteStrictMode,
+				}
+
+				http.SetCookie(w, &refreshCookie)
+			}
 		}
 	}
 
