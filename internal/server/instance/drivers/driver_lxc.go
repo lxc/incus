@@ -2471,10 +2471,22 @@ ff02::2 ip6-allrouters
 			}
 
 			// Prepare a new LXCFS instance.
-			lxcfs, err := subprocess.NewProcess("lxcfs", []string{"-f",
+			args := []string{"-f",
 				"-p", filepath.Join(d.RunPath(), "lxcfs.pid"),
-				"--runtime-dir", filepath.Join(d.RunPath(), "lxcfs"),
-				filepath.Join(d.DevicesPath(), "lxcfs")}, "", "")
+				"--runtime-dir", filepath.Join(d.RunPath(), "lxcfs")}
+
+			if os.Getenv("LXCFS_OPTS") != "" {
+				userArgs, err := shellquote.Split(os.Getenv("LXCFS_OPTS"))
+				if err != nil {
+					return "", nil, err
+				}
+
+				args = append(args, userArgs...)
+			}
+
+			args = append(args, filepath.Join(d.DevicesPath(), "lxcfs"))
+
+			lxcfs, err := subprocess.NewProcess("lxcfs", args, "", "")
 			if err != nil {
 				return "", nil, err
 			}
