@@ -15,9 +15,11 @@ import (
 	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
+	instanceDrivers "github.com/lxc/incus/v6/internal/server/instance/drivers"
 	"github.com/lxc/incus/v6/internal/server/lifecycle"
 	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/internal/server/response"
+	"github.com/lxc/incus/v6/internal/server/state"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
@@ -93,6 +95,12 @@ func clusterGroupsPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	err = clusterGroupValidate(req.Config)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	// Fill in the auto values.
+	err = clusterGroupFill(r.Context(), s, nil, &req.ClusterGroupPut)
 	if err != nil {
 		return response.BadRequest(err)
 	}
@@ -484,6 +492,36 @@ func clusterGroupPut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	// Get the current state.
+	var dbClusterGroup *dbCluster.ClusterGroup
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		dbClusterGroup, err = dbCluster.GetClusterGroup(ctx, tx.Tx(), name)
+		if err != nil {
+			return err
+		}
+
+		nodeClusterGroups, err := dbCluster.GetNodeClusterGroups(ctx, tx.Tx(), dbCluster.NodeClusterGroupFilter{GroupID: &dbClusterGroup.ID})
+		if err != nil {
+			return err
+		}
+
+		dbClusterGroup.Nodes = make([]string, 0, len(nodeClusterGroups))
+		for _, node := range nodeClusterGroups {
+			dbClusterGroup.Nodes = append(dbClusterGroup.Nodes, node.Node)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Fill in the auto values.
+	err = clusterGroupFill(r.Context(), s, dbClusterGroup.Nodes, &req)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
 	// Update the database.
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		group, err := dbCluster.GetClusterGroup(ctx, tx.Tx(), name)
@@ -664,6 +702,12 @@ func clusterGroupPatch(d *Daemon, r *http.Request) response.Response {
 
 	// Validate the config.
 	err = clusterGroupValidate(req.Config)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	// Fill in the auto values.
+	err = clusterGroupFill(r.Context(), s, dbClusterGroup.Nodes, &req)
 	if err != nil {
 		return response.BadRequest(err)
 	}
@@ -890,6 +934,42 @@ func clusterGroupValidate(config map[string]string) error {
 		if err != nil {
 			return fmt.Errorf("Invalid cluster group configuration key %q value", k)
 		}
+	}
+
+	return nil
+}
+
+// clusterGroupFill fills in automatic values.
+func clusterGroupFill(ctx context.Context, s *state.State, servers []string, req *api.ClusterGroupPut) error {
+	// If no config, nothing to fill.
+	if req.Config == nil {
+		return nil
+	}
+
+	for _, arch := range osarch.SupportedArchitectures() {
+		baseline := req.Config[fmt.Sprintf("instances.vm.cpu.%s.baseline", arch)]
+		flags := req.Config[fmt.Sprintf("instances.vm.cpu.%s.flags", arch)]
+
+		// Check whether we need to fill in values.
+		if flags != "auto" {
+			continue
+		}
+
+		if baseline != "kvm64" || arch != "x86_64" {
+			return fmt.Errorf("Automatic CPU flags are currently only supported on \"x86_64\" with the \"kvm64\" baseline")
+		}
+
+		if len(servers) == 0 {
+			return fmt.Errorf("Can't compute automatic CPU flags when no servers are in the cluster group")
+		}
+
+		// Fill in the flags.
+		cpuFlags, err := instanceDrivers.GetClusterCPUFlags(ctx, s, servers, arch)
+		if err != nil {
+			return fmt.Errorf("Couldn't compute automatic CPU flags: %w", err)
+		}
+
+		req.Config[fmt.Sprintf("instances.vm.cpu.%s.flags", arch)] = strings.Join(cpuFlags, ",")
 	}
 
 	return nil
