@@ -90,6 +90,5 @@ type State struct {
 	Authorizer auth.Authorizer
 
 	// OVN.
-	OVNNB *ovn.NB
-	OVNSB *ovn.SB
+	OVN func() (*ovn.NB, *ovn.SB, error)
 }
