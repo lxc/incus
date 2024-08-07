@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-08-04 14:11-0400\n"
+"POT-Creation-Date: 2024-08-08 12:35-0400\n"
 "PO-Revision-Date: 2024-01-27 21:01+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 <nlincus@users.noreply.hosted.weblate."
 "org>\n"
@@ -679,7 +679,7 @@ msgstr "--console kan niet gebruikt worden samen met --all"
 msgid "--console only works with a single instance"
 msgstr "--console werkt alleen als het een enkele instantie (instance) betreft"
 
-#: cmd/incus/create.go:134 cmd/incus/rebuild.go:64
+#: cmd/incus/create.go:136 cmd/incus/rebuild.go:64
 msgid "--empty cannot be combined with an image name"
 msgstr ""
 "--empty kan niet gebruikt worden in combinatie met een virtuele disk (image) "
@@ -1045,7 +1045,7 @@ msgstr ""
 "Beide konden niet worden gevonden, de directe SPICE plug (raw SPICE socket) "
 "kan hier gevonden worden:"
 
-#: cmd/incus/create.go:365 cmd/incus/rebuild.go:131
+#: cmd/incus/create.go:378 cmd/incus/rebuild.go:131
 msgid "Asked for a VM but image is of type container"
 msgstr ""
 "Gevraagd naar een virtueel machine (VM), maar het bestand (image) is van het "
@@ -1168,7 +1168,7 @@ msgstr "Ongeldige device override syntax, verwacht: <device>,<key>=<value>: %s"
 msgid "Bad key/value pair: %s"
 msgstr "Ongeldig sleutel/waarde paar: %s"
 
-#: cmd/incus/copy.go:150 cmd/incus/create.go:229 cmd/incus/move.go:302
+#: cmd/incus/copy.go:150 cmd/incus/create.go:242 cmd/incus/move.go:302
 #: cmd/incus/network_integration.go:145 cmd/incus/project.go:167
 #, c-format
 msgid "Bad key=value pair: %q"
@@ -1299,6 +1299,11 @@ msgstr ""
 msgid "Can't pull a directory without --recursive"
 msgstr ""
 
+#: cmd/incus/utils.go:250
+#, c-format
+msgid "Can't read from environment file: %w"
+msgstr ""
+
 #: cmd/incus/utils.go:215 cmd/incus/utils.go:235
 #, c-format
 msgid "Can't read from stdin: %w"
@@ -1354,7 +1359,7 @@ msgstr ""
 msgid "Can't use an image with --empty"
 msgstr ""
 
-#: cmd/incus/create.go:334
+#: cmd/incus/create.go:347
 #, c-format
 msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
@@ -1485,7 +1490,7 @@ msgstr ""
 
 #: cmd/incus/config.go:101 cmd/incus/config.go:393 cmd/incus/config.go:537
 #: cmd/incus/config.go:755 cmd/incus/config.go:886 cmd/incus/copy.go:60
-#: cmd/incus/create.go:57 cmd/incus/info.go:47 cmd/incus/move.go:64
+#: cmd/incus/create.go:59 cmd/incus/info.go:47 cmd/incus/move.go:64
 #: cmd/incus/network.go:347 cmd/incus/network.go:839 cmd/incus/network.go:920
 #: cmd/incus/network.go:1386 cmd/incus/network.go:1479
 #: cmd/incus/network.go:1551 cmd/incus/network_forward.go:177
@@ -1557,7 +1562,7 @@ msgstr ""
 msgid "Compression algorithm to use (none for uncompressed)"
 msgstr ""
 
-#: cmd/incus/copy.go:52 cmd/incus/create.go:50
+#: cmd/incus/copy.go:52 cmd/incus/create.go:51
 msgid "Config key/value to apply to the new instance"
 msgstr ""
 
@@ -1764,7 +1769,7 @@ msgstr ""
 msgid "Create a new %s pool?"
 msgstr ""
 
-#: cmd/incus/create.go:60
+#: cmd/incus/create.go:62
 msgid "Create a virtual machine"
 msgstr ""
 
@@ -1772,7 +1777,7 @@ msgstr ""
 msgid "Create aliases for existing images"
 msgstr ""
 
-#: cmd/incus/create.go:59
+#: cmd/incus/create.go:61
 msgid "Create an empty instance"
 msgstr ""
 
@@ -1805,7 +1810,7 @@ msgid ""
 "running state, including process memory state, TCP connections, ..."
 msgstr ""
 
-#: cmd/incus/create.go:41 cmd/incus/create.go:42
+#: cmd/incus/create.go:42 cmd/incus/create.go:43
 msgid "Create instances from images"
 msgstr ""
 
@@ -1871,7 +1876,7 @@ msgstr ""
 msgid "Create storage pools"
 msgstr ""
 
-#: cmd/incus/copy.go:62 cmd/incus/create.go:58
+#: cmd/incus/copy.go:62 cmd/incus/create.go:60
 msgid "Create the instance with no profiles applied"
 msgstr ""
 
@@ -1881,7 +1886,7 @@ msgstr ""
 msgid "Created: %s"
 msgstr ""
 
-#: cmd/incus/create.go:174
+#: cmd/incus/create.go:176
 #, c-format
 msgid "Creating %s"
 msgstr ""
@@ -1891,7 +1896,7 @@ msgstr ""
 msgid "Creating %s: %%s"
 msgstr ""
 
-#: cmd/incus/create.go:172
+#: cmd/incus/create.go:174
 msgid "Creating the instance"
 msgstr ""
 
@@ -2099,7 +2104,7 @@ msgstr ""
 #: cmd/incus/config_trust.go:275 cmd/incus/config_trust.go:400
 #: cmd/incus/config_trust.go:584 cmd/incus/config_trust.go:686
 #: cmd/incus/config_trust.go:732 cmd/incus/config_trust.go:803
-#: cmd/incus/console.go:37 cmd/incus/copy.go:40 cmd/incus/create.go:42
+#: cmd/incus/console.go:37 cmd/incus/copy.go:40 cmd/incus/create.go:43
 #: cmd/incus/delete.go:32 cmd/incus/exec.go:41 cmd/incus/export.go:32
 #: cmd/incus/file.go:85 cmd/incus/file.go:132 cmd/incus/file.go:310
 #: cmd/incus/file.go:359 cmd/incus/file.go:429 cmd/incus/file.go:648
@@ -2299,7 +2304,7 @@ msgstr ""
 msgid "Device: %s"
 msgstr ""
 
-#: cmd/incus/create.go:422
+#: cmd/incus/create.go:435
 msgid "Didn't get name of new instance from the server"
 msgstr ""
 
@@ -2583,7 +2588,7 @@ msgstr ""
 msgid "Environment variable to set (e.g. HOME=/home/foo)"
 msgstr ""
 
-#: cmd/incus/copy.go:55 cmd/incus/create.go:53
+#: cmd/incus/copy.go:55 cmd/incus/create.go:54
 msgid "Ephemeral instance"
 msgstr ""
 
@@ -2808,12 +2813,12 @@ msgstr ""
 msgid "Failed accepting channel client %q: %v"
 msgstr ""
 
-#: cmd/incus/utils.go:272
+#: cmd/incus/utils.go:302
 #, c-format
 msgid "Failed checking instance exists \"%s:%s\": %w"
 msgstr ""
 
-#: cmd/incus/utils.go:264
+#: cmd/incus/utils.go:294
 #, c-format
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr ""
@@ -2878,17 +2883,17 @@ msgstr ""
 msgid "Failed import request: %w"
 msgstr ""
 
-#: cmd/incus/create.go:188
+#: cmd/incus/create.go:190
 #, c-format
 msgid "Failed loading network %q: %w"
 msgstr ""
 
-#: cmd/incus/create.go:313
+#: cmd/incus/create.go:326
 #, c-format
 msgid "Failed loading profile %q for device override: %w"
 msgstr ""
 
-#: cmd/incus/create.go:239
+#: cmd/incus/create.go:252
 #, c-format
 msgid "Failed loading storage pool %q: %w"
 msgstr ""
@@ -3670,6 +3675,10 @@ msgstr ""
 msgid "Importing instance: %s"
 msgstr ""
 
+#: cmd/incus/create.go:55
+msgid "Include environment variables from file"
+msgstr ""
+
 #: cmd/incus/manpage.go:26
 msgid "Include less common commands"
 msgstr ""
@@ -3703,7 +3712,7 @@ msgstr ""
 msgid "Instance name is mandatory"
 msgstr ""
 
-#: cmd/incus/create.go:432
+#: cmd/incus/create.go:445
 #, c-format
 msgid "Instance name is: %s"
 msgstr ""
@@ -3722,7 +3731,7 @@ msgstr ""
 msgid "Instance snapshots cannot be rebuilt: %s"
 msgstr ""
 
-#: cmd/incus/create.go:56
+#: cmd/incus/create.go:58
 msgid "Instance type"
 msgstr ""
 
@@ -3931,12 +3940,12 @@ msgstr ""
 msgid "Last used: never"
 msgstr ""
 
-#: cmd/incus/create.go:168
+#: cmd/incus/create.go:170
 #, c-format
 msgid "Launching %s"
 msgstr ""
 
-#: cmd/incus/create.go:166
+#: cmd/incus/create.go:168
 msgid "Launching the instance"
 msgstr ""
 
@@ -5283,7 +5292,7 @@ msgstr ""
 msgid "Network load balancer %s deleted"
 msgstr ""
 
-#: cmd/incus/create.go:54
+#: cmd/incus/create.go:56
 msgid "Network name"
 msgstr ""
 
@@ -5334,7 +5343,7 @@ msgstr ""
 msgid "New aliases to add to the image"
 msgstr ""
 
-#: cmd/incus/copy.go:53 cmd/incus/create.go:52 cmd/incus/move.go:57
+#: cmd/incus/copy.go:53 cmd/incus/create.go:53 cmd/incus/move.go:57
 msgid "New key/value to apply to a specific device"
 msgstr ""
 
@@ -5385,7 +5394,7 @@ msgstr ""
 msgid "No storage pool for target volume specified"
 msgstr ""
 
-#: cmd/incus/utils.go:416
+#: cmd/incus/utils.go:446
 msgid "No text editor found, please set the EDITOR environment variable"
 msgstr ""
 
@@ -5716,7 +5725,7 @@ msgstr ""
 msgid "Profile to apply to the new image"
 msgstr ""
 
-#: cmd/incus/copy.go:54 cmd/incus/create.go:51
+#: cmd/incus/copy.go:54 cmd/incus/create.go:52
 msgid "Profile to apply to the new instance"
 msgstr ""
 
@@ -6142,7 +6151,7 @@ msgstr ""
 msgid "Retrieve the instance's console log"
 msgstr ""
 
-#: cmd/incus/create.go:379
+#: cmd/incus/create.go:392
 #, c-format
 msgid "Retrieving image: %s"
 msgstr ""
@@ -7000,7 +7009,7 @@ msgstr ""
 msgid "Storage pool %s pending on member %s"
 msgstr ""
 
-#: cmd/incus/copy.go:59 cmd/incus/create.go:55 cmd/incus/import.go:34
+#: cmd/incus/copy.go:59 cmd/incus/create.go:57 cmd/incus/import.go:34
 #: cmd/incus/move.go:63
 msgid "Storage pool name"
 msgstr ""
@@ -7187,7 +7196,7 @@ msgid ""
 "restarted"
 msgstr ""
 
-#: cmd/incus/create.go:453
+#: cmd/incus/create.go:466
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
 
@@ -7200,12 +7209,12 @@ msgstr ""
 msgid "The key %q does not exist on cluster member %q"
 msgstr ""
 
-#: cmd/incus/utils.go:352
+#: cmd/incus/utils.go:382
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:%q' instead."
 msgstr ""
 
-#: cmd/incus/utils.go:348
+#: cmd/incus/utils.go:378
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:' instead."
 msgstr ""
@@ -7392,11 +7401,11 @@ msgstr ""
 msgid "Timestamps:"
 msgstr ""
 
-#: cmd/incus/create.go:455
+#: cmd/incus/create.go:468
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr ""
 
-#: cmd/incus/create.go:454
+#: cmd/incus/create.go:467
 msgid "To create a new network, use: incus network create"
 msgstr ""
 
@@ -8190,7 +8199,7 @@ msgstr ""
 msgid "[<remote>:]<image> [<remote>:]<instance>"
 msgstr ""
 
-#: cmd/incus/create.go:40 cmd/incus/launch.go:22
+#: cmd/incus/create.go:41 cmd/incus/launch.go:22
 msgid "[<remote>:]<image> [<remote>:][<name>]"
 msgstr ""
 
@@ -8797,7 +8806,7 @@ msgid ""
 "    Create template t1 for instance u1 from config.tpl"
 msgstr ""
 
-#: cmd/incus/create.go:43
+#: cmd/incus/create.go:44
 msgid ""
 "incus create images:ubuntu/22.04 u1\n"
 "\n"

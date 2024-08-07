@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-08-04 14:11-0400\n"
+"POT-Creation-Date: 2024-08-08 12:35-0400\n"
 "PO-Revision-Date: 2024-03-08 16:01+0000\n"
 "Last-Translator: montag451 <montag451@laposte.net>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -676,7 +676,7 @@ msgstr "--console ne peut être utilisé avec --all"
 msgid "--console only works with a single instance"
 msgstr "--console fonctionne seulement avec une instance seule"
 
-#: cmd/incus/create.go:134 cmd/incus/rebuild.go:64
+#: cmd/incus/create.go:136 cmd/incus/rebuild.go:64
 msgid "--empty cannot be combined with an image name"
 msgstr "--empty ne peut être combiné avec le nom d'une image"
 
@@ -1048,7 +1048,7 @@ msgstr ""
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr "Aucun n'a pu être trouvé, la socket SPICE peut être trouvé à:"
 
-#: cmd/incus/create.go:365 cmd/incus/rebuild.go:131
+#: cmd/incus/create.go:378 cmd/incus/rebuild.go:131
 msgid "Asked for a VM but image is of type container"
 msgstr "Machine virtuelle a été demandé mais l'image est de type conteneur"
 
@@ -1176,7 +1176,7 @@ msgstr ""
 msgid "Bad key/value pair: %s"
 msgstr "Mauvaise paire clé/valeur: %s"
 
-#: cmd/incus/copy.go:150 cmd/incus/create.go:229 cmd/incus/move.go:302
+#: cmd/incus/copy.go:150 cmd/incus/create.go:242 cmd/incus/move.go:302
 #: cmd/incus/network_integration.go:145 cmd/incus/project.go:167
 #, c-format
 msgid "Bad key=value pair: %q"
@@ -1308,6 +1308,11 @@ msgstr "Impossible de fournir un nom à l'image cible"
 msgid "Can't pull a directory without --recursive"
 msgstr "Impossible de récupérer un répertoire sans --recursive"
 
+#: cmd/incus/utils.go:250
+#, fuzzy, c-format
+msgid "Can't read from environment file: %w"
+msgstr "Impossible de lire depuis stdin : %w"
+
 #: cmd/incus/utils.go:215 cmd/incus/utils.go:235
 #, c-format
 msgid "Can't read from stdin: %w"
@@ -1366,7 +1371,7 @@ msgstr "Impossible d'utiliser --minimal et --preseed ensemble"
 msgid "Can't use an image with --empty"
 msgstr "Impossible d'utiliser une image avec --empty"
 
-#: cmd/incus/create.go:334
+#: cmd/incus/create.go:347
 #, c-format
 msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
@@ -1506,7 +1511,7 @@ msgstr "Le membre du cluster %s est supprimé du groupe %s"
 
 #: cmd/incus/config.go:101 cmd/incus/config.go:393 cmd/incus/config.go:537
 #: cmd/incus/config.go:755 cmd/incus/config.go:886 cmd/incus/copy.go:60
-#: cmd/incus/create.go:57 cmd/incus/info.go:47 cmd/incus/move.go:64
+#: cmd/incus/create.go:59 cmd/incus/info.go:47 cmd/incus/move.go:64
 #: cmd/incus/network.go:347 cmd/incus/network.go:839 cmd/incus/network.go:920
 #: cmd/incus/network.go:1386 cmd/incus/network.go:1479
 #: cmd/incus/network.go:1551 cmd/incus/network_forward.go:177
@@ -1587,7 +1592,7 @@ msgstr "Algorithme de compression à utiliser (`none` pour ne pas compresser)"
 msgid "Compression algorithm to use (none for uncompressed)"
 msgstr "Algorithme de compression à utiliser (`none` pour ne pas compresser)"
 
-#: cmd/incus/copy.go:52 cmd/incus/create.go:50
+#: cmd/incus/copy.go:52 cmd/incus/create.go:51
 #, fuzzy
 msgid "Config key/value to apply to the new instance"
 msgstr "Configuration clef/valeur à associer à la nouvelle instance"
@@ -1816,7 +1821,7 @@ msgstr "Créer un groupe de serveurs"
 msgid "Create a new %s pool?"
 msgstr "Créer un nouvel agrégat de stockage %s ?"
 
-#: cmd/incus/create.go:60
+#: cmd/incus/create.go:62
 msgid "Create a virtual machine"
 msgstr "Créer une nouvelle machine virtuelle"
 
@@ -1824,7 +1829,7 @@ msgstr "Créer une nouvelle machine virtuelle"
 msgid "Create aliases for existing images"
 msgstr "Crée des alias pour les images existantes"
 
-#: cmd/incus/create.go:59
+#: cmd/incus/create.go:61
 msgid "Create an empty instance"
 msgstr "Créer une instance vide"
 
@@ -1879,7 +1884,7 @@ msgstr ""
 "Exemple :\n"
 "    lxc snapshot u1 snap0"
 
-#: cmd/incus/create.go:41 cmd/incus/create.go:42
+#: cmd/incus/create.go:42 cmd/incus/create.go:43
 #, fuzzy
 msgid "Create instances from images"
 msgstr "Création d'instances à partir d'images"
@@ -1959,7 +1964,7 @@ msgstr "Créé : %s"
 msgid "Create storage pools"
 msgstr "Copie de l'image : %s"
 
-#: cmd/incus/copy.go:62 cmd/incus/create.go:58
+#: cmd/incus/copy.go:62 cmd/incus/create.go:60
 #, fuzzy
 msgid "Create the instance with no profiles applied"
 msgstr "L'arrêt du conteneur a échoué !"
@@ -1970,7 +1975,7 @@ msgstr "L'arrêt du conteneur a échoué !"
 msgid "Created: %s"
 msgstr "Créé : %s"
 
-#: cmd/incus/create.go:174
+#: cmd/incus/create.go:176
 #, c-format
 msgid "Creating %s"
 msgstr "Création de %s"
@@ -1980,7 +1985,7 @@ msgstr "Création de %s"
 msgid "Creating %s: %%s"
 msgstr "Création de %s"
 
-#: cmd/incus/create.go:172
+#: cmd/incus/create.go:174
 #, fuzzy
 msgid "Creating the instance"
 msgstr "Création du conteneur"
@@ -2206,7 +2211,7 @@ msgstr "Récupération de l'image : %s"
 #: cmd/incus/config_trust.go:275 cmd/incus/config_trust.go:400
 #: cmd/incus/config_trust.go:584 cmd/incus/config_trust.go:686
 #: cmd/incus/config_trust.go:732 cmd/incus/config_trust.go:803
-#: cmd/incus/console.go:37 cmd/incus/copy.go:40 cmd/incus/create.go:42
+#: cmd/incus/console.go:37 cmd/incus/copy.go:40 cmd/incus/create.go:43
 #: cmd/incus/delete.go:32 cmd/incus/exec.go:41 cmd/incus/export.go:32
 #: cmd/incus/file.go:85 cmd/incus/file.go:132 cmd/incus/file.go:310
 #: cmd/incus/file.go:359 cmd/incus/file.go:429 cmd/incus/file.go:648
@@ -2413,7 +2418,7 @@ msgstr ""
 msgid "Device: %s"
 msgstr "Serveur distant : %s"
 
-#: cmd/incus/create.go:422
+#: cmd/incus/create.go:435
 #, fuzzy
 msgid "Didn't get name of new instance from the server"
 msgstr "pas d'image, conteneur ou instantané affecté sur ce serveur"
@@ -2738,7 +2743,7 @@ msgstr "Entrée TTL"
 msgid "Environment variable to set (e.g. HOME=/home/foo)"
 msgstr "Variable d'environnement (de la forme HOME=/home/foo) à positionner"
 
-#: cmd/incus/copy.go:55 cmd/incus/create.go:53
+#: cmd/incus/copy.go:55 cmd/incus/create.go:54
 #, fuzzy
 msgid "Ephemeral instance"
 msgstr "Conteneur éphémère"
@@ -3034,12 +3039,12 @@ msgstr "Échec de l'authentification SSH avec le client %q : %v"
 msgid "Failed accepting channel client %q: %v"
 msgstr "Échec de l'acceptation du canal client %q : %v"
 
-#: cmd/incus/utils.go:272
+#: cmd/incus/utils.go:302
 #, c-format
 msgid "Failed checking instance exists \"%s:%s\": %w"
 msgstr "Échec de la vérification de l'existence de l'instance \"%s:%s\" : %w"
 
-#: cmd/incus/utils.go:264
+#: cmd/incus/utils.go:294
 #, c-format
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr ""
@@ -3109,18 +3114,18 @@ msgstr "Échec de la récupération du status du pair : %w"
 msgid "Failed import request: %w"
 msgstr "Échec de la demande d'importation : %w"
 
-#: cmd/incus/create.go:188
+#: cmd/incus/create.go:190
 #, c-format
 msgid "Failed loading network %q: %w"
 msgstr "Échec du chargement du réseau %q : %w"
 
-#: cmd/incus/create.go:313
+#: cmd/incus/create.go:326
 #, c-format
 msgid "Failed loading profile %q for device override: %w"
 msgstr ""
 "Échec du chargement du profil %q pour la modification du périphérique : %w"
 
-#: cmd/incus/create.go:239
+#: cmd/incus/create.go:252
 #, c-format
 msgid "Failed loading storage pool %q: %w"
 msgstr "Échec du chargement du pool de stockage %q : %w"
@@ -3990,6 +3995,10 @@ msgstr "Ignorer l'état du conteneur (seulement pour start)"
 msgid "Importing instance: %s"
 msgstr "Ignorer l'état du conteneur (seulement pour start)"
 
+#: cmd/incus/create.go:55
+msgid "Include environment variables from file"
+msgstr ""
+
 #: cmd/incus/manpage.go:26
 #, fuzzy
 msgid "Include less common commands"
@@ -4027,7 +4036,7 @@ msgstr "Instance déconnectée pour le client %q"
 msgid "Instance name is mandatory"
 msgstr "Le nom du conteneur est obligatoire"
 
-#: cmd/incus/create.go:432
+#: cmd/incus/create.go:445
 #, fuzzy, c-format
 msgid "Instance name is: %s"
 msgstr "Le nom du conteneur est : %s"
@@ -4049,7 +4058,7 @@ msgstr "Conteneur publié avec l'empreinte : %s"
 msgid "Instance snapshots cannot be rebuilt: %s"
 msgstr "Le nom du conteneur est : %s"
 
-#: cmd/incus/create.go:56
+#: cmd/incus/create.go:58
 msgid "Instance type"
 msgstr "Type d'instance"
 
@@ -4272,12 +4281,12 @@ msgstr "Dernière utilisation : %s"
 msgid "Last used: never"
 msgstr "Dernière utilisation : jamais"
 
-#: cmd/incus/create.go:168
+#: cmd/incus/create.go:170
 #, fuzzy, c-format
 msgid "Launching %s"
 msgstr "Création de %s"
 
-#: cmd/incus/create.go:166
+#: cmd/incus/create.go:168
 #, fuzzy
 msgid "Launching the instance"
 msgstr "Création du conteneur"
@@ -5772,7 +5781,7 @@ msgstr "Le réseau %s a été créé"
 msgid "Network load balancer %s deleted"
 msgstr "Le réseau %s a été supprimé"
 
-#: cmd/incus/create.go:54
+#: cmd/incus/create.go:56
 msgid "Network name"
 msgstr "Nom du réseau"
 
@@ -5825,7 +5834,7 @@ msgstr "Nouvel alias à définir sur la cible"
 msgid "New aliases to add to the image"
 msgstr "Nouvel alias à définir sur la cible"
 
-#: cmd/incus/copy.go:53 cmd/incus/create.go:52 cmd/incus/move.go:57
+#: cmd/incus/copy.go:53 cmd/incus/create.go:53 cmd/incus/move.go:57
 #, fuzzy
 msgid "New key/value to apply to a specific device"
 msgstr "Clé/valeur de configuration à appliquer au nouveau conteneur"
@@ -5878,7 +5887,7 @@ msgstr ""
 msgid "No storage pool for target volume specified"
 msgstr ""
 
-#: cmd/incus/utils.go:416
+#: cmd/incus/utils.go:446
 msgid "No text editor found, please set the EDITOR environment variable"
 msgstr ""
 
@@ -6227,7 +6236,7 @@ msgstr "Profil %s ajouté à %s"
 msgid "Profile to apply to the new image"
 msgstr "Profil à appliquer au nouveau conteneur"
 
-#: cmd/incus/copy.go:54 cmd/incus/create.go:51
+#: cmd/incus/copy.go:54 cmd/incus/create.go:52
 #, fuzzy
 msgid "Profile to apply to the new instance"
 msgstr "Profil à appliquer au nouveau conteneur"
@@ -6706,7 +6715,7 @@ msgstr "Création du conteneur"
 msgid "Retrieve the instance's console log"
 msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
 
-#: cmd/incus/create.go:379
+#: cmd/incus/create.go:392
 #, c-format
 msgid "Retrieving image: %s"
 msgstr "Récupération de l'image : %s"
@@ -7636,7 +7645,7 @@ msgstr "Le réseau %s a été supprimé"
 msgid "Storage pool %s pending on member %s"
 msgstr "Le réseau %s a été créé"
 
-#: cmd/incus/copy.go:59 cmd/incus/create.go:55 cmd/incus/import.go:34
+#: cmd/incus/copy.go:59 cmd/incus/create.go:57 cmd/incus/import.go:34
 #: cmd/incus/move.go:63
 msgid "Storage pool name"
 msgstr "Nom de l'ensemble de stockage"
@@ -7837,7 +7846,7 @@ msgstr ""
 "Le conteneur est en cours d'exécution. Utiliser --force pour qu'il soit "
 "arrêté et redémarré."
 
-#: cmd/incus/create.go:453
+#: cmd/incus/create.go:466
 #, fuzzy
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
@@ -7852,12 +7861,12 @@ msgstr ""
 msgid "The key %q does not exist on cluster member %q"
 msgstr "Vous devez fournir le nom d'un conteneur pour : "
 
-#: cmd/incus/utils.go:352
+#: cmd/incus/utils.go:382
 #, fuzzy, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:%q' instead."
 msgstr "L'image locale '%s' n'a pas été trouvée, essayer '%s:' à la place."
 
-#: cmd/incus/utils.go:348
+#: cmd/incus/utils.go:378
 #, fuzzy, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:' instead."
 msgstr "L'image locale '%s' n'a pas été trouvée, essayer '%s:' à la place."
@@ -8050,12 +8059,12 @@ msgstr "Temps d'attente du conteneur avant de le tuer"
 msgid "Timestamps:"
 msgstr "Horodatage :"
 
-#: cmd/incus/create.go:455
+#: cmd/incus/create.go:468
 #, fuzzy
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr "Pour attacher un réseau à un conteneur, utiliser : lxc network attach"
 
-#: cmd/incus/create.go:454
+#: cmd/incus/create.go:467
 #, fuzzy
 msgid "To create a new network, use: incus network create"
 msgstr "Pour créer un réseau, utiliser : lxc network create"
@@ -9013,7 +9022,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/create.go:40 cmd/incus/launch.go:22
+#: cmd/incus/create.go:41 cmd/incus/launch.go:22
 #, fuzzy
 msgid "[<remote>:]<image> [<remote>:][<name>]"
 msgstr ""
@@ -10210,7 +10219,7 @@ msgid ""
 "    Create template t1 for instance u1 from config.tpl"
 msgstr ""
 
-#: cmd/incus/create.go:43
+#: cmd/incus/create.go:44
 msgid ""
 "incus create images:ubuntu/22.04 u1\n"
 "\n"
