@@ -27,7 +27,6 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   /dev/vfio/**                              rw,
   /dev/vhost-net                            rw,
   /dev/vhost-vsock                          rw,
-  /etc/ceph/**                              r,
   /etc/machine-id                           r,
   /run/udev/data/*                          r,
   @{PROC}/sys/vm/max_map_count              r,
@@ -51,9 +50,15 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   /etc/group                 r,
   @{PROC}/version                           r,
 
+  # Extra config paths
+{{- range $index, $element := .extra_config }}
+  {{ $element }}/**                         kr,
+{{- end }}
+
+
   # Extra binaries
 {{- range $index, $element := .extra_binaries }}
-{{ $element }}                               mrix,
+  {{ $element }}                            mrix,
 {{- end }}
 
   # Used by qemu for live migration NBD server and client
