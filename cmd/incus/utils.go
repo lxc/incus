@@ -244,6 +244,36 @@ func getConfig(args ...string) (map[string]string, error) {
 	return values, nil
 }
 
+func readEnvironmentFile(path string) (map[string]string, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf(i18n.G("Can't read from environment file: %w"), err)
+	}
+
+	// Split the file into lines.
+	lines := strings.Split(string(content), "\n")
+
+	// Create a map to store the key value pairs.
+	envMap := make(map[string]string)
+
+	// Iterate over the lines.
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+
+		pieces := strings.SplitN(line, "=", 2)
+		value := ""
+		if len(pieces) > 1 {
+			value = pieces[1]
+		}
+
+		envMap[pieces[0]] = value
+	}
+
+	return envMap, nil
+}
+
 func usage(name string, args ...string) string {
 	if len(args) == 0 {
 		return name
