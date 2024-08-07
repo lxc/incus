@@ -464,12 +464,12 @@ msgstr ""
 #: cmd/incus/admin_init_interactive.go:651
 #, c-format
 msgid "%q is not a block device"
-msgstr ""
+msgstr "%q 不是块设备"
 
 #: cmd/incus/admin_init_interactive.go:788
 #, c-format
 msgid "%q is not an IP address"
-msgstr ""
+msgstr "%q 不是 IP 地址"
 
 #: cmd/incus/admin_recover.go:209
 #, c-format
@@ -494,7 +494,7 @@ msgstr ""
 #: cmd/incus/file.go:1102
 #, c-format
 msgid "%s is not a directory"
-msgstr ""
+msgstr "%s 不是目录"
 
 #: cmd/incus/file.go:992
 #, c-format
@@ -4845,8 +4845,9 @@ msgid "More than one device matches, specify the device name"
 msgstr ""
 
 #: cmd/incus/file.go:469
+#, fuzzy
 msgid "More than one file to download, but target is not a directory"
-msgstr ""
+msgstr "下载的文件超过一个, 但目标不是目录"
 
 #: cmd/incus/file.go:1152 cmd/incus/file.go:1153
 msgid "Mount files from instances"
@@ -5748,14 +5749,14 @@ msgid "Remote %s exists as <%s>"
 msgstr ""
 
 #: cmd/incus/remote.go:922
-#, c-format
+#, fuzzy, c-format
 msgid "Remote %s is global and cannot be removed"
-msgstr ""
+msgstr "远程仓库 %s 是全局的, 无法移除"
 
 #: cmd/incus/remote.go:837 cmd/incus/remote.go:918 cmd/incus/remote.go:1031
-#, c-format
+#, fuzzy, c-format
 msgid "Remote %s is static and cannot be modified"
-msgstr ""
+msgstr "远程仓库 %s 是静态的, 无法修改"
 
 #: cmd/incus/remote.go:305
 msgid "Remote names may not contain colons"
@@ -6939,8 +6940,9 @@ msgid "Taken at"
 msgstr ""
 
 #: cmd/incus/file.go:1199
+#, fuzzy
 msgid "Target path and --listen flag cannot be used together"
-msgstr ""
+msgstr "目标路径和 --listen 标记不能一起使用"
 
 #: cmd/incus/file.go:1193
 msgid "Target path must be a directory"
