@@ -349,6 +349,30 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Figure out a potential cache path.
+	var cachePath string
+	if os.Getenv("INCUS_CACHE") != "" {
+		cachePath = os.Getenv("INCUS_CACHE")
+	} else if os.Getenv("HOME") != "" && util.PathExists(os.Getenv("HOME")) {
+		cachePath = path.Join(os.Getenv("HOME"), ".cache", "incus")
+	} else {
+		currentUser, err := user.Current()
+		if err != nil {
+			return err
+		}
+
+		if util.PathExists(currentUser.HomeDir) {
+			cachePath = path.Join(currentUser.HomeDir, ".cache", "incus")
+		}
+	}
+
+	if cachePath != "" {
+		err := os.MkdirAll(cachePath, 0700)
+		if err != nil && !os.IsExist(err) {
+			cachePath = ""
+		}
+	}
+
 	// If no homedir could be found, treat as if --force-local was passed.
 	if configDir == "" {
 		c.flagForceLocal = true
@@ -367,6 +391,9 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 	} else {
 		c.conf = config.NewConfig(filepath.Dir(c.confPath), true)
 	}
+
+	// Set cache directory in config.
+	c.conf.CacheDir = cachePath
 
 	// Override the project
 	if c.flagProject != "" {
