@@ -2523,3 +2523,7 @@ This adds support for both `io.bus` and `io.cache` to disks that are backed by a
 This introduces a new `instances.lxcfs.per_instance` server
 configuration key to control whether to run LXCFS per instance instead
 of globally on the system.
+
+## `disk_volume_subpath`
+
+This introduces the ability to access the sub-path of a file system custom volume by using the `source=volume/path` syntax.
