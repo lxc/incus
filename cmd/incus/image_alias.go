@@ -12,6 +12,11 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 )
 
+type imageAliasColumns struct {
+	Name string
+	Data func(api.ImageAliasesEntry) string
+}
+
 type cmdImageAlias struct {
 	global *cmdGlobal
 	image  *cmdImage
@@ -141,7 +146,8 @@ type cmdImageAliasList struct {
 	image      *cmdImage
 	imageAlias *cmdImageAlias
 
-	flagFormat string
+	flagFormat  string
+	flagColumns string
 }
 
 func (c *cmdImageAliasList) Command() *cobra.Command {
@@ -153,13 +159,32 @@ func (c *cmdImageAliasList) Command() *cobra.Command {
 		`List image aliases
 
 Filters may be part of the image hash or part of the image alias name.
-`))
+Default column layout: aftd
+
+== Columns ==
+The -c option takes a comma separated list of arguments that control
+which instance attributes to output when displaying in table or csv
+format.
+
+Column arguments are either pre-defined shorthand chars (see below),
+or (extended) config keys.
+
+Commas between consecutive shorthand chars are optional.
+
+Pre-defined column shorthand chars:
+  a - Alias
+  f - Fingerprint
+  t - Type
+  d - Description`))
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultImageAliasColumns, i18n.G("Columns")+"``")
 
 	cmd.RunE = c.Run
 
 	return cmd
 }
+
+const defaultImageAliasColumns = "aftd"
 
 func (c *cmdImageAliasList) aliasShouldShow(filters []string, state *api.ImageAliasesEntry) bool {
 	if len(filters) == 0 {
@@ -173,6 +198,52 @@ func (c *cmdImageAliasList) aliasShouldShow(filters []string, state *api.ImageAl
 	}
 
 	return false
+}
+
+func (c *cmdImageAliasList) parseColumns() ([]imageAliasColumns, error) {
+	columnsShorthandMap := map[rune]imageAliasColumns{
+		'a': {i18n.G("ALIAS"), c.imageAliasNameColumnData},
+		'f': {i18n.G("FINGERPRINT"), c.targetColumnData},
+		't': {i18n.G("TYPE"), c.typeColumnData},
+		'd': {i18n.G("DESCRIPTION"), c.descriptionColumntData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+
+	columns := []imageAliasColumns{}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+func (c *cmdImageAliasList) imageAliasNameColumnData(imageAlias api.ImageAliasesEntry) string {
+	return imageAlias.Name
+}
+
+func (c *cmdImageAliasList) targetColumnData(imageAlias api.ImageAliasesEntry) string {
+	return imageAlias.Target[0:12]
+}
+
+func (c *cmdImageAliasList) typeColumnData(imageAlias api.ImageAliasesEntry) string {
+	return strings.ToUpper(imageAlias.Type)
+}
+
+func (c *cmdImageAliasList) descriptionColumntData(imageAlias api.ImageAliasesEntry) string {
+	return imageAlias.Description
 }
 
 func (c *cmdImageAliasList) Run(cmd *cobra.Command, args []string) error {
@@ -214,6 +285,11 @@ func (c *cmdImageAliasList) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	columns, err := c.parseColumns()
+	if err != nil {
+		return err
+	}
+
 	// Render the table
 	data := [][]string{}
 	for _, alias := range aliases {
@@ -225,16 +301,19 @@ func (c *cmdImageAliasList) Run(cmd *cobra.Command, args []string) error {
 			alias.Type = "container"
 		}
 
-		data = append(data, []string{alias.Name, alias.Target[0:12], strings.ToUpper(alias.Type), alias.Description})
+		line := []string{}
+		for _, column := range columns {
+			line = append(line, column.Data(alias))
+		}
+
+		data = append(data, line)
 	}
 
 	sort.Sort(cli.StringList(data))
 
-	header := []string{
-		i18n.G("ALIAS"),
-		i18n.G("FINGERPRINT"),
-		i18n.G("TYPE"),
-		i18n.G("DESCRIPTION"),
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
 	}
 
 	return cli.RenderTable(c.flagFormat, header, data, aliases)
