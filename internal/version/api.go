@@ -430,6 +430,7 @@ var APIExtensions = []string{
 	"clustering_groups_config",
 	"instances_lxcfs_per_instance",
 	"clustering_groups_vm_cpu_definition",
+	"disk_volume_subpath",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
