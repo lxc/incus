@@ -28,6 +28,8 @@ Storage volume
   Alternatively, you can use the [`incus storage volume attach`](incus_storage_volume_attach.md) command to {ref}`storage-attach-volume`.
   Both commands use the same mechanism to add a storage volume as a disk device.
 
+  It's possible to attach a sub-path of a custom volume to an instance using the `source=<volume_name>/<sub_path>` syntax.
+
 Path on the host
 : You can share a path on your host (either a file system or a block device) to your instance by adding it as a disk device with the host path as the `source`:
 

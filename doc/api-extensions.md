@@ -2542,3 +2542,7 @@ The new configuration keys are:
 
 * `instances.vm.cpu.ARCHITECTURE.baseline`
 * `instances.vm.cpu.ARCHITECTURE.flag`
+
+## `disk_volume_subpath`
+
+This introduces the ability to access the sub-path of a file system custom volume by using the `source=volume/path` syntax.
