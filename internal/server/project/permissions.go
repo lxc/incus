@@ -21,6 +21,33 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
+// HiddenStoragePools returns a list of storage pools that should be hidden from users of the project.
+func HiddenStoragePools(ctx context.Context, tx *db.ClusterTx, projectName string) ([]string, error) {
+	dbProject, err := cluster.GetProject(ctx, tx.Tx(), projectName)
+	if err != nil {
+		return nil, fmt.Errorf("Failed getting project: %w", err)
+	}
+
+	project, err := dbProject.ToAPI(ctx, tx.Tx())
+	if err != nil {
+		return nil, err
+	}
+
+	hiddenPools := []string{}
+	for k, v := range project.Config {
+		if !strings.HasPrefix(k, projectLimitDiskPool) || v != "0" {
+			continue
+		}
+
+		fields := strings.SplitN(k, projectLimitDiskPool, 2)
+		if len(fields) == 2 {
+			hiddenPools = append(hiddenPools, fields[1])
+		}
+	}
+
+	return hiddenPools, nil
+}
+
 // AllowInstanceCreation returns an error if any project-specific limit or
 // restriction is violated when creating a new instance.
 func AllowInstanceCreation(tx *db.ClusterTx, projectName string, req api.InstancesPost) error {
