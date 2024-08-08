@@ -883,18 +883,23 @@ func (d *lvm) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *mig
 		if vol.volType == VolumeTypeVM || vol.IsCustomBlock() {
 			// Block volume.
 			volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.Name())
-			_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
-			if err != nil {
-				return err
+			if util.PathExists(volDevPath) {
+				_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
+				if err != nil {
+					return err
+				}
 			}
 
 			// Filesystem volume.
 			if vol.IsVMBlock() {
 				fsVol := vol.NewVMBlockFilesystemVolume()
 				volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], fsVol.volType, fsVol.contentType, fsVol.Name())
-				_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
-				if err != nil {
-					return err
+
+				if util.PathExists(volDevPath) {
+					_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}
