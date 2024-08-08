@@ -707,7 +707,7 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 			return err
 		}
 
-		err = project.AllowVolumeCreation(tx, projectName, req)
+		err = project.AllowVolumeCreation(tx, projectName, poolName, req)
 		if err != nil {
 			return err
 		}
