@@ -1784,6 +1784,13 @@
 						}
 					},
 					{
+						"limits.disk.pool.POOL_NAME": {
+							"longdesc": "This value is the maximum value of the aggregate disk\nspace used by all instance volumes, custom volumes, and images of the\nproject on this specific storage pool.",
+							"shortdesc": "Maximum disk space used by the project on this pool",
+							"type": "string"
+						}
+					},
+					{
 						"limits.instances": {
 							"longdesc": "",
 							"shortdesc": "Maximum number of instances that can be created in the project",
