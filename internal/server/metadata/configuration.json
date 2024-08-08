@@ -25,6 +25,20 @@
 			"common": {
 				"keys": [
 					{
+						"instances.vm.cpu.ARCHITECTURE.baseline": {
+							"longdesc": "The CPU base architecture name as can be found through `qemu -cpu ?`.\n\nThis can be a generic definition like `qemu64` or `kvm64`, or it can be a specific hardware architecture like `EPYC-v2`.\nIt's important to ensure that all servers in the group match that baseline.",
+							"shortdesc": "CPU base architecture name",
+							"type": "string"
+						}
+					},
+					{
+						"instances.vm.cpu.ARCHITECTURE.flags": {
+							"longdesc": "A comma separated list of CPU flags to add on top of CPU baseline or a list of flags to remove from it.\n\nTo remove a flag, use `-flag`.",
+							"shortdesc": "CPU flags to add/remove to/from the baseline",
+							"type": "string"
+						}
+					},
+					{
 						"user.*": {
 							"longdesc": "User keys can be used in search.",
 							"shortdesc": "Free form user key/value storage",

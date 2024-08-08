@@ -17,6 +17,23 @@ User keys can be used in search.
 
 <!-- config group cluster-cluster end -->
 <!-- config group cluster_group-common start -->
+```{config:option} instances.vm.cpu.ARCHITECTURE.baseline cluster_group-common
+:shortdesc: "CPU base architecture name"
+:type: "string"
+The CPU base architecture name as can be found through `qemu -cpu ?`.
+
+This can be a generic definition like `qemu64` or `kvm64`, or it can be a specific hardware architecture like `EPYC-v2`.
+It's important to ensure that all servers in the group match that baseline.
+```
+
+```{config:option} instances.vm.cpu.ARCHITECTURE.flags cluster_group-common
+:shortdesc: "CPU flags to add/remove to/from the baseline"
+:type: "string"
+A comma separated list of CPU flags to add on top of CPU baseline or a list of flags to remove from it.
+
+To remove a flag, use `-flag`.
+```
+
 ```{config:option} user.* cluster_group-common
 :shortdesc: "Free form user key/value storage"
 :type: "string"

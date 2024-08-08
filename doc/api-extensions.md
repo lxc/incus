@@ -2533,3 +2533,12 @@ those groups.
 This introduces a new `instances.lxcfs.per_instance` server
 configuration key to control whether to run LXCFS per instance instead
 of globally on the system.
+
+## `clustering_groups_vm_cpu_definition`
+
+This introduces a few new configuration options to control the virtual machine CPU definitions through cluster group configuration.
+
+The new configuration keys are:
+
+* `instances.vm.cpu.ARCHITECTURE.baseline`
+* `instances.vm.cpu.ARCHITECTURE.flag`

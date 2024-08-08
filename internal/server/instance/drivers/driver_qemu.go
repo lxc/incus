@@ -385,90 +385,6 @@ func (d *qemu) getAgentClient() (*http.Client, error) {
 	return agent, nil
 }
 
-func (d *qemu) getClusterCPUFlags() ([]string, error) {
-	// Get the list of cluster members.
-	var nodes []db.RaftNode
-	err := d.state.DB.Node.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
-		var err error
-		nodes, err = tx.GetRaftNodes(ctx)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Get architecture name.
-	arch, err := osarch.ArchitectureName(d.architecture)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get all the CPU flags for the architecture.
-	flagMembers := map[string]int{}
-	coreCount := 0
-
-	for _, node := range nodes {
-		// Attempt to load the cached resources.
-		resourcesPath := internalUtil.CachePath("resources", fmt.Sprintf("%s.yaml", node.Name))
-
-		data, err := os.ReadFile(resourcesPath)
-		if err != nil {
-			if os.IsNotExist(err) {
-				continue
-			}
-
-			return nil, err
-		}
-
-		res := api.Resources{}
-		err = json.Unmarshal(data, &res)
-		if err != nil {
-			return nil, err
-		}
-
-		// Skip if not the correct architecture.
-		if res.CPU.Architecture != arch {
-			continue
-		}
-
-		// Add the CPU flags to the map.
-		for _, socket := range res.CPU.Sockets {
-			for _, core := range socket.Cores {
-				coreCount += 1
-				for _, flag := range core.Flags {
-					flagMembers[flag] += 1
-				}
-			}
-		}
-	}
-
-	// Get the host flags.
-	info := DriverStatuses()[instancetype.VM].Info
-	hostFlags, ok := info.Features["flags"].(map[string]bool)
-	if !ok {
-		// No CPU flags found.
-		return nil, nil
-	}
-
-	// Build a set of flags common to all cores.
-	flags := []string{}
-
-	for k, v := range flagMembers {
-		if v != coreCount {
-			continue
-		}
-
-		hostVal, ok := hostFlags[k]
-		if !ok || hostVal {
-			continue
-		}
-
-		flags = append(flags, k)
-	}
-
-	return flags, nil
-}
-
 func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) {
 	// Create local variables from instance properties we need so as not to keep references to instance around
 	// after we have returned the callback function.
@@ -1517,16 +1433,70 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	cpuType := "host"
 
-	// Get CPU flags if clustered and migration is enabled (x86_64 only for now).
-	if d.architecture == osarch.ARCH_64BIT_INTEL_X86 && d.state.ServerClustered && util.IsTrue(d.expandedConfig["migration.stateful"]) {
-		cpuFlags, err := d.getClusterCPUFlags()
+	// Handle CPU flags.
+	if d.state.ServerClustered && util.IsTrue(d.expandedConfig["migration.stateful"]) {
+		// Get the cluster group config.
+		var groupConfig map[string]string
+		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Get the group name.
+			clusterGroupName := d.localConfig["volatile.cluster.group"]
+			if clusterGroupName == "" {
+				clusterGroupName = "default"
+			}
+
+			// Try to get the cluster group.
+			group, err := dbCluster.GetClusterGroup(ctx, tx.Tx(), clusterGroupName)
+			if err != nil && err != sql.ErrNoRows {
+				return err
+			}
+
+			// Fallback to default group.
+			if err == sql.ErrNoRows && clusterGroupName != "default" {
+				group, err = dbCluster.GetClusterGroup(ctx, tx.Tx(), "default")
+				if err != nil {
+					return err
+				}
+			}
+
+			// Get the config.
+			groupConfig, err = dbCluster.GetClusterGroupConfig(ctx, tx.Tx(), group.ID)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
 		if err != nil {
 			op.Done(err)
 			return err
 		}
 
-		cpuType = "kvm64"
-		cpuExtensions = append(cpuExtensions, cpuFlags...)
+		// Get the local architecture name.
+		archName, err := osarch.ArchitectureName(d.architecture)
+		if err != nil {
+			op.Done(err)
+			return err
+		}
+
+		// Set the cpu type and extensions.
+		groupConfigBaseline := fmt.Sprintf("instances.vm.cpu.%s.baseline", archName)
+		groupConfigFlags := fmt.Sprintf("instances.vm.cpu.%s.flags", archName)
+
+		if groupConfig[groupConfigBaseline] != "" {
+			// Apply group config if present.
+			cpuType = groupConfig[groupConfigBaseline]
+			cpuExtensions = append(cpuExtensions, util.SplitNTrimSpace(groupConfig[groupConfigFlags], ",", -1, true)...)
+		} else if d.architecture == osarch.ARCH_64BIT_INTEL_X86 {
+			// Apply automatic handling if on x86_64.
+			cpuFlags, err := GetClusterCPUFlags(context.TODO(), d.state, nil, archName)
+			if err != nil {
+				op.Done(err)
+				return err
+			}
+
+			cpuType = "kvm64"
+			cpuExtensions = append(cpuExtensions, cpuFlags...)
+		}
 	}
 
 	if len(cpuExtensions) > 0 {
