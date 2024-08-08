@@ -27,6 +27,9 @@ type Config struct {
 	// Configuration directory
 	ConfigDir string `yaml:"-"`
 
+	// Cache directory
+	CacheDir string `yaml:"-"`
+
 	// The UserAgent to pass for all queries
 	UserAgent string `yaml:"-"`
 

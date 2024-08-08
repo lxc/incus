@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"golang.org/x/crypto/ssh"
@@ -159,6 +160,12 @@ func (c *Config) GetImageServer(name string) (incus.ImageServer, error) {
 	args, err := c.getConnectionArgs(name)
 	if err != nil {
 		return nil, err
+	}
+
+	// Add image cache if specified.
+	if c.CacheDir != "" {
+		args.CachePath = c.CacheDir
+		args.CacheExpiry = 5 * time.Minute
 	}
 
 	// Unix socket
