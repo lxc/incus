@@ -16,7 +16,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/lxc/incus/v6/client"
+	incus "github.com/lxc/incus/v6/client"
 	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/ports"
@@ -706,7 +706,8 @@ type cmdRemoteList struct {
 	global *cmdGlobal
 	remote *cmdRemote
 
-	flagFormat string
+	flagFormat  string
+	flagColumns string
 }
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
@@ -716,13 +717,37 @@ func (c *cmdRemoteList) Command() *cobra.Command {
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List the available remotes")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`List the available remotes`))
+		`List the available remotes
+		
+Default column layout: nupaPsg
+
+== Columns ==
+The -c option takes a comma separated list of arguments that control
+which instance attributes to output when displaying in table or csv
+format.
+
+Column arguments are either pre-defined shorthand chars (see below),
+or (extended) config keys.
+
+Commas between consecutive shorthand chars are optional.
+
+Pre-defined column shorthand chars:
+  n - Name
+  u - URL
+  p - Protocol
+  a - Auth Type
+  P - Public
+  s - Static
+  g - Global`))
 
 	cmd.RunE = c.Run
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultRemoteColumns, i18n.G("Columns")+"``")
 
 	return cmd
 }
+
+const defaultRemoteColumns = "nupaPsg"
 
 // Run is used in the RunE field of the cobra.Command returned by Command.
 func (c *cmdRemoteList) Run(cmd *cobra.Command, args []string) error {
