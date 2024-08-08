@@ -7,7 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
+<<<<<<< HEAD
 "POT-Creation-Date: 2024-08-08 21:00-0400\n"
+=======
+<<<<<<< HEAD
+"POT-Creation-Date: 2024-08-07 14:26-0400\n"
+=======
+"POT-Creation-Date: 2024-08-08 10:41+0200\n"
+>>>>>>> e263177c3 (i18n: Update translation templates)
+>>>>>>> 23f26d411 (i18n: Update translation templates)
 "PO-Revision-Date: 2024-03-08 16:01+0000\n"
 "Last-Translator: montag451 <montag451@laposte.net>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -730,15 +738,15 @@ msgstr "<local|global> <requête>"
 msgid "<old alias> <new alias>"
 msgstr "<ancien alias> <nouvel alias>"
 
-#: cmd/incus/remote.go:882 cmd/incus/remote.go:948
+#: cmd/incus/remote.go:907 cmd/incus/remote.go:973
 msgid "<remote>"
 msgstr "<serveur_distant>"
 
-#: cmd/incus/remote.go:996
+#: cmd/incus/remote.go:1021
 msgid "<remote> <URL>"
 msgstr "<serveur_distant> <URL>"
 
-#: cmd/incus/remote.go:801
+#: cmd/incus/remote.go:826
 msgid "<remote> <new-name>"
 msgstr "<serveur distant> <nouveau nom>"
 
@@ -799,7 +807,7 @@ msgstr ""
 msgid "ARCHITECTURE"
 msgstr "ARCHITECTURE"
 
-#: cmd/incus/remote.go:783
+#: cmd/incus/remote.go:808
 msgid "AUTH TYPE"
 msgstr "TYPE D'AUTHENTIFICATION"
 
@@ -1322,7 +1330,7 @@ msgstr "Impossible de lire depuis stdin : %w"
 msgid "Can't read from stdin: %w"
 msgstr "Impossible de lire depuis stdin : %w"
 
-#: cmd/incus/remote.go:926
+#: cmd/incus/remote.go:951
 msgid "Can't remove the default remote"
 msgstr "Impossible de supprimer le serveur distant par défaut"
 
@@ -1515,13 +1523,26 @@ msgstr "Le membre du cluster %s est supprimé du groupe %s"
 
 #: cmd/incus/config.go:101 cmd/incus/config.go:393 cmd/incus/config.go:537
 #: cmd/incus/config.go:755 cmd/incus/config.go:886 cmd/incus/copy.go:60
+<<<<<<< HEAD
 #: cmd/incus/create.go:59 cmd/incus/info.go:48 cmd/incus/move.go:64
+<<<<<<< HEAD
 #: cmd/incus/network.go:347 cmd/incus/network.go:839 cmd/incus/network.go:920
 #: cmd/incus/network.go:1386 cmd/incus/network.go:1479
 #: cmd/incus/network.go:1551 cmd/incus/network_forward.go:177
 #: cmd/incus/network_forward.go:258 cmd/incus/network_forward.go:446
 #: cmd/incus/network_forward.go:598 cmd/incus/network_forward.go:752
 #: cmd/incus/network_forward.go:841 cmd/incus/network_forward.go:923
+=======
+=======
+#: cmd/incus/create.go:57 cmd/incus/info.go:48 cmd/incus/move.go:64
+>>>>>>> e263177c3 (i18n: Update translation templates)
+#: cmd/incus/network_forward.go:177 cmd/incus/network_forward.go:258
+#: cmd/incus/network_forward.go:446 cmd/incus/network_forward.go:598
+#: cmd/incus/network_forward.go:752 cmd/incus/network_forward.go:841
+#: cmd/incus/network_forward.go:923 cmd/incus/network.go:347
+#: cmd/incus/network.go:839 cmd/incus/network.go:920 cmd/incus/network.go:1386
+#: cmd/incus/network.go:1479 cmd/incus/network.go:1551
+>>>>>>> 23f26d411 (i18n: Update translation templates)
 #: cmd/incus/network_load_balancer.go:180
 #: cmd/incus/network_load_balancer.go:261
 #: cmd/incus/network_load_balancer.go:432
@@ -1557,8 +1578,13 @@ msgid "Clustering enabled"
 msgstr "Clustering activé"
 
 #: cmd/incus/cluster.go:150 cmd/incus/config_trust.go:421
+<<<<<<< HEAD
 #: cmd/incus/image.go:1093 cmd/incus/image_alias.go:180 cmd/incus/list.go:134
 #: cmd/incus/network.go:1072 cmd/incus/profile.go:725 cmd/incus/project.go:527
+=======
+#: cmd/incus/image.go:1093 cmd/incus/list.go:134 cmd/incus/network.go:1072
+#: cmd/incus/profile.go:725 cmd/incus/project.go:527 cmd/incus/remote.go:745
+>>>>>>> 23f26d411 (i18n: Update translation templates)
 #: cmd/incus/storage.go:687 cmd/incus/storage_volume.go:1557
 #: cmd/incus/storage_volume.go:2548 cmd/incus/warning.go:93
 msgid "Columns"
@@ -2180,6 +2206,7 @@ msgid "Delete warning"
 msgstr "Récupération de l'image : %s"
 
 #: cmd/incus/action.go:32 cmd/incus/action.go:57 cmd/incus/action.go:83
+<<<<<<< HEAD
 #: cmd/incus/action.go:109 cmd/incus/action.go:134 cmd/incus/admin.go:20
 #: cmd/incus/admin_cluster.go:25 cmd/incus/admin_init.go:45
 #: cmd/incus/admin_other.go:20 cmd/incus/admin_recover.go:29
@@ -2228,6 +2255,61 @@ msgstr "Récupération de l'image : %s"
 #: cmd/incus/image_alias.go:29 cmd/incus/image_alias.go:65
 #: cmd/incus/image_alias.go:112 cmd/incus/image_alias.go:158
 #: cmd/incus/image_alias.go:333 cmd/incus/import.go:27 cmd/incus/info.go:35
+=======
+#: cmd/incus/action.go:109 cmd/incus/action.go:134
+#: cmd/incus/admin_cluster.go:25 cmd/incus/admin.go:20
+#: cmd/incus/admin_init.go:45 cmd/incus/admin_other.go:20
+#: cmd/incus/admin_recover.go:29 cmd/incus/admin_shutdown.go:30
+#: cmd/incus/admin_sql.go:29 cmd/incus/admin_waitready.go:27
+#: cmd/incus/alias.go:23 cmd/incus/alias.go:61 cmd/incus/alias.go:111
+#: cmd/incus/alias.go:168 cmd/incus/alias.go:223 cmd/incus/cluster.go:35
+#: cmd/incus/cluster.go:130 cmd/incus/cluster.go:318 cmd/incus/cluster.go:375
+#: cmd/incus/cluster.go:434 cmd/incus/cluster.go:507 cmd/incus/cluster.go:587
+#: cmd/incus/cluster.go:631 cmd/incus/cluster.go:689 cmd/incus/cluster.go:780
+#: cmd/incus/cluster.go:873 cmd/incus/cluster.go:994 cmd/incus/cluster.go:1066
+#: cmd/incus/cluster.go:1176 cmd/incus/cluster.go:1264
+#: cmd/incus/cluster.go:1388 cmd/incus/cluster.go:1417
+#: cmd/incus/cluster_group.go:30 cmd/incus/cluster_group.go:96
+#: cmd/incus/cluster_group.go:181 cmd/incus/cluster_group.go:267
+#: cmd/incus/cluster_group.go:327 cmd/incus/cluster_group.go:451
+#: cmd/incus/cluster_group.go:533 cmd/incus/cluster_group.go:618
+#: cmd/incus/cluster_group.go:674 cmd/incus/cluster_group.go:736
+#: cmd/incus/cluster_group.go:812 cmd/incus/cluster_group.go:887
+#: cmd/incus/cluster_group.go:969 cmd/incus/cluster_role.go:24
+#: cmd/incus/cluster_role.go:51 cmd/incus/cluster_role.go:115
+#: cmd/incus/config_device.go:24 cmd/incus/config_device.go:78
+#: cmd/incus/config_device.go:220 cmd/incus/config_device.go:317
+#: cmd/incus/config_device.go:400 cmd/incus/config_device.go:502
+#: cmd/incus/config_device.go:618 cmd/incus/config_device.go:625
+#: cmd/incus/config_device.go:758 cmd/incus/config_device.go:843
+#: cmd/incus/config.go:32 cmd/incus/config.go:95 cmd/incus/config.go:388
+#: cmd/incus/config.go:525 cmd/incus/config.go:751 cmd/incus/config.go:883
+#: cmd/incus/config_metadata.go:26 cmd/incus/config_metadata.go:54
+#: cmd/incus/config_metadata.go:187 cmd/incus/config_template.go:26
+#: cmd/incus/config_template.go:66 cmd/incus/config_template.go:134
+#: cmd/incus/config_template.go:188 cmd/incus/config_template.go:288
+#: cmd/incus/config_template.go:356 cmd/incus/config_trust.go:36
+#: cmd/incus/config_trust.go:91 cmd/incus/config_trust.go:171
+#: cmd/incus/config_trust.go:275 cmd/incus/config_trust.go:400
+#: cmd/incus/config_trust.go:584 cmd/incus/config_trust.go:686
+#: cmd/incus/config_trust.go:732 cmd/incus/config_trust.go:803
+<<<<<<< HEAD
+#: cmd/incus/console.go:37 cmd/incus/copy.go:40 cmd/incus/create.go:43
+=======
+#: cmd/incus/console.go:37 cmd/incus/copy.go:40 cmd/incus/create.go:42
+>>>>>>> e263177c3 (i18n: Update translation templates)
+#: cmd/incus/delete.go:32 cmd/incus/exec.go:41 cmd/incus/export.go:32
+#: cmd/incus/file.go:85 cmd/incus/file.go:132 cmd/incus/file.go:310
+#: cmd/incus/file.go:359 cmd/incus/file.go:429 cmd/incus/file.go:648
+#: cmd/incus/file.go:1153 cmd/incus/image_alias.go:24
+#: cmd/incus/image_alias.go:60 cmd/incus/image_alias.go:107
+#: cmd/incus/image_alias.go:152 cmd/incus/image_alias.go:255
+#: cmd/incus/image.go:40 cmd/incus/image.go:148 cmd/incus/image.go:321
+#: cmd/incus/image.go:376 cmd/incus/image.go:511 cmd/incus/image.go:679
+#: cmd/incus/image.go:924 cmd/incus/image.go:1067 cmd/incus/image.go:1417
+#: cmd/incus/image.go:1501 cmd/incus/image.go:1568 cmd/incus/image.go:1633
+#: cmd/incus/image.go:1697 cmd/incus/import.go:27 cmd/incus/info.go:35
+>>>>>>> 23f26d411 (i18n: Update translation templates)
 #: cmd/incus/launch.go:24 cmd/incus/list.go:50 cmd/incus/main.go:85
 #: cmd/incus/manpage.go:22 cmd/incus/monitor.go:33 cmd/incus/move.go:35
 #: cmd/incus/network.go:36 cmd/incus/network.go:143 cmd/incus/network.go:240
@@ -2295,9 +2377,9 @@ msgstr "Récupération de l'image : %s"
 #: cmd/incus/project.go:876 cmd/incus/project.go:920 cmd/incus/project.go:981
 #: cmd/incus/project.go:1049 cmd/incus/publish.go:32 cmd/incus/query.go:34
 #: cmd/incus/rebuild.go:27 cmd/incus/remote.go:39 cmd/incus/remote.go:104
-#: cmd/incus/remote.go:633 cmd/incus/remote.go:680 cmd/incus/remote.go:718
-#: cmd/incus/remote.go:804 cmd/incus/remote.go:885 cmd/incus/remote.go:950
-#: cmd/incus/remote.go:998 cmd/incus/remote_unix.go:37 cmd/incus/rename.go:21
+#: cmd/incus/remote.go:633 cmd/incus/remote.go:680 cmd/incus/remote.go:719
+#: cmd/incus/remote.go:829 cmd/incus/remote.go:910 cmd/incus/remote.go:975
+#: cmd/incus/remote.go:1023 cmd/incus/remote_unix.go:37 cmd/incus/rename.go:21
 #: cmd/incus/snapshot.go:31 cmd/incus/snapshot.go:78 cmd/incus/snapshot.go:203
 #: cmd/incus/snapshot.go:288 cmd/incus/snapshot.go:385
 #: cmd/incus/snapshot.go:446 cmd/incus/snapshot.go:525 cmd/incus/storage.go:37
@@ -3499,9 +3581,18 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:93 cmd/incus/network_peer.go:84
 #: cmd/incus/network_zone.go:88 cmd/incus/network_zone.go:786
 #: cmd/incus/operation.go:109 cmd/incus/profile.go:726 cmd/incus/project.go:529
+<<<<<<< HEAD
 #: cmd/incus/project.go:1052 cmd/incus/remote.go:722 cmd/incus/snapshot.go:291
+<<<<<<< HEAD
 #: cmd/incus/storage.go:689 cmd/incus/storage_bucket.go:474
 #: cmd/incus/storage_bucket.go:806 cmd/incus/storage_volume.go:1575
+=======
+=======
+#: cmd/incus/project.go:1052 cmd/incus/remote.go:744 cmd/incus/snapshot.go:291
+>>>>>>> e263177c3 (i18n: Update translation templates)
+#: cmd/incus/storage_bucket.go:474 cmd/incus/storage_bucket.go:806
+#: cmd/incus/storage.go:689 cmd/incus/storage_volume.go:1575
+>>>>>>> 23f26d411 (i18n: Update translation templates)
 #: cmd/incus/storage_volume.go:2565 cmd/incus/warning.go:94
 #, fuzzy
 msgid "Format (csv|json|table|yaml|compact)"
@@ -3543,7 +3634,7 @@ msgstr "Fréquence : %vMhz"
 msgid "Frequency: %vMhz (min: %vMhz, max: %vMhz)"
 msgstr "Fréquence : %vMhz (min : %vMhz, max : %vMhz)"
 
-#: cmd/incus/remote.go:786
+#: cmd/incus/remote.go:811
 msgid "GLOBAL"
 msgstr "GLOBAL"
 
@@ -4819,8 +4910,34 @@ msgid ""
 "    U - Current disk usage"
 msgstr ""
 
-#: cmd/incus/remote.go:717 cmd/incus/remote.go:718
+#: cmd/incus/remote.go:718
 msgid "List the available remotes"
+msgstr ""
+
+#: cmd/incus/remote.go:719
+msgid ""
+"List the available remotes\n"
+"\t\t\n"
+"Default column layout: nupaPsg\n"
+"\n"
+"== Columns ==\n"
+"The -c option takes a comma separated list of arguments that control\n"
+"which instance attributes to output when displaying in table or csv\n"
+"format.\n"
+"\n"
+"Column arguments are either pre-defined shorthand chars (see below),\n"
+"or (extended) config keys.\n"
+"\n"
+"Commas between consecutive shorthand chars are optional.\n"
+"\n"
+"Pre-defined column shorthand chars:\n"
+"  n - Name\n"
+"  u - URL\n"
+"  p - Protocol\n"
+"  a - Auth Type\n"
+"  P - Public\n"
+"  s - Static\n"
+"  g - Global"
 msgstr ""
 
 #: cmd/incus/config_trust.go:399
@@ -5600,9 +5717,18 @@ msgstr "Vous devez fournir le nom d'un conteneur pour : "
 #: cmd/incus/network.go:1093 cmd/incus/network_acl.go:168
 #: cmd/incus/network_integration.go:457 cmd/incus/network_peer.go:154
 #: cmd/incus/network_zone.go:159 cmd/incus/network_zone.go:843
+<<<<<<< HEAD
 #: cmd/incus/profile.go:745 cmd/incus/project.go:548 cmd/incus/remote.go:780
+<<<<<<< HEAD
 #: cmd/incus/storage.go:708 cmd/incus/storage_bucket.go:539
 #: cmd/incus/storage_bucket.go:863 cmd/incus/storage_volume.go:1671
+=======
+=======
+#: cmd/incus/profile.go:745 cmd/incus/project.go:548 cmd/incus/remote.go:805
+>>>>>>> e263177c3 (i18n: Update translation templates)
+#: cmd/incus/storage_bucket.go:539 cmd/incus/storage_bucket.go:863
+#: cmd/incus/storage.go:708 cmd/incus/storage_volume.go:1671
+>>>>>>> 23f26d411 (i18n: Update translation templates)
 msgid "NAME"
 msgstr "NOM"
 
@@ -5633,8 +5759,8 @@ msgstr ""
 
 #: cmd/incus/operation.go:155 cmd/incus/project.go:586 cmd/incus/project.go:595
 #: cmd/incus/project.go:604 cmd/incus/project.go:613 cmd/incus/project.go:622
-#: cmd/incus/project.go:631 cmd/incus/remote.go:740 cmd/incus/remote.go:745
-#: cmd/incus/remote.go:750
+#: cmd/incus/project.go:631 cmd/incus/remote.go:765 cmd/incus/remote.go:770
+#: cmd/incus/remote.go:775
 msgid "NO"
 msgstr "NON"
 
@@ -6067,11 +6193,11 @@ msgstr ""
 msgid "PROJECTS"
 msgstr ""
 
-#: cmd/incus/remote.go:782
+#: cmd/incus/remote.go:807
 msgid "PROTOCOL"
 msgstr "PROTOCOLE"
 
-#: cmd/incus/image.go:1121 cmd/incus/remote.go:784
+#: cmd/incus/image.go:1121 cmd/incus/remote.go:809
 msgid "PUBLIC"
 msgstr "PUBLIC"
 
@@ -6459,13 +6585,13 @@ msgstr "Ignorer l'état du conteneur (seulement pour start)"
 msgid "Refreshing the image: %s"
 msgstr "Récupération de l'image : %s"
 
-#: cmd/incus/remote.go:842
+#: cmd/incus/remote.go:867
 #, fuzzy, c-format
 msgid "Remote %s already exists"
 msgstr "le serveur distant %s existe déjà"
 
-#: cmd/incus/project.go:1015 cmd/incus/remote.go:833 cmd/incus/remote.go:914
-#: cmd/incus/remote.go:979 cmd/incus/remote.go:1027
+#: cmd/incus/project.go:1015 cmd/incus/remote.go:858 cmd/incus/remote.go:939
+#: cmd/incus/remote.go:1004 cmd/incus/remote.go:1052
 #, fuzzy, c-format
 msgid "Remote %s doesn't exist"
 msgstr "le serveur distant %s n'existe pas"
@@ -6475,12 +6601,12 @@ msgstr "le serveur distant %s n'existe pas"
 msgid "Remote %s exists as <%s>"
 msgstr "le serveur distant %s existe en tant que <%s>"
 
-#: cmd/incus/remote.go:922
+#: cmd/incus/remote.go:947
 #, fuzzy, c-format
 msgid "Remote %s is global and cannot be removed"
 msgstr "le serveur distant %s est statique et ne peut être modifié"
 
-#: cmd/incus/remote.go:837 cmd/incus/remote.go:918 cmd/incus/remote.go:1031
+#: cmd/incus/remote.go:862 cmd/incus/remote.go:943 cmd/incus/remote.go:1056
 #, fuzzy, c-format
 msgid "Remote %s is static and cannot be modified"
 msgstr "le serveur distant %s est statique et ne peut être modifié"
@@ -6578,7 +6704,7 @@ msgstr "Création du conteneur"
 msgid "Remove profiles from instances"
 msgstr "Création du conteneur"
 
-#: cmd/incus/remote.go:884 cmd/incus/remote.go:885
+#: cmd/incus/remote.go:909 cmd/incus/remote.go:910
 msgid "Remove remotes"
 msgstr ""
 
@@ -6652,7 +6778,7 @@ msgstr ""
 msgid "Rename projects"
 msgstr "Créé : %s"
 
-#: cmd/incus/remote.go:803 cmd/incus/remote.go:804
+#: cmd/incus/remote.go:828 cmd/incus/remote.go:829
 msgid "Rename remotes"
 msgstr ""
 
@@ -6846,7 +6972,7 @@ msgstr "CRÉÉ À"
 msgid "STATE"
 msgstr "ÉTAT"
 
-#: cmd/incus/remote.go:785
+#: cmd/incus/remote.go:810
 msgid "STATIC"
 msgstr "STATIQUE"
 
@@ -7173,7 +7299,7 @@ msgid ""
 "machine\"."
 msgstr ""
 
-#: cmd/incus/remote.go:997 cmd/incus/remote.go:998
+#: cmd/incus/remote.go:1022 cmd/incus/remote.go:1023
 msgid "Set the URL for the remote"
 msgstr ""
 
@@ -7758,7 +7884,7 @@ msgstr "Swap (pointe)"
 msgid "Switch the current project"
 msgstr "impossible de supprimer le serveur distant par défaut"
 
-#: cmd/incus/remote.go:949 cmd/incus/remote.go:950
+#: cmd/incus/remote.go:974 cmd/incus/remote.go:975
 #, fuzzy
 msgid "Switch the default remote"
 msgstr "impossible de supprimer le serveur distant par défaut"
@@ -8241,7 +8367,7 @@ msgstr ""
 msgid "UPLOAD DATE"
 msgstr "DATE DE PUBLICATION"
 
-#: cmd/incus/cluster.go:172 cmd/incus/remote.go:781
+#: cmd/incus/cluster.go:172 cmd/incus/remote.go:806
 msgid "URL"
 msgstr "URL"
 
@@ -8805,8 +8931,8 @@ msgstr ""
 
 #: cmd/incus/operation.go:157 cmd/incus/project.go:588 cmd/incus/project.go:597
 #: cmd/incus/project.go:606 cmd/incus/project.go:615 cmd/incus/project.go:624
-#: cmd/incus/project.go:633 cmd/incus/remote.go:742 cmd/incus/remote.go:747
-#: cmd/incus/remote.go:752
+#: cmd/incus/project.go:633 cmd/incus/remote.go:767 cmd/incus/remote.go:772
+#: cmd/incus/remote.go:777
 msgid "YES"
 msgstr "OUI"
 
@@ -10200,7 +10326,7 @@ msgstr ""
 msgid "application"
 msgstr "Propriétés :"
 
-#: cmd/incus/project.go:692 cmd/incus/remote.go:771
+#: cmd/incus/project.go:692 cmd/incus/remote.go:796
 #, fuzzy
 msgid "current"
 msgstr "Swap (courant)"
