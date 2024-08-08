@@ -22,17 +22,18 @@ import (
 type cmdCreate struct {
 	global *cmdGlobal
 
-	flagConfig     []string
-	flagDevice     []string
-	flagEphemeral  bool
-	flagNetwork    string
-	flagProfile    []string
-	flagStorage    string
-	flagTarget     string
-	flagType       string
-	flagNoProfiles bool
-	flagEmpty      bool
-	flagVM         bool
+	flagConfig          []string
+	flagDevice          []string
+	flagEnvironmentFile string
+	flagEphemeral       bool
+	flagNetwork         string
+	flagProfile         []string
+	flagStorage         string
+	flagTarget          string
+	flagType            string
+	flagNoProfiles      bool
+	flagEmpty           bool
+	flagVM              bool
 }
 
 func (c *cmdCreate) Command() *cobra.Command {
@@ -51,6 +52,7 @@ incus create images:ubuntu/22.04 u1 < config.yaml
 	cmd.Flags().StringArrayVarP(&c.flagProfile, "profile", "p", nil, i18n.G("Profile to apply to the new instance")+"``")
 	cmd.Flags().StringArrayVarP(&c.flagDevice, "device", "d", nil, i18n.G("New key/value to apply to a specific device")+"``")
 	cmd.Flags().BoolVarP(&c.flagEphemeral, "ephemeral", "e", false, i18n.G("Ephemeral instance"))
+	cmd.Flags().StringVar(&c.flagEnvironmentFile, "environment-file", "", i18n.G("Include environment variables from file")+"``")
 	cmd.Flags().StringVarP(&c.flagNetwork, "network", "n", "", i18n.G("Network name")+"``")
 	cmd.Flags().StringVarP(&c.flagStorage, "storage", "s", "", i18n.G("Storage pool name")+"``")
 	cmd.Flags().StringVarP(&c.flagType, "type", "t", "", i18n.G("Instance type")+"``")
@@ -221,6 +223,17 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 		configMap = stdinData.Config
 	} else {
 		configMap = map[string]string{}
+	}
+
+	if c.flagEnvironmentFile != "" {
+		envMap, err := readEnvironmentFile(c.flagEnvironmentFile)
+		if err != nil {
+			return nil, "", err
+		}
+
+		for k, v := range envMap {
+			configMap["environment."+k] = v
+		}
 	}
 
 	for _, entry := range c.flagConfig {
