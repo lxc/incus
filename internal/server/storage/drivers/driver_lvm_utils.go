@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/linux"
@@ -439,13 +438,13 @@ func (d *lvm) createLogicalVolumeSnapshot(vgName string, srcVol Volume, snapVol 
 		volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], srcVol.volType, srcVol.contentType, parent)
 
 		if util.PathExists(volDevPath) {
-			_, err := subprocess.RunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volDevPath)
+			_, err := subprocess.TryRunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volDevPath)
 			if err != nil {
 				return "", fmt.Errorf("Failed to acquire exclusive lock on LVM logical volume %q: %w", volDevPath, err)
 			}
 
 			defer func() {
-				_, _ = subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
+				_, _ = subprocess.TryRunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
 			}()
 		}
 	}
@@ -838,17 +837,7 @@ func (d *lvm) deactivateVolume(vol Volume) (bool, error) {
 
 	if util.PathExists(volDevPath) {
 		// Keep trying to deactivate a few times in case the device is still being flushed.
-		var err error
-		for i := 0; i < 20; i++ {
-			_, err = subprocess.RunCommand("lvchange", "--activate", "n", "--ignoreactivationskip", volDevPath)
-			if err == nil {
-				break
-			}
-
-			logger.Debug("Failed to deactivate LVM logical volume", logger.Ctx{"path": volDevPath, "attempt": i, "err": err})
-			time.Sleep(500 * time.Millisecond)
-		}
-
+		_, err := subprocess.TryRunCommand("lvchange", "--activate", "n", "--ignoreactivationskip", volDevPath)
 		if err != nil {
 			return false, fmt.Errorf("Failed to deactivate LVM logical volume %q: %w", volDevPath, err)
 		}
