@@ -428,6 +428,7 @@ var APIExtensions = []string{
 	"disk_io_bus_cache_filesystem",
 	"instances_lxcfs_per_instance",
 	"disk_volume_subpath",
+	"projects_limits_disk_pool",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
