@@ -5,6 +5,7 @@ test_container_devices_disk() {
   incus init testimage foo
 
   test_container_devices_disk_shift
+  test_container_devices_disk_subpath
   test_container_devices_raw_mount_options
   test_container_devices_disk_ceph
   test_container_devices_disk_cephfs
@@ -181,4 +182,47 @@ test_container_devices_disk_char() {
   [ "$(incus exec foo -- stat /root/zero -c '%F')" = "character special file" ] || false
   incus config device remove foo char
   incus stop foo -f
+}
+
+test_container_devices_disk_subpath() {
+  POOL=$(incus profile device get default root pool)
+
+  # Create a test volume and main container
+  incus storage volume create "${POOL}" foo
+  incus launch testimage foo-main
+  incus config device add foo-main foo disk pool="${POOL}" source=foo path=/foo
+
+  # Create some entries
+  incus exec foo-main -- mkdir /foo/path1 /foo/path2
+  incus exec foo-main -- ln -s /etc /foo/path3
+  incus exec foo-main -- ln -s path1 /foo/path4
+  echo path1 | incus file push - foo-main/foo/path1/hello
+  echo path2 | incus file push - foo-main/foo/path2/hello
+
+  # Create some test containers
+  incus create testimage foo-path1
+  incus config device add foo-path1 foo disk pool="${POOL}" source=foo/path1 path=/foo
+
+  incus create testimage foo-path2
+  incus config device add foo-path2 foo disk pool="${POOL}" source=foo/path2 path=/foo
+
+  incus create testimage foo-path3
+  incus config device add foo-path3 foo disk pool="${POOL}" source=foo/path3 path=/foo
+
+  incus create testimage foo-path4
+  incus config device add foo-path4 foo disk pool="${POOL}" source=foo/path4 path=/foo
+
+  # Validation
+  incus start foo-path1
+  incus start foo-path2
+  ! incus start foo-path3 || false
+  incus start foo-path4
+
+  [ "$(incus file pull foo-path1/foo/hello -)" = "path1" ]
+  [ "$(incus file pull foo-path2/foo/hello -)" = "path2" ]
+  [ "$(incus file pull foo-path4/foo/hello -)" = "path1" ]
+
+  # Cleanup
+  incus delete -f foo-main foo-path1 foo-path2 foo-path3 foo-path4
+  incus storage volume delete "${POOL}" foo
 }
