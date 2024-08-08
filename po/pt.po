@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-08-08 12:35-0400\n"
+"POT-Creation-Date: 2024-08-09 15:03-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -527,7 +527,7 @@ msgstr ""
 msgid "ADDRESS"
 msgstr ""
 
-#: cmd/incus/alias.go:148 cmd/incus/image.go:1119 cmd/incus/image_alias.go:234
+#: cmd/incus/alias.go:148 cmd/incus/image.go:1119 cmd/incus/image_alias.go:205
 msgid "ALIAS"
 msgstr ""
 
@@ -710,8 +710,8 @@ msgstr ""
 msgid "Alias %s doesn't exist"
 msgstr ""
 
-#: cmd/incus/image_alias.go:84 cmd/incus/image_alias.go:131
-#: cmd/incus/image_alias.go:279
+#: cmd/incus/image_alias.go:89 cmd/incus/image_alias.go:136
+#: cmd/incus/image_alias.go:358
 msgid "Alias name missing"
 msgstr ""
 
@@ -1246,10 +1246,10 @@ msgid "Clustering enabled"
 msgstr ""
 
 #: cmd/incus/cluster.go:150 cmd/incus/config_trust.go:421
-#: cmd/incus/image.go:1093 cmd/incus/list.go:133 cmd/incus/network.go:1072
-#: cmd/incus/profile.go:725 cmd/incus/project.go:527 cmd/incus/storage.go:687
-#: cmd/incus/storage_volume.go:1557 cmd/incus/storage_volume.go:2548
-#: cmd/incus/warning.go:93
+#: cmd/incus/image.go:1093 cmd/incus/image_alias.go:180 cmd/incus/list.go:133
+#: cmd/incus/network.go:1072 cmd/incus/profile.go:725 cmd/incus/project.go:527
+#: cmd/incus/storage.go:687 cmd/incus/storage_volume.go:1557
+#: cmd/incus/storage_volume.go:2548 cmd/incus/warning.go:93
 msgid "Columns"
 msgstr ""
 
@@ -1486,7 +1486,7 @@ msgstr ""
 msgid "Create a virtual machine"
 msgstr ""
 
-#: cmd/incus/image_alias.go:59 cmd/incus/image_alias.go:60
+#: cmd/incus/image_alias.go:64 cmd/incus/image_alias.go:65
 msgid "Create aliases for existing images"
 msgstr ""
 
@@ -1623,7 +1623,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:176 cmd/incus/cluster_group.go:503
 #: cmd/incus/config_trust.go:435 cmd/incus/image.go:1115
-#: cmd/incus/image_alias.go:237 cmd/incus/list.go:574 cmd/incus/network.go:1098
+#: cmd/incus/image_alias.go:208 cmd/incus/list.go:574 cmd/incus/network.go:1098
 #: cmd/incus/network_acl.go:169 cmd/incus/network_forward.go:152
 #: cmd/incus/network_integration.go:458 cmd/incus/network_load_balancer.go:156
 #: cmd/incus/network_peer.go:155 cmd/incus/network_zone.go:160
@@ -1697,7 +1697,7 @@ msgstr ""
 msgid "Delete files in instances"
 msgstr ""
 
-#: cmd/incus/image_alias.go:106 cmd/incus/image_alias.go:107
+#: cmd/incus/image_alias.go:111 cmd/incus/image_alias.go:112
 msgid "Delete image aliases"
 msgstr ""
 
@@ -1822,9 +1822,9 @@ msgstr ""
 #: cmd/incus/image.go:321 cmd/incus/image.go:376 cmd/incus/image.go:511
 #: cmd/incus/image.go:679 cmd/incus/image.go:924 cmd/incus/image.go:1067
 #: cmd/incus/image.go:1417 cmd/incus/image.go:1501 cmd/incus/image.go:1568
-#: cmd/incus/image.go:1633 cmd/incus/image.go:1697 cmd/incus/image_alias.go:24
-#: cmd/incus/image_alias.go:60 cmd/incus/image_alias.go:107
-#: cmd/incus/image_alias.go:152 cmd/incus/image_alias.go:255
+#: cmd/incus/image.go:1633 cmd/incus/image.go:1697 cmd/incus/image_alias.go:29
+#: cmd/incus/image_alias.go:65 cmd/incus/image_alias.go:112
+#: cmd/incus/image_alias.go:158 cmd/incus/image_alias.go:334
 #: cmd/incus/import.go:27 cmd/incus/info.go:34 cmd/incus/launch.go:24
 #: cmd/incus/list.go:49 cmd/incus/main.go:85 cmd/incus/manpage.go:22
 #: cmd/incus/monitor.go:33 cmd/incus/move.go:35 cmd/incus/network.go:36
@@ -2253,9 +2253,10 @@ msgid "Edit trust configurations as YAML"
 msgstr ""
 
 #: cmd/incus/cluster.go:187 cmd/incus/config_trust.go:447
-#: cmd/incus/image.go:1133 cmd/incus/list.go:632 cmd/incus/network.go:1113
-#: cmd/incus/profile.go:763 cmd/incus/project.go:565 cmd/incus/storage.go:722
-#: cmd/incus/storage_volume.go:1700 cmd/incus/warning.go:236
+#: cmd/incus/image.go:1133 cmd/incus/image_alias.go:217 cmd/incus/list.go:632
+#: cmd/incus/network.go:1113 cmd/incus/profile.go:763 cmd/incus/project.go:565
+#: cmd/incus/storage.go:722 cmd/incus/storage_volume.go:1700
+#: cmd/incus/warning.go:236
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
@@ -2503,7 +2504,7 @@ msgid "FILENAME"
 msgstr ""
 
 #: cmd/incus/config_trust.go:434 cmd/incus/image.go:1117
-#: cmd/incus/image.go:1118 cmd/incus/image_alias.go:235
+#: cmd/incus/image.go:1118 cmd/incus/image_alias.go:206
 msgid "FINGERPRINT"
 msgstr ""
 
@@ -2930,7 +2931,7 @@ msgstr ""
 #: cmd/incus/alias.go:113 cmd/incus/cluster.go:151 cmd/incus/cluster.go:1067
 #: cmd/incus/cluster_group.go:441 cmd/incus/config_template.go:290
 #: cmd/incus/config_trust.go:422 cmd/incus/config_trust.go:586
-#: cmd/incus/image.go:1094 cmd/incus/image_alias.go:157 cmd/incus/list.go:134
+#: cmd/incus/image.go:1094 cmd/incus/image_alias.go:179 cmd/incus/list.go:134
 #: cmd/incus/network.go:1073 cmd/incus/network.go:1243
 #: cmd/incus/network_acl.go:97 cmd/incus/network_allocations.go:57
 #: cmd/incus/network_forward.go:88 cmd/incus/network_integration.go:412
@@ -3258,7 +3259,7 @@ msgstr ""
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 
-#: cmd/incus/main.go:419
+#: cmd/incus/main.go:446
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -3548,7 +3549,7 @@ msgid ""
 "Invalid name in '%s', empty string is only allowed when defining maxWidth"
 msgstr ""
 
-#: cmd/incus/main.go:515 cmd/incus/storage.go:134
+#: cmd/incus/main.go:542 cmd/incus/storage.go:134
 msgid "Invalid number of arguments"
 msgstr ""
 
@@ -3616,7 +3617,7 @@ msgstr ""
 msgid "LAST USED AT"
 msgstr ""
 
-#: cmd/incus/project.go:1134
+#: cmd/incus/project.go:1142
 msgid "LIMIT"
 msgstr ""
 
@@ -3804,15 +3805,32 @@ msgstr ""
 msgid "List background operations"
 msgstr ""
 
-#: cmd/incus/image_alias.go:151
+#: cmd/incus/image_alias.go:157
 msgid "List image aliases"
 msgstr ""
 
-#: cmd/incus/image_alias.go:152
+#: cmd/incus/image_alias.go:158
 msgid ""
 "List image aliases\n"
 "\n"
 "Filters may be part of the image hash or part of the image alias name.\n"
+"Default column layout: aftd\n"
+"\n"
+"== Columns ==\n"
+"The -c option takes a comma separated list of arguments that control\n"
+"which instance attributes to output when displaying in table or csv\n"
+"format.\n"
+"\n"
+"Column arguments are either pre-defined shorthand chars (see below),\n"
+"or (extended) config keys.\n"
+"\n"
+"Commas between consecutive shorthand chars are optional.\n"
+"\n"
+"Pre-defined column shorthand chars:\n"
+"  a - Alias\n"
+"  f - Fingerprint\n"
+"  t - Type\n"
+"  d - Description"
 msgstr ""
 
 #: cmd/incus/image.go:1066
@@ -4274,7 +4292,7 @@ msgstr ""
 msgid "Manage files in instances"
 msgstr ""
 
-#: cmd/incus/image_alias.go:23 cmd/incus/image_alias.go:24
+#: cmd/incus/image_alias.go:28 cmd/incus/image_alias.go:29
 msgid "Manage image aliases"
 msgstr ""
 
@@ -5247,7 +5265,7 @@ msgstr ""
 msgid "Partitions:"
 msgstr ""
 
-#: cmd/incus/main.go:380
+#: cmd/incus/main.go:407
 #, c-format
 msgid "Password for %s: "
 msgstr ""
@@ -5532,7 +5550,7 @@ msgstr ""
 msgid "Query virtual machine images"
 msgstr ""
 
-#: cmd/incus/project.go:1133
+#: cmd/incus/project.go:1141
 msgid "RESOURCE"
 msgstr ""
 
@@ -5738,8 +5756,8 @@ msgstr ""
 msgid "Rename a cluster member"
 msgstr ""
 
-#: cmd/incus/alias.go:167 cmd/incus/alias.go:168 cmd/incus/image_alias.go:254
-#: cmd/incus/image_alias.go:255
+#: cmd/incus/alias.go:167 cmd/incus/alias.go:168 cmd/incus/image_alias.go:333
+#: cmd/incus/image_alias.go:334
 msgid "Rename aliases"
 msgstr ""
 
@@ -6787,7 +6805,7 @@ msgid "TOKEN"
 msgstr ""
 
 #: cmd/incus/config_trust.go:432 cmd/incus/image.go:1123
-#: cmd/incus/image_alias.go:236 cmd/incus/list.go:588 cmd/incus/network.go:1094
+#: cmd/incus/image_alias.go:207 cmd/incus/list.go:588 cmd/incus/network.go:1094
 #: cmd/incus/network.go:1299 cmd/incus/network_allocations.go:26
 #: cmd/incus/network_integration.go:459 cmd/incus/network_peer.go:157
 #: cmd/incus/operation.go:172 cmd/incus/storage_volume.go:1670
@@ -7108,7 +7126,7 @@ msgstr ""
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
-#: cmd/incus/main.go:424
+#: cmd/incus/main.go:451
 msgid ""
 "To start your first container, try: incus launch images:ubuntu/22.04\n"
 "Or for a virtual machine: incus launch images:ubuntu/22.04 --vm"
@@ -7214,7 +7232,7 @@ msgstr ""
 msgid "Type: %s (ephemeral)"
 msgstr ""
 
-#: cmd/incus/project.go:1111
+#: cmd/incus/project.go:1113
 msgid "UNLIMITED"
 msgstr ""
 
@@ -7226,7 +7244,7 @@ msgstr ""
 msgid "URL"
 msgstr ""
 
-#: cmd/incus/project.go:1135 cmd/incus/storage_volume.go:1675
+#: cmd/incus/project.go:1143 cmd/incus/storage_volume.go:1675
 msgid "USAGE"
 msgstr ""
 
@@ -7279,9 +7297,10 @@ msgid "Unknown channel type for client %q: %s"
 msgstr ""
 
 #: cmd/incus/cluster.go:193 cmd/incus/config_trust.go:455
-#: cmd/incus/image.go:1141 cmd/incus/list.go:647 cmd/incus/network.go:1119
-#: cmd/incus/profile.go:769 cmd/incus/project.go:571 cmd/incus/storage.go:728
-#: cmd/incus/storage_volume.go:1708 cmd/incus/warning.go:244
+#: cmd/incus/image.go:1141 cmd/incus/image_alias.go:223 cmd/incus/list.go:647
+#: cmd/incus/network.go:1119 cmd/incus/profile.go:769 cmd/incus/project.go:571
+#: cmd/incus/storage.go:728 cmd/incus/storage_volume.go:1708
+#: cmd/incus/warning.go:244
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr ""
@@ -7798,7 +7817,7 @@ msgstr ""
 msgid "[<remote>:] [<filter>...]"
 msgstr ""
 
-#: cmd/incus/image_alias.go:149
+#: cmd/incus/image_alias.go:155
 msgid "[<remote>:] [<filters>...]"
 msgstr ""
 
@@ -7848,15 +7867,15 @@ msgstr ""
 msgid "[<remote>:]<Zone> [key=value...]"
 msgstr ""
 
-#: cmd/incus/image_alias.go:104
+#: cmd/incus/image_alias.go:109
 msgid "[<remote>:]<alias>"
 msgstr ""
 
-#: cmd/incus/image_alias.go:58
+#: cmd/incus/image_alias.go:63
 msgid "[<remote>:]<alias> <fingerprint>"
 msgstr ""
 
-#: cmd/incus/image_alias.go:252
+#: cmd/incus/image_alias.go:331
 msgid "[<remote>:]<alias> <new-name>"
 msgstr ""
 
