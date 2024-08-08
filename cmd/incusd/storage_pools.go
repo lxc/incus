@@ -146,13 +146,24 @@ func storagePoolsGet(d *Daemon, r *http.Request) response.Response {
 	recursion := localUtil.IsRecursionRequest(r)
 
 	var poolNames []string
+	var hiddenPoolNames []string
 
 	err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
+		// Load the pool names.
 		poolNames, err = tx.GetStoragePoolNames(ctx)
+		if err != nil {
+			return err
+		}
 
-		return err
+		// Load the project limits.
+		hiddenPoolNames, err = project.HiddenStoragePools(ctx, tx, request.ProjectParam(r))
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil && !response.IsNotFoundError(err) {
 		return response.SmartError(err)
@@ -166,6 +177,11 @@ func storagePoolsGet(d *Daemon, r *http.Request) response.Response {
 	resultString := []string{}
 	resultMap := []api.StoragePool{}
 	for _, poolName := range poolNames {
+		// Hide storage pools with a 0 project limit.
+		if slices.Contains(hiddenPoolNames, poolName) {
+			continue
+		}
+
 		if !recursion {
 			resultString = append(resultString, fmt.Sprintf("/%s/storage-pools/%s", version.APIVersion, poolName))
 		} else {
@@ -636,6 +652,27 @@ func storagePoolGet(d *Daemon, r *http.Request) response.Response {
 	memberSpecific := false
 	if request.QueryParam(r, "target") != "" {
 		memberSpecific = true
+	}
+
+	var hiddenPoolNames []string
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Load the project limits.
+		hiddenPoolNames, err = project.HiddenStoragePools(ctx, tx, request.ProjectParam(r))
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Hide storage pools with a 0 project limit.
+	if slices.Contains(hiddenPoolNames, poolName) {
+		return response.NotFound(nil)
 	}
 
 	// Get the existing storage pool.
