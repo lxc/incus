@@ -648,8 +648,9 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 	// This way we won't apply the same changes multiple times for each cluster member.
 	if len(aclOVNNets) > 0 && clientType == request.ClientTypeNormal {
 		// Check that OVN is available.
-		if d.state.OVNNB == nil {
-			return fmt.Errorf("OVN isn't currently available")
+		ovnnb, _, err := d.state.OVN()
+		if err != nil {
+			return err
 		}
 
 		var aclNameIDs map[string]int64
@@ -670,7 +671,7 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 		// apply those rules to each network affected by the ACL, so pass the full list of OVN networks
 		// affected by this ACL (either because the ACL is assigned directly or because it is assigned to
 		// an OVN NIC in an instance or profile).
-		cleanup, err := OVNEnsureACLs(d.state, d.logger, d.state.OVNNB, d.projectName, aclNameIDs, aclOVNNets, []string{d.info.Name}, true)
+		cleanup, err := OVNEnsureACLs(d.state, d.logger, ovnnb, d.projectName, aclNameIDs, aclOVNNets, []string{d.info.Name}, true)
 		if err != nil {
 			return fmt.Errorf("Failed ensuring ACL is configured in OVN: %w", err)
 		}
@@ -679,7 +680,7 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 
 		// Run unused port group cleanup in case any formerly referenced ACL in this ACL's rules means that
 		// an ACL port group is now considered unused.
-		err = OVNPortGroupDeleteIfUnused(d.state, d.logger, d.state.OVNNB, d.projectName, nil, "", d.info.Name)
+		err = OVNPortGroupDeleteIfUnused(d.state, d.logger, ovnnb, d.projectName, nil, "", d.info.Name)
 		if err != nil {
 			return fmt.Errorf("Failed removing unused OVN port groups: %w", err)
 		}

@@ -168,6 +168,7 @@ type Daemon struct {
 	// OVN clients.
 	ovnnb *ovn.NB
 	ovnsb *ovn.SB
+	ovnMu sync.Mutex
 
 	// API info.
 	apiExtensions int
@@ -559,8 +560,7 @@ func (d *Daemon) State() *state.State {
 		InstanceTypes:          instanceTypes,
 		LocalConfig:            localConfig,
 		OS:                     d.os,
-		OVNNB:                  d.ovnnb,
-		OVNSB:                  d.ovnsb,
+		OVN:                    d.getOVN,
 		Proxy:                  d.proxy,
 		ServerCert:             d.serverCert,
 		ServerClustered:        d.serverClustered,
@@ -1466,9 +1466,6 @@ func (d *Daemon) init() error {
 
 		logger.Info("Started BGP server")
 	}
-
-	// Attempt to setup OVN clients.
-	_ = d.setupOVN()
 
 	// Setup DNS listener.
 	d.dns = dns.NewServer(d.db.Cluster, func(name string, full bool) (*dns.Zone, error) {
@@ -2535,6 +2532,9 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 }
 
 func (d *Daemon) setupOVN() error {
+	d.ovnMu.Lock()
+	defer d.ovnMu.Unlock()
+
 	// Clear any existing clients.
 	d.ovnnb = nil
 	d.ovnsb = nil
@@ -2596,4 +2596,15 @@ func (d *Daemon) setupOVN() error {
 	d.ovnsb = ovnsb
 
 	return nil
+}
+
+func (d *Daemon) getOVN() (*ovn.NB, *ovn.SB, error) {
+	if d.ovnnb == nil || d.ovnsb == nil {
+		err := d.setupOVN()
+		if err != nil {
+			return nil, nil, fmt.Errorf("Failed to connect to OVN: %w", err)
+		}
+	}
+
+	return d.ovnnb, d.ovnsb, nil
 }

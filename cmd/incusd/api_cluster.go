@@ -773,6 +773,9 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		// Refresh the state.
 		s = d.State()
 
+		// Re-connect OVN if needed.
+		_ = d.setupOVN()
+
 		// Start up networks so any post-join changes can be applied now that we have a Node ID.
 		logger.Debug("Starting networks after cluster join")
 		err = networkStartup(s)
