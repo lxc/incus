@@ -433,27 +433,30 @@ func (n *ovn) Validate(config map[string]string) error {
 	}
 
 	// Check uplink network is valid and allowed in project.
-	uplinkNetworkName, err := n.validateUplinkNetwork(p, config["network"])
-	if err != nil {
-		return err
-	}
-
 	var uplink *api.Network
+	projectRestrictedSubnets := []*net.IPNet{}
 
-	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Get uplink routes.
-		_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, uplinkNetworkName)
+	if n.config["network"] != "none" {
+		uplinkNetworkName, err := n.validateUplinkNetwork(p, config["network"])
+		if err != nil {
+			return err
+		}
 
-		return err
-	})
-	if err != nil {
-		return fmt.Errorf("Failed to load uplink network %q: %w", uplinkNetworkName, err)
-	}
+		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Get uplink routes.
+			_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, uplinkNetworkName)
 
-	// Get project restricted routes.
-	projectRestrictedSubnets, err := n.projectRestrictedSubnets(p, uplinkNetworkName)
-	if err != nil {
-		return err
+			return err
+		})
+		if err != nil {
+			return fmt.Errorf("Failed to load uplink network %q: %w", uplinkNetworkName, err)
+		}
+
+		// Get project restricted routes.
+		projectRestrictedSubnets, err = n.projectRestrictedSubnets(p, uplinkNetworkName)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Parse the network's address subnets for further checks.
@@ -468,6 +471,25 @@ func (n *ovn) Validate(config map[string]string) error {
 
 			netSubnets[addressKey] = ipNet
 		}
+	}
+
+	// Check Security ACLs exist.
+	if config["security.acls"] != "" {
+		err = acl.Exists(n.state, n.project, util.SplitNTrimSpace(config["security.acls"], ",", -1, true)...)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Check that ipv6.l3only mode is used with ipvp.dhcp.stateful.
+	// As otherwise the router advertisements will configure an address using the subnet's mask.
+	if util.IsTrue(config["ipv6.l3only"]) && util.IsTrueOrEmpty(config["ipv6.dhcp"]) && util.IsFalseOrEmpty(config["ipv6.dhcp.stateful"]) {
+		return fmt.Errorf("The ipv6.dhcp.stateful setting must be enabled when using ipv6.l3only mode with ipv6.dhcp enabled")
+	}
+
+	// All tests below are related to the uplink network, skip if we don't have one.
+	if uplink == nil {
+		return nil
 	}
 
 	// If NAT disabled, parse the external subnets that are being requested.
@@ -650,20 +672,6 @@ func (n *ovn) Validate(config map[string]string) error {
 				return api.StatusErrorf(http.StatusBadRequest, "Network load balancer for %q has a backend target address %q that is not within the network subnet", loadBalancer.ListenAddress, targetIP.String())
 			}
 		}
-	}
-
-	// Check Security ACLs exist.
-	if config["security.acls"] != "" {
-		err = acl.Exists(n.state, n.project, util.SplitNTrimSpace(config["security.acls"], ",", -1, true)...)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Check that ipv6.l3only mode is used with ipvp.dhcp.stateful.
-	// As otherwise the router advertisements will configure an address using the subnet's mask.
-	if util.IsTrue(config["ipv6.l3only"]) && util.IsTrueOrEmpty(config["ipv6.dhcp"]) && util.IsFalseOrEmpty(config["ipv6.dhcp.stateful"]) {
-		return fmt.Errorf("The ipv6.dhcp.stateful setting must be enabled when using ipv6.l3only mode with ipv6.dhcp enabled")
 	}
 
 	return nil
@@ -930,6 +938,10 @@ func (n *ovn) getLogicalRouterPeerPortName(peerNetworkID int64) networkOVN.OVNRo
 // setupUplinkPort initializes the uplink connection. Returns the derived ovnUplinkVars settings used
 // during the initial creation of the logical network.
 func (n *ovn) setupUplinkPort(routerMAC net.HardwareAddr) (*ovnUplinkVars, error) {
+	if n.config["network"] == "none" {
+		return nil, nil
+	}
+
 	// Uplink network must be in default project.
 	uplinkNet, err := LoadByName(n.state, api.ProjectDefaultName, n.config["network"])
 	if err != nil {
@@ -1230,6 +1242,10 @@ func (n *ovn) uplinkAllocateIP(ipRanges []*iprange.Range, allAllocated []net.IP)
 
 // startUplinkPort performs any network start up logic needed to connect the uplink connection to OVN.
 func (n *ovn) startUplinkPort() error {
+	if n.config["network"] == "none" {
+		return nil
+	}
+
 	// Uplink network must be in default project.
 	uplinkNet, err := LoadByName(n.state, api.ProjectDefaultName, n.config["network"])
 	if err != nil {
@@ -1555,6 +1571,10 @@ func (n *ovn) startUplinkPortPhysical(uplinkNet Network) error {
 
 // checkUplinkUse checks if uplink network is used by another OVN network.
 func (n *ovn) checkUplinkUse() (bool, error) {
+	if n.config["network"] == "none" {
+		return false, nil
+	}
+
 	// Get all managed networks across all projects.
 	var err error
 	var projectNetworks map[string]map[int64]api.Network
@@ -1585,6 +1605,10 @@ func (n *ovn) checkUplinkUse() (bool, error) {
 
 // deleteUplinkPort deletes the uplink connection.
 func (n *ovn) deleteUplinkPort() error {
+	if n.config["network"] == "none" {
+		return nil
+	}
+
 	// Uplink network must be in default project.
 	if n.config["network"] != "" {
 		uplinkNet, err := LoadByName(n.state, api.ProjectDefaultName, n.config["network"])
@@ -1989,9 +2013,12 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	// Check project restrictions and get uplink network to use.
-	uplinkNetwork, err := n.validateUplinkNetwork(p, n.config["network"])
-	if err != nil {
-		return err
+	uplinkNetwork := "none"
+	if n.config["network"] != "none" {
+		uplinkNetwork, err = n.validateUplinkNetwork(p, n.config["network"])
+		if err != nil {
+			return err
+		}
 	}
 
 	// Ensure automatically selected uplink network is saved into "network" key.
@@ -2050,14 +2077,14 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	// Parse router IP config.
-	if uplinkNet.routerExtPortIPv4Net != "" {
+	if uplinkNet != nil && uplinkNet.routerExtPortIPv4Net != "" {
 		routerExtPortIPv4, routerExtPortIPv4Net, err = net.ParseCIDR(uplinkNet.routerExtPortIPv4Net)
 		if err != nil {
 			return fmt.Errorf("Failed parsing router's external uplink port IPv4 Net: %w", err)
 		}
 	}
 
-	if uplinkNet.routerExtPortIPv6Net != "" {
+	if uplinkNet != nil && uplinkNet.routerExtPortIPv6Net != "" {
 		routerExtPortIPv6, routerExtPortIPv6Net, err = net.ParseCIDR(uplinkNet.routerExtPortIPv6Net)
 		if err != nil {
 			return fmt.Errorf("Failed parsing router's external uplink port IPv6 Net: %w", err)
@@ -2163,9 +2190,11 @@ func (n *ovn) setup(update bool) error {
 			})
 		}
 
-		err = n.ovnnb.UpdateLogicalSwitchPortLinkProviderNetwork(context.TODO(), n.getExtSwitchProviderPortName(), uplinkNet.extSwitchProviderName)
-		if err != nil {
-			return fmt.Errorf("Failed linking external switch provider port to external provider network: %w", err)
+		if uplinkNet != nil {
+			err = n.ovnnb.UpdateLogicalSwitchPortLinkProviderNetwork(context.TODO(), n.getExtSwitchProviderPortName(), uplinkNet.extSwitchProviderName)
+			if err != nil {
+				return fmt.Errorf("Failed linking external switch provider port to external provider network: %w", err)
+			}
 		}
 
 		// Remove any existing SNAT rules on update. As currently these are only defined from the network
@@ -2421,16 +2450,21 @@ func (n *ovn) setup(update bool) error {
 			dhcpV4Netmask = "255.255.255.255"
 		}
 
-		err = n.ovnnb.UpdateLogicalSwitchDHCPv4Options(context.TODO(), n.getIntSwitchName(), dhcpv4UUID, dhcpV4Subnet, &networkOVN.OVNDHCPv4Opts{
-			ServerID:           routerIntPortIPv4,
-			ServerMAC:          routerMAC,
-			Router:             routerIntPortIPv4,
-			RecursiveDNSServer: uplinkNet.dnsIPv4,
-			DomainName:         n.getDomainName(),
-			LeaseTime:          time.Duration(time.Hour * 1),
-			MTU:                bridgeMTU,
-			Netmask:            dhcpV4Netmask,
-		})
+		opts := &networkOVN.OVNDHCPv4Opts{
+			ServerID:   routerIntPortIPv4,
+			ServerMAC:  routerMAC,
+			Router:     routerIntPortIPv4,
+			DomainName: n.getDomainName(),
+			LeaseTime:  time.Duration(time.Hour * 1),
+			MTU:        bridgeMTU,
+			Netmask:    dhcpV4Netmask,
+		}
+
+		if uplinkNet != nil {
+			opts.RecursiveDNSServer = uplinkNet.dnsIPv4
+		}
+
+		err = n.ovnnb.UpdateLogicalSwitchDHCPv4Options(context.TODO(), n.getIntSwitchName(), dhcpv4UUID, dhcpV4Subnet, opts)
 		if err != nil {
 			return fmt.Errorf("Failed adding DHCPv4 settings for internal switch: %w", err)
 		}
@@ -2438,11 +2472,16 @@ func (n *ovn) setup(update bool) error {
 
 	// Create DHCPv6 options for internal switch.
 	if dhcpV6Subnet != nil {
-		err = n.ovnnb.UpdateLogicalSwitchDHCPv6Options(context.TODO(), n.getIntSwitchName(), dhcpv6UUID, dhcpV6Subnet, &networkOVN.OVNDHCPv6Opts{
-			ServerID:           routerMAC,
-			RecursiveDNSServer: uplinkNet.dnsIPv6,
-			DNSSearchList:      n.getDNSSearchList(),
-		})
+		opts := &networkOVN.OVNDHCPv6Opts{
+			ServerID:      routerMAC,
+			DNSSearchList: n.getDNSSearchList(),
+		}
+
+		if uplinkNet != nil {
+			opts.RecursiveDNSServer = uplinkNet.dnsIPv6
+		}
+
+		err = n.ovnnb.UpdateLogicalSwitchDHCPv6Options(context.TODO(), n.getIntSwitchName(), dhcpv6UUID, dhcpV6Subnet, opts)
 		if err != nil {
 			return fmt.Errorf("Failed adding DHCPv6 settings for internal switch: %w", err)
 		}
@@ -2459,7 +2498,7 @@ func (n *ovn) setup(update bool) error {
 		}
 
 		var recursiveDNSServer net.IP
-		if len(uplinkNet.dnsIPv6) > 0 {
+		if uplinkNet != nil && len(uplinkNet.dnsIPv6) > 0 {
 			recursiveDNSServer = uplinkNet.dnsIPv6[0] // OVN only supports 1 RA DNS server.
 		}
 
@@ -2503,7 +2542,13 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	// Apply baseline ACL rules to internal logical switch.
-	err = acl.OVNApplyNetworkBaselineRules(n.ovnnb, n.getIntSwitchName(), n.getIntSwitchRouterPortName(), intRouterIPs, append(uplinkNet.dnsIPv4, uplinkNet.dnsIPv6...))
+	dnsServers := []net.IP{}
+	if uplinkNet != nil {
+		dnsServers = append(dnsServers, uplinkNet.dnsIPv4...)
+		dnsServers = append(dnsServers, uplinkNet.dnsIPv6...)
+	}
+
+	err = acl.OVNApplyNetworkBaselineRules(n.ovnnb, n.getIntSwitchName(), n.getIntSwitchRouterPortName(), intRouterIPs, dnsServers)
 	if err != nil {
 		return fmt.Errorf("Failed applying baseline ACL rules to internal switch: %w", err)
 	}
@@ -2733,31 +2778,31 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 	if clientType == request.ClientTypeNormal {
 		// Delete the router and anything tied to it (router ports, static routes, policies, nat, ...).
 		err = n.ovnnb.DeleteLogicalRouter(context.TODO(), n.getRouterName())
-		if err != nil {
+		if err != nil && err != networkOVN.ErrNotFound {
 			return err
 		}
 
 		// Delete the external logical switch and anything tied to it (ports, ...).
 		err = n.ovnnb.DeleteLogicalSwitch(context.TODO(), n.getExtSwitchName())
-		if err != nil {
+		if err != nil && err != networkOVN.ErrNotFound {
 			return err
 		}
 
 		// Delete the internal logical switch and anything tied to it (ports, ...).
 		err = n.ovnnb.DeleteLogicalSwitch(context.TODO(), n.getIntSwitchName())
-		if err != nil {
+		if err != nil && err != networkOVN.ErrNotFound {
 			return err
 		}
 
 		// Delete any related address sets.
 		err = n.ovnnb.DeleteAddressSet(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()))
-		if err != nil {
+		if err != nil && err != networkOVN.ErrNotFound {
 			return err
 		}
 
 		// Delete the chassis group for the network.
 		err = n.ovnnb.DeleteChassisGroup(context.TODO(), n.getChassisGroupName())
-		if err != nil {
+		if err != nil && err != networkOVN.ErrNotFound {
 			return err
 		}
 
@@ -2877,7 +2922,7 @@ func (n *ovn) Start() error {
 	revert.Add(func() { n.setUnavailable() })
 
 	// Check that uplink network is available.
-	if n.config["network"] != "" && !IsAvailable(api.ProjectDefaultName, n.config["network"]) {
+	if n.config["network"] != "" && n.config["network"] != "none" && !IsAvailable(api.ProjectDefaultName, n.config["network"]) {
 		return fmt.Errorf("Uplink network %q is unavailable", n.config["network"])
 	}
 
@@ -3321,6 +3366,10 @@ func (n *ovn) instanceDevicePortRoutesParse(deviceConfig map[string]string) ([]*
 
 // InstanceDevicePortValidateExternalRoutes validates the external routes for an OVN instance port.
 func (n *ovn) InstanceDevicePortValidateExternalRoutes(deviceInstance instance.Instance, deviceName string, portExternalRoutes []*net.IPNet) error {
+	if n.config["network"] == "none" {
+		return nil
+	}
+
 	var p *api.Project
 	var uplink *api.Network
 
@@ -4578,6 +4627,10 @@ func (n *ovn) forwardFlattenVIPs(listenAddress net.IP, defaultTargetAddress net.
 
 // ForwardCreate creates a network forward.
 func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.ClientType) error {
+	if n.config["network"] == "none" {
+		return fmt.Errorf("Isolated OVN network cannot use network forwards")
+	}
+
 	revert := revert.New()
 	defer revert.Fail()
 
@@ -4948,6 +5001,10 @@ func (n *ovn) loadBalancerFlattenVIPs(listenAddress net.IP, portMaps []*loadBala
 
 // LoadBalancerCreate creates a network load balancer.
 func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clientType request.ClientType) error {
+	if n.config["network"] == "none" {
+		return fmt.Errorf("Isolated OVN network cannot use network load balancers")
+	}
+
 	revert := revert.New()
 	defer revert.Fail()
 

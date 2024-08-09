@@ -330,6 +330,10 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("No name provided"))
 	}
 
+	if req.Name == "none" {
+		return response.BadRequest(fmt.Errorf("Network name 'none' is not valid"))
+	}
+
 	// Check if project allows access to network.
 	if !project.NetworkAllowed(reqProject.Config, req.Name, true) {
 		return response.SmartError(api.StatusErrorf(http.StatusForbidden, "Network not allowed in project"))
