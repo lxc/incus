@@ -2546,3 +2546,7 @@ The new configuration keys are:
 ## `disk_volume_subpath`
 
 This introduces the ability to access the sub-path of a file system custom volume by using the `source=volume/path` syntax.
+
+## `projects_limits_disk_pool`
+
+This introduces per-pool project disk limits, introducing a `limits.disk.pool.NAME` configuration option to the project limits.

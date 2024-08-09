@@ -1640,6 +1640,14 @@ This value is the maximum value for the sum of the individual {config:option}`in
 This value is the maximum value of the aggregate disk space used by all instance volumes, custom volumes, and images of the project.
 ```
 
+```{config:option} limits.disk.pool.POOL_NAME project-limits
+:shortdesc: "Maximum disk space used by the project on this pool"
+:type: "string"
+This value is the maximum value of the aggregate disk
+space used by all instance volumes, custom volumes, and images of the
+project on this specific storage pool.
+```
+
 ```{config:option} limits.instances project-limits
 :shortdesc: "Maximum number of instances that can be created in the project"
 :type: "integer"

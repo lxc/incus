@@ -1108,9 +1108,11 @@ func (c *cmdProjectInfo) Run(cmd *cobra.Command, args []string) error {
 	byteLimits := []string{"disk", "memory"}
 	data := [][]string{}
 	for k, v := range projectState.Resources {
+		shortKey := strings.SplitN(k, ".", 2)[0]
+
 		limit := i18n.G("UNLIMITED")
 		if v.Limit >= 0 {
-			if slices.Contains(byteLimits, k) {
+			if slices.Contains(byteLimits, shortKey) {
 				limit = units.GetByteSizeStringIEC(v.Limit, 2)
 			} else {
 				limit = fmt.Sprintf("%d", v.Limit)
@@ -1118,13 +1120,19 @@ func (c *cmdProjectInfo) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		usage := ""
-		if slices.Contains(byteLimits, k) {
+		if slices.Contains(byteLimits, shortKey) {
 			usage = units.GetByteSizeStringIEC(v.Usage, 2)
 		} else {
 			usage = fmt.Sprintf("%d", v.Usage)
 		}
 
-		data = append(data, []string{strings.ToUpper(k), limit, usage})
+		columnName := strings.ToUpper(k)
+		fields := strings.SplitN(columnName, ".", 2)
+		if len(fields) == 2 {
+			columnName = fmt.Sprintf("%s (%s)", fields[0], fields[1])
+		}
+
+		data = append(data, []string{columnName, limit, usage})
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))

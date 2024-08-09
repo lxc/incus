@@ -15,6 +15,9 @@ import (
 // separator is used to delimit the project name from the suffix.
 const separator = "_"
 
+// projectLimitDiskPool is the prefix used for pool-specific disk limits.
+var projectLimitDiskPool = "limits.disk.pool."
+
 // Instance adds the "<project>_" prefix to instance name when the given project name is not "default".
 func Instance(projectName string, instanceName string) string {
 	if projectName != api.ProjectDefaultName {

@@ -7006,7 +7006,7 @@ func (b *backend) CreateCustomVolumeFromISO(projectName string, volName string, 
 	}
 
 	err := b.state.DB.Cluster.Transaction(b.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
-		return project.AllowVolumeCreation(tx, projectName, req)
+		return project.AllowVolumeCreation(tx, projectName, b.name, req)
 	})
 	if err != nil {
 		return fmt.Errorf("Failed checking volume creation allowed: %w", err)
@@ -7096,7 +7096,7 @@ func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io
 	}
 
 	err := b.state.DB.Cluster.Transaction(b.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
-		return project.AllowVolumeCreation(tx, srcBackup.Project, req)
+		return project.AllowVolumeCreation(tx, srcBackup.Project, b.name, req)
 	})
 	if err != nil {
 		return fmt.Errorf("Failed checking volume creation allowed: %w", err)

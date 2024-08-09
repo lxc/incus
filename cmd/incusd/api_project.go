@@ -1692,6 +1692,34 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		"restricted.snapshots": isEitherAllowOrBlock,
 	}
 
+	// Add the storage pool keys.
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Load all the pools.
+		pools, err := tx.GetStoragePoolNames(ctx)
+		if err != nil {
+			return err
+		}
+
+		// Add the storage-pool specific config keys.
+		for _, poolName := range pools {
+			// gendoc:generate(entity=project, group=limits, key=limits.disk.pool.POOL_NAME)
+			// This value is the maximum value of the aggregate disk
+			// space used by all instance volumes, custom volumes, and images of the
+			// project on this specific storage pool.
+			// ---
+			//  type: string
+			//  shortdesc: Maximum disk space used by the project on this pool
+			projectConfigKeys[fmt.Sprintf("limits.disk.pool.%s", poolName)] = validate.Optional(validate.IsSize)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("Failed loading storage pool names: %w", err)
+	}
+
 	for k, v := range config {
 		key := k
 
