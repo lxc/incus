@@ -278,7 +278,7 @@ func hoistReq(f func(*Daemon, instance.Instance, http.ResponseWriter, *http.Requ
 		conn := ucred.GetConnFromContext(r.Context())
 		cred, ok := pidMapper.m[conn.(*net.UnixConn)]
 		if !ok {
-			http.Error(w, pidNotInContainerErr.Error(), http.StatusInternalServerError)
+			http.Error(w, errPidNotInContainer.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -390,7 +390,7 @@ func (m *ConnPidMapper) ConnStateHandler(conn net.Conn, state http.ConnState) {
 	}
 }
 
-var pidNotInContainerErr = fmt.Errorf("pid not in container?")
+var errPidNotInContainer = fmt.Errorf("pid not in container?")
 
 func findContainerForPid(pid int32, s *state.State) (instance.Container, error) {
 	/*
@@ -496,5 +496,5 @@ func findContainerForPid(pid int32, s *state.State) (instance.Container, error) 
 		}
 	}
 
-	return nil, pidNotInContainerErr
+	return nil, errPidNotInContainer
 }
