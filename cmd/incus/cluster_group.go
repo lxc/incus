@@ -22,6 +22,11 @@ type cmdClusterGroup struct {
 	cluster *cmdCluster
 }
 
+type clusterGroupColumn struct {
+	Name string
+	Data func(api.ClusterGroup) string
+}
+
 // Cluster management including assignment, creation, deletion, editing, listing, removal, renaming, and showing details.
 func (c *cmdClusterGroup) Command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -439,7 +444,8 @@ type cmdClusterGroupList struct {
 	global  *cmdGlobal
 	cluster *cmdCluster
 
-	flagFormat string
+	flagFormat  string
+	flagColumns string
 }
 
 // Command returns a cobra command to list all the cluster groups in a specified format.
@@ -449,7 +455,26 @@ func (c *cmdClusterGroupList) Command() *cobra.Command {
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List all the cluster groups")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`List all the cluster groups`))
+		`List all the cluster groups
+
+Default column layout: ndm
+
+== Columns ==
+The -c option takes a comma separated list of arguments that control
+which instance attributes to output when displaying in table or csv
+format.
+
+Column arguments are either pre-defined shorthand chars (see below),
+or (extended) config keys.
+
+Commas between consecutive shorthand chars are optional.
+
+Pre-defined column shorthand chars:
+  n - Name
+  d - Description
+  m - Member`))
+
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultClusterGroupColumns, i18n.G("Columns")+"``")
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
 
 	cmd.RunE = c.Run
@@ -463,6 +488,48 @@ func (c *cmdClusterGroupList) Command() *cobra.Command {
 	}
 
 	return cmd
+}
+
+const defaultClusterGroupColumns = "ndm"
+
+func (c *cmdClusterGroupList) parseColumns() ([]clusterGroupColumn, error) {
+	columnsShorthandMap := map[rune]clusterGroupColumn{
+		'n': {i18n.G("NAME"), c.clusterGroupNameColumnData},
+		'm': {i18n.G("MEMBERS"), c.membersColumnData},
+		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+	columns := []clusterGroupColumn{}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+func (c *cmdClusterGroupList) clusterGroupNameColumnData(group api.ClusterGroup) string {
+	return group.Name
+}
+
+func (c *cmdClusterGroupList) descriptionColumnData(group api.ClusterGroup) string {
+	return group.Description
+}
+
+func (c *cmdClusterGroupList) membersColumnData(group api.ClusterGroup) string {
+	return fmt.Sprintf("%d", len(group.Members))
 }
 
 // Run executes the command to list all the cluster groups, their descriptions, and number of members.
@@ -501,19 +568,28 @@ func (c *cmdClusterGroupList) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Parse column flags.
+	columns, err := c.parseColumns()
+	if err != nil {
+		return err
+	}
+
 	// Render the table
 	data := [][]string{}
 	for _, group := range groups {
-		line := []string{group.Name, group.Description, fmt.Sprintf("%d", len(group.Members))}
+		line := []string{}
+		for _, column := range columns {
+			line = append(line, column.Data(group))
+		}
+
 		data = append(data, line)
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))
 
-	header := []string{
-		i18n.G("NAME"),
-		i18n.G("DESCRIPTION"),
-		i18n.G("MEMBERS"),
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
 	}
 
 	return cli.RenderTable(c.flagFormat, header, data, groups)
