@@ -283,7 +283,8 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 
 	err = addr.Add()
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't add IP to %q\n", iface)
+		return nil
 	}
 
 	route := &ip.Route{
@@ -295,13 +296,15 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 
 	err = route.Add()
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't add default route to %q\n", iface)
+		return nil
 	}
 
 	// DNS configuration.
 	f, err := os.Create(filepath.Join(args[0], "resolv.conf"))
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
+		return nil
 	}
 
 	defer f.Close()
@@ -309,21 +312,24 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 	for _, nameserver := range reply.DNS() {
 		_, err = f.Write([]byte(fmt.Sprintf("nameserver %s\n", nameserver)))
 		if err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
+			return nil
 		}
 	}
 
 	if reply.DomainName() != "" {
 		_, err = f.Write([]byte(fmt.Sprintf("domain %s\n", reply.DomainName())))
 		if err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
+			return nil
 		}
 	}
 
 	if reply.DomainSearch() != nil && len(reply.DomainSearch().Labels) > 0 {
 		_, err = f.Write([]byte(fmt.Sprintf("search %s\n", strings.Join(reply.DomainSearch().Labels, ", "))))
 		if err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
+			return nil
 		}
 	}
 
