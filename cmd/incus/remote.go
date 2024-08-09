@@ -785,8 +785,8 @@ func (c *cmdRemoteList) parseColumns() ([]remoteColumn, error) {
 	}
 
 	return columns, nil
-
 }
+
 func (c *cmdRemoteList) remoteNameColumnData(name string, rc config.Remote) string {
 	conf := c.global.conf
 
