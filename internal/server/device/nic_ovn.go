@@ -412,16 +412,20 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 	// Load uplink network config.
 	uplinkNetworkName := d.network.Config()["network"]
-
 	var uplink *api.Network
+	var uplinkConfig map[string]string
 
-	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, uplinkNetworkName)
+	if uplinkNetworkName != "none" {
+		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, uplinkNetworkName)
 
-		return err
-	})
-	if err != nil {
-		return nil, fmt.Errorf("Failed to load uplink network %q: %w", uplinkNetworkName, err)
+			return err
+		})
+		if err != nil {
+			return nil, fmt.Errorf("Failed to load uplink network %q: %w", uplinkNetworkName, err)
+		}
+
+		uplinkConfig = uplink.Config
 	}
 
 	// Setup the host network interface (if not nested).
@@ -611,7 +615,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 		DNSName:      d.inst.Name(),
 		DeviceName:   d.name,
 		DeviceConfig: d.config,
-		UplinkConfig: uplink.Config,
+		UplinkConfig: uplinkConfig,
 		LastStateIPs: lastStateIPs, // Pass in volatile last state IPs for use with sticky DHCPv4 hint.
 	}, nil)
 	if err != nil {
@@ -642,7 +646,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 	// Associated host side interface to OVN logical switch port (if not nested).
 	if integrationBridgeNICName != "" {
-		cleanup, err := d.setupHostNIC(integrationBridgeNICName, logicalPortName, uplink)
+		cleanup, err := d.setupHostNIC(integrationBridgeNICName, logicalPortName)
 		if err != nil {
 			return nil, err
 		}
@@ -782,27 +786,31 @@ func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		if isRunning {
 			// Load uplink network config.
 			uplinkNetworkName := d.network.Config()["network"]
-
 			var uplink *api.Network
+			var uplinkConfig map[string]string
 
-			err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-				var err error
+			if uplinkNetworkName != "none" {
+				err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+					var err error
 
-				_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, uplinkNetworkName)
+					_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, uplinkNetworkName)
 
-				return err
-			})
-			if err != nil {
-				return fmt.Errorf("Failed to load uplink network %q: %w", uplinkNetworkName, err)
+					return err
+				})
+				if err != nil {
+					return fmt.Errorf("Failed to load uplink network %q: %w", uplinkNetworkName, err)
+				}
+
+				uplinkConfig = uplink.Config
 			}
 
 			// Update OVN logical switch port for instance.
-			_, _, err = d.network.InstanceDevicePortStart(&network.OVNInstanceNICSetupOpts{
+			_, _, err := d.network.InstanceDevicePortStart(&network.OVNInstanceNICSetupOpts{
 				InstanceUUID: d.inst.LocalConfig()["volatile.uuid"],
 				DNSName:      d.inst.Name(),
 				DeviceName:   d.name,
 				DeviceConfig: d.config,
-				UplinkConfig: uplink.Config,
+				UplinkConfig: uplinkConfig,
 			}, removedACLs)
 			if err != nil {
 				return fmt.Errorf("Failed updating OVN port: %w", err)
@@ -1153,7 +1161,7 @@ func (d *nicOVN) Register() error {
 	return nil
 }
 
-func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort, uplink *api.Network) (revert.Hook, error) {
+func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort) (revert.Hook, error) {
 	revert := revert.New()
 	defer revert.Fail()
 
