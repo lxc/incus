@@ -432,6 +432,7 @@ var APIExtensions = []string{
 	"clustering_groups_vm_cpu_definition",
 	"disk_volume_subpath",
 	"projects_limits_disk_pool",
+	"network_ovn_isolated",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
