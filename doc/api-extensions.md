@@ -2531,3 +2531,7 @@ This introduces the ability to access the sub-path of a file system custom volum
 ## `projects_limits_disk_pool`
 
 This introduces per-pool project disk limits, introducing a `limits.disk.pool.NAME` configuration option to the project limits.
+
+## `network_ovn_isolated`
+
+This allows using `none` as the uplink network for an OVN network, making the network isolated.

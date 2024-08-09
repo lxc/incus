@@ -429,6 +429,7 @@ var APIExtensions = []string{
 	"instances_lxcfs_per_instance",
 	"disk_volume_subpath",
 	"projects_limits_disk_pool",
+	"network_ovn_isolated",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
