@@ -2733,31 +2733,31 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 	if clientType == request.ClientTypeNormal {
 		// Delete the router and anything tied to it (router ports, static routes, policies, nat, ...).
 		err = n.ovnnb.DeleteLogicalRouter(context.TODO(), n.getRouterName())
-		if err != nil {
+		if err != nil && err != networkOVN.ErrNotFound {
 			return err
 		}
 
 		// Delete the external logical switch and anything tied to it (ports, ...).
 		err = n.ovnnb.DeleteLogicalSwitch(context.TODO(), n.getExtSwitchName())
-		if err != nil {
+		if err != nil && err != networkOVN.ErrNotFound {
 			return err
 		}
 
 		// Delete the internal logical switch and anything tied to it (ports, ...).
 		err = n.ovnnb.DeleteLogicalSwitch(context.TODO(), n.getIntSwitchName())
-		if err != nil {
+		if err != nil && err != networkOVN.ErrNotFound {
 			return err
 		}
 
 		// Delete any related address sets.
 		err = n.ovnnb.DeleteAddressSet(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()))
-		if err != nil {
+		if err != nil && err != networkOVN.ErrNotFound {
 			return err
 		}
 
 		// Delete the chassis group for the network.
 		err = n.ovnnb.DeleteChassisGroup(context.TODO(), n.getChassisGroupName())
-		if err != nil {
+		if err != nil && err != networkOVN.ErrNotFound {
 			return err
 		}
 
