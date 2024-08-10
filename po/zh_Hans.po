@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-08-09 20:16-0400\n"
 "PO-Revision-Date: 2024-08-11 11:09+0000\n"
-"Last-Translator: Kwok Guy <kwokjuy@163.com>\n"
+"Last-Translator: Sakiko <sakiko@anontokyo.co.uk>\n"
 "Language-Team: Chinese (Simplified) <https://hosted.weblate.org/projects/"
 "incus/cli/zh_Hans/>\n"
 "Language: zh_Hans\n"
@@ -5721,12 +5721,12 @@ msgstr ""
 #: cmd/incus/image.go:1036
 #, c-format
 msgid "Protocol: %s"
-msgstr ""
+msgstr "协议: %s"
 
 #: cmd/incus/config_trust.go:224
 #, c-format
 msgid "Provided certificate path doesn't exist: %s"
-msgstr ""
+msgstr "提供的证书路径不存在: %s"
 
 #: cmd/incus/remote_unix.go:42
 msgid "Proxy timeout (exits when no connections)"
@@ -5734,30 +5734,30 @@ msgstr ""
 
 #: cmd/incus/remote.go:123
 msgid "Public image server"
-msgstr ""
+msgstr "公共镜像服务器"
 
 #: cmd/incus/image.go:995
-#, c-format
+#, c-format, fuzzy
 msgid "Public: %s"
-msgstr ""
+msgstr "公共: %s"
 
 #: cmd/incus/publish.go:31 cmd/incus/publish.go:32
 msgid "Publish instances as images"
-msgstr ""
+msgstr "发布实例为镜像"
 
 #: cmd/incus/publish.go:264
-#, c-format
+#, c-format, fuzzy
 msgid "Publishing instance: %s"
-msgstr ""
+msgstr "正在发布实例: %s"
 
 #: cmd/incus/file.go:428 cmd/incus/file.go:429
 msgid "Pull files from instances"
-msgstr ""
+msgstr "从实例拉取文件"
 
 #: cmd/incus/file.go:597 cmd/incus/file.go:934
-#, c-format
+#, c-format, fuzzy
 msgid "Pulling %s from %s: %%s"
-msgstr ""
+msgstr "正在从 %[2]s 拉取 %[1]s: %%s"
 
 #: cmd/incus/file.go:647 cmd/incus/file.go:648
 msgid "Push files into instances"
