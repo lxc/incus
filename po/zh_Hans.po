@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-08-09 20:16-0400\n"
-"PO-Revision-Date: 2024-08-07 12:18+0000\n"
-"Last-Translator: Kwok Guy <kwokjuy@163.com>\n"
+"PO-Revision-Date: 2024-08-11 11:09+0000\n"
+"Last-Translator: Sakiko <sakiko@anontokyo.co.uk>\n"
 "Language-Team: Chinese (Simplified) <https://hosted.weblate.org/projects/"
 "incus/cli/zh_Hans/>\n"
 "Language: zh_Hans\n"
@@ -163,7 +163,7 @@ msgstr ""
 "###     type: disk\n"
 "### ephemeral: false\n"
 "###\n"
-"### 注意这里展示的名称不能被修改"
+"### 注意这里展示的 name 不能被修改"
 
 #: cmd/incus/image.go:399
 msgid ""
@@ -177,8 +177,8 @@ msgstr ""
 "### 这是一个镜像属性的 YAML 表示.\n"
 "### 任何以 '#' 开头的行会被忽略.\n"
 "###\n"
-"### 每条属性都通过一行表示:\n"
-"### 一个实例如下:\n"
+"### 每条属性都用一行表示:\n"
+"### 一个示例如下:\n"
 "###  description: My custom image"
 
 #: cmd/incus/config_metadata.go:71
@@ -207,7 +207,7 @@ msgstr ""
 "### 这是一个实例元数据的 YAML 表示.\n"
 "### 任何以 '#' 开头的行会被忽略.\n"
 "###\n"
-"### 一个配置样例如下:\n"
+"### 一个示例如下:\n"
 "###\n"
 "### architecture: x86_64\n"
 "### creation_date: 1477146654\n"
@@ -255,7 +255,7 @@ msgstr ""
 "­### 这是一个网络 ACL 的 YAML 表示.\n"
 "### 任何以 '#' 开头的行会被忽略.\n"
 "###\n"
-"### 一个网络 ACL 由一组规则和配置项组成.\n"
+"### 一个网络 ACL 由一组规则和配置项构成.\n"
 "###\n"
 "### 一个示例如下:\n"
 "### name: allow-all-inbound\n"
@@ -300,6 +300,25 @@ msgid ""
 "###\n"
 "### Note that the listen_address and location cannot be changed."
 msgstr ""
+"### 这是一个网络转发策略的 YAML 表示.\n"
+"### 任何以 '#' 开头的行都会被忽略.\n"
+"###\n"
+"### 一个网络转发策略由一个默认的目标地址和一组可选的监听地址上的端口号构成.\n"
+"###\n"
+"### 一个示例如下:\n"
+"### listen_address: 192.0.2.1\n"
+"### config:\n"
+"###   target_address: 198.51.100.2\n"
+"### description: test desc\n"
+"### ports:\n"
+"### - description: port forward\n"
+"###   protocol: tcp\n"
+"###   listen_port: 80,81,8080-8090\n"
+"###   target_address: 198.51.100.3\n"
+"###   target_port: 80,81,8080-8090\n"
+"### location: server01\n"
+"###\n"
+"### 注意这里展示的 listen_address 和 location 不能被修改."
 
 #: cmd/incus/network_integration.go:242
 msgid ""
@@ -308,6 +327,10 @@ msgid ""
 "###\n"
 "### Note that the name is shown but cannot be changed"
 msgstr ""
+"### 这是一个网络集成的 YAML 表示.\n"
+"### 任何以 '#' 开头的行会被忽略.\n"
+"###\n"
+"### 注意这里展示的 name 不能被修改."
 
 #: cmd/incus/network_load_balancer.go:585
 msgid ""
@@ -342,6 +365,36 @@ msgid ""
 "###\n"
 "### Note that the listen_address and location cannot be changed."
 msgstr ""
+"### 这是一个网络负载均衡的 YAML 表示.\n"
+"### 任何以 '#' 开头的行都会被忽略.\n"
+"###\n"
+"### 一个网络负载均衡由一组目标后端和A network load balancer consists of a "
+"set of target backends and port forwards for a listen address.\n"
+"###\n"
+"### An example would look like:\n"
+"### listen_address: 192.0.2.1\n"
+"### config:\n"
+"###   user.foo: bar\n"
+"### description: test desc\n"
+"### backends:\n"
+"### - name: backend1\n"
+"###   description: First backend server\n"
+"###   target_address: 192.0.3.1\n"
+"###   target_port: 80\n"
+"### - name: backend2\n"
+"###   description: Second backend server\n"
+"###   target_address: 192.0.3.2\n"
+"###   target_port: 80\n"
+"### ports:\n"
+"### - description: port forward\n"
+"###   protocol: tcp\n"
+"###   listen_port: 80,81,8080-8090\n"
+"###   target_backend:\n"
+"###    - backend1\n"
+"###    - backend2\n"
+"### location: server01\n"
+"###\n"
+"### Note that the listen_address and location cannot be changed."
 
 #: cmd/incus/network_peer.go:644
 msgid ""
@@ -5668,12 +5721,12 @@ msgstr ""
 #: cmd/incus/image.go:1036
 #, c-format
 msgid "Protocol: %s"
-msgstr ""
+msgstr "协议: %s"
 
 #: cmd/incus/config_trust.go:224
 #, c-format
 msgid "Provided certificate path doesn't exist: %s"
-msgstr ""
+msgstr "提供的证书路径不存在: %s"
 
 #: cmd/incus/remote_unix.go:42
 msgid "Proxy timeout (exits when no connections)"
@@ -5681,30 +5734,30 @@ msgstr ""
 
 #: cmd/incus/remote.go:123
 msgid "Public image server"
-msgstr ""
+msgstr "公共镜像服务器"
 
 #: cmd/incus/image.go:995
-#, c-format
+#, c-format, fuzzy
 msgid "Public: %s"
-msgstr ""
+msgstr "公共: %s"
 
 #: cmd/incus/publish.go:31 cmd/incus/publish.go:32
 msgid "Publish instances as images"
-msgstr ""
+msgstr "发布实例为镜像"
 
 #: cmd/incus/publish.go:264
-#, c-format
+#, c-format, fuzzy
 msgid "Publishing instance: %s"
-msgstr ""
+msgstr "正在发布实例: %s"
 
 #: cmd/incus/file.go:428 cmd/incus/file.go:429
 msgid "Pull files from instances"
-msgstr ""
+msgstr "从实例拉取文件"
 
 #: cmd/incus/file.go:597 cmd/incus/file.go:934
-#, c-format
+#, c-format, fuzzy
 msgid "Pulling %s from %s: %%s"
-msgstr ""
+msgstr "正在从 %[2]s 拉取 %[1]s: %%s"
 
 #: cmd/incus/file.go:647 cmd/incus/file.go:648
 msgid "Push files into instances"
