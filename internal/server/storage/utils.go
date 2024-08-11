@@ -868,7 +868,7 @@ func VolumeUsedByProfileDevices(s *state.State, poolName string, projectName str
 				continue
 			}
 
-			if dev["source"] == vol.Name {
+			if strings.Split(dev["source"], "/")[0] == vol.Name {
 				usedByDevices = append(usedByDevices, name)
 			}
 		}
@@ -937,7 +937,7 @@ func VolumeUsedByInstanceDevices(s *state.State, poolName string, projectName st
 					continue
 				}
 
-				if dev["source"] == vol.Name {
+				if strings.Split(dev["source"], "/")[0] == vol.Name {
 					usedByDevices = append(usedByDevices, devName)
 				}
 			}
