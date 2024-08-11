@@ -30,7 +30,9 @@
 //	  Name: name,
 //	  Source: api.InstanceSource{
 //	    Type:  "image",
-//	    Alias: "my-image",
+//	    Alias: "my-image", # e.g. alpine/3.20
+//	    Server: "https://images.linuxcontainers.org",
+//	    Protocol: "simplestreams",
 //	  },
 //	  Type: "container"
 //	}
