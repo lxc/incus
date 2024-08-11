@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-08-09 20:16-0400\n"
-"PO-Revision-Date: 2024-08-11 11:09+0000\n"
+"PO-Revision-Date: 2024-08-12 12:09+0000\n"
 "Last-Translator: Sakiko <sakiko@anontokyo.co.uk>\n"
 "Language-Team: Chinese (Simplified) <https://hosted.weblate.org/projects/"
 "incus/cli/zh_Hans/>\n"
@@ -5730,7 +5730,7 @@ msgstr "提供的证书路径不存在: %s"
 
 #: cmd/incus/remote_unix.go:42
 msgid "Proxy timeout (exits when no connections)"
-msgstr ""
+msgstr "代理已超时 (无连接时退出)"
 
 #: cmd/incus/remote.go:123
 msgid "Public image server"
@@ -5761,20 +5761,20 @@ msgstr "正在从 %[2]s 拉取 %[1]s: %%s"
 
 #: cmd/incus/file.go:647 cmd/incus/file.go:648
 msgid "Push files into instances"
-msgstr ""
+msgstr "向实例推送文件"
 
 #: cmd/incus/file.go:868 cmd/incus/file.go:1034
-#, c-format
+#, c-format, fuzzy
 msgid "Pushing %s to %s: %%s"
-msgstr ""
+msgstr "正在向 %[2]s 推送 %[1]s: %%s"
 
 #: cmd/incus/query.go:88
 msgid "Query path must start with /"
-msgstr ""
+msgstr "查询路径必须以 / 开头"
 
 #: cmd/incus/image.go:516 cmd/incus/image.go:927 cmd/incus/image.go:1504
 msgid "Query virtual machine images"
-msgstr ""
+msgstr "查询虚拟机镜像"
 
 #: cmd/incus/project.go:1141
 msgid "RESOURCE"
@@ -5795,20 +5795,22 @@ msgstr ""
 #: cmd/incus/info.go:309 cmd/incus/info.go:318
 #, c-format
 msgid "Read-Only: %v"
-msgstr ""
+msgstr "只读: %v"
 
 #: cmd/incus/rebuild.go:31
+#, fuzzy
 msgid "Rebuild as an empty instance"
-msgstr ""
+msgstr "重新初始化为空白实例"
 
 #: cmd/incus/rebuild.go:26
 msgid "Rebuild instances"
-msgstr ""
+msgstr "重新初始化实例"
 
 #: cmd/incus/admin_recover.go:28
+#, fuzzy
 msgid ""
 "Recover missing instances and volumes from existing and unknown storage pools"
-msgstr ""
+msgstr "从现有和未知存储池中恢复丢失的实例和存储卷"
 
 #: cmd/incus/admin_recover.go:29
 msgid ""
@@ -5824,8 +5826,9 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/file.go:436 cmd/incus/file.go:654
+#, fuzzy
 msgid "Recursively transfer files"
-msgstr ""
+msgstr "递归传输文件"
 
 #: cmd/incus/storage_volume.go:369
 msgid "Refresh and update the existing storage volume copies"
