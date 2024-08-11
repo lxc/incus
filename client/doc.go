@@ -6,6 +6,14 @@
 // servers over a Unix socket or HTTPs. You can then interact with those
 // remote servers, creating instances, images, moving them around, ...
 //
+// The following examples make use of serveral imports:
+//
+//	import (
+//		"github.com/lxc/incus/client"
+//		"github.com/lxc/incus/shared/api"
+//		"github.com/lxc/incus/shared/termios"
+//	)
+//
 // # Example - instance creation
 //
 // This creates a container on a local Incus daemon and then starts it.
