@@ -6,6 +6,14 @@
 // servers over a Unix socket or HTTPs. You can then interact with those
 // remote servers, creating instances, images, moving them around, ...
 //
+// The following examples make use of serveral imports:
+//
+//	import (
+//		"github.com/lxc/incus/client"
+//		"github.com/lxc/incus/shared/api"
+//		"github.com/lxc/incus/shared/termios"
+//	)
+//
 // # Example - instance creation
 //
 // This creates a container on a local Incus daemon and then starts it.
@@ -17,11 +25,14 @@
 //	}
 //
 //	// Instance creation request
+//	name := "my-container"
 //	req := api.InstancesPost{
-//	  Name: "my-container",
+//	  Name: name,
 //	  Source: api.InstanceSource{
 //	    Type:  "image",
-//	    Alias: "my-image",
+//	    Alias: "my-image", # e.g. alpine/3.20
+//	    Server: "https://images.linuxcontainers.org",
+//	    Protocol: "simplestreams",
 //	  },
 //	  Type: "container"
 //	}
@@ -93,7 +104,7 @@
 //	}
 //
 //	// Get the current state
-//	op, err := c.ExecInstance("c1", req, &args)
+//	op, err := c.ExecInstance(name, req, &args)
 //	if err != nil {
 //	  return err
 //	}
