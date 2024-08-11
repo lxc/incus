@@ -25,8 +25,9 @@
 //	}
 //
 //	// Instance creation request
+//	name := "my-container"
 //	req := api.InstancesPost{
-//	  Name: "my-container",
+//	  Name: name,
 //	  Source: api.InstanceSource{
 //	    Type:  "image",
 //	    Alias: "my-image",
@@ -101,7 +102,7 @@
 //	}
 //
 //	// Get the current state
-//	op, err := c.ExecInstance("c1", req, &args)
+//	op, err := c.ExecInstance(name, req, &args)
 //	if err != nil {
 //	  return err
 //	}
