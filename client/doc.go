@@ -6,7 +6,7 @@
 // servers over a Unix socket or HTTPs. You can then interact with those
 // remote servers, creating instances, images, moving them around, ...
 //
-// The following examples make use of serveral imports:
+// The following examples make use of several imports:
 //
 //	import (
 //		"github.com/lxc/incus/client"
