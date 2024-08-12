@@ -73,6 +73,11 @@ func (d *pci) Start() (*deviceConfig.RunConfig, error) {
 	saveData["last_state.pci.slot.name"] = pciDev.SlotName
 	saveData["last_state.pci.driver"] = pciDev.Driver
 
+	pciIOMMUGroup, err := pcidev.DeviceIOMMUGroup(saveData["last_state.pci.slot.name"])
+	if err != nil {
+		return nil, err
+	}
+
 	err = pcidev.DeviceDriverOverride(pciDev, "vfio-pci")
 	if err != nil {
 		return nil, fmt.Errorf("Failed to override IOMMU group driver: %w", err)
@@ -82,6 +87,7 @@ func (d *pci) Start() (*deviceConfig.RunConfig, error) {
 		[]deviceConfig.RunConfigItem{
 			{Key: "devName", Value: d.name},
 			{Key: "pciSlotName", Value: saveData["last_state.pci.slot.name"]},
+			{Key: "pciIOMMUGroup", Value: fmt.Sprintf("%d", pciIOMMUGroup)},
 		}...)
 
 	err = d.volatileSet(saveData)
@@ -90,6 +96,11 @@ func (d *pci) Start() (*deviceConfig.RunConfig, error) {
 	}
 
 	return &runConf, nil
+}
+
+// CanHotPlug returns whether the device can be managed whilst the instance is running.
+func (d *pci) CanHotPlug() bool {
+	return true
 }
 
 // Stop is run when the device is removed from the instance.
