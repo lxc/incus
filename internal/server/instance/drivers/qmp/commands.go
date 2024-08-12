@@ -1069,3 +1069,21 @@ func (m *Monitor) SetBlockThrottle(id string, bytesRead int, bytesWrite int, iop
 
 	return nil
 }
+
+// CheckPCIDevice checks if the deviceID exists as a bridged PCI device.
+func (m *Monitor) CheckPCIDevice(deviceID string) (bool, error) {
+	pciDevs, err := m.QueryPCI()
+	if err != nil {
+		return false, err
+	}
+
+	for _, pciDev := range pciDevs {
+		for _, bridgeDev := range pciDev.Bridge.Devices {
+			if bridgeDev.DevID == deviceID {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}
