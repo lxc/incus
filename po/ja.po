@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-08-09 20:16-0400\n"
+"POT-Creation-Date: 2024-08-12 12:05-0400\n"
 "PO-Revision-Date: 2024-06-02 16:41+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -1202,7 +1202,7 @@ msgstr "受信バイト数"
 msgid "Bytes sent"
 msgstr "送信バイト数"
 
-#: cmd/incus/operation.go:175
+#: cmd/incus/operation.go:153
 msgid "CANCELABLE"
 msgstr "CANCELABLE"
 
@@ -1244,7 +1244,7 @@ msgstr "CPU:"
 msgid "CPUs:"
 msgstr "GPUs:"
 
-#: cmd/incus/operation.go:176
+#: cmd/incus/operation.go:154
 msgid "CREATED"
 msgstr "CREATED"
 
@@ -1528,9 +1528,10 @@ msgstr "クラスタリングが有効になりました"
 #: cmd/incus/cluster.go:150 cmd/incus/cluster_group.go:477
 #: cmd/incus/config_trust.go:421 cmd/incus/image.go:1093
 #: cmd/incus/image_alias.go:180 cmd/incus/list.go:134 cmd/incus/network.go:1072
-#: cmd/incus/profile.go:725 cmd/incus/project.go:527 cmd/incus/remote.go:750
-#: cmd/incus/storage.go:687 cmd/incus/storage_volume.go:1557
-#: cmd/incus/storage_volume.go:2548 cmd/incus/warning.go:93
+#: cmd/incus/operation.go:138 cmd/incus/profile.go:725 cmd/incus/project.go:527
+#: cmd/incus/remote.go:750 cmd/incus/storage.go:687
+#: cmd/incus/storage_volume.go:1557 cmd/incus/storage_volume.go:2548
+#: cmd/incus/warning.go:93
 msgid "Columns"
 msgstr "カラムレイアウト"
 
@@ -1938,7 +1939,7 @@ msgstr "DEFAULT TARGET ADDRESS"
 #: cmd/incus/network_acl.go:169 cmd/incus/network_forward.go:152
 #: cmd/incus/network_integration.go:458 cmd/incus/network_load_balancer.go:156
 #: cmd/incus/network_peer.go:155 cmd/incus/network_zone.go:160
-#: cmd/incus/network_zone.go:844 cmd/incus/operation.go:173
+#: cmd/incus/network_zone.go:844 cmd/incus/operation.go:151
 #: cmd/incus/profile.go:747 cmd/incus/project.go:555 cmd/incus/storage.go:710
 #: cmd/incus/storage_bucket.go:540 cmd/incus/storage_bucket.go:864
 #: cmd/incus/storage_volume.go:1672
@@ -1990,7 +1991,7 @@ msgstr "圧縮アルゴリズムを指定します: backup or none"
 msgid "Delay:"
 msgstr "Down delay"
 
-#: cmd/incus/operation.go:56 cmd/incus/operation.go:57
+#: cmd/incus/operation.go:61 cmd/incus/operation.go:62
 msgid "Delete a background operation (will attempt to cancel)"
 msgstr "バックグラウンドの操作を削除します（キャンセルを試みます）"
 
@@ -2196,9 +2197,9 @@ msgstr "警告を削除します"
 #: cmd/incus/network_zone.go:1099 cmd/incus/network_zone.go:1188
 #: cmd/incus/network_zone.go:1235 cmd/incus/network_zone.go:1365
 #: cmd/incus/network_zone.go:1426 cmd/incus/network_zone.go:1441
-#: cmd/incus/network_zone.go:1499 cmd/incus/operation.go:24
-#: cmd/incus/operation.go:57 cmd/incus/operation.go:107
-#: cmd/incus/operation.go:194 cmd/incus/profile.go:34 cmd/incus/profile.go:109
+#: cmd/incus/network_zone.go:1499 cmd/incus/operation.go:29
+#: cmd/incus/operation.go:62 cmd/incus/operation.go:113
+#: cmd/incus/operation.go:288 cmd/incus/profile.go:34 cmd/incus/profile.go:109
 #: cmd/incus/profile.go:184 cmd/incus/profile.go:275 cmd/incus/profile.go:357
 #: cmd/incus/profile.go:440 cmd/incus/profile.go:498 cmd/incus/profile.go:634
 #: cmd/incus/profile.go:710 cmd/incus/profile.go:868 cmd/incus/profile.go:956
@@ -2587,9 +2588,9 @@ msgstr "信頼済みクライアント設定をYAMLで編集します"
 #: cmd/incus/cluster.go:187 cmd/incus/cluster_group.go:507
 #: cmd/incus/config_trust.go:447 cmd/incus/image.go:1133
 #: cmd/incus/image_alias.go:217 cmd/incus/list.go:633 cmd/incus/network.go:1113
-#: cmd/incus/profile.go:763 cmd/incus/project.go:565 cmd/incus/remote.go:773
-#: cmd/incus/storage.go:722 cmd/incus/storage_volume.go:1700
-#: cmd/incus/warning.go:236
+#: cmd/incus/operation.go:166 cmd/incus/profile.go:763 cmd/incus/project.go:565
+#: cmd/incus/remote.go:773 cmd/incus/storage.go:722
+#: cmd/incus/storage_volume.go:1700 cmd/incus/warning.go:236
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
@@ -3247,7 +3248,7 @@ msgid "Fetch instance backup file: %w"
 msgstr "インスタンスのバックアップをエクスポートします"
 
 #: cmd/incus/network.go:1187 cmd/incus/network_acl.go:133
-#: cmd/incus/network_zone.go:124 cmd/incus/operation.go:137
+#: cmd/incus/network_zone.go:124 cmd/incus/operation.go:236
 msgid "Filtering isn't supported yet"
 msgstr "情報表示のフィルタリングはまだサポートされていません"
 
@@ -3340,7 +3341,7 @@ msgstr ""
 #: cmd/incus/network_forward.go:88 cmd/incus/network_integration.go:412
 #: cmd/incus/network_load_balancer.go:93 cmd/incus/network_peer.go:84
 #: cmd/incus/network_zone.go:88 cmd/incus/network_zone.go:786
-#: cmd/incus/operation.go:109 cmd/incus/profile.go:726 cmd/incus/project.go:529
+#: cmd/incus/operation.go:136 cmd/incus/profile.go:726 cmd/incus/project.go:529
 #: cmd/incus/project.go:1052 cmd/incus/remote.go:749 cmd/incus/snapshot.go:291
 #: cmd/incus/storage.go:689 cmd/incus/storage_bucket.go:474
 #: cmd/incus/storage_bucket.go:806 cmd/incus/storage_volume.go:1575
@@ -3625,7 +3626,7 @@ msgstr "インスタンスから sshfs への I/O コピーに失敗しました
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "sshfs からインスタンスへの I/O コピーに失敗しました: %v"
 
-#: cmd/incus/network.go:1009 cmd/incus/operation.go:171
+#: cmd/incus/network.go:1009 cmd/incus/operation.go:149
 msgid "ID"
 msgstr "ID"
 
@@ -4083,7 +4084,7 @@ msgstr "LISTEN ADDRESS"
 
 #: cmd/incus/list.go:617 cmd/incus/network.go:1303
 #: cmd/incus/network_forward.go:158 cmd/incus/network_load_balancer.go:161
-#: cmd/incus/operation.go:178 cmd/incus/storage_bucket.go:544
+#: cmd/incus/operation.go:155 cmd/incus/storage_bucket.go:544
 #: cmd/incus/storage_volume.go:1679 cmd/incus/warning.go:221
 msgid "LOCATION"
 msgstr "LOCATION"
@@ -4355,9 +4356,60 @@ msgid ""
 "  s - state"
 msgstr ""
 
-#: cmd/incus/operation.go:106 cmd/incus/operation.go:107
+#: cmd/incus/operation.go:112
 msgid "List background operations"
 msgstr "バックグラウンド操作を一覧表示します"
+
+#: cmd/incus/operation.go:113
+#, fuzzy
+msgid ""
+"List background operations\n"
+"\n"
+"Default column layout: itdscCl\n"
+"\n"
+"== Columns ==\n"
+"The -c option takes a comma separated list of arguments that control\n"
+"which instance attributes to output when displaying in table or csv\n"
+"format.\n"
+"\n"
+"Column arguments are either pre-defined shorthand chars (see below),\n"
+"or (extended) config keys.\n"
+"\n"
+"Commas between consecutive shorthand chars are optional.\n"
+"\n"
+"Pre-defined column shorthand chars:\n"
+"  i - ID\n"
+"  t - Type\n"
+"  d - Description\n"
+"  s - State\n"
+"  c - Cancelable\n"
+"  C - Created\n"
+"  L - Location of the operation (e.g. its cluster member)"
+msgstr ""
+"イメージをリスト表示します\n"
+"\n"
+"プロパティでフィルタを行う場合はフィルタは <key>=<value> の形になります。\n"
+"あるいはイメージのハッシュ値やイメージのエイリアスの一部を指定することもでき"
+"ます。\n"
+"\n"
+"-c オプションは、表もしくは csv 形式で表示する際の、出力するイメージの\n"
+"属性を指定する引数のリスト (カンマ区切りでも OK) を指定します。\n"
+"\n"
+"デフォルトのカラムレイアウトは lfpdasu です。\n"
+"\n"
+"カラムの指定文字:\n"
+"\n"
+"    l - もっとも短いイメージのエイリアス (他の指定されているエイリアスの数も"
+"表示します)\n"
+"    L - イメージのエイリアスすべて (改行区切り)\n"
+"    f - フィンガープリント (短い形式)\n"
+"    F - フィンガープリント (長い形式)\n"
+"    p - イメージがパブリックかどうか\n"
+"    d - 説明\n"
+"    a - アーキテクチャ\n"
+"    s - サイズ\n"
+"    u - アップロード日\n"
+"    t - タイプ"
 
 #: cmd/incus/image_alias.go:157
 msgid "List image aliases"
@@ -4646,7 +4698,7 @@ msgstr "すべてのプロジェクトのインスタンスを表示します"
 msgid "List of projects to restrict the certificate to"
 msgstr "証明書の使用を制限するプロジェクトのリスト"
 
-#: cmd/incus/operation.go:110
+#: cmd/incus/operation.go:137
 #, fuzzy
 msgid "List operations from all projects"
 msgstr "すべてのプロジェクトのインスタンスを表示します"
@@ -4951,7 +5003,7 @@ msgstr ""
 "    u - UUID\n"
 "    t - タイプ"
 
-#: cmd/incus/operation.go:23 cmd/incus/operation.go:24
+#: cmd/incus/operation.go:28 cmd/incus/operation.go:29
 msgid "List, show and delete background operations"
 msgstr "バックグラウンド操作の一覧表示、表示、削除を行います"
 
@@ -5686,7 +5738,7 @@ msgstr "NIC:"
 msgid "NICs:"
 msgstr "NICs:"
 
-#: cmd/incus/operation.go:155 cmd/incus/project.go:586 cmd/incus/project.go:595
+#: cmd/incus/operation.go:199 cmd/incus/project.go:586 cmd/incus/project.go:595
 #: cmd/incus/project.go:604 cmd/incus/project.go:613 cmd/incus/project.go:622
 #: cmd/incus/project.go:631 cmd/incus/remote.go:823 cmd/incus/remote.go:832
 #: cmd/incus/remote.go:841
@@ -6046,7 +6098,7 @@ msgstr ""
 "指定できるのは、--storage-create-device もしくは --storage-create-loop のいず"
 "れか一方のみです"
 
-#: cmd/incus/operation.go:87
+#: cmd/incus/operation.go:92
 #, c-format
 msgid "Operation %s deleted"
 msgstr "バックグラウンド操作 %s を削除しました"
@@ -6853,7 +6905,7 @@ msgid "STARTED AT"
 msgstr "CREATED AT"
 
 #: cmd/incus/list.go:588 cmd/incus/network.go:1100
-#: cmd/incus/network_peer.go:158 cmd/incus/operation.go:174
+#: cmd/incus/network_peer.go:158 cmd/incus/operation.go:152
 #: cmd/incus/storage.go:713 cmd/incus/warning.go:215
 msgid "STATE"
 msgstr "STATE"
@@ -7382,7 +7434,7 @@ msgstr "インスタンスのファイルテンプレートの内容を表示し
 msgid "Show details of a cluster member"
 msgstr "クラスターメンバの詳細を表示します"
 
-#: cmd/incus/operation.go:193 cmd/incus/operation.go:194
+#: cmd/incus/operation.go:287 cmd/incus/operation.go:288
 msgid "Show details on a background operation"
 msgstr "バックグラウンド操作の詳細を表示します"
 
@@ -7823,7 +7875,7 @@ msgstr "TOKEN"
 #: cmd/incus/image_alias.go:207 cmd/incus/list.go:589 cmd/incus/network.go:1094
 #: cmd/incus/network.go:1299 cmd/incus/network_allocations.go:26
 #: cmd/incus/network_integration.go:459 cmd/incus/network_peer.go:157
-#: cmd/incus/operation.go:172 cmd/incus/storage_volume.go:1670
+#: cmd/incus/operation.go:150 cmd/incus/storage_volume.go:1670
 #: cmd/incus/warning.go:216
 msgid "TYPE"
 msgstr "TYPE"
@@ -8392,9 +8444,9 @@ msgstr "クライアント %q の未知のチャンネルタイプ: %s"
 #: cmd/incus/cluster.go:193 cmd/incus/cluster_group.go:513
 #: cmd/incus/config_trust.go:455 cmd/incus/image.go:1141
 #: cmd/incus/image_alias.go:223 cmd/incus/list.go:648 cmd/incus/network.go:1119
-#: cmd/incus/profile.go:769 cmd/incus/project.go:571 cmd/incus/remote.go:779
-#: cmd/incus/storage.go:728 cmd/incus/storage_volume.go:1708
-#: cmd/incus/warning.go:244
+#: cmd/incus/operation.go:172 cmd/incus/profile.go:769 cmd/incus/project.go:571
+#: cmd/incus/remote.go:779 cmd/incus/storage.go:728
+#: cmd/incus/storage_volume.go:1708 cmd/incus/warning.go:244
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr "未知のカラム名の短縮形です '%c' ('%s' 中)"
@@ -8891,7 +8943,7 @@ msgstr ""
 msgid "Would you like to use clustering?"
 msgstr "クラスタリングを使用しますか?"
 
-#: cmd/incus/operation.go:157 cmd/incus/project.go:588 cmd/incus/project.go:597
+#: cmd/incus/operation.go:202 cmd/incus/project.go:588 cmd/incus/project.go:597
 #: cmd/incus/project.go:606 cmd/incus/project.go:615 cmd/incus/project.go:624
 #: cmd/incus/project.go:633 cmd/incus/remote.go:825 cmd/incus/remote.go:834
 #: cmd/incus/remote.go:843
@@ -8938,7 +8990,7 @@ msgstr "[<remote:>]<pool> <volume> <profile> [<device name>] [<path>]"
 #: cmd/incus/config_trust.go:582 cmd/incus/monitor.go:31
 #: cmd/incus/network.go:1050 cmd/incus/network_acl.go:91
 #: cmd/incus/network_integration.go:407 cmd/incus/network_zone.go:82
-#: cmd/incus/operation.go:104 cmd/incus/profile.go:707 cmd/incus/project.go:505
+#: cmd/incus/operation.go:110 cmd/incus/profile.go:707 cmd/incus/project.go:505
 #: cmd/incus/storage.go:662 cmd/incus/version.go:20 cmd/incus/warning.go:69
 msgid "[<remote>:]"
 msgstr "[<remote>:]"
@@ -9368,7 +9420,7 @@ msgstr "[<remote>:]<network> <profile> [<device name>] [<interface name>]"
 msgid "[<remote>:]<network> [key=value...]"
 msgstr "[<remote>:]<network> [key=value...]"
 
-#: cmd/incus/operation.go:54 cmd/incus/operation.go:192
+#: cmd/incus/operation.go:59 cmd/incus/operation.go:286
 msgid "[<remote>:]<operation>"
 msgstr "[<remote>:]<operation>"
 
@@ -10118,7 +10170,7 @@ msgstr ""
 "lxc init ubuntu:22.04 u1 < config.yaml\n"
 "    config.yaml の設定を使ってインスタンスを作成します"
 
-#: cmd/incus/operation.go:196
+#: cmd/incus/operation.go:290
 #, fuzzy
 msgid ""
 "incus operation show 344a79e4-d88a-45bf-9c39-c72c26f6ab8a\n"
