@@ -111,7 +111,7 @@ sudo ufw route allow in on incusbr0 from "${CIDR6}"
 
 Running Incus and Docker on the same host can cause connectivity issues.
 A common reason for these issues is that Docker sets the global FORWARD policy to `drop`, which prevents Incus from forwarding traffic and thus causes the instances to lose network connectivity.
-See [Docker on a router](https://docs.docker.com/network/iptables/#docker-on-a-router) for detailed information.
+See [Docker on a router](https://docs.docker.com/engine/network/packet-filtering-firewalls/#docker-on-a-router) for detailed information.
 
 There are different ways of working around this problem:
 
