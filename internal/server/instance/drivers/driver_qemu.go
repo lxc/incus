@@ -2485,24 +2485,6 @@ func (d *qemu) deviceDetachNIC(deviceName string) error {
 		return err
 	}
 
-	// pciDeviceExists checks if the deviceID exists as a bridged PCI device.
-	pciDeviceExists := func(deviceID string) (bool, error) {
-		pciDevs, err := monitor.QueryPCI()
-		if err != nil {
-			return false, err
-		}
-
-		for _, pciDev := range pciDevs {
-			for _, bridgeDev := range pciDev.Bridge.Devices {
-				if bridgeDev.DevID == deviceID {
-					return true, nil
-				}
-			}
-		}
-
-		return false, nil
-	}
-
 	escapedDeviceName := linux.PathNameEncode(deviceName)
 	deviceID := fmt.Sprintf("%s%s", qemuDeviceIDPrefix, escapedDeviceName)
 	netDevID := fmt.Sprintf("%s%s", qemuNetDevIDPrefix, escapedDeviceName)
@@ -2528,7 +2510,7 @@ func (d *qemu) deviceDetachNIC(deviceName string) error {
 		waitDuration := time.Duration(time.Second * time.Duration(10))
 		waitUntil := time.Now().Add(waitDuration)
 		for {
-			devExists, err := pciDeviceExists(deviceID)
+			devExists, err := monitor.CheckPCIDevice(deviceID)
 			if err != nil {
 				return fmt.Errorf("Failed getting PCI devices to check for NIC detach: %w", err)
 			}
