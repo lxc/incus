@@ -1716,7 +1716,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 
 		return nil
 	})
-	if err != nil {
+	if err != nil && !api.StatusErrorCheck(err, http.StatusNotFound) {
 		return fmt.Errorf("Failed loading storage pool names: %w", err)
 	}
 
