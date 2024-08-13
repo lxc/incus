@@ -726,6 +726,33 @@
 						}
 					},
 					{
+						"raw.qemu.qmp.early": {
+							"condition": "virtual machine",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "QMP commands to run before Incus QEMU initialization",
+							"type": "blob"
+						}
+					},
+					{
+						"raw.qemu.qmp.post-start": {
+							"condition": "virtual machine",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "QMP commands to run after the VM has started",
+							"type": "blob"
+						}
+					},
+					{
+						"raw.qemu.qmp.pre-start": {
+							"condition": "virtual machine",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "QMP commands to run after Incus QEMU initialization and before the VM has started",
+							"type": "blob"
+						}
+					},
+					{
 						"raw.seccomp": {
 							"condition": "container",
 							"liveupdate": "no",
