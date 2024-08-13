@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-08-13 14:29-0400\n"
+"POT-Creation-Date: 2024-08-13 15:03-0400\n"
 "PO-Revision-Date: 2024-06-02 16:41+0000\n"
 "Last-Translator: Tobias Gerold <tobias@g3ro.eu>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
@@ -281,7 +281,7 @@ msgstr ""
 "###\n"
 "### Der Name wird zwar angezeigt, lässt sich jedoch nicht ändern.\n"
 
-#: cmd/incus/network_forward.go:616
+#: cmd/incus/network_forward.go:689
 #, fuzzy
 msgid ""
 "### This is a YAML representation of the network forward.\n"
@@ -425,7 +425,7 @@ msgstr ""
 "###\n"
 "### Der Name wird zwar angezeigt, lässt sich jedoch nicht ändern.\n"
 
-#: cmd/incus/network_zone.go:1329
+#: cmd/incus/network_zone.go:1328
 #, fuzzy
 msgid ""
 "### This is a YAML representation of the network zone record.\n"
@@ -451,7 +451,7 @@ msgstr ""
 "### config:\n"
 "###   size: \"61203283968\""
 
-#: cmd/incus/network_zone.go:633
+#: cmd/incus/network_zone.go:632
 #, fuzzy
 msgid ""
 "### This is a YAML representation of the network zone.\n"
@@ -856,7 +856,7 @@ msgstr "Aktion (Standard ist: GET)"
 msgid "Add a cluster member to a cluster group"
 msgstr "Cluster Mitglied zu einer Cluster Gruppe hinzufügen:"
 
-#: cmd/incus/network_zone.go:1514
+#: cmd/incus/network_zone.go:1513
 #, fuzzy
 msgid "Add a network zone record entry"
 msgstr "Füge einen Netzwerk Zonen Eintrag hinzu"
@@ -870,7 +870,7 @@ msgstr "Füge spezielles Backend zum Load Balancer hinzu"
 msgid "Add backends to a load balancer"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1515
+#: cmd/incus/network_zone.go:1514
 msgid "Add entries to a network zone record"
 msgstr ""
 
@@ -937,7 +937,7 @@ msgid ""
 "trust store.\n"
 msgstr ""
 
-#: cmd/incus/network_forward.go:837 cmd/incus/network_forward.go:838
+#: cmd/incus/network_forward.go:910 cmd/incus/network_forward.go:911
 msgid "Add ports to a forward"
 msgstr "Ports zu einem Network Forward hinzufügen"
 
@@ -1196,9 +1196,9 @@ msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
 
 #: cmd/incus/network.go:409 cmd/incus/network_acl.go:447
-#: cmd/incus/network_forward.go:308 cmd/incus/network_load_balancer.go:311
-#: cmd/incus/network_peer.go:334 cmd/incus/network_zone.go:456
-#: cmd/incus/network_zone.go:1143 cmd/incus/storage_bucket.go:154
+#: cmd/incus/network_forward.go:381 cmd/incus/network_load_balancer.go:311
+#: cmd/incus/network_peer.go:334 cmd/incus/network_zone.go:455
+#: cmd/incus/network_zone.go:1142 cmd/incus/storage_bucket.go:154
 #, c-format
 msgid "Bad key/value pair: %s"
 msgstr ""
@@ -1540,10 +1540,10 @@ msgstr "Gerät %s wurde von %s entfernt\n"
 #: cmd/incus/create.go:59 cmd/incus/info.go:48 cmd/incus/move.go:64
 #: cmd/incus/network.go:347 cmd/incus/network.go:839 cmd/incus/network.go:920
 #: cmd/incus/network.go:1386 cmd/incus/network.go:1479
-#: cmd/incus/network.go:1551 cmd/incus/network_forward.go:177
-#: cmd/incus/network_forward.go:258 cmd/incus/network_forward.go:446
-#: cmd/incus/network_forward.go:598 cmd/incus/network_forward.go:752
-#: cmd/incus/network_forward.go:841 cmd/incus/network_forward.go:923
+#: cmd/incus/network.go:1551 cmd/incus/network_forward.go:250
+#: cmd/incus/network_forward.go:331 cmd/incus/network_forward.go:519
+#: cmd/incus/network_forward.go:671 cmd/incus/network_forward.go:825
+#: cmd/incus/network_forward.go:914 cmd/incus/network_forward.go:996
 #: cmd/incus/network_load_balancer.go:180
 #: cmd/incus/network_load_balancer.go:261
 #: cmd/incus/network_load_balancer.go:432
@@ -1581,10 +1581,11 @@ msgstr ""
 #: cmd/incus/cluster.go:150 cmd/incus/cluster_group.go:477
 #: cmd/incus/config_trust.go:421 cmd/incus/image.go:1093
 #: cmd/incus/image_alias.go:180 cmd/incus/list.go:134 cmd/incus/network.go:1072
-#: cmd/incus/network_zone.go:115 cmd/incus/operation.go:138
-#: cmd/incus/profile.go:725 cmd/incus/project.go:527 cmd/incus/remote.go:750
-#: cmd/incus/storage.go:687 cmd/incus/storage_volume.go:1557
-#: cmd/incus/storage_volume.go:2548 cmd/incus/warning.go:93
+#: cmd/incus/network_forward.go:115 cmd/incus/network_zone.go:115
+#: cmd/incus/operation.go:138 cmd/incus/profile.go:725 cmd/incus/project.go:527
+#: cmd/incus/remote.go:750 cmd/incus/storage.go:687
+#: cmd/incus/storage_volume.go:1557 cmd/incus/storage_volume.go:2548
+#: cmd/incus/warning.go:93
 msgid "Columns"
 msgstr "Spalten"
 
@@ -1639,9 +1640,9 @@ msgstr ""
 #: cmd/incus/config.go:276 cmd/incus/config.go:351
 #: cmd/incus/config_metadata.go:154 cmd/incus/config_trust.go:353
 #: cmd/incus/image.go:477 cmd/incus/network.go:802 cmd/incus/network_acl.go:714
-#: cmd/incus/network_forward.go:716 cmd/incus/network_integration.go:312
+#: cmd/incus/network_forward.go:789 cmd/incus/network_integration.go:312
 #: cmd/incus/network_load_balancer.go:696 cmd/incus/network_peer.go:729
-#: cmd/incus/network_zone.go:711 cmd/incus/network_zone.go:1406
+#: cmd/incus/network_zone.go:710 cmd/incus/network_zone.go:1405
 #: cmd/incus/profile.go:600 cmd/incus/project.go:399 cmd/incus/storage.go:368
 #: cmd/incus/storage_bucket.go:361 cmd/incus/storage_bucket.go:1157
 #: cmd/incus/storage_volume.go:1111 cmd/incus/storage_volume.go:1143
@@ -1808,7 +1809,7 @@ msgstr ""
 msgid "Could not write server cert file %q: %w"
 msgstr "Kann Verzeichnis für Zertifikate auf dem Server nicht erstellen"
 
-#: cmd/incus/network_zone.go:1626
+#: cmd/incus/network_zone.go:1625
 msgid "Couldn't find a matching entry"
 msgstr ""
 
@@ -1906,7 +1907,7 @@ msgstr "Anhalten des Containers fehlgeschlagen!"
 msgid "Create new network ACLs"
 msgstr ""
 
-#: cmd/incus/network_forward.go:249 cmd/incus/network_forward.go:250
+#: cmd/incus/network_forward.go:322 cmd/incus/network_forward.go:323
 #, fuzzy
 msgid "Create new network forwards"
 msgstr "Anhalten des Containers fehlgeschlagen!"
@@ -1922,12 +1923,12 @@ msgstr "Anhalten des Containers fehlgeschlagen!"
 msgid "Create new network peering"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
-#: cmd/incus/network_zone.go:1074 cmd/incus/network_zone.go:1075
+#: cmd/incus/network_zone.go:1073 cmd/incus/network_zone.go:1074
 #, fuzzy
 msgid "Create new network zone record"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
-#: cmd/incus/network_zone.go:390 cmd/incus/network_zone.go:391
+#: cmd/incus/network_zone.go:389 cmd/incus/network_zone.go:390
 #, fuzzy
 msgid "Create new network zones"
 msgstr "Anhalten des Containers fehlgeschlagen!"
@@ -1982,17 +1983,17 @@ msgstr "kann nicht zum selben Container Namen kopieren"
 msgid "Current number of VFs: %d"
 msgstr ""
 
-#: cmd/incus/network_forward.go:153
+#: cmd/incus/network_forward.go:134
 msgid "DEFAULT TARGET ADDRESS"
 msgstr ""
 
 #: cmd/incus/cluster.go:176 cmd/incus/cluster_group.go:499
 #: cmd/incus/config_trust.go:435 cmd/incus/image.go:1115
 #: cmd/incus/image_alias.go:208 cmd/incus/list.go:575 cmd/incus/network.go:1098
-#: cmd/incus/network_acl.go:169 cmd/incus/network_forward.go:152
+#: cmd/incus/network_acl.go:169 cmd/incus/network_forward.go:133
 #: cmd/incus/network_integration.go:458 cmd/incus/network_load_balancer.go:156
 #: cmd/incus/network_peer.go:155 cmd/incus/network_zone.go:134
-#: cmd/incus/network_zone.go:918 cmd/incus/operation.go:151
+#: cmd/incus/network_zone.go:917 cmd/incus/operation.go:151
 #: cmd/incus/profile.go:747 cmd/incus/project.go:555 cmd/incus/storage.go:710
 #: cmd/incus/storage_bucket.go:540 cmd/incus/storage_bucket.go:864
 #: cmd/incus/storage_volume.go:1672
@@ -2096,7 +2097,7 @@ msgstr "Kein Zertifikat für diese Verbindung"
 msgid "Delete network ACLs"
 msgstr ""
 
-#: cmd/incus/network_forward.go:748 cmd/incus/network_forward.go:749
+#: cmd/incus/network_forward.go:821 cmd/incus/network_forward.go:822
 msgid "Delete network forwards"
 msgstr ""
 
@@ -2115,12 +2116,12 @@ msgstr "Kein Zertifikat für diese Verbindung"
 msgid "Delete network peerings"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1438 cmd/incus/network_zone.go:1439
+#: cmd/incus/network_zone.go:1437 cmd/incus/network_zone.go:1438
 #, fuzzy
 msgid "Delete network zone record"
 msgstr "Kein Zertifikat für diese Verbindung"
 
-#: cmd/incus/network_zone.go:743 cmd/incus/network_zone.go:744
+#: cmd/incus/network_zone.go:742 cmd/incus/network_zone.go:743
 #, fuzzy
 msgid "Delete network zones"
 msgstr "Kein Zertifikat für diese Verbindung"
@@ -2221,12 +2222,12 @@ msgstr ""
 #: cmd/incus/network_acl.go:804 cmd/incus/network_acl.go:861
 #: cmd/incus/network_acl.go:876 cmd/incus/network_acl.go:1013
 #: cmd/incus/network_allocations.go:51 cmd/incus/network_forward.go:28
-#: cmd/incus/network_forward.go:85 cmd/incus/network_forward.go:174
-#: cmd/incus/network_forward.go:250 cmd/incus/network_forward.go:353
-#: cmd/incus/network_forward.go:438 cmd/incus/network_forward.go:548
-#: cmd/incus/network_forward.go:595 cmd/incus/network_forward.go:749
-#: cmd/incus/network_forward.go:823 cmd/incus/network_forward.go:838
-#: cmd/incus/network_forward.go:919 cmd/incus/network_integration.go:28
+#: cmd/incus/network_forward.go:91 cmd/incus/network_forward.go:247
+#: cmd/incus/network_forward.go:323 cmd/incus/network_forward.go:426
+#: cmd/incus/network_forward.go:511 cmd/incus/network_forward.go:621
+#: cmd/incus/network_forward.go:668 cmd/incus/network_forward.go:822
+#: cmd/incus/network_forward.go:896 cmd/incus/network_forward.go:911
+#: cmd/incus/network_forward.go:992 cmd/incus/network_integration.go:28
 #: cmd/incus/network_integration.go:85 cmd/incus/network_integration.go:178
 #: cmd/incus/network_integration.go:230 cmd/incus/network_integration.go:347
 #: cmd/incus/network_integration.go:410 cmd/incus/network_integration.go:478
@@ -2250,16 +2251,16 @@ msgstr ""
 #: cmd/incus/network_peer.go:476 cmd/incus/network_peer.go:578
 #: cmd/incus/network_peer.go:625 cmd/incus/network_peer.go:762
 #: cmd/incus/network_zone.go:32 cmd/incus/network_zone.go:91
-#: cmd/incus/network_zone.go:255 cmd/incus/network_zone.go:318
-#: cmd/incus/network_zone.go:391 cmd/incus/network_zone.go:486
-#: cmd/incus/network_zone.go:574 cmd/incus/network_zone.go:617
-#: cmd/incus/network_zone.go:744 cmd/incus/network_zone.go:800
-#: cmd/incus/network_zone.go:857 cmd/incus/network_zone.go:935
-#: cmd/incus/network_zone.go:999 cmd/incus/network_zone.go:1075
-#: cmd/incus/network_zone.go:1173 cmd/incus/network_zone.go:1262
-#: cmd/incus/network_zone.go:1309 cmd/incus/network_zone.go:1439
-#: cmd/incus/network_zone.go:1500 cmd/incus/network_zone.go:1515
-#: cmd/incus/network_zone.go:1573 cmd/incus/operation.go:29
+#: cmd/incus/network_zone.go:254 cmd/incus/network_zone.go:317
+#: cmd/incus/network_zone.go:390 cmd/incus/network_zone.go:485
+#: cmd/incus/network_zone.go:573 cmd/incus/network_zone.go:616
+#: cmd/incus/network_zone.go:743 cmd/incus/network_zone.go:799
+#: cmd/incus/network_zone.go:856 cmd/incus/network_zone.go:934
+#: cmd/incus/network_zone.go:998 cmd/incus/network_zone.go:1074
+#: cmd/incus/network_zone.go:1172 cmd/incus/network_zone.go:1261
+#: cmd/incus/network_zone.go:1308 cmd/incus/network_zone.go:1438
+#: cmd/incus/network_zone.go:1499 cmd/incus/network_zone.go:1514
+#: cmd/incus/network_zone.go:1572 cmd/incus/operation.go:29
 #: cmd/incus/operation.go:62 cmd/incus/operation.go:113
 #: cmd/incus/operation.go:288 cmd/incus/profile.go:34 cmd/incus/profile.go:109
 #: cmd/incus/profile.go:184 cmd/incus/profile.go:275 cmd/incus/profile.go:357
@@ -2534,7 +2535,7 @@ msgstr ""
 msgid "Dump YAML config to stdout"
 msgstr ""
 
-#: cmd/incus/network_zone.go:919
+#: cmd/incus/network_zone.go:918
 msgid "ENTRIES"
 msgstr ""
 
@@ -2604,7 +2605,7 @@ msgstr "Alternatives config Verzeichnis."
 msgid "Edit network configurations as YAML"
 msgstr ""
 
-#: cmd/incus/network_forward.go:594 cmd/incus/network_forward.go:595
+#: cmd/incus/network_forward.go:667 cmd/incus/network_forward.go:668
 #, fuzzy
 msgid "Edit network forward configurations as YAML"
 msgstr "Alternatives config Verzeichnis."
@@ -2625,12 +2626,12 @@ msgstr "Alternatives config Verzeichnis."
 msgid "Edit network peer configurations as YAML"
 msgstr "Alternatives config Verzeichnis."
 
-#: cmd/incus/network_zone.go:616 cmd/incus/network_zone.go:617
+#: cmd/incus/network_zone.go:615 cmd/incus/network_zone.go:616
 #, fuzzy
 msgid "Edit network zone configurations as YAML"
 msgstr "Alternatives config Verzeichnis."
 
-#: cmd/incus/network_zone.go:1308 cmd/incus/network_zone.go:1309
+#: cmd/incus/network_zone.go:1307 cmd/incus/network_zone.go:1308
 #, fuzzy
 msgid "Edit network zone record configurations as YAML"
 msgstr "Alternatives config Verzeichnis."
@@ -2678,10 +2679,10 @@ msgstr "Alternatives config Verzeichnis."
 #: cmd/incus/cluster.go:187 cmd/incus/cluster_group.go:507
 #: cmd/incus/config_trust.go:447 cmd/incus/image.go:1133
 #: cmd/incus/image_alias.go:217 cmd/incus/list.go:633 cmd/incus/network.go:1113
-#: cmd/incus/network_zone.go:148 cmd/incus/operation.go:166
-#: cmd/incus/profile.go:763 cmd/incus/project.go:565 cmd/incus/remote.go:773
-#: cmd/incus/storage.go:722 cmd/incus/storage_volume.go:1700
-#: cmd/incus/warning.go:236
+#: cmd/incus/network_forward.go:147 cmd/incus/network_zone.go:147
+#: cmd/incus/operation.go:166 cmd/incus/profile.go:763 cmd/incus/project.go:565
+#: cmd/incus/remote.go:773 cmd/incus/storage.go:722
+#: cmd/incus/storage_volume.go:1700 cmd/incus/warning.go:236
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
@@ -2716,7 +2717,7 @@ msgstr ""
 msgid "Enter new delay in seconds:"
 msgstr "Legen Sie eine Verzögerungszeit angegeben in Sekunden fest:"
 
-#: cmd/incus/network_zone.go:1517
+#: cmd/incus/network_zone.go:1516
 #, fuzzy
 msgid "Entry TTL"
 msgstr "Eingangs TTL"
@@ -2753,10 +2754,10 @@ msgstr "Fehler beim Abrufen des Aliase/Namen: %w"
 
 #: cmd/incus/cluster.go:562 cmd/incus/cluster_group.go:1019
 #: cmd/incus/config.go:641 cmd/incus/config.go:673 cmd/incus/network.go:1454
-#: cmd/incus/network_acl.go:540 cmd/incus/network_forward.go:521
+#: cmd/incus/network_acl.go:540 cmd/incus/network_forward.go:594
 #: cmd/incus/network_integration.go:587 cmd/incus/network_load_balancer.go:507
-#: cmd/incus/network_peer.go:553 cmd/incus/network_zone.go:549
-#: cmd/incus/network_zone.go:1237 cmd/incus/profile.go:1083
+#: cmd/incus/network_peer.go:553 cmd/incus/network_zone.go:548
+#: cmd/incus/network_zone.go:1236 cmd/incus/profile.go:1083
 #: cmd/incus/project.go:851 cmd/incus/storage.go:896
 #: cmd/incus/storage_bucket.go:634 cmd/incus/storage_volume.go:2038
 #: cmd/incus/storage_volume.go:2081
@@ -2776,9 +2777,9 @@ msgstr "Fehler beim Löschen der Parameter: %v"
 
 #: cmd/incus/cluster.go:556 cmd/incus/cluster_group.go:1013
 #: cmd/incus/network.go:1448 cmd/incus/network_acl.go:534
-#: cmd/incus/network_forward.go:515 cmd/incus/network_integration.go:581
+#: cmd/incus/network_forward.go:588 cmd/incus/network_integration.go:581
 #: cmd/incus/network_load_balancer.go:501 cmd/incus/network_peer.go:547
-#: cmd/incus/network_zone.go:543 cmd/incus/network_zone.go:1231
+#: cmd/incus/network_zone.go:542 cmd/incus/network_zone.go:1230
 #: cmd/incus/profile.go:1077 cmd/incus/project.go:845 cmd/incus/storage.go:890
 #: cmd/incus/storage_bucket.go:628 cmd/incus/storage_volume.go:2032
 #: cmd/incus/storage_volume.go:2075
@@ -3352,7 +3353,7 @@ msgid "Fetch instance backup file: %w"
 msgstr "Herunterfahren des Containers erzwingen."
 
 #: cmd/incus/network.go:1187 cmd/incus/network_acl.go:133
-#: cmd/incus/network_zone.go:202 cmd/incus/operation.go:236
+#: cmd/incus/network_zone.go:201 cmd/incus/operation.go:236
 #, fuzzy
 msgid "Filtering isn't supported yet"
 msgstr ""
@@ -3431,9 +3432,9 @@ msgstr ""
 #: cmd/incus/image.go:1094 cmd/incus/image_alias.go:179 cmd/incus/list.go:135
 #: cmd/incus/network.go:1073 cmd/incus/network.go:1243
 #: cmd/incus/network_acl.go:97 cmd/incus/network_allocations.go:57
-#: cmd/incus/network_forward.go:88 cmd/incus/network_integration.go:412
+#: cmd/incus/network_forward.go:114 cmd/incus/network_integration.go:412
 #: cmd/incus/network_load_balancer.go:93 cmd/incus/network_peer.go:84
-#: cmd/incus/network_zone.go:113 cmd/incus/network_zone.go:860
+#: cmd/incus/network_zone.go:113 cmd/incus/network_zone.go:859
 #: cmd/incus/operation.go:136 cmd/incus/profile.go:726 cmd/incus/project.go:529
 #: cmd/incus/project.go:1052 cmd/incus/remote.go:749 cmd/incus/snapshot.go:291
 #: cmd/incus/storage.go:689 cmd/incus/storage_bucket.go:474
@@ -3526,7 +3527,7 @@ msgstr ""
 msgid "Get the key as a network ACL property"
 msgstr ""
 
-#: cmd/incus/network_forward.go:355
+#: cmd/incus/network_forward.go:428
 #, fuzzy
 msgid "Get the key as a network forward property"
 msgstr "Kein Zertifikat für diese Verbindung"
@@ -3550,12 +3551,12 @@ msgstr "Kein Zertifikat für diese Verbindung"
 msgid "Get the key as a network property"
 msgstr ""
 
-#: cmd/incus/network_zone.go:321
+#: cmd/incus/network_zone.go:320
 #, fuzzy
 msgid "Get the key as a network zone property"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
-#: cmd/incus/network_zone.go:1002
+#: cmd/incus/network_zone.go:1001
 #, fuzzy
 msgid "Get the key as a network zone record property"
 msgstr "Profil %s erstellt\n"
@@ -3616,7 +3617,7 @@ msgstr "Profil %s erstellt\n"
 msgid "Get values for network configuration keys"
 msgstr ""
 
-#: cmd/incus/network_forward.go:352 cmd/incus/network_forward.go:353
+#: cmd/incus/network_forward.go:425 cmd/incus/network_forward.go:426
 #, fuzzy
 msgid "Get values for network forward configuration keys"
 msgstr "Profil %s erstellt\n"
@@ -3637,12 +3638,12 @@ msgstr "Profil %s erstellt\n"
 msgid "Get values for network peer configuration keys"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/network_zone.go:317 cmd/incus/network_zone.go:318
+#: cmd/incus/network_zone.go:316 cmd/incus/network_zone.go:317
 #, fuzzy
 msgid "Get values for network zone configuration keys"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/network_zone.go:998 cmd/incus/network_zone.go:999
+#: cmd/incus/network_zone.go:997 cmd/incus/network_zone.go:998
 #, fuzzy
 msgid "Get values for network zone record configuration keys"
 msgstr "Profil %s erstellt\n"
@@ -4176,12 +4177,12 @@ msgstr ""
 msgid "LIMIT"
 msgstr ""
 
-#: cmd/incus/network_forward.go:151 cmd/incus/network_load_balancer.go:155
+#: cmd/incus/network_forward.go:132 cmd/incus/network_load_balancer.go:155
 msgid "LISTEN ADDRESS"
 msgstr ""
 
 #: cmd/incus/list.go:617 cmd/incus/network.go:1303
-#: cmd/incus/network_forward.go:158 cmd/incus/network_load_balancer.go:161
+#: cmd/incus/network_forward.go:136 cmd/incus/network_load_balancer.go:161
 #: cmd/incus/operation.go:155 cmd/incus/storage_bucket.go:544
 #: cmd/incus/storage_volume.go:1679 cmd/incus/warning.go:221
 msgid "LOCATION"
@@ -4306,8 +4307,32 @@ msgstr ""
 msgid "List available network ACLS"
 msgstr ""
 
-#: cmd/incus/network_forward.go:84 cmd/incus/network_forward.go:85
+#: cmd/incus/network_forward.go:90
 msgid "List available network forwards"
+msgstr ""
+
+#: cmd/incus/network_forward.go:91
+msgid ""
+"List available network forwards\n"
+"\n"
+"Default column layout: ldDp\n"
+"\n"
+"== Columns ==\n"
+"The -c option takes a comma separated list of arguments that control\n"
+"which instance attributes to output when displaying in table or csv\n"
+"format.\n"
+"\n"
+"Column arguments are either pre-defined shorthand chars (see below),\n"
+"or (extended) config keys.\n"
+"\n"
+"Commas between consecutive shorthand chars are optional.\n"
+"\n"
+"Pre-defined column shorthand chars:\n"
+"l - Listen Address\n"
+"d - Description\n"
+"D - Default Target Address\n"
+"p - Port\n"
+"L - Location of the network zone (e.g. its cluster member)"
 msgstr ""
 
 #: cmd/incus/network_load_balancer.go:89 cmd/incus/network_load_balancer.go:90
@@ -4319,7 +4344,7 @@ msgstr "Kein Zertifikat für diese Verbindung"
 msgid "List available network peers"
 msgstr ""
 
-#: cmd/incus/network_zone.go:856 cmd/incus/network_zone.go:857
+#: cmd/incus/network_zone.go:855 cmd/incus/network_zone.go:856
 #, fuzzy
 msgid "List available network zone records"
 msgstr "Kein Zertifikat für diese Verbindung"
@@ -5053,7 +5078,7 @@ msgstr "Kein Zertifikat für diese Verbindung"
 msgid "Manage network ACLs"
 msgstr ""
 
-#: cmd/incus/network_forward.go:822 cmd/incus/network_forward.go:823
+#: cmd/incus/network_forward.go:895 cmd/incus/network_forward.go:896
 #, fuzzy
 msgid "Manage network forward ports"
 msgstr "Kein Zertifikat für diese Verbindung"
@@ -5090,12 +5115,12 @@ msgstr "Kein Zertifikat für diese Verbindung"
 msgid "Manage network peerings"
 msgstr "Kein Zertifikat für diese Verbindung"
 
-#: cmd/incus/network_zone.go:1499 cmd/incus/network_zone.go:1500
+#: cmd/incus/network_zone.go:1498 cmd/incus/network_zone.go:1499
 #, fuzzy
 msgid "Manage network zone record entries"
 msgstr "Kein Zertifikat für diese Verbindung"
 
-#: cmd/incus/network_zone.go:799 cmd/incus/network_zone.go:800
+#: cmd/incus/network_zone.go:798 cmd/incus/network_zone.go:799
 #, fuzzy
 msgid "Manage network zone records"
 msgstr "Kein Zertifikat für diese Verbindung"
@@ -5293,10 +5318,10 @@ msgstr "der Name des Ursprung Containers muss angegeben werden"
 msgid "Missing key name"
 msgstr "Fehlende Zusammenfassung."
 
-#: cmd/incus/network_forward.go:214 cmd/incus/network_forward.go:283
-#: cmd/incus/network_forward.go:398 cmd/incus/network_forward.go:483
-#: cmd/incus/network_forward.go:658 cmd/incus/network_forward.go:789
-#: cmd/incus/network_forward.go:882 cmd/incus/network_forward.go:964
+#: cmd/incus/network_forward.go:287 cmd/incus/network_forward.go:356
+#: cmd/incus/network_forward.go:471 cmd/incus/network_forward.go:556
+#: cmd/incus/network_forward.go:731 cmd/incus/network_forward.go:862
+#: cmd/incus/network_forward.go:955 cmd/incus/network_forward.go:1037
 #: cmd/incus/network_load_balancer.go:217
 #: cmd/incus/network_load_balancer.go:286
 #: cmd/incus/network_load_balancer.go:384
@@ -5340,11 +5365,11 @@ msgstr "Profilname kann nicht geändert werden"
 #: cmd/incus/network.go:542 cmd/incus/network.go:639 cmd/incus/network.go:752
 #: cmd/incus/network.go:875 cmd/incus/network.go:951 cmd/incus/network.go:1274
 #: cmd/incus/network.go:1352 cmd/incus/network.go:1418
-#: cmd/incus/network.go:1510 cmd/incus/network_forward.go:122
-#: cmd/incus/network_forward.go:210 cmd/incus/network_forward.go:279
-#: cmd/incus/network_forward.go:394 cmd/incus/network_forward.go:479
-#: cmd/incus/network_forward.go:654 cmd/incus/network_forward.go:785
-#: cmd/incus/network_forward.go:878 cmd/incus/network_forward.go:960
+#: cmd/incus/network.go:1510 cmd/incus/network_forward.go:203
+#: cmd/incus/network_forward.go:283 cmd/incus/network_forward.go:352
+#: cmd/incus/network_forward.go:467 cmd/incus/network_forward.go:552
+#: cmd/incus/network_forward.go:727 cmd/incus/network_forward.go:858
+#: cmd/incus/network_forward.go:951 cmd/incus/network_forward.go:1033
 #: cmd/incus/network_load_balancer.go:127
 #: cmd/incus/network_load_balancer.go:213
 #: cmd/incus/network_load_balancer.go:282
@@ -5362,18 +5387,18 @@ msgstr "Profilname kann nicht geändert werden"
 msgid "Missing network name"
 msgstr ""
 
-#: cmd/incus/network_zone.go:285 cmd/incus/network_zone.go:354
-#: cmd/incus/network_zone.go:426 cmd/incus/network_zone.go:522
-#: cmd/incus/network_zone.go:663 cmd/incus/network_zone.go:774
-#: cmd/incus/network_zone.go:888 cmd/incus/network_zone.go:968
-#: cmd/incus/network_zone.go:1113 cmd/incus/network_zone.go:1210
-#: cmd/incus/network_zone.go:1472 cmd/incus/network_zone.go:1549
-#: cmd/incus/network_zone.go:1606
+#: cmd/incus/network_zone.go:284 cmd/incus/network_zone.go:353
+#: cmd/incus/network_zone.go:425 cmd/incus/network_zone.go:521
+#: cmd/incus/network_zone.go:662 cmd/incus/network_zone.go:773
+#: cmd/incus/network_zone.go:887 cmd/incus/network_zone.go:967
+#: cmd/incus/network_zone.go:1112 cmd/incus/network_zone.go:1209
+#: cmd/incus/network_zone.go:1471 cmd/incus/network_zone.go:1548
+#: cmd/incus/network_zone.go:1605
 #, fuzzy
 msgid "Missing network zone name"
 msgstr "Profilname kann nicht geändert werden"
 
-#: cmd/incus/network_zone.go:1038 cmd/incus/network_zone.go:1358
+#: cmd/incus/network_zone.go:1037 cmd/incus/network_zone.go:1357
 #, fuzzy
 msgid "Missing network zone record name"
 msgstr "Profilname kann nicht geändert werden"
@@ -5529,7 +5554,7 @@ msgstr ""
 msgid "Moving the storage volume: %s"
 msgstr "Kein Zertifikat für diese Verbindung"
 
-#: cmd/incus/network_forward.go:1008 cmd/incus/network_load_balancer.go:1164
+#: cmd/incus/network_forward.go:1081 cmd/incus/network_load_balancer.go:1164
 msgid "Multiple ports match. Use --force to remove them all"
 msgstr ""
 
@@ -5551,7 +5576,7 @@ msgstr "der Name des Ursprung Containers muss angegeben werden"
 #: cmd/incus/config_trust.go:666 cmd/incus/list.go:583
 #: cmd/incus/network.go:1093 cmd/incus/network_acl.go:168
 #: cmd/incus/network_integration.go:457 cmd/incus/network_peer.go:154
-#: cmd/incus/network_zone.go:133 cmd/incus/network_zone.go:917
+#: cmd/incus/network_zone.go:133 cmd/incus/network_zone.go:916
 #: cmd/incus/profile.go:745 cmd/incus/project.go:548 cmd/incus/remote.go:759
 #: cmd/incus/storage.go:708 cmd/incus/storage_bucket.go:539
 #: cmd/incus/storage_bucket.go:863 cmd/incus/storage_volume.go:1671
@@ -5721,22 +5746,22 @@ msgstr "Profil %s gelöscht\n"
 msgid "Network ACL %s renamed to %s"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/network_zone.go:468
+#: cmd/incus/network_zone.go:467
 #, fuzzy, c-format
 msgid "Network Zone %s created"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/network_zone.go:784
+#: cmd/incus/network_zone.go:783
 #, fuzzy, c-format
 msgid "Network Zone %s deleted"
 msgstr "Profil %s gelöscht\n"
 
-#: cmd/incus/network_forward.go:335
+#: cmd/incus/network_forward.go:408
 #, fuzzy, c-format
 msgid "Network forward %s created"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/network_forward.go:806
+#: cmd/incus/network_forward.go:879
 #, fuzzy, c-format
 msgid "Network forward %s deleted"
 msgstr "Profil %s gelöscht\n"
@@ -5801,12 +5826,12 @@ msgstr "Profil %s erstellt\n"
 msgid "Network usage:"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/network_zone.go:1155
+#: cmd/incus/network_zone.go:1154
 #, fuzzy, c-format
 msgid "Network zone record %s created"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/network_zone.go:1482
+#: cmd/incus/network_zone.go:1481
 #, fuzzy, c-format
 msgid "Network zone record %s deleted"
 msgstr "Profil %s gelöscht\n"
@@ -5853,7 +5878,7 @@ msgstr "Kein Zertifikat für diese Verbindung"
 msgid "No matching backend found"
 msgstr ""
 
-#: cmd/incus/network_forward.go:1019 cmd/incus/network_load_balancer.go:1175
+#: cmd/incus/network_forward.go:1092 cmd/incus/network_load_balancer.go:1175
 msgid "No matching port(s) found"
 msgstr ""
 
@@ -5983,7 +6008,7 @@ msgstr ""
 msgid "PID: %d"
 msgstr ""
 
-#: cmd/incus/network_forward.go:154 cmd/incus/network_load_balancer.go:157
+#: cmd/incus/network_forward.go:135 cmd/incus/network_load_balancer.go:157
 msgid "PORTS"
 msgstr ""
 
@@ -6120,9 +6145,9 @@ msgstr ""
 #: cmd/incus/config_metadata.go:155 cmd/incus/config_template.go:254
 #: cmd/incus/config_trust.go:354 cmd/incus/image.go:478
 #: cmd/incus/network.go:803 cmd/incus/network_acl.go:715
-#: cmd/incus/network_forward.go:717 cmd/incus/network_integration.go:313
+#: cmd/incus/network_forward.go:790 cmd/incus/network_integration.go:313
 #: cmd/incus/network_load_balancer.go:697 cmd/incus/network_peer.go:730
-#: cmd/incus/network_zone.go:712 cmd/incus/network_zone.go:1407
+#: cmd/incus/network_zone.go:711 cmd/incus/network_zone.go:1406
 #: cmd/incus/profile.go:601 cmd/incus/project.go:400 cmd/incus/storage.go:369
 #: cmd/incus/storage_bucket.go:362 cmd/incus/storage_bucket.go:1158
 #: cmd/incus/storage_volume.go:1112 cmd/incus/storage_volume.go:1144
@@ -6456,7 +6481,7 @@ msgstr "der Name des Ursprung Containers muss angegeben werden"
 msgid "Remove a member from the cluster"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1572
+#: cmd/incus/network_zone.go:1571
 #, fuzzy
 msgid "Remove a network zone record entry"
 msgstr "Profil %s erstellt\n"
@@ -6466,7 +6491,7 @@ msgstr "Profil %s erstellt\n"
 msgid "Remove aliases"
 msgstr "Entferntes Administrator Passwort"
 
-#: cmd/incus/network_forward.go:920 cmd/incus/network_load_balancer.go:1080
+#: cmd/incus/network_forward.go:993 cmd/incus/network_load_balancer.go:1080
 msgid "Remove all ports that match"
 msgstr ""
 
@@ -6484,7 +6509,7 @@ msgstr "der Name des Ursprung Containers muss angegeben werden"
 msgid "Remove backends from a load balancer"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
 
-#: cmd/incus/network_zone.go:1573
+#: cmd/incus/network_zone.go:1572
 #, fuzzy
 msgid "Remove entries from a network zone record"
 msgstr "kann nicht zum selben Container Namen kopieren"
@@ -6498,7 +6523,7 @@ msgstr "Anhalten des Containers fehlgeschlagen!"
 msgid "Remove member from group"
 msgstr ""
 
-#: cmd/incus/network_forward.go:918 cmd/incus/network_forward.go:919
+#: cmd/incus/network_forward.go:991 cmd/incus/network_forward.go:992
 #, fuzzy
 msgid "Remove ports from a forward"
 msgstr "kann nicht zum selben Container Namen kopieren"
@@ -6945,12 +6970,12 @@ msgid ""
 "    incus network set [<remote>:]<network> <key> <value>"
 msgstr ""
 
-#: cmd/incus/network_forward.go:437
+#: cmd/incus/network_forward.go:510
 #, fuzzy
 msgid "Set network forward keys"
 msgstr "Kein Zertifikat für diese Verbindung"
 
-#: cmd/incus/network_forward.go:438
+#: cmd/incus/network_forward.go:511
 msgid ""
 "Set network forward keys\n"
 "\n"
@@ -7002,12 +7027,12 @@ msgid ""
 "    incus network set [<remote>:]<network> <peer_name> <key> <value>"
 msgstr ""
 
-#: cmd/incus/network_zone.go:485
+#: cmd/incus/network_zone.go:484
 #, fuzzy
 msgid "Set network zone configuration keys"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/network_zone.go:486
+#: cmd/incus/network_zone.go:485
 msgid ""
 "Set network zone configuration keys\n"
 "\n"
@@ -7016,7 +7041,7 @@ msgid ""
 "    incus network set [<remote>:]<Zone> <key> <value>"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1172 cmd/incus/network_zone.go:1173
+#: cmd/incus/network_zone.go:1171 cmd/incus/network_zone.go:1172
 #, fuzzy
 msgid "Set network zone record configuration keys"
 msgstr "Profil %s erstellt\n"
@@ -7140,7 +7165,7 @@ msgstr ""
 msgid "Set the key as a network ACL property"
 msgstr ""
 
-#: cmd/incus/network_forward.go:445
+#: cmd/incus/network_forward.go:518
 #, fuzzy
 msgid "Set the key as a network forward property"
 msgstr "Kein Zertifikat für diese Verbindung"
@@ -7164,12 +7189,12 @@ msgstr "Kein Zertifikat für diese Verbindung"
 msgid "Set the key as a network property"
 msgstr ""
 
-#: cmd/incus/network_zone.go:493
+#: cmd/incus/network_zone.go:492
 #, fuzzy
 msgid "Set the key as a network zone property"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
-#: cmd/incus/network_zone.go:1178
+#: cmd/incus/network_zone.go:1177
 #, fuzzy
 msgid "Set the key as a network zone record property"
 msgstr "Profil %s erstellt\n"
@@ -7294,7 +7319,7 @@ msgstr "Profil %s erstellt\n"
 msgid "Show network configurations"
 msgstr ""
 
-#: cmd/incus/network_forward.go:173 cmd/incus/network_forward.go:174
+#: cmd/incus/network_forward.go:246 cmd/incus/network_forward.go:247
 #, fuzzy
 msgid "Show network forward configurations"
 msgstr "Profil %s erstellt\n"
@@ -7315,17 +7340,17 @@ msgstr "Profil %s erstellt\n"
 msgid "Show network peer configurations"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/network_zone.go:254 cmd/incus/network_zone.go:255
+#: cmd/incus/network_zone.go:253 cmd/incus/network_zone.go:254
 #, fuzzy
 msgid "Show network zone configurations"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/network_zone.go:934
+#: cmd/incus/network_zone.go:933
 #, fuzzy
 msgid "Show network zone record configuration"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/network_zone.go:935
+#: cmd/incus/network_zone.go:934
 #, fuzzy
 msgid "Show network zone record configurations"
 msgstr "Profil %s erstellt\n"
@@ -7871,7 +7896,7 @@ msgstr "der Name des Ursprung Containers muss angegeben werden"
 msgid "The property %q does not exist on the network ACL %q: %v"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
 
-#: cmd/incus/network_forward.go:411
+#: cmd/incus/network_forward.go:484
 #, fuzzy, c-format
 msgid "The property %q does not exist on the network forward %q: %v"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
@@ -7886,12 +7911,12 @@ msgstr "der Name des Ursprung Containers muss angegeben werden"
 msgid "The property %q does not exist on the network peer %q: %v"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
 
-#: cmd/incus/network_zone.go:366
+#: cmd/incus/network_zone.go:365
 #, fuzzy, c-format
 msgid "The property %q does not exist on the network zone %q: %v"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
 
-#: cmd/incus/network_zone.go:1050
+#: cmd/incus/network_zone.go:1049
 #, fuzzy, c-format
 msgid "The property %q does not exist on the network zone record %q: %v"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
@@ -8209,10 +8234,10 @@ msgstr "Unbekannter Befehl %s für Abbild"
 #: cmd/incus/cluster.go:193 cmd/incus/cluster_group.go:513
 #: cmd/incus/config_trust.go:455 cmd/incus/image.go:1141
 #: cmd/incus/image_alias.go:223 cmd/incus/list.go:648 cmd/incus/network.go:1119
-#: cmd/incus/network_zone.go:154 cmd/incus/operation.go:172
-#: cmd/incus/profile.go:769 cmd/incus/project.go:571 cmd/incus/remote.go:779
-#: cmd/incus/storage.go:728 cmd/incus/storage_volume.go:1708
-#: cmd/incus/warning.go:244
+#: cmd/incus/network_forward.go:153 cmd/incus/network_zone.go:153
+#: cmd/incus/operation.go:172 cmd/incus/profile.go:769 cmd/incus/project.go:571
+#: cmd/incus/remote.go:779 cmd/incus/storage.go:728
+#: cmd/incus/storage_volume.go:1708 cmd/incus/warning.go:244
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr ""
@@ -8275,12 +8300,12 @@ msgstr "Profil %s erstellt\n"
 msgid "Unset network configuration keys"
 msgstr ""
 
-#: cmd/incus/network_forward.go:547
+#: cmd/incus/network_forward.go:620
 #, fuzzy
 msgid "Unset network forward configuration keys"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/network_forward.go:548
+#: cmd/incus/network_forward.go:621
 #, fuzzy
 msgid "Unset network forward keys"
 msgstr "Kein Zertifikat für diese Verbindung"
@@ -8310,12 +8335,12 @@ msgstr "Profil %s erstellt\n"
 msgid "Unset network peer keys"
 msgstr "Kein Zertifikat für diese Verbindung"
 
-#: cmd/incus/network_zone.go:573 cmd/incus/network_zone.go:574
+#: cmd/incus/network_zone.go:572 cmd/incus/network_zone.go:573
 #, fuzzy
 msgid "Unset network zone configuration keys"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/network_zone.go:1261 cmd/incus/network_zone.go:1262
+#: cmd/incus/network_zone.go:1260 cmd/incus/network_zone.go:1261
 #, fuzzy
 msgid "Unset network zone record configuration keys"
 msgstr "Profil %s erstellt\n"
@@ -8366,7 +8391,7 @@ msgstr ""
 msgid "Unset the key as a network ACL property"
 msgstr ""
 
-#: cmd/incus/network_forward.go:551
+#: cmd/incus/network_forward.go:624
 #, fuzzy
 msgid "Unset the key as a network forward property"
 msgstr "Kein Zertifikat für diese Verbindung"
@@ -8391,12 +8416,12 @@ msgstr "Kein Zertifikat für diese Verbindung"
 msgid "Unset the key as a network property"
 msgstr "Kein Zertifikat für diese Verbindung"
 
-#: cmd/incus/network_zone.go:577
+#: cmd/incus/network_zone.go:576
 #, fuzzy
 msgid "Unset the key as a network zone property"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
-#: cmd/incus/network_zone.go:1265
+#: cmd/incus/network_zone.go:1264
 #, fuzzy
 msgid "Unset the key as a network zone record property"
 msgstr "Profil %s erstellt\n"
@@ -8885,8 +8910,8 @@ msgstr ""
 "Entfernt einen Container (oder Sicherungspunkt) und alle dazugehörigen\n"
 "Daten (Konfiguration, Sicherungspunkte, ...).\n"
 
-#: cmd/incus/network_zone.go:253 cmd/incus/network_zone.go:615
-#: cmd/incus/network_zone.go:741
+#: cmd/incus/network_zone.go:252 cmd/incus/network_zone.go:614
+#: cmd/incus/network_zone.go:740
 #, fuzzy
 msgid "[<remote>:]<Zone>"
 msgstr ""
@@ -8894,7 +8919,7 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/network_zone.go:316 cmd/incus/network_zone.go:572
+#: cmd/incus/network_zone.go:315 cmd/incus/network_zone.go:571
 #, fuzzy
 msgid "[<remote>:]<Zone> <key>"
 msgstr ""
@@ -8902,7 +8927,7 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/network_zone.go:484
+#: cmd/incus/network_zone.go:483
 #, fuzzy
 msgid "[<remote>:]<Zone> <key>=<value>..."
 msgstr ""
@@ -8910,7 +8935,7 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/network_zone.go:389
+#: cmd/incus/network_zone.go:388
 #, fuzzy
 msgid "[<remote>:]<Zone> [key=value...]"
 msgstr ""
@@ -9372,7 +9397,7 @@ msgstr ""
 
 #: cmd/incus/network.go:445 cmd/incus/network.go:698 cmd/incus/network.go:915
 #: cmd/incus/network.go:1239 cmd/incus/network.go:1474
-#: cmd/incus/network_forward.go:82 cmd/incus/network_load_balancer.go:87
+#: cmd/incus/network_forward.go:88 cmd/incus/network_load_balancer.go:87
 #: cmd/incus/network_peer.go:78
 #, fuzzy
 msgid "[<remote>:]<network>"
@@ -9413,8 +9438,8 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/network_forward.go:172 cmd/incus/network_forward.go:593
-#: cmd/incus/network_forward.go:746 cmd/incus/network_load_balancer.go:175
+#: cmd/incus/network_forward.go:245 cmd/incus/network_forward.go:666
+#: cmd/incus/network_forward.go:819 cmd/incus/network_load_balancer.go:175
 #: cmd/incus/network_load_balancer.go:562
 #: cmd/incus/network_load_balancer.go:726
 #, fuzzy
@@ -9442,7 +9467,7 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/network_forward.go:351 cmd/incus/network_forward.go:546
+#: cmd/incus/network_forward.go:424 cmd/incus/network_forward.go:619
 #: cmd/incus/network_load_balancer.go:354
 #: cmd/incus/network_load_balancer.go:532
 #, fuzzy
@@ -9452,7 +9477,7 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/network_forward.go:436 cmd/incus/network_load_balancer.go:422
+#: cmd/incus/network_forward.go:509 cmd/incus/network_load_balancer.go:422
 #, fuzzy
 msgid "[<remote>:]<network> <listen_address> <key>=<value>..."
 msgstr ""
@@ -9470,13 +9495,13 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/network_forward.go:836
+#: cmd/incus/network_forward.go:909
 msgid ""
 "[<remote>:]<network> <listen_address> <protocol> <listen_port(s)> "
 "<target_address> [<target_port(s)>]"
 msgstr ""
 
-#: cmd/incus/network_forward.go:917 cmd/incus/network_load_balancer.go:1077
+#: cmd/incus/network_forward.go:990 cmd/incus/network_load_balancer.go:1077
 #, fuzzy
 msgid "[<remote>:]<network> <listen_address> [<protocol>] [<listen_port(s)>]"
 msgstr ""
@@ -9484,7 +9509,7 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/network_forward.go:248 cmd/incus/network_load_balancer.go:251
+#: cmd/incus/network_forward.go:321 cmd/incus/network_load_balancer.go:251
 #, fuzzy
 msgid "[<remote>:]<network> <listen_address> [key=value...]"
 msgstr ""
@@ -9935,7 +9960,7 @@ msgstr ""
 "Entfernt einen Container (oder Sicherungspunkt) und alle dazugehörigen\n"
 "Daten (Konfiguration, Sicherungspunkte, ...).\n"
 
-#: cmd/incus/network_zone.go:854
+#: cmd/incus/network_zone.go:853
 #, fuzzy
 msgid "[<remote>:]<zone>"
 msgstr ""
@@ -9943,8 +9968,8 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/network_zone.go:933 cmd/incus/network_zone.go:1307
-#: cmd/incus/network_zone.go:1436
+#: cmd/incus/network_zone.go:932 cmd/incus/network_zone.go:1306
+#: cmd/incus/network_zone.go:1435
 #, fuzzy
 msgid "[<remote>:]<zone> <record>"
 msgstr ""
@@ -9952,7 +9977,7 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/network_zone.go:997 cmd/incus/network_zone.go:1260
+#: cmd/incus/network_zone.go:996 cmd/incus/network_zone.go:1259
 #, fuzzy
 msgid "[<remote>:]<zone> <record> <key>"
 msgstr ""
@@ -9960,7 +9985,7 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/network_zone.go:1171
+#: cmd/incus/network_zone.go:1170
 #, fuzzy
 msgid "[<remote>:]<zone> <record> <key>=<value>..."
 msgstr ""
@@ -9968,7 +9993,7 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/network_zone.go:1513 cmd/incus/network_zone.go:1571
+#: cmd/incus/network_zone.go:1512 cmd/incus/network_zone.go:1570
 #, fuzzy
 msgid "[<remote>:]<zone> <record> <type> <value>"
 msgstr ""
@@ -9976,7 +10001,7 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/network_zone.go:1073
+#: cmd/incus/network_zone.go:1072
 #, fuzzy
 msgid "[<remote>:]<zone> <record> [key=value...]"
 msgstr ""
@@ -10314,7 +10339,7 @@ msgid ""
 "    Create a new OVN network called bar using baz as its uplink network"
 msgstr ""
 
-#: cmd/incus/network_forward.go:251
+#: cmd/incus/network_forward.go:324
 msgid ""
 "incus network forward create n1 127.0.0.1\n"
 "\n"
@@ -10364,7 +10389,7 @@ msgid ""
 "\tin the file config.yaml"
 msgstr ""
 
-#: cmd/incus/network_zone.go:392
+#: cmd/incus/network_zone.go:391
 msgid ""
 "incus network zone create z1\n"
 "\n"
@@ -10372,7 +10397,7 @@ msgid ""
 "    Create network zone z1 with configuration from config.yaml"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1076
+#: cmd/incus/network_zone.go:1075
 msgid ""
 "incus network zone record create z1 r1\n"
 "\n"
