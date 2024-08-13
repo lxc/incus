@@ -74,7 +74,13 @@ type cmdNetworkForwardList struct {
 	global         *cmdGlobal
 	networkForward *cmdNetworkForward
 
-	flagFormat string
+	flagFormat  string
+	flagColumns string
+}
+
+type networkForwardColumn struct {
+	Name string
+	Data func(api.NetworkForward) string
 }
 
 func (c *cmdNetworkForwardList) Command() *cobra.Command {
@@ -82,10 +88,31 @@ func (c *cmdNetworkForwardList) Command() *cobra.Command {
 	cmd.Use = usage("list", i18n.G("[<remote>:]<network>"))
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available network forwards")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("List available network forwards"))
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+		`List available network forwards
+
+Default column layout: ldDp
+
+== Columns ==
+The -c option takes a comma separated list of arguments that control
+which instance attributes to output when displaying in table or csv
+format.
+
+Column arguments are either pre-defined shorthand chars (see below),
+or (extended) config keys.
+
+Commas between consecutive shorthand chars are optional.
+
+Pre-defined column shorthand chars:
+l - Listen Address
+d - Description
+D - Default Target Address
+p - Port
+L - Location of the network zone (e.g. its cluster member)`))
 
 	cmd.RunE = c.Run
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultNetworkForwardColumns, i18n.G("Columns")+"``")
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -96,6 +123,61 @@ func (c *cmdNetworkForwardList) Command() *cobra.Command {
 	}
 
 	return cmd
+}
+
+const defaultNetworkForwardColumns = "ldDp"
+
+func (c *cmdNetworkForwardList) parseColumns(clustered bool) ([]networkForwardColumn, error) {
+	columnsShorthandMap := map[rune]networkForwardColumn{
+		'l': {i18n.G("LISTEN ADDRESS"), c.listenAddressColumnData},
+		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
+		'D': {i18n.G("DEFAULT TARGET ADDRESS"), c.defaultTargetAddressColumnData},
+		'p': {i18n.G("PORTS"), c.portsColumnData},
+		'L': {i18n.G("LOCATION"), c.locationColumnData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+	columns := []networkForwardColumn{}
+	if c.flagColumns == defaultNetworkForwardColumns && clustered {
+		columnList = append(columnList, "L")
+	}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+func (c *cmdNetworkForwardList) listenAddressColumnData(forward api.NetworkForward) string {
+	return forward.ListenAddress
+}
+
+func (c *cmdNetworkForwardList) descriptionColumnData(forward api.NetworkForward) string {
+	return forward.Description
+}
+
+func (c *cmdNetworkForwardList) defaultTargetAddressColumnData(forward api.NetworkForward) string {
+	return forward.Config["target_address"]
+}
+
+func (c *cmdNetworkForwardList) portsColumnData(forward api.NetworkForward) string {
+	return fmt.Sprintf("%d", len(forward.Ports))
+}
+
+func (c *cmdNetworkForwardList) locationColumnData(forward api.NetworkForward) string {
+	return forward.Location
 }
 
 func (c *cmdNetworkForwardList) Run(cmd *cobra.Command, args []string) error {
@@ -127,35 +209,27 @@ func (c *cmdNetworkForwardList) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	clustered := resource.server.IsClustered()
+	// Parse column flags.
+	columns, err := c.parseColumns(resource.server.IsClustered())
+	if err != nil {
+		return err
+	}
 
 	data := make([][]string, 0, len(forwards))
 	for _, forward := range forwards {
-		details := []string{
-			forward.ListenAddress,
-			forward.Description,
-			forward.Config["target_address"],
-			fmt.Sprintf("%d", len(forward.Ports)),
+		line := []string{}
+		for _, column := range columns {
+			line = append(line, column.Data(forward))
 		}
 
-		if clustered {
-			details = append(details, forward.Location)
-		}
-
-		data = append(data, details)
+		data = append(data, line)
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))
 
-	header := []string{
-		i18n.G("LISTEN ADDRESS"),
-		i18n.G("DESCRIPTION"),
-		i18n.G("DEFAULT TARGET ADDRESS"),
-		i18n.G("PORTS"),
-	}
-
-	if clustered {
-		header = append(header, i18n.G("LOCATION"))
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
 	}
 
 	return cli.RenderTable(c.flagFormat, header, data, forwards)
