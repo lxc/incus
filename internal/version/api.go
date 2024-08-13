@@ -430,6 +430,7 @@ var APIExtensions = []string{
 	"disk_volume_subpath",
 	"projects_limits_disk_pool",
 	"network_ovn_isolated",
+	"qemu_raw_qmp",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
