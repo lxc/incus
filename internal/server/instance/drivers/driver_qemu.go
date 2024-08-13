@@ -1110,6 +1110,29 @@ func (d *qemu) Start(stateful bool) error {
 	return d.start(stateful, nil)
 }
 
+func (d *qemu) runQMP(monitor *qmp.Monitor, stage string) error {
+	commands, ok := d.expandedConfig["raw.qemu.qmp."+stage]
+	if ok {
+		var commandList []map[string]any
+		err := json.Unmarshal([]byte(commands), &commandList)
+		if err != nil {
+			err = fmt.Errorf("Failed to parse QMP commands at %s stage (expected JSON list of objects): %w", stage, err)
+			return err
+		}
+
+		for _, command := range commandList {
+			jsonCommand, _ := json.Marshal(command)
+			err = monitor.RunJSON(jsonCommand, nil)
+			if err != nil {
+				err = fmt.Errorf("Failed to run QMP command %s at %s stage: %w", jsonCommand, stage, err)
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // start starts the instance and can use an existing InstanceOperation lock.
 func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	d.logger.Debug("Start started", logger.Ctx{"stateful": stateful})
@@ -1700,6 +1723,13 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// onStop hook isn't triggered prematurely (as this function's reverter will clean up on failure to start).
 	monitor.SetOnDisconnectEvent(false)
 
+	// Early QMP hook
+	err = d.runQMP(monitor, "early")
+	if err != nil {
+		op.Done(err)
+		return err
+	}
+
 	// Apply CPU pinning.
 	if cpuInfo.vcpus == nil {
 		if d.architectureSupportsCPUHotplug() && cpuInfo.cores > 1 {
@@ -1755,6 +1785,13 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			op.Done(err)
 			return fmt.Errorf("Failed setting up device via monitor: %w", err)
 		}
+	}
+
+	// Pre-start QMP hook
+	err = d.runQMP(monitor, "pre-start")
+	if err != nil {
+		op.Done(err)
+		return err
 	}
 
 	// Due to a bug in QEMU, devices added using QMP's device_add command do not have their bootindex option
@@ -1824,6 +1861,16 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	revert.Success()
+
+	// Post-start QMP hook
+	err = d.runQMP(monitor, "post-start")
+	if err != nil {
+		op.Done(err)
+
+		// Shut down the VM if the post-start commands fail.
+		_ = d.Stop(false)
+		return err
+	}
 
 	// Run any post-start hooks.
 	err = d.runHooks(postStartHooks)
