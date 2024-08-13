@@ -681,6 +681,30 @@ For example: `both 1000 1000`
 See {ref}`instance-options-qemu` for more information.
 ```
 
+```{config:option} raw.qemu.qmp.early instance-raw
+:condition: "virtual machine"
+:liveupdate: "no"
+:shortdesc: "QMP commands to run before Incus QEMU initialization"
+:type: "blob"
+
+```
+
+```{config:option} raw.qemu.qmp.post-start instance-raw
+:condition: "virtual machine"
+:liveupdate: "no"
+:shortdesc: "QMP commands to run after the VM has started"
+:type: "blob"
+
+```
+
+```{config:option} raw.qemu.qmp.pre-start instance-raw
+:condition: "virtual machine"
+:liveupdate: "no"
+:shortdesc: "QMP commands to run after Incus QEMU initialization and before the VM has started"
+:type: "blob"
+
+```
+
 ```{config:option} raw.seccomp instance-raw
 :condition: "container"
 :liveupdate: "no"
