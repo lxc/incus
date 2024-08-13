@@ -902,8 +902,13 @@ func isVMLowLevelOptionForbidden(key string) bool {
 		"boot.host_shutdown_action",
 		"boot.host_shutdown_timeout",
 		"limits.memory.hugepages",
+		"raw.apparmor",
 		"raw.idmap",
 		"raw.qemu",
+		"raw.qemu.conf",
+		"raw.qemu.qmp.early",
+		"raw.qemu.qmp.post-start",
+		"raw.qemu.qmp.pre-start",
 	},
 		key)
 }
