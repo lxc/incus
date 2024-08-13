@@ -211,6 +211,7 @@ Podman
 PTS
 qdisc
 QEMU
+QMP
 qgroup
 qgroups
 RADOS

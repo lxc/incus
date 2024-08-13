@@ -2554,3 +2554,11 @@ This introduces per-pool project disk limits, introducing a `limits.disk.pool.NA
 ## `network_ovn_isolated`
 
 This allows using `none` as the uplink network for an OVN network, making the network isolated.
+
+## `qemu_raw_qmp`
+
+This adds new configuration options to virtual machines to directly issue QMP commands at various stages of startup:
+
+* `raw.qemu.qmp.early`
+* `raw.qemu.qmp.pre-start`
+* `raw.qemu.qmp.post-start`

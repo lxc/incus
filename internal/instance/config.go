@@ -935,6 +935,33 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  shortdesc: Addition/override to the generated `qemu.conf` file
 	"raw.qemu.conf": validate.IsAny,
 
+	// gendoc:generate(entity=instance, group=raw, key=raw.qemu.qmp.early)
+	//
+	// ---
+	//  type: blob
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: QMP commands to run before Incus QEMU initialization
+	"raw.qemu.qmp.early": validate.IsAny,
+
+	// gendoc:generate(entity=instance, group=raw, key=raw.qemu.qmp.post-start)
+	//
+	// ---
+	//  type: blob
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: QMP commands to run after the VM has started
+	"raw.qemu.qmp.post-start": validate.IsAny,
+
+	// gendoc:generate(entity=instance, group=raw, key=raw.qemu.qmp.pre-start)
+	//
+	// ---
+	//  type: blob
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: QMP commands to run after Incus QEMU initialization and before the VM has started
+	"raw.qemu.qmp.pre-start": validate.IsAny,
+
 	// gendoc:generate(entity=instance, group=security, key=security.agent.metrics)
 	//
 	// ---
