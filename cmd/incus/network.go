@@ -1231,7 +1231,13 @@ type cmdNetworkListLeases struct {
 	global  *cmdGlobal
 	network *cmdNetwork
 
-	flagFormat string
+	flagFormat  string
+	flagColumns string
+}
+
+type networkLeasesColumn struct {
+	Name string
+	Data func(api.NetworkLease) string
 }
 
 func (c *cmdNetworkListLeases) Command() *cobra.Command {
@@ -1239,8 +1245,28 @@ func (c *cmdNetworkListLeases) Command() *cobra.Command {
 	cmd.Use = usage("list-leases", i18n.G("[<remote>:]<network>"))
 	cmd.Short = i18n.G("List DHCP leases")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`List DHCP leases`))
+		`List DHCP leases
+
+Default column layout: hmitL
+
+== Columns ==
+The -c option takes a comma separated list of arguments that control
+which network zone attributes to output when displaying in table or csv
+format.
+
+Column arguments are either pre-defined shorthand chars (see below),
+or (extended) config keys.
+
+Commas between consecutive shorthand chars are optional.
+
+Pre-defined column shorthand chars:
+  h - Hostname
+  m - MAC Address
+  i - IP Address
+  t - Type
+  L - Location of the DHCP Lease (e.g. its cluster member)`))
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultNetworkListLeasesColumns, i18n.G("Columns")+"``")
 
 	cmd.RunE = c.Run
 
@@ -1253,6 +1279,61 @@ func (c *cmdNetworkListLeases) Command() *cobra.Command {
 	}
 
 	return cmd
+}
+
+const defaultNetworkListLeasesColumns = "hmit"
+
+func (c *cmdNetworkListLeases) parseColumns(clustered bool) ([]networkLeasesColumn, error) {
+	columnsShorthandMap := map[rune]networkLeasesColumn{
+		'h': {i18n.G("HOSTNAME"), c.hostnameColumnData},
+		'm': {i18n.G("MAC ADDRESS"), c.macAddressColumnData},
+		'i': {i18n.G("IP ADDRESS"), c.ipAddressColumnData},
+		't': {i18n.G("TYPE"), c.typeColumnData},
+		'L': {i18n.G("LOCATION"), c.locationColumnData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+	columns := []networkLeasesColumn{}
+	if c.flagColumns == defaultNetworkListLeasesColumns && clustered {
+		columnList = append(columnList, "L")
+	}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+func (c *cmdNetworkListLeases) hostnameColumnData(lease api.NetworkLease) string {
+	return lease.Hostname
+}
+
+func (c *cmdNetworkListLeases) macAddressColumnData(lease api.NetworkLease) string {
+	return lease.Hwaddr
+}
+
+func (c *cmdNetworkListLeases) ipAddressColumnData(lease api.NetworkLease) string {
+	return lease.Address
+}
+
+func (c *cmdNetworkListLeases) typeColumnData(lease api.NetworkLease) string {
+	return strings.ToUpper(lease.Type)
+}
+
+func (c *cmdNetworkListLeases) locationColumnData(lease api.NetworkLease) string {
+	return lease.Location
 }
 
 func (c *cmdNetworkListLeases) Run(cmd *cobra.Command, args []string) error {
@@ -1280,27 +1361,27 @@ func (c *cmdNetworkListLeases) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Parse column flags.
+	columns, err := c.parseColumns(resource.server.IsClustered())
+	if err != nil {
+		return err
+	}
+
 	data := [][]string{}
 	for _, lease := range leases {
-		entry := []string{lease.Hostname, lease.Hwaddr, lease.Address, strings.ToUpper(lease.Type)}
-		if resource.server.IsClustered() {
-			entry = append(entry, lease.Location)
+		line := []string{}
+		for _, column := range columns {
+			line = append(line, column.Data(lease))
 		}
 
-		data = append(data, entry)
+		data = append(data, line)
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))
 
-	header := []string{
-		i18n.G("HOSTNAME"),
-		i18n.G("MAC ADDRESS"),
-		i18n.G("IP ADDRESS"),
-		i18n.G("TYPE"),
-	}
-
-	if resource.server.IsClustered() {
-		header = append(header, i18n.G("LOCATION"))
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
 	}
 
 	return cli.RenderTable(c.flagFormat, header, data, leases)
