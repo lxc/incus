@@ -240,12 +240,20 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	// Read the hostname.
+	bb, err := os.ReadFile(filepath.Join(args[0], "hostname"))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to read hostname file: %v\n", err)
+	}
+
+	hostname := strings.TrimSpace(string(bb))
+
 	// Try to get a lease.
 	client := client4.NewClient()
 	for i := 0; i < 10; i++ {
 		var err error
 
-		messages, err = client.Exchange(iface)
+		messages, err = client.Exchange(iface, dhcpv4.WithOption(dhcpv4.OptHostName(hostname)))
 		if err == nil {
 			break
 		}
