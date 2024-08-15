@@ -2897,9 +2897,9 @@ func (o *NB) ClearPortGroupPortACLRules(ctx context.Context, portGroupName OVNPo
 	return nil
 }
 
-// CreateLoadBalancer creates a new load balancer (if doesn't exist) on the specified routers and switches.
+// CreateLoadBalancer creates a new load balancer (if doesn't exist) on the specified router and switch.
 // Providing an empty set of vips will delete the load balancer.
-func (o *NB) CreateLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBalancer, routers []OVNRouter, switches []OVNSwitch, vips ...OVNLoadBalancerVIP) error {
+func (o *NB) CreateLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBalancer, routerName OVNRouter, switchName OVNSwitch, vips ...OVNLoadBalancerVIP) error {
 	lbTCPName := fmt.Sprintf("%s-tcp", loadBalancerName)
 	lbUDPName := fmt.Sprintf("%s-udp", loadBalancerName)
 	operations := []ovsdb.Operation{}
@@ -2931,6 +2931,18 @@ func (o *NB) CreateLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBal
 		} else if err != ErrNotFound {
 			return err
 		}
+	}
+
+	// Get the logical router.
+	lr, err := o.GetLogicalRouter(ctx, routerName)
+	if err != nil {
+		return err
+	}
+
+	// Get the logical switch.
+	ls, err := o.GetLogicalSwitch(ctx, switchName)
+	if err != nil {
+		return err
 	}
 
 	// Define the new load-balancers.
@@ -3008,43 +3020,29 @@ func (o *NB) CreateLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBal
 
 		operations = append(operations, createOps...)
 
-		// Add to the routers.
-		for _, lrName := range routers {
-			lr, err := o.GetLogicalRouter(ctx, lrName)
-			if err != nil {
-				return err
-			}
-
-			updateOps, err := o.client.Where(lr).Mutate(lr, ovsModel.Mutation{
-				Field:   &lr.LoadBalancer,
-				Mutator: ovsdb.MutateOperationInsert,
-				Value:   []string{lb.UUID},
-			})
-			if err != nil {
-				return err
-			}
-
-			operations = append(operations, updateOps...)
+		// Add to the router.
+		updateOps, err := o.client.Where(lr).Mutate(lr, ovsModel.Mutation{
+			Field:   &lr.LoadBalancer,
+			Mutator: ovsdb.MutateOperationInsert,
+			Value:   []string{lb.UUID},
+		})
+		if err != nil {
+			return err
 		}
 
-		// Add to the switches.
-		for _, lsName := range switches {
-			ls, err := o.GetLogicalSwitch(ctx, lsName)
-			if err != nil {
-				return err
-			}
+		operations = append(operations, updateOps...)
 
-			updateOps, err := o.client.Where(ls).Mutate(ls, ovsModel.Mutation{
-				Field:   &ls.LoadBalancer,
-				Mutator: ovsdb.MutateOperationInsert,
-				Value:   []string{lb.UUID},
-			})
-			if err != nil {
-				return err
-			}
-
-			operations = append(operations, updateOps...)
+		// Add to the switch.
+		updateOps, err = o.client.Where(ls).Mutate(ls, ovsModel.Mutation{
+			Field:   &ls.LoadBalancer,
+			Mutator: ovsdb.MutateOperationInsert,
+			Value:   []string{lb.UUID},
+		})
+		if err != nil {
+			return err
 		}
+
+		operations = append(operations, updateOps...)
 	}
 
 	// Check if anything to delete.
