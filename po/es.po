@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-08-14 19:53-0400\n"
+"POT-Creation-Date: 2024-08-16 00:23-0400\n"
 "PO-Revision-Date: 2023-06-16 20:55+0000\n"
 "Last-Translator: Francisco Serrador <fserrador@gmail.com>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/linux-containers/"
@@ -774,7 +774,7 @@ msgstr ""
 msgid "A cluster member name must be provided"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/network_allocations.go:25
+#: cmd/incus/network_allocations.go:72
 msgid "ADDRESS"
 msgstr ""
 
@@ -1519,11 +1519,12 @@ msgstr ""
 #: cmd/incus/cluster.go:150 cmd/incus/cluster_group.go:477
 #: cmd/incus/config_trust.go:421 cmd/incus/image.go:1093
 #: cmd/incus/image_alias.go:180 cmd/incus/list.go:134 cmd/incus/network.go:1072
-#: cmd/incus/network.go:1269 cmd/incus/network_forward.go:115
-#: cmd/incus/network_zone.go:115 cmd/incus/operation.go:138
-#: cmd/incus/profile.go:725 cmd/incus/project.go:527 cmd/incus/remote.go:750
-#: cmd/incus/storage.go:687 cmd/incus/storage_volume.go:1557
-#: cmd/incus/storage_volume.go:2548 cmd/incus/warning.go:93
+#: cmd/incus/network.go:1269 cmd/incus/network_allocations.go:62
+#: cmd/incus/network_forward.go:115 cmd/incus/network_zone.go:115
+#: cmd/incus/operation.go:138 cmd/incus/profile.go:725 cmd/incus/project.go:527
+#: cmd/incus/remote.go:750 cmd/incus/storage.go:687
+#: cmd/incus/storage_volume.go:1557 cmd/incus/storage_volume.go:2548
+#: cmd/incus/warning.go:93
 msgid "Columns"
 msgstr "Columnas"
 
@@ -2141,7 +2142,7 @@ msgstr ""
 #: cmd/incus/network_acl.go:608 cmd/incus/network_acl.go:747
 #: cmd/incus/network_acl.go:804 cmd/incus/network_acl.go:861
 #: cmd/incus/network_acl.go:876 cmd/incus/network_acl.go:1013
-#: cmd/incus/network_allocations.go:51 cmd/incus/network_forward.go:28
+#: cmd/incus/network_allocations.go:34 cmd/incus/network_forward.go:28
 #: cmd/incus/network_forward.go:91 cmd/incus/network_forward.go:248
 #: cmd/incus/network_forward.go:324 cmd/incus/network_forward.go:427
 #: cmd/incus/network_forward.go:512 cmd/incus/network_forward.go:622
@@ -2573,11 +2574,11 @@ msgstr ""
 #: cmd/incus/cluster.go:187 cmd/incus/cluster_group.go:507
 #: cmd/incus/config_trust.go:447 cmd/incus/image.go:1133
 #: cmd/incus/image_alias.go:217 cmd/incus/list.go:633 cmd/incus/network.go:1113
-#: cmd/incus/network.go:1303 cmd/incus/network_forward.go:147
-#: cmd/incus/network_zone.go:147 cmd/incus/operation.go:166
-#: cmd/incus/profile.go:763 cmd/incus/project.go:565 cmd/incus/remote.go:773
-#: cmd/incus/storage.go:722 cmd/incus/storage_volume.go:1700
-#: cmd/incus/warning.go:236
+#: cmd/incus/network.go:1303 cmd/incus/network_allocations.go:83
+#: cmd/incus/network_forward.go:147 cmd/incus/network_zone.go:147
+#: cmd/incus/operation.go:166 cmd/incus/profile.go:763 cmd/incus/project.go:565
+#: cmd/incus/remote.go:773 cmd/incus/storage.go:722
+#: cmd/incus/storage_volume.go:1700 cmd/incus/warning.go:236
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
@@ -3262,7 +3263,7 @@ msgstr ""
 #: cmd/incus/config_trust.go:422 cmd/incus/config_trust.go:586
 #: cmd/incus/image.go:1094 cmd/incus/image_alias.go:179 cmd/incus/list.go:135
 #: cmd/incus/network.go:1073 cmd/incus/network.go:1268
-#: cmd/incus/network_acl.go:97 cmd/incus/network_allocations.go:57
+#: cmd/incus/network_acl.go:97 cmd/incus/network_allocations.go:59
 #: cmd/incus/network_forward.go:114 cmd/incus/network_integration.go:412
 #: cmd/incus/network_load_balancer.go:93 cmd/incus/network_peer.go:84
 #: cmd/incus/network_zone.go:113 cmd/incus/network_zone.go:859
@@ -3513,10 +3514,6 @@ msgstr ""
 
 #: cmd/incus/exec.go:65
 msgid "Group ID to run the command as (default 0)"
-msgstr ""
-
-#: cmd/incus/network_allocations.go:28
-msgid "HARDWARE ADDRESS"
 msgstr ""
 
 #: cmd/incus/network.go:1288
@@ -4466,8 +4463,31 @@ msgstr ""
 msgid "List network ACLs across all projects"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_allocations.go:50 cmd/incus/network_allocations.go:51
+#: cmd/incus/network_allocations.go:33
 msgid "List network allocations in use"
+msgstr ""
+
+#: cmd/incus/network_allocations.go:34
+msgid ""
+"List network allocations in use\n"
+"Default column layout: uatnm\n"
+"\n"
+"== Columns ==\n"
+"The -c option takes a comma separated list of arguments that control\n"
+"which instance attributes to output when displaying in table or csv\n"
+"format.\n"
+"\n"
+"Column arguments are either pre-defined shorthand chars (see below),\n"
+"or (extended) config keys.\n"
+"\n"
+"Commas between consecutive shorthand chars are optional.\n"
+"\n"
+"Pre-defined column shorthand chars:\n"
+"  u - Used by\n"
+"  a - Address\n"
+"  t - Type\n"
+"  n - NAT\n"
+"  m - Mac Address"
 msgstr ""
 
 #: cmd/incus/network_integration.go:409 cmd/incus/network_integration.go:410
@@ -4725,7 +4745,7 @@ msgstr ""
 msgid "Lower devices"
 msgstr ""
 
-#: cmd/incus/network.go:1289
+#: cmd/incus/network.go:1289 cmd/incus/network_allocations.go:75
 msgid "MAC ADDRESS"
 msgstr ""
 
@@ -5371,7 +5391,7 @@ msgstr ""
 msgid "NAME"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:27
+#: cmd/incus/network_allocations.go:74
 msgid "NAT"
 msgstr ""
 
@@ -6486,7 +6506,7 @@ msgstr ""
 msgid "Run a local API proxy for the remote"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:58
+#: cmd/incus/network_allocations.go:60
 msgid "Run again a specific project"
 msgstr ""
 
@@ -6494,7 +6514,7 @@ msgstr ""
 msgid "Run against all instances"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:59
+#: cmd/incus/network_allocations.go:61
 #, fuzzy
 msgid "Run against all projects"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -7439,7 +7459,7 @@ msgstr ""
 
 #: cmd/incus/config_trust.go:432 cmd/incus/image.go:1123
 #: cmd/incus/image_alias.go:207 cmd/incus/list.go:589 cmd/incus/network.go:1094
-#: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:26
+#: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:73
 #: cmd/incus/network_integration.go:459 cmd/incus/network_peer.go:157
 #: cmd/incus/operation.go:150 cmd/incus/storage_volume.go:1670
 #: cmd/incus/warning.go:216
@@ -7898,7 +7918,7 @@ msgid "USB devices:"
 msgstr ""
 
 #: cmd/incus/network.go:1099 cmd/incus/network_acl.go:170
-#: cmd/incus/network_allocations.go:24 cmd/incus/network_integration.go:460
+#: cmd/incus/network_allocations.go:71 cmd/incus/network_integration.go:460
 #: cmd/incus/network_zone.go:135 cmd/incus/profile.go:748
 #: cmd/incus/project.go:556 cmd/incus/storage.go:712
 #: cmd/incus/storage_volume.go:1674
@@ -7941,11 +7961,11 @@ msgstr ""
 #: cmd/incus/cluster.go:193 cmd/incus/cluster_group.go:513
 #: cmd/incus/config_trust.go:455 cmd/incus/image.go:1141
 #: cmd/incus/image_alias.go:223 cmd/incus/list.go:648 cmd/incus/network.go:1119
-#: cmd/incus/network.go:1309 cmd/incus/network_forward.go:153
-#: cmd/incus/network_zone.go:153 cmd/incus/operation.go:172
-#: cmd/incus/profile.go:769 cmd/incus/project.go:571 cmd/incus/remote.go:779
-#: cmd/incus/storage.go:728 cmd/incus/storage_volume.go:1708
-#: cmd/incus/warning.go:244
+#: cmd/incus/network.go:1309 cmd/incus/network_allocations.go:89
+#: cmd/incus/network_forward.go:153 cmd/incus/network_zone.go:153
+#: cmd/incus/operation.go:172 cmd/incus/profile.go:769 cmd/incus/project.go:571
+#: cmd/incus/remote.go:779 cmd/incus/storage.go:728
+#: cmd/incus/storage_volume.go:1708 cmd/incus/warning.go:244
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr ""
