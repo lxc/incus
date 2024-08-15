@@ -1,7 +1,7 @@
 (incus-alias)=
 # How to manage command aliases
 
-The Incus command-line client supports adding aliases for commands that you use frequently.
+The Incus command-line client `incus` has support for adding aliases for commands that you use frequently.
 You can use aliases as shortcuts for longer commands, or to automatically add flags to existing commands.
 
 Managing aliases is done through the [`incus alias`](incus_alias.md) command.
@@ -15,6 +15,13 @@ Within the [`incus alias`](incus_alias.md) command, you can use the following su
 
 Run [`incus alias --help`](incus_alias.md) to see all available subcommands and parameters.
 
+```{note}
+_Command aliases_ are different from {ref}`_image aliases_ <images>`.
+An image alias is an alternative name for an image, usually a shorter name or another common mnemonic for that image.
+
+Image aliases are a server-side concept part of the Incus API whereas command aliases are purely part of the command line tool configuration.
+```
+
 ## How to add a command alias
 
 To always ask for confirmation when deleting an instance, create an alias for
@@ -27,16 +34,16 @@ and will invoke the same Incus command but with the added `--interactive` flag.
 
 Note that when you now run `incus delete mycontainer` to delete an instance called `myinstance`,
 the Incus command-line client will replace `incus delete` with `incus delete --interactive`
-and will execute `incus delete --interactive myinstance`.
+and will instead execute `incus delete --interactive myinstance`.
 
 When a command alias has the same name as an Incus command, the command alias will mask the Incus command.
 
 You would need to remove first the command alias if you want to run verbatim the Incus command of the same name.
-In addition, when we use a command alias with parameters (in this case, the name of the container),
+In addition, when you use a command alias with parameters (in this case, the name of the container),
 the Incus command-line client will place those parameters at the end of
 the aliased command unless they are manually placed elsewhere through the `@ARGS@` string.
 
-Finally, the command in the command alias has to be enclosed in quotes.
+Finally, the command in the command alias should be enclosed in quotes.
 
 ## How to list all command aliases
 
@@ -44,20 +51,18 @@ To see all configured aliases, run [`incus alias list`](incus_alias_list.md).
 
 ## How to remove a command alias
 
-To remove an existing command alias, run [`incus alias remove`](incus_alias_remove.md)
-and add the name of the command alias.
+To remove an existing command alias, type [`incus alias remove`](incus_alias_remove.md)
+and add the name of that command alias.
 
 ## How to rename a command alias
 
-To rename an existing command alias, run [`incus alias rename`](incus_alias_rename.md),
-then add the name of the existing command alias, and finally the name of the new command alias.
+To rename an existing command alias, type [`incus alias rename`](incus_alias_rename.md),
+then add the name of that existing command alias, and finally the name of the new command alias.
 
 ## Built-in `shell` alias
 
 Incus comes with the `shell` built-in command alias. That alias is based on the
 [`incus exec`](incus_exec.md) command, executing `exec @ARGS@ -- su -l`.
-
-If you run `incus shell myinstance`, this command alias will expand into `incus exec mycontainer -- su -l`.
 
 ```
 $ incus alias list
@@ -68,14 +73,14 @@ $ incus alias list
 +-----------+----------------------+
 ```
 
-The target in this command alias is `exec @ARGS@ -- su -l`.
+If you run `incus shell myinstance`, this command alias will expand into `incus exec myinstance -- su -l`.
 
-The `--` construct is a command-line artifact that instructs the command to stop processing parameters like `-l`.
+The `--` construct is a command-line artifact that instructs the Incus command-line client to stop processing further parameters, like the `-l` that follows.
 Without `--`, the expanded command `incus exec mycontainer su -l` would fail,
-because the Incus command-line client would try to parse the `-l` flag, instead of not processing it as is our intent.
+because the Incus command-line client would try to parse the `-l` flag. In this particular case, it would fail with an error because there is no `-l` parameter for `incus shell`.
 
-The `su -l` command is synonymous to `su -` and `su --login`.
-It launches a login shell in the instance as the user `root` user.
+The `su -l` command is synonymous to `su -` or `su --login`.
+It launches a login shell in the instance as the `root` user.
 The command reads the necessary configuration files to launch a login shell for user `root`.
 
 The `shell` alias is built-in into the Incus server. Therefore, the Incus client is not able to remove it.
@@ -87,7 +92,7 @@ Error: Alias shell doesn't exist
 $
 ```
 
-If you add a new command alias with the name `shell`, you will be masking the built-in command alias.
+If you add a new command alias with the name `shell`, the new command alias will be masking the built-in command alias.
 That is, the Incus command-line client will be using your newly added alias instead and the built-in
 command alias will be hidden. When you remove the newly added alias `shell`, the built-in alias will appear again.
 
@@ -126,9 +131,18 @@ $ incus debian mycontainer
 debian@mycontainer:~$
 ```
 
-## Miscellaneous
+```{note}
+As an alternative to `su`, you may use instead `sudo`. In that case, the command would be as follows.
 
-Note that _command aliases_ are different from _images aliases_.
-An image alias is an alternative name for an image, usually a shorter name or another common mnemonic for that image.
+     incus alias add debian `exec @ARGS@ -- sudo --login --user debian`
+```
 
-Image aliases are a server-side concept part of the Incus API whereas command aliases are purely part of the command line tool configuration.
+```{note}
+When launching a system container or a virtual machine, Incus allows to specify environment variables.
+
+     incus launch -c environment.MYVARIABLE=myvalue images:debian/12 myinstance
+
+A login shell in such an instance does not have access to those environment variables. This is due to the semantics of login shells with either `su -l` or `sudo --login` which do not preserve any environment variables. If you want to preserve any environment variables, you would instead use either `su --preserve-environment` or `sudo --preserve-env`.
+
+Another alternative is to add the environment variables into the instance to the file system file `/etc/environment`. By doing so, any new login shell to the instance will be able to parse this file and enable any environment variables.
+```
