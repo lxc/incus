@@ -25,7 +25,7 @@ msgstr "  机箱:"
 
 #: cmd/incus/info.go:478
 msgid "  Firmware:"
-msgstr "  Firmware:"
+msgstr "  固件:"
 
 #: cmd/incus/info.go:458
 msgid "  Motherboard:"
@@ -277,7 +277,7 @@ msgstr ""
 "### Note that only the ingress and egress rules, description and "
 "configuration keys can be changed."
 
-#: cmd/incus/network_forward.go:690
+#: cmd/incus/network_forward.go:690 cmd/incus/network_forward.go:689
 msgid ""
 "### This is a YAML representation of the network forward.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -812,6 +812,7 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/network_forward.go:911 cmd/incus/network_forward.go:912
+#: cmd/incus/network_forward.go:910
 msgid "Add ports to a forward"
 msgstr ""
 
@@ -1047,6 +1048,7 @@ msgstr ""
 #: cmd/incus/network_forward.go:382 cmd/incus/network_load_balancer.go:311
 #: cmd/incus/network_peer.go:334 cmd/incus/network_zone.go:455
 #: cmd/incus/network_zone.go:1142 cmd/incus/storage_bucket.go:154
+#: cmd/incus/network_forward.go:381
 #, c-format
 msgid "Bad key/value pair: %s"
 msgstr ""
@@ -1403,6 +1405,11 @@ msgstr ""
 #: cmd/incus/storage_volume.go:2458 cmd/incus/storage_volume.go:2671
 #: cmd/incus/storage_volume.go:2757 cmd/incus/storage_volume.go:2837
 #: cmd/incus/storage_volume.go:2929 cmd/incus/storage_volume.go:3095
+#: cmd/incus/network.go:1386 cmd/incus/network.go:1479
+#: cmd/incus/network.go:1551 cmd/incus/network_forward.go:250
+#: cmd/incus/network_forward.go:331 cmd/incus/network_forward.go:519
+#: cmd/incus/network_forward.go:671 cmd/incus/network_forward.go:825
+#: cmd/incus/network_forward.go:914 cmd/incus/network_forward.go:996
 msgid "Cluster member name"
 msgstr ""
 
@@ -1474,6 +1481,7 @@ msgstr ""
 #: cmd/incus/profile.go:600 cmd/incus/project.go:399 cmd/incus/storage.go:368
 #: cmd/incus/storage_bucket.go:361 cmd/incus/storage_bucket.go:1157
 #: cmd/incus/storage_volume.go:1111 cmd/incus/storage_volume.go:1143
+#: cmd/incus/network_forward.go:789
 #, c-format
 msgid "Config parsing error: %s"
 msgstr ""
@@ -1720,6 +1728,7 @@ msgid "Create new network ACLs"
 msgstr ""
 
 #: cmd/incus/network_forward.go:323 cmd/incus/network_forward.go:324
+#: cmd/incus/network_forward.go:322
 msgid "Create new network forwards"
 msgstr ""
 
@@ -1894,6 +1903,7 @@ msgid "Delete network ACLs"
 msgstr ""
 
 #: cmd/incus/network_forward.go:822 cmd/incus/network_forward.go:823
+#: cmd/incus/network_forward.go:821
 msgid "Delete network forwards"
 msgstr ""
 
@@ -2095,7 +2105,14 @@ msgstr ""
 #: cmd/incus/storage_volume.go:2835 cmd/incus/storage_volume.go:2922
 #: cmd/incus/storage_volume.go:3088 cmd/incus/top.go:33 cmd/incus/version.go:22
 #: cmd/incus/warning.go:29 cmd/incus/warning.go:72 cmd/incus/warning.go:263
-#: cmd/incus/warning.go:304 cmd/incus/warning.go:358
+#: cmd/incus/warning.go:304 cmd/incus/warning.go:358 cmd/incus/network.go:1241
+#: cmd/incus/network.go:1320 cmd/incus/network.go:1380
+#: cmd/incus/network.go:1476 cmd/incus/network.go:1548
+#: cmd/incus/network_forward.go:247 cmd/incus/network_forward.go:323
+#: cmd/incus/network_forward.go:426 cmd/incus/network_forward.go:511
+#: cmd/incus/network_forward.go:621 cmd/incus/network_forward.go:668
+#: cmd/incus/network_forward.go:822 cmd/incus/network_forward.go:896
+#: cmd/incus/network_forward.go:911 cmd/incus/network_forward.go:992
 msgid "Description"
 msgstr ""
 
@@ -2360,6 +2377,7 @@ msgid "Edit network configurations as YAML"
 msgstr ""
 
 #: cmd/incus/network_forward.go:668 cmd/incus/network_forward.go:669
+#: cmd/incus/network_forward.go:667
 msgid "Edit network forward configurations as YAML"
 msgstr ""
 
@@ -2501,7 +2519,8 @@ msgstr ""
 #: cmd/incus/network_zone.go:1236 cmd/incus/profile.go:1083
 #: cmd/incus/project.go:851 cmd/incus/storage.go:896
 #: cmd/incus/storage_bucket.go:634 cmd/incus/storage_volume.go:2038
-#: cmd/incus/storage_volume.go:2081
+#: cmd/incus/storage_volume.go:2081 cmd/incus/network.go:1454
+#: cmd/incus/network_forward.go:594
 #, c-format
 msgid "Error setting properties: %v"
 msgstr ""
@@ -2523,7 +2542,8 @@ msgstr ""
 #: cmd/incus/network_zone.go:542 cmd/incus/network_zone.go:1230
 #: cmd/incus/profile.go:1077 cmd/incus/project.go:845 cmd/incus/storage.go:890
 #: cmd/incus/storage_bucket.go:628 cmd/incus/storage_volume.go:2032
-#: cmd/incus/storage_volume.go:2075
+#: cmd/incus/storage_volume.go:2075 cmd/incus/network.go:1448
+#: cmd/incus/network_forward.go:588
 #, c-format
 msgid "Error unsetting property: %v"
 msgstr ""
@@ -3115,6 +3135,7 @@ msgstr ""
 #: cmd/incus/storage.go:689 cmd/incus/storage_bucket.go:474
 #: cmd/incus/storage_bucket.go:806 cmd/incus/storage_volume.go:1575
 #: cmd/incus/storage_volume.go:2565 cmd/incus/warning.go:94
+#: cmd/incus/network.go:1243
 msgid "Format (csv|json|table|yaml|compact)"
 msgstr ""
 
@@ -3199,7 +3220,7 @@ msgstr ""
 msgid "Get the key as a network ACL property"
 msgstr ""
 
-#: cmd/incus/network_forward.go:429
+#: cmd/incus/network_forward.go:429 cmd/incus/network_forward.go:428
 msgid "Get the key as a network forward property"
 msgstr ""
 
@@ -3276,6 +3297,7 @@ msgid "Get values for network configuration keys"
 msgstr ""
 
 #: cmd/incus/network_forward.go:426 cmd/incus/network_forward.go:427
+#: cmd/incus/network_forward.go:425
 msgid "Get values for network forward configuration keys"
 msgstr ""
 
@@ -3345,7 +3367,7 @@ msgstr ""
 msgid "HARDWARE ADDRESS"
 msgstr ""
 
-#: cmd/incus/network.go:1288
+#: cmd/incus/network.go:1288 cmd/incus/network.go:1296
 msgid "HOSTNAME"
 msgstr ""
 
@@ -3404,7 +3426,7 @@ msgstr ""
 msgid "IOMMU group: %v"
 msgstr ""
 
-#: cmd/incus/network.go:1290
+#: cmd/incus/network.go:1290 cmd/incus/network.go:1298
 msgid "IP ADDRESS"
 msgstr ""
 
@@ -3810,6 +3832,7 @@ msgstr ""
 #: cmd/incus/network_forward.go:136 cmd/incus/network_load_balancer.go:161
 #: cmd/incus/operation.go:155 cmd/incus/storage_bucket.go:544
 #: cmd/incus/storage_volume.go:1679 cmd/incus/warning.go:221
+#: cmd/incus/network.go:1303
 msgid "LOCATION"
 msgstr ""
 
@@ -3846,7 +3869,8 @@ msgstr ""
 msgid "Link speed: %dMbit/s (%s duplex)"
 msgstr ""
 
-#: cmd/incus/network.go:1246
+#: cmd/incus/network.go:1246 cmd/incus/network.go:1240
+#: cmd/incus/network.go:1241
 msgid "List DHCP leases"
 msgstr ""
 
@@ -4518,7 +4542,7 @@ msgstr ""
 msgid "Lower devices"
 msgstr ""
 
-#: cmd/incus/network.go:1289
+#: cmd/incus/network.go:1289 cmd/incus/network.go:1297
 msgid "MAC ADDRESS"
 msgstr ""
 
@@ -4672,6 +4696,7 @@ msgid "Manage network ACLs"
 msgstr ""
 
 #: cmd/incus/network_forward.go:896 cmd/incus/network_forward.go:897
+#: cmd/incus/network_forward.go:895
 msgid "Manage network forward ports"
 msgstr ""
 
@@ -4897,7 +4922,11 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:857
 #: cmd/incus/network_load_balancer.go:933
 #: cmd/incus/network_load_balancer.go:1046
-#: cmd/incus/network_load_balancer.go:1120
+#: cmd/incus/network_load_balancer.go:1120 cmd/incus/network_forward.go:287
+#: cmd/incus/network_forward.go:356 cmd/incus/network_forward.go:471
+#: cmd/incus/network_forward.go:556 cmd/incus/network_forward.go:731
+#: cmd/incus/network_forward.go:862 cmd/incus/network_forward.go:955
+#: cmd/incus/network_forward.go:1037
 msgid "Missing listen address"
 msgstr ""
 
@@ -4946,6 +4975,13 @@ msgstr ""
 #: cmd/incus/network_peer.go:208 cmd/incus/network_peer.go:291
 #: cmd/incus/network_peer.go:432 cmd/incus/network_peer.go:516
 #: cmd/incus/network_peer.go:675 cmd/incus/network_peer.go:796
+#: cmd/incus/network.go:1274 cmd/incus/network.go:1352
+#: cmd/incus/network.go:1418 cmd/incus/network.go:1510
+#: cmd/incus/network_forward.go:203 cmd/incus/network_forward.go:283
+#: cmd/incus/network_forward.go:352 cmd/incus/network_forward.go:467
+#: cmd/incus/network_forward.go:552 cmd/incus/network_forward.go:727
+#: cmd/incus/network_forward.go:858 cmd/incus/network_forward.go:951
+#: cmd/incus/network_forward.go:1033
 msgid "Missing network name"
 msgstr ""
 
@@ -5103,6 +5139,7 @@ msgid "Moving the storage volume: %s"
 msgstr ""
 
 #: cmd/incus/network_forward.go:1082 cmd/incus/network_load_balancer.go:1164
+#: cmd/incus/network_forward.go:1081
 msgid "Multiple ports match. Use --force to remove them all"
 msgstr ""
 
@@ -5269,7 +5306,7 @@ msgstr ""
 msgid "Network %s pending on member %s"
 msgstr ""
 
-#: cmd/incus/network.go:1443
+#: cmd/incus/network.go:1443 cmd/incus/network.go:1362
 #, c-format
 msgid "Network %s renamed to %s"
 msgstr ""
@@ -5299,12 +5336,12 @@ msgstr ""
 msgid "Network Zone %s deleted"
 msgstr ""
 
-#: cmd/incus/network_forward.go:409
+#: cmd/incus/network_forward.go:409 cmd/incus/network_forward.go:408
 #, c-format
 msgid "Network forward %s created"
 msgstr ""
 
-#: cmd/incus/network_forward.go:880
+#: cmd/incus/network_forward.go:880 cmd/incus/network_forward.go:879
 #, c-format
 msgid "Network forward %s deleted"
 msgstr ""
@@ -5417,6 +5454,7 @@ msgid "No matching backend found"
 msgstr ""
 
 #: cmd/incus/network_forward.go:1093 cmd/incus/network_load_balancer.go:1175
+#: cmd/incus/network_forward.go:1092
 msgid "No matching port(s) found"
 msgstr ""
 
@@ -5492,7 +5530,7 @@ msgstr ""
 msgid "Only instance or custom volumes are supported"
 msgstr ""
 
-#: cmd/incus/network.go:778 cmd/incus/network.go:1514
+#: cmd/incus/network.go:778 cmd/incus/network.go:1514 cmd/incus/network.go:1433
 msgid "Only managed networks can be modified"
 msgstr ""
 
@@ -5684,6 +5722,7 @@ msgstr ""
 #: cmd/incus/profile.go:601 cmd/incus/project.go:400 cmd/incus/storage.go:369
 #: cmd/incus/storage_bucket.go:362 cmd/incus/storage_bucket.go:1158
 #: cmd/incus/storage_volume.go:1112 cmd/incus/storage_volume.go:1144
+#: cmd/incus/network_forward.go:790
 msgid "Press enter to open the editor again or ctrl+c to abort change"
 msgstr ""
 
@@ -6013,6 +6052,7 @@ msgid "Remove aliases"
 msgstr ""
 
 #: cmd/incus/network_forward.go:994 cmd/incus/network_load_balancer.go:1080
+#: cmd/incus/network_forward.go:993
 msgid "Remove all ports that match"
 msgstr ""
 
@@ -6041,6 +6081,7 @@ msgid "Remove member from group"
 msgstr ""
 
 #: cmd/incus/network_forward.go:992 cmd/incus/network_forward.go:993
+#: cmd/incus/network_forward.go:991
 msgid "Remove ports from a forward"
 msgstr ""
 
@@ -6108,6 +6149,7 @@ msgid "Rename network integrations"
 msgstr ""
 
 #: cmd/incus/network.go:1400 cmd/incus/network.go:1401
+#: cmd/incus/network.go:1319 cmd/incus/network.go:1320
 msgid "Rename networks"
 msgstr ""
 
@@ -6437,11 +6479,11 @@ msgid ""
 "    incus network set [<remote>:]<ACL> <key> <value>"
 msgstr ""
 
-#: cmd/incus/network.go:1460
+#: cmd/incus/network.go:1460 cmd/incus/network.go:1379
 msgid "Set network configuration keys"
 msgstr ""
 
-#: cmd/incus/network.go:1461
+#: cmd/incus/network.go:1461 cmd/incus/network.go:1380
 msgid ""
 "Set network configuration keys\n"
 "\n"
@@ -6450,11 +6492,11 @@ msgid ""
 "    incus network set [<remote>:]<network> <key> <value>"
 msgstr ""
 
-#: cmd/incus/network_forward.go:511
+#: cmd/incus/network_forward.go:511 cmd/incus/network_forward.go:510
 msgid "Set network forward keys"
 msgstr ""
 
-#: cmd/incus/network_forward.go:512
+#: cmd/incus/network_forward.go:512 cmd/incus/network_forward.go:511
 msgid ""
 "Set network forward keys\n"
 "\n"
@@ -6630,7 +6672,7 @@ msgstr ""
 msgid "Set the key as a network ACL property"
 msgstr ""
 
-#: cmd/incus/network_forward.go:519
+#: cmd/incus/network_forward.go:519 cmd/incus/network_forward.go:518
 msgid "Set the key as a network forward property"
 msgstr ""
 
@@ -6646,7 +6688,7 @@ msgstr ""
 msgid "Set the key as a network peer property"
 msgstr ""
 
-#: cmd/incus/network.go:1468
+#: cmd/incus/network.go:1468 cmd/incus/network.go:1387
 msgid "Set the key as a network property"
 msgstr ""
 
@@ -6763,10 +6805,12 @@ msgid "Show network ACL log"
 msgstr ""
 
 #: cmd/incus/network.go:1556 cmd/incus/network.go:1557
+#: cmd/incus/network.go:1475 cmd/incus/network.go:1476
 msgid "Show network configurations"
 msgstr ""
 
 #: cmd/incus/network_forward.go:247 cmd/incus/network_forward.go:248
+#: cmd/incus/network_forward.go:246
 msgid "Show network forward configurations"
 msgstr ""
 
@@ -7143,7 +7187,7 @@ msgstr ""
 #: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:26
 #: cmd/incus/network_integration.go:459 cmd/incus/network_peer.go:157
 #: cmd/incus/operation.go:150 cmd/incus/storage_volume.go:1670
-#: cmd/incus/warning.go:216
+#: cmd/incus/warning.go:216 cmd/incus/network.go:1299
 msgid "TYPE"
 msgstr ""
 
@@ -7311,7 +7355,7 @@ msgstr ""
 msgid "The property %q does not exist on the network ACL %q: %v"
 msgstr ""
 
-#: cmd/incus/network_forward.go:485
+#: cmd/incus/network_forward.go:485 cmd/incus/network_forward.go:484
 #, c-format
 msgid "The property %q does not exist on the network forward %q: %v"
 msgstr ""
@@ -7697,14 +7741,15 @@ msgid "Unset network ACL configuration keys"
 msgstr ""
 
 #: cmd/incus/network.go:1628 cmd/incus/network.go:1629
+#: cmd/incus/network.go:1547 cmd/incus/network.go:1548
 msgid "Unset network configuration keys"
 msgstr ""
 
-#: cmd/incus/network_forward.go:621
+#: cmd/incus/network_forward.go:621 cmd/incus/network_forward.go:620
 msgid "Unset network forward configuration keys"
 msgstr ""
 
-#: cmd/incus/network_forward.go:622
+#: cmd/incus/network_forward.go:622 cmd/incus/network_forward.go:621
 msgid "Unset network forward keys"
 msgstr ""
 
@@ -7777,7 +7822,7 @@ msgstr ""
 msgid "Unset the key as a network ACL property"
 msgstr ""
 
-#: cmd/incus/network_forward.go:625
+#: cmd/incus/network_forward.go:625 cmd/incus/network_forward.go:624
 msgid "Unset the key as a network forward property"
 msgstr ""
 
@@ -7793,7 +7838,7 @@ msgstr ""
 msgid "Unset the key as a network peer property"
 msgstr ""
 
-#: cmd/incus/network.go:1633
+#: cmd/incus/network.go:1633 cmd/incus/network.go:1552
 msgid "Unset the key as a network property"
 msgstr ""
 
@@ -8441,7 +8486,8 @@ msgstr ""
 #: cmd/incus/network.go:445 cmd/incus/network.go:698 cmd/incus/network.go:915
 #: cmd/incus/network.go:1245 cmd/incus/network.go:1555
 #: cmd/incus/network_forward.go:88 cmd/incus/network_load_balancer.go:87
-#: cmd/incus/network_peer.go:78
+#: cmd/incus/network_peer.go:78 cmd/incus/network.go:1239
+#: cmd/incus/network.go:1474
 msgid "[<remote>:]<network>"
 msgstr ""
 
@@ -8453,18 +8499,19 @@ msgstr ""
 msgid "[<remote>:]<network> <instance> [<device name>] [<interface name>]"
 msgstr ""
 
-#: cmd/incus/network.go:834 cmd/incus/network.go:1627
+#: cmd/incus/network.go:834 cmd/incus/network.go:1627 cmd/incus/network.go:1546
 msgid "[<remote>:]<network> <key>"
 msgstr ""
 
-#: cmd/incus/network.go:1459
+#: cmd/incus/network.go:1459 cmd/incus/network.go:1378
 msgid "[<remote>:]<network> <key>=<value>..."
 msgstr ""
 
 #: cmd/incus/network_forward.go:246 cmd/incus/network_forward.go:667
 #: cmd/incus/network_forward.go:820 cmd/incus/network_load_balancer.go:175
 #: cmd/incus/network_load_balancer.go:562
-#: cmd/incus/network_load_balancer.go:726
+#: cmd/incus/network_load_balancer.go:726 cmd/incus/network_forward.go:245
+#: cmd/incus/network_forward.go:666 cmd/incus/network_forward.go:819
 msgid "[<remote>:]<network> <listen_address>"
 msgstr ""
 
@@ -8480,11 +8527,13 @@ msgstr ""
 
 #: cmd/incus/network_forward.go:425 cmd/incus/network_forward.go:620
 #: cmd/incus/network_load_balancer.go:354
-#: cmd/incus/network_load_balancer.go:532
+#: cmd/incus/network_load_balancer.go:532 cmd/incus/network_forward.go:424
+#: cmd/incus/network_forward.go:619
 msgid "[<remote>:]<network> <listen_address> <key>"
 msgstr ""
 
 #: cmd/incus/network_forward.go:510 cmd/incus/network_load_balancer.go:422
+#: cmd/incus/network_forward.go:509
 msgid "[<remote>:]<network> <listen_address> <key>=<value>..."
 msgstr ""
 
@@ -8494,21 +8543,23 @@ msgid ""
 "<backend_name>[,<backend_name>...]"
 msgstr ""
 
-#: cmd/incus/network_forward.go:910
+#: cmd/incus/network_forward.go:910 cmd/incus/network_forward.go:909
 msgid ""
 "[<remote>:]<network> <listen_address> <protocol> <listen_port(s)> "
 "<target_address> [<target_port(s)>]"
 msgstr ""
 
 #: cmd/incus/network_forward.go:991 cmd/incus/network_load_balancer.go:1077
+#: cmd/incus/network_forward.go:990
 msgid "[<remote>:]<network> <listen_address> [<protocol>] [<listen_port(s)>]"
 msgstr ""
 
 #: cmd/incus/network_forward.go:322 cmd/incus/network_load_balancer.go:251
+#: cmd/incus/network_forward.go:321
 msgid "[<remote>:]<network> <listen_address> [key=value...]"
 msgstr ""
 
-#: cmd/incus/network.go:1398
+#: cmd/incus/network.go:1398 cmd/incus/network.go:1317
 msgid "[<remote>:]<network> <new-name>"
 msgstr ""
 
@@ -9046,7 +9097,7 @@ msgid ""
 "    Create a new OVN network called bar using baz as its uplink network"
 msgstr ""
 
-#: cmd/incus/network_forward.go:325
+#: cmd/incus/network_forward.go:325 cmd/incus/network_forward.go:324
 msgid ""
 "incus network forward create n1 127.0.0.1\n"
 "\n"
