@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-08-16 00:23-0400\n"
+"POT-Creation-Date: 2024-08-16 10:26-0400\n"
 "PO-Revision-Date: 2024-01-27 21:01+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 <nlincus@users.noreply.hosted.weblate."
 "org>\n"
@@ -606,12 +606,12 @@ msgstr ""
 msgid "%d (id: %d, online: %v, NUMA node: %v)"
 msgstr "%d (id: %d, online: %v, NUMA node: %v)"
 
-#: cmd/incus/admin_init_interactive.go:651
+#: cmd/incus/admin_init_interactive.go:660
 #, c-format
 msgid "%q is not a block device"
 msgstr "%q is geen block device"
 
-#: cmd/incus/admin_init_interactive.go:788
+#: cmd/incus/admin_init_interactive.go:797
 #, c-format
 msgid "%q is not an IP address"
 msgstr "%q is geen IP adres"
@@ -952,7 +952,7 @@ msgstr ""
 msgid "Address to bind to (default: none)"
 msgstr "Adres (Address) om aan te verbinden (bind) (standaard: geen)"
 
-#: cmd/incus/admin_init_interactive.go:794
+#: cmd/incus/admin_init_interactive.go:803
 msgid "Address to bind to (not including port)"
 msgstr ""
 
@@ -1284,7 +1284,7 @@ msgid "Caches:"
 msgstr "Caches:"
 
 #: cmd/incus/admin_init_interactive.go:144
-#: cmd/incus/admin_init_interactive.go:819
+#: cmd/incus/admin_init_interactive.go:828
 #, c-format
 msgid "Can't bind address %q: %w"
 msgstr "Kan niet binden (bind) aan adres (address) %q: %w"
@@ -1763,7 +1763,7 @@ msgstr ""
 msgid "Couldn't find a matching entry"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:663
+#: cmd/incus/admin_init_interactive.go:672
 #, c-format
 msgid "Couldn't statfs %s: %w"
 msgstr ""
@@ -1772,7 +1772,7 @@ msgstr ""
 msgid "Create a cluster group"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:600
+#: cmd/incus/admin_init_interactive.go:609
 #, c-format
 msgid "Create a new %s pool?"
 msgstr ""
@@ -2398,7 +2398,7 @@ msgstr ""
 msgid "Do you want to configure a new storage pool?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:736
+#: cmd/incus/admin_init_interactive.go:745
 msgid "Do you want to continue without thin provisioning?"
 msgstr ""
 
@@ -5001,7 +5001,7 @@ msgid ""
 "Minimum level for log messages (only available when using pretty format)"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:688
+#: cmd/incus/admin_init_interactive.go:697
 msgid "Minimum size is 1GiB"
 msgstr ""
 
@@ -5346,29 +5346,29 @@ msgstr ""
 msgid "Name"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:632
+#: cmd/incus/admin_init_interactive.go:641
 msgid "Name of the CEPHfs volume:"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:614
+#: cmd/incus/admin_init_interactive.go:623
 msgid "Name of the OSD storage pool"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:719
+#: cmd/incus/admin_init_interactive.go:728
 #, c-format
 msgid "Name of the existing %s pool or dataset:"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:608
-#: cmd/incus/admin_init_interactive.go:706
+#: cmd/incus/admin_init_interactive.go:617
+#: cmd/incus/admin_init_interactive.go:715
 msgid "Name of the existing CEPH cluster"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:626
+#: cmd/incus/admin_init_interactive.go:635
 msgid "Name of the existing CEPHfs cluster"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:712
+#: cmd/incus/admin_init_interactive.go:721
 msgid "Name of the existing OSD storage pool"
 msgstr ""
 
@@ -5384,7 +5384,7 @@ msgstr ""
 msgid "Name of the project to use for this remote:"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:638
+#: cmd/incus/admin_init_interactive.go:647
 msgid "Name of the shared LVM volume group:"
 msgstr ""
 
@@ -5619,7 +5619,7 @@ msgid ""
 "be used with the 'dir' backend"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:620
+#: cmd/incus/admin_init_interactive.go:629
 msgid "Number of placement groups"
 msgstr ""
 
@@ -5762,7 +5762,7 @@ msgstr ""
 msgid "Path %s doesn't exist"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:649
+#: cmd/incus/admin_init_interactive.go:658
 msgid "Path to the existing block device:"
 msgstr ""
 
@@ -5794,7 +5794,7 @@ msgstr ""
 msgid "Pool name cannot be empty"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:807
+#: cmd/incus/admin_init_interactive.go:816
 msgid "Port to bind to"
 msgstr ""
 
@@ -7064,7 +7064,7 @@ msgstr ""
 msgid "Show warning"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:677
+#: cmd/incus/admin_init_interactive.go:686
 msgid "Size in GiB of the new loop device"
 msgstr ""
 
@@ -7348,11 +7348,11 @@ msgstr ""
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:742
+#: cmd/incus/admin_init_interactive.go:751
 msgid "The LVM thin provisioning tools couldn't be found on the system"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:730
+#: cmd/incus/admin_init_interactive.go:739
 msgid ""
 "The LVM thin provisioning tools couldn't be found.\n"
 "LVM can still be used without thin provisioning but this will disable over-"
@@ -8149,7 +8149,7 @@ msgstr ""
 msgid "Wait for the operation to complete"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:759
+#: cmd/incus/admin_init_interactive.go:768
 msgid ""
 "We detected that you are running inside an unprivileged container.\n"
 "This means that unless you manually configured your host otherwise,\n"
@@ -8181,6 +8181,10 @@ msgstr ""
 msgid "What should the new bridge be called?"
 msgstr ""
 
+#: cmd/incus/admin_init_interactive.go:565
+msgid "Where should this storage pool store its data?"
+msgstr ""
+
 #: cmd/incus/export.go:40
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr ""
@@ -8205,11 +8209,11 @@ msgstr ""
 msgid "Would you like a YAML \"init\" preseed to be printed?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:834
+#: cmd/incus/admin_init_interactive.go:843
 msgid "Would you like stale cached images to be updated automatically?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:780
+#: cmd/incus/admin_init_interactive.go:789
 msgid "Would you like the server to be available over the network?"
 msgstr ""
 
@@ -8229,7 +8233,7 @@ msgstr ""
 msgid "Would you like to continue with scanning for lost volumes?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:571
+#: cmd/incus/admin_init_interactive.go:580
 #, c-format
 msgid "Would you like to create a new btrfs subvolume under %s?"
 msgstr ""
@@ -8238,11 +8242,11 @@ msgstr ""
 msgid "Would you like to create a new local network bridge?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:587
+#: cmd/incus/admin_init_interactive.go:596
 msgid "Would you like to create a new zfs dataset under rpool/incus?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:768
+#: cmd/incus/admin_init_interactive.go:777
 msgid "Would you like to have your containers share their parent's allocation?"
 msgstr ""
 
@@ -8254,7 +8258,7 @@ msgstr ""
 msgid "Would you like to use an existing bridge or host interface?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:643
+#: cmd/incus/admin_init_interactive.go:652
 msgid ""
 "Would you like to use an existing empty block device (e.g. a disk or "
 "partition)?"
