@@ -27,6 +27,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
+	"github.com/lxc/incus/v6/internal/server/dnsmasq/dhcpalloc"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/ip"
 	"github.com/lxc/incus/v6/internal/server/locking"
@@ -1950,15 +1951,14 @@ func (n *ovn) validateUplinkNetwork(p *api.Project, uplinkNetworkName string) (s
 
 // getDHCPv4Reservations returns list DHCP IPv4 reservations from NICs connected to this network.
 func (n *ovn) getDHCPv4Reservations() ([]iprange.Range, error) {
-	routerIntPortIPv4, _, err := n.parseRouterIntPortIPv4Net()
+	routerIntPortIPv4, ipv4Net, err := n.parseRouterIntPortIPv4Net()
 	if err != nil {
 		return nil, fmt.Errorf("Failed parsing router's internal port IPv4 Net for DHCP reservation: %w", err)
 	}
 
 	var dhcpReserveIPv4s []iprange.Range
-
 	if routerIntPortIPv4 != nil {
-		dhcpReserveIPv4s = []iprange.Range{{Start: routerIntPortIPv4}}
+		dhcpReserveIPv4s = []iprange.Range{{Start: routerIntPortIPv4}, {Start: dhcpalloc.GetIP(ipv4Net, -2)}}
 	}
 
 	err = UsedByInstanceDevices(n.state, n.Project(), n.Name(), n.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
@@ -4744,7 +4744,7 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 
 		vips := n.forwardFlattenVIPs(net.ParseIP(forward.ListenAddress), net.ParseIP(forward.Config["target_address"]), portMaps)
 
-		err = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(forward.ListenAddress), []networkOVN.OVNRouter{n.getRouterName()}, []networkOVN.OVNSwitch{n.getIntSwitchName()}, vips...)
+		err = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(forward.ListenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
 		if err != nil {
 			return fmt.Errorf("Failed applying OVN load balancer: %w", err)
 		}
@@ -4845,7 +4845,7 @@ func (n *ovn) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, cli
 		}
 
 		vips := n.forwardFlattenVIPs(net.ParseIP(newForward.ListenAddress), net.ParseIP(newForward.Config["target_address"]), portMaps)
-		err = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(newForward.ListenAddress), []networkOVN.OVNRouter{n.getRouterName()}, []networkOVN.OVNSwitch{n.getIntSwitchName()}, vips...)
+		err = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(newForward.ListenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
 		if err != nil {
 			return fmt.Errorf("Failed applying OVN load balancer: %w", err)
 		}
@@ -4855,7 +4855,7 @@ func (n *ovn) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, cli
 			portMaps, err := n.forwardValidate(net.ParseIP(curForward.ListenAddress), &curForward.NetworkForwardPut)
 			if err == nil {
 				vips := n.forwardFlattenVIPs(net.ParseIP(curForward.ListenAddress), net.ParseIP(curForward.Config["target_address"]), portMaps)
-				_ = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(curForward.ListenAddress), []networkOVN.OVNRouter{n.getRouterName()}, []networkOVN.OVNSwitch{n.getIntSwitchName()}, vips...)
+				_ = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(curForward.ListenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
 				_ = n.forwardBGPSetupPrefixes()
 			}
 		})
@@ -5118,7 +5118,19 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 
 		vips := n.loadBalancerFlattenVIPs(net.ParseIP(loadBalancer.ListenAddress), portMaps)
 
-		err = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(loadBalancer.ListenAddress), []networkOVN.OVNRouter{n.getRouterName()}, []networkOVN.OVNSwitch{n.getIntSwitchName()}, vips...)
+		// Look at health checking configuration.
+		healthCheck, err := n.getHealthCheck(loadBalancer.NetworkLoadBalancerPut)
+		if err != nil {
+			return err
+		}
+
+		if healthCheck != nil {
+			for i := range vips {
+				vips[i].HealthCheck = healthCheck
+			}
+		}
+
+		err = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(loadBalancer.ListenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
 		if err != nil {
 			return fmt.Errorf("Failed applying OVN load balancer: %w", err)
 		}
@@ -5220,7 +5232,19 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 
 		vips := n.loadBalancerFlattenVIPs(net.ParseIP(newLoadBalancer.ListenAddress), portMaps)
 
-		err = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(newLoadBalancer.ListenAddress), []networkOVN.OVNRouter{n.getRouterName()}, []networkOVN.OVNSwitch{n.getIntSwitchName()}, vips...)
+		// Look at health checking configuration.
+		healthCheck, err := n.getHealthCheck(newLoadBalancer.NetworkLoadBalancerPut)
+		if err != nil {
+			return err
+		}
+
+		if healthCheck != nil {
+			for i := range vips {
+				vips[i].HealthCheck = healthCheck
+			}
+		}
+
+		err = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(newLoadBalancer.ListenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
 		if err != nil {
 			return fmt.Errorf("Failed applying OVN load balancer: %w", err)
 		}
@@ -5230,7 +5254,7 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 			portMaps, err := n.loadBalancerValidate(net.ParseIP(curLoadBalancer.ListenAddress), &curLoadBalancer.NetworkLoadBalancerPut)
 			if err == nil {
 				vips := n.loadBalancerFlattenVIPs(net.ParseIP(curLoadBalancer.ListenAddress), portMaps)
-				_ = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(curLoadBalancer.ListenAddress), []networkOVN.OVNRouter{n.getRouterName()}, []networkOVN.OVNSwitch{n.getIntSwitchName()}, vips...)
+				_ = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(curLoadBalancer.ListenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
 				_ = n.forwardBGPSetupPrefixes()
 			}
 		})
@@ -5334,6 +5358,61 @@ func (n *ovn) LoadBalancerDelete(listenAddress string, clientType request.Client
 	}
 
 	return nil
+}
+
+func (n *ovn) getHealthCheck(loadBalancer api.NetworkLoadBalancerPut) (*networkOVN.OVNLoadBalancerHealthCheck, error) {
+	// Check if load-balancer is enabled.
+	if !util.IsTrue(loadBalancer.Config["healthcheck"]) {
+		return nil, nil
+	}
+
+	// Get IPv4 checker.
+	var checkerIPV4 net.IP
+	_, ipv4Net, err := n.parseRouterIntPortIPv4Net()
+	if err == nil {
+		checkerIPV4 = dhcpalloc.GetIP(ipv4Net, -2)
+	}
+
+	// Get IPv6 checker.
+	var checkerIPV6 net.IP
+	_, ipv6Net, err := n.parseRouterIntPortIPv6Net()
+	if err == nil {
+		checkerIPV6 = dhcpalloc.GetIP(ipv6Net, -2)
+	}
+
+	// Parse the healthcheck options.
+	hcInterval, err := strconv.Atoi(loadBalancer.Config["healthcheck.interval"])
+	if err != nil && loadBalancer.Config["healthcheck.interval"] != "" {
+		return nil, err
+	}
+
+	hcTimeout, err := strconv.Atoi(loadBalancer.Config["healthcheck.timeout"])
+	if err != nil && loadBalancer.Config["healthcheck.timeout"] != "" {
+		return nil, err
+	}
+
+	hcFailureCount, err := strconv.Atoi(loadBalancer.Config["healthcheck.failure_count"])
+	if err != nil && loadBalancer.Config["healthcheck.failure_count"] != "" {
+		return nil, err
+	}
+
+	hcSuccessCount, err := strconv.Atoi(loadBalancer.Config["healthcheck.success_count"])
+	if err != nil && loadBalancer.Config["healthcheck.success_count"] != "" {
+		return nil, err
+	}
+
+	// Prepare the load-balancer health check.
+	healthCheck := &networkOVN.OVNLoadBalancerHealthCheck{
+		CheckerIPV4: checkerIPV4,
+		CheckerIPV6: checkerIPV6,
+
+		Interval:     hcInterval,
+		Timeout:      hcTimeout,
+		FailureCount: hcFailureCount,
+		SuccessCount: hcSuccessCount,
+	}
+
+	return healthCheck, nil
 }
 
 // Leases returns a list of leases for the OVN network. Those are directly extracted from the OVN database.

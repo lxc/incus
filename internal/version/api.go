@@ -434,6 +434,7 @@ var APIExtensions = []string{
 	"projects_limits_disk_pool",
 	"network_ovn_isolated",
 	"qemu_raw_qmp",
+	"network_load_balancer_health_check",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
