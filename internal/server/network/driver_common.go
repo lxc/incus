@@ -1177,10 +1177,68 @@ func (n *common) loadBalancerValidate(listenAddress net.IP, forward *api.Network
 		}
 	}
 
-	// Look for any unknown config fields.
-	for k := range forward.Config {
+	// Check the configuration.
+	lbOptions := map[string]func(value string) error{
+		// gendoc:generate(entity=network_load_balancer, group=healthcheck, key=healthcheck)
+		//
+		// ---
+		//  type: bool
+		//  defaultdesc: `false`
+		//  shortdesc: Whether to perform checks on the backends
+		"healthcheck": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_load_balancer, group=healthcheck, key=healthcheck.interval)
+		//
+		// ---
+		//  type: integer
+		//  shortdesc: Interval in seconds between health checks
+		//  defaultdesc: `10`
+		"healthcheck.interval": validate.IsUint32,
+
+		// gendoc:generate(entity=network_load_balancer, group=healthcheck, key=healthcheck.success_count)
+		//
+		// ---
+		//  type: integer
+		//  shortdesc: Number of successful tests to consider the backend online
+		//  defaultdesc: `3`
+		"healthcheck.success_count": validate.IsUint32,
+
+		// gendoc:generate(entity=network_load_balancer, group=healthcheck, key=healthcheck.failure_count)
+		//
+		// ---
+		//  type: integer
+		//  shortdesc: Number of failed tests to consider the backend offline
+		//  defaultdesc: `3`
+		"healthcheck.failure_count": validate.IsUint32,
+
+		// gendoc:generate(entity=network_load_balancer, group=healthcheck, key=healthcheck.timeout)
+		//
+		// ---
+		//  type: integer
+		//  shortdesc: Test timeout
+		//  defaultdesc: `30`
+		"healthcheck.timeout": validate.IsUint32,
+	}
+
+	for k, v := range forward.Config {
 		// User keys are not validated.
+
+		// gendoc:generate(entity=network_load_balancer, group=common, key=user.*)
+		// User keys can be used in search.
+		// ---
+		//  type: string
+		//  shortdesc: Free form user key/value storage
 		if internalInstance.IsUserConfig(k) {
+			continue
+		}
+
+		checker, ok := lbOptions[k]
+		if ok {
+			err := checker(v)
+			if err != nil {
+				return nil, err
+			}
+
 			continue
 		}
 
