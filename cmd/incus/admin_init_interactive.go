@@ -562,6 +562,15 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 
 		// Optimization for dir
 		if pool.Driver == "dir" {
+			source, err := c.global.asker.AskString(fmt.Sprintf(i18n.G("Where should this storage pool store its data?")+" [default=%s]: ", internalUtil.VarPath("storage-pools", pool.Name)), "", validate.IsAny)
+			if err != nil {
+				return err
+			}
+
+			if source != "" {
+				pool.Config["source"] = source
+			}
+
 			config.Server.StoragePools = append(config.Server.StoragePools, pool)
 			break
 		}
