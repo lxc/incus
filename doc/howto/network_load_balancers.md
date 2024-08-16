@@ -34,9 +34,19 @@ Property         | Type         | Required | Description
 :--              | :--          | :--      | :--
 `listen_address` | string       | yes      | IP address to listen on
 `description`    | string       | no       | Description of the network load balancer
-`config`         | string set   | no       | Configuration options as key/value pairs (only `user.*` custom keys supported)
+`config`         | string set   | no       | Configuration options as key/value pairs (see below)
 `backends`       | backend list | no       | List of {ref}`backend specifications <network-load-balancers-backend-specifications>`
 `ports`          | port list    | no       | List of {ref}`port specifications <network-load-balancers-port-specifications>`
+
+### Configuration options
+
+The following configuration options are available for all network integrations:
+
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group network_load_balancer-common start -->
+    :end-before: <!-- config group network_load_balancer-common end -->
+```
 
 (network-load-balancers-listen-addresses)=
 ### Requirements for listen addresses
