@@ -1681,6 +1681,63 @@
 				]
 			}
 		},
+		"network_load_balancer": {
+			"common": {
+				"keys": [
+					{
+						"user.*": {
+							"longdesc": "User keys can be used in search.",
+							"shortdesc": "Free form user key/value storage",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"healthcheck": {
+				"keys": [
+					{
+						"healthcheck": {
+							"defaultdesc": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether to perform checks on the backends",
+							"type": "bool"
+						}
+					},
+					{
+						"healthcheck.failure_count": {
+							"defaultdesc": "`3`",
+							"longdesc": "",
+							"shortdesc": "Number of failed tests to consider the backend offline",
+							"type": "integer"
+						}
+					},
+					{
+						"healthcheck.interval": {
+							"defaultdesc": "`10`",
+							"longdesc": "",
+							"shortdesc": "Interval in seconds between health checks",
+							"type": "integer"
+						}
+					},
+					{
+						"healthcheck.success_count": {
+							"defaultdesc": "`3`",
+							"longdesc": "",
+							"shortdesc": "Number of successful tests to consider the backend online",
+							"type": "integer"
+						}
+					},
+					{
+						"healthcheck.timeout": {
+							"defaultdesc": "`30`",
+							"longdesc": "",
+							"shortdesc": "Test timeout",
+							"type": "integer"
+						}
+					}
+				]
+			}
+		},
 		"network_zone": {
 			"common": {
 				"keys": [
