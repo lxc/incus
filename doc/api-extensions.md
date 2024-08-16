@@ -2543,3 +2543,15 @@ This adds new configuration options to virtual machines to directly issue QMP co
 * `raw.qemu.qmp.early`
 * `raw.qemu.qmp.pre-start`
 * `raw.qemu.qmp.post-start`
+
+## `network_load_balancer_health_check`
+
+This adds the ability to perform health checks for load balancer backends.
+
+The following new configuration options are introduced:
+
+* `healthcheck`
+* `healthcheck.interval`
+* `healthcheck.timeout`
+* `healthcheck.failure_count`
+* `healthcheck.success_count`
