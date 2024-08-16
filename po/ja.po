@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-08-16 10:26-0400\n"
+"POT-Creation-Date: 2024-08-17 00:25-0400\n"
 "PO-Revision-Date: 2024-06-02 16:41+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -1529,11 +1529,11 @@ msgstr "クラスタリングが有効になりました"
 #: cmd/incus/config_trust.go:421 cmd/incus/image.go:1093
 #: cmd/incus/image_alias.go:180 cmd/incus/list.go:134 cmd/incus/network.go:1072
 #: cmd/incus/network.go:1269 cmd/incus/network_allocations.go:62
-#: cmd/incus/network_forward.go:115 cmd/incus/network_zone.go:115
-#: cmd/incus/operation.go:138 cmd/incus/profile.go:725 cmd/incus/project.go:527
-#: cmd/incus/remote.go:750 cmd/incus/storage.go:687
-#: cmd/incus/storage_volume.go:1557 cmd/incus/storage_volume.go:2548
-#: cmd/incus/warning.go:93
+#: cmd/incus/network_forward.go:115 cmd/incus/network_integration.go:438
+#: cmd/incus/network_zone.go:115 cmd/incus/operation.go:138
+#: cmd/incus/profile.go:725 cmd/incus/project.go:527 cmd/incus/remote.go:750
+#: cmd/incus/storage.go:687 cmd/incus/storage_volume.go:1557
+#: cmd/incus/storage_volume.go:2548 cmd/incus/warning.go:93
 msgid "Columns"
 msgstr "カラムレイアウト"
 
@@ -1939,7 +1939,7 @@ msgstr "DEFAULT TARGET ADDRESS"
 #: cmd/incus/config_trust.go:435 cmd/incus/image.go:1115
 #: cmd/incus/image_alias.go:208 cmd/incus/list.go:575 cmd/incus/network.go:1098
 #: cmd/incus/network_acl.go:169 cmd/incus/network_forward.go:133
-#: cmd/incus/network_integration.go:458 cmd/incus/network_load_balancer.go:156
+#: cmd/incus/network_integration.go:450 cmd/incus/network_load_balancer.go:156
 #: cmd/incus/network_peer.go:155 cmd/incus/network_zone.go:134
 #: cmd/incus/network_zone.go:917 cmd/incus/operation.go:151
 #: cmd/incus/profile.go:747 cmd/incus/project.go:555 cmd/incus/storage.go:710
@@ -2168,10 +2168,10 @@ msgstr "警告を削除します"
 #: cmd/incus/network_forward.go:897 cmd/incus/network_forward.go:912
 #: cmd/incus/network_forward.go:993 cmd/incus/network_integration.go:28
 #: cmd/incus/network_integration.go:85 cmd/incus/network_integration.go:178
-#: cmd/incus/network_integration.go:230 cmd/incus/network_integration.go:347
-#: cmd/incus/network_integration.go:410 cmd/incus/network_integration.go:478
-#: cmd/incus/network_integration.go:532 cmd/incus/network_integration.go:613
-#: cmd/incus/network_integration.go:646 cmd/incus/network_load_balancer.go:29
+#: cmd/incus/network_integration.go:230 cmd/incus/network_integration.go:352
+#: cmd/incus/network_integration.go:416 cmd/incus/network_integration.go:559
+#: cmd/incus/network_integration.go:613 cmd/incus/network_integration.go:694
+#: cmd/incus/network_integration.go:727 cmd/incus/network_load_balancer.go:29
 #: cmd/incus/network_load_balancer.go:90 cmd/incus/network_load_balancer.go:177
 #: cmd/incus/network_load_balancer.go:253
 #: cmd/incus/network_load_balancer.go:356
@@ -2591,10 +2591,11 @@ msgstr "信頼済みクライアント設定をYAMLで編集します"
 #: cmd/incus/config_trust.go:447 cmd/incus/image.go:1133
 #: cmd/incus/image_alias.go:217 cmd/incus/list.go:633 cmd/incus/network.go:1113
 #: cmd/incus/network.go:1303 cmd/incus/network_allocations.go:83
-#: cmd/incus/network_forward.go:147 cmd/incus/network_zone.go:147
-#: cmd/incus/operation.go:166 cmd/incus/profile.go:763 cmd/incus/project.go:565
-#: cmd/incus/remote.go:773 cmd/incus/storage.go:722
-#: cmd/incus/storage_volume.go:1700 cmd/incus/warning.go:236
+#: cmd/incus/network_forward.go:147 cmd/incus/network_integration.go:460
+#: cmd/incus/network_zone.go:147 cmd/incus/operation.go:166
+#: cmd/incus/profile.go:763 cmd/incus/project.go:565 cmd/incus/remote.go:773
+#: cmd/incus/storage.go:722 cmd/incus/storage_volume.go:1700
+#: cmd/incus/warning.go:236
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
@@ -2672,7 +2673,7 @@ msgstr "エイリアスの取得に失敗しました: %w"
 #: cmd/incus/cluster.go:562 cmd/incus/cluster_group.go:1019
 #: cmd/incus/config.go:641 cmd/incus/config.go:673 cmd/incus/network.go:1535
 #: cmd/incus/network_acl.go:540 cmd/incus/network_forward.go:595
-#: cmd/incus/network_integration.go:587 cmd/incus/network_load_balancer.go:507
+#: cmd/incus/network_integration.go:668 cmd/incus/network_load_balancer.go:507
 #: cmd/incus/network_peer.go:553 cmd/incus/network_zone.go:548
 #: cmd/incus/network_zone.go:1236 cmd/incus/profile.go:1083
 #: cmd/incus/project.go:851 cmd/incus/storage.go:896
@@ -2694,7 +2695,7 @@ msgstr "プロパティの削除でエラーが発生しました: %v"
 
 #: cmd/incus/cluster.go:556 cmd/incus/cluster_group.go:1013
 #: cmd/incus/network.go:1529 cmd/incus/network_acl.go:534
-#: cmd/incus/network_forward.go:589 cmd/incus/network_integration.go:581
+#: cmd/incus/network_forward.go:589 cmd/incus/network_integration.go:662
 #: cmd/incus/network_load_balancer.go:501 cmd/incus/network_peer.go:547
 #: cmd/incus/network_zone.go:542 cmd/incus/network_zone.go:1230
 #: cmd/incus/profile.go:1077 cmd/incus/project.go:845 cmd/incus/storage.go:890
@@ -3342,7 +3343,7 @@ msgstr ""
 #: cmd/incus/image.go:1094 cmd/incus/image_alias.go:179 cmd/incus/list.go:135
 #: cmd/incus/network.go:1073 cmd/incus/network.go:1268
 #: cmd/incus/network_acl.go:97 cmd/incus/network_allocations.go:59
-#: cmd/incus/network_forward.go:114 cmd/incus/network_integration.go:412
+#: cmd/incus/network_forward.go:114 cmd/incus/network_integration.go:437
 #: cmd/incus/network_load_balancer.go:93 cmd/incus/network_peer.go:84
 #: cmd/incus/network_zone.go:113 cmd/incus/network_zone.go:859
 #: cmd/incus/operation.go:136 cmd/incus/profile.go:726 cmd/incus/project.go:529
@@ -3442,7 +3443,7 @@ msgstr "key をネットワーク ACL プロパティとして取得します"
 msgid "Get the key as a network forward property"
 msgstr "ネットワークフォワードのポートを管理します"
 
-#: cmd/incus/network_integration.go:351
+#: cmd/incus/network_integration.go:356
 #, fuzzy
 msgid "Get the key as a network integration property"
 msgstr "ネットワークピアの設定を行います"
@@ -3527,7 +3528,7 @@ msgstr "ネットワークの設定値を取得します"
 msgid "Get values for network forward configuration keys"
 msgstr "ネットワークフォワードの設定値を取得します"
 
-#: cmd/incus/network_integration.go:346 cmd/incus/network_integration.go:347
+#: cmd/incus/network_integration.go:351 cmd/incus/network_integration.go:352
 #, fuzzy
 msgid "Get values for network integration configuration keys"
 msgstr "ネットワークピアの設定値を取得します"
@@ -4873,10 +4874,58 @@ msgstr ""
 "    u - アップロード日\n"
 "    t - タイプ"
 
-#: cmd/incus/network_integration.go:409 cmd/incus/network_integration.go:410
+#: cmd/incus/network_integration.go:415
 #, fuzzy
 msgid "List network integrations"
 msgstr "ネットワークの設定を削除します"
+
+#: cmd/incus/network_integration.go:416
+#, fuzzy
+msgid ""
+"List network integrations\n"
+"\n"
+"Default column layout: ndtu\n"
+"\n"
+"== Columns ==\n"
+"The -c option takes a comma separated list of arguments that control\n"
+"which network zone attributes to output when displaying in table or csv\n"
+"format.\n"
+"\n"
+"Column arguments are either pre-defined shorthand chars (see below),\n"
+"or (extended) config keys.\n"
+"\n"
+"Commas between consecutive shorthand chars are optional.\n"
+"\n"
+"Pre-defined column shorthand chars:\n"
+"\tn - Name\n"
+"\td - Description\n"
+"\tt - Type\n"
+"\tu - Used by"
+msgstr ""
+"イメージをリスト表示します\n"
+"\n"
+"プロパティでフィルタを行う場合はフィルタは <key>=<value> の形になります。\n"
+"あるいはイメージのハッシュ値やイメージのエイリアスの一部を指定することもでき"
+"ます。\n"
+"\n"
+"-c オプションは、表もしくは csv 形式で表示する際の、出力するイメージの\n"
+"属性を指定する引数のリスト (カンマ区切りでも OK) を指定します。\n"
+"\n"
+"デフォルトのカラムレイアウトは lfpdasu です。\n"
+"\n"
+"カラムの指定文字:\n"
+"\n"
+"    l - もっとも短いイメージのエイリアス (他の指定されているエイリアスの数も"
+"表示します)\n"
+"    L - イメージのエイリアスすべて (改行区切り)\n"
+"    f - フィンガープリント (短い形式)\n"
+"    F - フィンガープリント (長い形式)\n"
+"    p - イメージがパブリックかどうか\n"
+"    d - 説明\n"
+"    a - アーキテクチャ\n"
+"    s - サイズ\n"
+"    u - アップロード日\n"
+"    t - タイプ"
 
 #: cmd/incus/network.go:1074
 #, fuzzy
@@ -5664,9 +5713,9 @@ msgid "Missing network ACL name"
 msgstr "ネットワーク ACL 名を指定する必要があります"
 
 #: cmd/incus/network_integration.go:131 cmd/incus/network_integration.go:203
-#: cmd/incus/network_integration.go:266 cmd/incus/network_integration.go:372
-#: cmd/incus/network_integration.go:503 cmd/incus/network_integration.go:560
-#: cmd/incus/network_integration.go:671
+#: cmd/incus/network_integration.go:266 cmd/incus/network_integration.go:377
+#: cmd/incus/network_integration.go:584 cmd/incus/network_integration.go:641
+#: cmd/incus/network_integration.go:752
 #, fuzzy
 msgid "Missing network integration name"
 msgstr "ネットワークゾーン名を指定する必要があります"
@@ -5894,7 +5943,7 @@ msgstr "インスタンス名を指定する必要があります: "
 #: cmd/incus/cluster_group.go:497 cmd/incus/config_trust.go:431
 #: cmd/incus/config_trust.go:666 cmd/incus/list.go:583
 #: cmd/incus/network.go:1093 cmd/incus/network_acl.go:168
-#: cmd/incus/network_integration.go:457 cmd/incus/network_peer.go:154
+#: cmd/incus/network_integration.go:449 cmd/incus/network_peer.go:154
 #: cmd/incus/network_zone.go:133 cmd/incus/network_zone.go:916
 #: cmd/incus/profile.go:745 cmd/incus/project.go:548 cmd/incus/remote.go:759
 #: cmd/incus/storage.go:708 cmd/incus/storage_bucket.go:539
@@ -6095,7 +6144,7 @@ msgstr "ネットワークゾーン %s を作成しました"
 msgid "Network integration %s deleted"
 msgstr "ネットワークゾーン %s を削除しました"
 
-#: cmd/incus/network_integration.go:513
+#: cmd/incus/network_integration.go:594
 #, fuzzy, c-format
 msgid "Network integration %s renamed to %s"
 msgstr "ネットワーク名 %s を %s に変更しました"
@@ -6906,7 +6955,7 @@ msgstr "インスタンスを再起動します"
 msgid "Rename network ACLs"
 msgstr "ネットワーク ACL 名を変更します"
 
-#: cmd/incus/network_integration.go:477 cmd/incus/network_integration.go:478
+#: cmd/incus/network_integration.go:558 cmd/incus/network_integration.go:559
 #, fuzzy
 msgid "Rename network integrations"
 msgstr "ネットワーク名を変更します"
@@ -7311,12 +7360,12 @@ msgstr ""
 "後方互換性のため、単一の設定を行う場合は次の形式でも設定できます:\n"
 "    lxc network set [<remote>:]<network> <listen_address> <key> <value>"
 
-#: cmd/incus/network_integration.go:531
+#: cmd/incus/network_integration.go:612
 #, fuzzy
 msgid "Set network integration configuration keys"
 msgstr "ネットワークゾーンの設定を行います"
 
-#: cmd/incus/network_integration.go:532
+#: cmd/incus/network_integration.go:613
 #, fuzzy
 msgid ""
 "Set network integration configuration keys\n"
@@ -7534,7 +7583,7 @@ msgstr "ネットワーク ACL プロパティとして設定します"
 msgid "Set the key as a network forward property"
 msgstr "ネットワークフォワードの設定値を設定します"
 
-#: cmd/incus/network_integration.go:539
+#: cmd/incus/network_integration.go:620
 #, fuzzy
 msgid "Set the key as a network integration property"
 msgstr "ネットワークピアの設定を行います"
@@ -7680,7 +7729,7 @@ msgstr "ネットワークの設定を表示します"
 msgid "Show network forward configurations"
 msgstr "ネットワークフォワードの設定を表示します"
 
-#: cmd/incus/network_integration.go:645 cmd/incus/network_integration.go:646
+#: cmd/incus/network_integration.go:726 cmd/incus/network_integration.go:727
 #, fuzzy
 msgid "Show network integration options"
 msgstr "ネットワークの設定を表示します"
@@ -8063,7 +8112,7 @@ msgstr "TOKEN"
 #: cmd/incus/config_trust.go:432 cmd/incus/image.go:1123
 #: cmd/incus/image_alias.go:207 cmd/incus/list.go:589 cmd/incus/network.go:1094
 #: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:73
-#: cmd/incus/network_integration.go:459 cmd/incus/network_peer.go:157
+#: cmd/incus/network_integration.go:451 cmd/incus/network_peer.go:157
 #: cmd/incus/operation.go:150 cmd/incus/storage_volume.go:1670
 #: cmd/incus/warning.go:216
 msgid "TYPE"
@@ -8270,7 +8319,7 @@ msgstr "設定 %q はクラスタメンバー %q には存在しません"
 msgid "The property %q does not exist on the network forward %q: %v"
 msgstr "設定 %q はクラスタメンバー %q には存在しません"
 
-#: cmd/incus/network_integration.go:385
+#: cmd/incus/network_integration.go:390
 #, fuzzy, c-format
 msgid "The property %q does not exist on the network integration %q: %v"
 msgstr "設定 %q はクラスタメンバー %q には存在しません"
@@ -8590,7 +8639,7 @@ msgid "USB devices:"
 msgstr "上位デバイス"
 
 #: cmd/incus/network.go:1099 cmd/incus/network_acl.go:170
-#: cmd/incus/network_allocations.go:71 cmd/incus/network_integration.go:460
+#: cmd/incus/network_allocations.go:71 cmd/incus/network_integration.go:452
 #: cmd/incus/network_zone.go:135 cmd/incus/profile.go:748
 #: cmd/incus/project.go:556 cmd/incus/storage.go:712
 #: cmd/incus/storage_volume.go:1674
@@ -8634,10 +8683,11 @@ msgstr "クライアント %q の未知のチャンネルタイプ: %s"
 #: cmd/incus/config_trust.go:455 cmd/incus/image.go:1141
 #: cmd/incus/image_alias.go:223 cmd/incus/list.go:648 cmd/incus/network.go:1119
 #: cmd/incus/network.go:1309 cmd/incus/network_allocations.go:89
-#: cmd/incus/network_forward.go:153 cmd/incus/network_zone.go:153
-#: cmd/incus/operation.go:172 cmd/incus/profile.go:769 cmd/incus/project.go:571
-#: cmd/incus/remote.go:779 cmd/incus/storage.go:728
-#: cmd/incus/storage_volume.go:1708 cmd/incus/warning.go:244
+#: cmd/incus/network_forward.go:153 cmd/incus/network_integration.go:466
+#: cmd/incus/network_zone.go:153 cmd/incus/operation.go:172
+#: cmd/incus/profile.go:769 cmd/incus/project.go:571 cmd/incus/remote.go:779
+#: cmd/incus/storage.go:728 cmd/incus/storage_volume.go:1708
+#: cmd/incus/warning.go:244
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr "未知のカラム名の短縮形です '%c' ('%s' 中)"
@@ -8703,7 +8753,7 @@ msgstr "ネットワークフォワードの設定を削除します"
 msgid "Unset network forward keys"
 msgstr "ネットワークフォワードの設定を削除します"
 
-#: cmd/incus/network_integration.go:612 cmd/incus/network_integration.go:613
+#: cmd/incus/network_integration.go:693 cmd/incus/network_integration.go:694
 #, fuzzy
 msgid "Unset network integration configuration keys"
 msgstr "ネットワークピアの設定を削除します"
@@ -8779,7 +8829,7 @@ msgstr "ネットワーク ACL プロパティの設定を削除します"
 msgid "Unset the key as a network forward property"
 msgstr "ネットワークフォワードの設定を削除します"
 
-#: cmd/incus/network_integration.go:617
+#: cmd/incus/network_integration.go:698
 #, fuzzy
 msgid "Unset the key as a network integration property"
 msgstr "ネットワークピアの設定を削除します"
@@ -9185,7 +9235,7 @@ msgstr "[<remote:>]<pool> <volume> <profile> [<device name>] [<path>]"
 #: cmd/incus/cluster_group.go:454 cmd/incus/config_trust.go:397
 #: cmd/incus/config_trust.go:582 cmd/incus/monitor.go:31
 #: cmd/incus/network.go:1050 cmd/incus/network_acl.go:91
-#: cmd/incus/network_integration.go:407 cmd/incus/network_zone.go:88
+#: cmd/incus/network_integration.go:413 cmd/incus/network_zone.go:88
 #: cmd/incus/operation.go:110 cmd/incus/profile.go:707 cmd/incus/project.go:505
 #: cmd/incus/storage.go:662 cmd/incus/version.go:20 cmd/incus/warning.go:69
 msgid "[<remote>:]"
@@ -9474,22 +9524,22 @@ msgid "[<remote>:]<name>"
 msgstr "[<remote>:] <name>"
 
 #: cmd/incus/network_integration.go:175 cmd/incus/network_integration.go:228
-#: cmd/incus/network_integration.go:644
+#: cmd/incus/network_integration.go:725
 #, fuzzy
 msgid "[<remote>:]<network integration>"
 msgstr "[<remote>:]<operation>"
 
-#: cmd/incus/network_integration.go:345 cmd/incus/network_integration.go:611
+#: cmd/incus/network_integration.go:350 cmd/incus/network_integration.go:692
 #, fuzzy
 msgid "[<remote>:]<network integration> <key>"
 msgstr "[<remote>:]<network> <key>"
 
-#: cmd/incus/network_integration.go:530
+#: cmd/incus/network_integration.go:611
 #, fuzzy
 msgid "[<remote>:]<network integration> <key>=<value>..."
 msgstr "[<remote>:]<network> <key>=<value>..."
 
-#: cmd/incus/network_integration.go:475
+#: cmd/incus/network_integration.go:556
 #, fuzzy
 msgid "[<remote>:]<network integration> <new-name>"
 msgstr "[<remote>:]<network> <new-name>"
