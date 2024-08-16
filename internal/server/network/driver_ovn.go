@@ -1951,15 +1951,14 @@ func (n *ovn) validateUplinkNetwork(p *api.Project, uplinkNetworkName string) (s
 
 // getDHCPv4Reservations returns list DHCP IPv4 reservations from NICs connected to this network.
 func (n *ovn) getDHCPv4Reservations() ([]iprange.Range, error) {
-	routerIntPortIPv4, _, err := n.parseRouterIntPortIPv4Net()
+	routerIntPortIPv4, ipv4Net, err := n.parseRouterIntPortIPv4Net()
 	if err != nil {
 		return nil, fmt.Errorf("Failed parsing router's internal port IPv4 Net for DHCP reservation: %w", err)
 	}
 
 	var dhcpReserveIPv4s []iprange.Range
-
 	if routerIntPortIPv4 != nil {
-		dhcpReserveIPv4s = []iprange.Range{{Start: routerIntPortIPv4}}
+		dhcpReserveIPv4s = []iprange.Range{{Start: routerIntPortIPv4}, {Start: dhcpalloc.GetIP(ipv4Net, -2)}}
 	}
 
 	err = UsedByInstanceDevices(n.state, n.Project(), n.Name(), n.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
