@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-08-16 00:23-0400\n"
+"POT-Creation-Date: 2024-08-16 10:26-0400\n"
 "PO-Revision-Date: 2024-06-02 16:41+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -589,12 +589,12 @@ msgstr ""
 msgid "%d (id: %d, online: %v, NUMA node: %v)"
 msgstr "%d（id: %d, オンライン: %v, NUMA ノード: %v）"
 
-#: cmd/incus/admin_init_interactive.go:651
+#: cmd/incus/admin_init_interactive.go:660
 #, c-format
 msgid "%q is not a block device"
 msgstr "%q はブロックデバイスではありません"
 
-#: cmd/incus/admin_init_interactive.go:788
+#: cmd/incus/admin_init_interactive.go:797
 #, c-format
 msgid "%q is not an IP address"
 msgstr "%q は IP アドレスではありません"
@@ -936,7 +936,7 @@ msgstr "追加のストレージプール設定プロパティー（KEY=VALUE, �
 msgid "Address to bind to (default: none)"
 msgstr "バインドするアドレス (デフォルト: none)"
 
-#: cmd/incus/admin_init_interactive.go:794
+#: cmd/incus/admin_init_interactive.go:803
 msgid "Address to bind to (not including port)"
 msgstr "バインドするアドレス (ポートを含まない)"
 
@@ -1267,7 +1267,7 @@ msgid "Caches:"
 msgstr "キャッシュ:"
 
 #: cmd/incus/admin_init_interactive.go:144
-#: cmd/incus/admin_init_interactive.go:819
+#: cmd/incus/admin_init_interactive.go:828
 #, c-format
 msgid "Can't bind address %q: %w"
 msgstr "アドレス %q をバインドできません: %w"
@@ -1777,7 +1777,7 @@ msgstr "サーバ証明書ファイル %q を書き込めません: %w"
 msgid "Couldn't find a matching entry"
 msgstr "一致するエントリを見つけられませんでした"
 
-#: cmd/incus/admin_init_interactive.go:663
+#: cmd/incus/admin_init_interactive.go:672
 #, c-format
 msgid "Couldn't statfs %s: %w"
 msgstr "statfs %s できません: %w"
@@ -1786,7 +1786,7 @@ msgstr "statfs %s できません: %w"
 msgid "Create a cluster group"
 msgstr "クラスターグループを作成します"
 
-#: cmd/incus/admin_init_interactive.go:600
+#: cmd/incus/admin_init_interactive.go:609
 #, c-format
 msgid "Create a new %s pool?"
 msgstr "新たに %s プールを作成しますか?"
@@ -2429,7 +2429,7 @@ msgstr "新しいリモートストレージプールの設定をしますか?"
 msgid "Do you want to configure a new storage pool?"
 msgstr "新しいストレージプールのの設定をしますか?"
 
-#: cmd/incus/admin_init_interactive.go:736
+#: cmd/incus/admin_init_interactive.go:745
 msgid "Do you want to continue without thin provisioning?"
 msgstr "Thin provisioning なしで続けますか?"
 
@@ -5589,7 +5589,7 @@ msgid ""
 "Minimum level for log messages (only available when using pretty format)"
 msgstr "ログメッセージの最小レベル（pretty フォーマット使用時のみ利用可能）"
 
-#: cmd/incus/admin_init_interactive.go:688
+#: cmd/incus/admin_init_interactive.go:697
 msgid "Minimum size is 1GiB"
 msgstr "最小サイズは 1GiB です"
 
@@ -5959,30 +5959,30 @@ msgstr "NVRM バージョン: %v"
 msgid "Name"
 msgstr "名前"
 
-#: cmd/incus/admin_init_interactive.go:632
+#: cmd/incus/admin_init_interactive.go:641
 msgid "Name of the CEPHfs volume:"
 msgstr "CEPHfs ボリューム名:"
 
-#: cmd/incus/admin_init_interactive.go:614
+#: cmd/incus/admin_init_interactive.go:623
 #, fuzzy
 msgid "Name of the OSD storage pool"
 msgstr "ストレージプールを作成します"
 
-#: cmd/incus/admin_init_interactive.go:719
+#: cmd/incus/admin_init_interactive.go:728
 #, fuzzy, c-format
 msgid "Name of the existing %s pool or dataset:"
 msgstr "このリモートで使うプロジェクト名:"
 
-#: cmd/incus/admin_init_interactive.go:608
-#: cmd/incus/admin_init_interactive.go:706
+#: cmd/incus/admin_init_interactive.go:617
+#: cmd/incus/admin_init_interactive.go:715
 msgid "Name of the existing CEPH cluster"
 msgstr "既存の CEPH クラスター名"
 
-#: cmd/incus/admin_init_interactive.go:626
+#: cmd/incus/admin_init_interactive.go:635
 msgid "Name of the existing CEPHfs cluster"
 msgstr "既存の CEPHfs クラスター名"
 
-#: cmd/incus/admin_init_interactive.go:712
+#: cmd/incus/admin_init_interactive.go:721
 msgid "Name of the existing OSD storage pool"
 msgstr "既存の OSD ストレージプール名"
 
@@ -5999,7 +5999,7 @@ msgstr "ストレージプールを作成します"
 msgid "Name of the project to use for this remote:"
 msgstr "このリモートで使うプロジェクト名:"
 
-#: cmd/incus/admin_init_interactive.go:638
+#: cmd/incus/admin_init_interactive.go:647
 #, fuzzy
 msgid "Name of the shared LVM volume group:"
 msgstr "CEPHfs ボリューム名:"
@@ -6243,7 +6243,7 @@ msgstr ""
 "--storage-pool, --storage-create-device, --storage-create-loop のいずれ"
 "も、'dir' バックエンドでは使えません"
 
-#: cmd/incus/admin_init_interactive.go:620
+#: cmd/incus/admin_init_interactive.go:629
 msgid "Number of placement groups"
 msgstr "配置するグループの数"
 
@@ -6392,7 +6392,7 @@ msgstr "%s のパスワード: "
 msgid "Path %s doesn't exist"
 msgstr "エイリアス %s は存在しません"
 
-#: cmd/incus/admin_init_interactive.go:649
+#: cmd/incus/admin_init_interactive.go:658
 msgid "Path to the existing block device:"
 msgstr "既存のブロックデバイスのパス:"
 
@@ -6425,7 +6425,7 @@ msgstr "'y', 'n', フィンガープリントのどれかを入力してくだ�
 msgid "Pool name cannot be empty"
 msgstr "プール名を空白にすることはできません"
 
-#: cmd/incus/admin_init_interactive.go:807
+#: cmd/incus/admin_init_interactive.go:816
 msgid "Port to bind to"
 msgstr "バインドするポート"
 
@@ -7818,7 +7818,7 @@ msgstr "ストレージプールの情報を表示します"
 msgid "Show warning"
 msgstr "警告を表示します"
 
-#: cmd/incus/admin_init_interactive.go:677
+#: cmd/incus/admin_init_interactive.go:686
 msgid "Size in GiB of the new loop device"
 msgstr "新しい loop デバイスのサイズ (GiB)"
 
@@ -8115,11 +8115,11 @@ msgstr "デバイスはすでに存在します"
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr "--show-log フラグは 'console' アウトプットタイプの時だけ使えます"
 
-#: cmd/incus/admin_init_interactive.go:742
+#: cmd/incus/admin_init_interactive.go:751
 msgid "The LVM thin provisioning tools couldn't be found on the system"
 msgstr "システム上に LVM のシン・プロビジョニング用のツールが見つかりません"
 
-#: cmd/incus/admin_init_interactive.go:730
+#: cmd/incus/admin_init_interactive.go:739
 msgid ""
 "The LVM thin provisioning tools couldn't be found.\n"
 "LVM can still be used without thin provisioning but this will disable over-"
@@ -9004,7 +9004,7 @@ msgstr ""
 msgid "Wait for the operation to complete"
 msgstr "処理が完全に終わるまで待ちます"
 
-#: cmd/incus/admin_init_interactive.go:759
+#: cmd/incus/admin_init_interactive.go:768
 msgid ""
 "We detected that you are running inside an unprivileged container.\n"
 "This means that unless you manually configured your host otherwise,\n"
@@ -9044,6 +9044,11 @@ msgstr "クラスター内のこのサーバーを識別するのに使うメン
 msgid "What should the new bridge be called?"
 msgstr "新しいブリッジは何という名前にしますか?"
 
+#: cmd/incus/admin_init_interactive.go:565
+#, fuzzy
+msgid "Where should this storage pool store its data?"
+msgstr "デバイスはすでに存在します"
+
 #: cmd/incus/export.go:40
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr "スナップショットを含めずにインスタンスのみをバックアップするかどうか"
@@ -9073,11 +9078,11 @@ msgstr ""
 msgid "Would you like a YAML \"init\" preseed to be printed?"
 msgstr "YAML 形式の初期設定値を表示しますか?"
 
-#: cmd/incus/admin_init_interactive.go:834
+#: cmd/incus/admin_init_interactive.go:843
 msgid "Would you like stale cached images to be updated automatically?"
 msgstr "キャッシュされた古いイメージを自動的に更新しますか?"
 
-#: cmd/incus/admin_init_interactive.go:780
+#: cmd/incus/admin_init_interactive.go:789
 #, fuzzy
 msgid "Would you like the server to be available over the network?"
 msgstr "この LXD サーバはネットワークから利用できません"
@@ -9098,7 +9103,7 @@ msgstr "ブリッジ上で IPv6 トラフィックを NAT しますか?"
 msgid "Would you like to continue with scanning for lost volumes?"
 msgstr "失われたボリュームのスキャンを続行しますか?"
 
-#: cmd/incus/admin_init_interactive.go:571
+#: cmd/incus/admin_init_interactive.go:580
 #, c-format
 msgid "Would you like to create a new btrfs subvolume under %s?"
 msgstr "%s に新しい btrfs のサブボリュームを作成しますか?"
@@ -9107,11 +9112,11 @@ msgstr "%s に新しい btrfs のサブボリュームを作成しますか?"
 msgid "Would you like to create a new local network bridge?"
 msgstr "新しいローカルネットワークブリッジを作成しますか?"
 
-#: cmd/incus/admin_init_interactive.go:587
+#: cmd/incus/admin_init_interactive.go:596
 msgid "Would you like to create a new zfs dataset under rpool/incus?"
 msgstr "rpool/incus に新しい zfs データセットを作成しますか?"
 
-#: cmd/incus/admin_init_interactive.go:768
+#: cmd/incus/admin_init_interactive.go:777
 msgid "Would you like to have your containers share their parent's allocation?"
 msgstr "コンテナの親の割当をコンテナに共有させますか?"
 
@@ -9123,7 +9128,7 @@ msgstr "他のストレージプールを回復しますか?"
 msgid "Would you like to use an existing bridge or host interface?"
 msgstr "既存のブリッジかホストのインターフェースを使用しますか?"
 
-#: cmd/incus/admin_init_interactive.go:643
+#: cmd/incus/admin_init_interactive.go:652
 msgid ""
 "Would you like to use an existing empty block device (e.g. a disk or "
 "partition)?"
