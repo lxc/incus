@@ -14,6 +14,8 @@ import (
 	httphelper "github.com/zitadel/oidc/v3/pkg/http"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
+
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // Verifier holds all information needed to verify an access token offline.
@@ -22,6 +24,7 @@ type Verifier struct {
 
 	clientID  string
 	issuer    string
+	scopes    []string
 	audience  string
 	claim     string
 	cookieKey []byte
@@ -327,9 +330,7 @@ func (o *Verifier) getProvider(r *http.Request) (rp.RelyingParty, error) {
 		rp.WithPKCE(cookieHandler),
 	}
 
-	oidcScopes := []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess}
-
-	provider, err := rp.NewRelyingPartyOIDC(context.TODO(), o.issuer, o.clientID, "", fmt.Sprintf("https://%s/oidc/callback", r.Host), oidcScopes, options...)
+	provider, err := rp.NewRelyingPartyOIDC(context.TODO(), o.issuer, o.clientID, "", fmt.Sprintf("https://%s/oidc/callback", r.Host), o.scopes, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -350,13 +351,14 @@ func getAccessTokenVerifier(issuer string) (*op.AccessTokenVerifier, error) {
 }
 
 // NewVerifier returns a Verifier.
-func NewVerifier(issuer string, clientid string, audience string, claim string) (*Verifier, error) {
+func NewVerifier(issuer string, clientid string, scope string, audience string, claim string) (*Verifier, error) {
 	cookieKey, err := uuid.New().MarshalBinary()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create UUID: %w", err)
 	}
 
-	verifier := &Verifier{issuer: issuer, clientID: clientid, audience: audience, cookieKey: cookieKey, claim: claim}
+	scopes := util.SplitNTrimSpace(scope, ",", -1, false)
+	verifier := &Verifier{issuer: issuer, clientID: clientid, scopes: scopes, audience: audience, cookieKey: cookieKey, claim: claim}
 	verifier.accessTokenVerifier, _ = getAccessTokenVerifier(issuer)
 
 	return verifier, nil
