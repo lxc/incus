@@ -432,6 +432,7 @@ var APIExtensions = []string{
 	"network_ovn_isolated",
 	"qemu_raw_qmp",
 	"network_load_balancer_health_check",
+	"oidc_scopes",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
