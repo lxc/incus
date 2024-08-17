@@ -2755,6 +2755,14 @@
 							"shortdesc": "OpenID Connect Discovery URL for the provider",
 							"type": "string"
 						}
+					},
+					{
+						"oidc.scopes": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Comma separated list of OpenID Connect scopes",
+							"type": "string"
+						}
 					}
 				]
 			},

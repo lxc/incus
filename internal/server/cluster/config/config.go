@@ -219,8 +219,8 @@ func (c *Config) RemoteTokenExpiry() string {
 }
 
 // OIDCServer returns all the OpenID Connect settings needed to connect to a server.
-func (c *Config) OIDCServer() (string, string, string, string) {
-	return c.m.GetString("oidc.issuer"), c.m.GetString("oidc.client.id"), c.m.GetString("oidc.audience"), c.m.GetString("oidc.claim")
+func (c *Config) OIDCServer() (string, string, string, string, string) {
+	return c.m.GetString("oidc.issuer"), c.m.GetString("oidc.client.id"), c.m.GetString("oidc.scopes"), c.m.GetString("oidc.audience"), c.m.GetString("oidc.claim")
 }
 
 // ClusterHealingThreshold returns the configured healing threshold, i.e. the
@@ -690,6 +690,14 @@ var ConfigSchema = config.Schema{
 	//  scope: global
 	//  shortdesc: OpenID Connect Discovery URL for the provider
 	"oidc.issuer": {},
+
+	// gendoc:generate(entity=server, group=oidc, key=oidc.scopes)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: Comma separated list of OpenID Connect scopes
+	"oidc.scopes": {Default: "openid, offline_access"},
 
 	// gendoc:generate(entity=server, group=oidc, key=oidc.audience)
 	// This value is required by some providers.

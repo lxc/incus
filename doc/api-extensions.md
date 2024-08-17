@@ -2574,3 +2574,7 @@ The following new configuration options are introduced:
 * `healthcheck.timeout`
 * `healthcheck.failure_count`
 * `healthcheck.success_count`
+
+## `oidc_scopes`
+
+This introduces a new `oidc.scopes` server configuration key which can take a comma separate list of OIDC scopes to request from the identity provider.
