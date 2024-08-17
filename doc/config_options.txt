@@ -2459,6 +2459,13 @@ This value is required by some providers.
 
 ```
 
+```{config:option} oidc.scopes server-oidc
+:scope: "global"
+:shortdesc: "Comma separated list of OpenID Connect scopes"
+:type: "string"
+
+```
+
 <!-- config group server-oidc end -->
 <!-- config group server-openfga start -->
 ```{config:option} openfga.api.token server-openfga
