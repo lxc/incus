@@ -462,6 +462,12 @@ type cmdStorageBucketList struct {
 
 	flagFormat      string
 	flagAllProjects bool
+	flagColumns     string
+}
+
+type storageBucketColumn struct {
+	Name string
+	Data func(api.StorageBucket) string
 }
 
 func (c *cmdStorageBucketList) Command() *cobra.Command {
@@ -470,13 +476,89 @@ func (c *cmdStorageBucketList) Command() *cobra.Command {
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List storage buckets")
 
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`List storage buckets`))
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+		`List storage buckets
+
+Default column layout: ndL
+
+== Columns ==
+The -c option takes a comma separated list of arguments that control
+which network zone attributes to output when displaying in table or csv
+format.
+
+Column arguments are either pre-defined shorthand chars (see below),
+or (extended) config keys.
+
+Commas between consecutive shorthand chars are optional.
+
+Pre-defined column shorthand chars:
+  e - Project name
+  n - Name
+  d - Description
+  L - Location of the storage bucket (e.g. its cluster member)`))
+
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
 	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("Display storage pool buckets from all projects"))
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultStorageBucketColumns, i18n.G("Columns")+"``")
 
 	cmd.RunE = c.Run
 
 	return cmd
+}
+
+const defaultStorageBucketColumns = "nd"
+
+func (c *cmdStorageBucketList) parseColumns(clustered bool) ([]storageBucketColumn, error) {
+	columnsShorthandMap := map[rune]storageBucketColumn{
+		'e': {i18n.G("PROJECT"), c.projectColumnData},
+		'n': {i18n.G("NAME"), c.nameColumnData},
+		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
+		'L': {i18n.G("LOCATION"), c.locationColumnData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+	columns := []storageBucketColumn{}
+
+	if c.flagColumns == defaultStorageBucketColumns && clustered {
+		columnList = append(columnList, "L")
+	}
+
+	if c.flagColumns == defaultStorageBucketColumns && c.flagAllProjects {
+		columnList = append([]string{"e"}, columnList...)
+	}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+func (c *cmdStorageBucketList) nameColumnData(bucket api.StorageBucket) string {
+	return bucket.Name
+}
+
+func (c *cmdStorageBucketList) descriptionColumnData(bucket api.StorageBucket) string {
+	return bucket.Description
+}
+
+func (c *cmdStorageBucketList) locationColumnData(bucket api.StorageBucket) string {
+	return bucket.Location
+}
+
+func (c *cmdStorageBucketList) projectColumnData(bucket api.StorageBucket) string {
+	return bucket.Project
 }
 
 func (c *cmdStorageBucketList) Run(cmd *cobra.Command, args []string) error {
@@ -515,37 +597,27 @@ func (c *cmdStorageBucketList) Run(cmd *cobra.Command, args []string) error {
 
 	clustered := resource.server.IsClustered()
 
+	// Parse column flags.
+	columns, err := c.parseColumns(clustered)
+	if err != nil {
+		return err
+	}
+
 	data := make([][]string, 0, len(buckets))
 	for _, bucket := range buckets {
-		details := []string{
-			bucket.Name,
-			bucket.Description,
+		line := []string{}
+		for _, column := range columns {
+			line = append(line, column.Data(bucket))
 		}
 
-		if clustered {
-			details = append(details, bucket.Location)
-		}
-
-		if c.flagAllProjects {
-			details = append([]string{bucket.Project}, details...)
-		}
-
-		data = append(data, details)
+		data = append(data, line)
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))
 
-	header := []string{
-		i18n.G("NAME"),
-		i18n.G("DESCRIPTION"),
-	}
-
-	if clustered {
-		header = append(header, i18n.G("LOCATION"))
-	}
-
-	if c.flagAllProjects {
-		header = append([]string{i18n.G("PROJECT")}, header...)
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
 	}
 
 	return cli.RenderTable(c.flagFormat, header, data, buckets)
