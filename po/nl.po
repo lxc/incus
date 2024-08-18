@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-08-18 15:55-0400\n"
+"POT-Creation-Date: 2024-08-18 16:38-0400\n"
 "PO-Revision-Date: 2024-01-27 21:01+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 <nlincus@users.noreply.hosted.weblate."
 "org>\n"
@@ -1542,9 +1542,10 @@ msgstr ""
 #: cmd/incus/network_forward.go:115 cmd/incus/network_integration.go:438
 #: cmd/incus/network_zone.go:115 cmd/incus/operation.go:138
 #: cmd/incus/profile.go:725 cmd/incus/project.go:527 cmd/incus/remote.go:750
-#: cmd/incus/storage.go:687 cmd/incus/storage_bucket.go:502
-#: cmd/incus/storage_bucket.go:904 cmd/incus/storage_volume.go:1557
-#: cmd/incus/storage_volume.go:2548 cmd/incus/warning.go:93
+#: cmd/incus/snapshot.go:316 cmd/incus/storage.go:687
+#: cmd/incus/storage_bucket.go:502 cmd/incus/storage_bucket.go:904
+#: cmd/incus/storage_volume.go:1557 cmd/incus/storage_volume.go:2548
+#: cmd/incus/warning.go:93
 msgid "Columns"
 msgstr ""
 
@@ -2197,8 +2198,8 @@ msgstr ""
 #: cmd/incus/remote.go:898 cmd/incus/remote.go:979 cmd/incus/remote.go:1044
 #: cmd/incus/remote.go:1092 cmd/incus/remote_unix.go:37 cmd/incus/rename.go:21
 #: cmd/incus/snapshot.go:31 cmd/incus/snapshot.go:78 cmd/incus/snapshot.go:203
-#: cmd/incus/snapshot.go:288 cmd/incus/snapshot.go:385
-#: cmd/incus/snapshot.go:446 cmd/incus/snapshot.go:525 cmd/incus/storage.go:37
+#: cmd/incus/snapshot.go:294 cmd/incus/snapshot.go:449
+#: cmd/incus/snapshot.go:510 cmd/incus/snapshot.go:589 cmd/incus/storage.go:37
 #: cmd/incus/storage.go:100 cmd/incus/storage.go:212 cmd/incus/storage.go:270
 #: cmd/incus/storage.go:402 cmd/incus/storage.go:484 cmd/incus/storage.go:665
 #: cmd/incus/storage.go:826 cmd/incus/storage.go:930 cmd/incus/storage.go:1024
@@ -2443,6 +2444,7 @@ msgid "EXISTING: %q (backend=%q, source=%q)"
 msgstr ""
 
 #: cmd/incus/cluster.go:1160 cmd/incus/config_trust.go:668
+#: cmd/incus/snapshot.go:337
 msgid "EXPIRES AT"
 msgstr ""
 
@@ -2561,9 +2563,9 @@ msgstr ""
 #: cmd/incus/network_forward.go:147 cmd/incus/network_integration.go:460
 #: cmd/incus/network_zone.go:147 cmd/incus/operation.go:166
 #: cmd/incus/profile.go:763 cmd/incus/project.go:565 cmd/incus/remote.go:773
-#: cmd/incus/storage.go:722 cmd/incus/storage_bucket.go:532
-#: cmd/incus/storage_bucket.go:925 cmd/incus/storage_volume.go:1700
-#: cmd/incus/warning.go:236
+#: cmd/incus/snapshot.go:346 cmd/incus/storage.go:722
+#: cmd/incus/storage_bucket.go:532 cmd/incus/storage_bucket.go:925
+#: cmd/incus/storage_volume.go:1700 cmd/incus/warning.go:236
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
@@ -2738,9 +2740,8 @@ msgstr ""
 msgid "Expected a struct, got a %v"
 msgstr ""
 
-#: cmd/incus/info.go:819 cmd/incus/info.go:870 cmd/incus/snapshot.go:366
-#: cmd/incus/storage_volume.go:1476 cmd/incus/storage_volume.go:1526
-#: cmd/incus/storage_volume.go:2648
+#: cmd/incus/info.go:819 cmd/incus/info.go:870 cmd/incus/storage_volume.go:1476
+#: cmd/incus/storage_volume.go:1526 cmd/incus/storage_volume.go:2648
 msgid "Expires at"
 msgstr ""
 
@@ -3246,7 +3247,7 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:93 cmd/incus/network_peer.go:84
 #: cmd/incus/network_zone.go:113 cmd/incus/network_zone.go:859
 #: cmd/incus/operation.go:136 cmd/incus/profile.go:726 cmd/incus/project.go:529
-#: cmd/incus/project.go:1052 cmd/incus/remote.go:749 cmd/incus/snapshot.go:291
+#: cmd/incus/project.go:1052 cmd/incus/remote.go:749 cmd/incus/snapshot.go:315
 #: cmd/incus/storage.go:689 cmd/incus/storage_bucket.go:500
 #: cmd/incus/storage_bucket.go:902 cmd/incus/storage_volume.go:1575
 #: cmd/incus/storage_volume.go:2565 cmd/incus/warning.go:94
@@ -4305,8 +4306,31 @@ msgstr ""
 msgid "List instance file templates"
 msgstr ""
 
-#: cmd/incus/snapshot.go:287 cmd/incus/snapshot.go:288
+#: cmd/incus/snapshot.go:293
 msgid "List instance snapshots"
+msgstr ""
+
+#: cmd/incus/snapshot.go:294
+msgid ""
+"List instance snapshots\n"
+"\n"
+"Default column layout: nTEs\n"
+"\n"
+"== Columns ==\n"
+"The -c option takes a comma separated list of arguments that control\n"
+"which network zone attributes to output when displaying in table or csv\n"
+"format.\n"
+"\n"
+"Column arguments are either pre-defined shorthand chars (see below),\n"
+"or (extended) config keys.\n"
+"\n"
+"Commas between consecutive shorthand chars are optional.\n"
+"\n"
+"Pre-defined column shorthand chars:\n"
+"  n - Name\n"
+"  T - Taken At\n"
+"  E - Expires At\n"
+"  s - Stateful"
 msgstr ""
 
 #: cmd/incus/list.go:49
@@ -5355,8 +5379,9 @@ msgstr ""
 #: cmd/incus/network_integration.go:449 cmd/incus/network_peer.go:154
 #: cmd/incus/network_zone.go:133 cmd/incus/network_zone.go:916
 #: cmd/incus/profile.go:745 cmd/incus/project.go:548 cmd/incus/remote.go:759
-#: cmd/incus/storage.go:708 cmd/incus/storage_bucket.go:514
-#: cmd/incus/storage_bucket.go:915 cmd/incus/storage_volume.go:1671
+#: cmd/incus/snapshot.go:335 cmd/incus/storage.go:708
+#: cmd/incus/storage_bucket.go:514 cmd/incus/storage_bucket.go:915
+#: cmd/incus/storage_volume.go:1671
 msgid "NAME"
 msgstr ""
 
@@ -5411,9 +5436,8 @@ msgstr ""
 msgid "NVRM Version: %v"
 msgstr ""
 
-#: cmd/incus/info.go:817 cmd/incus/info.go:868 cmd/incus/snapshot.go:364
-#: cmd/incus/storage_volume.go:1474 cmd/incus/storage_volume.go:1524
-#: cmd/incus/storage_volume.go:2646
+#: cmd/incus/info.go:817 cmd/incus/info.go:868 cmd/incus/storage_volume.go:1474
+#: cmd/incus/storage_volume.go:1524 cmd/incus/storage_volume.go:2646
 msgid "Name"
 msgstr ""
 
@@ -6319,7 +6343,7 @@ msgstr ""
 msgid "Rename custom storage volumes"
 msgstr "Backup aan het maken van opslagvolume (storage volume): %s"
 
-#: cmd/incus/snapshot.go:384 cmd/incus/snapshot.go:385
+#: cmd/incus/snapshot.go:448 cmd/incus/snapshot.go:449
 msgid "Rename instance snapshots"
 msgstr ""
 
@@ -6391,14 +6415,14 @@ msgstr ""
 msgid "Restore cluster member"
 msgstr ""
 
-#: cmd/incus/snapshot.go:446
+#: cmd/incus/snapshot.go:510
 msgid ""
 "Restore instance from snapshots\n"
 "\n"
 "If --stateful is passed, then the running state will be restored too."
 msgstr ""
 
-#: cmd/incus/snapshot.go:445
+#: cmd/incus/snapshot.go:509
 msgid "Restore instance snapshots"
 msgstr ""
 
@@ -6514,6 +6538,10 @@ msgstr "GECREËERD OM"
 #: cmd/incus/network_peer.go:158 cmd/incus/operation.go:152
 #: cmd/incus/storage.go:713 cmd/incus/warning.go:215
 msgid "STATE"
+msgstr ""
+
+#: cmd/incus/snapshot.go:338
+msgid "STATEFUL"
 msgstr ""
 
 #: cmd/incus/remote.go:764
@@ -6976,7 +7004,7 @@ msgstr ""
 msgid "Show instance or server information"
 msgstr ""
 
-#: cmd/incus/snapshot.go:524 cmd/incus/snapshot.go:525
+#: cmd/incus/snapshot.go:588 cmd/incus/snapshot.go:589
 msgid "Show instance snapshot configuration"
 msgstr ""
 
@@ -7212,7 +7240,7 @@ msgstr ""
 msgid "State: %s"
 msgstr ""
 
-#: cmd/incus/info.go:820 cmd/incus/snapshot.go:367
+#: cmd/incus/info.go:820
 msgid "Stateful"
 msgstr ""
 
@@ -7365,6 +7393,10 @@ msgstr ""
 msgid "System:"
 msgstr ""
 
+#: cmd/incus/snapshot.go:336
+msgid "TAKEN AT"
+msgstr ""
+
 #: cmd/incus/alias.go:149
 msgid "TARGET"
 msgstr ""
@@ -7382,8 +7414,8 @@ msgstr ""
 msgid "TYPE"
 msgstr ""
 
-#: cmd/incus/info.go:818 cmd/incus/info.go:869 cmd/incus/snapshot.go:365
-#: cmd/incus/storage_volume.go:1525 cmd/incus/storage_volume.go:2647
+#: cmd/incus/info.go:818 cmd/incus/info.go:869 cmd/incus/storage_volume.go:1525
+#: cmd/incus/storage_volume.go:2647
 msgid "Taken at"
 msgstr ""
 
@@ -7877,9 +7909,9 @@ msgstr ""
 #: cmd/incus/network_forward.go:153 cmd/incus/network_integration.go:466
 #: cmd/incus/network_zone.go:153 cmd/incus/operation.go:172
 #: cmd/incus/profile.go:769 cmd/incus/project.go:571 cmd/incus/remote.go:779
-#: cmd/incus/storage.go:728 cmd/incus/storage_bucket.go:538
-#: cmd/incus/storage_bucket.go:931 cmd/incus/storage_volume.go:1708
-#: cmd/incus/warning.go:244
+#: cmd/incus/snapshot.go:352 cmd/incus/storage.go:728
+#: cmd/incus/storage_bucket.go:538 cmd/incus/storage_bucket.go:931
+#: cmd/incus/storage_volume.go:1708 cmd/incus/warning.go:244
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr ""
@@ -8262,7 +8294,7 @@ msgstr ""
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr ""
 
-#: cmd/incus/snapshot.go:454
+#: cmd/incus/snapshot.go:518
 msgid ""
 "Whether or not to restore the instance's running state from snapshot (if "
 "available)"
@@ -8529,7 +8561,7 @@ msgstr ""
 #: cmd/incus/config_device.go:320 cmd/incus/config_device.go:752
 #: cmd/incus/config_metadata.go:52 cmd/incus/config_metadata.go:185
 #: cmd/incus/config_template.go:286 cmd/incus/console.go:35
-#: cmd/incus/snapshot.go:286
+#: cmd/incus/snapshot.go:292
 msgid "[<remote>:]<instance>"
 msgstr ""
 
@@ -8557,7 +8589,7 @@ msgstr ""
 msgid "[<remote>:]<instance> <name>..."
 msgstr ""
 
-#: cmd/incus/snapshot.go:383
+#: cmd/incus/snapshot.go:447
 msgid "[<remote>:]<instance> <old snapshot name> <new snapshot name>"
 msgstr ""
 
@@ -8569,11 +8601,11 @@ msgstr ""
 msgid "[<remote>:]<instance> <profiles>"
 msgstr ""
 
-#: cmd/incus/snapshot.go:200 cmd/incus/snapshot.go:444
+#: cmd/incus/snapshot.go:200 cmd/incus/snapshot.go:508
 msgid "[<remote>:]<instance> <snapshot name>"
 msgstr ""
 
-#: cmd/incus/snapshot.go:523
+#: cmd/incus/snapshot.go:587
 msgid "[<remote>:]<instance> <snapshot>"
 msgstr ""
 
@@ -9429,7 +9461,7 @@ msgid ""
 "\"config.yaml\"."
 msgstr ""
 
-#: cmd/incus/snapshot.go:450
+#: cmd/incus/snapshot.go:514
 msgid ""
 "incus snapshot restore u1 snap0\n"
 "    Restore instance u1 to snapshot snap0"
