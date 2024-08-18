@@ -278,7 +278,13 @@ type cmdSnapshotList struct {
 	global   *cmdGlobal
 	snapshot *cmdSnapshot
 
-	flagFormat string
+	flagFormat  string
+	flagColumns string
+}
+
+type snapshotColumn struct {
+	Name string
+	Data func(api.InstanceSnapshot) string
 }
 
 func (c *cmdSnapshotList) Command() *cobra.Command {
@@ -286,9 +292,28 @@ func (c *cmdSnapshotList) Command() *cobra.Command {
 	cmd.Use = usage("list", i18n.G("[<remote>:]<instance>"))
 	cmd.Short = i18n.G("List instance snapshots")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`List instance snapshots`))
+		`List instance snapshots
+
+Default column layout: nTEs
+
+== Columns ==
+The -c option takes a comma separated list of arguments that control
+which network zone attributes to output when displaying in table or csv
+format.
+
+Column arguments are either pre-defined shorthand chars (see below),
+or (extended) config keys.
+
+Commas between consecutive shorthand chars are optional.
+
+Pre-defined column shorthand chars:
+  n - Name
+  T - Taken At
+  E - Expires At
+  s - Stateful`))
 
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultSnapshotColumns, i18n.G("Columns")+"``")
 
 	cmd.RunE = c.Run
 
@@ -301,6 +326,66 @@ func (c *cmdSnapshotList) Command() *cobra.Command {
 	}
 
 	return cmd
+}
+
+const defaultSnapshotColumns = "nTEs"
+
+func (c *cmdSnapshotList) parseColumns() ([]snapshotColumn, error) {
+	columnsShorthandMap := map[rune]snapshotColumn{
+		'n': {i18n.G("NAME"), c.nameColumnData},
+		'T': {i18n.G("TAKEN AT"), c.takenAtColumnData},
+		'E': {i18n.G("EXPIRES AT"), c.expiresAtColumnData},
+		's': {i18n.G("STATEFUL"), c.statefulColumnData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+	columns := []snapshotColumn{}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+func (c *cmdSnapshotList) nameColumnData(snapshot api.InstanceSnapshot) string {
+	return snapshot.Name
+}
+
+func (c *cmdSnapshotList) takenAtColumnData(snapshot api.InstanceSnapshot) string {
+	if snapshot.CreatedAt.IsZero() {
+		return " "
+	}
+
+	return snapshot.CreatedAt.Local().Format(dateLayout)
+}
+
+func (c *cmdSnapshotList) expiresAtColumnData(snapshot api.InstanceSnapshot) string {
+	if snapshot.ExpiresAt.IsZero() {
+		return " "
+	}
+
+	return snapshot.ExpiresAt.Local().Format(dateLayout)
+}
+
+func (c *cmdSnapshotList) statefulColumnData(snapshot api.InstanceSnapshot) string {
+	strStateful := "NO"
+	if snapshot.Stateful {
+		strStateful = "YES"
+	}
+
+	return strStateful
 }
 
 func (c *cmdSnapshotList) Run(cmd *cobra.Command, args []string) error {
@@ -322,54 +407,33 @@ func (c *cmdSnapshotList) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return c.listSnapshots(d, instanceName)
-}
-
-func (c *cmdSnapshotList) listSnapshots(d incus.InstanceServer, name string) error {
-	snapshots, err := d.GetInstanceSnapshots(name)
+	snapshots, err := d.GetInstanceSnapshots(instanceName)
 	if err != nil {
 		return err
 	}
 
-	// List snapshots
-	snapData := [][]string{}
+	// Parse column flags.
+	columns, err := c.parseColumns()
+	if err != nil {
+		return err
+	}
+
+	data := [][]string{}
 	for _, snap := range snapshots {
-		var row []string
-
-		fields := strings.Split(snap.Name, instance.SnapshotDelimiter)
-		row = append(row, fields[len(fields)-1])
-
-		if !snap.CreatedAt.IsZero() {
-			row = append(row, snap.CreatedAt.Local().Format(dateLayout))
-		} else {
-			row = append(row, " ")
+		line := []string{}
+		for _, column := range columns {
+			line = append(line, column.Data(snap))
 		}
 
-		if !snap.ExpiresAt.IsZero() {
-			row = append(row, snap.ExpiresAt.Local().Format(dateLayout))
-		} else {
-			row = append(row, " ")
-		}
-
-		if snap.Stateful {
-			row = append(row, "YES")
-		} else {
-			row = append(row, "NO")
-		}
-
-		snapData = append(snapData, row)
+		data = append(data, line)
 	}
 
-	snapHeader := []string{
-		i18n.G("Name"),
-		i18n.G("Taken at"),
-		i18n.G("Expires at"),
-		i18n.G("Stateful"),
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
 	}
 
-	_ = cli.RenderTable(c.flagFormat, snapHeader, snapData, snapshots)
-
-	return nil
+	return cli.RenderTable(c.flagFormat, header, data, snapshots)
 }
 
 // Rename.
