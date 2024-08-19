@@ -15,15 +15,12 @@ import (
 	"github.com/lxc/incus/v6/internal/server/cluster"
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
-	"github.com/lxc/incus/v6/internal/server/db/query"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/internal/server/response"
-	"github.com/lxc/incus/v6/internal/server/state"
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
-	"github.com/lxc/incus/v6/shared/logger"
 	localtls "github.com/lxc/incus/v6/shared/tls"
 	"github.com/lxc/incus/v6/shared/util"
 )
@@ -215,33 +212,12 @@ func urlInstanceTypeDetect(r *http.Request) (instancetype.Type, error) {
 func instancesGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	for i := 0; i < 100; i++ {
-		result, err := doInstancesGet(s, r)
-		if err == nil {
-			return response.SyncResponse(true, result)
-		}
-
-		if !query.IsRetriableError(err) {
-			logger.Debugf("DBERR: containersGet: error %q", err)
-			return response.SmartError(err)
-		}
-		// 100 ms may seem drastic, but we really don't want to thrash
-		// perhaps we should use a random amount
-		time.Sleep(100 * time.Millisecond)
-	}
-
-	logger.Debugf("DBERR: containersGet, db is locked")
-	logger.Debugf(logger.GetStack())
-	return response.InternalError(fmt.Errorf("DB is locked"))
-}
-
-func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 	resultFullList := []*api.InstanceFull{}
 	resultMu := sync.Mutex{}
 
 	instanceType, err := urlInstanceTypeDetect(r)
 	if err != nil {
-		return nil, err
+		return response.BadRequest(err)
 	}
 
 	// Parse the recursion field.
@@ -254,7 +230,7 @@ func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 	filterStr := r.FormValue("filter")
 	clauses, err := filter.Parse(filterStr, filter.QueryOperatorSet())
 	if err != nil {
-		return nil, fmt.Errorf("Invalid filter: %w", err)
+		return response.BadRequest(fmt.Errorf("Invalid filter: %w", err))
 	}
 
 	mustLoadObjects := recursion > 0 || (recursion == 0 && clauses != nil && len(clauses.Clauses) > 0)
@@ -264,7 +240,7 @@ func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 	allProjects := util.IsTrue(r.FormValue("all-projects"))
 
 	if allProjects && projectName != "" {
-		return nil, api.StatusErrorf(http.StatusBadRequest, "Cannot specify a project when requesting all projects")
+		return response.BadRequest(fmt.Errorf("Cannot specify a project when requesting all projects"))
 	} else if !allProjects && projectName == "" {
 		projectName = api.ProjectDefaultName
 	}
@@ -297,12 +273,12 @@ func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return response.SmartError(err)
 	}
 
 	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeInstance)
 	if err != nil {
-		return nil, err
+		return response.InternalError(err)
 	}
 
 	// Removes instances the user doesn't have access to.
@@ -429,7 +405,7 @@ func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 			for _, projectName := range filteredProjects {
 				insts, err := instanceLoadNodeProjectAll(r.Context(), s, projectName, instanceType)
 				if err != nil {
-					return nil, fmt.Errorf("Failed loading instances for project %q: %w", projectName, err)
+					return response.InternalError(fmt.Errorf("Failed loading instances for project %q: %w", projectName, err))
 				}
 
 				for _, inst := range insts {
@@ -499,7 +475,7 @@ func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 	if clauses != nil && len(clauses.Clauses) > 0 {
 		resultFullList, err = instance.FilterFull(resultFullList, *clauses)
 		if err != nil {
-			return nil, err
+			return response.SmartError(err)
 		}
 	}
 
@@ -510,7 +486,7 @@ func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 			resultList = append(resultList, url.String())
 		}
 
-		return resultList, nil
+		return response.SyncResponse(true, resultList)
 	}
 
 	if recursion == 1 {
@@ -519,10 +495,10 @@ func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 			resultList = append(resultList, &resultFullList[i].Instance)
 		}
 
-		return resultList, nil
+		return response.SyncResponse(true, resultList)
 	}
 
-	return resultFullList, nil
+	return response.SyncResponse(true, resultFullList)
 }
 
 // Fetch information about the containers on the given remote node, using the
