@@ -145,11 +145,19 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 			return err
 		}
 
+		// Get all the profile devices.
+		profileDevicesByID, err := cluster.GetDevices(ctx, tx.Tx(), "profile")
+		if err != nil {
+			return err
+		}
+
 		for _, profile := range profiles {
-			profileDevices[profile.Name], err = cluster.GetProfileDevices(ctx, tx.Tx(), profile.ID)
-			if err != nil {
-				return err
+			devices := map[string]cluster.Device{}
+			for _, dev := range profileDevicesByID[profile.ID] {
+				devices[dev.Name] = dev
 			}
+
+			profileDevices[profile.Name] = devices
 		}
 
 		return nil

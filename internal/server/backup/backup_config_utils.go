@@ -51,8 +51,14 @@ func ConfigToInstanceDBArgs(state *state.State, c *config.Config, projectName st
 				return err
 			}
 
+			// Get all the profile devices.
+			profileDevices, err := cluster.GetDevices(ctx, tx.Tx(), "profile")
+			if err != nil {
+				return err
+			}
+
 			for _, profile := range profiles {
-				apiProfile, err := profile.ToAPI(ctx, tx.Tx())
+				apiProfile, err := profile.ToAPI(ctx, tx.Tx(), profileDevices)
 				if err != nil {
 					return err
 				}
