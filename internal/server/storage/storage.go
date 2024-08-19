@@ -211,13 +211,14 @@ func UsedBy(ctx context.Context, s *state.State, pool Pool, firstOnly bool, memb
 			return fmt.Errorf("Failed loading profiles: %w", err)
 		}
 
-		for _, profile := range profiles {
-			profileDevices, err := cluster.GetProfileDevices(ctx, tx.Tx(), profile.ID)
-			if err != nil {
-				return fmt.Errorf("Failed loading profile devices: %w", err)
-			}
+		// Get all the profile devices.
+		profileDevices, err := cluster.GetDevices(ctx, tx.Tx(), "profile")
+		if err != nil {
+			return fmt.Errorf("Failed loading profile devices: %w", err)
+		}
 
-			for _, device := range profileDevices {
+		for _, profile := range profiles {
+			for _, device := range profileDevices[profile.ID] {
 				if device.Type != cluster.TypeDisk {
 					continue
 				}

@@ -819,8 +819,14 @@ func VolumeUsedByProfileDevices(s *state.State, poolName string, projectName str
 			return fmt.Errorf("Failed loading profiles: %w", err)
 		}
 
+		// Get all the profile devices.
+		profileDevices, err := cluster.GetDevices(ctx, tx.Tx(), "profile")
+		if err != nil {
+			return fmt.Errorf("Failed loading profiles: %w", err)
+		}
+
 		for _, profile := range dbProfiles {
-			apiProfile, err := profile.ToAPI(ctx, tx.Tx())
+			apiProfile, err := profile.ToAPI(ctx, tx.Tx(), profileDevices)
 			if err != nil {
 				return fmt.Errorf("Failed getting API Profile %q: %w", profile.Name, err)
 			}

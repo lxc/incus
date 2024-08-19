@@ -83,10 +83,15 @@ func (i *Instance) ToAPI(ctx context.Context, tx *sql.Tx) (*api.Instance, error)
 		return nil, err
 	}
 
+	profileDevices, err := GetDevices(ctx, tx, "profile")
+	if err != nil {
+		return nil, err
+	}
+
 	apiProfiles := make([]api.Profile, 0, len(profiles))
 	profileNames := make([]string, 0, len(profiles))
 	for _, p := range profiles {
-		apiProfile, err := p.ToAPI(ctx, tx)
+		apiProfile, err := p.ToAPI(ctx, tx, profileDevices)
 		if err != nil {
 			return nil, err
 		}

@@ -534,6 +534,12 @@ func (c *ClusterTx) instanceProfilesFill(ctx context.Context, snapshotsMode bool
 		return fmt.Errorf("Failed loading profiles: %w", err)
 	}
 
+	// Get all the profile devices.
+	profileDevices, err := cluster.GetDevices(context.TODO(), c.Tx(), "profile")
+	if err != nil {
+		return fmt.Errorf("Failed loading profile devices: %w", err)
+	}
+
 	// Populate profilesByID map entry for referenced profiles.
 	// This way we only call ToAPI() on the profiles actually referenced by the instances in
 	// the list, which can reduce the number of queries run.
@@ -543,7 +549,7 @@ func (c *ClusterTx) instanceProfilesFill(ctx context.Context, snapshotsMode bool
 			continue
 		}
 
-		profilesByID[profile.ID], err = profile.ToAPI(context.TODO(), c.tx)
+		profilesByID[profile.ID], err = profile.ToAPI(context.TODO(), c.tx, profileDevices)
 		if err != nil {
 			return err
 		}
