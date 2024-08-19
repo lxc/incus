@@ -1056,15 +1056,40 @@ type cmdClusterListTokens struct {
 	global  *cmdGlobal
 	cluster *cmdCluster
 
-	flagFormat string
+	flagFormat  string
+	flagColumns string
+}
+
+type clusterListTokenColumn struct {
+	Name string
+	Data func(*api.ClusterMemberJoinToken) string
 }
 
 func (c *cmdClusterListTokens) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("list-tokens", i18n.G("[<remote>:]"))
 	cmd.Short = i18n.G("List all active cluster member join tokens")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`List all active cluster member join tokens`))
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+		`List all active cluster member join tokens
+
+Default column layout: nte
+
+== Columns ==
+The -c option takes a comma separated list of arguments that control
+which network zone attributes to output when displaying in table or csv
+format.
+
+Column arguments are either pre-defined shorthand chars (see below),
+or (extended) config keys.
+
+Commas between consecutive shorthand chars are optional.
+
+Pre-defined column shorthand chars:
+  n - Name
+  t - Token
+  E - Expires At`))
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultclusterTokensColumns, i18n.G("Columns")+"``")
 
 	cmd.RunE = c.Run
 
@@ -1077,6 +1102,48 @@ func (c *cmdClusterListTokens) Command() *cobra.Command {
 	}
 
 	return cmd
+}
+
+const defaultclusterTokensColumns = "ntE"
+
+func (c *cmdClusterListTokens) parseColumns() ([]clusterListTokenColumn, error) {
+	columnsShorthandMap := map[rune]clusterListTokenColumn{
+		'n': {i18n.G("NAME"), c.serverNameColumnData},
+		't': {i18n.G("TOKEN"), c.tokenColumnData},
+		'E': {i18n.G("EXPIRES AT"), c.expiresAtColumnData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+	columns := []clusterListTokenColumn{}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+func (c *cmdClusterListTokens) serverNameColumnData(token *api.ClusterMemberJoinToken) string {
+	return token.ServerName
+}
+
+func (c *cmdClusterListTokens) tokenColumnData(token *api.ClusterMemberJoinToken) string {
+	return token.String()
+}
+
+func (c *cmdClusterListTokens) expiresAtColumnData(token *api.ClusterMemberJoinToken) string {
+	return token.ExpiresAt.Local().Format(dateLayout)
 }
 
 func (c *cmdClusterListTokens) Run(cmd *cobra.Command, args []string) error {
@@ -1115,14 +1182,14 @@ func (c *cmdClusterListTokens) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Convert the join token operation into encoded form for display.
-	type displayToken struct {
-		ServerName string
-		Token      string
-		ExpiresAt  string
-	}
+	data := [][]string{}
+	joinTokens := []*api.ClusterMemberJoinToken{}
 
-	displayTokens := make([]displayToken, 0)
+	// Parse column flags.
+	columns, err := c.parseColumns()
+	if err != nil {
+		return err
+	}
 
 	for _, op := range ops {
 		if op.Class != api.OperationClassToken {
@@ -1138,29 +1205,23 @@ func (c *cmdClusterListTokens) Run(cmd *cobra.Command, args []string) error {
 			continue // Operation is not a valid cluster member join token operation.
 		}
 
-		displayTokens = append(displayTokens, displayToken{
-			ServerName: joinToken.ServerName,
-			Token:      joinToken.String(),
-			ExpiresAt:  joinToken.ExpiresAt.Local().Format(dateLayout),
-		})
-	}
+		line := []string{}
+		for _, column := range columns {
+			line = append(line, column.Data(joinToken))
+		}
 
-	// Render the table.
-	data := [][]string{}
-	for _, token := range displayTokens {
-		line := []string{token.ServerName, token.Token, token.ExpiresAt}
+		joinTokens = append(joinTokens, joinToken)
 		data = append(data, line)
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))
 
-	header := []string{
-		i18n.G("NAME"),
-		i18n.G("TOKEN"),
-		i18n.G("EXPIRES AT"),
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, displayTokens)
+	return cli.RenderTable(c.flagFormat, header, data, joinTokens)
 }
 
 // Revoke Tokens.
