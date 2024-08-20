@@ -111,6 +111,18 @@ var updates = map[int]schema.Update{
 	72: updateFromV71,
 	73: updateFromV72,
 	74: updateFromV73,
+	75: updateFromV74,
+}
+
+// updateFromV74 removes the index preventing the same integration to be used multiple times.
+func updateFromV74(ctx context.Context, tx *sql.Tx) error {
+	q := `DROP INDEX IF EXISTS networks_peers_unique_network_id_target_network_integration_id;`
+	_, err := tx.Exec(q)
+	if err != nil {
+		return fmt.Errorf("Failed dropping network peer index: %w", err)
+	}
+
+	return nil
 }
 
 // updateFromV73 adds a config table to cluster groups.
