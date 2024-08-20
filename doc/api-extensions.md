@@ -2578,3 +2578,7 @@ The following new configuration options are introduced:
 ## `oidc_scopes`
 
 This introduces a new `oidc.scopes` server configuration key which can take a comma separate list of OIDC scopes to request from the identity provider.
+
+## `network_integrations_peer_name`
+
+This extends `ovn.transit.pattern` to allow `peerName` as a template variable.
