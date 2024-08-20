@@ -5650,6 +5650,7 @@ func (n *ovn) remotePeerCreate(peer api.NetworkPeersPost) error {
 		"projectName":     n.project,
 		"networkName":     n.name,
 		"integrationName": integration.Name,
+		"peerName":        peer.Name,
 	})
 	if err != nil {
 		return err
@@ -6122,6 +6123,7 @@ func (n *ovn) remotePeerDelete(peer *api.NetworkPeer) error {
 		"projectName":     n.project,
 		"networkName":     n.name,
 		"integrationName": integration.Name,
+		"peerName":        peer.Name,
 	})
 	if err != nil {
 		return err
