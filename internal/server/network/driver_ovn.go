@@ -5650,6 +5650,7 @@ func (n *ovn) remotePeerCreate(peer api.NetworkPeersPost) error {
 		"projectName":     n.project,
 		"networkName":     n.name,
 		"integrationName": integration.Name,
+		"peerName":        peer.Name,
 	})
 	if err != nil {
 		return err
@@ -5668,9 +5669,16 @@ func (n *ovn) remotePeerCreate(peer api.NetworkPeersPost) error {
 
 	reverter.Add(func() { _ = n.ovnnb.DeleteChassisGroup(ctx, cgName) })
 
+	// Seed the stable random number generator with the transit switch name.
+	// This should cause a reasonable spread of networks on the available IC gateway chassis.
+	r, err := localUtil.GetStableRandomGenerator(tsNameRendered)
+	if err != nil {
+		return fmt.Errorf("Failed generating stable random chassis group priority: %w", err)
+	}
+
 	// Assign some priorities.
-	for i, gateway := range gateways {
-		err = n.ovnnb.SetChassisGroupPriority(ctx, cgName, gateway, 10+i)
+	for _, gateway := range gateways {
+		err = n.ovnnb.SetChassisGroupPriority(ctx, cgName, gateway, r.Intn(ovnChassisPriorityMax+1))
 		if err != nil {
 			return err
 		}
@@ -6115,6 +6123,7 @@ func (n *ovn) remotePeerDelete(peer *api.NetworkPeer) error {
 		"projectName":     n.project,
 		"networkName":     n.name,
 		"integrationName": integration.Name,
+		"peerName":        peer.Name,
 	})
 	if err != nil {
 		return err

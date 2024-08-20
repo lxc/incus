@@ -1548,11 +1548,13 @@ User keys can be used in search.
 ```
 
 ```{config:option} ovn.transit.pattern network_integration-ovn
-:defaultdesc: "`ts-incus-{{ integrationName }}-{{ projectName }}-{{ networkname }}`"
+:defaultdesc: "`ts-incus-{{ integrationName }}-{{ projectName }}-{{ networkName }}`"
 :shortdesc: "Template for the transit switch name"
 :type: "string"
 Specify a Pongo2 template string that represents the transit switch name.
-This template gets access to the project name (`projectName`), integration name (`integrationName`) and network name (`networkName`).
+This template gets access to the project name (`projectName`),
+integration name (`integrationName`), network name (`networkName`)
+and peer name (`peerName`).
 
 ```
 
