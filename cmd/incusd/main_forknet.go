@@ -280,34 +280,6 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	// Turn into usable configuration.
-	netMask, _ := reply.SubnetMask().Size()
-
-	addr := &ip.Addr{
-		DevName: iface,
-		Address: fmt.Sprintf("%s/%d", reply.YourIPAddr, netMask),
-		Family:  ip.FamilyV4,
-	}
-
-	err = addr.Add()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't add IP to %q\n", iface)
-		return nil
-	}
-
-	route := &ip.Route{
-		DevName: iface,
-		Route:   "default",
-		Via:     reply.Router()[0].String(),
-		Family:  ip.FamilyV4,
-	}
-
-	err = route.Add()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't add default route to %q\n", iface)
-		return nil
-	}
-
 	// DNS configuration.
 	f, err := os.Create(filepath.Join(args[0], "resolv.conf"))
 	if err != nil {
@@ -339,6 +311,34 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 			fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
 			return nil
 		}
+	}
+
+	// Network configuration.
+	netMask, _ := reply.SubnetMask().Size()
+
+	addr := &ip.Addr{
+		DevName: iface,
+		Address: fmt.Sprintf("%s/%d", reply.YourIPAddr, netMask),
+		Family:  ip.FamilyV4,
+	}
+
+	err = addr.Add()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't add IP to %q\n", iface)
+		return nil
+	}
+
+	route := &ip.Route{
+		DevName: iface,
+		Route:   "default",
+		Via:     reply.Router()[0].String(),
+		Family:  ip.FamilyV4,
+	}
+
+	err = route.Add()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't add default route to %q\n", iface)
+		return nil
 	}
 
 	return nil
