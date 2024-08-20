@@ -735,7 +735,9 @@ func networkIntegrationValidate(integrationType string, inUse bool, oldConfig ma
 
 		// gendoc:generate(entity=network_integration, group=ovn, key=ovn.transit.pattern)
 		// Specify a Pongo2 template string that represents the transit switch name.
-		// This template gets access to the project name (`projectName`), integration name (`integrationName`) and network name (`networkName`).
+		// This template gets access to the project name (`projectName`),
+		// integration name (`integrationName`), network name (`networkName`)
+		// and peer name (`peerName`).
 		//
 		// ---
 		//  type: string
