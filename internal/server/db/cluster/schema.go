@@ -334,7 +334,6 @@ CREATE TABLE "networks_peers_config" (
     UNIQUE (network_peer_id, key),
     FOREIGN KEY (network_peer_id) REFERENCES "networks_peers" (id) ON DELETE CASCADE
 );
-CREATE UNIQUE INDEX networks_peers_unique_network_id_target_network_integration_id ON "networks_peers" (network_id, target_network_integration_id);
 CREATE UNIQUE INDEX networks_unique_network_id_node_id_key ON "networks_config" (network_id, IFNULL(node_id, -1), key);
 CREATE TABLE "networks_zones" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -657,5 +656,5 @@ CREATE TABLE "warnings" (
 );
 CREATE UNIQUE INDEX warnings_unique_node_id_project_id_entity_type_code_entity_id_type_code ON warnings(IFNULL(node_id, -1), IFNULL(project_id, -1), entity_type_code, entity_id, type_code);
 
-INSERT INTO schema (version, updated_at) VALUES (74, strftime("%s"))
+INSERT INTO schema (version, updated_at) VALUES (75, strftime("%s"))
 `
