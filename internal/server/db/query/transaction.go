@@ -10,9 +10,9 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
-// Transaction executes the given function within a database transaction with a 10s context timeout.
+// Transaction executes the given function within a database transaction with a 30s context timeout.
 func Transaction(ctx context.Context, db *sql.DB, f func(context.Context, *sql.Tx) error) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
 
 	tx, err := db.BeginTx(ctx, nil)

@@ -188,17 +188,19 @@ func UsedBy(s *state.State, networkProjectName string, networkID int64, networkN
 
 	// Look for profiles. Next cheapest to do.
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Get all profiles
 		profiles, err := cluster.GetProfiles(ctx, tx.Tx())
 		if err != nil {
 			return err
 		}
 
-		for _, profile := range profiles {
-			profileDevices, err := cluster.GetProfileDevices(ctx, tx.Tx(), profile.ID)
-			if err != nil {
-				return err
-			}
+		// Get all the profile devices.
+		profileDevices, err := cluster.GetDevices(ctx, tx.Tx(), "profile")
+		if err != nil {
+			return err
+		}
 
+		for _, profile := range profiles {
 			profileProject, err := cluster.GetProject(ctx, tx.Tx(), profile.Project)
 			if err != nil {
 				return err
@@ -209,7 +211,12 @@ func UsedBy(s *state.State, networkProjectName string, networkID int64, networkN
 				return err
 			}
 
-			inUse, err := usedByProfileDevices(s, profileDevices, apiProfileProject, networkProjectName, networkName, networkType)
+			devices := map[string]cluster.Device{}
+			for _, dev := range profileDevices[profile.ID] {
+				devices[dev.Name] = dev
+			}
+
+			inUse, err := usedByProfileDevices(s, devices, apiProfileProject, networkProjectName, networkName, networkType)
 			if err != nil {
 				return err
 			}

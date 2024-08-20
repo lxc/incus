@@ -282,9 +282,14 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 				}
 			}
 
+			objectDevices, err := dbCluster.GetDevices(ctx, tx.Tx(), "instance")
+			if err != nil {
+				return err
+			}
+
 			// Convert the []Instances into []api.Instances.
 			for _, obj := range objects {
-				instance, err := obj.ToAPI(ctx, tx.Tx())
+				instance, err := obj.ToAPI(ctx, tx.Tx(), objectDevices, nil)
 				if err != nil {
 					return err
 				}
