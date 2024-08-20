@@ -77,15 +77,17 @@ type InstanceFilter struct {
 }
 
 // ToAPI converts the database Instance to API type.
-func (i *Instance) ToAPI(ctx context.Context, tx *sql.Tx, instanceDevices map[int][]Device) (*api.Instance, error) {
+func (i *Instance) ToAPI(ctx context.Context, tx *sql.Tx, instanceDevices map[int][]Device, profileDevices map[int][]Device) (*api.Instance, error) {
 	profiles, err := GetInstanceProfiles(ctx, tx, i.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	profileDevices, err := GetDevices(ctx, tx, "profile")
-	if err != nil {
-		return nil, err
+	if profileDevices == nil {
+		profileDevices, err = GetDevices(ctx, tx, "profile")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	apiProfiles := make([]api.Profile, 0, len(profiles))
