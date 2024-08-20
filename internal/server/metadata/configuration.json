@@ -1708,7 +1708,7 @@
 					{
 						"ovn.transit.pattern": {
 							"defaultdesc": "`ts-incus-{{ integrationName }}-{{ projectName }}-{{ networkName }}`",
-							"longdesc": "Specify a Pongo2 template string that represents the transit switch name.\nThis template gets access to the project name (`projectName`), integration name (`integrationName`) and network name (`networkName`).\n",
+							"longdesc": "Specify a Pongo2 template string that represents the transit switch name.\nThis template gets access to the project name (`projectName`),\nintegration name (`integrationName`), network name (`networkName`)\nand peer name (`peerName`).\n",
 							"shortdesc": "Template for the transit switch name",
 							"type": "string"
 						}
