@@ -739,7 +739,7 @@ func networkIntegrationValidate(integrationType string, inUse bool, oldConfig ma
 		//
 		// ---
 		//  type: string
-		//  defaultdesc: `ts-incus-{{ integrationName }}-{{ projectName }}-{{ networkname }}`
+		//  defaultdesc: `ts-incus-{{ integrationName }}-{{ projectName }}-{{ networkName }}`
 		//  shortdesc: Template for the transit switch name
 		"ovn.transit.pattern": validate.IsAny,
 	}
