@@ -16,6 +16,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/internal/server/response"
 	storagePools "github.com/lxc/incus/v6/internal/server/storage"
+	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
 	"github.com/lxc/incus/v6/shared/api"
 )
 
@@ -119,7 +120,7 @@ func storagePoolVolumeTypeStateGet(d *Daemon, r *http.Request) response.Response
 	if volumeType == db.StoragePoolVolumeTypeCustom {
 		// Custom volumes.
 		usage, err = pool.GetCustomVolumeUsage(projectName, volumeName)
-		if err != nil {
+		if err != nil && err != storageDrivers.ErrNotSupported {
 			return response.SmartError(err)
 		}
 	} else {
@@ -139,23 +140,26 @@ func storagePoolVolumeTypeStateGet(d *Daemon, r *http.Request) response.Response
 		}
 
 		usage, err = pool.GetInstanceUsage(inst)
-		if err != nil {
+		if err != nil && err != storageDrivers.ErrNotSupported {
 			return response.SmartError(err)
 		}
 	}
 
 	// Prepare the state struct.
 	state := api.StorageVolumeState{}
-	state.Usage = &api.StorageVolumeStateUsage{}
 
-	// Only fill 'used' field if receiving a valid value.
-	if usage.Used >= 0 {
-		state.Usage.Used = uint64(usage.Used)
-	}
+	if usage != nil {
+		state.Usage = &api.StorageVolumeStateUsage{}
 
-	// Only fill 'total' field if receiving a valid value.
-	if usage.Total >= 0 {
-		state.Usage.Total = usage.Total
+		// Only fill 'used' field if receiving a valid value.
+		if usage.Used >= 0 {
+			state.Usage.Used = uint64(usage.Used)
+		}
+
+		// Only fill 'total' field if receiving a valid value.
+		if usage.Total >= 0 {
+			state.Usage.Total = usage.Total
+		}
 	}
 
 	return response.SyncResponse(true, state)
