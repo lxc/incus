@@ -37,6 +37,10 @@ func (s *targetSystemd) start() error {
 }
 
 func (s *targetSystemd) connect() (incus.InstanceServer, error) {
+	if util.PathExists("/run/incus/unix.socket") {
+		return incus.ConnectIncusUnix("/run/incus/unix.socket", &incus.ConnectionArgs{SkipGetServer: true})
+	}
+
 	return incus.ConnectIncusUnix("/var/lib/incus/unix.socket", &incus.ConnectionArgs{SkipGetServer: true})
 }
 
