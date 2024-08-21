@@ -99,6 +99,7 @@ type server
     define user: [user, group#member] or operator
     define viewer: [user:*] or user
     define can_create_certificates: [user, group#member] or admin
+    define can_create_network_integrations: [user, group#member] or admin
     define can_create_projects: [user, group#member] or operator
     define can_create_storage_pools: [user, group#member] or admin
     define can_edit: admin
