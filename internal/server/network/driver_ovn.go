@@ -2,10 +2,8 @@ package network
 
 import (
 	"context"
-	"encoding/binary"
 	"fmt"
 	"math/big"
-	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -5723,27 +5721,17 @@ func (n *ovn) remotePeerCreate(peer api.NetworkPeersPost) error {
 		bridgeMTU = 1500
 	}
 
-	// EUI64 for IPv6.
-	ipv6, err := eui64.ParseMAC(net.ParseIP("fd80::"), routerMAC)
+	// Get peering addresses.
+	ipv4Net, ipv6Net, err := icnb.CreateTransitSwitchAllocation(ctx, string(tsName), azName)
 	if err != nil {
 		return err
 	}
-
-	ipv6Net := net.IPNet{IP: ipv6, Mask: net.CIDRMask(64, 128)}
-
-	// Random IPv4.
-	buf := make([]byte, 4)
-	binary.LittleEndian.PutUint32(buf, rand.Uint32())
-	buf[0] = 169
-	buf[1] = 254
-	ipv4 := net.IP(buf)
-	ipv4Net := net.IPNet{IP: ipv4, Mask: net.CIDRMask(16, 32)}
 
 	// Determine logical router port name.
 	lrpName := networkOVN.OVNRouterPort(tsName)
 
 	// Create the logical router port.
-	err = n.ovnnb.CreateLogicalRouterPort(ctx, n.getRouterName(), lrpName, routerMAC, uint32(bridgeMTU), []*net.IPNet{&ipv4Net, &ipv6Net}, cgName, false)
+	err = n.ovnnb.CreateLogicalRouterPort(ctx, n.getRouterName(), lrpName, routerMAC, uint32(bridgeMTU), []*net.IPNet{ipv4Net, ipv6Net}, cgName, false)
 	if err != nil {
 		return err
 	}
@@ -6164,6 +6152,18 @@ func (n *ovn) remotePeerDelete(peer *api.NetworkPeer) error {
 	if len(icSwitch.Ports) == 0 {
 		err = icnb.DeleteTransitSwitch(ctx, string(tsName), false)
 		if err != nil && err != networkOVN.ErrNotManaged {
+			return err
+		}
+	} else {
+		// Get the OVN AZ name.
+		azName, err := n.ovnnb.GetName(ctx)
+		if err != nil {
+			return err
+		}
+
+		// Release peering addresses.
+		err = icnb.DeleteTransitSwitchAllocation(ctx, string(tsName), azName)
+		if err != nil {
 			return err
 		}
 	}
