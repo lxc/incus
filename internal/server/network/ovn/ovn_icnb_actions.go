@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"net/netip"
+	"slices"
+	"strings"
 
 	ovsdbClient "github.com/ovn-org/libovsdb/client"
 	"github.com/ovn-org/libovsdb/ovsdb"
@@ -51,6 +54,140 @@ func (o *ICNB) CreateTransitSwitch(ctx context.Context, name string, mayExist bo
 
 	// Create the switch.
 	ops, err := o.client.Create(&transitSwitch)
+	if err != nil {
+		return err
+	}
+
+	resp, err := o.client.Transact(ctx, ops...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, ops)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// CreateTransitSwitchAllocation creates a new allocation on the switch.
+func (o *ICNB) CreateTransitSwitchAllocation(ctx context.Context, switchName string, azName string) (*net.IPNet, *net.IPNet, error) {
+	// Get the switch.
+	transitSwitch := ovnICNB.TransitSwitch{
+		Name: switchName,
+	}
+
+	err := o.client.Get(ctx, &transitSwitch)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Check that it's managed by us.
+	if transitSwitch.ExternalIDs == nil || transitSwitch.ExternalIDs["incus-managed"] != "true" {
+		return nil, nil, fmt.Errorf("Transit switch isn't Incus managed")
+	}
+
+	// Check that prefixes are set.
+	if transitSwitch.ExternalIDs["incus-subnet-ipv4"] == "" || transitSwitch.ExternalIDs["incus-subnet-ipv6"] == "" {
+		return nil, nil, fmt.Errorf("No configured subnets on the transit switch")
+	}
+
+	// Get the allocated addresses.
+	v4Addresses := []string{}
+	v6Addresses := []string{}
+	for k, v := range transitSwitch.ExternalIDs {
+		if !strings.HasPrefix(k, "incus-allocation-") {
+			continue
+		}
+
+		fields := strings.Split(v, ",")
+		if len(fields) != 2 {
+			continue
+		}
+
+		v4Addresses = append(v4Addresses, fields[0])
+		v6Addresses = append(v6Addresses, fields[1])
+	}
+
+	// Get the prefixes.
+	v4Prefix, err := netip.ParsePrefix(transitSwitch.ExternalIDs["incus-subnet-ipv4"])
+	if err != nil {
+		return nil, nil, err
+	}
+
+	v6Prefix, err := netip.ParsePrefix(transitSwitch.ExternalIDs["incus-subnet-ipv6"])
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Allocate new IPs in the subnet.
+	v4Addr := v4Prefix.Addr()
+	for {
+		v4Addr = v4Addr.Next()
+		if !v4Prefix.Contains(v4Addr) {
+			return nil, nil, fmt.Errorf("Transit switch is out of IPv4 addresses")
+		}
+
+		if !slices.Contains(v4Addresses, v4Addr.String()) {
+			break
+		}
+	}
+
+	v6Addr := v6Prefix.Addr()
+	for {
+		v6Addr = v6Addr.Next()
+		if !v6Prefix.Contains(v6Addr) {
+			return nil, nil, fmt.Errorf("Transit switch is out of IPv6 addresses")
+		}
+
+		if !slices.Contains(v6Addresses, v6Addr.String()) {
+			break
+		}
+	}
+
+	// Update the record.
+	transitSwitch.ExternalIDs[fmt.Sprintf("incus-allocation-%s", azName)] = fmt.Sprintf("%s,%s", v4Addr.String(), v6Addr.String())
+
+	ops, err := o.client.Where(&transitSwitch).Update(&transitSwitch)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	resp, err := o.client.Transact(ctx, ops...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, ops)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &net.IPNet{IP: net.IP(v4Addr.AsSlice()), Mask: net.CIDRMask(v4Prefix.Bits(), 32)}, &net.IPNet{IP: net.IP(v6Addr.AsSlice()), Mask: net.CIDRMask(v6Prefix.Bits(), 128)}, nil
+}
+
+// DeleteTransitSwitchAllocation removes a current allocation from the switch.
+func (o *ICNB) DeleteTransitSwitchAllocation(ctx context.Context, switchName string, azName string) error {
+	// Get the switch.
+	transitSwitch := ovnICNB.TransitSwitch{
+		Name: switchName,
+	}
+
+	err := o.client.Get(ctx, &transitSwitch)
+	if err != nil {
+		return err
+	}
+
+	// Check that it's managed by us.
+	if transitSwitch.ExternalIDs == nil || transitSwitch.ExternalIDs["incus-managed"] != "true" {
+		return fmt.Errorf("Transit switch isn't Incus managed")
+	}
+
+	// Update the record.
+	delete(transitSwitch.ExternalIDs, fmt.Sprintf("incus-allocation-%s", azName))
+
+	ops, err := o.client.Where(&transitSwitch).Update(&transitSwitch)
 	if err != nil {
 		return err
 	}
