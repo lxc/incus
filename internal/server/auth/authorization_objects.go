@@ -309,7 +309,7 @@ func ObjectNetworkACL(projectName string, networkACLName string) Object {
 
 // ObjectNetworkIntegration represents a network integration.
 func ObjectNetworkIntegration(networkIntegrationName string) Object {
-	object, _ := NewObject(ObjectTypeNetworkIntegration, networkIntegrationName)
+	object, _ := NewObject(ObjectTypeNetworkIntegration, "", networkIntegrationName)
 	return object
 }
 

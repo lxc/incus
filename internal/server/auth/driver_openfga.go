@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"slices"
 	"time"
 
@@ -86,15 +85,9 @@ func (f *fga) load(ctx context.Context, certificateCache *certificate.Cache, opt
 		return err
 	}
 
-	u, err := url.Parse(f.apiURL)
-	if err != nil {
-		return fmt.Errorf("Failed parsing URL: %w", err)
-	}
-
 	conf := client.ClientConfiguration{
-		ApiScheme: u.Scheme,
-		ApiHost:   u.Host,
-		StoreId:   f.storeID,
+		ApiUrl:  f.apiURL,
+		StoreId: f.storeID,
 		Credentials: &credentials.Credentials{
 			Method: credentials.CredentialsMethodApiToken,
 			Config: &credentials.Config{
