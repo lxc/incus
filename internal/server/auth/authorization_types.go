@@ -9,38 +9,38 @@ const (
 	EntitlementCanView Entitlement = "can_view"
 
 	// Server entitlements.
-	EntitlementCanCreateStoragePools               Entitlement = "can_create_storage_pools"
-	EntitlementCanCreateProjects                   Entitlement = "can_create_projects"
-	EntitlementCanViewResources                    Entitlement = "can_view_resources"
 	EntitlementCanCreateCertificates               Entitlement = "can_create_certificates"
-	EntitlementCanViewMetrics                      Entitlement = "can_view_metrics"
+	EntitlementCanCreateNetworkIntegrations        Entitlement = "can_create_network_integrations"
+	EntitlementCanCreateProjects                   Entitlement = "can_create_projects"
+	EntitlementCanCreateStoragePools               Entitlement = "can_create_storage_pools"
 	EntitlementCanOverrideClusterTargetRestriction Entitlement = "can_override_cluster_target_restriction"
+	EntitlementCanViewMetrics                      Entitlement = "can_view_metrics"
 	EntitlementCanViewPrivilegedEvents             Entitlement = "can_view_privileged_events"
+	EntitlementCanViewResources                    Entitlement = "can_view_resources"
 
 	// Project entitlements.
-	EntitlementCanCreateImages              Entitlement = "can_create_images"
-	EntitlementCanCreateImageAliases        Entitlement = "can_create_image_aliases"
-	EntitlementCanCreateInstances           Entitlement = "can_create_instances"
-	EntitlementCanCreateNetworks            Entitlement = "can_create_networks"
-	EntitlementCanCreateNetworkACLs         Entitlement = "can_create_network_acls"
-	EntitlementCanCreateNetworkIntegrations Entitlement = "can_create_network_integrations"
-	EntitlementCanCreateNetworkZones        Entitlement = "can_create_network_zones"
-	EntitlementCanCreateProfiles            Entitlement = "can_create_profiles"
-	EntitlementCanCreateStorageVolumes      Entitlement = "can_create_storage_volumes"
-	EntitlementCanCreateStorageBuckets      Entitlement = "can_create_storage_buckets"
-	EntitlementCanViewOperations            Entitlement = "can_view_operations"
-	EntitlementCanViewEvents                Entitlement = "can_view_events"
+	EntitlementCanCreateImageAliases   Entitlement = "can_create_image_aliases"
+	EntitlementCanCreateImages         Entitlement = "can_create_images"
+	EntitlementCanCreateInstances      Entitlement = "can_create_instances"
+	EntitlementCanCreateNetworkACLs    Entitlement = "can_create_network_acls"
+	EntitlementCanCreateNetworks       Entitlement = "can_create_networks"
+	EntitlementCanCreateNetworkZones   Entitlement = "can_create_network_zones"
+	EntitlementCanCreateProfiles       Entitlement = "can_create_profiles"
+	EntitlementCanCreateStorageBuckets Entitlement = "can_create_storage_buckets"
+	EntitlementCanCreateStorageVolumes Entitlement = "can_create_storage_volumes"
+	EntitlementCanViewEvents           Entitlement = "can_view_events"
+	EntitlementCanViewOperations       Entitlement = "can_view_operations"
 
 	// Instance entitlements.
-	EntitlementCanUpdateState   Entitlement = "can_update_state"
-	EntitlementCanConnectSFTP   Entitlement = "can_connect_sftp"
-	EntitlementCanAccessFiles   Entitlement = "can_access_files"
 	EntitlementCanAccessConsole Entitlement = "can_access_console"
+	EntitlementCanAccessFiles   Entitlement = "can_access_files"
+	EntitlementCanConnectSFTP   Entitlement = "can_connect_sftp"
 	EntitlementCanExec          Entitlement = "can_exec"
+	EntitlementCanUpdateState   Entitlement = "can_update_state"
 
 	// Instance and storage volume entitlements.
-	EntitlementCanManageSnapshots Entitlement = "can_manage_snapshots"
 	EntitlementCanManageBackups   Entitlement = "can_manage_backups"
+	EntitlementCanManageSnapshots Entitlement = "can_manage_snapshots"
 )
 
 // ObjectType is a type of resource within Incus.
