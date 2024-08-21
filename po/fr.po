@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-08-20 01:09-0400\n"
+"POT-Creation-Date: 2024-08-21 23:48-0400\n"
 "PO-Revision-Date: 2024-03-08 16:01+0000\n"
 "Last-Translator: montag451 <montag451@laposte.net>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -1042,7 +1042,7 @@ msgstr "Architecture : %v"
 msgid "Are you joining an existing cluster?"
 msgstr "Rejoingez-vous un cluster existant ?"
 
-#: cmd/incus/cluster.go:1520
+#: cmd/incus/cluster.go:1519
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
@@ -1415,7 +1415,7 @@ msgstr "Cartes %d:"
 msgid "Card: %s (%s)"
 msgstr "Cartes : %s (%s)"
 
-#: cmd/incus/config_trust.go:782
+#: cmd/incus/config_trust.go:838
 #, c-format
 msgid "Certificate add token for %s deleted"
 msgstr "Jeton d'ajout du certificat pour %s supprimé"
@@ -1488,7 +1488,7 @@ msgstr "Le groupe de serveurs %s n'est pas actuellement appliqué à %s"
 msgid "Cluster group %s renamed to %s"
 msgstr "Groupe de serveurs %s renommée en %s"
 
-#: cmd/incus/cluster.go:1305
+#: cmd/incus/cluster.go:1304
 #, c-format
 msgid "Cluster join token for %s:%s deleted"
 msgstr "Jeton de connexion de cluster pour %s:%s supprimé"
@@ -1558,12 +1558,13 @@ msgstr "Clustering activé"
 
 #: cmd/incus/cluster.go:150 cmd/incus/cluster.go:1092
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:421
-#: cmd/incus/image.go:1093 cmd/incus/image_alias.go:180 cmd/incus/list.go:134
-#: cmd/incus/network.go:1072 cmd/incus/network.go:1269
-#: cmd/incus/network_allocations.go:62 cmd/incus/network_forward.go:115
-#: cmd/incus/network_integration.go:438 cmd/incus/network_zone.go:115
-#: cmd/incus/operation.go:138 cmd/incus/profile.go:725 cmd/incus/project.go:527
-#: cmd/incus/remote.go:750 cmd/incus/snapshot.go:316 cmd/incus/storage.go:687
+#: cmd/incus/config_trust.go:610 cmd/incus/image.go:1093
+#: cmd/incus/image_alias.go:180 cmd/incus/list.go:134 cmd/incus/network.go:1072
+#: cmd/incus/network.go:1269 cmd/incus/network_allocations.go:62
+#: cmd/incus/network_forward.go:115 cmd/incus/network_integration.go:438
+#: cmd/incus/network_zone.go:115 cmd/incus/operation.go:138
+#: cmd/incus/profile.go:725 cmd/incus/project.go:527 cmd/incus/remote.go:750
+#: cmd/incus/snapshot.go:316 cmd/incus/storage.go:687
 #: cmd/incus/storage_bucket.go:502 cmd/incus/storage_bucket.go:904
 #: cmd/incus/storage_volume.go:1557 cmd/incus/storage_volume.go:2548
 #: cmd/incus/warning.go:93
@@ -1781,27 +1782,27 @@ msgstr "Impossible de fermer le fichier de certificat serveur %q: %w"
 msgid "Could not create server cert dir"
 msgstr "Impossible de créer le dossier de stockage des certificats serveurs"
 
-#: cmd/incus/cluster.go:1386
+#: cmd/incus/cluster.go:1385
 #, c-format
 msgid "Could not find certificate file path: %s"
 msgstr "Impossible d'accéder au certificat : %s"
 
-#: cmd/incus/cluster.go:1390
+#: cmd/incus/cluster.go:1389
 #, c-format
 msgid "Could not find certificate key file path: %s"
 msgstr "Impossible d'accéder à la clé de certificat %s"
 
-#: cmd/incus/cluster.go:1395
+#: cmd/incus/cluster.go:1394
 #, c-format
 msgid "Could not read certificate file: %s with error: %v"
 msgstr "Impossible de lire le fichier de certificat: %s avec l'erreur: %v"
 
-#: cmd/incus/cluster.go:1400
+#: cmd/incus/cluster.go:1399
 #, c-format
 msgid "Could not read certificate key file: %s with error: %v"
 msgstr "Impossible de lire le fichier clé de certificat: %s avec l'erreur: %v"
 
-#: cmd/incus/cluster.go:1417
+#: cmd/incus/cluster.go:1416
 #, fuzzy, c-format
 msgid "Could not write new remote certificate for remote '%s' with error: %v"
 msgstr ""
@@ -2196,9 +2197,9 @@ msgstr "Récupération de l'image : %s"
 #: cmd/incus/cluster.go:375 cmd/incus/cluster.go:434 cmd/incus/cluster.go:507
 #: cmd/incus/cluster.go:587 cmd/incus/cluster.go:631 cmd/incus/cluster.go:689
 #: cmd/incus/cluster.go:780 cmd/incus/cluster.go:873 cmd/incus/cluster.go:994
-#: cmd/incus/cluster.go:1072 cmd/incus/cluster.go:1238
-#: cmd/incus/cluster.go:1326 cmd/incus/cluster.go:1450
-#: cmd/incus/cluster.go:1479 cmd/incus/cluster_group.go:35
+#: cmd/incus/cluster.go:1072 cmd/incus/cluster.go:1237
+#: cmd/incus/cluster.go:1325 cmd/incus/cluster.go:1449
+#: cmd/incus/cluster.go:1478 cmd/incus/cluster_group.go:35
 #: cmd/incus/cluster_group.go:101 cmd/incus/cluster_group.go:186
 #: cmd/incus/cluster_group.go:272 cmd/incus/cluster_group.go:332
 #: cmd/incus/cluster_group.go:457 cmd/incus/cluster_group.go:609
@@ -2220,9 +2221,9 @@ msgstr "Récupération de l'image : %s"
 #: cmd/incus/config_template.go:288 cmd/incus/config_template.go:356
 #: cmd/incus/config_trust.go:36 cmd/incus/config_trust.go:91
 #: cmd/incus/config_trust.go:171 cmd/incus/config_trust.go:275
-#: cmd/incus/config_trust.go:400 cmd/incus/config_trust.go:584
-#: cmd/incus/config_trust.go:686 cmd/incus/config_trust.go:732
-#: cmd/incus/config_trust.go:803 cmd/incus/console.go:37 cmd/incus/copy.go:40
+#: cmd/incus/config_trust.go:400 cmd/incus/config_trust.go:590
+#: cmd/incus/config_trust.go:742 cmd/incus/config_trust.go:788
+#: cmd/incus/config_trust.go:859 cmd/incus/console.go:37 cmd/incus/copy.go:40
 #: cmd/incus/create.go:43 cmd/incus/delete.go:32 cmd/incus/exec.go:41
 #: cmd/incus/export.go:32 cmd/incus/file.go:85 cmd/incus/file.go:132
 #: cmd/incus/file.go:310 cmd/incus/file.go:359 cmd/incus/file.go:429
@@ -2566,7 +2567,7 @@ msgstr "ÉPHÉMÈRE"
 msgid "EXISTING: %q (backend=%q, source=%q)"
 msgstr "EXISTANT: %q (principal=%q, source=%q)"
 
-#: cmd/incus/cluster.go:1113 cmd/incus/config_trust.go:668
+#: cmd/incus/cluster.go:1113 cmd/incus/config_trust.go:623
 #: cmd/incus/snapshot.go:337
 #, fuzzy
 msgid "EXPIRES AT"
@@ -2700,12 +2701,13 @@ msgstr "Clé de configuration invalide"
 
 #: cmd/incus/cluster.go:187 cmd/incus/cluster.go:1121
 #: cmd/incus/cluster_group.go:507 cmd/incus/config_trust.go:447
-#: cmd/incus/image.go:1133 cmd/incus/image_alias.go:217 cmd/incus/list.go:633
-#: cmd/incus/network.go:1113 cmd/incus/network.go:1303
-#: cmd/incus/network_allocations.go:83 cmd/incus/network_forward.go:147
-#: cmd/incus/network_integration.go:460 cmd/incus/network_zone.go:147
-#: cmd/incus/operation.go:166 cmd/incus/profile.go:763 cmd/incus/project.go:565
-#: cmd/incus/remote.go:773 cmd/incus/snapshot.go:346 cmd/incus/storage.go:722
+#: cmd/incus/config_trust.go:631 cmd/incus/image.go:1133
+#: cmd/incus/image_alias.go:217 cmd/incus/list.go:633 cmd/incus/network.go:1113
+#: cmd/incus/network.go:1303 cmd/incus/network_allocations.go:83
+#: cmd/incus/network_forward.go:147 cmd/incus/network_integration.go:460
+#: cmd/incus/network_zone.go:147 cmd/incus/operation.go:166
+#: cmd/incus/profile.go:763 cmd/incus/project.go:565 cmd/incus/remote.go:773
+#: cmd/incus/snapshot.go:346 cmd/incus/storage.go:722
 #: cmd/incus/storage_bucket.go:532 cmd/incus/storage_bucket.go:925
 #: cmd/incus/storage_volume.go:1700 cmd/incus/warning.go:236
 #, c-format
@@ -2826,7 +2828,7 @@ msgstr "Erreur dans le déparamétrage de la propriété: %v"
 msgid "Error updating template file: %s"
 msgstr "Erreur de mise à jour du modèle de fichier: %s"
 
-#: cmd/incus/cluster.go:1449 cmd/incus/cluster.go:1450
+#: cmd/incus/cluster.go:1448 cmd/incus/cluster.go:1449
 #, fuzzy
 msgid "Evacuate cluster member"
 msgstr ""
@@ -2838,7 +2840,7 @@ msgstr ""
 "Détruit les conteneurs ou les instantanés ainsi que toute donnée associée "
 "(configuration, instantanés, …)."
 
-#: cmd/incus/cluster.go:1545
+#: cmd/incus/cluster.go:1544
 #, c-format
 msgid "Evacuating cluster member: %s"
 msgstr "Évacuation du membre du cluster : %s"
@@ -3285,7 +3287,7 @@ msgstr "Échec de la mise en écoute des demandes de connexion : %w"
 msgid "Failed to parse dump response: %w"
 msgstr "Échec de l'analyse de la réponse du dump : %w"
 
-#: cmd/incus/cluster.go:1510
+#: cmd/incus/cluster.go:1509
 #, c-format
 msgid "Failed to parse servers: %w"
 msgstr "Échec de l'analyse des serveurs : %w"
@@ -3371,7 +3373,7 @@ msgid "Failed to setup trust relationship with cluster: %w"
 msgstr ""
 "Échec de l'établissement d'une relation de confiance avec le cluster : %w"
 
-#: cmd/incus/cluster.go:1537
+#: cmd/incus/cluster.go:1536
 #, c-format
 msgid "Failed to update cluster member state: %w"
 msgstr "Échec de la mise à jour de l'état du membre du cluster : %w"
@@ -3416,7 +3418,7 @@ msgstr "Le filtrage n'est pas encore pris en charge"
 msgid "Fingerprint: %s"
 msgstr "Empreinte : %s"
 
-#: cmd/incus/cluster.go:1452
+#: cmd/incus/cluster.go:1451
 #, fuzzy
 msgid "Force a particular evacuation action"
 msgstr "Forcer une action d'évacuation particulière"
@@ -3429,7 +3431,7 @@ msgstr "Forcer la création de fichiers ou de répertoires"
 msgid "Force delete the project and everything it contains."
 msgstr ""
 
-#: cmd/incus/cluster.go:1495
+#: cmd/incus/cluster.go:1494
 #, fuzzy
 msgid "Force evacuation without user confirmation"
 msgstr "Requérir une confirmation de l'utilisateur"
@@ -3502,7 +3504,7 @@ msgstr ""
 
 #: cmd/incus/alias.go:113 cmd/incus/cluster.go:151 cmd/incus/cluster.go:1091
 #: cmd/incus/cluster_group.go:478 cmd/incus/config_template.go:290
-#: cmd/incus/config_trust.go:422 cmd/incus/config_trust.go:586
+#: cmd/incus/config_trust.go:422 cmd/incus/config_trust.go:609
 #: cmd/incus/image.go:1094 cmd/incus/image_alias.go:179 cmd/incus/list.go:135
 #: cmd/incus/network.go:1073 cmd/incus/network.go:1268
 #: cmd/incus/network_acl.go:97 cmd/incus/network_allocations.go:59
@@ -4358,10 +4360,32 @@ msgstr ""
 msgid "List aliases"
 msgstr "Alias :"
 
-#: cmd/incus/config_trust.go:583 cmd/incus/config_trust.go:584
+#: cmd/incus/config_trust.go:589
 #, fuzzy
 msgid "List all active certificate add tokens"
 msgstr "Vous devez fournir le nom d'un conteneur pour : "
+
+#: cmd/incus/config_trust.go:590
+msgid ""
+"List all active certificate add tokens\n"
+"\n"
+"Default column layout: ntE\n"
+"\n"
+"== Columns ==\n"
+"The -c option takes a comma separated list of arguments that control\n"
+"which network zone attributes to output when displaying in table or csv\n"
+"format.\n"
+"\n"
+"Column arguments are either pre-defined shorthand chars (see below),\n"
+"or (extended) config keys.\n"
+"\n"
+"Commas between consecutive shorthand chars are optional.\n"
+"\n"
+"Pre-defined column shorthand chars:\n"
+"  n - Name\n"
+"  t - Token\n"
+"  E - Expires At"
+msgstr ""
 
 #: cmd/incus/cluster.go:1071
 #, fuzzy
@@ -5587,7 +5611,7 @@ msgstr ""
 msgid "Missing bucket name"
 msgstr "Résumé manquant."
 
-#: cmd/incus/config_trust.go:307 cmd/incus/config_trust.go:828
+#: cmd/incus/config_trust.go:307 cmd/incus/config_trust.go:884
 #, fuzzy
 msgid "Missing certificate fingerprint"
 msgstr "Empreinte du certificat : %s"
@@ -5598,7 +5622,7 @@ msgstr "Empreinte du certificat : %s"
 msgid "Missing cluster group name"
 msgstr "Vous devez fournir le nom d'un conteneur pour : "
 
-#: cmd/incus/cluster.go:914 cmd/incus/cluster.go:1516
+#: cmd/incus/cluster.go:914 cmd/incus/cluster.go:1515
 #: cmd/incus/cluster_group.go:145 cmd/incus/cluster_group.go:646
 #: cmd/incus/cluster_group.go:848 cmd/incus/cluster_role.go:82
 #: cmd/incus/cluster_role.go:150
@@ -5880,7 +5904,7 @@ msgstr "Vous devez fournir le nom d'un conteneur pour : "
 
 #: cmd/incus/cluster.go:171 cmd/incus/cluster.go:1111
 #: cmd/incus/cluster_group.go:497 cmd/incus/config_trust.go:431
-#: cmd/incus/config_trust.go:666 cmd/incus/list.go:583
+#: cmd/incus/config_trust.go:621 cmd/incus/list.go:583
 #: cmd/incus/network.go:1093 cmd/incus/network_acl.go:168
 #: cmd/incus/network_integration.go:449 cmd/incus/network_peer.go:154
 #: cmd/incus/network_zone.go:133 cmd/incus/network_zone.go:916
@@ -6162,12 +6186,12 @@ msgstr "Clé/valeur de configuration à appliquer au nouveau conteneur"
 msgid "No %s storage backends available"
 msgstr ""
 
-#: cmd/incus/config_trust.go:789
+#: cmd/incus/config_trust.go:845
 #, c-format
 msgid "No certificate add token for member %s on remote: %s"
 msgstr ""
 
-#: cmd/incus/cluster.go:1312
+#: cmd/incus/cluster.go:1311
 #, c-format
 msgid "No cluster join token for member %s on remote: %s"
 msgstr ""
@@ -6881,7 +6905,7 @@ msgstr "Création du conteneur"
 msgid "Remove snapshot %s from %s (yes/no): "
 msgstr "Supprimer %s (oui/non) : "
 
-#: cmd/incus/config_trust.go:685 cmd/incus/config_trust.go:686
+#: cmd/incus/config_trust.go:741 cmd/incus/config_trust.go:742
 #, fuzzy
 msgid "Remove trusted client"
 msgstr "Ajouter de nouveaux clients de confiance"
@@ -6977,7 +7001,7 @@ msgstr "Ressources :"
 msgid "Restart instances"
 msgstr "Création du conteneur"
 
-#: cmd/incus/cluster.go:1478 cmd/incus/cluster.go:1479
+#: cmd/incus/cluster.go:1477 cmd/incus/cluster.go:1478
 #, fuzzy
 msgid "Restore cluster member"
 msgstr "Vous devez fournir le nom d'un conteneur pour : "
@@ -7015,7 +7039,7 @@ msgstr "Forcer le conteneur à s'arrêter"
 msgid "Restore storage volume snapshots"
 msgstr "Forcer le conteneur à s'arrêter"
 
-#: cmd/incus/cluster.go:1543
+#: cmd/incus/cluster.go:1542
 #, fuzzy, c-format
 msgid "Restoring cluster member: %s"
 msgstr "Vous devez fournir le nom d'un conteneur pour : "
@@ -7039,12 +7063,12 @@ msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
 msgid "Retrieving image: %s"
 msgstr "Récupération de l'image : %s"
 
-#: cmd/incus/config_trust.go:731 cmd/incus/config_trust.go:732
+#: cmd/incus/config_trust.go:787 cmd/incus/config_trust.go:788
 #, fuzzy
 msgid "Revoke certificate add token"
 msgstr "Vous devez fournir le nom d'un conteneur pour : "
 
-#: cmd/incus/cluster.go:1237
+#: cmd/incus/cluster.go:1236
 #, fuzzy
 msgid "Revoke cluster member join token"
 msgstr "Vous devez fournir le nom d'un conteneur pour : "
@@ -7208,8 +7232,8 @@ msgid "Server doesn't trust us after authentication"
 msgstr ""
 "Le serveur ne nous fait pas confiance après l'ajout de notre certificat"
 
-#: cmd/incus/cluster.go:272 cmd/incus/cluster.go:1176 cmd/incus/cluster.go:1274
-#: cmd/incus/cluster.go:1382 cmd/incus/cluster_group.go:563
+#: cmd/incus/cluster.go:272 cmd/incus/cluster.go:1176 cmd/incus/cluster.go:1273
+#: cmd/incus/cluster.go:1381 cmd/incus/cluster_group.go:563
 msgid "Server isn't part of a cluster"
 msgstr ""
 
@@ -7795,7 +7819,7 @@ msgstr ""
 msgid "Show the used and free space in bytes"
 msgstr ""
 
-#: cmd/incus/config_trust.go:802 cmd/incus/config_trust.go:803
+#: cmd/incus/config_trust.go:858 cmd/incus/config_trust.go:859
 #, fuzzy
 msgid "Show trust configurations"
 msgstr "Afficher la configuration étendue"
@@ -8019,7 +8043,7 @@ msgstr "Profil %s supprimé"
 msgid "Store the instance state"
 msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
 
-#: cmd/incus/cluster.go:1422
+#: cmd/incus/cluster.go:1421
 #, fuzzy
 msgid "Successfully updated cluster certificates"
 msgstr "Accepter le certificat"
@@ -8068,7 +8092,7 @@ msgstr ""
 msgid "TARGET"
 msgstr ""
 
-#: cmd/incus/cluster.go:1112 cmd/incus/config_trust.go:667
+#: cmd/incus/cluster.go:1112 cmd/incus/config_trust.go:622
 msgid "TOKEN"
 msgstr ""
 
@@ -8596,12 +8620,13 @@ msgstr ""
 
 #: cmd/incus/cluster.go:193 cmd/incus/cluster.go:1127
 #: cmd/incus/cluster_group.go:513 cmd/incus/config_trust.go:455
-#: cmd/incus/image.go:1141 cmd/incus/image_alias.go:223 cmd/incus/list.go:648
-#: cmd/incus/network.go:1119 cmd/incus/network.go:1309
-#: cmd/incus/network_allocations.go:89 cmd/incus/network_forward.go:153
-#: cmd/incus/network_integration.go:466 cmd/incus/network_zone.go:153
-#: cmd/incus/operation.go:172 cmd/incus/profile.go:769 cmd/incus/project.go:571
-#: cmd/incus/remote.go:779 cmd/incus/snapshot.go:352 cmd/incus/storage.go:728
+#: cmd/incus/config_trust.go:637 cmd/incus/image.go:1141
+#: cmd/incus/image_alias.go:223 cmd/incus/list.go:648 cmd/incus/network.go:1119
+#: cmd/incus/network.go:1309 cmd/incus/network_allocations.go:89
+#: cmd/incus/network_forward.go:153 cmd/incus/network_integration.go:466
+#: cmd/incus/network_zone.go:153 cmd/incus/operation.go:172
+#: cmd/incus/profile.go:769 cmd/incus/project.go:571 cmd/incus/remote.go:779
+#: cmd/incus/snapshot.go:352 cmd/incus/storage.go:728
 #: cmd/incus/storage_bucket.go:538 cmd/incus/storage_bucket.go:931
 #: cmd/incus/storage_volume.go:1708 cmd/incus/warning.go:244
 #, c-format
@@ -8830,12 +8855,12 @@ msgstr ""
 msgid "Up delay"
 msgstr ""
 
-#: cmd/incus/cluster.go:1325
+#: cmd/incus/cluster.go:1324
 #, fuzzy
 msgid "Update cluster certificate"
 msgstr "Accepter le certificat"
 
-#: cmd/incus/cluster.go:1327
+#: cmd/incus/cluster.go:1326
 msgid ""
 "Update cluster certificate with PEM certificate and key read from input "
 "files."
@@ -9158,7 +9183,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:127 cmd/incus/cluster.go:1070
 #: cmd/incus/cluster_group.go:454 cmd/incus/config_trust.go:397
-#: cmd/incus/config_trust.go:582 cmd/incus/monitor.go:31
+#: cmd/incus/config_trust.go:588 cmd/incus/monitor.go:31
 #: cmd/incus/network.go:1050 cmd/incus/network_acl.go:91
 #: cmd/incus/network_integration.go:413 cmd/incus/network_zone.go:88
 #: cmd/incus/operation.go:110 cmd/incus/profile.go:707 cmd/incus/project.go:505
@@ -9174,7 +9199,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/cluster.go:1323
+#: cmd/incus/cluster.go:1322
 #, fuzzy
 msgid "[<remote>:] <cert.crt> <cert.key>"
 msgstr ""
@@ -9186,7 +9211,7 @@ msgstr ""
 msgid "[<remote>:] <cert>"
 msgstr "[<serveur distant>:] <certificat>"
 
-#: cmd/incus/cluster.go:778 cmd/incus/config_trust.go:730
+#: cmd/incus/cluster.go:778 cmd/incus/config_trust.go:786
 msgid "[<remote>:] <name>"
 msgstr "[<serveur distant>:] <nom>"
 
@@ -9308,8 +9333,8 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/config_trust.go:273 cmd/incus/config_trust.go:683
-#: cmd/incus/config_trust.go:801
+#: cmd/incus/config_trust.go:273 cmd/incus/config_trust.go:739
+#: cmd/incus/config_trust.go:857
 #, fuzzy
 msgid "[<remote>:]<fingerprint>"
 msgstr ""
@@ -9678,8 +9703,8 @@ msgstr ""
 "alias=ALIAS...] [prop-key=prop-value...]"
 
 #: cmd/incus/cluster.go:316 cmd/incus/cluster.go:373 cmd/incus/cluster.go:686
-#: cmd/incus/cluster.go:871 cmd/incus/cluster.go:1236 cmd/incus/cluster.go:1448
-#: cmd/incus/cluster.go:1477
+#: cmd/incus/cluster.go:871 cmd/incus/cluster.go:1235 cmd/incus/cluster.go:1447
+#: cmd/incus/cluster.go:1476
 #, fuzzy
 msgid "[<remote>:]<member>"
 msgstr ""
