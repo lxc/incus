@@ -574,7 +574,13 @@ type cmdConfigTrustListTokens struct {
 	config      *cmdConfig
 	configTrust *cmdConfigTrust
 
-	flagFormat string
+	flagFormat  string
+	flagColumns string
+}
+
+type configTrustListTokenColumn struct {
+	Name string
+	Data func(*api.CertificateAddToken) string
 }
 
 func (c *cmdConfigTrustListTokens) Command() *cobra.Command {
@@ -582,12 +588,76 @@ func (c *cmdConfigTrustListTokens) Command() *cobra.Command {
 	cmd.Use = usage("list-tokens", i18n.G("[<remote>:]"))
 	cmd.Short = i18n.G("List all active certificate add tokens")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`List all active certificate add tokens`))
+		`List all active certificate add tokens
+
+Default column layout: ntE
+
+== Columns ==
+The -c option takes a comma separated list of arguments that control
+which network zone attributes to output when displaying in table or csv
+format.
+
+Column arguments are either pre-defined shorthand chars (see below),
+or (extended) config keys.
+
+Commas between consecutive shorthand chars are optional.
+
+Pre-defined column shorthand chars:
+  n - Name
+  t - Token
+  E - Expires At`))
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultConfigTrustListTokenColumns, i18n.G("Columns")+"``")
 
 	cmd.RunE = c.Run
 
 	return cmd
+}
+
+const defaultConfigTrustListTokenColumns = "ntE"
+
+func (c *cmdConfigTrustListTokens) parseColumns() ([]configTrustListTokenColumn, error) {
+	columnsShorthandMap := map[rune]configTrustListTokenColumn{
+		'n': {i18n.G("NAME"), c.clientNameColumnData},
+		't': {i18n.G("TOKEN"), c.tokenColumnData},
+		'E': {i18n.G("EXPIRES AT"), c.expiresAtColumnData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+	columns := []configTrustListTokenColumn{}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+func (c *cmdConfigTrustListTokens) clientNameColumnData(token *api.CertificateAddToken) string {
+	return token.ClientName
+}
+
+func (c *cmdConfigTrustListTokens) tokenColumnData(token *api.CertificateAddToken) string {
+	return token.String()
+}
+
+func (c *cmdConfigTrustListTokens) expiresAtColumnData(token *api.CertificateAddToken) string {
+	if token.ExpiresAt.IsZero() {
+		return " "
+	}
+
+	return token.ExpiresAt.Local().Format(dateLayout)
 }
 
 func (c *cmdConfigTrustListTokens) Run(cmd *cobra.Command, args []string) error {
@@ -616,14 +686,14 @@ func (c *cmdConfigTrustListTokens) Run(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	// Convert the join token operation into encoded form for display.
-	type displayToken struct {
-		ClientName string
-		Token      string
-		ExpiresAt  string
-	}
+	data := [][]string{}
+	joinTokens := []*api.CertificateAddToken{}
 
-	displayTokens := make([]displayToken, 0)
+	// Parse column flags.
+	columns, err := c.parseColumns()
+	if err != nil {
+		return err
+	}
 
 	for _, op := range ops {
 		if op.Class != api.OperationClassToken {
@@ -639,36 +709,23 @@ func (c *cmdConfigTrustListTokens) Run(cmd *cobra.Command, args []string) error 
 			continue // Operation is not a valid certificate add token operation.
 		}
 
-		var expiresAt string
-
-		// Only show the expiry date if available, otherwise show an empty string.
-		if !joinToken.ExpiresAt.IsZero() {
-			expiresAt = joinToken.ExpiresAt.Local().Format(dateLayout)
+		line := []string{}
+		for _, column := range columns {
+			line = append(line, column.Data(joinToken))
 		}
 
-		displayTokens = append(displayTokens, displayToken{
-			ClientName: joinToken.ClientName,
-			Token:      joinToken.String(),
-			ExpiresAt:  expiresAt,
-		})
-	}
-
-	// Render the table.
-	data := [][]string{}
-	for _, token := range displayTokens {
-		line := []string{token.ClientName, token.Token, token.ExpiresAt}
+		joinTokens = append(joinTokens, joinToken)
 		data = append(data, line)
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))
 
-	header := []string{
-		i18n.G("NAME"),
-		i18n.G("TOKEN"),
-		i18n.G("EXPIRES AT"),
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, displayTokens)
+	return cli.RenderTable(c.flagFormat, header, data, joinTokens)
 }
 
 // Remove.
