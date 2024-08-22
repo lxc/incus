@@ -70,7 +70,13 @@ type cmdNetworkPeerList struct {
 	global      *cmdGlobal
 	networkPeer *cmdNetworkPeer
 
-	flagFormat string
+	flagFormat  string
+	flagColumns string
+}
+
+type networkPeerColumn struct {
+	Name string
+	Data func(api.NetworkPeer) string
 }
 
 func (c *cmdNetworkPeerList) Command() *cobra.Command {
@@ -78,10 +84,31 @@ func (c *cmdNetworkPeerList) Command() *cobra.Command {
 	cmd.Use = usage("list", i18n.G("[<remote>:]<network>"))
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available network peers")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("List available network peers"))
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+		`List available network peers
+
+Default column layout: ndpts
+
+== Columns ==
+The -c option takes a comma separated list of arguments that control
+which network zone attributes to output when displaying in table or csv
+format.
+
+Column arguments are either pre-defined shorthand chars (see below),
+or (extended) config keys.
+
+Commas between consecutive shorthand chars are optional.
+
+Pre-defined column shorthand chars:
+  n - Name
+  d - description
+  p - Peer
+  t - Type
+  s - State`))
 
 	cmd.RunE = c.Run
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultNetworkPeerListColumns, i18n.G("Columns")+"``")
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -92,6 +119,66 @@ func (c *cmdNetworkPeerList) Command() *cobra.Command {
 	}
 
 	return cmd
+}
+
+const defaultNetworkPeerListColumns = "ndpts"
+
+func (c *cmdNetworkPeerList) parseColumns() ([]networkPeerColumn, error) {
+	columnsShorthandMap := map[rune]networkPeerColumn{
+		'n': {i18n.G("NAME"), c.nameColumnData},
+		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
+		'p': {i18n.G("PEER"), c.peerColumnData},
+		't': {i18n.G("TYPE"), c.typeColumnData},
+		's': {i18n.G("STATE"), c.stateColumnData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+	columns := []networkPeerColumn{}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+func (c *cmdNetworkPeerList) nameColumnData(peer api.NetworkPeer) string {
+	return peer.Name
+}
+
+func (c *cmdNetworkPeerList) descriptionColumnData(peer api.NetworkPeer) string {
+	return peer.Description
+}
+
+func (c *cmdNetworkPeerList) peerColumnData(peer api.NetworkPeer) string {
+	target := "Unknown"
+
+	if peer.TargetProject != "" && peer.TargetNetwork != "" {
+		target = fmt.Sprintf("%s/%s", peer.TargetProject, peer.TargetNetwork)
+	} else if peer.TargetIntegration != "" {
+		target = peer.TargetIntegration
+	}
+
+	return target
+}
+
+func (c *cmdNetworkPeerList) typeColumnData(peer api.NetworkPeer) string {
+	return peer.Type
+}
+
+func (c *cmdNetworkPeerList) stateColumnData(peer api.NetworkPeer) string {
+	return strings.ToUpper(peer.Status)
 }
 
 func (c *cmdNetworkPeerList) Run(cmd *cobra.Command, args []string) error {
@@ -123,39 +210,27 @@ func (c *cmdNetworkPeerList) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data := make([][]string, 0, len(peers))
+	// Parse column flags.
+	columns, err := c.parseColumns()
+	if err != nil {
+		return err
+	}
+
+	data := [][]string{}
 	for _, peer := range peers {
-		target := "Unknown"
-
-		if peer.TargetProject != "" && peer.TargetNetwork != "" {
-			target = fmt.Sprintf("%s/%s", peer.TargetProject, peer.TargetNetwork)
-		} else if peer.TargetIntegration != "" {
-			target = peer.TargetIntegration
+		line := []string{}
+		for _, column := range columns {
+			line = append(line, column.Data(peer))
 		}
 
-		if peer.Type == "" {
-			peer.Type = "local"
-		}
-
-		details := []string{
-			peer.Name,
-			peer.Description,
-			target,
-			peer.Type,
-			strings.ToUpper(peer.Status),
-		}
-
-		data = append(data, details)
+		data = append(data, line)
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))
 
-	header := []string{
-		i18n.G("NAME"),
-		i18n.G("DESCRIPTION"),
-		i18n.G("PEER"),
-		i18n.G("TYPE"),
-		i18n.G("STATE"),
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
 	}
 
 	return cli.RenderTable(c.flagFormat, header, data, peers)
