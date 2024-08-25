@@ -188,14 +188,14 @@ config:
 
 #### Add a user account
 
-To add a user account, use the `user` key.
+To add a user account, use the `users` key.
 See the {ref}`cloud-init:reference/examples:including users and groups` example in the `cloud-init` documentation for details about default users and which keys are supported.
 
 ```yaml
 config:
   cloud-init.user-data: |
     #cloud-config
-    user:
+    users:
       - name: documentation_example
 ```
 
