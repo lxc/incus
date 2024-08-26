@@ -147,7 +147,7 @@ var storagePoolBucketBackupsExportCmd = APIEndpoint{
 //	          type: array
 //	          description: List of storage bucket backups
 //	          items:
-//	            $ref: "#/definitions/StoragePoolBucketBackup"
+//	            $ref: "#/definitions/StorageBucketBackup"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
 //	  "500":
@@ -231,7 +231,7 @@ func storagePoolBucketBackupsGet(d *Daemon, r *http.Request) response.Response {
 //	    description: Storage bucket backup
 //	    required: true
 //	    schema:
-//	      $ref: "#/definitions/StoragePoolBucketBackupsPost"
+//	      $ref: "#/definitions/StorageBucketBackupsPost"
 //	responses:
 //	  "202":
 //	    $ref: "#/responses/Operation"
@@ -431,7 +431,7 @@ func storagePoolBucketBackupsPost(d *Daemon, r *http.Request) response.Response 
 //	          description: Status code
 //	          example: 200
 //	        metadata:
-//	          $ref: "#/definitions/StoragePoolBucketBackup"
+//	          $ref: "#/definitions/StorageBucketBackup"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
 //	  "500":
