@@ -6031,79 +6031,6 @@ definitions:
         title: StoragePoolState represents the state of a storage pool.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
-    StoragePoolVolumeBackup:
-        description: StoragePoolVolumeBackup represents a volume backup
-        properties:
-            created_at:
-                description: When the backup was created
-                example: "2021-03-23T16:38:37.753398689-04:00"
-                format: date-time
-                type: string
-                x-go-name: CreatedAt
-            expires_at:
-                description: When the backup expires (gets auto-deleted)
-                example: "2021-03-23T17:38:37.753398689-04:00"
-                format: date-time
-                type: string
-                x-go-name: ExpiresAt
-            name:
-                description: Backup name
-                example: backup0
-                type: string
-                x-go-name: Name
-            optimized_storage:
-                description: Whether to use a pool-optimized binary format (instead of plain tarball)
-                example: true
-                type: boolean
-                x-go-name: OptimizedStorage
-            volume_only:
-                description: Whether to ignore snapshots
-                example: false
-                type: boolean
-                x-go-name: VolumeOnly
-        type: object
-        x-go-package: github.com/lxc/incus/v6/shared/api
-    StoragePoolVolumeBackupPost:
-        description: StoragePoolVolumeBackupPost represents the fields available for the renaming of a volume backup
-        properties:
-            name:
-                description: New backup name
-                example: backup1
-                type: string
-                x-go-name: Name
-        type: object
-        x-go-package: github.com/lxc/incus/v6/shared/api
-    StoragePoolVolumeBackupsPost:
-        description: StoragePoolVolumeBackupsPost represents the fields available for a new volume backup
-        properties:
-            compression_algorithm:
-                description: What compression algorithm to use
-                example: gzip
-                type: string
-                x-go-name: CompressionAlgorithm
-            expires_at:
-                description: When the backup expires (gets auto-deleted)
-                example: "2021-03-23T17:38:37.753398689-04:00"
-                format: date-time
-                type: string
-                x-go-name: ExpiresAt
-            name:
-                description: Backup name
-                example: backup0
-                type: string
-                x-go-name: Name
-            optimized_storage:
-                description: Whether to use a pool-optimized binary format (instead of plain tarball)
-                example: true
-                type: boolean
-                x-go-name: OptimizedStorage
-            volume_only:
-                description: Whether to ignore snapshots
-                example: false
-                type: boolean
-                x-go-name: VolumeOnly
-        type: object
-        x-go-package: github.com/lxc/incus/v6/shared/api
     StoragePoolsPost:
         description: StoragePoolsPost represents the fields of a new storage pool
         properties:
@@ -6194,6 +6121,79 @@ definitions:
                 type: array
                 x-go-name: UsedBy
         title: StorageVolume represents the fields of a storage volume.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    StorageVolumeBackup:
+        description: StorageVolumeBackup represents a volume backup
+        properties:
+            created_at:
+                description: When the backup was created
+                example: "2021-03-23T16:38:37.753398689-04:00"
+                format: date-time
+                type: string
+                x-go-name: CreatedAt
+            expires_at:
+                description: When the backup expires (gets auto-deleted)
+                example: "2021-03-23T17:38:37.753398689-04:00"
+                format: date-time
+                type: string
+                x-go-name: ExpiresAt
+            name:
+                description: Backup name
+                example: backup0
+                type: string
+                x-go-name: Name
+            optimized_storage:
+                description: Whether to use a pool-optimized binary format (instead of plain tarball)
+                example: true
+                type: boolean
+                x-go-name: OptimizedStorage
+            volume_only:
+                description: Whether to ignore snapshots
+                example: false
+                type: boolean
+                x-go-name: VolumeOnly
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    StorageVolumeBackupPost:
+        description: StorageVolumeBackupPost represents the fields available for the renaming of a volume backup
+        properties:
+            name:
+                description: New backup name
+                example: backup1
+                type: string
+                x-go-name: Name
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    StorageVolumeBackupsPost:
+        description: StorageVolumeBackupsPost represents the fields available for a new volume backup
+        properties:
+            compression_algorithm:
+                description: What compression algorithm to use
+                example: gzip
+                type: string
+                x-go-name: CompressionAlgorithm
+            expires_at:
+                description: When the backup expires (gets auto-deleted)
+                example: "2021-03-23T17:38:37.753398689-04:00"
+                format: date-time
+                type: string
+                x-go-name: ExpiresAt
+            name:
+                description: Backup name
+                example: backup0
+                type: string
+                x-go-name: Name
+            optimized_storage:
+                description: Whether to use a pool-optimized binary format (instead of plain tarball)
+                example: true
+                type: boolean
+                x-go-name: OptimizedStorage
+            volume_only:
+                description: Whether to ignore snapshots
+                example: false
+                type: boolean
+                x-go-name: VolumeOnly
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     StorageVolumePost:
@@ -14356,7 +14356,7 @@ paths:
                   name: bucket
                   required: true
                   schema:
-                    $ref: '#/definitions/StoragePoolBucketBackupsPost'
+                    $ref: '#/definitions/StorageBucketBackupsPost'
             produces:
                 - application/json
             responses:
@@ -14425,7 +14425,7 @@ paths:
                         description: Sync response
                         properties:
                             metadata:
-                                $ref: '#/definitions/StoragePoolBucketBackup'
+                                $ref: '#/definitions/StorageBucketBackup'
                             status:
                                 description: Status description
                                 example: Success
@@ -14535,7 +14535,7 @@ paths:
                             metadata:
                                 description: List of storage bucket backups
                                 items:
-                                    $ref: '#/definitions/StoragePoolBucketBackup'
+                                    $ref: '#/definitions/StorageBucketBackup'
                                 type: array
                             status:
                                 description: Status description
@@ -15225,7 +15225,7 @@ paths:
                   name: volume
                   required: true
                   schema:
-                    $ref: '#/definitions/StoragePoolVolumeBackupsPost'
+                    $ref: '#/definitions/StorageVolumeBackupsPost'
             produces:
                 - application/json
             responses:
@@ -15294,7 +15294,7 @@ paths:
                         description: Sync response
                         properties:
                             metadata:
-                                $ref: '#/definitions/StoragePoolVolumeBackup'
+                                $ref: '#/definitions/StorageVolumeBackup'
                             status:
                                 description: Status description
                                 example: Success
@@ -15404,7 +15404,7 @@ paths:
                             metadata:
                                 description: List of storage volume backups
                                 items:
-                                    $ref: '#/definitions/StoragePoolVolumeBackup'
+                                    $ref: '#/definitions/StorageVolumeBackup'
                                 type: array
                             status:
                                 description: Status description
