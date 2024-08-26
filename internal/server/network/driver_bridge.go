@@ -629,8 +629,8 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	if !n.isRunning() {
 		if n.config["bridge.driver"] == "openvswitch" {
 			vswitch, err := ovs.NewVSwitch()
-			if err != nil || !vswitch.Installed() {
-				return fmt.Errorf("Open vSwitch isn't installed on this system")
+			if err != nil {
+				return fmt.Errorf("Couldn't connect to OpenVSwitch: %v", err)
 			}
 
 			// Add and configure the interface in one operation to reduce the number of executions and
