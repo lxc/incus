@@ -731,9 +731,9 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: string
 	//  scope: global
-	//  defaultdesc: `unix:/var/run/ovn/ovnnb_db.sock`
+	//  defaultdesc: `unix:/run/ovn/ovnnb_db.sock`
 	//  shortdesc: OVN northbound database connection string
-	"network.ovn.northbound_connection": {Default: "unix:/var/run/ovn/ovnnb_db.sock"},
+	"network.ovn.northbound_connection": {Default: "unix:/run/ovn/ovnnb_db.sock"},
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=network.ovn.ca_cert)
 	//
