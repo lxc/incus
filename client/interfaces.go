@@ -353,17 +353,17 @@ type InstanceServer interface {
 	UpdateStoragePoolVolumeSnapshot(pool string, volumeType string, volumeName string, snapshotName string, volume api.StorageVolumeSnapshotPut, ETag string) (err error)
 
 	// Storage volume backup functions ("custom_volume_backup" API extension)
-	GetStoragePoolVolumeBackupNames(pool string, volName string) (names []string, err error)
-	GetStoragePoolVolumeBackups(pool string, volName string) (backups []api.StoragePoolVolumeBackup, err error)
-	GetStoragePoolVolumeBackup(pool string, volName string, name string) (backup *api.StoragePoolVolumeBackup, ETag string, err error)
-	CreateStoragePoolVolumeBackup(pool string, volName string, backup api.StoragePoolVolumeBackupsPost) (op Operation, err error)
-	RenameStoragePoolVolumeBackup(pool string, volName string, name string, backup api.StoragePoolVolumeBackupPost) (op Operation, err error)
-	DeleteStoragePoolVolumeBackup(pool string, volName string, name string) (op Operation, err error)
-	GetStoragePoolVolumeBackupFile(pool string, volName string, name string, req *BackupFileRequest) (resp *BackupFileResponse, err error)
-	CreateStoragePoolVolumeFromBackup(pool string, args StoragePoolVolumeBackupArgs) (op Operation, err error)
+	GetStorageVolumeBackupNames(pool string, volName string) (names []string, err error)
+	GetStorageVolumeBackups(pool string, volName string) (backups []api.StorageVolumeBackup, err error)
+	GetStorageVolumeBackup(pool string, volName string, name string) (backup *api.StorageVolumeBackup, ETag string, err error)
+	CreateStorageVolumeBackup(pool string, volName string, backup api.StorageVolumeBackupsPost) (op Operation, err error)
+	RenameStorageVolumeBackup(pool string, volName string, name string, backup api.StorageVolumeBackupPost) (op Operation, err error)
+	DeleteStorageVolumeBackup(pool string, volName string, name string) (op Operation, err error)
+	GetStorageVolumeBackupFile(pool string, volName string, name string, req *BackupFileRequest) (resp *BackupFileResponse, err error)
+	CreateStoragePoolVolumeFromBackup(pool string, args StorageVolumeBackupArgs) (op Operation, err error)
 
 	// Storage volume ISO import function ("custom_volume_iso" API extension)
-	CreateStoragePoolVolumeFromISO(pool string, args StoragePoolVolumeBackupArgs) (op Operation, err error)
+	CreateStoragePoolVolumeFromISO(pool string, args StorageVolumeBackupArgs) (op Operation, err error)
 
 	// Cluster functions ("cluster" API extensions)
 	GetCluster() (cluster *api.Cluster, ETag string, err error)
@@ -532,9 +532,9 @@ type StoragePoolVolumeMoveArgs struct {
 	Project string
 }
 
-// The StoragePoolVolumeBackupArgs struct is used when creating a storage volume from a backup.
+// The StorageVolumeBackupArgs struct is used when creating a storage volume from a backup.
 // API extension: custom_volume_backup.
-type StoragePoolVolumeBackupArgs struct {
+type StorageVolumeBackupArgs struct {
 	// The backup file
 	BackupFile io.Reader
 
