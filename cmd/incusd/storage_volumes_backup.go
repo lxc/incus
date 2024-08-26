@@ -148,7 +148,7 @@ var storagePoolVolumeTypeCustomBackupExportCmd = APIEndpoint{
 //	          type: array
 //	          description: List of storage volume backups
 //	          items:
-//	            $ref: "#/definitions/StoragePoolVolumeBackup"
+//	            $ref: "#/definitions/StorageVolumeBackup"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
 //	  "500":
@@ -228,7 +228,7 @@ func storagePoolVolumeTypeCustomBackupsGet(d *Daemon, r *http.Request) response.
 	}
 
 	resultString := []string{}
-	resultMap := []*api.StoragePoolVolumeBackup{}
+	resultMap := []*api.StorageVolumeBackup{}
 
 	for _, backup := range backups {
 		if !recursion {
@@ -274,7 +274,7 @@ func storagePoolVolumeTypeCustomBackupsGet(d *Daemon, r *http.Request) response.
 //	    description: Storage volume backup
 //	    required: true
 //	    schema:
-//	      $ref: "#/definitions/StoragePoolVolumeBackupsPost"
+//	      $ref: "#/definitions/StorageVolumeBackupsPost"
 //	responses:
 //	  "202":
 //	    $ref: "#/responses/Operation"
@@ -379,7 +379,7 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 		return response.InternalError(err)
 	}
 
-	req := api.StoragePoolVolumeBackupsPost{}
+	req := api.StorageVolumeBackupsPost{}
 
 	err = json.Unmarshal(body, &req)
 	if err != nil {
@@ -504,7 +504,7 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 //	          description: Status code
 //	          example: 200
 //	        metadata:
-//	          $ref: "#/definitions/StoragePoolVolumeBackup"
+//	          $ref: "#/definitions/StorageVolumeBackup"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
 //	  "500":
@@ -662,7 +662,7 @@ func storagePoolVolumeTypeCustomBackupPost(d *Daemon, r *http.Request) response.
 		return resp
 	}
 
-	req := api.StoragePoolVolumeBackupPost{}
+	req := api.StorageVolumeBackupPost{}
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
