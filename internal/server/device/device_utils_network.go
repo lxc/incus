@@ -560,7 +560,7 @@ func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, 
 			return fmt.Errorf("Failed to create ingress tc qdisc: %s", err)
 		}
 
-		police := &ip.ActionPolice{Rate: fmt.Sprintf("%dbit", egressInt), Burst: "1024k", Mtu: "64kb", Drop: true}
+		police := &ip.ActionPolice{Rate: fmt.Sprintf("%dbit", egressInt), Burst: fmt.Sprintf("%d", egressInt/40), Mtu: "64kb", Drop: true}
 		filter := &ip.U32Filter{Filter: ip.Filter{Dev: veth, Parent: "ffff:0", Protocol: "all"}, Value: "0", Mask: "0", Actions: []ip.Action{police}}
 		err = filter.Add()
 		if err != nil {
