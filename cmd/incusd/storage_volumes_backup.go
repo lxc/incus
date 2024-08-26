@@ -228,7 +228,7 @@ func storagePoolVolumeTypeCustomBackupsGet(d *Daemon, r *http.Request) response.
 	}
 
 	resultString := []string{}
-	resultMap := []*api.StoragePoolVolumeBackup{}
+	resultMap := []*api.StorageVolumeBackup{}
 
 	for _, backup := range backups {
 		if !recursion {
@@ -379,7 +379,7 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 		return response.InternalError(err)
 	}
 
-	req := api.StoragePoolVolumeBackupsPost{}
+	req := api.StorageVolumeBackupsPost{}
 
 	err = json.Unmarshal(body, &req)
 	if err != nil {
@@ -662,7 +662,7 @@ func storagePoolVolumeTypeCustomBackupPost(d *Daemon, r *http.Request) response.
 		return resp
 	}
 
-	req := api.StoragePoolVolumeBackupPost{}
+	req := api.StorageVolumeBackupPost{}
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
