@@ -21,11 +21,6 @@ import (
 // ovnBridgeMappingMutex locks access to read/write external-ids:ovn-bridge-mappings.
 var ovnBridgeMappingMutex sync.Mutex
 
-// Installed returns true if the OVS tools are installed.
-func (o *VSwitch) Installed() bool {
-	return util.PathExists("/run/openvswitch/db.sock")
-}
-
 // GetBridge returns a bridge entry.
 func (o *VSwitch) GetBridge(ctx context.Context, bridgeName string) (*ovsSwitch.Bridge, error) {
 	bridge := &ovsSwitch.Bridge{Name: bridgeName}
