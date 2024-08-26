@@ -495,6 +495,14 @@ func (d *lvm) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 				return err
 			}
 		} else if sizeBytes > oldSizeBytes {
+			// Get exclusive mode if active.
+			release, err := d.acquireExclusive(vol)
+			if err != nil {
+				return err
+			}
+
+			defer release()
+
 			// Grow block device first.
 			err = d.resizeLogicalVolume(volDevPath, sizeBytes)
 			if err != nil {
@@ -528,12 +536,17 @@ func (d *lvm) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 			if sizeBytes < oldSizeBytes {
 				return fmt.Errorf("Block volumes cannot be shrunk: %w", ErrCannotBeShrunk)
 			}
-
-			if inUse {
-				return ErrInUse // We don't allow online resizing of block volumes.
-			}
 		}
 
+		// Get exclusive mode.
+		release, err := d.acquireExclusive(vol)
+		if err != nil {
+			return err
+		}
+
+		defer release()
+
+		// Resize the block device.
 		err = d.resizeLogicalVolume(volDevPath, sizeBytes)
 		if err != nil {
 			return err
