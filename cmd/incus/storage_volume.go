@@ -1402,9 +1402,9 @@ func (c *cmdStorageVolumeInfo) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var volBackups []api.StoragePoolVolumeBackup
+	var volBackups []api.StorageVolumeBackup
 	if client.HasExtension("custom_volume_backup") && volType == "custom" {
-		volBackups, err = client.GetStoragePoolVolumeBackups(resource.name, volName)
+		volBackups, err = client.GetStorageVolumeBackups(resource.name, volName)
 		if err != nil {
 			return err
 		}
@@ -2976,7 +2976,7 @@ func (c *cmdStorageVolumeExport) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("Only \"custom\" volumes can be exported"))
 	}
 
-	req := api.StoragePoolVolumeBackupsPost{
+	req := api.StorageVolumeBackupsPost{
 		Name:                 "",
 		ExpiresAt:            time.Now().Add(24 * time.Hour),
 		VolumeOnly:           volumeOnly,
@@ -2984,7 +2984,7 @@ func (c *cmdStorageVolumeExport) Run(cmd *cobra.Command, args []string) error {
 		CompressionAlgorithm: c.flagCompressionAlgorithm,
 	}
 
-	op, err := d.CreateStoragePoolVolumeBackup(name, volName, req)
+	op, err := d.CreateStorageVolumeBackup(name, volName, req)
 	if err != nil {
 		return fmt.Errorf(i18n.G("Failed to create storage volume backup: %w"), err)
 	}
@@ -3029,7 +3029,7 @@ func (c *cmdStorageVolumeExport) Run(cmd *cobra.Command, args []string) error {
 
 	defer func() {
 		// Delete backup after we're done
-		op, err = d.DeleteStoragePoolVolumeBackup(name, volName, backupName)
+		op, err = d.DeleteStorageVolumeBackup(name, volName, backupName)
 		if err == nil {
 			_ = op.Wait()
 		}
@@ -3061,7 +3061,7 @@ func (c *cmdStorageVolumeExport) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Export tarball
-	_, err = d.GetStoragePoolVolumeBackupFile(name, volName, backupName, &backupFileRequest)
+	_, err = d.GetStorageVolumeBackupFile(name, volName, backupName, &backupFileRequest)
 	if err != nil {
 		_ = os.Remove(targetName)
 		progress.Done("")
@@ -3172,7 +3172,7 @@ func (c *cmdStorageVolumeImport) Run(cmd *cobra.Command, args []string) error {
 		Quiet:  c.global.flagQuiet,
 	}
 
-	createArgs := incus.StoragePoolVolumeBackupArgs{
+	createArgs := incus.StorageVolumeBackupArgs{
 		BackupFile: &ioprogress.ProgressReader{
 			ReadCloser: file,
 			Tracker: &ioprogress.ProgressTracker{
