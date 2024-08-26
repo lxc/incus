@@ -814,8 +814,8 @@ func (r *ProtocolIncus) RenameStoragePoolVolume(pool string, volType string, nam
 	return nil
 }
 
-// GetStoragePoolVolumeBackupNames returns a list of volume backup names.
-func (r *ProtocolIncus) GetStoragePoolVolumeBackupNames(pool string, volName string) ([]string, error) {
+// GetStorageVolumeBackupNames returns a list of volume backup names.
+func (r *ProtocolIncus) GetStorageVolumeBackupNames(pool string, volName string) ([]string, error) {
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, fmt.Errorf("The server is missing the required \"custom_volume_backup\" API extension")
 	}
@@ -832,14 +832,14 @@ func (r *ProtocolIncus) GetStoragePoolVolumeBackupNames(pool string, volName str
 	return urlsToResourceNames(baseURL, urls...)
 }
 
-// GetStoragePoolVolumeBackups returns a list of custom volume backups.
-func (r *ProtocolIncus) GetStoragePoolVolumeBackups(pool string, volName string) ([]api.StoragePoolVolumeBackup, error) {
+// GetStorageVolumeBackups returns a list of custom volume backups.
+func (r *ProtocolIncus) GetStorageVolumeBackups(pool string, volName string) ([]api.StorageVolumeBackup, error) {
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, fmt.Errorf("The server is missing the required \"custom_volume_backup\" API extension")
 	}
 
 	// Fetch the raw value
-	backups := []api.StoragePoolVolumeBackup{}
+	backups := []api.StorageVolumeBackup{}
 
 	_, err := r.queryStruct("GET", fmt.Sprintf("/storage-pools/%s/volumes/custom/%s/backups?recursion=1", url.PathEscape(pool), url.PathEscape(volName)), nil, "", &backups)
 	if err != nil {
@@ -849,14 +849,14 @@ func (r *ProtocolIncus) GetStoragePoolVolumeBackups(pool string, volName string)
 	return backups, nil
 }
 
-// GetStoragePoolVolumeBackup returns a custom volume backup.
-func (r *ProtocolIncus) GetStoragePoolVolumeBackup(pool string, volName string, name string) (*api.StoragePoolVolumeBackup, string, error) {
+// GetStorageVolumeBackup returns a custom volume backup.
+func (r *ProtocolIncus) GetStorageVolumeBackup(pool string, volName string, name string) (*api.StorageVolumeBackup, string, error) {
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, "", fmt.Errorf("The server is missing the required \"custom_volume_backup\" API extension")
 	}
 
 	// Fetch the raw value
-	backup := api.StoragePoolVolumeBackup{}
+	backup := api.StorageVolumeBackup{}
 	etag, err := r.queryStruct("GET", fmt.Sprintf("/storage-pools/%s/volumes/custom/%s/backups/%s", url.PathEscape(pool), url.PathEscape(volName), url.PathEscape(name)), nil, "", &backup)
 	if err != nil {
 		return nil, "", err
@@ -865,8 +865,8 @@ func (r *ProtocolIncus) GetStoragePoolVolumeBackup(pool string, volName string, 
 	return &backup, etag, nil
 }
 
-// CreateStoragePoolVolumeBackup creates new custom volume backup.
-func (r *ProtocolIncus) CreateStoragePoolVolumeBackup(pool string, volName string, backup api.StoragePoolVolumeBackupsPost) (Operation, error) {
+// CreateStorageVolumeBackup creates new custom volume backup.
+func (r *ProtocolIncus) CreateStorageVolumeBackup(pool string, volName string, backup api.StorageVolumeBackupsPost) (Operation, error) {
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, fmt.Errorf("The server is missing the required \"custom_volume_backup\" API extension")
 	}
@@ -880,8 +880,8 @@ func (r *ProtocolIncus) CreateStoragePoolVolumeBackup(pool string, volName strin
 	return op, nil
 }
 
-// RenameStoragePoolVolumeBackup renames a custom volume backup.
-func (r *ProtocolIncus) RenameStoragePoolVolumeBackup(pool string, volName string, name string, backup api.StoragePoolVolumeBackupPost) (Operation, error) {
+// RenameStorageVolumeBackup renames a custom volume backup.
+func (r *ProtocolIncus) RenameStorageVolumeBackup(pool string, volName string, name string, backup api.StorageVolumeBackupPost) (Operation, error) {
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, fmt.Errorf("The server is missing the required \"custom_volume_backup\" API extension")
 	}
@@ -895,8 +895,8 @@ func (r *ProtocolIncus) RenameStoragePoolVolumeBackup(pool string, volName strin
 	return op, nil
 }
 
-// DeleteStoragePoolVolumeBackup deletes a custom volume backup.
-func (r *ProtocolIncus) DeleteStoragePoolVolumeBackup(pool string, volName string, name string) (Operation, error) {
+// DeleteStorageVolumeBackup deletes a custom volume backup.
+func (r *ProtocolIncus) DeleteStorageVolumeBackup(pool string, volName string, name string) (Operation, error) {
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, fmt.Errorf("The server is missing the required \"custom_volume_backup\" API extension")
 	}
@@ -910,8 +910,8 @@ func (r *ProtocolIncus) DeleteStoragePoolVolumeBackup(pool string, volName strin
 	return op, nil
 }
 
-// GetStoragePoolVolumeBackupFile requests the custom volume backup content.
-func (r *ProtocolIncus) GetStoragePoolVolumeBackupFile(pool string, volName string, name string, req *BackupFileRequest) (*BackupFileResponse, error) {
+// GetStorageVolumeBackupFile requests the custom volume backup content.
+func (r *ProtocolIncus) GetStorageVolumeBackupFile(pool string, volName string, name string, req *BackupFileRequest) (*BackupFileResponse, error) {
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, fmt.Errorf("The server is missing the required \"custom_volume_backup\" API extension")
 	}
@@ -977,7 +977,7 @@ func (r *ProtocolIncus) GetStoragePoolVolumeBackupFile(pool string, volName stri
 }
 
 // CreateStoragePoolVolumeFromISO creates a custom volume from an ISO file.
-func (r *ProtocolIncus) CreateStoragePoolVolumeFromISO(pool string, args StoragePoolVolumeBackupArgs) (Operation, error) {
+func (r *ProtocolIncus) CreateStoragePoolVolumeFromISO(pool string, args StorageVolumeBackupArgs) (Operation, error) {
 	err := r.CheckExtension("custom_volume_iso")
 	if err != nil {
 		return nil, err
@@ -1035,7 +1035,7 @@ func (r *ProtocolIncus) CreateStoragePoolVolumeFromISO(pool string, args Storage
 }
 
 // CreateStoragePoolVolumeFromBackup creates a custom volume from a backup file.
-func (r *ProtocolIncus) CreateStoragePoolVolumeFromBackup(pool string, args StoragePoolVolumeBackupArgs) (Operation, error) {
+func (r *ProtocolIncus) CreateStoragePoolVolumeFromBackup(pool string, args StorageVolumeBackupArgs) (Operation, error) {
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, fmt.Errorf(`The server is missing the required "custom_volume_backup" API extension`)
 	}
