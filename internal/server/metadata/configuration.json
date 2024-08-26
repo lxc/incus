@@ -2697,10 +2697,19 @@
 					},
 					{
 						"network.ovn.northbound_connection": {
-							"defaultdesc": "`unix:/var/run/ovn/ovnnb_db.sock`",
+							"defaultdesc": "`unix:/run/ovn/ovnnb_db.sock`",
 							"longdesc": "",
 							"scope": "global",
 							"shortdesc": "OVN northbound database connection string",
+							"type": "string"
+						}
+					},
+					{
+						"network.ovs.connection": {
+							"defaultdesc": "`unix:/run/openvswitch/db.sock`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVS socket path",
 							"type": "string"
 						}
 					},
