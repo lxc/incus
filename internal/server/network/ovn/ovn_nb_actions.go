@@ -215,6 +215,12 @@ func (o *NB) CreateLogicalRouter(ctx context.Context, routerName OVNRouter, mayE
 		return ErrExists
 	}
 
+	// Set some options.
+	logicalRouter.Options = map[string]string{
+		"always_learn_from_arp_request": "false",
+		"dynamic_neigh_routers":         "true",
+	}
+
 	// Create the record.
 	operations, err := o.client.Create(&logicalRouter)
 	if err != nil {
