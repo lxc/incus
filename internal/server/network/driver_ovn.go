@@ -727,7 +727,7 @@ func (n *ovn) getUnderlayInfo() (uint32, net.IP, error) {
 		return 0, fmt.Errorf("No matching interface found for OVN enscapsulation IP %q", findIP.String())
 	}
 
-	vswitch, err := ovs.NewVSwitch()
+	vswitch, err := n.state.OVS()
 	if err != nil {
 		return 0, nil, fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
@@ -1386,7 +1386,7 @@ func (n *ovn) startUplinkPortBridgeNative(uplinkNet Network, bridgeDevice string
 	}
 
 	// Create uplink OVS bridge if needed.
-	vswitch, err := ovs.NewVSwitch()
+	vswitch, err := n.state.OVS()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
@@ -1422,7 +1422,7 @@ func (n *ovn) startUplinkPortBridgeOVS(uplinkNet Network, bridgeDevice string) e
 	defer revert.Fail()
 
 	// If uplink is an openvswitch bridge, have OVN logical provider connect directly to it.
-	vswitch, err := ovs.NewVSwitch()
+	vswitch, err := n.state.OVS()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
@@ -1502,7 +1502,7 @@ func (n *ovn) startUplinkPortPhysical(uplinkNet Network) error {
 	}
 
 	// Detect if uplink interface is a OVS bridge.
-	vswitch, err := ovs.NewVSwitch()
+	vswitch, err := n.state.OVS()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
@@ -1660,7 +1660,7 @@ func (n *ovn) deleteUplinkPortBridgeNative(uplinkNet Network) error {
 		if !uplinkUsed {
 			removeVeths = true
 
-			vswitch, err := ovs.NewVSwitch()
+			vswitch, err := n.state.OVS()
 			if err != nil {
 				return fmt.Errorf("Failed to connect to OVS: %w", err)
 			}
@@ -1714,7 +1714,7 @@ func (n *ovn) deleteUplinkPortBridgeOVS(uplinkNet Network, ovsBridge string) err
 
 	// Remove uplink OVS bridge mapping if not in use by other OVN networks.
 	if !uplinkUsed {
-		vswitch, err := ovs.NewVSwitch()
+		vswitch, err := n.state.OVS()
 		if err != nil {
 			return fmt.Errorf("Failed to connect to OVS: %w", err)
 		}
@@ -1739,7 +1739,7 @@ func (n *ovn) deleteUplinkPortPhysical(uplinkNet Network) error {
 	}
 
 	// Detect if uplink interface is a OVS bridge.
-	vswitch, err := ovs.NewVSwitch()
+	vswitch, err := n.state.OVS()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
@@ -2682,7 +2682,7 @@ func (n *ovn) ensureNetworkPortGroup(projectID int64) error {
 // don't end up using the same chassis for the primary uplink chassis for all OVN networks in a cluster.
 func (n *ovn) addChassisGroupEntry() error {
 	// Get local chassis ID for chassis group.
-	vswitch, err := ovs.NewVSwitch()
+	vswitch, err := n.state.OVS()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
@@ -2746,7 +2746,7 @@ func (n *ovn) addChassisGroupEntry() error {
 // deleteChassisGroupEntry deletes an entry for the local OVS chassis from the OVN logical network's chassis group.
 func (n *ovn) deleteChassisGroupEntry() error {
 	// Remove local chassis from chassis group.
-	vswitch, err := ovs.NewVSwitch()
+	vswitch, err := n.state.OVS()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
 	}

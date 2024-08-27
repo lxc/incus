@@ -21,7 +21,7 @@ type VSwitch struct {
 }
 
 // NewVSwitch initializes a new vSwitch client..
-func NewVSwitch() (*VSwitch, error) {
+func NewVSwitch(dbAddr string) (*VSwitch, error) {
 	// Prepare the OVSDB client.
 	dbSchema, err := ovsSwitch.FullDatabaseModel()
 	if err != nil {
@@ -32,7 +32,7 @@ func NewVSwitch() (*VSwitch, error) {
 
 	options := []ovsdbClient.Option{
 		ovsdbClient.WithLogger(&discard),
-		ovsdbClient.WithEndpoint("unix:///run/openvswitch/db.sock"),
+		ovsdbClient.WithEndpoint(dbAddr),
 		ovsdbClient.WithReconnect(5*time.Second, &backoff.ZeroBackOff{}),
 	}
 

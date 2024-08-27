@@ -2442,9 +2442,17 @@ See {ref}`clustering-instance-placement-scriptlet` for more information.
 ```
 
 ```{config:option} network.ovn.northbound_connection server-miscellaneous
-:defaultdesc: "`unix:/var/run/ovn/ovnnb_db.sock`"
+:defaultdesc: "`unix:/run/ovn/ovnnb_db.sock`"
 :scope: "global"
 :shortdesc: "OVN northbound database connection string"
+:type: "string"
+
+```
+
+```{config:option} network.ovs.connection server-miscellaneous
+:defaultdesc: "`unix:/run/openvswitch/db.sock`"
+:scope: "global"
+:shortdesc: "OVS socket path"
 :type: "string"
 
 ```

@@ -90,6 +90,11 @@ func (c *Config) MetricsAddress() string {
 	return metricsAddress
 }
 
+// NetworkOVSConnection returns the OVS socket path.
+func (c *Config) NetworkOVSConnection() string {
+	return c.m.GetString("network.ovs.connection")
+}
+
 // StorageBucketsAddress returns the address and port to setup the storage buckets listener on.
 func (c *Config) StorageBucketsAddress() string {
 	objectAddress := c.m.GetString("core.storage_buckets_address")
@@ -242,6 +247,15 @@ var ConfigSchema = config.Schema{
 	//  defaultdesc: `false`
 	//  shortdesc: Whether to enable the syslog unixgram socket listener
 	"core.syslog_socket": {Validator: validate.Optional(validate.IsBool), Type: config.Bool},
+
+	// gendoc:generate(entity=server, group=miscellaneous, key=network.ovs.connection)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  defaultdesc: `unix:/run/openvswitch/db.sock`
+	//  shortdesc: OVS socket path
+	"network.ovs.connection": {Default: "unix:/run/openvswitch/db.sock"},
 
 	// Storage volumes to store backups/images on
 

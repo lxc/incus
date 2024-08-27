@@ -97,8 +97,8 @@ func Listen(ctx context.Context, eventServer *events.Server) error {
 			}
 
 			// Acceptable formats:
-			// - <29> ovs|00017|rconn|INFO|unix:/var/run/openvswitch/br-int.mgmt: connected"
-			// - <29> ovs|ovn-controller|00017|rconn|INFO|unix:/var/run/openvswitch/br-int.mgmt: connected"
+			// - <29> ovs|00017|rconn|INFO|unix:/run/openvswitch/br-int.mgmt: connected"
+			// - <29> ovs|ovn-controller|00017|rconn|INFO|unix:/run/openvswitch/br-int.mgmt: connected"
 			// The first field can be ignored as that information is relevant to syslogd.
 			fields := strings.SplitN(string(buf[:n]), "|", 6)
 

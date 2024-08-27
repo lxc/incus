@@ -25,7 +25,6 @@ import (
 	"github.com/lxc/incus/v6/internal/server/network"
 	"github.com/lxc/incus/v6/internal/server/network/acl"
 	"github.com/lxc/incus/v6/internal/server/network/ovn"
-	"github.com/lxc/incus/v6/internal/server/network/ovs"
 	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/resources"
 	"github.com/lxc/incus/v6/internal/server/state"
@@ -439,7 +438,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 		delete(saveData, "host_name") // Nested NICs don't have a host side interface.
 	} else {
 		if d.config["acceleration"] == "sriov" {
-			vswitch, err := ovs.NewVSwitch()
+			vswitch, err := d.state.OVS()
 			if err != nil {
 				return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
 			}
@@ -495,7 +494,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 			integrationBridgeNICName = vfRepresentor
 			peerName = vfDev
 		} else if d.config["acceleration"] == "vdpa" {
-			vswitch, err := ovs.NewVSwitch()
+			vswitch, err := d.state.OVS()
 			if err != nil {
 				return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
 			}
@@ -657,7 +656,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 	runConf := deviceConfig.RunConfig{}
 
 	// Get local chassis ID for chassis group.
-	vswitch, err := ovs.NewVSwitch()
+	vswitch, err := d.state.OVS()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
@@ -880,7 +879,7 @@ func (d *nicOVN) Stop() (*deviceConfig.RunConfig, error) {
 	// port name using the same regime it does for new ports. This part is only here in order to allow
 	// instance ports generated under an older regime to be cleaned up properly.
 	networkVethFillFromVolatile(d.config, v)
-	vswitch, err := ovs.NewVSwitch()
+	vswitch, err := d.state.OVS()
 	if err != nil {
 		d.logger.Error("Failed to connect to OVS", logger.Ctx{"err": err})
 	}
@@ -1181,7 +1180,7 @@ func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort) (r
 	// Attach host side veth interface to bridge.
 	integrationBridge := d.state.GlobalConfig.NetworkOVNIntegrationBridge()
 
-	vswitch, err := ovs.NewVSwitch()
+	vswitch, err := d.state.OVS()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
 	}

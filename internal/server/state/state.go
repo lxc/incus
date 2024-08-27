@@ -19,6 +19,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/fsmonitor"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/network/ovn"
+	"github.com/lxc/incus/v6/internal/server/network/ovs"
 	"github.com/lxc/incus/v6/internal/server/node"
 	"github.com/lxc/incus/v6/internal/server/sys"
 	localtls "github.com/lxc/incus/v6/shared/tls"
@@ -91,4 +92,7 @@ type State struct {
 
 	// OVN.
 	OVN func() (*ovn.NB, *ovn.SB, error)
+
+	// OVS.
+	OVS func() (*ovs.VSwitch, error)
 }
