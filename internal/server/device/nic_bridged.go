@@ -29,7 +29,6 @@ import (
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/ip"
 	"github.com/lxc/incus/v6/internal/server/network"
-	"github.com/lxc/incus/v6/internal/server/network/ovs"
 	"github.com/lxc/incus/v6/internal/server/resources"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
@@ -566,12 +565,12 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 	revert.Add(r)
 
 	// Attach host side veth interface to bridge.
-	err = network.AttachInterface(d.config["parent"], saveData["host_name"])
+	err = network.AttachInterface(d.state, d.config["parent"], saveData["host_name"])
 	if err != nil {
 		return nil, err
 	}
 
-	revert.Add(func() { _ = network.DetachInterface(d.config["parent"], saveData["host_name"]) })
+	revert.Add(func() { _ = network.DetachInterface(d.state, d.config["parent"], saveData["host_name"]) })
 
 	// Attempt to disable router advertisement acceptance.
 	err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", saveData["host_name"]), "0")
@@ -824,7 +823,7 @@ func (d *nicBridged) postStop() error {
 
 	if d.config["host_name"] != "" && network.InterfaceExists(d.config["host_name"]) {
 		// Detach host-side end of veth pair from bridge (required for openvswitch particularly).
-		err := network.DetachInterface(d.config["parent"], d.config["host_name"])
+		err := network.DetachInterface(d.state, d.config["parent"], d.config["host_name"])
 		if err != nil {
 			return fmt.Errorf("Failed to detach interface %q from %q: %w", d.config["host_name"], d.config["parent"], err)
 		}
@@ -1537,7 +1536,7 @@ func (d *nicBridged) setupNativeBridgePortVLANs(hostName string) error {
 
 // setupOVSBridgePortVLANs configures the bridge port with the specified VLAN settings on the openvswitch bridge.
 func (d *nicBridged) setupOVSBridgePortVLANs(hostName string) error {
-	vswitch, err := ovs.NewVSwitch()
+	vswitch, err := d.state.OVS()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
