@@ -773,6 +773,9 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		// Refresh the state.
 		s = d.State()
 
+		// Re-connect OVS if needed.
+		_ = d.setupOVS()
+
 		// Re-connect OVN if needed.
 		_ = d.setupOVN()
 
