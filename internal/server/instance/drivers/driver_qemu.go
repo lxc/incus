@@ -8129,7 +8129,7 @@ func (d *qemu) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 
 	// Handle disk reconfiguration.
 	for _, mount := range runConf.Mounts {
-		if mount.Limits == nil {
+		if mount.Limits == nil && mount.Size == 0 {
 			continue
 		}
 
@@ -8142,10 +8142,20 @@ func (d *qemu) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 		// Figure out the QEMU device ID.
 		devID := fmt.Sprintf("%s%s", qemuDeviceIDPrefix, linux.PathNameEncode(mount.DevName))
 
-		// Apply the limits.
-		err = m.SetBlockThrottle(devID, int(mount.Limits.ReadBytes), int(mount.Limits.WriteBytes), int(mount.Limits.ReadIOps), int(mount.Limits.WriteIOps))
-		if err != nil {
-			return fmt.Errorf("Failed applying limits for disk device %q: %w", mount.DevName, err)
+		if mount.Limits != nil {
+			// Apply the limits.
+			err = m.SetBlockThrottle(devID, int(mount.Limits.ReadBytes), int(mount.Limits.WriteBytes), int(mount.Limits.ReadIOps), int(mount.Limits.WriteIOps))
+			if err != nil {
+				return fmt.Errorf("Failed applying limits for disk device %q: %w", mount.DevName, err)
+			}
+		}
+
+		if mount.Size > 0 {
+			// Update the size.
+			err = m.UpdateBlockSize(strings.SplitN(devID, "-", 2)[1])
+			if err != nil {
+				return fmt.Errorf("Failed updating disk size %q: %w", mount.DevName, err)
+			}
 		}
 	}
 
