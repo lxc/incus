@@ -170,6 +170,10 @@ type Daemon struct {
 	ovnsb *ovn.SB
 	ovnMu sync.Mutex
 
+	// OVS client.
+	ovs   *ovs.VSwitch
+	ovsMu sync.Mutex
+
 	// API info.
 	apiExtensions int
 }
@@ -561,6 +565,7 @@ func (d *Daemon) State() *state.State {
 		LocalConfig:            localConfig,
 		OS:                     d.os,
 		OVN:                    d.getOVN,
+		OVS:                    d.getOVS,
 		Proxy:                  d.proxy,
 		ServerCert:             d.serverCert,
 		ServerClustered:        d.serverClustered,
@@ -2540,7 +2545,7 @@ func (d *Daemon) setupOVN() error {
 	d.ovnsb = nil
 
 	// Connect to OpenVswitch.
-	vswitch, err := ovs.NewVSwitch()
+	vswitch, err := d.getOVS()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
@@ -2607,4 +2612,34 @@ func (d *Daemon) getOVN() (*ovn.NB, *ovn.SB, error) {
 	}
 
 	return d.ovnnb, d.ovnsb, nil
+}
+
+func (d *Daemon) setupOVS() error {
+	d.ovsMu.Lock()
+	defer d.ovsMu.Unlock()
+
+	// Clear any existing client.
+	d.ovs = nil
+
+	// Connect to OpenVswitch.
+	vswitch, err := ovs.NewVSwitch(d.localConfig.NetworkOVSConnection())
+	if err != nil {
+		return fmt.Errorf("Failed to connect to OVS: %w", err)
+	}
+
+	// Set the client.
+	d.ovs = vswitch
+
+	return nil
+}
+
+func (d *Daemon) getOVS() (*ovs.VSwitch, error) {
+	if d.ovs == nil {
+		err := d.setupOVS()
+		if err != nil {
+			return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
+		}
+	}
+
+	return d.ovs, nil
 }
