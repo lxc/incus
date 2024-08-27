@@ -3747,7 +3747,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 				return "", nil, err
 			}
 
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(250 * time.Millisecond)
 		}
 
 		for _, dynamicIP := range dynamicIPs {
