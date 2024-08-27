@@ -30,6 +30,7 @@ type MountEntryItem struct {
 	PassNo     int         // Used by fsck(8) to determine the order in which filesystem checks are done at boot time. Defaults to zero (don't fsck) if not present.
 	OwnerShift string      // Ownership shifting mode, use constants MountOwnerShiftNone, MountOwnerShiftStatic or MountOwnerShiftDynamic.
 	Limits     *DiskLimits // Disk limits.
+	Size       int64       // Expected disk size in bytes.
 }
 
 // RootFSEntryItem represents the root filesystem options for an Instance.
