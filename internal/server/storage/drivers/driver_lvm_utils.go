@@ -435,18 +435,14 @@ func (d *lvm) createLogicalVolumeSnapshot(vgName string, srcVol Volume, snapVol 
 	// If clustered, we need to acquire exclusive write access for this operation.
 	if d.clustered && !makeThinLv {
 		parent, _, _ := api.GetParentAndSnapshotName(srcVol.Name())
-		volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], srcVol.volType, srcVol.contentType, parent)
+		parentVol := NewVolume(d, d.Name(), srcVol.volType, srcVol.contentType, parent, srcVol.config, srcVol.poolConfig)
 
-		if util.PathExists(volDevPath) {
-			_, err := subprocess.TryRunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volDevPath)
-			if err != nil {
-				return "", fmt.Errorf("Failed to acquire exclusive lock on LVM logical volume %q: %w", volDevPath, err)
-			}
-
-			defer func() {
-				_, _ = subprocess.TryRunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
-			}()
+		release, err := d.acquireExclusive(parentVol)
+		if err != nil {
+			return "", err
 		}
+
+		defer release()
 	}
 
 	_, err = subprocess.TryRunCommand("lvcreate", args...)
@@ -464,6 +460,24 @@ func (d *lvm) createLogicalVolumeSnapshot(vgName string, srcVol Volume, snapVol 
 
 	revert.Success()
 	return targetVolDevPath, nil
+}
+
+// acquireExclusive switches a volume lock to exclusive mode.
+func (d *lvm) acquireExclusive(vol Volume) (func(), error) {
+	volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
+
+	if !d.clustered || !util.PathExists(volDevPath) {
+		return func() {}, nil
+	}
+
+	_, err := subprocess.TryRunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volDevPath)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to acquire exclusive lock on LVM logical volume %q: %w", volDevPath, err)
+	}
+
+	return func() {
+		_, _ = subprocess.TryRunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
+	}, nil
 }
 
 // removeLogicalVolume removes a logical volume.

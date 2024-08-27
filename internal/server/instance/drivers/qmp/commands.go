@@ -1043,6 +1043,24 @@ func (m *Monitor) Eject(id string) error {
 	return nil
 }
 
+// UpdateBlockSize updates the size of a disk.
+func (m *Monitor) UpdateBlockSize(id string) error {
+	var args struct {
+		NodeName string `json:"node-name"`
+		Size     int64  `json:"size"`
+	}
+
+	args.NodeName = id
+	args.Size = 1
+
+	err := m.run("block_resize", args, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // SetBlockThrottle applies an I/O limit on a disk.
 func (m *Monitor) SetBlockThrottle(id string, bytesRead int, bytesWrite int, iopsRead int, iopsWrite int) error {
 	var args struct {

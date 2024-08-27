@@ -1792,10 +1792,6 @@ func (d *zfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 				if sizeBytes < oldVolSizeBytes {
 					return fmt.Errorf("Block volumes cannot be shrunk: %w", ErrCannotBeShrunk)
 				}
-
-				if inUse {
-					return ErrInUse // We don't allow online resizing of block volumes.
-				}
 			}
 
 			err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("volsize=%d", sizeBytes))
