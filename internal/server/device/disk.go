@@ -1483,6 +1483,26 @@ func (d *disk) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 				d.logger.Warn("Could not apply quota because disk is in use, deferring until next start")
 			} else if err != nil {
 				return err
+			} else if d.inst.Type() == instancetype.VM && d.inst.IsRunning() {
+				// Get the disk size in bytes.
+				size, err := units.ParseByteSizeString(newRootDiskDeviceSize)
+				if err != nil {
+					return err
+				}
+
+				// Notify to reload disk size.
+				runConf := deviceConfig.RunConfig{}
+				runConf.Mounts = []deviceConfig.MountEntryItem{
+					{
+						DevName: d.name,
+						Size:    size,
+					},
+				}
+
+				err = d.inst.DeviceEventHandler(&runConf)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
