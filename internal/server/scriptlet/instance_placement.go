@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"go.starlark.net/starlark"
 
@@ -28,28 +27,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	logFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-		var sb strings.Builder
-		for _, arg := range args {
-			s, err := strconv.Unquote(arg.String())
-			if err != nil {
-				s = arg.String()
-			}
-
-			sb.WriteString(s)
-		}
-
-		switch b.Name() {
-		case "log_info":
-			l.Info(fmt.Sprintf("Instance placement scriptlet: %s", sb.String()))
-		case "log_warn":
-			l.Warn(fmt.Sprintf("Instance placement scriptlet: %s", sb.String()))
-		default:
-			l.Error(fmt.Sprintf("Instance placement scriptlet: %s", sb.String()))
-		}
-
-		return starlark.None, nil
-	}
+	logFunc := createLogger(l, "Instance placement scriptlet")
 
 	var targetMember *db.NodeInfo
 
