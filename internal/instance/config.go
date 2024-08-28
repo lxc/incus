@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	scriptletLoad "github.com/lxc/incus/v6/internal/server/scriptlet/load"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/validate"
@@ -961,6 +962,15 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  condition: virtual machine
 	//  shortdesc: QMP commands to run after Incus QEMU initialization and before the VM has started
 	"raw.qemu.qmp.pre-start": validate.IsAny,
+
+	// gendoc:generate(entity=instance, group=raw, key=raw.qemu.scriptlet)
+	//
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: QEMU scriptlet to run at early, pre-start and post-start stages
+	"raw.qemu.scriptlet": validate.Optional(scriptletLoad.QEMUValidate),
 
 	// gendoc:generate(entity=instance, group=security, key=security.agent.metrics)
 	//
