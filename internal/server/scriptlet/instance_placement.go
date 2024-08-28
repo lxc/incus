@@ -12,7 +12,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/cluster"
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
-	instanceDrivers "github.com/lxc/incus/v6/internal/server/instance/drivers"
+	"github.com/lxc/incus/v6/internal/server/instance/drivers/qemudefault"
 	"github.com/lxc/incus/v6/internal/server/resources"
 	scriptletLoad "github.com/lxc/incus/v6/internal/server/scriptlet/load"
 	"github.com/lxc/incus/v6/internal/server/state"
@@ -195,7 +195,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 			}
 		} else if req.Type == api.InstanceTypeVM {
 			// Apply VM CPU cores defaults if not specified.
-			res.CPUCores = instanceDrivers.QEMUDefaultCPUCores
+			res.CPUCores = qemudefault.CPUCores
 		}
 
 		// Parse limits.memory.
@@ -203,7 +203,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 
 		// Apply VM memory limit defaults if not specified.
 		if req.Type == api.InstanceTypeVM && memoryLimitStr == "" {
-			memoryLimitStr = instanceDrivers.QEMUDefaultMemSize
+			memoryLimitStr = qemudefault.MemSize
 		}
 
 		if memoryLimitStr != "" {

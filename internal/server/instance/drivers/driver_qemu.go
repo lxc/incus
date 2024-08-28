@@ -57,6 +57,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/device/nictype"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/edk2"
+	"github.com/lxc/incus/v6/internal/server/instance/drivers/qemudefault"
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/qmp"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/instance/operationlock"
@@ -91,12 +92,6 @@ import (
 //
 //go:embed agent-loader/*
 var incusAgentLoader embed.FS
-
-// QEMUDefaultCPUCores defines the default number of cores a VM will get if no limit specified.
-const QEMUDefaultCPUCores = 1
-
-// QEMUDefaultMemSize is the default memory size for VMs if no limit specified.
-const QEMUDefaultMemSize = "1GiB"
 
 // qemuSerialChardevName is used to communicate state with QEMU via QMP.
 const qemuSerialChardevName = "qemu_serial-chardev"
@@ -1088,7 +1083,7 @@ func (d *qemu) checkStateStorage() error {
 		return err
 	}
 
-	memoryLimitStr := QEMUDefaultMemSize
+	memoryLimitStr := qemudefault.MemSize
 	if d.expandedConfig["limits.memory"] != "" {
 		memoryLimitStr = d.expandedConfig["limits.memory"]
 	}
@@ -3747,7 +3742,7 @@ func (d *qemu) addCPUMemoryConfig(cfg *[]cfgSection, cpuInfo *cpuTopology) error
 	// Configure memory limit.
 	memSize := d.expandedConfig["limits.memory"]
 	if memSize == "" {
-		memSize = QEMUDefaultMemSize // Default if no memory limit specified.
+		memSize = qemudefault.MemSize // Default if no memory limit specified.
 	}
 
 	memSizeBytes, err := units.ParseByteSizeString(memSize)
