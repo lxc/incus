@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-08-20 16:00-0400\n"
+"POT-Creation-Date: 2024-08-27 23:22-0400\n"
 "PO-Revision-Date: 2023-06-16 20:55+0000\n"
 "Last-Translator: Francisco Serrador <fserrador@gmail.com>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/linux-containers/"
@@ -336,7 +336,7 @@ msgstr ""
 "###\n"
 "### Observe que la huella se muestra pero no puede modificarse"
 
-#: cmd/incus/network_load_balancer.go:585
+#: cmd/incus/network_load_balancer.go:656
 #, fuzzy
 msgid ""
 "### This is a YAML representation of the network load balancer.\n"
@@ -385,7 +385,7 @@ msgstr ""
 "###   source: /home/chb/mnt/lxd_test/default.img\n"
 "###   zfs.pool_name: default"
 
-#: cmd/incus/network_peer.go:644
+#: cmd/incus/network_peer.go:719
 #, fuzzy
 msgid ""
 "### This is a YAML representation of the network peer.\n"
@@ -834,11 +834,11 @@ msgstr "Nombre del Miembro del Cluster"
 msgid "Add a network zone record entry"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_load_balancer.go:817
+#: cmd/incus/network_load_balancer.go:888
 msgid "Add backend to a load balancer"
 msgstr ""
 
-#: cmd/incus/network_load_balancer.go:816
+#: cmd/incus/network_load_balancer.go:887
 msgid "Add backends to a load balancer"
 msgstr ""
 
@@ -905,8 +905,8 @@ msgstr ""
 msgid "Add ports to a forward"
 msgstr ""
 
-#: cmd/incus/network_load_balancer.go:1005
-#: cmd/incus/network_load_balancer.go:1006
+#: cmd/incus/network_load_balancer.go:1076
+#: cmd/incus/network_load_balancer.go:1077
 msgid "Add ports to a load balancer"
 msgstr ""
 
@@ -1139,8 +1139,8 @@ msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
 
 #: cmd/incus/network.go:409 cmd/incus/network_acl.go:447
-#: cmd/incus/network_forward.go:382 cmd/incus/network_load_balancer.go:311
-#: cmd/incus/network_peer.go:334 cmd/incus/network_zone.go:455
+#: cmd/incus/network_forward.go:382 cmd/incus/network_load_balancer.go:382
+#: cmd/incus/network_peer.go:409 cmd/incus/network_zone.go:455
 #: cmd/incus/network_zone.go:1142 cmd/incus/storage_bucket.go:154
 #, c-format
 msgid "Bad key/value pair: %s"
@@ -1373,7 +1373,7 @@ msgstr ""
 msgid "Card: %s (%s)"
 msgstr "Cacheado: %s"
 
-#: cmd/incus/config_trust.go:782
+#: cmd/incus/config_trust.go:839
 #, fuzzy, c-format
 msgid "Certificate add token for %s deleted"
 msgstr "Perfil %s eliminado"
@@ -1478,15 +1478,15 @@ msgstr "Perfil %s eliminado de %s"
 #: cmd/incus/network_forward.go:332 cmd/incus/network_forward.go:520
 #: cmd/incus/network_forward.go:672 cmd/incus/network_forward.go:826
 #: cmd/incus/network_forward.go:915 cmd/incus/network_forward.go:997
-#: cmd/incus/network_load_balancer.go:180
-#: cmd/incus/network_load_balancer.go:261
-#: cmd/incus/network_load_balancer.go:432
-#: cmd/incus/network_load_balancer.go:567
-#: cmd/incus/network_load_balancer.go:732
-#: cmd/incus/network_load_balancer.go:820
-#: cmd/incus/network_load_balancer.go:896
-#: cmd/incus/network_load_balancer.go:1009
-#: cmd/incus/network_load_balancer.go:1083 cmd/incus/storage.go:108
+#: cmd/incus/network_load_balancer.go:251
+#: cmd/incus/network_load_balancer.go:332
+#: cmd/incus/network_load_balancer.go:503
+#: cmd/incus/network_load_balancer.go:638
+#: cmd/incus/network_load_balancer.go:803
+#: cmd/incus/network_load_balancer.go:891
+#: cmd/incus/network_load_balancer.go:967
+#: cmd/incus/network_load_balancer.go:1080
+#: cmd/incus/network_load_balancer.go:1154 cmd/incus/storage.go:108
 #: cmd/incus/storage.go:405 cmd/incus/storage.go:488 cmd/incus/storage.go:832
 #: cmd/incus/storage.go:934 cmd/incus/storage.go:1027
 #: cmd/incus/storage_bucket.go:103 cmd/incus/storage_bucket.go:203
@@ -1514,12 +1514,14 @@ msgstr ""
 
 #: cmd/incus/cluster.go:150 cmd/incus/cluster.go:1092
 #: cmd/incus/cluster_group.go:465 cmd/incus/config_trust.go:421
-#: cmd/incus/image.go:1093 cmd/incus/image_alias.go:180 cmd/incus/list.go:133
-#: cmd/incus/network.go:1072 cmd/incus/network.go:1269
-#: cmd/incus/network_allocations.go:62 cmd/incus/network_forward.go:115
-#: cmd/incus/network_integration.go:438 cmd/incus/network_zone.go:115
-#: cmd/incus/operation.go:138 cmd/incus/profile.go:725 cmd/incus/project.go:527
-#: cmd/incus/remote.go:750 cmd/incus/snapshot.go:316 cmd/incus/storage.go:687
+#: cmd/incus/config_trust.go:610 cmd/incus/image.go:1093
+#: cmd/incus/image_alias.go:180 cmd/incus/list.go:133 cmd/incus/network.go:1072
+#: cmd/incus/network.go:1269 cmd/incus/network_allocations.go:62
+#: cmd/incus/network_forward.go:115 cmd/incus/network_integration.go:438
+#: cmd/incus/network_load_balancer.go:119 cmd/incus/network_peer.go:111
+#: cmd/incus/network_zone.go:115 cmd/incus/operation.go:138
+#: cmd/incus/profile.go:725 cmd/incus/project.go:527 cmd/incus/remote.go:750
+#: cmd/incus/snapshot.go:316 cmd/incus/storage.go:687
 #: cmd/incus/storage_bucket.go:502 cmd/incus/storage_bucket.go:904
 #: cmd/incus/storage_volume.go:1557 cmd/incus/storage_volume.go:2548
 #: cmd/incus/warning.go:93
@@ -1578,7 +1580,7 @@ msgstr ""
 #: cmd/incus/config_metadata.go:154 cmd/incus/config_trust.go:353
 #: cmd/incus/image.go:477 cmd/incus/network.go:802 cmd/incus/network_acl.go:714
 #: cmd/incus/network_forward.go:790 cmd/incus/network_integration.go:312
-#: cmd/incus/network_load_balancer.go:696 cmd/incus/network_peer.go:729
+#: cmd/incus/network_load_balancer.go:767 cmd/incus/network_peer.go:804
 #: cmd/incus/network_zone.go:710 cmd/incus/network_zone.go:1405
 #: cmd/incus/profile.go:600 cmd/incus/project.go:399 cmd/incus/storage.go:368
 #: cmd/incus/storage_bucket.go:361 cmd/incus/storage_bucket.go:1300
@@ -1841,13 +1843,13 @@ msgstr ""
 msgid "Create new network forwards"
 msgstr ""
 
-#: cmd/incus/network_load_balancer.go:252
-#: cmd/incus/network_load_balancer.go:253
+#: cmd/incus/network_load_balancer.go:323
+#: cmd/incus/network_load_balancer.go:324
 #, fuzzy
 msgid "Create new network load balancers"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_peer.go:244 cmd/incus/network_peer.go:245
+#: cmd/incus/network_peer.go:319 cmd/incus/network_peer.go:320
 msgid "Create new network peering"
 msgstr ""
 
@@ -1914,8 +1916,8 @@ msgstr ""
 #: cmd/incus/config_trust.go:435 cmd/incus/image.go:1115
 #: cmd/incus/image_alias.go:208 cmd/incus/list.go:574 cmd/incus/network.go:1098
 #: cmd/incus/network_acl.go:169 cmd/incus/network_forward.go:133
-#: cmd/incus/network_integration.go:450 cmd/incus/network_load_balancer.go:156
-#: cmd/incus/network_peer.go:155 cmd/incus/network_zone.go:134
+#: cmd/incus/network_integration.go:450 cmd/incus/network_load_balancer.go:137
+#: cmd/incus/network_peer.go:129 cmd/incus/network_zone.go:134
 #: cmd/incus/network_zone.go:917 cmd/incus/operation.go:151
 #: cmd/incus/profile.go:747 cmd/incus/project.go:555 cmd/incus/storage.go:710
 #: cmd/incus/storage_bucket.go:515 cmd/incus/storage_bucket.go:916
@@ -2026,13 +2028,13 @@ msgstr ""
 msgid "Delete network integrations"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_load_balancer.go:728
-#: cmd/incus/network_load_balancer.go:729
+#: cmd/incus/network_load_balancer.go:799
+#: cmd/incus/network_load_balancer.go:800
 #, fuzzy
 msgid "Delete network load balancers"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_peer.go:761 cmd/incus/network_peer.go:762
+#: cmd/incus/network_peer.go:836 cmd/incus/network_peer.go:837
 msgid "Delete network peerings"
 msgstr ""
 
@@ -2110,8 +2112,8 @@ msgstr ""
 #: cmd/incus/config_template.go:356 cmd/incus/config_trust.go:36
 #: cmd/incus/config_trust.go:91 cmd/incus/config_trust.go:171
 #: cmd/incus/config_trust.go:275 cmd/incus/config_trust.go:400
-#: cmd/incus/config_trust.go:584 cmd/incus/config_trust.go:686
-#: cmd/incus/config_trust.go:732 cmd/incus/config_trust.go:803
+#: cmd/incus/config_trust.go:590 cmd/incus/config_trust.go:743
+#: cmd/incus/config_trust.go:789 cmd/incus/config_trust.go:860
 #: cmd/incus/console.go:37 cmd/incus/copy.go:40 cmd/incus/create.go:43
 #: cmd/incus/delete.go:32 cmd/incus/exec.go:41 cmd/incus/export.go:32
 #: cmd/incus/file.go:85 cmd/incus/file.go:132 cmd/incus/file.go:310
@@ -2151,23 +2153,23 @@ msgstr ""
 #: cmd/incus/network_integration.go:416 cmd/incus/network_integration.go:559
 #: cmd/incus/network_integration.go:613 cmd/incus/network_integration.go:694
 #: cmd/incus/network_integration.go:727 cmd/incus/network_load_balancer.go:29
-#: cmd/incus/network_load_balancer.go:90 cmd/incus/network_load_balancer.go:177
-#: cmd/incus/network_load_balancer.go:253
-#: cmd/incus/network_load_balancer.go:356
-#: cmd/incus/network_load_balancer.go:424
-#: cmd/incus/network_load_balancer.go:534
-#: cmd/incus/network_load_balancer.go:564
-#: cmd/incus/network_load_balancer.go:729
-#: cmd/incus/network_load_balancer.go:802
-#: cmd/incus/network_load_balancer.go:817
-#: cmd/incus/network_load_balancer.go:893
-#: cmd/incus/network_load_balancer.go:991
-#: cmd/incus/network_load_balancer.go:1006
-#: cmd/incus/network_load_balancer.go:1079 cmd/incus/network_peer.go:28
-#: cmd/incus/network_peer.go:81 cmd/incus/network_peer.go:174
-#: cmd/incus/network_peer.go:245 cmd/incus/network_peer.go:391
-#: cmd/incus/network_peer.go:476 cmd/incus/network_peer.go:578
-#: cmd/incus/network_peer.go:625 cmd/incus/network_peer.go:762
+#: cmd/incus/network_load_balancer.go:96 cmd/incus/network_load_balancer.go:248
+#: cmd/incus/network_load_balancer.go:324
+#: cmd/incus/network_load_balancer.go:427
+#: cmd/incus/network_load_balancer.go:495
+#: cmd/incus/network_load_balancer.go:605
+#: cmd/incus/network_load_balancer.go:635
+#: cmd/incus/network_load_balancer.go:800
+#: cmd/incus/network_load_balancer.go:873
+#: cmd/incus/network_load_balancer.go:888
+#: cmd/incus/network_load_balancer.go:964
+#: cmd/incus/network_load_balancer.go:1062
+#: cmd/incus/network_load_balancer.go:1077
+#: cmd/incus/network_load_balancer.go:1150 cmd/incus/network_peer.go:28
+#: cmd/incus/network_peer.go:87 cmd/incus/network_peer.go:249
+#: cmd/incus/network_peer.go:320 cmd/incus/network_peer.go:466
+#: cmd/incus/network_peer.go:551 cmd/incus/network_peer.go:653
+#: cmd/incus/network_peer.go:700 cmd/incus/network_peer.go:837
 #: cmd/incus/network_zone.go:32 cmd/incus/network_zone.go:91
 #: cmd/incus/network_zone.go:254 cmd/incus/network_zone.go:317
 #: cmd/incus/network_zone.go:390 cmd/incus/network_zone.go:485
@@ -2449,7 +2451,7 @@ msgstr ""
 msgid "EXISTING: %q (backend=%q, source=%q)"
 msgstr ""
 
-#: cmd/incus/cluster.go:1113 cmd/incus/config_trust.go:668
+#: cmd/incus/cluster.go:1113 cmd/incus/config_trust.go:623
 #: cmd/incus/snapshot.go:337
 #, fuzzy
 msgid "EXPIRES AT"
@@ -2510,13 +2512,13 @@ msgstr ""
 msgid "Edit network integration configurations as YAML"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_load_balancer.go:563
-#: cmd/incus/network_load_balancer.go:564
+#: cmd/incus/network_load_balancer.go:634
+#: cmd/incus/network_load_balancer.go:635
 #, fuzzy
 msgid "Edit network load balancer configurations as YAML"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_peer.go:624 cmd/incus/network_peer.go:625
+#: cmd/incus/network_peer.go:699 cmd/incus/network_peer.go:700
 #, fuzzy
 msgid "Edit network peer configurations as YAML"
 msgstr "Perfil %s creado"
@@ -2571,12 +2573,14 @@ msgstr ""
 
 #: cmd/incus/cluster.go:187 cmd/incus/cluster.go:1121
 #: cmd/incus/cluster_group.go:495 cmd/incus/config_trust.go:447
-#: cmd/incus/image.go:1133 cmd/incus/image_alias.go:217 cmd/incus/list.go:632
-#: cmd/incus/network.go:1113 cmd/incus/network.go:1303
-#: cmd/incus/network_allocations.go:83 cmd/incus/network_forward.go:147
-#: cmd/incus/network_integration.go:460 cmd/incus/network_zone.go:147
-#: cmd/incus/operation.go:166 cmd/incus/profile.go:763 cmd/incus/project.go:565
-#: cmd/incus/remote.go:773 cmd/incus/snapshot.go:346 cmd/incus/storage.go:722
+#: cmd/incus/config_trust.go:631 cmd/incus/image.go:1133
+#: cmd/incus/image_alias.go:217 cmd/incus/list.go:632 cmd/incus/network.go:1113
+#: cmd/incus/network.go:1303 cmd/incus/network_allocations.go:83
+#: cmd/incus/network_forward.go:147 cmd/incus/network_integration.go:460
+#: cmd/incus/network_load_balancer.go:150 cmd/incus/network_peer.go:140
+#: cmd/incus/network_zone.go:147 cmd/incus/operation.go:166
+#: cmd/incus/profile.go:763 cmd/incus/project.go:565 cmd/incus/remote.go:773
+#: cmd/incus/snapshot.go:346 cmd/incus/storage.go:722
 #: cmd/incus/storage_bucket.go:532 cmd/incus/storage_bucket.go:925
 #: cmd/incus/storage_volume.go:1700 cmd/incus/warning.go:236
 #, c-format
@@ -2646,7 +2650,7 @@ msgstr ""
 #: cmd/incus/cluster.go:562 cmd/incus/config.go:641 cmd/incus/config.go:673
 #: cmd/incus/network.go:1535 cmd/incus/network_acl.go:540
 #: cmd/incus/network_forward.go:595 cmd/incus/network_integration.go:668
-#: cmd/incus/network_load_balancer.go:507 cmd/incus/network_peer.go:553
+#: cmd/incus/network_load_balancer.go:578 cmd/incus/network_peer.go:628
 #: cmd/incus/network_zone.go:548 cmd/incus/network_zone.go:1236
 #: cmd/incus/profile.go:1083 cmd/incus/project.go:851 cmd/incus/storage.go:896
 #: cmd/incus/storage_bucket.go:706 cmd/incus/storage_volume.go:2038
@@ -2667,8 +2671,8 @@ msgstr "Error actualizando el archivo de plantilla: %s"
 
 #: cmd/incus/cluster.go:556 cmd/incus/network.go:1529
 #: cmd/incus/network_acl.go:534 cmd/incus/network_forward.go:589
-#: cmd/incus/network_integration.go:662 cmd/incus/network_load_balancer.go:501
-#: cmd/incus/network_peer.go:547 cmd/incus/network_zone.go:542
+#: cmd/incus/network_integration.go:662 cmd/incus/network_load_balancer.go:572
+#: cmd/incus/network_peer.go:622 cmd/incus/network_zone.go:542
 #: cmd/incus/network_zone.go:1230 cmd/incus/profile.go:1077
 #: cmd/incus/project.go:845 cmd/incus/storage.go:890
 #: cmd/incus/storage_bucket.go:700 cmd/incus/storage_volume.go:2032
@@ -2909,7 +2913,7 @@ msgstr "Acepta certificado"
 msgid "Failed getting existing storage pools: %w"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/network_peer.go:364
+#: cmd/incus/network_peer.go:439
 #, c-format
 msgid "Failed getting peer's status: %w"
 msgstr ""
@@ -3258,12 +3262,12 @@ msgstr ""
 
 #: cmd/incus/alias.go:113 cmd/incus/cluster.go:151 cmd/incus/cluster.go:1091
 #: cmd/incus/cluster_group.go:466 cmd/incus/config_template.go:290
-#: cmd/incus/config_trust.go:422 cmd/incus/config_trust.go:586
+#: cmd/incus/config_trust.go:422 cmd/incus/config_trust.go:609
 #: cmd/incus/image.go:1094 cmd/incus/image_alias.go:179 cmd/incus/list.go:134
 #: cmd/incus/network.go:1073 cmd/incus/network.go:1268
 #: cmd/incus/network_acl.go:97 cmd/incus/network_allocations.go:59
 #: cmd/incus/network_forward.go:114 cmd/incus/network_integration.go:437
-#: cmd/incus/network_load_balancer.go:93 cmd/incus/network_peer.go:84
+#: cmd/incus/network_load_balancer.go:118 cmd/incus/network_peer.go:110
 #: cmd/incus/network_zone.go:113 cmd/incus/network_zone.go:859
 #: cmd/incus/operation.go:136 cmd/incus/profile.go:726 cmd/incus/project.go:529
 #: cmd/incus/project.go:1052 cmd/incus/remote.go:749 cmd/incus/snapshot.go:315
@@ -3361,12 +3365,12 @@ msgstr "Perfil %s creado"
 msgid "Get the key as a network integration property"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_load_balancer.go:359
+#: cmd/incus/network_load_balancer.go:430
 #, fuzzy
 msgid "Get the key as a network load balancer property"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/network_peer.go:394
+#: cmd/incus/network_peer.go:469
 #, fuzzy
 msgid "Get the key as a network peer property"
 msgstr "Perfil %s creado"
@@ -3441,13 +3445,13 @@ msgstr "Perfil %s creado"
 msgid "Get values for network integration configuration keys"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_load_balancer.go:355
-#: cmd/incus/network_load_balancer.go:356
+#: cmd/incus/network_load_balancer.go:426
+#: cmd/incus/network_load_balancer.go:427
 #, fuzzy
 msgid "Get values for network load balancer configuration keys"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_peer.go:390 cmd/incus/network_peer.go:391
+#: cmd/incus/network_peer.go:465 cmd/incus/network_peer.go:466
 #, fuzzy
 msgid "Get values for network peer configuration keys"
 msgstr "Perfil %s creado"
@@ -3910,7 +3914,7 @@ msgstr ""
 msgid "Invalid path %s"
 msgstr ""
 
-#: cmd/incus/network_peer.go:279
+#: cmd/incus/network_peer.go:354
 #, fuzzy
 msgid "Invalid peer type"
 msgstr "Nombre del contenedor es: %s"
@@ -3977,12 +3981,12 @@ msgstr ""
 msgid "LIMIT"
 msgstr ""
 
-#: cmd/incus/network_forward.go:132 cmd/incus/network_load_balancer.go:155
+#: cmd/incus/network_forward.go:132 cmd/incus/network_load_balancer.go:136
 msgid "LISTEN ADDRESS"
 msgstr ""
 
 #: cmd/incus/list.go:616 cmd/incus/network.go:1292
-#: cmd/incus/network_forward.go:136 cmd/incus/network_load_balancer.go:161
+#: cmd/incus/network_forward.go:136 cmd/incus/network_load_balancer.go:139
 #: cmd/incus/operation.go:155 cmd/incus/storage_bucket.go:516
 #: cmd/incus/storage_volume.go:1679 cmd/incus/warning.go:221
 msgid "LOCATION"
@@ -4055,10 +4059,32 @@ msgstr ""
 msgid "List aliases"
 msgstr "Aliases:"
 
-#: cmd/incus/config_trust.go:583 cmd/incus/config_trust.go:584
+#: cmd/incus/config_trust.go:589
 #, fuzzy
 msgid "List all active certificate add tokens"
 msgstr "Nombre del Miembro del Cluster"
+
+#: cmd/incus/config_trust.go:590
+msgid ""
+"List all active certificate add tokens\n"
+"\n"
+"Default column layout: ntE\n"
+"\n"
+"== Columns ==\n"
+"The -c option takes a comma separated list of arguments that control\n"
+"which network zone attributes to output when displaying in table or csv\n"
+"format.\n"
+"\n"
+"Column arguments are either pre-defined shorthand chars (see below),\n"
+"or (extended) config keys.\n"
+"\n"
+"Commas between consecutive shorthand chars are optional.\n"
+"\n"
+"Pre-defined column shorthand chars:\n"
+"  n - Name\n"
+"  t - Token\n"
+"  E - Expires At"
+msgstr ""
 
 #: cmd/incus/cluster.go:1071
 #, fuzzy
@@ -4181,13 +4207,60 @@ msgid ""
 "L - Location of the network zone (e.g. its cluster member)"
 msgstr ""
 
-#: cmd/incus/network_load_balancer.go:89 cmd/incus/network_load_balancer.go:90
+#: cmd/incus/network_load_balancer.go:95
 #, fuzzy
 msgid "List available network load balancers"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/network_peer.go:80 cmd/incus/network_peer.go:81
+#: cmd/incus/network_load_balancer.go:96
+msgid ""
+"List available network load balancers\n"
+"\n"
+"Default column layout: ldp\n"
+"\n"
+"== Columns ==\n"
+"The -c option takes a comma separated list of arguments that control\n"
+"which instance attributes to output when displaying in table or csv\n"
+"format.\n"
+"\n"
+"Column arguments are either pre-defined shorthand chars (see below),\n"
+"or (extended) config keys.\n"
+"\n"
+"Commas between consecutive shorthand chars are optional.\n"
+"\n"
+"Pre-defined column shorthand chars:\n"
+"  l - Listen Address\n"
+"  d - Description\n"
+"  p - Ports\n"
+"  L - Location of the operation (e.g. its cluster member)"
+msgstr ""
+
+#: cmd/incus/network_peer.go:86
 msgid "List available network peers"
+msgstr ""
+
+#: cmd/incus/network_peer.go:87
+msgid ""
+"List available network peers\n"
+"\n"
+"Default column layout: ndpts\n"
+"\n"
+"== Columns ==\n"
+"The -c option takes a comma separated list of arguments that control\n"
+"which network zone attributes to output when displaying in table or csv\n"
+"format.\n"
+"\n"
+"Column arguments are either pre-defined shorthand chars (see below),\n"
+"or (extended) config keys.\n"
+"\n"
+"Commas between consecutive shorthand chars are optional.\n"
+"\n"
+"Pre-defined column shorthand chars:\n"
+"  n - Name\n"
+"  d - description\n"
+"  p - Peer\n"
+"  t - Type\n"
+"  s - State"
 msgstr ""
 
 #: cmd/incus/network_zone.go:855 cmd/incus/network_zone.go:856
@@ -5016,14 +5089,14 @@ msgstr ""
 msgid "Manage network integrations"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/network_load_balancer.go:801
-#: cmd/incus/network_load_balancer.go:802
+#: cmd/incus/network_load_balancer.go:872
+#: cmd/incus/network_load_balancer.go:873
 #, fuzzy
 msgid "Manage network load balancer backends"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/network_load_balancer.go:990
-#: cmd/incus/network_load_balancer.go:991
+#: cmd/incus/network_load_balancer.go:1061
+#: cmd/incus/network_load_balancer.go:1062
 #, fuzzy
 msgid "Manage network load balancer ports"
 msgstr "Nombre del contenedor es: %s"
@@ -5200,7 +5273,7 @@ msgstr ""
 msgid "Missing bucket name"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/config_trust.go:307 cmd/incus/config_trust.go:828
+#: cmd/incus/config_trust.go:307 cmd/incus/config_trust.go:885
 #, fuzzy
 msgid "Missing certificate fingerprint"
 msgstr "Certificado de la huella digital: %s"
@@ -5238,16 +5311,16 @@ msgstr "Nombre del contenedor es: %s"
 #: cmd/incus/network_forward.go:472 cmd/incus/network_forward.go:557
 #: cmd/incus/network_forward.go:732 cmd/incus/network_forward.go:863
 #: cmd/incus/network_forward.go:956 cmd/incus/network_forward.go:1038
-#: cmd/incus/network_load_balancer.go:217
-#: cmd/incus/network_load_balancer.go:286
-#: cmd/incus/network_load_balancer.go:384
-#: cmd/incus/network_load_balancer.go:469
-#: cmd/incus/network_load_balancer.go:637
-#: cmd/incus/network_load_balancer.go:769
-#: cmd/incus/network_load_balancer.go:857
-#: cmd/incus/network_load_balancer.go:933
-#: cmd/incus/network_load_balancer.go:1046
-#: cmd/incus/network_load_balancer.go:1120
+#: cmd/incus/network_load_balancer.go:288
+#: cmd/incus/network_load_balancer.go:357
+#: cmd/incus/network_load_balancer.go:455
+#: cmd/incus/network_load_balancer.go:540
+#: cmd/incus/network_load_balancer.go:708
+#: cmd/incus/network_load_balancer.go:840
+#: cmd/incus/network_load_balancer.go:928
+#: cmd/incus/network_load_balancer.go:1004
+#: cmd/incus/network_load_balancer.go:1117
+#: cmd/incus/network_load_balancer.go:1191
 #, fuzzy
 msgid "Missing listen address"
 msgstr "Nombre del contenedor es: %s"
@@ -5285,20 +5358,20 @@ msgstr "Nombre del contenedor es: %s"
 #: cmd/incus/network_forward.go:468 cmd/incus/network_forward.go:553
 #: cmd/incus/network_forward.go:728 cmd/incus/network_forward.go:859
 #: cmd/incus/network_forward.go:952 cmd/incus/network_forward.go:1034
-#: cmd/incus/network_load_balancer.go:127
-#: cmd/incus/network_load_balancer.go:213
-#: cmd/incus/network_load_balancer.go:282
-#: cmd/incus/network_load_balancer.go:380
-#: cmd/incus/network_load_balancer.go:465
-#: cmd/incus/network_load_balancer.go:633
-#: cmd/incus/network_load_balancer.go:765
-#: cmd/incus/network_load_balancer.go:853
-#: cmd/incus/network_load_balancer.go:929
-#: cmd/incus/network_load_balancer.go:1042
-#: cmd/incus/network_load_balancer.go:1116 cmd/incus/network_peer.go:118
-#: cmd/incus/network_peer.go:208 cmd/incus/network_peer.go:291
-#: cmd/incus/network_peer.go:432 cmd/incus/network_peer.go:516
-#: cmd/incus/network_peer.go:675 cmd/incus/network_peer.go:796
+#: cmd/incus/network_load_balancer.go:203
+#: cmd/incus/network_load_balancer.go:284
+#: cmd/incus/network_load_balancer.go:353
+#: cmd/incus/network_load_balancer.go:451
+#: cmd/incus/network_load_balancer.go:536
+#: cmd/incus/network_load_balancer.go:704
+#: cmd/incus/network_load_balancer.go:836
+#: cmd/incus/network_load_balancer.go:924
+#: cmd/incus/network_load_balancer.go:1000
+#: cmd/incus/network_load_balancer.go:1113
+#: cmd/incus/network_load_balancer.go:1187 cmd/incus/network_peer.go:205
+#: cmd/incus/network_peer.go:283 cmd/incus/network_peer.go:366
+#: cmd/incus/network_peer.go:507 cmd/incus/network_peer.go:591
+#: cmd/incus/network_peer.go:750 cmd/incus/network_peer.go:871
 msgid "Missing network name"
 msgstr ""
 
@@ -5318,9 +5391,9 @@ msgstr "Nombre del contenedor es: %s"
 msgid "Missing network zone record name"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/network_peer.go:212 cmd/incus/network_peer.go:295
-#: cmd/incus/network_peer.go:436 cmd/incus/network_peer.go:520
-#: cmd/incus/network_peer.go:679 cmd/incus/network_peer.go:800
+#: cmd/incus/network_peer.go:287 cmd/incus/network_peer.go:370
+#: cmd/incus/network_peer.go:511 cmd/incus/network_peer.go:595
+#: cmd/incus/network_peer.go:754 cmd/incus/network_peer.go:875
 #, fuzzy
 msgid "Missing peer name"
 msgstr "Nombre del contenedor es: %s"
@@ -5382,7 +5455,7 @@ msgstr "Nombre del contenedor es: %s"
 msgid "Missing target directory"
 msgstr "%s no es un directorio"
 
-#: cmd/incus/network_peer.go:299
+#: cmd/incus/network_peer.go:374
 #, fuzzy
 msgid "Missing target network or integration"
 msgstr "%s no es un directorio"
@@ -5464,7 +5537,7 @@ msgstr ""
 msgid "Moving the storage volume: %s"
 msgstr ""
 
-#: cmd/incus/network_forward.go:1082 cmd/incus/network_load_balancer.go:1164
+#: cmd/incus/network_forward.go:1082 cmd/incus/network_load_balancer.go:1235
 msgid "Multiple ports match. Use --force to remove them all"
 msgstr ""
 
@@ -5482,9 +5555,9 @@ msgstr ""
 
 #: cmd/incus/cluster.go:171 cmd/incus/cluster.go:1111
 #: cmd/incus/cluster_group.go:485 cmd/incus/config_trust.go:431
-#: cmd/incus/config_trust.go:666 cmd/incus/list.go:582
+#: cmd/incus/config_trust.go:621 cmd/incus/list.go:582
 #: cmd/incus/network.go:1093 cmd/incus/network_acl.go:168
-#: cmd/incus/network_integration.go:449 cmd/incus/network_peer.go:154
+#: cmd/incus/network_integration.go:449 cmd/incus/network_peer.go:128
 #: cmd/incus/network_zone.go:133 cmd/incus/network_zone.go:916
 #: cmd/incus/profile.go:745 cmd/incus/project.go:548 cmd/incus/remote.go:759
 #: cmd/incus/snapshot.go:335 cmd/incus/storage.go:708
@@ -5686,12 +5759,12 @@ msgstr "Perfil %s eliminado"
 msgid "Network integration %s renamed to %s"
 msgstr "Perfil %s renombrado a %s"
 
-#: cmd/incus/network_load_balancer.go:338
+#: cmd/incus/network_load_balancer.go:409
 #, fuzzy, c-format
 msgid "Network load balancer %s created"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_load_balancer.go:786
+#: cmd/incus/network_load_balancer.go:857
 #, fuzzy, c-format
 msgid "Network load balancer %s deleted"
 msgstr "Perfil %s eliminado"
@@ -5700,22 +5773,22 @@ msgstr "Perfil %s eliminado"
 msgid "Network name"
 msgstr ""
 
-#: cmd/incus/network_peer.go:368
+#: cmd/incus/network_peer.go:443
 #, fuzzy, c-format
 msgid "Network peer %s created"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_peer.go:812
+#: cmd/incus/network_peer.go:887
 #, fuzzy, c-format
 msgid "Network peer %s deleted"
 msgstr "Perfil %s eliminado"
 
-#: cmd/incus/network_peer.go:372
+#: cmd/incus/network_peer.go:447
 #, c-format
 msgid "Network peer %s is in unexpected state %q"
 msgstr ""
 
-#: cmd/incus/network_peer.go:370
+#: cmd/incus/network_peer.go:445
 #, c-format
 msgid ""
 "Network peer %s pending (please complete mutual peering on peer network)"
@@ -5756,7 +5829,7 @@ msgstr ""
 msgid "No %s storage backends available"
 msgstr ""
 
-#: cmd/incus/config_trust.go:789
+#: cmd/incus/config_trust.go:846
 #, c-format
 msgid "No certificate add token for member %s on remote: %s"
 msgstr ""
@@ -5774,11 +5847,11 @@ msgstr ""
 msgid "No device found for this storage volume"
 msgstr ""
 
-#: cmd/incus/network_load_balancer.go:964
+#: cmd/incus/network_load_balancer.go:1035
 msgid "No matching backend found"
 msgstr ""
 
-#: cmd/incus/network_forward.go:1093 cmd/incus/network_load_balancer.go:1175
+#: cmd/incus/network_forward.go:1093 cmd/incus/network_load_balancer.go:1246
 msgid "No matching port(s) found"
 msgstr ""
 
@@ -5893,7 +5966,7 @@ msgstr ""
 msgid "PCI devices:"
 msgstr ""
 
-#: cmd/incus/network_peer.go:156
+#: cmd/incus/network_peer.go:130
 msgid "PEER"
 msgstr ""
 
@@ -5906,7 +5979,7 @@ msgstr ""
 msgid "PID: %d"
 msgstr ""
 
-#: cmd/incus/network_forward.go:135 cmd/incus/network_load_balancer.go:157
+#: cmd/incus/network_forward.go:135 cmd/incus/network_load_balancer.go:138
 msgid "PORTS"
 msgstr ""
 
@@ -6042,7 +6115,7 @@ msgstr ""
 #: cmd/incus/config_trust.go:354 cmd/incus/image.go:478
 #: cmd/incus/network.go:803 cmd/incus/network_acl.go:715
 #: cmd/incus/network_forward.go:791 cmd/incus/network_integration.go:313
-#: cmd/incus/network_load_balancer.go:697 cmd/incus/network_peer.go:730
+#: cmd/incus/network_load_balancer.go:768 cmd/incus/network_peer.go:805
 #: cmd/incus/network_zone.go:711 cmd/incus/network_zone.go:1406
 #: cmd/incus/profile.go:601 cmd/incus/project.go:400 cmd/incus/storage.go:369
 #: cmd/incus/storage_bucket.go:362 cmd/incus/storage_bucket.go:1301
@@ -6380,7 +6453,7 @@ msgstr "Perfil %s creado"
 msgid "Remove aliases"
 msgstr ""
 
-#: cmd/incus/network_forward.go:994 cmd/incus/network_load_balancer.go:1080
+#: cmd/incus/network_forward.go:994 cmd/incus/network_load_balancer.go:1151
 msgid "Remove all ports that match"
 msgstr ""
 
@@ -6388,12 +6461,12 @@ msgstr ""
 msgid "Remove all rules that match"
 msgstr ""
 
-#: cmd/incus/network_load_balancer.go:893
+#: cmd/incus/network_load_balancer.go:964
 #, fuzzy
 msgid "Remove backend from a load balancer"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/network_load_balancer.go:892
+#: cmd/incus/network_load_balancer.go:963
 #, fuzzy
 msgid "Remove backends from a load balancer"
 msgstr "Nombre del Miembro del Cluster"
@@ -6414,8 +6487,8 @@ msgstr ""
 msgid "Remove ports from a forward"
 msgstr ""
 
-#: cmd/incus/network_load_balancer.go:1078
-#: cmd/incus/network_load_balancer.go:1079
+#: cmd/incus/network_load_balancer.go:1149
+#: cmd/incus/network_load_balancer.go:1150
 #, fuzzy
 msgid "Remove ports from a load balancer"
 msgstr "Nombre del Miembro del Cluster"
@@ -6442,7 +6515,7 @@ msgstr ""
 msgid "Remove snapshot %s from %s (yes/no): "
 msgstr ""
 
-#: cmd/incus/config_trust.go:685 cmd/incus/config_trust.go:686
+#: cmd/incus/config_trust.go:742 cmd/incus/config_trust.go:743
 msgid "Remove trusted client"
 msgstr ""
 
@@ -6580,7 +6653,7 @@ msgstr ""
 msgid "Retrieving image: %s"
 msgstr ""
 
-#: cmd/incus/config_trust.go:731 cmd/incus/config_trust.go:732
+#: cmd/incus/config_trust.go:788 cmd/incus/config_trust.go:789
 #, fuzzy
 msgid "Revoke certificate add token"
 msgstr "Nombre del Miembro del Cluster"
@@ -6666,7 +6739,7 @@ msgid "STARTED AT"
 msgstr "CREADO EN"
 
 #: cmd/incus/list.go:587 cmd/incus/network.go:1100
-#: cmd/incus/network_peer.go:158 cmd/incus/operation.go:152
+#: cmd/incus/network_peer.go:132 cmd/incus/operation.go:152
 #: cmd/incus/storage.go:713 cmd/incus/warning.go:215
 msgid "STATE"
 msgstr ""
@@ -6865,12 +6938,12 @@ msgid ""
 "<value>"
 msgstr ""
 
-#: cmd/incus/network_load_balancer.go:423
+#: cmd/incus/network_load_balancer.go:494
 #, fuzzy
 msgid "Set network load balancer keys"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_load_balancer.go:424
+#: cmd/incus/network_load_balancer.go:495
 msgid ""
 "Set network load balancer keys\n"
 "\n"
@@ -6879,12 +6952,12 @@ msgid ""
 "    incus network set [<remote>:]<network> <listen_address> <key> <value>"
 msgstr ""
 
-#: cmd/incus/network_peer.go:475
+#: cmd/incus/network_peer.go:550
 #, fuzzy
 msgid "Set network peer keys"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_peer.go:476
+#: cmd/incus/network_peer.go:551
 msgid ""
 "Set network peer keys\n"
 "\n"
@@ -7029,12 +7102,12 @@ msgstr "Perfil %s creado"
 msgid "Set the key as a network integration property"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_load_balancer.go:431
+#: cmd/incus/network_load_balancer.go:502
 #, fuzzy
 msgid "Set the key as a network load balancer property"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_peer.go:483
+#: cmd/incus/network_peer.go:558
 #, fuzzy
 msgid "Set the key as a network peer property"
 msgstr "Perfil %s creado"
@@ -7174,13 +7247,13 @@ msgstr ""
 msgid "Show network integration options"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_load_balancer.go:176
-#: cmd/incus/network_load_balancer.go:177
+#: cmd/incus/network_load_balancer.go:247
+#: cmd/incus/network_load_balancer.go:248
 #, fuzzy
 msgid "Show network load balancer configurations"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_peer.go:173 cmd/incus/network_peer.go:174
+#: cmd/incus/network_peer.go:248 cmd/incus/network_peer.go:249
 #, fuzzy
 msgid "Show network peer configurations"
 msgstr "Perfil %s creado"
@@ -7290,7 +7363,7 @@ msgstr ""
 msgid "Show the used and free space in bytes"
 msgstr ""
 
-#: cmd/incus/config_trust.go:802 cmd/incus/config_trust.go:803
+#: cmd/incus/config_trust.go:859 cmd/incus/config_trust.go:860
 msgid "Show trust configurations"
 msgstr ""
 
@@ -7552,14 +7625,14 @@ msgstr ""
 msgid "TARGET"
 msgstr ""
 
-#: cmd/incus/cluster.go:1112 cmd/incus/config_trust.go:667
+#: cmd/incus/cluster.go:1112 cmd/incus/config_trust.go:622
 msgid "TOKEN"
 msgstr ""
 
 #: cmd/incus/config_trust.go:432 cmd/incus/image.go:1123
 #: cmd/incus/image_alias.go:207 cmd/incus/list.go:588 cmd/incus/network.go:1094
 #: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:73
-#: cmd/incus/network_integration.go:451 cmd/incus/network_peer.go:157
+#: cmd/incus/network_integration.go:451 cmd/incus/network_peer.go:131
 #: cmd/incus/operation.go:150 cmd/incus/storage_volume.go:1670
 #: cmd/incus/warning.go:216
 msgid "TYPE"
@@ -7703,7 +7776,7 @@ msgstr "Nombre del Miembro del Cluster"
 msgid "The property %q does not exist on the instance snapshot %s/%s: %v"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/network_load_balancer.go:397
+#: cmd/incus/network_load_balancer.go:468
 #, fuzzy, c-format
 msgid "The property %q does not exist on the load balancer %q: %v"
 msgstr "Nombre del Miembro del Cluster"
@@ -7728,7 +7801,7 @@ msgstr "Nombre del Miembro del Cluster"
 msgid "The property %q does not exist on the network integration %q: %v"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/network_peer.go:449
+#: cmd/incus/network_peer.go:524
 #, fuzzy, c-format
 msgid "The property %q does not exist on the network peer %q: %v"
 msgstr "Nombre del Miembro del Cluster"
@@ -7971,7 +8044,7 @@ msgid ""
 "SPICE graphical output"
 msgstr ""
 
-#: cmd/incus/network_peer.go:258
+#: cmd/incus/network_peer.go:333
 msgid "Type of peer (local or remote)"
 msgstr ""
 
@@ -8054,12 +8127,14 @@ msgstr ""
 
 #: cmd/incus/cluster.go:193 cmd/incus/cluster.go:1127
 #: cmd/incus/cluster_group.go:501 cmd/incus/config_trust.go:455
-#: cmd/incus/image.go:1141 cmd/incus/image_alias.go:223 cmd/incus/list.go:647
-#: cmd/incus/network.go:1119 cmd/incus/network.go:1309
-#: cmd/incus/network_allocations.go:89 cmd/incus/network_forward.go:153
-#: cmd/incus/network_integration.go:466 cmd/incus/network_zone.go:153
-#: cmd/incus/operation.go:172 cmd/incus/profile.go:769 cmd/incus/project.go:571
-#: cmd/incus/remote.go:779 cmd/incus/snapshot.go:352 cmd/incus/storage.go:728
+#: cmd/incus/config_trust.go:637 cmd/incus/image.go:1141
+#: cmd/incus/image_alias.go:223 cmd/incus/list.go:647 cmd/incus/network.go:1119
+#: cmd/incus/network.go:1309 cmd/incus/network_allocations.go:89
+#: cmd/incus/network_forward.go:153 cmd/incus/network_integration.go:466
+#: cmd/incus/network_load_balancer.go:156 cmd/incus/network_peer.go:146
+#: cmd/incus/network_zone.go:153 cmd/incus/operation.go:172
+#: cmd/incus/profile.go:769 cmd/incus/project.go:571 cmd/incus/remote.go:779
+#: cmd/incus/snapshot.go:352 cmd/incus/storage.go:728
 #: cmd/incus/storage_bucket.go:538 cmd/incus/storage_bucket.go:931
 #: cmd/incus/storage_volume.go:1708 cmd/incus/warning.go:244
 #, c-format
@@ -8130,22 +8205,22 @@ msgstr "Perfil %s creado"
 msgid "Unset network integration configuration keys"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_load_balancer.go:533
+#: cmd/incus/network_load_balancer.go:604
 #, fuzzy
 msgid "Unset network load balancer configuration keys"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_load_balancer.go:534
+#: cmd/incus/network_load_balancer.go:605
 #, fuzzy
 msgid "Unset network load balancer keys"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_peer.go:577
+#: cmd/incus/network_peer.go:652
 #, fuzzy
 msgid "Unset network peer configuration keys"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_peer.go:578
+#: cmd/incus/network_peer.go:653
 #, fuzzy
 msgid "Unset network peer keys"
 msgstr "Perfil %s creado"
@@ -8208,12 +8283,12 @@ msgstr "Perfil %s creado"
 msgid "Unset the key as a network integration property"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_load_balancer.go:537
+#: cmd/incus/network_load_balancer.go:608
 #, fuzzy
 msgid "Unset the key as a network load balancer property"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_peer.go:581
+#: cmd/incus/network_peer.go:656
 #, fuzzy
 msgid "Unset the key as a network peer property"
 msgstr "Perfil %s creado"
@@ -8578,7 +8653,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 
 #: cmd/incus/cluster.go:127 cmd/incus/cluster.go:1070
 #: cmd/incus/cluster_group.go:442 cmd/incus/config_trust.go:397
-#: cmd/incus/config_trust.go:582 cmd/incus/monitor.go:31
+#: cmd/incus/config_trust.go:588 cmd/incus/monitor.go:31
 #: cmd/incus/network.go:1050 cmd/incus/network_acl.go:91
 #: cmd/incus/network_integration.go:413 cmd/incus/network_zone.go:88
 #: cmd/incus/operation.go:110 cmd/incus/profile.go:707 cmd/incus/project.go:505
@@ -8602,7 +8677,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "[<remote>:] <cert>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/cluster.go:778 cmd/incus/config_trust.go:730
+#: cmd/incus/cluster.go:778 cmd/incus/config_trust.go:787
 #, fuzzy
 msgid "[<remote>:] <name>"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -8689,8 +8764,8 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "[<remote>:]<alias> <new-name>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/config_trust.go:273 cmd/incus/config_trust.go:683
-#: cmd/incus/config_trust.go:801
+#: cmd/incus/config_trust.go:273 cmd/incus/config_trust.go:740
+#: cmd/incus/config_trust.go:858
 #, fuzzy
 msgid "[<remote>:]<fingerprint>"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -8937,8 +9012,8 @@ msgstr "No se puede proveer el nombre del container a la lista"
 
 #: cmd/incus/network.go:445 cmd/incus/network.go:698 cmd/incus/network.go:915
 #: cmd/incus/network.go:1245 cmd/incus/network.go:1555
-#: cmd/incus/network_forward.go:88 cmd/incus/network_load_balancer.go:87
-#: cmd/incus/network_peer.go:78
+#: cmd/incus/network_forward.go:88 cmd/incus/network_load_balancer.go:93
+#: cmd/incus/network_peer.go:84
 #, fuzzy
 msgid "[<remote>:]<network>"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -8964,19 +9039,19 @@ msgid "[<remote>:]<network> <key>=<value>..."
 msgstr "No se puede proveer el nombre del container a la lista"
 
 #: cmd/incus/network_forward.go:246 cmd/incus/network_forward.go:667
-#: cmd/incus/network_forward.go:820 cmd/incus/network_load_balancer.go:175
-#: cmd/incus/network_load_balancer.go:562
-#: cmd/incus/network_load_balancer.go:726
+#: cmd/incus/network_forward.go:820 cmd/incus/network_load_balancer.go:246
+#: cmd/incus/network_load_balancer.go:633
+#: cmd/incus/network_load_balancer.go:797
 #, fuzzy
 msgid "[<remote>:]<network> <listen_address>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_load_balancer.go:891
+#: cmd/incus/network_load_balancer.go:962
 #, fuzzy
 msgid "[<remote>:]<network> <listen_address> <backend_name>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_load_balancer.go:815
+#: cmd/incus/network_load_balancer.go:886
 #, fuzzy
 msgid ""
 "[<remote>:]<network> <listen_address> <backend_name> <target_address> "
@@ -8984,18 +9059,18 @@ msgid ""
 msgstr "No se puede proveer el nombre del container a la lista"
 
 #: cmd/incus/network_forward.go:425 cmd/incus/network_forward.go:620
-#: cmd/incus/network_load_balancer.go:354
-#: cmd/incus/network_load_balancer.go:532
+#: cmd/incus/network_load_balancer.go:425
+#: cmd/incus/network_load_balancer.go:603
 #, fuzzy
 msgid "[<remote>:]<network> <listen_address> <key>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_forward.go:510 cmd/incus/network_load_balancer.go:422
+#: cmd/incus/network_forward.go:510 cmd/incus/network_load_balancer.go:493
 #, fuzzy
 msgid "[<remote>:]<network> <listen_address> <key>=<value>..."
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_load_balancer.go:1004
+#: cmd/incus/network_load_balancer.go:1075
 #, fuzzy
 msgid ""
 "[<remote>:]<network> <listen_address> <protocol> <listen_port(s)> "
@@ -9008,12 +9083,12 @@ msgid ""
 "<target_address> [<target_port(s)>]"
 msgstr ""
 
-#: cmd/incus/network_forward.go:991 cmd/incus/network_load_balancer.go:1077
+#: cmd/incus/network_forward.go:991 cmd/incus/network_load_balancer.go:1148
 #, fuzzy
 msgid "[<remote>:]<network> <listen_address> [<protocol>] [<listen_port(s)>]"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_forward.go:322 cmd/incus/network_load_balancer.go:251
+#: cmd/incus/network_forward.go:322 cmd/incus/network_load_balancer.go:322
 #, fuzzy
 msgid "[<remote>:]<network> <listen_address> [key=value...]"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -9023,29 +9098,29 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "[<remote>:]<network> <new-name>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_peer.go:172
+#: cmd/incus/network_peer.go:247
 #, fuzzy
 msgid "[<remote>:]<network> <peer name>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_peer.go:623 cmd/incus/network_peer.go:759
+#: cmd/incus/network_peer.go:698 cmd/incus/network_peer.go:834
 #, fuzzy
 msgid "[<remote>:]<network> <peer_name>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_peer.go:243
+#: cmd/incus/network_peer.go:318
 #, fuzzy
 msgid ""
 "[<remote>:]<network> <peer_name> <[target project/]<target network or "
 "integration> [key=value...]"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_peer.go:389 cmd/incus/network_peer.go:576
+#: cmd/incus/network_peer.go:464 cmd/incus/network_peer.go:651
 #, fuzzy
 msgid "[<remote>:]<network> <peer_name> <key>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_peer.go:474
+#: cmd/incus/network_peer.go:549
 #, fuzzy
 msgid "[<remote>:]<network> <peer_name> <key>=<value>..."
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -9638,7 +9713,7 @@ msgid ""
 "yaml"
 msgstr ""
 
-#: cmd/incus/network_load_balancer.go:254
+#: cmd/incus/network_load_balancer.go:325
 msgid ""
 "incus network load-balancer create n1 127.0.0.1\n"
 "\n"
@@ -9647,7 +9722,7 @@ msgid ""
 "config.yaml"
 msgstr ""
 
-#: cmd/incus/network_peer.go:246
+#: cmd/incus/network_peer.go:321
 msgid ""
 "incus network peer create default peer1 web/default\n"
 "    Create a new peering between network \"default\" in the current project "
