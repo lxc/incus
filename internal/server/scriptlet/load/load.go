@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"go.starlark.net/starlark"
+	"go.starlark.net/syntax"
 )
 
 // nameInstancePlacement is the name used in Starlark for the instance placement scriptlet.
@@ -30,7 +31,7 @@ func InstancePlacementCompile(src string) (*starlark.Program, error) {
 	}
 
 	// Parse, resolve, and compile a Starlark source file.
-	_, mod, err := starlark.SourceProgram(nameInstancePlacement, src, isPreDeclared)
+	_, mod, err := starlark.SourceProgramOptions(syntax.LegacyFileOptions(), nameInstancePlacement, src, isPreDeclared)
 	if err != nil {
 		return nil, err
 	}

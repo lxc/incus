@@ -10,7 +10,7 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
-	"github.com/lxc/incus/v6/client"
+	incus "github.com/lxc/incus/v6/client"
 	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/recover"
@@ -241,7 +241,8 @@ func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 	// Send /internal/recover/import request to the daemon.
 	// Don't lint next line with gosimple. It says we should convert reqValidate directly to an RecoverImportPost
 	// because their types are identical. This is less clear and will not work if either type changes in the future.
-	reqImport := recover.ImportPost{ //nolint:gosimple
+	//nolint:all
+	reqImport := recover.ImportPost{ //lint:ignore S1016 for reason above
 		Pools: reqValidate.Pools,
 	}
 
