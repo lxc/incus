@@ -203,3 +203,59 @@ func starlarkMarshal(input any, parent *starlark.Dict) (starlark.Value, error) {
 
 	return sv, nil
 }
+
+// StarlarkUnmarshal converts a Starlark value into a Go value.
+// Only NoneType, Bool, Int, Float, String, List and Dict are supported.
+func StarlarkUnmarshal(input starlark.Value) (any, error) {
+	switch v := input.(type) {
+	case starlark.NoneType:
+		return nil, nil
+	case starlark.Bool:
+		return bool(v), nil
+	case starlark.Int:
+		var result, _ = v.Int64()
+		return result, nil
+	case starlark.Float:
+		return float64(v), nil
+	case starlark.String:
+		return string(v), nil
+	case *starlark.List:
+		length := v.Len()
+		result := make([]any, length)
+
+		// Iterate over the Starlark List
+		for i := 0; i < length; i++ {
+			value, err := StarlarkUnmarshal(v.Index(i))
+			if err != nil {
+				return nil, err
+			}
+
+			result[i] = value
+		}
+
+		return result, nil
+	case *starlark.Dict:
+		result := make(map[string]any)
+
+		// Iterate over the Starlark Dict
+		for _, kv := range v.Items() {
+			dictKey, dictValue := kv[0], kv[1]
+
+			key, ok := starlark.AsString(dictKey)
+			if !ok {
+				return nil, fmt.Errorf("Only string keys are supported, found %s", dictKey.Type())
+			}
+
+			value, err := StarlarkUnmarshal(dictValue)
+			if err != nil {
+				return nil, err
+			}
+
+			result[key] = value
+		}
+
+		return result, nil
+	default:
+		return nil, fmt.Errorf("Unsupported type: %T", v)
+	}
+}
