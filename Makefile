@@ -94,8 +94,7 @@ ifneq "$(INCUS_OFFLINE)" ""
 	exit 1
 endif
 	$(GO) get -t -v -d -u ./...
-	$(GO) get github.com/go-acme/lego/v4@v4.16.1
-	$(GO) mod tidy --go=1.21
+	$(GO) mod tidy --go=1.22
 	$(GO) get toolchain@none
 
 	@echo "Dependencies updated"
