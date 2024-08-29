@@ -680,6 +680,14 @@ See {ref}`instance-options-qemu` for more information.
 
 ```
 
+```{config:option} raw.qemu.scriptlet instance-raw
+:condition: "virtual machine"
+:liveupdate: "no"
+:shortdesc: "QEMU scriptlet to run at early, pre-start and post-start stages"
+:type: "string"
+
+```
+
 ```{config:option} raw.seccomp instance-raw
 :condition: "container"
 :liveupdate: "no"
