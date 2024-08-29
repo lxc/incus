@@ -780,6 +780,15 @@
 						}
 					},
 					{
+						"raw.qemu.scriptlet": {
+							"condition": "virtual machine",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "QEMU scriptlet to run at early, pre-start and post-start stages",
+							"type": "string"
+						}
+					},
+					{
 						"raw.seccomp": {
 							"condition": "container",
 							"liveupdate": "no",

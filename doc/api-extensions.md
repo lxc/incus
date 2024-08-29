@@ -2582,3 +2582,7 @@ This introduces a new `oidc.scopes` server configuration key which can take a co
 ## `network_integrations_peer_name`
 
 This extends `ovn.transit.pattern` to allow `peerName` as a template variable.
+
+## `qemu_scriptlet`
+
+This adds the ability to run a scriptlet at various stages of startup: using the `raw.qemu.scriptlet` configuration key.

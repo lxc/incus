@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"go.starlark.net/starlark"
 
@@ -12,7 +11,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/cluster"
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
-	instanceDrivers "github.com/lxc/incus/v6/internal/server/instance/drivers"
+	"github.com/lxc/incus/v6/internal/server/instance/drivers/qemudefault"
 	"github.com/lxc/incus/v6/internal/server/resources"
 	scriptletLoad "github.com/lxc/incus/v6/internal/server/scriptlet/load"
 	"github.com/lxc/incus/v6/internal/server/state"
@@ -28,28 +27,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	logFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-		var sb strings.Builder
-		for _, arg := range args {
-			s, err := strconv.Unquote(arg.String())
-			if err != nil {
-				s = arg.String()
-			}
-
-			sb.WriteString(s)
-		}
-
-		switch b.Name() {
-		case "log_info":
-			l.Info(fmt.Sprintf("Instance placement scriptlet: %s", sb.String()))
-		case "log_warn":
-			l.Warn(fmt.Sprintf("Instance placement scriptlet: %s", sb.String()))
-		default:
-			l.Error(fmt.Sprintf("Instance placement scriptlet: %s", sb.String()))
-		}
-
-		return starlark.None, nil
-	}
+	logFunc := createLogger(l, "Instance placement scriptlet")
 
 	var targetMember *db.NodeInfo
 
@@ -195,7 +173,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 			}
 		} else if req.Type == api.InstanceTypeVM {
 			// Apply VM CPU cores defaults if not specified.
-			res.CPUCores = instanceDrivers.QEMUDefaultCPUCores
+			res.CPUCores = qemudefault.CPUCores
 		}
 
 		// Parse limits.memory.
@@ -203,7 +181,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 
 		// Apply VM memory limit defaults if not specified.
 		if req.Type == api.InstanceTypeVM && memoryLimitStr == "" {
-			memoryLimitStr = instanceDrivers.QEMUDefaultMemSize
+			memoryLimitStr = qemudefault.MemSize
 		}
 
 		if memoryLimitStr != "" {

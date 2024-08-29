@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/lxc/incus/v6/internal/server/instance/drivers/qemudefault"
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/qmp"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/metrics"
@@ -146,7 +147,7 @@ func (d *qemu) getQemuMemoryMetrics(monitor *qmp.Monitor) (metrics.MemoryMetrics
 	// Get max memory usage.
 	memTotal := d.expandedConfig["limits.memory"]
 	if memTotal == "" {
-		memTotal = QEMUDefaultMemSize // Default if no memory limit specified.
+		memTotal = qemudefault.MemSize // Default if no memory limit specified.
 	}
 
 	memTotalBytes, err := units.ParseByteSizeString(memTotal)
