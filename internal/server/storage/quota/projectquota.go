@@ -242,6 +242,10 @@ func GetProject(path string) (uint32, error) {
 func SetProject(path string, id uint32) error {
 	err := filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
 		if err != nil {
+			if os.IsNotExist(err) {
+				return nil
+			}
+
 			return err
 		}
 
