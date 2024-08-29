@@ -909,6 +909,7 @@ func isVMLowLevelOptionForbidden(key string) bool {
 		"raw.qemu.qmp.early",
 		"raw.qemu.qmp.post-start",
 		"raw.qemu.qmp.pre-start",
+		"raw.qemu.scriptlet",
 	},
 		key)
 }
