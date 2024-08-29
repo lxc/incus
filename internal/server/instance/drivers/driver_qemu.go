@@ -69,6 +69,8 @@ import (
 	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/resources"
 	"github.com/lxc/incus/v6/internal/server/response"
+	"github.com/lxc/incus/v6/internal/server/scriptlet"
+	scriptletLoad "github.com/lxc/incus/v6/internal/server/scriptlet/load"
 	"github.com/lxc/incus/v6/internal/server/state"
 	storagePools "github.com/lxc/incus/v6/internal/server/storage"
 	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
@@ -1105,7 +1107,9 @@ func (d *qemu) Start(stateful bool) error {
 	return d.start(stateful, nil)
 }
 
-func (d *qemu) runQMP(monitor *qmp.Monitor, stage string) error {
+// startupHook executes QMP commands and runs startup scriptlets at early, pre-stard and post-start
+// stages.
+func (d *qemu) startupHook(monitor *qmp.Monitor, stage string) error {
 	commands, ok := d.expandedConfig["raw.qemu.qmp."+stage]
 	if ok {
 		var commandList []map[string]any
@@ -1122,6 +1126,17 @@ func (d *qemu) runQMP(monitor *qmp.Monitor, stage string) error {
 				err = fmt.Errorf("Failed to run QMP command %s at %s stage: %w", jsonCommand, stage, err)
 				return err
 			}
+		}
+	}
+
+	_, ok = d.expandedConfig["raw.qemu.scriptlet"]
+	if ok {
+		instanceName := d.Name()
+
+		err := scriptlet.QEMURun(logger.Log, monitor, instanceName, stage)
+		if err != nil {
+			err = fmt.Errorf("Failed running QEMU scriptlet at %s stage: %w", stage, err)
+			return err
 		}
 	}
 
@@ -1718,8 +1733,20 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// onStop hook isn't triggered prematurely (as this function's reverter will clean up on failure to start).
 	monitor.SetOnDisconnectEvent(false)
 
-	// Early QMP hook
-	err = d.runQMP(monitor, "early")
+	// Precompile the QEMU scriptlet
+	src, ok := d.expandedConfig["raw.qemu.scriptlet"]
+	if ok {
+		instanceName := d.Name()
+
+		err := scriptletLoad.QEMUSet(src, instanceName)
+		if err != nil {
+			err = fmt.Errorf("Failed loading QEMU scriptlet: %w", err)
+			return err
+		}
+	}
+
+	// Early startup hook
+	err = d.startupHook(monitor, "early")
 	if err != nil {
 		op.Done(err)
 		return err
@@ -1782,8 +1809,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 	}
 
-	// Pre-start QMP hook
-	err = d.runQMP(monitor, "pre-start")
+	// Pre-start startup hook
+	err = d.startupHook(monitor, "pre-start")
 	if err != nil {
 		op.Done(err)
 		return err
@@ -1857,8 +1884,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	revert.Success()
 
-	// Post-start QMP hook
-	err = d.runQMP(monitor, "post-start")
+	// Post-start startup hook
+	err = d.startupHook(monitor, "post-start")
 	if err != nil {
 		op.Done(err)
 

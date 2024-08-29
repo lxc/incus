@@ -11,6 +11,9 @@ import (
 // nameInstancePlacement is the name used in Starlark for the instance placement scriptlet.
 const nameInstancePlacement = "instance_placement"
 
+// prefixQEMU is the prefix used in Starlark for the QEMU scriptlet.
+const prefixQEMU = "qemu"
+
 // compile compiles a scriptlet.
 func compile(programName string, src string, preDeclared []string) (*starlark.Program, error) {
 	isPreDeclared := func(name string) bool {
@@ -94,4 +97,31 @@ func InstancePlacementSet(src string) error {
 // InstancePlacementProgram returns the precompiled instance placement scriptlet program.
 func InstancePlacementProgram() (*starlark.Program, *starlark.Thread, error) {
 	return program("Instance placement", nameInstancePlacement)
+}
+
+// QEMUCompile compiles the QEMU scriptlet.
+func QEMUCompile(name string, src string) (*starlark.Program, error) {
+	return compile(name, src, []string{
+		"log_info",
+		"log_warn",
+		"log_error",
+		"run_qmp",
+	})
+}
+
+// QEMUValidate validates the instance placement scriptlet.
+func QEMUValidate(src string) error {
+	_, err := QEMUCompile(prefixQEMU, src)
+	return err
+}
+
+// QEMUSet compiles the QEMU scriptlet into memory for use with QEMURun.
+// If empty src is provided the current program is deleted.
+func QEMUSet(src string, instance string) error {
+	return set(QEMUCompile, prefixQEMU+"/"+instance, src)
+}
+
+// QEMUProgram returns the precompiled QEMU scriptlet program.
+func QEMUProgram(instance string) (*starlark.Program, *starlark.Thread, error) {
+	return program("QEMU", prefixQEMU+"/"+instance)
 }
