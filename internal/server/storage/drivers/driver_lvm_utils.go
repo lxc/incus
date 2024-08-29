@@ -390,7 +390,7 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 	if isRecent {
 		// Disable auto activation of volume on LVM versions that support it.
 		// Must be done after volume create so that zeroing and signature wiping can take place.
-		_, err := subprocess.RunCommand("lvchange", "--setactivationskip", "y", volDevPath)
+		_, err := subprocess.TryRunCommand("lvchange", "--setactivationskip", "y", volDevPath)
 		if err != nil {
 			return fmt.Errorf("Failed to set activation skip on LVM logical volume %q: %w", volDevPath, err)
 		}
