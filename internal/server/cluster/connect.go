@@ -22,6 +22,11 @@ import (
 	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
+// Set references.
+func init() {
+	storagePools.ConnectIfInstanceIsRemote = ConnectIfInstanceIsRemote
+}
+
 // Connect is a convenience around incus.ConnectIncus that configures the client
 // with the correct parameters for node-to-node communication.
 //
