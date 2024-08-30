@@ -57,6 +57,7 @@ var apiInternal = []APIEndpoint{
 	internalContainerOnStartCmd,
 	internalContainerOnStopCmd,
 	internalContainerOnStopNSCmd,
+	internalVirtualMachineOnResizeCmd,
 	internalGarbageCollectorCmd,
 	internalImageOptimizeCmd,
 	internalImageRefreshCmd,
@@ -95,6 +96,12 @@ var internalContainerOnStopCmd = APIEndpoint{
 	Path: "containers/{instanceRef}/onstop",
 
 	Get: APIEndpointAction{Handler: internalContainerOnStop, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+}
+
+var internalVirtualMachineOnResizeCmd = APIEndpoint{
+	Path: "virtual-machines/{instanceRef}/onresize",
+
+	Get: APIEndpointAction{Handler: internalVirtualMachineOnResize, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalSQLCmd = APIEndpoint{
@@ -395,6 +402,56 @@ func internalContainerOnStop(d *Daemon, r *http.Request) response.Response {
 	if err != nil {
 		logger.Error("The stop hook failed", logger.Ctx{"instance": inst.Name(), "err": err})
 		return response.SmartError(err)
+	}
+
+	return response.EmptySyncResponse
+}
+
+func internalVirtualMachineOnResize(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	// Get the instance ID.
+	instanceID, err := strconv.Atoi(mux.Vars(r)["instanceRef"])
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	// Get the devices list.
+	devices := request.QueryParam(r, "devices")
+	if devices == "" {
+		return response.BadRequest(fmt.Errorf("Resize hook requires a list of devices"))
+	}
+
+	// Load by ID.
+	inst, err := instance.LoadByID(s, instanceID)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Update the local instance.
+	for _, dev := range strings.Split(devices, ",") {
+		fields := strings.SplitN(dev, ":", 2)
+		if len(fields) != 2 {
+			return response.BadRequest(fmt.Errorf("Invalid device/size tuple: %s", dev))
+		}
+
+		size, err := strconv.ParseInt(fields[1], 16, 64)
+		if err != nil {
+			return response.BadRequest(err)
+		}
+
+		runConf := deviceConfig.RunConfig{}
+		runConf.Mounts = []deviceConfig.MountEntryItem{
+			{
+				DevName: fields[0],
+				Size:    size,
+			},
+		}
+
+		err = inst.DeviceEventHandler(&runConf)
+		if err != nil {
+			return response.InternalError(err)
+		}
 	}
 
 	return response.EmptySyncResponse
