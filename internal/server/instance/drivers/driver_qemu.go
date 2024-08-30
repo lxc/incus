@@ -637,15 +637,32 @@ func (d *qemu) onStop(target string) error {
 		return err
 	}
 
+	// Determine if instance should be auto-restarted.
+	var autoRestart bool
+	if target != "reboot" && op.GetInstanceInitiated() && d.shouldAutoRestart() {
+		autoRestart = true
+
+		// Mark current shutdown as complete.
+		op.Done(nil)
+
+		// Create a new restart operation.
+		op, err = operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionRestart, nil, true, false)
+		if err == nil {
+			defer op.Done(nil)
+		} else {
+			d.logger.Error("Failed to setup new restart operation", logger.Ctx{"err": err})
+		}
+	}
+
 	// Log and emit lifecycle if not user triggered.
-	if op.GetInstanceInitiated() {
+	if target != "reboot" && !autoRestart && op.GetInstanceInitiated() {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceShutdown.Event(d, nil))
-	} else if op.Action() != operationlock.ActionMigrate {
+	} else if !autoRestart && op.Action() != operationlock.ActionMigrate {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceStopped.Event(d, nil))
 	}
 
 	// Reboot the instance.
-	if target == "reboot" {
+	if target == "reboot" || autoRestart {
 		err = d.Start(false)
 		if err != nil {
 			op.Done(err)
