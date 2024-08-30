@@ -22,6 +22,11 @@ import (
 	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
+// Set references.
+func init() {
+	storagePools.ConnectIfInstanceIsRemote = ConnectIfInstanceIsRemote
+}
+
 // Connect is a convenience around incus.ConnectIncus that configures the client
 // with the correct parameters for node-to-node communication.
 //
@@ -152,11 +157,12 @@ func ConnectIfVolumeIsRemote(s *state.State, poolName string, projectName string
 		// Find if volume is attached to a remote instance.
 		var remoteInstance *db.InstanceArgs
 		err = storagePools.VolumeUsedByInstanceDevices(s, poolName, projectName, &dbVolume.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
-			if dbInst.Node != s.ServerName {
-				remoteInstance = &dbInst
-				return db.ErrInstanceListStop // Stop the search, this volume is attached to a remote instance.
+			if dbInst.Node == s.ServerName {
+				remoteInstance = nil
+				return db.ErrInstanceListStop // Stop the search if the volume is attached to the local system.
 			}
 
+			remoteInstance = &dbInst
 			return nil
 		})
 		if err != nil && err != db.ErrInstanceListStop {
