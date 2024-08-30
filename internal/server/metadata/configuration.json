@@ -427,6 +427,14 @@
 			"boot": {
 				"keys": [
 					{
+						"boot.autorestart": {
+							"liveupdate": "no",
+							"longdesc": "If set to `true` will attempt up to 10 restarts over a 1 minute period upon unexpected instance exit.",
+							"shortdesc": "Whether to automatically restart an instance on unexpected exit",
+							"type": "bool"
+						}
+					},
+					{
 						"boot.autostart": {
 							"liveupdate": "no",
 							"longdesc": "If set to `false`, restore the last state.",
