@@ -2567,3 +2567,9 @@ This extends `ovn.transit.pattern` to allow `peerName` as a template variable.
 ## `qemu_scriptlet`
 
 This adds the ability to run a scriptlet at various stages of startup: using the `raw.qemu.scriptlet` configuration key.
+
+## `instance_auto_restart`
+
+This introduces a new `boot.autorestart` configuration key which when
+set to `true` will have the instance automatically be restarted upon
+unexpected exit for up to 10 times over a 1 minute period.
