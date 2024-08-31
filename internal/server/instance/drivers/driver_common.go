@@ -42,6 +42,10 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
+// Track last autorestart of an instance.
+var instancesLastRestart = map[int][10]time.Time{}
+var muInstancesLastRestart sync.Mutex
+
 // ErrExecCommandNotFound indicates the command is not found.
 var ErrExecCommandNotFound = api.StatusErrorf(http.StatusBadRequest, "Command not found")
 
@@ -143,6 +147,52 @@ func (d *common) ExpiryDate() time.Time {
 
 	// Return zero time if the instance is not a snapshot.
 	return time.Time{}
+}
+
+func (d *common) shouldAutoRestart() bool {
+	if !util.IsTrue(d.expandedConfig["boot.autorestart"]) {
+		return false
+	}
+
+	muInstancesLastRestart.Lock()
+	defer muInstancesLastRestart.Unlock()
+
+	// Check if the instance was ever auto-restarted.
+	timestamps, ok := instancesLastRestart[d.id]
+	if !ok || len(timestamps) == 0 {
+		// If not, record it and allow the auto-restart.
+		instancesLastRestart[d.id] = [10]time.Time{time.Now()}
+		return true
+	}
+
+	// If it has been auto-restarted, look for the oldest non-zero timestamp.
+	oldestIndex := 0
+	validTimestamps := 0
+	for i, timestamp := range timestamps {
+		if timestamp.IsZero() {
+			// We found an unused slot, lets use it.
+			timestamps[i] = time.Now()
+			instancesLastRestart[d.id] = timestamps
+			return true
+		}
+
+		validTimestamps++
+
+		if timestamp.Before(timestamps[oldestIndex]) {
+			oldestIndex = i
+		}
+	}
+
+	// Check if the oldest restart was more than a minute ago.
+	if timestamps[oldestIndex].Before(time.Now().Add(-1 * time.Minute)) {
+		// Remove the old timestamp and replace it with ours.
+		timestamps[oldestIndex] = time.Now()
+		instancesLastRestart[d.id] = timestamps
+		return true
+	}
+
+	// If not and all slots are used
+	return false
 }
 
 // ID gets instances's ID.
