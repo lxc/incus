@@ -81,6 +81,18 @@ var architectureInstallations = map[int][]Installation{
 			},
 		},
 	}, {
+		Path: "/usr/share/edk2/x64",
+		Usage: map[FirmwareUsage][]FirmwarePair{
+			GENERIC: {
+				{Code: "OVMF_CODE.4m.fd", Vars: "OVMF_VARS.4m.fd"},
+				{Code: "OVMF_CODE.fd", Vars: "OVMF_VARS.fd"},
+			},
+			SECUREBOOT: {
+				{Code: "OVMF_CODE.secure.4m.fd", Vars: "OVMF_VARS.4m.fd"},
+				{Code: "OVMF_CODE.secure.fd", Vars: "OVMF_VARS.fd"},
+			},
+		},
+	}, {
 		Path: "/usr/share/OVMF/x64",
 		Usage: map[FirmwareUsage][]FirmwarePair{
 			GENERIC: {
