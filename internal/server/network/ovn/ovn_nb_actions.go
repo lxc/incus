@@ -852,7 +852,7 @@ func (o *NB) UpdateLogicalRouterPort(ctx context.Context, portName OVNRouterPort
 
 	if ipv6ra != nil {
 		ipv6conf := map[string]string{
-			"ipv6_ra_configs:send_periodic": fmt.Sprintf("%t", ipv6ra.SendPeriodic),
+			"send_periodic": fmt.Sprintf("%t", ipv6ra.SendPeriodic),
 		}
 
 		if ipv6ra.AddressMode != "" {
