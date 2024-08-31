@@ -402,6 +402,13 @@ For file systems (shared directories or custom volumes), this is one of:
 
 <!-- config group image-requirements end -->
 <!-- config group instance-boot start -->
+```{config:option} boot.autorestart instance-boot
+:liveupdate: "no"
+:shortdesc: "Whether to automatically restart an instance on unexpected exit"
+:type: "bool"
+If set to `true` will attempt up to 10 restarts over a 1 minute period upon unexpected instance exit.
+```
+
 ```{config:option} boot.autostart instance-boot
 :liveupdate: "no"
 :shortdesc: "Whether to always start the instance when the daemon starts"

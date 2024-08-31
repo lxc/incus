@@ -438,6 +438,7 @@ var APIExtensions = []string{
 	"oidc_scopes",
 	"network_integrations_peer_name",
 	"qemu_scriptlet",
+	"instance_auto_restart",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

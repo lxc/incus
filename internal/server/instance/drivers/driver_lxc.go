@@ -3303,8 +3303,25 @@ func (d *lxc) onStop(args map[string]string) error {
 			_ = unix.Unmount(filepath.Join(d.DevicesPath(), "lxcfs"), unix.MNT_DETACH)
 		}
 
+		// Determine if instance should be auto-restarted.
+		var autoRestart bool
+		if target != "reboot" && op.GetInstanceInitiated() && d.shouldAutoRestart() {
+			autoRestart = true
+
+			// Mark current shutdown as complete.
+			op.Done(nil)
+
+			// Create a new restart operation.
+			op, err = operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionRestart, nil, true, false)
+			if err == nil {
+				defer op.Done(nil)
+			} else {
+				d.logger.Error("Failed to setup new restart operation", logger.Ctx{"err": err})
+			}
+		}
+
 		// Log and emit lifecycle if not user triggered
-		if op.GetInstanceInitiated() {
+		if target != "reboot" && !autoRestart && op.GetInstanceInitiated() {
 			ctxMap := logger.Ctx{
 				"action":    target,
 				"created":   d.creationDate,
@@ -3318,7 +3335,7 @@ func (d *lxc) onStop(args map[string]string) error {
 		}
 
 		// Reboot the container
-		if target == "reboot" {
+		if target == "reboot" || autoRestart {
 			// Start the container again
 			err = d.Start(false)
 			if err != nil {
