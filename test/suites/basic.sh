@@ -668,4 +668,22 @@ test_basic_usage() {
   incus delete -f c1 c2 c3
   remaining_instances="$(incus list --format csv)"
   [ -z "${remaining_instances}" ]
+
+  # Test autorestart mechanism
+  incus launch testimage c1 -c boot.autorestart=true
+
+  for _ in $(seq 10); do
+    PID=$(incus info c1 | awk '/^PID/ {print $2}')
+    kill -9 "${PID}"
+    sleep 3
+  done
+
+  [ "$(incus list -cs -fcsv c1)" = "RUNNING" ] || false
+
+  PID=$(incus info c1 | awk '/^PID/ {print $2}')
+  kill -9 "${PID}"
+  sleep 3
+
+  [ "$(incus list -cs -fcsv c1)" = "STOPPED" ] || false
+  incus delete -f c1
 }
