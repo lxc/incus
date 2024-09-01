@@ -1469,7 +1469,40 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		// ---
 		//  type: string
 		//  shortdesc: Cluster groups that can be targeted
-		"restricted.cluster.groups": validate.Optional(validate.IsListOf(validate.IsAny)),
+		"restricted.cluster.groups": validate.Optional(func(value string) error {
+			// Basic format validation.
+			err := validate.IsListOf(validate.IsAny)(value)
+			if err != nil {
+				return err
+			}
+
+			// Get all valid groups.
+			groupNames := []string{}
+			err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				clusterGroups, err := cluster.GetClusterGroups(ctx, tx.Tx())
+				if err != nil {
+					return err
+				}
+
+				for _, group := range clusterGroups {
+					groupNames = append(groupNames, group.Name)
+				}
+
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			// Confirm that the group names exist.
+			for _, name := range util.SplitNTrimSpace(value, ",", -1, true) {
+				if !slices.Contains(groupNames, name) {
+					return fmt.Errorf("Cluster group %q doesn't exist", name)
+				}
+			}
+
+			return nil
+		}),
 
 		// gendoc:generate(entity=project, group=restricted, key=restricted.cluster.target)
 		// Possible values are `allow` or `block`.
