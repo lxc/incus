@@ -1085,8 +1085,24 @@ func (c *ClusterTx) GetCandidateMembers(ctx context.Context, allMembers []NodeIn
 
 		// Skip if working with a restricted set of cluster groups and member isn't part of any.
 		if allowedClusterGroups != nil {
+			// Load the list of cluster groups.
+			groupNames := []string{}
+			clusterGroups, err := cluster.GetClusterGroups(ctx, c.Tx())
+			if err != nil {
+				return nil, err
+			}
+
+			for _, group := range clusterGroups {
+				groupNames = append(groupNames, group.Name)
+			}
+
+			// Filter based on groups.
 			found := false
 			for _, allowedClusterGroup := range allowedClusterGroups {
+				if !slices.Contains(groupNames, allowedClusterGroup) {
+					return nil, fmt.Errorf("Cluster group %q doesn't exist", allowedClusterGroup)
+				}
+
 				if slices.Contains(member.Groups, allowedClusterGroup) {
 					found = true
 					break
