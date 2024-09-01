@@ -2573,3 +2573,9 @@ This adds the ability to run a scriptlet at various stages of startup: using the
 This introduces a new `boot.autorestart` configuration key which when
 set to `true` will have the instance automatically be restarted upon
 unexpected exit for up to 10 times over a 1 minute period.
+
+## `storage_lvm_metadatasize`
+
+This introduces a new `lvm.metadata_size` option for LVM storage pools
+which allows overriding the default metadata size when creating a new
+LVM physical volume.
