@@ -439,6 +439,7 @@ var APIExtensions = []string{
 	"network_integrations_peer_name",
 	"qemu_scriptlet",
 	"instance_auto_restart",
+	"storage_lvm_metadatasize",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
