@@ -50,3 +50,13 @@ To launch an instance on a member of a cluster group, follow the instructions in
 For example:
 
     incus launch images:ubuntu/22.04 c1 --target=@gpu
+
+## Use with restricted projects
+
+A project can be configured to only have access to servers that are part of specific cluster groups.
+
+This is done by setting both `restricted=true` and `restricted.cluster.groups` to a comma separated list of group names.
+
+```{note}
+If the cluster group is renamed, the project restrictions will need to be updated for the new group name.
+```
