@@ -71,18 +71,18 @@ func (d *zfs) load() error {
 		return nil
 	}
 
-	// Load the kernel module.
-	err := linux.LoadModule("zfs")
-	if err != nil {
-		return fmt.Errorf("Error loading %q module: %w", "zfs", err)
-	}
-
 	// Validate the needed tools are present.
 	for _, tool := range []string{"zpool", "zfs"} {
 		_, err := exec.LookPath(tool)
 		if err != nil {
 			return fmt.Errorf("Required tool '%s' is missing", tool)
 		}
+	}
+
+	// Load the kernel module.
+	err := linux.LoadModule("zfs")
+	if err != nil {
+		return fmt.Errorf("Error loading %q module: %w", "zfs", err)
 	}
 
 	// Get the version information.
