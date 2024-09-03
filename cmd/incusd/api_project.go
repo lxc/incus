@@ -1094,6 +1094,12 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 			count--
 		}
 
+		// Empty the default profile.
+		err = target.UpdateProfile("default", api.ProfilePut{}, "")
+		if err != nil {
+			return response.InternalError(err)
+		}
+
 		// Delete images.
 		for _, imageFingerprint := range entries["images"] {
 			op, err := target.DeleteImage(imageFingerprint)
