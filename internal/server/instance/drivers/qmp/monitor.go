@@ -198,6 +198,10 @@ func (m *Monitor) RunJSON(request []byte, resp any) error {
 
 	// Decode the response if needed.
 	if resp != nil {
+		// Handle weird QEMU QMP bug.
+		responses := strings.Split(string(out), "\r\n")
+		out = []byte(responses[len(responses)-1])
+
 		err = json.Unmarshal(out, &resp)
 		if err != nil {
 			// Confirm the daemon didn't die.
