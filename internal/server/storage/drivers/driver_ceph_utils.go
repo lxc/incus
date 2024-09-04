@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -134,7 +133,7 @@ func (d *ceph) rbdCreateVolume(vol Volume, size string) error {
 	cmd = append(cmd,
 		"--size", fmt.Sprintf("%dB", sizeBytes),
 		"create",
-		d.getRBDVolumeName(vol, "", false, false))
+		d.getRBDVolumeName(vol, "", false))
 
 	_, err = subprocess.RunCommand("rbd", cmd...)
 	return err
@@ -152,7 +151,7 @@ func (d *ceph) rbdDeleteVolume(vol Volume) error {
 		"--cluster", d.config["ceph.cluster_name"],
 		"--pool", d.config["ceph.osd.pool_name"],
 		"rm",
-		d.getRBDVolumeName(vol, "", false, false))
+		d.getRBDVolumeName(vol, "", false))
 	if err != nil {
 		return err
 	}
@@ -164,7 +163,7 @@ func (d *ceph) rbdDeleteVolume(vol Volume) error {
 // This will ensure that the RBD storage volume is accessible as a block device
 // in the /dev directory and is therefore necessary in order to mount it.
 func (d *ceph) rbdMapVolume(vol Volume) (string, error) {
-	rbdName := d.getRBDVolumeName(vol, "", false, false)
+	rbdName := d.getRBDVolumeName(vol, "", false)
 	devPath, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
@@ -191,7 +190,7 @@ func (d *ceph) rbdMapVolume(vol Volume) (string, error) {
 // This is a precondition in order to delete an RBD storage volume can.
 func (d *ceph) rbdUnmapVolume(vol Volume, unmapUntilEINVAL bool) error {
 	busyCount := 0
-	rbdVol := d.getRBDVolumeName(vol, "", false, false)
+	rbdVol := d.getRBDVolumeName(vol, "", false)
 
 	ourDeactivate := false
 
@@ -254,7 +253,7 @@ again:
 		"--cluster", d.config["ceph.cluster_name"],
 		"--pool", d.config["ceph.osd.pool_name"],
 		"unmap",
-		d.getRBDVolumeName(vol, snapshotName, false, false))
+		d.getRBDVolumeName(vol, snapshotName, false))
 	if err != nil {
 		runError, ok := err.(subprocess.RunError)
 		if ok {
@@ -287,7 +286,7 @@ func (d *ceph) rbdCreateVolumeSnapshot(vol Volume, snapshotName string) error {
 		"snap",
 		"create",
 		"--snap", snapshotName,
-		d.getRBDVolumeName(vol, "", false, false))
+		d.getRBDVolumeName(vol, "", false))
 	if err != nil {
 		return err
 	}
@@ -306,7 +305,7 @@ func (d *ceph) rbdProtectVolumeSnapshot(vol Volume, snapshotName string) error {
 		"snap",
 		"protect",
 		"--snap", snapshotName,
-		d.getRBDVolumeName(vol, "", false, false))
+		d.getRBDVolumeName(vol, "", false))
 	if err != nil {
 		runError, ok := err.(subprocess.RunError)
 		if ok {
@@ -337,7 +336,7 @@ func (d *ceph) rbdUnprotectVolumeSnapshot(vol Volume, snapshotName string) error
 		"snap",
 		"unprotect",
 		"--snap", snapshotName,
-		d.getRBDVolumeName(vol, "", false, false))
+		d.getRBDVolumeName(vol, "", false))
 	if err != nil {
 		runError, ok := err.(subprocess.RunError)
 		if ok {
@@ -377,8 +376,8 @@ func (d *ceph) rbdCreateClone(sourceVol Volume, sourceSnapshotName string, targe
 
 	cmd = append(cmd,
 		"clone",
-		d.getRBDVolumeName(sourceVol, sourceSnapshotName, false, true),
-		d.getRBDVolumeName(targetVol, "", false, true))
+		d.getRBDVolumeName(sourceVol, sourceSnapshotName, true),
+		d.getRBDVolumeName(targetVol, "", true))
 
 	_, err := subprocess.RunCommand("rbd", cmd...)
 	if err != nil {
@@ -396,7 +395,7 @@ func (d *ceph) rbdListSnapshotClones(vol Volume, snapshotName string) ([]string,
 		"--cluster", d.config["ceph.cluster_name"],
 		"--pool", d.config["ceph.osd.pool_name"],
 		"children",
-		"--image", d.getRBDVolumeName(vol, "", false, false),
+		"--image", d.getRBDVolumeName(vol, "", false),
 		"--snap", snapshotName)
 	if err != nil {
 		return nil, err
@@ -422,14 +421,15 @@ func (d *ceph) rbdMarkVolumeDeleted(vol Volume, newVolumeName string) error {
 	// Ensure that new volume contains the config from the source volume to maintain filesystem suffix on
 	// new volume name generated in getRBDVolumeName.
 	newVol := NewVolume(d, d.name, vol.volType, vol.contentType, newVolumeName, vol.config, vol.poolConfig)
-	deletedName := d.getRBDVolumeName(newVol, "", true, true)
+	newVol.isDeleted = true
+	deletedName := d.getRBDVolumeName(newVol, "", true)
 
 	_, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
 		"mv",
-		d.getRBDVolumeName(vol, "", false, true),
+		d.getRBDVolumeName(vol, "", true),
 		deletedName,
 	)
 	if err != nil {
@@ -454,8 +454,8 @@ func (d *ceph) rbdRenameVolume(vol Volume, newVolumeName string) error {
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
 		"mv",
-		d.getRBDVolumeName(vol, "", false, true),
-		d.getRBDVolumeName(newVol, "", false, true),
+		d.getRBDVolumeName(vol, "", true),
+		d.getRBDVolumeName(newVol, "", true),
 	)
 	if err != nil {
 		return err
@@ -477,8 +477,8 @@ func (d *ceph) rbdRenameVolumeSnapshot(vol Volume, oldSnapshotName string, newSn
 		"--cluster", d.config["ceph.cluster_name"],
 		"snap",
 		"rename",
-		d.getRBDVolumeName(vol, oldSnapshotName, false, true),
-		d.getRBDVolumeName(vol, newSnapshotName, false, true))
+		d.getRBDVolumeName(vol, oldSnapshotName, true),
+		d.getRBDVolumeName(vol, newSnapshotName, true))
 	if err != nil {
 		return err
 	}
@@ -500,7 +500,7 @@ func (d *ceph) rbdGetVolumeParent(vol Volume) (string, error) {
 		"--cluster", d.config["ceph.cluster_name"],
 		"--pool", d.config["ceph.osd.pool_name"],
 		"info",
-		d.getRBDVolumeName(vol, "", false, false))
+		d.getRBDVolumeName(vol, "", false))
 	if err != nil {
 		return "", err
 	}
@@ -535,7 +535,7 @@ func (d *ceph) rbdDeleteVolumeSnapshot(vol Volume, snapshotName string) error {
 		"--pool", d.config["ceph.osd.pool_name"],
 		"snap",
 		"rm",
-		d.getRBDVolumeName(vol, snapshotName, false, false))
+		d.getRBDVolumeName(vol, snapshotName, false))
 	if err != nil {
 		return err
 	}
@@ -558,7 +558,7 @@ func (d *ceph) rbdListVolumeSnapshots(vol Volume) ([]string, error) {
 		"--format", "json",
 		"snap",
 		"ls",
-		d.getRBDVolumeName(vol, "", false, false))
+		d.getRBDVolumeName(vol, "", false))
 	if err != nil {
 		return []string{}, err
 	}
@@ -678,7 +678,7 @@ func (d *ceph) deleteVolume(vol Volume) (int, error) {
 				return -1, err
 			}
 
-			if strings.HasPrefix(vol.name, "zombie_") || strings.HasPrefix(string(vol.volType), "zombie_") {
+			if vol.isDeleted {
 				return 1, nil
 			}
 
@@ -723,7 +723,7 @@ func (d *ceph) deleteVolume(vol Volume) (int, error) {
 			// Only delete the parent snapshot of the instance if it is a zombie.
 			// This includes both if the parent volume itself is a zombie, or if the just the snapshot
 			// is a zombie. If it is not we know that Incus is still using it.
-			if strings.HasPrefix(string(parentVol.volType), "zombie_") || strings.HasPrefix(parentSnapshotName, "zombie_") {
+			if parentVol.isDeleted || strings.HasPrefix(parentSnapshotName, "zombie_") {
 				ret, err := d.deleteVolumeSnapshot(parentVol, parentSnapshotName)
 				if ret < 0 {
 					return -1, err
@@ -794,7 +794,7 @@ func (d *ceph) deleteVolumeSnapshot(vol Volume, snapshotName string) (int, error
 		}
 
 		// Only delete the parent image if it is a zombie. If it is not we know that Incus is still using it.
-		if strings.HasPrefix(string(vol.volType), "zombie_") {
+		if vol.isDeleted {
 			ret, err := d.deleteVolume(vol)
 			if ret < 0 {
 				return -1, err
@@ -806,17 +806,18 @@ func (d *ceph) deleteVolumeSnapshot(vol Volume, snapshotName string) (int, error
 
 	canDelete := true
 	for _, clone := range clones {
-		_, cloneType, cloneName, err := d.parseClone(clone)
+		_, cloneType, cloneName, isDeleted, err := d.parseClone(clone)
 		if err != nil {
 			return -1, err
 		}
 
-		if !strings.HasPrefix(cloneType, "zombie_") {
+		if !isDeleted {
 			canDelete = false
 			continue
 		}
 
 		cloneVol := NewVolume(d, d.name, VolumeType(cloneType), vol.contentType, cloneName, nil, nil)
+		cloneVol.isDeleted = isDeleted
 
 		ret, err := d.deleteVolume(cloneVol)
 		if ret < 0 {
@@ -848,7 +849,7 @@ func (d *ceph) deleteVolumeSnapshot(vol Volume, snapshotName string) (int, error
 
 		// Only delete the parent image if it is a zombie. If it
 		// is not we know that Incus is still using it.
-		if strings.HasPrefix(string(vol.volType), "zombie_") {
+		if vol.isDeleted {
 			ret, err := d.deleteVolume(vol)
 			if ret < 0 {
 				return -1, err
@@ -880,68 +881,154 @@ func (d *ceph) deleteVolumeSnapshot(vol Volume, snapshotName string) (int, error
 func (d *ceph) parseParent(parent string) (Volume, string, error) {
 	vol := Volume{}
 
-	idx := strings.Index(parent, "/")
-	if idx == -1 {
+	fields := strings.SplitN(parent, "/", 2)
+	if len(fields) != 2 {
 		return vol, "", fmt.Errorf("Pool delimiter not found")
 	}
 
-	slider := parent[(idx + 1):]
-	poolName := parent[:idx]
+	parentName := fields[1]
+	vol.pool = fields[0]
+	vol.isDeleted = strings.HasPrefix(parentName, "zombie_")
 
-	// Match image volumes and extract their various parts into a Volume struct.
-	// Looks for volumes like:
-	// pool/zombie_image_9e90b7b9ccdd7a671a987fadcf07ab92363be57e7f056d18d42af452cdaf95bb_ext4.block@readonly
-	// pool/image_9e90b7b9ccdd7a671a987fadcf07ab92363be57e7f056d18d42af452cdaf95bb_xfs
-	reImage, err := regexp.Compile(`^((?:zombie_)?image)_([A-Za-z0-9]+)_([A-Za-z0-9]+)\.?(block)?@?([-\w]+)?$`)
-	if err != nil {
-		return vol, "", err
-	}
+	// Handle images.
+	if strings.HasPrefix(parentName, "image_") || strings.HasPrefix(parentName, "zombie_image_") {
+		vol.volType = VolumeTypeImage
 
-	imageRes := reImage.FindStringSubmatch(slider)
-	if imageRes != nil {
-		vol.volType = VolumeType(imageRes[1])
-		vol.pool = poolName
-		vol.name = imageRes[2]
-		vol.config = map[string]string{
-			"block.filesystem": imageRes[3],
+		// Split snapshot name.
+		s := strings.Split(parentName, "@")
+		var name string
+		var snapName string
+
+		if len(s) > 1 {
+			snapName = s[len(s)-1]
+			name = strings.TrimSuffix(parentName, "@"+snapName)
+		} else {
+			name = parentName
 		}
 
-		if imageRes[4] == "block" {
+		// Remove prefix from name.
+		name = strings.SplitN(name, "image_", 2)[1]
+
+		// Check for block indicator.
+		if strings.HasSuffix(name, ".block") {
+			name = strings.TrimSuffix(name, ".block")
 			vol.contentType = ContentTypeBlock
 		} else {
 			vol.contentType = ContentTypeFS
 		}
 
-		return vol, imageRes[5], nil
+		// Check for filesystem indicator.
+		if strings.Contains(name, "_") {
+			s := strings.Split(name, "_")
+			filesystem := s[len(s)-1]
+
+			name = strings.TrimSuffix(name, "_"+filesystem)
+			vol.config = map[string]string{
+				"block.filesystem": filesystem,
+			}
+		}
+
+		vol.name = name
+		return vol, snapName, nil
 	}
 
-	// Match normal instance volumes.
-	// Looks for volumes like:
-	// pool/container_bar@zombie_snapshot_ce77e971-6c1b-45c0-b193-dba9ec5e7d82
-	reInst, err := regexp.Compile(`^((?:zombie_)?[a-z-]+)_([\w-]+)\.?(block|iso)?@?([-\w]+)?$`)
-	if err != nil {
-		return vol, "", err
-	}
+	// Handle custom volumes.
+	if strings.HasPrefix(parentName, "custom_") || strings.HasPrefix(parentName, "zombie_custom_") {
+		vol.volType = VolumeTypeCustom
 
-	instRes := reInst.FindStringSubmatch(slider)
-	if instRes != nil {
-		vol.volType = VolumeType(instRes[1])
-		vol.pool = poolName
-		vol.name = instRes[2]
+		// Split snapshot name.
+		s := strings.Split(parentName, "@")
+		var name string
+		var snapName string
 
-		switch instRes[3] {
-		case "block":
+		if len(s) > 1 {
+			snapName = s[len(s)-1]
+			name = strings.TrimSuffix(parentName, "@"+snapName)
+		} else {
+			name = parentName
+		}
+
+		// Remove prefix from name.
+		name = strings.SplitN(name, "custom_", 2)[1]
+
+		// Check for block or ISO indicator.
+		if strings.HasSuffix(name, ".block") {
+			name = strings.TrimSuffix(name, ".block")
 			vol.contentType = ContentTypeBlock
-		case "iso":
+		} else if strings.HasSuffix(name, ".iso") {
+			name = strings.TrimSuffix(name, ".iso")
 			vol.contentType = ContentTypeISO
-		default:
+		} else {
 			vol.contentType = ContentTypeFS
 		}
 
-		return vol, instRes[4], nil
+		vol.name = name
+		return vol, snapName, nil
 	}
 
-	return vol, "", fmt.Errorf("Unrecognised parent: %q", parent)
+	// Handle container volumes.
+	if strings.HasPrefix(parentName, "container_") || strings.HasPrefix(parentName, "zombie_container_") {
+		vol.volType = VolumeTypeContainer
+
+		// Split snapshot name.
+		s := strings.Split(parentName, "@")
+		var name string
+		var snapName string
+
+		if len(s) > 1 {
+			snapName = s[len(s)-1]
+			name = strings.TrimSuffix(parentName, "@"+snapName)
+		} else {
+			name = parentName
+		}
+
+		// Remove prefix from name.
+		name = strings.SplitN(name, "container_", 2)[1]
+
+		// Check for block indicator.
+		if strings.HasSuffix(name, ".block") {
+			name = strings.TrimSuffix(name, ".block")
+			vol.contentType = ContentTypeBlock
+		} else {
+			vol.contentType = ContentTypeFS
+		}
+
+		vol.name = name
+		return vol, snapName, nil
+	}
+
+	// Handle virtual-machines volumes.
+	if strings.HasPrefix(parentName, "virtual_machine_") || strings.HasPrefix(parentName, "zombie_virtual_machine_") {
+		vol.volType = VolumeTypeVM
+
+		// Split snapshot name.
+		s := strings.Split(parentName, "@")
+		var name string
+		var snapName string
+
+		if len(s) > 1 {
+			snapName = s[len(s)-1]
+			name = strings.TrimSuffix(parentName, "@"+snapName)
+		} else {
+			name = parentName
+		}
+
+		// Remove prefix from name.
+		name = strings.SplitN(name, "virtual_machine_", 2)[1]
+
+		// Check for block indicator.
+		if strings.HasSuffix(name, ".block") {
+			name = strings.TrimSuffix(name, ".block")
+			vol.contentType = ContentTypeBlock
+		} else {
+			vol.contentType = ContentTypeFS
+		}
+
+		vol.name = name
+		return vol, snapName, nil
+	}
+
+	return vol, "", fmt.Errorf("Unrecognized parent: %q", parent)
 }
 
 // parseClone splits a strings describing an RBD storage volume.
@@ -949,48 +1036,28 @@ func (d *ceph) parseParent(parent string) (Volume, string, error) {
 // <osd-pool-name>/<prefix>_<rbd-storage-volume>
 // will be split into
 // <osd-pool-name>, <prefix>, <rbd-storage-volume>.
-func (d *ceph) parseClone(clone string) (string, string, string, error) {
-	idx := strings.Index(clone, "/")
-	if idx == -1 {
-		return "", "", "", fmt.Errorf("Unexpected parsing error")
+func (d *ceph) parseClone(clone string) (string, string, string, bool, error) {
+	fields := strings.SplitN(clone, "/", 2)
+	if len(fields) != 2 {
+		return "", "", "", false, fmt.Errorf("Pool delimiter not found")
 	}
 
-	slider := clone[(idx + 1):]
-	poolName := clone[:idx]
+	volumeName := fields[1]
+	poolName := fields[0]
+	volumeDeleted := strings.HasPrefix(volumeName, "zombie_")
 
-	volumeType := slider
-	idx = strings.Index(slider, "zombie_")
-	if idx == 0 {
-		idx += len("zombie_")
-		volumeType = slider
-		slider = slider[idx:]
+	// Strip zombie prefix.
+	volumeName = strings.TrimPrefix(volumeName, "zombie_")
+
+	f := strings.SplitN(volumeName, "_", 2)
+	if len(f) != 2 {
+		return "", "", "", false, fmt.Errorf("Unexpected parsing error")
 	}
 
-	idxType := strings.Index(slider, "_")
-	if idxType == -1 {
-		return "", "", "", fmt.Errorf("Unexpected parsing error")
-	}
+	volumeType := f[0]
+	volumeName = f[1]
 
-	if idx == len("zombie_") {
-		idxType += idx
-	}
-
-	volumeType = volumeType[:idxType]
-
-	idx = strings.Index(slider, "_")
-	if idx == -1 {
-		return "", "", "", fmt.Errorf("Unexpected parsing error")
-	}
-
-	volumeName := slider
-	idx = strings.Index(volumeName, "_")
-	if idx == -1 {
-		return "", "", "", fmt.Errorf("Unexpected parsing error")
-	}
-
-	volumeName = volumeName[(idx + 1):]
-
-	return poolName, volumeType, volumeName, nil
+	return poolName, volumeType, volumeName, volumeDeleted, nil
 }
 
 // getRBDMappedDevPath looks at sysfs to retrieve the device path. If it doesn't find it it will map it if told to
@@ -1044,7 +1111,7 @@ func (d *ceph) getRBDMappedDevPath(vol Volume, mapIfMissing bool) (bool, string,
 			return false, "", err
 		}
 
-		rbdName := d.getRBDVolumeName(vol, "", false, false)
+		rbdName := d.getRBDVolumeName(vol, "", false)
 
 		// Split RBD name into volume name and snapshot name parts.
 		rbdNameParts := strings.SplitN(rbdName, "@", 2)
@@ -1104,8 +1171,8 @@ func (d *ceph) generateUUID(fsType string, devPath string) error {
 	return nil
 }
 
-func (d *ceph) getRBDVolumeName(vol Volume, snapName string, zombie bool, withPoolName bool) string {
-	out := CephGetRBDImageName(vol, snapName, zombie)
+func (d *ceph) getRBDVolumeName(vol Volume, snapName string, withPoolName bool) string {
+	out := CephGetRBDImageName(vol, snapName, vol.isDeleted)
 
 	// If needed, the output will be prefixed with the pool name, e.g.
 	// <pool>/<type>_<volname>@<snapname>.
@@ -1259,7 +1326,7 @@ func (d *ceph) resizeVolume(vol Volume, sizeBytes int64, allowShrink bool) error
 		"--cluster", d.config["ceph.cluster_name"],
 		"--pool", d.config["ceph.osd.pool_name"],
 		"--size", fmt.Sprintf("%dB", sizeBytes),
-		d.getRBDVolumeName(vol, "", false, false),
+		d.getRBDVolumeName(vol, "", false),
 	)
 
 	// Resize the block device.

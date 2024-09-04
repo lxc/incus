@@ -105,6 +105,7 @@ type Volume struct {
 	mountCustomPath      string // Mount the filesystem volume at a custom location.
 	mountFilesystemProbe bool   // Probe filesystem type when mounting volume (when needed).
 	hasSource            bool   // Whether the volume is created from a source volume.
+	isDeleted            bool   // Whether we're dealing with a hidden volume (kept until all references are gone).
 }
 
 // NewVolume instantiates a new Volume struct.
