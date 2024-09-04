@@ -1773,7 +1773,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	if cpuInfo.vcpus == nil {
 		if d.architectureSupportsCPUHotplug() && cpuInfo.cores > 1 {
 			// Hotplug the CPUs.
-			err := d.setCPUs(cpuInfo.cores)
+			err := d.setCPUs(monitor, cpuInfo.cores)
 			if err != nil {
 				err = fmt.Errorf("Failed to add CPUs: %w", err)
 				op.Done(err)
@@ -5785,7 +5785,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 				}
 
 				// Hotplug the CPUs.
-				err = d.setCPUs(limit)
+				err = d.setCPUs(nil, limit)
 				if err != nil {
 					return fmt.Errorf("Failed updating cpu limit: %w", err)
 				}
@@ -9090,15 +9090,19 @@ func (d *qemu) blockNodeName(name string) string {
 	return fmt.Sprintf("%s%s", qemuBlockDevIDPrefix, name)
 }
 
-func (d *qemu) setCPUs(count int) error {
+func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {
 	if count == 0 {
 		return nil
 	}
 
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler())
-	if err != nil {
-		return err
+	if monitor == nil {
+		var err error
+
+		monitor, err = qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler())
+		if err != nil {
+			return err
+		}
 	}
 
 	cpus, err := monitor.QueryHotpluggableCPUs()
