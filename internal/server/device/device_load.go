@@ -153,6 +153,17 @@ func Validate(instConfig instance.ConfigReader, state *state.State, name string,
 	return dev.validateConfig(instConfig)
 }
 
+// Register performs a lightweight load of the device, bypassing most
+// validation to very quickly register the device on server startup.
+func Register(inst instance.Instance, s *state.State, name string, conf deviceConfig.Device) error {
+	dev, err := load(inst, s, inst.Project().Name, name, conf, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return dev.Register()
+}
+
 // LoadByType loads a device by type based on its project and config.
 // It does not validate config beyond the type fields.
 func LoadByType(state *state.State, projectName string, conf deviceConfig.Device) (Type, error) {
