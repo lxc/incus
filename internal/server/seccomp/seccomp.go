@@ -119,7 +119,7 @@ static const struct incus_seccomp_data_arch seccomp_notify_syscall_table[] = {
 	{ AUDIT_ARCH_I386,         14, 297, 226,  21, 357, 156, 116 },
 #endif
 #ifdef AUDIT_ARCH_AARCH64
-	{ AUDIT_ARCH_AARCH64,      -1,  33,   5,  21, 386, 156, 179 },
+	{ AUDIT_ARCH_AARCH64,      -1,  33,   5,  40, 280, 119, 179 },
 #endif
 #ifdef AUDIT_ARCH_ARM
 	{ AUDIT_ARCH_ARM,          14, 324, 226,  21, 386, 156, 116 },
@@ -128,7 +128,7 @@ static const struct incus_seccomp_data_arch seccomp_notify_syscall_table[] = {
 	{ AUDIT_ARCH_ARMEB,        14, 324, 226,  21, 386, 156, 116 },
 #endif
 #ifdef AUDIT_ARCH_S390
-	{ AUDIT_ARCH_S390,         14, 290, 224,  21, 386, 156, 116 },
+	{ AUDIT_ARCH_S390,         14, 290, 224,  21, 351, 156, 116 },
 #endif
 #ifdef AUDIT_ARCH_S390X
 	{ AUDIT_ARCH_S390X,        14, 290, 224,  21, 351, 156, 116 },
@@ -143,7 +143,7 @@ static const struct incus_seccomp_data_arch seccomp_notify_syscall_table[] = {
 	{ AUDIT_ARCH_PPC64LE,      14, 288, 209,  21, 361, 156, 116 },
 #endif
 #ifdef AUDIT_ARCH_RISCV64
-	{ AUDIT_ARCH_RISCV64,      -1,  33,   5,  40, 280, -1, 179 },
+	{ AUDIT_ARCH_RISCV64,      -1,  33,   5,  40, 280, 119, 179 },
 #endif
 #ifdef AUDIT_ARCH_SPARC
 	{ AUDIT_ARCH_SPARC,        14, 286, 169, 167, 349, 243, 214 },
