@@ -1152,7 +1152,24 @@ func (d *nicOVN) State() (*api.InstanceStateNetwork, error) {
 
 // Register sets up anything needed on startup.
 func (d *nicOVN) Register() error {
-	err := bgpAddPrefix(&d.deviceCommon, d.network, d.config)
+	// Skip when not using a managed network.
+	if d.config["network"] == "" {
+		return nil
+	}
+
+	// The NIC's network may be a non-default project, so lookup project and get network's project name.
+	networkProjectName, _, err := project.NetworkProject(d.state.DB.Cluster, d.inst.Project().Name)
+	if err != nil {
+		return fmt.Errorf("Failed loading network project name: %w", err)
+	}
+
+	// Lookup network settings and apply them to the device's config.
+	n, err := network.LoadByName(d.state, networkProjectName, d.config["network"])
+	if err != nil {
+		return fmt.Errorf("Error loading network config for %q: %w", d.config["network"], err)
+	}
+
+	err = bgpAddPrefix(&d.deviceCommon, n, d.config)
 	if err != nil {
 		return err
 	}

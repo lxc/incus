@@ -1751,7 +1751,19 @@ func (d *nicBridged) getHostMTU() (int, error) {
 
 // Register sets up anything needed on startup.
 func (d *nicBridged) Register() error {
-	err := bgpAddPrefix(&d.deviceCommon, d.network, d.config)
+	// Skip when not using a managed network.
+	if d.config["network"] == "" {
+		return nil
+	}
+
+	// Load managed network. api.ProjectDefaultName is used here as bridge networks don't support projects.
+	n, err := network.LoadByName(d.state, api.ProjectDefaultName, d.config["network"])
+	if err != nil {
+		return fmt.Errorf("Error loading network config for %q: %w", d.config["network"], err)
+	}
+
+	// Add BGP prefix.
+	err = bgpAddPrefix(&d.deviceCommon, n, d.config)
 	if err != nil {
 		return err
 	}
