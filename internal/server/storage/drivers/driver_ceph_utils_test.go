@@ -9,7 +9,6 @@ func Test_ceph_getRBDVolumeName(t *testing.T) {
 	type args struct {
 		vol          Volume
 		snapName     string
-		zombie       bool
 		withPoolName bool
 	}
 
@@ -23,7 +22,6 @@ func Test_ceph_getRBDVolumeName(t *testing.T) {
 			args{
 				vol:          NewVolume(nil, "testpool", VolumeTypeContainer, ContentTypeFS, "testvol", nil, nil),
 				snapName:     "",
-				zombie:       false,
 				withPoolName: false,
 			},
 			"container_testvol",
@@ -33,7 +31,6 @@ func Test_ceph_getRBDVolumeName(t *testing.T) {
 			args{
 				vol:          NewVolume(nil, "testpool", VolumeType("unknown"), ContentTypeFS, "testvol", nil, nil),
 				snapName:     "",
-				zombie:       false,
 				withPoolName: false,
 			},
 			"unknown_testvol",
@@ -41,9 +38,12 @@ func Test_ceph_getRBDVolumeName(t *testing.T) {
 		{
 			"Volume without pool name in zombie mode",
 			args{
-				vol:          NewVolume(nil, "testpool", VolumeTypeContainer, ContentTypeFS, "testvol", nil, nil),
+				vol: func() Volume {
+					vol := NewVolume(nil, "testpool", VolumeTypeContainer, ContentTypeFS, "testvol", nil, nil)
+					vol.isDeleted = true
+					return vol
+				}(),
 				snapName:     "",
-				zombie:       true,
 				withPoolName: false,
 			},
 			"zombie_container_testvol",
@@ -51,9 +51,12 @@ func Test_ceph_getRBDVolumeName(t *testing.T) {
 		{
 			"Volume with pool name in zombie mode",
 			args{
-				vol:          NewVolume(nil, "testpool", VolumeTypeContainer, ContentTypeFS, "testvol", nil, nil),
+				vol: func() Volume {
+					vol := NewVolume(nil, "testpool", VolumeTypeContainer, ContentTypeFS, "testvol", nil, nil)
+					vol.isDeleted = true
+					return vol
+				}(),
 				snapName:     "",
-				zombie:       true,
 				withPoolName: true,
 			},
 			"testosdpool/zombie_container_testvol",
@@ -63,7 +66,6 @@ func Test_ceph_getRBDVolumeName(t *testing.T) {
 			args{
 				vol:          NewVolume(nil, "testpool", VolumeTypeContainer, ContentTypeFS, "testvol", nil, nil),
 				snapName:     "snapshot_testsnap",
-				zombie:       false,
 				withPoolName: false,
 			},
 			"container_testvol@snapshot_testsnap",
@@ -73,7 +75,6 @@ func Test_ceph_getRBDVolumeName(t *testing.T) {
 			args{
 				vol:          NewVolume(nil, "testpool", VolumeTypeContainer, ContentTypeFS, "testvol", nil, nil),
 				snapName:     "snapshot_testsnap",
-				zombie:       false,
 				withPoolName: true,
 			},
 			"testosdpool/container_testvol@snapshot_testsnap",
@@ -83,7 +84,6 @@ func Test_ceph_getRBDVolumeName(t *testing.T) {
 			args{
 				vol:          NewVolume(nil, "testpool", VolumeTypeContainer, ContentTypeFS, "testvol/testsnap", nil, nil),
 				snapName:     "",
-				zombie:       false,
 				withPoolName: true,
 			},
 			"testosdpool/container_testvol@snapshot_testsnap",
@@ -93,7 +93,6 @@ func Test_ceph_getRBDVolumeName(t *testing.T) {
 			args{
 				vol:          NewVolume(nil, "testpool", VolumeTypeContainer, ContentTypeFS, "testvol/testsnap", nil, nil),
 				snapName:     "testsnap1",
-				zombie:       false,
 				withPoolName: true,
 			},
 			"testosdpool/container_testvol@testsnap1",
@@ -110,7 +109,7 @@ func Test_ceph_getRBDVolumeName(t *testing.T) {
 				},
 			}
 
-			got := d.getRBDVolumeName(tt.args.vol, tt.args.snapName, tt.args.zombie, tt.args.withPoolName)
+			got := d.getRBDVolumeName(tt.args.vol, tt.args.snapName, tt.args.withPoolName)
 			if got != tt.want {
 				t.Errorf("ceph.getRBDVolumeName() = %v, want %v", got, tt.want)
 			}
