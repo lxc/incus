@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -880,68 +879,154 @@ func (d *ceph) deleteVolumeSnapshot(vol Volume, snapshotName string) (int, error
 func (d *ceph) parseParent(parent string) (Volume, string, error) {
 	vol := Volume{}
 
-	idx := strings.Index(parent, "/")
-	if idx == -1 {
+	fields := strings.SplitN(parent, "/", 2)
+	if len(fields) != 2 {
 		return vol, "", fmt.Errorf("Pool delimiter not found")
 	}
 
-	slider := parent[(idx + 1):]
-	poolName := parent[:idx]
+	parentName := fields[1]
+	vol.pool = fields[0]
+	vol.isDeleted = strings.HasPrefix(parentName, "zombie_")
 
-	// Match image volumes and extract their various parts into a Volume struct.
-	// Looks for volumes like:
-	// pool/zombie_image_9e90b7b9ccdd7a671a987fadcf07ab92363be57e7f056d18d42af452cdaf95bb_ext4.block@readonly
-	// pool/image_9e90b7b9ccdd7a671a987fadcf07ab92363be57e7f056d18d42af452cdaf95bb_xfs
-	reImage, err := regexp.Compile(`^((?:zombie_)?image)_([A-Za-z0-9]+)_([A-Za-z0-9]+)\.?(block)?@?([-\w]+)?$`)
-	if err != nil {
-		return vol, "", err
-	}
+	// Handle images.
+	if strings.HasPrefix(parentName, "image_") || strings.HasPrefix(parentName, "zombie_image_") {
+		vol.volType = VolumeTypeImage
 
-	imageRes := reImage.FindStringSubmatch(slider)
-	if imageRes != nil {
-		vol.volType = VolumeType(imageRes[1])
-		vol.pool = poolName
-		vol.name = imageRes[2]
-		vol.config = map[string]string{
-			"block.filesystem": imageRes[3],
+		// Split snapshot name.
+		s := strings.Split(parentName, "@")
+		var name string
+		var snapName string
+
+		if len(s) > 1 {
+			snapName = s[len(s)-1]
+			name = strings.TrimSuffix(parentName, "@"+snapName)
+		} else {
+			name = parentName
 		}
 
-		if imageRes[4] == "block" {
+		// Remove prefix from name.
+		name = strings.SplitN(name, "image_", 2)[1]
+
+		// Check for block indicator.
+		if strings.HasSuffix(name, ".block") {
+			name = strings.TrimSuffix(name, ".block")
 			vol.contentType = ContentTypeBlock
 		} else {
 			vol.contentType = ContentTypeFS
 		}
 
-		return vol, imageRes[5], nil
+		// Check for filesystem indicator.
+		if strings.Contains(name, "_") {
+			s := strings.Split(name, "_")
+			filesystem := s[len(s)-1]
+
+			name = strings.TrimSuffix(name, "_"+filesystem)
+			vol.config = map[string]string{
+				"block.filesystem": filesystem,
+			}
+		}
+
+		vol.name = name
+		return vol, snapName, nil
 	}
 
-	// Match normal instance volumes.
-	// Looks for volumes like:
-	// pool/container_bar@zombie_snapshot_ce77e971-6c1b-45c0-b193-dba9ec5e7d82
-	reInst, err := regexp.Compile(`^((?:zombie_)?[a-z-]+)_([\w-]+)\.?(block|iso)?@?([-\w]+)?$`)
-	if err != nil {
-		return vol, "", err
-	}
+	// Handle custom volumes.
+	if strings.HasPrefix(parentName, "custom_") || strings.HasPrefix(parentName, "zombie_custom_") {
+		vol.volType = VolumeTypeCustom
 
-	instRes := reInst.FindStringSubmatch(slider)
-	if instRes != nil {
-		vol.volType = VolumeType(instRes[1])
-		vol.pool = poolName
-		vol.name = instRes[2]
+		// Split snapshot name.
+		s := strings.Split(parentName, "@")
+		var name string
+		var snapName string
 
-		switch instRes[3] {
-		case "block":
+		if len(s) > 1 {
+			snapName = s[len(s)-1]
+			name = strings.TrimSuffix(parentName, "@"+snapName)
+		} else {
+			name = parentName
+		}
+
+		// Remove prefix from name.
+		name = strings.SplitN(name, "custom_", 2)[1]
+
+		// Check for block or ISO indicator.
+		if strings.HasSuffix(name, ".block") {
+			name = strings.TrimSuffix(name, ".block")
 			vol.contentType = ContentTypeBlock
-		case "iso":
+		} else if strings.HasSuffix(name, ".iso") {
+			name = strings.TrimSuffix(name, ".iso")
 			vol.contentType = ContentTypeISO
-		default:
+		} else {
 			vol.contentType = ContentTypeFS
 		}
 
-		return vol, instRes[4], nil
+		vol.name = name
+		return vol, snapName, nil
 	}
 
-	return vol, "", fmt.Errorf("Unrecognised parent: %q", parent)
+	// Handle container volumes.
+	if strings.HasPrefix(parentName, "container_") || strings.HasPrefix(parentName, "zombie_container_") {
+		vol.volType = VolumeTypeContainer
+
+		// Split snapshot name.
+		s := strings.Split(parentName, "@")
+		var name string
+		var snapName string
+
+		if len(s) > 1 {
+			snapName = s[len(s)-1]
+			name = strings.TrimSuffix(parentName, "@"+snapName)
+		} else {
+			name = parentName
+		}
+
+		// Remove prefix from name.
+		name = strings.SplitN(name, "container_", 2)[1]
+
+		// Check for block indicator.
+		if strings.HasSuffix(name, ".block") {
+			name = strings.TrimSuffix(name, ".block")
+			vol.contentType = ContentTypeBlock
+		} else {
+			vol.contentType = ContentTypeFS
+		}
+
+		vol.name = name
+		return vol, snapName, nil
+	}
+
+	// Handle virtual-machines volumes.
+	if strings.HasPrefix(parentName, "virtual_machine_") || strings.HasPrefix(parentName, "zombie_virtual_machine_") {
+		vol.volType = VolumeTypeVM
+
+		// Split snapshot name.
+		s := strings.Split(parentName, "@")
+		var name string
+		var snapName string
+
+		if len(s) > 1 {
+			snapName = s[len(s)-1]
+			name = strings.TrimSuffix(parentName, "@"+snapName)
+		} else {
+			name = parentName
+		}
+
+		// Remove prefix from name.
+		name = strings.SplitN(name, "virtual_machine_", 2)[1]
+
+		// Check for block indicator.
+		if strings.HasSuffix(name, ".block") {
+			name = strings.TrimSuffix(name, ".block")
+			vol.contentType = ContentTypeBlock
+		} else {
+			vol.contentType = ContentTypeFS
+		}
+
+		vol.name = name
+		return vol, snapName, nil
+	}
+
+	return vol, "", fmt.Errorf("Unrecognized parent: %q", parent)
 }
 
 // parseClone splits a strings describing an RBD storage volume.
