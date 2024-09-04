@@ -76,7 +76,7 @@ func (d *ceph) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Ope
 
 			// Check if the cached image volume is larger than the current pool volume.size setting
 			// (if so we won't be able to resize the snapshot to that the smaller size later).
-			volSizeBytes, err := d.getVolumeSize(d.getRBDVolumeName(deletedVol, "", false, true))
+			volSizeBytes, err := d.getVolumeSize(d.getRBDVolumeName(deletedVol, "", true))
 			if err != nil {
 				return err
 			}
@@ -97,7 +97,7 @@ func (d *ceph) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Ope
 			if volSizeBytes != poolVolSizeBytes {
 				d.logger.Debug("Renaming deleted cached image volume so that regeneration is used", logger.Ctx{"fingerprint": vol.Name()})
 				randomVol := NewVolume(d, d.name, deletedVol.volType, deletedVol.contentType, strings.Replace(uuid.New().String(), "-", "", -1), deletedVol.config, deletedVol.poolConfig)
-				err = renameVolume(d.getRBDVolumeName(deletedVol, "", false, true), d.getRBDVolumeName(randomVol, "", false, true))
+				err = renameVolume(d.getRBDVolumeName(deletedVol, "", true), d.getRBDVolumeName(randomVol, "", true))
 				if err != nil {
 					return err
 				}
@@ -106,7 +106,7 @@ func (d *ceph) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Ope
 					fsDeletedVol := deletedVol.NewVMBlockFilesystemVolume()
 					fsRandomVol := randomVol.NewVMBlockFilesystemVolume()
 
-					err = renameVolume(d.getRBDVolumeName(fsDeletedVol, "", false, true), d.getRBDVolumeName(fsRandomVol, "", false, true))
+					err = renameVolume(d.getRBDVolumeName(fsDeletedVol, "", true), d.getRBDVolumeName(fsRandomVol, "", true))
 					if err != nil {
 						return err
 					}
@@ -118,7 +118,7 @@ func (d *ceph) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Ope
 			// Restore the image.
 			if canRestore {
 				d.logger.Debug("Restoring previously deleted cached image volume", logger.Ctx{"fingerprint": vol.Name()})
-				err = renameVolume(d.getRBDVolumeName(deletedVol, "", false, true), d.getRBDVolumeName(vol, "", false, true))
+				err = renameVolume(d.getRBDVolumeName(deletedVol, "", true), d.getRBDVolumeName(vol, "", true))
 				if err != nil {
 					return err
 				}
@@ -127,7 +127,7 @@ func (d *ceph) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Ope
 					fsDeletedVol := deletedVol.NewVMBlockFilesystemVolume()
 					fsVol := vol.NewVMBlockFilesystemVolume()
 
-					err = renameVolume(d.getRBDVolumeName(fsDeletedVol, "", false, true), d.getRBDVolumeName(fsVol, "", false, true))
+					err = renameVolume(d.getRBDVolumeName(fsDeletedVol, "", true), d.getRBDVolumeName(fsVol, "", true))
 					if err != nil {
 						return err
 					}
@@ -395,8 +395,8 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 				"--id", d.config["ceph.user.name"],
 				"--cluster", d.config["ceph.cluster_name"],
 				"cp",
-				d.getRBDVolumeName(srcVol, "", false, true),
-				d.getRBDVolumeName(vol, "", false, true),
+				d.getRBDVolumeName(srcVol, "", true),
+				d.getRBDVolumeName(vol, "", true),
 			)
 			if err != nil {
 				return err
@@ -466,7 +466,7 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 	revert.Add(func() { _ = d.rbdDeleteVolume(vol) })
 
 	// Receive over the placeholder volume we created above.
-	targetVolumeName := d.getRBDVolumeName(vol, "", false, true)
+	targetVolumeName := d.getRBDVolumeName(vol, "", true)
 
 	lastSnap := ""
 
@@ -484,7 +484,7 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 		}
 
 		lastSnap = fmt.Sprintf("snapshot_%s", snap)
-		sourceVolumeName := d.getRBDVolumeName(srcVol, lastSnap, false, true)
+		sourceVolumeName := d.getRBDVolumeName(srcVol, lastSnap, true)
 		err = d.copyWithSnapshots(sourceVolumeName, targetVolumeName, prev)
 		if err != nil {
 			return err
@@ -504,7 +504,7 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 	}
 
 	// Copy snapshot.
-	sourceVolumeName := d.getRBDVolumeName(srcVol, "", false, true)
+	sourceVolumeName := d.getRBDVolumeName(srcVol, "", true)
 
 	err = d.copyWithSnapshots(sourceVolumeName, targetVolumeName, lastSnap)
 	if err != nil {
@@ -554,7 +554,7 @@ func (d *ceph) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vo
 		}
 	}
 
-	recvName := d.getRBDVolumeName(vol, "", false, true)
+	recvName := d.getRBDVolumeName(vol, "", true)
 
 	volExists, err := d.HasVolume(vol)
 	if err != nil {
@@ -583,7 +583,7 @@ func (d *ceph) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vo
 
 		// Transfer the snapshots.
 		for _, snapName := range volTargetArgs.Snapshots {
-			fullSnapshotName := d.getRBDVolumeName(vol, snapName, false, true)
+			fullSnapshotName := d.getRBDVolumeName(vol, snapName, true)
 			wrapper := localMigration.ProgressWriter(op, "fs_progress", fullSnapshotName)
 
 			err = d.receiveVolume(recvName, conn, wrapper)
@@ -667,7 +667,7 @@ func (d *ceph) DeleteVolume(vol Volume, op *operations.Operation) error {
 			return err
 		}
 
-		hasReadonlySnapshot, err := d.hasVolume(d.getRBDVolumeName(vol, "readonly", false, false))
+		hasReadonlySnapshot, err := d.hasVolume(d.getRBDVolumeName(vol, "readonly", false))
 		if err != nil {
 			return err
 		}
@@ -707,7 +707,7 @@ func (d *ceph) DeleteVolume(vol Volume, op *operations.Operation) error {
 				"--pool", d.config["ceph.osd.pool_name"],
 				"snap",
 				"purge",
-				d.getRBDVolumeName(vol, "", false, false))
+				d.getRBDVolumeName(vol, "", false))
 			if err != nil {
 				return err
 			}
@@ -790,7 +790,7 @@ func (d *ceph) hasVolume(rbdVolumeName string) (bool, error) {
 
 // HasVolume indicates whether a specific volume exists on the storage pool.
 func (d *ceph) HasVolume(vol Volume) (bool, error) {
-	return d.hasVolume(d.getRBDVolumeName(vol, "", false, false))
+	return d.hasVolume(d.getRBDVolumeName(vol, "", false))
 }
 
 // FillVolumeConfig populate volume with default config.
@@ -918,7 +918,7 @@ func (d *ceph) GetVolumeUsage(vol Volume) (int64, error) {
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
 		"--pool", d.config["ceph.osd.pool_name"],
-		d.getRBDVolumeName(vol, "", false, false),
+		d.getRBDVolumeName(vol, "", false),
 	)
 	if err != nil {
 		return -1, err
@@ -1428,7 +1428,7 @@ func (d *ceph) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *lo
 		}
 
 		lastSnap = fmt.Sprintf("snapshot_%s", snapName)
-		sendSnapName := d.getRBDVolumeName(vol, lastSnap, false, true)
+		sendSnapName := d.getRBDVolumeName(vol, lastSnap, true)
 
 		// Setup progress tracking.
 		var wrapper *ioprogress.ProgressTracker
@@ -1458,7 +1458,7 @@ func (d *ceph) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *lo
 
 	defer func() { _ = d.rbdDeleteVolumeSnapshot(vol, runningSnapName) }()
 
-	cur := d.getRBDVolumeName(vol, runningSnapName, false, true)
+	cur := d.getRBDVolumeName(vol, runningSnapName, true)
 
 	err = d.sendVolume(conn, cur, lastSnap, wrapper)
 	if err != nil {
@@ -1537,7 +1537,7 @@ func (d *ceph) DeleteVolumeSnapshot(snapVol Volume, op *operations.Operation) er
 		"--cluster", d.config["ceph.cluster_name"],
 		"--pool", d.config["ceph.osd.pool_name"],
 		"info",
-		d.getRBDVolumeName(snapVol, "", false, false))
+		d.getRBDVolumeName(snapVol, "", false))
 	if err != nil {
 		return nil
 	}
@@ -1806,7 +1806,7 @@ func (d *ceph) RestoreVolume(vol Volume, snapshotName string, op *operations.Ope
 		"snap",
 		"rollback",
 		"--snap", fmt.Sprintf("snapshot_%s", snapshotName),
-		d.getRBDVolumeName(vol, "", false, false))
+		d.getRBDVolumeName(vol, "", false))
 	if err != nil {
 		return err
 	}
