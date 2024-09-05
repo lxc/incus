@@ -1660,16 +1660,16 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 			}
 
 			logicalSwitchPort.Addresses = []string{addresses}
-		}
 
-		if opts.DHCPv4OptsID != "" {
-			dhcp4opts := string(opts.DHCPv4OptsID)
-			logicalSwitchPort.Dhcpv4Options = &dhcp4opts
-		}
+			if opts.DHCPv4OptsID != "" {
+				dhcp4opts := string(opts.DHCPv4OptsID)
+				logicalSwitchPort.Dhcpv4Options = &dhcp4opts
+			}
 
-		if opts.DHCPv6OptsID != "" {
-			dhcp6opts := string(opts.DHCPv6OptsID)
-			logicalSwitchPort.Dhcpv6Options = &dhcp6opts
+			if opts.DHCPv6OptsID != "" {
+				dhcp6opts := string(opts.DHCPv6OptsID)
+				logicalSwitchPort.Dhcpv6Options = &dhcp6opts
+			}
 		}
 
 		if opts.Location != "" {
