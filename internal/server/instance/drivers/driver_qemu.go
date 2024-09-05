@@ -3602,8 +3602,8 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 		}
 	}
 
-	// Allocate 4 PCI slots for hotplug devices.
-	for i := 0; i < 4; i++ {
+	// Allocate 8 PCI slots for hotplug devices.
+	for i := 0; i < 8; i++ {
 		bus.allocate(busFunctionGroupNone)
 	}
 
