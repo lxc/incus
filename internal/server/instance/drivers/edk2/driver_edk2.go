@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/lxc/incus/v6/shared/osarch"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // FirmwarePair represents a combination of firmware code (Code) and storage (Vars).
@@ -177,9 +178,15 @@ func GetArchitectureFirmwarePairsForUsage(hostArch int, usage FirmwareUsage) []F
 					searchPath = installation.Path
 				}
 
+				codePath := filepath.Join(searchPath, firmwarePair.Code)
+				varsPath := filepath.Join(searchPath, firmwarePair.Vars)
+				if !util.PathExists(codePath) || !util.PathExists(varsPath) {
+					continue
+				}
+
 				firmwares = append(firmwares, FirmwarePair{
-					Code: filepath.Join(searchPath, firmwarePair.Code),
-					Vars: filepath.Join(searchPath, firmwarePair.Vars),
+					Code: codePath,
+					Vars: varsPath,
 				})
 			}
 		}
