@@ -172,10 +172,9 @@ func GetArchitectureFirmwarePairsForUsage(hostArch int, usage FirmwareUsage) []F
 		usage, found := installation.Usage[usage]
 		if found {
 			for _, firmwarePair := range usage {
-				searchPath := installation.Path
-
-				if GetenvEdk2Path() != "" {
-					searchPath = GetenvEdk2Path()
+				searchPath := GetenvEdk2Path()
+				if searchPath == "" {
+					searchPath = installation.Path
 				}
 
 				firmwares = append(firmwares, FirmwarePair{
