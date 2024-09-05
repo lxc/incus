@@ -3537,19 +3537,8 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		return "", nil, err
 	}
 
-	staticIPs := []net.IP{}
-	for _, key := range []string{"ipv4.address", "ipv6.address"} {
-		if opts.DeviceConfig[key] == "" {
-			continue
-		}
-
-		ip := net.ParseIP(opts.DeviceConfig[key])
-		if ip == nil {
-			return "", nil, fmt.Errorf("Invalid %s value %q", key, opts.DeviceConfig[key])
-		}
-
-		staticIPs = append(staticIPs, ip)
-	}
+	ipv4 := opts.DeviceConfig["ipv4.address"]
+	ipv6 := opts.DeviceConfig["ipv6.address"]
 
 	internalRoutes, externalRoutes, err := n.instanceDevicePortRoutesParse(opts.DeviceConfig)
 	if err != nil {
@@ -3606,7 +3595,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 
 			// If a previously used IP has been found and its not one of the static IPs, then check if
 			// the IP is available for use and if not then we can request this port use it statically.
-			if dhcpV4StickyIP != nil && !IPInSlice(dhcpV4StickyIP, staticIPs) {
+			if dhcpV4StickyIP != nil && dhcpV4StickyIP.String() != ipv4 {
 				// If the sticky IP isn't statically reserved, lets check its not used dynamically
 				// on any active port.
 				if !n.hasDHCPv4Reservation(dhcpReservations, dhcpV4StickyIP) {
@@ -3625,7 +3614,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 
 					// If IP is not in use then request OVN use previously used IP for port.
 					if !found {
-						staticIPs = append(staticIPs, dhcpV4StickyIP)
+						ipv4 = dhcpV4StickyIP.String()
 					}
 				}
 			}
@@ -3651,24 +3640,14 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 			// port has an IPv6 address that will be used to generate a DNS record. This works around a
 			// limitation in OVN that prevents us requesting dynamic IPv6 address allocation when
 			// static IPv4 allocation is used.
-			if len(staticIPs) > 0 {
-				hasIPv6 := false
-				for _, ip := range staticIPs {
-					if ip.To4() == nil {
-						hasIPv6 = true
-						break
-					}
+			if ipv4 != "" && ipv6 == "" {
+				eui64IP, err := eui64.ParseMAC(dhcpv6Subnet.IP, mac)
+				if err != nil {
+					return "", nil, fmt.Errorf("Failed generating EUI64 for instance port %q: %w", mac.String(), err)
 				}
 
-				if !hasIPv6 {
-					eui64IP, err := eui64.ParseMAC(dhcpv6Subnet.IP, mac)
-					if err != nil {
-						return "", nil, fmt.Errorf("Failed generating EUI64 for instance port %q: %w", mac.String(), err)
-					}
-
-					// Add EUI64 to list of static IPs for instance port.
-					staticIPs = append(staticIPs, eui64IP)
-				}
+				// Add EUI64 as the IPv6 address.
+				ipv6 = eui64IP.String()
 			}
 		}
 	}
@@ -3695,7 +3674,8 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		DHCPv4OptsID: dhcpV4ID,
 		DHCPv6OptsID: dhcpv6ID,
 		MAC:          mac,
-		IPs:          staticIPs,
+		IPV4:         ipv4,
+		IPV6:         ipv6,
 		Parent:       nestedPortParentName,
 		VLAN:         nestedPortVLAN,
 		Location:     n.state.ServerName,
@@ -3729,12 +3709,16 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	}
 
 	// Populate DNS IP variables with any static IPs first before checking if we need to extract dynamic IPs.
-	for _, staticIP := range staticIPs {
-		checkAndStoreIP(staticIP)
+	for _, staticIP := range []string{ipv4, ipv6} {
+		if staticIP == "" || staticIP == "none" {
+			continue
+		}
+
+		checkAndStoreIP(net.ParseIP(staticIP))
 	}
 
 	// Get dynamic IPs for switch port if any IPs not assigned statically.
-	if dnsIPv4 == nil || dnsIPv6 == nil {
+	if (ipv4 != "none" && dnsIPv4 == nil) || (ipv6 != "none" && dnsIPv6 == nil) {
 		var dynamicIPs []net.IP
 
 		// Retry a few times in case port has not yet allocated dynamic IPs.
