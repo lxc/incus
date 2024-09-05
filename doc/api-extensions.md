@@ -2602,3 +2602,7 @@ LVM physical volume.
 ## `ovn_nic_promiscuous`
 
 This implements a new `security.promiscuous` configuration option on OVN NICs.
+
+## `ovn_nic_ip_address_none`
+
+This adds `none` as a value for `ipv4.address` and `ipv6.address` for OVN NICs.
