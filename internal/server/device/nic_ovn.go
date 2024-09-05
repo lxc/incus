@@ -32,6 +32,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 // ovnNet defines an interface for accessing instance specific functions on OVN network.
@@ -252,6 +253,23 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 
 	rules := nicValidationRules(requiredFields, optionalFields, instConf)
 
+	// Override ipv4.address and ipv6.address to allow none value.
+	rules["ipv4.address"] = validate.Optional(func(value string) error {
+		if value == "none" {
+			return nil
+		}
+
+		return validate.IsNetworkAddressV4(value)
+	})
+
+	rules["ipv6.address"] = validate.Optional(func(value string) error {
+		if value == "none" {
+			return nil
+		}
+
+		return validate.IsNetworkAddressV6(value)
+	})
+
 	// Now run normal validation.
 	err = d.config.Validate(rules)
 	if err != nil {
@@ -296,6 +314,11 @@ func (d *nicOVN) checkAddressConflict() error {
 	ourNICIPs := make(map[string]net.IP, 2)
 	ourNICIPs["ipv4.address"] = net.ParseIP(d.config["ipv4.address"])
 	ourNICIPs["ipv6.address"] = net.ParseIP(d.config["ipv6.address"])
+
+	// Shortcut when no IP needs to be assigned.
+	if ourNICIPs["ipv4.address"] == nil && ourNICIPs["ipv6.address"] == nil {
+		return nil
+	}
 
 	ourNICMAC, _ := net.ParseMAC(d.config["hwaddr"])
 	if ourNICMAC == nil {
@@ -1079,7 +1102,7 @@ func (d *nicOVN) State() (*api.InstanceStateNetwork, error) {
 			d.logger.Warn("Failed getting OVN port device IPs", logger.Ctx{"err": err})
 		}
 	} else {
-		if d.config["ipv4.address"] != "" {
+		if d.config["ipv4.address"] != "" && d.config["ipv4.address"] != "none" {
 			// Static DHCPv4 allocation present, that is likely to be the NIC's IPv4. So assume that.
 			addresses = append(addresses, api.InstanceStateNetworkAddress{
 				Family:  "inet",
@@ -1089,7 +1112,7 @@ func (d *nicOVN) State() (*api.InstanceStateNetwork, error) {
 			})
 		}
 
-		if d.config["ipv6.address"] != "" {
+		if d.config["ipv6.address"] != "" && d.config["ipv4.address"] != "none" {
 			// Static DHCPv6 allocation present, that is likely to be the NIC's IPv6. So assume that.
 			addresses = append(addresses, api.InstanceStateNetworkAddress{
 				Family:  "inet6",
