@@ -238,6 +238,7 @@ Key                                   | Type    | Default           | Managed | 
 `security.acls.default.egress.logged` | bool    | `false`           | no      | Whether to log egress traffic that doesn't match any ACL rule
 `security.acls.default.ingress.action`| string  | `reject`          | no      | Action to use for ingress traffic that doesn't match any ACL rule
 `security.acls.default.ingress.logged`| bool    | `false`           | no      | Whether to log ingress traffic that doesn't match any ACL rule
+`security.promiscuous`                | bool    | `false`           | no      | Have OVN send unknown network traffic to this network interface (required for some nesting cases)
 `vlan`                                | integer | -                 | no      | The VLAN ID to use when nesting (see also `nested`)
 
 (nic-physical)=
