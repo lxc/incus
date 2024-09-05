@@ -640,6 +640,11 @@ func (n *common) bgpSetup(oldConfig map[string]string) error {
 		return fmt.Errorf("Failed applying BGP prefixes for address forwards: %w", err)
 	}
 
+	err = n.loadBalancerBGPSetupPrefixes()
+	if err != nil {
+		return fmt.Errorf("Failed applying BGP prefixes for load balancers: %w", err)
+	}
+
 	return nil
 }
 
