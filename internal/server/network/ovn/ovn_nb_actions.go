@@ -118,7 +118,8 @@ type OVNDHCPv6Opts struct {
 // OVNSwitchPortOpts options that can be applied to a swich port.
 type OVNSwitchPortOpts struct {
 	MAC          net.HardwareAddr   // Optional, if nil will be set to dynamic.
-	IPs          []net.IP           // Optional, if empty IPs will be set to dynamic.
+	IPV4         string             // Optional, if empty, allocate an address, if "none" then disable allocation.
+	IPV6         string             // Optional, if empty, allocate an address, if "none" then disable allocation.
 	DHCPv4OptsID OVNDHCPOptionsUUID // Optional, if empty, no DHCPv4 enabled on port.
 	DHCPv6OptsID OVNDHCPOptionsUUID // Optional, if empty, no DHCPv6 enabled on port.
 	Parent       OVNSwitchPort      // Optional, if set a nested port is created.
@@ -1646,21 +1647,31 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 			logicalSwitchPort.Addresses = []string{"router"}
 			logicalSwitchPort.Options = map[string]string{"router-port": string(opts.RouterPort)}
 		} else {
-			ipStr := make([]string, 0, len(opts.IPs))
-			for _, ip := range opts.IPs {
-				ipStr = append(ipStr, ip.String())
+			if (opts.IPV4 == "none" && opts.IPV6 != "none") || (opts.IPV6 == "none" && opts.IPV4 != "none") {
+				return fmt.Errorf("OVN doesn't support disabling IP allocation on only one protocol")
 			}
 
-			var addresses string
-			if opts.MAC != nil && len(ipStr) > 0 {
-				addresses = fmt.Sprintf("%s %s", opts.MAC.String(), strings.Join(ipStr, " "))
-			} else if opts.MAC != nil && len(ipStr) <= 0 {
-				addresses = fmt.Sprintf("%s %s", opts.MAC.String(), "dynamic")
-			} else {
-				addresses = "dynamic"
-			}
+			addresses := []string{}
+			if opts.IPV4 != "none" && opts.IPV6 != "none" {
+				address := []string{}
+				if opts.MAC != nil {
+					address = append(address, opts.MAC.String())
+				}
 
-			logicalSwitchPort.Addresses = []string{addresses}
+				if opts.IPV4 == "" || opts.IPV6 == "" {
+					address = append(address, "dynamic")
+				}
+
+				if opts.IPV4 != "" {
+					address = append(address, opts.IPV4)
+				}
+
+				if opts.IPV6 != "" {
+					address = append(address, opts.IPV6)
+				}
+
+				addresses = append(addresses, strings.Join(address, " "))
+			}
 
 			if opts.DHCPv4OptsID != "" {
 				dhcp4opts := string(opts.DHCPv4OptsID)
@@ -1673,8 +1684,10 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 			}
 
 			if opts.Promiscuous {
-				logicalSwitchPort.Addresses = append(logicalSwitchPort.Addresses, "unknown")
+				addresses = append(addresses, "unknown")
 			}
+
+			logicalSwitchPort.Addresses = addresses
 		}
 
 		if opts.Location != "" {
