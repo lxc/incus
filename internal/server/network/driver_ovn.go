@@ -3699,6 +3699,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		Parent:       nestedPortParentName,
 		VLAN:         nestedPortVLAN,
 		Location:     n.state.ServerName,
+		Promiscuous:  util.IsTrue(opts.DeviceConfig["security.promiscuous"]),
 	}, true)
 	if err != nil {
 		return "", nil, err
