@@ -440,6 +440,7 @@ var APIExtensions = []string{
 	"qemu_scriptlet",
 	"instance_auto_restart",
 	"storage_lvm_metadatasize",
+	"ovn_nic_promiscuous",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
