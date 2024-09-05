@@ -125,6 +125,7 @@ type OVNSwitchPortOpts struct {
 	VLAN         uint16             // Optional, use with Parent to request a specific VLAN for nested port.
 	Location     string             // Optional, use to indicate the name of the server this port is bound to.
 	RouterPort   OVNRouterPort      // Optional, the name of the associated logical router port.
+	Promiscuous  bool               // Optional, controls whether to allow unknown traffic on the port.
 }
 
 // OVNACLRule represents an ACL rule that can be added to a logical switch or port group.
@@ -1669,6 +1670,10 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 			if opts.DHCPv6OptsID != "" {
 				dhcp6opts := string(opts.DHCPv6OptsID)
 				logicalSwitchPort.Dhcpv6Options = &dhcp6opts
+			}
+
+			if opts.Promiscuous {
+				logicalSwitchPort.Addresses = append(logicalSwitchPort.Addresses, "unknown")
 			}
 		}
 
