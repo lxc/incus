@@ -224,10 +224,10 @@ Key                                   | Type    | Default           | Managed | 
 `boot.priority`                       | integer | -                 | no      | Boot priority for VMs (higher value boots first)
 `host_name`                           | string  | randomly assigned | no      | The name of the interface inside the host
 `hwaddr`                              | string  | randomly assigned | no      | The MAC address of the new interface
-`ipv4.address`                        | string  | -                 | no      | An IPv4 address to assign to the instance through DHCP
+`ipv4.address`                        | string  | -                 | no      | An IPv4 address to assign to the instance through DHCP, `none` can be used to disable IP allocation
 `ipv4.routes`                         | string  | -                 | no      | Comma-delimited list of IPv4 static routes to route to the NIC
 `ipv4.routes.external`                | string  | -                 | no      | Comma-delimited list of IPv4 static routes to route to the NIC and publish on uplink network
-`ipv6.address`                        | string  | -                 | no      | An IPv6 address to assign to the instance through DHCP
+`ipv6.address`                        | string  | -                 | no      | An IPv6 address to assign to the instance through DHCP, `none` can be used to disable IP allocation
 `ipv6.routes`                         | string  | -                 | no      | Comma-delimited list of IPv6 static routes to route to the NIC
 `ipv6.routes.external`                | string  | -                 | no      | Comma-delimited list of IPv6 static routes to route to the NIC and publish on uplink network
 `name`                                | string  | kernel assigned   | no      | The name of the interface inside the instance
@@ -240,6 +240,11 @@ Key                                   | Type    | Default           | Managed | 
 `security.acls.default.ingress.logged`| bool    | `false`           | no      | Whether to log ingress traffic that doesn't match any ACL rule
 `security.promiscuous`                | bool    | `false`           | no      | Have OVN send unknown network traffic to this network interface (required for some nesting cases)
 `vlan`                                | integer | -                 | no      | The VLAN ID to use when nesting (see also `nested`)
+
+```{note}
+Note that using `none` with either `ipv4.address` or `ipv6.address` needs the other protocol to also be disabled.
+There is currently no way for OVN to disable IP allocation just on IPv4 or IPv6.
+```
 
 (nic-physical)=
 ### `nictype`: `physical`
