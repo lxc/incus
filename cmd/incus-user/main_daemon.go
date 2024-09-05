@@ -22,6 +22,8 @@ var mu sync.RWMutex
 var connections uint64
 var transactions uint64
 
+var projectNames []string
+
 type cmdDaemon struct {
 	flagGroup string
 }
@@ -73,6 +75,12 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("Failed to apply initial configuration: %w", err)
 		}
+	}
+
+	// Pull the list of projects.
+	projectNames, err = client.GetProjectNames()
+	if err != nil {
+		return fmt.Errorf("Failed to pull project list: %w", err)
 	}
 
 	// Disconnect.

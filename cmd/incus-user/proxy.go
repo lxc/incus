@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"slices"
 
 	log "github.com/sirupsen/logrus"
 
@@ -81,7 +82,7 @@ func proxyConnection(conn *net.UnixConn) {
 	defer logger.Debug("Disconnected")
 
 	// Check if the user was setup.
-	if !util.PathExists(internalUtil.VarPath("users", fmt.Sprintf("%d", creds.Uid))) {
+	if !util.PathExists(internalUtil.VarPath("users", fmt.Sprintf("%d", creds.Uid))) || !slices.Contains(projectNames, fmt.Sprintf("user-%d", creds.Uid)) {
 		log.Infof("Setting up for uid %d", creds.Uid)
 		err := serverSetupUser(creds.Uid)
 		if err != nil {
