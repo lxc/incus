@@ -145,7 +145,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 	d.network = ovnNet // Stored loaded network for use by other functions.
 	netConfig := d.network.Config()
 
-	if d.config["ipv4.address"] != "" {
+	if d.config["ipv4.address"] != "" && d.config["ipv4.address"] != "none" {
 		// Check that DHCPv4 is enabled on parent network (needed to use static assigned IPs).
 		if n.DHCPv4Subnet() == nil {
 			return fmt.Errorf("Cannot specify %q when DHCP is disabled on network %q", "ipv4.address", d.config["network"])
@@ -168,7 +168,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		}
 	}
 
-	if d.config["ipv6.address"] != "" {
+	if d.config["ipv6.address"] != "" && d.config["ipv6.address"] != "none" {
 		// Check that DHCPv6 is enabled on parent network (needed to use static assigned IPs).
 		if n.DHCPv6Subnet() == nil || util.IsFalseOrEmpty(netConfig["ipv6.dhcp.stateful"]) {
 			return fmt.Errorf("Cannot specify %q when DHCP or %q are disabled on network %q", "ipv6.address", "ipv6.dhcp.stateful", d.config["network"])
