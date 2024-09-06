@@ -32,6 +32,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 // ovnNet defines an interface for accessing instance specific functions on OVN network.
@@ -103,6 +104,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		"security.acls.default.egress.action",
 		"security.acls.default.ingress.logged",
 		"security.acls.default.egress.logged",
+		"security.promiscuous",
 		"acceleration",
 		"nested",
 		"vlan",
@@ -143,7 +145,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 	d.network = ovnNet // Stored loaded network for use by other functions.
 	netConfig := d.network.Config()
 
-	if d.config["ipv4.address"] != "" {
+	if d.config["ipv4.address"] != "" && d.config["ipv4.address"] != "none" {
 		// Check that DHCPv4 is enabled on parent network (needed to use static assigned IPs).
 		if n.DHCPv4Subnet() == nil {
 			return fmt.Errorf("Cannot specify %q when DHCP is disabled on network %q", "ipv4.address", d.config["network"])
@@ -166,7 +168,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		}
 	}
 
-	if d.config["ipv6.address"] != "" {
+	if d.config["ipv6.address"] != "" && d.config["ipv6.address"] != "none" {
 		// Check that DHCPv6 is enabled on parent network (needed to use static assigned IPs).
 		if n.DHCPv6Subnet() == nil || util.IsFalseOrEmpty(netConfig["ipv6.dhcp.stateful"]) {
 			return fmt.Errorf("Cannot specify %q when DHCP or %q are disabled on network %q", "ipv6.address", "ipv6.dhcp.stateful", d.config["network"])
@@ -251,6 +253,23 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 
 	rules := nicValidationRules(requiredFields, optionalFields, instConf)
 
+	// Override ipv4.address and ipv6.address to allow none value.
+	rules["ipv4.address"] = validate.Optional(func(value string) error {
+		if value == "none" {
+			return nil
+		}
+
+		return validate.IsNetworkAddressV4(value)
+	})
+
+	rules["ipv6.address"] = validate.Optional(func(value string) error {
+		if value == "none" {
+			return nil
+		}
+
+		return validate.IsNetworkAddressV6(value)
+	})
+
 	// Now run normal validation.
 	err = d.config.Validate(rules)
 	if err != nil {
@@ -295,6 +314,11 @@ func (d *nicOVN) checkAddressConflict() error {
 	ourNICIPs := make(map[string]net.IP, 2)
 	ourNICIPs["ipv4.address"] = net.ParseIP(d.config["ipv4.address"])
 	ourNICIPs["ipv6.address"] = net.ParseIP(d.config["ipv6.address"])
+
+	// Shortcut when no IP needs to be assigned.
+	if ourNICIPs["ipv4.address"] == nil && ourNICIPs["ipv6.address"] == nil {
+		return nil
+	}
 
 	ourNICMAC, _ := net.ParseMAC(d.config["hwaddr"])
 	if ourNICMAC == nil {
@@ -1078,7 +1102,7 @@ func (d *nicOVN) State() (*api.InstanceStateNetwork, error) {
 			d.logger.Warn("Failed getting OVN port device IPs", logger.Ctx{"err": err})
 		}
 	} else {
-		if d.config["ipv4.address"] != "" {
+		if d.config["ipv4.address"] != "" && d.config["ipv4.address"] != "none" {
 			// Static DHCPv4 allocation present, that is likely to be the NIC's IPv4. So assume that.
 			addresses = append(addresses, api.InstanceStateNetworkAddress{
 				Family:  "inet",
@@ -1088,7 +1112,7 @@ func (d *nicOVN) State() (*api.InstanceStateNetwork, error) {
 			})
 		}
 
-		if d.config["ipv6.address"] != "" {
+		if d.config["ipv6.address"] != "" && d.config["ipv4.address"] != "none" {
 			// Static DHCPv6 allocation present, that is likely to be the NIC's IPv6. So assume that.
 			addresses = append(addresses, api.InstanceStateNetworkAddress{
 				Family:  "inet6",

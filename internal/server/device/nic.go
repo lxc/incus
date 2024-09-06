@@ -51,6 +51,7 @@ func nicValidationRules(requiredFields []string, optionalFields []string, instCo
 		"security.acls.default.egress.action":  validate.Optional(validate.IsOneOf(acl.ValidActions...)),
 		"security.acls.default.ingress.logged": validate.Optional(validate.IsBool),
 		"security.acls.default.egress.logged":  validate.Optional(validate.IsBool),
+		"security.promiscuous":                 validate.Optional(validate.IsBool),
 	}
 
 	validators := map[string]func(value string) error{}

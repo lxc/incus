@@ -2598,3 +2598,11 @@ unexpected exit for up to 10 times over a 1 minute period.
 This introduces a new `lvm.metadata_size` option for LVM storage pools
 which allows overriding the default metadata size when creating a new
 LVM physical volume.
+
+## `ovn_nic_promiscuous`
+
+This implements a new `security.promiscuous` configuration option on OVN NICs.
+
+## `ovn_nic_ip_address_none`
+
+This adds `none` as a value for `ipv4.address` and `ipv6.address` for OVN NICs.
