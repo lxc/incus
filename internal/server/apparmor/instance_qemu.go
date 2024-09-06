@@ -16,6 +16,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   capability setgid,
   capability setuid,
   capability sys_chroot,
+  capability sys_rawio,
   capability sys_resource,
 
   # Needed by qemu
