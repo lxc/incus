@@ -842,7 +842,7 @@ func (d *qemu) restoreStateHandle(ctx context.Context, monitor *qmp.Monitor, f *
 		return err
 	}
 
-	err = monitor.MigrateIncoming(ctx, "fd:migration")
+	err = monitor.MigrateIncoming(ctx, "migration")
 	if err != nil {
 		return err
 	}
@@ -966,7 +966,7 @@ func (d *qemu) saveStateHandle(monitor *qmp.Monitor, f *os.File) error {
 	}
 
 	// Issue the migration command.
-	err = monitor.Migrate("fd:migration")
+	err = monitor.Migrate("migration")
 	if err != nil {
 		return err
 	}

@@ -308,9 +308,28 @@ func (m *Monitor) MigrateSetCapabilities(caps map[string]bool) error {
 }
 
 // Migrate starts a migration stream.
-func (m *Monitor) Migrate(uri string) error {
+func (m *Monitor) Migrate(name string) error {
 	// Query the status.
-	args := map[string]string{"uri": uri}
+
+	type migrateArgsChannel struct {
+		ChannelType string            `json:"channel-type"`
+		Address     map[string]string `json:"addr"`
+	}
+
+	type migrateArgs struct {
+		Channels []migrateArgsChannel `json:"channels"`
+	}
+
+	args := migrateArgs{}
+	args.Channels = []migrateArgsChannel{{
+		ChannelType: "main",
+		Address: map[string]string{
+			"transport": "socket",
+			"type":      "fd",
+			"str":       name,
+		},
+	}}
+
 	err := m.run("migrate", args, nil)
 	if err != nil {
 		return err
@@ -366,9 +385,27 @@ func (m *Monitor) MigrateContinue(fromState string) error {
 }
 
 // MigrateIncoming starts the receiver of a migration stream.
-func (m *Monitor) MigrateIncoming(ctx context.Context, uri string) error {
+func (m *Monitor) MigrateIncoming(ctx context.Context, name string) error {
+	type migrateArgsChannel struct {
+		ChannelType string            `json:"channel-type"`
+		Address     map[string]string `json:"addr"`
+	}
+
+	type migrateArgs struct {
+		Channels []migrateArgsChannel `json:"channels"`
+	}
+
+	args := migrateArgs{}
+	args.Channels = []migrateArgsChannel{{
+		ChannelType: "main",
+		Address: map[string]string{
+			"transport": "socket",
+			"type":      "fd",
+			"str":       name,
+		},
+	}}
+
 	// Query the status.
-	args := map[string]string{"uri": uri}
 	err := m.run("migrate-incoming", args, nil)
 	if err != nil {
 		return err
