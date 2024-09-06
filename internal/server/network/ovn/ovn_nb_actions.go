@@ -1658,16 +1658,16 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 					address = append(address, opts.MAC.String())
 				}
 
-				if opts.IPV4 == "" || opts.IPV6 == "" {
+				if opts.IPV4 == "" && opts.IPV6 == "" {
 					address = append(address, "dynamic")
-				}
+				} else {
+					if opts.IPV4 != "" {
+						address = append(address, opts.IPV4)
+					}
 
-				if opts.IPV4 != "" {
-					address = append(address, opts.IPV4)
-				}
-
-				if opts.IPV6 != "" {
-					address = append(address, opts.IPV6)
+					if opts.IPV6 != "" {
+						address = append(address, opts.IPV6)
+					}
 				}
 
 				addresses = append(addresses, strings.Join(address, " "))
