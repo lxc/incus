@@ -132,6 +132,16 @@ func (d *lvm) volumeGroupExists(vgName string) (bool, []string, error) {
 
 // volumeGroupExtentSize gets the volume group's physical extent size in bytes.
 func (d *lvm) volumeGroupExtentSize(vgName string) (int64, error) {
+	// Look for cached value.
+	lvmExtentSizeMu.Lock()
+	defer lvmExtentSizeMu.Unlock()
+
+	if lvmExtentSize == nil {
+		lvmExtentSize = map[string]int64{}
+	} else if lvmExtentSize[d.name] > 0 {
+		return lvmExtentSize[d.name], nil
+	}
+
 	output, err := subprocess.TryRunCommand("vgs", "--noheadings", "--nosuffix", "--units", "b", "-o", "vg_extent_size", vgName)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
@@ -142,7 +152,14 @@ func (d *lvm) volumeGroupExtentSize(vgName string) (int64, error) {
 	}
 
 	output = strings.TrimSpace(output)
-	return strconv.ParseInt(output, 10, 64)
+	val, err := strconv.ParseInt(output, 10, 64)
+	if err != nil {
+		return -1, err
+	}
+
+	lvmExtentSize[d.name] = val
+
+	return val, nil
 }
 
 // countLogicalVolumes gets the count of volumes (both normal and thin) in a volume group.
