@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/lxc/incus/v6/internal/linux"
@@ -25,6 +26,9 @@ import (
 )
 
 const lvmVgPoolMarker = "incus_pool" // Indicator tag used to mark volume groups as in use.
+
+var lvmExtentSize map[string]int64
+var lvmExtentSizeMu sync.Mutex
 
 var lvmLoaded bool
 var lvmVersion string
