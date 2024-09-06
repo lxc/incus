@@ -1184,7 +1184,7 @@ func (n *common) loadBalancerValidate(listenAddress net.IP, forward *api.Network
 
 	// Check the configuration.
 	lbOptions := map[string]func(value string) error{
-		// gendoc:generate(entity=network_load_balancer, group=healthcheck, key=healthcheck)
+		// gendoc:generate(entity=network_load_balancer, group=common, key=healthcheck)
 		//
 		// ---
 		//  type: bool
@@ -1192,7 +1192,7 @@ func (n *common) loadBalancerValidate(listenAddress net.IP, forward *api.Network
 		//  shortdesc: Whether to perform checks on the backends
 		"healthcheck": validate.Optional(validate.IsBool),
 
-		// gendoc:generate(entity=network_load_balancer, group=healthcheck, key=healthcheck.interval)
+		// gendoc:generate(entity=network_load_balancer, group=common, key=healthcheck.interval)
 		//
 		// ---
 		//  type: integer
@@ -1200,7 +1200,7 @@ func (n *common) loadBalancerValidate(listenAddress net.IP, forward *api.Network
 		//  defaultdesc: `10`
 		"healthcheck.interval": validate.IsUint32,
 
-		// gendoc:generate(entity=network_load_balancer, group=healthcheck, key=healthcheck.success_count)
+		// gendoc:generate(entity=network_load_balancer, group=common, key=healthcheck.success_count)
 		//
 		// ---
 		//  type: integer
@@ -1208,7 +1208,7 @@ func (n *common) loadBalancerValidate(listenAddress net.IP, forward *api.Network
 		//  defaultdesc: `3`
 		"healthcheck.success_count": validate.IsUint32,
 
-		// gendoc:generate(entity=network_load_balancer, group=healthcheck, key=healthcheck.failure_count)
+		// gendoc:generate(entity=network_load_balancer, group=common, key=healthcheck.failure_count)
 		//
 		// ---
 		//  type: integer
@@ -1216,7 +1216,7 @@ func (n *common) loadBalancerValidate(listenAddress net.IP, forward *api.Network
 		//  defaultdesc: `3`
 		"healthcheck.failure_count": validate.IsUint32,
 
-		// gendoc:generate(entity=network_load_balancer, group=healthcheck, key=healthcheck.timeout)
+		// gendoc:generate(entity=network_load_balancer, group=common, key=healthcheck.timeout)
 		//
 		// ---
 		//  type: integer
