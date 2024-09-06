@@ -1702,17 +1702,6 @@
 			"common": {
 				"keys": [
 					{
-						"user.*": {
-							"longdesc": "User keys can be used in search.",
-							"shortdesc": "Free form user key/value storage",
-							"type": "string"
-						}
-					}
-				]
-			},
-			"healthcheck": {
-				"keys": [
-					{
 						"healthcheck": {
 							"defaultdesc": "`false`",
 							"longdesc": "",
@@ -1750,6 +1739,13 @@
 							"longdesc": "",
 							"shortdesc": "Test timeout",
 							"type": "integer"
+						}
+					},
+					{
+						"user.*": {
+							"longdesc": "User keys can be used in search.",
+							"shortdesc": "Free form user key/value storage",
+							"type": "string"
 						}
 					}
 				]
