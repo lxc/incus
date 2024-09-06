@@ -4088,9 +4088,11 @@ func (d *qemu) addDriveConfig(qemuDev map[string]string, bootIndexes map[string]
 	noFlushCache := false // Don't ignore any flush requests for the device.
 
 	if cacheMode == "unsafe" {
+		aioMode = "threads"
 		directCache = false
 		noFlushCache = true
 	} else if cacheMode == "writeback" {
+		aioMode = "threads"
 		directCache = false
 	}
 
