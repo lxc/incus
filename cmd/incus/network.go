@@ -1135,7 +1135,11 @@ func (c *cmdNetworkList) typeColumnData(network api.Network) string {
 }
 
 func (c *cmdNetworkList) managedColumnData(network api.Network) string {
-	return fmt.Sprintf("%v", network.Managed)
+	if network.Managed {
+		return i18n.G("YES")
+	}
+
+	return i18n.G("NO")
 }
 
 func (c *cmdNetworkList) projectColumnData(network api.Network) string {
