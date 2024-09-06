@@ -917,6 +917,14 @@ func (d *Daemon) init() error {
 		return err
 	}
 
+	// Initialize apparmor.
+	if d.os.AppArmorAvailable {
+		err := apparmor.Init()
+		if err != nil {
+			return fmt.Errorf("Failed to initialize apparmor: %v", err)
+		}
+	}
+
 	// Setup AppArmor wrapper.
 	archive.RunWrapper = func(cmd *exec.Cmd, output string, allowedCmds []string) (func(), error) {
 		return apparmor.ArchiveWrapper(d.os, cmd, output, allowedCmds)
