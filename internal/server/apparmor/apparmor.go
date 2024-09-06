@@ -25,17 +25,18 @@ var aaCacheDir string
 var aaPath = internalUtil.VarPath("security", "apparmor")
 var aaVersion *version.DottedVersion
 
-func init() {
+// Init performs initial version and feature detection.
+func Init() error {
 	// Fill in aaVersion.
 	out, err := subprocess.RunCommand("apparmor_parser", "--version")
 	if err != nil {
-		return
+		return err
 	}
 
 	fields := strings.Fields(strings.Split(out, "\n")[0])
 	parsedVersion, err := version.Parse(fields[len(fields)-1])
 	if err != nil {
-		return
+		return err
 	}
 
 	aaVersion = parsedVersion
@@ -46,7 +47,7 @@ func init() {
 	// Multiple policy cache directories were only added in v2.13.
 	minVer, err := version.NewDottedVersion("2.13")
 	if err != nil {
-		return
+		return err
 	}
 
 	if aaVersion.Compare(minVer) < 0 {
@@ -54,11 +55,13 @@ func init() {
 	} else {
 		output, err := subprocess.RunCommand("apparmor_parser", "-L", basePath, "--print-cache-dir")
 		if err != nil {
-			return
+			return err
 		}
 
 		aaCacheDir = strings.TrimSpace(output)
 	}
+
+	return nil
 }
 
 // runApparmor runs the relevant AppArmor command.
