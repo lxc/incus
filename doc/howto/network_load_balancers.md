@@ -40,7 +40,7 @@ Property         | Type         | Required | Description
 
 ### Configuration options
 
-The following configuration options are available for all network integrations:
+The following configuration options are available for load balancers:
 
 % Include content from [../config_options.txt](../config_options.txt)
 ```{include} ../config_options.txt
