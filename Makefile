@@ -93,7 +93,7 @@ ifneq "$(INCUS_OFFLINE)" ""
 	@echo "The update-gomod target cannot be run in offline mode."
 	exit 1
 endif
-	$(GO) get -t -v -d -u ./...
+	$(GO) get -t -v -u ./...
 	$(GO) mod tidy --go=1.22.0
 	$(GO) get toolchain@none
 
