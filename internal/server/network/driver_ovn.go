@@ -360,7 +360,8 @@ func (n *ovn) Validate(config map[string]string) error {
 
 			return validate.IsNetworkAddressCIDRV4(value)
 		}),
-		"ipv4.dhcp": validate.Optional(validate.IsBool),
+		"ipv4.dhcp":        validate.Optional(validate.IsBool),
+		"ipv4.dhcp.ranges": validate.Optional(validate.IsListOf(validate.IsNetworkRangeV4)),
 		"ipv6.address": validate.Optional(func(value string) error {
 			if validate.IsOneOf("none", "auto")(value) == nil {
 				return nil
@@ -1967,6 +1968,12 @@ func (n *ovn) getDHCPv4Reservations() ([]iprange.Range, error) {
 
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	allowedNets := []*net.IPNet{n.DHCPv4Subnet()}
+	dhcpRanges, err := parseIPRange(n.config["ipv4.dhcp.ranges"], allowedNets...)
 	if err != nil {
 		return nil, err
 	}
