@@ -1575,6 +1575,41 @@ and peer name (`peerName`).
 
 <!-- config group network_integration-ovn end -->
 <!-- config group network_load_balancer-common start -->
+```{config:option} healthcheck network_load_balancer-common
+:defaultdesc: "`false`"
+:shortdesc: "Whether to perform checks on the backends"
+:type: "bool"
+
+```
+
+```{config:option} healthcheck.failure_count network_load_balancer-common
+:defaultdesc: "`3`"
+:shortdesc: "Number of failed tests to consider the backend offline"
+:type: "integer"
+
+```
+
+```{config:option} healthcheck.interval network_load_balancer-common
+:defaultdesc: "`10`"
+:shortdesc: "Interval in seconds between health checks"
+:type: "integer"
+
+```
+
+```{config:option} healthcheck.success_count network_load_balancer-common
+:defaultdesc: "`3`"
+:shortdesc: "Number of successful tests to consider the backend online"
+:type: "integer"
+
+```
+
+```{config:option} healthcheck.timeout network_load_balancer-common
+:defaultdesc: "`30`"
+:shortdesc: "Test timeout"
+:type: "integer"
+
+```
+
 ```{config:option} user.* network_load_balancer-common
 :shortdesc: "Free form user key/value storage"
 :type: "string"
@@ -1582,43 +1617,6 @@ User keys can be used in search.
 ```
 
 <!-- config group network_load_balancer-common end -->
-<!-- config group network_load_balancer-healthcheck start -->
-```{config:option} healthcheck network_load_balancer-healthcheck
-:defaultdesc: "`false`"
-:shortdesc: "Whether to perform checks on the backends"
-:type: "bool"
-
-```
-
-```{config:option} healthcheck.failure_count network_load_balancer-healthcheck
-:defaultdesc: "`3`"
-:shortdesc: "Number of failed tests to consider the backend offline"
-:type: "integer"
-
-```
-
-```{config:option} healthcheck.interval network_load_balancer-healthcheck
-:defaultdesc: "`10`"
-:shortdesc: "Interval in seconds between health checks"
-:type: "integer"
-
-```
-
-```{config:option} healthcheck.success_count network_load_balancer-healthcheck
-:defaultdesc: "`3`"
-:shortdesc: "Number of successful tests to consider the backend online"
-:type: "integer"
-
-```
-
-```{config:option} healthcheck.timeout network_load_balancer-healthcheck
-:defaultdesc: "`30`"
-:shortdesc: "Test timeout"
-:type: "integer"
-
-```
-
-<!-- config group network_load_balancer-healthcheck end -->
 <!-- config group network_zone-common start -->
 ```{config:option} dns.nameservers network_zone-common
 :required: "no"

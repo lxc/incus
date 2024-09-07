@@ -842,7 +842,7 @@ func (d *qemu) restoreStateHandle(ctx context.Context, monitor *qmp.Monitor, f *
 		return err
 	}
 
-	err = monitor.MigrateIncoming(ctx, "fd:migration")
+	err = monitor.MigrateIncoming(ctx, "migration")
 	if err != nil {
 		return err
 	}
@@ -966,7 +966,7 @@ func (d *qemu) saveStateHandle(monitor *qmp.Monitor, f *os.File) error {
 	}
 
 	// Issue the migration command.
-	err = monitor.Migrate("fd:migration")
+	err = monitor.Migrate("migration")
 	if err != nil {
 		return err
 	}
@@ -4088,9 +4088,11 @@ func (d *qemu) addDriveConfig(qemuDev map[string]string, bootIndexes map[string]
 	noFlushCache := false // Don't ignore any flush requests for the device.
 
 	if cacheMode == "unsafe" {
+		aioMode = "threads"
 		directCache = false
 		noFlushCache = true
 	} else if cacheMode == "writeback" {
+		aioMode = "threads"
 		directCache = false
 	}
 
@@ -4276,7 +4278,9 @@ func (d *qemu) addDriveConfig(qemuDev map[string]string, bootIndexes map[string]
 				permissions = unix.O_RDONLY
 			}
 
-			permissions |= unix.O_DIRECT
+			if directCache {
+				permissions |= unix.O_DIRECT
+			}
 
 			f, err := os.OpenFile(driveConf.DevPath, permissions, 0)
 			if err != nil {
