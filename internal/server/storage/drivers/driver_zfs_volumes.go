@@ -1874,7 +1874,7 @@ func (d *zfs) tryGetVolumeDiskPathFromDataset(ctx context.Context, dataset strin
 
 func (d *zfs) getVolumeDiskPathFromDataset(dataset string) (string, error) {
 	// Shortcut for udev.
-	if util.PathExists(filepath.Join("/dev/zvol", dataset)) {
+	if util.PathExists(filepath.Join("/dev/zvol", dataset)) && linux.IsBlockdevPath(filepath.Join("/dev/zvol", dataset)) {
 		return filepath.Join("/dev/zvol", dataset), nil
 	}
 
@@ -1914,7 +1914,7 @@ func (d *zfs) getVolumeDiskPathFromDataset(dataset string) (string, error) {
 			continue
 		}
 
-		if strings.TrimSpace(output) == dataset {
+		if strings.TrimSpace(output) == dataset && linux.IsBlockdevPath(entryPath) {
 			return entryPath, nil
 		}
 	}
