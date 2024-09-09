@@ -181,7 +181,7 @@ func unloadProfile(sysOS *sys.OS, fullName string, name string) error {
 
 // deleteProfile unloads and delete profile and cache for a profile.
 func deleteProfile(sysOS *sys.OS, fullName string, name string) error {
-	if !sysOS.AppArmorAdmin {
+	if !sysOS.AppArmorAvailable || !sysOS.AppArmorAdmin {
 		return nil
 	}
 
