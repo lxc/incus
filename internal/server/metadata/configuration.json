@@ -893,7 +893,7 @@
 					},
 					{
 						"limits.memory": {
-							"defaultdesc": "`1Gib` (VMs)",
+							"defaultdesc": "`1GiB` (VMs)",
 							"liveupdate": "yes",
 							"longdesc": "Percentage of the host's memory or a fixed value in bytes.\nVarious suffixes are supported.\n\nSee {ref}`instances-limit-units` for details.",
 							"shortdesc": "Usage limit for the host's memory",

@@ -215,7 +215,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// See {ref}`instances-limit-units` for details.
 	// ---
 	//  type: string
-	//  defaultdesc: `1Gib` (VMs)
+	//  defaultdesc: `1GiB` (VMs)
 	//  liveupdate: yes
 	//  shortdesc: Usage limit for the host's memory
 	"limits.memory": func(value string) error {
