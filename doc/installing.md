@@ -113,26 +113,6 @@ Note that this is not an official project of Incus nor Fedora.
 Please report packaging issues [here](https://github.com/ganto/copr-lxc4/issues).
 ```
 
-```{group-tab} Rocky Linux 9
-RPM packages of Incus and its dependencies are not yet available for the EPEL (Extra Packages for Enterprise Linux) but via the [`neil/incus`](https://copr.fedorainfracloud.org/coprs/neil/incus/) Community Project (COPR) repository.
-
-Install the COPR repository and the EPEL repository for dependency packages:
-
-    dnf copr enable neil/incus
-    dnf -y install epel-release
-
-Make available the CodeReady Linux Builder (CRB) for additional dependencies:
-
-    dnf config-manager --enable crb
-    
-Intall Incus and (optionally) Incus tools:
-
-    dnf install incus incus-tools
-
-Note that this is not an official project of Incus nor Rocky Linux.
-Please report packaging issues [here](https://github.com/NeilHanlon/incus-rpm/issues).
-```
-
 ```{group-tab} Gentoo
 Incus and all of its dependencies are available in Gentoo's main repository as [`app-containers/incus`](https://packages.gentoo.org/packages/app-containers/incus).
 
@@ -184,6 +164,26 @@ Finally, you can add users to the `incus-admin` group to provide non-root access
     users.users.YOUR_USERNAME.extraGroups = ["incus-admin"];
 
 For any NixOS specific issues, please [file an issue](https://github.com/NixOS/nixpkgs/issues/new/choose) in the package repository.
+```
+
+```{group-tab} Rocky Linux 9
+RPM packages of Incus and its dependencies are not yet available for the EPEL (Extra Packages for Enterprise Linux) but via the [`neil/incus`](https://copr.fedorainfracloud.org/coprs/neil/incus/) Community Project (COPR) repository.
+
+Install the COPR repository and the EPEL repository for dependency packages:
+
+    dnf copr enable neil/incus
+    dnf -y install epel-release
+
+Make available the CodeReady Linux Builder (CRB) for additional dependencies:
+
+    dnf config-manager --enable crb
+    
+Intall Incus and (optionally) Incus tools:
+
+    dnf install incus incus-tools
+
+Note that this is not an official project of Incus nor Rocky Linux.
+Please report packaging issues [here](https://github.com/NeilHanlon/incus-rpm/issues).
 ```
 
 ```{group-tab} Ubuntu
