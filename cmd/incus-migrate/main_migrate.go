@@ -556,7 +556,15 @@ func (c *cmdMigrate) Run(cmd *cobra.Command, args []string) error {
 
 	// Automatically clean-up the temporary path on exit
 	defer func(path string) {
+		// Unmount the path if it's a mountpoint.
 		_ = unix.Unmount(path, unix.MNT_DETACH)
+		_ = unix.Unmount(filepath.Join(path, "root.img"), unix.MNT_DETACH)
+
+		// Cleanup VM image files.
+		_ = os.Remove(filepath.Join(path, "converted-raw-image.img"))
+		_ = os.Remove(filepath.Join(path, "root.img"))
+
+		// Remove the directory itself.
 		_ = os.Remove(path)
 	}(path)
 
@@ -577,6 +585,44 @@ func (c *cmdMigrate) Run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("Failed to setup the source: %w", err)
 		}
 	} else {
+		_, ext, convCmd, _ := archive.DetectCompression(config.SourcePath)
+		if ext == ".qcow2" || ext == ".vmdk" {
+			destImg := filepath.Join(path, "converted-raw-image.img")
+
+			cmd := []string{
+				"nice", "-n19", // Run with low priority to reduce CPU impact on other processes.
+			}
+
+			cmd = append(cmd, convCmd...)
+			cmd = append(cmd, "-p", "-t", "writeback")
+
+			// Check for Direct I/O support.
+			from, err := os.OpenFile(config.SourcePath, unix.O_DIRECT|unix.O_RDONLY, 0)
+			if err == nil {
+				cmd = append(cmd, "-T", "none")
+				_ = from.Close()
+			}
+
+			to, err := os.OpenFile(destImg, unix.O_DIRECT|unix.O_RDONLY, 0)
+			if err == nil {
+				cmd = append(cmd, "-t", "none")
+				_ = to.Close()
+			}
+
+			cmd = append(cmd, config.SourcePath, destImg)
+
+			fmt.Printf("Converting image %q to raw format before importing\n", config.SourcePath)
+
+			c := exec.Command(cmd[0], cmd[1:]...)
+			err = c.Run()
+
+			if err != nil {
+				return fmt.Errorf("Failed to convert image %q for importing: %w", config.SourcePath, err)
+			}
+
+			config.SourcePath = destImg
+		}
+
 		fullPath = path
 		target := filepath.Join(path, "root.img")
 
