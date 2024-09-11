@@ -177,7 +177,7 @@ Install the COPR repository and the EPEL repository for dependency packages:
 Make available the CodeReady Linux Builder (CRB) for additional dependencies:
 
     dnf config-manager --enable crb
-    
+
 Intall Incus and (optionally) Incus tools:
 
     dnf install incus incus-tools
