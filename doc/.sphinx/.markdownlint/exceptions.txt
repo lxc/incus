@@ -1,5 +1,5 @@
-.tmp/doc/howto/import_machines_to_instances.md:104: MD034 Bare URL used
-.tmp/doc/howto/import_machines_to_instances.md:208: MD034 Bare URL used
+.tmp/doc/howto/import_machines_to_instances.md:106: MD034 Bare URL used
+.tmp/doc/howto/import_machines_to_instances.md:210: MD034 Bare URL used
 .tmp/doc/howto/network_forwards.md:52: MD004 Unordered list style
 .tmp/doc/howto/network_forwards.md:56: MD004 Unordered list style
 .tmp/doc/howto/network_forwards.md:53: MD005 Inconsistent indentation for list items at the same level
