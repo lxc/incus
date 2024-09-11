@@ -8,13 +8,16 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-09-05 23:30-0400\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Automatically generated\n"
-"Language-Team: none\n"
+"PO-Revision-Date: 2024-09-11 12:09+0000\n"
+"Last-Translator: Daniel Dybing <daniel.dybing@gmail.com>\n"
+"Language-Team: Norwegian Bokmål <https://hosted.weblate.org/projects/incus/"
+"cli/nb_NO/>\n"
 "Language: nb_NO\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 5.8-dev\n"
 
 #: cmd/incus/info.go:438
 msgid "  Chassis:"
@@ -22,11 +25,11 @@ msgstr ""
 
 #: cmd/incus/info.go:478
 msgid "  Firmware:"
-msgstr ""
+msgstr "  Fastvare:"
 
 #: cmd/incus/info.go:458
 msgid "  Motherboard:"
-msgstr ""
+msgstr "  Hovedkort:"
 
 #: cmd/incus/storage_bucket.go:273 cmd/incus/storage_bucket.go:1208
 msgid "### This is a YAML representation of a storage bucket.\n"
@@ -187,6 +190,10 @@ msgid "### This is a YAML representation of the network integration.\n"
 "###\n"
 "### Note that the name is shown but cannot be changed"
 msgstr ""
+"### Dette er en YAML-presentasjon av nettverksintegrasjonen.\n"
+"### Alle linjer som starter med '# vil bli ignorert.\n"
+"###\n"
+"### Bemerk at navnet vises, men kan ikke endres"
 
 #: cmd/incus/network_load_balancer.go:656
 msgid "### This is a YAML representation of the network load balancer.\n"
@@ -8609,19 +8616,19 @@ msgstr ""
 
 #: cmd/incus/storage.go:547
 msgid "info"
-msgstr ""
+msgstr "informasjon"
 
 #: cmd/incus/remote.go:475
 msgid "n"
-msgstr ""
+msgstr "n"
 
 #: cmd/incus/storage.go:548
 msgid "name"
-msgstr ""
+msgstr "navn"
 
 #: cmd/incus/config_trust.go:496 cmd/incus/image.go:971 cmd/incus/image.go:976 cmd/incus/image.go:1181
 msgid "no"
-msgstr ""
+msgstr "nei"
 
 #: cmd/incus/remote.go:467
 msgid "ok (y/n/[fingerprint])?"
@@ -8629,15 +8636,15 @@ msgstr ""
 
 #: cmd/incus/config.go:55
 msgid "please use `incus profile`"
-msgstr ""
+msgstr "vennligst bruk `incus profile`"
 
 #: cmd/incus/storage.go:552
 msgid "space used"
-msgstr ""
+msgstr "brukt plass"
 
 #: cmd/incus/file.go:1309
 msgid "sshfs has stopped"
-msgstr ""
+msgstr "sshfs har stoppet"
 
 #: cmd/incus/file.go:1268
 #, c-format
@@ -8650,20 +8657,20 @@ msgstr ""
 
 #: cmd/incus/storage.go:551
 msgid "total space"
-msgstr ""
+msgstr "total plass"
 
 #: cmd/incus/version.go:48
 msgid "unreachable"
-msgstr ""
+msgstr "utilgjengelig"
 
 #: cmd/incus/storage.go:546
 msgid "used by"
-msgstr ""
+msgstr "brukt av"
 
 #: cmd/incus/remote.go:477
 msgid "y"
-msgstr ""
+msgstr "j"
 
 #: cmd/incus/cluster.go:727 cmd/incus/config_trust.go:493 cmd/incus/delete.go:52 cmd/incus/image.go:973 cmd/incus/image.go:978 cmd/incus/image.go:1178 cmd/incus/project.go:223 cmd/incus/snapshot.go:256
 msgid "yes"
-msgstr ""
+msgstr "ja"
