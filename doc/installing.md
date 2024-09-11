@@ -166,6 +166,26 @@ Finally, you can add users to the `incus-admin` group to provide non-root access
 For any NixOS specific issues, please [file an issue](https://github.com/NixOS/nixpkgs/issues/new/choose) in the package repository.
 ```
 
+```{group-tab} Rocky Linux
+RPM packages and their dependencies are not yet available from the Extra Packages for Enterprise Linux (EPEL) repository, but via the [`neil/incus`](https://copr.fedorainfracloud.org/coprs/neil/incus/) Community Project (COPR) repository for Rocky Linux 9.
+
+Ensure that the EPEL repository is installed for package dependencies and then install the COPR repository:
+
+    dnf -y install epel-release
+    dnf copr enable neil/incus
+
+Ensure that the `CodeReady Builder` (`CRB`) is available for other package dependencies:
+
+    dnf config-manager --enable crb
+
+Then install Incus and optionally, Incus tools:
+
+    dnf install incus incus-tools
+
+Note that this is not an official project of Incus nor Rocky Linux.
+Please report packaging issues [here](https://github.com/NeilHanlon/incus-rpm/issues).
+```
+
 ```{group-tab} Ubuntu
 There are two options currently available to Ubuntu users.
 
