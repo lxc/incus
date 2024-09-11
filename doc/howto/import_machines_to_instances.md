@@ -7,6 +7,8 @@ You can run the tool on any Linux machine.
 It connects to an Incus server and creates a blank instance, which you can configure during or after the migration.
 The tool then copies the data from the disk or image that you provide to the instance.
 
+`incus-migrate` can import images in `raw`, `qcow2`, and `vmdk` file formats.
+
 ```{note}
 If you want to configure your new instance during the migration process, set up the entities that you want your instance to use before starting the migration process.
 
