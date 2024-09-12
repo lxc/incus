@@ -2544,7 +2544,7 @@ func (c *cmdStorageVolumeSnapshotList) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List storage volume snapshots`))
 
-	c.defaultColumns = "etndcuL"
+	c.defaultColumns = "nTE"
 	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", c.defaultColumns, i18n.G("Columns")+"``")
 	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("All projects")+"``")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -2555,13 +2555,9 @@ func (c *cmdStorageVolumeSnapshotList) Command() *cobra.Command {
 	or csv format.
 
 	Column shorthand chars:
-		c - Content type (filesystem or block)
-		d - Description
-		e - Project name
-		L - Location of the instance (e.g. its cluster member)
 		n - Name
-		t - Type of volume (custom, image, container or virtual-machine)
-		u - Number of references (used by)`))
+		T - Taken at
+		E - Expiry`))
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
 
 	cmd.RunE = c.Run
@@ -2618,39 +2614,82 @@ func (c *cmdStorageVolumeSnapshotList) listSnapshots(d incus.InstanceServer, poo
 		return err
 	}
 
-	// List snapshots
-	snapData := [][]string{}
+	// Parse column flags.
+	columns, err := c.parseColumns()
+	if err != nil {
+		return err
+	}
 
+	data := [][]string{}
 	for _, snap := range snapshots {
-		var row []string
-
-		fields := strings.Split(snap.Name, instance.SnapshotDelimiter)
-		row = append(row, fields[len(fields)-1])
-
-		if !snap.CreatedAt.IsZero() {
-			row = append(row, snap.CreatedAt.Local().Format(dateLayout))
-		} else {
-			row = append(row, " ")
+		line := []string{}
+		for _, column := range columns {
+			line = append(line, column.Data(snap))
 		}
 
-		if snap.ExpiresAt != nil && !snap.ExpiresAt.IsZero() {
-			row = append(row, snap.ExpiresAt.Local().Format(dateLayout))
-		} else {
-			row = append(row, " ")
+		data = append(data, line)
+	}
+
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
+	}
+
+	return cli.RenderTable(c.flagFormat, header, data, snapshots)
+}
+
+type storageVolumeSnapshotColumn struct {
+	Name string
+	Data func(api.StorageVolumeSnapshot) string
+}
+
+func (c *cmdStorageVolumeSnapshotList) parseColumns() ([]storageVolumeSnapshotColumn, error) {
+	columnsShorthandMap := map[rune]storageVolumeSnapshotColumn{
+		'n': {i18n.G("NAME"), c.nameColumnData},
+		'T': {i18n.G("TAKEN AT"), c.takenAtColumnData},
+		'E': {i18n.G("EXPIRES AT"), c.expiresAtColumnData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+	columns := []storageVolumeSnapshotColumn{}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
 		}
 
-		snapData = append(snapData, row)
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
 	}
 
-	snapHeader := []string{
-		i18n.G("Name"),
-		i18n.G("Taken at"),
-		i18n.G("Expires at"),
+	return columns, nil
+}
+
+func (c *cmdStorageVolumeSnapshotList) nameColumnData(snapshot api.StorageVolumeSnapshot) string {
+	_, snapName, _ := api.GetParentAndSnapshotName(snapshot.Name)
+	return snapName
+}
+
+func (c *cmdStorageVolumeSnapshotList) takenAtColumnData(snapshot api.StorageVolumeSnapshot) string {
+	if snapshot.CreatedAt.IsZero() {
+		return " "
 	}
 
-	_ = cli.RenderTable(cli.TableFormatTable, snapHeader, snapData, snapshots)
+	return snapshot.CreatedAt.Local().Format(dateLayout)
+}
 
-	return nil
+func (c *cmdStorageVolumeSnapshotList) expiresAtColumnData(snapshot api.StorageVolumeSnapshot) string {
+	if snapshot.ExpiresAt == nil || snapshot.ExpiresAt.IsZero() {
+		return " "
+	}
+
+	return snapshot.ExpiresAt.Local().Format(dateLayout)
 }
 
 // Snapshot rename.
