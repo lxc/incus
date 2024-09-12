@@ -3330,25 +3330,28 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 
 	cfg = append(cfg, qemuTablet(&tabletOpts)...)
 
-	// Existing vsock ID from volatile.
-	vsockID, err := d.getVsockID()
-	if err != nil {
-		return "", nil, err
-	}
+	// Windows doesn't support virtio-vsock.
+	if !strings.Contains(strings.ToLower(d.expandedConfig["image.os"]), "windows") {
+		// Existing vsock ID from volatile.
+		vsockID, err := d.getVsockID()
+		if err != nil {
+			return "", nil, err
+		}
 
-	devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
-	vsockOpts := qemuVsockOpts{
-		dev: qemuDevOpts{
-			busName:       bus.name,
-			devBus:        devBus,
-			devAddr:       devAddr,
-			multifunction: multi,
-		},
-		vsockFD: vsockFD,
-		vsockID: vsockID,
-	}
+		devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
+		vsockOpts := qemuVsockOpts{
+			dev: qemuDevOpts{
+				busName:       bus.name,
+				devBus:        devBus,
+				devAddr:       devAddr,
+				multifunction: multi,
+			},
+			vsockFD: vsockFD,
+			vsockID: vsockID,
+		}
 
-	cfg = append(cfg, qemuVsock(&vsockOpts)...)
+		cfg = append(cfg, qemuVsock(&vsockOpts)...)
+	}
 
 	devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
 	serialOpts := qemuSerialOpts{
@@ -3396,25 +3399,10 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 
 	cfg = append(cfg, qemuSCSI(&scsiOpts)...)
 
-	// Always export the config directory as a 9p config drive, in case the host or VM guest doesn't support
-	// virtio-fs.
-	devBus, devAddr, multi = bus.allocate(busFunctionGroup9p)
-	driveConfig9pOpts := qemuDriveConfigOpts{
-		dev: qemuDevOpts{
-			busName:       bus.name,
-			devBus:        devBus,
-			devAddr:       devAddr,
-			multifunction: multi,
-		},
-		name:     "config",
-		protocol: "9p",
-		path:     d.configDriveMountPath(),
-	}
-
-	cfg = append(cfg, qemuDriveConfig(&driveConfig9pOpts)...)
-
-	// Pass in the agents if INCUS_AGENT_PATH is set.
-	if util.PathExists(os.Getenv("INCUS_AGENT_PATH")) {
+	// Windows doesn't support virtio-9p.
+	if !strings.Contains(strings.ToLower(d.expandedConfig["image.os"]), "windows") {
+		// Always export the config directory as a 9p config drive, in case the host or VM guest doesn't support
+		// virtio-fs.
 		devBus, devAddr, multi = bus.allocate(busFunctionGroup9p)
 		driveConfig9pOpts := qemuDriveConfigOpts{
 			dev: qemuDevOpts{
@@ -3423,12 +3411,30 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 				devAddr:       devAddr,
 				multifunction: multi,
 			},
-			name:     "agent",
+			name:     "config",
 			protocol: "9p",
-			path:     os.Getenv("INCUS_AGENT_PATH"),
+			path:     d.configDriveMountPath(),
 		}
 
 		cfg = append(cfg, qemuDriveConfig(&driveConfig9pOpts)...)
+
+		// Pass in the agents if INCUS_AGENT_PATH is set.
+		if util.PathExists(os.Getenv("INCUS_AGENT_PATH")) {
+			devBus, devAddr, multi = bus.allocate(busFunctionGroup9p)
+			driveConfig9pOpts := qemuDriveConfigOpts{
+				dev: qemuDevOpts{
+					busName:       bus.name,
+					devBus:        devBus,
+					devAddr:       devAddr,
+					multifunction: multi,
+				},
+				name:     "agent",
+				protocol: "9p",
+				path:     os.Getenv("INCUS_AGENT_PATH"),
+			}
+
+			cfg = append(cfg, qemuDriveConfig(&driveConfig9pOpts)...)
+		}
 	}
 
 	// If user has requested AMD SEV, check if supported and add to QEMU config.
