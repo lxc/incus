@@ -185,72 +185,113 @@ table {{.family}} {{.namespace}} {
 var nftablesInstanceBridgeFilter = template.Must(template.New("nftablesInstanceBridgeFilter").Parse(`
 chain in{{.chainSeparator}}{{.deviceLabel}} {
 	type filter hook input priority -200; policy accept;
+	{{if .macFiltering -}}
 	iifname "{{.hostName}}" ether saddr != {{.hwAddr}} drop
 	iifname "{{.hostName}}" ether type arp arp saddr ether != {{.hwAddr}} drop
 	iifname "{{.hostName}}" ether type ip6 icmpv6 type 136 @nh,528,48 != {{.hwAddrHex}} drop
-	{{if .ipv4Nets -}}
+	{{- end}}
+	{{if .ipv4NetsList -}}
 	iifname "{{.hostName}}" ether type ip ip saddr 0.0.0.0 ip daddr 255.255.255.255 udp dport 67 accept
-	{{range .ipv4Nets -}}
-	iifname "{{$.hostName}}" ether type arp arp saddr ip {{.}} accept
-	iifname "{{$.hostName}}" ether type ip ip saddr {{.}} accept
-	{{end}}
-	iifname "{{.hostName}}" ether type arp drop
-	iifname "{{.hostName}}" ether type ip drop
+	iifname "{{.hostName}}" ether type arp arp saddr ip != { {{.ipv4NetsList}} } drop
+	iifname "{{.hostName}}" ether type ip ip saddr != { {{.ipv4NetsList}} } drop
 	{{- end}}
 	{{if .ipv4FilterAll -}}
 	iifname "{{.hostName}}" ether type arp drop
 	iifname "{{.hostName}}" ether type ip drop
 	{{- end}}
-	{{if .ipv6Nets -}}
+	{{if .ipv6NetsList -}}
 	iifname "{{.hostName}}" ether type ip6 ip6 saddr fe80::/10 ip6 daddr ff02::1:2 udp dport 547 accept
 	iifname "{{.hostName}}" ether type ip6 ip6 saddr fe80::/10 ip6 daddr ff02::2 icmpv6 type 133 accept
 	iifname "{{.hostName}}" ether type ip6 icmpv6 type 134 drop
-	{{ range .ipv6Nets -}}
-	iifname "{{$.hostName}}" ether type ip6 icmpv6 type 136 @nh,384,{{.nBits}} {{.hexPrefix}} accept
-	iifname "{{$.hostName}}" ether type ip6 ip6 saddr {{.net}} accept
-	{{end}}
-	iifname "{{.hostName}}" ether type ip6 drop
+	iifname "{{.hostName}}" ether type ip6 icmpv6 type 136 {{.ipv6NetsPrefixList}} drop
+	iifname "{{.hostName}}" ether type ip6 ip6 saddr != { {{.ipv6NetsList}} } drop
 	{{- end}}
 	{{if .ipv6FilterAll -}}
 	iifname "{{.hostName}}" ether type ip6 drop
 	{{- end}}
+	{{- if .aclInChain -}}
+	ct state established,related accept
+	{{- end}}
+	{{- range .aclInDropRules}}
+	{{.}}
+	{{- end}}
+	{{- range .aclInAcceptRules}}
+	{{.}}
+	{{- end}}
 	{{if .filterUnwantedFrames -}}
 	iifname "{{.hostName}}" ether type != {arp, ip, ip6} drop
 	{{- end}}
+	{{if or .aclInDropRules .aclInAcceptRules -}}
+	iifname "{{.hostName}}" ether type arp accept
+	iifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
+	{{- end}}
+	{{.aclInDefaultRule}}
 }
 
 chain fwd{{.chainSeparator}}{{.deviceLabel}} {
 	type filter hook forward priority -200; policy accept;
+	{{if .macFiltering -}}
 	iifname "{{.hostName}}" ether saddr != {{.hwAddr}} drop
 	iifname "{{.hostName}}" ether type arp arp saddr ether != {{.hwAddr}} drop
 	iifname "{{.hostName}}" ether type ip6 icmpv6 type 136 @nh,528,48 != {{.hwAddrHex}} drop
-	{{if .ipv4Nets -}}
-	{{range .ipv4Nets -}}
-	iifname "{{$.hostName}}" ether type arp arp saddr ip {{.}} accept
-	iifname "{{$.hostName}}" ether type ip ip saddr {{.}} accept
-	{{end}}
-	iifname "{{.hostName}}" ether type arp drop
-	iifname "{{.hostName}}" ether type ip drop
+	{{- end}}
+	{{if .ipv4NetsList -}}
+	iifname "{{.hostName}}" ether type arp arp saddr ip != { {{.ipv4NetsList}} } drop
+	iifname "{{.hostName}}" ether type ip ip saddr != { {{.ipv4NetsList}} } drop
 	{{end}}
 	{{if .ipv4FilterAll -}}
 	iifname "{{.hostName}}" ether type arp drop
 	iifname "{{.hostName}}" ether type ip drop
 	{{- end}}
-	{{if .ipv6Nets -}}
+	{{if .ipv6NetsList -}}
 	iifname "{{.hostName}}" ether type ip6 icmpv6 type 134 drop
-	{{range .ipv6Nets}}
-	iifname "{{$.hostName}}" ether type ip6 ip6 saddr {{.net}} accept
-	iifname "{{$.hostName}}" ether type ip6 icmpv6 type 136 @nh,384,{{.nBits}} {{.hexPrefix}} accept
-	{{end}}
-	iifname "{{.hostName}}" ether type ip6 drop
+	iifname "{{.hostName}}" ether type ip6 icmpv6 type 136 {{.ipv6NetsPrefixList}} drop
+	iifname "{{.hostName}}" ether type ip6 ip6 saddr != { {{.ipv6NetsList}} } drop
 	{{- end}}
 	{{if .ipv6FilterAll -}}
 	iifname "{{.hostName}}" ether type ip6 drop
 	{{- end}}
+	{{- range .aclInDropRules}}
+	{{.}}
+	{{- end}}
+	{{- range .aclOutDropRules}}
+	{{.}}
+	{{- end}}
+	{{- range .aclInAcceptRules}}
+	{{.}}
+	{{- end}}
+	{{- range .aclOutAcceptRules}}
+	{{.}}
+	{{- end}}
 	{{if .filterUnwantedFrames -}}
 	iifname "{{.hostName}}" ether type != {arp, ip, ip6} drop
 	{{- end}}
+	{{if or .aclInDropRules .aclInAcceptRules -}}
+	iifname "{{.hostName}}" ether type arp accept
+	iifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
+	{{- end}}
+	{{if or .aclOutDropRules .aclOutAcceptRules -}}
+	oifname "{{.hostName}}" ether type arp accept
+	oifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
+	{{- end}}
+	{{.aclInDefaultRule}}
+	{{.aclOutDefaultRule}}
 }
+
+{{if or .aclOutDropRules .aclOutAcceptRules -}}
+chain out{{.chainSeparator}}{{.deviceLabel}} {
+	type filter hook output priority filter; policy accept;
+	{{- range .aclOutDropRules}}
+	{{.}}
+	{{- end}}
+	{{- range .aclOutAcceptRules}}
+	{{.}}
+	{{- end}}
+	oifname "{{.hostName}}" ether type arp accept
+	oifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
+	{{.aclOutDefaultRule}}
+}
+{{- end}}
 `))
 
 // nftablesInstanceRPFilter defines the rules to perform reverse path filtering.
