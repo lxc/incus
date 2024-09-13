@@ -25,7 +25,9 @@ func BridgeUpdateACLs(s *state.State, l logger.Logger, aclProjectName string, ac
 		devices := inst.LocalDevices().CloneNative()
 
 		// Test if device named aclNetDevice.DeviceName is present in the instance
-		if _, ok := devices[aclNetDevice.DeviceName]; !ok {
+		_, found := devices[aclNetDevice.DeviceName]
+
+		if !found {
 			continue
 		}
 
