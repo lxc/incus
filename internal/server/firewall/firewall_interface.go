@@ -6,6 +6,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/firewall/drivers"
 )
 
+// FirewallRules represents a set of firewall rules.
 type FirewallRules struct {
 	Rules         []drivers.ACLRule
 	IngressAction string
