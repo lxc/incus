@@ -675,6 +675,7 @@ func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftR
 		if nft4Rule != "" {
 			newNftRules = append(newNftRules, nft4Rule)
 		}
+
 		if nft6Rule != "" {
 			newNftRules = append(newNftRules, nft6Rule)
 		}
@@ -684,29 +685,38 @@ func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftR
 			switch {
 			case rule.Action == "drop":
 				nftRules.outDropRules = append(nftRules.outDropRules, newNftRules...)
+
 			case rule.Action == "reject":
 				return nil, fmt.Errorf("Invalid action %q for bridge filter", rule.Action)
+
 			case rule.Action == "allow":
 				nftRules.outAcceptRules = append(nftRules.outAcceptRules, newNftRules...)
+
 			default:
 				return nil, fmt.Errorf("Unrecognised action %q", rule.Action)
 			}
+
 		case "egress":
 			switch {
 			case rule.Action == "drop":
 				nftRules.inDropRules = append(nftRules.inDropRules, newNftRules...)
+
 			case rule.Action == "reject":
 				return nil, fmt.Errorf("Invalid action %q for bridge filter", rule.Action)
+
 			case rule.Action == "allow":
 				if nft4Rule != "" {
 					nftRules.inAcceptRules4 = append(nftRules.inAcceptRules4, nft4Rule)
 				}
+
 				if nft6Rule != "" {
 					nftRules.inAcceptRules6 = append(nftRules.inAcceptRules6, nft6Rule)
 				}
+
 			default:
 				return nil, fmt.Errorf("Unrecognised action %q", rule.Action)
 			}
+
 		default:
 			return nil, fmt.Errorf("Unrecognised direction %q", rule.Direction)
 		}
