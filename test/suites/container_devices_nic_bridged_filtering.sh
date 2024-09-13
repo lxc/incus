@@ -662,11 +662,11 @@ test_container_devices_nic_bridged_filtering() {
         echo "MAC NDP filter not applied as part of ipv6_filtering in nftables (${table}.${ctPrefix}A.eth0)"
         false
       fi
-      if ! echo "${rules}" | grep -P "iifname \"${ctAHost}\" icmpv6 type 136 @nh,384,128 (${ipv6Hex}|${ipv6Dec}) accept"; then
+      if ! echo "${rules}" | grep -P "iifname \"${ctAHost}\" icmpv6 type 136 @nh,384,128 != (${ipv6Hex}|${ipv6Dec}) drop"; then
         echo "IPv6 NDP filter not applied as part of ipv6_filtering in nftables (${table}.${ctPrefix}A.eth0)"
         false
       fi
-      if ! echo "${rules}" | grep "iifname \"${ctAHost}\" ip6 saddr 2001:db8::2 accept"; then
+      if ! echo "${rules}" | grep "iifname \"${ctAHost}\" ip6 saddr != 2001:db8::2 drop"; then
         echo "IPv6 filter not applied as part of ipv6_filtering in nftables (${table}.${ctPrefix}A.eth0)"
         false
       fi
