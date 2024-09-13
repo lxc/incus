@@ -20,9 +20,11 @@ import (
 
 	"github.com/lxc/incus/v6/client"
 	cli "github.com/lxc/incus/v6/internal/cmd"
+	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/revert"
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/archive"
 	"github.com/lxc/incus/v6/shared/osarch"
 	localtls "github.com/lxc/incus/v6/shared/tls"
 	"github.com/lxc/incus/v6/shared/units"
@@ -59,6 +61,7 @@ func (c *cmdMigrate) Command() *cobra.Command {
 
 type cmdMigrateData struct {
 	SourcePath   string
+	SourceFormat string
 	Mounts       []string
 	InstanceArgs api.InstancesPost
 	Project      string
@@ -66,21 +69,23 @@ type cmdMigrateData struct {
 
 func (c *cmdMigrateData) Render() string {
 	data := struct {
-		Name        string            `yaml:"Name"`
-		Project     string            `yaml:"Project"`
-		Type        api.InstanceType  `yaml:"Type"`
-		Source      string            `yaml:"Source"`
-		Mounts      []string          `yaml:"Mounts,omitempty"`
-		Profiles    []string          `yaml:"Profiles,omitempty"`
-		StoragePool string            `yaml:"Storage pool,omitempty"`
-		StorageSize string            `yaml:"Storage pool size,omitempty"`
-		Network     string            `yaml:"Network name,omitempty"`
-		Config      map[string]string `yaml:"Config,omitempty"`
+		Name         string            `yaml:"Name"`
+		Project      string            `yaml:"Project"`
+		Type         api.InstanceType  `yaml:"Type"`
+		Source       string            `yaml:"Source"`
+		SourceFormat string            `yaml:"Source format,omitempty"`
+		Mounts       []string          `yaml:"Mounts,omitempty"`
+		Profiles     []string          `yaml:"Profiles,omitempty"`
+		StoragePool  string            `yaml:"Storage pool,omitempty"`
+		StorageSize  string            `yaml:"Storage pool size,omitempty"`
+		Network      string            `yaml:"Network name,omitempty"`
+		Config       map[string]string `yaml:"Config,omitempty"`
 	}{
 		c.InstanceArgs.Name,
 		c.Project,
 		c.InstanceArgs.Type,
 		c.SourcePath,
+		c.SourceFormat,
 		c.Mounts,
 		c.InstanceArgs.Profiles,
 		"",
@@ -333,7 +338,7 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 
 	// Provide source path
 	if config.InstanceArgs.Type == api.InstanceTypeVM {
-		question = "Please provide the path to a disk, partition, or raw image file: "
+		question = "Please provide the path to a disk, partition, or qcow2/raw/vmdk image file: "
 	} else {
 		question = "Please provide the path to a root filesystem: "
 	}
@@ -346,6 +351,21 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 		_, err := os.Stat(s)
 		if err != nil {
 			return err
+		}
+
+		// When migrating a VM, report the detected source format
+		if config.InstanceArgs.Type == api.InstanceTypeVM {
+			if linux.IsBlockdevPath(s) {
+				config.SourceFormat = "Block device"
+			} else if _, ext, _, _ := archive.DetectCompression(s); ext == ".qcow2" {
+				config.SourceFormat = "qcow2"
+			} else if _, ext, _, _ := archive.DetectCompression(s); ext == ".vmdk" {
+				config.SourceFormat = "vmdk"
+			} else {
+				// If the input isn't a block device or qcow2/vmdk image, assume it's raw.
+				// Positively identifying a raw image depends on parsing MBR/GPT partition tables.
+				config.SourceFormat = "raw"
+			}
 		}
 
 		return nil
@@ -536,7 +556,15 @@ func (c *cmdMigrate) Run(cmd *cobra.Command, args []string) error {
 
 	// Automatically clean-up the temporary path on exit
 	defer func(path string) {
+		// Unmount the path if it's a mountpoint.
 		_ = unix.Unmount(path, unix.MNT_DETACH)
+		_ = unix.Unmount(filepath.Join(path, "root.img"), unix.MNT_DETACH)
+
+		// Cleanup VM image files.
+		_ = os.Remove(filepath.Join(path, "converted-raw-image.img"))
+		_ = os.Remove(filepath.Join(path, "root.img"))
+
+		// Remove the directory itself.
 		_ = os.Remove(path)
 	}(path)
 
@@ -557,6 +585,44 @@ func (c *cmdMigrate) Run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("Failed to setup the source: %w", err)
 		}
 	} else {
+		_, ext, convCmd, _ := archive.DetectCompression(config.SourcePath)
+		if ext == ".qcow2" || ext == ".vmdk" {
+			destImg := filepath.Join(path, "converted-raw-image.img")
+
+			cmd := []string{
+				"nice", "-n19", // Run with low priority to reduce CPU impact on other processes.
+			}
+
+			cmd = append(cmd, convCmd...)
+			cmd = append(cmd, "-p", "-t", "writeback")
+
+			// Check for Direct I/O support.
+			from, err := os.OpenFile(config.SourcePath, unix.O_DIRECT|unix.O_RDONLY, 0)
+			if err == nil {
+				cmd = append(cmd, "-T", "none")
+				_ = from.Close()
+			}
+
+			to, err := os.OpenFile(destImg, unix.O_DIRECT|unix.O_RDONLY, 0)
+			if err == nil {
+				cmd = append(cmd, "-t", "none")
+				_ = to.Close()
+			}
+
+			cmd = append(cmd, config.SourcePath, destImg)
+
+			fmt.Printf("Converting image %q to raw format before importing\n", config.SourcePath)
+
+			c := exec.Command(cmd[0], cmd[1:]...)
+			err = c.Run()
+
+			if err != nil {
+				return fmt.Errorf("Failed to convert image %q for importing: %w", config.SourcePath, err)
+			}
+
+			config.SourcePath = destImg
+		}
+
 		fullPath = path
 		target := filepath.Join(path, "root.img")
 
