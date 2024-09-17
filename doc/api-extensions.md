@@ -2591,3 +2591,8 @@ This adds `none` as a value for `ipv4.address` and `ipv6.address` for OVN NICs.
 ## `instances_state_os_info`
 
 This extension adds a pointer to an `InstanceStateOSInfo` struct to the instance's state API.
+
+## `network_load_balancer_state`
+
+This adds a new `/1.0/networks/NAME/load-balancers/IP/state` API endpoint
+which returns load-balancer health check information (when configured).
