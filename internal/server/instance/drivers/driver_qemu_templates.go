@@ -606,19 +606,13 @@ func qemuControlSocket(opts *qemuControlSocketOpts) []cfgSection {
 	}}
 }
 
-type qemuConsoleOpts struct {
-	path string
-}
-
-func qemuConsole(opts *qemuConsoleOpts) []cfgSection {
+func qemuConsole() []cfgSection {
 	return []cfgSection{{
 		name:    `chardev "console"`,
 		comment: "Console",
 		entries: []cfgEntry{
-			{key: "backend", value: "socket"},
-			{key: "path", value: opts.path},
-			{key: "server", value: "on"},
-			{key: "wait", value: "off"},
+			{key: "backend", value: "ringbuf"},
+			{key: "size", value: "1048576"},
 		},
 	}}
 }
