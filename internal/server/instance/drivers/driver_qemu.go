@@ -346,6 +346,10 @@ type qemu struct {
 
 	// Stateful migration streams.
 	migrationReceiveStateful map[string]io.ReadWriteCloser
+
+	// Keep a reference to the console socket when switching backends, so we can properly cleanup when switching back to a ring buffer.
+	consoleSocket     *net.UnixListener
+	consoleSocketFile *os.File
 }
 
 // getAgentClient returns the current agent client handle.
@@ -9364,4 +9368,52 @@ func (d *qemu) ConsoleLog() (string, error) {
 	}
 
 	return string(fullLog), nil
+}
+
+// SwapConsoleRBWithSocket swaps the qemu backend for the instance's console to a unix socket.
+func (d *qemu) SwapConsoleRBWithSocket() error {
+	// This will wipe out anything in the existing ring buffer; save any buffered data to log file first.
+	_, err := d.ConsoleLog()
+	if err != nil {
+		return err
+	}
+
+	// Check if the agent is running.
+	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler())
+	if err != nil {
+		return err
+	}
+
+	// Create the unix socket here, which will be passed via file descriptor to qemu.
+	d.consoleSocket, err = net.ListenUnix("unix", &net.UnixAddr{Name: d.consolePath(), Net: "unix"})
+	if err != nil {
+		return err
+	}
+
+	d.consoleSocketFile, err = d.consoleSocket.File()
+	if err != nil {
+		_ = d.consoleSocket.Close()
+		_ = os.Remove(d.consolePath())
+		return err
+	}
+
+	return monitor.ChardevChange("console", qmp.ChardevChangeInfo{Type: "socket", FDName: "consoleSocket", File: d.consoleSocketFile})
+}
+
+// SwapConsoleSocketWithRB swaps the qemu backend for the instance's console to a ring buffer.
+func (d *qemu) SwapConsoleSocketWithRB() error {
+	// Check if the agent is running.
+	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler())
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		// Clean up the old socket.
+		_ = d.consoleSocketFile.Close()
+		_ = d.consoleSocket.Close()
+		_ = os.Remove(d.consolePath())
+	}()
+
+	return monitor.ChardevChange("console", qmp.ChardevChangeInfo{Type: "ringbuf"})
 }
