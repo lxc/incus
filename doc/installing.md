@@ -58,6 +58,8 @@ Install Incus with:
 
     pacman -S incus
 
+See also [the Incus documentation page at Arch Linux](https://wiki.archlinux.org/title/Incus) for more details about the installation, configuration, use and troubleshooting.
+
 Please report packaging issues [here](https://gitlab.archlinux.org/archlinux/packaging/packages/incus).
 ```
 
