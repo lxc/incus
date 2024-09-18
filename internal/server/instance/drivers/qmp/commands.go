@@ -14,6 +14,13 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 )
 
+// ChardevChangeInfo contains information required to change the backend of a chardev.
+type ChardevChangeInfo struct {
+	Type   string   `json:"type"`
+	File   *os.File `json:"file,omitempty"`
+	FDName string   `json:"fdname,omitempty"`
+}
+
 // FdsetFdInfo contains information about a file descriptor that belongs to an FD set.
 type FdsetFdInfo struct {
 	FD     int    `json:"fd"`
@@ -1141,4 +1148,98 @@ func (m *Monitor) CheckPCIDevice(deviceID string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+// RingbufRead returns the complete contents of the specified ring buffer.
+func (m *Monitor) RingbufRead(device string) (string, error) {
+	var args struct {
+		Device string `json:"device"`
+		Size   int    `json:"size"`
+	}
+
+	args.Device = device
+	args.Size = 10000
+
+	var resp struct {
+		Return string `json:"return"`
+	}
+
+	var sb strings.Builder
+
+	for {
+		err := m.run("ringbuf-read", args, &resp)
+		if err != nil {
+			return "", err
+		}
+
+		if len(resp.Return) == 0 {
+			break
+		}
+
+		sb.WriteString(resp.Return)
+	}
+
+	return sb.String(), nil
+}
+
+// ChardevChange changes the backend of a specified chardev. Currently supports the socket and ringbuf backends.
+func (m *Monitor) ChardevChange(device string, info ChardevChangeInfo) error {
+	if info.Type == "socket" {
+		// Share the existing file descriptor with qemu.
+		err := m.SendFile(info.FDName, info.File)
+		if err != nil {
+			return err
+		}
+
+		var args struct {
+			ID      string `json:"id"`
+			Backend struct {
+				Type string `json:"type"`
+				Data struct {
+					Addr struct {
+						Type string `json:"type"`
+						Data struct {
+							Str string `json:"str"`
+						} `json:"data"`
+					} `json:"addr"`
+					Server bool `json:"server"`
+					Wait   bool `json:"wait"`
+				} `json:"data"`
+			} `json:"backend"`
+		}
+
+		args.ID = device
+		args.Backend.Type = info.Type
+		args.Backend.Data.Addr.Type = "fd"
+		args.Backend.Data.Addr.Data.Str = info.FDName
+		args.Backend.Data.Server = true
+		args.Backend.Data.Wait = false
+
+		err = m.run("chardev-change", args, nil)
+		if err != nil {
+			// If the chardev-change command failed for some reason, ensure qemu cleans up its file descriptor.
+			_ = m.CloseFile(info.FDName)
+			return err
+		}
+
+		return nil
+	} else if info.Type == "ringbuf" {
+		var args struct {
+			ID      string `json:"id"`
+			Backend struct {
+				Type string `json:"type"`
+				Data struct {
+					Size int `json:"size"`
+				} `json:"data"`
+			} `json:"backend"`
+		}
+
+		args.ID = device
+		args.Backend.Type = info.Type
+		args.Backend.Data.Size = 1048576
+
+		return m.run("chardev-change", args, nil)
+	}
+
+	return fmt.Errorf("Unsupported chardev type %q", info.Type)
 }
