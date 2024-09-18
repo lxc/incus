@@ -3333,7 +3333,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 	cfg = append(cfg, qemuControlSocket(&qemuControlSocketOpts{d.monitorPath()})...)
 
 	// Console output.
-	cfg = append(cfg, qemuConsole(&qemuConsoleOpts{d.consolePath()})...)
+	cfg = append(cfg, qemuConsole()...)
 
 	// Setup the bus allocator.
 	bus := qemuNewBus(busName, &cfg)
