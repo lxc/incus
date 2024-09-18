@@ -331,7 +331,12 @@ func (c *cmdAction) doAction(action string, conf *config.Config, nameArg string)
 	err = cli.CancelableWait(op, &progress)
 	if err != nil {
 		progress.Done("")
-		return fmt.Errorf("%s\n"+i18n.G("Try `incus info --show-log %s` for more info"), err, nameArg)
+		projectArg := ""
+		if conf.ProjectOverride != "" && conf.ProjectOverride != api.ProjectDefaultName {
+			projectArg = " --project " + conf.ProjectOverride
+		}
+
+		return fmt.Errorf("%s\n"+i18n.G("Try `incus info --show-log %s%s` for more info"), err, nameArg, projectArg)
 	}
 
 	progress.Done("")
