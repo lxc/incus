@@ -5352,14 +5352,14 @@ func (n *ovn) getHealthCheck(loadBalancer api.NetworkLoadBalancerPut) (*networkO
 	// Get IPv4 checker.
 	var checkerIPV4 net.IP
 	_, ipv4Net, err := n.parseRouterIntPortIPv4Net()
-	if err == nil {
+	if err == nil && ipv4Net != nil {
 		checkerIPV4 = dhcpalloc.GetIP(ipv4Net, -2)
 	}
 
 	// Get IPv6 checker.
 	var checkerIPV6 net.IP
 	_, ipv6Net, err := n.parseRouterIntPortIPv6Net()
-	if err == nil {
+	if err == nil && ipv6Net != nil {
 		checkerIPV6 = dhcpalloc.GetIP(ipv6Net, -2)
 	}
 

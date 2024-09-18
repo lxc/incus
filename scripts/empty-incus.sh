@@ -6,9 +6,9 @@ fi
 
 ## Delete anything that's tied to a project
 for project in $(incus query "/1.0/projects?recursion=1" | jq .[].name -r); do
-    echo "==> Deleting all containers for project: ${project}"
-    for container in $(incus query "/1.0/containers?recursion=1&project=${project}" | jq .[].name -r); do
-        incus delete --project "${project}" -f "${container}"
+    echo "==> Deleting all instances for project: ${project}"
+    for instance in $(incus query "/1.0/instances?recursion=1&project=${project}" | jq .[].name -r); do
+        incus delete --project "${project}" -f "${instance}"
     done
 
     echo "==> Deleting all images for project: ${project}"
