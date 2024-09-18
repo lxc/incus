@@ -394,7 +394,7 @@ func (d Nftables) instanceDeviceLabel(projectName, instanceName, deviceName stri
 }
 
 // InstanceSetupBridgeFilter sets up the filter rules to apply bridged device IP filtering.
-func (d Nftables) InstanceSetupBridgeFilter(projectName string, instanceName string, deviceName string, parentName string, hostName string, hwAddr string, IPv4Nets []*net.IPNet, IPv6Nets []*net.IPNet, parentManaged bool) error {
+func (d Nftables) InstanceSetupBridgeFilter(projectName string, instanceName string, deviceName string, parentName string, hostName string, hwAddr string, IPv4Nets []*net.IPNet, IPv6Nets []*net.IPNet, parentManaged bool, macFiltering bool, aclRules []ACLRule) error {
 	deviceLabel := d.instanceDeviceLabel(projectName, instanceName, deviceName)
 
 	mac, err := net.ParseMAC(hwAddr)
@@ -413,13 +413,19 @@ func (d Nftables) InstanceSetupBridgeFilter(projectName string, instanceName str
 		"hwAddrHex":      fmt.Sprintf("0x%s", hex.EncodeToString(mac)),
 	}
 
+	if macFiltering {
+		tplFields["macFiltering"] = true
+	}
+
 	// Filter unwanted ethernet frames when using IP filtering.
 	if len(IPv4Nets)+len(IPv6Nets) > 0 {
 		tplFields["filterUnwantedFrames"] = true
+		tplFields["macFiltering"] = true
 	}
 
 	if IPv4Nets != nil && len(IPv4Nets) == 0 {
 		tplFields["ipv4FilterAll"] = true
+		tplFields["macFiltering"] = true
 	}
 
 	ipv4Nets := make([]string, 0, len(IPv4Nets))
@@ -429,9 +435,11 @@ func (d Nftables) InstanceSetupBridgeFilter(projectName string, instanceName str
 
 	if IPv6Nets != nil && len(IPv6Nets) == 0 {
 		tplFields["ipv6FilterAll"] = true
+		tplFields["macFiltering"] = true
 	}
 
-	ipv6Nets := make([]map[string]string, 0, len(IPv6Nets))
+	ipv6NetsList := make([]string, 0, len(IPv6Nets))
+	ipv6NetsPrefixList := make([]string, 0, len(IPv6Nets))
 	for _, ipv6Net := range IPv6Nets {
 		ones, _ := ipv6Net.Mask.Size()
 		prefix, err := subnetPrefixHex(ipv6Net)
@@ -439,15 +447,31 @@ func (d Nftables) InstanceSetupBridgeFilter(projectName string, instanceName str
 			return err
 		}
 
-		ipv6Nets = append(ipv6Nets, map[string]string{
-			"net":       ipv6Net.String(),
-			"nBits":     strconv.Itoa(ones),
-			"hexPrefix": fmt.Sprintf("0x%s", prefix),
-		})
+		ipv6NetsList = append(ipv6NetsList, ipv6Net.String())
+		ipv6NetsPrefixList = append(ipv6NetsPrefixList, fmt.Sprintf("@nh,384,%d != 0x%s", ones, prefix))
 	}
 
-	tplFields["ipv4Nets"] = ipv4Nets
-	tplFields["ipv6Nets"] = ipv6Nets
+	tplFields["ipv4NetsList"] = strings.Join(ipv4Nets, ", ")
+	tplFields["ipv6NetsList"] = strings.Join(ipv6NetsList, ", ")
+	tplFields["ipv6NetsPrefixList"] = strings.Join(ipv6NetsPrefixList, " ")
+
+	// Process the assigned ACL rules and convert them to NFT rules
+	nftRules, err := d.aclRulesToNftRules(hostName, aclRules)
+	if err != nil {
+		return fmt.Errorf("Failed generating bridge ACL rules for instance device %q (%s): %w", deviceLabel, tplFields["family"], err)
+	}
+
+	// Set the template fields for the ACL rules.
+	tplFields["aclInDropRules"] = nftRules.inDropRules
+	tplFields["aclInRejectRules"] = nftRules.inRejectRules
+	tplFields["aclInRejectRulesConverted"] = nftRules.inRejectRulesConverted
+	tplFields["aclInAcceptRules"] = append(nftRules.inAcceptRules4, nftRules.inAcceptRules6...)
+	tplFields["aclInDefaultRule"] = nftRules.defaultInRule
+	tplFields["aclInDefaultRuleConverted"] = nftRules.defaultInRuleConverted
+
+	tplFields["aclOutDropRules"] = nftRules.outDropRules
+	tplFields["aclOutAcceptRules"] = nftRules.outAcceptRules
+	tplFields["aclOutDefaultRule"] = nftRules.defaultOutRule
 
 	err = d.applyNftConfig(nftablesInstanceBridgeFilter, tplFields)
 	if err != nil {
@@ -462,7 +486,7 @@ func (d Nftables) InstanceClearBridgeFilter(projectName string, instanceName str
 	deviceLabel := d.instanceDeviceLabel(projectName, instanceName, deviceName)
 
 	// Remove chains created by bridge filter rules.
-	err := d.removeChains([]string{"bridge"}, deviceLabel, "in", "fwd")
+	err := d.removeChains([]string{"bridge"}, deviceLabel, "in", "fwd", "out")
 	if err != nil {
 		return fmt.Errorf("Failed clearing bridge filter rules for instance device %q: %w", deviceLabel, err)
 	}
@@ -571,6 +595,175 @@ func (d Nftables) InstanceClearProxyNAT(projectName string, instanceName string,
 	}
 
 	return nil
+}
+
+// nftRulesCollection contains the ACL rules translated to NFT rules and split in groups.
+type nftRulesCollection struct {
+	inDropRules            []string
+	inRejectRules          []string
+	inRejectRulesConverted []string
+	inAcceptRules4         []string
+	inAcceptRules6         []string
+	outDropRules           []string
+	outAcceptRules         []string
+	defaultInRule          string
+	defaultInRuleConverted string
+	defaultOutRule         string
+}
+
+// aclRulesToNftRules converts ACL rules applied to the device to NFT rules.
+func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftRulesCollection, error) {
+	nftRules := nftRulesCollection{
+		inDropRules:            make([]string, 0),
+		inRejectRules:          make([]string, 0),
+		inRejectRulesConverted: make([]string, 0), // To be used in the forward chain where reject is not supported
+		inAcceptRules4:         make([]string, 0),
+		inAcceptRules6:         make([]string, 0),
+		outDropRules:           make([]string, 0),
+		outAcceptRules:         make([]string, 0),
+		defaultInRule:          "",
+		defaultInRuleConverted: "", // To be used in the forward chain where reject is not supported
+		defaultOutRule:         "",
+	}
+
+	hostNameQuoted := "\"" + hostName + "\""
+	rulesCount := len(aclRules)
+
+	for i, rule := range aclRules {
+		if i >= rulesCount-2 {
+			// The last two rules are the default ACL rules and we should keep them separate.
+			var partial bool
+			var err error
+			if rule.Direction == "egress" {
+				nftRules.defaultInRule, partial, err = d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
+
+				if err == nil && !partial && rule.Action == "reject" {
+					// Convert egress reject rules to drop rules to address nftables limitation.
+					rule.Action = "drop"
+					nftRules.defaultInRuleConverted, partial, err = d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
+				} else {
+					nftRules.defaultInRuleConverted = nftRules.defaultInRule
+				}
+			} else {
+				if rule.Action == "reject" {
+					// Always convert ingress reject rules to drop rules to address nftables limitation.
+					rule.Action = "drop"
+				}
+
+				nftRules.defaultOutRule, partial, err = d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
+			}
+
+			if err != nil {
+				return nil, err
+			}
+
+			if partial {
+				return nil, fmt.Errorf("Invalid default rule generated")
+			}
+
+			continue
+		}
+
+		if rule.Direction == "ingress" && rule.Action == "reject" {
+			// Convert ingress reject rules to drop rules to address nftables limitation.
+			rule.Action = "drop"
+		}
+
+		nft4Rule, nft6Rule, newNftRules, err := d.aclRuleToNftRules(hostNameQuoted, rule)
+		if err != nil {
+			return nil, err
+		}
+
+		switch rule.Direction {
+		case "ingress":
+			switch {
+			case rule.Action == "drop":
+				nftRules.outDropRules = append(nftRules.outDropRules, newNftRules...)
+
+			case rule.Action == "reject":
+				nftRules.outDropRules = append(nftRules.outDropRules, newNftRules...)
+
+			case rule.Action == "allow":
+				nftRules.outAcceptRules = append(nftRules.outAcceptRules, newNftRules...)
+
+			default:
+				return nil, fmt.Errorf("Unrecognised action %q", rule.Action)
+			}
+
+		case "egress":
+			switch {
+			case rule.Action == "drop":
+				nftRules.inDropRules = append(nftRules.inDropRules, newNftRules...)
+
+			case rule.Action == "reject":
+				nftRules.inRejectRules = append(nftRules.inRejectRules, newNftRules...)
+
+				// Generate reject rule converted to a drop rule.
+				rule.Action = "drop"
+
+				_, _, newNftRules, err = d.aclRuleToNftRules(hostNameQuoted, rule)
+				if err != nil {
+					return nil, err
+				}
+
+				nftRules.inRejectRulesConverted = append(nftRules.inRejectRulesConverted, newNftRules...)
+
+			case rule.Action == "allow":
+				if nft4Rule != "" {
+					nftRules.inAcceptRules4 = append(nftRules.inAcceptRules4, nft4Rule)
+				}
+
+				if nft6Rule != "" {
+					nftRules.inAcceptRules6 = append(nftRules.inAcceptRules6, nft6Rule)
+				}
+
+			default:
+				return nil, fmt.Errorf("Unrecognised action %q", rule.Action)
+			}
+
+		default:
+			return nil, fmt.Errorf("Unrecognised direction %q", rule.Direction)
+		}
+	}
+
+	return &nftRules, nil
+}
+
+func (d Nftables) aclRuleToNftRules(hostNameQuoted string, rule ACLRule) (string, string, []string, error) {
+	nft4Rule := ""
+	nft6Rule := ""
+
+	// First try generating rules with IPv4 or IP agnostic criteria.
+	nft4Rule, partial, err := d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
+	if err != nil {
+		return "", "", nil, err
+	}
+
+	if partial {
+		// If we couldn't fully generate the ruleset with only IPv4 or IP agnostic criteria, then
+		// fill in the remaining parts using IPv6 criteria.
+		nft6Rule, _, err = d.aclRuleCriteriaToRules(hostNameQuoted, 6, &rule)
+		if err != nil {
+			return "", "", nil, err
+		}
+
+		if nft6Rule == "" {
+			return "", "", nil, fmt.Errorf("Invalid empty rule generated")
+		}
+	} else if nft4Rule == "" {
+		return "", "", nil, fmt.Errorf("Invalid empty rule generated")
+	}
+
+	nftRules := []string{}
+	if nft4Rule != "" {
+		nftRules = append(nftRules, nft4Rule)
+	}
+
+	if nft6Rule != "" {
+		nftRules = append(nftRules, nft6Rule)
+	}
+
+	return nft4Rule, nft6Rule, nftRules, nil
 }
 
 // applyNftConfig loads the specified config template and then applies it to the common template before sending to
