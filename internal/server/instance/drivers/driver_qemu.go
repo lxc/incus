@@ -7763,17 +7763,34 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 		return nil, nil, fmt.Errorf("Unknown protocol %q", protocol)
 	}
 
+	// When activating the text-based console, swap the backend to be a socket for an interactive connection.
+	if protocol == instance.ConsoleTypeConsole {
+		err := d.SwapConsoleRBWithSocket()
+		if err != nil {
+			_ = d.SwapConsoleSocketWithRB()
+			return nil, nil, fmt.Errorf("Failed to swap console ring buffer with socket: %w", err)
+		}
+	}
+
 	// Disconnection notification.
 	chDisconnect := make(chan error, 1)
 
 	// Open the console socket.
 	conn, err := net.Dial("unix", path)
 	if err != nil {
+		if protocol == instance.ConsoleTypeConsole {
+			_ = d.SwapConsoleSocketWithRB()
+		}
+
 		return nil, nil, fmt.Errorf("Connect to console socket %q: %w", path, err)
 	}
 
 	file, err := (conn.(*net.UnixConn)).File()
 	if err != nil {
+		if protocol == instance.ConsoleTypeConsole {
+			_ = d.SwapConsoleSocketWithRB()
+		}
+
 		return nil, nil, fmt.Errorf("Get socket file: %w", err)
 	}
 
