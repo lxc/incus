@@ -168,6 +168,9 @@ func (list Devices) Update(newlist Devices, updateFields func(Device, Device) []
 
 	allChangedKeys := []string{}
 	for key, d := range addlist {
+		// Remove the "force_update" key if present.
+		delete(d, "force_update")
+
 		srcOldDevice := rmlist[key]
 		oldDevice := srcOldDevice.Clone()
 
