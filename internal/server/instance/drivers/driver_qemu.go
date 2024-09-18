@@ -698,6 +698,12 @@ func (d *qemu) Shutdown(timeout time.Duration) error {
 		return ErrInstanceIsStopped
 	}
 
+	// Save the console log from ring buffer before the instance is shutdown. Must be run prior to creating the operation lock.
+	_, err := d.ConsoleLog()
+	if err != nil {
+		return err
+	}
+
 	// Setup a new operation.
 	// Allow inheriting of ongoing restart operation (we are called from restartCommon).
 	// Allow reuse when creating a new stop operation. This allows the Stop() function to inherit operation.
@@ -1208,14 +1214,15 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	revert := revert.New()
 	defer revert.Fail()
 
-	// Rotate the log file.
-	logfile := d.LogFilePath()
-	if util.PathExists(logfile) {
-		_ = os.Remove(logfile + ".old")
-		err := os.Rename(logfile, logfile+".old")
-		if err != nil && !os.IsNotExist(err) {
-			op.Done(err)
-			return err
+	// Rotate the log files.
+	for _, logfile := range []string{d.LogFilePath(), d.common.ConsoleBufferLogPath()} {
+		if util.PathExists(logfile) {
+			_ = os.Remove(logfile + ".old")
+			err := os.Rename(logfile, logfile+".old")
+			if err != nil && !os.IsNotExist(err) {
+				op.Done(err)
+				return err
+			}
 		}
 	}
 
@@ -4940,6 +4947,12 @@ func (d *qemu) Stop(stateful bool) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	// Save the console log from ring buffer before the instance is stopped. Must be run prior to creating the operation lock.
+	_, err := d.ConsoleLog()
+	if err != nil {
+		return err
 	}
 
 	// Setup a new operation.
@@ -9306,4 +9319,49 @@ func (d *qemu) postCPUHotplug(monitor *qmp.Monitor) error {
 	}
 
 	return nil
+}
+
+// ConsoleLog returns all output sent to the instance's console's ring buffer since startup.
+func (d *qemu) ConsoleLog() (string, error) {
+	// Setup a new operation.
+	op, err := operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionConsoleRetrieve, false, false)
+	if err != nil {
+		return "", err
+	}
+
+	defer op.Done(nil)
+
+	// Check if the agent is running.
+	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler())
+	if err != nil {
+		return "", err
+	}
+
+	logString, err := monitor.RingbufRead("console")
+	if err != nil {
+		return "", err
+	}
+
+	// If we got data back, append it to the log file for this instance.
+	if logString != "" {
+		logFile, err := os.OpenFile(d.common.ConsoleBufferLogPath(), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		if err != nil {
+			return "", err
+		}
+
+		defer logFile.Close()
+
+		_, err = logFile.WriteString(logString)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// Read and return the complete log for this instance.
+	fullLog, err := os.ReadFile(d.common.ConsoleBufferLogPath())
+	if err != nil {
+		return "", err
+	}
+
+	return string(fullLog), nil
 }

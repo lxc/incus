@@ -37,6 +37,9 @@ const ActionDelete Action = "delete"
 // ActionMigrate for migrating an instance.
 const ActionMigrate Action = "migrate"
 
+// ActionConsoleRetrieve for retrieving and saving a VM's console history.
+const ActionConsoleRetrieve Action = "console_retrieve"
+
 // ErrNonReusuableSucceeded is returned when no operation is created due to having to wait for a matching
 // non-reusuable operation that has now completed successfully.
 var ErrNonReusuableSucceeded error = fmt.Errorf("A matching non-reusable operation has now succeeded")
