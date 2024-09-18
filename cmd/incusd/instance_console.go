@@ -217,7 +217,18 @@ func (s *consoleWs) doConsole(op *operations.Operation) error {
 		return err
 	}
 
-	defer func() { _ = console.Close() }()
+	// Cleanup the console when we're done.
+	defer func() {
+		_ = console.Close()
+
+		// If this was a text-based console for a VM, restore the default ring buffer device backend.
+		if s.instance.Type() == instancetype.VM && s.protocol == instance.ConsoleTypeConsole {
+			v, ok := s.instance.(instance.VM)
+			if ok {
+				_ = v.SwapConsoleSocketWithRB()
+			}
+		}
+	}()
 
 	// Detect size of window and set it into console.
 	if s.width > 0 && s.height > 0 {
@@ -592,15 +603,11 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if inst.Type() != instancetype.Container {
-		return response.SmartError(fmt.Errorf("Console backlog is only supported on containers"))
-	}
-
-	c := inst.(instance.Container)
 	ent := response.FileResponseEntry{}
-	if !c.IsRunning() {
+
+	if !inst.IsRunning() {
 		// Check if we have data we can return.
-		consoleBufferLogPath := c.ConsoleBufferLogPath()
+		consoleBufferLogPath := inst.ConsoleBufferLogPath()
 		if !util.PathExists(consoleBufferLogPath) {
 			return response.FileResponse(r, nil, nil)
 		}
@@ -610,34 +617,59 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 		return response.FileResponse(r, []response.FileResponseEntry{ent}, nil)
 	}
 
-	// Query the container's console ringbuffer.
-	console := liblxc.ConsoleLogOptions{
-		ClearLog:       false,
-		ReadLog:        true,
-		ReadMax:        0,
-		WriteToLogFile: true,
-	}
+	if inst.Type() == instancetype.Container {
+		c, ok := inst.(instance.Container)
+		if !ok {
+			return response.SmartError(fmt.Errorf("Failed to cast inst to Container"))
+		}
 
-	// Send a ringbuffer request to the container.
-	logContents, err := c.ConsoleLog(console)
-	if err != nil {
-		errno, isErrno := linux.GetErrno(err)
-		if !isErrno {
+		// Query the container's console ringbuffer.
+		console := liblxc.ConsoleLogOptions{
+			ClearLog:       false,
+			ReadLog:        true,
+			ReadMax:        0,
+			WriteToLogFile: true,
+		}
+
+		// Send a ringbuffer request to the container.
+		logContents, err := c.ConsoleLog(console)
+		if err != nil {
+			errno, isErrno := linux.GetErrno(err)
+			if !isErrno {
+				return response.SmartError(err)
+			}
+
+			if errno == unix.ENODATA {
+				return response.FileResponse(r, nil, nil)
+			}
+
 			return response.SmartError(err)
 		}
 
-		if errno == unix.ENODATA {
-			return response.FileResponse(r, nil, nil)
+		ent.File = bytes.NewReader([]byte(logContents))
+		ent.FileModified = time.Now()
+		ent.FileSize = int64(len(logContents))
+
+		return response.FileResponse(r, []response.FileResponseEntry{ent}, nil)
+	} else if inst.Type() == instancetype.VM {
+		v, ok := inst.(instance.VM)
+		if !ok {
+			return response.SmartError(fmt.Errorf("Failed to cast inst to VM"))
 		}
 
-		return response.SmartError(err)
+		logContents, err := v.ConsoleLog()
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		ent.File = bytes.NewReader([]byte(logContents))
+		ent.FileModified = time.Now()
+		ent.FileSize = int64(len(logContents))
+
+		return response.FileResponse(r, []response.FileResponseEntry{ent}, nil)
 	}
 
-	ent.File = bytes.NewReader([]byte(logContents))
-	ent.FileModified = time.Now()
-	ent.FileSize = int64(len(logContents))
-
-	return response.FileResponse(r, []response.FileResponseEntry{ent}, nil)
+	return response.SmartError(fmt.Errorf("Unsupported instance type %q", inst.Type()))
 }
 
 // swagger:operation DELETE /1.0/instances/{name}/console instances instance_console_delete
