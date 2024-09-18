@@ -621,6 +621,7 @@ func (d *qemu) onStop(target string) error {
 	d.cleanupDevices() // Must be called before unmount.
 	_ = os.Remove(d.pidFilePath())
 	_ = os.Remove(d.monitorPath())
+	_ = os.Remove(d.spicePath())
 
 	// Stop the storage for the instance.
 	err = d.unmount()
