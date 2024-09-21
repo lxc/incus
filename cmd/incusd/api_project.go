@@ -1196,7 +1196,7 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 
 	err = s.Authorizer.DeleteProject(r.Context(), id, name)
 	if err != nil {
-		return response.SmartError(err)
+		logger.Error("Failed to remove project from authorizer", logger.Ctx{"name": name, "err": err})
 	}
 
 	requestor := request.CreateRequestor(r)
