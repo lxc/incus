@@ -29,7 +29,10 @@ func storagePoolVolumeUpdateUsers(ctx context.Context, s *state.State, projectNa
 			_, exists := localDevices[devName]
 			if exists {
 				localDevices[devName]["pool"] = newPoolName
-				localDevices[devName]["source"] = newVol.Name
+
+				volFields := strings.SplitN(localDevices[devName]["source"], "/", 2)
+				volFields[0] = newVol.Name
+				localDevices[devName]["source"] = strings.Join(volFields, "/")
 			}
 		}
 
@@ -61,7 +64,10 @@ func storagePoolVolumeUpdateUsers(ctx context.Context, s *state.State, projectNa
 		for name, dev := range profile.Devices {
 			if slices.Contains(usedByDevices, name) {
 				dev["pool"] = newPoolName
-				dev["source"] = newVol.Name
+
+				volFields := strings.SplitN(dev["source"], "/", 2)
+				volFields[0] = newVol.Name
+				dev["source"] = strings.Join(volFields, "/")
 			}
 		}
 
