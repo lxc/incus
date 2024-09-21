@@ -862,7 +862,7 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 
 		err = s.Authorizer.RenameProject(s.ShutdownCtx, id, name, req.Name)
 		if err != nil {
-			return err
+			logger.Error("Failed to rename project in authorizer", logger.Ctx{"name": name, "new_name": req.Name, "err": err})
 		}
 
 		requestor := request.CreateRequestor(r)
