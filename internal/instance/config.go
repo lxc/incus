@@ -295,7 +295,9 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	"security.protection.delete": validate.Optional(validate.IsBool),
 
 	// gendoc:generate(entity=instance, group=snapshots, key=snapshots.schedule)
-	// Specify either a cron expression (`<minute> <hour> <dom> <month> <dow>`), a comma-separated list of schedule aliases (`@hourly`, `@daily`, `@midnight`, `@weekly`, `@monthly`, `@annually`, `@yearly`), or leave empty to disable automatic snapshots.
+	// Specify either a cron expression (`<minute> <hour> <dom> <month> <dow>`), a comma-and-space-separated list of schedule aliases (`@startup`, `@hourly`, `@daily`, `@midnight`, `@weekly`, `@monthly`, `@annually`, `@yearly`), or leave empty to disable automatic snapshots.
+	//
+	// Note that unlike most other configuration keys, this one must be comma-and-space-separated and not just comma-separated as cron expression can themselves contain commas.
 	//
 	// ---
 	//  type: string
