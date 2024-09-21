@@ -143,7 +143,12 @@ func (c *cmdLaunch) Run(cmd *cobra.Command, args []string) error {
 			prettyName = fmt.Sprintf("%s:%s", remote, name)
 		}
 
-		return fmt.Errorf("%s\n"+i18n.G("Try `incus info --show-log %s` for more info"), err, prettyName)
+		projectArg := ""
+		if conf.ProjectOverride != "" && conf.ProjectOverride != api.ProjectDefaultName {
+			projectArg = " --project " + conf.ProjectOverride
+		}
+
+		return fmt.Errorf("%s\n"+i18n.G("Try `incus info --show-log %s%s` for more info"), err, prettyName, projectArg)
 	}
 
 	progress.Done("")
