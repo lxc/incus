@@ -16,7 +16,7 @@ concurrency:
 jobs:
   code-tests:
     name: Code
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -127,7 +127,7 @@ jobs:
       INCUS_TMPFS: "1"
       INCUS_REQUIRED_TESTS: "test_storage_buckets"
     name: System
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
