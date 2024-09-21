@@ -701,19 +701,15 @@ func TestQemuConfigTemplates(t *testing.T) {
 
 	t.Run("qemu_console", func(t *testing.T) {
 		testCases := []struct {
-			opts     qemuConsoleOpts
 			expected string
 		}{{
-			qemuConsoleOpts{"/dev/shm/console-socket"},
 			`# Console
 			[chardev "console"]
-			backend = "socket"
-			path = "/dev/shm/console-socket"
-			server = "on"
-			wait = "off"`,
+			backend = "ringbuf"
+			size = "1048576"`,
 		}}
 		for _, tc := range testCases {
-			runTest(tc.expected, qemuConsole(&tc.opts))
+			runTest(tc.expected, qemuConsole())
 		}
 	})
 

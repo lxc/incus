@@ -346,6 +346,10 @@ type qemu struct {
 
 	// Stateful migration streams.
 	migrationReceiveStateful map[string]io.ReadWriteCloser
+
+	// Keep a reference to the console socket when switching backends, so we can properly cleanup when switching back to a ring buffer.
+	consoleSocket     *net.UnixListener
+	consoleSocketFile *os.File
 }
 
 // getAgentClient returns the current agent client handle.
@@ -621,6 +625,7 @@ func (d *qemu) onStop(target string) error {
 	d.cleanupDevices() // Must be called before unmount.
 	_ = os.Remove(d.pidFilePath())
 	_ = os.Remove(d.monitorPath())
+	_ = os.Remove(d.spicePath())
 
 	// Stop the storage for the instance.
 	err = d.unmount()
@@ -695,6 +700,12 @@ func (d *qemu) Shutdown(timeout time.Duration) error {
 		}
 
 		return ErrInstanceIsStopped
+	}
+
+	// Save the console log from ring buffer before the instance is shutdown. Must be run prior to creating the operation lock.
+	_, err := d.ConsoleLog()
+	if err != nil {
+		return err
 	}
 
 	// Setup a new operation.
@@ -1207,14 +1218,15 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	revert := revert.New()
 	defer revert.Fail()
 
-	// Rotate the log file.
-	logfile := d.LogFilePath()
-	if util.PathExists(logfile) {
-		_ = os.Remove(logfile + ".old")
-		err := os.Rename(logfile, logfile+".old")
-		if err != nil && !os.IsNotExist(err) {
-			op.Done(err)
-			return err
+	// Rotate the log files.
+	for _, logfile := range []string{d.LogFilePath(), d.common.ConsoleBufferLogPath()} {
+		if util.PathExists(logfile) {
+			_ = os.Remove(logfile + ".old")
+			err := os.Rename(logfile, logfile+".old")
+			if err != nil && !os.IsNotExist(err) {
+				op.Done(err)
+				return err
+			}
 		}
 	}
 
@@ -3332,7 +3344,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 	cfg = append(cfg, qemuControlSocket(&qemuControlSocketOpts{d.monitorPath()})...)
 
 	// Console output.
-	cfg = append(cfg, qemuConsole(&qemuConsoleOpts{d.consolePath()})...)
+	cfg = append(cfg, qemuConsole()...)
 
 	// Setup the bus allocator.
 	bus := qemuNewBus(busName, &cfg)
@@ -4939,6 +4951,12 @@ func (d *qemu) Stop(stateful bool) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	// Save the console log from ring buffer before the instance is stopped. Must be run prior to creating the operation lock.
+	_, err := d.ConsoleLog()
+	if err != nil {
+		return err
 	}
 
 	// Setup a new operation.
@@ -7745,17 +7763,34 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 		return nil, nil, fmt.Errorf("Unknown protocol %q", protocol)
 	}
 
+	// When activating the text-based console, swap the backend to be a socket for an interactive connection.
+	if protocol == instance.ConsoleTypeConsole {
+		err := d.SwapConsoleRBWithSocket()
+		if err != nil {
+			_ = d.SwapConsoleSocketWithRB()
+			return nil, nil, fmt.Errorf("Failed to swap console ring buffer with socket: %w", err)
+		}
+	}
+
 	// Disconnection notification.
 	chDisconnect := make(chan error, 1)
 
 	// Open the console socket.
 	conn, err := net.Dial("unix", path)
 	if err != nil {
+		if protocol == instance.ConsoleTypeConsole {
+			_ = d.SwapConsoleSocketWithRB()
+		}
+
 		return nil, nil, fmt.Errorf("Connect to console socket %q: %w", path, err)
 	}
 
 	file, err := (conn.(*net.UnixConn)).File()
 	if err != nil {
+		if protocol == instance.ConsoleTypeConsole {
+			_ = d.SwapConsoleSocketWithRB()
+		}
+
 		return nil, nil, fmt.Errorf("Get socket file: %w", err)
 	}
 
@@ -9305,4 +9340,97 @@ func (d *qemu) postCPUHotplug(monitor *qmp.Monitor) error {
 	}
 
 	return nil
+}
+
+// ConsoleLog returns all output sent to the instance's console's ring buffer since startup.
+func (d *qemu) ConsoleLog() (string, error) {
+	// Setup a new operation.
+	op, err := operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionConsoleRetrieve, false, false)
+	if err != nil {
+		return "", err
+	}
+
+	defer op.Done(nil)
+
+	// Check if the agent is running.
+	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler())
+	if err != nil {
+		return "", err
+	}
+
+	logString, err := monitor.RingbufRead("console")
+	if err != nil {
+		return "", err
+	}
+
+	// If we got data back, append it to the log file for this instance.
+	if logString != "" {
+		logFile, err := os.OpenFile(d.common.ConsoleBufferLogPath(), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		if err != nil {
+			return "", err
+		}
+
+		defer logFile.Close()
+
+		_, err = logFile.WriteString(logString)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// Read and return the complete log for this instance.
+	fullLog, err := os.ReadFile(d.common.ConsoleBufferLogPath())
+	if err != nil {
+		return "", err
+	}
+
+	return string(fullLog), nil
+}
+
+// SwapConsoleRBWithSocket swaps the qemu backend for the instance's console to a unix socket.
+func (d *qemu) SwapConsoleRBWithSocket() error {
+	// This will wipe out anything in the existing ring buffer; save any buffered data to log file first.
+	_, err := d.ConsoleLog()
+	if err != nil {
+		return err
+	}
+
+	// Check if the agent is running.
+	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler())
+	if err != nil {
+		return err
+	}
+
+	// Create the unix socket here, which will be passed via file descriptor to qemu.
+	d.consoleSocket, err = net.ListenUnix("unix", &net.UnixAddr{Name: d.consolePath(), Net: "unix"})
+	if err != nil {
+		return err
+	}
+
+	d.consoleSocketFile, err = d.consoleSocket.File()
+	if err != nil {
+		_ = d.consoleSocket.Close()
+		_ = os.Remove(d.consolePath())
+		return err
+	}
+
+	return monitor.ChardevChange("console", qmp.ChardevChangeInfo{Type: "socket", FDName: "consoleSocket", File: d.consoleSocketFile})
+}
+
+// SwapConsoleSocketWithRB swaps the qemu backend for the instance's console to a ring buffer.
+func (d *qemu) SwapConsoleSocketWithRB() error {
+	// Check if the agent is running.
+	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler())
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		// Clean up the old socket.
+		_ = d.consoleSocketFile.Close()
+		_ = d.consoleSocket.Close()
+		_ = os.Remove(d.consolePath())
+	}()
+
+	return monitor.ChardevChange("console", qmp.ChardevChangeInfo{Type: "ringbuf"})
 }
