@@ -72,7 +72,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo add-apt-repository ppa:cowsql/stable -y --no-update
+          sudo add-apt-repository ppa:cowsql/main -y --no-update
           sudo apt-get update
 
           sudo apt-get install --no-install-recommends -y \
@@ -222,7 +222,7 @@ jobs:
       - name: Install dependencies
         run: |
           set -x
-          sudo add-apt-repository ppa:cowsql/stable -y --no-update
+          sudo add-apt-repository ppa:cowsql/main -y --no-update
           sudo apt-get update
 
           sudo systemctl mask lxc.service lxc-net.service
