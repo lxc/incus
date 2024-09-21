@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -238,7 +239,7 @@ func serverSetupUser(uid uint32) error {
 		network.Description = fmt.Sprintf("Network for user restricted project %s", projectName)
 
 		err = client.CreateNetwork(network)
-		if err != nil {
+		if err != nil && !api.StatusErrorCheck(err, http.StatusConflict) {
 			return fmt.Errorf("Failed to create network: %w", err)
 		}
 
