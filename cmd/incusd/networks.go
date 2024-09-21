@@ -248,6 +248,11 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 			}
 
 			if !recursion {
+				// Check if project allows access to network.
+				if !project.NetworkAllowed(reqProject.Config, networkName, true) {
+					continue
+				}
+
 				resultString = append(resultString, fmt.Sprintf("/%s/networks/%s", version.APIVersion, networkName))
 			} else {
 				netInfo, err := doNetworkGet(s, r, s.ServerClustered, projectName, reqProject.Config, networkName)
