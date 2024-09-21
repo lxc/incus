@@ -803,6 +803,17 @@ func IsValidCPUSet(value string) error {
 		return fmt.Errorf("Invalid CPU limit syntax")
 	}
 
+	// Validate single values.
+	cpu, err := strconv.ParseInt(value, 10, 64)
+	if err == nil {
+		if cpu < 1 {
+			return fmt.Errorf("Invalid cpuset value: %s", value)
+		}
+
+		return nil
+	}
+
+	// Handle complex values.
 	cpus := make(map[int64]int)
 	chunks := strings.Split(value, ",")
 
