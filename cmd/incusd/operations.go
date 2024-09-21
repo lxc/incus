@@ -262,11 +262,19 @@ func operationDelete(d *Daemon, r *http.Request) response.Response {
 		if objectType != "" {
 			for _, v := range op.Resources() {
 				for _, u := range v {
-					_, _, _, pathArgs, err := dbCluster.URLToEntityType(u.String())
-					if err != nil {
-						return response.InternalError(fmt.Errorf("Unable to parse operation resource URL: %w", err))
+					// When dealing with specific objects, get the arguments from the URL.
+					var pathArgs []string
+
+					if objectType != auth.ObjectTypeProject {
+						var err error
+
+						_, _, _, pathArgs, err = dbCluster.URLToEntityType(u.String())
+						if err != nil {
+							return response.InternalError(fmt.Errorf("Unable to parse operation resource URL: %w", err))
+						}
 					}
 
+					// Check that the access is allowed.
 					object, err := auth.NewObject(objectType, projectName, pathArgs...)
 					if err != nil {
 						return response.InternalError(fmt.Errorf("Unable to create authorization object for operation: %w", err))
