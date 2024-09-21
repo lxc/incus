@@ -83,11 +83,16 @@ func (t *tls) CheckPermission(ctx context.Context, r *http.Request, object Objec
 
 	// Check project level permissions against the certificates project list.
 	projectName := object.Project()
-	if !slices.Contains(projectNames, projectName) {
-		return api.StatusErrorf(http.StatusForbidden, "User does not have permission for project %q", projectName)
+	if slices.Contains(projectNames, projectName) {
+		return nil
 	}
 
-	return nil
+	// Also allow read-only access to inherited resources.
+	if object.Project() == api.ProjectDefaultName && entitlement == EntitlementCanView && slices.Contains([]ObjectType{ObjectTypeImage, ObjectTypeProfile, ObjectTypeStorageVolume, ObjectTypeStorageBucket, ObjectTypeNetwork, ObjectTypeNetworkZone}, object.Type()) {
+		return nil
+	}
+
+	return api.StatusErrorf(http.StatusForbidden, "User does not have permission for project %q", projectName)
 }
 
 // GetPermissionChecker returns a function that can be used to check whether a user has the required entitlement on an authorization object.
@@ -154,7 +159,25 @@ func (t *tls) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 
 	// Filter objects by project.
 	return func(object Object) bool {
-		return slices.Contains(projectNames, object.Project())
+		// Allow if the project is in the allowed set.
+		if slices.Contains(projectNames, object.Project()) {
+			return true
+		}
+
+		// Also allow read-only access to inherited resources.
+		if object.Project() != api.ProjectDefaultName {
+			return false
+		}
+
+		if entitlement != EntitlementCanView {
+			return false
+		}
+
+		if !slices.Contains([]ObjectType{ObjectTypeImage, ObjectTypeProfile, ObjectTypeStorageVolume, ObjectTypeStorageBucket, ObjectTypeNetwork, ObjectTypeNetworkZone}, objectType) {
+			return false
+		}
+
+		return true
 	}, nil
 }
 
