@@ -438,7 +438,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		})
 		if err != nil {
 			if err == db.ErrAlreadyDefined {
-				return response.BadRequest(fmt.Errorf("The network is already defined on member %q", targetNode))
+				return response.Conflict(fmt.Errorf("Network %q is already defined on member %q", req.Name, targetNode))
 			}
 
 			return response.SmartError(err)
@@ -532,7 +532,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 
 	// Non-clustered network creation.
 	if netInfo != nil {
-		return response.BadRequest(fmt.Errorf("The network already exists"))
+		return response.Conflict(fmt.Errorf("Network %q already exists", req.Name))
 	}
 
 	revert := revert.New()
