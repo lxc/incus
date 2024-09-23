@@ -106,6 +106,7 @@ type OVNDHCPv4Opts struct {
 	LeaseTime          time.Duration
 	MTU                uint32
 	Netmask            string
+	DNSSearchList      []string
 }
 
 // OVNDHCPv6Opts IPv6 DHCP option set that can be created (and then applied to a switch port by resulting ID).
@@ -1252,6 +1253,11 @@ func (o *NB) UpdateLogicalSwitchDHCPv4Options(ctx context.Context, switchName OV
 
 	if opts.Router != nil {
 		dhcpOption.Options["router"] = opts.Router.String()
+	}
+
+	if len(opts.DNSSearchList) > 0 {
+		// Special quoting to allow domain names.
+		dhcpOption.Options["domain_search_list"] = fmt.Sprintf(`"%s"`, strings.Join(opts.DNSSearchList, ","))
 	}
 
 	if opts.RecursiveDNSServer != nil {

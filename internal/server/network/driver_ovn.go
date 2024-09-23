@@ -2449,13 +2449,14 @@ func (n *ovn) setup(update bool) error {
 		}
 
 		opts := &networkOVN.OVNDHCPv4Opts{
-			ServerID:   routerIntPortIPv4,
-			ServerMAC:  routerMAC,
-			Router:     routerIntPortIPv4,
-			DomainName: n.getDomainName(),
-			LeaseTime:  time.Duration(time.Hour * 1),
-			MTU:        bridgeMTU,
-			Netmask:    dhcpV4Netmask,
+			ServerID:      routerIntPortIPv4,
+			ServerMAC:     routerMAC,
+			Router:        routerIntPortIPv4,
+			DomainName:    n.getDomainName(),
+			LeaseTime:     time.Duration(time.Hour * 1),
+			MTU:           bridgeMTU,
+			Netmask:       dhcpV4Netmask,
+			DNSSearchList: n.getDNSSearchList(),
 		}
 
 		if uplinkNet != nil {
