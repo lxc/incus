@@ -3,7 +3,9 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -616,7 +618,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 
 	// Validate the target.
 	fileInfo, err := os.Stat(destBlockFile)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return -1, err
 	}
 

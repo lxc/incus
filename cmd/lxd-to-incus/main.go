@@ -3,7 +3,9 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -575,19 +577,19 @@ Instead this tool will be providing specific commands for each of the servers.`)
 	_, _ = logFile.WriteString("Wiping the target server\n")
 
 	err = os.RemoveAll(targetPaths.logs)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
 		return fmt.Errorf("Failed to remove %q: %w", targetPaths.logs, err)
 	}
 
 	err = os.RemoveAll(targetPaths.cache)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
 		return fmt.Errorf("Failed to remove %q: %w", targetPaths.cache, err)
 	}
 
 	err = os.RemoveAll(targetPaths.daemon)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
 		return fmt.Errorf("Failed to remove %q: %w", targetPaths.daemon, err)
 	}
@@ -713,7 +715,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 		_ = unix.Unmount(filepath.Join(targetPaths.daemon, dir), unix.MNT_DETACH)
 		err = os.RemoveAll(filepath.Join(targetPaths.daemon, dir))
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
 			return fmt.Errorf("Failed to delete %q: %w", dir, err)
 		}
@@ -722,7 +724,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 	for _, dir := range []string{"containers", "containers-snapshots", "snapshots", "virtual-machines", "virtual-machines-snapshots"} {
 		entries, err := os.ReadDir(filepath.Join(targetPaths.daemon, dir))
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
 

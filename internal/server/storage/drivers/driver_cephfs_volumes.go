@@ -1,8 +1,10 @@
 package drivers
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -261,7 +263,7 @@ func (d *cephfs) DeleteVolume(vol Volume, op *operations.Operation) error {
 
 	// Remove the volume from the storage device.
 	err = os.RemoveAll(volPath)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("Failed to delete '%s': %w", volPath, err)
 	}
 
@@ -270,7 +272,7 @@ func (d *cephfs) DeleteVolume(vol Volume, op *operations.Operation) error {
 	snapshotDir := GetVolumeSnapshotDir(d.name, vol.volType, vol.name)
 
 	err = os.RemoveAll(snapshotDir)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("Failed to delete '%s': %w", snapshotDir, err)
 	}
 
@@ -522,14 +524,14 @@ func (d *cephfs) DeleteVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 	cephSnapPath := filepath.Join(sourcePath, ".snap", snapName)
 
 	err := os.Remove(cephSnapPath)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("Failed to remove '%s': %w", cephSnapPath, err)
 	}
 
 	// Remove the symlink.
 	snapPath := snapVol.MountPath()
 	err = os.Remove(snapPath)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("Failed to remove '%s': %w", snapPath, err)
 	}
 
@@ -602,7 +604,7 @@ func (d *cephfs) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op
 	// Re-generate the snapshot symlink.
 	oldPath := snapVol.MountPath()
 	err = os.Remove(oldPath)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("Failed to remove '%s': %w", oldPath, err)
 	}
 

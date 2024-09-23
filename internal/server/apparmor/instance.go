@@ -1,7 +1,9 @@
 package apparmor
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -123,7 +125,7 @@ func instanceProfileGenerate(sysOS *sys.OS, inst instance, extraBinaries []strin
 	 */
 	profile := filepath.Join(aaPath, "profiles", instanceProfileFilename(inst))
 	content, err := os.ReadFile(profile)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
 

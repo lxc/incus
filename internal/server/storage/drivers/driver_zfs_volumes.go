@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -1533,13 +1534,13 @@ func (d *zfs) deleteVolume(vol Volume, op *operations.Operation) error {
 	if vol.contentType == ContentTypeFS {
 		// Delete the mountpoint if present.
 		err := os.Remove(vol.MountPath())
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return fmt.Errorf("Failed to remove '%s': %w", vol.MountPath(), err)
 		}
 
 		// Delete the snapshot storage.
 		err = os.RemoveAll(GetVolumeSnapshotDir(d.name, vol.volType, vol.name))
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return fmt.Errorf("Failed to remove '%s': %w", GetVolumeSnapshotDir(d.name, vol.volType, vol.name), err)
 		}
 	}
@@ -2942,7 +2943,7 @@ func (d *zfs) DeleteVolumeSnapshot(vol Volume, op *operations.Operation) error {
 
 	// Delete the mountpoint.
 	err = os.Remove(vol.MountPath())
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("Failed to remove '%s': %w", vol.MountPath(), err)
 	}
 

@@ -1,10 +1,11 @@
 package device
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/lxc/incus/v6/internal/revert"
@@ -231,7 +232,7 @@ func (d *nicMACVLAN) Start() (*deviceConfig.RunConfig, error) {
 	if d.inst.Type() == instancetype.VM {
 		// Disable IPv6 on host interface to avoid getting IPv6 link-local addresses unnecessarily.
 		err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", link.Name), "1")
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return nil, fmt.Errorf("Failed to disable IPv6 on host interface %q: %w", link.Name, err)
 		}
 	}

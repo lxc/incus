@@ -1,8 +1,9 @@
 package device
 
 import (
+	"errors"
 	"fmt"
-	"os"
+	"io/fs"
 	"path/filepath"
 	"strings"
 
@@ -168,7 +169,7 @@ func (d *unixCommon) Register() error {
 			// Get the file type and ensure it matches what the user was expecting.
 			dType, _, _, err := unixDeviceAttributes(e.Path)
 			if err != nil {
-				if os.IsNotExist(err) {
+				if errors.Is(err, fs.ErrNotExist) {
 					// Skip if host side source device doesn't exist.
 					// This could be an event for the parent directory being added.
 					return nil, nil

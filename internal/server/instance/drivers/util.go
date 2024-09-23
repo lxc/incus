@@ -3,7 +3,9 @@ package drivers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"slices"
 
@@ -42,7 +44,7 @@ func GetClusterCPUFlags(ctx context.Context, s *state.State, servers []string, a
 
 		data, err := os.ReadFile(resourcesPath)
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
 

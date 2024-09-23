@@ -5,8 +5,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"strings"
 	"time"
@@ -291,7 +293,7 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 
 	body, err = os.ReadFile("streams/v1/images.json")
 	if err != nil {
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
 

@@ -2,8 +2,10 @@ package apparmor
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -114,7 +116,7 @@ func deleteNamespace(sysOS *sys.OS, name string) error {
 
 	p := filepath.Join("/sys/kernel/security/apparmor/policy/namespaces", name)
 	err := os.Remove(p)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
 
@@ -195,12 +197,12 @@ func deleteProfile(sysOS *sys.OS, fullName string, name string) error {
 	}
 
 	err = os.Remove(filepath.Join(aaCacheDir, name))
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("Failed to remove %s: %w", filepath.Join(aaCacheDir, name), err)
 	}
 
 	err = os.Remove(filepath.Join(aaPath, "profiles", name))
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("Failed to remove %s: %w", filepath.Join(aaPath, "profiles", name), err)
 	}
 

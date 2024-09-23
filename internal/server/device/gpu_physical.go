@@ -1,7 +1,9 @@
 package device
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -419,7 +421,7 @@ func (d *gpuPhysical) deviceNumStringToUint32(devNum string) (uint32, uint32, er
 func (d *gpuPhysical) getNvidiaNonCardDevices() ([]nvidiaNonCardDevice, error) {
 	nvidiaEnts, err := os.ReadDir("/dev")
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil, err
 		}
 	}

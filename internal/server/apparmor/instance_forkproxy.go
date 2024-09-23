@@ -1,7 +1,9 @@
 package apparmor
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -170,7 +172,7 @@ func ForkproxyLoad(sysOS *sys.OS, inst instance, dev device) error {
 	 */
 	profile := filepath.Join(aaPath, "profiles", forkproxyProfileFilename(inst, dev))
 	content, err := os.ReadFile(profile)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
 

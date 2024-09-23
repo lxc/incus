@@ -3,7 +3,9 @@ package cluster_test
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -199,7 +201,7 @@ func newDir(t *testing.T) (string, func()) {
 	cleanup := func() {
 		_, err := os.Stat(dir)
 		if err != nil {
-			assert.True(t, os.IsNotExist(err))
+			assert.True(t, errors.Is(err, fs.ErrNotExist))
 		} else {
 			assert.NoError(t, os.RemoveAll(dir))
 		}

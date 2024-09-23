@@ -241,8 +241,10 @@ void forkproxy(void)
 import "C"
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net"
 	"os"
 	"os/signal"
@@ -453,7 +455,7 @@ func (c *cmdForkproxy) Run(cmd *cobra.Command, args []string) error {
 
 		if lAddr.ConnType == "unix" && !lAddr.Abstract {
 			err := os.Remove(lAddr.Address)
-			if err != nil && !os.IsNotExist(err) {
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				return err
 			}
 		}

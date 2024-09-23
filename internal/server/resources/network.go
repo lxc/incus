@@ -1,7 +1,9 @@
 package resources
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
 	"os"
@@ -713,7 +715,7 @@ func GetNetworkCounters(name string) (*api.NetworkStateCounters, error) {
 	// Get counters
 	content, err := os.ReadFile("/proc/net/dev")
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return &counters, nil
 		}
 

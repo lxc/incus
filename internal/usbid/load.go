@@ -16,6 +16,8 @@
 package usbid
 
 import (
+	"errors"
+	"io/fs"
 	"log"
 	"os"
 )
@@ -37,7 +39,7 @@ func Load() {
 
 	usbids, err := os.Open(usbidFile)
 	if err != nil {
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, fs.ErrNotExist) {
 			log.Printf("usbid: failed to load: %s", err)
 		}
 

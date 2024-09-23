@@ -2,8 +2,10 @@ package drivers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/exec"
@@ -1065,7 +1067,7 @@ func (d *ceph) parseClone(clone string) (string, string, string, bool, error) {
 func (d *ceph) getRBDMappedDevPath(vol Volume, mapIfMissing bool) (bool, string, error) {
 	// List all RBD devices.
 	files, err := os.ReadDir("/sys/devices/rbd")
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return false, "", err
 	}
 
@@ -1088,7 +1090,7 @@ func (d *ceph) getRBDMappedDevPath(vol Volume, mapIfMissing bool) (bool, string,
 		devPoolName, err := os.ReadFile(fmt.Sprintf("/sys/devices/rbd/%s/pool", fName))
 		if err != nil {
 			// Skip if no pool file.
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
 
@@ -1104,7 +1106,7 @@ func (d *ceph) getRBDMappedDevPath(vol Volume, mapIfMissing bool) (bool, string,
 		devName, err := os.ReadFile(fmt.Sprintf("/sys/devices/rbd/%s/name", fName))
 		if err != nil {
 			// Skip if no name file.
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
 
@@ -1123,7 +1125,7 @@ func (d *ceph) getRBDMappedDevPath(vol Volume, mapIfMissing bool) (bool, string,
 
 		// Get the snapshot name for the RBD device (if exists).
 		devSnap, err := os.ReadFile(fmt.Sprintf("/sys/devices/rbd/%s/current_snap", fName))
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return false, "", err
 		}
 

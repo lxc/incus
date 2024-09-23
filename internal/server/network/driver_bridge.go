@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
 	"os"
@@ -1155,7 +1156,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 				// If IPv6 router acceptance is enabled (set to 1) then we now set it to 2.
 				err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", entry.Name()), "2")
-				if err != nil && !os.IsNotExist(err) {
+				if err != nil && !errors.Is(err, fs.ErrNotExist) {
 					return err
 				}
 			}
@@ -1163,7 +1164,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			// Then set forwarding for all of them.
 			for _, entry := range entries {
 				err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/forwarding", entry.Name()), "1")
-				if err != nil && !os.IsNotExist(err) {
+				if err != nil && !errors.Is(err, fs.ErrNotExist) {
 					return err
 				}
 			}

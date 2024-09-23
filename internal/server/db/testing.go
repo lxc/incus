@@ -4,7 +4,9 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"os"
 	"path/filepath"
@@ -144,7 +146,7 @@ func newDir(t *testing.T) (string, func()) {
 	cleanup := func() {
 		_, err := os.Stat(dir)
 		if err != nil {
-			assert.True(t, os.IsNotExist(err))
+			assert.True(t, errors.Is(err, fs.ErrNotExist))
 		} else {
 			assert.NoError(t, os.RemoveAll(dir))
 		}

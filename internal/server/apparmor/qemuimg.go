@@ -3,8 +3,10 @@ package apparmor
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -153,7 +155,7 @@ func qemuImgProfileLoad(sysOS *sys.OS, imgPath string, dstPath string, allowedCm
 	profileName := profileName("qemu-img", name)
 	profilePath := filepath.Join(aaPath, "profiles", profileName)
 	content, err := os.ReadFile(profilePath)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return "", err
 	}
 
