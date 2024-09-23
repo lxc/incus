@@ -2,7 +2,9 @@ package resources
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -136,7 +138,7 @@ func getCPUCache(path string) ([]api.ResourcesCPUCache, error) {
 		// Get the cache size
 		content, err := os.ReadFile(filepath.Join(entryPath, "size"))
 		if err != nil {
-			if !os.IsNotExist(err) {
+			if !errors.Is(err, fs.ErrNotExist) {
 				return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(entryPath, "size"), err)
 			}
 		} else {
@@ -160,7 +162,7 @@ func getCPUCache(path string) ([]api.ResourcesCPUCache, error) {
 		// Get the cache type
 		cacheType, err := os.ReadFile(filepath.Join(entryPath, "type"))
 		if err != nil {
-			if !os.IsNotExist(err) {
+			if !errors.Is(err, fs.ErrNotExist) {
 				return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(entryPath, "type"), err)
 			}
 		} else {
@@ -267,17 +269,17 @@ func GetCPU() (*api.ResourcesCPU, error) {
 
 		// Get topology
 		cpuSocket, err := readInt(filepath.Join(entryPath, "topology", "physical_package_id"))
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(entryPath, "topology", "physical_package_id"), err)
 		}
 
 		cpuCore, err := readInt(filepath.Join(entryPath, "topology", "core_id"))
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(entryPath, "topology", "core_id"), err)
 		}
 
 		cpuDie, err := readInt(filepath.Join(entryPath, "topology", "die_id"))
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(entryPath, "topology", "die_id"), err)
 		}
 

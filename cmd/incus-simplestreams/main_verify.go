@@ -3,8 +3,10 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -47,7 +49,7 @@ func (c *cmdVerify) Run(cmd *cobra.Command, args []string) error {
 
 	body, err := os.ReadFile("streams/v1/images.json")
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil
 		}
 
@@ -67,7 +69,7 @@ func (c *cmdVerify) Run(cmd *cobra.Command, args []string) error {
 				// Open the data.
 				dataFile, err := os.Open(item.Path)
 				if err != nil {
-					if os.IsNotExist(err) {
+					if errors.Is(err, fs.ErrNotExist) {
 						return fmt.Errorf("Missing image file %q", item.Path)
 					}
 

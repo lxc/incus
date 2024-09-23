@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"math"
 	"math/rand"
 	"mime"
@@ -2623,14 +2624,14 @@ func pruneExpiredImages(ctx context.Context, s *state.State, op *operations.Oper
 		// Remove main image file.
 		fname := filepath.Join(s.OS.VarDir, "images", fingerprint)
 		err = os.Remove(fname)
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return fmt.Errorf("Error deleting image file %q: %w", fname, err)
 		}
 
 		// Remove the rootfs file for the image.
 		fname = filepath.Join(s.OS.VarDir, "images", fingerprint) + ".rootfs"
 		err = os.Remove(fname)
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return fmt.Errorf("Error deleting image file %q: %w", fname, err)
 		}
 
@@ -2856,7 +2857,7 @@ func imageDeleteFromDisk(fingerprint string) {
 	fname := internalUtil.VarPath("images", fingerprint)
 	if util.PathExists(fname) {
 		err := os.Remove(fname)
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			logger.Errorf("Error deleting image file %s: %s", fname, err)
 		}
 	}
@@ -2865,7 +2866,7 @@ func imageDeleteFromDisk(fingerprint string) {
 	fname = internalUtil.VarPath("images", fingerprint) + ".rootfs"
 	if util.PathExists(fname) {
 		err := os.Remove(fname)
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			logger.Errorf("Error deleting image file %s: %s", fname, err)
 		}
 	}

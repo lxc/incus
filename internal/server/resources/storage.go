@@ -2,7 +2,9 @@ package resources
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -165,7 +167,7 @@ func GetStorage() (*api.ResourcesStorage, error) {
 			// Device node
 			diskDev, err := os.ReadFile(filepath.Join(entryPath, "dev"))
 			if err != nil {
-				if os.IsNotExist(err) {
+				if errors.Is(err, fs.ErrNotExist) {
 					// This happens on multipath devices, just skip as we only care about the main node.
 					continue
 				}

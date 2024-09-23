@@ -3,6 +3,8 @@ package main
 import (
 	"crypto/tls"
 	"encoding/json"
+	"errors"
+	"io/fs"
 	"net"
 	"os"
 	"path/filepath"
@@ -65,7 +67,7 @@ func reconfigureNetworkInterfaces() {
 	nicDirEntries, err := os.ReadDir(deviceConfig.NICConfigDir)
 	if err != nil {
 		// Abort if configuration folder does not exist (nothing to do), otherwise log and return.
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return
 		}
 

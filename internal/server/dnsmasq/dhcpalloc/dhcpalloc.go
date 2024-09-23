@@ -5,10 +5,10 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io/fs"
 	"math"
 	"math/big"
 	"net"
-	"os"
 
 	"github.com/mdlayher/netx/eui64"
 
@@ -346,7 +346,7 @@ func AllocateTask(opts *Options, f func(*Transaction) error) error {
 	// Read current static IP allocation configured from dnsmasq host config (if exists).
 	deviceStaticFileName := dnsmasq.StaticAllocationFileName(opts.ProjectName, opts.HostName, opts.DeviceName)
 	t.currentDHCPMAC, t.currentDHCPv4, t.currentDHCPv6, err = dnsmasq.DHCPStaticAllocation(opts.Network.Name(), deviceStaticFileName)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
 

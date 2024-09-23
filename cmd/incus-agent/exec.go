@@ -360,7 +360,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 	if err != nil {
 		exitStatus := -1
 
-		if errors.Is(err, exec.ErrNotFound) || os.IsNotExist(err) {
+		if errors.Is(err, exec.ErrNotFound) || errors.Is(err, fs.ErrNotExist) {
 			exitStatus = 127
 		} else if errors.Is(err, fs.ErrPermission) {
 			exitStatus = 126

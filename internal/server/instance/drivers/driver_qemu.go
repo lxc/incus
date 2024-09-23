@@ -1223,7 +1223,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		if util.PathExists(logfile) {
 			_ = os.Remove(logfile + ".old")
 			err := os.Rename(logfile, logfile+".old")
-			if err != nil && !os.IsNotExist(err) {
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				op.Done(err)
 				return err
 			}
@@ -1542,7 +1542,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	} else if d.stateful {
 		// Stateless start requested but state is present, delete it.
 		err := os.Remove(d.StatePath())
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			op.Done(err)
 			return err
 		}
@@ -2058,7 +2058,7 @@ func (d *qemu) setupNvram() error {
 	// Cleanup existing variables.
 	for _, firmwarePair := range edk2.GetAchitectureFirmwarePairs(d.architecture) {
 		err := os.Remove(filepath.Join(d.Path(), filepath.Base(firmwarePair.Vars)))
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
 	}
@@ -4832,7 +4832,7 @@ func (d *qemu) pidFilePath() string {
 // pid gets the PID of the running qemu process. Returns 0 if PID file or process not found, and -1 if err non-nil.
 func (d *qemu) pid() (int, error) {
 	pidStr, err := os.ReadFile(d.pidFilePath())
-	if os.IsNotExist(err) {
+	if errors.Is(err, fs.ErrNotExist) {
 		return 0, nil // PID file has gone.
 	}
 
@@ -5863,7 +5863,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 	}
 
 	err = d.UpdateBackupFile()
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("Failed to write backup file: %w", err)
 	}
 
@@ -8864,7 +8864,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 
 		// Check if SEV/SEV-ES are enabled
 		sev, err := os.ReadFile("/sys/module/kvm_amd/parameters/sev")
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return nil, err
 		} else if strings.TrimSpace(string(sev)) == "Y" {
 			// Host supports SEV, check if QEMU supports it as well.

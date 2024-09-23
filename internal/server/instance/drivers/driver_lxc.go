@@ -2021,7 +2021,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	if util.PathExists(logfile) {
 		_ = os.Remove(logfile + ".old")
 		err := os.Rename(logfile, logfile+".old")
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return "", nil, err
 		}
 	}
@@ -3808,7 +3808,7 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool) error {
 
 		// Remove the state from the parent container; we only keep this in snapshots.
 		err2 := os.RemoveAll(d.StatePath())
-		if err2 != nil && !os.IsNotExist(err) {
+		if err2 != nil && !errors.Is(err, fs.ErrNotExist) {
 			op.Done(err)
 			return err
 		}
@@ -4941,7 +4941,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	}
 
 	err = d.UpdateBackupFile()
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("Failed to write backup file: %w", err)
 	}
 

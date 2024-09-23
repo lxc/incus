@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"io/fs"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -423,10 +425,11 @@ type uiHttpDir struct {
 	http.FileSystem
 }
 
-func (fs uiHttpDir) Open(name string) (http.File, error) {
-	fsFile, err := fs.FileSystem.Open(name)
-	if err != nil && os.IsNotExist(err) {
-		return fs.FileSystem.Open("index.html")
+// Open is part of the http.FileSystem interface.
+func (httpFS uiHttpDir) Open(name string) (http.File, error) {
+	fsFile, err := httpFS.FileSystem.Open(name)
+	if err != nil && errors.Is(err, fs.ErrNotExist) {
+		return httpFS.FileSystem.Open("index.html")
 	}
 
 	return fsFile, err
@@ -436,10 +439,11 @@ type documentationHttpDir struct {
 	http.FileSystem
 }
 
-func (fs documentationHttpDir) Open(name string) (http.File, error) {
-	fsFile, err := fs.FileSystem.Open(name)
-	if err != nil && os.IsNotExist(err) {
-		return fs.FileSystem.Open("index.html")
+// Open is part of the http.FileSystem interface.
+func (httpFS documentationHttpDir) Open(name string) (http.File, error) {
+	fsFile, err := httpFS.FileSystem.Open(name)
+	if err != nil && errors.Is(err, fs.ErrNotExist) {
+		return httpFS.FileSystem.Open("index.html")
 	}
 
 	return fsFile, err

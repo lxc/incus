@@ -2,7 +2,9 @@ package resources
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -206,7 +208,7 @@ func getDeviceDir(devicePath string) (string, error) {
 	for {
 		deviceDir := filepath.Join(devicePath, "device")
 		fileInfo, err := os.Stat(deviceDir)
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			break
 		} else if err != nil {
 			return "", fmt.Errorf("Unable to get file info for %q: %w", deviceDir, err)

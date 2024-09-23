@@ -1,7 +1,9 @@
 package osarch
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"strings"
 )
@@ -9,7 +11,7 @@ import (
 // GetLSBRelease returns a map with Linux distribution information.
 func GetLSBRelease() (map[string]string, error) {
 	osRelease, err := getLSBRelease("/etc/os-release")
-	if os.IsNotExist(err) {
+	if errors.Is(err, fs.ErrNotExist) {
 		return getLSBRelease("/usr/lib/os-release")
 	}
 
@@ -21,7 +23,7 @@ func getLSBRelease(filename string) (map[string]string, error) {
 
 	data, err := os.ReadFile(filename)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return osRelease, nil
 		}
 
