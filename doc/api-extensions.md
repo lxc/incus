@@ -2587,3 +2587,7 @@ This implements a new `security.promiscuous` configuration option on OVN NICs.
 ## `ovn_nic_ip_address_none`
 
 This adds `none` as a value for `ipv4.address` and `ipv6.address` for OVN NICs.
+
+## `instances_state_os_info`
+
+This extension adds a pointer to an `InstanceStateOSInfo` struct to the instance's state API.
