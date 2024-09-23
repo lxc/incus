@@ -3,7 +3,9 @@ package cgroup
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"slices"
 	"strconv"
@@ -762,7 +764,7 @@ func (cg *CGroup) SetHugepagesLimit(pageType string, limit int64) error {
 
 		// Apply the reserved limit.
 		err = cg.rw.Set(version, "hugetlb", fmt.Sprintf("hugetlb.%s.rsvd.limit_in_bytes", pageType), fmt.Sprintf("%d", limit))
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
 
@@ -777,7 +779,7 @@ func (cg *CGroup) SetHugepagesLimit(pageType string, limit int64) error {
 
 			// Apply the reserved limit.
 			err = cg.rw.Set(version, "hugetlb", fmt.Sprintf("hugetlb.%s.rsvd.max", pageType), "max")
-			if err != nil && !os.IsNotExist(err) {
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				return err
 			}
 
@@ -792,7 +794,7 @@ func (cg *CGroup) SetHugepagesLimit(pageType string, limit int64) error {
 
 		// Apply the reserved limit.
 		err = cg.rw.Set(version, "hugetlb", fmt.Sprintf("hugetlb.%s.rsvd.max", pageType), fmt.Sprintf("%d", limit))
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
 

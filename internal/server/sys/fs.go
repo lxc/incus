@@ -3,7 +3,9 @@
 package sys
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 )
@@ -68,7 +70,7 @@ func (s *OS) initDirs() error {
 			}
 
 			err = os.Chmod(dir.path, dir.mode)
-			if err != nil && !os.IsNotExist(err) {
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				return fmt.Errorf("Failed to chmod dir %q: %w", dir.path, err)
 			}
 		}
@@ -95,7 +97,7 @@ func (s *OS) initStorageDirs() error {
 			}
 
 			err = os.Chmod(dir.path, dir.mode)
-			if err != nil && !os.IsNotExist(err) {
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				return fmt.Errorf("Failed to chmod storage dir %q: %w", dir.path, err)
 			}
 		}

@@ -1,7 +1,9 @@
 package drivers
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/exec"
@@ -548,7 +550,7 @@ func (d *lvm) Delete(op *operations.Operation) error {
 
 		// This is a loop file so deconfigure the associated loop device.
 		err = os.Remove(d.config["source"])
-		if err != nil && !os.IsNotExist(err) {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return fmt.Errorf("Error removing LVM pool loop file %q: %w", d.config["source"], err)
 		}
 

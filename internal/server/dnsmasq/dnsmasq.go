@@ -2,7 +2,9 @@ package dnsmasq
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"os"
 	"strings"
@@ -64,7 +66,7 @@ func UpdateStaticEntry(network string, projectName string, instanceName string, 
 func RemoveStaticEntry(network string, projectName string, instanceName string, deviceName string) error {
 	deviceStaticFileName := StaticAllocationFileName(projectName, instanceName, deviceName)
 	err := os.Remove(internalUtil.VarPath("networks", network, "dnsmasq.hosts", deviceStaticFileName))
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
 
@@ -189,7 +191,7 @@ func DHCPAllAllocations(network string) (map[[4]byte]DHCPAllocation, map[[16]byt
 
 	// First read all statically allocated IPs.
 	files, err := os.ReadDir(internalUtil.VarPath("networks", network, "dnsmasq.hosts"))
-	if err != nil && os.IsNotExist(err) {
+	if err != nil && errors.Is(err, fs.ErrNotExist) {
 		return nil, nil, err
 	}
 

@@ -1,6 +1,8 @@
 package apparmor
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -30,7 +32,7 @@ func NetworkLoad(sysOS *sys.OS, n network) error {
 	// dnsmasq
 	profile := filepath.Join(aaPath, "profiles", dnsmasqProfileFilename(n))
 	content, err := os.ReadFile(profile)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
 

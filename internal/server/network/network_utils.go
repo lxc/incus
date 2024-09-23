@@ -6,7 +6,9 @@ import (
 	"context"
 	cryptoRand "crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"io/fs"
 	"math/big"
 	"math/rand"
 	"net"
@@ -469,7 +471,7 @@ func UpdateDNSMasqStatic(s *state.State, networkName string) error {
 			if (util.IsTrue(d["security.ipv4_filtering"]) && d["ipv4.address"] == "") || (util.IsTrue(d["security.ipv6_filtering"]) && d["ipv6.address"] == "") {
 				deviceStaticFileName := dnsmasq.StaticAllocationFileName(inst.Project().Name, inst.Name(), deviceName)
 				_, curIPv4, curIPv6, err := dnsmasq.DHCPStaticAllocation(d["parent"], deviceStaticFileName)
-				if err != nil && !os.IsNotExist(err) {
+				if err != nil && !errors.Is(err, fs.ErrNotExist) {
 					return err
 				}
 

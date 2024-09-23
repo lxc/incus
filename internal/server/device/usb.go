@@ -1,7 +1,9 @@
 package device
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"strings"
@@ -303,7 +305,7 @@ func (d *usb) loadUsb() ([]USBEvent, error) {
 	if err != nil {
 		/* if there are no USB devices, let's render an empty list,
 		 * i.e. no usb devices */
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return result, nil
 		}
 
@@ -313,7 +315,7 @@ func (d *usb) loadUsb() ([]USBEvent, error) {
 	for _, ent := range ents {
 		values, err := d.loadRawValues(path.Join(usbDevPath, ent.Name()))
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
 
@@ -339,7 +341,7 @@ func (d *usb) loadUsb() ([]USBEvent, error) {
 			0,
 		)
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
 
@@ -365,7 +367,7 @@ func (d *usb) loadRawValues(p string) (map[string]string, error) {
 	for k := range values {
 		v, err := os.ReadFile(path.Join(p, k))
 		if err != nil {
-			if k == "serial" && os.IsNotExist(err) {
+			if k == "serial" && errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
 

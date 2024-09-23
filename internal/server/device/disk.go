@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/exec"
@@ -678,7 +679,7 @@ func (d *disk) validateEnvironmentSourcePath() error {
 	// safely later).
 	_, err := os.Lstat(sourceHostPath)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return diskSourceNotFoundError{msg: fmt.Sprintf("Missing source path %q", d.config["source"])}
 		}
 

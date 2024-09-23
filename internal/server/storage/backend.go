@@ -404,7 +404,7 @@ func (b *backend) Delete(clientType request.ClientType, op *operations.Operation
 
 	// Delete the mountpoint.
 	err = os.Remove(path)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("Failed to remove directory %q: %w", path, err)
 	}
 

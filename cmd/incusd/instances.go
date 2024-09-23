@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -326,12 +328,12 @@ func instancesOnDisk(s *state.State) ([]instance.Instance, error) {
 	instanceTypeNames := make(map[instancetype.Type][]os.DirEntry, 2)
 
 	instanceTypeNames[instancetype.Container], err = os.ReadDir(instancePaths[instancetype.Container])
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
 
 	instanceTypeNames[instancetype.VM], err = os.ReadDir(instancePaths[instancetype.VM])
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
 

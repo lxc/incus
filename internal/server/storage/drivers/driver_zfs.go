@@ -1,7 +1,9 @@
 package drivers
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -452,7 +454,7 @@ func (d *zfs) Delete(op *operations.Operation) error {
 	// Delete any loop file we may have used
 	loopPath := loopFilePath(d.name)
 	err = os.Remove(loopPath)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("Failed to remove '%s': %w", loopPath, err)
 	}
 

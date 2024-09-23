@@ -3,8 +3,10 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"math/rand"
 	"net"
 	"os"
@@ -451,7 +453,7 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 
 	targetIsDir := false
 	sb, err := os.Stat(target)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
 

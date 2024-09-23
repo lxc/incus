@@ -3,7 +3,9 @@ package cluster_test
 import (
 	"context"
 	"crypto/x509"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -138,7 +140,7 @@ func TestMaybeUpdate_NothingToDo(t *testing.T) {
 	_ = cluster.MaybeUpdate(state)
 
 	_, err = os.Stat(stamp)
-	require.True(t, os.IsNotExist(err))
+	require.True(t, errors.Is(err, fs.ErrNotExist))
 }
 
 func TestUpgradeMembersWithoutRole(t *testing.T) {

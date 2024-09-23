@@ -1,7 +1,9 @@
 package device
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -266,7 +268,7 @@ func unixDeviceSetup(s *state.State, devicesPath string, typePrefix string, devi
 	// Load all existing host devices.
 	dents, err := os.ReadDir(devicesPath)
 	if err != nil {
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
 	}
@@ -384,7 +386,7 @@ func unixDeviceRemove(devicesPath string, typePrefix string, deviceName string, 
 	// Load all devices.
 	dents, err := os.ReadDir(devicesPath)
 	if err != nil {
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
 	}
@@ -490,7 +492,7 @@ func unixDeviceDeleteFiles(s *state.State, devicesPath string, typePrefix string
 	// Load all devices.
 	dents, err := os.ReadDir(devicesPath)
 	if err != nil {
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
 	}

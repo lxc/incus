@@ -2,6 +2,8 @@ package cgroup
 
 import (
 	"bufio"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -331,7 +333,7 @@ func Init() {
 	// Go through the list of resource controllers for Incus.
 	selfCg, err := os.Open("/proc/self/cgroup")
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			logger.Warnf("System doesn't appear to support CGroups")
 		} else {
 			logger.Errorf("Unable to load list of cgroups: %v", err)
@@ -370,14 +372,14 @@ func Init() {
 
 		controllers, err := os.Open(hybridPath)
 		if err != nil {
-			if !os.IsNotExist(err) {
+			if !errors.Is(err, fs.ErrNotExist) {
 				logger.Errorf("Unable to load cgroup.controllers")
 				return
 			}
 
 			dedicatedPath = filepath.Join(cgPath, "cgroup.controllers")
 			controllers, err = os.Open(dedicatedPath)
-			if err != nil && !os.IsNotExist(err) {
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				logger.Errorf("Unable to load cgroup.controllers")
 				return
 			}
