@@ -9381,6 +9381,11 @@ func (d *qemu) ConsoleLog() (string, error) {
 	// Read and return the complete log for this instance.
 	fullLog, err := os.ReadFile(d.common.ConsoleBufferLogPath())
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			// If there's no log file yet, such as right at VM creation, return an empty string.
+			return "", nil
+		}
+
 		return "", err
 	}
 
