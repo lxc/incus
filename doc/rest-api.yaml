@@ -2137,6 +2137,8 @@ definitions:
                 description: Network usage key/value pairs
                 type: object
                 x-go-name: Network
+            os_info:
+                $ref: '#/definitions/InstanceStateOSInfo'
             pid:
                 description: PID of the runtime
                 example: 7281
@@ -2349,6 +2351,36 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: PacketsSent
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    InstanceStateOSInfo:
+        properties:
+            fqdn:
+                description: FQDN of the instance.
+                example: myhost.mydomain.local
+                type: string
+                x-go-name: FQDN
+            hostname:
+                description: Hostname of the instance.
+                example: myhost
+                type: string
+                x-go-name: Hostname
+            kernel_version:
+                description: Version of the kernel running in the instance.
+                example: 6.1.0-25-amd64
+                type: string
+                x-go-name: KernelVersion
+            os:
+                description: Operating system running in the instance.
+                example: Debian GNU/Linux
+                type: string
+                x-go-name: OS
+            os_version:
+                description: Version of the operating system.
+                example: 12 (bookworm)
+                type: string
+                x-go-name: OSVersion
+        title: InstanceStateOSInfo represents the operating system information section of an instance's state.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     InstanceStatePut:
