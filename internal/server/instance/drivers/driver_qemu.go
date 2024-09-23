@@ -3811,6 +3811,7 @@ func (d *qemu) addRootDriveConfig(qemuDev map[string]string, mountInfo *storageP
 		DevPath:    mountInfo.DiskPath,
 		Opts:       rootDriveConf.Opts,
 		TargetPath: rootDriveConf.TargetPath,
+		Limits:     rootDriveConf.Limits,
 	}
 
 	if d.storagePool.Driver().Info().Remote {
