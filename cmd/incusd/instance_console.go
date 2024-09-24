@@ -723,7 +723,10 @@ func instanceConsoleLogDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(fmt.Errorf("Instance is not container type"))
 	}
 
-	c := inst.(instance.Container)
+	c, ok := inst.(instance.Container)
+	if !ok {
+		return response.SmartError(fmt.Errorf("Instance is not container type"))
+	}
 
 	truncateConsoleLogFile := func(path string) error {
 		// Check that this is a regular file. We don't want to try and unlink

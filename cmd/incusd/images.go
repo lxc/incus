@@ -2915,10 +2915,13 @@ func imageValidSecret(s *state.State, r *http.Request, projectName string, finge
 		}
 
 		if opSecret == secret {
-			// Token is single-use, so cancel it now.
-			err = operationCancel(s, r, projectName, op)
-			if err != nil {
-				return nil, fmt.Errorf("Failed to cancel operation %q: %w", op.ID, err)
+			// Check if the operation is currently running (we allow access while expired).
+			if op.Status == api.Running.String() {
+				// Token is single-use, so cancel it now.
+				err = operationCancel(s, r, projectName, op)
+				if err != nil {
+					return nil, fmt.Errorf("Failed to cancel operation %q: %w", op.ID, err)
+				}
 			}
 
 			return op, nil
