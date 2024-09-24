@@ -10,9 +10,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/osarch"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -39,6 +41,7 @@ func renderState() *api.InstanceState {
 		Network:   networkState(),
 		Pid:       1,
 		Processes: processesState(),
+		OSInfo:    osState(),
 	}
 }
 
@@ -241,4 +244,36 @@ func processesState() int64 {
 	}
 
 	return int64(len(pids))
+}
+
+func osState() *api.InstanceStateOSInfo {
+	osInfo := &api.InstanceStateOSInfo{}
+
+	// Get information about the OS.
+	lsbRelease, err := osarch.GetLSBRelease()
+	if err == nil {
+		osInfo.OS = lsbRelease["NAME"]
+		osInfo.OSVersion = lsbRelease["VERSION"]
+	}
+
+	// Get information about the kernel version.
+	uname, err := linux.Uname()
+	if err == nil {
+		osInfo.KernelVersion = uname.Release
+	}
+
+	// Get the hostname.
+	hostname, err := os.Hostname()
+	if err == nil {
+		osInfo.Hostname = hostname
+	}
+
+	// Get the FQDN. To avoid needing to run `hostname -f`, do a reverse host lookup for 127.0.1.1, and if found, return the first hostname as the FQDN.
+	fqdn, err := net.LookupAddr("127.0.1.1")
+	if err == nil {
+		// Take the first returned hostname and trim the trailing dot.
+		osInfo.FQDN = strings.TrimSuffix(fqdn[0], ".")
+	}
+
+	return osInfo
 }

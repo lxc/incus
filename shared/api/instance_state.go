@@ -65,6 +65,11 @@ type InstanceState struct {
 	//
 	// API extension: instance_state_started_at.
 	StartedAt time.Time `json:"started_at" yaml:"started_at"`
+
+	// OS information.
+	//
+	// API extension: instances_state_os_info.
+	OSInfo *InstanceStateOSInfo `json:"os_info" yaml:"os_info"`
 }
 
 // InstanceStateDisk represents the disk information section of an instance's state.
@@ -219,4 +224,31 @@ type InstanceStateNetworkCounters struct {
 	// Number of inbound packets dropped
 	// Example: 179
 	PacketsDroppedInbound int64 `json:"packets_dropped_inbound" yaml:"packets_dropped_inbound"`
+}
+
+// InstanceStateOSInfo represents the operating system information section of an instance's state.
+//
+// swagger:model
+//
+// API extension: instances_state_os_info.
+type InstanceStateOSInfo struct {
+	// Operating system running in the instance.
+	// Example: Debian GNU/Linux
+	OS string `json:"os" yaml:"os"`
+
+	// Version of the operating system.
+	// Example: 12 (bookworm)
+	OSVersion string `json:"os_version" yaml:"os_version"`
+
+	// Version of the kernel running in the instance.
+	// Example: 6.1.0-25-amd64
+	KernelVersion string `json:"kernel_version" yaml:"kernel_version"`
+
+	// Hostname of the instance.
+	// Example: myhost
+	Hostname string `json:"hostname" yaml:"hostname"`
+
+	// FQDN of the instance.
+	// Example: myhost.mydomain.local
+	FQDN string `json:"fqdn" yaml:"fqdn"`
 }
