@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-09-24 08:09-0600\n"
-"PO-Revision-Date: 2024-06-02 16:41+0000\n"
-"Last-Translator: Tobias Gerold <tobias@g3ro.eu>\n"
+"PO-Revision-Date: 2024-09-24 22:53+0000\n"
+"Last-Translator: Jan Mittelstädter <jan@mittelstaedter.de>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.6-dev\n"
+"X-Generator: Weblate 5.8-dev\n"
 
 #: cmd/incus/info.go:438
 msgid "  Chassis:"
@@ -634,7 +634,7 @@ msgstr "%s (%d mehr)"
 #: cmd/incus/admin_recover.go:65
 #, c-format
 msgid "%s (backend=%q, source=%q)"
-msgstr ""
+msgstr "%s (backend=%q, quelle=%q)"
 
 #: cmd/incus/file.go:1104 cmd/incus/file.go:1102
 #, c-format
@@ -682,7 +682,7 @@ msgstr "kann nicht zum selben Container Namen kopieren"
 
 #: cmd/incus/create.go:136 cmd/incus/rebuild.go:64
 msgid "--empty cannot be combined with an image name"
-msgstr ""
+msgstr "--empty kann nicht mit einem image namen kombiniert werden"
 
 #: cmd/incus/config.go:488 cmd/incus/config.go:796
 #, fuzzy
