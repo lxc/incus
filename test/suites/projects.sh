@@ -1067,7 +1067,7 @@ test_projects_usage() {
     limits.cpu=1 \
     limits.memory=512MiB \
     limits.processes=20
-  incus profile device set default root size=3GiB --project test-usage
+  incus profile device set default root size=300MiB --project test-usage
 
   # Spin up a container
   deps/import-busybox --project test-usage --alias testimage
@@ -1076,7 +1076,7 @@ test_projects_usage() {
 
   incus project info test-usage --format csv | grep -q "CONTAINERS,UNLIMITED,1"
   incus project info test-usage --format csv | grep -q "CPU,5,1"
-  incus project info test-usage --format csv | grep -q "DISK,10.00GiB,3.00GiB"
+  incus project info test-usage --format csv | grep -q "DISK,10.00GiB,300.00MiB"
   incus project info test-usage --format csv | grep -q "INSTANCES,UNLIMITED,1"
   incus project info test-usage --format csv | grep -q "MEMORY,1.00GiB,512.00MiB"
   incus project info test-usage --format csv | grep -q "NETWORKS,3,0"
