@@ -86,6 +86,13 @@ You can (and should!) run these tests locally as well with the following command
 - Check the Markdown formatting: `make doc-lint`
 - Check for inclusive language: `make doc-woke`
 
+To run the above, you will need the following:
+
+- Python 3.8 or higher
+- The `venv` python package
+- The `aspell` tool for spellchecking
+- The `mdl` markdown lint tool
+
 ### Document configuration options
 
 ```{note}
