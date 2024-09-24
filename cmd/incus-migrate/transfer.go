@@ -88,7 +88,7 @@ func rsyncSendSetup(ctx context.Context, path string, rsyncArgs string, instance
 	}
 
 	if instanceType == api.InstanceTypeVM {
-		args = append(args, "--exclude", "root.img")
+		args = append(args, "--exclude", "*.img")
 	}
 
 	if rsync.AtLeast("3.1.3") {
