@@ -359,9 +359,13 @@ You can get the development resources required to build Incus on your OpenSUSE T
 
     sudo zypper install autoconf automake git go libacl-devel libcap-devel liblxc1 liblxc-devel sqlite3-devel libtool libudev-devel liblz4-devel libuv-devel make pkg-config tcl
 
-In addition, for normal operation, you'll also likely need
+In addition, for normal operation, you'll also likely need:
 
     sudo zypper install dnsmasq squashfs xz rsync tar attr acl qemu qemu-img qemu-spice qemu-hw-display-virtio-gpu-pci iptables ebtables nftables
+
+For using NVIDIA GPUs inside containers, you will need the NVIDIA container tools and LXC hooks:
+
+    sudo zypper install libnvidia-container-tools lxc
 
 ```
 
