@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kballard/go-shellquote"
+
 	"github.com/lxc/incus/v6/internal/i18n"
 	config "github.com/lxc/incus/v6/shared/cliconfig"
 	"github.com/lxc/incus/v6/shared/util"
@@ -40,7 +42,14 @@ func findAlias(aliases map[string]string, origArgs []string) ([]string, []string
 
 		if foundAlias {
 			aliasKey = strings.Split(k, " ")
-			aliasValue = strings.Split(v, " ")
+
+			fields, err := shellquote.Split(v)
+			if err == nil {
+				aliasValue = fields
+			} else {
+				aliasValue = strings.Split(v, " ")
+			}
+
 			break
 		}
 	}
