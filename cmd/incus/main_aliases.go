@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -31,7 +32,29 @@ func findAlias(aliases map[string]string, origArgs []string) ([]string, []string
 	aliasKey := []string{}
 	aliasValue := []string{}
 
-	for k, v := range aliases {
+	// Sort the aliases in a stable order, preferring the long multi-fields ones.
+	aliasNames := make([]string, 0, len(aliases))
+	for k := range aliases {
+		aliasNames = append(aliasNames, k)
+	}
+
+	slices.Sort(aliasNames)
+	slices.SortStableFunc(aliasNames, func(a, b string) int {
+		aFields := strings.Split(a, " ")
+		bFields := strings.Split(b, " ")
+
+		if len(aFields) == len(bFields) {
+			return 0
+		} else if len(aFields) < len(bFields) {
+			return 1
+		}
+
+		return -1
+	})
+
+	for _, k := range aliasNames {
+		v := aliases[k]
+
 		foundAlias = true
 		for i, key := range strings.Split(k, " ") {
 			if len(origArgs) <= i+1 || origArgs[i+1] != key {
