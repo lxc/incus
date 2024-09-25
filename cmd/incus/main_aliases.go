@@ -8,8 +8,11 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/kballard/go-shellquote"
 
 	"github.com/lxc/incus/v6/internal/i18n"
 	config "github.com/lxc/incus/v6/shared/cliconfig"
@@ -29,7 +32,29 @@ func findAlias(aliases map[string]string, origArgs []string) ([]string, []string
 	aliasKey := []string{}
 	aliasValue := []string{}
 
-	for k, v := range aliases {
+	// Sort the aliases in a stable order, preferring the long multi-fields ones.
+	aliasNames := make([]string, 0, len(aliases))
+	for k := range aliases {
+		aliasNames = append(aliasNames, k)
+	}
+
+	slices.Sort(aliasNames)
+	slices.SortStableFunc(aliasNames, func(a, b string) int {
+		aFields := strings.Split(a, " ")
+		bFields := strings.Split(b, " ")
+
+		if len(aFields) == len(bFields) {
+			return 0
+		} else if len(aFields) < len(bFields) {
+			return 1
+		}
+
+		return -1
+	})
+
+	for _, k := range aliasNames {
+		v := aliases[k]
+
 		foundAlias = true
 		for i, key := range strings.Split(k, " ") {
 			if len(origArgs) <= i+1 || origArgs[i+1] != key {
@@ -40,7 +65,14 @@ func findAlias(aliases map[string]string, origArgs []string) ([]string, []string
 
 		if foundAlias {
 			aliasKey = strings.Split(k, " ")
-			aliasValue = strings.Split(v, " ")
+
+			fields, err := shellquote.Split(v)
+			if err == nil {
+				aliasValue = fields
+			} else {
+				aliasValue = strings.Split(v, " ")
+			}
+
 			break
 		}
 	}
