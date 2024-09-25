@@ -44,6 +44,10 @@ func (c *cmdNetworkLoadBalancer) Command() *cobra.Command {
 	networkLoadBalancerGetCmd := cmdNetworkLoadBalancerGet{global: c.global, networkLoadBalancer: c}
 	cmd.AddCommand(networkLoadBalancerGetCmd.Command())
 
+	// Info.
+	networkLoadBalancerInfoCmd := cmdNetworkLoadBalancerInfo{global: c.global, networkLoadBalancer: c}
+	cmd.AddCommand(networkLoadBalancerInfoCmd.Command())
+
 	// Set.
 	networkLoadBalancerSetCmd := cmdNetworkLoadBalancerSet{global: c.global, networkLoadBalancer: c}
 	cmd.AddCommand(networkLoadBalancerSetCmd.Command())
@@ -1257,4 +1261,75 @@ func (c *cmdNetworkLoadBalancerPort) RunRemove(cmd *cobra.Command, args []string
 	loadBalancer.Normalise()
 
 	return client.UpdateNetworkLoadBalancer(resource.name, loadBalancer.ListenAddress, loadBalancer.Writable(), etag)
+}
+
+// Info.
+type cmdNetworkLoadBalancerInfo struct {
+	global              *cmdGlobal
+	networkLoadBalancer *cmdNetworkLoadBalancer
+}
+
+// Command generates the command definition.
+func (c *cmdNetworkLoadBalancerInfo) Command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = usage("info", i18n.G("[<remote>:]<network> <listen_address>"))
+	cmd.Short = i18n.G("Get current load balancer status")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Get current load-balacner status"))
+	cmd.RunE = c.Run
+
+	return cmd
+}
+
+// Run runs the actual command logic.
+func (c *cmdNetworkLoadBalancerInfo) Run(cmd *cobra.Command, args []string) error {
+	// Quick checks.
+	exit, err := c.global.CheckArgs(cmd, args, 2, 2)
+	if exit {
+		return err
+	}
+
+	// Parse remote
+	resources, err := c.global.ParseServers(args[0])
+	if err != nil {
+		return err
+	}
+
+	resource := resources[0]
+	client := resource.server
+
+	if resource.name == "" {
+		return fmt.Errorf("%s", i18n.G("Missing network name"))
+	}
+
+	if args[1] == "" {
+		return fmt.Errorf("%s", i18n.G("Missing listen address"))
+	}
+
+	// Get the load-balancer state.
+	lbState, err := client.GetNetworkLoadBalancerState(resource.name, args[1])
+	if err != nil {
+		return err
+	}
+
+	// Render the state.
+	if lbState.BackendHealth == nil {
+		// Currently the only field in the state endpoint is the backend health, fail if it's missing.
+		return fmt.Errorf("%s", i18n.G("No load-balancer health information available"))
+	}
+
+	fmt.Println(i18n.G("Backend health:"))
+	for backend, info := range lbState.BackendHealth {
+		if len(info.Ports) == 0 {
+			continue
+		}
+
+		fmt.Printf("  %s (%s):\n", backend, info.Address)
+		for _, port := range info.Ports {
+			fmt.Printf("    - %s/%d: %s\n", port.Protocol, port.Port, port.Status)
+		}
+
+		fmt.Println("")
+	}
+
+	return nil
 }
