@@ -1152,6 +1152,37 @@ func (m *Monitor) CheckPCIDevice(deviceID string) (bool, error) {
 
 // RingbufRead returns the complete contents of the specified ring buffer.
 func (m *Monitor) RingbufRead(device string) (string, error) {
+	// Begin by ensuring the device specified is actually a ring buffer.
+	var queryResp struct {
+		Return []struct {
+			Label        string `json:"label"`
+			Filename     string `json:"filename"`
+			FrontendOpen bool   `json:"frontend_open"`
+		} `json:"return"`
+	}
+
+	err := m.run("query-chardev", nil, &queryResp)
+	if err != nil {
+		return "", err
+	}
+
+	deviceFound := true
+	for _, qemuDevice := range queryResp.Return {
+		if qemuDevice.Label == device {
+			deviceFound = true
+			if qemuDevice.Filename != "ringbuf" {
+				// Can't call `ringbuf-read` on a non-ringbuf device.
+				return "", ErrNotARingbuf
+			}
+
+			break
+		}
+	}
+	if !deviceFound {
+		return "", fmt.Errorf("Specified qemu device %q doesn't exist", device)
+	}
+
+	// Now actually read from the ring buffer.
 	var args struct {
 		Device string `json:"device"`
 		Size   int    `json:"size"`
@@ -1160,23 +1191,23 @@ func (m *Monitor) RingbufRead(device string) (string, error) {
 	args.Device = device
 	args.Size = 10000
 
-	var resp struct {
+	var readResp struct {
 		Return string `json:"return"`
 	}
 
 	var sb strings.Builder
 
 	for {
-		err := m.run("ringbuf-read", args, &resp)
+		err := m.run("ringbuf-read", args, &readResp)
 		if err != nil {
 			return "", err
 		}
 
-		if len(resp.Return) == 0 {
+		if len(readResp.Return) == 0 {
 			break
 		}
 
-		sb.WriteString(resp.Return)
+		sb.WriteString(readResp.Return)
 	}
 
 	return sb.String(), nil
