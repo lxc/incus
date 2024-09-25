@@ -315,8 +315,13 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(err)
 		}
 
-		// If no specific server and a placement scriplet exists, call it with the candidates.
-		if targetMemberInfo == nil && s.GlobalConfig.InstancesPlacementScriptlet() != "" {
+		// Run instance placement scriptlet if enabled.
+		if s.GlobalConfig.InstancesPlacementScriptlet() != "" {
+			// If a target was specified, limit the list of candidates to that target.
+			if targetMemberInfo != nil {
+				targetCandidates = []db.NodeInfo{*targetMemberInfo}
+			}
+
 			leaderAddress, err := s.Cluster.LeaderAddress()
 			if err != nil {
 				return response.InternalError(err)
@@ -335,9 +340,18 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 				Reason:  apiScriptlet.InstancePlacementReasonRelocation,
 			}
 
-			targetMemberInfo, err = scriptlet.InstancePlacementRun(r.Context(), logger.Log, s, &req, targetCandidates, leaderAddress)
-			if err != nil {
-				return response.BadRequest(fmt.Errorf("Failed instance placement scriptlet: %w", err))
+			if targetMemberInfo == nil {
+				// Get a new target.
+				targetMemberInfo, err = scriptlet.InstancePlacementRun(r.Context(), logger.Log, s, &req, targetCandidates, leaderAddress)
+				if err != nil {
+					return response.BadRequest(fmt.Errorf("Failed instance placement scriptlet: %w", err))
+				}
+			} else {
+				// Validate the current target.
+				_, err = scriptlet.InstancePlacementRun(r.Context(), logger.Log, s, &req, targetCandidates, leaderAddress)
+				if err != nil {
+					return response.BadRequest(fmt.Errorf("Failed instance placement scriptlet: %w", err))
+				}
 			}
 		}
 

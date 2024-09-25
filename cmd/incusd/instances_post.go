@@ -1095,8 +1095,13 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	if s.ServerClustered && !clusterNotification && targetMemberInfo == nil {
-		// Run instance placement scriptlet if enabled and no cluster member selected yet.
+	if s.ServerClustered && !clusterNotification {
+		// If a target was specified, limit the list of candidates to that target.
+		if targetMemberInfo != nil {
+			candidateMembers = []db.NodeInfo{*targetMemberInfo}
+		}
+
+		// Run instance placement scriptlet if enabled.
 		if s.GlobalConfig.InstancesPlacementScriptlet() != "" {
 			leaderAddress, err := s.Cluster.LeaderAddress()
 			if err != nil {
