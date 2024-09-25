@@ -9346,7 +9346,7 @@ func (d *qemu) postCPUHotplug(monitor *qmp.Monitor) error {
 // ConsoleLog returns all output sent to the instance's console's ring buffer since startup.
 func (d *qemu) ConsoleLog() (string, error) {
 	// Setup a new operation.
-	op, err := operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionConsoleRetrieve, false, false)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionConsoleRetrieve, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore, operationlock.ActionMigrate}, false, true)
 	if err != nil {
 		return "", err
 	}
@@ -9361,6 +9361,13 @@ func (d *qemu) ConsoleLog() (string, error) {
 
 	logString, err := monitor.RingbufRead("console")
 	if err != nil {
+		// If a VM was started by an older version of Incus which was then upgraded, its
+		// console device won't be a ring buffer. We don't want to cause an error in this
+		// case, so just return an empty string.
+		if errors.Is(err, qmp.ErrNotARingbuf) {
+			return "", nil
+		}
+
 		return "", err
 	}
 
