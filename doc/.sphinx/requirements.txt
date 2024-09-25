@@ -1,0 +1,16 @@
+furo
+gitpython
+linkify-it-py
+lxd-sphinx-extensions
+myst-parser<3.0.0
+pyspelling
+sphinx
+sphinx-autobuild
+sphinx-copybutton
+sphinx-design
+sphinx-notfound-page
+sphinx-remove-toctrees
+sphinx-reredirects
+sphinx-tabs
+sphinxcontrib-jquery
+sphinxext-opengraph

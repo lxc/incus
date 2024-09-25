@@ -1,0 +1,42 @@
+*.swp
+po/*.mo
+po/*.po~
+incus-*.tar.xz
+.vagrant
+*~
+tags
+
+# Potential binaries
+cmd/fuidshift/fuidshift
+cmd/incus/incus
+cmd/lxc-to-incus/lxc-to-incus
+cmd/lxd-to-incus/lxd-to-incus
+cmd/incus-agent/incus-agent
+cmd/incus-benchmark/incus-benchmark
+cmd/incus-migrate/incus-migrate
+cmd/incus-user/incus-user
+test/dev_incus-client/dev_incus-client
+test/syscall/sysinfo/sysinfo
+test/mini-oidc/mini-oidc
+test/mini-oidc/user.data
+test/tls2jwt/tls2jwt
+
+# Sphinx
+doc/html/
+doc/reference/manpages/**/*.md
+doc/.sphinx/deps/
+doc/.sphinx/.doctrees/
+doc/.sphinx/themes/
+doc/.sphinx/venv/
+doc/.sphinx/warnings.txt
+doc/.sphinx/.wordlist.dic
+doc/.sphinx/_static/swagger-ui
+doc/.sphinx/_static/download
+doc/__pycache__
+
+# For Atom ctags
+.tags
+.tags1
+
+# For JetBrains IDEs
+.idea

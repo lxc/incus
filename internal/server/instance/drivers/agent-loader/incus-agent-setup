@@ -1,0 +1,63 @@
+#!/bin/sh
+set -eu
+PREFIX="/run/incus_agent"
+CDROM="/dev/disk/by-id/scsi-0QEMU_QEMU_CD-ROM_incus_agent"
+
+# Functions.
+mount_cdrom() {
+    mount "${CDROM}" "${PREFIX}.mnt" >/dev/null 2>&1
+}
+
+mount_9p() {
+    modprobe 9pnet_virtio >/dev/null 2>&1 || true
+    mount -t 9p config "${PREFIX}.mnt" -o access=0,trans=virtio,size=1048576 >/dev/null 2>&1
+}
+
+fail() {
+    # Check if we already have an agent in place.
+    # This will typically be true during restart in the case of a cdrom-based setup.
+    if [ -x "${PREFIX}/incus-agent" ]; then
+        echo "${1}, re-using existing agent"
+        exit 0
+    fi
+
+    # Cleanup and fail.
+    umount -l "${PREFIX}" >/dev/null 2>&1 || true
+    eject "${CDROM}" >/dev/null 2>&1 || true
+    rmdir "${PREFIX}" >/dev/null 2>&1 || true
+    echo "${1}, failing"
+
+    exit 1
+}
+
+# Try getting an agent drive.
+mkdir -p "${PREFIX}.mnt"
+mount_9p || mount_cdrom || fail "Couldn't mount 9p or cdrom"
+
+# Setup the mount target.
+umount -l "${PREFIX}" >/dev/null 2>&1 || true
+mkdir -p "${PREFIX}"
+mount -t tmpfs tmpfs "${PREFIX}" -o mode=0700,size=50M
+
+# Copy the data.
+cp -Ra "${PREFIX}.mnt/"* "${PREFIX}"
+
+# Unmount the temporary mount.
+umount "${PREFIX}.mnt"
+rmdir "${PREFIX}.mnt"
+
+# Eject the cdrom in case it's present.
+eject "${CDROM}" >/dev/null 2>&1 || true
+
+# Fix up permissions.
+chown -R root:root "${PREFIX}"
+
+# Legacy.
+if [ ! -e "${PREFIX}/incus-agent" ] && [ -e "${PREFIX}/lxd-agent" ]; then
+    ln -s lxd-agent "${PREFIX}"/incus-agent
+fi
+
+# Attempt to restore SELinux labels.
+restorecon -R "${PREFIX}" >/dev/null 2>&1 || true
+
+exit 0

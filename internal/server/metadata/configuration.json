@@ -1,0 +1,2821 @@
+{
+	"configs": {
+		"cluster": {
+			"cluster": {
+				"keys": [
+					{
+						"scheduler.instance": {
+							"defaultdesc": "`all`",
+							"longdesc": "Possible values are `all`, `manual`, and `group`. See\n{ref}`clustering-instance-placement` for more information.",
+							"shortdesc": "Controls how instances are scheduled to run on this member",
+							"type": "string"
+						}
+					},
+					{
+						"user.*": {
+							"longdesc": "User keys can be used in search.",
+							"shortdesc": "Free form user key/value storage",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"cluster_group": {
+			"common": {
+				"keys": [
+					{
+						"instances.vm.cpu.ARCHITECTURE.baseline": {
+							"longdesc": "The CPU base architecture name as can be found through `qemu -cpu ?`.\n\nThis can be a generic definition like `qemu64` or `kvm64`, or it can be a specific hardware architecture like `EPYC-v2`.\nIt's important to ensure that all servers in the group match that baseline.",
+							"shortdesc": "CPU base architecture name",
+							"type": "string"
+						}
+					},
+					{
+						"instances.vm.cpu.ARCHITECTURE.flags": {
+							"longdesc": "A comma separated list of CPU flags to add on top of CPU baseline or a list of flags to remove from it.\n\nTo remove a flag, use `-flag`.",
+							"shortdesc": "CPU flags to add/remove to/from the baseline",
+							"type": "string"
+						}
+					},
+					{
+						"user.*": {
+							"longdesc": "User keys can be used in search.",
+							"shortdesc": "Free form user key/value storage",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"devices": {
+			"disk": {
+				"keys": [
+					{
+						"boot.priority": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Boot priority for VMs (higher value boots first)",
+							"type": "integer"
+						}
+					},
+					{
+						"ceph.cluster_name": {
+							"default": "`ceph`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The cluster name of the Ceph cluster (required for Ceph or CephFS sources)",
+							"type": "string"
+						}
+					},
+					{
+						"ceph.user_name": {
+							"default": "`admin`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The user name of the Ceph cluster (required for Ceph or CephFS sources)",
+							"type": "string"
+						}
+					},
+					{
+						"initial.*": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Initial volume configuration for instance root disk devices",
+							"type": "string"
+						}
+					},
+					{
+						"io.bus": {
+							"default": "`virtio-scsi` for block, `auto` for file system",
+							"longdesc": "This controls what bus a disk device should be attached to.\n\nFor block devices (disks), this is one of:\n- `nvme`\n- `virtio-blk`\n- `virtio-scsi` (default)\n\nFor file systems (shared directories or custom volumes), this is one of:\n- `9p`\n- `auto` (default) (`virtiofs` + `9p`, just `9p` if `virtiofsd` is missing)\n- `virtiofs`",
+							"required": "no",
+							"shortdesc": "Only for VMs: Override the bus for the device",
+							"type": "string"
+						}
+					},
+					{
+						"io.cache": {
+							"default": "`none`",
+							"longdesc": "This controls what bus a disk device should be attached to.\n\nFor block devices (disks), this is one of:\n- `none` (default)\n- `writeback`\n- `unsafe`\n\nFor file systems (shared directories or custom volumes), this is one of:\n- `none` (default)\n- `metadata`\n- `unsafe`",
+							"required": "no",
+							"shortdesc": "Only for VMs: Override the caching mode for the device",
+							"type": "string"
+						}
+					},
+					{
+						"limits.max": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "I/O limit in byte/s or IOPS for both read and write (same as setting both `limits.read` and `limits.write`)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.read": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`",
+							"type": "string"
+						}
+					},
+					{
+						"limits.write": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`",
+							"type": "string"
+						}
+					},
+					{
+						"path": {
+							"longdesc": "",
+							"required": "yes",
+							"shortdesc": "Path inside the instance where the disk will be mounted (only for containers)",
+							"type": "string"
+						}
+					},
+					{
+						"pool": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The storage pool to which the disk device belongs (only applicable for storage volumes managed by Incus)",
+							"type": "string"
+						}
+					},
+					{
+						"propagation": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Controls how a bind-mount is shared between the instance and the host (can be one of `private`, the default, or `shared`, `slave`, `unbindable`,  `rshared`, `rslave`, `runbindable`,  `rprivate`; see the Linux Kernel [shared subtree](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt) documentation for a full explanation)",
+							"type": "string"
+						}
+					},
+					{
+						"raw.mount.options": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "File system specific mount options",
+							"type": "string"
+						}
+					},
+					{
+						"readonly": {
+							"default": "`false`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Controls whether to make the mount read-only",
+							"type": "bool"
+						}
+					},
+					{
+						"recursive": {
+							"default": "`false`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Controls whether to recursively mount the source path",
+							"type": "bool"
+						}
+					},
+					{
+						"required": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Controls whether to fail if the source doesn't exist",
+							"type": "bool"
+						}
+					},
+					{
+						"shift": {
+							"default": "`false`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Sets up a shifting overlay to translate the source UID/GID to match the instance (only for containers)",
+							"type": "bool"
+						}
+					},
+					{
+						"size": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Disk size in bytes (various suffixes supported, see {ref}`instances-limit-units`) - only supported for the `rootfs` (`/`)",
+							"type": "string"
+						}
+					},
+					{
+						"size.state": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Same as `size`, but applies to the file-system volume used for saving runtime state in VMs",
+							"type": "string"
+						}
+					},
+					{
+						"source": {
+							"longdesc": "",
+							"required": "yes",
+							"shortdesc": "Source of a file system or block device (see {ref}`devices-disk-types` for details)",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"unix-char-block": {
+				"keys": [
+					{
+						"gid": {
+							"default": "0",
+							"longdesc": "",
+							"shortdesc": "GID of the device owner in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"major": {
+							"default": "device on host",
+							"longdesc": "",
+							"shortdesc": "Device major number",
+							"type": "int"
+						}
+					},
+					{
+						"minor": {
+							"default": "device on host",
+							"longdesc": "",
+							"shortdesc": "Device minor number",
+							"type": "int"
+						}
+					},
+					{
+						"mode": {
+							"default": "0660",
+							"longdesc": "",
+							"shortdesc": "Mode of the device in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"path": {
+							"longdesc": "",
+							"shortdesc": "Path inside the instance (one of `source` and `path` must be set)",
+							"type": "string"
+						}
+					},
+					{
+						"required": {
+							"default": "true",
+							"longdesc": "",
+							"shortdesc": "Whether this device is required to start the instance",
+							"type": "bool"
+						}
+					},
+					{
+						"source": {
+							"longdesc": "",
+							"shortdesc": "Path on the host (one of `source` and `path` must be set)",
+							"type": "string"
+						}
+					},
+					{
+						"uid": {
+							"default": "0",
+							"longdesc": "",
+							"shortdesc": "UID of the device owner in the instance",
+							"type": "int"
+						}
+					}
+				]
+			},
+			"unix-hotplug": {
+				"keys": [
+					{
+						"gid": {
+							"default": "0",
+							"longdesc": "",
+							"shortdesc": "GID of the device owner in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"mode": {
+							"default": "0660",
+							"longdesc": "",
+							"shortdesc": "Mode of the device in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"productid": {
+							"longdesc": "",
+							"shortdesc": "The product ID of the USB device",
+							"type": "string"
+						}
+					},
+					{
+						"required": {
+							"default": "true",
+							"longdesc": "",
+							"shortdesc": "Whether this device is required to start the instance",
+							"type": "bool"
+						}
+					},
+					{
+						"uid": {
+							"default": "0",
+							"longdesc": "",
+							"shortdesc": "UID of the device owner in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"vendorid": {
+							"longdesc": "",
+							"shortdesc": "The vendor ID of the USB device",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"usb": {
+				"keys": [
+					{
+						"busnum": {
+							"longdesc": "",
+							"shortdesc": "The bus number of which the USB device is attached",
+							"type": "int"
+						}
+					},
+					{
+						"devnum": {
+							"longdesc": "",
+							"shortdesc": "The device number of the USB device",
+							"type": "int"
+						}
+					},
+					{
+						"gid": {
+							"defaultdesc": "`0`",
+							"longdesc": "",
+							"shortdesc": "Only for containers: GID of the device owner in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"mode": {
+							"defaultdesc": "`0660`",
+							"longdesc": "",
+							"shortdesc": "Only for containers: Mode of the device in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"productid": {
+							"longdesc": "",
+							"shortdesc": "The product ID of the USB device",
+							"type": "string"
+						}
+					},
+					{
+						"required": {
+							"defaultdesc": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether this device is required to start the instance (the default is `false`, and all devices can be hotplugged)",
+							"type": "bool"
+						}
+					},
+					{
+						"serial": {
+							"longdesc": "",
+							"shortdesc": "The serial number of the USB device",
+							"type": "string"
+						}
+					},
+					{
+						"uid": {
+							"defaultdesc": "`0`",
+							"longdesc": "",
+							"shortdesc": "Only for containers: UID of the device owner in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"vendorid": {
+							"longdesc": "",
+							"shortdesc": "The vendor ID of the USB device",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"image": {
+			"requirements": {
+				"keys": [
+					{
+						"requirements.cdrom_agent": {
+							"longdesc": "",
+							"shortdesc": "If set to `true`, indicates that the VM requires an `agent:config` disk be added.",
+							"type": "bool"
+						}
+					},
+					{
+						"requirements.cgroup": {
+							"longdesc": "",
+							"shortdesc": "If set to `v1`, indicates that the image requires the host to run cgroup v1.",
+							"type": "string"
+						}
+					},
+					{
+						"requirements.nesting": {
+							"longdesc": "",
+							"shortdesc": "If set to `true`, indicates that the image cannot work without nesting enabled.",
+							"type": "bool"
+						}
+					},
+					{
+						"requirements.privileged": {
+							"longdesc": "",
+							"shortdesc": "If set to `false`, indicates that the image cannot work as a privileged container.",
+							"type": "bool"
+						}
+					},
+					{
+						"requirements.secureboot": {
+							"longdesc": "",
+							"shortdesc": "If set to `false`, indicates that the image cannot boot under secure boot.",
+							"type": "bool"
+						}
+					}
+				]
+			}
+		},
+		"instance": {
+			"boot": {
+				"keys": [
+					{
+						"boot.autorestart": {
+							"liveupdate": "no",
+							"longdesc": "If set to `true` will attempt up to 10 restarts over a 1 minute period upon unexpected instance exit.",
+							"shortdesc": "Whether to automatically restart an instance on unexpected exit",
+							"type": "bool"
+						}
+					},
+					{
+						"boot.autostart": {
+							"liveupdate": "no",
+							"longdesc": "If set to `false`, restore the last state.",
+							"shortdesc": "Whether to always start the instance when the daemon starts",
+							"type": "bool"
+						}
+					},
+					{
+						"boot.autostart.delay": {
+							"defaultdesc": "0",
+							"liveupdate": "no",
+							"longdesc": "The number of seconds to wait after the instance started before starting the next one.",
+							"shortdesc": "Delay after starting the instance",
+							"type": "integer"
+						}
+					},
+					{
+						"boot.autostart.priority": {
+							"defaultdesc": "0",
+							"liveupdate": "no",
+							"longdesc": "The instance with the highest value is started first.",
+							"shortdesc": "What order to start the instances in",
+							"type": "integer"
+						}
+					},
+					{
+						"boot.host_shutdown_action": {
+							"defaultdesc": "stop",
+							"liveupdate": "yes",
+							"longdesc": "Action to take on host shut down",
+							"shortdesc": "What action to take on the instance when the host is shut down",
+							"type": "integer"
+						}
+					},
+					{
+						"boot.host_shutdown_timeout": {
+							"defaultdesc": "30",
+							"liveupdate": "yes",
+							"longdesc": "Number of seconds to wait for the instance to shut down before it is force-stopped.",
+							"shortdesc": "How long to wait for the instance to shut down",
+							"type": "integer"
+						}
+					},
+					{
+						"boot.stop.priority": {
+							"defaultdesc": "0",
+							"liveupdate": "no",
+							"longdesc": "The instance with the highest value is shut down first.",
+							"shortdesc": "What order to shut down the instances in",
+							"type": "integer"
+						}
+					}
+				]
+			},
+			"cloud-init": {
+				"keys": [
+					{
+						"cloud-init.network-config": {
+							"condition": "If supported by image",
+							"defaultdesc": "`DHCP on eth0`",
+							"liveupdate": "no",
+							"longdesc": "The content is used as seed value for `cloud-init`.",
+							"shortdesc": "Network configuration for `cloud-init`",
+							"type": "string"
+						}
+					},
+					{
+						"cloud-init.user-data": {
+							"condition": "If supported by image",
+							"defaultdesc": "`#cloud-config`",
+							"liveupdate": "no",
+							"longdesc": "The content is used as seed value for `cloud-init`.",
+							"shortdesc": "User data for `cloud-init`",
+							"type": "string"
+						}
+					},
+					{
+						"cloud-init.vendor-data": {
+							"condition": "If supported by image",
+							"defaultdesc": "`#cloud-config`",
+							"liveupdate": "no",
+							"longdesc": "The content is used as seed value for `cloud-init`.",
+							"shortdesc": "Vendor data for `cloud-init`",
+							"type": "string"
+						}
+					},
+					{
+						"user.network-config": {
+							"condition": "If supported by image",
+							"defaultdesc": "`DHCP on eth0`",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Legacy version of `cloud-init.network-config`",
+							"type": "string"
+						}
+					},
+					{
+						"user.user-data": {
+							"condition": "If supported by image",
+							"defaultdesc": "`#cloud-config`",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Legacy version of `cloud-init.user-data`",
+							"type": "string"
+						}
+					},
+					{
+						"user.vendor-data": {
+							"condition": "If supported by image",
+							"defaultdesc": "`#cloud-config`",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Legacy version of `cloud-init.vendor-data`",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"migration": {
+				"keys": [
+					{
+						"migration.incremental.memory": {
+							"condition": "container",
+							"defaultdesc": "`false`",
+							"liveupdate": "yes",
+							"longdesc": "Using incremental memory transfer of the instance's memory can reduce downtime.",
+							"shortdesc": "Whether to use incremental memory transfer",
+							"type": "bool"
+						}
+					},
+					{
+						"migration.incremental.memory.goal": {
+							"condition": "container",
+							"defaultdesc": "`70`",
+							"liveupdate": "yes",
+							"longdesc": "",
+							"shortdesc": "Percentage of memory to have in sync before stopping the instance",
+							"type": "integer"
+						}
+					},
+					{
+						"migration.incremental.memory.iterations": {
+							"condition": "container",
+							"defaultdesc": "`10`",
+							"liveupdate": "yes",
+							"longdesc": "",
+							"shortdesc": "Maximum number of transfer operations to go through before stopping the instance",
+							"type": "integer"
+						}
+					},
+					{
+						"migration.stateful": {
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "Enabling this option prevents the use of some features that are incompatible with it.",
+							"shortdesc": "Whether to allow for stateful stop/start and snapshots",
+							"type": "bool"
+						}
+					}
+				]
+			},
+			"miscellaneous": {
+				"keys": [
+					{
+						"agent.nic_config": {
+							"condition": "virtual machine",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "For containers, the name and MTU of the default network interfaces is used for the instance devices.\nFor virtual machines, set this option to `true` to set the name and MTU of the default network interfaces to be the same as the instance devices.",
+							"shortdesc": "Whether to use the name and MTU of the default network interfaces",
+							"type": "bool"
+						}
+					},
+					{
+						"cluster.evacuate": {
+							"defaultdesc": "`auto`",
+							"liveupdate": "no",
+							"longdesc": "The `cluster.evacuate` provides control over how instances are handled when a cluster member is being\nevacuated.\n\nAvailable Modes:\n  - `auto` *(default)*: The system will automatically decide the best evacuation method based on the\n     instance's type and configured devices:\n    + If any device is not suitable for migration, the instance will not be migrated (only stopped).\n    + Live migration will be used only for virtual machines with the `migration.stateful` setting\n      enabled and for which all its devices can be migrated as well.\n  - `live-migrate`: Instances are live-migrated to another server. This means the instance remains running\n     and operational during the migration process, ensuring minimal disruption.\n  - `migrate`: In this mode, instances are migrated to another server in the cluster. The migration\n     process will not be live, meaning there will be a brief downtime for the instance during the\n     migration.\n  -  `stop`: Instances are not migrated. Instead, they are stopped on the current server.\n  -  `stateful-stop`: Instances are not migrated. Instead, they are stopped on the current server\n     but with their runtime state (memory) stored on disk for resuming on restore.\n  -  `force-stop`: Instances are not migrated. Instead, they are forcefully stopped.\n\nSee {ref}`cluster-evacuate` for more information.",
+							"shortdesc": "What to do when evacuating the instance",
+							"type": "string"
+						}
+					},
+					{
+						"linux.kernel_modules": {
+							"condition": "container",
+							"liveupdate": "yes",
+							"longdesc": "Specify the kernel modules as a comma-separated list.",
+							"shortdesc": "Kernel modules to load before starting the instance",
+							"type": "string"
+						}
+					},
+					{
+						"linux.sysctl.*": {
+							"condition": "container",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Override for the corresponding `sysctl` setting in the container",
+							"type": "string"
+						}
+					},
+					{
+						"user.*": {
+							"liveupdate": "no",
+							"longdesc": "User keys can be used in search.",
+							"shortdesc": "Free-form user key/value storage",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"nvidia": {
+				"keys": [
+					{
+						"nvidia.driver.capabilities": {
+							"condition": "container",
+							"defaultdesc": "`compute,utility`",
+							"liveupdate": "no",
+							"longdesc": "The specified driver capabilities are used to set `libnvidia-container NVIDIA_DRIVER_CAPABILITIES`.",
+							"shortdesc": "What driver capabilities the instance needs",
+							"type": "string"
+						}
+					},
+					{
+						"nvidia.require.cuda": {
+							"condition": "container",
+							"liveupdate": "no",
+							"longdesc": "The specified version expression is used to set `libnvidia-container NVIDIA_REQUIRE_CUDA`.",
+							"shortdesc": "Required CUDA version",
+							"type": "string"
+						}
+					},
+					{
+						"nvidia.require.driver": {
+							"condition": "container",
+							"liveupdate": "no",
+							"longdesc": "The specified version expression is used to set `libnvidia-container NVIDIA_REQUIRE_DRIVER`.",
+							"shortdesc": "Required driver version",
+							"type": "string"
+						}
+					},
+					{
+						"nvidia.runtime": {
+							"condition": "container",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Whether to pass the host NVIDIA and CUDA runtime libraries into the instance",
+							"type": "bool"
+						}
+					}
+				]
+			},
+			"raw": {
+				"keys": [
+					{
+						"raw.apparmor": {
+							"liveupdate": "yes",
+							"longdesc": "The specified entries are appended to the generated profile.",
+							"shortdesc": "AppArmor profile entries",
+							"type": "blob"
+						}
+					},
+					{
+						"raw.idmap": {
+							"condition": "unprivileged container",
+							"liveupdate": "no",
+							"longdesc": "For example: `both 1000 1000`",
+							"shortdesc": "Raw idmap configuration",
+							"type": "blob"
+						}
+					},
+					{
+						"raw.lxc": {
+							"condition": "container",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Raw LXC configuration to be appended to the generated one",
+							"type": "blob"
+						}
+					},
+					{
+						"raw.qemu": {
+							"condition": "virtual machine",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Raw QEMU configuration to be appended to the generated command line",
+							"type": "blob"
+						}
+					},
+					{
+						"raw.qemu.conf": {
+							"condition": "virtual machine",
+							"liveupdate": "no",
+							"longdesc": "See {ref}`instance-options-qemu` for more information.",
+							"shortdesc": "Addition/override to the generated `qemu.conf` file",
+							"type": "blob"
+						}
+					},
+					{
+						"raw.qemu.qmp.early": {
+							"condition": "virtual machine",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "QMP commands to run before Incus QEMU initialization",
+							"type": "blob"
+						}
+					},
+					{
+						"raw.qemu.qmp.post-start": {
+							"condition": "virtual machine",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "QMP commands to run after the VM has started",
+							"type": "blob"
+						}
+					},
+					{
+						"raw.qemu.qmp.pre-start": {
+							"condition": "virtual machine",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "QMP commands to run after Incus QEMU initialization and before the VM has started",
+							"type": "blob"
+						}
+					},
+					{
+						"raw.qemu.scriptlet": {
+							"condition": "virtual machine",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "QEMU scriptlet to run at early, pre-start and post-start stages",
+							"type": "string"
+						}
+					},
+					{
+						"raw.seccomp": {
+							"condition": "container",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Raw Seccomp configuration",
+							"type": "blob"
+						}
+					}
+				]
+			},
+			"resource-limits": {
+				"keys": [
+					{
+						"limits.cpu": {
+							"defaultdesc": "1 (VMs)",
+							"liveupdate": "yes",
+							"longdesc": "A number or a specific range of CPUs to expose to the instance.\n\nSee {ref}`instance-options-limits-cpu` for more information.",
+							"shortdesc": "Which CPUs to expose to the instance",
+							"type": "string"
+						}
+					},
+					{
+						"limits.cpu.allowance": {
+							"condition": "container",
+							"defaultdesc": "100%",
+							"liveupdate": "yes",
+							"longdesc": "To control how much of the CPU can be used, specify either a percentage (`50%`) for a soft limit\nor a chunk of time (`25ms/100ms`) for a hard limit.\n\nSee {ref}`instance-options-limits-cpu-container` for more information.",
+							"shortdesc": "How much of the CPU can be used",
+							"type": "string"
+						}
+					},
+					{
+						"limits.cpu.nodes": {
+							"liveupdate": "yes",
+							"longdesc": "A comma-separated list of NUMA node IDs or ranges to place the instance CPUs on.\nAlternatively, the value `balanced` may be used to have Incus pick the least busy NUMA node on startup.\n\nSee {ref}`instance-options-limits-cpu-container` for more information.",
+							"shortdesc": "Which NUMA nodes to place the instance CPUs on",
+							"type": "string"
+						}
+					},
+					{
+						"limits.cpu.priority": {
+							"condition": "container",
+							"defaultdesc": "`10` (maximum)",
+							"liveupdate": "yes",
+							"longdesc": "When overcommitting resources, specify the CPU scheduling priority compared to other instances that share the same CPUs.\nSpecify an integer between 0 and 10.\n\nSee {ref}`instance-options-limits-cpu-container` for more information.",
+							"shortdesc": "CPU scheduling priority compared to other instances",
+							"type": "integer"
+						}
+					},
+					{
+						"limits.disk.priority": {
+							"defaultdesc": "`5` (medium)",
+							"liveupdate": "yes",
+							"longdesc": "Controls how much priority to give to the instance's I/O requests when under load.\n\nSpecify an integer between 0 and 10.",
+							"shortdesc": "Priority of the instance's I/O requests",
+							"type": "integer"
+						}
+					},
+					{
+						"limits.hugepages.1GB": {
+							"condition": "container",
+							"liveupdate": "yes",
+							"longdesc": "Fixed value (in bytes) to limit the number of 1 GB huge pages.\nVarious suffixes are supported (see {ref}`instances-limit-units`).\n\nSee {ref}`instance-options-limits-hugepages` for more information.",
+							"shortdesc": "Limit for the number of 1 GB huge pages",
+							"type": "string"
+						}
+					},
+					{
+						"limits.hugepages.1MB": {
+							"condition": "container",
+							"liveupdate": "yes",
+							"longdesc": "Fixed value (in bytes) to limit the number of 1 MB huge pages.\nVarious suffixes are supported (see {ref}`instances-limit-units`).\n\nSee {ref}`instance-options-limits-hugepages` for more information.",
+							"shortdesc": "Limit for the number of 1 MB huge pages",
+							"type": "string"
+						}
+					},
+					{
+						"limits.hugepages.2MB": {
+							"condition": "container",
+							"liveupdate": "yes",
+							"longdesc": "Fixed value (in bytes) to limit the number of 2 MB huge pages.\nVarious suffixes are supported (see {ref}`instances-limit-units`).\n\nSee {ref}`instance-options-limits-hugepages` for more information.",
+							"shortdesc": "Limit for the number of 2 MB huge pages",
+							"type": "string"
+						}
+					},
+					{
+						"limits.hugepages.64KB": {
+							"condition": "container",
+							"liveupdate": "yes",
+							"longdesc": "Fixed value (in bytes) to limit the number of 64 KB huge pages.\nVarious suffixes are supported (see {ref}`instances-limit-units`).\n\nSee {ref}`instance-options-limits-hugepages` for more information.",
+							"shortdesc": "Limit for the number of 64 KB huge pages",
+							"type": "string"
+						}
+					},
+					{
+						"limits.memory": {
+							"defaultdesc": "`1GiB` (VMs)",
+							"liveupdate": "yes",
+							"longdesc": "Percentage of the host's memory or a fixed value in bytes.\nVarious suffixes are supported.\n\nSee {ref}`instances-limit-units` for details.",
+							"shortdesc": "Usage limit for the host's memory",
+							"type": "string"
+						}
+					},
+					{
+						"limits.memory.enforce": {
+							"condition": "container",
+							"defaultdesc": "`hard`",
+							"liveupdate": "yes",
+							"longdesc": "If the instance's memory limit is `hard`, the instance cannot exceed its limit.\nIf it is `soft`, the instance can exceed its memory limit when extra host memory is available.",
+							"shortdesc": "Whether the memory limit is `hard` or `soft`",
+							"type": "string"
+						}
+					},
+					{
+						"limits.memory.hugepages": {
+							"condition": "virtual machine",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "If this option is set to `false`, regular system memory is used.",
+							"shortdesc": "Whether to back the instance using huge pages",
+							"type": "bool"
+						}
+					},
+					{
+						"limits.memory.swap": {
+							"condition": "container",
+							"defaultdesc": "`true`",
+							"liveupdate": "yes",
+							"longdesc": "When set to `true` or `false`, it controls whether the container is likely to get some of\nits memory swapped by the kernel. Alternatively, it can be set to a bytes value which will\nthen allow the container to make use of additional memory through swap.",
+							"shortdesc": "Control swap usage by the instance",
+							"type": "string"
+						}
+					},
+					{
+						"limits.memory.swap.priority": {
+							"condition": "container",
+							"defaultdesc": "`10` (maximum)",
+							"liveupdate": "yes",
+							"longdesc": "Specify an integer between 0 and 10.\nThe higher the value, the less likely the instance is to be swapped to disk.",
+							"shortdesc": "Prevents the instance from being swapped to disk",
+							"type": "integer"
+						}
+					},
+					{
+						"limits.processes": {
+							"condition": "container",
+							"defaultdesc": "empty",
+							"liveupdate": "yes",
+							"longdesc": "If left empty, no limit is set.",
+							"shortdesc": "Maximum number of processes that can run in the instance",
+							"type": "integer"
+						}
+					}
+				]
+			},
+			"security": {
+				"keys": [
+					{
+						"security.agent.metrics": {
+							"condition": "virtual machine",
+							"defaultdesc": "`true`",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Whether the `incus-agent` is queried for state information and metrics",
+							"type": "bool"
+						}
+					},
+					{
+						"security.csm": {
+							"condition": "virtual machine",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "When enabling this option, set {config:option}`instance-security:security.secureboot` to `false`.",
+							"shortdesc": "Whether to use a firmware that supports UEFI-incompatible operating systems",
+							"type": "bool"
+						}
+					},
+					{
+						"security.guestapi": {
+							"defaultdesc": "`true`",
+							"liveupdate": "no",
+							"longdesc": "See {ref}`dev-incus` for more information.",
+							"shortdesc": "Whether `/dev/incus` is present in the instance",
+							"type": "bool"
+						}
+					},
+					{
+						"security.guestapi.images": {
+							"condition": "container",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Controls the availability of the `/1.0/images` API over `guestapi`",
+							"type": "bool"
+						}
+					},
+					{
+						"security.idmap.base": {
+							"condition": "unprivileged container",
+							"liveupdate": "no",
+							"longdesc": "Setting this option overrides auto-detection.",
+							"shortdesc": "The base host ID to use for the allocation",
+							"type": "integer"
+						}
+					},
+					{
+						"security.idmap.isolated": {
+							"condition": "unprivileged container",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "If specified, the idmap used for this instance is unique among instances that have this option set.",
+							"shortdesc": "Whether to use a unique idmap for this instance",
+							"type": "bool"
+						}
+					},
+					{
+						"security.idmap.size": {
+							"condition": "unprivileged container",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "The size of the idmap to use",
+							"type": "integer"
+						}
+					},
+					{
+						"security.nesting": {
+							"condition": "container",
+							"defaultdesc": "`false`",
+							"liveupdate": "yes",
+							"longdesc": "",
+							"shortdesc": "Whether to support running Incus (nested) inside the instance",
+							"type": "bool"
+						}
+					},
+					{
+						"security.privileged": {
+							"condition": "container",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Whether to run the instance in privileged mode",
+							"type": "bool"
+						}
+					},
+					{
+						"security.protection.delete": {
+							"defaultdesc": "`false`",
+							"liveupdate": "yes",
+							"longdesc": "",
+							"shortdesc": "Prevents the instance from being deleted",
+							"type": "bool"
+						}
+					},
+					{
+						"security.protection.shift": {
+							"condition": "container",
+							"defaultdesc": "`false`",
+							"liveupdate": "yes",
+							"longdesc": "Set this option to `true` to prevent the instance's file system from being UID/GID shifted on startup.",
+							"shortdesc": "Whether to protect the file system from being UID/GID shifted",
+							"type": "bool"
+						}
+					},
+					{
+						"security.secureboot": {
+							"condition": "virtual machine",
+							"defaultdesc": "`true`",
+							"liveupdate": "no",
+							"longdesc": "When disabling this option, consider enabling {config:option}`instance-security:security.csm`.",
+							"shortdesc": "Whether UEFI secure boot is enabled with the default Microsoft keys",
+							"type": "bool"
+						}
+					},
+					{
+						"security.sev": {
+							"condition": "virtual machine",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Whether AMD SEV (Secure Encrypted Virtualization) is enabled for this VM",
+							"type": "bool"
+						}
+					},
+					{
+						"security.sev.policy.es": {
+							"condition": "virtual machine",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Whether AMD SEV-ES (SEV Encrypted State) is enabled for this VM",
+							"type": "bool"
+						}
+					},
+					{
+						"security.sev.session.data": {
+							"condition": "virtual machine",
+							"defaultdesc": "`true`",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "The guest owner's `base64`-encoded session blob",
+							"type": "string"
+						}
+					},
+					{
+						"security.sev.session.dh": {
+							"condition": "virtual machine",
+							"defaultdesc": "`true`",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "The guest owner's `base64`-encoded Diffie-Hellman key",
+							"type": "string"
+						}
+					},
+					{
+						"security.syscalls.allow": {
+							"condition": "container",
+							"liveupdate": "no",
+							"longdesc": "A `\\n`-separated list of syscalls to allow.\nThis list must be mutually exclusive with `security.syscalls.deny*`.",
+							"shortdesc": "List of syscalls to allow",
+							"type": "string"
+						}
+					},
+					{
+						"security.syscalls.deny": {
+							"condition": "container",
+							"liveupdate": "no",
+							"longdesc": "A `\\n`-separated list of syscalls to deny.\nThis list must be mutually exclusive with `security.syscalls.allow`.",
+							"shortdesc": "List of syscalls to deny",
+							"type": "string"
+						}
+					},
+					{
+						"security.syscalls.deny_compat": {
+							"condition": "container",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "On `x86_64`, this option controls whether to block `compat_*` syscalls.\nOn other architectures, the option is ignored.",
+							"shortdesc": "Whether to block `compat_*` syscalls (`x86_64` only)",
+							"type": "bool"
+						}
+					},
+					{
+						"security.syscalls.deny_default": {
+							"condition": "container",
+							"defaultdesc": "`true`",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Whether to enable the default syscall deny",
+							"type": "bool"
+						}
+					},
+					{
+						"security.syscalls.intercept.bpf": {
+							"condition": "container",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Whether to handle the `bpf()` system call",
+							"type": "bool"
+						}
+					},
+					{
+						"security.syscalls.intercept.bpf.devices": {
+							"condition": "container",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "This option controls whether to allow BPF programs for the devices cgroup in the unified hierarchy to be loaded.",
+							"shortdesc": "Whether to allow BPF programs",
+							"type": "bool"
+						}
+					},
+					{
+						"security.syscalls.intercept.mknod": {
+							"condition": "container",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "These system calls allow creation of a limited subset of char/block devices.",
+							"shortdesc": "Whether to handle the `mknod` and `mknodat` system calls",
+							"type": "bool"
+						}
+					},
+					{
+						"security.syscalls.intercept.mount": {
+							"condition": "container",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Whether to handle the `mount` system call",
+							"type": "bool"
+						}
+					},
+					{
+						"security.syscalls.intercept.mount.allowed": {
+							"condition": "container",
+							"liveupdate": "yes",
+							"longdesc": "Specify a comma-separated list of file systems that are safe to mount for processes inside the instance.",
+							"shortdesc": "File systems that can be mounted",
+							"type": "string"
+						}
+					},
+					{
+						"security.syscalls.intercept.mount.fuse": {
+							"condition": "container",
+							"liveupdate": "yes",
+							"longdesc": "Specify the mounts of a given file system that should be redirected to their FUSE implementation (for example, `ext4=fuse2fs`).",
+							"shortdesc": "File system that should be redirected to FUSE implementation",
+							"type": "string"
+						}
+					},
+					{
+						"security.syscalls.intercept.mount.shift": {
+							"condition": "container",
+							"defaultdesc": "`false`",
+							"liveupdate": "yes",
+							"longdesc": "",
+							"shortdesc": "Whether to use idmapped mounts for syscall interception",
+							"type": "bool"
+						}
+					},
+					{
+						"security.syscalls.intercept.sched_setcheduler": {
+							"condition": "container",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "This system call allows increasing process priority.",
+							"shortdesc": "Whether to handle the `sched_setscheduler` system call",
+							"type": "bool"
+						}
+					},
+					{
+						"security.syscalls.intercept.setxattr": {
+							"condition": "container",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "This system call allows setting a limited subset of restricted extended attributes.",
+							"shortdesc": "Whether to handle the `setxattr` system call",
+							"type": "bool"
+						}
+					},
+					{
+						"security.syscalls.intercept.sysinfo": {
+							"condition": "container",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "This system call can be used to get cgroup-based resource usage information.",
+							"shortdesc": "Whether to handle the `sysinfo` system call",
+							"type": "bool"
+						}
+					}
+				]
+			},
+			"snapshots": {
+				"keys": [
+					{
+						"snapshots.expiry": {
+							"liveupdate": "no",
+							"longdesc": "Specify an expression like `1M 2H 3d 4w 5m 6y`.",
+							"shortdesc": "When snapshots are to be deleted",
+							"type": "string"
+						}
+					},
+					{
+						"snapshots.pattern": {
+							"defaultdesc": "`snap%d`",
+							"liveupdate": "no",
+							"longdesc": "Specify a Pongo2 template string that represents the snapshot name.\nThis template is used for scheduled snapshots and for unnamed snapshots.\n\nSee {ref}`instance-options-snapshots-names` for more information.",
+							"shortdesc": "Template for the snapshot name",
+							"type": "string"
+						}
+					},
+					{
+						"snapshots.schedule": {
+							"defaultdesc": "empty",
+							"liveupdate": "no",
+							"longdesc": "Specify either a cron expression (`\u003cminute\u003e \u003chour\u003e \u003cdom\u003e \u003cmonth\u003e \u003cdow\u003e`), a comma-and-space-separated list of schedule aliases (`@startup`, `@hourly`, `@daily`, `@midnight`, `@weekly`, `@monthly`, `@annually`, `@yearly`), or leave empty to disable automatic snapshots.\n\nNote that unlike most other configuration keys, this one must be comma-and-space-separated and not just comma-separated as cron expression can themselves contain commas.\n",
+							"shortdesc": "Schedule for automatic instance snapshots",
+							"type": "string"
+						}
+					},
+					{
+						"snapshots.schedule.stopped": {
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Whether to automatically snapshot stopped instances",
+							"type": "bool"
+						}
+					}
+				]
+			},
+			"volatile": {
+				"keys": [
+					{
+						"volatile.\u003cname\u003e.apply_quota": {
+							"longdesc": "The disk quota is applied the next time the instance starts.",
+							"shortdesc": "Disk quota",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.ceph_rbd": {
+							"longdesc": "",
+							"shortdesc": "RBD device path for Ceph disk devices",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.host_name": {
+							"longdesc": "",
+							"shortdesc": "Network device name on the host",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.hwaddr": {
+							"longdesc": "The network device MAC address is used when no `hwaddr` property is set on the device itself.",
+							"shortdesc": "Network device MAC address",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.created": {
+							"longdesc": "Possible values are `true` or `false`.",
+							"shortdesc": "Whether the network device physical device was created",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.hwaddr": {
+							"longdesc": "The original MAC that was used when moving a physical device into an instance.",
+							"shortdesc": "Network device original MAC",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.ip_addresses": {
+							"longdesc": "Comma-separated list of the last used IP addresses of the network device.",
+							"shortdesc": "Last used IP addresses",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.mtu": {
+							"longdesc": "The original MTU that was used when moving a physical device into an instance.",
+							"shortdesc": "Network device original MTU",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.pci.driver": {
+							"longdesc": "The original host driver for the PCI device.",
+							"shortdesc": "PCI original host driver",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.pci.parent": {
+							"longdesc": "The parent host device used when allocating a PCI device to an instance.",
+							"shortdesc": "PCI parent host device",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.pci.slot.name": {
+							"longdesc": "The parent host device PCI slot name.",
+							"shortdesc": "PCI parent slot name",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.usb.bus": {
+							"longdesc": "The original USB bus address.",
+							"shortdesc": "USB bus address",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.usb.device": {
+							"longdesc": "The original USB device identifier.",
+							"shortdesc": "USB device identifier",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.vdpa.name": {
+							"longdesc": "The VDPA device name used when moving a VDPA device file descriptor into an instance.",
+							"shortdesc": "VDPA device name",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.vf.hwaddr": {
+							"longdesc": "The original MAC used when moving a VF into an instance.",
+							"shortdesc": "SR-IOV virtual function original MAC",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.vf.id": {
+							"longdesc": "The ID used when moving a VF into an instance.",
+							"shortdesc": "SR-IOV virtual function ID",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.vf.parent": {
+							"longdesc": "The parent host device used when allocating a VF into an instance.",
+							"shortdesc": "SR-IOV parent host device",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.vf.spoofcheck": {
+							"longdesc": "The original spoof check setting used when moving a VF into an instance.",
+							"shortdesc": "SR-IOV virtual function original spoof check setting",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.vf.vlan": {
+							"longdesc": "The original VLAN used when moving a VF into an instance.",
+							"shortdesc": "SR-IOV virtual function original VLAN",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.mig.uuid": {
+							"longdesc": "The NVIDIA MIG instance UUID.",
+							"shortdesc": "MIG instance UUID",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.name": {
+							"longdesc": "The network interface name inside of the instance when no `name` property is set on the device itself.",
+							"shortdesc": "Network interface name inside of the instance",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.vgpu.uuid": {
+							"longdesc": "The NVIDIA virtual GPU instance UUID.",
+							"shortdesc": "virtual GPU instance UUID",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.apply_nvram": {
+							"longdesc": "",
+							"shortdesc": "Whether to regenerate VM NVRAM the next time the instance starts",
+							"type": "bool"
+						}
+					},
+					{
+						"volatile.apply_template": {
+							"longdesc": "The template with the given name is triggered upon next startup.",
+							"shortdesc": "Template hook",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.base_image": {
+							"longdesc": "The hash of the image that the instance was created from (empty if the instance was not created from an image).",
+							"shortdesc": "Hash of the base image",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.cloud_init.instance-id": {
+							"longdesc": "",
+							"shortdesc": "`instance-id` (UUID) exposed to `cloud-init`",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.cluster.group": {
+							"longdesc": "The cluster group(s) that the instance was restricted to at creation time.\nThis is used during re-scheduling events like an evacuation to keep the instance within the requested set.",
+							"shortdesc": "The original cluster group for the instance",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.container.oci": {
+							"defaultdesc": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether the container is an OCI application container",
+							"type": "bool"
+						}
+					},
+					{
+						"volatile.cpu.nodes": {
+							"longdesc": "The NUMA node that was selected for the instance.",
+							"shortdesc": "Instance NUMA node",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.evacuate.origin": {
+							"longdesc": "The cluster member that the instance lived on before evacuation.",
+							"shortdesc": "The origin of the evacuated instance",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.idmap.base": {
+							"longdesc": "",
+							"shortdesc": "The first ID in the instance's primary idmap range",
+							"type": "integer"
+						}
+					},
+					{
+						"volatile.idmap.current": {
+							"longdesc": "",
+							"shortdesc": "The idmap currently in use by the instance",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.idmap.next": {
+							"longdesc": "",
+							"shortdesc": "The idmap to use the next time the instance starts",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.last_state.idmap": {
+							"longdesc": "",
+							"shortdesc": "Serialized instance UID/GID map",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.last_state.power": {
+							"longdesc": "",
+							"shortdesc": "Instance state as of last host shutdown",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.last_state.ready": {
+							"longdesc": "",
+							"shortdesc": "Instance marked itself as ready",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.uuid": {
+							"longdesc": "The instance UUID is globally unique across all servers and projects.",
+							"shortdesc": "Instance UUID",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.uuid.generation": {
+							"longdesc": "The instance generation UUID changes whenever the instance's place in time moves backwards.\nIt is globally unique across all servers and projects.",
+							"shortdesc": "Instance generation UUID",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.vsock_id": {
+							"longdesc": "",
+							"shortdesc": "Instance `vsock ID` used as of last start",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"kernel": {
+			"limits": {
+				"keys": [
+					{
+						"limits.kernel.as": {
+							"longdesc": "",
+							"resource": "`RLIMIT_AS`",
+							"shortdesc": "Maximum size of the process's virtual memory",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.core": {
+							"longdesc": "",
+							"resource": "`RLIMIT_CORE`",
+							"shortdesc": "Maximum size of the process's core dump file",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.cpu": {
+							"longdesc": "",
+							"resource": "`RLIMIT_CPU`",
+							"shortdesc": "Limit in seconds on the amount of CPU time the process can consume",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.data": {
+							"longdesc": "",
+							"resource": "`RLIMIT_DATA`",
+							"shortdesc": "Maximum size of the process's data segment",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.fsize": {
+							"longdesc": "",
+							"resource": "`RLIMIT_FSIZE`",
+							"shortdesc": "Maximum size of files the process may create",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.locks": {
+							"longdesc": "",
+							"resource": "`RLIMIT_LOCKS`",
+							"shortdesc": "Limit on the number of file locks that this process may establish",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.memlock": {
+							"longdesc": "",
+							"resource": "`RLIMIT_MEMLOCK`",
+							"shortdesc": "Limit on the number of bytes of memory that the process may lock in RAM",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.nice": {
+							"longdesc": "",
+							"resource": "`RLIMIT_NICE`",
+							"shortdesc": "Maximum value to which the process's nice value can be raised",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.nofile": {
+							"longdesc": "",
+							"resource": "`RLIMIT_NOFILE`",
+							"shortdesc": "Maximum number of open files for the process",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.nproc": {
+							"longdesc": "",
+							"resource": "`RLIMIT_NPROC`",
+							"shortdesc": "Maximum number of processes that can be created for the user of the calling process",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.rtprio": {
+							"longdesc": "",
+							"resource": "`RLIMIT_RTPRIO`",
+							"shortdesc": "Maximum value on the real-time-priority that may be set for this process",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.sigpending": {
+							"longdesc": "",
+							"resource": "`RLIMIT_SIGPENDING`",
+							"shortdesc": "Limit on the number of bytes of memory that the process may lock in RAM",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"network_integration": {
+			"common": {
+				"keys": [
+					{
+						"user.*": {
+							"longdesc": "User keys can be used in search.",
+							"shortdesc": "Free form user key/value storage",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"ovn": {
+				"keys": [
+					{
+						"ovn.ca_cert": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN SSL certificate authority for the inter-connection database",
+							"type": "string"
+						}
+					},
+					{
+						"ovn.client_cert": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN SSL client certificate",
+							"type": "string"
+						}
+					},
+					{
+						"ovn.client_key": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN SSL client key",
+							"type": "string"
+						}
+					},
+					{
+						"ovn.northbound_connection": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN northbound inter-connection connection string",
+							"type": "string"
+						}
+					},
+					{
+						"ovn.southbound_connection": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN southbound inter-connection connection string",
+							"type": "string"
+						}
+					},
+					{
+						"ovn.transit.pattern": {
+							"defaultdesc": "`ts-incus-{{ integrationName }}-{{ projectName }}-{{ networkName }}`",
+							"longdesc": "Specify a Pongo2 template string that represents the transit switch name.\nThis template gets access to the project name (`projectName`),\nintegration name (`integrationName`), network name (`networkName`)\nand peer name (`peerName`).\n",
+							"shortdesc": "Template for the transit switch name",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"network_load_balancer": {
+			"common": {
+				"keys": [
+					{
+						"healthcheck": {
+							"defaultdesc": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether to perform checks on the backends",
+							"type": "bool"
+						}
+					},
+					{
+						"healthcheck.failure_count": {
+							"defaultdesc": "`3`",
+							"longdesc": "",
+							"shortdesc": "Number of failed tests to consider the backend offline",
+							"type": "integer"
+						}
+					},
+					{
+						"healthcheck.interval": {
+							"defaultdesc": "`10`",
+							"longdesc": "",
+							"shortdesc": "Interval in seconds between health checks",
+							"type": "integer"
+						}
+					},
+					{
+						"healthcheck.success_count": {
+							"defaultdesc": "`3`",
+							"longdesc": "",
+							"shortdesc": "Number of successful tests to consider the backend online",
+							"type": "integer"
+						}
+					},
+					{
+						"healthcheck.timeout": {
+							"defaultdesc": "`30`",
+							"longdesc": "",
+							"shortdesc": "Test timeout",
+							"type": "integer"
+						}
+					},
+					{
+						"user.*": {
+							"longdesc": "User keys can be used in search.",
+							"shortdesc": "Free form user key/value storage",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"network_zone": {
+			"common": {
+				"keys": [
+					{
+						"dns.nameservers": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Comma-separated list of DNS server FQDNs (for NS records)",
+							"type": "string set"
+						}
+					},
+					{
+						"network.nat": {
+							"defaultdesc": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether to generate records for NAT-ed subnets",
+							"type": "bool"
+						}
+					},
+					{
+						"peers.NAME.address": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "IP address of a DNS server",
+							"type": "string"
+						}
+					},
+					{
+						"peers.NAME.key": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "TSIG key for the server",
+							"type": "string"
+						}
+					},
+					{
+						"user.*": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "User-provided free-form key/value pairs",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"project": {
+			"features": {
+				"keys": [
+					{
+						"features.images": {
+							"defaultdesc": "`false`",
+							"initialvaluedesc": "`true`",
+							"longdesc": "This setting applies to both images and image aliases.",
+							"shortdesc": "Whether to use a separate set of images for the project",
+							"type": "bool"
+						}
+					},
+					{
+						"features.networks": {
+							"defaultdesc": "`false`",
+							"initialvaluedesc": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether to use a separate set of networks for the project",
+							"type": "bool"
+						}
+					},
+					{
+						"features.networks.zones": {
+							"defaultdesc": "`false`",
+							"initialvaluedesc": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether to use a separate set of network zones for the project",
+							"type": "bool"
+						}
+					},
+					{
+						"features.profiles": {
+							"defaultdesc": "`false`",
+							"initialvaluedesc": "`true`",
+							"longdesc": "",
+							"shortdesc": "Whether to use a separate set of profiles for the project",
+							"type": "bool"
+						}
+					},
+					{
+						"features.storage.buckets": {
+							"defaultdesc": "`false`",
+							"initialvaluedesc": "`true`",
+							"longdesc": "",
+							"shortdesc": "Whether to use a separate set of storage buckets for the project",
+							"type": "bool"
+						}
+					},
+					{
+						"features.storage.volumes": {
+							"defaultdesc": "`false`",
+							"initialvaluedesc": "`true`",
+							"longdesc": "",
+							"shortdesc": "Whether to use a separate set of storage volumes for the project",
+							"type": "bool"
+						}
+					}
+				]
+			},
+			"limits": {
+				"keys": [
+					{
+						"limits.containers": {
+							"longdesc": "",
+							"shortdesc": "Maximum number of containers that can be created in the project",
+							"type": "integer"
+						}
+					},
+					{
+						"limits.cpu": {
+							"longdesc": "This value is the maximum value for the sum of the individual {config:option}`instance-resource-limits:limits.cpu` configurations set on the instances of the project.",
+							"shortdesc": "Maximum number of CPUs to use in the project",
+							"type": "integer"
+						}
+					},
+					{
+						"limits.disk": {
+							"longdesc": "This value is the maximum value of the aggregate disk space used by all instance volumes, custom volumes, and images of the project.",
+							"shortdesc": "Maximum disk space used by the project",
+							"type": "string"
+						}
+					},
+					{
+						"limits.disk.pool.POOL_NAME": {
+							"longdesc": "This value is the maximum value of the aggregate disk\nspace used by all instance volumes, custom volumes, and images of the\nproject on this specific storage pool.",
+							"shortdesc": "Maximum disk space used by the project on this pool",
+							"type": "string"
+						}
+					},
+					{
+						"limits.instances": {
+							"longdesc": "",
+							"shortdesc": "Maximum number of instances that can be created in the project",
+							"type": "integer"
+						}
+					},
+					{
+						"limits.memory": {
+							"longdesc": "The value is the maximum value for the sum of the individual {config:option}`instance-resource-limits:limits.memory` configurations set on the instances of the project.",
+							"shortdesc": "Usage limit for the host's memory for the project",
+							"type": "string"
+						}
+					},
+					{
+						"limits.networks": {
+							"longdesc": "",
+							"shortdesc": "Maximum number of networks that the project can have",
+							"type": "integer"
+						}
+					},
+					{
+						"limits.processes": {
+							"longdesc": "This value is the maximum value for the sum of the individual {config:option}`instance-resource-limits:limits.processes` configurations set on the instances of the project.",
+							"shortdesc": "Maximum number of processes within the project",
+							"type": "integer"
+						}
+					},
+					{
+						"limits.virtual-machines": {
+							"longdesc": "",
+							"shortdesc": "Maximum number of VMs that can be created in the project",
+							"type": "integer"
+						}
+					}
+				]
+			},
+			"restricted": {
+				"keys": [
+					{
+						"restricted": {
+							"defaultdesc": "`false`",
+							"longdesc": "This option must be enabled to allow the `restricted.*` keys to take effect.\nTo temporarily remove the restrictions, you can disable this option instead of clearing the related keys.",
+							"shortdesc": "Whether to block access to security-sensitive features",
+							"type": "bool"
+						}
+					},
+					{
+						"restricted.backups": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent creating instance or volume backups",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.cluster.groups": {
+							"longdesc": "If specified, this option prevents targeting cluster groups other than the provided ones.",
+							"shortdesc": "Cluster groups that can be targeted",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.cluster.target": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.\nWhen set to `allow`, this option allows targeting of cluster members (either directly or via a group) when creating or moving instances.",
+							"shortdesc": "Whether to prevent targeting of cluster members",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.containers.interception": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow`, `block`, or `full`.\nWhen set to `allow`, interception options that are usually safe are allowed.\nFile system mounting remains blocked.",
+							"shortdesc": "Whether to prevent using system call interception options",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.containers.lowlevel": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.\nWhen set to `allow`, low-level container options like {config:option}`instance-raw:raw.lxc`, {config:option}`instance-raw:raw.idmap`, `volatile.*`, etc. can be used.",
+							"shortdesc": "Whether to prevent using low-level container options",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.containers.nesting": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.\nWhen set to `allow`, {config:option}`instance-security:security.nesting` can be set to `true` for an instance.",
+							"shortdesc": "Whether to prevent running nested Incus",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.containers.privilege": {
+							"defaultdesc": "`unprivileged`",
+							"longdesc": "Possible values are `unprivileged`, `isolated`, and `allow`.\n\n- When set to `unpriviliged`, this option prevents setting {config:option}`instance-security:security.privileged` to `true`.\n- When set to `isolated`, this option prevents setting {config:option}`instance-security:security.privileged` and {config:option}`instance-security:security.idmap.isolated` to `true`.\n- When set to `allow`, there is no restriction.",
+							"shortdesc": "Which settings for privileged containers to prevent",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.disk": {
+							"defaultdesc": "`managed`",
+							"longdesc": "Possible values are `allow`, `block`, or `managed`.\n\n- When set to `block`, this option prevents using all disk devices except the root one.\n- When set to `managed`, this option allows using disk devices only if `pool=` is set.\n- When set to `allow`, there is no restriction on which disk devices can be used.",
+							"shortdesc": "Which disk devices can be used",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.disk.paths": {
+							"longdesc": "If {config:option}`project-restricted:restricted.devices.disk` is set to `allow`, this option controls which `source` can be used for `disk` devices.\nSpecify a comma-separated list of path prefixes that restrict the `source` setting.\nIf this option is left empty, all paths are allowed.",
+							"shortdesc": "Which `source` can be used for `disk` devices",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.gpu": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent using devices of type `gpu`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.infiniband": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent using devices of type `infiniband`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.nic": {
+							"defaultdesc": "`managed`",
+							"longdesc": "Possible values are `allow`, `block`, or `managed`.\n\n- When set to `block`, this option prevents using all network devices.\n- When set to `managed`, this option allows using network devices only if `network=` is set.\n- When set to `allow`, there is no restriction on which network devices can be used.",
+							"shortdesc": "Which network devices can be used",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.pci": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent using devices of type `pci`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.proxy": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent using devices of type `proxy`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.unix-block": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent using devices of type `unix-block`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.unix-char": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent using devices of type `unix-char`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.unix-hotplug": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent using devices of type `unix-hotplug`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.usb": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent using devices of type `usb`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.idmap.gid": {
+							"longdesc": "This option specifies the host GID ranges that are allowed in the instance's {config:option}`instance-raw:raw.idmap` setting.",
+							"shortdesc": "Which host GID ranges are allowed in `raw.idmap`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.idmap.uid": {
+							"longdesc": "This option specifies the host UID ranges that are allowed in the instance's {config:option}`instance-raw:raw.idmap` setting.",
+							"shortdesc": "Which host UID ranges are allowed in `raw.idmap`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.networks.access": {
+							"longdesc": "Specify a comma-delimited list of network names that are allowed for use in this project.\nIf this option is not set, all networks are accessible.\n\nNote that this setting depends on the {config:option}`project-restricted:restricted.devices.nic` setting.",
+							"shortdesc": "Which network names are allowed for use in this project",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.networks.integrations": {
+							"longdesc": "Specify a comma-delimited list of network integrations that can be used by networks in this project.",
+							"shortdesc": "Which network integrations can be used in this project",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.networks.subnets": {
+							"defaultdesc": "`block`",
+							"longdesc": "Specify a comma-delimited list of network subnets from the uplink networks that are allocated for use in this project.\nUse the form `\u003cuplink\u003e:\u003csubnet\u003e`.",
+							"shortdesc": "Which network subnets are allocated for use in this project",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.networks.uplinks": {
+							"longdesc": "Specify a comma-delimited list of network names that can be used as uplink for networks in this project.",
+							"shortdesc": "Which network names can be used as uplink in this project",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.networks.zones": {
+							"defaultdesc": "`block`",
+							"longdesc": "Specify a comma-delimited list of network zones that can be used (or something under them) in this project.",
+							"shortdesc": "Which network zones can be used in this project",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.snapshots": {
+							"defaultdesc": "`block`",
+							"longdesc": "",
+							"shortdesc": "Whether to prevent creating instance or volume snapshots",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.virtual-machines.lowlevel": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.\nWhen set to `allow`, low-level VM options like {config:option}`instance-raw:raw.qemu`, `volatile.*`, etc. can be used.",
+							"shortdesc": "Whether to prevent using low-level VM options",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"specific": {
+				"keys": [
+					{
+						"backups.compression_algorithm": {
+							"longdesc": "Specify which compression algorithm to use for backups in this project.\nPossible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.",
+							"shortdesc": "Compression algorithm to use for backups",
+							"type": "string"
+						}
+					},
+					{
+						"images.auto_update_cached": {
+							"longdesc": "",
+							"shortdesc": "Whether to automatically update cached images in the project",
+							"type": "bool"
+						}
+					},
+					{
+						"images.auto_update_interval": {
+							"longdesc": "Specify the interval in hours.\nTo disable looking for updates to cached images, set this option to `0`.",
+							"shortdesc": "Interval at which to look for updates to cached images",
+							"type": "integer"
+						}
+					},
+					{
+						"images.compression_algorithm": {
+							"longdesc": "Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.",
+							"shortdesc": "Compression algorithm to use for new images in the project",
+							"type": "string"
+						}
+					},
+					{
+						"images.default_architecture": {
+							"longdesc": "",
+							"shortdesc": "Default architecture to use in a mixed-architecture cluster",
+							"type": "string"
+						}
+					},
+					{
+						"images.remote_cache_expiry": {
+							"longdesc": "Specify the number of days after which the unused cached image expires.",
+							"shortdesc": "When an unused cached remote image is flushed in the project",
+							"type": "integer"
+						}
+					},
+					{
+						"user.*": {
+							"longdesc": "",
+							"shortdesc": "User-provided free-form key/value pairs",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"server": {
+			"acme": {
+				"keys": [
+					{
+						"acme.agree_tos": {
+							"defaultdesc": "`false`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Agree to ACME terms of service",
+							"type": "bool"
+						}
+					},
+					{
+						"acme.ca_url": {
+							"defaultdesc": "`https://acme-v02.api.letsencrypt.org/directory`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "URL to the directory resource of the ACME service",
+							"type": "string"
+						}
+					},
+					{
+						"acme.domain": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Domain for which the certificate is issued",
+							"type": "string"
+						}
+					},
+					{
+						"acme.email": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Email address used for the account registration",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"cluster": {
+				"keys": [
+					{
+						"cluster.healing_threshold": {
+							"defaultdesc": "`0`",
+							"longdesc": "Specify the number of seconds after which an offline cluster member is to be evacuated.\nTo disable evacuating offline members, set this option to `0`.",
+							"scope": "global",
+							"shortdesc": "Threshold when to evacuate an offline cluster member",
+							"type": "integer"
+						}
+					},
+					{
+						"cluster.https_address": {
+							"longdesc": "See {ref}`cluster-https-address`.",
+							"scope": "local",
+							"shortdesc": "Address to use for clustering traffic",
+							"type": "string"
+						}
+					},
+					{
+						"cluster.images_minimal_replica": {
+							"defaultdesc": "`3`",
+							"longdesc": "Specify the minimal number of cluster members that keep a copy of a particular image.\nSet this option to `1` for no replication, or to `-1` to replicate images on all members.",
+							"scope": "global",
+							"shortdesc": "Number of cluster members that replicate an image",
+							"type": "integer"
+						}
+					},
+					{
+						"cluster.join_token_expiry": {
+							"defaultdesc": "`3H`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Time after which a cluster join token expires",
+							"type": "string"
+						}
+					},
+					{
+						"cluster.max_standby": {
+							"defaultdesc": "`2`",
+							"longdesc": "Specify the maximum number of cluster members that are assigned the database stand-by role.\nThis must be a number between `0` and `5`.",
+							"scope": "global",
+							"shortdesc": "Number of database stand-by members",
+							"type": "integer"
+						}
+					},
+					{
+						"cluster.max_voters": {
+							"defaultdesc": "`3`",
+							"longdesc": "Specify the maximum number of cluster members that are assigned the database voter role.\nThis must be an odd number \u003e= `3`.",
+							"scope": "global",
+							"shortdesc": "Number of database voter members",
+							"type": "integer"
+						}
+					},
+					{
+						"cluster.offline_threshold": {
+							"defaultdesc": "`20`",
+							"longdesc": "Specify the number of seconds after which an unresponsive member is considered offline.",
+							"scope": "global",
+							"shortdesc": "Threshold when an unresponsive member is considered offline",
+							"type": "integer"
+						}
+					}
+				]
+			},
+			"core": {
+				"keys": [
+					{
+						"core.bgp_address": {
+							"longdesc": "See {ref}`network-bgp`.",
+							"scope": "local",
+							"shortdesc": "Address to bind the BGP server to",
+							"type": "string"
+						}
+					},
+					{
+						"core.bgp_asn": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "BGP Autonomous System Number for the local server",
+							"type": "string"
+						}
+					},
+					{
+						"core.bgp_routerid": {
+							"longdesc": "The identifier must be formatted as an IPv4 address.",
+							"scope": "local",
+							"shortdesc": "A unique identifier for the BGP server",
+							"type": "string"
+						}
+					},
+					{
+						"core.debug_address": {
+							"longdesc": "",
+							"scope": "local",
+							"shortdesc": "Address to bind the `pprof` debug server to (HTTP)",
+							"type": "string"
+						}
+					},
+					{
+						"core.dns_address": {
+							"longdesc": "See {ref}`network-dns-server`.",
+							"scope": "local",
+							"shortdesc": "Address to bind the authoritative DNS server to",
+							"type": "string"
+						}
+					},
+					{
+						"core.https_address": {
+							"longdesc": "See {ref}`server-expose`.",
+							"scope": "local",
+							"shortdesc": "Address to bind for the remote API (HTTPS)",
+							"type": "string"
+						}
+					},
+					{
+						"core.https_allowed_credentials": {
+							"defaultdesc": "`false`",
+							"longdesc": "If enabled, the `Access-Control-Allow-Credentials` HTTP header value is set to `true`.",
+							"scope": "global",
+							"shortdesc": "Whether to set `Access-Control-Allow-Credentials`",
+							"type": "bool"
+						}
+					},
+					{
+						"core.https_allowed_headers": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "`Access-Control-Allow-Headers` HTTP header value",
+							"type": "string"
+						}
+					},
+					{
+						"core.https_allowed_methods": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "`Access-Control-Allow-Methods` HTTP header value",
+							"type": "string"
+						}
+					},
+					{
+						"core.https_allowed_origin": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "`Access-Control-Allow-Origin` HTTP header value",
+							"type": "string"
+						}
+					},
+					{
+						"core.https_trusted_proxy": {
+							"longdesc": "Specify a comma-separated list of IP addresses of trusted servers that provide the client's address through the proxy connection header.",
+							"scope": "global",
+							"shortdesc": "Trusted servers to provide the client's address",
+							"type": "string"
+						}
+					},
+					{
+						"core.metrics_address": {
+							"longdesc": "See {ref}`metrics`.",
+							"scope": "local",
+							"shortdesc": "Address to bind the metrics server to (HTTPS)",
+							"type": "string"
+						}
+					},
+					{
+						"core.metrics_authentication": {
+							"defaultdesc": "`true`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Whether to enforce authentication on the metrics endpoint",
+							"type": "bool"
+						}
+					},
+					{
+						"core.proxy_http": {
+							"longdesc": "If this option is not specified, the daemon falls back to the `HTTP_PROXY` environment variable (if set).",
+							"scope": "global",
+							"shortdesc": "HTTP proxy to use",
+							"type": "string"
+						}
+					},
+					{
+						"core.proxy_https": {
+							"longdesc": "If this option is not specified, the daemon falls back to the `HTTPS_PROXY` environment variable (if set).",
+							"scope": "global",
+							"shortdesc": "HTTPS proxy to use",
+							"type": "string"
+						}
+					},
+					{
+						"core.proxy_ignore_hosts": {
+							"longdesc": "Specify this option in a similar format to `NO_PROXY` (for example, `1.2.3.4,1.2.3.5`)\n\nIf this option is not specified, the daemon falls back to the `NO_PROXY` environment variable (if set).",
+							"scope": "global",
+							"shortdesc": "Hosts that don't need the proxy",
+							"type": "string"
+						}
+					},
+					{
+						"core.remote_token_expiry": {
+							"defaultdesc": "no expiry",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Time after which a remote add token expires",
+							"type": "string"
+						}
+					},
+					{
+						"core.shutdown_timeout": {
+							"defaultdesc": "`5`",
+							"longdesc": "Specify the number of minutes to wait for running operations to complete before the daemon shuts down.",
+							"scope": "global",
+							"shortdesc": "How long to wait before shutdown",
+							"type": "integer"
+						}
+					},
+					{
+						"core.storage_buckets_address": {
+							"longdesc": "See {ref}`howto-storage-buckets`.",
+							"scope": "local",
+							"shortdesc": "Address to bind the storage object server to (HTTPS)",
+							"type": "string"
+						}
+					},
+					{
+						"core.syslog_socket": {
+							"defaultdesc": "`false`",
+							"longdesc": "Set this option to `true` to enable the syslog unixgram socket to receive log messages from external processes.",
+							"scope": "local",
+							"shortdesc": "Whether to enable the syslog unixgram socket listener",
+							"type": "bool"
+						}
+					},
+					{
+						"core.trust_ca_certificates": {
+							"defaultdesc": "`false`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Whether to automatically trust clients signed by the CA",
+							"type": "bool"
+						}
+					}
+				]
+			},
+			"images": {
+				"keys": [
+					{
+						"images.auto_update_cached": {
+							"defaultdesc": "`true`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Whether to automatically update cached images",
+							"type": "bool"
+						}
+					},
+					{
+						"images.auto_update_interval": {
+							"defaultdesc": "`6`",
+							"longdesc": "Specify the interval in hours.\nTo disable looking for updates to cached images, set this option to `0`.",
+							"scope": "global",
+							"shortdesc": "Interval at which to look for updates to cached images",
+							"type": "integer"
+						}
+					},
+					{
+						"images.compression_algorithm": {
+							"defaultdesc": "`gzip`",
+							"longdesc": "Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.",
+							"scope": "global",
+							"shortdesc": "Compression algorithm to use for new images",
+							"type": "string"
+						}
+					},
+					{
+						"images.default_architecture": {
+							"longdesc": "",
+							"shortdesc": "Default architecture to use in a mixed-architecture cluster",
+							"type": "string"
+						}
+					},
+					{
+						"images.remote_cache_expiry": {
+							"defaultdesc": "`10`",
+							"longdesc": "Specify the number of days after which the unused cached image expires.",
+							"scope": "global",
+							"shortdesc": "When an unused cached remote image is flushed",
+							"type": "integer"
+						}
+					}
+				]
+			},
+			"loki": {
+				"keys": [
+					{
+						"loki.api.ca_cert": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "CA certificate for the Loki server",
+							"type": "string"
+						}
+					},
+					{
+						"loki.api.url": {
+							"longdesc": "Specify the protocol, name or IP and port. For example `https://loki.example.com:3100`. Incus will automatically add the `/loki/api/v1/push` suffix so there's no need to add it here.",
+							"scope": "global",
+							"shortdesc": "URL to the Loki server",
+							"type": "string"
+						}
+					},
+					{
+						"loki.auth.password": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Password used for Loki authentication",
+							"type": "string"
+						}
+					},
+					{
+						"loki.auth.username": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "User name used for Loki authentication",
+							"type": "string"
+						}
+					},
+					{
+						"loki.instance": {
+							"defaultdesc": "Local server host name or cluster member name",
+							"longdesc": "This allows replacing the default instance value (server host name) by a more relevant value like a cluster identifier.",
+							"scope": "global",
+							"shortdesc": "Name to use as the instance field in Loki events.",
+							"type": "string"
+						}
+					},
+					{
+						"loki.labels": {
+							"longdesc": "Specify a comma-separated list of values that should be used as labels for a Loki log entry.",
+							"scope": "global",
+							"shortdesc": "Labels for a Loki log entry",
+							"type": "string"
+						}
+					},
+					{
+						"loki.loglevel": {
+							"defaultdesc": "`info`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Minimum log level to send to the Loki server",
+							"type": "string"
+						}
+					},
+					{
+						"loki.types": {
+							"defaultdesc": "`lifecycle,logging`",
+							"longdesc": "Specify a comma-separated list of events to send to the Loki server.\nThe events can be any combination of `lifecycle`, `logging`, and `network-acl`.",
+							"scope": "global",
+							"shortdesc": "Events to send to the Loki server",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"miscellaneous": {
+				"keys": [
+					{
+						"backups.compression_algorithm": {
+							"defaultdesc": "`gzip`",
+							"longdesc": "Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.",
+							"scope": "global",
+							"shortdesc": "Compression algorithm to use for backups",
+							"type": "string"
+						}
+					},
+					{
+						"instances.lxcfs.per_instance": {
+							"defaultdesc": "`false`",
+							"longdesc": "LXCFS is used to provide overlays for common `/proc` and `/sys`\nfiles which reflect the resource limits applied to the container.\n\nIt normally operates through a single file system mount on the host which is then shared by all containers.\nThis is very efficient but comes with the downside that a crash of LXCFS will break all containers.\n\nWith this option, it's now possible to run a LXCFS instance per\ncontainer instead, using more system resources but reducing the impact\nof a crash.",
+							"scope": "global",
+							"shortdesc": "Whether to run LXCFS on a per-instance basis",
+							"type": "bool"
+						}
+					},
+					{
+						"instances.nic.host_name": {
+							"defaultdesc": "`random`",
+							"longdesc": "Possible values are `random` and `mac`.\n\nIf set to `random`, use the random host interface name as the host name.\nIf set to `mac`, generate a host name in the form `inc\u003cmac_address\u003e` (MAC without leading two digits).",
+							"scope": "global",
+							"shortdesc": "How to set the host name for a NIC",
+							"type": "string"
+						}
+					},
+					{
+						"instances.placement.scriptlet": {
+							"longdesc": "When using custom automatic instance placement logic, this option stores the scriptlet.\nSee {ref}`clustering-instance-placement-scriptlet` for more information.",
+							"scope": "global",
+							"shortdesc": "Instance placement scriptlet for automatic instance placement",
+							"type": "string"
+						}
+					},
+					{
+						"network.ovn.ca_cert": {
+							"defaultdesc": "Content of `/etc/ovn/ovn-central.crt` if present",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN SSL certificate authority",
+							"type": "string"
+						}
+					},
+					{
+						"network.ovn.client_cert": {
+							"defaultdesc": "Content of `/etc/ovn/cert_host` if present",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN SSL client certificate",
+							"type": "string"
+						}
+					},
+					{
+						"network.ovn.client_key": {
+							"defaultdesc": "Content of `/etc/ovn/key_host` if present",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN SSL client key",
+							"type": "string"
+						}
+					},
+					{
+						"network.ovn.integration_bridge": {
+							"defaultdesc": "`br-int`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVS integration bridge to use for OVN networks",
+							"type": "string"
+						}
+					},
+					{
+						"network.ovn.northbound_connection": {
+							"defaultdesc": "`unix:/run/ovn/ovnnb_db.sock`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN northbound database connection string",
+							"type": "string"
+						}
+					},
+					{
+						"network.ovs.connection": {
+							"defaultdesc": "`unix:/run/openvswitch/db.sock`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVS socket path",
+							"type": "string"
+						}
+					},
+					{
+						"storage.backups_volume": {
+							"longdesc": "Specify the volume using the syntax `POOL/VOLUME`.",
+							"scope": "local",
+							"shortdesc": "Volume to use to store backup tarballs",
+							"type": "string"
+						}
+					},
+					{
+						"storage.images_volume": {
+							"longdesc": "Specify the volume using the syntax `POOL/VOLUME`.",
+							"scope": "local",
+							"shortdesc": "Volume to use to store the image tarballs",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"oidc": {
+				"keys": [
+					{
+						"oidc.audience": {
+							"longdesc": "This value is required by some providers.",
+							"scope": "global",
+							"shortdesc": "Expected audience value for the application",
+							"type": "string"
+						}
+					},
+					{
+						"oidc.claim": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OpenID Connect claim to use as the username",
+							"type": "string"
+						}
+					},
+					{
+						"oidc.client.id": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OpenID Connect client ID",
+							"type": "string"
+						}
+					},
+					{
+						"oidc.issuer": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OpenID Connect Discovery URL for the provider",
+							"type": "string"
+						}
+					},
+					{
+						"oidc.scopes": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Comma separated list of OpenID Connect scopes",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"openfga": {
+				"keys": [
+					{
+						"openfga.api.token": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "API token of the OpenFGA server",
+							"type": "string"
+						}
+					},
+					{
+						"openfga.api.url": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "URL of the OpenFGA server",
+							"type": "string"
+						}
+					},
+					{
+						"openfga.store.id": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "ID of the OpenFGA permission store",
+							"type": "string"
+						}
+					}
+				]
+			}
+		}
+	}
+}

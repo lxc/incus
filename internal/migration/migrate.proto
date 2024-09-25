@@ -1,0 +1,96 @@
+// silence the protobuf compiler warning by setting the default
+syntax = "proto2";
+option go_package = "internal/migration";
+
+package migration;
+
+enum MigrationFSType {
+	RSYNC		= 0;
+	BTRFS		= 1;
+	ZFS		= 2;
+	RBD		= 3;
+	BLOCK_AND_RSYNC	= 4;
+}
+
+enum CRIUType {
+	CRIU_RSYNC	= 0;
+	PHAUL		= 1;
+	NONE		= 2;
+	VM_QEMU		= 3;
+}
+
+message IDMapType {
+	required bool	isuid			= 1;
+	required bool	isgid			= 2;
+	required int32	hostid			= 3;
+	required int32	nsid			= 4;
+	required int32	maprange		= 5;
+}
+
+message Config {
+	required string		key	= 1;
+	required string		value	= 2;
+}
+
+message Device {
+	required string		name	= 1;
+	repeated Config		config	= 2;
+}
+
+message Snapshot {
+	required string			name			= 1;
+	repeated Config 		localConfig		= 2;
+	repeated string			profiles		= 3;
+	required bool			ephemeral		= 4;
+	repeated Device			localDevices	= 5;
+	required int32			architecture	= 6;
+	required bool			stateful		= 7;
+	optional int64			creation_date	= 8;
+	optional int64			last_used_date	= 9;
+	optional int64 			expiry_date = 10;
+}
+
+message rsyncFeatures {
+	optional bool		xattrs = 1;
+	optional bool		delete = 2;
+	optional bool		compress = 3;
+	optional bool		bidirectional = 4;
+}
+
+message zfsFeatures {
+	optional bool		compress = 1;
+	optional bool		migration_header = 2;
+	optional bool		header_zvols = 3;
+}
+
+message btrfsFeatures {
+	optional bool		migration_header = 1;
+	optional bool		header_subvolumes = 2;
+	optional bool       	header_subvolume_uuids = 3;
+}
+
+message MigrationHeader {
+	required MigrationFSType		fs			= 1;
+	optional CRIUType			criu			= 2;
+	repeated IDMapType	 		idmap			= 3;
+	repeated string				snapshotNames		= 4;
+	repeated Snapshot			snapshots		= 5;
+	optional bool				predump			= 7;
+	optional rsyncFeatures			rsyncFeatures 		= 8;
+	optional bool				refresh			= 9;
+	optional zfsFeatures			zfsFeatures 		= 10;
+	optional int64				volumeSize		= 11;
+	optional btrfsFeatures			btrfsFeatures 		= 12;
+	optional uint32				indexHeaderVersion	= 13;
+}
+
+message MigrationControl {
+	required bool		success		= 1;
+
+	/* optional failure message if sending a failure */
+	optional string		message		= 2;
+}
+
+message MigrationSync {
+	required bool		finalPreDump	= 1;
+}
