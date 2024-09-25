@@ -1380,6 +1380,11 @@ func (n *common) LoadBalancerUpdate(listenAddress string, newLoadBalancer api.Ne
 	return ErrNotImplemented
 }
 
+// LoadBalancerState returns ErrNotImplemented for drivers that do not support load balancers..
+func (n *common) LoadBalancerState(loadBalancer api.NetworkLoadBalancer) (*api.NetworkLoadBalancerState, error) {
+	return nil, ErrNotImplemented
+}
+
 // LoadBalancerDelete returns ErrNotImplemented for drivers that do not support load balancers..
 func (n *common) LoadBalancerDelete(listenAddress string, clientType request.ClientType) error {
 	return ErrNotImplemented
