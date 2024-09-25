@@ -428,7 +428,7 @@ func imgPostRemoteInfo(ctx context.Context, s *state.State, r *http.Request, req
 		return nil, fmt.Errorf("must specify one of alias or fingerprint for init from image")
 	}
 
-	info, err := ImageDownload(ctx, r, s, op, &ImageDownloadArgs{
+	info, _, err := ImageDownload(ctx, r, s, op, &ImageDownloadArgs{
 		Server:            req.Source.Server,
 		Protocol:          req.Source.Protocol,
 		Certificate:       req.Source.Certificate,
@@ -546,7 +546,7 @@ func imgPostURLInfo(ctx context.Context, s *state.State, r *http.Request, req ap
 	}
 
 	// Import the image
-	info, err := ImageDownload(ctx, r, s, op, &ImageDownloadArgs{
+	info, _, err := ImageDownload(ctx, r, s, op, &ImageDownloadArgs{
 		Server:      url,
 		Protocol:    "direct",
 		Alias:       hash,
@@ -2198,7 +2198,7 @@ func autoUpdateImage(ctx context.Context, s *state.State, op *operations.Operati
 		default:
 		}
 
-		newInfo, err = ImageDownload(ctx, nil, s, op, &ImageDownloadArgs{
+		newInfo, _, err = ImageDownload(ctx, nil, s, op, &ImageDownloadArgs{
 			Server:      source.Server,
 			Protocol:    source.Protocol,
 			Certificate: source.Certificate,
