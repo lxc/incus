@@ -58,7 +58,7 @@ func imageOperationLock(ctx context.Context, fingerprint string) (locking.Unlock
 }
 
 // ImageDownload resolves the image fingerprint and if not in the database, downloads it.
-func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *operations.Operation, args *ImageDownloadArgs) (*api.Image, error) {
+func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *operations.Operation, args *ImageDownloadArgs) (*api.Image, bool, error) {
 	var err error
 	var ctxMap logger.Ctx
 
@@ -91,7 +91,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			// Setup client
 			remote, err = incus.ConnectPublicIncus(args.Server, clientArgs)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to connect to the server %q: %w", args.Server, err)
+				return nil, false, fmt.Errorf("Failed to connect to the server %q: %w", args.Server, err)
 			}
 
 			server, ok := remote.(incus.InstanceServer)
@@ -102,7 +102,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			// Setup simplestreams client
 			remote, err = incus.ConnectSimpleStreams(args.Server, clientArgs)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to connect to simple streams server %q: %w", args.Server, err)
+				return nil, false, fmt.Errorf("Failed to connect to simple streams server %q: %w", args.Server, err)
 			}
 		}
 
@@ -117,7 +117,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			// Expand partial fingerprints
 			info, _, err = remote.GetImage(fp)
 			if err != nil {
-				return nil, fmt.Errorf("Failed getting remote image info: %w", err)
+				return nil, false, fmt.Errorf("Failed getting remote image info: %w", err)
 			}
 
 			fp = info.Fingerprint
@@ -127,7 +127,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 	// Ensure we are the only ones operating on this image.
 	unlock, err := imageOperationLock(ctx, fp)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	defer unlock()
@@ -152,7 +152,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			return nil
 		})
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 	}
 
@@ -174,14 +174,14 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			return err
 		})
 		if err != nil {
-			return nil, fmt.Errorf("Failed locating image %q in the cluster: %w", imgInfo.Fingerprint, err)
+			return nil, false, fmt.Errorf("Failed locating image %q in the cluster: %w", imgInfo.Fingerprint, err)
 		}
 
 		if nodeAddress != "" {
 			// The image is available from another node, let's try to import it.
 			err = instanceImageTransfer(s, r, args.ProjectName, imgInfo.Fingerprint, nodeAddress)
 			if err != nil {
-				return nil, fmt.Errorf("Failed transferring image %q from %q: %w", imgInfo.Fingerprint, nodeAddress, err)
+				return nil, false, fmt.Errorf("Failed transferring image %q from %q: %w", imgInfo.Fingerprint, nodeAddress, err)
 			}
 
 			err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
@@ -189,7 +189,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 				return tx.AddImageToLocalNode(ctx, args.ProjectName, imgInfo.Fingerprint)
 			})
 			if err != nil {
-				return nil, fmt.Errorf("Failed adding transferred image %q to local cluster member: %w", imgInfo.Fingerprint, err)
+				return nil, false, fmt.Errorf("Failed adding transferred image %q to local cluster member: %w", imgInfo.Fingerprint, err)
 			}
 		}
 	} else if response.IsNotFoundError(err) {
@@ -234,7 +234,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 				return tx.CreateImageSource(ctx, id, args.Server, args.Protocol, args.Certificate, alias)
 			})
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
 
 			// Transfer image if needed (after database record has been created above).
@@ -242,7 +242,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 				// The image is available from another node, let's try to import it.
 				err = instanceImageTransfer(s, r, args.ProjectName, info.Fingerprint, nodeAddress)
 				if err != nil {
-					return nil, fmt.Errorf("Failed transferring image: %w", err)
+					return nil, false, fmt.Errorf("Failed transferring image: %w", err)
 				}
 			}
 		}
@@ -255,7 +255,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 		// If not requested in a particular pool, we're done.
 		if args.StoragePool == "" {
-			return info, nil
+			return info, false, nil
 		}
 
 		ctxMap["pool"] = args.StoragePool
@@ -276,12 +276,12 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			return err
 		})
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		if slices.Contains(poolIDs, poolID) {
 			logger.Debug("Image already exists on storage pool", ctxMap)
-			return info, nil
+			return info, false, nil
 		}
 
 		// Import the image in the pool.
@@ -291,11 +291,11 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		if err != nil {
 			ctxMap["err"] = err
 			logger.Debug("Failed to create image on storage pool", ctxMap)
-			return nil, fmt.Errorf("Failed to create image %q on storage pool %q: %w", info.Fingerprint, args.StoragePool, err)
+			return nil, false, fmt.Errorf("Failed to create image %q on storage pool %q: %w", info.Fingerprint, args.StoragePool, err)
 		}
 
 		logger.Debug("Created image on storage pool", ctxMap)
-		return info, nil
+		return info, false, nil
 	}
 
 	// Begin downloading
@@ -347,14 +347,14 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		// Create the target files
 		dest, err := os.Create(destName)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		defer func() { _ = dest.Close() }()
 
 		destRootfs, err := os.Create(destName + ".rootfs")
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		defer func() { _ = destRootfs.Close() }()
@@ -364,7 +364,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			if args.Secret != "" {
 				info, _, err = remote.GetPrivateImage(fp, args.Secret)
 				if err != nil {
-					return nil, err
+					return nil, false, err
 				}
 
 				// Expand the fingerprint now and mark alias string to match
@@ -373,7 +373,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			} else {
 				info, _, err = remote.GetImage(fp)
 				if err != nil {
-					return nil, err
+					return nil, false, err
 				}
 			}
 		}
@@ -384,7 +384,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		}
 
 		if args.Budget > 0 && info.Size > args.Budget {
-			return nil, fmt.Errorf("Remote image with size %d exceeds allowed bugdget of %d", info.Size, args.Budget)
+			return nil, false, fmt.Errorf("Remote image with size %d exceeds allowed bugdget of %d", info.Size, args.Budget)
 		}
 
 		// Download the image
@@ -411,44 +411,44 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		}
 
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		// Truncate down to size
 		if resp.RootfsSize > 0 {
 			err = destRootfs.Truncate(resp.RootfsSize)
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
 		}
 
 		err = dest.Truncate(resp.MetaSize)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		// Deal with unified images
 		if resp.RootfsSize == 0 {
 			err := os.Remove(destName + ".rootfs")
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
 		}
 
 		err = dest.Close()
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		err = destRootfs.Close()
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 	} else if protocol == "direct" {
 		// Setup HTTP client
 		httpClient, err := localUtil.HTTPClient(args.Certificate, s.Proxy)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		// Use relatively short response header timeout so as not to hold the image lock open too long.
@@ -457,7 +457,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 		req, err := http.NewRequest("GET", args.Server, nil)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		req.Header.Set("User-Agent", version.UserAgent)
@@ -465,13 +465,13 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		// Make the request
 		raw, doneCh, err := cancel.CancelableDownload(canceler, httpClient.Do, req)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		defer close(doneCh)
 
 		if raw.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("Unable to fetch %q: %s", args.Server, raw.Status)
+			return nil, false, fmt.Errorf("Unable to fetch %q: %s", args.Server, raw.Status)
 		}
 
 		// Progress handler
@@ -488,7 +488,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		// Create the target files
 		f, err := os.Create(destName)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		defer func() { _ = f.Close() }()
@@ -500,19 +500,19 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		writer := internalIO.NewQuotaWriter(io.MultiWriter(f, sha256), args.Budget)
 		size, err := io.Copy(writer, body)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		// Validate hash
 		result := fmt.Sprintf("%x", sha256.Sum(nil))
 		if result != fp {
-			return nil, fmt.Errorf("Hash mismatch for %q: %s != %s", args.Server, result, fp)
+			return nil, false, fmt.Errorf("Hash mismatch for %q: %s != %s", args.Server, result, fp)
 		}
 
 		// Parse the image
 		imageMeta, imageType, err := getImageMetadata(destName)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		info = &api.Image{}
@@ -532,10 +532,10 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 		err = f.Close()
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 	} else {
-		return nil, fmt.Errorf("Unsupported protocol: %v", protocol)
+		return nil, false, fmt.Errorf("Unsupported protocol: %v", protocol)
 	}
 
 	// Override visiblity
@@ -553,7 +553,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		return tx.CreateImage(ctx, args.ProjectName, info.Fingerprint, info.Filename, info.Size, info.Public, info.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, info.Properties, info.Type, nil)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Failed creating image record: %w", err)
+		return nil, false, fmt.Errorf("Failed creating image record: %w", err)
 	}
 
 	// Image is in the DB now, don't wipe on-disk files on failure
@@ -564,13 +564,13 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 	if newDestName != destName {
 		err = internalUtil.FileMove(destName, newDestName)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		if util.PathExists(destName + ".rootfs") {
 			err = internalUtil.FileMove(destName+".rootfs", newDestName+".rootfs")
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
 		}
 	}
@@ -586,7 +586,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			return tx.CreateImageSource(ctx, id, args.Server, protocol, args.Certificate, alias)
 		})
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 	}
 
@@ -594,7 +594,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 	if args.StoragePool != "" {
 		err = imageCreateInPool(s, info, args.StoragePool)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 	}
 
@@ -604,11 +604,11 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			return tx.SetImageCachedAndLastUseDate(ctx, args.ProjectName, fp, time.Now().UTC())
 		})
 		if err != nil {
-			return nil, fmt.Errorf("Failed setting cached flag and last use date: %w", err)
+			return nil, false, fmt.Errorf("Failed setting cached flag and last use date: %w", err)
 		}
 	}
 
 	logger.Info("Image downloaded", ctxMap)
 
-	return info, nil
+	return info, true, nil
 }

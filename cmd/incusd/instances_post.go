@@ -60,7 +60,7 @@ func ensureDownloadedImageFitWithinBudget(ctx context.Context, s *state.State, r
 		return nil, err
 	}
 
-	imgDownloaded, err := ImageDownload(ctx, r, s, op, &ImageDownloadArgs{
+	imgDownloaded, created, err := ImageDownload(ctx, r, s, op, &ImageDownloadArgs{
 		Server:       source.Server,
 		Protocol:     source.Protocol,
 		Certificate:  source.Certificate,
@@ -78,13 +78,15 @@ func ensureDownloadedImageFitWithinBudget(ctx context.Context, s *state.State, r
 		return nil, err
 	}
 
-	// Add the image to the authorizer.
-	err = s.Authorizer.AddImage(s.ShutdownCtx, p.Name, imgDownloaded.Fingerprint)
-	if err != nil {
-		logger.Error("Failed to add image to authorizer", logger.Ctx{"fingerprint": imgDownloaded.Fingerprint, "project": p.Name, "error": err})
-	}
+	if created {
+		// Add the image to the authorizer.
+		err = s.Authorizer.AddImage(s.ShutdownCtx, p.Name, imgDownloaded.Fingerprint)
+		if err != nil {
+			logger.Error("Failed to add image to authorizer", logger.Ctx{"fingerprint": imgDownloaded.Fingerprint, "project": p.Name, "error": err})
+		}
 
-	s.Events.SendLifecycle(p.Name, lifecycle.ImageCreated.Event(imgDownloaded.Fingerprint, p.Name, op.Requestor(), logger.Ctx{"type": imgDownloaded.Type}))
+		s.Events.SendLifecycle(p.Name, lifecycle.ImageCreated.Event(imgDownloaded.Fingerprint, p.Name, op.Requestor(), logger.Ctx{"type": imgDownloaded.Type}))
+	}
 
 	return imgDownloaded, nil
 }
