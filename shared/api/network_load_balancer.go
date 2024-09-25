@@ -157,3 +157,33 @@ func (f *NetworkLoadBalancer) Etag() []any {
 func (f *NetworkLoadBalancer) Writable() NetworkLoadBalancerPut {
 	return f.NetworkLoadBalancerPut
 }
+
+// NetworkLoadBalancerState is used for showing current state of a load balancer
+//
+// swagger:model
+//
+// API extension: network_load_balancer_state.
+type NetworkLoadBalancerState struct {
+	BackendHealth map[string]NetworkLoadBalancerStateBackendHealth `json:"backend_health" yaml:"backend_health"`
+}
+
+// NetworkLoadBalancerStateBackendHealth represents the health of a particular load-balancer backend
+//
+// swagger:model
+//
+// API extension: network_load_balancer_state.
+type NetworkLoadBalancerStateBackendHealth struct {
+	Address string                                      `json:"address" yaml:"address"`
+	Ports   []NetworkLoadBalancerStateBackendHealthPort `json:"ports" yaml:"ports"`
+}
+
+// NetworkLoadBalancerStateBackendHealthPort represents the health status of a particular load-balancer backend port.
+//
+// swagger:model
+//
+// API extension: network_load_balancer_state.
+type NetworkLoadBalancerStateBackendHealthPort struct {
+	Protocol string `json:"protocol" yaml:"protocol"`
+	Port     int    `json:"port" yaml:"port"`
+	Status   string `json:"status" yaml:"status"`
+}

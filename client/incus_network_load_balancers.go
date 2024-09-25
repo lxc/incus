@@ -111,3 +111,22 @@ func (r *ProtocolIncus) DeleteNetworkLoadBalancer(networkName string, listenAddr
 
 	return nil
 }
+
+// GetNetworkLoadBalancerState returns a Network load balancer state for the provided network and listen address.
+func (r *ProtocolIncus) GetNetworkLoadBalancerState(networkName string, listenAddress string) (*api.NetworkLoadBalancerState, error) {
+	err := r.CheckExtension("network_load_balancer_state")
+	if err != nil {
+		return nil, err
+	}
+
+	lbState := api.NetworkLoadBalancerState{}
+
+	// Fetch the raw value.
+	u := api.NewURL().Path("networks", networkName, "load-balancers", listenAddress, "state")
+	_, err = r.queryStruct("GET", u.String(), nil, "", &lbState)
+	if err != nil {
+		return nil, err
+	}
+
+	return &lbState, nil
+}

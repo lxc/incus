@@ -5280,6 +5280,61 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 	return nil
 }
 
+// LoadBalancerState returns the current state of the load balancer.
+func (n *ovn) LoadBalancerState(lb api.NetworkLoadBalancer) (*api.NetworkLoadBalancerState, error) {
+	lbState := &api.NetworkLoadBalancerState{}
+
+	if util.IsTrue(lb.Config["healthcheck"]) {
+		lbState.BackendHealth = map[string]api.NetworkLoadBalancerStateBackendHealth{}
+
+		for _, backend := range lb.Backends {
+			backendHealth := api.NetworkLoadBalancerStateBackendHealth{}
+			backendHealth.Address = backend.TargetAddress
+			backendHealth.Ports = []api.NetworkLoadBalancerStateBackendHealthPort{}
+
+			for _, lbPort := range lb.Ports {
+				if !slices.Contains(lbPort.TargetBackend, backend.Name) {
+					continue
+				}
+
+				// Check valid listen port(s) supplied.
+				listenPortRanges := util.SplitNTrimSpace(lbPort.ListenPort, ",", -1, true)
+				if len(listenPortRanges) <= 0 {
+					return nil, fmt.Errorf("Missing listen port in port specification %q", lbPort.ListenPort)
+				}
+
+				for _, pr := range listenPortRanges {
+					portFirst, portRange, err := ParsePortRange(pr)
+					if err != nil {
+						return nil, fmt.Errorf("Invalid listen port in port specification %q: %w", lbPort.ListenPort, err)
+					}
+
+					for i := int64(0); i < portRange; i++ {
+						port := portFirst + i
+
+						status, err := n.ovnsb.GetServiceHealth(context.TODO(), backend.TargetAddress, lbPort.Protocol, int(port))
+						if err != nil {
+							return nil, fmt.Errorf("Failed retrieving OVN load-balancer health: %w", err)
+						}
+
+						portHealth := api.NetworkLoadBalancerStateBackendHealthPort{
+							Protocol: lbPort.Protocol,
+							Port:     int(port),
+							Status:   status,
+						}
+
+						backendHealth.Ports = append(backendHealth.Ports, portHealth)
+					}
+				}
+			}
+
+			lbState.BackendHealth[backend.Name] = backendHealth
+		}
+	}
+
+	return lbState, nil
+}
+
 // LoadBalancerDelete deletes a network load balancer.
 func (n *ovn) LoadBalancerDelete(listenAddress string, clientType request.ClientType) error {
 	if clientType == request.ClientTypeNormal {

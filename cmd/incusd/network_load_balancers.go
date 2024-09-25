@@ -38,6 +38,12 @@ var networkLoadBalancerCmd = APIEndpoint{
 	Patch:  APIEndpointAction{Handler: networkLoadBalancerPut, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
 }
 
+var networkLoadBalancerStateCmd = APIEndpoint{
+	Path: "networks/{networkName}/load-balancers/{listenAddress}/state",
+
+	Get: APIEndpointAction{Handler: networkLoadBalancerStateGet, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanView, "networkName")},
+}
+
 // API endpoints
 
 // swagger:operation GET /1.0/networks/{networkName}/load-balancers network-load-balancers network_load_balancers_get
@@ -616,4 +622,99 @@ func networkLoadBalancerPut(d *Daemon, r *http.Request) response.Response {
 	s.Events.SendLifecycle(projectName, lifecycle.NetworkLoadBalancerUpdated.Event(n, listenAddress, request.CreateRequestor(r), nil))
 
 	return response.EmptySyncResponse
+}
+
+// swagger:operation GET /1.0/networks/{networkName}/load-balancers/{listenAddress}/state network-load-balancers network_load_balancer_state_get
+//
+//	Get the network address load balancer state
+//
+//	Get the current state of a specific network address load balancer.
+//
+//	---
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    example: default
+//	responses:
+//	  "200":
+//	    description: Load Balancer state
+//	    schema:
+//	      type: object
+//	      description: Sync response
+//	      properties:
+//	        type:
+//	          type: string
+//	          description: Response type
+//	          example: sync
+//	        status:
+//	          type: string
+//	          description: Status description
+//	          example: Success
+//	        status_code:
+//	          type: integer
+//	          description: Status code
+//	          example: 200
+//	        metadata:
+//	          $ref: "#/definitions/NetworkLoadBalancerState"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func networkLoadBalancerStateGet(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	resp := forwardedResponseIfTargetIsRemote(s, r)
+	if resp != nil {
+		return resp
+	}
+
+	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	n, err := network.LoadByName(s, projectName, networkName)
+	if err != nil {
+		return response.SmartError(fmt.Errorf("Failed loading network: %w", err))
+	}
+
+	// Check if project allows access to network.
+	if !project.NetworkAllowed(reqProject.Config, networkName, n.IsManaged()) {
+		return response.SmartError(api.StatusErrorf(http.StatusNotFound, "Network not found"))
+	}
+
+	if !n.Info().LoadBalancers {
+		return response.BadRequest(fmt.Errorf("Network driver %q does not support load balancers", n.Type()))
+	}
+
+	listenAddress, err := url.PathUnescape(mux.Vars(r)["listenAddress"])
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	var loadBalancer *api.NetworkLoadBalancer
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_, loadBalancer, err = tx.GetNetworkLoadBalancer(ctx, n.ID(), false, listenAddress)
+
+		return err
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	lbState, err := n.LoadBalancerState(*loadBalancer)
+	if err != nil {
+		return response.SmartError(fmt.Errorf("Failed fetching load balancer state: %w", err))
+	}
+
+	return response.SyncResponse(true, lbState)
 }
