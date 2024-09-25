@@ -1323,12 +1323,20 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Copy EDK2 settings firmware to nvram file if needed.
-	// This firmware file can be modified by the VM so it must be copied from the defaults.
-	if d.architectureSupportsUEFI(d.architecture) && (!util.PathExists(d.nvramPath()) || util.IsTrue(d.localConfig["volatile.apply_nvram"])) {
-		err = d.setupNvram()
-		if err != nil {
-			op.Done(err)
+	// Set up EDK2 NVRAM when on EFI.
+	if d.architectureSupportsUEFI(d.architecture) {
+		fi, err := os.Lstat(d.nvramPath())
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err
+		}
+
+		// Generate new NVRAM if missing, or if requested by the user or if the NVRAM file is of an invalid format (needs to be a valid symlink).
+		if util.IsTrue(d.localConfig["volatile.apply_nvram"]) || fi == nil || fi.Mode()&os.ModeSymlink != os.ModeSymlink {
+			err = d.setupNvram()
+			if err != nil {
+				op.Done(err)
+				return err
+			}
 		}
 	}
 
