@@ -9361,6 +9361,13 @@ func (d *qemu) ConsoleLog() (string, error) {
 
 	logString, err := monitor.RingbufRead("console")
 	if err != nil {
+		// If a VM was started by an older version of Incus which was then upgraded, its
+		// console device won't be a ring buffer. We don't want to cause an error in this
+		// case, so just return an empty string.
+		if errors.Is(err, qmp.ErrNotARingbuf) {
+			return "", nil
+		}
+
 		return "", err
 	}
 
