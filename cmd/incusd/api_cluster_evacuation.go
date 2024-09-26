@@ -40,7 +40,6 @@ type evacuateMigrateFunc func(ctx context.Context, s *state.State, inst instance
 
 type evacuateOpts struct {
 	s               *state.State
-	gateway         *cluster.Gateway
 	instances       []instance.Instance
 	mode            string
 	srcMemberName   string
@@ -85,7 +84,7 @@ func evacuateClusterSetState(s *state.State, name string, newState int) error {
 // evacuateHostShutdownDefaultTimeout default timeout (in seconds) for waiting for clean shutdown to complete.
 const evacuateHostShutdownDefaultTimeout = 30
 
-func evacuateClusterMember(ctx context.Context, s *state.State, gateway *cluster.Gateway, op *operations.Operation, name string, mode string, stopInstance evacuateStopFunc, migrateInstance evacuateMigrateFunc) error {
+func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.Operation, name string, mode string, stopInstance evacuateStopFunc, migrateInstance evacuateMigrateFunc) error {
 	// Get the instance list for the server being evacuated.
 	var dbInstances []dbCluster.Instance
 	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
@@ -130,7 +129,6 @@ func evacuateClusterMember(ctx context.Context, s *state.State, gateway *cluster
 	// Perform the evacuation.
 	opts := evacuateOpts{
 		s:               s,
-		gateway:         gateway,
 		instances:       instances,
 		mode:            mode,
 		srcMemberName:   name,
@@ -207,7 +205,7 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 		}
 
 		// Find a new location for the instance.
-		sourceMemberInfo, targetMemberInfo, err := evacuateClusterSelectTarget(ctx, opts.s, opts.gateway, inst)
+		sourceMemberInfo, targetMemberInfo, err := evacuateClusterSelectTarget(ctx, opts.s, inst)
 		if err != nil {
 			if api.StatusErrorCheck(err, http.StatusNotFound) {
 				// Skip migration if no target is available.
@@ -478,7 +476,7 @@ func restoreClusterMember(d *Daemon, r *http.Request) response.Response {
 	return operations.OperationResponse(op)
 }
 
-func evacuateClusterSelectTarget(ctx context.Context, s *state.State, gateway *cluster.Gateway, inst instance.Instance) (*db.NodeInfo, *db.NodeInfo, error) {
+func evacuateClusterSelectTarget(ctx context.Context, s *state.State, inst instance.Instance) (*db.NodeInfo, *db.NodeInfo, error) {
 	var sourceMemberInfo *db.NodeInfo
 	var targetMemberInfo *db.NodeInfo
 
@@ -755,7 +753,7 @@ func healClusterMember(d *Daemon, op *operations.Operation, name string) error {
 	// Attempt up to 5 evacuations.
 	var err error
 	for i := 0; i < 5; i++ {
-		err = evacuateClusterMember(context.Background(), s, d.gateway, op, name, "heal", nil, migrateFunc)
+		err = evacuateClusterMember(context.Background(), s, op, name, "heal", nil, migrateFunc)
 		if err == nil {
 			s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.ClusterMemberHealed.Event(name, op.Requestor(), nil))
 
