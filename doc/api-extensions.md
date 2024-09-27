@@ -2615,3 +2615,7 @@ This extension adds a pointer to an `InstanceStateOSInfo` struct to the instance
 
 This adds a new `/1.0/networks/NAME/load-balancers/IP/state` API endpoint
 which returns load-balancer health check information (when configured).
+
+## `instance_nic_macvlan_mode`
+
+This adds a `mode` configuration key on `macvlan` network interfaces which allows for configuring the Macvlan mode.
