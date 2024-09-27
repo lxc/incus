@@ -444,6 +444,7 @@ var APIExtensions = []string{
 	"ovn_nic_ip_address_none",
 	"instances_state_os_info",
 	"network_load_balancer_state",
+	"instance_nic_macvlan_mode",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
