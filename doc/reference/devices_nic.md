@@ -118,6 +118,7 @@ Key                     | Type    | Default           | Managed | Description
 `boot.priority`         | integer | -                 | no      | Boot priority for VMs (higher value boots first)
 `gvrp`                  | bool    | `false`           | no      | Register VLAN using GARP VLAN Registration Protocol
 `hwaddr`                | string  | randomly assigned | no      | The MAC address of the new interface
+`mode`                  | string  | `bridge`          | no      | Macvlan mode (one of `bridge`, `vepa`, `passthrough` or `private`)
 `mtu`                   | integer | parent MTU        | yes     | The MTU of the new interface
 `name`                  | string  | kernel assigned   | no      | The name of the interface inside the instance
 `network`               | string  | -                 | no      | The managed network to link the device to (instead of specifying the `nictype` directly)
