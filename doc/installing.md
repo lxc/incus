@@ -33,7 +33,11 @@ Packages are available for a number of Linux distributions, either in their main
 ````{tabs}
 
 ```{group-tab} Alpine
-Incus and all of its dependencies are available in Alpine Linux's community repository as `incus`.
+Incus and all of its dependencies are available in Alpine Linux's edge main and community repository as `incus`.
+
+Uncomment the edge main and community repositories in `/etc/apk/repositories` and run:
+
+    apk update
 
 Install Incus with:
 
