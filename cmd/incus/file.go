@@ -336,8 +336,14 @@ func (c *cmdFileDelete) Run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf(i18n.G("Invalid path %s"), resource.name)
 		}
 
-		// Delete the file
-		err = resource.server.DeleteInstanceFile(pathSpec[0], pathSpec[1])
+		sftpConn, err := resource.server.GetInstanceFileSFTP(pathSpec[0])
+		if err != nil {
+			return err
+		}
+
+		defer func() { _ = sftpConn.Close() }()
+
+		err = sftpConn.Remove(pathSpec[1])
 		if err != nil {
 			return err
 		}
