@@ -169,84 +169,87 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 	group.SetLimit(numParallelEvacs)
 
 	for _, inst := range opts.instances {
-		// Accesses variables groupCtx, inst, and opts
 		group.Go(func() error {
-		metadata := make(map[string]any)
-
-		instProject := inst.Project()
-		l := logger.AddContext(logger.Ctx{"project": instProject.Name, "instance": inst.Name()})
-
-		// Check if migratable.
-		action := inst.CanMigrate()
-
-		// Apply overrides.
-		if opts.mode != "" {
-			if opts.mode == "heal" {
-				// Source server is dead, live-migration isn't an option.
-				if action == "live-migrate" {
-					action = "migrate"
-				}
-
-				if action != "migrate" {
-					// We can only migrate instances or leave them as they are.
-					return nil
-				}
-			} else if opts.mode != "auto" {
-				action = opts.mode
-			}
-		}
-
-		// Stop the instance if needed.
-		isRunning := inst.IsRunning()
-		if action != "live-migrate" {
-			if opts.stopInstance != nil && isRunning {
-				metadata["evacuation_progress"] = fmt.Sprintf("Stopping %q in project %q", inst.Name(), instProject.Name)
-				_ = opts.op.UpdateMetadata(metadata)
-
-				err := opts.stopInstance(inst, action)
-				if err != nil {
-					return err
-				}
-			}
-
-			if action != "migrate" {
-				// Done with this instance.
-				return nil
-			}
-		}
-
-		// Find a new location for the instance.
-		sourceMemberInfo, targetMemberInfo, err := evacuateClusterSelectTarget(groupCtx, opts.s, inst)
-		if err != nil {
-			if api.StatusErrorCheck(err, http.StatusNotFound) {
-				// Skip migration if no target is available.
-				l.Warn("No migration target available for instance")
-				return nil
-			}
-		}
-
-		// Start migrating the instance.
-		metadata["evacuation_progress"] = fmt.Sprintf("Migrating %q in project %q to %q", inst.Name(), instProject.Name, targetMemberInfo.Name)
-		_ = opts.op.UpdateMetadata(metadata)
-
-		// Set origin server (but skip if already set as that suggests more than one server being evacuated).
-		if inst.LocalConfig()["volatile.evacuate.origin"] == "" {
-			_ = inst.VolatileSet(map[string]string{"volatile.evacuate.origin": opts.srcMemberName})
-		}
-
-		start := isRunning || instanceShouldAutoStart(inst)
-		err = opts.migrateInstance(groupCtx, opts.s, inst, sourceMemberInfo, targetMemberInfo, action == "live-migrate", start, metadata, opts.op)
-		if err != nil {
-			return err
-		}
-
-		return nil
+			return evacuateInstancesFunc(groupCtx, inst, opts)
 		})
 	}
 
 	err := group.Wait()
 	if err != nil {
 		return fmt.Errorf("Failed to evacuate instances: %w", err)
+	}
+
+	return nil
+}
+
+func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts evacuateOpts) error {
+	metadata := make(map[string]any)
+
+	instProject := inst.Project()
+	l := logger.AddContext(logger.Ctx{"project": instProject.Name, "instance": inst.Name()})
+
+	// Check if migratable.
+	action := inst.CanMigrate()
+
+	// Apply overrides.
+	if opts.mode != "" {
+		if opts.mode == "heal" {
+			// Source server is dead, live-migration isn't an option.
+			if action == "live-migrate" {
+				action = "migrate"
+			}
+
+			if action != "migrate" {
+				// We can only migrate instances or leave them as they are.
+				return nil
+			}
+		} else if opts.mode != "auto" {
+			action = opts.mode
+		}
+	}
+
+	// Stop the instance if needed.
+	isRunning := inst.IsRunning()
+	if action != "live-migrate" {
+		if opts.stopInstance != nil && isRunning {
+			metadata["evacuation_progress"] = fmt.Sprintf("Stopping %q in project %q", inst.Name(), instProject.Name)
+			_ = opts.op.UpdateMetadata(metadata)
+
+			err := opts.stopInstance(inst, action)
+			if err != nil {
+				return err
+			}
+		}
+
+		if action != "migrate" {
+			// Done with this instance.
+			return nil
+		}
+	}
+
+	// Find a new location for the instance.
+	sourceMemberInfo, targetMemberInfo, err := evacuateClusterSelectTarget(ctx, opts.s, inst)
+	if err != nil {
+		if api.StatusErrorCheck(err, http.StatusNotFound) {
+			// Skip migration if no target is available.
+			l.Warn("No migration target available for instance")
+			return nil
+		}
+	}
+
+	// Start migrating the instance.
+	metadata["evacuation_progress"] = fmt.Sprintf("Migrating %q in project %q to %q", inst.Name(), instProject.Name, targetMemberInfo.Name)
+	_ = opts.op.UpdateMetadata(metadata)
+
+	// Set origin server (but skip if already set as that suggests more than one server being evacuated).
+	if inst.LocalConfig()["volatile.evacuate.origin"] == "" {
+		_ = inst.VolatileSet(map[string]string{"volatile.evacuate.origin": opts.srcMemberName})
+	}
+
+	start := isRunning || instanceShouldAutoStart(inst)
+	err = opts.migrateInstance(ctx, opts.s, inst, sourceMemberInfo, targetMemberInfo, action == "live-migrate", start, metadata, opts.op)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -357,138 +360,8 @@ func restoreClusterMember(d *Daemon, r *http.Request) response.Response {
 
 		// Migrate back the remote instances.
 		for _, inst := range instances {
-			// Accesses variables inst, op, originName, r, and s
 			group.Go(func() error {
-			var err error
-			var source incus.InstanceServer
-			var sourceNode db.NodeInfo
-			metadata := make(map[string]any)
-
-			l := logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
-
-			// Check the action.
-			live := inst.CanMigrate() == "live-migrate"
-
-			metadata["evacuation_progress"] = fmt.Sprintf("Migrating %q in project %q from %q", inst.Name(), inst.Project().Name, inst.Location())
-			_ = op.UpdateMetadata(metadata)
-
-			err = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
-				sourceNode, err = tx.GetNodeByName(ctx, inst.Location())
-				if err != nil {
-					return fmt.Errorf("Failed to get node %q: %w", inst.Location(), err)
-				}
-
-				return nil
-			})
-			if err != nil {
-				return fmt.Errorf("Failed to get node: %w", err)
-			}
-
-			source, err = cluster.Connect(sourceNode.Address, s.Endpoints.NetworkCert(), s.ServerCert(), r, true)
-			if err != nil {
-				return fmt.Errorf("Failed to connect to source: %w", err)
-			}
-
-			source = source.UseProject(inst.Project().Name)
-
-			apiInst, _, err := source.GetInstance(inst.Name())
-			if err != nil {
-				return fmt.Errorf("Failed to get instance %q: %w", inst.Name(), err)
-			}
-
-			isRunning := apiInst.StatusCode == api.Running
-			if isRunning && !live {
-				metadata["evacuation_progress"] = fmt.Sprintf("Stopping %q in project %q", inst.Name(), inst.Project().Name)
-				_ = op.UpdateMetadata(metadata)
-
-				timeout := inst.ExpandedConfig()["boot.host_shutdown_timeout"]
-				val, err := strconv.Atoi(timeout)
-				if err != nil {
-					val = evacuateHostShutdownDefaultTimeout
-				}
-
-				// Attempt a clean stop.
-				stopOp, err := source.UpdateInstanceState(inst.Name(), api.InstanceStatePut{Action: "stop", Force: false, Timeout: val}, "")
-				if err != nil {
-					return fmt.Errorf("Failed to stop instance %q: %w", inst.Name(), err)
-				}
-
-				// Wait for the stop operation to complete or timeout.
-				err = stopOp.Wait()
-				if err != nil {
-					l.Warn("Failed shutting down instance, forcing stop", logger.Ctx{"err": err})
-
-					// On failure, attempt a forceful stop.
-					stopOp, err = source.UpdateInstanceState(inst.Name(), api.InstanceStatePut{Action: "stop", Force: true}, "")
-					if err != nil {
-						// If this fails too, fail the whole operation.
-						return fmt.Errorf("Failed to stop instance %q: %w", inst.Name(), err)
-					}
-
-					// Wait for the forceful stop to complete.
-					err = stopOp.Wait()
-					if err != nil && !strings.Contains(err.Error(), "The instance is already stopped") {
-						return fmt.Errorf("Failed to stop instance %q: %w", inst.Name(), err)
-					}
-				}
-			}
-
-			req := api.InstancePost{
-				Name:      inst.Name(),
-				Migration: true,
-				Live:      live,
-			}
-
-			source = source.UseTarget(originName)
-
-			migrationOp, err := source.MigrateInstance(inst.Name(), req)
-			if err != nil {
-				return fmt.Errorf("Migration API failure: %w", err)
-			}
-
-			err = migrationOp.Wait()
-			if err != nil {
-				return fmt.Errorf("Failed to wait for migration to finish: %w", err)
-			}
-
-			// Reload the instance after migration.
-			inst, err := instance.LoadByProjectAndName(s, inst.Project().Name, inst.Name())
-			if err != nil {
-				return fmt.Errorf("Failed to load instance: %w", err)
-			}
-
-			config := inst.LocalConfig()
-			delete(config, "volatile.evacuate.origin")
-
-			args := db.InstanceArgs{
-				Architecture: inst.Architecture(),
-				Config:       config,
-				Description:  inst.Description(),
-				Devices:      inst.LocalDevices(),
-				Ephemeral:    inst.IsEphemeral(),
-				Profiles:     inst.Profiles(),
-				Project:      inst.Project().Name,
-				ExpiryDate:   inst.ExpiryDate(),
-			}
-
-			err = inst.Update(args, false)
-			if err != nil {
-				return fmt.Errorf("Failed to update instance %q: %w", inst.Name(), err)
-			}
-
-			if !isRunning || live {
-				return nil
-			}
-
-			metadata["evacuation_progress"] = fmt.Sprintf("Starting %q in project %q", inst.Name(), inst.Project().Name)
-			_ = op.UpdateMetadata(metadata)
-
-			err = inst.Start(false)
-			if err != nil {
-				return fmt.Errorf("Failed to start instance %q: %w", inst.Name(), err)
-			}
-
-			return nil
+				return restoreClusterMemberFunc(inst, op, originName, r, s)
 			})
 		}
 
@@ -510,6 +383,139 @@ func restoreClusterMember(d *Daemon, r *http.Request) response.Response {
 	}
 
 	return operations.OperationResponse(op)
+}
+
+func restoreClusterMemberFunc(inst instance.Instance, op *operations.Operation, originName string, r *http.Request, s *state.State) error {
+	var err error
+	var source incus.InstanceServer
+	var sourceNode db.NodeInfo
+	metadata := make(map[string]any)
+
+	l := logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
+
+	// Check the action.
+	live := inst.CanMigrate() == "live-migrate"
+
+	metadata["evacuation_progress"] = fmt.Sprintf("Migrating %q in project %q from %q", inst.Name(), inst.Project().Name, inst.Location())
+	_ = op.UpdateMetadata(metadata)
+
+	err = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+		sourceNode, err = tx.GetNodeByName(ctx, inst.Location())
+		if err != nil {
+			return fmt.Errorf("Failed to get node %q: %w", inst.Location(), err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("Failed to get node: %w", err)
+	}
+
+	source, err = cluster.Connect(sourceNode.Address, s.Endpoints.NetworkCert(), s.ServerCert(), r, true)
+	if err != nil {
+		return fmt.Errorf("Failed to connect to source: %w", err)
+	}
+
+	source = source.UseProject(inst.Project().Name)
+
+	apiInst, _, err := source.GetInstance(inst.Name())
+	if err != nil {
+		return fmt.Errorf("Failed to get instance %q: %w", inst.Name(), err)
+	}
+
+	isRunning := apiInst.StatusCode == api.Running
+	if isRunning && !live {
+		metadata["evacuation_progress"] = fmt.Sprintf("Stopping %q in project %q", inst.Name(), inst.Project().Name)
+		_ = op.UpdateMetadata(metadata)
+
+		timeout := inst.ExpandedConfig()["boot.host_shutdown_timeout"]
+		val, err := strconv.Atoi(timeout)
+		if err != nil {
+			val = evacuateHostShutdownDefaultTimeout
+		}
+
+		// Attempt a clean stop.
+		stopOp, err := source.UpdateInstanceState(inst.Name(), api.InstanceStatePut{Action: "stop", Force: false, Timeout: val}, "")
+		if err != nil {
+			return fmt.Errorf("Failed to stop instance %q: %w", inst.Name(), err)
+		}
+
+		// Wait for the stop operation to complete or timeout.
+		err = stopOp.Wait()
+		if err != nil {
+			l.Warn("Failed shutting down instance, forcing stop", logger.Ctx{"err": err})
+
+			// On failure, attempt a forceful stop.
+			stopOp, err = source.UpdateInstanceState(inst.Name(), api.InstanceStatePut{Action: "stop", Force: true}, "")
+			if err != nil {
+				// If this fails too, fail the whole operation.
+				return fmt.Errorf("Failed to stop instance %q: %w", inst.Name(), err)
+			}
+
+			// Wait for the forceful stop to complete.
+			err = stopOp.Wait()
+			if err != nil && !strings.Contains(err.Error(), "The instance is already stopped") {
+				return fmt.Errorf("Failed to stop instance %q: %w", inst.Name(), err)
+			}
+		}
+	}
+
+	req := api.InstancePost{
+		Name:      inst.Name(),
+		Migration: true,
+		Live:      live,
+	}
+
+	source = source.UseTarget(originName)
+
+	migrationOp, err := source.MigrateInstance(inst.Name(), req)
+	if err != nil {
+		return fmt.Errorf("Migration API failure: %w", err)
+	}
+
+	err = migrationOp.Wait()
+	if err != nil {
+		return fmt.Errorf("Failed to wait for migration to finish: %w", err)
+	}
+
+	// Reload the instance after migration.
+	inst, err = instance.LoadByProjectAndName(s, inst.Project().Name, inst.Name())
+	if err != nil {
+		return fmt.Errorf("Failed to load instance: %w", err)
+	}
+
+	config := inst.LocalConfig()
+	delete(config, "volatile.evacuate.origin")
+
+	args := db.InstanceArgs{
+		Architecture: inst.Architecture(),
+		Config:       config,
+		Description:  inst.Description(),
+		Devices:      inst.LocalDevices(),
+		Ephemeral:    inst.IsEphemeral(),
+		Profiles:     inst.Profiles(),
+		Project:      inst.Project().Name,
+		ExpiryDate:   inst.ExpiryDate(),
+	}
+
+	err = inst.Update(args, false)
+	if err != nil {
+		return fmt.Errorf("Failed to update instance %q: %w", inst.Name(), err)
+	}
+
+	if !isRunning || live {
+		return nil
+	}
+
+	metadata["evacuation_progress"] = fmt.Sprintf("Starting %q in project %q", inst.Name(), inst.Project().Name)
+	_ = op.UpdateMetadata(metadata)
+
+	err = inst.Start(false)
+	if err != nil {
+		return fmt.Errorf("Failed to start instance %q: %w", inst.Name(), err)
+	}
+
+	return nil
 }
 
 func evacuateClusterSelectTarget(ctx context.Context, s *state.State, inst instance.Instance) (*db.NodeInfo, *db.NodeInfo, error) {
