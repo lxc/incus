@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-09-25 00:05-0400\n"
-"PO-Revision-Date: 2024-09-24 22:53+0000\n"
+"PO-Revision-Date: 2024-09-30 23:28+0000\n"
 "Last-Translator: Jan Mittelstädter <jan@mittelstaedter.de>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
 "Language: de\n"
@@ -692,6 +692,7 @@ msgstr "--refresh kann nur mit Containern verwendet werden"
 #: cmd/incus/copy.go:167
 msgid "--instance-only can't be passed when the source is a snapshot"
 msgstr ""
+"--instance-only kann nicht verwendet werden, wenn die Quelle ein Snapshot ist"
 
 #: cmd/incus/admin_init_auto.go:42
 #, fuzzy
@@ -868,7 +869,7 @@ msgstr "Füge spezielles Backend zum Load Balancer hinzu"
 
 #: cmd/incus/network_load_balancer.go:891
 msgid "Add backends to a load balancer"
-msgstr ""
+msgstr "Backends zu einem load balancer hinzufügen"
 
 #: cmd/incus/network_zone.go:1514
 msgid "Add entries to a network zone record"
@@ -928,6 +929,11 @@ msgid ""
 "- client (default)\n"
 "- metrics\n"
 msgstr ""
+"Neues vertrauenswürdigen Zertifikat hinzufügen\n"
+"\n"
+"Folgende Zertifikat typen aind möglich:\n"
+"- client (stndard)\n"
+"- metrics\n"
 
 #: cmd/incus/config_trust.go:91
 msgid ""
