@@ -1118,7 +1118,7 @@ func (d *qemu) checkStateStorage() error {
 		memoryLimitStr = d.expandedConfig["limits.memory"]
 	}
 
-	memoryLimit, err := units.ParseByteSizeString(memoryLimitStr)
+	memoryLimit, err := ParseMemoryStr(memoryLimitStr)
 	if err != nil {
 		return err
 	}
@@ -3821,7 +3821,7 @@ func (d *qemu) addCPUMemoryConfig(cfg *[]cfgSection, cpuInfo *cpuTopology) error
 		memSize = qemudefault.MemSize // Default if no memory limit specified.
 	}
 
-	memSizeBytes, err := units.ParseByteSizeString(memSize)
+	memSizeBytes, err := ParseMemoryStr(memSize)
 	if err != nil {
 		return fmt.Errorf("limits.memory invalid: %w", err)
 	}
