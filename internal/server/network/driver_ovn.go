@@ -410,7 +410,7 @@ func (n *ovn) Validate(config map[string]string) error {
 	_, ipv6Net, _ := net.ParseCIDR(config["ipv6.address"])
 	if ipv6Net != nil {
 		ones, _ := ipv6Net.Mask.Size()
-		if ones < 64 {
+		if ones > 64 {
 			return fmt.Errorf("IPv6 subnet must be at least a /64")
 		}
 	}
