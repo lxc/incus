@@ -2600,3 +2600,7 @@ which returns load-balancer health check information (when configured).
 ## `instance_nic_macvlan_mode`
 
 This adds a `mode` configuration key on `macvlan` network interfaces which allows for configuring the Macvlan mode.
+
+## `storage_lvm_cluster_create`
+
+Allow for creating new LVM cluster pools by setting the `source` to the shared block device.
