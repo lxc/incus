@@ -18,6 +18,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pkg/sftp"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh"
 
@@ -334,18 +335,30 @@ func (c *cmdFileDelete) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Store clients.
+	sftpClients := map[string]*sftp.Client{}
+
+	defer func() {
+		for _, sftpClient := range sftpClients {
+			_ = sftpClient.Close()
+		}
+	}()
+
 	for _, resource := range resources {
 		pathSpec := strings.SplitN(resource.name, "/", 2)
 		if len(pathSpec) != 2 {
 			return fmt.Errorf(i18n.G("Invalid path %s"), resource.name)
 		}
 
-		sftpConn, err := resource.server.GetInstanceFileSFTP(pathSpec[0])
-		if err != nil {
-			return err
-		}
+		sftpConn, ok := sftpClients[pathSpec[0]]
+		if !ok {
+			sftpConn, err = resource.server.GetInstanceFileSFTP(pathSpec[0])
+			if err != nil {
+				return err
+			}
 
-		defer func() { _ = sftpConn.Close() }()
+			sftpClients[pathSpec[0]] = sftpConn
+		}
 
 		if c.flagForce {
 			err = sftpConn.RemoveAll(pathSpec[1])
