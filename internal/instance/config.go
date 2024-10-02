@@ -74,8 +74,10 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 
 	// gendoc:generate(entity=instance, group=boot, key=boot.host_shutdown_action)
 	// Action to take on host shut down
+	//
+	// Valid values are: `stop`, `force-stop` or `stateful-stop`
 	// ---
-	//  type: integer
+	//  type: string
 	//  defaultdesc: stop
 	//  liveupdate: yes
 	//  shortdesc: What action to take on the instance when the host is shut down

@@ -491,9 +491,9 @@
 						"boot.host_shutdown_action": {
 							"defaultdesc": "stop",
 							"liveupdate": "yes",
-							"longdesc": "Action to take on host shut down",
+							"longdesc": "Action to take on host shut down\n\nValid values are: `stop`, `force-stop` or `stateful-stop`",
 							"shortdesc": "What action to take on the instance when the host is shut down",
-							"type": "integer"
+							"type": "string"
 						}
 					},
 					{

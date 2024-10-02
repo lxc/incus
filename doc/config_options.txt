@@ -436,8 +436,10 @@ The instance with the highest value is started first.
 :defaultdesc: "stop"
 :liveupdate: "yes"
 :shortdesc: "What action to take on the instance when the host is shut down"
-:type: "integer"
+:type: "string"
 Action to take on host shut down
+
+Valid values are: `stop`, `force-stop` or `stateful-stop`
 ```
 
 ```{config:option} boot.host_shutdown_timeout instance-boot
