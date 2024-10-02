@@ -302,6 +302,8 @@ func (c *cmdFileCreate) Run(cmd *cobra.Command, args []string) error {
 type cmdFileDelete struct {
 	global *cmdGlobal
 	file   *cmdFile
+
+	flagForce bool
 }
 
 func (c *cmdFileDelete) Command() *cobra.Command {
@@ -311,6 +313,8 @@ func (c *cmdFileDelete) Command() *cobra.Command {
 	cmd.Short = i18n.G("Delete files in instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Delete files in instances`))
+
+	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Force deleting files, directories, and subdirectories")+"``")
 
 	cmd.RunE = c.Run
 
@@ -342,6 +346,15 @@ func (c *cmdFileDelete) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		defer func() { _ = sftpConn.Close() }()
+
+		if c.flagForce {
+			err = sftpConn.RemoveAll(pathSpec[1])
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}
 
 		err = sftpConn.Remove(pathSpec[1])
 		if err != nil {
