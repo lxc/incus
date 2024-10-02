@@ -42,6 +42,7 @@ The following configuration options are available for the `ovn` network type:
 Key                                  | Type      | Condition             | Default                   | Description
 :--                                  | :--       | :--                   | :--                       | :--
 `network`                            | string    | -                     | -                         | Uplink network to use for external network access or `none` to keep isolated
+`bridge.external_interfaces`         | string    | -                     | -                         | Comma-separated list of unconfigured network interfaces to include in the bridge
 `bridge.hwaddr`                      | string    | -                     | -                         | MAC address for the bridge
 `bridge.mtu`                         | integer   | -                     | `1442`                    | Bridge MTU (default allows host to host Geneve tunnels)
 `dns.domain`                         | string    | -                     | `incus`                   | Domain to advertise to DHCP clients and use for DNS resolution
