@@ -77,7 +77,7 @@ After=sys-subsystem-net-devices-<network_bridge>.device
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/resolvectl dns <network_bridge> <dns_address>
-ExecStart=/usr/bin/resolvectl domain <network_bridge> <dns_domain>
+ExecStart=/usr/bin/resolvectl domain <network_bridge> ~<dns_domain>
 ExecStopPost=/usr/bin/resolvectl revert <network_bridge>
 RemainAfterExit=yes
 
