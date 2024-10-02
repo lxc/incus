@@ -66,6 +66,7 @@ func (r *ProtocolOCI) GetImage(fingerprint string) (*api.Image, string, error) {
 				"architecture": info.Architecture,
 				"type":         "oci",
 				"description":  fmt.Sprintf("%s (OCI)", info.Name),
+				"id":           info.Alias,
 			},
 		},
 		Aliases: []api.ImageAlias{{
