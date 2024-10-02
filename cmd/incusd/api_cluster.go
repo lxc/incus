@@ -2894,7 +2894,7 @@ func clusterNodeStatePost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		run := func(op *operations.Operation) error {
-			return evacuateClusterMember(context.Background(), s, d.gateway, op, name, req.Mode, stopFunc, migrateFunc)
+			return evacuateClusterMember(context.Background(), s, op, name, req.Mode, stopFunc, migrateFunc)
 		}
 
 		op, err := operations.OperationCreate(s, "", operations.OperationClassTask, operationtype.ClusterMemberEvacuate, nil, nil, run, nil, nil, r)
