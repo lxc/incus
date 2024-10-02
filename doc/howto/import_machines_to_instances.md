@@ -7,7 +7,16 @@ You can run the tool on any Linux machine.
 It connects to an Incus server and creates a blank instance, which you can configure during or after the migration.
 The tool then copies the data from the disk or image that you provide to the instance.
 
-`incus-migrate` can import images in `raw`, `qcow2`, and `vmdk` file formats.
+`incus-migrate` from Incus 6.0 LTS and up to Incus 6.4 can only import images in the `raw` file format. 
+If you have images in the `qcow2` or `vmdk` file formats, you need to convert them first to the `raw` file format using the external tool `qemu-img`. 
+In this example the QCOW2 image is converted to the `raw` file format. 
+```
+qemu-img convert -f vmdk -O raw image.vmdk image.img
+```
+
+```{note}
+Since Incus 6.5, the `incus-migrate` tool is able to directly use images in both the `qcow2` and `vmdk` file format.
+```
 
 ```{note}
 If you want to configure your new instance during the migration process, set up the entities that you want your instance to use before starting the migration process.
