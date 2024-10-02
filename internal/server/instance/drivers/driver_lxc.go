@@ -2371,6 +2371,16 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			if err != nil {
 				return "", nil, err
 			}
+
+			lxcMounts = append(lxcMounts, mount.Destination)
+		}
+
+		// Mount /run as a tmpfs if it exists and isn't already mounted.
+		if !slices.Contains(lxcMounts, "/run") {
+			err := lxcSetConfigItem(cc, "lxc.mount.entry", "none run tmpfs none,nosuid,nodev,noexec,mode=755,optional")
+			if err != nil {
+				return "", nil, err
+			}
 		}
 
 		// Configure network handling.
