@@ -103,7 +103,10 @@ func (d *lvm) init(s *state.State, name string, config map[string]string, log lo
 	d.common.init(s, name, config, log, volIDFunc, commonRules)
 
 	if d.clustered && d.config != nil {
-		d.config["lvm.vg_name"] = d.config["source"]
+		_, exists := d.config["lvm.vg_name"]
+		if !exists {
+			d.config["lvm.vg_name"] = d.name
+		}
 	}
 }
 
@@ -169,10 +172,6 @@ func (d *lvm) Create() error {
 	var usingLoopFile bool
 
 	if d.config["source"] == "" || d.config["source"] == defaultSource {
-		if d.clustered {
-			return fmt.Errorf("Clustered LVM only supports pre-existing shared VGs")
-		}
-
 		usingLoopFile = true
 
 		// We are using an internal loopback file.
@@ -236,10 +235,6 @@ func (d *lvm) Create() error {
 			return fmt.Errorf("A volume group already exists called %q", d.config["lvm.vg_name"])
 		}
 	} else if filepath.IsAbs(d.config["source"]) {
-		if d.clustered {
-			return fmt.Errorf("Clustered LVM only supports pre-existing shared VGs")
-		}
-
 		// We are using an existing physical device.
 		srcPath := d.config["source"]
 
@@ -393,7 +388,13 @@ func (d *lvm) Create() error {
 		}
 
 		// Create volume group.
-		_, err := subprocess.TryRunCommand("vgcreate", d.config["lvm.vg_name"], pvName)
+		args := []string{d.config["lvm.vg_name"], pvName}
+
+		if d.clustered {
+			args = append(args, "--shared")
+		}
+
+		_, err := subprocess.TryRunCommand("vgcreate", args...)
 		if err != nil {
 			return err
 		}
@@ -510,12 +511,9 @@ func (d *lvm) Delete(op *operations.Operation) error {
 
 		// Remove volume group if needed.
 		if removeVg {
-			if d.clustered {
-				// Wait for the locks we just released to clear.
-				time.Sleep(10 * time.Second)
-			}
+			// When deleting a shared VG, it may take more than a minute for the previously released shared locks to clear.
+			_, err := subprocess.TryRunCommandAttemptsDuration(240, 500*time.Millisecond, "vgremove", "-f", d.config["lvm.vg_name"])
 
-			_, err := subprocess.TryRunCommand("vgremove", "-f", d.config["lvm.vg_name"])
 			if err != nil {
 				return fmt.Errorf("Failed to delete the volume group for the lvm storage pool: %w", err)
 			}
@@ -704,7 +702,7 @@ func (d *lvm) Mount() (bool, error) {
 		return false, fmt.Errorf("Cannot mount pool as %q is not specified", "lvm.vg_name")
 	}
 
-	// Check if VG exists before we do anthing, this will indicate if its our mount or not.
+	// Check if VG exists before we do anything, this will indicate if its our mount or not.
 	vgExists, _, _ := d.volumeGroupExists(d.config["lvm.vg_name"])
 	ourMount := !vgExists
 
@@ -773,7 +771,7 @@ func (d *lvm) Mount() (bool, error) {
 }
 
 // Unmount unmounts the storage pool (this does nothing).
-// LVM doesn't currently support unmounting, please see https://github.com/lxc/incus/issues/9278
+// LVM doesn't currently support unmounting, please see https://github.com/canonical/lxd/issues/9278
 func (d *lvm) Unmount() (bool, error) {
 	if d.clustered {
 		_, err := subprocess.RunCommand("vgchange", "--lockstop", d.config["lvm.vg_name"])
