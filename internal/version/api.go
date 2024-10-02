@@ -445,6 +445,7 @@ var APIExtensions = []string{
 	"instances_state_os_info",
 	"network_load_balancer_state",
 	"instance_nic_macvlan_mode",
+	"storage_lvm_cluster_create",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
