@@ -54,7 +54,6 @@ To use this with Incus, you must:
 - Enable `lvmlockd` by setting `use_lvmlockd = 1` in your `/etc/lvm/lvm.conf`
 - Set a unique (within your cluster) `host_id` value in `/etc/lvm/lvmlocal.conf`
 - Ensure that both `lvmlockd` and `sanlock` daemons are running
-- Create a shared VG and confirm it is accessible on all servers
 
 ## Configuration options
 
