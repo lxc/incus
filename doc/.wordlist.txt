@@ -297,6 +297,7 @@ UIDs
 unconfigured
 unevictable
 unixgram
+uncomment
 unmanaged
 unmount
 unmounting
