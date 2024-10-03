@@ -220,14 +220,6 @@ func (s *consoleWs) doConsole(op *operations.Operation) error {
 	// Cleanup the console when we're done.
 	defer func() {
 		_ = console.Close()
-
-		// If this was a text-based console for a VM, restore the default ring buffer device backend.
-		if s.instance.Type() == instancetype.VM && s.protocol == instance.ConsoleTypeConsole {
-			v, ok := s.instance.(instance.VM)
-			if ok {
-				_ = v.SwapConsoleSocketWithRB()
-			}
-		}
 	}()
 
 	// Detect size of window and set it into console.

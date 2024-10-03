@@ -757,17 +757,8 @@ func (d *qemu) Shutdown(timeout time.Duration) error {
 	// Wait 500ms for the first event to be received by the guest.
 	time.Sleep(500 * time.Millisecond)
 
-	// Send a second system_powerdown command (required to get Windows to shutdown).
-	err = monitor.Powerdown()
-	if err != nil {
-		if err == qmp.ErrMonitorDisconnect {
-			op.Done(nil)
-			return nil
-		}
-
-		op.Done(err)
-		return err
-	}
+	// Attempt to send a second system_powerdown command (required to get Windows to shutdown).
+	_ = monitor.Powerdown()
 
 	d.logger.Debug("Shutdown request sent to instance")
 
@@ -7774,9 +7765,19 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 
 	// When activating the text-based console, swap the backend to be a socket for an interactive connection.
 	if protocol == instance.ConsoleTypeConsole {
-		err := d.SwapConsoleRBWithSocket()
+		// Look for existing connections and reset.
+		conn, err := net.Dial("unix", path)
+		if err == nil {
+			_ = d.consoleSwapSocketWithRB()
+			_ = conn.Close()
+
+			// Allow for cleanup to complete on the existing connection.
+			time.Sleep(time.Second)
+		}
+
+		err = d.consoleSwapRBWithSocket()
 		if err != nil {
-			_ = d.SwapConsoleSocketWithRB()
+			_ = d.consoleSwapSocketWithRB()
 			return nil, nil, fmt.Errorf("Failed to swap console ring buffer with socket: %w", err)
 		}
 	}
@@ -7788,7 +7789,7 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 	conn, err := net.Dial("unix", path)
 	if err != nil {
 		if protocol == instance.ConsoleTypeConsole {
-			_ = d.SwapConsoleSocketWithRB()
+			_ = d.consoleSwapSocketWithRB()
 		}
 
 		return nil, nil, fmt.Errorf("Connect to console socket %q: %w", path, err)
@@ -7797,13 +7798,19 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 	file, err := (conn.(*net.UnixConn)).File()
 	if err != nil {
 		if protocol == instance.ConsoleTypeConsole {
-			_ = d.SwapConsoleSocketWithRB()
+			_ = d.consoleSwapSocketWithRB()
 		}
 
 		return nil, nil, fmt.Errorf("Get socket file: %w", err)
 	}
 
 	_ = conn.Close()
+
+	// Handle disconnections.
+	go func() {
+		<-chDisconnect
+		_ = d.consoleSwapSocketWithRB()
+	}()
 
 	d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceConsole.Event(d, logger.Ctx{"type": protocol}))
 
@@ -9408,8 +9415,8 @@ func (d *qemu) ConsoleLog() (string, error) {
 	return string(fullLog), nil
 }
 
-// SwapConsoleRBWithSocket swaps the qemu backend for the instance's console to a unix socket.
-func (d *qemu) SwapConsoleRBWithSocket() error {
+// consoleSwapRBWithSocket swaps the qemu backend for the instance's console to a unix socket.
+func (d *qemu) consoleSwapRBWithSocket() error {
 	// This will wipe out anything in the existing ring buffer; save any buffered data to log file first.
 	_, err := d.ConsoleLog()
 	if err != nil {
@@ -9438,8 +9445,8 @@ func (d *qemu) SwapConsoleRBWithSocket() error {
 	return monitor.ChardevChange("console", qmp.ChardevChangeInfo{Type: "socket", FDName: "consoleSocket", File: d.consoleSocketFile})
 }
 
-// SwapConsoleSocketWithRB swaps the qemu backend for the instance's console to a ring buffer.
-func (d *qemu) SwapConsoleSocketWithRB() error {
+// consoleSwapSocketWithRB swaps the qemu backend for the instance's console to a ring buffer.
+func (d *qemu) consoleSwapSocketWithRB() error {
 	// Check if the agent is running.
 	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler())
 	if err != nil {
