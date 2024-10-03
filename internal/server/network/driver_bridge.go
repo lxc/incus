@@ -785,6 +785,13 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			if err != nil {
 				return err
 			}
+
+			// Make sure the port is up.
+			link := &ip.Link{Name: entry}
+			err = link.SetUp()
+			if err != nil {
+				return fmt.Errorf("Failed to bring up the host interface %s: %w", entry, err)
+			}
 		}
 	}
 

@@ -26,7 +26,7 @@ The supported connection types are:
 
 To add a `proxy` device, use the following command:
 
-    incus config device add <instance_name> <device_name> proxy listen=<type>:<addr>:<port>[-<port>][,<port>] connect=<type>:<addr>:<port> bind=<host/instance_name>
+    incus config device add <instance_name> <device_name> proxy listen=<type>:<addr>:<port>[-<port>][,<port>] connect=<type>:<addr>:<port> bind=<host/instance>
 
 (devices-proxy-nat-mode)=
 ## NAT mode
