@@ -7720,9 +7720,9 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 
 	// When activating the text-based console, swap the backend to be a socket for an interactive connection.
 	if protocol == instance.ConsoleTypeConsole {
-		err := d.SwapConsoleRBWithSocket()
+		err := d.consoleSwapRBWithSocket()
 		if err != nil {
-			_ = d.SwapConsoleSocketWithRB()
+			_ = d.consoleSwapSocketWithRB()
 			return nil, nil, fmt.Errorf("Failed to swap console ring buffer with socket: %w", err)
 		}
 	}
@@ -7734,7 +7734,7 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 	conn, err := net.Dial("unix", path)
 	if err != nil {
 		if protocol == instance.ConsoleTypeConsole {
-			_ = d.SwapConsoleSocketWithRB()
+			_ = d.consoleSwapSocketWithRB()
 		}
 
 		return nil, nil, fmt.Errorf("Connect to console socket %q: %w", path, err)
@@ -7743,13 +7743,19 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 	file, err := (conn.(*net.UnixConn)).File()
 	if err != nil {
 		if protocol == instance.ConsoleTypeConsole {
-			_ = d.SwapConsoleSocketWithRB()
+			_ = d.consoleSwapSocketWithRB()
 		}
 
 		return nil, nil, fmt.Errorf("Get socket file: %w", err)
 	}
 
 	_ = conn.Close()
+
+	// Handle disconnections.
+	go func() {
+		<-chDisconnect
+		_ = d.consoleSwapSocketWithRB()
+	}()
 
 	d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceConsole.Event(d, logger.Ctx{"type": protocol}))
 
@@ -9354,8 +9360,8 @@ func (d *qemu) ConsoleLog() (string, error) {
 	return string(fullLog), nil
 }
 
-// SwapConsoleRBWithSocket swaps the qemu backend for the instance's console to a unix socket.
-func (d *qemu) SwapConsoleRBWithSocket() error {
+// consoleSwapRBWithSocket swaps the qemu backend for the instance's console to a unix socket.
+func (d *qemu) consoleSwapRBWithSocket() error {
 	// This will wipe out anything in the existing ring buffer; save any buffered data to log file first.
 	_, err := d.ConsoleLog()
 	if err != nil {
@@ -9384,8 +9390,8 @@ func (d *qemu) SwapConsoleRBWithSocket() error {
 	return monitor.ChardevChange("console", qmp.ChardevChangeInfo{Type: "socket", FDName: "consoleSocket", File: d.consoleSocketFile})
 }
 
-// SwapConsoleSocketWithRB swaps the qemu backend for the instance's console to a ring buffer.
-func (d *qemu) SwapConsoleSocketWithRB() error {
+// consoleSwapSocketWithRB swaps the qemu backend for the instance's console to a ring buffer.
+func (d *qemu) consoleSwapSocketWithRB() error {
 	// Check if the agent is running.
 	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler())
 	if err != nil {
