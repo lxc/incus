@@ -30,7 +30,7 @@ func (o *ICSB) GetGateways(ctx context.Context, name string) ([]string, error) {
 	}
 
 	// Extract the names.
-	names := make([]string, len(gateways))
+	names := make([]string, 0, len(gateways))
 	for _, entry := range gateways {
 		names = append(names, entry.Name)
 	}
