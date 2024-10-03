@@ -191,9 +191,6 @@ type VM interface {
 
 	AgentCertificate() *x509.Certificate
 	ConsoleLog() (string, error)
-
-	SwapConsoleRBWithSocket() error
-	SwapConsoleSocketWithRB() error
 }
 
 // CriuMigrationArgs arguments for CRIU migration.
