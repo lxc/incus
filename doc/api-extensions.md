@@ -2604,3 +2604,7 @@ This adds a `mode` configuration key on `macvlan` network interfaces which allow
 ## `storage_lvm_cluster_create`
 
 Allow for creating new LVM cluster pools by setting the `source` to the shared block device.
+
+## `network_ovn_external_interfaces`
+
+This adds support for `bridge.external_interfaces` on OVN networks.

@@ -443,6 +443,7 @@ var APIExtensions = []string{
 	"network_load_balancer_state",
 	"instance_nic_macvlan_mode",
 	"storage_lvm_cluster_create",
+	"network_ovn_external_interfaces",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
