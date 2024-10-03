@@ -7720,7 +7720,17 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 
 	// When activating the text-based console, swap the backend to be a socket for an interactive connection.
 	if protocol == instance.ConsoleTypeConsole {
-		err := d.consoleSwapRBWithSocket()
+		// Look for existing connections and reset.
+		conn, err := net.Dial("unix", path)
+		if err == nil {
+			_ = d.consoleSwapSocketWithRB()
+			_ = conn.Close()
+
+			// Allow for cleanup to complete on the existing connection.
+			time.Sleep(time.Second)
+		}
+
+		err = d.consoleSwapRBWithSocket()
 		if err != nil {
 			_ = d.consoleSwapSocketWithRB()
 			return nil, nil, fmt.Errorf("Failed to swap console ring buffer with socket: %w", err)
