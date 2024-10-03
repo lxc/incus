@@ -163,47 +163,10 @@ func (n *bridge) Validate(config map[string]string) error {
 		"bgp.ipv4.nexthop": validate.Optional(validate.IsNetworkAddressV4),
 		"bgp.ipv6.nexthop": validate.Optional(validate.IsNetworkAddressV6),
 
-		"bridge.driver": validate.Optional(validate.IsOneOf("native", "openvswitch")),
-		"bridge.external_interfaces": validate.Optional(func(value string) error {
-			for _, entry := range strings.Split(value, ",") {
-				entry = strings.TrimSpace(entry)
-
-				// Test for extended configuration of external interface.
-				entryParts := strings.Split(entry, "/")
-				if len(entryParts) == 3 {
-					// The first part is the interface name.
-					entry = strings.TrimSpace(entryParts[0])
-				}
-
-				err := validate.IsInterfaceName(entry)
-				if err != nil {
-					return fmt.Errorf("Invalid interface name %q: %w", entry, err)
-				}
-
-				if len(entryParts) == 3 {
-					// Check if the parent interface is valid.
-					parent := strings.TrimSpace(entryParts[1])
-					err := validate.IsInterfaceName(parent)
-					if err != nil {
-						return fmt.Errorf("Invalid interface name %q: %w", parent, err)
-					}
-
-					// Check if the VLAN ID is valid.
-					vlanID, err := strconv.Atoi(entryParts[2])
-					if err != nil {
-						return fmt.Errorf("Invalid VLAN ID %q: %w", entryParts[2], err)
-					}
-
-					if vlanID < 1 || vlanID > 4094 {
-						return fmt.Errorf("Invalid VLAN ID %q", entryParts[2])
-					}
-				}
-			}
-
-			return nil
-		}),
-		"bridge.hwaddr": validate.Optional(validate.IsNetworkMAC),
-		"bridge.mtu":    validate.Optional(validate.IsNetworkMTU),
+		"bridge.driver":              validate.Optional(validate.IsOneOf("native", "openvswitch")),
+		"bridge.external_interfaces": validate.Optional(validateExternalInterfaces),
+		"bridge.hwaddr":              validate.Optional(validate.IsNetworkMAC),
+		"bridge.mtu":                 validate.Optional(validate.IsNetworkMTU),
 
 		"ipv4.address": validate.Optional(func(value string) error {
 			if validate.IsOneOf("none", "auto")(value) == nil {
