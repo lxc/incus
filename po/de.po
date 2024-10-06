@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-10-02 15:55-0400\n"
-"PO-Revision-Date: 2024-09-30 23:28+0000\n"
+"PO-Revision-Date: 2024-10-05 08:15+0000\n"
 "Last-Translator: Jan Mittelstädter <jan@mittelstaedter.de>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
 "Language: de\n"
@@ -114,19 +114,17 @@ msgstr ""
 "###   size: \"61203283968\""
 
 #: cmd/incus/config_trust.go:284
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the certificate.\n"
 "### Any line starting with a '# will be ignored.\n"
 "###\n"
 "### Note that the fingerprint is shown but cannot be changed"
 msgstr ""
-"### Dies ist eine Darstellung der Eigenschaften eines Images in yaml.\n"
-"### Jede Zeile die mit '# beginnt wird ignoriert.\n"
+"### Dies ist eine YAML-Darstellung des Zertifikats.\n"
+"### Jede Zeile, die mit '#' beginnt, wird ignoriert.\n"
 "###\n"
-"### Pro Eigenschaft wird eine Zeile verwendet:\n"
-"### Zum Beispiel:\n"
-"###  description: Mein eigenes Abbild\n"
+"### Beachten Sie, dass der Fingerabdruck angezeigt wird, aber nicht geändert "
+"werden kann."
 
 #: cmd/incus/cluster_group.go:437
 #, fuzzy
@@ -138,7 +136,6 @@ msgstr ""
 "### Jede mit '# beginnende Zeile wird ignoriert."
 
 #: cmd/incus/config.go:117
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the configuration.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -174,10 +171,9 @@ msgstr ""
 "###     type: disk\n"
 "### ephemeral: false\n"
 "###\n"
-"### Der Name wird zwar angezeigt, lässt sich jedoch nicht ändern.\n"
+"### Der Name wird zwar angezeigt, lässt sich jedoch nicht ändern."
 
 #: cmd/incus/image.go:399
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the image properties.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -191,10 +187,9 @@ msgstr ""
 "###\n"
 "### Pro Eigenschaft wird eine Zeile verwendet:\n"
 "### Zum Beispiel:\n"
-"###  description: Mein eigenes Abbild\n"
+"###  description: Mein eigenes Abbild"
 
 #: cmd/incus/config_metadata.go:71
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the instance metadata.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -217,23 +212,26 @@ msgid ""
 "###     template: template.tpl\n"
 "###     properties: {}"
 msgstr ""
-"### Dies ist eine Darstellung der Konfiguration in yaml.\n"
-"### Jede Zeile die mit '# beginnt wird ignoriert.\n"
+"### Dies ist eine YAML-Darstellung der Instanz-Metadaten.\n"
+"###Jede Zeile, die mit '#' beginnt, wird ignoriert.\n"
 "###\n"
-"### Beispiel einer Konfiguration:\n"
-"### name: container1\n"
-"### profiles:\n"
-"### - default\n"
-"### config:\n"
-"###   volatile.eth0.hwaddr: 00:16:3e:e9:f8:7f\n"
-"### devices:\n"
-"###   homedir:\n"
-"###     path: /extra\n"
-"###     source: /home/user\n"
-"###     type: disk\n"
-"### ephemeral: false\n"
+"### Eine Beispielkonfiguration sieht folgendermaßen aus:\n"
 "###\n"
-"### Der Name wird zwar angezeigt, lässt sich jedoch nicht ändern.\n"
+"### architecture: x86_64\n"
+"### creation_date: 1477146654\n"
+"### expiry_date: 0\n"
+"### properties:\n"
+"###    architecture: x86_64\n"
+"###    description: BusyBox x86_64\n"
+"###    name: busybox-x86_64\n"
+"###    os: BusyBox\n"
+"### templates:\n"
+"###   /template:\n"
+"###      when:\n"
+"###       - \"\"\n"
+"###       create_only: false\n"
+"###       template: template.tpl\n"
+"###       properties: {}"
 
 #: cmd/incus/network_acl.go:624
 #, fuzzy
@@ -324,19 +322,17 @@ msgstr ""
 "### Der Name wird zwar angezeigt, lässt sich jedoch nicht ändern.\n"
 
 #: cmd/incus/network_integration.go:242
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the network integration.\n"
 "### Any line starting with a '# will be ignored.\n"
 "###\n"
 "### Note that the name is shown but cannot be changed"
 msgstr ""
-"### Dies ist eine Darstellung der Eigenschaften eines Images in yaml.\n"
-"### Jede Zeile die mit '# beginnt wird ignoriert.\n"
+"### Dies ist eine YAML-Darstellung der Netzwerkintegration.\n"
+"### Jede Zeile, die mit '#' beginnt, wird ignoriert.\n"
 "###\n"
-"### Pro Eigenschaft wird eine Zeile verwendet:\n"
-"### Zum Beispiel:\n"
-"###  description: Mein eigenes Abbild\n"
+"### Beachten Sie, dass der Name angezeigt wird, aber nicht geändert werden "
+"kann."
 
 #: cmd/incus/network_load_balancer.go:660
 #, fuzzy
@@ -391,7 +387,6 @@ msgstr ""
 "### Der Name wird zwar angezeigt, lässt sich jedoch nicht ändern.\n"
 
 #: cmd/incus/network_peer.go:719
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the network peer.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -407,23 +402,19 @@ msgid ""
 "### Note that the name, target_project, target_network and status fields "
 "cannot be changed."
 msgstr ""
-"### Dies ist eine Darstellung eines Profils in yaml.\n"
-"### Jede Zeile die mit '# beginnt wird ignoriert.\n"
+"### Dies ist eine YAML-Darstellung des Netzwerk-Peers.\n"
+"### Jede Zeile, die mit '#' beginnt, wird ignoriert.\n"
 "###\n"
-"### Ein Profil besteht aus mehreren Konfigurationselementen gefolgt von\n"
-"### mehrere Geräten.\n"
+"### Ein Beispiel könnte so aussehen:\n"
+"### description: Eine Peering-Verbindung zu mynet\n"
+"### config: {}\n"
+"### name: mypeer\n"
+"### target_project: default\n"
+"### target_network: mynet\n"
+"### status: Pending\n"
 "###\n"
-"### Zum Beispiel:\n"
-"### name: onenic\n"
-"### config:\n"
-"###   raw.lxc: lxc.aa_profile=unconfined\n"
-"### devices:\n"
-"###   eth0:\n"
-"###     nictype: bridged\n"
-"###     parent: lxdbr0\n"
-"###     type: nic\n"
-"###\n"
-"### Der Name wird zwar angezeigt, lässt sich jedoch nicht ändern.\n"
+"### Beachten Sie, dass die Felder name, target_project, target_network und "
+"status nicht geändert werden können."
 
 #: cmd/incus/network_zone.go:1328
 #, fuzzy
@@ -552,7 +543,7 @@ msgstr ""
 "###     parent: lxdbr0\n"
 "###     type: nic\n"
 "###\n"
-"### Der Name wird zwar angezeigt, lässt sich jedoch nicht ändern.\n"
+"### Der Name wird zwar angezeigt, lässt sich jedoch nicht ändern."
 
 #: cmd/incus/project.go:317
 #, fuzzy
@@ -784,7 +775,7 @@ msgstr ""
 
 #: cmd/incus/remote.go:658
 msgid "A client certificate is already present"
-msgstr "Ein Client Zertifikat ist bereits erstellt worden."
+msgstr "Ein Client Zertifikat ist bereits erstellt worden"
 
 #: cmd/incus/config_trust.go:120
 msgid "A client name must be provided"
@@ -809,7 +800,7 @@ msgstr "ALIASES"
 
 #: cmd/incus/list.go:887
 msgid "APP"
-msgstr ""
+msgstr "APP"
 
 #: cmd/incus/cluster.go:174 cmd/incus/image.go:1114 cmd/incus/list.go:572
 msgid "ARCHITECTURE"
@@ -863,9 +854,8 @@ msgid "Add a network zone record entry"
 msgstr "Füge einen Netzwerk Zonen Eintrag hinzu"
 
 #: cmd/incus/network_load_balancer.go:892
-#, fuzzy
 msgid "Add backend to a load balancer"
-msgstr "Füge spezielles Backend zum Load Balancer hinzu"
+msgstr "Backend zu einem Load Balancer hinzufügen"
 
 #: cmd/incus/network_load_balancer.go:891
 msgid "Add backends to a load balancer"
@@ -873,7 +863,7 @@ msgstr "Backends zu einem load balancer hinzufügen"
 
 #: cmd/incus/network_zone.go:1514
 msgid "Add entries to a network zone record"
-msgstr ""
+msgstr "Einträge zu einem Netzwerkzonen-Datensatz hinzufügen"
 
 #: cmd/incus/config_device.go:77 cmd/incus/config_device.go:78
 msgid "Add instance devices"
@@ -942,6 +932,10 @@ msgid ""
 "This will issue a trust token to be used by the client to add itself to the "
 "trust store.\n"
 msgstr ""
+"Neuen vertrauenswürdigen Client hinzufügen\n"
+"\n"
+"Dies stellt einen Trust-Token aus, der vom Client verwendet wird, um sich "
+"selbst zum Trust Store hinzuzufügen.\"\n"
 
 #: cmd/incus/network_forward.go:911 cmd/incus/network_forward.go:912
 msgid "Add ports to a forward"
@@ -1026,9 +1020,8 @@ msgid "Aliases already exists: %s"
 msgstr "entfernte Instanz %s existiert bereits"
 
 #: cmd/incus/image.go:1021
-#, fuzzy
 msgid "Aliases:"
-msgstr "Aliasse:\n"
+msgstr "Aliase:"
 
 #: cmd/incus/admin_init_interactive.go:223
 msgid "All existing data is lost when joining a cluster, continue?"
@@ -1165,7 +1158,7 @@ msgstr "Verfügbare Projekte:"
 #: cmd/incus/info.go:496
 #, c-format
 msgid "Average: %.2f %.2f %.2f"
-msgstr ""
+msgstr "Durchschnitt: %.2f %.2f %.2f"
 
 #: cmd/incus/list.go:578 cmd/incus/list.go:579
 msgid "BASE IMAGE"
@@ -1173,7 +1166,7 @@ msgstr ""
 
 #: cmd/incus/network_load_balancer.go:1320
 msgid "Backend health:"
-msgstr ""
+msgstr "Backend Status:"
 
 #: cmd/incus/export.go:85
 #, fuzzy, c-format
@@ -1192,13 +1185,12 @@ msgstr "Kein Zertifikat für diese Verbindung"
 
 #: cmd/incus/export.go:191 cmd/incus/storage_bucket.go:1539
 #: cmd/incus/storage_volume.go:3110
-#, fuzzy
 msgid "Backup exported successfully!"
-msgstr "Profil %s erstellt\n"
+msgstr "Backup erfolgreich exportiert!"
 
 #: cmd/incus/info.go:844 cmd/incus/storage_volume.go:1489
 msgid "Backups:"
-msgstr ""
+msgstr "Sicherungen:"
 
 #: cmd/incus/utils.go:102
 #, c-format
@@ -1211,7 +1203,7 @@ msgstr ""
 #: cmd/incus/network_zone.go:1142 cmd/incus/storage_bucket.go:154
 #, c-format
 msgid "Bad key/value pair: %s"
-msgstr ""
+msgstr "Ungültiges key/value Paar: %s"
 
 #: cmd/incus/copy.go:150 cmd/incus/create.go:242 cmd/incus/move.go:302
 #: cmd/incus/network_integration.go:145 cmd/incus/project.go:167
@@ -1223,12 +1215,12 @@ msgstr "Alternatives config Verzeichnis."
 #: cmd/incus/storage_volume.go:651
 #, c-format
 msgid "Bad key=value pair: %s"
-msgstr ""
+msgstr "Ungültiges key=value Paar: %s"
 
 #: cmd/incus/image.go:796
-#, fuzzy, c-format
+#, c-format
 msgid "Bad property: %s"
-msgstr "Ungültige Abbild Eigenschaft: %s\n"
+msgstr "Ungültige Eigenschaft: %s"
 
 #: cmd/incus/network.go:995
 msgid "Bond:"
@@ -1236,7 +1228,7 @@ msgstr ""
 
 #: cmd/incus/action.go:187 cmd/incus/action.go:391
 msgid "Both --all and instance name given"
-msgstr ""
+msgstr "Sowohl --all als auch ein Instanzname angegeben"
 
 #: cmd/incus/info.go:155
 #, fuzzy, c-format
@@ -1248,9 +1240,9 @@ msgid "Bridge:"
 msgstr ""
 
 #: cmd/incus/info.go:364
-#, fuzzy, c-format
+#, c-format
 msgid "Bus Address: %v"
-msgstr "Profil %s erstellt\n"
+msgstr "Bus Adresse: %v"
 
 #: cmd/incus/info.go:767 cmd/incus/network.go:987
 msgid "Bytes received"
@@ -1262,19 +1254,19 @@ msgstr "Bytes gesendet"
 
 #: cmd/incus/operation.go:153
 msgid "CANCELABLE"
-msgstr ""
+msgstr "ABBRECHBAR"
 
 #: cmd/incus/config_trust.go:433
 msgid "COMMON NAME"
-msgstr ""
+msgstr "ALLGEMEINER NAME"
 
 #: cmd/incus/storage_volume.go:1673
 msgid "CONTENT-TYPE"
-msgstr ""
+msgstr "INHALTS-TYP"
 
 #: cmd/incus/warning.go:210
 msgid "COUNT"
-msgstr ""
+msgstr "ANZAHL"
 
 #: cmd/incus/top.go:349
 #, fuzzy
@@ -1283,11 +1275,11 @@ msgstr "Prozessorauslastung (%s):"
 
 #: cmd/incus/list.go:590
 msgid "CPU USAGE"
-msgstr ""
+msgstr "CPU NUTZUNG"
 
 #: cmd/incus/info.go:708
 msgid "CPU usage (in seconds)"
-msgstr ""
+msgstr "CPU Nutzung (in Sekunden)"
 
 #: cmd/incus/info.go:712
 msgid "CPU usage:"
@@ -1295,11 +1287,11 @@ msgstr "Prozessorauslastung:"
 
 #: cmd/incus/info.go:501
 msgid "CPU:"
-msgstr ""
+msgstr "CPU:"
 
 #: cmd/incus/info.go:505
 msgid "CPUs:"
-msgstr ""
+msgstr "CPUs:"
 
 #: cmd/incus/operation.go:154
 #, fuzzy
@@ -1313,31 +1305,22 @@ msgstr "ERSTELLT AM"
 #: cmd/incus/info.go:157
 #, c-format
 msgid "CUDA Version: %v"
-msgstr ""
+msgstr "CUDA Version: %v"
 
 #: cmd/incus/image.go:1030
-#, fuzzy, c-format
+#, c-format
 msgid "Cached: %s"
-msgstr ""
-"Benutzung: %s\n"
-"\n"
-"Optionen:\n"
-"\n"
+msgstr "Zwischengespeichert: %s"
 
 #: cmd/incus/info.go:334
-#, fuzzy
 msgid "Caches:"
-msgstr ""
-"Benutzung: %s\n"
-"\n"
-"Optionen:\n"
-"\n"
+msgstr "Zwischenspeicher:"
 
 #: cmd/incus/admin_init_interactive.go:144
 #: cmd/incus/admin_init_interactive.go:828
 #, c-format
 msgid "Can't bind address %q: %w"
-msgstr ""
+msgstr "Kann Adresse nicht zuweisen %q: %w"
 
 #: cmd/incus/move.go:127
 msgid "Can't override configuration or profiles in local rename"
@@ -1349,7 +1332,7 @@ msgstr ""
 
 #: cmd/incus/file.go:542
 msgid "Can't pull a directory without --recursive"
-msgstr ""
+msgstr "Verzeichnis kann ohne --recursive nicht abgerufen werde"
 
 #: cmd/incus/utils.go:250
 #, c-format
@@ -1359,7 +1342,7 @@ msgstr ""
 #: cmd/incus/utils.go:215 cmd/incus/utils.go:235
 #, c-format
 msgid "Can't read from stdin: %w"
-msgstr ""
+msgstr "Kann nicht von stdin lesen: %w"
 
 #: cmd/incus/remote.go:1020
 msgid "Can't remove the default remote"
@@ -1381,6 +1364,7 @@ msgstr ""
 #: cmd/incus/warning.go:225
 msgid "Can't specify column L when not clustered"
 msgstr ""
+"Kann die Spalte L nicht angeben, wenn keine Clusterbildung vorhanden ist"
 
 #: cmd/incus/file.go:744
 msgid "Can't supply uid/gid/mode in recursive mode"
@@ -1389,23 +1373,25 @@ msgstr ""
 #: cmd/incus/config.go:681
 #, c-format
 msgid "Can't unset key '%s', it's not currently set"
-msgstr ""
+msgstr "Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
 
 #: cmd/incus/admin_init.go:72
 msgid "Can't use --auto and --preseed together"
 msgstr ""
+"Die Optionen --auto und --preseed können nicht zusammen verwendet werden"
 
 #: cmd/incus/admin_init.go:94
 msgid "Can't use --dump with other flags"
 msgstr ""
+"Die Option --dump kann nicht zusammen mit anderen Optionen genutzt werden"
 
 #: cmd/incus/admin_init.go:80
 msgid "Can't use --minimal and --auto together"
-msgstr ""
+msgstr "Die Option --minimal und --auto können nicht zusammen genutzt werden"
 
 #: cmd/incus/admin_init.go:76
 msgid "Can't use --minimal and --preseed together"
-msgstr ""
+msgstr "Die Option --minimal und --preseed können nicht zusammen genutzt werden"
 
 #: cmd/incus/rebuild.go:161
 msgid "Can't use an image with --empty"
@@ -1421,19 +1407,21 @@ msgstr ""
 msgid ""
 "Cannot set --destination-target when destination server is not clustered"
 msgstr ""
+"Kann --destination-target nicht setzen, wenn der Zielserver nicht im Cluster "
+"ist"
 
 #: cmd/incus/storage_volume.go:411
 msgid "Cannot set --target when source server is not clustered"
-msgstr ""
+msgstr "\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
 
 #: cmd/incus/storage_volume.go:432
 msgid "Cannot set --volume-only when copying a snapshot"
-msgstr ""
+msgstr "Kann --volume-only nicht setzen, wenn ein Snapshot kopiert wird"
 
 #: cmd/incus/network_acl.go:945
 #, c-format
 msgid "Cannot set key: %s"
-msgstr ""
+msgstr "Kann Schlüssel nicht setzen: %s"
 
 #: cmd/incus/info.go:550 cmd/incus/info.go:562
 #, c-format
@@ -1450,9 +1438,9 @@ msgstr ""
 "\n"
 
 #: cmd/incus/config_trust.go:839
-#, fuzzy, c-format
+#, c-format
 msgid "Certificate add token for %s deleted"
-msgstr "Profil %s gelöscht\n"
+msgstr "\"Zertifikat-Token für %s gelöscht\""
 
 #: cmd/incus/remote.go:237
 #, c-format
@@ -1467,9 +1455,9 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/remote.go:466
-#, fuzzy, c-format
+#, c-format
 msgid "Certificate fingerprint: %s"
-msgstr "Fingerabdruck des Zertifikats: % x\n"
+msgstr "Fingerprint des Zertifikats: %s"
 
 #: cmd/incus/network.go:1029
 msgid "Chassis"
@@ -1491,24 +1479,23 @@ msgid "Client %s certificate add token:"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
 
 #: cmd/incus/remote.go:610
-#, fuzzy
 msgid "Client certificate now trusted by server:"
-msgstr "Gespeichertes Nutzerzertifikat auf dem Server: "
+msgstr "Client-Zertifikat wird nun vom Server als vertrauenswürdig behandelt:"
 
 #: cmd/incus/version.go:37
 #, c-format
 msgid "Client version: %s\n"
-msgstr ""
+msgstr "Client Version: %s\n"
 
 #: cmd/incus/cluster_group.go:254
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster group %s created"
-msgstr "Profil %s erstellt\n"
+msgstr "Cluster-Gruppe %s erstellt"
 
 #: cmd/incus/cluster_group.go:315
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster group %s deleted"
-msgstr "Profil %s gelöscht\n"
+msgstr "Cluster-Gruppe %s gelöscht\""
 
 #: cmd/incus/cluster_group.go:656
 #, fuzzy, c-format
@@ -1523,12 +1510,12 @@ msgstr "Profil %s wurde auf %s angewandt\n"
 #: cmd/incus/cluster.go:1304
 #, c-format
 msgid "Cluster join token for %s:%s deleted"
-msgstr ""
+msgstr "\"Join-Token für Cluster %s:%s gelöscht\""
 
 #: cmd/incus/cluster_group.go:169
 #, c-format
 msgid "Cluster member %s added to cluster groups %s"
-msgstr ""
+msgstr "%s als Mitglied zu den Cluster-Gruppen %s hinzugefügt"
 
 #: cmd/incus/cluster_group.go:869
 #, fuzzy, c-format
@@ -1582,11 +1569,11 @@ msgstr "Gerät %s wurde von %s entfernt\n"
 #: cmd/incus/storage_volume.go:2796 cmd/incus/storage_volume.go:2876
 #: cmd/incus/storage_volume.go:2968 cmd/incus/storage_volume.go:3134
 msgid "Cluster member name"
-msgstr ""
+msgstr "Cluster-Mitgliedsname"
 
 #: cmd/incus/cluster.go:859
 msgid "Clustering enabled"
-msgstr ""
+msgstr "Clustering aktiviert"
 
 #: cmd/incus/cluster.go:150 cmd/incus/cluster.go:1092
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:421
@@ -1606,7 +1593,7 @@ msgstr "Spalten"
 
 #: cmd/incus/main.go:84
 msgid "Command line client for Incus"
-msgstr ""
+msgstr "Kommandozeilen-Client für Incus"
 
 #: cmd/incus/main.go:85
 msgid ""
@@ -1618,6 +1605,14 @@ msgid ""
 "Custom commands can be defined through aliases, use \"incus alias\" to "
 "control those."
 msgstr ""
+"Kommandozeilen-Client für Incus\n"
+"\n"
+"Alle Funktionen von Incus können über die unten aufgeführten Befehle "
+"gesteuert werden.\n"
+"Für Hilfe zu einem der Befehle, einfach mit --help aufrufen.\n"
+"\n"
+"Eigene Befehle können über Aliase definiert werden. Verwenden Sie \"incus "
+"alias\", um diese zu verwalten."
 
 #: cmd/incus/publish.go:39
 msgid "Compression algorithm to use (`none` for uncompressed)"
@@ -2449,24 +2444,21 @@ msgid "Disable stdin (reads from /dev/null)"
 msgstr ""
 
 #: cmd/incus/info.go:574
-#, fuzzy, c-format
+#, c-format
 msgid "Disk %d:"
-msgstr " Prozessorauslastung:"
+msgstr "Festplatte %d:"
 
 #: cmd/incus/info.go:701
-#, fuzzy
 msgid "Disk usage:"
-msgstr " Prozessorauslastung:"
+msgstr "Festplattennutzung:"
 
 #: cmd/incus/info.go:569
-#, fuzzy
 msgid "Disk:"
-msgstr " Prozessorauslastung:"
+msgstr "Festplatte:"
 
 #: cmd/incus/info.go:572
-#, fuzzy
 msgid "Disks:"
-msgstr " Prozessorauslastung:"
+msgstr "Festplatten:"
 
 #: cmd/incus/cluster.go:152
 #, fuzzy
@@ -4725,7 +4717,7 @@ msgid "List instances"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
 #: cmd/incus/list.go:50
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "List instances\n"
 "\n"
@@ -4807,20 +4799,6 @@ msgid ""
 "  MAXWIDTH: Max width of the column (longer results are truncated).\n"
 "  Defaults to -1 (unlimited). Use 0 to limit to the column header size."
 msgstr ""
-"Listet vorhandene Ressourcen.\n"
-"\n"
-"lxc list [Resource] [Filter]\n"
-"\n"
-"Filter sind:\n"
-"* Ein einzelnes Schlüsselwort wie \"web“, was alle Container mit \"web\" im "
-"Namen listet.\n"
-"* Ein key/value Paar bezüglich eines Konfigurationsparameters. Dafür kann "
-"der Namensraum, solange eindeutig, abgekürzt werden:\n"
-"* \"user.blah=abc\" listet alle Container mit der \"blah\" Benutzer "
-"Eigenschaft \"abc\"\n"
-"* \"u.blah=abc\" ebenfalls\n"
-"* \"security.privileged=1\" listet alle privilegierten Container\n"
-"* \"s.privileged=1\" ebenfalls\n"
 
 #: cmd/incus/network_acl.go:98
 #, fuzzy
@@ -11114,8 +11092,8 @@ msgstr "sshfs mounted %q auf %q"
 #: cmd/incus/file.go:1242
 msgid "sshfs not found. Try SSH SFTP mode using the --listen flag"
 msgstr ""
-"sshfs wurde nicht gefunden. Versuchen Sie stattdessen SSH SFTP mode mit dem "
-"\"--listen\"  Argument"
+"sshfs wurde nicht gefunden. Versuchen Sie stattdessen SSH SFTP Modus mit dem "
+"\"--listen\" Argument"
 
 #: cmd/incus/storage.go:551
 msgid "total space"
