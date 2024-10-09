@@ -72,13 +72,16 @@ var architectureInstallations = map[int][]Installation{
 			GENERIC: {
 				{Code: "ovmf-x86_64-4m-code.bin", Vars: "ovmf-x86_64-4m-vars.bin"},
 				{Code: "ovmf-x86_64.bin", Vars: "ovmf-x86_64-code.bin"},
+				{Code: "edk2-x86_64-code.fd", Vars: "edk2-i386-vars.fd"},
 			},
 			SECUREBOOT: {
 				{Code: "ovmf-x86_64-ms-4m-vars.bin", Vars: "ovmf-x86_64-ms-4m-code.bin"},
 				{Code: "ovmf-x86_64-ms-code.bin", Vars: "ovmf-x86_64-ms-vars.bin"},
+				{Code: "edk2-x86_64-secure-code.fd", Vars: "edk2-i386-vars.fd"},
 			},
 			CSM: {
 				{Code: "seabios.bin", Vars: "seabios.bin"},
+				{Code: "bios.bin", Vars: "bios.bin"},
 			},
 		},
 	}, {
