@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-10-02 15:55-0400\n"
-"PO-Revision-Date: 2024-01-27 21:01+0000\n"
+"PO-Revision-Date: 2024-10-14 01:15+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 <nlincus@users.noreply.hosted.weblate."
 "org>\n"
 "Language-Team: Dutch <https://hosted.weblate.org/projects/incus/cli/nl/>\n"
@@ -17,19 +17,19 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.4-dev\n"
+"X-Generator: Weblate 5.8-dev\n"
 
 #: cmd/incus/info.go:438
 msgid "  Chassis:"
-msgstr ""
+msgstr "  Chassis:"
 
 #: cmd/incus/info.go:478
 msgid "  Firmware:"
-msgstr ""
+msgstr "  Firmware:"
 
 #: cmd/incus/info.go:458
 msgid "  Motherboard:"
-msgstr ""
+msgstr "  Moederboord:"
 
 #: cmd/incus/storage_bucket.go:273 cmd/incus/storage_bucket.go:1208
 msgid ""
@@ -85,7 +85,6 @@ msgstr ""
 "###   zfs.pool_name: default"
 
 #: cmd/incus/storage_volume.go:985
-#, fuzzy
 msgid ""
 "### This is a YAML representation of a storage volume.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -327,20 +326,18 @@ msgstr ""
 "aangepast kunnen worden."
 
 #: cmd/incus/network_integration.go:242
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the network integration.\n"
 "### Any line starting with a '# will be ignored.\n"
 "###\n"
 "### Note that the name is shown but cannot be changed"
 msgstr ""
-"### Dit is een YAML weergave van het certificaat.\n"
+"### Dit is een YAML weergave van een netwerk integratie.\n"
 "### Elke regel beginnende met een '# zal worden genegeerd.\n"
 "###\n"
-"### Merk op dat de getoonde fingerprint niet kan worden aangepast"
+"### Merk op dat de naam wordt getoond, maar aangepast kan worden"
 
 #: cmd/incus/network_load_balancer.go:660
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the network load balancer.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -384,14 +381,24 @@ msgstr ""
 "### Een voorbeeld zou er zo uit zien:\n"
 "### listen_address: 192.0.2.1\n"
 "### config:\n"
-"###   target_address: 198.51.100.2\n"
+"###   user.foo: bar\n"
 "### description: test desc\n"
+"### backends:\n"
+"### - name: backend1\n"
+"###   description: First backend server\n"
+"###   target_address: 192.0.3.1\n"
+"###   target_port: 80\n"
+"### - name: backend2\n"
+"###   description: Second backend server\n"
+"###   target_address: 192.0.3.2\n"
+"###   target_port: 80\n"
 "### ports:\n"
 "### - description: port forward\n"
 "###   protocol: tcp\n"
 "###   listen_port: 80,81,8080-8090\n"
-"###   target_address: 198.51.100.3\n"
-"###   target_port: 80,81,8080-8090\n"
+"###   target_backend:\n"
+"###    - backend1\n"
+"###    - backend2\n"
 "### location: server01\n"
 "###\n"
 "### Merk op dat het luisteradres (listen_address) en locatie (location) niet "
@@ -668,7 +675,7 @@ msgstr "- Port %d (%s)"
 #: cmd/incus/action.go:266
 msgid "--console can't be used while forcing instance shutdown"
 msgstr ""
-"--console kan niet gebruikt worden tijden een geforceerde instantie "
+"--console kan niet gebruikt worden tijden een geforceerde instantiatie "
 "(instance) shutdown"
 
 #: cmd/incus/action.go:435
@@ -677,7 +684,8 @@ msgstr "--console kan niet gebruikt worden samen met --all"
 
 #: cmd/incus/action.go:439
 msgid "--console only works with a single instance"
-msgstr "--console werkt alleen als het een enkele instantie (instance) betreft"
+msgstr ""
+"--console werkt alleen als het een enkele instantiatie (instance) betreft"
 
 #: cmd/incus/create.go:136 cmd/incus/rebuild.go:64
 msgid "--empty cannot be combined with an image name"
@@ -711,9 +719,8 @@ msgid "--refresh can only be used with instances"
 msgstr "--refresh kan alleen worden gebruikt bij geïnstantieerden (instances)"
 
 #: cmd/incus/move.go:265
-#, fuzzy
 msgid "--target can only be used with clusters"
-msgstr "--target kan niet gebruikt worden met: instances"
+msgstr "--target kan alleen gebruikt worden met clusters"
 
 #: cmd/incus/config.go:165 cmd/incus/config.go:438 cmd/incus/config.go:615
 #: cmd/incus/config.go:822 cmd/incus/info.go:624
@@ -730,15 +737,15 @@ msgstr "<alias> <target>"
 
 #: cmd/incus/admin_sql.go:27
 msgid "<local|global> <query>"
-msgstr ""
+msgstr "<local|global> <Query>"
 
 #: cmd/incus/alias.go:165
 msgid "<old alias> <new alias>"
-msgstr ""
+msgstr "<oude alias> <nieuwe alias>"
 
 #: cmd/incus/remote.go:976 cmd/incus/remote.go:1042
 msgid "<remote>"
-msgstr ""
+msgstr "<remote>"
 
 #: cmd/incus/remote.go:1090
 msgid "<remote> <URL>"
@@ -772,7 +779,7 @@ msgstr ""
 
 #: cmd/incus/remote.go:658
 msgid "A client certificate is already present"
-msgstr ""
+msgstr "Een client certificaat is al aanwezig"
 
 #: cmd/incus/config_trust.go:120
 msgid "A client name must be provided"
@@ -929,7 +936,7 @@ msgstr "Voeg poorten (ports) toe aan een werkverdeler (load balancer)"
 
 #: cmd/incus/profile.go:108 cmd/incus/profile.go:109
 msgid "Add profiles to instances"
-msgstr "Voeg profielen (profiles) toe aan instanties (instances)"
+msgstr "Voeg profielen (profiles) toe aan instantiaties (instances)"
 
 #: cmd/incus/cluster_role.go:50 cmd/incus/cluster_role.go:51
 msgid "Add roles to a cluster member"
@@ -962,9 +969,9 @@ msgid "Address: %s"
 msgstr "Adres: %s"
 
 #: cmd/incus/info.go:372
-#, fuzzy, c-format
+#, c-format
 msgid "Address: %v"
-msgstr "Adres: %s"
+msgstr "Adres: %v"
 
 #: cmd/incus/storage_bucket.go:182
 #, c-format
@@ -1062,30 +1069,29 @@ msgstr "Wijs collecties van groepen toe aan clusterleden (cluster members)"
 #: cmd/incus/profile.go:183 cmd/incus/profile.go:184
 msgid "Assign sets of profiles to instances"
 msgstr ""
-"Wijs collecties van profielen (set of profiles) toe aan instanties "
+"Wijs collecties van profielen (set of profiles) toe aan instantiaties "
 "(instances)"
 
 #: cmd/incus/network.go:142
 msgid "Attach network interfaces to instances"
-msgstr "Toekennen van netwerk interfaces aan instanties (instances)"
+msgstr "Toekennen van netwerk interfaces aan instantiaties (instances)"
 
 #: cmd/incus/network.go:239 cmd/incus/network.go:240
 msgid "Attach network interfaces to profiles"
 msgstr "Toekennen van netwerk (network) interfaces aan profielen (profiles)"
 
 #: cmd/incus/storage_volume.go:162 cmd/incus/storage_volume.go:163
-#, fuzzy
 msgid "Attach new custom storage volumes to instances"
-msgstr "Toekennen van nieuwe netwerk interfaces aan instanties (instances)"
+msgstr ""
+"Toekennen van nieuwe aangepaste opslag volumes aan instantiaties (instances)"
 
 #: cmd/incus/storage_volume.go:253 cmd/incus/storage_volume.go:254
-#, fuzzy
 msgid "Attach new custom storage volumes to profiles"
-msgstr "Toekennen van netwerk (network) interfaces aan profielen (profiles)"
+msgstr "Toekennen nieuwe aangepaste opslag volumes aan profielen (profiles)"
 
 #: cmd/incus/network.go:143
 msgid "Attach new network interfaces to instances"
-msgstr "Toekennen van nieuwe netwerk interfaces aan instanties (instances)"
+msgstr "Toekennen van nieuwe netwerk interfaces aan instantiaties (instances)"
 
 #: cmd/incus/console.go:36
 msgid "Attach to instance consoles"
@@ -1142,12 +1148,12 @@ msgstr ""
 #: cmd/incus/export.go:85
 #, c-format
 msgid "Backing up instance: %s"
-msgstr "Backup aan het maken van instantie (instance): %s"
+msgstr "Backup aan het maken van instantiatie (instance): %s"
 
 #: cmd/incus/storage_bucket.go:1462
-#, fuzzy, c-format
+#, c-format
 msgid "Backing up storage bucket: %s"
-msgstr "Backup aan het maken van opslagvolume (storage volume): %s"
+msgstr "Back-uppen van opslag emmer (storage bucket): %s"
 
 #: cmd/incus/storage_volume.go:3033
 #, c-format
@@ -1199,7 +1205,7 @@ msgstr "Samenvoeging (Bond):"
 
 #: cmd/incus/action.go:187 cmd/incus/action.go:391
 msgid "Both --all and instance name given"
-msgstr "Beide --all en instantie naam (instance name) zijn gegeven"
+msgstr "Beide --all en instantiatie naam (instance name) zijn gegeven"
 
 #: cmd/incus/info.go:155
 #, c-format
@@ -1211,9 +1217,9 @@ msgid "Bridge:"
 msgstr "Brug (Bridge):"
 
 #: cmd/incus/info.go:364
-#, fuzzy, c-format
+#, c-format
 msgid "Bus Address: %v"
-msgstr "Adres: %s"
+msgstr "Bus Adres: %v"
 
 #: cmd/incus/info.go:767 cmd/incus/network.go:987
 msgid "Bytes received"
@@ -1240,9 +1246,8 @@ msgid "COUNT"
 msgstr "SOM"
 
 #: cmd/incus/top.go:349
-#, fuzzy
 msgid "CPU TIME(s)"
-msgstr "CPU (%s):"
+msgstr "CPU TIJD(s)"
 
 #: cmd/incus/list.go:590
 msgid "CPU USAGE"
@@ -1261,9 +1266,8 @@ msgid "CPU:"
 msgstr ""
 
 #: cmd/incus/info.go:505
-#, fuzzy
 msgid "CPUs:"
-msgstr "CPU's (%s):"
+msgstr "CPUs:"
 
 #: cmd/incus/operation.go:154
 msgid "CREATED"
@@ -1537,7 +1541,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:859
 msgid "Clustering enabled"
-msgstr ""
+msgstr "Clustering aan"
 
 #: cmd/incus/cluster.go:150 cmd/incus/cluster.go:1092
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:421
@@ -1553,11 +1557,11 @@ msgstr ""
 #: cmd/incus/storage_volume.go:1557 cmd/incus/storage_volume.go:2548
 #: cmd/incus/warning.go:93
 msgid "Columns"
-msgstr ""
+msgstr "Kolommen"
 
 #: cmd/incus/main.go:84
 msgid "Command line client for Incus"
-msgstr ""
+msgstr "Lijncommando client voor Incus"
 
 #: cmd/incus/main.go:85
 msgid ""
@@ -1569,18 +1573,26 @@ msgid ""
 "Custom commands can be defined through aliases, use \"incus alias\" to "
 "control those."
 msgstr ""
+"Commando cliënt van Incus\n"
+"\n"
+"Al Incus's kenmerken kunnen worden aangepast door de verschillende "
+"commando's beneden.\n"
+"Voor hulp met een van die, vraag ze gewoon op met --help...\n"
+"\n"
+"Aangepaste opdrachten kunnen worden gedefinieerd door aliassen, gebruik "
+"\"incus alias\" om die te controleren."
 
 #: cmd/incus/publish.go:39
 msgid "Compression algorithm to use (`none` for uncompressed)"
-msgstr ""
+msgstr "Compressie algoritme om te gebruiken (`none` is geen compressie)"
 
 #: cmd/incus/export.go:43
 msgid "Compression algorithm to use (none for uncompressed)"
-msgstr ""
+msgstr "Compressie algoritme om te gebruiken (none is zonder compressie)"
 
 #: cmd/incus/copy.go:52 cmd/incus/create.go:51
 msgid "Config key/value to apply to the new instance"
-msgstr ""
+msgstr "Configuratie sleutel/waarde toe te passen op de nieuwe instantiatie"
 
 #: cmd/incus/network_integration.go:92
 msgid "Config key/value to apply to the new network integration"
@@ -1648,9 +1660,8 @@ msgid "Copy aliases from source"
 msgstr ""
 
 #: cmd/incus/storage_volume.go:360 cmd/incus/storage_volume.go:361
-#, fuzzy
 msgid "Copy custom storage volumes"
-msgstr "Backup aan het maken van opslagvolume (storage volume): %s"
+msgstr "Kopieer aangepaste opslag volumes"
 
 #: cmd/incus/image.go:147
 msgid "Copy images between servers"
@@ -1835,9 +1846,8 @@ msgid "Create key for a storage bucket"
 msgstr ""
 
 #: cmd/incus/network_integration.go:84 cmd/incus/network_integration.go:85
-#, fuzzy
 msgid "Create network integrations"
-msgstr "Toekennen van netwerk interfaces aan instanties (instances)"
+msgstr "Creëer netwerk integraties"
 
 #: cmd/incus/storage_bucket.go:95 cmd/incus/storage_bucket.go:96
 msgid "Create new custom storage buckets"
@@ -1965,9 +1975,9 @@ msgid "Daemon still running after %ds timeout"
 msgstr ""
 
 #: cmd/incus/info.go:488
-#, fuzzy, c-format
+#, c-format
 msgid "Date: %s"
-msgstr "Cached: %s"
+msgstr "Datum: %s"
 
 #: cmd/incus/network.go:1012
 msgid "Default VLAN ID"
@@ -1994,9 +2004,8 @@ msgid "Delete all warnings"
 msgstr ""
 
 #: cmd/incus/storage_volume.go:685 cmd/incus/storage_volume.go:686
-#, fuzzy
 msgid "Delete custom storage volumes"
-msgstr "Backup aan het maken van opslagvolume (storage volume): %s"
+msgstr "Verwijder aangepaste opslag volumes (storage volume)"
 
 #: cmd/incus/file.go:313 cmd/incus/file.go:314
 msgid "Delete files in instances"
@@ -2035,9 +2044,8 @@ msgid "Delete network forwards"
 msgstr ""
 
 #: cmd/incus/network_integration.go:177 cmd/incus/network_integration.go:178
-#, fuzzy
 msgid "Delete network integrations"
-msgstr "Toekennen van netwerk interfaces aan instanties (instances)"
+msgstr "Verwijder netwerk integratie"
 
 #: cmd/incus/network_load_balancer.go:803
 #: cmd/incus/network_load_balancer.go:804
@@ -2249,14 +2257,12 @@ msgid "Destination cluster member name"
 msgstr ""
 
 #: cmd/incus/storage_volume.go:758 cmd/incus/storage_volume.go:759
-#, fuzzy
 msgid "Detach custom storage volumes from instances"
-msgstr "Toekennen van netwerk interfaces aan instanties (instances)"
+msgstr "Ontkoppel aangepaste opslag volumes van een instantiatie (instance)"
 
 #: cmd/incus/storage_volume.go:856 cmd/incus/storage_volume.go:857
-#, fuzzy
 msgid "Detach custom storage volumes from profiles"
-msgstr "Toekennen van netwerk (network) interfaces aan profielen (profiles)"
+msgstr "Ontkoppel aangepaste opslag volumes van profielen (profiles)"
 
 #: cmd/incus/network.go:505 cmd/incus/network.go:506
 msgid "Detach network interfaces from instances"
@@ -2267,9 +2273,9 @@ msgid "Detach network interfaces from profiles"
 msgstr ""
 
 #: cmd/incus/info.go:586 cmd/incus/info.go:598
-#, fuzzy, c-format
+#, c-format
 msgid "Device %d:"
-msgstr "Adres: %s"
+msgstr "Device: %d:"
 
 #: cmd/incus/config_device.go:197
 #, c-format
@@ -2287,9 +2293,9 @@ msgid "Device %s removed from %s"
 msgstr ""
 
 #: cmd/incus/info.go:365
-#, fuzzy, c-format
+#, c-format
 msgid "Device Address: %v"
-msgstr "Adres: %s"
+msgstr "Device Adres: %v"
 
 #: cmd/incus/utils.go:58 cmd/incus/utils.go:82
 #, c-format
@@ -2378,27 +2384,27 @@ msgstr ""
 
 #: cmd/incus/network_zone.go:114
 msgid "Display network zones from all projects"
-msgstr ""
+msgstr "Toon netwerk zones van alle projecten"
 
 #: cmd/incus/profile.go:727
 msgid "Display profiles from all projects"
-msgstr ""
+msgstr "Toon profielen van alle projecten"
 
 #: cmd/incus/top.go:32
 msgid "Display resource usage info per instance"
-msgstr ""
+msgstr "Toon resource gebruik per instantiatie"
 
 #: cmd/incus/storage_bucket.go:501
 msgid "Display storage pool buckets from all projects"
-msgstr ""
+msgstr "Toon opslag pool emmers (buckets) van alle projecten"
 
 #: cmd/incus/top.go:33
 msgid "Displays CPU usage, memory usage, and disk usage per instance"
-msgstr ""
+msgstr "Toon CPU gebruik, geheugen gebruik en disk gebruik per instantiatie"
 
 #: cmd/incus/admin_init_interactive.go:416
 msgid "Do you want to configure a new local storage pool?"
-msgstr ""
+msgstr "Wilt u een nieuwe lokale opslag pool configureren?"
 
 #: cmd/incus/admin_init_interactive.go:428
 msgid "Do you want to configure a new remote storage pool?"
@@ -2418,25 +2424,25 @@ msgstr ""
 
 #: cmd/incus/main.go:105
 msgid "Don't show progress information"
-msgstr ""
+msgstr "Toon geen voortgang indicator/informatie"
 
 #: cmd/incus/network.go:999
 msgid "Down delay"
 msgstr ""
 
 #: cmd/incus/info.go:379
-#, fuzzy, c-format
+#, c-format
 msgid "Driver: %v"
-msgstr "Architectuur: %v"
+msgstr "Stuurprogramma: %v"
 
 #: cmd/incus/info.go:132 cmd/incus/info.go:218
 #, c-format
 msgid "Driver: %v (%v)"
-msgstr ""
+msgstr "Stuurprogramma: %v (%v)"
 
 #: cmd/incus/admin_init.go:57
 msgid "Dump YAML config to stdout"
-msgstr ""
+msgstr "Dump YAML configuratie naar standaard uitvoer (stdout)"
 
 #: cmd/incus/network_zone.go:918
 msgid "ENTRIES"
@@ -2801,9 +2807,9 @@ msgid "Export the volume without its snapshots"
 msgstr ""
 
 #: cmd/incus/storage_bucket.go:1522
-#, fuzzy, c-format
+#, c-format
 msgid "Exporting backup of storage bucket: %s"
-msgstr "Backup aan het maken van opslagvolume (storage volume): %s"
+msgstr "Exporteren van de backup van opslag (storage) emmer (bucket): %s"
 
 #: cmd/incus/export.go:151 cmd/incus/storage_volume.go:3093
 #, c-format
@@ -3323,9 +3329,8 @@ msgid "Generate manpages for all commands"
 msgstr ""
 
 #: cmd/incus/remote.go:637
-#, fuzzy
 msgid "Generate the client certificate"
-msgstr "Accepteer certificaat"
+msgstr "Genereer het client certificaat"
 
 #: cmd/incus/remote.go:177 cmd/incus/remote.go:412 cmd/incus/remote.go:663
 msgid "Generating a client certificate. This may take a minute..."
@@ -3352,9 +3357,8 @@ msgid "Get runtime information on networks"
 msgstr ""
 
 #: cmd/incus/cluster_group.go:890
-#, fuzzy
 msgid "Get the key as a cluster group property"
-msgstr "Toekennen van netwerk (network) interfaces aan profielen (profiles)"
+msgstr "Opvragen sleutel (key) als cluster groep eigenschap (property)"
 
 #: cmd/incus/cluster.go:436
 msgid "Get the key as a cluster property"
@@ -3369,9 +3373,8 @@ msgid "Get the key as a network forward property"
 msgstr ""
 
 #: cmd/incus/network_integration.go:356
-#, fuzzy
 msgid "Get the key as a network integration property"
-msgstr "Toekennen van netwerk (network) interfaces aan profielen (profiles)"
+msgstr "Opvragen sleutel (key) als netwerk integratie eigenschap (property)"
 
 #: cmd/incus/network_load_balancer.go:434
 msgid "Get the key as a network load balancer property"
@@ -3418,9 +3421,8 @@ msgid "Get the key as an instance property"
 msgstr ""
 
 #: cmd/incus/cluster_group.go:887
-#, fuzzy
 msgid "Get values for cluster group configuration keys"
-msgstr "Toekennen van netwerk (network) interfaces aan profielen (profiles)"
+msgstr "Opvragen waarden van cluster groep configuratie sleutels (keys)"
 
 #: cmd/incus/cluster.go:433
 msgid "Get values for cluster member configuration keys"
@@ -3680,9 +3682,8 @@ msgid "Import custom storage volumes"
 msgstr ""
 
 #: cmd/incus/storage_volume.go:3127
-#, fuzzy
 msgid "Import custom storage volumes."
-msgstr "Backup aan het maken van opslagvolume (storage volume): %s"
+msgstr "Importeer aangepaste opslag volumes (storage volume)."
 
 #: cmd/incus/image.go:679
 msgid ""
@@ -4579,9 +4580,8 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/network_integration.go:415
-#, fuzzy
 msgid "List network integrations"
-msgstr "Toekennen van netwerk interfaces aan instanties (instances)"
+msgstr "Toon lijst van netwerk integraties"
 
 #: cmd/incus/network_integration.go:416
 msgid ""
@@ -4607,9 +4607,8 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/network.go:1074
-#, fuzzy
 msgid "List networks in all projects"
-msgstr "Toekennen van netwerk interfaces aan instanties (instances)"
+msgstr "Toon lijst van netwerken in alle projecten"
 
 #: cmd/incus/config_trust.go:98 cmd/incus/config_trust.go:180
 msgid "List of projects to restrict the certificate to"
@@ -5055,9 +5054,8 @@ msgid "Manage network forwards"
 msgstr ""
 
 #: cmd/incus/network_integration.go:27 cmd/incus/network_integration.go:28
-#, fuzzy
 msgid "Manage network integrations"
-msgstr "Toekennen van nieuwe netwerk interfaces aan instanties (instances)"
+msgstr "Beheer netwerk integraties"
 
 #: cmd/incus/network_load_balancer.go:876
 #: cmd/incus/network_load_balancer.go:877
@@ -5297,9 +5295,8 @@ msgstr ""
 #: cmd/incus/network_integration.go:266 cmd/incus/network_integration.go:377
 #: cmd/incus/network_integration.go:584 cmd/incus/network_integration.go:641
 #: cmd/incus/network_integration.go:752
-#, fuzzy
 msgid "Missing network integration name"
-msgstr "Toekennen van netwerk interfaces aan instanties (instances)"
+msgstr "Netwerk integratie naam mist"
 
 #: cmd/incus/network.go:179 cmd/incus/network.go:276 cmd/incus/network.go:480
 #: cmd/incus/network.go:542 cmd/incus/network.go:639 cmd/incus/network.go:752
@@ -5851,9 +5848,8 @@ msgid "OS"
 msgstr ""
 
 #: cmd/incus/info.go:679
-#, fuzzy
 msgid "OS Version"
-msgstr "CUDA Versie: %v"
+msgstr "OS Versie"
 
 #: cmd/incus/network.go:1028
 msgid "OVN:"
@@ -6109,9 +6105,9 @@ msgid "Processing aliases failed: %s"
 msgstr ""
 
 #: cmd/incus/info.go:363 cmd/incus/info.go:376
-#, fuzzy, c-format
+#, c-format
 msgid "Product ID: %v"
-msgstr "Merk (Brand): %v"
+msgstr "Product Id: %v"
 
 #: cmd/incus/info.go:464
 #, c-format
@@ -6119,9 +6115,9 @@ msgid "Product: %s"
 msgstr ""
 
 #: cmd/incus/info.go:362 cmd/incus/info.go:375 cmd/incus/info.go:413
-#, fuzzy, c-format
+#, c-format
 msgid "Product: %v"
-msgstr "Merk (Brand): %v"
+msgstr "Product: %v"
 
 #: cmd/incus/info.go:124 cmd/incus/info.go:210
 #, c-format
@@ -6480,9 +6476,8 @@ msgid "Rename aliases"
 msgstr ""
 
 #: cmd/incus/storage_volume.go:1866 cmd/incus/storage_volume.go:1867
-#, fuzzy
 msgid "Rename custom storage volumes"
-msgstr "Backup aan het maken van opslagvolume (storage volume): %s"
+msgstr "Hernoem aangepaste opslag volumes"
 
 #: cmd/incus/snapshot.go:448 cmd/incus/snapshot.go:449
 msgid "Rename instance snapshots"
@@ -6497,9 +6492,8 @@ msgid "Rename network ACLs"
 msgstr ""
 
 #: cmd/incus/network_integration.go:558 cmd/incus/network_integration.go:559
-#, fuzzy
 msgid "Rename network integrations"
-msgstr "Toekennen van netwerk interfaces aan instanties (instances)"
+msgstr "Hernoem netwerk integraties"
 
 #: cmd/incus/network.go:1404 cmd/incus/network.go:1405
 msgid "Rename networks"
@@ -6671,9 +6665,8 @@ msgid "SSH client disconnected %q"
 msgstr ""
 
 #: cmd/incus/list.go:591
-#, fuzzy
 msgid "STARTED AT"
-msgstr "GECREËERD OM"
+msgstr "GESTART OM"
 
 #: cmd/incus/list.go:588 cmd/incus/network.go:1100
 #: cmd/incus/network_peer.go:132 cmd/incus/operation.go:152
@@ -6727,19 +6720,19 @@ msgid "Send a raw query to the server"
 msgstr ""
 
 #: cmd/incus/info.go:367
-#, fuzzy, c-format
+#, c-format
 msgid "Serial Number: %v"
-msgstr "Merk (Brand): %v"
+msgstr "Serie Nummer: %v"
 
 #: cmd/incus/info.go:452 cmd/incus/info.go:468
-#, fuzzy, c-format
+#, c-format
 msgid "Serial: %s"
-msgstr "Alias: %s"
+msgstr "Serienummer: %s"
 
 #: cmd/incus/info.go:429
-#, fuzzy, c-format
+#, c-format
 msgid "Serial: %v"
-msgstr "Merk (Brand): %v"
+msgstr "Serienummer: %v"
 
 #: cmd/incus/remote.go:122
 msgid "Server authentication type (tls or oidc)"
@@ -6773,9 +6766,8 @@ msgid "Server: %s"
 msgstr ""
 
 #: cmd/incus/cluster_group.go:962
-#, fuzzy
 msgid "Set a cluster group's configuration keys"
-msgstr "Toekennen van netwerk (network) interfaces aan profielen (profiles)"
+msgstr "Definieer een cluster groep configuratie sleutels (keys)"
 
 #: cmd/incus/cluster.go:506
 msgid "Set a cluster member's configuration keys"
@@ -6864,9 +6856,8 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/network_integration.go:612
-#, fuzzy
 msgid "Set network integration configuration keys"
-msgstr "Toekennen van netwerk (network) interfaces aan profielen (profiles)"
+msgstr "Definieer de netwerk integratie configuratie sleutels (keys)"
 
 #: cmd/incus/network_integration.go:613
 msgid ""
@@ -7020,9 +7011,9 @@ msgid "Set the file's uid on push"
 msgstr ""
 
 #: cmd/incus/cluster_group.go:965
-#, fuzzy
 msgid "Set the key as a cluster group property"
-msgstr "Toekennen van netwerk (network) interfaces aan profielen (profiles)"
+msgstr ""
+"Definieer de sleutel (key) voor markering als een cluster groep eigenschap"
 
 #: cmd/incus/cluster.go:509
 msgid "Set the key as a cluster property"
@@ -7037,9 +7028,9 @@ msgid "Set the key as a network forward property"
 msgstr ""
 
 #: cmd/incus/network_integration.go:620
-#, fuzzy
 msgid "Set the key as a network integration property"
-msgstr "Toekennen van netwerk (network) interfaces aan profielen (profiles)"
+msgstr ""
+"Definieer de sleutel (key) als een netwerk integratie eigenschap (property)"
 
 #: cmd/incus/network_load_balancer.go:506
 msgid "Set the key as a network load balancer property"
@@ -7174,9 +7165,8 @@ msgid "Show network forward configurations"
 msgstr ""
 
 #: cmd/incus/network_integration.go:726 cmd/incus/network_integration.go:727
-#, fuzzy
 msgid "Show network integration options"
-msgstr "Toekennen van netwerk (network) interfaces aan profielen (profiles)"
+msgstr "Toon de netwerk integratie opties"
 
 #: cmd/incus/network_load_balancer.go:251
 #: cmd/incus/network_load_balancer.go:252
@@ -7359,9 +7349,9 @@ msgid "Start instances"
 msgstr ""
 
 #: cmd/incus/info.go:672
-#, fuzzy, c-format
+#, c-format
 msgid "Started: %s"
-msgstr "Cached: %s"
+msgstr "Gestart: %s"
 
 #: cmd/incus/launch.go:114
 #, c-format
@@ -8080,9 +8070,8 @@ msgid "Unknown output type %q"
 msgstr ""
 
 #: cmd/incus/cluster_group.go:1044
-#, fuzzy
 msgid "Unset a cluster group's configuration keys"
-msgstr "Toekennen van netwerk (network) interfaces aan profielen (profiles)"
+msgstr "Verwijder de cluster groep eigenschappen (keys)"
 
 #: cmd/incus/cluster.go:586
 msgid "Unset a cluster member's configuration keys"
@@ -8178,9 +8167,9 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/cluster_group.go:1047
-#, fuzzy
 msgid "Unset the key as a cluster group property"
-msgstr "Toekennen van netwerk (network) interfaces aan profielen (profiles)"
+msgstr ""
+"Verwijder de sleutel (key) voor markering als een cluster groep eigenschap"
 
 #: cmd/incus/cluster.go:589
 msgid "Unset the key as a cluster property"
@@ -8335,14 +8324,14 @@ msgid "VLAN:"
 msgstr ""
 
 #: cmd/incus/info.go:361 cmd/incus/info.go:374
-#, fuzzy, c-format
+#, c-format
 msgid "Vendor ID: %v"
-msgstr "Cached: %s"
+msgstr "Maker ID: %v"
 
 #: cmd/incus/info.go:440 cmd/incus/info.go:460 cmd/incus/info.go:480
-#, fuzzy, c-format
+#, c-format
 msgid "Vendor: %s"
-msgstr "Cached: %s"
+msgstr "Maker: %s"
 
 #: cmd/incus/info.go:326 cmd/incus/info.go:360 cmd/incus/info.go:373
 #: cmd/incus/info.go:409
@@ -8361,14 +8350,14 @@ msgid "Verb: %s (%s)"
 msgstr ""
 
 #: cmd/incus/info.go:448 cmd/incus/info.go:472 cmd/incus/info.go:484
-#, fuzzy, c-format
+#, c-format
 msgid "Version: %s"
-msgstr "CUDA Versie: %v"
+msgstr "Versie: %s"
 
 #: cmd/incus/info.go:421
-#, fuzzy, c-format
+#, c-format
 msgid "Version: %v"
-msgstr "CUDA Versie: %v"
+msgstr "Versie: %v"
 
 #: cmd/incus/storage_volume.go:1527
 msgid "Volume Only"
@@ -9768,70 +9757,77 @@ msgid ""
 "    Removes the snapshot expiration period of virtual machine volume \"v1\" "
 "in pool \"default\""
 msgstr ""
+"incus storage volume unset default foo size\n"
+"    Verwijdert de grootte/quota van gebruikelijke volume \"foo\" in pool "
+"\"default\"\n"
+"\n"
+"incus storage volume unset default virtual-machine/v1 snapshots.expiry\n"
+"    Verwijdert de snapshot houdbaarheidsperiode van de virtuele machine "
+"volume \"v1\" in pool \"default\""
 
 #: cmd/incus/storage.go:547
 msgid "info"
-msgstr ""
+msgstr "informatie"
 
 #: cmd/incus/remote.go:475
 msgid "n"
-msgstr ""
+msgstr "n"
 
 #: cmd/incus/storage.go:548
 msgid "name"
-msgstr ""
+msgstr "naam"
 
 #: cmd/incus/config_trust.go:496 cmd/incus/image.go:971 cmd/incus/image.go:976
 #: cmd/incus/image.go:1181
 msgid "no"
-msgstr ""
+msgstr "nee"
 
 #: cmd/incus/remote.go:467
 msgid "ok (y/n/[fingerprint])?"
-msgstr ""
+msgstr "ok (j/n/[vingerafdruk])?"
 
 #: cmd/incus/config.go:55
 msgid "please use `incus profile`"
-msgstr ""
+msgstr "gebruik `incus profile`"
 
 #: cmd/incus/storage.go:552
 msgid "space used"
-msgstr ""
+msgstr "ruimte gebruikt"
 
 #: cmd/incus/file.go:1330
 msgid "sshfs has stopped"
-msgstr ""
+msgstr "sshfs is gestopt"
 
 #: cmd/incus/file.go:1289
 #, c-format
 msgid "sshfs mounting %q on %q"
-msgstr ""
+msgstr "sshfs koppelen van %q op %q"
 
 #: cmd/incus/file.go:1242
 msgid "sshfs not found. Try SSH SFTP mode using the --listen flag"
-msgstr ""
+msgstr "sshfs niet gevonden. Probeer SSH SFTP methode via de --listen optie"
 
 #: cmd/incus/storage.go:551
 msgid "total space"
-msgstr ""
+msgstr "totale ruimte"
 
 #: cmd/incus/version.go:48
 msgid "unreachable"
-msgstr ""
+msgstr "onbereikbaar"
 
 #: cmd/incus/storage.go:546
 msgid "used by"
-msgstr ""
+msgstr "gebruikt door"
 
 #: cmd/incus/remote.go:477
 msgid "y"
-msgstr ""
+msgstr "j"
 
 #: cmd/incus/cluster.go:727 cmd/incus/config_trust.go:493
 #: cmd/incus/delete.go:52 cmd/incus/image.go:973 cmd/incus/image.go:978
 #: cmd/incus/image.go:1178 cmd/incus/project.go:223 cmd/incus/snapshot.go:256
 msgid "yes"
-msgstr ""
+msgstr "ja"
 
 #, fuzzy
 #~ msgid "Path to the shared block device:"
