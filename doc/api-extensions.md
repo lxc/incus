@@ -2623,3 +2623,7 @@ As part of this, the following configuration options have been added:
 * `cluster.rebalance.cooldown`
 * `cluster.rebalance.interval`
 * `cluster.rebalance.threshold`
+
+## `custom_volume_refresh_exclude_older_snapshots`
+
+This adds support for excluding source snapshots earlier than latest target snapshot.
