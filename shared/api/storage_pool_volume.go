@@ -231,6 +231,12 @@ type StorageVolumeSource struct {
 	// API extension: custom_volume_refresh
 	Refresh bool `json:"refresh" yaml:"refresh"`
 
+	// Whether to exclude source snapshots earlier than latest target snapshot
+	// Example: false
+	//
+	// API extension: custom_volume_refresh_exclude_older_snapshots
+	RefreshExcludeOlder bool `json:"refresh_exclude_older" yaml:"refresh_exclude_older"`
+
 	// Source project name
 	// Example: foo
 	//
