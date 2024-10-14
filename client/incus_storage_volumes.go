@@ -529,15 +529,20 @@ func (r *ProtocolIncus) CopyStoragePoolVolume(pool string, source InstanceServer
 		return nil, fmt.Errorf("The target server is missing the required \"custom_volume_refresh\" API extension")
 	}
 
+	if args != nil && args.RefreshExcludeOlder && !r.HasExtension("custom_volume_refresh_exclude_older_snapshots") {
+		return nil, fmt.Errorf("The target server is missing the required \"custom_volume_refresh_exclude_older_snapshots\" API extension")
+	}
+
 	req := api.StorageVolumesPost{
 		Name: args.Name,
 		Type: volume.Type,
 		Source: api.StorageVolumeSource{
-			Name:       volume.Name,
-			Type:       "copy",
-			Pool:       sourcePool,
-			VolumeOnly: args.VolumeOnly,
-			Refresh:    args.Refresh,
+			Name:                volume.Name,
+			Type:                "copy",
+			Pool:                sourcePool,
+			VolumeOnly:          args.VolumeOnly,
+			Refresh:             args.Refresh,
+			RefreshExcludeOlder: args.RefreshExcludeOlder,
 		},
 	}
 
