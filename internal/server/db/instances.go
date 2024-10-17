@@ -534,6 +534,12 @@ func (c *ClusterTx) instanceProfilesFill(ctx context.Context, snapshotsMode bool
 		return fmt.Errorf("Failed loading profiles: %w", err)
 	}
 
+	// Get all the profile configs.
+	profileConfigs, err := cluster.GetConfig(context.TODO(), c.Tx(), "profile")
+	if err != nil {
+		return fmt.Errorf("Failed loading profile configs: %w", err)
+	}
+
 	// Get all the profile devices.
 	profileDevices, err := cluster.GetDevices(context.TODO(), c.Tx(), "profile")
 	if err != nil {
@@ -549,7 +555,7 @@ func (c *ClusterTx) instanceProfilesFill(ctx context.Context, snapshotsMode bool
 			continue
 		}
 
-		profilesByID[profile.ID], err = profile.ToAPI(context.TODO(), c.tx, profileDevices)
+		profilesByID[profile.ID], err = profile.ToAPI(context.TODO(), c.tx, profileConfigs, profileDevices)
 		if err != nil {
 			return err
 		}
