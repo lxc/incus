@@ -267,7 +267,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 
 			// Convert the []Instances into []api.Instances.
 			for _, obj := range objects {
-				instance, err := obj.ToAPI(ctx, tx.Tx(), objectDevices, nil)
+				instance, err := obj.ToAPI(ctx, tx.Tx(), objectDevices, nil, nil)
 				if err != nil {
 					return err
 				}

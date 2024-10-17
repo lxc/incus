@@ -993,6 +993,11 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 				return err
 			}
 
+			dbProfileConfigs, err := dbCluster.GetConfig(ctx, tx.Tx(), "profile")
+			if err != nil {
+				return err
+			}
+
 			dbProfileDevices, err := dbCluster.GetDevices(ctx, tx.Tx(), "profile")
 			if err != nil {
 				return err
@@ -1009,7 +1014,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 					return fmt.Errorf("Requested profile %q doesn't exist", profileName)
 				}
 
-				apiProfile, err := profile.ToAPI(ctx, tx.Tx(), dbProfileDevices)
+				apiProfile, err := profile.ToAPI(ctx, tx.Tx(), dbProfileConfigs, dbProfileDevices)
 				if err != nil {
 					return err
 				}

@@ -52,21 +52,31 @@ type ProfileFilter struct {
 }
 
 // ToAPI returns a cluster Profile as an API struct.
-func (p *Profile) ToAPI(ctx context.Context, tx *sql.Tx, profileDevices map[int][]Device) (*api.Profile, error) {
-	config, err := GetProfileConfig(ctx, tx, p.ID)
-	if err != nil {
-		return nil, err
-	}
+func (p *Profile) ToAPI(ctx context.Context, tx *sql.Tx, profileConfigs map[int]map[string]string, profileDevices map[int][]Device) (*api.Profile, error) {
+	var err error
 
-	var devices map[string]Device
-	if profileDevices != nil {
-		devices = map[string]Device{}
-
-		for _, dev := range profileDevices[p.ID] {
-			devices[dev.Name] = dev
+	var dbConfig map[string]string
+	if profileConfigs != nil {
+		dbConfig = profileConfigs[p.ID]
+		if dbConfig == nil {
+			dbConfig = map[string]string{}
 		}
 	} else {
-		devices, err = GetProfileDevices(ctx, tx, p.ID)
+		dbConfig, err = GetProfileConfig(ctx, tx, p.ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var dbDevices map[string]Device
+	if profileDevices != nil {
+		dbDevices = map[string]Device{}
+
+		for _, dev := range profileDevices[p.ID] {
+			dbDevices[dev.Name] = dev
+		}
+	} else {
+		dbDevices, err = GetProfileDevices(ctx, tx, p.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -76,8 +86,8 @@ func (p *Profile) ToAPI(ctx context.Context, tx *sql.Tx, profileDevices map[int]
 		Name: p.Name,
 		ProfilePut: api.ProfilePut{
 			Description: p.Description,
-			Config:      config,
-			Devices:     DevicesToAPI(devices),
+			Config:      dbConfig,
+			Devices:     DevicesToAPI(dbDevices),
 		},
 		Project: p.Project,
 	}
