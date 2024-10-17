@@ -4899,11 +4899,8 @@ func (d *qemu) Stop(stateful bool) error {
 		}
 	}
 
-	// Save the console log from ring buffer before the instance is stopped. Must be run prior to creating the operation lock.
-	_, err := d.ConsoleLog()
-	if err != nil {
-		return err
-	}
+	// Attempt to save the console log from ring buffer before the instance is stopped. Must be run prior to creating the operation lock.
+	_, _ = d.ConsoleLog()
 
 	// Setup a new operation.
 	// Allow inheriting of ongoing restart or restore operation (we are called from restartCommon and Restore).
