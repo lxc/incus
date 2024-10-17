@@ -3,12 +3,14 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/response"
@@ -269,8 +271,12 @@ func osState() *api.InstanceStateOSInfo {
 	}
 
 	// Get the FQDN. To avoid needing to run `hostname -f`, do a reverse host lookup for 127.0.1.1, and if found, return the first hostname as the FQDN.
-	fqdn, err := net.LookupAddr("127.0.1.1")
-	if err == nil {
+	ctx, cancel := context.WithTimeout(context.TODO(), 100*time.Millisecond)
+	defer cancel()
+
+	var r net.Resolver
+	fqdn, err := r.LookupAddr(ctx, "127.0.0.1")
+	if err == nil && len(fqdn) > 0 {
 		// Take the first returned hostname and trim the trailing dot.
 		osInfo.FQDN = strings.TrimSuffix(fqdn[0], ".")
 	}
