@@ -52,10 +52,20 @@ type ProfileFilter struct {
 }
 
 // ToAPI returns a cluster Profile as an API struct.
-func (p *Profile) ToAPI(ctx context.Context, tx *sql.Tx, profileDevices map[int][]Device) (*api.Profile, error) {
-	config, err := GetProfileConfig(ctx, tx, p.ID)
-	if err != nil {
-		return nil, err
+func (p *Profile) ToAPI(ctx context.Context, tx *sql.Tx, profileConfigs map[int]map[string]string, profileDevices map[int][]Device) (*api.Profile, error) {
+	var err error
+
+	var config map[string]string
+	if profileConfigs != nil {
+		config = profileConfigs[p.ID]
+		if config == nil {
+			config = map[string]string{}
+		}
+	} else {
+		config, err = GetProfileConfig(ctx, tx, p.ID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var devices map[string]Device
