@@ -298,8 +298,21 @@ func (n *common) Locations() []string {
 	return locations
 }
 
-// IsUsed returns whether the network is used by any instances or profiles.
-func (n *common) IsUsed() (bool, error) {
+// IsUsed returns whether the network is in use by instances or by downstream networks.
+func (n *common) IsUsed(instanceOnly bool) (bool, error) {
+	if instanceOnly {
+		usedBy := 0
+		err := UsedByInstanceDevices(n.state, n.project, n.name, n.netType, func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
+			usedBy++
+			return nil
+		})
+		if err != nil {
+			return false, err
+		}
+
+		return usedBy > 0, nil
+	}
+
 	usedBy, err := UsedBy(n.state, n.project, n.id, n.name, n.netType, true)
 	if err != nil {
 		return false, err
