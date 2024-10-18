@@ -687,7 +687,7 @@ func (c *cmdProjectList) Run(cmd *cobra.Command, args []string) error {
 	for _, project := range projects {
 		line := []string{}
 		for _, column := range columns {
-			if column.Name == "NAME" {
+			if column.Name == i18n.G("NAME") {
 				if project.Name == info.Project {
 					project.Name = fmt.Sprintf("%s (%s)", project.Name, i18n.G("current"))
 				}
