@@ -297,7 +297,7 @@ func (n *physical) Update(newNetwork api.NetworkPut, targetNode string, clientTy
 	// We only need to check in the database once, not on every clustered node.
 	if clientType == request.ClientTypeNormal {
 		if hostNameChanged {
-			isUsed, err := n.IsUsed()
+			isUsed, err := n.IsUsed(true)
 			if isUsed || err != nil {
 				return fmt.Errorf("Cannot update network parent interface when in use")
 			}
