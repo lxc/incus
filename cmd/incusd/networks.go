@@ -1059,7 +1059,7 @@ func networkDelete(d *Daemon, r *http.Request) response.Response {
 	clusterNotification := isClusterNotification(r)
 	if !clusterNotification {
 		// Quick checks.
-		inUse, err := n.IsUsed()
+		inUse, err := n.IsUsed(false)
 		if err != nil {
 			return response.SmartError(err)
 		}
@@ -1208,7 +1208,7 @@ func networkPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Check network isn't in use.
-	inUse, err := n.IsUsed()
+	inUse, err := n.IsUsed(false)
 	if err != nil {
 		return response.InternalError(fmt.Errorf("Failed checking network in use: %w", err))
 	}
