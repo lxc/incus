@@ -11,6 +11,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/cluster/request"
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/ip"
+	"github.com/lxc/incus/v6/internal/server/network/ovs"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
@@ -297,7 +298,7 @@ func (n *physical) Update(newNetwork api.NetworkPut, targetNode string, clientTy
 	// We only need to check in the database once, not on every clustered node.
 	if clientType == request.ClientTypeNormal {
 		if hostNameChanged {
-			isUsed, err := n.IsUsed()
+			isUsed, err := n.IsUsed(true)
 			if isUsed || err != nil {
 				return fmt.Errorf("Cannot update network parent interface when in use")
 			}
@@ -329,7 +330,7 @@ func (n *physical) Update(newNetwork api.NetworkPut, targetNode string, clientTy
 		_ = n.common.update(oldNetwork, targetNode, clientType)
 	})
 
-	// Apply changes to all nodes and databse.
+	// Apply changes to all nodes and database.
 	err = n.common.update(newNetwork, targetNode, clientType)
 	if err != nil {
 		return err
@@ -338,6 +339,24 @@ func (n *physical) Update(newNetwork api.NetworkPut, targetNode string, clientTy
 	err = n.setup(oldNetwork.Config)
 	if err != nil {
 		return err
+	}
+
+	// Update OVS bridge entries (for dependent OVN networks).
+	if hostNameChanged {
+		vswitch, err := n.state.OVS()
+		if err == nil {
+			ovsBridge := fmt.Sprintf("incusovn%d", n.id)
+
+			err := vswitch.DeleteBridgePort(context.TODO(), ovsBridge, oldNetwork.Config["parent"])
+			if err != nil && err != ovs.ErrNotFound {
+				return err
+			}
+
+			err = vswitch.CreateBridgePort(context.TODO(), ovsBridge, newNetwork.Config["parent"], true)
+			if err != nil && err != ovs.ErrNotFound {
+				return err
+			}
+		}
 	}
 
 	revert.Success()
