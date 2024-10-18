@@ -9,7 +9,6 @@ import (
 	"os"
 	"slices"
 
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/v6/client"
@@ -20,6 +19,8 @@ import (
 
 type cmdAdminSQL struct {
 	global *cmdGlobal
+
+	flagFormat string
 }
 
 func (c *cmdAdminSQL) Command() *cobra.Command {
@@ -51,6 +52,7 @@ func (c *cmdAdminSQL) Command() *cobra.Command {
   recovery. The development team will occasionally provide hotfixes to users as a
   set of database queries to fix some data inconsistency.`))
 	cmd.RunE = c.Run
+	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
 
 	return cmd
 }
@@ -138,7 +140,10 @@ func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		if result.Type == "select" {
-			sqlPrintSelectResult(result)
+			err := c.sqlPrintSelectResult(result)
+			if err != nil {
+				return err
+			}
 		} else {
 			fmt.Printf(i18n.G("Rows affected: %d")+"\n", result.RowsAffected)
 		}
@@ -150,20 +155,16 @@ func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func sqlPrintSelectResult(result internalSQL.SQLResult) {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAutoWrapText(false)
-	table.SetAutoFormatHeaders(false)
-	table.SetHeader(result.Columns)
+func (c *cmdAdminSQL) sqlPrintSelectResult(result internalSQL.SQLResult) error {
+	data := [][]string{}
 	for _, row := range result.Rows {
-		data := []string{}
+		rowData := []string{}
 		for _, col := range row {
-			data = append(data, fmt.Sprintf("%v", col))
+			rowData = append(rowData, fmt.Sprintf("%v", col))
 		}
 
-		table.Append(data)
+		data = append(data, rowData)
 	}
 
-	table.Render()
+	return cli.RenderTable(c.flagFormat, result.Columns, data, result)
 }
