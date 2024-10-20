@@ -1264,6 +1264,9 @@ func (d *common) devicesAdd(inst instance.Instance, instanceRunning bool) (rever
 				continue
 			}
 
+			// Clear any volatile key that could have been set during validation.
+			_ = d.deviceVolatileReset(entry.Name, entry.Config, nil)
+
 			return nil, fmt.Errorf("Failed add validation for device %q: %w", entry.Name, err)
 		}
 
@@ -1352,6 +1355,9 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 			}
 
 			if userRequested {
+				// Clear any volatile key that could have been set during validation.
+				_ = d.deviceVolatileReset(entry.Name, entry.Config, nil)
+
 				return fmt.Errorf("Failed add validation for device %q: %w", entry.Name, err)
 			}
 
