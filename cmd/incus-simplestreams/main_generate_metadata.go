@@ -14,6 +14,7 @@ import (
 
 	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/ask"
 	"github.com/lxc/incus/v6/shared/osarch"
 )
 
@@ -52,7 +53,7 @@ func (c *cmdGenerateMetadata) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Setup asker.
-	asker := cli.NewAsker(bufio.NewReader(os.Stdin))
+	asker := ask.NewAsker(bufio.NewReader(os.Stdin))
 
 	// Create the tarball.
 	metaFile, err := os.Create(args[0])
