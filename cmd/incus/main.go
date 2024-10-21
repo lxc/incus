@@ -17,13 +17,14 @@ import (
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/ask"
 	config "github.com/lxc/incus/v6/shared/cliconfig"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdGlobal struct {
-	asker cli.Asker
+	asker ask.Asker
 
 	conf     *config.Config
 	confPath string
@@ -94,7 +95,7 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	app.CompletionOptions = cobra.CompletionOptions{HiddenDefaultCmd: true}
 
 	// Global flags
-	globalCmd := cmdGlobal{cmd: app, asker: cli.NewAsker(bufio.NewReader(os.Stdin))}
+	globalCmd := cmdGlobal{cmd: app, asker: ask.NewAsker(bufio.NewReader(os.Stdin))}
 
 	app.PersistentFlags().BoolVar(&globalCmd.flagVersion, "version", false, i18n.G("Print version number"))
 	app.PersistentFlags().BoolVarP(&globalCmd.flagHelp, "help", "h", false, i18n.G("Print help"))
@@ -404,7 +405,7 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 
 	// Setup password helper
 	c.conf.PromptPassword = func(filename string) (string, error) {
-		return cli.AskPasswordOnce(fmt.Sprintf(i18n.G("Password for %s: "), filename)), nil
+		return ask.AskPasswordOnce(fmt.Sprintf(i18n.G("Password for %s: "), filename)), nil
 	}
 
 	// If the user is running a command that may attempt to connect to the local daemon

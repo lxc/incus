@@ -6,12 +6,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/ask"
 )
 
 type cmdGlobal struct {
-	asker cli.Asker
+	asker ask.Asker
 
 	flagVersion bool
 	flagHelp    bool
@@ -28,7 +28,7 @@ func main() {
 	app.Args = cobra.ArbitraryArgs
 
 	// Global flags
-	globalCmd := cmdGlobal{asker: cli.NewAsker(bufio.NewReader(os.Stdin))}
+	globalCmd := cmdGlobal{asker: ask.NewAsker(bufio.NewReader(os.Stdin))}
 	migrateCmd.global = &globalCmd
 	app.PersistentFlags().BoolVar(&globalCmd.flagVersion, "version", false, "Print version number")
 	app.PersistentFlags().BoolVarP(&globalCmd.flagHelp, "help", "h", false, "Print help")

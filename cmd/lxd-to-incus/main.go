@@ -16,16 +16,16 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v6/client"
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/ask"
 	"github.com/lxc/incus/v6/shared/subprocess"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdGlobal struct {
-	asker cli.Asker
+	asker ask.Asker
 
 	flagHelp    bool
 	flagVersion bool
@@ -47,7 +47,7 @@ func main() {
 	app.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}
 
 	// Global flags.
-	globalCmd := cmdGlobal{asker: cli.NewAsker(bufio.NewReader(os.Stdin))}
+	globalCmd := cmdGlobal{asker: ask.NewAsker(bufio.NewReader(os.Stdin))}
 	migrateCmd.global = globalCmd
 	app.PersistentFlags().BoolVar(&globalCmd.flagVersion, "version", false, "Print version number")
 	app.PersistentFlags().BoolVarP(&globalCmd.flagHelp, "help", "h", false, "Print help")
