@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/x509"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -26,6 +25,7 @@ import (
 	"github.com/gorilla/mux"
 	liblxc "github.com/lxc/go-lxc"
 	"golang.org/x/sys/unix"
+	yaml "gopkg.in/yaml.v2"
 
 	internalIO "github.com/lxc/incus/v6/internal/io"
 	"github.com/lxc/incus/v6/internal/linux"
@@ -2388,7 +2388,7 @@ func (d *Daemon) heartbeatHandler(w http.ResponseWriter, r *http.Request, isLead
 			// Check if we have a recent local cache entry already.
 			resourcesPath := internalUtil.CachePath("resources", fmt.Sprintf("%s.yaml", name))
 			fi, err := os.Stat(resourcesPath)
-			if err == nil && fi.ModTime().Before(time.Now().Add(time.Hour)) {
+			if err == nil && time.Since(fi.ModTime()) < time.Hour {
 				return
 			}
 
@@ -2405,7 +2405,7 @@ func (d *Daemon) heartbeatHandler(w http.ResponseWriter, r *http.Request, isLead
 			}
 
 			// Write to cache.
-			data, err := json.Marshal(resources)
+			data, err := yaml.Marshal(resources)
 			if err != nil {
 				return
 			}

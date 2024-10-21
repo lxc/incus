@@ -2,7 +2,6 @@ package drivers
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -10,6 +9,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/db"
@@ -56,7 +57,7 @@ func GetClusterCPUFlags(ctx context.Context, s *state.State, servers []string, a
 		}
 
 		res := api.Resources{}
-		err = json.Unmarshal(data, &res)
+		err = yaml.Unmarshal(data, &res)
 		if err != nil {
 			return nil, err
 		}
