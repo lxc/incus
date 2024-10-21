@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/mux"
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
-	"github.com/lxc/incus/v6/internal/revert"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/lifecycle"
@@ -21,6 +20,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/storage"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/revert"
 )
 
 var instanceLogCmd = APIEndpoint{

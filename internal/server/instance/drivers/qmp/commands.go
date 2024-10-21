@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/v6/internal/revert"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/revert"
 )
 
 // ChardevChangeInfo contains information required to change the backend of a chardev.
