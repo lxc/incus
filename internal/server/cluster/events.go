@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/lxc/incus/v6/client"
-	"github.com/lxc/incus/v6/internal/revert"
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/endpoints"
 	"github.com/lxc/incus/v6/internal/server/events"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/revert"
 	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 

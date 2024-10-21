@@ -14,8 +14,8 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/lxc/incus/v6/internal/ports"
-	"github.com/lxc/incus/v6/internal/revert"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/revert"
 )
 
 // Server represents a BGP server instance.

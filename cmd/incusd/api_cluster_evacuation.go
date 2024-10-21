@@ -18,7 +18,6 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/lxc/incus/v6/client"
-	"github.com/lxc/incus/v6/internal/revert"
 	"github.com/lxc/incus/v6/internal/server/cluster"
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
@@ -35,6 +34,7 @@ import (
 	apiScriptlet "github.com/lxc/incus/v6/shared/api/scriptlet"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/osarch"
+	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/subprocess"
 )
 
