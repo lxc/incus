@@ -637,17 +637,30 @@ func (n *common) bgpValidationRules(config map[string]string) (map[string]func(v
 
 // bgpSetup initializes BGP peers and prefixes.
 func (n *common) bgpSetup(oldConfig map[string]string) error {
+	currentPeers := n.bgpGetPeers(n.config)
+	oldPeers := n.bgpGetPeers(oldConfig)
+
+	// Don't set up BGP when no peers are configured.
+	if len(currentPeers) == 0 {
+		if len(oldPeers) > 0 {
+			return n.bgpClear(oldConfig)
+		}
+
+		return nil
+	}
+
+	// Set up the peers.
 	err := n.bgpSetupPeers(oldConfig)
 	if err != nil {
 		return fmt.Errorf("Failed setting up BGP peers: %w", err)
 	}
 
+	// Export the prefixes.
 	err = n.bgpSetupPrefixes(oldConfig)
 	if err != nil {
 		return fmt.Errorf("Failed setting up BGP prefixes: %w", err)
 	}
 
-	// Refresh exported BGP prefixes on local member.
 	err = n.forwardBGPSetupPrefixes()
 	if err != nil {
 		return fmt.Errorf("Failed applying BGP prefixes for address forwards: %w", err)
@@ -661,7 +674,7 @@ func (n *common) bgpSetup(oldConfig map[string]string) error {
 	return nil
 }
 
-// bgpClear initializes BGP peers and prefixes.
+// bgpClear clears BGP peers and prefixes.
 func (n *common) bgpClear(config map[string]string) error {
 	// Clear all peers.
 	err := n.bgpClearPeers(config)
