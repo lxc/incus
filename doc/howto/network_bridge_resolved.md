@@ -6,9 +6,6 @@ To do so, add the DNS servers and domains provided by an Incus network bridge to
 
 ```{note}
 The `dns.mode` option (see {ref}`network-bridge-options`) must be set to `managed` or `dynamic` if you want to use this feature.
-
-Depending on the configured `dns.domain`, you might need to disable DNSSEC in `resolved` to allow for DNS resolution.
-This can be done through the `DNSSEC` option in `resolved.conf`.
 ```
 
 (network-bridge-resolved-configure)=
@@ -47,16 +44,29 @@ The `~` tells `resolved` to use the respective name server to look up only this 
 Depending on which shell you use, you might need to include the DNS domain in quotes to prevent the `~` from being expanded.
 ```
 
+DNSSEC and DNS over TLS
+: The `incus` DNS server does not support DNSSEC or DNS over TLS.
+
+  Depending on your resolved configuration the configuration will fail as
+  the server does not support DNSSEC or DNS over TLS.
+
+  To disable both only for the bridge, use the following commands:
+
+      resolvectl dnssec <network_bridge> off
+      resolvectl dnsovertls <network_bridge> off
+
 For example:
 
     resolvectl dns incusbr0 192.0.2.10
     resolvectl domain incusbr0 '~incus'
+    resolvectl dnssec incusbr0 off
+    resolvectl dnsovertls incusbr0 off
 
 ```{note}
 Alternatively, you can use the `systemd-resolve` command.
 This command has been deprecated in newer releases of `systemd`, but it is still provided for backwards compatibility.
 
-    systemd-resolve --interface <network_bridge> --set-domain ~<dns_domain> --set-dns <dns_address>
+    systemd-resolve --interface <network_bridge> --set-domain ~<dns_domain> --set-dns <dns_address> --set-dnsovertls=off --set-dnssec=off
 ```
 
 The `resolved` configuration persists as long as the bridge exists.
@@ -78,6 +88,8 @@ After=sys-subsystem-net-devices-<network_bridge>.device
 Type=oneshot
 ExecStart=/usr/bin/resolvectl dns <network_bridge> <dns_address>
 ExecStart=/usr/bin/resolvectl domain <network_bridge> ~<dns_domain>
+ExecStart=/usr/bin/resolvectl dnssec <network_bridge> off
+ExecStart=/usr/bin/resolvectl dnsovertls <network_bridge> off
 ExecStopPost=/usr/bin/resolvectl revert <network_bridge>
 RemainAfterExit=yes
 
