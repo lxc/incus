@@ -479,9 +479,27 @@ func findIdmap(s *state.State, cName string, isolated bool, configBase string, c
 	}
 
 	if !isolated {
+		// Create a new set based from the global one.
 		newIdmapset := idmap.Set{Entries: make([]idmap.Entry, len(s.OS.IdmapSet.Entries))}
 		copy(newIdmapset.Entries, s.OS.IdmapSet.Entries)
 
+		// Restrict the range sizes if specified.
+		if configSize != "" {
+			size, err := idmapSize(s, isolated, configSize)
+			if err != nil {
+				return nil, 0, err
+			}
+
+			for k, ent := range newIdmapset.Entries {
+				if ent.MapRange < size {
+					continue
+				}
+
+				newIdmapset.Entries[k].MapRange = size
+			}
+		}
+
+		// Apply the raw idmap entries.
 		for _, ent := range rawMaps.Entries {
 			err := newIdmapset.AddSafe(ent)
 			if err != nil && err == idmap.ErrHostIDIsSubID {
