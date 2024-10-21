@@ -445,12 +445,7 @@ type lxc struct {
 	idmapset *idmap.Set
 }
 
-func idmapSize(state *state.State, isolatedStr string, size string) (int64, error) {
-	isolated := false
-	if util.IsTrue(isolatedStr) {
-		isolated = true
-	}
-
+func idmapSize(state *state.State, isolated bool, size string) (int64, error) {
 	var idMapSize int64
 	if size == "" || size == "auto" {
 		if isolated {
@@ -501,7 +496,7 @@ func findIdmap(s *state.State, cName string, isolatedStr string, configBase stri
 		return &newIdmapset, 0, nil
 	}
 
-	size, err := idmapSize(s, isolatedStr, configSize)
+	size, err := idmapSize(s, isolated, configSize)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -575,7 +570,7 @@ func findIdmap(s *state.State, cName string, isolatedStr string, configBase stri
 			}
 		}
 
-		cSize, err := idmapSize(s, container.ExpandedConfig()["security.idmap.isolated"], container.ExpandedConfig()["security.idmap.size"])
+		cSize, err := idmapSize(s, util.IsTrue(container.ExpandedConfig()["security.idmap.isolated"]), container.ExpandedConfig()["security.idmap.size"])
 		if err != nil {
 			return nil, 0, err
 		}
