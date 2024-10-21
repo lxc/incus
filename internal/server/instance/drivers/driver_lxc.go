@@ -268,15 +268,7 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operatio
 	var idmapSet *idmap.Set
 	base := int64(0)
 	if !d.IsPrivileged() {
-		idmapSet, base, err = findIdmap(
-			s,
-			args.Name,
-			util.IsTrue(d.expandedConfig["security.idmap.isolated"]),
-			d.expandedConfig["security.idmap.base"],
-			d.expandedConfig["security.idmap.size"],
-			d.expandedConfig["raw.idmap"],
-		)
-
+		idmapSet, base, err = d.findIdmap()
 		if err != nil {
 			return nil, nil, err
 		}
@@ -445,46 +437,62 @@ type lxc struct {
 	idmapset *idmap.Set
 }
 
-func idmapSize(state *state.State, isolated bool, size string) (int64, error) {
-	var idMapSize int64
-	if size == "" || size == "auto" {
-		if isolated {
-			idMapSize = 65536
-		} else {
-			if len(state.OS.IdmapSet.Entries) != 2 {
-				return 0, fmt.Errorf("Bad initial idmap: %v", state.OS.IdmapSet)
-			}
-
-			idMapSize = state.OS.IdmapSet.Entries[0].MapRange
-		}
-	} else {
-		size, err := strconv.ParseInt(size, 10, 64)
-		if err != nil {
-			return 0, err
-		}
-
-		idMapSize = size
-	}
-
-	return idMapSize, nil
-}
-
 var idmapLock sync.Mutex
 
-func findIdmap(s *state.State, cName string, isolated bool, configBase string, configSize string, rawIdmap string) (*idmap.Set, int64, error) {
-	rawMaps, err := idmap.NewSetFromIncusIDMap(rawIdmap)
+func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
+	idmapSize := func(size string) (int64, error) {
+		var idMapSize int64
+		if size == "" || size == "auto" {
+			if util.IsTrue(d.expandedConfig["security.idmap.isolated"]) {
+				idMapSize = 65536
+			} else {
+				if len(d.state.OS.IdmapSet.Entries) != 2 {
+					return 0, fmt.Errorf("Bad initial idmap: %v", d.state.OS.IdmapSet)
+				}
+
+				idMapSize = d.state.OS.IdmapSet.Entries[0].MapRange
+			}
+		} else {
+			size, err := strconv.ParseInt(size, 10, 64)
+			if err != nil {
+				return 0, err
+			}
+
+			idMapSize = size
+		}
+
+		return idMapSize, nil
+	}
+
+	rawMaps, err := idmap.NewSetFromIncusIDMap(d.expandedConfig["raw.idmap"])
 	if err != nil {
 		return nil, 0, err
 	}
 
-	if !isolated {
+	mkIdmap := func(offset int64, size int64) (*idmap.Set, error) {
+		set := &idmap.Set{Entries: []idmap.Entry{
+			{IsUID: true, NSID: 0, HostID: offset, MapRange: size},
+			{IsGID: true, NSID: 0, HostID: offset, MapRange: size},
+		}}
+
+		for _, ent := range rawMaps.Entries {
+			err := set.AddSafe(ent)
+			if err != nil && err == idmap.ErrHostIDIsSubID {
+				return nil, err
+			}
+		}
+
+		return set, nil
+	}
+
+	if !util.IsTrue(d.expandedConfig["security.idmap.isolated"]) {
 		// Create a new set based from the global one.
-		newIdmapset := idmap.Set{Entries: make([]idmap.Entry, len(s.OS.IdmapSet.Entries))}
-		copy(newIdmapset.Entries, s.OS.IdmapSet.Entries)
+		newIdmapset := idmap.Set{Entries: make([]idmap.Entry, len(d.state.OS.IdmapSet.Entries))}
+		copy(newIdmapset.Entries, d.state.OS.IdmapSet.Entries)
 
 		// Restrict the range sizes if specified.
-		if configSize != "" {
-			size, err := idmapSize(s, isolated, configSize)
+		if d.expandedConfig["security.idmap.size"] != "" {
+			size, err := idmapSize(d.expandedConfig["security.idmap.size"])
 			if err != nil {
 				return nil, 0, err
 			}
@@ -509,29 +517,13 @@ func findIdmap(s *state.State, cName string, isolated bool, configBase string, c
 		return &newIdmapset, 0, nil
 	}
 
-	size, err := idmapSize(s, isolated, configSize)
+	size, err := idmapSize(d.expandedConfig["security.idmap.size"])
 	if err != nil {
 		return nil, 0, err
 	}
 
-	mkIdmap := func(offset int64, size int64) (*idmap.Set, error) {
-		set := &idmap.Set{Entries: []idmap.Entry{
-			{IsUID: true, NSID: 0, HostID: offset, MapRange: size},
-			{IsGID: true, NSID: 0, HostID: offset, MapRange: size},
-		}}
-
-		for _, ent := range rawMaps.Entries {
-			err := set.AddSafe(ent)
-			if err != nil && err == idmap.ErrHostIDIsSubID {
-				return nil, err
-			}
-		}
-
-		return set, nil
-	}
-
-	if configBase != "" {
-		offset, err := strconv.ParseInt(configBase, 10, 64)
+	if d.expandedConfig["security.idmap.base"] != "" {
+		offset, err := strconv.ParseInt(d.expandedConfig["security.idmap.base"], 10, 64)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -547,12 +539,12 @@ func findIdmap(s *state.State, cName string, isolated bool, configBase string, c
 	idmapLock.Lock()
 	defer idmapLock.Unlock()
 
-	cts, err := instance.LoadNodeAll(s, instancetype.Container)
+	cts, err := instance.LoadNodeAll(d.state, instancetype.Container)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	offset := s.OS.IdmapSet.Entries[0].HostID + 65536
+	offset := d.state.OS.IdmapSet.Entries[0].HostID + 65536
 
 	mapentries := idmap.ByHostID{}
 	for _, container := range cts {
@@ -560,10 +552,8 @@ func findIdmap(s *state.State, cName string, isolated bool, configBase string, c
 			continue
 		}
 
-		name := container.Name()
-
 		/* Don't change our map Just Because. */
-		if name == cName {
+		if container.ID() == d.id {
 			continue
 		}
 
@@ -583,7 +573,7 @@ func findIdmap(s *state.State, cName string, isolated bool, configBase string, c
 			}
 		}
 
-		cSize, err := idmapSize(s, util.IsTrue(container.ExpandedConfig()["security.idmap.isolated"]), container.ExpandedConfig()["security.idmap.size"])
+		cSize, err := idmapSize(container.ExpandedConfig()["security.idmap.size"])
 		if err != nil {
 			return nil, 0, err
 		}
@@ -626,7 +616,7 @@ func findIdmap(s *state.State, cName string, isolated bool, configBase string, c
 		offset = mapentries.Entries[i].HostID + mapentries.Entries[i].MapRange
 	}
 
-	if offset+size < s.OS.IdmapSet.Entries[0].HostID+s.OS.IdmapSet.Entries[0].MapRange {
+	if offset+size < d.state.OS.IdmapSet.Entries[0].HostID+d.state.OS.IdmapSet.Entries[0].MapRange {
 		set, err := mkIdmap(offset, size)
 		if err != nil && err == idmap.ErrHostIDIsSubID {
 			return nil, 0, err
@@ -1939,14 +1929,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		// Check if we need to change idmap.
 		if nextMap != nil && d.state.OS.IdmapSet != nil && !d.state.OS.IdmapSet.Includes(nextMap) {
 			// Update the idmap.
-			idmapSet, base, err := findIdmap(
-				d.state,
-				d.Name(),
-				util.IsTrue(d.expandedConfig["security.idmap.isolated"]),
-				d.expandedConfig["security.idmap.base"],
-				d.expandedConfig["security.idmap.size"],
-				d.expandedConfig["raw.idmap"],
-			)
+			idmapSet, base, err := d.findIdmap()
 			if err != nil {
 				return "", nil, fmt.Errorf("Failed to get ID map: %w", err)
 			}
@@ -4520,14 +4503,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 		base := int64(0)
 		if !d.IsPrivileged() {
 			// Update the idmap.
-			idmapSet, base, err = findIdmap(
-				d.state,
-				d.Name(),
-				util.IsTrue(d.expandedConfig["security.idmap.isolated"]),
-				d.expandedConfig["security.idmap.base"],
-				d.expandedConfig["security.idmap.size"],
-				d.expandedConfig["raw.idmap"],
-			)
+			idmapSet, base, err = d.findIdmap()
 			if err != nil {
 				return fmt.Errorf("Failed to get ID map: %w", err)
 			}
