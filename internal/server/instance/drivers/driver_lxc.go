@@ -272,7 +272,7 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operatio
 		idmapSet, base, err = findIdmap(
 			s,
 			args.Name,
-			d.expandedConfig["security.idmap.isolated"],
+			util.IsTrue(d.expandedConfig["security.idmap.isolated"]),
 			d.expandedConfig["security.idmap.base"],
 			d.expandedConfig["security.idmap.size"],
 			d.expandedConfig["raw.idmap"],
@@ -472,12 +472,7 @@ func idmapSize(state *state.State, isolated bool, size string) (int64, error) {
 
 var idmapLock sync.Mutex
 
-func findIdmap(s *state.State, cName string, isolatedStr string, configBase string, configSize string, rawIdmap string) (*idmap.Set, int64, error) {
-	isolated := false
-	if util.IsTrue(isolatedStr) {
-		isolated = true
-	}
-
+func findIdmap(s *state.State, cName string, isolated bool, configBase string, configSize string, rawIdmap string) (*idmap.Set, int64, error) {
 	rawMaps, err := idmap.NewSetFromIncusIDMap(rawIdmap)
 	if err != nil {
 		return nil, 0, err
@@ -1930,7 +1925,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			idmapSet, base, err := findIdmap(
 				d.state,
 				d.Name(),
-				d.expandedConfig["security.idmap.isolated"],
+				util.IsTrue(d.expandedConfig["security.idmap.isolated"]),
 				d.expandedConfig["security.idmap.base"],
 				d.expandedConfig["security.idmap.size"],
 				d.expandedConfig["raw.idmap"],
@@ -4667,7 +4662,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 			idmapSet, base, err = findIdmap(
 				d.state,
 				d.Name(),
-				d.expandedConfig["security.idmap.isolated"],
+				util.IsTrue(d.expandedConfig["security.idmap.isolated"]),
 				d.expandedConfig["security.idmap.base"],
 				d.expandedConfig["security.idmap.size"],
 				d.expandedConfig["raw.idmap"],
