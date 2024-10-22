@@ -134,6 +134,7 @@ kbit
 KiB
 kibi
 Kibit
+Kubernetes
 KVM
 lookups
 Loongarch
