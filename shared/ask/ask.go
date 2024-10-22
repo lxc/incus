@@ -16,6 +16,7 @@ type Asker struct {
 	reader *bufio.Reader
 }
 
+// NewAsker returns a new Asker that utilizes the supplied reader.
 func NewAsker(reader *bufio.Reader) Asker {
 	return Asker{reader: reader}
 }
