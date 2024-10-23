@@ -88,6 +88,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jkeiser/iter v0.0.0-20200628201005-c8aa0ae784d1 // indirect
+	github.com/josharian/native v1.1.0 // indirect
 	github.com/k-sone/critbitgo v1.4.0 // indirect
 	github.com/klauspost/compress v1.17.10 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
@@ -95,6 +96,7 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/mdlayher/packet v1.1.2 // indirect
 	github.com/mdlayher/socket v0.5.1 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect

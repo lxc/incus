@@ -247,6 +247,8 @@ github.com/hashicorp/logutils v1.0.0/go.mod h1:QIAnNjmIWmVIIkWDTG1z5v++HQmx9WQRO
 github.com/hashicorp/mdns v1.0.0/go.mod h1:tL+uN++7HEJ6SQLQ2/p+z2pH24WQKWjBPkE0mNTz8vQ=
 github.com/hashicorp/memberlist v0.1.3/go.mod h1:ajVTdAv/9Im8oMAAj5G31PhhMCZJV2pPBoIllUwCN7I=
 github.com/hashicorp/serf v0.8.2/go.mod h1:6hOLApaqBFA1NXqRQAsxw9QxuDEvNxSQRwA/JwenrHc=
+github.com/hugelgupf/socketpair v0.0.0-20190730060125-05d35a94e714 h1:/jC7qQFrv8CrSJVmaolDVOxTfS9kc36uB6H40kdbQq8=
+github.com/hugelgupf/socketpair v0.0.0-20190730060125-05d35a94e714/go.mod h1:2Goc3h8EklBH5mspfHFxBnEoURQCGzQQH1ga9Myjvis=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
@@ -266,6 +268,8 @@ github.com/jkeiser/iter v0.0.0-20200628201005-c8aa0ae784d1 h1:smvLGU3obGU5kny71B
 github.com/jkeiser/iter v0.0.0-20200628201005-c8aa0ae784d1/go.mod h1:fP/NdyhRVOv09PLRbVXrSqHhrfQypdZwgE2L4h2U5C8=
 github.com/jochenvg/go-udev v0.0.0-20240801134859-b65ed646224b h1:Pzf7tldbCVqwl3NnOnTamEWdh/rL41fsoYCn2HdHgRA=
 github.com/jochenvg/go-udev v0.0.0-20240801134859-b65ed646224b/go.mod h1:IBDUGq30U56w969YNPomhMbRje1GrhUsCh7tHdwgLXA=
+github.com/josharian/native v1.1.0 h1:uuaP0hAbW7Y4l0ZRQ6C9zfb7Mg1mbFKry/xzDAfmtLA=
+github.com/josharian/native v1.1.0/go.mod h1:7X/raswPFr05uY3HiLlYeyQntB6OO7E/d2Cu7qoaN2w=
 github.com/json-iterator/go v1.1.11/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=
 github.com/jstemmer/go-junit-report v0.9.1/go.mod h1:Brl9GWCQeLvo8nXZwPNNblvFj/XSXhF0NWZEnDohbsk=
@@ -314,6 +318,8 @@ github.com/mdlayher/ndp v1.1.0 h1:QylGKGVtH60sKZUE88+IW5ila1Z/M9/OXhWdsVKuscs=
 github.com/mdlayher/ndp v1.1.0/go.mod h1:FmgESgemgjl38vuOIyAHWUUL6vQKA/pQNkvXdWsdQFM=
 github.com/mdlayher/netx v0.0.0-20230430222610-7e21880baee8 h1:HMgSn3c16SXca3M+n6fLK2hXJLd4mhKAsZZh7lQfYmQ=
 github.com/mdlayher/netx v0.0.0-20230430222610-7e21880baee8/go.mod h1:qhZhwMDNWwZglKfwuWm0U9pCr/YKX1QAEwwJk9qfiTQ=
+github.com/mdlayher/packet v1.1.2 h1:3Up1NG6LZrsgDVn6X4L9Ge/iyRyxFEFD9o6Pr3Q1nQY=
+github.com/mdlayher/packet v1.1.2/go.mod h1:GEu1+n9sG5VtiRE4SydOmX5GTwyyYlteZiFU+x0kew4=
 github.com/mdlayher/socket v0.5.1 h1:VZaqt6RkGkt2OE9l3GcC6nZkqD3xKeQLyfleW/uBcos=
 github.com/mdlayher/socket v0.5.1/go.mod h1:TjPLHI1UgwEv5J1B5q0zTZq12A/6H7nKmtTanQE37IQ=
 github.com/mdlayher/vsock v1.2.1 h1:pC1mTJTvjo1r9n9fbm7S1j04rCgCzhCOS5DY0zqHlnQ=
