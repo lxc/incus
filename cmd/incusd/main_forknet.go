@@ -74,6 +74,7 @@ static void forkdonetdetach(char *file) {
 static void forkdonetdhcp() {
 	char *pidstr;
 	char path[PATH_MAX];
+	pid_t pid;
 
 	pidstr = getenv("LXC_PID");
 	if (!pidstr) {
@@ -81,12 +82,62 @@ static void forkdonetdhcp() {
 		_exit(1);
 	}
 
-	snprintf(path, sizeof(path), "/proc/%s/ns/net", pidstr);
-
 	// Attach to the network namespace.
+	snprintf(path, sizeof(path), "/proc/%s/ns/net", pidstr);
 	if (dosetns_file(path, "net") < 0) {
 		fprintf(stderr, "Failed setns to container network namespace: %s\n", strerror(errno));
 		_exit(1);
+	}
+
+	// Attach to the PID namespace.
+	snprintf(path, sizeof(path), "/proc/%s/ns/pid", pidstr);
+	if (dosetns_file(path, "pid") < 0) {
+		fprintf(stderr, "Failed setns to container PID namespace: %s\n", strerror(errno));
+		_exit(1);
+	}
+
+	// Run in the background.
+	pid = fork();
+	if (pid < 0) {
+		fprintf(stderr, "%s - Failed to create new process\n",
+			strerror(errno));
+		_exit(EXIT_FAILURE);
+	}
+
+	if (pid > 0) {
+		_exit(EXIT_SUCCESS);
+	}
+
+	if (!freopen("/dev/null", "r", stdin)) {
+		fprintf(stderr, "Failed to reconfigure stdin: %s\n", strerror(errno));
+		_exit(1);
+	}
+
+	if (!freopen("/dev/null", "w", stdout)) {
+		fprintf(stderr, "Failed to reconfigure stdout: %s\n", strerror(errno));
+		_exit(1);
+	}
+
+	if (!freopen("/dev/null", "w", stderr)) {
+		fprintf(stderr, "Failed to reconfigure stderr: %s\n", strerror(errno));
+		_exit(1);
+	}
+
+	if (setsid() < 0) {
+		fprintf(stderr, "%s - Failed to setup new session\n",
+			strerror(errno));
+		_exit(EXIT_FAILURE);
+	}
+
+	pid = fork();
+	if (pid < 0) {
+		fprintf(stderr, "%s - Failed to create new process\n",
+			strerror(errno));
+		_exit(EXIT_FAILURE);
+	}
+
+	if (pid > 0) {
+		_exit(EXIT_SUCCESS);
 	}
 
 	// Jump back to Go for the rest
