@@ -17,6 +17,7 @@ package main
 #include "incus.h"
 #include "macro.h"
 #include "memory_utils.h"
+#include "process_utils.h"
 
 static void forkdonetinfo(int pidfd, int ns_fd)
 {
@@ -139,6 +140,9 @@ static void forkdonetdhcp() {
 	if (pid > 0) {
 		_exit(EXIT_SUCCESS);
 	}
+
+	// Set the process title.
+	(void)setproctitle("[incus DHCP] eth0");
 
 	// Jump back to Go for the rest
 }
