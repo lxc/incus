@@ -48,11 +48,21 @@ Check the contents of an existing instance configuration ([`incus config show <i
 
 The following examples use [`incus launch`](incus_launch.md), but you can use [`incus init`](incus_create.md) in the same way.
 
-### Launch a container
+### Launch a system container
 
-To launch a container with an Ubuntu 22.04 image from the `images` server using the instance name `ubuntu-container`, enter the following command:
+To launch a system container with an Ubuntu 22.04 image from the `images` server using the instance name `ubuntu-container`, enter the following command:
 
     incus launch images:ubuntu/22.04 ubuntu-container
+
+### Launch an application container
+
+To launch an application (OCI) container, you first need to add an image registry:
+
+    incus remote add oci-docker https://docker.io --protocol=oci
+
+And then can launch a container from one of its images:
+
+    incus launch oci-docker:hello-world --ephemeral --console
 
 ### Launch a virtual machine
 
