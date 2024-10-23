@@ -17,6 +17,7 @@ package main
 #include "incus.h"
 #include "macro.h"
 #include "memory_utils.h"
+#include "process_utils.h"
 
 static void forkdonetinfo(int pidfd, int ns_fd)
 {
@@ -74,6 +75,7 @@ static void forkdonetdetach(char *file) {
 static void forkdonetdhcp() {
 	char *pidstr;
 	char path[PATH_MAX];
+	pid_t pid;
 
 	pidstr = getenv("LXC_PID");
 	if (!pidstr) {
@@ -81,13 +83,66 @@ static void forkdonetdhcp() {
 		_exit(1);
 	}
 
-	snprintf(path, sizeof(path), "/proc/%s/ns/net", pidstr);
-
 	// Attach to the network namespace.
+	snprintf(path, sizeof(path), "/proc/%s/ns/net", pidstr);
 	if (dosetns_file(path, "net") < 0) {
 		fprintf(stderr, "Failed setns to container network namespace: %s\n", strerror(errno));
 		_exit(1);
 	}
+
+	// Attach to the PID namespace.
+	snprintf(path, sizeof(path), "/proc/%s/ns/pid", pidstr);
+	if (dosetns_file(path, "pid") < 0) {
+		fprintf(stderr, "Failed setns to container PID namespace: %s\n", strerror(errno));
+		_exit(1);
+	}
+
+	// Run in the background.
+	pid = fork();
+	if (pid < 0) {
+		fprintf(stderr, "%s - Failed to create new process\n",
+			strerror(errno));
+		_exit(EXIT_FAILURE);
+	}
+
+	if (pid > 0) {
+		_exit(EXIT_SUCCESS);
+	}
+
+	if (!freopen("/dev/null", "r", stdin)) {
+		fprintf(stderr, "Failed to reconfigure stdin: %s\n", strerror(errno));
+		_exit(1);
+	}
+
+	if (!freopen("/dev/null", "w", stdout)) {
+		fprintf(stderr, "Failed to reconfigure stdout: %s\n", strerror(errno));
+		_exit(1);
+	}
+
+	if (!freopen("/dev/null", "w", stderr)) {
+		fprintf(stderr, "Failed to reconfigure stderr: %s\n", strerror(errno));
+		_exit(1);
+	}
+
+	if (setsid() < 0) {
+		fprintf(stderr, "%s - Failed to setup new session\n",
+			strerror(errno));
+		_exit(EXIT_FAILURE);
+	}
+
+	pid = fork();
+	if (pid < 0) {
+		fprintf(stderr, "%s - Failed to create new process\n",
+			strerror(errno));
+		_exit(EXIT_FAILURE);
+	}
+
+	if (pid > 0) {
+		_exit(EXIT_SUCCESS);
+	}
+
+	// Set the process title.
+	(void)setproctitle("[incus DHCP] eth0");
 
 	// Jump back to Go for the rest
 }
@@ -145,6 +200,7 @@ void forknet(void)
 import "C"
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -154,7 +210,7 @@ import (
 	"time"
 
 	"github.com/insomniacslk/dhcp/dhcpv4"
-	"github.com/insomniacslk/dhcp/dhcpv4/client4"
+	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/v6/internal/netutils"
@@ -227,9 +283,9 @@ func (c *cmdForknet) RunInfo(cmd *cobra.Command, args []string) error {
 
 // RunDHCP runs a one time DHCPv4 client and applies address, route and DNS configuration.
 func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
-	var messages []*dhcpv4.DHCPv4
 	iface := "eth0"
 
+	// Bring the interface up.
 	link := &ip.Link{
 		Name: iface,
 	}
@@ -249,33 +305,27 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 	hostname := strings.TrimSpace(string(bb))
 
 	// Try to get a lease.
-	client := client4.NewClient()
-	for i := 0; i < 10; i++ {
-		var err error
+	client, err := nclient4.New(iface)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't set up client for %q: %v\n", iface, err)
+		return nil
+	}
 
-		messages, err = client.Exchange(iface, dhcpv4.WithOption(dhcpv4.OptHostName(hostname)))
-		if err == nil {
-			break
-		}
+	defer func() { _ = client.Close() }()
 
-		time.Sleep(500 * time.Millisecond)
+	lease, err := client.Request(context.Background(), dhcpv4.WithOption(dhcpv4.OptHostName(hostname)))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't get a lease on %q (%q): %v\n", iface, hostname, err)
+		return nil
 	}
 
 	// Parse the response.
-	var reply *dhcpv4.DHCPv4
-	for _, m := range messages {
-		if m.OpCode == dhcpv4.OpcodeBootReply && m.MessageType() == dhcpv4.MessageTypeOffer {
-			reply = m
-			break
-		}
-	}
-
-	if reply == nil {
+	if lease.Offer == nil {
 		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't get a lease on %q after 5s\n", iface)
 		return nil
 	}
 
-	if reply.YourIPAddr == nil || reply.YourIPAddr.Equal(net.IPv4zero) || reply.SubnetMask() == nil || len(reply.Router()) != 1 || len(reply.DNS()) < 1 {
+	if lease.Offer.YourIPAddr == nil || lease.Offer.YourIPAddr.Equal(net.IPv4zero) || lease.Offer.SubnetMask() == nil || len(lease.Offer.Router()) != 1 || len(lease.Offer.DNS()) < 1 {
 		fmt.Fprintf(os.Stderr, "Giving up on DHCP, lease for %q didn't contain required fields\n", iface)
 		return nil
 	}
@@ -289,7 +339,7 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 
 	defer f.Close()
 
-	for _, nameserver := range reply.DNS() {
+	for _, nameserver := range lease.Offer.DNS() {
 		_, err = f.Write([]byte(fmt.Sprintf("nameserver %s\n", nameserver)))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
@@ -297,16 +347,16 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if reply.DomainName() != "" {
-		_, err = f.Write([]byte(fmt.Sprintf("domain %s\n", reply.DomainName())))
+	if lease.Offer.DomainName() != "" {
+		_, err = f.Write([]byte(fmt.Sprintf("domain %s\n", lease.Offer.DomainName())))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
 			return nil
 		}
 	}
 
-	if reply.DomainSearch() != nil && len(reply.DomainSearch().Labels) > 0 {
-		_, err = f.Write([]byte(fmt.Sprintf("search %s\n", strings.Join(reply.DomainSearch().Labels, ", "))))
+	if lease.Offer.DomainSearch() != nil && len(lease.Offer.DomainSearch().Labels) > 0 {
+		_, err = f.Write([]byte(fmt.Sprintf("search %s\n", strings.Join(lease.Offer.DomainSearch().Labels, ", "))))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
 			return nil
@@ -314,11 +364,11 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 	}
 
 	// Network configuration.
-	netMask, _ := reply.SubnetMask().Size()
+	netMask, _ := lease.Offer.SubnetMask().Size()
 
 	addr := &ip.Addr{
 		DevName: iface,
-		Address: fmt.Sprintf("%s/%d", reply.YourIPAddr, netMask),
+		Address: fmt.Sprintf("%s/%d", lease.Offer.YourIPAddr, netMask),
 		Family:  ip.FamilyV4,
 	}
 
@@ -331,7 +381,7 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 	route := &ip.Route{
 		DevName: iface,
 		Route:   "default",
-		Via:     reply.Router()[0].String(),
+		Via:     lease.Offer.Router()[0].String(),
 		Family:  ip.FamilyV4,
 	}
 
@@ -339,6 +389,21 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't add default route to %q\n", iface)
 		return nil
+	}
+
+	// Handle DHCP renewal.
+	for {
+		// Wait until it's renewal time.
+		time.Sleep(lease.Offer.IPAddressRenewalTime(time.Minute))
+
+		// Renew the lease.
+		newLease, err := client.Renew(context.Background(), lease, dhcpv4.WithOption(dhcpv4.OptHostName(hostname)))
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't renew the lease for %q\n", iface)
+			return nil
+		}
+
+		lease = newLease
 	}
 
 	return nil
