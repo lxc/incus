@@ -387,6 +387,21 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	// Handle DHCP renewal.
+	for {
+		// Wait until it's renewal time.
+		time.Sleep(lease.Offer.IPAddressRenewalTime(time.Minute))
+
+		// Renew the lease.
+		newLease, err := client.Renew(context.Background(), lease, dhcpv4.WithOption(dhcpv4.OptHostName(hostname)))
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't renew the lease for %q\n", iface)
+			return nil
+		}
+
+		lease = newLease
+	}
+
 	return nil
 }
 
