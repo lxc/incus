@@ -167,19 +167,6 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 		return response.BadRequest(err)
 	}
 
-	// Get a snapshot name.
-	if req.Name == "" {
-		var i int
-
-		_ = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			i = tx.GetNextStorageVolumeSnapshotIndex(ctx, poolName, volumeName, volumeType, "snap%d")
-
-			return nil
-		})
-
-		req.Name = fmt.Sprintf("snap%d", i)
-	}
-
 	// Check that this isn't a restricted volume
 	used, err := storagePools.VolumeUsedByDaemon(s, poolName, volumeName)
 	if err != nil {
@@ -196,22 +183,9 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 		return response.SmartError(err)
 	}
 
-	// Validate the snapshot name using same rule as pool name.
-	err = pool.ValidateName(req.Name)
-	if err != nil {
-		return response.BadRequest(err)
-	}
-
+	// Get the parent volume.
 	var parentDBVolume *db.StorageVolume
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Ensure that the snapshot doesn't already exist.
-		snapDBVolume, err := tx.GetStoragePoolVolume(ctx, pool.ID(), projectName, volumeType, fmt.Sprintf("%s/%s", volumeName, req.Name), true)
-		if err != nil && !response.IsNotFoundError(err) {
-			return err
-		} else if snapDBVolume != nil {
-			return api.StatusErrorf(http.StatusConflict, "Snapshot %q already in use", req.Name)
-		}
-
 		// Get the parent volume so we can get the config.
 		parentDBVolume, err = tx.GetStoragePoolVolume(ctx, pool.ID(), projectName, volumeType, volumeName, true)
 		if err != nil {
@@ -222,6 +196,53 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 	})
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	// Get the snapshot pattern.
+	pattern := parentDBVolume.Config["snapshots.pattern"]
+	if pattern == "" {
+		pattern = "snap%d"
+	}
+
+	pattern, err = internalUtil.RenderTemplate(pattern, pongo2.Context{
+		"creation_date": time.Now(),
+	})
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	// Get a snapshot name.
+	if req.Name == "" {
+		var i int
+
+		_ = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			i = tx.GetNextStorageVolumeSnapshotIndex(ctx, poolName, volumeName, volumeType, pattern)
+
+			return nil
+		})
+
+		req.Name = fmt.Sprintf(pattern, i)
+	} else {
+		// Make sure the snapshot doesn't already exist.
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			snapDBVolume, err := tx.GetStoragePoolVolume(ctx, pool.ID(), projectName, volumeType, fmt.Sprintf("%s/%s", volumeName, req.Name), true)
+			if err != nil && !response.IsNotFoundError(err) {
+				return err
+			} else if snapDBVolume != nil {
+				return api.StatusErrorf(http.StatusConflict, "Snapshot %q already in use", req.Name)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
+	// Validate the snapshot name using same rule as pool name.
+	err = pool.ValidateName(req.Name)
+	if err != nil {
+		return response.BadRequest(err)
 	}
 
 	// Fill in the expiry.
