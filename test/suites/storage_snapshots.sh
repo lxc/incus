@@ -102,6 +102,15 @@ test_storage_volume_snapshots() {
   incus storage volume delete "${storage_pool}" "vol1"
   incus storage volume delete "${storage_pool}" "vol1-snap0"
 
+  # Check snapshot pattern
+  incus storage volume create "${storage_pool}" "vol1"
+  incus storage volume snapshot create "${storage_pool}" "vol1"
+  incus storage volume snapshot show "${storage_pool}" "vol1/snap0"
+  incus storage volume set "${storage_pool}" "vol1" snapshots.pattern="test%d"
+  incus storage volume snapshot create "${storage_pool}" "vol1"
+  incus storage volume snapshot show "${storage_pool}" "vol1/test0"
+  incus storage volume delete "${storage_pool}" "vol1"
+
   # Check snapshot restore of type block volumes.
   incus storage volume create "${storage_pool}" "vol1" --type block
   incus storage volume snapshot create "${storage_pool}" "vol1" "snap0"
