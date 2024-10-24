@@ -67,6 +67,27 @@ See also [the Incus documentation page at Arch Linux](https://wiki.archlinux.org
 Please report packaging issues [here](https://gitlab.archlinux.org/archlinux/packaging/packages/incus).
 ```
 
+```{group-tab} Chimera Linux
+Incus and its dependencies are available in Chimera Linux's `user` repository as `incus`. Enable the user repository:
+
+    apk add chimera-repo-user
+    apk update
+
+Then add the `incus` package; this will install other dependencies including `incus-client`. Enable the service.
+
+    apk add incus
+    dinitctl enable incus
+
+If running virtual machines, also add the EDK2 firmware. Note that Chimera Linux does not provide complete support for Secure Boot, so virtual machines must be launched with this feature disabled per the example.
+
+    apk add qemu-edk2-firmware
+    dinitctl restart incus
+    # example, launch virtual machine with secureboot disabled:
+    # incus launch images:debian/12 --vm -c security.secureboot=false
+
+Please report packaging issues [here](https://github.com/chimera-linux/cports/issues).
+```
+
 ```{group-tab} Debian
 There are three options currently available to Debian users.
 
