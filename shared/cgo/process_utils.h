@@ -114,19 +114,6 @@ static inline int push_vargs(char ***list, char *entry)
 	return 0;
 }
 
-static inline size_t strlcpy(char *dest, const char *src, size_t size)
-{
-	size_t ret = strlen(src);
-
-	if (size) {
-		size_t len = (ret >= size) ? size - 1 : ret;
-		memcpy(dest, src, len);
-		dest[len] = '\0';
-	}
-
-	return ret;
-}
-
 /*
  * Sets the process title to the specified title. Note that this may fail if
  * the kernel doesn't support PR_SET_MM_MAP (kernels <3.18).
@@ -231,8 +218,11 @@ static inline int setproctitle(char *title)
 
 	ret = prctl(PR_SET_MM, prctl_arg(PR_SET_MM_MAP), prctl_arg(&prctl_map),
 		    prctl_arg(sizeof(prctl_map)), prctl_arg(0));
-	if (ret == 0)
-		(void)strlcpy((char *)arg_start, title, len);
+	if (ret == 0) {
+		char *dest = (char *)arg_start;
+		memcpy(dest, title, len - 1);
+		dest[len-1] = '\0';
+	}
 
 	return ret;
 }
