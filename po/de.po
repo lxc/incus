@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-10-18 14:09-0400\n"
+"POT-Creation-Date: 2024-10-25 15:46-0400\n"
 "PO-Revision-Date: 2024-10-06 20:15+0000\n"
 "Last-Translator: Jan Mittelstädter <jan@mittelstaedter.de>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
@@ -1598,11 +1598,11 @@ msgstr "Clustering aktiviert"
 msgid "Columns"
 msgstr "Spalten"
 
-#: cmd/incus/main.go:84
+#: cmd/incus/main.go:85
 msgid "Command line client for Incus"
 msgstr "Kommandozeilen-Client für Incus"
 
-#: cmd/incus/main.go:85
+#: cmd/incus/main.go:86
 msgid ""
 "Command line client for Incus\n"
 "\n"
@@ -2223,7 +2223,7 @@ msgstr ""
 #: cmd/incus/image_alias.go:29 cmd/incus/image_alias.go:65
 #: cmd/incus/image_alias.go:112 cmd/incus/image_alias.go:158
 #: cmd/incus/image_alias.go:334 cmd/incus/import.go:27 cmd/incus/info.go:35
-#: cmd/incus/launch.go:24 cmd/incus/list.go:50 cmd/incus/main.go:85
+#: cmd/incus/launch.go:24 cmd/incus/list.go:50 cmd/incus/main.go:86
 #: cmd/incus/manpage.go:22 cmd/incus/monitor.go:33 cmd/incus/move.go:35
 #: cmd/incus/network.go:36 cmd/incus/network.go:143 cmd/incus/network.go:240
 #: cmd/incus/network.go:337 cmd/incus/network.go:448 cmd/incus/network.go:506
@@ -2325,7 +2325,7 @@ msgstr ""
 #: cmd/incus/storage_volume.go:2874 cmd/incus/storage_volume.go:2961
 #: cmd/incus/storage_volume.go:3127 cmd/incus/top.go:33 cmd/incus/version.go:22
 #: cmd/incus/warning.go:29 cmd/incus/warning.go:72 cmd/incus/warning.go:263
-#: cmd/incus/warning.go:304 cmd/incus/warning.go:358
+#: cmd/incus/warning.go:304 cmd/incus/warning.go:358 cmd/incus/webui.go:19
 msgid "Description"
 msgstr ""
 
@@ -2525,7 +2525,7 @@ msgstr ""
 msgid "Don't require user confirmation for using --force"
 msgstr ""
 
-#: cmd/incus/main.go:105
+#: cmd/incus/main.go:106
 msgid "Don't show progress information"
 msgstr ""
 
@@ -3428,7 +3428,7 @@ msgstr "Herunterfahren des Containers erzwingen."
 msgid "Force the removal of running instances"
 msgstr ""
 
-#: cmd/incus/main.go:101
+#: cmd/incus/main.go:102
 msgid "Force using the local unix socket"
 msgstr ""
 
@@ -3836,7 +3836,7 @@ msgstr ""
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 
-#: cmd/incus/main.go:446
+#: cmd/incus/main.go:451
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -4138,7 +4138,7 @@ msgid ""
 "Invalid name in '%s', empty string is only allowed when defining maxWidth"
 msgstr ""
 
-#: cmd/incus/main.go:542 cmd/incus/storage.go:134
+#: cmd/incus/main.go:547 cmd/incus/storage.go:134
 #, fuzzy
 msgid "Invalid number of arguments"
 msgstr "ungültiges Argument %s"
@@ -6235,6 +6235,11 @@ msgid ""
 "Only one of --storage-create-device or --storage-create-loop can be specified"
 msgstr ""
 
+#: cmd/incus/webui.go:18 cmd/incus/webui.go:19
+#, fuzzy
+msgid "Open the web interface"
+msgstr "Anhalten des Containers fehlgeschlagen!"
+
 #: cmd/incus/info.go:677
 #, fuzzy
 msgid "Operating System:"
@@ -6249,7 +6254,7 @@ msgstr "Profil %s gelöscht\n"
 msgid "Optimized Storage"
 msgstr ""
 
-#: cmd/incus/main.go:102
+#: cmd/incus/main.go:103
 msgid "Override the source project"
 msgstr ""
 
@@ -6329,7 +6334,7 @@ msgstr ""
 msgid "Partitions:"
 msgstr ""
 
-#: cmd/incus/main.go:407
+#: cmd/incus/main.go:412
 #, fuzzy, c-format
 msgid "Password for %s: "
 msgstr "Administrator Passwort für %s: "
@@ -6435,7 +6440,7 @@ msgstr ""
 msgid "Pretty rendering (short for --format=pretty)"
 msgstr ""
 
-#: cmd/incus/main.go:100
+#: cmd/incus/main.go:101
 msgid "Print help"
 msgstr ""
 
@@ -6443,7 +6448,7 @@ msgstr ""
 msgid "Print the raw response"
 msgstr ""
 
-#: cmd/incus/main.go:99
+#: cmd/incus/main.go:100
 msgid "Print version number"
 msgstr ""
 
@@ -6991,7 +6996,7 @@ msgstr "der Name des Ursprung Containers muss angegeben werden"
 msgid "Role (admin or read-only)"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:145
+#: cmd/incus/admin_sql.go:148
 #, c-format
 msgid "Rows affected: %d"
 msgstr ""
@@ -7519,11 +7524,11 @@ msgstr ""
 msgid "Setup loop based storage with SIZE in GiB"
 msgstr ""
 
-#: cmd/incus/main.go:103
+#: cmd/incus/main.go:104
 msgid "Show all debug messages"
 msgstr ""
 
-#: cmd/incus/main.go:104
+#: cmd/incus/main.go:105
 msgid "Show all information messages"
 msgstr ""
 
@@ -7578,7 +7583,7 @@ msgstr "Profil %s erstellt\n"
 msgid "Show instance snapshot configuration"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/main.go:279 cmd/incus/main.go:280
+#: cmd/incus/main.go:284 cmd/incus/main.go:285
 msgid "Show less common commands"
 msgstr ""
 
@@ -8273,6 +8278,10 @@ msgid ""
 "The requested storage pool \"%s\" already exists. Please choose another name."
 msgstr ""
 
+#: cmd/incus/webui_unix.go:73
+msgid "The server doesn't have a web UI installed"
+msgstr ""
+
 #: cmd/incus/info.go:394
 msgid "The server doesn't implement the newer v2 resources API"
 msgstr ""
@@ -8296,7 +8305,7 @@ msgstr ""
 msgid "There is no \"image name\".  Did you want an alias?"
 msgstr ""
 
-#: cmd/incus/main.go:306
+#: cmd/incus/main.go:311
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
 "As your platform can't run native Linux instances, you must connect to a "
@@ -8304,6 +8313,10 @@ msgid ""
 "\n"
 "If you already added a remote server, make it the default with \"incus "
 "remote switch NAME\"."
+msgstr ""
+
+#: cmd/incus/webui_windows.go:15
+msgid "This command isn't supported on Windows"
 msgstr ""
 
 #: cmd/incus/admin_recover.go:63
@@ -8345,7 +8358,7 @@ msgstr ""
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
-#: cmd/incus/main.go:451
+#: cmd/incus/main.go:456
 msgid ""
 "To start your first container, try: incus launch images:ubuntu/22.04\n"
 "Or for a virtual machine: incus launch images:ubuntu/22.04 --vm"
@@ -8792,7 +8805,7 @@ msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool)"
 msgstr ""
 
-#: cmd/incus/main.go:106
+#: cmd/incus/main.go:107
 msgid "Use with help or --help to view sub-commands"
 msgstr ""
 
@@ -8915,6 +8928,11 @@ msgid ""
 "Doing so makes your nested containers slightly less safe as they could\n"
 "in theory attack their parent container and gain more privileges than\n"
 "they otherwise would."
+msgstr ""
+
+#: cmd/incus/webui_unix.go:120
+#, c-format
+msgid "Web server running at: %s"
 msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:151
@@ -9088,7 +9106,8 @@ msgstr ""
 #: cmd/incus/network.go:1050 cmd/incus/network_acl.go:91
 #: cmd/incus/network_integration.go:413 cmd/incus/network_zone.go:88
 #: cmd/incus/operation.go:110 cmd/incus/profile.go:707 cmd/incus/project.go:505
-#: cmd/incus/storage.go:662 cmd/incus/version.go:20 cmd/incus/warning.go:69
+#: cmd/incus/storage.go:662 cmd/incus/top.go:31 cmd/incus/version.go:20
+#: cmd/incus/warning.go:69 cmd/incus/webui.go:17
 #, fuzzy
 msgid "[<remote>:]"
 msgstr ""

@@ -266,6 +266,10 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	warningCmd := cmdWarning{global: &globalCmd}
 	app.AddCommand(warningCmd.Command())
 
+	// webui sub-command
+	webuiCmd := cmdWebui{global: &globalCmd}
+	app.AddCommand(webuiCmd.Command())
+
 	// Get help command
 	app.InitDefaultHelpCmd()
 	var help *cobra.Command

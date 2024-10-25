@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-10-18 14:09-0400\n"
+"POT-Creation-Date: 2024-10-25 15:46-0400\n"
 "PO-Revision-Date: 2024-06-02 16:41+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -1545,11 +1545,11 @@ msgstr "クラスタリングが有効になりました"
 msgid "Columns"
 msgstr "カラムレイアウト"
 
-#: cmd/incus/main.go:84
+#: cmd/incus/main.go:85
 msgid "Command line client for Incus"
 msgstr "incus のコマンドラインクライアント"
 
-#: cmd/incus/main.go:85
+#: cmd/incus/main.go:86
 msgid ""
 "Command line client for Incus\n"
 "\n"
@@ -2153,7 +2153,7 @@ msgstr "警告を削除します"
 #: cmd/incus/image_alias.go:29 cmd/incus/image_alias.go:65
 #: cmd/incus/image_alias.go:112 cmd/incus/image_alias.go:158
 #: cmd/incus/image_alias.go:334 cmd/incus/import.go:27 cmd/incus/info.go:35
-#: cmd/incus/launch.go:24 cmd/incus/list.go:50 cmd/incus/main.go:85
+#: cmd/incus/launch.go:24 cmd/incus/list.go:50 cmd/incus/main.go:86
 #: cmd/incus/manpage.go:22 cmd/incus/monitor.go:33 cmd/incus/move.go:35
 #: cmd/incus/network.go:36 cmd/incus/network.go:143 cmd/incus/network.go:240
 #: cmd/incus/network.go:337 cmd/incus/network.go:448 cmd/incus/network.go:506
@@ -2255,7 +2255,7 @@ msgstr "警告を削除します"
 #: cmd/incus/storage_volume.go:2874 cmd/incus/storage_volume.go:2961
 #: cmd/incus/storage_volume.go:3127 cmd/incus/top.go:33 cmd/incus/version.go:22
 #: cmd/incus/warning.go:29 cmd/incus/warning.go:72 cmd/incus/warning.go:263
-#: cmd/incus/warning.go:304 cmd/incus/warning.go:358
+#: cmd/incus/warning.go:304 cmd/incus/warning.go:358 cmd/incus/webui.go:19
 msgid "Description"
 msgstr "説明"
 
@@ -2447,7 +2447,7 @@ msgstr "Thin provisioning なしで続けますか?"
 msgid "Don't require user confirmation for using --force"
 msgstr "--force を使う際にユーザーの確認を必要としない"
 
-#: cmd/incus/main.go:105
+#: cmd/incus/main.go:106
 msgid "Don't show progress information"
 msgstr "進捗情報を表示しません"
 
@@ -3317,7 +3317,7 @@ msgstr "インスタンスを強制停止します"
 msgid "Force the removal of running instances"
 msgstr "稼働中のインスタンスを強制的に削除します"
 
-#: cmd/incus/main.go:101
+#: cmd/incus/main.go:102
 msgid "Force using the local unix socket"
 msgstr "強制的にローカルのUNIXソケットを使います"
 
@@ -3733,7 +3733,7 @@ msgstr ""
 "存在するスナップショット名の場合は既存のスナップショットを削除したあとに新し"
 "いスナップショットを作成します"
 
-#: cmd/incus/main.go:446
+#: cmd/incus/main.go:451
 #, fuzzy
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
@@ -4042,7 +4042,7 @@ msgid ""
 msgstr ""
 "'%s' は不正な名前です。空文字列は maxWidth を指定しているときのみ指定できます"
 
-#: cmd/incus/main.go:542 cmd/incus/storage.go:134
+#: cmd/incus/main.go:547 cmd/incus/storage.go:134
 msgid "Invalid number of arguments"
 msgstr "引数の数が不正です"
 
@@ -6735,6 +6735,11 @@ msgstr ""
 "指定できるのは、--storage-create-device もしくは --storage-create-loop のいず"
 "れか一方のみです"
 
+#: cmd/incus/webui.go:18 cmd/incus/webui.go:19
+#, fuzzy
+msgid "Open the web interface"
+msgstr "ホストインターフェース"
+
 #: cmd/incus/info.go:677
 #, fuzzy
 msgid "Operating System:"
@@ -6749,7 +6754,7 @@ msgstr "バックグラウンド操作 %s を削除しました"
 msgid "Optimized Storage"
 msgstr "最適化されたストレージ"
 
-#: cmd/incus/main.go:102
+#: cmd/incus/main.go:103
 msgid "Override the source project"
 msgstr "プロジェクトを指定します"
 
@@ -6830,7 +6835,7 @@ msgstr "送信パケット"
 msgid "Partitions:"
 msgstr "パーティション:"
 
-#: cmd/incus/main.go:407
+#: cmd/incus/main.go:412
 #, c-format
 msgid "Password for %s: "
 msgstr "%s のパスワード: "
@@ -6936,7 +6941,7 @@ msgstr ""
 msgid "Pretty rendering (short for --format=pretty)"
 msgstr "Pretty レンダリング（--format=pretty の短縮系）"
 
-#: cmd/incus/main.go:100
+#: cmd/incus/main.go:101
 msgid "Print help"
 msgstr "ヘルプを表示します"
 
@@ -6944,7 +6949,7 @@ msgstr "ヘルプを表示します"
 msgid "Print the raw response"
 msgstr "レスポンスをそのまま表示します"
 
-#: cmd/incus/main.go:99
+#: cmd/incus/main.go:100
 msgid "Print version number"
 msgstr "バージョン番号を表示します"
 
@@ -7475,7 +7480,7 @@ msgstr "クラスターメンバーに join するためのトークンを失効
 msgid "Role (admin or read-only)"
 msgstr "ロール（admin または read-only）"
 
-#: cmd/incus/admin_sql.go:145
+#: cmd/incus/admin_sql.go:148
 #, c-format
 msgid "Rows affected: %d"
 msgstr "影響を受ける行: %d"
@@ -8061,11 +8066,11 @@ msgstr "DEVICE を使ってストレージベースのデバイスをセット�
 msgid "Setup loop based storage with SIZE in GiB"
 msgstr "サイズ GiB で loop ベースのストレージをセットアップします"
 
-#: cmd/incus/main.go:103
+#: cmd/incus/main.go:104
 msgid "Show all debug messages"
 msgstr "デバッグメッセージをすべて表示します"
 
-#: cmd/incus/main.go:104
+#: cmd/incus/main.go:105
 msgid "Show all information messages"
 msgstr "詳細な情報を出力します"
 
@@ -8114,7 +8119,7 @@ msgstr "インスタンスもしくはサーバの情報を表示します"
 msgid "Show instance snapshot configuration"
 msgstr "インスタンスもしくはサーバの設定を表示します"
 
-#: cmd/incus/main.go:279 cmd/incus/main.go:280
+#: cmd/incus/main.go:284 cmd/incus/main.go:285
 msgid "Show less common commands"
 msgstr "全てのコマンドを表示します (主なコマンドだけではなく)"
 
@@ -8829,6 +8834,10 @@ msgstr ""
 "入力したストレージプール \"%s\" はすでに存在しています。他の名前を入力してく"
 "ださい。"
 
+#: cmd/incus/webui_unix.go:73
+msgid "The server doesn't have a web UI installed"
+msgstr ""
+
 #: cmd/incus/info.go:394
 msgid "The server doesn't implement the newer v2 resources API"
 msgstr "サーバには新しい v2 resource API が実装されていません"
@@ -8852,7 +8861,7 @@ msgstr ""
 "publish 先にはイメージ名は指定できません。\"--alias\" オプションを使ってくだ"
 "さい。"
 
-#: cmd/incus/main.go:306
+#: cmd/incus/main.go:311
 #, fuzzy
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
@@ -8871,6 +8880,11 @@ msgstr ""
 "うにデフォルトを設定してください。\n"
 "仮想マシン上にローカルな LXD サーバを簡単にセットアップするには、https://"
 "multipass.run の使用を検討してください。"
+
+#: cmd/incus/webui_windows.go:15
+#, fuzzy
+msgid "This command isn't supported on Windows"
+msgstr "入力したバックエンド '%s' は、この初期化ではサポートされていません"
 
 #: cmd/incus/admin_recover.go:63
 msgid "This server currently has the following storage pools:"
@@ -8915,7 +8929,7 @@ msgstr ""
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr "コンソールから切り離すには <ctrl>+a q を押します"
 
-#: cmd/incus/main.go:451
+#: cmd/incus/main.go:456
 #, fuzzy
 msgid ""
 "To start your first container, try: incus launch images:ubuntu/22.04\n"
@@ -9353,7 +9367,7 @@ msgstr ""
 "最適化された形でストレージドライバを使います (同様のプール上にのみリストアで"
 "きます)"
 
-#: cmd/incus/main.go:106
+#: cmd/incus/main.go:107
 msgid "Use with help or --help to view sub-commands"
 msgstr "サブコマンドを見るには help もしくは --help を使ってください"
 
@@ -9487,6 +9501,11 @@ msgstr ""
 "この問題を回避するには、コンテナ自身への割当を再利用できます。再利用す\n"
 "ると理論的には、そうしない場合に比べて、親コンテナを攻撃してより多くの\n"
 "特権を得られる可能性があるため、安全性は若干低くなります。"
+
+#: cmd/incus/webui_unix.go:120
+#, c-format
+msgid "Web server running at: %s"
+msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:151
 msgid "What IP address or DNS name should be used to reach this server?"
@@ -9653,7 +9672,8 @@ msgstr "[<remote:>]<pool> <volume> <profile> [<device name>] [<path>]"
 #: cmd/incus/network.go:1050 cmd/incus/network_acl.go:91
 #: cmd/incus/network_integration.go:413 cmd/incus/network_zone.go:88
 #: cmd/incus/operation.go:110 cmd/incus/profile.go:707 cmd/incus/project.go:505
-#: cmd/incus/storage.go:662 cmd/incus/version.go:20 cmd/incus/warning.go:69
+#: cmd/incus/storage.go:662 cmd/incus/top.go:31 cmd/incus/version.go:20
+#: cmd/incus/warning.go:69 cmd/incus/webui.go:17
 msgid "[<remote>:]"
 msgstr "[<remote>:]"
 
