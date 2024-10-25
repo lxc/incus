@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"net/http/httputil"
@@ -71,7 +72,7 @@ func restServer(d *Daemon) *http.Server {
 	mux.UseEncodedPath() // Allow encoded values in path segments.
 
 	uiPath := os.Getenv("INCUS_UI")
-	uiEnabled := uiPath != "" && util.PathExists(uiPath)
+	uiEnabled := uiPath != "" && util.PathExists(fmt.Sprintf("%s/index.html", uiPath))
 	if uiEnabled {
 		uiHttpDir := uiHttpDir{http.Dir(uiPath)}
 		mux.PathPrefix("/ui/").Handler(http.StripPrefix("/ui/", http.FileServer(uiHttpDir)))
