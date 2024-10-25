@@ -214,6 +214,8 @@ type remoteProxyHandler struct {
 
 	api10     *api.Server
 	api10Etag string
+
+	token string
 }
 
 func (h remoteProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -228,6 +230,35 @@ func (h remoteProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	*h.transactions += 1
 	*h.connections += 1
 	h.mu.Unlock()
+
+	// Basic auth.
+	if h.token != "" {
+		// Parse query URL.
+		values, err := url.ParseQuery(r.URL.RawQuery)
+		if err != nil {
+			return
+		}
+
+		token := values.Get("auth_token")
+		if token != "" {
+			tokenCookie := http.Cookie{
+				Name:     "auth_token",
+				Value:    token,
+				Path:     "/",
+				Secure:   false,
+				HttpOnly: true,
+				SameSite: http.SameSiteStrictMode,
+			}
+
+			http.SetCookie(w, &tokenCookie)
+		} else {
+			cookie, err := r.Cookie("auth_token")
+			if err != nil || cookie.Value != h.token {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+		}
+	}
 
 	// Handle /1.0 internally (saves a round-trip).
 	if r.RequestURI == "/1.0" || strings.HasPrefix(r.RequestURI, "/1.0?project=") {
