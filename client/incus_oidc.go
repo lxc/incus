@@ -18,6 +18,8 @@ import (
 	httphelper "github.com/zitadel/oidc/v3/pkg/http"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"golang.org/x/oauth2"
+
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // ErrOIDCExpired is returned when the token is expired and we can't retry the request ourselves.
@@ -281,7 +283,7 @@ func (o *oidcClient) authenticate(issuer string, clientID string, audience strin
 	fmt.Printf("URL: %s\n", u.String())
 	fmt.Printf("Code: %s\n\n", resp.UserCode)
 
-	_ = openBrowser(u.String())
+	_ = util.OpenBrowser(u.String())
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT)
 	defer stop()
