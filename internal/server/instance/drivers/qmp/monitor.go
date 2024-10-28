@@ -61,7 +61,7 @@ func (m *Monitor) start() error {
 			"format": "utf8",
 		}
 
-		err := m.run("ringbuf-read", args, &resp)
+		err := m.Run("ringbuf-read", args, &resp)
 		if err != nil {
 			return
 		}
@@ -218,7 +218,7 @@ func (m *Monitor) RunJSON(request []byte, resp any) error {
 }
 
 // run executes a command.
-func (m *Monitor) run(cmd string, args any, resp any) error {
+func (m *Monitor) Run(cmd string, args any, resp any) error {
 	// Construct the command.
 	requestArgs := struct {
 		Execute   string `json:"execute"`
