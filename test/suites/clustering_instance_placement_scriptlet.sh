@@ -120,7 +120,7 @@ EOF
   ! INCUS_DIR="${INCUS_ONE_DIR}" incus init testimage c1 || false
 
   # Set instance placement scriptlet to one that sets an invalid cluster member target.
-  # Check that instance placement uses Incus's built in logic instead (as if setTarget hadn't been called at all).
+  # Confirm that we get a placement error.
   cat << EOF | incus config set instances.placement.scriptlet=-
 def instance_placement(request, candidate_members):
         # Set invalid member target.
@@ -130,8 +130,11 @@ def instance_placement(request, candidate_members):
         return
 EOF
 
-  INCUS_DIR="${INCUS_ONE_DIR}" incus init testimage c1 -c cluster.evacuate=migrate
-  INCUS_DIR="${INCUS_ONE_DIR}" incus info c1 | grep -q "Location: node1"
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incus init testimage c1 -c cluster.evacuate=migrate || false
+
+  # Create an instance
+  incus config unset instances.placement.scriptlet
+  INCUS_DIR="${INCUS_ONE_DIR}" incus init testimage c1 -c cluster.evacuate=migrate --target node1
 
   # Set basic instance placement scriptlet that statically targets to 3rd member.
   cat << EOF | incus config set instances.placement.scriptlet=-
