@@ -47,8 +47,8 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 		}
 
 		if targetMember == nil {
-			l.Warn("Instance placement scriptlet set invalid member target", logger.Ctx{"member": memberName})
-			return starlark.String("Invalid member name"), nil
+			l.Error("Instance placement scriptlet set invalid member target", logger.Ctx{"member": memberName})
+			return starlark.String("Invalid member name"), fmt.Errorf("Invalid member name: %s", memberName)
 		}
 
 		l.Info("Instance placement scriptlet set member target", logger.Ctx{"member": targetMember.Name})
