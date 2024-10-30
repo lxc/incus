@@ -325,6 +325,59 @@ property = "disable_s4"
 value = "0"
 ```
 
+### Override QEMU runtime objects
+While `raw.qemu` and `raw.qemu.conf` can be used to alter the arguments
+and configuration file that's passed to QEMU, a lot of devices are now
+added through QMP instead.
+
+This is used by Incus for any device which may need to be re-configured
+at runtime, effectively anything that can be hot-plugged.
+
+Those devices cannot be overridden through the configuration or the
+command line, but instead additional configuration keys are available to
+run QMP commands directly.
+
+Fixed commands can be provided through the `raw.qemu.early`, `raw.qemu.pre-start` and `raw.qemu.post-start` configuration keys.
+Those take a JSON encoded list of QMP commands to run.
+
+The hooks correspond to:
+
+- `early` is run prior to any device having been added by Incus through QMP
+- `pre-start` is run following Incus having added all its devices by prior to the VM being started
+- `post-start` is run immediately following the VM starting up
+
+For anyone needing dynamic QMP interactions, for example to retrieve the
+current value of some objects before modifying or generating new
+objects, it's also possible to attach to those same hooks using a
+scriptlet.
+
+This is done through `raw.qemu.scriptlet`. The scriptlet must define the `qemu_hook(hook_name)` function.
+
+The following commands are exposed to that scriptlet:
+
+- `log_info` will log an `INFO` message
+- `log_warn` will log a `WARNING` message
+- `log_error` will log an `ERROR` message
+- `run_qmp` will run an arbitrary QMP command (JSON) and return its output
+- `run_command` will run the specified command with an optional list of arguments and return its output
+
+Additionally the following alias commands (internally use `run_command`) are also available to simplify scripts:
+
+- `blockdev_add`
+- `blockdev_del`
+- `chardev_add`
+- `chardev_change`
+- `chardev_remove`
+- `device_add`
+- `device_del`
+- `netdev_add`
+- `netdev_del`
+- `object_add`
+- `object_del`
+- `qom_get`
+- `qom_list`
+- `qom_set`
+
 (instance-options-security)=
 ## Security policies
 
