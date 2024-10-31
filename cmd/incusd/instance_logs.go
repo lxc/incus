@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -668,8 +669,7 @@ func validLogFileName(fname string) bool {
 	/* Let's just require that the paths be relative, so that we don't have
 	 * to deal with any escaping or whatever.
 	 */
-	return fname == "lxc.log" ||
-		fname == "qemu.log" ||
+	return slices.Contains([]string{"lxc.log", "qemu.log", "qemu.early.log", "qemu.qmp.log"}, fname) ||
 		strings.HasPrefix(fname, "migration_") ||
 		strings.HasPrefix(fname, "snapshot_")
 }
