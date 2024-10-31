@@ -202,6 +202,7 @@ The following functions are available to the scriptlet (in addition to those pro
 - `get_cluster_member_state(member_name)`: Get the cluster member's state. Returns an object with the cluster member's state in the form of [`api.ClusterMemberState`](https://pkg.go.dev/github.com/lxc/incus/shared/api#ClusterMemberState). `member_name` is the name of the cluster member to get the state for.
 - `get_instance_resources()`: Get information about the resources the instance will require. Returns an object with the resource information in the form of [`scriptlet.InstanceResources`](https://pkg.go.dev/github.com/lxc/incus/shared/api/scriptlet/#InstanceResources).
 - `get_instances(location, project)`: Get a list of instances based on project and/or location filters. Returns the list of instances in the form of [`[]api.Instance`](https://pkg.go.dev/github.com/lxc/incus/shared/api#Instance).
+- `get_instances_count(location, project, pending)`: Get a count of the instances based on project and/or location filters. The count may include instances currently being created for which no database record exists yet..
 - `get_cluster_members(group)`: Get a list of cluster members based on the cluster group. Returns the list of cluster members in the form of [`[]api.ClusterMember`](https://pkg.go.dev/github.com/lxc/incus/shared/api#ClusterMember).
 - `get_project(name)`: Get a project object based on the project name. Returns a project object in the form of [`api.Project`](https://pkg.go.dev/github.com/lxc/incus/shared/api#Project).
 
