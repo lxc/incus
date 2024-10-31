@@ -99,7 +99,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 
 		rv, err := StarlarkMarshal(res)
 		if err != nil {
-			return nil, fmt.Errorf("Marshalling member resources for %q failed: %w", memberName, err)
+			return nil, fmt.Errorf("Marshalling cluster member resources for %q failed: %w", memberName, err)
 		}
 
 		return rv, nil
@@ -148,7 +148,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 
 		rv, err := StarlarkMarshal(memberState)
 		if err != nil {
-			return nil, fmt.Errorf("Marshalling member state for %q failed: %w", memberName, err)
+			return nil, fmt.Errorf("Marshalling cluster member state for %q failed: %w", memberName, err)
 		}
 
 		return rv, nil
@@ -283,7 +283,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 
 		rv, err := StarlarkMarshal(instanceList)
 		if err != nil {
-			return nil, fmt.Errorf("Marshalling instance resources failed: %w", err)
+			return nil, fmt.Errorf("Marshalling instances failed: %w", err)
 		}
 
 		return rv, nil
@@ -371,7 +371,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 
 		rv, err := StarlarkMarshal(allMembersInfo)
 		if err != nil {
-			return nil, fmt.Errorf("Marshalling instance resources failed: %w", err)
+			return nil, fmt.Errorf("Marshalling cluster members failed: %w", err)
 		}
 
 		return rv, nil
@@ -406,7 +406,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 
 		rv, err := StarlarkMarshal(p)
 		if err != nil {
-			return nil, fmt.Errorf("Marshalling instance resources failed: %w", err)
+			return nil, fmt.Errorf("Marshalling project failed: %w", err)
 		}
 
 		return rv, nil
