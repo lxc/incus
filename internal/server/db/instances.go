@@ -13,6 +13,7 @@ import (
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/db/cluster"
+	"github.com/lxc/incus/v6/internal/server/db/operationtype"
 	"github.com/lxc/incus/v6/internal/server/db/query"
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
@@ -1102,4 +1103,103 @@ func UpdateInstance(tx *sql.Tx, id int, description string, architecture int, ep
 	}
 
 	return nil
+}
+
+// GetInstancesCount returns the number of instances with possible filtering for project or location.
+// It also supports looking for instances currently being created.
+func (c *ClusterTx) GetInstancesCount(ctx context.Context, projectName string, locationName string, includePending bool) (int, error) {
+	var err error
+
+	// Load the project ID if needed.
+	projectID := int64(-1)
+	if projectName != "" {
+		projectID, err = cluster.GetProjectID(ctx, c.Tx(), projectName)
+		if err != nil {
+			return -1, err
+		}
+	}
+
+	// Load the cluster member ID if needed.
+	nodeID := int64(-1)
+	if locationName != "" {
+		nodeID, err = cluster.GetNodeID(ctx, c.Tx(), locationName)
+		if err != nil {
+			return -1, err
+		}
+	}
+
+	// Count the instances.
+	var count int
+
+	if projectID != -1 && nodeID != -1 {
+		// Count for specified project and cluster member.
+		created, err := query.Count(ctx, c.tx, "instances", "project_id=? AND node_id=?", projectID, nodeID)
+		if err != nil {
+			return -1, fmt.Errorf("Failed to get instances count: %w", err)
+		}
+
+		count += created
+
+		if includePending {
+			pending, err := query.Count(ctx, c.tx, "operations", "project_id=? AND node_id=? AND type=?", projectID, nodeID, operationtype.InstanceCreate)
+			if err != nil {
+				return -1, fmt.Errorf("Failed to get pending instances count: %w", err)
+			}
+
+			count += pending
+		}
+	} else if projectID != -1 {
+		// Count for specified project.
+		created, err := query.Count(ctx, c.tx, "instances", "project_id=?", projectID)
+		if err != nil {
+			return -1, fmt.Errorf("Failed to get instances count: %w", err)
+		}
+
+		count += created
+
+		if includePending {
+			pending, err := query.Count(ctx, c.tx, "operations", "project_id=? AND type=?", projectID, operationtype.InstanceCreate)
+			if err != nil {
+				return -1, fmt.Errorf("Failed to get pending instances count: %w", err)
+			}
+
+			count += pending
+		}
+	} else if nodeID != -1 {
+		// Count for specified cluster member.
+		created, err := query.Count(ctx, c.tx, "instances", "node_id=?", nodeID)
+		if err != nil {
+			return -1, fmt.Errorf("Failed to get instances count: %w", err)
+		}
+
+		count += created
+
+		if includePending {
+			pending, err := query.Count(ctx, c.tx, "operations", "node_id=? AND type=?", nodeID, operationtype.InstanceCreate)
+			if err != nil {
+				return -1, fmt.Errorf("Failed to get pending instances count: %w", err)
+			}
+
+			count += pending
+		}
+	} else {
+		// Count everything.
+		created, err := query.Count(ctx, c.tx, "instances", "")
+		if err != nil {
+			return -1, fmt.Errorf("Failed to get instances count: %w", err)
+		}
+
+		count += created
+
+		if includePending {
+			pending, err := query.Count(ctx, c.tx, "operations", "type=?", operationtype.InstanceCreate)
+			if err != nil {
+				return -1, fmt.Errorf("Failed to get pending instances count: %w", err)
+			}
+
+			count += pending
+		}
+	}
+
+	return count, nil
 }
