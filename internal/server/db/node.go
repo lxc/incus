@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -1134,6 +1135,13 @@ func (c *ClusterTx) GetCandidateMembers(ctx context.Context, allMembers []NodeIn
 			candidateMembers = append(candidateMembers, member)
 		}
 	}
+
+	sort.Slice(candidateMembers, func(i int, j int) bool {
+		iCount, _ := c.GetInstancesCount(ctx, "", candidateMembers[i].Name, true)
+		jCount, _ := c.GetInstancesCount(ctx, "", candidateMembers[j].Name, true)
+
+		return iCount < jCount
+	})
 
 	return candidateMembers, nil
 }
