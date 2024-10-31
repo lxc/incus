@@ -74,8 +74,9 @@ def instance_placement(request, candidate_members):
                 log_info("instance placement member resources: ", get_cluster_member_resources(member.server_name))
                 log_info("instance placement member state: ", get_cluster_member_state(member.server_name))
 
-        # Set statically target to 2nd member.
-        set_target(candidate_members[1].server_name)
+        # Set statically target to 2nd member (alphabetical).
+        candidate_names = sorted([candidate.server_name for candidate in candidate_members])
+        set_target(candidate_names[1])
 
         return # No error.
 EOF
@@ -151,7 +152,8 @@ def instance_placement(request, candidate_members):
         # Set statically target to 3rd member.
         # Note: We expect the candidate members to not contain the member being evacuated, and thus the 3rd
         # member is the 2nd entry in the candidate_members list now.
-        set_target(candidate_members[1].server_name)
+        candidate_names = sorted([candidate.server_name for candidate in candidate_members])
+        set_target(candidate_names[1])
 
         return # No error.
 EOF

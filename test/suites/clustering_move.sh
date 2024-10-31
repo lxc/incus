@@ -111,7 +111,8 @@ def instance_placement(request, candidate_members):
                 return "Expecting reason relocation"
 
         # Set statically target to 1st member.
-        set_target(candidate_members[0].server_name)
+        candidate_names = sorted([candidate.server_name for candidate in candidate_members])
+        set_target(candidate_names[0])
 
         return
 EOF
