@@ -305,7 +305,7 @@ INSERT INTO storage_volumes(name, storage_pool_id, node_id, type, project_id, de
 
 // If there are 2 online nodes, return the address of the one with the least
 // number of instances.
-func TestGetNodeWithLeastInstances(t *testing.T) {
+func TestGetCandidateMembers(t *testing.T) {
 	tx, cleanup := db.NewTestClusterTx(t)
 	defer cleanup()
 
@@ -325,14 +325,12 @@ INSERT INTO instances (id, node_id, name, architecture, type, project_id, descri
 	require.NoError(t, err)
 	require.Len(t, members, 2)
 
-	member, err := tx.GetNodeWithLeastInstances(context.Background(), members)
-	require.NoError(t, err)
-	assert.Equal(t, "buzz", member.Name)
+	assert.Equal(t, "buzz", members[0].Name)
 }
 
 // If there are nodes, and one of them is offline, return the name of the
 // online node, even if the offline one has more instances.
-func TestGetNodeWithLeastInstances_OfflineNode(t *testing.T) {
+func TestGetCandidateMembers_OfflineNode(t *testing.T) {
 	tx, cleanup := db.NewTestClusterTx(t)
 	defer cleanup()
 
@@ -356,14 +354,12 @@ INSERT INTO instances (id, node_id, name, architecture, type, project_id, descri
 	require.NoError(t, err)
 	require.Len(t, members, 1)
 
-	member, err := tx.GetNodeWithLeastInstances(context.Background(), members)
-	require.NoError(t, err)
-	assert.Equal(t, "buzz", member.Name)
+	assert.Equal(t, "buzz", members[0].Name)
 }
 
 // If there are 2 online nodes, and an instance is pending on one of them,
 // return the address of the other one number of instances.
-func TestGetNodeWithLeastInstances_Pending(t *testing.T) {
+func TestGetCandidateMembers_Pending(t *testing.T) {
 	tx, cleanup := db.NewTestClusterTx(t)
 	defer cleanup()
 
@@ -383,14 +379,12 @@ INSERT INTO operations (id, uuid, node_id, type, project_id) VALUES (1, 'abc', 1
 	require.NoError(t, err)
 	require.Len(t, members, 2)
 
-	member, err := tx.GetNodeWithLeastInstances(context.Background(), members)
-	require.NoError(t, err)
-	assert.Equal(t, "buzz", member.Name)
+	assert.Equal(t, "buzz", members[0].Name)
 }
 
 // If specific architectures were selected, return only nodes with those
 // architectures.
-func TestGetNodeWithLeastInstances_Architecture(t *testing.T) {
+func TestGetCandidateMembers_Architecture(t *testing.T) {
 	tx, cleanup := db.NewTestClusterTx(t)
 	defer cleanup()
 
@@ -419,9 +413,7 @@ INSERT INTO instances (id, node_id, name, architecture, type, project_id, descri
 	require.Len(t, members, 1)
 
 	// The local member is returned despite it has more instances.
-	member, err := tx.GetNodeWithLeastInstances(context.Background(), members)
-	require.NoError(t, err)
-	assert.Equal(t, "none", member.Name)
+	assert.Equal(t, "none", members[0].Name)
 }
 
 func TestUpdateNodeFailureDomain(t *testing.T) {
@@ -452,7 +444,7 @@ func TestUpdateNodeFailureDomain(t *testing.T) {
 	assert.Equal(t, map[string]uint64{"0.0.0.0": 0, "1.2.3.4:666": 0}, domains)
 }
 
-func TestGetNodeWithLeastInstances_DefaultArch(t *testing.T) {
+func TestGetCandidateMembers_DefaultArch(t *testing.T) {
 	tx, cleanup := db.NewTestClusterTx(t)
 	defer cleanup()
 
@@ -480,7 +472,5 @@ INSERT INTO instances (id, node_id, name, architecture, type, project_id, descri
 	require.NoError(t, err)
 	require.Len(t, members, 1)
 
-	member, err := tx.GetNodeWithLeastInstances(context.Background(), members)
-	require.NoError(t, err)
-	assert.Equal(t, "buzz", member.Name)
+	assert.Equal(t, "buzz", members[0].Name)
 }
