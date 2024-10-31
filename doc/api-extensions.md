@@ -2608,3 +2608,7 @@ Allow for creating new LVM cluster pools by setting the `source` to the shared b
 ## `network_ovn_external_interfaces`
 
 This adds support for `bridge.external_interfaces` on OVN networks.
+
+## `instances_scriptlet_get_instances_count`
+
+This allows the instance scriptlet to fetch the count instances given an optional Project or Location filter as well as including pending instances.
