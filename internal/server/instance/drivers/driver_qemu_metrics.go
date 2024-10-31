@@ -19,7 +19,7 @@ import (
 
 func (d *qemu) getQemuMetrics() (*metrics.MetricSet, error) {
 	// Connect to the monitor.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler())
+	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
 	if err != nil {
 		return nil, err
 	}

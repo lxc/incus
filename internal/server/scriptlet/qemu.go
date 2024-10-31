@@ -34,7 +34,7 @@ func QEMURun(l logger.Logger, m *qmp.Monitor, instance string, stage string) err
 		}
 
 		var resp map[string]any
-		err = m.RunJSON(request, &resp)
+		err = m.RunJSON(request, &resp, true)
 		if err != nil {
 			return nil, err
 		}
