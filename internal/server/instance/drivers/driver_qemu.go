@@ -1645,8 +1645,12 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		forkLimitsCmd = append(forkLimitsCmd, fmt.Sprintf("fd=%d", 3+i))
 	}
 
+	// Log the QEMU command line.
+	fullCmd := append(forkLimitsCmd, qemuCmd...)
+	d.logger.Debug("Starting QEMU", logger.Ctx{"command": fullCmd})
+
 	// Setup background process.
-	p, err := subprocess.NewProcess(d.state.OS.ExecPath, append(forkLimitsCmd, qemuCmd...), d.EarlyLogFilePath(), d.EarlyLogFilePath())
+	p, err := subprocess.NewProcess(d.state.OS.ExecPath, fullCmd, d.EarlyLogFilePath(), d.EarlyLogFilePath())
 	if err != nil {
 		op.Done(err)
 		return err
