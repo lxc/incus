@@ -1,11 +1,13 @@
 package network
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math/big"
 	"net"
 	"net/http"
+	"net/netip"
 	"os"
 	"slices"
 	"sort"
@@ -361,7 +363,8 @@ func (n *ovn) Validate(config map[string]string) error {
 
 			return validate.IsNetworkAddressCIDRV4(value)
 		}),
-		"ipv4.dhcp": validate.Optional(validate.IsBool),
+		"ipv4.dhcp":        validate.Optional(validate.IsBool),
+		"ipv4.dhcp.ranges": validate.Optional(validate.IsListOf(validate.IsNetworkRangeV4)),
 		"ipv6.address": validate.Optional(func(value string) error {
 			if validate.IsOneOf("none", "auto")(value) == nil {
 				return nil
@@ -1957,13 +1960,57 @@ func (n *ovn) getDHCPv4Reservations() ([]iprange.Range, error) {
 
 	var dhcpReserveIPv4s []iprange.Range
 	if routerIntPortIPv4 != nil {
-		dhcpReserveIPv4s = []iprange.Range{{Start: routerIntPortIPv4}, {Start: dhcpalloc.GetIP(ipv4Net, -2)}}
+		if n.config["ipv4.dhcp.ranges"] == "" {
+			dhcpReserveIPv4s = []iprange.Range{{Start: routerIntPortIPv4}, {Start: dhcpalloc.GetIP(ipv4Net, -2)}}
+		} else {
+			allowedNets := []*net.IPNet{n.DHCPv4Subnet()}
+			dhcpRanges, err := parseIPRanges(n.config["ipv4.dhcp.ranges"], allowedNets...)
+			if err != nil {
+				return nil, err
+			}
+
+			lastIP := routerIntPortIPv4
+
+			sort.Slice(dhcpRanges, func(i, j int) bool {
+				return bytes.Compare(dhcpRanges[i].Start, dhcpRanges[j].Start) < 0
+			})
+
+			for _, dhcpRange := range dhcpRanges {
+				startRangeAddr, err := netip.ParseAddr(dhcpRange.Start.String())
+				if err != nil {
+					return nil, err
+				}
+
+				endRangeAddr, err := netip.ParseAddr(dhcpRange.End.String())
+				if err != nil {
+					return nil, err
+				}
+
+				prevStartRangeIP, nextEndRangeIP := startRangeAddr.Prev().String(), endRangeAddr.Next().String()
+				complementRange := iprange.Range{Start: lastIP, End: net.ParseIP(prevStartRangeIP)}
+
+				lastIP = net.ParseIP(nextEndRangeIP)
+				dhcpReserveIPv4s = append(dhcpReserveIPv4s, complementRange)
+			}
+
+			dhcpReserveIPv4s = append(dhcpReserveIPv4s, iprange.Range{Start: lastIP, End: dhcpalloc.GetIP(ipv4Net, -2)})
+		}
 	}
 
 	err = UsedByInstanceDevices(n.state, n.Project(), n.Name(), n.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
 		ip := net.ParseIP(nicConfig["ipv4.address"])
 		if ip != nil {
-			dhcpReserveIPv4s = append(dhcpReserveIPv4s, iprange.Range{Start: ip})
+			containsIP := false
+			for _, reservedDhcpRange := range dhcpReserveIPv4s {
+				containsIP = reservedDhcpRange.ContainsIP(ip)
+				if containsIP {
+					break
+				}
+			}
+
+			if !containsIP {
+				dhcpReserveIPv4s = append(dhcpReserveIPv4s, iprange.Range{Start: ip})
+			}
 		}
 
 		return nil
