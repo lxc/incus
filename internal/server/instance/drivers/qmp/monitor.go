@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -31,6 +33,9 @@ var EventVMShutdownReasonDisconnect = "disconnect"
 // EventDiskEjected is used to indicate that a disk device was ejected by the guest.
 var EventDiskEjected = "DEVICE_TRAY_MOVED"
 
+// ExcludedCommands is used to filter verbose commands from the QMP logs.
+var ExcludedCommands = []string{"ringbuf-read"}
+
 // Monitor represents a QMP monitor.
 type Monitor struct {
 	path string
@@ -43,6 +48,7 @@ type Monitor struct {
 	eventHandler      func(name string, data map[string]any)
 	serialCharDev     string
 	onDisconnectEvent bool
+	logFile           string
 }
 
 // start handles the background goroutines for event handling and monitoring the ringbuffer.
@@ -179,10 +185,26 @@ func (m *Monitor) ping() error {
 }
 
 // RunJSON executes a JSON-formatted command.
-func (m *Monitor) RunJSON(request []byte, resp any) error {
+func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool) error {
 	// Check if disconnected
 	if m.disconnected {
 		return ErrMonitorDisconnect
+	}
+
+	var log *os.File
+	var err error
+	if logCommand {
+		log, err = os.OpenFile(m.logFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		if err != nil {
+			return err
+		}
+
+		defer log.Close()
+
+		_, err = fmt.Fprintf(log, "[%s] QUERY: %s\n", time.Now().Format(time.RFC3339), request)
+		if err != nil {
+			return err
+		}
 	}
 
 	out, err := m.qmp.Run(request)
@@ -196,12 +218,19 @@ func (m *Monitor) RunJSON(request []byte, resp any) error {
 		return err
 	}
 
+	// Handle weird QEMU QMP bug.
+	responses := strings.Split(string(out), "\r\n")
+	out = []byte(responses[len(responses)-1])
+
+	if logCommand {
+		_, err = fmt.Fprintf(log, "[%s] REPLY: %s\n\n", time.Now().Format(time.RFC3339), out)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Decode the response if needed.
 	if resp != nil {
-		// Handle weird QEMU QMP bug.
-		responses := strings.Split(string(out), "\r\n")
-		out = []byte(responses[len(responses)-1])
-
 		err = json.Unmarshal(out, &resp)
 		if err != nil {
 			// Confirm the daemon didn't die.
@@ -233,11 +262,12 @@ func (m *Monitor) Run(cmd string, args any, resp any) error {
 		return err
 	}
 
-	return m.RunJSON(request, resp)
+	logCommand := !slices.Contains(ExcludedCommands, cmd)
+	return m.RunJSON(request, resp, logCommand)
 }
 
 // Connect creates or retrieves an existing QMP monitor for the path.
-func Connect(path string, serialCharDev string, eventHandler func(name string, data map[string]any)) (*Monitor, error) {
+func Connect(path string, serialCharDev string, eventHandler func(name string, data map[string]any), logFile string) (*Monitor, error) {
 	monitorsLock.Lock()
 	defer monitorsLock.Unlock()
 
@@ -278,6 +308,7 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 	monitor.chDisconnect = make(chan struct{}, 1)
 	monitor.eventHandler = eventHandler
 	monitor.serialCharDev = serialCharDev
+	monitor.logFile = logFile
 
 	// Default to generating a shutdown event when the monitor disconnects so that devices can be
 	// cleaned up. This will be disabled after a shutdown event is received from QEMU itself to avoid
