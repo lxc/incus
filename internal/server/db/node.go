@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/lxc/incus/v6/internal/server/db/cluster"
-	"github.com/lxc/incus/v6/internal/server/db/operationtype"
 	"github.com/lxc/incus/v6/internal/server/db/query"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	"github.com/lxc/incus/v6/internal/version"
@@ -1135,40 +1135,14 @@ func (c *ClusterTx) GetCandidateMembers(ctx context.Context, allMembers []NodeIn
 		}
 	}
 
+	sort.Slice(candidateMembers, func(i int, j int) bool {
+		iCount, _ := c.GetInstancesCount(ctx, "", candidateMembers[i].Name, true)
+		jCount, _ := c.GetInstancesCount(ctx, "", candidateMembers[j].Name, true)
+
+		return iCount < jCount
+	})
+
 	return candidateMembers, nil
-}
-
-// GetNodeWithLeastInstances returns the name of the member with the least number of instances that are either
-// already created or being created with an operation.
-func (c *ClusterTx) GetNodeWithLeastInstances(ctx context.Context, members []NodeInfo) (*NodeInfo, error) {
-	var member *NodeInfo
-	var lowestInstanceCount = -1
-
-	for i := range members {
-		// Fetch the number of instances already created on this member.
-		created, err := query.Count(ctx, c.tx, "instances", "node_id=?", members[i].ID)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to get instances count: %w", err)
-		}
-
-		// Fetch the number of instances currently being created on this member.
-		pending, err := query.Count(ctx, c.tx, "operations", "node_id=? AND type=?", members[i].ID, operationtype.InstanceCreate)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to get pending instances count: %w", err)
-		}
-
-		memberInstanceCount := created + pending
-		if lowestInstanceCount == -1 || memberInstanceCount < lowestInstanceCount {
-			lowestInstanceCount = memberInstanceCount
-			member = &members[i]
-		}
-	}
-
-	if member == nil {
-		return nil, api.StatusErrorf(http.StatusNotFound, "No suitable cluster member could be found")
-	}
-
-	return member, nil
 }
 
 // SetNodeVersion updates the schema and API version of the node with the

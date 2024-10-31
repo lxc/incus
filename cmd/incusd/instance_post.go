@@ -367,13 +367,11 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 				}
 			}
 
-			err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-				targetMemberInfo, err = tx.GetNodeWithLeastInstances(ctx, filteredCandidateMembers)
-				return err
-			})
-			if err != nil {
-				return response.SmartError(err)
+			if len(filteredCandidateMembers) == 0 {
+				return response.InternalError(fmt.Errorf("Couldn't find a cluster member for the instance"))
 			}
+
+			targetMemberInfo = &filteredCandidateMembers[0]
 		}
 
 		if targetMemberInfo.IsOffline(s.GlobalConfig.OfflineThreshold()) {

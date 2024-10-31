@@ -1130,14 +1130,12 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// If no target member was selected yet, pick the member with the least number of instances.
+		if targetMemberInfo == nil && len(candidateMembers) > 0 {
+			targetMemberInfo = &candidateMembers[0]
+		}
+
 		if targetMemberInfo == nil {
-			err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-				targetMemberInfo, err = tx.GetNodeWithLeastInstances(ctx, candidateMembers)
-				return err
-			})
-			if err != nil {
-				return response.SmartError(err)
-			}
+			return response.InternalError(fmt.Errorf("Couldn't find a cluster member for the instance"))
 		}
 	}
 
