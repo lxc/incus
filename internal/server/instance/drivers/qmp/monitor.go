@@ -193,7 +193,7 @@ func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool) error {
 
 	var log *os.File
 	var err error
-	if logCommand {
+	if logCommand && m.logFile != "" {
 		log, err = os.OpenFile(m.logFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 		if err != nil {
 			return err
