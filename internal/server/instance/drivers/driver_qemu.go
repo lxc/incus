@@ -8807,7 +8807,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 
 		// Try and connect to QMP socket until cancelled.
 		for {
-			monitor, err = qmp.Connect(monitorPath.Name(), qemuSerialChardevName, nil, d.QMPLogFilePath())
+			monitor, err = qmp.Connect(monitorPath.Name(), qemuSerialChardevName, nil, "")
 			// QMP successfully connected or we have been cancelled.
 			if err == nil || ctx.Err() != nil {
 				break
