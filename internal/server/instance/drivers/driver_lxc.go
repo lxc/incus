@@ -2496,7 +2496,7 @@ ff02::2 ip6-allrouters
 				continue
 			}
 
-			err = lxcSetConfigItem(cc, "lxc.hook.pre-mount", fmt.Sprintf("mount -o bind %s /var/lib/incus-lxcfs/", filepath.Join(d.DevicesPath(), "lxcfs")))
+			err = lxcSetConfigItem(cc, "lxc.hook.pre-mount", fmt.Sprintf("mount -o bind %s %s/", filepath.Join(d.DevicesPath(), "lxcfs"), entry))
 			if err != nil {
 				return "", nil, err
 			}
