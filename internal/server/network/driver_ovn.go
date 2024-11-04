@@ -18,6 +18,7 @@ import (
 	"github.com/flosch/pongo2"
 	"github.com/mdlayher/netx/eui64"
 	ovsClient "github.com/ovn-org/libovsdb/client"
+	ovsdbModel "github.com/ovn-org/libovsdb/model"
 
 	"github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/iprange"
@@ -32,6 +33,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/locking"
 	"github.com/lxc/incus/v6/internal/server/network/acl"
 	networkOVN "github.com/lxc/incus/v6/internal/server/network/ovn"
+	ovnSB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-sb"
 	"github.com/lxc/incus/v6/internal/server/network/ovs"
 	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/state"
@@ -3140,6 +3142,106 @@ func (n *ovn) Start() error {
 		return fmt.Errorf("Failed applying BGP prefixes for load balancers: %w", err)
 	}
 
+	// Setup event handler for monitored services.
+	handler := networkOVN.EventHandler{
+		Tables: []string{"Service_Monitor"},
+		Hook: func(action string, table string, oldObject ovsdbModel.Model, newObject ovsdbModel.Model) {
+			// Skip invalid notifications.
+			if oldObject == nil && newObject == nil {
+				return
+			}
+
+			// Get the object.
+			dbObject := newObject
+			if dbObject == nil {
+				dbObject = oldObject
+			}
+
+			srvStatus, ok := dbObject.(*ovnSB.ServiceMonitor)
+			if !ok {
+				return
+			}
+
+			// Check if this is our network.
+			if !strings.HasPrefix(srvStatus.LogicalPort, fmt.Sprintf("incus-net%d-instance-", n.id)) {
+				return
+			}
+
+			// Locate affected load-balancers.
+			lbs, err := n.ovnnb.GetLoadBalancersByStatusUpdate(context.TODO(), *srvStatus)
+			if err != nil {
+				return
+			}
+
+			for _, lb := range lbs {
+				// Check for status of all backends on this load-balancer.
+				online, err := n.ovnsb.CheckLoadBalancerOnline(context.TODO(), lb)
+				if err != nil {
+					return
+				}
+
+				// Parse the name.
+				fields := strings.Split(lb.Name, "-")
+				listenAddr := net.ParseIP(fields[3])
+				if listenAddr == nil {
+					return
+				}
+
+				// Check if we have a matching UDP load-balancer.
+				fields[4] = "udp"
+				lbUDP, _ := n.ovnnb.GetLoadBalancer(context.TODO(), networkOVN.OVNLoadBalancer(strings.Join(fields, "-")))
+				if lbUDP != nil {
+					// UDP backends can't be checked, so have to assume online.
+					online = true
+				}
+
+				// Prepare advertisement.
+				ipVersion := uint(4)
+				if listenAddr.To4() == nil {
+					ipVersion = 6
+				}
+
+				bgpOwner := fmt.Sprintf("network_%d_load_balancer", n.id)
+				nextHopAddr := n.bgpNextHopAddress(ipVersion)
+				natEnabled := util.IsTrue(n.config[fmt.Sprintf("ipv%d.nat", ipVersion)])
+				_, netSubnet, _ := net.ParseCIDR(n.config[fmt.Sprintf("ipv%d.address", ipVersion)])
+
+				routeSubnetSize := 128
+				if ipVersion == 4 {
+					routeSubnetSize = 32
+				}
+
+				// Don't export internal address forwards (those inside the NAT enabled network's subnet).
+				if natEnabled && netSubnet != nil && netSubnet.Contains(listenAddr) {
+					return
+				}
+
+				_, ipRouteSubnet, err := net.ParseCIDR(fmt.Sprintf("%s/%d", listenAddr.String(), routeSubnetSize))
+				if err != nil {
+					return
+				}
+
+				// Update the BGP state.
+				if online {
+					err = n.state.BGP.AddPrefix(*ipRouteSubnet, nextHopAddr, bgpOwner)
+					if err != nil {
+						return
+					}
+				} else {
+					err = n.state.BGP.RemovePrefix(*ipRouteSubnet, nextHopAddr)
+					if err != nil {
+						return
+					}
+				}
+			}
+		},
+	}
+
+	err = networkOVN.AddOVNSBHandler(fmt.Sprintf("network_%d", n.id), handler)
+	if err != nil {
+		return err
+	}
+
 	revert.Success()
 
 	// Ensure network is marked as available now its started.
@@ -3167,6 +3269,12 @@ func (n *ovn) Stop() error {
 
 	// Clear BGP.
 	err = n.bgpClear(n.config)
+	if err != nil {
+		return err
+	}
+
+	// Clear event handler for monitored services.
+	err = networkOVN.RemoveOVNSBHandler(fmt.Sprintf("network_%d", n.id))
 	if err != nil {
 		return err
 	}
