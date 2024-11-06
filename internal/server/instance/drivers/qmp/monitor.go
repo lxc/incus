@@ -222,7 +222,7 @@ func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool) error {
 	responses := strings.Split(string(out), "\r\n")
 	out = []byte(responses[len(responses)-1])
 
-	if logCommand {
+	if logCommand && m.logFile != "" {
 		_, err = fmt.Fprintf(log, "[%s] REPLY: %s\n\n", time.Now().Format(time.RFC3339), out)
 		if err != nil {
 			return err
