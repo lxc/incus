@@ -65,7 +65,7 @@ test_projects_crud() {
   incus project delete bar
 
   # We're back to the default project
-  incus project list | grep -q "default (current)"
+  [ "$(incus project get-current)" = "default" ]
 }
 
 # Use containers in a project.
