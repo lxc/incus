@@ -26,7 +26,7 @@ kernels but will refuse to start containers.
 ## Allowed ranges
 
 On most hosts, Incus will check `/etc/subuid` and `/etc/subgid` for
-allocations for the `incus` user and on first start, set the default
+allocations for the `root` user and on first start, set the default
 profile to use the first 65536 UIDs and GIDs from that range.
 
 If the range is shorter than 65536 (which includes no range at all),
@@ -91,3 +91,7 @@ host, and the third entry is the range inside the container. These ranges must
 be the same size.
 
 This property requires a container reboot to take effect.
+
+Remember that you may need to add an entry for the `root` user into
+`/etc/subid` and/or `/etc/subgid` so the container is allowed to make
+use of it.
