@@ -36,6 +36,17 @@ func (r *ProtocolIncus) setupOIDCClient(token *oidc.Tokens[*oidc.IDTokenClaims])
 	r.oidcClient.httpClient = r.http
 }
 
+// GetOIDCTokens returns the current OIDC tokens (if any) from the OIDC client.
+//
+// This should only be used by internal Incus tools when it's not possible to get the tokens from a Config struct.
+func (r *ProtocolIncus) GetOIDCTokens() *oidc.Tokens[*oidc.IDTokenClaims] {
+	if r.oidcClient == nil {
+		return nil
+	}
+
+	return r.oidcClient.tokens
+}
+
 // Custom transport that modifies requests to inject the audience field.
 type oidcTransport struct {
 	deviceAuthorizationEndpoint string
