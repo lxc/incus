@@ -80,6 +80,10 @@ func (c *cmdProject) Command() *cobra.Command {
 	projectSwitchCmd := cmdProjectSwitch{global: c.global, project: c}
 	cmd.AddCommand(projectSwitchCmd.Command())
 
+	// Get current project
+	projectGetCurrentCmd := cmdProjectGetCurrent{global: c.global, project: c}
+	cmd.AddCommand(projectGetCurrentCmd.Command())
+
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
 	cmd.Run = func(cmd *cobra.Command, args []string) { _ = cmd.Usage() }
@@ -1144,4 +1148,43 @@ func (c *cmdProjectInfo) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	return cli.RenderTable(c.flagFormat, header, data, projectState)
+}
+
+// Get current project.
+type cmdProjectGetCurrent struct {
+	global  *cmdGlobal
+	project *cmdProject
+}
+
+// Command generates the command definition.
+func (c *cmdProjectGetCurrent) Command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = usage("get-current")
+	cmd.Short = i18n.G("Show the current project")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+		`Show the current project`))
+
+	cmd.RunE = c.Run
+
+	return cmd
+}
+
+// Run runs the actual command logic.
+func (c *cmdProjectGetCurrent) Run(cmd *cobra.Command, args []string) error {
+	conf := c.global.conf
+
+	// Quick checks.
+	exit, err := c.global.CheckArgs(cmd, args, 0, 0)
+	if exit {
+		return err
+	}
+
+	// Show the current project
+	remote, ok := conf.Remotes[conf.DefaultRemote]
+	if !ok {
+		return fmt.Errorf(i18n.G("Remote %s doesn't exist"), conf.DefaultRemote)
+	}
+
+	fmt.Println(remote.Project)
+	return nil
 }
