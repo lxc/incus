@@ -197,7 +197,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  type: string
 	//  liveupdate: yes
 	//  shortdesc: Which NUMA nodes to place the instance CPUs on
-	"limits.cpu.nodes": validate.Optional(validate.Or(validate.IsValidCPUSet, validate.IsOneOf("balanced"))),
+	"limits.cpu.nodes": validate.Optional(validate.Or(validate.IsValidCPUSet, validate.IsOneOf("0", "balanced"))),
 
 	// gendoc:generate(entity=instance, group=resource-limits, key=limits.disk.priority)
 	// Controls how much priority to give to the instance's I/O requests when under load.
