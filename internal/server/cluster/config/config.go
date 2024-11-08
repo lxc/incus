@@ -135,9 +135,9 @@ func (c *Config) ClusterRebalanceCooldown() string {
 	return c.m.GetString("cluster.rebalance.cooldown")
 }
 
-// ClusterRebalanceFrequency returns the frequency of considering re-balanicng.
-func (c *Config) ClusterRebalanceFrequency() int64 {
-	return c.m.GetInt64("cluster.rebalance.frequency")
+// ClusterRebalanceInterval returns the interval at which to evaluate re-balanicng.
+func (c *Config) ClusterRebalanceInterval() int64 {
+	return c.m.GetInt64("cluster.rebalance.interval")
 }
 
 // ClusterRebalanceThreshold returns load difference between most and least busy server
@@ -429,21 +429,21 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Amount of time during which an instance will not be moved again
 	"cluster.rebalance.cooldown": {Type: config.String, Default: "6H", Validator: validate.Optional(expiryValidator)},
 
-	// gendoc:generate(entity=server, group=cluster, key=cluster.rebalance.frequency)
+	// gendoc:generate(entity=server, group=cluster, key=cluster.rebalance.interval)
 	//
 	// ---
 	//  type: integer
 	//  scope: global
 	//  defaultdesc: `0`
 	//  shortdesc: How often (in minutes) to consider re-balancing things. 0 to disable (default)
-	"cluster.rebalance.frequency": {Type: config.Int64, Default: "0"},
+	"cluster.rebalance.interval": {Type: config.Int64, Default: "0"},
 
 	// gendoc:generate(entity=server, group=cluster, key=cluster.rebalance.threshold)
 	//
 	// ---
 	//  type: integer
 	//  scope: global
-	//  defaultdesc: `0`
+	//  defaultdesc: `20`
 	//  shortdesc: Percentage load difference between most and least busy server needed to trigger a migration
 	"cluster.rebalance.threshold": {Type: config.Int64, Default: "20", Validator: validate.Optional(rebalanceThresholdValidator)},
 
