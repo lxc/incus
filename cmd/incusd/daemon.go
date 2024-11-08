@@ -1719,6 +1719,9 @@ func (d *Daemon) startClusterTasks() {
 	// Perform automatic evacuation for offline cluster members
 	d.clusterTasks.Add(autoHealClusterTask(d))
 
+	// Perform automatic live-migration to alance load on cluster
+	d.clusterTasks.Add(autoRebalanceClusterTask(d))
+
 	// Start all background tasks
 	d.clusterTasks.Start(d.shutdownCtx)
 }
