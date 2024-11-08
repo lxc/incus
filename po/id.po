@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-11-06 08:30+0100\n"
-"PO-Revision-Date: 2024-11-08 04:44+0000\n"
+"PO-Revision-Date: 2024-11-09 07:00+0000\n"
 "Last-Translator: Andika Triwidada <andika@gmail.com>\n"
 "Language-Team: Indonesian <https://hosted.weblate.org/projects/incus/cli/id/>"
 "\n"
@@ -408,32 +408,32 @@ msgstr ""
 #: cmd/incus/info.go:315
 #, c-format
 msgid "- Partition %d"
-msgstr ""
+msgstr "- Partisi %d"
 
 #: cmd/incus/info.go:224
 #, c-format
 msgid "- Port %d (%s)"
-msgstr ""
+msgstr "- Port %d (%s)"
 
 #: cmd/incus/action.go:266
 msgid "--console can't be used while forcing instance shutdown"
-msgstr ""
+msgstr "--console tidak bisa dipakai saat memaksa mematikan instansi"
 
 #: cmd/incus/action.go:435
 msgid "--console can't be used with --all"
-msgstr ""
+msgstr "--console tidak bisa dipakai dengan --allx"
 
 #: cmd/incus/action.go:439
 msgid "--console only works with a single instance"
-msgstr ""
+msgstr "--console hanya bekerja dengan satu instansi"
 
 #: cmd/incus/create.go:136 cmd/incus/rebuild.go:64
 msgid "--empty cannot be combined with an image name"
-msgstr ""
+msgstr "--empty tidak bisa dikombinasikan dengan nama image"
 
 #: cmd/incus/config.go:488 cmd/incus/config.go:796
 msgid "--expanded cannot be used with a server"
-msgstr ""
+msgstr "--expanded tidak bisa dipakai dengan server"
 
 #: cmd/incus/copy.go:167
 msgid "--instance-only can't be passed when the source is a snapshot"
@@ -466,53 +466,54 @@ msgstr ""
 
 #: cmd/incus/alias.go:220
 msgid "<alias>"
-msgstr ""
+msgstr "<alias>"
 
 #: cmd/incus/alias.go:59
 msgid "<alias> <target>"
-msgstr ""
+msgstr "<alias> <target>"
 
 #: cmd/incus/admin_sql.go:28
 msgid "<local|global> <query>"
-msgstr ""
+msgstr "<lokal|global> <query>"
 
 #: cmd/incus/alias.go:165
 msgid "<old alias> <new alias>"
-msgstr ""
+msgstr "<alias lama> <alias baru>"
 
 #: cmd/incus/remote.go:976 cmd/incus/remote.go:1042
 msgid "<remote>"
-msgstr ""
+msgstr "<remote>"
 
 #: cmd/incus/remote.go:1090
 msgid "<remote> <URL>"
-msgstr ""
+msgstr "<remote> <URL>"
 
 #: cmd/incus/remote.go:895
 msgid "<remote> <new-name>"
-msgstr ""
+msgstr "<remote> <nama-baru>"
 
 #: cmd/incus/remote_unix.go:35
 msgid "<remote>: <path>"
-msgstr ""
+msgstr "<remote>: <path>"
 
 #: cmd/incus/file.go:680
 msgid "<source path>... [<remote>:]<instance>/<path>"
-msgstr ""
+msgstr "<path sumber>... [<remote>:]<instansi>/<path>"
 
 #: cmd/incus/image.go:677
 msgid ""
 "<tarball>|<directory>|<URL> [<rootfs tarball>] [<remote>:] [key=value...]"
 msgstr ""
+"<tarball>|<direktori>|<URL> [<rootfs tarball>] [<remote>:] [kunci=nilai...]"
 
 #: cmd/incus/manpage.go:20
 msgid "<target>"
-msgstr ""
+msgstr "<target>"
 
 #: cmd/incus/admin_sql.go:139
 #, c-format
 msgid "=> Query %d:"
-msgstr ""
+msgstr "=> Query %d:"
 
 #: cmd/incus/remote.go:658
 msgid "A client certificate is already present"
@@ -528,31 +529,31 @@ msgstr ""
 
 #: cmd/incus/network_allocations.go:72
 msgid "ADDRESS"
-msgstr ""
+msgstr "ALAMAT"
 
 #: cmd/incus/alias.go:148 cmd/incus/image.go:1119 cmd/incus/image_alias.go:205
 msgid "ALIAS"
-msgstr ""
+msgstr "ALIAS"
 
 #: cmd/incus/image.go:1120
 msgid "ALIASES"
-msgstr ""
+msgstr "ALIAS"
 
 #: cmd/incus/list.go:887
 msgid "APP"
-msgstr ""
+msgstr "APP"
 
 #: cmd/incus/cluster.go:174 cmd/incus/image.go:1114 cmd/incus/list.go:572
 msgid "ARCHITECTURE"
-msgstr ""
+msgstr "ARSITEKTUR"
 
 #: cmd/incus/remote.go:762
 msgid "AUTH TYPE"
-msgstr ""
+msgstr "TIPE AUTH"
 
 #: cmd/incus/remote.go:119
 msgid "Accept certificate"
-msgstr ""
+msgstr "Terima sertifikat"
 
 #: cmd/incus/storage_bucket.go:1038
 msgid "Access key (auto-generated if empty)"
@@ -725,7 +726,7 @@ msgstr ""
 #: cmd/incus/image.go:1037
 #, c-format
 msgid "Alias: %s"
-msgstr ""
+msgstr "Alias: %s"
 
 #: cmd/incus/publish.go:254
 #, c-format
@@ -734,7 +735,7 @@ msgstr ""
 
 #: cmd/incus/image.go:1021
 msgid "Aliases:"
-msgstr ""
+msgstr "Alias:"
 
 #: cmd/incus/admin_init_interactive.go:223
 msgid "All existing data is lost when joining a cluster, continue?"
@@ -742,7 +743,7 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:1558 cmd/incus/storage_volume.go:2549
 msgid "All projects"
-msgstr ""
+msgstr "Semua proyek"
 
 #: cmd/incus/remote.go:199
 msgid "All server addresses are unavailable"
@@ -756,12 +757,12 @@ msgstr ""
 #: cmd/incus/info.go:652
 #, c-format
 msgid "Architecture: %s"
-msgstr ""
+msgstr "Arsitektur: %s"
 
 #: cmd/incus/info.go:154
 #, c-format
 msgid "Architecture: %v"
-msgstr ""
+msgstr "Arsitektur: %v"
 
 #: cmd/incus/admin_init_interactive.go:159
 msgid "Are you joining an existing cluster?"
@@ -882,7 +883,7 @@ msgstr ""
 
 #: cmd/incus/info.go:844 cmd/incus/storage_volume.go:1489
 msgid "Backups:"
-msgstr ""
+msgstr "Cadangan:"
 
 #: cmd/incus/utils.go:102
 #, c-format
@@ -916,7 +917,7 @@ msgstr ""
 
 #: cmd/incus/network.go:995
 msgid "Bond:"
-msgstr ""
+msgstr "Bond:"
 
 #: cmd/incus/action.go:187 cmd/incus/action.go:391
 msgid "Both --all and instance name given"
@@ -925,24 +926,24 @@ msgstr ""
 #: cmd/incus/info.go:155
 #, c-format
 msgid "Brand: %v"
-msgstr ""
+msgstr "Merek: %v"
 
 #: cmd/incus/network.go:1008
 msgid "Bridge:"
-msgstr ""
+msgstr "Bridge:"
 
 #: cmd/incus/info.go:364
 #, c-format
 msgid "Bus Address: %v"
-msgstr ""
+msgstr "Alamat Bus: %v"
 
 #: cmd/incus/info.go:767 cmd/incus/network.go:987
 msgid "Bytes received"
-msgstr ""
+msgstr "Byte diterima"
 
 #: cmd/incus/info.go:768 cmd/incus/network.go:988
 msgid "Bytes sent"
-msgstr ""
+msgstr "Byte dikirim"
 
 #: cmd/incus/operation.go:153
 msgid "CANCELABLE"
@@ -950,7 +951,7 @@ msgstr ""
 
 #: cmd/incus/config_trust.go:433
 msgid "COMMON NAME"
-msgstr ""
+msgstr "NAMA UMUM"
 
 #: cmd/incus/storage_volume.go:1673
 msgid "CONTENT-TYPE"
@@ -958,7 +959,7 @@ msgstr ""
 
 #: cmd/incus/warning.go:210
 msgid "COUNT"
-msgstr ""
+msgstr "CACAH"
 
 #: cmd/incus/top.go:349
 msgid "CPU TIME(s)"
@@ -966,45 +967,45 @@ msgstr ""
 
 #: cmd/incus/list.go:590
 msgid "CPU USAGE"
-msgstr ""
+msgstr "PENGGUNAAN CPU"
 
 #: cmd/incus/info.go:708
 msgid "CPU usage (in seconds)"
-msgstr ""
+msgstr "Penggunaan CPU (dalam detik)"
 
 #: cmd/incus/info.go:712
 msgid "CPU usage:"
-msgstr ""
+msgstr "Penggunaan CPU:"
 
 #: cmd/incus/info.go:501
 msgid "CPU:"
-msgstr ""
+msgstr "CPU:"
 
 #: cmd/incus/info.go:505
 msgid "CPUs:"
-msgstr ""
+msgstr "CPU:"
 
 #: cmd/incus/operation.go:154
 msgid "CREATED"
-msgstr ""
+msgstr "DIBUAT"
 
 #: cmd/incus/list.go:574
 msgid "CREATED AT"
-msgstr ""
+msgstr "DIBUAT PADA"
 
 #: cmd/incus/info.go:157
 #, c-format
 msgid "CUDA Version: %v"
-msgstr ""
+msgstr "Versi CUDA: %v"
 
 #: cmd/incus/image.go:1030
 #, c-format
 msgid "Cached: %s"
-msgstr ""
+msgstr "Disinggahkan: %s"
 
 #: cmd/incus/info.go:334
 msgid "Caches:"
-msgstr ""
+msgstr "Singgahan:"
 
 #: cmd/incus/admin_init_interactive.go:144
 #: cmd/incus/admin_init_interactive.go:828
@@ -1111,12 +1112,12 @@ msgstr ""
 #: cmd/incus/info.go:550 cmd/incus/info.go:562
 #, c-format
 msgid "Card %d:"
-msgstr ""
+msgstr "Kartu %d:"
 
 #: cmd/incus/info.go:140
 #, c-format
 msgid "Card: %s (%s)"
-msgstr ""
+msgstr "Kartu: %s (%s)"
 
 #: cmd/incus/config_trust.go:839
 #, c-format
@@ -1270,7 +1271,7 @@ msgstr ""
 #: cmd/incus/storage_volume.go:1557 cmd/incus/storage_volume.go:2548
 #: cmd/incus/warning.go:93
 msgid "Columns"
-msgstr ""
+msgstr "Kolom"
 
 #: cmd/incus/main.go:85
 msgid "Command line client for Incus"
@@ -1438,11 +1439,11 @@ msgstr ""
 #: cmd/incus/info.go:342
 #, c-format
 msgid "Core %d"
-msgstr ""
+msgstr "Core %d"
 
 #: cmd/incus/info.go:340
 msgid "Cores:"
-msgstr ""
+msgstr "Core:"
 
 #: cmd/incus/remote.go:502
 #, c-format
@@ -1597,15 +1598,15 @@ msgstr ""
 
 #: cmd/incus/profile.go:356 cmd/incus/profile.go:357
 msgid "Create profiles"
-msgstr ""
+msgstr "Buat profil"
 
 #: cmd/incus/project.go:103 cmd/incus/project.go:104
 msgid "Create projects"
-msgstr ""
+msgstr "Buat proyek"
 
 #: cmd/incus/storage.go:99 cmd/incus/storage.go:100
 msgid "Create storage pools"
-msgstr ""
+msgstr "Buat pool penyimpanan"
 
 #: cmd/incus/copy.go:62 cmd/incus/create.go:60
 msgid "Create the instance with no profiles applied"
@@ -1615,21 +1616,21 @@ msgstr ""
 #: cmd/incus/storage_volume.go:1443
 #, c-format
 msgid "Created: %s"
-msgstr ""
+msgstr "Dibuat: %s"
 
 #: cmd/incus/create.go:176
 #, c-format
 msgid "Creating %s"
-msgstr ""
+msgstr "Membuat %s"
 
 #: cmd/incus/file.go:273
 #, c-format
 msgid "Creating %s: %%s"
-msgstr ""
+msgstr "Membuat %s: %%s"
 
 #: cmd/incus/create.go:174
 msgid "Creating the instance"
-msgstr ""
+msgstr "Membuat instansi"
 
 #: cmd/incus/info.go:164 cmd/incus/info.go:273
 #, c-format
@@ -1651,23 +1652,23 @@ msgstr ""
 #: cmd/incus/storage_bucket.go:515 cmd/incus/storage_bucket.go:916
 #: cmd/incus/storage_volume.go:1672
 msgid "DESCRIPTION"
-msgstr ""
+msgstr "DESKRIPSI"
 
 #: cmd/incus/top.go:349
 msgid "DISK"
-msgstr ""
+msgstr "DISK"
 
 #: cmd/incus/list.go:576
 msgid "DISK USAGE"
-msgstr ""
+msgstr "PENGGUNAAN DISK"
 
 #: cmd/incus/storage.go:709
 msgid "DRIVER"
-msgstr ""
+msgstr "DRIVER"
 
 #: cmd/incus/info.go:136
 msgid "DRM:"
-msgstr ""
+msgstr "DRM:"
 
 #: cmd/incus/admin_waitready.go:93
 #, c-format
@@ -1682,11 +1683,11 @@ msgstr ""
 #: cmd/incus/info.go:488
 #, c-format
 msgid "Date: %s"
-msgstr ""
+msgstr "Tanggal: %s"
 
 #: cmd/incus/network.go:1012
 msgid "Default VLAN ID"
-msgstr ""
+msgstr "ID VLAN baku"
 
 #: cmd/incus/storage_bucket.go:1410 cmd/incus/storage_volume.go:2967
 msgid "Define a compression algorithm: for backup or none"
@@ -1694,7 +1695,7 @@ msgstr ""
 
 #: cmd/incus/top.go:365
 msgid "Delay:"
-msgstr ""
+msgstr "Tundaan:"
 
 #: cmd/incus/operation.go:61 cmd/incus/operation.go:62
 msgid "Delete a background operation (will attempt to cancel)"
@@ -1714,68 +1715,68 @@ msgstr ""
 
 #: cmd/incus/file.go:314 cmd/incus/file.go:315
 msgid "Delete files in instances"
-msgstr ""
+msgstr "Hapus berkas dalam instansi"
 
 #: cmd/incus/image_alias.go:111 cmd/incus/image_alias.go:112
 msgid "Delete image aliases"
-msgstr ""
+msgstr "Hapus alias image"
 
 #: cmd/incus/image.go:320 cmd/incus/image.go:321
 msgid "Delete images"
-msgstr ""
+msgstr "Hapus image"
 
 #: cmd/incus/config_template.go:133 cmd/incus/config_template.go:134
 msgid "Delete instance file templates"
-msgstr ""
+msgstr "Hapus templat berkas instansi"
 
 #: cmd/incus/snapshot.go:202 cmd/incus/snapshot.go:203
 msgid "Delete instance snapshots"
-msgstr ""
+msgstr "Hapus snapshot instansi"
 
 #: cmd/incus/delete.go:31 cmd/incus/delete.go:32
 msgid "Delete instances"
-msgstr ""
+msgstr "Hapus instansi"
 
 #: cmd/incus/storage_bucket.go:1132 cmd/incus/storage_bucket.go:1133
 msgid "Delete key from a storage bucket"
-msgstr ""
+msgstr "Hapus kunci dari suatu bucket penyimpanan"
 
 #: cmd/incus/network_acl.go:803 cmd/incus/network_acl.go:804
 msgid "Delete network ACLs"
-msgstr ""
+msgstr "Hapus ACL jaringan"
 
 #: cmd/incus/network_forward.go:822 cmd/incus/network_forward.go:823
 msgid "Delete network forwards"
-msgstr ""
+msgstr "Hapus penerusan jaringan"
 
 #: cmd/incus/network_integration.go:177 cmd/incus/network_integration.go:178
 msgid "Delete network integrations"
-msgstr ""
+msgstr "Hapus integrasi jaringan"
 
 #: cmd/incus/network_load_balancer.go:803
 #: cmd/incus/network_load_balancer.go:804
 msgid "Delete network load balancers"
-msgstr ""
+msgstr "Hapus load balancer jaringan"
 
 #: cmd/incus/network_peer.go:836 cmd/incus/network_peer.go:837
 msgid "Delete network peerings"
-msgstr ""
+msgstr "Hapus peering jaringan"
 
 #: cmd/incus/network_zone.go:1437 cmd/incus/network_zone.go:1438
 msgid "Delete network zone record"
-msgstr ""
+msgstr "Hapus record zona jaringan"
 
 #: cmd/incus/network_zone.go:742 cmd/incus/network_zone.go:743
 msgid "Delete network zones"
-msgstr ""
+msgstr "Hapus zona jaringan"
 
 #: cmd/incus/network.go:447 cmd/incus/network.go:448
 msgid "Delete networks"
-msgstr ""
+msgstr "Hapus jaringan"
 
 #: cmd/incus/profile.go:439 cmd/incus/profile.go:440
 msgid "Delete profiles"
-msgstr ""
+msgstr "Hapus profil"
 
 #: cmd/incus/project.go:202 cmd/incus/project.go:203
 msgid "Delete projects"
@@ -1783,11 +1784,11 @@ msgstr ""
 
 #: cmd/incus/storage_bucket.go:200 cmd/incus/storage_bucket.go:201
 msgid "Delete storage buckets"
-msgstr ""
+msgstr "Hapus bucket penyimpanan"
 
 #: cmd/incus/storage.go:211 cmd/incus/storage.go:212
 msgid "Delete storage pools"
-msgstr ""
+msgstr "Hapus pool penyimpanan"
 
 #: cmd/incus/storage_volume.go:2454 cmd/incus/storage_volume.go:2455
 msgid "Delete storage volume snapshots"
@@ -1795,7 +1796,7 @@ msgstr ""
 
 #: cmd/incus/warning.go:357 cmd/incus/warning.go:358
 msgid "Delete warning"
-msgstr ""
+msgstr "Hapus peringatan"
 
 #: cmd/incus/action.go:32 cmd/incus/action.go:57 cmd/incus/action.go:83
 #: cmd/incus/action.go:109 cmd/incus/action.go:134 cmd/incus/admin.go:20
@@ -1951,12 +1952,12 @@ msgstr ""
 #: cmd/incus/warning.go:29 cmd/incus/warning.go:72 cmd/incus/warning.go:263
 #: cmd/incus/warning.go:304 cmd/incus/warning.go:358 cmd/incus/webui.go:19
 msgid "Description"
-msgstr ""
+msgstr "Deskripsi"
 
 #: cmd/incus/storage_volume.go:1416
 #, c-format
 msgid "Description: %s"
-msgstr ""
+msgstr "Deskripsi: %s"
 
 #: cmd/incus/storage_volume.go:366 cmd/incus/storage_volume.go:1779
 msgid "Destination cluster member name"
@@ -1981,7 +1982,7 @@ msgstr ""
 #: cmd/incus/info.go:586 cmd/incus/info.go:598
 #, c-format
 msgid "Device %d:"
-msgstr ""
+msgstr "Perangkat %d:"
 
 #: cmd/incus/config_device.go:197
 #, c-format
@@ -2033,7 +2034,7 @@ msgstr ""
 #: cmd/incus/info.go:293 cmd/incus/info.go:317
 #, c-format
 msgid "Device: %s"
-msgstr ""
+msgstr "Perangkat: %s"
 
 #: cmd/incus/create.go:435
 msgid "Didn't get name of new instance from the server"
@@ -2041,7 +2042,7 @@ msgstr ""
 
 #: cmd/incus/image.go:706
 msgid "Directory import is not available on this platform"
-msgstr ""
+msgstr "Impor direktori tidak tersedia di platform ini"
 
 #: cmd/incus/exec.go:66
 msgid "Directory to run the command in (default /root)"
@@ -2049,7 +2050,7 @@ msgstr ""
 
 #: cmd/incus/file.go:1195
 msgid "Disable authentication when using SSH SFTP listener"
-msgstr ""
+msgstr "Nonaktifkan autentikasi saat menggunakan pendengar SSH SFTP"
 
 #: cmd/incus/exec.go:62
 msgid "Disable pseudo-terminal allocation"
@@ -2066,15 +2067,15 @@ msgstr ""
 
 #: cmd/incus/info.go:701
 msgid "Disk usage:"
-msgstr ""
+msgstr "Penggunaan disk:"
 
 #: cmd/incus/info.go:569
 msgid "Disk:"
-msgstr ""
+msgstr "Disk:"
 
 #: cmd/incus/info.go:572
 msgid "Disks:"
-msgstr ""
+msgstr "Disk:"
 
 #: cmd/incus/cluster.go:152
 msgid "Display clusters from all projects"
@@ -2139,12 +2140,12 @@ msgstr ""
 #: cmd/incus/info.go:379
 #, c-format
 msgid "Driver: %v"
-msgstr ""
+msgstr "Driver: %v"
 
 #: cmd/incus/info.go:132 cmd/incus/info.go:218
 #, c-format
 msgid "Driver: %v (%v)"
-msgstr ""
+msgstr "Driver: %v (%v)"
 
 #: cmd/incus/admin_init.go:57
 msgid "Dump YAML config to stdout"
@@ -2152,7 +2153,7 @@ msgstr ""
 
 #: cmd/incus/network_zone.go:918
 msgid "ENTRIES"
-msgstr ""
+msgstr "ENTRI"
 
 #: cmd/incus/list.go:891
 msgid "EPHEMERAL"
@@ -2166,11 +2167,11 @@ msgstr ""
 #: cmd/incus/cluster.go:1113 cmd/incus/config_trust.go:623
 #: cmd/incus/snapshot.go:337 cmd/incus/storage_volume.go:2650
 msgid "EXPIRES AT"
-msgstr ""
+msgstr "KEDALUWARSA PADA"
 
 #: cmd/incus/config_trust.go:437
 msgid "EXPIRY DATE"
-msgstr ""
+msgstr "TANGGAL KEDALUWARSA"
 
 #: cmd/incus/file.go:79
 msgid ""
@@ -2466,20 +2467,20 @@ msgstr ""
 #: cmd/incus/info.go:830 cmd/incus/info.go:881 cmd/incus/storage_volume.go:1476
 #: cmd/incus/storage_volume.go:1526
 msgid "Expires at"
-msgstr ""
+msgstr "Kedaluwarsa pada"
 
 #: cmd/incus/image.go:1005
 #, c-format
 msgid "Expires: %s"
-msgstr ""
+msgstr "Kedaluwarsa: %s"
 
 #: cmd/incus/image.go:1007
 msgid "Expires: never"
-msgstr ""
+msgstr "Kedaluwarsa: tidak pernah"
 
 #: cmd/incus/image.go:510
 msgid "Export and download images"
-msgstr ""
+msgstr "Ekspor dan unduh image"
 
 #: cmd/incus/image.go:511
 msgid ""
@@ -2533,20 +2534,20 @@ msgstr ""
 
 #: cmd/incus/config_template.go:339
 msgid "FILENAME"
-msgstr ""
+msgstr "NAMA_BERKAS"
 
 #: cmd/incus/config_trust.go:434 cmd/incus/image.go:1117
 #: cmd/incus/image.go:1118 cmd/incus/image_alias.go:206
 msgid "FINGERPRINT"
-msgstr ""
+msgstr "SIDIKJARI"
 
 #: cmd/incus/warning.go:211
 msgid "FIRST SEEN"
-msgstr ""
+msgstr "PERTAMA TERLIHAT"
 
 #: cmd/incus/info.go:682
 msgid "FQDN"
-msgstr ""
+msgstr "FQDN"
 
 #: cmd/incus/file.go:1438
 #, c-format
@@ -5818,69 +5819,69 @@ msgstr ""
 #: cmd/incus/info.go:363 cmd/incus/info.go:376
 #, c-format
 msgid "Product ID: %v"
-msgstr ""
+msgstr "ID Produk: %v"
 
 #: cmd/incus/info.go:464
 #, c-format
 msgid "Product: %s"
-msgstr ""
+msgstr "Produk: %s"
 
 #: cmd/incus/info.go:362 cmd/incus/info.go:375 cmd/incus/info.go:413
 #, c-format
 msgid "Product: %v"
-msgstr ""
+msgstr "Produk: %v"
 
 #: cmd/incus/info.go:124 cmd/incus/info.go:210
 #, c-format
 msgid "Product: %v (%v)"
-msgstr ""
+msgstr "Produk: %v (%v)"
 
 #: cmd/incus/profile.go:167
 #, c-format
 msgid "Profile %s added to %s"
-msgstr ""
+msgstr "Profil %s ditambahkan ke %s"
 
 #: cmd/incus/profile.go:423
 #, c-format
 msgid "Profile %s created"
-msgstr ""
+msgstr "Profil %s dibuat"
 
 #: cmd/incus/profile.go:482
 #, c-format
 msgid "Profile %s deleted"
-msgstr ""
+msgstr "Profil %s dihapus"
 
 #: cmd/incus/profile.go:914
 #, c-format
 msgid "Profile %s isn't currently applied to %s"
-msgstr ""
+msgstr "Profil %s saat ini tidak diterapkan ke %s"
 
 #: cmd/incus/profile.go:939
 #, c-format
 msgid "Profile %s removed from %s"
-msgstr ""
+msgstr "Profil %s dihapus dari %s"
 
 #: cmd/incus/profile.go:998
 #, c-format
 msgid "Profile %s renamed to %s"
-msgstr ""
+msgstr "Profil %s diganti nama menjadi %s"
 
 #: cmd/incus/image.go:161
 msgid "Profile to apply to the new image"
-msgstr ""
+msgstr "Profil yang akan diterapkan ke image baru"
 
 #: cmd/incus/copy.go:54 cmd/incus/create.go:52
 msgid "Profile to apply to the new instance"
-msgstr ""
+msgstr "Profil yang akan diterapkan ke instansi baru"
 
 #: cmd/incus/move.go:58
 msgid "Profile to apply to the target instance"
-msgstr ""
+msgstr "Profil yang akan diterapkan ke instansi target"
 
 #: cmd/incus/profile.go:255
 #, c-format
 msgid "Profiles %s applied to %s"
-msgstr ""
+msgstr "Profil %s diterapkan ke %s"
 
 #: cmd/incus/image.go:1043
 msgid "Profiles:"
@@ -5893,7 +5894,7 @@ msgstr ""
 #: cmd/incus/project.go:184
 #, c-format
 msgid "Project %s created"
-msgstr ""
+msgstr "Proyek %s dibuat"
 
 #: cmd/incus/project.go:277
 #, c-format
@@ -6259,7 +6260,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:1477 cmd/incus/cluster.go:1478
 msgid "Restore cluster member"
-msgstr ""
+msgstr "Pulihkan anggota klaster"
 
 #: cmd/incus/snapshot.go:510
 msgid ""
@@ -8029,40 +8030,40 @@ msgstr ""
 #: cmd/incus/info.go:167 cmd/incus/info.go:276
 #, c-format
 msgid "VFs: %d"
-msgstr ""
+msgstr "VF: %d"
 
 #: cmd/incus/network.go:1022
 msgid "VLAN ID"
-msgstr ""
+msgstr "ID VLAN"
 
 #: cmd/incus/network.go:1013
 msgid "VLAN filtering"
-msgstr ""
+msgstr "Pemfilteran VLAN"
 
 #: cmd/incus/network.go:1020
 msgid "VLAN:"
-msgstr ""
+msgstr "VLAN:"
 
 #: cmd/incus/info.go:361 cmd/incus/info.go:374
 #, c-format
 msgid "Vendor ID: %v"
-msgstr ""
+msgstr "ID Vendor: %v"
 
 #: cmd/incus/info.go:440 cmd/incus/info.go:460 cmd/incus/info.go:480
 #, c-format
 msgid "Vendor: %s"
-msgstr ""
+msgstr "Vendor: %s"
 
 #: cmd/incus/info.go:326 cmd/incus/info.go:360 cmd/incus/info.go:373
 #: cmd/incus/info.go:409
 #, c-format
 msgid "Vendor: %v"
-msgstr ""
+msgstr "Vendor: %v"
 
 #: cmd/incus/info.go:120 cmd/incus/info.go:206
 #, c-format
 msgid "Vendor: %v (%v)"
-msgstr ""
+msgstr "Vendor: %v (%v)"
 
 #: cmd/incus/info.go:265
 #, c-format
@@ -8072,21 +8073,21 @@ msgstr ""
 #: cmd/incus/info.go:448 cmd/incus/info.go:472 cmd/incus/info.go:484
 #, c-format
 msgid "Version: %s"
-msgstr ""
+msgstr "Versi: %s"
 
 #: cmd/incus/info.go:421
 #, c-format
 msgid "Version: %v"
-msgstr ""
+msgstr "Versi: %v"
 
 #: cmd/incus/storage_volume.go:1527
 msgid "Volume Only"
-msgstr ""
+msgstr "Hanya Volume"
 
 #: cmd/incus/info.go:306
 #, c-format
 msgid "WWN: %s"
-msgstr ""
+msgstr "WWN: %s"
 
 #: cmd/incus/admin_waitready.go:26
 msgid "Wait for the daemon to be ready to process requests"
@@ -8263,11 +8264,11 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:855
 msgid "[<remote:>]<pool> <volume> <profile> [<device name>]"
-msgstr ""
+msgstr "[<remote:>]<pool> <volume> <profil> [<nama perangkat>]"
 
 #: cmd/incus/storage_volume.go:252
 msgid "[<remote:>]<pool> <volume> <profile> [<device name>] [<path>]"
-msgstr ""
+msgstr "[<remote:>]<pool> <volume> <profil> [<nama perangkat>] [<path>]"
 
 #: cmd/incus/cluster.go:127 cmd/incus/cluster.go:1070
 #: cmd/incus/cluster_group.go:454 cmd/incus/config_trust.go:397
@@ -8278,103 +8279,103 @@ msgstr ""
 #: cmd/incus/storage.go:662 cmd/incus/top.go:31 cmd/incus/version.go:20
 #: cmd/incus/warning.go:69 cmd/incus/webui.go:17
 msgid "[<remote>:]"
-msgstr ""
+msgstr "[<remote>:]"
 
 #: cmd/incus/import.go:25
 msgid "[<remote>:] <backup file> [<instance name>]"
-msgstr ""
+msgstr "[<remote>:] <berkas cadangan> [<nama instansi>]"
 
 #: cmd/incus/cluster.go:1322
 msgid "[<remote>:] <cert.crt> <cert.key>"
-msgstr ""
+msgstr "[<remote>:] <cert.crt> <cert.kunci>"
 
 #: cmd/incus/config_trust.go:169
 msgid "[<remote>:] <cert>"
-msgstr ""
+msgstr "[<remote>:] <cert>"
 
 #: cmd/incus/cluster.go:778 cmd/incus/config_trust.go:787
 msgid "[<remote>:] <name>"
-msgstr ""
+msgstr "[<remote>:] <nama>"
 
 #: cmd/incus/image.go:1064 cmd/incus/list.go:47
 msgid "[<remote>:] [<filter>...]"
-msgstr ""
+msgstr "[<remote>:] [<filter>...]"
 
 #: cmd/incus/image_alias.go:155
 msgid "[<remote>:] [<filters>...]"
-msgstr ""
+msgstr "[<remote>:] [<filter>...]"
 
 #: cmd/incus/network_acl.go:188 cmd/incus/network_acl.go:249
 #: cmd/incus/network_acl.go:606 cmd/incus/network_acl.go:801
 msgid "[<remote>:]<ACL>"
-msgstr ""
+msgstr "[<remote>:]<ACL>"
 
 #: cmd/incus/network_acl.go:874 cmd/incus/network_acl.go:1011
 msgid "[<remote>:]<ACL> <direction> <key>=<value>..."
-msgstr ""
+msgstr "[<remote>:]<ACL> <arah> <kunci>=<nilai>..."
 
 #: cmd/incus/network_acl.go:305 cmd/incus/network_acl.go:563
 msgid "[<remote>:]<ACL> <key>"
-msgstr ""
+msgstr "[<remote>:]<ACL> <kunci>"
 
 #: cmd/incus/network_acl.go:475
 msgid "[<remote>:]<ACL> <key>=<value>..."
-msgstr ""
+msgstr "[<remote>:]<ACL> <kunci>=<nilai>..."
 
 #: cmd/incus/network_acl.go:744
 msgid "[<remote>:]<ACL> <new-name>"
-msgstr ""
+msgstr "[<remote>:]<ACL> <nama-baru>"
 
 #: cmd/incus/network_acl.go:378
 msgid "[<remote>:]<ACL> [key=value...]"
-msgstr ""
+msgstr "[<remote>:]<ACL> [kunci=nilai...]"
 
 #: cmd/incus/query.go:32
 msgid "[<remote>:]<API path>"
-msgstr ""
+msgstr "[<remote>:]<path API>"
 
 #: cmd/incus/network_zone.go:252 cmd/incus/network_zone.go:614
 #: cmd/incus/network_zone.go:740
 msgid "[<remote>:]<Zone>"
-msgstr ""
+msgstr "[<remote>:]<Zona>"
 
 #: cmd/incus/network_zone.go:315 cmd/incus/network_zone.go:571
 msgid "[<remote>:]<Zone> <key>"
-msgstr ""
+msgstr "[<remote>:]<Zona> <kunci>"
 
 #: cmd/incus/network_zone.go:483
 msgid "[<remote>:]<Zone> <key>=<value>..."
-msgstr ""
+msgstr "[<remote>:]<Zone> <kunci>=<nilai>..."
 
 #: cmd/incus/network_zone.go:388
 msgid "[<remote>:]<Zone> [key=value...]"
-msgstr ""
+msgstr "[<remote>:]<Zona> [kunci=nilai...]"
 
 #: cmd/incus/image_alias.go:109
 msgid "[<remote>:]<alias>"
-msgstr ""
+msgstr "[<remote>:]<alias>"
 
 #: cmd/incus/image_alias.go:63
 msgid "[<remote>:]<alias> <fingerprint>"
-msgstr ""
+msgstr "[<remote>:]<alias> <sidikjari>"
 
 #: cmd/incus/image_alias.go:331
 msgid "[<remote>:]<alias> <new-name>"
-msgstr ""
+msgstr "[<remote>:]<alias> <nama-baru>"
 
 #: cmd/incus/config_trust.go:273 cmd/incus/config_trust.go:740
 #: cmd/incus/config_trust.go:858
 msgid "[<remote>:]<fingerprint>"
-msgstr ""
+msgstr "[<remote>:]<sidikjari>"
 
 #: cmd/incus/cluster_group.go:184 cmd/incus/cluster_group.go:269
 #: cmd/incus/cluster_group.go:330 cmd/incus/cluster_group.go:748
 msgid "[<remote>:]<group>"
-msgstr ""
+msgstr "[<remote>:]<grup>"
 
 #: cmd/incus/cluster_group.go:886 cmd/incus/cluster_group.go:1043
 msgid "[<remote>:]<group> <key>"
-msgstr ""
+msgstr "[<remote>:]<grup> <kunci>"
 
 #: cmd/incus/cluster_group.go:961
 msgid "[<remote>:]<group> <key>=<value>..."
@@ -8406,88 +8407,88 @@ msgstr ""
 
 #: cmd/incus/create.go:41 cmd/incus/launch.go:22
 msgid "[<remote>:]<image> [<remote>:][<name>]"
-msgstr ""
+msgstr "[<remote>:]<image> [<remote>:][<nama>]"
 
 #: cmd/incus/image.go:509
 msgid "[<remote>:]<image> [<target>]"
-msgstr ""
+msgstr "[<remote>:]<image> [<target>]"
 
 #: cmd/incus/image.go:318 cmd/incus/image.go:1415
 msgid "[<remote>:]<image> [[<remote>:]<image>...]"
-msgstr ""
+msgstr "[<remote>:]<image> [[<remote>:]<image>...]"
 
 #: cmd/incus/config_device.go:320 cmd/incus/config_device.go:752
 #: cmd/incus/config_metadata.go:52 cmd/incus/config_metadata.go:185
 #: cmd/incus/config_template.go:286 cmd/incus/console.go:35
 #: cmd/incus/snapshot.go:292
 msgid "[<remote>:]<instance>"
-msgstr ""
+msgstr "[<remote>:]<instansi>"
 
 #: cmd/incus/config_device.go:214 cmd/incus/config_device.go:837
 msgid "[<remote>:]<instance> <device> <key>"
-msgstr ""
+msgstr "[<remote>:]<instansi> <perangkat> <kunci>"
 
 #: cmd/incus/config_device.go:617
 msgid "[<remote>:]<instance> <device> <key>=<value>..."
-msgstr ""
+msgstr "[<remote>:]<instansi> <perangkat> <kunci>=<nilai>..."
 
 #: cmd/incus/config_device.go:81
 msgid "[<remote>:]<instance> <device> <type> [key=value...]"
-msgstr ""
+msgstr "[<remote>:]<instansi> <perangkat> <tipe> [kunci=nilai...]"
 
 #: cmd/incus/config_device.go:398
 msgid "[<remote>:]<instance> <device> [key=value...]"
-msgstr ""
+msgstr "[<remote>:]<instansi> <perangkat> [kunci=nilai...]"
 
 #: cmd/incus/rename.go:19
 msgid "[<remote>:]<instance> <instance>"
-msgstr ""
+msgstr "[<remote>:]<instansi> <instansi>"
 
 #: cmd/incus/config_device.go:495
 msgid "[<remote>:]<instance> <name>..."
-msgstr ""
+msgstr "[<remote>:]<instansi> <nama>..."
 
 #: cmd/incus/snapshot.go:447
 msgid "[<remote>:]<instance> <old snapshot name> <new snapshot name>"
-msgstr ""
+msgstr "[<remote>:]<instansi> <nama snapshot lama> <nama snapshot baru>"
 
 #: cmd/incus/profile.go:107 cmd/incus/profile.go:866
 msgid "[<remote>:]<instance> <profile>"
-msgstr ""
+msgstr "[<remote>:]<instansi> <profil>"
 
 #: cmd/incus/profile.go:181
 msgid "[<remote>:]<instance> <profiles>"
-msgstr ""
+msgstr "[<remote>:]<instansi> <profil>"
 
 #: cmd/incus/snapshot.go:200 cmd/incus/snapshot.go:508
 msgid "[<remote>:]<instance> <snapshot name>"
-msgstr ""
+msgstr "[<remote>:]<instansi> <nama snapshot>"
 
 #: cmd/incus/snapshot.go:587
 msgid "[<remote>:]<instance> <snapshot>"
-msgstr ""
+msgstr "[<remote>:]<instansi> <snapshot>"
 
 #: cmd/incus/config_template.go:64 cmd/incus/config_template.go:131
 #: cmd/incus/config_template.go:186 cmd/incus/config_template.go:354
 msgid "[<remote>:]<instance> <template>"
-msgstr ""
+msgstr "[<remote>:]<instansi> <templat>"
 
 #: cmd/incus/move.go:32
 msgid "[<remote>:]<instance> [<remote>:][<instance>]"
-msgstr ""
+msgstr "[<remote>:]<instansi> [<remote>:][<instansi>]"
 
 #: cmd/incus/snapshot.go:76
 msgid "[<remote>:]<instance> [<snapshot name>]"
-msgstr ""
+msgstr "[<remote>:]<instansi> [<nama snapshot>]"
 
 #: cmd/incus/action.go:30 cmd/incus/action.go:55 cmd/incus/action.go:81
 #: cmd/incus/action.go:107 cmd/incus/action.go:132 cmd/incus/delete.go:29
 msgid "[<remote>:]<instance> [[<remote>:]<instance>...]"
-msgstr ""
+msgstr "[<remote>:]<instansi> [[<remote>:]<instansi>...]"
 
 #: cmd/incus/exec.go:39
 msgid "[<remote>:]<instance> [flags] [--] <command line>"
-msgstr ""
+msgstr "[<remote>:]<instansi> [flags] [--] <baris perintah>"
 
 #: cmd/incus/export.go:30
 msgid "[<remote>:]<instance> [target] [--instance-only] [--optimized-storage]"
@@ -8673,87 +8674,87 @@ msgstr ""
 
 #: cmd/incus/network.go:238
 msgid "[<remote>:]<network> <profile> [<device name>] [<interface name>]"
-msgstr ""
+msgstr "[<remote>:]<jaringan> <profil> [<nama perangkat>] [<nama antar muka>]"
 
 #: cmd/incus/network.go:335
 msgid "[<remote>:]<network> [key=value...]"
-msgstr ""
+msgstr "[<remote>:]<jaringan> [kunci=nilai...]"
 
 #: cmd/incus/operation.go:59 cmd/incus/operation.go:286
 msgid "[<remote>:]<operation>"
-msgstr ""
+msgstr "[<remote>:]<operasi>"
 
 #: cmd/incus/storage.go:209 cmd/incus/storage.go:268 cmd/incus/storage.go:482
 #: cmd/incus/storage.go:928 cmd/incus/storage_bucket.go:475
 msgid "[<remote>:]<pool>"
-msgstr ""
+msgstr "[<remote>:]<pool>"
 
 #: cmd/incus/storage_bucket.go:1553
 msgid "[<remote>:]<pool> <backup file> [<bucket>]"
-msgstr ""
+msgstr "[<remote>:]<pool> <berkas cadangan> [<bucket>]"
 
 #: cmd/incus/storage_volume.go:3125
 msgid "[<remote>:]<pool> <backup file> [<volume name>]"
-msgstr ""
+msgstr "[<remote>:]<pool> <berkas cadangan> [<volume nama>]"
 
 #: cmd/incus/storage_bucket.go:198 cmd/incus/storage_bucket.go:260
 #: cmd/incus/storage_bucket.go:731 cmd/incus/storage_bucket.go:879
 msgid "[<remote>:]<pool> <bucket>"
-msgstr ""
+msgstr "[<remote>:]<pool> <bucket>"
 
 #: cmd/incus/storage_bucket.go:393 cmd/incus/storage_bucket.go:800
 #: cmd/incus/storage_bucket.go:1025 cmd/incus/storage_bucket.go:1131
 #: cmd/incus/storage_bucket.go:1195 cmd/incus/storage_bucket.go:1330
 msgid "[<remote>:]<pool> <bucket> <key>"
-msgstr ""
+msgstr "[<remote>:]<pool> <bucket> <kunci>"
 
 #: cmd/incus/storage_bucket.go:637
 msgid "[<remote>:]<pool> <bucket> <key>=<value>..."
-msgstr ""
+msgstr "[<remote>:]<pool> <bucket> <kunci>=<nilai>..."
 
 #: cmd/incus/storage_bucket.go:1402
 msgid "[<remote>:]<pool> <bucket> [<path>]"
-msgstr ""
+msgstr "[<remote>:]<pool> <bucket> [<path>]"
 
 #: cmd/incus/storage_bucket.go:94
 msgid "[<remote>:]<pool> <bucket> [key=value...]"
-msgstr ""
+msgstr "[<remote>:]<pool> <bucket> [kunci=nilai...]"
 
 #: cmd/incus/storage.go:98
 msgid "[<remote>:]<pool> <driver> [key=value...]"
-msgstr ""
+msgstr "[<remote>:]<pool> <driver> [kunci=nilai...]"
 
 #: cmd/incus/storage.go:400 cmd/incus/storage.go:1022
 msgid "[<remote>:]<pool> <key>"
-msgstr ""
+msgstr "[<remote>:]<pool> <kunci>"
 
 #: cmd/incus/storage.go:824
 msgid "[<remote>:]<pool> <key> <value>"
-msgstr ""
+msgstr "[<remote>:]<pool> <kunci> <nilai>"
 
 #: cmd/incus/storage_volume.go:1865
 msgid "[<remote>:]<pool> <old name> <new name>"
-msgstr ""
+msgstr "[<remote>:]<pool> <nama lama> <nama baru>"
 
 #: cmd/incus/storage_volume.go:683 cmd/incus/storage_volume.go:2542
 msgid "[<remote>:]<pool> <volume>"
-msgstr ""
+msgstr "[<remote>:]<pool> <volume>"
 
 #: cmd/incus/storage_volume.go:757
 msgid "[<remote>:]<pool> <volume> <instance> [<device name>]"
-msgstr ""
+msgstr "[<remote>:]<pool> <volume> <instansi> [<nama perangkat>]"
 
 #: cmd/incus/storage_volume.go:161
 msgid "[<remote>:]<pool> <volume> <instance> [<device name>] [<path>]"
-msgstr ""
+msgstr "[<remote>:]<pool> <volume> <instansi> [<nama perangkat>] [<path>]"
 
 #: cmd/incus/storage_volume.go:2705
 msgid "[<remote>:]<pool> <volume> <old snapshot> <new snapshot>"
-msgstr ""
+msgstr "[<remote>:]<pool> <volume> <snapshot lama> <snapshot baru>"
 
 #: cmd/incus/storage_volume.go:2452 cmd/incus/storage_volume.go:2792
 msgid "[<remote>:]<pool> <volume> <snapshot>"
-msgstr ""
+msgstr "[<remote>:]<pool> <volume> <snapshot>"
 
 #: cmd/incus/storage_volume.go:2959
 msgid "[<remote>:]<pool> <volume> [<path>]"
@@ -8914,7 +8915,7 @@ msgstr ""
 
 #: cmd/incus/info.go:643
 msgid "application"
-msgstr ""
+msgstr "aplikasi"
 
 #: cmd/incus/project.go:696 cmd/incus/remote.go:794
 msgid "current"
@@ -8922,19 +8923,19 @@ msgstr ""
 
 #: cmd/incus/storage.go:550
 msgid "description"
-msgstr ""
+msgstr "deskripsi"
 
 #: cmd/incus/image.go:981
 msgid "disabled"
-msgstr ""
+msgstr "dinonaktifkan"
 
 #: cmd/incus/storage.go:549
 msgid "driver"
-msgstr ""
+msgstr "driver"
 
 #: cmd/incus/image.go:983
 msgid "enabled"
-msgstr ""
+msgstr "difungsikan"
 
 #: cmd/incus/info.go:647
 msgid "ephemeral"
@@ -8943,7 +8944,7 @@ msgstr ""
 #: cmd/incus/action.go:460
 #, c-format
 msgid "error: %v"
-msgstr ""
+msgstr "galat: %v"
 
 #: cmd/incus/alias.go:63
 msgid ""
@@ -9540,10 +9541,10 @@ msgstr ""
 
 #: cmd/incus/remote.go:477
 msgid "y"
-msgstr ""
+msgstr "y"
 
 #: cmd/incus/cluster.go:727 cmd/incus/config_trust.go:493
 #: cmd/incus/delete.go:52 cmd/incus/image.go:973 cmd/incus/image.go:978
 #: cmd/incus/image.go:1178 cmd/incus/project.go:227 cmd/incus/snapshot.go:256
 msgid "yes"
-msgstr ""
+msgstr "ya"
