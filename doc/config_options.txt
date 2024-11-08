@@ -1384,6 +1384,12 @@ The cluster member that the instance lived on before evacuation.
 
 ```
 
+```{config:option} volatile.rebalance.last_move instance-volatile
+:shortdesc: "Timestamp of last move by automatic live-migration"
+:type: "integer"
+
+```
+
 ```{config:option} volatile.uuid instance-volatile
 :shortdesc: "Instance UUID"
 :type: "string"
@@ -2087,6 +2093,38 @@ This must be an odd number >= `3`.
 :shortdesc: "Threshold when an unresponsive member is considered offline"
 :type: "integer"
 Specify the number of seconds after which an unresponsive member is considered offline.
+```
+
+```{config:option} cluster.rebalance.batch server-cluster
+:defaultdesc: "`1`"
+:scope: "global"
+:shortdesc: "Maximum number of instances to move during one re-balancing run"
+:type: "integer"
+
+```
+
+```{config:option} cluster.rebalance.cooldown server-cluster
+:defaultdesc: "`6H`"
+:scope: "global"
+:shortdesc: "Amount of time during which an instance will not be moved again"
+:type: "string"
+
+```
+
+```{config:option} cluster.rebalance.interval server-cluster
+:defaultdesc: "`0`"
+:scope: "global"
+:shortdesc: "How often (in minutes) to consider re-balancing things. 0 to disable (default)"
+:type: "integer"
+
+```
+
+```{config:option} cluster.rebalance.threshold server-cluster
+:defaultdesc: "`20`"
+:scope: "global"
+:shortdesc: "Percentage load difference between most and least busy server needed to trigger a migration"
+:type: "integer"
+
 ```
 
 <!-- config group server-cluster end -->

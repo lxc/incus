@@ -1508,6 +1508,13 @@
 						}
 					},
 					{
+						"volatile.rebalance.last_move": {
+							"longdesc": "",
+							"shortdesc": "Timestamp of last move by automatic live-migration",
+							"type": "integer"
+						}
+					},
+					{
 						"volatile.uuid": {
 							"longdesc": "The instance UUID is globally unique across all servers and projects.",
 							"shortdesc": "Instance UUID",
@@ -2299,6 +2306,42 @@
 							"longdesc": "Specify the number of seconds after which an unresponsive member is considered offline.",
 							"scope": "global",
 							"shortdesc": "Threshold when an unresponsive member is considered offline",
+							"type": "integer"
+						}
+					},
+					{
+						"cluster.rebalance.batch": {
+							"defaultdesc": "`1`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Maximum number of instances to move during one re-balancing run",
+							"type": "integer"
+						}
+					},
+					{
+						"cluster.rebalance.cooldown": {
+							"defaultdesc": "`6H`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Amount of time during which an instance will not be moved again",
+							"type": "string"
+						}
+					},
+					{
+						"cluster.rebalance.interval": {
+							"defaultdesc": "`0`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "How often (in minutes) to consider re-balancing things. 0 to disable (default)",
+							"type": "integer"
+						}
+					},
+					{
+						"cluster.rebalance.threshold": {
+							"defaultdesc": "`20`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Percentage load difference between most and least busy server needed to trigger a migration",
 							"type": "integer"
 						}
 					}
