@@ -362,6 +362,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		InstanceOnly:          instanceOnly,
 		ClusterMoveSourceName: clusterMoveSourceName,
 		Refresh:               req.Source.Refresh,
+		RefreshExcludeOlder:   req.Source.RefreshExcludeOlder,
 	}
 
 	sink, err := newMigrationSink(&migrationArgs)

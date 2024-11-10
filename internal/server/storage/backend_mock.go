@@ -172,7 +172,8 @@ func (b *mockBackend) CleanupInstancePaths(inst instance.Instance, op *operation
 	return nil
 }
 
-func (b *mockBackend) RefreshCustomVolume(projectName string, srcProjectName string, volName string, desc string, config map[string]string, srcPoolName, srcVolName string, srcVolOnly bool, op *operations.Operation) error {
+// RefreshCustomVolume refresh a custom volume.
+func (b *mockBackend) RefreshCustomVolume(projectName string, srcProjectName string, volName string, desc string, config map[string]string, srcPoolName, srcVolName string, srcVolOnly bool, excludeOlder bool, op *operations.Operation) error {
 	return nil
 }
 
