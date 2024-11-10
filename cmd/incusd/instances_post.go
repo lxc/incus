@@ -549,6 +549,7 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 			targetInstance:       args,
 			instanceOnly:         req.Source.InstanceOnly,
 			refresh:              req.Source.Refresh,
+			refreshExcludeOlder:  req.Source.RefreshExcludeOlder,
 			applyTemplateTrigger: true,
 			allowInconsistent:    req.Source.AllowInconsistent,
 		}, op)

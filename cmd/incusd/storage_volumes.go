@@ -829,7 +829,7 @@ func doCustomVolumeRefresh(s *state.State, r *http.Request, requestProjectName s
 			return fmt.Errorf("No source volume name supplied")
 		}
 
-		err = pool.RefreshCustomVolume(projectName, srcProjectName, req.Name, req.Description, req.Config, req.Source.Pool, req.Source.Name, !req.Source.VolumeOnly, op)
+		err = pool.RefreshCustomVolume(projectName, srcProjectName, req.Name, req.Description, req.Config, req.Source.Pool, req.Source.Name, !req.Source.VolumeOnly, req.Source.RefreshExcludeOlder, op)
 		if err != nil {
 			return err
 		}
