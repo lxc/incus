@@ -208,9 +208,10 @@ func newStorageMigrationSink(args *migrationSinkArgs) (*migrationSink, error) {
 		migrationFields: migrationFields{
 			volumeOnly: args.VolumeOnly,
 		},
-		url:     args.URL,
-		push:    args.Push,
-		refresh: args.Refresh,
+		url:                 args.URL,
+		push:                args.Push,
+		refresh:             args.Refresh,
+		refreshExcludeOlder: args.RefreshExcludeOlder,
 	}
 
 	secretNames := []string{api.SecretNameControl, api.SecretNameFilesystem}
@@ -329,6 +330,7 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 			TrackProgress:      true,
 			ContentType:        req.ContentType,
 			Refresh:            args.Refresh,
+			RefreshExcludeOlder: args.RefreshExcludeOlder,
 			VolumeOnly:         args.VolumeOnly,
 		}
 
@@ -373,7 +375,7 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 		}
 
 		// Compare the two sets.
-		syncSourceSnapshotIndexes, deleteTargetSnapshotIndexes := storagePools.CompareSnapshots(sourceSnapshotComparable, targetSnapshotsComparable)
+		syncSourceSnapshotIndexes, deleteTargetSnapshotIndexes := storagePools.CompareSnapshots(sourceSnapshotComparable, targetSnapshotsComparable, c.refreshExcludeOlder)
 
 		// Delete the extra local snapshots first.
 		for _, deleteTargetSnapshotIndex := range deleteTargetSnapshotIndexes {

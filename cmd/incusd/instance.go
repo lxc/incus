@@ -234,6 +234,7 @@ type instanceCreateAsCopyOpts struct {
 	targetInstance       db.InstanceArgs   // Configuration for new instance.
 	instanceOnly         bool              // Only copy the instance and not it's snapshots.
 	refresh              bool              // Refresh an existing target instance.
+	refreshExcludeOlder  bool              // During refresh, exclude source snapshots earlier than latest target snapshot
 	applyTemplateTrigger bool              // Apply deferred TemplateTriggerCopy.
 	allowInconsistent    bool              // Ignore some copy errors
 }
@@ -316,7 +317,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 				})
 			}
 
-			syncSourceSnapshotIndexes, deleteTargetSnapshotIndexes := storagePools.CompareSnapshots(sourceSnapshotComparable, targetSnapshotsComparable)
+			syncSourceSnapshotIndexes, deleteTargetSnapshotIndexes := storagePools.CompareSnapshots(sourceSnapshotComparable, targetSnapshotsComparable, opts.refreshExcludeOlder)
 
 			// Delete extra snapshots first.
 			for _, deleteTargetSnapIndex := range deleteTargetSnapshotIndexes {
