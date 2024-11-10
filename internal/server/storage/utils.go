@@ -1133,10 +1133,11 @@ type ComparableSnapshot struct {
 // CompareSnapshots returns a list of snapshot indexes (from the associated input slices) to sync from the source
 // and to delete from the target respectively.
 // A snapshot will be added to "to sync from source" slice if it either doesn't exist in the target or its ID or
-// creation date is different to the source.
+// creation date is different to the source. When excludeOlder is true, source snapshots earlier than
+// latest target snapshot are excluded.
 // A snapshot will be added to the "to delete from target" slice if it doesn't exist in the source or its ID or
 // creation date is different to the source.
-func CompareSnapshots(sourceSnapshots []ComparableSnapshot, targetSnapshots []ComparableSnapshot) ([]int, []int) {
+func CompareSnapshots(sourceSnapshots []ComparableSnapshot, targetSnapshots []ComparableSnapshot, excludeOlder bool) ([]int, []int) {
 	// Compare source and target.
 	sourceSnapshotsByName := make(map[string]*ComparableSnapshot, len(sourceSnapshots))
 	targetSnapshotsByName := make(map[string]*ComparableSnapshot, len(targetSnapshots))
@@ -1148,6 +1149,9 @@ func CompareSnapshots(sourceSnapshots []ComparableSnapshot, targetSnapshots []Co
 		sourceSnapshotsByName[sourceSnapshots[sourceSnapIndex].Name] = &sourceSnapshots[sourceSnapIndex]
 	}
 
+	// Find the latest creation date among target snapshots.
+	var latestTargetSnapshotTime time.Time
+
 	// If target snapshot doesn't exist in source, or its creation date or ID differ,
 	// then mark it for deletion on target.
 	for targetSnapIndex := range targetSnapshots {
@@ -1157,6 +1161,8 @@ func CompareSnapshots(sourceSnapshots []ComparableSnapshot, targetSnapshots []Co
 		sourceSnap, sourceSnapExists := sourceSnapshotsByName[targetSnapshots[targetSnapIndex].Name]
 		if !sourceSnapExists || !sourceSnap.CreationDate.Equal(targetSnapshots[targetSnapIndex].CreationDate) || sourceSnap.ID != targetSnapshots[targetSnapIndex].ID {
 			deleteFromTarget = append(deleteFromTarget, targetSnapIndex)
+		} else if targetSnapshots[targetSnapIndex].CreationDate.After(latestTargetSnapshotTime) {
+			latestTargetSnapshotTime = targetSnapshots[targetSnapIndex].CreationDate
 		}
 	}
 
@@ -1164,7 +1170,7 @@ func CompareSnapshots(sourceSnapshots []ComparableSnapshot, targetSnapshots []Co
 	// then mark it for syncing to target.
 	for sourceSnapIndex := range sourceSnapshots {
 		targetSnap, targetSnapExists := targetSnapshotsByName[sourceSnapshots[sourceSnapIndex].Name]
-		if !targetSnapExists || !targetSnap.CreationDate.Equal(sourceSnapshots[sourceSnapIndex].CreationDate) || targetSnap.ID != sourceSnapshots[sourceSnapIndex].ID {
+		if (!targetSnapExists && (!excludeOlder || sourceSnapshots[sourceSnapIndex].CreationDate.After(latestTargetSnapshotTime))) || (targetSnapExists && (!targetSnap.CreationDate.Equal(sourceSnapshots[sourceSnapIndex].CreationDate) || targetSnap.ID != sourceSnapshots[sourceSnapIndex].ID)) {
 			syncFromSource = append(syncFromSource, sourceSnapIndex)
 		}
 	}

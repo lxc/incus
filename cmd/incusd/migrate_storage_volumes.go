@@ -322,16 +322,16 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 	// with the new storage layer.
 	myTarget = func(conn io.ReadWriteCloser, op *operations.Operation, args migrationSinkArgs) error {
 		volTargetArgs := localMigration.VolumeTargetArgs{
-			IndexHeaderVersion: respHeader.GetIndexHeaderVersion(),
-			Name:               req.Name,
-			Config:             req.Config,
-			Description:        req.Description,
-			MigrationType:      respTypes[0],
-			TrackProgress:      true,
-			ContentType:        req.ContentType,
-			Refresh:            args.Refresh,
+			IndexHeaderVersion:  respHeader.GetIndexHeaderVersion(),
+			Name:                req.Name,
+			Config:              req.Config,
+			Description:         req.Description,
+			MigrationType:       respTypes[0],
+			TrackProgress:       true,
+			ContentType:         req.ContentType,
+			Refresh:             args.Refresh,
 			RefreshExcludeOlder: args.RefreshExcludeOlder,
-			VolumeOnly:         args.VolumeOnly,
+			VolumeOnly:          args.VolumeOnly,
 		}
 
 		// A zero length Snapshots slice indicates volume only migration in
@@ -421,10 +421,11 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 			// as part of MigrationSinkArgs below.
 			rsyncFeatures := respHeader.GetRsyncFeaturesSlice()
 			args := migrationSinkArgs{
-				RsyncFeatures: rsyncFeatures,
-				Snapshots:     respHeader.Snapshots,
-				VolumeOnly:    c.volumeOnly,
-				Refresh:       c.refresh,
+				RsyncFeatures:       rsyncFeatures,
+				Snapshots:           respHeader.Snapshots,
+				VolumeOnly:          c.volumeOnly,
+				Refresh:             c.refresh,
+				RefreshExcludeOlder: c.refreshExcludeOlder,
 			}
 
 			fsConn, err := c.conns[api.SecretNameFilesystem].WebsocketIO(state.ShutdownCtx)

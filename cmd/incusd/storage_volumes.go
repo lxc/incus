@@ -940,10 +940,11 @@ func doVolumeMigration(s *state.State, r *http.Request, requestProjectName strin
 			NetDialContext:   localtls.RFC3493Dialer,
 			HandshakeTimeout: time.Second * 5,
 		},
-		Secrets:    req.Source.Websockets,
-		Push:       push,
-		VolumeOnly: req.Source.VolumeOnly,
-		Refresh:    req.Source.Refresh,
+		Secrets:             req.Source.Websockets,
+		Push:                push,
+		VolumeOnly:          req.Source.VolumeOnly,
+		Refresh:             req.Source.Refresh,
+		RefreshExcludeOlder: req.Source.RefreshExcludeOlder,
 	}
 
 	sink, err := newStorageMigrationSink(&migrationArgs)
