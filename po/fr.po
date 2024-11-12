@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-11-06 08:30+0100\n"
-"PO-Revision-Date: 2024-03-08 16:01+0000\n"
-"Last-Translator: montag451 <montag451@laposte.net>\n"
+"PO-Revision-Date: 2024-11-11 22:00+0000\n"
+"Last-Translator: \"Laterria.Severino\" <Laterria.Severino@openmail.pro>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.5-dev\n"
+"X-Generator: Weblate 5.8.2\n"
 
 #: cmd/incus/info.go:438
 msgid "  Chassis:"
@@ -1138,8 +1138,9 @@ msgid "BASE IMAGE"
 msgstr "Image de base"
 
 #: cmd/incus/network_load_balancer.go:1320
+#, fuzzy
 msgid "Backend health:"
-msgstr ""
+msgstr "État du backend :"
 
 #: cmd/incus/export.go:85
 #, c-format
@@ -2022,7 +2023,7 @@ msgstr "DESCRIPTION"
 
 #: cmd/incus/top.go:349
 msgid "DISK"
-msgstr ""
+msgstr "DISQUE"
 
 #: cmd/incus/list.go:576
 msgid "DISK USAGE"
@@ -2500,7 +2501,7 @@ msgstr "Forcer le conteneur à s'arrêter"
 
 #: cmd/incus/top.go:32
 msgid "Display resource usage info per instance"
-msgstr ""
+msgstr "Afficher l'utilisation des ressources par instance"
 
 #: cmd/incus/storage_bucket.go:501
 #, fuzzy
@@ -2508,8 +2509,11 @@ msgid "Display storage pool buckets from all projects"
 msgstr "Forcer le conteneur à s'arrêter"
 
 #: cmd/incus/top.go:33
+#, fuzzy
 msgid "Displays CPU usage, memory usage, and disk usage per instance"
 msgstr ""
+"Afficher pour chaque instance l'utilisation du CPU, de la mémoire et du "
+"disque"
 
 #: cmd/incus/admin_init_interactive.go:416
 msgid "Do you want to configure a new local storage pool?"
@@ -2748,10 +2752,13 @@ msgstr ""
 "  pour l'adresse si elle n'est pas encore paramétrée."
 
 #: cmd/incus/top.go:184
+#, fuzzy
 msgid ""
 "Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
 "for disk):"
 msgstr ""
+"Entrez le type de tri souhaité ('a' pour alphabétique, 'c' pour CPU, 'm' "
+"pour mémoire ou 'd' pour disque) :"
 
 #: cmd/incus/top.go:165
 msgid "Enter new delay in seconds:"
@@ -3052,8 +3059,9 @@ msgid "FIRST SEEN"
 msgstr "PREMIÈRE VUE"
 
 #: cmd/incus/info.go:682
+#, fuzzy
 msgid "FQDN"
-msgstr ""
+msgstr "FQDN (nom de domaine pleinement qualifié)"
 
 #: cmd/incus/file.go:1438
 #, c-format
@@ -3434,8 +3442,9 @@ msgid "Force creating files or directories"
 msgstr "Forcer la création de fichiers ou de répertoires"
 
 #: cmd/incus/project.go:206
+#, fuzzy
 msgid "Force delete the project and everything it contains."
-msgstr ""
+msgstr "Suppression forcée du projet et de toutes les données associées"
 
 #: cmd/incus/file.go:318
 #, fuzzy
@@ -3858,7 +3867,7 @@ msgstr "IMAGES"
 
 #: cmd/incus/top.go:349
 msgid "INSTANCE NAME"
-msgstr ""
+msgstr "NOM DE L'INSTANCE"
 
 #: cmd/incus/info.go:378
 #, c-format
@@ -4049,8 +4058,9 @@ msgid "Importing instance: %s"
 msgstr "Ignorer l'état du conteneur (seulement pour start)"
 
 #: cmd/incus/create.go:55
+#, fuzzy
 msgid "Include environment variables from file"
-msgstr ""
+msgstr "Inclure les variables environnements à partir d'un fichier"
 
 #: cmd/incus/manpage.go:26
 #, fuzzy
@@ -4188,8 +4198,9 @@ msgid "Invalid format: %s"
 msgstr "Cible invalide %s"
 
 #: cmd/incus/top.go:176
+#, fuzzy
 msgid "Invalid input, please enter a positive number"
-msgstr ""
+msgstr "Entrée invalide, veuillez entrer un entier positif"
 
 #: cmd/incus/snapshot.go:147
 #, fuzzy, c-format
@@ -4298,7 +4309,7 @@ msgstr "Garder l'image à jour après la copie initiale"
 
 #: cmd/incus/info.go:680
 msgid "Kernel Version"
-msgstr ""
+msgstr "Version du noyau"
 
 #: cmd/incus/warning.go:212
 #, fuzzy
