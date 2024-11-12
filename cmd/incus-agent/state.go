@@ -123,7 +123,7 @@ func memoryState() api.InstanceStateMemory {
 func networkState() map[string]api.InstanceStateNetwork {
 	result := map[string]api.InstanceStateNetwork{}
 
-	ifs, err := net.Interfaces()
+	ifs, err := linux.NetlinkInterfaces()
 	if err != nil {
 		logger.Errorf("Failed to retrieve network interfaces: %v", err)
 		return result
@@ -180,9 +180,7 @@ func networkState() map[string]api.InstanceStateNetwork {
 		}
 
 		// Addresses
-		addrs, _ := iface.Addrs()
-
-		for _, addr := range addrs {
+		for _, addr := range iface.Addresses {
 			addressFields := strings.Split(addr.String(), "/")
 
 			networkAddress := api.InstanceStateNetworkAddress{
