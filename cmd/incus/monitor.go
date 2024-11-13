@@ -151,7 +151,13 @@ func (c *cmdMonitor) Run(cmd *cobra.Command, args []string) error {
 
 			entry := &logrus.Entry{Logger: logger}
 			entry.Data = c.unpackCtx(record.Ctx)
-			entry.Message = record.Msg
+
+			if event.Type == "logging" && d.IsClustered() {
+				entry.Message = fmt.Sprintf("[%s] %s", event.Location, record.Msg)
+			} else {
+				entry.Message = record.Msg
+			}
+
 			entry.Time = record.Time
 			entry.Level = msgLevel
 			format := logrus.TextFormatter{FullTimestamp: true, PadLevelText: true}
