@@ -3,7 +3,11 @@ package ovn
 import (
 	"context"
 	"fmt"
+	"net"
+	"strconv"
+	"strings"
 
+	ovnNB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-nb"
 	ovnSB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-sb"
 )
 
@@ -52,4 +56,42 @@ func (o *SB) GetServiceHealth(ctx context.Context, address string, protocol stri
 	}
 
 	return *services[0].Status, nil
+}
+
+// CheckLoadBalancerOnline checks all backends for a particular load-balancer.
+func (o *SB) CheckLoadBalancerOnline(ctx context.Context, lb ovnNB.LoadBalancer) (bool, error) {
+	// Invalid load balancers should be kept offline.
+	if lb.Protocol == nil {
+		return false, nil
+	}
+
+	// Load-balancers with no service checks should be kept online.
+	if len(lb.HealthCheck) == 0 {
+		return true, nil
+	}
+
+	for _, v := range lb.Vips {
+		for _, backend := range strings.Split(v, ",") {
+			host, port, err := net.SplitHostPort(backend)
+			if err != nil {
+				return false, err
+			}
+
+			portInt, err := strconv.Atoi(port)
+			if err != nil {
+				return false, err
+			}
+
+			status, err := o.GetServiceHealth(ctx, host, *lb.Protocol, portInt)
+			if err != nil {
+				return false, err
+			}
+
+			if status == "online" {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
 }
