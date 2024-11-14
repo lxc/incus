@@ -97,6 +97,23 @@ One way to automatically achieve this is to have a piece of software monitor Inc
 power to the server in question by interacting with its BMC or PDU.
 ```
 
+(cluster-automatic-balancing)=
+### Cluster re-balancing
+
+Incus can automatically balance the load across cluster members.
+
+This is done through a few configuration options:
+
+- {config:option}`server-cluster:cluster.rebalance.batch`
+- {config:option}`server-cluster:cluster.rebalance.cooldown`
+- {config:option}`server-cluster:cluster.rebalance.interval`
+- {config:option}`server-cluster:cluster.rebalance.threshold`
+
+Incus will compare the load across all servers and if the difference in
+percent exceeds the threshold, it will start identifying
+virtual-machines that can be safely live-migrated to the least loaded
+server.
+
 (cluster-manage-delete-members)=
 ## Delete cluster members
 
