@@ -400,6 +400,13 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  shortdesc: Instance marked itself as ready
 	"volatile.last_state.ready": validate.IsBool,
 
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.rebalance.last_move)
+	//
+	// ---
+	//  type: integer
+	//  shortdesc: Timestamp of last move by automatic live-migration
+	"volatile.rebalance.last_move": validate.Optional(validate.IsInt64),
+
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.uuid)
 	// The instance UUID is globally unique across all servers and projects.
 	// ---

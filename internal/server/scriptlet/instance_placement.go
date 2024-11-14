@@ -3,23 +3,19 @@ package scriptlet
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"go.starlark.net/starlark"
 
-	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/cluster"
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
-	"github.com/lxc/incus/v6/internal/server/instance/drivers/qemudefault"
+	internalInstance "github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/resources"
 	scriptletLoad "github.com/lxc/incus/v6/internal/server/scriptlet/load"
 	"github.com/lxc/incus/v6/internal/server/state"
-	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
 	"github.com/lxc/incus/v6/shared/api"
 	apiScriptlet "github.com/lxc/incus/v6/shared/api/scriptlet"
 	"github.com/lxc/incus/v6/shared/logger"
-	"github.com/lxc/incus/v6/shared/units"
 )
 
 // InstancePlacementRun runs the instance placement scriptlet and returns the chosen cluster member target.
@@ -158,60 +154,14 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 		var err error
 		var res apiScriptlet.InstanceResources
 
-		// Parse limits.cpu.
-		if req.Config["limits.cpu"] != "" {
-			// Check if using shared CPU limits.
-			res.CPUCores, err = strconv.ParseUint(req.Config["limits.cpu"], 10, 64)
-			if err != nil {
-				// Or get count of pinned CPUs.
-				pinnedCPUs, err := resources.ParseCpuset(req.Config["limits.cpu"])
-				if err != nil {
-					return nil, fmt.Errorf("Failed parsing instance resources limits.cpu: %w", err)
-				}
-
-				res.CPUCores = uint64(len(pinnedCPUs))
-			}
-		} else if req.Type == api.InstanceTypeVM {
-			// Apply VM CPU cores defaults if not specified.
-			res.CPUCores = qemudefault.CPUCores
+		usageCPU, usageMemory, usageDisk, err := internalInstance.ResourceUsage(req.Config, req.Devices, req.Type)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to calculate instance resource usage: %w", err)
 		}
 
-		// Parse limits.memory.
-		memoryLimitStr := req.Config["limits.memory"]
-
-		// Apply VM memory limit defaults if not specified.
-		if req.Type == api.InstanceTypeVM && memoryLimitStr == "" {
-			memoryLimitStr = qemudefault.MemSize
-		}
-
-		if memoryLimitStr != "" {
-			memoryLimit, err := units.ParseByteSizeString(memoryLimitStr)
-			if err != nil {
-				return nil, fmt.Errorf("Failed parsing instance resources limits.memory: %w", err)
-			}
-
-			res.MemorySize = uint64(memoryLimit)
-		}
-
-		// Parse root disk size.
-		_, rootDiskConfig, err := instance.GetRootDiskDevice(req.Devices)
-		if err == nil {
-			rootDiskSizeStr := rootDiskConfig["size"]
-
-			// Apply VM root disk size defaults if not specified.
-			if req.Type == api.InstanceTypeVM && rootDiskSizeStr == "" {
-				rootDiskSizeStr = storageDrivers.DefaultBlockSize
-			}
-
-			if rootDiskSizeStr != "" {
-				rootDiskSize, err := units.ParseByteSizeString(rootDiskSizeStr)
-				if err != nil {
-					return nil, fmt.Errorf("Failed parsing instance resources root disk size: %w", err)
-				}
-
-				res.RootDiskSize = uint64(rootDiskSize)
-			}
-		}
+		res.CPUCores = uint64(usageCPU)
+		res.MemorySize = uint64(usageMemory)
+		res.RootDiskSize = uint64(usageDisk)
 
 		rv, err := StarlarkMarshal(res)
 		if err != nil {

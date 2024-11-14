@@ -62,6 +62,7 @@ var apiInternal = []APIEndpoint{
 	internalImageOptimizeCmd,
 	internalImageRefreshCmd,
 	internalRAFTSnapshotCmd,
+	internalRebalanceLoadCmd,
 	internalReadyCmd,
 	internalShutdownCmd,
 	internalSQLCmd,
@@ -145,6 +146,12 @@ var internalBGPStateCmd = APIEndpoint{
 	Path: "testing/bgp",
 
 	Get: APIEndpointAction{Handler: internalBGPState, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+}
+
+var internalRebalanceLoadCmd = APIEndpoint{
+	Path: "rebalance",
+
+	Get: APIEndpointAction{Handler: internalRebalanceLoad, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 type internalImageOptimizePost struct {
@@ -1073,4 +1080,13 @@ func internalBGPState(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	return response.SyncResponse(true, s.BGP.Debug())
+}
+
+func internalRebalanceLoad(d *Daemon, r *http.Request) response.Response {
+	err := autoRebalanceCluster(context.TODO(), d)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	return response.EmptySyncResponse
 }
