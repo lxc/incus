@@ -6322,84 +6322,35 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 		return nil
 	}
 
-	// Look for metadata.yaml.
-	meta := api.ImageMetadata{}
-
-	fnam := filepath.Join(cDir, "metadata.yaml")
-	if !util.PathExists(fnam) {
-		// Generate a new metadata.yaml.
-		tempDir, err := os.MkdirTemp("", "incus_metadata_")
+	// Get the instance's architecture.
+	var arch string
+	if d.IsSnapshot() {
+		parentName, _, _ := api.GetParentAndSnapshotName(d.name)
+		parent, err := instance.LoadByProjectAndName(d.state, d.project.Name, parentName)
 		if err != nil {
 			_ = tarWriter.Close()
 			d.logger.Error("Failed exporting instance", ctxMap)
 			return nil, err
 		}
 
-		defer func() { _ = os.RemoveAll(tempDir) }()
-
-		// Get the instance's architecture.
-		var arch string
-		if d.IsSnapshot() {
-			parentName, _, _ := api.GetParentAndSnapshotName(d.name)
-			parent, err := instance.LoadByProjectAndName(d.state, d.project.Name, parentName)
-			if err != nil {
-				_ = tarWriter.Close()
-				d.logger.Error("Failed exporting instance", ctxMap)
-				return meta, err
-			}
-
-			arch, _ = osarch.ArchitectureName(parent.Architecture())
-		} else {
-			arch, _ = osarch.ArchitectureName(d.architecture)
-		}
-
-		if arch == "" {
-			arch, err = osarch.ArchitectureName(d.state.OS.Architectures[0])
-			if err != nil {
-				d.logger.Error("Failed exporting instance", ctxMap)
-				return meta, err
-			}
-		}
-
-		// Fill in the metadata.
-		meta.Architecture = arch
-		meta.CreationDate = time.Now().UTC().Unix()
-		meta.Properties = properties
-		if !expiration.IsZero() {
-			meta.ExpiryDate = expiration.UTC().Unix()
-		}
-
-		data, err := yaml.Marshal(&meta)
-		if err != nil {
-			_ = tarWriter.Close()
-			d.logger.Error("Failed exporting instance", ctxMap)
-			return nil, err
-		}
-
-		// Write the actual file.
-		fnam = filepath.Join(tempDir, "metadata.yaml")
-		err = os.WriteFile(fnam, data, 0644)
-		if err != nil {
-			_ = tarWriter.Close()
-			d.logger.Error("Failed exporting instance", ctxMap)
-			return nil, err
-		}
-
-		fi, err := os.Lstat(fnam)
-		if err != nil {
-			_ = tarWriter.Close()
-			d.logger.Error("Failed exporting instance", ctxMap)
-			return nil, err
-		}
-
-		tmpOffset := len(filepath.Dir(fnam)) + 1
-		err = tarWriter.WriteFile(fnam[tmpOffset:], fnam, fi, false)
-		if err != nil {
-			_ = tarWriter.Close()
-			d.logger.Error("Failed exporting instance", ctxMap)
-			return nil, err
-		}
+		arch, _ = osarch.ArchitectureName(parent.Architecture())
 	} else {
+		arch, _ = osarch.ArchitectureName(d.architecture)
+	}
+
+	if arch == "" {
+		arch, err = osarch.ArchitectureName(d.state.OS.Architectures[0])
+		if err != nil {
+			d.logger.Error("Failed exporting instance", ctxMap)
+			return nil, err
+		}
+	}
+
+	// Generate metadata.yaml.
+	meta := api.ImageMetadata{}
+	fnam := filepath.Join(cDir, "metadata.yaml")
+
+	if util.PathExists(fnam) {
 		// Parse the metadata.
 		content, err := os.ReadFile(fnam)
 		if err != nil {
@@ -6414,65 +6365,64 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 			d.logger.Error("Failed exporting instance", ctxMap)
 			return nil, err
 		}
+	}
 
-		if !expiration.IsZero() {
-			meta.ExpiryDate = expiration.UTC().Unix()
-		}
+	// Fill in the metadata.
+	meta.Architecture = arch
+	meta.CreationDate = time.Now().UTC().Unix()
 
-		if properties != nil {
-			meta.Properties = properties
-		}
+	if meta.Properties == nil {
+		meta.Properties = map[string]string{}
+	}
 
-		if properties != nil || !expiration.IsZero() {
-			// Generate a new metadata.yaml.
-			tempDir, err := os.MkdirTemp("", "incus_metadata_")
-			if err != nil {
-				_ = tarWriter.Close()
-				d.logger.Error("Failed exporting instance", ctxMap)
-				return nil, err
-			}
+	for k, v := range properties {
+		meta.Properties[k] = v
+	}
 
-			defer func() { _ = os.RemoveAll(tempDir) }()
+	if !expiration.IsZero() {
+		meta.ExpiryDate = expiration.UTC().Unix()
+	}
 
-			data, err := yaml.Marshal(&meta)
-			if err != nil {
-				_ = tarWriter.Close()
-				d.logger.Error("Failed exporting instance", ctxMap)
-				return nil, err
-			}
+	// Write the new metadata.yaml.
+	tempDir, err := os.MkdirTemp("", "incus_metadata_")
+	if err != nil {
+		_ = tarWriter.Close()
+		d.logger.Error("Failed exporting instance", ctxMap)
+		return nil, err
+	}
 
-			// Write the actual file.
-			fnam = filepath.Join(tempDir, "metadata.yaml")
-			err = os.WriteFile(fnam, data, 0644)
-			if err != nil {
-				_ = tarWriter.Close()
-				d.logger.Error("Failed exporting instance", ctxMap)
-				return nil, err
-			}
-		}
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
-		// Include metadata.yaml in the tarball.
-		fi, err := os.Lstat(fnam)
-		if err != nil {
-			_ = tarWriter.Close()
-			d.logger.Debug("Error statting during export", logger.Ctx{"fileName": fnam})
-			d.logger.Error("Failed exporting instance", ctxMap)
-			return nil, err
-		}
+	data, err := yaml.Marshal(&meta)
+	if err != nil {
+		_ = tarWriter.Close()
+		d.logger.Error("Failed exporting instance", ctxMap)
+		return nil, err
+	}
 
-		if properties != nil || !expiration.IsZero() {
-			tmpOffset := len(filepath.Dir(fnam)) + 1
-			err = tarWriter.WriteFile(fnam[tmpOffset:], fnam, fi, false)
-		} else {
-			err = tarWriter.WriteFile(fnam[offset:], fnam, fi, false)
-		}
+	fnam = filepath.Join(tempDir, "metadata.yaml")
+	err = os.WriteFile(fnam, data, 0644)
+	if err != nil {
+		_ = tarWriter.Close()
+		d.logger.Error("Failed exporting instance", ctxMap)
+		return nil, err
+	}
 
-		if err != nil {
-			_ = tarWriter.Close()
-			d.logger.Debug("Error writing to tarfile", logger.Ctx{"err": err})
-			d.logger.Error("Failed exporting instance", ctxMap)
-			return nil, err
-		}
+	// Add metadata.yaml to the tarball.
+	fi, err := os.Lstat(fnam)
+	if err != nil {
+		_ = tarWriter.Close()
+		d.logger.Error("Failed exporting instance", ctxMap)
+		return nil, err
+	}
+
+	tmpOffset := len(filepath.Dir(fnam)) + 1
+	err = tarWriter.WriteFile(fnam[tmpOffset:], fnam, fi, false)
+	if err != nil {
+		_ = tarWriter.Close()
+		d.logger.Debug("Error writing to tarfile", logger.Ctx{"err": err})
+		d.logger.Error("Failed exporting instance", ctxMap)
+		return nil, err
 	}
 
 	// Convert from raw to qcow2 and add to tarball.
@@ -6521,7 +6471,7 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 	}
 
 	// Read converted file info and write file to tarball.
-	fi, err := os.Lstat(fPath)
+	fi, err = os.Lstat(fPath)
 	if err != nil {
 		return nil, err
 	}
