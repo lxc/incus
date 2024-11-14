@@ -126,7 +126,7 @@ func QEMUCompile(name string, src string) (*starlark.Program, error) {
 	})
 }
 
-// QEMUValidate validates the instance placement scriptlet.
+// QEMUValidate validates the QEMU scriptlet.
 func QEMUValidate(src string) error {
 	_, err := QEMUCompile(prefixQEMU, src)
 	return err
