@@ -191,7 +191,7 @@ func (c *cmdTop) Run(cmd *cobra.Command, args []string) error {
 
 	// These variables can be changed by the UI
 	refreshInterval := time.Duration(c.flagRefresh) * time.Second
-	sortingMethod := alphabetical       // default is alphabetical, could change this to a flag
+	sortingMethod := alphabetical // default is alphabetical, could change this to a flag
 
 	// Start the ticker for periodic updates
 	ticker := time.NewTicker(refreshInterval)

@@ -346,15 +346,10 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 	}
 
 	// Export instance to writer.
-	var meta api.ImageMetadata
+	var meta *api.ImageMetadata
 
 	writer = internalIO.NewQuotaWriter(writer, budget)
 	meta, err = c.Export(writer, req.Properties, req.ExpiresAt, tracker)
-
-	// Get ExpiresAt
-	if meta.ExpiryDate != 0 {
-		info.ExpiresAt = time.Unix(meta.ExpiryDate, 0)
-	}
 
 	// Clean up file handles.
 	// When compression is used, Close on imageProgressWriter/tarWriter is required for compressFile/gzip to
@@ -371,6 +366,11 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 	// Check instance export errors.
 	if err != nil {
 		return nil, err
+	}
+
+	// Get ExpiresAt
+	if meta.ExpiryDate != 0 {
+		info.ExpiresAt = time.Unix(meta.ExpiryDate, 0)
 	}
 
 	fi, err := os.Stat(imageFile.Name())
