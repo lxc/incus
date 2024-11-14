@@ -14,6 +14,7 @@ import (
 
 	"github.com/lxc/incus/v6/internal/iprange"
 	ovnNB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-nb"
+	ovnSB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-sb"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -3312,6 +3313,47 @@ func (o *NB) DeleteLoadBalancer(ctx context.Context, loadBalancerNames ...OVNLoa
 	}
 
 	return nil
+}
+
+// GetLoadBalancer gets the OVN database record for the load balancer.
+func (o *NB) GetLoadBalancer(ctx context.Context, lbName OVNLoadBalancer) (*ovnNB.LoadBalancer, error) {
+	lb := &ovnNB.LoadBalancer{
+		Name: string(lbName),
+	}
+
+	err := o.get(ctx, lb)
+	if err != nil {
+		return nil, err
+	}
+
+	return lb, nil
+}
+
+// GetLoadBalancersByStatusUpdate locate load-balancer(s) which are affected by a particular service monitor update.
+func (o *NB) GetLoadBalancersByStatusUpdate(ctx context.Context, mon ovnSB.ServiceMonitor) ([]ovnNB.LoadBalancer, error) {
+	lbs := []ovnNB.LoadBalancer{}
+	err := o.client.WhereCache(func(lb *ovnNB.LoadBalancer) bool {
+		if len(lb.HealthCheck) == 0 {
+			return false
+		}
+
+		if lb.Protocol != nil && mon.Protocol != nil && *lb.Protocol != *mon.Protocol {
+			return false
+		}
+
+		for k, v := range lb.IPPortMappings {
+			if k == mon.IP && v == fmt.Sprintf("%s:%s", mon.LogicalPort, mon.SrcIP) {
+				return true
+			}
+		}
+
+		return false
+	}).List(ctx, &lbs)
+	if err != nil {
+		return nil, err
+	}
+
+	return lbs, nil
 }
 
 // CreateAddressSet creates address sets for IP versions 4 and 6 in the format "<addressSetPrefix>_ip<IP version>".
