@@ -6632,6 +6632,29 @@ func (n *ovn) loadBalancerBGPSetupPrefixes() error {
 				continue
 			}
 
+			// Check health of load-balancer (if enabled).
+			online := false
+			for _, protocol := range []string{"tcp", "udp"} {
+				lb, err := n.ovnnb.GetLoadBalancer(context.TODO(), networkOVN.OVNLoadBalancer(fmt.Sprintf("incus-net%d-lb-%s-%s", n.id, listenAddr.String(), protocol)))
+				if err != nil {
+					continue
+				}
+
+				lbOnline, err := n.ovnsb.CheckLoadBalancerOnline(context.TODO(), *lb)
+				if err != nil {
+					continue
+				}
+
+				if lbOnline {
+					online = true
+					break
+				}
+			}
+
+			if !online {
+				continue
+			}
+
 			_, ipRouteSubnet, err := net.ParseCIDR(fmt.Sprintf("%s/%d", listenAddr.String(), routeSubnetSize))
 			if err != nil {
 				return err
