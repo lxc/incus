@@ -640,8 +640,8 @@ func (n *common) bgpSetup(oldConfig map[string]string) error {
 	currentPeers := n.bgpGetPeers(n.config)
 	oldPeers := n.bgpGetPeers(oldConfig)
 
-	// Don't set up BGP when no peers are configured.
-	if len(currentPeers) == 0 {
+	// Don't set up BGP on non-OVN networks when no peers are configured.
+	if n.netType != "ovn" && len(currentPeers) == 0 {
 		if len(oldPeers) > 0 {
 			return n.bgpClear(oldConfig)
 		}
