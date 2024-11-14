@@ -362,6 +362,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		InstanceOnly:          instanceOnly,
 		ClusterMoveSourceName: clusterMoveSourceName,
 		Refresh:               req.Source.Refresh,
+		RefreshExcludeOlder:   req.Source.RefreshExcludeOlder,
 	}
 
 	sink, err := newMigrationSink(&migrationArgs)
@@ -549,6 +550,7 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 			targetInstance:       args,
 			instanceOnly:         req.Source.InstanceOnly,
 			refresh:              req.Source.Refresh,
+			refreshExcludeOlder:  req.Source.RefreshExcludeOlder,
 			applyTemplateTrigger: true,
 			allowInconsistent:    req.Source.AllowInconsistent,
 		}, op)

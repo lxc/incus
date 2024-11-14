@@ -238,6 +238,7 @@ type MigrateSendArgs struct {
 type MigrateReceiveArgs struct {
 	MigrateArgs
 
-	InstanceOperation *operationlock.InstanceOperation
-	Refresh           bool
+	InstanceOperation   *operationlock.InstanceOperation
+	Refresh             bool
+	RefreshExcludeOlder bool
 }

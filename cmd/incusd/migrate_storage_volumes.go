@@ -208,9 +208,10 @@ func newStorageMigrationSink(args *migrationSinkArgs) (*migrationSink, error) {
 		migrationFields: migrationFields{
 			volumeOnly: args.VolumeOnly,
 		},
-		url:     args.URL,
-		push:    args.Push,
-		refresh: args.Refresh,
+		url:                 args.URL,
+		push:                args.Push,
+		refresh:             args.Refresh,
+		refreshExcludeOlder: args.RefreshExcludeOlder,
 	}
 
 	secretNames := []string{api.SecretNameControl, api.SecretNameFilesystem}
@@ -321,15 +322,16 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 	// with the new storage layer.
 	myTarget = func(conn io.ReadWriteCloser, op *operations.Operation, args migrationSinkArgs) error {
 		volTargetArgs := localMigration.VolumeTargetArgs{
-			IndexHeaderVersion: respHeader.GetIndexHeaderVersion(),
-			Name:               req.Name,
-			Config:             req.Config,
-			Description:        req.Description,
-			MigrationType:      respTypes[0],
-			TrackProgress:      true,
-			ContentType:        req.ContentType,
-			Refresh:            args.Refresh,
-			VolumeOnly:         args.VolumeOnly,
+			IndexHeaderVersion:  respHeader.GetIndexHeaderVersion(),
+			Name:                req.Name,
+			Config:              req.Config,
+			Description:         req.Description,
+			MigrationType:       respTypes[0],
+			TrackProgress:       true,
+			ContentType:         req.ContentType,
+			Refresh:             args.Refresh,
+			RefreshExcludeOlder: args.RefreshExcludeOlder,
+			VolumeOnly:          args.VolumeOnly,
 		}
 
 		// A zero length Snapshots slice indicates volume only migration in
@@ -373,7 +375,7 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 		}
 
 		// Compare the two sets.
-		syncSourceSnapshotIndexes, deleteTargetSnapshotIndexes := storagePools.CompareSnapshots(sourceSnapshotComparable, targetSnapshotsComparable)
+		syncSourceSnapshotIndexes, deleteTargetSnapshotIndexes := storagePools.CompareSnapshots(sourceSnapshotComparable, targetSnapshotsComparable, c.refreshExcludeOlder)
 
 		// Delete the extra local snapshots first.
 		for _, deleteTargetSnapshotIndex := range deleteTargetSnapshotIndexes {
@@ -419,10 +421,11 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 			// as part of MigrationSinkArgs below.
 			rsyncFeatures := respHeader.GetRsyncFeaturesSlice()
 			args := migrationSinkArgs{
-				RsyncFeatures: rsyncFeatures,
-				Snapshots:     respHeader.Snapshots,
-				VolumeOnly:    c.volumeOnly,
-				Refresh:       c.refresh,
+				RsyncFeatures:       rsyncFeatures,
+				Snapshots:           respHeader.Snapshots,
+				VolumeOnly:          c.volumeOnly,
+				Refresh:             c.refresh,
+				RefreshExcludeOlder: c.refreshExcludeOlder,
 			}
 
 			fsConn, err := c.conns[api.SecretNameFilesystem].WebsocketIO(state.ShutdownCtx)

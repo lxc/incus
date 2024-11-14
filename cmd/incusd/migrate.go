@@ -185,6 +185,7 @@ type migrationSink struct {
 	push                  bool
 	clusterMoveSourceName string
 	refresh               bool
+	refreshExcludeOlder   bool
 }
 
 // MigrationSinkArgs arguments to configure migration sink.
@@ -201,6 +202,7 @@ type migrationSinkArgs struct {
 	Idmap                 *idmap.Set
 	Live                  bool
 	Refresh               bool
+	RefreshExcludeOlder   bool
 	ClusterMoveSourceName string
 	Snapshots             []*migration.Snapshot
 

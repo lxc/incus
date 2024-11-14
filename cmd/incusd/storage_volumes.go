@@ -829,7 +829,7 @@ func doCustomVolumeRefresh(s *state.State, r *http.Request, requestProjectName s
 			return fmt.Errorf("No source volume name supplied")
 		}
 
-		err = pool.RefreshCustomVolume(projectName, srcProjectName, req.Name, req.Description, req.Config, req.Source.Pool, req.Source.Name, !req.Source.VolumeOnly, op)
+		err = pool.RefreshCustomVolume(projectName, srcProjectName, req.Name, req.Description, req.Config, req.Source.Pool, req.Source.Name, !req.Source.VolumeOnly, req.Source.RefreshExcludeOlder, op)
 		if err != nil {
 			return err
 		}
@@ -940,10 +940,11 @@ func doVolumeMigration(s *state.State, r *http.Request, requestProjectName strin
 			NetDialContext:   localtls.RFC3493Dialer,
 			HandshakeTimeout: time.Second * 5,
 		},
-		Secrets:    req.Source.Websockets,
-		Push:       push,
-		VolumeOnly: req.Source.VolumeOnly,
-		Refresh:    req.Source.Refresh,
+		Secrets:             req.Source.Websockets,
+		Push:                push,
+		VolumeOnly:          req.Source.VolumeOnly,
+		Refresh:             req.Source.Refresh,
+		RefreshExcludeOlder: req.Source.RefreshExcludeOlder,
 	}
 
 	sink, err := newStorageMigrationSink(&migrationArgs)
