@@ -26,11 +26,14 @@ import (
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/db/cluster"
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
+	"github.com/lxc/incus/v6/internal/server/instance/drivers/qemudefault"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/instance/operationlock"
 	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/internal/server/resources"
 	"github.com/lxc/incus/v6/internal/server/seccomp"
 	"github.com/lxc/incus/v6/internal/server/state"
+	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
 	"github.com/lxc/incus/v6/internal/server/sys"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
@@ -40,6 +43,7 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/osarch"
 	"github.com/lxc/incus/v6/shared/revert"
+	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/validate"
 )
@@ -1261,4 +1265,72 @@ func SnapshotProtobufToInstanceArgs(s *state.State, inst Instance, snap *migrati
 	}
 
 	return &args, nil
+}
+
+// ResourceUsage returns an instance's expected CPU, memory and disk usage.
+func ResourceUsage(instConfig map[string]string, instDevices map[string]map[string]string, instType api.InstanceType) (int64, int64, int64, error) {
+	var err error
+
+	limitsCPU := instConfig["limits.cpu"]
+	limitsMemory := instConfig["limits.memory"]
+	cpuUsage := int64(0)
+	memoryUsage := int64(0)
+	diskUsage := int64(0)
+
+	// Parse limits.cpu.
+	if limitsCPU != "" {
+		// Check if using shared CPU limits.
+		cpuUsage, err = strconv.ParseInt(limitsCPU, 10, 64)
+		if err != nil {
+			// Or get count of pinned CPUs.
+			pinnedCPUs, err := resources.ParseCpuset(limitsCPU)
+			if err != nil {
+				return -1, -1, -1, fmt.Errorf("Failed parsing instance resources limits.cpu: %w", err)
+			}
+
+			cpuUsage = int64(len(pinnedCPUs))
+		}
+	} else if instType == api.InstanceTypeVM {
+		// Apply VM CPU cores defaults if not specified.
+		cpuUsage = qemudefault.CPUCores
+	}
+
+	// Parse limits.memory.
+	memoryLimitStr := limitsMemory
+
+	// Apply VM memory limit defaults if not specified.
+	if instType == api.InstanceTypeVM && memoryLimitStr == "" {
+		memoryLimitStr = qemudefault.MemSize
+	}
+
+	if memoryLimitStr != "" {
+		memoryLimit, err := units.ParseByteSizeString(memoryLimitStr)
+		if err != nil {
+			return -1, -1, -1, fmt.Errorf("Failed parsing instance resources limits.memory: %w", err)
+		}
+
+		memoryUsage = int64(memoryLimit)
+	}
+
+	// Parse root disk size.
+	_, rootDiskConfig, err := instance.GetRootDiskDevice(instDevices)
+	if err == nil {
+		rootDiskSizeStr := rootDiskConfig["size"]
+
+		// Apply VM root disk size defaults if not specified.
+		if instType == api.InstanceTypeVM && rootDiskSizeStr == "" {
+			rootDiskSizeStr = storageDrivers.DefaultBlockSize
+		}
+
+		if rootDiskSizeStr != "" {
+			rootDiskSize, err := units.ParseByteSizeString(rootDiskSizeStr)
+			if err != nil {
+				return -1, -1, -1, fmt.Errorf("Failed parsing instance resources root disk size: %w", err)
+			}
+
+			diskUsage = int64(rootDiskSize)
+		}
+	}
+
+	return cpuUsage, memoryUsage, diskUsage, nil
 }
