@@ -422,6 +422,10 @@ func isClusterNotification(r *http.Request) bool {
 	return r.Header.Get("User-Agent") == clusterRequest.UserAgentNotifier
 }
 
+func isClusterInternal(r *http.Request) bool {
+	return r.Header.Get("User-Agent") == clusterRequest.UserAgentClient
+}
+
 type uiHttpDir struct {
 	http.FileSystem
 }
