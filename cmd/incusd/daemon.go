@@ -482,6 +482,11 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 		return false, "", "", fmt.Errorf("Cluster notification isn't using trusted server certificate")
 	}
 
+	// Cluster internal client with wrong certificate.
+	if isClusterInternal(r) {
+		return false, "", "", fmt.Errorf("Cluster internal client isn't using trusted server certificate")
+	}
+
 	// Bad query, no TLS found.
 	if r.TLS == nil {
 		return false, "", "", fmt.Errorf("Bad/missing TLS on network query")
