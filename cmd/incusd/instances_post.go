@@ -832,6 +832,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 
 	targetProjectName := request.ProjectParam(r)
 	clusterNotification := isClusterNotification(r)
+	clusterInternal := isClusterInternal(r)
 
 	logger.Debug("Responding to instance create")
 
@@ -1102,7 +1103,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	if s.ServerClustered && !clusterNotification {
+	if s.ServerClustered && !clusterNotification && !clusterInternal {
 		// If a target was specified, limit the list of candidates to that target.
 		if targetMemberInfo != nil {
 			candidateMembers = []db.NodeInfo{*targetMemberInfo}
@@ -1142,7 +1143,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Record the cluster group as a volatile config key if present.
-	if !clusterNotification && targetGroupName != "" {
+	if !clusterNotification && !clusterInternal && targetGroupName != "" {
 		req.Config["volatile.cluster.group"] = targetGroupName
 	}
 
