@@ -9322,7 +9322,10 @@ func (d *qemu) ConsoleLog() (string, error) {
 		return "", err
 	}
 
-	defer op.Done(nil)
+	// Only mark the operation as done if only processing the console retrieval.
+	if op.Action() == operationlock.ActionConsoleRetrieve {
+		defer op.Done(nil)
+	}
 
 	// Check if the agent is running.
 	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
