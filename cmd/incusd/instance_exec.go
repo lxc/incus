@@ -478,6 +478,15 @@ func (s *execWs) Do(op *operations.Operation) error {
 					}()
 				}
 
+				if i == execWSStderr {
+					// Consume data (e.g. websocket pings) from stderr too to
+					// avoid a situation where we hit an inactivity timeout on
+					// stderr during long exec sessions
+					go func() {
+						_, _, _ = conn.ReadMessage()
+					}()
+				}
+
 				if i == execWSStdin {
 					err = <-ws.MirrorWrite(conn, ttys[i])
 					_ = ttys[i].Close()
