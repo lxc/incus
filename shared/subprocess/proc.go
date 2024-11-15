@@ -27,6 +27,7 @@ type Process struct {
 	Name     string         `yaml:"name"`
 	Args     []string       `yaml:"args,flow"`
 	Apparmor string         `yaml:"apparmor"`
+	Cwd      string         `yaml:"cwd"`
 	PID      int64          `yaml:"pid"`
 	Stdin    io.ReadCloser  `yaml:"-"`
 	Stdout   io.WriteCloser `yaml:"-"`
@@ -153,6 +154,11 @@ func (p *Process) start(ctx context.Context, fds []*os.File) error {
 	cmd.Stderr = p.Stderr
 	cmd.Stdin = p.Stdin
 	cmd.SysProcAttr = p.SysProcAttr
+
+	if p.Cwd != "" {
+		cmd.Dir = p.Cwd
+	}
+
 	if cmd.SysProcAttr == nil {
 		cmd.SysProcAttr = &syscall.SysProcAttr{}
 	}
