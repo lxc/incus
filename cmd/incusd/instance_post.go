@@ -14,6 +14,7 @@ import (
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/cluster"
+	clusterRequest "github.com/lxc/incus/v6/internal/server/cluster/request"
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/internal/server/db/operationtype"
@@ -595,7 +596,12 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 	// Handle pool and project moves.
 	if req.Project != "" || req.Pool != "" {
 		// Get a local client.
-		target, err := incus.ConnectIncusUnix(s.OS.GetUnixSocket(), nil)
+		args := &incus.ConnectionArgs{
+			SkipGetServer: true,
+			UserAgent:     clusterRequest.UserAgentClient,
+		}
+
+		target, err := incus.ConnectIncusUnix(s.OS.GetUnixSocket(), args)
 		if err != nil {
 			return err
 		}
