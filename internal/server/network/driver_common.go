@@ -640,8 +640,8 @@ func (n *common) bgpSetup(oldConfig map[string]string) error {
 	currentPeers := n.bgpGetPeers(n.config)
 	oldPeers := n.bgpGetPeers(oldConfig)
 
-	// Don't set up BGP when no peers are configured.
-	if len(currentPeers) == 0 {
+	// Don't set up BGP on non-OVN networks when no peers are configured.
+	if n.netType != "ovn" && len(currentPeers) == 0 {
 		if len(oldPeers) > 0 {
 			return n.bgpClear(oldConfig)
 		}
@@ -664,11 +664,6 @@ func (n *common) bgpSetup(oldConfig map[string]string) error {
 	err = n.forwardBGPSetupPrefixes()
 	if err != nil {
 		return fmt.Errorf("Failed applying BGP prefixes for address forwards: %w", err)
-	}
-
-	err = n.loadBalancerBGPSetupPrefixes()
-	if err != nil {
-		return fmt.Errorf("Failed applying BGP prefixes for load balancers: %w", err)
 	}
 
 	return nil
@@ -1414,80 +1409,6 @@ func (n *common) LoadBalancerState(loadBalancer api.NetworkLoadBalancer) (*api.N
 // LoadBalancerDelete returns ErrNotImplemented for drivers that do not support load balancers..
 func (n *common) LoadBalancerDelete(listenAddress string, clientType request.ClientType) error {
 	return ErrNotImplemented
-}
-
-// loadBalancerBGPSetupPrefixes exports external load balancer addresses as prefixes.
-func (n *common) loadBalancerBGPSetupPrefixes() error {
-	var listenAddresses map[int64]string
-
-	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		var err error
-
-		// Retrieve network forwards before clearing existing prefixes, and separate them by IP family.
-		listenAddresses, err = tx.GetNetworkLoadBalancerListenAddresses(ctx, n.ID(), true)
-
-		return err
-	})
-	if err != nil {
-		return fmt.Errorf("Failed loading network forwards: %w", err)
-	}
-
-	listenAddressesByFamily := map[uint][]string{
-		4: make([]string, 0),
-		6: make([]string, 0),
-	}
-
-	for _, listenAddress := range listenAddresses {
-		if strings.Contains(listenAddress, ":") {
-			listenAddressesByFamily[6] = append(listenAddressesByFamily[6], listenAddress)
-		} else {
-			listenAddressesByFamily[4] = append(listenAddressesByFamily[4], listenAddress)
-		}
-	}
-
-	// Use load balancer specific owner string (different from the network prefixes) so that these can be
-	// reapplied independently of the network's own prefixes.
-	bgpOwner := fmt.Sprintf("network_%d_load_balancer", n.id)
-
-	// Clear existing address load balancer prefixes for network.
-	err = n.state.BGP.RemovePrefixByOwner(bgpOwner)
-	if err != nil {
-		return err
-	}
-
-	// Add the new prefixes.
-	for _, ipVersion := range []uint{4, 6} {
-		nextHopAddr := n.bgpNextHopAddress(ipVersion)
-		natEnabled := util.IsTrue(n.config[fmt.Sprintf("ipv%d.nat", ipVersion)])
-		_, netSubnet, _ := net.ParseCIDR(n.config[fmt.Sprintf("ipv%d.address", ipVersion)])
-
-		routeSubnetSize := 128
-		if ipVersion == 4 {
-			routeSubnetSize = 32
-		}
-
-		// Export external forward listen addresses.
-		for _, listenAddress := range listenAddressesByFamily[ipVersion] {
-			listenAddr := net.ParseIP(listenAddress)
-
-			// Don't export internal address forwards (those inside the NAT enabled network's subnet).
-			if natEnabled && netSubnet != nil && netSubnet.Contains(listenAddr) {
-				continue
-			}
-
-			_, ipRouteSubnet, err := net.ParseCIDR(fmt.Sprintf("%s/%d", listenAddr.String(), routeSubnetSize))
-			if err != nil {
-				return err
-			}
-
-			err = n.state.BGP.AddPrefix(*ipRouteSubnet, nextHopAddr, bgpOwner)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }
 
 // Leases returns ErrNotImplemented for drivers that don't support address leases.
