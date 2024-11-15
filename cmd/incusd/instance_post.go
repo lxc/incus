@@ -336,7 +336,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 						Devices: inst.ExpandedDevices().CloneNative(),
 					},
 				},
-				Project: projectName,
+				Project: instProject,
 				Reason:  apiScriptlet.InstancePlacementReasonRelocation,
 			}
 
