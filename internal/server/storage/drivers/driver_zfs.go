@@ -566,11 +566,26 @@ func (d *zfs) importPool() (bool, error) {
 		return false, err
 	}
 
-	if exists {
-		return true, nil
+	if !exists {
+		return false, fmt.Errorf("ZFS zpool exists but dataset is missing")
 	}
 
-	return false, fmt.Errorf("ZFS zpool exists but dataset is missing")
+	// We need to explicitly import the keys here so containers can start. This
+	// is always needed because even if the admin has set up auto-import of
+	// keys on the system, because incus manually imports and exports the pools
+	// the keys can get unloaded.
+	//
+	// We could do "zpool import -l" to request the keys during import, but by
+	// doing it separately we know that the key loading specifically failed and
+	// not some other operation. If a user has keylocation=prompt configured,
+	// this command will fail and the pool will fail to load.
+	_, err = subprocess.RunCommand("zfs", "load-key", "-r", d.config["zfs.pool_name"])
+	if err != nil {
+		_, _ = d.Unmount()
+		return false, fmt.Errorf("Failed to load keys for ZFS dataset %q: %w", d.config["zfs.pool_name"], err)
+	}
+
+	return true, nil
 }
 
 // Mount mounts the storage pool.
