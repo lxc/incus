@@ -70,6 +70,27 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 `
 }
 
+func aliases() []string {
+	c, err := config.LoadConfig("")
+	if err != nil {
+		return nil
+	}
+
+	aliases := make([]string, 0, len(defaultAliases)+len(c.Aliases))
+
+	// Add default aliases
+	for alias := range defaultAliases {
+		aliases = append(aliases, alias)
+	}
+
+	// Add user-defined aliases
+	for alias := range c.Aliases {
+		aliases = append(aliases, alias)
+	}
+
+	return aliases
+}
+
 func main() {
 	// Process aliases
 	err := execIfAliases()
@@ -92,6 +113,7 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	app.SilenceUsage = true
 	app.SilenceErrors = true
 	app.CompletionOptions = cobra.CompletionOptions{HiddenDefaultCmd: true}
+	app.ValidArgs = aliases()
 
 	// Global flags
 	globalCmd := cmdGlobal{cmd: app, asker: ask.NewAsker(bufio.NewReader(os.Stdin))}
