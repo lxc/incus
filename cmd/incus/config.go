@@ -395,11 +395,15 @@ func (c *cmdConfigGet) Command() *cobra.Command {
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
+			if strings.Contains(toComplete, ".") {
+				return c.global.cmpServerAllKeys(toComplete)
+			}
+
 			return c.global.cmpInstances(toComplete)
 		}
 
 		if len(args) == 1 {
-			return c.global.cmpInstanceAllKeys()
+			return c.global.cmpInstanceKeys(args[0])
 		}
 
 		return nil, cobra.ShellCompDirectiveNoFileComp
@@ -540,11 +544,15 @@ incus config set core.https_address=[::]:8443
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
+			if strings.Contains(toComplete, ".") {
+				return c.global.cmpServerAllKeys(toComplete)
+			}
+
 			return c.global.cmpInstances(toComplete)
 		}
 
 		if len(args) == 1 {
-			return c.global.cmpInstanceAllKeys()
+			return c.global.cmpInstanceKeys(args[0])
 		}
 
 		return nil, cobra.ShellCompDirectiveNoFileComp
@@ -889,11 +897,15 @@ func (c *cmdConfigUnset) Command() *cobra.Command {
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
+			if strings.Contains(toComplete, ".") {
+				return c.global.cmpServerAllKeys(toComplete)
+			}
+
 			return c.global.cmpInstances(toComplete)
 		}
 
 		if len(args) == 1 {
-			return c.global.cmpInstanceAllKeys()
+			return c.global.cmpInstanceKeys(args[0])
 		}
 
 		return nil, cobra.ShellCompDirectiveNoFileComp
