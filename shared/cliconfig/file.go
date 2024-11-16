@@ -3,6 +3,8 @@ package cliconfig
 import (
 	"fmt"
 	"os"
+	"os/user"
+	"path"
 	"path/filepath"
 
 	"gopkg.in/yaml.v2"
@@ -11,9 +13,50 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
+func getConfigPaths() (string, string, error) {
+	// Figure out the config directory and config path
+	var configDir string
+	if os.Getenv("INCUS_CONF") != "" {
+		configDir = os.Getenv("INCUS_CONF")
+	} else if os.Getenv("HOME") != "" && util.PathExists(os.Getenv("HOME")) {
+		configDir = path.Join(os.Getenv("HOME"), ".config", "incus")
+	} else {
+		usr, err := user.Current()
+		if err != nil {
+			return "", "", err
+		}
+
+		if util.PathExists(usr.HomeDir) {
+			configDir = path.Join(usr.HomeDir, ".config", "incus")
+		}
+	}
+
+	if configDir == "" {
+		return "", "", nil
+	}
+
+	configPath := os.ExpandEnv(path.Join(configDir, "config.yml"))
+
+	return configPath, filepath.Dir(configPath), nil
+}
+
 // LoadConfig reads the configuration from the config path; if the path does
-// not exist, it returns a default configuration.
+// not exist, it returns a default configuration; if the given path is empty
+// it tries to determine automatically the configuration file to load.
 func LoadConfig(path string) (*Config, error) {
+	configDir := filepath.Dir(path)
+	if path == "" {
+		var err error
+		path, configDir, err = getConfigPaths()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if path == "" || !util.PathExists(path) {
+		return NewConfig(configDir, true), nil
+	}
+
 	// Open the config file
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -21,7 +64,7 @@ func LoadConfig(path string) (*Config, error) {
 	}
 
 	// Decode the YAML document
-	c := NewConfig(filepath.Dir(path), false)
+	c := NewConfig(configDir, false)
 	err = yaml.Unmarshal(content, &c)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to decode the configuration: %w", err)
