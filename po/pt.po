@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-11-14 01:18-0500\n"
+"POT-Creation-Date: 2024-11-16 15:36+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -1269,11 +1269,11 @@ msgstr ""
 msgid "Columns"
 msgstr ""
 
-#: cmd/incus/main.go:85
+#: cmd/incus/main.go:101
 msgid "Command line client for Incus"
 msgstr ""
 
-#: cmd/incus/main.go:86
+#: cmd/incus/main.go:102
 msgid ""
 "Command line client for Incus\n"
 "\n"
@@ -1847,7 +1847,7 @@ msgstr ""
 #: cmd/incus/image_alias.go:29 cmd/incus/image_alias.go:65
 #: cmd/incus/image_alias.go:112 cmd/incus/image_alias.go:158
 #: cmd/incus/image_alias.go:334 cmd/incus/import.go:27 cmd/incus/info.go:35
-#: cmd/incus/launch.go:24 cmd/incus/list.go:50 cmd/incus/main.go:86
+#: cmd/incus/launch.go:24 cmd/incus/list.go:50 cmd/incus/main.go:102
 #: cmd/incus/manpage.go:22 cmd/incus/monitor.go:33 cmd/incus/move.go:35
 #: cmd/incus/network.go:36 cmd/incus/network.go:143 cmd/incus/network.go:240
 #: cmd/incus/network.go:337 cmd/incus/network.go:448 cmd/incus/network.go:506
@@ -2147,7 +2147,7 @@ msgstr ""
 msgid "Don't require user confirmation for using --force"
 msgstr ""
 
-#: cmd/incus/main.go:106
+#: cmd/incus/main.go:123
 msgid "Don't show progress information"
 msgstr ""
 
@@ -2802,6 +2802,11 @@ msgstr ""
 msgid "Failed to listen for connection: %w"
 msgstr ""
 
+#: cmd/incus/main.go:383 cmd/incus/main_aliases.go:213
+#, c-format
+msgid "Failed to load configuration: %s"
+msgstr ""
+
 #: cmd/incus/admin_sql.go:114
 #, c-format
 msgid "Failed to parse dump response: %w"
@@ -2970,7 +2975,7 @@ msgstr ""
 msgid "Force the removal of running instances"
 msgstr ""
 
-#: cmd/incus/main.go:102
+#: cmd/incus/main.go:119
 msgid "Force using the local unix socket"
 msgstr ""
 
@@ -3032,7 +3037,7 @@ msgstr ""
 msgid "Forward delay"
 msgstr ""
 
-#: cmd/incus/main_aliases.go:140
+#: cmd/incus/main_aliases.go:136
 #, c-format
 msgid "Found alias %q references an argument outside the given number"
 msgstr ""
@@ -3350,7 +3355,7 @@ msgstr ""
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 
-#: cmd/incus/main.go:451
+#: cmd/incus/main.go:444
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -3547,7 +3552,7 @@ msgstr ""
 msgid "Invalid URL scheme \"%s\" in \"%s\""
 msgstr ""
 
-#: cmd/incus/main_aliases.go:136 cmd/incus/main_aliases.go:179
+#: cmd/incus/main_aliases.go:132 cmd/incus/main_aliases.go:175
 #, c-format
 msgid "Invalid argument %q"
 msgstr ""
@@ -3645,7 +3650,7 @@ msgid ""
 "Invalid name in '%s', empty string is only allowed when defining maxWidth"
 msgstr ""
 
-#: cmd/incus/main.go:547 cmd/incus/storage.go:134
+#: cmd/incus/main.go:540 cmd/incus/storage.go:134
 msgid "Invalid number of arguments"
 msgstr ""
 
@@ -4873,8 +4878,8 @@ msgstr ""
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect "
-"\"custom\" (user created) volumes."
+"Unless specified through a prefix, all volume operations affect \"custom\" "
+"(user created) volumes."
 msgstr ""
 
 #: cmd/incus/remote.go:43 cmd/incus/remote.go:44
@@ -5651,7 +5656,7 @@ msgstr ""
 msgid "Optimized Storage"
 msgstr ""
 
-#: cmd/incus/main.go:103
+#: cmd/incus/main.go:120
 msgid "Override the source project"
 msgstr ""
 
@@ -5729,7 +5734,7 @@ msgstr ""
 msgid "Partitions:"
 msgstr ""
 
-#: cmd/incus/main.go:412
+#: cmd/incus/main.go:405
 #, c-format
 msgid "Password for %s: "
 msgstr ""
@@ -5832,7 +5837,7 @@ msgstr ""
 msgid "Pretty rendering (short for --format=pretty)"
 msgstr ""
 
-#: cmd/incus/main.go:101
+#: cmd/incus/main.go:118
 msgid "Print help"
 msgstr ""
 
@@ -5840,7 +5845,7 @@ msgstr ""
 msgid "Print the raw response"
 msgstr ""
 
-#: cmd/incus/main.go:100
+#: cmd/incus/main.go:117
 msgid "Print version number"
 msgstr ""
 
@@ -5849,7 +5854,7 @@ msgstr ""
 msgid "Processes: %d"
 msgstr ""
 
-#: cmd/incus/main_aliases.go:255 cmd/incus/main_aliases.go:262
+#: cmd/incus/main_aliases.go:227 cmd/incus/main_aliases.go:234
 #, c-format
 msgid "Processing aliases failed: %s"
 msgstr ""
@@ -6836,11 +6841,11 @@ msgstr ""
 msgid "Setup loop based storage with SIZE in GiB"
 msgstr ""
 
-#: cmd/incus/main.go:104
+#: cmd/incus/main.go:121
 msgid "Show all debug messages"
 msgstr ""
 
-#: cmd/incus/main.go:105
+#: cmd/incus/main.go:122
 msgid "Show all information messages"
 msgstr ""
 
@@ -6888,7 +6893,7 @@ msgstr ""
 msgid "Show instance snapshot configuration"
 msgstr ""
 
-#: cmd/incus/main.go:284 cmd/incus/main.go:285
+#: cmd/incus/main.go:301 cmd/incus/main.go:302
 msgid "Show less common commands"
 msgstr ""
 
@@ -7581,7 +7586,7 @@ msgstr ""
 msgid "There is no \"image name\".  Did you want an alias?"
 msgstr ""
 
-#: cmd/incus/main.go:311
+#: cmd/incus/main.go:328
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
 "As your platform can't run native Linux instances, you must connect to a "
@@ -7631,7 +7636,7 @@ msgstr ""
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
-#: cmd/incus/main.go:456
+#: cmd/incus/main.go:449
 msgid ""
 "To start your first container, try: incus launch images:ubuntu/22.04\n"
 "Or for a virtual machine: incus launch images:ubuntu/22.04 --vm"
@@ -8041,7 +8046,7 @@ msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool)"
 msgstr ""
 
-#: cmd/incus/main.go:107
+#: cmd/incus/main.go:124
 msgid "Use with help or --help to view sub-commands"
 msgstr ""
 
