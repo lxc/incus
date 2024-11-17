@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
 	"os"
@@ -759,11 +760,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		d.globalConfig = currentClusterConfig
 		d.globalConfigMu.Unlock()
 
-		existingConfigDump := currentClusterConfig.Dump()
-		changes := make(map[string]string, len(existingConfigDump))
-		for k, v := range existingConfigDump {
-			changes[k] = v
-		}
+		changes := maps.Clone(currentClusterConfig.Dump())
 
 		err = doApi10UpdateTriggers(d, nil, changes, nodeConfig, currentClusterConfig)
 		if err != nil {

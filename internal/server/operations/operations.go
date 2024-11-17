@@ -3,6 +3,7 @@ package operations
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/http"
 	"sync"
 	"time"
@@ -66,12 +67,7 @@ func Clone() map[string]*Operation {
 	operationsLock.Lock()
 	defer operationsLock.Unlock()
 
-	localOperations := make(map[string]*Operation, len(operations))
-	for k, v := range operations {
-		localOperations[k] = v
-	}
-
-	return localOperations
+	return maps.Clone(operations)
 }
 
 // OperationGetInternal returns the operation with the given id. It returns an

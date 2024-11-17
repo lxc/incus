@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"net/http"
 	"net/url"
 	"os"
@@ -4032,10 +4033,7 @@ func (b *backend) ImportBucket(projectName string, poolVol *backupConfig.Config,
 	defer revert.Fail()
 
 	// Copy bucket config from backup file if present (so BucketDBCreate can safely modify the copy if needed).
-	bucketConfig := make(map[string]string, len(poolVol.Bucket.Config))
-	for k, v := range poolVol.Bucket.Config {
-		bucketConfig[k] = v
-	}
+	bucketConfig := maps.Clone(poolVol.Bucket.Config)
 
 	bucket := &api.StorageBucketsPost{
 		Name:             poolVol.Bucket.Name,
@@ -5810,10 +5808,7 @@ func (b *backend) ImportCustomVolume(projectName string, poolVol *backupConfig.C
 	defer revert.Fail()
 
 	// Copy volume config from backup file if present (so VolumeDBCreate can safely modify the copy if needed).
-	volumeConfig := make(map[string]string, len(poolVol.Volume.Config))
-	for k, v := range poolVol.Volume.Config {
-		volumeConfig[k] = v
-	}
+	volumeConfig := maps.Clone(poolVol.Volume.Config)
 
 	// Validate config and create database entry for restored storage volume.
 	err := VolumeDBCreate(b, projectName, poolVol.Volume.Name, poolVol.Volume.Description, drivers.VolumeTypeCustom, false, volumeConfig, poolVol.Volume.CreatedAt, time.Time{}, drivers.ContentType(poolVol.Volume.ContentType), false, true)
@@ -5829,10 +5824,7 @@ func (b *backend) ImportCustomVolume(projectName string, poolVol *backupConfig.C
 
 		// Copy volume config from backup file if present
 		// (so VolumeDBCreate can safely modify the copy if needed).
-		snapVolumeConfig := make(map[string]string, len(poolVolSnap.Config))
-		for k, v := range poolVolSnap.Config {
-			snapVolumeConfig[k] = v
-		}
+		snapVolumeConfig := maps.Clone(poolVolSnap.Config)
 
 		// Validate config and create database entry for restored storage volume.
 		err = VolumeDBCreate(b, projectName, fullSnapName, poolVolSnap.Description, drivers.VolumeTypeCustom, true, snapVolumeConfig, poolVolSnap.CreatedAt, time.Time{}, drivers.ContentType(poolVolSnap.ContentType), false, true)
@@ -6881,10 +6873,7 @@ func (b *backend) ImportInstance(inst instance.Instance, poolVol *backupConfig.C
 		// Copy volume config from backup file config if present,
 		// so VolumeDBCreate can safely modify the copy if needed.
 		if poolVol.Volume != nil {
-			volumeConfig = make(map[string]string, len(poolVol.Volume.Config))
-			for k, v := range poolVol.Volume.Config {
-				volumeConfig[k] = v
-			}
+			volumeConfig = maps.Clone(poolVol.Volume.Config)
 
 			if !poolVol.Volume.CreatedAt.IsZero() {
 				creationDate = poolVol.Volume.CreatedAt
@@ -6906,10 +6895,7 @@ func (b *backend) ImportInstance(inst instance.Instance, poolVol *backupConfig.C
 
 				// Copy volume config from backup file if present,
 				// so VolumeDBCreate can safely modify the copy if needed.
-				snapVolumeConfig := make(map[string]string, len(poolVolSnap.Config))
-				for k, v := range poolVolSnap.Config {
-					snapVolumeConfig[k] = v
-				}
+				snapVolumeConfig := maps.Clone(poolVolSnap.Config)
 
 				// Validate config and create database entry for recovered storage volume.
 				err = VolumeDBCreate(b, inst.Project().Name, fullSnapName, poolVolSnap.Description, volType, true, snapVolumeConfig, poolVolSnap.CreatedAt, time.Time{}, contentType, false, true)

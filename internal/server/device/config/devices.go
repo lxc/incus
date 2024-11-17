@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"maps"
 	"sort"
 	"strings"
 
@@ -13,13 +14,7 @@ type Device map[string]string
 
 // Clone returns a copy of the Device.
 func (device Device) Clone() Device {
-	copy := make(map[string]string, len(device))
-
-	for k, v := range device {
-		copy[k] = v
-	}
-
-	return copy
+	return maps.Clone(device)
 }
 
 // Validate accepts a map of field/validation functions to run against the device's config.
