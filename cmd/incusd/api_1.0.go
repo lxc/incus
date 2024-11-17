@@ -29,6 +29,7 @@ import (
 	"github.com/lxc/incus/v6/shared/osarch"
 	"github.com/lxc/incus/v6/shared/revert"
 	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 var api10Cmd = APIEndpoint{
@@ -459,10 +460,7 @@ func api10Put(d *Daemon, r *http.Request) response.Response {
 	// for reacting to the values that changed.
 	if isClusterNotification(r) {
 		logger.Debug("Handling config changed notification")
-		changed := make(map[string]string)
-		for key, value := range req.Config {
-			changed[key] = value
-		}
+		changed := util.CloneMap(req.Config)
 
 		// Get the current (updated) config.
 		var config *clusterConfig.Config
@@ -587,7 +585,7 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 
 	nodeChanged := map[string]string{}
 	var newNodeConfig *node.Config
-	oldNodeConfig := make(map[string]string)
+	var oldNodeConfig map[string]string
 
 	err := s.DB.Node.Transaction(r.Context(), func(ctx context.Context, tx *db.NodeTx) error {
 		var err error
@@ -597,9 +595,7 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 		}
 
 		// Keep old config around in case something goes wrong. In that case the config will be reverted.
-		for k, v := range newNodeConfig.Dump() {
-			oldNodeConfig[k] = v
-		}
+		oldNodeConfig = util.CloneMap(newNodeConfig.Dump())
 
 		// We currently don't allow changing the cluster.https_address once it's set.
 		if s.ServerClustered {
@@ -687,7 +683,7 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 	// Then deal with cluster wide configuration
 	var clusterChanged map[string]string
 	var newClusterConfig *clusterConfig.Config
-	oldClusterConfig := make(map[string]string)
+	var oldClusterConfig map[string]string
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
@@ -697,9 +693,7 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 		}
 
 		// Keep old config around in case something goes wrong. In that case the config will be reverted.
-		for k, v := range newClusterConfig.Dump() {
-			oldClusterConfig[k] = v
-		}
+		oldClusterConfig = util.CloneMap(newClusterConfig.Dump())
 
 		if patch {
 			clusterChanged, err = newClusterConfig.Patch(req.Config)
@@ -760,11 +754,8 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 		}
 
 		serverPut := server.Writable()
-		serverPut.Config = make(map[string]string)
 		// Only propagated cluster-wide changes
-		for key, value := range clusterChanged {
-			serverPut.Config[key] = value
-		}
+		serverPut.Config = util.CloneMap(clusterChanged)
 
 		return client.UpdateServer(serverPut, etag)
 	})

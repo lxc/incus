@@ -19,6 +19,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/cancel"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 var debug bool
@@ -66,12 +67,7 @@ func Clone() map[string]*Operation {
 	operationsLock.Lock()
 	defer operationsLock.Unlock()
 
-	localOperations := make(map[string]*Operation, len(operations))
-	for k, v := range operations {
-		localOperations[k] = v
-	}
-
-	return localOperations
+	return util.CloneMap(operations)
 }
 
 // OperationGetInternal returns the operation with the given id. It returns an

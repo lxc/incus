@@ -577,16 +577,10 @@ func (v *Volume) SetHasSource(hasSource bool) {
 // Clone returns a copy of the volume.
 func (v Volume) Clone() Volume {
 	// Copy the config map to avoid internal modifications affecting external state.
-	newConfig := make(map[string]string, len(v.config))
-	for k, v := range v.config {
-		newConfig[k] = v
-	}
+	newConfig := util.CloneMap(v.config)
 
 	// Copy the pool config map to avoid internal modifications affecting external state.
-	newPoolConfig := make(map[string]string, len(v.poolConfig))
-	for k, v := range v.poolConfig {
-		newPoolConfig[k] = v
-	}
+	newPoolConfig := util.CloneMap(v.poolConfig)
 
 	return NewVolume(v.driver, v.pool, v.volType, v.contentType, v.name, newConfig, newPoolConfig)
 }
