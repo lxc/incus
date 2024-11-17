@@ -1,5 +1,9 @@
 package cliconfig
 
+import (
+	"github.com/lxc/incus/v6/shared/util"
+)
+
 // LocalRemote is the default local remote (over the unix socket).
 var LocalRemote = Remote{
 	Addr:     "unix://",
@@ -28,14 +32,8 @@ var DefaultRemotes = map[string]Remote{
 
 // DefaultConfig returns the default configuration.
 func DefaultConfig() *Config {
-	// Duplicate remotes from DefaultRemotes.
-	defaultRoutes := make(map[string]Remote, len(DefaultRemotes))
-	for k, v := range DefaultRemotes {
-		defaultRoutes[k] = v
-	}
-
 	return &Config{
-		Remotes:       defaultRoutes,
+		Remotes:       util.CloneMap(DefaultRemotes),
 		Aliases:       make(map[string]string),
 		DefaultRemote: "local",
 	}

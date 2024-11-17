@@ -240,12 +240,7 @@ func (d *common) Logger() logger.Logger {
 
 // Config returns the storage pool config (as a copy, so not modifiable).
 func (d *common) Config() map[string]string {
-	confCopy := make(map[string]string, len(d.config))
-	for k, v := range d.config {
-		confCopy[k] = v
-	}
-
-	return confCopy
+	return util.CloneMap(d.config)
 }
 
 // ApplyPatch looks for a suitable patch and runs it.

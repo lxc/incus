@@ -759,11 +759,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		d.globalConfig = currentClusterConfig
 		d.globalConfigMu.Unlock()
 
-		existingConfigDump := currentClusterConfig.Dump()
-		changes := make(map[string]string, len(existingConfigDump))
-		for k, v := range existingConfigDump {
-			changes[k] = v
-		}
+		changes := util.CloneMap(currentClusterConfig.Dump())
 
 		err = doApi10UpdateTriggers(d, nil, changes, nodeConfig, currentClusterConfig)
 		if err != nil {

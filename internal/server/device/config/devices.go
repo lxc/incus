@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // Device represents an instance device.
@@ -13,13 +14,7 @@ type Device map[string]string
 
 // Clone returns a copy of the Device.
 func (device Device) Clone() Device {
-	copy := make(map[string]string, len(device))
-
-	for k, v := range device {
-		copy[k] = v
-	}
-
-	return copy
+	return util.CloneMap(device)
 }
 
 // Validate accepts a map of field/validation functions to run against the device's config.
