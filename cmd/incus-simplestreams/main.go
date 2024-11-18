@@ -62,6 +62,9 @@ func main() {
 	verifyCmd := cmdVerify{global: &globalCmd}
 	app.AddCommand(verifyCmd.Command())
 
+	pruneCmd := cmdPrune{global: &globalCmd}
+	app.AddCommand(pruneCmd.Command())
+
 	// Run the main command and handle errors.
 	err := app.Execute()
 	if err != nil {
