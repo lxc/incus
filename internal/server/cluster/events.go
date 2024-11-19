@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lxc/incus/v6/client"
+	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/endpoints"
 	"github.com/lxc/incus/v6/internal/server/events"

@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lxc/incus/v6/client"
+	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/auth/oidc"
 	"github.com/lxc/incus/v6/internal/server/cluster"

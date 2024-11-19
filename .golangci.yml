@@ -3,6 +3,7 @@ linters:
     - gci
     - godot
     - gofmt
+    - goimports
     - misspell
     - whitespace
     - revive

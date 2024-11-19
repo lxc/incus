@@ -29,7 +29,7 @@ import (
 	"github.com/kballard/go-shellquote"
 	"gopkg.in/yaml.v2"
 
-	"github.com/lxc/incus/v6/client"
+	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/filter"
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	internalIO "github.com/lxc/incus/v6/internal/io"

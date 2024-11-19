@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/lxc/incus/v6/client"
+	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/i18n"
 )
 
