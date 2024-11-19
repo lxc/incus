@@ -377,7 +377,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// ---
 	//  type: string
 	//  shortdesc: Instance NUMA node
-	"volatile.cpu.nodes": validate.Optional(validate.IsValidCPUSet),
+	"volatile.cpu.nodes": validate.Optional(validate.Or(validate.IsValidCPUSet, validate.IsOneOf("0", "balanced"))),
 
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.evacuate.origin)
 	// The cluster member that the instance lived on before evacuation.
