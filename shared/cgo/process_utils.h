@@ -219,9 +219,11 @@ static inline int setproctitle(char *title)
 	ret = prctl(PR_SET_MM, prctl_arg(PR_SET_MM_MAP), prctl_arg(&prctl_map),
 		    prctl_arg(sizeof(prctl_map)), prctl_arg(0));
 	if (ret == 0) {
-		char *dest = (char *)arg_start;
+		char *dest;
+
+		dest = (char *)(uintptr_t)arg_start;
 		memcpy(dest, title, len - 1);
-		dest[len-1] = '\0';
+		dest[len - 1] = '\0';
 	}
 
 	return ret;
