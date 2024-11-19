@@ -19,7 +19,7 @@ import (
 	"github.com/google/uuid"
 	liblxc "github.com/lxc/go-lxc"
 
-	"github.com/lxc/incus/v6/client"
+	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/migration"
 	"github.com/lxc/incus/v6/internal/server/backup"

@@ -1,8 +1,6 @@
 package main
 
-import (
-	"github.com/lxc/incus/v6/client"
-)
+import incus "github.com/lxc/incus/v6/client"
 
 type target interface {
 	present() bool
