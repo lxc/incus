@@ -10,7 +10,6 @@ import (
 
 	"github.com/cowsql/go-cowsql/client"
 
-	"github.com/lxc/incus/v6/client"
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/state"
