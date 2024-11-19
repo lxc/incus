@@ -7,8 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	incus "github.com/lxc/incus/v6/client"
 	"github.com/spf13/cobra"
+
+	incus "github.com/lxc/incus/v6/client"
 )
 
 type cmdShutdown struct {
