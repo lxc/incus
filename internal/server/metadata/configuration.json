@@ -664,7 +664,7 @@
 					},
 					{
 						"user.*": {
-							"liveupdate": "no",
+							"liveupdate": "yes",
 							"longdesc": "User keys can be used in search.",
 							"shortdesc": "Free-form user key/value storage",
 							"type": "string"
