@@ -37,6 +37,7 @@ type migrationFields struct {
 	// storage specific fields
 	volumeOnly        bool
 	allowInconsistent bool
+	storagePool       string
 }
 
 func (c *migrationFields) send(m proto.Message) error {
@@ -207,8 +208,9 @@ type migrationSinkArgs struct {
 	Snapshots             []*migration.Snapshot
 
 	// Storage specific fields
-	VolumeOnly bool
-	VolumeSize int64
+	StoragePool string
+	VolumeOnly  bool
+	VolumeSize  int64
 
 	// Transport specific fields
 	RsyncFeatures []string
