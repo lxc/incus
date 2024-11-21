@@ -1065,7 +1065,7 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	// User keys can be used in search.
 	// ---
 	//  type: string
-	//  liveupdate: no
+	//  liveupdate: yes
 	//  shortdesc: Free-form user key/value storage
 
 	// gendoc:generate(entity=instance, group=miscellaneous, key=agent.nic_config)
