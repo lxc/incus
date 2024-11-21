@@ -5,6 +5,8 @@ test_storage_driver_zfs() {
 
   do_zfs_cross_pool_copy
   do_zfs_delegate
+
+  do_zfs_encryption
 }
 
 do_zfs_delegate() {
@@ -43,6 +45,84 @@ do_zfs_delegate() {
   ! nsenter -t "${PID}" -U -- zfs list | grep -q containers/c1
 
   incus delete -f c1
+}
+
+do_zfs_encryption() {
+  # shellcheck disable=2039,3043
+  local INCUS_STORAGE_DIR incus_backend
+
+  incus_backend=$(storage_backend "$INCUS_DIR")
+  if [ "$incus_backend" != "zfs" ]; then
+    return
+  fi
+
+  if ! zfs --help | grep -q '^\s\+load-key\b'; then
+    echo "==> SKIP: Skipping ZFS encryption tests as installed version doesn't support it"
+    return
+  fi
+
+  INCUS_STORAGE_DIR="$(mktemp -d -p "${TEST_DIR}" XXXXXXXXX)"
+  chmod +x "${INCUS_STORAGE_DIR}"
+  spawn_incus "${INCUS_STORAGE_DIR}" false
+
+  # shellcheck disable=3043
+  local zpool_name zpool_keyfile zpool_vdev
+  # Create a new pool. incus storage create doesn't support setting up
+  # encrypted datasets, so we need to create the pool ourselves.
+  configure_loop_device zpool_file zpool_vdev
+  zpool_name="$(mktemp -u incus-zpool-XXXXXXXXX)"
+  zpool_keyfile="$(mktemp -p "${TEST_DIR}" incus-zpool-keyfile.XXXXXXXXX)"
+  echo "dummy-passphrase" >"$zpool_keyfile"
+
+  zpool create \
+    -O encryption=on \
+    -O keyformat=passphrase \
+    -O keylocation="file://$zpool_keyfile" \
+    "$zpool_name" "$zpool_vdev"
+
+  INCUS_DIR="${INCUS_STORAGE_DIR}" incus storage create zpool_encrypted zfs source="$zpool_name"
+
+  # Make sure that incus sees that the pool is imported.
+  zfs get -H -o name,property,value keystatus "$zpool_name" | grep -Eq "$zpool_name\s+keystatus\s+available"
+  INCUS_DIR="${INCUS_STORAGE_DIR}" incus storage list -f csv -c nDs | grep -q "zpool_encrypted,zfs,CREATED"
+
+  # Shut down Incus to force the pool to get exported.
+  shutdown_incus "${INCUS_STORAGE_DIR}"
+
+  # The pool should be exported now.
+  ! zpool status "$zpool_name" 2>/dev/null || false
+
+  # Restart Incus.
+  respawn_incus "${INCUS_STORAGE_DIR}" true
+
+  # The keys should've been re-imported automatically by Incus.
+  zfs get -H -o name,property,value keystatus "$zpool_name" | grep -Eq "$zpool_name\s+keystatus\s+available"
+  INCUS_DIR="${INCUS_STORAGE_DIR}" incus storage list -f csv -c nDs | grep -q "zpool_encrypted,zfs,CREATED"
+
+  # Now we reconfigure the dataset so that the encryption key is provided via
+  # an interactive prompt. Incus cannot handle this, so we should expect the
+  # pool to remain unimported and the storage pool should be reported as
+  # UNAVAILABLE.
+  zfs set keylocation=prompt "$zpool_name"
+
+  # Shut down Incus to force the pool to get exported.
+  shutdown_incus "${INCUS_STORAGE_DIR}"
+
+  # The pool should be exported now.
+  ! zpool status "$zpool_name" 2>/dev/null || false
+
+  # Restart Incus.
+  respawn_incus "${INCUS_STORAGE_DIR}" true
+
+  # The pool should still not be imported, and Incus should report the storage
+  # pool as UNAVAILABLE.
+  ! zpool status "$zpool_name" 2>/dev/null || false
+  INCUS_DIR="${INCUS_STORAGE_DIR}" incus storage list -f csv -c nDs | grep -q "zpool_encrypted,zfs,UNAVAILABLE"
+
+  INCUS_DIR="${INCUS_STORAGE_DIR}" incus storage delete zpool_encrypted
+
+  # shellcheck disable=SC2031
+  kill_incus "${INCUS_STORAGE_DIR}"
 }
 
 do_zfs_cross_pool_copy() {
