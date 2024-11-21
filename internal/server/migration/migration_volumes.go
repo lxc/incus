@@ -61,6 +61,7 @@ type VolumeSourceArgs struct {
 	Info               *Info
 	VolumeOnly         bool
 	ClusterMove        bool
+	StorageMove        bool
 }
 
 // VolumeTargetArgs represents the arguments needed to setup a volume migration sink.
@@ -79,6 +80,7 @@ type VolumeTargetArgs struct {
 	ContentType           string
 	VolumeOnly            bool
 	ClusterMoveSourceName string
+	StoragePool           string
 }
 
 // TypesToHeader converts one or more Types to a MigrationHeader. It uses the first type argument
