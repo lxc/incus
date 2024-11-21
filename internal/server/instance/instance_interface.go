@@ -225,6 +225,7 @@ type MigrateArgs struct {
 	Live                  bool
 	Disconnect            func()
 	ClusterMoveSourceName string // Will be empty if not a cluster move, othwise indicates the source instance.
+	StoragePool           string
 }
 
 // MigrateSendArgs represent arguments for instance migration send.
