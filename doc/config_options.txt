@@ -582,7 +582,7 @@ Specify the kernel modules as a comma-separated list.
 ```
 
 ```{config:option} user.* instance-miscellaneous
-:liveupdate: "no"
+:liveupdate: "yes"
 :shortdesc: "Free-form user key/value storage"
 :type: "string"
 User keys can be used in search.
