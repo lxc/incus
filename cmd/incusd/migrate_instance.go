@@ -20,11 +20,12 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
-func newMigrationSource(inst instance.Instance, stateful bool, instanceOnly bool, allowInconsistent bool, clusterMoveSourceName string, pushTarget *api.InstancePostTarget) (*migrationSourceWs, error) {
+func newMigrationSource(inst instance.Instance, stateful bool, instanceOnly bool, allowInconsistent bool, clusterMoveSourceName string, storagePool string, pushTarget *api.InstancePostTarget) (*migrationSourceWs, error) {
 	ret := migrationSourceWs{
 		migrationFields: migrationFields{
 			instance:          inst,
 			allowInconsistent: allowInconsistent,
+			storagePool:       storagePool,
 		},
 		clusterMoveSourceName: clusterMoveSourceName,
 	}
@@ -144,6 +145,7 @@ func (s *migrationSourceWs) Do(state *state.State, migrateOp *operations.Operati
 				}
 			},
 			ClusterMoveSourceName: s.clusterMoveSourceName,
+			StoragePool:           s.storagePool,
 		},
 		AllowInconsistent: s.allowInconsistent,
 	})
@@ -164,6 +166,7 @@ func newMigrationSink(args *migrationSinkArgs) (*migrationSink, error) {
 			instance:     args.Instance,
 			instanceOnly: args.InstanceOnly,
 			live:         args.Live,
+			storagePool:  args.StoragePool,
 		},
 		url:                   args.URL,
 		clusterMoveSourceName: args.ClusterMoveSourceName,
@@ -275,6 +278,7 @@ func (c *migrationSink) Do(state *state.State, instOp *operationlock.InstanceOpe
 				}
 			},
 			ClusterMoveSourceName: c.clusterMoveSourceName,
+			StoragePool:           c.storagePool,
 		},
 		InstanceOperation:   instOp,
 		Refresh:             c.refresh,

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -363,6 +364,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		ClusterMoveSourceName: clusterMoveSourceName,
 		Refresh:               req.Source.Refresh,
 		RefreshExcludeOlder:   req.Source.RefreshExcludeOlder,
+		StoragePool:           storagePool,
 	}
 
 	sink, err := newMigrationSink(&migrationArgs)
@@ -388,6 +390,48 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		}
 
 		instOp.Done(nil) // Complete operation that was created earlier, to release lock.
+
+		// Update root device for instance.
+		err = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+			devs := inst.LocalDevices().CloneNative()
+			rootDevKey, _, err := internalInstance.GetRootDiskDevice(devs)
+			if err != nil {
+				if !errors.Is(err, internalInstance.ErrNoRootDisk) {
+					return err
+				}
+
+				rootDev := map[string]string{}
+				rootDev["type"] = "disk"
+				rootDev["path"] = "/"
+				rootDev["pool"] = storagePool
+
+				devs["root"] = rootDev
+			} else {
+				// Apply the override.
+				devs[rootDevKey]["pool"] = storagePool
+			}
+
+			devices, err := dbCluster.APIToDevices(devs)
+			if err != nil {
+				return err
+			}
+
+			id, err := dbCluster.GetInstanceID(ctx, tx.Tx(), inst.Project().Name, inst.Name())
+			if err != nil {
+				return fmt.Errorf("Failed to get ID of moved instance: %w", err)
+			}
+
+			err = dbCluster.UpdateInstanceDevices(ctx, tx.Tx(), int64(id), devices)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
 		runRevert.Success()
 
 		return instanceCreateFinish(s, req, args, op)
