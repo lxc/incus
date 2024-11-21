@@ -162,7 +162,7 @@ func (d *lvm) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 
 // CreateVolumeFromMigration creates a volume being sent via a migration.
 func (d *lvm) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs migration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
-	if d.clustered && volTargetArgs.ClusterMoveSourceName != "" {
+	if d.clustered && volTargetArgs.ClusterMoveSourceName != "" && volTargetArgs.StoragePool == "" {
 		err := vol.EnsureMountPath()
 		if err != nil {
 			return err
@@ -903,7 +903,7 @@ func (d *lvm) RenameVolume(vol Volume, newVolName string, op *operations.Operati
 
 // MigrateVolume sends a volume for migration.
 func (d *lvm) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *migration.VolumeSourceArgs, op *operations.Operation) error {
-	if d.clustered && volSrcArgs.ClusterMove {
+	if d.clustered && volSrcArgs.ClusterMove && !volSrcArgs.StorageMove {
 		// Ensure the volume allows shared access.
 		if vol.volType == VolumeTypeVM || vol.IsCustomBlock() {
 			// Block volume.

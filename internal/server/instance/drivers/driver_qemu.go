@@ -6639,6 +6639,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		VolumeOnly:         !args.Snapshots,
 		Info:               &localMigration.Info{Config: srcConfig},
 		ClusterMove:        args.ClusterMoveSourceName != "",
+		StorageMove:        args.StoragePool != "",
 	}
 
 	// Only send the snapshots that the target requests when refreshing.
@@ -6730,7 +6731,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 				defer instanceRefClear(d)
 			}
 
-			err = d.migrateSendLive(pool, args.ClusterMoveSourceName, blockSize, filesystemConn, stateConn, volSourceArgs)
+			err = d.migrateSendLive(pool, args.ClusterMoveSourceName, args.StoragePool, blockSize, filesystemConn, stateConn, volSourceArgs)
 			if err != nil {
 				return err
 			}
@@ -6769,7 +6770,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 }
 
 // migrateSendLive performs live migration send process.
-func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs) error {
+func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs) error {
 	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
 	if err != nil {
 		return err
@@ -6779,14 +6780,14 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 	nbdTargetDiskName := "incus_root_nbd"         // Name of NBD disk device added to local VM to sync to.
 	rootSnapshotDiskName := "incus_root_snapshot" // Name of snapshot disk device to use.
 
-	// If we are performing an intra-cluster member move on a Ceph storage pool then we can treat this as
-	// shared storage and avoid needing to sync the root disk.
-	sharedStorage := clusterMoveSourceName != "" && pool.Driver().Info().Remote
+	// If we are performing an intra-cluster member move on a Ceph storage pool without storage change
+	// then we can treat this as shared storage and avoid needing to sync the root disk.
+	sameSharedStorage := clusterMoveSourceName != "" && pool.Driver().Info().Remote && storagePool == ""
 
 	revert := revert.New()
 
 	// Non-shared storage snapshot setup.
-	if !sharedStorage {
+	if !sameSharedStorage {
 		// Setup migration capabilities.
 		capabilities := map[string]bool{
 			// Automatically throttle down the guest to speed up convergence of RAM migration.
@@ -6949,7 +6950,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 	}
 
 	// Non-shared storage snapshot transfer.
-	if !sharedStorage {
+	if !sameSharedStorage {
 		listener, err := net.Listen("unix", "")
 		if err != nil {
 			return fmt.Errorf("Failed creating NBD unix listener: %w", err)
@@ -7043,7 +7044,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 	}
 
 	// Non-shared storage snapshot transfer finalization.
-	if !sharedStorage {
+	if !sameSharedStorage {
 		// Wait until state transfer has reached pre-switchover state (the guest OS will remain paused).
 		err = monitor.MigrateWait("pre-switchover")
 		if err != nil {
@@ -7141,19 +7142,26 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	// record because it may be associated to the wrong cluster member. Instead we ascertain the pool to load
 	// using the instance's root disk device.
 	if args.ClusterMoveSourceName == d.name {
-		_, rootDiskDevice, err := d.getRootDiskDevice()
-		if err != nil {
-			return fmt.Errorf("Failed getting root disk: %w", err)
-		}
+		if args.StoragePool != "" {
+			d.storagePool, err = storagePools.LoadByName(d.state, args.StoragePool)
+			if err != nil {
+				return fmt.Errorf("Failed loading storage pool: %w", err)
+			}
+		} else {
+			_, rootDiskDevice, err := d.getRootDiskDevice()
+			if err != nil {
+				return fmt.Errorf("Failed getting root disk: %w", err)
+			}
 
-		if rootDiskDevice["pool"] == "" {
-			return fmt.Errorf("The instance's root device is missing the pool property")
-		}
+			if rootDiskDevice["pool"] == "" {
+				return fmt.Errorf("The instance's root device is missing the pool property")
+			}
 
-		// Initialize the storage pool cache.
-		d.storagePool, err = storagePools.LoadByName(d.state, rootDiskDevice["pool"])
-		if err != nil {
-			return fmt.Errorf("Failed loading storage pool: %w", err)
+			// Initialize the storage pool cache.
+			d.storagePool, err = storagePools.LoadByName(d.state, rootDiskDevice["pool"])
+			if err != nil {
+				return fmt.Errorf("Failed loading storage pool: %w", err)
+			}
 		}
 	}
 
@@ -7370,6 +7378,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			VolumeSize:            offerHeader.GetVolumeSize(), // Block size setting override.
 			VolumeOnly:            !args.Snapshots,
 			ClusterMoveSourceName: args.ClusterMoveSourceName,
+			StoragePool:           args.StoragePool,
 		}
 
 		// At this point we have already figured out the parent instances's root
@@ -7449,6 +7458,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			// Setup the volume entry.
 			extraTargetArgs := localMigration.VolumeTargetArgs{
 				ClusterMoveSourceName: args.ClusterMoveSourceName,
+				StoragePool:           args.StoragePool,
 			}
 
 			vol := diskPool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentTypeBlock, project.StorageVolume(storageProjectName, dev.Config["source"]), nil)
@@ -7492,8 +7502,8 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 				}
 
 				// Populate the filesystem connection handle if doing non-shared storage migration.
-				sharedStorage := args.ClusterMoveSourceName != "" && poolInfo.Remote
-				if !sharedStorage {
+				sameSharedStorage := args.ClusterMoveSourceName != "" && poolInfo.Remote && args.StoragePool == ""
+				if !sameSharedStorage {
 					d.migrationReceiveStateful[api.SecretNameFilesystem] = filesystemConn
 				}
 			}
