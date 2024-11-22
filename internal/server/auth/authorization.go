@@ -22,8 +22,8 @@ const (
 var ErrUnknownDriver = fmt.Errorf("Unknown driver")
 
 var authorizers = map[string]func() authorizer{
-	DriverTLS:     func() authorizer { return &tls{} },
-	DriverOpenFGA: func() authorizer { return &fga{} },
+	DriverTLS:     func() authorizer { return &TLS{} },
+	DriverOpenFGA: func() authorizer { return &FGA{} },
 }
 
 type authorizer interface {
