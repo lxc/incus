@@ -10,10 +10,12 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
+// Scriptlet represents a scriptlet authorizer.
 type Scriptlet struct {
 	commonAuthorizer
 }
 
+// CheckPermission returns an error if the user does not have the given Entitlement on the given Object.
 func (s *Scriptlet) CheckPermission(ctx context.Context, r *http.Request, object Object, entitlement Entitlement) error {
 	details, err := s.requestDetails(r)
 	if err != nil {
@@ -36,10 +38,12 @@ func (s *Scriptlet) CheckPermission(ctx context.Context, r *http.Request, object
 	return api.StatusErrorf(http.StatusForbidden, "Permission denied")
 }
 
+// GetInstanceAccess returns the list of entities who have access to the instance.
 func (s *Scriptlet) GetInstanceAccess(ctx context.Context, projectName string, instanceName string) (*api.Access, error) {
 	return &api.Access{}, nil
 }
 
+// GetPermissionChecker returns a function that can be used to check whether a user has the required entitlement on an authorization object.
 func (s *Scriptlet) GetPermissionChecker(ctx context.Context, r *http.Request, entitlement Entitlement, objectType ObjectType) (PermissionChecker, error) {
 	allowFunc := func(b bool) func(Object) bool {
 		return func(Object) bool {
@@ -69,6 +73,7 @@ func (s *Scriptlet) GetPermissionChecker(ctx context.Context, r *http.Request, e
 	return permissionChecker, nil
 }
 
+// GetProjectAccess returns the list of entities who have access to the project.
 func (s *Scriptlet) GetProjectAccess(ctx context.Context, projectName string) (*api.Access, error) {
 	return &api.Access{}, nil
 }

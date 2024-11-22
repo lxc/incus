@@ -13,6 +13,7 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
+// TLS represents a TLS authorizer.
 type TLS struct {
 	commonAuthorizer
 	certificates *certificate.Cache
