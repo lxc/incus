@@ -2260,17 +2260,26 @@ func (d *Daemon) setupAuthorizationScriptlet(scriptlet string) error {
 		return fmt.Errorf("Failed saving authorization scriptlet: %w", err)
 	}
 
-	if scriptlet != "" {
-		// Fail if not using the default tls or scriptlet authorizer.
-		switch d.authorizer.(type) {
-		case *auth.TLS, *auth.Scriptlet:
-			d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverScriptlet, logger.Log, d.clientCerts)
-			if err != nil {
-				return err
-			}
-		default:
-			return errors.New("Attempting to setup scriptlet authorization while a non-default authorizer is already set")
+	if scriptlet == "" {
+		// Reset to default authorizer.
+		d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts)
+		if err != nil {
+			return err
 		}
+
+		return nil
+	}
+
+	// Fail if not using the default tls or scriptlet authorizer.
+	switch d.authorizer.(type) {
+	case *auth.TLS, *auth.Scriptlet:
+		d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverScriptlet, logger.Log, d.clientCerts)
+		if err != nil {
+			return err
+		}
+
+	default:
+		return errors.New("Attempting to setup scriptlet authorization while another authorizer is already set")
 	}
 
 	return nil
