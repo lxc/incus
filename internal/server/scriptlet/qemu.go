@@ -9,6 +9,7 @@ import (
 
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/qmp"
 	scriptletLoad "github.com/lxc/incus/v6/internal/server/scriptlet/load"
+	"github.com/lxc/incus/v6/internal/server/scriptlet/marshal"
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
@@ -23,7 +24,7 @@ func QEMURun(l logger.Logger, m *qmp.Monitor, instance string, stage string) err
 			return nil, err
 		}
 
-		value, err := StarlarkUnmarshal(command)
+		value, err := marshal.StarlarkUnmarshal(command)
 		if err != nil {
 			return nil, err
 		}
@@ -39,7 +40,7 @@ func QEMURun(l logger.Logger, m *qmp.Monitor, instance string, stage string) err
 			return nil, err
 		}
 
-		rv, err := StarlarkMarshal(resp)
+		rv, err := marshal.StarlarkMarshal(resp)
 		if err != nil {
 			return nil, fmt.Errorf("Marshalling QMP response failed: %w", err)
 		}
@@ -50,12 +51,12 @@ func QEMURun(l logger.Logger, m *qmp.Monitor, instance string, stage string) err
 	runCommandFromKwargs := func(funName string, kwargs []starlark.Tuple) (starlark.Value, error) {
 		qmpArgs := make(map[string]any)
 		for _, kwarg := range kwargs {
-			key, err := StarlarkUnmarshal(kwarg.Index(0))
+			key, err := marshal.StarlarkUnmarshal(kwarg.Index(0))
 			if err != nil {
 				return nil, err
 			}
 
-			value, err := StarlarkUnmarshal(kwarg.Index(1))
+			value, err := marshal.StarlarkUnmarshal(kwarg.Index(1))
 			if err != nil {
 				return nil, err
 			}
@@ -73,7 +74,7 @@ func QEMURun(l logger.Logger, m *qmp.Monitor, instance string, stage string) err
 		}
 
 		// Extract the return value
-		rv, err := StarlarkMarshal(resp.Return)
+		rv, err := marshal.StarlarkMarshal(resp.Return)
 		if err != nil {
 			return nil, fmt.Errorf("Marshalling QMP response failed: %w", err)
 		}
@@ -90,7 +91,7 @@ func QEMURun(l logger.Logger, m *qmp.Monitor, instance string, stage string) err
 			return nil, fmt.Errorf("%s Expected exactly one positional argument, got %d", errPrefix, argsLen)
 		}
 
-		arg, err := StarlarkUnmarshal(args.Index(0))
+		arg, err := marshal.StarlarkUnmarshal(args.Index(0))
 		if err != nil {
 			return nil, err
 		}
