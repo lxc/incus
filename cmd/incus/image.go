@@ -228,7 +228,6 @@ func (c *cmdImageCopy) Run(cmd *cobra.Command, args []string) error {
 
 	// Copy the image
 	var imgInfo *api.Image
-	var fp string
 	if conf.Remotes[remoteName].Protocol != "incus" && !c.flagCopyAliases && len(c.flagAliases) == 0 {
 		// All image servers outside of other Incus servers are always public, so unless we
 		// need the aliases list too or the real fingerprint, we can skip the otherwise very expensive
@@ -243,9 +242,6 @@ func (c *cmdImageCopy) Run(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-
-		// Store the fingerprint for use when creating aliases later (as imgInfo.Fingerprint may be overridden)
-		fp = imgInfo.Fingerprint
 	}
 
 	if imgInfo.Public && imgInfo.Fingerprint != name && !strings.HasPrefix(imgInfo.Fingerprint, name) {
@@ -253,12 +249,19 @@ func (c *cmdImageCopy) Run(cmd *cobra.Command, args []string) error {
 		imgInfo.Fingerprint = name
 	}
 
+	aliases := make([]api.ImageAlias, len(c.flagAliases))
+	for i, entry := range c.flagAliases {
+		aliases[i].Name = entry
+	}
+
 	copyArgs := incus.ImageCopyArgs{
-		AutoUpdate: c.flagAutoUpdate,
-		Public:     c.flagPublic,
-		Type:       imageType,
-		Mode:       c.flagMode,
-		Profiles:   c.flagProfile,
+		Aliases:     aliases,
+		AutoUpdate:  c.flagAutoUpdate,
+		CopyAliases: c.flagCopyAliases,
+		Public:      c.flagPublic,
+		Type:        imageType,
+		Mode:        c.flagMode,
+		Profiles:    c.flagProfile,
 	}
 
 	// Do the copy
@@ -287,22 +290,6 @@ func (c *cmdImageCopy) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	progress.Done(i18n.G("Image copied successfully!"))
-
-	// Ensure aliases
-	aliases := make([]api.ImageAlias, len(c.flagAliases))
-	for i, entry := range c.flagAliases {
-		aliases[i].Name = entry
-	}
-
-	if c.flagCopyAliases {
-		// Also add the original aliases
-		aliases = append(aliases, imgInfo.Aliases...)
-	}
-
-	err = ensureImageAliases(destinationServer, aliases, fp)
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
