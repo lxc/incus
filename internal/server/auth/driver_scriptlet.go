@@ -40,7 +40,7 @@ func (s *Scriptlet) CheckPermission(ctx context.Context, r *http.Request, object
 
 // GetInstanceAccess returns the list of entities who have access to the instance.
 func (s *Scriptlet) GetInstanceAccess(ctx context.Context, projectName string, instanceName string) (*api.Access, error) {
-	return &api.Access{}, nil
+	return authScriptlet.GetInstanceAccessRun(logger.Log, projectName, instanceName)
 }
 
 // GetPermissionChecker returns a function that can be used to check whether a user has the required entitlement on an authorization object.
@@ -75,7 +75,7 @@ func (s *Scriptlet) GetPermissionChecker(ctx context.Context, r *http.Request, e
 
 // GetProjectAccess returns the list of entities who have access to the project.
 func (s *Scriptlet) GetProjectAccess(ctx context.Context, projectName string) (*api.Access, error) {
-	return &api.Access{}, nil
+	return authScriptlet.GetProjectAccessRun(logger.Log, projectName)
 }
 
 func (s *Scriptlet) load(ctx context.Context, certificateCache *certificate.Cache, opts Opts) error {
