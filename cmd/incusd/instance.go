@@ -179,6 +179,15 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, r *http.Reques
 		return fmt.Errorf("Failed loading instance storage pool: %w", err)
 	}
 
+	// Lock this operation to ensure that concurrent image operations don't conflict.
+	// Other operations will wait for this one to finish.
+	unlock, err := imageOperationLock(ctx, img.Fingerprint)
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+
 	err = pool.CreateInstanceFromImage(inst, img.Fingerprint, op)
 	if err != nil {
 		return fmt.Errorf("Failed creating instance from image: %w", err)
