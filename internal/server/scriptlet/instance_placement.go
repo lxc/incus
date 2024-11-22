@@ -12,6 +12,7 @@ import (
 	internalInstance "github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/resources"
 	scriptletLoad "github.com/lxc/incus/v6/internal/server/scriptlet/load"
+	"github.com/lxc/incus/v6/internal/server/scriptlet/log"
 	"github.com/lxc/incus/v6/internal/server/scriptlet/marshal"
 	"github.com/lxc/incus/v6/internal/server/state"
 	"github.com/lxc/incus/v6/shared/api"
@@ -24,7 +25,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	logFunc := createLogger(l, "Instance placement scriptlet")
+	logFunc := log.CreateLogger(l, "Instance placement scriptlet")
 
 	var targetMember *db.NodeInfo
 

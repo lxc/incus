@@ -9,13 +9,14 @@ import (
 
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/qmp"
 	scriptletLoad "github.com/lxc/incus/v6/internal/server/scriptlet/load"
+	"github.com/lxc/incus/v6/internal/server/scriptlet/log"
 	"github.com/lxc/incus/v6/internal/server/scriptlet/marshal"
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // QEMURun runs the QEMU scriptlet.
 func QEMURun(l logger.Logger, m *qmp.Monitor, instance string, stage string) error {
-	logFunc := createLogger(l, "QEMU scriptlet ("+stage+")")
+	logFunc := log.CreateLogger(l, "QEMU scriptlet ("+stage+")")
 	runQMPFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 		var command *starlark.Dict
 
