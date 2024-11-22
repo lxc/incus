@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 
 	"go.starlark.net/starlark"

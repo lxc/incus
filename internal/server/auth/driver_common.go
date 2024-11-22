@@ -64,6 +64,15 @@ func (r *requestDetails) authenticationProtocol() string {
 	return r.Protocol
 }
 
+func (r *requestDetails) actualDetails() *common.RequestDetails {
+	return &common.RequestDetails{
+		Username:             r.username(),
+		Protocol:             r.authenticationProtocol(),
+		IsAllProjectsRequest: r.IsAllProjectsRequest,
+		ProjectName:          r.ProjectName,
+	}
+}
+
 func (c *commonAuthorizer) requestDetails(r *http.Request) (*requestDetails, error) {
 	if r == nil {
 		return nil, fmt.Errorf("Cannot inspect nil request")
