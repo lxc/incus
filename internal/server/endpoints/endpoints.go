@@ -11,7 +11,7 @@ import (
 
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/endpoints/listeners"
-	"github.com/lxc/incus/v6/internal/server/util"
+	"github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/logger"
 	localtls "github.com/lxc/incus/v6/shared/tls"
 )

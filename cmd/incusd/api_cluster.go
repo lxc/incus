@@ -430,9 +430,15 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		return response.BadRequest(fmt.Errorf("This server is already clustered"))
 	}
 
-	// The old pre 'clustering_join' join API approach is no longer supported.
+	// Validate server address.
 	if req.ServerAddress == "" {
 		return response.BadRequest(fmt.Errorf("No server address provided for this member"))
+	}
+
+	// Check that the provided address is an IP address or DNS, not wildcard and isn't required to specify a port.
+	err := validate.IsListenAddress(true, false, false)(req.ServerAddress)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid server address %q: %w", req.ServerAddress, err))
 	}
 
 	localHTTPSAddress := s.LocalConfig.HTTPSAddress()
