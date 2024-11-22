@@ -12,6 +12,7 @@ import (
 	internalInstance "github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/resources"
 	scriptletLoad "github.com/lxc/incus/v6/internal/server/scriptlet/load"
+	"github.com/lxc/incus/v6/internal/server/scriptlet/marshal"
 	"github.com/lxc/incus/v6/internal/server/state"
 	"github.com/lxc/incus/v6/shared/api"
 	apiScriptlet "github.com/lxc/incus/v6/shared/api/scriptlet"
@@ -93,7 +94,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 			}
 		}
 
-		rv, err := StarlarkMarshal(res)
+		rv, err := marshal.StarlarkMarshal(res)
 		if err != nil {
 			return nil, fmt.Errorf("Marshalling cluster member resources for %q failed: %w", memberName, err)
 		}
@@ -142,7 +143,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 			}
 		}
 
-		rv, err := StarlarkMarshal(memberState)
+		rv, err := marshal.StarlarkMarshal(memberState)
 		if err != nil {
 			return nil, fmt.Errorf("Marshalling cluster member state for %q failed: %w", memberName, err)
 		}
@@ -163,7 +164,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 		res.MemorySize = uint64(usageMemory)
 		res.RootDiskSize = uint64(usageDisk)
 
-		rv, err := StarlarkMarshal(res)
+		rv, err := marshal.StarlarkMarshal(res)
 		if err != nil {
 			return nil, fmt.Errorf("Marshalling instance resources failed: %w", err)
 		}
@@ -231,7 +232,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 			return nil, err
 		}
 
-		rv, err := StarlarkMarshal(instanceList)
+		rv, err := marshal.StarlarkMarshal(instanceList)
 		if err != nil {
 			return nil, fmt.Errorf("Marshalling instances failed: %w", err)
 		}
@@ -259,7 +260,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 			return nil, err
 		}
 
-		rv, err := StarlarkMarshal(count)
+		rv, err := marshal.StarlarkMarshal(count)
 		if err != nil {
 			return nil, fmt.Errorf("Marshalling instance count failed: %w", err)
 		}
@@ -347,7 +348,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 			return nil, err
 		}
 
-		rv, err := StarlarkMarshal(allMembersInfo)
+		rv, err := marshal.StarlarkMarshal(allMembersInfo)
 		if err != nil {
 			return nil, fmt.Errorf("Marshalling cluster members failed: %w", err)
 		}
@@ -382,7 +383,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 			return nil, err
 		}
 
-		rv, err := StarlarkMarshal(p)
+		rv, err := marshal.StarlarkMarshal(p)
 		if err != nil {
 			return nil, fmt.Errorf("Marshalling project failed: %w", err)
 		}
@@ -484,12 +485,12 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 		return nil, fmt.Errorf("Scriptlet missing instance_placement function")
 	}
 
-	rv, err := StarlarkMarshal(req)
+	rv, err := marshal.StarlarkMarshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("Marshalling request failed: %w", err)
 	}
 
-	candidateMembersv, err := StarlarkMarshal(candidateMembersInfo)
+	candidateMembersv, err := marshal.StarlarkMarshal(candidateMembersInfo)
 	if err != nil {
 		return nil, fmt.Errorf("Marshalling candidate members failed: %w", err)
 	}

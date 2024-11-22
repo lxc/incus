@@ -1,4 +1,4 @@
-package scriptlet
+package marshal
 
 import (
 	"fmt"
