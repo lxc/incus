@@ -738,8 +738,12 @@ func (r *ProtocolIncus) CopyImage(source ImageServer, image api.Image, args *Ima
 			},
 		}
 
+		imagesPost.Aliases = args.Aliases
 		if args.CopyAliases {
 			imagesPost.Aliases = image.Aliases
+			if args.Aliases != nil {
+				imagesPost.Aliases = append(imagesPost.Aliases, args.Aliases...)
+			}
 		}
 
 		imagesPost.ExpiresAt = image.ExpiresAt
@@ -764,7 +768,6 @@ func (r *ProtocolIncus) CopyImage(source ImageServer, image api.Image, args *Ima
 			Target:      info.URL,
 			Certificate: info.Certificate,
 			Secret:      secret.(string),
-			Aliases:     image.Aliases,
 			Project:     info.Project,
 			Profiles:    image.Profiles,
 		}
@@ -832,6 +835,7 @@ func (r *ProtocolIncus) CopyImage(source ImageServer, image api.Image, args *Ima
 		imagePost.Public = args.Public
 		imagePost.Profiles = image.Profiles
 
+		imagePost.Aliases = args.Aliases
 		if args.CopyAliases {
 			imagePost.Aliases = image.Aliases
 			if args.Aliases != nil {
@@ -876,6 +880,19 @@ func (r *ProtocolIncus) CopyImage(source ImageServer, image api.Image, args *Ima
 			if err != nil {
 				rop.err = remoteOperationError("Failed to copy image", nil)
 				return
+			}
+
+			// Apply the aliases.
+			for _, entry := range imagePost.Aliases {
+				alias := api.ImageAliasesPost{}
+				alias.Name = entry.Name
+				alias.Target = image.Fingerprint
+
+				err := r.CreateImageAlias(alias)
+				if err != nil {
+					rop.err = remoteOperationError("Failed to add alias", nil)
+					return
+				}
 			}
 		}()
 
