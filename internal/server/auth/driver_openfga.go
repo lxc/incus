@@ -17,6 +17,7 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
+// FGA represents an OpenFGA authorizer.
 type FGA struct {
 	commonAuthorizer
 	tls *TLS
@@ -137,6 +138,7 @@ func (f *FGA) load(ctx context.Context, certificateCache *certificate.Cache, opt
 	return nil
 }
 
+// StopService stops the authorizer gracefully.
 func (f *FGA) StopService(ctx context.Context) error {
 	// Cancel any background routine.
 	f.shutdownCancel()
@@ -253,6 +255,7 @@ func (f *FGA) connect(ctx context.Context, certificateCache *certificate.Cache, 
 	return nil
 }
 
+// CheckPermission returns an error if the user does not have the given Entitlement on the given Object.
 func (f *FGA) CheckPermission(ctx context.Context, r *http.Request, object Object, entitlement Entitlement) error {
 	logCtx := logger.Ctx{"object": object, "entitlement": entitlement, "url": r.URL.String(), "method": r.Method}
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -301,6 +304,7 @@ func (f *FGA) CheckPermission(ctx context.Context, r *http.Request, object Objec
 	return nil
 }
 
+// GetPermissionChecker returns a function that can be used to check whether a user has the required entitlement on an authorization object.
 func (f *FGA) GetPermissionChecker(ctx context.Context, r *http.Request, entitlement Entitlement, objectType ObjectType) (PermissionChecker, error) {
 	allowFunc := func(b bool) func(Object) bool {
 		return func(Object) bool {
@@ -344,6 +348,7 @@ func (f *FGA) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 	}, nil
 }
 
+// AddProject adds a project to the authorizer.
 func (f *FGA) AddProject(ctx context.Context, _ int64, projectName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -361,6 +366,7 @@ func (f *FGA) AddProject(ctx context.Context, _ int64, projectName string) error
 	return f.updateTuples(ctx, writes, nil)
 }
 
+// DeleteProject deletes a project from the authorizer.
 func (f *FGA) DeleteProject(ctx context.Context, _ int64, projectName string) error {
 	// Only empty projects can be deleted, so we don't need to worry about any tuples with this project as a parent.
 	deletions := []client.ClientTupleKeyWithoutCondition{
@@ -380,6 +386,7 @@ func (f *FGA) DeleteProject(ctx context.Context, _ int64, projectName string) er
 	return f.updateTuples(ctx, nil, deletions)
 }
 
+// RenameProject renames a project in the authorizer.
 func (f *FGA) RenameProject(ctx context.Context, _ int64, oldName string, newName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -412,7 +419,7 @@ func (f *FGA) RenameProject(ctx context.Context, _ int64, oldName string, newNam
 	return f.updateTuples(ctx, writes, deletions)
 }
 
-// AddCertificate is a no-op.
+// AddCertificate adds a certificate to the authorizer.
 func (f *FGA) AddCertificate(ctx context.Context, fingerprint string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -425,7 +432,7 @@ func (f *FGA) AddCertificate(ctx context.Context, fingerprint string) error {
 	return f.updateTuples(ctx, writes, nil)
 }
 
-// DeleteCertificate is a no-op.
+// DeleteCertificate deletes a certificate from the authorizer.
 func (f *FGA) DeleteCertificate(ctx context.Context, fingerprint string) error {
 	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
@@ -438,7 +445,7 @@ func (f *FGA) DeleteCertificate(ctx context.Context, fingerprint string) error {
 	return f.updateTuples(ctx, nil, deletions)
 }
 
-// AddStoragePool is a no-op.
+// AddStoragePool adds a storage pool to the authorizer.
 func (f *FGA) AddStoragePool(ctx context.Context, storagePoolName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -451,7 +458,7 @@ func (f *FGA) AddStoragePool(ctx context.Context, storagePoolName string) error 
 	return f.updateTuples(ctx, writes, nil)
 }
 
-// DeleteStoragePool is a no-op.
+// DeleteStoragePool deletes a storage pool from the authorizer.
 func (f *FGA) DeleteStoragePool(ctx context.Context, storagePoolName string) error {
 	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
@@ -464,7 +471,7 @@ func (f *FGA) DeleteStoragePool(ctx context.Context, storagePoolName string) err
 	return f.updateTuples(ctx, nil, deletions)
 }
 
-// AddImage is a no-op.
+// AddImage adds an image to the authorizer.
 func (f *FGA) AddImage(ctx context.Context, projectName string, fingerprint string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -477,7 +484,7 @@ func (f *FGA) AddImage(ctx context.Context, projectName string, fingerprint stri
 	return f.updateTuples(ctx, writes, nil)
 }
 
-// DeleteImage is a no-op.
+// DeleteImage deletes an image from the authorizer.
 func (f *FGA) DeleteImage(ctx context.Context, projectName string, fingerprint string) error {
 	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
@@ -490,7 +497,7 @@ func (f *FGA) DeleteImage(ctx context.Context, projectName string, fingerprint s
 	return f.updateTuples(ctx, nil, deletions)
 }
 
-// AddImageAlias is a no-op.
+// AddImageAlias adds an image alias to the authorizer.
 func (f *FGA) AddImageAlias(ctx context.Context, projectName string, imageAliasName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -503,7 +510,7 @@ func (f *FGA) AddImageAlias(ctx context.Context, projectName string, imageAliasN
 	return f.updateTuples(ctx, writes, nil)
 }
 
-// DeleteImageAlias is a no-op.
+// DeleteImageAlias deletes an image alias from the authorizer.
 func (f *FGA) DeleteImageAlias(ctx context.Context, projectName string, imageAliasName string) error {
 	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
@@ -516,7 +523,7 @@ func (f *FGA) DeleteImageAlias(ctx context.Context, projectName string, imageAli
 	return f.updateTuples(ctx, nil, deletions)
 }
 
-// RenameImageAlias is a no-op.
+// RenameImageAlias renames an image alias in the authorizer.
 func (f *FGA) RenameImageAlias(ctx context.Context, projectName string, oldAliasName string, newAliasName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -537,7 +544,7 @@ func (f *FGA) RenameImageAlias(ctx context.Context, projectName string, oldAlias
 	return f.updateTuples(ctx, writes, deletions)
 }
 
-// AddInstance is a no-op.
+// AddInstance adds an instance to the authorizer.
 func (f *FGA) AddInstance(ctx context.Context, projectName string, instanceName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -550,7 +557,7 @@ func (f *FGA) AddInstance(ctx context.Context, projectName string, instanceName 
 	return f.updateTuples(ctx, writes, nil)
 }
 
-// DeleteInstance is a no-op.
+// DeleteInstance deletes an instance from the authorizer.
 func (f *FGA) DeleteInstance(ctx context.Context, projectName string, instanceName string) error {
 	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
@@ -563,7 +570,7 @@ func (f *FGA) DeleteInstance(ctx context.Context, projectName string, instanceNa
 	return f.updateTuples(ctx, nil, deletions)
 }
 
-// RenameInstance is a no-op.
+// RenameInstance renames an instance in the authorizer.
 func (f *FGA) RenameInstance(ctx context.Context, projectName string, oldInstanceName string, newInstanceName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -584,7 +591,7 @@ func (f *FGA) RenameInstance(ctx context.Context, projectName string, oldInstanc
 	return f.updateTuples(ctx, writes, deletions)
 }
 
-// AddNetwork is a no-op.
+// AddNetwork adds a network to the authorizer.
 func (f *FGA) AddNetwork(ctx context.Context, projectName string, networkName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -597,7 +604,7 @@ func (f *FGA) AddNetwork(ctx context.Context, projectName string, networkName st
 	return f.updateTuples(ctx, writes, nil)
 }
 
-// DeleteNetwork is a no-op.
+// DeleteNetwork deletes a network from the authorizer.
 func (f *FGA) DeleteNetwork(ctx context.Context, projectName string, networkName string) error {
 	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
@@ -610,7 +617,7 @@ func (f *FGA) DeleteNetwork(ctx context.Context, projectName string, networkName
 	return f.updateTuples(ctx, nil, deletions)
 }
 
-// RenameNetwork is a no-op.
+// RenameNetwork renames a network in the authorizer.
 func (f *FGA) RenameNetwork(ctx context.Context, projectName string, oldNetworkName string, newNetworkName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -631,7 +638,7 @@ func (f *FGA) RenameNetwork(ctx context.Context, projectName string, oldNetworkN
 	return f.updateTuples(ctx, writes, deletions)
 }
 
-// AddNetworkZone is a no-op.
+// AddNetworkZone adds a network zone in the authorizer.
 func (f *FGA) AddNetworkZone(ctx context.Context, projectName string, networkZoneName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -644,7 +651,7 @@ func (f *FGA) AddNetworkZone(ctx context.Context, projectName string, networkZon
 	return f.updateTuples(ctx, writes, nil)
 }
 
-// DeleteNetworkZone is a no-op.
+// DeleteNetworkZone deletes a network zone from the authorizer.
 func (f *FGA) DeleteNetworkZone(ctx context.Context, projectName string, networkZoneName string) error {
 	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
@@ -657,7 +664,7 @@ func (f *FGA) DeleteNetworkZone(ctx context.Context, projectName string, network
 	return f.updateTuples(ctx, nil, deletions)
 }
 
-// AddNetworkIntegration is a no-op.
+// AddNetworkIntegration adds a network integration to the authorizer.
 func (f *FGA) AddNetworkIntegration(ctx context.Context, networkIntegrationName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -670,7 +677,7 @@ func (f *FGA) AddNetworkIntegration(ctx context.Context, networkIntegrationName 
 	return f.updateTuples(ctx, writes, nil)
 }
 
-// DeleteNetworkIntegration is a no-op.
+// DeleteNetworkIntegration deletes a network integration from the authorizer.
 func (f *FGA) DeleteNetworkIntegration(ctx context.Context, networkIntegrationName string) error {
 	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
@@ -683,7 +690,7 @@ func (f *FGA) DeleteNetworkIntegration(ctx context.Context, networkIntegrationNa
 	return f.updateTuples(ctx, nil, deletions)
 }
 
-// RenameNetworkIntegration is a no-op.
+// RenameNetworkIntegration renames a network integration in the authorizer.
 func (f *FGA) RenameNetworkIntegration(ctx context.Context, oldNetworkIntegrationName string, newNetworkIntegrationName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -704,7 +711,7 @@ func (f *FGA) RenameNetworkIntegration(ctx context.Context, oldNetworkIntegratio
 	return f.updateTuples(ctx, writes, deletions)
 }
 
-// AddNetworkACL is a no-op.
+// AddNetworkACL adds a network ACL in the authorizer.
 func (f *FGA) AddNetworkACL(ctx context.Context, projectName string, networkACLName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -717,7 +724,7 @@ func (f *FGA) AddNetworkACL(ctx context.Context, projectName string, networkACLN
 	return f.updateTuples(ctx, writes, nil)
 }
 
-// DeleteNetworkACL is a no-op.
+// DeleteNetworkACL deletes a network ACL from the authorizer.
 func (f *FGA) DeleteNetworkACL(ctx context.Context, projectName string, networkACLName string) error {
 	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
@@ -730,7 +737,7 @@ func (f *FGA) DeleteNetworkACL(ctx context.Context, projectName string, networkA
 	return f.updateTuples(ctx, nil, deletions)
 }
 
-// RenameNetworkACL is a no-op.
+// RenameNetworkACL renames a network ACL in the authorizer.
 func (f *FGA) RenameNetworkACL(ctx context.Context, projectName string, oldNetworkACLName string, newNetworkACLName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -751,7 +758,7 @@ func (f *FGA) RenameNetworkACL(ctx context.Context, projectName string, oldNetwo
 	return f.updateTuples(ctx, writes, deletions)
 }
 
-// AddProfile is a no-op.
+// AddProfile adds a profile in the authorizer.
 func (f *FGA) AddProfile(ctx context.Context, projectName string, profileName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -764,7 +771,7 @@ func (f *FGA) AddProfile(ctx context.Context, projectName string, profileName st
 	return f.updateTuples(ctx, writes, nil)
 }
 
-// DeleteProfile is a no-op.
+// DeleteProfile deletes a profile from the authorizer.
 func (f *FGA) DeleteProfile(ctx context.Context, projectName string, profileName string) error {
 	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
@@ -777,7 +784,7 @@ func (f *FGA) DeleteProfile(ctx context.Context, projectName string, profileName
 	return f.updateTuples(ctx, nil, deletions)
 }
 
-// RenameProfile is a no-op.
+// RenameProfile renames a profile in the authorizer.
 func (f *FGA) RenameProfile(ctx context.Context, projectName string, oldProfileName string, newProfileName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -798,7 +805,7 @@ func (f *FGA) RenameProfile(ctx context.Context, projectName string, oldProfileN
 	return f.updateTuples(ctx, writes, deletions)
 }
 
-// AddStoragePoolVolume is a no-op.
+// AddStoragePoolVolume adds a storage volume to the authorizer.
 func (f *FGA) AddStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string, storageVolumeLocation string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -811,7 +818,7 @@ func (f *FGA) AddStoragePoolVolume(ctx context.Context, projectName string, stor
 	return f.updateTuples(ctx, writes, nil)
 }
 
-// DeleteStoragePoolVolume is a no-op.
+// DeleteStoragePoolVolume deletes a storage volume from the authorizer.
 func (f *FGA) DeleteStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string, storageVolumeLocation string) error {
 	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
@@ -824,7 +831,7 @@ func (f *FGA) DeleteStoragePoolVolume(ctx context.Context, projectName string, s
 	return f.updateTuples(ctx, nil, deletions)
 }
 
-// RenameStoragePoolVolume is a no-op.
+// RenameStoragePoolVolume renames a storage volume in the authorizer.
 func (f *FGA) RenameStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, oldStorageVolumeName string, newStorageVolumeName string, storageVolumeLocation string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -845,7 +852,7 @@ func (f *FGA) RenameStoragePoolVolume(ctx context.Context, projectName string, s
 	return f.updateTuples(ctx, writes, deletions)
 }
 
-// AddStorageBucket is a no-op.
+// AddStorageBucket adds a storage bucket to the authorizer.
 func (f *FGA) AddStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -858,7 +865,7 @@ func (f *FGA) AddStorageBucket(ctx context.Context, projectName string, storageP
 	return f.updateTuples(ctx, writes, nil)
 }
 
-// DeleteStorageBucket is a no-op.
+// DeleteStorageBucket deletes a storage bucket from the authorizer.
 func (f *FGA) DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error {
 	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
