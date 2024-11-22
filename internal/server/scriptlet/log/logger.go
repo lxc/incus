@@ -1,4 +1,4 @@
-package scriptlet
+package log
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 )
 
 // createLogger creates a logger for scriptlets.
-func createLogger(l logger.Logger, name string) func(*starlark.Thread, *starlark.Builtin, starlark.Tuple, []starlark.Tuple) (starlark.Value, error) {
+func CreateLogger(l logger.Logger, name string) func(*starlark.Thread, *starlark.Builtin, starlark.Tuple, []starlark.Tuple) (starlark.Value, error) {
 	return func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 		var sb strings.Builder
 		for _, arg := range args {
