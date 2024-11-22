@@ -738,8 +738,12 @@ func (r *ProtocolIncus) CopyImage(source ImageServer, image api.Image, args *Ima
 			},
 		}
 
+		imagesPost.Aliases = args.Aliases
 		if args.CopyAliases {
 			imagesPost.Aliases = image.Aliases
+			if args.Aliases != nil {
+				imagesPost.Aliases = append(imagesPost.Aliases, args.Aliases...)
+			}
 		}
 
 		imagesPost.ExpiresAt = image.ExpiresAt
@@ -764,7 +768,6 @@ func (r *ProtocolIncus) CopyImage(source ImageServer, image api.Image, args *Ima
 			Target:      info.URL,
 			Certificate: info.Certificate,
 			Secret:      secret.(string),
-			Aliases:     image.Aliases,
 			Project:     info.Project,
 			Profiles:    image.Profiles,
 		}
