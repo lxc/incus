@@ -407,41 +407,40 @@ func (d *zfs) Delete(op *operations.Operation) error {
 		return err
 	}
 
-	if !exists {
-		return nil
-	}
-
-	// Confirm that nothing's been left behind
-	datasets, err := d.getDatasets(d.config["zfs.pool_name"], "all")
-	if err != nil {
-		return err
-	}
-
-	initialDatasets := d.initialDatasets()
-	for _, dataset := range datasets {
-		dataset = strings.TrimPrefix(dataset, "/")
-
-		if slices.Contains(initialDatasets, dataset) {
-			continue
-		}
-
-		fields := strings.Split(dataset, "/")
-		if len(fields) > 1 {
-			return fmt.Errorf("ZFS pool has leftover datasets: %s", dataset)
-		}
-	}
-
-	if strings.Contains(d.config["zfs.pool_name"], "/") {
-		// Delete the dataset.
-		_, err := subprocess.RunCommand("zfs", "destroy", "-r", d.config["zfs.pool_name"])
+	if exists {
+		// Confirm that nothing's been left behind
+		datasets, err := d.getDatasets(d.config["zfs.pool_name"], "all")
 		if err != nil {
 			return err
 		}
-	} else {
+
+		initialDatasets := d.initialDatasets()
+		for _, dataset := range datasets {
+			dataset = strings.TrimPrefix(dataset, "/")
+
+			if slices.Contains(initialDatasets, dataset) {
+				continue
+			}
+
+			fields := strings.Split(dataset, "/")
+			if len(fields) > 1 {
+				return fmt.Errorf("ZFS pool has leftover datasets: %s", dataset)
+			}
+		}
+
 		// Delete the pool.
-		_, err := subprocess.RunCommand("zpool", "destroy", d.config["zfs.pool_name"])
-		if err != nil {
-			return err
+		if strings.Contains(d.config["zfs.pool_name"], "/") {
+			// Delete the dataset.
+			_, err := subprocess.RunCommand("zfs", "destroy", "-r", d.config["zfs.pool_name"])
+			if err != nil {
+				return err
+			}
+		} else {
+			// Delete the pool.
+			_, err := subprocess.RunCommand("zpool", "destroy", d.config["zfs.pool_name"])
+			if err != nil {
+				return err
+			}
 		}
 	}
 
