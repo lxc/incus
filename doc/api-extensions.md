@@ -2627,3 +2627,13 @@ As part of this, the following configuration options have been added:
 ## `custom_volume_refresh_exclude_older_snapshots`
 
 This adds support for excluding source snapshots earlier than latest target snapshot.
+
+## `storage_initial_owner`
+
+This adds ability to set the initial owner of a custom volume.
+
+The following configuration options have been added:
+
+* `initial.gid`
+* `initial.mode`
+* `initial.uid`
