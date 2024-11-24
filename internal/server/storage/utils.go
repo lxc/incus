@@ -491,10 +491,13 @@ func poolAndVolumeCommonRules(vol *drivers.Volume) map[string]func(string) error
 		"snapshots.pattern":  validate.IsAny,
 	}
 
-	// security.shifted and security.unmapped are only relevant for custom filesystem volumes.
+	// Options relevant for custom filesystem volumes.
 	if (vol == nil) || (vol != nil && vol.Type() == drivers.VolumeTypeCustom && vol.ContentType() == drivers.ContentTypeFS) {
 		rules["security.shifted"] = validate.Optional(validate.IsBool)
 		rules["security.unmapped"] = validate.Optional(validate.IsBool)
+		rules["initial.uid"] = validate.Optional(validate.IsInt64)
+		rules["initial.gid"] = validate.Optional(validate.IsInt64)
+		rules["initial.mode"] = validate.Optional(validate.IsInt64)
 	}
 
 	// security.shared is only relevant for custom block volumes.
