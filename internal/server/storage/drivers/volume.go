@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
@@ -233,8 +234,46 @@ func (v Volume) EnsureMountPath() error {
 		revert.Add(func() { _ = os.Remove(volPath) })
 	}
 
-	// Set very restrictive mode 0100 for non-custom, non-bucket and non-image volumes.
 	mode := os.FileMode(0711)
+	if v.volType == VolumeTypeCustom && v.contentType == ContentTypeFS {
+		initialMode := v.ExpandedConfig("initial.mode")
+		if initialMode != "" {
+			m, err := strconv.ParseInt(initialMode, 8, 0)
+			if err != nil {
+				return err
+			}
+
+			mode = os.FileMode(m)
+		}
+
+		uid, gid := 0, 0
+		var err error
+		initialUID := v.ExpandedConfig("initial.uid")
+		if initialUID != "" {
+			uid, err = strconv.Atoi(initialUID)
+			if err != nil {
+				return err
+			}
+		}
+
+		initialGID := v.ExpandedConfig("initial.gid")
+		if initialGID != "" {
+			gid, err = strconv.Atoi(initialGID)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Set the owner of a custom volume if uid or gid have been set.
+		if uid != 0 || gid != 0 {
+			err = os.Chown(volPath, uid, gid)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Set very restrictive mode 0100 for non-custom, non-bucket and non-image volumes.
 	if v.volType != VolumeTypeCustom && v.volType != VolumeTypeImage && v.volType != VolumeTypeBucket {
 		mode = os.FileMode(0100)
 	}
