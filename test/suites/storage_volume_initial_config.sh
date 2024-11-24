@@ -138,6 +138,28 @@ test_storage_volume_initial_config() {
     incus delete c --force
   fi
 
+  # Test initial owner of a custom volume configuration options.
+  incus storage volume create "${pool}" testvolume1
+  incus storage volume create "${pool}" testvolume2 initial.uid=101 initial.gid=101 initial.mode=0700
+
+  incus launch testimage c
+
+  incus storage volume attach "${pool}" testvolume1 c /testvolume1
+  incus storage volume attach "${pool}" testvolume2 c /testvolume2
+
+  [ "$(incus exec c -- stat -c %u:%g /testvolume1 )" = "0:0" ]
+  [ "$(incus exec c -- stat -c %a /testvolume1 )" = "711" ]
+  [ "$(incus exec c -- stat -c %u:%g /testvolume2 )" = "101:101" ]
+  [ "$(incus exec c -- stat -c %a /testvolume2 )" = "700" ]
+
+  incus storage volume detach "${pool}" testvolume1 c
+  incus storage volume detach "${pool}" testvolume2 c
+
+  incus delete c --force
+
+  incus storage volume delete "${pool}" testvolume1
+  incus storage volume delete "${pool}" testvolume2
+
   # Cleanup
   incus profile delete "${profile}"
 
