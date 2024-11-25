@@ -524,7 +524,7 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 
 // CreateVolumeFromMigration creates a volume being sent via a migration.
 func (d *ceph) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
-	if volTargetArgs.ClusterMoveSourceName != "" {
+	if volTargetArgs.ClusterMoveSourceName != "" && volTargetArgs.StoragePool == "" {
 		err := vol.EnsureMountPath()
 		if err != nil {
 			return err
@@ -1353,7 +1353,7 @@ func (d *ceph) RenameVolume(vol Volume, newVolName string, op *operations.Operat
 
 // MigrateVolume sends a volume for migration.
 func (d *ceph) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
-	if volSrcArgs.ClusterMove {
+	if volSrcArgs.ClusterMove && !volSrcArgs.StorageMove {
 		return nil // When performing a cluster member move don't do anything on the source member.
 	}
 

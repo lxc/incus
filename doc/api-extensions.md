@@ -2656,3 +2656,7 @@ The following configuration options have been added:
 * `initial.gid`
 * `initial.mode`
 * `initial.uid`
+
+## `storage_live_migration`
+
+This adds support for virtual-machines live-migration between storage pools.
