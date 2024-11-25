@@ -2421,6 +2421,13 @@ The events can be any combination of `lifecycle`, `logging`, and `network-acl`.
 
 <!-- config group server-loki end -->
 <!-- config group server-miscellaneous start -->
+```{config:option} authorization.scriptlet server-miscellaneous
+:scope: "global"
+:shortdesc: "Authorization scriptlet"
+:type: "string"
+When using scriptlet-based authorization, this option stores the scriptlet.
+```
+
 ```{config:option} backups.compression_algorithm server-miscellaneous
 :defaultdesc: "`gzip`"
 :scope: "global"
