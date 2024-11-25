@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"os/user"
-	"path"
-	"path/filepath"
 	"regexp"
 	"slices"
 	"strconv"
@@ -16,7 +13,6 @@ import (
 
 	"github.com/lxc/incus/v6/internal/i18n"
 	config "github.com/lxc/incus/v6/shared/cliconfig"
-	"github.com/lxc/incus/v6/shared/util"
 )
 
 var numberedArgRegex = regexp.MustCompile(`@ARG(\d+)@`)
@@ -212,33 +208,9 @@ func execIfAliases() error {
 		return nil
 	}
 
-	// Figure out the config directory and config path
-	var configDir string
-	if os.Getenv("INCUS_CONF") != "" {
-		configDir = os.Getenv("INCUS_CONF")
-	} else if os.Getenv("HOME") != "" {
-		configDir = path.Join(os.Getenv("HOME"), ".config", "incus")
-	} else {
-		user, err := user.Current()
-		if err != nil {
-			return nil
-		}
-
-		configDir = path.Join(user.HomeDir, ".config", "incus")
-	}
-
-	confPath := os.ExpandEnv(path.Join(configDir, "config.yml"))
-
-	// Load the configuration
-	var conf *config.Config
-	var err error
-	if util.PathExists(confPath) {
-		conf, err = config.LoadConfig(confPath)
-		if err != nil {
-			return nil
-		}
-	} else {
-		conf = config.NewConfig(filepath.Dir(confPath), true)
+	conf, err := config.LoadConfig("")
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to load configuration: %s"), err)
 	}
 
 	// Expand the aliases

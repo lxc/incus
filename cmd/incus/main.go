@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/user"
 	"path"
-	"path/filepath"
 	"slices"
 
 	"github.com/spf13/cobra"
@@ -71,6 +70,27 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 `
 }
 
+func aliases() []string {
+	c, err := config.LoadConfig("")
+	if err != nil {
+		return nil
+	}
+
+	aliases := make([]string, 0, len(defaultAliases)+len(c.Aliases))
+
+	// Add default aliases
+	for alias := range defaultAliases {
+		aliases = append(aliases, alias)
+	}
+
+	// Add user-defined aliases
+	for alias := range c.Aliases {
+		aliases = append(aliases, alias)
+	}
+
+	return aliases
+}
+
 func main() {
 	// Process aliases
 	err := execIfAliases()
@@ -93,6 +113,7 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	app.SilenceUsage = true
 	app.SilenceErrors = true
 	app.CompletionOptions = cobra.CompletionOptions{HiddenDefaultCmd: true}
+	app.ValidArgs = aliases()
 
 	// Global flags
 	globalCmd := cmdGlobal{cmd: app, asker: ask.NewAsker(bufio.NewReader(os.Stdin))}
@@ -337,23 +358,6 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	// Figure out the config directory and config path
-	var configDir string
-	if os.Getenv("INCUS_CONF") != "" {
-		configDir = os.Getenv("INCUS_CONF")
-	} else if os.Getenv("HOME") != "" && util.PathExists(os.Getenv("HOME")) {
-		configDir = path.Join(os.Getenv("HOME"), ".config", "incus")
-	} else {
-		user, err := user.Current()
-		if err != nil {
-			return err
-		}
-
-		if util.PathExists(user.HomeDir) {
-			configDir = path.Join(user.HomeDir, ".config", "incus")
-		}
-	}
-
 	// Figure out a potential cache path.
 	var cachePath string
 	if os.Getenv("INCUS_CACHE") != "" {
@@ -378,24 +382,17 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// If no homedir could be found, treat as if --force-local was passed.
-	if configDir == "" {
+	c.conf, err = config.LoadConfig("")
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to load configuration: %s"), err)
+	}
+
+	// If no config dir could be found, treat as if --force-local was passed.
+	if c.conf.ConfigDir == "" {
 		c.flagForceLocal = true
 	}
 
-	c.confPath = os.ExpandEnv(path.Join(configDir, "config.yml"))
-
-	// Load the configuration
-	if c.flagForceLocal {
-		c.conf = config.NewConfig("", true)
-	} else if util.PathExists(c.confPath) {
-		c.conf, err = config.LoadConfig(c.confPath)
-		if err != nil {
-			return err
-		}
-	} else {
-		c.conf = config.NewConfig(filepath.Dir(c.confPath), true)
-	}
+	c.confPath = c.conf.ConfigPath("config.yml")
 
 	// Set cache directory in config.
 	c.conf.CacheDir = cachePath
