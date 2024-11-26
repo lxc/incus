@@ -3,6 +3,7 @@ package incus
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/subprocess"
 	"github.com/lxc/incus/v6/shared/util"
 )
@@ -121,6 +123,11 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 
 			size, err = util.DownloadFileHash(context.TODO(), &httpClient, r.httpUserAgent, req.ProgressHandler, req.Canceler, filename, uri, hash, sha256.New(), target)
 			if err != nil {
+				if errors.Is(err, util.ErrNotFound) {
+					logger.Info("Unable to download file by hash, invalidate potentially outdated cache", logger.Ctx{"filename": filename, "uri": uri, "hash": hash})
+					r.ssClient.InvalidateCache()
+				}
+
 				return -1, err
 			}
 		}
