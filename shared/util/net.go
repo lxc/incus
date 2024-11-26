@@ -2,6 +2,7 @@ package util
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"hash"
 	"io"
@@ -11,6 +12,10 @@ import (
 	"github.com/lxc/incus/v6/shared/ioprogress"
 	"github.com/lxc/incus/v6/shared/units"
 )
+
+// ErrNotFound is used to explicitly signal error cases, where a resource
+// can not be found (404 HTTP status code).
+var ErrNotFound = errors.New("resource not found")
 
 func DownloadFileHash(ctx context.Context, httpClient *http.Client, useragent string, progress func(progress ioprogress.ProgressData), canceler *cancel.HTTPRequestCanceller, filename string, url string, hash string, hashFunc hash.Hash, target io.WriteSeeker) (int64, error) {
 	// Always seek to the beginning
@@ -44,6 +49,10 @@ func DownloadFileHash(ctx context.Context, httpClient *http.Client, useragent st
 	defer close(doneCh)
 
 	if r.StatusCode != http.StatusOK {
+		if r.StatusCode == http.StatusNotFound {
+			return -1, fmt.Errorf("Unable to fetch %s: %w", url, ErrNotFound)
+		}
+
 		return -1, fmt.Errorf("Unable to fetch %s: %s", url, r.Status)
 	}
 

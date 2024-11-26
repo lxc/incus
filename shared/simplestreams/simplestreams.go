@@ -92,6 +92,11 @@ func (s *SimpleStreams) readCache(path string) ([]byte, bool) {
 	return body, expired
 }
 
+// InvalidateCache removes the on-disk cache for the SimpleStreams remote.
+func (s *SimpleStreams) InvalidateCache() {
+	_ = os.RemoveAll(s.cachePath)
+}
+
 func (s *SimpleStreams) cachedDownload(path string) ([]byte, error) {
 	fields := strings.Split(path, "/")
 	fileName := fields[len(fields)-1]
@@ -165,7 +170,7 @@ func (s *SimpleStreams) cachedDownload(path string) ([]byte, error) {
 	if s.cachePath != "" {
 		cacheName := filepath.Join(s.cachePath, fileName)
 		_ = os.Remove(cacheName)
-		_ = os.WriteFile(cacheName, body, 0644)
+		_ = os.WriteFile(cacheName, body, 0o644)
 	}
 
 	return body, nil
@@ -375,7 +380,8 @@ func (s *SimpleStreams) GetFiles(fingerprint string) (map[string]DownloadableFil
 					files[path[2]] = DownloadableFile{
 						Path:   path[0],
 						Sha256: path[1],
-						Size:   size}
+						Size:   size,
+					}
 				}
 
 				return files, nil
