@@ -400,10 +400,10 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		instOp.Done(nil) // Complete operation that was created earlier, to release lock.
 
 		if migrationArgs.StoragePool != "" {
-			// Update root device for instance.
+			// Update root device for the instance.
 			err = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
 				devs := inst.LocalDevices().CloneNative()
-				rootDevKey, _, err := internalInstance.GetRootDiskDevice(devs)
+				rootDevKey, _, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
 				if err != nil {
 					if !errors.Is(err, internalInstance.ErrNoRootDisk) {
 						return err
@@ -416,6 +416,12 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 
 					devs["root"] = rootDev
 				} else {
+					// Copy the device if not a local device.
+					_, ok := devs[rootDevKey]
+					if !ok {
+						devs[rootDevKey] = inst.ExpandedDevices().CloneNative()[rootDevKey]
+					}
+
 					// Apply the override.
 					devs[rootDevKey]["pool"] = storagePool
 				}
