@@ -367,6 +367,14 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		StoragePool:           storagePool,
 	}
 
+	// Check if the pool is changing at all.
+	if r != nil && isClusterNotification(r) && inst != nil {
+		_, currentPool, _ := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+		if currentPool["pool"] == storagePool {
+			migrationArgs.StoragePool = ""
+		}
+	}
+
 	sink, err := newMigrationSink(&migrationArgs)
 	if err != nil {
 		return response.InternalError(err)
