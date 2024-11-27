@@ -384,6 +384,13 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	// Create PID file.
+	err = os.WriteFile(filepath.Join(args[0], "dhcp.pid"), []byte(fmt.Sprintf("%d", os.Getpid())), 0644)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't write PID file: %v\n", err)
+		return nil
+	}
+
 	// Handle DHCP renewal.
 	for {
 		// Wait until it's renewal time.

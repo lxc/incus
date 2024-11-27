@@ -3228,6 +3228,17 @@ func (d *lxc) onStop(args map[string]string) error {
 		// Clean up devices.
 		d.cleanupDevices(false, "")
 
+		// Stop DHCP client if any.
+		if util.PathExists(filepath.Join(d.Path(), "network", "dhcp.pid")) {
+			dhcpPIDStr, err := os.ReadFile(filepath.Join(d.Path(), "network", "dhcp.pid"))
+			if err == nil {
+				dhcpPID, err := strconv.Atoi(strings.TrimSpace(string(dhcpPIDStr)))
+				if err == nil {
+					_ = unix.Kill(dhcpPID, unix.SIGTERM)
+				}
+			}
+		}
+
 		// Remove directory ownership (to avoid issue if uidmap is re-used)
 		err := os.Chown(d.Path(), 0, 0)
 		if err != nil {
