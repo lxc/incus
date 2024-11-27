@@ -656,6 +656,7 @@ type cmdImageImport struct {
 	image  *cmdImage
 
 	flagPublic  bool
+	flagReuse   bool
 	flagAliases []string
 }
 
@@ -669,6 +670,7 @@ func (c *cmdImageImport) Command() *cobra.Command {
 Directory import is only available on Linux and must be performed as root.`))
 
 	cmd.Flags().BoolVar(&c.flagPublic, "public", false, i18n.G("Make image public"))
+	cmd.Flags().BoolVar(&c.flagReuse, "reuse", false, i18n.G("If the image alias already exists, delete and create a new one"))
 	cmd.Flags().StringArrayVar(&c.flagAliases, "alias", nil, i18n.G("New aliases to add to the image")+"``")
 	cmd.RunE = c.Run
 
@@ -880,13 +882,24 @@ func (c *cmdImageImport) Run(cmd *cobra.Command, args []string) error {
 	fingerprint := opAPI.Metadata["fingerprint"].(string)
 	progress.Done(fmt.Sprintf(i18n.G("Image imported with fingerprint: %s"), fingerprint))
 
+	// Reformat aliases
+	aliases := []api.ImageAlias{}
+	for _, entry := range c.flagAliases {
+		alias := api.ImageAlias{}
+		alias.Name = entry
+		aliases = append(aliases, alias)
+	}
+
+	// Delete images if necessary
+	if c.flagReuse {
+		err = deleteImagesByAliases(d, aliases)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Add the aliases
 	if len(c.flagAliases) > 0 {
-		aliases := make([]api.ImageAlias, len(c.flagAliases))
-		for i, entry := range c.flagAliases {
-			aliases[i].Name = entry
-		}
-
 		err = ensureImageAliases(d, aliases, fingerprint)
 		if err != nil {
 			return err
