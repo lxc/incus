@@ -135,7 +135,14 @@ static void forkdonetdhcp() {
 	}
 
 	// Set the process title.
-	(void)setproctitle("[incus DHCP] eth0");
+	char *workdir = advance_arg(false);
+	if (workdir != NULL) {
+		char *title = malloc(sizeof(char)*strlen(workdir)+19);
+		if (title != NULL) {
+			sprintf(title, "[incus dhcp] %s eth0", workdir);
+			(void)setproctitle(title);
+		}
+	}
 
 	// Jump back to Go for the rest
 }
