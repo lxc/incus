@@ -367,6 +367,14 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		StoragePool:           storagePool,
 	}
 
+	// Check if the pool is changing at all.
+	if r != nil && isClusterNotification(r) && inst != nil {
+		_, currentPool, _ := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+		if currentPool["pool"] == storagePool {
+			migrationArgs.StoragePool = ""
+		}
+	}
+
 	sink, err := newMigrationSink(&migrationArgs)
 	if err != nil {
 		return response.InternalError(err)
@@ -391,45 +399,53 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 
 		instOp.Done(nil) // Complete operation that was created earlier, to release lock.
 
-		// Update root device for instance.
-		err = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
-			devs := inst.LocalDevices().CloneNative()
-			rootDevKey, _, err := internalInstance.GetRootDiskDevice(devs)
-			if err != nil {
-				if !errors.Is(err, internalInstance.ErrNoRootDisk) {
+		if migrationArgs.StoragePool != "" {
+			// Update root device for the instance.
+			err = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+				devs := inst.LocalDevices().CloneNative()
+				rootDevKey, _, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+				if err != nil {
+					if !errors.Is(err, internalInstance.ErrNoRootDisk) {
+						return err
+					}
+
+					rootDev := map[string]string{}
+					rootDev["type"] = "disk"
+					rootDev["path"] = "/"
+					rootDev["pool"] = storagePool
+
+					devs["root"] = rootDev
+				} else {
+					// Copy the device if not a local device.
+					_, ok := devs[rootDevKey]
+					if !ok {
+						devs[rootDevKey] = inst.ExpandedDevices().CloneNative()[rootDevKey]
+					}
+
+					// Apply the override.
+					devs[rootDevKey]["pool"] = storagePool
+				}
+
+				devices, err := dbCluster.APIToDevices(devs)
+				if err != nil {
 					return err
 				}
 
-				rootDev := map[string]string{}
-				rootDev["type"] = "disk"
-				rootDev["path"] = "/"
-				rootDev["pool"] = storagePool
+				id, err := dbCluster.GetInstanceID(ctx, tx.Tx(), inst.Project().Name, inst.Name())
+				if err != nil {
+					return fmt.Errorf("Failed to get ID of moved instance: %w", err)
+				}
 
-				devs["root"] = rootDev
-			} else {
-				// Apply the override.
-				devs[rootDevKey]["pool"] = storagePool
-			}
+				err = dbCluster.UpdateInstanceDevices(ctx, tx.Tx(), int64(id), devices)
+				if err != nil {
+					return err
+				}
 
-			devices, err := dbCluster.APIToDevices(devs)
+				return nil
+			})
 			if err != nil {
 				return err
 			}
-
-			id, err := dbCluster.GetInstanceID(ctx, tx.Tx(), inst.Project().Name, inst.Name())
-			if err != nil {
-				return fmt.Errorf("Failed to get ID of moved instance: %w", err)
-			}
-
-			err = dbCluster.UpdateInstanceDevices(ctx, tx.Tx(), int64(id), devices)
-			if err != nil {
-				return err
-			}
-
-			return nil
-		})
-		if err != nil {
-			return err
 		}
 
 		runRevert.Success()
