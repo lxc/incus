@@ -90,13 +90,6 @@ static void forkdonetdhcp() {
 		_exit(1);
 	}
 
-	// Attach to the PID namespace.
-	snprintf(path, sizeof(path), "/proc/%s/ns/pid", pidstr);
-	if (dosetns_file(path, "pid") < 0) {
-		fprintf(stderr, "Failed setns to container PID namespace: %s\n", strerror(errno));
-		_exit(1);
-	}
-
 	// Run in the background.
 	pid = fork();
 	if (pid < 0) {
@@ -142,7 +135,14 @@ static void forkdonetdhcp() {
 	}
 
 	// Set the process title.
-	(void)setproctitle("[incus DHCP] eth0");
+	char *workdir = advance_arg(false);
+	if (workdir != NULL) {
+		char *title = malloc(sizeof(char)*strlen(workdir)+19);
+		if (title != NULL) {
+			sprintf(title, "[incus dhcp] %s eth0", workdir);
+			(void)setproctitle(title);
+		}
+	}
 
 	// Jump back to Go for the rest
 }
@@ -388,6 +388,13 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 	err = route.Add()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't add default route to %q\n", iface)
+		return nil
+	}
+
+	// Create PID file.
+	err = os.WriteFile(filepath.Join(args[0], "dhcp.pid"), []byte(fmt.Sprintf("%d", os.Getpid())), 0644)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't write PID file: %v\n", err)
 		return nil
 	}
 
