@@ -90,13 +90,6 @@ static void forkdonetdhcp() {
 		_exit(1);
 	}
 
-	// Attach to the PID namespace.
-	snprintf(path, sizeof(path), "/proc/%s/ns/pid", pidstr);
-	if (dosetns_file(path, "pid") < 0) {
-		fprintf(stderr, "Failed setns to container PID namespace: %s\n", strerror(errno));
-		_exit(1);
-	}
-
 	// Run in the background.
 	pid = fork();
 	if (pid < 0) {
