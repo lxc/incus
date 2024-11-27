@@ -1583,6 +1583,13 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			}
 		}
 
+		// Change ownership of main instance directory.
+		err = os.Chown(d.Path(), int(d.state.OS.UnprivUID), -1)
+		if err != nil {
+			op.Done(err)
+			return fmt.Errorf("Failed to chown instance path: %w", err)
+		}
+
 		// Change ownership of config directory files so they are accessible to the
 		// unprivileged qemu process so that the 9p share can work.
 		//
