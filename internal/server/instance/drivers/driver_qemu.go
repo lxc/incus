@@ -9445,3 +9445,29 @@ func (d *qemu) consoleSwapSocketWithRB() error {
 
 	return monitor.ChardevChange("console", qmp.ChardevChangeInfo{Type: "ringbuf"})
 }
+
+// ConsoleScreenshot returns a screenshot of the current VGA console in PNG format.
+func (d *qemu) ConsoleScreenshot(screenshotFile *os.File) error {
+	if !d.IsRunning() {
+		return fmt.Errorf("Instance is not running")
+	}
+
+	// Check if the agent is running.
+	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	if err != nil {
+		return err
+	}
+
+	err = screenshotFile.Chown(int(d.state.OS.UnprivUID), -1)
+	if err != nil {
+		return fmt.Errorf("Failed to chown screenshot path: %w", err)
+	}
+
+	// Take the screenshot.
+	err = monitor.Screendump(screenshotFile.Name())
+	if err != nil {
+		return fmt.Errorf("Failed taking screenshot: %w", err)
+	}
+
+	return nil
+}
