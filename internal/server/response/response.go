@@ -357,7 +357,6 @@ func (r *errorResponse) Render(w http.ResponseWriter) error {
 	}
 
 	err := json.NewEncoder(output).Encode(resp)
-
 	if err != nil {
 		return err
 	}
@@ -452,7 +451,11 @@ func (r *fileResponse) Render(w http.ResponseWriter) error {
 			rs = f
 		}
 
-		w.Header().Set("Content-Type", "application/octet-stream")
+		// Only set Content-Type header if it is still set to the default or not yet set at all.
+		if w.Header().Get("Content-Type") == "application/json" || w.Header().Get("Content-Type") == "" {
+			w.Header().Set("Content-Type", "application/octet-stream")
+		}
+
 		w.Header().Set("Content-Length", fmt.Sprintf("%d", sz))
 		w.Header().Set("Content-Disposition", fmt.Sprintf("inline;filename=%s", r.files[0].Filename))
 
