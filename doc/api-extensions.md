@@ -2664,3 +2664,7 @@ This adds support for virtual-machines live-migration between storage pools.
 ## `instance_console_screenshot`
 
 This adds support to take screenshots of the current VGA console of a VM.
+
+## `image_import_alias`
+
+Adds a new `X-Incus-aliases` HTTP header to set aliases while uploading an image.
