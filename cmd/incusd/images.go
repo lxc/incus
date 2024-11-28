@@ -1220,7 +1220,7 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 				}
 
 				// Add the image alias to the authorizer.
-				err = s.Authorizer.AddImageAlias(r.Context(), projectName, alias.Name)
+				err = s.Authorizer.AddImageAlias(ctx, projectName, alias.Name)
 				if err != nil {
 					logger.Error("Failed to add image alias to authorizer", logger.Ctx{"name": alias.Name, "project": projectName, "error": err})
 				}
