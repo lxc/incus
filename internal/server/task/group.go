@@ -43,7 +43,6 @@ func (g *Group) Start(ctx context.Context) {
 	defer g.mu.Unlock()
 
 	ctx, g.cancel = context.WithCancel(ctx)
-	g.wg.Add(len(g.tasks))
 
 	if g.running == nil {
 		g.running = make(map[int]bool)
@@ -56,18 +55,18 @@ func (g *Group) Start(ctx context.Context) {
 
 		g.running[i] = true
 		task := g.tasks[i] // Local variable for the closure below.
+		g.wg.Add(1)
 
 		go func(i int) {
+			defer g.wg.Done()
+
 			task.loop(ctx)
 
 			// Ensure running map is updated before wait group Done() is called.
 			g.mu.Lock()
 			defer g.mu.Unlock()
 
-			if g.running != nil {
-				g.running[i] = false
-				g.wg.Done()
-			}
+			g.running[i] = false
 		}(i)
 	}
 }
