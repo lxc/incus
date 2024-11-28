@@ -7834,6 +7834,13 @@ paths:
                   name: X-Incus-fingerprint
                   schema:
                     type: string
+                - description: List of aliases to assign
+                  in: header
+                  name: X-Incus-aliases
+                  schema:
+                    items:
+                        type: string
+                    type: array
                 - description: Descriptive properties
                   in: header
                   name: X-Incus-properties
