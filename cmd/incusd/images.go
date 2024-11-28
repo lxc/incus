@@ -820,7 +820,6 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 	}
 
 	var exists bool
-
 	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		// Check if the image already exists
 		exists, err = tx.ImageExists(ctx, project, info.Fingerprint)
@@ -1017,7 +1016,6 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 	fingerprint := r.Header.Get("X-Incus-fingerprint")
 
 	var imageMetadata map[string]any
-
 	if !trusted && (secret == "" || fingerprint == "") {
 		return response.Forbidden(nil)
 	} else {
@@ -1193,9 +1191,18 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Apply any provided alias
-		aliases, ok := imageMetadata["aliases"]
-		if ok {
-			req.Aliases = aliases.([]api.ImageAlias)
+		if len(req.Aliases) == 0 {
+			aliases, ok := imageMetadata["aliases"]
+			if ok {
+				// Used to get aliases from push mode image copy operation.
+				aliases, ok := aliases.([]api.ImageAlias)
+				if ok {
+					req.Aliases = aliases
+				}
+			} else if len(info.Aliases) > 0 {
+				// Used to get aliases from HTTP headers on raw image imports.
+				req.Aliases = info.Aliases
+			}
 		}
 
 		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
