@@ -449,6 +449,7 @@ var APIExtensions = []string{
 	"custom_volume_refresh_exclude_older_snapshots",
 	"storage_initial_owner",
 	"storage_live_migration",
+	"instance_console_screenshot",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

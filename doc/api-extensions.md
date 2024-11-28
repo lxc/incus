@@ -2641,3 +2641,7 @@ The following configuration options have been added:
 ## `storage_live_migration`
 
 This adds support for virtual-machines live-migration between storage pools.
+
+## `instance_console_screenshot`
+
+This adds support to take screenshots of the current VGA console of a VM.
