@@ -77,7 +77,7 @@ type project
     define admin: [user, group#member] or admin from server
     define operator: [user, group#member] or admin or operator from server
     define user: [user, group#member] or operator or user from server
-    define viewer: [user, group#member] or user
+    define viewer: [user, group#member] or user or viewer from server
     define can_create_image_aliases: [user, group#member] or operator
     define can_create_images: [user, group#member] or operator
     define can_create_instances: [user, group#member] or operator
@@ -97,17 +97,19 @@ type server
     define admin: [user, group#member]
     define operator: [user, group#member] or admin
     define user: [user, group#member] or operator
-    define viewer: [user:*] or user
+    define viewer: [user, group#member] or user
+    define authenticated: [user:*]
     define can_create_certificates: [user, group#member] or admin
     define can_create_network_integrations: [user, group#member] or admin
     define can_create_projects: [user, group#member] or admin
     define can_create_storage_pools: [user, group#member] or admin
     define can_edit: admin
     define can_override_cluster_target_restriction: [user, group#member] or admin
-    define can_view_metrics: [user, group#member] or viewer
     define can_view_privileged_events: [user, group#member] or admin
-    define can_view_resources: [user, group#member] or viewer
-    define can_view: viewer
+    define can_view_metrics: authenticated
+    define can_view_resources: authenticated
+    define can_view_sensitive: [user, group#member] or viewer
+    define can_view: authenticated
 
 type storage_bucket
   relations
@@ -119,7 +121,7 @@ type storage_pool
   relations
     define server: [server]
     define can_edit: [user, group#member] or admin from server
-    define can_view: viewer from server
+    define can_view: authenticated from server
 
 type storage_volume
   relations
