@@ -556,6 +556,16 @@ func (r *ProtocolIncus) CreateImage(image api.ImagesPost, args *ImageCreateArgs)
 		req.Header.Set("X-Incus-profiles", imgProfiles.Encode())
 	}
 
+	if len(image.Aliases) > 0 {
+		imgProfiles := url.Values{}
+
+		for _, v := range image.Aliases {
+			imgProfiles.Add("alias", v.Name)
+		}
+
+		req.Header.Set("X-Incus-aliases", imgProfiles.Encode())
+	}
+
 	// Set the user agent
 	if image.Source != nil && image.Source.Fingerprint != "" && image.Source.Secret != "" && image.Source.Mode == "push" {
 		// Set fingerprint
