@@ -143,6 +143,8 @@ type Instance interface {
 	ExpiryDate() time.Time
 	FillNetworkDevice(name string, m deviceConfig.Device) (deviceConfig.Device, error)
 
+	ETag() []any
+
 	// Paths.
 	Path() string
 	ExecOutputPath() string

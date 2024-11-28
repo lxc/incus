@@ -1589,3 +1589,26 @@ func (d *common) processStartedAt(pid int) (time.Time, error) {
 
 	return time.Unix(int64(linuxInfo.Ctim.Sec), int64(linuxInfo.Ctim.Nsec)), nil
 }
+
+// ETag returns the instance configuration ETag data for pre-condition validation.
+func (d *common) ETag() []any {
+	if d.IsSnapshot() {
+		return []any{d.expiryDate}
+	}
+
+	// Prepare the ETag
+	etag := []any{d.architecture, d.ephemeral, d.profiles, d.localDevices.Sorted()}
+
+	configKeys := make([]string, 0, len(d.localConfig))
+	for k := range d.localConfig {
+		configKeys = append(configKeys, k)
+	}
+
+	sort.Strings(configKeys)
+
+	for _, k := range configKeys {
+		etag = append(etag, fmt.Sprintf("%s=%s", k, d.localConfig[k]))
+	}
+
+	return etag
+}
