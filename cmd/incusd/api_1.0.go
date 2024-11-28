@@ -394,7 +394,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 	fullSrv.AuthUserName = requestor.Username
 	fullSrv.AuthUserMethod = requestor.Protocol
 
-	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanEdit)
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanViewSensitive)
 	if err == nil {
 		fullSrv.Config = fullSrvConfig
 	} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
