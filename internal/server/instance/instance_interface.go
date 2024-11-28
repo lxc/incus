@@ -191,6 +191,7 @@ type VM interface {
 
 	AgentCertificate() *x509.Certificate
 	ConsoleLog() (string, error)
+	ConsoleScreenshot(screenshotFile *os.File) error
 }
 
 // CriuMigrationArgs arguments for CRIU migration.
