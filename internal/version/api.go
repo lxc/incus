@@ -450,6 +450,7 @@ var APIExtensions = []string{
 	"storage_initial_owner",
 	"storage_live_migration",
 	"instance_console_screenshot",
+	"image_import_alias",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
