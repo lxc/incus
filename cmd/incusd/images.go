@@ -596,6 +596,7 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 	info.Public = util.IsTrue(r.Header.Get("X-Incus-public"))
 	propHeaders := r.Header[http.CanonicalHeaderKey("X-Incus-properties")]
 	profilesHeaders := r.Header.Get("X-Incus-profiles")
+	aliasesHeaders := r.Header.Get("X-Incus-aliases")
 	ctype, ctypeParams, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil {
 		ctype = "application/octet-stream"
@@ -781,6 +782,19 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 		}
 	}
 
+	if len(aliasesHeaders) > 0 {
+		info.Aliases = []api.ImageAlias{}
+		aliasNames, _ := url.ParseQuery(aliasesHeaders)
+
+		for _, aliasName := range aliasNames["alias"] {
+			alias := api.ImageAlias{
+				Name: aliasName,
+			}
+
+			info.Aliases = append(info.Aliases, alias)
+		}
+	}
+
 	var profileIds []int64
 	if len(profilesHeaders) > 0 {
 		p, _ := url.ParseQuery(profilesHeaders)
@@ -944,6 +958,13 @@ func imageCreateInPool(s *state.State, info *api.Image, storagePool string) erro
 //	    description: Expected fingerprint when pushing a raw image
 //	    schema:
 //	      type: string
+//	  - in: header
+//	    name: X-Incus-aliases
+//	    description: List of aliases to assign
+//	    schema:
+//	      type: array
+//	      items:
+//	        type: string
 //	  - in: header
 //	    name: X-Incus-properties
 //	    description: Descriptive properties
