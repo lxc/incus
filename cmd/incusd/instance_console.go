@@ -533,9 +533,10 @@ func instanceConsolePost(d *Daemon, r *http.Request) response.Response {
 
 // swagger:operation GET /1.0/instances/{name}/console instances instance_console_get
 //
-//	Get console log
+//	Get console output
 //
-//	Gets the console log for the instance.
+//	Gets the console output for the instance either as text log or as vga
+//	screendump.
 //
 //	---
 //	produces:
@@ -546,14 +547,27 @@ func instanceConsolePost(d *Daemon, r *http.Request) response.Response {
 //	    description: Project name
 //	    type: string
 //	    example: default
+//	  - in: query
+//	    name: type
+//	    description: Console type
+//	    type: string
+//	    enum: [log, vga]
+//	    default: log
+//	    example: vga
 //	responses:
 //	  "200":
-//	     description: Raw console log
+//	     description: |
+//	       Console output either as raw console log or as vga screendump in PNG
+//	       format depending on the `type` parameter provided with the request.
 //	     content:
 //	       application/octet-stream:
 //	         schema:
 //	           type: string
 //	           example: some-text
+//	       image/png:
+//	         schema:
+//	           type: string
+//	           format: binary
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
@@ -574,6 +588,11 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	consoleLogType := request.QueryParam(r, "type")
+	if consoleLogType != "" && consoleLogType != "log" && consoleLogType != "vga" {
+		return response.SmartError(fmt.Errorf("Invalid value for type parameter: %s", consoleLogType))
 	}
 
 	if internalInstance.IsSnapshot(name) {
@@ -649,16 +668,48 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(fmt.Errorf("Failed to cast inst to VM"))
 		}
 
-		logContents, err := v.ConsoleLog()
-		if err != nil {
-			return response.SmartError(err)
+		var headers map[string]string
+		if consoleLogType == "vga" {
+			screenshotFile, err := os.CreateTemp(v.Path(), "screenshot-*.png")
+			if err != nil {
+				return response.SmartError(fmt.Errorf("Couldn't create screenshot file: %w", err))
+			}
+
+			ent.Cleanup = func() {
+				_ = screenshotFile.Close()
+				_ = os.Remove(screenshotFile.Name())
+			}
+
+			err = v.ConsoleScreenshot(screenshotFile)
+			if err != nil {
+				return response.SmartError(err)
+			}
+
+			fileInfo, err := screenshotFile.Stat()
+			if err != nil {
+				return response.SmartError(fmt.Errorf("Couldn't stat screenshot file for filesize: %w", err))
+			}
+
+			headers = map[string]string{
+				"Content-Type": "image/png",
+			}
+
+			ent.File = screenshotFile
+			ent.FileSize = fileInfo.Size()
+			ent.Filename = screenshotFile.Name()
+		} else {
+			logContents, err := v.ConsoleLog()
+			if err != nil {
+				return response.SmartError(err)
+			}
+
+			ent.File = bytes.NewReader([]byte(logContents))
+			ent.FileSize = int64(len(logContents))
 		}
 
-		ent.File = bytes.NewReader([]byte(logContents))
 		ent.FileModified = time.Now()
-		ent.FileSize = int64(len(logContents))
 
-		return response.FileResponse(r, []response.FileResponseEntry{ent}, nil)
+		return response.FileResponse(r, []response.FileResponseEntry{ent}, headers)
 	}
 
 	return response.SmartError(fmt.Errorf("Unsupported instance type %q", inst.Type()))
