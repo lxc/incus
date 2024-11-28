@@ -102,8 +102,7 @@ func instancePatch(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Validate the ETag
-	etag := []any{c.Architecture(), c.LocalConfig(), c.LocalDevices(), c.IsEphemeral(), c.Profiles()}
-	err = localUtil.EtagCheck(r, etag)
+	err = localUtil.EtagCheck(r, c.ETag())
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
