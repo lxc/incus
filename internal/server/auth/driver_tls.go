@@ -63,7 +63,7 @@ func (t *tls) CheckPermission(ctx context.Context, r *http.Request, object Objec
 	// Check server level object types
 	switch object.Type() {
 	case ObjectTypeServer:
-		if entitlement == EntitlementCanView || entitlement == EntitlementCanViewResources || entitlement == EntitlementCanViewMetrics {
+		if entitlement == EntitlementCanView || entitlement == EntitlementCanViewResources || entitlement == EntitlementCanViewMetrics || entitlement == EntitlementCanViewSensitive {
 			return nil
 		}
 
@@ -139,7 +139,7 @@ func (t *tls) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 	// Check server level object types
 	switch objectType {
 	case ObjectTypeServer:
-		if entitlement == EntitlementCanView || entitlement == EntitlementCanViewResources || entitlement == EntitlementCanViewMetrics {
+		if entitlement == EntitlementCanView || entitlement == EntitlementCanViewResources || entitlement == EntitlementCanViewMetrics || entitlement == EntitlementCanViewSensitive {
 			return allowFunc(true), nil
 		}
 
