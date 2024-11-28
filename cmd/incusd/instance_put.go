@@ -110,8 +110,7 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Validate the ETag
-	etag := []any{inst.Architecture(), inst.LocalConfig(), inst.LocalDevices(), inst.IsEphemeral(), inst.Profiles()}
-	err = localUtil.EtagCheck(r, etag)
+	err = localUtil.EtagCheck(r, inst.ETag())
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
