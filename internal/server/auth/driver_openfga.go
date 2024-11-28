@@ -951,27 +951,41 @@ func (f *fga) projectObjects(ctx context.Context, projectName string) ([]string,
 	return allObjects, nil
 }
 
-func (f *fga) syncResources(ctx context.Context, resources Resources) error {
+func (f *fga) applyPatches(ctx context.Context) ([]client.ClientTupleKey, []client.ClientTupleKeyWithoutCondition, error) {
 	var writes []client.ClientTupleKey
 	var deletions []client.ClientTupleKeyWithoutCondition
 
-	// Check if the type-bound public access is set.
+	// Add the public access permission if not set.
 	resp, err := f.client.Check(ctx).Body(client.ClientCheckRequest{
 		User:     "user:*",
-		Relation: "viewer",
+		Relation: "authenticated",
 		Object:   ObjectServer().String(),
 	}).Execute()
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	// If not, set it.
 	if !resp.GetAllowed() {
 		writes = append(writes, client.ClientTupleKey{
 			User:     "user:*",
-			Relation: "viewer",
+			Relation: "authenticated",
 			Object:   ObjectServer().String(),
 		})
+
+		// Attempt to clear the former version of this permission.
+		_ = f.updateTuples(ctx, nil, []client.ClientTupleKeyWithoutCondition{
+			{User: "user:*", Relation: "viewer", Object: ObjectServer().String()},
+		})
+	}
+
+	return writes, deletions, nil
+}
+
+func (f *fga) syncResources(ctx context.Context, resources Resources) error {
+	// Apply model patches.
+	writes, deletions, err := f.applyPatches(ctx)
+	if err != nil {
+		return err
 	}
 
 	// Helper function for diffing local objects with those in OpenFGA. These are appended to the writes and deletions
