@@ -313,40 +313,10 @@ func (c *cmdPublish) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Delete images if necessary
-	if c.flagReuse && len(existingAliases) > 0 {
-		visitedImages := make(map[string]interface{})
-		for _, alias := range existingAliases {
-			image, _, _ := d.GetImage(alias.Target)
-
-			// If the image has already been visited then continue
-			if image != nil {
-				_, found := visitedImages[image.Fingerprint]
-				if found {
-					continue
-				}
-
-				visitedImages[image.Fingerprint] = nil
-			}
-
-			// An image can have multiple aliases. If an image being published
-			// reuses all the aliases from an existing image then that existing image is removed.
-			// In other case only specific aliases should be removed. E.g.
-			// 1. If image with 'foo' and 'bar' aliases already exists and new image is published
-			//    with aliases 'foo' and 'bar' (and flag '--reuse'). Old image should be removed.
-			// 2. If image with 'foo' and 'bar' aliases already exists and new image is published
-			//    with alias 'foo' (and flag '--reuse'). Old image should be kept with alias 'bar'
-			//    and new image will have 'foo' alias.
-			if image != nil && IsAliasesSubset(image.Aliases, aliases) {
-				op, err := d.DeleteImage(alias.Target)
-				if err != nil {
-					return err
-				}
-
-				err = op.Wait()
-				if err != nil {
-					return err
-				}
-			}
+	if c.flagReuse {
+		err = deleteImagesByAliases(d, aliases)
+		if err != nil {
+			return err
 		}
 	}
 

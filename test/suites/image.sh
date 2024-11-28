@@ -122,6 +122,23 @@ test_image_import_existing_alias() {
     incus image delete newimage image2
 }
 
+test_image_import_with_reuse() {
+    ensure_import_testimage
+    incus init testimage c
+    testimage_fingerprint="$(incus image ls -c F -f csv testimage)"
+    image1_fingerprint="$(incus publish c --alias image1 | awk '{print $NF;}')"
+    incus delete c
+    incus image export image1 image1.file
+    incus image delete image1
+
+    incus image import image1.file.tar.gz --alias testimage --reuse
+
+    [ "$(incus image ls -c F -f csv testimage)" = "${image1_fingerprint}" ]
+    [ "$(incus image ls -c F -f csv "${testimage_fingerprint}" | wc -l)" = "0" ]
+
+    incus image delete testimage
+}
+
 test_image_refresh() {
   # shellcheck disable=2039,3043
   local INCUS2_DIR INCUS2_ADDR

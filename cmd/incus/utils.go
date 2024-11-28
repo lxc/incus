@@ -207,6 +207,60 @@ func GetExistingAliases(aliases []string, allAliases []api.ImageAliasesEntry) []
 	return existing
 }
 
+// deleteImagesByAliases deletes images based on provided aliases. E.g.
+// aliases=[a1], image aliases=[a1] - image will be deleted
+// aliases=[a1, a2], image aliases=[a1] - image will be deleted
+// aliases=[a1], image aliases=[a1, a2] - image will be preserved.
+func deleteImagesByAliases(client incus.InstanceServer, aliases []api.ImageAlias) error {
+	existingAliases, err := GetCommonAliases(client, aliases...)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Error retrieving aliases: %w"), err)
+	}
+
+	// Nothing to do. Just return.
+	if len(existingAliases) == 0 {
+		return nil
+	}
+
+	// Delete images if necessary
+	visitedImages := make(map[string]any)
+	for _, alias := range existingAliases {
+		image, _, _ := client.GetImage(alias.Target)
+
+		// If the image has already been visited then continue
+		if image != nil {
+			_, found := visitedImages[image.Fingerprint]
+			if found {
+				continue
+			}
+
+			visitedImages[image.Fingerprint] = nil
+		}
+
+		// An image can have multiple aliases. If an image being published
+		// reuses all the aliases from an existing image then that existing image is removed.
+		// In other case only specific aliases should be removed. E.g.
+		// 1. If image with 'foo' and 'bar' aliases already exists and new image is published
+		//    with aliases 'foo' and 'bar'. Old image should be removed.
+		// 2. If image with 'foo' and 'bar' aliases already exists and new image is published
+		//    with alias 'foo'. Old image should be kept with alias 'bar'
+		//    and new image will have 'foo' alias.
+		if image != nil && IsAliasesSubset(image.Aliases, aliases) {
+			op, err := client.DeleteImage(alias.Target)
+			if err != nil {
+				return err
+			}
+
+			err = op.Wait()
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func getConfig(args ...string) (map[string]string, error) {
 	if len(args) == 2 && !strings.Contains(args[0], "=") {
 		if args[1] == "-" && !termios.IsTerminal(getStdinFd()) {
