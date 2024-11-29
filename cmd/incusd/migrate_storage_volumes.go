@@ -353,7 +353,7 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 		for _, sourceSnap := range sourceSnapshots {
 			sourceSnapshotComparable = append(sourceSnapshotComparable, storagePools.ComparableSnapshot{
 				Name:         sourceSnap.GetName(),
-				CreationDate: time.Unix(sourceSnap.GetCreationDate(), 0),
+				CreationDate: time.Unix(0, sourceSnap.GetCreationDate()),
 			})
 		}
 
@@ -501,7 +501,7 @@ func volumeSnapshotToProtobuf(vol *api.StorageVolumeSnapshot) *migration.Snapsho
 		LocalDevices: []*migration.Device{},
 		Architecture: proto.Int32(0),
 		Stateful:     proto.Bool(false),
-		CreationDate: proto.Int64(0),
+		CreationDate: proto.Int64(vol.CreatedAt.UnixNano()),
 		LastUsedDate: proto.Int64(0),
 		ExpiryDate:   proto.Int64(0),
 	}
