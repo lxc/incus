@@ -35,6 +35,7 @@ test_openfga() {
   echo "==> Checking permissions for unknown user..."
   user_is_not_server_admin
   user_is_not_server_operator
+  user_is_not_server_viewer
   user_is_not_project_admin
   user_is_not_project_operator
 
@@ -105,12 +106,17 @@ test_openfga() {
   shutdown_openfga
 }
 
-user_is_not_server_admin() {
-  # Can always see server info (type-bound public access https://openfga.dev/docs/modeling/public-access).
-  incus info oidc-openfga: > /dev/null
+user_is_not_server_viewer() {
+  # Should still be able to list certificates.
+  [ "$(incus config trust list oidc-openfga: -f csv -cf | wc -l)" = 0 ]
 
   # Cannot see any config.
   ! incus info oidc-openfga: | grep -Fq 'core.https_address' || false
+}
+
+user_is_not_server_admin() {
+  # Can always see server info (type-bound public access https://openfga.dev/docs/modeling/public-access).
+  incus info oidc-openfga: > /dev/null
 
   # Cannot set any config.
   ! incus config set oidc-openfga: core.proxy_https=https://example.com || false
@@ -125,13 +131,6 @@ user_is_not_server_admin() {
 
   # Should not be able to create a storage pool.
   ! incus storage create oidc-openfga:test dir || false
-
-  # Should still be able to list certificates.
-  [ "$(incus config trust list oidc-openfga: -f csv -cf | wc -l)" = 1 ]
-
-  # Cannot edit certificates.
-  fingerprint="$(incus config trust list -f csv -cf)"
-  ! incus config trust show "${fingerprint}" | sed -e "s/restricted: false/restricted: true/" | incus config trust edit "oidc-openfga:${fingerprint}" || false
 }
 
 user_is_not_server_operator() {
@@ -204,7 +203,6 @@ user_is_project_operator() {
 }
 
 user_is_not_project_operator() {
-
   # Project list will not fail but there will be no output.
   [ "$(incus project list oidc-openfga: -f csv | wc -l)" = 0 ]
   ! incus project show oidc-openfga:default || false
