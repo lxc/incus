@@ -39,18 +39,14 @@ Incus will connect to the OpenFGA server, write the {ref}`openfga-model`, and qu
 With OpenFGA, access to a particular API resource is determined by the user's relationship to it.
 These relationships are determined by an [OpenFGA authorization model](https://openfga.dev/docs/concepts#what-is-an-authorization-model).
 The Incus OpenFGA authorization model describes API resources in terms of their relationship to other resources, and a relationship a user or group might have with that resource.
-Some convenient relations have also been built into the model:
 
-- `server -> admin`: Full access to Incus.
-- `server -> operator`: Full access to Incus, without edit access on server configuration, certificates, or storage pools.
-- `server -> viewer`: Can view all server level configuration but cannot edit. Cannot view projects or their contents.
-- `project -> manager`: Full access to a single project, including edit access.
-- `project -> operator`: Full access to a single project, without edit access.
-- `project -> viewer`: View access for a single project.
-- `instance -> manager`: Full access to a single instance, including edit access.
-- `instance -> operator`: Full access to a single  instance, without edit access.
-- `instance -> user`: View access to a single instance, plus permissions for `exec`, `console`, and `file` APIs.
-- `instance -> viewer`: View access to a single instance.
+The full Incus OpenFGA authorization model is defined in `internal/server/auth/driver_openfga_model.openfga`:
+
+```{literalinclude} ../internal/server/auth/driver_openfga_model.openfga
+---
+language: none
+---
+```
 
 ```{important}
 Users that you do not trust with root access to the host should not be granted the following relations:
@@ -67,12 +63,4 @@ Users that you do not trust with root access to the host should not be granted t
 
 The remaining relations may be granted.
 However, you must apply appropriate {ref}`project-restrictions`.
-```
-
-The full Incus OpenFGA authorization model is defined in `internal/server/auth/driver_openfga_model.openfga`:
-
-```{literalinclude} ../internal/server/auth/driver_openfga_model.openfga
----
-language: none
----
 ```

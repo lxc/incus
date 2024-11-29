@@ -134,6 +134,11 @@ func (c *commonAuthorizer) StopService(ctx context.Context) error {
 	return nil
 }
 
+// ApplyPatch is a no-op.
+func (c *commonAuthorizer) ApplyPatch(ctx context.Context, name string) error {
+	return nil
+}
+
 // AddProject is a no-op.
 func (c *commonAuthorizer) AddProject(ctx context.Context, projectID int64, name string) error {
 	return nil

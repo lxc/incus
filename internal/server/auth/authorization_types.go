@@ -17,6 +17,7 @@ const (
 	EntitlementCanViewMetrics                      Entitlement = "can_view_metrics"
 	EntitlementCanViewPrivilegedEvents             Entitlement = "can_view_privileged_events"
 	EntitlementCanViewResources                    Entitlement = "can_view_resources"
+	EntitlementCanViewSensitive                    Entitlement = "can_view_sensitive"
 
 	// Project entitlements.
 	EntitlementCanCreateImageAliases   Entitlement = "can_create_image_aliases"

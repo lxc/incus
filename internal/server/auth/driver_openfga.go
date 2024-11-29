@@ -144,76 +144,41 @@ func (f *fga) StopService(ctx context.Context) error {
 	return nil
 }
 
-func (f *fga) connect(ctx context.Context, certificateCache *certificate.Cache, opts Opts) error {
-	var builtinAuthorizationModel client.ClientWriteAuthorizationModelRequest
+// ApplyPatch is called when an applicable server patch is run, this triggers a model re-upload.
+func (f *fga) ApplyPatch(ctx context.Context, name string) error {
+	// Upload a new model.
+	logger.Info("Refreshing the OpenFGA model")
+	return f.refreshModel(ctx)
+}
 
+func (f *fga) refreshModel(ctx context.Context) error {
+	var builtinAuthorizationModel client.ClientWriteAuthorizationModelRequest
 	err := json.Unmarshal([]byte(authModel), &builtinAuthorizationModel)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to unmarshal built in authorization model: %w", err)
 	}
 
+	_, err = f.client.WriteAuthorizationModel(ctx).Body(builtinAuthorizationModel).Execute()
+	if err != nil {
+		return fmt.Errorf("Failed to write the authorization model: %w", err)
+	}
+
+	return nil
+}
+
+func (f *fga) connect(ctx context.Context, certificateCache *certificate.Cache, opts Opts) error {
 	// Load current authorization model.
 	readModelResponse, err := f.client.ReadLatestAuthorizationModel(ctx).Execute()
 	if err != nil {
 		return fmt.Errorf("Failed to read pre-existing OpenFGA model: %w", err)
 	}
 
-	// Check if we need to upload a new model.
-	upload := readModelResponse.AuthorizationModel == nil
-
-	if !upload {
-		// Make sure we're not dealing with different schemas.
-		if readModelResponse.AuthorizationModel.SchemaVersion != builtinAuthorizationModel.SchemaVersion {
-			return fmt.Errorf("Existing OpenFGA model has schema version %q, but our model has version %q", readModelResponse.AuthorizationModel.SchemaVersion, builtinAuthorizationModel.SchemaVersion)
-		}
-
-		// Clear condition field from older servers.
-		for _, entry := range readModelResponse.AuthorizationModel.TypeDefinitions {
-			if entry.Metadata == nil || entry.Metadata.Relations == nil {
-				continue
-			}
-
-			for _, relation := range *entry.Metadata.Relations {
-				if relation.DirectlyRelatedUserTypes == nil {
-					continue
-				}
-
-				for i, reference := range *relation.DirectlyRelatedUserTypes {
-					if reference.Condition != nil && *reference.Condition == "" {
-						rel := *relation.DirectlyRelatedUserTypes
-						rel[i].Condition = nil
-					}
-				}
-			}
-		}
-
-		// Serialize the models to JSON.
-		existingTypeDefinitions, err := json.Marshal(readModelResponse.AuthorizationModel.TypeDefinitions)
+	// Check if we need to upload an initial model.
+	if readModelResponse.AuthorizationModel == nil {
+		logger.Info("Upload initial OpenFGA model")
+		err := f.refreshModel(ctx)
 		if err != nil {
-			return fmt.Errorf("Failed to compare OpenFGA model type definitions: %w", err)
-		}
-
-		builtinTypeDefinitions, err := json.Marshal(builtinAuthorizationModel.TypeDefinitions)
-		if err != nil {
-			return fmt.Errorf("Failed to compare OpenFGA model type definitions: %w", err)
-		}
-
-		// Compare them.
-		if string(existingTypeDefinitions) != string(builtinTypeDefinitions) {
-			logger.Info("The OpenFGA model has changed, uploading new model")
-			upload = true
-		}
-	}
-
-	if upload {
-		err = json.Unmarshal([]byte(authModel), &builtinAuthorizationModel)
-		if err != nil {
-			return fmt.Errorf("Failed to unmarshal built in authorization model: %w", err)
-		}
-
-		_, err := f.client.WriteAuthorizationModel(ctx).Body(builtinAuthorizationModel).Execute()
-		if err != nil {
-			return fmt.Errorf("Failed to write the authorization model: %w", err)
+			return fmt.Errorf("Failed to load initial model: %w", err)
 		}
 	}
 
@@ -951,27 +916,41 @@ func (f *fga) projectObjects(ctx context.Context, projectName string) ([]string,
 	return allObjects, nil
 }
 
-func (f *fga) syncResources(ctx context.Context, resources Resources) error {
+func (f *fga) applyPatches(ctx context.Context) ([]client.ClientTupleKey, []client.ClientTupleKeyWithoutCondition, error) {
 	var writes []client.ClientTupleKey
 	var deletions []client.ClientTupleKeyWithoutCondition
 
-	// Check if the type-bound public access is set.
+	// Add the public access permission if not set.
 	resp, err := f.client.Check(ctx).Body(client.ClientCheckRequest{
 		User:     "user:*",
-		Relation: "viewer",
+		Relation: "authenticated",
 		Object:   ObjectServer().String(),
 	}).Execute()
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	// If not, set it.
 	if !resp.GetAllowed() {
 		writes = append(writes, client.ClientTupleKey{
 			User:     "user:*",
-			Relation: "viewer",
+			Relation: "authenticated",
 			Object:   ObjectServer().String(),
 		})
+
+		// Attempt to clear the former version of this permission.
+		_ = f.updateTuples(ctx, nil, []client.ClientTupleKeyWithoutCondition{
+			{User: "user:*", Relation: "viewer", Object: ObjectServer().String()},
+		})
+	}
+
+	return writes, deletions, nil
+}
+
+func (f *fga) syncResources(ctx context.Context, resources Resources) error {
+	// Apply model patches.
+	writes, deletions, err := f.applyPatches(ctx)
+	if err != nil {
+		return err
 	}
 
 	// Helper function for diffing local objects with those in OpenFGA. These are appended to the writes and deletions

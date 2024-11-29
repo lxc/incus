@@ -85,6 +85,7 @@ var patches = []patch{
 	{name: "storage_zfs_unset_invalid_block_settings_v2", stage: patchPostDaemonStorage, run: patchStorageZfsUnsetInvalidBlockSettingsV2},
 	{name: "runtime_directory", stage: patchPostDaemonStorage, run: patchRuntimeDirectory},
 	{name: "lvm_node_force_reuse", stage: patchPostDaemonStorage, run: patchLvmForceReuseKey},
+	{name: "auth_openfga_viewer", stage: patchPostNetworks, run: patchGenericAuthorization},
 }
 
 type patch struct {
@@ -133,6 +134,10 @@ func patchesApply(d *Daemon, stage patchStage) error {
 	for _, patch := range patches {
 		if patch.stage == patchNoStageSet {
 			return fmt.Errorf("Patch %q has no stage set: %d", patch.name, patch.stage)
+		}
+
+		if patch.stage != stage {
+			continue
 		}
 
 		if slices.Contains(appliedPatches, patch.name) {
@@ -678,6 +683,29 @@ func patchMoveBackupsInstances(name string, d *Daemon) error {
 	}
 
 	return nil
+}
+
+func patchGenericAuthorization(name string, d *Daemon) error {
+	// Only run authorization patches on the leader.
+	isLeader := false
+
+	leaderAddress, err := d.gateway.LeaderAddress()
+	if err != nil {
+		if !errors.Is(err, cluster.ErrNodeIsNotClustered) {
+			return err
+		}
+
+		isLeader = true
+	} else if leaderAddress == d.localConfig.ClusterAddress() {
+		isLeader = true
+	}
+
+	// If clustered and not running on a leader, skip the resource update.
+	if !isLeader {
+		return nil
+	}
+
+	return d.authorizer.ApplyPatch(d.shutdownCtx, name)
 }
 
 func patchGenericStorage(name string, d *Daemon) error {

@@ -41,6 +41,7 @@ type PermissionChecker func(object Object) bool
 type Authorizer interface {
 	Driver() string
 	StopService(ctx context.Context) error
+	ApplyPatch(ctx context.Context, name string) error
 
 	CheckPermission(ctx context.Context, r *http.Request, object Object, entitlement Entitlement) error
 	GetPermissionChecker(ctx context.Context, r *http.Request, entitlement Entitlement, objectType ObjectType) (PermissionChecker, error)
