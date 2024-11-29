@@ -6211,6 +6211,7 @@ func (b *backend) GenerateCustomVolumeBackupConfig(projectName string, volName s
 				Name:        snapName, // Snapshot only name, not full name.
 				Config:      dbVolSnaps[i].Config,
 				ContentType: dbVolSnaps[i].ContentType,
+				CreatedAt:   dbVolSnaps[i].CreationDate,
 			}
 
 			config.VolumeSnapshots = append(config.VolumeSnapshots, &snapshot)
