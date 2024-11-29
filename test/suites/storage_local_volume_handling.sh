@@ -219,19 +219,7 @@ test_storage_local_volume_handling() {
           incus storage volume snapshot create "${source_pool}" vol5
           incus storage volume set "${source_pool}" vol5 user.foo=snap1vol5
           incus storage volume snapshot create "${source_pool}" vol5
-          incus storage volume set "${source_pool}" vol5 user.foo=snapremovevol5
-          incus storage volume snapshot create "${source_pool}" vol5 snapremove
           incus storage volume set "${source_pool}" vol5 user.foo=postsnap1vol5
-
-          # create storage volume with user config differing over snapshots and additional snapshot than vol5
-          incus storage volume create "${source_pool}" vol6 --type=block size=4194304
-          incus storage volume set "${source_pool}" vol6 user.foo=snap0vol6
-          incus storage volume snapshot create "${source_pool}" vol6
-          incus storage volume set "${source_pool}" vol6 user.foo=snap1vol6
-          incus storage volume snapshot create "${source_pool}" vol6
-          incus storage volume set "${source_pool}" vol6 user.foo=snap2vol6
-          incus storage volume snapshot create "${source_pool}" vol6
-          incus storage volume set "${source_pool}" vol6 user.foo=postsnap1vol6
 
           # copy to new volume destination with refresh flag
           incus storage volume copy --refresh "${source_pool}/vol5" "${target_pool}/vol5"
@@ -240,19 +228,23 @@ test_storage_local_volume_handling() {
           incus storage volume get "${target_pool}" vol5 user.foo | grep -Fx "postsnap1vol5"
           incus storage volume get "${target_pool}" vol5/snap0 user.foo | grep -Fx "snap0vol5"
           incus storage volume get "${target_pool}" vol5/snap1 user.foo | grep -Fx "snap1vol5"
-          incus storage volume get "${target_pool}" vol5/snapremove user.foo | grep -Fx "snapremovevol5"
+
+          # create additional snapshot on source_pool and one on target_pool
+          incus storage volume snapshot create "${source_pool}" vol5 postsnap1vol5
+          incus storage volume set "${target_pool}" vol5 user.foo=snapremovevol5
+          incus storage volume snapshot create "${target_pool}" vol5 snapremove
 
           # incremental copy to existing volume destination with refresh flag
-          incus storage volume copy --refresh "${source_pool}/vol6" "${target_pool}/vol5"
+          incus storage volume copy --refresh "${source_pool}/vol5" "${target_pool}/vol5"
 
           # check snapshot volumes (including config) was overridden from new source and that missing snapshot is
           # present and that the missing snapshot has been removed.
-          # Note: Due to a known issue we are currently only diffing the snapshots by name, so infact existing
-          # snapshots of the same name won't be overwritten even if their config or contents is different.
-          incus storage volume get "${target_pool}" vol5 user.foo | grep -Fx "postsnap1vol5"
+          # Note: We are currently diffing the snapshots by name and creation date, so infact existing
+          # snapshots of the same name and cretion date won't be overwritten even if their config or contents is different.
+          incus storage volume get "${target_pool}" vol5 user.foo | grep -Fx "snapremovevol5"
           incus storage volume get "${target_pool}" vol5/snap0 user.foo | grep -Fx "snap0vol5"
           incus storage volume get "${target_pool}" vol5/snap1 user.foo | grep -Fx "snap1vol5"
-          incus storage volume get "${target_pool}" vol5/snap2 user.foo | grep -Fx "snap2vol6"
+          incus storage volume get "${target_pool}" vol5/postsnap1vol5 user.foo | grep -Fx "postsnap1vol5"
           ! incus storage volume get "${target_pool}" vol5/snapremove user.foo || false
 
           # copy ISO custom volumes
@@ -272,7 +264,6 @@ test_storage_local_volume_handling() {
           incus storage volume delete "${target_pool}" vol4
           incus storage volume delete "${source_pool}" vol5
           incus storage volume delete "${target_pool}" vol5
-          incus storage volume delete "${source_pool}" vol6
           incus storage volume delete "${target_pool}" iso1
           incus storage volume delete "${target_pool}" iso2
           rm -f foo.iso
