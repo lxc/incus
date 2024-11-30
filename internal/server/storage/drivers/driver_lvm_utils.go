@@ -503,7 +503,17 @@ func (d *lvm) lvmDevPath(vgName string, volType VolumeType, contentType ContentT
 
 // resizeLogicalVolume resizes an LVM logical volume. This function does not resize any filesystem inside the LV.
 func (d *lvm) resizeLogicalVolume(lvPath string, sizeBytes int64) error {
-	_, err := subprocess.TryRunCommand("lvresize", "-L", fmt.Sprintf("%db", sizeBytes), "-f", lvPath)
+	isRecent, err := d.lvmVersionIsAtLeast(lvmVersion, "2.03.17")
+	if err != nil {
+		return fmt.Errorf("Error checking LVM version: %w", err)
+	}
+
+	args := []string{"-L", fmt.Sprintf("%db", sizeBytes), "-f", lvPath}
+	if isRecent {
+		args = append(args, "--fs=ignore")
+	}
+
+	_, err = subprocess.TryRunCommand("lvresize", args...)
 	if err != nil {
 		return err
 	}
