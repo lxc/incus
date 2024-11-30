@@ -70,6 +70,18 @@ func (d *lvm) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 				if err != nil {
 					return err
 				}
+
+				// Check the block size for image volumes.
+				if vol.volType == VolumeTypeImage {
+					blockSize, err := d.getBlockSize(devPath)
+					if err != nil {
+						return err
+					}
+
+					if blockSize != 512 {
+						return fmt.Errorf("Underlying storage uses %d bytes sector size when virtual machine images require 512 bytes", blockSize)
+					}
+				}
 			}
 
 			allowUnsafeResize := false
