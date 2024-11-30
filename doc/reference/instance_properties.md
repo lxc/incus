@@ -13,12 +13,42 @@ The following instance properties are available:
 * - Property
   - Read-only
   - Description
-* - `name`
-  - yes
-  - Instance name (see {ref}`instance-name-requirements`)
 * - `architecture`
   - no
   - Instance architecture
+* - `created_at`
+  - yes
+  - Timestamp of the instance creation
+* - `description`
+  - no
+  - User provided description of the instance
+* - `ephemeral`
+  - no
+  - Whether the instance is ephemeral (gets deleted when stopped)
+* - `last_used_at`
+  - yes
+  - Timestamp of the instance last usage
+* - `location`
+  - no
+  - Current location of the instance within a cluster
+* - `name`
+  - yes
+  - Instance name (see {ref}`instance-name-requirements`)
+* - `project`
+  - yes
+  - Project that the instance is a part of
+* - `stateful`
+  - yes
+  - Whether saved runtime state is currently present
+* - `status`
+  - yes
+  - Human readable status of the instance
+* - `status_code`
+  - yes
+  - Machine readable status of the instance
+* - `type`
+  - yes
+  - Type of instance (container or virtual machine)
 ```
 
 (instance-name-requirements)=
