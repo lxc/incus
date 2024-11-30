@@ -2,7 +2,7 @@ furo
 gitpython
 linkify-it-py
 lxd-sphinx-extensions
-myst-parser<3.0.0
+myst-parser
 pyspelling
 sphinx
 sphinx-autobuild
