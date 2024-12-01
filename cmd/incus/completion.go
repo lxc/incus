@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -1221,4 +1224,90 @@ func (g *cmdGlobal) cmpStoragePoolVolumes(poolName string) ([]string, cobra.Shel
 	}
 
 	return volumes, cobra.ShellCompDirectiveNoFileComp
+}
+
+func isSymlinkToDir(path string, d fs.DirEntry) bool {
+	if d.Type()&fs.ModeSymlink == 0 {
+		return false
+	}
+
+	info, err := os.Stat(path)
+	if err != nil || !info.IsDir() {
+		return false
+	}
+
+	return true
+}
+
+func (g *cmdGlobal) cmpFiles(toComplete string, includeLocalFiles bool) ([]string, cobra.ShellCompDirective) {
+	instances, directives := g.cmpInstances(toComplete)
+	for i := range instances {
+		if strings.HasSuffix(instances[i], ":") {
+			continue
+		}
+
+		instances[i] += "/"
+	}
+
+	if len(instances) == 0 {
+		if includeLocalFiles {
+			return nil, cobra.ShellCompDirectiveDefault
+		}
+
+		return instances, directives
+	}
+
+	directives |= cobra.ShellCompDirectiveNoSpace
+
+	if !includeLocalFiles {
+		return instances, directives
+	}
+
+	var files []string
+	sep := string(filepath.Separator)
+	dir, prefix := filepath.Split(toComplete)
+	switch prefix {
+	case ".":
+		files = append(files, dir+"."+sep)
+		fallthrough
+	case "..":
+		files = append(files, dir+".."+sep)
+		directives |= cobra.ShellCompDirectiveNoSpace
+	}
+
+	root, err := filepath.EvalSymlinks(filepath.Dir(dir))
+	if err != nil {
+		return append(instances, files...), directives
+	}
+
+	_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || path == root {
+			return err
+		}
+
+		base := filepath.Base(path)
+		if strings.HasPrefix(base, prefix) {
+			file := dir + base
+			switch {
+			case d.IsDir():
+				directives |= cobra.ShellCompDirectiveNoSpace
+				file += sep
+			case isSymlinkToDir(path, d):
+				directives |= cobra.ShellCompDirectiveNoSpace
+				if base == prefix {
+					file += sep
+				}
+			}
+
+			files = append(files, file)
+		}
+
+		if d.IsDir() {
+			return fs.SkipDir
+		}
+
+		return nil
+	})
+
+	return append(instances, files...), directives
 }
