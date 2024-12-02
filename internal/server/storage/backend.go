@@ -2719,7 +2719,11 @@ func (b *backend) GetInstanceUsage(inst instance.Instance) (*VolumeUsage, error)
 	}
 
 	sizeStr, ok := rootDiskConf["size"]
-	if ok {
+	if !ok && volType == drivers.VolumeTypeVM {
+		sizeStr = drivers.DefaultBlockSize
+	}
+
+	if sizeStr != "" {
 		total, err := units.ParseByteSizeString(sizeStr)
 		if err != nil {
 			return nil, err
