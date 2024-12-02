@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -71,7 +74,7 @@ func (g *cmdGlobal) cmpClusterGroups(toComplete string) ([]string, cobra.ShellCo
 	}
 
 	if !strings.Contains(toComplete, ":") {
-		remotes, directives := g.cmpRemotes(false)
+		remotes, directives := g.cmpRemotes(toComplete, false)
 		results = append(results, remotes...)
 		cmpDirectives |= directives
 	}
@@ -192,7 +195,7 @@ func (g *cmdGlobal) cmpClusterMembers(toComplete string) ([]string, cobra.ShellC
 	}
 
 	if !strings.Contains(toComplete, ":") {
-		remotes, directives := g.cmpRemotes(false)
+		remotes, directives := g.cmpRemotes(toComplete, false)
 		results = append(results, remotes...)
 		cmpDirectives |= directives
 	}
@@ -230,7 +233,7 @@ func (g *cmdGlobal) cmpImages(toComplete string) ([]string, cobra.ShellCompDirec
 	}
 
 	if !strings.Contains(toComplete, ":") {
-		remotes, directives := g.cmpRemotes(true)
+		remotes, directives := g.cmpRemotes(toComplete, true)
 		results = append(results, remotes...)
 		cmpDirectives |= directives
 	}
@@ -330,12 +333,16 @@ func (g *cmdGlobal) cmpInstances(toComplete string) ([]string, cobra.ShellCompDi
 				name = fmt.Sprintf("%s:%s", resource.remote, instName)
 			}
 
+			if !strings.HasPrefix(name, toComplete) {
+				continue
+			}
+
 			results = append(results, name)
 		}
 	}
 
 	if !strings.Contains(toComplete, ":") {
-		remotes, directives := g.cmpRemotes(false)
+		remotes, directives := g.cmpRemotes(toComplete, false)
 		results = append(results, remotes...)
 		cmpDirectives |= directives
 	}
@@ -375,7 +382,7 @@ func (g *cmdGlobal) cmpInstancesAndSnapshots(toComplete string) ([]string, cobra
 	}
 
 	if !strings.Contains(toComplete, ":") {
-		remotes, directives := g.cmpRemotes(false)
+		remotes, directives := g.cmpRemotes(toComplete, false)
 		results = append(results, remotes...)
 		cmpDirectives |= directives
 	}
@@ -453,7 +460,7 @@ func (g *cmdGlobal) cmpNetworkACLs(toComplete string) ([]string, cobra.ShellComp
 	}
 
 	if !strings.Contains(toComplete, ":") {
-		remotes, directives := g.cmpRemotes(false)
+		remotes, directives := g.cmpRemotes(toComplete, false)
 		results = append(results, remotes...)
 		cmpDirectives |= directives
 	}
@@ -607,7 +614,7 @@ func (g *cmdGlobal) cmpNetworks(toComplete string) ([]string, cobra.ShellCompDir
 	}
 
 	if !strings.Contains(toComplete, ":") {
-		remotes, directives := g.cmpRemotes(false)
+		remotes, directives := g.cmpRemotes(toComplete, false)
 		results = append(results, remotes...)
 		cmpDirectives |= directives
 	}
@@ -789,7 +796,7 @@ func (g *cmdGlobal) cmpNetworkZones(toComplete string) ([]string, cobra.ShellCom
 	}
 
 	if !strings.Contains(toComplete, ":") {
-		remotes, directives := g.cmpRemotes(false)
+		remotes, directives := g.cmpRemotes(toComplete, false)
 		results = append(results, remotes...)
 		cmpDirectives |= directives
 	}
@@ -882,7 +889,7 @@ func (g *cmdGlobal) cmpProfiles(toComplete string, includeRemotes bool) ([]strin
 	}
 
 	if includeRemotes && !strings.Contains(toComplete, ":") {
-		remotes, directives := g.cmpRemotes(false)
+		remotes, directives := g.cmpRemotes(toComplete, false)
 		results = append(results, remotes...)
 		cmpDirectives |= directives
 	}
@@ -940,7 +947,7 @@ func (g *cmdGlobal) cmpProjects(toComplete string) ([]string, cobra.ShellCompDir
 	}
 
 	if !strings.Contains(toComplete, ":") {
-		remotes, directives := g.cmpRemotes(false)
+		remotes, directives := g.cmpRemotes(toComplete, false)
 		results = append(results, remotes...)
 		cmpDirectives |= directives
 	}
@@ -948,7 +955,7 @@ func (g *cmdGlobal) cmpProjects(toComplete string) ([]string, cobra.ShellCompDir
 	return results, cmpDirectives
 }
 
-func (g *cmdGlobal) cmpRemotes(includeAll bool) ([]string, cobra.ShellCompDirective) {
+func (g *cmdGlobal) cmpRemotes(toComplete string, includeAll bool) ([]string, cobra.ShellCompDirective) {
 	results := []string{}
 
 	for remoteName, rc := range g.conf.Remotes {
@@ -956,10 +963,18 @@ func (g *cmdGlobal) cmpRemotes(includeAll bool) ([]string, cobra.ShellCompDirect
 			continue
 		}
 
+		if !strings.HasPrefix(remoteName, toComplete) {
+			continue
+		}
+
 		results = append(results, fmt.Sprintf("%s:", remoteName))
 	}
 
-	return results, cobra.ShellCompDirectiveNoSpace
+	if len(results) > 0 {
+		return results, cobra.ShellCompDirectiveNoSpace
+	}
+
+	return results, cobra.ShellCompDirectiveNoFileComp
 }
 
 func (g *cmdGlobal) cmpRemoteNames() ([]string, cobra.ShellCompDirective) {
@@ -1056,7 +1071,7 @@ func (g *cmdGlobal) cmpStoragePools(toComplete string) ([]string, cobra.ShellCom
 	}
 
 	if !strings.Contains(toComplete, ":") {
-		remotes, _ := g.cmpRemotes(false)
+		remotes, _ := g.cmpRemotes(toComplete, false)
 		results = append(results, remotes...)
 	}
 
@@ -1209,4 +1224,90 @@ func (g *cmdGlobal) cmpStoragePoolVolumes(poolName string) ([]string, cobra.Shel
 	}
 
 	return volumes, cobra.ShellCompDirectiveNoFileComp
+}
+
+func isSymlinkToDir(path string, d fs.DirEntry) bool {
+	if d.Type()&fs.ModeSymlink == 0 {
+		return false
+	}
+
+	info, err := os.Stat(path)
+	if err != nil || !info.IsDir() {
+		return false
+	}
+
+	return true
+}
+
+func (g *cmdGlobal) cmpFiles(toComplete string, includeLocalFiles bool) ([]string, cobra.ShellCompDirective) {
+	instances, directives := g.cmpInstances(toComplete)
+	for i := range instances {
+		if strings.HasSuffix(instances[i], ":") {
+			continue
+		}
+
+		instances[i] += "/"
+	}
+
+	if len(instances) == 0 {
+		if includeLocalFiles {
+			return nil, cobra.ShellCompDirectiveDefault
+		}
+
+		return instances, directives
+	}
+
+	directives |= cobra.ShellCompDirectiveNoSpace
+
+	if !includeLocalFiles {
+		return instances, directives
+	}
+
+	var files []string
+	sep := string(filepath.Separator)
+	dir, prefix := filepath.Split(toComplete)
+	switch prefix {
+	case ".":
+		files = append(files, dir+"."+sep)
+		fallthrough
+	case "..":
+		files = append(files, dir+".."+sep)
+		directives |= cobra.ShellCompDirectiveNoSpace
+	}
+
+	root, err := filepath.EvalSymlinks(filepath.Dir(dir))
+	if err != nil {
+		return append(instances, files...), directives
+	}
+
+	_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || path == root {
+			return err
+		}
+
+		base := filepath.Base(path)
+		if strings.HasPrefix(base, prefix) {
+			file := dir + base
+			switch {
+			case d.IsDir():
+				directives |= cobra.ShellCompDirectiveNoSpace
+				file += sep
+			case isSymlinkToDir(path, d):
+				directives |= cobra.ShellCompDirectiveNoSpace
+				if base == prefix {
+					file += sep
+				}
+			}
+
+			files = append(files, file)
+		}
+
+		if d.IsDir() {
+			return fs.SkipDir
+		}
+
+		return nil
+	})
+
+	return append(instances, files...), directives
 }

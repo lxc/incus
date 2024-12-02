@@ -167,7 +167,7 @@ It requires the source to be an alias and for it to be public.`))
 		}
 
 		if len(args) == 1 {
-			return c.global.cmpRemotes(false)
+			return c.global.cmpRemotes(toComplete, false)
 		}
 
 		return nil, cobra.ShellCompDirectiveNoFileComp
@@ -680,7 +680,7 @@ Directory import is only available on Linux and must be performed as root.`))
 		}
 
 		if len(args) == 1 {
-			return c.global.cmpRemotes(false)
+			return c.global.cmpRemotes(toComplete, false)
 		}
 
 		return nil, cobra.ShellCompDirectiveNoFileComp

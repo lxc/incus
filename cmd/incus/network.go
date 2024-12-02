@@ -354,7 +354,7 @@ incus network create bar network=baz --type ovn
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 
-		return c.global.cmpRemotes(false)
+		return c.global.cmpRemotes(toComplete, false)
 	}
 
 	return cmd
@@ -1079,7 +1079,7 @@ u - Used by (count)`))
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 
-		return c.global.cmpRemotes(false)
+		return c.global.cmpRemotes(toComplete, false)
 	}
 
 	return cmd
