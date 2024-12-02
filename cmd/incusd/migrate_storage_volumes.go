@@ -502,7 +502,6 @@ func volumeSnapshotToProtobuf(vol *api.StorageVolumeSnapshot) *migration.Snapsho
 		Architecture: proto.Int32(0),
 		Stateful:     proto.Bool(false),
 		CreationDate: proto.Int64(vol.CreatedAt.UnixNano()),
-		LastUsedDate: proto.Int64(0),
-		ExpiryDate:   proto.Int64(0),
+		ExpiryDate:   proto.Int64(vol.CreatedAt.UnixNano()),
 	}
 }
