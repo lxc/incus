@@ -202,6 +202,9 @@ func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
 		},
 	}
 
+	// Delete any leftover socket.
+	_ = os.Remove(socketPath)
+
 	proc, err := subprocess.NewProcess("swtpm", []string{"socket", "--tpm2", "--tpmstate", fmt.Sprintf("dir=%s", tpmDevPath), "--ctrl", fmt.Sprintf("type=unixio,path=swtpm-%s.sock", d.name)}, "", "")
 	if err != nil {
 		return nil, err
@@ -225,6 +228,21 @@ func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
 	err = proc.Save(pidPath)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to save swtpm state for device %q: %w", d.name, err)
+	}
+
+	// Wait for the socket to be available.
+	exists := false
+	for i := 0; i < 20; i++ {
+		if util.PathExists(socketPath) {
+			exists = true
+			break
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	if !exists {
+		return nil, fmt.Errorf("swtpm socket didn't appear within 2s")
 	}
 
 	revert.Success()
