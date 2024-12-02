@@ -146,7 +146,16 @@ incus file create --type=symlink foo/bar baz
 	cmd.Flags().IntVar(&c.file.flagUID, "uid", -1, i18n.G("Set the file's uid on create")+"``")
 	cmd.Flags().StringVar(&c.file.flagMode, "mode", "", i18n.G("Set the file's perms on create")+"``")
 	cmd.Flags().StringVar(&c.flagType, "type", "file", i18n.G("The type to create (file, symlink, or directory)")+"``")
+
 	cmd.RunE = c.Run
+
+	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpFiles(toComplete, false)
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
 
 	return cmd
 }
