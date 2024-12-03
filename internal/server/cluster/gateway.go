@@ -154,10 +154,18 @@ func setDqliteVersionHeader(request *http.Request) {
 // These handlers might return 404, either because this server is a
 // non-clustered member not available over the network or because it is not a
 // database node part of the dqlite cluster.
-func (g *Gateway) HandlerFuncs(heartbeatHandler HeartbeatHandler, trustedCerts func() map[certificate.Type]map[string]x509.Certificate) map[string]http.HandlerFunc {
+func (g *Gateway) HandlerFuncs(heartbeatHandler HeartbeatHandler, trustedCerts func() (map[certificate.Type]map[string]x509.Certificate, error)) map[string]http.HandlerFunc {
 	database := func(w http.ResponseWriter, r *http.Request) {
 		g.lock.RLock()
-		if !tlsCheckCert(r, g.networkCert, g.state().ServerCert(), trustedCerts()) {
+
+		certs, err := trustedCerts()
+		if err != nil {
+			g.lock.RUnlock()
+			http.Error(w, "403 invalid client certificate", http.StatusForbidden)
+			return
+		}
+
+		if !tlsCheckCert(r, g.networkCert, g.state().ServerCert(), certs) {
 			g.lock.RUnlock()
 			http.Error(w, "403 invalid client certificate", http.StatusForbidden)
 			return

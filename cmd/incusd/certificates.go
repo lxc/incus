@@ -177,7 +177,11 @@ func certificatesGet(d *Daemon, r *http.Request) response.Response {
 
 	body := []string{}
 
-	trustedCertificates := d.getTrustedCertificates()
+	trustedCertificates, err := d.getTrustedCertificates()
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	for _, certs := range trustedCertificates {
 		for _, cert := range certs {
 			fingerprint := localtls.CertFingerprint(&cert)
