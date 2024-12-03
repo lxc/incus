@@ -429,8 +429,44 @@ func (d *Daemon) checkTrustedClient(r *http.Request) error {
 }
 
 // getTrustedCertificates returns trusted certificates key on DB type and fingerprint.
-func (d *Daemon) getTrustedCertificates() map[certificate.Type]map[string]x509.Certificate {
-	return d.clientCerts.GetCertificates()
+//
+// When in PKI mode, this also filters out any non-server certificate which isn't issued by the PKI.
+func (d *Daemon) getTrustedCertificates() (map[certificate.Type]map[string]x509.Certificate, error) {
+	certs := d.clientCerts.GetCertificates()
+
+	// If not in PKI mode, return all certificates.
+	if !util.PathExists(internalUtil.VarPath("server.ca")) {
+		return certs, nil
+	}
+
+	// If in PKI mode, filter certificates that aren't trusted by the CA.
+	ca, err := localtls.ReadCert(internalUtil.VarPath("server.ca"))
+	if err != nil {
+		return nil, err
+	}
+
+	certPool := x509.NewCertPool()
+	certPool.AddCert(ca)
+
+	for certType, certEntries := range certs {
+		if certType == certificate.TypeServer {
+			continue
+		}
+
+		for name, entry := range certEntries {
+			_, err := entry.Verify(x509.VerifyOptions{
+				Roots:     certPool,
+				KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+			})
+
+			if err != nil {
+				// Skip certificates that aren't signed by the PKI.
+				delete(certs[certType], name)
+			}
+		}
+	}
+
+	return certs, nil
 }
 
 // Authenticate validates an incoming http Request
@@ -441,7 +477,10 @@ func (d *Daemon) getTrustedCertificates() map[certificate.Type]map[string]x509.C
 // Returns whether trusted or not, the username (or certificate fingerprint) of the trusted client, and the type of
 // client that has been authenticated (cluster, unix, or tls).
 func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, string, string, error) {
-	trustedCerts := d.getTrustedCertificates()
+	trustedCerts, err := d.getTrustedCertificates()
+	if err != nil {
+		return false, "", "", err
+	}
 
 	// Allow internal cluster traffic by checking against the trusted certfificates.
 	if r.TLS != nil {
