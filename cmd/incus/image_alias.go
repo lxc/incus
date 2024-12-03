@@ -67,6 +67,28 @@ func (c *cmdImageAliasCreate) Command() *cobra.Command {
 
 	cmd.RunE = c.Run
 
+	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) > 1 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		if len(args) == 0 {
+			return c.global.cmpRemotes(toComplete, true)
+		}
+
+		remote, _, found := strings.Cut(args[0], ":")
+		if found {
+			toComplete = remote + ":" + toComplete
+		}
+
+		fingerprints, directives := c.global.cmpImageFingerprints(toComplete)
+		for i, f := range fingerprints {
+			fingerprints[i], _ = strings.CutPrefix(f, remote+":")
+		}
+
+		return fingerprints, directives
+	}
+
 	return cmd
 }
 
@@ -113,6 +135,14 @@ func (c *cmdImageAliasDelete) Command() *cobra.Command {
 		`Delete image aliases`))
 
 	cmd.RunE = c.Run
+
+	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) > 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return c.global.cmpImages(toComplete)
+	}
 
 	return cmd
 }
@@ -180,6 +210,14 @@ Pre-defined column shorthand chars:
 	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultImageAliasColumns, i18n.G("Columns")+"``")
 
 	cmd.RunE = c.Run
+
+	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) > 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return c.global.cmpRemotes(toComplete, true)
+	}
 
 	return cmd
 }
@@ -335,6 +373,14 @@ func (c *cmdImageAliasRename) Command() *cobra.Command {
 		`Rename aliases`))
 
 	cmd.RunE = c.Run
+
+	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) > 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return c.global.cmpImages(toComplete)
+	}
 
 	return cmd
 }
