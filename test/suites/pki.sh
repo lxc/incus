@@ -36,19 +36,34 @@ test_pki() {
     fi
   )
 
-  # Setup the daemon.
+  # Setup the daemon in normal mode
   INCUS5_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS5_DIR}"
-  cp "${TEST_DIR}/pki/keys/ca.crt" "${INCUS5_DIR}/server.ca"
-  cp "${TEST_DIR}/pki/keys/crl.pem" "${INCUS5_DIR}/ca.crl"
   spawn_incus "${INCUS5_DIR}" true
   INCUS5_ADDR=$(cat "${INCUS5_DIR}/incus.addr")
+
+  # Generate, trust and test a client certificate
+  openssl req -x509 -newkey rsa:4096 -sha384 -keyout "${INCUS_CONF}/simple-client.key" -nodes -out "${INCUS_CONF}/simple-client.crt" -days 1 -subj "/CN=test.local"
+  INCUS_DIR="${INCUS5_DIR}" incus config trust add-certificate "${INCUS_CONF}/simple-client.crt"
+  INCUS_DIR="${INCUS5_DIR}" incus config set user.test foo
+  curl -k -s --cert "${INCUS_CONF}/simple-client.crt" --key "${INCUS_CONF}/simple-client.key" "https://${INCUS5_ADDR}/1.0" | grep -q "user.test.*foo" || false
+
+  # Restart the daemon in PKI mode
+  shutdown_incus "${INCUS5_DIR}"
+  cp "${TEST_DIR}/pki/keys/ca.crt" "${INCUS5_DIR}/server.ca"
+  cp "${TEST_DIR}/pki/keys/crl.pem" "${INCUS5_DIR}/ca.crl"
+  respawn_incus "${INCUS5_DIR}" true
 
   # Setup the client.
   INC5_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   cp "${TEST_DIR}/pki/keys/incus-client.crt" "${INC5_DIR}/client.crt"
   cp "${TEST_DIR}/pki/keys/incus-client.key" "${INC5_DIR}/client.key"
   cp "${TEST_DIR}/pki/keys/ca.crt" "${INC5_DIR}/client.ca"
+
+  # Re-test the regular client certificate
+  curl -k -s --cert "${INCUS_CONF}/simple-client.crt" --key "${INCUS_CONF}/simple-client.key" "https://${INCUS5_ADDR}/1.0" incus/1.0 | grep -q "user.test.*foo" && false
+  fingerprint="$(INCUS_DIR="${INCUS5_DIR}" incus config trust list -cf -fcsv)"
+  INCUS_DIR="${INCUS5_DIR}" incus config trust remove "${fingerprint}"
 
   # Confirm that a valid client certificate works.
   (
