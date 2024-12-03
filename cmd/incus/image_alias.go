@@ -77,16 +77,11 @@ func (c *cmdImageAliasCreate) Command() *cobra.Command {
 		}
 
 		remote, _, found := strings.Cut(args[0], ":")
-		if found {
-			toComplete = remote + ":" + toComplete
+		if !found {
+			remote = ""
 		}
 
-		fingerprints, directives := c.global.cmpImageFingerprints(toComplete)
-		for i, f := range fingerprints {
-			fingerprints[i], _ = strings.CutPrefix(f, remote+":")
-		}
-
-		return fingerprints, directives
+		return c.global.cmpImageFingerprintsFromRemote(toComplete, remote)
 	}
 
 	return cmd

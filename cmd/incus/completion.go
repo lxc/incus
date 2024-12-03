@@ -253,6 +253,28 @@ func (g *cmdGlobal) cmpImages(toComplete string) ([]string, cobra.ShellCompDirec
 	return results, cmpDirectives
 }
 
+func (g *cmdGlobal) cmpImageFingerprintsFromRemote(toComplete string, remote string) ([]string, cobra.ShellCompDirective) {
+	results := []string{}
+
+	if remote == "" {
+		remote = g.conf.DefaultRemote
+	}
+
+	remoteServer, _ := g.conf.GetImageServer(remote)
+
+	images, _ := remoteServer.GetImages()
+
+	for _, image := range images {
+		if !strings.HasPrefix(image.Fingerprint, toComplete) {
+			continue
+		}
+
+		results = append(results, image.Fingerprint)
+	}
+
+	return results, cobra.ShellCompDirectiveNoFileComp
+}
+
 func (g *cmdGlobal) cmpImageFingerprints(toComplete string) ([]string, cobra.ShellCompDirective) {
 	results := []string{}
 	var remote string
