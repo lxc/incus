@@ -123,21 +123,13 @@ Docker/Podman images of Incus, based on the Zabbly package repository, are avail
 ```
 
 ```{group-tab} Fedora
-RPM packages of Incus and its dependencies are not yet available via official Fedora repositories but via the [`ganto/lxc4`](https://copr.fedorainfracloud.org/coprs/ganto/lxc4/) Community Project (COPR) repository.
-
-Install the COPR plugin for `dnf` and then enable the COPR repository:
-
-    dnf install 'dnf-command(copr)'
-    dnf copr enable ganto/lxc4
+Incus and all of its dependencies are available in Fedora.
 
 Install Incus with:
 
     dnf install incus
 
-For the additional setup steps see [Getting started with Incus on Fedora](https://github.com/ganto/copr-lxc4/wiki/Getting-Started-with-Incus-on-Fedora).
-
-Note that this is not an official project of Incus nor Fedora.
-Please report packaging issues [here](https://github.com/ganto/copr-lxc4/issues).
+Please report packaging issues [here](https://bugzilla.redhat.com/).
 ```
 
 ```{group-tab} Gentoo
