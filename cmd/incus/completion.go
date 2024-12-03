@@ -14,6 +14,18 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 )
 
+func (g *cmdGlobal) appendCompletion(comps []string, comp, toComplete, remote string) []string {
+	if remote != g.conf.DefaultRemote || strings.Contains(toComplete, g.conf.DefaultRemote) {
+		comp = fmt.Sprintf("%s:%s", remote, comp)
+	}
+
+	if !strings.HasPrefix(comp, toComplete) {
+		return comps
+	}
+
+	return append(comps, comp)
+}
+
 func (g *cmdGlobal) cmpClusterGroupNames(toComplete string) ([]string, cobra.ShellCompDirective) {
 	var results []string
 	cmpDirectives := cobra.ShellCompDirectiveNoFileComp
@@ -230,6 +242,34 @@ func (g *cmdGlobal) cmpImages(toComplete string) ([]string, cobra.ShellCompDirec
 
 			results = append(results, name)
 		}
+	}
+
+	if !strings.Contains(toComplete, ":") {
+		remotes, directives := g.cmpRemotes(toComplete, true)
+		results = append(results, remotes...)
+		cmpDirectives |= directives
+	}
+
+	return results, cmpDirectives
+}
+
+func (g *cmdGlobal) cmpImageFingerprints(toComplete string) ([]string, cobra.ShellCompDirective) {
+	results := []string{}
+	var remote string
+	cmpDirectives := cobra.ShellCompDirectiveNoFileComp
+
+	if strings.Contains(toComplete, ":") {
+		remote = strings.Split(toComplete, ":")[0]
+	} else {
+		remote = g.conf.DefaultRemote
+	}
+
+	remoteServer, _ := g.conf.GetImageServer(remote)
+
+	images, _ := remoteServer.GetImages()
+
+	for _, image := range images {
+		results = g.appendCompletion(results, image.Fingerprint, toComplete, remote)
 	}
 
 	if !strings.Contains(toComplete, ":") {
