@@ -22,6 +22,10 @@ import (
 	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
+func trustedCerts() (map[certificate.Type]map[string]x509.Certificate, error) {
+	return nil, nil
+}
+
 // Basic creation and shutdown. By default, the gateway runs an in-memory gRPC
 // server.
 func TestGateway_Single(t *testing.T) {
@@ -36,10 +40,6 @@ func TestGateway_Single(t *testing.T) {
 
 	gateway := newGateway(t, node, cert, s)
 	defer func() { _ = gateway.Shutdown() }()
-
-	trustedCerts := func() map[certificate.Type]map[string]x509.Certificate {
-		return nil
-	}
 
 	handlerFuncs := gateway.HandlerFuncs(nil, trustedCerts)
 	assert.Len(t, handlerFuncs, 1)
@@ -101,10 +101,6 @@ func TestGateway_SingleWithNetworkAddress(t *testing.T) {
 	gateway := newGateway(t, node, cert, s)
 	defer func() { _ = gateway.Shutdown() }()
 
-	trustedCerts := func() map[certificate.Type]map[string]x509.Certificate {
-		return nil
-	}
-
 	for path, handler := range gateway.HandlerFuncs(nil, trustedCerts) {
 		mux.HandleFunc(path, handler)
 	}
@@ -145,10 +141,6 @@ func TestGateway_NetworkAuth(t *testing.T) {
 
 	gateway := newGateway(t, node, cert, s)
 	defer func() { _ = gateway.Shutdown() }()
-
-	trustedCerts := func() map[certificate.Type]map[string]x509.Certificate {
-		return nil
-	}
 
 	for path, handler := range gateway.HandlerFuncs(nil, trustedCerts) {
 		mux.HandleFunc(path, handler)

@@ -2,7 +2,6 @@ package cluster_test
 
 import (
 	"context"
-	"crypto/x509"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/lxc/incus/v6/internal/server/certificate"
 	"github.com/lxc/incus/v6/internal/server/cluster"
 	clusterConfig "github.com/lxc/incus/v6/internal/server/cluster/config"
 	"github.com/lxc/incus/v6/internal/server/db"
@@ -213,10 +211,6 @@ func (f *heartbeatFixture) node() (*state.State, *cluster.Gateway, string) {
 
 	mux := http.NewServeMux()
 	server := newServer(serverCert, mux)
-
-	trustedCerts := func() map[certificate.Type]map[string]x509.Certificate {
-		return nil
-	}
 
 	for path, handler := range gateway.HandlerFuncs(nil, trustedCerts) {
 		mux.HandleFunc(path, handler)
