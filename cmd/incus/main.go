@@ -8,6 +8,7 @@ import (
 	"path"
 	"slices"
 
+	"github.com/kballard/go-shellquote"
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
@@ -337,7 +338,11 @@ If you already added a remote server, make it the default with "incus remote swi
 		}
 
 		// Default error handling
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		if os.Getenv("INCUS_ALIASES") == "1" {
+			fmt.Fprintf(os.Stderr, i18n.G("Error while executing alias expansion: %s\n"), shellquote.Join(os.Args...))
+		}
+
+		fmt.Fprintf(os.Stderr, i18n.G("Error: %v\n"), err)
 
 		// If custom exit status not set, use default error status.
 		if globalCmd.ret == 0 {
