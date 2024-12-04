@@ -38,21 +38,32 @@ Property         | Type       | Required | Description
 :--              | :--        | :--      | :--
 `listen_address` | string     | yes      | IP address to listen on
 `description`    | string     | no       | Description of the network forward
-`config`         | string set | no       | Configuration options as key/value pairs (only `target_address` and `user.*` custom keys supported)
+`config`         | string set | no       | See table below
 `ports`          | port list  | no       | List of {ref}`port specifications <network-forwards-port-specifications>`
+
+### Forward configuration
+
+Network forwards have the following configuration options:
+
+Key                 | Type      | Default | Description
+:--                 | :---      | :------ | :----------
+`user.*`            | string    | -       | User defined key/value configuration
+`target_address`    | string    | -       | Default target address for anything not covered through a port definition
 
 (network-forwards-listen-addresses)=
 ### Requirements for listen addresses
 
 The requirements for valid listen addresses vary depending on which network type the forward is associated to.
 
-Bridge network
-: - Any non-conflicting listen address is allowed.
-  - The listen address must not overlap with a subnet that is in use with another network.
+#### Bridge network
 
-OVN network
-: - Allowed listen addresses must be defined in the uplink network's `ipv{n}.routes` settings or the project's {config:option}`project-restricted:restricted.networks.subnets` setting (if set).
-  - The listen address must not overlap with a subnet that is in use with another network.
+- Any non-conflicting listen address is allowed.
+- The listen address must not overlap with a subnet that is in use with another network.
+
+#### OVN network
+
+- Allowed listen addresses must be defined in the uplink network's `ipv{n}.routes` settings or the project's {config:option}`project-restricted:restricted.networks.subnets` setting (if set).
+- The listen address must not overlap with a subnet that is in use with another network.
 
 (network-forwards-port-specifications)=
 ## Configure ports
