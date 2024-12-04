@@ -92,14 +92,7 @@ func aliases() []string {
 	return aliases
 }
 
-func main() {
-	// Process aliases
-	err := execIfAliases()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
-
+func createApp() (*cobra.Command, *cmdGlobal) {
 	// Setup the parser
 	app := &cobra.Command{}
 	app.Use = "incus"
@@ -306,8 +299,14 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	app.Flags().BoolVar(&globalCmd.flagHelpAll, "all", false, i18n.G("Show less common commands"))
 	help.Flags().BoolVar(&globalCmd.flagHelpAll, "all", false, i18n.G("Show less common commands"))
 
-	// Deal with --all flag and --sub-commands flag
-	err = app.ParseFlags(os.Args[1:])
+	return app, &globalCmd
+}
+
+func main() {
+	app, globalCmd := createApp()
+
+	// Deal with --all and --sub-commands flags as well as process aliases.
+	err := app.ParseFlags(os.Args[1:])
 	if err == nil {
 		if globalCmd.flagHelpAll {
 			// Show all commands
@@ -323,6 +322,13 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 		if globalCmd.flagSubCmds {
 			app.SetUsageTemplate(usageTemplateSubCmds())
 		}
+	}
+
+	// Process aliases
+	err = execIfAliases(app)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
 	}
 
 	// Run the main command and handle errors
