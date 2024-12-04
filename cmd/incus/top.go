@@ -493,6 +493,10 @@ func (ms *metricSet) getMetricValue(metricType metricType, instanceName string) 
 				continue
 			}
 
+			if metricType == cpuSecondsTotal && sample.labels["mode"] == "idle" {
+				continue
+			}
+
 			if sample.labels["name"] == instanceName {
 				value += sample.value
 			}
