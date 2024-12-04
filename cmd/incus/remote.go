@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -344,7 +345,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 	// Fast track simplestreams
 	if c.flagProtocol == "simplestreams" {
 		if remoteURL.Scheme != "https" {
-			return fmt.Errorf(i18n.G("Only https URLs are supported for simplestreams"))
+			return errors.New(i18n.G("Only https URLs are supported for simplestreams"))
 		}
 
 		conf.Remotes[server] = config.Remote{Addr: addr, Public: true, Protocol: c.flagProtocol}
