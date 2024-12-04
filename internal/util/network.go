@@ -17,15 +17,17 @@ func CanonicalNetworkAddress(address string, defaultPort int) string {
 		if ip != nil {
 			// If the input address is a bare IP address, then convert it to a proper listen address
 			// using the canonical IP with default port and wrap IPv6 addresses in square brackets.
-			address = net.JoinHostPort(ip.String(), fmt.Sprintf("%d", defaultPort))
-		} else {
-			// Otherwise assume this is either a host name or a partial address (e.g `[::]`) without
-			// a port number, so append the default port.
-			address = fmt.Sprintf("%s:%d", address, defaultPort)
+			return net.JoinHostPort(ip.String(), fmt.Sprintf("%d", defaultPort))
 		}
-	} else if port == "" && address[len(address)-1] == ':' {
+
+		// Otherwise assume this is either a host name or a partial address (e.g `[::]`) without
+		// a port number, so append the default port.
+		return fmt.Sprintf("%s:%d", address, defaultPort)
+	}
+
+	if port == "" && address[len(address)-1] == ':' {
 		// An address that ends with a trailing colon will be parsed as having an empty port.
-		address = net.JoinHostPort(host, fmt.Sprintf("%d", defaultPort))
+		return net.JoinHostPort(host, fmt.Sprintf("%d", defaultPort))
 	}
 
 	return address

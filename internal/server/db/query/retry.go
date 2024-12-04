@@ -23,35 +23,37 @@ const maxRetries = 250
 //
 // This should by typically used to wrap transactions.
 func Retry(ctx context.Context, f func(ctx context.Context) error) error {
-	// TODO: the retry loop should be configurable.
 	var err error
 	for i := 0; i < maxRetries; i++ {
 		err = f(ctx)
-		if err != nil {
-			if errors.Is(err, context.Canceled) {
-				break
-			}
-
-			// No point in re-trying or logging a no-row or not found error.
-			if errors.Is(err, sql.ErrNoRows) || api.StatusErrorCheck(err, http.StatusNotFound) {
-				break
-			}
-
-			// Process actual errors.
-			if IsRetriableError(err) {
-				if i == maxRetries {
-					logger.Warn("Database error, giving up", logger.Ctx{"attempt": i, "err": err})
-					break
-				}
-
-				logger.Debug("Database error, retrying", logger.Ctx{"attempt": i, "err": err})
-				time.Sleep(jitter.Deviation(nil, 0.8)(100 * time.Millisecond))
-				continue
-			} else {
-				logger.Debug("Database error", logger.Ctx{"err": err})
-			}
+		if err == nil {
+			// The function succeeded, we're done here.
+			break
 		}
-		break
+
+		if errors.Is(err, context.Canceled) {
+			// The function was canceled, don't retry.
+			break
+		}
+
+		// No point in re-trying or logging a no-row or not found error.
+		if errors.Is(err, sql.ErrNoRows) || api.StatusErrorCheck(err, http.StatusNotFound) {
+			break
+		}
+
+		// Process actual errors.
+		if !IsRetriableError(err) {
+			logger.Debug("Database error", logger.Ctx{"err": err})
+			break
+		}
+
+		if i == maxRetries {
+			logger.Warn("Database error, giving up", logger.Ctx{"attempt": i, "err": err})
+			break
+		}
+
+		logger.Debug("Database error, retrying", logger.Ctx{"attempt": i, "err": err})
+		time.Sleep(jitter.Deviation(nil, 0.8)(100 * time.Millisecond))
 	}
 
 	return err
