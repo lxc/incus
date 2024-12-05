@@ -975,14 +975,39 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 }
 
 func (c *cmdFile) setOwnerMode(sftpConn *sftp.Client, targetPath string, args incus.InstanceFileArgs) error {
-	err := sftpConn.Chown(targetPath, int(args.UID), int(args.GID))
+	// Get the current stat information.
+	st, err := sftpConn.Stat(targetPath)
 	if err != nil {
 		return err
 	}
 
-	err = sftpConn.Chmod(targetPath, fs.FileMode(args.Mode))
-	if err != nil {
-		return err
+	fileStat, ok := st.Sys().(*sftp.FileStat)
+	if !ok {
+		return fmt.Errorf("Invalid filestat data for %q", targetPath)
+	}
+
+	// Set owner.
+	if args.UID >= 0 || args.GID >= 0 {
+		if args.UID == -1 {
+			args.UID = int64(fileStat.UID)
+		}
+
+		if args.GID == -1 {
+			args.GID = int64(fileStat.GID)
+		}
+
+		err = sftpConn.Chown(targetPath, int(args.UID), int(args.GID))
+		if err != nil {
+			return err
+		}
+	}
+
+	// Set mode.
+	if args.Mode >= 0 {
+		err = sftpConn.Chmod(targetPath, fs.FileMode(args.Mode))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
