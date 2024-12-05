@@ -158,7 +158,7 @@ func (f *fga) ApplyPatch(ctx context.Context, name string) error {
 		}
 
 		if !resp.GetAllowed() {
-			err = f.updateTuples(ctx, []client.ClientTupleKey{
+			err = f.sendTuples(ctx, []client.ClientTupleKey{
 				{User: "user:*", Relation: "authenticated", Object: ObjectServer().String()},
 			}, nil)
 			if err != nil {
@@ -166,7 +166,7 @@ func (f *fga) ApplyPatch(ctx context.Context, name string) error {
 			}
 
 			// Attempt to clear the former version of this permission.
-			_ = f.updateTuples(ctx, nil, []client.ClientTupleKeyWithoutCondition{
+			_ = f.sendTuples(ctx, nil, []client.ClientTupleKeyWithoutCondition{
 				{User: "user:*", Relation: "viewer", Object: ObjectServer().String()},
 			})
 		}
@@ -210,7 +210,7 @@ func (f *fga) connect(ctx context.Context, certificateCache *certificate.Cache, 
 		}
 
 		// Allow basic authenticated access.
-		err = f.updateTuples(ctx, []client.ClientTupleKey{
+		err = f.sendTuples(ctx, []client.ClientTupleKey{
 			{User: "user:*", Relation: "authenticated", Object: ObjectServer().String()},
 		}, nil)
 		if err != nil {
@@ -866,6 +866,7 @@ func (f *fga) DeleteStorageBucket(ctx context.Context, projectName string, stora
 	return f.updateTuples(ctx, nil, deletions)
 }
 
+// updateTuples sends an object update to OpenFGA if it's currently online.
 func (f *fga) updateTuples(ctx context.Context, writes []client.ClientTupleKey, deletions []client.ClientTupleKeyWithoutCondition) error {
 	// If offline, skip updating as a full sync will happen after connection.
 	if !f.online {
@@ -876,6 +877,11 @@ func (f *fga) updateTuples(ctx context.Context, writes []client.ClientTupleKey, 
 		return nil
 	}
 
+	return f.sendTuples(ctx, writes, deletions)
+}
+
+// sendTuples directly sends the write/deletion tuples to OpenFGA.
+func (f *fga) sendTuples(ctx context.Context, writes []client.ClientTupleKey, deletions []client.ClientTupleKeyWithoutCondition) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
