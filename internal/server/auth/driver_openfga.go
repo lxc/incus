@@ -146,7 +146,33 @@ func (f *fga) StopService(ctx context.Context) error {
 
 // ApplyPatch is called when an applicable server patch is run, this triggers a model re-upload.
 func (f *fga) ApplyPatch(ctx context.Context, name string) error {
-	// Upload a new model.
+	if name == "auth_openfga_viewer" {
+		// Add the public access permission if not set.
+		resp, err := f.client.Check(ctx).Body(client.ClientCheckRequest{
+			User:     "user:*",
+			Relation: "authenticated",
+			Object:   ObjectServer().String(),
+		}).Execute()
+		if err != nil {
+			return err
+		}
+
+		if !resp.GetAllowed() {
+			err = f.updateTuples(ctx, []client.ClientTupleKey{
+				{User: "user:*", Relation: "authenticated", Object: ObjectServer().String()},
+			}, nil)
+			if err != nil {
+				return err
+			}
+
+			// Attempt to clear the former version of this permission.
+			_ = f.updateTuples(ctx, nil, []client.ClientTupleKeyWithoutCondition{
+				{User: "user:*", Relation: "viewer", Object: ObjectServer().String()},
+			})
+		}
+	}
+
+	// Always refresh the model.
 	logger.Info("Refreshing the OpenFGA model")
 	return f.refreshModel(ctx)
 }
@@ -176,9 +202,19 @@ func (f *fga) connect(ctx context.Context, certificateCache *certificate.Cache, 
 	// Check if we need to upload an initial model.
 	if readModelResponse.AuthorizationModel == nil {
 		logger.Info("Upload initial OpenFGA model")
+
+		// Upload the model itself.
 		err := f.refreshModel(ctx)
 		if err != nil {
 			return fmt.Errorf("Failed to load initial model: %w", err)
+		}
+
+		// Allow basic authenticated access.
+		err = f.updateTuples(ctx, []client.ClientTupleKey{
+			{User: "user:*", Relation: "authenticated", Object: ObjectServer().String()},
+		}, nil)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -916,42 +952,9 @@ func (f *fga) projectObjects(ctx context.Context, projectName string) ([]string,
 	return allObjects, nil
 }
 
-func (f *fga) applyPatches(ctx context.Context) ([]client.ClientTupleKey, []client.ClientTupleKeyWithoutCondition, error) {
+func (f *fga) syncResources(ctx context.Context, resources Resources) error {
 	var writes []client.ClientTupleKey
 	var deletions []client.ClientTupleKeyWithoutCondition
-
-	// Add the public access permission if not set.
-	resp, err := f.client.Check(ctx).Body(client.ClientCheckRequest{
-		User:     "user:*",
-		Relation: "authenticated",
-		Object:   ObjectServer().String(),
-	}).Execute()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if !resp.GetAllowed() {
-		writes = append(writes, client.ClientTupleKey{
-			User:     "user:*",
-			Relation: "authenticated",
-			Object:   ObjectServer().String(),
-		})
-
-		// Attempt to clear the former version of this permission.
-		_ = f.updateTuples(ctx, nil, []client.ClientTupleKeyWithoutCondition{
-			{User: "user:*", Relation: "viewer", Object: ObjectServer().String()},
-		})
-	}
-
-	return writes, deletions, nil
-}
-
-func (f *fga) syncResources(ctx context.Context, resources Resources) error {
-	// Apply model patches.
-	writes, deletions, err := f.applyPatches(ctx)
-	if err != nil {
-		return err
-	}
 
 	// Helper function for diffing local objects with those in OpenFGA. These are appended to the writes and deletions
 	// slices as appropriate. If the given relation is relationProject, we need to construct a project object for the
