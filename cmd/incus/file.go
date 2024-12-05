@@ -304,7 +304,7 @@ func (c *cmdFileCreate) Run(cmd *cobra.Command, args []string) error {
 		paths = []string{targetPath, symlinkTargetPath}
 	}
 
-	err = c.file.sftpCreateFile(resource, paths, fileArgs)
+	err = c.file.sftpCreateFile(resource, paths, fileArgs, false)
 	if err != nil {
 		progress.Done("")
 		return err
@@ -962,7 +962,7 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 		}, f)
 
 		logger.Infof("Pushing %s to %s (%s)", f.Name(), fpath, args.Type)
-		err = resource.server.CreateInstanceFile(resource.name, fpath, args)
+		err = c.file.sftpCreateFile(resource, []string{fpath}, args, true)
 		if err != nil {
 			progress.Done("")
 			return err
@@ -975,20 +975,45 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 }
 
 func (c *cmdFile) setOwnerMode(sftpConn *sftp.Client, targetPath string, args incus.InstanceFileArgs) error {
-	err := sftpConn.Chown(targetPath, int(args.UID), int(args.GID))
+	// Get the current stat information.
+	st, err := sftpConn.Stat(targetPath)
 	if err != nil {
 		return err
 	}
 
-	err = sftpConn.Chmod(targetPath, fs.FileMode(args.Mode))
-	if err != nil {
-		return err
+	fileStat, ok := st.Sys().(*sftp.FileStat)
+	if !ok {
+		return fmt.Errorf("Invalid filestat data for %q", targetPath)
+	}
+
+	// Set owner.
+	if args.UID >= 0 || args.GID >= 0 {
+		if args.UID == -1 {
+			args.UID = int64(fileStat.UID)
+		}
+
+		if args.GID == -1 {
+			args.GID = int64(fileStat.GID)
+		}
+
+		err = sftpConn.Chown(targetPath, int(args.UID), int(args.GID))
+		if err != nil {
+			return err
+		}
+	}
+
+	// Set mode.
+	if args.Mode >= 0 {
+		err = sftpConn.Chmod(targetPath, fs.FileMode(args.Mode))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (c *cmdFile) sftpCreateFile(resource remoteResource, targetPath []string, args incus.InstanceFileArgs) error {
+func (c *cmdFile) sftpCreateFile(resource remoteResource, targetPath []string, args incus.InstanceFileArgs, push bool) error {
 	sftpConn, err := resource.server.GetInstanceFileSFTP(resource.name)
 	if err != nil {
 		return err
@@ -998,9 +1023,18 @@ func (c *cmdFile) sftpCreateFile(resource remoteResource, targetPath []string, a
 
 	switch args.Type {
 	case "file":
-		_, err := sftpConn.OpenFile(targetPath[0], os.O_CREATE)
+		file, err := sftpConn.OpenFile(targetPath[0], os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
 		if err != nil {
 			return err
+		}
+
+		defer func() { _ = file.Close() }()
+
+		if push {
+			_, err = io.Copy(file, args.Content)
+			if err != nil {
+				return err
+			}
 		}
 
 		err = c.setOwnerMode(sftpConn, targetPath[0], args)
