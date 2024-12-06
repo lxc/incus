@@ -44,7 +44,10 @@ func (c *cmdCreate) Command() *cobra.Command {
 	cmd.Example = cli.FormatSection("", i18n.G(`incus create images:ubuntu/22.04 u1
 
 incus create images:ubuntu/22.04 u1 < config.yaml
-    Create the instance with configuration from config.yaml`))
+    Create the instance with configuration from config.yaml
+
+incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io.bus=nvme
+    Create and start a virtual machine, overriding the disk size and bus`))
 
 	cmd.Aliases = []string{"init"}
 	cmd.RunE = c.Run
