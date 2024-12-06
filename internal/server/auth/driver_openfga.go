@@ -146,6 +146,13 @@ func (f *fga) StopService(ctx context.Context) error {
 
 // ApplyPatch is called when an applicable server patch is run, this triggers a model re-upload.
 func (f *fga) ApplyPatch(ctx context.Context, name string) error {
+	// Always refresh the model.
+	logger.Info("Refreshing the OpenFGA model")
+	err := f.refreshModel(ctx)
+	if err != nil {
+		return err
+	}
+
 	if name == "auth_openfga_viewer" {
 		// Add the public access permission if not set.
 		resp, err := f.client.Check(ctx).Body(client.ClientCheckRequest{
@@ -172,9 +179,7 @@ func (f *fga) ApplyPatch(ctx context.Context, name string) error {
 		}
 	}
 
-	// Always refresh the model.
-	logger.Info("Refreshing the OpenFGA model")
-	return f.refreshModel(ctx)
+	return nil
 }
 
 func (f *fga) refreshModel(ctx context.Context) error {
