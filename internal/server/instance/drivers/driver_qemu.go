@@ -4870,7 +4870,7 @@ func (d *qemu) addTPMDeviceConfig(cfg *[]cfgSection, tpmConfig []deviceConfig.Ru
 		}
 	}
 
-	fd, err := unix.Open(socketPath, unix.O_PATH, 0)
+	fd, err := unix.Open(socketPath, unix.O_PATH|unix.O_CLOEXEC, 0)
 	if err != nil {
 		return err
 	}
