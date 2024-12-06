@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-12-05 00:32+0100\n"
+"POT-Creation-Date: 2024-12-06 15:12-0500\n"
 "PO-Revision-Date: 2024-10-14 01:15+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 <nlincus@users.noreply.hosted.weblate."
 "org>\n"
@@ -643,12 +643,12 @@ msgstr "%s (%s) (%d beschikbaar)"
 msgid "%s (backend=%q, source=%q)"
 msgstr "%s (backend=%q, source=%q)"
 
-#: cmd/incus/file.go:1237
+#: cmd/incus/file.go:1271
 #, c-format
 msgid "%s is not a directory"
 msgstr "%s is geen directory"
 
-#: cmd/incus/file.go:1127
+#: cmd/incus/file.go:1161
 #, c-format
 msgid "'%s' isn't a supported file type"
 msgstr "'%s' is geen ondersteund bestandstype"
@@ -687,7 +687,7 @@ msgid "--console only works with a single instance"
 msgstr ""
 "--console werkt alleen als het een enkele instantiatie (instance) betreft"
 
-#: cmd/incus/create.go:136 cmd/incus/rebuild.go:64
+#: cmd/incus/create.go:139 cmd/incus/rebuild.go:64
 msgid "--empty cannot be combined with an image name"
 msgstr ""
 "--empty kan niet gebruikt worden in combinatie met een virtuele disk (image) "
@@ -1056,7 +1056,7 @@ msgstr ""
 "Beide konden niet worden gevonden, de directe SPICE plug (raw SPICE socket) "
 "kan hier gevonden worden:"
 
-#: cmd/incus/create.go:378 cmd/incus/rebuild.go:131
+#: cmd/incus/create.go:381 cmd/incus/rebuild.go:131
 msgid "Asked for a VM but image is of type container"
 msgstr ""
 "Gevraagd naar een virtueel machine (VM), maar het bestand (image) is van het "
@@ -1182,7 +1182,7 @@ msgstr "Ongeldige device override syntax, verwacht: <device>,<key>=<value>: %s"
 msgid "Bad key/value pair: %s"
 msgstr "Ongeldig sleutel/waarde paar: %s"
 
-#: cmd/incus/copy.go:152 cmd/incus/create.go:242 cmd/incus/move.go:302
+#: cmd/incus/copy.go:152 cmd/incus/create.go:245 cmd/incus/move.go:302
 #: cmd/incus/network_integration.go:145 cmd/incus/project.go:171
 #, c-format
 msgid "Bad key=value pair: %q"
@@ -1371,7 +1371,7 @@ msgstr ""
 msgid "Can't use an image with --empty"
 msgstr ""
 
-#: cmd/incus/create.go:347
+#: cmd/incus/create.go:350
 #, c-format
 msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
@@ -1502,7 +1502,7 @@ msgstr ""
 
 #: cmd/incus/config.go:101 cmd/incus/config.go:393 cmd/incus/config.go:537
 #: cmd/incus/config.go:755 cmd/incus/config.go:886 cmd/incus/copy.go:61
-#: cmd/incus/create.go:59 cmd/incus/info.go:48 cmd/incus/move.go:64
+#: cmd/incus/create.go:62 cmd/incus/info.go:48 cmd/incus/move.go:64
 #: cmd/incus/network.go:347 cmd/incus/network.go:839 cmd/incus/network.go:920
 #: cmd/incus/network.go:1471 cmd/incus/network.go:1564
 #: cmd/incus/network.go:1636 cmd/incus/network_forward.go:251
@@ -1559,11 +1559,11 @@ msgstr "Clustering aan"
 msgid "Columns"
 msgstr "Kolommen"
 
-#: cmd/incus/main.go:106
+#: cmd/incus/main.go:99
 msgid "Command line client for Incus"
 msgstr "Lijncommando client voor Incus"
 
-#: cmd/incus/main.go:107
+#: cmd/incus/main.go:100
 msgid ""
 "Command line client for Incus\n"
 "\n"
@@ -1590,7 +1590,7 @@ msgstr "Compressie algoritme om te gebruiken (`none` is geen compressie)"
 msgid "Compression algorithm to use (none for uncompressed)"
 msgstr "Compressie algoritme om te gebruiken (none is zonder compressie)"
 
-#: cmd/incus/copy.go:53 cmd/incus/create.go:51
+#: cmd/incus/copy.go:53 cmd/incus/create.go:54
 msgid "Config key/value to apply to the new instance"
 msgstr "Configuratie sleutel/waarde toe te passen op de nieuwe instantiatie"
 
@@ -1800,7 +1800,7 @@ msgstr ""
 msgid "Create a new %s pool?"
 msgstr ""
 
-#: cmd/incus/create.go:62
+#: cmd/incus/create.go:65
 msgid "Create a virtual machine"
 msgstr ""
 
@@ -1808,7 +1808,7 @@ msgstr ""
 msgid "Create aliases for existing images"
 msgstr ""
 
-#: cmd/incus/create.go:61
+#: cmd/incus/create.go:64
 msgid "Create an empty instance"
 msgstr ""
 
@@ -1906,7 +1906,7 @@ msgstr ""
 msgid "Create storage pools"
 msgstr ""
 
-#: cmd/incus/copy.go:63 cmd/incus/create.go:60
+#: cmd/incus/copy.go:63 cmd/incus/create.go:63
 msgid "Create the instance with no profiles applied"
 msgstr ""
 
@@ -1916,7 +1916,7 @@ msgstr ""
 msgid "Created: %s"
 msgstr ""
 
-#: cmd/incus/create.go:176
+#: cmd/incus/create.go:179
 #, c-format
 msgid "Creating %s"
 msgstr ""
@@ -1926,7 +1926,7 @@ msgstr ""
 msgid "Creating %s: %%s"
 msgstr ""
 
-#: cmd/incus/create.go:174
+#: cmd/incus/create.go:177
 msgid "Creating the instance"
 msgstr ""
 
@@ -2137,7 +2137,7 @@ msgstr ""
 #: cmd/incus/create.go:43 cmd/incus/delete.go:32 cmd/incus/exec.go:41
 #: cmd/incus/export.go:32 cmd/incus/file.go:88 cmd/incus/file.go:135
 #: cmd/incus/file.go:331 cmd/incus/file.go:413 cmd/incus/file.go:491
-#: cmd/incus/file.go:719 cmd/incus/file.go:1288 cmd/incus/image.go:40
+#: cmd/incus/file.go:719 cmd/incus/file.go:1322 cmd/incus/image.go:40
 #: cmd/incus/image.go:148 cmd/incus/image.go:308 cmd/incus/image.go:363
 #: cmd/incus/image.go:498 cmd/incus/image.go:667 cmd/incus/image.go:924
 #: cmd/incus/image.go:1067 cmd/incus/image.go:1417 cmd/incus/image.go:1501
@@ -2145,7 +2145,7 @@ msgstr ""
 #: cmd/incus/image_alias.go:29 cmd/incus/image_alias.go:65
 #: cmd/incus/image_alias.go:129 cmd/incus/image_alias.go:183
 #: cmd/incus/image_alias.go:367 cmd/incus/import.go:27 cmd/incus/info.go:35
-#: cmd/incus/launch.go:24 cmd/incus/list.go:50 cmd/incus/main.go:107
+#: cmd/incus/launch.go:24 cmd/incus/list.go:50 cmd/incus/main.go:100
 #: cmd/incus/manpage.go:22 cmd/incus/monitor.go:33 cmd/incus/move.go:35
 #: cmd/incus/network.go:36 cmd/incus/network.go:143 cmd/incus/network.go:240
 #: cmd/incus/network.go:337 cmd/incus/network.go:448 cmd/incus/network.go:506
@@ -2334,7 +2334,7 @@ msgstr ""
 msgid "Device: %s"
 msgstr ""
 
-#: cmd/incus/create.go:435
+#: cmd/incus/create.go:438
 msgid "Didn't get name of new instance from the server"
 msgstr ""
 
@@ -2346,7 +2346,7 @@ msgstr ""
 msgid "Directory to run the command in (default /root)"
 msgstr ""
 
-#: cmd/incus/file.go:1295
+#: cmd/incus/file.go:1329
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr ""
 
@@ -2445,7 +2445,7 @@ msgstr ""
 msgid "Don't require user confirmation for using --force"
 msgstr ""
 
-#: cmd/incus/main.go:128
+#: cmd/incus/main.go:121
 msgid "Don't show progress information"
 msgstr "Toon geen voortgang indicator/informatie"
 
@@ -2657,7 +2657,7 @@ msgstr ""
 msgid "Environment variable to set (e.g. HOME=/home/foo)"
 msgstr ""
 
-#: cmd/incus/copy.go:56 cmd/incus/create.go:54
+#: cmd/incus/copy.go:56 cmd/incus/create.go:57
 msgid "Ephemeral instance"
 msgstr ""
 
@@ -2721,13 +2721,13 @@ msgstr ""
 msgid "Error updating template file: %s"
 msgstr ""
 
-#: cmd/incus/main.go:342
+#: cmd/incus/main.go:348
 #, c-format
 msgid "Error while executing alias expansion: %s\n"
 msgstr ""
 
-#: cmd/incus/main.go:344
-#, fuzzy, c-format
+#: cmd/incus/main.go:351
+#, c-format
 msgid "Error: %v\n"
 msgstr ""
 
@@ -2886,12 +2886,12 @@ msgstr ""
 msgid "FQDN"
 msgstr ""
 
-#: cmd/incus/file.go:1552
+#: cmd/incus/file.go:1586
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr ""
 
-#: cmd/incus/file.go:1575
+#: cmd/incus/file.go:1609
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr ""
@@ -2906,12 +2906,12 @@ msgstr ""
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr ""
 
-#: cmd/incus/file.go:1602
+#: cmd/incus/file.go:1636
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr ""
 
-#: cmd/incus/file.go:1387
+#: cmd/incus/file.go:1421
 #, c-format
 msgid "Failed connecting to instance SFTP: %w"
 msgstr ""
@@ -2941,7 +2941,7 @@ msgstr ""
 msgid "Failed deleting source volume after copy: %w"
 msgstr ""
 
-#: cmd/incus/file.go:1508
+#: cmd/incus/file.go:1542
 #, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr ""
@@ -2966,22 +2966,22 @@ msgstr ""
 msgid "Failed import request: %w"
 msgstr ""
 
-#: cmd/incus/create.go:190
+#: cmd/incus/create.go:193
 #, c-format
 msgid "Failed loading network %q: %w"
 msgstr ""
 
-#: cmd/incus/create.go:326
+#: cmd/incus/create.go:329
 #, c-format
 msgid "Failed loading profile %q for device override: %w"
 msgstr ""
 
-#: cmd/incus/create.go:252
+#: cmd/incus/create.go:255
 #, c-format
 msgid "Failed loading storage pool %q: %w"
 msgstr ""
 
-#: cmd/incus/file.go:1513
+#: cmd/incus/file.go:1547
 #, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr ""
@@ -2996,12 +2996,12 @@ msgstr ""
 msgid "Failed starting command: %w"
 msgstr ""
 
-#: cmd/incus/file.go:1413
+#: cmd/incus/file.go:1447
 #, c-format
 msgid "Failed starting sshfs: %w"
 msgstr ""
 
-#: cmd/incus/file.go:1540
+#: cmd/incus/file.go:1574
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr ""
@@ -3105,12 +3105,12 @@ msgstr ""
 msgid "Failed to join cluster: %w"
 msgstr ""
 
-#: cmd/incus/file.go:1525
+#: cmd/incus/file.go:1559
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr ""
 
-#: cmd/incus/main.go:391 cmd/incus/main_aliases.go:213
+#: cmd/incus/main.go:398 cmd/incus/main_aliases.go:222
 #, c-format
 msgid "Failed to load configuration: %s"
 msgstr ""
@@ -3208,7 +3208,7 @@ msgstr ""
 msgid "Failed to update cluster member state: %w"
 msgstr ""
 
-#: cmd/incus/file.go:1122
+#: cmd/incus/file.go:1156
 #, c-format
 msgid "Failed to walk path for %s: %s"
 msgstr ""
@@ -3283,7 +3283,7 @@ msgstr ""
 msgid "Force the removal of running instances"
 msgstr ""
 
-#: cmd/incus/main.go:124
+#: cmd/incus/main.go:117
 msgid "Force using the local unix socket"
 msgstr ""
 
@@ -3345,7 +3345,7 @@ msgstr ""
 msgid "Forward delay"
 msgstr ""
 
-#: cmd/incus/main_aliases.go:136
+#: cmd/incus/main_aliases.go:147
 #, c-format
 msgid "Found alias %q references an argument outside the given number"
 msgstr ""
@@ -3580,22 +3580,22 @@ msgstr ""
 msgid "Hugepages:\n"
 msgstr ""
 
-#: cmd/incus/file.go:1625
+#: cmd/incus/file.go:1659
 #, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr ""
 
-#: cmd/incus/file.go:1614
+#: cmd/incus/file.go:1648
 #, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr ""
 
-#: cmd/incus/file.go:1437
+#: cmd/incus/file.go:1471
 #, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr ""
 
-#: cmd/incus/file.go:1447
+#: cmd/incus/file.go:1481
 #, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr ""
@@ -3663,7 +3663,7 @@ msgstr ""
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 
-#: cmd/incus/main.go:452
+#: cmd/incus/main.go:459
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -3719,7 +3719,7 @@ msgstr ""
 msgid "Image refreshed successfully!"
 msgstr ""
 
-#: cmd/incus/action.go:170 cmd/incus/launch.go:41
+#: cmd/incus/action.go:170 cmd/incus/launch.go:44
 msgid "Immediately attach to the console"
 msgstr ""
 
@@ -3785,7 +3785,7 @@ msgstr ""
 msgid "Importing instance: %s"
 msgstr ""
 
-#: cmd/incus/create.go:55
+#: cmd/incus/create.go:58
 msgid "Include environment variables from file"
 msgstr ""
 
@@ -3809,11 +3809,11 @@ msgstr ""
 msgid "Instance Only"
 msgstr ""
 
-#: cmd/incus/file.go:1439
+#: cmd/incus/file.go:1473
 msgid "Instance disconnected"
 msgstr ""
 
-#: cmd/incus/file.go:1616
+#: cmd/incus/file.go:1650
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr ""
@@ -3822,12 +3822,12 @@ msgstr ""
 msgid "Instance name is mandatory"
 msgstr ""
 
-#: cmd/incus/create.go:445
+#: cmd/incus/create.go:448
 #, c-format
 msgid "Instance name is: %s"
 msgstr ""
 
-#: cmd/incus/file.go:1359
+#: cmd/incus/file.go:1393
 msgid "Instance path cannot be used in SSH SFTP listener mode"
 msgstr ""
 
@@ -3841,7 +3841,7 @@ msgstr ""
 msgid "Instance snapshots cannot be rebuilt: %s"
 msgstr ""
 
-#: cmd/incus/create.go:58
+#: cmd/incus/create.go:61
 msgid "Instance type"
 msgstr ""
 
@@ -3860,7 +3860,7 @@ msgstr ""
 msgid "Invalid URL scheme \"%s\" in \"%s\""
 msgstr ""
 
-#: cmd/incus/main_aliases.go:132 cmd/incus/main_aliases.go:175
+#: cmd/incus/main_aliases.go:143 cmd/incus/main_aliases.go:186
 #, c-format
 msgid "Invalid argument %q"
 msgstr ""
@@ -3927,7 +3927,7 @@ msgstr ""
 msgid "Invalid instance name: %s"
 msgstr ""
 
-#: cmd/incus/file.go:1354
+#: cmd/incus/file.go:1388
 #, c-format
 msgid "Invalid instance path: %q"
 msgstr ""
@@ -3958,7 +3958,7 @@ msgid ""
 "Invalid name in '%s', empty string is only allowed when defining maxWidth"
 msgstr ""
 
-#: cmd/incus/main.go:548 cmd/incus/storage.go:134
+#: cmd/incus/main.go:555 cmd/incus/storage.go:134
 msgid "Invalid number of arguments"
 msgstr ""
 
@@ -4059,12 +4059,12 @@ msgstr ""
 msgid "Last used: never"
 msgstr ""
 
-#: cmd/incus/create.go:170
+#: cmd/incus/create.go:173
 #, c-format
 msgid "Launching %s"
 msgstr ""
 
-#: cmd/incus/create.go:168
+#: cmd/incus/create.go:171
 msgid "Launching the instance"
 msgstr ""
 
@@ -4926,12 +4926,12 @@ msgstr ""
 msgid "Logical router"
 msgstr ""
 
-#: cmd/incus/file.go:1531
+#: cmd/incus/file.go:1565
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr ""
 
-#: cmd/incus/file.go:1533
+#: cmd/incus/file.go:1567
 msgid "Login without username and password"
 msgstr ""
 
@@ -5186,8 +5186,8 @@ msgstr ""
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect \"custom\" "
-"(user created) volumes."
+"Unless specified through a prefix, all volume operations affect "
+"\"custom\" (user created) volumes."
 msgstr ""
 
 #: cmd/incus/remote.go:43 cmd/incus/remote.go:44
@@ -5495,7 +5495,7 @@ msgstr ""
 msgid "More than one file to download, but target is not a directory"
 msgstr ""
 
-#: cmd/incus/file.go:1287 cmd/incus/file.go:1288
+#: cmd/incus/file.go:1321 cmd/incus/file.go:1322
 msgid "Mount files from instances"
 msgstr ""
 
@@ -5768,7 +5768,7 @@ msgstr ""
 msgid "Network load balancer %s deleted"
 msgstr ""
 
-#: cmd/incus/create.go:56
+#: cmd/incus/create.go:59
 msgid "Network name"
 msgstr ""
 
@@ -5819,7 +5819,7 @@ msgstr ""
 msgid "New aliases to add to the image"
 msgstr ""
 
-#: cmd/incus/copy.go:54 cmd/incus/create.go:53 cmd/incus/move.go:57
+#: cmd/incus/copy.go:54 cmd/incus/create.go:56 cmd/incus/move.go:57
 msgid "New key/value to apply to a specific device"
 msgstr ""
 
@@ -5964,7 +5964,7 @@ msgstr ""
 msgid "Optimized Storage"
 msgstr ""
 
-#: cmd/incus/main.go:125
+#: cmd/incus/main.go:118
 msgid "Override the source project"
 msgstr ""
 
@@ -6042,12 +6042,12 @@ msgstr ""
 msgid "Partitions:"
 msgstr ""
 
-#: cmd/incus/main.go:413
+#: cmd/incus/main.go:420
 #, c-format
 msgid "Password for %s: "
 msgstr ""
 
-#: cmd/incus/file.go:1501
+#: cmd/incus/file.go:1535
 #, c-format
 msgid "Password rejected for %q"
 msgstr ""
@@ -6123,7 +6123,7 @@ msgstr ""
 msgid "Press CTRL-C to exit"
 msgstr ""
 
-#: cmd/incus/file.go:1417
+#: cmd/incus/file.go:1451
 msgid "Press ctrl+c to finish"
 msgstr ""
 
@@ -6145,7 +6145,7 @@ msgstr ""
 msgid "Pretty rendering (short for --format=pretty)"
 msgstr ""
 
-#: cmd/incus/main.go:123
+#: cmd/incus/main.go:116
 msgid "Print help"
 msgstr ""
 
@@ -6153,7 +6153,7 @@ msgstr ""
 msgid "Print the raw response"
 msgstr ""
 
-#: cmd/incus/main.go:122
+#: cmd/incus/main.go:115
 msgid "Print version number"
 msgstr ""
 
@@ -6162,7 +6162,7 @@ msgstr ""
 msgid "Processes: %d"
 msgstr ""
 
-#: cmd/incus/main_aliases.go:227 cmd/incus/main_aliases.go:234
+#: cmd/incus/main_aliases.go:236 cmd/incus/main_aliases.go:243
 #, c-format
 msgid "Processing aliases failed: %s"
 msgstr ""
@@ -6221,7 +6221,7 @@ msgstr ""
 msgid "Profile to apply to the new image"
 msgstr ""
 
-#: cmd/incus/copy.go:55 cmd/incus/create.go:52
+#: cmd/incus/copy.go:55 cmd/incus/create.go:55
 msgid "Profile to apply to the new instance"
 msgstr ""
 
@@ -6305,7 +6305,7 @@ msgstr ""
 msgid "Pull files from instances"
 msgstr ""
 
-#: cmd/incus/file.go:668 cmd/incus/file.go:1069
+#: cmd/incus/file.go:668 cmd/incus/file.go:1103
 #, c-format
 msgid "Pulling %s from %s: %%s"
 msgstr ""
@@ -6314,7 +6314,7 @@ msgstr ""
 msgid "Push files into instances"
 msgstr ""
 
-#: cmd/incus/file.go:948 cmd/incus/file.go:1169
+#: cmd/incus/file.go:948 cmd/incus/file.go:1203
 #, c-format
 msgid "Pushing %s to %s: %%s"
 msgstr ""
@@ -6645,7 +6645,7 @@ msgstr ""
 msgid "Retrieve the instance's console log"
 msgstr ""
 
-#: cmd/incus/create.go:392
+#: cmd/incus/create.go:395
 #, c-format
 msgid "Retrieving image: %s"
 msgstr ""
@@ -6712,17 +6712,17 @@ msgstr ""
 msgid "SR-IOV information:"
 msgstr ""
 
-#: cmd/incus/file.go:1528
+#: cmd/incus/file.go:1562
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr ""
 
-#: cmd/incus/file.go:1545
+#: cmd/incus/file.go:1579
 #, c-format
 msgid "SSH client connected %q"
 msgstr ""
 
-#: cmd/incus/file.go:1546
+#: cmd/incus/file.go:1580
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr ""
@@ -6836,7 +6836,7 @@ msgstr "Definieer een cluster groep configuratie sleutels (keys)"
 msgid "Set a cluster member's configuration keys"
 msgstr ""
 
-#: cmd/incus/file.go:1296
+#: cmd/incus/file.go:1330
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr ""
 
@@ -7139,7 +7139,7 @@ msgstr ""
 msgid "Set the key as an instance property"
 msgstr ""
 
-#: cmd/incus/file.go:1294
+#: cmd/incus/file.go:1328
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr ""
 
@@ -7151,11 +7151,11 @@ msgstr ""
 msgid "Setup loop based storage with SIZE in GiB"
 msgstr ""
 
-#: cmd/incus/main.go:126
+#: cmd/incus/main.go:119
 msgid "Show all debug messages"
 msgstr ""
 
-#: cmd/incus/main.go:127
+#: cmd/incus/main.go:120
 msgid "Show all information messages"
 msgstr ""
 
@@ -7203,7 +7203,7 @@ msgstr ""
 msgid "Show instance snapshot configuration"
 msgstr ""
 
-#: cmd/incus/main.go:306 cmd/incus/main.go:307
+#: cmd/incus/main.go:299 cmd/incus/main.go:300
 msgid "Show less common commands"
 msgstr ""
 
@@ -7420,7 +7420,7 @@ msgstr ""
 msgid "Started: %s"
 msgstr "Gestart: %s"
 
-#: cmd/incus/launch.go:114
+#: cmd/incus/launch.go:117
 #, c-format
 msgid "Starting %s"
 msgstr ""
@@ -7517,7 +7517,7 @@ msgstr ""
 msgid "Storage pool %s pending on member %s"
 msgstr ""
 
-#: cmd/incus/copy.go:60 cmd/incus/create.go:57 cmd/incus/import.go:34
+#: cmd/incus/copy.go:60 cmd/incus/create.go:60 cmd/incus/import.go:34
 #: cmd/incus/move.go:63
 msgid "Storage pool name"
 msgstr ""
@@ -7616,11 +7616,11 @@ msgstr ""
 msgid "Taken at"
 msgstr ""
 
-#: cmd/incus/file.go:1347
+#: cmd/incus/file.go:1381
 msgid "Target path and --listen flag cannot be used together"
 msgstr ""
 
-#: cmd/incus/file.go:1341
+#: cmd/incus/file.go:1375
 msgid "Target path must be a directory"
 msgstr ""
 
@@ -7707,7 +7707,7 @@ msgid ""
 "restarted"
 msgstr ""
 
-#: cmd/incus/create.go:466
+#: cmd/incus/create.go:469
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
 
@@ -7896,7 +7896,7 @@ msgstr ""
 msgid "There is no \"image name\".  Did you want an alias?"
 msgstr ""
 
-#: cmd/incus/main.go:333
+#: cmd/incus/main.go:339
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
 "As your platform can't run native Linux instances, you must connect to a "
@@ -7934,11 +7934,11 @@ msgstr ""
 msgid "Timestamps:"
 msgstr ""
 
-#: cmd/incus/create.go:468
+#: cmd/incus/create.go:471
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr ""
 
-#: cmd/incus/create.go:467
+#: cmd/incus/create.go:470
 msgid "To create a new network, use: incus network create"
 msgstr ""
 
@@ -7946,7 +7946,7 @@ msgstr ""
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
-#: cmd/incus/main.go:457
+#: cmd/incus/main.go:464
 msgid ""
 "To start your first container, try: incus launch images:ubuntu/22.04\n"
 "Or for a virtual machine: incus launch images:ubuntu/22.04 --vm"
@@ -8017,7 +8017,7 @@ msgstr ""
 msgid "Trust token for %s: "
 msgstr ""
 
-#: cmd/incus/action.go:339 cmd/incus/launch.go:151
+#: cmd/incus/action.go:339 cmd/incus/launch.go:154
 #, c-format
 msgid "Try `incus info --show-log %s%s` for more info"
 msgstr ""
@@ -8106,7 +8106,7 @@ msgstr ""
 msgid "Unknown certificate type %q"
 msgstr ""
 
-#: cmd/incus/file.go:1568
+#: cmd/incus/file.go:1602
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr ""
@@ -8133,7 +8133,7 @@ msgstr ""
 msgid "Unknown console type %q"
 msgstr ""
 
-#: cmd/incus/file.go:1109
+#: cmd/incus/file.go:1143
 #, c-format
 msgid "Unknown file type '%s'"
 msgstr ""
@@ -8357,7 +8357,7 @@ msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool)"
 msgstr ""
 
-#: cmd/incus/main.go:129
+#: cmd/incus/main.go:122
 msgid "Use with help or --help to view sub-commands"
 msgstr ""
 
@@ -8869,7 +8869,7 @@ msgid ""
 "[<remote>:]<instance>/<path> [[<remote>:]<instance>/<path>...] <target path>"
 msgstr ""
 
-#: cmd/incus/file.go:1286
+#: cmd/incus/file.go:1320
 msgid "[<remote>:]<instance>[/<path>] [<target path>]"
 msgstr ""
 
@@ -9384,7 +9384,11 @@ msgid ""
 "incus create images:ubuntu/22.04 u1\n"
 "\n"
 "incus create images:ubuntu/22.04 u1 < config.yaml\n"
-"    Create the instance with configuration from config.yaml"
+"    Create the instance with configuration from config.yaml\n"
+"\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
+"    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
 #: cmd/incus/storage.go:102
@@ -9419,7 +9423,7 @@ msgid ""
 "\t   To create a symlink /bar in instance foo whose target is baz."
 msgstr ""
 
-#: cmd/incus/file.go:1290
+#: cmd/incus/file.go:1324
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory."
@@ -9475,7 +9479,11 @@ msgid ""
 "\n"
 "incus launch images:ubuntu/22.04 v1 --vm -c limits.cpu=4 -c limits."
 "memory=4GiB\n"
-"    Create and start a virtual machine with 4 vCPUs and 4GiB of RAM"
+"    Create and start a virtual machine with 4 vCPUs and 4GiB of RAM\n"
+"\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
+"    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
 #: cmd/incus/list.go:124
@@ -9879,16 +9887,16 @@ msgstr "gebruik `incus profile`"
 msgid "space used"
 msgstr "ruimte gebruikt"
 
-#: cmd/incus/file.go:1457
+#: cmd/incus/file.go:1491
 msgid "sshfs has stopped"
 msgstr "sshfs is gestopt"
 
-#: cmd/incus/file.go:1416
+#: cmd/incus/file.go:1450
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr "sshfs koppelen van %q op %q"
 
-#: cmd/incus/file.go:1369
+#: cmd/incus/file.go:1403
 msgid "sshfs not found. Try SSH SFTP mode using the --listen flag"
 msgstr "sshfs niet gevonden. Probeer SSH SFTP methode via de --listen optie"
 
