@@ -185,6 +185,21 @@ Finally, you can add users to the `incus-admin` group to provide non-root access
 For any NixOS specific issues, please [file an issue](https://github.com/NixOS/nixpkgs/issues/new/choose) in the package repository.
 ```
 
+```{group-tab} openSUSE
+Incus and its dependencies are packaged in both openSUSE Tumbleweed and openSUSE Leap 15.6 and later (this is available through openSUSE Backports, so you can also install the same packages through PackageHub for SUSE Linux Enterprise Server 15 SP6 and later, though no support is provided by SUSE for said packages).
+
+Install Incus with:
+
+    zypper in incus
+
+If migrating from LXD, please also install `incus-tools` for `lxd-to-incus`.
+
+The default setup should work fine for most users, but if you intend to run many containers on your system you may wish to apply some custom `sysctl` settings [as suggested in the production deployments guide](./reference/server_settings.md).
+
+Please report packaging issues [here](https://bugzilla.opensuse.org/).
+Make sure to mark the bug as being in the "Containers" component, to make sure the right package maintainers see the bug.
+```
+
 ```{group-tab} Rocky Linux
 RPM packages and their dependencies are not yet available from the Extra Packages for Enterprise Linux (EPEL) repository, but via the [`neil/incus`](https://copr.fedorainfracloud.org/coprs/neil/incus/) Community Project (COPR) repository for Rocky Linux 9.
 
