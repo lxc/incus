@@ -17,6 +17,7 @@ import (
 	"github.com/lxc/incus/v6/shared/osarch"
 	"github.com/lxc/incus/v6/shared/subprocess"
 	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 type ociInfo struct {
@@ -152,6 +153,7 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		fmt.Sprintf("%s/%s", strings.Replace(r.httpHost, "https://", "docker://", -1), info.Alias),
 		fmt.Sprintf("oci:%s:latest", filepath.Join(ociPath, "oci")))
 	if err != nil {
+		logger.Debug("Error copying remote image to local", logger.Ctx{"image": info.Alias, "stdout": stdout, "stderr": err})
 		return nil, err
 	}
 
@@ -167,6 +169,7 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		"--image", filepath.Join(ociPath, "oci"),
 		filepath.Join(ociPath, "image"))
 	if err != nil {
+		logger.Debug("Error unpacking OCI image", logger.Ctx{"image": filepath.Join(ociPath, "oci"), "stdout": stdout, "stderr": err})
 		return nil, err
 	}
 
@@ -305,6 +308,7 @@ func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string
 	// Get the image information from skopeo.
 	stdout, err := subprocess.RunCommand("skopeo", "inspect", fmt.Sprintf("%s/%s", strings.Replace(r.httpHost, "https://", "docker://", -1), name))
 	if err != nil {
+		logger.Debug("Error getting image alias", logger.Ctx{"name": name, "stdout": stdout, "stderr": err})
 		return nil, "", err
 	}
 
