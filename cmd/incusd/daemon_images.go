@@ -102,7 +102,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			// Setup OCI client
 			remote, err = incus.ConnectOCI(args.Server, clientArgs)
 			if err != nil {
-				return nil, false, fmt.Errorf("Failed to connect to simple streams server %q: %w", args.Server, err)
+				return nil, false, fmt.Errorf("Failed to connect to oci server %q: %w", args.Server, err)
 			}
 		} else if protocol == "simplestreams" {
 			// Setup simplestreams client
@@ -114,7 +114,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 		// For public images, handle aliases and initial metadata
 		if args.Secret == "" {
-			// Look for a matching alias
+			// Look for a matching alias.  Note, this err message is lost!
 			entry, _, err := remote.GetImageAliasType(args.Type, fp)
 			if err == nil {
 				fp = entry.Target
