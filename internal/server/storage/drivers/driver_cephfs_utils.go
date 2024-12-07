@@ -44,20 +44,3 @@ func (d *cephfs) osdPoolExists(clusterName string, userName string, osdPoolName 
 
 	return true, nil
 }
-
-// getConfig parses the Ceph configuration file and returns the list of monitors and secret key.
-func (d *cephfs) getConfig(clusterName string, userName string) ([]string, string, error) {
-	// Get the monitor list.
-	monitors, err := CephMonitors(clusterName)
-	if err != nil {
-		return nil, "", err
-	}
-
-	// Get the keyring entry.
-	secret, err := CephKeyring(clusterName, userName)
-	if err != nil {
-		return nil, "", err
-	}
-
-	return monitors, secret, nil
-}
