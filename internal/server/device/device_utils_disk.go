@@ -137,7 +137,16 @@ func DiskMount(srcPath string, dstPath string, recursive bool, propagation strin
 	}
 
 	// Mount the filesystem
-	err = unix.Mount(srcPath, dstPath, fsName, uintptr(flags), mountOptionsStr)
+	if fsName == "ceph" {
+		// shell out to `mount.ceph` to do the work of
+		// determining monitor addresses and keyring
+		_, err = subprocess.RunCommand(
+			"mount.ceph", srcPath, dstPath,
+			"-o", mountOptionsStr,
+		)
+	} else {
+		err = unix.Mount(srcPath, dstPath, fsName, uintptr(flags), mountOptionsStr)
+	}
 	if err != nil {
 		return fmt.Errorf("Unable to mount %q at %q with filesystem %q: %w", srcPath, dstPath, fsName, err)
 	}
@@ -236,31 +245,6 @@ again:
 	}
 
 	goto again
-}
-
-// diskCephfsOptions returns the mntSrcPath and fsOptions to use for mounting a cephfs share.
-func diskCephfsOptions(clusterName string, userName string, fsName string, fsPath string) (string, []string, error) {
-	// Get the monitor list.
-	monAddresses, err := storageDrivers.CephMonitors(clusterName)
-	if err != nil {
-		return "", nil, err
-	}
-
-	// Get the keyring entry.
-	secret, err := storageDrivers.CephKeyring(clusterName, userName)
-	if err != nil {
-		return "", nil, err
-	}
-
-	// Prepare mount entry.
-	fsOptions := []string{
-		fmt.Sprintf("name=%v", userName),
-		fmt.Sprintf("secret=%v", secret),
-		fmt.Sprintf("mds_namespace=%v", fsName),
-	}
-
-	srcPath := strings.Join(monAddresses, ",") + ":/" + fsPath
-	return srcPath, fsOptions, nil
 }
 
 // diskAddRootUserNSEntry takes a set of idmap entries, and adds host -> userns root uid/gid mappings if needed.
