@@ -146,7 +146,7 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		req.ProgressHandler(ioprogress.ProgressData{Text: "Retrieving OCI image from registry"})
 	}
 
-	_, err = subprocess.RunCommand(
+	stdout, err := subprocess.RunCommand(
 		"skopeo",
 		"--insecure-policy",
 		"copy",
@@ -162,7 +162,7 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		req.ProgressHandler(ioprogress.ProgressData{Text: "Unpacking the OCI image"})
 	}
 
-	_, err = subprocess.RunCommand(
+	stdout, err = subprocess.RunCommand(
 		"umoci",
 		"unpack",
 		"--keep-dirlinks",
