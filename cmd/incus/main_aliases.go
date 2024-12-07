@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/kballard/go-shellquote"
+	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/v6/internal/i18n"
 	config "github.com/lxc/incus/v6/shared/cliconfig"
@@ -76,26 +77,36 @@ func findAlias(aliases map[string]string, origArgs []string) ([]string, []string
 	return aliasKey, aliasValue, foundAlias
 }
 
-func expandAlias(conf *config.Config, args []string) ([]string, bool, error) {
-	var completion = false
-	var completionFrament string
-	var newArgs []string
-	var origArgs []string
+func expandAlias(conf *config.Config, args []string, app *cobra.Command) ([]string, bool, error) {
+	fset := app.Flags()
 
-	for _, arg := range args[1:] {
-		if !strings.HasPrefix(arg, "-") {
-			break
-		}
-
-		newArgs = append(newArgs, arg)
+	nargs := fset.NArg()
+	firstArgIndex := 1
+	firstPosArgIndex := 0
+	if fset.Arg(0) == "__complete" {
+		nargs--
+		firstArgIndex++
+		firstPosArgIndex++
 	}
 
-	origArgs = append([]string{args[0]}, args[len(newArgs)+1:]...)
+	if nargs == 0 {
+		return nil, false, nil
+	}
+
+	lastFlagIndex := slices.Index(args, fset.Arg(firstPosArgIndex))
+
+	// newArgs contains all the flags before the first positional argument
+	newArgs := args[firstArgIndex:lastFlagIndex]
+
+	// origArgs contains everything except the flags in newArgs
+	origArgs := slices.Concat(args[:firstArgIndex], args[lastFlagIndex:])
 
 	// strip out completion subcommand and fragment from end
+	completion := false
+	completionFragment := ""
 	if len(origArgs) >= 3 && origArgs[1] == "__complete" {
 		completion = true
-		completionFrament = origArgs[len(origArgs)-1]
+		completionFragment = origArgs[len(origArgs)-1]
 		origArgs = append(origArgs[:1], origArgs[2:len(origArgs)-1]...)
 	}
 
@@ -189,7 +200,7 @@ func expandAlias(conf *config.Config, args []string) ([]string, bool, error) {
 	// add back in completion if it was stripped before
 	if completion {
 		newArgs = append([]string{newArgs[0], "__complete"}, newArgs[1:]...)
-		newArgs = append(newArgs, completionFrament)
+		newArgs = append(newArgs, completionFragment)
 	}
 
 	// Add the rest of the arguments only if @ARGS@ wasn't used.
@@ -200,9 +211,7 @@ func expandAlias(conf *config.Config, args []string) ([]string, bool, error) {
 	return newArgs, true, nil
 }
 
-func execIfAliases() error {
-	args := os.Args
-
+func execIfAliases(app *cobra.Command) error {
 	// Avoid loops
 	if os.Getenv("INCUS_ALIASES") == "1" {
 		return nil
@@ -214,7 +223,7 @@ func execIfAliases() error {
 	}
 
 	// Expand the aliases
-	newArgs, expanded, err := expandAlias(conf, args)
+	newArgs, expanded, err := expandAlias(conf, os.Args, app)
 	if err != nil {
 		return err
 	} else if !expanded {

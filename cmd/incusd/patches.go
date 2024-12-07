@@ -686,25 +686,6 @@ func patchMoveBackupsInstances(name string, d *Daemon) error {
 }
 
 func patchGenericAuthorization(name string, d *Daemon) error {
-	// Only run authorization patches on the leader.
-	isLeader := false
-
-	leaderAddress, err := d.gateway.LeaderAddress()
-	if err != nil {
-		if !errors.Is(err, cluster.ErrNodeIsNotClustered) {
-			return err
-		}
-
-		isLeader = true
-	} else if leaderAddress == d.localConfig.ClusterAddress() {
-		isLeader = true
-	}
-
-	// If clustered and not running on a leader, skip the resource update.
-	if !isLeader {
-		return nil
-	}
-
 	return d.authorizer.ApplyPatch(d.shutdownCtx, name)
 }
 
