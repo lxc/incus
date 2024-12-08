@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/subprocess"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -248,4 +249,16 @@ func CephKeyring(cluster string, client string) (string, error) {
 	}
 
 	return cephSecret, nil
+}
+
+// CephFSID returns the ceph fsid for a given cluster name
+// requires that the ceph client is avaible on the host.
+func CephFSID(cluster string) (string, error) {
+	fsid, err := subprocess.RunCommand("ceph", "--cluster", cluster)
+	if err != nil {
+		return "", fmt.Errorf("Failed to get fsid for cluster %q: %w", cluster, err)
+	}
+
+	fsid = strings.TrimSpace(fsid)
+	return fsid, nil
 }
