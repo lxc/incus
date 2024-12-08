@@ -1012,5 +1012,14 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		}
 	}
 
+	// Setup the authorization scriptlet.
+	value, ok = clusterChanged["authorization.scriptlet"]
+	if ok {
+		err := d.setupAuthorizationScriptlet(value)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

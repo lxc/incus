@@ -13,12 +13,13 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
-type tls struct {
+// TLS represents a TLS authorizer.
+type TLS struct {
 	commonAuthorizer
 	certificates *certificate.Cache
 }
 
-func (t *tls) load(ctx context.Context, certificateCache *certificate.Cache, opts Opts) error {
+func (t *TLS) load(ctx context.Context, certificateCache *certificate.Cache, opts Opts) error {
 	if certificateCache == nil {
 		return errors.New("TLS authorization driver requires a certificate cache")
 	}
@@ -28,7 +29,7 @@ func (t *tls) load(ctx context.Context, certificateCache *certificate.Cache, opt
 }
 
 // CheckPermission returns an error if the user does not have the given Entitlement on the given Object.
-func (t *tls) CheckPermission(ctx context.Context, r *http.Request, object Object, entitlement Entitlement) error {
+func (t *TLS) CheckPermission(ctx context.Context, r *http.Request, object Object, entitlement Entitlement) error {
 	details, err := t.requestDetails(r)
 	if err != nil {
 		return api.StatusErrorf(http.StatusForbidden, "Failed to extract request details: %v", err)
@@ -55,7 +56,7 @@ func (t *tls) CheckPermission(ctx context.Context, r *http.Request, object Objec
 		return nil
 	}
 
-	if details.isAllProjectsRequest {
+	if details.IsAllProjectsRequest {
 		// Only admins (users with non-restricted certs) can use the all-projects parameter.
 		return api.StatusErrorf(http.StatusForbidden, "Certificate is restricted")
 	}
@@ -100,7 +101,7 @@ func (t *tls) CheckPermission(ctx context.Context, r *http.Request, object Objec
 }
 
 // GetPermissionChecker returns a function that can be used to check whether a user has the required entitlement on an authorization object.
-func (t *tls) GetPermissionChecker(ctx context.Context, r *http.Request, entitlement Entitlement, objectType ObjectType) (PermissionChecker, error) {
+func (t *TLS) GetPermissionChecker(ctx context.Context, r *http.Request, entitlement Entitlement, objectType ObjectType) (PermissionChecker, error) {
 	allowFunc := func(b bool) func(Object) bool {
 		return func(Object) bool {
 			return b
@@ -161,8 +162,8 @@ func (t *tls) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 	}
 
 	// Error if user does not have access to the project (unless we're getting projects, where we want to filter the results).
-	if !details.isAllProjectsRequest && !slices.Contains(projectNames, details.projectName) && objectType != ObjectTypeProject {
-		return nil, api.StatusErrorf(http.StatusForbidden, "User does not have permissions for project %q", details.projectName)
+	if !details.IsAllProjectsRequest && !slices.Contains(projectNames, details.ProjectName) && objectType != ObjectTypeProject {
+		return nil, api.StatusErrorf(http.StatusForbidden, "User does not have permissions for project %q", details.ProjectName)
 	}
 
 	// Filter objects by project.
@@ -191,7 +192,7 @@ func (t *tls) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 
 // certificateDetails returns the certificate type, a boolean indicating if the certificate is *not* restricted, a slice of
 // project names for this certificate, or an error if the certificate could not be found.
-func (t *tls) certificateDetails(fingerprint string) (certificate.Type, bool, []string, error) {
+func (t *TLS) certificateDetails(fingerprint string) (certificate.Type, bool, []string, error) {
 	certs, projects := t.certificates.GetCertificatesAndProjects()
 	clientCerts := certs[certificate.TypeClient]
 	_, ok := clientCerts[fingerprint]
@@ -228,7 +229,7 @@ func (t *tls) certificateDetails(fingerprint string) (certificate.Type, bool, []
 }
 
 // GetInstanceAccess returns the list of entities who have access to the instance.
-func (t *tls) GetInstanceAccess(ctx context.Context, projectName string, instanceName string) (*api.Access, error) {
+func (t *TLS) GetInstanceAccess(ctx context.Context, projectName string, instanceName string) (*api.Access, error) {
 	var access api.Access
 
 	certificates, projects := t.certificates.GetCertificatesAndProjects()
@@ -293,7 +294,7 @@ func (t *tls) GetInstanceAccess(ctx context.Context, projectName string, instanc
 }
 
 // GetProjectAccess returns the list of entities who have access to the project.
-func (t *tls) GetProjectAccess(ctx context.Context, projectName string) (*api.Access, error) {
+func (t *TLS) GetProjectAccess(ctx context.Context, projectName string) (*api.Access, error) {
 	var access api.Access
 
 	certificates, projects := t.certificates.GetCertificatesAndProjects()

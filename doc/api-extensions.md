@@ -2668,3 +2668,7 @@ This adds support to take screenshots of the current VGA console of a VM.
 ## `image_import_alias`
 
 Adds a new `X-Incus-aliases` HTTP header to set aliases while uploading an image.
+
+## `authorization_scriptlet`
+
+This adds the ability to define a scriptlet in a new configuration key, `authorization.scriptlet`, managing authorization on the Incus cluster.

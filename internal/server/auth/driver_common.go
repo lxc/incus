@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/lxc/incus/v6/internal/server/auth/common"
 	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
@@ -29,20 +30,18 @@ func (c *commonAuthorizer) init(driverName string, l logger.Logger) error {
 }
 
 type requestDetails struct {
-	userName             string
-	protocol             string
-	forwardedUsername    string
-	forwardedProtocol    string
-	isAllProjectsRequest bool
-	projectName          string
+	common.RequestDetails
+
+	forwardedUsername string
+	forwardedProtocol string
 }
 
 func (r *requestDetails) isInternalOrUnix() bool {
-	if r.protocol == "unix" {
+	if r.Protocol == "unix" {
 		return true
 	}
 
-	if r.protocol == "cluster" && (r.forwardedProtocol == "unix" || r.forwardedProtocol == "cluster" || r.forwardedProtocol == "") {
+	if r.Protocol == "cluster" && (r.forwardedProtocol == "unix" || r.forwardedProtocol == "cluster" || r.forwardedProtocol == "") {
 		return true
 	}
 
@@ -50,19 +49,28 @@ func (r *requestDetails) isInternalOrUnix() bool {
 }
 
 func (r *requestDetails) username() string {
-	if r.protocol == "cluster" && r.forwardedUsername != "" {
+	if r.Protocol == "cluster" && r.forwardedUsername != "" {
 		return r.forwardedUsername
 	}
 
-	return r.userName
+	return r.Username
 }
 
 func (r *requestDetails) authenticationProtocol() string {
-	if r.protocol == "cluster" {
+	if r.Protocol == "cluster" {
 		return r.forwardedProtocol
 	}
 
-	return r.protocol
+	return r.Protocol
+}
+
+func (r *requestDetails) actualDetails() *common.RequestDetails {
+	return &common.RequestDetails{
+		Username:             r.username(),
+		Protocol:             r.authenticationProtocol(),
+		IsAllProjectsRequest: r.IsAllProjectsRequest,
+		ProjectName:          r.ProjectName,
+	}
 }
 
 func (c *commonAuthorizer) requestDetails(r *http.Request) (*requestDetails, error) {
@@ -116,12 +124,15 @@ func (c *commonAuthorizer) requestDetails(r *http.Request) (*requestDetails, err
 	}
 
 	return &requestDetails{
-		userName:             username,
-		protocol:             protocol,
-		forwardedUsername:    forwardedUsername,
-		forwardedProtocol:    forwardedProtocol,
-		isAllProjectsRequest: util.IsTrue(values.Get("all-projects")),
-		projectName:          request.ProjectParam(r),
+		RequestDetails: common.RequestDetails{
+			Username:             username,
+			Protocol:             protocol,
+			IsAllProjectsRequest: util.IsTrue(values.Get("all-projects")),
+			ProjectName:          request.ProjectParam(r),
+		},
+
+		forwardedUsername: forwardedUsername,
+		forwardedProtocol: forwardedProtocol,
 	}, nil
 }
 

@@ -16,14 +16,18 @@ const (
 
 	// DriverOpenFGA provides fine-grained authorization. It is compatible with any authentication method.
 	DriverOpenFGA string = "openfga"
+
+	// DriverScriptlet provides scriptlet-based authorization. It is compatible with any authentication method.
+	DriverScriptlet string = "scriptlet"
 )
 
 // ErrUnknownDriver is the "Unknown driver" error.
 var ErrUnknownDriver = fmt.Errorf("Unknown driver")
 
 var authorizers = map[string]func() authorizer{
-	DriverTLS:     func() authorizer { return &tls{} },
-	DriverOpenFGA: func() authorizer { return &fga{} },
+	DriverTLS:       func() authorizer { return &TLS{} },
+	DriverOpenFGA:   func() authorizer { return &FGA{} },
+	DriverScriptlet: func() authorizer { return &Scriptlet{} },
 }
 
 type authorizer interface {
