@@ -147,6 +147,7 @@ func DiskMount(srcPath string, dstPath string, recursive bool, propagation strin
 	} else {
 		err = unix.Mount(srcPath, dstPath, fsName, uintptr(flags), mountOptionsStr)
 	}
+
 	if err != nil {
 		return fmt.Errorf("Unable to mount %q at %q with filesystem %q: %w", srcPath, dstPath, fsName, err)
 	}
