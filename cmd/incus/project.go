@@ -1185,7 +1185,7 @@ func (c *cmdProjectGetCurrent) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("Remote %s doesn't exist"), conf.DefaultRemote)
 	}
 	if remote.Project == "" {
-		fmt.Println("default")
+		fmt.Println(api.ProjectDefaultName)
 	} else {
 		fmt.Println(remote.Project)
 	}
