@@ -203,6 +203,11 @@ func (c *Config) InstancesPlacementScriptlet() string {
 	return c.m.GetString("instances.placement.scriptlet")
 }
 
+// AuthorizationScriptlet returns the authorization scriptlet source code.
+func (c *Config) AuthorizationScriptlet() string {
+	return c.m.GetString("authorization.scriptlet")
+}
+
 // InstancesLXCFSPerInstance returns whether LXCFS should be run on a per-instance basis.
 func (c *Config) InstancesLXCFSPerInstance() bool {
 	return c.m.GetBool("instances.lxcfs.per_instance")
@@ -343,6 +348,14 @@ var ConfigSchema = config.Schema{
 	//  defaultdesc: `false`
 	//  shortdesc: Agree to ACME terms of service
 	"acme.agree_tos": {Type: config.Bool, Default: "false"},
+
+	// gendoc:generate(entity=server, group=miscellaneous, key=authorization.scriptlet)
+	// When using scriptlet-based authorization, this option stores the scriptlet.
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: Authorization scriptlet
+	"authorization.scriptlet": {Validator: validate.Optional(scriptletLoad.AuthorizationValidate)},
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=backups.compression_algorithm)
 	// Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.

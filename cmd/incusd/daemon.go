@@ -1477,6 +1477,7 @@ func (d *Daemon) init() error {
 	syslogSocketEnabled := d.localConfig.SyslogSocket()
 	openfgaAPIURL, openfgaAPIToken, openfgaStoreID := d.globalConfig.OpenFGA()
 	instancePlacementScriptlet := d.globalConfig.InstancesPlacementScriptlet()
+	authorizationScriptlet := d.globalConfig.AuthorizationScriptlet()
 
 	d.endpoints.NetworkUpdateTrustedProxy(d.globalConfig.HTTPSTrustedProxy())
 	d.globalConfigMu.Unlock()
@@ -1510,6 +1511,14 @@ func (d *Daemon) init() error {
 		err = d.setupOpenFGA(openfgaAPIURL, openfgaAPIToken, openfgaStoreID)
 		if err != nil {
 			return fmt.Errorf("Failed to configure OpenFGA: %w", err)
+		}
+	}
+
+	// Setup the authorization scriptlet.
+	if authorizationScriptlet != "" {
+		err = d.setupAuthorizationScriptlet(authorizationScriptlet)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -2241,6 +2250,38 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 	d.authorizer = openfgaAuthorizer
 
 	revert.Success()
+	return nil
+}
+
+// Setup authorization scriptlet.
+func (d *Daemon) setupAuthorizationScriptlet(scriptlet string) error {
+	err := scriptletLoad.AuthorizationSet(scriptlet)
+	if err != nil {
+		return fmt.Errorf("Failed saving authorization scriptlet: %w", err)
+	}
+
+	if scriptlet == "" {
+		// Reset to default authorizer.
+		d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	// Fail if not using the default tls or scriptlet authorizer.
+	switch d.authorizer.(type) {
+	case *auth.TLS, *auth.Scriptlet:
+		d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverScriptlet, logger.Log, d.clientCerts)
+		if err != nil {
+			return err
+		}
+
+	default:
+		return errors.New("Attempting to setup scriptlet authorization while another authorizer is already set")
+	}
+
 	return nil
 }
 

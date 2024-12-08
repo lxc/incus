@@ -5,10 +5,11 @@ When interacting with Incus over the Unix socket, members of the `incus-admin` g
 Those who are only members of the `incus` group will instead be restricted to a single project tied to their user.
 
 When interacting with Incus over the network (see {ref}`server-expose` for instructions), it is possible to further authenticate and restrict user access.
-There are two supported authorization methods:
+There are three supported authorization methods:
 
 - {ref}`authorization-tls`
 - {ref}`authorization-openfga`
+- {ref}`authorization-scriptlet`
 
 (authorization-tls)=
 ## TLS authorization
@@ -20,7 +21,7 @@ To restrict access, use [`incus config trust edit <fingerprint>`](incus_config_t
 Set the `restricted` key to `true` and specify a list of projects to restrict the client to.
 If the list of projects is empty, the client will not be allowed access to any of them.
 
-This authorization method is always used if a client authenticates with TLS, regardless of whether another authorization method is configured.
+This authorization method is used if a client authenticates with TLS even if {ref}`OpenFGA authorization <authorization-openfga>` is configured.
 
 (authorization-openfga)=
 ## Open Fine-Grained Authorization (OpenFGA)
@@ -64,3 +65,21 @@ Users that you do not trust with root access to the host should not be granted t
 The remaining relations may be granted.
 However, you must apply appropriate {ref}`project-restrictions`.
 ```
+
+(authorization-scriptlet)=
+## Scriptlet authorization
+
+Incus supports defining a scriptlet to manage fine-grained authorization, allowing to write precise authorization rules with no dependency on external tools.
+
+To use scriptlet authorization, you can write a scriptlet in the `authorization.scriptlet` server configuration option implementing a function `authorize`, which takes three arguments:
+
+- `details`, an object with attributes `Username` (the user name or certificate fingerprint), `Protocol` (the authentication protocol), `IsAllProjectsRequest` (whether the request is made on all projects) and `ProjectName` (the project name)
+- `object`, the object on which the user requests authorization
+- `entitlement`, the authorization level asked by the user
+
+This function must return a Boolean indicating whether the user has access or not to the given object with the given entitlement.
+
+Additionally, two optional functions can be defined so that users can be listed through the access API:
+
+- `get_instance_access`, with two arguments (`project_name` and `instance_name`), returning a list of users able to access a given instance
+- `get_project_access`, with one argument (`project_name`), returning a list of users able to access a given project

@@ -15,6 +15,9 @@ const nameInstancePlacement = "instance_placement"
 // prefixQEMU is the prefix used in Starlark for the QEMU scriptlet.
 const prefixQEMU = "qemu"
 
+// prefixAuthorization is the prefix used in Starlark for the Authorization scriptlet.
+const prefixAuthorization = "authorization"
+
 // compile compiles a scriptlet.
 func compile(programName string, src string, preDeclared []string) (*starlark.Program, error) {
 	isPreDeclared := func(name string) bool {
@@ -126,7 +129,7 @@ func QEMUCompile(name string, src string) (*starlark.Program, error) {
 	})
 }
 
-// QEMUValidate validates the instance placement scriptlet.
+// QEMUValidate validates the QEMU scriptlet.
 func QEMUValidate(src string) error {
 	_, err := QEMUCompile(prefixQEMU, src)
 	return err
@@ -141,4 +144,30 @@ func QEMUSet(src string, instance string) error {
 // QEMUProgram returns the precompiled QEMU scriptlet program.
 func QEMUProgram(instance string) (*starlark.Program, *starlark.Thread, error) {
 	return program("QEMU", prefixQEMU+"/"+instance)
+}
+
+// AuthorizationCompile compiles the authorization scriptlet.
+func AuthorizationCompile(name string, src string) (*starlark.Program, error) {
+	return compile(name, src, []string{
+		"log_info",
+		"log_warn",
+		"log_error",
+	})
+}
+
+// AuthorizationValidate validates the authorization scriptlet.
+func AuthorizationValidate(src string) error {
+	_, err := AuthorizationCompile(prefixAuthorization, src)
+	return err
+}
+
+// AuthorizationSet compiles the authorization scriptlet into memory for use with AuthorizationRun.
+// If empty src is provided the current program is deleted.
+func AuthorizationSet(src string) error {
+	return set(AuthorizationCompile, prefixAuthorization, src)
+}
+
+// AuthorizationProgram returns the precompiled authorization scriptlet program.
+func AuthorizationProgram() (*starlark.Program, *starlark.Thread, error) {
+	return program("Authorization", prefixAuthorization)
 }

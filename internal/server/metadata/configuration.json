@@ -2681,6 +2681,14 @@
 			"miscellaneous": {
 				"keys": [
 					{
+						"authorization.scriptlet": {
+							"longdesc": "When using scriptlet-based authorization, this option stores the scriptlet.",
+							"scope": "global",
+							"shortdesc": "Authorization scriptlet",
+							"type": "string"
+						}
+					},
+					{
 						"backups.compression_algorithm": {
 							"defaultdesc": "`gzip`",
 							"longdesc": "Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.",
