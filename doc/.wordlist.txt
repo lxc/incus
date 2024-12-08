@@ -17,6 +17,7 @@ AXFR
 backend
 backends
 backported
+Backports
 balancer
 balancers
 benchmarking
@@ -183,6 +184,7 @@ OpenID
 OpenMetrics
 OpenSSL
 OpenSUSE
+openSUSE
 OpenTofu
 OSD
 overcommit
@@ -191,6 +193,7 @@ overlayfs
 OVMF
 OVN
 OVS
+PackageHub
 Pbit
 PCI
 PCIe
