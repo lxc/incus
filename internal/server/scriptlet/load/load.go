@@ -15,8 +15,8 @@ const nameInstancePlacement = "instance_placement"
 // prefixQEMU is the prefix used in Starlark for the QEMU scriptlet.
 const prefixQEMU = "qemu"
 
-// prefixAuthorization is the prefix used in Starlark for the Authorization scriptlet.
-const prefixAuthorization = "authorization"
+// nameAuthorization is the name used in Starlark for the Authorization scriptlet.
+const nameAuthorization = "authorization"
 
 // compile compiles a scriptlet.
 func compile(programName string, src string, preDeclared []string) (*starlark.Program, error) {
@@ -157,17 +157,17 @@ func AuthorizationCompile(name string, src string) (*starlark.Program, error) {
 
 // AuthorizationValidate validates the authorization scriptlet.
 func AuthorizationValidate(src string) error {
-	_, err := AuthorizationCompile(prefixAuthorization, src)
+	_, err := AuthorizationCompile(nameAuthorization, src)
 	return err
 }
 
 // AuthorizationSet compiles the authorization scriptlet into memory for use with AuthorizationRun.
 // If empty src is provided the current program is deleted.
 func AuthorizationSet(src string) error {
-	return set(AuthorizationCompile, prefixAuthorization, src)
+	return set(AuthorizationCompile, nameAuthorization, src)
 }
 
 // AuthorizationProgram returns the precompiled authorization scriptlet program.
 func AuthorizationProgram() (*starlark.Program, *starlark.Thread, error) {
-	return program("Authorization", prefixAuthorization)
+	return program("Authorization", nameAuthorization)
 }
