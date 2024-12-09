@@ -33,6 +33,47 @@ func compile(programName string, src string, preDeclared []string) (*starlark.Pr
 	return mod, nil
 }
 
+// validate validates a scriptlet by compiling it and checking the presence of required functions.
+func validate(compiler func(string, string) (*starlark.Program, error), programName string, src string, requiredFunctions []string) error {
+	prog, err := compiler(programName, src)
+	if err != nil {
+		return err
+	}
+
+	thread := &starlark.Thread{Name: programName}
+	globals, err := prog.Init(thread, nil)
+	if err != nil {
+		return err
+	}
+
+	globals.Freeze()
+
+	var notFound []string
+	for _, funName := range requiredFunctions {
+		// The function is missing if its name is not found in the globals.
+		requiredFun := globals[funName]
+		if requiredFun == nil {
+			notFound = append(notFound, funName)
+			continue
+		}
+
+		// The function is missing if its name is not bound to a function.
+		_, ok := requiredFun.(*starlark.Function)
+		if !ok {
+			notFound = append(notFound, funName)
+		}
+	}
+
+	switch len(notFound) {
+	case 0:
+		return nil
+	case 1:
+		return fmt.Errorf("The function %q is required but has not been found in the scriptlet", notFound[0])
+	default:
+		return fmt.Errorf("The functions %q are required but have not been found in the scriptlet", notFound)
+	}
+}
+
 var programsMu sync.Mutex
 var programs = make(map[string]*starlark.Program)
 
@@ -89,8 +130,9 @@ func InstancePlacementCompile(name string, src string) (*starlark.Program, error
 
 // InstancePlacementValidate validates the instance placement scriptlet.
 func InstancePlacementValidate(src string) error {
-	_, err := InstancePlacementCompile(nameInstancePlacement, src)
-	return err
+	return validate(InstancePlacementCompile, nameInstancePlacement, src, []string{
+		"instance_placement",
+	})
 }
 
 // InstancePlacementSet compiles the instance placement scriptlet into memory for use with InstancePlacementRun.
@@ -131,8 +173,9 @@ func QEMUCompile(name string, src string) (*starlark.Program, error) {
 
 // QEMUValidate validates the QEMU scriptlet.
 func QEMUValidate(src string) error {
-	_, err := QEMUCompile(prefixQEMU, src)
-	return err
+	return validate(QEMUCompile, prefixQEMU, src, []string{
+		"qemu_hook",
+	})
 }
 
 // QEMUSet compiles the QEMU scriptlet into memory for use with QEMURun.
@@ -157,8 +200,9 @@ func AuthorizationCompile(name string, src string) (*starlark.Program, error) {
 
 // AuthorizationValidate validates the authorization scriptlet.
 func AuthorizationValidate(src string) error {
-	_, err := AuthorizationCompile(nameAuthorization, src)
-	return err
+	return validate(AuthorizationCompile, nameAuthorization, src, []string{
+		"authorize",
+	})
 }
 
 // AuthorizationSet compiles the authorization scriptlet into memory for use with AuthorizationRun.
