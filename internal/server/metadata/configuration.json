@@ -69,12 +69,44 @@
 						}
 					},
 					{
+						"ceph.fsid": {
+							"longdesc": "Uniquely identifies the ceph cluster\n\nOverrides ceph.cluster_name\nThis will usually be retrieved from ceph.conf or the cluster directly\nusing `ceph-conf` or `ceph` respectively. If these tools are not available\nthen this will need to be provided.\n",
+							"required": "no",
+							"shortdesc": "Ceph File System ID",
+							"type": "string"
+						}
+					},
+					{
+						"ceph.mon_addr": {
+							"longdesc": "Used to establish connection to the ceph cluster.\n\nThis will usually be retrieved from ceph.conf or the cluster directly\nusing `ceph-conf` or `ceph` respectively. If these tools are not available\nthen this will need to be provided. Can be provided as ip addresses or\nhostnames, port is optional\n\nHas the form:\nmon1:3300,1.2.3.4:5678,mon2.example.net:6789",
+							"required": "no",
+							"shortdesc": "Ceph monitor address(es)",
+							"type": "string"
+						}
+					},
+					{
+						"ceph.user_key": {
+							"longdesc": "Used if authentication with cephx is required.\n\nIf needed at all will usually be retrieved using the `ceph-conf` tool.\nHowever if this is not available on the host or the key is not accessible\nto those tools then this will need to be provided.",
+							"required": "no",
+							"shortdesc": "Ceph user key",
+							"type": "string"
+						}
+					},
+					{
 						"ceph.user_name": {
 							"default": "`admin`",
 							"longdesc": "",
 							"required": "no",
 							"shortdesc": "The user name of the Ceph cluster (required for Ceph or CephFS sources)",
 							"type": "string"
+						}
+					},
+					{
+						"ceph.user_key": {
+							"required": "no",
+							"type": "string",
+							"shortdesc": "Ceph user key",
+							"longdesc": "Usually inferred using Ceph client tools on the host."
 						}
 					},
 					{

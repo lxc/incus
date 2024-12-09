@@ -300,6 +300,38 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		//  shortdesc: The cluster name of the Ceph cluster (required for Ceph or CephFS sources)
 		"ceph.cluster_name": validate.IsAny,
 
+		// gendoc:generate(entity=devices, group=disk, key=ceph.fsid)
+		// Uniquely identifies the ceph cluster
+		//
+		// Overrides ceph.cluster_name
+		// This will usually be retrieved from ceph.conf or the cluster directly
+		// using `ceph-conf` or `ceph` respectively. If these tools are not available
+		// then this will need to be provided.
+		//
+		// ---
+		// type: string
+		// required: no
+		// shortdesc: Ceph File System ID
+		"ceph.fsid": validate.Optional(validate.IsUUID),
+
+		// gendoc:generate(entity=devices, group=disk, key=ceph.mon_addr)
+		// Used to establish connection to the ceph cluster.
+		//
+		// This will usually be retrieved from ceph.conf or the cluster directly
+		// using `ceph-conf` or `ceph` respectively. If these tools are not available
+		// then this will need to be provided. Can be provided as ip addresses or
+		// hostnames, port is optional
+		//
+		// Has the form:
+		// mon1:3300,1.2.3.4:5678,mon2.example.net:6789
+		// ---
+		// type: string
+		// required: no
+		// shortdesc: Ceph monitor address(es)
+		"ceph.mon_addr": validate.Optional(
+			validate.IsListOf(validate.IsListenAddress(true, false, false)),
+		),
+
 		// gendoc:generate(entity=devices, group=disk, key=ceph.user_name)
 		//
 		// ---
@@ -308,6 +340,18 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		//  required: no
 		//  shortdesc: The user name of the Ceph cluster (required for Ceph or CephFS sources)
 		"ceph.user_name": validate.IsAny,
+
+		// gendoc:generate(entity=devices, group=disk, key=ceph.user_key)
+		// Used if authentication with cephx is required.
+		//
+		// If needed at all will usually be retrieved using the `ceph-conf` tool.
+		// However if this is not available on the host or the key is not accessible
+		// to those tools then this will need to be provided.
+		// ---
+		// type: string
+		// required: no
+		// shortdesc: Ceph user key
+		"ceph.user_key": validate.IsAny,
 
 		// gendoc:generate(entity=devices, group=disk, key=boot.priority)
 		//

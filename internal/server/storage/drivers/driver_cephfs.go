@@ -387,9 +387,12 @@ func (d *cephfs) Delete(op *operations.Operation) error {
 func (d *cephfs) Validate(config map[string]string) error {
 	rules := map[string]func(value string) error{
 		"cephfs.cluster_name":    validate.IsAny,
+		"cephfs.fsid":            validate.Optional(validate.IsUUID),
+		"cephfs.mon_addr":        validate.Optional(validate.IsListOf(validate.IsListenAddress(true, false, false))),
 		"cephfs.fscache":         validate.Optional(validate.IsBool),
 		"cephfs.path":            validate.IsAny,
 		"cephfs.user.name":       validate.IsAny,
+		"cephfs.user.secret":     validate.Optional(validate.IsAny),
 		"cephfs.create_missing":  validate.Optional(validate.IsBool),
 		"cephfs.osd_pg_num":      validate.Optional(validate.IsInt64),
 		"cephfs.meta_pool":       validate.IsAny,
