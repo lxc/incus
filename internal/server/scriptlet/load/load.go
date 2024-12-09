@@ -3,6 +3,7 @@ package load
 import (
 	"fmt"
 	"slices"
+	"sort"
 	"sync"
 
 	"go.starlark.net/starlark"
@@ -34,7 +35,7 @@ func compile(programName string, src string, preDeclared []string) (*starlark.Pr
 }
 
 // validate validates a scriptlet by compiling it and checking the presence of required functions.
-func validate(compiler func(string, string) (*starlark.Program, error), programName string, src string, requiredFunctions []string) error {
+func validate(compiler func(string, string) (*starlark.Program, error), programName string, src string, requiredFunctions map[string][]string) error {
 	prog, err := compiler(programName, src)
 	if err != nil {
 		return err
@@ -49,18 +50,43 @@ func validate(compiler func(string, string) (*starlark.Program, error), programN
 	globals.Freeze()
 
 	var notFound []string
-	for _, funName := range requiredFunctions {
+	for funName, requiredArgs := range requiredFunctions {
 		// The function is missing if its name is not found in the globals.
-		requiredFun := globals[funName]
-		if requiredFun == nil {
+		funv := globals[funName]
+		if funv == nil {
 			notFound = append(notFound, funName)
 			continue
 		}
 
 		// The function is missing if its name is not bound to a function.
-		_, ok := requiredFun.(*starlark.Function)
+		fun, ok := funv.(*starlark.Function)
 		if !ok {
 			notFound = append(notFound, funName)
+		}
+
+		// Get the function arguments.
+		argc := fun.NumParams()
+		var args []string
+		for i := range argc {
+			arg, _ := fun.Param(i)
+			args = append(args, arg)
+		}
+
+		// Return an error early if the function does not have the right arguments.
+		match := len(args) == len(requiredArgs)
+		if match {
+			sort.Strings(args)
+			sort.Strings(requiredArgs)
+			for i := range args {
+				if args[i] != requiredArgs[i] {
+					match = false
+					break
+				}
+			}
+		}
+
+		if !match {
+			return fmt.Errorf("The function %q defines arguments %q (expected: %q)", funName, args, requiredArgs)
 		}
 	}
 
@@ -130,8 +156,8 @@ func InstancePlacementCompile(name string, src string) (*starlark.Program, error
 
 // InstancePlacementValidate validates the instance placement scriptlet.
 func InstancePlacementValidate(src string) error {
-	return validate(InstancePlacementCompile, nameInstancePlacement, src, []string{
-		"instance_placement",
+	return validate(InstancePlacementCompile, nameInstancePlacement, src, map[string][]string{
+		"instance_placement": {"request", "candidate_members"},
 	})
 }
 
@@ -173,8 +199,8 @@ func QEMUCompile(name string, src string) (*starlark.Program, error) {
 
 // QEMUValidate validates the QEMU scriptlet.
 func QEMUValidate(src string) error {
-	return validate(QEMUCompile, prefixQEMU, src, []string{
-		"qemu_hook",
+	return validate(QEMUCompile, prefixQEMU, src, map[string][]string{
+		"qemu_hook": {"hook_name"},
 	})
 }
 
@@ -200,8 +226,8 @@ func AuthorizationCompile(name string, src string) (*starlark.Program, error) {
 
 // AuthorizationValidate validates the authorization scriptlet.
 func AuthorizationValidate(src string) error {
-	return validate(AuthorizationCompile, nameAuthorization, src, []string{
-		"authorize",
+	return validate(AuthorizationCompile, nameAuthorization, src, map[string][]string{
+		"authorize": {"details", "object", "entitlement"},
 	})
 }
 
