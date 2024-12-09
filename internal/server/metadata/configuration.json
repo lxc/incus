@@ -102,14 +102,6 @@
 						}
 					},
 					{
-						"ceph.user_key": {
-							"required": "no",
-							"type": "string",
-							"shortdesc": "Ceph user key",
-							"longdesc": "Usually inferred using Ceph client tools on the host."
-						}
-					},
-					{
 						"initial.*": {
 							"longdesc": "",
 							"required": "no",
