@@ -200,7 +200,6 @@ jobs:
             bind9-dnsutils \
             btrfs-progs \
             busybox-static \
-            ceph-common \
             dnsmasq-base \
             easy-rsa \
             gettext \
