@@ -284,7 +284,6 @@ jobs:
           sudo microceph disk add --wipe "${ephemeral_disk}"
           sudo rm -rf /etc/ceph
           sudo ln -s /var/snap/microceph/current/conf/ /etc/ceph
-          sudo find /etc/ceph -exec echo \{\} \; -exec cat \{\} \;
           sudo microceph enable rgw
           sudo microceph.ceph osd pool create cephfs_meta 32
           sudo microceph.ceph osd pool create cephfs_data 32
@@ -301,6 +300,8 @@ jobs:
             fi
           done
           sudo microceph.ceph status
+          echo "### MicroCeph Config ###"
+          sudo find /etc/ceph -type f -exec echo \{\} \; -exec cat \{\} \;
           sudo rm -f /snap/bin/rbd
 
       - name: "Ensure offline mode (block image server)"
@@ -316,3 +317,50 @@ jobs:
           echo "root:1000000:1000000000" | sudo tee /etc/subuid /etc/subgid
           cd test
           sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS, INCUS_BACKEND=${{ matrix.backend }} ./main.sh ${{ matrix.suite }}
+  documentation:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get install aspell aspell-en
+          sudo snap install mdl
+
+      - name: Run markdown linter
+        run: |
+          make doc-lint
+
+      - name: Run spell checker
+        run: |
+          make doc-spellcheck
+
+      - name: Run inclusive naming checker
+        uses: get-woke/woke-action@v0
+        with:
+          fail-on-error: true
+          woke-args: "*.md **/*.md -c https://github.com/canonical/Inclusive-naming/raw/main/config.yml"
+
+      - name: Run link checker
+        run: |
+          make doc-linkcheck
+
+      - name: Build docs (Sphinx)
+        run: make doc
+
+      - name: Print warnings (Sphinx)
+        run: if [ -s doc/.sphinx/warnings.txt ]; then cat doc/.sphinx/warnings.txt; exit 1; fi
+
+      - name: Upload documentation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: doc/html
