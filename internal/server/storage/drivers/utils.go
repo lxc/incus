@@ -164,14 +164,23 @@ func sameMount(srcPath string, dstPath string) bool {
 func TryMount(src string, dst string, fs string, flags uintptr, options string) error {
 	var err error
 
-	// Attempt 20 mounts over 10s
-	for i := 0; i < 20; i++ {
-		err = unix.Mount(src, dst, fs, flags, options)
-		if err == nil {
-			break
-		}
+	if fs == "ceph" {
+		// shell out to `mount.ceph` to do the work of
+		// determining monitor addresses and keyring
+		_, err = subprocess.RunCommand(
+			"mount.ceph", src, dst,
+			"-o", options,
+		)
+	} else {
+		// Attempt 20 mounts over 10s
+		for i := 0; i < 20; i++ {
+			err = unix.Mount(src, dst, fs, flags, options)
+			if err == nil {
+				break
+			}
 
-		time.Sleep(500 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
+		}
 	}
 
 	if err != nil {

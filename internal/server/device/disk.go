@@ -1790,17 +1790,13 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 			mdsPath := fields[1]
 			clusterName, userName := d.cephCreds()
 
-			// Get the mount options.
-			mntSrcPath, fsOptions, fsErr := diskCephfsOptions(clusterName, userName, mdsName, mdsPath)
-			if fsErr != nil {
-				return nil, "", false, fsErr
+			fsid, err := storageDrivers.CephFSID(clusterName)
+			if err != nil {
+				return nil, "", false, fmt.Errorf("Failed to get fsid for cluster %q: %w", clusterName, err)
 			}
 
-			// Join the options with any provided by the user.
-			mntOptions = append(mntOptions, fsOptions...)
-
 			fsName = "ceph"
-			srcPath = mntSrcPath
+			srcPath = fmt.Sprintf("%s@%s.%s=/%s", userName, fsid, mdsName, mdsPath)
 			isFile = false
 		} else if d.sourceIsCeph() {
 			// Get the pool and volume names.

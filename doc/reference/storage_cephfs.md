@@ -54,6 +54,7 @@ The `cephfs` driver in Incus supports snapshots if snapshots are enabled on the 
 ## Configuration options
 
 The following configuration options are available for storage pools that use the `cephfs` driver and for storage volumes in these pools.
+Usually [`cephfs.fsid`](storage-cephfs-pool-config), [`cephfs.monitor_addrs`](storage-cephfs-pool-config), and [`cephfs.user.key`](storage-cephfs-pool-config) will be automatically discovered using the Ceph admin tool & mount helper. However if those tools are not availble on the host then they will need to be provided.
 
 (storage-cephfs-pool-config)=
 ### Storage pool configuration
@@ -64,10 +65,13 @@ Key                           | Type                          | Default         
 `cephfs.create_missing`       | bool                          | `false`                                 | Create the file system and the missing data and metadata OSD pools
 `cephfs.data_pool`            | string                        | -                                       | Data OSD pool name to create for the file system
 `cephfs.fscache`              | bool                          | `false`                                 | Enable use of kernel `fscache` and `cachefilesd`
+`cephfs.fsid`                 | string                        | -                                       | Ceph cluster FSID, overrides `cluster_name`. Can usually be inferred.
 `cephfs.meta_pool`            | string                        | -                                       | Metadata OSD pool name to create for the file system
+`cephfs.mon_addr`             | string                        | -                                       | Ceph mon addresses, usually not required.
 `cephfs.osd_pg_num`           | string                        | -                                       | OSD pool `pg_num` to use when creating missing OSD pools
 `cephfs.path`                 | string                        | `/`                                     | The base path for the CephFS mount
 `cephfs.user.name`            | string                        | `admin`                                 | The Ceph user to use
+`cephfs.user.key`             | string                        | -                                       | Ceph user key, usually not required.
 `source`                      | string                        | -                                       | Existing CephFS file system or file system path to use
 `volatile.pool.pristine`      | string                        | `true`                                  | Whether the CephFS file system was empty on creation time
 

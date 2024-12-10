@@ -266,14 +266,22 @@ func (d *cephfs) Create() error {
 	}
 
 	// Get the credentials and host.
-	monAddresses, userSecret, err := d.getConfig(d.config["cephfs.cluster_name"], d.config["cephfs.user.name"])
+	fsid, err := CephFSID(d.config["cephfs.cluster_name"])
 	if err != nil {
 		return err
 	}
 
+	// Build source path
+	srcPath := fmt.Sprintf(
+		"%s@%s.%s=/%s",
+		d.config["cephfs.user.name"],
+		fsid,
+		fsName,
+		fsPath,
+	)
+
 	// Mount the pool.
-	srcPath := strings.Join(monAddresses, ",") + ":/"
-	err = TryMount(srcPath, mountPoint, "ceph", 0, fmt.Sprintf("name=%v,secret=%v,mds_namespace=%v", d.config["cephfs.user.name"], userSecret, fsName))
+	err = TryMount(srcPath, mountPoint, "ceph", 0, "")
 	if err != nil {
 		return err
 	}
@@ -327,14 +335,22 @@ func (d *cephfs) Delete(op *operations.Operation) error {
 	}
 
 	// Get the credentials and host.
-	monAddresses, userSecret, err := d.getConfig(d.config["cephfs.cluster_name"], d.config["cephfs.user.name"])
+	fsid, err := CephFSID(d.config["cephfs.cluster_name"])
 	if err != nil {
 		return err
 	}
 
+	// Build source path
+	srcPath := fmt.Sprintf(
+		"%s@%s.%s=/%s",
+		d.config["cephfs.user.name"],
+		fsid,
+		fsName,
+		fsPath,
+	)
+
 	// Mount the pool.
-	srcPath := strings.Join(monAddresses, ",") + ":/"
-	err = TryMount(srcPath, mountPoint, "ceph", 0, fmt.Sprintf("name=%v,secret=%v,mds_namespace=%v", d.config["cephfs.user.name"], userSecret, fsName))
+	err = TryMount(srcPath, mountPoint, "ceph", 0, "")
 	if err != nil {
 		return err
 	}
@@ -405,19 +421,27 @@ func (d *cephfs) Mount() (bool, error) {
 	}
 
 	// Get the credentials and host.
-	monAddresses, userSecret, err := d.getConfig(d.config["cephfs.cluster_name"], d.config["cephfs.user.name"])
+	fsid, err := CephFSID(d.config["cephfs.cluster_name"])
 	if err != nil {
 		return false, err
 	}
 
 	// Mount options.
-	options := fmt.Sprintf("name=%s,secret=%s,mds_namespace=%s", d.config["cephfs.user.name"], userSecret, fsName)
+	options := ""
 	if util.IsTrue(d.config["cephfs.fscache"]) {
-		options += ",fsc"
+		options += "fsc"
 	}
 
+	// Build source path
+	srcPath := fmt.Sprintf(
+		"%s@%s.%s=/%s",
+		d.config["cephfs.user.name"],
+		fsid,
+		fsName,
+		fsPath,
+	)
+
 	// Mount the pool.
-	srcPath := strings.Join(monAddresses, ",") + ":/" + fsPath
 	err = TryMount(srcPath, GetPoolMountPath(d.name), "ceph", 0, options)
 	if err != nil {
 		return false, err
