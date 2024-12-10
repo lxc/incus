@@ -138,7 +138,7 @@ func DiskMount(srcPath string, dstPath string, recursive bool, propagation strin
 
 	// Mount the filesystem
 	if fsName == "ceph" {
-		storageDrivers.CephMount(srcPath, dstPath, mountOptionsStr)
+		err = storageDrivers.CephMount(srcPath, dstPath, mountOptionsStr)
 	} else {
 		err = unix.Mount(srcPath, dstPath, fsName, uintptr(flags), mountOptionsStr)
 	}
