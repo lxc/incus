@@ -69,36 +69,12 @@
 						}
 					},
 					{
-						"ceph.mon_addr": {
-							"required": "no",
-							"type": "string",
-							"shortdesc": "Ceph monitor address(es)",
-							"longdesc": "Usually inferred using Ceph client tools on the host.\nProvided as `/` seperated list of host[:port]"
-						}
-					},
-					{
-						"ceph.fsid": {
-							"required": "no",
-							"type": "string",
-							"shortdesc": "Ceph File System ID",
-							"longdesc": "Usually inferred using Ceph client tools on the host.\nCan be retrived with `ceph fsid`"
-						}
-					},
-					{
 						"ceph.user_name": {
 							"default": "`admin`",
 							"longdesc": "",
 							"required": "no",
 							"shortdesc": "The user name of the Ceph cluster (required for Ceph or CephFS sources)",
 							"type": "string"
-						}
-					},
-					{
-						"ceph.user_key": {
-							"required": "no",
-							"type": "string",
-							"shortdesc": "Ceph user key",
-							"longdesc": "Usually inferred using Ceph client tools on the host."
 						}
 					},
 					{

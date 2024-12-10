@@ -10,6 +10,7 @@ import (
 	"github.com/lxc/incus/v6/shared/subprocess"
 )
 
+// CephMonmap represents the json (partial) output of `ceph mon dump`.
 type CephMonmap struct {
 	Fsid string `json:"fsid"`
 	Mons []struct {
@@ -125,11 +126,11 @@ func CephMonitors(cluster string) ([]string, error) {
 		}
 	}
 
-	if len(cephMon) > 0 {
-		return cephMon, nil
-	} else {
+	if len(cephMon) == 0 {
 		return nil, fmt.Errorf("Failed to retrieve monitors for %q", cluster)
 	}
+
+	return cephMon, nil
 }
 
 // CephKeyring gets the key for a particular Ceph cluster and client name.
@@ -142,10 +143,10 @@ func CephKeyring(cluster string, client string) (string, error) {
 		"--name", "client."+client,
 	)
 	if err != nil {
-		return cephSecret, nil
-	} else {
 		return "", fmt.Errorf("Failed to get key for 'client.%s' on %q", client, cluster)
 	}
+
+	return cephSecret, nil
 }
 
 // CephFSID returns the ceph fsid for a given cluster name
