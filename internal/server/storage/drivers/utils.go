@@ -165,12 +165,7 @@ func TryMount(src string, dst string, fs string, flags uintptr, options string) 
 	var err error
 
 	if fs == "ceph" {
-		// shell out to `mount.ceph` to do the work of
-		// determining monitor addresses and keyring
-		_, err = subprocess.RunCommand(
-			"mount.ceph", src, dst,
-			"-o", options,
-		)
+		err = CephMount(src, dst, options)
 	} else {
 		// Attempt 20 mounts over 10s
 		for i := 0; i < 20; i++ {

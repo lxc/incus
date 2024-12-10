@@ -138,12 +138,7 @@ func DiskMount(srcPath string, dstPath string, recursive bool, propagation strin
 
 	// Mount the filesystem
 	if fsName == "ceph" {
-		// shell out to `mount.ceph` to do the work of
-		// determining monitor addresses and keyring
-		_, err = subprocess.RunCommand(
-			"mount.ceph", srcPath, dstPath,
-			"-o", mountOptionsStr,
-		)
+		err = storageDrivers.CephMount(srcPath, dstPath, mountOptionsStr)
 	} else {
 		err = unix.Mount(srcPath, dstPath, fsName, uintptr(flags), mountOptionsStr)
 	}

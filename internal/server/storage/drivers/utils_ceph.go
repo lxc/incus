@@ -160,3 +160,18 @@ func CephFSID(cluster string) (string, error) {
 	fsid = strings.TrimSpace(fsid)
 	return fsid, nil
 }
+
+// CephMount attempts to mount a CephFS volume via the `ceph.mount` helper.
+func CephMount(src string, dst string, options string) error {
+	args := []string{
+		src,
+		dst,
+	}
+
+	if options != "" {
+		args = append(args, "-o", options)
+	}
+
+	_, err := subprocess.RunCommand("mount.ceph", args...)
+	return err
+}
