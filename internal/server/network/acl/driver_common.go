@@ -626,11 +626,17 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 
 	// Separate out OVN networks from non-OVN networks. This is because OVN networks share ACL config, and
 	// so changes are not applied entirely on a per-network basis and need to be treated differently.
+	// Separate the bridge networks used indirectly by NIC devices. This is because the ACL rules need to be
+	// applied to the bridge interface, not the network.
 	aclOVNNets := map[string]NetworkACLUsage{}
+	aclBridgeNICs := map[string]NetworkACLUsage{}
 	for k, v := range aclNets {
 		if v.Type == "ovn" {
 			delete(aclNets, k)
 			aclOVNNets[k] = v
+		} else if v.Type == "bridge" && v.DeviceName != "" {
+			delete(aclNets, k)
+			aclBridgeNICs[k] = v
 		} else if v.Type != "bridge" {
 			return fmt.Errorf("Unsupported network ACL type %q", v.Type)
 		}
@@ -641,6 +647,14 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 		err = FirewallApplyACLRules(d.state, d.logger, d.projectName, aclNet)
 		if err != nil {
 			return err
+		}
+	}
+
+	// If there are affected bridge NICs, apply the ACL changes to the bridge interface filter.
+	if len(aclBridgeNICs) > 0 {
+		err := BridgeUpdateACLs(d.state, d.logger, d.projectName, aclBridgeNICs)
+		if err != nil {
+			return fmt.Errorf("Failed updating bridge NIC ACL: %w", err)
 		}
 	}
 

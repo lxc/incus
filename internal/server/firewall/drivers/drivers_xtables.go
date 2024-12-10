@@ -810,7 +810,11 @@ func (d Xtables) instanceDeviceIPTablesComment(projectName string, instanceName 
 // If the parent bridge is managed by Incus then parentManaged argument should be true so that the rules added can
 // use the iptablesChainACLFilterPrefix chain. If not they are added to the main filter chains directly (which only
 // works for unmanaged bridges because those don't support ACLs).
-func (d Xtables) InstanceSetupBridgeFilter(projectName string, instanceName string, deviceName string, parentName string, hostName string, hwAddr string, IPv4Nets []*net.IPNet, IPv6Nets []*net.IPNet, parentManaged bool) error {
+func (d Xtables) InstanceSetupBridgeFilter(projectName string, instanceName string, deviceName string, parentName string, hostName string, hwAddr string, IPv4Nets []*net.IPNet, IPv6Nets []*net.IPNet, parentManaged bool, macFiltering bool, aclRules []ACLRule) error {
+	if len(aclRules) > 0 {
+		return fmt.Errorf("ACL rules not supported for xtables bridge filtering")
+	}
+
 	comment := d.instanceDeviceIPTablesComment(projectName, instanceName, deviceName)
 
 	rules := d.generateFilterEbtablesRules(hostName, hwAddr, IPv4Nets, IPv6Nets)
