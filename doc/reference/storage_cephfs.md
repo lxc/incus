@@ -54,7 +54,7 @@ The `cephfs` driver in Incus supports snapshots if snapshots are enabled on the 
 ## Configuration options
 
 The following configuration options are available for storage pools that use the `cephfs` driver and for storage volumes in these pools.
-Usually [`cephfs.fsid`](storage-cephfs-pool-config), [`cephfs.monitor_addrs`](storage-cephfs-pool-config), and [`cephfs.user.key`](storage-cephfs-pool-config) will be automatically discovered using the Ceph admin tool & mount helper. However if those tools are not availble on the host then they will need to be provided.
+Usually [`cephfs.fsid`](storage-cephfs-pool-config), [`cephfs.monitor_addrs`](storage-cephfs-pool-config), and [`cephfs.user.key`](storage-cephfs-pool-config) will be automatically discovered using the Ceph admin tool & mount helper. However if those tools are not available on the host then they will need to be provided.
 
 (storage-cephfs-pool-config)=
 ### Storage pool configuration
