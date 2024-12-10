@@ -249,6 +249,7 @@ jobs:
             bind9-dnsutils \
             btrfs-progs \
             busybox-static \
+            ceph-common \
             dnsmasq-base \
             easy-rsa \
             gettext \
@@ -389,7 +390,7 @@ jobs:
 
       - name: Create build directory
         run: |
-            mkdir bin
+          mkdir bin
 
       - name: Build static x86_64 incus
         env:
