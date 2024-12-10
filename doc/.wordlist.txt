@@ -84,6 +84,7 @@ ESA
 ETag
 failover
 FQDNs
+FSID
 Furo
 gapped
 GARM
@@ -159,6 +160,7 @@ MicroCeph
 MicroCloud
 MII
 MITM
+mon
 MTU
 Mullvad
 multicast

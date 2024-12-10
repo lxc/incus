@@ -300,6 +300,38 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		//  shortdesc: The cluster name of the Ceph cluster (required for Ceph or CephFS sources)
 		"ceph.cluster_name": validate.IsAny,
 
+		// gendoc:generate(entity=devices, group=disk, key=ceph.fsid)
+		// Uniquely identifies the Ceph cluster
+		//
+		// Overrides `ceph.cluster_name`
+		// This will usually be retrieved from `ceph.conf` or the cluster directly
+		// using `ceph-conf` or `ceph` respectively. If these tools are not available
+		// then this will need to be provided.
+		//
+		// ---
+		// type: string
+		// required: no
+		// shortdesc: Ceph File System ID
+		"ceph.fsid": validate.Optional(validate.IsUUID),
+
+		// gendoc:generate(entity=devices, group=disk, key=ceph.mon_addr)
+		// Used to establish connection to the Ceph cluster.
+		//
+		// This will usually be retrieved from `ceph.conf` or the cluster directly
+		// using `ceph-conf` or `ceph` respectively. If these tools are not available
+		// then this will need to be provided. Can be provided as IP addresses or
+		// host names, port is optional
+		//
+		// Has the form:
+		// mon1:3300,1.2.3.4:5678,mon2.example.net:6789
+		// ---
+		// type: string
+		// required: no
+		// shortdesc: Ceph monitor address(es)
+		"ceph.mon_addr": validate.Optional(
+			validate.IsListOf(validate.IsListenAddress(true, false, false)),
+		),
+
 		// gendoc:generate(entity=devices, group=disk, key=ceph.user_name)
 		//
 		// ---
@@ -308,6 +340,18 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		//  required: no
 		//  shortdesc: The user name of the Ceph cluster (required for Ceph or CephFS sources)
 		"ceph.user_name": validate.IsAny,
+
+		// gendoc:generate(entity=devices, group=disk, key=ceph.user_key)
+		// Used if authentication with Ceph is required.
+		//
+		// If needed at all will usually be retrieved using the `ceph-conf` tool.
+		// However if this is not available on the host or the key is not accessible
+		// to those tools then this will need to be provided.
+		// ---
+		// type: string
+		// required: no
+		// shortdesc: Ceph user key
+		"ceph.user_key": validate.IsAny,
 
 		// gendoc:generate(entity=devices, group=disk, key=boot.priority)
 		//
@@ -1790,17 +1834,13 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 			mdsPath := fields[1]
 			clusterName, userName := d.cephCreds()
 
-			// Get the mount options.
-			mntSrcPath, fsOptions, fsErr := diskCephfsOptions(clusterName, userName, mdsName, mdsPath)
-			if fsErr != nil {
-				return nil, "", false, fsErr
+			fsid, err := storageDrivers.CephFSID(clusterName)
+			if err != nil {
+				return nil, "", false, fmt.Errorf("Failed to get fsid for cluster %q: %w", clusterName, err)
 			}
 
-			// Join the options with any provided by the user.
-			mntOptions = append(mntOptions, fsOptions...)
-
 			fsName = "ceph"
-			srcPath = mntSrcPath
+			srcPath = fmt.Sprintf("%s@%s.%s=/%s", userName, fsid, mdsName, mdsPath)
 			isFile = false
 		} else if d.sourceIsCeph() {
 			// Get the pool and volume names.

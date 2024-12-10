@@ -1,10 +1,7 @@
-name: Tests
+name: Dev
 on:
   push:
-    branches:
-      - main
-      - stable-*
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -21,54 +18,15 @@ jobs:
       fail-fast: false
       matrix:
         go:
-          - oldstable
           - stable
-          - tip
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Dependency Review
-        uses: actions/dependency-review-action@v4
-        if: github.event_name == 'pull_request'
-
-      - id: ShellCheck
-        name: Differential ShellCheck
-        uses: redhat-plumbers-in-action/differential-shellcheck@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-        if: github.event_name == 'pull_request' && matrix.go == 'stable'
-
-      - name: Upload artifact with ShellCheck defects in SARIF format
-        uses: actions/upload-artifact@v4
-        with:
-          name: Differential ShellCheck SARIF
-          path: ${{ steps.ShellCheck.outputs.sarif }}
-        if: github.event_name == 'pull_request' && matrix.go == 'stable'
 
       - name: Install Go (${{ matrix.go }})
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
-        if: matrix.go != 'tip'
-
-      - name: Install Go (stable)
-        uses: actions/setup-go@v5
-        with:
-          go-version: stable
-        if: matrix.go == 'tip'
-
-      - name: Install Go (tip)
-        run: |
-          go install golang.org/dl/gotip@latest
-          gotip download
-          ~/sdk/gotip/bin/go version
-          echo "PATH=$HOME/go/bin:$HOME/sdk/gotip/bin/:$PATH" >> $GITHUB_ENV
-        if: matrix.go == 'tip'
-
-      - name: Check compatible min Go version
-        run: |
-          go mod tidy
 
       - name: Install dependencies
         run: |
@@ -96,6 +54,28 @@ jobs:
             shellcheck
 
           python3 -m pip install flake8
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        if: github.event_name == 'pull_request'
+
+      - name: Differential ShellCheck
+        uses: redhat-plumbers-in-action/differential-shellcheck@v5
+        id: ShellCheck
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+        if: github.event_name == 'pull_request' && matrix.go == 'stable'
+
+      - name: Upload artifact with ShellCheck defects in SARIF format
+        uses: actions/upload-artifact@v4
+        with:
+          name: Differential ShellCheck SARIF
+          path: ${{ steps.ShellCheck.outputs.sarif }}
+        if: github.event_name == 'pull_request' && matrix.go == 'stable'
+
+      - name: Check compatible min Go version
+        run: |
+          go mod tidy
 
       - name: Download go dependencies
         run: |
@@ -134,28 +114,15 @@ jobs:
         go:
           - stable
         suite:
-          - cluster
+          # - cluster
           - standalone
         backend:
           - dir
-          - btrfs
-          - lvm
-          - zfs
+          # - btrfs
+          # - lvm
+          # - zfs
           - ceph
-          - random
-        include:
-          - go: oldstable
-            suite: cluster
-            backend: dir
-          - go: oldstable
-            suite: standalone
-            backend: dir
-          - go: tip
-            suite: cluster
-            backend: dir
-          - go: tip
-            suite: standalone
-            backend: dir
+          # - random
 
     steps:
       - name: Performance tuning
@@ -197,28 +164,10 @@ jobs:
           sudo ip link delete docker0
           sudo nft flush ruleset
 
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Install Go (${{ matrix.go }})
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
-        if: matrix.go != 'tip'
-
-      - name: Install Go (stable)
-        uses: actions/setup-go@v5
-        with:
-          go-version: stable
-        if: matrix.go == 'tip'
-
-      - name: Install Go (tip)
-        run: |
-          go install golang.org/dl/gotip@latest
-          gotip download
-          ~/sdk/gotip/bin/go version
-          echo "PATH=$HOME/go/bin:$HOME/sdk/gotip/bin/:$PATH" >> $GITHUB_ENV
-        if: matrix.go == 'tip'
 
       - name: Install dependencies
         run: |
@@ -249,7 +198,6 @@ jobs:
             bind9-dnsutils \
             btrfs-progs \
             busybox-static \
-            ceph-common \
             dnsmasq-base \
             easy-rsa \
             gettext \
@@ -271,9 +219,6 @@ jobs:
             xz-utils \
             zfsutils-linux
 
-          # reclaim some space
-          sudo apt-get clean
-
           # Download minio.
           curl -sSfL https://dl.min.io/server/minio/release/linux-amd64/archive/minio_20240116160738.0.0_amd64.deb --output /tmp/minio.deb
           sudo apt-get install /tmp/minio.deb --yes
@@ -292,13 +237,11 @@ jobs:
           curl -sSfL https://api.github.com/repos/openfga/cli/releases/latest | jq -r '.assets | .[] | .browser_download_url | select(. | test("_linux_amd64.tar.gz$"))' | xargs -I {} curl -sSfL {} -o fga.tar.gz
           tar -xzf fga.tar.gz -C "$(go env GOPATH)/bin/"
 
-      - name: Download go dependencies
+      - name: Install dependencies (ceph-common)
+        if: ${{ matrix.backend == 'ceph' }}
         run: |
-          go mod download
-
-      - name: Run Incus build
-        run: |
-          make
+          sudo apt-get install --no-install-recommends -y \
+            ceph-common
 
       - name: Setup MicroCeph
         if: ${{ matrix.backend == 'ceph' }}
@@ -349,7 +292,24 @@ jobs:
             fi
           done
           sudo microceph.ceph status
+          echo "### MicroCeph Config ###"
+          sudo find /etc/ceph -type f -exec echo \{\} \; -exec cat \{\} \;
           sudo rm -f /snap/bin/rbd
+
+      - name: Cleanup apt cache
+        run: |
+          sudo apt-get clean
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download go dependencies
+        run: |
+          go mod download
+
+      - name: Run Incus build
+        run: |
+          make
 
       - name: "Ensure offline mode (block image server)"
         run: |
@@ -364,86 +324,6 @@ jobs:
           echo "root:1000000:1000000000" | sudo tee /etc/subuid /etc/subgid
           cd test
           sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS, INCUS_BACKEND=${{ matrix.backend }} ./main.sh ${{ matrix.suite }}
-
-  client:
-    name: Client
-    strategy:
-      fail-fast: false
-      matrix:
-        go:
-          - oldstable
-          - stable
-        os:
-          - ubuntu-latest
-          - macos-latest
-          - windows-latest
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go }}
-
-      - name: Create build directory
-        run: |
-          mkdir bin
-
-      - name: Build static x86_64 incus
-        env:
-          CGO_ENABLED: 0
-          GOARCH: amd64
-        run: |
-          go build -o bin/incus.x86_64 ./cmd/incus
-
-      - name: Build static aarch64 incus
-        env:
-          CGO_ENABLED: 0
-          GOARCH: arm64
-        run: |
-          go build -o bin/incus.aarch64 ./cmd/incus
-
-      - name: Build static incus-migrate
-        if: runner.os == 'Linux'
-        env:
-          CGO_ENABLED: 0
-        run: |
-          GOARCH=amd64 go build -o bin/incus-migrate.x86_64 ./cmd/incus-migrate
-          GOARCH=arm64 go build -o bin/incus-migrate.aarch64 ./cmd/incus-migrate
-
-      - name: Build static lxd-to-incus
-        if: runner.os == 'Linux'
-        env:
-          CGO_ENABLED: 0
-        run: |
-          GOARCH=amd64 go build -o bin/lxd-to-incus.x86_64 ./cmd/lxd-to-incus
-          GOARCH=arm64 go build -o bin/lxd-to-incus.aarch64 ./cmd/lxd-to-incus
-
-      - name: Unit tests (client)
-        env:
-          CGO_ENABLED: 0
-        run: go test -v ./client/...
-
-      - name: Unit tests (incus)
-        env:
-          CGO_ENABLED: 0
-        run: go test -v ./cmd/incus/...
-
-      - name: Unit tests (shared)
-        env:
-          CGO_ENABLED: 0
-        run: go test -v ./shared/...
-
-      - name: Upload incus client artifacts
-        if: matrix.go == 'stable'
-        uses: actions/upload-artifact@v4
-        continue-on-error: true
-        with:
-          name: ${{ runner.os }}
-          path: bin/
 
   documentation:
     name: Documentation

@@ -57,6 +57,45 @@ User keys can be used in search.
 
 ```
 
+```{config:option} ceph.fsid devices-disk
+:required: "no"
+:shortdesc: "Ceph File System ID"
+:type: "string"
+Uniquely identifies the Ceph cluster
+
+Overrides `ceph.cluster_name`
+This will usually be retrieved from `ceph.conf` or the cluster directly
+using `ceph-conf` or `ceph` respectively. If these tools are not available
+then this will need to be provided.
+
+```
+
+```{config:option} ceph.mon_addr devices-disk
+:required: "no"
+:shortdesc: "Ceph monitor address(es)"
+:type: "string"
+Used to establish connection to the Ceph cluster.
+
+This will usually be retrieved from `ceph.conf` or the cluster directly
+using `ceph-conf` or `ceph` respectively. If these tools are not available
+then this will need to be provided. Can be provided as IP addresses or
+host names, port is optional
+
+Has the form:
+mon1:3300,1.2.3.4:5678,mon2.example.net:6789
+```
+
+```{config:option} ceph.user_key devices-disk
+:required: "no"
+:shortdesc: "Ceph user key"
+:type: "string"
+Used if authentication with Ceph is required.
+
+If needed at all will usually be retrieved using the `ceph-conf` tool.
+However if this is not available on the host or the key is not accessible
+to those tools then this will need to be provided.
+```
+
 ```{config:option} ceph.user_name devices-disk
 :default: "`admin`"
 :required: "no"
