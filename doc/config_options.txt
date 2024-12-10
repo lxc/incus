@@ -61,10 +61,10 @@ User keys can be used in search.
 :required: "no"
 :shortdesc: "Ceph File System ID"
 :type: "string"
-Uniquely identifies the ceph cluster
+Uniquely identifies the Ceph cluster
 
-Overrides ceph.cluster_name
-This will usually be retrieved from ceph.conf or the cluster directly
+Overrides `ceph.cluster_name`
+This will usually be retrieved from `ceph.conf` or the cluster directly
 using `ceph-conf` or `ceph` respectively. If these tools are not available
 then this will need to be provided.
 
@@ -74,12 +74,12 @@ then this will need to be provided.
 :required: "no"
 :shortdesc: "Ceph monitor address(es)"
 :type: "string"
-Used to establish connection to the ceph cluster.
+Used to establish connection to the Ceph cluster.
 
-This will usually be retrieved from ceph.conf or the cluster directly
+This will usually be retrieved from `ceph.conf` or the cluster directly
 using `ceph-conf` or `ceph` respectively. If these tools are not available
-then this will need to be provided. Can be provided as ip addresses or
-hostnames, port is optional
+then this will need to be provided. Can be provided as IP addresses or
+host names, port is optional
 
 Has the form:
 mon1:3300,1.2.3.4:5678,mon2.example.net:6789
@@ -89,7 +89,7 @@ mon1:3300,1.2.3.4:5678,mon2.example.net:6789
 :required: "no"
 :shortdesc: "Ceph user key"
 :type: "string"
-Used if authentication with cephx is required.
+Used if authentication with Ceph is required.
 
 If needed at all will usually be retrieved using the `ceph-conf` tool.
 However if this is not available on the host or the key is not accessible

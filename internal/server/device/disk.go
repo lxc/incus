@@ -301,10 +301,10 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		"ceph.cluster_name": validate.IsAny,
 
 		// gendoc:generate(entity=devices, group=disk, key=ceph.fsid)
-		// Uniquely identifies the ceph cluster
+		// Uniquely identifies the Ceph cluster
 		//
-		// Overrides ceph.cluster_name
-		// This will usually be retrieved from ceph.conf or the cluster directly
+		// Overrides `ceph.cluster_name`
+		// This will usually be retrieved from `ceph.conf` or the cluster directly
 		// using `ceph-conf` or `ceph` respectively. If these tools are not available
 		// then this will need to be provided.
 		//
@@ -315,12 +315,12 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		"ceph.fsid": validate.Optional(validate.IsUUID),
 
 		// gendoc:generate(entity=devices, group=disk, key=ceph.mon_addr)
-		// Used to establish connection to the ceph cluster.
+		// Used to establish connection to the Ceph cluster.
 		//
-		// This will usually be retrieved from ceph.conf or the cluster directly
+		// This will usually be retrieved from `ceph.conf` or the cluster directly
 		// using `ceph-conf` or `ceph` respectively. If these tools are not available
-		// then this will need to be provided. Can be provided as ip addresses or
-		// hostnames, port is optional
+		// then this will need to be provided. Can be provided as IP addresses or
+		// host names, port is optional
 		//
 		// Has the form:
 		// mon1:3300,1.2.3.4:5678,mon2.example.net:6789
@@ -342,7 +342,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		"ceph.user_name": validate.IsAny,
 
 		// gendoc:generate(entity=devices, group=disk, key=ceph.user_key)
-		// Used if authentication with cephx is required.
+		// Used if authentication with Ceph is required.
 		//
 		// If needed at all will usually be retrieved using the `ceph-conf` tool.
 		// However if this is not available on the host or the key is not accessible
