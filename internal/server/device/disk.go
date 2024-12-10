@@ -315,7 +315,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		"ceph.fsid": validate.Optional(validate.IsUUID),
 
 		// gendoc:generate(entity=devices, group=disk, key=ceph.mon_addr)
-		// Used to establish connection to the ceph cluster.
+		// Used to establish connection to the Ceph cluster.
 		//
 		// This will usually be retrieved from `ceph.conf` or the cluster directly
 		// using `ceph-conf` or `ceph` respectively. If these tools are not available
