@@ -23,32 +23,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Dependency Review
-        uses: actions/dependency-review-action@v4
-        if: github.event_name == 'pull_request'
-
-      - id: ShellCheck
-        name: Differential ShellCheck
-        uses: redhat-plumbers-in-action/differential-shellcheck@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-        if: github.event_name == 'pull_request' && matrix.go == 'stable'
-
-      - name: Upload artifact with ShellCheck defects in SARIF format
-        uses: actions/upload-artifact@v4
-        with:
-          name: Differential ShellCheck SARIF
-          path: ${{ steps.ShellCheck.outputs.sarif }}
-        if: github.event_name == 'pull_request' && matrix.go == 'stable'
-
       - name: Install Go (${{ matrix.go }})
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
-
-      - name: Check compatible min Go version
-        run: |
-          go mod tidy
 
       - name: Install dependencies
         run: |
@@ -77,6 +55,28 @@ jobs:
 
           python3 -m pip install flake8
 
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        if: github.event_name == 'pull_request'
+
+      - name: Differential ShellCheck
+        uses: redhat-plumbers-in-action/differential-shellcheck@v5
+        id: ShellCheck
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+        if: github.event_name == 'pull_request' && matrix.go == 'stable'
+
+      - name: Upload artifact with ShellCheck defects in SARIF format
+        uses: actions/upload-artifact@v4
+        with:
+          name: Differential ShellCheck SARIF
+          path: ${{ steps.ShellCheck.outputs.sarif }}
+        if: github.event_name == 'pull_request' && matrix.go == 'stable'
+
+      - name: Check compatible min Go version
+        run: |
+          go mod tidy
+
       - name: Download go dependencies
         run: |
           go mod download
@@ -94,6 +94,7 @@ jobs:
       - name: Unit tests (all)
         run: |
           sudo --preserve-env=CGO_CFLAGS,CGO_LDFLAGS,CGO_LDFLAGS_ALLOW,LD_LIBRARY_PATH LD_LIBRARY_PATH=${LD_LIBRARY_PATH} env "PATH=${PATH}" go test ./...
+
   system-tests:
     env:
       CGO_LDFLAGS_ALLOW: "(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
@@ -163,9 +164,6 @@ jobs:
           sudo ip link delete docker0
           sudo nft flush ruleset
 
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Install Go (${{ matrix.go }})
         uses: actions/setup-go@v5
         with:
@@ -221,9 +219,6 @@ jobs:
             xz-utils \
             zfsutils-linux
 
-          # reclaim some space
-          sudo apt-get clean
-
           # Download minio.
           curl -sSfL https://dl.min.io/server/minio/release/linux-amd64/archive/minio_20240116160738.0.0_amd64.deb --output /tmp/minio.deb
           sudo apt-get install /tmp/minio.deb --yes
@@ -242,13 +237,11 @@ jobs:
           curl -sSfL https://api.github.com/repos/openfga/cli/releases/latest | jq -r '.assets | .[] | .browser_download_url | select(. | test("_linux_amd64.tar.gz$"))' | xargs -I {} curl -sSfL {} -o fga.tar.gz
           tar -xzf fga.tar.gz -C "$(go env GOPATH)/bin/"
 
-      - name: Download go dependencies
+      - name: Install dependencies (ceph-common)
+        if: ${{ matrix.backend == 'ceph' }}
         run: |
-          go mod download
-
-      - name: Run Incus build
-        run: |
-          make
+          sudo apt-get install --no-install-recommends -y \
+            ceph-common
 
       - name: Setup MicroCeph
         if: ${{ matrix.backend == 'ceph' }}
@@ -303,6 +296,21 @@ jobs:
           sudo find /etc/ceph -type f -exec echo \{\} \; -exec cat \{\} \;
           sudo rm -f /snap/bin/rbd
 
+      - name: Cleanup apt cache
+        run: |
+          sudo apt-get clean
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download go dependencies
+        run: |
+          go mod download
+
+      - name: Run Incus build
+        run: |
+          make
+
       - name: "Ensure offline mode (block image server)"
         run: |
           sudo nft add table inet filter
@@ -316,6 +324,7 @@ jobs:
           echo "root:1000000:1000000000" | sudo tee /etc/subuid /etc/subgid
           cd test
           sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS, INCUS_BACKEND=${{ matrix.backend }} ./main.sh ${{ matrix.suite }}
+
   documentation:
     name: Documentation
     runs-on: ubuntu-latest
