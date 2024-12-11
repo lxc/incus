@@ -166,5 +166,5 @@ func (c *cmdAdminSQL) sqlPrintSelectResult(result internalSQL.SQLResult) error {
 		data = append(data, rowData)
 	}
 
-	return cli.RenderTable(c.flagFormat, result.Columns, data, result)
+	return cli.RenderTable(os.Stdout, c.flagFormat, result.Columns, data, result)
 }

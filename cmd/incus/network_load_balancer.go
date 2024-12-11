@@ -236,7 +236,7 @@ func (c *cmdNetworkLoadBalancerList) Run(cmd *cobra.Command, args []string) erro
 		header = append(header, column.Name)
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, loadBalancers)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, loadBalancers)
 }
 
 // Show.

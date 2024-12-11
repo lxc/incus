@@ -233,7 +233,7 @@ func (c *cmdNetworkPeerList) Run(cmd *cobra.Command, args []string) error {
 		header = append(header, column.Name)
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, peers)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, peers)
 }
 
 // Show.

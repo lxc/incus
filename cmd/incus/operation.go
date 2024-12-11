@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -272,7 +273,7 @@ func (c *cmdOperationList) Run(cmd *cobra.Command, args []string) error {
 		header = append(header, column.Name)
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, operations)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, operations)
 }
 
 // Show.

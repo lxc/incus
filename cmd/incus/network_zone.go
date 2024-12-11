@@ -238,7 +238,7 @@ func (c *cmdNetworkZoneList) Run(cmd *cobra.Command, args []string) error {
 		header = append(header, column.Name)
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, zones)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, zones)
 }
 
 // Show.
@@ -918,7 +918,7 @@ func (c *cmdNetworkZoneRecordList) Run(cmd *cobra.Command, args []string) error 
 		i18n.G("ENTRIES"),
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, records)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, records)
 }
 
 // Show.
