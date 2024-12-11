@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"sort"
 
 	"github.com/spf13/cobra"
@@ -67,5 +68,5 @@ func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
 		"CREATED",
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, images)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, images)
 }
