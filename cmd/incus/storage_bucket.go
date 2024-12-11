@@ -87,6 +87,8 @@ func (c *cmdStorageBucket) Command() *cobra.Command {
 type cmdStorageBucketCreate struct {
 	global        *cmdGlobal
 	storageBucket *cmdStorageBucket
+
+	flagDescription string
 }
 
 func (c *cmdStorageBucketCreate) Command() *cobra.Command {
@@ -101,6 +103,8 @@ incus storage bucket create p1 b01 < config.yaml
 	Create a new storage bucket named b01 in storage pool p1 using the content of config.yaml`))
 
 	cmd.Flags().StringVar(&c.storageBucket.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Bucket description")+"``")
+
 	cmd.RunE = c.Run
 
 	return cmd
@@ -161,6 +165,10 @@ func (c *cmdStorageBucketCreate) Run(cmd *cobra.Command, args []string) error {
 	bucket := api.StorageBucketsPost{
 		Name:             args[1],
 		StorageBucketPut: bucketPut,
+	}
+
+	if c.flagDescription != "" {
+		bucket.Description = c.flagDescription
 	}
 
 	client := resource.server
@@ -1018,6 +1026,7 @@ type cmdStorageBucketKeyCreate struct {
 	flagRole         string
 	flagAccessKey    string
 	flagSecretKey    string
+	flagDescription  string
 }
 
 func (c *cmdStorageBucketKeyCreate) Command() *cobra.Command {
@@ -1037,6 +1046,7 @@ incus storage bucket key create p1 b01 k1 < config.yaml
 	cmd.Flags().StringVar(&c.flagRole, "role", "read-only", i18n.G("Role (admin or read-only)")+"``")
 	cmd.Flags().StringVar(&c.flagAccessKey, "access-key", "", i18n.G("Access key (auto-generated if empty)")+"``")
 	cmd.Flags().StringVar(&c.flagSecretKey, "secret-key", "", i18n.G("Secret key (auto-generated if empty)")+"``")
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Key description")+"``")
 
 	return cmd
 }
@@ -1104,6 +1114,10 @@ func (c *cmdStorageBucketKeyCreate) RunAdd(cmd *cobra.Command, args []string) er
 
 	if c.flagSecretKey != "" {
 		req.SecretKey = c.flagSecretKey
+	}
+
+	if c.flagDescription != "" {
+		req.Description = c.flagDescription
 	}
 
 	key, err := client.CreateStoragePoolBucketKey(resource.name, args[1], req)

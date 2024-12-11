@@ -91,6 +91,8 @@ func (c *cmdStorage) Command() *cobra.Command {
 type cmdStorageCreate struct {
 	global  *cmdGlobal
 	storage *cmdStorage
+
+	flagDescription string
 }
 
 func (c *cmdStorageCreate) Command() *cobra.Command {
@@ -106,6 +108,8 @@ incus create storage s1 dir < config.yaml
 	`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Storage pool description")+"``")
+
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -157,22 +161,25 @@ func (c *cmdStorageCreate) Run(cmd *cobra.Command, args []string) error {
 	client := resource.server
 
 	// Create the new storage pool entry
-	pool := api.StoragePoolsPost{}
+	pool := api.StoragePoolsPost{StoragePoolPut: stdinData}
 	pool.Name = resource.name
-	pool.Config = map[string]string{}
 	pool.Driver = args[1]
 
-	if stdinData.Config == nil {
-		for i := 2; i < len(args); i++ {
-			entry := strings.SplitN(args[i], "=", 2)
-			if len(entry) < 2 {
-				return fmt.Errorf(i18n.G("Bad key=value pair: %s"), entry)
-			}
+	if c.flagDescription != "" {
+		pool.Description = c.flagDescription
+	}
 
-			pool.Config[entry[0]] = entry[1]
+	if pool.Config == nil {
+		pool.Config = map[string]string{}
+	}
+
+	for i := 2; i < len(args); i++ {
+		entry := strings.SplitN(args[i], "=", 2)
+		if len(entry) < 2 {
+			return fmt.Errorf(i18n.G("Bad key=value pair: %s"), entry)
 		}
-	} else {
-		pool.Config = stdinData.Config
+
+		pool.Config[entry[0]] = entry[1]
 	}
 
 	// If a target member was specified the API won't actually create the

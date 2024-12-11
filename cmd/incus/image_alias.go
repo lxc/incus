@@ -57,6 +57,8 @@ type cmdImageAliasCreate struct {
 	global     *cmdGlobal
 	image      *cmdImage
 	imageAlias *cmdImageAlias
+
+	flagDescription string
 }
 
 func (c *cmdImageAliasCreate) Command() *cobra.Command {
@@ -65,6 +67,8 @@ func (c *cmdImageAliasCreate) Command() *cobra.Command {
 	cmd.Short = i18n.G("Create aliases for existing images")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create aliases for existing images`))
+
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Image alias description")+"``")
 
 	cmd.RunE = c.Run
 
@@ -111,6 +115,7 @@ func (c *cmdImageAliasCreate) Run(cmd *cobra.Command, args []string) error {
 	alias := api.ImageAliasesPost{}
 	alias.Name = resource.name
 	alias.Target = args[1]
+	alias.Description = c.flagDescription
 
 	return resource.server.CreateImageAlias(alias)
 }

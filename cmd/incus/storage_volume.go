@@ -570,6 +570,7 @@ type cmdStorageVolumeCreate struct {
 	storage         *cmdStorage
 	storageVolume   *cmdStorageVolume
 	flagContentType string
+	flagDescription string
 }
 
 func (c *cmdStorageVolumeCreate) Command() *cobra.Command {
@@ -586,6 +587,8 @@ incus storage volume create default foo < config.yaml
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.Flags().StringVar(&c.flagContentType, "type", "filesystem", i18n.G("Content type, block or filesystem")+"``")
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Volume description")+"``")
+
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -655,6 +658,10 @@ func (c *cmdStorageVolumeCreate) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		vol.Config[entry[0]] = entry[1]
+	}
+
+	if c.flagDescription != "" {
+		vol.Description = c.flagDescription
 	}
 
 	// If a target was specified, create the volume on the given member.
@@ -2314,8 +2321,9 @@ type cmdStorageVolumeSnapshotCreate struct {
 	storageVolume         *cmdStorageVolume
 	storageVolumeSnapshot *cmdStorageVolumeSnapshot
 
-	flagNoExpiry bool
-	flagReuse    bool
+	flagNoExpiry    bool
+	flagReuse       bool
+	flagDescription string
 }
 
 func (c *cmdStorageVolumeSnapshotCreate) Command() *cobra.Command {
@@ -2333,6 +2341,8 @@ incus storage volume snapshot create default vol1 snap0 < config.yaml
 	cmd.Flags().BoolVar(&c.flagNoExpiry, "no-expiry", false, i18n.G("Ignore any configured auto-expiry for the storage volume"))
 	cmd.Flags().BoolVar(&c.flagReuse, "reuse", false, i18n.G("If the snapshot name already exists, delete and create a new one"))
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Snapshot description")+"``")
+
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

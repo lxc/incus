@@ -371,6 +371,8 @@ func (c *cmdNetworkACLGet) Run(cmd *cobra.Command, args []string) error {
 type cmdNetworkACLCreate struct {
 	global     *cmdGlobal
 	networkACL *cmdNetworkACL
+
+	flagDescription string
 }
 
 func (c *cmdNetworkACLCreate) Command() *cobra.Command {
@@ -382,6 +384,8 @@ func (c *cmdNetworkACLCreate) Command() *cobra.Command {
 
 incus network acl create a1 < config.yaml
     Create network acl with configuration from config.yaml`))
+
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Network ACL description")+"``")
 
 	cmd.RunE = c.Run
 
@@ -435,6 +439,10 @@ func (c *cmdNetworkACLCreate) Run(cmd *cobra.Command, args []string) error {
 			Name: resource.name,
 		},
 		NetworkACLPut: aclPut,
+	}
+
+	if c.flagDescription != "" {
+		acl.Description = c.flagDescription
 	}
 
 	if acl.Config == nil {
@@ -852,6 +860,7 @@ type cmdNetworkACLRule struct {
 	global          *cmdGlobal
 	networkACL      *cmdNetworkACL
 	flagRemoveForce bool
+	flagDescription string
 }
 
 func (c *cmdNetworkACLRule) Command() *cobra.Command {
@@ -874,6 +883,9 @@ func (c *cmdNetworkACLRule) CommandAdd() *cobra.Command {
 	cmd.Use = usage("add", i18n.G("[<remote>:]<ACL> <direction> <key>=<value>..."))
 	cmd.Short = i18n.G("Add rules to an ACL")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add rules to an ACL"))
+
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Rule description")+"``")
+
 	cmd.RunE = c.RunAdd
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -985,6 +997,10 @@ func (c *cmdNetworkACLRule) RunAdd(cmd *cobra.Command, args []string) error {
 	rule, err := c.parseConfigToRule(keys)
 	if err != nil {
 		return err
+	}
+
+	if c.flagDescription != "" {
+		rule.Description = c.flagDescription
 	}
 
 	rule.Normalise() // Strip space.
