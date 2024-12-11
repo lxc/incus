@@ -435,7 +435,7 @@ func (c *cmdTop) updateDisplay(d incus.InstanceServer, refreshInterval time.Dura
 	}
 
 	fmt.Print("\033[H\033[2J") // Clear the terminal on each tick
-	err = cli.RenderTable(c.flagFormat, headers, dataFormatted, nil)
+	err = cli.RenderTable(os.Stdout, c.flagFormat, headers, dataFormatted, nil)
 	if err != nil {
 		return err
 	}

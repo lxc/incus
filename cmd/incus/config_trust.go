@@ -565,7 +565,7 @@ func (c *cmdConfigTrustList) Run(cmd *cobra.Command, args []string) error {
 		headers = append(headers, column.Name)
 	}
 
-	return cli.RenderTable(c.flagFormat, headers, data, trust)
+	return cli.RenderTable(os.Stdout, c.flagFormat, headers, data, trust)
 }
 
 // List tokens.
@@ -725,7 +725,7 @@ func (c *cmdConfigTrustListTokens) Run(cmd *cobra.Command, args []string) error 
 		header = append(header, column.Name)
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, joinTokens)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, joinTokens)
 }
 
 // Remove.

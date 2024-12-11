@@ -351,14 +351,14 @@ func (c *cmdClusterListDatabase) Command() *cobra.Command {
 }
 
 func (c *cmdClusterListDatabase) Run(cmd *cobra.Command, args []string) error {
-	os := sys.DefaultOS()
+	defaultOS := sys.DefaultOS()
 
-	db, err := db.OpenNode(filepath.Join(os.VarDir, "database"), nil)
+	dbconn, err := db.OpenNode(filepath.Join(defaultOS.VarDir, "database"), nil)
 	if err != nil {
 		return fmt.Errorf("Failed to open local database: %w", err)
 	}
 
-	addresses, err := cluster.ListDatabaseNodes(db)
+	addresses, err := cluster.ListDatabaseNodes(dbconn)
 	if err != nil {
 		return fmt.Errorf("Failed to get database nodes: %w", err)
 	}
@@ -369,7 +369,7 @@ func (c *cmdClusterListDatabase) Run(cmd *cobra.Command, args []string) error {
 		data[i] = []string{address}
 	}
 
-	_ = cli.RenderTable(c.flagFormat, columns, data, nil)
+	_ = cli.RenderTable(os.Stdout, c.flagFormat, columns, data, nil)
 
 	return nil
 }
@@ -546,7 +546,7 @@ func textEditor(inPath string, inContent []byte) ([]byte, error) {
 			_ = os.Remove(f.Name())
 		})
 
-		err = os.Chmod(f.Name(), 0600)
+		err = os.Chmod(f.Name(), 0o600)
 		if err != nil {
 			return []byte{}, err
 		}

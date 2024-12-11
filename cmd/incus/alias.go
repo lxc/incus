@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"sort"
 
 	"github.com/spf13/cobra"
@@ -149,7 +150,7 @@ func (c *cmdAliasList) Run(cmd *cobra.Command, args []string) error {
 		i18n.G("TARGET"),
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, conf.Aliases)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, conf.Aliases)
 }
 
 // Rename.

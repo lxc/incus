@@ -174,7 +174,7 @@ func (c *cmdNetworkACLList) Run(cmd *cobra.Command, args []string) error {
 		header = append([]string{i18n.G("PROJECT")}, header...)
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, acls)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, acls)
 }
 
 // Show.

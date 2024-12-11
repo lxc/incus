@@ -302,7 +302,7 @@ func (c *cmdClusterList) Run(cmd *cobra.Command, args []string) error {
 		header = append(header, column.Name)
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, members)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, members)
 }
 
 // Show.
@@ -1221,7 +1221,7 @@ func (c *cmdClusterListTokens) Run(cmd *cobra.Command, args []string) error {
 		header = append(header, column.Name)
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, joinTokens)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, joinTokens)
 }
 
 // Revoke Tokens.

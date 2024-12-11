@@ -339,7 +339,7 @@ func (c *cmdConfigTemplateList) Run(cmd *cobra.Command, args []string) error {
 		i18n.G("FILENAME"),
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, templates)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, templates)
 }
 
 // Show.
