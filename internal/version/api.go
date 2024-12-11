@@ -455,6 +455,7 @@ var APIExtensions = []string{
 	"instance_console_screenshot",
 	"image_import_alias",
 	"authorization_scriptlet",
+	"console_force",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

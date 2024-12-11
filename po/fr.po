@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-12-06 15:12-0500\n"
+"POT-Creation-Date: 2024-12-11 17:46+0000\n"
 "PO-Revision-Date: 2024-11-11 22:00+0000\n"
 "Last-Translator: \"Laterria.Severino\" <Laterria.Severino@openmail.pro>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -1047,7 +1047,7 @@ msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
 "Êtes-vous sûr de %s le membre du cluster %q ? (oui/non) [défaut=non] : "
 
-#: cmd/incus/console.go:384
+#: cmd/incus/console.go:388
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr "Aucun n'a pu être trouvé, la socket SPICE peut être trouvé à:"
 
@@ -1083,11 +1083,11 @@ msgstr "Attacher de nouveaux volumes de stockage aux profils"
 msgid "Attach new network interfaces to instances"
 msgstr "Attacher de nouvelles interfaces aux instances"
 
-#: cmd/incus/console.go:36
+#: cmd/incus/console.go:37
 msgid "Attach to instance consoles"
 msgstr "Connexion aux consoles de l'instance"
 
-#: cmd/incus/console.go:37
+#: cmd/incus/console.go:38
 msgid ""
 "Attach to instance consoles\n"
 "\n"
@@ -2226,7 +2226,7 @@ msgstr "Récupération de l'image : %s"
 #: cmd/incus/config_trust.go:171 cmd/incus/config_trust.go:275
 #: cmd/incus/config_trust.go:400 cmd/incus/config_trust.go:590
 #: cmd/incus/config_trust.go:743 cmd/incus/config_trust.go:789
-#: cmd/incus/config_trust.go:860 cmd/incus/console.go:37 cmd/incus/copy.go:41
+#: cmd/incus/config_trust.go:860 cmd/incus/console.go:38 cmd/incus/copy.go:41
 #: cmd/incus/create.go:43 cmd/incus/delete.go:32 cmd/incus/exec.go:41
 #: cmd/incus/export.go:32 cmd/incus/file.go:88 cmd/incus/file.go:135
 #: cmd/incus/file.go:331 cmd/incus/file.go:413 cmd/incus/file.go:491
@@ -3215,7 +3215,7 @@ msgstr "Échec de l'analyse de la clé d'hôte SSH : %w"
 msgid "Failed parsing validation response: %w"
 msgstr "Échec de l'analyse de la réponse de validation : %w"
 
-#: cmd/incus/console.go:362
+#: cmd/incus/console.go:366
 #, c-format
 msgid "Failed starting command: %w"
 msgstr "Échec de l'exécution de la commande : %w"
@@ -3567,6 +3567,12 @@ msgstr ""
 "hors-service, a été réinstallé ou n'est pas censé réintégrer le cluster.\n"
 "\n"
 "Êtes-vous vraiment sûr de vouloir forcer la suppression de %s ? (oui/non) : "
+
+#: cmd/incus/console.go:45
+msgid ""
+"Forces a connection to the console, even if there is already an active "
+"session"
+msgstr ""
 
 #: cmd/incus/admin_sql.go:55 cmd/incus/alias.go:113 cmd/incus/cluster.go:151
 #: cmd/incus/cluster.go:1091 cmd/incus/cluster_group.go:478
@@ -7219,7 +7225,7 @@ msgstr ""
 msgid "Resume instances"
 msgstr "Création du conteneur"
 
-#: cmd/incus/console.go:44
+#: cmd/incus/console.go:46
 #, fuzzy
 msgid "Retrieve the instance's console log"
 msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
@@ -8309,7 +8315,7 @@ msgstr ""
 msgid "The %s storage pool already exists"
 msgstr "Le périphérique n'existe pas"
 
-#: cmd/incus/console.go:134
+#: cmd/incus/console.go:136
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr ""
 
@@ -8340,7 +8346,7 @@ msgid ""
 "You can invoke it through \"incusd cluster\"."
 msgstr ""
 
-#: cmd/incus/console.go:383
+#: cmd/incus/console.go:387
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""
@@ -8623,7 +8629,7 @@ msgstr "Pour attacher un réseau à un conteneur, utiliser : lxc network attach"
 msgid "To create a new network, use: incus network create"
 msgstr "Pour créer un réseau, utiliser : lxc network create"
 
-#: cmd/incus/console.go:221
+#: cmd/incus/console.go:224
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
@@ -8715,7 +8721,7 @@ msgstr "Expire : %s"
 msgid "Type of certificate"
 msgstr "Accepter le certificat"
 
-#: cmd/incus/console.go:45
+#: cmd/incus/console.go:47
 msgid ""
 "Type of connection to establish: 'console' for serial console, 'vga' for "
 "SPICE graphical output"
@@ -8817,7 +8823,7 @@ msgstr ""
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr ""
 
-#: cmd/incus/console.go:164
+#: cmd/incus/console.go:166
 #, c-format
 msgid "Unknown console type %q"
 msgstr ""
@@ -8832,7 +8838,7 @@ msgstr ""
 msgid "Unknown key: %s"
 msgstr ""
 
-#: cmd/incus/console.go:113
+#: cmd/incus/console.go:115
 #, c-format
 msgid "Unknown output type %q"
 msgstr ""
@@ -9643,7 +9649,7 @@ msgstr ""
 
 #: cmd/incus/config_device.go:320 cmd/incus/config_device.go:752
 #: cmd/incus/config_metadata.go:52 cmd/incus/config_metadata.go:185
-#: cmd/incus/config_template.go:286 cmd/incus/console.go:35
+#: cmd/incus/config_template.go:286 cmd/incus/console.go:36
 #: cmd/incus/snapshot.go:292
 #, fuzzy
 msgid "[<remote>:]<instance>"

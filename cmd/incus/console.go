@@ -26,6 +26,7 @@ import (
 type cmdConsole struct {
 	global *cmdGlobal
 
+	flagForce   bool
 	flagShowLog bool
 	flagType    string
 }
@@ -41,6 +42,7 @@ This command allows you to interact with the boot console of an instance
 as well as retrieve past log entries from it.`))
 
 	cmd.RunE = c.Run
+	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Forces a connection to the console, even if there is already an active session"))
 	cmd.Flags().BoolVar(&c.flagShowLog, "show-log", false, i18n.G("Retrieve the instance's console log"))
 	cmd.Flags().StringVarP(&c.flagType, "type", "t", "console", i18n.G("Type of connection to establish: 'console' for serial console, 'vga' for SPICE graphical output")+"``")
 
@@ -188,6 +190,7 @@ func (c *cmdConsole) text(d incus.InstanceServer, name string) error {
 		Width:  width,
 		Height: height,
 		Type:   "console",
+		Force:  c.flagForce,
 	}
 
 	consoleDisconnect := make(chan bool)
@@ -243,7 +246,8 @@ func (c *cmdConsole) vga(d incus.InstanceServer, name string) error {
 
 	// Prepare the remote console.
 	req := api.InstanceConsolePost{
-		Type: "vga",
+		Type:  "vga",
+		Force: c.flagForce,
 	}
 
 	chDisconnect := make(chan bool)
