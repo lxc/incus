@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-12-06 15:12-0500\n"
+"POT-Creation-Date: 2024-12-11 17:46+0000\n"
 "PO-Revision-Date: 2024-12-11 16:28+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -1026,7 +1026,7 @@ msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
 "本当に %s しますか? （対象: クラスターメンバー %q） (yes/no) [default=no]: "
 
-#: cmd/incus/console.go:384
+#: cmd/incus/console.go:388
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr "どちらもみつかりませんでした。raw SPICE ソケットはこちらにあります:"
 
@@ -1064,11 +1064,11 @@ msgstr "新しいストレージボリュームをプロファイルに追加し
 msgid "Attach new network interfaces to instances"
 msgstr "新たなネットワークインターフェースをインスタンスに追加します"
 
-#: cmd/incus/console.go:36
+#: cmd/incus/console.go:37
 msgid "Attach to instance consoles"
 msgstr "インスタンスのコンソールに接続します"
 
-#: cmd/incus/console.go:37
+#: cmd/incus/console.go:38
 msgid ""
 "Attach to instance consoles\n"
 "\n"
@@ -2146,7 +2146,7 @@ msgstr "警告を削除します"
 #: cmd/incus/config_trust.go:171 cmd/incus/config_trust.go:275
 #: cmd/incus/config_trust.go:400 cmd/incus/config_trust.go:590
 #: cmd/incus/config_trust.go:743 cmd/incus/config_trust.go:789
-#: cmd/incus/config_trust.go:860 cmd/incus/console.go:37 cmd/incus/copy.go:41
+#: cmd/incus/config_trust.go:860 cmd/incus/console.go:38 cmd/incus/copy.go:41
 #: cmd/incus/create.go:43 cmd/incus/delete.go:32 cmd/incus/exec.go:41
 #: cmd/incus/export.go:32 cmd/incus/file.go:88 cmd/incus/file.go:135
 #: cmd/incus/file.go:331 cmd/incus/file.go:413 cmd/incus/file.go:491
@@ -3099,7 +3099,7 @@ msgstr "SSH ホスト鍵の読み取りに失敗しました: %w"
 msgid "Failed parsing validation response: %w"
 msgstr "バリデーションレスポンスの読み取りに失敗しました: %w"
 
-#: cmd/incus/console.go:362
+#: cmd/incus/console.go:366
 #, c-format
 msgid "Failed starting command: %w"
 msgstr "コマンドの実行に失敗しました: %w"
@@ -3434,6 +3434,12 @@ msgstr ""
 "の見込みがまったくない場合にのみ使用してください。\n"
 "\n"
 "本当に強制的に %s を削除してもよろしいですか? (yes/no): "
+
+#: cmd/incus/console.go:45
+msgid ""
+"Forces a connection to the console, even if there is already an active "
+"session"
+msgstr ""
 
 #: cmd/incus/admin_sql.go:55 cmd/incus/alias.go:113 cmd/incus/cluster.go:151
 #: cmd/incus/cluster.go:1091 cmd/incus/cluster_group.go:478
@@ -7544,7 +7550,7 @@ msgstr "証明書の使用を1つ以上のプロジェクトに制限します"
 msgid "Resume instances"
 msgstr "インスタンスを再起動します"
 
-#: cmd/incus/console.go:44
+#: cmd/incus/console.go:46
 msgid "Retrieve the instance's console log"
 msgstr "インスタンスのコンソールログを取得します"
 
@@ -8667,7 +8673,7 @@ msgstr ""
 msgid "The %s storage pool already exists"
 msgstr "デバイスはすでに存在します"
 
-#: cmd/incus/console.go:134
+#: cmd/incus/console.go:136
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr "--show-log フラグは 'console' アウトプットタイプの時だけ使えます"
 
@@ -8714,7 +8720,7 @@ msgstr ""
 "\n"
 "\"incusd cluster\" から呼び出すことができます。"
 
-#: cmd/incus/console.go:383
+#: cmd/incus/console.go:387
 #, fuzzy
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
@@ -9019,7 +9025,7 @@ msgid "To create a new network, use: incus network create"
 msgstr ""
 "新しいネットワークを作成するには、lxc network create を使用してください"
 
-#: cmd/incus/console.go:221
+#: cmd/incus/console.go:224
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr "コンソールから切り離すには <ctrl>+a q を押します"
 
@@ -9113,7 +9119,7 @@ msgstr "タイプ"
 msgid "Type of certificate"
 msgstr "証明書の形式"
 
-#: cmd/incus/console.go:45
+#: cmd/incus/console.go:47
 msgid ""
 "Type of connection to establish: 'console' for serial console, 'vga' for "
 "SPICE graphical output"
@@ -9216,7 +9222,7 @@ msgstr "クライアント %q の未知のチャンネルタイプ: %s"
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr "未知のカラム名の短縮形です '%c' ('%s' 中)"
 
-#: cmd/incus/console.go:164
+#: cmd/incus/console.go:166
 #, c-format
 msgid "Unknown console type %q"
 msgstr "未知のコンソールタイプ %q"
@@ -9231,7 +9237,7 @@ msgstr "未知のファイルタイプ '%s'"
 msgid "Unknown key: %s"
 msgstr "未知の設定: %s"
 
-#: cmd/incus/console.go:113
+#: cmd/incus/console.go:115
 #, c-format
 msgid "Unknown output type %q"
 msgstr "未知の出力タイプ: %q"
@@ -9913,7 +9919,7 @@ msgstr "[<remote>:]<image> [[<remote>:]<image>...]"
 
 #: cmd/incus/config_device.go:320 cmd/incus/config_device.go:752
 #: cmd/incus/config_metadata.go:52 cmd/incus/config_metadata.go:185
-#: cmd/incus/config_template.go:286 cmd/incus/console.go:35
+#: cmd/incus/config_template.go:286 cmd/incus/console.go:36
 #: cmd/incus/snapshot.go:292
 msgid "[<remote>:]<instance>"
 msgstr "[<remote>:]<instance>"
