@@ -1487,6 +1487,11 @@ definitions:
         x-go-package: github.com/lxc/incus/v6/shared/api
     InstanceConsolePost:
         properties:
+            force:
+                description: Forces a connection to the console
+                example: true
+                type: boolean
+                x-go-name: Force
             height:
                 description: Console height in rows (console type only)
                 example: 24
