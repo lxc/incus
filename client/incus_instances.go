@@ -2528,6 +2528,10 @@ func (r *ProtocolIncus) ConsoleInstance(instanceName string, console api.Instanc
 		return nil, fmt.Errorf("The server is missing the required \"console_vga_type\" API extension")
 	}
 
+	if console.Force && !r.HasExtension("console_force") {
+		return nil, fmt.Errorf(`The server is missing the required "console_force" API extension`)
+	}
+
 	// Send the request
 	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/console", path, url.PathEscape(instanceName)), console, "")
 	if err != nil {
@@ -2614,6 +2618,10 @@ func (r *ProtocolIncus) ConsoleInstanceDynamic(instanceName string, console api.
 
 	if console.Type == "vga" && !r.HasExtension("console_vga_type") {
 		return nil, nil, fmt.Errorf("The server is missing the required \"console_vga_type\" API extension")
+	}
+
+	if console.Force && !r.HasExtension("console_force") {
+		return nil, nil, fmt.Errorf(`The server is missing the required "console_force" API extension`)
 	}
 
 	// Send the request.
