@@ -710,7 +710,7 @@ func (c *cmdProjectList) Run(cmd *cobra.Command, args []string) error {
 		header = append(header, column.Name)
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, projects)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, projects)
 }
 
 // Rename.
@@ -1147,7 +1147,7 @@ func (c *cmdProjectInfo) Run(cmd *cobra.Command, args []string) error {
 		i18n.G("USAGE"),
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, projectState)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, projectState)
 }
 
 // Get current project.

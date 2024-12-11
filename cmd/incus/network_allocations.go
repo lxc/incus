@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -170,5 +171,5 @@ func (c *cmdNetworkListAllocations) Run(cmd *cobra.Command, args []string) error
 		header = append(header, column.Name)
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, addresses)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, addresses)
 }

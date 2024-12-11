@@ -592,7 +592,7 @@ func (c *cmdClusterGroupList) Run(cmd *cobra.Command, args []string) error {
 		header = append(header, column.Name)
 	}
 
-	return cli.RenderTable(c.flagFormat, header, data, groups)
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, groups)
 }
 
 // Remove.

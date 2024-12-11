@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"os"
 	"regexp"
 	"slices"
 	"sort"
@@ -453,7 +454,7 @@ func (c *cmdList) showInstances(instances []api.InstanceFull, filters []string, 
 		headers = append(headers, column.Name)
 	}
 
-	return cli.RenderTable(c.flagFormat, headers, data, instancesFiltered)
+	return cli.RenderTable(os.Stdout, c.flagFormat, headers, data, instancesFiltered)
 }
 
 func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
