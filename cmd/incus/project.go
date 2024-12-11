@@ -92,9 +92,10 @@ func (c *cmdProject) Command() *cobra.Command {
 
 // Create.
 type cmdProjectCreate struct {
-	global     *cmdGlobal
-	project    *cmdProject
-	flagConfig []string
+	global          *cmdGlobal
+	project         *cmdProject
+	flagConfig      []string
+	flagDescription string
 }
 
 func (c *cmdProjectCreate) Command() *cobra.Command {
@@ -110,6 +111,7 @@ incus project create p1 < config.yaml
     Create a project named p1 with configuration from config.yaml`))
 
 	cmd.Flags().StringArrayVarP(&c.flagConfig, "config", "c", nil, i18n.G("Config key/value to apply to the new project")+"``")
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Project description")+"``")
 
 	cmd.RunE = c.Run
 
@@ -173,6 +175,10 @@ func (c *cmdProjectCreate) Run(cmd *cobra.Command, args []string) error {
 
 			project.Config[key] = value
 		}
+	}
+
+	if c.flagDescription != "" {
+		project.Description = c.flagDescription
 	}
 
 	err = resource.server.CreateProject(project)

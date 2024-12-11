@@ -381,6 +381,8 @@ func (c *cmdNetworkZoneGet) Run(cmd *cobra.Command, args []string) error {
 type cmdNetworkZoneCreate struct {
 	global      *cmdGlobal
 	networkZone *cmdNetworkZone
+
+	flagDescription string
 }
 
 func (c *cmdNetworkZoneCreate) Command() *cobra.Command {
@@ -394,6 +396,8 @@ incus network zone create z1 < config.yaml
     Create network zone z1 with configuration from config.yaml`))
 
 	cmd.RunE = c.Run
+
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Zone description")+"``")
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -447,6 +451,10 @@ func (c *cmdNetworkZoneCreate) Run(cmd *cobra.Command, args []string) error {
 
 	if zone.Config == nil {
 		zone.Config = map[string]string{}
+	}
+
+	if c.flagDescription != "" {
+		zone.Description = c.flagDescription
 	}
 
 	for i := 1; i < len(args); i++ {
@@ -1065,6 +1073,8 @@ func (c *cmdNetworkZoneRecordGet) Run(cmd *cobra.Command, args []string) error {
 type cmdNetworkZoneRecordCreate struct {
 	global            *cmdGlobal
 	networkZoneRecord *cmdNetworkZoneRecord
+
+	flagDescription string
 }
 
 func (c *cmdNetworkZoneRecordCreate) Command() *cobra.Command {
@@ -1078,6 +1088,8 @@ incus network zone record create z1 r1 < config.yaml
     Create record r1 for zone z1 with configuration from config.yaml`))
 
 	cmd.RunE = c.Run
+
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Record description")+"``")
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -1134,6 +1146,10 @@ func (c *cmdNetworkZoneRecordCreate) Run(cmd *cobra.Command, args []string) erro
 
 	if record.Config == nil {
 		record.Config = map[string]string{}
+	}
+
+	if c.flagDescription != "" {
+		record.Description = c.flagDescription
 	}
 
 	for i := 2; i < len(args); i++ {

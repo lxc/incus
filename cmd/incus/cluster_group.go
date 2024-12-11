@@ -164,6 +164,8 @@ func (c *cmdClusterGroupAssign) Run(cmd *cobra.Command, args []string) error {
 type cmdClusterGroupCreate struct {
 	global  *cmdGlobal
 	cluster *cmdCluster
+
+	flagDescription string
 }
 
 // Creation of a new cluster group, defining its usage, short and long descriptions, and the RunE method.
@@ -178,6 +180,8 @@ func (c *cmdClusterGroupCreate) Command() *cobra.Command {
 
 incus cluster group create g1 < config.yaml
 	Create a cluster group with configuration from config.yaml`))
+
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Cluster group description")+"``")
 
 	cmd.RunE = c.Run
 
@@ -231,6 +235,10 @@ func (c *cmdClusterGroupCreate) Run(cmd *cobra.Command, args []string) error {
 	group := api.ClusterGroupsPost{
 		Name:            resource.name,
 		ClusterGroupPut: stdinData,
+	}
+
+	if c.flagDescription != "" {
+		group.Description = c.flagDescription
 	}
 
 	err = resource.server.CreateClusterGroup(group)

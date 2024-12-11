@@ -328,6 +328,8 @@ func (c *cmdNetworkAttachProfile) Run(cmd *cobra.Command, args []string) error {
 type cmdNetworkCreate struct {
 	global  *cmdGlobal
 	network *cmdNetwork
+
+	flagDescription string
 }
 
 func (c *cmdNetworkCreate) Command() *cobra.Command {
@@ -346,6 +348,7 @@ incus network create bar network=baz --type ovn
 
 	cmd.Flags().StringVar(&c.network.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.Flags().StringVarP(&c.network.flagType, "type", "t", "", i18n.G("Network type")+"``")
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Network description")+"``")
 
 	cmd.RunE = c.Run
 
@@ -398,6 +401,10 @@ func (c *cmdNetworkCreate) Run(cmd *cobra.Command, args []string) error {
 
 	network.Name = resource.name
 	network.Type = c.network.flagType
+
+	if c.flagDescription != "" {
+		network.Description = c.flagDescription
+	}
 
 	if network.Config == nil {
 		network.Config = map[string]string{}

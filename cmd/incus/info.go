@@ -631,7 +631,7 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, nam
 	}
 
 	fmt.Printf(i18n.G("Name: %s")+"\n", inst.Name)
-
+	fmt.Printf(i18n.G("Description: %s")+"\n", inst.Description)
 	fmt.Printf(i18n.G("Status: %s")+"\n", strings.ToUpper(inst.Status))
 
 	if inst.Type == "" {
