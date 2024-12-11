@@ -27,4 +27,10 @@ type InstanceConsolePost struct {
 	//
 	// API extension: console_vga_type
 	Type string `json:"type" yaml:"type"`
+
+	// Forces a connection to the console
+	// Example: true
+	//
+	// API extension: console_force
+	Force bool `json:"force" yaml:"force"`
 }
