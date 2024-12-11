@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"slices"
 	"strings"
@@ -29,7 +30,7 @@ const (
 )
 
 // RenderTable renders tabular data in various formats.
-func RenderTable(format string, header []string, data [][]string, raw any) error {
+func RenderTable(w io.Writer, format string, header []string, data [][]string, raw any) error {
 	fields := strings.SplitN(format, ",", 2)
 	format = fields[0]
 
@@ -44,17 +45,17 @@ func RenderTable(format string, header []string, data [][]string, raw any) error
 
 	switch format {
 	case TableFormatTable:
-		table := getBaseTable(header, data)
+		table := getBaseTable(w, header, data)
 		table.SetRowLine(true)
 		table.Render()
 	case TableFormatCompact:
-		table := getBaseTable(header, data)
+		table := getBaseTable(w, header, data)
 		table.SetColumnSeparator("")
 		table.SetHeaderLine(false)
 		table.SetBorder(false)
 		table.Render()
 	case TableFormatCSV:
-		w := csv.NewWriter(os.Stdout)
+		w := csv.NewWriter(w)
 		err := w.WriteAll(data)
 		if err != nil {
 			return err
@@ -66,7 +67,7 @@ func RenderTable(format string, header []string, data [][]string, raw any) error
 		}
 
 	case TableFormatJSON:
-		enc := json.NewEncoder(os.Stdout)
+		enc := json.NewEncoder(w)
 
 		err := enc.Encode(raw)
 		if err != nil {
@@ -79,7 +80,7 @@ func RenderTable(format string, header []string, data [][]string, raw any) error
 			return err
 		}
 
-		fmt.Printf("%s", out)
+		_, _ = fmt.Fprintf(w, "%s", out)
 	default:
 		return fmt.Errorf(i18n.G("Invalid format %q"), format)
 	}
@@ -87,7 +88,7 @@ func RenderTable(format string, header []string, data [][]string, raw any) error
 	return nil
 }
 
-func getBaseTable(header []string, data [][]string) *tablewriter.Table {
+func getBaseTable(w io.Writer, header []string, data [][]string) *tablewriter.Table {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetAutoWrapText(false)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
