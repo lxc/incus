@@ -566,12 +566,13 @@ func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 			continue
 		}
 
-		cBase := int64(0)
-		if container.ExpandedConfig()["volatile.idmap.base"] != "" {
-			cBase, err = strconv.ParseInt(container.ExpandedConfig()["volatile.idmap.base"], 10, 64)
-			if err != nil {
-				return nil, 0, err
-			}
+		if container.ExpandedConfig()["volatile.idmap.base"] == "" {
+			continue
+		}
+
+		cBase, err := strconv.ParseInt(container.ExpandedConfig()["volatile.idmap.base"], 10, 64)
+		if err != nil {
+			return nil, 0, err
 		}
 
 		cSize, err := idmapSize(container.ExpandedConfig()["security.idmap.size"])
