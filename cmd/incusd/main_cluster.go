@@ -369,7 +369,7 @@ func (c *cmdClusterListDatabase) Run(cmd *cobra.Command, args []string) error {
 		data[i] = []string{address}
 	}
 
-	_ = cli.RenderTable(c.flagFormat, columns, data, nil)
+	_ = cli.RenderTable(os.Stdout, c.flagFormat, columns, data, nil)
 
 	return nil
 }
