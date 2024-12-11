@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-12-06 15:12-0500\n"
-"PO-Revision-Date: 2024-06-02 16:41+0000\n"
+"PO-Revision-Date: 2024-12-11 16:28+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.6-dev\n"
+"X-Generator: Weblate 5.9-dev\n"
 
 #: cmd/incus/info.go:438
 #, fuzzy
@@ -777,7 +777,7 @@ msgstr "ALIASES"
 
 #: cmd/incus/list.go:887
 msgid "APP"
-msgstr ""
+msgstr "APP"
 
 #: cmd/incus/cluster.go:174 cmd/incus/image.go:1114 cmd/incus/list.go:572
 msgid "ARCHITECTURE"
@@ -2992,7 +2992,7 @@ msgstr "FIRST SEEN"
 
 #: cmd/incus/info.go:682
 msgid "FQDN"
-msgstr ""
+msgstr "FQDN"
 
 #: cmd/incus/file.go:1586
 #, c-format
