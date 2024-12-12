@@ -207,8 +207,12 @@ func (o *NB) get(ctx context.Context, m ovsdbModel.Model) error {
 		return fmt.Errorf("Bad collection type")
 	}
 
-	if rVal.Len() != 1 {
+	if rVal.Len() == 0 {
 		return ovsdbClient.ErrNotFound
+	}
+
+	if rVal.Len() > 1 {
+		return ErrTooMany
 	}
 
 	reflect.ValueOf(m).Elem().Set(rVal.Index(0))
