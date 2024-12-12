@@ -56,7 +56,7 @@ func (a *Asker) AskChoice(question string, choices []string, defaultAnswer strin
 }
 
 // AskInt asks the user to enter an integer between a min and max value.
-func (a *Asker) AskInt(question string, min int64, max int64, defaultAnswer string, validate func(int64) error) (int64, error) {
+func (a *Asker) AskInt(question string, minValue int64, maxValue int64, defaultAnswer string, validate func(int64) error) (int64, error) {
 	for {
 		answer, err := a.askQuestion(question, defaultAnswer)
 		if err != nil {
@@ -69,7 +69,7 @@ func (a *Asker) AskInt(question string, min int64, max int64, defaultAnswer stri
 			continue
 		}
 
-		if !((min == -1 || result >= min) && (max == -1 || result <= max)) {
+		if !((minValue == -1 || result >= minValue) && (maxValue == -1 || result <= maxValue)) {
 			fmt.Fprintf(os.Stderr, "Invalid input: out of range\n\n")
 			continue
 		}
@@ -96,9 +96,9 @@ func (a *Asker) AskString(question string, defaultAnswer string, validate func(s
 		}
 
 		if validate != nil {
-			error := validate(answer)
-			if error != nil {
-				fmt.Fprintf(os.Stderr, "Invalid input: %s\n\n", error)
+			err := validate(answer)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Invalid input: %s\n\n", err)
 				continue
 			}
 
