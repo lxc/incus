@@ -213,6 +213,9 @@ func (c *cmdConsole) text(d incus.InstanceServer, name string) error {
 		}
 
 		close(consoleDisconnect)
+
+		// Make sure we leave the user back to a clean prompt.
+		fmt.Printf("\r\n")
 	}()
 
 	// Attach to the instance console
