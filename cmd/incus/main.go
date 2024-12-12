@@ -417,7 +417,7 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 
 	// Setup password helper
 	c.conf.PromptPassword = func(filename string) (string, error) {
-		return ask.AskPasswordOnce(fmt.Sprintf(i18n.G("Password for %s: "), filename)), nil
+		return c.asker.AskPasswordOnce(fmt.Sprintf(i18n.G("Password for %s: "), filename)), nil
 	}
 
 	// If the user is running a command that may attempt to connect to the local daemon
