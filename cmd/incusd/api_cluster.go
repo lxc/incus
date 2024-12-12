@@ -978,12 +978,20 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 			continue
 		}
 
+		// We only care about project features at this stage, leave the restrictions and limits for later.
+		features := map[string]string{}
+		for k, v := range p.Config {
+			if strings.HasPrefix(k, "features.") {
+				features[k] = v
+			}
+		}
+
 		// Request that the project be created first before the project specific networks.
 		data.Projects = append(data.Projects, api.ProjectsPost{
 			Name: p.Name,
 			ProjectPut: api.ProjectPut{
 				Description: p.Description,
-				Config:      p.Config,
+				Config:      features,
 			},
 		})
 
