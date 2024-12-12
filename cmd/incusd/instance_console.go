@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -329,14 +330,10 @@ func (s *consoleWs) doConsole(op *operations.Operation) error {
 	// Write a reset escape sequence to the console to cancel any ongoing reads to the handle
 	// and then close it. This ordering is important, close the console before closing the
 	// websocket to ensure console doesn't get stuck reading.
-	_, err = console.Write([]byte("\x1bc"))
-	if err != nil {
-		_ = console.Close()
-		return err
-	}
+	_, _ = console.Write([]byte("\x1bc"))
 
 	err = console.Close()
-	if err != nil {
+	if err != nil && !errors.Is(err, os.ErrClosed) {
 		return err
 	}
 
