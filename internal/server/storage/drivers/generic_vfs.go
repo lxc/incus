@@ -332,6 +332,12 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 
 		defer func() { _ = to.Close() }()
 
+		// Reset the disk.
+		err = clearDiskData(path, to)
+		if err != nil {
+			return err
+		}
+
 		// Setup progress tracker.
 		fromPipe := io.ReadCloser(conn)
 		if wrapper != nil {
@@ -787,6 +793,13 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 						logMsg = "Unpacking custom block volume"
 					}
 
+					// Reset the disk.
+					err = clearDiskData(targetPath, to)
+					if err != nil {
+						return err
+					}
+
+					// Copy the data.
 					d.Logger().Debug(logMsg, logger.Ctx{"source": srcFile, "target": targetPath})
 					_, err = io.Copy(NewSparseFileWrapper(to), tr)
 					if err != nil {
