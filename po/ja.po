@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-12-11 17:46+0000\n"
-"PO-Revision-Date: 2024-12-11 16:28+0000\n"
+"PO-Revision-Date: 2024-12-13 10:01+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
@@ -1118,7 +1118,7 @@ msgstr "BASE IMAGE"
 
 #: cmd/incus/network_load_balancer.go:1320
 msgid "Backend health:"
-msgstr ""
+msgstr "バックエンドの稼働状況:"
 
 #: cmd/incus/export.go:85
 #, c-format
@@ -2522,12 +2522,14 @@ msgstr "YAML 形式で設定を stdout に出力します"
 msgid ""
 "During incremental copy, exclude source snapshots earlier than latest target "
 "snapshot"
-msgstr ""
+msgstr "インクリメンタルコピーの際、最新のターゲットスナップショットより前のソースス"
+"ナップショットを除外する"
 
 #: cmd/incus/storage_volume.go:371
 msgid ""
 "During refresh, exclude source snapshots earlier than latest target snapshot"
-msgstr ""
+msgstr "更新時、最新のターゲットスナップショットより前のソーススナップショットを除外"
+"する"
 
 #: cmd/incus/network_zone.go:918
 msgid "ENTRIES"
@@ -2653,6 +2655,11 @@ msgid ""
 "Supported values for type are \"custom\", \"container\" and \"virtual-"
 "machine\"."
 msgstr ""
+"ストレージボリュームの設定を YAML で編集する\n"
+"\n"
+"タイプが指定されていない場合、incus はタイプを \"custom\" として扱います。\n"
+"サポートされているタイプの値は \"custom\", \"container\", \"virtual-machine\""
+" です。"
 
 #: cmd/incus/config_trust.go:274 cmd/incus/config_trust.go:275
 msgid "Edit trust configurations as YAML"
@@ -2788,12 +2795,12 @@ msgstr "テンプレートファイル更新のエラー: %s"
 #: cmd/incus/main.go:348
 #, c-format
 msgid "Error while executing alias expansion: %s\n"
-msgstr ""
+msgstr "エイリアスの展開の実行中にエラー発生しました: %s\n"
 
 #: cmd/incus/main.go:351
 #, c-format
 msgid "Error: %v\n"
-msgstr ""
+msgstr "エラー: %v\n"
 
 #: cmd/incus/cluster.go:1448 cmd/incus/cluster.go:1449
 msgid "Evacuate cluster member"
@@ -3221,7 +3228,7 @@ msgstr "コネクションのリッスンに失敗しました: %w"
 #: cmd/incus/main.go:398 cmd/incus/main_aliases.go:222
 #, c-format
 msgid "Failed to load configuration: %s"
-msgstr ""
+msgstr "設定のロードに失敗しました: %s"
 
 #: cmd/incus/admin_sql.go:114
 #, c-format
@@ -3953,7 +3960,7 @@ msgstr "インスタンスのインポート中: %s"
 
 #: cmd/incus/create.go:58
 msgid "Include environment variables from file"
-msgstr ""
+msgstr "ファイルからの環境変数を含める"
 
 #: cmd/incus/manpage.go:26
 #, fuzzy
@@ -4823,6 +4830,26 @@ msgid ""
 "  u - used by\n"
 "  s - state"
 msgstr ""
+"利用可能なストレージプールをリスト表示します\n"
+"\n"
+"デフォルトのカラムレイアウト: nDSdus\n"
+"\n"
+"== カラム ==\n"
+"-c オプションは、表または CSV 形式で表示するときに出力するインスタンス属性を"
+"制御する引数のコンマ区切りのリストを指定します。\n"
+"\n"
+"カラム引数は事前に定義された短縮文字（以下を参照）か、（拡張）設定キーのいず"
+"れかです。\n"
+"\n"
+"連続する短縮文字間のコンマはオプションです。\n"
+"\n"
+"事前定義されたカラムの短縮文字は次のとおりです:\n"
+"  n - 名前\n"
+"  D - ドライバー\n"
+"  d - 説明\n"
+"  S - ソース\n"
+"  u - 使用中の数\n"
+"  s - 状態"
 
 #: cmd/incus/operation.go:112
 msgid "List background operations"
@@ -4906,6 +4933,26 @@ msgid ""
 "  t - Type\n"
 "  d - Description"
 msgstr ""
+"イメージエイリアスをリスト表示します\n"
+"\n"
+"フィルターはイメージハッシュの一部か、イメージエイリアスの一部である場合があ"
+"ります。\n"
+"デフォルトカラムのレイアウト: aftd\n"
+"\n"
+"== カラム ==\n"
+"-c オプションは、表または CSV 形式で表示するときに出力するインスタンス属性を"
+"制御する引数のコンマ区切りのリストを指定します。\n"
+"\n"
+"カラム引数は事前に定義された短縮文字（以下を参照）か、（拡張）設定キーのいず"
+"れかです。\n"
+"\n"
+"連続する短縮文字間のコンマはオプションです。\n"
+"\n"
+"事前定義されたカラムの短縮文字は次のとおりです:\n"
+"  a - エイリアス\n"
+"  f - フィンガープリント\n"
+"  t - タイプ\n"
+"  d - 説明"
 
 #: cmd/incus/image.go:1066
 msgid "List images"
