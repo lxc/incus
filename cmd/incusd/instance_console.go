@@ -398,10 +398,11 @@ func (s *consoleWs) Cancel(op *operations.Operation) error {
 	conn := s.conns[-1]
 	s.connsLock.Unlock()
 
-	err := conn.Close()
-	if err != nil {
-		return err
+	if conn == nil {
+		return nil
 	}
+
+	_ = conn.Close()
 
 	// Close all dynamic connections.
 	for conn, console := range s.dynamic {
