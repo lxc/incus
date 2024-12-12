@@ -1696,7 +1696,7 @@ func (r *ProtocolIncus) GetInstanceFileSFTP(instanceName string) (*sftp.Client, 
 	}
 
 	// Get a SFTP client.
-	client, err := sftp.NewClientPipe(conn, conn)
+	client, err := sftp.NewClientPipe(conn, conn, sftp.MaxPacketUnchecked(128*1024))
 	if err != nil {
 		_ = conn.Close()
 		return nil, err
