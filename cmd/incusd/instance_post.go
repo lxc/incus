@@ -18,6 +18,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/internal/server/db/operationtype"
+	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/operations"
@@ -335,13 +336,73 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 				return response.InternalError(err)
 			}
 
+			// Load profiles.
+			profileNames := make([]string, 0, len(inst.Profiles()))
+			for _, profile := range inst.Profiles() {
+				profileNames = append(profileNames, profile.Name)
+			}
+
+			profiles := make([]api.Profile, 0, len(profileNames))
+			if len(profileNames) > 0 {
+				err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+					profileFilters := make([]dbCluster.ProfileFilter, 0, len(profileNames))
+					for _, profileName := range profileNames {
+						profileFilters = append(profileFilters, dbCluster.ProfileFilter{
+							Project: &instProject,
+							Name:    &profileName,
+						})
+					}
+
+					dbProfiles, err := dbCluster.GetProfiles(ctx, tx.Tx(), profileFilters...)
+					if err != nil {
+						return err
+					}
+
+					dbProfileConfigs, err := dbCluster.GetConfig(ctx, tx.Tx(), "profile")
+					if err != nil {
+						return err
+					}
+
+					dbProfileDevices, err := dbCluster.GetDevices(ctx, tx.Tx(), "profile")
+					if err != nil {
+						return err
+					}
+
+					profilesByName := make(map[string]dbCluster.Profile, len(dbProfiles))
+					for _, dbProfile := range dbProfiles {
+						profilesByName[dbProfile.Name] = dbProfile
+					}
+
+					for _, profileName := range profileNames {
+						profile, found := profilesByName[profileName]
+						if !found {
+							return fmt.Errorf("Requested profile %q doesn't exist", profileName)
+						}
+
+						apiProfile, err := profile.ToAPI(ctx, tx.Tx(), dbProfileConfigs, dbProfileDevices)
+						if err != nil {
+							return err
+						}
+
+						profiles = append(profiles, *apiProfile)
+					}
+
+					return nil
+				})
+				if err != nil {
+					return response.SmartError(err)
+				}
+			}
+
+			// Prepare the placement scriptlet context.
 			req := apiScriptlet.InstancePlacement{
 				InstancesPost: api.InstancesPost{
 					Name: name,
 					Type: api.InstanceType(instanceType.String()),
 					InstancePut: api.InstancePut{
-						Config:  inst.ExpandedConfig(),
-						Devices: inst.ExpandedDevices().CloneNative(),
+						Config:   db.ExpandInstanceConfig(inst.LocalConfig(), profiles),
+						Devices:  db.ExpandInstanceDevices(deviceConfig.NewDevices(inst.LocalDevices().CloneNative()), profiles).CloneNative(),
+						Profiles: profileNames,
 					},
 				},
 				Project: instProject,
