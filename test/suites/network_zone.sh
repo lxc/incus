@@ -18,9 +18,13 @@ test_network_zone() {
   ! incus network zone create /incus.example.net || false
   incus network zone create incus.example.net/withslash
   incus network zone delete incus.example.net/withslash
-  incus network zone create incus.example.net
+  incus network zone create incus.example.net --description "Test network zone"
   incus network zone create 2.0.192.in-addr.arpa
   incus network zone create 0.1.0.1.2.4.2.4.2.4.2.4.2.4.d.f.ip6.arpa
+
+  # Check that the description is set
+  incus network zone list | grep -q -F 'Test network zone'
+  incus network zone show incus.example.net | grep -q -F 'description: Test network zone'
 
   # Create project and forward zone in project.
   incus project create foo \
@@ -117,7 +121,7 @@ test_network_zone() {
   dig "@${DNS_ADDR}" -p "${DNS_PORT}" axfr 0.1.0.1.2.4.2.4.2.4.2.4.2.4.d.f.ip6.arpa | grep "300\s\+IN\s\+PTR\s\+c2.incus-foo.example.net."
 
   # Test extra records
-  incus network zone record create incus.example.net demo user.foo=bar
+  incus network zone record create incus.example.net demo user.foo=bar --description "Test network zone record"
   ! incus network zone record create incus.example.net demo user.foo=bar || false
   incus network zone record entry add incus.example.net demo A 1.1.1.1 --ttl 900
   incus network zone record entry add incus.example.net demo A 2.2.2.2
@@ -128,6 +132,8 @@ test_network_zone() {
   incus network zone record list incus.example.net
   dig "@${DNS_ADDR}" -p "${DNS_PORT}" axfr incus.example.net | grep -Fc demo.incus.example.net | grep -Fx 6
   incus network zone record entry remove incus.example.net demo A 1.1.1.1
+  incus network zone record list incus.example.net | grep -q -F "Test network zone record"
+  incus network zone record show incus.example.net demo | grep -q -F "description: Test network zone record"
 
   incus admin sql global 'select * from networks_zones_records'
   incus network zone record create incus-foo.example.net demo user.foo=bar --project foo

@@ -148,6 +148,11 @@ test_config_profiles() {
   incus profile remove foo one
   [ "$(incus list -f json foo | jq -r '.[0].profiles | join(" ")')" = "" ]
 
+  # check that we can create a profile with a description
+  incus profile create foo --description bar
+  incus profile ls | grep -q bar
+  incus profile delete foo
+
   incus profile create stdintest
   echo "BADCONF" | incus profile set stdintest user.user_data -
   incus profile show stdintest | grep BADCONF
