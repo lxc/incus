@@ -2975,8 +2975,12 @@ func (o *NB) CreateLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBal
 		}
 
 		err := o.get(ctx, &lb)
-		if err == nil {
-			// Delete the load balancer.
+		if err == nil || err == ErrTooMany {
+			// Delete the load balancer (by name in case there are duplicates).
+			lb := ovnNB.LoadBalancer{
+				Name: name,
+			}
+
 			deleteOps, err := o.client.Where(&lb).Delete()
 			if err != nil {
 				return err
