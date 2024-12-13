@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-12-11 17:46+0000\n"
 "PO-Revision-Date: 2024-12-14 14:00+0000\n"
-"Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
+"Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -9202,7 +9202,7 @@ msgstr ""
 
 #: cmd/incus/network_peer.go:333
 msgid "Type of peer (local or remote)"
-msgstr ""
+msgstr "ピアのタイプ（localまたはremote）"
 
 #: cmd/incus/image.go:994 cmd/incus/info.go:300 cmd/incus/info.go:433
 #: cmd/incus/info.go:444 cmd/incus/info.go:650 cmd/incus/network.go:973
