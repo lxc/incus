@@ -37,8 +37,8 @@ func InstancePlacementCompile(name string, src string) (*starlark.Program, error
 
 // InstancePlacementValidate validates the instance placement scriptlet.
 func InstancePlacementValidate(src string) error {
-	return validate(InstancePlacementCompile, nameInstancePlacement, src, map[string][]string{
-		"instance_placement": {"request", "candidate_members"},
+	return validate(InstancePlacementCompile, nameInstancePlacement, src, declaration{
+		required("instance_placement"): {"request", "candidate_members"},
 	})
 }
 
@@ -80,8 +80,8 @@ func QEMUCompile(name string, src string) (*starlark.Program, error) {
 
 // QEMUValidate validates the QEMU scriptlet.
 func QEMUValidate(src string) error {
-	return validate(QEMUCompile, prefixQEMU, src, map[string][]string{
-		"qemu_hook": {"hook_name"},
+	return validate(QEMUCompile, prefixQEMU, src, declaration{
+		required("qemu_hook"): {"hook_name"},
 	})
 }
 
@@ -107,8 +107,10 @@ func AuthorizationCompile(name string, src string) (*starlark.Program, error) {
 
 // AuthorizationValidate validates the authorization scriptlet.
 func AuthorizationValidate(src string) error {
-	return validate(AuthorizationCompile, nameAuthorization, src, map[string][]string{
-		"authorize": {"details", "object", "entitlement"},
+	return validate(AuthorizationCompile, nameAuthorization, src, declaration{
+		required("authorize"):           {"details", "object", "entitlement"},
+		optional("get_instance_access"): {"project_name", "instance_name"},
+		optional("get_project_access"):  {"project_name"},
 	})
 }
 
