@@ -80,18 +80,19 @@ test_storage_buckets() {
   ! incus storage bucket create "${poolName}" "foo bar" || false
 
   # Create bucket.
-  initCreds=$(incus storage bucket create "${poolName}" "${bucketPrefix}.foo" user.foo=comment)
+  initCreds=$(incus storage bucket create "${poolName}" "${bucketPrefix}.foo" user.foo=comment --description "Test description")
   initAccessKey=$(echo "${initCreds}" | awk '{ if ($2 == "access" && $3 == "key:") {print $4}}')
   initSecretKey=$(echo "${initCreds}" | awk '{ if ($2 == "secret" && $3 == "key:") {print $4}}')
   s3cmdrun "${incus_backend}" "${initAccessKey}" "${initSecretKey}" ls | grep -F "${bucketPrefix}.foo"
 
   incus storage bucket list "${poolName}" | grep -F "${bucketPrefix}.foo"
+  incus storage bucket list "${poolName}" | grep -F "Test description"
   incus storage bucket show "${poolName}" "${bucketPrefix}.foo"
 
   # Create bucket keys.
 
   # Create admin key with randomly generated credentials.
-  creds=$(incus storage bucket key create "${poolName}" "${bucketPrefix}.foo" admin-key --role=admin)
+  creds=$(incus storage bucket key create "${poolName}" "${bucketPrefix}.foo" admin-key --role=admin --description "Test description")
   adAccessKey=$(echo "${creds}" | awk '{ if ($1 == "Access" && $2 == "key:") {print $3}}')
   adSecretKey=$(echo "${creds}" | awk '{ if ($1 == "Secret" && $2 == "key:") {print $3}}')
 
@@ -102,6 +103,7 @@ test_storage_buckets() {
 
   incus storage bucket key list "${poolName}" "${bucketPrefix}.foo" | grep -F "admin-key"
   incus storage bucket key list "${poolName}" "${bucketPrefix}.foo" | grep -F "ro-key"
+  incus storage bucket key list "${poolName}" "${bucketPrefix}.foo" | grep -F "Test description"
   incus storage bucket key show "${poolName}" "${bucketPrefix}.foo" admin-key
   incus storage bucket key show "${poolName}" "${bucketPrefix}.foo" ro-key
 

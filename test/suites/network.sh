@@ -49,8 +49,11 @@ test_network() {
   incus network delete inct$$
 
   # edit network description
-  incus network create inct$$
+  incus network create inct$$ --description "Test description"
+  incus network list | grep -q 'Test description'
+  incus network show inct$$ | grep -q 'description: Test description'
   incus network show inct$$ | sed 's/^description:.*/description: foo/' | incus network edit inct$$
+  incus network list | grep -q 'foo'
   incus network show inct$$ | grep -q 'description: foo'
   incus network delete inct$$
 

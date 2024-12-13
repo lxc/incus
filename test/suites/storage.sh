@@ -14,11 +14,14 @@ test_storage() {
   local storage_pool storage_volume
   storage_pool="incustest-$(basename "${INCUS_DIR}")-pool"
   storage_volume="${storage_pool}-vol"
-  incus storage create "$storage_pool" "$incus_backend"
-  incus storage show "$storage_pool" | sed 's/^description:.*/description: foo/' | incus storage edit "$storage_pool"
+  incus storage create "$storage_pool" "$incus_backend" --description foo
   incus storage show "$storage_pool" | grep -q 'description: foo'
+  incus storage show "$storage_pool" | sed 's/^description:.*/description: bar/' | incus storage edit "$storage_pool"
+  incus storage show "$storage_pool" | grep -q 'description: bar'
 
-  incus storage volume create "$storage_pool" "$storage_volume"
+  # Create a storage volume with a description
+  incus storage volume create "$storage_pool" "$storage_volume" --description foo
+  incus storage volume show "$storage_pool" "$storage_volume" | grep -q 'description: foo'
 
   # Test setting description on a storage volume
   incus storage volume show "$storage_pool" "$storage_volume" | sed 's/^description:.*/description: bar/' | incus storage volume edit "$storage_pool" "$storage_volume"
