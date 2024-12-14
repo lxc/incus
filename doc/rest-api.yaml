@@ -3655,6 +3655,16 @@ definitions:
                 example: incus-net1-lr
                 type: string
                 x-go-name: LogicalRouter
+            uplink_ipv4:
+                description: OVN network uplink ipv4 address
+                example: 10.0.0.1
+                type: string
+                x-go-name: UplinkIPv4
+            uplink_ipv6:
+                description: OVN network uplink ipv6 address
+                example: 2001:0000:130F:0000:0000:09C0:876A:130B.
+                type: string
+                x-go-name: UplinkIPv6
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     NetworkStateVLAN:
