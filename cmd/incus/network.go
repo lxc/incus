@@ -1030,6 +1030,14 @@ func (c *cmdNetworkInfo) Run(cmd *cobra.Command, args []string) error {
 		if client.HasExtension("network_state_ovn_lr") {
 			fmt.Printf("  %s: %s\n", i18n.G("Logical router"), state.OVN.LogicalRouter)
 		}
+
+		if state.OVN.UplinkIPv4 != "" {
+			fmt.Printf("  %s: %s\n", i18n.G("IPv4 uplink address"), state.OVN.UplinkIPv4)
+		}
+
+		if state.OVN.UplinkIPv6 != "" {
+			fmt.Printf("  %s: %s\n", i18n.G("IPv6 uplink address"), state.OVN.UplinkIPv6)
+		}
 	}
 
 	return nil
