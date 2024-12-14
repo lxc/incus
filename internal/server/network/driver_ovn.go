@@ -175,6 +175,17 @@ func (n *ovn) State() (*api.NetworkState, error) {
 		mtu = 1500
 	}
 
+	var uplinkIPv4 string
+	var uplinkIPv6 string
+
+	if n.config[ovnVolatileUplinkIPv4] != "" {
+		uplinkIPv4 = n.config[ovnVolatileUplinkIPv4]
+	}
+
+	if n.config[ovnVolatileUplinkIPv6] != "" {
+		uplinkIPv6 = n.config[ovnVolatileUplinkIPv6]
+	}
+
 	return &api.NetworkState{
 		Addresses: addresses,
 		Counters:  api.NetworkStateCounters{},
@@ -185,6 +196,8 @@ func (n *ovn) State() (*api.NetworkState, error) {
 		OVN: &api.NetworkStateOVN{
 			Chassis:       chassis,
 			LogicalRouter: string(n.getRouterName()),
+			UplinkIPv4:    uplinkIPv4,
+			UplinkIPv6:    uplinkIPv6,
 		},
 	}, nil
 }
