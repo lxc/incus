@@ -8,20 +8,19 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-12-11 17:46+0000\n"
-"PO-Revision-Date: 2024-12-13 10:01+0000\n"
-"Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
+"PO-Revision-Date: 2024-12-14 14:00+0000\n"
+"Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.9-dev\n"
+"X-Generator: Weblate 5.9-rc\n"
 
 #: cmd/incus/info.go:438
-#, fuzzy
 msgid "  Chassis:"
-msgstr "Chassis"
+msgstr "  筐体:"
 
 #: cmd/incus/info.go:478
 msgid "  Firmware:"
@@ -3446,7 +3445,7 @@ msgstr ""
 msgid ""
 "Forces a connection to the console, even if there is already an active "
 "session"
-msgstr ""
+msgstr "すでにアクティブなセッションがある場合でも、コンソールへの接続を強制します"
 
 #: cmd/incus/admin_sql.go:55 cmd/incus/alias.go:113 cmd/incus/cluster.go:151
 #: cmd/incus/cluster.go:1091 cmd/incus/cluster_group.go:478
@@ -4204,9 +4203,8 @@ msgid "Keep the image up to date after initial copy"
 msgstr "最初にコピーした後も常にイメージを最新の状態に保つ"
 
 #: cmd/incus/info.go:680
-#, fuzzy
 msgid "Kernel Version"
-msgstr "サーバのバージョン: %s\n"
+msgstr "サーバのバージョン: %s"
 
 #: cmd/incus/warning.go:212
 msgid "LAST SEEN"
@@ -5670,6 +5668,27 @@ msgid ""
 "  s - Static\n"
 "  g - Global"
 msgstr ""
+"利用可能なリモートをリスト表示します\n"
+"\n"
+"デフォルトのカラムレイアウト: nupaPsg\n"
+"\n"
+"== カラム ==\n"
+"-c オプションは、表または CSV 形式で表示するときに出力するインスタンス属性を"
+"制御する引数のコンマ区切りのリストを指定します。\n"
+"\n"
+"カラム引数は事前に定義された短縮文字（以下を参照）か、（拡張）設定キーのいず"
+"れかです。\n"
+"\n"
+"連続する短縮文字間のコンマはオプションです。\n"
+"\n"
+"事前定義されたカラムの短縮文字は次のとおりです:\n"
+"  n - 名前\n"
+"  u - URL\n"
+"  p - プロトコル\n"
+"  a - 認証タイプ\n"
+"  P - パブリック\n"
+"  s - 静的\n"
+"  g - グローバル"
 
 #: cmd/incus/config_trust.go:399
 msgid "List trusted clients"
@@ -5769,7 +5788,7 @@ msgstr "バックグラウンド操作の一覧表示、表示、削除を行い
 
 #: cmd/incus/info.go:493
 msgid "Load:"
-msgstr ""
+msgstr "負荷:"
 
 #: cmd/incus/info.go:655 cmd/incus/storage_volume.go:1435
 #, c-format
@@ -6089,7 +6108,7 @@ msgstr "警告を管理します"
 
 #: cmd/incus/remote.go:638
 msgid "Manually trigger the generation of a client certificate"
-msgstr ""
+msgstr "クライアント証明書の生成を手動でトリガーする"
 
 #: cmd/incus/info.go:165 cmd/incus/info.go:274
 #, c-format
@@ -6766,7 +6785,7 @@ msgstr "このストレージボリュームに対するデバイスがありま
 
 #: cmd/incus/network_load_balancer.go:1317
 msgid "No load-balancer health information available"
-msgstr ""
+msgstr "ロードバランサーのヘルス情報がありません"
 
 #: cmd/incus/network_load_balancer.go:1039
 msgid "No matching backend found"
@@ -6826,7 +6845,7 @@ msgstr "配置するグループの数"
 
 #: cmd/incus/info.go:678
 msgid "OS"
-msgstr ""
+msgstr "OS"
 
 #: cmd/incus/info.go:679
 #, fuzzy
@@ -7045,15 +7064,15 @@ msgstr "Pre-seed モード。標準入力から YAML で設定を入力します
 
 #: cmd/incus/top.go:443
 msgid "Press 'd' + ENTER to change delay"
-msgstr ""
+msgstr "更新間隔を変更するには 'd' + ENTER を押してください"
 
 #: cmd/incus/top.go:444
 msgid "Press 's' + ENTER to change sorting method"
-msgstr ""
+msgstr "ソート方法を変更するには 's' + ENTER を押してください"
 
 #: cmd/incus/top.go:445
 msgid "Press CTRL-C to exit"
-msgstr ""
+msgstr "終了するには CTRL-C を押してください"
 
 #: cmd/incus/file.go:1451
 msgid "Press ctrl+c to finish"
@@ -7390,7 +7409,9 @@ msgstr "%s を消去しますか (yes/no): "
 msgid ""
 "Remove %s and everything it contains (instances, images, volumes, "
 "networks, ...) (yes/no): "
-msgstr ""
+msgstr "%s "
+"とそれに含まれるすべて（インスタンス、イメージ、ボリューム、ネットワーク、…）"
+"を削除します (yes/no): "
 
 #: cmd/incus/cluster_group.go:609
 msgid "Remove a cluster member from a cluster group"
@@ -8368,6 +8389,11 @@ msgid ""
 "Supported values for type are \"custom\", \"container\" and \"virtual-"
 "machine\"."
 msgstr ""
+"ストレージボリュームの状態を表示します\n"
+"\n"
+"タイプが指定されていない場合、incus はタイプを \"custom\" として扱います。\n"
+"サポートされているタイプの値は \"custom\", \"container\", \"virtual-machine\""
+" です。"
 
 #: cmd/incus/project.go:1163 cmd/incus/project.go:1164
 #, fuzzy
@@ -8462,7 +8488,7 @@ msgstr "一部のインスタンスで %s が失敗しました"
 
 #: cmd/incus/top.go:448
 msgid "Sorting Method:"
-msgstr ""
+msgstr "ソート方法:"
 
 #: cmd/incus/admin_recover.go:121
 msgid ""
@@ -8656,11 +8682,11 @@ msgstr "シンボリックリンクのターゲットパスは \"symlink\" タ�
 
 #: cmd/incus/info.go:403
 msgid "System:"
-msgstr ""
+msgstr "システム:"
 
 #: cmd/incus/snapshot.go:336 cmd/incus/storage_volume.go:2652
 msgid "TAKEN AT"
-msgstr ""
+msgstr "TAKEN AT"
 
 #: cmd/incus/alias.go:149
 msgid "TARGET"
@@ -8837,7 +8863,7 @@ msgstr ""
 
 #: cmd/incus/top.go:171
 msgid "The minimum refresh rate is 10s"
-msgstr ""
+msgstr "更新間隔の最小値は 10 秒です"
 
 #: cmd/incus/config_device.go:449
 msgid "The profile device doesn't exist"
@@ -8983,7 +9009,7 @@ msgstr ""
 
 #: cmd/incus/webui_unix.go:73
 msgid "The server doesn't have a web UI installed"
-msgstr ""
+msgstr "サーバーに Web UI がインストールされていません"
 
 #: cmd/incus/info.go:394
 msgid "The server doesn't implement the newer v2 resources API"
@@ -9176,7 +9202,7 @@ msgstr ""
 
 #: cmd/incus/network_peer.go:333
 msgid "Type of peer (local or remote)"
-msgstr ""
+msgstr "ピアのタイプ（localまたはremote）"
 
 #: cmd/incus/image.go:994 cmd/incus/info.go:300 cmd/incus/info.go:433
 #: cmd/incus/info.go:444 cmd/incus/info.go:650 cmd/incus/network.go:973
@@ -9387,6 +9413,11 @@ msgid ""
 "Supported values for type are \"custom\", \"container\" and \"virtual-"
 "machine\"."
 msgstr ""
+"ストレージボリュームの設定キーの設定を解除する\n"
+"\n"
+"タイプが指定されていない場合、incus はタイプを \"custom\" として扱います。\n"
+"サポートされているタイプの値は \"custom\", \"container\", \"virtual-machine\""
+" です。"
 
 #: cmd/incus/cluster_group.go:1047
 #, fuzzy
@@ -9491,7 +9522,7 @@ msgstr "コピー元の全てのプロファイルがターゲットに存在し
 #: cmd/incus/top.go:247
 #, c-format
 msgid "Updated interval to %v"
-msgstr ""
+msgstr "間隔を %v に更新します"
 
 #: cmd/incus/image.go:1002
 #, c-format
@@ -9652,7 +9683,7 @@ msgstr ""
 #: cmd/incus/webui_unix.go:120
 #, c-format
 msgid "Web server running at: %s"
-msgstr ""
+msgstr "Web サーバーの実行 URL: %s"
 
 #: cmd/incus/admin_init_interactive.go:151
 msgid "What IP address or DNS name should be used to reach this server?"
@@ -10689,6 +10720,11 @@ msgid ""
 "incus exec c1 -- ls -lh /\n"
 "\tRun the \"ls -lh /\" command in instance \"c1\""
 msgstr ""
+"incus exec c1 bash\n"
+"\t\"bash\" コマンドをインスタンス \"c1\" 内で実行します\n"
+"\n"
+"incus exec c1 -- ls -lh /\n"
+"\t\"ls -lh /\" コマンドをインスタンス \"c1\" で実行します"
 
 #: cmd/incus/export.go:34
 #, fuzzy
@@ -10981,6 +11017,19 @@ msgid ""
 "network default in the web project using the configuration\n"
 "\tin the file config.yaml"
 msgstr ""
+"incus network peer create default peer1 web/default\n"
+"    現在のプロジェクト内のネットワーク \"default\" と \"web\" "
+"プロジェクト内のネットワーク \"default\" 間に、新たにピアリングを作成します\n"
+"\n"
+"incus network peer create default peer2 ovn-ic --type=remote\n"
+"    現在のプロジェクト内のネットワーク \"default\" と \"ovn-ic\" "
+"インテグレーションによる他のリモートネットワークの間に、"
+"新たにピアリングを作成します\n"
+"\n"
+"incus network peer create default peer3 web/default < config.yaml\n"
+"\tconfig.yaml ファイル内の設定を使用して、現在のプロジェクト内のネットワーク "
+"\"default\" と \"web\" プロジェクト内の \"default\" "
+"ネットワークの間に、新たにピアリングを作成します"
 
 #: cmd/incus/network_zone.go:391
 #, fuzzy
@@ -11280,6 +11329,13 @@ msgid ""
 "    Create a new custom volume storing some-installer.iso for use as a CD-"
 "ROM image"
 msgstr ""
+"incus storage volume import default backup0.tar.gz\n"
+"    ソースとして backup0.tar.gz を使用して、"
+"新たにカスタムボリュームを作成します\n"
+"\n"
+"incus storage volume import default some-installer.iso installer --type=iso\n"
+"    CD-ROM イメージとして使用するために some-installer.iso "
+"を保存する新しいカスタムボリュームを作成します"
 
 #: cmd/incus/storage_volume.go:1322
 #, fuzzy
