@@ -968,7 +968,10 @@ func clearDiskData(diskPath string, disk *os.File) error {
 	if linux.IsBlockdev(st.Mode()) {
 		// If dealing with a block device, attempt to discard its current content.
 		// This saves space and avoids issues with leaving zero blocks to their original value.
-		_, _ = subprocess.RunCommand("blkdiscard", "-f", diskPath)
+		_, err = subprocess.RunCommand("blkdiscard", "-f", diskPath)
+		if err != nil {
+			logger.Debugf("Unable to clear disk data on %q: %v", diskPath, err)
+		}
 	} else {
 		// Otherwise truncate the file.
 		err = disk.Truncate(0)
