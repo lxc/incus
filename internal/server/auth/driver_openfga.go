@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"sync"
 	"time"
 
 	openfga "github.com/openfga/go-sdk"
@@ -26,7 +27,9 @@ type FGA struct {
 	apiToken string
 	storeID  string
 
-	online         bool
+	onlineMu sync.Mutex
+	online   bool
+
 	shutdownCtx    context.Context
 	shutdownCancel context.CancelFunc
 
@@ -116,7 +119,10 @@ func (f *FGA) load(ctx context.Context, certificateCache *certificate.Cache, opt
 					logger.Warn("Connection with OpenFGA established")
 				}
 
+				f.onlineMu.Lock()
+				defer f.onlineMu.Unlock()
 				f.online = true
+
 				return
 			}
 
@@ -276,6 +282,8 @@ func (f *FGA) CheckPermission(ctx context.Context, r *http.Request, object Objec
 	}
 
 	// If offline, return a clear error to the user.
+	f.onlineMu.Lock()
+	defer f.onlineMu.Unlock()
 	if !f.online {
 		return api.StatusErrorf(http.StatusForbidden, "The authorization server is currently offline, please try again later")
 	}
@@ -881,6 +889,8 @@ func (f *FGA) DeleteStorageBucket(ctx context.Context, projectName string, stora
 // updateTuples sends an object update to OpenFGA if it's currently online.
 func (f *FGA) updateTuples(ctx context.Context, writes []client.ClientTupleKey, deletions []client.ClientTupleKeyWithoutCondition) error {
 	// If offline, skip updating as a full sync will happen after connection.
+	f.onlineMu.Lock()
+	defer f.onlineMu.Unlock()
 	if !f.online {
 		return nil
 	}
@@ -1118,7 +1128,6 @@ func (f *FGA) GetInstanceAccess(ctx context.Context, projectName string, instanc
 			Relation:    relation,
 			UserFilters: userFilters,
 		}).Execute()
-
 		if err != nil {
 			fgaAPIErr, ok := err.(openfga.FgaApiValidationError)
 			if !ok || fgaAPIErr.ResponseCode() != openfga.ERRORCODE_RELATION_NOT_FOUND {
@@ -1173,7 +1182,6 @@ func (f *FGA) GetProjectAccess(ctx context.Context, projectName string) (*api.Ac
 			Relation:    relation,
 			UserFilters: userFilters,
 		}).Execute()
-
 		if err != nil {
 			fgaAPIErr, ok := err.(openfga.FgaApiValidationError)
 			if !ok || fgaAPIErr.ResponseCode() != openfga.ERRORCODE_RELATION_NOT_FOUND {
