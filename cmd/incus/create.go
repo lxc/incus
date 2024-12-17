@@ -34,6 +34,7 @@ type cmdCreate struct {
 	flagNoProfiles      bool
 	flagEmpty           bool
 	flagVM              bool
+	flagDescription     string
 }
 
 func (c *cmdCreate) Command() *cobra.Command {
@@ -63,6 +64,7 @@ incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io.bus=nvme
 	cmd.Flags().BoolVar(&c.flagNoProfiles, "no-profiles", false, i18n.G("Create the instance with no profiles applied"))
 	cmd.Flags().BoolVar(&c.flagEmpty, "empty", false, i18n.G("Create an empty instance"))
 	cmd.Flags().BoolVar(&c.flagVM, "vm", false, i18n.G("Create a virtual machine"))
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Instance description")+"``")
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {
@@ -283,7 +285,12 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 
 	req.Config = configMap
 	req.Ephemeral = c.flagEphemeral
-	req.Description = stdinData.Description
+
+	if c.flagDescription != "" {
+		req.Description = c.flagDescription
+	} else {
+		req.Description = stdinData.Description
+	}
 
 	if !c.flagNoProfiles && len(profiles) == 0 {
 		if len(stdinData.Profiles) > 0 {

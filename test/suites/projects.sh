@@ -60,9 +60,15 @@ test_projects_crud() {
 
   incus project switch default
 
+  # Create a project with a description
+  incus project create baz --description "Test description"
+  incus project list | grep -q -F 'Test description'
+  incus project show baz | grep -q -F 'description: Test description'
+
   # Delete the projects
   incus project delete foo
   incus project delete bar
+  incus project delete baz
 
   # We're back to the default project
   [ "$(incus project get-current)" = "default" ]

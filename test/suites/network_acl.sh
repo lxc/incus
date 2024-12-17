@@ -17,6 +17,10 @@ test_network_acl() {
   ! incus network acl ls | grep testacl || false
   ! incus network acl ls --project testproj | grep testacl || false
   incus project delete testproj
+  incus network acl create testacl --description "Test description"
+  incus network acl list | grep -q -F 'Test description'
+  incus network acl show testacl | grep -q -F 'description: Test description'
+  incus network acl delete testacl
 
   # ACL creation from stdin.
   cat <<EOF | incus network acl create testacl
@@ -88,10 +92,11 @@ EOF
  ! incus network acl rule add testacl ingress action=allow protocol=icmp4 icmp_code=256 || false # Invalid icmp combination
  ! incus network acl rule add testacl ingress action=allow protocol=icmp6 icmp_type=-1 || false # Invalid icmp combination
 
- incus network acl rule add testacl ingress action=allow source=192.168.1.2/32 protocol=tcp destination=192.168.1.1-192.168.1.3 destination_port="22, 2222-2223"
- ! incus network acl rule add testacl ingress action=allow source=192.168.1.2/32 protocol=tcp destination=192.168.1.1-192.168.1.3 destination_port=22,2222-2223 || false # Dupe rule detection
+ incus network acl rule add testacl ingress action=allow source=192.168.1.2/32 protocol=tcp destination=192.168.1.1-192.168.1.3 destination_port="22, 2222-2223" --description "Test ACL rule description"
+ ! incus network acl rule add testacl ingress action=allow source=192.168.1.2/32 protocol=tcp destination=192.168.1.1-192.168.1.3 destination_port=22,2222-2223 --description "Test ACL rule description" || false # Dupe rule detection
  incus network acl show testacl | grep "destination: 192.168.1.1-192.168.1.3"
  incus network acl show testacl | grep -c2 'state: enabled' # Default state enabled for new rules.
+ incus network acl show testacl | grep "description: Test ACL rule description"
 
  # ACL rule removal.
  incus network acl rule add testacl ingress action=allow source=192.168.1.3/32 protocol=tcp destination=192.168.1.1-192.168.1.3 destination_port=22,2222-2223 description="removal rule test"

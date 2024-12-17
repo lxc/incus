@@ -319,6 +319,7 @@ func (c *cmdNetworkLoadBalancerShow) Run(cmd *cobra.Command, args []string) erro
 type cmdNetworkLoadBalancerCreate struct {
 	global              *cmdGlobal
 	networkLoadBalancer *cmdNetworkLoadBalancer
+	flagDescription     string
 }
 
 func (c *cmdNetworkLoadBalancerCreate) Command() *cobra.Command {
@@ -334,6 +335,7 @@ incus network load-balancer create n1 127.0.0.1 < config.yaml
 	cmd.RunE = c.Run
 
 	cmd.Flags().StringVar(&c.networkLoadBalancer.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Load balancer description")+"``")
 
 	return cmd
 }
@@ -393,6 +395,10 @@ func (c *cmdNetworkLoadBalancerCreate) Run(cmd *cobra.Command, args []string) er
 	loadBalancer := api.NetworkLoadBalancersPost{
 		ListenAddress:          args[1],
 		NetworkLoadBalancerPut: loadBalancerPut,
+	}
+
+	if c.flagDescription != "" {
+		loadBalancer.Description = c.flagDescription
 	}
 
 	loadBalancer.Normalise()
@@ -868,6 +874,7 @@ func (c *cmdNetworkLoadBalancerDelete) Run(cmd *cobra.Command, args []string) er
 type cmdNetworkLoadBalancerBackend struct {
 	global              *cmdGlobal
 	networkLoadBalancer *cmdNetworkLoadBalancer
+	flagDescription     string
 }
 
 func (c *cmdNetworkLoadBalancerBackend) Command() *cobra.Command {
@@ -893,6 +900,7 @@ func (c *cmdNetworkLoadBalancerBackend) CommandAdd() *cobra.Command {
 	cmd.RunE = c.RunAdd
 
 	cmd.Flags().StringVar(&c.networkLoadBalancer.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Backend description")+"``")
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -948,6 +956,7 @@ func (c *cmdNetworkLoadBalancerBackend) RunAdd(cmd *cobra.Command, args []string
 	backend := api.NetworkLoadBalancerBackend{
 		Name:          args[2],
 		TargetAddress: args[3],
+		Description:   c.flagDescription,
 	}
 
 	if len(args) >= 5 {
@@ -1057,6 +1066,7 @@ type cmdNetworkLoadBalancerPort struct {
 	global              *cmdGlobal
 	networkLoadBalancer *cmdNetworkLoadBalancer
 	flagRemoveForce     bool
+	flagDescription     string
 }
 
 func (c *cmdNetworkLoadBalancerPort) Command() *cobra.Command {
@@ -1082,6 +1092,7 @@ func (c *cmdNetworkLoadBalancerPort) CommandAdd() *cobra.Command {
 	cmd.RunE = c.RunAdd
 
 	cmd.Flags().StringVar(&c.networkLoadBalancer.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Port description")+"``")
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -1138,6 +1149,7 @@ func (c *cmdNetworkLoadBalancerPort) RunAdd(cmd *cobra.Command, args []string) e
 		Protocol:      args[2],
 		ListenPort:    args[3],
 		TargetBackend: util.SplitNTrimSpace(args[4], ",", -1, false),
+		Description:   c.flagDescription,
 	}
 
 	loadBalancer.Ports = append(loadBalancer.Ports, port)

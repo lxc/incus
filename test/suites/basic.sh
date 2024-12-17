@@ -34,6 +34,11 @@ test_basic_usage() {
   incus image alias list | grep -qv foo  # the old name is gone
   incus image alias delete bar
 
+  # Test an alias with description
+  incus image alias create baz "${sum}" --description "Test description"
+  incus image alias list | grep -q 'Test description'
+  incus image alias delete baz
+
   # Test image list output formats (table & json)
   incus image list --format table | grep -q testimage
   incus image list --format json \
@@ -373,7 +378,7 @@ test_basic_usage() {
   kill_incus "${INCUS_ACTIVATION_DIR}"
 
   # Create and start a container
-  incus launch testimage foo
+  incus launch testimage foo --description "Test container"
   incus list | grep foo | grep RUNNING
   incus stop foo --force
 
