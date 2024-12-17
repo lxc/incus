@@ -328,4 +328,16 @@ type NetworkStateOVN struct {
 	//
 	// API extension: network_state_ovn_lr
 	LogicalRouter string `json:"logical_router" yaml:"logical_router"`
+
+	// OVN network uplink ipv4 address
+	// Example: 10.0.0.1
+	//
+	// API extension: network_ovn_state_addresses
+	UplinkIPv4 string `json:"uplink_ipv4" yaml:"uplink_ipv4"`
+
+	// OVN network uplink ipv6 address
+	// Example: 2001:0000:130F:0000:0000:09C0:876A:130B.
+	//
+	// API extension: network_ovn_state_addresses
+	UplinkIPv6 string `json:"uplink_ipv6" yaml:"uplink_ipv6"`
 }
