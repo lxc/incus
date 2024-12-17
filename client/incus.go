@@ -452,10 +452,11 @@ func (r *ProtocolIncus) rawWebsocket(url string) (*websocket.Conn, error) {
 
 	// Setup a new websocket dialer based on it
 	dialer := websocket.Dialer{
-		NetDialContext:   httpTransport.DialContext,
-		TLSClientConfig:  httpTransport.TLSClientConfig,
-		Proxy:            httpTransport.Proxy,
-		HandshakeTimeout: time.Second * 5,
+		NetDialTLSContext: httpTransport.DialTLSContext,
+		NetDialContext:    httpTransport.DialContext,
+		TLSClientConfig:   httpTransport.TLSClientConfig,
+		Proxy:             httpTransport.Proxy,
+		HandshakeTimeout:  time.Second * 5,
 	}
 
 	// Create temporary http.Request using the http url, not the ws one, so that we can add the client headers
