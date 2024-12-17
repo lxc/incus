@@ -1991,7 +1991,9 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 		}
 	}
 
-	if !isRemoteClusterMove {
+	// Create new volume database records when the storage pool is changed or
+	// when it is not a remote cluster move.
+	if !isRemoteClusterMove || args.StoragePool != "" {
 		for i, snapName := range args.Snapshots {
 			newSnapshotName := drivers.GetSnapshotVolumeName(inst.Name(), snapName)
 			snapConfig := vol.Config()           // Use parent volume config by default.
