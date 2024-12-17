@@ -351,7 +351,7 @@ current value of some objects before modifying or generating new
 objects, it's also possible to attach to those same hooks using a
 scriptlet.
 
-This is done through `raw.qemu.scriptlet`. The scriptlet must define the `qemu_hook(hook_name)` function.
+This is done through `raw.qemu.scriptlet`. The scriptlet must define the `qemu_hook(stage)` function.
 
 The following commands are exposed to that scriptlet:
 
