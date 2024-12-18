@@ -538,7 +538,7 @@ func (m *Monitor) SetMemoryBalloonSizeBytes(sizeBytes int64) error {
 }
 
 // AddBlockDevice adds a block device.
-func (m *Monitor) AddBlockDevice(blockDev map[string]any, device map[string]string) error {
+func (m *Monitor) AddBlockDevice(blockDev map[string]any, device map[string]any) error {
 	revert := revert.New()
 	defer revert.Fail()
 
@@ -624,7 +624,7 @@ func (m *Monitor) RemoveCharDevice(deviceID string) error {
 }
 
 // AddDevice adds a new device.
-func (m *Monitor) AddDevice(device map[string]string) error {
+func (m *Monitor) AddDevice(device map[string]any) error {
 	if device != nil {
 		err := m.Run("device_add", device, nil)
 		if err != nil {
@@ -656,7 +656,7 @@ func (m *Monitor) RemoveDevice(deviceID string) error {
 }
 
 // AddNIC adds a NIC device.
-func (m *Monitor) AddNIC(netDev map[string]any, device map[string]string) error {
+func (m *Monitor) AddNIC(netDev map[string]any, device map[string]any) error {
 	revert := revert.New()
 	defer revert.Fail()
 
