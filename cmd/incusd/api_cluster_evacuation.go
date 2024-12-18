@@ -235,6 +235,8 @@ func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts eva
 			l.Warn("No migration target available for instance")
 			return nil
 		}
+
+		return err
 	}
 
 	// Start migrating the instance.
@@ -528,7 +530,7 @@ func evacuateClusterSelectTarget(ctx context.Context, s *state.State, inst insta
 		// Get the source member info.
 		srcMember, err := tx.GetNodeByName(ctx, inst.Location())
 		if err != nil {
-			return fmt.Errorf("Failed getting current cluster member of instance %q", inst.Name())
+			return fmt.Errorf("Failed loading location details %q for instance %q in project %q: %w", inst.Location(), inst.Name(), inst.Project().Name, err)
 		}
 
 		sourceMemberInfo = &srcMember
