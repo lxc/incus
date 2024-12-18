@@ -235,6 +235,8 @@ func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts eva
 			l.Warn("No migration target available for instance")
 			return nil
 		}
+
+		return err
 	}
 
 	// Start migrating the instance.
