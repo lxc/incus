@@ -302,10 +302,12 @@ func isInUseByDevice(d deviceConfig.Device, matchACLNames ...string) []string {
 
 // NetworkACLUsage info about a network and what ACL it uses.
 type NetworkACLUsage struct {
-	ID     int64
-	Name   string
-	Type   string
-	Config map[string]string
+	ID           int64
+	Name         string
+	Type         string
+	Config       map[string]string
+	InstanceName string
+	DeviceName   string
 }
 
 // NetworkUsage populates the provided aclNets map with networks that are using any of the specified ACLs.
@@ -313,9 +315,9 @@ func NetworkUsage(s *state.State, aclProjectName string, aclNames []string, aclN
 	supportedNetTypes := []string{"bridge", "ovn"}
 
 	// Find all networks and instance/profile NICs that use any of the specified Network ACLs.
-	err := UsedBy(s, aclProjectName, func(ctx context.Context, tx *db.ClusterTx, matchedACLNames []string, usageType any, _ string, nicConfig map[string]string) error {
+	err := UsedBy(s, aclProjectName, func(ctx context.Context, tx *db.ClusterTx, matchedACLNames []string, usageType any, devName string, nicConfig map[string]string) error {
 		switch u := usageType.(type) {
-		case db.InstanceArgs, cluster.Profile:
+		case cluster.Profile:
 			networkID, network, _, err := tx.GetNetworkInAnyState(ctx, aclProjectName, nicConfig["network"])
 			if err != nil {
 				return fmt.Errorf("Failed to load network %q: %w", nicConfig["network"], err)
@@ -329,6 +331,43 @@ func NetworkUsage(s *state.State, aclProjectName string, aclNames []string, aclN
 						Name:   network.Name,
 						Type:   network.Type,
 						Config: network.Config,
+					}
+				}
+			}
+
+		case db.InstanceArgs:
+			networkID, network, _, err := tx.GetNetworkInAnyState(ctx, aclProjectName, nicConfig["network"])
+			if err != nil {
+				return fmt.Errorf("Failed to load network %q: %w", nicConfig["network"], err)
+			}
+
+			if slices.Contains(supportedNetTypes, network.Type) {
+				if network.Type == "bridge" && devName != "" {
+					// Use different key for the usage by bridge NICs to avoid overwriting the usage by the bridge network itself.
+					key := fmt.Sprintf("%s/%s/%s", network.Name, u.Name, devName)
+
+					_, found := aclNets[key]
+
+					if !found {
+						aclNets[key] = NetworkACLUsage{
+							ID:           networkID,
+							Name:         network.Name,
+							Type:         network.Type,
+							Config:       network.Config,
+							InstanceName: u.Name,
+							DeviceName:   devName,
+						}
+					}
+				} else {
+					_, found := aclNets[network.Name]
+
+					if !found {
+						aclNets[network.Name] = NetworkACLUsage{
+							ID:     networkID,
+							Name:   network.Name,
+							Type:   network.Type,
+							Config: network.Config,
+						}
 					}
 				}
 			}
