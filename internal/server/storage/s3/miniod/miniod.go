@@ -3,13 +3,13 @@ package miniod
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -41,6 +41,9 @@ const minioAdminUser = "incus-admin"
 
 // minioBucketDir the directory on the storage volume used for the MinIO bucket.
 const minioBucketDir = "minio"
+
+// mcAliasPrefix is the prefix used for mc aliases, as they have to start with a letter.
+const mcAliasPrefix = "base64url_"
 
 // Process represents a running minio process.
 type Process struct {
@@ -75,9 +78,12 @@ func (p *Process) AdminClient() (*AdminClient, error) {
 		}
 	}
 
+	// Encode the bucketName with base64url as only certain characters with alpha prefix are allowed
+	aliasPrefixedEncoded := mcAliasPrefix + base64.RawURLEncoding.EncodeToString([]byte(p.bucketName))
+
 	client := &AdminClient{
 		p,
-		strings.Replace(p.bucketName, ".", "_", -1),
+		aliasPrefixedEncoded,
 		binaryName,
 		internalUtil.VarPath(""),
 	}
