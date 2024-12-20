@@ -134,6 +134,12 @@ func (n *ovn) Info() Info {
 }
 
 func (n *ovn) State() (*api.NetworkState, error) {
+	// Check if uplink exists
+	_, err := n.ovnnb.GetLogicalRouter(context.TODO(), n.getRouterName())
+	if err != nil && err == networkOVN.ErrNotFound {
+		return nil, nil
+	}
+
 	var addresses []api.NetworkStateAddress
 	IPv4Net, err := ParseIPCIDRToNet(n.config["ipv4.address"])
 	if err == nil {
