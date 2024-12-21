@@ -240,6 +240,12 @@ again:
 
 // diskCephfsOptions returns the mntSrcPath and fsOptions to use for mounting a cephfs share.
 func diskCephfsOptions(clusterName string, userName string, fsName string, fsPath string) (string, []string, error) {
+	// Get the FSID
+	fsid, err := storageDrivers.CephFsid(clusterName)
+	if err != nil {
+		return "", nil, err
+	}
+
 	// Get the monitor list.
 	monAddresses, err := storageDrivers.CephMonitors(clusterName)
 	if err != nil {
@@ -252,14 +258,15 @@ func diskCephfsOptions(clusterName string, userName string, fsName string, fsPat
 		return "", nil, err
 	}
 
-	// Prepare mount entry.
-	fsOptions := []string{
-		fmt.Sprintf("name=%v", userName),
-		fmt.Sprintf("secret=%v", secret),
-		fmt.Sprintf("mds_namespace=%v", fsName),
-	}
+	srcPath, fsOptions := storageDrivers.CephBuildMount(
+		userName,
+		secret,
+		fsid,
+		monAddresses,
+		fsName,
+		fsPath,
+	)
 
-	srcPath := strings.Join(monAddresses, ",") + ":/" + fsPath
 	return srcPath, fsOptions, nil
 }
 
