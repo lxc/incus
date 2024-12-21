@@ -10,7 +10,6 @@ Install Incus </installing>
 Initialize Incus </howto/initialize>
 Get support </support>
 Frequently asked </faq>
-Contribute to Incus </contributing>
 ```
 
 You can find a series of demos and tutorials on YouTube:

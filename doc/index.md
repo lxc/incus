@@ -58,5 +58,6 @@ Clustering </clustering>
 API </api>
 Security </security>
 Internals </internals>
+Contributing </contributing>
 External resources </external_resources>
 ```
