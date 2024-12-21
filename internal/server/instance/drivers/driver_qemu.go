@@ -4148,7 +4148,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 	} else if isRBDImage {
 		blockDev["driver"] = "rbd"
 
-		_, volName, opts, err := device.DiskParseRBDFormat(driveConf.DevPath)
+		poolName, volName, opts, err := device.DiskParseRBDFormat(driveConf.DevPath)
 		if err != nil {
 			return nil, fmt.Errorf("Failed parsing rbd string: %w", err)
 		}
@@ -4173,68 +4173,20 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 		vol := storageDrivers.NewVolume(nil, "", volumeType, rbdContentType, volumeName, nil, nil)
 		rbdImageName := storageDrivers.CephGetRBDImageName(vol, "", false)
 
-		// Parse the options (ceph credentials).
-		userName := storageDrivers.CephDefaultUser
-		clusterName := storageDrivers.CephDefaultCluster
-		poolName := ""
-
-		for _, option := range opts {
-			fields := strings.Split(option, "=")
-			if len(fields) != 2 {
-				return nil, fmt.Errorf("Unexpected volume rbd option %q", option)
+		// scan & pass through options
+		blockDev["pool"] = poolName
+		blockDev["image"] = rbdImageName
+		for key, val := range opts {
+			// We use 'id' where qemu uses 'user'
+			if key == "id" {
+				blockDev["user"] = val
+			} else {
+				blockDev[key] = val
 			}
-
-			if fields[0] == "id" {
-				userName = fields[1]
-			} else if fields[0] == "pool" {
-				poolName = fields[1]
-			} else if fields[0] == "conf" {
-				baseName := filepath.Base(fields[1])
-				clusterName = strings.TrimSuffix(baseName, ".conf")
-			}
-		}
-
-		if poolName == "" {
-			return nil, fmt.Errorf("Missing pool name")
 		}
 
 		// The aio option isn't available when using the rbd driver.
 		delete(blockDev, "aio")
-		blockDev["pool"] = poolName
-		blockDev["image"] = rbdImageName
-		blockDev["user"] = userName
-		blockDev["server"] = []map[string]string{}
-
-		// Derference ceph config path.
-		cephConfPath := fmt.Sprintf("/etc/ceph/%s.conf", clusterName)
-		target, err := filepath.EvalSymlinks(cephConfPath)
-		if err == nil {
-			cephConfPath = target
-		}
-
-		blockDev["conf"] = cephConfPath
-
-		// Setup the Ceph cluster config (monitors and keyring).
-		monitors, err := storageDrivers.CephMonitors(clusterName)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, monitor := range monitors {
-			idx := strings.LastIndex(monitor, ":")
-			host := monitor[:idx]
-			port := monitor[idx+1:]
-
-			blockDev["server"] = append(blockDev["server"].([]map[string]string), map[string]string{
-				"host": strings.Trim(host, "[]"),
-				"port": port,
-			})
-		}
-
-		rbdSecret, err = storageDrivers.CephKeyring(clusterName, userName)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	readonly := slices.Contains(driveConf.Opts, "ro")
