@@ -123,6 +123,7 @@ jobs:
       INCUS_CEPH_CEPHOBJECT_RADOSGW: "http://127.0.0.1"
       INCUS_CONCURRENT: "1"
       INCUS_VERBOSE: "1"
+      INCUS_DEBUG: "1"
       INCUS_OFFLINE: "1"
       INCUS_TMPFS: "1"
       INCUS_REQUIRED_TESTS: "test_storage_buckets"
@@ -349,6 +350,9 @@ jobs:
           done
           sudo microceph.ceph status
           sudo rm -f /snap/bin/rbd
+          # Show final config
+          sudo microceph.ceph config dump
+          sudo microceph.ceph auth ls
 
       - name: "Ensure offline mode (block image server)"
         run: |
@@ -389,7 +393,7 @@ jobs:
 
       - name: Create build directory
         run: |
-            mkdir bin
+          mkdir bin
 
       - name: Build static x86_64 incus
         env:
