@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-12-17 02:23-0500\n"
-"PO-Revision-Date: 2024-08-14 07:23+0000\n"
-"Last-Translator: Kwok Guy <kwokjuy@163.com>\n"
-"Language-Team: Chinese (Simplified) <https://hosted.weblate.org/projects/"
-"incus/cli/zh_Hans/>\n"
+"PO-Revision-Date: 2024-12-22 12:00+0000\n"
+"Last-Translator: Loge Xu <wazolm5643@163.com>\n"
+"Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
+"projects/incus/cli/zh_Hans/>\n"
 "Language: zh_Hans\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.7-dev\n"
+"X-Generator: Weblate 5.10-dev\n"
 
 #: cmd/incus/info.go:439
 msgid "  Chassis:"
@@ -43,10 +43,10 @@ msgid ""
 "### config:\n"
 "###   size: \"61203283968\""
 msgstr ""
-"### 这是一个存储桶的 YAML 表示.\n"
-"### 任何以 '#' 开头的行都会被忽略.\n"
+"### 这是存储桶的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都会被忽略。\n"
 "###\n"
-"### 一个存储桶由一系列配置项构成.\n"
+"### 一个存储桶由一系列配置项构成。\n"
 "###\n"
 "### name: bucket1\n"
 "### used_by: []\n"
@@ -69,12 +69,12 @@ msgid ""
 "###   source: default\n"
 "###   zfs.pool_name: default"
 msgstr ""
-"### 这是一个存储池的 YAML 表示.\n"
-"### 任何以 '#' 开头的行都会被忽略.\n"
+"### 这是存储池的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都会被忽略。\n"
 "###\n"
-"### 一个存储池由一系列配置项构成.\n"
+"### 一个存储池由一系列配置项构成。\n"
 "###\n"
-"### 一个示例如下:\n"
+"### 例如：\n"
 "### name: default\n"
 "### driver: zfs\n"
 "### used_by: []\n"
@@ -96,10 +96,10 @@ msgid ""
 "### config:\n"
 "###   size: \"61203283968\""
 msgstr ""
-"### 这是一个存储卷的 YAML 表示.\n"
-"### 任何以 '#' 开头的行都会被忽略.\n"
+"### 这是存储卷的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都会被忽略。\n"
 "###\n"
-"### 一个存储卷由一系列配置项构成.\n"
+"### 一个存储卷由一系列配置项构成。\n"
 "###\n"
 "### name: foo\n"
 "### type: custom\n"
@@ -114,18 +114,18 @@ msgid ""
 "###\n"
 "### Note that the fingerprint is shown but cannot be changed"
 msgstr ""
-"### 这是一个证书的 YAML 表示.\n"
-"### 任何以 '#' 开头的行会被忽略.\n"
+"### 这是证书的 YAML 表示形式。\n"
+"### 任何以“#”开头的行会都被忽略。\n"
 "###\n"
-"### 注意这里展示的指纹不能被修改"
+"### 注意，展示的指纹不能修改"
 
 #: cmd/incus/cluster_group.go:445
 msgid ""
 "### This is a YAML representation of the cluster group.\n"
 "### Any line starting with a '# will be ignored."
 msgstr ""
-"### 这是一个集群组的 YAML 表示.\n"
-"### 任何以 '#' 开头的行会被忽略."
+"### 这是集群组的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都会被忽略。"
 
 #: cmd/incus/config.go:117
 msgid ""
@@ -147,10 +147,10 @@ msgid ""
 "###\n"
 "### Note that the name is shown but cannot be changed"
 msgstr ""
-"### 这是一个配置的 YAML 表示.\n"
-"### 任何以 '#' 开头的行会被忽略.\n"
+"### 这是配置的 YAML 表示形式\n"
+"### 任何以“#”开头的行会都被忽略。\n"
 "###\n"
-"### 一个配置样例如下:\n"
+"### 示例配置如下：\n"
 "### name: instance1\n"
 "### profiles:\n"
 "### - default\n"
@@ -163,7 +163,7 @@ msgstr ""
 "###     type: disk\n"
 "### ephemeral: false\n"
 "###\n"
-"### 注意这里展示的 name 不能被修改"
+"### 注意，显示的名称（name）不能修改"
 
 #: cmd/incus/image.go:386
 msgid ""
@@ -174,11 +174,11 @@ msgid ""
 "### An example would be:\n"
 "###  description: My custom image"
 msgstr ""
-"### 这是一个镜像属性的 YAML 表示.\n"
-"### 任何以 '#' 开头的行会被忽略.\n"
+"### 这是镜像属性的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都会被忽略。\n"
 "###\n"
-"### 每条属性都用一行表示:\n"
-"### 一个示例如下:\n"
+"### 每个属性由一行表示。\n"
+"### 例如：\n"
 "###  description: My custom image"
 
 #: cmd/incus/config_metadata.go:71
@@ -204,10 +204,10 @@ msgid ""
 "###     template: template.tpl\n"
 "###     properties: {}"
 msgstr ""
-"### 这是一个实例元数据的 YAML 表示.\n"
-"### 任何以 '#' 开头的行会被忽略.\n"
+"### 这是实例元数据的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都会被忽略。\n"
 "###\n"
-"### 一个示例如下:\n"
+"### 例如：\n"
 "###\n"
 "### architecture: x86_64\n"
 "### creation_date: 1477146654\n"
@@ -252,12 +252,12 @@ msgid ""
 "### Note that only the ingress and egress rules, description and "
 "configuration keys can be changed."
 msgstr ""
-"­### 这是一个网络 ACL 的 YAML 表示.\n"
-"### 任何以 '#' 开头的行会被忽略.\n"
+"­### 这是网络 ACL 的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都被忽略。\n"
 "###\n"
-"### 一个网络 ACL 由一组规则和配置项构成.\n"
+"### 网络 ACL 由一组规则和配置项构成。\n"
 "###\n"
-"### 一个示例如下:\n"
+"### 例如：\n"
 "### name: allow-all-inbound\n"
 "### description: test desc\n"
 "### egress: []\n"
@@ -274,8 +274,9 @@ msgstr ""
 "### config:\n"
 "###  user.foo: bah\n"
 "###\n"
-"### Note that only the ingress and egress rules, description and "
-"configuration keys can be changed."
+"### "
+"注意，只能修改入口规则（ingress）、出口规则（egress）、描述（description）、"
+"配置键。"
 
 #: cmd/incus/network_forward.go:697
 msgid ""
@@ -300,12 +301,12 @@ msgid ""
 "###\n"
 "### Note that the listen_address and location cannot be changed."
 msgstr ""
-"### 这是一个网络转发策略的 YAML 表示.\n"
-"### 任何以 '#' 开头的行都会被忽略.\n"
+"### 这是网络转发的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都会被忽略。\n"
 "###\n"
-"### 一个网络转发策略由一个默认的目标地址和一组可选的监听地址上的端口号构成.\n"
+"### 网络转发策略由监听地址的一个默认目标地址和一组可选的端口转发集构成。\n"
 "###\n"
-"### 一个示例如下:\n"
+"### 例如：\n"
 "### listen_address: 192.0.2.1\n"
 "### config:\n"
 "###   target_address: 198.51.100.2\n"
@@ -318,7 +319,7 @@ msgstr ""
 "###   target_port: 80,81,8080-8090\n"
 "### location: server01\n"
 "###\n"
-"### 注意这里展示的 listen_address 和 location 不能被修改."
+"### 注意，监听地址（listen_address）和位置（location）不能修改。"
 
 #: cmd/incus/network_integration.go:242
 msgid ""
@@ -327,10 +328,10 @@ msgid ""
 "###\n"
 "### Note that the name is shown but cannot be changed"
 msgstr ""
-"### 这是一个网络集成的 YAML 表示.\n"
-"### 任何以 '#' 开头的行会被忽略.\n"
+"### 这是网络集成的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都会被忽略。\n"
 "###\n"
-"### 注意这里展示的 name 不能被修改."
+"### 注意，展示的名称不能修改"
 
 #: cmd/incus/network_load_balancer.go:666
 msgid ""
@@ -365,13 +366,12 @@ msgid ""
 "###\n"
 "### Note that the listen_address and location cannot be changed."
 msgstr ""
-"### 这是一个网络负载均衡的 YAML 表示.\n"
-"### 任何以 '#' 开头的行都会被忽略.\n"
+"### 这是网络负载均衡器的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都会被忽略。\n"
 "###\n"
-"### 一个网络负载均衡由一组目标后端和A network load balancer consists of a "
-"set of target backends and port forwards for a listen address.\n"
+"### 网络负载均衡器由监听地址的一组目标后端和端口转发组成。\n"
 "###\n"
-"### An example would look like:\n"
+"### 例如：\n"
 "### listen_address: 192.0.2.1\n"
 "### config:\n"
 "###   user.foo: bar\n"
@@ -394,7 +394,7 @@ msgstr ""
 "###    - backend2\n"
 "### location: server01\n"
 "###\n"
-"### Note that the listen_address and location cannot be changed."
+"### 注意，监听地址（listen_address）和位置（location）不能修改。"
 
 #: cmd/incus/network_peer.go:725
 msgid ""
@@ -412,6 +412,20 @@ msgid ""
 "### Note that the name, target_project, target_network and status fields "
 "cannot be changed."
 msgstr ""
+"### 这是网络对等体的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都将被忽略。\n"
+"###\n"
+"### 例如：\n"
+"### description: A peering to mynet\n"
+"### config: {}\n"
+"### name: mypeer\n"
+"### target_project: default\n"
+"### target_network: mynet\n"
+"### status: Pending\n"
+"###\n"
+"### "
+"注意，名称（name）、目标项目（target_project）、目标网络（target_network）、"
+"状态（status）字段不能更改。"
 
 #: cmd/incus/network_zone.go:1344
 msgid ""
@@ -426,6 +440,16 @@ msgid ""
 "### config:\n"
 "###  user.foo: bah\n"
 msgstr ""
+"### 这是网络区域记录的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都会被忽略。\n"
+"###\n"
+"### 网络区域由一组规则和配置项组成。\n"
+"###\n"
+"### 例如：\n"
+"### name: foo\n"
+"### description: SPF record\n"
+"### config:\n"
+"###  user.foo: bah\n"
 
 #: cmd/incus/network_zone.go:640
 msgid ""
@@ -440,6 +464,16 @@ msgid ""
 "### config:\n"
 "###  user.foo: bah\n"
 msgstr ""
+"### 这是网络区域记录的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都会被忽略。\n"
+"###\n"
+"### 网络区域由一组规则和配置项组成。\n"
+"###\n"
+"### 例如：\n"
+"### name: example.net\n"
+"### description: Internal domain\n"
+"### config:\n"
+"###  user.foo: bah\n"
 
 #: cmd/incus/network.go:724
 msgid ""
@@ -460,6 +494,22 @@ msgid ""
 "###\n"
 "### Note that only the configuration can be changed."
 msgstr ""
+"### 这是网络的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都会被忽略。\n"
+"###\n"
+"### 网络由一组配置项组成。\n"
+"###\n"
+"### 例如：\n"
+"### name: mybr0\n"
+"### config:\n"
+"###   ipv4.address: 10.62.42.1/24\n"
+"###   ipv4.nat: true\n"
+"###   ipv6.address: fd00:56ad:9f7a:9800::1/64\n"
+"###   ipv6.nat: true\n"
+"### managed: true\n"
+"### type: bridge\n"
+"###\n"
+"### 请注意，只能更改配置项。"
 
 #: cmd/incus/profile.go:526
 msgid ""
@@ -481,6 +531,22 @@ msgid ""
 "###\n"
 "### Note that the name is shown but cannot be changed"
 msgstr ""
+"### 这是配置文件的YAML表示形式。\n"
+"### 任何以“#”开头的行都会被忽略。\n"
+"###\n"
+"### 配置文件由一组配置项和一组设备组成。\n"
+"###\n"
+"### 例如：\n"
+"### name: onenic\n"
+"### config:\n"
+"###   raw.lxc: lxc.aa_profile=unconfined\n"
+"### devices:\n"
+"###   eth0:\n"
+"###     nictype: bridged\n"
+"###     parent: mybr0\n"
+"###     type: nic\n"
+"###\n"
+"### 请注意，显示的名称（name）无法更改"
 
 #: cmd/incus/project.go:327
 msgid ""
@@ -502,17 +568,36 @@ msgid ""
 "###\n"
 "### Note that the name is shown but cannot be changed"
 msgstr ""
+"### 这是项目的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都会被忽略。\n"
+"###\n"
+"### 项目由一组功能和一条描述组成。\n"
+"###\n"
+"### 例如：\n"
+"### config:\n"
+"###   features.images: \"true\"\n"
+"###   features.networks: \"true\"\n"
+"###   features.networks.zones: \"true\"\n"
+"###   features.profiles: \"true\"\n"
+"###   features.storage.buckets: \"true\"\n"
+"###   features.storage.volumes: \"true\"\n"
+"### description: My own project\n"
+"### name: my-project\n"
+"###\n"
+"### 请注意，显示的名称（name）无法更改"
 
 #: cmd/incus/cluster.go:893
 msgid ""
 "### This is a yaml representation of the cluster member.\n"
 "### Any line starting with a '# will be ignored."
 msgstr ""
+"### 这是集群成员的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都会被忽略。"
 
 #: cmd/incus/info.go:347
 #, c-format
 msgid "%d (id: %d, online: %v, NUMA node: %v)"
-msgstr ""
+msgstr "%d （id：%d，在线：%v，NUMA 结点：%v）"
 
 #: cmd/incus/admin_init_interactive.go:660
 #, c-format
@@ -527,22 +612,22 @@ msgstr "%q 不是 IP 地址"
 #: cmd/incus/admin_recover.go:209
 #, c-format
 msgid "%s %q on pool %q in project %q (includes %d snapshots)"
-msgstr ""
+msgstr "项目 %q 中 %q 池的 %s %q（包括 %d 个快照）"
 
 #: cmd/incus/image.go:1152
 #, c-format
 msgid "%s (%d more)"
-msgstr ""
+msgstr "%s（还有%d个）"
 
 #: cmd/incus/info.go:189
 #, c-format
 msgid "%s (%s) (%d available)"
-msgstr ""
+msgstr "%s（%s）（%d个可用）"
 
 #: cmd/incus/admin_recover.go:65
 #, c-format
 msgid "%s (backend=%q, source=%q)"
-msgstr ""
+msgstr "%s（后端=%q，来源=%q）"
 
 #: cmd/incus/file.go:1271
 #, c-format
@@ -552,223 +637,225 @@ msgstr "%s 不是目录"
 #: cmd/incus/file.go:1161
 #, c-format
 msgid "'%s' isn't a supported file type"
-msgstr ""
+msgstr "“%s”不是受支持的文件类型"
 
 #: cmd/incus/cluster_group.go:165 cmd/incus/profile.go:251
 msgid "(none)"
-msgstr ""
+msgstr "（无）"
 
 #: cmd/incus/info.go:337
 #, c-format
 msgid "- Level %d (type: %s): %s"
-msgstr ""
+msgstr "- 第 %d 级（类型：%s）：%s"
 
 #: cmd/incus/info.go:316
 #, c-format
 msgid "- Partition %d"
-msgstr ""
+msgstr "- 分区 %d"
 
 #: cmd/incus/info.go:225
 #, c-format
 msgid "- Port %d (%s)"
-msgstr ""
+msgstr "- 端口 %d（%s）"
 
 #: cmd/incus/action.go:266
 msgid "--console can't be used while forcing instance shutdown"
-msgstr ""
+msgstr "强制关闭实例时无法使用 --console"
 
 #: cmd/incus/action.go:435
 msgid "--console can't be used with --all"
-msgstr ""
+msgstr "--console 不能与 --all 一起使用"
 
 #: cmd/incus/action.go:439
 msgid "--console only works with a single instance"
-msgstr ""
+msgstr "--console 只适用于单个实例"
 
 #: cmd/incus/create.go:141 cmd/incus/rebuild.go:64
 msgid "--empty cannot be combined with an image name"
-msgstr ""
+msgstr "--empty 不能与图像名称组合"
 
 #: cmd/incus/config.go:488 cmd/incus/config.go:796
 msgid "--expanded cannot be used with a server"
-msgstr ""
+msgstr "--expanded 不能与服务器一起使用"
 
 #: cmd/incus/copy.go:169
 msgid "--instance-only can't be passed when the source is a snapshot"
-msgstr ""
+msgstr "当来源是快照时，无法传递 --instance-only"
 
 #: cmd/incus/admin_init_auto.go:42
 msgid "--network-port can't be used without --network-address"
-msgstr ""
+msgstr "--network-port 必须和 --network-address 一起使用"
 
 #: cmd/incus/copy.go:103
 msgid "--no-profiles cannot be used with --refresh"
-msgstr ""
+msgstr "--no-profiles 不能与 --refresh 一起使用"
 
 #: cmd/incus/query.go:73
 msgid "--project cannot be used with the query command"
-msgstr ""
+msgstr "--project 不能与 query 命令一起使用"
 
 #: cmd/incus/copy.go:180
 msgid "--refresh can only be used with instances"
-msgstr ""
+msgstr "--refresh 只能与实例一起使用"
 
 #: cmd/incus/move.go:265
 msgid "--target can only be used with clusters"
-msgstr ""
+msgstr "--target 只能与集群一起使用"
 
 #: cmd/incus/config.go:165 cmd/incus/config.go:438 cmd/incus/config.go:615
 #: cmd/incus/config.go:822 cmd/incus/info.go:625
 msgid "--target cannot be used with instances"
-msgstr ""
+msgstr "--target 不能与实例一起使用"
 
 #: cmd/incus/alias.go:221
 msgid "<alias>"
-msgstr ""
+msgstr "<别名>"
 
 #: cmd/incus/alias.go:60
 msgid "<alias> <target>"
-msgstr ""
+msgstr "<别名> <目标>"
 
 #: cmd/incus/admin_sql.go:28
 msgid "<local|global> <query>"
-msgstr ""
+msgstr "<本地|全局> <查询>"
 
 #: cmd/incus/alias.go:166
 msgid "<old alias> <new alias>"
-msgstr ""
+msgstr "<旧别名> <新别名>"
 
 #: cmd/incus/remote.go:976 cmd/incus/remote.go:1042
 msgid "<remote>"
-msgstr ""
+msgstr "<远程>"
 
 #: cmd/incus/remote.go:1090
 msgid "<remote> <URL>"
-msgstr ""
+msgstr "<远程> <URL>"
 
 #: cmd/incus/remote.go:895
 msgid "<remote> <new-name>"
-msgstr ""
+msgstr "<远程> <新名称>"
 
 #: cmd/incus/remote_unix.go:35
 msgid "<remote>: <path>"
-msgstr ""
+msgstr "<远程>: <路径>"
 
 #: cmd/incus/file.go:717
 msgid "<source path>... [<remote>:]<instance>/<path>"
-msgstr ""
+msgstr "<源路径>... [<远程>:]<示例>/<路径>"
 
 #: cmd/incus/image.go:665
+#, fuzzy
 msgid ""
 "<tarball>|<directory>|<URL> [<rootfs tarball>] [<remote>:] [key=value...]"
-msgstr ""
+msgstr "<tarball>|<目录>|<URL> [<rootfs tarball>] [<远程>:] [键=值…]"
 
 #: cmd/incus/manpage.go:20
 msgid "<target>"
-msgstr ""
+msgstr "<目标>"
 
 #: cmd/incus/admin_sql.go:139
 #, c-format
 msgid "=> Query %d:"
-msgstr ""
+msgstr "=> 查询 %d："
 
 #: cmd/incus/remote.go:658
 msgid "A client certificate is already present"
-msgstr ""
+msgstr "客户端证书已存在"
 
 #: cmd/incus/config_trust.go:120
 msgid "A client name must be provided"
-msgstr ""
+msgstr "必须提供客户端名称"
 
 #: cmd/incus/cluster.go:1026
 msgid "A cluster member name must be provided"
-msgstr ""
+msgstr "必须提供集群成员名称"
 
 #: cmd/incus/network_allocations.go:73
 msgid "ADDRESS"
-msgstr ""
+msgstr "地址"
 
 #: cmd/incus/alias.go:149 cmd/incus/image.go:1119 cmd/incus/image_alias.go:244
 msgid "ALIAS"
-msgstr ""
+msgstr "别名"
 
 #: cmd/incus/image.go:1120
 msgid "ALIASES"
-msgstr ""
+msgstr "别名"
 
 #: cmd/incus/list.go:888
 msgid "APP"
-msgstr ""
+msgstr "应用"
 
 #: cmd/incus/cluster.go:174 cmd/incus/image.go:1114 cmd/incus/list.go:573
 msgid "ARCHITECTURE"
-msgstr ""
+msgstr "架构"
 
 #: cmd/incus/remote.go:762
 msgid "AUTH TYPE"
-msgstr ""
+msgstr "认证类型"
 
 #: cmd/incus/remote.go:119
 msgid "Accept certificate"
-msgstr ""
+msgstr "接受证书"
 
 #: cmd/incus/storage_bucket.go:1047
 msgid "Access key (auto-generated if empty)"
-msgstr ""
+msgstr "访问密钥（为空时自动生成）"
 
 #: cmd/incus/storage_bucket.go:1130
 #, c-format
 msgid "Access key: %s"
-msgstr ""
+msgstr "访问密钥：%s"
 
 #: cmd/incus/config.go:391
 msgid "Access the expanded configuration"
-msgstr ""
+msgstr "访问扩展配置"
 
 #: cmd/incus/warning.go:263 cmd/incus/warning.go:264
 msgid "Acknowledge warning"
-msgstr ""
+msgstr "确认警告"
 
 #: cmd/incus/query.go:77
 #, c-format
 msgid "Action %q isn't supported by this tool"
-msgstr ""
+msgstr "此工具不支持操作 %q"
 
 #: cmd/incus/query.go:44
+#, fuzzy
 msgid "Action (defaults to GET)"
-msgstr ""
+msgstr "操作（默认为 GET）"
 
 #: cmd/incus/cluster_group.go:820
 msgid "Add a cluster member to a cluster group"
-msgstr ""
+msgstr "将集群成员添加到集群组"
 
 #: cmd/incus/network_zone.go:1529
 msgid "Add a network zone record entry"
-msgstr ""
+msgstr "添加网络区域记录条目"
 
 #: cmd/incus/network_load_balancer.go:899
 msgid "Add backend to a load balancer"
-msgstr ""
+msgstr "将后端添加到负载均衡器"
 
 #: cmd/incus/network_load_balancer.go:898
 msgid "Add backends to a load balancer"
-msgstr ""
+msgstr "将后端添加到负载均衡器"
 
 #: cmd/incus/network_zone.go:1530
 msgid "Add entries to a network zone record"
-msgstr ""
+msgstr "向网络区域记录添加条目"
 
 #: cmd/incus/config_device.go:77 cmd/incus/config_device.go:78
 msgid "Add instance devices"
-msgstr ""
+msgstr "添加实例设备"
 
 #: cmd/incus/cluster_group.go:819
 msgid "Add member to group"
-msgstr ""
+msgstr "将成员添加到组"
 
 #: cmd/incus/alias.go:61 cmd/incus/alias.go:62
 msgid "Add new aliases"
-msgstr ""
+msgstr "添加新别名"
 
 #: cmd/incus/remote.go:108
 msgid "Add new remote servers"
