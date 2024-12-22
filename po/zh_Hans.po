@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-12-17 02:23-0500\n"
-"PO-Revision-Date: 2024-12-22 12:00+0000\n"
+"PO-Revision-Date: 2024-12-23 14:00+0000\n"
 "Last-Translator: Loge Xu <wazolm5643@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/incus/cli/zh_Hans/>\n"
@@ -744,7 +744,6 @@ msgid "<source path>... [<remote>:]<instance>/<path>"
 msgstr "<源路径>... [<远程>:]<示例>/<路径>"
 
 #: cmd/incus/image.go:665
-#, fuzzy
 msgid ""
 "<tarball>|<directory>|<URL> [<rootfs tarball>] [<remote>:] [key=value...]"
 msgstr "<tarball>|<目录>|<URL> [<rootfs tarball>] [<远程>:] [键=值…]"
@@ -859,7 +858,7 @@ msgstr "添加新别名"
 
 #: cmd/incus/remote.go:108
 msgid "Add new remote servers"
-msgstr ""
+msgstr "添加新的远程服务器"
 
 #: cmd/incus/remote.go:109
 msgid ""
@@ -872,16 +871,24 @@ msgid ""
 "  incus remote add some-name https://LOGIN:PASSWORD@example.com/some/path --"
 "protocol=simplestreams\n"
 msgstr ""
+"添加新的远程服务器\n"
+"\n"
+"远程源的URL必须是HTTPS（https://）。\n"
+"\n"
+"当与“simplestreams”协议结合使用时，可以使用基本身份验证：\n"
+"  incus remote add some-name https://LOGIN:PASSWORD@example.com/some/path "
+"--protocol=simplestreams\n"
 
 #: cmd/incus/config_trust.go:90
 msgid "Add new trusted client"
-msgstr ""
+msgstr "添加新的受信任客户端"
 
 #: cmd/incus/config_trust.go:171
 msgid "Add new trusted client certificate"
-msgstr ""
+msgstr "添加新的受信任客户端证书"
 
 #: cmd/incus/config_trust.go:172
+#, fuzzy
 msgid ""
 "Add new trusted client certificate\n"
 "\n"
@@ -889,6 +896,11 @@ msgid ""
 "- client (default)\n"
 "- metrics\n"
 msgstr ""
+"添加新的受信任客户端证书\n"
+"\n"
+"支持以下证书类型：\n"
+"- 客户端（默认）\n"
+"- metric\n"
 
 #: cmd/incus/config_trust.go:91
 msgid ""
@@ -897,165 +909,168 @@ msgid ""
 "This will issue a trust token to be used by the client to add itself to the "
 "trust store.\n"
 msgstr ""
+"添加新的受信任客户端\n"
+"\n"
+"这会发布一个信任令牌，供客户端将自己添加到信任存储中。\n"
 
 #: cmd/incus/network_forward.go:919 cmd/incus/network_forward.go:920
 msgid "Add ports to a forward"
-msgstr ""
+msgstr "将端口添加到转发"
 
 #: cmd/incus/network_load_balancer.go:1090
 #: cmd/incus/network_load_balancer.go:1091
 msgid "Add ports to a load balancer"
-msgstr ""
+msgstr "向负载平衡器添加端口"
 
 #: cmd/incus/profile.go:108 cmd/incus/profile.go:109
 msgid "Add profiles to instances"
-msgstr ""
+msgstr "向实例添加配置文件"
 
 #: cmd/incus/cluster_role.go:50 cmd/incus/cluster_role.go:51
 msgid "Add roles to a cluster member"
-msgstr ""
+msgstr "向集群成员添加角色"
 
 #: cmd/incus/network_acl.go:884 cmd/incus/network_acl.go:885
 msgid "Add rules to an ACL"
-msgstr ""
+msgstr "向 ACL 添加规则"
 
 #: cmd/incus/admin_recover.go:128
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
-msgstr ""
+msgstr "附加存储池配置属性（键=值，完成后为空）："
 
 #: cmd/incus/admin_init.go:59
 msgid "Address to bind to (default: none)"
-msgstr ""
+msgstr "要绑定的地址（默认值：无）"
 
 #: cmd/incus/admin_init_interactive.go:803
 msgid "Address to bind to (not including port)"
-msgstr ""
+msgstr "要绑定的地址（不包括端口）"
 
 #: cmd/incus/info.go:229
 #, c-format
 msgid "Address: %s"
-msgstr ""
+msgstr "地址：%s"
 
 #: cmd/incus/info.go:373
 #, c-format
 msgid "Address: %v"
-msgstr ""
+msgstr "地址：%v"
 
 #: cmd/incus/storage_bucket.go:190
 #, c-format
 msgid "Admin access key: %s"
-msgstr ""
+msgstr "管理员访问密钥：%s"
 
 #: cmd/incus/storage_bucket.go:191
 #, c-format
 msgid "Admin secret key: %s"
-msgstr ""
+msgstr "管理员私密密钥：%s"
 
 #: cmd/incus/alias.go:87 cmd/incus/alias.go:200
 #, c-format
 msgid "Alias %s already exists"
-msgstr ""
+msgstr "别名 %s 已存在"
 
 #: cmd/incus/alias.go:194 cmd/incus/alias.go:249
 #, c-format
 msgid "Alias %s doesn't exist"
-msgstr ""
+msgstr "别名 %s 不存在"
 
 #: cmd/incus/image_alias.go:111 cmd/incus/image_alias.go:167
 #: cmd/incus/image_alias.go:405
 msgid "Alias name missing"
-msgstr ""
+msgstr "缺少别名"
 
 #: cmd/incus/image.go:1037
 #, c-format
 msgid "Alias: %s"
-msgstr ""
+msgstr "别名：%s"
 
 #: cmd/incus/publish.go:254
 #, c-format
 msgid "Aliases already exists: %s"
-msgstr ""
+msgstr "别名已存在：%s"
 
 #: cmd/incus/image.go:1021
 msgid "Aliases:"
-msgstr ""
+msgstr "别名："
 
 #: cmd/incus/admin_init_interactive.go:223
 msgid "All existing data is lost when joining a cluster, continue?"
-msgstr ""
+msgstr "加入集群会丢失所有现有数据，是否继续？"
 
 #: cmd/incus/storage_volume.go:1568 cmd/incus/storage_volume.go:2562
 msgid "All projects"
-msgstr ""
+msgstr "所有项目"
 
 #: cmd/incus/remote.go:199
 msgid "All server addresses are unavailable"
-msgstr ""
+msgstr "所有服务器地址都不可用"
 
 #: cmd/incus/config_trust.go:182
 msgid "Alternative certificate name"
-msgstr ""
+msgstr "备选证书名称"
 
 #: cmd/incus/image.go:993 cmd/incus/info.go:503 cmd/incus/info.go:507
 #: cmd/incus/info.go:653
 #, c-format
 msgid "Architecture: %s"
-msgstr ""
+msgstr "架构：%s"
 
 #: cmd/incus/info.go:155
 #, c-format
 msgid "Architecture: %v"
-msgstr ""
+msgstr "架构：%v"
 
 #: cmd/incus/admin_init_interactive.go:159
 msgid "Are you joining an existing cluster?"
-msgstr ""
+msgstr "您是否正在加入现有集群？"
 
 #: cmd/incus/cluster.go:1519
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
-msgstr ""
+msgstr "您确定要 %s 集群成员 %q 吗？（是/否）[默认值=否]： "
 
 #: cmd/incus/console.go:391
 msgid "As neither could be found, the raw SPICE socket can be found at:"
-msgstr ""
+msgstr "由于两者都找不到，原始 SPICE 套接字可在以下位置找到："
 
 #: cmd/incus/create.go:388 cmd/incus/rebuild.go:131
 msgid "Asked for a VM but image is of type container"
-msgstr ""
+msgstr "请求 VM，但映像的类型为容器"
 
 #: cmd/incus/cluster_group.go:100 cmd/incus/cluster_group.go:101
 msgid "Assign sets of groups to cluster members"
-msgstr ""
+msgstr "为集群成员分配组集"
 
 #: cmd/incus/profile.go:183 cmd/incus/profile.go:184
 msgid "Assign sets of profiles to instances"
-msgstr ""
+msgstr "为实例分配配置文件集"
 
 #: cmd/incus/network.go:142
 msgid "Attach network interfaces to instances"
-msgstr ""
+msgstr "将网络接口附加到实例"
 
 #: cmd/incus/network.go:239 cmd/incus/network.go:240
 msgid "Attach network interfaces to profiles"
-msgstr ""
+msgstr "将网络接口附加到配置文件"
 
 #: cmd/incus/storage_volume.go:162 cmd/incus/storage_volume.go:163
 msgid "Attach new custom storage volumes to instances"
-msgstr ""
+msgstr "将新的自定义存储卷附加到实例"
 
 #: cmd/incus/storage_volume.go:253 cmd/incus/storage_volume.go:254
 msgid "Attach new custom storage volumes to profiles"
-msgstr ""
+msgstr "将新的自定义存储卷附加到配置文件"
 
 #: cmd/incus/network.go:143
 msgid "Attach new network interfaces to instances"
-msgstr ""
+msgstr "将新的网络接口附加到实例"
 
 #: cmd/incus/console.go:37
 msgid "Attach to instance consoles"
-msgstr ""
+msgstr "附加到实例控制台"
 
 #: cmd/incus/console.go:38
 msgid ""
@@ -1064,79 +1079,82 @@ msgid ""
 "This command allows you to interact with the boot console of an instance\n"
 "as well as retrieve past log entries from it."
 msgstr ""
+"附加到实例控制台\n"
+"\n"
+"此命令允许您与实例的引导控制台进行交互，并从中检索过去的日志条目。"
 
 #: cmd/incus/remote.go:564
 #, c-format
 msgid "Authentication type '%s' not supported by server"
-msgstr ""
+msgstr "服务器不支持身份验证类型“%s”"
 
 #: cmd/incus/info.go:248
 #, c-format
 msgid "Auto negotiation: %v"
-msgstr ""
+msgstr "自动协商：%v"
 
 #: cmd/incus/image.go:189
 msgid "Auto update is only available in pull mode"
-msgstr ""
+msgstr "自动更新仅在拉模式下可用"
 
 #: cmd/incus/image.go:1031
 #, c-format
 msgid "Auto update: %s"
-msgstr ""
+msgstr "自动更新：%s"
 
 #: cmd/incus/admin_init.go:54
 msgid "Automatic (non-interactive) mode"
-msgstr ""
+msgstr "自动（非交互）模式"
 
 #: cmd/incus/remote.go:154
 msgid "Available projects:"
-msgstr ""
+msgstr "可用项目："
 
 #: cmd/incus/info.go:497
 #, c-format
 msgid "Average: %.2f %.2f %.2f"
-msgstr ""
+msgstr "平均值：%.2f %.2f %.2f"
 
 #: cmd/incus/list.go:579 cmd/incus/list.go:580
 msgid "BASE IMAGE"
-msgstr ""
+msgstr "基础镜像"
 
 #: cmd/incus/network_load_balancer.go:903
 msgid "Backend description"
-msgstr ""
+msgstr "后端描述"
 
 #: cmd/incus/network_load_balancer.go:1332
 msgid "Backend health:"
-msgstr ""
+msgstr "后端健康："
 
 #: cmd/incus/export.go:85
 #, c-format
 msgid "Backing up instance: %s"
-msgstr ""
+msgstr "正在备份实例：%s"
 
 #: cmd/incus/storage_bucket.go:1476
 #, c-format
 msgid "Backing up storage bucket: %s"
-msgstr ""
+msgstr "备份存储桶：%s"
 
 #: cmd/incus/storage_volume.go:3046
 #, c-format
 msgid "Backing up storage volume: %s"
-msgstr ""
+msgstr "备份存储卷：%s"
 
 #: cmd/incus/export.go:191 cmd/incus/storage_bucket.go:1553
 #: cmd/incus/storage_volume.go:3123
 msgid "Backup exported successfully!"
-msgstr ""
+msgstr "备份导出成功！"
 
 #: cmd/incus/info.go:845 cmd/incus/storage_volume.go:1499
 msgid "Backups:"
-msgstr ""
+msgstr "备份："
 
 #: cmd/incus/utils.go:102
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
-msgstr ""
+msgstr "设备覆盖语法错误，应为“<设备>,<键>=<值>”：%s"
 
 #: cmd/incus/network.go:416 cmd/incus/network_acl.go:455
 #: cmd/incus/network_forward.go:385 cmd/incus/network_load_balancer.go:388
@@ -1144,24 +1162,24 @@ msgstr ""
 #: cmd/incus/network_zone.go:1158 cmd/incus/storage_bucket.go:158
 #, c-format
 msgid "Bad key/value pair: %s"
-msgstr ""
+msgstr "错误的键值对：%s"
 
 #: cmd/incus/copy.go:152 cmd/incus/create.go:247 cmd/incus/move.go:302
 #: cmd/incus/network_integration.go:145 cmd/incus/project.go:173
 #, c-format
 msgid "Bad key=value pair: %q"
-msgstr ""
+msgstr "错误的键=值对：%q"
 
 #: cmd/incus/publish.go:191 cmd/incus/storage.go:179
 #: cmd/incus/storage_volume.go:657
 #, c-format
 msgid "Bad key=value pair: %s"
-msgstr ""
+msgstr "错误的键=值对：%s"
 
 #: cmd/incus/image.go:785
 #, c-format
 msgid "Bad property: %s"
-msgstr ""
+msgstr "错误特性：%s"
 
 #: cmd/incus/network.go:1002
 msgid "Bond:"
