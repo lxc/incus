@@ -634,7 +634,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	}
 
 	// IPv6 bridge configuration.
-	if !slices.Contains([]string{"", "none"}, n.config["ipv6.address"]) {
+	if !util.IsNoneOrEmpty(n.config["ipv6.address"]) {
 		if !util.PathExists("/proc/sys/net/ipv6") {
 			return fmt.Errorf("Network has ipv6.address but kernel IPv6 support is missing")
 		}
@@ -860,7 +860,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	}
 
 	// Configure IPv4 firewall.
-	if !slices.Contains([]string{"", "none"}, n.config["ipv4.address"]) {
+	if !util.IsNoneOrEmpty(n.config["ipv4.address"]) {
 		if n.hasDHCPv4() && n.hasIPv4Firewall() {
 			fwOpts.FeaturesV4.ICMPDHCPDNSAccess = true
 		}
@@ -913,7 +913,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	}
 
 	// Configure IPv4.
-	if !slices.Contains([]string{"", "none"}, n.config["ipv4.address"]) {
+	if !util.IsNoneOrEmpty(n.config["ipv4.address"]) {
 		// Parse the subnet.
 		ipAddress, subnet, err := net.ParseCIDR(n.config["ipv4.address"])
 		if err != nil {
@@ -1038,7 +1038,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	}
 
 	// Configure IPv6.
-	if !slices.Contains([]string{"", "none"}, n.config["ipv6.address"]) {
+	if !util.IsNoneOrEmpty(n.config["ipv6.address"]) {
 		// Enable IPv6 for the subnet.
 		err := localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", n.name), "0")
 		if err != nil {
@@ -1767,7 +1767,7 @@ func (n *bridge) applyBootRoutesV6(routes []string) {
 // hasIPv4Firewall indicates whether the network has IPv4 firewall enabled.
 func (n *bridge) hasIPv4Firewall() bool {
 	// IPv4 firewall is only enabled if there is a bridge ipv4.address and ipv4.firewall enabled.
-	if !slices.Contains([]string{"", "none"}, n.config["ipv4.address"]) && util.IsTrueOrEmpty(n.config["ipv4.firewall"]) {
+	if !util.IsNoneOrEmpty(n.config["ipv4.address"]) && util.IsTrueOrEmpty(n.config["ipv4.firewall"]) {
 		return true
 	}
 
@@ -1777,7 +1777,7 @@ func (n *bridge) hasIPv4Firewall() bool {
 // hasIPv6Firewall indicates whether the network has IPv6 firewall enabled.
 func (n *bridge) hasIPv6Firewall() bool {
 	// IPv6 firewall is only enabled if there is a bridge ipv6.address and ipv6.firewall enabled.
-	if !slices.Contains([]string{"", "none"}, n.config["ipv6.address"]) && util.IsTrueOrEmpty(n.config["ipv6.firewall"]) {
+	if !util.IsNoneOrEmpty(n.config["ipv6.address"]) && util.IsTrueOrEmpty(n.config["ipv6.firewall"]) {
 		return true
 	}
 
@@ -2684,5 +2684,25 @@ func (n *bridge) Leases(projectName string, clientType request.ClientType) ([]ap
 
 // UsesDNSMasq indicates if network's config indicates if it needs to use dnsmasq.
 func (n *bridge) UsesDNSMasq() bool {
-	return !slices.Contains([]string{"", "none"}, n.config["ipv4.address"]) || !slices.Contains([]string{"", "none"}, n.config["ipv6.address"])
+	// Skip dnsmasq when no connectivity is configured.
+	if util.IsNoneOrEmpty(n.config["ipv4.address"]) && util.IsNoneOrEmpty(n.config["ipv6.address"]) {
+		return false
+	}
+
+	// Start dnsmasq if providing instance DNS records.
+	if n.config["dns.mode"] != "none" {
+		return true
+	}
+
+	// Start dnsmassq if IPv6 is used (needed for SLAAC or DHCPv6).
+	if !util.IsNoneOrEmpty(n.config["ipv6.address"]) {
+		return true
+	}
+
+	// Start dnsmasq if IPv4 DHCP is used.
+	if !util.IsNoneOrEmpty(n.config["ipv4.address"]) && n.hasDHCPv4() {
+		return true
+	}
+
+	return false
 }
