@@ -157,6 +157,7 @@ test_container_devices_disk_cephfs() {
   fi
 
   incus launch testimage ceph-fs -c security.privileged=true
+  ceph auth rm "client.${INCUS_CEPH_CLIENT}"
   ceph fs authorize "${INCUS_CEPH_CEPHFS}" "client.${INCUS_CEPH_CLIENT}" / rw
   incus config device add ceph-fs fs disk \
     source=cephfs:"${INCUS_CEPH_CEPHFS}"/ \
@@ -168,9 +169,10 @@ test_container_devices_disk_cephfs() {
   incus exec ceph-fs -- stat /cephfs
   incus exec ceph-fs -- mkdir /cephfs/ro
   incus stop ceph-fs
+  ceph auth rm "client.${INCUS_CEPH_CLIENT}"
   ceph fs authorize "${INCUS_CEPH_CEPHFS}" "client.${INCUS_CEPH_CLIENT}" / rw / ro
   incus start ceph-fs
-  ! incus exec ceph-fs -- touch /cephfs/ro/fail || true
+  ! incus exec ceph-fs -- touch /cephfs/ro/fail
   incus exec ceph-fs -- touch /cephfs/succeed
   incus delete -f ceph-fs
 }
