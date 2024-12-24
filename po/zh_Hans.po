@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-12-17 02:23-0500\n"
-"PO-Revision-Date: 2024-12-23 14:00+0000\n"
+"PO-Revision-Date: 2024-12-25 14:01+0000\n"
 "Last-Translator: Loge Xu <wazolm5643@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/incus/cli/zh_Hans/>\n"
@@ -531,7 +531,7 @@ msgid ""
 "###\n"
 "### Note that the name is shown but cannot be changed"
 msgstr ""
-"### 这是配置文件的YAML表示形式。\n"
+"### 这是配置文件的 YAML 表示形式。\n"
 "### 任何以“#”开头的行都会被忽略。\n"
 "###\n"
 "### 配置文件由一组配置项和一组设备组成。\n"
@@ -597,7 +597,7 @@ msgstr ""
 #: cmd/incus/info.go:347
 #, c-format
 msgid "%d (id: %d, online: %v, NUMA node: %v)"
-msgstr "%d （id：%d，在线：%v，NUMA 结点：%v）"
+msgstr "%d （id：%d，在线：%v，NUMA 节点：%v）"
 
 #: cmd/incus/admin_init_interactive.go:660
 #, c-format
@@ -820,7 +820,6 @@ msgid "Action %q isn't supported by this tool"
 msgstr "此工具不支持操作 %q"
 
 #: cmd/incus/query.go:44
-#, fuzzy
 msgid "Action (defaults to GET)"
 msgstr "操作（默认为 GET）"
 
@@ -1183,61 +1182,61 @@ msgstr "错误特性：%s"
 
 #: cmd/incus/network.go:1002
 msgid "Bond:"
-msgstr ""
+msgstr "网络绑定："
 
 #: cmd/incus/action.go:187 cmd/incus/action.go:391
 msgid "Both --all and instance name given"
-msgstr ""
+msgstr "给出了--all和实例名称"
 
 #: cmd/incus/info.go:156
 #, c-format
 msgid "Brand: %v"
-msgstr ""
+msgstr "品牌：%v"
 
 #: cmd/incus/network.go:1015
 msgid "Bridge:"
-msgstr ""
+msgstr "网络桥接："
 
 #: cmd/incus/storage_bucket.go:106
 msgid "Bucket description"
-msgstr ""
+msgstr "桶描述"
 
 #: cmd/incus/info.go:365
 #, c-format
 msgid "Bus Address: %v"
-msgstr ""
+msgstr "总线地址：%v"
 
 #: cmd/incus/info.go:768 cmd/incus/network.go:994
 msgid "Bytes received"
-msgstr ""
+msgstr "已接收字节"
 
 #: cmd/incus/info.go:769 cmd/incus/network.go:995
 msgid "Bytes sent"
-msgstr ""
+msgstr "已发送字节"
 
 #: cmd/incus/operation.go:154
 msgid "CANCELABLE"
-msgstr ""
+msgstr "可取消"
 
 #: cmd/incus/config_trust.go:436
 msgid "COMMON NAME"
-msgstr ""
+msgstr "常用名"
 
 #: cmd/incus/storage_volume.go:1683
 msgid "CONTENT-TYPE"
-msgstr ""
+msgstr "内容类型"
 
 #: cmd/incus/warning.go:211
 msgid "COUNT"
-msgstr ""
+msgstr "数量"
 
 #: cmd/incus/top.go:79
 msgid "CPU TIME(s)"
-msgstr ""
+msgstr "CPU 时间（秒）"
 
 #: cmd/incus/list.go:591
 msgid "CPU USAGE"
-msgstr ""
+msgstr "CPU 使用率"
 
 #: cmd/incus/info.go:709
 msgid "CPU usage (in seconds)"
