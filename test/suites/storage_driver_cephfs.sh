@@ -7,22 +7,42 @@ test_storage_driver_cephfs() {
     return
   fi
 
+  if [ "${INCUS_CEPH_CLIENT}" != "admin" ]; then
+    ceph fs authorize "${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")" / rw
+  fi
+
   # Simple create/delete attempt
-  incus storage create cephfs cephfs source="${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")"
+  incus storage create cephfs cephfs \
+    source="${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")" \
+    cephfs.user.name="${INCUS_CEPH_CLIENT}"
   incus storage delete cephfs
 
   # Test invalid key combinations for auto-creation of cephfs entities.
-  ! incus storage create cephfs cephfs source="${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")" cephfs.osd_pg_num=32 || true
-  ! incus storage create cephfs cephfs source="${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")" cephfs.meta_pool=xyz || true
-  ! incus storage create cephfs cephfs source="${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")" cephfs.data_pool=xyz || true
-  ! incus storage create cephfs cephfs source="${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")" cephfs.create_missing=true cephfs.data_pool=xyz_data cephfs.meta_pool=xyz_meta || true
+  ! incus storage create cephfs cephfs \
+    source="${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")" \
+    cephfs.user.name="${INCUS_CEPH_CLIENT}" \
+    cephfs.osd_pg_num=32 || true
+  ! incus storage create cephfs cephfs \
+    source="${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")" \
+    cephfs.user.name="${INCUS_CEPH_CLIENT}" \
+    cephfs.meta_pool=xyz || true
+  ! incus storage create cephfs cephfs \
+    source="${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")" \
+    cephfs.user.name="${INCUS_CEPH_CLIENT}" \
+    cephfs.data_pool=xyz || true
+  ! incus storage create cephfs cephfs \
+    source="${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")" \
+    cephfs.user.name="${INCUS_CEPH_CLIENT}" \
+    cephfs.create_missing=true cephfs.data_pool=xyz_data cephfs.meta_pool=xyz_meta || true
 
 
   # Test cephfs storage volumes.
   for fs in "cephfs" "cephfs2" ; do
     if [ "${fs}" = "cephfs" ]; then
       # Create one cephfs with pre-existing OSDs.
-      incus storage create "${fs}" cephfs source="${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")"
+      incus storage create "${fs}" cephfs \
+        source="${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")" \
+        cephfs.user.name="${INCUS_CEPH_CLIENT}"
     else
       # Create one cephfs by creating the OSDs and the cephfs itself.
       incus storage create "${fs}" cephfs source=cephfs2 cephfs.create_missing=true cephfs.data_pool=xyz_data cephfs.meta_pool=xyz_meta
@@ -64,5 +84,5 @@ test_storage_driver_cephfs() {
   done
 
   # Recreate the fs for other tests.
-  ceph fs new cephfs cephfs_meta cephfs_data --force
+  ceph fs new "${INCUS_CEPH_CEPHFS}" cephfs_meta cephfs_data --force
 }

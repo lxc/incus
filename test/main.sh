@@ -63,6 +63,13 @@ if [ "$INCUS_BACKEND" != "random" ] && ! storage_backend_available "$INCUS_BACKE
 fi
 echo "==> Using storage backend ${INCUS_BACKEND}"
 
+if [ "${INCUS_BACKEND}" = "ceph" ]; then
+  if [ -z "${INCUS_CEPH_CLIENT:-}" ]; then
+    INCUS_CEPH_CLIENT="admin"
+  fi
+  echo "==> Using ceph client ${INCUS_CEPH_CLIENT}"
+fi
+
 import_storage_backends
 
 cleanup() {
