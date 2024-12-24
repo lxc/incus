@@ -378,6 +378,10 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		// Remove volatile.uuid key from storage volumes (not used by Incus).
 		rewriteStatements = append(rewriteStatements, "DELETE FROM storage_volumes_config WHERE key='volatile.uuid';")
 		rewriteStatements = append(rewriteStatements, "DELETE FROM storage_volumes_snapshots_config WHERE key='volatile.uuid';")
+
+		// Remove volatile.uuid key from instances (not used by Incus).
+		rewriteStatements = append(rewriteStatements, "DELETE FROM instances_config WHERE key='volatile.uuid';")
+		rewriteStatements = append(rewriteStatements, "DELETE FROM instances_snapshots_config WHERE key='volatile.uuid';")
 	}
 
 	// Mangle database schema to be compatible.
