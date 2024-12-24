@@ -3911,13 +3911,6 @@ func (d *qemu) addDriveDirConfig(cfg *[]cfgSection, bus *qemuBus, fdFiles *[]*os
 	if !slices.Contains(driveConf.Opts, "bus=virtiofs") {
 		devBus, devAddr, multi := bus.allocate(busFunctionGroup9p)
 
-		fd, err := strconv.Atoi(driveConf.DevPath)
-		if err != nil {
-			return fmt.Errorf("Invalid file descriptor %q for drive %q: %w", driveConf.DevPath, driveConf.DevName, err)
-		}
-
-		proxyFD := d.addFileDescriptor(fdFiles, os.NewFile(uintptr(fd), driveConf.DevName))
-
 		driveDir9pOpts := qemuDriveDirOpts{
 			dev: qemuDevOpts{
 				busName:       bus.name,
@@ -3927,8 +3920,8 @@ func (d *qemu) addDriveDirConfig(cfg *[]cfgSection, bus *qemuBus, fdFiles *[]*os
 			},
 			devName:  driveConf.DevName,
 			mountTag: mountTag,
-			proxyFD:  proxyFD, // Pass by file descriptor
 			readonly: readonly,
+			path:     driveConf.DevPath,
 			protocol: "9p",
 		}
 		*cfg = append(*cfg, qemuDriveDir(&driveDir9pOpts)...)
