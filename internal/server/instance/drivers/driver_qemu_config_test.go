@@ -839,15 +839,16 @@ func TestQemuConfigTemplates(t *testing.T) {
 				dev:      qemuDevOpts{"pci", "qemu_pcie0", "00.5", true},
 				devName:  "stub",
 				mountTag: "mtag",
+				path:     "/var/9p",
 				protocol: "9p",
 				readonly: false,
-				proxyFD:  5,
 			},
 			`# stub drive (9p)
 			[fsdev "incus_stub"]
-			fsdriver = "proxy"
-			sock_fd = "5"
+			fsdriver = "local"
+			security_model = "passthrough"
 			readonly = "off"
+			path = "/var/9p"
 
 			[device "dev-incus_stub-9p"]
 			driver = "virtio-9p-pci"
@@ -898,15 +899,16 @@ func TestQemuConfigTemplates(t *testing.T) {
 				dev:      qemuDevOpts{"ccw", "qemu_pcie0", "00.0", false},
 				devName:  "stub2",
 				mountTag: "mtag2",
+				path:     "/var/9p",
 				protocol: "9p",
 				readonly: true,
-				proxyFD:  3,
 			},
 			`# stub2 drive (9p)
 			[fsdev "incus_stub2"]
-			fsdriver = "proxy"
-			sock_fd = "3"
+			fsdriver = "local"
+			security_model = "passthrough"
 			readonly = "on"
+			path = "/var/9p"
 
 			[device "dev-incus_stub2-9p"]
 			driver = "virtio-9p-ccw"
