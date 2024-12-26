@@ -8,7 +8,12 @@ test_storage_driver_cephfs() {
   fi
 
   if [ "${INCUS_CEPH_CLIENT}" != "admin" ]; then
-    ceph fs authorize "${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")" / rw
+    ceph auth rm "client.${INCUS_CEPH_CLIENT}"
+    ceph fs authorize \
+      "client.${INCUS_CEPH_CLIENT}" \
+      "${INCUS_CEPH_CEPHFS}" \
+      "$(basename "${INCUS_DIR}")" rw
+
   fi
 
   # Simple create/delete attempt
