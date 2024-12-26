@@ -170,8 +170,9 @@ test_container_devices_disk_cephfs() {
   incus exec ceph-fs -- mkdir /cephfs/ro
   incus stop ceph-fs
   ceph auth rm "client.${INCUS_CEPH_CLIENT}"
-  ceph fs authorize "${INCUS_CEPH_CEPHFS}" "client.${INCUS_CEPH_CLIENT}" / rw / ro
+  ceph fs authorize "${INCUS_CEPH_CEPHFS}" "client.${INCUS_CEPH_CLIENT}" / rw /ro r
   incus start ceph-fs
+  incus exec ceph-fs -- stat /cephfs/ro
   ! incus exec ceph-fs -- touch /cephfs/ro/fail
   incus exec ceph-fs -- touch /cephfs/succeed
   incus delete -f ceph-fs
