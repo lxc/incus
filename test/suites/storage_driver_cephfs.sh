@@ -10,8 +10,8 @@ test_storage_driver_cephfs() {
   if [ "${INCUS_CEPH_CLIENT}" != "admin" ]; then
     ceph auth rm "client.${INCUS_CEPH_CLIENT}"
     ceph fs authorize \
-      "client.${INCUS_CEPH_CLIENT}" \
       "${INCUS_CEPH_CEPHFS}" \
+      "client.${INCUS_CEPH_CLIENT}" \
       "$(basename "${INCUS_DIR}")" rw
 
   fi
