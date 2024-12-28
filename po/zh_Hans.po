@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-12-17 02:23-0500\n"
-"PO-Revision-Date: 2024-12-25 14:01+0000\n"
+"PO-Revision-Date: 2024-12-29 09:28+0000\n"
 "Last-Translator: Loge Xu <wazolm5643@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/incus/cli/zh_Hans/>\n"
@@ -1236,81 +1236,81 @@ msgstr "CPU 时间（秒）"
 
 #: cmd/incus/list.go:591
 msgid "CPU USAGE"
-msgstr "CPU 使用率"
+msgstr "CPU 占用"
 
 #: cmd/incus/info.go:709
 msgid "CPU usage (in seconds)"
-msgstr ""
+msgstr "CPU 占用（秒）"
 
 #: cmd/incus/info.go:713
 msgid "CPU usage:"
-msgstr ""
+msgstr "CPU 占用："
 
 #: cmd/incus/info.go:502
 msgid "CPU:"
-msgstr ""
+msgstr "CPU："
 
 #: cmd/incus/info.go:506
 msgid "CPUs:"
-msgstr ""
+msgstr "CPU："
 
 #: cmd/incus/operation.go:155
 msgid "CREATED"
-msgstr ""
+msgstr "创建"
 
 #: cmd/incus/list.go:575
 msgid "CREATED AT"
-msgstr ""
+msgstr "创建于"
 
 #: cmd/incus/info.go:158
 #, c-format
 msgid "CUDA Version: %v"
-msgstr ""
+msgstr "CUDA 版本：%v"
 
 #: cmd/incus/image.go:1030
 #, c-format
 msgid "Cached: %s"
-msgstr ""
+msgstr "已缓存：%s"
 
 #: cmd/incus/info.go:335
 msgid "Caches:"
-msgstr ""
+msgstr "缓存："
 
 #: cmd/incus/admin_init_interactive.go:144
 #: cmd/incus/admin_init_interactive.go:828
 #, c-format
 msgid "Can't bind address %q: %w"
-msgstr ""
+msgstr "无法绑定地址 %q：%w"
 
 #: cmd/incus/move.go:127
 msgid "Can't override configuration or profiles in local rename"
-msgstr ""
+msgstr "无法在本地重命名中覆盖配置或配置文件"
 
 #: cmd/incus/image.go:212
 msgid "Can't provide a name for the target image"
-msgstr ""
+msgstr "无法为目标镜像提供名称"
 
 #: cmd/incus/file.go:592
 msgid "Can't pull a directory without --recursive"
-msgstr ""
+msgstr "没有 --recursive 无法拉取目录"
 
 #: cmd/incus/utils.go:304
 #, c-format
 msgid "Can't read from environment file: %w"
-msgstr ""
+msgstr "无法读取环境文件：%w"
 
 #: cmd/incus/utils.go:269 cmd/incus/utils.go:289
 #, c-format
 msgid "Can't read from stdin: %w"
-msgstr ""
+msgstr "无法从标准输入读取：%w"
 
 #: cmd/incus/remote.go:1020
 msgid "Can't remove the default remote"
-msgstr ""
+msgstr "无法删除默认远程服务器"
 
 #: cmd/incus/list.go:606
 msgid "Can't specify --fast with --columns"
-msgstr ""
+msgstr "不能用 --columns 指定 --fast"
 
 #: cmd/incus/cluster.go:249 cmd/incus/list.go:470 cmd/incus/profile.go:811
 msgid "Can't specify --project with --all-projects"
