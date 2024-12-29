@@ -8,25 +8,28 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-12-17 02:23-0500\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Automatically generated\n"
-"Language-Team: none\n"
+"PO-Revision-Date: 2024-12-30 10:00+0000\n"
+"Last-Translator: pesder <j_h_liau@yahoo.com.tw>\n"
+"Language-Team: Chinese (Traditional Han script) <https://hosted.weblate.org/"
+"projects/incus/cli/zh_Hant/>\n"
 "Language: zh_Hant\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 5.10-dev\n"
 
 #: cmd/incus/info.go:439
 msgid "  Chassis:"
-msgstr ""
+msgstr "  機櫃："
 
 #: cmd/incus/info.go:479
 msgid "  Firmware:"
-msgstr ""
+msgstr "  韌體："
 
 #: cmd/incus/info.go:459
 msgid "  Motherboard:"
-msgstr ""
+msgstr "  主機板："
 
 #: cmd/incus/storage_bucket.go:281 cmd/incus/storage_bucket.go:1222
 msgid "### This is a YAML representation of a storage bucket.\n"
@@ -328,134 +331,134 @@ msgstr ""
 #: cmd/incus/info.go:347
 #, c-format
 msgid "%d (id: %d, online: %v, NUMA node: %v)"
-msgstr ""
+msgstr "%d (id: %d, 上線: %v, NUMA 節點: %v)"
 
 #: cmd/incus/admin_init_interactive.go:660
 #, c-format
 msgid "%q is not a block device"
-msgstr ""
+msgstr "%q 不是一個區塊裝置"
 
 #: cmd/incus/admin_init_interactive.go:797
 #, c-format
 msgid "%q is not an IP address"
-msgstr ""
+msgstr "%q 不是一個 IP 位址"
 
 #: cmd/incus/admin_recover.go:209
 #, c-format
 msgid "%s %q on pool %q in project %q (includes %d snapshots)"
-msgstr ""
+msgstr "%s %q 於 %q 池的 %q 專案(包含 %d 快照)"
 
 #: cmd/incus/image.go:1152
 #, c-format
 msgid "%s (%d more)"
-msgstr ""
+msgstr "%s (還有 %d)"
 
 #: cmd/incus/info.go:189
 #, c-format
 msgid "%s (%s) (%d available)"
-msgstr ""
+msgstr "%s (%s) (%d 可用)"
 
 #: cmd/incus/admin_recover.go:65
 #, c-format
 msgid "%s (backend=%q, source=%q)"
-msgstr ""
+msgstr "%s (後端=%q, 來源=%q)"
 
 #: cmd/incus/file.go:1271
 #, c-format
 msgid "%s is not a directory"
-msgstr ""
+msgstr "%s 不是目錄"
 
 #: cmd/incus/file.go:1161
 #, c-format
 msgid "'%s' isn't a supported file type"
-msgstr ""
+msgstr "'%s' 不是受支援的檔案類型"
 
 #: cmd/incus/cluster_group.go:165 cmd/incus/profile.go:251
 msgid "(none)"
-msgstr ""
+msgstr "(沒有)"
 
 #: cmd/incus/info.go:337
 #, c-format
 msgid "- Level %d (type: %s): %s"
-msgstr ""
+msgstr "- 等級 %d (類型： %s)： %s"
 
 #: cmd/incus/info.go:316
 #, c-format
 msgid "- Partition %d"
-msgstr ""
+msgstr "- 分割區 %d"
 
 #: cmd/incus/info.go:225
 #, c-format
 msgid "- Port %d (%s)"
-msgstr ""
+msgstr "- 連接埠 %d (%s)"
 
 #: cmd/incus/action.go:266
 msgid "--console can't be used while forcing instance shutdown"
-msgstr ""
+msgstr "強制關閉實體時無法使用 --console"
 
 #: cmd/incus/action.go:435
 msgid "--console can't be used with --all"
-msgstr ""
+msgstr "--console 不能與 --all 一起使用"
 
 #: cmd/incus/action.go:439
 msgid "--console only works with a single instance"
-msgstr ""
+msgstr "--console 僅適用於單個實體"
 
 #: cmd/incus/create.go:141 cmd/incus/rebuild.go:64
 msgid "--empty cannot be combined with an image name"
-msgstr ""
+msgstr "--empty 不能與映像檔名稱結合使用"
 
 #: cmd/incus/config.go:488 cmd/incus/config.go:796
 msgid "--expanded cannot be used with a server"
-msgstr ""
+msgstr "--expanded 不能與伺服器一起使用"
 
 #: cmd/incus/copy.go:169
 msgid "--instance-only can't be passed when the source is a snapshot"
-msgstr ""
+msgstr "當來源是快照時，無法傳遞 --instance-only"
 
 #: cmd/incus/admin_init_auto.go:42
 msgid "--network-port can't be used without --network-address"
-msgstr ""
+msgstr "--network-port 不能在沒有 --network-address 的情況下使用"
 
 #: cmd/incus/copy.go:103
 msgid "--no-profiles cannot be used with --refresh"
-msgstr ""
+msgstr "--no-profiles 不能與 --refresh 一起使用"
 
 #: cmd/incus/query.go:73
 msgid "--project cannot be used with the query command"
-msgstr ""
+msgstr "--project 不能與 query 命令一起使用"
 
 #: cmd/incus/copy.go:180
 msgid "--refresh can only be used with instances"
-msgstr ""
+msgstr "--refresh 只能與實體一起使用"
 
 #: cmd/incus/move.go:265
 msgid "--target can only be used with clusters"
-msgstr ""
+msgstr "--target 只能與叢集一起使用"
 
 #: cmd/incus/config.go:165 cmd/incus/config.go:438 cmd/incus/config.go:615 cmd/incus/config.go:822 cmd/incus/info.go:625
 msgid "--target cannot be used with instances"
-msgstr ""
+msgstr "--target 不能與實體一起使用"
 
 #: cmd/incus/alias.go:221
 msgid "<alias>"
-msgstr ""
+msgstr "<別名>"
 
 #: cmd/incus/alias.go:60
 msgid "<alias> <target>"
-msgstr ""
+msgstr "<別名> <目標>"
 
 #: cmd/incus/admin_sql.go:28
 msgid "<local|global> <query>"
-msgstr ""
+msgstr "<本地|全域> <查詢>"
 
 #: cmd/incus/alias.go:166
 msgid "<old alias> <new alias>"
-msgstr ""
+msgstr "<舊别名> <新别名>"
 
 #: cmd/incus/remote.go:976 cmd/incus/remote.go:1042
 msgid "<remote>"
-msgstr ""
+msgstr "<遠端>"
 
 #: cmd/incus/remote.go:1090
 msgid "<remote> <URL>"
