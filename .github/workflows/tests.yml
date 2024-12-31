@@ -112,9 +112,8 @@ jobs:
         run: |
           sudo --preserve-env=CGO_CFLAGS,CGO_LDFLAGS,CGO_LDFLAGS_ALLOW,LD_LIBRARY_PATH LD_LIBRARY_PATH=${LD_LIBRARY_PATH} env "PATH=${PATH}" go test ./...
 
-  system-tests:
-    name: System
-    runs-on: ubuntu-22.04
+  system-tests-hosted:
+    name: System (x86_64)
     strategy:
       fail-fast: false
       matrix:
@@ -143,6 +142,7 @@ jobs:
           - go: tip
             suite: standalone
             backend: dir
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Performance tuning
@@ -184,6 +184,50 @@ jobs:
           sudo ip link delete docker0
           sudo nft flush ruleset
 
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run the testsuite
+        uses: ./.github/actions/testsuite
+        with:
+          backend: ${{ matrix.backend }}
+          go: ${{ matrix.go }}
+          suite: ${{ matrix.suite }}
+
+  system-tests-self-hosted:
+    name: System (aarch64)
+    strategy:
+      fail-fast: false
+      matrix:
+        go:
+          - stable
+        suite:
+          - cluster
+          - standalone
+        backend:
+          - dir
+        include:
+          - go: oldstable
+            suite: cluster
+            backend: dir
+          - go: oldstable
+            suite: standalone
+            backend: dir
+          - go: tip
+            suite: cluster
+            backend: dir
+          - go: tip
+            suite: standalone
+            backend: dir
+    runs-on:
+      - self-hosted
+      - cpu-4
+      - mem-4G
+      - disk-50G
+      - arch-arm64
+      - image-ubuntu-22.04
+
+    steps:
       - name: Checkout
         uses: actions/checkout@v4
 
