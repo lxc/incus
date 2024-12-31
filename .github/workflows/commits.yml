@@ -10,7 +10,7 @@ jobs:
     permissions:
       pull-requests: read  # for tim-actions/get-pr-commits to get list of commits from the PR
     name: Signed-off-by (DCO)
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: Get PR Commits
       id: 'get-pr-commits'
@@ -27,7 +27,7 @@ jobs:
     permissions:
       contents: none
     name: Branch target
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: Check branch target
       env:
