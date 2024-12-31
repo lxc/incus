@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-12-17 02:23-0500\n"
-"PO-Revision-Date: 2024-12-29 09:28+0000\n"
+"PO-Revision-Date: 2024-12-31 15:00+0000\n"
 "Last-Translator: Loge Xu <wazolm5643@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/incus/cli/zh_Hans/>\n"
@@ -1314,69 +1314,69 @@ msgstr "不能用 --columns 指定 --fast"
 
 #: cmd/incus/cluster.go:249 cmd/incus/list.go:470 cmd/incus/profile.go:811
 msgid "Can't specify --project with --all-projects"
-msgstr ""
+msgstr "不能用 --all-projects 指定 --project"
 
 #: cmd/incus/rename.go:59
 msgid "Can't specify a different remote for rename"
-msgstr ""
+msgstr "无法指定其他远程服务器进行重命名"
 
 #: cmd/incus/list.go:622 cmd/incus/storage_volume.go:1693
 #: cmd/incus/warning.go:226
 msgid "Can't specify column L when not clustered"
-msgstr ""
+msgstr "未集群时无法指定列 L"
 
 #: cmd/incus/file.go:803
 msgid "Can't supply uid/gid/mode in recursive mode"
-msgstr ""
+msgstr "无法在递归模式下提供 uid/gid/mode"
 
 #: cmd/incus/config.go:681
 #, c-format
 msgid "Can't unset key '%s', it's not currently set"
-msgstr ""
+msgstr "无法取消设置键“%s”，当前尚未设置"
 
 #: cmd/incus/admin_init.go:72
 msgid "Can't use --auto and --preseed together"
-msgstr ""
+msgstr "不能同时使用 --auto 和 --preseed"
 
 #: cmd/incus/admin_init.go:94
 msgid "Can't use --dump with other flags"
-msgstr ""
+msgstr "--dump 不能与其他标志一起使用"
 
 #: cmd/incus/admin_init.go:80
 msgid "Can't use --minimal and --auto together"
-msgstr ""
+msgstr "不能同时使用 --minimal 和 --auto"
 
 #: cmd/incus/admin_init.go:76
 msgid "Can't use --minimal and --preseed together"
-msgstr ""
+msgstr "不能同时使用 --minimal 和 --preseed"
 
 #: cmd/incus/rebuild.go:161
 msgid "Can't use an image with --empty"
-msgstr ""
+msgstr "镜像服务器不能与 --empty 一起使用"
 
 #: cmd/incus/create.go:357
 #, c-format
 msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
-msgstr ""
+msgstr "无法覆盖设备 %q 的配置：在配置文件设备中找不到设备"
 
 #: cmd/incus/storage_volume.go:459
 msgid ""
 "Cannot set --destination-target when destination server is not clustered"
-msgstr ""
+msgstr "当目标服务器未集群时，无法设置 --destination-target"
 
 #: cmd/incus/storage_volume.go:413
 msgid "Cannot set --target when source server is not clustered"
-msgstr ""
+msgstr "源服务器未集群时无法设置 --target"
 
 #: cmd/incus/storage_volume.go:434
 msgid "Cannot set --volume-only when copying a snapshot"
-msgstr ""
+msgstr "复制快照时无法设置 --volume-only"
 
 #: cmd/incus/network_acl.go:957
 #, c-format
 msgid "Cannot set key: %s"
-msgstr ""
+msgstr "无法设置键：%s"
 
 #: cmd/incus/info.go:551 cmd/incus/info.go:563
 #, c-format
