@@ -9,6 +9,11 @@ test_container_devices_nic_bridged() {
     false
   fi
 
+  if [ "$firewallDriver" = "nftables" ] && uname -r | grep -q ^5.15.0; then
+    echo "==> SKIP: nftables support on kernel $(uname -r) isn't good enough"
+    return
+  fi
+
   vethHostName="veth$$"
   ctName="nt$$"
   ctMAC="0a:92:a7:0d:b7:d9"
