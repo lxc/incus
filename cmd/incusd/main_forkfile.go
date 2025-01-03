@@ -58,12 +58,18 @@ void forkfile(void)
 
 	// Attach to the container.
 	if (ns_fd >= 0) {
-		attach_userns_fd(ns_fd);
+		int setns_flags = CLONE_NEWNS;
 
-		if (!change_namespaces(pidfd, ns_fd, CLONE_NEWNS)) {
+		if (in_same_namespace(getpid(), ns_fd, "user") > 0)
+			setns_flags |= CLONE_NEWUSER;
+
+		if (!change_namespaces(pidfd, ns_fd, setns_flags)) {
 			error("error: setns");
 			_exit(1);
 		}
+
+		if (setns_flags & CLONE_NEWUSER)
+			finalize_userns();
 	} else {
 		if (fchdir(rootfs_fd) < 0) {
 			error("error: fchdir");
