@@ -166,6 +166,13 @@ void attach_userns_fd(int ns_fd)
 		_exit(EXIT_FAILURE);
 	}
 
+	finalize_userns();
+}
+
+void finalize_userns()
+{
+	int ret;
+
 	ret = setuid(0);
 	if (ret < 0) {
 		fprintf(stderr, "Failed setuid to container root user: %s\n", strerror(errno));
