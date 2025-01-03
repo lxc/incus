@@ -24,3 +24,8 @@ func IsFalse(value string) bool {
 func IsFalseOrEmpty(value string) bool {
 	return value == "" || IsFalse(value)
 }
+
+// IsNoneOrEmpty returns true if value is empty or a "none" value.
+func IsNoneOrEmpty(value string) bool {
+	return value == "" || value == "none"
+}
