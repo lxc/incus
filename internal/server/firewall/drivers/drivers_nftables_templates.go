@@ -209,7 +209,7 @@ chain in{{.chainSeparator}}{{.deviceLabel}} {
 	{{if .ipv6FilterAll -}}
 	iifname "{{.hostName}}" ether type ip6 drop
 	{{- end}}
-	{{- if .aclInChain -}}
+	{{- if or .aclInDropRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule -}}
 	ct state established,related accept
 	{{- end}}
 	{{- range .aclInDropRules}}
@@ -221,7 +221,7 @@ chain in{{.chainSeparator}}{{.deviceLabel}} {
 	{{if .filterUnwantedFrames -}}
 	iifname "{{.hostName}}" ether type != {arp, ip, ip6} drop
 	{{- end}}
-	{{if or .aclInDropRules .aclInAcceptRules -}}
+	{{if or .aclInDropRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule -}}
 	iifname "{{.hostName}}" ether type arp accept
 	iifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
 	{{- end}}
@@ -251,6 +251,9 @@ chain fwd{{.chainSeparator}}{{.deviceLabel}} {
 	{{if .ipv6FilterAll -}}
 	iifname "{{.hostName}}" ether type ip6 drop
 	{{- end}}
+	{{- if or .aclInDropRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule .aclOutDefaultRule -}}
+	ct state established,related accept
+	{{- end}}
 	{{- range .aclInDropRules}}
 	{{.}}
 	{{- end}}
@@ -266,11 +269,9 @@ chain fwd{{.chainSeparator}}{{.deviceLabel}} {
 	{{if .filterUnwantedFrames -}}
 	iifname "{{.hostName}}" ether type != {arp, ip, ip6} drop
 	{{- end}}
-	{{if or .aclInDropRules .aclInAcceptRules -}}
+	{{if or .aclInDropRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule .aclOutDefaultRule -}}
 	iifname "{{.hostName}}" ether type arp accept
 	iifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
-	{{- end}}
-	{{if or .aclOutDropRules .aclOutAcceptRules -}}
 	oifname "{{.hostName}}" ether type arp accept
 	oifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
 	{{- end}}
@@ -278,9 +279,10 @@ chain fwd{{.chainSeparator}}{{.deviceLabel}} {
 	{{.aclOutDefaultRule}}
 }
 
-{{if or .aclOutDropRules .aclOutAcceptRules -}}
+{{if or .aclInDropRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule .aclOutDefaultRule -}}
 chain out{{.chainSeparator}}{{.deviceLabel}} {
 	type filter hook output priority filter; policy accept;
+	ct state established,related accept
 	{{- range .aclOutDropRules}}
 	{{.}}
 	{{- end}}
