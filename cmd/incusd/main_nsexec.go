@@ -111,7 +111,7 @@ int preserve_ns(pid_t pid, int ns_fd, const char *ns)
 // If the two processes are not in the same namespace returns an fd to the
 // namespace of the second process identified by @pid2. If the two processes are
 // in the same namespace returns -EINVAL, -1 if an error occurred.
-static int in_same_namespace(pid_t pid1, int ns_fd_pid2, const char *ns)
+int in_same_namespace(pid_t pid1, int ns_fd_pid2, const char *ns)
 {
 	__do_close int ns_fd1 = -EBADF, ns_fd2 = -EBADF;
 	int ret = -1;
@@ -165,6 +165,13 @@ void attach_userns_fd(int ns_fd)
 		fprintf(stderr, "Failed setns to container user namespace: %s\n", strerror(errno));
 		_exit(EXIT_FAILURE);
 	}
+
+	finalize_userns();
+}
+
+void finalize_userns()
+{
+	int ret;
 
 	ret = setuid(0);
 	if (ret < 0) {

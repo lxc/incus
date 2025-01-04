@@ -5,6 +5,8 @@
 
 __hidden extern char *advance_arg(bool required);
 __hidden extern void attach_userns_fd(int ns_fd);
+__hidden extern void finalize_userns();
+__hidden extern int in_same_namespace(pid_t pid1, int ns_fd_pid2, const char *ns);
 __hidden extern int can_inject_uevent(const char *uevent, size_t len);
 __hidden extern void checkfeature();
 __hidden extern bool change_namespaces(int pidfd, int nsfd, unsigned int flags);
