@@ -325,18 +325,18 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 			wrapper = localMigration.ProgressTracker(op, "block_progress", volName)
 		}
 
+		// Reset the disk.
+		err := linux.ClearBlock(path)
+		if err != nil {
+			return err
+		}
+
 		to, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0)
 		if err != nil {
 			return fmt.Errorf("Error opening file for writing %q: %w", path, err)
 		}
 
 		defer func() { _ = to.Close() }()
-
-		// Reset the disk.
-		err = clearDiskData(path, to)
-		if err != nil {
-			return err
-		}
 
 		// Setup progress tracker.
 		fromPipe := io.ReadCloser(conn)
@@ -769,6 +769,12 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 				if hdr.Name == srcFile {
 					var allowUnsafeResize bool
 
+					// Reset the disk.
+					err = linux.ClearBlock(targetPath)
+					if err != nil {
+						return err
+					}
+
 					// Open block file (use O_CREATE to support drivers that use image files).
 					to, err := os.OpenFile(targetPath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 					if err != nil {
@@ -791,12 +797,6 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 					logMsg := "Unpacking virtual machine block volume"
 					if vol.volType == VolumeTypeCustom {
 						logMsg = "Unpacking custom block volume"
-					}
-
-					// Reset the disk.
-					err = clearDiskData(targetPath, to)
-					if err != nil {
-						return err
 					}
 
 					// Copy the data.

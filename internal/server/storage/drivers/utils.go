@@ -957,38 +957,3 @@ func roundAbove(above, val int64) int64 {
 
 	return rounded
 }
-
-// clearDiskData resets a disk file or device to a zero value.
-func clearDiskData(diskPath string, disk *os.File) error {
-	st, err := disk.Stat()
-	if err != nil {
-		return err
-	}
-
-	if linux.IsBlockdev(st.Mode()) {
-		// If dealing with a block device, attempt to discard its current content.
-		// This saves space and avoids issues with leaving zero blocks to their original value.
-		_, err = subprocess.RunCommand("blkdiscard", "-f", diskPath)
-		if err != nil {
-			logger.Debugf("Unable to clear disk data on %q: %v", diskPath, err)
-		}
-	} else {
-		// Otherwise truncate the file.
-		err = disk.Truncate(0)
-		if err != nil {
-			return err
-		}
-
-		err = disk.Truncate(st.Size())
-		if err != nil {
-			return err
-		}
-
-		_, err = disk.Seek(0, 0)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
