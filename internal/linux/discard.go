@@ -79,7 +79,6 @@ func ClearBlock(blockPath string) error {
 		found := 0
 
 		for _, offset := range []int64{markerOffsetStart, markerOffsetMiddle, markerOffsetEnd} {
-			fmt.Printf("offset=%d\n", offset)
 			buf := make([]byte, 5)
 
 			// Read the marker from the offset.
