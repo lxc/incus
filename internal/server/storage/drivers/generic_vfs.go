@@ -326,7 +326,7 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 		}
 
 		// Reset the disk.
-		err := linux.ClearBlock(path)
+		err := linux.ClearBlock(path, 0)
 		if err != nil {
 			return err
 		}
@@ -770,7 +770,7 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 					var allowUnsafeResize bool
 
 					// Reset the disk.
-					err = linux.ClearBlock(targetPath)
+					err = linux.ClearBlock(targetPath, 0)
 					if err != nil {
 						return err
 					}
