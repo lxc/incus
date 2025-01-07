@@ -568,9 +568,29 @@ func (d *lvm) resizeLogicalVolume(lvPath string, sizeBytes int64) error {
 		args = append(args, "--fs=ignore")
 	}
 
+	// If needed, get the original LV size.
+	var oldSizeBytes int64
+	if !d.usesThinpool() {
+		oldSizeBytes, err = d.logicalVolumeSize(lvPath)
+		if err != nil {
+			return err
+		}
+	}
+
 	_, err = subprocess.TryRunCommand("lvresize", args...)
 	if err != nil {
 		return err
+	}
+
+	// On thick pools, discard the blocks in the additional space when the volume is grown.
+	if !d.usesThinpool() {
+		if oldSizeBytes < sizeBytes {
+			// Discard the new blocks.
+			err := linux.ClearBlock(lvPath, sizeBytes)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	d.logger.Debug("Logical volume resized", logger.Ctx{"dev": lvPath, "size": fmt.Sprintf("%db", sizeBytes)})
