@@ -138,6 +138,10 @@ Pre-defined column shorthand chars:
 	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("List operations from all projects")+"``")
 	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultOperationColumns, i18n.G("Columns")+"``")
 
+	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
+		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
+	}
+
 	cmd.RunE = c.Run
 
 	return cmd

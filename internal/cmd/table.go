@@ -115,3 +115,29 @@ type Column struct {
 	// "data" slice that is passed into RenderSlice.
 	DataFunc func(any) (string, error)
 }
+
+// ValidateFlagFormatForListOutput validates the value for the command line flag --format.
+func ValidateFlagFormatForListOutput(value string) error {
+	fields := strings.SplitN(value, ",", 2)
+	format := fields[0]
+
+	var options []string
+	if len(fields) == 2 {
+		options = strings.Split(fields[1], ",")
+		for _, option := range options {
+			switch option {
+			case "noheader", "header":
+			default:
+				return fmt.Errorf(`Invalid value %q for flag "--format"`, format)
+			}
+		}
+	}
+
+	switch format {
+	case "csv", "json", "table", "yaml", "compact":
+	default:
+		return fmt.Errorf(`Invalid value %q for flag "--format"`, format)
+	}
+
+	return nil
+}
