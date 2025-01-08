@@ -52,7 +52,7 @@ func (c *cmdAdminSQL) Command() *cobra.Command {
   recovery. The development team will occasionally provide hotfixes to users as a
   set of database queries to fix some data inconsistency.`))
 	cmd.RunE = c.Run
-	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
+	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G(`Format (csv|json|table|yaml|compact), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)+"``")
 
 	return cmd
 }
