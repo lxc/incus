@@ -27,6 +27,9 @@ const (
 const (
 	// TableOptionNoHeader hides the table header when possible.
 	TableOptionNoHeader = "noheader"
+
+	// TableOptionHeader adds header to csv.
+	TableOptionHeader = "header"
 )
 
 // RenderTable renders tabular data in various formats.
@@ -56,6 +59,13 @@ func RenderTable(w io.Writer, format string, header []string, data [][]string, r
 		table.Render()
 	case TableFormatCSV:
 		w := csv.NewWriter(w)
+		if slices.Contains(options, TableOptionHeader) {
+			err := w.Write(header)
+			if err != nil {
+				return err
+			}
+		}
+
 		err := w.WriteAll(data)
 		if err != nil {
 			return err
