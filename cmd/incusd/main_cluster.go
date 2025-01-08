@@ -345,6 +345,10 @@ func (c *cmdClusterListDatabase) Command() *cobra.Command {
 	cmd.Short = "Print the addresses of the cluster members serving the database"
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", `Format (csv|json|table|yaml|compact), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)
 
+	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
+		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
+	}
+
 	cmd.RunE = c.Run
 
 	return cmd

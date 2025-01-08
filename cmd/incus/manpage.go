@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
@@ -24,6 +26,16 @@ func (c *cmdManpage) Command() *cobra.Command {
 	cmd.Hidden = true
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "man", i18n.G("Format (man|md|rest|yaml)")+"``")
 	cmd.Flags().BoolVar(&c.flagAll, "all", false, i18n.G("Include less common commands"))
+
+	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
+		format := cmd.Flag("format").Value.String()
+		switch format {
+		case "man", "md", "rest", "yaml":
+			return nil
+		default:
+			return fmt.Errorf(`Invalid value %q for flag "--format"`, format)
+		}
+	}
 
 	cmd.RunE = c.Run
 
