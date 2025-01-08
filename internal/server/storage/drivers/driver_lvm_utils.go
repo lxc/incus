@@ -400,6 +400,12 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 		if err != nil {
 			return fmt.Errorf("Error making filesystem on LVM logical volume: %w", err)
 		}
+	} else if !d.usesThinpool() {
+		// Make sure we get an empty LV.
+		err := linux.ClearBlock(volDevPath, 0)
+		if err != nil {
+			return err
+		}
 	}
 
 	isRecent, err := d.lvmVersionIsAtLeast(lvmVersion, "2.02.99")
