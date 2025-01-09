@@ -27,6 +27,9 @@ const (
 const (
 	// TableOptionNoHeader hides the table header when possible.
 	TableOptionNoHeader = "noheader"
+
+	// TableOptionHeader adds header to csv.
+	TableOptionHeader = "header"
 )
 
 // RenderTable renders tabular data in various formats.
@@ -56,6 +59,13 @@ func RenderTable(w io.Writer, format string, header []string, data [][]string, r
 		table.Render()
 	case TableFormatCSV:
 		w := csv.NewWriter(w)
+		if slices.Contains(options, TableOptionHeader) {
+			err := w.Write(header)
+			if err != nil {
+				return err
+			}
+		}
+
 		err := w.WriteAll(data)
 		if err != nil {
 			return err
@@ -104,4 +114,30 @@ type Column struct {
 	// DataFunc is a method to retrieve data for this column. The argument to this function will be an element of the
 	// "data" slice that is passed into RenderSlice.
 	DataFunc func(any) (string, error)
+}
+
+// ValidateFlagFormatForListOutput validates the value for the command line flag --format.
+func ValidateFlagFormatForListOutput(value string) error {
+	fields := strings.SplitN(value, ",", 2)
+	format := fields[0]
+
+	var options []string
+	if len(fields) == 2 {
+		options = strings.Split(fields[1], ",")
+		for _, option := range options {
+			switch option {
+			case "noheader", "header":
+			default:
+				return fmt.Errorf(`Invalid value %q for flag "--format"`, format)
+			}
+		}
+	}
+
+	switch format {
+	case "csv", "json", "table", "yaml", "compact":
+	default:
+		return fmt.Errorf(`Invalid value %q for flag "--format"`, format)
+	}
+
+	return nil
 }

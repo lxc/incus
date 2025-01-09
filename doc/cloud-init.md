@@ -49,7 +49,7 @@ However, there might be exceptions to that rule.
 
 The following configuration options are supported:
 
-* `cloud-init.vendor-data` or `user.vendor-data` (see {ref}`cloud-init:vendordata`)
+* `cloud-init.vendor-data` or `user.vendor-data` (see {ref}`cloud-init:vendor-data`)
 * `cloud-init.user-data` or `user.user-data` (see {ref}`cloud-init:user_data_formats`)
 * `cloud-init.network-config` or `user.network-config` (see {ref}`cloud-init:network_config`)
 
