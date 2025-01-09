@@ -1,0 +1,72 @@
+{
+  "name": "Incus",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "766b.go-outliner",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.makefile-tools",
+        "github.vscode-github-actions",
+        "davidanson.vscode-markdownlint",
+        "shardulm94.trailing-spaces",
+        "Gruntfuggly.todo-tree"
+      ],
+      "settings": {
+        "files.insertFinalNewline": true,
+        "go.goroot": "/usr/local/go",
+        "go.gopath": "/go",
+        "go.lintTool": "golangci-lint",
+        "go.lintOnSave": "package",
+        "go.lintFlags": [ "--fast" ],
+        "go.useLanguageServer": true,
+        "goOutliner.extendExplorerTab": true,
+        "gopls": {
+          "formatting.gofumpt": true,
+          "formatting.local": "github.com/lxc/incus",
+          "ui.diagnostic.staticcheck": false
+        },
+        "[go]": {
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+          }
+        },
+        "[go.mod]": {
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+          }
+        },
+        "search.exclude": {
+          "**/.git": true
+        }
+      }
+    }
+  },
+
+  "postCreateCommand": "go mod download",
+
+  "mounts": [
+    "source=incus_devcontainer_cache,target=/home/vscode/.cache,type=volume",
+    "source=incus_devcontainer_goroot,target=/go,type=volume"
+  ],
+
+  "runArgs": [
+    "--privileged",
+    "-u",
+    "vscode",
+    "--cap-add=SYS_PTRACE",
+    "--security-opt",
+    "seccomp=unconfined",
+    "-v", "${env:HOME}/.ssh:/home/vscode/.ssh:ro",
+    "--name", "${localEnv:USER}_incus_devcontainer"
+  ],
+
+  "remoteUser": "vscode"
+}
