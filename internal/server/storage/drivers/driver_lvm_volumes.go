@@ -566,6 +566,27 @@ func (d *lvm) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 			return err
 		}
 
+		// On thick pools, discard the blocks in the additional space when the volume is grown.
+		if !d.usesThinpool() && oldSizeBytes < sizeBytes {
+			// Activate the volume for discarding.
+			activated, err := d.activateVolume(vol)
+			if err != nil {
+				return err
+			}
+
+			if activated {
+				defer func() {
+					_, _ = d.deactivateVolume(vol)
+				}()
+			}
+
+			// Discard the new blocks.
+			err = linux.ClearBlock(volDevPath, oldSizeBytes)
+			if err != nil {
+				return err
+			}
+		}
+
 		// Move the VM GPT alt header to end of disk if needed (not needed in unsafe resize mode as it is
 		// expected the caller will do all necessary post resize actions themselves).
 		if vol.IsVMBlock() && !allowUnsafeResize {
@@ -581,6 +602,7 @@ func (d *lvm) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 				}()
 			}
 
+			// Move the GPT alt header.
 			err = d.moveGPTAltHeader(volDevPath)
 			if err != nil {
 				return err
