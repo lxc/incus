@@ -6589,7 +6589,13 @@ func (n *ovn) forPeers(f func(targetOVNNet *ovn) error) error {
 	}
 
 	for _, peer := range peers {
+		// Skip partially defined peers.
 		if peer.Status != api.NetworkStatusCreated {
+			continue
+		}
+
+		// Skip remote peers (no local networks to load).
+		if peer.Type == "remote" {
 			continue
 		}
 
