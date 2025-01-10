@@ -711,9 +711,13 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 			_ = to.Close()
 		}
 
-		// Check if we should do parallel unpacking.
+		// Extra options when dealing with block devices.
 		if linux.IsBlockdevPath(dstPath) {
+			// Parallel unpacking.
 			cmd = append(cmd, "-W")
+
+			// Our block devices are clean, so skip zeroes.
+			cmd = append(cmd, "-n", "--target-is-zero")
 		}
 
 		cmd = append(cmd, imgPath, dstPath)
