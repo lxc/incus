@@ -14,6 +14,16 @@ import (
 
 // FirewallApplyACLRules applies ACL rules to network firewall.
 func FirewallApplyACLRules(s *state.State, logger logger.Logger, aclProjectName string, aclNet NetworkACLUsage) error {
+	rules, err := FirewallACLRules(s, aclNet.Name, aclProjectName, aclNet.Config)
+	if err != nil {
+		return err
+	}
+
+	return s.Firewall.NetworkApplyACLRules(aclNet.Name, rules)
+}
+
+// FirewallACLRules returns ACL rules for network firewall.
+func FirewallACLRules(s *state.State, aclDeviceName string, aclProjectName string, config map[string]string) ([]firewallDrivers.ACLRule, error) {
 	var dropRules []firewallDrivers.ACLRule
 	var rejectRules []firewallDrivers.ACLRule
 	var allowRules []firewallDrivers.ACLRule
@@ -61,10 +71,10 @@ func FirewallApplyACLRules(s *state.State, logger logger.Logger, aclProjectName 
 		return nil
 	}
 
-	logPrefix := aclNet.Name
+	logPrefix := aclDeviceName
 
 	// Load ACLs specified by network.
-	for _, aclName := range util.SplitNTrimSpace(aclNet.Config["security.acls"], ",", -1, true) {
+	for _, aclName := range util.SplitNTrimSpace(config["security.acls"], ",", -1, true) {
 		var aclInfo *api.NetworkACL
 
 		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -75,17 +85,17 @@ func FirewallApplyACLRules(s *state.State, logger logger.Logger, aclProjectName 
 			return err
 		})
 		if err != nil {
-			return fmt.Errorf("Failed loading ACL %q for network %q: %w", aclName, aclNet.Name, err)
+			return nil, fmt.Errorf("Failed loading ACL %q for network %q: %w", aclName, aclDeviceName, err)
 		}
 
 		err = convertACLRules("ingress", logPrefix, aclInfo.Ingress...)
 		if err != nil {
-			return fmt.Errorf("Failed converting ACL %q ingress rules for network %q: %w", aclInfo.Name, aclNet.Name, err)
+			return nil, fmt.Errorf("Failed converting ACL %q ingress rules for network %q: %w", aclInfo.Name, aclDeviceName, err)
 		}
 
 		err = convertACLRules("egress", logPrefix, aclInfo.Egress...)
 		if err != nil {
-			return fmt.Errorf("Failed converting ACL %q egress rules for network %q: %w", aclInfo.Name, aclNet.Name, err)
+			return nil, fmt.Errorf("Failed converting ACL %q egress rules for network %q: %w", aclInfo.Name, aclDeviceName, err)
 		}
 	}
 
@@ -96,8 +106,8 @@ func FirewallApplyACLRules(s *state.State, logger logger.Logger, aclProjectName 
 	rules = append(rules, allowStatelessRules...)
 
 	// Add the automatic default ACL rule for the network.
-	egressAction, egressLogged := firewallACLDefaults(aclNet.Config, "egress")
-	ingressAction, ingressLogged := firewallACLDefaults(aclNet.Config, "ingress")
+	egressAction, egressLogged := firewallACLDefaults(config, "egress")
+	ingressAction, ingressLogged := firewallACLDefaults(config, "ingress")
 
 	rules = append(rules, firewallDrivers.ACLRule{
 		Direction: "egress",
@@ -113,7 +123,7 @@ func FirewallApplyACLRules(s *state.State, logger logger.Logger, aclProjectName 
 		LogName:   fmt.Sprintf("%s-ingress", logPrefix),
 	})
 
-	return s.Firewall.NetworkApplyACLRules(aclNet.Name, rules)
+	return rules, nil
 }
 
 // firewallACLDefaults returns the action and logging mode to use for the specified direction's default rule.
