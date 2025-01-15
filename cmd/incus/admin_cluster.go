@@ -51,5 +51,5 @@ You can invoke it through "incusd cluster".`))
 		os.Exit(1)
 	}
 
-	_ = doExec(path, append([]string{"incusd", "cluster"}, args...), env)
+	_ = doExec(path, append([]string{"incusd", "admin", "cluster"}, args...), env)
 }
