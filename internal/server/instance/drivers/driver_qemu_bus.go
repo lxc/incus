@@ -2,6 +2,8 @@ package drivers
 
 import (
 	"fmt"
+
+	"github.com/lxc/incus/v6/internal/server/instance/drivers/cfg"
 )
 
 const busFunctionGroupNone = ""           // Add a non multi-function port.
@@ -18,8 +20,8 @@ type qemuBusEntry struct {
 }
 
 type qemuBus struct {
-	name string        // Bus type.
-	cfg  *[]cfgSection // pointer to cfgSection slice.
+	name string         // Bus type.
+	cfg  *[]cfg.Section // pointer to Section slice.
 
 	portNum int // Next available port/chassis on the bridge.
 	devNum  int // Next available device number on the bridge.
@@ -148,10 +150,10 @@ func (a *qemuBus) allocateInternal(multiFunctionGroup string, hotplug bool) (str
 
 // qemuNewBus instantiates a new qemu bus allocator. Accepts the type name of the bus and the qemu config builder
 // which it will use to write root port config entries too as ports are allocated.
-func qemuNewBus(name string, cfg *[]cfgSection) *qemuBus {
+func qemuNewBus(name string, conf *[]cfg.Section) *qemuBus {
 	a := &qemuBus{
 		name: name,
-		cfg:  cfg,
+		cfg:  conf,
 
 		portNum: 0, // No PCIe ports are used in the default config.
 		devNum:  1, // Address 0 is used by the DRAM controller.
