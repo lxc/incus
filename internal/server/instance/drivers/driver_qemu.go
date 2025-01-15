@@ -350,6 +350,10 @@ type qemu struct {
 	// Keep a reference to the console socket when switching backends, so we can properly cleanup when switching back to a ring buffer.
 	consoleSocket     *net.UnixListener
 	consoleSocketFile *os.File
+
+	// Keep a record of QEMU configuration.
+	cmdArgs []string
+	cfg     []cfgSection
 }
 
 // getAgentClient returns the current agent client handle.
@@ -1514,16 +1518,15 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Generate the QEMU configuration.
-	confFile, monHooks, err := d.generateQemuConfigFile(cpuInfo, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles)
+	monHooks, err := d.generateQemuConfig(cpuInfo, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles)
 	if err != nil {
 		op.Done(err)
 		return err
 	}
 
+	confFile := filepath.Join(d.RunPath(), "qemu.conf")
 	// Start QEMU.
-	qemuCmd := []string{
-		"--",
-		qemuPath,
+	qemuArgs := []string{
 		"-S",
 		"-name", d.Name(),
 		"-uuid", instUUID,
@@ -1543,7 +1546,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// If stateful, restore now.
 	if stateful {
 		if d.stateful {
-			qemuCmd = append(qemuCmd, "-incoming", "defer")
+			qemuArgs = append(qemuArgs, "-incoming", "defer")
 		} else {
 			// No state to restore, just start as normal.
 			stateful = false
@@ -1568,12 +1571,12 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	// SMBIOS only on x86_64 and aarch64.
 	if d.architectureSupportsUEFI(d.architecture) {
-		qemuCmd = append(qemuCmd, "-smbios", "type=2,manufacturer=LinuxContainers,product=Incus")
+		qemuArgs = append(qemuArgs, "-smbios", "type=2,manufacturer=LinuxContainers,product=Incus")
 	}
 
 	// Attempt to drop privileges (doesn't work when restoring state).
 	if !stateful && d.state.OS.UnprivUser != "" {
-		qemuCmd = append(qemuCmd, "-runas", d.state.OS.UnprivUser)
+		qemuArgs = append(qemuArgs, "-runas", d.state.OS.UnprivUser)
 
 		nvRAMPath := d.nvramPath()
 		if d.architectureSupportsUEFI(d.architecture) && util.PathExists(nvRAMPath) {
@@ -1634,7 +1637,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			return err
 		}
 
-		qemuCmd = append(qemuCmd, "-mem-path", hugetlb, "-mem-prealloc")
+		qemuArgs = append(qemuArgs, "-mem-path", hugetlb, "-mem-prealloc")
 	}
 
 	if d.expandedConfig["raw.qemu"] != "" {
@@ -1644,7 +1647,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			return err
 		}
 
-		qemuCmd = append(qemuCmd, fields...)
+		qemuArgs = append(qemuArgs, fields...)
 	}
 
 	d.cmdArgs = qemuArgs
@@ -1668,6 +1671,13 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return err
 	}
 
+	// Write the config file.
+	err = d.writeQemuConfigFile(confFile)
+	if err != nil {
+		op.Done(err)
+		return err
+	}
+
 	// Run the qemu command via forklimits so we can selectively increase ulimits.
 	forkLimitsCmd := []string{
 		"forklimits",
@@ -1684,7 +1694,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Log the QEMU command line.
-	fullCmd := append(forkLimitsCmd, qemuCmd...)
+	fullCmd := append(forkLimitsCmd, "--", qemuPath)
+	fullCmd = append(fullCmd, d.cmdArgs...)
 	d.logger.Debug("Starting QEMU", logger.Ctx{"command": fullCmd})
 
 	// Setup background process.
@@ -3253,16 +3264,15 @@ func (d *qemu) deviceBootPriorities(base int) (map[string]int, error) {
 	return sortedDevs, nil
 }
 
-// generateQemuConfigFile writes the qemu config file and returns its location.
-// It writes the config file inside the VM's log path.
-func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) (string, []monitorHook, error) {
+// generateQemuConfig generates the QEMU configuration.
+func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
 	var monHooks []monitorHook
 
 	cfg := qemuBase(&qemuBaseOpts{d.Architecture()})
 
 	err := d.addCPUMemoryConfig(&cfg, cpuInfo)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 	// Parse raw.qemu.
@@ -3270,7 +3280,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 	if d.expandedConfig["raw.qemu"] != "" {
 		rawOptions, err = shellquote.Split(d.expandedConfig["raw.qemu"])
 		if err != nil {
-			return "", nil, err
+			return nil, err
 		}
 	}
 
@@ -3282,7 +3292,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 		// This is so the QEMU process can still read/write the file after it has dropped its user privs.
 		nvRAMFile, err := os.Open(d.nvramPath())
 		if err != nil {
-			return "", nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
+			return nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
 		}
 
 		// Determine expected firmware.
@@ -3304,7 +3314,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 		}
 
 		if efiCode == "" {
-			return "", nil, fmt.Errorf("Unable to locate matching firmware: %+v", firmwares)
+			return nil, fmt.Errorf("Unable to locate matching firmware: %+v", firmwares)
 		}
 
 		driveFirmwareOpts := qemuDriveFirmwareOpts{
@@ -3376,7 +3386,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 		// Existing vsock ID from volatile.
 		vsockID, err := d.getVsockID()
 		if err != nil {
-			return "", nil, err
+			return nil, err
 		}
 
 		devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
@@ -3482,7 +3492,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 	if util.IsTrue(d.expandedConfig["security.sev"]) {
 		sevOpts, err := d.setupSEV(fdFiles)
 		if err != nil {
-			return "", nil, err
+			return nil, err
 		}
 
 		if sevOpts != nil {
@@ -3527,7 +3537,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 
 	bootIndexes, err := d.deviceBootPriorities(base)
 	if err != nil {
-		return "", nil, fmt.Errorf("Error calculating boot indexes: %w", err)
+		return nil, fmt.Errorf("Error calculating boot indexes: %w", err)
 	}
 
 	// Record the mounts we are going to do inside the VM using the agent.
@@ -3578,7 +3588,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 				}
 
 				if err != nil {
-					return "", nil, fmt.Errorf("Failed setting up disk device %q: %w", drive.DevName, err)
+					return nil, fmt.Errorf("Failed setting up disk device %q: %w", drive.DevName, err)
 				}
 
 				if monHook != nil {
@@ -3606,7 +3616,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 
 			monHook, err := d.addNetDevConfig(bus.name, qemuDev, bootIndexes, runConf.NetworkInterface)
 			if err != nil {
-				return "", nil, err
+				return nil, err
 			}
 
 			monHooks = append(monHooks, monHook)
@@ -3616,7 +3626,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 		if len(runConf.GPUDevice) > 0 {
 			err = d.addGPUDevConfig(&cfg, bus, runConf.GPUDevice)
 			if err != nil {
-				return "", nil, err
+				return nil, err
 			}
 		}
 
@@ -3624,7 +3634,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 		if len(runConf.PCIDevice) > 0 {
 			err = d.addPCIDevConfig(&cfg, bus, runConf.PCIDevice)
 			if err != nil {
-				return "", nil, err
+				return nil, err
 			}
 		}
 
@@ -3632,7 +3642,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 		for _, usbDev := range runConf.USBDevice {
 			monHook, err := d.addUSBDeviceConfig(usbDev)
 			if err != nil {
-				return "", nil, err
+				return nil, err
 			}
 
 			monHooks = append(monHooks, monHook)
@@ -3642,7 +3652,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 		if len(runConf.TPMDevice) > 0 {
 			err = d.addTPMDeviceConfig(&cfg, runConf.TPMDevice, fdFiles)
 			if err != nil {
-				return "", nil, err
+				return nil, err
 			}
 		}
 	}
@@ -3651,7 +3661,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 	if d.architecture == osarch.ARCH_64BIT_INTEL_X86 {
 		err = d.addVmgenDeviceConfig(&cfg, d.localConfig["volatile.uuid.generation"])
 		if err != nil {
-			return "", nil, err
+			return nil, err
 		}
 	}
 
@@ -3663,21 +3673,26 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 	// Write the agent mount config.
 	agentMountJSON, err := json.Marshal(agentMounts)
 	if err != nil {
-		return "", nil, fmt.Errorf("Failed marshalling agent mounts to JSON: %w", err)
+		return nil, fmt.Errorf("Failed marshalling agent mounts to JSON: %w", err)
 	}
 
 	agentMountFile := filepath.Join(d.Path(), "config", "agent-mounts.json")
 	err = os.WriteFile(agentMountFile, agentMountJSON, 0400)
 	if err != nil {
-		return "", nil, fmt.Errorf("Failed writing agent mounts file: %w", err)
+		return nil, fmt.Errorf("Failed writing agent mounts file: %w", err)
 	}
 
 	// process any user-specified overrides
-	cfg = qemuRawCfgOverride(cfg, d.expandedConfig)
+	d.cfg = qemuRawCfgOverride(cfg, d.expandedConfig)
+	return monHooks, nil
+}
+
+// writeQemuConfigFile writes the QEMU config file.
+// It writes the config file inside the VM's log path.
+func (d *qemu) writeQemuConfigFile(configPath string) error {
 	// Write the config file to disk.
-	sb := qemuStringifyCfg(cfg...)
-	configPath := filepath.Join(d.RunPath(), "qemu.conf")
-	return configPath, monHooks, os.WriteFile(configPath, []byte(sb.String()), 0640)
+	sb := qemuStringifyCfg(d.cfg...)
+	return os.WriteFile(configPath, []byte(sb.String()), 0640)
 }
 
 // addCPUMemoryConfig adds the qemu config required for setting the number of virtualised CPUs and memory.
