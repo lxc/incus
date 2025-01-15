@@ -1126,7 +1126,23 @@ func (d *qemu) Start(stateful bool) error {
 	return d.start(stateful, nil)
 }
 
-// startupHook executes QMP commands and runs startup scriptlets at early, pre-stard and post-start
+// runStartupScriptlet runs startup scriptlets at config, early, pre-start and post-start stages.
+func (d *qemu) runStartupScriptlet(monitor *qmp.Monitor, stage string) error {
+	_, ok := d.expandedConfig["raw.qemu.scriptlet"]
+	if ok {
+		instanceName := d.Name()
+
+		err := scriptlet.QEMURun(logger.Log, monitor, instanceName, stage)
+		if err != nil {
+			err = fmt.Errorf("Failed running QEMU scriptlet at %s stage: %w", stage, err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+// startupHook executes QMP commands and runs startup scriptlets at early, pre-start and post-start
 // stages.
 func (d *qemu) startupHook(monitor *qmp.Monitor, stage string) error {
 	commands, ok := d.expandedConfig["raw.qemu.qmp."+stage]
@@ -1148,18 +1164,7 @@ func (d *qemu) startupHook(monitor *qmp.Monitor, stage string) error {
 		}
 	}
 
-	_, ok = d.expandedConfig["raw.qemu.scriptlet"]
-	if ok {
-		instanceName := d.Name()
-
-		err := scriptlet.QEMURun(logger.Log, monitor, instanceName, stage)
-		if err != nil {
-			err = fmt.Errorf("Failed running QEMU scriptlet at %s stage: %w", stage, err)
-			return err
-		}
-	}
-
-	return nil
+	return d.runStartupScriptlet(monitor, stage)
 }
 
 // start starts the instance and can use an existing InstanceOperation lock.
