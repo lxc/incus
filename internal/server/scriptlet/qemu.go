@@ -11,11 +11,12 @@ import (
 	scriptletLoad "github.com/lxc/incus/v6/internal/server/scriptlet/load"
 	"github.com/lxc/incus/v6/internal/server/scriptlet/log"
 	"github.com/lxc/incus/v6/internal/server/scriptlet/marshal"
+	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // QEMURun runs the QEMU scriptlet.
-func QEMURun(l logger.Logger, m *qmp.Monitor, instance string, stage string) error {
+func QEMURun(l logger.Logger, instance *api.Instance, m *qmp.Monitor, stage string) error {
 	logFunc := log.CreateLogger(l, "QEMU scriptlet ("+stage+")")
 	runQMPFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 		var command *starlark.Dict
@@ -155,7 +156,7 @@ func QEMURun(l logger.Logger, m *qmp.Monitor, instance string, stage string) err
 		"qom_set":        makeQOM("qom-set"),
 	}
 
-	prog, thread, err := scriptletLoad.QEMUProgram(instance)
+	prog, thread, err := scriptletLoad.QEMUProgram(instance.Name)
 	if err != nil {
 		return err
 	}
