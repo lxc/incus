@@ -85,6 +85,11 @@ func main() {
 	// Workaround for main command
 	app.Args = cobra.ArbitraryArgs
 
+	// Workaround for being called through "incus admin cluster".
+	if len(os.Args) >= 3 && os.Args[0] == "incusd" && os.Args[1] == "admin" && os.Args[2] == "cluster" {
+		app.Use = "incus"
+	}
+
 	// Global flags
 	globalCmd := cmdGlobal{cmd: app}
 	daemonCmd.global = &globalCmd
@@ -185,7 +190,10 @@ func main() {
 	waitreadyCmd := cmdWaitready{global: &globalCmd}
 	app.AddCommand(waitreadyCmd.Command())
 
-	// cluster sub-command
+	// cluster sub-command (also admin cluster)
+	adminCmd := cmdAdmin{global: &globalCmd}
+	app.AddCommand(adminCmd.Command())
+
 	clusterCmd := cmdCluster{global: &globalCmd}
 	app.AddCommand(clusterCmd.Command())
 
