@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/lxc/incus/v6/internal/server/instance/drivers/cfg"
 )
 
 const pattern = `\s*(?m:(?:\[([^\]]+)\](?:\[(\d+)\])?)|(?:([^=]+)[ \t]*=[ \t]*(?:"([^"]*)"|([^\n]*)))$)`
@@ -19,10 +21,10 @@ type rawConfigKey struct {
 
 type configMap map[rawConfigKey]string
 
-func sortedConfigKeys(cfgMap configMap) []rawConfigKey {
+func sortedConfigKeys(confMap configMap) []rawConfigKey {
 	rv := []rawConfigKey{}
 
-	for k := range cfgMap {
+	for k := range confMap {
 		rv = append(rv, k)
 	}
 
@@ -111,21 +113,21 @@ func parseConfOverride(confOverride string) configMap {
 	return rv
 }
 
-func updateEntries(entries []cfgEntry, sk rawConfigKey, cfgMap configMap) []cfgEntry {
-	rv := []cfgEntry{}
+func updateEntries(entries []cfg.Entry, sk rawConfigKey, confMap configMap) []cfg.Entry {
+	rv := []cfg.Entry{}
 
 	for _, entry := range entries {
-		newEntry := cfgEntry{
-			key:   entry.key,
-			value: entry.value,
+		newEntry := cfg.Entry{
+			Key:   entry.Key,
+			Value: entry.Value,
 		}
 
-		ek := rawConfigKey{sk.sectionName, sk.index, entry.key}
-		val, ok := cfgMap[ek]
+		ek := rawConfigKey{sk.sectionName, sk.index, entry.Key}
+		val, ok := confMap[ek]
 		if ok {
 			// override
-			delete(cfgMap, ek)
-			newEntry.value = val
+			delete(confMap, ek)
+			newEntry.Value = val
 		}
 
 		rv = append(rv, newEntry)
@@ -134,9 +136,9 @@ func updateEntries(entries []cfgEntry, sk rawConfigKey, cfgMap configMap) []cfgE
 	return rv
 }
 
-func appendEntries(entries []cfgEntry, sk rawConfigKey, cfgMap configMap) []cfgEntry {
+func appendEntries(entries []cfg.Entry, sk rawConfigKey, confMap configMap) []cfg.Entry {
 	// sort to have deterministic output in the appended entries
-	sortedKeys := sortedConfigKeys(cfgMap)
+	sortedKeys := sortedConfigKeys(confMap)
 	// processed all modifications for the current section, now
 	// handle new entries
 	for _, rawKey := range sortedKeys {
@@ -144,61 +146,61 @@ func appendEntries(entries []cfgEntry, sk rawConfigKey, cfgMap configMap) []cfgE
 			continue
 		}
 
-		newEntry := cfgEntry{
-			key:   rawKey.entryKey,
-			value: cfgMap[rawKey],
+		newEntry := cfg.Entry{
+			Key:   rawKey.entryKey,
+			Value: confMap[rawKey],
 		}
 
 		entries = append(entries, newEntry)
-		delete(cfgMap, rawKey)
+		delete(confMap, rawKey)
 	}
 
 	return entries
 }
 
-func updateSections(cfg []cfgSection, cfgMap configMap) []cfgSection {
-	newCfg := []cfgSection{}
+func updateSections(conf []cfg.Section, confMap configMap) []cfg.Section {
+	newConf := []cfg.Section{}
 	sectionCounts := map[string]uint{}
 
-	for _, section := range cfg {
-		count, ok := sectionCounts[section.name]
+	for _, section := range conf {
+		count, ok := sectionCounts[section.Name]
 
 		if ok {
-			sectionCounts[section.name] = count + 1
+			sectionCounts[section.Name] = count + 1
 		} else {
-			sectionCounts[section.name] = 1
+			sectionCounts[section.Name] = 1
 		}
 
-		index := sectionCounts[section.name] - 1
-		sk := rawConfigKey{section.name, index, ""}
+		index := sectionCounts[section.Name] - 1
+		sk := rawConfigKey{section.Name, index, ""}
 
-		val, ok := cfgMap[sk]
+		val, ok := confMap[sk]
 		if ok {
 			if val == "" {
 				// deleted section
-				delete(cfgMap, sk)
+				delete(confMap, sk)
 				continue
 			}
 		}
 
-		newSection := cfgSection{
-			name:    section.name,
-			comment: section.comment,
+		newSection := cfg.Section{
+			Name:    section.Name,
+			Comment: section.Comment,
 		}
 
-		newSection.entries = updateEntries(section.entries, sk, cfgMap)
-		newSection.entries = appendEntries(newSection.entries, sk, cfgMap)
+		newSection.Entries = updateEntries(section.Entries, sk, confMap)
+		newSection.Entries = appendEntries(newSection.Entries, sk, confMap)
 
-		newCfg = append(newCfg, newSection)
+		newConf = append(newConf, newSection)
 	}
 
-	return newCfg
+	return newConf
 }
 
-func appendSections(newCfg []cfgSection, cfgMap configMap) []cfgSection {
-	tmp := map[rawConfigKey]cfgSection{}
+func appendSections(newConf []cfg.Section, confMap configMap) []cfg.Section {
+	tmp := map[rawConfigKey]cfg.Section{}
 	// sort to have deterministic output in the appended entries
-	sortedKeys := sortedConfigKeys(cfgMap)
+	sortedKeys := sortedConfigKeys(confMap)
 
 	for _, k := range sortedKeys {
 		if k.entryKey == "" {
@@ -210,13 +212,13 @@ func appendSections(newCfg []cfgSection, cfgMap configMap) []cfgSection {
 		sectionKey := rawConfigKey{k.sectionName, k.index, ""}
 		section, found := tmp[sectionKey]
 		if !found {
-			section = cfgSection{
-				name: k.sectionName,
+			section = cfg.Section{
+				Name: k.sectionName,
 			}
 		}
-		section.entries = append(section.entries, cfgEntry{
-			key:   k.entryKey,
-			value: cfgMap[k],
+		section.Entries = append(section.Entries, cfg.Entry{
+			Key:   k.entryKey,
+			Value: confMap[k],
 		})
 		tmp[sectionKey] = section
 	}
@@ -233,27 +235,27 @@ func appendSections(newCfg []cfgSection, cfgMap configMap) []cfgSection {
 	})
 
 	for _, rawSection := range rawSections {
-		newCfg = append(newCfg, tmp[rawSection])
+		newConf = append(newConf, tmp[rawSection])
 	}
 
-	return newCfg
+	return newConf
 }
 
-func qemuRawCfgOverride(cfg []cfgSection, expandedConfig map[string]string) []cfgSection {
+func qemuRawCfgOverride(conf []cfg.Section, expandedConfig map[string]string) []cfg.Section {
 	confOverride, ok := expandedConfig["raw.qemu.conf"]
 	if !ok {
-		return cfg
+		return conf
 	}
 
-	cfgMap := parseConfOverride(confOverride)
+	confMap := parseConfOverride(confOverride)
 
-	if len(cfgMap) == 0 {
-		// If no keys are found, we return the cfg unmodified.
-		return cfg
+	if len(confMap) == 0 {
+		// If no keys are found, we return the conf unmodified.
+		return conf
 	}
 
-	newCfg := updateSections(cfg, cfgMap)
-	newCfg = appendSections(newCfg, cfgMap)
+	newConf := updateSections(conf, confMap)
+	newConf = appendSections(newConf, confMap)
 
-	return newCfg
+	return newConf
 }
