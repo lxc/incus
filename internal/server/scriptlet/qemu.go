@@ -174,8 +174,17 @@ func QEMURun(l logger.Logger, instance *api.Instance, m *qmp.Monitor, stage stri
 		return fmt.Errorf("Scriptlet missing qemu_hook function")
 	}
 
+	instancev, err := marshal.StarlarkMarshal(instance)
+	if err != nil {
+		return fmt.Errorf("Marshalling instance failed: %w", err)
+	}
+
 	// Call starlark function from Go.
 	v, err := starlark.Call(thread, qemuHook, nil, []starlark.Tuple{
+		{
+			starlark.String("instance"),
+			instancev,
+		},
 		{
 			starlark.String("stage"),
 			starlark.String(stage),

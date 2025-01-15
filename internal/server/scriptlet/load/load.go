@@ -81,7 +81,7 @@ func QEMUCompile(name string, src string) (*starlark.Program, error) {
 // QEMUValidate validates the QEMU scriptlet.
 func QEMUValidate(src string) error {
 	return validate(QEMUCompile, prefixQEMU, src, declaration{
-		required("qemu_hook"): {"stage"},
+		required("qemu_hook"): {"instance", "stage"},
 	})
 }
 
