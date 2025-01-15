@@ -1130,9 +1130,14 @@ func (d *qemu) Start(stateful bool) error {
 func (d *qemu) runStartupScriptlet(monitor *qmp.Monitor, stage string) error {
 	_, ok := d.expandedConfig["raw.qemu.scriptlet"]
 	if ok {
-		instanceName := d.Name()
+		// Render cannot return errors here.
+		render, _, _ := d.Render()
+		instanceData, ok := render.(*api.Instance)
+		if !ok {
+			return errors.New("Unexpected instance type")
+		}
 
-		err := scriptlet.QEMURun(logger.Log, monitor, instanceName, stage)
+		err := scriptlet.QEMURun(logger.Log, instanceData, monitor, stage)
 		if err != nil {
 			err = fmt.Errorf("Failed running QEMU scriptlet at %s stage: %w", stage, err)
 			return err
@@ -1642,6 +1647,27 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		qemuCmd = append(qemuCmd, fields...)
 	}
 
+	d.cmdArgs = qemuArgs
+
+	// Precompile the QEMU scriptlet
+	src, ok := d.expandedConfig["raw.qemu.scriptlet"]
+	if ok {
+		instanceName := d.Name()
+
+		err := scriptletLoad.QEMUSet(src, instanceName)
+		if err != nil {
+			err = fmt.Errorf("Failed loading QEMU scriptlet: %w", err)
+			return err
+		}
+	}
+
+	// Config startup hook.
+	err = d.runStartupScriptlet(nil, "config")
+	if err != nil {
+		op.Done(err)
+		return err
+	}
+
 	// Run the qemu command via forklimits so we can selectively increase ulimits.
 	forkLimitsCmd := []string{
 		"forklimits",
@@ -1722,18 +1748,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// Don't allow the monitor to trigger a disconnection shutdown event until cleanly started so that the
 	// onStop hook isn't triggered prematurely (as this function's reverter will clean up on failure to start).
 	monitor.SetOnDisconnectEvent(false)
-
-	// Precompile the QEMU scriptlet
-	src, ok := d.expandedConfig["raw.qemu.scriptlet"]
-	if ok {
-		instanceName := d.Name()
-
-		err := scriptletLoad.QEMUSet(src, instanceName)
-		if err != nil {
-			err = fmt.Errorf("Failed loading QEMU scriptlet: %w", err)
-			return err
-		}
-	}
 
 	// Early startup hook
 	err = d.startupHook(monitor, "early")
