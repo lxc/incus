@@ -2681,3 +2681,7 @@ It introduces the new `--force` flag for connecting to the instance console.
 ## `network_ovn_state_addresses`
 
 This adds extra fields to the OVN network state struct for the IPv4 and IPv6 addresses used on the uplink.
+
+## `qemu_scriptlet_config`
+
+This extends the QEMU scriptlet feature by allowing to modify QEMU configuration before a VM starts, and passing information about the instance to the scriptlet.
