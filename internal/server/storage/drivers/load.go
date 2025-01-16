@@ -13,6 +13,7 @@ var drivers = map[string]func() driver{
 	"dir":        func() driver { return &dir{} },
 	"lvm":        func() driver { return &lvm{} },
 	"lvmcluster": func() driver { return &lvm{clustered: true} },
+	"truenas":    func() driver { return &truenas{} },
 	"zfs":        func() driver { return &zfs{} },
 	"linstor":    func() driver { return &linstor{} },
 }
