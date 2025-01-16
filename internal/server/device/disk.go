@@ -2197,6 +2197,7 @@ func (d *disk) getDiskLimits() (map[string]diskBlockLimit, error) {
 
 	// Build a list of all valid block devices
 	validBlocks := []string{}
+	parentBlocks := map[string]string{}
 
 	dents, err := os.ReadDir("/sys/class/block/")
 	if err != nil {
@@ -2205,10 +2206,13 @@ func (d *disk) getDiskLimits() (map[string]diskBlockLimit, error) {
 
 	for _, f := range dents {
 		fPath := filepath.Join("/sys/class/block/", f.Name())
+
+		// Ignore partitions.
 		if util.PathExists(fmt.Sprintf("%s/partition", fPath)) {
 			continue
 		}
 
+		// Only select real block devices.
 		if !util.PathExists(fmt.Sprintf("%s/dev", fPath)) {
 			continue
 		}
@@ -2218,7 +2222,37 @@ func (d *disk) getDiskLimits() (map[string]diskBlockLimit, error) {
 			return nil, err
 		}
 
-		validBlocks = append(validBlocks, strings.TrimSuffix(string(block), "\n"))
+		// Add the block to the list.
+		blockIdentifier := strings.TrimSuffix(string(block), "\n")
+		validBlocks = append(validBlocks, blockIdentifier)
+
+		// Look for partitions.
+		subDents, err := os.ReadDir(fPath)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, sub := range subDents {
+			// Skip files.
+			if !sub.IsDir() {
+				continue
+			}
+
+			// Select partitions.
+			if !util.PathExists(filepath.Join(fPath, sub.Name(), "partition")) {
+				continue
+			}
+
+			// Get the block identifier for the partition.
+			partition, err := os.ReadFile(filepath.Join(fPath, sub.Name(), "dev"))
+			if err != nil {
+				return nil, err
+			}
+
+			// Add the partition to the map.
+			partitionIdentifier := strings.TrimSuffix(string(partition), "\n")
+			parentBlocks[partitionIdentifier] = blockIdentifier
+		}
 	}
 
 	// Process all the limits
@@ -2267,6 +2301,9 @@ func (d *disk) getDiskLimits() (map[string]diskBlockLimit, error) {
 			if slices.Contains(validBlocks, block) {
 				// Straightforward entry (full block device)
 				blockStr = block
+			} else if parentBlocks[block] != "" {
+				// Known partition.
+				blockStr = parentBlocks[block]
 			} else {
 				// Attempt to deal with a partition (guess its parent)
 				fields := strings.SplitN(block, ":", 2)
