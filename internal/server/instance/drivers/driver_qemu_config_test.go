@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/lxc/incus/v6/internal/server/instance/drivers/cfg"
 	"github.com/lxc/incus/v6/shared/osarch"
 )
 
@@ -16,7 +17,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 		return strings.TrimSpace(indent.ReplaceAllString(s, "$1"))
 	}
 
-	runTest := func(expected string, sections []cfgSection) {
+	runTest := func(expected string, sections []cfg.Section) {
 		t.Run(expected, func(t *testing.T) {
 			actual := normalize(qemuStringifyCfg(sections...).String())
 			expected = normalize(expected)
@@ -1082,47 +1083,47 @@ func TestQemuConfigTemplates(t *testing.T) {
 	})
 
 	t.Run("qemu_raw_cfg_override", func(t *testing.T) {
-		cfg := []cfgSection{{
-			name: "global",
-			entries: []cfgEntry{
-				{key: "driver", value: "ICH9-LPC"},
-				{key: "property", value: "disable_s3"},
-				{key: "value", value: "1"},
+		conf := []cfg.Section{{
+			Name: "global",
+			Entries: []cfg.Entry{
+				{Key: "driver", Value: "ICH9-LPC"},
+				{Key: "property", Value: "disable_s3"},
+				{Key: "value", Value: "1"},
 			},
 		}, {
-			name: "global",
-			entries: []cfgEntry{
-				{key: "driver", value: "ICH9-LPC"},
-				{key: "property", value: "disable_s4"},
-				{key: "value", value: "1"},
+			Name: "global",
+			Entries: []cfg.Entry{
+				{Key: "driver", Value: "ICH9-LPC"},
+				{Key: "property", Value: "disable_s4"},
+				{Key: "value", Value: "1"},
 			},
 		}, {
-			name: "memory",
-			entries: []cfgEntry{
-				{key: "size", value: "1024M"},
+			Name: "memory",
+			Entries: []cfg.Entry{
+				{Key: "size", Value: "1024M"},
 			},
 		}, {
-			name: `device "qemu_gpu"`,
-			entries: []cfgEntry{
-				{key: "driver", value: "virtio-gpu-pci"},
-				{key: "bus", value: "qemu_pci3"},
-				{key: "addr", value: "00.0"},
+			Name: `device "qemu_gpu"`,
+			Entries: []cfg.Entry{
+				{Key: "driver", Value: "virtio-gpu-pci"},
+				{Key: "bus", Value: "qemu_pci3"},
+				{Key: "addr", Value: "00.0"},
 			},
 		}, {
-			name: `device "qemu_keyboard"`,
-			entries: []cfgEntry{
-				{key: "driver", value: "virtio-keyboard-pci"},
-				{key: "bus", value: "qemu_pci2"},
-				{key: "addr", value: "00.1"},
+			Name: `device "qemu_keyboard"`,
+			Entries: []cfg.Entry{
+				{Key: "driver", Value: "virtio-keyboard-pci"},
+				{Key: "bus", Value: "qemu_pci2"},
+				{Key: "addr", Value: "00.1"},
 			},
 		}}
 		testCases := []struct {
-			cfg       []cfgSection
+			cfg       []cfg.Section
 			overrides map[string]string
 			expected  string
 		}{{
 			// unmodified
-			cfg,
+			conf,
 			map[string]string{},
 			`[global]
 			driver = "ICH9-LPC"
@@ -1148,7 +1149,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			addr = "00.1"`,
 		}, {
 			// override some keys
-			cfg,
+			conf,
 			map[string]string{
 				"raw.qemu.conf": `
 						[memory]
@@ -1181,7 +1182,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			addr = "00.1"`,
 		}, {
 			// delete some keys
-			cfg,
+			conf,
 			map[string]string{
 				"raw.qemu.conf": `
 						[device "qemu_keyboard"]
@@ -1212,7 +1213,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				addr = "00.1"`,
 		}, {
 			// add some keys to existing sections
-			cfg,
+			conf,
 			map[string]string{
 				"raw.qemu.conf": `
 						[memory]
@@ -1257,7 +1258,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				multifunction = "off"`,
 		}, {
 			// edit/add/remove
-			cfg,
+			conf,
 			map[string]string{
 				"raw.qemu.conf": `
 						[memory]
@@ -1291,7 +1292,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				driver = "virtio-keyboard-pci"`,
 		}, {
 			// delete sections
-			cfg,
+			conf,
 			map[string]string{
 				"raw.qemu.conf": `
 						[memory]
@@ -1309,7 +1310,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				addr = "00.0"`,
 		}, {
 			// add sections
-			cfg,
+			conf,
 			map[string]string{
 				"raw.qemu.conf": `
 						[object1]
@@ -1363,7 +1364,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				key6 = "value6"`,
 		}, {
 			// add/remove sections
-			cfg,
+			conf,
 			map[string]string{
 				"raw.qemu.conf": `
 						[device "qemu_gpu"]
@@ -1400,7 +1401,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				key4 = "value4"`,
 		}, {
 			// edit keys of repeated sections
-			cfg,
+			conf,
 			map[string]string{
 				"raw.qemu.conf": `
 						[global][1]
@@ -1439,7 +1440,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				addr = "00.1"`,
 		}, {
 			// create multiple sections with same name
-			cfg,
+			conf,
 			// note that for appending new sections, all that matters is that
 			// the index is higher than the existing indexes
 			map[string]string{
@@ -1498,7 +1499,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				k11 = "v11"`,
 		}, {
 			// mix all operations
-			cfg,
+			conf,
 			map[string]string{
 				"raw.qemu.conf": `
 						[memory]
