@@ -342,16 +342,17 @@ Those take a JSON encoded list of QMP commands to run.
 
 The hooks correspond to:
 
-- `early` is run prior to any device having been added by Incus through QMP
-- `pre-start` is run following Incus having added all its devices by prior to the VM being started
-- `post-start` is run immediately following the VM starting up
+- `early`, run prior to any device having been added by Incus through QMP, after QEMU has started
+- `pre-start`, run following Incus having added all its devices but prior to the VM being started
+- `post-start`, run immediately following the VM starting up
 
+### Advanced use
 For anyone needing dynamic QMP interactions, for example to retrieve the
 current value of some objects before modifying or generating new
 objects, it's also possible to attach to those same hooks using a
 scriptlet.
 
-This is done through `raw.qemu.scriptlet`. The scriptlet must define the `qemu_hook(stage)` function.
+This is done through `raw.qemu.scriptlet`. The scriptlet must define the `qemu_hook(instance, stage)` function. The `instance` arguments is an object representing the VM, whose attributes are those of the `api.Instance` struct. The `stage` argument is the name of the hook (`config`, `early`, `pre-start` or `post-start`), with `config` being run before starting QEMU, and the other hooks defined above.
 
 The following commands are exposed to that scriptlet:
 
@@ -360,6 +361,10 @@ The following commands are exposed to that scriptlet:
 - `log_error` will log an `ERROR` message
 - `run_qmp` will run an arbitrary QMP command (JSON) and return its output
 - `run_command` will run the specified command with an optional list of arguments and return its output
+- `get_qemu_cmdline` will return the list of command-line arguments passed to QEMU
+- `set_qemu_cmdline` will set them
+- `get_qemu_conf` will return the QEMU configuration file as a dictionary
+- `set_qemu_conf` will set it from a dictionary
 
 Additionally the following alias commands (internally use `run_command`) are also available to simplify scripts:
 
@@ -377,6 +382,8 @@ Additionally the following alias commands (internally use `run_command`) are als
 - `qom_get`
 - `qom_list`
 - `qom_set`
+
+The functions allowing to change QEMU configuration can only be run during the `config` hook. In parallel, the functions running QMP commands cannot be run during the `config` hook.
 
 (instance-options-security)=
 ## Security policies
