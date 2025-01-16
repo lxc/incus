@@ -114,7 +114,7 @@ func QEMURun(l logger.Logger, instance *api.Instance, m *qmp.Monitor, stage stri
 	makeQOM := func(funName string) *starlark.Builtin {
 		fun := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 			frame := thread.CallFrame(1)
-			errPrefix := fmt.Sprintf("%s (%d:%d):", strings.ReplaceAll(funName, "-", "_"), frame.Pos.Line, frame.Pos.Col)
+			errPrefix := fmt.Sprintf("%s (%d:%d):", b.Name(), frame.Pos.Line, frame.Pos.Col)
 
 			argsLen := args.Len()
 			if argsLen != 0 {
@@ -129,7 +129,7 @@ func QEMURun(l logger.Logger, instance *api.Instance, m *qmp.Monitor, stage stri
 			return rv, nil
 		}
 
-		return starlark.NewBuiltin(funName, fun)
+		return starlark.NewBuiltin(strings.ReplaceAll(funName, "-", "_"), fun)
 	}
 
 	// Remember to match the entries in scriptletLoad.QEMUCompile() with this list so Starlark can
