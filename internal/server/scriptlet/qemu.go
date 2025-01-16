@@ -18,10 +18,23 @@ import (
 // QEMURun runs the QEMU scriptlet.
 func QEMURun(l logger.Logger, instance *api.Instance, m *qmp.Monitor, stage string) error {
 	logFunc := log.CreateLogger(l, "QEMU scriptlet ("+stage+")")
-	runQMPFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-		var command *starlark.Dict
 
-		err := starlark.UnpackArgs(b.Name(), args, kwargs, "command", &command)
+	assertQEMUStarted := func(name string) error {
+		if stage == "config" {
+			return fmt.Errorf("%s cannot be called at config stage", name)
+		}
+
+		return nil
+	}
+
+	runQMPFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		err := assertQEMUStarted(b.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		var command *starlark.Dict
+		err = starlark.UnpackArgs(b.Name(), args, kwargs, "command", &command)
 		if err != nil {
 			return nil, err
 		}
@@ -85,6 +98,11 @@ func QEMURun(l logger.Logger, instance *api.Instance, m *qmp.Monitor, stage stri
 	}
 
 	runCommandFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		err := assertQEMUStarted(b.Name())
+		if err != nil {
+			return nil, err
+		}
+
 		frame := thread.CallFrame(1)
 		errPrefix := fmt.Sprintf("run_command (%d:%d):", frame.Pos.Line, frame.Pos.Col)
 
@@ -113,6 +131,11 @@ func QEMURun(l logger.Logger, instance *api.Instance, m *qmp.Monitor, stage stri
 
 	makeQOM := func(funName string) *starlark.Builtin {
 		fun := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+			err := assertQEMUStarted(b.Name())
+			if err != nil {
+				return nil, err
+			}
+
 			frame := thread.CallFrame(1)
 			errPrefix := fmt.Sprintf("%s (%d:%d):", b.Name(), frame.Pos.Line, frame.Pos.Col)
 
