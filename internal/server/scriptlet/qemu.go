@@ -7,6 +7,7 @@ import (
 
 	"go.starlark.net/starlark"
 
+	"github.com/lxc/incus/v6/internal/server/instance/drivers/cfg"
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/qmp"
 	scriptletLoad "github.com/lxc/incus/v6/internal/server/scriptlet/load"
 	"github.com/lxc/incus/v6/internal/server/scriptlet/log"
@@ -15,9 +16,51 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
+// qemuCfgSection is a temporary struct to hold QEMU configuration sections with Entries of type
+// map[string]string instead of []cfg.Entry. This type should be moved to the cfg package in the
+// future.
+type qemuCfgSection struct {
+	Name    string            `json:"name"`
+	Comment string            `json:"comment"`
+	Entries map[string]string `json:"entries"`
+}
+
+// marshalQEMUConf marshals a configuration into a []map[string]any.
+func marshalQEMUConf(conf any) ([]map[string]any, error) {
+	jsonConf, err := json.Marshal(conf)
+	if err != nil {
+		return nil, err
+	}
+
+	var newConf []map[string]any
+	err = json.Unmarshal(jsonConf, &newConf)
+	if err != nil {
+		return nil, err
+	}
+
+	return newConf, nil
+}
+
 // QEMURun runs the QEMU scriptlet.
-func QEMURun(l logger.Logger, instance *api.Instance, m *qmp.Monitor, stage string) error {
+func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[]cfg.Section, m *qmp.Monitor, stage string) error {
 	logFunc := log.CreateLogger(l, "QEMU scriptlet ("+stage+")")
+
+	// We first convert from []cfg.Section to []qemuCfgSection. This conversion is temporary.
+	var cfgSectionMaps []qemuCfgSection
+	for _, section := range *conf {
+		entries := map[string]string{}
+		for _, entry := range section.Entries {
+			entries[entry.Key] = entry.Value
+		}
+
+		cfgSectionMaps = append(cfgSectionMaps, qemuCfgSection{Name: section.Name, Comment: section.Comment, Entries: entries})
+	}
+
+	// We do not want to handle a qemuCfgSection object within our scriptlet, for simplicity.
+	cfgSections, err := marshalQEMUConf(cfgSectionMaps)
+	if err != nil {
+		return err
+	}
 
 	assertQEMUStarted := func(name string) error {
 		if stage == "config" {
@@ -155,12 +198,41 @@ func QEMURun(l logger.Logger, instance *api.Instance, m *qmp.Monitor, stage stri
 		return starlark.NewBuiltin(strings.ReplaceAll(funName, "-", "_"), fun)
 	}
 
+	getCmdArgsFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		err := starlark.UnpackArgs(b.Name(), args, kwargs)
+		if err != nil {
+			return nil, err
+		}
+
+		rv, err := marshal.StarlarkMarshal(cmdArgs)
+		if err != nil {
+			return nil, fmt.Errorf("Marshalling QEMU command-line arguments failed: %w", err)
+		}
+
+		return rv, nil
+	}
+
+	getConfFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		err := starlark.UnpackArgs(b.Name(), args, kwargs)
+		if err != nil {
+			return nil, err
+		}
+
+		rv, err := marshal.StarlarkMarshal(cfgSections)
+		if err != nil {
+			return nil, fmt.Errorf("Marshalling QEMU configuration failed: %w", err)
+		}
+
+		return rv, nil
+	}
+
 	// Remember to match the entries in scriptletLoad.QEMUCompile() with this list so Starlark can
 	// perform compile time validation of functions used.
 	env := starlark.StringDict{
-		"log_info":       starlark.NewBuiltin("log_info", logFunc),
-		"log_warn":       starlark.NewBuiltin("log_warn", logFunc),
-		"log_error":      starlark.NewBuiltin("log_error", logFunc),
+		"log_info":  starlark.NewBuiltin("log_info", logFunc),
+		"log_warn":  starlark.NewBuiltin("log_warn", logFunc),
+		"log_error": starlark.NewBuiltin("log_error", logFunc),
+
 		"run_qmp":        starlark.NewBuiltin("run_qmp", runQMPFunc),
 		"run_command":    starlark.NewBuiltin("run_command", runCommandFunc),
 		"blockdev_add":   makeQOM("blockdev-add"),
@@ -177,6 +249,9 @@ func QEMURun(l logger.Logger, instance *api.Instance, m *qmp.Monitor, stage stri
 		"qom_get":        makeQOM("qom-get"),
 		"qom_list":       makeQOM("qom-list"),
 		"qom_set":        makeQOM("qom-set"),
+
+		"get_qemu_cmdline": starlark.NewBuiltin("get_qemu_cmdline", getCmdArgsFunc),
+		"get_qemu_conf":    starlark.NewBuiltin("get_qemu_conf", getConfFunc),
 	}
 
 	prog, thread, err := scriptletLoad.QEMUProgram(instance.Name)
