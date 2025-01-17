@@ -1142,7 +1142,7 @@ func (d *qemu) runStartupScriptlet(monitor *qmp.Monitor, stage string) error {
 			return errors.New("Unexpected instance type")
 		}
 
-		err := scriptlet.QEMURun(logger.Log, instanceData, monitor, stage)
+		err := scriptlet.QEMURun(logger.Log, instanceData, &d.cmdArgs, &d.conf, monitor, stage)
 		if err != nil {
 			err = fmt.Errorf("Failed running QEMU scriptlet at %s stage: %w", stage, err)
 			return err
