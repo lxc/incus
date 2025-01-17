@@ -1301,6 +1301,8 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 						var errUnsupported UnsupportedError
 						if errors.As(err, &errUnsupported) {
 							d.logger.Warn("Unable to use virtio-fs for device, using 9p as a fallback", logger.Ctx{"err": errUnsupported})
+							// Fallback to 9p-only.
+							busOption = "9p"
 
 							if errUnsupported == ErrMissingVirtiofsd {
 								_ = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -1338,6 +1340,16 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 				}()
 				if err != nil {
 					return nil, fmt.Errorf("Failed to setup virtiofsd for device %q: %w", d.name, err)
+				}
+
+				// If an idmap is specified, disable 9p.
+				if len(rawIDMaps.Entries) > 0 {
+					// If we are 9p-only, return an error.
+					if busOption == "9p" {
+						return nil, fmt.Errorf("9p shares do not support identity mapping")
+					}
+
+					mount.Opts = append(opts, "bus=virtiofs")
 				}
 			} else {
 				// Confirm we're dealing with block options.
