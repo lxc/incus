@@ -59,6 +59,7 @@ func QEMUCompile(name string, src string) (*starlark.Program, error) {
 		"log_info",
 		"log_warn",
 		"log_error",
+
 		"run_qmp",
 		"run_command",
 		"blockdev_add",
@@ -75,13 +76,18 @@ func QEMUCompile(name string, src string) (*starlark.Program, error) {
 		"qom_get",
 		"qom_list",
 		"qom_set",
+
+		"get_qemu_cmdline",
+		"set_qemu_cmdline",
+		"get_qemu_conf",
+		"set_qemu_conf",
 	})
 }
 
 // QEMUValidate validates the QEMU scriptlet.
 func QEMUValidate(src string) error {
 	return validate(QEMUCompile, prefixQEMU, src, declaration{
-		required("qemu_hook"): {"stage"},
+		required("qemu_hook"): {"instance", "stage"},
 	})
 }
 
