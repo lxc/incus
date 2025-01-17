@@ -83,6 +83,8 @@ type Instance interface {
 	Restart(timeout time.Duration) error
 	Rebuild(img *api.Image, op *operations.Operation) error
 	Unfreeze() error
+
+	ReloadDevice(devName string) error
 	RegisterDevices()
 
 	Info() Info

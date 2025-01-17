@@ -9441,3 +9441,13 @@ func (d *qemu) ConsoleScreenshot(screenshotFile *os.File) error {
 
 	return nil
 }
+
+// ReloadDevice triggers an empty Update call to the underlying device.
+func (d *qemu) ReloadDevice(devName string) error {
+	dev, err := d.deviceLoad(d, devName, d.expandedDevices[devName])
+	if err != nil {
+		return err
+	}
+
+	return dev.Update(d.expandedDevices, true)
+}

@@ -8730,3 +8730,13 @@ func (d *lxc) loadRawLXCConfig(cc *liblxc.Container) error {
 func (d *common) forkfileRunningLockName() string {
 	return fmt.Sprintf("forkfile-running_%d", d.id)
 }
+
+// ReloadDevice triggers an empty Update call to the underlying device.
+func (d *lxc) ReloadDevice(devName string) error {
+	dev, err := d.deviceLoad(d, devName, d.expandedDevices[devName])
+	if err != nil {
+		return err
+	}
+
+	return dev.Update(d.expandedDevices, true)
+}
