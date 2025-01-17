@@ -78,7 +78,9 @@ func QEMUCompile(name string, src string) (*starlark.Program, error) {
 		"qom_set",
 
 		"get_qemu_cmdline",
+		"set_qemu_cmdline",
 		"get_qemu_conf",
+		"set_qemu_conf",
 	})
 }
 

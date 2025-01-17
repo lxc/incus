@@ -2,6 +2,7 @@ package scriptlet
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -41,6 +42,22 @@ func marshalQEMUConf(conf any) ([]map[string]any, error) {
 	return newConf, nil
 }
 
+// unmarshalQEMUConf unmarshals a configuration into a []qemuCfgSection.
+func unmarshalQEMUConf(conf any) ([]qemuCfgSection, error) {
+	jsonConf, err := json.Marshal(conf)
+	if err != nil {
+		return nil, err
+	}
+
+	var newConf []qemuCfgSection
+	err = json.Unmarshal(jsonConf, &newConf)
+	if err != nil {
+		return nil, err
+	}
+
+	return newConf, nil
+}
+
 // QEMURun runs the QEMU scriptlet.
 func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[]cfg.Section, m *qmp.Monitor, stage string) error {
 	logFunc := log.CreateLogger(l, "QEMU scriptlet ("+stage+")")
@@ -65,6 +82,14 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 	assertQEMUStarted := func(name string) error {
 		if stage == "config" {
 			return fmt.Errorf("%s cannot be called at config stage", name)
+		}
+
+		return nil
+	}
+
+	assertConfigStage := func(name string) error {
+		if stage != "config" {
+			return fmt.Errorf("%s can only be called at config stage", name)
 		}
 
 		return nil
@@ -212,6 +237,69 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 		return rv, nil
 	}
 
+	setCmdArgsFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		err := assertConfigStage(b.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		var newCmdArgsv *starlark.List
+		err = starlark.UnpackArgs(b.Name(), args, kwargs, "args", &newCmdArgsv)
+		if err != nil {
+			return nil, err
+		}
+
+		newCmdArgsAny, err := marshal.StarlarkUnmarshal(newCmdArgsv)
+		if err != nil {
+			return nil, err
+		}
+
+		newCmdArgsListAny, ok := newCmdArgsAny.([]any)
+		if !ok {
+			return nil, fmt.Errorf("%s requires a list of strings", b.Name())
+		}
+
+		// Check whether -bios or -kernel are in the new arguments, and convert them to string on the go.
+		var newFoundBios, newFoundKernel bool
+		var newCmdArgs []string
+		for _, argAny := range newCmdArgsListAny {
+			arg, ok := argAny.(string)
+			if !ok {
+				return nil, fmt.Errorf("%s requires a list of strings", b.Name())
+			}
+
+			newCmdArgs = append(newCmdArgs, arg)
+
+			if arg == "-bios" {
+				newFoundBios = true
+			} else if arg == "-kernel" {
+				newFoundKernel = true
+			}
+		}
+
+		// Check whether -bios or -kernel are in the current arguments
+		var foundBios, foundKernel bool
+		for _, arg := range *cmdArgs {
+			if arg == "-bios" {
+				foundBios = true
+			} else if arg == "-kernel" {
+				foundKernel = true
+			}
+
+			// If we've found both already, we can break early.
+			if foundBios && foundKernel {
+				break
+			}
+		}
+
+		if foundBios != newFoundBios || foundKernel != newFoundKernel {
+			return nil, errors.New("Addition or deletion of -bios or -kernel is unsupported")
+		}
+
+		*cmdArgs = newCmdArgs
+		return starlark.None, nil
+	}
+
 	getConfFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 		err := starlark.UnpackArgs(b.Name(), args, kwargs)
 		if err != nil {
@@ -224,6 +312,49 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 		}
 
 		return rv, nil
+	}
+
+	setConfFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		err := assertConfigStage(b.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		var newConf *starlark.List
+		err = starlark.UnpackArgs(b.Name(), args, kwargs, "conf", &newConf)
+		if err != nil {
+			return nil, err
+		}
+
+		confAny, err := marshal.StarlarkUnmarshal(newConf)
+		if err != nil {
+			return nil, err
+		}
+
+		confListAny, ok := confAny.([]any)
+		if !ok {
+			return nil, fmt.Errorf("%s requires a valid configuration", b.Name())
+		}
+
+		var newCfgSections []map[string]any
+		for _, section := range confListAny {
+			newSection, ok := section.(map[string]any)
+			if !ok {
+				return nil, fmt.Errorf("%s requires a valid configuration", b.Name())
+			}
+
+			newCfgSections = append(newCfgSections, newSection)
+		}
+
+		// We want to further check the configuration structure, by trying to unmarshal it to a
+		// []qemuCfgSection.
+		_, err = unmarshalQEMUConf(confAny)
+		if err != nil {
+			return nil, fmt.Errorf("%s requires a valid configuration", b.Name())
+		}
+
+		cfgSections = newCfgSections
+		return starlark.None, nil
 	}
 
 	// Remember to match the entries in scriptletLoad.QEMUCompile() with this list so Starlark can
@@ -251,7 +382,9 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 		"qom_set":        makeQOM("qom-set"),
 
 		"get_qemu_cmdline": starlark.NewBuiltin("get_qemu_cmdline", getCmdArgsFunc),
+		"set_qemu_cmdline": starlark.NewBuiltin("set_qemu_cmdline", setCmdArgsFunc),
 		"get_qemu_conf":    starlark.NewBuiltin("get_qemu_conf", getConfFunc),
+		"set_qemu_conf":    starlark.NewBuiltin("set_qemu_conf", setConfFunc),
 	}
 
 	prog, thread, err := scriptletLoad.QEMUProgram(instance.Name)
@@ -295,6 +428,25 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 	if v.Type() != "NoneType" {
 		return fmt.Errorf("Failed with unexpected return value: %v", v)
 	}
+
+	// We need to convert the configuration back to a suitable format
+	cfgSectionMaps, err = unmarshalQEMUConf(cfgSections)
+	if err != nil {
+		return err
+	}
+
+	// We convert back from []qemuCfgSection to []cfg.Section. This conversion is temporary.
+	var newConf []cfg.Section
+	for _, section := range cfgSectionMaps {
+		entries := []cfg.Entry{}
+		for key, value := range section.Entries {
+			entries = append(entries, cfg.Entry{Key: key, Value: value})
+		}
+
+		newConf = append(newConf, cfg.Section{Name: section.Name, Comment: section.Comment, Entries: entries})
+	}
+
+	*conf = newConf
 
 	return nil
 }
