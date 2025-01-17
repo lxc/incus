@@ -209,10 +209,13 @@ chain in{{.chainSeparator}}{{.deviceLabel}} {
 	{{if .ipv6FilterAll -}}
 	iifname "{{.hostName}}" ether type ip6 drop
 	{{- end}}
-	{{- if or .aclInDropRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule -}}
+	{{- if or .aclInDropRules .aclInRejectRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule -}}
 	ct state established,related accept
 	{{- end}}
 	{{- range .aclInDropRules}}
+	{{.}}
+	{{- end}}
+	{{- range .aclInRejectRules}}
 	{{.}}
 	{{- end}}
 	{{- range .aclInAcceptRules}}
@@ -221,7 +224,7 @@ chain in{{.chainSeparator}}{{.deviceLabel}} {
 	{{if .filterUnwantedFrames -}}
 	iifname "{{.hostName}}" ether type != {arp, ip, ip6} drop
 	{{- end}}
-	{{if or .aclInDropRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule -}}
+	{{if or .aclInDropRules .aclInRejectRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule -}}
 	iifname "{{.hostName}}" ether type arp accept
 	iifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
 	{{- end}}
@@ -251,16 +254,19 @@ chain fwd{{.chainSeparator}}{{.deviceLabel}} {
 	{{if .ipv6FilterAll -}}
 	iifname "{{.hostName}}" ether type ip6 drop
 	{{- end}}
-	{{- if or .aclInDropRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule .aclOutDefaultRule -}}
+	{{- if or .aclInDropRules .aclInRejectRulesConverted .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRuleConverted .aclOutDefaultRule -}}
 	ct state established,related accept
 	{{- end}}
 	{{- range .aclInDropRules}}
 	{{.}}
 	{{- end}}
+	{{- range .aclInRejectRulesConverted}}
+	{{.}}
+	{{- end}}
 	{{- range .aclOutDropRules}}
 	{{.}}
 	{{- end}}
-	{{- range .aclInAcceptRules}}
+    {{- range .aclInAcceptRules}}
 	{{.}}
 	{{- end}}
 	{{- range .aclOutAcceptRules}}
@@ -269,17 +275,17 @@ chain fwd{{.chainSeparator}}{{.deviceLabel}} {
 	{{if .filterUnwantedFrames -}}
 	iifname "{{.hostName}}" ether type != {arp, ip, ip6} drop
 	{{- end}}
-	{{if or .aclInDropRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule .aclOutDefaultRule -}}
+	{{if or .aclInDropRules .aclInRejectRulesConverted .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRuleConverted .aclOutDefaultRule -}}
 	iifname "{{.hostName}}" ether type arp accept
 	iifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
 	oifname "{{.hostName}}" ether type arp accept
 	oifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
 	{{- end}}
-	{{.aclInDefaultRule}}
+	{{.aclInDefaultRuleConverted}}
 	{{.aclOutDefaultRule}}
 }
 
-{{if or .aclInDropRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule .aclOutDefaultRule -}}
+{{if or .aclInDropRules .aclInRejectRulesConverted .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule .aclOutDefaultRule -}}
 chain out{{.chainSeparator}}{{.deviceLabel}} {
 	type filter hook output priority filter; policy accept;
 	ct state established,related accept

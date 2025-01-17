@@ -463,8 +463,11 @@ func (d Nftables) InstanceSetupBridgeFilter(projectName string, instanceName str
 
 	// Set the template fields for the ACL rules.
 	tplFields["aclInDropRules"] = nftRules.inDropRules
+	tplFields["aclInRejectRules"] = nftRules.inRejectRules
+	tplFields["aclInRejectRulesConverted"] = nftRules.inRejectRulesConverted
 	tplFields["aclInAcceptRules"] = append(nftRules.inAcceptRules4, nftRules.inAcceptRules6...)
 	tplFields["aclInDefaultRule"] = nftRules.defaultInRule
+	tplFields["aclInDefaultRuleConverted"] = nftRules.defaultInRuleConverted
 
 	tplFields["aclOutDropRules"] = nftRules.outDropRules
 	tplFields["aclOutAcceptRules"] = nftRules.outAcceptRules
@@ -596,25 +599,31 @@ func (d Nftables) InstanceClearProxyNAT(projectName string, instanceName string,
 
 // nftRulesCollection contains the ACL rules translated to NFT rules and split in groups.
 type nftRulesCollection struct {
-	inDropRules    []string
-	inAcceptRules4 []string
-	inAcceptRules6 []string
-	outDropRules   []string
-	outAcceptRules []string
-	defaultInRule  string
-	defaultOutRule string
+	inDropRules            []string
+	inRejectRules          []string
+	inRejectRulesConverted []string
+	inAcceptRules4         []string
+	inAcceptRules6         []string
+	outDropRules           []string
+	outAcceptRules         []string
+	defaultInRule          string
+	defaultInRuleConverted string
+	defaultOutRule         string
 }
 
 // aclRulesToNftRules converts ACL rules applied to the device to NFT rules.
 func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftRulesCollection, error) {
 	nftRules := nftRulesCollection{
-		inDropRules:    make([]string, 0),
-		inAcceptRules4: make([]string, 0),
-		inAcceptRules6: make([]string, 0),
-		outDropRules:   make([]string, 0),
-		outAcceptRules: make([]string, 0),
-		defaultInRule:  "",
-		defaultOutRule: "",
+		inDropRules:            make([]string, 0),
+		inRejectRules:          make([]string, 0),
+		inRejectRulesConverted: make([]string, 0), // To be used in the forward chain where reject is not supported
+		inAcceptRules4:         make([]string, 0),
+		inAcceptRules6:         make([]string, 0),
+		outDropRules:           make([]string, 0),
+		outAcceptRules:         make([]string, 0),
+		defaultInRule:          "",
+		defaultInRuleConverted: "", // To be used in the forward chain where reject is not supported
+		defaultOutRule:         "",
 	}
 
 	hostNameQuoted := "\"" + hostName + "\""
@@ -623,16 +632,24 @@ func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftR
 	for i, rule := range aclRules {
 		if i >= rulesCount-2 {
 			// The last two rules are the default ACL rules and we should keep them separate.
-			if rule.Action == "reject" {
-				// Reject is not supported in bridge filter and is converted to drop.
-				rule.Action = "drop"
-			}
-
 			var partial bool
 			var err error
 			if rule.Direction == "egress" {
 				nftRules.defaultInRule, partial, err = d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
+
+				if err == nil && !partial && rule.Action == "reject" {
+					// Convert egress reject rules to drop rules to address nftables limitation.
+					rule.Action = "drop"
+					nftRules.defaultInRuleConverted, partial, err = d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
+				} else {
+					nftRules.defaultInRuleConverted = nftRules.defaultInRule
+				}
 			} else {
+				if rule.Action == "reject" {
+					// Always convert ingress reject rules to drop rules to address nftables limitation.
+					rule.Action = "drop"
+				}
+
 				nftRules.defaultOutRule, partial, err = d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
 			}
 
@@ -647,37 +664,14 @@ func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftR
 			continue
 		}
 
-		nft4Rule := ""
-		nft6Rule := ""
+		if rule.Direction == "ingress" && rule.Action == "reject" {
+			// Convert ingress reject rules to drop rules to address nftables limitation.
+			rule.Action = "drop"
+		}
 
-		// First try generating rules with IPv4 or IP agnostic criteria.
-		nft4Rule, partial, err := d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
+		nft4Rule, nft6Rule, newNftRules, err := d.aclRuleToNftRules(hostNameQuoted, rule)
 		if err != nil {
 			return nil, err
-		}
-
-		if partial {
-			// If we couldn't fully generate the ruleset with only IPv4 or IP agnostic criteria, then
-			// fill in the remaining parts using IPv6 criteria.
-			nft6Rule, _, err = d.aclRuleCriteriaToRules(hostNameQuoted, 6, &rule)
-			if err != nil {
-				return nil, err
-			}
-
-			if nft6Rule == "" {
-				return nil, fmt.Errorf("Invalid empty rule generated")
-			}
-		} else if nft4Rule == "" {
-			return nil, fmt.Errorf("Invalid empty rule generated")
-		}
-
-		newNftRules := []string{}
-		if nft4Rule != "" {
-			newNftRules = append(newNftRules, nft4Rule)
-		}
-
-		if nft6Rule != "" {
-			newNftRules = append(newNftRules, nft6Rule)
 		}
 
 		switch rule.Direction {
@@ -687,7 +681,7 @@ func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftR
 				nftRules.outDropRules = append(nftRules.outDropRules, newNftRules...)
 
 			case rule.Action == "reject":
-				return nil, fmt.Errorf("Invalid action %q for bridge filter", rule.Action)
+				nftRules.outDropRules = append(nftRules.outDropRules, newNftRules...)
 
 			case rule.Action == "allow":
 				nftRules.outAcceptRules = append(nftRules.outAcceptRules, newNftRules...)
@@ -702,7 +696,17 @@ func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftR
 				nftRules.inDropRules = append(nftRules.inDropRules, newNftRules...)
 
 			case rule.Action == "reject":
-				return nil, fmt.Errorf("Invalid action %q for bridge filter", rule.Action)
+				nftRules.inRejectRules = append(nftRules.inRejectRules, newNftRules...)
+
+				// Generate reject rule converted to a drop rule.
+				rule.Action = "drop"
+
+				_, _, newNftRules, err = d.aclRuleToNftRules(hostNameQuoted, rule)
+				if err != nil {
+					return nil, err
+				}
+
+				nftRules.inRejectRulesConverted = append(nftRules.inRejectRulesConverted, newNftRules...)
 
 			case rule.Action == "allow":
 				if nft4Rule != "" {
@@ -723,6 +727,43 @@ func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftR
 	}
 
 	return &nftRules, nil
+}
+
+func (d Nftables) aclRuleToNftRules(hostNameQuoted string, rule ACLRule) (string, string, []string, error) {
+	nft4Rule := ""
+	nft6Rule := ""
+
+	// First try generating rules with IPv4 or IP agnostic criteria.
+	nft4Rule, partial, err := d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
+	if err != nil {
+		return "", "", nil, err
+	}
+
+	if partial {
+		// If we couldn't fully generate the ruleset with only IPv4 or IP agnostic criteria, then
+		// fill in the remaining parts using IPv6 criteria.
+		nft6Rule, _, err = d.aclRuleCriteriaToRules(hostNameQuoted, 6, &rule)
+		if err != nil {
+			return "", "", nil, err
+		}
+
+		if nft6Rule == "" {
+			return "", "", nil, fmt.Errorf("Invalid empty rule generated")
+		}
+	} else if nft4Rule == "" {
+		return "", "", nil, fmt.Errorf("Invalid empty rule generated")
+	}
+
+	nftRules := []string{}
+	if nft4Rule != "" {
+		nftRules = append(nftRules, nft4Rule)
+	}
+
+	if nft6Rule != "" {
+		nftRules = append(nftRules, nft6Rule)
+	}
+
+	return nft4Rule, nft6Rule, nftRules, nil
 }
 
 // applyNftConfig loads the specified config template and then applies it to the common template before sending to
