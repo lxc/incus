@@ -277,6 +277,26 @@ func (d *common) moveGPTAltHeader(devPath string) error {
 		return nil
 	}
 
+	// Our images and VM drives use a 512 bytes sector size.
+	// If the underlying block device uses a different sector size, we
+	// need to fake the correct size through a loop device so sgdisk can
+	// correctly re-locate the partition tables.
+	if linux.IsBlockdevPath(devPath) {
+		blockSize, err := GetPhysicalBlockSize(devPath)
+		if err != nil {
+			return err
+		}
+
+		if blockSize != 512 {
+			devPath, err = loopDeviceSetupAlign(devPath)
+			if err != nil {
+				return err
+			}
+
+			defer func() { _ = loopDeviceAutoDetach(devPath) }()
+		}
+	}
+
 	_, err = subprocess.RunCommand(path, "--move-second-header", devPath)
 	if err == nil {
 		d.logger.Debug("Moved GPT alternative header to end of disk", logger.Ctx{"dev": devPath})
