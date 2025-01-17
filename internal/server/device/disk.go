@@ -978,13 +978,6 @@ func (d *disk) startContainer() (*deviceConfig.RunConfig, error) {
 	return &runConf, nil
 }
 
-// vmVirtfsProxyHelperPaths returns the path for PID file to use with virtfs-proxy-helper process.
-func (d *disk) vmVirtfsProxyHelperPaths() string {
-	pidPath := filepath.Join(d.inst.DevicesPath(), fmt.Sprintf("%s.pid", d.name))
-
-	return pidPath
-}
-
 // vmVirtiofsdPaths returns the path for the socket and PID file to use with virtiofsd process.
 func (d *disk) vmVirtiofsdPaths() (string, string) {
 	sockPath := filepath.Join(d.inst.DevicesPath(), fmt.Sprintf("virtio-fs.%s.sock", d.name))
@@ -1288,7 +1281,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 				}
 
 				// Start virtiofsd for virtio-fs share. The agent prefers to use this over the
-				// virtfs-proxy-helper 9p share. The 9p share will only be used as a fallback.
+				// 9p share. The 9p share will only be used as a fallback.
 				err = func() error {
 					// Check if we should start virtiofsd.
 					if busOption != "auto" && busOption != "virtiofs" {
@@ -1308,6 +1301,8 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 						var errUnsupported UnsupportedError
 						if errors.As(err, &errUnsupported) {
 							d.logger.Warn("Unable to use virtio-fs for device, using 9p as a fallback", logger.Ctx{"err": errUnsupported})
+							// Fallback to 9p-only.
+							busOption = "9p"
 
 							if errUnsupported == ErrMissingVirtiofsd {
 								_ = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -1347,34 +1342,14 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					return nil, fmt.Errorf("Failed to setup virtiofsd for device %q: %w", d.name, err)
 				}
 
-				// We can't hotplug 9p shares, so only do 9p for stopped instances.
-				if !d.inst.IsRunning() {
-					// Start virtfs-proxy-helper for 9p share (this will rewrite mount.DevPath with
-					// socket FD number so must come after starting virtiofsd).
-					err = func() error {
-						// Check if we should start 9p.
-						if busOption != "auto" && busOption != "9p" {
-							return nil
-						}
-
-						sockFile, cleanup, err := DiskVMVirtfsProxyStart(d.state.OS.ExecPath, d.vmVirtfsProxyHelperPaths(), mount.DevPath, rawIDMaps.Entries)
-						if err != nil {
-							return err
-						}
-
-						revert.Add(cleanup)
-
-						// Request the unix socket is closed after QEMU has connected on startup.
-						runConf.PostHooks = append(runConf.PostHooks, sockFile.Close)
-
-						// Use 9p socket FD number as dev path so qemu can connect to the proxy.
-						mount.DevPath = fmt.Sprintf("%d", sockFile.Fd())
-
-						return nil
-					}()
-					if err != nil {
-						return nil, fmt.Errorf("Failed to setup virtfs-proxy-helper for device %q: %w", d.name, err)
+				// If an idmap is specified, disable 9p.
+				if len(rawIDMaps.Entries) > 0 {
+					// If we are 9p-only, return an error.
+					if busOption == "9p" {
+						return nil, fmt.Errorf("9p shares do not support identity mapping")
 					}
+
+					mount.Opts = append(opts, "bus=virtiofs")
 				}
 			} else {
 				// Confirm we're dealing with block options.
@@ -2178,14 +2153,8 @@ func (d *disk) Stop() (*deviceConfig.RunConfig, error) {
 }
 
 func (d *disk) stopVM() (*deviceConfig.RunConfig, error) {
-	// Stop the virtfs-proxy-helper process and clean up.
-	err := DiskVMVirtfsProxyStop(d.vmVirtfsProxyHelperPaths())
-	if err != nil {
-		return &deviceConfig.RunConfig{}, fmt.Errorf("Failed cleaning up virtfs-proxy-helper: %w", err)
-	}
-
 	// Stop the virtiofsd process and clean up.
-	err = DiskVMVirtiofsdStop(d.vmVirtiofsdPaths())
+	err := DiskVMVirtiofsdStop(d.vmVirtiofsdPaths())
 	if err != nil {
 		return &deviceConfig.RunConfig{}, fmt.Errorf("Failed cleaning up virtiofsd: %w", err)
 	}

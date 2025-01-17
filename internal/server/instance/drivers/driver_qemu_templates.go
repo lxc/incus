@@ -750,21 +750,20 @@ type qemuDriveDirOpts struct {
 	mountTag string
 	path     string
 	protocol string
-	proxyFD  int
 	readonly bool
 }
 
 func qemuDriveDir(opts *qemuDriveDirOpts) []cfgSection {
 	return qemuHostDrive(&qemuHostDriveOpts{
-		dev:      opts.dev,
-		name:     fmt.Sprintf("incus_%s", opts.devName),
-		comment:  fmt.Sprintf("%s drive (%s)", opts.devName, opts.protocol),
-		mountTag: opts.mountTag,
-		protocol: opts.protocol,
-		fsdriver: "proxy",
-		readonly: opts.readonly,
-		path:     opts.path,
-		sockFd:   fmt.Sprintf("%d", opts.proxyFD),
+		dev:           opts.dev,
+		name:          fmt.Sprintf("incus_%s", opts.devName),
+		comment:       fmt.Sprintf("%s drive (%s)", opts.devName, opts.protocol),
+		mountTag:      opts.mountTag,
+		protocol:      opts.protocol,
+		fsdriver:      "local",
+		readonly:      opts.readonly,
+		path:          opts.path,
+		securityModel: "passthrough",
 	})
 }
 
