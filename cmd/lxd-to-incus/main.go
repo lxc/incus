@@ -430,35 +430,35 @@ INSERT INTO certificates (id, fingerprint, type, name, certificate, restricted) 
 INSERT INTO certificates_projects (certificate_id, project_id) SELECT identity_id, project_id FROM identities_projects;`)
 
 			// Drop the other tables.
-			rewriteStatements = append(rewriteStatements, `DROP TRIGGER on_auth_group_delete;
-DROP TRIGGER on_cluster_group_delete;
-DROP TRIGGER on_identity_delete;
-DROP TRIGGER on_identity_provider_group_delete;
-DROP TRIGGER on_image_alias_delete;
-DROP TRIGGER on_image_delete;
-DROP TRIGGER on_instance_backup_delete;
-DROP TRIGGER on_instance_delete;
-DROP TRIGGER on_instance_snaphot_delete;
-DROP TRIGGER on_network_acl_delete;
-DROP TRIGGER on_network_delete;
-DROP TRIGGER on_network_zone_delete;
-DROP TRIGGER on_node_delete;
-DROP TRIGGER on_operation_delete;
-DROP TRIGGER on_profile_delete;
-DROP TRIGGER on_project_delete;
-DROP TRIGGER on_storage_bucket_delete;
-DROP TRIGGER on_storage_pool_delete;
-DROP TRIGGER on_storage_volume_backup_delete;
-DROP TRIGGER on_storage_volume_delete;
-DROP TRIGGER on_storage_volume_snapshot_delete;
-DROP TRIGGER on_warning_delete;
-DROP TABLE identities_projects;
-DROP TABLE auth_groups_permissions;
-DROP TABLE auth_groups_identity_provider_groups;
-DROP TABLE identities_auth_groups;
-DROP TABLE identity_provider_groups;
-DROP TABLE identities;
-DROP TABLE auth_groups;`)
+			rewriteStatements = append(rewriteStatements, `DROP TRIGGER IF EXISTS on_auth_group_delete;
+DROP TRIGGER IF EXISTS on_cluster_group_delete;
+DROP TRIGGER IF EXISTS on_identity_delete;
+DROP TRIGGER IF EXISTS on_identity_provider_group_delete;
+DROP TRIGGER IF EXISTS on_image_alias_delete;
+DROP TRIGGER IF EXISTS on_image_delete;
+DROP TRIGGER IF EXISTS on_instance_backup_delete;
+DROP TRIGGER IF EXISTS on_instance_delete;
+DROP TRIGGER IF EXISTS on_instance_snaphot_delete;
+DROP TRIGGER IF EXISTS on_network_acl_delete;
+DROP TRIGGER IF EXISTS on_network_delete;
+DROP TRIGGER IF EXISTS on_network_zone_delete;
+DROP TRIGGER IF EXISTS on_node_delete;
+DROP TRIGGER IF EXISTS on_operation_delete;
+DROP TRIGGER IF EXISTS on_profile_delete;
+DROP TRIGGER IF EXISTS on_project_delete;
+DROP TRIGGER IF EXISTS on_storage_bucket_delete;
+DROP TRIGGER IF EXISTS on_storage_pool_delete;
+DROP TRIGGER IF EXISTS on_storage_volume_backup_delete;
+DROP TRIGGER IF EXISTS on_storage_volume_delete;
+DROP TRIGGER IF EXISTS on_storage_volume_snapshot_delete;
+DROP TRIGGER IF EXISTS on_warning_delete;
+DROP TABLE IF EXISTS identities_projects;
+DROP TABLE IF EXISTS auth_groups_permissions;
+DROP TABLE IF EXISTS auth_groups_identity_provider_groups;
+DROP TABLE IF EXISTS identities_auth_groups;
+DROP TABLE IF EXISTS identity_provider_groups;
+DROP TABLE IF EXISTS identities;
+DROP TABLE IF EXISTS auth_groups;`)
 		}
 	}
 
