@@ -9,9 +9,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"unsafe"
-
-	"golang.org/x/sys/unix"
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/linux"
@@ -887,23 +884,4 @@ func (d *lvm) deactivateVolume(vol Volume) (bool, error) {
 	}
 
 	return false, nil
-}
-
-func (d *lvm) getBlockSize(path string) (int, error) {
-	// Open the block device.
-	f, err := os.Open(path)
-	if err != nil {
-		return -1, err
-	}
-
-	defer func() { _ = f.Close() }()
-
-	// Query the physical block size.
-	var res int32
-	_, _, errno := unix.Syscall(unix.SYS_IOCTL, uintptr(f.Fd()), unix.BLKPBSZGET, uintptr(unsafe.Pointer(&res)))
-	if errno != 0 {
-		return -1, fmt.Errorf("Failed to BLKPBSZGET: %w", unix.Errno(errno))
-	}
-
-	return int(res), nil
 }
