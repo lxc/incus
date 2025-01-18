@@ -70,32 +70,37 @@ A `bridged` NIC uses an existing bridge on the host and creates a virtual device
 
 NIC devices of type `bridged` have the following device options:
 
-Key                      | Type    | Default           | Managed | Description
-:--                      | :--     | :--               | :--     | :--
-`boot.priority`          | integer | -                 | no      | Boot priority for VMs (higher value boots first)
-`host_name`              | string  | randomly assigned | no      | The name of the interface inside the host
-`hwaddr`                 | string  | randomly assigned | no      | The MAC address of the new interface
-`ipv4.address`           | string  | -                 | no      | An IPv4 address to assign to the instance through DHCP (can be `none` to restrict all IPv4 traffic when `security.ipv4_filtering` is set)
-`ipv4.routes`            | string  | -                 | no      | Comma-delimited list of IPv4 static routes to add on host to NIC
-`ipv4.routes.external`   | string  | -                 | no      | Comma-delimited list of IPv4 static routes to route to the NIC and publish on uplink network (BGP)
-`ipv6.address`           | string  | -                 | no      | An IPv6 address to assign to the instance through DHCP (can be `none` to restrict all IPv6 traffic when `security.ipv6_filtering` is set)
-`ipv6.routes`            | string  | -                 | no      | Comma-delimited list of IPv6 static routes to add on host to NIC
-`ipv6.routes.external`   | string  | -                 | no      | Comma-delimited list of IPv6 static routes to route to the NIC and publish on uplink network (BGP)
-`limits.egress`          | string  | -                 | no      | I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)
-`limits.ingress`         | string  | -                 | no      | I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)
-`limits.max`             | string  | -                 | no      | I/O limit in bit/s for both incoming and outgoing traffic (same as setting both `limits.ingress` and `limits.egress`)
-`limits.priority`        | integer | -                 | no      | The `skb->priority` value (32-bit unsigned integer) for outgoing traffic, to be used by the kernel queuing discipline (qdisc) to prioritize network packets (The effect of this value depends on the particular qdisc implementation, for example, `SKBPRIO` or `QFQ`. Consult the kernel qdisc documentation before setting this value.)
-`mtu`                    | integer | parent MTU        | yes     | The MTU of the new interface
-`name`                   | string  | kernel assigned   | no      | The name of the interface inside the instance
-`network`                | string  | -                 | no      | The managed network to link the device to (instead of specifying the `nictype` directly)
-`parent`                 | string  | -                 | yes     | The name of the host device (required if specifying the `nictype` directly)
-`queue.tx.length`        | integer | -                 | no      | The transmit queue length for the NIC
-`security.ipv4_filtering`| bool    | `false`           | no      | Prevent the instance from spoofing another instance's IPv4 address (enables `security.mac_filtering`)
-`security.ipv6_filtering`| bool    | `false`           | no      | Prevent the instance from spoofing another instance's IPv6 address (enables `security.mac_filtering`)
-`security.mac_filtering` | bool    | `false`           | no      | Prevent the instance from spoofing another instance's MAC address
-`security.port_isolation`| bool    | `false`           | no      | Prevent the NIC from communicating with other NICs in the network that have port isolation enabled
-`vlan`                   | integer | -                 | no      | The VLAN ID to use for non-tagged traffic (can be `none` to remove port from default VLAN)
-`vlan.tagged`            | integer | -                 | no      | Comma-delimited list of VLAN IDs or VLAN ranges to join for tagged traffic
+Key                                   | Type    | Default           | Managed | Description
+:--                                   | :--     | :--               | :--     | :--
+`boot.priority`                       | integer | -                 | no      | Boot priority for VMs (higher value boots first)
+`host_name`                           | string  | randomly assigned | no      | The name of the interface inside the host
+`hwaddr`                              | string  | randomly assigned | no      | The MAC address of the new interface
+`ipv4.address`                        | string  | -                 | no      | An IPv4 address to assign to the instance through DHCP (can be `none` to restrict all IPv4 traffic when `security.ipv4_filtering` is set)
+`ipv4.routes`                         | string  | -                 | no      | Comma-delimited list of IPv4 static routes to add on host to NIC
+`ipv4.routes.external`                | string  | -                 | no      | Comma-delimited list of IPv4 static routes to route to the NIC and publish on uplink network (BGP)
+`ipv6.address`                        | string  | -                 | no      | An IPv6 address to assign to the instance through DHCP (can be `none` to restrict all IPv6 traffic when `security.ipv6_filtering` is set)
+`ipv6.routes`                         | string  | -                 | no      | Comma-delimited list of IPv6 static routes to add on host to NIC
+`ipv6.routes.external`                | string  | -                 | no      | Comma-delimited list of IPv6 static routes to route to the NIC and publish on uplink network (BGP)
+`limits.egress`                       | string  | -                 | no      | I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)
+`limits.ingress`                      | string  | -                 | no      | I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)
+`limits.max`                          | string  | -                 | no      | I/O limit in bit/s for both incoming and outgoing traffic (same as setting both `limits.ingress` and `limits.egress`)
+`limits.priority`                     | integer | -                 | no      | The `skb->priority` value (32-bit unsigned integer) for outgoing traffic, to be used by the kernel queuing discipline (qdisc) to prioritize network packets (The effect of this value depends on the particular qdisc implementation, for example, `SKBPRIO` or `QFQ`. Consult the kernel qdisc documentation before setting this value.)
+`mtu`                                 | integer | parent MTU        | yes     | The MTU of the new interface
+`name`                                | string  | kernel assigned   | no      | The name of the interface inside the instance
+`network`                             | string  | -                 | no      | The managed network to link the device to (instead of specifying the `nictype` directly)
+`parent`                              | string  | -                 | yes     | The name of the host device (required if specifying the `nictype` directly)
+`queue.tx.length`                     | integer | -                 | no      | The transmit queue length for the NIC
+`security.acls`                       | string  | -                 | no      | Comma-separated list of network ACLs to apply
+`security.acls.default.egress.action` | string  | `drop`            | no      | Action to use for egress traffic that doesn't match any ACL rule
+`security.acls.default.egress.logged` | bool    | `false`           | no      | Whether to log egress traffic that doesn't match any ACL rule
+`security.acls.default.ingress.action`| string  | `drop`            | no      | Action to use for ingress traffic that doesn't match any ACL rule
+`security.acls.default.ingress.logged`| bool    | `false`           | no      | Whether to log ingress traffic that doesn't match any ACL rule
+`security.ipv4_filtering`             | bool    | `false`           | no      | Prevent the instance from spoofing another instance's IPv4 address (enables `security.mac_filtering`)
+`security.ipv6_filtering`             | bool    | `false`           | no      | Prevent the instance from spoofing another instance's IPv6 address (enables `security.mac_filtering`)
+`security.mac_filtering`              | bool    | `false`           | no      | Prevent the instance from spoofing another instance's MAC address
+`security.port_isolation`             | bool    | `false`           | no      | Prevent the NIC from communicating with other NICs in the network that have port isolation enabled
+`vlan`                                | integer | -                 | no      | The VLAN ID to use for non-tagged traffic (can be `none` to remove port from default VLAN)
+`vlan.tagged`                         | integer | -                 | no      | Comma-delimited list of VLAN IDs or VLAN ranges to join for tagged traffic
 
 (nic-macvlan)=
 ### `nictype`: `macvlan`

@@ -210,8 +210,9 @@ incus config device set <instance_name> <device_name> security.acls.default.ingr
 When using network ACLs with a bridge network, be aware of the following limitations:
 
 - Unlike OVN ACLs, bridge ACLs are applied only on the boundary between the bridge and the Incus host.
-  This means they can only be used to apply network policies for traffic going to or from external networks.
+  This means they can only be used to apply network policies for traffic going to or from external networks (see exception for `nftables` firewall driver below).
   They cannot be used for to create {spellexception}`intra-bridge` firewalls, thus firewalls that control traffic between instances connected to the same bridge.
+- When using the `nftables` firewall driver you can apply ACLs to the NIC device and control traffic between the instances. In this case the `reject` ACL rules applied to the ingress traffic are converted to `drop` to address `nftables` limitation.
 - {ref}`ACL groups and network selectors <network-acls-selectors>` are not supported.
 - When using the `iptables` firewall driver, you cannot use IP range subjects (for example, `192.0.2.1-192.0.2.10`).
 - Baseline network service rules are added before ACL rules (in their respective INPUT/OUTPUT chains), because we cannot differentiate between INPUT/OUTPUT and FORWARD traffic once we have jumped into the ACL chain.

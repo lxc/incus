@@ -2685,3 +2685,7 @@ This adds extra fields to the OVN network state struct for the IPv4 and IPv6 add
 ## `qemu_scriptlet_config`
 
 This extends the QEMU scriptlet feature by allowing to modify QEMU configuration before a VM starts, and passing information about the instance to the scriptlet.
+
+## `network_bridge_acl_devices`
+
+This adds support for device ACLs when attached to a bridged network.
