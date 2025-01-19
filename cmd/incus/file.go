@@ -561,18 +561,29 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	sftpClients := map[string]*sftp.Client{}
+
+	defer func() {
+		for _, sftpClient := range sftpClients {
+			_ = sftpClient.Close()
+		}
+	}()
+
 	for _, resource := range resources {
 		pathSpec := strings.SplitN(resource.name, "/", 2)
 		if len(pathSpec) != 2 {
 			return fmt.Errorf(i18n.G("Invalid source %s"), resource.name)
 		}
 
-		sftpConn, err := resource.server.GetInstanceFileSFTP(pathSpec[0])
-		if err != nil {
-			return err
-		}
+		sftpConn, ok := sftpClients[pathSpec[0]]
+		if !ok {
+			sftpConn, err = resource.server.GetInstanceFileSFTP(pathSpec[0])
+			if err != nil {
+				return err
+			}
 
-		defer func() { _ = sftpConn.Close() }()
+			sftpClients[pathSpec[0]] = sftpConn
+		}
 
 		src, err := sftpConn.Open(pathSpec[1])
 		if err != nil {
