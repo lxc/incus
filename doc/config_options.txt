@@ -1105,7 +1105,7 @@ Specify the mounts of a given file system that should be redirected to their FUS
 
 ```
 
-```{config:option} security.syscalls.intercept.sched_setcheduler instance-security
+```{config:option} security.syscalls.intercept.sched_setscheduler instance-security
 :condition: "container"
 :defaultdesc: "`false`"
 :liveupdate: "no"

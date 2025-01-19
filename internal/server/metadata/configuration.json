@@ -1190,7 +1190,7 @@
 						}
 					},
 					{
-						"security.syscalls.intercept.sched_setcheduler": {
+						"security.syscalls.intercept.sched_setscheduler": {
 							"condition": "container",
 							"defaultdesc": "`false`",
 							"liveupdate": "no",
