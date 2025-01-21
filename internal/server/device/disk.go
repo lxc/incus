@@ -1349,7 +1349,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 						return nil, fmt.Errorf("9p shares do not support identity mapping")
 					}
 
-					mount.Opts = append(opts, "bus=virtiofs")
+					mount.Opts = append(mount.Opts, "bus=virtiofs")
 				}
 			} else {
 				// Confirm we're dealing with block options.
