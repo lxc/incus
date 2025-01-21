@@ -3031,3 +3031,42 @@ func (r *ProtocolIncus) proxyMigration(targetOp *operation, targetSecrets map[st
 
 	return nil
 }
+
+// GetInstanceDebugMemory retrieves memory debug information for a given instance and saves it to the specified file path.
+func (r *ProtocolIncus) GetInstanceDebugMemory(name string, format string) (io.ReadCloser, error) {
+	path, v, err := r.instanceTypeToPath(api.InstanceTypeVM)
+	if err != nil {
+		return nil, err
+	}
+
+	v.Set("format", format)
+
+	// Prepare the HTTP request
+	requestURL := fmt.Sprintf("%s/1.0%s/%s/debug/memory?%s", r.httpBaseURL.String(), path, url.PathEscape(name), v.Encode())
+
+	requestURL, err = r.setQueryAttributes(requestURL)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", requestURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Send the request
+	resp, err := r.DoHTTP(req)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check the return value for a cleaner error
+	if resp.StatusCode != http.StatusOK {
+		_, _, err := incusParseResponse(resp)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return resp.Body, nil
+}
