@@ -165,6 +165,13 @@ var instanceAccessCmd = APIEndpoint{
 	Get: APIEndpointAction{Handler: instanceAccess, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
 }
 
+var instanceDebugMemoryCmd = APIEndpoint{
+	Name: "instanceDebugMemory",
+	Path: "instances/{name}/debug/memory",
+
+	Get: APIEndpointAction{Handler: instanceDebugMemoryGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
+}
+
 type instanceAutostartList []instance.Instance
 
 func (slice instanceAutostartList) Len() int {
