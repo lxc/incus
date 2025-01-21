@@ -521,7 +521,9 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 	target := filepath.Clean(args[len(args)-1])
 
 	targetIsDir := false
-	sb, err := os.Stat(target)
+	targetIsLink := false
+
+	targetInfo, err := os.Stat(target)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
@@ -535,7 +537,7 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 	 *   3. We are dealing with recursive copy
 	 */
 	if err == nil {
-		targetIsDir = sb.IsDir()
+		targetIsDir = targetInfo.IsDir()
 		if !targetIsDir && len(args)-1 > 1 {
 			return fmt.Errorf(i18n.G("More than one file to download, but target is not a directory"))
 		}
@@ -559,19 +561,46 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	sftpClients := map[string]*sftp.Client{}
+
+	defer func() {
+		for _, sftpClient := range sftpClients {
+			_ = sftpClient.Close()
+		}
+	}()
+
 	for _, resource := range resources {
 		pathSpec := strings.SplitN(resource.name, "/", 2)
 		if len(pathSpec) != 2 {
 			return fmt.Errorf(i18n.G("Invalid source %s"), resource.name)
 		}
 
-		buf, resp, err := fileGetWrapper(resource.server, pathSpec[0], pathSpec[1])
+		sftpConn, ok := sftpClients[pathSpec[0]]
+		if !ok {
+			sftpConn, err = resource.server.GetInstanceFileSFTP(pathSpec[0])
+			if err != nil {
+				return err
+			}
+
+			sftpClients[pathSpec[0]] = sftpConn
+		}
+
+		src, err := sftpConn.Open(pathSpec[1])
 		if err != nil {
 			return err
 		}
 
+		srcInfo, err := sftpConn.Lstat(pathSpec[1])
+		if err != nil {
+			return err
+		}
+
+		if srcInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+			targetIsLink = true
+		}
+
 		// Deal with recursion
-		if resp.Type == "directory" {
+		if srcInfo.IsDir() {
 			if c.file.flagRecursive {
 				if !util.PathExists(target) {
 					err := os.MkdirAll(target, DirMode)
@@ -600,56 +629,16 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 			targetPath = target
 		}
 
-		logger.Infof("Pulling %s from %s (%s)", targetPath, pathSpec[1], resp.Type)
+		var f *os.File
+		var linkName string
 
-		if resp.Type == "symlink" {
-			linkTarget, err := io.ReadAll(buf)
+		if targetPath == "-" {
+			f = os.Stdout
+		} else if targetIsLink {
+			linkName, err = sftpConn.ReadLink(pathSpec[1])
 			if err != nil {
 				return err
 			}
-
-			// Follow the symlink
-			if targetPath == "-" || c.file.flagRecursive {
-				i := 0
-				for {
-					newPath := strings.TrimSuffix(string(linkTarget), "\n")
-					if !strings.HasPrefix(newPath, "/") {
-						newPath = filepath.Clean(filepath.Join(filepath.Dir(pathSpec[1]), newPath))
-					}
-
-					buf, resp, err = resource.server.GetInstanceFile(pathSpec[0], newPath)
-					if err != nil {
-						return err
-					}
-
-					if resp.Type != "symlink" {
-						break
-					}
-
-					i++
-					if i > 255 {
-						return fmt.Errorf(i18n.G("Too many links"))
-					}
-
-					// Update link target for next iteration.
-					linkTarget, err = io.ReadAll(buf)
-					if err != nil {
-						return err
-					}
-				}
-			} else {
-				err = os.Symlink(strings.TrimSpace(string(linkTarget)), targetPath)
-				if err != nil {
-					return err
-				}
-
-				continue
-			}
-		}
-
-		var f *os.File
-		if targetPath == "-" {
-			f = os.Stdout
 		} else {
 			f, err = os.Create(targetPath)
 			if err != nil {
@@ -658,7 +647,7 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 
 			defer func() { _ = f.Close() }()
 
-			err = os.Chmod(targetPath, os.FileMode(resp.Mode))
+			err = os.Chmod(targetPath, os.FileMode(srcInfo.Mode()))
 			if err != nil {
 				return err
 			}
@@ -685,16 +674,18 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 			},
 		}
 
-		_, err = io.Copy(writer, buf)
-		if err != nil {
-			progress.Done("")
-			return err
-		}
-
-		err = f.Close()
-		if err != nil {
-			progress.Done("")
-			return err
+		if targetIsLink {
+			err = os.Symlink(linkName, srcInfo.Name())
+			if err != nil {
+				progress.Done("")
+				return err
+			}
+		} else {
+			_, err = io.Copy(writer, src)
+			if err != nil {
+				progress.Done("")
+				return err
+			}
 		}
 
 		progress.Done("")
