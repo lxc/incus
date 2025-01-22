@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-01-20 23:16-0500\n"
+"POT-Creation-Date: 2025-01-23 15:36-0500\n"
 "PO-Revision-Date: 2024-12-14 14:00+0000\n"
 "Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -2012,6 +2012,16 @@ msgstr "%d 秒のタイムアウトが経過しましたが、デーモンがま
 msgid "Date: %s"
 msgstr "状態: %s"
 
+#: cmd/incus/debug.go:23
+#, fuzzy
+msgid "Debug commands"
+msgstr "コマンド:"
+
+#: cmd/incus/debug.go:24
+#, fuzzy
+msgid "Debug commands for instances"
+msgstr "インスタンス内でコマンドを実行します"
+
 #: cmd/incus/network.go:1019
 msgid "Default VLAN ID"
 msgstr "デフォルト VLAN ID"
@@ -2166,23 +2176,24 @@ msgstr "警告を削除します"
 #: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:597
 #: cmd/incus/config_trust.go:754 cmd/incus/config_trust.go:800
 #: cmd/incus/config_trust.go:871 cmd/incus/console.go:38 cmd/incus/copy.go:41
-#: cmd/incus/create.go:44 cmd/incus/delete.go:32 cmd/incus/exec.go:41
-#: cmd/incus/export.go:32 cmd/incus/file.go:88 cmd/incus/file.go:135
-#: cmd/incus/file.go:331 cmd/incus/file.go:413 cmd/incus/file.go:491
-#: cmd/incus/file.go:710 cmd/incus/file.go:1313 cmd/incus/image.go:40
-#: cmd/incus/image.go:148 cmd/incus/image.go:308 cmd/incus/image.go:363
-#: cmd/incus/image.go:498 cmd/incus/image.go:667 cmd/incus/image.go:924
-#: cmd/incus/image.go:1067 cmd/incus/image.go:1422 cmd/incus/image.go:1506
-#: cmd/incus/image.go:1573 cmd/incus/image.go:1638 cmd/incus/image.go:1702
-#: cmd/incus/image_alias.go:30 cmd/incus/image_alias.go:68
-#: cmd/incus/image_alias.go:135 cmd/incus/image_alias.go:189
-#: cmd/incus/image_alias.go:377 cmd/incus/import.go:27 cmd/incus/info.go:36
-#: cmd/incus/launch.go:24 cmd/incus/list.go:51 cmd/incus/main.go:100
-#: cmd/incus/manpage.go:24 cmd/incus/monitor.go:33 cmd/incus/move.go:35
-#: cmd/incus/network.go:36 cmd/incus/network.go:143 cmd/incus/network.go:240
-#: cmd/incus/network.go:339 cmd/incus/network.go:455 cmd/incus/network.go:513
-#: cmd/incus/network.go:610 cmd/incus/network.go:707 cmd/incus/network.go:843
-#: cmd/incus/network.go:924 cmd/incus/network.go:1068 cmd/incus/network.go:1271
+#: cmd/incus/create.go:44 cmd/incus/debug.go:24 cmd/incus/debug.go:45
+#: cmd/incus/delete.go:32 cmd/incus/exec.go:41 cmd/incus/export.go:32
+#: cmd/incus/file.go:88 cmd/incus/file.go:135 cmd/incus/file.go:331
+#: cmd/incus/file.go:413 cmd/incus/file.go:491 cmd/incus/file.go:710
+#: cmd/incus/file.go:1313 cmd/incus/image.go:40 cmd/incus/image.go:148
+#: cmd/incus/image.go:308 cmd/incus/image.go:363 cmd/incus/image.go:498
+#: cmd/incus/image.go:667 cmd/incus/image.go:924 cmd/incus/image.go:1067
+#: cmd/incus/image.go:1422 cmd/incus/image.go:1506 cmd/incus/image.go:1573
+#: cmd/incus/image.go:1638 cmd/incus/image.go:1702 cmd/incus/image_alias.go:30
+#: cmd/incus/image_alias.go:68 cmd/incus/image_alias.go:135
+#: cmd/incus/image_alias.go:189 cmd/incus/image_alias.go:377
+#: cmd/incus/import.go:27 cmd/incus/info.go:36 cmd/incus/launch.go:24
+#: cmd/incus/list.go:51 cmd/incus/main.go:100 cmd/incus/manpage.go:24
+#: cmd/incus/monitor.go:33 cmd/incus/move.go:35 cmd/incus/network.go:36
+#: cmd/incus/network.go:143 cmd/incus/network.go:240 cmd/incus/network.go:339
+#: cmd/incus/network.go:455 cmd/incus/network.go:513 cmd/incus/network.go:610
+#: cmd/incus/network.go:707 cmd/incus/network.go:843 cmd/incus/network.go:924
+#: cmd/incus/network.go:1068 cmd/incus/network.go:1271
 #: cmd/incus/network.go:1429 cmd/incus/network.go:1489
 #: cmd/incus/network.go:1585 cmd/incus/network.go:1657
 #: cmd/incus/network_acl.go:28 cmd/incus/network_acl.go:94
@@ -2813,12 +2824,12 @@ msgstr "プロパティの設定解除エラー: %v"
 msgid "Error updating template file: %s"
 msgstr "テンプレートファイル更新のエラー: %s"
 
-#: cmd/incus/main.go:348
+#: cmd/incus/main.go:352
 #, c-format
 msgid "Error while executing alias expansion: %s\n"
 msgstr "エイリアスの展開の実行中にエラー発生しました: %s\n"
 
-#: cmd/incus/main.go:351
+#: cmd/incus/main.go:355
 #, c-format
 msgid "Error: %v\n"
 msgstr "エラー: %v\n"
@@ -2947,6 +2958,11 @@ msgstr "失効日時: %s"
 msgid "Expires: never"
 msgstr "失効日時: 失効しない"
 
+#: cmd/incus/debug.go:44
+#, fuzzy
+msgid "Export a virtual machine's memory state"
+msgstr "仮想マシンイメージをコピーします"
+
 #: cmd/incus/image.go:497
 msgid "Export and download images"
 msgstr "イメージをエクスポートしてダウンロードします"
@@ -2980,6 +2996,13 @@ msgstr "ストレージバケットをエクスポートします"
 #: cmd/incus/storage_bucket.go:1426
 msgid "Export storage buckets as tarball."
 msgstr "ストレージバケットを tarball 形式でエクスポートします。"
+
+#: cmd/incus/debug.go:45
+msgid ""
+"Export the current memory state of a running virtual machine into a dump "
+"file.\n"
+"\t\tThis can be useful for debugging or analysis purposes."
+msgstr ""
 
 #: cmd/incus/storage_volume.go:2985
 msgid "Export the volume without its snapshots"
@@ -3221,6 +3244,11 @@ msgstr "ストレージボリュームのバックアップ作成に失敗しま
 msgid "Failed to delete original instance after copying it: %w"
 msgstr "移動元のインスタンスをコピーしたあとの削除に失敗しました: %w"
 
+#: cmd/incus/debug.go:88
+#, fuzzy, c-format
+msgid "Failed to dump instance memory: %w"
+msgstr "クラスタメンバへの接続に失敗しました: %w"
+
 #: cmd/incus/storage_bucket.go:1558
 #, fuzzy, c-format
 msgid "Failed to fetch storage bucket backup: %w"
@@ -3246,7 +3274,7 @@ msgstr "クラスターへの join に失敗しました: %w"
 msgid "Failed to listen for connection: %w"
 msgstr "コネクションのリッスンに失敗しました: %w"
 
-#: cmd/incus/main.go:398 cmd/incus/main_aliases.go:222
+#: cmd/incus/main.go:402 cmd/incus/main_aliases.go:222
 #, c-format
 msgid "Failed to load configuration: %s"
 msgstr "設定のロードに失敗しました: %s"
@@ -3507,6 +3535,11 @@ msgstr "フォーマット (man|md|rest|yaml)"
 #, fuzzy
 msgid "Format (table|compact)"
 msgstr "フォーマット (csv|json|table|yaml|compact)"
+
+#: cmd/incus/debug.go:53
+msgid ""
+"Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
+msgstr ""
 
 #: cmd/incus/network.go:1018
 msgid "Forward delay"
@@ -3865,7 +3898,7 @@ msgstr ""
 "存在するスナップショット名の場合は既存のスナップショットを削除したあとに新し"
 "いスナップショットを作成します"
 
-#: cmd/incus/main.go:459
+#: cmd/incus/main.go:463
 #, fuzzy
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
@@ -4189,7 +4222,7 @@ msgid ""
 msgstr ""
 "'%s' は不正な名前です。空文字列は maxWidth を指定しているときのみ指定できます"
 
-#: cmd/incus/main.go:555 cmd/incus/storage.go:138
+#: cmd/incus/main.go:559 cmd/incus/storage.go:138
 msgid "Invalid number of arguments"
 msgstr "引数の数が不正です"
 
@@ -7067,7 +7100,7 @@ msgstr "送信パケット"
 msgid "Partitions:"
 msgstr "パーティション:"
 
-#: cmd/incus/main.go:420
+#: cmd/incus/main.go:424
 #, c-format
 msgid "Password for %s: "
 msgstr "%s のパスワード: "
@@ -8383,7 +8416,7 @@ msgstr "インスタンスもしくはサーバの情報を表示します"
 msgid "Show instance snapshot configuration"
 msgstr "インスタンスもしくはサーバの設定を表示します"
 
-#: cmd/incus/main.go:299 cmd/incus/main.go:300
+#: cmd/incus/main.go:303 cmd/incus/main.go:304
 msgid "Show less common commands"
 msgstr "全てのコマンドを表示します (主なコマンドだけではなく)"
 
@@ -9149,7 +9182,7 @@ msgstr ""
 "publish 先にはイメージ名は指定できません。\"--alias\" オプションを使ってくだ"
 "さい。"
 
-#: cmd/incus/main.go:339
+#: cmd/incus/main.go:343
 #, fuzzy
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
@@ -9217,7 +9250,7 @@ msgstr ""
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr "コンソールから切り離すには <ctrl>+a q を押します"
 
-#: cmd/incus/main.go:464
+#: cmd/incus/main.go:468
 #, fuzzy
 msgid ""
 "To start your first container, try: incus launch images:ubuntu/22.04\n"
@@ -10195,6 +10228,11 @@ msgstr "[<remote>:]<instance> [[<remote>:]<instance>...]"
 msgid "[<remote>:]<instance> [flags] [--] <command line>"
 msgstr "[<remote>:]<instance> [flags] [--] <command line>"
 
+#: cmd/incus/debug.go:43
+#, fuzzy
+msgid "[<remote>:]<instance> [target] [--format]"
+msgstr "[<remote>:]<instance>[/<path>] [<target path>]"
+
 #: cmd/incus/export.go:30
 msgid "[<remote>:]<instance> [target] [--instance-only] [--optimized-storage]"
 msgstr "[<remote>:]<instance> [target] [--instance-only] [--optimized-storage]"
@@ -10832,6 +10870,12 @@ msgid ""
 msgstr ""
 "lxc storage edit [<remote>:]<pool> < pool.yaml\n"
 "    pool.yaml の内容でストレージプールを更新します。"
+
+#: cmd/incus/debug.go:48
+msgid ""
+"incus debug get-instance-memory vm1 dump.elf --format=elf\n"
+"    Creates an ELF format memory dump of the vm1 instance."
+msgstr ""
 
 #: cmd/incus/exec.go:52
 msgid ""
@@ -11599,6 +11643,18 @@ msgstr "y"
 #: cmd/incus/image.go:1183 cmd/incus/project.go:233 cmd/incus/snapshot.go:256
 msgid "yes"
 msgstr "yes"
+
+#, fuzzy, c-format
+#~ msgid "Exporting VM memory: %s"
+#~ msgstr "イメージのエクスポート中: %s"
+
+#, fuzzy, c-format
+#~ msgid "Invalid format '%s'. Supported formats: %s"
+#~ msgstr "不正なフォーマット %s"
+
+#, fuzzy
+#~ msgid "Memory dump completed successfully!"
+#~ msgstr "ストレージボリュームのコピーが成功しました!"
 
 #~ msgid "Too many links"
 #~ msgstr "リンクが多すぎます"
@@ -12370,9 +12426,6 @@ msgstr "yes"
 
 #~ msgid "Cannot provide container name to list"
 #~ msgstr "コンテナ名を取得できません"
-
-#~ msgid "Commands:"
-#~ msgstr "コマンド:"
 
 #~ msgid "Connection refused; is LXD running?"
 #~ msgstr "接続が拒否されました。LXDが実行されていますか?"
