@@ -9365,6 +9365,37 @@ paths:
             summary: Connect to console
             tags:
                 - instances
+    /1.0/instances/{name}/debug/memory:
+        get:
+            description: |-
+                Returns memory debug information of a running instance.
+                Only supported for VMs.
+            operationId: instance_debug_memory_get
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Memory dump format
+                  example: elf
+                  in: query
+                  name: format
+                  type: string
+            responses:
+                "200":
+                    description: Success
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get memory debug information of an instance
+            tags:
+                - instances
     /1.0/instances/{name}/exec:
         post:
             consumes:
