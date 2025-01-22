@@ -3332,6 +3332,9 @@ func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.
 	// Console output.
 	conf = append(conf, qemuConsole()...)
 
+	// VM core info (memory dump).
+	conf = append(conf, qemuCoreInfo()...)
+
 	// Setup the bus allocator.
 	bus := qemuNewBus(busName, &conf)
 

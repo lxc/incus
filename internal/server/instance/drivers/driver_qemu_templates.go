@@ -301,6 +301,16 @@ func qemuRNG(opts *qemuDevOpts) []cfg.Section {
 	}}
 }
 
+func qemuCoreInfo() []cfg.Section {
+	return []cfg.Section{{
+		Name:    `device "qemu_vmcoreinfo"`,
+		Comment: "VM core info driver",
+		Entries: []cfg.Entry{
+			{Key: "driver", Value: "vmcoreinfo"},
+		},
+	}}
+}
+
 type qemuSevOpts struct {
 	cbitpos         int
 	reducedPhysBits int
