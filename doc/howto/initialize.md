@@ -152,6 +152,11 @@ storage_pools:
   config:
     source: my-zfs-pool/my-zfs-dataset
 
+# Storage volumes
+storage_volumes:
+- name: my-vol
+  pool: data
+
 # Network devices
 networks:
 - name: incus-my-bridge
