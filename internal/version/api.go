@@ -456,6 +456,7 @@ var APIExtensions = []string{
 	"network_ovn_state_addresses",
 	"network_bridge_acl_devices",
 	"instance_debug_memory",
+	"init_preseed_storage_volumes",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
