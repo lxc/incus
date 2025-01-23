@@ -3386,6 +3386,9 @@ func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.
 	// Console output.
 	conf = append(conf, qemuConsole()...)
 
+	// VM core info (memory dump).
+	conf = append(conf, qemuCoreInfo()...)
+
 	// Setup the bus allocator.
 	bus := qemuNewBus(busName, &conf)
 
@@ -9504,4 +9507,38 @@ func (d *qemu) ReloadDevice(devName string) error {
 	}
 
 	return dev.Update(d.expandedDevices, true)
+}
+
+// DumpGuestMemory dumps the guest memory to a file in the specified format.
+func (d *qemu) DumpGuestMemory(w *os.File, format string) error {
+	if !d.IsRunning() {
+		return fmt.Errorf("Instance is not running")
+	}
+
+	// Check if the agent is running.
+	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	if err != nil {
+		return err
+	}
+
+	defer monitor.Disconnect()
+
+	// Dump the guest memory.
+	err = monitor.SendFile("memory-dump", w)
+	if err != nil {
+		return err
+	}
+
+	err = monitor.DumpGuestMemory("memory-dump", format)
+	if err != nil {
+		return err
+	}
+
+	// Close the writer.
+	err = w.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
