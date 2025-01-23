@@ -1247,6 +1247,13 @@ definitions:
                     $ref: '#/definitions/StoragePoolsPost'
                 type: array
                 x-go-name: StoragePools
+            storage_volumes:
+                description: Storage Volumes to add
+                example: local dir storage volume
+                items:
+                    $ref: '#/definitions/InitStorageVolumesProjectPost'
+                type: array
+                x-go-name: StorageVolumes
         title: InitLocalPreseed represents initialization configuration.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
@@ -1291,6 +1298,55 @@ definitions:
             cluster:
                 $ref: '#/definitions/InitClusterPreseed'
         title: InitPreseed represents initialization configuration that can be supplied to `init`.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    InitStorageVolumesProjectPost:
+        properties:
+            Pool:
+                description: Storage pool in which the volume will reside
+                example: '"default"'
+                type: string
+            Project:
+                description: Project in which the volume will reside
+                example: '"default"'
+                type: string
+            config:
+                additionalProperties:
+                    type: string
+                description: Storage volume configuration map (refer to doc/storage.md)
+                example:
+                    size: 50GiB
+                    zfs.remove_snapshots: "true"
+                type: object
+                x-go-name: Config
+            content_type:
+                description: Volume content type (filesystem or block)
+                example: filesystem
+                type: string
+                x-go-name: ContentType
+            description:
+                description: Description of the storage volume
+                example: My custom volume
+                type: string
+                x-go-name: Description
+            name:
+                description: Volume name
+                example: foo
+                type: string
+                x-go-name: Name
+            restore:
+                description: Name of a snapshot to restore
+                example: snap0
+                type: string
+                x-go-name: Restore
+            source:
+                $ref: '#/definitions/StorageVolumeSource'
+            type:
+                description: Volume type (container, custom, image or virtual-machine)
+                example: custom
+                type: string
+                x-go-name: Type
+        title: InitStorageVolumesProjectPost represents the fields of a new storage volume along with its associated pool.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     Instance:
