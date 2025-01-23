@@ -1,3 +1,7 @@
+.swagger-ui {
+    background-color: white;
+}
+
 .swagger-ui .markdown p, .swagger-ui .markdown pre, .swagger-ui .renderedMarkdown p, .swagger-ui .renderedMarkdown pre {
     margin-left: 0em;
 }
