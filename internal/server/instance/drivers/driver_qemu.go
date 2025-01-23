@@ -4287,6 +4287,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 	qemuDev["serial"] = fmt.Sprintf("%s%s", qemuBlockDevIDPrefix, escapedDeviceName)
 
 	if bus == "virtio-scsi" {
+		qemuDev["device_id"] = d.blockNodeName(escapedDeviceName)
 		qemuDev["channel"] = 0
 		qemuDev["lun"] = 1
 		qemuDev["bus"] = "qemu_scsi.0"
