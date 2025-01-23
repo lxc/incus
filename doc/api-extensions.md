@@ -2670,3 +2670,7 @@ This extends the QEMU scriptlet feature by allowing to modify QEMU configuration
 ## `network_bridge_acl_devices`
 
 This adds support for device ACLs when attached to a bridged network.
+
+## `instance_debug_memory`
+
+Add new memory dump API at `/1.0/instances/NAME/debug/memory`.
