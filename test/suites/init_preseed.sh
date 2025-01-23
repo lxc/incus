@@ -11,6 +11,7 @@ test_init_preseed() {
     INCUS_DIR=${INCUS_INIT_DIR}
 
     storage_pool="incustest-$(basename "${INCUS_DIR}")-data"
+    storage_volume="${storage_pool}-volume"
     # In case we're running against the ZFS backend, let's test
     # creating a zfs storage pool, otherwise just use dir.
     if [ "$incus_backend" = "zfs" ]; then
@@ -36,6 +37,9 @@ storage_pools:
   driver: $driver
   config:
     source: $source
+storage_volumes:
+- name: ${storage_volume}
+  pool: ${storage_pool}
 networks:
 - name: inct$$
   type: bridge
@@ -66,6 +70,7 @@ EOF
     incus network list | grep -q "inct$$"
     incus storage list | grep -q "${storage_pool}"
     incus storage show "${storage_pool}" | grep -q "$source"
+    incus storage volume list "${storage_pool}" | grep -q "${storage_volume}"
     incus profile list | grep -q "test-profile"
     incus profile show default | grep -q "pool: ${storage_pool}"
     incus profile show test-profile | grep -q "limits.memory: 2GiB"
@@ -74,6 +79,7 @@ EOF
     printf 'config: {}\ndevices: {}' | incus profile edit default
     incus profile delete test-profile
     incus network delete inct$$
+    incus storage volume delete "${storage_pool}" "${storage_volume}"
     incus storage delete "${storage_pool}"
 
     if [ "$incus_backend" = "zfs" ]; then
