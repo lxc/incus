@@ -46,7 +46,7 @@ func (c *cmdDebugMemory) Command() *cobra.Command {
 		`Export the current memory state of a running virtual machine into a dump file.
 		This can be useful for debugging or analysis purposes.`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`incus debug get-instance-memory vm1 dump.elf --format=elf
+		`incus debug dump-memory vm1 memory-dump.elf --format=elf
     Creates an ELF format memory dump of the vm1 instance.`))
 
 	cmd.RunE = c.Run
