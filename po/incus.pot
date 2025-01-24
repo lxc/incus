@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2025-01-23 15:36-0500\n"
+        "POT-Creation-Date: 2025-01-24 11:19+0900\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -8490,7 +8490,7 @@ msgid   "incus create storage s1 dir\n"
 msgstr  ""
 
 #: cmd/incus/debug.go:48
-msgid   "incus debug get-instance-memory vm1 dump.elf --format=elf\n"
+msgid   "incus debug dump-memory vm1 memory-dump.elf --format=elf\n"
         "    Creates an ELF format memory dump of the vm1 instance."
 msgstr  ""
 
