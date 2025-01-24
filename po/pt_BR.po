@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-01-23 15:36-0500\n"
+"POT-Creation-Date: 2025-01-24 11:19+0900\n"
 "PO-Revision-Date: 2024-01-30 13:01+0000\n"
 "Last-Translator: Paulo Coghi <paulo@coghi.com.br>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
@@ -5412,8 +5412,8 @@ msgstr ""
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect "
-"\"custom\" (user created) volumes."
+"Unless specified through a prefix, all volume operations affect \"custom\" "
+"(user created) volumes."
 msgstr ""
 
 #: cmd/incus/remote.go:43 cmd/incus/remote.go:44
@@ -9928,7 +9928,7 @@ msgstr ""
 
 #: cmd/incus/debug.go:48
 msgid ""
-"incus debug get-instance-memory vm1 dump.elf --format=elf\n"
+"incus debug dump-memory vm1 memory-dump.elf --format=elf\n"
 "    Creates an ELF format memory dump of the vm1 instance."
 msgstr ""
 
