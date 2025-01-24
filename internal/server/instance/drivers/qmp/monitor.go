@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
@@ -13,6 +14,7 @@ import (
 	"github.com/digitalocean/go-qemu/qmp"
 
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 var monitors = map[string]*Monitor{}
@@ -308,7 +310,10 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 	monitor.chDisconnect = make(chan struct{}, 1)
 	monitor.eventHandler = eventHandler
 	monitor.serialCharDev = serialCharDev
-	monitor.logFile = logFile
+
+	if util.PathExists(filepath.Dir(logFile)) {
+		monitor.logFile = logFile
+	}
 
 	// Default to generating a shutdown event when the monitor disconnects so that devices can be
 	// cleaned up. This will be disabled after a shutdown event is received from QEMU itself to avoid
