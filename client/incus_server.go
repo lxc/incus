@@ -10,6 +10,7 @@ import (
 
 	"github.com/lxc/incus/v6/shared/api"
 	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // Server handling functions
@@ -400,6 +401,68 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 		}
 
 		err := applyNetwork(config.Server.Networks[i])
+		if err != nil {
+			return err
+		}
+	}
+
+	// Apply storage volumes configuration.
+	applyStorageVolume := func(storageVolume api.InitStorageVolumesProjectPost) error {
+		// Get the current storageVolume.
+		currentStorageVolume, etag, err := r.UseProject(storageVolume.Project).GetStoragePoolVolume(storageVolume.Pool, storageVolume.Type, storageVolume.Name)
+
+		if err != nil {
+			// Create the storage volume if it doesn't exist.
+			err := r.UseProject(storageVolume.Project).CreateStoragePoolVolume(storageVolume.Pool, storageVolume.StorageVolumesPost)
+			if err != nil {
+				return fmt.Errorf("Failed to create storage volume %q in project %q on pool %q: %w", storageVolume.Name, storageVolume.Project, storageVolume.Pool, err)
+			}
+		} else {
+			// Quick check.
+			if currentStorageVolume.Type != storageVolume.Type {
+				return fmt.Errorf("Storage volume %q in project %q is of type %q instead of %q", currentStorageVolume.Name, storageVolume.Project, currentStorageVolume.Type, storageVolume.Type)
+			}
+
+			// Prepare the update.
+			newStorageVolume := api.StorageVolumePut{}
+			err = util.DeepCopy(currentStorageVolume.Writable(), &newStorageVolume)
+			if err != nil {
+				return fmt.Errorf("Failed to copy configuration of storage volume %q in project %q: %w", storageVolume.Name, storageVolume.Project, err)
+			}
+
+			// Description override.
+			if storageVolume.Description != "" {
+				newStorageVolume.Description = storageVolume.Description
+			}
+
+			// Config overrides.
+			for k, v := range storageVolume.Config {
+				newStorageVolume.Config[k] = fmt.Sprintf("%v", v)
+			}
+
+			// Apply it.
+			err = r.UseProject(storageVolume.Project).UpdateStoragePoolVolume(storageVolume.Pool, storageVolume.Type, currentStorageVolume.Name, newStorageVolume, etag)
+			if err != nil {
+				return fmt.Errorf("Failed to update storage volume %q in project %q: %w", storageVolume.Name, storageVolume.Project, err)
+			}
+		}
+
+		return nil
+	}
+
+	// Apply storage volumes in the default project before other projects config.
+	for i := range config.Server.StorageVolumes {
+		// Populate default project if not specified.
+		if config.Server.StorageVolumes[i].Project == "" {
+			config.Server.StorageVolumes[i].Project = api.ProjectDefaultName
+		}
+
+		// Populate default type if not specified.
+		if config.Server.StorageVolumes[i].Type == "" {
+			config.Server.StorageVolumes[i].Type = "custom"
+		}
+
+		err := applyStorageVolume(config.Server.StorageVolumes[i])
 		if err != nil {
 			return err
 		}

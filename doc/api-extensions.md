@@ -2693,3 +2693,6 @@ This adds support for device ACLs when attached to a bridged network.
 ## `instance_debug_memory`
 
 Add new memory dump API at `/1.0/instances/NAME/debug/memory`.
+
+## `init_preseed_storage_volumes`
+This API extension provides the ability to configure storage volumes in preseed init.
