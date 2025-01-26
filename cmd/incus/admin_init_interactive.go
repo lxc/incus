@@ -36,13 +36,16 @@ func (c *cmdAdminInit) RunInteractive(cmd *cobra.Command, args []string, d incus
 	config.Server.Config = map[string]string{}
 	config.Server.Networks = []api.InitNetworksProjectPost{}
 	config.Server.StoragePools = []api.StoragePoolsPost{}
-	config.Server.Profiles = []api.ProfilesPost{
+	config.Server.Profiles = []api.InitProfileProjectPost{
 		{
-			Name: "default",
-			ProfilePut: api.ProfilePut{
-				Config:  map[string]string{},
-				Devices: map[string]map[string]string{},
+			ProfilesPost: api.ProfilesPost{
+				Name: "default",
+				ProfilePut: api.ProfilePut{
+					Config:  map[string]string{},
+					Devices: map[string]map[string]string{},
+				},
 			},
+			Project: api.ProjectDefaultName,
 		},
 	}
 
