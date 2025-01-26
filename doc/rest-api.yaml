@@ -1230,7 +1230,7 @@ definitions:
                 description: Profiles to add
                 example: '"default" profile with a root disk device'
                 items:
-                    $ref: '#/definitions/ProfilesPost'
+                    $ref: '#/definitions/InitProfileProjectPost'
                 type: array
                 x-go-name: Profiles
             projects:
@@ -1298,6 +1298,51 @@ definitions:
             cluster:
                 $ref: '#/definitions/InitClusterPreseed'
         title: InitPreseed represents initialization configuration that can be supplied to `init`.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    InitProfileProjectPost:
+        properties:
+            Project:
+                description: Project in which the profile will reside
+                example: '"default"'
+                type: string
+            config:
+                additionalProperties:
+                    type: string
+                description: Instance configuration map (refer to doc/instances.md)
+                example:
+                    limits.cpu: "4"
+                    limits.memory: 4GiB
+                type: object
+                x-go-name: Config
+            description:
+                description: Description of the profile
+                example: Medium size instances
+                type: string
+                x-go-name: Description
+            devices:
+                additionalProperties:
+                    additionalProperties:
+                        type: string
+                    type: object
+                description: List of devices
+                example:
+                    eth0:
+                        name: eth0
+                        network: mybr0
+                        type: nic
+                    root:
+                        path: /
+                        pool: default
+                        type: disk
+                type: object
+                x-go-name: Devices
+            name:
+                description: The name of the new profile
+                example: foo
+                type: string
+                x-go-name: Name
+        title: InitProfileProjectPost represents the fields of a new profile along with its associated project.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     InitStorageVolumesProjectPost:
