@@ -470,81 +470,72 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 
 	// Apply profile configuration.
 	if config.Server.Profiles != nil && len(config.Server.Profiles) > 0 {
-		// Get the list of profiles.
-		profileNames, err := r.GetProfileNames()
-		if err != nil {
-			return fmt.Errorf("Failed to retrieve list of profiles: %w", err)
-		}
 
-		// Profile creator.
-		createProfile := func(profile api.ProfilesPost) error {
-			// Create the profile if doesn't exist.
-			err := r.CreateProfile(profile)
-			if err != nil {
-				return fmt.Errorf("Failed to create profile %q: %w", profile.Name, err)
-			}
-
-			return nil
-		}
-
-		// Profile updater.
-		updateProfile := func(target api.ProfilesPost) error {
+		// Apply profile configuration.
+		applyProfile := func(profile api.InitProfileProjectPost) error {
 			// Get the current profile.
-			profile, etag, err := r.GetProfile(target.Name)
+			currentProfile, etag, err := r.UseProject(profile.Project).GetProfile(profile.Name)
+
 			if err != nil {
-				return fmt.Errorf("Failed to retrieve current profile %q: %w", target.Name, err)
-			}
+				// // Create the profile if it doesn't exist.
+				err := r.UseProject(profile.Project).CreateProfile(profile.ProfilesPost)
+				if err != nil {
+					return fmt.Errorf("Failed to create profile %q in project %q: %w", profile.Name, profile.Project, err)
+				}
+			} else {
+				// Prepare the update.
+				updatedProfile := api.ProfilePut{}
 
-			// Description override.
-			if target.Description != "" {
-				profile.Description = target.Description
-			}
-
-			// Config overrides.
-			for k, v := range target.Config {
-				profile.Config[k] = fmt.Sprintf("%v", v)
-			}
-
-			// Device overrides.
-			for k, v := range target.Devices {
-				// New device.
-				_, ok := profile.Devices[k]
-				if !ok {
-					profile.Devices[k] = v
-					continue
+				err = util.DeepCopy(currentProfile.Writable(), &updatedProfile)
+				if err != nil {
+					return fmt.Errorf("Failed to copy configuration of profile %q in project %q: %w", profile.Name, profile.Project, err)
 				}
 
-				// Existing device.
-				for configKey, configValue := range v {
-					profile.Devices[k][configKey] = fmt.Sprintf("%v", configValue)
+				// Description override.
+				if profile.Description != "" {
+					updatedProfile.Description = profile.Description
 				}
-			}
 
-			// Apply it.
-			err = r.UpdateProfile(target.Name, profile.Writable(), etag)
-			if err != nil {
-				return fmt.Errorf("Failed to update profile %q: %w", target.Name, err)
+				// Config overrides.
+				for k, v := range profile.Config {
+					updatedProfile.Config[k] = fmt.Sprintf("%v", v)
+				}
+
+				// Device overrides.
+				for k, v := range profile.Devices {
+					// New device.
+					_, ok := updatedProfile.Devices[k]
+					if !ok {
+						updatedProfile.Devices[k] = v
+						continue
+					}
+
+					// Existing device.
+					for configKey, configValue := range v {
+						updatedProfile.Devices[k][configKey] = fmt.Sprintf("%v", configValue)
+					}
+				}
+
+				// Apply it.
+				err = r.UseProject(profile.Project).UpdateProfile(profile.Name, updatedProfile, etag)
+				if err != nil {
+					return fmt.Errorf("Failed to update profile %q in project %q: %w", profile.Name, profile.Project, err)
+				}
 			}
 
 			return nil
 		}
 
 		for _, profile := range config.Server.Profiles {
-			// New profile.
-			if !slices.Contains(profileNames, profile.Name) {
-				err := createProfile(profile)
-				if err != nil {
-					return err
-				}
-
-				continue
+			if profile.Project == "" {
+				profile.Project = api.ProjectDefaultName
 			}
 
-			// Existing profile.
-			err := updateProfile(profile)
+			err := applyProfile(profile)
 			if err != nil {
 				return err
 			}
+
 		}
 	}
 
