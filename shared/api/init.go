@@ -34,7 +34,7 @@ type InitLocalPreseed struct {
 
 	// Profiles to add
 	// Example: "default" profile with a root disk device
-	Profiles []ProfilesPost `json:"profiles" yaml:"profiles"`
+	Profiles []InitProfileProjectPost `json:"profiles" yaml:"profiles"`
 
 	// Projects to add
 	// Example: "default" project
@@ -50,6 +50,19 @@ type InitNetworksProjectPost struct {
 	NetworksPost `yaml:",inline"`
 
 	// Project in which the network will reside
+	// Example: "default"
+	Project string
+}
+
+// InitProfileProjectPost represents the fields of a new profile along with its associated project.
+//
+// swagger:model
+//
+// API extension: init_preseed_profile_project.
+type InitProfileProjectPost struct {
+	ProfilesPost `yaml:",inline"`
+
+	// Project in which the profile will reside
 	// Example: "default"
 	Project string
 }
