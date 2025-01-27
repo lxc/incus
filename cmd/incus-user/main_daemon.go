@@ -63,6 +63,14 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Unable to connect to the daemon: %w", err)
 	}
 
+	cinfo, err := client.GetConnectionInfo()
+	if err != nil {
+		return fmt.Errorf("Failed to obtain connection info: %w", err)
+	}
+
+	// Keep track of the socket path we used to succefully connect to the server
+	serverUnixPath := cinfo.SocketPath
+
 	// Validate the configuration.
 	ok, err := serverIsConfigured(client)
 	if err != nil {
@@ -187,6 +195,6 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 			continue
 		}
 
-		go proxyConnection(conn)
+		go proxyConnection(conn, serverUnixPath)
 	}
 }

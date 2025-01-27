@@ -49,7 +49,7 @@ func tlsConfig(uid uint32) (*tls.Config, error) {
 	return localtls.GetTLSConfigMem(tlsClientCert, tlsClientKey, "", tlsServerCert, false)
 }
 
-func proxyConnection(conn *net.UnixConn) {
+func proxyConnection(conn *net.UnixConn, serverUnixPath string) {
 	defer func() {
 		_ = conn.Close()
 
@@ -92,7 +92,7 @@ func proxyConnection(conn *net.UnixConn) {
 	}
 
 	// Connect to the daemon.
-	unixAddr, err := net.ResolveUnixAddr("unix", internalUtil.VarPath("unix.socket"))
+	unixAddr, err := net.ResolveUnixAddr("unix", serverUnixPath)
 	if err != nil {
 		log.Errorf("Unable to resolve the target server: %v", err)
 		return
