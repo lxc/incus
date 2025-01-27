@@ -65,7 +65,7 @@ func (c *cmdAdminInit) RunDump(d incus.InstanceServer) error {
 	}
 
 	for _, profile := range profiles {
-		profilesPost := api.ProfilesPost{}
+		profilesPost := api.InitProfileProjectPost{}
 		profilesPost.Config = profile.Config
 		profilesPost.Description = profile.Description
 		profilesPost.Devices = profile.Devices
