@@ -10,12 +10,12 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/linux"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 var mu sync.RWMutex
@@ -43,13 +43,6 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("This must be run as root")
 	}
 
-	// Setup logger.
-	log.SetFormatter(&log.TextFormatter{
-		FullTimestamp: true,
-	})
-	log.SetLevel(log.InfoLevel)
-	log.SetOutput(os.Stdout)
-
 	// Create storage.
 	err := os.MkdirAll(internalUtil.VarPath("users"), 0700)
 	if err != nil && !os.IsExist(err) {
@@ -57,7 +50,7 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Connect.
-	log.Debug("Connecting to the daemon")
+	logger.Debug("Connecting to the daemon")
 	client, err := incus.ConnectIncusUnix("", nil)
 	if err != nil {
 		return fmt.Errorf("Unable to connect to the daemon: %w", err)
@@ -78,7 +71,7 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if !ok {
-		log.Info("Performing initial configuration")
+		logger.Info("Performing initial configuration")
 		err = serverInitialConfiguration(client)
 		if err != nil {
 			return fmt.Errorf("Failed to apply initial configuration: %w", err)
@@ -185,13 +178,13 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Start accepting requests.
-	log.Info("Starting up the server")
+	logger.Info("Starting up the server")
 
 	for {
 		// Accept new connection.
 		conn, err := listener.AcceptUnix()
 		if err != nil {
-			log.Error("Failed to accept new connection: %w", err)
+			logger.Errorf("Failed to accept new connection: %v", err)
 			continue
 		}
 
