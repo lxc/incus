@@ -29,6 +29,7 @@ func DetectCompressionFile(f io.Reader) ([]string, string, []string, error) {
 	// lzma - 6 bytes, { [0x000, 0xE0], '7', 'z', 'X', 'Z', 0x00 } -
 	// xz - 6 bytes,  header format { 0xFD, '7', 'z', 'X', 'Z', 0x00 }
 	// tar - 263 bytes, trying to get ustar from 257 - 262
+	// lz4 - 4 bytes 0x04 0x22 0x4d 0x18, magic number
 	header := make([]byte, 263)
 	_, err := f.Read(header)
 	if err != nil {
@@ -56,6 +57,8 @@ func DetectCompressionFile(f io.Reader) ([]string, string, []string, error) {
 		return []string{""}, ".vmdk", []string{"qemu-img", "convert", "-O", "raw"}, nil
 	case bytes.Equal(header[0:4], []byte{0x28, 0xb5, 0x2f, 0xfd}):
 		return []string{"--zstd", "-xf"}, ".tar.zst", []string{"zstd", "-d"}, nil
+	case bytes.Equal(header[0:4], []byte{0x04, 0x22, 0x4d, 0x18}):
+		return []string{"-Ilz4", "-xf"}, ".tar.lz4", []string{"lz4", "-d"}, nil
 	default:
 		return nil, "", nil, fmt.Errorf("Unsupported compression")
 	}
