@@ -172,3 +172,30 @@ func (d *linstor) deleteResourceGroup() error {
 
 	return nil
 }
+
+// getResourceDefinition returns a Resource Definition instance for the given Resource name.
+func (d *linstor) getResourceDefinition(resourceDefinitionName string) (*linstorClient.ResourceDefinition, error) {
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return nil, err
+	}
+
+	resourceDefinition, err := linstor.Client.ResourceDefinitions.Get(context.TODO(), resourceDefinitionName)
+	if errors.Is(err, linstorClient.NotFoundError) {
+		return nil, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("Could not find the resource definition: %w", err)
+	}
+
+	return &resourceDefinition, nil
+}
+
+// getResourceDefinitionName returns the Linstor resource definition name for a given `vol`.
+func (d *linstor) getResourceDefinitionName(vol Volume) (string, error) {
+	id, err := d.getVolID(vol.volType, vol.name)
+	if err != nil {
+		return "", fmt.Errorf("Failed to get volume ID for %s: %w", vol.name, err)
+	}
+
+	return d.config[LinstorVolumePrefixConfigKey] + strconv.FormatInt(id, 10), nil
+}
