@@ -11,7 +11,6 @@ import (
 	linstorClient "github.com/LINBIT/golinstor/client"
 
 	"github.com/lxc/incus/v6/internal/version"
-	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -66,8 +65,7 @@ func (d *linstor) resourceGroupExists() (bool, error) {
 
 // getResourceGroup fetches the resource group for the storage pool.
 func (d *linstor) getResourceGroup() (*linstorClient.ResourceGroup, error) {
-	l := logger.AddContext(logger.Ctx{"config": d.config})
-	l.Debug("Fetching Linstor resource group")
+	d.logger.Debug("Fetching Linstor resource group")
 
 	// Retrieve the Linstor client
 	linstor, err := d.state.Linstor()
@@ -79,16 +77,16 @@ func (d *linstor) getResourceGroup() (*linstorClient.ResourceGroup, error) {
 	resourceGroup, err := linstor.Client.ResourceGroups.Get(context.TODO(), resourceGroupName)
 	if errors.Is(err, linstorClient.NotFoundError) {
 		return nil, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("Could not get Linstor resource group: %w", err)
 	}
 
-	l.Debug("Got Linstor resource Group", logger.Ctx{"resourceGroup": resourceGroup, "err": err})
 	return &resourceGroup, nil
 }
 
 // createResourceGroup creates a new resource group for the storage pool.
 func (d *linstor) createResourceGroup() error {
-	l := logger.AddContext(logger.Ctx{"config": d.config})
-	l.Debug("Creating Linstor resource group")
+	d.logger.Debug("Creating Linstor resource group")
 
 	// Retrieve the Linstor client
 	linstor, err := d.state.Linstor()
@@ -96,7 +94,7 @@ func (d *linstor) createResourceGroup() error {
 		return fmt.Errorf("Could not load Linstor client: %w", err)
 	}
 
-	place_count, err := strconv.Atoi(d.config[LinstorResourceGroupPlaceCountConfigKey])
+	placeCount, err := strconv.Atoi(d.config[LinstorResourceGroupPlaceCountConfigKey])
 	if err != nil {
 		return fmt.Errorf("Could not parse resource group place count property: %w", err)
 	}
@@ -105,14 +103,13 @@ func (d *linstor) createResourceGroup() error {
 		Name:        d.config[LinstorResourceGroupNameConfigKey],
 		Description: "Resource group managed by Incus to provide volumes",
 		SelectFilter: linstorClient.AutoSelectFilter{
-			PlaceCount: int32(place_count),
+			PlaceCount: int32(placeCount),
 		},
 	}
 	if d.config[LinstorResourceGroupStoragePoolConfigKey] != "" {
 		resourceGroup.SelectFilter.StoragePool = d.config[LinstorResourceGroupStoragePoolConfigKey]
 	}
 	err = linstor.Client.ResourceGroups.Create(context.TODO(), resourceGroup)
-	l.Debug("Created resource group", logger.Ctx{"err": err})
 	if err != nil {
 		return fmt.Errorf("Could not create Linstor resource group : %w", err)
 	}
@@ -136,7 +133,26 @@ func (d *linstor) deleteResourceGroup() error {
 	return nil
 }
 
-// getPlaceholderVolume returns the volume used to indicate if the pool is in use.
-func (d *linstor) getPlaceholderVolume() Volume {
-	return NewVolume(d, d.name, VolumeType("incus"), ContentTypeFS, d.config[LinstorResourceGroupNameConfigKey], nil, nil)
+// getResourceDefinition returns a Resource Definition instance for the given Resource name.
+func (d *linstor) getResourceDefinition(resourceDefinitionName string) (*linstorClient.ResourceDefinition, error) {
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return nil, fmt.Errorf("Could not load Linstor client: %w", err)
+	}
+
+	resourceDefinition, err := linstor.Client.ResourceDefinitions.Get(context.TODO(), resourceDefinitionName)
+	if errors.Is(err, linstorClient.NotFoundError) {
+		return nil, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("Could not find the resource definition: %w", err)
+	}
+
+	return &resourceDefinition, nil
+}
+
+// getResourceDefinitionName returns the Linstor resource definition name for a given `volName`.
+func (d *linstor) getResourceDefinitionName(volName string) string {
+	// TODO: set an unique ID on the name so we can later rename the resource at the
+	// Incus level, since Linstor does not support renaming
+	return fmt.Sprintf("%s-%s", d.config[LinstorResourceGroupNameConfigKey], volName)
 }

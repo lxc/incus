@@ -7,7 +7,6 @@ import (
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/shared/api"
-	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/validate"
@@ -90,10 +89,9 @@ func (d *linstor) FillConfig() error {
 
 // Create is called during storage pool creation.
 func (d *linstor) Create() error {
-	l := logger.AddContext(logger.Ctx{"config": d.config})
-	l.Debug("Creating Linstor storage pool")
-	revert := revert.New()
-	defer revert.Fail()
+	d.logger.Debug("Creating Linstor storage pool")
+	rev := revert.New()
+	defer rev.Fail()
 
 	// Track the initial source
 	d.config["volatile.initial_source"] = d.config["source"]
@@ -117,16 +115,16 @@ func (d *linstor) Create() error {
 
 	if !resourceGroupExists {
 		// Create new resource group
-		logger.Debug("Resource group does not exist. Creating one")
+		d.logger.Debug("Resource group does not exist. Creating one")
 		err := d.createResourceGroup()
 		if err != nil {
 			return fmt.Errorf("Could not create Linstor storage pool: %w", err)
 		}
-		revert.Add(func() { _ = d.deleteResourceGroup() })
+		rev.Add(func() { _ = d.deleteResourceGroup() })
 
 		d.config["volatile.pool.pristine"] = "true"
 	} else {
-		logger.Debug("Resource group already exists. Using an existing one")
+		d.logger.Debug("Resource group already exists. Using an existing one")
 		resourceGroup, err := d.getResourceGroup()
 		if err != nil {
 			return fmt.Errorf("Could not create Linstor storage pool: %w", err)
@@ -136,7 +134,7 @@ func (d *linstor) Create() error {
 		d.config[LinstorResourceGroupStoragePoolConfigKey] = resourceGroup.SelectFilter.StoragePool
 	}
 
-	revert.Success()
+	rev.Success()
 	return nil
 }
 
@@ -148,8 +146,7 @@ func (d *linstor) ListVolumes() ([]Volume, error) {
 
 // Delete removes the storage pool from the storage device.
 func (d *linstor) Delete(op *operations.Operation) error {
-	l := logger.AddContext(logger.Ctx{"config": d.config})
-	l.Debug("Deleting Linstor storage pool")
+	d.logger.Debug("Deleting Linstor storage pool")
 
 	// Test if the resource group exists
 	resourceGroupExists, err := d.resourceGroupExists()
@@ -167,9 +164,9 @@ func (d *linstor) Delete(op *operations.Operation) error {
 			if err != nil {
 				return err
 			}
-			l.Debug("Deleted Linstor resource group")
+			d.logger.Debug("Deleted Linstor resource group")
 		} else {
-			l.Debug("Linstor resource group is not owned by Incus, skipping delete")
+			d.logger.Debug("Linstor resource group is not owned by Incus, skipping delete")
 		}
 	}
 
