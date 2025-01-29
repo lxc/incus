@@ -432,7 +432,7 @@ Key                     | Type    | Default           | Description
 `ipv4.address`          | string  | -                 | Comma-delimited list of IPv4 static addresses to add to the instance
 `ipv4.gateway`          | string  | `auto`            | Whether to add an automatic default IPv4 gateway (can be `auto` or `none`)
 `ipv4.host_address`     | string  | `169.254.0.1`     | The IPv4 address to add to the host-side `veth` interface
-`ipv4.host_table`       | integer | -                 | The custom policy routing table ID to add IPv4 static routes to (in addition to the main routing table)
+`ipv4.host_table`       | integer | -                 | The custom policy routing table ID to add IPv4 static routes to (in addition to the main/vrf routing table)
 `ipv4.neighbor_probe`   | bool    | `true`            | Whether to probe the parent network for IP address availability
 `ipv4.routes`           | string  | -                 | Comma-delimited list of IPv4 static routes to add on host to NIC (without L2 ARP/NDP proxy)
 `ipv6.address`          | string  | -                 | Comma-delimited list of IPv6 static addresses to add to the instance
@@ -450,6 +450,7 @@ Key                     | Type    | Default           | Description
 `parent`                | string  | -                 | The name of the host device to join the instance to
 `queue.tx.length`       | integer | -                 | The transmit queue length for the NIC
 `vlan`                  | integer | -                 | The VLAN ID to attach to
+`vrf`                   | string  | -                 | The VRF on the host in which the host-side interface and routes are created
 
 ## `bridged`, `macvlan` or `ipvlan` for connection to physical network
 
