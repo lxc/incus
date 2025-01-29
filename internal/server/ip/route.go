@@ -15,6 +15,7 @@ type Route struct {
 	Proto   string
 	Family  string
 	Via     string
+	VRF     string
 }
 
 // Add adds new route.
@@ -37,6 +38,10 @@ func (r *Route) Add() error {
 		cmd = append(cmd, "proto", r.Proto)
 	}
 
+	if r.VRF != "" {
+		cmd = append(cmd, "vrf", r.VRF)
+	}
+
 	_, err := subprocess.RunCommand("ip", cmd...)
 	if err != nil {
 		return err
@@ -47,7 +52,15 @@ func (r *Route) Add() error {
 
 // Delete deletes routing table.
 func (r *Route) Delete() error {
-	_, err := subprocess.RunCommand("ip", r.Family, "route", "delete", "table", r.Table, r.Route, "dev", r.DevName)
+	cmd := []string{r.Family, "route", "delete", r.Route, "dev", r.DevName}
+
+	if r.VRF != "" {
+		cmd = append(cmd, "vrf", r.VRF)
+	} else if r.Table != "" {
+		cmd = append(cmd, "table", r.Table)
+	}
+
+	_, err := subprocess.RunCommand("ip", cmd...)
 	if err != nil {
 		return err
 	}
@@ -76,6 +89,10 @@ func (r *Route) Flush() error {
 		cmd = append(cmd, "proto", r.Proto)
 	}
 
+	if r.VRF != "" {
+		cmd = append(cmd, "vrf", r.VRF)
+	}
+
 	_, err := subprocess.RunCommand("ip", cmd...)
 	if err != nil {
 		return err
@@ -87,6 +104,11 @@ func (r *Route) Flush() error {
 // Replace changes or adds new route.
 func (r *Route) Replace(routes []string) error {
 	cmd := []string{r.Family, "route", "replace", "dev", r.DevName, "proto", r.Proto}
+
+	if r.VRF != "" {
+		cmd = append(cmd, "vrf", r.VRF)
+	}
+
 	cmd = append(cmd, routes...)
 	_, err := subprocess.RunCommand("ip", cmd...)
 	if err != nil {
@@ -99,7 +121,14 @@ func (r *Route) Replace(routes []string) error {
 // Show lists routes.
 func (r *Route) Show() ([]string, error) {
 	routes := []string{}
-	out, err := subprocess.RunCommand("ip", r.Family, "route", "show", "dev", r.DevName, "proto", r.Proto)
+
+	cmd := []string{r.Family, "route", "show", "dev", r.DevName, "proto", r.Proto}
+
+	if r.VRF != "" {
+		cmd = append(cmd, "vrf", r.VRF)
+	}
+
+	out, err := subprocess.RunCommand("ip", cmd...)
 	if err != nil {
 		return routes, err
 	}
