@@ -326,6 +326,7 @@ VMs
 VPD
 VPN
 VPS
+VRF
 vSwitch
 VXLAN
 WebSocket

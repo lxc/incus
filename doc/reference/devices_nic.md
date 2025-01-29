@@ -450,6 +450,7 @@ Key                     | Type    | Default           | Description
 `parent`                | string  | -                 | The name of the host device to join the instance to
 `queue.tx.length`       | integer | -                 | The transmit queue length for the NIC
 `vlan`                  | integer | -                 | The VLAN ID to attach to
+`vrf`                   | string  | -                 | The VRF on the host in which the host-side interface and routes are created
 
 ## `bridged`, `macvlan` or `ipvlan` for connection to physical network
 
