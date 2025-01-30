@@ -164,6 +164,15 @@ func (d *linstor) DeleteVolume(vol Volume, op *operations.Operation) error {
 		}
 	}
 
+	// For VMs, also delete the filesystem volume.
+	if vol.IsVMBlock() {
+		fsVol := vol.NewVMBlockFilesystemVolume()
+		err = linstor.Client.ResourceDefinitions.Delete(context.TODO(), d.getResourceDefinitionName(fsVol))
+		if err != nil {
+			return fmt.Errorf("Unable to delete the resource definition: %w", err)
+		}
+	}
+
 	return nil
 }
 
