@@ -11,6 +11,7 @@ import (
 
 	linstorClient "github.com/LINBIT/golinstor/client"
 
+	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/subprocess"
 	"github.com/lxc/incus/v6/shared/util"
 )
@@ -233,4 +234,48 @@ func (d *linstor) getLinstorDevPath(vol Volume) (string, error) {
 	}
 
 	return volume.DevicePath, nil
+}
+
+// getSatelliteName returns the local LINSTOR satellite name.
+//
+// The logic used to determine the satellite name is documented in the public
+// driver documentation, as it is relevant for users. Therefore, any changes
+// to the external behavior of this function should also be reflected in the
+// public documentation.
+func (d *linstor) getSatelliteName() string {
+	name := d.state.LocalConfig.LinstorSatelliteName()
+	if name != "" {
+		return name
+	}
+
+	if d.state.ServerClustered {
+		return d.state.ServerName
+	}
+
+	return d.state.OS.Hostname
+}
+
+// makeVolumeAvailable makes a volume available on the current node.
+func (d *linstor) makeVolumeAvailable(vol Volume) error {
+	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name()})
+	l.Debug("Making volume available on node")
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	resourceName, err := d.getResourceDefinitionName(vol)
+	if err != nil {
+		return err
+	}
+
+	err = linstor.Client.Resources.MakeAvailable(context.TODO(), resourceName, d.getSatelliteName(), linstorClient.ResourceMakeAvailable{
+		Diskful: false,
+	})
+	if err != nil {
+		l.Debug("Could not make resource available on node", logger.Ctx{"resourceName": resourceName, "nodeName": d.getSatelliteName(), "error": err})
+		return fmt.Errorf("Could not make resource available on node: %w", err)
+	}
+
+	return nil
 }

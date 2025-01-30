@@ -3,9 +3,13 @@ package drivers
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 
 	linstorClient "github.com/LINBIT/golinstor/client"
+	"golang.org/x/sys/unix"
 
+	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
@@ -33,6 +37,16 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	linstor, err := d.state.Linstor()
 	if err != nil {
 		return err
+	}
+
+	if vol.contentType == ContentTypeFS {
+		// Create mountpoint.
+		err := vol.EnsureMountPath()
+		if err != nil {
+			return err
+		}
+
+		rev.Add(func() { _ = os.Remove(vol.MountPath()) })
 	}
 
 	// Transform byte to KiB.
@@ -74,6 +88,40 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 
 	l.Debug("Spawned a new Linstor resource definition for volume", logger.Ctx{"resourceDefinitionName": resourceDefinitionName})
 	rev.Add(func() { _ = d.DeleteVolume(vol, op) })
+
+	// Setup the filesystem.
+	err = d.makeVolumeAvailable(vol)
+	if err != nil {
+		return fmt.Errorf("Could not make volume available for filesystem creation: %w", err)
+	}
+
+	devPath, err := d.getLinstorDevPath(vol)
+	if err != nil {
+		return fmt.Errorf("Could not get device path for filesystem creation: %w", err)
+	}
+
+	volFilesystem := vol.ConfigBlockFilesystem()
+	if vol.contentType == ContentTypeFS {
+		_, err = makeFSType(devPath, volFilesystem, nil)
+		if err != nil {
+			return err
+		}
+	}
+
+	// For VMs, also create the filesystem on the associated filesystem volume.
+	if vol.IsVMBlock() {
+		fsVol := vol.NewVMBlockFilesystemVolume()
+		fsVolDevPath, err := d.getLinstorDevPath(fsVol)
+		if err != nil {
+			return fmt.Errorf("Could not get device path for filesystem creation: %w", err)
+		}
+
+		fsVolFilesystem := fsVol.ConfigBlockFilesystem()
+		_, err = makeFSType(fsVolDevPath, fsVolFilesystem, nil)
+		if err != nil {
+			return err
+		}
+	}
 
 	err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
 		// Run the volume filler function if supplied.
@@ -199,4 +247,128 @@ func (d *linstor) GetVolumeDiskPath(vol Volume) (string, error) {
 	}
 
 	return "", ErrNotSupported
+}
+
+// MountVolume mounts a volume and increments ref counter. Please call UnmountVolume() when done with the volume.
+func (d *linstor) MountVolume(vol Volume, op *operations.Operation) error {
+	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name()})
+	l.Debug("Mounting volume")
+	unlock, err := vol.MountLock()
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+
+	rev := revert.New()
+	defer rev.Fail()
+
+	err = d.makeVolumeAvailable(vol)
+	if err != nil {
+		return fmt.Errorf("Could not mount volume: %w", err)
+	}
+
+	volDevPath, err := d.getLinstorDevPath(vol)
+	if err != nil {
+		return fmt.Errorf("Could not mount volume: %w", err)
+	}
+
+	l.Debug("Volume is available on node", logger.Ctx{"volDevPath": volDevPath})
+
+	switch vol.contentType {
+	case ContentTypeFS:
+		mountPath := vol.MountPath()
+		l.Debug("Content type FS", logger.Ctx{"mountPath": mountPath})
+		if !linux.IsMountPoint(mountPath) {
+			err := vol.EnsureMountPath()
+			if err != nil {
+				return err
+			}
+
+			fsType := vol.ConfigBlockFilesystem()
+
+			if vol.mountFilesystemProbe {
+				fsType, err = fsProbe(volDevPath)
+				if err != nil {
+					return fmt.Errorf("Failed probing filesystem: %w", err)
+				}
+			}
+
+			mountFlags, mountOptions := linux.ResolveMountOptions(strings.Split(vol.ConfigBlockMountOptions(), ","))
+			l.Debug("Will try mount", logger.Ctx{"mountFlags": mountFlags, "mountOptions": mountOptions})
+			err = TryMount(volDevPath, mountPath, fsType, mountFlags, mountOptions)
+			if err != nil {
+				l.Debug("Tried mounting but failed", logger.Ctx{"error": err})
+				return err
+			}
+
+			d.logger.Debug("Mounted Linstor volume", logger.Ctx{"volName": vol.name, "dev": volDevPath, "path": mountPath, "options": mountOptions})
+		}
+
+	case ContentTypeBlock:
+		l.Debug("Content type Block")
+		// For VMs, mount the filesystem volume.
+		if vol.IsVMBlock() {
+			fsVol := vol.NewVMBlockFilesystemVolume()
+			l.Debug("Created a new FS volume", logger.Ctx{"fsVol": fsVol})
+			err = d.MountVolume(fsVol, op)
+			if err != nil {
+				l.Debug("Tried mounting but failed", logger.Ctx{"error": err})
+				return err
+			}
+		}
+	}
+
+	vol.MountRefCountIncrement() // From here on it is up to caller to call UnmountVolume() when done.
+	rev.Success()
+	l.Debug("Volume mounted")
+	return nil
+}
+
+// UnmountVolume clears any runtime state for the volume.
+// keepBlockDev indicates if backing block device should be not be unmapped if volume is unmounted.
+func (d *linstor) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operation) (bool, error) {
+	unlock, err := vol.MountLock()
+	if err != nil {
+		return false, err
+	}
+
+	defer unlock()
+
+	ourUnmount := false
+	mountPath := vol.MountPath()
+
+	refCount := vol.MountRefCountDecrement()
+
+	// Attempt to unmount the volume.
+	if vol.contentType == ContentTypeFS && linux.IsMountPoint(mountPath) {
+		if refCount > 0 {
+			d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": vol.name, "refCount": refCount})
+			return false, ErrInUse
+		}
+
+		err = TryUnmount(mountPath, unix.MNT_DETACH)
+		if err != nil {
+			return false, err
+		}
+
+		d.logger.Debug("Unmounted Linstor volume", logger.Ctx{"volName": vol.name, "path": mountPath, "keepBlockDev": keepBlockDev})
+
+		// TODO: handle keepBlockDev
+
+		ourUnmount = true
+	} else if vol.contentType == ContentTypeBlock {
+		// For VMs, unmount the filesystem volume.
+		if vol.IsVMBlock() {
+			fsVol := vol.NewVMBlockFilesystemVolume()
+			ourUnmount, err = d.UnmountVolume(fsVol, false, op)
+			if err != nil {
+				return false, err
+			}
+		}
+
+		// TODO: handle keepBlockDev
+	}
+
+	return ourUnmount, nil
 }
