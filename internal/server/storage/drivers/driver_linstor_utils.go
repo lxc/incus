@@ -156,3 +156,27 @@ func (d *linstor) getResourceDefinitionName(volName string) string {
 	// Incus level, since Linstor does not support renaming
 	return fmt.Sprintf("%s-%s", d.config[LinstorResourceGroupNameConfigKey], volName)
 }
+
+// getLinstorDevPath return the device path for a given Volume
+func (d *linstor) getLinstorDevPath(volName string) (string, error) {
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return "", fmt.Errorf("Could not load Linstor client: %w", err)
+	}
+
+	resourceDefinitionName := d.getResourceDefinitionName(volName)
+
+	// Fetching all the nodes that contains the volume definition
+	nodes, err := linstor.Client.Nodes.GetAll(context.TODO(), &linstorClient.ListOpts{
+		StoragePool: []string{d.config[LinstorResourceGroupNameConfigKey]},
+		Resource:    []string{resourceDefinitionName},
+	})
+	if err != nil {
+		return "", fmt.Errorf("Unable to get the nodes for the resource definition: %w", err)
+	}
+
+	// NOTE: Since we're mapping a unique Volume Definition to a Incus Volume, the Volume Number always be set to 0
+	volume := linstor.Client.Resource.GetVolume(context.TODO(), resourceDefinitionName, nodes[0], 0, nil)
+
+	return volume.DevicePath, nil
+}
