@@ -575,6 +575,11 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf(i18n.G("Invalid source %s"), resource.name)
 		}
 
+		// Make sure we have a leading / for the path.
+		if !strings.HasPrefix(pathSpec[1], "/") {
+			pathSpec[1] = "/" + pathSpec[1]
+		}
+
 		sftpConn, ok := sftpClients[pathSpec[0]]
 		if !ok {
 			sftpConn, err = resource.server.GetInstanceFileSFTP(pathSpec[0])
