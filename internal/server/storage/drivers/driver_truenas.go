@@ -68,6 +68,7 @@ import (
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 	localMigration "github.com/lxc/incus/v6/internal/server/migration"
 	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/subprocess"
@@ -77,6 +78,9 @@ import (
 
 var tnVersion string
 var tnLoaded bool
+
+// TODO: these flags are not needed once we stop using earlier versions.
+var tnHasLoginFlags bool // 0.1.1
 
 var tnDefaultSettings = map[string]string{
 	"relatime":   "on",
@@ -124,6 +128,23 @@ func (d *truenas) load() error {
 		}
 
 		tnVersion = version
+	}
+
+	// Decide whether we can use features added by 0.1.1
+	ver011, err := version.Parse("0.1.1")
+	if err != nil {
+		return err
+	}
+
+	ourVer, err := version.Parse(tnVersion)
+	if err != nil {
+		return err
+	}
+
+	// If 0.1.1 we can use login flags (api-key, url, key-file)
+	// TODO: remove this later.
+	if ourVer.Compare(ver011) >= 0 {
+		tnHasLoginFlags = true
 	}
 
 	tnLoaded = true
