@@ -61,6 +61,7 @@ package drivers
 import (
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -83,13 +84,13 @@ var tnLoaded bool
 var tnHasLoginFlags bool // 0.1.1
 
 var tnDefaultSettings = map[string]string{
-	"relatime":   "on",
-	"mountpoint": "legacy",
-	"setuid":     "on",
-	"exec":       "on",
-	"devices":    "on",
-	"acltype":    "posixacl",
-	"xattr":      "sa",
+	//"relatime":   "on",
+	//"mountpoint": "legacy",
+	//"setuid":     "on",
+	"exec": "on",
+	//"devices":    "on",
+	//"acltype":    "posixacl",
+	//"xattr":      "sa",
 }
 
 type truenas struct {
@@ -148,14 +149,6 @@ func (d *truenas) load() error {
 	}
 
 	tnLoaded = true
-	// before, _ := d.datasetExists("dozer/created")
-	// if !before {
-	// 	d.createDataset("dozer/created")
-	// }
-	// after, _ := d.datasetExists("dozer/created")
-	// if after {
-	// 	d.deleteDataset("dozer/created")
-	// }
 
 	return nil
 }
@@ -186,48 +179,49 @@ func (d *truenas) Info() Info {
 // Accepts warnOnExistingPolicyApplyError argument, if true will warn rather than fail if applying current policy
 // to an existing dataset fails.
 func (d truenas) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
-	// args := make([]string, 0, len(zfsDefaultSettings))
-	// for k, v := range zfsDefaultSettings {
-	// 	args = append(args, fmt.Sprintf("%s=%s", k, v))
-	// }
+	args := make([]string, 0, len(zfsDefaultSettings))
+	for k, v := range tnDefaultSettings {
+		args = append(args, fmt.Sprintf("%s=%s", k, v))
+	}
 
-	// err := d.setDatasetProperties(d.config["zfs.pool_name"], args...)
-	// if err != nil {
-	// 	if warnOnExistingPolicyApplyError {
-	// 		d.logger.Warn("Failed applying policy to existing dataset", logger.Ctx{"dataset": d.config["zfs.pool_name"], "err": err})
-	// 	} else {
-	// 		return fmt.Errorf("Failed applying policy to existing dataset %q: %w", d.config["zfs.pool_name"], err)
-	// 	}
-	// }
+	err := d.setDatasetProperties(d.config["truenas.dataset"], args...)
+	if err != nil {
+		if warnOnExistingPolicyApplyError {
+			d.logger.Warn("Failed applying policy to existing dataset", logger.Ctx{"dataset": d.config["truenas.dataset"], "err": err})
+		} else {
+			return fmt.Errorf("Failed applying policy to existing dataset %q: %w", d.config["truenas.dataset"], err)
+		}
+	}
 
-	// for _, dataset := range d.initialDatasets() {
-	// 	properties := []string{"mountpoint=legacy"}
-	// 	if slices.Contains([]string{"virtual-machines", "deleted/virtual-machines"}, dataset) {
-	// 		properties = append(properties, "volmode=none")
-	// 	}
+	for _, dataset := range d.initialDatasets() {
+		//properties := []string{"mountpoint=legacy"}
+		properties := []string{"exec=off"}
+		// if slices.Contains([]string{"virtual-machines", "deleted/virtual-machines"}, dataset) {
+		// 	properties = append(properties, "volmode=none")
+		// }
 
-	// 	datasetPath := filepath.Join(d.config["zfs.pool_name"], dataset)
-	// 	exists, err := d.datasetExists(datasetPath)
-	// 	if err != nil {
-	// 		return err
-	// 	}
+		datasetPath := filepath.Join(d.config["truenas.dataset"], dataset)
+		exists, err := d.datasetExists(datasetPath)
+		if err != nil {
+			return err
+		}
 
-	// 	if exists {
-	// 		err = d.setDatasetProperties(datasetPath, properties...)
-	// 		if err != nil {
-	// 			if warnOnExistingPolicyApplyError {
-	// 				d.logger.Warn("Failed applying policy to existing dataset", logger.Ctx{"dataset": datasetPath, "err": err})
-	// 			} else {
-	// 				return fmt.Errorf("Failed applying policy to existing dataset %q: %w", datasetPath, err)
-	// 			}
-	// 		}
-	// 	} else {
-	// 		err = d.createDataset(datasetPath, properties...)
-	// 		if err != nil {
-	// 			return fmt.Errorf("Failed creating dataset %q: %w", datasetPath, err)
-	// 		}
-	// 	}
-	// }
+		if exists {
+			err = d.setDatasetProperties(datasetPath, properties...)
+			if err != nil {
+				if warnOnExistingPolicyApplyError {
+					d.logger.Warn("Failed applying policy to existing dataset", logger.Ctx{"dataset": datasetPath, "err": err})
+				} else {
+					return fmt.Errorf("Failed applying policy to existing dataset %q: %w", datasetPath, err)
+				}
+			}
+		} else {
+			err = d.createDataset(datasetPath, properties...)
+			if err != nil {
+				return fmt.Errorf("Failed creating dataset %q: %w", datasetPath, err)
+			}
+		}
+	}
 
 	return nil
 }
@@ -260,7 +254,7 @@ func (d *truenas) Create() error {
 
 	d.config["truenas.dataset"] = d.config["source"] + "/" + d.name
 
-	// Handle a dataset.
+	// Handle a dataset
 	exists, err = d.datasetExists(d.config["truenas.dataset"])
 	if err != nil {
 		return err
@@ -329,7 +323,8 @@ func (d *truenas) Delete(op *operations.Operation) error {
 		}
 
 		// Delete the dataset.
-		_, err = d.runTool("dataset", "delete", "-r", d.config["truenas.dataset"])
+		out, err := d.runTool("dataset", "delete", "-r", d.config["truenas.dataset"])
+		_ = out
 		if err != nil {
 			return err
 		}
@@ -340,13 +335,6 @@ func (d *truenas) Delete(op *operations.Operation) error {
 	if err != nil {
 		return err
 	}
-
-	// // Delete any loop file we may have used
-	// loopPath := loopFilePath(d.name)
-	// err = os.Remove(loopPath)
-	// if err != nil && !errors.Is(err, fs.ErrNotExist) {
-	// 	return fmt.Errorf("Failed to remove '%s': %w", loopPath, err)
-	// }
 
 	return nil
 }
