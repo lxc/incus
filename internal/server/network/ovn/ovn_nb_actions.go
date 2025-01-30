@@ -4074,7 +4074,7 @@ func (o *NB) DeleteLogicalRouterPeering(ctx context.Context, opts OVNRouterPeeri
 			}
 
 			// Skip over anything that's not tied to the current port.
-			if route.OutputPort != nil || *route.OutputPort != string(portName) {
+			if route.OutputPort == nil || *route.OutputPort != string(portName) {
 				continue
 			}
 
