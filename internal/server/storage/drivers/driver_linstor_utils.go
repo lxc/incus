@@ -199,3 +199,38 @@ func (d *linstor) getResourceDefinitionName(vol Volume) (string, error) {
 
 	return d.config[LinstorVolumePrefixConfigKey] + strconv.FormatInt(id, 10), nil
 }
+
+// getLinstorDevPath return the device path for a given `vol`.
+func (d *linstor) getLinstorDevPath(vol Volume) (string, error) {
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return "", err
+	}
+
+	resourceDefinitionName, err := d.getResourceDefinitionName(vol)
+	if err != nil {
+		return "", err
+	}
+
+	// Fetching all the nodes that contains the volume definition.
+	nodes, err := linstor.Client.Nodes.GetAll(context.TODO(), &linstorClient.ListOpts{
+		Resource: []string{resourceDefinitionName},
+	})
+	if err != nil {
+		return "", fmt.Errorf("Unable to get the nodes for the resource definition: %w", err)
+	}
+
+	volumeIndex := 0
+
+	// For VM volumes, the associated filesystem volume is a second volume on the same LINSTOR resource.
+	if vol.volType == VolumeTypeVM && vol.contentType == ContentTypeFS {
+		volumeIndex = 1
+	}
+
+	volume, err := linstor.Client.Resources.GetVolume(context.TODO(), resourceDefinitionName, nodes[0].Name, volumeIndex)
+	if err != nil {
+		return "", fmt.Errorf("Unable to get Linstor volume: %w", err)
+	}
+
+	return volume.DevicePath, nil
+}
