@@ -48,12 +48,19 @@ func (d *truenas) dataset(vol Volume, deleted bool) string {
 
 func (d *truenas) runTool(args ...string) (string, error) {
 	baseArgs := []string{}
+
+	if tnHasLoginFlags {
 	if d.config["truenas.url"] != "" {
-		//baseArgs = append(baseArgs, "--uri", d.config["truenas.url"]) // se: todo: its actually a url.
+			baseArgs = append(baseArgs, "--url", d.config["truenas.url"])
 	}
 
 	if d.config["truenas.api_key"] != "" {
-		//baseArgs = append(baseArgs, "--api-key", d.config["truenas.api_key"])
+			baseArgs = append(baseArgs, "--api-key", d.config["truenas.api_key"])
+		}
+
+		if d.config["truenas.key_file"] != "" {
+			baseArgs = append(baseArgs, "--key-file", d.config["truenas.key_file"])
+		}
 	}
 
 	args = append(baseArgs, args...)
