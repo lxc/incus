@@ -50,11 +50,11 @@ func (d *truenas) runTool(args ...string) (string, error) {
 	baseArgs := []string{}
 
 	if tnHasLoginFlags {
-	if d.config["truenas.url"] != "" {
+		if d.config["truenas.url"] != "" {
 			baseArgs = append(baseArgs, "--url", d.config["truenas.url"])
-	}
+		}
 
-	if d.config["truenas.api_key"] != "" {
+		if d.config["truenas.api_key"] != "" {
 			baseArgs = append(baseArgs, "--api-key", d.config["truenas.api_key"])
 		}
 
@@ -108,7 +108,9 @@ func (d *truenas) setDatasetProperties(dataset string, options ...string) error 
 }
 
 func (d *truenas) datasetExists(dataset string) (bool, error) {
-	out, err := d.runTool("dataset", "get", "-H", "-o", "name", dataset)
+	//out, err := d.runTool("dataset", "get", "-H", "-o", "name", dataset)
+	out, err := d.runTool("dataset", "list", "-H", "-o", "name", dataset)
+
 	if err != nil {
 		return false, nil
 	}
