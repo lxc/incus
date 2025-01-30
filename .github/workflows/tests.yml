@@ -27,6 +27,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Differential ShellCheck requires full git history
+          fetch-depth: 0
 
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
