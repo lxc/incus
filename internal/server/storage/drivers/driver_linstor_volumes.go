@@ -2,7 +2,9 @@ package drivers
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"strings"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // FillVolumeConfig populate volume with default config.
@@ -213,6 +216,36 @@ func (d *linstor) DeleteVolume(vol Volume, op *operations.Operation) error {
 		err = linstor.Client.ResourceDefinitions.Delete(context.TODO(), name)
 		if err != nil {
 			return fmt.Errorf("Unable to delete the resource definition: %w", err)
+		}
+	}
+
+	// For VMs, also delete the associated filesystem volume mount path.
+	if vol.IsVMBlock() {
+		fsVol := vol.NewVMBlockFilesystemVolume()
+		fsVolMountPath := fsVol.MountPath()
+
+		err := wipeDirectory(fsVolMountPath)
+		if err != nil {
+			return err
+		}
+
+		err = os.Remove(fsVolMountPath)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("Failed to remove '%s': %w", fsVolMountPath, err)
+		}
+	}
+
+	mountPath := vol.MountPath()
+
+	if vol.contentType == ContentTypeFS && util.PathExists(mountPath) {
+		err := wipeDirectory(mountPath)
+		if err != nil {
+			return err
+		}
+
+		err = os.Remove(mountPath)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("Failed to remove '%s': %w", mountPath, err)
 		}
 	}
 
