@@ -11,6 +11,7 @@ import (
 	linstorClient "github.com/LINBIT/golinstor/client"
 
 	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -101,7 +102,7 @@ func (d *linstor) createResourceGroup() error {
 
 	resourceGroup := linstorClient.ResourceGroup{
 		Name:        d.config[LinstorResourceGroupNameConfigKey],
-		Description: "Resource group managed by Incus to provide volumes",
+		Description: "Resource group managed by Incus",
 		SelectFilter: linstorClient.AutoSelectFilter{
 			PlaceCount: int32(placeCount),
 		},
@@ -150,21 +151,24 @@ func (d *linstor) getResourceDefinition(resourceDefinitionName string) (*linstor
 	return &resourceDefinition, nil
 }
 
-// getResourceDefinitionName returns the Linstor resource definition name for a given `volName`.
-func (d *linstor) getResourceDefinitionName(volName string) string {
+// getResourceDefinitionName returns the Linstor resource definition name for a given `vol`.
+func (d *linstor) getResourceDefinitionName(vol Volume) string {
 	// TODO: set an unique ID on the name so we can later rename the resource at the
 	// Incus level, since Linstor does not support renaming
-	return fmt.Sprintf("%s-%s", d.config[LinstorResourceGroupNameConfigKey], volName)
+	volName := vol.Name()
+	volType := vol.contentType
+
+	return fmt.Sprintf("%s-%s_%s", d.config[LinstorResourceGroupNameConfigKey], volName, volType)
 }
 
-// getLinstorDevPath return the device path for a given Volume
-func (d *linstor) getLinstorDevPath(volName string) (string, error) {
+// getLinstorDevPath return the device path for a given `vol`.
+func (d *linstor) getLinstorDevPath(vol Volume) (string, error) {
 	linstor, err := d.state.Linstor()
 	if err != nil {
 		return "", fmt.Errorf("Could not load Linstor client: %w", err)
 	}
 
-	resourceDefinitionName := d.getResourceDefinitionName(volName)
+	resourceDefinitionName := d.getResourceDefinitionName(vol)
 
 	// Fetching all the nodes that contains the volume definition
 	nodes, err := linstor.Client.Nodes.GetAll(context.TODO(), &linstorClient.ListOpts{
@@ -176,7 +180,33 @@ func (d *linstor) getLinstorDevPath(volName string) (string, error) {
 	}
 
 	// NOTE: Since we're mapping a unique Volume Definition to a Incus Volume, the Volume Number always be set to 0
-	volume := linstor.Client.Resource.GetVolume(context.TODO(), resourceDefinitionName, nodes[0], 0, nil)
+	volume, err := linstor.Client.Resources.GetVolume(context.TODO(), resourceDefinitionName, nodes[0].Name, 0)
+	if err != nil {
+		return "", fmt.Errorf("Unable to get Linstor volume: %w", err)
+	}
 
+	// TODO: maybe we should get the device path from /dev/drbd/by-res/<name>/0 like Cinder does
+	// https://github.com/LINBIT/openstack-cinder/blob/linstor/master/cinder/volume/drivers/linstordrv.py#L1065
 	return volume.DevicePath, nil
+}
+
+// makeVolumeAvailable makes a volume available on the current node.
+func (d *linstor) makeVolumeAvailable(vol Volume) error {
+	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name()})
+	l.Debug("Making volume available on node", logger.Ctx{"volume": vol.Name()})
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return fmt.Errorf("Could not load Linstor client: %w", err)
+	}
+
+	resourceName := d.getResourceDefinitionName(vol)
+	err = linstor.Client.Resources.MakeAvailable(context.TODO(), resourceName, d.state.ServerName, linstorClient.ResourceMakeAvailable{
+		Diskful: false,
+	})
+	if err != nil {
+		l.Debug("Could not make resource available on node", logger.Ctx{"resourceName": resourceName, "nodeName": d.state.ServerName, "error": err})
+		return fmt.Errorf("Could not make resource available on node: %w", err)
+	}
+
+	return nil
 }
