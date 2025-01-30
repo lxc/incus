@@ -69,6 +69,44 @@ func (d *truenas) runTool(args ...string) (string, error) {
 	return subprocess.RunCommand(tnToolName, args...)
 }
 
+func optionsToOptionString(options ...string) string {
+	var builder strings.Builder
+
+	for i, option := range options {
+		if i > 0 {
+			builder.WriteString(",")
+		}
+		builder.WriteString(option)
+	}
+	optionString := builder.String()
+
+	return optionString
+}
+
+/*
+--exec=on
+*/
+func (d *truenas) setDatasetProperties(dataset string, options ...string) error {
+	args := []string{"dataset", "update"}
+
+	// TODO: either move the "--" prepending here, or have the -o syntax work!
+
+	optionString := optionsToOptionString(options...)
+	if optionString != "" {
+		args = append(args, "-o", optionString)
+	}
+
+	args = append(args, dataset)
+
+	out, err := d.runTool(args...)
+	_ = out
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (d *truenas) datasetExists(dataset string) (bool, error) {
 	out, err := d.runTool("dataset", "get", "-H", "-o", "name", dataset)
 	if err != nil {
@@ -120,9 +158,15 @@ func (d *truenas) createDataset(dataset string, options ...string) error {
 	// 	args = append(args, option)
 	// }
 
+	optionString := optionsToOptionString(options...)
+	if optionString != "" {
+		args = append(args, "-o", optionString)
+	}
+
 	args = append(args, dataset)
 
-	_, err := d.runTool(args...)
+	out, err := d.runTool(args...)
+	_ = out
 	if err != nil {
 		return err
 	}
