@@ -185,6 +185,10 @@ func (d truenas) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) erro
 		args = append(args, fmt.Sprintf("%s=%s", k, v))
 	}
 
+	if d.config["truenas.dataset"] == "" {
+		return nil
+	}
+
 	err := d.setDatasetProperties(d.config["truenas.dataset"], args...)
 	if err != nil {
 		if warnOnExistingPolicyApplyError {
@@ -399,90 +403,22 @@ func (d *truenas) Update(changedConfig map[string]string) error {
 	return nil
 }
 
-// importPool the storage pool.
-func (d *truenas) importPool() (bool, error) {
-	// 	if d.config["zfs.pool_name"] == "" {
-	// 		return false, fmt.Errorf("Cannot mount pool as %q is not specified", "zfs.pool_name")
-	// 	}
-
-	// 	// Check if already setup.
-	// 	exists, err := d.datasetExists(d.config["zfs.pool_name"])
-	// 	if err != nil {
-	// 		return false, err
-	// 	}
-
-	// 	if exists {
-	// 		return false, nil
-	// 	}
-
-	// 	// Check if the pool exists.
-	// 	poolName := strings.Split(d.config["zfs.pool_name"], "/")[0]
-	// 	exists, err = d.datasetExists(poolName)
-	// 	if err != nil {
-	// 		return false, err
-	// 	}
-
-	// 	if exists {
-	// 		return false, fmt.Errorf("ZFS zpool exists but dataset is missing")
-	// 	}
-
-	// 	// Import the pool.
-	// 	if filepath.IsAbs(d.config["source"]) {
-	// 		disksPath := internalUtil.VarPath("disks")
-	// 		_, err := subprocess.RunCommand("zpool", "import", "-f", "-d", disksPath, poolName)
-	// 		if err != nil {
-	// 			return false, err
-	// 		}
-	// 	} else {
-	// 		_, err := subprocess.RunCommand("zpool", "import", poolName)
-	// 		if err != nil {
-	// 			return false, err
-	// 		}
-	// 	}
-
-	// 	// Check that the dataset now exists.
-	// 	exists, err = d.datasetExists(d.config["zfs.pool_name"])
-	// 	if err != nil {
-	// 		return false, err
-	// 	}
-
-	// 	if !exists {
-	// 		return false, fmt.Errorf("ZFS zpool exists but dataset is missing")
-	// 	}
-
-	// 	// We need to explicitly import the keys here so containers can start. This
-	// 	// is always needed because even if the admin has set up auto-import of
-	// 	// keys on the system, because incus manually imports and exports the pools
-	// 	// the keys can get unloaded.
-	// 	//
-	// 	// We could do "zpool import -l" to request the keys during import, but by
-	// 	// doing it separately we know that the key loading specifically failed and
-	// 	// not some other operation. If a user has keylocation=prompt configured,
-	// 	// this command will fail and the pool will fail to load.
-	// 	_, err = subprocess.RunCommand("zfs", "load-key", "-r", d.config["zfs.pool_name"])
-	// 	if err != nil {
-	// 		_, _ = d.Unmount()
-	// 		return false, fmt.Errorf("Failed to load keys for ZFS dataset %q: %w", d.config["zfs.pool_name"], err)
-	// 	}
-
-	return true, nil
-}
-
 // Mount mounts the storage pool.
 func (d *truenas) Mount() (bool, error) {
-	// 	// Import the pool if not already imported.
-	// 	imported, err := d.importPool()
-	// 	if err != nil {
-	// 		return false, err
-	// 	}
+	// // Import the pool if not already imported.
+	// imported, err := d.importPool()
+	// if err != nil {
+	// 	return false, err
+	// }
 
-	// 	// Apply our default configuration.
-	// 	err = d.ensureInitialDatasets(true)
-	// 	if err != nil {
-	// 		return false, err
-	// 	}
+	// Apply our default configuration.
+	err := d.ensureInitialDatasets(true)
+	if err != nil {
+		return false, err
+	}
 
-	return false, nil //imported, nil
+	//return imported, nil
+	return false, nil
 }
 
 // Unmount unmounts the storage pool.
