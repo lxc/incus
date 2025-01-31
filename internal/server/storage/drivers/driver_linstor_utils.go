@@ -61,6 +61,7 @@ func (d *linstor) resourceGroupExists() (bool, error) {
 	if resourceGroup == nil {
 		return false, nil
 	}
+
 	return true, nil
 }
 
@@ -107,9 +108,11 @@ func (d *linstor) createResourceGroup() error {
 			PlaceCount: int32(placeCount),
 		},
 	}
+
 	if d.config[LinstorResourceGroupStoragePoolConfigKey] != "" {
 		resourceGroup.SelectFilter.StoragePool = d.config[LinstorResourceGroupStoragePoolConfigKey]
 	}
+
 	err = linstor.Client.ResourceGroups.Create(context.TODO(), resourceGroup)
 	if err != nil {
 		return fmt.Errorf("Could not create Linstor resource group : %w", err)

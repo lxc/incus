@@ -48,6 +48,7 @@ func (d *linstor) load() error {
 	if err != nil {
 		return fmt.Errorf("Could not load Linstor driver: %w", err)
 	}
+
 	if ver.Major < 9 {
 		return fmt.Errorf("Could not load Linstor driver: Linstor requires DRBD version 9.0 to be loaded, got: %s", ver)
 	}
@@ -71,7 +72,7 @@ func (d *linstor) Validate(config map[string]string) error {
 		"volatile.pool.pristine":                 validate.IsAny,
 	}
 
-	return d.validatePool(config, rules, nil)
+	return d.validatePool(config, rules, d.commonVolumeRules())
 }
 
 // FillConfig populates the storage pool's configuration file with the default values.
@@ -120,6 +121,7 @@ func (d *linstor) Create() error {
 		if err != nil {
 			return fmt.Errorf("Could not create Linstor storage pool: %w", err)
 		}
+
 		rev.Add(func() { _ = d.deleteResourceGroup() })
 
 		d.config["volatile.pool.pristine"] = "true"
@@ -164,6 +166,7 @@ func (d *linstor) Delete(op *operations.Operation) error {
 			if err != nil {
 				return err
 			}
+
 			d.logger.Debug("Deleted Linstor resource group")
 		} else {
 			d.logger.Debug("Linstor resource group is not owned by Incus, skipping delete")
