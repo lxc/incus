@@ -9,6 +9,7 @@ import (
 
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/units"
 )
 
 const (
@@ -40,10 +41,10 @@ func (d *truenas) dataset(vol Volume, deleted bool) string {
 			name = uuid.New().String()
 		}
 
-		return filepath.Join(d.config["zfs.pool_name"], "deleted", string(vol.volType), name)
+		return filepath.Join(d.config["truenas.dataset"], "deleted", string(vol.volType), name)
 	}
 
-	return filepath.Join(d.config["zfs.pool_name"], string(vol.volType), name)
+	return filepath.Join(d.config["truenas.dataset"], string(vol.volType), name)
 }
 
 func (d *truenas) runTool(args ...string) (string, error) {
@@ -194,6 +195,52 @@ func (d *truenas) deleteDataset(dataset string, options ...string) error {
 	return nil
 }
 
+func (d *truenas) deleteDatasetRecursive(dataset string) error {
+	// Locate the origin snapshot (if any).
+	// origin, err := d.getDatasetProperty(dataset, "origin")
+	// if err != nil {
+	// 	return err
+	// }
+
+	// Delete the dataset (and any snapshots left).
+	_, err := d.runTool("dataset", "delete", "-r", dataset)
+	if err != nil {
+		return err
+	}
+
+	// Check if the origin can now be deleted.
+	// if origin != "" && origin != "-" {
+	// 	if strings.HasPrefix(origin, filepath.Join(d.config["zfs.pool_name"], "deleted")) {
+	// 		// Strip the snapshot name when dealing with a deleted volume.
+	// 		dataset = strings.SplitN(origin, "@", 2)[0]
+	// 	} else if strings.Contains(origin, "@deleted-") || strings.Contains(origin, "@copy-") {
+	// 		// Handle deleted snapshots.
+	// 		dataset = origin
+	// 	} else {
+	// 		// Origin is still active.
+	// 		dataset = ""
+	// 	}
+
+	// 	if dataset != "" {
+	// 		// Get all clones.
+	// 		clones, err := d.getClones(dataset)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+
+	// 		if len(clones) == 0 {
+	// 			// Delete the origin.
+	// 			err = d.deleteDatasetRecursive(dataset)
+	// 			if err != nil {
+	// 				return err
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	return nil
+}
+
 func (d *truenas) version() (string, error) {
 	out, err := subprocess.RunCommand(tnToolName, "version")
 	if err == nil {
@@ -201,4 +248,49 @@ func (d *truenas) version() (string, error) {
 	}
 
 	return "", fmt.Errorf("Could not determine TrueNAS driver version")
+}
+
+func (d *truenas) setBlocksizeFromConfig(vol Volume) error {
+	size := vol.ExpandedConfig("zfs.blocksize")
+	if size == "" {
+		return nil
+	}
+
+	// Convert to bytes.
+	sizeBytes, err := units.ParseByteSizeString(size)
+	if err != nil {
+		return err
+	}
+
+	return d.setBlocksize(vol, sizeBytes)
+}
+
+func (d *truenas) setBlocksize(vol Volume, size int64) error {
+	if vol.contentType != ContentTypeFS {
+		return nil
+	}
+
+	err := d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("recordsize=%d", size))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *truenas) createVolume(dataset string, size int64, options ...string) error {
+	// args := []string{"create", "-s", "-V", fmt.Sprintf("%d", size)}
+	// for _, option := range options {
+	// 	args = append(args, "-o")
+	// 	args = append(args, option)
+	// }
+
+	// args = append(args, dataset)
+
+	// _, err := subprocess.RunCommand("zfs", args...)
+	// if err != nil {
+	// 	return err
+	// }
+
+	return nil
 }
