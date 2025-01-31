@@ -17,16 +17,70 @@ import (
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 // FillVolumeConfig populate volume with default config.
 func (d *linstor) FillVolumeConfig(vol Volume) error {
+	// Copy volume.* configuration options from pool.
+	// Exclude 'block.filesystem' and 'block.mount_options'
+	// as this ones are handled below in this function and depends from volume type.
+	err := d.fillVolumeConfig(&vol, "block.filesystem", "block.mount_options")
+	if err != nil {
+		return err
+	}
+
+	// Only validate filesystem config keys for filesystem volumes or VM block volumes (which have an
+	// associated filesystem volume).
+	if vol.ContentType() == ContentTypeFS || vol.IsVMBlock() {
+		// Inherit filesystem from pool if not set.
+		if vol.config["block.filesystem"] == "" {
+			vol.config["block.filesystem"] = d.config["volume.block.filesystem"]
+		}
+
+		// Default filesystem if neither volume nor pool specify an override.
+		if vol.config["block.filesystem"] == "" {
+			// Unchangeable volume property: Set unconditionally.
+			vol.config["block.filesystem"] = DefaultFilesystem
+		}
+
+		// Inherit filesystem mount options from pool if not set.
+		if vol.config["block.mount_options"] == "" {
+			vol.config["block.mount_options"] = d.config["volume.block.mount_options"]
+		}
+
+		// Default filesystem mount options if neither volume nor pool specify an override.
+		if vol.config["block.mount_options"] == "" {
+			// Unchangeable volume property: Set unconditionally.
+			vol.config["block.mount_options"] = "discard"
+		}
+	}
+
 	return nil
+}
+
+// commonVolumeRules returns validation rules which are common for pool and volume.
+func (d *linstor) commonVolumeRules() map[string]func(value string) error {
+	return map[string]func(value string) error{
+		"block.filesystem":    validate.Optional(validate.IsOneOf(blockBackedAllowedFilesystems...)),
+		"block.mount_options": validate.IsAny,
+	}
 }
 
 // ValidateVolume validates the supplied volume config.
 func (d *linstor) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
-	return nil
+	commonRules := d.commonVolumeRules()
+
+	// Disallow block.* settings for regular custom block volumes. These settings only make sense
+	// when using custom filesystem volumes. Incus will create the filesystem
+	// for these volumes, and use the mount options. When attaching a regular block volume to a VM,
+	// these are not mounted by Incus and therefore don't need these config keys.
+	if vol.IsVMBlock() || vol.volType == VolumeTypeCustom && vol.contentType == ContentTypeBlock {
+		delete(commonRules, "block.filesystem")
+		delete(commonRules, "block.mount_options")
+	}
+
+	return d.validateVolume(vol, commonRules, removeUnknownKeys)
 }
 
 // CreateVolume creates an empty volume and can optionally fill it by executing the supplied

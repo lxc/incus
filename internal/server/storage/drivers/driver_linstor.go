@@ -81,7 +81,7 @@ func (d *linstor) Validate(config map[string]string) error {
 		"volatile.pool.pristine":                 validate.IsAny,
 	}
 
-	return d.validatePool(config, rules, nil)
+	return d.validatePool(config, rules, d.commonVolumeRules())
 }
 
 // FillConfig populates the storage pool's configuration file with the default values.
