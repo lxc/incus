@@ -686,10 +686,17 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 		} else {
-			_, err = io.Copy(writer, src)
-			if err != nil {
-				progress.Done("")
-				return err
+			for {
+				// Read 1MB at a time.
+				_, err = io.CopyN(writer, src, 1024*1024*1024)
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+
+					progress.Done("")
+					return err
+				}
 			}
 		}
 
