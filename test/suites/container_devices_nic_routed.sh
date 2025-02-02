@@ -217,6 +217,36 @@ test_container_devices_nic_routed() {
   ip -4 route show table 100 | grep "192.0.2.1${ipRand}"
   ip -6 route show table 101 | grep "2001:db8::1${ipRand}"
 
+  # Undo settings
+  incus stop -f "${ctName}"
+  incus config device unset "${ctName}" eth0 vlan
+  incus config device unset "${ctName}" eth0 ipv4.host_table
+  incus config device unset "${ctName}" eth0 ipv6.host_table
+
+  # Add VRF
+  ip link add test_vrf type vrf table 120
+
+  # Check nic interface not in the vrf
+  ! ip link show master test_vrf | grep "veth"
+
+  # Configure VRF on nic
+  incus config device set "${ctName}" eth0 vrf="test_vrf"
+  incus start "${ctName}"
+
+  # Check nic interface is in the vrf
+  ip link show master test_vrf | grep "veth"
+
+  # Check routes are in the vrf
+  ip -4 route show vrf test_vrf | grep "192.0.2.1${ipRand}"
+  ip -6 route show vrf test_vrf | grep "2001:db8::1${ipRand}"
+
+  # Check no routes in the main table
+  ! ip -4 route show table main | grep "192.0.2.1${ipRand}"
+  ! ip -6 route show table main | grep "2001:db8::1${ipRand}"
+
+  # Delete test VRF
+  ip link delete test_vrf
+
   # Check volatile cleanup on stop.
   incus stop -f "${ctName}"
   if incus config show "${ctName}" | grep volatile.eth0 | grep -v volatile.eth0.hwaddr | grep -v volatile.eth0.name ; then

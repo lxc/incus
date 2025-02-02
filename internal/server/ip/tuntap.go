@@ -9,6 +9,7 @@ type Tuntap struct {
 	Name       string
 	Mode       string
 	MultiQueue bool
+	Master     string
 }
 
 // Add adds new tuntap interface.
@@ -21,6 +22,13 @@ func (t *Tuntap) Add() error {
 	_, err := subprocess.RunCommand("ip", cmd...)
 	if err != nil {
 		return err
+	}
+
+	if t.Master != "" {
+		_, err := subprocess.RunCommand("ip", "link", "set", t.Name, "master", t.Master)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
