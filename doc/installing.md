@@ -182,6 +182,10 @@ Finally, you can add users to the `incus-admin` group to provide non-root access
 
     users.users.YOUR_USERNAME.extraGroups = ["incus-admin"];
 
+Instead of giving the users a full Incus daemon access, you can add users to the `incus` group, which will only grant access to the Incus user socket. In your NixOS configuration:
+
+    users.users.YOUR_USERNAME.extraGroups = ["incus"];
+
 For any NixOS specific issues, please [file an issue](https://github.com/NixOS/nixpkgs/issues/new/choose) in the package repository.
 ```
 
