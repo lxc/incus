@@ -177,6 +177,19 @@ func (d *truenas) createDataset(dataset string, options ...string) error {
 	return nil
 }
 
+func (d *truenas) createNfsShare(dataset string) error {
+	if tnHasShareNfs {
+		args := []string{"share", "nfs", "create", "--comment", "Managed By Incus", "--maproot-user", "root", "--maproot-group", "root", dataset}
+		out, err := d.runTool(args...)
+		_ = out
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (d *truenas) deleteDataset(dataset string, options ...string) error {
 	args := []string{"dataset", "delete"}
 
@@ -203,7 +216,8 @@ func (d *truenas) deleteDatasetRecursive(dataset string) error {
 	// }
 
 	// Delete the dataset (and any snapshots left).
-	_, err := d.runTool("dataset", "delete", "-r", dataset)
+	out, err := d.runTool("dataset", "delete", "-r", dataset)
+	_ = out
 	if err != nil {
 		return err
 	}
