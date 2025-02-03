@@ -110,7 +110,15 @@ func (d *truenas) setDatasetProperties(dataset string, options ...string) error 
 
 func (d *truenas) datasetExists(dataset string) (bool, error) {
 	//out, err := d.runTool("dataset", "get", "-H", "-o", "name", dataset)
-	out, err := d.runTool("dataset", "list", "-H", "-o", "name", dataset)
+	//out, err := d.runTool("dataset", "list", "-H", "-o", "name", dataset)
+	var cmd string
+	if strings.Contains(dataset, "@") {
+		cmd = "snapshot"
+	} else {
+		cmd = "dataset"
+	}
+
+	out, err := d.runTool(cmd, "list", "-H", "-o", "name", dataset)
 
 	if err != nil {
 		return false, nil
@@ -307,4 +315,24 @@ func (d *truenas) createVolume(dataset string, size int64, options ...string) er
 	// }
 
 	return nil
+}
+
+func (d *truenas) getClones(dataset string) ([]string, error) {
+	// out, err := subprocess.RunCommand("zfs", "get", "-H", "-p", "-r", "-o", "value", "clones", dataset)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	clones := []string{}
+	// for _, line := range strings.Split(out, "\n") {
+	// 	line = strings.TrimSpace(line)
+	// 	if line == dataset || line == "" || line == "-" {
+	// 		continue
+	// 	}
+
+	// 	line = strings.TrimPrefix(line, fmt.Sprintf("%s/", dataset))
+	// 	clones = append(clones, line)
+	// }
+
+	return clones, nil
 }
