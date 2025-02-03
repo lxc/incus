@@ -83,6 +83,7 @@ var tnLoaded bool
 
 // TODO: these flags are not needed once we stop using earlier versions.
 var tnHasLoginFlags bool // 0.1.1
+var tnHasShareNfs bool   // 0.1.2
 
 var tnDefaultSettings = map[string]string{
 	//"relatime":   "on",
@@ -132,13 +133,13 @@ func (d *truenas) load() error {
 		tnVersion = version
 	}
 
-	// Decide whether we can use features added by 0.1.1
-	ver011, err := version.Parse("0.1.1")
+	ourVer, err := version.Parse(tnVersion)
 	if err != nil {
 		return err
 	}
 
-	ourVer, err := version.Parse(tnVersion)
+	// Decide whether we can use features added by a specific versiojn
+	ver011, err := version.Parse("0.1.1")
 	if err != nil {
 		return err
 	}
@@ -147,6 +148,16 @@ func (d *truenas) load() error {
 	// TODO: remove this later.
 	if ourVer.Compare(ver011) >= 0 {
 		tnHasLoginFlags = true
+	}
+
+	ver012, err := version.Parse("0.1.2")
+	if err != nil {
+		return err
+	}
+
+	// If 0.1.2 we can create/list/delete NFS shares
+	if ourVer.Compare(ver012) >= 0 {
+		tnHasShareNfs = true
 	}
 
 	tnLoaded = true
@@ -166,7 +177,7 @@ func (d *truenas) Info() Info {
 		Remote:                       d.isRemote(),
 		VolumeTypes:                  []VolumeType{VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
 		VolumeMultiNode:              d.isRemote(),
-		BlockBacking:                 util.IsTrue(d.config["volume.zfs.block_mode"]),
+		BlockBacking:                 false, //util.IsTrue(d.config["volume.zfs.block_mode"]),
 		RunningCopyFreeze:            false,
 		DirectIO:                     zfsDirectIO,
 		MountedRoot:                  false,
