@@ -167,13 +167,19 @@ func (n *ovn) State() (*api.NetworkState, error) {
 	if !ok {
 		hwaddr, err = n.ovnnb.GetLogicalRouterPortHardwareAddress(context.TODO(), n.getRouterExtPortName())
 		if err != nil {
-			return nil, err
+			hwaddr = ""
+			//return nil, err
 		}
 	}
 
+	var logicalRouterName string
 	chassis, err := n.ovnsb.GetLogicalRouterPortActiveChassisHostname(context.TODO(), n.getRouterExtPortName())
 	if err != nil {
-		return nil, err
+		chassis = "none"
+		logicalRouterName = ""
+		//return nil, err
+	} else {
+		logicalRouterName = string(n.getRouterName())
 	}
 
 	mtu := int(n.getBridgeMTU())
@@ -201,7 +207,7 @@ func (n *ovn) State() (*api.NetworkState, error) {
 		Type:      "broadcast",
 		OVN: &api.NetworkStateOVN{
 			Chassis:       chassis,
-			LogicalRouter: string(n.getRouterName()),
+			LogicalRouter: logicalRouterName,
 			UplinkIPv4:    uplinkIPv4,
 			UplinkIPv6:    uplinkIPv6,
 		},
