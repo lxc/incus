@@ -2863,98 +2863,103 @@ func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 // 	return nil
 // }
 
-// // CreateVolumeSnapshot creates a snapshot of a volume.
-// func (d *zfs) CreateVolumeSnapshot(vol Volume, op *operations.Operation) error {
-// 	parentName, _, _ := api.GetParentAndSnapshotName(vol.name)
+// CreateVolumeSnapshot creates a snapshot of a volume.
+func (d *truenas) CreateVolumeSnapshot(vol Volume, op *operations.Operation) error {
+	parentName, _, _ := api.GetParentAndSnapshotName(vol.name)
 
-// 	// Revert handling.
-// 	revert := revert.New()
-// 	defer revert.Fail()
+	// Revert handling.
+	revert := revert.New()
+	defer revert.Fail()
 
-// 	// Create the parent directory.
-// 	err := createParentSnapshotDirIfMissing(d.name, vol.volType, parentName)
-// 	if err != nil {
-// 		return err
-// 	}
+	// Create the parent directory.
+	err := createParentSnapshotDirIfMissing(d.name, vol.volType, parentName)
+	if err != nil {
+		return err
+	}
 
-// 	// Create snapshot directory.
-// 	err = vol.EnsureMountPath()
-// 	if err != nil {
-// 		return err
-// 	}
+	// Create snapshot directory.
+	err = vol.EnsureMountPath()
+	if err != nil {
+		return err
+	}
 
-// 	// Make the snapshot.
-// 	_, err = subprocess.RunCommand("zfs", "snapshot", "-r", d.dataset(vol, false))
-// 	if err != nil {
-// 		return err
-// 	}
+	// Make the snapshot.
+	//_, err = subprocess.RunCommand("zfs", "snapshot", "-r", d.dataset(vol, false))
+	out, err := d.runTool("snapshot", "create", "-r", d.dataset(vol, false))
+	_ = out
+	if err != nil {
+		return err
+	}
 
-// 	revert.Add(func() { _ = d.DeleteVolumeSnapshot(vol, op) })
+	revert.Add(func() { _ = d.DeleteVolumeSnapshot(vol, op) })
 
-// 	// For VM images, create a filesystem volume too.
-// 	if vol.IsVMBlock() {
-// 		fsVol := vol.NewVMBlockFilesystemVolume()
-// 		err := d.CreateVolumeSnapshot(fsVol, op)
-// 		if err != nil {
-// 			return err
-// 		}
+	// For VM images, create a filesystem volume too.
+	if vol.IsVMBlock() {
+		fsVol := vol.NewVMBlockFilesystemVolume()
+		err := d.CreateVolumeSnapshot(fsVol, op)
+		if err != nil {
+			return err
+		}
 
-// 		revert.Add(func() { _ = d.DeleteVolumeSnapshot(fsVol, op) })
-// 	}
+		revert.Add(func() { _ = d.DeleteVolumeSnapshot(fsVol, op) })
+	}
 
-// 	// All done.
-// 	revert.Success()
+	// All done.
+	revert.Success()
 
-// 	return nil
-// }
+	return nil
+}
 
-// // DeleteVolumeSnapshot removes a snapshot from the storage device.
-// func (d *zfs) DeleteVolumeSnapshot(vol Volume, op *operations.Operation) error {
-// 	parentName, _, _ := api.GetParentAndSnapshotName(vol.name)
+// DeleteVolumeSnapshot removes a snapshot from the storage device.
+func (d *truenas) DeleteVolumeSnapshot(vol Volume, op *operations.Operation) error {
+	parentName, _, _ := api.GetParentAndSnapshotName(vol.name)
 
-// 	// Handle clones.
-// 	clones, err := d.getClones(d.dataset(vol, false))
-// 	if err != nil {
-// 		return err
-// 	}
+	// Handle clones.
+	clones, err := d.getClones(d.dataset(vol, false))
+	if err != nil {
+		return err
+	}
 
-// 	if len(clones) > 0 {
-// 		// Move to the deleted path.
-// 		_, err := subprocess.RunCommand("zfs", "rename", d.dataset(vol, false), d.dataset(vol, true))
-// 		if err != nil {
-// 			return err
-// 		}
-// 	} else {
-// 		// Delete the snapshot.
-// 		_, err := subprocess.RunCommand("zfs", "destroy", "-r", d.dataset(vol, false))
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
+	if len(clones) > 0 {
+		// Move to the deleted path.
+		//_, err := subprocess.RunCommand("zfs", "rename", d.dataset(vol, false), d.dataset(vol, true))
+		if err != nil {
+			return err
+		}
+	} else {
+		//tnat snapshot delete -r dozer/created@snapname
+		// Delete the snapshot.
+		//_, err := subprocess.RunCommand("zfs", "destroy", "-r", d.dataset(vol, false))
+		out, err := d.runTool("snapshot", "delete", "-r", d.dataset(vol, false))
+		_ = out
+		if err != nil {
+			return err
+		}
+	}
 
-// 	// Delete the mountpoint.
-// 	err = os.Remove(vol.MountPath())
-// 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-// 		return fmt.Errorf("Failed to remove '%s': %w", vol.MountPath(), err)
-// 	}
+	// Delete the mountpoint.
+	err = os.Remove(vol.MountPath())
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("Failed to remove '%s': %w", vol.MountPath(), err)
+	}
 
-// 	// Remove the parent snapshot directory if this is the last snapshot being removed.
-// 	err = deleteParentSnapshotDirIfEmpty(d.name, vol.volType, parentName)
-// 	if err != nil {
-// 		return err
-// 	}
+	// Remove the parent snapshot directory if this is the last snapshot being removed.
+	err = deleteParentSnapshotDirIfEmpty(d.name, vol.volType, parentName)
+	if err != nil {
+		return err
+	}
 
-// 	// For VM images, create a filesystem volume too.
-// 	if vol.IsVMBlock() {
-// 		fsVol := vol.NewVMBlockFilesystemVolume()
-// 		err := d.DeleteVolumeSnapshot(fsVol, op)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
+	// For VM images, create a filesystem volume too.
+	if vol.IsVMBlock() {
+		fsVol := vol.NewVMBlockFilesystemVolume()
+		err := d.DeleteVolumeSnapshot(fsVol, op)
+		if err != nil {
+			return err
+		}
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
 // // MountVolumeSnapshot simulates mounting a volume snapshot.
 // func (d *zfs) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) error {
