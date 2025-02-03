@@ -8,6 +8,7 @@ import (
 
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/subprocess"
@@ -127,7 +128,14 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 
 	if vol.contentType == ContentTypeFS && !d.isBlockBacked(vol) {
 		// Create the filesystem dataset.
-		err := d.createDataset(d.dataset(vol, false) /*, "mountpoint=legacy", "canmount=noauto"*/) // enable share?
+		dataset := d.dataset(vol, false)
+		err := d.createDataset(dataset /*, "mountpoint=legacy", "canmount=noauto"*/) // enable share?
+		if err != nil {
+			return err
+		}
+
+		// se: now share it. Ideally, we'd only do this in Mount, and we'd look before we leap.
+		err = d.createNfsShare(dataset /*, "mountpoint=legacy", "canmount=noauto"*/) // enable share?
 		if err != nil {
 			return err
 		}
