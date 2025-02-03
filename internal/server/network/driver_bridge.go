@@ -665,28 +665,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 	}
 
-	// Get a list of interfaces.
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		return err
-	}
-
-	// Cleanup any existing tunnel and dummy devices.
-	for _, iface := range ifaces {
-		l, err := ip.LinkFromName(iface.Name)
-		if err != nil {
-			return err
-		}
-
-		if l.Master != n.name || l.Kind != "vxlan" && l.Kind != "gretap" && l.Kind != "dummy" {
-			continue
-		}
-
-		err = l.Delete()
-		if err != nil {
-			return err
-		}
-	}
+	n.deleteChildren()
 
 	// Attempt to add a dummy device to the bridge to force the MTU.
 	if bridge.MTU != bridgeMTUDefault && n.config["bridge.driver"] != "openvswitch" {
@@ -1509,6 +1488,8 @@ func (n *bridge) Stop() error {
 		return err
 	}
 
+	n.deleteChildren()
+
 	// Destroy the bridge interface
 	if n.config["bridge.driver"] == "openvswitch" {
 		vswitch, err := n.state.OVS()
@@ -1551,23 +1532,6 @@ func (n *bridge) Stop() error {
 	err = dnsmasq.Kill(n.name, false)
 	if err != nil {
 		return err
-	}
-
-	// Get a list of interfaces
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		return err
-	}
-
-	// Cleanup any existing tunnel device
-	for _, iface := range ifaces {
-		if strings.HasPrefix(iface.Name, fmt.Sprintf("%s-", n.name)) {
-			tunLink := &ip.Link{Name: iface.Name}
-			err = tunLink.Delete()
-			if err != nil {
-				return err
-			}
-		}
 	}
 
 	// Unload apparmor profiles.
@@ -2711,4 +2675,35 @@ func (n *bridge) UsesDNSMasq() bool {
 	}
 
 	return false
+}
+
+func (n *bridge) deleteChildren() error {
+	// Get a list of interfaces
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return err
+	}
+
+	kinds := []string{
+		"vxlan",
+		"gretap",
+		"dummy",
+	}
+	for _, iface := range ifaces {
+		l, err := ip.LinkFromName(iface.Name)
+		if err != nil {
+			return err
+		}
+
+		if l.Master != n.name || !slices.Contains(kinds, l.Kind) {
+			continue
+		}
+
+		err = l.Delete()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
