@@ -163,33 +163,41 @@ func (n *ovn) State() (*api.NetworkState, error) {
 		})
 	}
 
-	hwaddr, ok := n.config["bridge.hwaddr"]
-	if !ok {
-		hwaddr, err = n.ovnnb.GetLogicalRouterPortHardwareAddress(context.TODO(), n.getRouterExtPortName())
+	var chassis string
+	var hwaddr string
+	var logicalRouterName string
+	var uplinkIPv4 string
+	var uplinkIPv6 string
+
+	if n.config["network"] != "none" {
+		var ok bool
+		hwaddr, ok = n.config["bridge.hwaddr"]
+		if !ok {
+			hwaddr, err = n.ovnnb.GetLogicalRouterPortHardwareAddress(context.TODO(), n.getRouterExtPortName())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		chassis, err = n.ovnsb.GetLogicalRouterPortActiveChassisHostname(context.TODO(), n.getRouterExtPortName())
 		if err != nil {
 			return nil, err
 		}
-	}
 
-	chassis, err := n.ovnsb.GetLogicalRouterPortActiveChassisHostname(context.TODO(), n.getRouterExtPortName())
-	if err != nil {
-		return nil, err
+		logicalRouterName = string(n.getRouterName())
+
+		if n.config[ovnVolatileUplinkIPv4] != "" {
+			uplinkIPv4 = n.config[ovnVolatileUplinkIPv4]
+		}
+
+		if n.config[ovnVolatileUplinkIPv6] != "" {
+			uplinkIPv6 = n.config[ovnVolatileUplinkIPv6]
+		}
 	}
 
 	mtu := int(n.getBridgeMTU())
 	if mtu == 0 {
 		mtu = 1500
-	}
-
-	var uplinkIPv4 string
-	var uplinkIPv6 string
-
-	if n.config[ovnVolatileUplinkIPv4] != "" {
-		uplinkIPv4 = n.config[ovnVolatileUplinkIPv4]
-	}
-
-	if n.config[ovnVolatileUplinkIPv6] != "" {
-		uplinkIPv6 = n.config[ovnVolatileUplinkIPv6]
 	}
 
 	return &api.NetworkState{
@@ -201,7 +209,7 @@ func (n *ovn) State() (*api.NetworkState, error) {
 		Type:      "broadcast",
 		OVN: &api.NetworkStateOVN{
 			Chassis:       chassis,
-			LogicalRouter: string(n.getRouterName()),
+			LogicalRouter: logicalRouterName,
 			UplinkIPv4:    uplinkIPv4,
 			UplinkIPv6:    uplinkIPv6,
 		},
