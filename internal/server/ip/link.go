@@ -17,13 +17,28 @@ import (
 // Link represents base arguments for link device.
 type Link struct {
 	Name          string
+	Kind          string
 	MTU           uint32
 	Parent        string
 	Address       net.HardwareAddr
 	TXQueueLength uint32
-	AllMutlicast  bool
+	AllMulticast  bool
 	Master        string
 	Up            bool
+}
+
+type jsonLink struct {
+	Name          string `json:"ifname"`
+	MTU           uint32 `json:"mtu"`
+	Parent        string `json:"link"`
+	Address       string `json:"address"`
+	TXQueueLength uint32 `json:"txqlen"`
+	AllMulticast  int    `json:"allmulti"`
+	Master        string `json:"master"`
+	Up            string `json:"operstate"`
+	Info          struct {
+		Kind string `json:"info_kind"`
+	} `json:"linkinfo"`
 }
 
 // args generate common arguments for the virtual link.
@@ -50,7 +65,7 @@ func (l *Link) args() []string {
 		result = append(result, "txqueuelen", fmt.Sprintf("%d", l.TXQueueLength))
 	}
 
-	if l.AllMutlicast {
+	if l.AllMulticast {
 		result = append(result, "allmulticast", "on")
 	}
 
@@ -77,6 +92,47 @@ func (l *Link) add(linkType string, additionalArgs []string) error {
 	}
 
 	return nil
+}
+
+// LinkFromName returns a Link from a device name.
+func LinkFromName(name string) (*Link, error) {
+	out, err := subprocess.RunCommand("ip", "-d", "-j", "link", "show", name)
+	if err != nil {
+		return nil, err
+	}
+
+	var links []jsonLink
+	err = json.Unmarshal([]byte(out), &links)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode JSON link representation: %w", err)
+	}
+
+	jl := &links[0]
+	l := &Link{
+		Name:          jl.Name,
+		Kind:          jl.Info.Kind,
+		MTU:           jl.MTU,
+		Parent:        jl.Parent,
+		TXQueueLength: jl.TXQueueLength,
+		Master:        jl.Master,
+	}
+
+	if jl.Address != "" {
+		l.Address, err = net.ParseMAC(jl.Address)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if jl.AllMulticast == 1 {
+		l.AllMulticast = true
+	}
+
+	if jl.Up == "UP" {
+		l.Up = true
+	}
+
+	return l, err
 }
 
 // SetUp enables the link device.

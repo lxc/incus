@@ -671,14 +671,20 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		return err
 	}
 
-	// Cleanup any existing tunnel device.
+	// Cleanup any existing tunnel and dummy devices.
 	for _, iface := range ifaces {
-		if strings.HasPrefix(iface.Name, fmt.Sprintf("%s-", n.name)) {
-			tunLink := &ip.Link{Name: iface.Name}
-			err = tunLink.Delete()
-			if err != nil {
-				return err
-			}
+		l, err := ip.LinkFromName(iface.Name)
+		if err != nil {
+			return err
+		}
+
+		if l.Master != n.name || l.Kind != "vxlan" && l.Kind != "gretap" && l.Kind != "dummy" {
+			continue
+		}
+
+		err = l.Delete()
+		if err != nil {
+			return err
 		}
 	}
 

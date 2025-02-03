@@ -219,7 +219,7 @@ func (d *nicMACVLAN) Start() (*deviceConfig.RunConfig, error) {
 
 	if d.inst.Type() == instancetype.VM {
 		// Enable all multicast processing which is required for IPv6 NDP functionality.
-		link.AllMutlicast = true
+		link.AllMulticast = true
 
 		// Bring the interface up on host side.
 		link.Up = true
