@@ -1,15 +1,19 @@
 package drivers
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/subprocess"
-	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 const (
@@ -140,9 +144,33 @@ func (d *truenas) initialDatasets() []string {
 	return entries
 }
 
+func (d *truenas) needsRecursion(dataset string) bool {
+	// Ignore snapshots for the test.
+	dataset = strings.Split(dataset, "@")[0]
+
+	entries, err := d.getDatasets(dataset, "filesystem,volume")
+	if err != nil {
+		return false
+	}
+
+	if len(entries) == 0 {
+		return false
+	}
+
+	return true
+}
+
 func (d *truenas) getDatasets(dataset string, types string) ([]string, error) {
 	// NOTE: types not implemented... yet.
-	out, err := d.runTool("dataset", "list", "-H", "-r", "-o", "name", dataset)
+
+	noun := "dataset"
+
+	// TODO: we need to be clever to get combined/datasets+snapshots etc
+	if types == "snapshot" {
+		noun = "snapshot"
+	}
+
+	out, err := d.runTool(noun, "list", "-H", "-r", "-o", "name", dataset)
 	if err != nil {
 		return nil, err
 	}
@@ -216,14 +244,46 @@ func (d *truenas) deleteDataset(dataset string, options ...string) error {
 	return nil
 }
 
+func (d *truenas) getDatasetProperty(dataset string, key string) (string, error) {
+
+	//output, err := subprocess.RunCommand("zfs", "get", "-H", "-p", "-o", "value", key, dataset)
+	output, err := subprocess.RunCommand("zfs", "list", "-H", "-p", "-o", key, dataset)
+
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(output), nil
+	//return "", nil
+}
+
+// same as renameDataset, except that there's no point updating shares on a snapshot rename
+func (d *truenas) renameSnapshot(sourceDataset string, destDataset string) (string, error) {
+	return d.renameDataset(sourceDataset, destDataset, false)
+}
+
+// will rename a dataset, or snapshot. updateShares is relatively expensive if there is no possibility of there being a share
+func (d *truenas) renameDataset(sourceDataset string, destDataset string, updateShares bool) (string, error) {
+	args := []string{"dataset", "rename"}
+
+	if updateShares && tnHasUpdateShares {
+		args = append(args, "--update-shares")
+	}
+
+	args = append(args, sourceDataset, destDataset)
+
+	return d.runTool(args...)
+}
+
 func (d *truenas) deleteDatasetRecursive(dataset string) error {
 	// Locate the origin snapshot (if any).
-	// origin, err := d.getDatasetProperty(dataset, "origin")
-	// if err != nil {
-	// 	return err
-	// }
+	origin, err := d.getDatasetProperty(dataset, "origin")
+	if err != nil {
+		return err
+	}
 
 	// Delete the dataset (and any snapshots left).
+	//_, err = subprocess.TryRunCommand("zfs", "destroy", "-r", dataset)
 	out, err := d.runTool("dataset", "delete", "-r", dataset)
 	_ = out
 	if err != nil {
@@ -231,36 +291,140 @@ func (d *truenas) deleteDatasetRecursive(dataset string) error {
 	}
 
 	// Check if the origin can now be deleted.
-	// if origin != "" && origin != "-" {
-	// 	if strings.HasPrefix(origin, filepath.Join(d.config["zfs.pool_name"], "deleted")) {
-	// 		// Strip the snapshot name when dealing with a deleted volume.
-	// 		dataset = strings.SplitN(origin, "@", 2)[0]
-	// 	} else if strings.Contains(origin, "@deleted-") || strings.Contains(origin, "@copy-") {
-	// 		// Handle deleted snapshots.
-	// 		dataset = origin
-	// 	} else {
-	// 		// Origin is still active.
-	// 		dataset = ""
-	// 	}
+	if origin != "" && origin != "-" {
+		if strings.HasPrefix(origin, filepath.Join(d.config["truenas.dataset"], "deleted")) {
+			// Strip the snapshot name when dealing with a deleted volume.
+			dataset = strings.SplitN(origin, "@", 2)[0]
+		} else if strings.Contains(origin, "@deleted-") || strings.Contains(origin, "@copy-") {
+			// Handle deleted snapshots.
+			dataset = origin
+		} else {
+			// Origin is still active.
+			dataset = ""
+		}
 
-	// 	if dataset != "" {
-	// 		// Get all clones.
-	// 		clones, err := d.getClones(dataset)
-	// 		if err != nil {
-	// 			return err
-	// 		}
+		if dataset != "" {
+			// Get all clones.
+			clones, err := d.getClones(dataset)
+			if err != nil {
+				return err
+			}
 
-	// 		if len(clones) == 0 {
-	// 			// Delete the origin.
-	// 			err = d.deleteDatasetRecursive(dataset)
-	// 			if err != nil {
-	// 				return err
-	// 			}
-	// 		}
-	// 	}
-	// }
+			if len(clones) == 0 {
+				// Delete the origin.
+				err = d.deleteDatasetRecursive(dataset)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
 
 	return nil
+}
+
+// activateVolume activates a ZFS volume if not already active. Returns true if activated, false if not.
+func (d *truenas) activateVolume(vol Volume) (bool, error) {
+	if !IsContentBlock(vol.contentType) && !vol.IsBlockBacked() {
+		return false, nil // Nothing to do for non-block or non-block backed volumes.
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	dataset := d.dataset(vol, false)
+
+	// Check if already active.
+	current, err := d.getDatasetProperty(dataset, "volmode")
+	if err != nil {
+		return false, err
+	}
+
+	if current != "dev" {
+		// For block backed volumes, we make their associated device appear.
+		err = d.setDatasetProperties(dataset, "volmode=dev")
+		if err != nil {
+			return false, err
+		}
+
+		reverter.Add(func() { _ = d.setDatasetProperties(dataset, fmt.Sprintf("volmode=%s", current)) })
+
+		// Wait up to 30 seconds for the device to appear.
+		ctx, cancel := context.WithTimeout(d.state.ShutdownCtx, 30*time.Second)
+		defer cancel()
+
+		_, err := d.tryGetVolumeDiskPathFromDataset(ctx, dataset)
+		if err != nil {
+			return false, fmt.Errorf("Failed to activate volume: %v", err)
+		}
+
+		d.logger.Debug("Activated ZFS volume", logger.Ctx{"volName": vol.Name(), "dev": dataset})
+
+		reverter.Success()
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// deactivateVolume deactivates a ZFS volume if activate. Returns true if deactivated, false if not.
+func (d *truenas) deactivateVolume(vol Volume) (bool, error) {
+	if vol.contentType != ContentTypeBlock && !vol.IsBlockBacked() {
+		return false, nil // Nothing to do for non-block and non-block backed volumes.
+	}
+
+	dataset := d.dataset(vol, false)
+
+	// Check if currently active.
+	current, err := d.getDatasetProperty(dataset, "volmode")
+	if err != nil {
+		return false, err
+	}
+
+	if current == "dev" {
+		devPath, err := d.GetVolumeDiskPath(vol)
+		if err != nil {
+			return false, fmt.Errorf("Failed locating zvol for deactivation: %w", err)
+		}
+
+		// We cannot wait longer than the operationlock.TimeoutShutdown to avoid continuing
+		// the unmount process beyond the ongoing request.
+		waitDuration := time.Minute * 5
+		waitUntil := time.Now().Add(waitDuration)
+		i := 0
+		for {
+			// Sometimes it takes multiple attempts for ZFS to actually apply this.
+			err = d.setDatasetProperties(dataset, "volmode=none")
+			if err != nil {
+				return false, err
+			}
+
+			if !util.PathExists(devPath) {
+				d.logger.Debug("Deactivated ZFS volume", logger.Ctx{"volName": vol.name, "dev": dataset})
+				break
+			}
+
+			if time.Now().After(waitUntil) {
+				return false, fmt.Errorf("Failed to deactivate zvol after %v", waitDuration)
+			}
+
+			// Wait for ZFS a chance to flush and udev to remove the device path.
+			d.logger.Debug("Waiting for ZFS volume to deactivate", logger.Ctx{"volName": vol.name, "dev": dataset, "path": devPath, "attempt": i})
+
+			if i <= 5 {
+				// Retry more quickly early on.
+				time.Sleep(time.Second * time.Duration(i))
+			} else {
+				time.Sleep(time.Second * time.Duration(5))
+			}
+
+			i++
+		}
+
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func (d *truenas) version() (string, error) {
@@ -273,18 +437,20 @@ func (d *truenas) version() (string, error) {
 }
 
 func (d *truenas) setBlocksizeFromConfig(vol Volume) error {
-	size := vol.ExpandedConfig("zfs.blocksize")
-	if size == "" {
-		return nil
-	}
+	// size := vol.ExpandedConfig("zfs.blocksize")
+	// if size == "" {
+	// 	return nil
+	// }
 
 	// Convert to bytes.
-	sizeBytes, err := units.ParseByteSizeString(size)
-	if err != nil {
-		return err
-	}
+	// sizeBytes, err := units.ParseByteSizeString(size)
+	// if err != nil {
+	// 	return err
+	// }
 
-	return d.setBlocksize(vol, sizeBytes)
+	// return d.setBlocksize(vol, sizeBytes)
+
+	return nil
 }
 
 func (d *truenas) setBlocksize(vol Volume, size int64) error {
@@ -318,21 +484,27 @@ func (d *truenas) createVolume(dataset string, size int64, options ...string) er
 }
 
 func (d *truenas) getClones(dataset string) ([]string, error) {
-	// out, err := subprocess.RunCommand("zfs", "get", "-H", "-p", "-r", "-o", "value", "clones", dataset)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	//out, err := subprocess.RunCommand("zfs", "get", "-H", "-p", "-r", "-o", "value", "clones", dataset)
+	out, err := d.runTool("snapshot", "list", "-H", "-r", "-o", "clones", dataset)
+
+	if err != nil {
+		return nil, err
+	}
 
 	clones := []string{}
-	// for _, line := range strings.Split(out, "\n") {
-	// 	line = strings.TrimSpace(line)
-	// 	if line == dataset || line == "" || line == "-" {
-	// 		continue
-	// 	}
+	for _, line := range strings.Split(out, "\n") {
+		line = strings.TrimSpace(line)
+		if line == dataset || line == "" || line == "-" {
+			continue
+		}
 
-	// 	line = strings.TrimPrefix(line, fmt.Sprintf("%s/", dataset))
-	// 	clones = append(clones, line)
-	// }
+		line = strings.TrimPrefix(line, fmt.Sprintf("%s/", dataset))
+		clones = append(clones, line)
+	}
 
 	return clones, nil
+}
+
+func (d *truenas) randomVolumeName(vol Volume) string {
+	return fmt.Sprintf("%s_%s", vol.name, uuid.New().String())
 }
