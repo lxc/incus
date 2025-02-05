@@ -232,8 +232,23 @@ func (d *truenas) createDataset(dataset string, options ...string) error {
 
 func (d *truenas) createNfsShare(dataset string) error {
 	if tnHasShareNfs {
-		args := []string{"share", "nfs", "create", "--comment", "Managed By Incus", "--maproot-user", "root", "--maproot-group", "root", dataset}
+		args := []string{"share", "nfs", "create"}
+		args = append(args, "--comment", "Managed By Incus", "--maproot-user", "root", "--maproot-group", "root")
+		args = append(args, dataset)
+
 		out, err := d.runTool(args...)
+		_ = out
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (d *truenas) deleteNfsShare(dataset string) error {
+	if tnHasNfsDeleteByDataset {
+		out, err := d.runTool("share", "nfs", "delete", dataset)
 		_ = out
 		if err != nil {
 			return err
