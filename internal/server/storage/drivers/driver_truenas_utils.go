@@ -227,6 +227,13 @@ func (d *truenas) createDataset(dataset string, options ...string) error {
 		return err
 	}
 
+	// TODO: `dataset create` doesn't currently implement error handling! so we need to chec if it worked!
+
+	exists, _ := d.datasetExists(dataset)
+	if !exists {
+		return fmt.Errorf("Failed to createDataset: %s", dataset)
+	}
+
 	return nil
 }
 
