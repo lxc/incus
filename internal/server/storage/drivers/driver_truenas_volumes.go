@@ -1539,7 +1539,8 @@ func (d *truenas) deleteVolume(vol Volume, op *operations.Operation) error {
 		if len(clones) > 0 {
 			// Move to the deleted path.
 			//_, err := subprocess.RunCommand("/proc/self/exe", "forkzfs", "--", "rename", d.dataset(vol, false), d.dataset(vol, true))
-			out, err := d.renameDataset(d.dataset(vol, false), d.dataset(vol, true), true) // TODO: remove the share, and then we don't need to update.
+			_ = d.deleteNfsShare(d.dataset(vol, false))
+			out, err := d.renameDataset(d.dataset(vol, false), d.dataset(vol, true), false)
 			_ = out
 			if err != nil {
 				return err
@@ -2382,7 +2383,6 @@ func (d *truenas) RenameVolume(vol Volume, newVolName string, op *operations.Ope
 
 	// Rename the ZFS datasets.
 	//_, err = subprocess.RunCommand("zfs", "rename", d.dataset(vol, false), d.dataset(newVol, false))
-	//out, err := d.runTool("dataset", "rename",  d.dataset(vol, false), d.dataset(newVol, false))
 	out, err := d.renameDataset(d.dataset(vol, false), d.dataset(newVol, false), true)
 	_ = out
 	if err != nil {
@@ -2391,7 +2391,6 @@ func (d *truenas) RenameVolume(vol Volume, newVolName string, op *operations.Ope
 
 	revert.Add(func() {
 		//_, _ = subprocess.RunCommand("zfs", "rename", d.dataset(newVol, false), d.dataset(vol, false))
-		//_, _ = d.runTool("dataset", "rename", d.dataset(newVol, false), d.dataset(vol, false))
 		_, _ = d.renameDataset(d.dataset(newVol, false), d.dataset(vol, false), true)
 
 	})
@@ -3336,103 +3335,103 @@ func (d *truenas) VolumeSnapshots(vol Volume, op *operations.Operation) ([]strin
 	return snapshots, nil
 }
 
-// // RestoreVolume restores a volume from a snapshot.
-// func (d *zfs) RestoreVolume(vol Volume, snapshotName string, op *operations.Operation) error {
-// 	return d.restoreVolume(vol, snapshotName, false, op)
-// }
+// RestoreVolume restores a volume from a snapshot.
+func (d *truenas) RestoreVolume(vol Volume, snapshotName string, op *operations.Operation) error {
+	return d.restoreVolume(vol, snapshotName, false, op)
+}
 
-// func (d *zfs) restoreVolume(vol Volume, snapshotName string, migration bool, op *operations.Operation) error {
-// 	// Get the list of snapshots.
-// 	entries, err := d.getDatasets(d.dataset(vol, false), "snapshot")
-// 	if err != nil {
-// 		return err
-// 	}
+func (d *truenas) restoreVolume(vol Volume, snapshotName string, migration bool, op *operations.Operation) error {
+	// Get the list of snapshots.
+	entries, err := d.getDatasets(d.dataset(vol, false), "snapshot")
+	if err != nil {
+		return err
+	}
 
-// 	// Check if more recent snapshots exist.
-// 	idx := -1
-// 	snapshots := []string{}
-// 	for i, entry := range entries {
-// 		if entry == fmt.Sprintf("@snapshot-%s", snapshotName) {
-// 			// Located the current snapshot.
-// 			idx = i
-// 			continue
-// 		} else if idx < 0 {
-// 			// Skip any previous snapshot.
-// 			continue
-// 		}
+	// Check if more recent snapshots exist.
+	idx := -1
+	snapshots := []string{}
+	for i, entry := range entries {
+		if entry == fmt.Sprintf("@snapshot-%s", snapshotName) {
+			// Located the current snapshot.
+			idx = i
+			continue
+		} else if idx < 0 {
+			// Skip any previous snapshot.
+			continue
+		}
 
-// 		if strings.HasPrefix(entry, "@snapshot-") {
-// 			// Located a normal snapshot following ours.
-// 			snapshots = append(snapshots, strings.TrimPrefix(entry, "@snapshot-"))
-// 			continue
-// 		}
+		if strings.HasPrefix(entry, "@snapshot-") {
+			// Located a normal snapshot following ours.
+			snapshots = append(snapshots, strings.TrimPrefix(entry, "@snapshot-"))
+			continue
+		}
 
-// 		if strings.HasPrefix(entry, "@") {
-// 			// Located an internal snapshot.
-// 			return fmt.Errorf("Snapshot %q cannot be restored due to subsequent internal snapshot(s) (from a copy)", snapshotName)
-// 		}
-// 	}
+		if strings.HasPrefix(entry, "@") {
+			// Located an internal snapshot.
+			return fmt.Errorf("Snapshot %q cannot be restored due to subsequent internal snapshot(s) (from a copy)", snapshotName)
+		}
+	}
 
-// 	// Check if snapshot removal is allowed.
-// 	if len(snapshots) > 0 {
-// 		if util.IsFalseOrEmpty(vol.ExpandedConfig("zfs.remove_snapshots")) {
-// 			return fmt.Errorf("Snapshot %q cannot be restored due to subsequent snapshot(s). Set zfs.remove_snapshots to override", snapshotName)
-// 		}
+	// Check if snapshot removal is allowed.
+	if len(snapshots) > 0 {
+		if util.IsFalseOrEmpty(vol.ExpandedConfig("zfs.remove_snapshots")) {
+			return fmt.Errorf("Snapshot %q cannot be restored due to subsequent snapshot(s). Set zfs.remove_snapshots to override", snapshotName)
+		}
 
-// 		// Setup custom error to tell the backend what to delete.
-// 		err := ErrDeleteSnapshots{}
-// 		err.Snapshots = snapshots
-// 		return err
-// 	}
+		// Setup custom error to tell the backend what to delete.
+		err := ErrDeleteSnapshots{}
+		err.Snapshots = snapshots
+		return err
+	}
 
-// 	// Restore the snapshot.
-// 	datasets, err := d.getDatasets(d.dataset(vol, false), "snapshot")
-// 	if err != nil {
-// 		return err
-// 	}
+	// Restore the snapshot.
+	datasets, err := d.getDatasets(d.dataset(vol, false), "snapshot")
+	if err != nil {
+		return err
+	}
 
-// 	for _, dataset := range datasets {
-// 		if !strings.HasSuffix(dataset, fmt.Sprintf("@snapshot-%s", snapshotName)) {
-// 			continue
-// 		}
+	for _, dataset := range datasets {
+		if !strings.HasSuffix(dataset, fmt.Sprintf("@snapshot-%s", snapshotName)) {
+			continue
+		}
 
-// 		_, err = subprocess.RunCommand("zfs", "rollback", fmt.Sprintf("%s%s", d.dataset(vol, false), dataset))
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
+		_, err = subprocess.RunCommand("zfs", "rollback", fmt.Sprintf("%s%s", d.dataset(vol, false), dataset))
+		if err != nil {
+			return err
+		}
+	}
 
-// 	if vol.contentType == ContentTypeFS && d.isBlockBacked(vol) && renegerateFilesystemUUIDNeeded(vol.ConfigBlockFilesystem()) {
-// 		_, err = d.activateVolume(vol)
-// 		if err != nil {
-// 			return err
-// 		}
+	if vol.contentType == ContentTypeFS && d.isBlockBacked(vol) && renegerateFilesystemUUIDNeeded(vol.ConfigBlockFilesystem()) {
+		_, err = d.activateVolume(vol)
+		if err != nil {
+			return err
+		}
 
-// 		defer func() { _, _ = d.deactivateVolume(vol) }()
+		defer func() { _, _ = d.deactivateVolume(vol) }()
 
-// 		volPath, err := d.GetVolumeDiskPath(vol)
-// 		if err != nil {
-// 			return err
-// 		}
+		volPath, err := d.GetVolumeDiskPath(vol)
+		if err != nil {
+			return err
+		}
 
-// 		d.logger.Debug("Regenerating filesystem UUID", logger.Ctx{"dev": volPath, "fs": vol.ConfigBlockFilesystem()})
-// 		err = regenerateFilesystemUUID(vol.ConfigBlockFilesystem(), volPath)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
+		d.logger.Debug("Regenerating filesystem UUID", logger.Ctx{"dev": volPath, "fs": vol.ConfigBlockFilesystem()})
+		err = regenerateFilesystemUUID(vol.ConfigBlockFilesystem(), volPath)
+		if err != nil {
+			return err
+		}
+	}
 
-// 	// For VM images, restore the associated filesystem dataset too.
-// 	if !migration && vol.IsVMBlock() {
-// 		fsVol := vol.NewVMBlockFilesystemVolume()
-// 		err := d.restoreVolume(fsVol, snapshotName, migration, op)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
+	// For VM images, restore the associated filesystem dataset too.
+	if !migration && vol.IsVMBlock() {
+		fsVol := vol.NewVMBlockFilesystemVolume()
+		err := d.restoreVolume(fsVol, snapshotName, migration, op)
+		if err != nil {
+			return err
+		}
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
 // RenameVolumeSnapshot renames a volume snapshot.
 func (d *truenas) RenameVolumeSnapshot(vol Volume, newSnapshotName string, op *operations.Operation) error {
