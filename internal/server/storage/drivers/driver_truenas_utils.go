@@ -161,13 +161,30 @@ func (d *truenas) needsRecursion(dataset string) bool {
 }
 
 func (d *truenas) getDatasets(dataset string, types string) ([]string, error) {
-	// NOTE: types not implemented... yet.
+	/*
+		NOTE: types not fully implemented... yet.
+
+		filesystem OR snapshot OR all should work.
+	*/
 
 	noun := "dataset"
 
 	// TODO: we need to be clever to get combined/datasets+snapshots etc
+	// or add it to admin-tool...
 	if types == "snapshot" {
 		noun = "snapshot"
+	} else if types == "all" {
+		// ideally, admin=tool takes care of this.
+		datasets, err := d.getDatasets(dataset, "filesystem")
+		if err != nil {
+			return nil, err
+		}
+		snapshots, err := d.getDatasets(dataset, "snapshot")
+		if err != nil {
+			return nil, err
+		}
+		return append(datasets, snapshots...), nil
+
 	}
 
 	out, err := d.runTool(noun, "list", "-H", "-r", "-o", "name", dataset)
@@ -247,14 +264,13 @@ func (d *truenas) deleteDataset(dataset string, options ...string) error {
 func (d *truenas) getDatasetProperty(dataset string, key string) (string, error) {
 
 	//output, err := subprocess.RunCommand("zfs", "get", "-H", "-p", "-o", "value", key, dataset)
-	output, err := subprocess.RunCommand("zfs", "list", "-H", "-p", "-o", key, dataset)
+	output, err := d.runTool("dataset", "list", "-H" /*"-p",*/, "-o", key, dataset)
 
 	if err != nil {
 		return "", err
 	}
 
 	return strings.TrimSpace(output), nil
-	//return "", nil
 }
 
 // same as renameDataset, except that there's no point updating shares on a snapshot rename
