@@ -82,9 +82,10 @@ var tnVersion string
 var tnLoaded bool
 
 // TODO: these flags are not needed once we stop using earlier versions.
-var tnHasLoginFlags bool   // 0.1.1
-var tnHasShareNfs bool     // 0.1.2
-var tnHasUpdateShares bool // 0.1.4
+var tnHasLoginFlags bool         // 0.1.1
+var tnHasShareNfs bool           // 0.1.2
+var tnHasUpdateShares bool       // 0.1.4
+var tnHasNfsDeleteByDataset bool // 0.1.6
 
 var tnDefaultSettings = map[string]string{
 	//"relatime":   "on",
@@ -126,9 +127,10 @@ func (d *truenas) initVersionAndCapabilities() error {
 	}
 
 	// Decide whether we can use features added by a specific version
-	tnHasLoginFlags = d.isVersionGE(*ourVer, "0.1.1")   // login flags (api-key, url, key-file)
-	tnHasShareNfs = d.isVersionGE(*ourVer, "0.1.2")     // create/list/delete NFS shares
-	tnHasUpdateShares = d.isVersionGE(*ourVer, "0.1.4") // can update-shares when renaming datasets
+	tnHasLoginFlags = d.isVersionGE(*ourVer, "0.1.1")         // login flags (api-key, url, key-file)
+	tnHasShareNfs = d.isVersionGE(*ourVer, "0.1.2")           // create/list/delete NFS shares
+	tnHasUpdateShares = d.isVersionGE(*ourVer, "0.1.4")       // can update-shares when renaming datasets
+	tnHasNfsDeleteByDataset = d.isVersionGE(*ourVer, "0.1.6") // can delete shares by dataset
 
 	return nil
 }
@@ -293,7 +295,7 @@ func (d *truenas) Create() error {
 	}
 
 	if len(datasets) > 0 {
-		return fmt.Errorf(`Provided remote TrueNAS dataset isn't empty`, d.config["truenas.dataset"])
+		return fmt.Errorf(`Provided remote TrueNAS dataset isn't empty (%s)`, d.config["truenas.dataset"])
 	}
 
 	// Setup revert in case of problems
