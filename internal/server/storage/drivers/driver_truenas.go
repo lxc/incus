@@ -82,8 +82,9 @@ var tnVersion string
 var tnLoaded bool
 
 // TODO: these flags are not needed once we stop using earlier versions.
-var tnHasLoginFlags bool // 0.1.1
-var tnHasShareNfs bool   // 0.1.2
+var tnHasLoginFlags bool   // 0.1.1
+var tnHasShareNfs bool     // 0.1.2
+var tnHasUpdateShares bool // 0.1.4
 
 var tnDefaultSettings = map[string]string{
 	//"relatime":   "on",
@@ -97,6 +98,39 @@ var tnDefaultSettings = map[string]string{
 
 type truenas struct {
 	common
+}
+
+func (d *truenas) isVersionGE(thisVersion version.DottedVersion, thatVersion string) bool {
+	ver, err := version.Parse(thatVersion)
+	if err != nil {
+		return false
+	}
+
+	return (thisVersion.Compare(ver) >= 0)
+}
+
+func (d *truenas) initVersionAndCapabilities() error {
+	// Get the version information.
+	if tnVersion == "" {
+		version, err := d.version()
+		if err != nil {
+			return err
+		}
+
+		tnVersion = version
+	}
+
+	ourVer, err := version.Parse(tnVersion)
+	if err != nil {
+		return err
+	}
+
+	// Decide whether we can use features added by a specific version
+	tnHasLoginFlags = d.isVersionGE(*ourVer, "0.1.1")   // login flags (api-key, url, key-file)
+	tnHasShareNfs = d.isVersionGE(*ourVer, "0.1.2")     // create/list/delete NFS shares
+	tnHasUpdateShares = d.isVersionGE(*ourVer, "0.1.4") // can update-shares when renaming datasets
+
+	return nil
 }
 
 // load is used to run one-time action per-driver rather than per-pool.
@@ -123,41 +157,10 @@ func (d *truenas) load() error {
 		}
 	}
 
-	// Get the version information.
-	if tnVersion == "" {
-		version, err := d.version()
-		if err != nil {
-			return err
-		}
-
-		tnVersion = version
-	}
-
-	ourVer, err := version.Parse(tnVersion)
+	// also tests for available features
+	err := d.initVersionAndCapabilities()
 	if err != nil {
 		return err
-	}
-
-	// Decide whether we can use features added by a specific versiojn
-	ver011, err := version.Parse("0.1.1")
-	if err != nil {
-		return err
-	}
-
-	// If 0.1.1 we can use login flags (api-key, url, key-file)
-	// TODO: remove this later.
-	if ourVer.Compare(ver011) >= 0 {
-		tnHasLoginFlags = true
-	}
-
-	ver012, err := version.Parse("0.1.2")
-	if err != nil {
-		return err
-	}
-
-	// If 0.1.2 we can create/list/delete NFS shares
-	if ourVer.Compare(ver012) >= 0 {
-		tnHasShareNfs = true
 	}
 
 	tnLoaded = true
