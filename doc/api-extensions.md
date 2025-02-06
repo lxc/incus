@@ -2748,3 +2748,7 @@ Adds `acme.http.port` to control an alternative HTTP port for `HTTP-01` validati
 ## `network_ovn_ipv4_dhcp_expiry`
 
 Introduces `ipv4.dhcp.expiry` for OVN networks.
+
+## `storage_driver_linstor`
+
+This adds a LINSTOR storage driver.
