@@ -279,3 +279,121 @@ func (d *linstor) makeVolumeAvailable(vol Volume) error {
 
 	return nil
 }
+
+// createVolumeSnapshot creates a volume snapshot.
+func (d *linstor) createVolumeSnapshot(parentVol Volume, snapVol Volume) error {
+	l := d.logger.AddContext(logger.Ctx{"parentVol": parentVol.Name(), "snapVol": snapVol.Name()})
+	l.Debug("Creating volume snapshot")
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	resourceName, err := d.getResourceDefinitionName(parentVol)
+	if err != nil {
+		return err
+	}
+
+	snapResourceName, err := d.getResourceDefinitionName(snapVol)
+	if err != nil {
+		return err
+	}
+
+	err = linstor.Client.Resources.CreateSnapshot(context.TODO(), linstorClient.Snapshot{
+		Name:         snapResourceName,
+		ResourceName: resourceName,
+	})
+	if err != nil {
+		return fmt.Errorf("Could not create resource snapshot: %w", err)
+	}
+
+	return nil
+}
+
+// deleteVolumeSnapshot deletes a volume snapshot.
+func (d *linstor) deleteVolumeSnapshot(parentVol Volume, snapVol Volume) error {
+	l := d.logger.AddContext(logger.Ctx{"parentVol": parentVol.Name(), "snapVol": snapVol.Name()})
+	l.Debug("Deleting volume snapshot")
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	resourceName, err := d.getResourceDefinitionName(parentVol)
+	if err != nil {
+		return err
+	}
+
+	snapResourceName, err := d.getResourceDefinitionName(snapVol)
+	if err != nil {
+		return err
+	}
+
+	err = linstor.Client.Resources.DeleteSnapshot(context.TODO(), resourceName, snapResourceName)
+	if err != nil {
+		return fmt.Errorf("Could not delete resource snapshot: %w", err)
+	}
+
+	return nil
+}
+
+// snapshotExists returns whether the given snapshot exists.
+func (d *linstor) snapshotExists(parentVol Volume, snapVol Volume) (bool, error) {
+	l := d.logger.AddContext(logger.Ctx{"parentVol": parentVol.Name(), "snapVol": snapVol.Name()})
+	l.Debug("Fetching Linstor snapshot")
+
+	// Retrieve the Linstor client.
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return false, err
+	}
+
+	resourceName, err := d.getResourceDefinitionName(parentVol)
+	if err != nil {
+		return false, err
+	}
+
+	snapResourceName, err := d.getResourceDefinitionName(snapVol)
+	if err != nil {
+		return false, err
+	}
+
+	_, err = linstor.Client.Resources.GetSnapshot(context.TODO(), resourceName, snapResourceName)
+	if errors.Is(err, linstorClient.NotFoundError) {
+		l.Debug("Snapshot not found")
+		return false, nil
+	} else if err != nil {
+		return false, fmt.Errorf("Could not get snapshot: %w", err)
+	}
+
+	l.Debug("Got snapshot")
+
+	return true, nil
+}
+
+// restoreVolume restores a volume state from a snapshot.
+func (d *linstor) restoreVolume(vol Volume, snapVol Volume) error {
+	l := d.logger.AddContext(logger.Ctx{"vol": vol.Name(), "snapVol": snapVol.Name()})
+	l.Debug("Restoring volume to snapshot")
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	resourceName, err := d.getResourceDefinitionName(vol)
+	if err != nil {
+		return err
+	}
+
+	snapResourceName, err := d.getResourceDefinitionName(snapVol)
+	if err != nil {
+		return err
+	}
+
+	err = linstor.Client.Resources.RollbackSnapshot(context.TODO(), resourceName, snapResourceName)
+	if err != nil {
+		return fmt.Errorf("Could not restore volume to snapshot: %w", err)
+	}
+
+	return nil
+}

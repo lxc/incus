@@ -13,6 +13,7 @@ import (
 
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/units"
@@ -316,6 +317,13 @@ func (d *linstor) DeleteVolume(vol Volume, op *operations.Operation) error {
 
 // HasVolume indicates whether a specific volume exists on the storage pool.
 func (d *linstor) HasVolume(vol Volume) (bool, error) {
+	if vol.IsSnapshot() {
+		parentName, _, _ := api.GetParentAndSnapshotName(vol.name)
+		parentVol := NewVolume(d, d.name, vol.volType, vol.contentType, parentName, nil, nil)
+
+		return d.snapshotExists(parentVol, vol)
+	}
+
 	// If we cannot find the definition name, we can conclude that the volume does not exist.
 	resourceDefinitionName, err := d.getResourceDefinitionName(vol)
 	if err != nil {
@@ -497,6 +505,114 @@ func (d *linstor) RenameVolume(vol Volume, newVolName string, op *operations.Ope
 	})
 	if err != nil {
 		return fmt.Errorf("Could not set properties on resource definition: %w", err)
+	}
+
+	return nil
+}
+
+// CreateVolumeSnapshot creates a snapshot of a volume.
+func (d *linstor) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) error {
+	rev := revert.New()
+	defer rev.Fail()
+
+	parentName, _, _ := api.GetParentAndSnapshotName(snapVol.name)
+
+	// Create the parent directory.
+	err := createParentSnapshotDirIfMissing(d.name, snapVol.volType, parentName)
+	if err != nil {
+		return err
+	}
+
+	err = snapVol.EnsureMountPath()
+	if err != nil {
+		return err
+	}
+
+	parentVol := NewVolume(d, d.name, snapVol.volType, snapVol.contentType, parentName, nil, nil)
+
+	err = d.createVolumeSnapshot(parentVol, snapVol)
+	if err != nil {
+		return err
+	}
+
+	rev.Add(func() { _ = d.DeleteVolumeSnapshot(snapVol, op) })
+
+	rev.Success()
+
+	return nil
+}
+
+// DeleteVolumeSnapshot removes a snapshot from the storage device.
+func (d *linstor) DeleteVolumeSnapshot(snapVol Volume, op *operations.Operation) error {
+	parentName, _, _ := api.GetParentAndSnapshotName(snapVol.name)
+
+	parentVol := NewVolume(d, d.name, snapVol.volType, snapVol.contentType, parentName, nil, nil)
+
+	snapshotExists, err := d.snapshotExists(parentVol, snapVol)
+	if err != nil {
+		return fmt.Errorf("Failed to delete volume snapshot: %w", err)
+	}
+
+	// Check if snapshot exists, and return if not.
+	if !snapshotExists {
+		return nil
+	}
+
+	err = d.deleteVolumeSnapshot(parentVol, snapVol)
+	if err != nil {
+		return fmt.Errorf("Failed to delete volume snapshot: %w", err)
+	}
+
+	mountPath := snapVol.MountPath()
+
+	if snapVol.contentType == ContentTypeFS && util.PathExists(mountPath) {
+		err = wipeDirectory(mountPath)
+		if err != nil {
+			return err
+		}
+
+		err = os.Remove(mountPath)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("Failed to remove '%s': %w", mountPath, err)
+		}
+	}
+
+	// Remove the parent snapshot directory if this is the last snapshot being removed.
+	err = deleteParentSnapshotDirIfEmpty(d.name, snapVol.volType, parentName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// RenameVolumeSnapshot renames a volume snapshot.
+func (d *linstor) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *operations.Operation) error {
+	return ErrNotSupported
+}
+
+// RestoreVolume restores a volume from a snapshot.
+func (d *linstor) RestoreVolume(vol Volume, snapshotName string, op *operations.Operation) error {
+	ourUnmount, err := d.UnmountVolume(vol, false, op)
+	if err != nil {
+		return err
+	}
+
+	if ourUnmount {
+		defer func() { _ = d.MountVolume(vol, op) }()
+	}
+
+	snapVol, err := vol.NewSnapshot(snapshotName)
+	if err != nil {
+		return err
+	}
+
+	// TODO: check if more recent snapshots exist and delete them if the user
+	// configure the storage pool to allow for such deletions. Otherwise, return
+	// a graceful error
+	err = d.restoreVolume(vol, snapVol)
+	if err != nil {
+		return err
 	}
 
 	return nil
