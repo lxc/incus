@@ -18,7 +18,6 @@ import (
 	"github.com/lxc/incus/v6/internal/server/instance"
 	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
 	"github.com/lxc/incus/v6/shared/idmap"
-	"github.com/lxc/incus/v6/shared/osarch"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/subprocess"
 	"github.com/lxc/incus/v6/shared/util"
@@ -330,12 +329,6 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 
 	if cmd == "" {
 		return nil, nil, ErrMissingVirtiofsd
-	}
-
-	// Currently, virtiofs is broken on at least the ARM architecture.
-	// We therefore restrict virtiofs to 64BIT_INTEL_X86.
-	if inst.Architecture() != osarch.ARCH_64BIT_INTEL_X86 {
-		return nil, nil, UnsupportedError{msg: "Architecture unsupported"}
 	}
 
 	if util.IsTrue(inst.ExpandedConfig()["migration.stateful"]) {
