@@ -372,3 +372,37 @@ func (d *linstor) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 
 	return ourUnmount, nil
 }
+
+// RenameVolume renames a volume.
+func (d *linstor) RenameVolume(vol Volume, newVolName string, op *operations.Operation) error {
+	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name()})
+	l.Debug("Renaming Linstor volume")
+	rev := revert.New()
+	defer rev.Fail()
+
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	// At this point the volume name is already updated on the database, so we
+	// clone it and set the new name to be able to fetch its ID from the database.
+	newVol := vol.Clone()
+	newVol.name = newVolName
+
+	resourceDefinitionName, err := d.getResourceDefinitionName(newVol)
+	if err != nil {
+		return err
+	}
+
+	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceDefinitionName, linstorClient.GenericPropsModify{
+		OverrideProps: map[string]string{
+			"Aux/Incus/name": newVolName,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("Could not set properties on resource definition: %w", err)
+	}
+
+	return nil
+}
