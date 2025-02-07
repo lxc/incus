@@ -882,3 +882,14 @@ func IsValidCPUSet(value string) error {
 
 	return nil
 }
+
+// IsShorterThan checks whether a string is shorter than a specific length.
+func IsShorterThan(length int) func(value string) error {
+	return func(value string) error {
+		if len(value) > length {
+			return fmt.Errorf("Value is too long. Must be within %d characters", length)
+		}
+
+		return nil
+	}
+}
