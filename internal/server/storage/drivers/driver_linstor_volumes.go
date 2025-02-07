@@ -243,6 +243,14 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	return nil
 }
 
+// CreateVolumeFromCopy provides same-pool volume copying functionality.
+func (d *linstor) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool, allowInconsistent bool, op *operations.Operation) error {
+	// TODO: get snapshots
+	var srcSnapshots []Volume
+	// TODO: use optimized copying
+	return genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, false, allowInconsistent, op)
+}
+
 // DeleteVolume deletes a volume of the storage device.
 func (d *linstor) DeleteVolume(vol Volume, op *operations.Operation) error {
 	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name()})
