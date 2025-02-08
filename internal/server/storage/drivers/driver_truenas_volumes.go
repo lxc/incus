@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -2231,10 +2232,15 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 			// 	volOptions = append(volOptions, "strictatime")
 			// }
 
+			ip4and6, err := net.LookupIP(d.config["truenas.host"])
+			if err != nil {
+				return err
+			}
+
 			// NFS
 			volOptions = append(volOptions, "vers=4.2")
 			//volOptions = append(volOptions, "user_xattr")
-			volOptions = append(volOptions, "addr=192.168.0.32") // TODO: need to dns lookup...
+			volOptions = append(volOptions, "addr=" + ip4and6[0].String()) // 192.168.0.32
 
 			mountFlags, mountOptions := linux.ResolveMountOptions(volOptions)
 
