@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-01-24 11:19+0900\n"
-"PO-Revision-Date: 2025-02-08 03:51+0000\n"
+"PO-Revision-Date: 2025-02-08 09:15+0000\n"
 "Last-Translator: Loge X <wazolm5643@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/incus/cli/zh_Hans/>\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: cmd/incus/info.go:439
 msgid "  Chassis:"
-msgstr "  机箱:"
+msgstr "  逻辑机箱（Chassis）:"
 
 #: cmd/incus/info.go:479
 msgid "  Firmware:"
@@ -1379,7 +1379,7 @@ msgstr "无法设置键：%s"
 #: cmd/incus/info.go:551 cmd/incus/info.go:563
 #, c-format
 msgid "Card %d:"
-msgstr ""
+msgstr "显卡 %d："
 
 #: cmd/incus/info.go:141
 #, c-format
@@ -1414,7 +1414,7 @@ msgstr "证书指纹：%s"
 
 #: cmd/incus/network.go:1036
 msgid "Chassis"
-msgstr ""
+msgstr "逻辑机箱（Chassis）"
 
 #: cmd/incus/admin_waitready.go:69
 #, c-format
@@ -1487,7 +1487,7 @@ msgstr "集群成员 %s 已在组 %s 中"
 #: cmd/incus/cluster_group.go:688
 #, c-format
 msgid "Cluster member %s removed from group %s"
-msgstr ""
+msgstr "已从组 %s 中删除集群成员 %s"
 
 #: cmd/incus/config.go:101 cmd/incus/config.go:393 cmd/incus/config.go:537
 #: cmd/incus/config.go:755 cmd/incus/config.go:886 cmd/incus/copy.go:61
@@ -1526,11 +1526,11 @@ msgstr ""
 #: cmd/incus/storage_volume.go:2817 cmd/incus/storage_volume.go:2897
 #: cmd/incus/storage_volume.go:2989 cmd/incus/storage_volume.go:3155
 msgid "Cluster member name"
-msgstr ""
+msgstr "集群成员名称"
 
 #: cmd/incus/cluster.go:863
 msgid "Clustering enabled"
-msgstr ""
+msgstr "已启用集群"
 
 #: cmd/incus/cluster.go:150 cmd/incus/cluster.go:1096
 #: cmd/incus/cluster_group.go:485 cmd/incus/config_trust.go:424
@@ -1550,7 +1550,7 @@ msgstr ""
 
 #: cmd/incus/main.go:99
 msgid "Command line client for Incus"
-msgstr ""
+msgstr "Incus 的命令行客户端"
 
 #: cmd/incus/main.go:100
 msgid ""
@@ -1562,34 +1562,40 @@ msgid ""
 "Custom commands can be defined through aliases, use \"incus alias\" to "
 "control those."
 msgstr ""
+"Incus 的命令行客户端\n"
+"\n"
+"Incus 的所有功能都可以通过下列各种命令来驱动。\n"
+"需要任何帮助，只需要输入具体指令加 --help。\n"
+"\n"
+"可以用别名自定义命令，可使用“incus alias”进行控制。"
 
 #: cmd/incus/publish.go:39
 msgid "Compression algorithm to use (`none` for uncompressed)"
-msgstr ""
+msgstr "要使用的压缩算法（“none”表示不压缩）"
 
 #: cmd/incus/export.go:43
 msgid "Compression algorithm to use (none for uncompressed)"
-msgstr ""
+msgstr "要使用的压缩算法（留空表示不压缩）"
 
 #: cmd/incus/copy.go:53 cmd/incus/create.go:55
 msgid "Config key/value to apply to the new instance"
-msgstr ""
+msgstr "要应用于新实例的配置键/值"
 
 #: cmd/incus/network_integration.go:92
 msgid "Config key/value to apply to the new network integration"
-msgstr ""
+msgstr "要应用于新网络集成的配置键/值"
 
 #: cmd/incus/project.go:113
 msgid "Config key/value to apply to the new project"
-msgstr ""
+msgstr "要应用于新项目的配置键/值"
 
 #: cmd/incus/move.go:56
 msgid "Config key/value to apply to the target instance"
-msgstr ""
+msgstr "要应用于目标实例的配置键/值"
 
 #: cmd/incus/admin_recover.go:131
 msgid "Config option should be in the format KEY=VALUE"
-msgstr ""
+msgstr "配置选项的格式应为 KEY=VALUE"
 
 #: cmd/incus/cluster.go:966 cmd/incus/cluster_group.go:421
 #: cmd/incus/config.go:276 cmd/incus/config.go:351
@@ -1603,54 +1609,55 @@ msgstr ""
 #: cmd/incus/storage_volume.go:1121 cmd/incus/storage_volume.go:1153
 #, c-format
 msgid "Config parsing error: %s"
-msgstr ""
+msgstr "配置解析错误：%s"
 
 #: cmd/incus/admin_init.go:86
 msgid "Configuration flags require --auto"
-msgstr ""
+msgstr "配置标志需要 --auto"
 
 #: cmd/incus/admin_init.go:44 cmd/incus/admin_init.go:45
 msgid "Configure the daemon"
-msgstr ""
+msgstr "配置守护进程"
 
 #: cmd/incus/top.go:66
 msgid "Configure the refresh delay in seconds"
-msgstr ""
+msgstr "配置刷新延迟（秒）"
 
 #: cmd/incus/admin_waitready.go:54
 #, c-format
 msgid "Connecting to the daemon (attempt %d)"
-msgstr ""
+msgstr "正在连接到守护进程（第 %d 次尝试）"
 
 #: cmd/incus/storage_volume.go:589
 msgid "Content type, block or filesystem"
-msgstr ""
+msgstr "内容类型、块或文件系统"
 
 #: cmd/incus/storage_volume.go:1439
 #, c-format
 msgid "Content type: %s"
-msgstr ""
+msgstr "内容类型：%s"
 
 #: cmd/incus/info.go:145
 #, c-format
 msgid "Control: %s (%s)"
-msgstr ""
+msgstr "控制：%s（%s）"
 
 #: cmd/incus/copy.go:59 cmd/incus/move.go:62
 msgid "Copy a stateful instance stateless"
-msgstr ""
+msgstr "无状态复制有状态实例"
 
 #: cmd/incus/image.go:155
+#, fuzzy
 msgid "Copy aliases from source"
-msgstr ""
+msgstr "从源复制别名"
 
 #: cmd/incus/storage_volume.go:361 cmd/incus/storage_volume.go:362
 msgid "Copy custom storage volumes"
-msgstr ""
+msgstr "复制自定义存储卷"
 
 #: cmd/incus/image.go:147
 msgid "Copy images between servers"
-msgstr ""
+msgstr "在服务器之间复制镜像"
 
 #: cmd/incus/image.go:148
 msgid ""
@@ -1659,10 +1666,14 @@ msgid ""
 "The auto-update flag instructs the server to keep this image up to date.\n"
 "It requires the source to be an alias and for it to be public."
 msgstr ""
+"在服务器之间复制镜像\n"
+"\n"
+"auto-update 标志指示服务器保持此镜像的最新状态。\n"
+"需要源是别名，并且是公开的。"
 
 #: cmd/incus/copy.go:40
 msgid "Copy instances within or in between servers"
-msgstr ""
+msgstr "在服务器内或服务器之间复制实例"
 
 #: cmd/incus/copy.go:41
 msgid ""
@@ -1679,79 +1690,88 @@ msgid ""
 "The pull transfer mode is the default as it is compatible with all server "
 "versions.\n"
 msgstr ""
+"在服务器内或服务器之间复制实例\n"
+"\n"
+"传输模式（--mode）：\n"
+" - pull：目标服务器从源服务器提取数据（源服务器必须开启网络监听）\n"
+" - push：源服务器将数据推送到目标服务器（目标服务器必须开启网络监听）\n"
+" - relay：CLI "
+"连接到源和服务器，并代理数据（源服务器和目标服务器都必须开启网络监听）\n"
+"\n"
+"默认为 pull 传输模式，因为它兼容所有服务器版本。\n"
 
 #: cmd/incus/config_device.go:399 cmd/incus/config_device.go:400
 msgid "Copy profile inherited devices and override configuration keys"
-msgstr ""
+msgstr "复制配置文件继承的设备并覆盖配置密钥"
 
 #: cmd/incus/profile.go:274 cmd/incus/profile.go:275
 msgid "Copy profiles"
-msgstr ""
+msgstr "复制配置文件"
 
 #: cmd/incus/copy.go:58
 msgid "Copy the instance without its snapshots"
-msgstr ""
+msgstr "复制实例但不复制快照"
 
 #: cmd/incus/storage_volume.go:368
 msgid "Copy the volume without its snapshots"
-msgstr ""
+msgstr "复制卷但不复制快照"
 
 #: cmd/incus/copy.go:62 cmd/incus/image.go:160 cmd/incus/move.go:65
 #: cmd/incus/profile.go:277 cmd/incus/storage_volume.go:369
 msgid "Copy to a project different from the source"
-msgstr ""
+msgstr "复制到与源不同的项目"
 
 #: cmd/incus/image.go:158
 msgid "Copy virtual machine images"
-msgstr ""
+msgstr "复制虚拟机镜像"
 
 #: cmd/incus/image.go:275
 #, c-format
 msgid "Copying the image: %s"
-msgstr ""
+msgstr "正在复制镜像：%s"
 
 #: cmd/incus/storage_volume.go:481
 #, c-format
 msgid "Copying the storage volume: %s"
-msgstr ""
+msgstr "正在复制储存卷：%s"
 
 #: cmd/incus/info.go:343
 #, c-format
 msgid "Core %d"
-msgstr ""
+msgstr "核心 %d"
 
 #: cmd/incus/info.go:341
 msgid "Cores:"
-msgstr ""
+msgstr "核心："
 
 #: cmd/incus/remote.go:502
 #, c-format
 msgid "Could not close server cert file %q: %w"
-msgstr ""
+msgstr "无法关闭服务器证书文件 %q：%w"
 
 #: cmd/incus/remote.go:243 cmd/incus/remote.go:486
 msgid "Could not create server cert dir"
-msgstr ""
+msgstr "无法创建服务器证书目录"
 
 #: cmd/incus/cluster.go:1389
 #, c-format
 msgid "Could not find certificate file path: %s"
-msgstr ""
+msgstr "找不到证书文件路径：%s"
 
 #: cmd/incus/cluster.go:1393
 #, c-format
 msgid "Could not find certificate key file path: %s"
-msgstr ""
+msgstr "找不到证书密钥文件路径：%s"
 
 #: cmd/incus/cluster.go:1398
 #, c-format
 msgid "Could not read certificate file: %s with error: %v"
-msgstr ""
+msgstr "无法读取证书文件：%s，出现错误：%v"
 
 #: cmd/incus/cluster.go:1403
 #, c-format
 msgid "Could not read certificate key file: %s with error: %v"
-msgstr ""
+msgstr "无法读取证书密钥文件：%s，出现错误：%v"
 
 #: cmd/incus/cluster.go:1420
 #, c-format
