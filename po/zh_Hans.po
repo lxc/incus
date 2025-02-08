@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-01-24 11:19+0900\n"
-"PO-Revision-Date: 2024-12-31 15:00+0000\n"
-"Last-Translator: Loge Xu <wazolm5643@163.com>\n"
+"PO-Revision-Date: 2025-02-08 03:51+0000\n"
+"Last-Translator: Loge X <wazolm5643@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/incus/cli/zh_Hans/>\n"
 "Language: zh_Hans\n"
@@ -1389,28 +1389,28 @@ msgstr ""
 #: cmd/incus/config_trust.go:850
 #, c-format
 msgid "Certificate add token for %s deleted"
-msgstr ""
+msgstr "已删除 %s 的证书添加令牌"
 
 #: cmd/incus/config_trust.go:184
 msgid "Certificate description"
-msgstr ""
+msgstr "证书描述"
 
 #: cmd/incus/remote.go:237
 #, c-format
 msgid ""
 "Certificate fingerprint mismatch between certificate token and server %q"
-msgstr ""
+msgstr "证书令牌和服务器 %q 之间的证书指纹不匹配"
 
 #: cmd/incus/admin_init.go:185 cmd/incus/admin_init_interactive.go:207
 #, c-format
 msgid ""
 "Certificate fingerprint mismatch between join token and cluster member %q"
-msgstr ""
+msgstr "连接令牌与集群成员 %q 之间的证书指纹不匹配"
 
 #: cmd/incus/remote.go:466
 #, c-format
 msgid "Certificate fingerprint: %s"
-msgstr ""
+msgstr "证书指纹：%s"
 
 #: cmd/incus/network.go:1036
 msgid "Chassis"
@@ -1419,70 +1419,70 @@ msgstr ""
 #: cmd/incus/admin_waitready.go:69
 #, c-format
 msgid "Checking if the daemon is ready (attempt %d)"
-msgstr ""
+msgstr "正在检查守护进程是否已就绪（第 %d 次尝试）"
 
 #: cmd/incus/admin_init_interactive.go:267
 #, c-format
 msgid "Choose %s:"
-msgstr ""
+msgstr "选择 %s："
 
 #: cmd/incus/config_trust.go:147
 #, c-format
 msgid "Client %s certificate add token:"
-msgstr ""
+msgstr "客户端 %s 证书添加令牌："
 
 #: cmd/incus/remote.go:610
 msgid "Client certificate now trusted by server:"
-msgstr ""
+msgstr "服务器现已信任客户端证书："
 
 #: cmd/incus/version.go:37
 #, c-format
 msgid "Client version: %s\n"
-msgstr ""
+msgstr "客户端版本：%s\n"
 
 #: cmd/incus/cluster_group.go:262
 #, c-format
 msgid "Cluster group %s created"
-msgstr ""
+msgstr "已创建集群组 %s"
 
 #: cmd/incus/cluster_group.go:323
 #, c-format
 msgid "Cluster group %s deleted"
-msgstr ""
+msgstr "已删除集群组 %s"
 
 #: cmd/incus/cluster_group.go:668
 #, c-format
 msgid "Cluster group %s isn't currently applied to %s"
-msgstr ""
+msgstr "当前集群组 %s 未应用于 %s"
 
 #: cmd/incus/cluster_group.go:745
 #, c-format
 msgid "Cluster group %s renamed to %s"
-msgstr ""
+msgstr "集群组 %s 已重命名为 %s"
 
 #: cmd/incus/cluster_group.go:196
 msgid "Cluster group description"
-msgstr ""
+msgstr "集群组描述"
 
 #: cmd/incus/cluster.go:1308
 #, c-format
 msgid "Cluster join token for %s:%s deleted"
-msgstr ""
+msgstr "%s 的集群连接令牌：%s 已删除"
 
 #: cmd/incus/cluster_group.go:169
 #, c-format
 msgid "Cluster member %s added to cluster groups %s"
-msgstr ""
+msgstr "集群成员 %s 已添加到集群组 %s 中"
 
 #: cmd/incus/cluster_group.go:881
 #, c-format
 msgid "Cluster member %s added to group %s"
-msgstr ""
+msgstr "集群成员 %s 已添加到组 %s 中"
 
 #: cmd/incus/cluster_group.go:870
 #, c-format
 msgid "Cluster member %s is already in group %s"
-msgstr ""
+msgstr "集群成员 %s 已在组 %s 中"
 
 #: cmd/incus/cluster_group.go:688
 #, c-format
