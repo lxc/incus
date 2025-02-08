@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-01-24 11:19+0900\n"
-"PO-Revision-Date: 2025-02-08 13:29+0000\n"
+"PO-Revision-Date: 2025-02-08 17:37+0000\n"
 "Last-Translator: Loge X <wazolm5643@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/incus/cli/zh_Hans/>\n"
@@ -1780,20 +1780,20 @@ msgstr "无法为远程服务器“%s”写入新的远程证书，出现错误�
 #: cmd/incus/remote.go:497
 #, c-format
 msgid "Could not write server cert file %q: %w"
-msgstr ""
+msgstr "无法写入服务器证书文件 %q：%w"
 
 #: cmd/incus/network_zone.go:1649
 msgid "Couldn't find a matching entry"
-msgstr ""
+msgstr "找不到匹配的条目"
 
 #: cmd/incus/admin_init_interactive.go:672
-#, c-format
+#, c-format, fuzzy
 msgid "Couldn't statfs %s: %w"
-msgstr ""
+msgstr "无法获取 %s 的相关信息：%w"
 
 #: cmd/incus/cluster_group.go:187 cmd/incus/cluster_group.go:188
 msgid "Create a cluster group"
-msgstr ""
+msgstr "创建集群组"
 
 #: cmd/incus/admin_init_interactive.go:609
 #, c-format
