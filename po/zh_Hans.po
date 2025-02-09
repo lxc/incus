@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-01-24 11:19+0900\n"
-"PO-Revision-Date: 2025-02-08 17:37+0000\n"
+"PO-Revision-Date: 2025-02-09 14:44+0000\n"
 "Last-Translator: Loge X <wazolm5643@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/incus/cli/zh_Hans/>\n"
@@ -1303,7 +1303,7 @@ msgstr "无法从标准输入读取：%w"
 
 #: cmd/incus/remote.go:1024
 msgid "Can't remove the default remote"
-msgstr "无法删除默认远程服务器"
+msgstr "无法移除默认远程服务器"
 
 #: cmd/incus/list.go:610
 msgid "Can't specify --fast with --columns"
@@ -1486,7 +1486,7 @@ msgstr "集群成员 %s 已在组 %s 中"
 #: cmd/incus/cluster_group.go:688
 #, c-format
 msgid "Cluster member %s removed from group %s"
-msgstr "已从组 %s 中删除集群成员 %s"
+msgstr "已从组 %s 中移除集群成员 %s"
 
 #: cmd/incus/config.go:101 cmd/incus/config.go:393 cmd/incus/config.go:537
 #: cmd/incus/config.go:755 cmd/incus/config.go:886 cmd/incus/copy.go:61
@@ -1798,40 +1798,40 @@ msgstr "创建集群组"
 #: cmd/incus/admin_init_interactive.go:609
 #, c-format
 msgid "Create a new %s pool?"
-msgstr ""
+msgstr "要创建新的 %s 池吗？"
 
 #: cmd/incus/create.go:66
 msgid "Create a virtual machine"
-msgstr ""
+msgstr "创建虚拟机"
 
 #: cmd/incus/image_alias.go:67 cmd/incus/image_alias.go:68
 msgid "Create aliases for existing images"
-msgstr ""
+msgstr "为现有镜像创建别名"
 
 #: cmd/incus/create.go:65
 msgid "Create an empty instance"
-msgstr ""
+msgstr "创建空实例"
 
 #: cmd/incus/launch.go:23 cmd/incus/launch.go:24
 msgid "Create and start instances from images"
-msgstr ""
+msgstr "从镜像创建和启动实例"
 
 #: cmd/incus/file.go:143 cmd/incus/file.go:497 cmd/incus/file.go:717
 msgid "Create any directories necessary"
-msgstr ""
+msgstr "创建任何必要的目录"
 
 #: cmd/incus/file.go:134 cmd/incus/file.go:135
 msgid "Create files and directories in instances"
-msgstr ""
+msgstr "在实例中创建文件和目录"
 
 #: cmd/incus/export.go:80
 #, c-format
 msgid "Create instance backup: %w"
-msgstr ""
+msgstr "创建实例备份：%w"
 
 #: cmd/incus/snapshot.go:77
 msgid "Create instance snapshot"
-msgstr ""
+msgstr "创建实例快照"
 
 #: cmd/incus/snapshot.go:78
 msgid ""
@@ -1840,86 +1840,89 @@ msgid ""
 "When --stateful is used, attempt to checkpoint the instance's\n"
 "running state, including process memory state, TCP connections, ..."
 msgstr ""
+"创建实例快照\n"
+"\n"
+"在使用 --stateful 时，尝试检查实例的运行状态，包括进程内存状态、TCP连接等"
 
 #: cmd/incus/create.go:43 cmd/incus/create.go:44
 msgid "Create instances from images"
-msgstr ""
+msgstr "从镜像创建实例"
 
 #: cmd/incus/storage_bucket.go:1043 cmd/incus/storage_bucket.go:1044
 msgid "Create key for a storage bucket"
-msgstr ""
+msgstr "为存储桶创建密钥"
 
 #: cmd/incus/network_integration.go:84 cmd/incus/network_integration.go:85
 msgid "Create network integrations"
-msgstr ""
+msgstr "创建网络集成"
 
 #: cmd/incus/storage_bucket.go:97 cmd/incus/storage_bucket.go:98
 msgid "Create new custom storage buckets"
-msgstr ""
+msgstr "创建新的自定义存储桶"
 
 #: cmd/incus/storage_volume.go:579 cmd/incus/storage_volume.go:580
 msgid "Create new custom storage volumes"
-msgstr ""
+msgstr "创建新的自定义存储卷"
 
 #: cmd/incus/config_template.go:65 cmd/incus/config_template.go:66
 msgid "Create new instance file templates"
-msgstr ""
+msgstr "创建新的实例文件模板"
 
 #: cmd/incus/network_acl.go:385 cmd/incus/network_acl.go:386
 msgid "Create new network ACLs"
-msgstr ""
+msgstr "创建新的网络 ACL"
 
 #: cmd/incus/network_forward.go:329 cmd/incus/network_forward.go:330
 msgid "Create new network forwards"
-msgstr ""
+msgstr "创建新的网络转发"
 
 #: cmd/incus/network_load_balancer.go:332
 #: cmd/incus/network_load_balancer.go:333
 msgid "Create new network load balancers"
-msgstr ""
+msgstr "创建新的网络负载均衡器"
 
 #: cmd/incus/network_peer.go:324 cmd/incus/network_peer.go:325
 msgid "Create new network peering"
-msgstr ""
+msgstr "创建新的网络对等互联"
 
 #: cmd/incus/network_zone.go:1091 cmd/incus/network_zone.go:1092
 msgid "Create new network zone record"
-msgstr ""
+msgstr "创建新的网络区域记录"
 
 #: cmd/incus/network_zone.go:395 cmd/incus/network_zone.go:396
 msgid "Create new network zones"
-msgstr ""
+msgstr "创建新的网络区域"
 
 #: cmd/incus/network.go:338 cmd/incus/network.go:339
 msgid "Create new networks"
-msgstr ""
+msgstr "创建新网络"
 
 #: cmd/incus/profile.go:358 cmd/incus/profile.go:359
 msgid "Create profiles"
-msgstr ""
+msgstr "创建配置文件"
 
 #: cmd/incus/project.go:104 cmd/incus/project.go:105
 msgid "Create projects"
-msgstr ""
+msgstr "创建项目"
 
 #: cmd/incus/storage.go:101 cmd/incus/storage.go:102
 msgid "Create storage pools"
-msgstr ""
+msgstr "创建存储池"
 
 #: cmd/incus/copy.go:63 cmd/incus/create.go:64
 msgid "Create the instance with no profiles applied"
-msgstr ""
+msgstr "创建未应用配置文件的实例"
 
 #: cmd/incus/image.go:999 cmd/incus/info.go:664
 #: cmd/incus/storage_volume.go:1453
 #, c-format
 msgid "Created: %s"
-msgstr ""
+msgstr "已创建：%s"
 
 #: cmd/incus/create.go:181
 #, c-format
 msgid "Creating %s"
-msgstr ""
+msgstr "正在创建 %s"
 
 #: cmd/incus/file.go:282
 #, c-format
@@ -1928,16 +1931,16 @@ msgstr ""
 
 #: cmd/incus/create.go:179
 msgid "Creating the instance"
-msgstr ""
+msgstr "正在创建实例"
 
 #: cmd/incus/info.go:165 cmd/incus/info.go:274
 #, c-format
 msgid "Current number of VFs: %d"
-msgstr ""
+msgstr "目前 VF 的数目：%d"
 
 #: cmd/incus/network_forward.go:138
 msgid "DEFAULT TARGET ADDRESS"
-msgstr ""
+msgstr "默认目标地址"
 
 #: cmd/incus/cluster.go:180 cmd/incus/cluster_group.go:511
 #: cmd/incus/config_trust.go:442 cmd/incus/image.go:1120
@@ -1950,160 +1953,159 @@ msgstr ""
 #: cmd/incus/storage_bucket.go:527 cmd/incus/storage_bucket.go:932
 #: cmd/incus/storage_volume.go:1686
 msgid "DESCRIPTION"
-msgstr ""
+msgstr "描述"
 
 #: cmd/incus/top.go:81
 msgid "DISK"
-msgstr ""
+msgstr "磁盘"
 
 #: cmd/incus/list.go:581
 msgid "DISK USAGE"
-msgstr ""
+msgstr "磁盘利用率"
 
 #: cmd/incus/storage.go:720
 msgid "DRIVER"
-msgstr ""
+msgstr "驱动"
 
 #: cmd/incus/info.go:137
 msgid "DRM:"
-msgstr ""
+msgstr "DRM："
 
 #: cmd/incus/admin_waitready.go:93
 #, c-format
 msgid "Daemon still not running after %ds timeout (%v)"
-msgstr ""
+msgstr "超时 %d 秒后守护进程仍未运行（%v）"
 
 #: cmd/incus/admin_shutdown.go:83
 #, c-format
 msgid "Daemon still running after %ds timeout"
-msgstr ""
+msgstr "超时 %d 秒后，守护进程仍在运行"
 
 #: cmd/incus/info.go:489
 #, c-format
 msgid "Date: %s"
-msgstr ""
+msgstr "日期：%s"
 
 #: cmd/incus/debug.go:23
 msgid "Debug commands"
-msgstr ""
+msgstr "调试命令"
 
 #: cmd/incus/debug.go:24
-#, fuzzy
 msgid "Debug commands for instances"
-msgstr "重新初始化实例"
+msgstr "实例的调试命令"
 
 #: cmd/incus/network.go:1019
 msgid "Default VLAN ID"
-msgstr ""
+msgstr "默认 VLAN ID"
 
 #: cmd/incus/storage_bucket.go:1432 cmd/incus/storage_volume.go:2988
 msgid "Define a compression algorithm: for backup or none"
-msgstr ""
+msgstr "定义压缩算法：用于备份与否"
 
 #: cmd/incus/top.go:447
 msgid "Delay:"
-msgstr ""
+msgstr "延迟："
 
 #: cmd/incus/operation.go:62 cmd/incus/operation.go:63
 msgid "Delete a background operation (will attempt to cancel)"
-msgstr ""
+msgstr "删除后台操作（将尝试取消）"
 
 #: cmd/incus/cluster_group.go:279 cmd/incus/cluster_group.go:280
 msgid "Delete a cluster group"
-msgstr ""
+msgstr "删除集群组"
 
 #: cmd/incus/warning.go:366
 msgid "Delete all warnings"
-msgstr ""
+msgstr "删除所有警告"
 
 #: cmd/incus/storage_volume.go:695 cmd/incus/storage_volume.go:696
 msgid "Delete custom storage volumes"
-msgstr ""
+msgstr "删除自定义存储卷"
 
 #: cmd/incus/file.go:330 cmd/incus/file.go:331
 msgid "Delete files in instances"
-msgstr ""
+msgstr "删除实例中的文件"
 
 #: cmd/incus/image_alias.go:134 cmd/incus/image_alias.go:135
 msgid "Delete image aliases"
-msgstr ""
+msgstr "删除镜像别名"
 
 #: cmd/incus/image.go:307 cmd/incus/image.go:308
 msgid "Delete images"
-msgstr ""
+msgstr "删除镜像"
 
 #: cmd/incus/config_template.go:133 cmd/incus/config_template.go:134
 msgid "Delete instance file templates"
-msgstr ""
+msgstr "删除实例文件模板"
 
 #: cmd/incus/snapshot.go:202 cmd/incus/snapshot.go:203
 msgid "Delete instance snapshots"
-msgstr ""
+msgstr "删除实例快照"
 
 #: cmd/incus/delete.go:31 cmd/incus/delete.go:32
 msgid "Delete instances"
-msgstr ""
+msgstr "删除实例"
 
 #: cmd/incus/storage_bucket.go:1154 cmd/incus/storage_bucket.go:1155
 msgid "Delete key from a storage bucket"
-msgstr ""
+msgstr "从存储桶中删除密钥"
 
 #: cmd/incus/network_acl.go:815 cmd/incus/network_acl.go:816
 msgid "Delete network ACLs"
-msgstr ""
+msgstr "删除网络 ACL"
 
 #: cmd/incus/network_forward.go:833 cmd/incus/network_forward.go:834
 msgid "Delete network forwards"
-msgstr ""
+msgstr "删除网络转发"
 
 #: cmd/incus/network_integration.go:177 cmd/incus/network_integration.go:178
 msgid "Delete network integrations"
-msgstr ""
+msgstr "删除网络集成"
 
 #: cmd/incus/network_load_balancer.go:813
 #: cmd/incus/network_load_balancer.go:814
 msgid "Delete network load balancers"
-msgstr ""
+msgstr "删除网络负载均衡器"
 
 #: cmd/incus/network_peer.go:846 cmd/incus/network_peer.go:847
 msgid "Delete network peerings"
-msgstr ""
+msgstr "删除网络对等互联"
 
 #: cmd/incus/network_zone.go:1461 cmd/incus/network_zone.go:1462
 msgid "Delete network zone record"
-msgstr ""
+msgstr "删除网络区域记录"
 
 #: cmd/incus/network_zone.go:754 cmd/incus/network_zone.go:755
 msgid "Delete network zones"
-msgstr ""
+msgstr "删除网络区域"
 
 #: cmd/incus/network.go:454 cmd/incus/network.go:455
 msgid "Delete networks"
-msgstr ""
+msgstr "删除网络"
 
 #: cmd/incus/profile.go:447 cmd/incus/profile.go:448
 msgid "Delete profiles"
-msgstr ""
+msgstr "删除配置文件"
 
 #: cmd/incus/project.go:208 cmd/incus/project.go:209
 msgid "Delete projects"
-msgstr ""
+msgstr "删除项目"
 
 #: cmd/incus/storage_bucket.go:208 cmd/incus/storage_bucket.go:209
 msgid "Delete storage buckets"
-msgstr ""
+msgstr "删除存储桶"
 
 #: cmd/incus/storage.go:218 cmd/incus/storage.go:219
 msgid "Delete storage pools"
-msgstr ""
+msgstr "删除存储池"
 
 #: cmd/incus/storage_volume.go:2471 cmd/incus/storage_volume.go:2472
 msgid "Delete storage volume snapshots"
-msgstr ""
+msgstr "删除存储卷快照"
 
 #: cmd/incus/warning.go:362 cmd/incus/warning.go:363
 msgid "Delete warning"
-msgstr ""
+msgstr "删除警告"
 
 #: cmd/incus/action.go:32 cmd/incus/action.go:57 cmd/incus/action.go:83
 #: cmd/incus/action.go:109 cmd/incus/action.go:134 cmd/incus/admin.go:20
@@ -2260,101 +2262,101 @@ msgstr ""
 #: cmd/incus/warning.go:30 cmd/incus/warning.go:73 cmd/incus/warning.go:268
 #: cmd/incus/warning.go:309 cmd/incus/warning.go:363 cmd/incus/webui.go:19
 msgid "Description"
-msgstr ""
+msgstr "描述"
 
 #: cmd/incus/info.go:635 cmd/incus/storage_volume.go:1426
 #, c-format
 msgid "Description: %s"
-msgstr ""
+msgstr "描述：%s"
 
 #: cmd/incus/storage_volume.go:367 cmd/incus/storage_volume.go:1793
 msgid "Destination cluster member name"
-msgstr ""
+msgstr "目标集群成员名称"
 
 #: cmd/incus/storage_volume.go:768 cmd/incus/storage_volume.go:769
 msgid "Detach custom storage volumes from instances"
-msgstr ""
+msgstr "从实例中分离自定义存储卷"
 
 #: cmd/incus/storage_volume.go:866 cmd/incus/storage_volume.go:867
 msgid "Detach custom storage volumes from profiles"
-msgstr ""
+msgstr "从配置文件中分离自定义存储卷"
 
 #: cmd/incus/network.go:512 cmd/incus/network.go:513
 msgid "Detach network interfaces from instances"
-msgstr ""
+msgstr "从实例中分离网络接口"
 
 #: cmd/incus/network.go:609 cmd/incus/network.go:610
 msgid "Detach network interfaces from profiles"
-msgstr ""
+msgstr "从配置文件中分离网络接口"
 
 #: cmd/incus/info.go:587 cmd/incus/info.go:599
 #, c-format
 msgid "Device %d:"
-msgstr ""
+msgstr "设备 %d："
 
 #: cmd/incus/config_device.go:197
 #, c-format
 msgid "Device %s added to %s"
-msgstr ""
+msgstr "设备 %s 添加到 %s"
 
 #: cmd/incus/config_device.go:478
 #, c-format
 msgid "Device %s overridden for %s"
-msgstr ""
+msgstr "设备 %s 被 %s 覆盖"
 
 #: cmd/incus/config_device.go:599
 #, c-format
 msgid "Device %s removed from %s"
-msgstr ""
+msgstr "设备 %s 已从 %s 中移除"
 
 #: cmd/incus/info.go:366
 #, c-format
 msgid "Device Address: %v"
-msgstr ""
+msgstr "设备地址：%v"
 
 #: cmd/incus/utils.go:58 cmd/incus/utils.go:82
 #, c-format
 msgid "Device already exists: %s"
-msgstr ""
+msgstr "设备已存在：%s"
 
 #: cmd/incus/config_device.go:279 cmd/incus/config_device.go:293
 #: cmd/incus/config_device.go:557 cmd/incus/config_device.go:578
 #: cmd/incus/config_device.go:692 cmd/incus/config_device.go:715
 msgid "Device doesn't exist"
-msgstr ""
+msgstr "设备不存在"
 
 #: cmd/incus/config_device.go:718
 msgid ""
 "Device from profile(s) cannot be modified for individual instance. Override "
 "device or modify profile instead"
-msgstr ""
+msgstr "无法为单个实例修改配置文件中的设备。改为替代设备或修改配置文件"
 
 #: cmd/incus/config_device.go:581
 msgid ""
 "Device from profile(s) cannot be removed from individual instance. Override "
 "device or modify profile instead"
-msgstr ""
+msgstr "无法为单个实例移除配置文件中的设备。改为替代设备或修改配置文件"
 
 #: cmd/incus/config_device.go:296
 msgid "Device from profile(s) cannot be retrieved for individual instance"
-msgstr ""
+msgstr "无法为单个实例检索配置文件中的设备"
 
 #: cmd/incus/info.go:294 cmd/incus/info.go:318
 #, c-format
 msgid "Device: %s"
-msgstr ""
+msgstr "设备：%s"
 
 #: cmd/incus/create.go:445
 msgid "Didn't get name of new instance from the server"
-msgstr ""
+msgstr "未从服务器获取新实例的名称"
 
 #: cmd/incus/image.go:695
 msgid "Directory import is not available on this platform"
-msgstr ""
+msgstr "目录导入在此平台上不可用"
 
 #: cmd/incus/exec.go:66
 msgid "Directory to run the command in (default /root)"
-msgstr ""
+msgstr "运行命令的目录（默认/根目录）"
 
 #: cmd/incus/file.go:1320
 msgid "Disable authentication when using SSH SFTP listener"
@@ -6518,9 +6520,9 @@ msgid "Remote %s exists as <%s>"
 msgstr "远程 %s 已存在地址 <%s>"
 
 #: cmd/incus/remote.go:1020
-#, fuzzy, c-format
+#, c-format
 msgid "Remote %s is global and cannot be removed"
-msgstr "远程 %s 是全局的, 无法移除"
+msgstr "远程服务器 %s 是全局的，无法移除"
 
 #: cmd/incus/remote.go:935 cmd/incus/remote.go:1016 cmd/incus/remote.go:1129
 #, c-format
