@@ -36,15 +36,15 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	revert := revert.New()
 	defer revert.Fail()
 
-	if vol.contentType == ContentTypeFS {
-		// Create mountpoint.
-		err := vol.EnsureMountPath()
-		if err != nil {
-			return err
-		}
-
-		revert.Add(func() { _ = os.Remove(vol.MountPath()) })
+	//if vol.contentType == ContentTypeFS {
+	// Create mountpoint.
+	err := vol.EnsureMountPath()
+	if err != nil {
+		return err
 	}
+
+	revert.Add(func() { _ = os.Remove(vol.MountPath()) })
+	//}
 
 	// Look for previously deleted images.
 	if vol.volType == VolumeTypeImage {
@@ -139,7 +139,9 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	// After this point we'll have a volume, so setup revert.
 	revert.Add(func() { _ = d.DeleteVolume(vol, op) })
 
-	if vol.contentType == ContentTypeFS && !d.isBlockBacked(vol) {
+	// se: even if a block volume, we still need a filesystem dataset...
+	//if vol.contentType == ContentTypeFS && !d.isBlockBacked(vol)
+	{
 		// Create the filesystem dataset.
 		dataset := d.dataset(vol, false)
 
@@ -166,91 +168,18 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 			return err
 		}
 	}
-	// else {
-	// 	var opts []string
 
-	// 	if vol.contentType == ContentTypeFS {
-	// 		// Use volmode=dev so volume is visible as we need to run makeFSType.
-	// 		opts = []string{"volmode=dev"}
-	// 	} else {
-	// 		// Use volmode=none so volume is invisible until mounted.
-	// 		opts = []string{"volmode=none"}
-	// 	}
+	// Get path to disk volume if volume is block or iso.
+	rootBlockPath := ""
+	if IsContentBlock(vol.contentType) {
+		// We expect the filler to copy the VM image into this path.
+		rootBlockPath, err = d.GetVolumeDiskPath(vol)
+		if err != nil {
+			return err
+		}
+	}
 
-	// 	// Add custom property incus:content_type which allows distinguishing between regular volumes, block_mode enabled volumes, and ISO volumes.
-	// 	if vol.volType == VolumeTypeCustom {
-	// 		opts = append(opts, fmt.Sprintf("incus:content_type=%s", vol.contentType))
-	// 	}
-
-	// 	// Avoid double caching in the ARC cache and in the guest OS filesystem cache.
-	// 	if vol.volType == VolumeTypeVM {
-	// 		opts = append(opts, "primarycache=metadata", "secondarycache=metadata")
-	// 	}
-
-	// 	loopPath := loopFilePath(d.name)
-	// 	if d.config["source"] == loopPath {
-	// 		// Create the volume dataset with sync disabled (to avoid kernel lockups when using a disk based pool).
-	// 		opts = append(opts, "sync=disabled")
-	// 	}
-
-	// 	blockSize := vol.ExpandedConfig("zfs.blocksize")
-	// 	if blockSize != "" {
-	// 		// Convert to bytes.
-	// 		sizeBytes, err := units.ParseByteSizeString(blockSize)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-
-	// 		// zfs.blocksize can have value in range from 512 to 16MiB because it's used for volblocksize and recordsize
-	// 		// volblocksize maximum value is 128KiB so if the value of zfs.blocksize is bigger set it to 128KiB.
-	// 		if sizeBytes > zfsMaxVolBlocksize {
-	// 			sizeBytes = zfsMaxVolBlocksize
-	// 		}
-
-	// 		opts = append(opts, fmt.Sprintf("volblocksize=%d", sizeBytes))
-	// 	}
-
-	// 	sizeBytes, err := units.ParseByteSizeString(vol.ConfigSize())
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	sizeBytes, err = d.roundVolumeBlockSizeBytes(vol, sizeBytes)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	// Create the volume dataset.
-	// 	err = d.createVolume(d.dataset(vol, false), sizeBytes, opts...)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	if vol.contentType == ContentTypeFS {
-	// 		// Wait up to 30 seconds for the device to appear.
-	// 		ctx, cancel := context.WithTimeout(d.state.ShutdownCtx, 30*time.Second)
-	// 		defer cancel()
-
-	// 		devPath, err := d.tryGetVolumeDiskPathFromDataset(ctx, d.dataset(vol, false))
-	// 		if err != nil {
-	// 			return err
-	// 		}
-
-	// 		zfsFilesystem := vol.ConfigBlockFilesystem()
-
-	// 		_, err = makeFSType(devPath, zfsFilesystem, nil)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-
-	// 		err = d.setDatasetProperties(d.dataset(vol, false), "volmode=none")
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 	}
-	// }
-
-	// For VM images, create a filesystem volume too.
+	//For VM images, create a filesystem volume too.
 	// if vol.IsVMBlock() {
 	// 	fsVol := vol.NewVMBlockFilesystemVolume()
 	// 	err := d.CreateVolume(fsVol, nil, op)
@@ -261,7 +190,34 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	// 	revert.Add(func() { _ = d.DeleteVolume(fsVol, op) })
 	// }
 
-	err := vol.MountTask(func(mountPath string, op *operations.Operation) error {
+	err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
+
+		// If we are creating a block volume, resize it to the requested size or the default.
+		// For block volumes, we expect the filler function to have converted the qcow2 image to raw into the rootBlockPath.
+		// For ISOs the content will just be copied.
+		if IsContentBlock(vol.contentType) {
+			// Convert to bytes.
+			sizeBytes, err := units.ParseByteSizeString(vol.ConfigSize())
+			if err != nil {
+				return err
+			}
+
+			// Ignore ErrCannotBeShrunk when setting size this just means the filler run above has needed to
+			// increase the volume size beyond the default block volume size.
+			_, err = ensureVolumeBlockFile(vol, rootBlockPath, sizeBytes, false)
+			if err != nil && !errors.Is(err, ErrCannotBeShrunk) {
+				return err
+			}
+
+			// Move the GPT alt header to end of disk if needed and if filler specified.
+			if vol.IsVMBlock() && filler != nil && filler.Fill != nil {
+				err = d.moveGPTAltHeader(rootBlockPath)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
 		// Run the volume filler function if supplied.
 		if filler != nil && filler.Fill != nil {
 			var err error
@@ -269,10 +225,11 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 
 			if IsContentBlock(vol.contentType) {
 				// Get the device path.
-				devPath, err = d.GetVolumeDiskPath(vol)
-				if err != nil {
-					return err
-				}
+				//devPath, err = d.GetVolumeDiskPath(vol)
+				devPath = rootBlockPath
+				// if err != nil {
+				// 	return err
+				// }
 			}
 
 			allowUnsafeResize := false
@@ -584,20 +541,20 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 		revert.Add(func() { _ = os.Remove(vol.MountPath()) })
 	}
 
-	// For VMs, also copy the filesystem dataset.
-	if vol.IsVMBlock() {
-		// For VMs, also copy the filesystem volume.
-		srcFSVol := srcVol.NewVMBlockFilesystemVolume()
-		fsVol := vol.NewVMBlockFilesystemVolume()
+	// // For VMs, also copy the filesystem dataset.
+	// if vol.IsVMBlock() {
+	// 	// For VMs, also copy the filesystem volume.
+	// 	srcFSVol := srcVol.NewVMBlockFilesystemVolume()
+	// 	fsVol := vol.NewVMBlockFilesystemVolume()
 
-		err = d.CreateVolumeFromCopy(fsVol, srcFSVol, copySnapshots, false, op)
-		if err != nil {
-			return err
-		}
+	// 	err = d.CreateVolumeFromCopy(fsVol, srcFSVol, copySnapshots, false, op)
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-		// Delete on revert.
-		revert.Add(func() { _ = d.DeleteVolume(fsVol, op) })
-	}
+	// 	// Delete on revert.
+	// 	revert.Add(func() { _ = d.DeleteVolume(fsVol, op) })
+	// }
 
 	// Retrieve snapshots on the source.
 	snapshots := []string{}
@@ -903,16 +860,18 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 	// leaving the filesystem in an inconsistent state if the resize couldn't be completed. This is because if
 	// the resize fails we will delete the volume anyway so don't have to worry about it being inconsistent.
 	var allowUnsafeResize bool
+	_ = allowUnsafeResize
+
 	if d.isBlockBacked(vol) && vol.contentType == ContentTypeFS {
 		allowUnsafeResize = true
 	}
 
 	// Resize volume to the size specified. Only uses volume "size" property and does not use pool/defaults
 	// to give the caller more control over the size being used.
-	err = d.SetVolumeQuota(vol, vol.config["size"], allowUnsafeResize, op)
-	if err != nil {
-		return err
-	}
+	// err = d.SetVolumeQuota(vol, vol.config["size"], allowUnsafeResize, op)
+	// if err != nil {
+	// 	return err
+	// }
 
 	// All done.
 	revert.Success()
@@ -1574,13 +1533,13 @@ func (d *truenas) deleteVolume(vol Volume, op *operations.Operation) error {
 	}
 
 	// For VMs, also delete the filesystem dataset.
-	if vol.IsVMBlock() {
-		fsVol := vol.NewVMBlockFilesystemVolume()
-		err := d.DeleteVolume(fsVol, op)
-		if err != nil {
-			return err
-		}
-	}
+	// if vol.IsVMBlock() {
+	// 	fsVol := vol.NewVMBlockFilesystemVolume()
+	// 	err := d.DeleteVolume(fsVol, op)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 }
@@ -1706,8 +1665,10 @@ func (d *truenas) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
 // 	return valueInt, nil
 // }
 
-// SetVolumeQuota sets the quota/reservation on the volume.
-// Does nothing if supplied with an empty/zero size for block volumes.
+//
+
+// SetVolumeQuota applies a size limit on volume.
+// Does nothing if supplied with an empty/zero size for block volumes, and for filesystem volumes removes quota.
 func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op *operations.Operation) error {
 	// Convert to bytes.
 	sizeBytes, err := units.ParseByteSizeString(size)
@@ -1715,173 +1676,59 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 		return err
 	}
 
-	inUse := vol.MountInUse()
-
-	// Handle volume datasets.
-	if d.isBlockBacked(vol) && vol.contentType == ContentTypeFS || IsContentBlock(vol.contentType) {
+	// For VM block files, resize the file if needed.
+	if vol.contentType == ContentTypeBlock {
 		// Do nothing if size isn't specified.
 		if sizeBytes <= 0 {
 			return nil
 		}
 
-		sizeBytes, err = d.roundVolumeBlockSizeBytes(vol, sizeBytes)
-		if err != nil {
-			return err
-		}
+		// rootBlockPath, err := d.GetVolumeDiskPath(vol)
+		// if err != nil {
+		// 	return err
+		// }
 
-		oldSizeBytesStr, err := d.getDatasetProperty(d.dataset(vol, false), "volsize")
-		if err != nil {
-			return err
-		}
+		// resized, err := ensureVolumeBlockFile(vol, rootBlockPath, sizeBytes, allowUnsafeResize)
+		// if err != nil {
+		// 	return err
+		// }
 
-		oldVolSizeBytesInt, err := strconv.ParseInt(oldSizeBytesStr, 10, 64)
-		if err != nil {
-			return err
-		}
-
-		oldVolSizeBytes := int64(oldVolSizeBytesInt)
-
-		if oldVolSizeBytes == sizeBytes {
-			return nil
-		}
-
-		if vol.contentType == ContentTypeFS {
-			// Activate volume if needed.
-			activated, err := d.activateVolume(vol)
-			if err != nil {
-				return err
-			}
-
-			if activated {
-				defer func() { _, _ = d.deactivateVolume(vol) }()
-			}
-
-			if vol.volType == VolumeTypeImage {
-				return fmt.Errorf("Image volumes cannot be resized: %w", ErrCannotBeShrunk)
-			}
-
-			fsType := vol.ConfigBlockFilesystem()
-
-			volDevPath, err := d.GetVolumeDiskPath(vol)
-			if err != nil {
-				return err
-			}
-
-			l := d.logger.AddContext(logger.Ctx{"dev": volDevPath, "size": fmt.Sprintf("%db", sizeBytes)})
-
-			if sizeBytes < oldVolSizeBytes {
-				if !filesystemTypeCanBeShrunk(fsType) {
-					return fmt.Errorf("Filesystem %q cannot be shrunk: %w", fsType, ErrCannotBeShrunk)
-				}
-
-				if inUse {
-					return ErrInUse // We don't allow online shrinking of filesystem block volumes.
-				}
-
-				// Shrink filesystem first.
-				// Pass allowUnsafeResize to allow disabling of filesystem resize safety checks.
-				err = shrinkFileSystem(fsType, volDevPath, vol, sizeBytes, allowUnsafeResize)
-				if err != nil {
-					return err
-				}
-
-				l.Debug("ZFS volume filesystem shrunk")
-
-				// Shrink the block device.
-				err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("volsize=%d", sizeBytes))
-				if err != nil {
-					return err
-				}
-			} else if sizeBytes > oldVolSizeBytes {
-				// Grow block device first.
-				err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("volsize=%d", sizeBytes))
-				if err != nil {
-					return err
-				}
-
-				// Grow the filesystem to fill block device.
-				err = growFileSystem(fsType, volDevPath, vol)
-				if err != nil {
-					return err
-				}
-
-				l.Debug("ZFS volume filesystem grown")
-			}
-		} else {
-			// Block image volumes cannot be resized because they have a readonly snapshot that doesn't get
-			// updated when the volume's size is changed, and this is what instances are created from.
-			// During initial volume fill allowUnsafeResize is enabled because snapshot hasn't been taken yet.
-			if !allowUnsafeResize && vol.volType == VolumeTypeImage {
-				return ErrNotSupported
-			}
-
-			// Only perform pre-resize checks if we are not in "unsafe" mode.
-			// In unsafe mode we expect the caller to know what they are doing and understand the risks.
-			if !allowUnsafeResize {
-				if sizeBytes < oldVolSizeBytes {
-					return fmt.Errorf("Block volumes cannot be shrunk: %w", ErrCannotBeShrunk)
-				}
-			}
-
-			err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("volsize=%d", sizeBytes))
-			if err != nil {
-				return err
-			}
-		}
-
-		// Move the VM GPT alt header to end of disk if needed (not needed in unsafe resize mode as
-		// it is expected the caller will do all necessary post resize actions themselves).
-		if vol.IsVMBlock() && !allowUnsafeResize {
-			err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
-				devPath, err := d.GetVolumeDiskPath(vol)
-				if err != nil {
-					return err
-				}
-
-				return d.moveGPTAltHeader(devPath)
-			}, op)
-			if err != nil {
-				return err
-			}
-		}
+		// // Move the GPT alt header to end of disk if needed and resize has taken place (not needed in
+		// // unsafe resize mode as it is expected the caller will do all necessary post resize actions
+		// // themselves).
+		// if vol.IsVMBlock() && resized && !allowUnsafeResize {
+		// 	err = d.moveGPTAltHeader(rootBlockPath)
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// }
 
 		return nil
+	} else if vol.Type() != VolumeTypeBucket {
+		// For non-VM block volumes, set filesystem quota.
+		volID, err := d.getVolID(vol.volType, vol.name)
+		_ = volID
+		if err != nil {
+			return err
+		}
+
+		// Custom handling for filesystem volume associated with a VM.
+		volPath := vol.MountPath()
+		if sizeBytes > 0 && vol.volType == VolumeTypeVM && util.PathExists(filepath.Join(volPath, genericVolumeDiskFile)) {
+			// Get the size of the VM image.
+			blockSize, err := BlockDiskSizeBytes(filepath.Join(volPath, genericVolumeDiskFile))
+			if err != nil {
+				return err
+			}
+
+			// Add that to the requested filesystem size (to ignore it from the quota).
+			sizeBytes += blockSize
+			d.logger.Debug("Accounting for VM image file size", logger.Ctx{"sizeBytes": sizeBytes})
+		}
+
+		//return d.setQuota(vol.MountPath(), volID, sizeBytes)
+		return nil
 	}
-
-	// se: quota props are not implemented yet in Tool
-
-	// Clear the existing quota.
-	// for _, property := range []string{"quota", "refquota", "reservation", "refreservation"} {
-	// 	err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("%s=none", property))
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-
-	// value := fmt.Sprintf("%d", sizeBytes)
-	// if sizeBytes == 0 {
-	// 	return nil
-	// }
-
-	// // Apply the new quota.
-	// quotaKey := "quota"
-	// reservationKey := "reservation"
-	// if util.IsTrue(vol.ExpandedConfig("zfs.use_refquota")) {
-	// 	quotaKey = "refquota"
-	// 	reservationKey = "refreservation"
-	// }
-
-	// err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("%s=%s", quotaKey, value))
-	// if err != nil {
-	// 	return err
-	// }
-
-	// if util.IsTrue(vol.ExpandedConfig("zfs.reserve_space")) {
-	// 	err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("%s=%s", reservationKey, value))
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
 
 	return nil
 }
@@ -1961,6 +1808,12 @@ func (d *truenas) getVolumeDiskPathFromDataset(dataset string) (string, error) {
 
 // 	return d.tryGetVolumeDiskPathFromDataset(ctx, d.dataset(vol, false))
 // }
+
+// se: from driver_dir_volumes.go
+// GetVolumeDiskPath returns the location of a disk volume.
+func (d *truenas) GetVolumeDiskPath(vol Volume) (string, error) {
+	return genericVFSGetVolumeDiskPath(vol)
+}
 
 // ListVolumes returns a list of volumes in storage pool.
 func (d *truenas) ListVolumes() ([]Volume, error) {
@@ -2209,7 +2062,7 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 	mountPath := vol.MountPath()
 
 	// Check if filesystem volume already mounted.
-	if vol.contentType == ContentTypeFS && !d.isBlockBacked(vol) {
+	if /*vol.contentType == ContentTypeFS && !d.isBlockBacked(vol)*/ true {
 		if !linux.IsMountPoint(mountPath) {
 			//err := d.setDatasetProperties(dataset, "mountpoint=legacy", "canmount=noauto")
 			// if err != nil {
@@ -2340,7 +2193,7 @@ func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 
 	refCount := vol.MountRefCountDecrement()
 
-	if vol.contentType == ContentTypeFS && linux.IsMountPoint(mountPath) {
+	if /*vol.contentType == ContentTypeFS &&*/ linux.IsMountPoint(mountPath) {
 		if refCount > 0 {
 			d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": vol.name, "refCount": refCount})
 			return false, ErrInUse
@@ -2375,28 +2228,6 @@ func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 		// }
 
 		ourUnmount = true
-	} else if vol.contentType == ContentTypeBlock {
-		// For VMs, also unmount the filesystem dataset.
-		if vol.IsVMBlock() {
-			fsVol := vol.NewVMBlockFilesystemVolume()
-			ourUnmount, err = d.UnmountVolume(fsVol, false, op)
-			if err != nil {
-				return false, err
-			}
-		}
-
-		// 		if !keepBlockDev {
-		// 			if refCount > 0 {
-		// 				d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": vol.name, "refCount": refCount})
-		// 				return false, ErrInUse
-		// 			}
-
-		// 			// // For block devices, we make them disappear if active.
-		// 			// ourUnmount, err = d.deactivateVolume(vol)
-		// 			// if err != nil {
-		// 			// 	return false, err
-		// 			// }
-		// 		}
 	}
 
 	return ourUnmount, nil
