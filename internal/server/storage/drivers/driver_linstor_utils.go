@@ -11,7 +11,9 @@ import (
 
 	linstorClient "github.com/LINBIT/golinstor/client"
 
+	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/subprocess"
 	"github.com/lxc/incus/v6/shared/util"
 )
@@ -36,6 +38,9 @@ const LinstorResourceGroupStoragePoolConfigKey = "linstor.resource_group.storage
 
 // LinstorVolumePrefixConfigKey represents the config key that describes the prefix to add to every volume within a storage pool.
 const LinstorVolumePrefixConfigKey = "linstor.volume.prefix"
+
+// errResourceDefinitionNotFound indicates that a resource definition could not be found in Linstor.
+var errResourceDefinitionNotFound = errors.New("Resource definition not found")
 
 // drbdVersion returns the DRBD version of the currently loaded kernel module.
 func (d *linstor) drbdVersion() (string, error) {
@@ -395,5 +400,75 @@ func (d *linstor) restoreVolume(vol Volume, snapVol Volume) error {
 		return fmt.Errorf("Could not restore volume to snapshot: %w", err)
 	}
 
+	return nil
+}
+
+// createResourceFromSnapshot creates a new resource from a snapshot.
+func (d *linstor) createResourceFromSnapshot(snapVol Volume, vol Volume) error {
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	rev := revert.New()
+	defer rev.Fail()
+
+	parentName, _, _ := api.GetParentAndSnapshotName(snapVol.name)
+	parentVol := NewVolume(d, d.name, snapVol.volType, snapVol.contentType, parentName, nil, nil)
+
+	parentResourceDefinitionName, err := d.getResourceDefinitionName(parentVol)
+	if err != nil {
+		return err
+	}
+
+	snapResourceDefinitionName, err := d.getResourceDefinitionName(snapVol)
+	if err != nil {
+		return err
+	}
+
+	resourceDefinitionName, err := d.getResourceDefinitionName(vol)
+	if err != nil {
+		return err
+	}
+
+	err = linstor.Client.ResourceDefinitions.Create(context.TODO(), linstorClient.ResourceDefinitionCreate{
+		ResourceDefinition: linstorClient.ResourceDefinition{
+			Name:              resourceDefinitionName,
+			ResourceGroupName: d.config[LinstorResourceGroupNameConfigKey],
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("Could not create resource definition from snapshot: %w", err)
+	}
+
+	rev.Add(func() { _ = linstor.Client.ResourceDefinitions.Delete(context.TODO(), resourceDefinitionName) })
+
+	err = linstor.Client.Resources.RestoreVolumeDefinitionSnapshot(context.TODO(), parentResourceDefinitionName, snapResourceDefinitionName, linstorClient.SnapshotRestore{
+		ToResource: resourceDefinitionName,
+	})
+	if err != nil {
+		return fmt.Errorf("Could not restore volume definition from snapshot: %w", err)
+	}
+
+	err = linstor.Client.Resources.RestoreSnapshot(context.TODO(), parentResourceDefinitionName, snapResourceDefinitionName, linstorClient.SnapshotRestore{
+		ToResource: resourceDefinitionName,
+	})
+	if err != nil {
+		return fmt.Errorf("Could not restore resource from snapshot: %w", err)
+	}
+
+	// Set the aux properties on the new resource definition.
+	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceDefinitionName, linstorClient.GenericPropsModify{
+		OverrideProps: map[string]string{
+			"Aux/Incus/name":         vol.name,
+			"Aux/Incus/type":         string(vol.volType),
+			"Aux/Incus/content-type": string(vol.contentType),
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("Could not set properties on resource definition: %w", err)
+	}
+
+	rev.Success()
 	return nil
 }
