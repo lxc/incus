@@ -615,3 +615,159 @@ func (d *linstor) RestoreVolume(vol Volume, snapshotName string, op *operations.
 
 	return nil
 }
+
+// MountVolumeSnapshot mounts a storage volume snapshot.
+//
+// The snapshot is restored into a new temporary LINSTOR resource definition that will live for the duration of the mount.
+func (d *linstor) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) error {
+	l := d.logger.AddContext(logger.Ctx{"volume": snapVol.Name()})
+	l.Debug("Mounting snapshot volume")
+
+	unlock, err := snapVol.MountLock()
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+
+	rev := revert.New()
+	defer rev.Fail()
+
+	// Create a new temporary resource-definition from the snapshot
+	if !(snapVol.volType == VolumeTypeVM && snapVol.contentType == ContentTypeFS) {
+		err = d.createResourceFromSnapshot(snapVol, snapVol)
+		if err != nil {
+			return err
+		}
+
+		rev.Add(func() { _ = d.DeleteVolume(snapVol, op) })
+
+		// Mount the volume
+		err = d.makeVolumeAvailable(snapVol)
+		if err != nil {
+			return fmt.Errorf("Could not mount volume: %w", err)
+		}
+	}
+
+	volDevPath, err := d.getLinstorDevPath(snapVol)
+	if err != nil {
+		return fmt.Errorf("Could not mount volume: %w", err)
+	}
+
+	l.Debug("Volume is available on node", logger.Ctx{"volDevPath": volDevPath})
+
+	if snapVol.contentType == ContentTypeFS {
+		mountPath := snapVol.MountPath()
+		l.Debug("Content type FS", logger.Ctx{"mountPath": mountPath})
+		if !linux.IsMountPoint(mountPath) {
+			err := snapVol.EnsureMountPath()
+			if err != nil {
+				return err
+			}
+
+			snapVolFS := snapVol.ConfigBlockFilesystem()
+
+			if snapVol.mountFilesystemProbe {
+				snapVolFS, err = fsProbe(volDevPath)
+				if err != nil {
+					return fmt.Errorf("Failed probing filesystem: %w", err)
+				}
+			}
+
+			mountFlags, mountOptions := linux.ResolveMountOptions(strings.Split(snapVol.ConfigBlockMountOptions(), ","))
+
+			d.logger.Debug("Regenerating filesystem UUID", logger.Ctx{"volDevPath": volDevPath, "fs": snapVolFS})
+			if renegerateFilesystemUUIDNeeded(snapVolFS) {
+				if snapVolFS == "xfs" {
+					idx := strings.Index(mountOptions, "nouuid")
+					if idx < 0 {
+						mountOptions += ",nouuid"
+					}
+				} else {
+					err = regenerateFilesystemUUID(snapVolFS, volDevPath)
+					if err != nil {
+						return err
+					}
+				}
+			}
+
+			l.Debug("Will try mount")
+			err = TryMount(volDevPath, mountPath, snapVolFS, mountFlags, mountOptions)
+			if err != nil {
+				l.Debug("Tried mounting but failed", logger.Ctx{"error": err})
+				return err
+			}
+
+			d.logger.Debug("Mounted snapshot volume", logger.Ctx{"volName": snapVol.name, "dev": volDevPath, "path": mountPath, "options": mountOptions})
+		}
+	} else if snapVol.contentType == ContentTypeBlock {
+		l.Debug("Content type Block")
+		// For VMs, mount the filesystem volume.
+		if snapVol.IsVMBlock() {
+			fsVol := snapVol.NewVMBlockFilesystemVolume()
+			l.Debug("Created a new FS volume", logger.Ctx{"fsVol": fsVol})
+			err = d.MountVolumeSnapshot(fsVol, op)
+			if err != nil {
+				l.Debug("Tried mounting but failed", logger.Ctx{"error": err})
+				return err
+			}
+		}
+	}
+
+	snapVol.MountRefCountIncrement() // From here on it is up to caller to call UnmountVolumeSnapshot() when done.
+	rev.Success()
+	return nil
+}
+
+// UnmountVolumeSnapshot unmounts a volume snapshot.
+//
+// The temporary LINSTOR resource definition created for the mount is deleted.
+func (d *linstor) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (bool, error) {
+	l := d.logger.AddContext(logger.Ctx{"volume": snapVol.Name()})
+	l.Debug("Umounting snapshot volume")
+
+	unlock, err := snapVol.MountLock()
+	if err != nil {
+		return false, err
+	}
+
+	defer unlock()
+
+	ourUnmount := false
+	mountPath := snapVol.MountPath()
+	refCount := snapVol.MountRefCountDecrement()
+
+	// Attempt to unmount the volume.
+	if snapVol.contentType == ContentTypeFS && linux.IsMountPoint(mountPath) {
+		if refCount > 0 {
+			d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": snapVol.name, "refCount": refCount})
+			return false, ErrInUse
+		}
+
+		err = TryUnmount(mountPath, unix.MNT_DETACH)
+		if err != nil {
+			return false, err
+		}
+
+		d.logger.Debug("Unmounted snapshot volume", logger.Ctx{"volName": snapVol.name, "path": mountPath})
+		d.logger.Debug("Deleting temporary resource definition for snapshot mount", logger.Ctx{"volName": snapVol.name, "path": mountPath})
+
+		err = d.DeleteVolume(snapVol, op)
+		if err != nil {
+			return false, err
+		}
+
+		ourUnmount = true
+	} else if snapVol.contentType == ContentTypeBlock {
+		// For VMs, unmount the filesystem volume.
+		if snapVol.IsVMBlock() {
+			fsVol := snapVol.NewVMBlockFilesystemVolume()
+			ourUnmount, err = d.UnmountVolumeSnapshot(fsVol, op)
+			if err != nil {
+				return false, err
+			}
+		}
+	}
+
+	return ourUnmount, nil
+}
