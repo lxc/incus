@@ -132,9 +132,9 @@ func (d *truenas) Info() Info {
 		Remote:                       d.isRemote(),
 		VolumeTypes:                  []VolumeType{VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
 		VolumeMultiNode:              d.isRemote(),
-		BlockBacking:                 false, //util.IsTrue(d.config["volume.zfs.block_mode"]),
+		BlockBacking:                 false,
 		RunningCopyFreeze:            false,
-		DirectIO:                     zfsDirectIO,
+		DirectIO:                     false,
 		MountedRoot:                  false,
 		Buckets:                      false,
 	}

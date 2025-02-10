@@ -29,9 +29,9 @@ func (d *truenas) dataset(vol Volume, deleted bool) string {
 	}
 
 	if (vol.volType == VolumeTypeVM || vol.volType == VolumeTypeImage) && vol.contentType == ContentTypeBlock {
-		name = fmt.Sprintf("%s%s", name, zfsBlockVolSuffix)
+		//name = fmt.Sprintf("%s%s", name, zfsBlockVolSuffix)
 	} else if vol.volType == VolumeTypeCustom && vol.contentType == ContentTypeISO {
-		name = fmt.Sprintf("%s%s", name, zfsISOVolSuffix)
+		//name = fmt.Sprintf("%s%s", name, zfsISOVolSuffix)
 	}
 
 	if snapName != "" {
