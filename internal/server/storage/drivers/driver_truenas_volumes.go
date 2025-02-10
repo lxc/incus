@@ -2232,22 +2232,26 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 			// 	volOptions = append(volOptions, "strictatime")
 			// }
 
-			ip4and6, err := net.LookupIP(d.config["truenas.host"])
+			host := d.config["truenas.host"]
+			if host == "" {
+				return fmt.Errorf("`truenas.host` must be specified")
+			}
+
+			ip4and6, err := net.LookupIP(host)
 			if err != nil {
 				return err
 			}
 
 			// NFS
-			volOptions = append(volOptions, "vers=4.2")
-			//volOptions = append(volOptions, "user_xattr")
-			volOptions = append(volOptions, "addr=" + ip4and6[0].String()) // 192.168.0.32
+			volOptions = append(volOptions, "vers=4.2")                  // TODO: decide on default options
+			volOptions = append(volOptions, "addr="+ip4and6[0].String()) // TODO: pick ip4 or ip6
 
 			mountFlags, mountOptions := linux.ResolveMountOptions(volOptions)
 
-			remotePath := fmt.Sprintf("%s:/mnt/%s", d.config["truenas.dataset"], dataset)
+			remotePath := fmt.Sprintf("%s:/mnt/%s", host, dataset)
+
 			// Mount the dataset.
 			//err = TryMount(dataset, mountPath, "zfs", mountFlags, mountOptions)
-
 			err = TryMount(remotePath, mountPath, "nfs", mountFlags, mountOptions) // TODO: if local we want to bind mount.
 
 			if err != nil {
