@@ -88,9 +88,6 @@ func optionsToOptionString(options ...string) string {
 	return optionString
 }
 
-/*
---exec=on
-*/
 func (d *truenas) setDatasetProperties(dataset string, options ...string) error {
 	args := []string{"dataset", "update"}
 
@@ -112,17 +109,20 @@ func (d *truenas) setDatasetProperties(dataset string, options ...string) error 
 	return nil
 }
 
+// returns "dataset" or "snapshot" depending on the supplied name
+// used to disambiguate admin-tool commands
+func (d *truenas) getDatasetOrSnapshot(dataset string) string {
+	if strings.Contains(dataset, "@") {
+		return "snapshot"
+	}
+
+	return "dataset"
+}
+
 func (d *truenas) datasetExists(dataset string) (bool, error) {
 	//out, err := d.runTool("dataset", "get", "-H", "-o", "name", dataset)
 	//out, err := d.runTool("dataset", "list", "-H", "-o", "name", dataset)
-	var cmd string
-	if strings.Contains(dataset, "@") {
-		cmd = "snapshot"
-	} else {
-		cmd = "dataset"
-	}
-
-	out, err := d.runTool(cmd, "list", "-H", "-o", "name", dataset)
+	out, err := d.runTool(d.getDatasetOrSnapshot(dataset), "list", "-H", "-o", "name", dataset)
 
 	if err != nil {
 		return false, nil
@@ -219,7 +219,7 @@ func (d *truenas) createDataset(dataset string, options ...string) error {
 		args = append(args, "-o", optionString)
 	}
 
-	args = append(args, dataset)
+	args = append(args, "--managedby", tnDefaultSettings["managedby"], "--comments", tnDefaultSettings["comments"], dataset)
 
 	out, err := d.runTool(args...)
 	_ = out
@@ -227,11 +227,12 @@ func (d *truenas) createDataset(dataset string, options ...string) error {
 		return err
 	}
 
-	// TODO: `dataset create` doesn't currently implement error handling! so we need to chec if it worked!
-
-	exists, _ := d.datasetExists(dataset)
-	if !exists {
-		return fmt.Errorf("Failed to createDataset: %s", dataset)
+	// previous versions of the tool didnt' properly handle dataset creation failure
+	if !tnHasErrorResults {
+		exists, _ := d.datasetExists(dataset)
+		if !exists {
+			return fmt.Errorf("Failed to createDataset: %s", dataset)
+		}
 	}
 
 	return nil
@@ -239,8 +240,22 @@ func (d *truenas) createDataset(dataset string, options ...string) error {
 
 func (d *truenas) createNfsShare(dataset string) error {
 	if tnHasShareNfs {
-		args := []string{"share", "nfs", "create"}
-		args = append(args, "--comment", "Managed By Incus", "--maproot-user", "root", "--maproot-group", "root")
+		args := []string{"share", "nfs"}
+		if tnHasNfsUpdateWithCreate {
+			/*
+				`update --create` will create a share if it does not exist, with the supplied props, otherwise
+				it will update the share with the supplied props if the share does not yet have them.
+
+				This allows a share to be created, or even updated, "just-in-time" before mounting, as the tool will first lookup
+				the share's existance, before modifying it, without risking duplicating the share
+
+				This also means that if we add additional flag in the future to the share, they can be applied
+			*/
+			args = append(args, "update", "--create")
+		} else {
+			args = append(args, "create")
+		}
+		args = append(args, "--comment", tnDefaultSettings["comments"], "--maproot-user", "root", "--maproot-group", "root")
 		args = append(args, dataset)
 
 		out, err := d.runTool(args...)
@@ -266,7 +281,7 @@ func (d *truenas) deleteNfsShare(dataset string) error {
 }
 
 func (d *truenas) deleteDataset(dataset string, options ...string) error {
-	args := []string{"dataset", "delete"}
+	args := []string{d.getDatasetOrSnapshot(dataset), "delete"}
 
 	// for _, option := range options {
 	// 	args = append(args, "-o")
@@ -286,7 +301,7 @@ func (d *truenas) deleteDataset(dataset string, options ...string) error {
 func (d *truenas) getDatasetProperty(dataset string, key string) (string, error) {
 
 	//output, err := subprocess.RunCommand("zfs", "get", "-H", "-p", "-o", "value", key, dataset)
-	output, err := d.runTool("dataset", "list", "-H" /*"-p",*/, "-o", key, dataset)
+	output, err := d.runTool(d.getDatasetOrSnapshot(dataset), "list", "-H" /*"-p",*/, "-o", key, dataset)
 
 	if err != nil {
 		return "", err
@@ -322,7 +337,7 @@ func (d *truenas) deleteDatasetRecursive(dataset string) error {
 
 	// Delete the dataset (and any snapshots left).
 	//_, err = subprocess.TryRunCommand("zfs", "destroy", "-r", dataset)
-	out, err := d.runTool("dataset", "delete", "-r", dataset)
+	out, err := d.runTool(d.getDatasetOrSnapshot((dataset)), "delete", "-r", dataset)
 	_ = out
 	if err != nil {
 		return err
