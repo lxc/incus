@@ -52,35 +52,6 @@ type cmdFile struct {
 	flagRecursive bool
 }
 
-func fileGetWrapper(server incus.InstanceServer, inst string, path string) (buf io.ReadCloser, resp *incus.InstanceFileResponse, err error) {
-	// Signal handling
-	chSignal := make(chan os.Signal, 1)
-	signal.Notify(chSignal, os.Interrupt)
-
-	// Operation handling
-	chDone := make(chan bool)
-	go func() {
-		buf, resp, err = server.GetInstanceFile(inst, path)
-		close(chDone)
-	}()
-
-	count := 0
-	for {
-		select {
-		case <-chDone:
-			return buf, resp, err
-		case <-chSignal:
-			count++
-
-			if count == 3 {
-				return nil, nil, fmt.Errorf(i18n.G("User signaled us three times, exiting. The remote operation will keep running"))
-			}
-
-			fmt.Println(i18n.G("Early server side processing of file transfer requests cannot be canceled (interrupt two more times to force)"))
-		}
-	}
-}
-
 func (c *cmdFile) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("file")
