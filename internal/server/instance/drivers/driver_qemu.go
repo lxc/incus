@@ -3392,6 +3392,19 @@ func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.
 	// Setup the bus allocator.
 	bus := qemuNewBus(busName, &conf)
 
+	// Windows doesn't support virtio-iommu.
+	if !strings.Contains(strings.ToLower(d.expandedConfig["image.os"]), "windows") && d.architectureSupportsUEFI(d.architecture) {
+		devBus, devAddr, multi := bus.allocateDirect()
+		iommuOpts := qemuDevOpts{
+			busName:       bus.name,
+			devBus:        devBus,
+			devAddr:       devAddr,
+			multifunction: multi,
+		}
+
+		conf = append(conf, qemuIOMMU(&iommuOpts)...)
+	}
+
 	// Now add the fixed set of devices. The multi-function groups used for these fixed internal devices are
 	// specifically chosen to ensure that we consume exactly 4 PCI bus ports (on PCIe bus). This ensures that
 	// the first user device NIC added will use the 5th PCI bus port and will be consistently named enp5s0

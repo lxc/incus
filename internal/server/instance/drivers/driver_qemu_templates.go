@@ -311,6 +311,19 @@ func qemuCoreInfo() []cfg.Section {
 	}}
 }
 
+func qemuIOMMU(opts *qemuDevOpts) []cfg.Section {
+	entriesOpts := qemuDevEntriesOpts{
+		dev:     *opts,
+		pciName: "virtio-iommu-pci",
+	}
+
+	return []cfg.Section{{
+		Name:    `device "qemu_iommu"`,
+		Comment: "IOMMU driver",
+		Entries: qemuDeviceEntries(&entriesOpts),
+	}}
+}
+
 type qemuSevOpts struct {
 	cbitpos         int
 	reducedPhysBits int
