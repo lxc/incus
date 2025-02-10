@@ -1,6 +1,7 @@
 package drivers
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -140,13 +141,14 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	if vol.contentType == ContentTypeFS && !d.isBlockBacked(vol) {
 		// Create the filesystem dataset.
 		dataset := d.dataset(vol, false)
-		err := d.createDataset(dataset /*, "mountpoint=legacy", "canmount=noauto"*/) // enable share?
+
+		err := d.createDataset(dataset)
 		if err != nil {
 			return err
 		}
 
-		// se: now share it. Ideally, we'd only do this in Mount, and we'd look before we leap.
-		err = d.createNfsShare(dataset /*, "mountpoint=legacy", "canmount=noauto"*/) // enable share?
+		// now share it
+		err = d.createNfsShare(dataset)
 		if err != nil {
 			return err
 		}
@@ -845,6 +847,7 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 			return err
 		}
 
+		// and share the clone.
 		err = d.createNfsShare(dataset)
 		if err != nil {
 			return err
@@ -1537,9 +1540,11 @@ func (d *truenas) deleteVolume(vol Volume, op *operations.Operation) error {
 		}
 
 		if len(clones) > 0 {
+			// Deleted volues do not need shares
+			_ = d.deleteNfsShare(d.dataset(vol, false))
+
 			// Move to the deleted path.
 			//_, err := subprocess.RunCommand("/proc/self/exe", "forkzfs", "--", "rename", d.dataset(vol, false), d.dataset(vol, true))
-			_ = d.deleteNfsShare(d.dataset(vol, false))
 			out, err := d.renameDataset(d.dataset(vol, false), d.dataset(vol, true), false)
 			_ = out
 			if err != nil {
@@ -1842,38 +1847,40 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 		return nil
 	}
 
+	// se: quota props are not implemented yet in Tool
+
 	// Clear the existing quota.
-	for _, property := range []string{"quota", "refquota", "reservation", "refreservation"} {
-		err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("%s=none", property))
-		if err != nil {
-			return err
-		}
-	}
+	// for _, property := range []string{"quota", "refquota", "reservation", "refreservation"} {
+	// 	err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("%s=none", property))
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
-	value := fmt.Sprintf("%d", sizeBytes)
-	if sizeBytes == 0 {
-		return nil
-	}
+	// value := fmt.Sprintf("%d", sizeBytes)
+	// if sizeBytes == 0 {
+	// 	return nil
+	// }
 
-	// Apply the new quota.
-	quotaKey := "quota"
-	reservationKey := "reservation"
-	if util.IsTrue(vol.ExpandedConfig("zfs.use_refquota")) {
-		quotaKey = "refquota"
-		reservationKey = "refreservation"
-	}
+	// // Apply the new quota.
+	// quotaKey := "quota"
+	// reservationKey := "reservation"
+	// if util.IsTrue(vol.ExpandedConfig("zfs.use_refquota")) {
+	// 	quotaKey = "refquota"
+	// 	reservationKey = "refreservation"
+	// }
 
-	err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("%s=%s", quotaKey, value))
-	if err != nil {
-		return err
-	}
+	// err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("%s=%s", quotaKey, value))
+	// if err != nil {
+	// 	return err
+	// }
 
-	if util.IsTrue(vol.ExpandedConfig("zfs.reserve_space")) {
-		err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("%s=%s", reservationKey, value))
-		if err != nil {
-			return err
-		}
-	}
+	// if util.IsTrue(vol.ExpandedConfig("zfs.reserve_space")) {
+	// 	err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("%s=%s", reservationKey, value))
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 }
@@ -1959,17 +1966,19 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 	vols := make(map[string]Volume)
 	_ = vols
 
-	// // Get just filesystem and volume datasets, not snapshots.
-	// // The ZFS driver uses two approaches to indicating block volumes; firstly for VM and image volumes it
-	// // creates both a filesystem dataset and an associated volume ending in zfsBlockVolSuffix.
-	// // However for custom block volumes it does not also end the volume name in zfsBlockVolSuffix (unlike the
-	// // LVM and Ceph drivers), so we must also retrieve the dataset type here and look for "volume" types
-	// // which also indicate this is a block volume.
-	// cmd := exec.Command("zfs", "list", "-H", "-o", "name,type,incus:content_type", "-r", "-t", "filesystem,volume", d.config["zfs.pool_name"])
-	// stdout, err := cmd.StdoutPipe()
-	// if err != nil {
-	// 	return nil, err
-	// }
+	// Get just filesystem and volume datasets, not snapshots.
+	// The ZFS driver uses two approaches to indicating block volumes; firstly for VM and image volumes it
+	// creates both a filesystem dataset and an associated volume ending in zfsBlockVolSuffix.
+	// However for custom block volumes it does not also end the volume name in zfsBlockVolSuffix (unlike the
+	// LVM and Ceph drivers), so we must also retrieve the dataset type here and look for "volume" types
+	// which also indicate this is a block volume.
+	//cmd := exec.Command("zfs", "list", "-H", "-o", "name,type,incus:content_type", "-r", "-t", "filesystem,volume", d.config["zfs.pool_name"])
+
+	// this is using pipes... so i'll just glue it together at the moment
+	out, err := d.runTool("dataset", "list", "-H", "-o", "name,type,incus:content_type", "-r" /*"-t","filesystem,volume",*/, d.config["truenas.dataset"])
+	if err != nil {
+		return nil, err
+	}
 
 	// stderr, err := cmd.StderrPipe()
 	// if err != nil {
@@ -1984,77 +1993,82 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 	// scanner := bufio.NewScanner(stdout)
 	// for scanner.Scan() {
 	// 	line := strings.TrimSpace(scanner.Text())
+	//scanner := bufio.NewScanner(stdout)
+	scanner := bufio.NewScanner(strings.NewReader(out))
 
-	// 	// Splitting fields on tab should be safe as ZFS doesn't appear to allow tabs in dataset names.
-	// 	parts := strings.Split(line, "\t")
-	// 	if len(parts) != 3 {
-	// 		return nil, fmt.Errorf("Unexpected volume line %q", line)
-	// 	}
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
 
-	// 	zfsVolName := parts[0]
-	// 	zfsContentType := parts[1]
-	// 	incusContentType := parts[2]
+		// Splitting fields on tab should be safe as ZFS doesn't appear to allow tabs in dataset names.
+		parts := strings.Split(line, "\t")
+		if len(parts) != 3 {
+			return nil, fmt.Errorf("Unexpected volume line %q", line)
+		}
 
-	// 	var volType VolumeType
-	// 	var volName string
+		zfsVolName := parts[0]
+		zfsContentType := parts[1]
+		incusContentType := parts[2]
 
-	// 	for _, volumeType := range d.Info().VolumeTypes {
-	// 		prefix := fmt.Sprintf("%s/%s/", d.config["zfs.pool_name"], volumeType)
-	// 		if strings.HasPrefix(zfsVolName, prefix) {
-	// 			volType = volumeType
-	// 			volName = strings.TrimPrefix(zfsVolName, prefix)
-	// 		}
-	// 	}
+		var volType VolumeType
+		var volName string
 
-	// 	if volType == "" {
-	// 		d.logger.Debug("Ignoring unrecognised volume type", logger.Ctx{"name": zfsVolName})
-	// 		continue // Ignore unrecognised volume.
-	// 	}
+		for _, volumeType := range d.Info().VolumeTypes {
+			prefix := fmt.Sprintf("%s/%s/", d.config["truenas.dataset"], volumeType)
+			if strings.HasPrefix(zfsVolName, prefix) {
+				volType = volumeType
+				volName = strings.TrimPrefix(zfsVolName, prefix)
+			}
+		}
 
-	// 	// Detect if a volume is block content type using only the dataset type.
-	// 	isBlock := zfsContentType == "volume"
+		if volType == "" {
+			d.logger.Debug("Ignoring unrecognised volume type", logger.Ctx{"name": zfsVolName})
+			continue // Ignore unrecognised volume.
+		}
 
-	// 	if volType == VolumeTypeVM && !isBlock {
-	// 		continue // Ignore VM filesystem volumes as we will just return the VM's block volume.
-	// 	}
+		// Detect if a volume is block content type using only the dataset type.
+		isBlock := zfsContentType == "volume"
 
-	// 	contentType := ContentTypeFS
-	// 	if isBlock {
-	// 		contentType = ContentTypeBlock
-	// 	}
+		if volType == VolumeTypeVM && !isBlock {
+			continue // Ignore VM filesystem volumes as we will just return the VM's block volume.
+		}
 
-	// 	if volType == VolumeTypeCustom && isBlock && strings.HasSuffix(volName, zfsISOVolSuffix) {
-	// 		contentType = ContentTypeISO
-	// 		volName = strings.TrimSuffix(volName, zfsISOVolSuffix)
-	// 	} else if volType == VolumeTypeVM || isBlock {
-	// 		volName = strings.TrimSuffix(volName, zfsBlockVolSuffix)
-	// 	}
+		contentType := ContentTypeFS
+		if isBlock {
+			contentType = ContentTypeBlock
+		}
 
-	// 	// If a new volume has been found, or the volume will replace an existing image filesystem volume
-	// 	// then proceed to add the volume to the map. We allow image volumes to overwrite existing
-	// 	// filesystem volumes of the same name so that for VM images we only return the block content type
-	// 	// volume (so that only the single "logical" volume is returned).
-	// 	existingVol, foundExisting := vols[volName]
-	// 	if !foundExisting || (existingVol.Type() == VolumeTypeImage && existingVol.ContentType() == ContentTypeFS) {
-	// 		v := NewVolume(d, d.name, volType, contentType, volName, make(map[string]string), d.config)
+		if volType == VolumeTypeCustom && isBlock && strings.HasSuffix(volName, zfsISOVolSuffix) {
+			contentType = ContentTypeISO
+			volName = strings.TrimSuffix(volName, zfsISOVolSuffix)
+		} else if volType == VolumeTypeVM || isBlock {
+			volName = strings.TrimSuffix(volName, zfsBlockVolSuffix)
+		}
 
-	// 		if isBlock {
-	// 			// Get correct content type from incus:content_type property.
-	// 			if incusContentType != "-" {
-	// 				v.contentType = ContentType(incusContentType)
-	// 			}
+		// If a new volume has been found, or the volume will replace an existing image filesystem volume
+		// then proceed to add the volume to the map. We allow image volumes to overwrite existing
+		// filesystem volumes of the same name so that for VM images we only return the block content type
+		// volume (so that only the single "logical" volume is returned).
+		existingVol, foundExisting := vols[volName]
+		if !foundExisting || (existingVol.Type() == VolumeTypeImage && existingVol.ContentType() == ContentTypeFS) {
+			v := NewVolume(d, d.name, volType, contentType, volName, make(map[string]string), d.config)
 
-	// 			if v.contentType == ContentTypeBlock {
-	// 				v.SetMountFilesystemProbe(true)
-	// 			}
-	// 		}
+			if isBlock {
+				// Get correct content type from incus:content_type property.
+				if incusContentType != "-" {
+					v.contentType = ContentType(incusContentType)
+				}
 
-	// 		vols[volName] = v
-	// 		continue
-	// 	}
+				if v.contentType == ContentTypeBlock {
+					v.SetMountFilesystemProbe(true)
+				}
+			}
 
-	// 	return nil, fmt.Errorf("Unexpected duplicate volume %q found", volName)
-	// }
+			vols[volName] = v
+			continue
+		}
+
+		return nil, fmt.Errorf("Unexpected duplicate volume %q found", volName)
+	}
 
 	// errMsg, err := io.ReadAll(stderr)
 	// if err != nil {
@@ -2066,13 +2080,12 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 	// 	return nil, fmt.Errorf("Failed getting volume list: %v: %w", strings.TrimSpace(string(errMsg)), err)
 	// }
 
-	// volList := make([]Volume, 0, len(vols))
-	// for _, v := range vols {
-	// 	volList = append(volList, v)
-	// }
+	volList := make([]Volume, 0, len(vols))
+	for _, v := range vols {
+		volList = append(volList, v)
+	}
 
-	//return volList, nil
-	return nil, nil
+	return volList, nil
 }
 
 // // activateVolume activates a ZFS volume if not already active. Returns true if activated, false if not.
@@ -2228,13 +2241,28 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 			remotePath := fmt.Sprintf("%s:/mnt/%s", d.config["truenas.dataset"], dataset)
 			// Mount the dataset.
 			//err = TryMount(dataset, mountPath, "zfs", mountFlags, mountOptions)
-			err = TryMount(remotePath, mountPath, "nfs", mountFlags, mountOptions)
-			_ = mountFlags
-			_ = mountOptions
+
+			err = TryMount(remotePath, mountPath, "nfs", mountFlags, mountOptions) // TODO: if local we want to bind mount.
 
 			if err != nil {
+				// try once more, after re-creating the share.
+				if tnHasNfsUpdateWithCreate && !vol.MountInUse() {
+					// we haven't mounted yet, so update/create the share
+					err = d.createNfsShare(dataset)
+					if err != nil {
+						return err
+					}
+					err = TryMount(remotePath, mountPath, "nfs", mountFlags, mountOptions)
+					if err != nil {
+						return err
+					}
+				}
+			} else {
 				return err
 			}
+
+			_ = mountFlags
+			_ = mountOptions
 
 			d.logger.Debug("Mounted ZFS dataset", logger.Ctx{"volName": vol.name, "dev": dataset, "path": mountPath})
 		}
