@@ -2209,7 +2209,6 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 	mountPath := vol.MountPath()
 
 	// Check if filesystem volume already mounted.
-
 	if vol.contentType == ContentTypeFS && !d.isBlockBacked(vol) {
 		if !linux.IsMountPoint(mountPath) {
 			//err := d.setDatasetProperties(dataset, "mountpoint=legacy", "canmount=noauto")
@@ -2225,9 +2224,11 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 			var volOptions []string
 
 			//props, _ := d.getDatasetProperties(dataset, "atime", "relatime")
+			atime, _ := d.getDatasetProperty(dataset, "atime")
 
-			// if props["atime"] == "off" {
-			// 	volOptions = append(volOptions, "noatime")
+			if atime == "off" || atime == "false" { // bug in admin-tool. remove when fixed.
+				volOptions = append(volOptions, "noatime")
+			}
 			// } else if props["relatime"] == "off" {
 			// 	volOptions = append(volOptions, "strictatime")
 			// }
