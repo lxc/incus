@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-01-24 11:19+0900\n"
+"POT-Creation-Date: 2025-02-10 16:33-0500\n"
 "PO-Revision-Date: 2023-06-16 20:55+0000\n"
 "Last-Translator: Francisco Serrador <fserrador@gmail.com>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/linux-containers/"
@@ -593,12 +593,12 @@ msgstr ""
 msgid "%d (id: %d, online: %v, NUMA node: %v)"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:660
+#: cmd/incus/admin_init_interactive.go:663
 #, fuzzy, c-format
 msgid "%q is not a block device"
 msgstr "%s no es un directorio"
 
-#: cmd/incus/admin_init_interactive.go:797
+#: cmd/incus/admin_init_interactive.go:800
 #, fuzzy, c-format
 msgid "%q is not an IP address"
 msgstr "%s no es un directorio"
@@ -623,12 +623,12 @@ msgstr "%s (%d más)"
 msgid "%s (backend=%q, source=%q)"
 msgstr ""
 
-#: cmd/incus/file.go:1262
+#: cmd/incus/file.go:1245
 #, c-format
 msgid "%s is not a directory"
 msgstr "%s no es un directorio"
 
-#: cmd/incus/file.go:1152
+#: cmd/incus/file.go:1135
 #, fuzzy, c-format
 msgid "'%s' isn't a supported file type"
 msgstr "%s no es un tipo de archivo soportado."
@@ -741,7 +741,7 @@ msgstr ""
 msgid "<remote>: <path>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/file.go:708
+#: cmd/incus/file.go:691
 #, fuzzy
 msgid "<source path>... [<remote>:]<instance>/<path>"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -936,7 +936,7 @@ msgstr ""
 msgid "Address to bind to (default: none)"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:803
+#: cmd/incus/admin_init_interactive.go:806
 msgid "Address to bind to (not including port)"
 msgstr ""
 
@@ -989,7 +989,7 @@ msgstr "El dispostivo ya existe: %s"
 msgid "Aliases:"
 msgstr "Aliases:"
 
-#: cmd/incus/admin_init_interactive.go:223
+#: cmd/incus/admin_init_interactive.go:226
 msgid "All existing data is lost when joining a cluster, continue?"
 msgstr ""
 
@@ -1017,7 +1017,7 @@ msgstr "Arquitectura: %s"
 msgid "Architecture: %v"
 msgstr "Arquitectura: %s"
 
-#: cmd/incus/admin_init_interactive.go:159
+#: cmd/incus/admin_init_interactive.go:162
 msgid "Are you joining an existing cluster?"
 msgstr ""
 
@@ -1276,8 +1276,8 @@ msgstr "Cacheado: %s"
 msgid "Caches:"
 msgstr "Cacheado: %s"
 
-#: cmd/incus/admin_init_interactive.go:144
-#: cmd/incus/admin_init_interactive.go:828
+#: cmd/incus/admin_init_interactive.go:147
+#: cmd/incus/admin_init_interactive.go:831
 #, c-format
 msgid "Can't bind address %q: %w"
 msgstr ""
@@ -1292,7 +1292,7 @@ msgstr ""
 msgid "Can't provide a name for the target image"
 msgstr "No se puede proporcionar un nombre para la imagen de destino"
 
-#: cmd/incus/file.go:621
+#: cmd/incus/file.go:597
 msgid "Can't pull a directory without --recursive"
 msgstr "No se puede jalar un directorio sin - recursivo"
 
@@ -1328,7 +1328,7 @@ msgstr "No se puede especificar un remote diferente para renombrar."
 msgid "Can't specify column L when not clustered"
 msgstr ""
 
-#: cmd/incus/file.go:794
+#: cmd/incus/file.go:777
 msgid "Can't supply uid/gid/mode in recursive mode"
 msgstr ""
 
@@ -1407,7 +1407,7 @@ msgid ""
 "Certificate fingerprint mismatch between certificate token and server %q"
 msgstr ""
 
-#: cmd/incus/admin_init.go:185 cmd/incus/admin_init_interactive.go:207
+#: cmd/incus/admin_init.go:185 cmd/incus/admin_init_interactive.go:210
 #, c-format
 msgid ""
 "Certificate fingerprint mismatch between join token and cluster member %q"
@@ -1427,7 +1427,7 @@ msgstr ""
 msgid "Checking if the daemon is ready (attempt %d)"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:267
+#: cmd/incus/admin_init_interactive.go:270
 #, c-format
 msgid "Choose %s:"
 msgstr ""
@@ -1782,7 +1782,7 @@ msgstr "Certificado de la huella digital: %s"
 msgid "Couldn't find a matching entry"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:672
+#: cmd/incus/admin_init_interactive.go:675
 #, c-format
 msgid "Couldn't statfs %s: %w"
 msgstr ""
@@ -1791,7 +1791,7 @@ msgstr ""
 msgid "Create a cluster group"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:609
+#: cmd/incus/admin_init_interactive.go:612
 #, fuzzy, c-format
 msgid "Create a new %s pool?"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -1814,11 +1814,11 @@ msgstr "Creando el contenedor"
 msgid "Create and start instances from images"
 msgstr ""
 
-#: cmd/incus/file.go:143 cmd/incus/file.go:497 cmd/incus/file.go:717
+#: cmd/incus/file.go:114 cmd/incus/file.go:468 cmd/incus/file.go:700
 msgid "Create any directories necessary"
 msgstr ""
 
-#: cmd/incus/file.go:134 cmd/incus/file.go:135
+#: cmd/incus/file.go:105 cmd/incus/file.go:106
 #, fuzzy
 msgid "Create files and directories in instances"
 msgstr "Creando el contenedor"
@@ -1925,7 +1925,7 @@ msgstr "Creado: %s"
 msgid "Creating %s"
 msgstr "Creando %s"
 
-#: cmd/incus/file.go:282
+#: cmd/incus/file.go:253
 #, fuzzy, c-format
 msgid "Creating %s: %%s"
 msgstr "Creando %s"
@@ -2027,7 +2027,7 @@ msgstr ""
 msgid "Delete custom storage volumes"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/file.go:330 cmd/incus/file.go:331
+#: cmd/incus/file.go:301 cmd/incus/file.go:302
 msgid "Delete files in instances"
 msgstr ""
 
@@ -2160,9 +2160,9 @@ msgstr ""
 #: cmd/incus/config_trust.go:871 cmd/incus/console.go:38 cmd/incus/copy.go:41
 #: cmd/incus/create.go:44 cmd/incus/debug.go:24 cmd/incus/debug.go:45
 #: cmd/incus/delete.go:32 cmd/incus/exec.go:41 cmd/incus/export.go:32
-#: cmd/incus/file.go:88 cmd/incus/file.go:135 cmd/incus/file.go:331
-#: cmd/incus/file.go:413 cmd/incus/file.go:491 cmd/incus/file.go:710
-#: cmd/incus/file.go:1313 cmd/incus/image.go:40 cmd/incus/image.go:148
+#: cmd/incus/file.go:59 cmd/incus/file.go:106 cmd/incus/file.go:302
+#: cmd/incus/file.go:384 cmd/incus/file.go:462 cmd/incus/file.go:693
+#: cmd/incus/file.go:1296 cmd/incus/image.go:40 cmd/incus/image.go:148
 #: cmd/incus/image.go:308 cmd/incus/image.go:363 cmd/incus/image.go:498
 #: cmd/incus/image.go:667 cmd/incus/image.go:924 cmd/incus/image.go:1067
 #: cmd/incus/image.go:1422 cmd/incus/image.go:1506 cmd/incus/image.go:1573
@@ -2376,7 +2376,7 @@ msgstr "El directorio importado no está disponible en esta plataforma"
 msgid "Directory to run the command in (default /root)"
 msgstr ""
 
-#: cmd/incus/file.go:1320
+#: cmd/incus/file.go:1303
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr ""
 
@@ -2461,19 +2461,19 @@ msgid ""
 "  u - CPU usage (in seconds)"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:416
+#: cmd/incus/admin_init_interactive.go:419
 msgid "Do you want to configure a new local storage pool?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:428
+#: cmd/incus/admin_init_interactive.go:431
 msgid "Do you want to configure a new remote storage pool?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:443
+#: cmd/incus/admin_init_interactive.go:446
 msgid "Do you want to configure a new storage pool?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:745
+#: cmd/incus/admin_init_interactive.go:748
 msgid "Do you want to continue without thin provisioning?"
 msgstr ""
 
@@ -2537,12 +2537,6 @@ msgstr "FECHA DE EXPIRACIÓN"
 msgid "EXPIRY DATE"
 msgstr "FECHA DE EXPIRACIÓN"
 
-#: cmd/incus/file.go:79
-msgid ""
-"Early server side processing of file transfer requests cannot be canceled "
-"(interrupt two more times to force)"
-msgstr ""
-
 #: cmd/incus/cluster_group.go:339 cmd/incus/cluster_group.go:340
 msgid "Edit a cluster group"
 msgstr ""
@@ -2551,7 +2545,7 @@ msgstr ""
 msgid "Edit cluster member configurations as YAML"
 msgstr ""
 
-#: cmd/incus/file.go:412 cmd/incus/file.go:413
+#: cmd/incus/file.go:383 cmd/incus/file.go:384
 msgid "Edit files in instances"
 msgstr ""
 
@@ -2704,7 +2698,7 @@ msgstr ""
 msgid "Ephemeral instance"
 msgstr ""
 
-#: cmd/incus/admin_init.go:179 cmd/incus/admin_init_interactive.go:201
+#: cmd/incus/admin_init.go:179 cmd/incus/admin_init_interactive.go:204
 #, fuzzy, c-format
 msgid "Error connecting to existing cluster member %q: %v"
 msgstr "Nombre del Miembro del Cluster"
@@ -2947,12 +2941,12 @@ msgstr ""
 msgid "FQDN"
 msgstr ""
 
-#: cmd/incus/file.go:1577
+#: cmd/incus/file.go:1560
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr ""
 
-#: cmd/incus/file.go:1600
+#: cmd/incus/file.go:1583
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr ""
@@ -2967,12 +2961,12 @@ msgstr "Nombre del Miembro del Cluster"
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/file.go:1627
+#: cmd/incus/file.go:1610
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr ""
 
-#: cmd/incus/file.go:1412
+#: cmd/incus/file.go:1395
 #, fuzzy, c-format
 msgid "Failed connecting to instance SFTP: %w"
 msgstr "Nombre del Miembro del Cluster"
@@ -3002,12 +2996,12 @@ msgstr "Perfil para aplicar al nuevo contenedor"
 msgid "Failed deleting source volume after copy: %w"
 msgstr ""
 
-#: cmd/incus/file.go:1533
+#: cmd/incus/file.go:1516
 #, fuzzy, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/admin_init_interactive.go:469
+#: cmd/incus/admin_init_interactive.go:472
 #, fuzzy, c-format
 msgid "Failed generating trust certificate: %w"
 msgstr "Acepta certificado"
@@ -3042,7 +3036,7 @@ msgstr ""
 msgid "Failed loading storage pool %q: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/file.go:1538
+#: cmd/incus/file.go:1521
 #, fuzzy, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr "Acepta certificado"
@@ -3057,12 +3051,12 @@ msgstr "Acepta certificado"
 msgid "Failed starting command: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/file.go:1438
+#: cmd/incus/file.go:1421
 #, fuzzy, c-format
 msgid "Failed starting sshfs: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/file.go:1565
+#: cmd/incus/file.go:1548
 #, fuzzy, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "Acepta certificado"
@@ -3071,7 +3065,7 @@ msgstr "Acepta certificado"
 msgid "Failed to add remote"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:479
+#: cmd/incus/admin_init_interactive.go:482
 #, fuzzy, c-format
 msgid "Failed to add server cert to cluster: %w"
 msgstr "Acepta certificado"
@@ -3111,7 +3105,7 @@ msgstr "Nombre del Miembro del Cluster"
 msgid "Failed to connect to local daemon: %w"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/admin_init_interactive.go:464
+#: cmd/incus/admin_init_interactive.go:467
 #, fuzzy, c-format
 msgid "Failed to connect to target cluster node %q: %w"
 msgstr "Nombre del Miembro del Cluster"
@@ -3171,7 +3165,7 @@ msgstr ""
 msgid "Failed to join cluster: %w"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/file.go:1550
+#: cmd/incus/file.go:1533
 #, fuzzy, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "Acepta certificado"
@@ -3216,7 +3210,7 @@ msgstr "Acepta certificado"
 msgid "Failed to rename export file: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/admin_init_interactive.go:97
+#: cmd/incus/admin_init_interactive.go:100
 #, fuzzy, c-format
 msgid "Failed to render the config: %w"
 msgstr "Acepta certificado"
@@ -3226,7 +3220,7 @@ msgstr "Acepta certificado"
 msgid "Failed to request dump: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/admin_init_interactive.go:263
+#: cmd/incus/admin_init_interactive.go:266
 #, fuzzy, c-format
 msgid "Failed to retrieve cluster information: %w"
 msgstr "Acepta certificado"
@@ -3254,7 +3248,7 @@ msgid ""
 "Failed to retrieve current server network configuration for project %q: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/admin_init_auto.go:129
+#: cmd/incus/admin_init_auto.go:132
 #, fuzzy, c-format
 msgid "Failed to retrieve list of networks: %w"
 msgstr "Acepta certificado"
@@ -3264,7 +3258,7 @@ msgstr "Acepta certificado"
 msgid "Failed to retrieve list of storage pools: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/admin_init_interactive.go:240
+#: cmd/incus/admin_init_interactive.go:243
 #, fuzzy, c-format
 msgid "Failed to setup trust relationship with cluster: %w"
 msgstr "Nombre del Miembro del Cluster"
@@ -3274,7 +3268,7 @@ msgstr "Nombre del Miembro del Cluster"
 msgid "Failed to update cluster member state: %w"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/file.go:1147
+#: cmd/incus/file.go:1130
 #, c-format
 msgid "Failed to walk path for %s: %s"
 msgstr ""
@@ -3317,7 +3311,7 @@ msgstr "Huella dactilar: %s"
 msgid "Force a particular evacuation action"
 msgstr ""
 
-#: cmd/incus/file.go:144
+#: cmd/incus/file.go:115
 msgid "Force creating files or directories"
 msgstr ""
 
@@ -3325,7 +3319,7 @@ msgstr ""
 msgid "Force delete the project and everything it contains."
 msgstr ""
 
-#: cmd/incus/file.go:334
+#: cmd/incus/file.go:305
 msgid "Force deleting files, directories, and subdirectories"
 msgstr ""
 
@@ -3687,22 +3681,22 @@ msgstr "Aliases:"
 msgid "Hugepages:\n"
 msgstr ""
 
-#: cmd/incus/file.go:1650
+#: cmd/incus/file.go:1633
 #, fuzzy, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr "Copiando la imagen: %s"
 
-#: cmd/incus/file.go:1639
+#: cmd/incus/file.go:1622
 #, fuzzy, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr "Copiando la imagen: %s"
 
-#: cmd/incus/file.go:1462
+#: cmd/incus/file.go:1445
 #, fuzzy, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr "Dispositivo %s añadido a %s"
 
-#: cmd/incus/file.go:1472
+#: cmd/incus/file.go:1455
 #, fuzzy, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "Copiando la imagen: %s"
@@ -3943,11 +3937,11 @@ msgstr "Nombre del contenedor es: %s"
 msgid "Instance description"
 msgstr "Descripción"
 
-#: cmd/incus/file.go:1464
+#: cmd/incus/file.go:1447
 msgid "Instance disconnected"
 msgstr ""
 
-#: cmd/incus/file.go:1641
+#: cmd/incus/file.go:1624
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr ""
@@ -3962,7 +3956,7 @@ msgstr "Nombre del contenedor es obligatorio"
 msgid "Instance name is: %s"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/file.go:1384
+#: cmd/incus/file.go:1367
 msgid "Instance path cannot be used in SSH SFTP listener mode"
 msgstr ""
 
@@ -3980,7 +3974,7 @@ msgstr "Nombre del contenedor es: %s"
 msgid "Instance type"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:132
+#: cmd/incus/admin_init_interactive.go:135
 #, fuzzy
 msgid "Invalid IP address or DNS name"
 msgstr "Nombre del contenedor es: %s"
@@ -4064,12 +4058,12 @@ msgstr ""
 msgid "Invalid instance name: %s"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/file.go:1379
+#: cmd/incus/file.go:1362
 #, fuzzy, c-format
 msgid "Invalid instance path: %q"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/admin_init_interactive.go:178
+#: cmd/incus/admin_init_interactive.go:181
 #, fuzzy, c-format
 msgid "Invalid join token: %w"
 msgstr "Nombre del contenedor es: %s"
@@ -4099,7 +4093,7 @@ msgstr ""
 msgid "Invalid number of arguments"
 msgstr ""
 
-#: cmd/incus/file.go:370
+#: cmd/incus/file.go:341
 #, c-format
 msgid "Invalid path %s"
 msgstr ""
@@ -4131,17 +4125,17 @@ msgstr "Nombre del contenedor es: %s"
 msgid "Invalid sorting type provided"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/file.go:575
+#: cmd/incus/file.go:546
 #, c-format
 msgid "Invalid source %s"
 msgstr ""
 
-#: cmd/incus/file.go:186 cmd/incus/file.go:747
+#: cmd/incus/file.go:157 cmd/incus/file.go:730
 #, c-format
 msgid "Invalid target %s"
 msgstr ""
 
-#: cmd/incus/file.go:172
+#: cmd/incus/file.go:143
 #, fuzzy, c-format
 msgid "Invalid type %q"
 msgstr "Nombre del contenedor es: %s"
@@ -4151,7 +4145,7 @@ msgstr "Nombre del contenedor es: %s"
 msgid "IsSM: %s (%s)"
 msgstr "Cacheado: %s"
 
-#: cmd/incus/admin_init_interactive.go:170
+#: cmd/incus/admin_init_interactive.go:173
 msgid "Joining an existing cluster requires root privileges"
 msgstr ""
 
@@ -5093,12 +5087,12 @@ msgstr "Registro:"
 msgid "Logical router"
 msgstr ""
 
-#: cmd/incus/file.go:1556
+#: cmd/incus/file.go:1539
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr ""
 
-#: cmd/incus/file.go:1558
+#: cmd/incus/file.go:1541
 msgid "Login without username and password"
 msgstr ""
 
@@ -5212,7 +5206,7 @@ msgstr ""
 msgid "Manage devices"
 msgstr ""
 
-#: cmd/incus/file.go:87 cmd/incus/file.go:88
+#: cmd/incus/file.go:58 cmd/incus/file.go:59
 msgid "Manage files in instances"
 msgstr ""
 
@@ -5368,8 +5362,8 @@ msgstr ""
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect \"custom\" "
-"(user created) volumes."
+"Unless specified through a prefix, all volume operations affect "
+"\"custom\" (user created) volumes."
 msgstr ""
 
 #: cmd/incus/remote.go:43 cmd/incus/remote.go:44
@@ -5458,7 +5452,7 @@ msgid ""
 "Minimum level for log messages (only available when using pretty format)"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:697
+#: cmd/incus/admin_init_interactive.go:700
 msgid "Minimum size is 1GiB"
 msgstr ""
 
@@ -5651,7 +5645,7 @@ msgstr ""
 msgid "Missing storage pool name"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/file.go:842
+#: cmd/incus/file.go:825
 #, fuzzy
 msgid "Missing target directory"
 msgstr "%s no es un directorio"
@@ -5691,11 +5685,11 @@ msgstr ""
 msgid "More than one device matches, specify the device name"
 msgstr ""
 
-#: cmd/incus/file.go:542
+#: cmd/incus/file.go:513
 msgid "More than one file to download, but target is not a directory"
 msgstr ""
 
-#: cmd/incus/file.go:1312 cmd/incus/file.go:1313
+#: cmd/incus/file.go:1295 cmd/incus/file.go:1296
 #, fuzzy
 msgid "Mount files from instances"
 msgstr "Aliases:"
@@ -5823,37 +5817,37 @@ msgstr ""
 msgid "Name"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:641
+#: cmd/incus/admin_init_interactive.go:644
 msgid "Name of the CEPHfs volume:"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:623
+#: cmd/incus/admin_init_interactive.go:626
 msgid "Name of the OSD storage pool"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:728
+#: cmd/incus/admin_init_interactive.go:731
 #, c-format
 msgid "Name of the existing %s pool or dataset:"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:617
-#: cmd/incus/admin_init_interactive.go:715
+#: cmd/incus/admin_init_interactive.go:620
+#: cmd/incus/admin_init_interactive.go:718
 msgid "Name of the existing CEPH cluster"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:635
+#: cmd/incus/admin_init_interactive.go:638
 msgid "Name of the existing CEPHfs cluster"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:721
+#: cmd/incus/admin_init_interactive.go:724
 msgid "Name of the existing OSD storage pool"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:310
+#: cmd/incus/admin_init_interactive.go:313
 msgid "Name of the existing bridge or host interface:"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:517
+#: cmd/incus/admin_init_interactive.go:520
 msgid "Name of the new storage pool"
 msgstr ""
 
@@ -5861,7 +5855,7 @@ msgstr ""
 msgid "Name of the project to use for this remote:"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:647
+#: cmd/incus/admin_init_interactive.go:650
 msgid "Name of the shared LVM volume group:"
 msgstr ""
 
@@ -5870,7 +5864,7 @@ msgstr ""
 msgid "Name of the storage backend (%s):"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/admin_init_interactive.go:555
+#: cmd/incus/admin_init_interactive.go:558
 #, c-format
 msgid "Name of the storage backend to use (%s)"
 msgstr ""
@@ -6040,7 +6034,7 @@ msgstr ""
 msgid "New key/value to apply to a specific device"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:494
+#: cmd/incus/admin_init_interactive.go:497
 #, c-format
 msgid "No %s storage backends available"
 msgstr ""
@@ -6079,7 +6073,7 @@ msgstr ""
 msgid "No matching rule(s) found"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:491
+#: cmd/incus/admin_init_interactive.go:494
 msgid "No storage backends available"
 msgstr ""
 
@@ -6115,7 +6109,7 @@ msgid ""
 "be used with the 'dir' backend"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:629
+#: cmd/incus/admin_init_interactive.go:632
 msgid "Number of placement groups"
 msgstr ""
 
@@ -6266,7 +6260,7 @@ msgstr ""
 msgid "Password for %s: "
 msgstr "Contraseña admin para %s:"
 
-#: cmd/incus/file.go:1526
+#: cmd/incus/file.go:1509
 #, fuzzy, c-format
 msgid "Password rejected for %q"
 msgstr "Contraseña admin para %s:"
@@ -6276,7 +6270,7 @@ msgstr "Contraseña admin para %s:"
 msgid "Path %s doesn't exist"
 msgstr "El dispostivo ya existe: %s"
 
-#: cmd/incus/admin_init_interactive.go:658
+#: cmd/incus/admin_init_interactive.go:661
 msgid "Path to the existing block device:"
 msgstr ""
 
@@ -6301,7 +6295,7 @@ msgstr ""
 msgid "Please provide an alternate server address (empty to abort):"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:185
+#: cmd/incus/admin_init_interactive.go:188
 #, fuzzy
 msgid "Please provide join token:"
 msgstr "Nombre del Miembro del Cluster"
@@ -6319,7 +6313,7 @@ msgstr ""
 msgid "Port description"
 msgstr "Descripción"
 
-#: cmd/incus/admin_init_interactive.go:816
+#: cmd/incus/admin_init_interactive.go:819
 msgid "Port to bind to"
 msgstr ""
 
@@ -6353,7 +6347,7 @@ msgstr ""
 msgid "Press CTRL-C to exit"
 msgstr ""
 
-#: cmd/incus/file.go:1442
+#: cmd/incus/file.go:1425
 msgid "Press ctrl+c to finish"
 msgstr ""
 
@@ -6545,20 +6539,20 @@ msgstr ""
 msgid "Publishing instance: %s"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/file.go:490 cmd/incus/file.go:491
+#: cmd/incus/file.go:461 cmd/incus/file.go:462
 msgid "Pull files from instances"
 msgstr ""
 
-#: cmd/incus/file.go:657 cmd/incus/file.go:1094
+#: cmd/incus/file.go:633 cmd/incus/file.go:1077
 #, c-format
 msgid "Pulling %s from %s: %%s"
 msgstr ""
 
-#: cmd/incus/file.go:709 cmd/incus/file.go:710
+#: cmd/incus/file.go:692 cmd/incus/file.go:693
 msgid "Push files into instances"
 msgstr ""
 
-#: cmd/incus/file.go:939 cmd/incus/file.go:1194
+#: cmd/incus/file.go:922 cmd/incus/file.go:1177
 #, c-format
 msgid "Pushing %s to %s: %%s"
 msgstr ""
@@ -6625,7 +6619,7 @@ msgid ""
 "database records."
 msgstr ""
 
-#: cmd/incus/file.go:498 cmd/incus/file.go:716
+#: cmd/incus/file.go:469 cmd/incus/file.go:699
 msgid "Recursively transfer files"
 msgstr ""
 
@@ -6986,17 +6980,17 @@ msgstr ""
 msgid "SR-IOV information:"
 msgstr ""
 
-#: cmd/incus/file.go:1553
+#: cmd/incus/file.go:1536
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr ""
 
-#: cmd/incus/file.go:1570
+#: cmd/incus/file.go:1553
 #, c-format
 msgid "SSH client connected %q"
 msgstr ""
 
-#: cmd/incus/file.go:1571
+#: cmd/incus/file.go:1554
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr ""
@@ -7113,7 +7107,7 @@ msgstr "Perfil %s creado"
 msgid "Set a cluster member's configuration keys"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/file.go:1321
+#: cmd/incus/file.go:1304
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr ""
 
@@ -7333,27 +7327,27 @@ msgstr ""
 msgid "Set the URL for the remote"
 msgstr ""
 
-#: cmd/incus/file.go:145
+#: cmd/incus/file.go:116
 msgid "Set the file's gid on create"
 msgstr ""
 
-#: cmd/incus/file.go:719
+#: cmd/incus/file.go:702
 msgid "Set the file's gid on push"
 msgstr ""
 
-#: cmd/incus/file.go:147
+#: cmd/incus/file.go:118
 msgid "Set the file's perms on create"
 msgstr ""
 
-#: cmd/incus/file.go:720
+#: cmd/incus/file.go:703
 msgid "Set the file's perms on push"
 msgstr ""
 
-#: cmd/incus/file.go:146
+#: cmd/incus/file.go:117
 msgid "Set the file's uid on create"
 msgstr ""
 
-#: cmd/incus/file.go:718
+#: cmd/incus/file.go:701
 msgid "Set the file's uid on push"
 msgstr ""
 
@@ -7429,7 +7423,7 @@ msgstr ""
 msgid "Set the key as an instance property"
 msgstr ""
 
-#: cmd/incus/file.go:1319
+#: cmd/incus/file.go:1302
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr ""
 
@@ -7666,7 +7660,7 @@ msgstr ""
 msgid "Show warning"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:686
+#: cmd/incus/admin_init_interactive.go:689
 msgid "Size in GiB of the new loop device"
 msgstr ""
 
@@ -7901,7 +7895,7 @@ msgstr ""
 msgid "Switch the default remote"
 msgstr ""
 
-#: cmd/incus/file.go:176
+#: cmd/incus/file.go:147
 msgid "Symlink target path can only be used for type \"symlink\""
 msgstr ""
 
@@ -7934,11 +7928,11 @@ msgstr ""
 msgid "Taken at"
 msgstr ""
 
-#: cmd/incus/file.go:1372
+#: cmd/incus/file.go:1355
 msgid "Target path and --listen flag cannot be used together"
 msgstr ""
 
-#: cmd/incus/file.go:1366
+#: cmd/incus/file.go:1349
 msgid "Target path must be a directory"
 msgstr ""
 
@@ -7957,7 +7951,7 @@ msgid ""
 "  shutdown, especially if a non-standard timeout was configured for them."
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:532
+#: cmd/incus/admin_init_interactive.go:535
 #, c-format
 msgid "The %s storage pool already exists"
 msgstr ""
@@ -7966,11 +7960,11 @@ msgstr ""
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:751
+#: cmd/incus/admin_init_interactive.go:754
 msgid "The LVM thin provisioning tools couldn't be found on the system"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:739
+#: cmd/incus/admin_init_interactive.go:742
 msgid ""
 "The LVM thin provisioning tools couldn't be found.\n"
 "LVM can still be used without thin provisioning but this will disable over-"
@@ -8172,18 +8166,18 @@ msgstr ""
 msgid "The requested backend '%s' isn't supported by init"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:316
+#: cmd/incus/admin_init_interactive.go:319
 msgid "The requested interface doesn't exist. Please choose another one."
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:353
+#: cmd/incus/admin_init_interactive.go:356
 #, c-format
 msgid ""
 "The requested network bridge \"%s\" already exists. Please choose another "
 "name."
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:528
+#: cmd/incus/admin_init_interactive.go:531
 #, c-format
 msgid ""
 "The requested storage pool \"%s\" already exists. Please choose another name."
@@ -8206,7 +8200,7 @@ msgstr ""
 msgid "The specified device doesn't match the network"
 msgstr ""
 
-#: cmd/incus/file.go:148
+#: cmd/incus/file.go:119
 msgid "The type to create (file, symlink, or directory)"
 msgstr ""
 
@@ -8405,12 +8399,12 @@ msgstr ""
 msgid "UUID: %v"
 msgstr ""
 
-#: cmd/incus/admin_init.go:194 cmd/incus/admin_init_interactive.go:216
+#: cmd/incus/admin_init.go:194 cmd/incus/admin_init_interactive.go:219
 #, fuzzy
 msgid "Unable to connect to any of the cluster members specified in join token"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/file.go:446
+#: cmd/incus/file.go:417
 #, c-format
 msgid "Unable to create a temporary file: %v"
 msgstr ""
@@ -8424,7 +8418,7 @@ msgstr ""
 msgid "Unknown certificate type %q"
 msgstr ""
 
-#: cmd/incus/file.go:1593
+#: cmd/incus/file.go:1576
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr ""
@@ -8451,7 +8445,7 @@ msgstr ""
 msgid "Unknown console type %q"
 msgstr ""
 
-#: cmd/incus/file.go:1134
+#: cmd/incus/file.go:1117
 #, c-format
 msgid "Unknown file type '%s'"
 msgstr ""
@@ -8710,7 +8704,7 @@ msgstr ""
 msgid "User ID to run the command as (default 0)"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:229
+#: cmd/incus/admin_init_interactive.go:232
 #, fuzzy
 msgid "User aborted configuration"
 msgstr "Perfil %s creado"
@@ -8718,11 +8712,6 @@ msgstr "Perfil %s creado"
 #: cmd/incus/cluster.go:732 cmd/incus/delete.go:53 cmd/incus/project.go:234
 #: cmd/incus/snapshot.go:257
 msgid "User aborted delete operation"
-msgstr ""
-
-#: cmd/incus/file.go:76
-msgid ""
-"User signaled us three times, exiting. The remote operation will keep running"
 msgstr ""
 
 #: cmd/incus/info.go:168 cmd/incus/info.go:277
@@ -8810,7 +8799,7 @@ msgstr ""
 msgid "Wait for the operation to complete"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:768
+#: cmd/incus/admin_init_interactive.go:771
 msgid ""
 "We detected that you are running inside an unprivileged container.\n"
 "This means that unless you manually configured your host otherwise,\n"
@@ -8827,27 +8816,27 @@ msgstr ""
 msgid "Web server running at: %s"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:151
+#: cmd/incus/admin_init_interactive.go:154
 msgid "What IP address or DNS name should be used to reach this server?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:365
+#: cmd/incus/admin_init_interactive.go:368
 msgid "What IPv4 address should be used?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:386
+#: cmd/incus/admin_init_interactive.go:389
 msgid "What IPv6 address should be used?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:117
+#: cmd/incus/admin_init_interactive.go:120
 msgid "What member name should be used to identify this server in the cluster?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:346
+#: cmd/incus/admin_init_interactive.go:349
 msgid "What should the new bridge be called?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:565
+#: cmd/incus/admin_init_interactive.go:568
 msgid "Where should this storage pool store its data?"
 msgstr ""
 
@@ -8871,15 +8860,15 @@ msgid ""
 "re-initialize the instance if a different image or --empty is not specified."
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:77
+#: cmd/incus/admin_init_interactive.go:80
 msgid "Would you like a YAML \"init\" preseed to be printed?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:843
+#: cmd/incus/admin_init_interactive.go:846
 msgid "Would you like stale cached images to be updated automatically?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:789
+#: cmd/incus/admin_init_interactive.go:792
 #, fuzzy
 msgid "Would you like the server to be available over the network?"
 msgstr "El directorio importado no está disponible en esta plataforma"
@@ -8888,11 +8877,11 @@ msgstr "El directorio importado no está disponible en esta plataforma"
 msgid "Would you like those to be recovered?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:377
+#: cmd/incus/admin_init_interactive.go:380
 msgid "Would you like to NAT IPv4 traffic on your bridge?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:398
+#: cmd/incus/admin_init_interactive.go:401
 msgid "Would you like to NAT IPv6 traffic on your bridge?"
 msgstr ""
 
@@ -8900,20 +8889,20 @@ msgstr ""
 msgid "Would you like to continue with scanning for lost volumes?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:580
+#: cmd/incus/admin_init_interactive.go:583
 #, c-format
 msgid "Would you like to create a new btrfs subvolume under %s?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:296
+#: cmd/incus/admin_init_interactive.go:299
 msgid "Would you like to create a new local network bridge?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:596
+#: cmd/incus/admin_init_interactive.go:599
 msgid "Would you like to create a new zfs dataset under rpool/incus?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:777
+#: cmd/incus/admin_init_interactive.go:780
 msgid "Would you like to have your containers share their parent's allocation?"
 msgstr ""
 
@@ -8921,17 +8910,17 @@ msgstr ""
 msgid "Would you like to recover another storage pool?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:303
+#: cmd/incus/admin_init_interactive.go:306
 msgid "Would you like to use an existing bridge or host interface?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:652
+#: cmd/incus/admin_init_interactive.go:655
 msgid ""
 "Would you like to use an existing empty block device (e.g. a disk or "
 "partition)?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:107
+#: cmd/incus/admin_init_interactive.go:110
 msgid "Would you like to use clustering?"
 msgstr ""
 
@@ -9261,28 +9250,28 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "[<remote>:]<instance> [target] [--instance-only] [--optimized-storage]"
 msgstr ""
 
-#: cmd/incus/file.go:411
+#: cmd/incus/file.go:382
 #, fuzzy
 msgid "[<remote>:]<instance>/<path>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/file.go:133
+#: cmd/incus/file.go:104
 #, fuzzy
 msgid "[<remote>:]<instance>/<path> [<symlink target path>]"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/file.go:328
+#: cmd/incus/file.go:299
 #, fuzzy
 msgid "[<remote>:]<instance>/<path> [[<remote>:]<instance>/<path>...]"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/file.go:489
+#: cmd/incus/file.go:460
 #, fuzzy
 msgid ""
 "[<remote>:]<instance>/<path> [[<remote>:]<instance>/<path>...] <target path>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/file.go:1311
+#: cmd/incus/file.go:1294
 #, fuzzy
 msgid "[<remote>:]<instance>[/<path>] [<target path>]"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -9926,7 +9915,7 @@ msgid ""
 "    Download a backup tarball of the u1 instance."
 msgstr ""
 
-#: cmd/incus/file.go:137
+#: cmd/incus/file.go:108
 msgid ""
 "incus file create foo/bar\n"
 "\t   To create a file /bar in the foo instance.\n"
@@ -9934,20 +9923,20 @@ msgid ""
 "\t   To create a symlink /bar in instance foo whose target is baz."
 msgstr ""
 
-#: cmd/incus/file.go:1315
+#: cmd/incus/file.go:1298
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory."
 msgstr ""
 
-#: cmd/incus/file.go:493
+#: cmd/incus/file.go:464
 msgid ""
 "incus file pull foo/etc/hosts .\n"
 "   To pull /etc/hosts from the instance and write it to the current "
 "directory."
 msgstr ""
 
-#: cmd/incus/file.go:712
+#: cmd/incus/file.go:695
 msgid ""
 "incus file push /etc/hosts foo/etc/hosts\n"
 "   To push /etc/hosts into the instance \"foo\"."
@@ -10391,16 +10380,16 @@ msgstr ""
 msgid "space used"
 msgstr ""
 
-#: cmd/incus/file.go:1482
+#: cmd/incus/file.go:1465
 msgid "sshfs has stopped"
 msgstr ""
 
-#: cmd/incus/file.go:1441
+#: cmd/incus/file.go:1424
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr ""
 
-#: cmd/incus/file.go:1394
+#: cmd/incus/file.go:1377
 msgid "sshfs not found. Try SSH SFTP mode using the --listen flag"
 msgstr ""
 
