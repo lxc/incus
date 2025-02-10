@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-01-24 11:19+0900\n"
-"PO-Revision-Date: 2025-02-09 14:44+0000\n"
+"PO-Revision-Date: 2025-02-10 02:36+0000\n"
 "Last-Translator: Loge X <wazolm5643@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/incus/cli/zh_Hans/>\n"
@@ -1545,7 +1545,7 @@ msgstr "已启用集群"
 #: cmd/incus/storage_volume.go:1567 cmd/incus/storage_volume.go:2565
 #: cmd/incus/top.go:64 cmd/incus/warning.go:94
 msgid "Columns"
-msgstr ""
+msgstr "列"
 
 #: cmd/incus/main.go:99
 msgid "Command line client for Incus"
@@ -2360,60 +2360,60 @@ msgstr "运行命令的目录（默认/根目录）"
 
 #: cmd/incus/file.go:1320
 msgid "Disable authentication when using SSH SFTP listener"
-msgstr ""
+msgstr "使用 SSH SFTP 监听器时禁用身份验证"
 
 #: cmd/incus/exec.go:62
 msgid "Disable pseudo-terminal allocation"
-msgstr ""
+msgstr "禁用伪终端分配"
 
 #: cmd/incus/exec.go:63
 msgid "Disable stdin (reads from /dev/null)"
-msgstr ""
+msgstr "禁用标准输入（从 /dev/null 读取）"
 
 #: cmd/incus/info.go:575
 #, c-format
 msgid "Disk %d:"
-msgstr ""
+msgstr "磁盘 %d："
 
 #: cmd/incus/info.go:702
 msgid "Disk usage:"
-msgstr ""
+msgstr "磁盘使用情况："
 
 #: cmd/incus/info.go:570
 msgid "Disk:"
-msgstr ""
+msgstr "磁盘："
 
 #: cmd/incus/info.go:573
 msgid "Disks:"
-msgstr ""
+msgstr "磁盘："
 
 #: cmd/incus/cluster.go:152
 msgid "Display clusters from all projects"
-msgstr ""
+msgstr "显示所有项目的集群"
 
 #: cmd/incus/image.go:1095
 msgid "Display images from all projects"
-msgstr ""
+msgstr "显示所有项目的镜像"
 
 #: cmd/incus/list.go:138 cmd/incus/top.go:63
 msgid "Display instances from all projects"
-msgstr ""
+msgstr "显示所有项目的实例"
 
 #: cmd/incus/network_zone.go:114
 msgid "Display network zones from all projects"
-msgstr ""
+msgstr "显示所有项目的网络区域"
 
 #: cmd/incus/profile.go:735
 msgid "Display profiles from all projects"
-msgstr ""
+msgstr "显示所有项目的配置文件"
 
 #: cmd/incus/top.go:42
 msgid "Display resource usage info per instance"
-msgstr ""
+msgstr "显示每个实例的资源使用信息"
 
 #: cmd/incus/storage_bucket.go:509
 msgid "Display storage pool buckets from all projects"
-msgstr ""
+msgstr "显示所有项目的存储池桶"
 
 #: cmd/incus/top.go:43
 msgid ""
@@ -2436,67 +2436,84 @@ msgid ""
 "  n - Instance name\n"
 "  u - CPU usage (in seconds)"
 msgstr ""
+"显示每个实例的 CPU 使用率、内存使用率和磁盘使用率\n"
+"\n"
+"默认列布局：numD\n"
+"\n"
+"== 列 ==\n"
+"-c 选项采用逗号分隔的参数列表，\n"
+"这些参数控制用表格或压缩格式显示时输出哪些实例属性。\n"
+"\n"
+"列参数是预定义的简写字符（见下文）。\n"
+"连续简写字符之间的逗号是可选的。\n"
+"\n"
+"列简写字符：\n"
+"  D - 磁盘使用率\n"
+"  e - 项目名称\n"
+"  m - 内存使用率\n"
+"  n - 实例名称\n"
+"  u - CPU 使用率（秒）"
 
 #: cmd/incus/admin_init_interactive.go:416
 msgid "Do you want to configure a new local storage pool?"
-msgstr ""
+msgstr "是否要配置新的本地存储池？"
 
 #: cmd/incus/admin_init_interactive.go:428
 msgid "Do you want to configure a new remote storage pool?"
-msgstr ""
+msgstr "是否要配置新的远程存储池？"
 
 #: cmd/incus/admin_init_interactive.go:443
 msgid "Do you want to configure a new storage pool?"
-msgstr ""
+msgstr "是否要配置新的存储池？"
 
 #: cmd/incus/admin_init_interactive.go:745
 msgid "Do you want to continue without thin provisioning?"
-msgstr ""
+msgstr "您想在不进行精简置备的情况下继续吗？"
 
 #: cmd/incus/cluster.go:698
 msgid "Don't require user confirmation for using --force"
-msgstr ""
+msgstr "使用 --force 不需要用户确认"
 
 #: cmd/incus/main.go:121
 msgid "Don't show progress information"
-msgstr ""
+msgstr "不显示进度信息"
 
 #: cmd/incus/network.go:1006
 msgid "Down delay"
-msgstr ""
+msgstr "下行延迟"
 
 #: cmd/incus/info.go:380
 #, c-format
 msgid "Driver: %v"
-msgstr ""
+msgstr "驱动：%v"
 
 #: cmd/incus/info.go:133 cmd/incus/info.go:219
 #, c-format
 msgid "Driver: %v (%v)"
-msgstr ""
+msgstr "驱动：%v（%v）"
 
 #: cmd/incus/admin_init.go:57
 msgid "Dump YAML config to stdout"
-msgstr ""
+msgstr "将 YAML 配置转储到标准输出"
 
 #: cmd/incus/copy.go:65
 msgid ""
 "During incremental copy, exclude source snapshots earlier than latest target "
 "snapshot"
-msgstr ""
+msgstr "在增量复制期间，排除早于最新目标快照的源快照"
 
 #: cmd/incus/storage_volume.go:371
 msgid ""
 "During refresh, exclude source snapshots earlier than latest target snapshot"
-msgstr ""
+msgstr "在刷新期间，排除早于最新目标快照的源快照"
 
 #: cmd/incus/network_zone.go:934
 msgid "ENTRIES"
-msgstr ""
+msgstr "条目"
 
 #: cmd/incus/list.go:896
 msgid "EPHEMERAL"
-msgstr ""
+msgstr "短暂的"
 
 #: cmd/incus/admin_recover.go:153
 #, c-format
@@ -2506,7 +2523,7 @@ msgstr ""
 #: cmd/incus/cluster.go:1117 cmd/incus/config_trust.go:634
 #: cmd/incus/snapshot.go:341 cmd/incus/storage_volume.go:2671
 msgid "EXPIRES AT"
-msgstr ""
+msgstr "过期时间"
 
 #: cmd/incus/config_trust.go:444
 msgid "EXPIRY DATE"
