@@ -1,61 +1,3 @@
-// package drivers
-
-// type truenas struct {
-//     common
-// }
-
-// var driverLoaded bool
-// var tnaVersion string
-
-// func (d *truenas) Info() Info {
-// 	info := Info{
-// 		Name:                         "truenas",
-// 		Version:                      tnaVersion,
-// 		DefaultVMBlockFilesystemSize: deviceConfig.DefaultVMBlockFilesystemSize,
-// 		OptimizedImages:              true,
-// 		OptimizedBackups:             true,
-// 		PreservesInodes:              true,
-// 		Remote:                       true,
-// 		VolumeTypes:                  []VolumeType{VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
-// 		VolumeMultiNode:              true,
-// 		BlockBacking:                 false,
-// 		RunningCopyFreeze:            false,
-// 		DirectIO:                     false,
-// 		MountedRoot:                  false,
-// 		Buckets:                      false,
-// 	}
-
-// 	return info
-// }
-
-// func (d *truenas) load() error {
-//     if driverLoaded {
-//         return nil
-//     }
-
-//     // Get the version information.
-//     if tnaVersion == "" {
-//         version, err := d.version()
-//         if err != nil {
-//             return err
-//         }
-
-//         tnaVersion = version
-//     }
-
-//     driverLoaded = true
-//     return err
-// }
-
-// func (d *truenas) version() (string, error) {
-// 	out, err = subprocess.RunCommand("truenas-admin", "version")
-// 	if err == nil {
-// 		return strings.TrimSpace(string(out)), nil
-// 	}
-
-// 	return "", fmt.Errorf("Could not determine TrueNAS driver version (truenas-admin was missing)")
-// }
-
 package drivers
 
 import (
@@ -82,19 +24,25 @@ var tnVersion string
 var tnLoaded bool
 
 // TODO: these flags are not needed once we stop using earlier versions.
-var tnHasLoginFlags bool         // 0.1.1
-var tnHasShareNfs bool           // 0.1.2
-var tnHasUpdateShares bool       // 0.1.4
-var tnHasNfsDeleteByDataset bool // 0.1.6
+var tnHasLoginFlags bool          // 0.1.1
+var tnHasShareNfs bool            // 0.1.2
+var tnHasUpdateShares bool        // 0.1.4
+var tnHasNfsDeleteByDataset bool  // 0.1.6
+var tnHasNfsUpdateWithCreate bool // 0.1.7
+var tnHasErrorResults bool        // 0.1.8
 
 var tnDefaultSettings = map[string]string{
-	//"relatime":   "on",
+	"atime": "off", //"relatime": "on",
 	//"mountpoint": "legacy",
-	//"setuid":     "on",
+	//"setuid":  "on",
 	"exec": "on",
-	//"devices":    "on",
-	//"acltype":    "posixacl",
-	//"xattr":      "sa",
+	//"devices": "on",
+	"acltype": "posix", //"acltype": "posixacl",
+	"aclmode": "discard",
+	//"xattr":      "sa", 			// xattr doesn't seem able to be set via API
+	//"share_type": "nfs",
+	"comments":  "Managed by Incus.TrueNAS", // these are set in createDataset
+	"managedby": "incus.truenas",
 }
 
 type truenas struct {
@@ -127,10 +75,12 @@ func (d *truenas) initVersionAndCapabilities() error {
 	}
 
 	// Decide whether we can use features added by a specific version
-	tnHasLoginFlags = d.isVersionGE(*ourVer, "0.1.1")         // login flags (api-key, url, key-file)
-	tnHasShareNfs = d.isVersionGE(*ourVer, "0.1.2")           // create/list/delete NFS shares
-	tnHasUpdateShares = d.isVersionGE(*ourVer, "0.1.4")       // can update-shares when renaming datasets
-	tnHasNfsDeleteByDataset = d.isVersionGE(*ourVer, "0.1.6") // can delete shares by dataset
+	tnHasLoginFlags = d.isVersionGE(*ourVer, "0.1.1")          // login flags (api-key, url, key-file)
+	tnHasShareNfs = d.isVersionGE(*ourVer, "0.1.2")            // create/list/delete NFS shares
+	tnHasUpdateShares = d.isVersionGE(*ourVer, "0.1.4")        // can update-shares when renaming datasets
+	tnHasNfsDeleteByDataset = d.isVersionGE(*ourVer, "0.1.6")  // can delete shares by dataset
+	tnHasNfsUpdateWithCreate = d.isVersionGE(*ourVer, "0.1.7") // can create shares with update
+	tnHasErrorResults = d.isVersionGE(*ourVer, "0.1.8")        // actually returns errors on failure
 
 	return nil
 }
@@ -196,7 +146,7 @@ func (d *truenas) Info() Info {
 // Accepts warnOnExistingPolicyApplyError argument, if true will warn rather than fail if applying current policy
 // to an existing dataset fails.
 func (d truenas) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
-	args := make([]string, 0, len(zfsDefaultSettings))
+	args := make([]string, 0, len(tnDefaultSettings))
 	for k, v := range tnDefaultSettings {
 		args = append(args, fmt.Sprintf("%s=%s", k, v))
 	}
@@ -216,7 +166,7 @@ func (d truenas) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) erro
 
 	for _, dataset := range d.initialDatasets() {
 		//properties := []string{"mountpoint=legacy"}
-		properties := []string{"exec=off"}
+		properties := []string{}
 		// if slices.Contains([]string{"virtual-machines", "deleted/virtual-machines"}, dataset) {
 		// 	properties = append(properties, "volmode=none")
 		// }
@@ -250,6 +200,11 @@ func (d truenas) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) erro
 // FillConfig populates the storage pool's configuration file with the default values.
 func (d *truenas) FillConfig() error {
 
+	// map back. for legacy.
+	if d.config["truenas.dataset"] != "" && d.config["source"] == "" {
+		d.config["source"] = d.config["truenas.dataset"]
+	}
+
 	// set host url
 	if d.config["truenas.url"] == "" && d.config["truenas.host"] != "" {
 		d.config["truenas.url"] = fmt.Sprintf("wss://%s/api/current", d.config["truenas.host"])
@@ -262,40 +217,50 @@ func (d *truenas) FillConfig() error {
 // WARNING: The Create() function cannot rely on any of the struct attributes being set.
 func (d *truenas) Create() error {
 
+	// Store the provided source as we are likely to be mangling it.
+	d.config["volatile.initial_source"] = d.config["source"]
+
 	err := d.FillConfig()
 
-	exists, err := d.datasetExists(d.config["source"])
+	if d.config["source"] == "" || filepath.IsAbs(d.config["source"]) {
+		return fmt.Errorf(`TrueNAS Driver requires "source" to be specified using the format: <remote pool>[[/<remote dataset>]...][/]`)
+	}
+
+	// a pool... means we create a dataset in the root
+	if !strings.Contains(d.config["source"], "/") {
+		d.config["source"] += "/"
+	}
+
+	// a trailing slash means use the storage pool name as the dataset
+	if strings.HasSuffix(d.config["source"], "/") {
+		d.config["source"] += d.name
+	}
+
+	// legacy stores source in truenas.dataset
+	d.config["truenas.dataset"] = d.config["source"]
+
+	// create pool dataset
+	exists, err := d.datasetExists(d.config["truenas.dataset"])
 	if err != nil {
 		return err
 	}
 
 	if !exists {
-		return fmt.Errorf(`Provided source: %s, does not exist on TrueNAS host`, d.config["source"])
-	}
-
-	d.config["truenas.dataset"] = d.config["source"] + "/" + d.name
-
-	// Handle a dataset
-	exists, err = d.datasetExists(d.config["truenas.dataset"])
-	if err != nil {
-		return err
-	}
-
-	if !exists {
-		err := d.createDataset(d.config["truenas.dataset"])
+		err = d.createDataset(d.config["source"])
+		if err != nil {
+			return fmt.Errorf("Failed to create storgage pool on TrueNAS host: %s", d.config["source"])
+		}
+	} else {
+		// Confirm that the existing pool/dataset is all empty.
+		datasets, err := d.getDatasets(d.config["truenas.dataset"], "all")
 		if err != nil {
 			return err
 		}
-	}
 
-	// Confirm that the existing pool/dataset is all empty.
-	datasets, err := d.getDatasets(d.config["truenas.dataset"], "all")
-	if err != nil {
-		return err
-	}
+		if len(datasets) > 0 {
+			return fmt.Errorf(`Remote TrueNAS dataset isn't empty: %s`, d.config["truenas.dataset"])
+		}
 
-	if len(datasets) > 0 {
-		return fmt.Errorf(`Provided remote TrueNAS dataset isn't empty (%s)`, d.config["truenas.dataset"])
 	}
 
 	// Setup revert in case of problems
