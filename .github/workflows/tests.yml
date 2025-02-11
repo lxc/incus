@@ -267,6 +267,7 @@ jobs:
             libsqlite3-dev \
             libtool \
             libudev-dev \
+            linux-modules-extra-$(uname -r) \
             make \
             pkg-config\
             acl \
