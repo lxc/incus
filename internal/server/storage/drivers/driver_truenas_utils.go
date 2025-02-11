@@ -1,19 +1,14 @@
 package drivers
 
 import (
-	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/lxc/incus/v6/shared/api"
-	"github.com/lxc/incus/v6/shared/logger"
-	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/subprocess"
-	"github.com/lxc/incus/v6/shared/util"
 )
 
 const (
@@ -301,7 +296,7 @@ func (d *truenas) deleteDataset(dataset string, options ...string) error {
 func (d *truenas) getDatasetProperty(dataset string, key string) (string, error) {
 
 	//output, err := subprocess.RunCommand("zfs", "get", "-H", "-p", "-o", "value", key, dataset)
-	output, err := d.runTool(d.getDatasetOrSnapshot(dataset), "list", "-H" /*"-p",*/, "-o", key, dataset)
+	output, err := d.runTool(d.getDatasetOrSnapshot(dataset), "list", "-H", "-p", "-o", key, dataset)
 
 	if err != nil {
 		return "", err
@@ -376,110 +371,6 @@ func (d *truenas) deleteDatasetRecursive(dataset string) error {
 	return nil
 }
 
-// activateVolume activates a ZFS volume if not already active. Returns true if activated, false if not.
-func (d *truenas) activateVolume(vol Volume) (bool, error) {
-	if !IsContentBlock(vol.contentType) && !vol.IsBlockBacked() {
-		return false, nil // Nothing to do for non-block or non-block backed volumes.
-	}
-
-	reverter := revert.New()
-	defer reverter.Fail()
-
-	dataset := d.dataset(vol, false)
-
-	// Check if already active.
-	current, err := d.getDatasetProperty(dataset, "volmode")
-	if err != nil {
-		return false, err
-	}
-
-	if current != "dev" {
-		// For block backed volumes, we make their associated device appear.
-		err = d.setDatasetProperties(dataset, "volmode=dev")
-		if err != nil {
-			return false, err
-		}
-
-		reverter.Add(func() { _ = d.setDatasetProperties(dataset, fmt.Sprintf("volmode=%s", current)) })
-
-		// Wait up to 30 seconds for the device to appear.
-		ctx, cancel := context.WithTimeout(d.state.ShutdownCtx, 30*time.Second)
-		defer cancel()
-
-		_, err := d.tryGetVolumeDiskPathFromDataset(ctx, dataset)
-		if err != nil {
-			return false, fmt.Errorf("Failed to activate volume: %v", err)
-		}
-
-		d.logger.Debug("Activated ZFS volume", logger.Ctx{"volName": vol.Name(), "dev": dataset})
-
-		reverter.Success()
-		return true, nil
-	}
-
-	return false, nil
-}
-
-// deactivateVolume deactivates a ZFS volume if activate. Returns true if deactivated, false if not.
-func (d *truenas) deactivateVolume(vol Volume) (bool, error) {
-	if vol.contentType != ContentTypeBlock && !vol.IsBlockBacked() {
-		return false, nil // Nothing to do for non-block and non-block backed volumes.
-	}
-
-	dataset := d.dataset(vol, false)
-
-	// Check if currently active.
-	current, err := d.getDatasetProperty(dataset, "volmode")
-	if err != nil {
-		return false, err
-	}
-
-	if current == "dev" {
-		devPath, err := d.GetVolumeDiskPath(vol)
-		if err != nil {
-			return false, fmt.Errorf("Failed locating zvol for deactivation: %w", err)
-		}
-
-		// We cannot wait longer than the operationlock.TimeoutShutdown to avoid continuing
-		// the unmount process beyond the ongoing request.
-		waitDuration := time.Minute * 5
-		waitUntil := time.Now().Add(waitDuration)
-		i := 0
-		for {
-			// Sometimes it takes multiple attempts for ZFS to actually apply this.
-			err = d.setDatasetProperties(dataset, "volmode=none")
-			if err != nil {
-				return false, err
-			}
-
-			if !util.PathExists(devPath) {
-				d.logger.Debug("Deactivated ZFS volume", logger.Ctx{"volName": vol.name, "dev": dataset})
-				break
-			}
-
-			if time.Now().After(waitUntil) {
-				return false, fmt.Errorf("Failed to deactivate zvol after %v", waitDuration)
-			}
-
-			// Wait for ZFS a chance to flush and udev to remove the device path.
-			d.logger.Debug("Waiting for ZFS volume to deactivate", logger.Ctx{"volName": vol.name, "dev": dataset, "path": devPath, "attempt": i})
-
-			if i <= 5 {
-				// Retry more quickly early on.
-				time.Sleep(time.Second * time.Duration(i))
-			} else {
-				time.Sleep(time.Second * time.Duration(5))
-			}
-
-			i++
-		}
-
-		return true, nil
-	}
-
-	return false, nil
-}
-
 func (d *truenas) version() (string, error) {
 	out, err := subprocess.RunCommand(tnToolName, "version")
 	if err == nil {
@@ -538,7 +429,7 @@ func (d *truenas) createVolume(dataset string, size int64, options ...string) er
 
 func (d *truenas) getClones(dataset string) ([]string, error) {
 	//out, err := subprocess.RunCommand("zfs", "get", "-H", "-p", "-r", "-o", "value", "clones", dataset)
-	out, err := d.runTool("snapshot", "list", "-H", "-r", "-o", "clones", dataset)
+	out, err := d.runTool("snapshot", "list", "-H", "-p", "-r", "-o", "clones", dataset)
 
 	if err != nil {
 		return nil, err
