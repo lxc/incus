@@ -30,7 +30,7 @@ do_copy() {
   incus storage volume set "${source_pool}" container/c1 user.foo=main
 
   # Set size to check this is supported during copy.
-  incus config device set c1 root size=50MiB
+  incus config device set c1 root size=200MiB
 
   targetPoolFlag=
   if [ -n "${target_pool}" ]; then

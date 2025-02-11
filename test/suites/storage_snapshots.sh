@@ -18,7 +18,11 @@ test_storage_volume_snapshots() {
   storage_pool2="${storage_pool}2"
   storage_volume="${storage_pool}-vol"
 
-  incus storage create "$storage_pool" "$incus_backend"
+  if [ "${incus_backend}" = "linstor" ]; then
+      incus storage create "$storage_pool" "$incus_backend" linstor.resource_group.place_count=1
+  else
+      incus storage create "$storage_pool" "$incus_backend"
+  fi
   incus storage volume create "${storage_pool}" "${storage_volume}"
   incus launch testimage c1 -s "${storage_pool}"
   incus storage volume attach "${storage_pool}" "${storage_volume}" c1 /mnt
