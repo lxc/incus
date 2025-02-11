@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/lxc/incus/v6/internal/migration"
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
+	localMigration "github.com/lxc/incus/v6/internal/server/migration"
 	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
@@ -246,4 +248,38 @@ func (d *linstor) Unmount() (bool, error) {
 // Update applies any driver changes required from a configuration change.
 func (d *linstor) Update(changedConfig map[string]string) error {
 	return ErrNotSupported
+}
+
+// MigrationTypes returns the type of transfer methods to be used when doing migrations between pools in preference order.
+func (d *linstor) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []localMigration.Type {
+	if !clusterMove || storageMove {
+		return []localMigration.Type{d.rsyncMigrationType(contentType)}
+	}
+
+	var rsyncTransportType migration.MigrationFSType
+	var rsyncFeatures []string
+
+	// Do not pass compression argument to rsync if the associated
+	// config key, that is rsync.compression, is set to false.
+	if util.IsFalse(d.Config()["rsync.compression"]) {
+		rsyncFeatures = []string{"xattrs", "delete", "bidirectional"}
+	} else {
+		rsyncFeatures = []string{"xattrs", "delete", "compress", "bidirectional"}
+	}
+
+	if IsContentBlock(contentType) {
+		rsyncTransportType = migration.MigrationFSType_BLOCK_AND_RSYNC
+	} else {
+		rsyncTransportType = migration.MigrationFSType_RSYNC
+	}
+
+	return []localMigration.Type{
+		{
+			FSType: migration.MigrationFSType_LINSTOR,
+		},
+		{
+			FSType:   rsyncTransportType,
+			Features: rsyncFeatures,
+		},
+	}
 }
