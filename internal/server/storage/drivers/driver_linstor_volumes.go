@@ -773,3 +773,129 @@ func (d *linstor) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation
 
 	return ourUnmount, nil
 }
+
+// UpdateVolume applies config changes to the volume.
+func (d *linstor) UpdateVolume(vol Volume, changedConfig map[string]string) error {
+	newSize, sizeChanged := changedConfig["size"]
+	if sizeChanged {
+		err := d.SetVolumeQuota(vol, newSize, false, nil)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// SetVolumeQuota applies a size limit on volume.
+// Does nothing if supplied with an empty/zero size.
+func (d *linstor) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op *operations.Operation) error {
+	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name()})
+	l.Debug("Setting volume quota")
+
+	// Convert to bytes.
+	sizeBytes, err := units.ParseByteSizeString(size)
+	if err != nil {
+		return err
+	}
+
+	// Do nothing if size isn't specified.
+	if sizeBytes <= 0 {
+		return nil
+	}
+
+	// Make the volume available locally.
+	err = d.makeVolumeAvailable(vol)
+	if err != nil {
+		return err
+	}
+
+	// Get the device path.
+	devPath, err := d.getLinstorDevPath(vol)
+	if err != nil {
+		return err
+	}
+
+	// LVM and ZFS (LINSTOR's backends) round up the final block device size to the next extent. Because of
+	// this, we cannot simply get the volume size from the OS. We must fetch the size from LINSTOR.
+	oldSizeBytes, err := d.getVolumeSize(vol)
+	if err != nil {
+		return fmt.Errorf("Error getting current size: %w", err)
+	}
+
+	// Do nothing if volume is already specified size (+/- 512 bytes).
+	if oldSizeBytes+512 > sizeBytes && oldSizeBytes-512 < sizeBytes {
+		return nil
+	}
+
+	inUse := vol.MountInUse()
+
+	// Resize filesystem if needed.
+	if vol.contentType == ContentTypeFS {
+		fsType := vol.ConfigBlockFilesystem()
+
+		if sizeBytes < oldSizeBytes {
+			if !filesystemTypeCanBeShrunk(fsType) {
+				return fmt.Errorf("Filesystem %q cannot be shrunk: %w", fsType, ErrCannotBeShrunk)
+			}
+
+			if inUse {
+				return ErrInUse // We don't allow online shrinking of filesystem volumes.
+			}
+
+			// Shrink filesystem first. Pass allowUnsafeResize to allow disabling of filesystem
+			// resize safety checks.
+			err = shrinkFileSystem(fsType, devPath, vol, sizeBytes, allowUnsafeResize)
+			if err != nil {
+				return err
+			}
+
+			// Shrink the block device.
+			err = d.resizeVolume(vol, sizeBytes)
+			if err != nil {
+				return err
+			}
+		} else if sizeBytes > oldSizeBytes {
+			// Grow block device first.
+			err = d.resizeVolume(vol, sizeBytes)
+			if err != nil {
+				return err
+			}
+
+			// Grow the filesystem to fill block device.
+			err = growFileSystem(fsType, devPath, vol)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		// Only perform pre-resize checks if we are not in "unsafe" mode.
+		// In unsafe mode we expect the caller to know what they are doing and understand the risks.
+		if !allowUnsafeResize {
+			if sizeBytes < oldSizeBytes {
+				return fmt.Errorf("Block volumes cannot be shrunk: %w", ErrCannotBeShrunk)
+			}
+
+			if inUse {
+				return ErrInUse // We don't allow online resizing of block volumes.
+			}
+		}
+
+		// Resize block device.
+		err = d.resizeVolume(vol, sizeBytes)
+		if err != nil {
+			return err
+		}
+
+		// Move the VM GPT alt header to end of disk if needed (not needed in unsafe resize mode as it is
+		// expected the caller will do all necessary post resize actions themselves).
+		if vol.IsVMBlock() && !allowUnsafeResize {
+			err = d.moveGPTAltHeader(devPath)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}

@@ -472,3 +472,60 @@ func (d *linstor) createResourceFromSnapshot(snapVol Volume, vol Volume) error {
 	rev.Success()
 	return nil
 }
+
+// resizeVolume resizes a volume definition. This function does not resize any filesystem inside the volume.
+func (d *linstor) resizeVolume(vol Volume, sizeBytes int64) error {
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	resourceDefinitionName, err := d.getResourceDefinitionName(vol)
+	if err != nil {
+		return err
+	}
+
+	volumeIndex := 0
+
+	// For VM volumes, the associated filesystem volume is a second volume on the same LINSTOR resource.
+	if vol.volType == VolumeTypeVM && vol.contentType == ContentTypeFS {
+		volumeIndex = 1
+	}
+
+	// Resize the volume definition.
+	err = linstor.Client.ResourceDefinitions.ModifyVolumeDefinition(context.TODO(), resourceDefinitionName, volumeIndex, linstorClient.VolumeDefinitionModify{
+		SizeKib: uint64(sizeBytes) / 1024,
+	})
+	if err != nil {
+		return fmt.Errorf("Unable to resize volume definition: %w", err)
+	}
+
+	return nil
+}
+func (d *linstor) getVolumeSize(vol Volume) (int64, error) {
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return 0, err
+	}
+
+	resourceDefinitionName, err := d.getResourceDefinitionName(vol)
+	if err != nil {
+		return 0, err
+	}
+
+	// Get the volume definitions.
+	volumeDefinitions, err := linstor.Client.ResourceDefinitions.GetVolumeDefinitions(context.TODO(), resourceDefinitionName)
+	if err != nil {
+		return 0, fmt.Errorf("Unable to get volume definition: %w", err)
+	}
+
+	volumeIndex := 0
+	if len(volumeDefinitions) == 2 {
+		// For VM volumes, the associated filesystem volume is a second volume on the same LINSTOR resource.
+		if (vol.volType == VolumeTypeVM || vol.volType == VolumeTypeImage) && vol.contentType == ContentTypeFS {
+			volumeIndex = 1
+		}
+	}
+
+	return int64(volumeDefinitions[volumeIndex].SizeKib * 1024), nil
+}
