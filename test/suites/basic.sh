@@ -305,7 +305,7 @@ test_basic_usage() {
   # Test activateifneeded/shutdown
   INCUS_ACTIVATION_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_ACTIVATION_DIR}"
-  spawn_incus "${INCUS_ACTIVATION_DIR}" true
+  LINSTOR_PREFIX_OVERRIDE=incus2-volume- spawn_incus "${INCUS_ACTIVATION_DIR}" true
   (
     set -e
     # shellcheck disable=SC2030
