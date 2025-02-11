@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-02-10 16:33-0500\n"
-"PO-Revision-Date: 2025-02-10 02:36+0000\n"
+"PO-Revision-Date: 2025-02-11 13:55+0000\n"
 "Last-Translator: Loge X <wazolm5643@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/incus/cli/zh_Hans/>\n"
@@ -2725,17 +2725,17 @@ msgstr "连接到现有集群成员 %q 时出错：%v"
 #: cmd/incus/utils_properties.go:206
 #, c-format
 msgid "Error creating decoder: %v"
-msgstr ""
+msgstr "创建解码器时出错：%v"
 
 #: cmd/incus/utils_properties.go:211
 #, c-format
 msgid "Error decoding data: %v"
-msgstr ""
+msgstr "解码数据时出错：%v"
 
 #: cmd/incus/publish.go:245 cmd/incus/utils.go:217
 #, c-format
 msgid "Error retrieving aliases: %w"
-msgstr ""
+msgstr "检索别名时出错：%w"
 
 #: cmd/incus/cluster.go:566 cmd/incus/cluster_group.go:1031
 #: cmd/incus/config.go:641 cmd/incus/config.go:673 cmd/incus/network.go:1563
@@ -2748,17 +2748,17 @@ msgstr ""
 #: cmd/incus/storage_volume.go:2095
 #, c-format
 msgid "Error setting properties: %v"
-msgstr ""
+msgstr "设置属性时出错：%v"
 
 #: cmd/incus/console_windows.go:27
 #, c-format
 msgid "Error setting term size %s"
-msgstr ""
+msgstr "设置术语大小 %s 时出错"
 
 #: cmd/incus/config.go:635 cmd/incus/config.go:667
 #, c-format
 msgid "Error unsetting properties: %v"
-msgstr ""
+msgstr "取消设置属性时出错：%v"
 
 #: cmd/incus/cluster.go:560 cmd/incus/cluster_group.go:1025
 #: cmd/incus/network.go:1557 cmd/incus/network_acl.go:546
@@ -2770,39 +2770,39 @@ msgstr ""
 #: cmd/incus/storage_volume.go:2089
 #, c-format
 msgid "Error unsetting property: %v"
-msgstr ""
+msgstr "取消设置属性时出错：%v"
 
 #: cmd/incus/config_template.go:253
 #, c-format
 msgid "Error updating template file: %s"
-msgstr ""
+msgstr "更新模板文件时出错：%s"
 
 #: cmd/incus/main.go:352
 #, c-format
 msgid "Error while executing alias expansion: %s\n"
-msgstr ""
+msgstr "执行别名扩展时出错：%s\n"
 
 #: cmd/incus/main.go:355
 #, c-format
 msgid "Error: %v\n"
-msgstr ""
+msgstr "错误：%v\n"
 
 #: cmd/incus/cluster.go:1452 cmd/incus/cluster.go:1453
 msgid "Evacuate cluster member"
-msgstr ""
+msgstr "解散集群成员"
 
 #: cmd/incus/cluster.go:1548
 #, c-format
 msgid "Evacuating cluster member: %s"
-msgstr ""
+msgstr "正在解散集群成员：%s"
 
 #: cmd/incus/monitor.go:51
 msgid "Event type to listen for"
-msgstr ""
+msgstr "要监听的事件类型"
 
 #: cmd/incus/admin_sql.go:29
 msgid "Execute a SQL query against the local or global database"
-msgstr ""
+msgstr "对本地或全局数据库执行 SQL 查询"
 
 #: cmd/incus/admin_sql.go:30
 msgid ""
@@ -2832,10 +2832,31 @@ msgid ""
 "as a\n"
 "  set of database queries to fix some data inconsistency."
 msgstr ""
+"对本地或全局数据库执行 SQL 查询\n"
+"\n"
+"  "
+"本地数据库专门用于您命令所针对的集群成员，并包含成员特定数据（如成员网络地址"
+"）。\n"
+"\n"
+"  全局数据库对集群中所有成员通用，并包含集群特定数据（如配置文件、容器等）。"
+"\n"
+"\n"
+"  如果您运行的是非集群服务器也同样适用，因为该实例等同于一个单成员集群。\n"
+"\n"
+"  如果 <query> 是特殊值“-”，则从标准输入读取查询。\n"
+"\n"
+"  如果 <query> 是特殊值“.dump”，则该命令返回给定数据库的 SQL 文本转储。\n"
+"\n"
+"  如果 <query> 是特殊值“.schema”，则该命令返回给定数据库的 SQL 文本模式。\n"
+"\n"
+"  此内部命令主要用于调试和灾难恢复。\n"
+"  "
+"开发团队有时会以数据库查询的形式向用户提供修补程序，以修复一些数据不一致的问"
+"题。"
 
 #: cmd/incus/exec.go:40
 msgid "Execute commands in instances"
-msgstr ""
+msgstr "在实例中执行命令"
 
 #: cmd/incus/exec.go:41
 msgid ""
@@ -2851,34 +2872,42 @@ msgid ""
 "Mode defaults to non-interactive, interactive mode is selected if both stdin "
 "AND stdout are terminals (stderr is ignored)."
 msgstr ""
+"在实例中执行命令\n"
+"\n"
+"该命令直接使用 exec 执行，因此不存在 shell 模式（变量、文件重定向等）。\n"
+"如果需要 shell 环境，您需要执行 shell 可执行文件，并将 shell "
+"命令作为参数传递，例如：\n"
+"\n"
+"  incus exec <instance> -- sh -c \"cd /tmp && pwd\"\n"
+"默认为非交互式模式，如果标准输入和输出都是终端，则选择交互式模式（不考虑 "
+"stderr）。"
 
 #: cmd/incus/utils_properties.go:95
 #, c-format
 msgid "Expected a struct, got a %v"
-msgstr ""
+msgstr "需要结构体，已有 %v"
 
 #: cmd/incus/info.go:831 cmd/incus/info.go:882 cmd/incus/storage_volume.go:1486
 #: cmd/incus/storage_volume.go:1536
 msgid "Expires at"
-msgstr ""
+msgstr "过期时间"
 
 #: cmd/incus/image.go:1005
 #, c-format
 msgid "Expires: %s"
-msgstr ""
+msgstr "过期：%s"
 
 #: cmd/incus/image.go:1007
 msgid "Expires: never"
-msgstr ""
+msgstr "过期：永不"
 
 #: cmd/incus/debug.go:44
-#, fuzzy
 msgid "Export a virtual machine's memory state"
-msgstr "查询虚拟机镜像"
+msgstr "导出虚拟机内存状态"
 
 #: cmd/incus/image.go:497
 msgid "Export and download images"
-msgstr ""
+msgstr "导出并下载镜像"
 
 #: cmd/incus/image.go:498
 msgid ""
@@ -2886,26 +2915,29 @@ msgid ""
 "\n"
 "The output target is optional and defaults to the working directory."
 msgstr ""
+"导出并下载镜像\n"
+"\n"
+"输出目标可选，默认为工作目录。"
 
 #: cmd/incus/storage_volume.go:2981 cmd/incus/storage_volume.go:2982
 msgid "Export custom storage volume"
-msgstr ""
+msgstr "导出自定义存储卷"
 
 #: cmd/incus/export.go:31
 msgid "Export instance backups"
-msgstr ""
+msgstr "导出实例备份"
 
 #: cmd/incus/export.go:32
 msgid "Export instances as backup tarballs."
-msgstr ""
+msgstr "将实例导出为备份 tar 包。"
 
 #: cmd/incus/storage_bucket.go:1425
 msgid "Export storage bucket"
-msgstr ""
+msgstr "导出存储桶"
 
 #: cmd/incus/storage_bucket.go:1426
 msgid "Export storage buckets as tarball."
-msgstr ""
+msgstr "将存储桶导出为 tar 包。"
 
 #: cmd/incus/debug.go:45
 msgid ""
@@ -2913,379 +2945,381 @@ msgid ""
 "file.\n"
 "\t\tThis can be useful for debugging or analysis purposes."
 msgstr ""
+"将正在运行的虚拟机当前内存状态导出到转储文件中。\n"
+"\t\t可用于调试或分析目的。"
 
 #: cmd/incus/storage_volume.go:2985
 msgid "Export the volume without its snapshots"
-msgstr ""
+msgstr "导出不带快照的卷"
 
 #: cmd/incus/storage_bucket.go:1544
 #, c-format
 msgid "Exporting backup of storage bucket: %s"
-msgstr ""
+msgstr "正在导出存储桶备份：%s"
 
 #: cmd/incus/export.go:151 cmd/incus/storage_volume.go:3114
 #, c-format
 msgid "Exporting the backup: %s"
-msgstr ""
+msgstr "导出备份：%s"
 
 #: cmd/incus/image.go:573
 #, c-format
 msgid "Exporting the image: %s"
-msgstr ""
+msgstr "正在导出镜像：%s"
 
 #: cmd/incus/cluster.go:179
 msgid "FAILURE DOMAIN"
-msgstr ""
+msgstr "故障域"
 
 #: cmd/incus/config_template.go:343
 msgid "FILENAME"
-msgstr ""
+msgstr "文件名"
 
 #: cmd/incus/config_trust.go:441 cmd/incus/image.go:1122
 #: cmd/incus/image.go:1123 cmd/incus/image_alias.go:249
 msgid "FINGERPRINT"
-msgstr ""
+msgstr "指纹"
 
 #: cmd/incus/warning.go:216
 msgid "FIRST SEEN"
-msgstr ""
+msgstr "首次发现"
 
 #: cmd/incus/info.go:683
 msgid "FQDN"
-msgstr ""
+msgstr "FQDN"
 
 #: cmd/incus/file.go:1560 cmd/incus/file.go:1577
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
-msgstr ""
+msgstr "与客户端 %q 的 SSH 握手失败：%v"
 
 #: cmd/incus/file.go:1583 cmd/incus/file.go:1600
 #, c-format
 msgid "Failed accepting channel client %q: %v"
-msgstr ""
+msgstr "接受通道客户端 %q 失败：%v"
 
 #: cmd/incus/utils.go:356
 #, c-format
 msgid "Failed checking instance exists \"%s:%s\": %w"
-msgstr ""
+msgstr "检查实例是否存在“%s:%s”失败：%w"
 
 #: cmd/incus/utils.go:348
 #, c-format
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
-msgstr ""
+msgstr "检查实例快照是否存在“%s:%s”失败：%w"
 
 #: cmd/incus/file.go:1610 cmd/incus/file.go:1627
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
-msgstr ""
+msgstr "连接到客户端 %q 的实例 SFTP 失败：%v"
 
 #: cmd/incus/file.go:1395 cmd/incus/file.go:1412
 #, c-format
 msgid "Failed connecting to instance SFTP: %w"
-msgstr ""
+msgstr "连接到实例 SFTP 失败：%w"
 
 #: cmd/incus/admin_waitready.go:61
 #, c-format
 msgid "Failed connecting to the daemon (attempt %d): %v"
-msgstr ""
+msgstr "连接到守护进程失败（第 %d 次尝试）：%v"
 
 #: cmd/incus/config_trust.go:143
 #, c-format
 msgid "Failed converting token operation to certificate add token: %w"
-msgstr ""
+msgstr "将令牌操作转换为证书添加令牌失败：%w"
 
 #: cmd/incus/cluster.go:1046
 #, c-format
 msgid "Failed converting token operation to join token: %w"
-msgstr ""
+msgstr "将令牌操作转换为加入令牌失败：%w"
 
 #: cmd/incus/delete.go:154
 #, c-format
 msgid "Failed deleting instance %q in project %q: %w"
-msgstr ""
+msgstr "在项目 %q 中删除实例 %q 失败：%w"
 
 #: cmd/incus/storage_volume.go:559
 #, c-format
 msgid "Failed deleting source volume after copy: %w"
-msgstr ""
+msgstr "复制后删除源卷失败：%w"
 
 #: cmd/incus/file.go:1516 cmd/incus/file.go:1533
 #, c-format
 msgid "Failed generating SSH host key: %w"
-msgstr ""
+msgstr "生成 SSH 主机密钥失败：%w"
 
 #: cmd/incus/admin_init_interactive.go:472
 #: cmd/incus/admin_init_interactive.go:469
 #, c-format
 msgid "Failed generating trust certificate: %w"
-msgstr ""
+msgstr "生成信任证书失败：%w"
 
 #: cmd/incus/admin_recover.go:60
 #, c-format
 msgid "Failed getting existing storage pools: %w"
-msgstr ""
+msgstr "获取现有存储池失败：%w"
 
 #: cmd/incus/network_peer.go:449
 #, c-format
 msgid "Failed getting peer's status: %w"
-msgstr ""
+msgstr "获取对等体状态失败：%w"
 
 #: cmd/incus/admin_recover.go:250
 #, c-format
 msgid "Failed import request: %w"
-msgstr ""
+msgstr "导入请求失败：%w"
 
 #: cmd/incus/create.go:195
 #, c-format
 msgid "Failed loading network %q: %w"
-msgstr ""
+msgstr "加载网络 %q 失败：%w"
 
 #: cmd/incus/create.go:336
 #, c-format
 msgid "Failed loading profile %q for device override: %w"
-msgstr ""
+msgstr "加载覆盖设备的配置文件 %q 失败：%w"
 
 #: cmd/incus/create.go:257
 #, c-format
 msgid "Failed loading storage pool %q: %w"
-msgstr ""
+msgstr "加载存储池 %q 失败：%w"
 
 #: cmd/incus/file.go:1521 cmd/incus/file.go:1538
 #, c-format
 msgid "Failed parsing SSH host key: %w"
-msgstr ""
+msgstr "解析 SSH 主机密钥失败：%w"
 
 #: cmd/incus/admin_recover.go:196
 #, c-format
 msgid "Failed parsing validation response: %w"
-msgstr ""
+msgstr "解析验证响应失败：%w"
 
 #: cmd/incus/console.go:369
 #, c-format
 msgid "Failed starting command: %w"
-msgstr ""
+msgstr "启动命令失败：%w"
 
 #: cmd/incus/file.go:1421 cmd/incus/file.go:1438
 #, c-format
 msgid "Failed starting sshfs: %w"
-msgstr ""
+msgstr "启动 sshfs 失败：%w"
 
 #: cmd/incus/file.go:1548 cmd/incus/file.go:1565
 #, c-format
 msgid "Failed to accept incoming connection: %w"
-msgstr ""
+msgstr "接受传入连接失败：%w"
 
 #: cmd/incus/remote.go:209
 msgid "Failed to add remote"
-msgstr ""
+msgstr "添加远程服务器失败"
 
 #: cmd/incus/admin_init_interactive.go:482
 #: cmd/incus/admin_init_interactive.go:479
 #, c-format
 msgid "Failed to add server cert to cluster: %w"
-msgstr ""
+msgstr "无法将服务器证书添加到集群：%w"
 
 #: cmd/incus/admin_waitready.go:76
 #, c-format
 msgid "Failed to check if the daemon is ready (attempt %d): %v"
-msgstr ""
+msgstr "无法检查守护进程是否已就绪（第 %d 次尝试）：%v"
 
 #: cmd/incus/export.go:188
 #, c-format
 msgid "Failed to close export file: %w"
-msgstr ""
+msgstr "关闭导出文件失败：%w"
 
 #: cmd/incus/remote.go:260
 #, c-format
 msgid "Failed to close server cert file %q: %w"
-msgstr ""
+msgstr "关闭服务器证书文件 %q 失败：%w"
 
 #: cmd/incus/cluster.go:855 cmd/incus/cluster.go:860
 #, c-format
 msgid "Failed to configure cluster: %w"
-msgstr ""
+msgstr "配置集群失败：%w"
 
 #: cmd/incus/move.go:261
 #, c-format
 msgid "Failed to connect to cluster member: %w"
-msgstr ""
+msgstr "无法连接到集群成员：%w"
 
 #: cmd/incus/admin_init.go:105
 #, c-format
 msgid "Failed to connect to get server info: %w"
-msgstr ""
+msgstr "无法连接以获取服务器信息：%w"
 
 #: cmd/incus/admin_init.go:100
 #, c-format
 msgid "Failed to connect to local daemon: %w"
-msgstr ""
+msgstr "无法连接到本地守护进程：%w"
 
 #: cmd/incus/admin_init_interactive.go:467
 #: cmd/incus/admin_init_interactive.go:464
 #, c-format
 msgid "Failed to connect to target cluster node %q: %w"
-msgstr ""
+msgstr "无法连接到目标集群节点 %q：%w"
 
 #: cmd/incus/remote.go:250
 #, c-format
 msgid "Failed to create %q: %w"
-msgstr ""
+msgstr "创建 %q 失败：%w"
 
 #: cmd/incus/utils.go:190
 #, c-format
 msgid "Failed to create alias %s: %w"
-msgstr ""
+msgstr "创建别名 %s 失败：%w"
 
 #: cmd/incus/storage_bucket.go:1479
 #, c-format
 msgid "Failed to create backup: %v"
-msgstr ""
+msgstr "创建备份失败：%v"
 
 #: cmd/incus/remote.go:275
 #, c-format
 msgid "Failed to create certificate: %w"
-msgstr ""
+msgstr "创建证书失败：%w"
 
 #: cmd/incus/storage_volume.go:3049
 #, c-format
 msgid "Failed to create storage volume backup: %w"
-msgstr ""
+msgstr "创建存储卷备份失败：%w"
 
 #: cmd/incus/move.go:226
 #, c-format
 msgid "Failed to delete original instance after copying it: %w"
-msgstr ""
+msgstr "复制后删除原始实例失败：%w"
 
 #: cmd/incus/debug.go:88
 #, c-format
 msgid "Failed to dump instance memory: %w"
-msgstr ""
+msgstr "转储实例内存失败：%w"
 
 #: cmd/incus/storage_bucket.go:1558
 #, c-format
 msgid "Failed to fetch storage bucket backup: %w"
-msgstr ""
+msgstr "获取存储桶备份失败：%w"
 
 #: cmd/incus/storage_volume.go:3128
 #, c-format
 msgid "Failed to fetch storage volume backup file: %w"
-msgstr ""
+msgstr "获取存储卷备份文件失败：%w"
 
 #: cmd/incus/remote.go:282
 #, c-format
 msgid "Failed to find project: %w"
-msgstr ""
+msgstr "找不到项目：%w"
 
 #: cmd/incus/admin_init.go:215 cmd/incus/admin_init.go:220
 #, c-format
 msgid "Failed to join cluster: %w"
-msgstr ""
+msgstr "加入集群失败：%w"
 
 #: cmd/incus/file.go:1533 cmd/incus/file.go:1550
 #, c-format
 msgid "Failed to listen for connection: %w"
-msgstr ""
+msgstr "监听连接失败：%w"
 
 #: cmd/incus/main.go:402 cmd/incus/main_aliases.go:222
 #, c-format
 msgid "Failed to load configuration: %s"
-msgstr ""
+msgstr "加载配置失败：%s"
 
 #: cmd/incus/admin_sql.go:118
 #, c-format
 msgid "Failed to parse dump response: %w"
-msgstr ""
+msgstr "解析转储响应失败：%w"
 
 #: cmd/incus/cluster.go:1513
 #, c-format
 msgid "Failed to parse servers: %w"
-msgstr ""
+msgstr "解析服务器失败：%w"
 
 #: cmd/incus/admin_init_preseed.go:30
-#, c-format
+#, c-format, fuzzy
 msgid "Failed to parse the preseed: %w"
-msgstr ""
+msgstr "解析 preseed 失败：%w"
 
 #: cmd/incus/admin_init_preseed.go:22 cmd/incus/admin_sql.go:88
 #, c-format
 msgid "Failed to read from stdin: %w"
-msgstr ""
+msgstr "无法从标准输入读取：%w"
 
 #: cmd/incus/copy.go:375
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
-msgstr ""
+msgstr "刷新目标实例“%s”失败：%v"
 
 #: cmd/incus/utils.go:179
 #, c-format
 msgid "Failed to remove alias %s: %w"
-msgstr ""
+msgstr "删除别名 %s 失败：%w"
 
 #: cmd/incus/export.go:182
 #, c-format
 msgid "Failed to rename export file: %w"
-msgstr ""
+msgstr "重命名导出文件失败：%w"
 
 #: cmd/incus/admin_init_interactive.go:100
 #: cmd/incus/admin_init_interactive.go:97
 #, c-format
 msgid "Failed to render the config: %w"
-msgstr ""
+msgstr "呈现配置失败：%w"
 
 #: cmd/incus/admin_sql.go:112
 #, c-format
 msgid "Failed to request dump: %w"
-msgstr ""
+msgstr "请求转储失败：%w"
 
 #: cmd/incus/admin_init_interactive.go:266
 #: cmd/incus/admin_init_interactive.go:263
 #, c-format
 msgid "Failed to retrieve cluster information: %w"
-msgstr ""
+msgstr "检索集群信息失败：%w"
 
 #: cmd/incus/cluster.go:842
 #, c-format
 msgid "Failed to retrieve current cluster config: %w"
-msgstr ""
+msgstr "检索当前集群配置失败：%w"
 
 #: cmd/incus/cluster.go:832
 #, c-format
 msgid "Failed to retrieve current server config: %w"
-msgstr ""
+msgstr "检索当前服务器配置失败：%w"
 
 #: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:49
 #: cmd/incus/admin_init_dump.go:64 cmd/incus/admin_init_dump.go:79
 #: cmd/incus/admin_init_dump.go:93
 #, c-format
 msgid "Failed to retrieve current server configuration: %w"
-msgstr ""
+msgstr "检索当前服务器配置失败：%w"
 
 #: cmd/incus/admin_init_dump.go:28
 #, c-format
 msgid ""
 "Failed to retrieve current server network configuration for project %q: %w"
-msgstr ""
+msgstr "无法检索项目 %q 的当前服务器网络配置：%w"
 
 #: cmd/incus/admin_init_auto.go:132 cmd/incus/admin_init_auto.go:129
 #, c-format
 msgid "Failed to retrieve list of networks: %w"
-msgstr ""
+msgstr "检索网络列表失败：%w"
 
 #: cmd/incus/admin_init_auto.go:48
 #, c-format
 msgid "Failed to retrieve list of storage pools: %w"
-msgstr ""
+msgstr "检索存储池列表失败：%w"
 
 #: cmd/incus/admin_init_interactive.go:243
 #: cmd/incus/admin_init_interactive.go:240
 #, c-format
 msgid "Failed to setup trust relationship with cluster: %w"
-msgstr ""
+msgstr "无法与集群建立信任关系：%w"
 
 #: cmd/incus/cluster.go:1540
 #, c-format
 msgid "Failed to update cluster member state: %w"
-msgstr ""
+msgstr "更新群集成员状态失败：%w"
 
 #: cmd/incus/file.go:1130 cmd/incus/file.go:1147
 #, c-format
@@ -3295,12 +3329,12 @@ msgstr ""
 #: cmd/incus/remote.go:255
 #, c-format
 msgid "Failed to write server cert file %q: %w"
-msgstr ""
+msgstr "无法写入服务器证书文件 %q：%w"
 
 #: cmd/incus/admin_recover.go:189
 #, c-format
 msgid "Failed validation request: %w"
-msgstr ""
+msgstr "验证请求失败：%w"
 
 #: cmd/incus/info.go:418
 #, c-format
@@ -3309,62 +3343,62 @@ msgstr ""
 
 #: cmd/incus/list.go:137
 msgid "Fast mode (same as --columns=nsacPt)"
-msgstr ""
+msgstr "快速模式（等价于 --columns=nsacPt）"
 
 #: cmd/incus/export.go:165
 #, c-format
 msgid "Fetch instance backup file: %w"
-msgstr ""
+msgstr "获取实例备份文件：%w"
 
 #: cmd/incus/network.go:1211 cmd/incus/network_acl.go:137
 #: cmd/incus/network_zone.go:205 cmd/incus/operation.go:241
 msgid "Filtering isn't supported yet"
-msgstr ""
+msgstr "尚不支持筛选"
 
 #: cmd/incus/image.go:991
 #, c-format
 msgid "Fingerprint: %s"
-msgstr ""
+msgstr "指纹：%s"
 
 #: cmd/incus/cluster.go:1455
 msgid "Force a particular evacuation action"
-msgstr ""
+msgstr "强制采取特定的解散操作"
 
 #: cmd/incus/file.go:115 cmd/incus/file.go:144
 msgid "Force creating files or directories"
-msgstr ""
+msgstr "强制创建文件或目录"
 
 #: cmd/incus/project.go:212
 msgid "Force delete the project and everything it contains."
-msgstr ""
+msgstr "强制删除项目及其包含的所有内容。"
 
 #: cmd/incus/file.go:305 cmd/incus/file.go:334
 msgid "Force deleting files, directories, and subdirectories"
-msgstr ""
+msgstr "强制删除文件、目录和子目录"
 
 #: cmd/incus/cluster.go:1498
 msgid "Force evacuation without user confirmation"
-msgstr ""
+msgstr "未经用户确认的强制解散"
 
 #: cmd/incus/exec.go:61
 msgid "Force pseudo-terminal allocation"
-msgstr ""
+msgstr "强制伪终端分配"
 
 #: cmd/incus/cluster.go:697
 msgid "Force removing a member, even if degraded"
-msgstr ""
+msgstr "强制移除成员，即使已降级"
 
 #: cmd/incus/action.go:175
 msgid "Force the instance to stop"
-msgstr ""
+msgstr "强制实例停止"
 
 #: cmd/incus/delete.go:36
 msgid "Force the removal of running instances"
-msgstr ""
+msgstr "强制删除正在运行的实例"
 
 #: cmd/incus/main.go:117
 msgid "Force using the local unix socket"
-msgstr ""
+msgstr "强制使用本地 unix 套接字"
 
 #: cmd/incus/cluster.go:713
 #, c-format
@@ -3389,6 +3423,17 @@ msgid ""
 "\n"
 "Are you really sure you want to force removing %s? (yes/no): "
 msgstr ""
+"从集群中强制删除服务器只能作为最后手段。\n"
+"\n"
+"此操作后，被删除的服务器会无法运行，并需要完全重置，而且会丢失其可能保存的剩"
+"余实例、镜像或存储卷。\n"
+"\n"
+"请尽可能优雅地删除，即在彻底删除集群中的服务器之前，把所有受影响的实例、镜像"
+"或存储卷移动到另一台服务器。\n"
+"\n"
+"只有在服务器已死亡、已重装或预计永远不会恢复时才会使用 --force 标志。\n"
+"\n"
+"您确定要强制删除 %s 吗？（yes/no）： "
 
 #: cmd/incus/console.go:45
 msgid ""
