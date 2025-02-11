@@ -15,7 +15,6 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
-	"github.com/lxc/incus/v6/shared/subprocess"
 	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 )
@@ -133,7 +132,7 @@ func (d *truenas) Info() Info {
 		VolumeTypes:                  []VolumeType{VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
 		VolumeMultiNode:              d.isRemote(),
 		BlockBacking:                 false,
-		RunningCopyFreeze:            false,
+		RunningCopyFreeze:            true,
 		DirectIO:                     false,
 		MountedRoot:                  false,
 		Buckets:                      false,
@@ -330,7 +329,7 @@ func (d *truenas) Validate(config map[string]string) error {
 	// rules := map[string]func(value string) error{
 	// 	"size":          validate.Optional(validate.IsSize),
 	// 	"zfs.pool_name": validate.IsAny,
-	// 	"zfs.clone_copy": validate.Optional(func(value string) error {
+	// 	"truenas.clone_copy": validate.Optional(func(value string) error {
 	// 		if value == "rebase" {
 	// 			return nil
 	// 		}
@@ -518,42 +517,6 @@ func (d *truenas) MigrationTypes(contentType ContentType, refresh bool, copySnap
 			Features: rsyncFeatures,
 		},
 	}
-}
-
-// patchDropBlockVolumeFilesystemExtension removes the filesystem extension (e.g _ext4) from VM image block volumes.
-func (d *truenas) patchDropBlockVolumeFilesystemExtension() error {
-	poolName, ok := d.config["zfs.pool_name"]
-	if !ok {
-		poolName = d.name
-	}
-
-	out, err := subprocess.RunCommand("zfs", "list", "-H", "-r", "-o", "name", "-t", "volume", fmt.Sprintf("%s/images", poolName))
-	if err != nil {
-		return fmt.Errorf("Failed listing images: %w", err)
-	}
-
-	for _, volume := range strings.Split(out, "\n") {
-		fields := strings.SplitN(volume, fmt.Sprintf("%s/images/", poolName), 2)
-
-		if len(fields) != 2 || fields[1] == "" {
-			continue
-		}
-
-		// Ignore non-block images, and images without filesystem extension
-		if !strings.HasSuffix(fields[1], ".block") || !strings.Contains(fields[1], "_") {
-			continue
-		}
-
-		// Rename zfs dataset. Snapshots will automatically be renamed.
-		newName := fmt.Sprintf("%s/images/%s.block", poolName, strings.Split(fields[1], "_")[0])
-
-		_, err = subprocess.RunCommand("zfs", "rename", volume, newName)
-		if err != nil {
-			return fmt.Errorf("Failed renaming zfs dataset: %w", err)
-		}
-	}
-
-	return nil
 }
 
 // roundVolumeBlockSizeBytes returns sizeBytes rounded up to the next multiple
