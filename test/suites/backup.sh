@@ -234,6 +234,12 @@ ceph.osd.pool_name=$(incus storage get "${poolName}" ceph.osd.pool_name)
 ceph.user.name=$(incus storage get "${poolName}" ceph.user.name)
 "
       ;;
+      linstor)
+        poolExtraConfig="linstor.resource_group.place_count=$(incus storage get "${poolName}" linstor.resource_group.place_count)
+linstor.volume.prefix=$(incus storage get "${poolName}" linstor.volume.prefix)
+linstor.resource_group.name=$(incus storage get "${poolName}" linstor.resource_group.name)
+"
+      ;;
     esac
 
     incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
@@ -292,8 +298,8 @@ test_bucket_recover() {
     poolDriver=$(incus storage show "${poolName}" | awk '/^driver:/ {print $2}')
     bucketName="bucket123"
 
-    # Skip ceph driver - ceph does not support storage buckets
-    if [ "${poolDriver}" = "ceph" ]; then
+    # Skip ceph and linstor drivers, as they do not support storage buckets
+    if [ "${poolDriver}" = "ceph" ] || [ "${poolDriver}" = "linstor" ]; then
       return 0
     fi
 

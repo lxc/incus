@@ -14,7 +14,11 @@ test_storage() {
   local storage_pool storage_volume
   storage_pool="incustest-$(basename "${INCUS_DIR}")-pool"
   storage_volume="${storage_pool}-vol"
-  incus storage create "$storage_pool" "$incus_backend" --description foo
+  if [ "${incus_backend}" = "linstor" ]; then
+      incus storage create "$storage_pool" "$incus_backend" linstor.resource_group.place_count=1 --description foo
+  else
+      incus storage create "$storage_pool" "$incus_backend" --description foo
+  fi
   incus storage show "$storage_pool" | grep -q 'description: foo'
   incus storage show "$storage_pool" | sed 's/^description:.*/description: bar/' | incus storage edit "$storage_pool"
   incus storage show "$storage_pool" | grep -q 'description: bar'
@@ -881,7 +885,11 @@ test_storage() {
   # shellcheck disable=SC2031,2269
   INCUS_DIR="${INCUS_DIR}"
   storage_pool="incustest-$(basename "${INCUS_DIR}")-pool26"
-  incus storage create "$storage_pool" "$incus_backend"
+  if [ "${incus_backend}" = "linstor" ]; then
+      incus storage create "$storage_pool" "$incus_backend" linstor.resource_group.place_count=1
+  else
+      incus storage create "$storage_pool" "$incus_backend"
+  fi
   incus init -s "${storage_pool}" testimage c1
   # The storage pool will not be removed since it has c1 attached to it
   ! incus storage delete "${storage_pool}" || false
