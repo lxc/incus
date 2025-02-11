@@ -1,9 +1,11 @@
 package drivers
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -1499,8 +1501,8 @@ func (d *common) deleteSnapshots(deleteFunc func(snapInst instance.Instance) err
 	return nil
 }
 
-// setNUMANode looks at all other instances and picks the least used NUMA node.
-func (d *common) setNUMANode() error {
+// balanceNUMANodes looks at all other instances and picks the least used NUMA node(s).
+func (d *common) balanceNUMANodes() error {
 	muNUMA.Lock()
 	defer muNUMA.Unlock()
 
@@ -1564,15 +1566,30 @@ func (d *common) setNUMANode() error {
 		}
 	}
 
-	// Pick least used node.
-	var node uint64
-	for _, numaNode := range nodes {
-		if numaUsage[int64(numaNode)] < numaUsage[int64(node)] {
-			node = numaNode
+	// Sort NUMA nodes by usage.
+	slices.SortFunc(nodes, func(i, j uint64) int {
+		return cmp.Compare(numaUsage[int64(i)], numaUsage[int64(j)])
+	})
+
+	// If `limits.cpu` is greater than the number of CPUs per NUMA node,
+	// then figure out how many NUMA nodes to use.
+	conf := d.ExpandedConfig()
+	cpusPerNumaNode := int(cpu.Total) / len(nodes)
+
+	limitsCPU, err := strconv.Atoi(conf["limits.cpu"])
+	if err == nil && limitsCPU > cpusPerNumaNode {
+		numaNodesToUse := int(math.Ceil(float64(limitsCPU) / float64(cpusPerNumaNode)))
+
+		selectedNumaNodes := make([]string, numaNodesToUse)
+		for i, node := range nodes[:numaNodesToUse] {
+			selectedNumaNodes[i] = strconv.FormatUint(node, 10)
 		}
+
+		joinedNumaNodes := strings.Join(selectedNumaNodes, ",")
+		return d.VolatileSet(map[string]string{"volatile.cpu.nodes": joinedNumaNodes})
 	}
 
-	return d.VolatileSet(map[string]string{"volatile.cpu.nodes": fmt.Sprintf("%d", node)})
+	return d.VolatileSet(map[string]string{"volatile.cpu.nodes": fmt.Sprintf("%d", nodes[0])})
 }
 
 // Gets the process starting time.

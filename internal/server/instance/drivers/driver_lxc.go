@@ -1913,9 +1913,9 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	revert := revert.New()
 	defer revert.Fail()
 
-	// Assign a NUMA node if needed.
+	// Assign NUMA node(s) if needed.
 	if d.expandedConfig["limits.cpu.nodes"] == "balanced" {
-		err := d.setNUMANode()
+		err := d.balanceNUMANodes()
 		if err != nil {
 			return "", nil, err
 		}
