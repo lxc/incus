@@ -452,7 +452,7 @@ test_basic_usage() {
 
   # test incus file edit doesn't change target file's owner and permissions
   echo "content" | incus file push - foo/tmp/edit_test
-  incus exec foo -- chown 55.55 /tmp/edit_test
+  incus exec foo -- chown 55:55 /tmp/edit_test
   incus exec foo -- chmod 555 /tmp/edit_test
   echo "new content" | incus file edit foo/tmp/edit_test
   [ "$(incus exec foo -- cat /tmp/edit_test)" = "new content" ]
