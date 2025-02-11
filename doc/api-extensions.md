@@ -2680,3 +2680,6 @@ This API extension provides the ability to configure storage volumes in preseed 
 
 ## `init_preseed_profile_project`
 This API extension provides the ability to specify the project as part of profile definitions in preseed init.
+
+## `instance_nic_routed_host_address`
+Adds support for specifying the VRF to add the routes to.

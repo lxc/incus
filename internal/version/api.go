@@ -458,6 +458,7 @@ var APIExtensions = []string{
 	"instance_debug_memory",
 	"init_preseed_storage_volumes",
 	"init_preseed_profile_project",
+	`instance_nic_routed_host_address`,
 }
 
 // APIExtensionsCount returns the number of available API extensions.
