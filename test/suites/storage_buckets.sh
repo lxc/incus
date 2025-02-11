@@ -38,6 +38,10 @@ test_storage_buckets() {
       export TEST_UNMET_REQUIREMENT="INCUS_CEPH_CEPHOBJECT_RADOSGW not specified"
       return
     fi
+  elif [ "${incus_backend}" = "linstor" ]; then
+    # Skip linstor driver, as it does not support storage buckets
+    export TEST_UNMET_REQUIREMENT="linstor driver does not support storage buckets"
+    return 0
   elif ! command -v minio ; then
     # Check minio is installed for local storage pool buckets.
     export TEST_UNMET_REQUIREMENT="minio command not found"

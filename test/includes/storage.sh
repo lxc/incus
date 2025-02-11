@@ -38,6 +38,9 @@ available_storage_backends() {
     if [ -n "${INCUS_CEPH_CLUSTER:-}" ]; then
         storage_backends="${storage_backends} ceph"
     fi
+    if [ -n "${INCUS_LINSTOR_CLUSTER:-}" ]; then
+        storage_backends="${storage_backends} linstor"
+    fi
 
     for backend in $storage_backends; do
         if command -v "$backend" >/dev/null 2>&1; then
