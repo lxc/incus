@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/lxc/incus/v6/internal/server/db/generate/lex"
+	"github.com/lxc/incus/v6/cmd/generate-database/lex"
 )
 
 // Packages returns the AST packages in which to search for structs.
@@ -25,7 +25,7 @@ func Packages() (map[string]*ast.Package, error) {
 	_, filename, _, _ := runtime.Caller(0)
 
 	for _, name := range defaultPackages {
-		pkg, err := lex.Parse(filepath.Join(filepath.Dir(filename), "..", "..", "..", "..", "..", name))
+		pkg, err := lex.Parse(filepath.Join(filepath.Dir(filename), "..", "..", "..", name))
 		if err != nil {
 			return nil, fmt.Errorf("Parse %q: %w", name, err)
 		}

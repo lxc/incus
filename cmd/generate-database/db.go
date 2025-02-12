@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/lxc/incus/v6/internal/server/db/generate/db"
-	"github.com/lxc/incus/v6/internal/server/db/generate/file"
-	"github.com/lxc/incus/v6/internal/server/db/generate/lex"
+	"github.com/lxc/incus/v6/cmd/generate-database/db"
+	"github.com/lxc/incus/v6/cmd/generate-database/file"
+	"github.com/lxc/incus/v6/cmd/generate-database/lex"
 )
 
 // Return a new db command.
