@@ -131,6 +131,16 @@ func CompressedTarReader(ctx context.Context, r io.ReadSeeker, unpacker []string
 	return tr, cancelFunc, nil
 }
 
+// returns true if the path exists and is NFS
+func isNfs(path string) bool {
+	backingFs, err := linux.DetectFilesystem(path)
+	if err != nil {
+		return false
+	}
+
+	return backingFs == "nfs"
+}
+
 // Unpack extracts image from archive.
 func Unpack(file string, path string, blockBackend bool, maxMemory int64, tracker *ioprogress.ProgressTracker) error {
 	extractArgs, extension, unpacker, err := DetectCompression(file)
@@ -225,10 +235,32 @@ func Unpack(file string, path string, blockBackend bool, maxMemory int64, tracke
 		readCloser = io.NopCloser(reader)
 	}
 
+	// if command == "unsquashfs" {
+
+	// 	nfs, err := IsNfs(path)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	// 	if nfs {
+	// 		logger.Warn("Unpack: NFS Detected, disabling non-user xatttr unpacking")
+	// 		args = append(args, "-user-xattrs")
+	// 	}
+	// }
+
 	err = ExtractWithFds(command, args, allowedCmds, readCloser, outputDir)
 	if err != nil {
 		// We can't create char/block devices in unpriv containers so ignore related errors.
 		if command == "unsquashfs" {
+
+			fs := unix.Statfs_t{}
+			if unix.Statfs(path, &fs) == nil {
+				const NFS_SUPER_MAGIC = 0x6969
+				if fs.Type == NFS_SUPER_MAGIC {
+					logger.Warn("Unpack: NFS Detected")
+				}
+			}
+
 			runError, ok := err.(subprocess.RunError)
 			if !ok {
 				return err
@@ -252,6 +284,18 @@ func Unpack(file string, path string, blockBackend bool, maxMemory int64, tracke
 				}
 
 				if strings.Contains(line, "failed to create character device") {
+					continue
+				}
+
+				if strings.Contains(line, "failed to write xattr security.capability") {
+					/*
+						// we can't write "security.capability" to an NFS filesystem, so this is expected, perhaps we can use a fusefs to resolve?
+
+						"write_xattr: failed to write xattr security.capability for file
+						/var/lib/incus/storage-pools/incusdev/images/7398c6c3390a7721c30fc69e904c49a0ae575f8bed2685f5a6b0bd09f055b41e/rootfs/usr/bin/ping
+						because extended attributes are not supported by the destination filesystem"
+					*/
+					logger.Warn("Unpack:" + line)
 					continue
 				}
 
