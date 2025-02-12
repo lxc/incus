@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/lxc/incus/v6/internal/server/db/generate/lex"
+	"github.com/lxc/incus/v6/cmd/generate-database/lex"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
