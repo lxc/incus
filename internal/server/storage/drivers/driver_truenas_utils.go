@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	// we haven't decided what the tool should be called yet... "truenas-admin" is probably a good choice.
-	tnToolName = "admin-tool"
+	tnToolName              = "truenas-admin"
+	tnMinVersion            = "0.2.0"
+	tnVerifyDatasetCreation = false // explicitly check that the dataset is created, work around for bugs in certain versions of the tool.
 )
 
 func (d *truenas) dataset(vol Volume, deleted bool) string {
@@ -49,18 +50,16 @@ func (d *truenas) dataset(vol Volume, deleted bool) string {
 func (d *truenas) runTool(args ...string) (string, error) {
 	baseArgs := []string{}
 
-	if tnHasLoginFlags {
-		if d.config["truenas.url"] != "" {
-			baseArgs = append(baseArgs, "--url", d.config["truenas.url"])
-		}
+	if d.config["truenas.url"] != "" {
+		baseArgs = append(baseArgs, "--url", d.config["truenas.url"])
+	}
 
-		if d.config["truenas.api_key"] != "" {
-			baseArgs = append(baseArgs, "--api-key", d.config["truenas.api_key"])
-		}
+	if d.config["truenas.api_key"] != "" {
+		baseArgs = append(baseArgs, "--api-key", d.config["truenas.api_key"])
+	}
 
-		if d.config["truenas.key_file"] != "" {
-			baseArgs = append(baseArgs, "--key-file", d.config["truenas.key_file"])
-		}
+	if d.config["truenas.key_file"] != "" {
+		baseArgs = append(baseArgs, "--key-file", d.config["truenas.key_file"])
 	}
 
 	args = append(baseArgs, args...)
@@ -105,7 +104,7 @@ func (d *truenas) setDatasetProperties(dataset string, options ...string) error 
 }
 
 // returns "dataset" or "snapshot" depending on the supplied name
-// used to disambiguate admin-tool commands
+// used to disambiguate truenas-admin commands
 func (d *truenas) getDatasetOrSnapshot(dataset string) string {
 	if strings.Contains(dataset, "@") {
 		return "snapshot"
@@ -165,7 +164,7 @@ func (d *truenas) getDatasets(dataset string, types string) ([]string, error) {
 	noun := "dataset"
 
 	// TODO: we need to be clever to get combined/datasets+snapshots etc
-	// or add it to admin-tool...
+	// or add it to truenas-admin...
 	if types == "snapshot" {
 		noun = "snapshot"
 	} else if types == "all" {
@@ -223,7 +222,7 @@ func (d *truenas) createDataset(dataset string, options ...string) error {
 	}
 
 	// previous versions of the tool didnt' properly handle dataset creation failure
-	if !tnHasErrorResults {
+	if tnVerifyDatasetCreation {
 		exists, _ := d.datasetExists(dataset)
 		if !exists {
 			return fmt.Errorf("Failed to createDataset: %s", dataset)
@@ -234,42 +233,35 @@ func (d *truenas) createDataset(dataset string, options ...string) error {
 }
 
 func (d *truenas) createNfsShare(dataset string) error {
-	if tnHasShareNfs {
-		args := []string{"share", "nfs"}
-		if tnHasNfsUpdateWithCreate {
-			/*
-				`update --create` will create a share if it does not exist, with the supplied props, otherwise
-				it will update the share with the supplied props if the share does not yet have them.
+	args := []string{"share", "nfs"}
 
-				This allows a share to be created, or even updated, "just-in-time" before mounting, as the tool will first lookup
-				the share's existance, before modifying it, without risking duplicating the share
+	/*
+		`update --create` will create a share if it does not exist, with the supplied props, otherwise
+		it will update the share with the supplied props if the share does not yet have them.
 
-				This also means that if we add additional flag in the future to the share, they can be applied
-			*/
-			args = append(args, "update", "--create")
-		} else {
-			args = append(args, "create")
-		}
-		args = append(args, "--comment", tnDefaultSettings["comments"], "--maproot-user", "root", "--maproot-group", "root")
-		args = append(args, dataset)
+		This allows a share to be created, or even updated, "just-in-time" before mounting, as the tool will first lookup
+		the share's existance, before modifying it, without risking duplicating the share
 
-		out, err := d.runTool(args...)
-		_ = out
-		if err != nil {
-			return err
-		}
+		This also means that if we add additional flags, or change them in the future to the share, they can be applied
+	*/
+	args = append(args, "update", "--create")
+	args = append(args, "--comment", tnDefaultSettings["comments"], "--maproot-user=root", "--maproot-group=root")
+	args = append(args, dataset)
+
+	out, err := d.runTool(args...)
+	_ = out
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (d *truenas) deleteNfsShare(dataset string) error {
-	if tnHasNfsDeleteByDataset {
-		out, err := d.runTool("share", "nfs", "delete", dataset)
-		_ = out
-		if err != nil {
-			return err
-		}
+	out, err := d.runTool("share", "nfs", "delete", dataset)
+	_ = out
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -314,7 +306,7 @@ func (d *truenas) renameSnapshot(sourceDataset string, destDataset string) (stri
 func (d *truenas) renameDataset(sourceDataset string, destDataset string, updateShares bool) (string, error) {
 	args := []string{"dataset", "rename"}
 
-	if updateShares && tnHasUpdateShares {
+	if updateShares {
 		args = append(args, "--update-shares")
 	}
 
