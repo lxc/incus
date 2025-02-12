@@ -127,7 +127,7 @@ update-protobuf:
 
 .PHONY: update-schema
 update-schema:
-	cd internal/server/db/generate && $(GO) build -o $(GOPATH)/bin/incus-generate -tags "$(TAG_SQLITE3)" $(DEBUG) && cd -
+	cd cmd/generate-database && $(GO) build -o $(GOPATH)/bin/incus-generate -tags "$(TAG_SQLITE3)" $(DEBUG) && cd -
 	$(GO) generate ./...
 	gofmt -s -w ./internal/server/db/
 	goimports -w ./internal/server/db/
@@ -143,7 +143,7 @@ endif
 .PHONY: update-metadata
 update-metadata: build
 	@echo "Generating golang documentation metadata"
-	cd internal/server/config/generate && CGO_ENABLED=0 $(GO) build -o $(GOPATH)/bin/incus-doc
+	cd cmd/generate-config && CGO_ENABLED=0 $(GO) build -o $(GOPATH)/bin/incus-doc
 	$(GOPATH)/bin/incus-doc . --json ./internal/server/metadata/configuration.json --txt ./doc/config_options.txt
 
 .PHONY: doc-setup
