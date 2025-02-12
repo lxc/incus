@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-02-10 16:33-0500\n"
-"PO-Revision-Date: 2025-02-11 13:55+0000\n"
+"PO-Revision-Date: 2025-02-12 04:42+0000\n"
 "Last-Translator: Loge X <wazolm5643@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/incus/cli/zh_Hans/>\n"
@@ -3439,13 +3439,15 @@ msgstr ""
 msgid ""
 "Forces a connection to the console, even if there is already an active "
 "session"
-msgstr ""
+msgstr "强制连接到控制台，即使已存在活动会话"
 
 #: cmd/incus/cluster.go:1095
 msgid ""
 "Format (csv|json|table|yaml|compact), use suffix \",noheader\" to disable "
 "headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr ""
+"格式化（csv|json|table|yaml|compact），使用后缀“,noheader”可禁用表头，需要时"
+"可使用“,header”启用表头，例如 csv,header"
 
 #: cmd/incus/admin_sql.go:55 cmd/incus/alias.go:114 cmd/incus/cluster.go:151
 #: cmd/incus/cluster_group.go:486 cmd/incus/config_template.go:290
@@ -3465,148 +3467,150 @@ msgid ""
 "Format (csv|json|table|yaml|compact), use suffix \",noheader\" to disable "
 "headers and \",header\" to enable it if missing, e.g. csv,header"
 msgstr ""
+"格式化（csv|json|table|yaml|compact），使用后缀“,noheader”可禁用表头，需要时"
+"可使用“,header”启用表头，例如 csv,header"
 
 #: cmd/incus/monitor.go:53
 msgid "Format (json|pretty|yaml)"
-msgstr ""
+msgstr "格式化（json|pretty|yaml）"
 
 #: cmd/incus/manpage.go:27
 msgid "Format (man|md|rest|yaml)"
-msgstr ""
+msgstr "格式化（man|md|rest|yaml）"
 
 #: cmd/incus/top.go:65
 msgid "Format (table|compact)"
-msgstr ""
+msgstr "格式化（table|compact）"
 
 #: cmd/incus/debug.go:53
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
-msgstr ""
+msgstr "内存转储格式（如 elf、win-dmp、kdump-zlib、kdump-raw-zlib 等）"
 
 #: cmd/incus/network.go:1018
 msgid "Forward delay"
-msgstr ""
+msgstr "转发延迟"
 
 #: cmd/incus/main_aliases.go:147
 #, c-format
 msgid "Found alias %q references an argument outside the given number"
-msgstr ""
+msgstr "发现别名 %q 引用了给定数字之外的参数"
 
 #: cmd/incus/info.go:518 cmd/incus/info.go:529 cmd/incus/info.go:534
 #: cmd/incus/info.go:540
 #, c-format
 msgid "Free: %v"
-msgstr ""
+msgstr "空闲：%v"
 
 #: cmd/incus/info.go:344 cmd/incus/info.go:355
 #, c-format
 msgid "Frequency: %vMhz"
-msgstr ""
+msgstr "频率：%v Mhz"
 
 #: cmd/incus/info.go:353
 #, c-format
 msgid "Frequency: %vMhz (min: %vMhz, max: %vMhz)"
-msgstr ""
+msgstr "频率：%v Mhz（最低：%v Mhz，最高：%v Mhz）"
 
 #: cmd/incus/remote.go:769
 msgid "GLOBAL"
-msgstr ""
+msgstr "全局"
 
 #: cmd/incus/info.go:546
 msgid "GPU:"
-msgstr ""
+msgstr "GPU："
 
 #: cmd/incus/info.go:549
 msgid "GPUs:"
-msgstr ""
+msgstr "GPU："
 
 #: cmd/incus/manpage.go:23 cmd/incus/manpage.go:24
 msgid "Generate manpages for all commands"
-msgstr ""
+msgstr "为所有命令生成手册"
 
 #: cmd/incus/remote.go:637
 msgid "Generate the client certificate"
-msgstr ""
+msgstr "生成客户端证书"
 
 #: cmd/incus/remote.go:177 cmd/incus/remote.go:412 cmd/incus/remote.go:663
 msgid "Generating a client certificate. This may take a minute..."
-msgstr ""
+msgstr "正在生成客户端证书。这可能会花点时间……"
 
 #: cmd/incus/project.go:1062 cmd/incus/project.go:1063
 msgid "Get a summary of resource allocations"
-msgstr ""
+msgstr "获取资源分配摘要"
 
 #: cmd/incus/network_load_balancer.go:1292
 msgid "Get current load balancer status"
-msgstr ""
+msgstr "获取当前负载均衡器状态"
 
 #: cmd/incus/network_load_balancer.go:1293
 msgid "Get current load-balacner status"
-msgstr ""
+msgstr "获取当前负载均衡器状态"
 
 #: cmd/incus/image.go:1572 cmd/incus/image.go:1573
 msgid "Get image properties"
-msgstr ""
+msgstr "获取镜像属性"
 
 #: cmd/incus/network.go:923 cmd/incus/network.go:924
 msgid "Get runtime information on networks"
-msgstr ""
+msgstr "获取网络运行时信息"
 
 #: cmd/incus/cluster_group.go:902
 msgid "Get the key as a cluster group property"
-msgstr ""
+msgstr "获取作为集群组属性的密钥"
 
 #: cmd/incus/cluster.go:440
 msgid "Get the key as a cluster property"
-msgstr ""
+msgstr "获取作为集群属性的密钥"
 
 #: cmd/incus/network_acl.go:313
 msgid "Get the key as a network ACL property"
-msgstr ""
+msgstr "获取作为网络 ACL 属性的密钥"
 
 #: cmd/incus/network_forward.go:440
 msgid "Get the key as a network forward property"
-msgstr ""
+msgstr "获取作为网络转发属性的密钥"
 
 #: cmd/incus/network_integration.go:356
 msgid "Get the key as a network integration property"
-msgstr ""
+msgstr "获取作为网络集成属性的密钥"
 
 #: cmd/incus/network_load_balancer.go:444
 msgid "Get the key as a network load balancer property"
-msgstr ""
+msgstr "获取作为网络负载均衡器属性的密钥"
 
 #: cmd/incus/network_peer.go:479
 msgid "Get the key as a network peer property"
-msgstr ""
+msgstr "获取作为网络对等属性的密钥"
 
 #: cmd/incus/network.go:847
 msgid "Get the key as a network property"
-msgstr ""
+msgstr "获取作为网络属性的密钥"
 
 #: cmd/incus/network_zone.go:324
 msgid "Get the key as a network zone property"
-msgstr ""
+msgstr "获取作为网络区域属性的密钥"
 
 #: cmd/incus/network_zone.go:1017
 msgid "Get the key as a network zone record property"
-msgstr ""
+msgstr "获取作为网络区域记录属性的密钥"
 
 #: cmd/incus/profile.go:647
 msgid "Get the key as a profile property"
-msgstr ""
+msgstr "获取作为配置文件属性的密钥"
 
 #: cmd/incus/project.go:447
 msgid "Get the key as a project property"
-msgstr ""
+msgstr "获取作为项目属性的密钥"
 
 #: cmd/incus/storage_bucket.go:406
 msgid "Get the key as a storage bucket property"
-msgstr ""
+msgstr "获取作为存储桶属性的密钥"
 
 #: cmd/incus/storage.go:413
 msgid "Get the key as a storage property"
-msgstr ""
+msgstr "获取作为存储属性的密钥"
 
 #: cmd/incus/storage_volume.go:1203
 msgid "Get the key as a storage volume property"
