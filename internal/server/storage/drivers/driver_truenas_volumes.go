@@ -149,10 +149,10 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		}
 
 		// now share it
-		// err = d.createNfsShare(dataset)
-		// if err != nil {
-		// 	return err
-		// }
+		err = d.createNfsShare(dataset)
+		if err != nil {
+			return err
+		}
 
 		// Apply the size limit.
 		// err = d.SetVolumeQuota(vol, vol.ConfigSize(), false, op)
@@ -212,11 +212,11 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 
 			if IsContentBlock(vol.contentType) {
 				// Get the device path.
-				//devPath, err = d.GetVolumeDiskPath(vol)
+				devPath, err = d.GetVolumeDiskPath(vol)
+				if err != nil {
+					return err
+				}
 				devPath = rootBlockPath
-				// if err != nil {
-				// 	return err
-				// }
 			}
 
 			allowUnsafeResize := false
@@ -568,9 +568,9 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 			return fmt.Errorf("Failed syncing filesystem %q: %w", sourcePath, err)
 		}
 		/*
-		 if we have the guest frozen, we want to skip anything which will delay unfreezing
+			if we have the guest frozen, we want to skip anything which will delay unfreezing
 		*/
-		skipNfsShare = true
+		//skipNfsShare = true
 	}
 
 	var srcSnapshot string
@@ -798,10 +798,10 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 				this can take a while, and we have a fallback in Mount if it hasn't been done, so
 				when we have the guest frozen, we may skip it.
 			*/
-			// err = d.createNfsShare(dataset)
-			// if err != nil {
-			// 	return err
-			// }
+			err = d.createNfsShare(dataset)
+			if err != nil {
+				return err
+			}
 		}
 
 	}
@@ -1844,20 +1844,20 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 	if vol.contentType == ContentTypeFS {
 		if !linux.IsMountPoint(mountPath) {
 
-			if tnHasNfsUpdateWithCreate && !vol.MountInUse() {
-				/*
-					we haven't mounted yet, so update/create the share
+			//if !vol.MountInUse() {
+			/*
+				we haven't mounted yet, so update/create the share
 
-					createNfsShare is optimized to only create the share if it doesn't already exists. This does involve
-					checking for a share, but it means that we don't have to take time creating the share when we are
-					setting up the volume, when the source instance may be frozen. Also, if someone were to delete the
-					share off the server, or if we change our default settings, this will recreate/update as a side-effect
-				*/
-				err = d.createNfsShare(dataset)
-				if err != nil {
-					return err
-				}
-			}
+				createNfsShare is optimized to only create the share if it doesn't already exists. This does involve
+				checking for a share, but it means that we don't have to take time creating the share when we are
+				setting up the volume, when the source instance may be frozen. Also, if someone were to delete the
+				share off the server, or if we change our default settings, this will recreate/update as a side-effect
+			*/
+			// err = d.createNfsShare(dataset)
+			// if err != nil {
+			// 	return err
+			// }
+			//}
 
 			err = vol.EnsureMountPath()
 			if err != nil {
@@ -1866,7 +1866,7 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 
 			var volOptions []string
 
-			//note: to implement getDatasetProperties, we'd like `admin-tool dataset inspect` to be implemented
+			//note: to implement getDatasetProperties, we'd like `truenas-admin dataset inspect` to be implemented
 			atime, _ := d.getDatasetProperty(dataset, "atime")
 			if atime == "off" {
 				volOptions = append(volOptions, "noatime")
@@ -1895,19 +1895,14 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 
 			if err != nil {
 				// try once more, after re-creating the share.
-				if tnHasNfsUpdateWithCreate && !vol.MountInUse() {
-					// we haven't mounted yet, so update/create the share
-					err = d.createNfsShare(dataset)
-					if err != nil {
-						return err
-					}
-					err = TryMount(remotePath, mountPath, "nfs", mountFlags, mountOptions)
-					if err != nil {
-						return err
-					}
+				err = d.createNfsShare(dataset)
+				if err != nil {
+					return err
 				}
-			} else {
-				return err
+				err = TryMount(remotePath, mountPath, "nfs", mountFlags, mountOptions)
+				if err != nil {
+					return err
+				}
 			}
 
 			_ = mountFlags

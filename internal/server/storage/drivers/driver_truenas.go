@@ -22,14 +22,6 @@ import (
 var tnVersion string
 var tnLoaded bool
 
-// TODO: these flags are not needed once we stop using earlier versions.
-var tnHasLoginFlags bool          // 0.1.1
-var tnHasShareNfs bool            // 0.1.2
-var tnHasUpdateShares bool        // 0.1.4
-var tnHasNfsDeleteByDataset bool  // 0.1.6
-var tnHasNfsUpdateWithCreate bool // 0.1.7
-var tnHasErrorResults bool        // 0.1.8
-
 var tnDefaultSettings = map[string]string{
 	"atime": "off", //"relatime": "on",
 	//"mountpoint": "legacy",
@@ -73,13 +65,10 @@ func (d *truenas) initVersionAndCapabilities() error {
 		return err
 	}
 
-	// Decide whether we can use features added by a specific version
-	tnHasLoginFlags = d.isVersionGE(*ourVer, "0.1.1")          // login flags (api-key, url, key-file)
-	tnHasShareNfs = d.isVersionGE(*ourVer, "0.1.2")            // create/list/delete NFS shares
-	tnHasUpdateShares = d.isVersionGE(*ourVer, "0.1.4")        // can update-shares when renaming datasets
-	tnHasNfsDeleteByDataset = d.isVersionGE(*ourVer, "0.1.6")  // can delete shares by dataset
-	tnHasNfsUpdateWithCreate = d.isVersionGE(*ourVer, "0.1.7") // can create shares with update
-	tnHasErrorResults = d.isVersionGE(*ourVer, "0.1.8")        // actually returns errors on failure
+	// this same logic can be used for feature detection based on versions.
+	if !d.isVersionGE(*ourVer, tnMinVersion) {
+		return fmt.Errorf("TrueNAS driver requires %s v%s or later, but the currently installed version is v%s", tnToolName, tnMinVersion, tnVersion)
+	}
 
 	return nil
 }
@@ -91,7 +80,7 @@ func (d *truenas) load() error {
 		"storage_lvm_skipactivation":                         nil,
 		"storage_missing_snapshot_records":                   nil,
 		"storage_delete_old_snapshot_records":                nil,
-		"storage_zfs_drop_block_volume_filesystem_extension": nil, //d.patchDropBlockVolumeFilesystemExtension,
+		"storage_zfs_drop_block_volume_filesystem_extension": nil,
 		"storage_prefix_bucket_names_with_project":           nil,
 	}
 
@@ -220,6 +209,9 @@ func (d *truenas) Create() error {
 	d.config["volatile.initial_source"] = d.config["source"]
 
 	err := d.FillConfig()
+	if err != nil {
+		return err
+	}
 
 	if d.config["source"] == "" || filepath.IsAbs(d.config["source"]) {
 		return fmt.Errorf(`TrueNAS Driver requires "source" to be specified using the format: <remote pool>[[/<remote dataset>]...][/]`)
