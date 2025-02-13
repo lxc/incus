@@ -590,6 +590,13 @@ Available Modes:
 See {ref}`cluster-evacuate` for more information.
 ```
 
+```{config:option} environment.* instance-miscellaneous
+:liveupdate: "yes"
+:shortdesc: "Free-form environment key/value"
+:type: "string"
+Extra environment variables to set on boot and during exec.
+```
+
 ```{config:option} linux.kernel_modules instance-miscellaneous
 :condition: "container"
 :liveupdate: "yes"
@@ -604,6 +611,13 @@ Specify the kernel modules as a comma-separated list.
 :shortdesc: "Override for the corresponding `sysctl` setting in the container"
 :type: "string"
 
+```
+
+```{config:option} smbios11.* instance-miscellaneous
+:liveupdate: "yes"
+:shortdesc: "Free-form `SMBIOS Type 11` key/value"
+:type: "string"
+`SMBIOS Type 11` configuration keys.
 ```
 
 ```{config:option} user.* instance-miscellaneous
