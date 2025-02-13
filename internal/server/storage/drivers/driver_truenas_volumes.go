@@ -628,7 +628,11 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 
 		// NOTE: we have not implemented "zfs send/recieve" yet. WIll be performed using replication.run_onetime task
 		if true {
-			return fmt.Errorf("Failed to copy volume with snapshots (not implemented). Try `--instance-only` to skip the snapshots")
+			flag := "instance-only"
+			if srcVol.volType == VolumeTypeCustom {
+				flag = "volume-only"
+			}
+			return fmt.Errorf("Failed to copy volume with snapshots (not implemented). Try `--%s` to skip the snapshots", flag)
 		}
 
 		// Send/receive the snapshot.
