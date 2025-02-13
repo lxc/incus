@@ -38,6 +38,15 @@ const lvmEscapedHyphen = "--"
 // lvmThinpoolDefaultName is the default name for the thinpool volume.
 const lvmThinpoolDefaultName = "IncusThinPool"
 
+type lvmSourceType int
+
+const (
+	lvmSourceTypeUnknown lvmSourceType = iota
+	lvmSourceTypeDefault
+	lvmSourceTypePhysicalDevice
+	lvmSourceTypeVolumeGroup
+)
+
 // usesThinpool indicates whether the config specifies to use a thin pool or not.
 func (d *lvm) usesThinpool() bool {
 	// No thin pool on clustered LVM.
@@ -884,4 +893,19 @@ func (d *lvm) deactivateVolume(vol Volume) (bool, error) {
 	}
 
 	return false, nil
+}
+
+// getSourceType determines the source type based on the config["source"] value.
+func (d *lvm) getSourceType() lvmSourceType {
+	defaultSource := loopFilePath(d.name)
+
+	if d.config["source"] == "" || d.config["source"] == defaultSource {
+		return lvmSourceTypeDefault
+	} else if filepath.IsAbs(d.config["source"]) {
+		return lvmSourceTypePhysicalDevice
+	} else if d.config["source"] != "" {
+		return lvmSourceTypeVolumeGroup
+	}
+
+	return lvmSourceTypeUnknown
 }
