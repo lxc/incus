@@ -1329,6 +1329,16 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 		return validate.IsAny, nil
 	}
 
+	// gendoc:generate(entity=instance, group=miscellaneous, key=smbios11.*)
+	// `SMBIOS Type 11` configuration keys.
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  shortdesc: Free-form `SMBIOS Type 11` key/value
+	if strings.HasPrefix(key, "smbios11.") && instanceType == api.InstanceTypeAny || instanceType == api.InstanceTypeVM {
+		return validate.IsAny, nil
+	}
+
 	if strings.HasPrefix(key, "limits.kernel.") {
 		// gendoc:generate(entity=kernel, group=limits, key=limits.kernel.as)
 		//
