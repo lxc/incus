@@ -17,6 +17,7 @@ import (
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 var tnVersion string
@@ -188,10 +189,50 @@ func (d truenas) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) erro
 // FillConfig populates the storage pool's configuration file with the default values.
 func (d *truenas) FillConfig() error {
 
-	// map back. for legacy.
+	// populate source if not already present
 	if d.config["truenas.dataset"] != "" && d.config["source"] == "" {
 		d.config["source"] = d.config["truenas.dataset"]
 	}
+
+	return nil
+}
+
+func (d *truenas) parseSource() error {
+
+	// fill config may modify.
+	source := d.config["source"]
+	host, source, found := strings.Cut(source, ":")
+	if !found {
+		source = host
+		host = ""
+	}
+
+	if source == "" || filepath.IsAbs(source) {
+		return fmt.Errorf(`TrueNAS Driver requires "source" to be specified using the format: [<remote host>:]<remote pool>[[/<remote dataset>]...][/]`)
+	}
+
+	// a pool... means we create a dataset in the root
+	if !strings.Contains(source, "/") {
+		source += "/"
+	}
+
+	// a trailing slash means use the storage pool name as the dataset
+	if strings.HasSuffix(source, "/") {
+		source += d.name
+	}
+
+	// legacy stores source in truenas.dataset
+	d.config["truenas.dataset"] = source
+
+	if host != "" {
+		if d.config["truenas.host"] != "" {
+			host = d.config["truenas.host"]
+		}
+
+		source = fmt.Sprintf("%s:%s", host, source)
+		d.config["truenas.host"] = host
+	}
+	d.config["source"] = source
 
 	// set host url
 	if d.config["truenas.url"] == "" && d.config["truenas.host"] != "" {
@@ -213,22 +254,10 @@ func (d *truenas) Create() error {
 		return err
 	}
 
-	if d.config["source"] == "" || filepath.IsAbs(d.config["source"]) {
-		return fmt.Errorf(`TrueNAS Driver requires "source" to be specified using the format: <remote pool>[[/<remote dataset>]...][/]`)
+	err = d.parseSource()
+	if err != nil {
+		return err
 	}
-
-	// a pool... means we create a dataset in the root
-	if !strings.Contains(d.config["source"], "/") {
-		d.config["source"] += "/"
-	}
-
-	// a trailing slash means use the storage pool name as the dataset
-	if strings.HasSuffix(d.config["source"], "/") {
-		d.config["source"] += d.name
-	}
-
-	// legacy stores source in truenas.dataset
-	d.config["truenas.dataset"] = d.config["source"]
 
 	// create pool dataset
 	exists, err := d.datasetExists(d.config["truenas.dataset"])
@@ -237,7 +266,7 @@ func (d *truenas) Create() error {
 	}
 
 	if !exists {
-		err = d.createDataset(d.config["source"])
+		err = d.createDataset(d.config["truenas.dataset"])
 		if err != nil {
 			return fmt.Errorf("Failed to create storgage pool on TrueNAS host: %s", d.config["source"])
 		}
@@ -318,59 +347,49 @@ func (d *truenas) Delete(op *operations.Operation) error {
 
 // Validate checks that all provide keys are supported and that no conflicting or missing configuration is present.
 func (d *truenas) Validate(config map[string]string) error {
-	// rules := map[string]func(value string) error{
-	// 	"size":          validate.Optional(validate.IsSize),
-	// 	"zfs.pool_name": validate.IsAny,
-	// 	"truenas.clone_copy": validate.Optional(func(value string) error {
-	// 		if value == "rebase" {
-	// 			return nil
-	// 		}
+	rules := map[string]func(value string) error{
+		// 	"size":          validate.Optional(validate.IsSize),
+		// 	"zfs.pool_name": validate.IsAny,
+		"source":           validate.IsAny,
+		"truenas.dataset":  validate.IsAny,
+		"truenas.host":     validate.IsAny,
+		"truenas.api_key":  validate.IsAny,
+		"truenas.key_file": validate.IsAny,
+		"truenas.url":      validate.IsAny,
 
-	// 		return validate.IsBool(value)
-	// 	}),
-	// 	"zfs.export": validate.Optional(validate.IsBool),
-	// }
+		// 	"truenas.clone_copy": validate.Optional(func(value string) error {
+		// 		if value == "rebase" {
+		// 			return nil
+		// 		}
 
-	return nil //d.validatePool(config, rules, d.commonVolumeRules())
+		// 		return validate.IsBool(value)
+		// 	}),
+		// 	"zfs.export": validate.Optional(validate.IsBool),
+	}
+
+	return d.validatePool(config, rules, d.commonVolumeRules())
 }
 
 // Update applies any driver changes required from a configuration change.
 func (d *truenas) Update(changedConfig map[string]string) error {
-	// _, ok := changedConfig["zfs.pool_name"]
-	// if ok {
-	// 	return fmt.Errorf("zfs.pool_name cannot be modified")
-	// }
 
-	// size, ok := changedConfig["size"]
-	// if ok {
-	// 	// Figure out loop path
-	// 	loopPath := loopFilePath(d.name)
+	_, ok := changedConfig["truenas.dataset"]
+	if ok {
+		return fmt.Errorf("truenas.dataset cannot be modified")
+	}
 
-	// 	_, devices := d.parseSource()
-	// 	if len(devices) != 1 || devices[0] != loopPath {
-	// 		return fmt.Errorf("Cannot resize non-loopback pools")
-	// 	}
-
-	// 	// Resize loop file
-	// 	f, err := os.OpenFile(loopPath, os.O_RDWR, 0600)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	defer func() { _ = f.Close() }()
-
-	// 	sizeBytes, _ := units.ParseByteSizeString(size)
-
-	// 	err = f.Truncate(sizeBytes)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	_, err = subprocess.RunCommand("zpool", "online", "-e", d.config["zfs.pool_name"], loopPath)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
+	host, ok := changedConfig["truenas.host"]
+	if ok {
+		d.config["truenas.host"] = host
+	}
+	url, ok := changedConfig["truenas.host"]
+	if ok {
+		d.config["truenas.url"] = url
+	}
+	apikey, ok := changedConfig["truenas.api_key"]
+	if ok {
+		d.config["truenas.api_key"] = apikey
+	}
 
 	return nil
 }
@@ -383,8 +402,18 @@ func (d *truenas) Mount() (bool, error) {
 	// 	return false, err
 	// }
 
+	// verify pool dataset exists
+	exists, err := d.datasetExists(d.config["truenas.dataset"])
+	if err != nil {
+		return false, err
+	}
+
+	if !exists {
+		return false, fmt.Errorf("TrueNAS host is responding, but dataset is missing %s:%s", d.config["truenas.host"], d.config["truenas.dataset"])
+	}
+
 	// Apply our default configuration.
-	err := d.ensureInitialDatasets(true)
+	err = d.ensureInitialDatasets(true)
 	if err != nil {
 		return false, err
 	}
