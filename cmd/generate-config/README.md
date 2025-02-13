@@ -1,4 +1,4 @@
-# incus-doc
+# generate-config
 
 A small CLI to parse comments in a Golang codebase meant to be used for a documentation tool (like Sphinx for example).
 
@@ -6,8 +6,8 @@ It parses the comments from the AST and extracts their documentation.
 
 # Usage
 
-    $ incus-doc -h
-    Usage of incus-doc:
+    $ generate-config -h
+    Usage of generate-config:
     -e value
         Path that will be excluded from the process
 
@@ -78,7 +78,7 @@ A comment is formatted this way:
 
 The go-swagger spec from source generator can only handles `swagger:meta` (global file/package level documentation), `swagger:route` (API endpoints), `swagger:params` (function parameters), `swagger:operation` (method documentation), `swagger:response` (API response content documentation), `swagger:model` (struct documentation) generation. In our use case, we would want a config variable spec generator that can bundle any key-value data pairs alongside metadata to build a sense of hierarchy and identity (we want to associate a unique key to each gendoc comment group that will also be displayed in the generated documentation)
 
-In a swagger fashion, `incus-doc` can associate metadata key-value pairs (here for example, `group` and `key`) to data key-value pairs. As a result, it can generate a YAML tree out of the code documentation and also a Markdown document.
+In a swagger fashion, `generate-config` can associate metadata key-value pairs (here for example, `group` and `key`) to data key-value pairs. As a result, it can generate a YAML tree out of the code documentation and also a Markdown document.
 
 ## Output
 
