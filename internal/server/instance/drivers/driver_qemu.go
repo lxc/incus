@@ -1573,6 +1573,14 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// SMBIOS only on x86_64 and aarch64.
 	if d.architectureSupportsUEFI(d.architecture) {
 		qemuArgs = append(qemuArgs, "-smbios", "type=2,manufacturer=LinuxContainers,product=Incus")
+
+		for k, v := range d.expandedConfig {
+			if !strings.HasPrefix(k, "smbios11.") {
+				continue
+			}
+
+			qemuArgs = append(qemuArgs, "-smbios", fmt.Sprintf("type=11,value=%s=%s", strings.TrimPrefix(k, "smbios11."), qemuEscapeCmdline(v)))
+		}
 	}
 
 	// Attempt to drop privileges (doesn't work when restoring state).
