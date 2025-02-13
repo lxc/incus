@@ -1,6 +1,6 @@
 package cluster
 
-//go:generate -command mapper incus-generate db mapper -t nodes.mapper.go
+//go:generate -command mapper generate-database db mapper -t nodes.mapper.go
 //go:generate mapper reset -i -b "//go:build linux && cgo && !agent"
 //
 //go:generate mapper stmt -e node id

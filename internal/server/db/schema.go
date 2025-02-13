@@ -4,4 +4,4 @@ package db
 
 // Directive for regenerating both the cluster and node database schemas.
 //
-//go:generate incus-generate db schema
+//go:generate generate-database db schema

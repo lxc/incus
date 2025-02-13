@@ -9,7 +9,7 @@ import (
 // Return a new root command.
 func newRoot() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "incus-generate",
+		Use:   "generate-database",
 		Short: "Code generation tool for Incus development",
 		Long: `This is the entry point for all "go:generate" directives
 used in Incus' source code.`,

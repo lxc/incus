@@ -1,12 +1,12 @@
-# `incus-generate`
+# `generate-database`
 
 ## Introduction
 
-`incus-generate` is a database statement and associated `go` function generator
-for Incus and related projects. `incus-generate` utilizes `go`'s code generation
+`generate-database` is a database statement and associated `go` function generator
+for Incus and related projects. `generate-database` utilizes `go`'s code generation
 directives (`//go:generate ...`) alongside go's [ast](https://pkg.go.dev/go/ast)
 package for parsing the syntax tree for go structs and variables. We use
-`incus-generate` for the majority of our SQL statements and database interactions
+`generate-database` for the majority of our SQL statements and database interactions
 on the `go` side for consistency and predictability.
 
 ## Usage
@@ -18,12 +18,12 @@ establish the command, the target file, and ensure the file has been cleared of
 content:
 
 ```go
-//go:generate -command mapper incus-generate db mapper -t instances.mapper.go
+//go:generate -command mapper generate-database db mapper -t instances.mapper.go
 //go:generate mapper reset -i -b "//go:build linux && cgo && !agent"
 
 ```
 
-This will initiate a call to `incus-generate db mapper -t instances.mapper.go` on
+This will initiate a call to `generate-database db mapper -t instances.mapper.go` on
 each call to the go generation directive `mapper`.
 
 ### Generation Directive Arguments
@@ -136,7 +136,7 @@ type InstanceFilter struct {
 }
 ```
 
-`incus-generate` will handle parsing of structs differently based on the composition of the struct in four different ways.
+`generate-database` will handle parsing of structs differently based on the composition of the struct in four different ways.
 
 Non-`EntityType` structs will only support `GetMany`, `Create`, `Update`, and `Delete` functions.
 
@@ -154,7 +154,7 @@ including a comma separated list to `references=<OtherEntity>` in the code gener
 ### ReferenceTable
 
 A struct that contains a field named `ReferenceID` will be parsed this way.
-`incus-generate` will use this struct to generate more abstract SQL statements and functions of the form `<parent_table>_<this_table>`.
+`generate-database` will use this struct to generate more abstract SQL statements and functions of the form `<parent_table>_<this_table>`.
 
 Real world invocation of these statements and functions should be done through an `EntityTable` `method` call with the tag `references=<ThisStruct>`. This `EntityTable` will replace the `<parent_table>` above.
 
