@@ -1305,6 +1305,12 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 		}
 	}
 
+	// gendoc:generate(entity=instance, group=miscellaneous, key=environment.*)
+	// Extra environment variables to set on boot and during exec.
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  shortdesc: Free-form environment key/value
 	if strings.HasPrefix(key, "environment.") {
 		return validate.IsAny, nil
 	}
