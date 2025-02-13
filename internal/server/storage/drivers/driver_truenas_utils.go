@@ -50,6 +50,10 @@ func (d *truenas) dataset(vol Volume, deleted bool) string {
 func (d *truenas) runTool(args ...string) (string, error) {
 	baseArgs := []string{}
 
+	if d.config["truenas.url"] == "" && d.config["truenas.host"] != "" {
+		d.config["truenas.url"] = fmt.Sprintf("wss://%s/api/current", d.config["truenas.host"])
+	}
+
 	if d.config["truenas.url"] != "" {
 		baseArgs = append(baseArgs, "--url", d.config["truenas.url"])
 	}
@@ -180,8 +184,14 @@ func (d *truenas) getDatasets(dataset string, types string) ([]string, error) {
 		return append(datasets, snapshots...), nil
 
 	}
-
 	out, err := d.runTool(noun, "list", "-H", "-r", "-o", "name", dataset)
+
+	// if types == "all" {
+	// 	types = "filesystem,volume,snapshot"
+	// }
+
+	//out, err := d.runTool("list", "-H", "-r", "-o", "name", "-t", types, dataset)
+
 	if err != nil {
 		return nil, err
 	}
