@@ -8,8 +8,10 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	linstorClient "github.com/LINBIT/golinstor/client"
+	"github.com/LINBIT/golinstor/clonestatus"
 
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
@@ -226,19 +228,20 @@ func (d *linstor) getLinstorDevPath(vol Volume) (string, error) {
 		return "", fmt.Errorf("Unable to get the nodes for the resource definition: %w", err)
 	}
 
-	volumeIndex := 0
-
-	// For VM volumes, the associated filesystem volume is a second volume on the same LINSTOR resource.
-	if vol.volType == VolumeTypeVM && vol.contentType == ContentTypeFS {
-		volumeIndex = 1
-	}
-
-	volume, err := linstor.Client.Resources.GetVolume(context.TODO(), resourceDefinitionName, nodes[0].Name, volumeIndex)
+	volumes, err := linstor.Client.Resources.GetVolumes(context.TODO(), resourceDefinitionName, nodes[0].Name)
 	if err != nil {
-		return "", fmt.Errorf("Unable to get Linstor volume: %w", err)
+		return "", fmt.Errorf("Unable to get Linstor volumes: %w", err)
 	}
 
-	return volume.DevicePath, nil
+	volumeIndex := 0
+	if len(volumes) == 2 {
+		// For VM volumes, the associated filesystem volume is a second volume on the same LINSTOR resource.
+		if (vol.volType == VolumeTypeVM || vol.volType == VolumeTypeImage) && vol.contentType == ContentTypeFS {
+			volumeIndex = 1
+		}
+	}
+
+	return volumes[volumeIndex].DevicePath, nil
 }
 
 // getSatelliteName returns the local LINSTOR satellite name.
@@ -502,6 +505,76 @@ func (d *linstor) resizeVolume(vol Volume, sizeBytes int64) error {
 
 	return nil
 }
+
+func (d *linstor) copyVolume(vol Volume, srcVol Volume) error {
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	rev := revert.New()
+	defer rev.Fail()
+
+	targetResourceDefinitionName, err := d.getResourceDefinitionName(vol)
+	if err != nil {
+		return err
+	}
+
+	srcResourceDefinitionName, err := d.getResourceDefinitionName(srcVol)
+	if err != nil {
+		return err
+	}
+
+	_, err = linstor.Client.ResourceDefinitions.Clone(context.TODO(), srcResourceDefinitionName, linstorClient.ResourceDefinitionCloneRequest{
+		Name: targetResourceDefinitionName,
+	})
+	if err != nil {
+		return fmt.Errorf("Unable to start cloning resource definition: %w", err)
+	}
+
+	d.logger.Debug("Clone operation started. Will poll for status", logger.Ctx{"srcResourceDefinition": srcResourceDefinitionName, "targetResourceDefinition": targetResourceDefinitionName})
+
+	// Poll the cloning operation status from LINSTOR. The duration of the operation depends on the
+	// underlying storage backend being used. For LVM-thin and ZFS the cloning is optimized and should
+	// be considerably faster than for LVM, which uses `dd`.
+loop:
+	for {
+		cloneStatus, err := linstor.Client.ResourceDefinitions.CloneStatus(context.TODO(), srcResourceDefinitionName, targetResourceDefinitionName)
+		if err != nil {
+			return fmt.Errorf("Unable to get clone operation status: %w", err)
+		}
+
+		d.logger.Debug("Got resource definition clone status", logger.Ctx{"cloneStatus": cloneStatus.Status})
+
+		switch cloneStatus.Status {
+		case clonestatus.Complete:
+			break loop
+		case clonestatus.Cloning:
+			time.Sleep(1 * time.Second)
+		case clonestatus.Failed:
+			return fmt.Errorf("Clone operation failed")
+		}
+	}
+
+	rev.Add(func() { _ = linstor.Client.ResourceDefinitions.Delete(context.TODO(), targetResourceDefinitionName) })
+
+	// Set the aux properties on the new resource definition.
+	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), targetResourceDefinitionName, linstorClient.GenericPropsModify{
+		OverrideProps: map[string]string{
+			"Aux/Incus/name":         vol.name,
+			"Aux/Incus/type":         string(vol.volType),
+			"Aux/Incus/content-type": string(vol.contentType),
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("Could not set properties on resource definition: %w", err)
+	}
+
+	rev.Success()
+
+	return nil
+}
+
 func (d *linstor) getVolumeSize(vol Volume) (int64, error) {
 	linstor, err := d.state.Linstor()
 	if err != nil {

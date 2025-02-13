@@ -222,7 +222,7 @@ func (d *linstor) Info() Info {
 		Buckets:                      false,
 		Remote:                       d.isRemote(),
 		VolumeMultiNode:              false, // DRBD uses an active-passive replication paradigm, so we cannot use the same volume concurrently in multiple nodes.
-		OptimizedImages:              false,
+		OptimizedImages:              true,
 		OptimizedBackups:             false,
 		OptimizedBackupHeader:        false,
 		PreservesInodes:              false,

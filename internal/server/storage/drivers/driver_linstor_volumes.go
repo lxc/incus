@@ -156,13 +156,14 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		return fmt.Errorf("Could not make volume available for filesystem creation: %w", err)
 	}
 
-	devPath, err := d.getLinstorDevPath(vol)
-	if err != nil {
-		return fmt.Errorf("Could not get device path for filesystem creation: %w", err)
-	}
-
-	volFilesystem := vol.ConfigBlockFilesystem()
 	if vol.contentType == ContentTypeFS {
+		devPath, err := d.getLinstorDevPath(vol)
+		if err != nil {
+			return fmt.Errorf("Could not get device path for filesystem creation: %w", err)
+		}
+
+		volFilesystem := vol.ConfigBlockFilesystem()
+
 		_, err = makeFSType(devPath, volFilesystem, nil)
 		if err != nil {
 			return err
@@ -171,6 +172,8 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 
 	// For VMs, also create the filesystem on the associated filesystem volume.
 	if vol.IsVMBlock() {
+		l.Debug("Creating filesystem on the associated filesystem volume")
+
 		fsVol := vol.NewVMBlockFilesystemVolume()
 		fsVolDevPath, err := d.getLinstorDevPath(fsVol)
 		if err != nil {
@@ -179,6 +182,8 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 
 		fsVolFilesystem := fsVol.ConfigBlockFilesystem()
 		_, err = makeFSType(fsVolDevPath, fsVolFilesystem, nil)
+
+		l.Debug("Created filesystem on the associated filesystem volume", logger.Ctx{"fsVolDevPath": fsVolDevPath, "fsVolFilesystem": fsVolFilesystem})
 		if err != nil {
 			return err
 		}
@@ -249,10 +254,76 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 
 // CreateVolumeFromCopy provides same-pool volume copying functionality.
 func (d *linstor) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool, allowInconsistent bool, op *operations.Operation) error {
-	// TODO: get snapshots
-	var srcSnapshots []Volume
-	// TODO: use optimized copying
-	return genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, false, allowInconsistent, op)
+	l := d.logger.AddContext(logger.Ctx{"vol": vol.Name(), "srcVol": srcVol.Name()})
+	l.Debug("Creating Linstor volume from copy")
+	rev := revert.New()
+	defer rev.Fail()
+
+	// TODO: get snapshots and copy them over
+	if copySnapshots {
+		return ErrNotSupported
+	}
+
+	// For VM volumes, the associated filesystem volume is already cloned with the main block
+	// volume, since they share the same resource definition.
+	if vol.volType != VolumeTypeVM || vol.contentType != ContentTypeFS {
+		err := d.copyVolume(vol, srcVol)
+		if err != nil {
+			return err
+		}
+
+		rev.Add(func() { _ = d.DeleteVolume(vol, op) })
+	}
+
+	if vol.contentType == ContentTypeFS {
+		devPath, err := d.getLinstorDevPath(vol)
+		if err != nil {
+			return err
+		}
+
+		fsType := vol.ConfigBlockFilesystem()
+
+		// Generate a new filesystem UUID if needed (this is required because some filesystems won't allow
+		// volumes with the same UUID to be mounted at the same time). This should be done before volume
+		// resize as some filesystems will need to mount the filesystem to resize.
+		if renegerateFilesystemUUIDNeeded(fsType) {
+			d.logger.Debug("Regenerating filesystem UUID", logger.Ctx{"dev": devPath, "fs": fsType})
+			err = regenerateFilesystemUUID(fsType, devPath)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Create mountpoint.
+		err = vol.EnsureMountPath()
+		if err != nil {
+			return err
+		}
+
+		rev.Add(func() { _ = os.Remove(vol.MountPath()) })
+	}
+
+	// Resize volume to the size specified. Only uses volume "size" property and does not use
+	// pool/defaults to give the caller more control over the size being used.
+	err := d.SetVolumeQuota(vol, vol.config["size"], false, op)
+	if err != nil {
+		return err
+	}
+
+	// For VMs, also copy the filesystem volume.
+	if vol.IsVMBlock() {
+		srcFSVol := srcVol.NewVMBlockFilesystemVolume()
+		fsVol := vol.NewVMBlockFilesystemVolume()
+
+		err = d.CreateVolumeFromCopy(fsVol, srcFSVol, copySnapshots, false, op)
+		if err != nil {
+			return err
+		}
+	}
+
+	rev.Success()
+
+	return nil
 }
 
 // DeleteVolume deletes a volume of the storage device.
