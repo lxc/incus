@@ -1500,7 +1500,7 @@ func (d *truenas) deleteVolume(vol Volume, op *operations.Operation) error {
 		}
 
 		if len(clones) > 0 {
-			// Deleted volues do not need shares
+			// Deleted volumes do not need shares
 			_ = d.deleteNfsShare(d.dataset(vol, false))
 
 			// Move to the deleted path.
@@ -1742,7 +1742,6 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 	// LVM and Ceph drivers), so we must also retrieve the dataset type here and look for "volume" types
 	// which also indicate this is a block volume.
 	//cmd := exec.Command("zfs", "list", "-H", "-o", "name,type,incus:content_type", "-r", "-t", "filesystem,volume", d.config["zfs.pool_name"])
-
 	out, err := d.runTool("dataset", "list", "-H", "-o", "name,type,incus:content_type", "-r" /*"-t","filesystem,volume",*/, d.config["truenas.dataset"])
 	if err != nil {
 		return nil, err
@@ -1921,13 +1920,13 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 		// For VMs, mount the filesystem volume.
 		// this essentially has the effect of double-mounting the FS volume when we are mounting the block device. This prevents
 		// the FS volume being unmounted prematurely.
-		if vol.IsVMBlock() {
-			fsVol := vol.NewVMBlockFilesystemVolume()
-			err = d.MountVolume(fsVol, op)
-			if err != nil {
-				return err
-			}
+		//if vol.IsVMBlock() {
+		fsVol := vol.NewVMBlockFilesystemVolume()
+		err = d.MountVolume(fsVol, op)
+		if err != nil {
+			return err
 		}
+		//}
 	}
 
 	vol.MountRefCountIncrement() // From here on it is up to caller to call UnmountVolume() when done.
@@ -1968,13 +1967,13 @@ func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 		ourUnmount = true
 	} else if vol.contentType == ContentTypeBlock || vol.contentType == ContentTypeISO {
 		// For VMs and ISOs, unmount the filesystem volume.
-		if vol.IsVMBlock() {
-			fsVol := vol.NewVMBlockFilesystemVolume()
-			ourUnmount, err = d.UnmountVolume(fsVol, false, op)
-			if err != nil {
-				return false, err
-			}
+		//if vol.IsVMBlock() {
+		fsVol := vol.NewVMBlockFilesystemVolume()
+		ourUnmount, err = d.UnmountVolume(fsVol, false, op)
+		if err != nil {
+			return false, err
 		}
+		//}
 	}
 
 	return ourUnmount, nil
