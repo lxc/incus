@@ -4,7 +4,7 @@ package cluster
 
 // Code generation directives.
 //
-//go:generate -command mapper incus-generate db mapper -t config.mapper.go
+//go:generate -command mapper generate-database db mapper -t config.mapper.go
 //go:generate mapper reset -i -b "//go:build linux && cgo && !agent"
 //
 //go:generate mapper stmt -e config objects

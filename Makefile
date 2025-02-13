@@ -127,7 +127,7 @@ update-protobuf:
 
 .PHONY: update-schema
 update-schema:
-	cd cmd/generate-database && $(GO) build -o $(GOPATH)/bin/incus-generate -tags "$(TAG_SQLITE3)" $(DEBUG) && cd -
+	cd cmd/generate-database && $(GO) build -o $(GOPATH)/bin/generate-database -tags "$(TAG_SQLITE3)" $(DEBUG) && cd -
 	$(GO) generate ./...
 	gofmt -s -w ./internal/server/db/
 	goimports -w ./internal/server/db/
