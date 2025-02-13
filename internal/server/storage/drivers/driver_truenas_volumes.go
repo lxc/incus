@@ -114,19 +114,22 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 			// Restore the image.
 			if canRestore {
 				d.logger.Debug("Restoring previously deleted cached image volume", logger.Ctx{"fingerprint": vol.Name()})
-				_, err := subprocess.RunCommand("/proc/self/exe", "forkzfs", "--", "rename", d.dataset(vol, true), d.dataset(vol, false))
+				//_, err := subprocess.RunCommand("/proc/self/exe", "forkzfs", "--", "rename", d.dataset(vol, true), d.dataset(vol, false))
+				_, err := d.runTool("dataset", "rename", d.dataset(vol, true), d.dataset(vol, false))
 				if err != nil {
 					return err
 				}
 
-				if vol.IsVMBlock() {
-					fsVol := vol.NewVMBlockFilesystemVolume()
+				// if vol.IsVMBlock() {
+				// 	fsVol := vol.NewVMBlockFilesystemVolume()
 
-					_, err := subprocess.RunCommand("/proc/self/exe", "forkzfs", "--", "rename", d.dataset(fsVol, true), d.dataset(fsVol, false))
-					if err != nil {
-						return err
-					}
-				}
+				// 	//_, err := subprocess.RunCommand("/proc/self/exe", "forkzfs", "--", "rename", d.dataset(fsVol, true), d.dataset(fsVol, false))
+				// 	_, err := d.runTool("dataset", "rename", d.dataset(fsVol, true), d.dataset(fsVol, false))
+
+				// 	if err != nil {
+				// 		return err
+				// 	}
+				// }
 
 				revert.Success()
 				return nil
