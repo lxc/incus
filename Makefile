@@ -143,8 +143,8 @@ endif
 .PHONY: update-metadata
 update-metadata: build
 	@echo "Generating golang documentation metadata"
-	cd cmd/generate-config && CGO_ENABLED=0 $(GO) build -o $(GOPATH)/bin/incus-doc
-	$(GOPATH)/bin/incus-doc . --json ./internal/server/metadata/configuration.json --txt ./doc/config_options.txt
+	cd cmd/generate-config && CGO_ENABLED=0 $(GO) build -o $(GOPATH)/bin/generate-config
+	$(GOPATH)/bin/generate-config . --json ./internal/server/metadata/configuration.json --txt ./doc/config_options.txt
 
 .PHONY: doc-setup
 doc-setup: client
