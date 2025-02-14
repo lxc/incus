@@ -1061,13 +1061,6 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  shortdesc: The guest owner's `base64`-encoded session blob
 	"security.sev.session.data": validate.Optional(validate.IsAny),
 
-	// gendoc:generate(entity=instance, group=miscellaneous, key=user.*)
-	// User keys can be used in search.
-	// ---
-	//  type: string
-	//  liveupdate: yes
-	//  shortdesc: Free-form user key/value storage
-
 	// gendoc:generate(entity=instance, group=miscellaneous, key=agent.nic_config)
 	// For containers, the name and MTU of the default network interfaces is used for the instance devices.
 	// For virtual machines, set this option to `true` to set the name and MTU of the default network interfaces to be the same as the instance devices.
@@ -1320,15 +1313,37 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 		}
 	}
 
+	// gendoc:generate(entity=instance, group=miscellaneous, key=environment.*)
+	// Extra environment variables to set on boot and during exec.
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  shortdesc: Free-form environment key/value
 	if strings.HasPrefix(key, "environment.") {
 		return validate.IsAny, nil
 	}
 
+	// gendoc:generate(entity=instance, group=miscellaneous, key=user.*)
+	// User keys can be used in search.
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  shortdesc: Free-form user key/value storage
 	if strings.HasPrefix(key, "user.") {
 		return validate.IsAny, nil
 	}
 
 	if strings.HasPrefix(key, "image.") {
+		return validate.IsAny, nil
+	}
+
+	// gendoc:generate(entity=instance, group=miscellaneous, key=smbios11.*)
+	// `SMBIOS Type 11` configuration keys.
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  shortdesc: Free-form `SMBIOS Type 11` key/value
+	if strings.HasPrefix(key, "smbios11.") && instanceType == api.InstanceTypeAny || instanceType == api.InstanceTypeVM {
 		return validate.IsAny, nil
 	}
 

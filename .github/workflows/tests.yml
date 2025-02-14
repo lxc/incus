@@ -101,6 +101,10 @@ jobs:
         run: |
           go mod download
 
+      - name: Fix repository permissions
+        run: |
+          sudo chown -R runner:docker .
+
       - name: Run Incus build
         run: |
           make

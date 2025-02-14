@@ -1627,6 +1627,14 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// SMBIOS only on x86_64 and aarch64.
 	if d.architectureSupportsUEFI(d.architecture) {
 		qemuArgs = append(qemuArgs, "-smbios", "type=2,manufacturer=LinuxContainers,product=Incus")
+
+		for k, v := range d.expandedConfig {
+			if !strings.HasPrefix(k, "smbios11.") {
+				continue
+			}
+
+			qemuArgs = append(qemuArgs, "-smbios", fmt.Sprintf("type=11,value=%s=%s", strings.TrimPrefix(k, "smbios11."), qemuEscapeCmdline(v)))
+		}
 	}
 
 	// Attempt to drop privileges (doesn't work when restoring state).
@@ -8813,7 +8821,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		"-nographic",
 		"-nodefaults",
 		"-no-user-config",
-		"-chardev", fmt.Sprintf("socket,id=monitor,path=%s,server=on,wait=off", monitorPath.Name()),
+		"-chardev", fmt.Sprintf("socket,id=monitor,path=%s,server=on,wait=off", qemuEscapeCmdline(monitorPath.Name())),
 		"-mon", "chardev=monitor,mode=control",
 		"-machine", qemuMachineType(hostArch),
 	}
@@ -8840,7 +8848,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 			return nil, fmt.Errorf("Unable to locate a UEFI firmware")
 		}
 
-		qemuArgs = append(qemuArgs, "-drive", fmt.Sprintf("if=pflash,format=raw,readonly=on,file=%s", efiPath))
+		qemuArgs = append(qemuArgs, "-drive", fmt.Sprintf("if=pflash,format=raw,readonly=on,file=%s", qemuEscapeCmdline(efiPath)))
 	}
 
 	var stderr bytes.Buffer

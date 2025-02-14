@@ -645,6 +645,14 @@
 						}
 					},
 					{
+						"environment.*": {
+							"liveupdate": "yes",
+							"longdesc": "Extra environment variables to set on boot and during exec.",
+							"shortdesc": "Free-form environment key/value",
+							"type": "string"
+						}
+					},
+					{
 						"linux.kernel_modules": {
 							"condition": "container",
 							"liveupdate": "yes",
@@ -659,6 +667,14 @@
 							"liveupdate": "no",
 							"longdesc": "",
 							"shortdesc": "Override for the corresponding `sysctl` setting in the container",
+							"type": "string"
+						}
+					},
+					{
+						"smbios11.*": {
+							"liveupdate": "yes",
+							"longdesc": "`SMBIOS Type 11` configuration keys.",
+							"shortdesc": "Free-form `SMBIOS Type 11` key/value",
 							"type": "string"
 						}
 					},
