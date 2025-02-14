@@ -127,3 +127,7 @@ func ParseMemoryStr(memory string) (valueInt int64, err error) {
 
 	return valueInt, err
 }
+
+func qemuEscapeCmdline(value string) string {
+	return strings.Replace(value, ",", ",,", -1)
+}
