@@ -8813,7 +8813,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		"-nographic",
 		"-nodefaults",
 		"-no-user-config",
-		"-chardev", fmt.Sprintf("socket,id=monitor,path=%s,server=on,wait=off", monitorPath.Name()),
+		"-chardev", fmt.Sprintf("socket,id=monitor,path=%s,server=on,wait=off", qemuEscapeCmdline(monitorPath.Name())),
 		"-mon", "chardev=monitor,mode=control",
 		"-machine", qemuMachineType(hostArch),
 	}
@@ -8840,7 +8840,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 			return nil, fmt.Errorf("Unable to locate a UEFI firmware")
 		}
 
-		qemuArgs = append(qemuArgs, "-drive", fmt.Sprintf("if=pflash,format=raw,readonly=on,file=%s", efiPath))
+		qemuArgs = append(qemuArgs, "-drive", fmt.Sprintf("if=pflash,format=raw,readonly=on,file=%s", qemuEscapeCmdline(efiPath)))
 	}
 
 	var stderr bytes.Buffer
