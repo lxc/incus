@@ -2879,20 +2879,6 @@ func (d *truenas) RenameVolumeSnapshot(vol Volume, newSnapshotName string, op *o
 
 	})
 
-	// For VM images, create a filesystem volume too.
-	if vol.IsVMBlock() {
-		fsVol := vol.NewVMBlockFilesystemVolume()
-		err := d.RenameVolumeSnapshot(fsVol, newSnapshotName, op)
-		if err != nil {
-			return err
-		}
-
-		revert.Add(func() {
-			newFsVol := NewVolume(d, d.name, newVol.volType, ContentTypeFS, newVol.name, newVol.config, newVol.poolConfig)
-			_ = d.RenameVolumeSnapshot(newFsVol, vol.name, op)
-		})
-	}
-
 	// All done.
 	revert.Success()
 
