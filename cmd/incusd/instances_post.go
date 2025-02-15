@@ -1356,7 +1356,6 @@ func clusterCopyContainerInternal(ctx context.Context, s *state.State, r *http.R
 		pullReq := api.InstanceSnapshotPost{
 			Migration: true,
 			Live:      req.Source.Live,
-			Name:      req.Name,
 		}
 
 		op, err := client.MigrateInstanceSnapshot(cName, sName, pullReq)
@@ -1371,7 +1370,6 @@ func clusterCopyContainerInternal(ctx context.Context, s *state.State, r *http.R
 			Migration:    true,
 			Live:         req.Source.Live,
 			InstanceOnly: instanceOnly,
-			Name:         req.Name,
 		}
 
 		op, err := client.MigrateInstance(req.Source.Source, pullReq)

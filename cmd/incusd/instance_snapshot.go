@@ -649,25 +649,21 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 
 	parentName, snapName, _ := api.GetParentAndSnapshotName(snapInst.Name())
 
+	rdr2 := io.NopCloser(bytes.NewBuffer(body))
+	reqNew := api.InstanceSnapshotPost{}
+	err = json.NewDecoder(rdr2).Decode(&reqNew)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
 	migration, err := raw.GetBool("migration")
 	if err == nil && migration {
-		rdr2 := io.NopCloser(bytes.NewBuffer(body))
 		rdr3 := io.NopCloser(bytes.NewBuffer(body))
 
 		req := api.InstancePost{}
-		err = json.NewDecoder(rdr2).Decode(&req)
+		err = json.NewDecoder(rdr3).Decode(&req)
 		if err != nil {
 			return response.BadRequest(err)
-		}
-
-		reqNew := api.InstanceSnapshotPost{}
-		err = json.NewDecoder(rdr3).Decode(&reqNew)
-		if err != nil {
-			return response.BadRequest(err)
-		}
-
-		if reqNew.Name == "" {
-			return response.BadRequest(fmt.Errorf("A new name for the instance must be provided"))
 		}
 
 		if reqNew.Live {
@@ -707,6 +703,10 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 		}
 
 		return operations.OperationResponse(op)
+	} else if !migration {
+		if reqNew.Name == "" {
+			return response.BadRequest(fmt.Errorf("A new name for the instance must be provided"))
+		}
 	}
 
 	newName, err := raw.GetString("name")
