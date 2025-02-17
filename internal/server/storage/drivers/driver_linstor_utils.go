@@ -130,6 +130,38 @@ func (d *linstor) getResourceGroup() (*linstorClient.ResourceGroup, error) {
 	return &resourceGroup, nil
 }
 
+// getResourceGroupSize fetches the resource group size info.
+func (d *linstor) getResourceGroupSize() (*linstorClient.QuerySizeInfoResponseSpaceInfo, error) {
+	// Retrieve the Linstor client.
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return nil, err
+	}
+
+	placeCount, err := strconv.Atoi(d.config[LinstorResourceGroupPlaceCountConfigKey])
+	if err != nil {
+		return nil, fmt.Errorf("Could not parse resource group place count property: %w", err)
+	}
+
+	resourceGroupName := d.config[LinstorResourceGroupNameConfigKey]
+	request := linstorClient.QuerySizeInfoRequest{
+		SelectFilter: &linstorClient.AutoSelectFilter{
+			PlaceCount: int32(placeCount),
+		},
+	}
+
+	if d.config[LinstorResourceGroupStoragePoolConfigKey] != "" {
+		request.SelectFilter.StoragePool = d.config[LinstorResourceGroupStoragePoolConfigKey]
+	}
+
+	response, err := linstor.Client.ResourceGroups.QuerySizeInfo(context.TODO(), resourceGroupName, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return response.SpaceInfo, nil
+}
+
 // createResourceGroup creates a new resource group for the storage pool.
 func (d *linstor) createResourceGroup() error {
 	d.logger.Debug("Creating Linstor resource group")

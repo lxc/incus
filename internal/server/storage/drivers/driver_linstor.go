@@ -206,12 +206,6 @@ func (d *linstor) Delete(op *operations.Operation) error {
 	return nil
 }
 
-// GetResources returns the pool resource usage information.
-func (d *linstor) GetResources() (*api.ResourcesStoragePool, error) {
-	// TODO: implement getting resource usage
-	return nil, ErrNotSupported
-}
-
 // Info returns info about the driver and its environment.
 func (d *linstor) Info() Info {
 	return Info{
@@ -248,6 +242,21 @@ func (d *linstor) Unmount() (bool, error) {
 // Update applies any driver changes required from a configuration change.
 func (d *linstor) Update(changedConfig map[string]string) error {
 	return ErrNotSupported
+}
+
+// GetResources returns utilisation and space info about the pool.
+func (d *linstor) GetResources() (*api.ResourcesStoragePool, error) {
+	sizeInfo, err := d.getResourceGroupSize()
+	if err != nil {
+		return nil, fmt.Errorf("Could not fetch pool space info: %w", err)
+	}
+
+	// We have no information about inode usage, so we skip that.
+	res := api.ResourcesStoragePool{}
+	res.Space.Total = uint64(*sizeInfo.CapacityInKib) * 1024
+	res.Space.Used = (uint64(*sizeInfo.CapacityInKib) - uint64(*sizeInfo.AvailableSizeInKib)) * 1024
+
+	return &res, nil
 }
 
 // MigrationTypes returns the type of transfer methods to be used when doing migrations between pools in preference order.
