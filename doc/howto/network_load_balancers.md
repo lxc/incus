@@ -65,11 +65,11 @@ The backend target address must be within the same subnet as the network that th
 Use the following command to add a backend specification:
 
 ```bash
-incus network load-balancer backend add <network_name> <listen_address> <backend_name> <listen_ports> <target_address> [<target_ports>]
+incus network load-balancer backend add <network_name> <listen_address> <backend_name> <target_address> [<target_ports>]
 ```
 
 The target ports are optional.
-If not specified, the load balancer will use the listen ports for the backend for the backend target ports.
+If not specified, the load balancer defaults to using the frontend port as the backend target port.
 
 If you want to forward the traffic to different ports, you have two options:
 
