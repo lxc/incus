@@ -248,9 +248,27 @@ func (d *linstor) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 	rev := revert.New()
 	defer rev.Fail()
 
-	// TODO: get snapshots and copy them over
-	if copySnapshots {
-		return ErrNotSupported
+	// For snapshots, restore them into the target volume
+	if srcVol.IsSnapshot() {
+		l.Debug("Copying snapshot to volume")
+		err := d.createResourceFromSnapshot(srcVol, vol)
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	if copySnapshots && !srcVol.IsSnapshot() {
+		// Get the list of snapshots from the source.
+		srcSnapshots, err := srcVol.Snapshots(op)
+		if err != nil {
+			return err
+		}
+
+		// TODO: support optimized copying with snapshots
+		return genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, false, allowInconsistent, op)
 	}
 
 	// For VM volumes, the associated filesystem volume is already cloned with the main block
@@ -1033,4 +1051,31 @@ func (d *linstor) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser,
 
 	// TODO: handle optimize migration from other LINSTOR storage pools
 	return ErrNotSupported
+}
+
+// VolumeSnapshots returns a list of snapshots for the volume (in no particular order).
+func (d *linstor) VolumeSnapshots(vol Volume, op *operations.Operation) ([]string, error) {
+	var snapshots []string
+
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return snapshots, err
+	}
+
+	resourceDefinitionName, err := d.getResourceDefinitionName(vol)
+	if err != nil {
+		return snapshots, err
+	}
+
+	// Get the snapshots
+	linstorSnapshots, err := linstor.Client.Resources.GetSnapshots(context.TODO(), resourceDefinitionName)
+	if err != nil {
+		return snapshots, fmt.Errorf("Unable to get snapshots: %w", err)
+	}
+
+	for _, snapshot := range linstorSnapshots {
+		snapshots = append(snapshots, snapshot.Name)
+	}
+
+	return snapshots, nil
 }
