@@ -135,7 +135,7 @@ func ValidConfig(sysOS *sys.OS, config map[string]string, expanded bool, instanc
 		return err
 	}
 
-	if expanded && (util.IsFalseOrEmpty(config["security.privileged"])) && sysOS.IdmapSet == nil {
+	if instanceType == instancetype.Container && expanded && util.IsFalseOrEmpty(config["security.privileged"]) && sysOS.IdmapSet == nil {
 		return fmt.Errorf("No uid/gid allocation configured. In this mode, only privileged containers are supported")
 	}
 
