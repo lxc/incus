@@ -231,19 +231,9 @@ static const struct ns_info {
 	{ "time",   CLONE_NEWTIME	},
 };
 
-static inline const char *namespace_flag_into_name(unsigned int flags)
-{
-	for (int i = 0; i < ARRAY_SIZE(ns_info); i++)
-		if (ns_info[i].clone_flag == flags)
-			return ns_info[i].proc_name;
-
-	return NULL;
-}
-
 bool change_namespaces(int pidfd, int nsfd, unsigned int flags)
 {
 	__do_close int fd = -EBADF;
-	const char *ns;
 
 	if (pidfd >= 0 && setns(pidfd, flags) == 0)
 		return true;
@@ -251,15 +241,18 @@ bool change_namespaces(int pidfd, int nsfd, unsigned int flags)
 	if (nsfd < 0)
 		return false;
 
-	ns = namespace_flag_into_name(flags);
-	if (!ns)
-		return false;
+	for (int i = 0; i < ARRAY_SIZE(ns_info); i++) {
+		if (flags & ns_info[i].clone_flag) {
+			fd = openat(nsfd, ns_info[i].proc_name, O_RDONLY | O_CLOEXEC);
+			if (fd < 0)
+				return false;
 
-	fd = openat(nsfd, ns, O_RDONLY | O_CLOEXEC);
-	if (fd < 0)
-		return false;
+			if (setns(fd, 0) < 0)
+				return false;
+		}
+	}
 
-	return setns(fd, 0) == 0;
+	return true;
 }
 
 static char *file_to_buf(char *path, ssize_t *length)
