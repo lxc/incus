@@ -359,6 +359,11 @@ func (d *linstor) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 	return nil
 }
 
+// RefreshVolume updates an existing volume to match the state of another.
+func (d *linstor) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, allowInconsistent bool, op *operations.Operation) error {
+	return genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, true, allowInconsistent, op)
+}
+
 // DeleteVolume deletes a volume of the storage device.
 func (d *linstor) DeleteVolume(vol Volume, op *operations.Operation) error {
 	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name()})
