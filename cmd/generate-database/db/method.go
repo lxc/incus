@@ -4,11 +4,13 @@ package db
 
 import (
 	"fmt"
-	"go/ast"
 	"go/build"
+	"go/types"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/tools/go/packages"
 
 	"github.com/lxc/incus/v6/cmd/generate-database/file"
 	"github.com/lxc/incus/v6/cmd/generate-database/lex"
@@ -22,7 +24,7 @@ type Method struct {
 	kind   string            // Kind of statement to generate
 	ref    string            // ref is the current reference method for the method kind
 	config map[string]string // Configuration parameters
-	pkg    *ast.Package      // Package to perform for struct declaration lookup
+	pkg    *types.Package    // Package to perform for struct declaration lookup
 }
 
 // NewMethod return a new method code snippet for executing a certain mapping.
@@ -43,7 +45,9 @@ func NewMethod(database, pkg, entity, kind string, config map[string]string) (*M
 		}
 	}
 
-	parsedPkg, err := ParsePackage(pkgPath)
+	parsedPkg, err := packages.Load(&packages.Config{
+		Mode: packages.LoadTypes,
+	}, pkgPath)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +61,7 @@ func NewMethod(database, pkg, entity, kind string, config map[string]string) (*M
 		entity: entity,
 		kind:   kind,
 		config: config,
-		pkg:    parsedPkg,
+		pkg:    parsedPkg[0].Types,
 	}
 
 	return method, nil
