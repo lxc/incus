@@ -899,6 +899,17 @@ func (d *linstor) UpdateVolume(vol Volume, changedConfig map[string]string) erro
 	return nil
 }
 
+// GetVolumeUsage returns the disk space used by the volume.
+func (d *linstor) GetVolumeUsage(vol Volume) (int64, error) {
+	usageInKiB, err := d.getVolumeUsage(vol)
+	if err != nil {
+		return 0, fmt.Errorf("Could not get volume usage: %w", err)
+	}
+
+	usageInBytes := usageInKiB * 1024
+	return usageInBytes, nil
+}
+
 // SetVolumeQuota applies a size limit on volume.
 // Does nothing if supplied with an empty/zero size.
 func (d *linstor) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op *operations.Operation) error {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -311,6 +312,58 @@ func (d *linstor) getLinstorDevPath(vol Volume) (string, error) {
 	}
 
 	return volumes[volumeIndex].DevicePath, nil
+}
+
+// getVolumeUsage returns the allocated size for a given volume in KiB.
+func (d *linstor) getVolumeUsage(vol Volume) (int64, error) {
+	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name()})
+	l.Debug("Getting volume usage")
+
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return 0, err
+	}
+
+	resourceDefinitionName, err := d.getResourceDefinitionName(vol)
+	if err != nil {
+		return 0, err
+	}
+
+	// Fetch all resources for the given volume.
+	resources, err := linstor.Client.Resources.GetResourceView(context.TODO(), &linstorClient.ListOpts{
+		Resource: []string{resourceDefinitionName},
+	})
+	if err != nil {
+		return 0, fmt.Errorf("Unable to get the resources for the resource definition: %w", err)
+	}
+
+	var resource *linstorClient.ResourceWithVolumes
+
+	// Find the first non DISKLESS resource.
+	for _, r := range resources {
+		l.Debug("Volume flags", logger.Ctx{"node": r.NodeName, "flags": r.Flags})
+		if !slices.Contains(r.Flags, "DISKLESS") {
+			resource = &r
+		}
+	}
+
+	// If no diskful resource is found, usage cannot be determined.
+	if resource == nil {
+		l.Warn("No diskful resource found for volume")
+		return 0, nil
+	}
+
+	volumes := resource.Volumes
+
+	volumeIndex := 0
+	if len(volumes) == 2 {
+		// For VM volumes, the associated filesystem volume is a second volume on the same LINSTOR resource.
+		if (vol.volType == VolumeTypeVM || vol.volType == VolumeTypeImage) && vol.contentType == ContentTypeFS {
+			volumeIndex = 1
+		}
+	}
+
+	return volumes[volumeIndex].AllocatedSizeKib, nil
 }
 
 // getSatelliteName returns the local LINSTOR satellite name.
