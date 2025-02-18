@@ -12,8 +12,10 @@ import (
 	linstorClient "github.com/LINBIT/golinstor/client"
 	"golang.org/x/sys/unix"
 
+	"github.com/lxc/incus/v6/internal/instancewriter"
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/migration"
+	"github.com/lxc/incus/v6/internal/server/backup"
 	localMigration "github.com/lxc/incus/v6/internal/server/migration"
 	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/shared/api"
@@ -1122,4 +1124,15 @@ func (d *linstor) VolumeSnapshots(vol Volume, op *operations.Operation) ([]strin
 	}
 
 	return snapshots, nil
+}
+
+// BackupVolume copies a volume (and optionally its snapshots) to a specified target path.
+// This driver does not support optimized backups.
+func (d *linstor) BackupVolume(vol Volume, tarWriter *instancewriter.InstanceTarWriter, optimized bool, snapshots []string, op *operations.Operation) error {
+	return genericVFSBackupVolume(d, vol, tarWriter, snapshots, op)
+}
+
+// CreateVolumeFromBackup restores a backup tarball onto the storage device.
+func (d *linstor) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
+	return genericVFSBackupUnpack(d, d.state.OS, vol, srcBackup.Snapshots, srcData, op)
 }
