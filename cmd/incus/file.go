@@ -799,7 +799,7 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 
 		// Transfer the files
 		for _, fname := range sourcefilenames {
-			err := c.file.recursivePushFile(resource.server, resource.name, fname, targetPath)
+			err := c.file.recursivePushFile(resource, fname, targetPath)
 			if err != nil {
 				return err
 			}
@@ -1119,7 +1119,7 @@ func (c *cmdFile) recursivePullFile(d incus.InstanceServer, inst string, p strin
 	return nil
 }
 
-func (c *cmdFile) recursivePushFile(d incus.InstanceServer, inst string, source string, target string) error {
+func (c *cmdFile) recursivePushFile(resource remoteResource, source string, target string) error {
 	source = filepath.Clean(source)
 	sourceDir, _ := filepath.Split(source)
 	sourceLen := len(sourceDir)
@@ -1144,6 +1144,7 @@ func (c *cmdFile) recursivePushFile(d incus.InstanceServer, inst string, source 
 		}
 
 		var readCloser io.ReadCloser
+		paths := []string{targetPath}
 
 		if fInfo.IsDir() {
 			// Directory handling
@@ -1158,6 +1159,7 @@ func (c *cmdFile) recursivePushFile(d incus.InstanceServer, inst string, source 
 			args.Type = "symlink"
 			args.Content = bytes.NewReader([]byte(symlinkTarget))
 			readCloser = io.NopCloser(args.Content)
+			paths = append(paths, symlinkTarget)
 		} else {
 			// File handling
 			f, err := os.Open(p)
@@ -1202,7 +1204,7 @@ func (c *cmdFile) recursivePushFile(d incus.InstanceServer, inst string, source 
 		}
 
 		logger.Infof("Pushing %s to %s (%s)", p, targetPath, args.Type)
-		err = d.CreateInstanceFile(inst, targetPath, args)
+		err = c.sftpCreateFile(resource, paths, args, true)
 		if err != nil {
 			if args.Type != "directory" {
 				progress.Done("")
