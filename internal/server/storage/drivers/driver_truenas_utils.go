@@ -210,7 +210,8 @@ func (d *truenas) getDatasets(dataset string, types string) ([]string, error) {
 	return children, nil
 }
 
-func (d *truenas) createDataset(dataset string, options ...string) error {
+// batch creates one or more datasets with the same options
+func (d *truenas) createDatasets(datasets []string, options ...string) error {
 	args := []string{"dataset", "create"}
 
 	// for _, option := range options {
@@ -223,10 +224,22 @@ func (d *truenas) createDataset(dataset string, options ...string) error {
 		args = append(args, "-o", optionString)
 	}
 
-	args = append(args, "--managedby", tnDefaultSettings["managedby"], "--comments", tnDefaultSettings["comments"], dataset)
+	args = append(args, "--managedby", tnDefaultSettings["managedby"], "--comments", tnDefaultSettings["comments"])
+
+	args = append(args, datasets...)
 
 	out, err := d.runTool(args...)
 	_ = out
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *truenas) createDataset(dataset string, options ...string) error {
+	err := d.createDatasets([]string{dataset}, options...)
+
 	if err != nil {
 		return err
 	}
@@ -314,7 +327,7 @@ func (d *truenas) renameSnapshot(sourceDataset string, destDataset string) (stri
 
 // will rename a dataset, or snapshot. updateShares is relatively expensive if there is no possibility of there being a share
 func (d *truenas) renameDataset(sourceDataset string, destDataset string, updateShares bool) (string, error) {
-	args := []string{"dataset", "rename"}
+	args := []string{d.getDatasetOrSnapshot(sourceDataset), "rename"}
 
 	if updateShares {
 		args = append(args, "--update-shares")
@@ -334,7 +347,7 @@ func (d *truenas) deleteDatasetRecursive(dataset string) error {
 
 	// Delete the dataset (and any snapshots left).
 	//_, err = subprocess.TryRunCommand("zfs", "destroy", "-r", dataset)
-	out, err := d.runTool(d.getDatasetOrSnapshot((dataset)), "delete", "-r", dataset)
+	out, err := d.runTool(d.getDatasetOrSnapshot(dataset), "delete", "-r", dataset)
 	_ = out
 	if err != nil {
 		return err
