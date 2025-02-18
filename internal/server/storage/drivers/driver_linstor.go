@@ -241,7 +241,22 @@ func (d *linstor) Unmount() (bool, error) {
 
 // Update applies any driver changes required from a configuration change.
 func (d *linstor) Update(changedConfig map[string]string) error {
-	return ErrNotSupported
+	_, changed := changedConfig[LinstorResourceGroupNameConfigKey]
+	if changed {
+		return fmt.Errorf("%s cannot be changed", LinstorResourceGroupNameConfigKey)
+	}
+
+	_, changed = changedConfig[LinstorVolumePrefixConfigKey]
+	if changed {
+		return fmt.Errorf("%s cannot be changed", LinstorVolumePrefixConfigKey)
+	}
+
+	err := d.updateResourceGroup(changedConfig)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GetResources returns utilisation and space info about the pool.

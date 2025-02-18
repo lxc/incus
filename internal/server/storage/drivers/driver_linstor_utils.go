@@ -197,6 +197,43 @@ func (d *linstor) createResourceGroup() error {
 	return nil
 }
 
+// updateResourceGroup updates the resource group for the storage pool.
+func (d *linstor) updateResourceGroup(changedConfig map[string]string) error {
+	d.logger.Debug("Updating Linstor resource group")
+
+	// Retrieve the Linstor client.
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	resourceGroupModify := linstorClient.ResourceGroupModify{}
+
+	placeCount, changed := changedConfig[LinstorResourceGroupPlaceCountConfigKey]
+	if changed {
+		placeCount, err := strconv.Atoi(placeCount)
+		if err != nil {
+			return fmt.Errorf("Could not parse resource group place count property: %w", err)
+		}
+
+		resourceGroupModify.SelectFilter.PlaceCount = int32(placeCount)
+	}
+
+	storagePool, changed := changedConfig[LinstorResourceGroupStoragePoolConfigKey]
+	if changed {
+		resourceGroupModify.SelectFilter.StoragePool = storagePool
+	}
+
+	resourceGroupName := d.config[LinstorResourceGroupNameConfigKey]
+
+	err = linstor.Client.ResourceGroups.Modify(context.TODO(), resourceGroupName, resourceGroupModify)
+	if err != nil {
+		return fmt.Errorf("Could not update Linstor resource group : %w", err)
+	}
+
+	return nil
+}
+
 // deleteResourceGroup deleter the resource group for the storage pool.
 func (d *linstor) deleteResourceGroup() error {
 	// Retrieve the Linstor client.
