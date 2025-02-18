@@ -42,6 +42,9 @@ const LinstorResourceGroupStoragePoolConfigKey = "linstor.resource_group.storage
 // LinstorVolumePrefixConfigKey represents the config key that describes the prefix to add to every volume within a storage pool.
 const LinstorVolumePrefixConfigKey = "linstor.volume.prefix"
 
+// LinstorAuxSnapshotPrefix represents the AuxProp prefix to map Incus and LINSTOR snapshots.
+const LinstorAuxSnapshotPrefix = "Aux/Incus/snapshot-name/"
+
 // errResourceDefinitionNotFound indicates that a resource definition could not be found in Linstor.
 var errResourceDefinitionNotFound = errors.New("Resource definition not found")
 
@@ -437,7 +440,41 @@ func (d *linstor) createVolumeSnapshot(parentVol Volume, snapVol Volume) error {
 		return fmt.Errorf("Could not create resource snapshot: %w", err)
 	}
 
+	_, snapshotName, _ := api.GetParentAndSnapshotName(snapVol.Name())
+	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceName, linstorClient.GenericPropsModify{
+		OverrideProps: map[string]string{LinstorAuxSnapshotPrefix + snapResourceName: snapshotName},
+	})
+	if err != nil {
+		_ = linstor.Client.Resources.DeleteSnapshot(context.TODO(), resourceName, snapResourceName)
+		return err
+	}
+
 	return nil
+}
+
+// renameVolumeSnapshot renames a volume snapshot.
+func (d *linstor) renameVolumeSnapshot(parentVol Volume, snapVol Volume, newSnapshotName string) error {
+	l := d.logger.AddContext(logger.Ctx{"parentVol": parentVol.Name(), "snapVol": snapVol.Name()})
+	l.Debug("Renaming volume snapshot")
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	resourceName, err := d.getResourceDefinitionName(parentVol)
+	if err != nil {
+		return err
+	}
+
+	snapResourceName, err := d.getResourceDefinitionName(snapVol)
+	if err != nil {
+		return err
+	}
+
+	_, snapshotName, _ := api.GetParentAndSnapshotName(snapVol.Name())
+	return linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceName, linstorClient.GenericPropsModify{
+		OverrideProps: map[string]string{LinstorAuxSnapshotPrefix + snapResourceName: snapshotName},
+	})
 }
 
 // deleteVolumeSnapshot deletes a volume snapshot.
@@ -464,7 +501,39 @@ func (d *linstor) deleteVolumeSnapshot(parentVol Volume, snapVol Volume) error {
 		return fmt.Errorf("Could not delete resource snapshot: %w", err)
 	}
 
-	return nil
+	return linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceName, linstorClient.GenericPropsModify{
+		DeleteProps: []string{LinstorAuxSnapshotPrefix + snapResourceName},
+	})
+}
+
+// getSnapshotMap gets the map from LINSTOR snapshot names to Incus’.
+func (d *linstor) getSnapshotMap(parentVol Volume) (map[string]string, error) {
+	l := d.logger.AddContext(logger.Ctx{"parentVol": parentVol.Name()})
+	l.Debug("Getting snapshot map")
+	result := make(map[string]string)
+
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return result, err
+	}
+
+	resourceName, err := d.getResourceDefinitionName(parentVol)
+	if err != nil {
+		return result, err
+	}
+
+	resourceDefinition, err := linstor.Client.ResourceDefinitions.Get(context.TODO(), resourceName)
+	if err != nil {
+		return result, err
+	}
+
+	for key, value := range resourceDefinition.Props {
+		if strings.HasPrefix(key, LinstorAuxSnapshotPrefix) {
+			result[strings.TrimPrefix(key, LinstorAuxSnapshotPrefix)] = value
+		}
+	}
+
+	return result, nil
 }
 
 // snapshotExists returns whether the given snapshot exists.
