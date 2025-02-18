@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"go/ast"
+	"go/types"
 	"net/url"
 	"slices"
 	"strings"
@@ -19,7 +20,6 @@ type Mapping struct {
 	Filterable bool      // Whether the Go struct has a Filter companion struct for filtering queries.
 	Filters    []*Field  // Metadata about the Go struct used for filter fields.
 	Type       TableType // Type of table structure for this Go struct.
-
 }
 
 // TableType represents the logical type of the table defined by the Go struct.
@@ -434,7 +434,7 @@ func (f *Field) JoinClause(mapping *Mapping, table string) (string, error) {
 // to select the ID to insert into this table.
 // - If a 'joinon' tag is present, but this table is not among the conditions, then the join will be considered indirect,
 // and an empty string will be returned.
-func (f *Field) InsertColumn(pkg *ast.Package, dbPkg *ast.Package, mapping *Mapping, primaryTable string) (string, string, error) {
+func (f *Field) InsertColumn(pkg *types.Package, dbPkg *types.Package, mapping *Mapping, primaryTable string, defs map[*ast.Ident]types.Object) (string, string, error) {
 	var column string
 	var value string
 	var err error
@@ -474,7 +474,7 @@ func (f *Field) InsertColumn(pkg *ast.Package, dbPkg *ast.Package, mapping *Mapp
 		}
 
 		varName := stmtCodeVar(lex.Singular(table), "ID")
-		joinStmt, err := ParseStmt(pkg, dbPkg, varName)
+		joinStmt, err := ParseStmt(varName, defs)
 		if err != nil {
 			return "", "", fmt.Errorf("Failed to find registered statement %q for field %q of struct %q: %w", varName, f.Name, mapping.Name, err)
 		}
