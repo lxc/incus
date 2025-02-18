@@ -711,11 +711,6 @@ func (d *linstor) DeleteVolumeSnapshot(snapVol Volume, op *operations.Operation)
 	return nil
 }
 
-// RenameVolumeSnapshot renames a volume snapshot.
-func (d *linstor) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *operations.Operation) error {
-	return ErrNotSupported
-}
-
 // RestoreVolume restores a volume from a snapshot.
 func (d *linstor) RestoreVolume(vol Volume, snapshotName string, op *operations.Operation) error {
 	ourUnmount, err := d.UnmountVolume(vol, false, op)
@@ -741,6 +736,13 @@ func (d *linstor) RestoreVolume(vol Volume, snapshotName string, op *operations.
 	}
 
 	return nil
+}
+
+// RenameVolumeSnapshot is a no-op.
+func (d *linstor) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *operations.Operation) error {
+	parentName, _, _ := api.GetParentAndSnapshotName(snapVol.name)
+	parentVol := NewVolume(d, d.name, snapVol.volType, snapVol.contentType, parentName, nil, nil)
+	return d.renameVolumeSnapshot(parentVol, snapVol, newSnapshotName)
 }
 
 // MountVolumeSnapshot mounts a storage volume snapshot.
@@ -1124,6 +1126,11 @@ func (d *linstor) VolumeSnapshots(vol Volume, op *operations.Operation) ([]strin
 		return snapshots, err
 	}
 
+	snapshotMap, err := d.getSnapshotMap(vol)
+	if err != nil {
+		return snapshots, err
+	}
+
 	// Get the snapshots
 	linstorSnapshots, err := linstor.Client.Resources.GetSnapshots(context.TODO(), resourceDefinitionName)
 	if err != nil {
@@ -1131,7 +1138,7 @@ func (d *linstor) VolumeSnapshots(vol Volume, op *operations.Operation) ([]strin
 	}
 
 	for _, snapshot := range linstorSnapshots {
-		snapshots = append(snapshots, snapshot.Name)
+		snapshots = append(snapshots, snapshotMap[snapshot.Name])
 	}
 
 	return snapshots, nil
