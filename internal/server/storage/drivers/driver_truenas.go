@@ -272,11 +272,11 @@ func (d *truenas) Create() error {
 
 	revert.Add(func() { _ = d.Delete(nil) })
 
-	// Apply our default configuration.
-	err = d.ensureInitialDatasets(false)
-	if err != nil {
-		return err
-	}
+	// // Apply our default configuration.
+	// err = d.ensureInitialDatasets(false)
+	// if err != nil {
+	// 	return err
+	// }
 
 	revert.Success()
 	return nil
