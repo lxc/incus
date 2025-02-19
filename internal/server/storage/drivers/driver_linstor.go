@@ -159,12 +159,6 @@ func (d *linstor) Create() error {
 	return nil
 }
 
-// ListVolumes returns a list of volumes in storage pool.
-func (d *linstor) ListVolumes() ([]Volume, error) {
-	// TODO: implement volume listing
-	return []Volume{}, nil
-}
-
 // Delete removes the storage pool from the storage device.
 func (d *linstor) Delete(op *operations.Operation) error {
 	d.logger.Debug("Deleting Linstor storage pool")

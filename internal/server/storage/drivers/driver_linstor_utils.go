@@ -45,6 +45,15 @@ const LinstorVolumePrefixConfigKey = "linstor.volume.prefix"
 // LinstorAuxSnapshotPrefix represents the AuxProp prefix to map Incus and LINSTOR snapshots.
 const LinstorAuxSnapshotPrefix = "Aux/Incus/snapshot-name/"
 
+// LinstorAuxName represents the AuxProp storing the Incus volume name.
+const LinstorAuxName = "Aux/Incus/name"
+
+// LinstorAuxType represents the AuxProp storing the Incus volume type.
+const LinstorAuxType = "Aux/Incus/type"
+
+// LinstorAuxContentType represents the AuxProp storing the Incus volume content type.
+const LinstorAuxContentType = "Aux/Incus/content-type"
+
 // errResourceDefinitionNotFound indicates that a resource definition could not be found in Linstor.
 var errResourceDefinitionNotFound = errors.New("Resource definition not found")
 
@@ -654,9 +663,9 @@ func (d *linstor) createResourceFromSnapshot(snapVol Volume, vol Volume) error {
 	// Set the aux properties on the new resource definition.
 	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceDefinitionName, linstorClient.GenericPropsModify{
 		OverrideProps: map[string]string{
-			"Aux/Incus/name":         vol.name,
-			"Aux/Incus/type":         string(vol.volType),
-			"Aux/Incus/content-type": string(vol.contentType),
+			LinstorAuxName:        vol.name,
+			LinstorAuxType:        string(vol.volType),
+			LinstorAuxContentType: string(vol.contentType),
 		},
 	})
 	if err != nil {
@@ -752,9 +761,9 @@ loop:
 	// Set the aux properties on the new resource definition.
 	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), targetResourceDefinitionName, linstorClient.GenericPropsModify{
 		OverrideProps: map[string]string{
-			"Aux/Incus/name":         vol.name,
-			"Aux/Incus/type":         string(vol.volType),
-			"Aux/Incus/content-type": string(vol.contentType),
+			LinstorAuxName:        vol.name,
+			LinstorAuxType:        string(vol.volType),
+			LinstorAuxContentType: string(vol.contentType),
 		},
 	})
 	if err != nil {
@@ -792,4 +801,42 @@ func (d *linstor) getVolumeSize(vol Volume) (int64, error) {
 	}
 
 	return int64(volumeDefinitions[volumeIndex].SizeKib * 1024), nil
+}
+
+// getResourceDefinitions returns all available resource definitions.
+func (d *linstor) getResourceDefinitions() ([]linstorClient.ResourceDefinitionWithVolumeDefinition, error) {
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the resource definitions.
+	resourceDefinitions, err := linstor.Client.ResourceDefinitions.GetAll(context.TODO(), linstorClient.RDGetAllRequest{
+		WithVolumeDefinitions: false,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Unable to get resource definitions: %w", err)
+	}
+
+	return resourceDefinitions, nil
+}
+
+func (d *linstor) parseVolumeType(s string) (*VolumeType, bool) {
+	for _, volType := range d.Info().VolumeTypes {
+		if s == string(volType) {
+			return &volType, true
+		}
+	}
+
+	return nil, false
+}
+
+func (d *linstor) parseContentType(s string) (*ContentType, bool) {
+	for _, contentType := range []ContentType{ContentTypeFS, ContentTypeBlock, ContentTypeISO} {
+		if s == string(contentType) {
+			return &contentType, true
+		}
+	}
+
+	return nil, false
 }

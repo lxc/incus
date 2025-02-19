@@ -466,6 +466,66 @@ func (d *linstor) GetVolumeDiskPath(vol Volume) (string, error) {
 	return "", ErrNotSupported
 }
 
+// ListVolumes returns a list of volumes in storage pool.
+func (d *linstor) ListVolumes() ([]Volume, error) {
+	d.logger.Debug("Listing volumes")
+
+	resourceDefinitions, err := d.getResourceDefinitions()
+	if err != nil {
+		return nil, err
+	}
+
+	var volumes []Volume
+
+	for _, rd := range resourceDefinitions {
+		l := d.logger.AddContext(logger.Ctx{"resourceDefinition": rd.Name})
+		if rd.ResourceGroupName != d.config[LinstorResourceGroupNameConfigKey] {
+			l.Debug("Ignoring resource definition not linked to the storage pool's resource group")
+			continue
+		}
+
+		volName, ok := rd.Props[LinstorAuxName]
+		if !ok {
+			l.Debug("Ignoring resource definition with no name aux property set")
+			continue
+		}
+
+		// Strip the volume prefix.
+		volName = strings.TrimPrefix(volName, d.config[LinstorVolumePrefixConfigKey])
+
+		rawVolType, ok := rd.Props[LinstorAuxType]
+		if !ok {
+			l.Debug("Ignoring resource definition with no type aux property set")
+			continue
+		}
+
+		volType, ok := d.parseVolumeType(rawVolType)
+		if !ok && volType != nil {
+			l.Debug("Ignoring resource definition with invalid type")
+			continue
+		}
+
+		rawContentType, ok := rd.Props[LinstorAuxContentType]
+		if !ok {
+			l.Debug("Ignoring resource definition with no name contentType property set")
+			continue
+		}
+
+		contentType, ok := d.parseContentType(rawContentType)
+		if !ok && contentType != nil {
+			l.Debug("Ignoring resource definition with invalid contentType")
+			continue
+		}
+
+		vol := NewVolume(d, d.name, *volType, *contentType, volName, make(map[string]string), d.config)
+		volumes = append(volumes, vol)
+
+		l.Debug("Found volume from storage pool", logger.Ctx{"volName": volName, "volType": *volType, "contentType": *contentType})
+	}
+
+	return volumes, nil
+}
+
 // MountVolume mounts a volume and increments ref counter. Please call UnmountVolume() when done with the volume.
 func (d *linstor) MountVolume(vol Volume, op *operations.Operation) error {
 	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name()})
@@ -614,7 +674,7 @@ func (d *linstor) RenameVolume(vol Volume, newVolName string, op *operations.Ope
 
 	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceDefinitionName, linstorClient.GenericPropsModify{
 		OverrideProps: map[string]string{
-			"Aux/Incus/name": newVolName,
+			LinstorAuxName: newVolName,
 		},
 	})
 	if err != nil {
