@@ -746,3 +746,41 @@ func (d *linstor) getVolumeSize(vol Volume) (int64, error) {
 
 	return int64(volumeDefinitions[volumeIndex].SizeKib), nil
 }
+
+// getResourceDefinitions returns all available resource definitions.
+func (d *linstor) getResourceDefinitions() ([]linstorClient.ResourceDefinitionWithVolumeDefinition, error) {
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the resource definitions
+	resourceDefinitions, err := linstor.Client.ResourceDefinitions.GetAll(context.TODO(), linstorClient.RDGetAllRequest{
+		WithVolumeDefinitions: false,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Unable to get resource definitions: %w", err)
+	}
+
+	return resourceDefinitions, nil
+}
+
+func (d *linstor) parseVolumeType(s string) (*VolumeType, bool) {
+	for _, volType := range d.Info().VolumeTypes {
+		if s == string(volType) {
+			return &volType, true
+		}
+	}
+
+	return nil, false
+}
+
+func (d *linstor) parseContentType(s string) (*ContentType, bool) {
+	for _, contentType := range []ContentType{ContentTypeFS, ContentTypeBlock, ContentTypeISO} {
+		if s == string(contentType) {
+			return &contentType, true
+		}
+	}
+
+	return nil, false
+}
