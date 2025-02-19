@@ -9,20 +9,20 @@ import (
 // Code generation directives.
 //
 //go:generate -command mapper generate-database db mapper -t operations.mapper.go
-//go:generate mapper reset -i -b "//go:build linux && cgo && !agent"
+//go:generate mapper generate -i -b "//go:build linux && cgo && !agent"
 //
-//go:generate mapper stmt -e operation objects
-//go:generate mapper stmt -e operation objects-by-NodeID
-//go:generate mapper stmt -e operation objects-by-ID
-//go:generate mapper stmt -e operation objects-by-UUID
-//go:generate mapper stmt -e operation create-or-replace
-//go:generate mapper stmt -e operation delete-by-UUID
-//go:generate mapper stmt -e operation delete-by-NodeID
+//generate-database:mapper stmt operation objects
+//generate-database:mapper stmt operation objects-by-NodeID
+//generate-database:mapper stmt operation objects-by-ID
+//generate-database:mapper stmt operation objects-by-UUID
+//generate-database:mapper stmt operation create-or-replace
+//generate-database:mapper stmt operation delete-by-UUID
+//generate-database:mapper stmt operation delete-by-NodeID
 //
-//go:generate mapper method -i -e operation GetMany
-//go:generate mapper method -i -e operation CreateOrReplace
-//go:generate mapper method -i -e operation DeleteOne-by-UUID
-//go:generate mapper method -i -e operation DeleteMany-by-NodeID
+//generate-database:mapper method operation GetMany
+//generate-database:mapper method operation CreateOrReplace
+//generate-database:mapper method operation DeleteOne-by-UUID
+//generate-database:mapper method operation DeleteMany-by-NodeID
 
 // Operation holds information about a single operation running on a member in the cluster.
 type Operation struct {

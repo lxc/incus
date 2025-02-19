@@ -15,24 +15,24 @@ import (
 // Code generation directives.
 //
 //go:generate -command mapper generate-database db mapper -t projects.mapper.go
-//go:generate mapper reset -i -b "//go:build linux && cgo && !agent"
+//go:generate mapper generate -i -b "//go:build linux && cgo && !agent"
 //
-//go:generate mapper stmt -e project objects
-//go:generate mapper stmt -e project objects-by-Name
-//go:generate mapper stmt -e project objects-by-ID
-//go:generate mapper stmt -e project create struct=Project
-//go:generate mapper stmt -e project id
-//go:generate mapper stmt -e project rename
-//go:generate mapper stmt -e project update struct=Project
-//go:generate mapper stmt -e project delete-by-Name
+//generate-database:mapper stmt project objects
+//generate-database:mapper stmt project objects-by-Name
+//generate-database:mapper stmt project objects-by-ID
+//generate-database:mapper stmt project create struct=Project
+//generate-database:mapper stmt project id
+//generate-database:mapper stmt project rename
+//generate-database:mapper stmt project update struct=Project
+//generate-database:mapper stmt project delete-by-Name
 //
-//go:generate mapper method -i -e project GetMany references=Config
-//go:generate mapper method -i -e project GetOne struct=Project
-//go:generate mapper method -i -e project Exists struct=Project
-//go:generate mapper method -i -e project Create references=Config
-//go:generate mapper method -i -e project ID struct=Project
-//go:generate mapper method -i -e project Rename
-//go:generate mapper method -i -e project DeleteOne-by-Name
+//generate-database:mapper method project GetMany references=Config
+//generate-database:mapper method project GetOne struct=Project
+//generate-database:mapper method project Exists struct=Project
+//generate-database:mapper method project Create references=Config
+//generate-database:mapper method project ID struct=Project
+//generate-database:mapper method project Rename
+//generate-database:mapper method project DeleteOne-by-Name
 
 // ProjectFeature indicates the behaviour of a project feature.
 type ProjectFeature struct {
