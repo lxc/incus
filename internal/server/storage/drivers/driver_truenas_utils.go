@@ -129,6 +129,41 @@ func (d *truenas) datasetExists(dataset string) (bool, error) {
 	return strings.TrimSpace(out) == dataset, nil
 }
 
+func (d *truenas) objectsExist(objects []string, optType string) (map[string]bool, error) {
+	var t string
+	if optType == "" {
+		t = "fs,vol,snap"
+	} else if optType == "dataset" {
+		t = "fs,vol"
+	} else {
+		t = optType
+	}
+	args := []string{"list", "-H", "-o", "name", "-t", t}
+	args = append(args, objects...)
+
+	out, err := d.runTool(args...)
+	if err != nil {
+		return nil, nil
+	}
+
+	existsMap := make(map[string]bool)
+	for _, str := range objects {
+		existsMap[str] = false
+	}
+
+	lines := strings.Split(out, "\n")
+	for _, l := range lines {
+		if l == "" || l == "-" {
+			continue
+		}
+		if _, exists := existsMap[l]; exists {
+			existsMap[l] = true
+		}
+	}
+
+	return existsMap, nil
+}
+
 // initialDatasets returns the list of all expected datasets.
 func (d *truenas) initialDatasets() []string {
 	entries := []string{"deleted"}
@@ -208,6 +243,37 @@ func (d *truenas) getDatasets(dataset string, types string) ([]string, error) {
 	}
 
 	return children, nil
+}
+
+// batch updates or creates one or more datasets with the same options
+func (d *truenas) updateDatasets(datasets []string, orCreate bool, options ...string) error {
+	args := []string{"dataset", "update"}
+
+	// for _, option := range options {
+	// 	args = append(args, "-o")
+	// 	args = append(args, option)
+	// }
+
+	if orCreate {
+		args = append(args, "--create")
+	}
+
+	optionString := optionsToOptionString(options...)
+	if optionString != "" {
+		args = append(args, "-o", optionString)
+	}
+
+	args = append(args, "--managedby", tnDefaultSettings["managedby"], "--comments", tnDefaultSettings["comments"])
+
+	args = append(args, datasets...)
+
+	out, err := d.runTool(args...)
+	_ = out
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // batch creates one or more datasets with the same options

@@ -91,6 +91,7 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 					randomVol := NewVolume(d, d.name, vol.volType, vol.contentType, d.randomVolumeName(vol), vol.config, vol.poolConfig)
 
 					_, err := subprocess.RunCommand("/proc/self/exe", "forkzfs", "--", "rename", d.dataset(vol, true), d.dataset(randomVol, true))
+					//_, err := d.runTool("dataset", "rename", d.dataset(vol, true), d.dataset(randomVol, true))
 					if err != nil {
 						return err
 					}
@@ -100,6 +101,7 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 						randomFsVol := randomVol.NewVMBlockFilesystemVolume()
 
 						_, err := subprocess.RunCommand("/proc/self/exe", "forkzfs", "--", "rename", d.dataset(fsVol, true), d.dataset(randomFsVol, true))
+						//_, err := d.runTool("dataset", "rename", d.dataset(fsVol, true), d.dataset(randomFsVol, true))
 						if err != nil {
 							return err
 						}
@@ -758,7 +760,8 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 		}
 
 		// Delete the snapshot.
-		_, err = subprocess.RunCommand("zfs", "destroy", "-r", fmt.Sprintf("%s@%s", d.dataset(vol, false), snapName))
+		//_, err = subprocess.RunCommand("zfs", "destroy", "-r", fmt.Sprintf("%s@%s", d.dataset(vol, false), snapName))
+		_, err = d.runTool("snapshot", "delete", "-r", fmt.Sprintf("%s@%s", d.dataset(vol, false), snapName))
 		if err != nil {
 			return err
 		}
@@ -770,6 +773,7 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 				return err
 			}
 
+			toDestroy := make([]string, 0)
 			for _, entry := range children {
 				// Check if expected snapshot.
 				if strings.Contains(entry, "@snapshot-") {
@@ -780,7 +784,11 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 				}
 
 				// Delete the rest.
-				_, err := subprocess.RunCommand("zfs", "destroy", fmt.Sprintf("%s%s", d.dataset(vol, false), entry))
+				toDestroy = append(toDestroy, fmt.Sprintf("%s%s", d.dataset(vol, false), entry))
+			}
+			if len(toDestroy) > 0 {
+				snapDelCmd := []string{"snapshot", "delete"}
+				_, err := d.runTool(append(snapDelCmd, toDestroy...)...)
 				if err != nil {
 					return err
 				}
@@ -2802,12 +2810,18 @@ func (d *truenas) restoreVolume(vol Volume, snapshotName string, migration bool,
 		return err
 	}
 
+	toRollback := make([]string, 0)
 	for _, dataset := range datasets {
 		if !strings.HasSuffix(dataset, fmt.Sprintf("@snapshot-%s", snapshotName)) {
 			continue
 		}
 
-		_, err = subprocess.RunCommand("zfs", "rollback", fmt.Sprintf("%s%s", d.dataset(vol, false), dataset))
+		toRollback = append(toRollback, fmt.Sprintf("%s%s", d.dataset(vol, false), dataset))
+	}
+
+	if len(toRollback) > 0 {
+		snapRbCmd := []string{"snapshot", "rollback"}
+		_, err = d.runTool(append(snapRbCmd, toRollback...)...)
 		if err != nil {
 			return err
 		}
