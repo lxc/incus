@@ -19,11 +19,13 @@ import (
 // FiltersFromStmt parses all filtering statement defined for the given entity. It
 // returns all supported combinations of filters, sorted by number of criteria, and
 // the corresponding set of unused filters from the Filter struct.
-func FiltersFromStmt(pkg *types.Package, kind string, entity string, filters []*Field) ([][]string, [][]string) {
+func FiltersFromStmt(pkg *types.Package, kind string, entity string, filters []*Field, registeredSQLStmts map[string]string) ([][]string, [][]string) {
 	objects := pkg.Scope().Names()
 	stmtFilters := [][]string{}
 
 	prefix := fmt.Sprintf("%s%sBy", lex.Minuscule(lex.Camel(entity)), lex.Camel(kind))
+
+	seenNames := make(map[string]struct{}, len(objects))
 
 	for _, name := range objects {
 		if !strings.HasPrefix(name, prefix) {
@@ -31,6 +33,22 @@ func FiltersFromStmt(pkg *types.Package, kind string, entity string, filters []*
 		}
 
 		rest := name[len(prefix):]
+		stmtFilters = append(stmtFilters, strings.Split(rest, "And"))
+		seenNames[rest] = struct{}{}
+	}
+
+	for name := range registeredSQLStmts {
+		if !strings.HasPrefix(name, prefix) {
+			continue
+		}
+
+		rest := name[len(prefix):]
+
+		_, ok := seenNames[rest]
+		if ok {
+			continue
+		}
+
 		stmtFilters = append(stmtFilters, strings.Split(rest, "And"))
 	}
 
@@ -51,11 +69,13 @@ func FiltersFromStmt(pkg *types.Package, kind string, entity string, filters []*
 }
 
 // RefFiltersFromStmt parses all filtering statement defined for the given entity reference.
-func RefFiltersFromStmt(pkg *types.Package, entity string, ref string, filters []*Field) ([][]string, [][]string) {
+func RefFiltersFromStmt(pkg *types.Package, entity string, ref string, filters []*Field, registeredSQLStmts map[string]string) ([][]string, [][]string) {
 	objects := pkg.Scope().Names()
 	stmtFilters := [][]string{}
 
 	prefix := fmt.Sprintf("%s%sRefBy", lex.Minuscule(lex.Camel(entity)), lex.Capital(ref))
+
+	seenNames := make(map[string]struct{}, len(objects))
 
 	for _, name := range objects {
 		if !strings.HasPrefix(name, prefix) {
@@ -63,6 +83,22 @@ func RefFiltersFromStmt(pkg *types.Package, entity string, ref string, filters [
 		}
 
 		rest := name[len(prefix):]
+		stmtFilters = append(stmtFilters, strings.Split(rest, "And"))
+		seenNames[rest] = struct{}{}
+	}
+
+	for name := range registeredSQLStmts {
+		if !strings.HasPrefix(name, prefix) {
+			continue
+		}
+
+		rest := name[len(prefix):]
+
+		_, ok := seenNames[rest]
+		if ok {
+			continue
+		}
+
 		stmtFilters = append(stmtFilters, strings.Split(rest, "And"))
 	}
 
@@ -180,7 +216,12 @@ func Parse(pkg *types.Package, name string, kind string) (*Mapping, error) {
 
 // ParseStmt returns the SQL string passed as an argument to a variable declaration of a call to RegisterStmt with the given name.
 // e.g. the SELECT string from 'var instanceObjects = RegisterStmt(`SELECT * from instances...`)'.
-func ParseStmt(name string, defs map[*ast.Ident]types.Object) (string, error) {
+func ParseStmt(name string, defs map[*ast.Ident]types.Object, registeredSQLStmts map[string]string) (string, error) {
+	sql, ok := registeredSQLStmts[name]
+	if ok {
+		return sql, nil
+	}
+
 	for stmtVar := range defs {
 		if stmtVar.Name != name {
 			continue

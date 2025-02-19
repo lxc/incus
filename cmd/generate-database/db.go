@@ -3,6 +3,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"go/build"
 	"os"
@@ -55,9 +56,41 @@ func newDbMapper() *cobra.Command {
 		},
 	}
 
+	cmd.AddCommand(newDbMapperGenerate())
 	cmd.AddCommand(newDbMapperReset())
 	cmd.AddCommand(newDbMapperStmt())
 	cmd.AddCommand(newDbMapperMethod())
+
+	return cmd
+}
+
+func newDbMapperGenerate() *cobra.Command {
+	var target string
+	var build string
+	var iface bool
+	var pkg string
+
+	cmd := &cobra.Command{
+		Use:   "generate",
+		Short: "Generate database statememnts and transaction method and interface signature.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if os.Getenv("GOPACKAGE") == "" {
+				return errors.New("GOPACKAGE environment variable is not set")
+			}
+
+			if os.Getenv("GOFILE") == "" {
+				return errors.New("GOFILE environment variable is not set")
+			}
+
+			return generate(target, build, iface, pkg)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.BoolVarP(&iface, "interface", "i", false, "create interface files")
+	flags.StringVarP(&target, "target", "t", "-", "target source file to generate")
+	flags.StringVarP(&build, "build", "b", "", "build comment to include")
+	flags.StringVarP(&pkg, "package", "p", "", "Go package where the entity struct is declared")
 
 	return cmd
 }
@@ -109,7 +142,7 @@ func newDbMapperStmt() *cobra.Command {
 				return err
 			}
 
-			stmt, err := db.NewStmt(parsedPkg, entity, kind, config)
+			stmt, err := db.NewStmt(parsedPkg, entity, kind, config, map[string]string{})
 			if err != nil {
 				return err
 			}
@@ -153,7 +186,7 @@ func newDbMapperMethod() *cobra.Command {
 				return err
 			}
 
-			method, err := db.NewMethod(parsedPkg, entity, kind, config)
+			method, err := db.NewMethod(parsedPkg, entity, kind, config, map[string]string{})
 			if err != nil {
 				return err
 			}
