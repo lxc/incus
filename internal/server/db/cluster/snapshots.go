@@ -13,24 +13,24 @@ import (
 // Code generation directives.
 //
 //go:generate -command mapper generate-database db mapper -t snapshots.mapper.go
-//go:generate mapper reset -i -b "//go:build linux && cgo && !agent"
+//go:generate mapper generate -i -b "//go:build linux && cgo && !agent"
 
-//go:generate mapper stmt -e instance_snapshot objects
-//go:generate mapper stmt -e instance_snapshot objects-by-ID
-//go:generate mapper stmt -e instance_snapshot objects-by-Project-and-Instance
-//go:generate mapper stmt -e instance_snapshot objects-by-Project-and-Instance-and-Name
-//go:generate mapper stmt -e instance_snapshot id
-//go:generate mapper stmt -e instance_snapshot create references=Config,Devices
-//go:generate mapper stmt -e instance_snapshot rename
-//go:generate mapper stmt -e instance_snapshot delete-by-Project-and-Instance-and-Name
+//generate-database:mapper stmt instance_snapshot objects
+//generate-database:mapper stmt instance_snapshot objects-by-ID
+//generate-database:mapper stmt instance_snapshot objects-by-Project-and-Instance
+//generate-database:mapper stmt instance_snapshot objects-by-Project-and-Instance-and-Name
+//generate-database:mapper stmt instance_snapshot id
+//generate-database:mapper stmt instance_snapshot create references=Config,Devices
+//generate-database:mapper stmt instance_snapshot rename
+//generate-database:mapper stmt instance_snapshot delete-by-Project-and-Instance-and-Name
 //
-//go:generate mapper method -i -e instance_snapshot GetMany references=Config,Device
-//go:generate mapper method -i -e instance_snapshot GetOne
-//go:generate mapper method -i -e instance_snapshot ID
-//go:generate mapper method -i -e instance_snapshot Exists
-//go:generate mapper method -i -e instance_snapshot Create references=Config,Device
-//go:generate mapper method -i -e instance_snapshot Rename
-//go:generate mapper method -i -e instance_snapshot DeleteOne-by-Project-and-Instance-and-Name
+//generate-database:mapper method instance_snapshot GetMany references=Config,Device
+//generate-database:mapper method instance_snapshot GetOne
+//generate-database:mapper method instance_snapshot ID
+//generate-database:mapper method instance_snapshot Exists
+//generate-database:mapper method instance_snapshot Create references=Config,Device
+//generate-database:mapper method instance_snapshot Rename
+//generate-database:mapper method instance_snapshot DeleteOne-by-Project-and-Instance-and-Name
 
 // InstanceSnapshot is a value object holding db-related details about a snapshot.
 type InstanceSnapshot struct {

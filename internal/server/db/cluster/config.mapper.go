@@ -90,7 +90,7 @@ func GetConfig(ctx context.Context, tx *sql.Tx, parent string, filters ...Config
 	configObjectsLocal := strings.Replace(configObjects, "%s_id", fmt.Sprintf("%s_id", parent), -1)
 	fillParent := make([]any, strings.Count(configObjectsLocal, "%s"))
 	for i := range fillParent {
-		fillParent[i] = strings.Replace(parent, "_", "s_", -1) + "s"
+		fillParent[i] = strings.Replace(strings.Replace(parent, "_", "s_", -1), "clusters_", "cluster_", -1) + "s"
 	}
 
 	queryStr := fmt.Sprintf(configObjectsLocal, fillParent...)
@@ -154,7 +154,7 @@ func CreateConfig(ctx context.Context, tx *sql.Tx, parent string, object Config)
 	configCreateLocal := strings.Replace(configCreate, "%s_id", fmt.Sprintf("%s_id", parent), -1)
 	fillParent := make([]any, strings.Count(configCreateLocal, "%s"))
 	for i := range fillParent {
-		fillParent[i] = strings.Replace(parent, "_", "s_", -1) + "s"
+		fillParent[i] = strings.Replace(strings.Replace(parent, "_", "s_", -1), "clusters_", "cluster_", -1) + "s"
 	}
 
 	queryStr := fmt.Sprintf(configCreateLocal, fillParent...)
@@ -198,7 +198,7 @@ func DeleteConfig(ctx context.Context, tx *sql.Tx, parent string, referenceID in
 	configDeleteLocal := strings.Replace(configDelete, "%s_id", fmt.Sprintf("%s_id", parent), -1)
 	fillParent := make([]any, strings.Count(configDeleteLocal, "%s"))
 	for i := range fillParent {
-		fillParent[i] = strings.Replace(parent, "_", "s_", -1) + "s"
+		fillParent[i] = strings.Replace(strings.Replace(parent, "_", "s_", -1), "clusters_", "cluster_", -1) + "s"
 	}
 
 	queryStr := fmt.Sprintf(configDeleteLocal, fillParent...)
