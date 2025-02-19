@@ -5,9 +5,7 @@ package db
 import (
 	"fmt"
 	"go/ast"
-	"go/build"
 	"go/types"
-	"os"
 	"strings"
 
 	"golang.org/x/tools/go/packages"
@@ -27,36 +25,13 @@ type Stmt struct {
 
 // NewStmt return a new statement code snippet for running the given kind of
 // query against the given database entity.
-func NewStmt(pkg, entity, kind string, config map[string]string) (*Stmt, error) {
-	var pkgPath string
-	if pkg != "" {
-		importPkg, err := build.Import(pkg, "", build.FindOnly)
-		if err != nil {
-			return nil, fmt.Errorf("Invalid import path %q: %w", pkg, err)
-		}
-
-		pkgPath = importPkg.Dir
-	} else {
-		var err error
-		pkgPath, err = os.Getwd()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	parsedPkg, err := packages.Load(&packages.Config{
-		Mode: packages.LoadTypes | packages.NeedTypesInfo,
-	}, pkgPath)
-	if err != nil {
-		return nil, err
-	}
-
+func NewStmt(parsedPkg *packages.Package, entity, kind string, config map[string]string) (*Stmt, error) {
 	stmt := &Stmt{
 		entity: entity,
 		kind:   kind,
 		config: config,
-		pkg:    parsedPkg[0].Types,
-		defs:   parsedPkg[0].TypesInfo.Defs,
+		pkg:    parsedPkg.Types,
+		defs:   parsedPkg.TypesInfo.Defs,
 	}
 
 	return stmt, nil

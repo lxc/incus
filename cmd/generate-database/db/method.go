@@ -4,9 +4,7 @@ package db
 
 import (
 	"fmt"
-	"go/build"
 	"go/types"
-	"os"
 	"strings"
 
 	"golang.org/x/tools/go/packages"
@@ -26,35 +24,12 @@ type Method struct {
 }
 
 // NewMethod return a new method code snippet for executing a certain mapping.
-func NewMethod(pkg, entity, kind string, config map[string]string) (*Method, error) {
-	var pkgPath string
-	if pkg != "" {
-		importPkg, err := build.Import(pkg, "", build.FindOnly)
-		if err != nil {
-			return nil, fmt.Errorf("Invalid import path %q: %w", pkg, err)
-		}
-
-		pkgPath = importPkg.Dir
-	} else {
-		var err error
-		pkgPath, err = os.Getwd()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	parsedPkg, err := packages.Load(&packages.Config{
-		Mode: packages.LoadTypes,
-	}, pkgPath)
-	if err != nil {
-		return nil, err
-	}
-
+func NewMethod(parsedPkg *packages.Package, entity, kind string, config map[string]string) (*Method, error) {
 	method := &Method{
 		entity: entity,
 		kind:   kind,
 		config: config,
-		pkg:    parsedPkg[0].Types,
+		pkg:    parsedPkg.Types,
 	}
 
 	return method, nil
