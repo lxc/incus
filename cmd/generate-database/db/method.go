@@ -16,20 +16,22 @@ import (
 
 // Method generates a code snippet for a particular database query method.
 type Method struct {
-	entity string            // Name of the database entity
-	kind   string            // Kind of statement to generate
-	ref    string            // ref is the current reference method for the method kind
-	config map[string]string // Configuration parameters
-	pkg    *types.Package    // Package to perform for struct declaration lookup
+	entity             string            // Name of the database entity
+	kind               string            // Kind of statement to generate
+	ref                string            // ref is the current reference method for the method kind
+	config             map[string]string // Configuration parameters
+	pkg                *types.Package    // Package to perform for struct declaration lookup
+	registeredSQLStmts map[string]string // Lookup for SQL statements registered during this execution, which are therefore not included in the parsed package information
 }
 
 // NewMethod return a new method code snippet for executing a certain mapping.
-func NewMethod(parsedPkg *packages.Package, entity, kind string, config map[string]string) (*Method, error) {
+func NewMethod(parsedPkg *packages.Package, entity, kind string, config map[string]string, registeredSQLStmts map[string]string) (*Method, error) {
 	method := &Method{
-		entity: entity,
-		kind:   kind,
-		config: config,
-		pkg:    parsedPkg.Types,
+		entity:             entity,
+		kind:               kind,
+		config:             config,
+		pkg:                parsedPkg.Types,
+		registeredSQLStmts: registeredSQLStmts,
 	}
 
 	return method, nil
@@ -204,7 +206,7 @@ func (m *Method) getMany(buf *file.Buffer) error {
 
 		buf.L("args := []any{%sID}", lex.Minuscule(m.config["struct"]))
 	} else {
-		filters, ignoredFilters := FiltersFromStmt(m.pkg, "objects", m.entity, mapping.Filters)
+		filters, ignoredFilters := FiltersFromStmt(m.pkg, "objects", m.entity, mapping.Filters, m.registeredSQLStmts)
 		buf.N()
 		buf.L("// Pick the prepared statement and arguments to use based on active criteria.")
 		buf.L("var sqlStmt *sql.Stmt")
