@@ -434,7 +434,7 @@ func (f *Field) JoinClause(mapping *Mapping, table string) (string, error) {
 // to select the ID to insert into this table.
 // - If a 'joinon' tag is present, but this table is not among the conditions, then the join will be considered indirect,
 // and an empty string will be returned.
-func (f *Field) InsertColumn(pkg *types.Package, dbPkg *types.Package, mapping *Mapping, primaryTable string, defs map[*ast.Ident]types.Object) (string, string, error) {
+func (f *Field) InsertColumn(pkg *types.Package, mapping *Mapping, primaryTable string, defs map[*ast.Ident]types.Object) (string, string, error) {
 	var column string
 	var value string
 	var err error

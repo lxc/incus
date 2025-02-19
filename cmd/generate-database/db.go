@@ -82,7 +82,6 @@ func newDbMapperReset() *cobra.Command {
 
 func newDbMapperStmt() *cobra.Command {
 	var target string
-	var database string
 	var pkg string
 	var entity string
 
@@ -102,7 +101,7 @@ func newDbMapperStmt() *cobra.Command {
 				return err
 			}
 
-			stmt, err := db.NewStmt(database, pkg, entity, kind, config)
+			stmt, err := db.NewStmt(pkg, entity, kind, config)
 			if err != nil {
 				return err
 			}
@@ -113,7 +112,6 @@ func newDbMapperStmt() *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.StringVarP(&target, "target", "t", "-", "target source file to generate")
-	flags.StringVarP(&database, "database", "d", "", "target database")
 	flags.StringVarP(&pkg, "package", "p", "", "Go package where the entity struct is declared")
 	flags.StringVarP(&entity, "entity", "e", "", "database entity to generate the statement for")
 
@@ -122,7 +120,6 @@ func newDbMapperStmt() *cobra.Command {
 
 func newDbMapperMethod() *cobra.Command {
 	var target string
-	var database string
 	var pkg string
 	var entity string
 	var iface bool
@@ -143,7 +140,7 @@ func newDbMapperMethod() *cobra.Command {
 				return err
 			}
 
-			method, err := db.NewMethod(database, pkg, entity, kind, config)
+			method, err := db.NewMethod(pkg, entity, kind, config)
 			if err != nil {
 				return err
 			}
@@ -155,7 +152,6 @@ func newDbMapperMethod() *cobra.Command {
 	flags := cmd.Flags()
 	flags.BoolVarP(&iface, "interface", "i", false, "create interface files")
 	flags.StringVarP(&target, "target", "t", "-", "target source file to generate")
-	flags.StringVarP(&database, "database", "d", "", "target database")
 	flags.StringVarP(&pkg, "package", "p", "", "Go package where the entity struct is declared")
 	flags.StringVarP(&entity, "entity", "e", "", "database entity to generate the method for")
 
