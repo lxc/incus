@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	tnToolName              = "truenas-admin"
-	tnMinVersion            = "0.2.0"
-	tnVerifyDatasetCreation = false // explicitly check that the dataset is created, work around for bugs in certain versions of the tool.
+	tnToolName              = "truenas_incus_ctl"
+	tnMinVersion            = "0.3.0" // bulk api
+	tnVerifyDatasetCreation = false   // explicitly check that the dataset is created, work around for bugs in certain versions of the tool.
 )
 
 func (d *truenas) dataset(vol Volume, deleted bool) string {
