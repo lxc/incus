@@ -120,6 +120,17 @@ jobs:
           sudo --preserve-env=CGO_CFLAGS,CGO_LDFLAGS,CGO_LDFLAGS_ALLOW,LD_LIBRARY_PATH LD_LIBRARY_PATH=${LD_LIBRARY_PATH} env "PATH=${PATH}" go test ./...
 
   system-tests:
+    env:
+      CGO_LDFLAGS_ALLOW: "(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
+      INCUS_CEPH_CLUSTER: "ceph"
+      INCUS_CEPH_CEPHFS: "cephfs-incus"
+      INCUS_CEPH_CLIENT: "incus"
+      INCUS_CEPH_CEPHOBJECT_RADOSGW: "http://127.0.0.1"
+      INCUS_CONCURRENT: "1"
+      INCUS_VERBOSE: "1"
+      INCUS_OFFLINE: "1"
+      INCUS_TMPFS: "1"
+      INCUS_REQUIRED_TESTS: "test_storage_buckets"
     name: System
     strategy:
       fail-fast: false
@@ -371,8 +382,7 @@ jobs:
           sudo microceph enable rgw
           sudo microceph.ceph osd pool create cephfs_meta 32
           sudo microceph.ceph osd pool create cephfs_data 32
-          sudo microceph.ceph fs new cephfs cephfs_meta cephfs_data
-          sudo microceph.ceph fs ls
+          sudo microceph.ceph fs new ${INCUS_CEPH_CEPHFS} cephfs_meta cephfs_data
           sleep 30
           sudo microceph.ceph status
           # Wait until there are no more "unkowns" pgs
@@ -397,7 +407,6 @@ jobs:
         env:
           CGO_LDFLAGS_ALLOW: "(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
           INCUS_CEPH_CLUSTER: "ceph"
-          INCUS_CEPH_CEPHFS: "cephfs"
           INCUS_CEPH_CEPHOBJECT_RADOSGW: "http://127.0.0.1"
           INCUS_CONCURRENT: "1"
           INCUS_VERBOSE: "1"
@@ -435,7 +444,7 @@ jobs:
 
       - name: Create build directory
         run: |
-            mkdir bin
+          mkdir bin
 
       - name: Build static x86_64 incus
         env:
