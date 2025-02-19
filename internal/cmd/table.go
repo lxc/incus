@@ -128,7 +128,7 @@ func ValidateFlagFormatForListOutput(value string) error {
 			switch option {
 			case "noheader", "header":
 			default:
-				return fmt.Errorf(`Invalid value %q for flag "--format"`, format)
+				return fmt.Errorf(`Invalid modifier %q on flag "--format" (%q)`, option, value)
 			}
 		}
 	}
