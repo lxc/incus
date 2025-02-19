@@ -4,8 +4,11 @@ package main
 
 import (
 	"fmt"
+	"go/build"
+	"os"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/tools/go/packages"
 
 	"github.com/lxc/incus/v6/cmd/generate-database/db"
 	"github.com/lxc/incus/v6/cmd/generate-database/file"
@@ -101,7 +104,12 @@ func newDbMapperStmt() *cobra.Command {
 				return err
 			}
 
-			stmt, err := db.NewStmt(pkg, entity, kind, config)
+			parsedPkg, err := packageLoad(pkg)
+			if err != nil {
+				return err
+			}
+
+			stmt, err := db.NewStmt(parsedPkg, entity, kind, config)
 			if err != nil {
 				return err
 			}
@@ -140,7 +148,12 @@ func newDbMapperMethod() *cobra.Command {
 				return err
 			}
 
-			method, err := db.NewMethod(pkg, entity, kind, config)
+			parsedPkg, err := packageLoad(pkg)
+			if err != nil {
+				return err
+			}
+
+			method, err := db.NewMethod(parsedPkg, entity, kind, config)
 			if err != nil {
 				return err
 			}
@@ -156,6 +169,33 @@ func newDbMapperMethod() *cobra.Command {
 	flags.StringVarP(&entity, "entity", "e", "", "database entity to generate the method for")
 
 	return cmd
+}
+
+func packageLoad(pkg string) (*packages.Package, error) {
+	var pkgPath string
+	if pkg != "" {
+		importPkg, err := build.Import(pkg, "", build.FindOnly)
+		if err != nil {
+			return nil, fmt.Errorf("Invalid import path %q: %w", pkg, err)
+		}
+
+		pkgPath = importPkg.Dir
+	} else {
+		var err error
+		pkgPath, err = os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	parsedPkg, err := packages.Load(&packages.Config{
+		Mode: packages.LoadTypes | packages.NeedTypesInfo,
+	}, pkgPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return parsedPkg[0], nil
 }
 
 func parseParams(args []string) (map[string]string, error) {
