@@ -153,37 +153,20 @@ func (d truenas) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) erro
 		}
 	}
 
-	for _, dataset := range d.initialDatasets() {
-		//properties := []string{"mountpoint=legacy"}
-		properties := []string{}
-		// if slices.Contains([]string{"virtual-machines", "deleted/virtual-machines"}, dataset) {
-		// 	properties = append(properties, "volmode=none")
-		// }
-
-		datasetPath := filepath.Join(d.config["truenas.dataset"], dataset)
-		exists, err := d.datasetExists(datasetPath)
-		if err != nil {
-			return err
-		}
-
-		if exists {
-			err = d.setDatasetProperties(datasetPath, properties...)
-			if err != nil {
-				if warnOnExistingPolicyApplyError {
-					d.logger.Warn("Failed applying policy to existing dataset", logger.Ctx{"dataset": datasetPath, "err": err})
-				} else {
-					return fmt.Errorf("Failed applying policy to existing dataset %q: %w", datasetPath, err)
-				}
-			}
-		} else {
-			err = d.createDataset(datasetPath, properties...)
-			if err != nil {
-				return fmt.Errorf("Failed creating dataset %q: %w", datasetPath, err)
-			}
-		}
+	datasets := d.initialDatasets()
+	fullDatasetPaths := make([]string, len(datasets))
+	for i := 0; i < len(datasets); i++ {
+		fullDatasetPaths[i] = filepath.Join(d.config["truenas.dataset"], datasets[i])
 	}
 
-	return nil
+	//properties := []string{"mountpoint=legacy"}
+	properties := []string{}
+	// if slices.Contains([]string{"virtual-machines", "deleted/virtual-machines"}, dataset) {
+	// 	properties = append(properties, "volmode=none")
+	// }
+
+	shouldCreateMissingDatasets := true
+	return d.updateDatasets(fullDatasetPaths, shouldCreateMissingDatasets, properties...)
 }
 
 // FillConfig populates the storage pool's configuration file with the default values.
