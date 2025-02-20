@@ -35,7 +35,7 @@ func cloneVolAsFsImgVol(vol Volume) Volume {
 	fsImgVol := vol.Clone()
 	fsImgVol.config["volatile.truenas.fs-img"] = "true"
 
-	fsImgVol.mountCustomPath = fsImgVol.MountPath() + ".block"
+	fsImgVol.mountCustomPath = fmt.Sprintf("%s_%s", fsImgVol.MountPath(), fsImgVol.ConfigBlockFilesystem())
 
 	return fsImgVol
 }
@@ -1558,31 +1558,32 @@ func (d *truenas) DeleteVolume(vol Volume, op *operations.Operation) error {
 
 func (d *truenas) deleteVolume(vol Volume, op *operations.Operation) error {
 	// Check that we have a dataset to delete.
-	exists, err := d.datasetExists(d.dataset(vol, false))
+	dataset := d.dataset(vol, false)
+	exists, err := d.datasetExists(dataset)
 	if err != nil {
 		return err
 	}
 
 	if exists {
 		// Handle clones.
-		clones, err := d.getClones(d.dataset(vol, false))
+		clones, err := d.getClones(dataset)
 		if err != nil {
 			return err
 		}
 
 		if len(clones) > 0 {
 			// Deleted volumes do not need shares
-			_ = d.deleteNfsShare(d.dataset(vol, false))
+			_ = d.deleteNfsShare(dataset)
 
 			// Move to the deleted path.
 			//_, err := subprocess.RunCommand("/proc/self/exe", "forkzfs", "--", "rename", d.dataset(vol, false), d.dataset(vol, true))
-			out, err := d.renameDataset(d.dataset(vol, false), d.dataset(vol, true), false)
+			out, err := d.renameDataset(dataset, d.dataset(vol, true), false)
 			_ = out
 			if err != nil {
 				return err
 			}
 		} else {
-			err := d.deleteDatasetRecursive(d.dataset(vol, false))
+			err := d.deleteDatasetRecursive(dataset)
 			if err != nil {
 				return err
 			}
@@ -2080,6 +2081,7 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 		// the FS volume being unmounted prematurely.
 		//if vol.IsVMBlock() {
 		fsVol := vol.NewVMBlockFilesystemVolume()
+		fsVol.config["volatile.truenas.fs-img"] = "true" // bit of a hack to get the fs-mounter to mount it instead of loop it.
 		err = d.MountVolume(fsVol, op)
 		if err != nil {
 			return err

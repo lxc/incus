@@ -20,15 +20,17 @@ const (
 func (d *truenas) dataset(vol Volume, deleted bool) string {
 	name, snapName, _ := api.GetParentAndSnapshotName(vol.name)
 
-	// if vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS && d.isBlockBacked(vol) {
-	// 	name = fmt.Sprintf("%s_%s", name, vol.ConfigBlockFilesystem())
-	// }
-
-	if (vol.volType == VolumeTypeVM || vol.volType == VolumeTypeImage) && vol.contentType == ContentTypeBlock {
-		//name = fmt.Sprintf("%s%s", name, zfsBlockVolSuffix)
-	} else if vol.volType == VolumeTypeCustom && vol.contentType == ContentTypeISO {
-		//name = fmt.Sprintf("%s%s", name, zfsISOVolSuffix)
+	// need to disambiguate different images based on the root.img filesystem
+	//if vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS && d.isBlockBacked(vol) {
+	if vol.volType == VolumeTypeImage && ((vol.contentType == ContentTypeFS && needsLoopMount(vol)) || isFsImgVol(vol)) {
+		name = fmt.Sprintf("%s_%s", name, vol.ConfigBlockFilesystem())
 	}
+
+	// if (vol.volType == VolumeTypeVM || vol.volType == VolumeTypeImage) && vol.contentType == ContentTypeBlock {
+	// 	name = fmt.Sprintf("%s%s", name, zfsBlockVolSuffix)
+	// } else if vol.volType == VolumeTypeCustom && vol.contentType == ContentTypeISO {
+	// 	name = fmt.Sprintf("%s%s", name, zfsISOVolSuffix)
+	// }
 
 	if snapName != "" {
 		if deleted {
