@@ -4,17 +4,17 @@ package cluster
 
 // Code generation directives.
 //
-//go:generate -command mapper generate-database db mapper -t config.mapper.go
-//go:generate mapper generate -i -b "//go:build linux && cgo && !agent"
+//generate-database:mapper target config.mapper.go
+//generate-database:mapper reset -i -b "//go:build linux && cgo && !agent"
 //
-//generate-database:mapper stmt config objects
-//generate-database:mapper stmt config create struct=Config
-//generate-database:mapper stmt config delete
+//generate-database:mapper stmt -e config objects
+//generate-database:mapper stmt -e config create struct=Config
+//generate-database:mapper stmt -e config delete
 //
-//generate-database:mapper method config GetMany
-//generate-database:mapper method config Create struct=Config
-//generate-database:mapper method config Update struct=Config
-//generate-database:mapper method config DeleteMany
+//generate-database:mapper method -i -e config GetMany
+//generate-database:mapper method -i -e config Create struct=Config
+//generate-database:mapper method -i -e config Update struct=Config
+//generate-database:mapper method -i -e config DeleteMany
 
 // Config is a reference struct representing one configuration entry of another entity.
 type Config struct {

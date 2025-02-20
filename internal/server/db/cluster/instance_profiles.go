@@ -10,19 +10,19 @@ import (
 
 // Code generation directives.
 //
-//go:generate -command mapper generate-database db mapper -t instance_profiles.mapper.go
-//go:generate mapper generate -i -b "//go:build linux && cgo && !agent"
+//generate-database:mapper target instance_profiles.mapper.go
+//generate-database:mapper reset -i -b "//go:build linux && cgo && !agent"
 //
-//generate-database:mapper stmt instance_profile objects
-//generate-database:mapper stmt instance_profile objects-by-ProfileID
-//generate-database:mapper stmt instance_profile objects-by-InstanceID
-//generate-database:mapper stmt instance_profile create
-//generate-database:mapper stmt instance_profile delete-by-InstanceID
+//generate-database:mapper stmt -e instance_profile objects
+//generate-database:mapper stmt -e instance_profile objects-by-ProfileID
+//generate-database:mapper stmt -e instance_profile objects-by-InstanceID
+//generate-database:mapper stmt -e instance_profile create
+//generate-database:mapper stmt -e instance_profile delete-by-InstanceID
 //
-//generate-database:mapper method instance_profile GetMany struct=Profile
-//generate-database:mapper method instance_profile GetMany struct=Instance
-//generate-database:mapper method instance_profile Create struct=Instance
-//generate-database:mapper method instance_profile DeleteMany struct=Instance
+//generate-database:mapper method -i -e instance_profile GetMany struct=Profile
+//generate-database:mapper method -i -e instance_profile GetMany struct=Instance
+//generate-database:mapper method -i -e instance_profile Create struct=Instance
+//generate-database:mapper method -i -e instance_profile DeleteMany struct=Instance
 
 // InstanceProfile is an association table struct that associates Instances
 // to Profiles.

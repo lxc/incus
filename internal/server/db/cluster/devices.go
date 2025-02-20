@@ -8,17 +8,17 @@ import (
 
 // Code generation directives.
 //
-//go:generate -command mapper generate-database db mapper -t devices.mapper.go
-//go:generate mapper generate -i -b "//go:build linux && cgo && !agent"
+//generate-database:mapper target devices.mapper.go
+//generate-database:mapper reset -i -b "//go:build linux && cgo && !agent"
 //
-//generate-database:mapper stmt device objects
-//generate-database:mapper stmt device create struct=Device
-//generate-database:mapper stmt device delete
+//generate-database:mapper stmt -e device objects
+//generate-database:mapper stmt -e device create struct=Device
+//generate-database:mapper stmt -e device delete
 //
-//generate-database:mapper method device GetMany
-//generate-database:mapper method device Create struct=Device
-//generate-database:mapper method device Update struct=Device
-//generate-database:mapper method device DeleteMany
+//generate-database:mapper method -i -e device GetMany
+//generate-database:mapper method -i -e device Create struct=Device
+//generate-database:mapper method -i -e device Update struct=Device
+//generate-database:mapper method -i -e device DeleteMany
 
 // DeviceType represents the types of supported devices.
 type DeviceType int

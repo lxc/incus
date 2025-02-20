@@ -2,6 +2,8 @@
 
 package cluster
 
+//go:generate generate-database db mapper generate
+
 import (
 	"database/sql"
 	"fmt"

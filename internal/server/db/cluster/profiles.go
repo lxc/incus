@@ -12,28 +12,28 @@ import (
 
 // Code generation directives.
 //
-//go:generate -command mapper generate-database db mapper -t profiles.mapper.go
-//go:generate mapper generate -i -b "//go:build linux && cgo && !agent"
+//generate-database:mapper target profiles.mapper.go
+//generate-database:mapper reset -i -b "//go:build linux && cgo && !agent"
 //
-//generate-database:mapper stmt profile objects
-//generate-database:mapper stmt profile objects-by-ID
-//generate-database:mapper stmt profile objects-by-Name
-//generate-database:mapper stmt profile objects-by-Project
-//generate-database:mapper stmt profile objects-by-Project-and-Name
-//generate-database:mapper stmt profile id
-//generate-database:mapper stmt profile create
-//generate-database:mapper stmt profile rename
-//generate-database:mapper stmt profile update
-//generate-database:mapper stmt profile delete-by-Project-and-Name
+//generate-database:mapper stmt -e profile objects
+//generate-database:mapper stmt -e profile objects-by-ID
+//generate-database:mapper stmt -e profile objects-by-Name
+//generate-database:mapper stmt -e profile objects-by-Project
+//generate-database:mapper stmt -e profile objects-by-Project-and-Name
+//generate-database:mapper stmt -e profile id
+//generate-database:mapper stmt -e profile create
+//generate-database:mapper stmt -e profile rename
+//generate-database:mapper stmt -e profile update
+//generate-database:mapper stmt -e profile delete-by-Project-and-Name
 //
-//generate-database:mapper method profile ID
-//generate-database:mapper method profile Exists
-//generate-database:mapper method profile GetMany references=Config,Device
-//generate-database:mapper method profile GetOne
-//generate-database:mapper method profile Create references=Config,Device
-//generate-database:mapper method profile Rename
-//generate-database:mapper method profile Update references=Config,Device
-//generate-database:mapper method profile DeleteOne-by-Project-and-Name
+//generate-database:mapper method -i -e profile ID
+//generate-database:mapper method -i -e profile Exists
+//generate-database:mapper method -i -e profile GetMany references=Config,Device
+//generate-database:mapper method -i -e profile GetOne
+//generate-database:mapper method -i -e profile Create references=Config,Device
+//generate-database:mapper method -i -e profile Rename
+//generate-database:mapper method -i -e profile Update references=Config,Device
+//generate-database:mapper method -i -e profile DeleteOne-by-Project-and-Name
 
 // Profile is a value object holding db-related details about a profile.
 type Profile struct {
