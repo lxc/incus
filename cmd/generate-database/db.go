@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"go/build"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/tools/go/packages"
@@ -57,9 +59,6 @@ func newDbMapper() *cobra.Command {
 	}
 
 	cmd.AddCommand(newDbMapperGenerate())
-	cmd.AddCommand(newDbMapperReset())
-	cmd.AddCommand(newDbMapperStmt())
-	cmd.AddCommand(newDbMapperMethod())
 
 	return cmd
 }
@@ -95,113 +94,84 @@ func newDbMapperGenerate() *cobra.Command {
 	return cmd
 }
 
-func newDbMapperReset() *cobra.Command {
-	var target string
-	var build string
-	var iface bool
+const prefix = "//generate-database:mapper "
 
-	cmd := &cobra.Command{
-		Use:   "reset",
-		Short: "Reset target source file and its interface file.",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return file.Reset(target, db.Imports, build, iface)
-		},
+func generate(target string, build string, iface bool, pkg string) error {
+	err := file.Reset(target, db.Imports, build, iface)
+	if err != nil {
+		return err
 	}
 
-	flags := cmd.Flags()
-	flags.BoolVarP(&iface, "interface", "i", false, "create interface files")
-	flags.StringVarP(&target, "target", "t", "-", "target source file to generate")
-	flags.StringVarP(&build, "build", "b", "", "build comment to include")
+	parsedPkg, err := packageLoad(pkg)
+	if err != nil {
+		return err
+	}
 
-	return cmd
+	registeredSQLStmts := map[string]string{}
+	for _, goFile := range parsedPkg.CompiledGoFiles {
+		if filepath.Base(goFile) != os.Getenv("GOFILE") {
+			continue
+		}
+
+		body, err := os.ReadFile(goFile)
+		if err != nil {
+			return err
+		}
+
+		lines := strings.Split(string(body), "\n")
+		for _, line := range lines {
+			// Lazy matching for prefix, does not consider Go syntax and therefore
+			// lines starting with prefix, that are part of e.g. multiline strings
+			// match as well. This is highly unlikely to cause false positives.
+			if strings.HasPrefix(line, prefix) {
+				line = strings.TrimPrefix(line, prefix)
+				args := strings.Split(line, " ")
+
+				command := args[0]
+				entity := args[1]
+				kind := args[2]
+				config, err := parseParams(args[3:])
+				if err != nil {
+					return err
+				}
+
+				switch command {
+				case "stmt":
+					err = generateStmt(target, parsedPkg, entity, kind, config, registeredSQLStmts)
+
+				case "method":
+					err = generateMethod(target, iface, parsedPkg, entity, kind, config, registeredSQLStmts)
+
+				default:
+					err = fmt.Errorf("undefined command: %s", command)
+				}
+
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
-func newDbMapperStmt() *cobra.Command {
-	var target string
-	var pkg string
-	var entity string
-
-	cmd := &cobra.Command{
-		Use:   "stmt [kind]",
-		Args:  cobra.MinimumNArgs(1),
-		Short: "Generate a particular database statement.",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			kind := args[0]
-
-			if entity == "" {
-				return fmt.Errorf("No database entity given")
-			}
-
-			config, err := parseParams(args[1:])
-			if err != nil {
-				return err
-			}
-
-			parsedPkg, err := packageLoad(pkg)
-			if err != nil {
-				return err
-			}
-
-			stmt, err := db.NewStmt(parsedPkg, entity, kind, config, map[string]string{})
-			if err != nil {
-				return err
-			}
-
-			return file.Append(entity, target, stmt, false)
-		},
+func generateStmt(target string, parsedPkg *packages.Package, entity, kind string, config map[string]string, registeredSQLStmts map[string]string) error {
+	stmt, err := db.NewStmt(parsedPkg, entity, kind, config, registeredSQLStmts)
+	if err != nil {
+		return err
 	}
 
-	flags := cmd.Flags()
-	flags.StringVarP(&target, "target", "t", "-", "target source file to generate")
-	flags.StringVarP(&pkg, "package", "p", "", "Go package where the entity struct is declared")
-	flags.StringVarP(&entity, "entity", "e", "", "database entity to generate the statement for")
-
-	return cmd
+	return file.Append(entity, target, stmt, false)
 }
 
-func newDbMapperMethod() *cobra.Command {
-	var target string
-	var pkg string
-	var entity string
-	var iface bool
-
-	cmd := &cobra.Command{
-		Use:   "method [kind] [param1=value1 ... paramN=valueN]",
-		Args:  cobra.MinimumNArgs(1),
-		Short: "Generate a particular transaction method and interface signature.",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			kind := args[0]
-
-			if entity == "" {
-				return fmt.Errorf("No database entity given")
-			}
-
-			config, err := parseParams(args[1:])
-			if err != nil {
-				return err
-			}
-
-			parsedPkg, err := packageLoad(pkg)
-			if err != nil {
-				return err
-			}
-
-			method, err := db.NewMethod(parsedPkg, entity, kind, config, map[string]string{})
-			if err != nil {
-				return err
-			}
-
-			return file.Append(entity, target, method, iface)
-		},
+func generateMethod(target string, iface bool, parsedPkg *packages.Package, entity, kind string, config map[string]string, registeredSQLStmts map[string]string) error {
+	method, err := db.NewMethod(parsedPkg, entity, kind, config, registeredSQLStmts)
+	if err != nil {
+		return err
 	}
 
-	flags := cmd.Flags()
-	flags.BoolVarP(&iface, "interface", "i", false, "create interface files")
-	flags.StringVarP(&target, "target", "t", "-", "target source file to generate")
-	flags.StringVarP(&pkg, "package", "p", "", "Go package where the entity struct is declared")
-	flags.StringVarP(&entity, "entity", "e", "", "database entity to generate the method for")
-
-	return cmd
+	return file.Append(entity, target, method, iface)
 }
 
 func packageLoad(pkg string) (*packages.Package, error) {
