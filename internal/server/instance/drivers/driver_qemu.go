@@ -7049,6 +7049,11 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 			return fmt.Errorf("Failed loading storage pool: %w", err)
 		}
 
+		// Check that we're on shared storage.
+		if !diskPool.Driver().Info().Remote {
+			continue
+		}
+
 		// Setup the volume entry.
 		extraSourceArgs := &localMigration.VolumeSourceArgs{
 			ClusterMove: true,
@@ -7567,6 +7572,11 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			diskPool, err := storagePools.LoadByName(d.state, dev.Config["pool"])
 			if err != nil {
 				return fmt.Errorf("Failed loading storage pool: %w", err)
+			}
+
+			// Check that we're on shared storage.
+			if !diskPool.Driver().Info().Remote {
+				continue
 			}
 
 			// Setup the volume entry.
