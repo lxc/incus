@@ -9,20 +9,20 @@ import (
 
 // Code generation directives.
 //
-//go:generate -command mapper generate-database db mapper -t images.mapper.go
-//go:generate mapper generate -i -b "//go:build linux && cgo && !agent"
+//generate-database:mapper target images.mapper.go
+//generate-database:mapper reset -i -b "//go:build linux && cgo && !agent"
 //
-//generate-database:mapper stmt image objects
-//generate-database:mapper stmt image objects-by-ID
-//generate-database:mapper stmt image objects-by-Project
-//generate-database:mapper stmt image objects-by-Project-and-Cached
-//generate-database:mapper stmt image objects-by-Project-and-Public
-//generate-database:mapper stmt image objects-by-Fingerprint
-//generate-database:mapper stmt image objects-by-Cached
-//generate-database:mapper stmt image objects-by-AutoUpdate
+//generate-database:mapper stmt -e image objects
+//generate-database:mapper stmt -e image objects-by-ID
+//generate-database:mapper stmt -e image objects-by-Project
+//generate-database:mapper stmt -e image objects-by-Project-and-Cached
+//generate-database:mapper stmt -e image objects-by-Project-and-Public
+//generate-database:mapper stmt -e image objects-by-Fingerprint
+//generate-database:mapper stmt -e image objects-by-Cached
+//generate-database:mapper stmt -e image objects-by-AutoUpdate
 //
-//generate-database:mapper method image GetMany
-//generate-database:mapper method image GetOne
+//generate-database:mapper method -i -e image GetMany
+//generate-database:mapper method -i -e image GetOne
 
 // Image is a value object holding db-related details about an image.
 type Image struct {
