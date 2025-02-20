@@ -40,7 +40,7 @@ func certificateNeedsUpdate(domain string, cert *x509.Certificate) bool {
 }
 
 // UpdateCertificate updates the certificate.
-func UpdateCertificate(s *state.State, provider HTTP01Provider, clustered bool, domain string, email string, caURL string, force bool) (*certificate.Resource, error) {
+func UpdateCertificate(s *state.State, provider ChallengeProvider, clustered bool, domain string, email string, caURL string, force bool) (*certificate.Resource, error) {
 	clusterCertFilename := internalUtil.VarPath(ClusterCertFilename)
 
 	l := logger.AddContext(logger.Ctx{"domain": domain, "caURL": caURL})
@@ -126,9 +126,9 @@ func UpdateCertificate(s *state.State, provider HTTP01Provider, clustered bool, 
 		return nil, fmt.Errorf("Failed to create new client: %w", err)
 	}
 
-	err = client.Challenge.SetHTTP01Provider(provider)
+	err = provider.RegisterWithSolver(client.Challenge)
 	if err != nil {
-		return nil, fmt.Errorf("Failed setting HTTP-01 provider: %w", err)
+		return nil, fmt.Errorf("Failed setting challenge provider: %w", err)
 	}
 
 	var reg *registration.Resource
