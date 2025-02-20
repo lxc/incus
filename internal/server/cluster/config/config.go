@@ -230,8 +230,37 @@ func (c *Config) LokiServer() (string, string, string, string, string, string, [
 }
 
 // ACME returns all ACME settings needed for certificate renewal.
-func (c *Config) ACME() (string, string, string, bool) {
-	return c.m.GetString("acme.domain"), c.m.GetString("acme.email"), c.m.GetString("acme.ca_url"), c.m.GetBool("acme.agree_tos")
+func (c *Config) ACME() (string, string, string, bool, string, string, map[string]string, []string) {
+	var resolvers []string
+
+	providerConfig := make(map[string]string)
+
+	if c.m.GetString("acme.provider.config") != "" {
+		lines := strings.Split(strings.TrimSpace(c.m.GetString("acme.provider.config")), "\n")
+
+		for _, line := range lines {
+			if len(strings.TrimSpace(line)) == 0 {
+				continue
+			}
+
+			parts := strings.SplitN(line, "=", 2)
+			if len(parts) != 2 {
+				logrus.Warnf("Malformed line in config string: %q", line)
+				continue
+			}
+
+			key := strings.TrimSpace(parts[0])
+			value := strings.TrimSpace(parts[1])
+
+			providerConfig[key] = value
+		}
+	}
+
+	if c.m.GetString("acme.provider.resolvers") != "" {
+		resolvers = strings.Split(c.m.GetString("acme.provider.resolvers"), ",")
+	}
+
+	return c.m.GetString("acme.domain"), c.m.GetString("acme.email"), c.m.GetString("acme.ca_url"), c.m.GetBool("acme.agree_tos"), c.m.GetString("acme.challenge"), c.m.GetString("acme.provider"), providerConfig, resolvers
 }
 
 // ClusterJoinTokenExpiry returns the cluster join token expiry.
@@ -348,6 +377,42 @@ var ConfigSchema = config.Schema{
 	//  defaultdesc: `false`
 	//  shortdesc: Agree to ACME terms of service
 	"acme.agree_tos": {Type: config.Bool, Default: "false"},
+
+	// gendoc:generate(entity=server, group=acme, key=acme.challenge)
+	// Possible values are `DNS-01` and `HTTP-01`.
+	// ---
+	//  type: string
+	//  scope: global
+	//  defaultdesc: `HTTP-01`
+	//  shortdesc: ACME challenge type to use
+	"acme.challenge": {Type: config.String, Default: "HTTP-01"},
+
+	// gendoc:generate(entity=server, group=acme, key=acme.dns_provider)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  defaultdesc: ``
+	//  shortdesc: DNS provider for DNS-01 challenge
+	"acme.provider": {Type: config.String, Default: ""},
+
+	// gendoc:generate(entity=server, group=acme, key=acme.provider.config)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  defaultdesc: ``
+	//  shortdesc: Environment variables to set during the DNS-01 challenge
+	"acme.provider.config": {Type: config.String, Default: ""},
+
+	// gendoc:generate(entity=server, group=acme, key=acme.provider.resolvers)
+	// DNS resolvers to use for performing (recursive) CNAME resolving and apex domain determination.
+	// ---
+	//  type: string
+	//  scope: global
+	//  defaultdesc: ``
+	//  shortdesc: Comma-separated list of DNS resolvers
+	"acme.provider.resolvers": {Type: config.String, Default: ""},
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=authorization.scriptlet)
 	// When using scriptlet-based authorization, this option stores the scriptlet.
