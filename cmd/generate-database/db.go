@@ -3,14 +3,15 @@
 package main
 
 import (
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"go/build"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"golang.org/x/tools/go/packages"
 
 	"github.com/lxc/incus/v6/cmd/generate-database/db"
@@ -64,9 +65,6 @@ func newDbMapper() *cobra.Command {
 }
 
 func newDbMapperGenerate() *cobra.Command {
-	var target string
-	var build string
-	var iface bool
 	var pkg string
 
 	cmd := &cobra.Command{
@@ -77,18 +75,11 @@ func newDbMapperGenerate() *cobra.Command {
 				return errors.New("GOPACKAGE environment variable is not set")
 			}
 
-			if os.Getenv("GOFILE") == "" {
-				return errors.New("GOFILE environment variable is not set")
-			}
-
-			return generate(target, build, iface, pkg)
+			return generate(pkg)
 		},
 	}
 
 	flags := cmd.Flags()
-	flags.BoolVarP(&iface, "interface", "i", false, "create interface files")
-	flags.StringVarP(&target, "target", "t", "-", "target source file to generate")
-	flags.StringVarP(&build, "build", "b", "", "build comment to include")
 	flags.StringVarP(&pkg, "package", "p", "", "Go package where the entity struct is declared")
 
 	return cmd
@@ -96,12 +87,7 @@ func newDbMapperGenerate() *cobra.Command {
 
 const prefix = "//generate-database:mapper "
 
-func generate(target string, build string, iface bool, pkg string) error {
-	err := file.Reset(target, db.Imports, build, iface)
-	if err != nil {
-		return err
-	}
-
+func generate(pkg string) error {
 	parsedPkg, err := packageLoad(pkg)
 	if err != nil {
 		return err
@@ -109,14 +95,13 @@ func generate(target string, build string, iface bool, pkg string) error {
 
 	registeredSQLStmts := map[string]string{}
 	for _, goFile := range parsedPkg.CompiledGoFiles {
-		if filepath.Base(goFile) != os.Getenv("GOFILE") {
-			continue
-		}
-
 		body, err := os.ReadFile(goFile)
 		if err != nil {
 			return err
 		}
+
+		// Reset target to stdout
+		target := "-"
 
 		lines := strings.Split(string(body), "\n")
 		for _, line := range lines {
@@ -125,25 +110,39 @@ func generate(target string, build string, iface bool, pkg string) error {
 			// match as well. This is highly unlikely to cause false positives.
 			if strings.HasPrefix(line, prefix) {
 				line = strings.TrimPrefix(line, prefix)
-				args := strings.Split(line, " ")
 
-				command := args[0]
-				entity := args[1]
-				kind := args[2]
-				config, err := parseParams(args[3:])
+				// Use csv parser to properly handle arguments surrounded by double quotes.
+				r := csv.NewReader(strings.NewReader(line))
+				r.Comma = ' ' // space
+				args, err := r.Read()
 				if err != nil {
 					return err
 				}
 
+				if len(args) == 0 {
+					return fmt.Errorf("command missing")
+				}
+
+				command := args[0]
+
 				switch command {
+				case "target":
+					if len(args) != 2 {
+						return fmt.Errorf("invalid arguments for command target, one argument for the target filename: %s", line)
+					}
+
+					target = args[1]
+				case "reset":
+					err = commandReset(args[1:], target)
+
 				case "stmt":
-					err = generateStmt(target, parsedPkg, entity, kind, config, registeredSQLStmts)
+					err = commandStmt(args[1:], target, parsedPkg, registeredSQLStmts)
 
 				case "method":
-					err = generateMethod(target, iface, parsedPkg, entity, kind, config, registeredSQLStmts)
+					err = commandMethod(args[1:], target, parsedPkg, registeredSQLStmts)
 
 				default:
-					err = fmt.Errorf("undefined command: %s", command)
+					err = fmt.Errorf("unknown command: %s", command)
 				}
 
 				if err != nil {
@@ -156,22 +155,83 @@ func generate(target string, build string, iface bool, pkg string) error {
 	return nil
 }
 
-func generateStmt(target string, parsedPkg *packages.Package, entity, kind string, config map[string]string, registeredSQLStmts map[string]string) error {
-	stmt, err := db.NewStmt(parsedPkg, entity, kind, config, registeredSQLStmts)
+func commandReset(commandLine []string, target string) error {
+	var err error
+
+	flags := pflag.NewFlagSet("", pflag.ContinueOnError)
+	iface := flags.BoolP("interface", "i", false, "create interface files")
+	buildComment := flags.StringP("build", "b", "", "build comment to include")
+
+	err = flags.Parse(commandLine)
 	if err != nil {
 		return err
 	}
 
-	return file.Append(entity, target, stmt, false)
+	err = file.Reset(target, db.Imports, *buildComment, *iface)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func generateMethod(target string, iface bool, parsedPkg *packages.Package, entity, kind string, config map[string]string, registeredSQLStmts map[string]string) error {
-	method, err := db.NewMethod(parsedPkg, entity, kind, config, registeredSQLStmts)
+func commandStmt(commandLine []string, target string, parsedPkg *packages.Package, registeredSQLStmts map[string]string) error {
+	var err error
+
+	flags := pflag.NewFlagSet("", pflag.ContinueOnError)
+	entity := flags.StringP("entity", "e", "", "database entity to generate the statement for")
+
+	err = flags.Parse(commandLine)
 	if err != nil {
 		return err
 	}
 
-	return file.Append(entity, target, method, iface)
+	if len(flags.Args()) < 1 {
+		return fmt.Errorf("argument <kind> missing for stmt command")
+	}
+
+	kind := flags.Arg(0)
+	config, err := parseParams(flags.Args()[1:])
+	if err != nil {
+		return err
+	}
+
+	stmt, err := db.NewStmt(parsedPkg, *entity, kind, config, registeredSQLStmts)
+	if err != nil {
+		return err
+	}
+
+	return file.Append(*entity, target, stmt, false)
+}
+
+func commandMethod(commandLine []string, target string, parsedPkg *packages.Package, registeredSQLStmts map[string]string) error {
+	var err error
+
+	flags := pflag.NewFlagSet("", pflag.ContinueOnError)
+	iface := flags.BoolP("interface", "i", false, "create interface files")
+	entity := flags.StringP("entity", "e", "", "database entity to generate the method for")
+
+	err = flags.Parse(commandLine)
+	if err != nil {
+		return err
+	}
+
+	if len(flags.Args()) < 1 {
+		return fmt.Errorf("argument <kind> missing for method command")
+	}
+
+	kind := flags.Arg(0)
+	config, err := parseParams(flags.Args()[1:])
+	if err != nil {
+		return err
+	}
+
+	method, err := db.NewMethod(parsedPkg, *entity, kind, config, registeredSQLStmts)
+	if err != nil {
+		return err
+	}
+
+	return file.Append(*entity, target, method, *iface)
 }
 
 func packageLoad(pkg string) (*packages.Package, error) {

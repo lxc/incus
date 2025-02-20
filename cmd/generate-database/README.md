@@ -14,39 +14,55 @@ predictability.
 
 ### Initialization
 
-Generally the first thing we will want to do for any newly generated file is to
-establish the command, the target file, and ensure the file has been cleared of
-content:
+#### Package global
+
+Once per package, that uses `generate-database` for generation of database
+statements and associated `go` functions, `generate-database` needs to be invoked
+using the following `go:generate` instruction:
 
 ```go
-//go:generate -command mapper generate-database db mapper -t instances.mapper.go
-//go:generate mapper generate -i -b "//go:build linux && cgo && !agent"
-
+//go:generate generate-database db mapper generate
 ```
 
-This will initiate a call to `generate-database db mapper -t instances.mapper.go mapper generate`,
+This will initiate a call to `generate-database db mapper generate`,
 which will then search for `//generate-database:mapper` directives in the same file
 and process those.
+
+#### File
+
+Generally the first thing we will want to do for any newly generated file is to
+ensure the file has been cleared of content:
+
+```go
+//generate-database:mapper target instances.mapper.go
+//generate-database:mapper reset -i -b "//go:build linux && cgo && !agent"
+```
 
 ### Generation Directive Arguments
 
 The generation directive aruments have the following form:
 
-`//generate-database:mapper <command> <entity> <kind> <config...>`
+`//generate-database:mapper <command> flags <kind> <args...>`
+
+The following flags are available:
+
+* `--build` / `-b`: build comment to include (commands: `reset`)
+* `--interface` / `-i`: create interface files (commands: `reset`, `method`)
+* `--entity` / `-e`: database entity to generate the method or statement for (commands: `stmt`, `method`)
 
 Example:
 
-* `//generate-database:mapper stmt instance objects table=table_name`
+* `//generate-database:mapper stmt -e instance objects table=table_name`
 
 The `table` key can be used to override the generated table name for a specified one.
 
-* `//generate-database:mapper stmt method instance Create references=Config,Device`
+* `//generate-database:mapper method -i -e instance Create references=Config,Device`
 
 For some tables (defined below under [Additional Information](#Additional-Information) as [EntityTable](#EntityTable), the `references=<ReferenceEntity>` key can be provided with the name of
 a [ReferenceTable](#ReferenceTable) or [MapTable](#MapTable) struct. This directive would produce `CreateInstance` in addition to `CreateInstanceConfig` and `CreateInstanceDevices`:
 
-* `//generate-database:mapper method instance_profile Create struct=Instance`
-* `//generate-database:mapper method instance_profile Create struct=Profile`
+* `//generate-database:mapper method -i -e instance_profile Create struct=Instance`
+* `//generate-database:mapper method -i -e instance_profile Create struct=Profile`
 
 For some tables (defined below under [Additional Information](#Additional-Information) as [AssociationTable](#AssociationTable), `method` declarations must
 include a `struct=<Entity>` to indicate the directionality of the function. An invocation can be called for each direction.
@@ -70,11 +86,11 @@ Type                                  | Description
 #### Examples
 
 ```go
-//generate-database:mapper stmt instance objects
-//generate-database:mapper stmt instance objects-by-Name-and-Project
-//generate-database:mapper stmt instance create
-//generate-database:mapper stmt instance update
-//generate-database:mapper stmt instance delete-by-Name-and-Project
+//generate-database:mapper stmt -e instance objects
+//generate-database:mapper stmt -e instance objects-by-Name-and-Project
+//generate-database:mapper stmt -e instance create
+//generate-database:mapper stmt -e instance update
+//generate-database:mapper stmt -e instance delete-by-Name-and-Project
 ```
 
 #### Statement Related Go Tags
@@ -112,14 +128,14 @@ Type                                | Description
 `DeleteMany`                        | Delete one or more rows from the table.
 
 ```go
-//generate-database:mapper method instance GetMany
-//generate-database:mapper method instance GetOne
-//generate-database:mapper method instance ID
-//generate-database:mapper method instance Exist
-//generate-database:mapper method instance Create
-//generate-database:mapper method instance Update
-//generate-database:mapper method instance DeleteOne-by-Project-and-Name
-//generate-database:mapper method instance DeleteMany-by-Name
+//generate-database:mapper method -i -e instance GetMany
+//generate-database:mapper method -i -e instance GetOne
+//generate-database:mapper method -i -e instance ID
+//generate-database:mapper method -i -e instance Exist
+//generate-database:mapper method -i -e instance Create
+//generate-database:mapper method -i -e instance Update
+//generate-database:mapper method -i -e instance DeleteOne-by-Project-and-Name
+//generate-database:mapper method -i -e instance DeleteMany-by-Name
 ```
 
 ### Additional Information
@@ -168,8 +184,8 @@ Real world invocation of these statements and functions should be done through a
 Example:
 
 ```go
-//generate-database:mapper stmt device create
-//generate-database:mapper method device Create
+//generate-database:mapper stmt -e device create
+//generate-database:mapper method -e device Create
 
 type Device struct {
   ID int
@@ -179,7 +195,7 @@ type Device struct {
 }
 
 //...
-//generate-database:mapper method instance Create references=Device
+//generate-database:mapper method -e instance Create references=Device
 // This will produce a function called `CreateInstanceDevices`.
 ```
 
@@ -191,8 +207,8 @@ On the SQL side, this is treated exactly like a `ReferenceTable`, but on the `go
 Example:
 
 ```go
-//generate-database:mapper stmt config create
-//generate-database:mapper method config Create
+//generate-database:mapper stmt -e config create
+//generate-database:mapper method -e config Create
 
 type Config struct {
   ID int
@@ -202,7 +218,7 @@ type Config struct {
 }
 
 //...
-//generate-database:mapper method instance Create references=Config
+//generate-database:mapper method -e instance Create references=Config
 // This will produce a function called `CreateInstanceConfig`, which will return a `map[string]string`.
 ```
 
@@ -217,8 +233,8 @@ An invocation can be called for each direction.
 Example:
 
 ```go
-//generate-database:mapper method instance_profile Create struct=Instance
-//generate-database:mapper method instance_profile Create struct=Profile
+//generate-database:mapper method -i -e instance_profile Create struct=Instance
+//generate-database:mapper method -i -e instance_profile Create struct=Profile
 
 type InstanceProfile struct {
   InstanceID int
