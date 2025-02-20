@@ -5,68 +5,50 @@ package db
 import (
 	"fmt"
 	"go/ast"
+	"go/types"
 	"net/url"
-	"path/filepath"
 	"reflect"
-	"runtime"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/lxc/incus/v6/cmd/generate-database/lex"
 )
 
-// Packages returns the AST packages in which to search for structs.
-//
-// By default it includes the internal/server/db and shared/api packages.
-func Packages() (map[string]*ast.Package, error) {
-	packages := map[string]*ast.Package{}
-
-	_, filename, _, _ := runtime.Caller(0)
-
-	for _, name := range defaultPackages {
-		pkg, err := lex.Parse(filepath.Join(filepath.Dir(filename), "..", "..", "..", name))
-		if err != nil {
-			return nil, fmt.Errorf("Parse %q: %w", name, err)
-		}
-
-		parts := strings.Split(name, "/")
-		packages[parts[len(parts)-1]] = pkg
-	}
-
-	return packages, nil
-}
-
-// ParsePackage returns the AST package in which to search for structs.
-func ParsePackage(pkgPath string) (*ast.Package, error) {
-	pkg, err := lex.Parse(pkgPath)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to parse package path %q: %w", pkgPath, err)
-	}
-
-	return pkg, nil
-}
-
-var defaultPackages = []string{
-	"shared/api",
-	"internal/server/db",
-}
-
 // FiltersFromStmt parses all filtering statement defined for the given entity. It
 // returns all supported combinations of filters, sorted by number of criteria, and
 // the corresponding set of unused filters from the Filter struct.
-func FiltersFromStmt(pkg *ast.Package, kind string, entity string, filters []*Field) ([][]string, [][]string) {
-	objects := pkg.Scope.Objects
+func FiltersFromStmt(pkg *types.Package, kind string, entity string, filters []*Field, registeredSQLStmts map[string]string) ([][]string, [][]string) {
+	objects := pkg.Scope().Names()
 	stmtFilters := [][]string{}
 
 	prefix := fmt.Sprintf("%s%sBy", lex.Minuscule(lex.Camel(entity)), lex.Camel(kind))
 
-	for name := range objects {
+	seenNames := make(map[string]struct{}, len(objects))
+
+	for _, name := range objects {
 		if !strings.HasPrefix(name, prefix) {
 			continue
 		}
 
 		rest := name[len(prefix):]
+		stmtFilters = append(stmtFilters, strings.Split(rest, "And"))
+		seenNames[rest] = struct{}{}
+	}
+
+	for name := range registeredSQLStmts {
+		if !strings.HasPrefix(name, prefix) {
+			continue
+		}
+
+		rest := name[len(prefix):]
+
+		_, ok := seenNames[rest]
+		if ok {
+			continue
+		}
+
 		stmtFilters = append(stmtFilters, strings.Split(rest, "And"))
 	}
 
@@ -87,18 +69,36 @@ func FiltersFromStmt(pkg *ast.Package, kind string, entity string, filters []*Fi
 }
 
 // RefFiltersFromStmt parses all filtering statement defined for the given entity reference.
-func RefFiltersFromStmt(pkg *ast.Package, entity string, ref string, filters []*Field) ([][]string, [][]string) {
-	objects := pkg.Scope.Objects
+func RefFiltersFromStmt(pkg *types.Package, entity string, ref string, filters []*Field, registeredSQLStmts map[string]string) ([][]string, [][]string) {
+	objects := pkg.Scope().Names()
 	stmtFilters := [][]string{}
 
 	prefix := fmt.Sprintf("%s%sRefBy", lex.Minuscule(lex.Camel(entity)), lex.Capital(ref))
 
-	for name := range objects {
+	seenNames := make(map[string]struct{}, len(objects))
+
+	for _, name := range objects {
 		if !strings.HasPrefix(name, prefix) {
 			continue
 		}
 
 		rest := name[len(prefix):]
+		stmtFilters = append(stmtFilters, strings.Split(rest, "And"))
+		seenNames[rest] = struct{}{}
+	}
+
+	for name := range registeredSQLStmts {
+		if !strings.HasPrefix(name, prefix) {
+			continue
+		}
+
+		rest := name[len(prefix):]
+
+		_, ok := seenNames[rest]
+		if ok {
+			continue
+		}
+
 		stmtFilters = append(stmtFilters, strings.Split(rest, "And"))
 	}
 
@@ -150,20 +150,20 @@ func sortFilter(filter []string) []string {
 
 // Parse the structure declaration with the given name found in the given Go package.
 // Any 'Entity' struct should also have an 'EntityFilter' struct defined in the same file.
-func Parse(pkg *ast.Package, name string, kind string) (*Mapping, error) {
+func Parse(pkg *types.Package, name string, kind string) (*Mapping, error) {
 	// The main entity struct.
-	str := findStruct(pkg.Scope, name)
+	str := findStruct(pkg.Scope(), name)
 	if str == nil {
 		return nil, fmt.Errorf("No declaration found for %q", name)
 	}
 
-	fields, err := parseStruct(str, kind)
+	fields, err := parseStruct(str, kind, pkg.Name())
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse %q: %w", name, err)
 	}
 
 	m := &Mapping{
-		Package:    pkg.Name,
+		Package:    pkg.Name(),
 		Name:       name,
 		Fields:     fields,
 		Type:       tableType(pkg, name, fields),
@@ -173,12 +173,12 @@ func Parse(pkg *ast.Package, name string, kind string) (*Mapping, error) {
 	if m.Filterable {
 		// The 'EntityFilter' struct. This is used for filtering on specific fields of the entity.
 		filterName := name + "Filter"
-		filterStr := findStruct(pkg.Scope, filterName)
+		filterStr := findStruct(pkg.Scope(), filterName)
 		if filterStr == nil {
 			return nil, fmt.Errorf("No declaration found for %q", filterName)
 		}
 
-		filters, err := parseStruct(filterStr, kind)
+		filters, err := parseStruct(filterStr, kind, pkg.Name())
 		if err != nil {
 			return nil, fmt.Errorf("Failed to parse %q: %w", name, err)
 		}
@@ -216,54 +216,53 @@ func Parse(pkg *ast.Package, name string, kind string) (*Mapping, error) {
 
 // ParseStmt returns the SQL string passed as an argument to a variable declaration of a call to RegisterStmt with the given name.
 // e.g. the SELECT string from 'var instanceObjects = RegisterStmt(`SELECT * from instances...`)'.
-func ParseStmt(pkg *ast.Package, dbPkg *ast.Package, name string) (string, error) {
-	stmtVar := pkg.Scope.Lookup(name)
-	if stmtVar == nil && dbPkg != nil {
-		// Fallback to database helper package if provided, if we can't find the variable.
-		stmtVar = dbPkg.Scope.Lookup(name)
+func ParseStmt(name string, defs map[*ast.Ident]types.Object, registeredSQLStmts map[string]string) (string, error) {
+	sql, ok := registeredSQLStmts[name]
+	if ok {
+		return sql, nil
 	}
 
-	if stmtVar == nil {
-		return "", fmt.Errorf("Failed to find variable named %q", name)
+	for stmtVar := range defs {
+		if stmtVar.Name != name {
+			continue
+		}
+
+		spec, ok := stmtVar.Obj.Decl.(*ast.ValueSpec)
+		if !ok {
+			continue
+		}
+
+		if len(spec.Values) != 1 {
+			continue
+		}
+
+		expr, ok := spec.Values[0].(*ast.CallExpr)
+		if !ok {
+			continue
+		}
+
+		if len(expr.Args) != 1 {
+			continue
+		}
+
+		lit, ok := expr.Args[0].(*ast.BasicLit)
+		if !ok {
+			continue
+		}
+
+		return lit.Value, nil
 	}
 
-	if stmtVar.Kind != ast.Var {
-		return "", fmt.Errorf("Object %q is not a variable", name)
-	}
-
-	spec, ok := stmtVar.Decl.(*ast.ValueSpec)
-	if !ok {
-		return "", fmt.Errorf("Object %q is not a variable declaration", name)
-	}
-
-	if len(spec.Values) != 1 && len(spec.Names) != 1 {
-		return "", fmt.Errorf("Object %q must have 1 value, found %d", name, len(spec.Values))
-	}
-
-	expr, ok := spec.Values[0].(*ast.CallExpr)
-	if !ok {
-		return "", fmt.Errorf("Object %q is not variable defined as a function call to RegisterStmt", name)
-	}
-
-	if len(expr.Args) != 1 {
-		return "", fmt.Errorf("Object %q's call to RegisterStmt should have only one argument, found %d", name, len(expr.Args))
-	}
-
-	lit, ok := expr.Args[0].(*ast.BasicLit)
-	if !ok {
-		return "", fmt.Errorf("Object %q's call to RegisterStmt must have a SQL string as its argument", name)
-	}
-
-	return lit.Value, nil
+	return "", fmt.Errorf("Declaration for %q not found", name)
 }
 
 // tableType determines the TableType for the given struct fields.
-func tableType(pkg *ast.Package, name string, fields []*Field) TableType {
+func tableType(pkg *types.Package, name string, fields []*Field) TableType {
 	fieldNames := FieldNames(fields)
 	entities := strings.Split(lex.Snake(name), "_")
 	if len(entities) == 2 {
-		struct1 := findStruct(pkg.Scope, lex.Camel(lex.Singular(entities[0])))
-		struct2 := findStruct(pkg.Scope, lex.Camel(lex.Singular(entities[1])))
+		struct1 := findStruct(pkg.Scope(), lex.Camel(lex.Singular(entities[0])))
+		struct2 := findStruct(pkg.Scope(), lex.Camel(lex.Singular(entities[1])))
 		if struct1 != nil && struct2 != nil {
 			return AssociationTable
 		}
@@ -281,18 +280,18 @@ func tableType(pkg *ast.Package, name string, fields []*Field) TableType {
 }
 
 // Find the StructType node for the structure with the given name.
-func findStruct(scope *ast.Scope, name string) *ast.StructType {
+func findStruct(scope *types.Scope, name string) *types.Struct {
 	obj := scope.Lookup(name)
 	if obj == nil {
 		return nil
 	}
 
-	typ, ok := obj.Decl.(*ast.TypeSpec)
+	typ, ok := obj.(*types.TypeName)
 	if !ok {
 		return nil
 	}
 
-	str, ok := typ.Type.(*ast.StructType)
+	str, ok := typ.Type().Underlying().(*types.Struct)
 	if !ok {
 		return nil
 	}
@@ -301,28 +300,19 @@ func findStruct(scope *ast.Scope, name string) *ast.StructType {
 }
 
 // Extract field information from the given structure.
-func parseStruct(str *ast.StructType, kind string) ([]*Field, error) {
+func parseStruct(str *types.Struct, kind string, pkgName string) ([]*Field, error) {
 	fields := make([]*Field, 0)
 
-	for _, f := range str.Fields.List {
-		if len(f.Names) == 0 {
+	for i := 0; i < str.NumFields(); i++ {
+		f := str.Field(i)
+		if f.Embedded() {
 			// Check if this is a parent struct.
-			ident, ok := f.Type.(*ast.Ident)
+			parentStr, ok := f.Type().Underlying().(*types.Struct)
 			if !ok {
 				continue
 			}
 
-			typ, ok := ident.Obj.Decl.(*ast.TypeSpec)
-			if !ok {
-				continue
-			}
-
-			parentStr, ok := typ.Type.(*ast.StructType)
-			if !ok {
-				continue
-			}
-
-			parentFields, err := parseStruct(parentStr, kind)
+			parentFields, err := parseStruct(parentStr, kind, pkgName)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to parse parent struct: %w", err)
 			}
@@ -332,11 +322,7 @@ func parseStruct(str *ast.StructType, kind string) ([]*Field, error) {
 			continue
 		}
 
-		if len(f.Names) != 1 {
-			return nil, fmt.Errorf("Expected a single field name, got %q", f.Names)
-		}
-
-		field, err := parseField(f, kind)
+		field, err := parseField(f, str.Tag(i), kind, pkgName)
 		if err != nil {
 			return nil, err
 		}
@@ -350,25 +336,24 @@ func parseStruct(str *ast.StructType, kind string) ([]*Field, error) {
 	return fields, nil
 }
 
-func parseField(f *ast.Field, kind string) (*Field, error) {
-	name := f.Names[0]
+func parseField(f *types.Var, structTag string, kind string, pkgName string) (*Field, error) {
+	name := f.Name()
 
-	if !name.IsExported() {
-		return nil, fmt.Errorf("Unexported field name %q", name.Name)
+	if !f.Exported() {
+		return nil, fmt.Errorf("Unexported field name %q", name)
 	}
 
 	// Ignore fields that are marked with a tag of `db:"ingore"`
-	if f.Tag != nil {
-		tag := f.Tag.Value
-		tagValue := reflect.StructTag(tag[1 : len(tag)-1]).Get("db")
+	if structTag != "" {
+		tagValue := reflect.StructTag(structTag).Get("db")
 		if tagValue == "ignore" {
 			return nil, nil
 		}
 	}
 
-	typeName := parseType(f.Type)
+	typeName := parseType(f.Type(), pkgName)
 	if typeName == "" {
-		return nil, fmt.Errorf("Unsupported type for field %q", name.Name)
+		return nil, fmt.Errorf("Unsupported type for field %q", name)
 	}
 
 	typeObj := Type{
@@ -383,10 +368,9 @@ func parseField(f *ast.Field, kind string) (*Field, error) {
 	}
 
 	var config url.Values
-	if f.Tag != nil {
-		tag := f.Tag.Value
+	if structTag != "" {
 		var err error
-		config, err = url.ParseQuery(reflect.StructTag(tag[1 : len(tag)-1]).Get("db"))
+		config, err = url.ParseQuery(reflect.StructTag(structTag).Get("db"))
 		if err != nil {
 			return nil, fmt.Errorf("Parse 'db' structure tag: %w", err)
 		}
@@ -419,7 +403,7 @@ func parseField(f *ast.Field, kind string) (*Field, error) {
 	}
 
 	field := Field{
-		Name:   name.Name,
+		Name:   name,
 		Type:   typeObj,
 		Config: config,
 	}
@@ -427,25 +411,29 @@ func parseField(f *ast.Field, kind string) (*Field, error) {
 	return &field, nil
 }
 
-func parseType(x ast.Expr) string {
+func parseType(x types.Type, pkgName string) string {
 	switch t := x.(type) {
-	case *ast.StarExpr:
-		return parseType(t.X)
-	case *ast.SelectorExpr:
-		return parseType(t.X) + "." + t.Sel.String()
-	case *ast.Ident:
+	case *types.Pointer:
+		return parseType(t.Elem(), pkgName)
+	case *types.Slice:
+		return "[]" + parseType(t.Elem(), pkgName)
+	case *types.Basic:
 		s := t.String()
 		if s == "byte" {
 			return "uint8"
 		}
 
 		return s
-	case *ast.ArrayType:
-		return "[" + parseType(t.Len) + "]" + parseType(t.Elt)
-	case *ast.MapType:
-		return "map[" + parseType(t.Key) + "]" + parseType(t.Value)
-	case *ast.BasicLit:
-		return t.Value
+	case *types.Array:
+		return "[" + strconv.FormatInt(t.Len(), 10) + "]" + parseType(t.Elem(), pkgName)
+	case *types.Map:
+		return "map[" + t.Key().String() + "]" + parseType(t.Elem(), pkgName)
+	case *types.Named:
+		if pkgName == t.Obj().Pkg().Name() {
+			return t.Obj().Name()
+		}
+
+		return t.Obj().Pkg().Name() + "." + t.Obj().Name()
 	case nil:
 		return ""
 	default:

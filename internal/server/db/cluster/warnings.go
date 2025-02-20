@@ -11,26 +11,26 @@ import (
 
 // Code generation directives.
 //
-//go:generate -command mapper generate-database db mapper -t warnings.mapper.go
-//go:generate mapper reset -i -b "//go:build linux && cgo && !agent"
+//generate-database:mapper target warnings.mapper.go
+//generate-database:mapper reset -i -b "//go:build linux && cgo && !agent"
 //
-//go:generate mapper stmt -e warning objects
-//go:generate mapper stmt -e warning objects-by-UUID
-//go:generate mapper stmt -e warning objects-by-Project
-//go:generate mapper stmt -e warning objects-by-Status
-//go:generate mapper stmt -e warning objects-by-Node-and-TypeCode
-//go:generate mapper stmt -e warning objects-by-Node-and-TypeCode-and-Project
-//go:generate mapper stmt -e warning objects-by-Node-and-TypeCode-and-Project-and-EntityTypeCode-and-EntityID
-//go:generate mapper stmt -e warning delete-by-UUID
-//go:generate mapper stmt -e warning delete-by-EntityTypeCode-and-EntityID
-//go:generate mapper stmt -e warning id
+//generate-database:mapper stmt -e warning objects
+//generate-database:mapper stmt -e warning objects-by-UUID
+//generate-database:mapper stmt -e warning objects-by-Project
+//generate-database:mapper stmt -e warning objects-by-Status
+//generate-database:mapper stmt -e warning objects-by-Node-and-TypeCode
+//generate-database:mapper stmt -e warning objects-by-Node-and-TypeCode-and-Project
+//generate-database:mapper stmt -e warning objects-by-Node-and-TypeCode-and-Project-and-EntityTypeCode-and-EntityID
+//generate-database:mapper stmt -e warning delete-by-UUID
+//generate-database:mapper stmt -e warning delete-by-EntityTypeCode-and-EntityID
+//generate-database:mapper stmt -e warning id
 //
-//go:generate mapper method -i -e warning GetMany
-//go:generate mapper method -i -e warning GetOne-by-UUID
-//go:generate mapper method -i -e warning DeleteOne-by-UUID
-//go:generate mapper method -i -e warning DeleteMany-by-EntityTypeCode-and-EntityID
-//go:generate mapper method -i -e warning ID
-//go:generate mapper method -i -e warning Exists struct=Warning
+//generate-database:mapper method -i -e warning GetMany
+//generate-database:mapper method -i -e warning GetOne-by-UUID
+//generate-database:mapper method -i -e warning DeleteOne-by-UUID
+//generate-database:mapper method -i -e warning DeleteMany-by-EntityTypeCode-and-EntityID
+//generate-database:mapper method -i -e warning ID
+//generate-database:mapper method -i -e warning Exists struct=Warning
 
 // Warning is a value object holding db-related details about a warning.
 type Warning struct {
