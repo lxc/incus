@@ -119,10 +119,7 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	}
 
 	requiredKiB := requiredBytes / 1024
-	resourceDefinitionName, err := d.getResourceDefinitionName(vol)
-	if err != nil {
-		return err
-	}
+	resourceDefinitionName := d.generateUUIDWithPrefix()
 
 	volumeSizes := []int64{requiredKiB}
 	// For VMs, create and extra volume on the resource for the filesystem volume.
@@ -151,6 +148,18 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 
 	l.Debug("Spawned a new Linstor resource definition for volume", logger.Ctx{"resourceDefinitionName": resourceDefinitionName})
 	rev.Add(func() { _ = d.DeleteVolume(vol, op) })
+
+	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceDefinitionName, linstorClient.GenericPropsModify{
+		OverrideProps: map[string]string{
+			LinstorAuxName:                        d.config[LinstorVolumePrefixConfigKey] + vol.name,
+			LinstorAuxType:                        string(vol.volType),
+			LinstorAuxContentType:                 string(vol.contentType),
+			"DrbdOptions/Net/allow-two-primaries": "yes",
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("Could not set properties on resource definition: %w", err)
+	}
 
 	// Setup the filesystem.
 	err = d.makeVolumeAvailable(vol)
@@ -385,12 +394,12 @@ func (d *linstor) DeleteVolume(vol Volume, op *operations.Operation) error {
 	if !volumeExists {
 		l.Warn("Resource definition does not exist")
 	} else {
-		name, err := d.getResourceDefinitionName(vol)
+		resourceDefinition, err := d.getResourceDefinition(vol, false)
 		if err != nil {
 			return err
 		}
 
-		err = linstor.Client.ResourceDefinitions.Delete(context.TODO(), name)
+		err = linstor.Client.ResourceDefinitions.Delete(context.TODO(), resourceDefinition.Name)
 		if err != nil {
 			return fmt.Errorf("Unable to delete the resource definition: %w", err)
 		}
@@ -438,19 +447,13 @@ func (d *linstor) HasVolume(vol Volume) (bool, error) {
 		return d.snapshotExists(parentVol, vol)
 	}
 
-	// If we cannot find the definition name, we can conclude that the volume does not exist.
-	resourceDefinitionName, err := d.getResourceDefinitionName(vol)
+	_, err := d.getResourceDefinition(vol, false)
 	if err != nil {
-		return false, nil
-	}
+		if errors.Is(err, errResourceDefinitionNotFound) {
+			return false, nil
+		}
 
-	resourceDefinition, err := d.getResourceDefinition(resourceDefinitionName)
-	if err != nil {
 		return false, err
-	}
-
-	if resourceDefinition == nil {
-		return false, nil
 	}
 
 	return true, nil
@@ -662,19 +665,14 @@ func (d *linstor) RenameVolume(vol Volume, newVolName string, op *operations.Ope
 		return err
 	}
 
-	// At this point the volume name is already updated on the database, so we
-	// clone it and set the new name to be able to fetch its ID from the database.
-	newVol := vol.Clone()
-	newVol.name = newVolName
-
-	resourceDefinitionName, err := d.getResourceDefinitionName(newVol)
+	resourceDefinition, err := d.getResourceDefinition(vol, false)
 	if err != nil {
 		return err
 	}
 
-	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceDefinitionName, linstorClient.GenericPropsModify{
+	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceDefinition.Name, linstorClient.GenericPropsModify{
 		OverrideProps: map[string]string{
-			LinstorAuxName: newVolName,
+			LinstorAuxName: d.config[LinstorVolumePrefixConfigKey] + newVolName,
 		},
 	})
 	if err != nil {
@@ -930,13 +928,12 @@ func (d *linstor) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation
 
 	l.Debug("Deleting temporary resource definition for snapshot mount")
 
-	resourceDefinitionName, err := d.getResourceDefinitionName(snapVol)
+	resourceDefinition, err := d.getResourceDefinition(snapVol, false)
 	if err != nil {
-		return false, err
-	}
+		if errors.Is(err, errResourceDefinitionNotFound) {
+			return false, nil
+		}
 
-	resourceDefinition, err := d.getResourceDefinition(resourceDefinitionName)
-	if err != nil {
 		return false, err
 	}
 
@@ -1170,13 +1167,18 @@ func (d *linstor) VolumeSnapshots(vol Volume, op *operations.Operation) ([]strin
 		return snapshots, err
 	}
 
-	resourceDefinitionName, err := d.getResourceDefinitionName(vol)
+	resourceDefinition, err := d.getResourceDefinition(vol, false)
+	if err != nil {
+		return snapshots, err
+	}
+
+	snapshotMap, err := d.getSnapshotMap(vol)
 	if err != nil {
 		return snapshots, err
 	}
 
 	// Get the snapshots.
-	linstorSnapshots, err := linstor.Client.Resources.GetSnapshots(context.TODO(), resourceDefinitionName)
+	linstorSnapshots, err := linstor.Client.Resources.GetSnapshots(context.TODO(), resourceDefinition.Name)
 	if err != nil {
 		return snapshots, fmt.Errorf("Unable to get snapshots: %w", err)
 	}
