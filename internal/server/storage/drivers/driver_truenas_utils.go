@@ -20,9 +20,9 @@ const (
 func (d *truenas) dataset(vol Volume, deleted bool) string {
 	name, snapName, _ := api.GetParentAndSnapshotName(vol.name)
 
-	if vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS && d.isBlockBacked(vol) {
-		name = fmt.Sprintf("%s_%s", name, vol.ConfigBlockFilesystem())
-	}
+	// if vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS && d.isBlockBacked(vol) {
+	// 	name = fmt.Sprintf("%s_%s", name, vol.ConfigBlockFilesystem())
+	// }
 
 	if (vol.volType == VolumeTypeVM || vol.volType == VolumeTypeImage) && vol.contentType == ContentTypeBlock {
 		//name = fmt.Sprintf("%s%s", name, zfsBlockVolSuffix)
