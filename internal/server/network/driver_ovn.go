@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flosch/pongo2"
+	"github.com/flosch/pongo2/v6"
 	"github.com/mdlayher/netx/eui64"
 	ovsClient "github.com/ovn-org/libovsdb/client"
 	ovsdbModel "github.com/ovn-org/libovsdb/model"
