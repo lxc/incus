@@ -162,11 +162,6 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	}
 
 	// Setup the filesystem
-	err = d.makeVolumeAvailable(vol)
-	if err != nil {
-		return fmt.Errorf("Could not make volume available for filesystem creation: %w", err)
-	}
-
 	if vol.contentType == ContentTypeFS {
 		devPath, err := d.getLinstorDevPath(vol)
 		if err != nil {
@@ -505,11 +500,6 @@ func (d *linstor) MountVolume(vol Volume, op *operations.Operation) error {
 	rev := revert.New()
 	defer rev.Fail()
 
-	err = d.makeVolumeAvailable(vol)
-	if err != nil {
-		return fmt.Errorf("Could not mount volume: %w", err)
-	}
-
 	volDevPath, err := d.getLinstorDevPath(vol)
 	if err != nil {
 		return fmt.Errorf("Could not mount volume: %w", err)
@@ -777,12 +767,6 @@ func (d *linstor) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 		}
 
 		rev.Add(func() { _ = d.DeleteVolume(snapVol, op) })
-
-		// Mount the volume
-		err = d.makeVolumeAvailable(snapVol)
-		if err != nil {
-			return fmt.Errorf("Could not mount volume: %w", err)
-		}
 	}
 
 	volDevPath, err := d.getLinstorDevPath(snapVol)
@@ -947,12 +931,6 @@ func (d *linstor) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 	// Do nothing if size isn't specified.
 	if sizeBytes <= 0 {
 		return nil
-	}
-
-	// Make the volume available locally
-	err = d.makeVolumeAvailable(vol)
-	if err != nil {
-		return err
 	}
 
 	// Get the device path
