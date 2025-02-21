@@ -224,14 +224,20 @@ func (d *linstor) deleteResourceGroup() error {
 // getResourceDefinition returns the Linstor resource definition for a given volume.
 func (d *linstor) getResourceDefinition(vol Volume, fetchVolumeDefinitions bool) (linstorClient.ResourceDefinitionWithVolumeDefinition, error) {
 	l := logger.AddContext(logger.Ctx{"vol": vol.name, "volType": vol.volType, "contentType": vol.contentType})
-	l.Debug("Getting resource definition for volume")
+	l.Info("Getting resource definition for volume")
 	linstor, err := d.state.Linstor()
 	if err != nil {
 		return linstorClient.ResourceDefinitionWithVolumeDefinition{}, err
 	}
 
-	// Query resource definitions that match the desired volume by its name.
 	resourceDefinitions, err := linstor.Client.ResourceDefinitions.GetAll(context.TODO(), linstorClient.RDGetAllRequest{
+		WithVolumeDefinitions: fetchVolumeDefinitions,
+	})
+
+	l.Info("Queried all resource definitions for debugging", logger.Ctx{"result": resourceDefinitions})
+
+	// Query resource definitions that match the desired volume by its name.
+	resourceDefinitions, err = linstor.Client.ResourceDefinitions.GetAll(context.TODO(), linstorClient.RDGetAllRequest{
 		Props: []string{
 			fmt.Sprintf("Aux/Incus/name=%s", d.config[LinstorVolumePrefixConfigKey]+vol.name),
 		},
@@ -241,7 +247,7 @@ func (d *linstor) getResourceDefinition(vol Volume, fetchVolumeDefinitions bool)
 		return linstorClient.ResourceDefinitionWithVolumeDefinition{}, err
 	}
 
-	l.Debug("Queried resource definitions", logger.Ctx{"query": fmt.Sprintf("Aux/Incus/name=%s", d.config[LinstorVolumePrefixConfigKey]+vol.name), "result": resourceDefinitions})
+	l.Info("Queried resource definitions", logger.Ctx{"query": fmt.Sprintf("Aux/Incus/name=%s", d.config[LinstorVolumePrefixConfigKey]+vol.name), "result": resourceDefinitions})
 
 	if len(resourceDefinitions) == 0 {
 		return linstorClient.ResourceDefinitionWithVolumeDefinition{}, errResourceDefinitionNotFound

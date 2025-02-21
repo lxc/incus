@@ -397,6 +397,9 @@ func (d *linstor) DeleteVolume(vol Volume, op *operations.Operation) error {
 
 // HasVolume indicates whether a specific volume exists on the storage pool.
 func (d *linstor) HasVolume(vol Volume) (bool, error) {
+	l := logger.AddContext(logger.Ctx{"vol": vol.name, "volType": vol.volType, "contentType": vol.contentType})
+	l.Info("Checking if volume exists")
+
 	if vol.IsSnapshot() {
 		parentName, _, _ := api.GetParentAndSnapshotName(vol.name)
 		parentVol := NewVolume(d, d.name, vol.volType, vol.contentType, parentName, nil, nil)
@@ -405,6 +408,7 @@ func (d *linstor) HasVolume(vol Volume) (bool, error) {
 	}
 
 	_, err := d.getResourceDefinition(vol, false)
+	l.Info("Queried resource definition", logger.Ctx{"err": err})
 	if err != nil {
 		if errors.Is(err, errResourceDefinitionNotFound) {
 			return false, nil

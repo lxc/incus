@@ -3418,6 +3418,8 @@ func (b *backend) EnsureImage(fingerprint string, op *operations.Operation) erro
 		return err
 	}
 
+	l.Info("Got imgDBVol for image", logger.Ctx{"imgDBVol": imgDBVol})
+
 	// Create the new image volume. No config for an image volume so set to nil.
 	// Pool config values will be read by the underlying driver if needed.
 	imgVol := b.GetVolume(drivers.VolumeTypeImage, contentType, fingerprint, nil)
@@ -3464,8 +3466,10 @@ func (b *backend) EnsureImage(fingerprint string, op *operations.Operation) erro
 		}
 	}
 
+	// This is probably where we introduced the bug in the driver
 	// Check if we already have a suitable volume on storage device.
 	volExists, err := b.driver.HasVolume(imgVol)
+	l.Info("Got response from the driver", logger.Ctx{"volExists": volExists})
 	if err != nil {
 		return err
 	}
@@ -3526,6 +3530,7 @@ func (b *backend) EnsureImage(fingerprint string, op *operations.Operation) erro
 	revert := revert.New()
 	defer revert.Fail()
 
+	// This is the creation that fails. We end up calling this when an image volume already exists in the database
 	// Validate config and create database entry for new storage volume.
 	err = VolumeDBCreate(b, api.ProjectDefaultName, fingerprint, "", drivers.VolumeTypeImage, false, imgVol.Config(), time.Now().UTC(), time.Time{}, contentType, false, false)
 	if err != nil {
