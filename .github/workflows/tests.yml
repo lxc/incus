@@ -69,10 +69,6 @@ jobs:
           echo "PATH=$HOME/go/bin:$HOME/sdk/gotip/bin/:$PATH" >> $GITHUB_ENV
         if: matrix.go == 'tip'
 
-      - name: Check compatible min Go version
-        run: |
-          go mod tidy
-
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -97,13 +93,17 @@ jobs:
 
           python3 -m pip install flake8
 
-      - name: Download go dependencies
-        run: |
-          go mod download
-
       - name: Fix repository permissions
         run: |
           sudo chown -R runner:docker .
+
+      - name: Check compatible min Go version
+        run: |
+          go mod tidy
+
+      - name: Download go dependencies
+        run: |
+          go mod download
 
       - name: Run Incus build
         run: |
