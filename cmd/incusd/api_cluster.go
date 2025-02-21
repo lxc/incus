@@ -547,6 +547,19 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 			return err
 		}
 
+		// Get the cluster members
+		members, err := client.GetClusterMembers()
+		if err != nil {
+			return err
+		}
+
+		// Verify if a node with the same name already exists in the cluster.
+		for _, member := range members {
+			if member.ServerName == req.ServerName {
+				return fmt.Errorf("The cluster already has a member with name: %s", req.ServerName)
+			}
+		}
+
 		// As ServerAddress field is required to be set it means that we're using the new join API
 		// introduced with the 'clustering_join' extension.
 		// Connect to ourselves to initialize storage pools and networks using the API.
@@ -1317,6 +1330,11 @@ func clusterNodesPost(d *Daemon, r *http.Request) response.Response {
 
 		// Filter to online members.
 		for _, member := range members {
+			// Verify if a node with the same name already exists in the cluster.
+			if member.Name == req.ServerName {
+				return fmt.Errorf("The cluster already has a member with name: %s", req.ServerName)
+			}
+
 			if member.State == db.ClusterMemberStateEvacuated || member.IsOffline(s.GlobalConfig.OfflineThreshold()) {
 				continue
 			}
