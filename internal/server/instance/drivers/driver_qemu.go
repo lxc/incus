@@ -29,7 +29,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/flosch/pongo2"
+	"github.com/flosch/pongo2/v6"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/kballard/go-shellquote"

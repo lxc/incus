@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flosch/pongo2"
+	"github.com/flosch/pongo2/v6"
 	"github.com/google/uuid"
 	liblxc "github.com/lxc/go-lxc"
 
