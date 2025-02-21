@@ -285,6 +285,8 @@ func (d *linstor) getResourceDefinition(vol Volume, fetchVolumeDefinitions bool)
 		return linstorClient.ResourceDefinitionWithVolumeDefinition{}, err
 	}
 
+	l.Debug("Queried resource definitions", logger.Ctx{"query": LinstorAuxName + "=" + d.config[LinstorVolumePrefixConfigKey] + vol.name, "result": resourceDefinitions})
+
 	if len(resourceDefinitions) == 0 {
 		return linstorClient.ResourceDefinitionWithVolumeDefinition{}, errResourceDefinitionNotFound
 	} else if len(resourceDefinitions) > 1 {
@@ -294,8 +296,13 @@ func (d *linstor) getResourceDefinition(vol Volume, fetchVolumeDefinitions bool)
 	return resourceDefinitions[0], nil
 }
 
-// getLinstorDevPath return the device path for a given `vol`.
+// getLinstorDevPath return the device path for a given `vol` in the current node.
+//
+// If the resource is not available on the current node, it is made available before
+// fetching its device path.
 func (d *linstor) getLinstorDevPath(vol Volume) (string, error) {
+	l := logger.AddContext(logger.Ctx{"vol": vol.name, "volType": vol.volType, "contentType": vol.contentType})
+	l.Debug("Getting device path")
 	linstor, err := d.state.Linstor()
 	if err != nil {
 		return "", err
@@ -306,15 +313,16 @@ func (d *linstor) getLinstorDevPath(vol Volume) (string, error) {
 		return "", err
 	}
 
-	// Fetching all the nodes that contains the volume definition.
-	nodes, err := linstor.Client.Nodes.GetAll(context.TODO(), &linstorClient.ListOpts{
-		Resource: []string{resourceDefinition.Name},
+	// When retrieving the device path, always make sure that the resource is available on the current node.
+	err = linstor.Client.Resources.MakeAvailable(context.TODO(), resourceDefinition.Name, d.getSatelliteName(), linstorClient.ResourceMakeAvailable{
+		Diskful: false,
 	})
 	if err != nil {
-		return "", fmt.Errorf("Unable to get the nodes for the resource definition: %w", err)
+		l.Debug("Could not make resource available on node", logger.Ctx{"resourceDefinitionName": resourceDefinition.Name, "nodeName": d.getSatelliteName(), "error": err})
+		return "", fmt.Errorf("Could not make resource available on node: %w", err)
 	}
 
-	volumes, err := linstor.Client.Resources.GetVolumes(context.TODO(), resourceDefinition.Name, nodes[0].Name)
+	volumes, err := linstor.Client.Resources.GetVolumes(context.TODO(), resourceDefinition.Name, d.getSatelliteName())
 	if err != nil {
 		return "", fmt.Errorf("Unable to get Linstor volumes: %w", err)
 	}
