@@ -20,9 +20,14 @@ const (
 func (d *truenas) dataset(vol Volume, deleted bool) string {
 	name, snapName, _ := api.GetParentAndSnapshotName(vol.name)
 
+	/*
+		update, we can't tell the when generating an image name, thus we MUST not append <filesytem> to an image name... unless its
+		deleted... in which case we probably can.
+	*/
+
 	// need to disambiguate different images based on the root.img filesystem
 	//if vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS && d.isBlockBacked(vol) {
-	if vol.volType == VolumeTypeImage && ((vol.contentType == ContentTypeFS && needsLoopMount(vol)) || isFsImgVol(vol)) {
+	if deleted && vol.volType == VolumeTypeImage && ((vol.contentType == ContentTypeFS && needsFsImgVol(vol)) || isFsImgVol(vol)) {
 		name = fmt.Sprintf("%s_%s", name, vol.ConfigBlockFilesystem())
 	}
 
