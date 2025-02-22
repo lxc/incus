@@ -131,4 +131,8 @@ const (
 	EventLifecycleWarningAcknowledged               = "warning-acknowledged"
 	EventLifecycleWarningDeleted                    = "warning-deleted"
 	EventLifecycleWarningReset                      = "warning-reset"
+	EventLifecycleNetworkAddressSetCreated          = "network-address-set-created"
+	EventLifecycleNetworkAddressSetDeleted          = "network-address-set-deleted"
+	EventLifecycleNetworkAddressSetUpdated          = "network-address-set-updated"
+	EventLifecycleNetworkAddressSetRenamed          = "network-address-set-renamed"
 )

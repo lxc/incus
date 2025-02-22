@@ -17,6 +17,7 @@ type NetworkACLRule struct {
 
 	// Source address
 	// Example: @internal
+	// Example: $addressSetName
 	Source string `json:"source,omitempty" yaml:"source,omitempty"`
 
 	// Destination address
