@@ -1654,3 +1654,7 @@ func (d Xtables) NetworkApplyForwards(networkName string, rules []AddressForward
 	reverter.Success()
 	return nil
 }
+
+func (d Xtables) NetworkApplyAddressSets(networkName string, sets []AddressSet) error {
+	return fmt.Errorf("Address set are not implemented for xtables.")
+}
