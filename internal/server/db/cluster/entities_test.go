@@ -89,6 +89,14 @@ func TestURLToEntityType(t *testing.T) {
 			expectedErr:        nil,
 		},
 		{
+			name:               "network address sets",
+			rawURL:             "/1.0/network-address-sets/my-network-address-set",
+			expectedEntityType: TypeNetworkAddressSet,
+			expectedProject:    "default",
+			expectedPathArgs:   []string{"my-network-address-set"},
+			expectedErr:        nil,
+		},
+		{
 			name:               "cluster members",
 			rawURL:             "/1.0/cluster/members/node01",
 			expectedEntityType: TypeNode,
