@@ -694,10 +694,14 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		return response.InternalError(err)
 	}
 
-	logger.Debug("Reading backup file info")
 	bInfo, err := backup.GetInfo(backupFile, s.OS, backupFile.Name())
 	if err != nil {
 		return response.BadRequest(err)
+	}
+
+	// Detect broken legacy backups.
+	if bInfo.Config == nil {
+		return response.BadRequest(fmt.Errorf("Backup file is missing required information"))
 	}
 
 	// Check project permissions.
