@@ -1,0 +1,15 @@
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest 
+go install golang.org/x/tools/cmd/goimports@latest
+
+fga cli
+
+apt install liblxc-common \
+libuv1-dev \
+libsqlite3-dev \
+jq \
+libudev-dev \
+libcap-dev \
+lxc-dev \
+attr \
+libacl1-dev xgettext sqlite3 msgmerge msgfmt socat ceph-common incus-agent  qemu-system-x86  swtpm-tools  virtiofsd  incus-tools  minio-client
+
