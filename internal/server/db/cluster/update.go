@@ -112,6 +112,37 @@ var updates = map[int]schema.Update{
 	73: updateFromV72,
 	74: updateFromV73,
 	75: updateFromV74,
+	76: updateFromV75,
+}
+
+func updateFromV75(ctx context.Context, tx *sql.Tx) error {
+	q := `
+    CREATE TABLE "address_sets" (
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        project_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        addresses TEXT NOT NULL,
+        description TEXT,
+        UNIQUE (name)
+        UNIQUE (project_id, name),
+        FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
+    );
+ 
+    CREATE TABLE "address_sets_external_ids" (
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        address_set_id INTEGER NOT NULL,
+        key TEXT NOT NULL,
+        value TEXT NOT NULL,
+        UNIQUE (address_set_id, key),
+        FOREIGN KEY (address_set_id) REFERENCES "address_sets"(id) ON DELETE CASCADE
+    );
+    `
+	_, err := tx.Exec(q)
+	if err != nil {
+		return fmt.Errorf("Failed creating address_sets and address_sets_external_ids tables: %w", err)
+	}
+
+	return nil
 }
 
 // updateFromV74 removes the index preventing the same integration to be used multiple times.
