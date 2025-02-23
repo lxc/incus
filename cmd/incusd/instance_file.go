@@ -539,7 +539,7 @@ func instanceFilePost(s *state.State, inst instance.Instance, path string, r *ht
 		// Set file permissions.
 		if mode < 0 {
 			// Default mode for directories (sftp doesn't know about umask).
-			mode = 0750
+			mode = 0755
 		}
 
 		err = client.Chmod(path, fs.FileMode(mode))
