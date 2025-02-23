@@ -240,7 +240,7 @@ function test_inner_address_set() {
   done
   if [ -z "$container_ip" ]; then
     error_msg "Failed to retrieve container IP address."
-    incus delete testct --force --instance
+    incus delete testct --force
     exit 1
   fi
   info "Container IP is: $container_ip"
@@ -251,7 +251,7 @@ function test_inner_address_set() {
     success "Ping succeeded."
   else
     error_msg "Ping failed, but expected success."
-    incus delete testct --force --instance
+    incus delete testct --force
     exit 1
   fi
 
@@ -262,16 +262,16 @@ function test_inner_address_set() {
   incus network acl rule add blockping ingress action=drop protocol=icmp4 destination="${container_ip}/32"
   incus network set incusbr0 security.acls="blockping"
   # Wait a moment for the ACL to take effect.
-  sleep 3
+  sleep 2
 
   # Step 5: Ping the container – expect failure.
   info "Pinging container after ACL block (should fail)..."
   if ping -c2 "$container_ip" > /dev/null 2>&1; then
     error_msg "Ping succeeded despite ACL block; expected failure."
     incus network set incusbr0 security.acls="" 
-    sleep 3
+    sleep 2
     incus network acl delete blockping
-    incus delete testct --force --instance
+    incus delete testct --force
     exit 1
   else
     success "Ping correctly blocked by ACL."
@@ -281,7 +281,7 @@ function test_inner_address_set() {
   info "Removing ACL 'blockping'..."
   incus network set incusbr0 security.acls=""
   incus network acl delete blockping
-  sleep 3
+  sleep 1
 
   # Step 7: Ping the container again – expect success.
   info "Pinging container after ACL removal (should succeed)..."
@@ -289,7 +289,7 @@ function test_inner_address_set() {
     success "Ping succeeded after ACL removal."
   else
     error_msg "Ping still blocked after ACL removal."
-    incus delete testct --force --instance
+    incus delete testct --force
     exit 1
   fi
 
@@ -297,40 +297,40 @@ function test_inner_address_set() {
   info "Creating address set 'testAS' with container IP..."
   incus network address-set create testAS --description "Test Address Set for inner test"
   incus network address-set add-addr testAS "$container_ip"
-  sleep 3
+  sleep 1
   if incus network address-set show testAS | grep -q "$container_ip"; then
     success "Address set 'testAS' now contains the container IP."
   else
     error_msg "Address set 'testAS' does not list the container IP."
-    incus delete testct --force --instance
+    incus delete testct --force
     exit 1
   fi
 
   # Step 9: Verify that ping still works.
-  info "Pinging container with address set present (should succeed)..."
+  info "Step 9: Pinging container with address set present (should succeed)..."
   if ping -c2 "$container_ip" > /dev/null 2>&1; then
     success "Ping succeeded as expected."
   else
     error_msg "Ping failed unexpectedly with address set present."
-    incus delete testct --force --instance
+    incus delete testct --force
     exit 1
   fi
 
   # Step 10: Create an ACL (named blockpingAS) that uses the address set reference to block pings.
-  info "Creating ACL 'blockpingAS' to ban pings using address set 'testAS'..."
+  info "Step 10: Creating ACL 'blockpingAS' to ban pings using address set 'testAS'..."
   incus network acl create blockpingAS
   # Here we assume that using "$testAS" in the rule will be converted (by the driver) into references to the
   # underlying named sets (testAS_ipv4, testAS_ipv6, testAS_eth). Adjust the syntax as needed.
   incus network acl rule add blockpingAS ingress action=drop protocol=icmp4 destination="\$testAS"
   incus network set incusbr0 security.acls="blockpingAS"
-  sleep 3
+  sleep 2
 
   # Step 11: Ping the container – expect failure because of the ACL using the address set.
-  info "Pinging container after applying ACL referencing address set (should fail)..."
+  info "Step 11: Pinging container after applying ACL referencing address set (should fail)..."
   if ping -c2 "$container_ip" > /dev/null 2>&1; then
     error_msg "Ping succeeded despite ACL block using address set; expected failure."
     incus network set incusbr0 security.acls=""
-    sleep 3
+    sleep 2
     incus network acl delete blockpingAS
     incus network address-set delete testAS
     incus delete testct --force
@@ -339,13 +339,175 @@ function test_inner_address_set() {
     success "Ping correctly blocked by ACL referencing address set."
   fi
 
-  # Step 12: Clean up: remove ACL and address set, then delete the container.
+  incus launch images:debian/12 testct2
+  info "Step 12: Adding a second container and updating address set to include both IPs (both pings should fail)..."
+
+  # Wait for container testct2 to get an IP (loop up to 10 seconds)
+  container2_ip=""
+  for i in {1..10}; do
+    container2_ip=$(incus list testct2 --format csv | cut -d',' -f3 | head -n1 | cut -d' ' -f1)
+    if [ -n "$container2_ip" ]; then
+      break
+    fi
+    sleep 1
+  done
+  if [ -z "$container2_ip" ]; then
+    error_msg "Failed to retrieve container testct2 IP address."
+    incus delete testct2 --force
+    exit 1
+  fi
+  info "Container testct2 IP is: $container2_ip"
+
+  # Add the second container’s IP to the address set "testAS"
+  incus network address-set add-addr testAS "$container2_ip"
+  sleep 1
+
+  # Both container IPs are now in the address set used by the ACL.
+  info "Pinging container testct (should fail)..."
+  if ping -c2 "$container_ip" > /dev/null 2>&1; then
+    error_msg "Ping to container testct succeeded, expected failure."
+    exit 1
+  else
+    success "Ping to container testct correctly blocked."
+  fi
+
+  info "Pinging container testct2 (should fail)..."
+  if ping -c2 "$container2_ip" > /dev/null 2>&1; then
+    error_msg "Ping to container testct2 succeeded, expected failure."
+    exit 1
+  else
+    success "Ping to container testct2 correctly blocked."
+  fi
+
+  # Step 13: Remove first container’s IP from the address set.
+  info "Step 13: Removing first container IP from address set and verifying ping outcomes..."
+  incus network address-set remove-addr testAS "$container_ip"
+  sleep 1
+
+  info "Pinging container testct (should succeed now)..."
+  if ping -c2 "$container_ip" > /dev/null 2>&1; then
+    success "Ping to container testct succeeded as expected."
+  else
+    error_msg "Ping to container testct still blocked, expected success."
+    exit 1
+  fi
+
+  info "Pinging container testct2 (should remain blocked)..."
+  if ping -c2 "$container2_ip" > /dev/null 2>&1; then
+    error_msg "Ping to container testct2 succeeded, expected failure."
+    exit 1
+  else
+    success "Ping to container testct2 correctly remains blocked."
+  fi
+  incus rm --force testct2
+  incus network set incusbr0 security.acls=""
+  incus network acl rm blockpingAS
+
+  # --- Step 14: Set up a TCP listener on port 7896 in container testct and block TCP 7896 via ACL using the address set ---
+    #info "Step 14: Setting up TCP listener on port 7896 in container testct and applying ACL to block TCP 7896 using address set 'testAS'..."
+    ## Start a TCP server in testct on port 7896 (using netcat in background)
+    #container_ip6=$(incus list testct --format csv | cut -d',' -f4 | tr ' ' '\n' | head -n1)
+    #incus network address-set add-addr testAS "$container_ip"
+    #incus network address-set add-addr testAS "$container_ip6"
+    #incus exec testct -- sh -c "apt install netcat-openbsd -y"
+    #incus exec testct -- sh -c "nohup nc -l -p 7896 >/dev/null 2>&1 &"
+    #sleep 1
+  #
+    ## Create ACL 'blocktcp7896' to block TCP traffic destined to port 7896 via address set "testAS".
+    #info "Creating ACL 'blocktcp7896' to block TCP traffic to port 7896 via address set 'testAS'..."
+    #incus network acl create blocktcp7896
+    ## Here, using "$testAS" should be converted by the driver into separate rules referencing testAS_ipv4 and testAS_ipv6.
+    #incus network acl rule add blocktcp7896 ingress action=drop protocol=tcp destination_port="7896" destination="\$testAS"
+    #incus network set incusbr0 security.acls="blocktcp7896"
+    #sleep 2
+  #
+    #info "Testing TCP connection to port 7896 on container testct (should fail)..."
+    #if nc -z -w 5 "$(incus list testct --format csv | cut -d',' -f3 | head -n1 | cut -d' ' -f1)" 7896; then
+    #  error_msg "TCP connection to port 7896 on testct succeeded despite ACL block; expected failure."
+    #  incus network set incusbr0 security.acls=""
+    #  incus network acl delete blocktcp7896
+    #  incus delete testct --force
+    #  exit 1
+    #else
+    #  success "TCP connection to port 7896 on testct correctly blocked by ACL."
+    #fi
+  #
+    ## Also test IPv6 TCP connection if available.
+    #
+    #if [ -n "$container_ip6" ]; then
+    #  info "Testing TCP connection to port 7896 on container testct IPv6 (should fail)..."
+    #  incus exec testct -- sh -c "nohup nc -6 -l -p 7896 >/dev/null 2>&1 &"
+    #  if nc -z -w 5 "$container_ip6" 7896; then
+    #    error_msg "TCP connection to port 7896 on testct IPv6 succeeded despite ACL block; expected failure."
+    #    incus network set incusbr0 security.acls=""
+    #    incus network acl delete blocktcp7896
+    #    incus delete testct --force
+    #    exit 1
+    #  else
+    #    success "TCP connection to port 7896 on testct IPv6 correctly blocked by ACL."
+    #  fi
+    #fi
+
+  # --- Step 15: Remove testct's IP from the address set and verify TCP connectivity ---
+    #info "Step 15: Removing testct's IP from address set 'testAS' and verifying TCP connectivity..."
+    #incus network address-set remove-addr testAS "$container_ip6"
+    #sleep 1
+  #
+    #info "Testing TCP connection to port 7896 on container testct (should succeed now)..."
+    #incus exec testct -- sh -c "nohup nc -6 -l -p 7896 >/dev/null 2>&1 &"
+    #info "Pinging testct at $container_ip6"
+    #if nc -z -w 5 "$container_ip6" 7896; then
+    #  success "TCP connection to port 7896 on testct succeeded as expected after removal from address set."
+    #else
+    #  error_msg "TCP connection to port 7896 on testct still blocked, expected success."
+    #  incus network set incusbr0 security.acls=""
+    #  incus network acl delete blocktcp7896
+    #  #incus network address-set delete testAS
+    #  #incus delete testct --force
+    #  exit 1
+    #fi
+    #incus network set incusbr0 security.acls=""
+    #incus network acl delete blocktcp7896
+    #incus network address-set delete testAS
+
+  # Step 16: Remove all addresses from the address set and add a CIDR representing the container's network.
+  info "Step 16: Updating address set 'testAS' with container network CIDR..."
+  incus network address-set rm testAS 
+  sleep 3
+  # Derive the container’s network CIDR from its IPv4 address.
+  # For example, if container_ip is 10.158.174.140, assume subnet 10.158.174.0/24.
+  subnet=$(echo "$container_ip" | awk -F. '{print $1"."$2"."$3".0/24"}')
+  info "Adding subnet $subnet to address set 'testAS'..."
+  incus network address-set create testAS 
+  incus network address-set add-addr testAS "$subnet"
+  sleep 3
+  
+  info "Creating ACL 'blockpingAS-cidr' to block pings using the CIDR in address set 'testAS'..."
+  incus network acl create blockpingAS-cidr
+  incus network acl rule add blockpingAS-cidr ingress action=drop protocol=icmp4 destination="\$testAS"
+  incus network set incusbr0 security.acls="blockpingAS-cidr"
+  sleep 3
+  
+  info "Pinging container (should fail due to CIDR ACL block)..."
+  if ping -c2 "$container_ip" > /dev/null 2>&1; then
+    error_msg "Ping succeeded despite ACL block using CIDR in address set; expected failure."
+    incus network set incusbr0 security.acls=""
+    sleep 3
+    incus network acl delete blockpingAS-cidr
+    incus network address-set delete testAS
+    incus delete testct --force
+    exit 1
+  else
+    success "Ping correctly blocked by ACL referencing CIDR in address set."
+  fi
+
+  # Step 17: Clean up: remove ACL and address set, then delete the container.
   info "Cleaning up: Removing ACL 'blockpingAS' and address set 'testAS'..."
   incus network set incusbr0 security.acls=""
-  incus network acl delete blockpingAS
+  incus network acl delete blockpingAS-cidr
   incus network address-set delete testAS
   incus delete testct --force
-  success "Clean up complete. Test 12 passed."
+  success "Clean up complete."
 }
 
 # --- Run all tests ---
