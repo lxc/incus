@@ -53,8 +53,8 @@ test_filemanip() {
   incus file push -p --mode=400 "${TEST_DIR}"/source/foo \
       filemanip/tmp/ptest/d1/d2/foo
 
-  [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/d1)" = "750" ]
-  [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/d1/d2)" = "750" ]
+  [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/d1)" = "755" ]
+  [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/d1/d2)" = "755" ]
 
   incus exec filemanip --project=test -- rm -rf /tmp/ptest/d1
 
