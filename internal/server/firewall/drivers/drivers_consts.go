@@ -1,6 +1,8 @@
 package drivers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net"
 )
 
@@ -73,10 +75,45 @@ type NftMetainfo struct {
 }
 
 type NftSet struct {
-	Family string   `json:"family"`
-	Name   string   `json:"name"`
-	Table  string   `json:"table"`
-	Type   string   `json:"type"`
-	Handle int      `json:"handle"`
-	Elem   []string `json:"elem"`
+	Family string    `json:"family"`
+	Name   string    `json:"name"`
+	Table  string    `json:"table"`
+	Type   string    `json:"type"`
+	Handle int       `json:"handle"`
+	Flags  []string  `json:"flags"`
+	Elem   ElemField `json:"elem"`
+}
+
+// ElemField supports both string elements (IP, MAC) and dictionary-based CIDR elements.
+// In order to parse it correctly a custom unsmarshalling is defined in drivers_nftables.go
+type ElemField struct {
+	Addresses []string // Stores plain addresses and CIDR notations as strings.
+}
+
+// UnmarshalJSON handles both plain strings and CIDR dictionaries inside `elem`.
+func (e *ElemField) UnmarshalJSON(data []byte) error {
+	var rawElems []interface{}
+	if err := json.Unmarshal(data, &rawElems); err != nil {
+		return err
+	}
+
+	for _, elem := range rawElems {
+		switch v := elem.(type) {
+		case string:
+			// Plain address (IPv4, IPv6, or MAC).
+			e.Addresses = append(e.Addresses, v)
+		case map[string]interface{}:
+			// CIDR notation (prefix dictionary).
+			if prefix, ok := v["prefix"].(map[string]interface{}); ok {
+				addr, addrOk := prefix["addr"].(string)
+				lenFloat, lenOk := prefix["len"].(float64) // JSON numbers are float64 by default
+				if addrOk && lenOk {
+					e.Addresses = append(e.Addresses, fmt.Sprintf("%s/%d", addr, int(lenFloat)))
+				}
+			}
+		default:
+			return fmt.Errorf("unsupported element type in NFTables set: %v", elem)
+		}
+	}
+	return nil
 }
