@@ -76,7 +76,7 @@ func acmeProvideChallenge(d *Daemon, r *http.Request) response.Response {
 func autoRenewCertificate(ctx context.Context, d *Daemon, force bool) error {
 	s := d.State()
 
-	domain, email, caURL, agreeToS, challengeType, provider, providerConfig, resolvers := s.GlobalConfig.ACME()
+	domain, email, caURL, agreeToS, challengeType := s.GlobalConfig.ACME()
 
 	if domain == "" || email == "" || !agreeToS {
 		return nil
@@ -84,11 +84,6 @@ func autoRenewCertificate(ctx context.Context, d *Daemon, force bool) error {
 
 	if challengeType != "" && challengeType != "HTTP-01" && challengeType != "DNS-01" {
 		logger.Errorf("Invalid ACME challenge type: %s", challengeType)
-		return nil
-	}
-
-	if challengeType == "DNS-01" && provider == "" {
-		logger.Error("DNS-01 challenge type requires acme.provider configuration key to be set", nil)
 		return nil
 	}
 
@@ -107,18 +102,25 @@ func autoRenewCertificate(ctx context.Context, d *Daemon, force bool) error {
 		}
 	}
 
-	opRun := func(op *operations.Operation) error {
-		var challengeProvider acme.ChallengeProvider
+	var challengeProvider acme.ChallengeProvider
 
-		if challengeType == "DNS-01" {
-			challengeProvider = acme.NewDNS01Provider(provider, providerConfig, resolvers)
-			if challengeProvider == nil {
-				return nil
-			}
-		} else {
-			challengeProvider = d.http01Provider
+	if challengeType == "DNS-01" {
+		provider, env, resolvers := s.GlobalConfig.ACMEDNS()
+
+		if provider == "" {
+			logger.Error("DNS-01 challenge type requires acme.dns.provider configuration key to be set", nil)
+			return nil
 		}
 
+		challengeProvider = acme.NewDNS01Provider(provider, env, resolvers)
+		if challengeProvider == nil {
+			return nil
+		}
+	} else {
+		challengeProvider = d.http01Provider
+	}
+
+	opRun := func(op *operations.Operation) error {
 		newCert, err := acme.UpdateCertificate(s, challengeProvider, s.ServerClustered, domain, email, caURL, force)
 		if err != nil {
 			return err
