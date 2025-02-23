@@ -1356,6 +1356,25 @@ func (d Nftables) NetworkApplyAddressSets(networkName string, sets []AddressSet)
 	for _, set := range sets {
 		name := set.Name
 		addresses := set.Addresses
+
+		// Flush current addresses in set if set exists
+		for _, suffix := range []string{"ipv4", "ipv6", "eth"} {
+			flush := &strings.Builder{}
+			setName := fmt.Sprintf("%s_%s", name, suffix)
+			exists, err := d.NamedAddressSetExists(setName, "inet")
+			if err != nil {
+				return fmt.Errorf("failed to check existence of set %q: %w", setName, err)
+			}
+			if exists {
+				// Append a flush command for this set.
+				fmt.Fprintf(flush, " flush set inet %s %s\n", nftablesNamespace, setName)
+				err = subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(flush.String()), nil, "nft", "-f", "-")
+				if err != nil {
+					return fmt.Errorf("failed to flush nft set for address set %q: %w", setName, err)
+				}
+			}
+		}
+
 		for _, addr := range addresses {
 			// Try IP first.
 			ip := net.ParseIP(addr)
@@ -1387,29 +1406,71 @@ func (d Nftables) NetworkApplyAddressSets(networkName string, sets []AddressSet)
 		}
 
 		// Build NFT config.
-		config := &strings.Builder{}
-		fmt.Fprintf(config, "add set inet %s ", nftablesNamespace)
+		configv4 := &strings.Builder{}
+		configv6 := &strings.Builder{}
+		configeth := &strings.Builder{}
 
 		if len(ipv4Addrs) > 0 {
-			// Create IPv4 set
-			fmt.Fprintf(config, " %s_ipv4 {\n    type ipv4_addr;\n    elements = { %s }\n  }\n", name, strings.Join(ipv4Addrs, ", "))
+			// Create IPv4 set and flush it if it already exists
+			fmt.Fprintf(configv4, "add set inet %s ", nftablesNamespace)
+			setExtendedName := fmt.Sprintf("%s_ipv4", name)
+
+			// Create v4 named set
+			fmt.Fprintf(configv4, " %s {\n    type ipv4_addr;\n    elements = { %s }\n  }\n", setExtendedName, strings.Join(ipv4Addrs, ", "))
+			err := subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(configv4.String()), nil, "nft", "-f", "-")
+			if err != nil {
+				return fmt.Errorf("failed to apply nft sets for address set %q: %w", name, err)
+			}
 		} else if len(ipv6Addrs) > 0 {
-			// Create IPv6 set
-			fmt.Fprintf(config, " %s_ipv6 {\n    type ipv6_addr;\n    elements = { %s }\n  }\n", name, strings.Join(ipv6Addrs, ", "))
-		}
-		// MAKE it work for inet before eth
-		// else if len(ethAddrs) > 0 {
-		//     // Create Ethernet set
-		// 	fmt.Fprintf(config, "  set %s_eth {\n    type ether_addr;\n    elements = { %s }\n  }\n", setName, strings.Join(ethAddrs, ", "))
-		// }
-
-		fmt.Fprintf(config, "\n")
-
-		// Apply the configuration using nft
-		err := subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(config.String()), nil, "nft", "-f", "-")
-		if err != nil {
-			return fmt.Errorf("failed to apply nft sets for address set %q: %w", name, err)
+			// Create IPv6 set and flush it if it already exists
+			fmt.Fprintf(configv6, "add set inet %s ", nftablesNamespace)
+			setExtendedName := fmt.Sprintf("%s_ipv6", name)
+			// Create v6 named set
+			fmt.Fprintf(configv6, " %s {\n    type ipv6_addr;\n    elements = { %s }\n  }\n", setExtendedName, strings.Join(ipv6Addrs, ", "))
+			err := subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(configv6.String()), nil, "nft", "-f", "-")
+			if err != nil {
+				return fmt.Errorf("failed to apply nft sets for address set %q: %w", name, err)
+			}
+		} else if len(ethAddrs) > 0 {
+			// Create Ethernet set
+			fmt.Fprintf(configeth, "add set inet %s ", nftablesNamespace)
+			setExtendedName := fmt.Sprintf("%s_eth", name)
+			// Create eth named set
+			fmt.Fprintf(configeth, "  set %s_eth {\n    type ether_addr;\n    elements = { %s }\n  }\n", setExtendedName, strings.Join(ethAddrs, ", "))
+			err := subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(configv6.String()), nil, "nft", "-f", "-")
+			if err != nil {
+				return fmt.Errorf("failed to apply nft sets for address set %q: %w", name, err)
+			}
 		}
 	}
 	return nil
+}
+
+// NamedAddressSetExists checks if a named set exists in nftables.
+// It returns true if the set exists in the nftables namespace.
+func (d Nftables) NamedAddressSetExists(setName string, family string) (bool, error) {
+	// Execute the nft command with JSON output using subprocess.
+	output, err := subprocess.RunCommand("sudo", "nft", "-j", "list", "sets")
+	if err != nil {
+		return false, fmt.Errorf("failed to execute nft command: %w", err)
+	}
+
+	var setsOutput NftListSetsOutput
+	if err := json.Unmarshal([]byte(output), &setsOutput); err != nil {
+		return false, fmt.Errorf("failed to parse nft command output: %w", err)
+	}
+
+	// Iterate through the sets to find a match.
+	for _, entry := range setsOutput.Nftables {
+		if entry.Set != nil {
+			if strings.EqualFold(entry.Set.Name, setName) &&
+				strings.EqualFold(entry.Set.Family, family) &&
+				strings.EqualFold(entry.Set.Table, nftablesNamespace) {
+				return true, nil
+			}
+		}
+	}
+
+	// Set not found.
+	return false, nil
 }
