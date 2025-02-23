@@ -129,51 +129,21 @@ func (d *common) validateName(name string) error {
 
 // validateAddresses ensure set is valid.
 func (d *common) validateAddresses(addresses []string) error {
-	if len(addresses) == 0 {
-		// Empty address list is allowed, means no addresses.
-		return nil
-	}
-
-	var addrType string
-	detected := false
-
 	for i, addr := range addresses {
-		ip := net.ParseIP(addr)
-		if ip != nil {
-			// It's an IP address.
-			if ip.To4() != nil {
-				if !detected {
-					addrType = "ipv4"
-					detected = true
-				} else if addrType != "ipv4" {
-					return fmt.Errorf("Mixed address types detected. All addresses must be the same type")
-				}
-			} else {
-				// IPv6 address
-				if !detected {
-					addrType = "ipv6"
-					detected = true
-				} else if addrType != "ipv6" {
-					return fmt.Errorf("Mixed address types detected. All addresses must be the same type")
-				}
-			}
-		} else {
-			// Check MAC
-			_, err := net.ParseMAC(addr)
-			if err == nil {
-				// It's a MAC address
-				if !detected {
-					addrType = "mac"
-					detected = true
-				} else if addrType != "mac" {
-					return fmt.Errorf("Mixed address types detected. All addresses must be the same type")
-				}
-			} else {
-				return fmt.Errorf("Unsupported address format %q at index %d", addr, i)
-			}
+		// Check if it's a valid plain IP address.
+		if net.ParseIP(addr) != nil {
+			continue
 		}
+		// Check if it's a valid CIDR.
+		if _, _, err := net.ParseCIDR(addr); err == nil {
+			continue
+		}
+		// Check if it's a valid MAC address.
+		if _, err := net.ParseMAC(addr); err == nil {
+			continue
+		}
+		return fmt.Errorf("Unsupported address format %q at index %d", addr, i)
 	}
-
 	return nil
 }
 
@@ -343,4 +313,6 @@ func (d *common) Delete() error {
 	return d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		return tx.DeleteNetworkAddressSet(ctx, d.projectName, d.info.Name)
 	})
+
+	// Add logic to remove sets from nft and OVN
 }
