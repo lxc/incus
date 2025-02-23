@@ -2,12 +2,28 @@ package resources
 
 import (
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/lxc/incus/v6/shared/api"
 )
 
+// Cache to speed up concurrent runs.
+var muResources sync.Mutex
+var lastResources *api.Resources
+var lastRun time.Time
+
 // GetResources returns a filled api.Resources struct ready for use by Incus.
 func GetResources() (*api.Resources, error) {
+	// Ensure only one concurrent run.
+	muResources.Lock()
+	defer muResources.Unlock()
+
+	// Check if we ran less than 10s ago.
+	if lastResources != nil && lastRun.Add(10*time.Second).Before(time.Now()) {
+		return lastResources, nil
+	}
+
 	// Get CPU information
 	cpu, err := GetCPU()
 	if err != nil {
@@ -73,6 +89,10 @@ func GetResources() (*api.Resources, error) {
 		System:  *system,
 		Load:    *load,
 	}
+
+	// Update the cache.
+	lastResources = &resources
+	lastRun = time.Now()
 
 	return &resources, nil
 }

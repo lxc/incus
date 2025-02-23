@@ -1,30 +1,15 @@
 package db_test
 
 import (
-	"go/ast"
-	"go/parser"
-	"go/token"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/tools/go/packages"
 
 	"github.com/lxc/incus/v6/cmd/generate-database/db"
 )
-
-func TestPackages(t *testing.T) {
-	packages, err := db.Packages()
-	require.NoError(t, err)
-
-	assert.Len(t, packages, 2)
-
-	pkg := packages["api"]
-	assert.NotNil(t, pkg)
-
-	obj := pkg.Scope.Lookup("Project")
-	assert.NotNil(t, obj)
-}
 
 type Person struct {
 	Name string
@@ -42,21 +27,16 @@ type Teacher struct {
 	Classes      []Class
 }
 
-type TeacherFilter struct {
-}
+type TeacherFilter struct{}
 
 func TestParse(t *testing.T) {
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "parse_test.go", nil, parser.ParseComments)
+	pkg, err := packages.Load(&packages.Config{
+		Mode:  packages.LoadTypes | packages.NeedTypesInfo,
+		Tests: true,
+	}, "")
 	require.NoError(t, err)
 
-	files := map[string]*ast.File{
-		"parse_test": file,
-	}
-
-	pkg, _ := ast.NewPackage(fset, files, nil, nil)
-
-	m, err := db.Parse(pkg, "Teacher", "objects")
+	m, err := db.Parse(pkg[1].Types, "Teacher", "objects")
 	require.NoError(t, err)
 
 	assert.Equal(t, "db_test", m.Package)

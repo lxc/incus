@@ -85,6 +85,13 @@ var architectureInstallations = map[int][]Installation{
 			},
 		},
 	}, {
+		Path: "/usr/share/seabios",
+		Usage: map[FirmwareUsage][]FirmwarePair{
+			CSM: {
+				{Code: "bios.bin", Vars: "bios.bin"},
+			},
+		},
+	}, {
 		Path: "/usr/share/edk2/x64",
 		Usage: map[FirmwareUsage][]FirmwarePair{
 			GENERIC: {

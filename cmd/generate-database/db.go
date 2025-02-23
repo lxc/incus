@@ -3,9 +3,16 @@
 package main
 
 import (
+	"encoding/csv"
+	"errors"
 	"fmt"
+	"go/build"
+	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"golang.org/x/tools/go/packages"
 
 	"github.com/lxc/incus/v6/cmd/generate-database/db"
 	"github.com/lxc/incus/v6/cmd/generate-database/file"
@@ -52,114 +59,206 @@ func newDbMapper() *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(newDbMapperReset())
-	cmd.AddCommand(newDbMapperStmt())
-	cmd.AddCommand(newDbMapperMethod())
+	cmd.AddCommand(newDbMapperGenerate())
 
 	return cmd
 }
 
-func newDbMapperReset() *cobra.Command {
-	var target string
-	var build string
-	var iface bool
-
-	cmd := &cobra.Command{
-		Use:   "reset",
-		Short: "Reset target source file and its interface file.",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return file.Reset(target, db.Imports, build, iface)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.BoolVarP(&iface, "interface", "i", false, "create interface files")
-	flags.StringVarP(&target, "target", "t", "-", "target source file to generate")
-	flags.StringVarP(&build, "build", "b", "", "build comment to include")
-
-	return cmd
-}
-
-func newDbMapperStmt() *cobra.Command {
-	var target string
-	var database string
+func newDbMapperGenerate() *cobra.Command {
 	var pkg string
-	var entity string
 
 	cmd := &cobra.Command{
-		Use:   "stmt [kind]",
-		Args:  cobra.MinimumNArgs(1),
-		Short: "Generate a particular database statement.",
+		Use:   "generate",
+		Short: "Generate database statememnts and transaction method and interface signature.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			kind := args[0]
-
-			if entity == "" {
-				return fmt.Errorf("No database entity given")
+			if os.Getenv("GOPACKAGE") == "" {
+				return errors.New("GOPACKAGE environment variable is not set")
 			}
 
-			config, err := parseParams(args[1:])
-			if err != nil {
-				return err
-			}
-
-			stmt, err := db.NewStmt(database, pkg, entity, kind, config)
-			if err != nil {
-				return err
-			}
-
-			return file.Append(entity, target, stmt, false)
+			return generate(pkg)
 		},
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&target, "target", "t", "-", "target source file to generate")
-	flags.StringVarP(&database, "database", "d", "", "target database")
 	flags.StringVarP(&pkg, "package", "p", "", "Go package where the entity struct is declared")
-	flags.StringVarP(&entity, "entity", "e", "", "database entity to generate the statement for")
 
 	return cmd
 }
 
-func newDbMapperMethod() *cobra.Command {
-	var target string
-	var database string
-	var pkg string
-	var entity string
-	var iface bool
+const prefix = "//generate-database:mapper "
 
-	cmd := &cobra.Command{
-		Use:   "method [kind] [param1=value1 ... paramN=valueN]",
-		Args:  cobra.MinimumNArgs(1),
-		Short: "Generate a particular transaction method and interface signature.",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			kind := args[0]
-
-			if entity == "" {
-				return fmt.Errorf("No database entity given")
-			}
-
-			config, err := parseParams(args[1:])
-			if err != nil {
-				return err
-			}
-
-			method, err := db.NewMethod(database, pkg, entity, kind, config)
-			if err != nil {
-				return err
-			}
-
-			return file.Append(entity, target, method, iface)
-		},
+func generate(pkg string) error {
+	parsedPkg, err := packageLoad(pkg)
+	if err != nil {
+		return err
 	}
 
-	flags := cmd.Flags()
-	flags.BoolVarP(&iface, "interface", "i", false, "create interface files")
-	flags.StringVarP(&target, "target", "t", "-", "target source file to generate")
-	flags.StringVarP(&database, "database", "d", "", "target database")
-	flags.StringVarP(&pkg, "package", "p", "", "Go package where the entity struct is declared")
-	flags.StringVarP(&entity, "entity", "e", "", "database entity to generate the method for")
+	registeredSQLStmts := map[string]string{}
+	for _, goFile := range parsedPkg.CompiledGoFiles {
+		body, err := os.ReadFile(goFile)
+		if err != nil {
+			return err
+		}
 
-	return cmd
+		// Reset target to stdout
+		target := "-"
+
+		lines := strings.Split(string(body), "\n")
+		for _, line := range lines {
+			// Lazy matching for prefix, does not consider Go syntax and therefore
+			// lines starting with prefix, that are part of e.g. multiline strings
+			// match as well. This is highly unlikely to cause false positives.
+			if strings.HasPrefix(line, prefix) {
+				line = strings.TrimPrefix(line, prefix)
+
+				// Use csv parser to properly handle arguments surrounded by double quotes.
+				r := csv.NewReader(strings.NewReader(line))
+				r.Comma = ' ' // space
+				args, err := r.Read()
+				if err != nil {
+					return err
+				}
+
+				if len(args) == 0 {
+					return fmt.Errorf("command missing")
+				}
+
+				command := args[0]
+
+				switch command {
+				case "target":
+					if len(args) != 2 {
+						return fmt.Errorf("invalid arguments for command target, one argument for the target filename: %s", line)
+					}
+
+					target = args[1]
+				case "reset":
+					err = commandReset(args[1:], target)
+
+				case "stmt":
+					err = commandStmt(args[1:], target, parsedPkg, registeredSQLStmts)
+
+				case "method":
+					err = commandMethod(args[1:], target, parsedPkg, registeredSQLStmts)
+
+				default:
+					err = fmt.Errorf("unknown command: %s", command)
+				}
+
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func commandReset(commandLine []string, target string) error {
+	var err error
+
+	flags := pflag.NewFlagSet("", pflag.ContinueOnError)
+	iface := flags.BoolP("interface", "i", false, "create interface files")
+	buildComment := flags.StringP("build", "b", "", "build comment to include")
+
+	err = flags.Parse(commandLine)
+	if err != nil {
+		return err
+	}
+
+	err = file.Reset(target, db.Imports, *buildComment, *iface)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func commandStmt(commandLine []string, target string, parsedPkg *packages.Package, registeredSQLStmts map[string]string) error {
+	var err error
+
+	flags := pflag.NewFlagSet("", pflag.ContinueOnError)
+	entity := flags.StringP("entity", "e", "", "database entity to generate the statement for")
+
+	err = flags.Parse(commandLine)
+	if err != nil {
+		return err
+	}
+
+	if len(flags.Args()) < 1 {
+		return fmt.Errorf("argument <kind> missing for stmt command")
+	}
+
+	kind := flags.Arg(0)
+	config, err := parseParams(flags.Args()[1:])
+	if err != nil {
+		return err
+	}
+
+	stmt, err := db.NewStmt(parsedPkg, *entity, kind, config, registeredSQLStmts)
+	if err != nil {
+		return err
+	}
+
+	return file.Append(*entity, target, stmt, false)
+}
+
+func commandMethod(commandLine []string, target string, parsedPkg *packages.Package, registeredSQLStmts map[string]string) error {
+	var err error
+
+	flags := pflag.NewFlagSet("", pflag.ContinueOnError)
+	iface := flags.BoolP("interface", "i", false, "create interface files")
+	entity := flags.StringP("entity", "e", "", "database entity to generate the method for")
+
+	err = flags.Parse(commandLine)
+	if err != nil {
+		return err
+	}
+
+	if len(flags.Args()) < 1 {
+		return fmt.Errorf("argument <kind> missing for method command")
+	}
+
+	kind := flags.Arg(0)
+	config, err := parseParams(flags.Args()[1:])
+	if err != nil {
+		return err
+	}
+
+	method, err := db.NewMethod(parsedPkg, *entity, kind, config, registeredSQLStmts)
+	if err != nil {
+		return err
+	}
+
+	return file.Append(*entity, target, method, *iface)
+}
+
+func packageLoad(pkg string) (*packages.Package, error) {
+	var pkgPath string
+	if pkg != "" {
+		importPkg, err := build.Import(pkg, "", build.FindOnly)
+		if err != nil {
+			return nil, fmt.Errorf("Invalid import path %q: %w", pkg, err)
+		}
+
+		pkgPath = importPkg.Dir
+	} else {
+		var err error
+		pkgPath, err = os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	parsedPkg, err := packages.Load(&packages.Config{
+		Mode: packages.LoadTypes | packages.NeedTypesInfo,
+	}, pkgPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return parsedPkg[0], nil
 }
 
 func parseParams(args []string) (map[string]string, error) {

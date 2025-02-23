@@ -1,11 +1,13 @@
 package cluster
 
-//go:generate -command mapper generate-database db mapper -t nodes.mapper.go
-//go:generate mapper reset -i -b "//go:build linux && cgo && !agent"
+// Code generation directives.
 //
-//go:generate mapper stmt -e node id
+//generate-database:mapper target nodes.mapper.go
+//generate-database:mapper reset -i -b "//go:build linux && cgo && !agent"
 //
-//go:generate mapper method -i -e node ID
+//generate-database:mapper stmt -e node id
+//
+//generate-database:mapper method -i -e node ID
 
 // Node represents a cluster member.
 type Node struct {

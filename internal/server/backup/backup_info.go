@@ -60,6 +60,7 @@ type Info struct {
 func GetInfo(r io.ReadSeeker, sysOS *sys.OS, outputPath string) (*Info, error) {
 	result := Info{}
 	hasIndexFile := false
+	hasOptimizedHeader := false
 
 	// Define some bools used to create points for OptimizedStorage field.
 	optimizedStorageFalse := false
@@ -102,13 +103,19 @@ func GetInfo(r io.ReadSeeker, sysOS *sys.OS, outputPath string) (*Info, error) {
 			}
 
 			if result.OptimizedStorage != nil {
-				// No need to continue looking for optimized storage hint using the presence of the
-				// container.bin file below, as the index.yaml file tells us directly.
-				break
+				hasOptimizedHeader = true
 			} else {
 				// Default to non-optimized if not specified and continue reading to see if
 				// optimized container.bin file present.
 				result.OptimizedStorage = &optimizedStorageFalse
+			}
+		}
+
+		// Load old backup data.
+		if result.Config == nil && hdr.Name == "backup/container/backup.yaml" {
+			err = yaml.NewDecoder(tr).Decode(&result.Config)
+			if err != nil {
+				return nil, err
 			}
 		}
 
@@ -120,10 +127,12 @@ func GetInfo(r io.ReadSeeker, sysOS *sys.OS, outputPath string) (*Info, error) {
 			optimizedStorageTrue := true
 			result.OptimizedStorage = &optimizedStorageTrue
 
-			// Stop read loop if index.yaml already parsed.
-			if hasIndexFile {
-				break
-			}
+			hasOptimizedHeader = true
+		}
+
+		// Check if we're done processing what we need.
+		if hasIndexFile && hasOptimizedHeader && result.Config != nil {
+			break
 		}
 	}
 

@@ -3,7 +3,7 @@ package util
 import (
 	"strings"
 
-	"github.com/flosch/pongo2"
+	"github.com/flosch/pongo2/v6"
 )
 
 // RenderTemplate renders a pongo2 template.

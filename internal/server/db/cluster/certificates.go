@@ -15,26 +15,26 @@ import (
 
 // Code generation directives.
 //
-//go:generate -command mapper generate-database db mapper -t certificates.mapper.go
-//go:generate mapper reset -i -b "//go:build linux && cgo && !agent"
+//generate-database:mapper target certificates.mapper.go
+//generate-database:mapper reset -i -b "//go:build linux && cgo && !agent"
 //
-//go:generate mapper stmt -e certificate objects
-//go:generate mapper stmt -e certificate objects-by-ID
-//go:generate mapper stmt -e certificate objects-by-Fingerprint
-//go:generate mapper stmt -e certificate id
-//go:generate mapper stmt -e certificate create struct=Certificate
-//go:generate mapper stmt -e certificate delete-by-Fingerprint
-//go:generate mapper stmt -e certificate delete-by-Name-and-Type
-//go:generate mapper stmt -e certificate update struct=Certificate
+//generate-database:mapper stmt -e certificate objects
+//generate-database:mapper stmt -e certificate objects-by-ID
+//generate-database:mapper stmt -e certificate objects-by-Fingerprint
+//generate-database:mapper stmt -e certificate id
+//generate-database:mapper stmt -e certificate create struct=Certificate
+//generate-database:mapper stmt -e certificate delete-by-Fingerprint
+//generate-database:mapper stmt -e certificate delete-by-Name-and-Type
+//generate-database:mapper stmt -e certificate update struct=Certificate
 //
-//go:generate mapper method -i -e certificate GetMany
-//go:generate mapper method -i -e certificate GetOne
-//go:generate mapper method -i -e certificate ID struct=Certificate
-//go:generate mapper method -i -e certificate Exists struct=Certificate
-//go:generate mapper method -i -e certificate Create struct=Certificate
-//go:generate mapper method -i -e certificate DeleteOne-by-Fingerprint
-//go:generate mapper method -i -e certificate DeleteMany-by-Name-and-Type
-//go:generate mapper method -i -e certificate Update struct=Certificate
+//generate-database:mapper method -i -e certificate GetMany
+//generate-database:mapper method -i -e certificate GetOne
+//generate-database:mapper method -i -e certificate ID struct=Certificate
+//generate-database:mapper method -i -e certificate Exists struct=Certificate
+//generate-database:mapper method -i -e certificate Create struct=Certificate
+//generate-database:mapper method -i -e certificate DeleteOne-by-Fingerprint
+//generate-database:mapper method -i -e certificate DeleteMany-by-Name-and-Type
+//generate-database:mapper method -i -e certificate Update struct=Certificate
 
 // Certificate is here to pass the certificates content from the database around.
 type Certificate struct {

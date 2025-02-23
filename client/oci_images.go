@@ -185,6 +185,7 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		"skopeo",
 		"--insecure-policy",
 		"copy",
+		"--remove-signatures",
 		fmt.Sprintf("%s/%s", strings.Replace(r.httpHost, "https://", "docker://", -1), info.Alias),
 		fmt.Sprintf("oci:%s:latest", filepath.Join(ociPath, "oci")))
 	if err != nil {

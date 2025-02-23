@@ -11,26 +11,26 @@ import (
 
 // Code generation directives.
 //
-//go:generate -command mapper generate-database db mapper -t networks_integrations.mapper.go
-//go:generate mapper reset -i -b "//go:build linux && cgo && !agent"
+//generate-database:mapper target networks_integrations.mapper.go
+//generate-database:mapper reset -i -b "//go:build linux && cgo && !agent"
 //
-//go:generate mapper stmt -e network_integration objects
-//go:generate mapper stmt -e network_integration objects-by-Name
-//go:generate mapper stmt -e network_integration objects-by-ID
-//go:generate mapper stmt -e network_integration create struct=NetworkIntegration
-//go:generate mapper stmt -e network_integration id
-//go:generate mapper stmt -e network_integration rename
-//go:generate mapper stmt -e network_integration update struct=NetworkIntegration
-//go:generate mapper stmt -e network_integration delete-by-Name
+//generate-database:mapper stmt -e network_integration objects
+//generate-database:mapper stmt -e network_integration objects-by-Name
+//generate-database:mapper stmt -e network_integration objects-by-ID
+//generate-database:mapper stmt -e network_integration create struct=NetworkIntegration
+//generate-database:mapper stmt -e network_integration id
+//generate-database:mapper stmt -e network_integration rename
+//generate-database:mapper stmt -e network_integration update struct=NetworkIntegration
+//generate-database:mapper stmt -e network_integration delete-by-Name
 //
-//go:generate mapper method -i -e network_integration GetMany references=Config
-//go:generate mapper method -i -e network_integration GetOne struct=NetworkIntegration
-//go:generate mapper method -i -e network_integration Exists struct=NetworkIntegration
-//go:generate mapper method -i -e network_integration Create references=Config
-//go:generate mapper method -i -e network_integration ID struct=NetworkIntegration
-//go:generate mapper method -i -e network_integration Rename
-//go:generate mapper method -i -e network_integration DeleteOne-by-Name
-//go:generate mapper method -i -e network_integration Update struct=NetworkIntegration references=Config
+//generate-database:mapper method -i -e network_integration GetMany references=Config
+//generate-database:mapper method -i -e network_integration GetOne struct=NetworkIntegration
+//generate-database:mapper method -i -e network_integration Exists struct=NetworkIntegration
+//generate-database:mapper method -i -e network_integration Create references=Config
+//generate-database:mapper method -i -e network_integration ID struct=NetworkIntegration
+//generate-database:mapper method -i -e network_integration Rename
+//generate-database:mapper method -i -e network_integration DeleteOne-by-Name
+//generate-database:mapper method -i -e network_integration Update struct=NetworkIntegration references=Config
 
 const (
 	// NetworkIntegrationTypeOVN represents an OVN network integration.

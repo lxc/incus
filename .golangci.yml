@@ -9,6 +9,10 @@ linters:
     - revive
 issues:
   exclude-use-default: false
+  exclude-rules:
+    - linters:
+        - revive
+      source: "^//generate-database:mapper "
 linters-settings:
   gci:
     sections:
