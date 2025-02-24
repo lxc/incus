@@ -310,6 +310,26 @@ func (d *truenas) createDatasets(datasets []string, options ...string) error {
 	return nil
 }
 
+// take a recursive snapshot of dataset@snapname, and optionally delete the old snapshot first
+func (d *truenas) createSnapshot(snapName string, delete bool) error {
+	args := []string{"snapshot", "create", "-r"}
+
+	if delete {
+		args = append(args, "--delete")
+	}
+
+	args = append(args, snapName)
+
+	// Make the snapshot.
+	out, err := d.runTool(args...)
+	_ = out
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (d *truenas) createDataset(dataset string, options ...string) error {
 	err := d.createDatasets([]string{dataset}, options...)
 
