@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/lxc/incus/v6/internal/filter"
 	"net"
 	"net/http"
 	"net/url"
@@ -186,6 +187,16 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	recursion := localUtil.IsRecursionRequest(r)
+
+	// Parse filter value.
+	filterStr := r.FormValue("filter")
+	clauses, err := filter.Parse(filterStr, filter.QueryOperatorSet())
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid filter: %w", err))
+	}
+
+	mustLoadObjects := recursion || (clauses != nil && len(clauses.Clauses) > 0)
+
 	allProjects := util.IsTrue(r.FormValue("all-projects"))
 
 	var networkNames map[string][]string
@@ -239,37 +250,48 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 		return response.InternalError(err)
 	}
 
-	resultString := []string{}
-	resultMap := []api.Network{}
+	var linkResultList []string
+	var fullResultList []api.Network
 	for projectName, networks := range networkNames {
 		for _, networkName := range networks {
 			if !userHasPermission(auth.ObjectNetwork(projectName, networkName)) {
 				continue
 			}
 
-			if !recursion {
-				// Check if project allows access to network.
-				if !project.NetworkAllowed(reqProject.Config, networkName, true) {
-					continue
-				}
-
-				resultString = append(resultString, fmt.Sprintf("/%s/networks/%s", version.APIVersion, networkName))
-			} else {
+			if mustLoadObjects {
 				netInfo, err := doNetworkGet(s, r, s.ServerClustered, projectName, reqProject.Config, networkName)
 				if err != nil {
 					continue
 				}
 
-				resultMap = append(resultMap, netInfo)
+				if clauses != nil && len(clauses.Clauses) > 0 {
+					match, err := filter.Match(netInfo, *clauses)
+					if err != nil {
+						return response.SmartError(err)
+					}
+
+					if !match {
+						continue
+					}
+				}
+
+				fullResultList = append(fullResultList, netInfo)
+
+			} else {
+				if !project.NetworkAllowed(reqProject.Config, networkName, true) {
+					continue
+				}
+
 			}
+			linkResultList = append(linkResultList, fmt.Sprintf("/%s/networks/%s", version.APIVersion, networkName))
 		}
 	}
 
 	if !recursion {
-		return response.SyncResponse(true, resultString)
+		return response.SyncResponse(true, linkResultList)
 	}
 
-	return response.SyncResponse(true, resultMap)
+	return response.SyncResponse(true, fullResultList)
 }
 
 // swagger:operation POST /1.0/networks networks networks_post
