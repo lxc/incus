@@ -2617,7 +2617,7 @@ func (d *qemu) getPCIHotplug() (string, error) {
 
 	for _, dev := range devices {
 		// Skip built-in devices.
-		if dev.DevID == "" {
+		if dev.DevID == "" || dev.DevID == "qemu_iommu" {
 			continue
 		}
 
