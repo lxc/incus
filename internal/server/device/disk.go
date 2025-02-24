@@ -1266,15 +1266,6 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					return nil, fmt.Errorf(`Failed parsing instance "raw.idmap": %w`, err)
 				}
 
-				// If we are using restricted parent source path mode, or if a non-empty set of
-				// raw ID maps have been supplied, then we will be running the disk proxy processes
-				// inside a user namespace as the root userns user. Therefore we need to ensure
-				// that there is a root UID and GID mapping in the raw ID maps, and if not then add
-				// one mapping the root userns user to the nouser/nogroup host ID.
-				if d.restrictedParentSourcePath != "" || len(rawIDMaps.Entries) > 0 {
-					rawIDMaps.Entries = diskAddRootUserNSEntry(rawIDMaps.Entries, 65534)
-				}
-
 				busOption := d.config["io.bus"]
 				if busOption == "" {
 					busOption = "auto"
