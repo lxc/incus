@@ -32,11 +32,11 @@ func (d *truenas) dataset(vol Volume, deleted bool) string {
 		name = fmt.Sprintf("%s_%s", name, vol.ConfigBlockFilesystem())
 	}
 
-	// if (vol.volType == VolumeTypeVM || vol.volType == VolumeTypeImage) && vol.contentType == ContentTypeBlock {
-	// 	name = fmt.Sprintf("%s%s", name, zfsBlockVolSuffix)
-	// } else if vol.volType == VolumeTypeCustom && vol.contentType == ContentTypeISO {
-	// 	name = fmt.Sprintf("%s%s", name, zfsISOVolSuffix)
-	// }
+	if (vol.volType == VolumeTypeVM || vol.volType == VolumeTypeImage) && vol.contentType == ContentTypeBlock {
+		name = fmt.Sprintf("%s%s", name, zfsBlockVolSuffix)
+	} else if vol.volType == VolumeTypeCustom && vol.contentType == ContentTypeISO {
+		name = fmt.Sprintf("%s%s", name, zfsISOVolSuffix)
+	}
 
 	if snapName != "" {
 		if deleted {

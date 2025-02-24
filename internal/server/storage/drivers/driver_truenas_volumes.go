@@ -96,6 +96,11 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	revert := revert.New()
 	defer revert.Fail()
 
+	// must mount VM.block so we can access the root.img, as well as the config filesystem
+	if vol.IsVMBlock() {
+		vol.mountCustomPath = vol.MountPath() + ".block"
+	}
+
 	// Create mountpoint.
 	err := vol.EnsureMountPath()
 	if err != nil {
@@ -241,7 +246,14 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	}
 
 	// for  block or fs-img we need to create a dataset
-	if vol.contentType == ContentTypeBlock || isFsImgVol(vol) {
+	if vol.contentType == ContentTypeBlock || isFsImgVol(vol) || (vol.contentType == ContentTypeFS && !needsFsImgVol(vol)) {
+
+		/*
+			for a VMBlock we need to create both a .block with an root.img and a filesystem
+			volume. The filesystem volume has to be separate so that it can have a separate quota
+			to the root.img/block volume.
+		*/
+
 		// Create the filesystem dataset.
 		dataset := d.dataset(vol, false)
 
@@ -267,6 +279,17 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		if err != nil {
 			return err
 		}
+	}
+
+	// For VM images, create a filesystem volume too.
+	if vol.IsVMBlock() {
+		fsVol := vol.NewVMBlockFilesystemVolume()
+		err := d.CreateVolume(fsVol, nil, op)
+		if err != nil {
+			return err
+		}
+
+		revert.Add(func() { _ = d.DeleteVolume(fsVol, op) })
 	}
 
 	err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
@@ -1636,13 +1659,13 @@ func (d *truenas) deleteVolume(vol Volume, op *operations.Operation) error {
 		}
 	}
 
-	if vol.contentType == ContentTypeFS {
-		// Delete the mountpoint if present.
-		err := os.Remove(vol.MountPath())
-		if err != nil && !errors.Is(err, fs.ErrNotExist) {
-			return fmt.Errorf("Failed to remove '%s': %w", vol.MountPath(), err)
-		}
+	// Delete the mountpoint if present.
+	err = os.Remove(vol.MountPath())
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("Failed to remove '%s': %w", vol.MountPath(), err)
+	}
 
+	if vol.contentType == ContentTypeFS {
 		// Delete the snapshot storage.
 		err = os.RemoveAll(GetVolumeSnapshotDir(d.name, vol.volType, vol.name))
 		if err != nil && !errors.Is(err, fs.ErrNotExist) {
@@ -1656,6 +1679,15 @@ func (d *truenas) deleteVolume(vol Volume, op *operations.Operation) error {
 			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				return fmt.Errorf("Failed to remove '%s': %w", fsImgVol.MountPath(), err)
 			}
+		}
+	}
+
+	// For VMs, also delete the filesystem dataset.
+	if vol.IsVMBlock() {
+		fsVol := vol.NewVMBlockFilesystemVolume()
+		err := d.DeleteVolume(fsVol, op)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -2081,7 +2113,7 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 	revert := revert.New()
 	defer revert.Fail()
 
-	if vol.contentType == ContentTypeFS || isFsImgVol(vol) {
+	if vol.contentType == ContentTypeFS || isFsImgVol(vol) || vol.IsVMBlock() {
 
 		// handle an FS mount
 
@@ -2126,6 +2158,16 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 			}
 		} // PS: not 100% sure what to do about ISOs yet.
 	}
+
+	// now, if we were a VM block we also need to mount the config filesystem
+	if vol.IsVMBlock() {
+		fsVol := vol.NewVMBlockFilesystemVolume()
+		//fsVol.config["volatile.truenas.fs-img"] = "true" // bit of a hack to get the fs-mounter to mount it instead of loop it.
+		err = d.MountVolume(fsVol, op)
+		if err != nil {
+			return err
+		}
+	} // PS: not 100% sure what to do about ISOs yet.
 
 	vol.MountRefCountIncrement() // From here on it is up to caller to call UnmountVolume() when done.
 	revert.Success()
@@ -2189,7 +2231,7 @@ func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 		d.logger.Debug("keepBlockDevTrue", logger.Ctx{"volName": vol.name, "refCount": refCount})
 	}
 
-	if (vol.contentType == ContentTypeFS || isFsImgVol(vol)) && linux.IsMountPoint(mountPath) {
+	if (vol.contentType == ContentTypeFS || vol.IsVMBlock() || isFsImgVol(vol)) && linux.IsMountPoint(mountPath) {
 
 		// Unmount the dataset.
 		err = TryUnmount(mountPath, 0)
@@ -2216,7 +2258,9 @@ func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 			d.logger.Debug("Unmounted TrueNAS dataset", logger.Ctx{"volName": vol.name, "host": d.config["truenas.host"], "dataset": dataset, "path": mountPath})
 		}
 
-	} else if vol.contentType == ContentTypeBlock || vol.contentType == ContentTypeISO {
+	}
+
+	if vol.contentType == ContentTypeBlock || vol.contentType == ContentTypeISO {
 		// For VMs and ISOs, unmount the filesystem volume.
 		if vol.IsVMBlock() {
 			fsVol := vol.NewVMBlockFilesystemVolume()
