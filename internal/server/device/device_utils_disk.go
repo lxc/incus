@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -344,15 +345,43 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 	}
 
 	// Start the virtiofsd process in non-daemon mode.
-	args := []string{"--fd=3", fmt.Sprintf("--cache=%s", cacheOption), "-o", fmt.Sprintf("source=%s", sharePath)}
-	proc, err := subprocess.NewProcess(cmd, args, logPath, logPath)
-	if err != nil {
-		return nil, nil, err
-	}
+	args := []string{"--fd=3", fmt.Sprintf("--cache=%s", cacheOption), fmt.Sprintf("--shared-dir=%s", sharePath)}
 
 	if len(idmaps) > 0 {
 		idmapSet := &idmap.Set{Entries: idmaps}
-		proc.SetUserns(idmapSet.ToUIDMappings(), idmapSet.ToGIDMappings())
+		sort.Sort(idmapSet)
+
+		var lastUID int64
+		var lastGID int64
+
+		for _, entry := range idmapSet.Entries {
+			if entry.IsUID {
+				args = append(args, fmt.Sprintf("--translate-uid=map:%d:%d:%d", entry.NSID, entry.HostID, entry.MapRange))
+
+				args = append(args, fmt.Sprintf("--translate-uid=forbid-guest:%d:%d", lastUID, entry.NSID-lastUID))
+				lastUID = entry.NSID + entry.MapRange
+			}
+
+			if entry.IsGID {
+				args = append(args, fmt.Sprintf("--translate-gid=map:%d:%d:%d", entry.NSID, entry.HostID, entry.MapRange))
+
+				args = append(args, fmt.Sprintf("--translate-gid=forbid-guest:%d:%d", lastGID, entry.NSID-lastGID))
+				lastGID = entry.NSID + entry.MapRange
+			}
+		}
+
+		if lastUID < 4294967295 {
+			args = append(args, fmt.Sprintf("--translate-uid=forbid-guest:%d:%d", lastUID, 4294967295-lastUID))
+		}
+
+		if lastGID < 4294967295 {
+			args = append(args, fmt.Sprintf("--translate-gid=forbid-guest:%d:%d", lastGID, 4294967295-lastGID))
+		}
+	}
+
+	proc, err := subprocess.NewProcess(cmd, args, logPath, logPath)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	err = proc.StartWithFiles(context.Background(), []*os.File{unixFile})
