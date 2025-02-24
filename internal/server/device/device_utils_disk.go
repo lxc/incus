@@ -262,43 +262,6 @@ func diskCephfsOptions(clusterName string, userName string, fsName string, fsPat
 	return srcPath, fsOptions, nil
 }
 
-// diskAddRootUserNSEntry takes a set of idmap entries, and adds host -> userns root uid/gid mappings if needed.
-// Returns the supplied idmap entries with any added root entries.
-func diskAddRootUserNSEntry(idmaps []idmap.Entry, hostRootID int64) []idmap.Entry {
-	needsNSUIDRootEntry := true
-	needsNSGIDRootEntry := true
-
-	for _, idmap := range idmaps {
-		// Check if the idmap entry contains the userns root user.
-		if idmap.NSID == 0 {
-			if idmap.IsUID {
-				needsNSUIDRootEntry = false // Root UID mapping already present.
-			}
-
-			if idmap.IsGID {
-				needsNSGIDRootEntry = false // Root GID mapping already present.
-			}
-
-			if !needsNSUIDRootEntry && needsNSGIDRootEntry {
-				break // If we've found a root entry for UID and GID then we don't need to add one.
-			}
-		}
-	}
-
-	// Add UID/GID/both mapping entry if needed.
-	if needsNSUIDRootEntry || needsNSGIDRootEntry {
-		idmaps = append(idmaps, idmap.Entry{
-			HostID:   hostRootID,
-			IsUID:    needsNSUIDRootEntry,
-			IsGID:    needsNSGIDRootEntry,
-			NSID:     0,
-			MapRange: 1,
-		})
-	}
-
-	return idmaps
-}
-
 // DiskVMVirtiofsdStart starts a new virtiofsd process.
 // If the idmaps slice is supplied then the proxy process is run inside a user namespace using the supplied maps.
 // Returns UnsupportedError error if the host system or instance does not support virtiosfd, returns normal error
