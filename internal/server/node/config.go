@@ -115,6 +115,11 @@ func (c *Config) StorageImagesVolume() string {
 	return c.m.GetString("storage.images_volume")
 }
 
+// LinstorSatelliteName returns the LINSTOR satellite name override.
+func (c *Config) LinstorSatelliteName() string {
+	return c.m.GetString("storage.linstor.satellite.name")
+}
+
 // SyslogSocket returns true if the syslog socket is enabled, otherwise false.
 func (c *Config) SyslogSocket() bool {
 	return c.m.GetBool("core.syslog_socket")
@@ -266,6 +271,7 @@ var ConfigSchema = config.Schema{
 	//  scope: local
 	//  shortdesc: Volume to use to store backup tarballs
 	"storage.backups_volume": {},
+
 	// gendoc:generate(entity=server, group=miscellaneous, key=storage.images_volume)
 	// Specify the volume using the syntax `POOL/VOLUME`.
 	// ---
@@ -273,4 +279,14 @@ var ConfigSchema = config.Schema{
 	//  scope: local
 	//  shortdesc: Volume to use to store the image tarballs
 	"storage.images_volume": {},
+
+	// LINSTOR
+
+	// gendoc:generate(entity=server, group=miscellaneous, key=storage.linstor.satellite.name)
+	// Set this option to the name of the local LINSTOR satellite node, should it be different from the Incus server name.
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: LINSTOR satellite node name override
+	"storage.linstor.satellite.name": {},
 }
