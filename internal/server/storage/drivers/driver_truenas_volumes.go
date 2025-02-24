@@ -2218,13 +2218,13 @@ func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 
 	} else if vol.contentType == ContentTypeBlock || vol.contentType == ContentTypeISO {
 		// For VMs and ISOs, unmount the filesystem volume.
-		//if vol.IsVMBlock() {
-		fsVol := vol.NewVMBlockFilesystemVolume()
-		ourUnmount, err = d.UnmountVolume(fsVol, false, op)
-		if err != nil {
-			return false, err
+		if vol.IsVMBlock() {
+			fsVol := vol.NewVMBlockFilesystemVolume()
+			ourUnmount, err = d.UnmountVolume(fsVol, false, op)
+			if err != nil {
+				return false, err
+			}
 		}
-		//}
 	}
 
 	return ourUnmount, nil
