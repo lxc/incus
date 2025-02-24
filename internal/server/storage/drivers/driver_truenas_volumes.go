@@ -376,8 +376,7 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		snapName := fmt.Sprintf("%s@readonly", dataset)
 
 		// Create snapshot of the main dataset.
-		out, err := d.runTool("snapshot", "create", "-r", snapName)
-		_ = out
+		err := d.createSnapshot(snapName, false)
 		if err != nil {
 			return err
 		}
@@ -671,9 +670,7 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 		// Create a new snapshot for copy.
 		srcSnapshot = fmt.Sprintf("%s@copy-%s", d.dataset(srcVol, false), uuid.New().String())
 
-		//_, err := subprocess.RunCommand("zfs", "snapshot", "-r", srcSnapshot)
-		out, err := d.runTool("snapshot", "create", "-r", srcSnapshot)
-		_ = out
+		err := d.createSnapshot(srcSnapshot, false)
 		if err != nil {
 			return err
 		}
@@ -2760,8 +2757,7 @@ func (d *truenas) CreateVolumeSnapshot(vol Volume, op *operations.Operation) err
 
 	// Make the snapshot.
 	dataset := d.dataset(vol, false)
-	out, err := d.runTool("snapshot", "create", "-r", dataset)
-	_ = out
+	err = d.createSnapshot(dataset, false)
 	if err != nil {
 		return err
 	}
