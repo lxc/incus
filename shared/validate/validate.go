@@ -858,3 +858,12 @@ func IsValidCPUSet(value string) error {
 
 	return nil
 }
+
+// IsACMEChallenge validates whether a value is a valid ACME challenge.
+func IsACMEChallenge(value string) error {
+	if value == "DNS-01" || value == "HTTP-01" {
+		return nil
+	}
+
+	return fmt.Errorf("Invalid ACME challenge value: %s", value)
+}
