@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -262,43 +263,6 @@ func diskCephfsOptions(clusterName string, userName string, fsName string, fsPat
 	return srcPath, fsOptions, nil
 }
 
-// diskAddRootUserNSEntry takes a set of idmap entries, and adds host -> userns root uid/gid mappings if needed.
-// Returns the supplied idmap entries with any added root entries.
-func diskAddRootUserNSEntry(idmaps []idmap.Entry, hostRootID int64) []idmap.Entry {
-	needsNSUIDRootEntry := true
-	needsNSGIDRootEntry := true
-
-	for _, idmap := range idmaps {
-		// Check if the idmap entry contains the userns root user.
-		if idmap.NSID == 0 {
-			if idmap.IsUID {
-				needsNSUIDRootEntry = false // Root UID mapping already present.
-			}
-
-			if idmap.IsGID {
-				needsNSGIDRootEntry = false // Root GID mapping already present.
-			}
-
-			if !needsNSUIDRootEntry && needsNSGIDRootEntry {
-				break // If we've found a root entry for UID and GID then we don't need to add one.
-			}
-		}
-	}
-
-	// Add UID/GID/both mapping entry if needed.
-	if needsNSUIDRootEntry || needsNSGIDRootEntry {
-		idmaps = append(idmaps, idmap.Entry{
-			HostID:   hostRootID,
-			IsUID:    needsNSUIDRootEntry,
-			IsGID:    needsNSGIDRootEntry,
-			NSID:     0,
-			MapRange: 1,
-		})
-	}
-
-	return idmaps
-}
-
 // DiskVMVirtiofsdStart starts a new virtiofsd process.
 // If the idmaps slice is supplied then the proxy process is run inside a user namespace using the supplied maps.
 // Returns UnsupportedError error if the host system or instance does not support virtiosfd, returns normal error
@@ -381,15 +345,43 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 	}
 
 	// Start the virtiofsd process in non-daemon mode.
-	args := []string{"--fd=3", fmt.Sprintf("--cache=%s", cacheOption), "-o", fmt.Sprintf("source=%s", sharePath)}
-	proc, err := subprocess.NewProcess(cmd, args, logPath, logPath)
-	if err != nil {
-		return nil, nil, err
-	}
+	args := []string{"--fd=3", fmt.Sprintf("--cache=%s", cacheOption), fmt.Sprintf("--shared-dir=%s", sharePath)}
 
 	if len(idmaps) > 0 {
 		idmapSet := &idmap.Set{Entries: idmaps}
-		proc.SetUserns(idmapSet.ToUIDMappings(), idmapSet.ToGIDMappings())
+		sort.Sort(idmapSet)
+
+		var lastUID int64
+		var lastGID int64
+
+		for _, entry := range idmapSet.Entries {
+			if entry.IsUID {
+				args = append(args, fmt.Sprintf("--translate-uid=map:%d:%d:%d", entry.NSID, entry.HostID, entry.MapRange))
+
+				args = append(args, fmt.Sprintf("--translate-uid=forbid-guest:%d:%d", lastUID, entry.NSID-lastUID))
+				lastUID = entry.NSID + entry.MapRange
+			}
+
+			if entry.IsGID {
+				args = append(args, fmt.Sprintf("--translate-gid=map:%d:%d:%d", entry.NSID, entry.HostID, entry.MapRange))
+
+				args = append(args, fmt.Sprintf("--translate-gid=forbid-guest:%d:%d", lastGID, entry.NSID-lastGID))
+				lastGID = entry.NSID + entry.MapRange
+			}
+		}
+
+		if lastUID < 4294967295 {
+			args = append(args, fmt.Sprintf("--translate-uid=forbid-guest:%d:%d", lastUID, 4294967295-lastUID))
+		}
+
+		if lastGID < 4294967295 {
+			args = append(args, fmt.Sprintf("--translate-gid=forbid-guest:%d:%d", lastGID, 4294967295-lastGID))
+		}
+	}
+
+	proc, err := subprocess.NewProcess(cmd, args, logPath, logPath)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	err = proc.StartWithFiles(context.Background(), []*os.File{unixFile})
