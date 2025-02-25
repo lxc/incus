@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/filter"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/cluster"
 	clusterRequest "github.com/lxc/incus/v6/internal/server/cluster/request"
@@ -64,6 +65,11 @@ var storagePoolCmd = APIEndpoint{
 //      description: Project name
 //      type: string
 //      example: default
+//    - in: query
+//      name: filter
+//      description: Collection filter
+//      type: string
+//      example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -100,56 +106,71 @@ var storagePoolCmd = APIEndpoint{
 
 // swagger:operation GET /1.0/storage-pools?recursion=1 storage storage_pools_get_recursion1
 //
-//	Get the storage pools
+//  Get the storage pools
 //
-//	Returns a list of storage pools (structs).
+//  Returns a list of storage pools (structs).
 //
-//	---
-//	produces:
-//	  - application/json
-//	parameters:
-//	  - in: query
-//	    name: project
-//	    description: Project name
-//	    type: string
-//	    example: default
-//	responses:
-//	  "200":
-//	    description: API endpoints
-//	    schema:
-//	      type: object
-//	      description: Sync response
-//	      properties:
-//	        type:
-//	          type: string
-//	          description: Response type
-//	          example: sync
-//	        status:
-//	          type: string
-//	          description: Status description
-//	          example: Success
-//	        status_code:
-//	          type: integer
-//	          description: Status code
-//	          example: 200
-//	        metadata:
-//	          type: array
-//	          description: List of storage pools
-//	          items:
-//	            $ref: "#/definitions/StoragePool"
-//	  "403":
-//	    $ref: "#/responses/Forbidden"
-//	  "500":
-//	    $ref: "#/responses/InternalServerError"
+//  ---
+//  produces:
+//    - application/json
+//  parameters:
+//    - in: query
+//      name: project
+//      description: Project name
+//      type: string
+//      example: default
+//    - in: query
+//      name: filter
+//      description: Collection filter
+//      type: string
+//      example: default
+//  responses:
+//    "200":
+//      description: API endpoints
+//      schema:
+//        type: object
+//        description: Sync response
+//        properties:
+//          type:
+//            type: string
+//            description: Response type
+//            example: sync
+//          status:
+//            type: string
+//            description: Status description
+//            example: Success
+//          status_code:
+//            type: integer
+//            description: Status code
+//            example: 200
+//          metadata:
+//            type: array
+//            description: List of storage pools
+//            items:
+//              $ref: "#/definitions/StoragePool"
+//    "403":
+//      $ref: "#/responses/Forbidden"
+//    "500":
+//      $ref: "#/responses/InternalServerError"
+
 func storagePoolsGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	recursion := localUtil.IsRecursionRequest(r)
 
+	// Parse filter value.
+	filterStr := r.FormValue("filter")
+	clauses, err := filter.Parse(filterStr, filter.QueryOperatorSet())
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid filter: %w", err))
+	}
+
+	mustLoadObjects := recursion || (clauses != nil && len(clauses.Clauses) > 0)
+
 	var poolNames []string
 	var hiddenPoolNames []string
 
-	err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		// Load the pool names.
@@ -175,17 +196,15 @@ func storagePoolsGet(d *Daemon, r *http.Request) response.Response {
 		return response.InternalError(err)
 	}
 
-	resultString := []string{}
-	resultMap := []api.StoragePool{}
+	var linkResults []string
+	var fullResults []api.StoragePool
 	for _, poolName := range poolNames {
 		// Hide storage pools with a 0 project limit.
 		if slices.Contains(hiddenPoolNames, poolName) {
 			continue
 		}
 
-		if !recursion {
-			resultString = append(resultString, fmt.Sprintf("/%s/storage-pools/%s", version.APIVersion, poolName))
-		} else {
+		if mustLoadObjects {
 			pool, err := storagePools.LoadByName(s, poolName)
 			if err != nil {
 				return response.SmartError(err)
@@ -215,15 +234,28 @@ func storagePoolsGet(d *Daemon, r *http.Request) response.Response {
 				poolAPI.Status = pool.LocalStatus()
 			}
 
-			resultMap = append(resultMap, poolAPI)
+			if clauses != nil && len(clauses.Clauses) > 0 {
+				match, err := filter.Match(poolAPI, *clauses)
+				if err != nil {
+					return response.SmartError(err)
+				}
+
+				if !match {
+					continue
+				}
+			}
+
+			fullResults = append(fullResults, poolAPI)
 		}
+
+		linkResults = append(linkResults, fmt.Sprintf("/%s/storage-pools/%s", version.APIVersion, poolName))
 	}
 
 	if !recursion {
-		return response.SyncResponse(true, resultString)
+		return response.SyncResponse(true, linkResults)
 	}
 
-	return response.SyncResponse(true, resultMap)
+	return response.SyncResponse(true, fullResults)
 }
 
 // swagger:operation POST /1.0/storage-pools storage storage_pools_post
