@@ -4,96 +4,127 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"slices"
 	"strings"
 
+	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/network/ovn"
 	"github.com/lxc/incus/v6/internal/server/state"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
 )
 
-// OVNEnsureAddressSets ensures that the address sets and their addresses are created in OVN NB DB.
+// OVNEnsureAddressSetsViaACLs ensure that every address set referenced by given acls are created in OVN NB DB
+func OVNEnsureAddressSetsViaACLs(s *state.State, l logger.Logger, client *ovn.NB, projectName string, ACLNames []string) (revert.Hook, error) {
+	// Build address set usage from network ACLs
+	setsNames, err := GetAddressSetForACLs(s, projectName, ACLNames)
+	if err != nil {
+		return nil, err
+	}
+	// Then call OVNEnsureAddressSet
+	return OVNEnsureAddressSets(s, l, client, projectName, setsNames)
+}
+
+// OVNDeleteAddressSetsViaACLs remove address sets used by network ACLS
+func OVNDeleteAddressSetsViaACLs(s *state.State, l logger.Logger, client *ovn.NB, projectName string, ACLNames []string) error {
+	setsNames, err := GetAddressSetForACLs(s, projectName, ACLNames)
+	if err != nil {
+		return err
+	}
+
+	for _, setName := range setsNames {
+		err = client.DeleteAddressSet(context.TODO(), ovn.OVNAddressSet(setName))
+		if err != nil {
+			return fmt.Errorf("Failed removing address set %q from OVN: %w", setName, err)
+		}
+
+		l.Debug("Removed unused address set from OVN", logger.Ctx{"project": projectName, "addressSet": setName})
+	}
+	return nil
+}
+
+// OVNEnsureAddressSet ensures that the address sets and their addresses are created in OVN NB DB.
 // Similar logic to before, but now directly using OVN NB methods.
 //
 // The asNets parameter contains networks using the address set indirectly via ACLs. The addressSetName is the
-// name of the address set in LXD's database, and we have addresses in asInfo. If addresses is empty, we still
+// name of the address set in incus database, and we have addresses in asInfo. If addresses is empty, we still
 // create empty sets to avoid match errors.
 //
 // Returns a revert function to undo changes if needed.
-func OVNEnsureAddressSets(s *state.State, l logger.Logger, client *ovn.NB, projectName string, asNets map[string]AddressSetUsage, addressSetName string) (revert.Hook, error) {
+func OVNEnsureAddressSets(s *state.State, l logger.Logger, client *ovn.NB, projectName string, addressSetNames []string) (revert.Hook, error) {
 	revert := revert.New()
 	defer revert.Fail()
 
-	// Load the address set info.
-	addrSet, err := LoadByName(s, projectName, addressSetName)
-	if err != nil {
-		return nil, fmt.Errorf("Failed loading address set %q: %w", addressSetName, err)
-	}
-
-	asInfo := addrSet.Info()
-
-	// Convert addresses into net.IPNet slices.
-	var ipNets []net.IPNet
-	for _, addr := range asInfo.Addresses {
-		// Try to parse as IP or CIDR.
-		if strings.Contains(addr, "/") {
-			_, ipnet, err := net.ParseCIDR(addr)
-			if err != nil {
-				return nil, fmt.Errorf("Failed parsing CIDR address %q: %w", addr, err)
-			}
-			ipNets = append(ipNets, *ipnet)
-		} else {
-			// If single IP address, convert to /32 or /128.
-			ip := net.ParseIP(addr)
-			if ip != nil {
-				bits := 32
-				if ip.To4() == nil {
-					bits = 128
-				}
-				mask := net.CIDRMask(bits, bits)
-				ipNets = append(ipNets, net.IPNet{IP: ip, Mask: mask})
-			} else {
-				// If MAC, skip IP sets. OVN address sets currently don't store MAC addresses.
-				// If needed, you'd have separate sets for MAC (not currently supported by OVN).
-				_, errMac := net.ParseMAC(addr)
-				if errMac == nil {
-					// We currently ignore MAC addresses. OVN address sets are primarily for IP addresses.
-					// If future support for MAC sets needed, handle here.
-					continue
-				}
-				return nil, fmt.Errorf("Unsupported address format: %q", addr)
-			}
-		}
-	}
-
-	// If no addresses, we still create empty sets.
-	// First, try deleting old sets and re-creating them cleanly. Or we can just ensure sets exist empty.
-	// We'll just ensure sets are created (even if empty).
-	//
-	// Check if sets exist by trying to update them. If not present, create them.
-	// We'll rely on UpdateAddressSetAdd to create if missing. But per the code, UpdateAddressSetAdd only updates,
-	// so we must attempt a CreateAddressSet if not existing.
-
-	// We attempt a CreateAddressSet only if it doesn't exist. If it fails because it exists, we will ignore and proceed.
-	err = client.CreateAddressSet(context.TODO(), ovn.OVNAddressSet(asInfo.Name))
-	if err != nil && !strings.Contains(err.Error(), "already exists") {
-		// If error is not "exists", fail.
-		if err != ovn.ErrExists {
-			return nil, fmt.Errorf("Failed creating address set %q in OVN: %w", asInfo.Name, err)
-		}
-	}
-
-	// If we have addresses, add them. If not, we ensure empty sets by calling UpdateAddressSetAdd with no addresses,
-	// which will just leave them empty.
-	if len(ipNets) > 0 {
-		err = client.UpdateAddressSetAdd(context.TODO(), ovn.OVNAddressSet(asInfo.Name), ipNets...)
+	for _, addressSetName := range addressSetNames {
+		addrSet, err := LoadByName(s, projectName, addressSetName)
 		if err != nil {
-			return nil, fmt.Errorf("Failed adding addresses to address set %q in OVN: %w", asInfo.Name, err)
+			return nil, fmt.Errorf("Failed loading address set %q: %w", addressSetName, err)
 		}
-	} else {
-		// No addresses means ensure empty sets. CreateAddressSet already done above ensures empty sets.
-	}
 
+		asInfo := addrSet.Info()
+
+		// Convert addresses into net.IPNet slices.
+		var ipNets []net.IPNet
+		for _, addr := range asInfo.Addresses {
+			// Try to parse as IP or CIDR.
+			if strings.Contains(addr, "/") {
+				_, ipnet, err := net.ParseCIDR(addr)
+				if err != nil {
+					return nil, fmt.Errorf("Failed parsing CIDR address %q: %w", addr, err)
+				}
+				ipNets = append(ipNets, *ipnet)
+			} else {
+				// If single IP address, convert to /32 or /128.
+				ip := net.ParseIP(addr)
+				if ip != nil {
+					bits := 32
+					if ip.To4() == nil {
+						bits = 128
+					}
+					mask := net.CIDRMask(bits, bits)
+					ipNets = append(ipNets, net.IPNet{IP: ip, Mask: mask})
+				} else {
+					// If MAC, skip IP sets. OVN address sets currently don't store MAC addresses.
+					// If needed, you'd have separate sets for MAC (not currently supported by OVN).
+					_, errMac := net.ParseMAC(addr)
+					if errMac == nil {
+						// We currently ignore MAC addresses. OVN address sets are primarily for IP addresses.
+						// If future support for MAC sets needed, handle here.
+						continue
+					}
+					return nil, fmt.Errorf("Unsupported address format: %q", addr)
+				}
+			}
+		}
+
+		// If no addresses, we still create empty sets.
+		// First, try deleting old sets and re-creating them cleanly. Or we can just ensure sets exist empty.
+		// We'll just ensure sets are created (even if empty).
+		//
+		// Check if sets exist by trying to update them. If not present, create them.
+		// We'll rely on UpdateAddressSetAdd to create if missing. But per the code, UpdateAddressSetAdd only updates,
+		// so we must attempt a CreateAddressSet if not existing.
+
+		// We attempt a CreateAddressSet only if it doesn't exist. If it fails because it exists, we will ignore and proceed.
+		err = client.CreateAddressSet(context.TODO(), ovn.OVNAddressSet(asInfo.Name))
+		if err != nil && !strings.Contains(err.Error(), "already exists") {
+			// If error is not "exists", fail.
+			if err != ovn.ErrExists {
+				return nil, fmt.Errorf("Failed creating address set %q in OVN: %w", asInfo.Name, err)
+			}
+		}
+
+		// If we have addresses, add them. If not, we ensure empty sets by calling UpdateAddressSetAdd with no addresses,
+		// which will just leave them empty.
+		if len(ipNets) > 0 {
+			err = client.UpdateAddressSetAdd(context.TODO(), ovn.OVNAddressSet(asInfo.Name), ipNets...)
+			if err != nil {
+				return nil, fmt.Errorf("Failed adding addresses to address set %q in OVN: %w", asInfo.Name, err)
+			}
+		} else {
+			// No addresses means ensure empty sets. CreateAddressSet already done above ensures empty sets.
+		}
+	}
 	revert.Success()
 	return nil, nil
 }
@@ -126,4 +157,35 @@ func OVNAddressSetDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB
 
 	l.Debug("Removed unused address set from OVN", logger.Ctx{"project": projectName, "addressSet": setName})
 	return nil
+}
+
+// Return the set of address sets used by given ACLs
+func GetAddressSetForACLs(s *state.State, projectName string, ACLNames []string) ([]string, error) {
+	var projectSetsNames []string
+	var setsNames []string
+	// For every address set in project check if used by acls in given via ACLNames
+	// If so store it in setsNames slice
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		projectSetsNames, err = tx.GetNetworkAddressSets(ctx, projectName)
+
+		return err
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Failed loading address set names for project %q: %w", projectName, err)
+	}
+	// For every address set in project check if used by acls in given via ACLNames
+	// If so store it in setsNames slice
+	for _, setName := range projectSetsNames {
+		err = AddressSetUsedBy(s, projectName, func(aclName string) error {
+			if slices.Contains(ACLNames, aclName) {
+				setsNames = append(setsNames, setName)
+			}
+			return nil
+		}, setName)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to fetch address set %s use", setName)
+		}
+	}
+	return setsNames, nil
 }
