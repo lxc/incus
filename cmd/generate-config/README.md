@@ -4,6 +4,13 @@ A small CLI to parse comments in a Golang codebase meant to be used for a docume
 
 It parses the comments from the AST and extracts their documentation.
 
+## Disclaimer
+
+`generate-config` is intended for internal use within the
+[Incus](https://github.com/lxc/incus) code base. There are no guarantees regarding
+backwards compatibility, API stability, or long-term availability. It may change
+or be removed at any time without prior notice. Use at your own discretion.
+
 ## Usage
 
 ```shell
