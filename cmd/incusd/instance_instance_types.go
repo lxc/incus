@@ -153,7 +153,19 @@ func instanceRefreshTypes(ctx context.Context, s *state.State) error {
 
 	// Set an initial value from the cache
 	if instanceTypes == nil {
-		_ = instanceLoadCache()
+		instanceTypes = map[string]map[string]*instanceType{}
+	}
+
+	if len(instanceTypes) == 0 {
+		err := instanceLoadCache()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Allow disabling instance type download.
+	if util.IsTrue(os.Getenv("INCUS_SKIP_INSTANCE_TYPES")) {
+		return nil
 	}
 
 	// Get the list of instance type sources
