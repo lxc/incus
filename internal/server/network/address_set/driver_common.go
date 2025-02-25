@@ -211,13 +211,14 @@ func (d *common) Update(config *api.NetworkAddressSetPut, clientType request.Cli
 	}
 
 	// Apply address set changes to non-OVN networks on this member.
-	for _, asNet := range asNets {
-		err = FirewallApplyAddressSetRules(d.state, d.logger, d.projectName, asNet)
-		if err != nil {
-			return err
+	if len(asNets) > 0 {
+		for _, asNet := range asNets {
+			err = FirewallApplyAddressSetRules(d.state, d.logger, d.projectName, asNet)
+			if err != nil {
+				return err
+			}
 		}
 	}
-
 	// If there are affected OVN networks, then apply changes if request type is normal.
 	if len(asOVNNets) > 0 && clientType == request.ClientTypeNormal {
 		// Check that OVN is available.
@@ -225,13 +226,8 @@ func (d *common) Update(config *api.NetworkAddressSetPut, clientType request.Cli
 		if err != nil {
 			return err
 		}
-
-		// We may need AddressSetNameIDs if we do referencing in OVN. For ACL we had aclNameIDs.
-		// For address sets, you might not need name->ID mapping if OVN can handle sets by name directly.
-		// If needed, add a similar code block to fetch IDs like done for ACL.
-
 		// Ensure address sets are created or updated in OVN. A function like OVNEnsureAddressSets can be implemented.
-		cleanup, err := OVNEnsureAddressSets(d.state, d.logger, ovnnb, d.projectName, asOVNNets, d.info.Name)
+		cleanup, err := OVNEnsureAddressSets(d.state, d.logger, ovnnb, d.projectName, []string{d.info.Name})
 		if err != nil {
 			return fmt.Errorf("Failed ensuring address set %q is configured in OVN: %w", d.info.Name, err)
 		}
@@ -295,8 +291,6 @@ func (d *common) Rename(newName string) error {
 
 	d.info.Name = newName
 
-	// TODO: lifecycle.NetworkAddressSetRenamed.Event(d, ...)
-
 	return nil
 }
 
@@ -310,9 +304,47 @@ func (d *common) Delete() error {
 		return fmt.Errorf("Cannot delete address set that is in use")
 	}
 
-	return d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		return tx.DeleteNetworkAddressSet(ctx, d.projectName, d.info.Name)
 	})
+	if err != nil {
+		return fmt.Errorf("Error while deleting address set from db")
+	}
+	// Get a list of networks that indirectly reference this Address Set via ACLs.
+	asNets := map[string]AddressSetUsage{}
+	err = AddressSetNetworkUsage(d.state, d.projectName, d.info.Name, d.info.Addresses, asNets)
+	if err != nil {
+		return fmt.Errorf("Failed getting address set network usage: %w", err)
+	}
 
-	// Add logic to remove sets from nft and OVN
+	// Logic to remove sets from nft and OVN
+	// Separate out OVN networks from non-OVN networks for different handling.
+	asOVNNets := map[string]AddressSetUsage{}
+	for k, v := range asNets {
+		if v.Type == "ovn" {
+			delete(asNets, k)
+			asOVNNets[k] = v
+		} else if v.Type != "bridge" {
+			return fmt.Errorf("Unsupported network type %q using address set %q", v.Type, d.info.Name)
+		}
+	}
+	if len(asNets) > 0 {
+		for _, asNet := range asNets {
+			err = FirewallApplyAddressSetRules(d.state, d.logger, d.projectName, asNet)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	if len(asOVNNets) > 0 {
+		ovnnb, _, err := d.state.OVN()
+		if err != nil {
+			return err
+		}
+		err = OVNAddressSetDeleteIfUnused(d.state, d.logger, ovnnb, d.projectName, d.info.Name)
+		if err != nil {
+			return fmt.Errorf("Failed removing unused OVN address sets: %w", err)
+		}
+	}
+	return nil
 }
