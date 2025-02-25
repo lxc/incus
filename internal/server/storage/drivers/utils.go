@@ -24,6 +24,7 @@ import (
 	"github.com/lxc/incus/v6/shared/idmap"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -387,6 +388,34 @@ func ensureVolumeBlockFile(vol Volume, path string, sizeBytes int64, allowUnsafe
 	}
 
 	return false, nil
+}
+
+// enlargeVolumeBlockFile enlarges the raw block file for a volume to the specified size.
+func enlargeVolumeBlockFile(vol Volume, path string) error {
+	if linux.IsBlockdevPath(path) {
+		return nil
+	}
+
+	volSize, err := units.ParseByteSizeString(vol.ConfigSize())
+	if err != nil {
+		return err
+	}
+
+	actualSize, err := BlockDiskSizeBytes(path)
+	if err != nil {
+		return err
+	}
+
+	if volSize < actualSize {
+		return fmt.Errorf("Block volumes cannot be shrunk: %w", ErrCannotBeShrunk)
+	}
+
+	err = ensureSparseFile(path, volSize)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // mkfsOptions represents options for filesystem creation.
