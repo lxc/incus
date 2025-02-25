@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/v6/internal/filter"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/lifecycle"
@@ -54,6 +55,11 @@ var networkPeerCmd = APIEndpoint{
 //      description: Project name
 //      type: string
 //      example: default
+//    - in: query
+//      name: filter
+//      description: Collection filter
+//      type: string
+//      example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -90,47 +96,53 @@ var networkPeerCmd = APIEndpoint{
 
 // swagger:operation GET /1.0/networks/{networkName}/peers?recursion=1 network-peers network_peer_get_recursion1
 //
-//	Get the network peers
+//  Get the network peers
 //
-//	Returns a list of network peers (structs).
+//  Returns a list of network peers (structs).
 //
-//	---
-//	produces:
-//	  - application/json
-//	parameters:
-//	  - in: query
-//	    name: project
-//	    description: Project name
-//	    type: string
-//	    example: default
-//	responses:
-//	  "200":
-//	    description: API endpoints
-//	    schema:
-//	      type: object
-//	      description: Sync response
-//	      properties:
-//	        type:
-//	          type: string
-//	          description: Response type
-//	          example: sync
-//	        status:
-//	          type: string
-//	          description: Status description
-//	          example: Success
-//	        status_code:
-//	          type: integer
-//	          description: Status code
-//	          example: 200
-//	        metadata:
-//	          type: array
-//	          description: List of network peers
-//	          items:
-//	            $ref: "#/definitions/NetworkPeer"
-//	  "403":
-//	    $ref: "#/responses/Forbidden"
-//	  "500":
-//	    $ref: "#/responses/InternalServerError"
+//  ---
+//  produces:
+//    - application/json
+//  parameters:
+//    - in: query
+//      name: project
+//      description: Project name
+//      type: string
+//      example: default
+//    - in: query
+//      name: filter
+//      description: Collection filter
+//      type: string
+//      example: default
+//  responses:
+//    "200":
+//      description: API endpoints
+//      schema:
+//        type: object
+//        description: Sync response
+//        properties:
+//          type:
+//            type: string
+//            description: Response type
+//            example: sync
+//          status:
+//            type: string
+//            description: Status description
+//            example: Success
+//          status_code:
+//            type: integer
+//            description: Status code
+//            example: 200
+//          metadata:
+//            type: array
+//            description: List of network peers
+//            items:
+//              $ref: "#/definitions/NetworkPeer"
+//    "403":
+//      $ref: "#/responses/Forbidden"
+//    "500":
+//      $ref: "#/responses/InternalServerError"
+
 func networkPeersGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
@@ -158,11 +170,25 @@ func networkPeersGet(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Network driver %q does not support peering", n.Type()))
 	}
 
-	if localUtil.IsRecursionRequest(r) {
-		var records map[int64]*api.NetworkPeer
+	recursion := localUtil.IsRecursionRequest(r)
+
+	// Parse filter value.
+	filterStr := r.FormValue("filter")
+	clauses, err := filter.Parse(filterStr, filter.QueryOperatorSet())
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid filter: %w", err))
+	}
+
+	mustLoadObjects := recursion || (clauses != nil && len(clauses.Clauses) > 0)
+
+	fullResults := make([]api.NetworkPeer, 0)
+	linkResults := make([]string, 0)
+
+	if mustLoadObjects {
+		var peers map[int64]*api.NetworkPeer
 
 		err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			records, err = tx.GetNetworkPeers(ctx, n.ID())
+			peers, err = tx.GetNetworkPeers(ctx, n.ID())
 
 			return err
 		})
@@ -170,32 +196,45 @@ func networkPeersGet(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(fmt.Errorf("Failed loading network peers: %w", err))
 		}
 
-		peers := make([]*api.NetworkPeer, 0, len(records))
-		for _, record := range records {
-			record.UsedBy, _ = n.PeerUsedBy(record.Name)
-			peers = append(peers, record)
+		for _, peer := range peers {
+			peer.UsedBy, _ = n.PeerUsedBy(peer.Name)
+
+			if clauses != nil && len(clauses.Clauses) > 0 {
+				match, err := filter.Match(*peer, *clauses)
+				if err != nil {
+					return response.SmartError(err)
+				}
+
+				if !match {
+					continue
+				}
+			}
+
+			fullResults = append(fullResults, *peer)
+			linkResults = append(linkResults, fmt.Sprintf("/%s/networks/%s/peers/%s", version.APIVersion, url.PathEscape(n.Name()), url.PathEscape(peer.Name)))
+		}
+	} else {
+		var peerNames map[int64]string
+
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			peerNames, err = tx.GetNetworkPeerNames(ctx, n.ID())
+
+			return err
+		})
+		if err != nil {
+			return response.SmartError(fmt.Errorf("Failed loading network peers: %w", err))
 		}
 
-		return response.SyncResponse(true, peers)
+		for _, peerName := range peerNames {
+			linkResults = append(linkResults, fmt.Sprintf("/%s/networks/%s/peers/%s", version.APIVersion, url.PathEscape(n.Name()), url.PathEscape(peerName)))
+		}
 	}
 
-	var peerNames map[int64]string
-
-	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		peerNames, err = tx.GetNetworkPeerNames(ctx, n.ID())
-
-		return err
-	})
-	if err != nil {
-		return response.SmartError(fmt.Errorf("Failed loading network peers: %w", err))
+	if recursion {
+		return response.SyncResponse(true, fullResults)
 	}
 
-	peerURLs := make([]string, 0, len(peerNames))
-	for _, peerName := range peerNames {
-		peerURLs = append(peerURLs, fmt.Sprintf("/%s/networks/%s/peers/%s", version.APIVersion, url.PathEscape(n.Name()), url.PathEscape(peerName)))
-	}
-
-	return response.SyncResponse(true, peerURLs)
+	return response.SyncResponse(true, linkResults)
 }
 
 // swagger:operation POST /1.0/networks/{networkName}/peers network-peers network_peers_post
