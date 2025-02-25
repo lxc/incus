@@ -3,6 +3,7 @@ package drivers
 import (
 	"fmt"
 	"path/filepath"
+	"encoding/json"
 	"strings"
 
 	"github.com/google/uuid"
@@ -411,6 +412,64 @@ func (d *truenas) getDatasetProperty(dataset string, key string) (string, error)
 	}
 
 	return strings.TrimSpace(output), nil
+}
+
+func (d *truenas) getDatasetProperties(dataset string, properties []string) (map[string]string, error) {
+	response, err := d.getDatasetsAndProperties([]string{dataset}, properties)
+	if err != nil {
+		return nil, err
+	}
+	if result, exists := response[dataset]; exists {
+		return result, nil
+	}
+	return nil, nil
+}
+
+func (d *truenas) getDatasetsAndProperties(datasets []string, properties []string) (map[string]map[string]string, error) {
+	propsStr := strings.Join(properties, ",")
+	out, err := d.runTool(append([]string{"list", "-j", "-p", "-o", propsStr}, datasets...)...)
+	if err != nil {
+		return nil, err
+	}
+
+	var response interface{}
+	if err = json.Unmarshal([]byte(out), &response); err != nil {
+		return nil, err
+	}
+
+	var resultsMap map[string]interface{}
+	if responseMap, ok := response.(map[string]interface{}); ok {
+		for _, v := range responseMap {
+			if r, ok := v.(map[string]interface{}); ok {
+				resultsMap = r
+				break
+			}
+		}
+	}
+	if resultsMap == nil {
+		return nil, fmt.Errorf("Could not find object inside list --json response")
+	}
+
+	objectsAsMap := make(map[string]bool)
+	for _, obj := range datasets {
+		objectsAsMap[obj] = true
+	}
+
+	outMap := make(map[string]map[string]string)
+	for k, result := range resultsMap {
+		if _, exists := objectsAsMap[k]; !exists {
+			continue
+		}
+		if r, ok := result.(map[string]interface{}); ok {
+			formattedMap := make(map[string]string)
+			for p, v := range r {
+				formattedMap[p] = fmt.Sprint(v)
+			}
+			outMap[k] = formattedMap
+		}
+	}
+
+	return outMap, nil
 }
 
 // same as renameDataset, except that there's no point updating shares on a snapshot rename
