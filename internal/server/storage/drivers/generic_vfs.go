@@ -392,6 +392,14 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 				if err != nil {
 					return err
 				}
+
+				// During migration (e.g., LVM → dir), the block file may be smaller because
+				// recvBlockVol uses SparseFileWrapper, which omits trailing zero bytes and does not truncate.
+				// enlargeVolumeBlockFile ensures the block file matches the source volume size by applying truncation.
+				err = enlargeVolumeBlockFile(snapVol, pathBlock)
+				if err != nil {
+					return err
+				}
 			}
 
 			// Create the snapshot itself.
@@ -442,6 +450,14 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 		// Receive the block volume next (if needed).
 		if vol.IsVMBlock() || (IsContentBlock(vol.contentType) && vol.volType == VolumeTypeCustom) {
 			err = recvBlockVol(vol.name, conn, pathBlock)
+			if err != nil {
+				return err
+			}
+
+			// During migration (e.g., LVM → dir), the block file may be smaller because
+			// recvBlockVol uses SparseFileWrapper, which omits trailing zero bytes and does not truncate.
+			// enlargeVolumeBlockFile ensures the block file matches the source volume size by applying truncation.
+			err = enlargeVolumeBlockFile(vol, pathBlock)
 			if err != nil {
 				return err
 			}
