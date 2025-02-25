@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/v6/internal/filter"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/v6/internal/server/cluster/request"
 	"github.com/lxc/incus/v6/internal/server/db"
@@ -61,6 +62,11 @@ var networkLoadBalancerStateCmd = APIEndpoint{
 //      description: Project name
 //      type: string
 //      example: default
+//    - in: query
+//      name: filter
+//      description: Collection filter
+//      type: string
+//      example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -97,47 +103,53 @@ var networkLoadBalancerStateCmd = APIEndpoint{
 
 // swagger:operation GET /1.0/networks/{networkName}/load-balancers?recursion=1 network-load-balancers network_load_balancer_get_recursion1
 //
-//	Get the network address load balancers
+//  Get the network address load balancers
 //
-//	Returns a list of network address load balancers (structs).
+//  Returns a list of network address load balancers (structs).
 //
-//	---
-//	produces:
-//	  - application/json
-//	parameters:
-//	  - in: query
-//	    name: project
-//	    description: Project name
-//	    type: string
-//	    example: default
-//	responses:
-//	  "200":
-//	    description: API endpoints
-//	    schema:
-//	      type: object
-//	      description: Sync response
-//	      properties:
-//	        type:
-//	          type: string
-//	          description: Response type
-//	          example: sync
-//	        status:
-//	          type: string
-//	          description: Status description
-//	          example: Success
-//	        status_code:
-//	          type: integer
-//	          description: Status code
-//	          example: 200
-//	        metadata:
-//	          type: array
-//	          description: List of network address load balancers
-//	          items:
-//	            $ref: "#/definitions/NetworkLoadBalancer"
-//	  "403":
-//	    $ref: "#/responses/Forbidden"
-//	  "500":
-//	    $ref: "#/responses/InternalServerError"
+//  ---
+//  produces:
+//    - application/json
+//  parameters:
+//    - in: query
+//      name: project
+//      description: Project name
+//      type: string
+//      example: default
+//    - in: query
+//      name: filter
+//      description: Collection filter
+//      type: string
+//      example: default
+//  responses:
+//    "200":
+//      description: API endpoints
+//      schema:
+//        type: object
+//        description: Sync response
+//        properties:
+//          type:
+//            type: string
+//            description: Response type
+//            example: sync
+//          status:
+//            type: string
+//            description: Status description
+//            example: Success
+//          status_code:
+//            type: integer
+//            description: Status code
+//            example: 200
+//          metadata:
+//            type: array
+//            description: List of network address load balancers
+//            items:
+//              $ref: "#/definitions/NetworkLoadBalancer"
+//    "403":
+//      $ref: "#/responses/Forbidden"
+//    "500":
+//      $ref: "#/responses/InternalServerError"
+
 func networkLoadBalancersGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
@@ -167,7 +179,21 @@ func networkLoadBalancersGet(d *Daemon, r *http.Request) response.Response {
 
 	memberSpecific := false // Get load balancers for all cluster members.
 
-	if localUtil.IsRecursionRequest(r) {
+	recursion := localUtil.IsRecursionRequest(r)
+
+	// Parse filter value.
+	filterStr := r.FormValue("filter")
+	clauses, err := filter.Parse(filterStr, filter.QueryOperatorSet())
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid filter: %w", err))
+	}
+
+	mustLoadObjects := recursion || (clauses != nil && len(clauses.Clauses) > 0)
+
+	fullResults := make([]api.NetworkLoadBalancer, 0)
+	linkResults := make([]string, 0)
+
+	if mustLoadObjects {
 		var records map[int64]*api.NetworkLoadBalancer
 
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -179,32 +205,45 @@ func networkLoadBalancersGet(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(fmt.Errorf("Failed loading network load balancers: %w", err))
 		}
 
-		loadBalancers := make([]*api.NetworkLoadBalancer, 0, len(records))
 		for _, record := range records {
-			loadBalancers = append(loadBalancers, record)
+			if clauses != nil && len(clauses.Clauses) > 0 {
+				match, err := filter.Match(*record, *clauses)
+				if err != nil {
+					return response.SmartError(err)
+				}
+
+				if !match {
+					continue
+				}
+			}
+
+			fullResults = append(fullResults, *record)
+			u := api.NewURL().Path(version.APIVersion, "networks", n.Name(), "load-balancers", record.ListenAddress)
+			linkResults = append(linkResults, u.String())
+		}
+	} else {
+		var listenAddresses map[int64]string
+
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			listenAddresses, err = tx.GetNetworkLoadBalancerListenAddresses(ctx, n.ID(), memberSpecific)
+
+			return err
+		})
+		if err != nil {
+			return response.SmartError(fmt.Errorf("Failed loading network load balancers: %w", err))
 		}
 
-		return response.SyncResponse(true, loadBalancers)
+		for _, listenAddress := range listenAddresses {
+			u := api.NewURL().Path(version.APIVersion, "networks", n.Name(), "load-balancers", listenAddress)
+			linkResults = append(linkResults, u.String())
+		}
 	}
 
-	var listenAddresses map[int64]string
-
-	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		listenAddresses, err = tx.GetNetworkLoadBalancerListenAddresses(ctx, n.ID(), memberSpecific)
-
-		return err
-	})
-	if err != nil {
-		return response.SmartError(fmt.Errorf("Failed loading network load balancers: %w", err))
+	if recursion {
+		return response.SyncResponse(true, fullResults)
 	}
 
-	loadBalancerURLs := make([]string, 0, len(listenAddresses))
-	for _, listenAddress := range listenAddresses {
-		u := api.NewURL().Path(version.APIVersion, "networks", n.Name(), "load-balancers", listenAddress)
-		loadBalancerURLs = append(loadBalancerURLs, u.String())
-	}
-
-	return response.SyncResponse(true, loadBalancerURLs)
+	return response.SyncResponse(true, linkResults)
 }
 
 // swagger:operation POST /1.0/networks/{networkName}/load-balancers network-load-balancers network_load_balancers_post
