@@ -994,8 +994,8 @@ func (d Nftables) buildRemainingRuleParts(rule *ACLRule, ipVersion uint) (string
 			// with at least some subjects in the same family as ipVersion. So if the icmpIPVersion
 			// doesn't match the ipVersion then it means the rule contains mixed-version subjects
 			// which is invalid when using an IP version specific ICMP protocol.
-			if rule.Source != "" || rule.Destination != "" {
-				return "", fmt.Errorf("Invalid use of %q protocol with non-IPv%d source/destination criteria", rule.Protocol, ipVersion)
+			if (rule.Source != "" || rule.Destination != "") && !(strings.Contains(rule.Source, "$") || strings.Contains(rule.Destination, "$")) {
+				return "", fmt.Errorf("Invalid use of %q protocol with non-IPv%d source/destination criteria\nDEBUG: %s  - %s", rule.Protocol, ipVersion, rule.Source, rule.Destination)
 			}
 
 			// Otherwise it means this is just a blanket ICMP rule and is only appropriate for use
@@ -1050,8 +1050,9 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 
 	// Process source criteria if present.
 	if rule.Source != "" {
-
-		frags, _, err := d.aclRuleSubjectToACLMatch("saddr", ipVersion, util.SplitNTrimSpace(rule.Source, ",", -1, false)...)
+		var err error
+		var frags []string
+		frags, overallPartial, err = d.aclRuleSubjectToACLMatch("saddr", ipVersion, util.SplitNTrimSpace(rule.Source, ",", -1, false)...)
 		if err != nil {
 			return nil, false, err
 		}
@@ -1061,6 +1062,8 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 			// For each fragment generated from the source criteria,
 			// start a new rule fragment beginning with the base arguments.
 			for _, frag := range frags {
+				// if fragment contain IP address sets of different family than icmp drop fragment
+				// This is ok for icmp only as we may apply both ipv4 and ipv6 restriction in match field for tcp/udp
 				ruleFragments = append(ruleFragments, append(append([]string{}, baseArgs...), frag))
 			}
 		}
@@ -1068,7 +1071,9 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 
 	// Process destination criteria if present.
 	if rule.Destination != "" {
-		frags, _, err := d.aclRuleSubjectToACLMatch("daddr", ipVersion, util.SplitNTrimSpace(rule.Destination, ",", -1, false)...)
+		var err error
+		var frags []string
+		frags, overallPartial, err = d.aclRuleSubjectToACLMatch("daddr", ipVersion, util.SplitNTrimSpace(rule.Destination, ",", -1, false)...)
 		if err != nil {
 			return nil, false, err
 		}
@@ -1115,7 +1120,6 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 		ruleStrings = append(ruleStrings, strings.Join(frag, " "))
 	}
 
-	// Ensure we don't return an empty rule.
 	if len(ruleStrings) == 0 {
 		return nil, overallPartial, fmt.Errorf("Invalid empty rule generated")
 	}
