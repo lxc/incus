@@ -32,6 +32,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/ip"
 	"github.com/lxc/incus/v6/internal/server/locking"
 	"github.com/lxc/incus/v6/internal/server/network/acl"
+	"github.com/lxc/incus/v6/internal/server/network/address_set"
 	networkOVN "github.com/lxc/incus/v6/internal/server/network/ovn"
 	ovnSB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-sb"
 	"github.com/lxc/incus/v6/internal/server/network/ovs"
@@ -2766,6 +2767,13 @@ func (n *ovn) setup(update bool) error {
 
 	// Ensure any network assigned security ACL port groups are created ready for instance NICs to use.
 	securityACLS := util.SplitNTrimSpace(n.config["security.acls"], ",", -1, true)
+	// Load address sets referenced by ACLs
+	cleanup, err := address_set.OVNEnsureAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), securityACLS)
+	if err != nil {
+		return fmt.Errorf("Failed ensuring security ACLs are configured in OVN for network: %w", err)
+	}
+	revert.Add(cleanup)
+
 	if len(securityACLS) > 0 {
 		var aclNameIDs map[string]int64
 
@@ -3003,6 +3011,14 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 		err = n.ovnnb.DeleteAddressSet(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()))
 		if err != nil && err != networkOVN.ErrNotFound {
 			return err
+		}
+
+		// Delete address sets used in ACLs
+		securityACLS := util.SplitNTrimSpace(n.config["security.acls"], ",", -1, true)
+		// Load address sets referenced by ACLs
+		err = address_set.OVNDeleteAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), securityACLS)
+		if err != nil {
+			return fmt.Errorf("Failed ensuring security ACLs are configured in OVN for network: %w", err)
 		}
 
 		// Delete the chassis group for the network.
@@ -3403,7 +3419,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		delete(newNetwork.Config, ovnVolatileUplinkIPv6)
 	}
 
-	// Apply changes to all nodes and databse.
+	// Apply changes to all nodes and database.
 	err = n.common.update(newNetwork, targetNode, clientType)
 	if err != nil {
 		return err
@@ -3481,6 +3497,18 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 
 			// Apply security ACL and default rule changes.
 			if aclConfigChanged {
+
+				// Update relevant address sets and Remove from removedACL
+				cleanup, err := address_set.OVNEnsureAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), addedACLs)
+				if err != nil {
+					return fmt.Errorf("Failed ensuring security ACLs are configured in OVN for network: %w", err)
+				}
+				revert.Add(cleanup)
+				err = address_set.OVNDeleteAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), removedACLs)
+				if err != nil {
+					return fmt.Errorf("Failed ensuring security ACLs are configured in OVN for network: %w", err)
+				}
+
 				// Check whether we need to add any of the new ACLs to the NIC.
 				for _, addedACL := range addedACLs {
 					if slices.Contains(nicACLs, addedACL) {
