@@ -10,6 +10,13 @@ go structs and variables. We use `generate-database` for the majority of our
 SQL statements and database interactions on the `go` side for consistency and
 predictability.
 
+## Disclaimer
+
+`generate-database` is intended for internal use within the
+[Incus](https://github.com/lxc/incus) code base. There are no guarantees regarding
+backwards compatibility, API stability, or long-term availability. It may change
+or be removed at any time without prior notice. Use at your own discretion.
+
 ## Usage
 
 ### Initialization
