@@ -39,9 +39,9 @@ func NewMethod(parsedPkg *packages.Package, entity, kind string, config map[stri
 
 // Generate the desired method.
 func (m *Method) Generate(buf *file.Buffer) error {
-	mapping, err := Parse(m.pkg, lex.Camel(m.entity), m.kind)
+	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
-		return fmt.Errorf("Unable to parse go struct %q: %w", lex.Camel(m.entity), err)
+		return fmt.Errorf("Unable to parse go struct %q: %w", lex.PascalCase(m.entity), err)
 	}
 
 	if mapping.Type != EntityTable {
@@ -88,8 +88,8 @@ func (m *Method) Generate(buf *file.Buffer) error {
 // GenerateSignature generates an interface signature for the method.
 func (m *Method) GenerateSignature(buf *file.Buffer) error {
 	buf.N()
-	buf.L("// %sGenerated is an interface of generated methods for %s.", lex.Camel(m.entity), lex.Camel(m.entity))
-	buf.L("type %sGenerated interface {", lex.Camel(m.entity))
+	buf.L("// %sGenerated is an interface of generated methods for %s.", lex.PascalCase(m.entity), lex.PascalCase(m.entity))
+	buf.L("type %sGenerated interface {", lex.PascalCase(m.entity))
 	defer m.end(buf)
 	if m.config["references"] != "" {
 		refFields := strings.Split(m.config["references"], ",")
@@ -109,7 +109,7 @@ func (m *Method) GenerateSignature(buf *file.Buffer) error {
 }
 
 func (m *Method) getMany(buf *file.Buffer) error {
-	mapping, err := Parse(m.pkg, lex.Camel(m.entity), m.kind)
+	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -132,7 +132,7 @@ func (m *Method) getMany(buf *file.Buffer) error {
 	}
 
 	// Go type name the objects to return (e.g. api.Foo).
-	typ := lex.Camel(m.entity)
+	typ := lex.PascalCase(m.entity)
 
 	err = m.signature(buf, false)
 	if err != nil {
@@ -184,7 +184,7 @@ func (m *Method) getMany(buf *file.Buffer) error {
 			}
 
 			buf.L("if filter.%s != nil {", filter.Name)
-			buf.L("entries = append(entries, \"%s = ?\")", lex.Snake(filter.Name))
+			buf.L("entries = append(entries, \"%s = ?\")", lex.SnakeCase(filter.Name))
 			buf.L("args = append(args, filter.%s)", filter.Name)
 			buf.L("}")
 			buf.N()
@@ -319,7 +319,7 @@ func (m *Method) getMany(buf *file.Buffer) error {
 			buf.L("%sURIs, err := Get%sURIs(%sFilter{ID: &refID})", refVar, refStruct, refStruct)
 			m.ifErrNotNil(buf, true, "nil", "err")
 			if field.Config.Get("uri") == "" {
-				uriName := strings.ReplaceAll(lex.Snake(refSlice), "_", "-")
+				uriName := strings.ReplaceAll(lex.SnakeCase(refSlice), "_", "-")
 				buf.L("uris, err := urlsToResourceNames(\"/%s\", %sURIs...)", uriName, refVar)
 				m.ifErrNotNil(buf, true, "nil", "err")
 				buf.L("%sURIs = uris", refVar)
@@ -460,8 +460,8 @@ func (m *Method) getRefs(buf *file.Buffer, refMapping *Mapping) error {
 	refStruct := refMapping.Name
 	refVar := lex.Minuscule(refStruct)
 	refList := lex.Plural(refVar)
-	refParent := lex.Minuscule(lex.Camel(m.entity))
-	refParentList := refParent + lex.Camel(refList)
+	refParent := lex.CamelCase(m.entity)
+	refParentList := refParent + lex.PascalCase(refList)
 
 	switch refMapping.Type {
 	case ReferenceTable:
@@ -493,7 +493,7 @@ func (m *Method) getRefs(buf *file.Buffer, refMapping *Mapping) error {
 }
 
 func (m *Method) getOne(buf *file.Buffer) error {
-	mapping, err := Parse(m.pkg, lex.Camel(m.entity), m.kind)
+	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -518,7 +518,7 @@ func (m *Method) getOne(buf *file.Buffer) error {
 	}
 
 	buf.N()
-	buf.L("objects, err := Get%s(ctx, tx, filter)", lex.Plural(lex.Camel(m.entity)))
+	buf.L("objects, err := Get%s(ctx, tx, filter)", lex.Plural(lex.PascalCase(m.entity)))
 	if mapping.Type == ReferenceTable || mapping.Type == MapTable {
 		m.ifErrNotNil(buf, true, "nil", fmt.Sprintf(`fmt.Errorf("Failed to fetch from \"%%s_%s\" table: %%w", parent, err)`, entityTable(m.entity, m.config["table"])))
 	} else {
@@ -541,7 +541,7 @@ func (m *Method) id(buf *file.Buffer) error {
 	// Support using a different structure or package to pass arguments to Create.
 	entityCreate, ok := m.config["struct"]
 	if !ok {
-		entityCreate = lex.Camel(m.entity)
+		entityCreate = lex.PascalCase(m.entity)
 	}
 
 	mapping, err := Parse(m.pkg, entityCreate, m.kind)
@@ -586,7 +586,7 @@ func (m *Method) exists(buf *file.Buffer) error {
 	// Support using a different structure or package to pass arguments to Create.
 	entityCreate, ok := m.config["struct"]
 	if !ok {
-		entityCreate = lex.Camel(m.entity)
+		entityCreate = lex.PascalCase(m.entity)
 	}
 
 	mapping, err := Parse(m.pkg, entityCreate, m.kind)
@@ -629,7 +629,7 @@ func (m *Method) exists(buf *file.Buffer) error {
 }
 
 func (m *Method) create(buf *file.Buffer, replace bool) error {
-	mapping, err := Parse(m.pkg, lex.Camel(m.entity), m.kind)
+	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -707,7 +707,7 @@ func (m *Method) create(buf *file.Buffer, replace bool) error {
 				kind = "create_or_replace"
 			} else {
 				buf.L("// Check if a %s with the same key exists.", m.entity)
-				buf.L("exists, err := %sExists(ctx, tx, %s)", lex.Camel(m.entity), strings.Join(nkParams, ", "))
+				buf.L("exists, err := %sExists(ctx, tx, %s)", lex.PascalCase(m.entity), strings.Join(nkParams, ", "))
 				m.ifErrNotNil(buf, true, "-1", "fmt.Errorf(\"Failed to check for duplicates: %w\", err)")
 				buf.L("if exists {")
 				buf.L(`        return -1, ErrConflict`)
@@ -828,7 +828,7 @@ func (m *Method) createRefs(buf *file.Buffer, refMapping *Mapping) error {
 
 	refStruct := refMapping.Name
 	refVar := lex.Minuscule(refStruct)
-	refParent := lex.Minuscule(lex.Camel(m.entity))
+	refParent := lex.CamelCase(m.entity)
 
 	switch refMapping.Type {
 	case ReferenceTable:
@@ -838,7 +838,7 @@ func (m *Method) createRefs(buf *file.Buffer, refMapping *Mapping) error {
 		buf.L("}")
 		buf.N()
 		buf.L("err := Create%s(ctx, tx, \"%s\", %s)", lex.Plural(refStruct), m.entity, lex.Plural(refVar))
-		m.ifErrNotNil(buf, false, fmt.Sprintf("fmt.Errorf(\"Insert %s failed for %s: %%w\", err)", refStruct, lex.Camel(m.entity)))
+		m.ifErrNotNil(buf, false, fmt.Sprintf("fmt.Errorf(\"Insert %s failed for %s: %%w\", err)", refStruct, lex.PascalCase(m.entity)))
 	case MapTable:
 		buf.L("referenceID := int(%sID)", refParent)
 		buf.L("for key, value := range %s {", refVar)
@@ -850,7 +850,7 @@ func (m *Method) createRefs(buf *file.Buffer, refMapping *Mapping) error {
 		buf.L("}")
 		buf.N()
 		buf.L("err := Create%s(ctx, tx, \"%s\", insert)", refStruct, m.entity)
-		m.ifErrNotNil(buf, true, fmt.Sprintf("fmt.Errorf(\"Insert %s failed for %s: %%w\", err)", refStruct, lex.Camel(m.entity)))
+		m.ifErrNotNil(buf, true, fmt.Sprintf("fmt.Errorf(\"Insert %s failed for %s: %%w\", err)", refStruct, lex.PascalCase(m.entity)))
 		buf.L("}")
 	}
 
@@ -861,7 +861,7 @@ func (m *Method) createRefs(buf *file.Buffer, refMapping *Mapping) error {
 }
 
 func (m *Method) rename(buf *file.Buffer) error {
-	mapping, err := Parse(m.pkg, lex.Camel(m.entity), m.kind)
+	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -900,7 +900,7 @@ func (m *Method) rename(buf *file.Buffer) error {
 }
 
 func (m *Method) update(buf *file.Buffer) error {
-	mapping, err := Parse(m.pkg, lex.Camel(m.entity), m.kind)
+	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -957,7 +957,7 @@ func (m *Method) update(buf *file.Buffer) error {
 		m.ifErrNotNil(buf, true, "err")
 	case ReferenceTable:
 		buf.L("// Delete current entry.")
-		buf.L("err := Delete%s(ctx, tx, parent, referenceID)", lex.Camel(lex.Plural(m.entity)))
+		buf.L("err := Delete%s(ctx, tx, parent, referenceID)", lex.PascalCase(lex.Plural(m.entity)))
 		m.ifErrNotNil(buf, true, "err")
 		buf.L("// Insert new entries.")
 		buf.L("for key, object := range %s {", lex.Plural(m.entity))
@@ -965,11 +965,11 @@ func (m *Method) update(buf *file.Buffer) error {
 		buf.L("%s[key] = object", lex.Plural(m.entity))
 		buf.L("}")
 		buf.N()
-		buf.L("err = Create%s(ctx, tx, parent, %s)", lex.Camel(lex.Plural(m.entity)), lex.Plural(m.entity))
+		buf.L("err = Create%s(ctx, tx, parent, %s)", lex.PascalCase(lex.Plural(m.entity)), lex.Plural(m.entity))
 		m.ifErrNotNil(buf, true, "err")
 	case MapTable:
 		buf.L("// Delete current entry.")
-		buf.L("err := Delete%s(ctx, tx, parent, referenceID)", lex.Camel(lex.Plural(m.entity)))
+		buf.L("err := Delete%s(ctx, tx, parent, referenceID)", lex.PascalCase(lex.Plural(m.entity)))
 		m.ifErrNotNil(buf, true, "err")
 		buf.L("// Insert new entries.")
 		buf.L("for key, value := range config {")
@@ -980,7 +980,7 @@ func (m *Method) update(buf *file.Buffer) error {
 
 		buf.L("}")
 		buf.N()
-		buf.L("err = Create%s(ctx, tx, parent, object)", lex.Camel(m.entity))
+		buf.L("err = Create%s(ctx, tx, parent, object)", lex.PascalCase(m.entity))
 		m.ifErrNotNil(buf, false, "err")
 		buf.L("}")
 		buf.N()
@@ -990,7 +990,7 @@ func (m *Method) update(buf *file.Buffer) error {
 			return fmt.Errorf("Parse entity struct: %w", err)
 		}
 
-		buf.L("id, err := Get%sID(ctx, tx, %s)", lex.Camel(m.entity), mapping.FieldParams(nk))
+		buf.L("id, err := Get%sID(ctx, tx, %s)", lex.PascalCase(m.entity), mapping.FieldParams(nk))
 		m.ifErrNotNil(buf, true, "err")
 		buf.L("stmt, err := Stmt(tx, %s)", stmtCodeVar(m.entity, "update"))
 
@@ -1067,17 +1067,17 @@ func (m *Method) updateRefs(buf *file.Buffer, refMapping *Mapping) error {
 	refStruct := refMapping.Name
 	refVar := lex.Minuscule(refStruct)
 	refList := lex.Plural(refVar)
-	refParent := lex.Minuscule(lex.Camel(m.entity))
+	refParent := lex.CamelCase(m.entity)
 
 	buf.L("err := Update%s(ctx, tx, \"%s\", int(%sID), %s)", lex.Plural(refStruct), m.entity, refParent, refList)
-	m.ifErrNotNil(buf, true, fmt.Sprintf("fmt.Errorf(\"Replace %s for %s failed: %%w\", err)", refStruct, lex.Camel(m.entity)))
+	m.ifErrNotNil(buf, true, fmt.Sprintf("fmt.Errorf(\"Replace %s for %s failed: %%w\", err)", refStruct, lex.PascalCase(m.entity)))
 	buf.L("return nil")
 
 	return nil
 }
 
 func (m *Method) delete(buf *file.Buffer, deleteOne bool) error {
-	mapping, err := Parse(m.pkg, lex.Camel(m.entity), m.kind)
+	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -1133,7 +1133,7 @@ func (m *Method) delete(buf *file.Buffer, deleteOne bool) error {
 		buf.L("if n == 0 {")
 		buf.L(`        return ErrNotFound`)
 		buf.L("} else if n > 1 {")
-		buf.L("        return fmt.Errorf(\"Query deleted %%d %s rows instead of 1\", n)", lex.Camel(m.entity))
+		buf.L("        return fmt.Errorf(\"Query deleted %%d %s rows instead of 1\", n)", lex.PascalCase(m.entity))
 		buf.L("}")
 	}
 
@@ -1144,7 +1144,7 @@ func (m *Method) delete(buf *file.Buffer, deleteOne bool) error {
 
 // signature generates a method or interface signature with comments, arguments, and return values.
 func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
-	mapping, err := Parse(m.pkg, lex.Camel(m.entity), m.kind)
+	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -1242,7 +1242,7 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 			if m.ref == "" {
 				comment = fmt.Sprintf("returns all available %s.", lex.Plural(m.entity))
 				args += fmt.Sprintf("filters ...%s", entityFilter(m.entity))
-				rets = fmt.Sprintf("(_ %s, _err error)", lex.Slice(lex.Camel(m.entity)))
+				rets = fmt.Sprintf("(_ %s, _err error)", lex.Slice(lex.PascalCase(m.entity)))
 			} else {
 				comment = fmt.Sprintf("returns all available %s %s", mapping.Name, lex.Plural(m.ref))
 				args += fmt.Sprintf("%sID int, filters ...%s", lex.Minuscule(mapping.Name), entityFilter(m.ref))
@@ -1265,7 +1265,7 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 		case "GetOne":
 			comment = fmt.Sprintf("returns the %s with the given key.", m.entity)
 			args += mapping.FieldArgs(mapping.NaturalKey())
-			rets = fmt.Sprintf("(_ %s, _err error)", lex.Star(lex.Camel(m.entity)))
+			rets = fmt.Sprintf("(_ %s, _err error)", lex.Star(lex.PascalCase(m.entity)))
 		case "ID":
 			comment = fmt.Sprintf("return the ID of the %s with the given key.", m.entity)
 			args += mapping.FieldArgs(mapping.NaturalKey())
@@ -1282,7 +1282,7 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 				}
 
 				comment = fmt.Sprintf("adds a new %s to the database.", m.entity)
-				args += fmt.Sprintf("object %s", lex.Camel(entityCreate))
+				args += fmt.Sprintf("object %s", lex.PascalCase(entityCreate))
 				rets = "(_ int64, _err error)"
 			} else {
 				comment = fmt.Sprintf("adds new %s %s to the database.", m.entity, lex.Plural(m.ref))
@@ -1295,9 +1295,9 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 
 				switch refMapping.Type {
 				case ReferenceTable:
-					args += fmt.Sprintf("%sID int64, %s map[%s]%s", lex.Minuscule(lex.Camel(m.entity)), lex.Plural(lex.Minuscule(m.ref)), refMapping.Identifier().Type.Name, m.ref)
+					args += fmt.Sprintf("%sID int64, %s map[%s]%s", lex.CamelCase(m.entity), lex.Plural(lex.Minuscule(m.ref)), refMapping.Identifier().Type.Name, m.ref)
 				case MapTable:
-					args += fmt.Sprintf("%sID int64, %s map[string]string", lex.Minuscule(lex.Camel(m.entity)), lex.Minuscule(m.ref))
+					args += fmt.Sprintf("%sID int64, %s map[string]string", lex.CamelCase(m.entity), lex.Minuscule(m.ref))
 				}
 			}
 		case "CreateOrReplace":
@@ -1307,7 +1307,7 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 			}
 
 			comment = fmt.Sprintf("adds a new %s to the database.", m.entity)
-			args += fmt.Sprintf("object %s", lex.Camel(entityCreate))
+			args += fmt.Sprintf("object %s", lex.PascalCase(entityCreate))
 			rets = "(_ int64, _err error)"
 		case "Rename":
 			comment = fmt.Sprintf("renames the %s matching the given key parameters.", m.entity)
@@ -1321,7 +1321,7 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 				}
 
 				comment = fmt.Sprintf("updates the %s matching the given key parameters.", m.entity)
-				args += mapping.FieldArgs(mapping.NaturalKey(), fmt.Sprintf("object %s", lex.Camel(entityUpdate)))
+				args += mapping.FieldArgs(mapping.NaturalKey(), fmt.Sprintf("object %s", lex.PascalCase(entityUpdate)))
 				rets = "(_err error)"
 			} else {
 				comment = fmt.Sprintf("updates the %s %s matching the given key parameters.", m.entity, m.ref)
@@ -1334,9 +1334,9 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 
 				switch refMapping.Type {
 				case ReferenceTable:
-					args += fmt.Sprintf("%sID int64, %s map[%s]%s", lex.Minuscule(lex.Camel(m.entity)), lex.Minuscule(lex.Plural(m.ref)), refMapping.Identifier().Type.Name, m.ref)
+					args += fmt.Sprintf("%sID int64, %s map[%s]%s", lex.CamelCase(m.entity), lex.Minuscule(lex.Plural(m.ref)), refMapping.Identifier().Type.Name, m.ref)
 				case MapTable:
-					args += fmt.Sprintf("%sID int64, %s map[string]string", lex.Minuscule(lex.Camel(m.entity)), lex.Minuscule(lex.Plural(m.ref)))
+					args += fmt.Sprintf("%sID int64, %s map[string]string", lex.CamelCase(m.entity), lex.Minuscule(lex.Plural(m.ref)))
 				}
 			}
 		case "DeleteOne":
@@ -1356,13 +1356,13 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 }
 
 func (m *Method) begin(buf *file.Buffer, comment string, args string, rets string, isInterface bool) error {
-	mapping, err := Parse(m.pkg, lex.Camel(m.entity), m.kind)
+	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
 
 	name := ""
-	entity := lex.Camel(m.entity)
+	entity := lex.PascalCase(m.entity)
 
 	if mapping.Type == AssociationTable {
 		parent := m.config["struct"]
@@ -1492,7 +1492,7 @@ func (m *Method) getManyTemplateFuncs(buf *file.Buffer, mapping *Mapping) error 
 
 	buf.L("objects := make([]%s, 0)", mapping.Name)
 	buf.N()
-	buf.L("dest := %s", destFunc("objects", lex.Camel(m.entity), mapping.ColumnFields()))
+	buf.L("dest := %s", destFunc("objects", lex.PascalCase(m.entity), mapping.ColumnFields()))
 	buf.N()
 	buf.L("err := selectObjects(ctx, stmt, dest, args...)")
 	if mapping.Type != ReferenceTable && mapping.Type != MapTable {
@@ -1515,7 +1515,7 @@ func (m *Method) getManyTemplateFuncs(buf *file.Buffer, mapping *Mapping) error 
 
 	buf.L("objects := make([]%s, 0)", mapping.Name)
 	buf.N()
-	buf.L("dest := %s", destFunc("objects", lex.Camel(m.entity), mapping.ColumnFields()))
+	buf.L("dest := %s", destFunc("objects", lex.PascalCase(m.entity), mapping.ColumnFields()))
 	buf.N()
 	buf.L("err := scan(ctx, tx, sql, dest, args...)")
 	if mapping.Type != ReferenceTable && mapping.Type != MapTable {

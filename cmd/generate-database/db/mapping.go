@@ -294,7 +294,7 @@ func (f *Field) Column() string {
 		panic("attempt to get column name of non-column field")
 	}
 
-	column := lex.Snake(f.Name)
+	column := lex.SnakeCase(f.Name)
 
 	join := f.JoinConfig()
 	if join != "" {
@@ -311,7 +311,7 @@ func (f *Field) SelectColumn(mapping *Mapping, primaryTable string) (string, err
 	// ReferenceTable and MapTable require specific fields, so parse those instead of checking tags.
 	if mapping.Type == ReferenceTable || mapping.Type == MapTable {
 		table := primaryTable
-		column := fmt.Sprintf("%s.%s", table, lex.Snake(f.Name))
+		column := fmt.Sprintf("%s.%s", table, lex.SnakeCase(f.Name))
 		column = strings.Replace(column, "reference", "%s", -1)
 
 		return column, nil
@@ -327,7 +327,7 @@ func (f *Field) SelectColumn(mapping *Mapping, primaryTable string) (string, err
 	}
 
 	if columnName == "" {
-		columnName = lex.Snake(f.Name)
+		columnName = lex.SnakeCase(f.Name)
 	}
 
 	var column string
@@ -355,7 +355,7 @@ func (f *Field) OrderBy(mapping *Mapping, primaryTable string) (string, error) {
 	// ReferenceTable and MapTable require specific fields, so parse those instead of checking tags.
 	if mapping.Type == ReferenceTable || mapping.Type == MapTable {
 		table := primaryTable
-		column := fmt.Sprintf("%s.%s", table, lex.Snake(f.Name))
+		column := fmt.Sprintf("%s.%s", table, lex.SnakeCase(f.Name))
 		column = strings.Replace(column, "reference", "%s", -1)
 
 		return column, nil
@@ -376,7 +376,7 @@ func (f *Field) OrderBy(mapping *Mapping, primaryTable string) (string, error) {
 	}
 
 	if columnName == "" {
-		columnName = lex.Snake(f.Name)
+		columnName = lex.SnakeCase(f.Name)
 	}
 
 	if tableName == "" {
