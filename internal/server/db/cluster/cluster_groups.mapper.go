@@ -9,14 +9,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/server/db/query"
-	"github.com/lxc/incus/v6/shared/api"
 )
-
-var _ = api.ServerEnvironment{}
 
 var clusterGroupObjects = RegisterStmt(`
 SELECT cluster_groups.id, cluster_groups.name, coalesce(cluster_groups.description, '')
@@ -111,7 +107,11 @@ func getClusterGroupsRaw(ctx context.Context, tx *sql.Tx, sql string, args ...an
 
 // GetClusterGroups returns all available cluster_groups.
 // generator: cluster_group GetMany
-func GetClusterGroups(ctx context.Context, tx *sql.Tx, filters ...ClusterGroupFilter) ([]ClusterGroup, error) {
+func GetClusterGroups(ctx context.Context, tx *sql.Tx, filters ...ClusterGroupFilter) (_ []ClusterGroup, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Cluster_group")
+	}()
+
 	var err error
 
 	// Result slice.
@@ -178,7 +178,11 @@ func GetClusterGroups(ctx context.Context, tx *sql.Tx, filters ...ClusterGroupFi
 
 // GetClusterGroupConfig returns all available ClusterGroup Config
 // generator: cluster_group GetMany
-func GetClusterGroupConfig(ctx context.Context, tx *sql.Tx, clusterGroupID int, filters ...ConfigFilter) (map[string]string, error) {
+func GetClusterGroupConfig(ctx context.Context, tx *sql.Tx, clusterGroupID int, filters ...ConfigFilter) (_ map[string]string, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Cluster_group")
+	}()
+
 	clusterGroupConfig, err := GetConfig(ctx, tx, "cluster_group", filters...)
 	if err != nil {
 		return nil, err
@@ -194,7 +198,11 @@ func GetClusterGroupConfig(ctx context.Context, tx *sql.Tx, clusterGroupID int, 
 
 // GetClusterGroup returns the cluster_group with the given key.
 // generator: cluster_group GetOne
-func GetClusterGroup(ctx context.Context, tx *sql.Tx, name string) (*ClusterGroup, error) {
+func GetClusterGroup(ctx context.Context, tx *sql.Tx, name string) (_ *ClusterGroup, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Cluster_group")
+	}()
+
 	filter := ClusterGroupFilter{}
 	filter.Name = &name
 
@@ -205,7 +213,7 @@ func GetClusterGroup(ctx context.Context, tx *sql.Tx, name string) (*ClusterGrou
 
 	switch len(objects) {
 	case 0:
-		return nil, api.StatusErrorf(http.StatusNotFound, "ClusterGroup not found")
+		return nil, ErrNotFound
 	case 1:
 		return &objects[0], nil
 	default:
@@ -215,7 +223,11 @@ func GetClusterGroup(ctx context.Context, tx *sql.Tx, name string) (*ClusterGrou
 
 // GetClusterGroupID return the ID of the cluster_group with the given key.
 // generator: cluster_group ID
-func GetClusterGroupID(ctx context.Context, tx *sql.Tx, name string) (int64, error) {
+func GetClusterGroupID(ctx context.Context, tx *sql.Tx, name string) (_ int64, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Cluster_group")
+	}()
+
 	stmt, err := Stmt(tx, clusterGroupID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"clusterGroupID\" prepared statement: %w", err)
@@ -225,7 +237,7 @@ func GetClusterGroupID(ctx context.Context, tx *sql.Tx, name string) (int64, err
 	var id int64
 	err = row.Scan(&id)
 	if errors.Is(err, sql.ErrNoRows) {
-		return -1, api.StatusErrorf(http.StatusNotFound, "ClusterGroup not found")
+		return -1, ErrNotFound
 	}
 
 	if err != nil {
@@ -237,14 +249,25 @@ func GetClusterGroupID(ctx context.Context, tx *sql.Tx, name string) (int64, err
 
 // ClusterGroupExists checks if a cluster_group with the given key exists.
 // generator: cluster_group Exists
-func ClusterGroupExists(ctx context.Context, tx *sql.Tx, name string) (bool, error) {
-	_, err := GetClusterGroupID(ctx, tx, name)
-	if err != nil {
-		if api.StatusErrorCheck(err, http.StatusNotFound) {
-			return false, nil
-		}
+func ClusterGroupExists(ctx context.Context, tx *sql.Tx, name string) (_ bool, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Cluster_group")
+	}()
 
-		return false, err
+	stmt, err := Stmt(tx, clusterGroupID)
+	if err != nil {
+		return false, fmt.Errorf("Failed to get \"clusterGroupID\" prepared statement: %w", err)
+	}
+
+	row := stmt.QueryRowContext(ctx, name)
+	var id int64
+	err = row.Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, fmt.Errorf("Failed to get \"clusters_groups\" ID: %w", err)
 	}
 
 	return true, nil
@@ -252,7 +275,11 @@ func ClusterGroupExists(ctx context.Context, tx *sql.Tx, name string) (bool, err
 
 // RenameClusterGroup renames the cluster_group matching the given key parameters.
 // generator: cluster_group Rename
-func RenameClusterGroup(ctx context.Context, tx *sql.Tx, name string, to string) error {
+func RenameClusterGroup(ctx context.Context, tx *sql.Tx, name string, to string) (_err error) {
+	defer func() {
+		_err = mapErr(_err, "Cluster_group")
+	}()
+
 	stmt, err := Stmt(tx, clusterGroupRename)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"clusterGroupRename\" prepared statement: %w", err)
@@ -277,7 +304,11 @@ func RenameClusterGroup(ctx context.Context, tx *sql.Tx, name string, to string)
 
 // CreateClusterGroup adds a new cluster_group to the database.
 // generator: cluster_group Create
-func CreateClusterGroup(ctx context.Context, tx *sql.Tx, object ClusterGroup) (int64, error) {
+func CreateClusterGroup(ctx context.Context, tx *sql.Tx, object ClusterGroup) (_ int64, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Cluster_group")
+	}()
+
 	// Check if a cluster_group with the same key exists.
 	exists, err := ClusterGroupExists(ctx, tx, object.Name)
 	if err != nil {
@@ -285,7 +316,7 @@ func CreateClusterGroup(ctx context.Context, tx *sql.Tx, object ClusterGroup) (i
 	}
 
 	if exists {
-		return -1, api.StatusErrorf(http.StatusConflict, "This \"clusters_groups\" entry already exists")
+		return -1, ErrConflict
 	}
 
 	args := make([]any, 2)
@@ -316,7 +347,11 @@ func CreateClusterGroup(ctx context.Context, tx *sql.Tx, object ClusterGroup) (i
 
 // CreateClusterGroupConfig adds new cluster_group Config to the database.
 // generator: cluster_group Create
-func CreateClusterGroupConfig(ctx context.Context, tx *sql.Tx, clusterGroupID int64, config map[string]string) error {
+func CreateClusterGroupConfig(ctx context.Context, tx *sql.Tx, clusterGroupID int64, config map[string]string) (_err error) {
+	defer func() {
+		_err = mapErr(_err, "Cluster_group")
+	}()
+
 	referenceID := int(clusterGroupID)
 	for key, value := range config {
 		insert := Config{
@@ -337,7 +372,11 @@ func CreateClusterGroupConfig(ctx context.Context, tx *sql.Tx, clusterGroupID in
 
 // UpdateClusterGroup updates the cluster_group matching the given key parameters.
 // generator: cluster_group Update
-func UpdateClusterGroup(ctx context.Context, tx *sql.Tx, name string, object ClusterGroup) error {
+func UpdateClusterGroup(ctx context.Context, tx *sql.Tx, name string, object ClusterGroup) (_err error) {
+	defer func() {
+		_err = mapErr(_err, "Cluster_group")
+	}()
+
 	id, err := GetClusterGroupID(ctx, tx, name)
 	if err != nil {
 		return err
@@ -367,7 +406,11 @@ func UpdateClusterGroup(ctx context.Context, tx *sql.Tx, name string, object Clu
 
 // UpdateClusterGroupConfig updates the cluster_group Config matching the given key parameters.
 // generator: cluster_group Update
-func UpdateClusterGroupConfig(ctx context.Context, tx *sql.Tx, clusterGroupID int64, config map[string]string) error {
+func UpdateClusterGroupConfig(ctx context.Context, tx *sql.Tx, clusterGroupID int64, config map[string]string) (_err error) {
+	defer func() {
+		_err = mapErr(_err, "Cluster_group")
+	}()
+
 	err := UpdateConfig(ctx, tx, "cluster_group", int(clusterGroupID), config)
 	if err != nil {
 		return fmt.Errorf("Replace Config for ClusterGroup failed: %w", err)
@@ -378,7 +421,11 @@ func UpdateClusterGroupConfig(ctx context.Context, tx *sql.Tx, clusterGroupID in
 
 // DeleteClusterGroup deletes the cluster_group matching the given key parameters.
 // generator: cluster_group DeleteOne-by-Name
-func DeleteClusterGroup(ctx context.Context, tx *sql.Tx, name string) error {
+func DeleteClusterGroup(ctx context.Context, tx *sql.Tx, name string) (_err error) {
+	defer func() {
+		_err = mapErr(_err, "Cluster_group")
+	}()
+
 	stmt, err := Stmt(tx, clusterGroupDeleteByName)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"clusterGroupDeleteByName\" prepared statement: %w", err)
@@ -395,7 +442,7 @@ func DeleteClusterGroup(ctx context.Context, tx *sql.Tx, name string) error {
 	}
 
 	if n == 0 {
-		return api.StatusErrorf(http.StatusNotFound, "ClusterGroup not found")
+		return ErrNotFound
 	} else if n > 1 {
 		return fmt.Errorf("Query deleted %d ClusterGroup rows instead of 1", n)
 	}

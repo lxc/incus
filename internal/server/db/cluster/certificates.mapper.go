@@ -9,15 +9,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/server/certificate"
 	"github.com/lxc/incus/v6/internal/server/db/query"
-	"github.com/lxc/incus/v6/shared/api"
 )
-
-var _ = api.ServerEnvironment{}
 
 var certificateObjects = RegisterStmt(`
 SELECT certificates.id, certificates.fingerprint, certificates.type, certificates.name, certificates.certificate, certificates.restricted, certificates.description
@@ -119,7 +115,11 @@ func getCertificatesRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any
 
 // GetCertificates returns all available certificates.
 // generator: certificate GetMany
-func GetCertificates(ctx context.Context, tx *sql.Tx, filters ...CertificateFilter) ([]Certificate, error) {
+func GetCertificates(ctx context.Context, tx *sql.Tx, filters ...CertificateFilter) (_ []Certificate, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Certificate")
+	}()
+
 	var err error
 
 	// Result slice.
@@ -210,7 +210,11 @@ func GetCertificates(ctx context.Context, tx *sql.Tx, filters ...CertificateFilt
 
 // GetCertificate returns the certificate with the given key.
 // generator: certificate GetOne
-func GetCertificate(ctx context.Context, tx *sql.Tx, fingerprint string) (*Certificate, error) {
+func GetCertificate(ctx context.Context, tx *sql.Tx, fingerprint string) (_ *Certificate, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Certificate")
+	}()
+
 	filter := CertificateFilter{}
 	filter.Fingerprint = &fingerprint
 
@@ -221,7 +225,7 @@ func GetCertificate(ctx context.Context, tx *sql.Tx, fingerprint string) (*Certi
 
 	switch len(objects) {
 	case 0:
-		return nil, api.StatusErrorf(http.StatusNotFound, "Certificate not found")
+		return nil, ErrNotFound
 	case 1:
 		return &objects[0], nil
 	default:
@@ -231,7 +235,11 @@ func GetCertificate(ctx context.Context, tx *sql.Tx, fingerprint string) (*Certi
 
 // GetCertificateID return the ID of the certificate with the given key.
 // generator: certificate ID
-func GetCertificateID(ctx context.Context, tx *sql.Tx, fingerprint string) (int64, error) {
+func GetCertificateID(ctx context.Context, tx *sql.Tx, fingerprint string) (_ int64, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Certificate")
+	}()
+
 	stmt, err := Stmt(tx, certificateID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"certificateID\" prepared statement: %w", err)
@@ -241,7 +249,7 @@ func GetCertificateID(ctx context.Context, tx *sql.Tx, fingerprint string) (int6
 	var id int64
 	err = row.Scan(&id)
 	if errors.Is(err, sql.ErrNoRows) {
-		return -1, api.StatusErrorf(http.StatusNotFound, "Certificate not found")
+		return -1, ErrNotFound
 	}
 
 	if err != nil {
@@ -253,14 +261,25 @@ func GetCertificateID(ctx context.Context, tx *sql.Tx, fingerprint string) (int6
 
 // CertificateExists checks if a certificate with the given key exists.
 // generator: certificate Exists
-func CertificateExists(ctx context.Context, tx *sql.Tx, fingerprint string) (bool, error) {
-	_, err := GetCertificateID(ctx, tx, fingerprint)
-	if err != nil {
-		if api.StatusErrorCheck(err, http.StatusNotFound) {
-			return false, nil
-		}
+func CertificateExists(ctx context.Context, tx *sql.Tx, fingerprint string) (_ bool, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Certificate")
+	}()
 
-		return false, err
+	stmt, err := Stmt(tx, certificateID)
+	if err != nil {
+		return false, fmt.Errorf("Failed to get \"certificateID\" prepared statement: %w", err)
+	}
+
+	row := stmt.QueryRowContext(ctx, fingerprint)
+	var id int64
+	err = row.Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, fmt.Errorf("Failed to get \"certificates\" ID: %w", err)
 	}
 
 	return true, nil
@@ -268,7 +287,11 @@ func CertificateExists(ctx context.Context, tx *sql.Tx, fingerprint string) (boo
 
 // CreateCertificate adds a new certificate to the database.
 // generator: certificate Create
-func CreateCertificate(ctx context.Context, tx *sql.Tx, object Certificate) (int64, error) {
+func CreateCertificate(ctx context.Context, tx *sql.Tx, object Certificate) (_ int64, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Certificate")
+	}()
+
 	// Check if a certificate with the same key exists.
 	exists, err := CertificateExists(ctx, tx, object.Fingerprint)
 	if err != nil {
@@ -276,7 +299,7 @@ func CreateCertificate(ctx context.Context, tx *sql.Tx, object Certificate) (int
 	}
 
 	if exists {
-		return -1, api.StatusErrorf(http.StatusConflict, "This \"certificates\" entry already exists")
+		return -1, ErrConflict
 	}
 
 	args := make([]any, 6)
@@ -311,7 +334,11 @@ func CreateCertificate(ctx context.Context, tx *sql.Tx, object Certificate) (int
 
 // DeleteCertificate deletes the certificate matching the given key parameters.
 // generator: certificate DeleteOne-by-Fingerprint
-func DeleteCertificate(ctx context.Context, tx *sql.Tx, fingerprint string) error {
+func DeleteCertificate(ctx context.Context, tx *sql.Tx, fingerprint string) (_err error) {
+	defer func() {
+		_err = mapErr(_err, "Certificate")
+	}()
+
 	stmt, err := Stmt(tx, certificateDeleteByFingerprint)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"certificateDeleteByFingerprint\" prepared statement: %w", err)
@@ -328,7 +355,7 @@ func DeleteCertificate(ctx context.Context, tx *sql.Tx, fingerprint string) erro
 	}
 
 	if n == 0 {
-		return api.StatusErrorf(http.StatusNotFound, "Certificate not found")
+		return ErrNotFound
 	} else if n > 1 {
 		return fmt.Errorf("Query deleted %d Certificate rows instead of 1", n)
 	}
@@ -338,7 +365,11 @@ func DeleteCertificate(ctx context.Context, tx *sql.Tx, fingerprint string) erro
 
 // DeleteCertificates deletes the certificate matching the given key parameters.
 // generator: certificate DeleteMany-by-Name-and-Type
-func DeleteCertificates(ctx context.Context, tx *sql.Tx, name string, certificateType certificate.Type) error {
+func DeleteCertificates(ctx context.Context, tx *sql.Tx, name string, certificateType certificate.Type) (_err error) {
+	defer func() {
+		_err = mapErr(_err, "Certificate")
+	}()
+
 	stmt, err := Stmt(tx, certificateDeleteByNameAndType)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"certificateDeleteByNameAndType\" prepared statement: %w", err)
@@ -359,7 +390,11 @@ func DeleteCertificates(ctx context.Context, tx *sql.Tx, name string, certificat
 
 // UpdateCertificate updates the certificate matching the given key parameters.
 // generator: certificate Update
-func UpdateCertificate(ctx context.Context, tx *sql.Tx, fingerprint string, object Certificate) error {
+func UpdateCertificate(ctx context.Context, tx *sql.Tx, fingerprint string, object Certificate) (_err error) {
+	defer func() {
+		_err = mapErr(_err, "Certificate")
+	}()
+
 	id, err := GetCertificateID(ctx, tx, fingerprint)
 	if err != nil {
 		return err
