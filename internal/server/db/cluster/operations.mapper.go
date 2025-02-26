@@ -8,14 +8,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"net/http"
 	"strings"
-
-	"github.com/lxc/incus/v6/internal/server/db/query"
-	"github.com/lxc/incus/v6/shared/api"
 )
-
-var _ = api.ServerEnvironment{}
 
 var operationObjects = RegisterStmt(`
 SELECT operations.id, operations.uuid, nodes.address AS node_address, operations.project_id, operations.node_id, operations.type
@@ -83,7 +77,7 @@ func getOperations(ctx context.Context, stmt *sql.Stmt, args ...any) ([]Operatio
 		return nil
 	}
 
-	err := query.SelectObjects(ctx, stmt, dest, args...)
+	err := selectObjects(ctx, stmt, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"operations\" table: %w", err)
 	}
@@ -107,7 +101,7 @@ func getOperationsRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) 
 		return nil
 	}
 
-	err := query.Scan(ctx, tx, sql, dest, args...)
+	err := scan(ctx, tx, sql, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"operations\" table: %w", err)
 	}
@@ -117,7 +111,11 @@ func getOperationsRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) 
 
 // GetOperations returns all available operations.
 // generator: operation GetMany
-func GetOperations(ctx context.Context, tx *sql.Tx, filters ...OperationFilter) ([]Operation, error) {
+func GetOperations(ctx context.Context, tx *sql.Tx, filters ...OperationFilter) (_ []Operation, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Operation")
+	}()
+
 	var err error
 
 	// Result slice.
@@ -232,7 +230,11 @@ func GetOperations(ctx context.Context, tx *sql.Tx, filters ...OperationFilter) 
 
 // CreateOrReplaceOperation adds a new operation to the database.
 // generator: operation CreateOrReplace
-func CreateOrReplaceOperation(ctx context.Context, tx *sql.Tx, object Operation) (int64, error) {
+func CreateOrReplaceOperation(ctx context.Context, tx *sql.Tx, object Operation) (_ int64, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Operation")
+	}()
+
 	args := make([]any, 4)
 
 	// Populate the statement arguments.
@@ -263,7 +265,11 @@ func CreateOrReplaceOperation(ctx context.Context, tx *sql.Tx, object Operation)
 
 // DeleteOperation deletes the operation matching the given key parameters.
 // generator: operation DeleteOne-by-UUID
-func DeleteOperation(ctx context.Context, tx *sql.Tx, uuid string) error {
+func DeleteOperation(ctx context.Context, tx *sql.Tx, uuid string) (_err error) {
+	defer func() {
+		_err = mapErr(_err, "Operation")
+	}()
+
 	stmt, err := Stmt(tx, operationDeleteByUUID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"operationDeleteByUUID\" prepared statement: %w", err)
@@ -280,7 +286,7 @@ func DeleteOperation(ctx context.Context, tx *sql.Tx, uuid string) error {
 	}
 
 	if n == 0 {
-		return api.StatusErrorf(http.StatusNotFound, "Operation not found")
+		return ErrNotFound
 	} else if n > 1 {
 		return fmt.Errorf("Query deleted %d Operation rows instead of 1", n)
 	}
@@ -290,7 +296,11 @@ func DeleteOperation(ctx context.Context, tx *sql.Tx, uuid string) error {
 
 // DeleteOperations deletes the operation matching the given key parameters.
 // generator: operation DeleteMany-by-NodeID
-func DeleteOperations(ctx context.Context, tx *sql.Tx, nodeID int64) error {
+func DeleteOperations(ctx context.Context, tx *sql.Tx, nodeID int64) (_err error) {
+	defer func() {
+		_err = mapErr(_err, "Operation")
+	}()
+
 	stmt, err := Stmt(tx, operationDeleteByNodeID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"operationDeleteByNodeID\" prepared statement: %w", err)

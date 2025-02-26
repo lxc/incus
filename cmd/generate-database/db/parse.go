@@ -23,7 +23,7 @@ func FiltersFromStmt(pkg *types.Package, kind string, entity string, filters []*
 	objects := pkg.Scope().Names()
 	stmtFilters := [][]string{}
 
-	prefix := fmt.Sprintf("%s%sBy", lex.Minuscule(lex.Camel(entity)), lex.Camel(kind))
+	prefix := fmt.Sprintf("%s%sBy", lex.CamelCase(entity), lex.PascalCase(kind))
 
 	seenNames := make(map[string]struct{}, len(objects))
 
@@ -73,7 +73,7 @@ func RefFiltersFromStmt(pkg *types.Package, entity string, ref string, filters [
 	objects := pkg.Scope().Names()
 	stmtFilters := [][]string{}
 
-	prefix := fmt.Sprintf("%s%sRefBy", lex.Minuscule(lex.Camel(entity)), lex.Capital(ref))
+	prefix := fmt.Sprintf("%s%sRefBy", lex.CamelCase(entity), lex.Capital(ref))
 
 	seenNames := make(map[string]struct{}, len(objects))
 
@@ -195,7 +195,7 @@ func Parse(pkg *types.Package, name string, kind string) (*Mapping, error) {
 
 			// A Filter field and its indirect references must all be in the Filter struct.
 			if field.IsIndirect() {
-				indirectField := lex.Camel(field.Config.Get("via"))
+				indirectField := lex.PascalCase(field.Config.Get("via"))
 				for i, f := range filters {
 					if f.Name == indirectField {
 						break
@@ -259,10 +259,10 @@ func ParseStmt(name string, defs map[*ast.Ident]types.Object, registeredSQLStmts
 // tableType determines the TableType for the given struct fields.
 func tableType(pkg *types.Package, name string, fields []*Field) TableType {
 	fieldNames := FieldNames(fields)
-	entities := strings.Split(lex.Snake(name), "_")
+	entities := strings.Split(lex.SnakeCase(name), "_")
 	if len(entities) == 2 {
-		struct1 := findStruct(pkg.Scope(), lex.Camel(lex.Singular(entities[0])))
-		struct2 := findStruct(pkg.Scope(), lex.Camel(lex.Singular(entities[1])))
+		struct1 := findStruct(pkg.Scope(), lex.PascalCase(lex.Singular(entities[0])))
+		struct2 := findStruct(pkg.Scope(), lex.PascalCase(lex.Singular(entities[1])))
 		if struct1 != nil && struct2 != nil {
 			return AssociationTable
 		}
@@ -380,7 +380,7 @@ func parseField(f *types.Var, structTag string, kind string, pkgName string) (*F
 	omit := config.Get("omit")
 	if omit != "" {
 		omitFields := strings.Split(omit, ",")
-		stmtKind := strings.Replace(lex.Snake(kind), "_", "-", -1)
+		stmtKind := strings.Replace(lex.SnakeCase(kind), "_", "-", -1)
 		switch kind {
 		case "URIs":
 			stmtKind = "names"
