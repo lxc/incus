@@ -179,7 +179,7 @@ func appendInterface(entity string, path string, snippet Snippet) error {
 		return err
 	}
 
-	declaration := fmt.Sprintf("type %sGenerated interface {", lex.Camel(entity))
+	declaration := fmt.Sprintf("type %sGenerated interface {", lex.PascalCase(entity))
 	content := make([]byte, stat.Size())
 	_, err = file.Read(content)
 	if err != nil {

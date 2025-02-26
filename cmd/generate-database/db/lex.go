@@ -14,7 +14,7 @@ func entityTable(entity string, override string) string {
 		return override
 	}
 
-	entityParts := strings.Split(lex.Snake(entity), "_")
+	entityParts := strings.Split(lex.SnakeCase(entity), "_")
 	tableParts := make([]string, len(entityParts))
 	for i, part := range entityParts {
 		if strings.HasSuffix(part, "ty") || strings.HasSuffix(part, "ly") {
@@ -29,14 +29,14 @@ func entityTable(entity string, override string) string {
 
 // Return the name of the Filter struct for the given database entity.
 func entityFilter(entity string) string {
-	return fmt.Sprintf("%sFilter", lex.Camel(entity))
+	return fmt.Sprintf("%sFilter", lex.PascalCase(entity))
 }
 
 // Return the name of the global variable holding the registration code for
 // the given kind of statement aganst the given entity.
 func stmtCodeVar(entity string, kind string, filters ...string) string {
-	prefix := lex.Minuscule(lex.Camel(entity))
-	name := fmt.Sprintf("%s%s", prefix, lex.Camel(kind))
+	prefix := lex.CamelCase(entity)
+	name := fmt.Sprintf("%s%s", prefix, lex.PascalCase(kind))
 
 	if len(filters) > 0 {
 		name += "By"
