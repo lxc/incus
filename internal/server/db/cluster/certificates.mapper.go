@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/server/certificate"
-	"github.com/lxc/incus/v6/internal/server/db/query"
 )
 
 var certificateObjects = RegisterStmt(`
@@ -81,7 +80,7 @@ func getCertificates(ctx context.Context, stmt *sql.Stmt, args ...any) ([]Certif
 		return nil
 	}
 
-	err := query.SelectObjects(ctx, stmt, dest, args...)
+	err := selectObjects(ctx, stmt, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"certificates\" table: %w", err)
 	}
@@ -105,7 +104,7 @@ func getCertificatesRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any
 		return nil
 	}
 
-	err := query.Scan(ctx, tx, sql, dest, args...)
+	err := scan(ctx, tx, sql, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"certificates\" table: %w", err)
 	}

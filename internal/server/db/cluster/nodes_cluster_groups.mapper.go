@@ -10,8 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/lxc/incus/v6/internal/server/db/query"
 )
 
 var nodeClusterGroupObjects = RegisterStmt(`
@@ -65,7 +63,7 @@ func getNodeClusterGroups(ctx context.Context, stmt *sql.Stmt, args ...any) ([]N
 		return nil
 	}
 
-	err := query.SelectObjects(ctx, stmt, dest, args...)
+	err := selectObjects(ctx, stmt, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"nodes_clusters_groups\" table: %w", err)
 	}
@@ -89,7 +87,7 @@ func getNodeClusterGroupsRaw(ctx context.Context, tx *sql.Tx, sql string, args .
 		return nil
 	}
 
-	err := query.Scan(ctx, tx, sql, dest, args...)
+	err := scan(ctx, tx, sql, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"nodes_clusters_groups\" table: %w", err)
 	}

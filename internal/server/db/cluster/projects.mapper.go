@@ -10,8 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/lxc/incus/v6/internal/server/db/query"
 )
 
 var projectObjects = RegisterStmt(`
@@ -80,7 +78,7 @@ func getProjects(ctx context.Context, stmt *sql.Stmt, args ...any) ([]Project, e
 		return nil
 	}
 
-	err := query.SelectObjects(ctx, stmt, dest, args...)
+	err := selectObjects(ctx, stmt, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"projects\" table: %w", err)
 	}
@@ -104,7 +102,7 @@ func getProjectsRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) ([
 		return nil
 	}
 
-	err := query.Scan(ctx, tx, sql, dest, args...)
+	err := scan(ctx, tx, sql, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"projects\" table: %w", err)
 	}
