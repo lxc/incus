@@ -1029,12 +1029,6 @@ func (d *linstor) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 func (d *linstor) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
 	d.logger.Debug("Migrating volume", logger.Ctx{"volume": vol.Name(), "volSrcArgs": volSrcArgs})
 
-	// When migrating between cluster members on the same storage pool, don't do anything on the source member
-	if volSrcArgs.ClusterMove && !volSrcArgs.StorageMove {
-		d.logger.Debug("Detected migration between cluster members on the same storage pool", logger.Ctx{"volume": vol.Name(), "volSrcArgs": volSrcArgs})
-		return nil
-	}
-
 	// Handle simple rsync and block_and_rsync through generic.
 	if volSrcArgs.MigrationType.FSType == migration.MigrationFSType_RSYNC || volSrcArgs.MigrationType.FSType == migration.MigrationFSType_BLOCK_AND_RSYNC {
 		// TODO: create a fast snapshot to ensure migration consistency when the driver supports snapshots
@@ -1050,6 +1044,12 @@ func (d *linstor) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs 
 		return genericVFSMigrateVolume(d, d.state, vol, conn, volSrcArgs, op)
 	} else if volSrcArgs.MigrationType.FSType != migration.MigrationFSType_LINSTOR {
 		return ErrNotSupported
+	}
+
+	// When migrating between cluster members on the same storage pool, don't do anything on the source member
+	if volSrcArgs.ClusterMove && !volSrcArgs.StorageMove {
+		d.logger.Debug("Detected migration between cluster members on the same storage pool", logger.Ctx{"volume": vol.Name(), "volSrcArgs": volSrcArgs})
+		return nil
 	}
 
 	// If migration header is supported, send the header for the volume being migrated
@@ -1081,6 +1081,14 @@ func (d *linstor) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs 
 // CreateVolumeFromMigration creates a volume being sent via a migration.
 func (d *linstor) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
 	d.logger.Debug("Receiving volume from migration", logger.Ctx{"volume": vol.Name(), "volTargetArgs": volTargetArgs})
+
+	// Handle simple rsync and block_and_rsync through generic.
+	if volTargetArgs.MigrationType.FSType == migration.MigrationFSType_RSYNC || volTargetArgs.MigrationType.FSType == migration.MigrationFSType_BLOCK_AND_RSYNC {
+		return genericVFSCreateVolumeFromMigration(d, nil, vol, conn, volTargetArgs, preFiller, op)
+	} else if volTargetArgs.MigrationType.FSType != migration.MigrationFSType_LINSTOR {
+		return ErrNotSupported
+	}
+
 	if volTargetArgs.ClusterMoveSourceName != "" && volTargetArgs.StoragePool == "" {
 		d.logger.Debug("Detected migration between cluster members on the same storage pool", logger.Ctx{"volume": vol.Name(), "volTargetArgs": volTargetArgs})
 
@@ -1108,13 +1116,6 @@ func (d *linstor) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser,
 
 		d.logger.Debug("Finished migrating", logger.Ctx{"volume": vol.Name(), "volTargetArgs": volTargetArgs})
 		return nil
-	}
-
-	// Handle simple rsync and block_and_rsync through generic.
-	if volTargetArgs.MigrationType.FSType == migration.MigrationFSType_RSYNC || volTargetArgs.MigrationType.FSType == migration.MigrationFSType_BLOCK_AND_RSYNC {
-		return genericVFSCreateVolumeFromMigration(d, nil, vol, conn, volTargetArgs, preFiller, op)
-	} else if volTargetArgs.MigrationType.FSType != migration.MigrationFSType_LINSTOR {
-		return ErrNotSupported
 	}
 
 	// Migration accross LINSTOR storage pools

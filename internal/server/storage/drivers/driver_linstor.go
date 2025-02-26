@@ -280,6 +280,16 @@ func (d *linstor) MigrationTypes(contentType ContentType, refresh bool, copySnap
 		rsyncTransportType = migration.MigrationFSType_RSYNC
 	}
 
+	// TODO: support optimized migration with snapshots
+	if !copySnapshots {
+		return []localMigration.Type{
+			{
+				FSType:   rsyncTransportType,
+				Features: rsyncFeatures,
+			},
+		}
+	}
+
 	return []localMigration.Type{
 		{
 			FSType:   migration.MigrationFSType_LINSTOR,
