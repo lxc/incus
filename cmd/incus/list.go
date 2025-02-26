@@ -18,7 +18,6 @@ import (
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/shared/api"
-	config "github.com/lxc/incus/v6/shared/cliconfig"
 	"github.com/lxc/incus/v6/shared/units"
 )
 
@@ -268,7 +267,7 @@ func (c *cmdList) evaluateShorthandFilter(key string, value string, inst *api.In
 	return false
 }
 
-func (c *cmdList) listInstances(conf *config.Config, d incus.InstanceServer, instances []api.Instance, filters []string, columns []column) error {
+func (c *cmdList) listInstances(d incus.InstanceServer, instances []api.Instance, filters []string, columns []column) error {
 	threads := 10
 	if len(instances) < threads {
 		threads = len(instances)
@@ -566,7 +565,7 @@ func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Fetch any remaining data and render the table
-	return c.listInstances(conf, d, instancesFiltered, clientFilters, columns)
+	return c.listInstances(d, instancesFiltered, clientFilters, columns)
 }
 
 func (c *cmdList) parseColumns(clustered bool) ([]column, bool, error) {
@@ -978,7 +977,7 @@ func (c *cmdList) matchByLocation(cInfo *api.Instance, cState *api.InstanceState
 	return strings.EqualFold(cInfo.Location, query)
 }
 
-func (c *cmdList) matchByNet(cInfo *api.Instance, cState *api.InstanceState, query string, family string) bool {
+func (c *cmdList) matchByNet(cState *api.InstanceState, query string, family string) bool {
 	// Skip if no state.
 	if cState == nil {
 		return false
@@ -1019,12 +1018,12 @@ func (c *cmdList) matchByNet(cInfo *api.Instance, cState *api.InstanceState, que
 	return false
 }
 
-func (c *cmdList) matchByIPV6(cInfo *api.Instance, cState *api.InstanceState, query string) bool {
-	return c.matchByNet(cInfo, cState, query, "ipv6")
+func (c *cmdList) matchByIPV6(_ *api.Instance, cState *api.InstanceState, query string) bool {
+	return c.matchByNet(cState, query, "ipv6")
 }
 
-func (c *cmdList) matchByIPV4(cInfo *api.Instance, cState *api.InstanceState, query string) bool {
-	return c.matchByNet(cInfo, cState, query, "ipv4")
+func (c *cmdList) matchByIPV4(_ *api.Instance, cState *api.InstanceState, query string) bool {
+	return c.matchByNet(cState, query, "ipv4")
 }
 
 func (c *cmdList) mapShorthandFilters() {
