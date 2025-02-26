@@ -9,8 +9,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-
-	"github.com/lxc/incus/v6/internal/server/db/query"
 )
 
 var operationObjects = RegisterStmt(`
@@ -79,7 +77,7 @@ func getOperations(ctx context.Context, stmt *sql.Stmt, args ...any) ([]Operatio
 		return nil
 	}
 
-	err := query.SelectObjects(ctx, stmt, dest, args...)
+	err := selectObjects(ctx, stmt, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"operations\" table: %w", err)
 	}
@@ -103,7 +101,7 @@ func getOperationsRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) 
 		return nil
 	}
 
-	err := query.Scan(ctx, tx, sql, dest, args...)
+	err := scan(ctx, tx, sql, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"operations\" table: %w", err)
 	}

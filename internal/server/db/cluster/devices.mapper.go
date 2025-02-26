@@ -9,8 +9,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-
-	"github.com/lxc/incus/v6/internal/server/db/query"
 )
 
 const deviceObjects = `SELECT %s_devices.id, %s_devices.%s_id, %s_devices.name, %s_devices.type
@@ -44,7 +42,7 @@ func getDevices(ctx context.Context, stmt *sql.Stmt, parent string, args ...any)
 		return nil
 	}
 
-	err := query.SelectObjects(ctx, stmt, dest, args...)
+	err := selectObjects(ctx, stmt, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"%s_devices\" table: %w", parent, err)
 	}
@@ -68,7 +66,7 @@ func getDevicesRaw(ctx context.Context, tx *sql.Tx, sql string, parent string, a
 		return nil
 	}
 
-	err := query.Scan(ctx, tx, sql, dest, args...)
+	err := scan(ctx, tx, sql, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"%s_devices\" table: %w", parent, err)
 	}

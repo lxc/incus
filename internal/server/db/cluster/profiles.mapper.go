@@ -10,8 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/lxc/incus/v6/internal/server/db/query"
 )
 
 var profileObjects = RegisterStmt(`
@@ -152,7 +150,7 @@ func getProfiles(ctx context.Context, stmt *sql.Stmt, args ...any) ([]Profile, e
 		return nil
 	}
 
-	err := query.SelectObjects(ctx, stmt, dest, args...)
+	err := selectObjects(ctx, stmt, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"profiles\" table: %w", err)
 	}
@@ -176,7 +174,7 @@ func getProfilesRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) ([
 		return nil
 	}
 
-	err := query.Scan(ctx, tx, sql, dest, args...)
+	err := scan(ctx, tx, sql, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"profiles\" table: %w", err)
 	}
