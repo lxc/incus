@@ -14,7 +14,7 @@ import (
 
 const (
 	tnToolName              = "truenas_incus_ctl"
-	tnMinVersion            = "0.3.0" // bulk api
+	tnMinVersion            = "0.3.2" // snapshot create --delete
 	tnVerifyDatasetCreation = false   // explicitly check that the dataset is created, work around for bugs in certain versions of the tool.
 )
 
@@ -312,10 +312,10 @@ func (d *truenas) createDatasets(datasets []string, options ...string) error {
 }
 
 // take a recursive snapshot of dataset@snapname, and optionally delete the old snapshot first
-func (d *truenas) createSnapshot(snapName string, delete bool) error {
+func (d *truenas) createSnapshot(snapName string, deleteFirst bool) error {
 	args := []string{"snapshot", "create", "-r"}
 
-	if delete {
+	if deleteFirst {
 		args = append(args, "--delete")
 	}
 
