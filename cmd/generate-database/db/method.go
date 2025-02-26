@@ -232,7 +232,7 @@ func (m *Method) getMany(buf *file.Buffer) error {
 			for _, name := range filter {
 				for _, field := range mapping.Fields {
 					if name == field.Name && util.IsTrue(field.Config.Get("marshal")) {
-						buf.L("marshaledFilter%s, err := query.Marshal(filter.%s)", name, name)
+						buf.L("marshaledFilter%s, err := marshal(filter.%s)", name, name)
 						m.ifErrNotNil(buf, true, "nil", "err")
 						args += fmt.Sprintf("marshaledFilter%s,", name)
 					} else if name == field.Name {
@@ -564,7 +564,7 @@ func (m *Method) id(buf *file.Buffer) error {
 
 	for _, field := range nk {
 		if util.IsTrue(field.Config.Get("marshal")) {
-			buf.L("marshaled%s, err := query.Marshal(%s)", field.Name, lex.Minuscule(field.Name))
+			buf.L("marshaled%s, err := marshal(%s)", field.Name, lex.Minuscule(field.Name))
 			m.ifErrNotNil(buf, true, "-1", "err")
 		}
 	}
@@ -609,7 +609,7 @@ func (m *Method) exists(buf *file.Buffer) error {
 
 	for _, field := range nk {
 		if util.IsTrue(field.Config.Get("marshal")) {
-			buf.L("marshaled%s, err := query.Marshal(%s)", field.Name, lex.Minuscule(field.Name))
+			buf.L("marshaled%s, err := marshal(%s)", field.Name, lex.Minuscule(field.Name))
 			m.ifErrNotNil(buf, true, "false", "err")
 		}
 	}
@@ -727,7 +727,7 @@ func (m *Method) create(buf *file.Buffer, replace bool) error {
 		buf.L("// Populate the statement arguments. ")
 		for i, field := range fields {
 			if util.IsTrue(field.Config.Get("marshal")) {
-				buf.L("marshaled%s, err := query.Marshal(object.%s)", field.Name, field.Name)
+				buf.L("marshaled%s, err := marshal(object.%s)", field.Name, field.Name)
 				m.ifErrNotNil(buf, true, "-1", "err")
 				buf.L("args[%d] = marshaled%s", i, field.Name)
 			} else {
@@ -881,7 +881,7 @@ func (m *Method) rename(buf *file.Buffer) error {
 
 	for _, field := range nk {
 		if util.IsTrue(field.Config.Get("marshal")) {
-			buf.L("marshaled%s, err := query.Marshal(%s)", field.Name, lex.Minuscule(field.Name))
+			buf.L("marshaled%s, err := marshal(%s)", field.Name, lex.Minuscule(field.Name))
 			m.ifErrNotNil(buf, true, "err")
 		}
 	}
@@ -1000,7 +1000,7 @@ func (m *Method) update(buf *file.Buffer) error {
 		params := make([]string, len(fields))
 		for i, field := range fields {
 			if util.IsTrue(field.Config.Get("marshal")) {
-				buf.L("marshaled%s, err := query.Marshal(object.%s)", field.Name, field.Name)
+				buf.L("marshaled%s, err := marshal(object.%s)", field.Name, field.Name)
 				m.ifErrNotNil(buf, true, "err")
 				params[i] = fmt.Sprintf("marshaled%s", field.Name)
 			} else {
@@ -1112,7 +1112,7 @@ func (m *Method) delete(buf *file.Buffer, deleteOne bool) error {
 
 		for _, field := range activeFilters {
 			if util.IsTrue(field.Config.Get("marshal")) {
-				buf.L("marshaled%s, err := query.Marshal(%s)", field.Name, lex.Minuscule(field.Name))
+				buf.L("marshaled%s, err := marshal(%s)", field.Name, lex.Minuscule(field.Name))
 				m.ifErrNotNil(buf, true, "err")
 			}
 		}
@@ -1494,7 +1494,7 @@ func (m *Method) getManyTemplateFuncs(buf *file.Buffer, mapping *Mapping) error 
 	buf.N()
 	buf.L("dest := %s", destFunc("objects", lex.Camel(m.entity), mapping.ColumnFields()))
 	buf.N()
-	buf.L("err := query.SelectObjects(ctx, stmt, dest, args...)")
+	buf.L("err := selectObjects(ctx, stmt, dest, args...)")
 	if mapping.Type != ReferenceTable && mapping.Type != MapTable {
 		m.ifErrNotNil(buf, true, "nil", fmt.Sprintf(`fmt.Errorf("Failed to fetch from \"%s\" table: %%w", err)`, tableName))
 	} else {
@@ -1517,7 +1517,7 @@ func (m *Method) getManyTemplateFuncs(buf *file.Buffer, mapping *Mapping) error 
 	buf.N()
 	buf.L("dest := %s", destFunc("objects", lex.Camel(m.entity), mapping.ColumnFields()))
 	buf.N()
-	buf.L("err := query.Scan(ctx, tx, sql, dest, args...)")
+	buf.L("err := scan(ctx, tx, sql, dest, args...)")
 	if mapping.Type != ReferenceTable && mapping.Type != MapTable {
 		m.ifErrNotNil(buf, true, "nil", fmt.Sprintf(`fmt.Errorf("Failed to fetch from \"%s\" table: %%w", err)`, tableName))
 	} else {
