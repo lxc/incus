@@ -179,6 +179,8 @@ func (c *cmdTop) Run(cmd *cobra.Command, args []string) error {
 
 	if !c.flagAllProjects {
 		d = d.UseProject(info.Project)
+	} else {
+		d = d.UseProject("")
 	}
 
 	// If clustered, get a list of targets.
