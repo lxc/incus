@@ -527,7 +527,7 @@ func (m *Method) getOne(buf *file.Buffer) error {
 
 	buf.L("switch len(objects) {")
 	buf.L("case 0:")
-	buf.L(`        return nil, api.StatusErrorf(http.StatusNotFound, "%s not found")`, lex.Camel(m.entity))
+	buf.L(`        return nil, ErrNotFound`)
 	buf.L("case 1:")
 	buf.L("        return &objects[0], nil")
 	buf.L("default:")
@@ -573,7 +573,7 @@ func (m *Method) id(buf *file.Buffer) error {
 	buf.L("var id int64")
 	buf.L("err = row.Scan(&id)")
 	buf.L("if errors.Is(err, sql.ErrNoRows) {")
-	buf.L(`return -1, api.StatusErrorf(http.StatusNotFound, "%s not found")`, lex.Camel(m.entity))
+	buf.L(`return -1, ErrNotFound`)
 	buf.L("}")
 	buf.N()
 	m.ifErrNotNil(buf, true, "-1", fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" ID: %%w", err)`, entityTable(m.entity, m.config["table"])))
@@ -603,15 +603,26 @@ func (m *Method) exists(buf *file.Buffer) error {
 
 	defer m.end(buf)
 
-	buf.L("_, err := Get%sID(ctx, tx, %s)", lex.Camel(m.entity), mapping.FieldParams(nk))
-	buf.L("if err != nil {")
-	buf.L("        if api.StatusErrorCheck(err, http.StatusNotFound) {")
-	buf.L("                return false, nil")
-	buf.L("        }")
-	buf.N()
-	buf.L("        return false, err")
+	buf.L("stmt, err := Stmt(tx, %s)", stmtCodeVar(m.entity, "ID"))
+
+	m.ifErrNotNil(buf, true, "false", fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, "ID")))
+
+	for _, field := range nk {
+		if util.IsTrue(field.Config.Get("marshal")) {
+			buf.L("marshaled%s, err := query.Marshal(%s)", field.Name, lex.Minuscule(field.Name))
+			m.ifErrNotNil(buf, true, "false", "err")
+		}
+	}
+
+	buf.L("row := stmt.QueryRowContext(ctx, %s)", mapping.FieldParamsMarshal(nk))
+	buf.L("var id int64")
+	buf.L("err = row.Scan(&id)")
+	buf.L("if errors.Is(err, sql.ErrNoRows) {")
+	buf.L(`        return false, nil`)
 	buf.L("}")
 	buf.N()
+	m.ifErrNotNil(buf, true, "false", fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" ID: %%w", err)`, entityTable(m.entity, m.config["table"])))
+
 	buf.L("return true, nil")
 
 	return nil
@@ -699,7 +710,7 @@ func (m *Method) create(buf *file.Buffer, replace bool) error {
 				buf.L("exists, err := %sExists(ctx, tx, %s)", lex.Camel(m.entity), strings.Join(nkParams, ", "))
 				m.ifErrNotNil(buf, true, "-1", "fmt.Errorf(\"Failed to check for duplicates: %w\", err)")
 				buf.L("if exists {")
-				buf.L(`        return -1, api.StatusErrorf(http.StatusConflict, "This \"%s\" entry already exists")`, entityTable(m.entity, m.config["table"]))
+				buf.L(`        return -1, ErrConflict`)
 				buf.L("}")
 				buf.N()
 			}
@@ -1120,7 +1131,7 @@ func (m *Method) delete(buf *file.Buffer, deleteOne bool) error {
 	m.ifErrNotNil(buf, true, "fmt.Errorf(\"Fetch affected rows: %w\", err)")
 	if deleteOne {
 		buf.L("if n == 0 {")
-		buf.L(`        return api.StatusErrorf(http.StatusNotFound, "%s not found")`, lex.Camel(m.entity))
+		buf.L(`        return ErrNotFound`)
 		buf.L("} else if n > 1 {")
 		buf.L("        return fmt.Errorf(\"Query deleted %%d %s rows instead of 1\", n)", lex.Camel(m.entity))
 		buf.L("}")
@@ -1154,11 +1165,11 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 		case "GetMany":
 			comment = fmt.Sprintf("returns all available %s for the %s.", lex.Plural(ref), m.config["struct"])
 			args += fmt.Sprintf("%sID int", lex.Minuscule(m.config["struct"]))
-			rets = fmt.Sprintf("([]%s, error)", ref)
+			rets = fmt.Sprintf("(_ []%s, _err error)", ref)
 		case "Create":
 			comment = fmt.Sprintf("adds a new %s to the database.", m.entity)
 			args += fmt.Sprintf("objects []%s", mapping.Name)
-			rets = "error"
+			rets = "(_err error)"
 		case "Update":
 			comment = fmt.Sprintf("updates the %s matching the given key parameters.", m.entity)
 			if len(refMapping.NaturalKey()) > 1 {
@@ -1168,11 +1179,11 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 			}
 
 			args += fmt.Sprintf("%sID int, %s%s []%s", lex.Minuscule(m.config["struct"]), lex.Minuscule(ref), lex.Plural(refMapping.Identifier().Name), refMapping.Identifier().Type.Name)
-			rets = "error"
+			rets = "(_err error)"
 		case "DeleteMany":
 			comment = fmt.Sprintf("deletes the %s matching the given key parameters.", m.entity)
 			args += fmt.Sprintf("%sID int", lex.Minuscule(m.config["struct"]))
-			rets = "error"
+			rets = "(_err error)"
 		default:
 			return fmt.Errorf("Unknown method kind '%s'", m.kind)
 		}
@@ -1182,19 +1193,19 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 		case "GetMany":
 			comment = fmt.Sprintf("returns all available %s for the parent entity.", lex.Plural(m.entity))
 			args += fmt.Sprintf("parent string, filters ...%s", entityFilter(m.entity))
-			rets = fmt.Sprintf("(map[int][]%s, error)", mapping.Name)
+			rets = fmt.Sprintf("(_ map[int][]%s, _err error)", mapping.Name)
 		case "Create":
 			comment = fmt.Sprintf("adds a new %s to the database.", m.entity)
 			args += fmt.Sprintf("parent string, objects map[string]%s", mapping.Name)
-			rets = "error"
+			rets = "(_err error)"
 		case "Update":
 			comment = fmt.Sprintf("updates the %s matching the given key parameters.", m.entity)
 			args += fmt.Sprintf("parent string, referenceID int, %s map[string]%s", lex.Plural(m.entity), mapping.Name)
-			rets = "error"
+			rets = "(_err error)"
 		case "DeleteMany":
 			comment = fmt.Sprintf("deletes the %s matching the given key parameters.", m.entity)
 			args += "parent string, referenceID int"
-			rets = "error"
+			rets = "(_err error)"
 		default:
 			return fmt.Errorf("Unknown method kind '%s'", m.kind)
 		}
@@ -1204,19 +1215,19 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 		case "GetMany":
 			comment = fmt.Sprintf("returns all available %s.", lex.Plural(m.entity))
 			args += fmt.Sprintf("parent string, filters ...%s", entityFilter(m.entity))
-			rets = "(map[int]map[string]string, error)"
+			rets = "(_ map[int]map[string]string, _err error)"
 		case "Create":
 			comment = fmt.Sprintf("adds a new %s to the database.", m.entity)
 			args += fmt.Sprintf("parent string, object %s", mapping.Name)
-			rets = "error"
+			rets = "(_err error)"
 		case "Update":
 			comment = fmt.Sprintf("updates the %s matching the given key parameters.", m.entity)
 			args += "parent string, referenceID int, config map[string]string"
-			rets = "error"
+			rets = "(_err error)"
 		case "DeleteMany":
 			comment = fmt.Sprintf("deletes the %s matching the given key parameters.", m.entity)
 			args += "parent string, referenceID int"
-			rets = "error"
+			rets = "(_err error)"
 		default:
 			return fmt.Errorf("Unknown method kind '%s'", m.kind)
 		}
@@ -1226,12 +1237,12 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 		case "URIs":
 			comment = fmt.Sprintf("returns all available %s URIs.", m.entity)
 			args += fmt.Sprintf("filter %s", entityFilter(m.entity))
-			rets = "([]string, error)"
+			rets = "(_ []string, _err error)"
 		case "GetMany":
 			if m.ref == "" {
 				comment = fmt.Sprintf("returns all available %s.", lex.Plural(m.entity))
 				args += fmt.Sprintf("filters ...%s", entityFilter(m.entity))
-				rets = fmt.Sprintf("(%s, error)", lex.Slice(lex.Camel(m.entity)))
+				rets = fmt.Sprintf("(_ %s, _err error)", lex.Slice(lex.Camel(m.entity)))
 			} else {
 				comment = fmt.Sprintf("returns all available %s %s", mapping.Name, lex.Plural(m.ref))
 				args += fmt.Sprintf("%sID int, filters ...%s", lex.Minuscule(mapping.Name), entityFilter(m.ref))
@@ -1248,21 +1259,21 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 					retType = "map[string]string"
 				}
 
-				rets = fmt.Sprintf("(%s, error)", retType)
+				rets = fmt.Sprintf("(_ %s, _err error)", retType)
 			}
 
 		case "GetOne":
 			comment = fmt.Sprintf("returns the %s with the given key.", m.entity)
 			args += mapping.FieldArgs(mapping.NaturalKey())
-			rets = fmt.Sprintf("(%s, error)", lex.Star(lex.Camel(m.entity)))
+			rets = fmt.Sprintf("(_ %s, _err error)", lex.Star(lex.Camel(m.entity)))
 		case "ID":
 			comment = fmt.Sprintf("return the ID of the %s with the given key.", m.entity)
 			args += mapping.FieldArgs(mapping.NaturalKey())
-			rets = "(int64, error)"
+			rets = "(_ int64, _err error)"
 		case "Exists":
 			comment = fmt.Sprintf("checks if a %s with the given key exists.", m.entity)
 			args += mapping.FieldArgs(mapping.NaturalKey())
-			rets = "(bool, error)"
+			rets = "(_ bool, _err error)"
 		case "Create":
 			if m.ref == "" {
 				entityCreate, ok := m.config["struct"]
@@ -1272,10 +1283,10 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 
 				comment = fmt.Sprintf("adds a new %s to the database.", m.entity)
 				args += fmt.Sprintf("object %s", lex.Camel(entityCreate))
-				rets = "(int64, error)"
+				rets = "(_ int64, _err error)"
 			} else {
 				comment = fmt.Sprintf("adds new %s %s to the database.", m.entity, lex.Plural(m.ref))
-				rets = "error"
+				rets = "(_err error)"
 
 				refMapping, err := Parse(m.pkg, m.ref, "")
 				if err != nil {
@@ -1297,11 +1308,11 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 
 			comment = fmt.Sprintf("adds a new %s to the database.", m.entity)
 			args += fmt.Sprintf("object %s", lex.Camel(entityCreate))
-			rets = "(int64, error)"
+			rets = "(_ int64, _err error)"
 		case "Rename":
 			comment = fmt.Sprintf("renames the %s matching the given key parameters.", m.entity)
 			args += mapping.FieldArgs(mapping.NaturalKey(), "to string")
-			rets = "error"
+			rets = "(_err error)"
 		case "Update":
 			if m.ref == "" {
 				entityUpdate, ok := m.config["struct"]
@@ -1311,10 +1322,10 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 
 				comment = fmt.Sprintf("updates the %s matching the given key parameters.", m.entity)
 				args += mapping.FieldArgs(mapping.NaturalKey(), fmt.Sprintf("object %s", lex.Camel(entityUpdate)))
-				rets = "error"
+				rets = "(_err error)"
 			} else {
 				comment = fmt.Sprintf("updates the %s %s matching the given key parameters.", m.entity, m.ref)
-				rets = "error"
+				rets = "(_err error)"
 
 				refMapping, err := Parse(m.pkg, m.ref, "")
 				if err != nil {
@@ -1331,11 +1342,11 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 		case "DeleteOne":
 			comment = fmt.Sprintf("deletes the %s matching the given key parameters.", m.entity)
 			args += mapping.FieldArgs(mapping.ActiveFilters(m.kind))
-			rets = "error"
+			rets = "(_err error)"
 		case "DeleteMany":
 			comment = fmt.Sprintf("deletes the %s matching the given key parameters.", m.entity)
 			args += mapping.FieldArgs(mapping.ActiveFilters(m.kind))
-			rets = "error"
+			rets = "(_err error)"
 		default:
 			return fmt.Errorf("Unknown method kind '%s'", m.kind)
 		}
@@ -1412,9 +1423,18 @@ func (m *Method) begin(buf *file.Buffer, comment string, args string, rets strin
 	buf.L("// generator: %s %s", m.entity, m.kind)
 
 	if isInterface {
+		// Named return values are not needed for the interface definition.
+		rets = strings.ReplaceAll(rets, "_err ", "")
+		rets = strings.ReplaceAll(rets, "_ ", "")
+
 		buf.L("%s(%s) %s", name, args, rets)
 	} else {
 		buf.L("func %s(%s) %s {", name, args, rets)
+
+		buf.L("defer func() {")
+		buf.L("_err = mapErr(_err, %q)", lex.Capital(m.entity))
+		buf.L("}()")
+		buf.N()
 	}
 
 	return nil
