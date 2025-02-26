@@ -15,6 +15,9 @@ const ZFSFeatureMigrationHeader = "migration_header"
 // ZFSFeatureZvolFilesystems indicates migration can send/recv zvols.
 const ZFSFeatureZvolFilesystems = "header_zvol_filesystems"
 
+// LINSTORFeatureMigrationHeader indicates that the header will include the source volume name.
+const LINSTORFeatureMigrationHeader = "migration_header"
+
 // GetRsyncFeaturesSlice returns a slice of strings representing the supported RSYNC features.
 func (m *MigrationHeader) GetRsyncFeaturesSlice() []string {
 	features := []string{}
@@ -85,6 +88,22 @@ func (m *MigrationHeader) GetBtrfsFeaturesSlice() []string {
 
 		if m.BtrfsFeatures.HeaderSubvolumeUuids != nil && *m.BtrfsFeatures.HeaderSubvolumeUuids {
 			features = append(features, BTRFSFeatureSubvolumeUUIDs)
+		}
+	}
+
+	return features
+}
+
+// GetLinstorFeaturesSlice returns a slice of strings representing the supported LINSTOR features.
+func (m *MigrationHeader) GetLinstorFeaturesSlice() []string {
+	features := []string{}
+	if m == nil {
+		return features
+	}
+
+	if m.LinstorFeatures != nil {
+		if m.LinstorFeatures.MigrationHeader != nil && *m.LinstorFeatures.MigrationHeader {
+			features = append(features, LINSTORFeatureMigrationHeader)
 		}
 	}
 

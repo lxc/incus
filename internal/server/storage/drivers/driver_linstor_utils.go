@@ -700,7 +700,8 @@ func (d *linstor) copyVolume(vol Volume, srcVol Volume) error {
 	}
 
 	_, err = linstor.Client.ResourceDefinitions.Clone(context.TODO(), srcResourceDefinition.Name, linstorClient.ResourceDefinitionCloneRequest{
-		Name: targetResourceDefinitionName,
+		Name:          targetResourceDefinitionName,
+		ResourceGroup: d.config[LinstorResourceGroupNameConfigKey],
 	})
 	if err != nil {
 		return fmt.Errorf("Unable to start cloning resource definition: %w", err)
@@ -782,6 +783,15 @@ func (d *linstor) getResourceDefinitions() ([]linstorClient.ResourceDefinitionWi
 	}
 
 	return resourceDefinitions, nil
+}
+
+// linstorMigrationHeader is the meta data header for volumes being migrated.
+type linstorMigrationHeader struct {
+	srcVolName string `json:"src_vol_name" yaml:"src_vol_name"`
+}
+
+func (d *linstor) migrationHeader(vol Volume) linstorMigrationHeader {
+	return linstorMigrationHeader{srcVolName: vol.Name()}
 }
 
 func (d *linstor) parseVolumeType(s string) (*VolumeType, bool) {

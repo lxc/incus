@@ -139,6 +139,21 @@ func TypesToHeader(types ...Type) *migration.MigrationHeader {
 		header.BtrfsFeatures = &features
 	}
 
+	// Add LINSTOR features if preferred type is LINSTOR.
+	if preferredType.FSType == migration.MigrationFSType_LINSTOR {
+		features := migration.LinstorFeatures{
+			MigrationHeader: &missingFeature,
+		}
+
+		for _, feature := range preferredType.Features {
+			if feature == migration.LINSTORFeatureMigrationHeader {
+				features.MigrationHeader = &hasFeature
+			}
+		}
+
+		header.LinstorFeatures = &features
+	}
+
 	// Check all the types for an Rsync method, if found add its features to the header's RsyncFeatures list.
 	for _, t := range types {
 		if t.FSType != migration.MigrationFSType_RSYNC && t.FSType != migration.MigrationFSType_BLOCK_AND_RSYNC {
@@ -199,6 +214,8 @@ func MatchTypes(offer *migration.MigrationHeader, fallbackType migration.Migrati
 				offeredFeatures = offer.GetBtrfsFeaturesSlice()
 			} else if offerFSType == migration.MigrationFSType_RSYNC {
 				offeredFeatures = offer.GetRsyncFeaturesSlice()
+			} else if offerFSType == migration.MigrationFSType_LINSTOR {
+				offeredFeatures = offer.GetLinstorFeaturesSlice()
 			}
 
 			// Find common features in both our type and offered type.

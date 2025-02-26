@@ -282,7 +282,8 @@ func (d *linstor) MigrationTypes(contentType ContentType, refresh bool, copySnap
 
 	return []localMigration.Type{
 		{
-			FSType: migration.MigrationFSType_LINSTOR,
+			FSType:   migration.MigrationFSType_LINSTOR,
+			Features: []string{migration.LINSTORFeatureMigrationHeader},
 		},
 		{
 			FSType:   rsyncTransportType,

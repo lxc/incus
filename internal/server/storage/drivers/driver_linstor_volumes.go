@@ -2,11 +2,13 @@ package drivers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
+	"slices"
 	"strings"
 
 	linstorClient "github.com/LINBIT/golinstor/client"
@@ -1050,8 +1052,30 @@ func (d *linstor) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs 
 		return ErrNotSupported
 	}
 
-	// TODO: handle optimize migration to other LINSTOR storage pools
-	return ErrNotSupported
+	// If migration header is supported, send the header for the volume being migrated
+	if slices.Contains(volSrcArgs.MigrationType.Features, migration.LINSTORFeatureMigrationHeader) {
+		// Fill the migration header with the snapshot names and dataset GUIDs.
+		srcMigrationHeader := d.migrationHeader(vol)
+
+		headerJSON, err := json.Marshal(srcMigrationHeader)
+		if err != nil {
+			return fmt.Errorf("Failed encoding LINSTOR migration header: %w", err)
+		}
+
+		// Send the migration header to the target.
+		_, err = conn.Write(headerJSON)
+		if err != nil {
+			return fmt.Errorf("Failed sending LINSTOR migration header: %w", err)
+		}
+
+		// End the frame.
+		err = conn.Close()
+		if err != nil {
+			return fmt.Errorf("Failed closing LINSTOR migration header frame: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // CreateVolumeFromMigration creates a volume being sent via a migration.
@@ -1093,8 +1117,36 @@ func (d *linstor) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser,
 		return ErrNotSupported
 	}
 
-	// TODO: handle optimize migration from other LINSTOR storage pools
-	return ErrNotSupported
+	// Migration accross LINSTOR storage pools
+	d.logger.Debug("Detected migration between storage pools", logger.Ctx{"volume": vol.Name(), "volTargetArgs": volTargetArgs})
+
+	if !slices.Contains(volTargetArgs.MigrationType.Features, migration.LINSTORFeatureMigrationHeader) {
+		return errors.New("LINSTOR migration between storage pools requires a migration header")
+	}
+
+	var migrationHeader linstorMigrationHeader
+
+	buf, err := io.ReadAll(conn)
+	if err != nil {
+		return fmt.Errorf("Failed reading LINSTOR migration header: %w", err)
+	}
+
+	// Read the migration header
+	err = json.Unmarshal(buf, &migrationHeader)
+	if err != nil {
+		return fmt.Errorf("Failed decoding LINSTOR migration header: %w", err)
+	}
+
+	d.logger.Debug("Received migration header for LINSTOR volume", logger.Ctx{"migrationHeader": migrationHeader})
+	srcVol := vol.Clone()
+	srcVol.name = migrationHeader.srcVolName
+
+	err = d.copyVolume(vol, srcVol)
+	if err != nil {
+		return fmt.Errorf("Could not copy LINSTOR volume: %w", err)
+	}
+
+	return nil
 }
 
 // VolumeSnapshots returns a list of snapshots for the volume (in no particular order).
