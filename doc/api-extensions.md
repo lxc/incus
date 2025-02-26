@@ -2707,3 +2707,7 @@ Adds support for specifying the VRF to add the routes to.
 A new category of configuration options, `smbios11.XYZ` has been added
 which allows passing key/value pairs through `SMBIOS Type 11` on systems that
 support it.
+
+## `storage_driver_linstor`
+
+This adds a LINSTOR storage driver.

@@ -24,6 +24,7 @@ The following storage drivers are supported:
 - [Ceph RBD - `ceph`](storage-ceph)
 - [CephFS - `cephfs`](storage-cephfs)
 - [Ceph Object - `cephobject`](storage-cephobject)
+- [LINSTOR - `linstor`](storage-linstor)
 
 See the following how-to guides for additional information:
 
@@ -36,12 +37,12 @@ See the following how-to guides for additional information:
 Where the Incus data is stored depends on the configuration and the selected storage driver.
 Depending on the storage driver that is used, Incus can either share the file system with its host or keep its data separate.
 
-Storage location         | Directory | Btrfs    | LVM (all) | ZFS      | Ceph (all) |
-:---                     | :-:       | :-:      | :-:       | :-:      | :-:        |
-Shared with the host     | &#x2713;  | &#x2713; | -         | &#x2713; | -          |
-Dedicated disk/partition | -         | &#x2713; | &#x2713;  | &#x2713; | -          |
-Loop disk                | -         | &#x2713; | &#x2713;  | &#x2713; | -          |
-Remote storage           | -         | -        | &#x2713;  | -        | &#x2713;   |
+Storage location         | Directory | Btrfs    | LVM (all) | ZFS      | Ceph (all) | LINSTOR  |
+:---                     | :-:       | :-:      | :-:       | :-:      | :-:        | :-:      |
+Shared with the host     | &#x2713;  | &#x2713; | -         | &#x2713; | -          | -        |
+Dedicated disk/partition | -         | &#x2713; | &#x2713;  | &#x2713; | -          | &#x2713; |
+Loop disk                | -         | &#x2713; | &#x2713;  | &#x2713; | -          | &#x2713; |
+Remote storage           | -         | -        | &#x2713;  | -        | &#x2713;   | &#x2713; |
 
 #### Shared with the host
 
@@ -54,7 +55,7 @@ This option is supported for the `dir` driver, the `btrfs` driver (if the host i
 
 Having Incus use an empty partition on your main disk or a full dedicated disk keeps its storage completely independent from the host.
 
-This option is supported  for the `btrfs` driver, the `lvm` driver and the `zfs` driver.
+This option is supported  for the `btrfs` driver, the `lvm` driver, the `zfs` driver and the `linstor` driver.
 
 #### Loop disk
 
@@ -72,6 +73,7 @@ You can increase their size though; see {ref}`storage-resize-pool`.
 
 The `ceph`, `cephfs` and `cephobject` drivers store the data in a completely independent Ceph storage cluster that must be set up separately.
 The `lvmcluster` driver relies on a shared block device being available to all cluster members and on a pre-existing `lvmlockd` setup.
+The `linstor` driver stores the data in a LINSTOR storage cluster that must be setup separately.
 
 (storage-default-pool)=
 ### Default storage pool

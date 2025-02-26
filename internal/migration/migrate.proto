@@ -10,6 +10,7 @@ enum MigrationFSType {
 	ZFS		= 2;
 	RBD		= 3;
 	BLOCK_AND_RSYNC	= 4;
+	LINSTOR = 5;
 }
 
 enum CRIUType {
@@ -66,7 +67,11 @@ message zfsFeatures {
 message btrfsFeatures {
 	optional bool		migration_header = 1;
 	optional bool		header_subvolumes = 2;
-	optional bool       	header_subvolume_uuids = 3;
+	optional bool       header_subvolume_uuids = 3;
+}
+
+message linstorFeatures {
+	optional bool		migration_header = 1;
 }
 
 message MigrationHeader {
@@ -82,6 +87,7 @@ message MigrationHeader {
 	optional int64				volumeSize		= 11;
 	optional btrfsFeatures			btrfsFeatures 		= 12;
 	optional uint32				indexHeaderVersion	= 13;
+	optional linstorFeatures	linstorFeatures 	= 14;
 }
 
 message MigrationControl {
