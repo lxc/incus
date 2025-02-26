@@ -2269,19 +2269,34 @@ func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 
 	defer unlock()
 
+	if vol.IsVMBlock() {
+		blockifyMountPath(&vol)
+	}
+
 	ourUnmount := false
 	dataset := d.dataset(vol, false)
 	mountPath := vol.MountPath()
 
 	refCount := vol.MountRefCountDecrement()
 
+	if keepBlockDev {
+		d.logger.Debug("keepBlockDevTrue", logger.Ctx{"volName": vol.name, "refCount": refCount})
+	}
+
+	if vol.contentType == ContentTypeBlock || vol.contentType == ContentTypeISO {
+		// For VMs and ISOs, unmount the filesystem volume.
+		if vol.IsVMBlock() {
+			fsVol := vol.NewVMBlockFilesystemVolume()
+			ourUnmount, err = d.UnmountVolume(fsVol, false, op)
+			if err != nil {
+				return false, err
+			}
+		}
+	}
+
 	if refCount > 0 {
 		d.logger.Debug("Skipping TrueNAS unmount as in use", logger.Ctx{"volName": vol.name, "host": d.config["truenas.host"], "dataset": dataset, "path": mountPath})
 		return false, ErrInUse
-	}
-
-	if keepBlockDev {
-		d.logger.Debug("keepBlockDevTrue", logger.Ctx{"volName": vol.name, "refCount": refCount})
 	}
 
 	if (vol.contentType == ContentTypeFS || vol.IsVMBlock() || isFsImgVol(vol)) && linux.IsMountPoint(mountPath) {
@@ -2311,17 +2326,6 @@ func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 			d.logger.Debug("Unmounted TrueNAS dataset", logger.Ctx{"volName": vol.name, "host": d.config["truenas.host"], "dataset": dataset, "path": mountPath})
 		}
 
-	}
-
-	if vol.contentType == ContentTypeBlock || vol.contentType == ContentTypeISO {
-		// For VMs and ISOs, unmount the filesystem volume.
-		if vol.IsVMBlock() {
-			fsVol := vol.NewVMBlockFilesystemVolume()
-			ourUnmount, err = d.UnmountVolume(fsVol, false, op)
-			if err != nil {
-				return false, err
-			}
-		}
 	}
 
 	return ourUnmount, nil
