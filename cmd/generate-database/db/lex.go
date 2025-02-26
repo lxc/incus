@@ -81,7 +81,7 @@ func activeCriteria(filter []string, ignoredFilter []string) string {
 }
 
 // Return the code for a "dest" function, to be passed as parameter to
-// query.SelectObjects in order to scan a single row.
+// selectObjects in order to scan a single row.
 func destFunc(slice string, typ string, fields []*Field) string {
 	var builder strings.Builder
 	writeLine := func(line string) { builder.WriteString(fmt.Sprintf("%s\n", line)) }
@@ -97,7 +97,7 @@ func destFunc(slice string, typ string, fields []*Field) string {
 	}
 
 	unmarshal := func(declVarName string, field *Field) {
-		writeLine(fmt.Sprintf("err = query.Unmarshal(%s, &%s.%s)", declVarName, varName, field.Name))
+		writeLine(fmt.Sprintf("err = unmarshal(%s, &%s.%s)", declVarName, varName, field.Name))
 		checkErr()
 	}
 
