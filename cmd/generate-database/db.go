@@ -66,6 +66,7 @@ func newDbMapper() *cobra.Command {
 
 func newDbMapperGenerate() *cobra.Command {
 	var pkg string
+	var boilerplateFilename string
 
 	cmd := &cobra.Command{
 		Use:   "generate",
@@ -75,20 +76,26 @@ func newDbMapperGenerate() *cobra.Command {
 				return errors.New("GOPACKAGE environment variable is not set")
 			}
 
-			return generate(pkg)
+			return generate(pkg, boilerplateFilename)
 		},
 	}
 
 	flags := cmd.Flags()
 	flags.StringVarP(&pkg, "package", "p", "", "Go package where the entity struct is declared")
+	flags.StringVarP(&boilerplateFilename, "boilerplate-file", "b", "-", "Filename of the file where the mapper boilerplate is written to")
 
 	return cmd
 }
 
 const prefix = "//generate-database:mapper "
 
-func generate(pkg string) error {
+func generate(pkg string, boilerplateFilename string) error {
 	parsedPkg, err := packageLoad(pkg)
+	if err != nil {
+		return err
+	}
+
+	err = file.Boilerplate(boilerplateFilename)
 	if err != nil {
 		return err
 	}
