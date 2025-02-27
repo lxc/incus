@@ -16,6 +16,7 @@ import (
 	"github.com/gorilla/mux"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/filter"
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/certificate"
@@ -62,6 +63,12 @@ var certificateCmd = APIEndpoint{
 //  ---
 //  produces:
 //    - application/json
+//  parameters:
+//    - in: query
+//      name: filter
+//      description: Collection filter
+//      type: string
+//      example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -98,43 +105,49 @@ var certificateCmd = APIEndpoint{
 
 // swagger:operation GET /1.0/certificates?recursion=1 certificates certificates_get_recursion1
 //
-//	Get the trusted certificates
+//  Get the trusted certificates
 //
-//	Returns a list of trusted certificates (structs).
+//  Returns a list of trusted certificates (structs).
 //
-//	---
-//	produces:
-//	  - application/json
-//	responses:
-//	  "200":
-//	    description: API endpoints
-//	    schema:
-//	      type: object
-//	      description: Sync response
-//	      properties:
-//	        type:
-//	          type: string
-//	          description: Response type
-//	          example: sync
-//	        status:
-//	          type: string
-//	          description: Status description
-//	          example: Success
-//	        status_code:
-//	          type: integer
-//	          description: Status code
-//	          example: 200
-//	        metadata:
-//	          type: array
-//	          description: List of certificates
-//	          items:
-//	            $ref: "#/definitions/Certificate"
-//	  "403":
-//	    $ref: "#/responses/Forbidden"
-//	  "500":
-//	    $ref: "#/responses/InternalServerError"
+//  ---
+//  produces:
+//    - application/json
+//  parameters:
+//    - in: query
+//      name: filter
+//      description: Collection filter
+//      type: string
+//      example: default
+//  responses:
+//    "200":
+//      description: API endpoints
+//      schema:
+//        type: object
+//        description: Sync response
+//        properties:
+//          type:
+//            type: string
+//            description: Response type
+//            example: sync
+//          status:
+//            type: string
+//            description: Status description
+//            example: Success
+//          status_code:
+//            type: integer
+//            description: Status code
+//            example: 200
+//          metadata:
+//            type: array
+//            description: List of certificates
+//            items:
+//              $ref: "#/definitions/Certificate"
+//    "403":
+//      $ref: "#/responses/Forbidden"
+//    "500":
+//      $ref: "#/responses/InternalServerError"
+
 func certificatesGet(d *Daemon, r *http.Request) response.Response {
-	recursion := localUtil.IsRecursionRequest(r)
 	s := d.State()
 
 	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeCertificate)
@@ -142,8 +155,21 @@ func certificatesGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if recursion {
-		var certResponses []api.Certificate
+	recursion := localUtil.IsRecursionRequest(r)
+
+	// Parse filter value.
+	filterStr := r.FormValue("filter")
+	clauses, err := filter.Parse(filterStr, filter.QueryOperatorSet())
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid filter: %w", err))
+	}
+
+	mustLoadObjects := recursion || (clauses != nil && len(clauses.Clauses) > 0)
+
+	linkResults := make([]string, 0)
+	fullResults := make([]api.Certificate, 0)
+
+	if mustLoadObjects {
 		var baseCerts []dbCluster.Certificate
 		var err error
 		err = d.State().DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -152,7 +178,6 @@ func certificatesGet(d *Daemon, r *http.Request) response.Response {
 				return err
 			}
 
-			certResponses = make([]api.Certificate, 0, len(baseCerts))
 			for _, baseCert := range baseCerts {
 				if !userHasPermission(auth.ObjectCertificate(baseCert.Fingerprint)) {
 					continue
@@ -163,7 +188,21 @@ func certificatesGet(d *Daemon, r *http.Request) response.Response {
 					return err
 				}
 
-				certResponses = append(certResponses, *apiCert)
+				if clauses != nil && len(clauses.Clauses) > 0 {
+					match, err := filter.Match(*apiCert, *clauses)
+					if err != nil {
+						return err
+					}
+
+					if !match {
+						continue
+					}
+				}
+
+				fullResults = append(fullResults, *apiCert)
+
+				certificateURL := fmt.Sprintf("/%s/certificates/%s", version.APIVersion, apiCert.Fingerprint)
+				linkResults = append(linkResults, certificateURL)
 			}
 
 			return nil
@@ -171,30 +210,30 @@ func certificatesGet(d *Daemon, r *http.Request) response.Response {
 		if err != nil {
 			return response.SmartError(err)
 		}
+	} else {
+		trustedCertificates, err := d.getTrustedCertificates()
+		if err != nil {
+			return response.SmartError(err)
+		}
 
-		return response.SyncResponse(true, certResponses)
-	}
+		for _, certs := range trustedCertificates {
+			for _, cert := range certs {
+				fingerprint := localtls.CertFingerprint(&cert)
+				if !userHasPermission(auth.ObjectCertificate(fingerprint)) {
+					continue
+				}
 
-	body := []string{}
-
-	trustedCertificates, err := d.getTrustedCertificates()
-	if err != nil {
-		return response.SmartError(err)
-	}
-
-	for _, certs := range trustedCertificates {
-		for _, cert := range certs {
-			fingerprint := localtls.CertFingerprint(&cert)
-			if !userHasPermission(auth.ObjectCertificate(fingerprint)) {
-				continue
+				certificateURL := fmt.Sprintf("/%s/certificates/%s", version.APIVersion, fingerprint)
+				linkResults = append(linkResults, certificateURL)
 			}
-
-			certificateURL := fmt.Sprintf("/%s/certificates/%s", version.APIVersion, fingerprint)
-			body = append(body, certificateURL)
 		}
 	}
 
-	return response.SyncResponse(true, body)
+	if recursion {
+		return response.SyncResponse(true, fullResults)
+	}
+
+	return response.SyncResponse(true, linkResults)
 }
 
 func updateCertificateCache(d *Daemon) {

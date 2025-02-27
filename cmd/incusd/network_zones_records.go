@@ -2,11 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/v6/internal/filter"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/v6/internal/server/cluster/request"
 	"github.com/lxc/incus/v6/internal/server/lifecycle"
@@ -52,6 +54,11 @@ var networkZoneRecordCmd = APIEndpoint{
 //      description: Project name
 //      type: string
 //      example: default
+//    - in: query
+//      name: filter
+//      description: Collection filter
+//      type: string
+//      example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -88,47 +95,53 @@ var networkZoneRecordCmd = APIEndpoint{
 
 // swagger:operation GET /1.0/network-zones/{zone}/records?recursion=1 network-zones network_zone_records_get_recursion1
 //
-//	Get the network zone records
+//  Get the network zone records
 //
-//	Returns a list of network zone records (structs).
+//  Returns a list of network zone records (structs).
 //
-//	---
-//	produces:
-//	  - application/json
-//	parameters:
-//	  - in: query
-//	    name: project
-//	    description: Project name
-//	    type: string
-//	    example: default
-//	responses:
-//	  "200":
-//	    description: API endpoints
-//	    schema:
-//	      type: object
-//	      description: Sync response
-//	      properties:
-//	        type:
-//	          type: string
-//	          description: Response type
-//	          example: sync
-//	        status:
-//	          type: string
-//	          description: Status description
-//	          example: Success
-//	        status_code:
-//	          type: integer
-//	          description: Status code
-//	          example: 200
-//	        metadata:
-//	          type: array
-//	          description: List of network zone records
-//	          items:
-//	            $ref: "#/definitions/NetworkZoneRecord"
-//	  "403":
-//	    $ref: "#/responses/Forbidden"
-//	  "500":
-//	    $ref: "#/responses/InternalServerError"
+//  ---
+//  produces:
+//    - application/json
+//  parameters:
+//    - in: query
+//      name: project
+//      description: Project name
+//      type: string
+//      example: default
+//    - in: query
+//      name: filter
+//      description: Collection filter
+//      type: string
+//      example: default
+//  responses:
+//    "200":
+//      description: API endpoints
+//      schema:
+//        type: object
+//        description: Sync response
+//        properties:
+//          type:
+//            type: string
+//            description: Response type
+//            example: sync
+//          status:
+//            type: string
+//            description: Status description
+//            example: Success
+//          status_code:
+//            type: integer
+//            description: Status code
+//            example: 200
+//          metadata:
+//            type: array
+//            description: List of network zone records
+//            items:
+//              $ref: "#/definitions/NetworkZoneRecord"
+//    "403":
+//      $ref: "#/responses/Forbidden"
+//    "500":
+//      $ref: "#/responses/InternalServerError"
+
 func networkZoneRecordsGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
@@ -138,6 +151,15 @@ func networkZoneRecordsGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	recursion := localUtil.IsRecursionRequest(r)
+
+	// Parse filter value.
+	filterStr := r.FormValue("filter")
+	clauses, err := filter.Parse(filterStr, filter.QueryOperatorSet())
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid filter: %w", err))
+	}
+
+	mustLoadObjects := recursion || (clauses != nil && len(clauses.Clauses) > 0)
 
 	zoneName, err := url.PathUnescape(mux.Vars(r)["zone"])
 	if err != nil {
@@ -156,21 +178,32 @@ func networkZoneRecordsGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	resultString := []string{}
-	resultMap := []api.NetworkZoneRecord{}
+	linkResults := make([]string, 0)
+	fullResults := make([]api.NetworkZoneRecord, 0)
 	for _, record := range records {
-		if !recursion {
-			resultString = append(resultString, api.NewURL().Path(version.APIVersion, "network-zones", zoneName, "records", record.Name).String())
-		} else {
-			resultMap = append(resultMap, record)
+		if mustLoadObjects {
+			if clauses != nil && len(clauses.Clauses) > 0 {
+				match, err := filter.Match(record, *clauses)
+				if err != nil {
+					return response.SmartError(err)
+				}
+
+				if !match {
+					continue
+				}
+			}
+
+			fullResults = append(fullResults, record)
 		}
+
+		linkResults = append(linkResults, api.NewURL().Path(version.APIVersion, "network-zones", zoneName, "records", record.Name).String())
 	}
 
 	if !recursion {
-		return response.SyncResponse(true, resultString)
+		return response.SyncResponse(true, linkResults)
 	}
 
-	return response.SyncResponse(true, resultMap)
+	return response.SyncResponse(true, fullResults)
 }
 
 // swagger:operation POST /1.0/network-zones/{zone}/records network-zones network_zone_records_post

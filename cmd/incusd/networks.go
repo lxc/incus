@@ -17,6 +17,7 @@ import (
 	"github.com/gorilla/mux"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/filter"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/cluster"
 	clusterRequest "github.com/lxc/incus/v6/internal/server/cluster/request"
@@ -95,6 +96,11 @@ var networkStateCmd = APIEndpoint{
 //      description: Retrieve networks from all projects
 //      type: boolean
 //      example: true
+//    - in: query
+//      name: filter
+//      description: Collection filter
+//      type: string
+//      example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -131,52 +137,58 @@ var networkStateCmd = APIEndpoint{
 
 // swagger:operation GET /1.0/networks?recursion=1 networks networks_get_recursion1
 //
-//	Get the networks
+//  Get the networks
 //
-//	Returns a list of networks (structs).
+//  Returns a list of networks (structs).
 //
-//	---
-//	produces:
-//	  - application/json
-//	parameters:
-//	  - in: query
-//	    name: project
-//	    description: Project name
-//	    type: string
-//	    example: default
-//	  - in: query
-//	    name: all-projects
-//	    description: Retrieve networks from all projects
-//	    type: boolean
-//	    example: true
-//	responses:
-//	  "200":
-//	    description: API endpoints
-//	    schema:
-//	      type: object
-//	      description: Sync response
-//	      properties:
-//	        type:
-//	          type: string
-//	          description: Response type
-//	          example: sync
-//	        status:
-//	          type: string
-//	          description: Status description
-//	          example: Success
-//	        status_code:
-//	          type: integer
-//	          description: Status code
-//	          example: 200
-//	        metadata:
-//	          type: array
-//	          description: List of networks
-//	          items:
-//	            $ref: "#/definitions/Network"
-//	  "403":
-//	    $ref: "#/responses/Forbidden"
-//	  "500":
-//	    $ref: "#/responses/InternalServerError"
+//  ---
+//  produces:
+//    - application/json
+//  parameters:
+//    - in: query
+//      name: project
+//      description: Project name
+//      type: string
+//      example: default
+//    - in: query
+//      name: all-projects
+//      description: Retrieve networks from all projects
+//      type: boolean
+//      example: true
+//    - in: query
+//      name: filter
+//      description: Collection filter
+//      type: string
+//      example: default
+//  responses:
+//    "200":
+//      description: API endpoints
+//      schema:
+//        type: object
+//        description: Sync response
+//        properties:
+//          type:
+//            type: string
+//            description: Response type
+//            example: sync
+//          status:
+//            type: string
+//            description: Status description
+//            example: Success
+//          status_code:
+//            type: integer
+//            description: Status code
+//            example: 200
+//          metadata:
+//            type: array
+//            description: List of networks
+//            items:
+//              $ref: "#/definitions/Network"
+//    "403":
+//      $ref: "#/responses/Forbidden"
+//    "500":
+//      $ref: "#/responses/InternalServerError"
+
 func networksGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
@@ -186,6 +198,16 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	recursion := localUtil.IsRecursionRequest(r)
+
+	// Parse filter value.
+	filterStr := r.FormValue("filter")
+	clauses, err := filter.Parse(filterStr, filter.QueryOperatorSet())
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid filter: %w", err))
+	}
+
+	mustLoadObjects := recursion || (clauses != nil && len(clauses.Clauses) > 0)
+
 	allProjects := util.IsTrue(r.FormValue("all-projects"))
 
 	var networkNames map[string][]string
@@ -239,37 +261,47 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 		return response.InternalError(err)
 	}
 
-	resultString := []string{}
-	resultMap := []api.Network{}
+	linkResults := make([]string, 0)
+	fullResults := make([]api.Network, 0)
 	for projectName, networks := range networkNames {
 		for _, networkName := range networks {
 			if !userHasPermission(auth.ObjectNetwork(projectName, networkName)) {
 				continue
 			}
 
-			if !recursion {
-				// Check if project allows access to network.
-				if !project.NetworkAllowed(reqProject.Config, networkName, true) {
-					continue
-				}
-
-				resultString = append(resultString, fmt.Sprintf("/%s/networks/%s", version.APIVersion, networkName))
-			} else {
+			if mustLoadObjects {
 				netInfo, err := doNetworkGet(s, r, s.ServerClustered, projectName, reqProject.Config, networkName)
 				if err != nil {
 					continue
 				}
 
-				resultMap = append(resultMap, netInfo)
+				if clauses != nil && len(clauses.Clauses) > 0 {
+					match, err := filter.Match(netInfo, *clauses)
+					if err != nil {
+						return response.SmartError(err)
+					}
+
+					if !match {
+						continue
+					}
+				}
+
+				fullResults = append(fullResults, netInfo)
+			} else {
+				if !project.NetworkAllowed(reqProject.Config, networkName, true) {
+					continue
+				}
 			}
+
+			linkResults = append(linkResults, fmt.Sprintf("/%s/networks/%s", version.APIVersion, networkName))
 		}
 	}
 
 	if !recursion {
-		return response.SyncResponse(true, resultString)
+		return response.SyncResponse(true, linkResults)
 	}
 
-	return response.SyncResponse(true, resultMap)
+	return response.SyncResponse(true, fullResults)
 }
 
 // swagger:operation POST /1.0/networks networks networks_post
