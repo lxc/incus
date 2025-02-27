@@ -579,7 +579,7 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 					targetIsDir = true
 				}
 
-				err := c.file.recursivePullFile(resource.server, pathSpec[0], pathSpec[1], target)
+				err := c.file.recursivePullFile(sftpConn, pathSpec[1], target)
 				if err != nil {
 					return err
 				}
@@ -1043,38 +1043,59 @@ func (c *cmdFile) sftpCreateFile(resource remoteResource, targetPath string, arg
 	return nil
 }
 
-func (c *cmdFile) recursivePullFile(d incus.InstanceServer, inst string, p string, targetDir string) error {
-	buf, resp, err := d.GetInstanceFile(inst, p)
+func (c *cmdFile) recursivePullFile(sftpConn *sftp.Client, p string, targetDir string) error {
+	fInfo, err := sftpConn.Lstat(p)
 	if err != nil {
 		return err
 	}
 
-	target := filepath.Join(targetDir, filepath.Base(p))
-	logger.Infof("Pulling %s from %s (%s)", target, p, resp.Type)
+	var fileType string
+	if fInfo.IsDir() {
+		fileType = "directory"
+	} else if fInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+		fileType = "symlink"
+	} else {
+		fileType = "file"
+	}
 
-	if resp.Type == "directory" {
-		err := os.Mkdir(target, os.FileMode(resp.Mode))
+	target := filepath.Join(targetDir, filepath.Base(p))
+	logger.Infof("Pulling %s from %s (%s)", target, p, fileType)
+
+	if fileType == "directory" {
+		err := os.Mkdir(target, fInfo.Mode())
 		if err != nil {
 			return err
 		}
 
-		for _, ent := range resp.Entries {
-			nextP := filepath.Join(p, ent)
+		entries, err := sftpConn.ReadDir(p)
+		if err != nil {
+			return err
+		}
 
-			err := c.recursivePullFile(d, inst, nextP, target)
+		for _, ent := range entries {
+			nextP := filepath.Join(p, ent.Name())
+
+			err := c.recursivePullFile(sftpConn, nextP, target)
 			if err != nil {
 				return err
 			}
 		}
-	} else if resp.Type == "file" {
-		f, err := os.Create(target)
+	} else if fileType == "file" {
+		src, err := sftpConn.Open(p)
 		if err != nil {
 			return err
 		}
 
-		defer func() { _ = f.Close() }()
+		defer func() { _ = src.Close() }()
 
-		err = os.Chmod(target, os.FileMode(resp.Mode))
+		dst, err := os.Create(target)
+		if err != nil {
+			return err
+		}
+
+		defer func() { _ = dst.Close() }()
+
+		err = os.Chmod(target, fInfo.Mode())
 		if err != nil {
 			return err
 		}
@@ -1085,7 +1106,7 @@ func (c *cmdFile) recursivePullFile(d incus.InstanceServer, inst string, p strin
 		}
 
 		writer := &ioprogress.ProgressWriter{
-			WriteCloser: f,
+			WriteCloser: dst,
 			Tracker: &ioprogress.ProgressTracker{
 				Handler: func(bytesReceived int64, speed int64) {
 					progress.UpdateProgress(ioprogress.ProgressData{
@@ -1096,31 +1117,37 @@ func (c *cmdFile) recursivePullFile(d incus.InstanceServer, inst string, p strin
 			},
 		}
 
-		_, err = io.Copy(writer, buf)
+		_, err = io.Copy(writer, src)
 		if err != nil {
 			progress.Done("")
 			return err
 		}
 
-		err = f.Close()
+		err = src.Close()
+		if err != nil {
+			progress.Done("")
+			return err
+		}
+
+		err = dst.Close()
 		if err != nil {
 			progress.Done("")
 			return err
 		}
 
 		progress.Done("")
-	} else if resp.Type == "symlink" {
-		linkTarget, err := io.ReadAll(buf)
+	} else if fileType == "symlink" {
+		linkTarget, err := sftpConn.ReadLink(p)
 		if err != nil {
 			return err
 		}
 
-		err = os.Symlink(strings.TrimSpace(string(linkTarget)), target)
+		err = os.Symlink(linkTarget, target)
 		if err != nil {
 			return err
 		}
 	} else {
-		return fmt.Errorf(i18n.G("Unknown file type '%s'"), resp.Type)
+		return fmt.Errorf(i18n.G("Unknown file type '%s'"), fileType)
 	}
 
 	return nil
