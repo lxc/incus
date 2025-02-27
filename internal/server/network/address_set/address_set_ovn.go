@@ -2,6 +2,7 @@ package address_set
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"slices"
@@ -97,32 +98,88 @@ func OVNEnsureAddressSets(s *state.State, l logger.Logger, client *ovn.NB, proje
 			}
 		}
 
-		// If no addresses, we still create empty sets.
-		// First, try deleting old sets and re-creating them cleanly. Or we can just ensure sets exist empty.
-		// We'll just ensure sets are created (even if empty).
-		//
-		// Check if sets exist by trying to update them. If not present, create them.
-		// We'll rely on UpdateAddressSetAdd to create if missing. But per the code, UpdateAddressSetAdd only updates,
-		// so we must attempt a CreateAddressSet if not existing.
+		// Check if the address set exists in OVN
+		existingIPv4Set, existingIPv6Set, err := client.GetAddressSet(context.TODO(), ovn.OVNAddressSet(asInfo.Name))
 
-		// We attempt a CreateAddressSet only if it doesn't exist. If it fails because it exists, we will ignore and proceed.
-		err = client.CreateAddressSet(context.TODO(), ovn.OVNAddressSet(asInfo.Name))
-		if err != nil && !strings.Contains(err.Error(), "already exists") {
-			// If error is not "exists", fail.
-			if err != ovn.ErrExists {
+		// If address sets do not exist, create them
+		if errors.Is(err, ovn.ErrNotFound) {
+			err = client.CreateAddressSet(context.TODO(), ovn.OVNAddressSet(asInfo.Name), ipNets...)
+			if err != nil {
 				return nil, fmt.Errorf("Failed creating address set %q in OVN: %w", asInfo.Name, err)
 			}
-		}
-
-		// If we have addresses, add them. If not, we ensure empty sets by calling UpdateAddressSetAdd with no addresses,
-		// which will just leave them empty.
-		if len(ipNets) > 0 {
-			err = client.UpdateAddressSetAdd(context.TODO(), ovn.OVNAddressSet(asInfo.Name), ipNets...)
-			if err != nil {
-				return nil, fmt.Errorf("Failed adding addresses to address set %q in OVN: %w", asInfo.Name, err)
-			}
 		} else {
-			// No addresses means ensure empty sets. CreateAddressSet already done above ensures empty sets.
+			if err != nil && !errors.Is(err, ovn.ErrNotFound) {
+				return nil, fmt.Errorf("Failed fetching address set %q (IPv4) from OVN: %w", asInfo.Name, err)
+			}
+			if err != nil && !errors.Is(err, ovn.ErrNotFound) {
+				return nil, fmt.Errorf("Failed fetching address set %q (IPv6) from OVN: %w", asInfo.Name, err)
+			}
+
+			// Compute differences
+			existingIPv4Map := make(map[string]bool)
+			existingIPv6Map := make(map[string]bool)
+
+			for _, addr := range existingIPv4Set.Addresses {
+				existingIPv4Map[addr] = true
+			}
+			for _, addr := range existingIPv6Set.Addresses {
+				existingIPv6Map[addr] = true
+			}
+
+			var addIPv4, removeIPv4, addIPv6, removeIPv6 []net.IPNet
+
+			for _, newIP := range ipNets {
+				if newIP.IP.To4() != nil {
+					if !existingIPv4Map[newIP.String()] {
+						addIPv4 = append(addIPv4, newIP)
+					}
+				} else {
+					if !existingIPv6Map[newIP.String()] {
+						addIPv6 = append(addIPv6, newIP)
+					}
+				}
+			}
+
+			for existingIP := range existingIPv4Map {
+				found := false
+				for _, newIP := range ipNets {
+					if newIP.String() == existingIP {
+						found = true
+						break
+					}
+				}
+				if !found {
+					removeIPv4 = append(removeIPv4, net.IPNet{IP: net.ParseIP(existingIP), Mask: net.CIDRMask(32, 32)})
+				}
+			}
+
+			for existingIP := range existingIPv6Map {
+				found := false
+				for _, newIP := range ipNets {
+					if newIP.String() == existingIP {
+						found = true
+						break
+					}
+				}
+				if !found {
+					removeIPv6 = append(removeIPv6, net.IPNet{IP: net.ParseIP(existingIP), Mask: net.CIDRMask(128, 128)})
+				}
+			}
+
+			// Update OVN sets
+			if len(addIPv4) > 0 || len(addIPv6) > 0 {
+				err = client.UpdateAddressSetAdd(context.TODO(), ovn.OVNAddressSet(asInfo.Name), append(addIPv4, addIPv6...)...)
+				if err != nil {
+					return nil, fmt.Errorf("Failed adding addresses to address set %q in OVN: %w", asInfo.Name, err)
+				}
+			}
+
+			if len(removeIPv4) > 0 || len(removeIPv6) > 0 {
+				err = client.UpdateAddressSetRemove(context.TODO(), ovn.OVNAddressSet(asInfo.Name), append(removeIPv4, removeIPv6...)...)
+				if err != nil {
+					return nil, fmt.Errorf("Failed removing addresses from address set %q in OVN: %w", asInfo.Name, err)
+				}
+			}
 		}
 	}
 	revert.Success()
