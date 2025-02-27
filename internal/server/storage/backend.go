@@ -1196,6 +1196,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 				AllowInconsistent:  allowInconsistent,
 				VolumeOnly:         !snapshots,
 				Info:               &localMigration.Info{Config: srcConfig},
+				StorageMove:        true,
 			}, op)
 		})
 
@@ -1208,6 +1209,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 				VolumeSize:         srcVolumeSize, // Block size setting override.
 				TrackProgress:      false,         // Do not use a progress tracker on receiver.
 				VolumeOnly:         !snapshots,
+				StoragePool:        srcPool.Name(),
 			}, op)
 		})
 
@@ -1456,6 +1458,7 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 				TrackProgress:      true, // Do use a progress tracker on sender.
 				ContentType:        string(contentType),
 				Info:               &localMigration.Info{Config: srcConfig},
+				StorageMove:        true,
 			}, op)
 			if err != nil {
 				cancel()
@@ -1476,6 +1479,7 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 				ContentType:        string(contentType),
 				VolumeSize:         volSize, // Block size setting override.
 				Refresh:            true,
+				StoragePool:        srcPoolName,
 			}, op)
 			if err != nil {
 				cancel()
@@ -1686,6 +1690,7 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 				Refresh:            true, // Indicate to sender to use incremental streams.
 				Info:               &localMigration.Info{Config: srcConfig},
 				VolumeOnly:         !snapshots,
+				StorageMove:        true,
 			}, op)
 		})
 
@@ -1699,6 +1704,7 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 				VolumeSize:         srcVolumeSize,
 				TrackProgress:      false, // Do not use a progress tracker on receiver.
 				VolumeOnly:         !snapshots,
+				StoragePool:        srcPool.Name(),
 			}, op)
 		})
 
@@ -4874,6 +4880,7 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 			ContentType:        string(contentType),
 			Info:               &localMigration.Info{Config: srcConfig},
 			VolumeOnly:         !snapshots,
+			StorageMove:        true,
 		}, op)
 		if err != nil {
 			cancel()
@@ -4894,6 +4901,7 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 			ContentType:        string(contentType),
 			VolumeSize:         volSize, // Block size setting override.
 			VolumeOnly:         !snapshots,
+			StoragePool:        srcPool.Name(),
 		}, op)
 		if err != nil {
 			cancel()
