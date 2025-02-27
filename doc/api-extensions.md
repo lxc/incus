@@ -2691,3 +2691,6 @@ support it.
 
 ## `api_filtering_extended`
 This extends the API filtering mechanism to all API collections.
+
+## `acme_dns01`
+Adds support for `DNS-01` challenge to the Incus ACME support for certificate generation.
