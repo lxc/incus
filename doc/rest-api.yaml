@@ -6959,6 +6959,12 @@ paths:
         get:
             description: Returns a list of trusted certificates (URLs).
             operationId: certificates_get
+            parameters:
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -7172,6 +7178,12 @@ paths:
         get:
             description: Returns a list of trusted certificates (structs).
             operationId: certificates_get_recursion1
+            parameters:
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -10791,6 +10803,11 @@ paths:
                   in: query
                   name: all-projects
                   type: boolean
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -11057,6 +11074,11 @@ paths:
                   in: query
                   name: all-projects
                   type: boolean
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -11140,6 +11162,12 @@ paths:
         get:
             description: Returns a list of network integrations (URLs).
             operationId: network_integrations_get
+            parameters:
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -11339,6 +11367,12 @@ paths:
         get:
             description: Returns a list of network integrations (structs).
             operationId: network_integrations_get_recursion1
+            parameters:
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -11387,6 +11421,11 @@ paths:
                   in: query
                   name: all-projects
                   type: boolean
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -11594,6 +11633,11 @@ paths:
                   example: default
                   in: query
                   name: project
+                  type: string
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
                   type: string
             produces:
                 - application/json
@@ -11803,6 +11847,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -11851,6 +11900,11 @@ paths:
                   in: query
                   name: all-projects
                   type: boolean
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -11899,6 +11953,11 @@ paths:
                   in: query
                   name: all-projects
                   type: boolean
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -12253,6 +12312,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -12461,6 +12525,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -12503,6 +12572,11 @@ paths:
                   example: default
                   in: query
                   name: project
+                  type: string
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
                   type: string
             produces:
                 - application/json
@@ -12752,6 +12826,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -12794,6 +12873,11 @@ paths:
                   example: default
                   in: query
                   name: project
+                  type: string
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
                   type: string
             produces:
                 - application/json
@@ -13005,6 +13089,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -13053,6 +13142,11 @@ paths:
                   in: query
                   name: all-projects
                   type: boolean
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -13397,6 +13491,11 @@ paths:
                   in: query
                   name: all-projects
                   type: boolean
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -13641,6 +13740,11 @@ paths:
                   in: query
                   name: all-projects
                   type: boolean
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -13678,6 +13782,12 @@ paths:
         get:
             description: Returns a list of projects (URLs).
             operationId: projects_get
+            parameters:
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -13954,6 +14064,12 @@ paths:
         get:
             description: Returns a list of projects (structs).
             operationId: projects_get_recursion1
+            parameters:
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -14036,6 +14152,11 @@ paths:
                   example: default
                   in: query
                   name: project
+                  type: string
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
                   type: string
             produces:
                 - application/json
@@ -14484,6 +14605,11 @@ paths:
                   in: query
                   name: all-projects
                   type: boolean
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -15045,6 +15171,11 @@ paths:
                   in: query
                   name: all-projects
                   type: boolean
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -16216,6 +16347,11 @@ paths:
                   example: default
                   in: query
                   name: project
+                  type: string
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
                   type: string
             produces:
                 - application/json
