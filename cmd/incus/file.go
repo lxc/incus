@@ -267,14 +267,7 @@ func (c *cmdFileCreate) Run(cmd *cobra.Command, args []string) error {
 		}, fileArgs.Content)
 	}
 
-	var paths []string
-	if c.flagType != "symlink" {
-		paths = []string{targetPath}
-	} else {
-		paths = []string{targetPath, symlinkTargetPath}
-	}
-
-	err = c.file.sftpCreateFile(resource, paths, fileArgs, false)
+	err = c.file.sftpCreateFile(resource, targetPath, fileArgs, false)
 	if err != nil {
 		progress.Done("")
 		return err
@@ -935,7 +928,7 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 		}, f)
 
 		logger.Infof("Pushing %s to %s (%s)", f.Name(), fpath, args.Type)
-		err = c.file.sftpCreateFile(resource, []string{fpath}, args, true)
+		err = c.file.sftpCreateFile(resource, fpath, args, true)
 		if err != nil {
 			progress.Done("")
 			return err
@@ -986,7 +979,7 @@ func (c *cmdFile) setOwnerMode(sftpConn *sftp.Client, targetPath string, args in
 	return nil
 }
 
-func (c *cmdFile) sftpCreateFile(resource remoteResource, targetPath []string, args incus.InstanceFileArgs, push bool) error {
+func (c *cmdFile) sftpCreateFile(resource remoteResource, targetPath string, args incus.InstanceFileArgs, push bool) error {
 	sftpConn, err := resource.server.GetInstanceFileSFTP(resource.name)
 	if err != nil {
 		return err
@@ -996,7 +989,7 @@ func (c *cmdFile) sftpCreateFile(resource remoteResource, targetPath []string, a
 
 	switch args.Type {
 	case "file":
-		file, err := sftpConn.OpenFile(targetPath[0], os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
+		file, err := sftpConn.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
 		if err != nil {
 			return err
 		}
@@ -1010,24 +1003,38 @@ func (c *cmdFile) sftpCreateFile(resource remoteResource, targetPath []string, a
 			}
 		}
 
-		err = c.setOwnerMode(sftpConn, targetPath[0], args)
+		err = c.setOwnerMode(sftpConn, targetPath, args)
 		if err != nil {
 			return err
 		}
 
 	case "directory":
-		err := sftpConn.MkdirAll(targetPath[0])
+		err := sftpConn.MkdirAll(targetPath)
 		if err != nil {
 			return err
 		}
 
-		err = c.setOwnerMode(sftpConn, targetPath[0], args)
+		err = c.setOwnerMode(sftpConn, targetPath, args)
 		if err != nil {
 			return err
 		}
 
 	case "symlink":
-		err = sftpConn.Symlink(targetPath[1], targetPath[0])
+		// If already a symlink, re-create it.
+		fInfo, err := sftpConn.Lstat(targetPath)
+		if err == nil && fInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+			err = sftpConn.Remove(targetPath)
+			if err != nil {
+				return err
+			}
+		}
+
+		dest, err := io.ReadAll(args.Content)
+		if err != nil {
+			return err
+		}
+
+		err = sftpConn.Symlink(string(dest), targetPath)
 		if err != nil {
 			return err
 		}
