@@ -75,33 +75,13 @@ func needsFsImgVol(vol Volume) bool {
 // CreateVolume creates an empty volume and can optionally fill it by executing the supplied
 // filler function.
 func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Operation) error {
-	/*
-		incus storage volume create incusdev <name> --type=block
-			name: "<project>_<name>"
-			volType: "custom"		VolumeTypeCustom
-			contentType: "block"	ContentTypeBlock
-
-		incus storage volume create incusdev <name>
-			name: "<project>_<name>"
-			volType: "custom"		VolumeTypeCustom
-			contentType: "filesystem"	ContentTypeFS
-
-		incus storage volume create incusdev <name> zfs.block_mode=true
-
-		incus create --empty empty2 --storage incusdev
-			volType: "containers"
-			contentType: "filesystem"
-
-
-
-	*/
 
 	// Revert handling
 	revert := revert.New()
 	defer revert.Fail()
 
 	// must mount VM.block so we can access the root.img, as well as the config filesystem
-	if vol.IsVMBlock() {
+	if vol.IsVMBlock() { // or fs-img...
 		blockifyMountPath(&vol)
 	}
 
@@ -222,7 +202,14 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		*/
 		fsImgVol := cloneVolAsFsImgVol(vol)
 
-		innerFiller := &VolumeFiller{
+		// TODO: this relies on "isBlockBacked" for fs-img blockbacked vols.
+		// Convert to bytes.
+		fsImgVol.config["size"] = vol.ConfigSize()
+		if fsImgVol.config["size"] == "" || fsImgVol.config["size"] == "0" {
+			fsImgVol.config["size"] = DefaultBlockSize
+		}
+
+		fsImgFiller := &VolumeFiller{
 			Fill: func(innerVol Volume, rootBlockPath string, allowUnsafeResize bool) (int64, error) {
 				// Get filesystem.
 				filesystem := vol.ConfigBlockFilesystem() // outer-vol.
@@ -233,8 +220,12 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 						return 0, err
 					}
 				}
-
-				return 0, nil
+				sizeBytes, err := units.ParseByteSizeString(innerVol.config["size"])
+				if err != nil {
+					return 0, err
+				}
+				// sizeBytes should be correct
+				return sizeBytes, nil
 			},
 		}
 
@@ -242,7 +233,7 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 			create volume will mount, create the image file, then call our filler, and unmount, and then we can take care of the mounting the side-car
 			in MountVolume
 		*/
-		err := d.CreateVolume(fsImgVol, innerFiller, op)
+		err = d.CreateVolume(fsImgVol, fsImgFiller, op)
 		if err != nil {
 			return err
 		}
@@ -313,15 +304,6 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 				return err
 			}
 
-			if sizeBytes == 0 {
-				blockVol := vol.Clone()
-				blockVol.contentType = ContentTypeBlock
-				sizeBytes, err = units.ParseByteSizeString(blockVol.ConfigSize())
-				if err != nil {
-					return err
-				}
-			}
-
 			// We expect the filler to copy the VM image into this path.
 			rootBlockPath, err = d.GetVolumeDiskPath(vol)
 			if err != nil {
@@ -364,7 +346,7 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 			}
 
 			// Run the filler.
-			if vol.IsVMBlock() {
+			if vol.IsVMBlock() { // can do for FS-IMG too
 				vol.mountCustomPath = "" // need to zap path... or the filler will fill into the .block path...
 				// the fillter expects the metadata volume to passed in.
 			}
@@ -1034,10 +1016,10 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 
 	// Resize volume to the size specified. Only uses volume "size" property and does not use pool/defaults
 	// to give the caller more control over the size being used.
-	// err = d.SetVolumeQuota(vol, vol.config["size"], allowUnsafeResize, op)
-	// if err != nil {
-	// 	return err
-	// }
+	err = d.SetVolumeQuota(vol, vol.config["size"], allowUnsafeResize, op)
+	if err != nil {
+		return err
+	}
 
 	// All done.
 	revert.Success()
@@ -1925,7 +1907,7 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 // GetVolumeDiskPath returns the location of a disk volume.
 func (d *truenas) GetVolumeDiskPath(vol Volume) (string, error) {
 
-	if vol.IsVMBlock() {
+	if vol.IsVMBlock() { // or FS-IMG
 		blockifyMountPath(&vol) // when backend calls GetVolumeDiskPath, it needs to refer to the .block mount.
 	}
 
@@ -2060,8 +2042,8 @@ func (d *truenas) activateAndMountFsImg(vol Volume, op *operations.Operation) er
 		return fmt.Errorf("Failed probing filesystem: %w", err)
 	}
 	if fsType == "" {
-		// if we couln't probe it, we probably can't mount it, but may as well give it a whirl
-		fsType = vol.ConfigBlockFilesystem()
+		// if we couldn't probe it, we won't be able to mount it.
+		return fmt.Errorf("Failed probing filesystem: %s", rootBlockPath)
 	}
 
 	loopDevPath, err := loopDeviceSetup(rootBlockPath)
@@ -2162,9 +2144,9 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 	revert := revert.New()
 	defer revert.Fail()
 
-	if vol.contentType == ContentTypeFS || isFsImgVol(vol) || vol.IsVMBlock() {
+	if vol.contentType == ContentTypeFS || isFsImgVol(vol) || vol.IsVMBlock() || vol.IsCustomBlock() {
 
-		if vol.IsVMBlock() {
+		if vol.IsVMBlock() { // OR fs-img
 			blockifyMountPath(&vol)
 		}
 
@@ -2191,25 +2173,6 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 			}
 		}
 
-	} else if vol.contentType == ContentTypeBlock || vol.contentType == ContentTypeISO {
-		/*
-			Like the spoon, there is no block volume.
-
-			For VMs, mount the filesystem volume. This essentially has the effect of double-mounting the FS volume
-			when we are mounting the block device. This prevents the FS volume being unmounted prematurely.
-
-			Its important to mount the block volume and then its underlying "config" filesystem volume because
-			vol.NewVMBlockFilesystemVolume is used to to mount the VM's config without necessarily mounting the "block" volume,
-			and if we don't explicitly mount it, then MountTask will blindly unmount our block volume.
-		*/
-		if vol.IsVMBlock() {
-			fsVol := vol.NewVMBlockFilesystemVolume()
-			fsVol.config["volatile.truenas.fs-img"] = "true" // bit of a hack to get the fs-mounter to mount it instead of loop it.
-			err = d.MountVolume(fsVol, op)
-			if err != nil {
-				return err
-			}
-		} // PS: not 100% sure what to do about ISOs yet.
 	}
 
 	// now, if we were a VM block we also need to mount the config filesystem
@@ -2299,7 +2262,7 @@ func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 		return false, ErrInUse
 	}
 
-	if (vol.contentType == ContentTypeFS || vol.IsVMBlock() || isFsImgVol(vol)) && linux.IsMountPoint(mountPath) {
+	if (vol.contentType == ContentTypeFS || vol.IsVMBlock() || vol.IsCustomBlock() || isFsImgVol(vol)) && linux.IsMountPoint(mountPath) {
 
 		// Unmount the dataset.
 		err = TryUnmount(mountPath, 0)
