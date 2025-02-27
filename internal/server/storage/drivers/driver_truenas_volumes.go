@@ -1835,8 +1835,6 @@ func (d *truenas) UpdateVolume(vol Volume, changedConfig map[string]string) erro
 // 	return valueInt, nil
 // }
 
-//
-
 // SetVolumeQuota applies a size limit on volume.
 // Does nothing if supplied with an empty/zero size for block volumes, and for filesystem volumes removes quota.
 func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op *operations.Operation) error {
@@ -1846,34 +1844,54 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 		return err
 	}
 
+	// Do nothing if size isn't specified.
+	if sizeBytes <= 0 {
+		return nil
+	}
+
 	// For VM block files, resize the file if needed.
-	if vol.contentType == ContentTypeBlock {
-		// Do nothing if size isn't specified.
-		if sizeBytes <= 0 {
-			return nil
+	if vol.IsCustomBlock() { // TODO: VMBlock etc
+
+		if vol.MountInUse() {
+			return ErrInUse // We don't allow online resizing of block volumes.
 		}
 
-		// rootBlockPath, err := d.GetVolumeDiskPath(vol)
-		// if err != nil {
-		// 	return err
-		// }
+		/*
+			we want to resize the root.img in the vol, but if we simply mount the vol
+			then ensureVolumeBlockFile function will reject a resize of an online vol, but
+			an fs-img vol counts as a separate mount-lock
+		*/
+		fsImgVol := cloneVolAsFsImgVol(vol)
+		fsImgVol.mountCustomPath = "" // deblockify, no need to establish a secondary mount-point
 
-		// resized, err := ensureVolumeBlockFile(vol, rootBlockPath, sizeBytes, allowUnsafeResize)
-		// if err != nil {
-		// 	return err
-		// }
+		err := fsImgVol.MountTask(func(mountPath string, op *operations.Operation) error {
 
-		// // Move the GPT alt header to end of disk if needed and resize has taken place (not needed in
-		// // unsafe resize mode as it is expected the caller will do all necessary post resize actions
-		// // themselves).
-		// if vol.IsVMBlock() && resized && !allowUnsafeResize {
-		// 	err = d.moveGPTAltHeader(rootBlockPath)
-		// 	if err != nil {
-		// 		return err
-		// 	}
-		// }
+			// We expect the filler to copy the VM image into this path.
+			rootBlockPath, err := d.GetVolumeDiskPath(fsImgVol)
+			if err != nil {
+				return err
+			}
 
-		return nil
+			_, err = ensureVolumeBlockFile(vol, rootBlockPath, sizeBytes, false)
+			if err != nil {
+				return err
+			}
+
+			// Move the VM GPT alt header to end of disk if needed (not needed in unsafe resize mode as
+			// it is expected the caller will do all necessary post resize actions themselves).
+			if vol.IsVMBlock() && !allowUnsafeResize {
+				err = d.moveGPTAltHeader(rootBlockPath)
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		}, op)
+		if err != nil {
+			return err
+		}
+
 	} else if vol.Type() != VolumeTypeBucket {
 		// For non-VM block volumes, set filesystem quota.
 		volID, err := d.getVolID(vol.volType, vol.name)
