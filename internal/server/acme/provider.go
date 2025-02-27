@@ -4,30 +4,29 @@ import (
 	"sync"
 
 	"github.com/go-acme/lego/v4/challenge"
+	"github.com/go-acme/lego/v4/challenge/resolver"
 )
 
-// HTTP01Provider is an extension of the challenge.Provider interface.
-type HTTP01Provider interface {
+// ChallengeProvider is an extension of the challenge.ChallengeProvider interface.
+type ChallengeProvider interface {
 	challenge.Provider
 
 	Domain() string
 	KeyAuth() string
 	Token() string
+
+	RegisterWithSolver(solver *resolver.SolverManager) error
 }
 
-type http01Provider struct {
+type challengeProvider struct {
 	mu      sync.Mutex
 	domain  string
-	token   string
 	keyAuth string
+	token   string
 }
 
-// NewHTTP01Provider returns a HTTP01Provider.
-func NewHTTP01Provider() HTTP01Provider {
-	return &http01Provider{}
-}
-
-func (p *http01Provider) Present(domain string, token string, keyAuth string) error {
+// Present implements the challenge.Provider interface by storing the challenge details.
+func (p *challengeProvider) Present(domain string, token string, keyAuth string) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -38,7 +37,8 @@ func (p *http01Provider) Present(domain string, token string, keyAuth string) er
 	return nil
 }
 
-func (p *http01Provider) CleanUp(domain string, token string, keyAuth string) error {
+// CleanUp implements the challenge.Provider interface by clearing the challenge details.
+func (p *challengeProvider) CleanUp(domain string, token string, keyAuth string) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -49,21 +49,24 @@ func (p *http01Provider) CleanUp(domain string, token string, keyAuth string) er
 	return nil
 }
 
-func (p *http01Provider) KeyAuth() string {
+// KeyAuth returns the key authorization string for the ACME challenge.
+func (p *challengeProvider) KeyAuth() string {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	return p.keyAuth
 }
 
-func (p *http01Provider) Domain() string {
+// Domain returns the domain name for the ACME challenge.
+func (p *challengeProvider) Domain() string {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	return p.domain
 }
 
-func (p *http01Provider) Token() string {
+// Token returns the token for the ACME challenge.
+func (p *challengeProvider) Token() string {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
