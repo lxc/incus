@@ -215,7 +215,7 @@ func (c *cmdFileCreate) Run(cmd *cobra.Command, args []string) error {
 
 	// Create needed paths if requested
 	if c.file.flagMkdir {
-		err = c.file.recursiveMkdir(resource.server, resource.name, filepath.Dir(targetPath), nil, int64(uid), int64(gid))
+		err = c.file.recursiveMkdir(resource, filepath.Dir(targetPath), nil, int64(uid), int64(gid))
 		if err != nil {
 			return err
 		}
@@ -784,7 +784,7 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 
 			mode, uid, gid := internalIO.GetOwnerMode(finfo)
 
-			err = c.file.recursiveMkdir(resource.server, resource.name, targetPath, &mode, int64(uid), int64(gid))
+			err = c.file.recursiveMkdir(resource, targetPath, &mode, int64(uid), int64(gid))
 			if err != nil {
 				return err
 			}
@@ -860,7 +860,7 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 				}
 			}
 
-			err = c.file.recursiveMkdir(resource.server, resource.name, filepath.Dir(fpath), nil, int64(uid), int64(gid))
+			err = c.file.recursiveMkdir(resource, filepath.Dir(fpath), nil, int64(uid), int64(gid))
 			if err != nil {
 				return err
 			}
@@ -1228,7 +1228,14 @@ func (c *cmdFile) recursivePushFile(resource remoteResource, source string, targ
 	return filepath.Walk(source, sendFile)
 }
 
-func (c *cmdFile) recursiveMkdir(d incus.InstanceServer, inst string, p string, mode *os.FileMode, uid int64, gid int64) error {
+func (c *cmdFile) recursiveMkdir(resource remoteResource, p string, mode *os.FileMode, uid int64, gid int64) error {
+	sftpConn, err := resource.server.GetInstanceFileSFTP(resource.name)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = sftpConn.Close() }()
+
 	/* special case, every instance has a /, we don't need to do anything */
 	if p == "/" {
 		return nil
@@ -1242,12 +1249,12 @@ func (c *cmdFile) recursiveMkdir(d incus.InstanceServer, inst string, p string, 
 
 	for ; i >= 1; i-- {
 		cur := filepath.Join(parts[:i]...)
-		_, resp, err := d.GetInstanceFile(inst, cur)
+		fInfo, err := sftpConn.Lstat(cur)
 		if err != nil {
 			continue
 		}
 
-		if resp.Type != "directory" {
+		if !fInfo.IsDir() {
 			return fmt.Errorf(i18n.G("%s is not a directory"), cur)
 		}
 
@@ -1276,7 +1283,7 @@ func (c *cmdFile) recursiveMkdir(d incus.InstanceServer, inst string, p string, 
 		}
 
 		logger.Infof("Creating %s (%s)", cur, args.Type)
-		err := d.CreateInstanceFile(inst, cur, args)
+		err := c.sftpCreateFile(resource, cur, args, false)
 		if err != nil {
 			return err
 		}
