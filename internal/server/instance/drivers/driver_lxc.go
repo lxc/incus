@@ -5419,6 +5419,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 		VolumeOnly:         !args.Snapshots,
 		Info:               &localMigration.Info{Config: srcConfig},
 		ClusterMove:        args.ClusterMoveSourceName != "",
+		StorageMove:        args.StoragePool != "",
 	}
 
 	// Only send the snapshots that the target requests when refreshing.
@@ -6182,6 +6183,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			VolumeSize:            offerHeader.GetVolumeSize(), // Block size setting override.
 			VolumeOnly:            !args.Snapshots,
 			ClusterMoveSourceName: args.ClusterMoveSourceName,
+			StoragePool:           args.StoragePool,
 		}
 
 		// At this point we have already figured out the parent container's root
