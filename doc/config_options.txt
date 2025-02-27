@@ -2034,6 +2034,14 @@ Specify the number of days after which the unused cached image expires.
 
 ```
 
+```{config:option} acme.challenge server-acme
+:defaultdesc: "`HTTP-01`"
+:scope: "global"
+:shortdesc: "ACME challenge type to use"
+:type: "string"
+Possible values are `DNS-01` and `HTTP-01`.
+```
+
 ```{config:option} acme.domain server-acme
 :scope: "global"
 :shortdesc: "Domain for which the certificate is issued"
@@ -2046,6 +2054,30 @@ Specify the number of days after which the unused cached image expires.
 :shortdesc: "Email address used for the account registration"
 :type: "string"
 
+```
+
+```{config:option} acme.provider server-acme
+:defaultdesc: "``"
+:scope: "global"
+:shortdesc: "Backend provider for the challenge (used by DNS-01)"
+:type: "string"
+
+```
+
+```{config:option} acme.provider.environment server-acme
+:defaultdesc: "``"
+:scope: "global"
+:shortdesc: "Environment variables to set during the challenge (used by DNS-01)"
+:type: "string"
+
+```
+
+```{config:option} acme.provider.resolvers server-acme
+:defaultdesc: "``"
+:scope: "global"
+:shortdesc: "Comma-separated list of DNS resolvers (used by DNS-01)"
+:type: "string"
+DNS resolvers to use for performing (recursive) `CNAME` resolving and apex domain determination during DNS-01 challenge.
 ```
 
 <!-- config group server-acme end -->
