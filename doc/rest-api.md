@@ -171,8 +171,6 @@ by the object itself.
 To filter your results on certain values, filter is implemented for collections.
 A `filter` argument can be passed to a GET query against a collection.
 
-Filtering is available for the instance, image and storage volume endpoints.
-
 There is no default value for filter which means that all results found will
 be returned. The following is the language used for the filter argument:
 
