@@ -274,30 +274,10 @@ func (d *linstor) MigrationTypes(contentType ContentType, refresh bool, copySnap
 		return []localMigration.Type{d.rsyncMigrationType(contentType)}
 	}
 
-	var rsyncTransportType migration.MigrationFSType
-	var rsyncFeatures []string
-
-	// Do not pass compression argument to rsync if the associated
-	// config key, that is rsync.compression, is set to false.
-	if util.IsFalse(d.Config()["rsync.compression"]) {
-		rsyncFeatures = []string{"xattrs", "delete", "bidirectional"}
-	} else {
-		rsyncFeatures = []string{"xattrs", "delete", "compress", "bidirectional"}
-	}
-
-	if IsContentBlock(contentType) {
-		rsyncTransportType = migration.MigrationFSType_BLOCK_AND_RSYNC
-	} else {
-		rsyncTransportType = migration.MigrationFSType_RSYNC
-	}
-
 	return []localMigration.Type{
 		{
 			FSType: migration.MigrationFSType_LINSTOR,
 		},
-		{
-			FSType:   rsyncTransportType,
-			Features: rsyncFeatures,
-		},
+		d.rsyncMigrationType(contentType),
 	}
 }

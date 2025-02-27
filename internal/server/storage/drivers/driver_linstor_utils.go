@@ -15,6 +15,8 @@ import (
 	"github.com/LINBIT/golinstor/clonestatus"
 	"github.com/google/uuid"
 
+	"github.com/lxc/incus/v6/internal/migration"
+	localMigration "github.com/lxc/incus/v6/internal/server/migration"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
@@ -278,7 +280,10 @@ func (d *linstor) getResourceDefinition(vol Volume, fetchVolumeDefinitions bool)
 
 	// Query resource definitions that match the desired volume by its name.
 	resourceDefinitions, err := linstor.Client.ResourceDefinitions.GetAll(context.TODO(), linstorClient.RDGetAllRequest{
-		Props:                 []string{LinstorAuxName + "=" + d.config[LinstorVolumePrefixConfigKey] + vol.name},
+		Props: []string{
+			LinstorAuxName + "=" + d.config[LinstorVolumePrefixConfigKey] + vol.name,
+			LinstorAuxType + "=" + string(vol.volType),
+		},
 		WithVolumeDefinitions: fetchVolumeDefinitions,
 	})
 	if err != nil {
@@ -287,13 +292,21 @@ func (d *linstor) getResourceDefinition(vol Volume, fetchVolumeDefinitions bool)
 
 	l.Debug("Queried resource definitions", logger.Ctx{"query": LinstorAuxName + "=" + d.config[LinstorVolumePrefixConfigKey] + vol.name, "result": resourceDefinitions})
 
-	if len(resourceDefinitions) == 0 {
+	// Filter resource definitions for the storage pool's resource group.
+	var filteredResourceDefinitions []linstorClient.ResourceDefinitionWithVolumeDefinition
+	for _, rd := range resourceDefinitions {
+		if rd.ResourceGroupName == d.config[LinstorResourceGroupNameConfigKey] {
+			filteredResourceDefinitions = append(filteredResourceDefinitions, rd)
+		}
+	}
+
+	if len(filteredResourceDefinitions) == 0 {
 		return linstorClient.ResourceDefinitionWithVolumeDefinition{}, errResourceDefinitionNotFound
-	} else if len(resourceDefinitions) > 1 {
+	} else if len(filteredResourceDefinitions) > 1 {
 		return linstorClient.ResourceDefinitionWithVolumeDefinition{}, fmt.Errorf("Multiple resource definitions found for volume %s", vol.name)
 	}
 
-	return resourceDefinitions[0], nil
+	return filteredResourceDefinitions[0], nil
 }
 
 // getLinstorDevPath return the device path for a given `vol` in the current node.
@@ -750,7 +763,8 @@ func (d *linstor) copyVolume(vol Volume, srcVol Volume) error {
 	}
 
 	_, err = linstor.Client.ResourceDefinitions.Clone(context.TODO(), srcResourceDefinition.Name, linstorClient.ResourceDefinitionCloneRequest{
-		Name: targetResourceDefinitionName,
+		Name:          targetResourceDefinitionName,
+		ResourceGroup: d.config[LinstorResourceGroupNameConfigKey],
 	})
 	if err != nil {
 		return fmt.Errorf("Unable to start cloning resource definition: %w", err)
@@ -832,6 +846,30 @@ func (d *linstor) getResourceDefinitions() ([]linstorClient.ResourceDefinitionWi
 	}
 
 	return resourceDefinitions, nil
+}
+
+func (d *linstor) rsyncMigrationType(contentType ContentType) localMigration.Type {
+	var rsyncTransportType migration.MigrationFSType
+	var rsyncFeatures []string
+
+	// Do not pass compression argument to rsync if the associated
+	// config key, that is rsync.compression, is set to false.
+	if util.IsFalse(d.Config()["rsync.compression"]) {
+		rsyncFeatures = []string{"xattrs", "delete", "bidirectional"}
+	} else {
+		rsyncFeatures = []string{"xattrs", "delete", "compress", "bidirectional"}
+	}
+
+	if IsContentBlock(contentType) {
+		rsyncTransportType = migration.MigrationFSType_BLOCK_AND_RSYNC
+	} else {
+		rsyncTransportType = migration.MigrationFSType_RSYNC
+	}
+
+	return localMigration.Type{
+		FSType:   rsyncTransportType,
+		Features: rsyncFeatures,
+	}
 }
 
 func (d *linstor) parseVolumeType(s string) (*VolumeType, bool) {
