@@ -225,6 +225,7 @@ RBD
 README
 reconfiguring
 requestor
+resolvers
 RESTful
 RHEL
 rootfs
