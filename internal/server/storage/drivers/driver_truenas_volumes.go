@@ -1850,7 +1850,7 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 	}
 
 	// For VM block files, resize the file if needed.
-	if vol.IsCustomBlock() { // TODO: VMBlock etc
+	if vol.IsBlockBacked() || vol.IsCustomBlock() || vol.IsVMBlock() { // TODO: VMBlock etc
 
 		if vol.MountInUse() {
 			return ErrInUse // We don't allow online resizing of block volumes.
@@ -1861,18 +1861,28 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 			then ensureVolumeBlockFile function will reject a resize of an online vol, but
 			an fs-img vol counts as a separate mount-lock
 		*/
-		fsImgVol := cloneVolAsFsImgVol(vol)
-		fsImgVol.mountCustomPath = "" // deblockify, no need to establish a secondary mount-point
+		// fsImgVol := cloneVolAsFsImgVol(vol)
+		// if vol.IsCustomBlock() {
+		// 	fsImgVol.mountCustomPath = "" // deblockify, no need to create a secondary mount point
+		// }
 
-		err := fsImgVol.MountTask(func(mountPath string, op *operations.Operation) error {
+		err := vol.MountTask(func(mountPath string, op *operations.Operation) error {
 
 			// We expect the filler to copy the VM image into this path.
-			rootBlockPath, err := d.GetVolumeDiskPath(fsImgVol)
+			rootBlockPath, err := d.GetVolumeDiskPath(vol)
 			if err != nil {
 				return err
 			}
 
-			_, err = ensureVolumeBlockFile(vol, rootBlockPath, sizeBytes, false)
+			_, err = ensureVolumeBlockFile(vol, rootBlockPath, sizeBytes, allowUnsafeResize)
+			if err == ErrInUse {
+				/*
+					this error is expected because we have the vol mounted...
+					but now that we've passed the size check we can perform an unsafe
+					resize to bypass the mounted check
+				*/
+				_, err = ensureVolumeBlockFile(vol, rootBlockPath, sizeBytes, true)
+			}
 			if err != nil {
 				return err
 			}
@@ -1900,7 +1910,7 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 			return err
 		}
 
-		// Custom handling for filesystem volume associated with a VM.
+		// Custom handling for filesystem volume associated with a VM, if the file is in the state dataaset. which its not currently
 		volPath := vol.MountPath()
 		if sizeBytes > 0 && vol.volType == VolumeTypeVM && util.PathExists(filepath.Join(volPath, genericVolumeDiskFile)) {
 			// Get the size of the VM image.
@@ -1915,7 +1925,8 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 		}
 
 		//return d.setQuota(vol.MountPath(), volID, sizeBytes)
-		return nil
+		dataset := d.dataset(vol, false)
+		return d.setDatasetQuota(dataset, sizeBytes)
 	}
 
 	return nil
