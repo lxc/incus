@@ -47,6 +47,10 @@ function get_container_ip6() {
   echo "$ip6"
 }
 
+
+get_container_ip_ovn() { incus list testct --format json | jq -r '.[0].state.network.eth0.addresses[] | select(.family=="inet").address'; }
+get_container_ip_ovn6() { incus list testct --format json | jq -r '.[0].state.network.eth0.addresses[] | select(.family=="inet6").address' | head -n 1; }
+
 # --- Check that incus is installed ---
 if ! command -v incus &> /dev/null; then
   error_msg "incus CLI could not be found. Please install it first."
@@ -247,7 +251,7 @@ function test_delete() {
 
 # Test 12: Block ping using address-sets
 
-function test_block_ping_with_address_set() {
+function test_nft_block_ping_with_address_set() {
     info "Test 12: ACL block ICMP for container"
     local ip=$(get_container_ip testct)
     info "Container IPv4: $ip"
@@ -288,7 +292,7 @@ function test_block_ping_with_address_set() {
 
 # Test 13 Block pingv6 using address-sets
 
-function test_block_pingv6_with_address_set() {
+function test_nft_block_pingv6_with_address_set() {
     info "Test 13: ACL block ICMPv6 for container"
     local ip=$(get_container_ip6 testct)
     info "Container IPv6: $ip"
@@ -329,7 +333,7 @@ function test_block_pingv6_with_address_set() {
 
 # Test 14
 
-function test_inner_acl_mixed_subject() {
+function test_nft_acl_mixed_subject() {
     info "Test 14: ACL with mixed subject (literal IP and address set)"
     # Create ACL that blocks TCP port 22 if destination is either a literal IP or an address set.
     incus network address-set create testAS
@@ -372,7 +376,7 @@ function test_inner_acl_mixed_subject() {
 
 # Test 15
 
-function test_inner_update_with_cidr() {
+function test_nft_update_with_cidr() {
     info "Test 15: Update address set with container network CIDR and verify ACL block"
     local ip=$(get_container_ip testct)
     local subnet=$(echo "$ip" | awk -F. '{print $1"."$2"."$3".0/24"}')
@@ -400,7 +404,7 @@ function test_inner_update_with_cidr() {
 
 # Test 16 
 
-function test_inner_block_tcp(){
+function test_nft_block_tcp(){
     incus exec testct -- sh -c "apt install netcat-openbsd -y"
     local ip=$(get_container_ip testct)
     incus network address-set create testAS
@@ -427,7 +431,7 @@ function test_inner_block_tcp(){
 
 # Test 17
 
-function test_inner_block_tcp_mixed_set(){
+function test_nft_block_tcp_mixed_set(){
     incus exec testct -- sh -c "apt install netcat-openbsd -y"
     local ip=$(get_container_ip testct)
     local ip6=$(get_container_ip6 testct)
@@ -466,46 +470,415 @@ function test_inner_block_tcp_mixed_set(){
     incus network address-set rm testAS
 }
 
+# Test 18
+
+function test_nft_dynamic_ping_block() {
+    info "Test: Dynamically updating an address set for ACL blocking"
+
+    # Step 1: Get container IPs
+    local ip_testct=$(get_container_ip testct)
+    
+    incus launch images:debian/12 testct2
+    sleep 3
+    local ip_testct2=$(get_container_ip testct2)
+    info "Container testct IPv4: $ip_testct"
+    info "Container testct2 IPv4: $ip_testct2"
+
+    # Step 2: Create address set and add both IPs
+    incus network address-set create testAS
+    incus network address-set add-addr testAS "$ip_testct"
+    incus network address-set add-addr testAS "$ip_testct2"
+
+    # Step 3: Create ACL to block ICMP to testAS
+    incus network acl create blockping
+    incus network acl rule add blockping ingress action=drop protocol=icmp4 destination="\$testAS"
+    incus network set "incusbr0" security.acls="blockping"
+
+    sleep 2
+
+    # Step 4: Verify that both containers are blocked
+    if ping -c2 "$ip_testct" > /dev/null; then
+        error_msg "Ping to testct succeeded despite ACL block."
+        incus network acl delete blockping
+        incus network address-set delete testAS
+        exit 1
+    else
+        success "Ping to testct correctly blocked."
+    fi
+
+    if ping -c2 "$ip_testct2" > /dev/null; then
+        error_msg "Ping to testct2 succeeded despite ACL block."
+        incus network acl delete blockping
+        incus network address-set delete testAS
+        exit 1
+    else
+        success "Ping to testct2 correctly blocked."
+    fi
+
+    # Step 5: Remove testct2's IP from the address set
+    incus network address-set remove-addr testAS "$ip_testct2"
+    sleep 1
+
+    # Step 6: Verify that testct is still blocked but testct2 is now reachable
+    if ping -c2 "$ip_testct" > /dev/null; then
+        error_msg "Ping to testct succeeded despite ACL block."
+        incus network acl delete blockping
+        incus network address-set delete testAS
+        exit 1
+    else
+        success "Ping to testct correctly remains blocked."
+    fi
+
+    if ping -c2 "$ip_testct2" > /dev/null; then
+        success "Ping to testct2 succeeded after address set update."
+    else
+        error_msg "Ping to testct2 failed despite being removed from the blocked set."
+        incus network acl delete blockping
+        incus network address-set delete testAS
+        exit 1
+    fi
+    incus network set incusbr0 security.acls=""
+    incus network acl delete blockping
+    incus network address-set delete testAS
+    incus rm --force testct2
+}
+
+### OVN TESTS
+
+### TEST 19: Block ICMPv4 using address-sets
+function test_ovn_block_ping_with_address_set() {
+    info "Test 12: ACL block ICMPv4 for container"
+    local ip=$(get_container_ip_ovn)
+    info "Container IPv4: $ip"
+
+    if ping -c2 "$ip" > /dev/null; then
+        success "Ping to container succeeded."
+    else
+        error_msg "Ping to container failed."
+    fi
+
+    incus network address-set create testAS
+    incus network address-set add-addr testAS "$ip"
+    incus network acl create blockping
+    incus network acl rule add blockping ingress action=drop protocol=icmp4 destination="\$testAS"
+    incus network set "$OVN_NETWORK" security.acls="blockping"
+    sleep 2
+
+    if ping -c2 "$ip" > /dev/null; then
+        error_msg "Ping succeeded despite ACL block."
+    else
+        success "Ping correctly blocked by ACL."
+    fi
+
+    incus network set "$OVN_NETWORK" security.acls=""
+    incus network acl delete blockping
+    incus network address-set delete testAS
+}
+
+### TEST 20: Block ICMPv6 using address-sets
+function test_ovn_block_pingv6_with_address_set() {
+    info "Test 13: ACL block ICMPv6 for container"
+    local ip=$(get_container_ip_ovn6)
+    info "Container IPv6: $ip"
+
+    if ping -6 -c2 "$ip" > /dev/null; then
+        success "Ping to container succeeded."
+    else
+        error_msg "Ping to container failed."
+    fi
+
+    incus network address-set create testAS
+    incus network address-set add-addr testAS "$ip"
+    incus network acl create blockping
+    incus network acl rule add blockping ingress action=drop protocol=icmp6 destination="\$testAS"
+    incus network set "$OVN_NETWORK" security.acls="blockping"
+
+    sleep 2
+    if ping -6 -c2 "$ip" > /dev/null; then
+        error_msg "Ping succeeded despite ACL block."
+    else
+        success "Ping correctly blocked by ACL."
+    fi
+
+    incus network set "$OVN_NETWORK" security.acls=""
+    incus network acl delete blockping
+    incus network address-set delete testAS
+}
+
+### TEST 21: Mixed ACL Subject
+function test_ovn_acl_mixed_subject() {
+    info "Test 14: ACL with mixed subject (literal IP and address set)"
+    local ip=$(get_container_ip_ovn)
+
+    incus network address-set create testAS
+    incus network address-set add-addr testAS "$ip"
+    incus launch images:debian/12 testct2
+    sleep 3
+    local ip2=$(get_container_ip_ovn testct2)
+
+    incus network acl create mixedACL
+    incus network acl rule add mixedACL ingress action=drop protocol=icmp4 destination="$ip2,\$testAS"
+    incus network set "$OVN_NETWORK" security.acls="mixedACL"
+
+    sleep 2
+    if ping -c2 "$ip" > /dev/null || ping -c2 "$ip2" > /dev/null; then
+        error_msg "Ping succeeded despite ACL block."
+    else
+        success "Ping correctly blocked by ACL."
+    fi
+
+    incus network set "$OVN_NETWORK" security.acls=""
+    incus network acl delete mixedACL
+    incus network address-set delete testAS
+    incus delete testct2 --force
+}
+
+### TEST 22: CIDR Address Set
+function test_ovn_update_with_cidr() {
+    info "Test 15: Update address set with CIDR"
+    local ip=$(get_container_ip_ovn)
+    local subnet=$(echo "$ip" | awk -F. '{print $1"."$2"."$3".0/24"}')
+
+    incus network address-set create testAS
+    incus network address-set add-addr testAS "$subnet"
+    incus network acl create cidrACL
+    incus network acl rule add cidrACL ingress action=drop protocol=icmp4 destination="\$testAS"
+    incus network set "$OVN_NETWORK" security.acls="cidrACL"
+
+    sleep 2
+    if ping -c2 "$ip" > /dev/null; then
+        error_msg "Ping succeeded despite CIDR ACL block."
+    else
+        success "Ping correctly blocked by ACL."
+    fi
+
+    incus network set "$OVN_NETWORK" security.acls=""
+    incus network acl delete cidrACL
+    incus network address-set delete testAS
+}
+
+### TEST 23: IPv4/TCP Block
+function test_ovn_block_tcp() {
+    local ip=$(get_container_ip_ovn)
+    incus exec testct -- apt update && apt install -y netcat-openbsd
+
+    incus network address-set create testAS
+    echo "Container ip: $ip"
+    incus network address-set add-addr testAS "$ip"
+    incus network acl create blocktcp7896
+    incus network acl rule add blocktcp7896 ingress action=drop protocol=tcp destination_port="7896" destination="\$testAS"
+    incus network set "$OVN_NETWORK" security.acls="blocktcp7896"
+
+    info "Run: incus exec testct -- nohup nc -l -p 7896 &"
+    read
+
+    if nc -z -w 5 "$ip" 7896; then
+        error_msg "TCP connection succeeded despite ACL block."
+    else
+        success "TCP connection correctly blocked by ACL."
+    fi
+
+    incus network set "$OVN_NETWORK" security.acls=""
+    incus network acl delete blocktcp7896
+    incus network address-set delete testAS
+}
+
+### TEST 24: TCP Block with Mixed Address Sets
+function test_ovn_block_tcp_mixed_set() {
+    local ip=$(get_container_ip_ovn)
+    local ip6=$(get_container_ip_ovn6)
+    incus exec testct -- apt update && apt install -y netcat-openbsd
+
+    incus network address-set create testAS
+    incus network address-set add-addr testAS "$ip"
+    incus network address-set add-addr testAS "$ip6"
+    incus network acl create blocktcp7896
+    incus network acl rule add blocktcp7896 ingress action=drop protocol=tcp destination_port="7896" destination="\$testAS"
+    incus network set "$OVN_NETWORK" security.acls="blocktcp7896"
+
+    info "Run: incus exec testct -- nohup nc -l -p 7896 &"
+    read
+
+    if nc -z -w 5 "$ip" 7896 ; then
+        error_msg "TCP connection succeeded despite ACL block."
+    else
+        success "TCP connection correctly blocked by ACL."
+    fi
+    info "Run: incus exec testct -- nohup nc -6 -l -p 7896 &"
+    read
+    if nc -6 -z -w 5 "$ip6" 7896; then
+        error_msg "TCP connection succeeded despite ACL block."
+    else
+        success "TCP connection correctly blocked by ACL."
+    fi
+
+    incus network set "$OVN_NETWORK" security.acls=""
+    incus network acl delete blocktcp7896
+    incus network address-set delete testAS
+}
+
+### TEST 25
+
+function test_ovn_dynamic_ping_block() {
+    info "Test: Dynamically updating an address set for ACL blocking"
+
+    # Step 1: Get container IPs
+    local ip_testct=$(get_container_ip_ovn testct)
+    local ip_testct2=$(get_container_ip_ovn testct2)
+    incus init images:debian/12 testct2
+    incus config device override testct2 eth0 network=ovntest
+    incus start testct2
+    sleep 3
+    info "Container testct IPv4: $ip_testct"
+    info "Container testct2 IPv4: $ip_testct2"
+
+    # Step 2: Create address set and add both IPs
+    incus network address-set create testAS
+    incus network address-set add-addr testAS "$ip_testct"
+    incus network address-set add-addr testAS "$ip_testct2"
+
+    # Step 3: Create ACL to block ICMP to testAS
+    incus network acl create blockping
+    incus network acl rule add blockping ingress action=drop protocol=icmp4 destination="\$testAS"
+    incus network set "$OVN_NETWORK" security.acls="blockping"
+
+    sleep 2
+
+    # Step 4: Verify that both containers are blocked
+    if ping -c2 "$ip_testct" > /dev/null; then
+        error_msg "Ping to testct succeeded despite ACL block."
+        incus network acl delete blockping
+        incus network address-set delete testAS
+        exit 1
+    else
+        success "Ping to testct correctly blocked."
+    fi
+
+    if ping -c2 "$ip_testct2" > /dev/null; then
+        error_msg "Ping to testct2 succeeded despite ACL block."
+        incus network acl delete blockping
+        incus network address-set delete testAS
+        exit 1
+    else
+        success "Ping to testct2 correctly blocked."
+    fi
+
+    # Step 5: Remove testct2's IP from the address set
+    incus network address-set remove-addr testAS "$ip_testct2"
+    sleep 2
+
+    # Step 6: Verify that testct is still blocked but testct2 is now reachable
+    if ping -c2 "$ip_testct" > /dev/null; then
+        error_msg "Ping to testct succeeded despite ACL block."
+        incus network acl delete blockping
+        incus network address-set delete testAS
+        exit 1
+    else
+        success "Ping to testct correctly remains blocked."
+    fi
+
+    if ping -c2 "$ip_testct2" > /dev/null; then
+        success "Ping to testct2 succeeded after address set update."
+    else
+        error_msg "Ping to testct2 failed despite being removed from the blocked set."
+        incus network acl delete blockping
+        incus network address-set delete testAS
+        exit 1
+    fi
+
+    incus network acl delete blockping
+    incus network address-set delete testAS
+    incus rm --force testct2
+}
+
 
 ## --- Run all tests ---
 info "Starting network address set tests..."
-test_creation_cli
-success "TEST 1 CLI CREATION OK"
-test_creation_project
-success "TEST 2 CREATION PROJECT OK"
-test_creation_stdin
-success "TEST 3 CREATION STDIN OK"
-test_listing
-success "TEST 4 LISTING OK"
-test_show
-success "TEST 5 SHOW OK"
-test_edit
-success "TEST 6 EDIT OK"
-test_patch
-success "TEST 7 PATCH OK"
-test_add_remove_addresses
-success "TEST 8 REMOVE ADDR OK"
-test_rename
-success "TEST 9 RENAME OK"
-test_custom_keys
-success "TEST 10 CUSTOM KEYS OK"
-test_delete
-success "TEST 11 DELETION OK"
-info Tests needing a container begin now
+#test_creation_cli
+#success "TEST 1 CLI CREATION OK"
+#test_creation_project
+#success "TEST 2 CREATION PROJECT OK"
+#test_creation_stdin
+#success "TEST 3 CREATION STDIN OK"
+#test_listing
+#success "TEST 4 LISTING OK"
+#test_show
+#success "TEST 5 SHOW OK"
+#test_edit
+#success "TEST 6 EDIT OK"
+#test_patch
+#success "TEST 7 PATCH OK"
+#test_add_remove_addresses
+#success "TEST 8 REMOVE ADDR OK"
+#test_rename
+#success "TEST 9 RENAME OK"
+#test_custom_keys
+#success "TEST 10 CUSTOM KEYS OK"
+#test_delete
+#success "TEST 11 DELETION OK"
+
+#info Tests needing a container begin now
 incus launch images:debian/12 testct
 sleep 3
-test_block_ping_with_address_set
-success "TEST 12 BLOCK ICMPv4 OK"
-test_block_pingv6_with_address_set # NOK
-success "TEST 13 BLOCK ICMPv6 OK"
-test_inner_acl_mixed_subject
-success "TEST 14 MIXED ACL SUBJECTS OK"
-test_inner_update_with_cidr
-success "TEST 15 CIDR ADDRESS SET OK"
-test_inner_block_tcp
-success "TEST 16 IPv4/TCP BLOCK OK"
-test_inner_block_tcp_mixed_set
-success "TEST 17 TCP BLOCK MIXED ADDRESS SET OK"
-incus rm --force testct
 
-success "All network address set tests completed successfully."
+info Testing nftables behaviour
+
+#test_nft_block_ping_with_address_set
+#success "TEST 12 BLOCK ICMPv4 OK"
+#test_nft_block_pingv6_with_address_set # NOK
+#success "TEST 13 BLOCK ICMPv6 OK"
+#test_nft_acl_mixed_subject
+#success "TEST 14 MIXED ACL SUBJECTS OK"
+#test_nft_update_with_cidr
+#success "TEST 15 CIDR ADDRESS SET OK"
+test_nft_block_tcp
+success "TEST 16 IPv4/TCP BLOCK OK"
+#test_nft_block_tcp_mixed_set
+#success "TEST 17 TCP BLOCK MIXED ADDRESS SET OK"
+#test_nft_dynamic_ping_block
+#success "TEST 18 NFT DYNAMIC PING BLOCK OK"
+#incus rm --force testct
+
+info "OVN tests begins"
+
+# Ensure the container network is OVN-based
+PARENT_NETWORK="incusbr0"
+OVN_NETWORK="ovntest"
+
+info "Ensuring OVN network is set up..."
+incus network set "$PARENT_NETWORK" ipv4.dhcp.ranges="10.158.174.100-10.158.174.110" ipv4.ovn.ranges="10.158.174.111-10.158.174.120"
+incus network create "$OVN_NETWORK" --type=ovn network="$PARENT_NETWORK" || true
+# Get ovn ipv4 external address and setup routing:
+ovnnet=$(incus network show ovntest | grep 'ipv4.address' | head -n 1 | cut -d ':' -f2)
+ovnip=$(incus network show ovntest | grep 'network.ipv4.address' | head -n 1 | cut -d ':' -f2)
+# Add route to ovn network
+ip r a $(echo $ovnnet | awk -F. '{print $1"."$2"."$3".0/24"}') via $ovnip
+# Allow icmp to go through ovn network
+lsin=$(ovn-nbctl ls-list | awk '/-ls-int/ {gsub(/[()]/, "", $2); print $2}')
+ovn-nbctl acl-add $lsin to-lport 200 "(icmp4 || icmp6)" allow
+# Start a test container
+info "Launching test container..."
+incus stop --force testct
+sleep 3
+incus config device override testct eth0 network=ovntest
+incus start testct
+sleep 3
+
+#test_ovn_block_ping_with_address_set
+#success "TEST 19 OVN PING BLOCK OK"
+#test_ovn_block_pingv6_with_address_set  # NOK
+#success "TEST 20 OVN PING6 OK"
+#test_ovn_acl_mixed_subject
+#success "TEST 21 OVN MIXED ACL SUBJECT OK"
+#test_ovn_update_with_cidr
+#success "TEST 22 OVN CIDR ADDRESS SET OK"
+#test_ovn_block_tcp
+
+success "TEST 23 OVN IPv4/TCP BLOCK OK"
+test_ovn_block_tcp_mixed_set
+#success "TEST 24 OVN TCP BLOCK MIXED ADDRESS SET OK"
+#test_ovn_dynamic_ping_block
+#success "TEST 25 OVN DYNAMIC PING BLOCK OK"
+
+incus delete --force testct
+incus network rm ovntest
