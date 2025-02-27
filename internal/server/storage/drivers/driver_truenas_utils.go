@@ -94,6 +94,25 @@ func optionsToOptionString(options ...string) string {
 	return optionString
 }
 
+// zero, or >= 1GiB
+func (d *truenas) setDatasetQuota(dataset string, sizeBytes int64) error {
+
+	if sizeBytes < 0 {
+		return fmt.Errorf("negative quota not allowed: %d", sizeBytes)
+	}
+	if sizeBytes > 0 && sizeBytes < 1073741824 {
+		sizeBytes = 1073741824 // middleware rejects < 1GiB
+	}
+
+	props := []string{fmt.Sprintf("quota=%d", sizeBytes), "refquota=0", "reservation=0", "refreservation=0"}
+
+	err := d.setDatasetProperties(dataset, props...)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (d *truenas) setDatasetProperties(dataset string, options ...string) error {
 	args := []string{"dataset", "update"}
 
