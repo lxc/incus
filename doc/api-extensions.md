@@ -2688,3 +2688,6 @@ Adds support for specifying the VRF to add the routes to.
 A new category of configuration options, `smbios11.XYZ` has been added
 which allows passing key/value pairs through `SMBIOS Type 11` on systems that
 support it.
+
+## `api_filtering_extended`
+This extends the API filtering mechanism to all API collections.
