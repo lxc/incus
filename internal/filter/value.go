@@ -14,8 +14,6 @@ func ValueOf(obj any, field string) any {
 	key := parts[0]
 	rest := strings.Join(parts[1:], ".")
 
-	var parent any
-
 	if value.Kind() == reflect.Map {
 		switch reflect.TypeOf(obj).Elem().Kind() {
 		case reflect.String:
@@ -40,7 +38,10 @@ func ValueOf(obj any, field string) any {
 		yaml := fieldType.Tag.Get("yaml")
 
 		if yaml == ",inline" {
-			parent = fieldValue.Interface()
+			v := ValueOf(fieldValue.Interface(), field)
+			if v != nil {
+				return v
+			}
 		}
 
 		yamlKey, _, _ := strings.Cut(yaml, ",")
@@ -52,10 +53,6 @@ func ValueOf(obj any, field string) any {
 
 			return ValueOf(v, rest)
 		}
-	}
-
-	if parent != nil {
-		return ValueOf(parent, field)
 	}
 
 	return nil
