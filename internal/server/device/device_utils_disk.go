@@ -30,25 +30,35 @@ const RBDFormatPrefix = "rbd"
 // RBDFormatSeparator is the field separate used in disk paths for RBD devices.
 const RBDFormatSeparator = " "
 
-// DiskParseRBDFormat parses an rbd formatted string, and returns the pool name, volume name, and list of options.
-func DiskParseRBDFormat(rbd string) (string, string, []string, error) {
-	if !strings.HasPrefix(rbd, fmt.Sprintf("%s%s", RBDFormatPrefix, RBDFormatSeparator)) {
-		return "", "", nil, fmt.Errorf("Invalid rbd format, missing prefix")
+// DiskParseRBDFormat parses an rbd formatted string, and returns the pool name, volume name, and map of options.
+func DiskParseRBDFormat(rbd string) (string, string, map[string]string, error) {
+	// Remove and check the prefix.
+	prefix, rbd, _ := strings.Cut(rbd, RBDFormatSeparator)
+	if prefix != RBDFormatPrefix {
+		return "", "", nil, fmt.Errorf("Invalid rbd format, wrong prefix: %q", prefix)
 	}
 
-	fields := strings.SplitN(rbd, RBDFormatSeparator, 3)
-	if len(fields) != 3 {
-		return "", "", nil, fmt.Errorf("Invalid rbd format, invalid number of fields")
+	// Split the path and options.
+	path, rawOpts, _ := strings.Cut(rbd, RBDFormatSeparator)
+
+	// Check for valid RBD path.
+	pool, volume, validPath := strings.Cut(path, "/")
+	if !validPath {
+		return "", "", nil, fmt.Errorf("Invalid rbd format, missing pool and/or volume: %q", path)
 	}
 
-	opts := fields[2]
+	// Parse options.
+	opts := make(map[string]string)
+	for _, o := range strings.Split(rawOpts, ":") {
+		k, v, isValid := strings.Cut(o, "=")
+		if !isValid {
+			return "", "", nil, fmt.Errorf("Invalid rbd format, bad option: %q", o)
+		}
 
-	fields = strings.SplitN(fields[1], "/", 2)
-	if len(fields) != 2 {
-		return "", "", nil, fmt.Errorf("Invalid rbd format, invalid pool or volume")
+		opts[k] = v
 	}
 
-	return fields[0], fields[1], strings.Split(opts, ":"), nil
+	return pool, volume, opts, nil
 }
 
 // DiskGetRBDFormat returns a rbd formatted string with the given values.
@@ -59,7 +69,6 @@ func DiskGetRBDFormat(clusterName string, userName string, poolName string, volu
 	opts := []string{
 		fmt.Sprintf("id=%s", optEscaper.Replace(userName)),
 		fmt.Sprintf("pool=%s", optEscaper.Replace(poolName)),
-		fmt.Sprintf("conf=/etc/ceph/%s.conf", optEscaper.Replace(clusterName)),
 	}
 
 	return fmt.Sprintf("%s%s%s/%s%s%s", RBDFormatPrefix, RBDFormatSeparator, optEscaper.Replace(poolName), optEscaper.Replace(volumeName), RBDFormatSeparator, strings.Join(opts, ":"))
@@ -77,7 +86,7 @@ func BlockFsDetect(dev string) (string, error) {
 
 // IsBlockdev returns boolean indicating whether device is block type.
 func IsBlockdev(path string) bool {
-	// Get a stat struct from the provided path
+	// Get a stat struct from the provided path.
 	stat := unix.Stat_t{}
 	err := unix.Stat(path, &stat)
 	if err != nil {
@@ -240,6 +249,12 @@ again:
 
 // diskCephfsOptions returns the mntSrcPath and fsOptions to use for mounting a cephfs share.
 func diskCephfsOptions(clusterName string, userName string, fsName string, fsPath string) (string, []string, error) {
+	// Get the FSID.
+	fsid, err := storageDrivers.CephFsid(clusterName)
+	if err != nil {
+		return "", nil, err
+	}
+
 	// Get the monitor list.
 	monAddresses, err := storageDrivers.CephMonitors(clusterName)
 	if err != nil {
@@ -252,14 +267,15 @@ func diskCephfsOptions(clusterName string, userName string, fsName string, fsPat
 		return "", nil, err
 	}
 
-	// Prepare mount entry.
-	fsOptions := []string{
-		fmt.Sprintf("name=%v", userName),
-		fmt.Sprintf("secret=%v", secret),
-		fmt.Sprintf("mds_namespace=%v", fsName),
-	}
+	srcPath, fsOptions := storageDrivers.CephBuildMount(
+		userName,
+		secret,
+		fsid,
+		monAddresses,
+		fsName,
+		fsPath,
+	)
 
-	srcPath := strings.Join(monAddresses, ",") + ":/" + fsPath
 	return srcPath, fsOptions, nil
 }
 
