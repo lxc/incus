@@ -1027,10 +1027,20 @@ func (d *linstor) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 func (d *linstor) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
 	d.logger.Debug("Migrating volume", logger.Ctx{"volume": vol.Name(), "volSrcArgs": volSrcArgs})
 
-	// When migrating between cluster members on the same storage pool, don't do anything on the source member
+	// Optimized migration is currently only supported for case in which we are migrating
+	// the volume across cluster members on the same storage pool.
 	if volSrcArgs.ClusterMove && !volSrcArgs.StorageMove {
 		d.logger.Debug("Detected migration between cluster members on the same storage pool", logger.Ctx{"volume": vol.Name(), "volSrcArgs": volSrcArgs})
+		// When migrating between cluster members on the same storage pool, don't do anything on the source member
 		return nil
+	}
+
+	// Since LINSTOR does not support cloning resource definitions with their snapshots, we
+	// fallback to the generic implementation if the migration is not across cluster members
+	// on the same storage pool.
+	if volSrcArgs.MigrationType.FSType == migration.MigrationFSType_LINSTOR {
+		d.logger.Debug("Detected unsuported optimized migration. Will fallback to generic implementation", logger.Ctx{"volume": vol.Name(), "volSrcArgs": volSrcArgs})
+		volSrcArgs.MigrationType = d.rsyncMigrationType(ContentType(volSrcArgs.ContentType))
 	}
 
 	// Handle simple rsync and block_and_rsync through generic.
@@ -1050,15 +1060,18 @@ func (d *linstor) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs 
 		return ErrNotSupported
 	}
 
-	// TODO: handle optimize migration to other LINSTOR storage pools
-	return ErrNotSupported
+	return nil
 }
 
 // CreateVolumeFromMigration creates a volume being sent via a migration.
 func (d *linstor) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
-	d.logger.Debug("Receiving volume from migration", logger.Ctx{"volume": vol.Name(), "volTargetArgs": volTargetArgs})
+	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name(), "volTargetArgs": volTargetArgs})
+	l.Debug("Receiving volume from migration")
+
+	// Optimized migration is currently only supported for case in which we are migrating
+	// the volume across cluster members on the same storage pool.
 	if volTargetArgs.ClusterMoveSourceName != "" && volTargetArgs.StoragePool == "" {
-		d.logger.Debug("Detected migration between cluster members on the same storage pool", logger.Ctx{"volume": vol.Name(), "volTargetArgs": volTargetArgs})
+		l.Debug("Detected migration between cluster members on the same storage pool")
 
 		err := d.makeVolumeAvailable(vol)
 		if err != nil {
@@ -1082,8 +1095,16 @@ func (d *linstor) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser,
 			}
 		}
 
-		d.logger.Debug("Finished migrating", logger.Ctx{"volume": vol.Name(), "volTargetArgs": volTargetArgs})
+		l.Debug("Finished migrating volume")
 		return nil
+	}
+
+	// Since LINSTOR does not support cloning resource definitions with their snapshots, we
+	// fallback to the generic implementation if the migration is not across cluster members
+	// on the same storage pool.
+	if volTargetArgs.MigrationType.FSType == migration.MigrationFSType_LINSTOR {
+		l.Debug("Detected migration across storage pool. Will fallback to generic implementation")
+		volTargetArgs.MigrationType = d.rsyncMigrationType(ContentType(volTargetArgs.ContentType))
 	}
 
 	// Handle simple rsync and block_and_rsync through generic.
@@ -1093,7 +1114,7 @@ func (d *linstor) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser,
 		return ErrNotSupported
 	}
 
-	// TODO: handle optimize migration from other LINSTOR storage pools
+	l.Warn("Unsuported migration type detected")
 	return ErrNotSupported
 }
 
