@@ -2279,6 +2279,15 @@
 						}
 					},
 					{
+						"acme.challenge": {
+							"defaultdesc": "`HTTP-01`",
+							"longdesc": "Possible values are `DNS-01` and `HTTP-01`.",
+							"scope": "global",
+							"shortdesc": "ACME challenge type to use",
+							"type": "string"
+						}
+					},
+					{
 						"acme.domain": {
 							"longdesc": "",
 							"scope": "global",
@@ -2291,6 +2300,33 @@
 							"longdesc": "",
 							"scope": "global",
 							"shortdesc": "Email address used for the account registration",
+							"type": "string"
+						}
+					},
+					{
+						"acme.provider": {
+							"defaultdesc": "``",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Backend provider for the challenge (used by DNS-01)",
+							"type": "string"
+						}
+					},
+					{
+						"acme.provider.environment": {
+							"defaultdesc": "``",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Environment variables to set during the challenge (used by DNS-01)",
+							"type": "string"
+						}
+					},
+					{
+						"acme.provider.resolvers": {
+							"defaultdesc": "``",
+							"longdesc": "DNS resolvers to use for performing (recursive) `CNAME` resolving and apex domain determination during DNS-01 challenge.",
+							"scope": "global",
+							"shortdesc": "Comma-separated list of DNS resolvers (used by DNS-01)",
 							"type": "string"
 						}
 					}
