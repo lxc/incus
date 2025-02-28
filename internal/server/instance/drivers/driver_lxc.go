@@ -2328,6 +2328,12 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			return "", nil, err
 		}
 
+		// Allow unprivileged users to use low ports.
+		err = lxcSetConfigItem(cc, "lxc.sysctl.net.ipv4.ip_unprivileged_port_start", "0")
+		if err != nil {
+			return "", nil, err
+		}
+
 		// Configure the entry point.
 		if len(config.Process.Args) > 0 && slices.Contains([]string{"/init", "/sbin/init", "/s6-init"}, config.Process.Args[0]) {
 			// For regular init systems, call them directly as PID1.
