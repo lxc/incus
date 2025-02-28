@@ -2336,6 +2336,11 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			return "", nil, err
 		}
 
+		err = lxcSetConfigItem(cc, "lxc.sysctl.net.ipv4.ip_unprivileged_port_start", "0")
+		if err != nil {
+			return "", nil, err
+		}
+
 		// Get all mounts so far.
 		lxcMounts := []string{"/dev", "/proc", "/sys", "/sys/fs/cgroup"}
 		for _, mount := range cc.ConfigItem("lxc.mount.entry") {
