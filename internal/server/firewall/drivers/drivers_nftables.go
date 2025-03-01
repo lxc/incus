@@ -931,12 +931,13 @@ func (d Nftables) NetworkApplyACLRules(networkName string, rules []ACLRule) erro
 			}
 
 			if len(nftRules) == 0 {
-				return fmt.Errorf("Invalid empty rule generated")
+				// when using address set we may generates empty rules without being an error
+				// So we just skip it
+				continue
 			}
 			completeNftRules = append(completeNftRules, nftRules...)
+			//return fmt.Errorf("CRAFTED : rules len %d / %s", len(nftRules), strings.Join(nftRules, "-"))
 
-		} else if len(nftRules) == 0 {
-			return fmt.Errorf("Invalid empty rule generated")
 		}
 	}
 
@@ -965,7 +966,10 @@ func (d Nftables) NetworkApplyACLRules(networkName string, rules []ACLRule) erro
 // buildRemainingRuleParts is a helper that returns the protocol, port, logging, and action parts of a rule.
 func (d Nftables) buildRemainingRuleParts(rule *ACLRule, ipVersion uint) (string, error) {
 	args := []string{}
-
+	var useAddressSets bool
+	if strings.Contains(rule.Source, "$") || strings.Contains(rule.Destination, "$") {
+		useAddressSets = true
+	}
 	// Add protocol filters.
 	if slices.Contains([]string{"tcp", "udp"}, rule.Protocol) {
 		args = append(args, "meta", "l4proto", rule.Protocol)
@@ -989,12 +993,12 @@ func (d Nftables) buildRemainingRuleParts(rule *ACLRule, ipVersion uint) (string
 			args = append(args, "ip6", "nexthdr", protoName)
 		}
 
-		if ipVersion != icmpIPVersion {
+		if ipVersion != icmpIPVersion && !useAddressSets {
 			// If we got this far it means that source/destination are either empty or are filled
 			// with at least some subjects in the same family as ipVersion. So if the icmpIPVersion
 			// doesn't match the ipVersion then it means the rule contains mixed-version subjects
 			// which is invalid when using an IP version specific ICMP protocol.
-			if (rule.Source != "" || rule.Destination != "") && !(strings.Contains(rule.Source, "$") || strings.Contains(rule.Destination, "$")) {
+			if rule.Source != "" || rule.Destination != "" {
 				return "", fmt.Errorf("Invalid use of %q protocol with non-IPv%d source/destination criteria\nDEBUG: %s  - %s", rule.Protocol, ipVersion, rule.Source, rule.Destination)
 			}
 
@@ -1051,17 +1055,17 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 	// Process source criteria if present.
 	if rule.Source != "" {
 		var err error
-		var frags []string
-		frags, overallPartial, err = d.aclRuleSubjectToACLMatch("saddr", ipVersion, util.SplitNTrimSpace(rule.Source, ",", -1, false)...)
+		var matchFragments []string
+		matchFragments, overallPartial, err = d.aclRuleSubjectToACLMatch("saddr", ipVersion, util.SplitNTrimSpace(rule.Source, ",", -1, false)...)
 		if err != nil {
-			return nil, false, err
+			return nil, overallPartial, err
 		}
-		if len(frags) == 0 {
+		if len(matchFragments) == 0 {
 			overallPartial = true
 		} else {
 			// For each fragment generated from the source criteria,
 			// start a new rule fragment beginning with the base arguments.
-			for _, frag := range frags {
+			for _, frag := range matchFragments {
 				// if fragment contain IP address sets of different family than icmp drop fragment
 				// This is ok for icmp only as we may apply both ipv4 and ipv6 restriction in match field for tcp/udp
 				ruleFragments = append(ruleFragments, append(append([]string{}, baseArgs...), frag))
@@ -1072,26 +1076,37 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 	// Process destination criteria if present.
 	if rule.Destination != "" {
 		var err error
-		var frags []string
-		frags, overallPartial, err = d.aclRuleSubjectToACLMatch("daddr", ipVersion, util.SplitNTrimSpace(rule.Destination, ",", -1, false)...)
+		var matchFragments []string
+		matchFragments, overallPartial, err = d.aclRuleSubjectToACLMatch("daddr", ipVersion, util.SplitNTrimSpace(rule.Destination, ",", -1, false)...)
 		if err != nil {
-			return nil, false, err
+			return nil, overallPartial, err
 		}
-		if len(frags) == 0 {
+		if len(matchFragments) == 0 {
 			overallPartial = true
 		} else {
 			if len(ruleFragments) > 0 {
 				// Combine each existing fragment with each destination fragment.
 				var combined [][]string
+				contains := func(slices [][]string, item []string) bool {
+					for _, s := range slices {
+						if strings.Join(s, " ") == strings.Join(item, " ") {
+							return true
+						}
+					}
+					return false
+				}
 				for _, frag := range ruleFragments {
-					for _, df := range frags {
-						combined = append(combined, append(append([]string{}, frag...), df))
+					for _, df := range matchFragments {
+						newRule := append(append([]string{}, frag...), df)
+						if !contains(combined, newRule) {
+							combined = append(combined, newRule)
+						}
 					}
 				}
 				ruleFragments = combined
 			} else {
 				// If no source criteria were provided, start with baseArgs and add destination fragments.
-				for _, df := range frags {
+				for _, df := range matchFragments {
 					ruleFragments = append(ruleFragments, append(append([]string{}, baseArgs...), df))
 				}
 			}
@@ -1101,27 +1116,29 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 	// Build the remaining parts (protocol, ports, logging, action).
 	suffixParts, err := d.buildRemainingRuleParts(rule, ipVersion)
 	if err != nil {
-		return nil, false, err
+		return nil, overallPartial, err
 	}
 
 	// Append the common suffix parts to every fragment.
-	for i, frag := range ruleFragments {
-		ruleFragments[i] = append(frag, suffixParts)
-	}
-
-	// If neither source nor destination criteria were provided,
-	// then we start with just the base arguments.
-	if len(ruleFragments) == 0 {
-		ruleFragments = append(ruleFragments, baseArgs)
-	}
-
-	// Convert each fragment slice to a single rule string.
 	for _, frag := range ruleFragments {
-		ruleStrings = append(ruleStrings, strings.Join(frag, " "))
-	}
-
-	if len(ruleStrings) == 0 {
-		return nil, overallPartial, fmt.Errorf("Invalid empty rule generated")
+		fullFrag := append(frag, suffixParts)
+		// Filter out for icmp address sets not in the correct ip version
+		ruleString := strings.Join(fullFrag, " ")
+		if slices.Contains([]string{"icmp4", "icmp6"}, rule.Protocol) {
+			var icmpIPVersion uint
+			switch rule.Protocol {
+			case "icmp4":
+				icmpIPVersion = 4
+			case "icmp6":
+				icmpIPVersion = 6
+			}
+			if ipVersion != icmpIPVersion {
+				if strings.Contains(ruleString, fmt.Sprintf("_ipv%d", ipVersion)) {
+					continue
+				}
+			}
+		}
+		ruleStrings = append(ruleStrings, ruleString)
 	}
 
 	return ruleStrings, overallPartial, nil
@@ -1143,10 +1160,12 @@ func (d Nftables) aclRuleSubjectToACLMatch(direction string, ipVersion uint, sub
 		if strings.HasPrefix(subjectCriterion, "$") {
 			// This is an address set reference.
 			setName := strings.TrimPrefix(subjectCriterion, "$")
+			// With an address we won't guess if it only contains ipv4 or ipv6 address so partial is set
 			partial = true
-			if ipVersion == 6 {
+			switch ipVersion {
+			case 6:
 				setRefs = append(setRefs, fmt.Sprintf(" @%s_ipv6", setName))
-			} else {
+			case 4:
 				setRefs = append(setRefs, fmt.Sprintf(" @%s_ipv4", setName))
 			}
 		} else {
@@ -1203,8 +1222,10 @@ func (d Nftables) aclRuleSubjectToACLMatch(direction string, ipVersion uint, sub
 		ipFamily = "ip6"
 	}
 	// For each set reference, create its own fragment.
-	for _, ref := range setRefs {
-		fragments = append(fragments, fmt.Sprintf("%s %s %s", ipFamily, direction, ref))
+	if len(setRefs) > 0 {
+		for _, ref := range setRefs {
+			fragments = append(fragments, fmt.Sprintf("%s %s %s", ipFamily, direction, ref))
+		}
 	}
 	// If there are literal addresses, create one fragment combining them.
 	if len(literals) > 0 {
