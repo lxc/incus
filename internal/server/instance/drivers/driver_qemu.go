@@ -4172,15 +4172,27 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 		rbdImageName := storageDrivers.CephGetRBDImageName(vol, "", false)
 
 		// Scan & pass through options.
+		clusterName := storageDrivers.CephDefaultCluster
+		userName := storageDrivers.CephDefaultUser
+
 		blockDev["pool"] = poolName
 		blockDev["image"] = rbdImageName
 		for key, val := range opts {
 			// We use 'id' where qemu uses 'user'.
 			if key == "id" {
 				blockDev["user"] = val
+				userName = val
+			} else if key == "cluster" {
+				clusterName = val
 			} else {
 				blockDev[key] = val
 			}
+		}
+
+		// Parse the secret (QEMU runs unprivileged and can't read the keyring directly).
+		rbdSecret, err = storageDrivers.CephKeyring(clusterName, userName)
+		if err != nil {
+			return nil, err
 		}
 
 		// The aio option isn't available when using the rbd driver.
