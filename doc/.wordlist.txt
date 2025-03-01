@@ -64,10 +64,14 @@ DHCPv
 Diátaxis
 Diffie
 Distrobuilder
+diskful
+Diskless
+diskless
 DNS
 DNSSEC
 DoS
 DRM
+DRBD
 EB
 Ebit
 eBPF
@@ -149,6 +153,7 @@ LXCFS
 LXC's
 LXD
 LXD's
+LINSTOR
 macOS
 macvlan
 Makefile

@@ -2713,3 +2713,6 @@ This extends the API filtering mechanism to all API collections.
 
 ## `acme_dns01`
 Adds support for `DNS-01` challenge to the Incus ACME support for certificate generation.
+
+## `storage_driver_linstor`
+This adds a LINSTOR storage driver.
