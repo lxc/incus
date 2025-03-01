@@ -2771,7 +2771,7 @@ func (n *ovn) setup(update bool) error {
 	//time.Sleep(time.Second * 15)
 	//cleanup, err := address_set.OVNEnsureAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), securityACLS)
 	//if err != nil {
-	//	return fmt.Errorf("Failed ensuring security ACLs are configured in OVN for network: %w", err)
+	//	return fmt.Errorf("Failed ensuring address sets for security ACLs are configured in OVN for network: %w", err)
 	//}
 	//revert.Add(cleanup)
 
@@ -3019,7 +3019,7 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 		// Load address sets referenced by ACLs
 		err = address_set.OVNDeleteAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), securityACLS)
 		if err != nil {
-			return fmt.Errorf("Failed ensuring security ACLs are configured in OVN for network: %w", err)
+			return fmt.Errorf("Failed deleting address sets for security ACLs in OVN for network: %w", err)
 		}
 
 		// Delete the chassis group for the network.
@@ -3500,16 +3500,19 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 			if aclConfigChanged {
 
 				// Update relevant address sets and Remove from removedACL
-				cleanup, err := address_set.OVNEnsureAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), addedACLs)
-				if err != nil {
-					return fmt.Errorf("Failed ensuring security ACLs are configured in OVN for network: %w", err)
+				if len(addedACLs) > 0 {
+					cleanup, err := address_set.OVNEnsureAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), addedACLs)
+					if err != nil {
+						return fmt.Errorf("Failed ensuring address sets for added ACLs are configured in OVN for network: %w", err)
+					}
+					revert.Add(cleanup)
 				}
-				revert.Add(cleanup)
-				err = address_set.OVNDeleteAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), removedACLs)
-				if err != nil {
-					return fmt.Errorf("Failed ensuring security ACLs are configured in OVN for network: %w", err)
+				if len(removedACLs) > 0 {
+					err = address_set.OVNDeleteAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), removedACLs)
+					if err != nil {
+						return fmt.Errorf("Failed to delete address set for removed ACLs are configured in OVN for network: %w", err)
+					}
 				}
-
 				// Check whether we need to add any of the new ACLs to the NIC.
 				for _, addedACL := range addedACLs {
 					if slices.Contains(nicACLs, addedACL) {
@@ -4339,8 +4342,12 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 			aclNets := map[string]acl.NetworkACLUsage{
 				n.Name(): {Name: n.Name(), Type: n.Type(), ID: n.ID(), Config: n.Config()},
 			}
-
-			cleanup, err := acl.OVNEnsureACLs(n.state, n.logger, n.ovnnb, n.Project(), aclNameIDs, aclNets, nicACLNames, false)
+			cleanup, err := address_set.OVNEnsureAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), nicACLNames)
+			if err != nil {
+				return "", nil, fmt.Errorf("Failed ensuring address sets for nic ACLs are configured in OVN for network: %w", err)
+			}
+			revert.Add(cleanup)
+			cleanup, err = acl.OVNEnsureACLs(n.state, n.logger, n.ovnnb, n.Project(), aclNameIDs, aclNets, nicACLNames, false)
 			if err != nil {
 				return "", nil, fmt.Errorf("Failed ensuring security ACLs are configured in OVN for instance: %w", err)
 			}
