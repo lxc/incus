@@ -63,12 +63,21 @@ func DiskParseRBDFormat(rbd string) (string, string, map[string]string, error) {
 
 // DiskGetRBDFormat returns a rbd formatted string with the given values.
 func DiskGetRBDFormat(clusterName string, userName string, poolName string, volumeName string) string {
+	// Resolve any symlinks to config path.
+	confPath := fmt.Sprintf("/etc/ceph/%s.conf", clusterName)
+	target, err := filepath.EvalSymlinks(confPath)
+	if err == nil {
+		confPath = target
+	}
+
 	// Configuration values containing :, @, or = can be escaped with a leading \ character.
 	// According to https://docs.ceph.com/docs/hammer/rbd/qemu-rbd/#usage
 	optEscaper := strings.NewReplacer(":", `\:`, "@", `\@`, "=", `\=`)
 	opts := []string{
 		fmt.Sprintf("id=%s", optEscaper.Replace(userName)),
 		fmt.Sprintf("pool=%s", optEscaper.Replace(poolName)),
+		fmt.Sprintf("cluster=%s", optEscaper.Replace(clusterName)),
+		fmt.Sprintf("conf=%s", optEscaper.Replace(confPath)),
 	}
 
 	return fmt.Sprintf("%s%s%s/%s%s%s", RBDFormatPrefix, RBDFormatSeparator, optEscaper.Replace(poolName), optEscaper.Replace(volumeName), RBDFormatSeparator, strings.Join(opts, ":"))
