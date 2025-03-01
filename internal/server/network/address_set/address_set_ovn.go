@@ -45,12 +45,6 @@ func OVNDeleteAddressSetsViaACLs(s *state.State, l logger.Logger, client *ovn.NB
 }
 
 // OVNEnsureAddressSet ensures that the address sets and their addresses are created in OVN NB DB.
-// Similar logic to before, but now directly using OVN NB methods.
-//
-// The asNets parameter contains networks using the address set indirectly via ACLs. The addressSetName is the
-// name of the address set in incus database, and we have addresses in asInfo. If addresses is empty, we still
-// create empty sets to avoid match errors.
-//
 // Returns a revert function to undo changes if needed.
 func OVNEnsureAddressSets(s *state.State, l logger.Logger, client *ovn.NB, projectName string, addressSetNames []string) (revert.Hook, error) {
 	revert := revert.New()
@@ -104,8 +98,12 @@ func OVNEnsureAddressSets(s *state.State, l logger.Logger, client *ovn.NB, proje
 		// If address sets do not exist, create them
 		if errors.Is(err, ovn.ErrNotFound) {
 			err = client.CreateAddressSet(context.TODO(), ovn.OVNAddressSet(asInfo.Name), ipNets...)
+			ipNetStrings := make([]string, len(ipNets))
+			for i, ipNet := range ipNets {
+				ipNetStrings[i] = ipNet.String()
+			}
 			if err != nil {
-				return nil, fmt.Errorf("Failed creating address set %q in OVN: %w", asInfo.Name, err)
+				return nil, fmt.Errorf("Failed creating address set %q with networks %s in OVN: %w", asInfo.Name, strings.Join(ipNetStrings, "-"), err)
 			}
 		} else {
 			if err != nil && !errors.Is(err, ovn.ErrNotFound) {
@@ -149,7 +147,12 @@ func OVNEnsureAddressSets(s *state.State, l logger.Logger, client *ovn.NB, proje
 					}
 				}
 				if !found {
-					removeIPv4 = append(removeIPv4, net.IPNet{IP: net.ParseIP(existingIP), Mask: net.CIDRMask(32, 32)})
+					// OVN always register CIDR in address set
+					_, net, err := net.ParseCIDR(existingIP)
+					if err != nil {
+						return nil, fmt.Errorf("Failed parsing existing IP in set %s err: %w", existingIP, err)
+					}
+					removeIPv4 = append(removeIPv4, *net)
 				}
 			}
 
@@ -162,7 +165,11 @@ func OVNEnsureAddressSets(s *state.State, l logger.Logger, client *ovn.NB, proje
 					}
 				}
 				if !found {
-					removeIPv6 = append(removeIPv6, net.IPNet{IP: net.ParseIP(existingIP), Mask: net.CIDRMask(128, 128)})
+					_, net, err := net.ParseCIDR(existingIP)
+					if err != nil {
+						return nil, fmt.Errorf("Failed parsing existing IP in set %s err: %w", existingIP, err)
+					}
+					removeIPv6 = append(removeIPv6, *net)
 				}
 			}
 
@@ -188,7 +195,6 @@ func OVNEnsureAddressSets(s *state.State, l logger.Logger, client *ovn.NB, proje
 
 // OVNAddressSetDeleteIfUnused checks if the specified address set is unused and if so, removes it from OVN.
 func OVNAddressSetDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB, projectName string, setName string) error {
-	// Load the address set by name.
 	addrSet, err := LoadByName(s, projectName, setName)
 	if err != nil {
 		// If not found, it's either already deleted or doesn't exist, so nothing to do.
@@ -220,8 +226,6 @@ func OVNAddressSetDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB
 func GetAddressSetForACLs(s *state.State, projectName string, ACLNames []string) ([]string, error) {
 	var projectSetsNames []string
 	var setsNames []string
-	// For every address set in project check if used by acls in given via ACLNames
-	// If so store it in setsNames slice
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 		projectSetsNames, err = tx.GetNetworkAddressSets(ctx, projectName)
@@ -231,7 +235,7 @@ func GetAddressSetForACLs(s *state.State, projectName string, ACLNames []string)
 	if err != nil {
 		return nil, fmt.Errorf("Failed loading address set names for project %q: %w", projectName, err)
 	}
-	// For every address set in project check if used by acls in given via ACLNames
+	// For every address set in project check if used by acls given via ACLNames
 	// If so store it in setsNames slice
 	for _, setName := range projectSetsNames {
 		err = AddressSetUsedBy(s, projectName, func(aclName string) error {
