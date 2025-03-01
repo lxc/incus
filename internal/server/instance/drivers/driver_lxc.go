@@ -6185,9 +6185,9 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		// A zero length Snapshots slice indicates volume only migration in
 		// VolumeTargetArgs. So if VolumeOnly was requested, do not populate them.
 		if args.Snapshots {
-			volTargetArgs.Snapshots = make([]string, 0, len(snapshots))
+			volTargetArgs.Snapshots = make([]*migration.Snapshot, 0, len(snapshots))
 			for _, snap := range snapshots {
-				volTargetArgs.Snapshots = append(volTargetArgs.Snapshots, *snap.Name)
+				volTargetArgs.Snapshots = append(volTargetArgs.Snapshots, &migration.Snapshot{Name: snap.Name})
 
 				// Only create snapshot instance DB records if not doing a cluster same-name move.
 				// As otherwise the DB records will already exist.

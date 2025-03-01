@@ -6605,6 +6605,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		return err
 	}
 
+	contentType := storagePools.InstanceContentType(d)
 	// If we are copying snapshots, retrieve a list of snapshots from source volume.
 	if args.Snapshots {
 		offerHeader.SnapshotNames = make([]string, 0, len(srcConfig.Snapshots))
@@ -6612,6 +6613,12 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 
 		for i := range srcConfig.Snapshots {
 			offerHeader.SnapshotNames = append(offerHeader.SnapshotNames, srcConfig.Snapshots[i].Name)
+			snapSize, err := storagePools.CalculateVolumeSnapshotSize(d.Project().Name, pool, contentType, storageDrivers.VolumeTypeVM, d.Name(), srcConfig.Snapshots[i].Name)
+			if err != nil {
+				return err
+			}
+
+			srcConfig.Snapshots[i].Config["size"] = fmt.Sprintf("%d", snapSize)
 			offerHeader.Snapshots = append(offerHeader.Snapshots, instance.SnapshotToProtobuf(srcConfig.Snapshots[i]))
 		}
 	}
@@ -7427,9 +7434,12 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		// A zero length Snapshots slice indicates volume only migration in
 		// VolumeTargetArgs. So if VolumeOnly was requested, do not populate them.
 		if args.Snapshots {
-			volTargetArgs.Snapshots = make([]string, 0, len(snapshots))
+			volTargetArgs.Snapshots = make([]*migration.Snapshot, 0, len(snapshots))
 			for _, snap := range snapshots {
-				volTargetArgs.Snapshots = append(volTargetArgs.Snapshots, *snap.Name)
+				migrationSnapshot := &migration.Snapshot{Name: snap.Name}
+				migration.SetSnapshotConfigValue(migrationSnapshot, "size", migration.GetSnapshotConfigValue(snap, "size"))
+
+				volTargetArgs.Snapshots = append(volTargetArgs.Snapshots, migrationSnapshot)
 
 				// Only create snapshot instance DB records if not doing a cluster same-name move.
 				// As otherwise the DB records will already exist.
@@ -7438,6 +7448,12 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 					if err != nil {
 						return err
 					}
+
+					// The offerHeader, depending on the case, stores information about either an InstanceSnapshot
+					// or a StorageVolumeSnapshot. In the Config, we pass information about the volume size,
+					// but an InstanceSnapshot config cannot have a 'size' key. This key should be removed
+					// before passing the data to the CreateInternal method.
+					delete(snapArgs.Config, "size")
 
 					// Ensure that snapshot and parent instance have the same storage pool in
 					// their local root disk device. If the root disk device for the snapshot
