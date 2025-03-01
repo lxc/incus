@@ -129,7 +129,12 @@ func (d *common) validateName(name string) error {
 
 // validateAddresses ensure set is valid.
 func (d *common) validateAddresses(addresses []string) error {
+	seen := make(map[string]struct{})
 	for i, addr := range addresses {
+		if _, exists := seen[addr]; exists {
+			return fmt.Errorf("Duplicate address %q found at index %d", addr, i)
+		}
+		seen[addr] = struct{}{}
 		// Check if it's a valid plain IP address.
 		if net.ParseIP(addr) != nil {
 			continue
@@ -226,19 +231,13 @@ func (d *common) Update(config *api.NetworkAddressSetPut, clientType request.Cli
 		if err != nil {
 			return err
 		}
-		// Ensure address sets are created or updated in OVN. A function like OVNEnsureAddressSets can be implemented.
+		// Ensure address sets are created or updated in OVN.
 		cleanup, err := OVNEnsureAddressSets(d.state, d.logger, ovnnb, d.projectName, []string{d.info.Name})
 		if err != nil {
 			return fmt.Errorf("Failed ensuring address set %q is configured in OVN: %w", d.info.Name, err)
 		}
 
 		revert.Add(cleanup)
-
-		// If some sets become unused after update, perform cleanup if needed.
-		err = OVNAddressSetDeleteIfUnused(d.state, d.logger, ovnnb, d.projectName, d.info.Name)
-		if err != nil {
-			return fmt.Errorf("Failed removing unused OVN address sets: %w", err)
-		}
 	}
 
 	// If normal request and asNets is not empty, notify other cluster members.
@@ -262,7 +261,7 @@ func (d *common) Update(config *api.NetworkAddressSetPut, clientType request.Cli
 }
 
 func (d *common) Rename(newName string) error {
-	err := ValidName(newName)
+	err := d.validateName(newName)
 	if err != nil {
 		return err
 	}
