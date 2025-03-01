@@ -25,6 +25,7 @@ import (
 	"github.com/lxc/incus/v6/shared/ioprogress"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
+	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -375,8 +376,9 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 		}
 
 		// Snapshots are sent first by the sender, so create these first.
-		for _, snapName := range volTargetArgs.Snapshots {
-			fullSnapshotName := GetSnapshotVolumeName(vol.name, snapName)
+		for _, snapshot := range volTargetArgs.Snapshots {
+			fullSnapshotName := GetSnapshotVolumeName(vol.name, snapshot.GetName())
+
 			snapVol := NewVolume(d, d.Name(), vol.volType, vol.contentType, fullSnapshotName, vol.config, vol.poolConfig)
 
 			if snapVol.contentType != ContentTypeBlock || snapVol.volType != VolumeTypeCustom { // Receive the filesystem snapshot first (as it is sent first).
@@ -393,12 +395,19 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 					return err
 				}
 
+				volSize, err := units.ParseByteSizeString(migration.GetSnapshotConfigValue(snapshot, "size"))
+				if err != nil {
+					return err
+				}
+
 				// During migration (e.g., LVM → dir), the block file may be smaller because
 				// recvBlockVol uses SparseFileWrapper, which omits trailing zero bytes and does not truncate.
 				// enlargeVolumeBlockFile ensures the block file matches the source volume size by applying truncation.
-				err = enlargeVolumeBlockFile(snapVol, pathBlock)
-				if err != nil {
-					return err
+				if volSize > 0 {
+					err = enlargeVolumeBlockFile(pathBlock, volSize)
+					if err != nil {
+						return err
+					}
 				}
 			}
 
@@ -457,9 +466,11 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 			// During migration (e.g., LVM → dir), the block file may be smaller because
 			// recvBlockVol uses SparseFileWrapper, which omits trailing zero bytes and does not truncate.
 			// enlargeVolumeBlockFile ensures the block file matches the source volume size by applying truncation.
-			err = enlargeVolumeBlockFile(vol, pathBlock)
-			if err != nil {
-				return err
+			if volTargetArgs.VolumeSize > 0 {
+				err = enlargeVolumeBlockFile(pathBlock, volTargetArgs.VolumeSize)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
