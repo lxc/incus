@@ -90,3 +90,32 @@ func (m *MigrationHeader) GetBtrfsFeaturesSlice() []string {
 
 	return features
 }
+
+// GetSnapshotConfigValue retrieves the value associated with the given key from the snapshot LocalConfig.
+func GetSnapshotConfigValue(snapshot *Snapshot, key string) string {
+	var value string
+	for _, c := range snapshot.LocalConfig {
+		if c.GetKey() != key {
+			continue
+		}
+
+		value = c.GetValue()
+	}
+
+	return value
+}
+
+// SetSnapshotConfigValue stores the given value for the specified key in the snapshot LocalConfig.
+func SetSnapshotConfigValue(snapshot *Snapshot, key string, value string) {
+	for _, c := range snapshot.LocalConfig {
+		if c.GetKey() != key {
+			continue
+		}
+
+		c.Value = &value
+		return
+	}
+
+	config := Config{Key: &key, Value: &value}
+	snapshot.LocalConfig = append(snapshot.LocalConfig, &config)
+}
