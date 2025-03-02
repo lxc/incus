@@ -3278,7 +3278,7 @@ func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.
 	var monHooks []monitorHook
 
 	isWindows := strings.Contains(strings.ToLower(d.expandedConfig["image.os"]), "windows")
-	conf := qemuBase(&qemuBaseOpts{d.Architecture()})
+	conf := qemuBase(&qemuBaseOpts{d.Architecture(), util.IsTrue(d.expandedConfig["security.iommu"])})
 
 	err := d.addCPUMemoryConfig(&conf, cpuInfo)
 	if err != nil {
