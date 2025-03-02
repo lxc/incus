@@ -2707,3 +2707,7 @@ Adds support for specifying the VRF to add the routes to.
 A new category of configuration options, `smbios11.XYZ` has been added
 which allows passing key/value pairs through `SMBIOS Type 11` on systems that
 support it.
+
+## `network_address_set`
+
+This adds the concept of network address sets to API under the API endpoint prefix `/1.0/network-address-sets`.
