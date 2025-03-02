@@ -305,7 +305,7 @@ func (c *cmdNetworkAddressSetCreate) Run(cmd *cobra.Command, args []string) erro
 		}
 		if entry[0] == "addresses" {
 			addresses := strings.Split(entry[1], ",") // Split the comma-separated IPs
-        	addrSet.Addresses = append(addrSet.Addresses, addresses...)
+			addrSet.Addresses = append(addrSet.Addresses, addresses...)
 			continue
 		}
 
@@ -476,7 +476,7 @@ func (c *cmdNetworkAddressSetEdit) helpTemplate() string {
 ### addresses:
 ###  - 10.0.0.1
 ###  - 2001:db8::1
-### config:
+### external_ids:
 ###  user.foo: bar
 `)
 }
@@ -725,7 +725,7 @@ type cmdNetworkAddressSetRemoveAddr struct {
 
 func (c *cmdNetworkAddressSetRemoveAddr) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("remove-addr", i18n.G("[<remote>:]<address-set> <address>..."))
+	cmd.Use = usage("del-addr", i18n.G("[<remote>:]<address-set> <address>..."))
 	cmd.Short = i18n.G("Remove addresses from a network address set")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Remove addresses from a network address set"))
 	cmd.Flags().BoolVar(&c.flagForce, "force", false, i18n.G("Remove all specified addresses that match, error if multiple match and --force not used"))

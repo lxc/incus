@@ -187,7 +187,7 @@ function test_add_remove_addresses() {
     error_msg "Failed to add address 192.168.1.100."
     exit 1
   fi
-  incus network address-set remove-addr testAS 192.168.1.100
+  incus network address-set del-addr testAS 192.168.1.100
   if ! incus network address-set show testAS | grep -q "192.168.1.100"; then
     success "Address 192.168.1.100 removed."
   else
@@ -273,7 +273,7 @@ function test_nft_block_ping_with_address_set() {
     else
         success "Ping correctly blocked by ACL."
     fi
-    incus network address-set remove-addr testAS $ip
+    incus network address-set del-addr testAS $ip
     if ping -c2 "$ip" > /dev/null; then
         success "Ping to container succeeded."
     else
@@ -315,7 +315,7 @@ function test_nft_block_pingv6_with_address_set() {
     else
         success "Ping correctly blocked by ACL."
     fi
-    incus network address-set remove-addr testAS $ip
+    incus network address-set del-addr testAS $ip
     if ping -c2 "$ip" > /dev/null; then
         success "Ping to container succeeded."
     else
@@ -520,7 +520,7 @@ function test_nft_dynamic_ping_block() {
     fi
 
     # Step 5: Remove testct2's IP from the address set
-    incus network address-set remove-addr testAS "$ip_testct2"
+    incus network address-set del-addr testAS "$ip_testct2"
     sleep 1
 
     # Step 6: Verify that testct is still blocked but testct2 is now reachable
@@ -792,7 +792,7 @@ function test_ovn_dynamic_ping_block() {
     fi
 
     # Step 5: Remove testct2's IP from the address set
-    incus network address-set remove-addr testAS "$ip_testct2"
+    incus network address-set del-addr testAS "$ip_testct2"
     sleep 2
 
     # Step 6: Verify that testct is still blocked but testct2 is now reachable

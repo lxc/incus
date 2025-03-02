@@ -68,7 +68,7 @@ EOF
   incus network address-set create testAS --description "Address add/remove test"
   incus network address-set add-addr testAS 192.168.1.100
   incus network address-set show testAS | grep -q "192.168.1.100"
-  incus network address-set remove-addr testAS 192.168.1.100
+  incus network address-set del-addr testAS 192.168.1.100
   ! incus network address-set show testAS | grep -q "192.168.1.100" || false
   incus network address-set delete testAS
   incus network address-set create testAS --description "Rename test"
@@ -90,7 +90,7 @@ EOF
   incus network set incusbr0 security.acls="blockping"
   sleep 1
   ! ping -c2 "$ip" > /dev/null || false
-  incus network address-set remove-addr testAS $ip
+  incus network address-set del-addr testAS $ip
   incus network set incusbr0 security.acls=""
   incus network acl delete blockping
   incus network address-set delete testAS
@@ -132,7 +132,7 @@ EOF
   ! nc -z -w 5 "$ip" 5355 || false
   incus network address-set add-addr testAS "$ip6"
   ! nc -6 -z -w 5 "$ip6" 5355 || false
-  incus network address-set remove-addr testAS "$ip6"
+  incus network address-set del-addr testAS "$ip6"
   nc -6 -z -w 5 "$ip6" 5355
   incus network set incusbr0 security.acls=""
   incus network acl delete blocktcp5355
@@ -249,7 +249,7 @@ EOF'
   incus exec testct -- systemctl stop nc-server
   incus exec testct -- systemctl start nc6-server
   nc -6 -z -w 5 "$ip6" 7896
-  incus network address-set remove-addr testAS "$ip6"
+  incus network address-set del-addr testAS "$ip6"
   ! nc -6 -z -w 5 "$ip6" 7896 || false
   incus network set "$OVN_NETWORK" security.acls=""
   incus network acl delete allowtcp7896
