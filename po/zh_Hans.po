@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.10-dev\n"
+"X-Generator: Weblate 5.10.3-dev\n"
 
 #: cmd/incus/info.go:439
 msgid "  Chassis:"
@@ -3353,7 +3353,7 @@ msgstr "更新群集成员状态失败：%w"
 #: cmd/incus/file.go:1129
 #, c-format
 msgid "Failed to walk path for %s: %s"
-msgstr ""
+msgstr "为 %s 遍历路径失败：%s"
 
 #: cmd/incus/remote.go:255
 #, c-format
@@ -3648,80 +3648,80 @@ msgstr "获取作为存储属性的密钥"
 
 #: cmd/incus/storage_volume.go:1203
 msgid "Get the key as a storage volume property"
-msgstr ""
+msgstr "获取作为存储卷属性的密钥"
 
 #: cmd/incus/config.go:392
 msgid "Get the key as an instance property"
-msgstr ""
+msgstr "获取作为实例属性的密钥"
 
 #: cmd/incus/cluster_group.go:899
 msgid "Get values for cluster group configuration keys"
-msgstr ""
+msgstr "获取集群组配置键的值"
 
 #: cmd/incus/cluster.go:437
 msgid "Get values for cluster member configuration keys"
-msgstr ""
+msgstr "获取集群成员配置键的值"
 
 #: cmd/incus/config_device.go:219 cmd/incus/config_device.go:220
 msgid "Get values for device configuration keys"
-msgstr ""
+msgstr "获取设备配置键的值"
 
 #: cmd/incus/config.go:387 cmd/incus/config.go:388
 msgid "Get values for instance or server configuration keys"
-msgstr ""
+msgstr "获取实例或服务器配置键的值"
 
 #: cmd/incus/network_acl.go:310 cmd/incus/network_acl.go:311
 msgid "Get values for network ACL configuration keys"
-msgstr ""
+msgstr "获取网络 ACL 配置键的值"
 
 #: cmd/incus/network.go:846 cmd/incus/network.go:847
 msgid "Get values for network configuration keys"
-msgstr ""
+msgstr "获取网络配置键的值"
 
 #: cmd/incus/network_forward.go:437 cmd/incus/network_forward.go:438
 msgid "Get values for network forward configuration keys"
-msgstr ""
+msgstr "获取网络转发配置键的值"
 
 #: cmd/incus/network_integration.go:351 cmd/incus/network_integration.go:352
 msgid "Get values for network integration configuration keys"
-msgstr ""
+msgstr "获取网络集成配置键的值"
 
 #: cmd/incus/network_load_balancer.go:440
 #: cmd/incus/network_load_balancer.go:441
 msgid "Get values for network load balancer configuration keys"
-msgstr ""
+msgstr "获取网络负载均衡器配置键的值"
 
 #: cmd/incus/network_peer.go:475 cmd/incus/network_peer.go:476
 msgid "Get values for network peer configuration keys"
-msgstr ""
+msgstr "获取网络对等配置键的值"
 
 #: cmd/incus/network_zone.go:320 cmd/incus/network_zone.go:321
 msgid "Get values for network zone configuration keys"
-msgstr ""
+msgstr "获取网络区域配置键的值"
 
 #: cmd/incus/network_zone.go:1013 cmd/incus/network_zone.go:1014
 msgid "Get values for network zone record configuration keys"
-msgstr ""
+msgstr "获取网络区域记录配置键的值"
 
 #: cmd/incus/profile.go:641 cmd/incus/profile.go:642
 msgid "Get values for profile configuration keys"
-msgstr ""
+msgstr "获取配置文件配置键的值"
 
 #: cmd/incus/project.go:442 cmd/incus/project.go:443
 msgid "Get values for project configuration keys"
-msgstr ""
+msgstr "获取项目配置键的值"
 
 #: cmd/incus/storage_bucket.go:402 cmd/incus/storage_bucket.go:403
 msgid "Get values for storage bucket configuration keys"
-msgstr ""
+msgstr "获取储存桶配置键的值"
 
 #: cmd/incus/storage.go:408 cmd/incus/storage.go:409
 msgid "Get values for storage pool configuration keys"
-msgstr ""
+msgstr "获取储存池配置键的值"
 
 #: cmd/incus/storage_volume.go:1187
 msgid "Get values for storage volume configuration keys"
-msgstr ""
+msgstr "获取储存卷配置键的值"
 
 #: cmd/incus/storage_volume.go:1188
 msgid ""
@@ -3734,41 +3734,47 @@ msgid ""
 "For snapshots, add the snapshot name (only if type is one of custom, "
 "container or virtual-machine)."
 msgstr ""
+"获取储存卷配置键的值\n"
+"\n"
+"如果未指定类型，incus 会将假定类型为“自定义”。\n"
+"支持的类型值有“自定义”、“容器”和“虚拟机”。\n"
+"\n"
+"对于快照，添加快照名称（当且仅当类型为自定义、容器或虚拟机时）。"
 
 #: cmd/incus/storage_volume.go:442
 #, c-format
 msgid "Given target %q does not match source volume location %q"
-msgstr ""
+msgstr "给定的目标 %q 与源卷位置 %q 不匹配"
 
 #: cmd/incus/exec.go:65
 msgid "Group ID to run the command as (default 0)"
-msgstr ""
+msgstr "运行命令的组 ID（默认为 0）"
 
 #: cmd/incus/network.go:1320
 msgid "HOSTNAME"
-msgstr ""
+msgstr "主机名"
 
 #: cmd/incus/info.go:757
 msgid "Host interface"
-msgstr ""
+msgstr "主机接口"
 
 #: cmd/incus/info.go:682
 msgid "Hostname"
-msgstr ""
+msgstr "主机名"
 
 #: cmd/incus/info.go:517 cmd/incus/info.go:528
 msgid "Hugepages:\n"
-msgstr ""
+msgstr "大页内存：\n"
 
 #: cmd/incus/file.go:1632
 #, c-format
 msgid "I/O copy from SSH to instance failed: %v"
-msgstr ""
+msgstr "从 SSH 到实例的 I/O 复制操作失败：%v"
 
 #: cmd/incus/file.go:1621
 #, c-format
 msgid "I/O copy from instance to SSH failed: %v"
-msgstr ""
+msgstr "从实例到 SSH 的 I/O 复制操作失败：%v"
 
 #: cmd/incus/file.go:1444
 #, c-format

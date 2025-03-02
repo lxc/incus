@@ -2708,6 +2708,12 @@ A new category of configuration options, `smbios11.XYZ` has been added
 which allows passing key/value pairs through `SMBIOS Type 11` on systems that
 support it.
 
+## `api_filtering_extended`
+This extends the API filtering mechanism to all API collections.
+
+## `acme_dns01`
+Adds support for `DNS-01` challenge to the Incus ACME support for certificate generation.
+
 ## `network_address_set`
 
 This adds the concept of network address sets to API under the API endpoint prefix `/1.0/network-address-sets`.

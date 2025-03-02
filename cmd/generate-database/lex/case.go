@@ -23,8 +23,13 @@ func Minuscule(s string) string {
 	return strings.ToLower(s[:1]) + s[1:]
 }
 
-// Camel converts to camel case ("foo_bar" -> "FooBar").
-func Camel(s string) string {
+// CamelCase converts to camel case ("foo_bar" -> "fooBar").
+func CamelCase(s string) string {
+	return Minuscule(PascalCase(s))
+}
+
+// PascalCase converts to pascal case ("foo_bar" -> "FooBar").
+func PascalCase(s string) string {
 	words := strings.Split(s, "_")
 	for i := range words {
 		words[i] = Capital(words[i])
@@ -33,8 +38,8 @@ func Camel(s string) string {
 	return strings.Join(words, "")
 }
 
-// Snake converts to snake case ("FooBar" -> "foo_bar").
-func Snake(name string) string {
+// SnakeCase converts to snake case ("FooBar" -> "foo_bar").
+func SnakeCase(name string) string {
 	var ret bytes.Buffer
 
 	multipleUpper := false

@@ -2617,7 +2617,7 @@ func (d *qemu) getPCIHotplug() (string, error) {
 
 	for _, dev := range devices {
 		// Skip built-in devices.
-		if dev.DevID == "" {
+		if dev.DevID == "" || dev.DevID == "qemu_iommu" {
 			continue
 		}
 
@@ -4200,7 +4200,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 	} else if isRBDImage {
 		blockDev["driver"] = "rbd"
 
-		_, volName, opts, err := device.DiskParseRBDFormat(driveConf.DevPath)
+		poolName, volName, opts, err := device.DiskParseRBDFormat(driveConf.DevPath)
 		if err != nil {
 			return nil, fmt.Errorf("Failed parsing rbd string: %w", err)
 		}
@@ -4225,68 +4225,32 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 		vol := storageDrivers.NewVolume(nil, "", volumeType, rbdContentType, volumeName, nil, nil)
 		rbdImageName := storageDrivers.CephGetRBDImageName(vol, "", false)
 
-		// Parse the options (ceph credentials).
-		userName := storageDrivers.CephDefaultUser
+		// Scan & pass through options.
 		clusterName := storageDrivers.CephDefaultCluster
-		poolName := ""
+		userName := storageDrivers.CephDefaultUser
 
-		for _, option := range opts {
-			fields := strings.Split(option, "=")
-			if len(fields) != 2 {
-				return nil, fmt.Errorf("Unexpected volume rbd option %q", option)
-			}
-
-			if fields[0] == "id" {
-				userName = fields[1]
-			} else if fields[0] == "pool" {
-				poolName = fields[1]
-			} else if fields[0] == "conf" {
-				baseName := filepath.Base(fields[1])
-				clusterName = strings.TrimSuffix(baseName, ".conf")
-			}
-		}
-
-		if poolName == "" {
-			return nil, fmt.Errorf("Missing pool name")
-		}
-
-		// The aio option isn't available when using the rbd driver.
-		delete(blockDev, "aio")
 		blockDev["pool"] = poolName
 		blockDev["image"] = rbdImageName
-		blockDev["user"] = userName
-		blockDev["server"] = []map[string]string{}
-
-		// Derference ceph config path.
-		cephConfPath := fmt.Sprintf("/etc/ceph/%s.conf", clusterName)
-		target, err := filepath.EvalSymlinks(cephConfPath)
-		if err == nil {
-			cephConfPath = target
+		for key, val := range opts {
+			// We use 'id' where qemu uses 'user'.
+			if key == "id" {
+				blockDev["user"] = val
+				userName = val
+			} else if key == "cluster" {
+				clusterName = val
+			} else {
+				blockDev[key] = val
+			}
 		}
 
-		blockDev["conf"] = cephConfPath
-
-		// Setup the Ceph cluster config (monitors and keyring).
-		monitors, err := storageDrivers.CephMonitors(clusterName)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, monitor := range monitors {
-			idx := strings.LastIndex(monitor, ":")
-			host := monitor[:idx]
-			port := monitor[idx+1:]
-
-			blockDev["server"] = append(blockDev["server"].([]map[string]string), map[string]string{
-				"host": strings.Trim(host, "[]"),
-				"port": port,
-			})
-		}
-
+		// Parse the secret (QEMU runs unprivileged and can't read the keyring directly).
 		rbdSecret, err = storageDrivers.CephKeyring(clusterName, userName)
 		if err != nil {
 			return nil, err
 		}
+
+		// The aio option isn't available when using the rbd driver.
+		delete(blockDev, "aio")
 	}
 
 	readonly := slices.Contains(driveConf.Opts, "ro")

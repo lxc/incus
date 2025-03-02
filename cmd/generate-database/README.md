@@ -10,6 +10,13 @@ go structs and variables. We use `generate-database` for the majority of our
 SQL statements and database interactions on the `go` side for consistency and
 predictability.
 
+## Disclaimer
+
+`generate-database` is intended for internal use within the
+[Incus](https://github.com/lxc/incus) code base. There are no guarantees regarding
+backwards compatibility, API stability, or long-term availability. It may change
+or be removed at any time without prior notice. Use at your own discretion.
+
 ## Usage
 
 ### Initialization
@@ -108,7 +115,7 @@ Tag                         | Description
 `primary=yes`               | Assigns column associated with the field to be sufficient for returning a row from the table. Will default to `Name` if unspecified. Fields with this key will be included in the default 'ORDER BY' clause.
 `omit=<Stmt Types>`         | Omits a given field from consideration for the comma separated list of statement types (`create`, `objects-by-Name`, `update`).
 `ignore=yes`                | Outright ignore the struct field as though it does not exist.
-`marshal=yes`               | Marshal/Unmarshal data into the field. The column must be a TEXT column and the type must implement both `query.Marshal` and `query.Unmarshal`. This works for entity tables only, and not for association or mapping tables.
+`marshal=yes`               | Marshal/Unmarshal data into the field. The column must be a TEXT column and the type must implement both `Marshal` and `Unmarshal`. This works for entity tables only, and not for association or mapping tables.
 
 ### Go Function Generation
 

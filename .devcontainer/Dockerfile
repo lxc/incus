@@ -1,4 +1,4 @@
-ARG GO_VERSION=1.22
+ARG GO_VERSION=1.23
 ARG DEBIAN_VERSION=bookworm
 
 # Go development container

@@ -463,7 +463,9 @@ var APIExtensions = []string{
 	"init_preseed_profile_project",
 	`instance_nic_routed_host_address`,
 	"instance_smbios11",
-	"network_address_set",
+	"api_filtering_extended",
+	"acme_dns01",
+  "network_address_set",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

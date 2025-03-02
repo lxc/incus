@@ -666,27 +666,9 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 	}
 
-	// Get a list of interfaces.
-	ifaces, err := net.Interfaces()
+	err = n.deleteChildren()
 	if err != nil {
-		return err
-	}
-
-	// Cleanup any existing tunnel and dummy devices.
-	for _, iface := range ifaces {
-		l, err := ip.LinkFromName(iface.Name)
-		if err != nil {
-			return err
-		}
-
-		if l.Master != n.name || l.Kind != "vxlan" && l.Kind != "gretap" && l.Kind != "dummy" {
-			continue
-		}
-
-		err = l.Delete()
-		if err != nil {
-			return err
-		}
+		return fmt.Errorf("Failed to delete bridge children interfaces: %w", err)
 	}
 
 	// Attempt to add a dummy device to the bridge to force the MTU.
@@ -1530,6 +1512,11 @@ func (n *bridge) Stop() error {
 		return err
 	}
 
+	err = n.deleteChildren()
+	if err != nil {
+		return fmt.Errorf("Failed to delete bridge children interfaces: %w", err)
+	}
+
 	// Destroy the bridge interface
 	if n.config["bridge.driver"] == "openvswitch" {
 		vswitch, err := n.state.OVS()
@@ -1572,23 +1559,6 @@ func (n *bridge) Stop() error {
 	err = dnsmasq.Kill(n.name, false)
 	if err != nil {
 		return err
-	}
-
-	// Get a list of interfaces
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		return err
-	}
-
-	// Cleanup any existing tunnel device
-	for _, iface := range ifaces {
-		if strings.HasPrefix(iface.Name, fmt.Sprintf("%s-", n.name)) {
-			tunLink := &ip.Link{Name: iface.Name}
-			err = tunLink.Delete()
-			if err != nil {
-				return err
-			}
-		}
 	}
 
 	// Unload apparmor profiles.
@@ -2732,4 +2702,44 @@ func (n *bridge) UsesDNSMasq() bool {
 	}
 
 	return false
+}
+
+func (n *bridge) deleteChildren() error {
+	// Get a list of interfaces
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return err
+	}
+
+	var externalInterfaces []string
+	if n.config["bridge.external_interfaces"] != "" {
+		for _, entry := range strings.Split(n.config["bridge.external_interfaces"], ",") {
+			entry = strings.Split(strings.TrimSpace(entry), "/")[0]
+			externalInterfaces = append(externalInterfaces, entry)
+		}
+	}
+
+	kinds := []string{
+		"vxlan",
+		"gretap",
+		"dummy",
+	}
+
+	for _, iface := range ifaces {
+		l, err := ip.LinkFromName(iface.Name)
+		if err != nil {
+			return err
+		}
+
+		if l.Master != n.name || slices.Contains(externalInterfaces, iface.Name) || !slices.Contains(kinds, l.Kind) {
+			continue
+		}
+
+		err = l.Delete()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

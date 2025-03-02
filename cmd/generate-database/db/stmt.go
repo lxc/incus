@@ -73,7 +73,7 @@ func (s *Stmt) objects(buf *file.Buffer) error {
 		return s.objectsBy(buf)
 	}
 
-	mapping, err := Parse(s.pkg, lex.Camel(s.entity), s.kind)
+	mapping, err := Parse(s.pkg, lex.PascalCase(s.entity), s.kind)
 	if err != nil {
 		return err
 	}
@@ -140,7 +140,7 @@ func (s *Stmt) objects(buf *file.Buffer) error {
 // string using the objects-by-<FIELD> field suffixes, and then creates a new variable declaration.
 // Strictly, it will look for variables of the form 'var <entity>Objects = <database>.RegisterStmt(`SQL String`)'.
 func (s *Stmt) objectsBy(buf *file.Buffer) error {
-	mapping, err := Parse(s.pkg, lex.Camel(s.entity), s.kind)
+	mapping, err := Parse(s.pkg, lex.PascalCase(s.entity), s.kind)
 	if err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func (s *Stmt) objectsBy(buf *file.Buffer) error {
 				column = table + "." + columnName
 			}
 		} else if field.IsScalar() {
-			column = lex.Snake(field.Name)
+			column = lex.SnakeCase(field.Name)
 		} else {
 			column = mapping.FieldColumnName(field.Name, tableName)
 		}
@@ -203,7 +203,7 @@ func (s *Stmt) objectsBy(buf *file.Buffer) error {
 }
 
 func (s *Stmt) create(buf *file.Buffer, replace bool) error {
-	entityCreate := lex.Camel(s.entity)
+	entityCreate := lex.PascalCase(s.entity)
 
 	mapping, err := Parse(s.pkg, entityCreate, s.kind)
 	if err != nil {
@@ -247,7 +247,7 @@ func (s *Stmt) create(buf *file.Buffer, replace bool) error {
 }
 
 func (s *Stmt) id(buf *file.Buffer) error {
-	mapping, err := Parse(s.pkg, lex.Camel(s.entity), s.kind)
+	mapping, err := Parse(s.pkg, lex.PascalCase(s.entity), s.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -288,7 +288,7 @@ func (s *Stmt) id(buf *file.Buffer) error {
 }
 
 func (s *Stmt) rename(buf *file.Buffer) error {
-	mapping, err := Parse(s.pkg, lex.Camel(s.entity), s.kind)
+	mapping, err := Parse(s.pkg, lex.PascalCase(s.entity), s.kind)
 	if err != nil {
 		return err
 	}
@@ -317,7 +317,7 @@ func (s *Stmt) rename(buf *file.Buffer) error {
 }
 
 func (s *Stmt) update(buf *file.Buffer) error {
-	entityUpdate := lex.Camel(s.entity)
+	entityUpdate := lex.PascalCase(s.entity)
 
 	mapping, err := Parse(s.pkg, entityUpdate, s.kind)
 	if err != nil {
@@ -349,7 +349,7 @@ func (s *Stmt) update(buf *file.Buffer) error {
 }
 
 func (s *Stmt) delete(buf *file.Buffer) error {
-	mapping, err := Parse(s.pkg, lex.Camel(s.entity), s.kind)
+	mapping, err := Parse(s.pkg, lex.PascalCase(s.entity), s.kind)
 	if err != nil {
 		return err
 	}
