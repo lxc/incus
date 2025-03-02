@@ -3331,6 +3331,7 @@ func (d *qemu) deviceBootPriorities(base int) (map[string]int, error) {
 func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
 	var monHooks []monitorHook
 
+	isWindows := strings.Contains(strings.ToLower(d.expandedConfig["image.os"]), "windows")
 	conf := qemuBase(&qemuBaseOpts{d.Architecture()})
 
 	err := d.addCPUMemoryConfig(&conf, cpuInfo)
@@ -3461,7 +3462,7 @@ func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.
 	conf = append(conf, qemuTablet(&tabletOpts)...)
 
 	// Windows doesn't support virtio-vsock.
-	if !strings.Contains(strings.ToLower(d.expandedConfig["image.os"]), "windows") {
+	if !isWindows {
 		// Existing vsock ID from volatile.
 		vsockID, err := d.getVsockID()
 		if err != nil {
@@ -3530,7 +3531,7 @@ func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.
 	conf = append(conf, qemuSCSI(&scsiOpts)...)
 
 	// Windows doesn't support virtio-9p.
-	if !strings.Contains(strings.ToLower(d.expandedConfig["image.os"]), "windows") {
+	if !isWindows {
 		// Always export the config directory as a 9p config drive, in case the host or VM guest doesn't support
 		// virtio-fs.
 		devBus, devAddr, multi = bus.allocate(busFunctionGroup9p)
