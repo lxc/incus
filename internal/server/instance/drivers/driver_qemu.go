@@ -3331,7 +3331,8 @@ func (d *qemu) deviceBootPriorities(base int) (map[string]int, error) {
 func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
 	var monHooks []monitorHook
 
-	conf := qemuBase(&qemuBaseOpts{d.Architecture()})
+	isWindows := strings.Contains(strings.ToLower(d.expandedConfig["image.os"]), "windows")
+	conf := qemuBase(&qemuBaseOpts{d.Architecture(), util.IsTrue(d.expandedConfig["security.iommu"])})
 
 	err := d.addCPUMemoryConfig(&conf, cpuInfo)
 	if err != nil {
@@ -3400,8 +3401,8 @@ func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.
 	// Setup the bus allocator.
 	bus := qemuNewBus(busName, &conf)
 
-	// Windows doesn't support virtio-iommu.
-	if !strings.Contains(strings.ToLower(d.expandedConfig["image.os"]), "windows") && d.architectureSupportsUEFI(d.architecture) {
+	// Add IOMMU.
+	if util.IsTrue(d.expandedConfig["security.iommu"]) && d.architectureSupportsUEFI(d.architecture) {
 		devBus, devAddr, multi := bus.allocateDirect()
 		iommuOpts := qemuDevOpts{
 			busName:       bus.name,
@@ -3410,7 +3411,7 @@ func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.
 			multifunction: multi,
 		}
 
-		conf = append(conf, qemuIOMMU(&iommuOpts)...)
+		conf = append(conf, qemuIOMMU(&iommuOpts, isWindows)...)
 	}
 
 	// Now add the fixed set of devices. The multi-function groups used for these fixed internal devices are
@@ -3461,7 +3462,7 @@ func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.
 	conf = append(conf, qemuTablet(&tabletOpts)...)
 
 	// Windows doesn't support virtio-vsock.
-	if !strings.Contains(strings.ToLower(d.expandedConfig["image.os"]), "windows") {
+	if !isWindows {
 		// Existing vsock ID from volatile.
 		vsockID, err := d.getVsockID()
 		if err != nil {
@@ -3530,7 +3531,7 @@ func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.
 	conf = append(conf, qemuSCSI(&scsiOpts)...)
 
 	// Windows doesn't support virtio-9p.
-	if !strings.Contains(strings.ToLower(d.expandedConfig["image.os"]), "windows") {
+	if !isWindows {
 		// Always export the config directory as a 9p config drive, in case the host or VM guest doesn't support
 		// virtio-fs.
 		devBus, devAddr, multi = bus.allocate(busFunctionGroup9p)

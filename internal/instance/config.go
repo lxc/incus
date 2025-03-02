@@ -1011,6 +1011,16 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  shortdesc: Whether to use a firmware that supports UEFI-incompatible operating systems
 	"security.csm": validate.Optional(validate.IsBool),
 
+	// gendoc:generate(entity=instance, group=security, key=security.iommu)
+	//
+	// ---
+	//  type: bool
+	//  defaultdesc: `false`
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: Whether to enable virtual IOMMU, useful for device passthrough and nesting
+	"security.iommu": validate.Optional(validate.IsBool),
+
 	// gendoc:generate(entity=instance, group=security, key=security.secureboot)
 	// When disabling this option, consider enabling {config:option}`instance-security:security.csm`.
 	// ---
