@@ -2713,3 +2713,7 @@ This extends the API filtering mechanism to all API collections.
 
 ## `acme_dns01`
 Adds support for `DNS-01` challenge to the Incus ACME support for certificate generation.
+
+## `security_iommu`
+Introduce a new `security.iommu` configuration key to control whether to
+enable IOMMU emulation. This is done through `virtio_iommu` on Linux and the emulated Intel IOMMU on Windows.
