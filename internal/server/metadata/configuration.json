@@ -1011,6 +1011,16 @@
 						}
 					},
 					{
+						"security.iommu": {
+							"condition": "virtual machine",
+							"defaultdesc": "`false`",
+							"liveupdate": "no",
+							"longdesc": "",
+							"shortdesc": "Whether to enable virtual IOMMU, useful for device passthrough and nesting",
+							"type": "bool"
+						}
+					},
+					{
 						"security.nesting": {
 							"condition": "container",
 							"defaultdesc": "`false`",

@@ -941,6 +941,15 @@ If specified, the idmap used for this instance is unique among instances that ha
 
 ```
 
+```{config:option} security.iommu instance-security
+:condition: "virtual machine"
+:defaultdesc: "`false`"
+:liveupdate: "no"
+:shortdesc: "Whether to enable virtual IOMMU, useful for device passthrough and nesting"
+:type: "bool"
+
+```
+
 ```{config:option} security.nesting instance-security
 :condition: "container"
 :defaultdesc: "`false`"
