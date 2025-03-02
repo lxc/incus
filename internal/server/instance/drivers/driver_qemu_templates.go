@@ -311,7 +311,18 @@ func qemuCoreInfo() []cfg.Section {
 	}}
 }
 
-func qemuIOMMU(opts *qemuDevOpts) []cfg.Section {
+func qemuIOMMU(opts *qemuDevOpts, isWindows bool) []cfg.Section {
+	if isWindows {
+		return []cfg.Section{{
+			Name:    `device "intel-iommu"`,
+			Comment: "IOMMU driver",
+			Entries: []cfg.Entry{
+				{Key: "driver", Value: "intel-iommu"},
+				{Key: "intremap", Value: "on"},
+			},
+		}}
+	}
+
 	entriesOpts := qemuDevEntriesOpts{
 		dev:     *opts,
 		pciName: "virtio-iommu-pci",
