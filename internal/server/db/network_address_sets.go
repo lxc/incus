@@ -164,11 +164,6 @@ func (c *ClusterTx) CreateNetworkAddressSet(ctx context.Context, projectName str
 		return -1, fmt.Errorf("Failed marshalling addresses: %w", err)
 	}
 
-	//descriptionJSON, err := json.Marshal(info.Description)
-	//if err != nil {
-	//	return -1, fmt.Errorf("Failed marshalling description: %w", err)
-	//}
-
 	stmt := `
 	INSERT INTO address_sets (project_id, name, addresses, description)
 	VALUES ((SELECT id FROM projects WHERE name = ? LIMIT 1), ?, ?, ?)
@@ -203,17 +198,12 @@ func (c *ClusterTx) UpdateNetworkAddressSet(ctx context.Context, projectName str
 		return fmt.Errorf("Failed marshalling addresses: %w", err)
 	}
 
-	descriptionJSON, err := json.Marshal(put.Description)
-	if err != nil {
-		return fmt.Errorf("Failed marshalling description: %w", err)
-	}
-
 	stmt := `
 	UPDATE address_sets
 	SET addresses = ?, description = ?
 	WHERE project_id = ? AND name = ?
 	`
-	res, err := c.tx.ExecContext(ctx, stmt, string(addressesJSON), descriptionJSON, projectID, name)
+	res, err := c.tx.ExecContext(ctx, stmt, string(addressesJSON), put.Description, projectID, name)
 	if err != nil {
 		return err
 	}
