@@ -51,6 +51,7 @@ func qemuMachineType(architecture int) string {
 
 type qemuBaseOpts struct {
 	architecture int
+	iommu        bool
 }
 
 func qemuBase(opts *qemuBaseOpts) []cfg.Section {
@@ -77,6 +78,10 @@ func qemuBase(opts *qemuBaseOpts) []cfg.Section {
 			{Key: "usb", Value: "off"},
 		},
 	}}
+
+	if opts.iommu {
+		sections[0].Entries = append(sections[0].Entries, cfg.Entry{Key: "kernel-irqchip", Value: "split"})
+	}
 
 	if opts.architecture == osarch.ARCH_64BIT_INTEL_X86 {
 		sections = append(sections, []cfg.Section{{
