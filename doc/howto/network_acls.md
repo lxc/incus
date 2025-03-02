@@ -111,6 +111,22 @@ The `source` field (for ingress rules) and the `destination` field (for egress r
 
 With this method, you can use ACL groups or network selectors to define rules for groups of instances without needing to maintain IP lists or create additional subnets.
 
+### Use address sets in rules
+
+```{note}
+This feature is supported only for the {ref}`bridge network using <network-bridge-firewall>` `nftables` and the {ref}`network-ovn`.
+```
+
+The `source` field (for ingress rules) and the `destination` field (for egress rules) support using address sets.
+
+With this feature you can create groups of addresses and / or networks to match rules against. You can eventually mix them with literals addresses and CIDRs.
+
+To use one in a rule:
+```
+source=\$<name>
+```
+
+
 (network-acls-groups)=
 #### ACL groups
 
