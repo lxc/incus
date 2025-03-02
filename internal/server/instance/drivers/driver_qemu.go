@@ -3347,8 +3347,8 @@ func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.
 	// Setup the bus allocator.
 	bus := qemuNewBus(busName, &conf)
 
-	// Windows doesn't support virtio-iommu.
-	if !strings.Contains(strings.ToLower(d.expandedConfig["image.os"]), "windows") && d.architectureSupportsUEFI(d.architecture) {
+	// Add IOMMU.
+	if util.IsTrue(d.expandedConfig["security.iommu"]) && d.architectureSupportsUEFI(d.architecture) {
 		devBus, devAddr, multi := bus.allocateDirect()
 		iommuOpts := qemuDevOpts{
 			busName:       bus.name,
@@ -3357,7 +3357,7 @@ func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.
 			multifunction: multi,
 		}
 
-		conf = append(conf, qemuIOMMU(&iommuOpts)...)
+		conf = append(conf, qemuIOMMU(&iommuOpts, isWindows)...)
 	}
 
 	// Now add the fixed set of devices. The multi-function groups used for these fixed internal devices are
