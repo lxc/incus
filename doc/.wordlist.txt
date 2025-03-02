@@ -122,6 +122,7 @@ InfluxDB
 init
 initramfs
 integrations
+IOMMU
 IOPS
 IOV
 IPAM
@@ -194,6 +195,7 @@ OVMF
 OVN
 OVS
 PackageHub
+passthrough
 Pbit
 PCI
 PCIe
