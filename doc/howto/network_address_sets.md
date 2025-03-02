@@ -60,4 +60,4 @@ incus network address-set del-addr --force <name> <address1> <address2>
 
 ## Use of address sets in ACL rules
 
-In order to use an address set in an ACL, we need to prepend `name` with `$` (you need to escape the dollar in command line). Then we can refer the address set in `source` or `destination` fields of an ACL rule.
+In order to use an address set in an {ref}`ACL <network-acls-address-sets>`, we need to prepend `name` with `$` (you need to escape the dollar in command line). Then we can refer the address set in `source` or `destination` fields of an ACL rule.
