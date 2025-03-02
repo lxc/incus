@@ -343,3 +343,10 @@ endif
 .PHONY: unit-test
 unit-test:
 	sudo --preserve-env=CGO_CFLAGS,CGO_LDFLAGS,CGO_LDFLAGS_ALLOW,LD_LIBRARY_PATH LD_LIBRARY_PATH=${LD_LIBRARY_PATH} env "PATH=${PATH}" $(GO) test ./...
+
+
+.PHONY: workaround
+workaround:
+	sudo cp -r ~/go/ /usr/local/
+	sudo rm /usr/local/bin/incus*
+	sudo cp /usr/local/go/bin/incus* /usr/local/bin/
