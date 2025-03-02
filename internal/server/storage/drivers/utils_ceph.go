@@ -1,13 +1,16 @@
 package drivers
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // CephGetRBDImageName returns the RBD image name as it is used in ceph.
@@ -182,21 +185,21 @@ func CephMonitors(cluster string) (Monitors, error) {
 
 // CephKeyring retrieves the CephX key for the given entity.
 func CephKeyring(cluster string, client string) (string, error) {
+	// See if we can't find it from the filesystem directly (short path).
+	value, err := cephKeyringFromFile(cluster, client)
+	if err == nil {
+		return value, nil
+	}
+
 	// If client isn't prefixed, prefix it with 'client.'.
 	if !strings.Contains(client, ".") {
 		client = "client." + client
 	}
 
 	// Check that cephx is enabled.
-	authType, err := callCeph(
-		"--cluster", cluster,
-		"config", "get", client, "auth_service_required",
-	)
+	authType, err := callCeph("--cluster", cluster, "config", "get", client, "auth_service_required")
 	if err != nil {
-		return "", fmt.Errorf(
-			"Failed to query ceph config for auth_service_required: %w",
-			err,
-		)
+		return "", fmt.Errorf("Failed to query ceph config for auth_service_required: %w", err)
 	}
 
 	if authType == "none" {
@@ -208,18 +211,117 @@ func CephKeyring(cluster string, client string) (string, error) {
 	key := struct {
 		Key string `json:"key"`
 	}{}
-	err = callCephJSON(&key,
-		"--cluster", cluster,
-		"auth", "get-key", client,
-	)
+	err = callCephJSON(&key, "--cluster", cluster, "auth", "get-key", client)
 	if err != nil {
-		return "", fmt.Errorf(
-			"Failed to get keyring for %q on %q: %w",
-			client, cluster, err,
-		)
+		return "", fmt.Errorf("Failed to get keyring for %q on %q: %w", client, cluster, err)
 	}
 
 	return key.Key, nil
+}
+
+func cephGetKeyFromFile(path string) (string, error) {
+	cephKeyring, err := os.Open(path)
+	if err != nil {
+		return "", fmt.Errorf("Failed to open %q: %w", path, err)
+	}
+
+	// Locate the keyring entry and its value.
+	var cephSecret string
+	scan := bufio.NewScanner(cephKeyring)
+	for scan.Scan() {
+		line := scan.Text()
+		line = strings.TrimSpace(line)
+
+		if line == "" {
+			continue
+		}
+
+		if strings.HasPrefix(line, "key") {
+			fields := strings.SplitN(line, "=", 2)
+			if len(fields) < 2 {
+				continue
+			}
+
+			cephSecret = strings.TrimSpace(fields[1])
+			break
+		}
+	}
+
+	if cephSecret == "" {
+		return "", fmt.Errorf("Couldn't find a keyring entry")
+	}
+
+	return cephSecret, nil
+}
+
+// cephKeyringFromFile gets the key for a particular Ceph cluster and client name.
+func cephKeyringFromFile(cluster string, client string) (string, error) {
+	var cephSecret string
+	cephConfigPath := fmt.Sprintf("/etc/ceph/%v.conf", cluster)
+
+	keyringPathFull := fmt.Sprintf("/etc/ceph/%v.client.%v.keyring", cluster, client)
+	keyringPathCluster := fmt.Sprintf("/etc/ceph/%v.keyring", cluster)
+	keyringPathGlobal := "/etc/ceph/keyring"
+	keyringPathGlobalBin := "/etc/ceph/keyring.bin"
+
+	if util.PathExists(keyringPathFull) {
+		return cephGetKeyFromFile(keyringPathFull)
+	} else if util.PathExists(keyringPathCluster) {
+		return cephGetKeyFromFile(keyringPathCluster)
+	} else if util.PathExists(keyringPathGlobal) {
+		return cephGetKeyFromFile(keyringPathGlobal)
+	} else if util.PathExists(keyringPathGlobalBin) {
+		return cephGetKeyFromFile(keyringPathGlobalBin)
+	} else if util.PathExists(cephConfigPath) {
+		// Open the CEPH config file.
+		cephConfig, err := os.Open(cephConfigPath)
+		if err != nil {
+			return "", fmt.Errorf("Failed to open %q: %w", cephConfigPath, err)
+		}
+
+		// Locate the keyring entry and its value.
+		scan := bufio.NewScanner(cephConfig)
+		for scan.Scan() {
+			line := scan.Text()
+			line = strings.TrimSpace(line)
+
+			if line == "" {
+				continue
+			}
+
+			if strings.HasPrefix(line, "key") {
+				fields := strings.SplitN(line, "=", 2)
+				if len(fields) < 2 {
+					continue
+				}
+
+				// Check all key related config keys.
+				switch strings.TrimSpace(fields[0]) {
+				case "key":
+					cephSecret = strings.TrimSpace(fields[1])
+				case "keyfile":
+					key, err := os.ReadFile(fields[1])
+					if err != nil {
+						return "", err
+					}
+
+					cephSecret = strings.TrimSpace(string(key))
+				case "keyring":
+					return cephGetKeyFromFile(strings.TrimSpace(fields[1]))
+				}
+			}
+
+			if cephSecret != "" {
+				break
+			}
+		}
+	}
+
+	if cephSecret == "" {
+		return "", fmt.Errorf("Couldn't find a keyring entry")
+	}
+
+	return cephSecret, nil
 }
 
 // CephFsid retrieves the FSID for the given cluster.
