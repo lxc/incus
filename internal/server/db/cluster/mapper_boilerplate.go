@@ -140,8 +140,8 @@ func selectObjects(ctx context.Context, stmt *sql.Stmt, rowFunc dest, args ...an
 
 // scan runs a query with inArgs and provides the rowFunc with the scan function for each row.
 // It handles closing the rows and errors from the result set.
-func scan(ctx context.Context, tx *sql.Tx, sql string, rowFunc dest, inArgs ...any) error {
-	rows, err := tx.QueryContext(ctx, sql, inArgs...)
+func scan(ctx context.Context, tx *sql.Tx, sqlStmt string, rowFunc dest, inArgs ...any) error {
+	rows, err := tx.QueryContext(ctx, sqlStmt, inArgs...)
 	if err != nil {
 		return err
 	}
