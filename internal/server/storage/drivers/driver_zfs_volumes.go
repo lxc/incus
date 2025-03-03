@@ -939,7 +939,7 @@ func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 		}
 
 		var respSnapshots []ZFSDataset
-		var syncSnapshotNames []string
+		var syncSnapshots []*migration.Snapshot
 
 		// Get the GUIDs of all target snapshots.
 		for _, snapVol := range snapshots {
@@ -965,7 +965,7 @@ func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 			}
 
 			if !found {
-				syncSnapshotNames = append(syncSnapshotNames, srcSnapshot.Name)
+				syncSnapshots = append(syncSnapshots, &migration.Snapshot{Name: &srcSnapshot.Name})
 			}
 		}
 
@@ -992,10 +992,10 @@ func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 			respSnapshots = []ZFSDataset{}
 
 			// Let the source know that we need all snapshots.
-			syncSnapshotNames = []string{}
+			syncSnapshots = []*migration.Snapshot{}
 
 			for _, dataset := range migrationHeader.SnapshotDatasets {
-				syncSnapshotNames = append(syncSnapshotNames, dataset.Name)
+				syncSnapshots = append(syncSnapshots, &migration.Snapshot{Name: &dataset.Name})
 			}
 		} else {
 			// Delete local snapshots which exist on the target but not on the source.
@@ -1041,7 +1041,7 @@ func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 
 		// Don't pass the snapshots if it's volume only.
 		if !volumeOnly {
-			volTargetArgs.Snapshots = syncSnapshotNames
+			volTargetArgs.Snapshots = syncSnapshots
 		}
 	}
 
@@ -1090,8 +1090,8 @@ func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCl
 		}
 
 		// Transfer the snapshots.
-		for _, snapName := range volTargetArgs.Snapshots {
-			snapVol, err := vol.NewSnapshot(snapName)
+		for _, snapshot := range volTargetArgs.Snapshots {
+			snapVol, err := vol.NewSnapshot(snapshot.GetName())
 			if err != nil {
 				return err
 			}
@@ -1151,8 +1151,8 @@ func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCl
 		// Check if snapshot data set matches one of the requested snapshots in volTargetArgs.Snapshots.
 		// If so, then keep it, otherwise request it be removed.
 		entrySnapName := strings.TrimPrefix(dataSetName, dataSetSnapshotPrefix)
-		for _, snapName := range volTargetArgs.Snapshots {
-			if entrySnapName == snapName {
+		for _, snapshot := range volTargetArgs.Snapshots {
+			if entrySnapName == snapshot.GetName() {
 				return true // Keep snapshot data set if present in the requested snapshots list.
 			}
 		}

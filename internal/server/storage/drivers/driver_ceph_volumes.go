@@ -584,8 +584,8 @@ func (d *ceph) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vo
 		}
 
 		// Transfer the snapshots.
-		for _, snapName := range volTargetArgs.Snapshots {
-			fullSnapshotName := d.getRBDVolumeName(vol, snapName, true)
+		for _, snapshot := range volTargetArgs.Snapshots {
+			fullSnapshotName := d.getRBDVolumeName(vol, snapshot.GetName(), true)
 			wrapper := localMigration.ProgressWriter(op, "fs_progress", fullSnapshotName)
 
 			err = d.receiveVolume(recvName, conn, wrapper)
@@ -593,7 +593,7 @@ func (d *ceph) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vo
 				return err
 			}
 
-			snapVol, err := vol.NewSnapshot(snapName)
+			snapVol, err := vol.NewSnapshot(snapshot.GetName())
 			if err != nil {
 				return err
 			}

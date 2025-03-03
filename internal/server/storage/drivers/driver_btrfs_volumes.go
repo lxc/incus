@@ -532,9 +532,9 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 		d.logger.Debug("Received BTRFS migration meta data header", logger.Ctx{"name": vol.name})
 	} else {
 		// Populate the migrationHeader subvolumes with root volumes only to support older sources.
-		for _, snapName := range volTargetArgs.Snapshots {
+		for _, snapshot := range volTargetArgs.Snapshots {
 			migrationHeader.Subvolumes = append(migrationHeader.Subvolumes, BTRFSSubVolume{
-				Snapshot: snapName,
+				Snapshot: snapshot.GetName(),
 				Path:     string(filepath.Separator),
 				Readonly: true, // Snapshots are made readonly.
 			})
@@ -554,7 +554,7 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 		}
 
 		// Reset list of snapshots which are to be received.
-		volTargetArgs.Snapshots = []string{}
+		volTargetArgs.Snapshots = []*migration.Snapshot{}
 
 		// Map of local subvolumes with their received UUID.
 		localSubvolumes := make(map[string]string)
@@ -579,7 +579,7 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 			}
 
 			if migrationSnap.Path == "/" && migrationSnap.Snapshot != "" {
-				volTargetArgs.Snapshots = append(volTargetArgs.Snapshots, migrationSnap.Snapshot)
+				volTargetArgs.Snapshots = append(volTargetArgs.Snapshots, &migration.Snapshot{Name: &migrationSnap.Snapshot})
 			}
 
 			syncSubvolumes = append(syncSubvolumes, BTRFSSubVolume{Path: migrationSnap.Path, Snapshot: migrationSnap.Snapshot, UUID: migrationSnap.UUID})
@@ -702,8 +702,8 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 		revert.Add(func() { _ = deleteParentSnapshotDirIfEmpty(d.name, vol.volType, vol.name) })
 
 		// Transfer the snapshots.
-		for _, snapName := range volTargetArgs.Snapshots {
-			snapVol, _ := vol.NewSnapshot(snapName)
+		for _, snapshot := range volTargetArgs.Snapshots {
+			snapVol, _ := vol.NewSnapshot(snapshot.GetName())
 			err = receiveVolume(snapVol, tmpVolumesMountPoint)
 			if err != nil {
 				return err

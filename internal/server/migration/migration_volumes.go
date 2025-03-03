@@ -70,7 +70,7 @@ type VolumeTargetArgs struct {
 	Name                  string
 	Description           string
 	Config                map[string]string // Only used for custom volume migration.
-	Snapshots             []string
+	Snapshots             []*migration.Snapshot
 	MigrationType         Type
 	TrackProgress         bool
 	Refresh               bool

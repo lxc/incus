@@ -24,7 +24,6 @@ import (
 	"github.com/lxc/incus/v6/shared/idmap"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/subprocess"
-	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -391,14 +390,9 @@ func ensureVolumeBlockFile(vol Volume, path string, sizeBytes int64, allowUnsafe
 }
 
 // enlargeVolumeBlockFile enlarges the raw block file for a volume to the specified size.
-func enlargeVolumeBlockFile(vol Volume, path string) error {
+func enlargeVolumeBlockFile(path string, volSize int64) error {
 	if linux.IsBlockdevPath(path) {
 		return nil
-	}
-
-	volSize, err := units.ParseByteSizeString(vol.ConfigSize())
-	if err != nil {
-		return err
 	}
 
 	actualSize, err := BlockDiskSizeBytes(path)

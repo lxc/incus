@@ -1184,3 +1184,63 @@ func CompareSnapshots(sourceSnapshots []ComparableSnapshot, targetSnapshots []Co
 
 	return syncFromSource, deleteFromTarget
 }
+
+// CalculateVolumeSnapshotSize returns the size of a volume snapshot in bytes.
+func CalculateVolumeSnapshotSize(projectName string, pool Pool, contentType drivers.ContentType, volumeType drivers.VolumeType, volName string, snapName string) (int64, error) {
+	if contentType != drivers.ContentTypeBlock {
+		return 0, nil
+	}
+
+	var volSize int64
+
+	snapVolumeName := drivers.GetSnapshotVolumeName(volName, snapName)
+	var fullSnapVolName string
+	if volumeType == drivers.VolumeTypeCustom {
+		fullSnapVolName = project.StorageVolume(projectName, snapVolumeName)
+	} else {
+		fullSnapVolName = project.Instance(projectName, snapVolumeName)
+	}
+
+	snapVol := pool.GetVolume(volumeType, contentType, fullSnapVolName, nil)
+	err := snapVol.MountTask(func(mountPath string, op *operations.Operation) error {
+		poolBackend, ok := pool.(*backend)
+		if !ok {
+			return fmt.Errorf("Pool is not a backend")
+		}
+
+		volDiskPath, err := poolBackend.driver.GetVolumeDiskPath(snapVol)
+		if err != nil {
+			return err
+		}
+
+		volSize, err = drivers.BlockDiskSizeBytes(volDiskPath)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	return volSize, nil
+}
+
+// VolumeSnapshotsToMigrationSnapshots converts a *api.StorageVolumeSnapshot to a *migration.Snapshot.
+func VolumeSnapshotsToMigrationSnapshots(snapshots []*api.StorageVolumeSnapshot, projectName string, pool Pool, contentType drivers.ContentType, volumeType drivers.VolumeType, volName string) ([]*migration.Snapshot, error) {
+	migrationSnapshots := make([]*migration.Snapshot, 0, len(snapshots))
+	for _, snap := range snapshots {
+		mSnapshot := &migration.Snapshot{Name: &snap.Name}
+
+		volSize, err := CalculateVolumeSnapshotSize(projectName, pool, contentType, volumeType, volName, snap.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		migration.SetSnapshotConfigValue(mSnapshot, "size", fmt.Sprintf("%d", volSize))
+		migrationSnapshots = append(migrationSnapshots, mSnapshot)
+	}
+
+	return migrationSnapshots, nil
+}

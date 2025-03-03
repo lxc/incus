@@ -194,11 +194,11 @@ func (d *cephfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, 
 		path := internalUtil.AddSlash(mountPath)
 
 		// Snapshots are sent first by the sender, so create these first.
-		for _, snapName := range volTargetArgs.Snapshots {
+		for _, snapshot := range volTargetArgs.Snapshots {
 			// Receive the snapshot.
 			var wrapper *ioprogress.ProgressTracker
 			if volTargetArgs.TrackProgress {
-				wrapper = localMigration.ProgressTracker(op, "fs_progress", snapName)
+				wrapper = localMigration.ProgressTracker(op, "fs_progress", snapshot.GetName())
 			}
 
 			err = rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features)
@@ -206,7 +206,7 @@ func (d *cephfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, 
 				return err
 			}
 
-			fullSnapName := GetSnapshotVolumeName(vol.name, snapName)
+			fullSnapName := GetSnapshotVolumeName(vol.name, snapshot.GetName())
 			snapVol := NewVolume(d, d.name, vol.volType, vol.contentType, fullSnapName, vol.config, vol.poolConfig)
 
 			// Create the snapshot itself.
@@ -216,7 +216,7 @@ func (d *cephfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, 
 			}
 
 			// Setup the revert.
-			revertSnaps = append(revertSnaps, snapName)
+			revertSnaps = append(revertSnaps, snapshot.GetName())
 		}
 
 		if vol.contentType == ContentTypeFS {
