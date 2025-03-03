@@ -2306,6 +2306,34 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			volatileSet["volatile.container.oci"] = "true"
 		}
 
+		// Allow unprivileged users to use ping.
+		maxGid := int64(4294967295)
+
+		if !d.IsPrivileged() {
+			maxGid = 0
+			idMap, err := d.CurrentIdmap()
+			if err != nil {
+				return "", nil, err
+			}
+
+			for _, entry := range idMap.Entries {
+				if entry.NSID+entry.MapRange-1 > maxGid {
+					maxGid = entry.NSID + entry.MapRange - 1
+				}
+			}
+		}
+
+		err = lxcSetConfigItem(cc, "lxc.sysctl.net.ipv4.ping_group_range", fmt.Sprintf("0 %d", maxGid))
+		if err != nil {
+			return "", nil, err
+		}
+
+		// Allow unprivileged users to use low ports.
+		err = lxcSetConfigItem(cc, "lxc.sysctl.net.ipv4.ip_unprivileged_port_start", "0")
+		if err != nil {
+			return "", nil, err
+		}
+
 		// Configure the entry point.
 		if len(config.Process.Args) > 0 && slices.Contains([]string{"/init", "/sbin/init", "/s6-init"}, config.Process.Args[0]) {
 			// For regular init systems, call them directly as PID1.
