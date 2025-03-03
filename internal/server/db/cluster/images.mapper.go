@@ -105,7 +105,7 @@ func getImages(ctx context.Context, stmt *sql.Stmt, args ...any) ([]Image, error
 }
 
 // getImagesRaw can be used to run handwritten query strings to return a slice of objects.
-func getImagesRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) ([]Image, error) {
+func getImagesRaw(ctx context.Context, db dbtx, sql string, args ...any) ([]Image, error) {
 	objects := make([]Image, 0)
 
 	dest := func(scan func(dest ...any) error) error {
@@ -120,7 +120,7 @@ func getImagesRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) ([]I
 		return nil
 	}
 
-	err := scan(ctx, tx, sql, dest, args...)
+	err := scan(ctx, db, sql, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"images\" table: %w", err)
 	}
@@ -130,7 +130,7 @@ func getImagesRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) ([]I
 
 // GetImages returns all available images.
 // generator: image GetMany
-func GetImages(ctx context.Context, tx *sql.Tx, filters ...ImageFilter) (_ []Image, _err error) {
+func GetImages(ctx context.Context, db dbtx, filters ...ImageFilter) (_ []Image, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Image")
 	}()
@@ -146,7 +146,7 @@ func GetImages(ctx context.Context, tx *sql.Tx, filters ...ImageFilter) (_ []Ima
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(tx, imageObjects)
+		sqlStmt, err = Stmt(db, imageObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"imageObjects\" prepared statement: %w", err)
 		}
@@ -156,7 +156,7 @@ func GetImages(ctx context.Context, tx *sql.Tx, filters ...ImageFilter) (_ []Ima
 		if filter.Project != nil && filter.Public != nil && filter.ID == nil && filter.Fingerprint == nil && filter.Cached == nil && filter.AutoUpdate == nil {
 			args = append(args, []any{filter.Project, filter.Public}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, imageObjectsByProjectAndPublic)
+				sqlStmt, err = Stmt(db, imageObjectsByProjectAndPublic)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"imageObjectsByProjectAndPublic\" prepared statement: %w", err)
 				}
@@ -180,7 +180,7 @@ func GetImages(ctx context.Context, tx *sql.Tx, filters ...ImageFilter) (_ []Ima
 		} else if filter.Project != nil && filter.Cached != nil && filter.ID == nil && filter.Fingerprint == nil && filter.Public == nil && filter.AutoUpdate == nil {
 			args = append(args, []any{filter.Project, filter.Cached}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, imageObjectsByProjectAndCached)
+				sqlStmt, err = Stmt(db, imageObjectsByProjectAndCached)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"imageObjectsByProjectAndCached\" prepared statement: %w", err)
 				}
@@ -204,7 +204,7 @@ func GetImages(ctx context.Context, tx *sql.Tx, filters ...ImageFilter) (_ []Ima
 		} else if filter.Project != nil && filter.ID == nil && filter.Fingerprint == nil && filter.Public == nil && filter.Cached == nil && filter.AutoUpdate == nil {
 			args = append(args, []any{filter.Project}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, imageObjectsByProject)
+				sqlStmt, err = Stmt(db, imageObjectsByProject)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"imageObjectsByProject\" prepared statement: %w", err)
 				}
@@ -228,7 +228,7 @@ func GetImages(ctx context.Context, tx *sql.Tx, filters ...ImageFilter) (_ []Ima
 		} else if filter.ID != nil && filter.Project == nil && filter.Fingerprint == nil && filter.Public == nil && filter.Cached == nil && filter.AutoUpdate == nil {
 			args = append(args, []any{filter.ID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, imageObjectsByID)
+				sqlStmt, err = Stmt(db, imageObjectsByID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"imageObjectsByID\" prepared statement: %w", err)
 				}
@@ -252,7 +252,7 @@ func GetImages(ctx context.Context, tx *sql.Tx, filters ...ImageFilter) (_ []Ima
 		} else if filter.Fingerprint != nil && filter.ID == nil && filter.Project == nil && filter.Public == nil && filter.Cached == nil && filter.AutoUpdate == nil {
 			args = append(args, []any{filter.Fingerprint}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, imageObjectsByFingerprint)
+				sqlStmt, err = Stmt(db, imageObjectsByFingerprint)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"imageObjectsByFingerprint\" prepared statement: %w", err)
 				}
@@ -276,7 +276,7 @@ func GetImages(ctx context.Context, tx *sql.Tx, filters ...ImageFilter) (_ []Ima
 		} else if filter.Cached != nil && filter.ID == nil && filter.Project == nil && filter.Fingerprint == nil && filter.Public == nil && filter.AutoUpdate == nil {
 			args = append(args, []any{filter.Cached}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, imageObjectsByCached)
+				sqlStmt, err = Stmt(db, imageObjectsByCached)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"imageObjectsByCached\" prepared statement: %w", err)
 				}
@@ -300,7 +300,7 @@ func GetImages(ctx context.Context, tx *sql.Tx, filters ...ImageFilter) (_ []Ima
 		} else if filter.AutoUpdate != nil && filter.ID == nil && filter.Project == nil && filter.Fingerprint == nil && filter.Public == nil && filter.Cached == nil {
 			args = append(args, []any{filter.AutoUpdate}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, imageObjectsByAutoUpdate)
+				sqlStmt, err = Stmt(db, imageObjectsByAutoUpdate)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"imageObjectsByAutoUpdate\" prepared statement: %w", err)
 				}
@@ -333,7 +333,7 @@ func GetImages(ctx context.Context, tx *sql.Tx, filters ...ImageFilter) (_ []Ima
 		objects, err = getImages(ctx, sqlStmt, args...)
 	} else {
 		queryStr := strings.Join(queryParts[:], "ORDER BY")
-		objects, err = getImagesRaw(ctx, tx, queryStr, args...)
+		objects, err = getImagesRaw(ctx, db, queryStr, args...)
 	}
 
 	if err != nil {
@@ -345,7 +345,7 @@ func GetImages(ctx context.Context, tx *sql.Tx, filters ...ImageFilter) (_ []Ima
 
 // GetImage returns the image with the given key.
 // generator: image GetOne
-func GetImage(ctx context.Context, tx *sql.Tx, project string, fingerprint string) (_ *Image, _err error) {
+func GetImage(ctx context.Context, db dbtx, project string, fingerprint string) (_ *Image, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Image")
 	}()
@@ -354,7 +354,7 @@ func GetImage(ctx context.Context, tx *sql.Tx, project string, fingerprint strin
 	filter.Project = &project
 	filter.Fingerprint = &fingerprint
 
-	objects, err := GetImages(ctx, tx, filter)
+	objects, err := GetImages(ctx, db, filter)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"images\" table: %w", err)
 	}

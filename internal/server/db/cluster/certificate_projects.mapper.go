@@ -63,7 +63,7 @@ func getCertificateProjects(ctx context.Context, stmt *sql.Stmt, args ...any) ([
 }
 
 // getCertificateProjectsRaw can be used to run handwritten query strings to return a slice of objects.
-func getCertificateProjectsRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) ([]CertificateProject, error) {
+func getCertificateProjectsRaw(ctx context.Context, db dbtx, sql string, args ...any) ([]CertificateProject, error) {
 	objects := make([]CertificateProject, 0)
 
 	dest := func(scan func(dest ...any) error) error {
@@ -78,7 +78,7 @@ func getCertificateProjectsRaw(ctx context.Context, tx *sql.Tx, sql string, args
 		return nil
 	}
 
-	err := scan(ctx, tx, sql, dest, args...)
+	err := scan(ctx, db, sql, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"certificates_projects\" table: %w", err)
 	}
@@ -88,7 +88,7 @@ func getCertificateProjectsRaw(ctx context.Context, tx *sql.Tx, sql string, args
 
 // GetCertificateProjects returns all available Projects for the Certificate.
 // generator: certificate_project GetMany
-func GetCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID int) (_ []Project, _err error) {
+func GetCertificateProjects(ctx context.Context, db dbtx, certificateID int) (_ []Project, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Certificate_project")
 	}()
@@ -98,7 +98,7 @@ func GetCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID int) 
 	// Result slice.
 	objects := make([]CertificateProject, 0)
 
-	sqlStmt, err := Stmt(tx, certificateProjectObjectsByCertificateID)
+	sqlStmt, err := Stmt(db, certificateProjectObjectsByCertificateID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get \"certificateProjectObjectsByCertificateID\" prepared statement: %w", err)
 	}
@@ -113,7 +113,7 @@ func GetCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID int) 
 
 	result := make([]Project, len(objects))
 	for i, object := range objects {
-		project, err := GetProjects(ctx, tx, ProjectFilter{ID: &object.ProjectID})
+		project, err := GetProjects(ctx, db, ProjectFilter{ID: &object.ProjectID})
 		if err != nil {
 			return nil, err
 		}
@@ -126,12 +126,12 @@ func GetCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID int) 
 
 // DeleteCertificateProjects deletes the certificate_project matching the given key parameters.
 // generator: certificate_project DeleteMany
-func DeleteCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID int) (_err error) {
+func DeleteCertificateProjects(ctx context.Context, db dbtx, certificateID int) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Certificate_project")
 	}()
 
-	stmt, err := Stmt(tx, certificateProjectDeleteByCertificateID)
+	stmt, err := Stmt(db, certificateProjectDeleteByCertificateID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"certificateProjectDeleteByCertificateID\" prepared statement: %w", err)
 	}
@@ -151,7 +151,7 @@ func DeleteCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID in
 
 // CreateCertificateProjects adds a new certificate_project to the database.
 // generator: certificate_project Create
-func CreateCertificateProjects(ctx context.Context, tx *sql.Tx, objects []CertificateProject) (_err error) {
+func CreateCertificateProjects(ctx context.Context, db dbtx, objects []CertificateProject) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Certificate_project")
 	}()
@@ -164,7 +164,7 @@ func CreateCertificateProjects(ctx context.Context, tx *sql.Tx, objects []Certif
 		args[1] = object.ProjectID
 
 		// Prepared statement to use.
-		stmt, err := Stmt(tx, certificateProjectCreate)
+		stmt, err := Stmt(db, certificateProjectCreate)
 		if err != nil {
 			return fmt.Errorf("Failed to get \"certificateProjectCreate\" prepared statement: %w", err)
 		}
@@ -182,13 +182,13 @@ func CreateCertificateProjects(ctx context.Context, tx *sql.Tx, objects []Certif
 
 // UpdateCertificateProjects updates the certificate_project matching the given key parameters.
 // generator: certificate_project Update
-func UpdateCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID int, projectNames []string) (_err error) {
+func UpdateCertificateProjects(ctx context.Context, db dbtx, certificateID int, projectNames []string) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Certificate_project")
 	}()
 
 	// Delete current entry.
-	err := DeleteCertificateProjects(ctx, tx, certificateID)
+	err := DeleteCertificateProjects(ctx, db, certificateID)
 	if err != nil {
 		return err
 	}
@@ -196,7 +196,7 @@ func UpdateCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID in
 	// Get new entry IDs.
 	certificateProjects := make([]CertificateProject, 0, len(projectNames))
 	for _, entry := range projectNames {
-		refID, err := GetProjectID(ctx, tx, entry)
+		refID, err := GetProjectID(ctx, db, entry)
 		if err != nil {
 			return err
 		}
@@ -204,7 +204,7 @@ func UpdateCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID in
 		certificateProjects = append(certificateProjects, CertificateProject{CertificateID: certificateID, ProjectID: int(refID)})
 	}
 
-	err = CreateCertificateProjects(ctx, tx, certificateProjects)
+	err = CreateCertificateProjects(ctx, db, certificateProjects)
 	if err != nil {
 		return err
 	}
