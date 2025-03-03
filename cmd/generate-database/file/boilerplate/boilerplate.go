@@ -7,6 +7,13 @@ import (
 	"fmt"
 )
 
+type dbtx interface {
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	PrepareContext(ctx context.Context, query string) (*sql.Stmt, error)
+	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+}
+
 // RegisterStmt register a SQL statement.
 //
 // Registered statements will be prepared upfront and re-used, to speed up
@@ -42,13 +49,18 @@ var stmts = map[int]string{} // Statement code to statement SQL text.
 var PreparedStmts = map[int]*sql.Stmt{}
 
 // Stmt prepares the in-memory prepared statement for the transaction.
-func Stmt(tx *sql.Tx, code int) (*sql.Stmt, error) {
+func Stmt(db dbtx, code int) (*sql.Stmt, error) {
 	stmt, ok := PreparedStmts[code]
 	if !ok {
 		return nil, fmt.Errorf("No prepared statement registered with code %d", code)
 	}
 
-	return tx.Stmt(stmt), nil
+	tx, ok := db.(*sql.Tx)
+	if ok {
+		return tx.Stmt(stmt), nil
+	}
+
+	return stmt, nil
 }
 
 // StmtString returns the in-memory query string with the given code.
@@ -138,8 +150,8 @@ func selectObjects(ctx context.Context, stmt *sql.Stmt, rowFunc dest, args ...an
 
 // scan runs a query with inArgs and provides the rowFunc with the scan function for each row.
 // It handles closing the rows and errors from the result set.
-func scan(ctx context.Context, tx *sql.Tx, sqlStmt string, rowFunc dest, inArgs ...any) error {
-	rows, err := tx.QueryContext(ctx, sqlStmt, inArgs...)
+func scan(ctx context.Context, db dbtx, sqlStmt string, rowFunc dest, inArgs ...any) error {
+	rows, err := db.QueryContext(ctx, sqlStmt, inArgs...)
 	if err != nil {
 		return err
 	}
