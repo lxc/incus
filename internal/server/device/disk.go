@@ -540,9 +540,10 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 					}
 				}
 
+				// Parse the volume name and path.
+				volFields := strings.SplitN(d.config["source"], "/", 2)
+
 				if dbVolume == nil {
-					// Parse the volume name and path.
-					volFields := strings.SplitN(d.config["source"], "/", 2)
 					volName := volFields[0]
 
 					// GetStoragePoolVolume returns a volume with an empty Location field for remote drivers.
@@ -579,6 +580,11 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 					if d.config["path"] != "" {
 						return fmt.Errorf("Custom block volumes cannot have a path defined")
 					}
+
+					if len(volFields) > 1 {
+						return fmt.Errorf("Custom block volume snapshots cannot be used directly")
+					}
+
 				} else if contentType == db.StoragePoolVolumeContentTypeISO {
 					if instConf.Type() == instancetype.Container {
 						return fmt.Errorf("Custom ISO volumes cannot be used on containers")
