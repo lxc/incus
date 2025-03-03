@@ -41,7 +41,7 @@ DELETE FROM instances_profiles WHERE instance_id = ?
 
 // GetProfileInstances returns all available Instances for the Profile.
 // generator: instance_profile GetMany
-func GetProfileInstances(ctx context.Context, tx *sql.Tx, profileID int) (_ []Instance, _err error) {
+func GetProfileInstances(ctx context.Context, db dbtx, profileID int) (_ []Instance, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance_profile")
 	}()
@@ -51,7 +51,7 @@ func GetProfileInstances(ctx context.Context, tx *sql.Tx, profileID int) (_ []In
 	// Result slice.
 	objects := make([]InstanceProfile, 0)
 
-	sqlStmt, err := Stmt(tx, instanceProfileObjectsByProfileID)
+	sqlStmt, err := Stmt(db, instanceProfileObjectsByProfileID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get \"instanceProfileObjectsByProfileID\" prepared statement: %w", err)
 	}
@@ -66,7 +66,7 @@ func GetProfileInstances(ctx context.Context, tx *sql.Tx, profileID int) (_ []In
 
 	result := make([]Instance, len(objects))
 	for i, object := range objects {
-		instance, err := GetInstances(ctx, tx, InstanceFilter{ID: &object.InstanceID})
+		instance, err := GetInstances(ctx, db, InstanceFilter{ID: &object.InstanceID})
 		if err != nil {
 			return nil, err
 		}
@@ -108,7 +108,7 @@ func getInstanceProfiles(ctx context.Context, stmt *sql.Stmt, args ...any) ([]In
 }
 
 // getInstanceProfilesRaw can be used to run handwritten query strings to return a slice of objects.
-func getInstanceProfilesRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) ([]InstanceProfile, error) {
+func getInstanceProfilesRaw(ctx context.Context, db dbtx, sql string, args ...any) ([]InstanceProfile, error) {
 	objects := make([]InstanceProfile, 0)
 
 	dest := func(scan func(dest ...any) error) error {
@@ -123,7 +123,7 @@ func getInstanceProfilesRaw(ctx context.Context, tx *sql.Tx, sql string, args ..
 		return nil
 	}
 
-	err := scan(ctx, tx, sql, dest, args...)
+	err := scan(ctx, db, sql, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"instances_profiles\" table: %w", err)
 	}
@@ -133,7 +133,7 @@ func getInstanceProfilesRaw(ctx context.Context, tx *sql.Tx, sql string, args ..
 
 // GetInstanceProfiles returns all available Profiles for the Instance.
 // generator: instance_profile GetMany
-func GetInstanceProfiles(ctx context.Context, tx *sql.Tx, instanceID int) (_ []Profile, _err error) {
+func GetInstanceProfiles(ctx context.Context, db dbtx, instanceID int) (_ []Profile, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance_profile")
 	}()
@@ -143,7 +143,7 @@ func GetInstanceProfiles(ctx context.Context, tx *sql.Tx, instanceID int) (_ []P
 	// Result slice.
 	objects := make([]InstanceProfile, 0)
 
-	sqlStmt, err := Stmt(tx, instanceProfileObjectsByInstanceID)
+	sqlStmt, err := Stmt(db, instanceProfileObjectsByInstanceID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get \"instanceProfileObjectsByInstanceID\" prepared statement: %w", err)
 	}
@@ -158,7 +158,7 @@ func GetInstanceProfiles(ctx context.Context, tx *sql.Tx, instanceID int) (_ []P
 
 	result := make([]Profile, len(objects))
 	for i, object := range objects {
-		profile, err := GetProfiles(ctx, tx, ProfileFilter{ID: &object.ProfileID})
+		profile, err := GetProfiles(ctx, db, ProfileFilter{ID: &object.ProfileID})
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +171,7 @@ func GetInstanceProfiles(ctx context.Context, tx *sql.Tx, instanceID int) (_ []P
 
 // CreateInstanceProfiles adds a new instance_profile to the database.
 // generator: instance_profile Create
-func CreateInstanceProfiles(ctx context.Context, tx *sql.Tx, objects []InstanceProfile) (_err error) {
+func CreateInstanceProfiles(ctx context.Context, db dbtx, objects []InstanceProfile) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance_profile")
 	}()
@@ -185,7 +185,7 @@ func CreateInstanceProfiles(ctx context.Context, tx *sql.Tx, objects []InstanceP
 		args[2] = object.ApplyOrder
 
 		// Prepared statement to use.
-		stmt, err := Stmt(tx, instanceProfileCreate)
+		stmt, err := Stmt(db, instanceProfileCreate)
 		if err != nil {
 			return fmt.Errorf("Failed to get \"instanceProfileCreate\" prepared statement: %w", err)
 		}
@@ -203,12 +203,12 @@ func CreateInstanceProfiles(ctx context.Context, tx *sql.Tx, objects []InstanceP
 
 // DeleteInstanceProfiles deletes the instance_profile matching the given key parameters.
 // generator: instance_profile DeleteMany
-func DeleteInstanceProfiles(ctx context.Context, tx *sql.Tx, instanceID int) (_err error) {
+func DeleteInstanceProfiles(ctx context.Context, db dbtx, instanceID int) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance_profile")
 	}()
 
-	stmt, err := Stmt(tx, instanceProfileDeleteByInstanceID)
+	stmt, err := Stmt(db, instanceProfileDeleteByInstanceID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"instanceProfileDeleteByInstanceID\" prepared statement: %w", err)
 	}

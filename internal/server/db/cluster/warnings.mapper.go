@@ -118,7 +118,7 @@ func getWarnings(ctx context.Context, stmt *sql.Stmt, args ...any) ([]Warning, e
 }
 
 // getWarningsRaw can be used to run handwritten query strings to return a slice of objects.
-func getWarningsRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) ([]Warning, error) {
+func getWarningsRaw(ctx context.Context, db dbtx, sql string, args ...any) ([]Warning, error) {
 	objects := make([]Warning, 0)
 
 	dest := func(scan func(dest ...any) error) error {
@@ -133,7 +133,7 @@ func getWarningsRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) ([
 		return nil
 	}
 
-	err := scan(ctx, tx, sql, dest, args...)
+	err := scan(ctx, db, sql, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"warnings\" table: %w", err)
 	}
@@ -143,7 +143,7 @@ func getWarningsRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) ([
 
 // GetWarnings returns all available warnings.
 // generator: warning GetMany
-func GetWarnings(ctx context.Context, tx *sql.Tx, filters ...WarningFilter) (_ []Warning, _err error) {
+func GetWarnings(ctx context.Context, db dbtx, filters ...WarningFilter) (_ []Warning, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Warning")
 	}()
@@ -159,7 +159,7 @@ func GetWarnings(ctx context.Context, tx *sql.Tx, filters ...WarningFilter) (_ [
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(tx, warningObjects)
+		sqlStmt, err = Stmt(db, warningObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"warningObjects\" prepared statement: %w", err)
 		}
@@ -169,7 +169,7 @@ func GetWarnings(ctx context.Context, tx *sql.Tx, filters ...WarningFilter) (_ [
 		if filter.Node != nil && filter.TypeCode != nil && filter.Project != nil && filter.EntityTypeCode != nil && filter.EntityID != nil && filter.ID == nil && filter.UUID == nil && filter.Status == nil {
 			args = append(args, []any{filter.Node, filter.TypeCode, filter.Project, filter.EntityTypeCode, filter.EntityID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, warningObjectsByNodeAndTypeCodeAndProjectAndEntityTypeCodeAndEntityID)
+				sqlStmt, err = Stmt(db, warningObjectsByNodeAndTypeCodeAndProjectAndEntityTypeCodeAndEntityID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"warningObjectsByNodeAndTypeCodeAndProjectAndEntityTypeCodeAndEntityID\" prepared statement: %w", err)
 				}
@@ -193,7 +193,7 @@ func GetWarnings(ctx context.Context, tx *sql.Tx, filters ...WarningFilter) (_ [
 		} else if filter.Node != nil && filter.TypeCode != nil && filter.Project != nil && filter.ID == nil && filter.UUID == nil && filter.EntityTypeCode == nil && filter.EntityID == nil && filter.Status == nil {
 			args = append(args, []any{filter.Node, filter.TypeCode, filter.Project}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, warningObjectsByNodeAndTypeCodeAndProject)
+				sqlStmt, err = Stmt(db, warningObjectsByNodeAndTypeCodeAndProject)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"warningObjectsByNodeAndTypeCodeAndProject\" prepared statement: %w", err)
 				}
@@ -217,7 +217,7 @@ func GetWarnings(ctx context.Context, tx *sql.Tx, filters ...WarningFilter) (_ [
 		} else if filter.Node != nil && filter.TypeCode != nil && filter.ID == nil && filter.UUID == nil && filter.Project == nil && filter.EntityTypeCode == nil && filter.EntityID == nil && filter.Status == nil {
 			args = append(args, []any{filter.Node, filter.TypeCode}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, warningObjectsByNodeAndTypeCode)
+				sqlStmt, err = Stmt(db, warningObjectsByNodeAndTypeCode)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"warningObjectsByNodeAndTypeCode\" prepared statement: %w", err)
 				}
@@ -241,7 +241,7 @@ func GetWarnings(ctx context.Context, tx *sql.Tx, filters ...WarningFilter) (_ [
 		} else if filter.UUID != nil && filter.ID == nil && filter.Project == nil && filter.Node == nil && filter.TypeCode == nil && filter.EntityTypeCode == nil && filter.EntityID == nil && filter.Status == nil {
 			args = append(args, []any{filter.UUID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, warningObjectsByUUID)
+				sqlStmt, err = Stmt(db, warningObjectsByUUID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"warningObjectsByUUID\" prepared statement: %w", err)
 				}
@@ -265,7 +265,7 @@ func GetWarnings(ctx context.Context, tx *sql.Tx, filters ...WarningFilter) (_ [
 		} else if filter.Status != nil && filter.ID == nil && filter.UUID == nil && filter.Project == nil && filter.Node == nil && filter.TypeCode == nil && filter.EntityTypeCode == nil && filter.EntityID == nil {
 			args = append(args, []any{filter.Status}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, warningObjectsByStatus)
+				sqlStmt, err = Stmt(db, warningObjectsByStatus)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"warningObjectsByStatus\" prepared statement: %w", err)
 				}
@@ -289,7 +289,7 @@ func GetWarnings(ctx context.Context, tx *sql.Tx, filters ...WarningFilter) (_ [
 		} else if filter.Project != nil && filter.ID == nil && filter.UUID == nil && filter.Node == nil && filter.TypeCode == nil && filter.EntityTypeCode == nil && filter.EntityID == nil && filter.Status == nil {
 			args = append(args, []any{filter.Project}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, warningObjectsByProject)
+				sqlStmt, err = Stmt(db, warningObjectsByProject)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"warningObjectsByProject\" prepared statement: %w", err)
 				}
@@ -322,7 +322,7 @@ func GetWarnings(ctx context.Context, tx *sql.Tx, filters ...WarningFilter) (_ [
 		objects, err = getWarnings(ctx, sqlStmt, args...)
 	} else {
 		queryStr := strings.Join(queryParts[:], "ORDER BY")
-		objects, err = getWarningsRaw(ctx, tx, queryStr, args...)
+		objects, err = getWarningsRaw(ctx, db, queryStr, args...)
 	}
 
 	if err != nil {
@@ -334,7 +334,7 @@ func GetWarnings(ctx context.Context, tx *sql.Tx, filters ...WarningFilter) (_ [
 
 // GetWarning returns the warning with the given key.
 // generator: warning GetOne-by-UUID
-func GetWarning(ctx context.Context, tx *sql.Tx, uuid string) (_ *Warning, _err error) {
+func GetWarning(ctx context.Context, db dbtx, uuid string) (_ *Warning, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Warning")
 	}()
@@ -342,7 +342,7 @@ func GetWarning(ctx context.Context, tx *sql.Tx, uuid string) (_ *Warning, _err 
 	filter := WarningFilter{}
 	filter.UUID = &uuid
 
-	objects, err := GetWarnings(ctx, tx, filter)
+	objects, err := GetWarnings(ctx, db, filter)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"warnings\" table: %w", err)
 	}
@@ -359,12 +359,12 @@ func GetWarning(ctx context.Context, tx *sql.Tx, uuid string) (_ *Warning, _err 
 
 // DeleteWarning deletes the warning matching the given key parameters.
 // generator: warning DeleteOne-by-UUID
-func DeleteWarning(ctx context.Context, tx *sql.Tx, uuid string) (_err error) {
+func DeleteWarning(ctx context.Context, db dbtx, uuid string) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Warning")
 	}()
 
-	stmt, err := Stmt(tx, warningDeleteByUUID)
+	stmt, err := Stmt(db, warningDeleteByUUID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"warningDeleteByUUID\" prepared statement: %w", err)
 	}
@@ -390,12 +390,12 @@ func DeleteWarning(ctx context.Context, tx *sql.Tx, uuid string) (_err error) {
 
 // DeleteWarnings deletes the warning matching the given key parameters.
 // generator: warning DeleteMany-by-EntityTypeCode-and-EntityID
-func DeleteWarnings(ctx context.Context, tx *sql.Tx, entityTypeCode int, entityID int) (_err error) {
+func DeleteWarnings(ctx context.Context, db dbtx, entityTypeCode int, entityID int) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Warning")
 	}()
 
-	stmt, err := Stmt(tx, warningDeleteByEntityTypeCodeAndEntityID)
+	stmt, err := Stmt(db, warningDeleteByEntityTypeCodeAndEntityID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"warningDeleteByEntityTypeCodeAndEntityID\" prepared statement: %w", err)
 	}
@@ -415,12 +415,12 @@ func DeleteWarnings(ctx context.Context, tx *sql.Tx, entityTypeCode int, entityI
 
 // GetWarningID return the ID of the warning with the given key.
 // generator: warning ID
-func GetWarningID(ctx context.Context, tx *sql.Tx, uuid string) (_ int64, _err error) {
+func GetWarningID(ctx context.Context, db dbtx, uuid string) (_ int64, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Warning")
 	}()
 
-	stmt, err := Stmt(tx, warningID)
+	stmt, err := Stmt(db, warningID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"warningID\" prepared statement: %w", err)
 	}
@@ -441,12 +441,12 @@ func GetWarningID(ctx context.Context, tx *sql.Tx, uuid string) (_ int64, _err e
 
 // WarningExists checks if a warning with the given key exists.
 // generator: warning Exists
-func WarningExists(ctx context.Context, tx *sql.Tx, uuid string) (_ bool, _err error) {
+func WarningExists(ctx context.Context, db dbtx, uuid string) (_ bool, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Warning")
 	}()
 
-	stmt, err := Stmt(tx, warningID)
+	stmt, err := Stmt(db, warningID)
 	if err != nil {
 		return false, fmt.Errorf("Failed to get \"warningID\" prepared statement: %w", err)
 	}
