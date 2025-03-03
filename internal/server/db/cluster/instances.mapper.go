@@ -220,7 +220,7 @@ func getInstances(ctx context.Context, stmt *sql.Stmt, args ...any) ([]Instance,
 }
 
 // getInstancesRaw can be used to run handwritten query strings to return a slice of objects.
-func getInstancesRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) ([]Instance, error) {
+func getInstancesRaw(ctx context.Context, db dbtx, sql string, args ...any) ([]Instance, error) {
 	objects := make([]Instance, 0)
 
 	dest := func(scan func(dest ...any) error) error {
@@ -235,7 +235,7 @@ func getInstancesRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) (
 		return nil
 	}
 
-	err := scan(ctx, tx, sql, dest, args...)
+	err := scan(ctx, db, sql, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"instances\" table: %w", err)
 	}
@@ -245,7 +245,7 @@ func getInstancesRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) (
 
 // GetInstances returns all available instances.
 // generator: instance GetMany
-func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_ []Instance, _err error) {
+func GetInstances(ctx context.Context, db dbtx, filters ...InstanceFilter) (_ []Instance, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
@@ -261,7 +261,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(tx, instanceObjects)
+		sqlStmt, err = Stmt(db, instanceObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"instanceObjects\" prepared statement: %w", err)
 		}
@@ -271,7 +271,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		if filter.Project != nil && filter.Type != nil && filter.Node != nil && filter.Name != nil && filter.ID == nil {
 			args = append(args, []any{filter.Project, filter.Type, filter.Node, filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, instanceObjectsByProjectAndTypeAndNodeAndName)
+				sqlStmt, err = Stmt(db, instanceObjectsByProjectAndTypeAndNodeAndName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceObjectsByProjectAndTypeAndNodeAndName\" prepared statement: %w", err)
 				}
@@ -295,7 +295,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		} else if filter.Project != nil && filter.Type != nil && filter.Node != nil && filter.ID == nil && filter.Name == nil {
 			args = append(args, []any{filter.Project, filter.Type, filter.Node}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, instanceObjectsByProjectAndTypeAndNode)
+				sqlStmt, err = Stmt(db, instanceObjectsByProjectAndTypeAndNode)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceObjectsByProjectAndTypeAndNode\" prepared statement: %w", err)
 				}
@@ -319,7 +319,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		} else if filter.Project != nil && filter.Type != nil && filter.Name != nil && filter.ID == nil && filter.Node == nil {
 			args = append(args, []any{filter.Project, filter.Type, filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, instanceObjectsByProjectAndTypeAndName)
+				sqlStmt, err = Stmt(db, instanceObjectsByProjectAndTypeAndName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceObjectsByProjectAndTypeAndName\" prepared statement: %w", err)
 				}
@@ -343,7 +343,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		} else if filter.Type != nil && filter.Name != nil && filter.Node != nil && filter.ID == nil && filter.Project == nil {
 			args = append(args, []any{filter.Type, filter.Name, filter.Node}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, instanceObjectsByTypeAndNameAndNode)
+				sqlStmt, err = Stmt(db, instanceObjectsByTypeAndNameAndNode)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceObjectsByTypeAndNameAndNode\" prepared statement: %w", err)
 				}
@@ -367,7 +367,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		} else if filter.Project != nil && filter.Name != nil && filter.Node != nil && filter.ID == nil && filter.Type == nil {
 			args = append(args, []any{filter.Project, filter.Name, filter.Node}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, instanceObjectsByProjectAndNameAndNode)
+				sqlStmt, err = Stmt(db, instanceObjectsByProjectAndNameAndNode)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceObjectsByProjectAndNameAndNode\" prepared statement: %w", err)
 				}
@@ -391,7 +391,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		} else if filter.Project != nil && filter.Type != nil && filter.ID == nil && filter.Name == nil && filter.Node == nil {
 			args = append(args, []any{filter.Project, filter.Type}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, instanceObjectsByProjectAndType)
+				sqlStmt, err = Stmt(db, instanceObjectsByProjectAndType)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceObjectsByProjectAndType\" prepared statement: %w", err)
 				}
@@ -415,7 +415,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		} else if filter.Type != nil && filter.Node != nil && filter.ID == nil && filter.Project == nil && filter.Name == nil {
 			args = append(args, []any{filter.Type, filter.Node}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, instanceObjectsByTypeAndNode)
+				sqlStmt, err = Stmt(db, instanceObjectsByTypeAndNode)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceObjectsByTypeAndNode\" prepared statement: %w", err)
 				}
@@ -439,7 +439,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		} else if filter.Type != nil && filter.Name != nil && filter.ID == nil && filter.Project == nil && filter.Node == nil {
 			args = append(args, []any{filter.Type, filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, instanceObjectsByTypeAndName)
+				sqlStmt, err = Stmt(db, instanceObjectsByTypeAndName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceObjectsByTypeAndName\" prepared statement: %w", err)
 				}
@@ -463,7 +463,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		} else if filter.Project != nil && filter.Node != nil && filter.ID == nil && filter.Name == nil && filter.Type == nil {
 			args = append(args, []any{filter.Project, filter.Node}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, instanceObjectsByProjectAndNode)
+				sqlStmt, err = Stmt(db, instanceObjectsByProjectAndNode)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceObjectsByProjectAndNode\" prepared statement: %w", err)
 				}
@@ -487,7 +487,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		} else if filter.Project != nil && filter.Name != nil && filter.ID == nil && filter.Node == nil && filter.Type == nil {
 			args = append(args, []any{filter.Project, filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, instanceObjectsByProjectAndName)
+				sqlStmt, err = Stmt(db, instanceObjectsByProjectAndName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceObjectsByProjectAndName\" prepared statement: %w", err)
 				}
@@ -511,7 +511,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		} else if filter.Node != nil && filter.Name != nil && filter.ID == nil && filter.Project == nil && filter.Type == nil {
 			args = append(args, []any{filter.Node, filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, instanceObjectsByNodeAndName)
+				sqlStmt, err = Stmt(db, instanceObjectsByNodeAndName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceObjectsByNodeAndName\" prepared statement: %w", err)
 				}
@@ -535,7 +535,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		} else if filter.Type != nil && filter.ID == nil && filter.Project == nil && filter.Name == nil && filter.Node == nil {
 			args = append(args, []any{filter.Type}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, instanceObjectsByType)
+				sqlStmt, err = Stmt(db, instanceObjectsByType)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceObjectsByType\" prepared statement: %w", err)
 				}
@@ -559,7 +559,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		} else if filter.Project != nil && filter.ID == nil && filter.Name == nil && filter.Node == nil && filter.Type == nil {
 			args = append(args, []any{filter.Project}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, instanceObjectsByProject)
+				sqlStmt, err = Stmt(db, instanceObjectsByProject)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceObjectsByProject\" prepared statement: %w", err)
 				}
@@ -583,7 +583,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		} else if filter.Node != nil && filter.ID == nil && filter.Project == nil && filter.Name == nil && filter.Type == nil {
 			args = append(args, []any{filter.Node}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, instanceObjectsByNode)
+				sqlStmt, err = Stmt(db, instanceObjectsByNode)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceObjectsByNode\" prepared statement: %w", err)
 				}
@@ -607,7 +607,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		} else if filter.Name != nil && filter.ID == nil && filter.Project == nil && filter.Node == nil && filter.Type == nil {
 			args = append(args, []any{filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, instanceObjectsByName)
+				sqlStmt, err = Stmt(db, instanceObjectsByName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceObjectsByName\" prepared statement: %w", err)
 				}
@@ -631,7 +631,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		} else if filter.ID != nil && filter.Project == nil && filter.Name == nil && filter.Node == nil && filter.Type == nil {
 			args = append(args, []any{filter.ID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(tx, instanceObjectsByID)
+				sqlStmt, err = Stmt(db, instanceObjectsByID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceObjectsByID\" prepared statement: %w", err)
 				}
@@ -664,7 +664,7 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 		objects, err = getInstances(ctx, sqlStmt, args...)
 	} else {
 		queryStr := strings.Join(queryParts[:], "ORDER BY")
-		objects, err = getInstancesRaw(ctx, tx, queryStr, args...)
+		objects, err = getInstancesRaw(ctx, db, queryStr, args...)
 	}
 
 	if err != nil {
@@ -676,12 +676,12 @@ func GetInstances(ctx context.Context, tx *sql.Tx, filters ...InstanceFilter) (_
 
 // GetInstanceDevices returns all available Instance Devices
 // generator: instance GetMany
-func GetInstanceDevices(ctx context.Context, tx *sql.Tx, instanceID int, filters ...DeviceFilter) (_ map[string]Device, _err error) {
+func GetInstanceDevices(ctx context.Context, db dbtx, instanceID int, filters ...DeviceFilter) (_ map[string]Device, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
 
-	instanceDevices, err := GetDevices(ctx, tx, "instance", filters...)
+	instanceDevices, err := GetDevices(ctx, db, "instance", filters...)
 	if err != nil {
 		return nil, err
 	}
@@ -701,12 +701,12 @@ func GetInstanceDevices(ctx context.Context, tx *sql.Tx, instanceID int, filters
 
 // GetInstanceConfig returns all available Instance Config
 // generator: instance GetMany
-func GetInstanceConfig(ctx context.Context, tx *sql.Tx, instanceID int, filters ...ConfigFilter) (_ map[string]string, _err error) {
+func GetInstanceConfig(ctx context.Context, db dbtx, instanceID int, filters ...ConfigFilter) (_ map[string]string, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
 
-	instanceConfig, err := GetConfig(ctx, tx, "instance", filters...)
+	instanceConfig, err := GetConfig(ctx, db, "instance", filters...)
 	if err != nil {
 		return nil, err
 	}
@@ -721,7 +721,7 @@ func GetInstanceConfig(ctx context.Context, tx *sql.Tx, instanceID int, filters 
 
 // GetInstance returns the instance with the given key.
 // generator: instance GetOne
-func GetInstance(ctx context.Context, tx *sql.Tx, project string, name string) (_ *Instance, _err error) {
+func GetInstance(ctx context.Context, db dbtx, project string, name string) (_ *Instance, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
@@ -730,7 +730,7 @@ func GetInstance(ctx context.Context, tx *sql.Tx, project string, name string) (
 	filter.Project = &project
 	filter.Name = &name
 
-	objects, err := GetInstances(ctx, tx, filter)
+	objects, err := GetInstances(ctx, db, filter)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"instances\" table: %w", err)
 	}
@@ -747,12 +747,12 @@ func GetInstance(ctx context.Context, tx *sql.Tx, project string, name string) (
 
 // GetInstanceID return the ID of the instance with the given key.
 // generator: instance ID
-func GetInstanceID(ctx context.Context, tx *sql.Tx, project string, name string) (_ int64, _err error) {
+func GetInstanceID(ctx context.Context, db dbtx, project string, name string) (_ int64, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
 
-	stmt, err := Stmt(tx, instanceID)
+	stmt, err := Stmt(db, instanceID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"instanceID\" prepared statement: %w", err)
 	}
@@ -773,12 +773,12 @@ func GetInstanceID(ctx context.Context, tx *sql.Tx, project string, name string)
 
 // InstanceExists checks if a instance with the given key exists.
 // generator: instance Exists
-func InstanceExists(ctx context.Context, tx *sql.Tx, project string, name string) (_ bool, _err error) {
+func InstanceExists(ctx context.Context, db dbtx, project string, name string) (_ bool, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
 
-	stmt, err := Stmt(tx, instanceID)
+	stmt, err := Stmt(db, instanceID)
 	if err != nil {
 		return false, fmt.Errorf("Failed to get \"instanceID\" prepared statement: %w", err)
 	}
@@ -799,13 +799,13 @@ func InstanceExists(ctx context.Context, tx *sql.Tx, project string, name string
 
 // CreateInstance adds a new instance to the database.
 // generator: instance Create
-func CreateInstance(ctx context.Context, tx *sql.Tx, object Instance) (_ int64, _err error) {
+func CreateInstance(ctx context.Context, db dbtx, object Instance) (_ int64, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
 
 	// Check if a instance with the same key exists.
-	exists, err := InstanceExists(ctx, tx, object.Project, object.Name)
+	exists, err := InstanceExists(ctx, db, object.Project, object.Name)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to check for duplicates: %w", err)
 	}
@@ -830,7 +830,7 @@ func CreateInstance(ctx context.Context, tx *sql.Tx, object Instance) (_ int64, 
 	args[10] = object.ExpiryDate
 
 	// Prepared statement to use.
-	stmt, err := Stmt(tx, instanceCreate)
+	stmt, err := Stmt(db, instanceCreate)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"instanceCreate\" prepared statement: %w", err)
 	}
@@ -851,7 +851,7 @@ func CreateInstance(ctx context.Context, tx *sql.Tx, object Instance) (_ int64, 
 
 // CreateInstanceDevices adds new instance Devices to the database.
 // generator: instance Create
-func CreateInstanceDevices(ctx context.Context, tx *sql.Tx, instanceID int64, devices map[string]Device) (_err error) {
+func CreateInstanceDevices(ctx context.Context, db dbtx, instanceID int64, devices map[string]Device) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
@@ -861,7 +861,7 @@ func CreateInstanceDevices(ctx context.Context, tx *sql.Tx, instanceID int64, de
 		devices[key] = device
 	}
 
-	err := CreateDevices(ctx, tx, "instance", devices)
+	err := CreateDevices(ctx, db, "instance", devices)
 	if err != nil {
 		return fmt.Errorf("Insert Device failed for Instance: %w", err)
 	}
@@ -871,7 +871,7 @@ func CreateInstanceDevices(ctx context.Context, tx *sql.Tx, instanceID int64, de
 
 // CreateInstanceConfig adds new instance Config to the database.
 // generator: instance Create
-func CreateInstanceConfig(ctx context.Context, tx *sql.Tx, instanceID int64, config map[string]string) (_err error) {
+func CreateInstanceConfig(ctx context.Context, db dbtx, instanceID int64, config map[string]string) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
@@ -884,7 +884,7 @@ func CreateInstanceConfig(ctx context.Context, tx *sql.Tx, instanceID int64, con
 			Value:       value,
 		}
 
-		err := CreateConfig(ctx, tx, "instance", insert)
+		err := CreateConfig(ctx, db, "instance", insert)
 		if err != nil {
 			return fmt.Errorf("Insert Config failed for Instance: %w", err)
 		}
@@ -896,12 +896,12 @@ func CreateInstanceConfig(ctx context.Context, tx *sql.Tx, instanceID int64, con
 
 // RenameInstance renames the instance matching the given key parameters.
 // generator: instance Rename
-func RenameInstance(ctx context.Context, tx *sql.Tx, project string, name string, to string) (_err error) {
+func RenameInstance(ctx context.Context, db dbtx, project string, name string, to string) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
 
-	stmt, err := Stmt(tx, instanceRename)
+	stmt, err := Stmt(db, instanceRename)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"instanceRename\" prepared statement: %w", err)
 	}
@@ -925,12 +925,12 @@ func RenameInstance(ctx context.Context, tx *sql.Tx, project string, name string
 
 // DeleteInstance deletes the instance matching the given key parameters.
 // generator: instance DeleteOne-by-Project-and-Name
-func DeleteInstance(ctx context.Context, tx *sql.Tx, project string, name string) (_err error) {
+func DeleteInstance(ctx context.Context, db dbtx, project string, name string) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
 
-	stmt, err := Stmt(tx, instanceDeleteByProjectAndName)
+	stmt, err := Stmt(db, instanceDeleteByProjectAndName)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"instanceDeleteByProjectAndName\" prepared statement: %w", err)
 	}
@@ -956,17 +956,17 @@ func DeleteInstance(ctx context.Context, tx *sql.Tx, project string, name string
 
 // UpdateInstance updates the instance matching the given key parameters.
 // generator: instance Update
-func UpdateInstance(ctx context.Context, tx *sql.Tx, project string, name string, object Instance) (_err error) {
+func UpdateInstance(ctx context.Context, db dbtx, project string, name string, object Instance) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
 
-	id, err := GetInstanceID(ctx, tx, project, name)
+	id, err := GetInstanceID(ctx, db, project, name)
 	if err != nil {
 		return err
 	}
 
-	stmt, err := Stmt(tx, instanceUpdate)
+	stmt, err := Stmt(db, instanceUpdate)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"instanceUpdate\" prepared statement: %w", err)
 	}
@@ -990,12 +990,12 @@ func UpdateInstance(ctx context.Context, tx *sql.Tx, project string, name string
 
 // UpdateInstanceDevices updates the instance Device matching the given key parameters.
 // generator: instance Update
-func UpdateInstanceDevices(ctx context.Context, tx *sql.Tx, instanceID int64, devices map[string]Device) (_err error) {
+func UpdateInstanceDevices(ctx context.Context, db dbtx, instanceID int64, devices map[string]Device) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
 
-	err := UpdateDevices(ctx, tx, "instance", int(instanceID), devices)
+	err := UpdateDevices(ctx, db, "instance", int(instanceID), devices)
 	if err != nil {
 		return fmt.Errorf("Replace Device for Instance failed: %w", err)
 	}
@@ -1005,12 +1005,12 @@ func UpdateInstanceDevices(ctx context.Context, tx *sql.Tx, instanceID int64, de
 
 // UpdateInstanceConfig updates the instance Config matching the given key parameters.
 // generator: instance Update
-func UpdateInstanceConfig(ctx context.Context, tx *sql.Tx, instanceID int64, config map[string]string) (_err error) {
+func UpdateInstanceConfig(ctx context.Context, db dbtx, instanceID int64, config map[string]string) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
 
-	err := UpdateConfig(ctx, tx, "instance", int(instanceID), config)
+	err := UpdateConfig(ctx, db, "instance", int(instanceID), config)
 	if err != nil {
 		return fmt.Errorf("Replace Config for Instance failed: %w", err)
 	}

@@ -2,14 +2,11 @@
 
 package cluster
 
-import (
-	"context"
-	"database/sql"
-)
+import "context"
 
 // NodeGenerated is an interface of generated methods for Node.
 type NodeGenerated interface {
 	// GetNodeID return the ID of the node with the given key.
 	// generator: node ID
-	GetNodeID(ctx context.Context, tx *sql.Tx, name string) (int64, error)
+	GetNodeID(ctx context.Context, db dbtx, name string) (int64, error)
 }

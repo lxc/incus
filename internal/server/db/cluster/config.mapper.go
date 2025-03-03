@@ -51,7 +51,7 @@ func getConfig(ctx context.Context, stmt *sql.Stmt, parent string, args ...any) 
 }
 
 // getConfigRaw can be used to run handwritten query strings to return a slice of objects.
-func getConfigRaw(ctx context.Context, tx *sql.Tx, sql string, parent string, args ...any) ([]Config, error) {
+func getConfigRaw(ctx context.Context, db dbtx, sql string, parent string, args ...any) ([]Config, error) {
 	objects := make([]Config, 0)
 
 	dest := func(scan func(dest ...any) error) error {
@@ -66,7 +66,7 @@ func getConfigRaw(ctx context.Context, tx *sql.Tx, sql string, parent string, ar
 		return nil
 	}
 
-	err := scan(ctx, tx, sql, dest, args...)
+	err := scan(ctx, db, sql, dest, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"%s_config\" table: %w", parent, err)
 	}
@@ -76,7 +76,7 @@ func getConfigRaw(ctx context.Context, tx *sql.Tx, sql string, parent string, ar
 
 // GetConfig returns all available config.
 // generator: config GetMany
-func GetConfig(ctx context.Context, tx *sql.Tx, parent string, filters ...ConfigFilter) (_ map[int]map[string]string, _err error) {
+func GetConfig(ctx context.Context, db dbtx, parent string, filters ...ConfigFilter) (_ map[int]map[string]string, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Config")
 	}()
@@ -124,7 +124,7 @@ func GetConfig(ctx context.Context, tx *sql.Tx, parent string, filters ...Config
 
 	queryStr = strings.Join(queryParts, " ORDER BY")
 	// Select.
-	objects, err = getConfigRaw(ctx, tx, queryStr, parent, args...)
+	objects, err = getConfigRaw(ctx, db, queryStr, parent, args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from \"%s_config\" table: %w", parent, err)
 	}
@@ -144,7 +144,7 @@ func GetConfig(ctx context.Context, tx *sql.Tx, parent string, filters ...Config
 
 // CreateConfig adds a new config to the database.
 // generator: config Create
-func CreateConfig(ctx context.Context, tx *sql.Tx, parent string, object Config) (_err error) {
+func CreateConfig(ctx context.Context, db dbtx, parent string, object Config) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Config")
 	}()
@@ -161,7 +161,7 @@ func CreateConfig(ctx context.Context, tx *sql.Tx, parent string, object Config)
 	}
 
 	queryStr := fmt.Sprintf(configCreateLocal, fillParent...)
-	_, err := tx.ExecContext(ctx, queryStr, object.ReferenceID, object.Key, object.Value)
+	_, err := db.ExecContext(ctx, queryStr, object.ReferenceID, object.Key, object.Value)
 	if err != nil {
 		return fmt.Errorf("Insert failed for \"%s_config\" table: %w", parent, err)
 	}
@@ -171,13 +171,13 @@ func CreateConfig(ctx context.Context, tx *sql.Tx, parent string, object Config)
 
 // UpdateConfig updates the config matching the given key parameters.
 // generator: config Update
-func UpdateConfig(ctx context.Context, tx *sql.Tx, parent string, referenceID int, config map[string]string) (_err error) {
+func UpdateConfig(ctx context.Context, db dbtx, parent string, referenceID int, config map[string]string) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Config")
 	}()
 
 	// Delete current entry.
-	err := DeleteConfig(ctx, tx, parent, referenceID)
+	err := DeleteConfig(ctx, db, parent, referenceID)
 	if err != nil {
 		return err
 	}
@@ -190,7 +190,7 @@ func UpdateConfig(ctx context.Context, tx *sql.Tx, parent string, referenceID in
 			Value:       value,
 		}
 
-		err = CreateConfig(ctx, tx, parent, object)
+		err = CreateConfig(ctx, db, parent, object)
 		if err != nil {
 			return err
 		}
@@ -201,7 +201,7 @@ func UpdateConfig(ctx context.Context, tx *sql.Tx, parent string, referenceID in
 
 // DeleteConfig deletes the config matching the given key parameters.
 // generator: config DeleteMany
-func DeleteConfig(ctx context.Context, tx *sql.Tx, parent string, referenceID int) (_err error) {
+func DeleteConfig(ctx context.Context, db dbtx, parent string, referenceID int) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Config")
 	}()
@@ -213,7 +213,7 @@ func DeleteConfig(ctx context.Context, tx *sql.Tx, parent string, referenceID in
 	}
 
 	queryStr := fmt.Sprintf(configDeleteLocal, fillParent...)
-	result, err := tx.ExecContext(ctx, queryStr, referenceID)
+	result, err := db.ExecContext(ctx, queryStr, referenceID)
 	if err != nil {
 		return fmt.Errorf("Delete entry for \"%s_config\" failed: %w", parent, err)
 	}

@@ -18,12 +18,12 @@ SELECT nodes.id FROM nodes
 
 // GetNodeID return the ID of the node with the given key.
 // generator: node ID
-func GetNodeID(ctx context.Context, tx *sql.Tx, name string) (_ int64, _err error) {
+func GetNodeID(ctx context.Context, db dbtx, name string) (_ int64, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Node")
 	}()
 
-	stmt, err := Stmt(tx, nodeID)
+	stmt, err := Stmt(db, nodeID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"nodeID\" prepared statement: %w", err)
 	}
