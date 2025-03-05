@@ -597,9 +597,6 @@ func ovnRuleSubjectToOVNACLMatch(direction string, aclNameIDs map[string]int64, 
 					// Check if subject is an address set if so we use it as it is
 					// We may want to add mac filtering in the future
 					fieldParts = append(fieldParts, fmt.Sprintf("ip6.%s == %s_ip6 || ip4.%s == %s_ip4", direction, subjectCriterion, direction, subjectCriterion))
-					// Internal arbitrary choice for now
-					// subjectPortSelector = ovn.OVNPortGroup(ruleSubjectInternal)
-					// networkSpecific = true
 					continue
 				} else if strings.HasPrefix(subjectCriterion, "@") {
 					// Subject is a network peer name. Convert to address set criteria.
