@@ -14,6 +14,10 @@ type dbtx interface {
 	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 }
 
+type preparer interface {
+	Prepare(query string) (*sql.Stmt, error)
+}
+
 // RegisterStmt register a SQL statement.
 //
 // Registered statements will be prepared upfront and re-used, to speed up
@@ -28,7 +32,7 @@ func RegisterStmt(sqlStmt string) int {
 
 // PrepareStmts prepares all registered statements and returns an index from
 // statement code to prepared statement object.
-func PrepareStmts(db *sql.DB, skipErrors bool) (map[int]*sql.Stmt, error) {
+func PrepareStmts(db preparer, skipErrors bool) (map[int]*sql.Stmt, error) {
 	index := map[int]*sql.Stmt{}
 
 	for code, sqlStmt := range stmts {
