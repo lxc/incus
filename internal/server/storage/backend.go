@@ -165,12 +165,13 @@ func (b *backend) Driver() drivers.Driver {
 	return b.driver
 }
 
-// MigrationTypes returns the migration transport method preferred when sending a migration,
-// based on the migration method requested by the driver's ability. The snapshots argument
-// indicates whether snapshots are migrated as well. It is used to determine whether to use
-// optimized migration.
-func (b *backend) MigrationTypes(contentType drivers.ContentType, refresh bool, copySnapshots bool) []localMigration.Type {
-	return b.driver.MigrationTypes(contentType, refresh, copySnapshots)
+// MigrationTypes returns the migration transport method preferred when sending a migration, based
+// on the migration method requested by the driver's ability. The copySnapshots argument indicates
+// whether snapshots are migrated as well. clusterMove determines whether the migration is done
+// within a cluster and storageMove determines whether the storage pool is changed by the migration.
+// This method is used to determine whether to use optimized migration.
+func (b *backend) MigrationTypes(contentType drivers.ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []localMigration.Type {
+	return b.driver.MigrationTypes(contentType, refresh, copySnapshots, clusterMove, storageMove)
 }
 
 // Create creates the storage pool layout on the storage device.
@@ -1150,9 +1151,9 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 		l.Debug("CreateInstanceFromCopy cross-pool mode detected")
 
 		// Negotiate the migration type to use.
-		offeredTypes := srcPool.MigrationTypes(contentType, false, snapshots)
+		offeredTypes := srcPool.MigrationTypes(contentType, false, snapshots, false, true)
 		offerHeader := localMigration.TypesToHeader(offeredTypes...)
-		migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, false, snapshots))
+		migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, false, snapshots, false, true))
 		if err != nil {
 			return fmt.Errorf("Failed to negotiate copy migration type: %w", err)
 		}
@@ -1400,9 +1401,9 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 		l.Debug("RefreshCustomVolume cross-pool mode detected")
 
 		// Negotiate the migration type to use.
-		offeredTypes := srcPool.MigrationTypes(contentType, true, snapshots)
+		offeredTypes := srcPool.MigrationTypes(contentType, true, snapshots, false, true)
 		offerHeader := localMigration.TypesToHeader(offeredTypes...)
-		migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, true, snapshots))
+		migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, true, snapshots, false, true))
 		if err != nil {
 			return fmt.Errorf("Failed to negotiate copy migration type: %w", err)
 		}
@@ -1647,9 +1648,9 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 		l.Debug("RefreshInstance cross-pool mode detected")
 
 		// Negotiate the migration type to use.
-		offeredTypes := srcPool.MigrationTypes(contentType, true, snapshots)
+		offeredTypes := srcPool.MigrationTypes(contentType, true, snapshots, false, true)
 		offerHeader := localMigration.TypesToHeader(offeredTypes...)
-		migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, true, snapshots))
+		migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, true, snapshots, false, true))
 		if err != nil {
 			return fmt.Errorf("Failed to negotiate copy migration type: %w", err)
 		}
@@ -4818,9 +4819,9 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 	l.Debug("CreateCustomVolumeFromCopy cross-pool mode detected")
 
 	// Negotiate the migration type to use.
-	offeredTypes := srcPool.MigrationTypes(contentType, false, snapshots)
+	offeredTypes := srcPool.MigrationTypes(contentType, false, snapshots, false, true)
 	offerHeader := localMigration.TypesToHeader(offeredTypes...)
-	migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, false, snapshots))
+	migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, false, snapshots, false, true))
 	if err != nil {
 		return fmt.Errorf("Failed to negotiate copy migration type: %w", err)
 	}

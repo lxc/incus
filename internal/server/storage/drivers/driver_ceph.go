@@ -394,7 +394,7 @@ func (d *ceph) GetResources() (*api.ResourcesStoragePool, error) {
 }
 
 // MigrationType returns the type of transfer methods to be used when doing migrations between pools in preference order.
-func (d *ceph) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool) []localMigration.Type {
+func (d *ceph) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []localMigration.Type {
 	var rsyncFeatures []string
 
 	// Do not pass compression argument to rsync if the associated
