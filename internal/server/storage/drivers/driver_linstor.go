@@ -262,7 +262,11 @@ func (d *linstor) GetResources() (*api.ResourcesStoragePool, error) {
 }
 
 // MigrationTypes returns the type of transfer methods to be used when doing migrations between pools in preference order.
-func (d *linstor) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool) []localMigration.Type {
+func (d *linstor) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []localMigration.Type {
+	if !clusterMove || storageMove {
+		return []localMigration.Type{d.rsyncMigrationType(contentType)}
+	}
+
 	return []localMigration.Type{
 		{
 			FSType: migration.MigrationFSType_LINSTOR,
