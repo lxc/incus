@@ -249,22 +249,23 @@ func (c *cmdList) evaluateShorthandFilter(key string, value string, inst *api.In
 	const shorthandValueDelimiter = ","
 	shorthandFilterFunction, isShorthandFilter := c.shorthandFilters[strings.ToLower(key)]
 
-	if isShorthandFilter {
-		if strings.Contains(value, shorthandValueDelimiter) {
-			matched := false
-			for _, curValue := range strings.Split(value, shorthandValueDelimiter) {
-				if shorthandFilterFunction(inst, state, curValue) {
-					matched = true
-				}
-			}
+	if !isShorthandFilter {
+		return false
+	}
 
-			return matched
-		}
-
+	if !strings.Contains(value, shorthandValueDelimiter) {
 		return shorthandFilterFunction(inst, state, value)
 	}
 
-	return false
+	matched := false
+	for _, curValue := range strings.Split(value, shorthandValueDelimiter) {
+		if shorthandFilterFunction(inst, state, curValue) {
+			matched = true
+		}
+	}
+
+	return matched
+
 }
 
 func (c *cmdList) listInstances(d incus.InstanceServer, instances []api.Instance, filters []string, columns []column) error {
