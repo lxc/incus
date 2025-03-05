@@ -86,6 +86,10 @@ type Authorizer interface {
 	DeleteNetworkACL(ctx context.Context, projectName string, networkACLName string) error
 	RenameNetworkACL(ctx context.Context, projectName string, oldNetworkACLName string, newNetworkACLName string) error
 
+	AddNetworkAddressSet(ctx context.Context, projectName string, networkAddressSetName string) error
+	DeleteNetworkAddressSet(ctx context.Context, projectName string, networkAddressSetName string) error
+	RenameNetworkAddressSet(ctx context.Context, projectName string, oldNetworkAddressSetName string, newNetworkAddressSetName string) error
+
 	AddProfile(ctx context.Context, projectName string, profileName string) error
 	DeleteProfile(ctx context.Context, projectName string, profileName string) error
 	RenameProfile(ctx context.Context, projectName string, oldProfileName string, newProfileName string) error
@@ -119,6 +123,7 @@ type Resources struct {
 	InstanceObjects          []Object
 	NetworkObjects           []Object
 	NetworkACLObjects        []Object
+	NetworkAddressSetObjects []Object
 	NetworkZoneObjects       []Object
 	ProfileObjects           []Object
 	StoragePoolVolumeObjects []Object
