@@ -143,6 +143,7 @@ func (d *lvm) Info() Info {
 		MountedRoot:                  false,
 		Buckets:                      !d.isRemote(),
 		Deactivate:                   d.isRemote(),
+		ZeroUnpack:                   !d.usesThinpool(),
 	}
 }
 
