@@ -19,6 +19,7 @@ type Info struct {
 	IOUring                      bool         // Whether the driver supports io_uring.
 	MountedRoot                  bool         // Whether the pool directory itself is a mount.
 	Deactivate                   bool         // Whether an unmount action is required prior to removing the pool.
+	ZeroUnpack                   bool         // Whether to write zeroes (no discard) during unpacking.
 }
 
 // VolumeFiller provides a struct for filling a volume.
