@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/osarch"
 	"github.com/lxc/incus/v6/shared/util"
 )
@@ -164,26 +163,31 @@ func GetArchitectureInstallations(hostArch int) []Installation {
 // specific host architecture. If the environment variable INCUS_EDK2_PATH
 // has been set it will override the default installation path when
 // constructing Code & Vars paths.
-func GetArchitectureFirmwarePairs(hostArch int) []FirmwarePair {
+func GetArchitectureFirmwarePairs(hostArch int) ([]FirmwarePair, error) {
 	firmwares := make([]FirmwarePair, 0)
 
 	for _, usage := range []FirmwareUsage{GENERIC, SECUREBOOT, CSM} {
-		firmwares = append(firmwares, GetArchitectureFirmwarePairsForUsage(hostArch, usage)...)
+		firmware, err := GetArchitectureFirmwarePairsForUsage(hostArch, usage)
+		if err != nil {
+			return nil, err
+		}
+
+		firmwares = append(firmwares, firmware...)
 	}
 
-	return firmwares
+	return firmwares, nil
 }
 
 // GetArchitectureFirmwarePairsForUsage creates an array of FirmwarePair
 // for a specific host architecture and usage combination. If the
 // environment variable INCUS_EDK2_PATH has been set it will override the
 // default installation path when constructing Code & Vars paths.
-func GetArchitectureFirmwarePairsForUsage(hostArch int, usage FirmwareUsage) []FirmwarePair {
+func GetArchitectureFirmwarePairsForUsage(hostArch int, usage FirmwareUsage) ([]FirmwarePair, error) {
 	firmwares := make([]FirmwarePair, 0)
 
 	incusEdk2Path, err := GetenvEdk2Path()
 	if err != nil {
-		logger.Warnf("err: %v", err)
+		return nil, err
 	}
 
 	for _, installation := range GetArchitectureInstallations(hostArch) {
@@ -216,7 +220,7 @@ func GetArchitectureFirmwarePairsForUsage(hostArch int, usage FirmwareUsage) []F
 		}
 	}
 
-	return firmwares
+	return firmwares, nil
 }
 
 // GetenvEdk2Path returns the environment variable for overriding the path to use for EDK2 installations.

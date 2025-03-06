@@ -74,7 +74,11 @@ func TestArchitectureFirmwarePairs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pairs := GetArchitectureFirmwarePairs(architectures[0])
+	pairs, err := GetArchitectureFirmwarePairs(architectures[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if len(pairs) == 0 {
 		t.Fatal(pairs)
 	}
