@@ -10,6 +10,8 @@ func Test(t *testing.T) {
 	_ = defaultMapErr
 	_ = marshal
 	_ = unmarshal
+	_ = marshalJSON
+	_ = unmarshalJSON
 	_ = selectObjects
 	_ = scan
 }

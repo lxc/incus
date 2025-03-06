@@ -240,7 +240,7 @@ func (m *Mapping) FieldParamsMarshal(fields []*Field) string {
 			name = lex.Minuscule(m.Name) + field.Name
 		}
 
-		if util.IsTrue(field.Config.Get("marshal")) {
+		if util.IsNeitherFalseNorEmpty(field.Config.Get("marshal")) {
 			name = fmt.Sprintf("marshaled%s", field.Name)
 		}
 

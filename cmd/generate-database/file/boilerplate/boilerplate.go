@@ -3,6 +3,7 @@ package boilerplate
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 )
@@ -125,6 +126,19 @@ func unmarshal(data string, v any) error {
 	}
 
 	return unmarshaler.UnmarshalDB(data)
+}
+
+func marshalJSON(v any) (string, error) {
+	marshalled, err := json.Marshal(v)
+	if err != nil {
+		return "", err
+	}
+
+	return string(marshalled), nil
+}
+
+func unmarshalJSON(data string, v any) error {
+	return json.Unmarshal([]byte(data), v)
 }
 
 // dest is a function that is expected to return the objects to pass to the
