@@ -2159,7 +2159,7 @@ func (d *qemu) setupNvram() error {
 	d.logger.Debug("Generating NVRAM")
 
 	// Cleanup existing variables.
-	for _, firmwarePair := range edk2.GetAchitectureFirmwarePairs(d.architecture) {
+	for _, firmwarePair := range edk2.GetArchitectureFirmwarePairs(d.architecture) {
 		err := os.Remove(filepath.Join(d.Path(), filepath.Base(firmwarePair.Vars)))
 		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err
