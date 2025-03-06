@@ -2159,7 +2159,12 @@ func (d *qemu) setupNvram() error {
 	d.logger.Debug("Generating NVRAM")
 
 	// Cleanup existing variables.
-	for _, firmwarePair := range edk2.GetArchitectureFirmwarePairs(d.architecture) {
+	firmwares, err := edk2.GetArchitectureFirmwarePairs(d.architecture)
+	if err != nil {
+		return err
+	}
+
+	for _, firmwarePair := range firmwares {
 		err := os.Remove(filepath.Join(d.Path(), filepath.Base(firmwarePair.Vars)))
 		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err
@@ -2167,13 +2172,21 @@ func (d *qemu) setupNvram() error {
 	}
 
 	// Determine expected firmware.
-	var firmwares []edk2.FirmwarePair
 	if util.IsTrue(d.expandedConfig["security.csm"]) {
-		firmwares = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.CSM)
+		firmwares, err = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.CSM)
+		if err != nil {
+			return err
+		}
 	} else if util.IsTrueOrEmpty(d.expandedConfig["security.secureboot"]) {
-		firmwares = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.SECUREBOOT)
+		firmwares, err = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.SECUREBOOT)
+		if err != nil {
+			return err
+		}
 	} else {
-		firmwares = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.GENERIC)
+		firmwares, err = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.GENERIC)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Find the template file.
@@ -3362,11 +3375,20 @@ func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.
 		// Determine expected firmware.
 		var firmwares []edk2.FirmwarePair
 		if util.IsTrue(d.expandedConfig["security.csm"]) {
-			firmwares = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.CSM)
+			firmwares, err = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.CSM)
+			if err != nil {
+				return nil, err
+			}
 		} else if util.IsTrueOrEmpty(d.expandedConfig["security.secureboot"]) {
-			firmwares = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.SECUREBOOT)
+			firmwares, err = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.SECUREBOOT)
+			if err != nil {
+				return nil, err
+			}
 		} else {
-			firmwares = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.GENERIC)
+			firmwares, err = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.GENERIC)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		var efiCode string
@@ -8828,7 +8850,13 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 	if d.architectureSupportsUEFI(hostArch) {
 		// Try to locate a UEFI firmware.
 		var efiPath string
-		for _, firmwarePair := range edk2.GetArchitectureFirmwarePairsForUsage(hostArch, edk2.GENERIC) {
+
+		firmwares, err := edk2.GetArchitectureFirmwarePairsForUsage(hostArch, edk2.GENERIC)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, firmwarePair := range firmwares {
 			if util.PathExists(firmwarePair.Code) {
 				efiPath = firmwarePair.Code
 				break
