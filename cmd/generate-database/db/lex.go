@@ -97,7 +97,12 @@ func destFunc(slice string, typ string, fields []*Field) string {
 	}
 
 	unmarshal := func(declVarName string, field *Field) {
-		writeLine(fmt.Sprintf("err = unmarshal(%s, &%s.%s)", declVarName, varName, field.Name))
+		unmarshalFunc := "unmarshal"
+		if field.Config.Get("marshal") == "json" {
+			unmarshalFunc = "unmarshalJSON"
+		}
+
+		writeLine(fmt.Sprintf("err = %s(%s, &%s.%s)", unmarshalFunc, declVarName, varName, field.Name))
 		checkErr()
 	}
 
@@ -106,7 +111,7 @@ func destFunc(slice string, typ string, fields []*Field) string {
 	declVarNames := make([]string, 0, len(fields))
 	for i, field := range fields {
 		var arg string
-		if util.IsTrue(field.Config.Get("marshal")) {
+		if util.IsNeitherFalseNorEmpty(field.Config.Get("marshal")) {
 			declVarName := fmt.Sprintf("%sStr", lex.Minuscule(field.Name))
 			declVarNames = append(declVarNames, declVarName)
 			declVars[declVarName] = field
