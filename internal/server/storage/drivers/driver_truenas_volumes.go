@@ -2,15 +2,12 @@ package drivers
 
 import (
 	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
 	"io/fs"
 	"net"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"slices"
 	"strconv"
 	"strings"
 
@@ -692,14 +689,16 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 		//skipNfsShare = true
 	}
 
+	srcDataset := d.dataset(srcVol, false)
+
 	var srcSnapshot string
 	if srcVol.volType == VolumeTypeImage {
-		srcSnapshot = fmt.Sprintf("%s@readonly", d.dataset(srcVol, false))
+		srcSnapshot = fmt.Sprintf("%s@readonly", srcDataset)
 	} else if srcVol.IsSnapshot() {
-		srcSnapshot = d.dataset(srcVol, false)
+		srcSnapshot = srcDataset
 	} else {
 		// Create a new snapshot for copy.
-		srcSnapshot = fmt.Sprintf("%s@copy-%s", d.dataset(srcVol, false), uuid.New().String())
+		srcSnapshot = fmt.Sprintf("%s@copy-%s", srcDataset, uuid.New().String())
 
 		err := d.createSnapshot(srcSnapshot, false)
 		if err != nil {
@@ -738,173 +737,23 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 
 	// If truenas.clone_copy is disabled or source volume has snapshots, then use full copy mode.
 	if util.IsFalse(d.config["truenas.clone_copy"]) || len(snapshots) > 0 {
+		/*
+		 instead of using full replication, and then removing snapshots, we instead take advantage of the replication task's
+		 ability to filter snapshots as they are sent.
+		*/
 		snapName := strings.SplitN(srcSnapshot, "@", 2)[1]
+		snapRegex := fmt.Sprintf("(snapshot-.*|%s)", snapName)
 
-		// NOTE: we have not implemented "zfs send/recieve" yet. WIll be performed using replication.run_onetime task
-		if true {
-			flag := "instance-only"
-			if srcVol.volType == VolumeTypeCustom {
-				flag = "volume-only"
-			}
-			return fmt.Errorf("Failed to copy volume with snapshots (not implemented). Try `--%s` to skip the snapshots", flag)
-		}
-
-		// Send/receive the snapshot.
-		var sender *exec.Cmd
-		var receiver *exec.Cmd
-		if vol.ContentType() == ContentTypeBlock || d.isBlockBacked(vol) {
-			receiver = exec.Command("zfs", "receive", d.dataset(vol, false))
-		} else {
-			receiver = exec.Command("zfs", "receive", "-x", "mountpoint", d.dataset(vol, false))
-		}
-
-		// Handle transferring snapshots.
-		if len(snapshots) > 0 {
-			args := []string{"send", "-R"}
-
-			// Use raw flag is supported, this is required to send/receive encrypted volumes (and enables compression).
-			if zfsRaw {
-				args = append(args, "-w")
-			}
-
-			args = append(args, srcSnapshot)
-
-			sender = exec.Command("zfs", args...)
-		} else {
-			args := []string{"send"}
-
-			// Check if nesting is required.
-			if d.needsRecursion(d.dataset(srcVol, false)) {
-				args = append(args, "-R")
-
-				if zfsRaw {
-					args = append(args, "-w")
-				}
-			}
-
-			if d.config["truenas.clone_copy"] == "rebase" {
-				var err error
-				origin := d.dataset(srcVol, false)
-				for {
-					fields := strings.SplitN(origin, "@", 2)
-
-					// If the origin is a @readonly snapshot under a /images/ path (/images or deleted/images), we're done.
-					if len(fields) > 1 && strings.Contains(fields[0], "/images/") && fields[1] == "readonly" {
-						break
-					}
-
-					origin, err = d.getDatasetProperty(origin, "origin")
-					if err != nil {
-						return err
-					}
-
-					if origin == "" || origin == "-" {
-						origin = ""
-						break
-					}
-				}
-
-				if origin != "" && origin != srcSnapshot {
-					args = append(args, "-i", origin)
-					args = append(args, srcSnapshot)
-					sender = exec.Command("zfs", args...)
-				} else {
-					args = append(args, srcSnapshot)
-					sender = exec.Command("zfs", args...)
-				}
-			} else {
-				args = append(args, srcSnapshot)
-				sender = exec.Command("zfs", args...)
-			}
-		}
-
-		// Configure the pipes.
-		receiver.Stdin, _ = sender.StdoutPipe()
-		receiver.Stdout = os.Stdout
-
-		var recvStderr bytes.Buffer
-		receiver.Stderr = &recvStderr
-
-		var sendStderr bytes.Buffer
-		sender.Stderr = &sendStderr
-
-		// Run the transfer.
-		err := receiver.Start()
+		destDataset := d.dataset(vol, false)
+		_, err := d.runTool("replication", "start", "--name-regex", snapRegex, "--recursive", srcDataset, destDataset)
 		if err != nil {
-			return fmt.Errorf("Failed starting ZFS receive: %w", err)
-		}
-
-		err = sender.Start()
-		if err != nil {
-			_ = receiver.Process.Kill()
-			return fmt.Errorf("Failed starting ZFS send: %w", err)
-		}
-
-		senderErr := make(chan error)
-		go func() {
-			err := sender.Wait()
-			if err != nil {
-				_ = receiver.Process.Kill()
-
-				// This removes any newlines in the error message.
-				msg := strings.ReplaceAll(strings.TrimSpace(sendStderr.String()), "\n", " ")
-
-				senderErr <- fmt.Errorf("Failed ZFS send: %w (%s)", err, msg)
-				return
-			}
-
-			senderErr <- nil
-		}()
-
-		err = receiver.Wait()
-		if err != nil {
-			_ = sender.Process.Kill()
-
-			// This removes any newlines in the error message.
-			msg := strings.ReplaceAll(strings.TrimSpace(recvStderr.String()), "\n", " ")
-
-			return fmt.Errorf("Failed ZFS receive: %w (%s)", err, msg)
-		}
-
-		err = <-senderErr
-		if err != nil {
-			return err
+			return fmt.Errorf("Failed to replicate dataset: %w", err)
 		}
 
 		// Delete the snapshot.
-		//_, err = subprocess.RunCommand("zfs", "destroy", "-r", fmt.Sprintf("%s@%s", d.dataset(vol, false), snapName))
 		_, err = d.runTool("snapshot", "delete", "-r", fmt.Sprintf("%s@%s", d.dataset(vol, false), snapName))
 		if err != nil {
 			return err
-		}
-
-		// Cleanup unexpected snapshots.
-		if len(snapshots) > 0 {
-			children, err := d.getDatasets(d.dataset(vol, false), "snapshot")
-			if err != nil {
-				return err
-			}
-
-			toDestroy := make([]string, 0)
-			for _, entry := range children {
-				// Check if expected snapshot.
-				if strings.Contains(entry, "@snapshot-") {
-					name := strings.Split(entry, "@snapshot-")[1]
-					if slices.Contains(snapshots, name) {
-						continue
-					}
-				}
-
-				// Delete the rest.
-				toDestroy = append(toDestroy, fmt.Sprintf("%s%s", d.dataset(vol, false), entry))
-			}
-			if len(toDestroy) > 0 {
-				snapDelCmd := []string{"snapshot", "delete"}
-				_, err := d.runTool(append(snapDelCmd, toDestroy...)...)
-				if err != nil {
-					return err
-				}
-			}
 		}
 	} else {
 		// Perform volume clone.

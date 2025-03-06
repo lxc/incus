@@ -14,7 +14,7 @@ import (
 
 const (
 	tnToolName              = "truenas_incus_ctl"
-	tnMinVersion            = "0.3.2" // snapshot create --delete
+	tnMinVersion            = "0.4.0" // replication start
 	tnVerifyDatasetCreation = false   // explicitly check that the dataset is created, work around for bugs in certain versions of the tool.
 )
 
