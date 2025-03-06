@@ -158,11 +158,11 @@ func GetArchitectureInstallations(hostArch int) []Installation {
 	return []Installation{}
 }
 
-// GetAchitectureFirmwarePairs creates an array of FirmwarePair for a
+// GetArchitectureFirmwarePairs creates an array of FirmwarePair for a
 // specific host architecture. If the environment variable INCUS_EDK2_PATH
 // has been set it will override the default installation path when
 // constructing Code & Vars paths.
-func GetAchitectureFirmwarePairs(hostArch int) []FirmwarePair {
+func GetArchitectureFirmwarePairs(hostArch int) []FirmwarePair {
 	firmwares := make([]FirmwarePair, 0)
 
 	for _, usage := range []FirmwareUsage{GENERIC, SECUREBOOT, CSM} {
