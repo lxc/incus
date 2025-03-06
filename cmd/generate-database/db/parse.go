@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/v6/cmd/generate-database/lex"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // FiltersFromStmt parses all filtering statement defined for the given entity. It
@@ -374,6 +375,11 @@ func parseField(f *types.Var, structTag string, kind string, pkgName string) (*F
 		if err != nil {
 			return nil, fmt.Errorf("Parse 'db' structure tag: %w", err)
 		}
+
+		err = validateFieldConfig(config)
+		if err != nil {
+			return nil, fmt.Errorf("Invalid struct tag for field %q: %v", name, err)
+		}
 	}
 
 	// Ignore fields that are marked with `db:"omit"`.
@@ -439,4 +445,59 @@ func parseType(x types.Type, pkgName string) string {
 	default:
 		return ""
 	}
+}
+
+func validateFieldConfig(config url.Values) error {
+	for tag, values := range config {
+		switch tag {
+		case
+			"sql",
+			"coalesce",
+			"join",
+			"leftjoin",
+			"joinon",
+			"omit":
+
+			_, err := exactlyOneValue(tag, values)
+			return err
+
+		case
+			"order",
+			"primary",
+			"ignore":
+
+			value, err := exactlyOneValue(tag, values)
+			if err != nil {
+				return err
+			}
+
+			if !util.IsTrue(value) && !util.IsFalse(value) {
+				return fmt.Errorf("Unexpected value %q for %q tag", value, tag)
+			}
+
+		case "marshal":
+			value, err := exactlyOneValue(tag, values)
+			if err != nil {
+				return err
+			}
+
+			if !util.IsTrue(value) && !util.IsFalse(value) && strings.ToLower(value) != "json" {
+				return fmt.Errorf("Unexpected value %q for %q tag", value, tag)
+			}
+		}
+	}
+
+	return nil
+}
+
+func exactlyOneValue(tag string, values []string) (string, error) {
+	if len(values) == 0 {
+		return "", fmt.Errorf("Missing value for %q tag", tag)
+	}
+
+	if len(values) > 1 {
+		return "", fmt.Errorf("More than one value for %q tag", tag)
+	}
+
+	return values[0], nil
 }
