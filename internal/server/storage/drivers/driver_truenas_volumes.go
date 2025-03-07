@@ -652,6 +652,19 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 	revert.Add(func() { _ = os.Remove(vol.MountPath()) })
 	//}
 
+	if needsFsImgVol(vol) { // ie create the fs-img
+		/*
+			by making an FS Block volume, we automatically create the root.img file and fill it out
+			same as we do for a VM, which means we can now mount it too.
+		*/
+		fsImgVol := cloneVolAsFsImgVol(vol)
+		err = fsImgVol.EnsureMountPath()
+		if err != nil {
+			return err
+		}
+		revert.Add(func() { _ = os.Remove(fsImgVol.MountPath()) })
+	}
+
 	// For VMs, also copy the filesystem dataset.
 	if vol.IsVMBlock() {
 		// For VMs, also copy the filesystem volume.
@@ -676,8 +689,6 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 		}
 	}
 
-	skipNfsShare := false
-
 	// When not allowing inconsistent copies and the volume has a mounted filesystem, we must ensure it is
 	// consistent by syncing. Ideally we'd freeze the fs too.
 	sourcePath := srcVol.MountPath()
@@ -691,10 +702,6 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 		if err != nil {
 			return fmt.Errorf("Failed syncing filesystem %q: %w", sourcePath, err)
 		}
-		/*
-			if we have the guest frozen, we want to skip anything which will delay unfreezing
-		*/
-		//skipNfsShare = true
 	}
 
 	srcDataset := d.dataset(srcVol, false)
@@ -718,7 +725,6 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 			// Delete the snapshot at the end.
 			defer func() {
 				// Delete snapshot (or mark for deferred deletion if cannot be deleted currently).
-				//_, err := subprocess.RunCommand("zfs", "destroy", "-r", "-d", srcSnapshot)
 				out, err := d.runTool("snapshot", "delete", "-r", "--defer", srcSnapshot)
 				_ = out
 
@@ -730,7 +736,6 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 			// Delete the snapshot on revert.
 			revert.Add(func() {
 				// Delete snapshot (or mark for deferred deletion if cannot be deleted currently).
-				//_, err := subprocess.RunCommand("zfs", "destroy", "-r", "-d", srcSnapshot)
 				out, err := d.runTool("snapshot", "delete", "-r", "--defer", srcSnapshot)
 				_ = out
 				if err != nil {
@@ -743,6 +748,8 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 	// Delete the volume created on failure.
 	revert.Add(func() { _ = d.DeleteVolume(vol, op) })
 
+	destDataset := d.dataset(vol, false)
+
 	// If truenas.clone_copy is disabled or source volume has snapshots, then use full copy mode.
 	if util.IsFalse(d.config["truenas.clone_copy"]) || len(snapshots) > 0 {
 		/*
@@ -752,22 +759,22 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 		snapName := strings.SplitN(srcSnapshot, "@", 2)[1]
 		snapRegex := fmt.Sprintf("(snapshot-.*|%s)", snapName)
 
-		destDataset := d.dataset(vol, false)
-		_, err := d.runTool("replication", "start", "--name-regex", snapRegex, "--recursive", srcDataset, destDataset)
+		// Run the replication, snaps + copy- snap. TODO: verify necessary props are replicated.
+		_, err := d.runTool("replication", "start", "--name-regex", snapRegex, "-r", "-o", "readonly=IGNORE", srcDataset, destDataset)
 		if err != nil {
 			return fmt.Errorf("Failed to replicate dataset: %w", err)
 		}
 
-		// Delete the snapshot.
-		_, err = d.runTool("snapshot", "delete", "-r", fmt.Sprintf("%s@%s", d.dataset(vol, false), snapName))
+		// Delete the copy- snapshot on the dest.
+		_, err = d.runTool("snapshot", "delete", "-r", fmt.Sprintf("%s@%s", destDataset, snapName))
 		if err != nil {
 			return err
 		}
 	} else {
 		// Perform volume clone.
 		args := []string{"snapshot", "clone"}
-		dataset := d.dataset(vol, false)
-		args = append(args, srcSnapshot, dataset)
+		args = append(args, srcSnapshot, destDataset)
+
 		// Clone the snapshot.
 		out, err := d.runTool(args...)
 		_ = out
@@ -776,18 +783,12 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 			return err
 		}
 
-		// and share the clone.
-		if !skipNfsShare {
-			/*
-				this can take a while, and we have a fallback in Mount if it hasn't been done, so
-				when we have the guest frozen, we may skip it.
-			*/
-			err = d.createNfsShare(dataset)
-			if err != nil {
-				return err
-			}
-		}
+	}
 
+	// and share the clone/copy.
+	err = d.createNfsShare(destDataset)
+	if err != nil {
+		return err
 	}
 
 	// Apply the properties.
