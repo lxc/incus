@@ -221,39 +221,13 @@ func (d *truenas) needsRecursion(dataset string) bool {
 }
 
 func (d *truenas) getDatasets(dataset string, types string) ([]string, error) {
-	/*
-		NOTE: types not fully implemented... yet.
 
-		filesystem OR snapshot OR all should work.
-	*/
-
-	noun := "dataset"
-
-	// TODO: we need to be clever to get combined/datasets+snapshots etc
-	// or add it to truenas-admin...
-	if types == "snapshot" {
-		noun = "snapshot"
-	} else if types == "all" {
-		// ideally, admin=tool takes care of this.
-		datasets, err := d.getDatasets(dataset, "filesystem")
-		if err != nil {
-			return nil, err
-		}
-		snapshots, err := d.getDatasets(dataset, "snapshot")
-		if err != nil {
-			return nil, err
-		}
-		return append(datasets, snapshots...), nil
-
+	// tool does not support "all", but it also supports "nfs"
+	if types == "all" {
+		types = "filesystem,volume,snapshot"
 	}
-	out, err := d.runTool(noun, "list", "-H", "-r", "-o", "name", dataset)
 
-	// if types == "all" {
-	// 	types = "filesystem,volume,snapshot"
-	// }
-
-	//out, err := d.runTool("list", "-H", "-r", "-o", "name", "-t", types, dataset)
-
+	out, err := d.runTool("list", "-H", "-r", "-o", "name", "-t", types, dataset)
 	if err != nil {
 		return nil, err
 	}
