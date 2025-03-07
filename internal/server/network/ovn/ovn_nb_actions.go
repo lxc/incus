@@ -108,6 +108,7 @@ type OVNDHCPv4Opts struct {
 	MTU                uint32
 	Netmask            string
 	DNSSearchList      []string
+	StaticRoutes       string
 }
 
 // OVNDHCPv6Opts IPv6 DHCP option set that can be created (and then applied to a switch port by resulting ID).
@@ -1285,6 +1286,12 @@ func (o *NB) UpdateLogicalSwitchDHCPv4Options(ctx context.Context, switchName OV
 
 	if opts.Netmask != "" {
 		dhcpOption.Options["netmask"] = opts.Netmask
+	}
+
+	if opts.StaticRoutes != "" {
+		dhcpOption.Options["classless_static_route"] = fmt.Sprintf("{%s}", opts.StaticRoutes)
+	} else {
+		delete(dhcpOption.Options, "classless_static_route")
 	}
 
 	// Prepare the changes.
