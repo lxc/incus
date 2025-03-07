@@ -75,6 +75,7 @@ Key                                  | Type      | Condition             | Defau
 `ipv4.dhcp.expiry`                   | string    | IPv4 DHCP             | `1h`                      | When to expire DHCP leases
 `ipv4.dhcp.gateway`                  | string    | IPv4 DHCP             | IPv4 address              | Address of the gateway for the subnet
 `ipv4.dhcp.ranges`                   | string    | IPv4 DHCP             | all addresses             | Comma-separated list of IP ranges to use for DHCP (FIRST-LAST format)
+`ipv4.dhcp.routes`                   | string    | IPv4 DHCP             | -                         | Static routes to provide via DHCP option 121, as a comma-separated list of alternating subnets (CIDR) and gateway addresses (same syntax as dnsmasq)
 `ipv4.firewall`                      | bool      | IPv4 address          | `true`                    | Whether to generate filtering firewall rules for this network
 `ipv4.nat`                           | bool      | IPv4 address          | `false` (initial value on creation if `ipv4.address` is set to `auto`: `true`) | Whether to NAT
 `ipv4.nat.address`                   | string    | IPv4 address          | -                         | The source address used for outbound traffic from the bridge
