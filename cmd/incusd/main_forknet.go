@@ -391,6 +391,21 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	for _, staticRoute := range lease.Offer.ClasslessStaticRoute() {
+		route := &ip.Route{
+			DevName: iface,
+			Route:   staticRoute.Dest.String(),
+			Via:     staticRoute.Router.String(),
+			Family:  ip.FamilyV4,
+		}
+
+		err = route.Add()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't add classless static route to %q: %v\n", iface, err)
+			return nil
+		}
+	}
+
 	// Create PID file.
 	err = os.WriteFile(filepath.Join(args[0], "dhcp.pid"), []byte(fmt.Sprintf("%d", os.Getpid())), 0644)
 	if err != nil {
