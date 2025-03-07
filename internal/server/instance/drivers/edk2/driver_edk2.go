@@ -1,6 +1,7 @@
 package edk2
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -158,36 +159,53 @@ func GetArchitectureInstallations(hostArch int) []Installation {
 	return []Installation{}
 }
 
-// GetAchitectureFirmwarePairs creates an array of FirmwarePair for a
+// GetArchitectureFirmwarePairs creates an array of FirmwarePair for a
 // specific host architecture. If the environment variable INCUS_EDK2_PATH
 // has been set it will override the default installation path when
 // constructing Code & Vars paths.
-func GetAchitectureFirmwarePairs(hostArch int) []FirmwarePair {
+func GetArchitectureFirmwarePairs(hostArch int) ([]FirmwarePair, error) {
 	firmwares := make([]FirmwarePair, 0)
 
 	for _, usage := range []FirmwareUsage{GENERIC, SECUREBOOT, CSM} {
-		firmwares = append(firmwares, GetArchitectureFirmwarePairsForUsage(hostArch, usage)...)
+		firmware, err := GetArchitectureFirmwarePairsForUsage(hostArch, usage)
+		if err != nil {
+			return nil, err
+		}
+
+		firmwares = append(firmwares, firmware...)
 	}
 
-	return firmwares
+	return firmwares, nil
 }
 
 // GetArchitectureFirmwarePairsForUsage creates an array of FirmwarePair
 // for a specific host architecture and usage combination. If the
 // environment variable INCUS_EDK2_PATH has been set it will override the
 // default installation path when constructing Code & Vars paths.
-func GetArchitectureFirmwarePairsForUsage(hostArch int, usage FirmwareUsage) []FirmwarePair {
+func GetArchitectureFirmwarePairsForUsage(hostArch int, usage FirmwareUsage) ([]FirmwarePair, error) {
 	firmwares := make([]FirmwarePair, 0)
+
+	incusEdk2Path, err := GetenvEdk2Path()
+	if err != nil {
+		return nil, err
+	}
 
 	for _, installation := range GetArchitectureInstallations(hostArch) {
 		usage, found := installation.Usage[usage]
 		if found {
-			for _, firmwarePair := range usage {
-				searchPath := GetenvEdk2Path()
-				if searchPath == "" {
-					searchPath = installation.Path
+			searchPath := installation.Path
+
+			// If listed path doesn't exist, consider EDK2 override path.
+			if !util.PathExists(searchPath) {
+				if incusEdk2Path == "" {
+					// No fallback path, skip entirely.
+					continue
 				}
 
+				searchPath = incusEdk2Path
+			}
+
+			for _, firmwarePair := range usage {
 				codePath := filepath.Join(searchPath, firmwarePair.Code)
 				varsPath := filepath.Join(searchPath, firmwarePair.Vars)
 				if !util.PathExists(codePath) || !util.PathExists(varsPath) {
@@ -202,10 +220,19 @@ func GetArchitectureFirmwarePairsForUsage(hostArch int, usage FirmwareUsage) []F
 		}
 	}
 
-	return firmwares
+	return firmwares, nil
 }
 
 // GetenvEdk2Path returns the environment variable for overriding the path to use for EDK2 installations.
-func GetenvEdk2Path() string {
-	return os.Getenv("INCUS_EDK2_PATH")
+func GetenvEdk2Path() (string, error) {
+	value := os.Getenv("INCUS_EDK2_PATH")
+	if value == "" {
+		return "", nil
+	}
+
+	if !util.PathExists(value) {
+		return "", fmt.Errorf("INCUS_EDK2_PATH set to %q but path doesn't exist", value)
+	}
+
+	return value, nil
 }

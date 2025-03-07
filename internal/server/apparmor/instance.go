@@ -200,7 +200,11 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 
 		var edk2Paths []string
 
-		edk2Path := edk2.GetenvEdk2Path()
+		edk2Path, err := edk2.GetenvEdk2Path()
+		if err != nil {
+			return "", err
+		}
+
 		if edk2Path != "" {
 			edk2Path, err := filepath.EvalSymlinks(edk2Path)
 			if err != nil {
