@@ -40,3 +40,4 @@ Name                            | Description
 `INCUS_SECURITY_APPARMOR`       | If set to `false`, forces AppArmor off
 `INCUS_UI`                      | Path to the web UI to serve through the web server
 `INCUS_USBIDS_PATH`             | Path to the hwdata `usb.ids` file
+`INCUS_SKIP_INSTANCE_TYPES`     | If set to `true`, skip downloading instance type definitions
