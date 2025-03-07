@@ -183,6 +183,7 @@ func (n *bridge) Validate(config map[string]string) error {
 		"ipv4.dhcp.gateway": validate.Optional(validate.IsNetworkAddressV4),
 		"ipv4.dhcp.expiry":  validate.IsAny,
 		"ipv4.dhcp.ranges":  validate.Optional(validate.IsListOf(validate.IsNetworkRangeV4)),
+		"ipv4.dhcp.routes":  validate.Optional(validate.IsDHCPRouteList),
 		"ipv4.routes":       validate.Optional(validate.IsListOf(validate.IsNetworkV4)),
 		"ipv4.routing":      validate.Optional(validate.IsBool),
 		"ipv4.ovn.ranges":   validate.Optional(validate.IsListOf(validate.IsNetworkRangeV4)),
@@ -926,6 +927,10 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			dnsSearch := n.config["dns.search"]
 			if dnsSearch != "" {
 				dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--dhcp-option-force=119,%s", strings.Trim(dnsSearch, " ")))
+			}
+
+			if n.config["ipv4.dhcp.routes"] != "" {
+				dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--dhcp-option-force=121,%s", strings.Replace(n.config["ipv4.dhcp.routes"], " ", "", -1)))
 			}
 
 			expiry := "1h"
