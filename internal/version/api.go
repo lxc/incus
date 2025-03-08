@@ -466,6 +466,7 @@ var APIExtensions = []string{
 	"api_filtering_extended",
 	"acme_dns01",
 	"security_iommu",
+	"network_address_set",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

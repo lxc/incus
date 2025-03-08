@@ -20,15 +20,16 @@ const (
 	TypeInstanceSnapshot      = 7
 	TypeNetwork               = 8
 	TypeNetworkACL            = 9
-	TypeNode                  = 10
-	TypeOperation             = 11
-	TypeStoragePool           = 12
-	TypeStorageVolume         = 13
-	TypeStorageVolumeBackup   = 14
-	TypeStorageVolumeSnapshot = 15
-	TypeWarning               = 16
-	TypeClusterGroup          = 17
-	TypeStorageBucket         = 18
+	TypeNetworkAddressSet     = 10
+	TypeNode                  = 11
+	TypeOperation             = 12
+	TypeStoragePool           = 13
+	TypeStorageVolume         = 14
+	TypeStorageVolumeBackup   = 15
+	TypeStorageVolumeSnapshot = 16
+	TypeWarning               = 17
+	TypeClusterGroup          = 18
+	TypeStorageBucket         = 19
 )
 
 // EntityNames associates an entity code to its name.
@@ -43,6 +44,7 @@ var EntityNames = map[int]string{
 	TypeInstanceSnapshot:      "instance snapshot",
 	TypeNetwork:               "network",
 	TypeNetworkACL:            "network acl",
+	TypeNetworkAddressSet:     "network address set",
 	TypeNode:                  "node",
 	TypeOperation:             "operation",
 	TypeStoragePool:           "storage pool",
@@ -69,6 +71,7 @@ var EntityURIs = map[int]string{
 	TypeInstanceSnapshot:      "/" + version.APIVersion + "/instances/%s/snapshots/%s?project=%s",
 	TypeNetwork:               "/" + version.APIVersion + "/networks/%s?project=%s",
 	TypeNetworkACL:            "/" + version.APIVersion + "/network-acls/%s?project=%s",
+	TypeNetworkAddressSet:     "/" + version.APIVersion + "/network-address-sets/%s?project=%s",
 	TypeNode:                  "/" + version.APIVersion + "/cluster/members/%s",
 	TypeOperation:             "/" + version.APIVersion + "/operations/%s",
 	TypeStoragePool:           "/" + version.APIVersion + "/storage-pools/%s",

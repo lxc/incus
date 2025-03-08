@@ -319,6 +319,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_filemanip "file manipulations"
     run_test test_network "network management"
     run_test test_network_acl "network ACL management"
+    run_test test_address_set "network address set"
     run_test test_network_forward "network address forwards"
     run_test test_network_zone "network DNS zones"
     run_test test_idmap "id mapping"
