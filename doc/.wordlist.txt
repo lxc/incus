@@ -65,6 +65,7 @@ Diátaxis
 Diffie
 Distrobuilder
 DNS
+dnsmasq
 DNSSEC
 DoS
 DRM
