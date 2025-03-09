@@ -226,6 +226,7 @@ qgroups
 RADOS
 RBAC
 RBD
+RDNSS
 README
 reconfiguring
 requestor
