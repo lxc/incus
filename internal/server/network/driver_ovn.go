@@ -416,6 +416,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		"ipv6.nat.address":                     validate.Optional(validate.IsNetworkAddressV6),
 		"ipv4.l3only":                          validate.Optional(validate.IsBool),
 		"ipv6.l3only":                          validate.Optional(validate.IsBool),
+		"dns.nameservers":                      validate.Optional(validate.IsListOf(validate.IsNetworkAddress)),
 		"dns.domain":                           validate.IsAny,
 		"dns.search":                           validate.IsAny,
 		"dns.zone.forward":                     validate.IsAny,
@@ -2646,6 +2647,26 @@ func (n *ovn) setup(update bool) error {
 		}
 	}
 
+	var dnsIPv4 []net.IP
+	var dnsIPv6 []net.IP
+
+	if n.config["dns.nameservers"] != "" {
+		for _, s := range util.SplitNTrimSpace(n.config["dns.nameservers"], ",", -1, false) {
+			nsIP := net.ParseIP(s)
+			if nsIP.To4() != nil {
+				dnsIPv4 = append(dnsIPv4, nsIP)
+			} else {
+				dnsIPv6 = append(dnsIPv6, nsIP)
+			}
+		}
+	} else if uplinkNet != nil {
+		dnsIPv4 = uplinkNet.dnsIPv6
+		dnsIPv6 = uplinkNet.dnsIPv6
+	} else {
+		dnsIPv4 = []net.IP{routerIntPortIPv4}
+		dnsIPv6 = []net.IP{routerIntPortIPv6}
+	}
+
 	// Create DHCPv4 options for internal switch.
 	if dhcpV4Subnet != nil {
 		// In l3only mode we configure the DHCPv4 server to request the instances use a /32 subnet mask.
@@ -2655,21 +2676,16 @@ func (n *ovn) setup(update bool) error {
 		}
 
 		opts := &networkOVN.OVNDHCPv4Opts{
-			ServerID:      routerIntPortIPv4,
-			ServerMAC:     routerMAC,
-			Router:        routerIntPortIPv4,
-			DomainName:    n.getDomainName(),
-			LeaseTime:     time.Duration(time.Hour * 1),
-			MTU:           bridgeMTU,
-			Netmask:       dhcpV4Netmask,
-			DNSSearchList: n.getDNSSearchList(),
-			StaticRoutes:  n.config["ipv4.dhcp.routes"],
-		}
-
-		if uplinkNet != nil {
-			opts.RecursiveDNSServer = uplinkNet.dnsIPv4
-		} else {
-			opts.RecursiveDNSServer = []net.IP{routerIntPortIPv4}
+			ServerID:           routerIntPortIPv4,
+			ServerMAC:          routerMAC,
+			Router:             routerIntPortIPv4,
+			DomainName:         n.getDomainName(),
+			LeaseTime:          time.Duration(time.Hour * 1),
+			MTU:                bridgeMTU,
+			Netmask:            dhcpV4Netmask,
+			DNSSearchList:      n.getDNSSearchList(),
+			StaticRoutes:       n.config["ipv4.dhcp.routes"],
+			RecursiveDNSServer: dnsIPv4,
 		}
 
 		err = n.ovnnb.UpdateLogicalSwitchDHCPv4Options(context.TODO(), n.getIntSwitchName(), dhcpv4UUID, dhcpV4Subnet, opts)
@@ -2681,14 +2697,9 @@ func (n *ovn) setup(update bool) error {
 	// Create DHCPv6 options for internal switch.
 	if dhcpV6Subnet != nil {
 		opts := &networkOVN.OVNDHCPv6Opts{
-			ServerID:      routerMAC,
-			DNSSearchList: n.getDNSSearchList(),
-		}
-
-		if uplinkNet != nil {
-			opts.RecursiveDNSServer = uplinkNet.dnsIPv6
-		} else {
-			opts.RecursiveDNSServer = []net.IP{routerIntPortIPv6}
+			ServerID:           routerMAC,
+			DNSSearchList:      n.getDNSSearchList(),
+			RecursiveDNSServer: dnsIPv6,
 		}
 
 		err = n.ovnnb.UpdateLogicalSwitchDHCPv6Options(context.TODO(), n.getIntSwitchName(), dhcpv6UUID, dhcpV6Subnet, opts)
@@ -2708,10 +2719,9 @@ func (n *ovn) setup(update bool) error {
 		}
 
 		var recursiveDNSServer net.IP
-		if uplinkNet != nil && len(uplinkNet.dnsIPv6) > 0 {
-			recursiveDNSServer = uplinkNet.dnsIPv6[0] // OVN only supports 1 RA DNS server.
-		} else {
-			recursiveDNSServer = routerIntPortIPv6
+
+		if len(dnsIPv6) > 0 {
+			recursiveDNSServer = dnsIPv6[0] // OVN only supports 1 RA DNS server.
 		}
 
 		err = n.ovnnb.UpdateLogicalRouterPort(context.TODO(), n.getRouterIntPortName(), &networkOVN.OVNIPv6RAOpts{
@@ -2763,8 +2773,8 @@ func (n *ovn) setup(update bool) error {
 	// Apply baseline ACL rules to internal logical switch.
 	dnsServers := []net.IP{}
 	if uplinkNet != nil {
-		dnsServers = append(dnsServers, uplinkNet.dnsIPv4...)
-		dnsServers = append(dnsServers, uplinkNet.dnsIPv6...)
+		dnsServers = append(dnsServers, dnsIPv4...)
+		dnsServers = append(dnsServers, dnsIPv6...)
 	}
 
 	err = acl.OVNApplyNetworkBaselineRules(n.ovnnb, n.getIntSwitchName(), n.getIntSwitchRouterPortName(), intRouterIPs, dnsServers)
