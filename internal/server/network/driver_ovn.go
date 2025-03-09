@@ -2660,6 +2660,8 @@ func (n *ovn) setup(update bool) error {
 
 		if uplinkNet != nil {
 			opts.RecursiveDNSServer = uplinkNet.dnsIPv4
+		} else {
+			opts.RecursiveDNSServer = []net.IP{routerIntPortIPv4}
 		}
 
 		err = n.ovnnb.UpdateLogicalSwitchDHCPv4Options(context.TODO(), n.getIntSwitchName(), dhcpv4UUID, dhcpV4Subnet, opts)
@@ -2677,6 +2679,8 @@ func (n *ovn) setup(update bool) error {
 
 		if uplinkNet != nil {
 			opts.RecursiveDNSServer = uplinkNet.dnsIPv6
+		} else {
+			opts.RecursiveDNSServer = []net.IP{routerIntPortIPv6}
 		}
 
 		err = n.ovnnb.UpdateLogicalSwitchDHCPv6Options(context.TODO(), n.getIntSwitchName(), dhcpv6UUID, dhcpV6Subnet, opts)
@@ -2698,6 +2702,8 @@ func (n *ovn) setup(update bool) error {
 		var recursiveDNSServer net.IP
 		if uplinkNet != nil && len(uplinkNet.dnsIPv6) > 0 {
 			recursiveDNSServer = uplinkNet.dnsIPv6[0] // OVN only supports 1 RA DNS server.
+		} else {
+			recursiveDNSServer = routerIntPortIPv6
 		}
 
 		err = n.ovnnb.UpdateLogicalRouterPort(context.TODO(), n.getRouterIntPortName(), &networkOVN.OVNIPv6RAOpts{
