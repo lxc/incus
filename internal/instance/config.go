@@ -1028,7 +1028,7 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  defaultdesc: `true`
 	//  liveupdate: no
 	//  condition: virtual machine
-	//  shortdesc: Whether UEFI secure boot is enabled with the default Microsoft keys
+	//  shortdesc: Whether UEFI secure boot is enforced with the default Microsoft keys
 	"security.secureboot": validate.Optional(validate.IsBool),
 
 	// gendoc:generate(entity=instance, group=security, key=security.sev)
