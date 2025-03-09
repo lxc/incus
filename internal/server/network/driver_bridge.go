@@ -206,6 +206,7 @@ func (n *bridge) Validate(config map[string]string) error {
 		"ipv6.routes":                          validate.Optional(validate.IsListOf(validate.IsNetworkV6)),
 		"ipv6.routing":                         validate.Optional(validate.IsBool),
 		"ipv6.ovn.ranges":                      validate.Optional(validate.IsListOf(validate.IsNetworkRangeV6)),
+		"dns.nameservers":                      validate.Optional(validate.IsListOf(validate.IsNetworkAddress)),
 		"dns.domain":                           validate.IsAny,
 		"dns.mode":                             validate.Optional(validate.IsOneOf("dynamic", "managed", "none")),
 		"dns.search":                           validate.IsAny,
@@ -901,6 +902,16 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 	}
 
+	var dnsIPv4 []string
+	var dnsIPv6 []string
+	for _, s := range util.SplitNTrimSpace(n.config["dns.nameservers"], ",", -1, false) {
+		if net.ParseIP(s).To4() != nil {
+			dnsIPv4 = append(dnsIPv4, s)
+		} else {
+			dnsIPv6 = append(dnsIPv6, s)
+		}
+	}
+
 	// Configure IPv4.
 	if !util.IsNoneOrEmpty(n.config["ipv4.address"]) {
 		// Parse the subnet.
@@ -918,6 +929,14 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 			if n.config["ipv4.dhcp.gateway"] != "" {
 				dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--dhcp-option-force=3,%s", n.config["ipv4.dhcp.gateway"]))
+			}
+
+			if n.config["dns.nameservers"] != "" {
+				if len(dnsIPv4) == 0 {
+					dnsmasqCmd = append(dnsmasqCmd, "--dhcp-option-force=6")
+				} else {
+					dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--dhcp-option-force=6,%s", strings.Join(dnsIPv4, ",")))
+				}
 			}
 
 			if bridge.MTU != bridgeMTUDefault {
@@ -1093,6 +1112,14 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			}
 		} else {
 			dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-range", fmt.Sprintf("::,constructor:%s,ra-only", n.name)}...)
+		}
+
+		if n.config["dns.nameservers"] != "" {
+			if len(dnsIPv6) == 0 {
+				dnsmasqCmd = append(dnsmasqCmd, "--dhcp-option-force=option6:dns-server")
+			} else {
+				dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--dhcp-option-force=option6:dns-server,[%s]", strings.Join(dnsIPv6, ",")))
+			}
 		}
 
 		// Allow forwarding.
