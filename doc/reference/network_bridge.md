@@ -64,6 +64,7 @@ Key                                  | Type      | Condition             | Defau
 `bridge.external_interfaces`         | string    | -                     | -                         | Comma-separated list of unconfigured network interfaces to include in the bridge
 `bridge.hwaddr`                      | string    | -                     | -                         | MAC address for the bridge
 `bridge.mtu`                         | integer   | -                     | `1500`                    | Bridge MTU (default varies if tunnel in use)
+`dns.nameservers`                    | string    | -                     | IPv4 and IPv6 address     | DNS server IPs to advertise to DHCP clients and via Router Advertisements. Both IPv4 and IPv6 addresses get pushed via DHCP, and IPv6 addresses are also advertised as RDNSS via RA.
 `dns.domain`                         | string    | -                     | `incus`                   | Domain to advertise to DHCP clients and use for DNS resolution
 `dns.mode`                           | string    | -                     | `managed`                 | DNS registration mode: `none` for no DNS record, `managed` for Incus-generated static records or `dynamic` for client-generated records
 `dns.search`                         | string    | -                     | -                         | Full comma-separated domain search list, defaulting to `dns.domain` value
