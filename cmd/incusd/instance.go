@@ -197,6 +197,8 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, r *http.Reques
 		return fmt.Errorf("Failed creating instance from image: %w", err)
 	}
 
+	revert.Add(func() { _ = inst.Delete(true) })
+
 	// If dealing with an OCI image, parse the configuration.
 	if args.Type == instancetype.Container && inst.LocalConfig()["image.type"] == "oci" {
 		// Reset the config to the post-generation one.
@@ -248,8 +250,6 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, r *http.Reques
 			return err
 		}
 	}
-
-	revert.Add(func() { _ = inst.Delete(true) })
 
 	err = inst.UpdateBackupFile()
 	if err != nil {
