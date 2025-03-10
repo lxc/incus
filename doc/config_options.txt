@@ -1014,7 +1014,7 @@ Set this option to `true` to prevent the instance's file system from being UID/G
 :condition: "virtual machine"
 :defaultdesc: "`true`"
 :liveupdate: "no"
-:shortdesc: "Whether UEFI secure boot is enabled with the default Microsoft keys"
+:shortdesc: "Whether UEFI secure boot is enforced with the default Microsoft keys"
 :type: "bool"
 When disabling this option, consider enabling {config:option}`instance-security:security.csm`.
 ```

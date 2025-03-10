@@ -1092,7 +1092,7 @@
 							"defaultdesc": "`true`",
 							"liveupdate": "no",
 							"longdesc": "When disabling this option, consider enabling {config:option}`instance-security:security.csm`.",
-							"shortdesc": "Whether UEFI secure boot is enabled with the default Microsoft keys",
+							"shortdesc": "Whether UEFI secure boot is enforced with the default Microsoft keys",
 							"type": "bool"
 						}
 					},
