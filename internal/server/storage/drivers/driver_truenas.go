@@ -483,18 +483,18 @@ func (d *truenas) MigrationTypes(contentType ContentType, refresh bool, copySnap
 	}
 
 	// Detect ZFS features.
-	features := []string{migration.ZFSFeatureMigrationHeader, "compress"}
+	// features := []string{migration.ZFSFeatureMigrationHeader, "compress"}
 
-	if contentType == ContentTypeFS {
-		features = append(features, migration.ZFSFeatureZvolFilesystems)
-	}
+	// if contentType == ContentTypeFS {
+	// 	features = append(features, migration.ZFSFeatureZvolFilesystems)
+	// }
 
 	if IsContentBlock(contentType) {
 		return []localMigration.Type{
-			{
-				FSType:   migration.MigrationFSType_ZFS,
-				Features: features,
-			},
+			// {
+			// 	FSType:   migration.MigrationFSType_ZFS,
+			// 	Features: features,
+			// },
 			{
 				FSType:   migration.MigrationFSType_BLOCK_AND_RSYNC,
 				Features: rsyncFeatures,
@@ -512,10 +512,10 @@ func (d *truenas) MigrationTypes(contentType ContentType, refresh bool, copySnap
 	}
 
 	return []localMigration.Type{
-		{
-			FSType:   migration.MigrationFSType_ZFS,
-			Features: features,
-		},
+		// {
+		// 	FSType:   migration.MigrationFSType_ZFS,
+		// 	Features: features,
+		// },
 		{
 			FSType:   migration.MigrationFSType_RSYNC,
 			Features: rsyncFeatures,
