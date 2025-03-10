@@ -36,6 +36,7 @@ type jsonLink struct {
 	AllMulticast  int    `json:"allmulti"`
 	Master        string `json:"master"`
 	Up            string `json:"operstate"`
+	Type          string `json:"link_type"`
 	Info          struct {
 		Kind string `json:"info_kind"`
 	} `json:"linkinfo"`
@@ -104,7 +105,7 @@ func LinkFromName(name string) (*Link, error) {
 	var links []jsonLink
 	err = json.Unmarshal([]byte(out), &links)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode JSON link representation: %w", err)
+		return nil, fmt.Errorf("Failed to decode JSON link representation: %w", err)
 	}
 
 	jl := &links[0]
@@ -117,7 +118,7 @@ func LinkFromName(name string) (*Link, error) {
 		Master:        jl.Master,
 	}
 
-	if jl.Address != "" {
+	if jl.Type == "ether" && jl.Address != "" {
 		l.Address, err = net.ParseMAC(jl.Address)
 		if err != nil {
 			return nil, err
