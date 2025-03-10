@@ -2717,3 +2717,7 @@ Adds support for `DNS-01` challenge to the Incus ACME support for certificate ge
 ## `security_iommu`
 Introduce a new `security.iommu` configuration key to control whether to
 enable IOMMU emulation. This is done through `virtio_iommu` on Linux and the emulated Intel IOMMU on Windows.
+
+## `network_ipv4_dhcp_routes`
+Introduces a new `ipv4.dhcp.routes` configuration option on bridged and OVN networks.
+This allows specifying pairs of CIDR networks and gateway address to be announced by the DHCP server.

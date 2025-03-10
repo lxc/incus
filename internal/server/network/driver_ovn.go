@@ -394,6 +394,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		}),
 		"ipv4.dhcp":        validate.Optional(validate.IsBool),
 		"ipv4.dhcp.ranges": validate.Optional(validate.IsListOf(validate.IsNetworkRangeV4)),
+		"ipv4.dhcp.routes": validate.Optional(validate.IsDHCPRouteList),
 		"ipv6.address": validate.Optional(func(value string) error {
 			if validate.IsOneOf("none", "auto")(value) == nil {
 				return nil
@@ -2656,6 +2657,7 @@ func (n *ovn) setup(update bool) error {
 			MTU:           bridgeMTU,
 			Netmask:       dhcpV4Netmask,
 			DNSSearchList: n.getDNSSearchList(),
+			StaticRoutes:  n.config["ipv4.dhcp.routes"],
 		}
 
 		if uplinkNet != nil {

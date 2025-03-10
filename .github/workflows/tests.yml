@@ -38,6 +38,8 @@ jobs:
       - id: ShellCheck
         name: Differential ShellCheck
         uses: redhat-plumbers-in-action/differential-shellcheck@v5
+        env:
+          SHELLCHECK_OPTS: --shell sh
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
         if: github.event_name == 'pull_request' && matrix.go == 'stable'

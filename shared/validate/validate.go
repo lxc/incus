@@ -512,6 +512,30 @@ func IsNetworkPortRange(value string) error {
 	return nil
 }
 
+// IsDHCPRouteList validates a comma-separated list of alternating CIDR networks and IP addresses.
+func IsDHCPRouteList(value string) error {
+	parts := strings.Split(value, ",")
+	for i, s := range parts {
+		// routes are pairs of subnet and gateway
+		var err error
+		if i%2 == 0 { // subnet part
+			err = IsNetworkV4(s)
+		} else { // gateway part
+			err = IsNetworkAddressV4(s)
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(parts)%2 != 0 { // uneven number of parts means the gateway of the last route is missing
+		return fmt.Errorf("missing gateway for route %v", parts[len(parts)-1])
+	}
+
+	return nil
+}
+
 // IsURLSegmentSafe validates whether value can be used in a URL segment.
 func IsURLSegmentSafe(value string) error {
 	for _, char := range []string{"/", "?", "&", "+"} {
