@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"net"
 	"os"
@@ -13,6 +14,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/migration"
+	localMigration "github.com/lxc/incus/v6/internal/server/migration"
 	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
@@ -628,8 +631,8 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 // 	return postHook, cleanup, nil
 // }
 
-// CreateVolumeFromCopy provides same-pool volume copying functionality.
-func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool, allowInconsistent bool, op *operations.Operation) error {
+// same as CreateVolumeFromCopy, but will refresh if refresh is true.
+func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refresh bool, copySnapshots bool, allowInconsistent bool, op *operations.Operation) error {
 	var err error
 
 	// Revert handling
@@ -671,13 +674,15 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 		srcFSVol := srcVol.NewVMBlockFilesystemVolume()
 		fsVol := vol.NewVMBlockFilesystemVolume()
 
-		err = d.CreateVolumeFromCopy(fsVol, srcFSVol, copySnapshots, false, op)
+		err = d.createOrRefeshVolumeFromCopy(fsVol, srcFSVol, refresh, copySnapshots, false, op)
 		if err != nil {
 			return err
 		}
 
 		// Delete on revert.
-		revert.Add(func() { _ = d.DeleteVolume(fsVol, op) })
+		if !refresh {
+			revert.Add(func() { _ = d.DeleteVolume(fsVol, op) })
+		}
 	}
 
 	// Retrieve snapshots on the source.
@@ -746,7 +751,9 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 	}
 
 	// Delete the volume created on failure.
-	revert.Add(func() { _ = d.DeleteVolume(vol, op) })
+	if !refresh {
+		revert.Add(func() { _ = d.DeleteVolume(vol, op) })
+	}
 
 	destDataset := d.dataset(vol, false)
 
@@ -760,7 +767,18 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 		snapRegex := fmt.Sprintf("(snapshot-.*|%s)", snapName)
 
 		// Run the replication, snaps + copy- snap. TODO: verify necessary props are replicated.
-		_, err := d.runTool("replication", "start", "--name-regex", snapRegex, "-r", "-o", "readonly=IGNORE", srcDataset, destDataset)
+		args := []string{"replication", "start", "--name-regex", snapRegex, "-r"}
+
+		options := "readonly=IGNORE"
+		if refresh {
+			// refresh implies that we have a dest already, and that we want to re-replicate from scratch
+			args = append(args, "--retention-policy=source")
+			options += ",allow_from_scratch=true"
+		}
+
+		args = append(args, "-o", options, srcDataset, destDataset)
+
+		_, err := d.runTool(args...)
 		if err != nil {
 			return fmt.Errorf("Failed to replicate dataset: %w", err)
 		}
@@ -884,590 +902,74 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 	return nil
 }
 
-// // CreateVolumeFromMigration creates a volume being sent via a migration.
-// func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
-// 	// Handle simple rsync and block_and_rsync through generic.
-// 	if volTargetArgs.MigrationType.FSType == migration.MigrationFSType_RSYNC || volTargetArgs.MigrationType.FSType == migration.MigrationFSType_BLOCK_AND_RSYNC {
-// 		return genericVFSCreateVolumeFromMigration(d, nil, vol, conn, volTargetArgs, preFiller, op)
-// 	} else if volTargetArgs.MigrationType.FSType != migration.MigrationFSType_ZFS {
-// 		return ErrNotSupported
-// 	}
-
-// 	var migrationHeader ZFSMetaDataHeader
-
-// 	// If no snapshots have been provided it can mean two things:
-// 	// 1) The target has no snapshots
-// 	// 2) Snapshots shouldn't be copied (--instance-only flag)
-// 	volumeOnly := len(volTargetArgs.Snapshots) == 0
-
-// 	if slices.Contains(volTargetArgs.MigrationType.Features, migration.ZFSFeatureMigrationHeader) {
-// 		// The source will send all of its snapshots with their respective GUID.
-// 		buf, err := io.ReadAll(conn)
-// 		if err != nil {
-// 			return fmt.Errorf("Failed reading ZFS migration header: %w", err)
-// 		}
-
-// 		err = json.Unmarshal(buf, &migrationHeader)
-// 		if err != nil {
-// 			return fmt.Errorf("Failed decoding ZFS migration header: %w", err)
-// 		}
-// 	}
-
-// 	// If we're refreshing, send back all snapshots of the target.
-// 	if volTargetArgs.Refresh && slices.Contains(volTargetArgs.MigrationType.Features, migration.ZFSFeatureMigrationHeader) {
-// 		snapshots, err := vol.Snapshots(op)
-// 		if err != nil {
-// 			return fmt.Errorf("Failed getting volume snapshots: %w", err)
-// 		}
-
-// 		// If there are no snapshots on the target, there's no point in doing an optimized
-// 		// refresh.
-// 		if len(snapshots) == 0 {
-// 			volTargetArgs.Refresh = false
-// 		}
-
-// 		var respSnapshots []ZFSDataset
-// 		var syncSnapshotNames []string
-
-// 		// Get the GUIDs of all target snapshots.
-// 		for _, snapVol := range snapshots {
-// 			guid, err := d.getDatasetProperty(d.dataset(snapVol, false), "guid")
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			_, snapName, _ := api.GetParentAndSnapshotName(snapVol.name)
-
-// 			respSnapshots = append(respSnapshots, ZFSDataset{Name: snapName, GUID: guid})
-// 		}
-
-// 		// Generate list of snapshots which need to be synced, i.e. are available on the source but not on the target.
-// 		for _, srcSnapshot := range migrationHeader.SnapshotDatasets {
-// 			found := false
-
-// 			for _, dstSnapshot := range respSnapshots {
-// 				if srcSnapshot.GUID == dstSnapshot.GUID {
-// 					found = true
-// 					break
-// 				}
-// 			}
-
-// 			if !found {
-// 				syncSnapshotNames = append(syncSnapshotNames, srcSnapshot.Name)
-// 			}
-// 		}
-
-// 		// The following scenario will result in a failure:
-// 		// - The source has more than one snapshot
-// 		// - The target has at least one of these snapshot, but not the very first
-// 		//
-// 		// It will fail because the source tries sending the first snapshot using `zfs send <first>`.
-// 		// Since the target does have snapshots, `zfs receive` will fail with:
-// 		//     cannot receive new filesystem stream: destination has snapshots
-// 		//
-// 		// We therefore need to check the snapshots, and delete all target snapshots if the above
-// 		// scenario is true.
-// 		if !volumeOnly && len(respSnapshots) > 0 && len(migrationHeader.SnapshotDatasets) > 0 && respSnapshots[0].GUID != migrationHeader.SnapshotDatasets[0].GUID {
-// 			for _, snapVol := range snapshots {
-// 				// Delete
-// 				err = d.DeleteVolume(snapVol, op)
-// 				if err != nil {
-// 					return err
-// 				}
-// 			}
-
-// 			// Let the source know that we don't have any snapshots.
-// 			respSnapshots = []ZFSDataset{}
-
-// 			// Let the source know that we need all snapshots.
-// 			syncSnapshotNames = []string{}
-
-// 			for _, dataset := range migrationHeader.SnapshotDatasets {
-// 				syncSnapshotNames = append(syncSnapshotNames, dataset.Name)
-// 			}
-// 		} else {
-// 			// Delete local snapshots which exist on the target but not on the source.
-// 			for _, snapVol := range snapshots {
-// 				targetOnlySnapshot := true
-// 				_, snapName, _ := api.GetParentAndSnapshotName(snapVol.name)
-
-// 				for _, migrationSnap := range migrationHeader.SnapshotDatasets {
-// 					if snapName == migrationSnap.Name {
-// 						targetOnlySnapshot = false
-// 						break
-// 					}
-// 				}
-
-// 				if targetOnlySnapshot {
-// 					// Delete
-// 					err = d.DeleteVolume(snapVol, op)
-// 					if err != nil {
-// 						return err
-// 					}
-// 				}
-// 			}
-// 		}
-
-// 		migrationHeader = ZFSMetaDataHeader{}
-// 		migrationHeader.SnapshotDatasets = respSnapshots
-
-// 		// Send back all target snapshots with their GUIDs.
-// 		headerJSON, err := json.Marshal(migrationHeader)
-// 		if err != nil {
-// 			return fmt.Errorf("Failed encoding ZFS migration header: %w", err)
-// 		}
-
-// 		_, err = conn.Write(headerJSON)
-// 		if err != nil {
-// 			return fmt.Errorf("Failed sending ZFS migration header: %w", err)
-// 		}
-
-// 		err = conn.Close() //End the frame.
-// 		if err != nil {
-// 			return fmt.Errorf("Failed closing ZFS migration header frame: %w", err)
-// 		}
-
-// 		// Don't pass the snapshots if it's volume only.
-// 		if !volumeOnly {
-// 			volTargetArgs.Snapshots = syncSnapshotNames
-// 		}
-// 	}
-
-// 	return d.createVolumeFromMigrationOptimized(vol, conn, volTargetArgs, volumeOnly, preFiller, op)
-// }
-
-// func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, volumeOnly bool, preFiller *VolumeFiller, op *operations.Operation) error {
-// 	if vol.IsVMBlock() {
-// 		fsVol := vol.NewVMBlockFilesystemVolume()
-// 		err := d.createVolumeFromMigrationOptimized(fsVol, conn, volTargetArgs, volumeOnly, preFiller, op)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-
-// 	var snapshots []Volume
-// 	var err error
-
-// 	// Rollback to the latest identical snapshot if performing a refresh.
-// 	if volTargetArgs.Refresh {
-// 		snapshots, err = vol.Snapshots(op)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		if len(snapshots) > 0 {
-// 			lastIdenticalSnapshot := snapshots[len(snapshots)-1]
-// 			_, lastIdenticalSnapshotOnlyName, _ := api.GetParentAndSnapshotName(lastIdenticalSnapshot.Name())
-
-// 			err = d.restoreVolume(vol, lastIdenticalSnapshotOnlyName, true, op)
-// 			if err != nil {
-// 				return err
-// 			}
-// 		}
-// 	}
-
-// 	revert := revert.New()
-// 	defer revert.Fail()
-
-// 	// Handle zfs send/receive migration.
-// 	if len(volTargetArgs.Snapshots) > 0 {
-// 		// Create the parent directory.
-// 		err := createParentSnapshotDirIfMissing(d.name, vol.volType, vol.name)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		// Transfer the snapshots.
-// 		for _, snapName := range volTargetArgs.Snapshots {
-// 			snapVol, err := vol.NewSnapshot(snapName)
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			// Setup progress tracking.
-// 			var wrapper *ioprogress.ProgressTracker
-// 			if volTargetArgs.TrackProgress {
-// 				wrapper = localMigration.ProgressTracker(op, "fs_progress", snapVol.Name())
-// 			}
-
-// 			err = d.receiveDataset(snapVol, conn, wrapper)
-// 			if err != nil {
-// 				_ = d.DeleteVolume(snapVol, op)
-// 				return fmt.Errorf("Failed receiving snapshot volume %q: %w", snapVol.Name(), err)
-// 			}
-
-// 			revert.Add(func() {
-// 				_ = d.DeleteVolumeSnapshot(snapVol, op)
-// 			})
-// 		}
-// 	}
-
-// 	if !volTargetArgs.Refresh {
-// 		revert.Add(func() {
-// 			_ = d.DeleteVolume(vol, op)
-// 		})
-// 	}
-
-// 	// Setup progress tracking.
-// 	var wrapper *ioprogress.ProgressTracker
-// 	if volTargetArgs.TrackProgress {
-// 		wrapper = localMigration.ProgressTracker(op, "fs_progress", vol.name)
-// 	}
-
-// 	// Transfer the main volume.
-// 	err = d.receiveDataset(vol, conn, wrapper)
-// 	if err != nil {
-// 		return fmt.Errorf("Failed receiving volume %q: %w", vol.Name(), err)
-// 	}
-
-// 	// Strip internal snapshots.
-// 	entries, err := d.getDatasets(d.dataset(vol, false), "snapshot")
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	// keepDataset returns whether to keep the data set or delete it. Data sets that are non-snapshots or
-// 	// snapshots that match the requested snapshots in volTargetArgs.Snapshots are kept. Any other snapshot
-// 	// data sets should be removed.
-// 	keepDataset := func(dataSetName string) bool {
-// 		// Keep non-snapshot data sets and snapshots that don't have the snapshot prefix indicator.
-// 		dataSetSnapshotPrefix := "@snapshot-"
-// 		if !strings.HasPrefix(dataSetName, "@") || !strings.HasPrefix(dataSetName, dataSetSnapshotPrefix) {
-// 			return false
-// 		}
-
-// 		// Check if snapshot data set matches one of the requested snapshots in volTargetArgs.Snapshots.
-// 		// If so, then keep it, otherwise request it be removed.
-// 		entrySnapName := strings.TrimPrefix(dataSetName, dataSetSnapshotPrefix)
-// 		for _, snapName := range volTargetArgs.Snapshots {
-// 			if entrySnapName == snapName {
-// 				return true // Keep snapshot data set if present in the requested snapshots list.
-// 			}
-// 		}
-
-// 		return false // Delete any other snapshot data sets that have been transferred.
-// 	}
-
-// 	if volTargetArgs.Refresh {
-// 		// Only delete the latest migration snapshot.
-// 		_, err := subprocess.RunCommand("zfs", "destroy", "-r", fmt.Sprintf("%s%s", d.dataset(vol, false), entries[len(entries)-1]))
-// 		if err != nil {
-// 			return err
-// 		}
-// 	} else {
-// 		// Remove any snapshots that were transferred but are not needed.
-// 		for _, entry := range entries {
-// 			if !keepDataset(entry) {
-// 				_, err := subprocess.RunCommand("zfs", "destroy", fmt.Sprintf("%s%s", d.dataset(vol, false), entry))
-// 				if err != nil {
-// 					return err
-// 				}
-// 			}
-// 		}
-// 	}
-
-// 	if vol.contentType == ContentTypeFS {
-// 		// Create mountpoint.
-// 		err := vol.EnsureMountPath()
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		if !d.isBlockBacked(vol) {
-// 			// Re-apply the base mount options.
-// 			if zfsDelegate {
-// 				// Unset the zoned property so the mountpoint property can be updated.
-// 				err := d.setDatasetProperties(d.dataset(vol, false), "zoned=off")
-// 				if err != nil {
-// 					return err
-// 				}
-// 			}
-
-// 			err = d.setDatasetProperties(d.dataset(vol, false), "mountpoint=legacy", "canmount=noauto")
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			// Apply the size limit.
-// 			err = d.SetVolumeQuota(vol, vol.ConfigSize(), false, op)
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			// Apply the blocksize.
-// 			err = d.setBlocksizeFromConfig(vol)
-// 			if err != nil {
-// 				return err
-// 			}
-// 		}
-
-// 		if d.isBlockBacked(vol) && renegerateFilesystemUUIDNeeded(vol.ConfigBlockFilesystem()) {
-// 			// Activate volume if needed.
-// 			activated, err := d.activateVolume(vol)
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			if activated {
-// 				defer func() { _, _ = d.deactivateVolume(vol) }()
-// 			}
-
-// 			volPath, err := d.GetVolumeDiskPath(vol)
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			d.logger.Debug("Regenerating filesystem UUID", logger.Ctx{"dev": volPath, "fs": vol.ConfigBlockFilesystem()})
-// 			err = regenerateFilesystemUUID(vol.ConfigBlockFilesystem(), volPath)
-// 			if err != nil {
-// 				return err
-// 			}
-// 		}
-// 	}
-
-// 	revert.Success()
-// 	return nil
-// }
-
-// // RefreshVolume updates an existing volume to match the state of another.
-// func (d *zfs) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, allowInconsistent bool, op *operations.Operation) error {
-// 	var err error
-// 	var targetSnapshots []Volume
-// 	var srcSnapshotsAll []Volume
-
-// 	if !srcVol.IsSnapshot() {
-// 		// Get target snapshots
-// 		targetSnapshots, err = vol.Snapshots(op)
-// 		if err != nil {
-// 			return fmt.Errorf("Failed to get target snapshots: %w", err)
-// 		}
-
-// 		srcSnapshotsAll, err = srcVol.Snapshots(op)
-// 		if err != nil {
-// 			return fmt.Errorf("Failed to get source snapshots: %w", err)
-// 		}
-// 	}
-
-// 	// If there are no target or source snapshots, perform a simple copy using zfs.
-// 	// We cannot use generic vfs volume copy here, as zfs will complain if a generic
-// 	// copy/refresh is followed by an optimized refresh.
-// 	if len(targetSnapshots) == 0 || len(srcSnapshotsAll) == 0 {
-// 		err = d.DeleteVolume(vol, op)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		return d.CreateVolumeFromCopy(vol, srcVol, len(srcSnapshots) > 0, false, op)
-// 	}
-
-// 	transfer := func(src Volume, target Volume, origin Volume) error {
-// 		var sender *exec.Cmd
-
-// 		receiver := exec.Command("zfs", "receive", d.dataset(target, false))
-
-// 		args := []string{"send"}
-
-// 		// Check if nesting is required.
-// 		if d.needsRecursion(d.dataset(src, false)) {
-// 			args = append(args, "-R")
-
-// 			if zfsRaw {
-// 				args = append(args, "-w")
-// 			}
-// 		}
-
-// 		if origin.Name() != src.Name() {
-// 			args = append(args, "-i", d.dataset(origin, false), d.dataset(src, false))
-// 			sender = exec.Command("zfs", args...)
-// 		} else {
-// 			args = append(args, d.dataset(src, false))
-// 			sender = exec.Command("zfs", args...)
-// 		}
-
-// 		// Configure the pipes.
-// 		receiver.Stdin, _ = sender.StdoutPipe()
-// 		receiver.Stdout = os.Stdout
-
-// 		var recvStderr bytes.Buffer
-// 		receiver.Stderr = &recvStderr
-
-// 		var sendStderr bytes.Buffer
-// 		sender.Stderr = &sendStderr
-
-// 		// Run the transfer.
-// 		err := receiver.Start()
-// 		if err != nil {
-// 			return fmt.Errorf("Failed starting ZFS receive: %w", err)
-// 		}
-
-// 		err = sender.Start()
-// 		if err != nil {
-// 			_ = receiver.Process.Kill()
-// 			return fmt.Errorf("Failed starting ZFS send: %w", err)
-// 		}
-
-// 		senderErr := make(chan error)
-// 		go func() {
-// 			err := sender.Wait()
-// 			if err != nil {
-// 				_ = receiver.Process.Kill()
-
-// 				// This removes any newlines in the error message.
-// 				msg := strings.ReplaceAll(strings.TrimSpace(sendStderr.String()), "\n", " ")
-
-// 				senderErr <- fmt.Errorf("Failed ZFS send: %w (%s)", err, msg)
-// 				return
-// 			}
-
-// 			senderErr <- nil
-// 		}()
-
-// 		err = receiver.Wait()
-// 		if err != nil {
-// 			_ = sender.Process.Kill()
-
-// 			// This removes any newlines in the error message.
-// 			msg := strings.ReplaceAll(strings.TrimSpace(recvStderr.String()), "\n", " ")
-
-// 			if strings.Contains(msg, "does not match incremental source") {
-// 				return ErrSnapshotDoesNotMatchIncrementalSource
-// 			}
-
-// 			return fmt.Errorf("Failed ZFS receive: %w (%s)", err, msg)
-// 		}
-
-// 		err = <-senderErr
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		return nil
-// 	}
-
-// 	// This represents the most recent identical snapshot of the source volume and target volume.
-// 	lastIdenticalSnapshot := targetSnapshots[len(targetSnapshots)-1]
-// 	_, lastIdenticalSnapshotOnlyName, _ := api.GetParentAndSnapshotName(lastIdenticalSnapshot.Name())
-
-// 	// Rollback target volume to the latest identical snapshot
-// 	err = d.RestoreVolume(vol, lastIdenticalSnapshotOnlyName, op)
-// 	if err != nil {
-// 		return fmt.Errorf("Failed to restore volume: %w", err)
-// 	}
-
-// 	// Create all missing snapshots on the target using an incremental stream
-// 	for i, snap := range srcSnapshots {
-// 		var originSnap Volume
-
-// 		if i == 0 {
-// 			originSnap, err = srcVol.NewSnapshot(lastIdenticalSnapshotOnlyName)
-// 			if err != nil {
-// 				return fmt.Errorf("Failed to create new snapshot volume: %w", err)
-// 			}
-// 		} else {
-// 			originSnap = srcSnapshots[i-1]
-// 		}
-
-// 		err = transfer(snap, vol, originSnap)
-// 		if err != nil {
-// 			// Don't fail here. If it's not possible to perform an optimized refresh, do a generic
-// 			// refresh instead.
-// 			if errors.Is(err, ErrSnapshotDoesNotMatchIncrementalSource) {
-// 				d.logger.Debug("Unable to perform an optimized refresh, doing a generic refresh", logger.Ctx{"err": err})
-// 				return genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, true, allowInconsistent, op)
-// 			}
-
-// 			return fmt.Errorf("Failed to transfer snapshot %q: %w", snap.name, err)
-// 		}
-
-// 		if snap.IsVMBlock() {
-// 			srcFSVol := snap.NewVMBlockFilesystemVolume()
-// 			targetFSVol := vol.NewVMBlockFilesystemVolume()
-// 			originFSVol := originSnap.NewVMBlockFilesystemVolume()
-
-// 			err = transfer(srcFSVol, targetFSVol, originFSVol)
-// 			if err != nil {
-// 				// Don't fail here. If it's not possible to perform an optimized refresh, do a generic
-// 				// refresh instead.
-// 				if errors.Is(err, ErrSnapshotDoesNotMatchIncrementalSource) {
-// 					d.logger.Debug("Unable to perform an optimized refresh, doing a generic refresh", logger.Ctx{"err": err})
-// 					return genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, true, allowInconsistent, op)
-// 				}
-
-// 				return fmt.Errorf("Failed to transfer snapshot %q: %w", snap.name, err)
-// 			}
-// 		}
-// 	}
-
-// 	// Create temporary snapshot of the source volume.
-// 	snapUUID := uuid.New().String()
-
-// 	srcSnap, err := srcVol.NewSnapshot(snapUUID)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	err = d.CreateVolumeSnapshot(srcSnap, op)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	latestSnapVol := srcSnapshotsAll[len(srcSnapshotsAll)-1]
-
-// 	err = transfer(srcSnap, vol, latestSnapVol)
-// 	if err != nil {
-// 		// Don't fail here. If it's not possible to perform an optimized refresh, do a generic
-// 		// refresh instead.
-// 		if errors.Is(err, ErrSnapshotDoesNotMatchIncrementalSource) {
-// 			d.logger.Debug("Unable to perform an optimized refresh, doing a generic refresh", logger.Ctx{"err": err})
-// 			return genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, true, allowInconsistent, op)
-// 		}
-
-// 		return fmt.Errorf("Failed to transfer main volume: %w", err)
-// 	}
-
-// 	if srcSnap.IsVMBlock() {
-// 		srcFSVol := srcSnap.NewVMBlockFilesystemVolume()
-// 		targetFSVol := vol.NewVMBlockFilesystemVolume()
-// 		originFSVol := latestSnapVol.NewVMBlockFilesystemVolume()
-
-// 		err = transfer(srcFSVol, targetFSVol, originFSVol)
-// 		if err != nil {
-// 			// Don't fail here. If it's not possible to perform an optimized refresh, do a generic
-// 			// refresh instead.
-// 			if errors.Is(err, ErrSnapshotDoesNotMatchIncrementalSource) {
-// 				d.logger.Debug("Unable to perform an optimized refresh, doing a generic refresh", logger.Ctx{"err": err})
-// 				return genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, true, allowInconsistent, op)
-// 			}
-
-// 			return fmt.Errorf("Failed to transfer main volume: %w", err)
-// 		}
-// 	}
-
-// 	// Restore target volume from main source snapshot.
-// 	err = d.RestoreVolume(vol, snapUUID, op)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	// Delete temporary source snapshot.
-// 	err = d.DeleteVolumeSnapshot(srcSnap, op)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	// Delete temporary target snapshot.
-// 	targetSnap, err := vol.NewSnapshot(snapUUID)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	err = d.DeleteVolumeSnapshot(targetSnap, op)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
+// CreateVolumeFromCopy provides same-pool volume copying functionality.
+func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool, allowInconsistent bool, op *operations.Operation) error {
+	return d.createOrRefeshVolumeFromCopy(vol, srcVol, false, copySnapshots, allowInconsistent, op) // not refreshing.
+}
+
+// CreateVolumeFromMigration creates a volume being sent via a migration.
+func (d *truenas) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
+	if volTargetArgs.ClusterMoveSourceName != "" && volTargetArgs.StoragePool == "" {
+		err := vol.EnsureMountPath()
+		if err != nil {
+			return err
+		}
+
+		if vol.IsVMBlock() {
+			fsVol := vol.NewVMBlockFilesystemVolume()
+			err := d.CreateVolumeFromMigration(fsVol, conn, volTargetArgs, preFiller, op)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	// Handle simple rsync and block_and_rsync through generic.
+	if volTargetArgs.MigrationType.FSType == migration.MigrationFSType_RSYNC || volTargetArgs.MigrationType.FSType == migration.MigrationFSType_BLOCK_AND_RSYNC {
+		return genericVFSCreateVolumeFromMigration(d, nil, vol, conn, volTargetArgs, preFiller, op)
+	}
+
+	// TODO: optimized migration
+
+	return ErrNotSupported
+}
+
+// RefreshVolume updates an existing volume to match the state of another.
+func (d *truenas) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, allowInconsistent bool, op *operations.Operation) error {
+	var err error
+	var targetSnapshots []Volume
+	var srcSnapshotsAll []Volume
+
+	if !srcVol.IsSnapshot() {
+		// Get target snapshots
+		targetSnapshots, err = vol.Snapshots(op)
+		if err != nil {
+			return fmt.Errorf("Failed to get target snapshots: %w", err)
+		}
+
+		srcSnapshotsAll, err = srcVol.Snapshots(op)
+		if err != nil {
+			return fmt.Errorf("Failed to get source snapshots: %w", err)
+		}
+	}
+
+	// If there are no source or target snapshots, perform a simple replacement copy
+	if len(srcSnapshotsAll) == 0 || len(targetSnapshots) == 0 {
+
+		// this ensures that recursive deletions are performed.
+		err = d.DeleteVolume(vol, op)
+		if err != nil {
+			return err
+		}
+
+		return d.CreateVolumeFromCopy(vol, srcVol, len(srcSnapshotsAll) == 0, false, op)
+	}
+
+	// repl task can "refresh"
+	return d.createOrRefeshVolumeFromCopy(vol, srcVol, true, true, false, op)
+}
 
 // DeleteVolume deletes a volume of the storage device. If any snapshots of the volume remain then
 // this function will return an error.
@@ -2219,232 +1721,33 @@ func (d *truenas) RenameVolume(vol Volume, newVolName string, op *operations.Ope
 	return nil
 }
 
-// // MigrateVolume sends a volume for migration.
-// func (d *zfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
-// 	if !volSrcArgs.AllowInconsistent && vol.contentType == ContentTypeFS && vol.IsBlockBacked() {
-// 		// When migrating using zfs volumes (not datasets), ensure that the filesystem is synced
-// 		// otherwise the source and target volumes may differ. Tests have shown that only calling
-// 		// os.SyncFS() doesn't suffice. A freeze and unfreeze is needed.
-// 		err := vol.MountTask(func(mountPath string, op *operations.Operation) error {
-// 			unfreezeFS, err := d.filesystemFreeze(mountPath)
-// 			if err != nil {
-// 				return err
-// 			}
+// MigrateVolume sends a volume for migration.
+func (d *truenas) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
+	if volSrcArgs.ClusterMove && !volSrcArgs.StorageMove {
+		return nil // When performing a cluster member move don't do anything on the source member.
+	}
 
-// 			return unfreezeFS()
-// 		}, op)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
+	// Handle simple rsync and block_and_rsync through generic.
+	if volSrcArgs.MigrationType.FSType == migration.MigrationFSType_RSYNC || volSrcArgs.MigrationType.FSType == migration.MigrationFSType_BLOCK_AND_RSYNC {
+		// TODO this should take a temporary snapshot.
+		// Before doing a generic volume migration, we need to ensure volume (or snap volume parent) is
+		// activated to avoid issues activating the snapshot volume device.
+		parent, _, _ := api.GetParentAndSnapshotName(vol.Name())
+		parentVol := NewVolume(d, d.Name(), vol.volType, vol.contentType, parent, vol.config, vol.poolConfig)
+		err := d.MountVolume(parentVol, op)
+		if err != nil {
+			return err
+		}
 
-// 	// Handle simple rsync and block_and_rsync through generic.
-// 	if volSrcArgs.MigrationType.FSType == migration.MigrationFSType_RSYNC || volSrcArgs.MigrationType.FSType == migration.MigrationFSType_BLOCK_AND_RSYNC {
-// 		// If volume is filesystem type, create a fast snapshot to ensure migration is consistent.
-// 		// TODO add support for temporary snapshots of block volumes here.
-// 		if vol.contentType == ContentTypeFS && !vol.IsSnapshot() {
-// 			snapshotPath, cleanup, err := d.readonlySnapshot(vol)
-// 			if err != nil {
-// 				return err
-// 			}
+		defer func() { _, _ = d.UnmountVolume(parentVol, false, op) }()
 
-// 			// Clean up the snapshot.
-// 			defer cleanup()
+		return genericVFSMigrateVolume(d, d.state, vol, conn, volSrcArgs, op)
+	}
 
-// 			// Set the path of the volume to the path of the fast snapshot so the migration reads from there instead.
-// 			vol.mountCustomPath = snapshotPath
-// 		}
+	// TODO: optmized migration between TrueNAS or ZFS storage pools?
 
-// 		return genericVFSMigrateVolume(d, d.state, vol, conn, volSrcArgs, op)
-// 	} else if volSrcArgs.MigrationType.FSType != migration.MigrationFSType_ZFS {
-// 		return ErrNotSupported
-// 	}
-
-// 	// Handle zfs send/receive migration.
-// 	if volSrcArgs.MultiSync || volSrcArgs.FinalSync {
-// 		// This is not needed if the migration is performed using zfs send/receive.
-// 		return fmt.Errorf("MultiSync should not be used with optimized migration")
-// 	}
-
-// 	var srcMigrationHeader *ZFSMetaDataHeader
-
-// 	// The target will validate the GUIDs and if successful proceed with the refresh.
-// 	if slices.Contains(volSrcArgs.MigrationType.Features, migration.ZFSFeatureMigrationHeader) {
-// 		snapshots, err := d.VolumeSnapshots(vol, op)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		// Fill the migration header with the snapshot names and dataset GUIDs.
-// 		srcMigrationHeader, err = d.datasetHeader(vol, snapshots)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		headerJSON, err := json.Marshal(srcMigrationHeader)
-// 		if err != nil {
-// 			return fmt.Errorf("Failed encoding ZFS migration header: %w", err)
-// 		}
-
-// 		// Send the migration header to the target.
-// 		_, err = conn.Write(headerJSON)
-// 		if err != nil {
-// 			return fmt.Errorf("Failed sending ZFS migration header: %w", err)
-// 		}
-
-// 		err = conn.Close() //End the frame.
-// 		if err != nil {
-// 			return fmt.Errorf("Failed closing ZFS migration header frame: %w", err)
-// 		}
-// 	}
-
-// 	// If we haven't negotiated zvol support, ensure volume is not a zvol.
-// 	if !slices.Contains(volSrcArgs.MigrationType.Features, migration.ZFSFeatureZvolFilesystems) && d.isBlockBacked(vol) {
-// 		return fmt.Errorf("Filesystem zvol detected in source but target does not support receiving zvols")
-// 	}
-
-// 	incrementalStream := true
-// 	var migrationHeader ZFSMetaDataHeader
-
-// 	if volSrcArgs.Refresh && slices.Contains(volSrcArgs.MigrationType.Features, migration.ZFSFeatureMigrationHeader) {
-// 		buf, err := io.ReadAll(conn)
-// 		if err != nil {
-// 			return fmt.Errorf("Failed reading ZFS migration header: %w", err)
-// 		}
-
-// 		err = json.Unmarshal(buf, &migrationHeader)
-// 		if err != nil {
-// 			return fmt.Errorf("Failed decoding ZFS migration header: %w", err)
-// 		}
-
-// 		// If the target has no snapshots we cannot use incremental streams and will do a normal copy operation instead.
-// 		if len(migrationHeader.SnapshotDatasets) == 0 {
-// 			incrementalStream = false
-// 			volSrcArgs.Refresh = false
-// 		}
-
-// 		volSrcArgs.Snapshots = []string{}
-
-// 		// Override volSrcArgs.Snapshots to only include snapshots which need to be sent.
-// 		if !volSrcArgs.VolumeOnly {
-// 			for _, srcDataset := range srcMigrationHeader.SnapshotDatasets {
-// 				found := false
-
-// 				for _, dstDataset := range migrationHeader.SnapshotDatasets {
-// 					if srcDataset.GUID == dstDataset.GUID {
-// 						found = true
-// 						break
-// 					}
-// 				}
-
-// 				if !found {
-// 					volSrcArgs.Snapshots = append(volSrcArgs.Snapshots, srcDataset.Name)
-// 				}
-// 			}
-// 		}
-// 	}
-
-// 	return d.migrateVolumeOptimized(vol, conn, volSrcArgs, incrementalStream, op)
-// }
-
-// func (d *zfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, incremental bool, op *operations.Operation) error {
-// 	if vol.IsVMBlock() {
-// 		fsVol := vol.NewVMBlockFilesystemVolume()
-// 		err := d.migrateVolumeOptimized(fsVol, conn, volSrcArgs, incremental, op)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-
-// 	// Handle zfs send/receive migration.
-// 	var finalParent string
-
-// 	// Transfer the snapshots first.
-// 	for i, snapName := range volSrcArgs.Snapshots {
-// 		snapshot, _ := vol.NewSnapshot(snapName)
-
-// 		// Figure out parent and current subvolumes.
-// 		parent := ""
-// 		if i == 0 && volSrcArgs.Refresh {
-// 			snapshots, err := vol.Snapshots(op)
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			for k, snap := range snapshots {
-// 				if k == 0 {
-// 					continue
-// 				}
-
-// 				if snap.name == fmt.Sprintf("%s/%s", vol.name, snapName) {
-// 					parent = d.dataset(snapshots[k-1], false)
-// 					break
-// 				}
-// 			}
-// 		} else if i > 0 {
-// 			oldSnapshot, _ := vol.NewSnapshot(volSrcArgs.Snapshots[i-1])
-// 			parent = d.dataset(oldSnapshot, false)
-// 		}
-
-// 		// Setup progress tracking.
-// 		var wrapper *ioprogress.ProgressTracker
-// 		if volSrcArgs.TrackProgress {
-// 			wrapper = localMigration.ProgressTracker(op, "fs_progress", snapshot.name)
-// 		}
-
-// 		// Send snapshot to recipient (ensure local snapshot volume is mounted if needed).
-// 		err := d.sendDataset(d.dataset(snapshot, false), parent, volSrcArgs, conn, wrapper)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		finalParent = d.dataset(snapshot, false)
-// 	}
-
-// 	// Setup progress tracking.
-// 	var wrapper *ioprogress.ProgressTracker
-// 	if volSrcArgs.TrackProgress {
-// 		wrapper = localMigration.ProgressTracker(op, "fs_progress", vol.name)
-// 	}
-
-// 	srcSnapshot := d.dataset(vol, false)
-// 	if !vol.IsSnapshot() {
-// 		// Create a temporary read-only snapshot.
-// 		srcSnapshot = fmt.Sprintf("%s@migration-%s", d.dataset(vol, false), uuid.New().String())
-// 		_, err := subprocess.RunCommand("zfs", "snapshot", "-r", srcSnapshot)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		defer func() {
-// 			// Delete snapshot (or mark for deferred deletion if cannot be deleted currently).
-// 			_, err := subprocess.RunCommand("zfs", "destroy", "-r", "-d", srcSnapshot)
-// 			if err != nil {
-// 				d.logger.Warn("Failed deleting temporary snapshot for migration", logger.Ctx{"snapshot": srcSnapshot, "err": err})
-// 			}
-// 		}()
-// 	}
-
-// 	// Get parent snapshot of the main volume which can then be used to send an incremental stream.
-// 	if volSrcArgs.Refresh && incremental {
-// 		localSnapshots, err := vol.Snapshots(op)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		if len(localSnapshots) > 0 {
-// 			finalParent = d.dataset(localSnapshots[len(localSnapshots)-1], false)
-// 		}
-// 	}
-
-// 	// Send the volume itself.
-// 	err := d.sendDataset(srcSnapshot, finalParent, volSrcArgs, conn, wrapper)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
+	return ErrNotSupported
+}
 
 // func (d *zfs) readonlySnapshot(vol Volume) (string, revert.Hook, error) {
 // 	revert := revert.New()
