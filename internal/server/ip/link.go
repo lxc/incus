@@ -104,7 +104,7 @@ func LinkFromName(name string) (*Link, error) {
 	var links []jsonLink
 	err = json.Unmarshal([]byte(out), &links)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode JSON link representation: %w", err)
+		return nil, fmt.Errorf("Failed to decode JSON link representation: %w", err)
 	}
 
 	jl := &links[0]
