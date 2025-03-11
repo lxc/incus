@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/mattn/go-sqlite3"
 )
 
 var instanceSnapshotObjects = RegisterStmt(`
@@ -371,16 +373,6 @@ func CreateInstanceSnapshot(ctx context.Context, db dbtx, object InstanceSnapsho
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
 
-	// Check if a instance_snapshot with the same key exists.
-	exists, err := InstanceSnapshotExists(ctx, db, object.Project, object.Instance, object.Name)
-	if err != nil {
-		return -1, fmt.Errorf("Failed to check for duplicates: %w", err)
-	}
-
-	if exists {
-		return -1, ErrConflict
-	}
-
 	args := make([]any, 7)
 
 	// Populate the statement arguments.
@@ -400,6 +392,13 @@ func CreateInstanceSnapshot(ctx context.Context, db dbtx, object InstanceSnapsho
 
 	// Execute the statement.
 	result, err := stmt.Exec(args...)
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		if sqliteErr.Code == sqlite3.ErrConstraint {
+			return -1, ErrConflict
+		}
+	}
+
 	if err != nil {
 		return -1, fmt.Errorf("Failed to create \"instances_snapshots\" entry: %w", err)
 	}

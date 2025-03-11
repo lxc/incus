@@ -7,7 +7,10 @@ package cluster
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+
+	"github.com/mattn/go-sqlite3"
 )
 
 var instanceProfileObjects = RegisterStmt(`
@@ -192,6 +195,13 @@ func CreateInstanceProfiles(ctx context.Context, db dbtx, objects []InstanceProf
 
 		// Execute the statement.
 		_, err = stmt.Exec(args...)
+		var sqliteErr sqlite3.Error
+		if errors.As(err, &sqliteErr) {
+			if sqliteErr.Code == sqlite3.ErrConstraint {
+				return ErrConflict
+			}
+		}
+
 		if err != nil {
 			return fmt.Errorf("Failed to create \"instances_profiles\" entry: %w", err)
 		}
