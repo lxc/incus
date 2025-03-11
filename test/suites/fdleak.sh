@@ -22,7 +22,7 @@ test_fdleak() {
     done
 
     incus list
-    incus query /internal/gc
+    incus query /internal/debug/gc
 
     exit 0
   )
