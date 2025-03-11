@@ -1391,15 +1391,18 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 		}
 	}
 
-	return m.begin(buf, comment, args, rets, isInterface)
-}
+	m.begin(buf, mapping, comment, args, rets, isInterface)
 
-func (m *Method) begin(buf *file.Buffer, comment string, args string, rets string, isInterface bool) error {
-	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
-	if err != nil {
-		return fmt.Errorf("Parse entity struct: %w", err)
+	if isInterface {
+		return nil
 	}
 
+	m.sqlTxCheck(buf, mapping)
+
+	return nil
+}
+
+func (m *Method) begin(buf *file.Buffer, mapping *Mapping, comment string, args string, rets string, isInterface bool) {
 	name := ""
 	entity := lex.PascalCase(m.entity)
 
@@ -1475,8 +1478,43 @@ func (m *Method) begin(buf *file.Buffer, comment string, args string, rets strin
 		buf.L("}()")
 		buf.N()
 	}
+}
 
-	return nil
+func (m *Method) sqlTxCheck(buf *file.Buffer, mapping *Mapping) {
+	txCheck := false
+	rets := []string{}
+
+	switch operation(m.kind) {
+	case "GetMany":
+		if mapping.Type != EntityTable || len(mapping.RefFields()) > 0 {
+			rets = []string{"nil"}
+			txCheck = true
+		}
+
+	case "Create":
+		if mapping.Type == AssociationTable ||
+			mapping.Type == ReferenceTable ||
+			len(mapping.RefFields()) > 0 ||
+			m.ref != "" {
+			txCheck = true
+		}
+
+	case "Update":
+		if mapping.Type != EntityTable {
+			txCheck = true
+		}
+	}
+
+	if !txCheck {
+		return
+	}
+
+	rets = append(rets, `fmt.Errorf("Committable DB connection (transaction) required")`)
+	buf.L(`_, ok := db.(interface{ Commit() error })`)
+	buf.L(`if !ok {`)
+	buf.L(`	return %s`, strings.Join(rets, ", "))
+	buf.L(`}`)
+	buf.N()
 }
 
 func (m *Method) ifErrNotNil(buf *file.Buffer, newLine bool, rets ...string) {
