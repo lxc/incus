@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/mattn/go-sqlite3"
 )
 
 var nodeClusterGroupObjects = RegisterStmt(`
@@ -173,16 +175,6 @@ func CreateNodeClusterGroup(ctx context.Context, db dbtx, object NodeClusterGrou
 		_err = mapErr(_err, "Node_cluster_group")
 	}()
 
-	// Check if a node_cluster_group with the same key exists.
-	exists, err := NodeClusterGroupExists(ctx, db, object.GroupID)
-	if err != nil {
-		return -1, fmt.Errorf("Failed to check for duplicates: %w", err)
-	}
-
-	if exists {
-		return -1, ErrConflict
-	}
-
 	args := make([]any, 2)
 
 	// Populate the statement arguments.
@@ -197,6 +189,13 @@ func CreateNodeClusterGroup(ctx context.Context, db dbtx, object NodeClusterGrou
 
 	// Execute the statement.
 	result, err := stmt.Exec(args...)
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		if sqliteErr.Code == sqlite3.ErrConstraint {
+			return -1, ErrConflict
+		}
+	}
+
 	if err != nil {
 		return -1, fmt.Errorf("Failed to create \"nodes_clusters_groups\" entry: %w", err)
 	}
