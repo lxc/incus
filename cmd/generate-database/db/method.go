@@ -717,18 +717,8 @@ func (m *Method) create(buf *file.Buffer, replace bool) error {
 		}
 
 		kind := "create"
-		if mapping.Type != AssociationTable {
-			if replace {
-				kind = "create_or_replace"
-			} else {
-				buf.L("// Check if a %s with the same key exists.", m.entity)
-				buf.L("exists, err := %sExists(ctx, db, %s)", lex.PascalCase(m.entity), strings.Join(nkParams, ", "))
-				m.ifErrNotNil(buf, true, "-1", "fmt.Errorf(\"Failed to check for duplicates: %w\", err)")
-				buf.L("if exists {")
-				buf.L(`        return -1, ErrConflict`)
-				buf.L("}")
-				buf.N()
-			}
+		if mapping.Type != AssociationTable && replace {
+			kind = "create_or_replace"
 		}
 
 		if mapping.Type == AssociationTable {
@@ -762,15 +752,29 @@ func (m *Method) create(buf *file.Buffer, replace bool) error {
 
 		if mapping.Type == AssociationTable {
 			m.ifErrNotNil(buf, true, fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, kind)))
-			buf.L("// Execute the statement. ")
-			buf.L("_, err = stmt.Exec(args...)")
+			buf.L(`// Execute the statement.`)
+			buf.L(`_, err = stmt.Exec(args...)`)
+			buf.L(`var sqliteErr sqlite3.Error`)
+			buf.L(`if errors.As(err, &sqliteErr) {`)
+			buf.L(`	if sqliteErr.Code == sqlite3.ErrConstraint {`)
+			buf.L(`		return ErrConflict`)
+			buf.L(`	}`)
+			buf.L(`}`)
+			buf.N()
 			m.ifErrNotNil(buf, true, fmt.Sprintf(`fmt.Errorf("Failed to create \"%s\" entry: %%w", err)`, entityTable(m.entity, m.config["table"])))
 		} else {
 			m.ifErrNotNil(buf, true, "-1", fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, kind)))
-			buf.L("// Execute the statement. ")
-			buf.L("result, err := stmt.Exec(args...)")
+			buf.L(`// Execute the statement.`)
+			buf.L(`result, err := stmt.Exec(args...)`)
+			buf.L(`var sqliteErr sqlite3.Error`)
+			buf.L(`if errors.As(err, &sqliteErr) {`)
+			buf.L(`	if sqliteErr.Code == sqlite3.ErrConstraint {`)
+			buf.L(`		return -1, ErrConflict`)
+			buf.L(`	}`)
+			buf.L(`}`)
+			buf.N()
 			m.ifErrNotNil(buf, true, "-1", fmt.Sprintf(`fmt.Errorf("Failed to create \"%s\" entry: %%w", err)`, entityTable(m.entity, m.config["table"])))
-			buf.L("id, err := result.LastInsertId()")
+			buf.L(`id, err := result.LastInsertId()`)
 			m.ifErrNotNil(buf, true, "-1", fmt.Sprintf(`fmt.Errorf("Failed to fetch \"%s\" entry ID: %%w", err)`, entityTable(m.entity, m.config["table"])))
 		}
 	}
@@ -1387,15 +1391,18 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 		}
 	}
 
-	return m.begin(buf, comment, args, rets, isInterface)
-}
+	m.begin(buf, mapping, comment, args, rets, isInterface)
 
-func (m *Method) begin(buf *file.Buffer, comment string, args string, rets string, isInterface bool) error {
-	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
-	if err != nil {
-		return fmt.Errorf("Parse entity struct: %w", err)
+	if isInterface {
+		return nil
 	}
 
+	m.sqlTxCheck(buf, mapping)
+
+	return nil
+}
+
+func (m *Method) begin(buf *file.Buffer, mapping *Mapping, comment string, args string, rets string, isInterface bool) {
 	name := ""
 	entity := lex.PascalCase(m.entity)
 
@@ -1471,8 +1478,43 @@ func (m *Method) begin(buf *file.Buffer, comment string, args string, rets strin
 		buf.L("}()")
 		buf.N()
 	}
+}
 
-	return nil
+func (m *Method) sqlTxCheck(buf *file.Buffer, mapping *Mapping) {
+	txCheck := false
+	rets := []string{}
+
+	switch operation(m.kind) {
+	case "GetMany":
+		if mapping.Type != EntityTable || len(mapping.RefFields()) > 0 {
+			rets = []string{"nil"}
+			txCheck = true
+		}
+
+	case "Create":
+		if mapping.Type == AssociationTable ||
+			mapping.Type == ReferenceTable ||
+			len(mapping.RefFields()) > 0 ||
+			m.ref != "" {
+			txCheck = true
+		}
+
+	case "Update":
+		if mapping.Type != EntityTable {
+			txCheck = true
+		}
+	}
+
+	if !txCheck {
+		return
+	}
+
+	rets = append(rets, `fmt.Errorf("Committable DB connection (transaction) required")`)
+	buf.L(`_, ok := db.(interface{ Commit() error })`)
+	buf.L(`if !ok {`)
+	buf.L(`	return %s`, strings.Join(rets, ", "))
+	buf.L(`}`)
+	buf.N()
 }
 
 func (m *Method) ifErrNotNil(buf *file.Buffer, newLine bool, rets ...string) {

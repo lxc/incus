@@ -81,6 +81,11 @@ func GetDevices(ctx context.Context, db dbtx, parent string, filters ...DeviceFi
 		_err = mapErr(_err, "Device")
 	}()
 
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return nil, fmt.Errorf("Committable DB connection (transaction) required")
+	}
+
 	var err error
 
 	// Result slice.
@@ -175,6 +180,11 @@ func CreateDevices(ctx context.Context, db dbtx, parent string, objects map[stri
 		_err = mapErr(_err, "Device")
 	}()
 
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
+
 	deviceCreateLocal := strings.Replace(deviceCreate, "%s_id", fmt.Sprintf("%s_id", parent), -1)
 	fillParent := make([]any, strings.Count(deviceCreateLocal, "%s"))
 	for i := range fillParent {
@@ -217,6 +227,11 @@ func UpdateDevices(ctx context.Context, db dbtx, parent string, referenceID int,
 	defer func() {
 		_err = mapErr(_err, "Device")
 	}()
+
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
 
 	// Delete current entry.
 	err := DeleteDevices(ctx, db, parent, referenceID)

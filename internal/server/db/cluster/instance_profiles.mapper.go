@@ -7,7 +7,10 @@ package cluster
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+
+	"github.com/mattn/go-sqlite3"
 )
 
 var instanceProfileObjects = RegisterStmt(`
@@ -45,6 +48,11 @@ func GetProfileInstances(ctx context.Context, db dbtx, profileID int) (_ []Insta
 	defer func() {
 		_err = mapErr(_err, "Instance_profile")
 	}()
+
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return nil, fmt.Errorf("Committable DB connection (transaction) required")
+	}
 
 	var err error
 
@@ -138,6 +146,11 @@ func GetInstanceProfiles(ctx context.Context, db dbtx, instanceID int) (_ []Prof
 		_err = mapErr(_err, "Instance_profile")
 	}()
 
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return nil, fmt.Errorf("Committable DB connection (transaction) required")
+	}
+
 	var err error
 
 	// Result slice.
@@ -176,6 +189,11 @@ func CreateInstanceProfiles(ctx context.Context, db dbtx, objects []InstanceProf
 		_err = mapErr(_err, "Instance_profile")
 	}()
 
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
+
 	for _, object := range objects {
 		args := make([]any, 3)
 
@@ -192,6 +210,13 @@ func CreateInstanceProfiles(ctx context.Context, db dbtx, objects []InstanceProf
 
 		// Execute the statement.
 		_, err = stmt.Exec(args...)
+		var sqliteErr sqlite3.Error
+		if errors.As(err, &sqliteErr) {
+			if sqliteErr.Code == sqlite3.ErrConstraint {
+				return ErrConflict
+			}
+		}
+
 		if err != nil {
 			return fmt.Errorf("Failed to create \"instances_profiles\" entry: %w", err)
 		}

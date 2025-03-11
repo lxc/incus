@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/mattn/go-sqlite3"
 )
 
 var clusterGroupObjects = RegisterStmt(`
@@ -307,16 +309,6 @@ func CreateClusterGroup(ctx context.Context, db dbtx, object ClusterGroup) (_ in
 		_err = mapErr(_err, "Cluster_group")
 	}()
 
-	// Check if a cluster_group with the same key exists.
-	exists, err := ClusterGroupExists(ctx, db, object.Name)
-	if err != nil {
-		return -1, fmt.Errorf("Failed to check for duplicates: %w", err)
-	}
-
-	if exists {
-		return -1, ErrConflict
-	}
-
 	args := make([]any, 2)
 
 	// Populate the statement arguments.
@@ -331,6 +323,13 @@ func CreateClusterGroup(ctx context.Context, db dbtx, object ClusterGroup) (_ in
 
 	// Execute the statement.
 	result, err := stmt.Exec(args...)
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		if sqliteErr.Code == sqlite3.ErrConstraint {
+			return -1, ErrConflict
+		}
+	}
+
 	if err != nil {
 		return -1, fmt.Errorf("Failed to create \"clusters_groups\" entry: %w", err)
 	}
@@ -349,6 +348,11 @@ func CreateClusterGroupConfig(ctx context.Context, db dbtx, clusterGroupID int64
 	defer func() {
 		_err = mapErr(_err, "Cluster_group")
 	}()
+
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
 
 	referenceID := int(clusterGroupID)
 	for key, value := range config {

@@ -8,4 +8,5 @@ var Imports = []string{
 	"database/sql",
 	"fmt",
 	"strings",
+	"github.com/mattn/go-sqlite3",
 }

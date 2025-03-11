@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/mattn/go-sqlite3"
 )
 
 var profileObjects = RegisterStmt(`
@@ -403,16 +405,6 @@ func CreateProfile(ctx context.Context, db dbtx, object Profile) (_ int64, _err 
 		_err = mapErr(_err, "Profile")
 	}()
 
-	// Check if a profile with the same key exists.
-	exists, err := ProfileExists(ctx, db, object.Project, object.Name)
-	if err != nil {
-		return -1, fmt.Errorf("Failed to check for duplicates: %w", err)
-	}
-
-	if exists {
-		return -1, ErrConflict
-	}
-
 	args := make([]any, 3)
 
 	// Populate the statement arguments.
@@ -428,6 +420,13 @@ func CreateProfile(ctx context.Context, db dbtx, object Profile) (_ int64, _err 
 
 	// Execute the statement.
 	result, err := stmt.Exec(args...)
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		if sqliteErr.Code == sqlite3.ErrConstraint {
+			return -1, ErrConflict
+		}
+	}
+
 	if err != nil {
 		return -1, fmt.Errorf("Failed to create \"profiles\" entry: %w", err)
 	}
@@ -446,6 +445,11 @@ func CreateProfileDevices(ctx context.Context, db dbtx, profileID int64, devices
 	defer func() {
 		_err = mapErr(_err, "Profile")
 	}()
+
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
 
 	for key, device := range devices {
 		device.ReferenceID = int(profileID)
@@ -466,6 +470,11 @@ func CreateProfileConfig(ctx context.Context, db dbtx, profileID int64, config m
 	defer func() {
 		_err = mapErr(_err, "Profile")
 	}()
+
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
 
 	referenceID := int(profileID)
 	for key, value := range config {

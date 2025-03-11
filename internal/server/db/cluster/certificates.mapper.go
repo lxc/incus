@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/server/certificate"
+	"github.com/mattn/go-sqlite3"
 )
 
 var certificateObjects = RegisterStmt(`
@@ -291,16 +292,6 @@ func CreateCertificate(ctx context.Context, db dbtx, object Certificate) (_ int6
 		_err = mapErr(_err, "Certificate")
 	}()
 
-	// Check if a certificate with the same key exists.
-	exists, err := CertificateExists(ctx, db, object.Fingerprint)
-	if err != nil {
-		return -1, fmt.Errorf("Failed to check for duplicates: %w", err)
-	}
-
-	if exists {
-		return -1, ErrConflict
-	}
-
 	args := make([]any, 6)
 
 	// Populate the statement arguments.
@@ -319,6 +310,13 @@ func CreateCertificate(ctx context.Context, db dbtx, object Certificate) (_ int6
 
 	// Execute the statement.
 	result, err := stmt.Exec(args...)
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		if sqliteErr.Code == sqlite3.ErrConstraint {
+			return -1, ErrConflict
+		}
+	}
+
 	if err != nil {
 		return -1, fmt.Errorf("Failed to create \"certificates\" entry: %w", err)
 	}

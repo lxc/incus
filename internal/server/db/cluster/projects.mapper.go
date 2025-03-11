@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/mattn/go-sqlite3"
 )
 
 var projectObjects = RegisterStmt(`
@@ -283,16 +285,6 @@ func CreateProject(ctx context.Context, db dbtx, object Project) (_ int64, _err 
 		_err = mapErr(_err, "Project")
 	}()
 
-	// Check if a project with the same key exists.
-	exists, err := ProjectExists(ctx, db, object.Name)
-	if err != nil {
-		return -1, fmt.Errorf("Failed to check for duplicates: %w", err)
-	}
-
-	if exists {
-		return -1, ErrConflict
-	}
-
 	args := make([]any, 2)
 
 	// Populate the statement arguments.
@@ -307,6 +299,13 @@ func CreateProject(ctx context.Context, db dbtx, object Project) (_ int64, _err 
 
 	// Execute the statement.
 	result, err := stmt.Exec(args...)
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		if sqliteErr.Code == sqlite3.ErrConstraint {
+			return -1, ErrConflict
+		}
+	}
+
 	if err != nil {
 		return -1, fmt.Errorf("Failed to create \"projects\" entry: %w", err)
 	}
@@ -325,6 +324,11 @@ func CreateProjectConfig(ctx context.Context, db dbtx, projectID int64, config m
 	defer func() {
 		_err = mapErr(_err, "Project")
 	}()
+
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
 
 	referenceID := int(projectID)
 	for key, value := range config {

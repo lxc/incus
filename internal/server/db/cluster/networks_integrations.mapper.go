@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/mattn/go-sqlite3"
 )
 
 var networkIntegrationObjects = RegisterStmt(`
@@ -283,16 +285,6 @@ func CreateNetworkIntegration(ctx context.Context, db dbtx, object NetworkIntegr
 		_err = mapErr(_err, "Network_integration")
 	}()
 
-	// Check if a network_integration with the same key exists.
-	exists, err := NetworkIntegrationExists(ctx, db, object.Name)
-	if err != nil {
-		return -1, fmt.Errorf("Failed to check for duplicates: %w", err)
-	}
-
-	if exists {
-		return -1, ErrConflict
-	}
-
 	args := make([]any, 3)
 
 	// Populate the statement arguments.
@@ -308,6 +300,13 @@ func CreateNetworkIntegration(ctx context.Context, db dbtx, object NetworkIntegr
 
 	// Execute the statement.
 	result, err := stmt.Exec(args...)
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		if sqliteErr.Code == sqlite3.ErrConstraint {
+			return -1, ErrConflict
+		}
+	}
+
 	if err != nil {
 		return -1, fmt.Errorf("Failed to create \"networks_integrations\" entry: %w", err)
 	}
@@ -326,6 +325,11 @@ func CreateNetworkIntegrationConfig(ctx context.Context, db dbtx, networkIntegra
 	defer func() {
 		_err = mapErr(_err, "Network_integration")
 	}()
+
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
 
 	referenceID := int(networkIntegrationID)
 	for key, value := range config {

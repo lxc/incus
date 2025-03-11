@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/mattn/go-sqlite3"
 )
 
 var instanceObjects = RegisterStmt(`
@@ -804,16 +806,6 @@ func CreateInstance(ctx context.Context, db dbtx, object Instance) (_ int64, _er
 		_err = mapErr(_err, "Instance")
 	}()
 
-	// Check if a instance with the same key exists.
-	exists, err := InstanceExists(ctx, db, object.Project, object.Name)
-	if err != nil {
-		return -1, fmt.Errorf("Failed to check for duplicates: %w", err)
-	}
-
-	if exists {
-		return -1, ErrConflict
-	}
-
 	args := make([]any, 11)
 
 	// Populate the statement arguments.
@@ -837,6 +829,13 @@ func CreateInstance(ctx context.Context, db dbtx, object Instance) (_ int64, _er
 
 	// Execute the statement.
 	result, err := stmt.Exec(args...)
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		if sqliteErr.Code == sqlite3.ErrConstraint {
+			return -1, ErrConflict
+		}
+	}
+
 	if err != nil {
 		return -1, fmt.Errorf("Failed to create \"instances\" entry: %w", err)
 	}
@@ -855,6 +854,11 @@ func CreateInstanceDevices(ctx context.Context, db dbtx, instanceID int64, devic
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
+
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
 
 	for key, device := range devices {
 		device.ReferenceID = int(instanceID)
@@ -875,6 +879,11 @@ func CreateInstanceConfig(ctx context.Context, db dbtx, instanceID int64, config
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
+
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
 
 	referenceID := int(instanceID)
 	for key, value := range config {
