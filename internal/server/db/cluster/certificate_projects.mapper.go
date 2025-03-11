@@ -96,6 +96,11 @@ func GetCertificateProjects(ctx context.Context, db dbtx, certificateID int) (_ 
 		_err = mapErr(_err, "Certificate_project")
 	}()
 
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return nil, fmt.Errorf("Committable DB connection (transaction) required")
+	}
+
 	var err error
 
 	// Result slice.
@@ -159,6 +164,11 @@ func CreateCertificateProjects(ctx context.Context, db dbtx, objects []Certifica
 		_err = mapErr(_err, "Certificate_project")
 	}()
 
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
+
 	for _, object := range objects {
 		args := make([]any, 2)
 
@@ -196,6 +206,11 @@ func UpdateCertificateProjects(ctx context.Context, db dbtx, certificateID int, 
 	defer func() {
 		_err = mapErr(_err, "Certificate_project")
 	}()
+
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
 
 	// Delete current entry.
 	err := DeleteCertificateProjects(ctx, db, certificateID)

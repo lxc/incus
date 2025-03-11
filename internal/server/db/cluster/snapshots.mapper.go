@@ -418,6 +418,11 @@ func CreateInstanceSnapshotDevices(ctx context.Context, db dbtx, instanceSnapsho
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
 
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
+
 	for key, device := range devices {
 		device.ReferenceID = int(instanceSnapshotID)
 		devices[key] = device
@@ -437,6 +442,11 @@ func CreateInstanceSnapshotConfig(ctx context.Context, db dbtx, instanceSnapshot
 	defer func() {
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
+
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
 
 	referenceID := int(instanceSnapshotID)
 	for key, value := range config {

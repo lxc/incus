@@ -349,6 +349,11 @@ func CreateClusterGroupConfig(ctx context.Context, db dbtx, clusterGroupID int64
 		_err = mapErr(_err, "Cluster_group")
 	}()
 
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
+
 	referenceID := int(clusterGroupID)
 	for key, value := range config {
 		insert := Config{
