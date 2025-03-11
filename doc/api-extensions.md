@@ -2764,3 +2764,7 @@ Adds a new `usb` value for `io.bus` on `disk` devices.
 ## `storage_driver_linstor`
 
 This adds a LINSTOR storage driver.
+
+## `network_address_set`
+
+This adds the concept of network address sets to API under the API endpoint prefix `/1.0/network-address-sets`.

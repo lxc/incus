@@ -475,6 +475,7 @@ var APIExtensions = []string{
 	"network_io_bus",
 	"disk_io_bus_usb",
 	"storage_driver_linstor",
+	"network_address_set",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
