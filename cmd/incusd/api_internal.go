@@ -69,18 +69,71 @@ var apiInternal = []APIEndpoint{
 	internalWarningCreateCmd,
 }
 
-var internalShutdownCmd = APIEndpoint{
-	Path: "shutdown",
-
-	Put: APIEndpointAction{Handler: internalShutdown, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
-}
-
+// Daemon management internal commands.
 var internalReadyCmd = APIEndpoint{
 	Path: "ready",
 
 	Get: APIEndpointAction{Handler: internalWaitReady, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
+var internalShutdownCmd = APIEndpoint{
+	Path: "shutdown",
+
+	Put: APIEndpointAction{Handler: internalShutdown, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+}
+
+// Internal managemnt traffic.
+var internalImageOptimizeCmd = APIEndpoint{
+	Path: "image-optimize",
+
+	Post: APIEndpointAction{Handler: internalOptimizeImage, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+}
+
+var internalRebalanceLoadCmd = APIEndpoint{
+	Path: "rebalance",
+
+	Get: APIEndpointAction{Handler: internalRebalanceLoad, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+}
+
+var internalSQLCmd = APIEndpoint{
+	Path: "sql",
+
+	Get:  APIEndpointAction{Handler: internalSQLGet, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+	Post: APIEndpointAction{Handler: internalSQLPost, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+}
+
+// Internal cluster traffic.
+var internalClusterAcceptCmd = APIEndpoint{
+	Path: "cluster/accept",
+
+	Post: APIEndpointAction{Handler: internalClusterPostAccept, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+}
+
+var internalClusterAssignCmd = APIEndpoint{
+	Path: "cluster/assign",
+
+	Post: APIEndpointAction{Handler: internalClusterPostAssign, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+}
+
+var internalClusterHandoverCmd = APIEndpoint{
+	Path: "cluster/handover",
+
+	Post: APIEndpointAction{Handler: internalClusterPostHandover, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+}
+
+var internalClusterRaftNodeCmd = APIEndpoint{
+	Path: "cluster/raft-node/{address}",
+
+	Delete: APIEndpointAction{Handler: internalClusterRaftNodeDelete, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+}
+
+var internalClusterRebalanceCmd = APIEndpoint{
+	Path: "cluster/rebalance",
+
+	Post: APIEndpointAction{Handler: internalClusterPostRebalance, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+}
+
+// Container hooks.
 var internalContainerOnStartCmd = APIEndpoint{
 	Path: "containers/{instanceRef}/onstart",
 
@@ -99,59 +152,42 @@ var internalContainerOnStopCmd = APIEndpoint{
 	Get: APIEndpointAction{Handler: internalContainerOnStop, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
+// Virtual machine hooks.
 var internalVirtualMachineOnResizeCmd = APIEndpoint{
 	Path: "virtual-machines/{instanceRef}/onresize",
 
 	Get: APIEndpointAction{Handler: internalVirtualMachineOnResize, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
-var internalSQLCmd = APIEndpoint{
-	Path: "sql",
-
-	Get:  APIEndpointAction{Handler: internalSQLGet, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
-	Post: APIEndpointAction{Handler: internalSQLPost, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
-}
-
-var internalGarbageCollectorCmd = APIEndpoint{
-	Path: "gc",
-
-	Get: APIEndpointAction{Handler: internalGC, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
-}
-
-var internalRAFTSnapshotCmd = APIEndpoint{
-	Path: "raft-snapshot",
-
-	Get: APIEndpointAction{Handler: internalRAFTSnapshot, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
-}
-
-var internalImageRefreshCmd = APIEndpoint{
-	Path: "testing/image-refresh",
-
-	Get: APIEndpointAction{Handler: internalRefreshImage, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
-}
-
-var internalImageOptimizeCmd = APIEndpoint{
-	Path: "image-optimize",
-
-	Post: APIEndpointAction{Handler: internalOptimizeImage, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
-}
-
-var internalWarningCreateCmd = APIEndpoint{
-	Path: "testing/warnings",
-
-	Post: APIEndpointAction{Handler: internalCreateWarning, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
-}
-
+// Debugging.
 var internalBGPStateCmd = APIEndpoint{
-	Path: "testing/bgp",
+	Path: "debug/bgp",
 
 	Get: APIEndpointAction{Handler: internalBGPState, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
-var internalRebalanceLoadCmd = APIEndpoint{
-	Path: "rebalance",
+var internalGarbageCollectorCmd = APIEndpoint{
+	Path: "debug/gc",
 
-	Get: APIEndpointAction{Handler: internalRebalanceLoad, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+	Get: APIEndpointAction{Handler: internalGC, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+}
+
+var internalImageRefreshCmd = APIEndpoint{
+	Path: "debug/image-refresh",
+
+	Get: APIEndpointAction{Handler: internalRefreshImage, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+}
+
+var internalRAFTSnapshotCmd = APIEndpoint{
+	Path: "debug/raft-snapshot",
+
+	Get: APIEndpointAction{Handler: internalRAFTSnapshot, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+}
+
+var internalWarningCreateCmd = APIEndpoint{
+	Path: "debug/warnings",
+
+	Post: APIEndpointAction{Handler: internalCreateWarning, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 type internalImageOptimizePost struct {
