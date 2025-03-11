@@ -238,6 +238,16 @@ type InstanceServer interface {
 	RenameNetworkACL(name string, acl api.NetworkACLPost) (err error)
 	DeleteNetworkACL(name string) (err error)
 
+	// Network address set functions ("network_address_set" API extension)
+	GetNetworkAddressSetNames() (names []string, err error)
+	GetNetworkAddressSets() (AddressSets []api.NetworkAddressSet, err error)
+	GetNetworkAddressSetsAllProjects() (AddressSets []api.NetworkAddressSet, err error)
+	GetNetworkAddressSet(name string) (AddressSet *api.NetworkAddressSet, ETag string, err error)
+	CreateNetworkAddressSet(AddressSet api.NetworkAddressSetsPost) (err error)
+	UpdateNetworkAddressSet(name string, AddressSet api.NetworkAddressSetPut, ETag string) (err error)
+	RenameNetworkAddressSet(name string, AddressSet api.NetworkAddressSetPost) (err error)
+	DeleteNetworkAddressSet(name string) (err error)
+
 	// Network allocations functions ("network_allocations" API extension)
 	GetNetworkAllocations() (allocations []api.NetworkAllocations, err error)
 	GetNetworkAllocationsAllProjects() (allocations []api.NetworkAllocations, err error)
