@@ -717,18 +717,8 @@ func (m *Method) create(buf *file.Buffer, replace bool) error {
 		}
 
 		kind := "create"
-		if mapping.Type != AssociationTable {
-			if replace {
-				kind = "create_or_replace"
-			} else {
-				buf.L("// Check if a %s with the same key exists.", m.entity)
-				buf.L("exists, err := %sExists(ctx, db, %s)", lex.PascalCase(m.entity), strings.Join(nkParams, ", "))
-				m.ifErrNotNil(buf, true, "-1", "fmt.Errorf(\"Failed to check for duplicates: %w\", err)")
-				buf.L("if exists {")
-				buf.L(`        return -1, ErrConflict`)
-				buf.L("}")
-				buf.N()
-			}
+		if mapping.Type != AssociationTable && replace {
+			kind = "create_or_replace"
 		}
 
 		if mapping.Type == AssociationTable {
@@ -762,15 +752,29 @@ func (m *Method) create(buf *file.Buffer, replace bool) error {
 
 		if mapping.Type == AssociationTable {
 			m.ifErrNotNil(buf, true, fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, kind)))
-			buf.L("// Execute the statement. ")
-			buf.L("_, err = stmt.Exec(args...)")
+			buf.L(`// Execute the statement.`)
+			buf.L(`_, err = stmt.Exec(args...)`)
+			buf.L(`var sqliteErr sqlite3.Error`)
+			buf.L(`if errors.As(err, &sqliteErr) {`)
+			buf.L(`	if sqliteErr.Code == sqlite3.ErrConstraint {`)
+			buf.L(`		return ErrConflict`)
+			buf.L(`	}`)
+			buf.L(`}`)
+			buf.N()
 			m.ifErrNotNil(buf, true, fmt.Sprintf(`fmt.Errorf("Failed to create \"%s\" entry: %%w", err)`, entityTable(m.entity, m.config["table"])))
 		} else {
 			m.ifErrNotNil(buf, true, "-1", fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, kind)))
-			buf.L("// Execute the statement. ")
-			buf.L("result, err := stmt.Exec(args...)")
+			buf.L(`// Execute the statement.`)
+			buf.L(`result, err := stmt.Exec(args...)`)
+			buf.L(`var sqliteErr sqlite3.Error`)
+			buf.L(`if errors.As(err, &sqliteErr) {`)
+			buf.L(`	if sqliteErr.Code == sqlite3.ErrConstraint {`)
+			buf.L(`		return -1, ErrConflict`)
+			buf.L(`	}`)
+			buf.L(`}`)
+			buf.N()
 			m.ifErrNotNil(buf, true, "-1", fmt.Sprintf(`fmt.Errorf("Failed to create \"%s\" entry: %%w", err)`, entityTable(m.entity, m.config["table"])))
-			buf.L("id, err := result.LastInsertId()")
+			buf.L(`id, err := result.LastInsertId()`)
 			m.ifErrNotNil(buf, true, "-1", fmt.Sprintf(`fmt.Errorf("Failed to fetch \"%s\" entry ID: %%w", err)`, entityTable(m.entity, m.config["table"])))
 		}
 	}
