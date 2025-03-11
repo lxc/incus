@@ -49,6 +49,11 @@ func GetProfileInstances(ctx context.Context, db dbtx, profileID int) (_ []Insta
 		_err = mapErr(_err, "Instance_profile")
 	}()
 
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return nil, fmt.Errorf("Committable DB connection (transaction) required")
+	}
+
 	var err error
 
 	// Result slice.
@@ -141,6 +146,11 @@ func GetInstanceProfiles(ctx context.Context, db dbtx, instanceID int) (_ []Prof
 		_err = mapErr(_err, "Instance_profile")
 	}()
 
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return nil, fmt.Errorf("Committable DB connection (transaction) required")
+	}
+
 	var err error
 
 	// Result slice.
@@ -178,6 +188,11 @@ func CreateInstanceProfiles(ctx context.Context, db dbtx, objects []InstanceProf
 	defer func() {
 		_err = mapErr(_err, "Instance_profile")
 	}()
+
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
 
 	for _, object := range objects {
 		args := make([]any, 3)

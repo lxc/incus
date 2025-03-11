@@ -326,6 +326,11 @@ func CreateNetworkIntegrationConfig(ctx context.Context, db dbtx, networkIntegra
 		_err = mapErr(_err, "Network_integration")
 	}()
 
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
+
 	referenceID := int(networkIntegrationID)
 	for key, value := range config {
 		insert := Config{

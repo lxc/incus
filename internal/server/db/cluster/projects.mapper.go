@@ -325,6 +325,11 @@ func CreateProjectConfig(ctx context.Context, db dbtx, projectID int64, config m
 		_err = mapErr(_err, "Project")
 	}()
 
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
+
 	referenceID := int(projectID)
 	for key, value := range config {
 		insert := Config{

@@ -855,6 +855,11 @@ func CreateInstanceDevices(ctx context.Context, db dbtx, instanceID int64, devic
 		_err = mapErr(_err, "Instance")
 	}()
 
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
+
 	for key, device := range devices {
 		device.ReferenceID = int(instanceID)
 		devices[key] = device
@@ -874,6 +879,11 @@ func CreateInstanceConfig(ctx context.Context, db dbtx, instanceID int64, config
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
+
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
 
 	referenceID := int(instanceID)
 	for key, value := range config {

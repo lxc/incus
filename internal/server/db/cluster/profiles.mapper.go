@@ -446,6 +446,11 @@ func CreateProfileDevices(ctx context.Context, db dbtx, profileID int64, devices
 		_err = mapErr(_err, "Profile")
 	}()
 
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
+
 	for key, device := range devices {
 		device.ReferenceID = int(profileID)
 		devices[key] = device
@@ -465,6 +470,11 @@ func CreateProfileConfig(ctx context.Context, db dbtx, profileID int64, config m
 	defer func() {
 		_err = mapErr(_err, "Profile")
 	}()
+
+	_, ok := db.(interface{ Commit() error })
+	if !ok {
+		return fmt.Errorf("Committable DB connection (transaction) required")
+	}
 
 	referenceID := int(profileID)
 	for key, value := range config {
