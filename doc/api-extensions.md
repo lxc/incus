@@ -2721,3 +2721,7 @@ enable IOMMU emulation. This is done through `virtio_iommu` on Linux and the emu
 ## `network_ipv4_dhcp_routes`
 Introduces a new `ipv4.dhcp.routes` configuration option on bridged and OVN networks.
 This allows specifying pairs of CIDR networks and gateway address to be announced by the DHCP server.
+
+## `network_address_set`
+
+This adds the concept of network address sets to API under the API endpoint prefix `/1.0/network-address-sets`.
