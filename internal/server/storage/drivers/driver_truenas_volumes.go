@@ -177,6 +177,8 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 					return err
 				}
 
+				// After this point we have a restored image, so setup revert.
+				revert.Add(func() { _ = d.DeleteVolume(vol, op) })
 
 				if vol.IsVMBlock() {
 					fsVol := vol.NewVMBlockFilesystemVolume()
@@ -194,9 +196,6 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 			}
 		}
 	}
-
-	// After this point we may have a volume, so setup revert.
-	revert.Add(func() { _ = d.DeleteVolume(vol, op) })
 
 	/*
 		if we are creating a block_mode volume we start by creating a regular fs to host
@@ -243,6 +242,8 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		if err != nil {
 			return err
 		}
+
+		// After this point we have a backing volume, so setup revert.
 		revert.Add(func() { _ = d.DeleteVolume(fsImgVol, op) })
 	}
 
@@ -261,6 +262,9 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		if err != nil {
 			return err
 		}
+
+		// Now have a dataset, so setup revert
+		revert.Add(func() { _ = d.DeleteVolume(vol, op) })
 
 		// now share it
 		err = d.createNfsShare(dataset)
