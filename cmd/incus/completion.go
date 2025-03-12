@@ -541,6 +541,69 @@ func (g *cmdGlobal) cmpNetworkACLRuleProperties() ([]string, cobra.ShellCompDire
 	return results, cobra.ShellCompDirectiveNoSpace
 }
 
+func (g *cmdGlobal) cmpNetworkAddressSets(toComplete string) ([]string, cobra.ShellCompDirective) {
+	results := []string{}
+	cmpDirectives := cobra.ShellCompDirectiveNoFileComp
+
+	resources, _ := g.ParseServers(toComplete)
+
+	if len(resources) <= 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+
+	// Get the network address set names from the server.
+	addrSets, err := resource.server.GetNetworkAddressSetNames()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	for _, addrSet := range addrSets {
+		var name string
+		if resource.remote == g.conf.DefaultRemote && !strings.Contains(toComplete, g.conf.DefaultRemote) {
+			name = addrSet
+		} else {
+			name = fmt.Sprintf("%s:%s", resource.remote, addrSet)
+		}
+
+		results = append(results, name)
+	}
+
+	// Also suggest remotes if no ":" in toComplete.
+	if !strings.Contains(toComplete, ":") {
+		remotes, directives := g.cmpRemotes(toComplete, false)
+		results = append(results, remotes...)
+		cmpDirectives |= directives
+	}
+
+	return results, cmpDirectives
+}
+
+func (g *cmdGlobal) cmpNetworkAddressSetConfigs(addressSetName string) ([]string, cobra.ShellCompDirective) {
+	// Parse remote
+	resources, err := g.ParseServers(addressSetName)
+	if err != nil || len(resources) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+	client := resource.server
+
+	// Get the network address set.
+	addrSet, _, err := client.GetNetworkAddressSet(resource.name)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	var results []string
+	for k := range addrSet.ExternalIDs {
+		results = append(results, k)
+	}
+
+	return results, cobra.ShellCompDirectiveNoFileComp
+}
+
 func (g *cmdGlobal) cmpNetworkForwardConfigs(networkName string, listenAddress string) ([]string, cobra.ShellCompDirective) {
 	// Parse remote
 	resources, err := g.ParseServers(networkName)
