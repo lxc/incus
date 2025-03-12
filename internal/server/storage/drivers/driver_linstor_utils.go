@@ -646,8 +646,8 @@ func (d *linstor) restoreVolume(vol Volume, snapVol Volume) error {
 	return nil
 }
 
-// createResourceFromSnapshot creates a new resource from a snapshot.
-func (d *linstor) createResourceFromSnapshot(snapVol Volume, vol Volume) error {
+// createResourceDefinitionFromSnapshot creates a new resource definition from a snapshot.
+func (d *linstor) createResourceDefinitionFromSnapshot(snapVol Volume, vol Volume) error {
 	linstor, err := d.state.Linstor()
 	if err != nil {
 		return err
@@ -710,6 +710,35 @@ func (d *linstor) createResourceFromSnapshot(snapVol Volume, vol Volume) error {
 	}
 
 	rev.Success()
+	return nil
+}
+
+// deleteResourceDefinitionFromSnapshot deletes the resource definition created from a snapshot.
+func (d *linstor) deleteResourceDefinitionFromSnapshot(vol Volume) error {
+	l := d.logger.AddContext(logger.Ctx{"vol": vol.Name()})
+	l.Debug("Deleting resource definition for snapshot")
+
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	resourceDefinition, err := d.getResourceDefinition(vol, false)
+	if err != nil {
+		if errors.Is(err, errResourceDefinitionNotFound) {
+			return nil
+		}
+
+		return err
+	}
+
+	err = linstor.Client.ResourceDefinitions.Delete(context.TODO(), resourceDefinition.Name)
+	if err != nil {
+		return err
+	}
+
+	d.logger.Debug("Resource definition for snapshot deleted")
+
 	return nil
 }
 
