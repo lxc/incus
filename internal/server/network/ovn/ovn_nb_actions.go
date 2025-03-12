@@ -3724,6 +3724,30 @@ func (o *NB) DeleteAddressSet(ctx context.Context, addressSetPrefix OVNAddressSe
 	return nil
 }
 
+// GetAddressSet gets the two OVN database records (v4 and v6) for the address set.
+func (o *NB) GetAddressSet(ctx context.Context, asName OVNAddressSet) (*ovnNB.AddressSet, *ovnNB.AddressSet, error) {
+	asV4 := &ovnNB.AddressSet{
+		Name: fmt.Sprintf("%s_ip4", asName),
+	}
+
+	asV6 := &ovnNB.AddressSet{
+		Name: fmt.Sprintf("%s_ip6", asName),
+	}
+
+	// Get the entries (we always expect both IPv4 and IPv6 sets to exist).
+	err := o.get(ctx, asV4)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = o.get(ctx, asV6)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return asV4, asV6, nil
+}
+
 // UpdateLogicalRouterPolicy removes any existing policies and applies the new policies to the specified router.
 func (o *NB) UpdateLogicalRouterPolicy(ctx context.Context, routerName OVNRouter, policies ...OVNRouterPolicy) error {
 	operations := []ovsdb.Operation{}
