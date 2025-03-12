@@ -130,6 +130,9 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 					return err
 				}
 
+				// We now have a restored image, so setup revert.
+				revert.Add(func() { _ = d.DeleteVolume(vol, op) })
+
 				if vol.IsVMBlock() {
 					fsVol := vol.NewVMBlockFilesystemVolume()
 
@@ -137,6 +140,8 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 					if err != nil {
 						return err
 					}
+
+					// No need to revert.add since we have already succeeded.
 				}
 
 				revert.Success()
@@ -145,15 +150,15 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 		}
 	}
 
-	// After this point we'll have a volume, so setup revert.
-	revert.Add(func() { _ = d.DeleteVolume(vol, op) })
-
 	if vol.contentType == ContentTypeFS && !d.isBlockBacked(vol) {
 		// Create the filesystem dataset.
 		err := d.createDataset(d.dataset(vol, false), "mountpoint=legacy", "canmount=noauto")
 		if err != nil {
 			return err
 		}
+
+		// After this point we have a filesystem, so setup revert.
+		revert.Add(func() { _ = d.DeleteVolume(vol, op) })
 
 		// Apply the size limit.
 		err = d.SetVolumeQuota(vol, vol.ConfigSize(), false, op)
@@ -225,6 +230,9 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 		if err != nil {
 			return err
 		}
+
+		// After this point we'll have a volume, so setup revert.
+		revert.Add(func() { _ = d.DeleteVolume(vol, op) })
 
 		if vol.contentType == ContentTypeFS {
 			// Wait up to 30 seconds for the device to appear.
