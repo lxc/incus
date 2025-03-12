@@ -370,7 +370,7 @@ func (d Nftables) NetworkSetup(networkName string, opts Opts) error {
 	return nil
 }
 
-// NetworkClear removes the Incus network related chains.
+// NetworkClear removes the Incus network related chains and address sets.
 // The delete and ipeVersions arguments have no effect for nftables driver.
 func (d Nftables) NetworkClear(networkName string, _ bool, _ []uint) error {
 	removeChains := []string{
@@ -385,6 +385,11 @@ func (d Nftables) NetworkClear(networkName string, _ bool, _ []uint) error {
 	err := d.removeChains([]string{"inet", "ip", "ip6", "netdev"}, networkName, removeChains...)
 	if err != nil {
 		return fmt.Errorf("Failed clearing nftables rules for network %q: %w", networkName, err)
+	}
+
+	err = d.RemoveIncusAddressSets()
+	if err != nil {
+		return fmt.Errorf("Error in deletion of address sets: %w", err)
 	}
 
 	return nil
@@ -634,25 +639,47 @@ func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftR
 	for i, rule := range aclRules {
 		if i >= rulesCount-2 {
 			// The last two rules are the default ACL rules and we should keep them separate.
+			// As aclRuleCriteriaToRules return a set of rules instead of a rule to manage address sets in source / dests.
+			// We use rules[0] for default rules because those rules do not use address sets and will be in one fragment.
 			var partial bool
 			var err error
+			var defaultRules []string
 			if rule.Direction == "egress" {
-				nftRules.defaultInRule, partial, err = d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
+				defaultRules, partial, err = d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
+
+				if len(defaultRules) > 1 {
+					return nil, fmt.Errorf("Default rules slice has invalid len: %d", len(defaultRules))
+				}
+
+				nftRules.defaultInRule = defaultRules[0]
 
 				if err == nil && !partial && rule.Action == "reject" {
 					// Convert egress reject rules to drop rules to address nftables limitation.
 					rule.Action = "drop"
-					nftRules.defaultInRuleConverted, partial, err = d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
+					defaultRules, partial, err = d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
+
+					if len(defaultRules) > 1 {
+						return nil, fmt.Errorf("Default rules slice has invalid len: %d", len(defaultRules))
+					}
+
+					nftRules.defaultInRuleConverted = defaultRules[0]
 				} else {
 					nftRules.defaultInRuleConverted = nftRules.defaultInRule
 				}
 			} else {
+
 				if rule.Action == "reject" {
 					// Always convert ingress reject rules to drop rules to address nftables limitation.
 					rule.Action = "drop"
 				}
 
-				nftRules.defaultOutRule, partial, err = d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
+				defaultRules, partial, err = d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
+
+				if len(defaultRules) > 1 {
+					return nil, fmt.Errorf("Default rules slice has invalid len: %d", len(defaultRules))
+				}
+
+				nftRules.defaultOutRule = defaultRules[0]
 			}
 
 			if err != nil {
@@ -671,7 +698,7 @@ func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftR
 			rule.Action = "drop"
 		}
 
-		nft4Rule, nft6Rule, newNftRules, err := d.aclRuleToNftRules(hostNameQuoted, rule)
+		nft4Rules, nft6Rules, newNftRules, err := d.aclRuleToNftRules(hostNameQuoted, rule)
 		if err != nil {
 			return nil, err
 		}
@@ -711,12 +738,12 @@ func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftR
 				nftRules.inRejectRulesConverted = append(nftRules.inRejectRulesConverted, newNftRules...)
 
 			case rule.Action == "allow":
-				if nft4Rule != "" {
-					nftRules.inAcceptRules4 = append(nftRules.inAcceptRules4, nft4Rule)
+				if len(nft4Rules) != 0 {
+					nftRules.inAcceptRules4 = append(nftRules.inAcceptRules4, nft4Rules...)
 				}
 
-				if nft6Rule != "" {
-					nftRules.inAcceptRules6 = append(nftRules.inAcceptRules6, nft6Rule)
+				if len(nft6Rules) != 0 {
+					nftRules.inAcceptRules6 = append(nftRules.inAcceptRules6, nft6Rules...)
 				}
 
 			default:
@@ -731,41 +758,40 @@ func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftR
 	return &nftRules, nil
 }
 
-func (d Nftables) aclRuleToNftRules(hostNameQuoted string, rule ACLRule) (string, string, []string, error) {
-	nft4Rule := ""
-	nft6Rule := ""
+func (d Nftables) aclRuleToNftRules(hostNameQuoted string, rule ACLRule) ([]string, []string, []string, error) {
+	nft6Rules := []string{}
 
 	// First try generating rules with IPv4 or IP agnostic criteria.
-	nft4Rule, partial, err := d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
+	nft4Rules, partial, err := d.aclRuleCriteriaToRules(hostNameQuoted, 4, &rule)
 	if err != nil {
-		return "", "", nil, err
+		return nil, nil, nil, err
 	}
 
 	if partial {
 		// If we couldn't fully generate the ruleset with only IPv4 or IP agnostic criteria, then
 		// fill in the remaining parts using IPv6 criteria.
-		nft6Rule, _, err = d.aclRuleCriteriaToRules(hostNameQuoted, 6, &rule)
+		nft6Rules, _, err = d.aclRuleCriteriaToRules(hostNameQuoted, 6, &rule)
 		if err != nil {
-			return "", "", nil, err
+			return nil, nil, nil, err
 		}
 
-		if nft6Rule == "" {
-			return "", "", nil, fmt.Errorf("Invalid empty rule generated")
+		if len(nft6Rules) == 0 {
+			return nil, nil, nil, fmt.Errorf("Invalid empty rule generated")
 		}
-	} else if nft4Rule == "" {
-		return "", "", nil, fmt.Errorf("Invalid empty rule generated")
+	} else if len(nft4Rules) == 0 {
+		return nil, nil, nil, fmt.Errorf("Invalid empty rule generated")
 	}
 
 	nftRules := []string{}
-	if nft4Rule != "" {
-		nftRules = append(nftRules, nft4Rule)
+	if len(nft4Rules) != 0 {
+		nftRules = append(nftRules, nft4Rules...)
 	}
 
-	if nft6Rule != "" {
-		nftRules = append(nftRules, nft6Rule)
+	if len(nft6Rules) != 0 {
+		nftRules = append(nftRules, nft6Rules...)
 	}
 
-	return nft4Rule, nft6Rule, nftRules, nil
+	return nft4Rules, nft6Rules, nftRules, nil
 }
 
 // applyNftConfig loads the specified config template and then applies it to the common template before sending to
@@ -905,33 +931,33 @@ func (d Nftables) InstanceClearNetPrio(projectName string, instanceName string, 
 
 // NetworkApplyACLRules applies ACL rules to the existing firewall chains.
 func (d Nftables) NetworkApplyACLRules(networkName string, rules []ACLRule) error {
-	nftRules := make([]string, 0)
+	completeNftRules := make([]string, 0)
 	for _, rule := range rules {
 		// First try generating rules with IPv4 or IP agnostic criteria.
-		nftRule, partial, err := d.aclRuleCriteriaToRules(networkName, 4, &rule)
+		// If protocol is icmpv6 skip
+		nftRules, partial, err := d.aclRuleCriteriaToRules(networkName, 4, &rule)
 		if err != nil {
 			return err
 		}
 
-		if nftRule != "" {
-			nftRules = append(nftRules, nftRule)
+		if len(nftRules) != 0 {
+			completeNftRules = append(completeNftRules, nftRules...)
 		}
 
 		if partial {
 			// If we couldn't fully generate the ruleset with only IPv4 or IP agnostic criteria, then
 			// fill in the remaining parts using IPv6 criteria.
-			nftRule, _, err = d.aclRuleCriteriaToRules(networkName, 6, &rule)
+			nftRules, _, err = d.aclRuleCriteriaToRules(networkName, 6, &rule)
 			if err != nil {
 				return err
 			}
 
-			if nftRule == "" {
-				return fmt.Errorf("Invalid empty rule generated")
+			if len(nftRules) == 0 {
+				// When using address set we may generates empty rules without it being an error.
+				continue
 			}
 
-			nftRules = append(nftRules, nftRule)
-		} else if nftRule == "" {
-			return fmt.Errorf("Invalid empty rule generated")
+			completeNftRules = append(completeNftRules, nftRules...)
 		}
 	}
 
@@ -940,7 +966,7 @@ func (d Nftables) NetworkApplyACLRules(networkName string, rules []ACLRule) erro
 		"chainSeparator": nftablesChainSeparator,
 		"networkName":    networkName,
 		"family":         "inet",
-		"rules":          nftRules,
+		"rules":          completeNftRules,
 	}
 
 	config := &strings.Builder{}
@@ -957,52 +983,9 @@ func (d Nftables) NetworkApplyACLRules(networkName string, rules []ACLRule) erro
 	return nil
 }
 
-// aclRuleCriteriaToRules converts an ACL rule into 1 or more nftables rules.
-func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rule *ACLRule) (string, bool, error) {
-	var args []string
-
-	if rule.Direction == "ingress" {
-		args = append(args, "oifname", networkName) // Coming from host into network's interface.
-	} else {
-		args = append(args, "iifname", networkName) // Coming from network's interface into host.
-	}
-
-	// Add subject filters.
-	isPartialRule := false
-
-	if rule.Source != "" {
-		matchArgs, partial, err := d.aclRuleSubjectToACLMatch("saddr", ipVersion, util.SplitNTrimSpace(rule.Source, ",", -1, false)...)
-		if err != nil {
-			return "", false, err
-		}
-
-		if matchArgs == nil {
-			return "", true, nil // Rule is not appropriate for ipVersion.
-		}
-
-		if partial && !isPartialRule {
-			isPartialRule = true
-		}
-
-		args = append(args, matchArgs...)
-	}
-
-	if rule.Destination != "" {
-		matchArgs, partial, err := d.aclRuleSubjectToACLMatch("daddr", ipVersion, util.SplitNTrimSpace(rule.Destination, ",", -1, false)...)
-		if err != nil {
-			return "", false, err
-		}
-
-		if matchArgs == nil {
-			return "", partial, nil // Rule is not appropriate for ipVersion.
-		}
-
-		if partial && !isPartialRule {
-			isPartialRule = true
-		}
-
-		args = append(args, matchArgs...)
-	}
+// buildRemainingRuleParts is a helper that returns the protocol, port, logging, and action parts of a rule.
+func (d Nftables) buildRemainingRuleParts(rule *ACLRule, ipVersion uint) (string, error) {
+	args := []string{}
 
 	// Add protocol filters.
 	if slices.Contains([]string{"tcp", "udp"}, rule.Protocol) {
@@ -1016,32 +999,15 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 			args = append(args, d.aclRulePortToACLMatch("dport", util.SplitNTrimSpace(rule.DestinationPort, ",", -1, false)...)...)
 		}
 	} else if slices.Contains([]string{"icmp4", "icmp6"}, rule.Protocol) {
-		var icmpIPVersion uint
 		var protoName string
 
 		switch rule.Protocol {
 		case "icmp4":
 			protoName = "icmp"
-			icmpIPVersion = 4
 			args = append(args, "ip", "protocol", protoName)
 		case "icmp6":
 			protoName = "icmpv6"
-			icmpIPVersion = 6
 			args = append(args, "ip6", "nexthdr", protoName)
-		}
-
-		if ipVersion != icmpIPVersion {
-			// If we got this far it means that source/destination are either empty or are filled
-			// with at least some subjects in the same family as ipVersion. So if the icmpIPVersion
-			// doesn't match the ipVersion then it means the rule contains mixed-version subjects
-			// which is invalid when using an IP version specific ICMP protocol.
-			if rule.Source != "" || rule.Destination != "" {
-				return "", false, fmt.Errorf("Invalid use of %q protocol with non-IPv%d source/destination criteria", rule.Protocol, ipVersion)
-			}
-
-			// Otherwise it means this is just a blanket ICMP rule and is only appropriate for use
-			// with the corresponding ipVersion nft command.
-			return "", true, nil // Rule is not appropriate for ipVersion.
 		}
 
 		if rule.ICMPType != "" {
@@ -1056,9 +1022,8 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 	// Handle logging.
 	if rule.Log {
 		args = append(args, "log")
-
 		if rule.LogName != "" {
-			// Add a trailing space to prefix for readability in logs.
+			// Append a trailing space for readability in logs.
 			args = append(args, "prefix", fmt.Sprintf(`"%s "`, rule.LogName))
 		}
 	}
@@ -1071,24 +1036,190 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 
 	args = append(args, action)
 
-	return strings.Join(args, " "), isPartialRule, nil
+	return strings.Join(args, " "), nil
 }
 
-// aclRuleSubjectToACLMatch converts direction (source/destination) and subject criteria list into xtables args.
-// Returns nil if none of the subjects are appropriate for the ipVersion.
-func (d Nftables) aclRuleSubjectToACLMatch(direction string, ipVersion uint, subjectCriteria ...string) ([]string, bool, error) {
-	fieldParts := make([]string, 0, len(subjectCriteria))
+// aclRuleCriteriaToRules converts an ACL rule into one or more nftables rule strings.
+// It uses aclRuleSubjectToACLMatch to generate separate fragments for subject criteria.
+// The function returns a slice of complete rule strings, a partial flag, and an error.
+func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rule *ACLRule) ([]string, bool, error) {
+	// Build a base argument list with the interface name.
+	baseArgs := []string{}
+	var useAddressSets bool
+	if rule.Direction == "ingress" {
+		// For ingress, the rule applies to packets coming from the host into the network's interface.
+		baseArgs = append(baseArgs, "oifname", networkName)
+	} else {
+		// For egress, packets leaving the network's interface toward the host.
+		baseArgs = append(baseArgs, "iifname", networkName)
+	}
 
+	// We'll accumulate rule fragments in this slice.
+	var ruleFragments [][]string
+	var ruleStrings []string
+	overallPartial := false
+
+	// Process source criteria if present.
+	if rule.Source != "" {
+		var err error
+		var matchFragments []string
+		matchFragments, overallPartial, err = d.aclRuleSubjectToACLMatch("saddr", ipVersion, util.SplitNTrimSpace(rule.Source, ",", -1, false)...)
+		if err != nil {
+			return nil, overallPartial, err
+		}
+
+		if len(matchFragments) == 0 {
+			overallPartial = true
+		} else {
+			// For each fragment generated from the source criteria,
+			// start a new rule fragment beginning with the base arguments.
+			for _, frag := range matchFragments {
+				// if fragment contain IP address sets of different family than icmp drop fragment
+				// This is ok for icmp only as we may apply both ipv4 and ipv6 restriction in match field for tcp/udp
+				ruleFragments = append(ruleFragments, append(append([]string{}, baseArgs...), frag))
+			}
+		}
+	}
+
+	// Process destination criteria if present.
+	if rule.Destination != "" {
+		var err error
+		var matchFragments []string
+		matchFragments, overallPartial, err = d.aclRuleSubjectToACLMatch("daddr", ipVersion, util.SplitNTrimSpace(rule.Destination, ",", -1, false)...)
+		if err != nil {
+			return nil, overallPartial, err
+		}
+
+		if len(matchFragments) == 0 {
+			overallPartial = true
+		} else {
+			if len(ruleFragments) > 0 {
+				// Combine each existing fragment with each destination fragment.
+				var combined [][]string
+				contains := func(fragMap [][]string, item []string) bool {
+					for _, s := range fragMap {
+						if strings.Join(s, " ") == strings.Join(item, " ") {
+							return true
+						}
+					}
+
+					return false
+				}
+
+				for _, frag := range ruleFragments {
+					for _, df := range matchFragments {
+						newRule := append(append([]string{}, frag...), df)
+
+						if !contains(combined, newRule) {
+							combined = append(combined, newRule)
+						}
+					}
+				}
+
+				ruleFragments = combined
+			} else {
+				// If no source criteria were provided, start with baseArgs and add destination fragments.
+				for _, df := range matchFragments {
+					ruleFragments = append(ruleFragments, append(append([]string{}, baseArgs...), df))
+				}
+			}
+		}
+	}
+
+	// If source and destination are empty we want to build base rules at least
+	if rule.Source == "" && rule.Destination == "" {
+		ruleFragments = append(ruleFragments, append([]string{}, baseArgs...))
+	}
+
+	// Build the remaining parts (protocol, ports, logging, action).
+	suffixParts, err := d.buildRemainingRuleParts(rule, ipVersion)
+	if err != nil {
+		return nil, overallPartial, err
+	}
+
+	// Append the common suffix parts to every fragment.
+	for _, frag := range ruleFragments {
+		fullFrag := append(frag, suffixParts)
+		// Filter out for icmp address sets not in the correct ip version
+		ruleString := strings.Join(fullFrag, " ")
+
+		if slices.Contains([]string{"icmp4", "icmp6"}, rule.Protocol) {
+			var icmpIPVersion uint
+			switch rule.Protocol {
+			case "icmp4":
+				icmpIPVersion = 4
+			case "icmp6":
+				icmpIPVersion = 6
+			}
+
+			if strings.Contains(rule.Source, "$") || strings.Contains(rule.Destination, "$") {
+				useAddressSets = true
+			}
+
+			if ipVersion != icmpIPVersion {
+				if !useAddressSets {
+					// If we got this far it means that source/destination are either empty or are filled
+					// with at least some subjects in the same family as ipVersion. So if the icmpIPVersion
+					// doesn't match the ipVersion then it means the rule contains mixed-version subjects
+					// which is invalid when using an IP version specific ICMP protocol.
+					if rule.Source != "" || rule.Destination != "" {
+						return nil, overallPartial, fmt.Errorf("Invalid use of %q protocol with non-IPv%d source/destination criteria", rule.Protocol, ipVersion)
+					}
+
+					// Otherwise it means this is just a blanket ICMP rule and is only appropriate for use
+					// with the corresponding ipVersion nft command.
+					return nil, true, nil // Rule is not appropriate for ipVersion.
+				}
+
+				if strings.Contains(ruleString, fmt.Sprintf("_ipv%d", ipVersion)) {
+					continue
+				}
+			}
+		}
+
+		ruleStrings = append(ruleStrings, ruleString)
+	}
+
+	return ruleStrings, overallPartial, nil
+}
+
+// aclRuleSubjectToACLMatch converts a list of subject criteria into one or more nft rule fragments.
+// It splits the criteria into address-set references and literal addresses.
+// For each address set reference (criteria starting with "$"), it creates a fragment using the set reference
+// (without braces). For literal addresses, it creates one fragment combining them in braces.
+// It returns a slice of fragments, a partial flag, and an error.
+func (d Nftables) aclRuleSubjectToACLMatch(direction string, ipVersion uint, subjectCriteria ...string) ([]string, bool, error) {
+	var setRefs []string
+	var literals []string
 	partial := false
 
-	// For each criterion check if value looks like IP CIDR.
+	// Process each criterion
 	for _, subjectCriterion := range subjectCriteria {
-		if validate.IsNetworkRange(subjectCriterion) == nil {
-			criterionParts := strings.SplitN(subjectCriterion, "-", 2)
-			if len(criterionParts) > 1 {
+		if strings.HasPrefix(subjectCriterion, "$") {
+			// This is an address set reference.
+			setName := strings.TrimPrefix(subjectCriterion, "$")
+			// With an address we won't guess if it only contains ipv4 or ipv6 address so partial is set
+			partial = true
+			switch ipVersion {
+			case 6:
+				setRefs = append(setRefs, fmt.Sprintf(" @%s_ipv6", setName))
+			case 4:
+				setRefs = append(setRefs, fmt.Sprintf(" @%s_ipv4", setName))
+			}
+		} else {
+			// Process literal address or range.
+			if validate.IsNetworkRange(subjectCriterion) == nil {
+				criterionParts := strings.SplitN(subjectCriterion, "-", 2)
+
+				if !(len(criterionParts) > 1) {
+					return nil, false, fmt.Errorf("Invalid IP range %q", subjectCriterion)
+				}
+
 				ip := net.ParseIP(criterionParts[0])
+
 				if ip != nil {
 					var subjectIPVersion uint = 4
+
 					if ip.To4() == nil {
 						subjectIPVersion = 6
 					}
@@ -1098,19 +1229,21 @@ func (d Nftables) aclRuleSubjectToACLMatch(direction string, ipVersion uint, sub
 						continue // Skip subjects that are not for the ipVersion we are looking for.
 					}
 
-					fieldParts = append(fieldParts, fmt.Sprintf("%s-%s", criterionParts[0], criterionParts[1]))
+					literals = append(literals, fmt.Sprintf("%s-%s", criterionParts[0], criterionParts[1]))
 				}
 			} else {
-				return nil, false, fmt.Errorf("Invalid IP range %q", subjectCriterion)
-			}
-		} else {
-			ip := net.ParseIP(subjectCriterion)
-			if ip == nil {
-				ip, _, _ = net.ParseCIDR(subjectCriterion)
-			}
+				ip := net.ParseIP(subjectCriterion)
 
-			if ip != nil {
+				if ip == nil {
+					ip, _, _ = net.ParseCIDR(subjectCriterion)
+				}
+
+				if ip == nil {
+					return nil, false, fmt.Errorf("Unsupported nftables subject %q", subjectCriterion)
+				}
+
 				var subjectIPVersion uint = 4
+
 				if ip.To4() == nil {
 					subjectIPVersion = 6
 				}
@@ -1120,23 +1253,36 @@ func (d Nftables) aclRuleSubjectToACLMatch(direction string, ipVersion uint, sub
 					continue // Skip subjects that are not for the ipVersion we are looking for.
 				}
 
-				fieldParts = append(fieldParts, subjectCriterion)
-			} else {
-				return nil, false, fmt.Errorf("Unsupported nftables subject %q", subjectCriterion)
+				literals = append(literals, subjectCriterion)
 			}
 		}
 	}
 
-	if len(fieldParts) > 0 {
-		ipFamily := "ip"
-		if ipVersion == 6 {
-			ipFamily = "ip6"
-		}
+	// Build the result fragments.
+	var fragments []string
+	ipFamily := "ip"
 
-		return []string{ipFamily, direction, fmt.Sprintf("{%s}", strings.Join(fieldParts, ","))}, partial, nil
+	if ipVersion == 6 {
+		ipFamily = "ip6"
 	}
 
-	return nil, partial, nil // No subjects suitable for ipVersion.
+	// For each set reference, create its own fragment.
+	if len(setRefs) > 0 {
+		for _, ref := range setRefs {
+			fragments = append(fragments, fmt.Sprintf("%s %s %s", ipFamily, direction, ref))
+		}
+	}
+
+	// If there are literal addresses, create one fragment combining them.
+	if len(literals) > 0 {
+		fragments = append(fragments, fmt.Sprintf("%s %s {%s}", ipFamily, direction, strings.Join(literals, ",")))
+	}
+
+	if len(fragments) == 0 {
+		return nil, partial, nil
+	}
+
+	return fragments, partial, nil
 }
 
 // aclRulePortToACLMatch converts protocol (tcp/udp), direction (sports/dports) and port criteria list into
@@ -1146,6 +1292,7 @@ func (d Nftables) aclRulePortToACLMatch(direction string, portCriteria ...string
 
 	for _, portCriterion := range portCriteria {
 		criterionParts := strings.SplitN(portCriterion, "-", 2)
+
 		if len(criterionParts) > 1 {
 			fieldParts = append(fieldParts, fmt.Sprintf("%s-%s", criterionParts[0], criterionParts[1]))
 		} else {
@@ -1167,6 +1314,7 @@ func (d Nftables) NetworkApplyForwards(networkName string, rules []AddressForwar
 		for ruleIndex, rule := range rules {
 			// Process the rules in order of outer loop.
 			listenPortsLen := len(rule.ListenPorts)
+
 			if (listenPortsOnly && listenPortsLen < 1) || (!listenPortsOnly && listenPortsLen > 0) {
 				continue
 			}
@@ -1197,6 +1345,7 @@ func (d Nftables) NetworkApplyForwards(networkName string, rules []AddressForwar
 			}
 
 			ipFamily := "ip"
+
 			if rule.ListenAddress.To4() == nil {
 				ipFamily = "ip6"
 			}
@@ -1205,7 +1354,9 @@ func (d Nftables) NetworkApplyForwards(networkName string, rules []AddressForwar
 			targetAddressStr := rule.TargetAddress.String()
 
 			if rule.Protocol != "" {
+
 				targetPortRanges := portRangesFromSlice(rule.TargetPorts)
+
 				for _, targetPortRange := range targetPortRanges {
 					targetPortRangeStr := portRangeStr(targetPortRange, "-")
 					snatRules = append(snatRules, map[string]any{
@@ -1217,12 +1368,15 @@ func (d Nftables) NetworkApplyForwards(networkName string, rules []AddressForwar
 				}
 
 				dnatRanges := getOptimisedDNATRanges(&rule)
+
 				for listenPortRange, targetPortRange := range dnatRanges {
 					// Format the destination host/port as appropriate
 					targetDest := targetAddressStr
+
 					if targetPortRange[1] == 1 {
 						targetPortStr := portRangeStr(targetPortRange, ":")
 						targetDest = fmt.Sprintf("%s:%s", targetAddressStr, targetPortStr)
+
 						if ipFamily == "ip6" {
 							targetDest = fmt.Sprintf("[%s]:%s", targetAddressStr, targetPortStr)
 						}
@@ -1239,6 +1393,7 @@ func (d Nftables) NetworkApplyForwards(networkName string, rules []AddressForwar
 			} else {
 				// Format the destination host/port as appropriate.
 				targetDest := targetAddressStr
+
 				if ipFamily == "ip6" {
 					targetDest = fmt.Sprintf("[%s]", targetAddressStr)
 				}
@@ -1284,6 +1439,188 @@ func (d Nftables) NetworkApplyForwards(networkName string, rules []AddressForwar
 		err := d.removeChains([]string{"inet", "ip", "ip6"}, networkName, "fwdprert", "fwdout", "fwdpstrt")
 		if err != nil {
 			return fmt.Errorf("Failed clearing nftables forward rules for network %q: %w", networkName, err)
+		}
+	}
+
+	return nil
+}
+
+// NetworkApplyAddressSets creates or updates named nft sets for all address sets.
+func (d Nftables) NetworkApplyAddressSets(networkName string, sets []AddressSet) error {
+	var ipv4Addrs, ipv6Addrs, ethAddrs []string
+
+	for _, set := range sets {
+		name := set.Name
+		addresses := set.Addresses
+
+		// Flush current addresses in set if set exists
+		for _, suffix := range []string{"ipv4", "ipv6", "eth"} {
+			flush := &strings.Builder{}
+			setName := fmt.Sprintf("%s_%s", name, suffix)
+			exists, err := d.NamedAddressSetExists(setName, "inet")
+			if err != nil {
+				return fmt.Errorf("Failed to check existence of set %q: %w", setName, err)
+			}
+
+			if exists {
+				// Append a flush command for this set.
+				fmt.Fprintf(flush, " flush set inet %s %s\n", nftablesNamespace, setName)
+				err = subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(flush.String()), nil, "nft", "-f", "-")
+				if err != nil {
+					return fmt.Errorf("Failed to flush nft set for address set %q: %w", setName, err)
+				}
+			}
+		}
+
+		for _, addr := range addresses {
+			// Try IP first.
+			ip := net.ParseIP(addr)
+			if ip != nil {
+				if ip.To4() != nil {
+					ipv4Addrs = append(ipv4Addrs, addr)
+					continue
+				} else {
+					ipv6Addrs = append(ipv6Addrs, addr)
+					continue
+				}
+			}
+
+			// Try to parse as CIDR.
+			_, ipNet, err := net.ParseCIDR(addr)
+			if err == nil {
+				if ipNet.IP.To4() != nil {
+					ipv4Addrs = append(ipv4Addrs, addr)
+				} else {
+					ipv6Addrs = append(ipv6Addrs, addr)
+				}
+
+				continue
+			}
+
+			// Try MAC perhaps future support
+			_, err = net.ParseMAC(addr)
+			if err == nil {
+				ethAddrs = append(ethAddrs, addr)
+				continue
+			}
+
+			return fmt.Errorf("unsupported address format: %q", addr)
+		}
+
+		// Build NFT config.
+		configv4 := &strings.Builder{}
+		configv6 := &strings.Builder{}
+		configeth := &strings.Builder{}
+
+		if len(ipv4Addrs) >= 0 {
+			// Create v4 named set
+			fmt.Fprintf(configv4, "add set inet %s ", nftablesNamespace)
+			setExtendedName := fmt.Sprintf("%s_ipv4", name)
+			if len(ipv4Addrs) == 0 {
+				// Create empty set to avoid errors
+				fmt.Fprintf(configv4, " %s {\n    type ipv4_addr;\n  flags interval;\n}\n", setExtendedName)
+			} else {
+				fmt.Fprintf(configv4, " %s {\n    type ipv4_addr;\n  flags interval;\n  elements = { %s }\n  }\n", setExtendedName, strings.Join(ipv4Addrs, ", "))
+			}
+
+			err := subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(configv4.String()), nil, "nft", "-f", "-")
+			if err != nil {
+				return fmt.Errorf("Failed to apply nft sets for address set %q: %w", name, err)
+			}
+		}
+
+		if len(ipv6Addrs) >= 0 {
+			fmt.Fprintf(configv6, "add set inet %s ", nftablesNamespace)
+			setExtendedName := fmt.Sprintf("%s_ipv6", name)
+			// Create v6 named set
+			if len(ipv6Addrs) == 0 {
+				// Create empty set to avoid errors
+				fmt.Fprintf(configv6, " %s {\n    type ipv6_addr;\n  flags interval;\n}\n", setExtendedName)
+			} else {
+				fmt.Fprintf(configv6, " %s {\n    type ipv6_addr;\n  flags interval;\n  elements = { %s }\n  }\n", setExtendedName, strings.Join(ipv6Addrs, ", "))
+			}
+
+			err := subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(configv6.String()), nil, "nft", "-f", "-")
+			if err != nil {
+				return fmt.Errorf("Failed to apply nft sets for address set %q: %w", name, err)
+			}
+		}
+
+		// Should be >= but since we do not support it fr now leave it as a dead portion
+		if len(ethAddrs) > 0 {
+			fmt.Fprintf(configeth, "add set inet %s ", nftablesNamespace)
+			setExtendedName := fmt.Sprintf("%s_eth", name)
+			// Create eth named set perhaps future support
+			if len(ethAddrs) == 0 {
+				fmt.Fprintf(configeth, "  set %s {\n    type ether_addr;\n}\n", setExtendedName)
+			} else {
+				fmt.Fprintf(configeth, "  set %s {\n    type ether_addr;\n    elements = { %s }\n  }\n", setExtendedName, strings.Join(ethAddrs, ", "))
+			}
+
+			err := subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(configv6.String()), nil, "nft", "-f", "-")
+			if err != nil {
+				return fmt.Errorf("Failed to apply nft sets for address set %q: %w", name, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// NamedAddressSetExists checks if a named set exists in nftables.
+// It returns true if the set exists in the nftables namespace.
+func (d Nftables) NamedAddressSetExists(setName string, family string) (bool, error) {
+	// Execute the nft command with JSON output using subprocess.
+	output, err := subprocess.RunCommand("nft", "-j", "list", "sets")
+	if err != nil {
+		return false, fmt.Errorf("Failed to execute nft command: %w", err)
+	}
+
+	var setsOutput NftListSetsOutput
+	err = json.Unmarshal([]byte(output), &setsOutput)
+	if err != nil {
+		return false, fmt.Errorf("Failed to parse nft command output: %w", err)
+	}
+
+	// Iterate through the sets to find a match.
+	for _, entry := range setsOutput.Nftables {
+		if entry.Set != nil {
+			if strings.EqualFold(entry.Set.Name, setName) &&
+				strings.EqualFold(entry.Set.Family, family) &&
+				strings.EqualFold(entry.Set.Table, nftablesNamespace) {
+				return true, nil
+			}
+		}
+	}
+
+	// Set not found.
+	return false, nil
+}
+
+// RemoveIncusAddressSets remove every address set in incus namespace.
+func (d Nftables) RemoveIncusAddressSets() error {
+	// Execute the nft command with JSON output using subprocess.
+	output, err := subprocess.RunCommand("nft", "-j", "list", "sets", "inet")
+	if err != nil {
+		return fmt.Errorf("Failed to execute nft command: %w", err)
+	}
+
+	var setsOutput NftListSetsOutput
+	err = json.Unmarshal([]byte(output), &setsOutput)
+	if err != nil {
+		return fmt.Errorf("Failed to parse nft command output: %w", err)
+	}
+
+	for _, setEntry := range setsOutput.Nftables {
+		if setEntry.Set == nil {
+			continue // Skip entries that do not contain a set.
+		}
+
+		if strings.EqualFold(setEntry.Set.Table, nftablesNamespace) {
+			_, err := subprocess.RunCommand("nft", "delete", "set", "inet", nftablesNamespace, setEntry.Set.Name)
+			if err != nil {
+				return fmt.Errorf("Failed to delete nft named set %s: %w", setEntry.Set.Name, err)
+			}
 		}
 	}
 
