@@ -254,7 +254,7 @@ CREATE TABLE "networks_address_sets_config" (
     key TEXT NOT NULL,
     value TEXT NOT NULL,
     UNIQUE (network_address_set_id, key),
-    FOREIGN KEY (network_address_set_id) REFERENCES network_address_sets (id) ON DELETE CASCADE
+    FOREIGN KEY (network_address_set_id) REFERENCES networks_address_sets (id) ON DELETE CASCADE
 );
 CREATE TABLE "networks_config" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,

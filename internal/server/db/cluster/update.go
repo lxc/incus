@@ -134,12 +134,12 @@ CREATE TABLE "networks_address_sets_config" (
     key TEXT NOT NULL,
     value TEXT NOT NULL,
     UNIQUE (network_address_set_id, key),
-    FOREIGN KEY (network_address_set_id) REFERENCES network_address_sets (id) ON DELETE CASCADE
+    FOREIGN KEY (network_address_set_id) REFERENCES networks_address_sets (id) ON DELETE CASCADE
 );
 `
 	_, err := tx.Exec(q)
 	if err != nil {
-		return fmt.Errorf("Failed creating network_address_sets and network_address_sets_external_ids tables: %w", err)
+		return fmt.Errorf("Failed creating networks_address_sets and networks_address_sets_external_ids tables: %w", err)
 	}
 
 	return nil
