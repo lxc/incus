@@ -29,6 +29,7 @@ const (
 	TypeWarning               = 16
 	TypeClusterGroup          = 17
 	TypeStorageBucket         = 18
+	TypeNetworkAddressSet     = 19
 )
 
 // EntityNames associates an entity code to its name.
@@ -43,6 +44,7 @@ var EntityNames = map[int]string{
 	TypeInstanceSnapshot:      "instance snapshot",
 	TypeNetwork:               "network",
 	TypeNetworkACL:            "network acl",
+	TypeNetworkAddressSet:     "network address set",
 	TypeNode:                  "node",
 	TypeOperation:             "operation",
 	TypeStoragePool:           "storage pool",
@@ -69,6 +71,7 @@ var EntityURIs = map[int]string{
 	TypeInstanceSnapshot:      "/" + version.APIVersion + "/instances/%s/snapshots/%s?project=%s",
 	TypeNetwork:               "/" + version.APIVersion + "/networks/%s?project=%s",
 	TypeNetworkACL:            "/" + version.APIVersion + "/network-acls/%s?project=%s",
+	TypeNetworkAddressSet:     "/" + version.APIVersion + "/network-address-sets/%s?project=%s",
 	TypeNode:                  "/" + version.APIVersion + "/cluster/members/%s",
 	TypeOperation:             "/" + version.APIVersion + "/operations/%s",
 	TypeStoragePool:           "/" + version.APIVersion + "/storage-pools/%s",
