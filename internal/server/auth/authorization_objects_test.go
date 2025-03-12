@@ -61,6 +61,13 @@ func (s *objectSuite) TestObjectNetworkACL() {
 	})
 }
 
+func (s *objectSuite) TestObjectNetworkAddressSet() {
+	s.Assert().NotPanics(func() {
+		o := ObjectNetworkAddressSet("default", "network_address_set_name")
+		s.Equal("network_address_set:default/network_address_set_name", string(o))
+	})
+}
+
 func (s *objectSuite) TestObjectNetworkZone() {
 	s.Assert().NotPanics(func() {
 		o := ObjectNetworkZone("default", "network_zone_name")
@@ -168,6 +175,10 @@ func (s *objectSuite) TestObjectFromString() {
 		{
 			in:  "network_acl:default/acl1",
 			out: Object("network_acl:default/acl1"),
+		},
+		{
+			in:  "network_address_set:default/as1",
+			out: Object("network_address_set:default/as1"),
 		},
 		{
 			in:  "network_zone:default/example.com",
