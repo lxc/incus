@@ -210,73 +210,66 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 		}
 	}
 
-	// Apply storage configuration.
-	if config.Server.StoragePools != nil && len(config.Server.StoragePools) > 0 {
-		// Get the list of storagePools.
-		storagePoolNames, err := r.GetStoragePoolNames()
+	// Apply storage pool configuration.
+	applyStoragePool := func(storagePool api.InitStoragePoolsProjectPost) error {
+		// Get the current storage pool.
+		currentStoragePool, etag, err := r.UseProject(storagePool.Project).GetStoragePool(storagePool.Name)
+
 		if err != nil {
-			return fmt.Errorf("Failed to retrieve list of storage pools: %w", err)
-		}
-
-		// StoragePool creator
-		createStoragePool := func(storagePool api.StoragePoolsPost) error {
-			// Create the storagePool if doesn't exist.
-			err := r.CreateStoragePool(storagePool)
+			// Create the storage pool if it doesn't exist.
+			err := r.UseProject(storagePool.Project).CreateStoragePool(storagePool.StoragePoolsPost)
 			if err != nil {
-				return fmt.Errorf("Failed to create storage pool %q: %w", storagePool.Name, err)
+				return fmt.Errorf("Failed to create storage pool %q in project %q %w", storagePool.Name, storagePool.Project, err)
 			}
-
-			return nil
-		}
-
-		// StoragePool updater.
-		updateStoragePool := func(target api.StoragePoolsPost) error {
-			// Get the current storagePool.
-			storagePool, etag, err := r.GetStoragePool(target.Name)
-			if err != nil {
-				return fmt.Errorf("Failed to retrieve current storage pool %q: %w", target.Name, err)
-			}
-
+		} else {
 			// Quick check.
-			if storagePool.Driver != target.Driver {
-				return fmt.Errorf("Storage pool %q is of type %q instead of %q", storagePool.Name, storagePool.Driver, target.Driver)
+			if currentStoragePool.Driver != storagePool.Driver {
+				return fmt.Errorf("Storage pool %q in project %q is of type %q instead of %q", currentStoragePool.Name, storagePool.Project, currentStoragePool.Driver, storagePool.Driver)
+			}
+
+			// Prepare the update.
+			newStoragePool := api.StoragePoolPut{}
+			err = util.DeepCopy(currentStoragePool.Writable(), &newStoragePool)
+			if err != nil {
+				return fmt.Errorf("Failed to copy configuration of storage pool %q in project %q: %w", storagePool.Name, storagePool.Project, err)
 			}
 
 			// Description override.
-			if target.Description != "" {
-				storagePool.Description = target.Description
+			if storagePool.Description != "" {
+				newStoragePool.Description = storagePool.Description
 			}
 
 			// Config overrides.
-			for k, v := range target.Config {
-				storagePool.Config[k] = fmt.Sprintf("%v", v)
+			for k, v := range storagePool.Config {
+				newStoragePool.Config[k] = fmt.Sprintf("%v", v)
 			}
 
 			// Apply it.
-			err = r.UpdateStoragePool(target.Name, storagePool.Writable(), etag)
+			err = r.UseProject(storagePool.Project).UpdateStoragePool(currentStoragePool.Name, newStoragePool, etag)
 			if err != nil {
-				return fmt.Errorf("Failed to update storage pool %q: %w", target.Name, err)
+				return fmt.Errorf("Failed to update storage pool %q in project %q: %w", storagePool.Name, storagePool.Project, err)
 			}
-
-			return nil
 		}
 
-		for _, storagePool := range config.Server.StoragePools {
-			// New storagePool.
-			if !slices.Contains(storagePoolNames, storagePool.Name) {
-				err := createStoragePool(storagePool)
-				if err != nil {
-					return err
-				}
+		return nil
+	}
 
-				continue
-			}
+	// Apply storage pools in the default project before other projects config applied (so that if the projects
+	// depend on a storage pool in the default project they can have their config applied successfully).
+	for _, storagePool := range config.Server.StoragePools {
+		// Populate default project if not specified for backwards compatbility with earlier
+		// preseed dump files.
+		if storagePool.Project == "" {
+			storagePool.Project = api.ProjectDefaultName
+		}
 
-			// Existing storagePool.
-			err := updateStoragePool(storagePool)
-			if err != nil {
-				return err
-			}
+		if storagePool.Project != api.ProjectDefaultName {
+			continue
+		}
+
+		err := applyStoragePool(storagePool)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -401,6 +394,18 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 		}
 
 		err := applyNetwork(config.Server.Networks[i])
+		if err != nil {
+			return err
+		}
+	}
+
+	// Apply storage pools in non-default projects after project config applied (so that their projects exist).
+	for _, storagePool := range config.Server.StoragePools {
+		if storagePool.Project == api.ProjectDefaultName {
+			continue
+		}
+
+		err := applyStoragePool(storagePool)
 		if err != nil {
 			return err
 		}
