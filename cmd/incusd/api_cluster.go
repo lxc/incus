@@ -79,36 +79,6 @@ var clusterNodeStateCmd = APIEndpoint{
 	Post: APIEndpointAction{Handler: clusterNodeStatePost, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
-var internalClusterAcceptCmd = APIEndpoint{
-	Path: "cluster/accept",
-
-	Post: APIEndpointAction{Handler: internalClusterPostAccept, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
-}
-
-var internalClusterRebalanceCmd = APIEndpoint{
-	Path: "cluster/rebalance",
-
-	Post: APIEndpointAction{Handler: internalClusterPostRebalance, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
-}
-
-var internalClusterAssignCmd = APIEndpoint{
-	Path: "cluster/assign",
-
-	Post: APIEndpointAction{Handler: internalClusterPostAssign, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
-}
-
-var internalClusterHandoverCmd = APIEndpoint{
-	Path: "cluster/handover",
-
-	Post: APIEndpointAction{Handler: internalClusterPostHandover, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
-}
-
-var internalClusterRaftNodeCmd = APIEndpoint{
-	Path: "cluster/raft-node/{address}",
-
-	Delete: APIEndpointAction{Handler: internalClusterRaftNodeDelete, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
-}
-
 // swagger:operation GET /1.0/cluster cluster cluster_get
 //
 //	Get the cluster configuration

@@ -30,12 +30,12 @@ test_network_forward() {
   incus network forward show "${netName}" 198.51.100.1 | grep -q -F "description: Test network forward"
 
   # Check forward is exported via BGP prefixes.
-  incus query /internal/testing/bgp | grep "198.51.100.1/32"
+  incus query /internal/debug/bgp | grep "198.51.100.1/32"
 
   incus network forward delete "${netName}" 198.51.100.1
 
   # Check deleting network forward removes forward BGP prefix.
-  ! incus query /internal/testing/bgp | grep "198.51.100.1/32" || false
+  ! incus query /internal/debug/bgp | grep "198.51.100.1/32" || false
 
   # Check creating forward with default target creates valid firewall rules.
   incus network forward create "${netName}" 198.51.100.1 target_address=192.0.2.2
@@ -140,13 +140,13 @@ test_network_forward() {
   fi
 
   # Check forward is exported via BGP prefixes before network delete.
-  incus query /internal/testing/bgp | grep "198.51.100.1/32"
+  incus query /internal/debug/bgp | grep "198.51.100.1/32"
 
   # Check deleting the network clears the forward firewall rules.
   incus network delete "${netName}"
 
   # Check deleting network removes forward BGP prefix.
-  ! incus query /internal/testing/bgp | grep "198.51.100.1/32" || false
+  ! incus query /internal/debug/bgp | grep "198.51.100.1/32" || false
 
   if [ "$firewallDriver" = "xtables" ]; then
     ! iptables -w -t nat -S | grep -c "generated for Incus network-forward ${netName}" || false

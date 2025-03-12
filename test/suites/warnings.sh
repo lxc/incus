@@ -3,13 +3,13 @@ test_warnings() {
     incus query --wait /1.0/warnings\?recursion=1 | jq -r '.[].uuid' | xargs -n1 incus warning delete
 
     # Create a global warning (no node and no project)
-    incus query --wait -X POST -d '{\"type_code\": 0, \"message\": \"global warning\"}' /internal/testing/warnings
+    incus query --wait -X POST -d '{\"type_code\": 0, \"message\": \"global warning\"}' /internal/debug/warnings
 
     # More valid queries
-    incus query --wait -X POST -d '{\"type_code\": 0, \"message\": \"global warning\", \"project\": \"default\"}' /internal/testing/warnings
+    incus query --wait -X POST -d '{\"type_code\": 0, \"message\": \"global warning\", \"project\": \"default\"}' /internal/debug/warnings
 
     # Update the last warning. This will not create a new warning.
-    incus query --wait -X POST -d '{\"type_code\": 0, \"message\": \"global warning 2\", \"project\": \"default\"}' /internal/testing/warnings
+    incus query --wait -X POST -d '{\"type_code\": 0, \"message\": \"global warning 2\", \"project\": \"default\"}' /internal/debug/warnings
 
     # There should be two warnings now.
     count=$(incus query --wait /1.0/warnings | jq 'length')
@@ -19,13 +19,13 @@ test_warnings() {
     [ "${count}" -eq 2 ] || false
 
     # Invalid query (unknown project)
-    ! incus query --wait -X POST -d '{\"type_code\": 0, \"message\": \"global warning\", \"project\": \"foo\"}' /internal/testing/warnings || false
+    ! incus query --wait -X POST -d '{\"type_code\": 0, \"message\": \"global warning\", \"project\": \"foo\"}' /internal/debug/warnings || false
 
     # Invalid query (unknown type code)
-    ! incus query --wait -X POST -d '{\"type_code\": 999, \"message\": \"global warning\"}' /internal/testing/warnings || false
+    ! incus query --wait -X POST -d '{\"type_code\": 999, \"message\": \"global warning\"}' /internal/debug/warnings || false
 
     # Both entity type code as entity ID need to be valid otherwise no warning will be created. Note that empty/null values are valid as well.
-    ! incus query --wait -X POST -d '{\"type_code\": 0, \"message\": \"global warning\", \"entity_type_code\": 0, \"entity_id\": 0}' /internal/testing/warnings || false
+    ! incus query --wait -X POST -d '{\"type_code\": 0, \"message\": \"global warning\", \"entity_type_code\": 0, \"entity_id\": 0}' /internal/debug/warnings || false
 
     ensure_import_testimage
 
@@ -33,7 +33,7 @@ test_warnings() {
     image_id=$(echo 'select image_id from images_aliases where name="testimage"' | incus admin sql global - | grep -Eo '[[:digit:]]+')
 
     # Create a warning with entity type "image" and entity ID ${image_id} (the imported testimage)
-    incus query --wait -X POST -d "{\\\"type_code\\\": 0, \\\"message\\\": \\\"global warning\\\", \\\"entity_type_code\\\": 1, \\\"entity_id\\\": ${image_id}}" /internal/testing/warnings
+    incus query --wait -X POST -d "{\\\"type_code\\\": 0, \\\"message\\\": \\\"global warning\\\", \\\"entity_type_code\\\": 1, \\\"entity_id\\\": ${image_id}}" /internal/debug/warnings
 
     # There should be three warnings now.
     count=$(incus warning list --format json | jq 'length')
