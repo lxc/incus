@@ -32,6 +32,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/ip"
 	"github.com/lxc/incus/v6/internal/server/locking"
 	"github.com/lxc/incus/v6/internal/server/network/acl"
+	addressset "github.com/lxc/incus/v6/internal/server/network/address-set"
 	networkOVN "github.com/lxc/incus/v6/internal/server/network/ovn"
 	ovnSB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-sb"
 	"github.com/lxc/incus/v6/internal/server/network/ovs"
@@ -2842,7 +2843,14 @@ func (n *ovn) setup(update bool) error {
 			n.Name(): {Name: n.Name(), Type: n.Type(), ID: n.ID(), Config: n.Config()},
 		}
 
-		cleanup, err := acl.OVNEnsureACLs(n.state, n.logger, n.ovnnb, n.Project(), aclNameIDs, aclNets, securityACLS, false)
+		cleanup, err := addressset.OVNEnsureAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), securityACLS)
+		if err != nil {
+			return fmt.Errorf("Failed ensuring address sets for added ACLs are configured in OVN for network: %w", err)
+		}
+
+		revert.Add(cleanup)
+
+		cleanup, err = acl.OVNEnsureACLs(n.state, n.logger, n.ovnnb, n.Project(), aclNameIDs, aclNets, securityACLS, false)
 		if err != nil {
 			return fmt.Errorf("Failed ensuring security ACLs are configured in OVN for network: %w", err)
 		}
@@ -3085,6 +3093,15 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 		err = n.ovnnb.DeleteAddressSet(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()))
 		if err != nil && err != networkOVN.ErrNotFound {
 			return err
+		}
+
+		// Delete address sets used in ACLs.
+		securityACLS := util.SplitNTrimSpace(n.config["security.acls"], ",", -1, true)
+
+		// Load address sets referenced by ACLs.
+		err = addressset.OVNDeleteAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), securityACLS)
+		if err != nil {
+			return fmt.Errorf("Failed deleting address sets for security ACLs in OVN for network: %w", err)
 		}
 
 		// Delete the chassis group for the network.
@@ -3563,6 +3580,23 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 
 			// Apply security ACL and default rule changes.
 			if aclConfigChanged {
+				// Update relevant address sets and Remove from removedACL.
+				if len(addedACLs) > 0 {
+					cleanup, err := addressset.OVNEnsureAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), addedACLs)
+					if err != nil {
+						return fmt.Errorf("Failed ensuring address sets for added ACLs are configured in OVN for network: %w", err)
+					}
+
+					revert.Add(cleanup)
+				}
+
+				if len(removedACLs) > 0 {
+					err = addressset.OVNDeleteAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), removedACLs)
+					if err != nil {
+						return fmt.Errorf("Failed to delete address set for removed ACLs are configured in OVN for network: %w", err)
+					}
+				}
+
 				// Check whether we need to add any of the new ACLs to the NIC.
 				for _, addedACL := range addedACLs {
 					if slices.Contains(nicACLs, addedACL) {
@@ -3725,6 +3759,12 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 	err = n.loadBalancerBGPSetupPrefixes()
 	if err != nil {
 		return fmt.Errorf("Failed applying BGP prefixes for load balancers: %w", err)
+	}
+
+	// Delete any address set that is unused
+	err = addressset.OVNAddressSetsDeleteIfUnused(n.state, n.logger, n.ovnnb, n.Project())
+	if err != nil {
+		return fmt.Errorf("Failed removing unused OVN address sets: %w", err)
 	}
 
 	revert.Success()
@@ -4371,7 +4411,13 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 				n.Name(): {Name: n.Name(), Type: n.Type(), ID: n.ID(), Config: n.Config()},
 			}
 
-			cleanup, err := acl.OVNEnsureACLs(n.state, n.logger, n.ovnnb, n.Project(), aclNameIDs, aclNets, nicACLNames, false)
+			cleanup, err := addressset.OVNEnsureAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), nicACLNames)
+			if err != nil {
+				return "", nil, fmt.Errorf("Failed ensuring address sets for nic ACLs are configured in OVN for network: %w", err)
+			}
+
+			revert.Add(cleanup)
+			cleanup, err = acl.OVNEnsureACLs(n.state, n.logger, n.ovnnb, n.Project(), aclNameIDs, aclNets, nicACLNames, false)
 			if err != nil {
 				return "", nil, fmt.Errorf("Failed ensuring security ACLs are configured in OVN for instance: %w", err)
 			}
@@ -5115,6 +5161,31 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 			return fmt.Errorf("Failed applying OVN load balancer: %w", err)
 		}
 
+		// Add internal static route to the network forward (helps with OVN IC).
+		var nexthop net.IP
+		if listenAddressNet.IP.To4() == nil {
+			routerV6, _, err := n.parseRouterIntPortIPv6Net()
+			if err == nil {
+				nexthop = routerV6
+			}
+		} else {
+			routerV4, _, err := n.parseRouterIntPortIPv4Net()
+			if err == nil {
+				nexthop = routerV4
+			}
+		}
+
+		if nexthop != nil {
+			err = n.ovnnb.CreateLogicalRouterRoute(context.TODO(), n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: *listenAddressNet})
+			if err != nil {
+				return err
+			}
+
+			revert.Add(func() {
+				_ = n.ovnnb.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), *listenAddressNet)
+			})
+		}
+
 		// Notify all other members to refresh their BGP prefixes.
 		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
 		if err != nil {
@@ -5474,6 +5545,31 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 		err = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(loadBalancer.ListenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
 		if err != nil {
 			return fmt.Errorf("Failed applying OVN load balancer: %w", err)
+		}
+
+		// Add internal static route to the load-balancer (helps with OVN IC).
+		var nexthop net.IP
+		if listenAddressNet.IP.To4() == nil {
+			routerV6, _, err := n.parseRouterIntPortIPv6Net()
+			if err == nil {
+				nexthop = routerV6
+			}
+		} else {
+			routerV4, _, err := n.parseRouterIntPortIPv4Net()
+			if err == nil {
+				nexthop = routerV4
+			}
+		}
+
+		if nexthop != nil {
+			err = n.ovnnb.CreateLogicalRouterRoute(context.TODO(), n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: *listenAddressNet})
+			if err != nil {
+				return err
+			}
+
+			revert.Add(func() {
+				_ = n.ovnnb.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), *listenAddressNet)
+			})
 		}
 
 		// Notify all other members to refresh their BGP prefixes.
