@@ -268,7 +268,7 @@ func (d *linstor) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 	// For snapshots, restore them into the target volume
 	if srcVol.IsSnapshot() {
 		l.Debug("Copying snapshot to volume")
-		err := d.createResourceFromSnapshot(srcVol, vol)
+		err := d.createResourceDefinitionFromSnapshot(srcVol, vol)
 
 		if err != nil {
 			return err
@@ -818,13 +818,13 @@ func (d *linstor) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 		return d.MountVolumeSnapshot(fsVol, op)
 	}
 
-	// Create a new temporary resource-definition from the snapshot
-	err = d.createResourceFromSnapshot(snapVol, snapVol)
+	// Create a new temporary resource definition from the snapshot
+	err = d.createResourceDefinitionFromSnapshot(snapVol, snapVol)
 	if err != nil {
 		return err
 	}
 
-	rev.Add(func() { _ = d.DeleteVolume(snapVol, op) })
+	rev.Add(func() { _ = d.deleteResourceDefinitionFromSnapshot(snapVol) })
 
 	volDevPath, err := d.getLinstorDevPath(snapVol)
 	if err != nil {
@@ -891,11 +891,6 @@ func (d *linstor) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation
 	l := d.logger.AddContext(logger.Ctx{"volume": snapVol.Name()})
 	l.Debug("Umounting snapshot volume")
 
-	linstor, err := d.state.Linstor()
-	if err != nil {
-		return false, err
-	}
-
 	unlock, err := snapVol.MountLock()
 	if err != nil {
 		return false, err
@@ -929,17 +924,7 @@ func (d *linstor) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation
 	}
 
 	l.Debug("Deleting temporary resource definition for snapshot mount")
-
-	resourceDefinition, err := d.getResourceDefinition(snapVol, false)
-	if err != nil {
-		if errors.Is(err, errResourceDefinitionNotFound) {
-			return false, nil
-		}
-
-		return false, err
-	}
-
-	err = linstor.Client.ResourceDefinitions.Delete(context.TODO(), resourceDefinition.Name)
+	err = d.deleteResourceDefinitionFromSnapshot(snapVol)
 	if err != nil {
 		return false, err
 	}
