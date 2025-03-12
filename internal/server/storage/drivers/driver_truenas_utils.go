@@ -1,9 +1,9 @@
 package drivers
 
 import (
+	"encoding/json"
 	"fmt"
 	"path/filepath"
-	"encoding/json"
 	"strings"
 
 	"github.com/google/uuid"

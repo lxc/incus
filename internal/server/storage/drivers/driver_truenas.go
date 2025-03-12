@@ -272,12 +272,6 @@ func (d *truenas) Create() error {
 
 	revert.Add(func() { _ = d.Delete(nil) })
 
-	// // Apply our default configuration.
-	// err = d.ensureInitialDatasets(false)
-	// if err != nil {
-	// 	return err
-	// }
-
 	revert.Success()
 	return nil
 }
@@ -340,14 +334,13 @@ func (d *truenas) Validate(config map[string]string) error {
 		"truenas.key_file": validate.IsAny,
 		"truenas.url":      validate.IsAny,
 
-		// 	"truenas.clone_copy": validate.Optional(func(value string) error {
-		// 		if value == "rebase" {
-		// 			return nil
-		// 		}
+		"truenas.clone_copy": validate.Optional(func(value string) error {
+			// if value == "rebase" {
+			// 	return nil
+			// }
 
-		// 		return validate.IsBool(value)
-		// 	}),
-		// 	"zfs.export": validate.Optional(validate.IsBool),
+			return validate.IsBool(value)
+		}),
 	}
 
 	return d.validatePool(config, rules, d.commonVolumeRules())
@@ -379,11 +372,6 @@ func (d *truenas) Update(changedConfig map[string]string) error {
 
 // Mount mounts the storage pool.
 func (d *truenas) Mount() (bool, error) {
-	// // Import the pool if not already imported.
-	// imported, err := d.importPool()
-	// if err != nil {
-	// 	return false, err
-	// }
 
 	// verify pool dataset exists
 	exists, err := d.datasetExists(d.config["truenas.dataset"])
@@ -407,33 +395,6 @@ func (d *truenas) Mount() (bool, error) {
 
 // Unmount unmounts the storage pool.
 func (d *truenas) Unmount() (bool, error) {
-	// // Skip if zfs.export config is set to false
-	// if util.IsFalse(d.config["zfs.export"]) {
-	// 	return false, nil
-	// }
-
-	// // Skip if using a dataset and not a full pool.
-	// if strings.Contains(d.config["zfs.pool_name"], "/") {
-	// 	return false, nil
-	// }
-
-	// // Check if already unmounted.
-	// exists, err := d.datasetExists(d.config["zfs.pool_name"])
-	// if err != nil {
-	// 	return false, err
-	// }
-
-	// if !exists {
-	// 	return false, nil
-	// }
-
-	// // Export the pool.
-	// poolName := strings.Split(d.config["zfs.pool_name"], "/")[0]
-	// _, err = subprocess.RunCommand("zpool", "export", poolName)
-	// if err != nil {
-	// 	return false, err
-	// }
-
 	return true, nil
 }
 
@@ -482,19 +443,9 @@ func (d *truenas) MigrationTypes(contentType ContentType, refresh bool, copySnap
 		rsyncFeatures = []string{"xattrs", "delete", "compress", "bidirectional"}
 	}
 
-	// Detect ZFS features.
-	// features := []string{migration.ZFSFeatureMigrationHeader, "compress"}
-
-	// if contentType == ContentTypeFS {
-	// 	features = append(features, migration.ZFSFeatureZvolFilesystems)
-	// }
-
 	if IsContentBlock(contentType) {
 		return []localMigration.Type{
-			// {
-			// 	FSType:   migration.MigrationFSType_ZFS,
-			// 	Features: features,
-			// },
+			// TODO: optimized
 			{
 				FSType:   migration.MigrationFSType_BLOCK_AND_RSYNC,
 				Features: rsyncFeatures,
@@ -512,10 +463,7 @@ func (d *truenas) MigrationTypes(contentType ContentType, refresh bool, copySnap
 	}
 
 	return []localMigration.Type{
-		// {
-		// 	FSType:   migration.MigrationFSType_ZFS,
-		// 	Features: features,
-		// },
+		// TODO: optimized
 		{
 			FSType:   migration.MigrationFSType_RSYNC,
 			Features: rsyncFeatures,
@@ -526,6 +474,7 @@ func (d *truenas) MigrationTypes(contentType ContentType, refresh bool, copySnap
 // roundVolumeBlockSizeBytes returns sizeBytes rounded up to the next multiple
 // of `vol`'s "zfs.blocksize".
 func (d *truenas) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) (int64, error) {
+	// NOTE: "zfs.blocksize" has support througout incus
 	minBlockSize, err := units.ParseByteSizeString(vol.ExpandedConfig("zfs.blocksize"))
 
 	// minBlockSize will be 0 if zfs.blocksize=""
