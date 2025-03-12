@@ -24,6 +24,8 @@ type Firewall interface {
 	NetworkClear(networkName string, delete bool, ipVersions []uint) error
 	NetworkApplyACLRules(networkName string, rules []drivers.ACLRule) error
 	NetworkApplyForwards(networkName string, rules []drivers.AddressForward) error
+	NetworkApplyAddressSets(sets []drivers.AddressSet, nftTable string) error
+	NetworkDeleteAddressSetsIfUnused(nftTable string) error
 
 	InstanceSetupBridgeFilter(projectName string, instanceName string, deviceName string, parentName string, hostName string, hwAddr string, IPv4Nets []*net.IPNet, IPv6Nets []*net.IPNet, parentManaged bool, macFiltering bool, aclRules []drivers.ACLRule) error
 	InstanceClearBridgeFilter(projectName string, instanceName string, deviceName string, parentName string, hostName string, hwAddr string, IPv4Nets []*net.IPNet, IPv6Nets []*net.IPNet) error
