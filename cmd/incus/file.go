@@ -1006,9 +1006,16 @@ func (c *cmdFile) sftpCreateFile(sftpConn *sftp.Client, targetPath string, args 
 		defer func() { _ = file.Close() }()
 
 		if push {
-			_, err = io.Copy(file, args.Content)
-			if err != nil {
-				return err
+			for {
+				// Read 1MB at a time.
+				_, err = io.CopyN(file, args.Content, 1024*1024)
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+
+					return err
+				}
 			}
 		}
 
@@ -1126,10 +1133,17 @@ func (c *cmdFile) recursivePullFile(sftpConn *sftp.Client, p string, targetDir s
 			},
 		}
 
-		_, err = io.Copy(writer, src)
-		if err != nil {
-			progress.Done("")
-			return err
+		for {
+			// Read 1MB at a time.
+			_, err = io.CopyN(writer, src, 1024*1024)
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+
+				progress.Done("")
+				return err
+			}
 		}
 
 		err = src.Close()
