@@ -441,6 +441,10 @@ type lxc struct {
 var idmapLock sync.Mutex
 
 func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
+	if d.state.OS.IdmapSet == nil {
+		return nil, 0, fmt.Errorf("System doesn't have a functional idmap setup")
+	}
+
 	idmapSize := func(size string) (int64, error) {
 		var idMapSize int64
 		if size == "" || size == "auto" {
