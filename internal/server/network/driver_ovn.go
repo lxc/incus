@@ -2614,33 +2614,18 @@ func (n *ovn) setup(update bool) error {
 	dhcpV6Subnet := n.DHCPv6Subnet()
 
 	if update {
-		// Find first existing DHCP options set for IPv4 and IPv6 and update them instead of adding sets.
-		existingOpts, err := n.ovnnb.GetLogicalSwitchDHCPOptions(context.TODO(), n.getIntSwitchName())
+		dhcpv4UUID, dhcpv6UUID, err = n.getDhcpOptionUUIDs()
 		if err != nil {
-			return fmt.Errorf("Failed getting existing DHCP settings for internal switch: %w", err)
+			return err
 		}
 
-		// DHCP option records to delete if DHCP is being disabled.
 		var deleteDHCPRecords []networkOVN.OVNDHCPOptionsUUID
+		if dhcpV4Subnet == nil && dhcpv4UUID != "" {
+			deleteDHCPRecords = append(deleteDHCPRecords, dhcpv4UUID)
+		}
 
-		for _, existingOpt := range existingOpts {
-			if existingOpt.CIDR.IP.To4() == nil {
-				if dhcpv6UUID == "" {
-					dhcpv6UUID = existingOpt.UUID
-
-					if dhcpV6Subnet == nil {
-						deleteDHCPRecords = append(deleteDHCPRecords, dhcpv6UUID)
-					}
-				}
-			} else {
-				if dhcpv4UUID == "" {
-					dhcpv4UUID = existingOpt.UUID
-
-					if dhcpV4Subnet == nil {
-						deleteDHCPRecords = append(deleteDHCPRecords, dhcpv4UUID)
-					}
-				}
-			}
+		if dhcpV6Subnet == nil && dhcpv6UUID != "" {
+			deleteDHCPRecords = append(deleteDHCPRecords, dhcpv6UUID)
 		}
 
 		if len(deleteDHCPRecords) > 0 {
@@ -2670,6 +2655,8 @@ func (n *ovn) setup(update bool) error {
 		dnsIPv4 = []net.IP{routerIntPortIPv4}
 		dnsIPv6 = []net.IP{routerIntPortIPv6}
 	}
+
+	var dhcpv4Created, dhcpv6Created bool
 
 	// Create DHCPv4 options for internal switch.
 	if dhcpV4Subnet != nil {
@@ -2706,6 +2693,10 @@ func (n *ovn) setup(update bool) error {
 		if err != nil {
 			return fmt.Errorf("Failed adding DHCPv4 settings for internal switch: %w", err)
 		}
+
+		if dhcpv4UUID == "" {
+			dhcpv4Created = true
+		}
 	}
 
 	// Create DHCPv6 options for internal switch.
@@ -2719,6 +2710,29 @@ func (n *ovn) setup(update bool) error {
 		err = n.ovnnb.UpdateLogicalSwitchDHCPv6Options(context.TODO(), n.getIntSwitchName(), dhcpv6UUID, dhcpV6Subnet, opts)
 		if err != nil {
 			return fmt.Errorf("Failed adding DHCPv6 settings for internal switch: %w", err)
+		}
+
+		if dhcpv6UUID == "" {
+			dhcpv6Created = true
+		}
+	}
+
+	if update && (dhcpv4Created || dhcpv6Created) {
+		dhcpv4UUID, dhcpv6UUID, err = n.getDhcpOptionUUIDs()
+		if err != nil {
+			return err
+		}
+
+		ports, err := n.ovnnb.GetLogicalSwitchPorts(context.TODO(), n.getIntSwitchName())
+		if err != nil {
+			return err
+		}
+
+		for portName := range ports {
+			err := n.ovnnb.UpdateLogicalSwitchPortDHCP(context.TODO(), portName, dhcpv4UUID, dhcpv6UUID)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -2834,6 +2848,32 @@ func (n *ovn) setup(update bool) error {
 
 	revert.Success()
 	return nil
+}
+
+func (n *ovn) getDhcpOptionUUIDs() (v4Uuid networkOVN.OVNDHCPOptionsUUID, v6Uuid networkOVN.OVNDHCPOptionsUUID, err error) {
+	// Find first existing DHCP options set for IPv4 and IPv6 and update them instead of adding sets.
+	existingOpts, err := n.ovnnb.GetLogicalSwitchDHCPOptions(context.TODO(), n.getIntSwitchName())
+	if err != nil {
+		return "", "", fmt.Errorf("Failed getting existing DHCP settings for internal switch: %w", err)
+	}
+
+	for _, existingOpt := range existingOpts {
+		if existingOpt.CIDR.IP.To4() == nil {
+			if v6Uuid != "" {
+				return "", "", fmt.Errorf("Multiple matching DHCPv6 option sets found for switch %q", n.getIntSwitchName())
+			}
+
+			v6Uuid = existingOpt.UUID
+		} else {
+			if v4Uuid != "" {
+				return "", "", fmt.Errorf("Multiple matching DHCPv4 option sets found for switch %q", n.getIntSwitchName())
+			}
+
+			v4Uuid = existingOpt.UUID
+		}
+	}
+
+	return v4Uuid, v6Uuid, nil
 }
 
 // logicalRouterPolicySetup applies the security policy to the logical router (clearing any existing policies).
@@ -3919,97 +3959,75 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 
 	dhcpv4Subnet := n.DHCPv4Subnet()
 	dhcpv6Subnet := n.DHCPv6Subnet()
-	var dhcpV4ID, dhcpv6ID networkOVN.OVNDHCPOptionsUUID
+	var dhcpV4UUID, dhcpV6UUID networkOVN.OVNDHCPOptionsUUID
 
 	if dhcpv4Subnet != nil || dhcpv6Subnet != nil {
-		// Find existing DHCP options set for IPv4 and IPv6 and update them instead of adding sets.
-		existingOpts, err := n.ovnnb.GetLogicalSwitchDHCPOptions(context.TODO(), n.getIntSwitchName())
+		dhcpV4UUID, dhcpV6UUID, err = n.getDhcpOptionUUIDs()
 		if err != nil {
-			return "", nil, fmt.Errorf("Failed getting existing DHCP settings for internal switch: %w", err)
+			return "", nil, err
+		}
+	}
+	if dhcpv4Subnet != nil {
+		if dhcpV4UUID == "" {
+			return "", nil, fmt.Errorf("Could not find DHCPv4 options for instance port for subnet %q", dhcpv4Subnet.String())
 		}
 
-		if dhcpv4Subnet != nil {
-			for _, existingOpt := range existingOpts {
-				if existingOpt.CIDR.String() == dhcpv4Subnet.String() {
-					if dhcpV4ID != "" {
-						return "", nil, fmt.Errorf("Multiple matching DHCP option sets found for switch %q and subnet %q", n.getIntSwitchName(), dhcpv4Subnet.String())
-					}
-
-					dhcpV4ID = existingOpt.UUID
-				}
-			}
-
-			if dhcpV4ID == "" {
-				return "", nil, fmt.Errorf("Could not find DHCPv4 options for instance port for subnet %q", dhcpv4Subnet.String())
-			}
-
-			// If using dynamic IPv4, look for previously used sticky IPs from the NIC's last state.
-			var dhcpV4StickyIP net.IP
-			if opts.DeviceConfig["ipv4.address"] == "" {
-				for _, ip := range opts.LastStateIPs {
-					if ip.To4() != nil && SubnetContainsIP(dhcpv4Subnet, ip) {
-						dhcpV4StickyIP = ip
-						break
-					}
-				}
-			}
-
-			// If a previously used IP has been found and its not one of the static IPs, then check if
-			// the IP is available for use and if not then we can request this port use it statically.
-			if dhcpV4StickyIP != nil && dhcpV4StickyIP.String() != ipv4 {
-				// If the sticky IP isn't statically reserved, lets check its not used dynamically
-				// on any active port.
-				if !n.hasDHCPv4Reservation(dhcpReservations, dhcpV4StickyIP) {
-					existingPortIPs, err := n.ovnnb.GetLogicalSwitchIPs(context.TODO(), n.getIntSwitchName())
-					if err != nil {
-						return "", nil, fmt.Errorf("Failed getting existing switch port IPs: %w", err)
-					}
-
-					found := false
-					for _, ips := range existingPortIPs {
-						if IPInSlice(dhcpV4StickyIP, ips) {
-							found = true
-							break // IP is in use with another port, so cannot use it.
-						}
-					}
-
-					// If IP is not in use then request OVN use previously used IP for port.
-					if !found {
-						ipv4 = dhcpV4StickyIP.String()
-					}
+		// If using dynamic IPv4, look for previously used sticky IPs from the NIC's last state.
+		var dhcpV4StickyIP net.IP
+		if opts.DeviceConfig["ipv4.address"] == "" {
+			for _, entry := range opts.LastStateIPs {
+				if entry.To4() != nil && SubnetContainsIP(dhcpv4Subnet, entry) {
+					dhcpV4StickyIP = entry
+					break
 				}
 			}
 		}
 
-		if dhcpv6Subnet != nil {
-			for _, existingOpt := range existingOpts {
-				if existingOpt.CIDR.String() == dhcpv6Subnet.String() {
-					if dhcpv6ID != "" {
-						return "", nil, fmt.Errorf("Multiple matching DHCP option sets found for switch %q and subnet %q", n.getIntSwitchName(), dhcpv6Subnet.String())
-					}
-
-					dhcpv6ID = existingOpt.UUID
-				}
-			}
-
-			if dhcpv6ID == "" {
-				return "", nil, fmt.Errorf("Could not find DHCPv6 options for instance port for subnet %q", dhcpv6Subnet.String())
-			}
-
-			// If port isn't going to have fully dynamic IPs allocated by OVN, and instead only static
-			// IPv4 addresses have been added, then add an EUI64 static IPv6 address so that the switch
-			// port has an IPv6 address that will be used to generate a DNS record. This works around a
-			// limitation in OVN that prevents us requesting dynamic IPv6 address allocation when
-			// static IPv4 allocation is used.
-			if ipv4 != "" && ipv6 == "" {
-				eui64IP, err := eui64.ParseMAC(dhcpv6Subnet.IP, mac)
+		// If a previously used IP has been found and its not one of the static IPs, then check if
+		// the IP is available for use and if not then we can request this port use it statically.
+		if dhcpV4StickyIP != nil && dhcpV4StickyIP.String() != ipv4 {
+			// If the sticky IP isn't statically reserved, lets check its not used dynamically
+			// on any active port.
+			if !n.hasDHCPv4Reservation(dhcpReservations, dhcpV4StickyIP) {
+				existingPortIPs, err := n.ovnnb.GetLogicalSwitchIPs(context.TODO(), n.getIntSwitchName())
 				if err != nil {
-					return "", nil, fmt.Errorf("Failed generating EUI64 for instance port %q: %w", mac.String(), err)
+					return "", nil, fmt.Errorf("Failed getting existing switch port IPs: %w", err)
 				}
 
-				// Add EUI64 as the IPv6 address.
-				ipv6 = eui64IP.String()
+				found := false
+				for _, ips := range existingPortIPs {
+					if IPInSlice(dhcpV4StickyIP, ips) {
+						found = true
+						break // IP is in use with another port, so cannot use it.
+					}
+				}
+
+				// If IP is not in use then request OVN use previously used IP for port.
+				if !found {
+					ipv4 = dhcpV4StickyIP.String()
+				}
 			}
+		}
+	}
+
+	if dhcpv6Subnet != nil {
+		if dhcpV6UUID == "" {
+			return "", nil, fmt.Errorf("Could not find DHCPv6 options for instance port for subnet %q", dhcpv6Subnet.String())
+		}
+
+		// If port isn't going to have fully dynamic IPs allocated by OVN, and instead only static
+		// IPv4 addresses have been added, then add an EUI64 static IPv6 address so that the switch
+		// port has an IPv6 address that will be used to generate a DNS record. This works around a
+		// limitation in OVN that prevents us requesting dynamic IPv6 address allocation when
+		// static IPv4 allocation is used.
+		if ipv4 != "" && ipv6 == "" {
+			eui64IP, err := eui64.ParseMAC(dhcpv6Subnet.IP, mac)
+			if err != nil {
+				return "", nil, fmt.Errorf("Failed generating EUI64 for instance port %q: %w", mac.String(), err)
+			}
+
+			// Add EUI64 as the IPv6 address.
+			ipv6 = eui64IP.String()
 		}
 	}
 
@@ -4032,8 +4050,8 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	// when the instance NIC was stopped and was unable to remove the port on last stop, which would otherwise
 	// prevent future NIC starts.
 	err = n.ovnnb.CreateLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), instancePortName, &networkOVN.OVNSwitchPortOpts{
-		DHCPv4OptsID: dhcpV4ID,
-		DHCPv6OptsID: dhcpv6ID,
+		DHCPv4OptsID: dhcpV4UUID,
+		DHCPv6OptsID: dhcpV6UUID,
 		MAC:          mac,
 		IPV4:         ipv4,
 		IPV6:         ipv6,
