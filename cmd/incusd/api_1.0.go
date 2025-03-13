@@ -799,7 +799,7 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 
 	for key := range clusterChanged {
 		switch key {
-		case "acme.ca_url", "acme.domain":
+		case "acme.agree_tos", "acme.ca_url", "acme.challenge", "acme.domain", "acme.email", "acme.provider", "acme.provider.environment", "acme.provider.resolvers":
 			acmeChanged = true
 
 		case "cluster.images_minimal_replica":
