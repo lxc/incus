@@ -143,7 +143,7 @@ func UpdateCertificate(s *state.State, challengeType string, provider ChallengeP
 			return nil, fmt.Errorf("Failed to run lego command: %w", err)
 		}
 
-		certInfo, err = localtls.KeyPairAndCA(tmpDir, domain, localtls.CertServer, true)
+		certInfo, err = localtls.KeyPairAndCA(tmpDir+"/certificates", domain, localtls.CertServer, true)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to load certificate and key file: %w", err)
 		}
