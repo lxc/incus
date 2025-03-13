@@ -356,7 +356,7 @@ var ConfigSchema = config.Schema{
 	//  scope: global
 	//  defaultdesc: `https://acme-v02.api.letsencrypt.org/directory`
 	//  shortdesc: URL to the directory resource of the ACME service
-	"acme.ca_url": {},
+	"acme.ca_url": {Default: "https://acme-v02.api.letsencrypt.org/directory"},
 
 	// gendoc:generate(entity=server, group=acme, key=acme.domain)
 	//
