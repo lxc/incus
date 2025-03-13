@@ -1525,7 +1525,7 @@ func (d *Daemon) init() error {
 	// Setup BGP listener.
 	d.bgp = bgp.NewServer()
 	if bgpAddress != "" && bgpASN != 0 && bgpRouterID != "" {
-		err := d.bgp.Start(bgpAddress, uint32(bgpASN), net.ParseIP(bgpRouterID))
+		err := d.bgp.Configure(bgpAddress, uint32(bgpASN), net.ParseIP(bgpRouterID))
 		if err != nil {
 			return err
 		}
