@@ -35,7 +35,7 @@ func (c *cmdAdminInit) RunInteractive(cmd *cobra.Command, args []string, d incus
 	config := api.InitPreseed{}
 	config.Server.Config = map[string]string{}
 	config.Server.Networks = []api.InitNetworksProjectPost{}
-	config.Server.StoragePools = []api.StoragePoolsPost{}
+	config.Server.StoragePools = []api.InitStoragePoolsProjectPost{}
 	config.Server.Profiles = []api.InitProfileProjectPost{
 		{
 			ProfilesPost: api.ProfilesPost{
@@ -574,7 +574,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 				pool.Config["source"] = source
 			}
 
-			config.Server.StoragePools = append(config.Server.StoragePools, pool)
+			config.Server.StoragePools = append(config.Server.StoragePools, api.InitStoragePoolsProjectPost{StoragePoolsPost: pool})
 			break
 		}
 
@@ -587,7 +587,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 
 			if btrfsSubvolume {
 				pool.Config["source"] = internalUtil.VarPath("storage-pools", pool.Name)
-				config.Server.StoragePools = append(config.Server.StoragePools, pool)
+				config.Server.StoragePools = append(config.Server.StoragePools, api.InitStoragePoolsProjectPost{StoragePoolsPost: pool})
 				break
 			}
 		}
@@ -603,7 +603,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 
 				if zfsDataset {
 					pool.Config["source"] = "rpool/incus"
-					config.Server.StoragePools = append(config.Server.StoragePools, pool)
+					config.Server.StoragePools = append(config.Server.StoragePools, api.InitStoragePoolsProjectPost{StoragePoolsPost: pool})
 					break
 				}
 			}
@@ -758,7 +758,7 @@ and make sure that your user can see and run the "thin_check" command before run
 			}
 		}
 
-		config.Server.StoragePools = append(config.Server.StoragePools, pool)
+		config.Server.StoragePools = append(config.Server.StoragePools, api.InitStoragePoolsProjectPost{StoragePoolsPost: pool})
 		break
 	}
 

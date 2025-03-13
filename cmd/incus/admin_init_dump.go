@@ -50,7 +50,7 @@ func (c *cmdAdminInit) RunDump(d incus.InstanceServer) error {
 	}
 
 	for _, storagePool := range storagePools {
-		storagePoolsPost := api.StoragePoolsPost{}
+		storagePoolsPost := api.InitStoragePoolsProjectPost{}
 		storagePoolsPost.Config = storagePool.Config
 		storagePoolsPost.Description = storagePool.Description
 		storagePoolsPost.Name = storagePool.Name

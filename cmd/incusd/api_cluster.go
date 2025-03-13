@@ -946,7 +946,10 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 			post.Config[config.Key] = config.Value
 		}
 
-		data.StoragePools = append(data.StoragePools, post)
+		data.StoragePools = append(data.StoragePools, api.InitStoragePoolsProjectPost{
+			StoragePoolsPost: post,
+			Project:          api.ProjectDefaultName,
+		})
 	}
 
 	projects, err := client.GetProjects()
