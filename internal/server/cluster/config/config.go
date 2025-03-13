@@ -235,10 +235,9 @@ func (c *Config) ACME() (string, string, string, bool, string) {
 }
 
 // ACMEDNS returns all ACME DNS settings needed for DNS-01 challenge.
-func (c *Config) ACMEDNS() (string, map[string]string, []string) {
+func (c *Config) ACMEDNS() (string, []string, []string) {
+	var environment []string
 	var resolvers []string
-
-	env := make(map[string]string)
 
 	if c.m.GetString("acme.provider.environment") != "" {
 		lines := strings.Split(strings.TrimSpace(c.m.GetString("acme.provider.environment")), "\n")
@@ -257,7 +256,7 @@ func (c *Config) ACMEDNS() (string, map[string]string, []string) {
 			key := strings.TrimSpace(parts[0])
 			value := strings.TrimSpace(parts[1])
 
-			env[key] = value
+			environment = append(environment, strings.Join([]string{key, value}, "="))
 		}
 	}
 
@@ -265,7 +264,7 @@ func (c *Config) ACMEDNS() (string, map[string]string, []string) {
 		resolvers = strings.Split(c.m.GetString("acme.provider.resolvers"), ",")
 	}
 
-	return c.m.GetString("acme.provider"), env, resolvers
+	return c.m.GetString("acme.provider"), environment, resolvers
 }
 
 // ClusterJoinTokenExpiry returns the cluster join token expiry.
@@ -356,7 +355,7 @@ var ConfigSchema = config.Schema{
 	//  scope: global
 	//  defaultdesc: `https://acme-v02.api.letsencrypt.org/directory`
 	//  shortdesc: URL to the directory resource of the ACME service
-	"acme.ca_url": {},
+	"acme.ca_url": {Default: "https://acme-v02.api.letsencrypt.org/directory"},
 
 	// gendoc:generate(entity=server, group=acme, key=acme.domain)
 	//

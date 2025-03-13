@@ -97,26 +97,8 @@ func autoRenewCertificate(ctx context.Context, d *Daemon, force bool) error {
 		}
 	}
 
-	var challengeProvider acme.ChallengeProvider
-
-	if challengeType == "DNS-01" {
-		provider, env, resolvers := s.GlobalConfig.ACMEDNS()
-
-		if provider == "" {
-			logger.Error("DNS-01 challenge type requires acme.dns.provider configuration key to be set", nil)
-			return nil
-		}
-
-		challengeProvider = acme.NewDNS01Provider(provider, env, resolvers)
-		if challengeProvider == nil {
-			return nil
-		}
-	} else {
-		challengeProvider = d.http01Provider
-	}
-
 	opRun := func(op *operations.Operation) error {
-		newCert, err := acme.UpdateCertificate(s, challengeProvider, s.ServerClustered, domain, email, caURL, force)
+		newCert, err := acme.UpdateCertificate(s, challengeType, d.http01Provider, s.ServerClustered, domain, email, caURL, force)
 		if err != nil {
 			return err
 		}
