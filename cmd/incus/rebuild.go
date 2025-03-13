@@ -25,7 +25,7 @@ func (c *cmdRebuild) Command() *cobra.Command {
 	cmd.Use = usage("rebuild", i18n.G("[<remote>:]<image> [<remote>:]<instance>"))
 	cmd.Short = i18n.G("Rebuild instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Wipe the instance root disk and re-initialize. The original image is used to re-initialize the instance if a different image or --empty is not specified.`))
+		`Wipe the instance root disk and re-initialize with a new image (or empty volume).`))
 
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVar(&c.flagEmpty, "empty", false, i18n.G("Rebuild as an empty instance"))
