@@ -509,6 +509,7 @@ func (o *NB) CreateLogicalRouterRoute(ctx context.Context, routerName OVNRouter,
 	operations := []ovsdb.Operation{}
 	for i, route := range routes {
 		// Check if already present.
+		exists := false
 		for _, existing := range existingRoutes {
 			if existing.IPPrefix != route.Prefix.String() {
 				continue
@@ -531,10 +532,16 @@ func (o *NB) CreateLogicalRouterRoute(ctx context.Context, routerName OVNRouter,
 			}
 
 			if mayExist {
-				continue
+				exists = true
+				break
 			}
 
 			return ErrExists
+		}
+
+		// Don't add duplicate entries.
+		if exists {
+			continue
 		}
 
 		// Create the new record.
