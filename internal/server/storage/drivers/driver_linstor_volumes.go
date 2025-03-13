@@ -151,10 +151,11 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 
 	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceDefinitionName, linstorClient.GenericPropsModify{
 		OverrideProps: map[string]string{
-			LinstorAuxName:                        d.config[LinstorVolumePrefixConfigKey] + vol.name,
-			LinstorAuxType:                        string(vol.volType),
-			LinstorAuxContentType:                 string(vol.contentType),
-			"DrbdOptions/Net/allow-two-primaries": "yes",
+			LinstorAuxName:                           d.config[LinstorVolumePrefixConfigKey] + vol.name,
+			LinstorAuxType:                           string(vol.volType),
+			LinstorAuxContentType:                    string(vol.contentType),
+			"DrbdOptions/Net/allow-two-primaries":    "yes", // Required for mounting volumes simultaneously on two nodes when live migrating
+			"DrbdOptions/auto-add-quorum-tiebreaker": "yes", // Ensures that LINSTOR will create diskless resources to reach quorum if needed
 		},
 	})
 	if err != nil {
@@ -596,7 +597,7 @@ func (d *linstor) MountVolume(vol Volume, op *operations.Operation) error {
 }
 
 // UnmountVolume clears any runtime state for the volume.
-// keepBlockDev indicates if backing block device should be not be unmapped if volume is unmounted.
+// keepBlockDev indicates if backing block device should be not be deleted if volume is unmounted.
 func (d *linstor) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operation) (bool, error) {
 	unlock, err := vol.MountLock()
 	if err != nil {
@@ -624,20 +625,20 @@ func (d *linstor) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 
 		d.logger.Debug("Unmounted Linstor volume", logger.Ctx{"volName": vol.name, "path": mountPath, "keepBlockDev": keepBlockDev})
 
-		// TODO: handle keepBlockDev
-
 		ourUnmount = true
 	} else if vol.contentType == ContentTypeBlock {
 		// For VMs, unmount the filesystem volume.
 		if vol.IsVMBlock() {
 			fsVol := vol.NewVMBlockFilesystemVolume()
-			ourUnmount, err = d.UnmountVolume(fsVol, false, op)
-			if err != nil {
-				return false, err
-			}
+			return d.UnmountVolume(fsVol, false, op)
 		}
+	}
 
-		// TODO: handle keepBlockDev
+	if !keepBlockDev {
+		err = d.deleteDisklessResource(vol)
+		if err != nil {
+			return false, fmt.Errorf("Could not delete diskless resource: %w", err)
+		}
 	}
 
 	return ourUnmount, nil

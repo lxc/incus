@@ -351,6 +351,48 @@ func (d *linstor) getLinstorDevPath(vol Volume) (string, error) {
 	return volumes[volumeIndex].DevicePath, nil
 }
 
+// deleteDisklessResource deletes the diskless resource for the given volume in the current node if one exists.
+func (d *linstor) deleteDisklessResource(vol Volume) error {
+	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name()})
+	l.Debug("Checking for diskless resources to delete")
+
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	resourceDefinition, err := d.getResourceDefinition(vol, false)
+	if err != nil {
+		return err
+	}
+
+	// Fetch all resources for the given volume in the current node.
+	resources, err := linstor.Client.Resources.GetResourceView(context.TODO(), &linstorClient.ListOpts{
+		Resource: []string{resourceDefinition.Name},
+		Node:     []string{d.getSatelliteName()},
+	})
+	if err != nil {
+		return fmt.Errorf("Unable to get the resources for the resource definition: %w", err)
+	}
+
+	l.Debug("Got resources for the volume in the current node", logger.Ctx{"resources": resources})
+
+	// Delete the DISKLESS resources.
+	for _, r := range resources {
+		if slices.Contains(r.Flags, "DISKLESS") {
+			l.Debug("Deleting diskless resource")
+			err := linstor.Client.Resources.Delete(context.TODO(), r.Name, r.NodeName)
+			if err != nil {
+				return err
+			}
+
+			l.Debug("Deleted diskless resource")
+		}
+	}
+
+	return nil
+}
+
 // getVolumeUsage returns the allocated size for a given volume in KiB.
 func (d *linstor) getVolumeUsage(vol Volume) (int64, error) {
 	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name()})
