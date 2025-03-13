@@ -933,7 +933,7 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		asn := clusterConfig.BGPASN()
 		routerid := nodeConfig.BGPRouterID()
 
-		err := s.BGP.Reconfigure(address, uint32(asn), net.ParseIP(routerid))
+		err := s.BGP.Configure(address, uint32(asn), net.ParseIP(routerid))
 		if err != nil {
 			return fmt.Errorf("Failed reconfiguring BGP: %w", err)
 		}

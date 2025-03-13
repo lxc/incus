@@ -58,44 +58,23 @@ func NewServer() *Server {
 }
 
 func (s *Server) setup() {
-	if s.bgp != nil {
-		return
-	}
-
-	// Spawn the BGP goroutines.
-	s.bgp = bgpServer.NewBgpServer(bgpServer.LoggerOption(&logWrapper{logger.Log}))
-	go s.bgp.Serve()
-
-	// Insert any path that's already defined.
-	if len(s.paths) > 0 {
-		// Reset the path list.
-		paths := s.paths
-		s.paths = map[string]path{}
-
-		for _, path := range paths {
-			err := s.addPrefix(path.prefix, path.nexthop, path.owner)
-			logger.Warn("Unable to add prefix to BGP server", logger.Ctx{"prefix": path.prefix.String(), "err": err})
-		}
-	}
 }
 
 // Start sets up the BGP listener.
-func (s *Server) Start(address string, asn uint32, routerID net.IP) error {
-	// Locking.
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	return s.start(address, asn, routerID)
-}
-
 func (s *Server) start(address string, asn uint32, routerID net.IP) error {
 	// If routerID is nil, fill with our best guess.
 	if routerID == nil || routerID.To4() == nil {
 		return ErrBadRouterID
 	}
 
-	// Make sure we have a BGP instance.
-	s.setup()
+	// Check if already running
+	if s.bgp != nil {
+		return fmt.Errorf("BGP listener is already running")
+	}
+
+	// Spawn the BGP goroutines.
+	s.bgp = bgpServer.NewBgpServer(bgpServer.LoggerOption(&logWrapper{logger.Log}))
+	go s.bgp.Serve()
 
 	// Get the address and port.
 	addrHost, addrPort, err := net.SplitHostPort(address)
@@ -132,8 +111,30 @@ func (s *Server) start(address string, asn uint32, routerID net.IP) error {
 		return err
 	}
 
-	// Add any existing peers.
-	for _, peer := range s.peers {
+	// Copy the path list
+	oldPaths := map[string]path{}
+	for pathUUID, path := range s.paths {
+		oldPaths[pathUUID] = path
+	}
+
+	// Add existing paths.
+	s.paths = map[string]path{}
+	for _, path := range oldPaths {
+		err := s.addPrefix(path.prefix, path.nexthop, path.owner)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Copy the peer list.
+	oldPeers := map[string]peer{}
+	for peerUUID, peer := range s.peers {
+		oldPeers[peerUUID] = peer
+	}
+
+	// Add existing peers.
+	s.peers = map[string]peer{}
+	for _, peer := range oldPeers {
 		err := s.addPeer(peer.address, peer.asn, peer.password, peer.holdtime)
 		if err != nil {
 			return err
@@ -149,18 +150,16 @@ func (s *Server) start(address string, asn uint32, routerID net.IP) error {
 }
 
 // Stop tears down the BGP listener.
-func (s *Server) Stop() error {
-	// Locking.
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	return s.stop()
-}
-
 func (s *Server) stop() error {
 	// Skip if no instance.
 	if s.bgp == nil {
 		return nil
+	}
+
+	// Save the peer list.
+	oldPeers := map[string]peer{}
+	for peerUUID, peer := range s.peers {
+		oldPeers[peerUUID] = peer
 	}
 
 	// Remove all the peers (ignore failures).
@@ -171,37 +170,38 @@ func (s *Server) stop() error {
 		}
 	}
 
+	// Restore peer list.
+	s.peers = oldPeers
+
 	// Stop the listener.
 	err := s.bgp.StopBgp(context.Background(), &bgpAPI.StopBgpRequest{})
 	if err != nil {
 		return err
 	}
 
-	// Unset the address
+	// Mark the daemon as down.
 	s.address = ""
 	s.asn = 0
 	s.routerID = nil
+	s.bgp = nil
+
 	return nil
 }
 
-// Reconfigure updates the listener with a new configuration..
-func (s *Server) Reconfigure(address string, asn uint32, routerID net.IP) error {
+// Configure updates the listener with a new configuration..
+func (s *Server) Configure(address string, asn uint32, routerID net.IP) error {
 	// Locking.
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.reconfigure(address, asn, routerID)
+	return s.configure(address, asn, routerID)
 }
 
-func (s *Server) reconfigure(address string, asn uint32, routerID net.IP) error {
-	// Get the old address.
+func (s *Server) configure(address string, asn uint32, routerID net.IP) error {
+	// Store current configuration for reverting.
 	oldAddress := s.address
 	oldASN := s.asn
 	oldRouterID := s.routerID
-	oldPeers := map[string]peer{}
-	for peerUUID, peer := range s.peers {
-		oldPeers[peerUUID] = peer
-	}
 
 	// Setup reverter.
 	revert := revert.New()
@@ -210,11 +210,8 @@ func (s *Server) reconfigure(address string, asn uint32, routerID net.IP) error 
 	// Stop the listener.
 	err := s.stop()
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to stop current listener: %w", err)
 	}
-
-	// Restore peer list.
-	s.peers = oldPeers
 
 	// Check if we should start.
 	if address != "" && asn > 0 && routerID != nil {
@@ -224,7 +221,7 @@ func (s *Server) reconfigure(address string, asn uint32, routerID net.IP) error 
 		// Start the listener with the new address.
 		err = s.start(address, asn, routerID)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to start new listener: %w", err)
 		}
 	}
 
