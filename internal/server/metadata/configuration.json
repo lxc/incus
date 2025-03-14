@@ -2279,6 +2279,15 @@
 						}
 					},
 					{
+						"acme.http.port": {
+							"defaultdesc": "`:80`",
+							"longdesc": "Set the port and interface to use for HTTP-01 based challenges to listen on",
+							"scope": "global",
+							"shortdesc": "Port and interface for HTTP server (used by HTTP-01)",
+							"type": "string"
+						}
+					},
+					{
 						"acme.provider": {
 							"defaultdesc": "``",
 							"longdesc": "",

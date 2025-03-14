@@ -2065,6 +2065,14 @@ Possible values are `DNS-01` and `HTTP-01`.
 
 ```
 
+```{config:option} acme.http.port server-acme
+:defaultdesc: "`:80`"
+:scope: "global"
+:shortdesc: "Port and interface for HTTP server (used by HTTP-01)"
+:type: "string"
+Set the port and interface to use for HTTP-01 based challenges to listen on
+```
+
 ```{config:option} acme.provider server-acme
 :defaultdesc: "``"
 :scope: "global"
