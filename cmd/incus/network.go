@@ -974,9 +974,11 @@ func (c *cmdNetworkInfo) Run(cmd *cobra.Command, args []string) error {
 
 	// Interface information.
 	fmt.Printf(i18n.G("Name: %s")+"\n", resource.name)
+
 	if state.Hwaddr != "" {
 		fmt.Printf(i18n.G("MAC address: %s")+"\n", state.Hwaddr)
 	}
+
 	fmt.Printf(i18n.G("MTU: %d")+"\n", state.Mtu)
 	fmt.Printf(i18n.G("State: %s")+"\n", state.State)
 	fmt.Printf(i18n.G("Type: %s")+"\n", state.Type)
@@ -991,12 +993,14 @@ func (c *cmdNetworkInfo) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Network usage.
-	fmt.Println("")
-	fmt.Println(i18n.G("Network usage:"))
-	fmt.Printf("  %s: %s\n", i18n.G("Bytes received"), units.GetByteSizeString(state.Counters.BytesReceived, 2))
-	fmt.Printf("  %s: %s\n", i18n.G("Bytes sent"), units.GetByteSizeString(state.Counters.BytesSent, 2))
-	fmt.Printf("  %s: %d\n", i18n.G("Packets received"), state.Counters.PacketsReceived)
-	fmt.Printf("  %s: %d\n", i18n.G("Packets sent"), state.Counters.PacketsSent)
+	if state.Counters != nil {
+		fmt.Println("")
+		fmt.Println(i18n.G("Network usage:"))
+		fmt.Printf("  %s: %s\n", i18n.G("Bytes received"), units.GetByteSizeString(state.Counters.BytesReceived, 2))
+		fmt.Printf("  %s: %s\n", i18n.G("Bytes sent"), units.GetByteSizeString(state.Counters.BytesSent, 2))
+		fmt.Printf("  %s: %d\n", i18n.G("Packets received"), state.Counters.PacketsReceived)
+		fmt.Printf("  %s: %d\n", i18n.G("Packets sent"), state.Counters.PacketsSent)
+	}
 
 	// Bond information.
 	if state.Bond != nil {
