@@ -1624,6 +1624,11 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 	}
 
+	// Set RTC to localtime on Windows.
+	if d.isWindows() {
+		qemuArgs = append(qemuArgs, "-rtc", "base=localtime")
+	}
+
 	// SMBIOS only on x86_64 and aarch64.
 	if d.architectureSupportsUEFI(d.architecture) {
 		qemuArgs = append(qemuArgs, "-smbios", "type=2,manufacturer=LinuxContainers,product=Incus")
