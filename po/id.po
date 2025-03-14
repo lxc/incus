@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-03-12 12:26-0400\n"
+"POT-Creation-Date: 2025-03-14 15:30-0400\n"
 "PO-Revision-Date: 2024-11-09 07:00+0000\n"
 "Last-Translator: Andika Triwidada <andika@gmail.com>\n"
 "Language-Team: Indonesian <https://hosted.weblate.org/projects/incus/cli/id/"
@@ -386,12 +386,12 @@ msgstr "%s (%s) (%d tersedia)"
 msgid "%s (backend=%q, source=%q)"
 msgstr "%s (backend=%q, sumber=%q)"
 
-#: cmd/incus/file.go:1287
+#: cmd/incus/file.go:1301
 #, c-format
 msgid "%s is not a directory"
 msgstr "%s bukan direktori"
 
-#: cmd/incus/file.go:1177
+#: cmd/incus/file.go:1191
 #, c-format
 msgid "'%s' isn't a supported file type"
 msgstr "'%s' bukan tipe berkas yang didukung"
@@ -1238,8 +1238,8 @@ msgstr ""
 #: cmd/incus/config.go:755 cmd/incus/config.go:886 cmd/incus/copy.go:61
 #: cmd/incus/create.go:63 cmd/incus/info.go:49 cmd/incus/move.go:64
 #: cmd/incus/network.go:349 cmd/incus/network.go:846 cmd/incus/network.go:927
-#: cmd/incus/network.go:1495 cmd/incus/network.go:1588
-#: cmd/incus/network.go:1660 cmd/incus/network_forward.go:255
+#: cmd/incus/network.go:1499 cmd/incus/network.go:1592
+#: cmd/incus/network.go:1664 cmd/incus/network_forward.go:255
 #: cmd/incus/network_forward.go:338 cmd/incus/network_forward.go:531
 #: cmd/incus/network_forward.go:683 cmd/incus/network_forward.go:837
 #: cmd/incus/network_forward.go:927 cmd/incus/network_forward.go:1011
@@ -1280,8 +1280,8 @@ msgstr ""
 #: cmd/incus/cluster.go:150 cmd/incus/cluster.go:1096
 #: cmd/incus/cluster_group.go:485 cmd/incus/config_trust.go:424
 #: cmd/incus/config_trust.go:617 cmd/incus/image.go:1093
-#: cmd/incus/image_alias.go:211 cmd/incus/list.go:134 cmd/incus/network.go:1087
-#: cmd/incus/network.go:1293 cmd/incus/network_allocations.go:63
+#: cmd/incus/image_alias.go:211 cmd/incus/list.go:134 cmd/incus/network.go:1091
+#: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:63
 #: cmd/incus/network_forward.go:115 cmd/incus/network_integration.go:438
 #: cmd/incus/network_load_balancer.go:123 cmd/incus/network_peer.go:111
 #: cmd/incus/network_zone.go:115 cmd/incus/operation.go:139
@@ -1667,7 +1667,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:180 cmd/incus/cluster_group.go:511
 #: cmd/incus/config_trust.go:442 cmd/incus/image.go:1120
-#: cmd/incus/image_alias.go:251 cmd/incus/list.go:580 cmd/incus/network.go:1118
+#: cmd/incus/image_alias.go:251 cmd/incus/list.go:580 cmd/incus/network.go:1122
 #: cmd/incus/network_acl.go:173 cmd/incus/network_forward.go:137
 #: cmd/incus/network_integration.go:454 cmd/incus/network_load_balancer.go:145
 #: cmd/incus/network_peer.go:133 cmd/incus/network_zone.go:138
@@ -1872,7 +1872,7 @@ msgstr "Hapus peringatan"
 #: cmd/incus/delete.go:32 cmd/incus/exec.go:41 cmd/incus/export.go:32
 #: cmd/incus/file.go:58 cmd/incus/file.go:105 cmd/incus/file.go:302
 #: cmd/incus/file.go:384 cmd/incus/file.go:462 cmd/incus/file.go:693
-#: cmd/incus/file.go:1338 cmd/incus/image.go:40 cmd/incus/image.go:148
+#: cmd/incus/file.go:1352 cmd/incus/image.go:40 cmd/incus/image.go:148
 #: cmd/incus/image.go:308 cmd/incus/image.go:363 cmd/incus/image.go:498
 #: cmd/incus/image.go:667 cmd/incus/image.go:924 cmd/incus/image.go:1067
 #: cmd/incus/image.go:1422 cmd/incus/image.go:1506 cmd/incus/image.go:1573
@@ -1885,9 +1885,9 @@ msgstr "Hapus peringatan"
 #: cmd/incus/network.go:143 cmd/incus/network.go:240 cmd/incus/network.go:339
 #: cmd/incus/network.go:455 cmd/incus/network.go:513 cmd/incus/network.go:610
 #: cmd/incus/network.go:707 cmd/incus/network.go:843 cmd/incus/network.go:924
-#: cmd/incus/network.go:1068 cmd/incus/network.go:1271
-#: cmd/incus/network.go:1429 cmd/incus/network.go:1489
-#: cmd/incus/network.go:1585 cmd/incus/network.go:1657
+#: cmd/incus/network.go:1072 cmd/incus/network.go:1275
+#: cmd/incus/network.go:1433 cmd/incus/network.go:1493
+#: cmd/incus/network.go:1589 cmd/incus/network.go:1661
 #: cmd/incus/network_acl.go:28 cmd/incus/network_acl.go:94
 #: cmd/incus/network_acl.go:194 cmd/incus/network_acl.go:255
 #: cmd/incus/network_acl.go:311 cmd/incus/network_acl.go:386
@@ -2081,7 +2081,7 @@ msgstr "Impor direktori tidak tersedia di platform ini"
 msgid "Directory to run the command in (default /root)"
 msgstr ""
 
-#: cmd/incus/file.go:1345
+#: cmd/incus/file.go:1359
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr "Nonaktifkan autentikasi saat menggunakan pendengar SSH SFTP"
 
@@ -2336,8 +2336,8 @@ msgstr ""
 #: cmd/incus/cluster.go:191 cmd/incus/cluster.go:1125
 #: cmd/incus/cluster_group.go:519 cmd/incus/config_trust.go:454
 #: cmd/incus/config_trust.go:642 cmd/incus/image.go:1138
-#: cmd/incus/image_alias.go:260 cmd/incus/list.go:638 cmd/incus/network.go:1133
-#: cmd/incus/network.go:1331 cmd/incus/network_allocations.go:88
+#: cmd/incus/image_alias.go:260 cmd/incus/list.go:638 cmd/incus/network.go:1137
+#: cmd/incus/network.go:1335 cmd/incus/network_allocations.go:88
 #: cmd/incus/network_forward.go:151 cmd/incus/network_integration.go:464
 #: cmd/incus/network_load_balancer.go:158 cmd/incus/network_peer.go:144
 #: cmd/incus/network_zone.go:151 cmd/incus/operation.go:171
@@ -2411,7 +2411,7 @@ msgid "Error retrieving aliases: %w"
 msgstr ""
 
 #: cmd/incus/cluster.go:566 cmd/incus/cluster_group.go:1031
-#: cmd/incus/config.go:641 cmd/incus/config.go:673 cmd/incus/network.go:1563
+#: cmd/incus/config.go:641 cmd/incus/config.go:673 cmd/incus/network.go:1567
 #: cmd/incus/network_acl.go:552 cmd/incus/network_forward.go:606
 #: cmd/incus/network_integration.go:672 cmd/incus/network_load_balancer.go:592
 #: cmd/incus/network_peer.go:638 cmd/incus/network_zone.go:560
@@ -2434,7 +2434,7 @@ msgid "Error unsetting properties: %v"
 msgstr ""
 
 #: cmd/incus/cluster.go:560 cmd/incus/cluster_group.go:1025
-#: cmd/incus/network.go:1557 cmd/incus/network_acl.go:546
+#: cmd/incus/network.go:1561 cmd/incus/network_acl.go:546
 #: cmd/incus/network_forward.go:600 cmd/incus/network_integration.go:666
 #: cmd/incus/network_load_balancer.go:586 cmd/incus/network_peer.go:632
 #: cmd/incus/network_zone.go:554 cmd/incus/network_zone.go:1254
@@ -2626,12 +2626,12 @@ msgstr "PERTAMA TERLIHAT"
 msgid "FQDN"
 msgstr "FQDN"
 
-#: cmd/incus/file.go:1602
+#: cmd/incus/file.go:1616
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr ""
 
-#: cmd/incus/file.go:1625
+#: cmd/incus/file.go:1639
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr ""
@@ -2646,12 +2646,12 @@ msgstr ""
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr ""
 
-#: cmd/incus/file.go:1652
+#: cmd/incus/file.go:1666
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr ""
 
-#: cmd/incus/file.go:1437
+#: cmd/incus/file.go:1451
 #, c-format
 msgid "Failed connecting to instance SFTP: %w"
 msgstr ""
@@ -2681,7 +2681,7 @@ msgstr ""
 msgid "Failed deleting source volume after copy: %w"
 msgstr ""
 
-#: cmd/incus/file.go:1558
+#: cmd/incus/file.go:1572
 #, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr ""
@@ -2721,7 +2721,7 @@ msgstr ""
 msgid "Failed loading storage pool %q: %w"
 msgstr ""
 
-#: cmd/incus/file.go:1563
+#: cmd/incus/file.go:1577
 #, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr ""
@@ -2736,12 +2736,12 @@ msgstr ""
 msgid "Failed starting command: %w"
 msgstr ""
 
-#: cmd/incus/file.go:1463
+#: cmd/incus/file.go:1477
 #, c-format
 msgid "Failed starting sshfs: %w"
 msgstr ""
 
-#: cmd/incus/file.go:1590
+#: cmd/incus/file.go:1604
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr ""
@@ -2850,7 +2850,7 @@ msgstr ""
 msgid "Failed to join cluster: %w"
 msgstr ""
 
-#: cmd/incus/file.go:1575
+#: cmd/incus/file.go:1589
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr ""
@@ -2953,7 +2953,7 @@ msgstr ""
 msgid "Failed to update cluster member state: %w"
 msgstr ""
 
-#: cmd/incus/file.go:1172
+#: cmd/incus/file.go:1186
 #, c-format
 msgid "Failed to walk path for %s: %s"
 msgstr ""
@@ -2982,7 +2982,7 @@ msgstr ""
 msgid "Fetch instance backup file: %w"
 msgstr ""
 
-#: cmd/incus/network.go:1211 cmd/incus/network_acl.go:137
+#: cmd/incus/network.go:1215 cmd/incus/network_acl.go:137
 #: cmd/incus/network_zone.go:205 cmd/incus/operation.go:241
 msgid "Filtering isn't supported yet"
 msgstr ""
@@ -3072,7 +3072,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:486 cmd/incus/config_template.go:290
 #: cmd/incus/config_trust.go:425 cmd/incus/config_trust.go:616
 #: cmd/incus/image.go:1094 cmd/incus/image_alias.go:210 cmd/incus/list.go:135
-#: cmd/incus/network.go:1088 cmd/incus/network.go:1292
+#: cmd/incus/network.go:1092 cmd/incus/network.go:1296
 #: cmd/incus/network_acl.go:97 cmd/incus/network_allocations.go:60
 #: cmd/incus/network_forward.go:114 cmd/incus/network_integration.go:437
 #: cmd/incus/network_load_balancer.go:122 cmd/incus/network_peer.go:110
@@ -3327,7 +3327,7 @@ msgstr ""
 msgid "Group ID to run the command as (default 0)"
 msgstr ""
 
-#: cmd/incus/network.go:1316
+#: cmd/incus/network.go:1320
 msgid "HOSTNAME"
 msgstr ""
 
@@ -3343,22 +3343,22 @@ msgstr ""
 msgid "Hugepages:\n"
 msgstr ""
 
-#: cmd/incus/file.go:1675
+#: cmd/incus/file.go:1689
 #, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr ""
 
-#: cmd/incus/file.go:1664
+#: cmd/incus/file.go:1678
 #, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr ""
 
-#: cmd/incus/file.go:1487
+#: cmd/incus/file.go:1501
 #, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr ""
 
-#: cmd/incus/file.go:1497
+#: cmd/incus/file.go:1511
 #, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr ""
@@ -3390,7 +3390,7 @@ msgstr ""
 msgid "IOMMU group: %v"
 msgstr ""
 
-#: cmd/incus/network.go:1318
+#: cmd/incus/network.go:1322
 msgid "IP ADDRESS"
 msgstr ""
 
@@ -3402,19 +3402,19 @@ msgstr ""
 msgid "IP addresses:"
 msgstr ""
 
-#: cmd/incus/list.go:575 cmd/incus/network.go:1116
+#: cmd/incus/list.go:575 cmd/incus/network.go:1120
 msgid "IPV4"
 msgstr ""
 
-#: cmd/incus/list.go:576 cmd/incus/network.go:1117
+#: cmd/incus/list.go:576 cmd/incus/network.go:1121
 msgid "IPV6"
 msgstr ""
 
-#: cmd/incus/network.go:1042
+#: cmd/incus/network.go:1046
 msgid "IPv4 uplink address"
 msgstr ""
 
-#: cmd/incus/network.go:1046
+#: cmd/incus/network.go:1050
 msgid "IPv6 uplink address"
 msgstr ""
 
@@ -3590,11 +3590,11 @@ msgstr ""
 msgid "Instance description"
 msgstr "deskripsi"
 
-#: cmd/incus/file.go:1489
+#: cmd/incus/file.go:1503
 msgid "Instance disconnected"
 msgstr ""
 
-#: cmd/incus/file.go:1666
+#: cmd/incus/file.go:1680
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr ""
@@ -3608,7 +3608,7 @@ msgstr ""
 msgid "Instance name is: %s"
 msgstr ""
 
-#: cmd/incus/file.go:1409
+#: cmd/incus/file.go:1423
 msgid "Instance path cannot be used in SSH SFTP listener mode"
 msgstr ""
 
@@ -3708,7 +3708,7 @@ msgstr ""
 msgid "Invalid instance name: %s"
 msgstr ""
 
-#: cmd/incus/file.go:1404
+#: cmd/incus/file.go:1418
 #, c-format
 msgid "Invalid instance path: %q"
 msgstr ""
@@ -3824,7 +3824,7 @@ msgstr ""
 msgid "LISTEN ADDRESS"
 msgstr ""
 
-#: cmd/incus/list.go:622 cmd/incus/network.go:1320
+#: cmd/incus/list.go:622 cmd/incus/network.go:1324
 #: cmd/incus/network_forward.go:140 cmd/incus/network_load_balancer.go:147
 #: cmd/incus/operation.go:160 cmd/incus/storage_bucket.go:528
 #: cmd/incus/storage_volume.go:1693 cmd/incus/warning.go:226
@@ -3864,11 +3864,11 @@ msgstr ""
 msgid "Link speed: %dMbit/s (%s duplex)"
 msgstr ""
 
-#: cmd/incus/network.go:1270
+#: cmd/incus/network.go:1274
 msgid "List DHCP leases"
 msgstr ""
 
-#: cmd/incus/network.go:1271
+#: cmd/incus/network.go:1275
 msgid ""
 "List DHCP leases\n"
 "\n"
@@ -4126,11 +4126,11 @@ msgid ""
 "  u - Used by"
 msgstr ""
 
-#: cmd/incus/network.go:1067
+#: cmd/incus/network.go:1071
 msgid "List available networks"
 msgstr ""
 
-#: cmd/incus/network.go:1068
+#: cmd/incus/network.go:1072
 msgid ""
 "List available networks\n"
 "\n"
@@ -4451,7 +4451,7 @@ msgid ""
 "\tu - Used by"
 msgstr ""
 
-#: cmd/incus/network.go:1089
+#: cmd/incus/network.go:1093
 msgid "List networks in all projects"
 msgstr ""
 
@@ -4717,12 +4717,16 @@ msgstr ""
 msgid "Logical router"
 msgstr ""
 
-#: cmd/incus/file.go:1581
+#: cmd/incus/network.go:1042
+msgid "Logical switch"
+msgstr ""
+
+#: cmd/incus/file.go:1595
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr ""
 
-#: cmd/incus/file.go:1583
+#: cmd/incus/file.go:1597
 msgid "Login without username and password"
 msgstr ""
 
@@ -4742,7 +4746,7 @@ msgstr ""
 msgid "Lower devices"
 msgstr ""
 
-#: cmd/incus/network.go:1317 cmd/incus/network_allocations.go:80
+#: cmd/incus/network.go:1321 cmd/incus/network_allocations.go:80
 msgid "MAC ADDRESS"
 msgstr ""
 
@@ -4760,7 +4764,7 @@ msgstr ""
 msgid "MAD: %s (%s)"
 msgstr ""
 
-#: cmd/incus/network.go:1115
+#: cmd/incus/network.go:1119
 msgid "MANAGED"
 msgstr ""
 
@@ -5150,9 +5154,9 @@ msgstr ""
 
 #: cmd/incus/network.go:179 cmd/incus/network.go:276 cmd/incus/network.go:487
 #: cmd/incus/network.go:549 cmd/incus/network.go:646 cmd/incus/network.go:759
-#: cmd/incus/network.go:882 cmd/incus/network.go:958 cmd/incus/network.go:1383
-#: cmd/incus/network.go:1461 cmd/incus/network.go:1527
-#: cmd/incus/network.go:1619 cmd/incus/network_forward.go:208
+#: cmd/incus/network.go:882 cmd/incus/network.go:958 cmd/incus/network.go:1387
+#: cmd/incus/network.go:1465 cmd/incus/network.go:1531
+#: cmd/incus/network.go:1623 cmd/incus/network_forward.go:208
 #: cmd/incus/network_forward.go:288 cmd/incus/network_forward.go:360
 #: cmd/incus/network_forward.go:479 cmd/incus/network_forward.go:564
 #: cmd/incus/network_forward.go:739 cmd/incus/network_forward.go:870
@@ -5286,7 +5290,7 @@ msgstr ""
 msgid "More than one file to download, but target is not a directory"
 msgstr ""
 
-#: cmd/incus/file.go:1337 cmd/incus/file.go:1338
+#: cmd/incus/file.go:1351 cmd/incus/file.go:1352
 msgid "Mount files from instances"
 msgstr ""
 
@@ -5346,7 +5350,7 @@ msgstr ""
 #: cmd/incus/cluster.go:175 cmd/incus/cluster.go:1115
 #: cmd/incus/cluster_group.go:509 cmd/incus/config_trust.go:438
 #: cmd/incus/config_trust.go:632 cmd/incus/list.go:588
-#: cmd/incus/network.go:1113 cmd/incus/network_acl.go:172
+#: cmd/incus/network.go:1117 cmd/incus/network_acl.go:172
 #: cmd/incus/network_integration.go:453 cmd/incus/network_peer.go:132
 #: cmd/incus/network_zone.go:137 cmd/incus/network_zone.go:932
 #: cmd/incus/profile.go:757 cmd/incus/project.go:562 cmd/incus/project.go:704
@@ -5381,7 +5385,7 @@ msgstr ""
 msgid "NICs:"
 msgstr ""
 
-#: cmd/incus/network.go:1162 cmd/incus/operation.go:204
+#: cmd/incus/network.go:1166 cmd/incus/operation.go:204
 #: cmd/incus/project.go:600 cmd/incus/project.go:609 cmd/incus/project.go:618
 #: cmd/incus/project.go:627 cmd/incus/project.go:636 cmd/incus/project.go:645
 #: cmd/incus/remote.go:827 cmd/incus/remote.go:836 cmd/incus/remote.go:845
@@ -5494,7 +5498,7 @@ msgstr ""
 msgid "Network %s pending on member %s"
 msgstr ""
 
-#: cmd/incus/network.go:1471
+#: cmd/incus/network.go:1475
 #, c-format
 msgid "Network %s renamed to %s"
 msgstr ""
@@ -5744,7 +5748,7 @@ msgstr ""
 msgid "Only instance or custom volumes are supported"
 msgstr ""
 
-#: cmd/incus/network.go:785 cmd/incus/network.go:1542
+#: cmd/incus/network.go:785 cmd/incus/network.go:1546
 msgid "Only managed networks can be modified"
 msgstr ""
 
@@ -5816,7 +5820,7 @@ msgstr ""
 msgid "PROFILES"
 msgstr ""
 
-#: cmd/incus/image.go:1121 cmd/incus/list.go:582 cmd/incus/network.go:1112
+#: cmd/incus/image.go:1121 cmd/incus/list.go:582 cmd/incus/network.go:1116
 #: cmd/incus/network_acl.go:178 cmd/incus/network_zone.go:136
 #: cmd/incus/profile.go:758 cmd/incus/storage_bucket.go:525
 #: cmd/incus/storage_volume.go:1704 cmd/incus/top.go:77
@@ -5853,7 +5857,7 @@ msgstr ""
 msgid "Password for %s: "
 msgstr ""
 
-#: cmd/incus/file.go:1551
+#: cmd/incus/file.go:1565
 #, c-format
 msgid "Password rejected for %q"
 msgstr ""
@@ -5939,7 +5943,7 @@ msgstr ""
 msgid "Press CTRL-C to exit"
 msgstr ""
 
-#: cmd/incus/file.go:1467
+#: cmd/incus/file.go:1481
 msgid "Press ctrl+c to finish"
 msgstr ""
 
@@ -6131,7 +6135,7 @@ msgstr ""
 msgid "Pull files from instances"
 msgstr ""
 
-#: cmd/incus/file.go:633 cmd/incus/file.go:1113
+#: cmd/incus/file.go:633 cmd/incus/file.go:1120
 #, c-format
 msgid "Pulling %s from %s: %%s"
 msgstr ""
@@ -6140,7 +6144,7 @@ msgstr ""
 msgid "Push files into instances"
 msgstr ""
 
-#: cmd/incus/file.go:930 cmd/incus/file.go:1219
+#: cmd/incus/file.go:930 cmd/incus/file.go:1233
 #, c-format
 msgid "Pushing %s to %s: %%s"
 msgstr ""
@@ -6389,7 +6393,7 @@ msgstr ""
 msgid "Rename network integrations"
 msgstr ""
 
-#: cmd/incus/network.go:1428 cmd/incus/network.go:1429
+#: cmd/incus/network.go:1432 cmd/incus/network.go:1433
 msgid "Rename networks"
 msgstr ""
 
@@ -6548,17 +6552,17 @@ msgstr ""
 msgid "SR-IOV information:"
 msgstr ""
 
-#: cmd/incus/file.go:1578
+#: cmd/incus/file.go:1592
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr ""
 
-#: cmd/incus/file.go:1595
+#: cmd/incus/file.go:1609
 #, c-format
 msgid "SSH client connected %q"
 msgstr ""
 
-#: cmd/incus/file.go:1596
+#: cmd/incus/file.go:1610
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr ""
@@ -6567,7 +6571,7 @@ msgstr ""
 msgid "STARTED AT"
 msgstr ""
 
-#: cmd/incus/list.go:593 cmd/incus/network.go:1120
+#: cmd/incus/list.go:593 cmd/incus/network.go:1124
 #: cmd/incus/network_peer.go:136 cmd/incus/operation.go:157
 #: cmd/incus/storage.go:724 cmd/incus/warning.go:220
 msgid "STATE"
@@ -6672,7 +6676,7 @@ msgstr ""
 msgid "Set a cluster member's configuration keys"
 msgstr ""
 
-#: cmd/incus/file.go:1346
+#: cmd/incus/file.go:1360
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr ""
 
@@ -6728,11 +6732,11 @@ msgid ""
 "    incus network set [<remote>:]<ACL> <key> <value>"
 msgstr ""
 
-#: cmd/incus/network.go:1488
+#: cmd/incus/network.go:1492
 msgid "Set network configuration keys"
 msgstr ""
 
-#: cmd/incus/network.go:1489
+#: cmd/incus/network.go:1493
 msgid ""
 "Set network configuration keys\n"
 "\n"
@@ -6937,7 +6941,7 @@ msgstr ""
 msgid "Set the key as a network peer property"
 msgstr ""
 
-#: cmd/incus/network.go:1496
+#: cmd/incus/network.go:1500
 msgid "Set the key as a network property"
 msgstr ""
 
@@ -6973,7 +6977,7 @@ msgstr ""
 msgid "Set the key as an instance property"
 msgstr ""
 
-#: cmd/incus/file.go:1344
+#: cmd/incus/file.go:1358
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr ""
 
@@ -7053,7 +7057,7 @@ msgstr ""
 msgid "Show network ACL log"
 msgstr ""
 
-#: cmd/incus/network.go:1584 cmd/incus/network.go:1585
+#: cmd/incus/network.go:1588 cmd/incus/network.go:1589
 msgid "Show network configurations"
 msgstr ""
 
@@ -7448,8 +7452,8 @@ msgid "TOKEN"
 msgstr ""
 
 #: cmd/incus/config_trust.go:439 cmd/incus/image.go:1128
-#: cmd/incus/image_alias.go:250 cmd/incus/list.go:594 cmd/incus/network.go:1114
-#: cmd/incus/network.go:1319 cmd/incus/network_allocations.go:78
+#: cmd/incus/image_alias.go:250 cmd/incus/list.go:594 cmd/incus/network.go:1118
+#: cmd/incus/network.go:1323 cmd/incus/network_allocations.go:78
 #: cmd/incus/network_integration.go:455 cmd/incus/network_peer.go:135
 #: cmd/incus/operation.go:155 cmd/incus/storage_volume.go:1684
 #: cmd/incus/warning.go:221
@@ -7460,11 +7464,11 @@ msgstr ""
 msgid "Taken at"
 msgstr ""
 
-#: cmd/incus/file.go:1397
+#: cmd/incus/file.go:1411
 msgid "Target path and --listen flag cannot be used together"
 msgstr ""
 
-#: cmd/incus/file.go:1391
+#: cmd/incus/file.go:1405
 msgid "Target path must be a directory"
 msgstr ""
 
@@ -7911,7 +7915,7 @@ msgstr ""
 msgid "USB devices:"
 msgstr ""
 
-#: cmd/incus/network.go:1119 cmd/incus/network_acl.go:174
+#: cmd/incus/network.go:1123 cmd/incus/network_acl.go:174
 #: cmd/incus/network_allocations.go:76 cmd/incus/network_integration.go:456
 #: cmd/incus/network_zone.go:139 cmd/incus/profile.go:760
 #: cmd/incus/project.go:570 cmd/incus/storage.go:723
@@ -7946,7 +7950,7 @@ msgstr ""
 msgid "Unknown certificate type %q"
 msgstr ""
 
-#: cmd/incus/file.go:1618
+#: cmd/incus/file.go:1632
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr ""
@@ -7954,8 +7958,8 @@ msgstr ""
 #: cmd/incus/cluster.go:197 cmd/incus/cluster.go:1131
 #: cmd/incus/cluster_group.go:525 cmd/incus/config_trust.go:462
 #: cmd/incus/config_trust.go:648 cmd/incus/image.go:1146
-#: cmd/incus/image_alias.go:266 cmd/incus/list.go:653 cmd/incus/network.go:1139
-#: cmd/incus/network.go:1337 cmd/incus/network_allocations.go:94
+#: cmd/incus/image_alias.go:266 cmd/incus/list.go:653 cmd/incus/network.go:1143
+#: cmd/incus/network.go:1341 cmd/incus/network_allocations.go:94
 #: cmd/incus/network_forward.go:157 cmd/incus/network_integration.go:470
 #: cmd/incus/network_load_balancer.go:164 cmd/incus/network_peer.go:150
 #: cmd/incus/network_zone.go:157 cmd/incus/operation.go:177
@@ -7973,7 +7977,7 @@ msgstr ""
 msgid "Unknown console type %q"
 msgstr ""
 
-#: cmd/incus/file.go:1159
+#: cmd/incus/file.go:1173
 #, c-format
 msgid "Unknown file type '%s'"
 msgstr ""
@@ -8016,7 +8020,7 @@ msgstr ""
 msgid "Unset network ACL configuration keys"
 msgstr ""
 
-#: cmd/incus/network.go:1656 cmd/incus/network.go:1657
+#: cmd/incus/network.go:1660 cmd/incus/network.go:1661
 msgid "Unset network configuration keys"
 msgstr ""
 
@@ -8113,7 +8117,7 @@ msgstr ""
 msgid "Unset the key as a network peer property"
 msgstr ""
 
-#: cmd/incus/network.go:1661
+#: cmd/incus/network.go:1665
 msgid "Unset the key as a network property"
 msgstr ""
 
@@ -8428,7 +8432,7 @@ msgstr ""
 msgid "Would you like to use clustering?"
 msgstr ""
 
-#: cmd/incus/network.go:1159 cmd/incus/operation.go:207
+#: cmd/incus/network.go:1163 cmd/incus/operation.go:207
 #: cmd/incus/project.go:602 cmd/incus/project.go:611 cmd/incus/project.go:620
 #: cmd/incus/project.go:629 cmd/incus/project.go:638 cmd/incus/project.go:647
 #: cmd/incus/remote.go:829 cmd/incus/remote.go:838 cmd/incus/remote.go:847
@@ -8475,7 +8479,7 @@ msgstr "[<remote:>]<pool> <volume> <profil> [<nama perangkat>] [<path>]"
 #: cmd/incus/cluster.go:127 cmd/incus/cluster.go:1074
 #: cmd/incus/cluster_group.go:462 cmd/incus/config_trust.go:400
 #: cmd/incus/config_trust.go:595 cmd/incus/monitor.go:31
-#: cmd/incus/network.go:1065 cmd/incus/network_acl.go:91
+#: cmd/incus/network.go:1069 cmd/incus/network_acl.go:91
 #: cmd/incus/network_integration.go:413 cmd/incus/network_zone.go:88
 #: cmd/incus/operation.go:111 cmd/incus/profile.go:715 cmd/incus/project.go:515
 #: cmd/incus/storage.go:669 cmd/incus/top.go:41 cmd/incus/version.go:20
@@ -8718,7 +8722,7 @@ msgid ""
 "[<remote>:]<instance>/<path> [[<remote>:]<instance>/<path>...] <target path>"
 msgstr ""
 
-#: cmd/incus/file.go:1336
+#: cmd/incus/file.go:1350
 msgid "[<remote>:]<instance>[/<path>] [<target path>]"
 msgstr ""
 
@@ -8779,7 +8783,7 @@ msgid "[<remote>:]<network integration> <type>"
 msgstr ""
 
 #: cmd/incus/network.go:452 cmd/incus/network.go:705 cmd/incus/network.go:922
-#: cmd/incus/network.go:1269 cmd/incus/network.go:1583
+#: cmd/incus/network.go:1273 cmd/incus/network.go:1587
 #: cmd/incus/network_forward.go:88 cmd/incus/network_load_balancer.go:97
 #: cmd/incus/network_peer.go:84
 msgid "[<remote>:]<network>"
@@ -8793,11 +8797,11 @@ msgstr ""
 msgid "[<remote>:]<network> <instance> [<device name>] [<interface name>]"
 msgstr ""
 
-#: cmd/incus/network.go:841 cmd/incus/network.go:1655
+#: cmd/incus/network.go:841 cmd/incus/network.go:1659
 msgid "[<remote>:]<network> <key>"
 msgstr ""
 
-#: cmd/incus/network.go:1487
+#: cmd/incus/network.go:1491
 msgid "[<remote>:]<network> <key>=<value>..."
 msgstr ""
 
@@ -8849,7 +8853,7 @@ msgstr ""
 msgid "[<remote>:]<network> <listen_address> [key=value...]"
 msgstr ""
 
-#: cmd/incus/network.go:1426
+#: cmd/incus/network.go:1430
 msgid "[<remote>:]<network> <new-name>"
 msgstr ""
 
@@ -9278,7 +9282,7 @@ msgid ""
 "\t   To create a symlink /bar in instance foo whose target is baz."
 msgstr ""
 
-#: cmd/incus/file.go:1340
+#: cmd/incus/file.go:1354
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory."
@@ -9735,16 +9739,16 @@ msgstr ""
 msgid "space used"
 msgstr ""
 
-#: cmd/incus/file.go:1507
+#: cmd/incus/file.go:1521
 msgid "sshfs has stopped"
 msgstr ""
 
-#: cmd/incus/file.go:1466
+#: cmd/incus/file.go:1480
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr ""
 
-#: cmd/incus/file.go:1419
+#: cmd/incus/file.go:1433
 msgid "sshfs not found. Try SSH SFTP mode using the --listen flag"
 msgstr ""
 

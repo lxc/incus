@@ -2695,29 +2695,43 @@ This adds support for device ACLs when attached to a bridged network.
 Add new memory dump API at `/1.0/instances/NAME/debug/memory`.
 
 ## `init_preseed_storage_volumes`
+
 This API extension provides the ability to configure storage volumes in preseed init.
 
 ## `init_preseed_profile_project`
+
 This API extension provides the ability to specify the project as part of profile definitions in preseed init.
 
 ## `instance_nic_routed_host_address`
+
 Adds support for specifying the VRF to add the routes to.
 
 ## `instance_smbios11`
+
 A new category of configuration options, `smbios11.XYZ` has been added
 which allows passing key/value pairs through `SMBIOS Type 11` on systems that
 support it.
 
 ## `api_filtering_extended`
+
 This extends the API filtering mechanism to all API collections.
 
 ## `acme_dns01`
+
 Adds support for `DNS-01` challenge to the Incus ACME support for certificate generation.
 
 ## `security_iommu`
+
 Introduce a new `security.iommu` configuration key to control whether to
 enable IOMMU emulation. This is done through `virtio_iommu` on Linux and the emulated Intel IOMMU on Windows.
 
 ## `network_ipv4_dhcp_routes`
+
 Introduces a new `ipv4.dhcp.routes` configuration option on bridged and OVN networks.
 This allows specifying pairs of CIDR networks and gateway address to be announced by the DHCP server.
+
+## `network_state_ovn_ls`
+
+Adds a new `LogicalSwitch` field to the `NetworkStateOVN` struct which is part of the `GET /1.0/networks/NAME/state` API.
+
+This is used to get the OVN logical switch name.
