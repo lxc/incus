@@ -468,6 +468,7 @@ var APIExtensions = []string{
 	"security_iommu",
 	"network_ipv4_dhcp_routes",
 	"network_state_ovn_ls",
+	"network_dns_nameservers",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
