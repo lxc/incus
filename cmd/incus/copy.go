@@ -206,6 +206,12 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 				continue
 			}
 
+			if m["type"] == "none" {
+				// When overriding with "none" type, clear the entire device.
+				entry.Devices[k] = map[string]string{"type": "none"}
+				continue
+			}
+
 			for key, value := range m {
 				entry.Devices[k][key] = value
 			}
@@ -295,6 +301,12 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 		for k, m := range deviceMap {
 			if entry.Devices[k] == nil {
 				entry.Devices[k] = m
+				continue
+			}
+
+			if m["type"] == "none" {
+				// When overriding with "none" type, clear the entire device.
+				entry.Devices[k] = map[string]string{"type": "none"}
 				continue
 			}
 
