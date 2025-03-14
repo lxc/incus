@@ -324,6 +324,7 @@ func qemuIOMMU(opts *qemuDevOpts, isWindows bool) []cfg.Section {
 			Entries: []cfg.Entry{
 				{Key: "driver", Value: "intel-iommu"},
 				{Key: "intremap", Value: "on"},
+				{Key: "caching-mode", Value: "on"},
 			},
 		}}
 	}
