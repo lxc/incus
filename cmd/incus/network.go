@@ -974,7 +974,9 @@ func (c *cmdNetworkInfo) Run(cmd *cobra.Command, args []string) error {
 
 	// Interface information.
 	fmt.Printf(i18n.G("Name: %s")+"\n", resource.name)
-	fmt.Printf(i18n.G("MAC address: %s")+"\n", state.Hwaddr)
+	if state.Hwaddr != "" {
+		fmt.Printf(i18n.G("MAC address: %s")+"\n", state.Hwaddr)
+	}
 	fmt.Printf(i18n.G("MTU: %d")+"\n", state.Mtu)
 	fmt.Printf(i18n.G("State: %s")+"\n", state.State)
 	fmt.Printf(i18n.G("Type: %s")+"\n", state.Type)
@@ -1033,12 +1035,16 @@ func (c *cmdNetworkInfo) Run(cmd *cobra.Command, args []string) error {
 	if state.OVN != nil {
 		fmt.Println("")
 		fmt.Println(i18n.G("OVN:"))
-		fmt.Printf("  %s: %s\n", i18n.G("Chassis"), state.OVN.Chassis)
-		if client.HasExtension("network_state_ovn_lr") {
+
+		if state.OVN.Chassis != "" {
+			fmt.Printf("  %s: %s\n", i18n.G("Chassis"), state.OVN.Chassis)
+		}
+
+		if state.OVN.LogicalRouter != "" {
 			fmt.Printf("  %s: %s\n", i18n.G("Logical router"), state.OVN.LogicalRouter)
 		}
 
-		if client.HasExtension("network_state_ovn_ls") {
+		if state.OVN.LogicalSwitch != "" {
 			fmt.Printf("  %s: %s\n", i18n.G("Logical switch"), state.OVN.LogicalSwitch)
 		}
 
