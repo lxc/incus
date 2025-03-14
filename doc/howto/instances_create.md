@@ -101,6 +101,16 @@ The list of supported clouds and instance types can be found at [`https://github
 
 ### Launch a VM that boots from an ISO
 
+```{note}
+When creating a Windows virtual machine, make sure to set the `image.os` property to something starting with `Windows`.
+Doing so will tell Incus to expect Windows to be running inside of the virtual machine and to tweak behavior accordingly.
+
+This notably will cause:
+ - Some unsupported virtual devices to be disabled
+ - The {abbr}`RTC (Real Time Clock)` clock to be based on system local time rather than UTC
+ - IOMMU handling to switch to an Intel IOMMU controller
+```
+
 To launch a VM that boots from an ISO, you must first create a VM.
 Let's assume that we want to create a VM and install it from the ISO image.
 In this scenario, use the following command to create an empty VM:
