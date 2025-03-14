@@ -151,7 +151,7 @@ type NetworkState struct {
 	Addresses []NetworkStateAddress `json:"addresses" yaml:"addresses"`
 
 	// Interface counters
-	Counters NetworkStateCounters `json:"counters" yaml:"counters"`
+	Counters *NetworkStateCounters `json:"counters" yaml:"counters"`
 
 	// MAC address
 	// Example: 00:16:3e:5a:83:57
