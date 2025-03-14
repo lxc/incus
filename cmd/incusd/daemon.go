@@ -30,7 +30,6 @@ import (
 	internalIO "github.com/lxc/incus/v6/internal/io"
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/rsync"
-	"github.com/lxc/incus/v6/internal/server/acme"
 	"github.com/lxc/incus/v6/internal/server/apparmor"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/auth/oidc"
@@ -156,9 +155,6 @@ type Daemon struct {
 
 	lokiClient *loki.Client
 
-	// HTTP-01 challenge provider for ACME
-	http01Provider acme.HTTP01Provider
-
 	// Authorization.
 	authorizer auth.Authorizer
 
@@ -198,7 +194,6 @@ func newDaemon(config *DaemonConfig, os *sys.OS) *Daemon {
 		devIncusEvents: devIncusEvents,
 		events:         incusEvents,
 		db:             &db.DB{},
-		http01Provider: acme.NewHTTP01Provider(),
 		os:             os,
 		setupChan:      make(chan struct{}),
 		waitReady:      cancel.New(context.Background()),

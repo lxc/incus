@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"io"
+	"net"
 	"net/http"
-	"net/url"
-
-	"github.com/gorilla/mux"
+	"strings"
 
 	"github.com/lxc/incus/v6/internal/server/acme"
 	"github.com/lxc/incus/v6/internal/server/cluster"
@@ -32,11 +32,7 @@ var acmeChallengeCmd = APIEndpoint{
 func acmeProvideChallenge(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	token, err := url.PathUnescape(mux.Vars(r)["token"])
-	if err != nil {
-		return response.SmartError(err)
-	}
-
+	// Redirect to the leader when clustered.
 	if s.ServerClustered {
 		leader, err := s.Cluster.LeaderAddress()
 		if err != nil {
@@ -57,14 +53,44 @@ func acmeProvideChallenge(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
-	if d.http01Provider == nil || d.http01Provider.Token() != token {
-		return response.NotFound(nil)
+	// Forward to the lego listener.
+	addr := s.GlobalConfig.ACMEHTTP()
+	if strings.HasPrefix(addr, ":") {
+		addr = "127.0.0.1" + addr
+	}
+
+	domain, _, _, _, _ := s.GlobalConfig.ACME()
+
+	client := http.Client{}
+	client.Transport = &http.Transport{
+		DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+			return net.Dial("tcp", addr)
+		},
+	}
+
+	req, err := http.NewRequest("GET", "http://"+domain+r.URL.String(), nil)
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	req.Header = r.Header
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	defer resp.Body.Close()
+
+	challenge, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return response.InternalError(err)
 	}
 
 	return response.ManualResponse(func(w http.ResponseWriter) error {
 		w.Header().Set("Content-Type", "text/plain")
 
-		_, err := w.Write([]byte(d.http01Provider.KeyAuth()))
+		_, err = w.Write(challenge)
 		if err != nil {
 			return err
 		}
@@ -98,7 +124,7 @@ func autoRenewCertificate(ctx context.Context, d *Daemon, force bool) error {
 	}
 
 	opRun := func(op *operations.Operation) error {
-		newCert, err := acme.UpdateCertificate(s, challengeType, d.http01Provider, s.ServerClustered, domain, email, caURL, force)
+		newCert, err := acme.UpdateCertificate(s, challengeType, s.ServerClustered, domain, email, caURL, force)
 		if err != nil {
 			return err
 		}
