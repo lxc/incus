@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"strings"
+	"time"
 
 	linstorClient "github.com/LINBIT/golinstor/client"
 	"golang.org/x/sys/unix"
@@ -68,8 +69,11 @@ func (d *linstor) FillVolumeConfig(vol Volume) error {
 // commonVolumeRules returns validation rules which are common for pool and volume.
 func (d *linstor) commonVolumeRules() map[string]func(value string) error {
 	return map[string]func(value string) error{
-		"block.filesystem":    validate.Optional(validate.IsOneOf(blockBackedAllowedFilesystems...)),
-		"block.mount_options": validate.IsAny,
+		"block.filesystem":                   validate.Optional(validate.IsOneOf(blockBackedAllowedFilesystems...)),
+		"block.mount_options":                validate.IsAny,
+		DrbdOnNoQuorumConfigKey:              validate.Optional(validate.IsOneOf("io-error", "suspend-io")),
+		DrbdAutoDiskfulConfigKey:             validate.Optional(validate.IsMinimumDuration(time.Minute)),
+		DrbdAutoAddQuorumTiebreakerConfigKey: validate.Optional(validate.IsBool),
 	}
 }
 
@@ -149,17 +153,9 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	l.Debug("Spawned a new Linstor resource definition for volume", logger.Ctx{"resourceDefinitionName": resourceDefinitionName})
 	rev.Add(func() { _ = d.DeleteVolume(vol, op) })
 
-	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceDefinitionName, linstorClient.GenericPropsModify{
-		OverrideProps: map[string]string{
-			LinstorAuxName:                           d.config[LinstorVolumePrefixConfigKey] + vol.name,
-			LinstorAuxType:                           string(vol.volType),
-			LinstorAuxContentType:                    string(vol.contentType),
-			"DrbdOptions/Net/allow-two-primaries":    "yes", // Required for mounting volumes simultaneously on two nodes when live migrating
-			"DrbdOptions/auto-add-quorum-tiebreaker": "yes", // Ensures that LINSTOR will create diskless resources to reach quorum if needed
-		},
-	})
+	err = d.setResourceDefinitionProperties(vol, resourceDefinitionName)
 	if err != nil {
-		return fmt.Errorf("Could not set properties on resource definition: %w", err)
+		return err
 	}
 
 	// Setup the filesystem.
@@ -946,7 +942,12 @@ func (d *linstor) UpdateVolume(vol Volume, changedConfig map[string]string) erro
 		}
 	}
 
-	return nil
+	// If only the size changed, there's nothing left to do.
+	if sizeChanged && len(changedConfig) == 1 {
+		return nil
+	}
+
+	return d.updateResourceDefinition(vol, changedConfig)
 }
 
 // GetVolumeUsage returns the disk space used by the volume.

@@ -45,6 +45,15 @@ const LinstorResourceGroupStoragePoolConfigKey = "linstor.resource_group.storage
 // LinstorVolumePrefixConfigKey represents the config key that describes the prefix to add to every volume within a storage pool.
 const LinstorVolumePrefixConfigKey = "linstor.volume.prefix"
 
+// DrbdOnNoQuorumConfigKey represents the config key that describes the DRBD policy when quorum is not reached.
+const DrbdOnNoQuorumConfigKey = "drbd.on_no_quorum"
+
+// DrbdAutoDiskfulConfigKey represents the config key that describes the DRBD timeout for toggling a diskful resource.
+const DrbdAutoDiskfulConfigKey = "drbd.auto_diskful"
+
+// DrbdAutoAddQuorumTiebreakerConfigKey represents the config key that describes whether DRBD will automatically create tiebreaker resources.
+const DrbdAutoAddQuorumTiebreakerConfigKey = "drbd.auto_add_quorum_tiebreaker"
+
 // LinstorAuxSnapshotPrefix represents the AuxProp prefix to map Incus and LINSTOR snapshots.
 const LinstorAuxSnapshotPrefix = "Aux/Incus/snapshot-name/"
 
@@ -62,6 +71,13 @@ var errResourceDefinitionNotFound = errors.New("Resource definition not found")
 
 // errSnapshotNotFound indicates that a snapshot could not be found in Linstor.
 var errSnapshotNotFound = errors.New("Resource definition not found")
+
+// drbdPropsMap maps incus config keys to DRBD options.
+var drbdPropsMap = map[string]string{
+	DrbdOnNoQuorumConfigKey:              "DrbdOptions/Resource/on-no-quorum",
+	DrbdAutoDiskfulConfigKey:             "DrbdOptions/auto-diskful",
+	DrbdAutoAddQuorumTiebreakerConfigKey: "DrbdOptions/auto-add-quorum-tiebreaker",
+}
 
 // drbdVersion returns the DRBD version of the currently loaded kernel module.
 func (d *linstor) drbdVersion() (string, error) {
@@ -208,9 +224,23 @@ func (d *linstor) createResourceGroup() error {
 		resourceGroup.SelectFilter.StoragePool = d.config[LinstorResourceGroupStoragePoolConfigKey]
 	}
 
+	// Create the resource group.
 	err = linstor.Client.ResourceGroups.Create(context.TODO(), resourceGroup)
 	if err != nil {
 		return fmt.Errorf("Could not create Linstor resource group : %w", err)
+	}
+
+	// Set additional properties based on the config.
+	props, err := d.drbdPropsFromConfig(d.config)
+	if err != nil {
+		return fmt.Errorf("Could parse config into DRBD props: %w", err)
+	}
+
+	err = linstor.Client.ResourceGroups.Modify(context.TODO(), resourceGroup.Name, linstorClient.ResourceGroupModify{
+		OverrideProps: props,
+	})
+	if err != nil {
+		return fmt.Errorf("Could not set properties on Linstor resource group : %w", err)
 	}
 
 	return nil
@@ -242,6 +272,29 @@ func (d *linstor) updateResourceGroup(changedConfig map[string]string) error {
 	if changed {
 		resourceGroupModify.SelectFilter.StoragePool = storagePool
 	}
+
+	// Parse and set properties to be overwritten.
+	overrideProps, err := d.drbdPropsFromConfig(changedConfig)
+	if err != nil {
+		return fmt.Errorf("Could parse config into DRBD props: %w", err)
+	}
+
+	resourceGroupModify.OverrideProps = overrideProps
+
+	// Parse and set properties to be deleted.
+	deleteProps := []string{}
+	for key, value := range changedConfig {
+		if value != "" {
+			continue
+		}
+
+		prop, ok := drbdPropsMap[key]
+		if ok {
+			deleteProps = append(deleteProps, prop)
+		}
+	}
+
+	resourceGroupModify.DeleteProps = deleteProps
 
 	resourceGroupName := d.config[LinstorResourceGroupNameConfigKey]
 
@@ -740,15 +793,9 @@ func (d *linstor) createResourceDefinitionFromSnapshot(snapVol Volume, vol Volum
 	}
 
 	// Set the aux properties on the new resource definition.
-	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceDefinitionName, linstorClient.GenericPropsModify{
-		OverrideProps: map[string]string{
-			LinstorAuxName:        d.config[LinstorVolumePrefixConfigKey] + vol.name,
-			LinstorAuxType:        string(vol.volType),
-			LinstorAuxContentType: string(vol.contentType),
-		},
-	})
+	err = d.setResourceDefinitionProperties(vol, resourceDefinitionName)
 	if err != nil {
-		return fmt.Errorf("Could not set properties on resource definition: %w", err)
+		return err
 	}
 
 	rev.Success()
@@ -868,15 +915,9 @@ loop:
 	rev.Add(func() { _ = linstor.Client.ResourceDefinitions.Delete(context.TODO(), targetResourceDefinitionName) })
 
 	// Set the aux properties on the new resource definition.
-	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), targetResourceDefinitionName, linstorClient.GenericPropsModify{
-		OverrideProps: map[string]string{
-			LinstorAuxName:        d.config[LinstorVolumePrefixConfigKey] + vol.name,
-			LinstorAuxType:        string(vol.volType),
-			LinstorAuxContentType: string(vol.contentType),
-		},
-	})
+	err = d.setResourceDefinitionProperties(vol, targetResourceDefinitionName)
 	if err != nil {
-		return fmt.Errorf("Could not set properties on resource definition: %w", err)
+		return err
 	}
 
 	rev.Success()
@@ -917,6 +958,122 @@ func (d *linstor) getResourceDefinitions() ([]linstorClient.ResourceDefinitionWi
 	}
 
 	return resourceDefinitions, nil
+}
+
+// setResourceDefinitionProperties sets properties on the resource definition based on the volume config.
+func (d *linstor) setResourceDefinitionProperties(vol Volume, resourceDefinitionName string) error {
+	l := logger.AddContext(logger.Ctx{"volume": vol.Name(), "resourceDefinition": resourceDefinitionName})
+	l.Debug("Setting resource definition properties", logger.Ctx{"config": vol.config})
+
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	// Set the base properties.
+	overrideProps := map[string]string{
+		LinstorAuxName:                        d.config[LinstorVolumePrefixConfigKey] + vol.name,
+		LinstorAuxType:                        string(vol.volType),
+		LinstorAuxContentType:                 string(vol.contentType),
+		"DrbdOptions/Net/allow-two-primaries": "yes", // Required for mounting volumes simultaneously on two nodes when live migrating
+	}
+
+	// Parse and set properties derived from config.
+	drbdProps, err := d.drbdPropsFromConfig(vol.config)
+	if err != nil {
+		return fmt.Errorf("Could parse config into DRBD options: %w", err)
+	}
+
+	for k, v := range drbdProps {
+		overrideProps[k] = v
+	}
+
+	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceDefinitionName, linstorClient.GenericPropsModify{
+		OverrideProps: overrideProps,
+	})
+	if err != nil {
+		return fmt.Errorf("Could not set properties on resource definition: %w", err)
+	}
+
+	return nil
+}
+
+// updateResourceDefinitionupdates the resource definition with the given changed configs.
+func (d *linstor) updateResourceDefinition(vol Volume, changedConfig map[string]string) error {
+	l := logger.AddContext(logger.Ctx{"volume": vol.Name()})
+	l.Debug("Updating resource definition", logger.Ctx{"changedchangedConfig": changedConfig})
+
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return err
+	}
+
+	resourceDefinition, err := d.getResourceDefinition(vol, false)
+	if err != nil {
+		return err
+	}
+
+	// Parse and set properties to be overwritten.
+	overrideProps, err := d.drbdPropsFromConfig(changedConfig)
+	if err != nil {
+		return fmt.Errorf("Could parse config into DRBD props: %w", err)
+	}
+
+	// Parse and set properties to be deleted.
+	deleteProps := []string{}
+	for key, value := range changedConfig {
+		if value != "" {
+			continue
+		}
+
+		prop, ok := drbdPropsMap[key]
+		if ok {
+			deleteProps = append(deleteProps, prop)
+		}
+	}
+
+	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceDefinition.Name, linstorClient.GenericPropsModify{
+		OverrideProps: overrideProps,
+		DeleteProps:   deleteProps,
+	})
+	if err != nil {
+		return fmt.Errorf("Could not set properties on resource definition: %w", err)
+	}
+
+	return nil
+}
+
+// drbdPropsFromConfig creates a map of DRBD properties from the given volume or storage pool config.
+func (d *linstor) drbdPropsFromConfig(config map[string]string) (map[string]string, error) {
+	props := map[string]string{}
+
+	for key, prop := range drbdPropsMap {
+		value, changed := config[key]
+		if !changed {
+			continue
+		}
+
+		switch key {
+		case DrbdAutoDiskfulConfigKey:
+			duration, err := time.ParseDuration(value)
+			if err != nil {
+				return nil, err
+			}
+
+			props[prop] = strconv.Itoa(int(duration.Seconds()))
+		case DrbdAutoAddQuorumTiebreakerConfigKey:
+			if util.IsFalse(value) {
+				props[prop] = "false"
+			} else {
+				props[prop] = "true"
+			}
+
+		default:
+			props[prop] = value
+		}
+	}
+
+	return props, nil
 }
 
 func (d *linstor) rsyncMigrationType(contentType ContentType) localMigration.Type {

@@ -3,6 +3,7 @@ package drivers
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/lxc/incus/v6/internal/migration"
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
@@ -81,6 +82,9 @@ func (d *linstor) Validate(config map[string]string) error {
 		LinstorResourceGroupStoragePoolConfigKey: validate.IsAny,
 		LinstorVolumePrefixConfigKey:             validate.IsShorterThan(24),
 		"volatile.pool.pristine":                 validate.IsAny,
+		DrbdOnNoQuorumConfigKey:                  validate.Optional(validate.IsOneOf("io-error", "suspend-io")),
+		DrbdAutoDiskfulConfigKey:                 validate.Optional(validate.IsMinimumDuration(time.Minute)),
+		DrbdAutoAddQuorumTiebreakerConfigKey:     validate.Optional(validate.IsBool),
 	}
 
 	return d.validatePool(config, rules, d.commonVolumeRules())
@@ -94,6 +98,14 @@ func (d *linstor) FillConfig() error {
 
 	if d.config[LinstorVolumePrefixConfigKey] == "" {
 		d.config[LinstorVolumePrefixConfigKey] = LinstorDefaultVolumePrefix
+	}
+
+	if d.config[DrbdOnNoQuorumConfigKey] == "" {
+		d.config[DrbdOnNoQuorumConfigKey] = "suspend-io"
+	}
+
+	if d.config[DrbdAutoAddQuorumTiebreakerConfigKey] == "" {
+		d.config[DrbdAutoAddQuorumTiebreakerConfigKey] = "true"
 	}
 
 	return nil
