@@ -1624,6 +1624,11 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 	}
 
+	// Set RTC to localtime on Windows.
+	if d.isWindows() {
+		qemuArgs = append(qemuArgs, "-rtc", "base=localtime")
+	}
+
 	// SMBIOS only on x86_64 and aarch64.
 	if d.architectureSupportsUEFI(d.architecture) {
 		qemuArgs = append(qemuArgs, "-smbios", "type=2,manufacturer=LinuxContainers,product=Incus")
@@ -3340,11 +3345,16 @@ func (d *qemu) deviceBootPriorities(base int) (map[string]int, error) {
 	return sortedDevs, nil
 }
 
+// isWindows returns whether the VM is Windows.
+func (d *qemu) isWindows() bool {
+	return strings.Contains(strings.ToLower(d.expandedConfig["image.os"]), "windows")
+}
+
 // generateQemuConfig generates the QEMU configuration.
 func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
 	var monHooks []monitorHook
 
-	isWindows := strings.Contains(strings.ToLower(d.expandedConfig["image.os"]), "windows")
+	isWindows := d.isWindows()
 	conf := qemuBase(&qemuBaseOpts{d.Architecture(), util.IsTrue(d.expandedConfig["security.iommu"])})
 
 	err := d.addCPUMemoryConfig(&conf, cpuInfo)
