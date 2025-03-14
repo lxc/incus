@@ -267,6 +267,11 @@ func (c *Config) ACMEDNS() (string, []string, []string) {
 	return c.m.GetString("acme.provider"), environment, resolvers
 }
 
+// ACMEHTTP returns all ACME HTTP settings needed for HTTP-01 challenge.
+func (c *Config) ACMEHTTP() string {
+	return c.m.GetString("acme.http.port")
+}
+
 // ClusterJoinTokenExpiry returns the cluster join token expiry.
 func (c *Config) ClusterJoinTokenExpiry() string {
 	return c.m.GetString("cluster.join_token_expiry")
@@ -417,6 +422,15 @@ var ConfigSchema = config.Schema{
 	//  defaultdesc: ``
 	//  shortdesc: Comma-separated list of DNS resolvers (used by DNS-01)
 	"acme.provider.resolvers": {Type: config.String, Default: ""},
+
+	// gendoc:generate(entity=server, group=acme, key=acme.http.port)
+	// Set the port and interface to use for HTTP-01 based challenges to listen on
+	// ---
+	//  type: string
+	//  scope: global
+	//  defaultdesc: `:80`
+	//  shortdesc: Port and interface for HTTP server (used by HTTP-01)
+	"acme.http.port": {Default: ":80", Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=authorization.scriptlet)
 	// When using scriptlet-based authorization, this option stores the scriptlet.
