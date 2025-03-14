@@ -3756,6 +3756,11 @@ definitions:
                 example: incus-net1-lr
                 type: string
                 x-go-name: LogicalRouter
+            logical_switch:
+                description: OVN logical switch name
+                example: incus-net1-ls-int
+                type: string
+                x-go-name: LogicalSwitch
             uplink_ipv4:
                 description: OVN network uplink ipv4 address
                 example: 10.0.0.1
