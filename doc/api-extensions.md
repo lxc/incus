@@ -2729,3 +2729,9 @@ enable IOMMU emulation. This is done through `virtio_iommu` on Linux and the emu
 
 Introduces a new `ipv4.dhcp.routes` configuration option on bridged and OVN networks.
 This allows specifying pairs of CIDR networks and gateway address to be announced by the DHCP server.
+
+## `network_state_ovn_ls`
+
+Adds a new `LogicalSwitch` field to the `NetworkStateOVN` struct which is part of the `GET /1.0/networks/NAME/state` API.
+
+This is used to get the OVN logical switch name.
