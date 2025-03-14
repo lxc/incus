@@ -234,6 +234,7 @@ RESTful
 RHEL
 rootfs
 RSA
+RTC
 rST
 runtime
 SATA
