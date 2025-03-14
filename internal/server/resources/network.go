@@ -504,7 +504,6 @@ func GetNetworkState(name string) (*api.NetworkState, error) {
 
 	network := api.NetworkState{
 		Addresses: []api.NetworkStateAddress{},
-		Counters:  api.NetworkStateCounters{},
 		Hwaddr:    netIf.HardwareAddr.String(),
 		Mtu:       netIf.MTU,
 		State:     netState,
@@ -703,7 +702,7 @@ func GetNetworkState(name string) (*api.NetworkState, error) {
 		return nil, err
 	}
 
-	network.Counters = *counters
+	network.Counters = counters
 
 	return &network, nil
 }
