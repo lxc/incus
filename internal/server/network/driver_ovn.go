@@ -134,12 +134,7 @@ func (n *ovn) Info() Info {
 }
 
 func (n *ovn) State() (*api.NetworkState, error) {
-	// Check if uplink exists
-	_, err := n.ovnnb.GetLogicalRouter(context.TODO(), n.getRouterName())
-	if err != nil && err == networkOVN.ErrNotFound {
-		return nil, nil
-	}
-
+	// Get the addresses.
 	var addresses []api.NetworkStateAddress
 	IPv4Net, err := ParseIPCIDRToNet(n.config["ipv4.address"])
 	if err == nil {
@@ -165,27 +160,21 @@ func (n *ovn) State() (*api.NetworkState, error) {
 
 	var chassis string
 	var hwaddr string
-	var logicalRouterName string
 	var uplinkIPv4 string
 	var uplinkIPv6 string
 
-	if n.config["network"] != "none" {
-		var ok bool
-		hwaddr, ok = n.config["bridge.hwaddr"]
-		if !ok {
-			hwaddr, err = n.ovnnb.GetLogicalRouterPortHardwareAddress(context.TODO(), n.getRouterExtPortName())
-			if err != nil {
-				return nil, err
-			}
-		}
+	logicalRouterName := n.getRouterName()
+	logicalSwitchName := n.getIntSwitchName()
 
+	// Check if an uplink network is present.
+	if n.config["network"] != "none" {
+		// Get the current active chassis.
 		chassis, err = n.ovnsb.GetLogicalRouterPortActiveChassisHostname(context.TODO(), n.getRouterExtPortName())
 		if err != nil {
 			return nil, err
 		}
 
-		logicalRouterName = string(n.getRouterName())
-
+		// Get the IPv4 and IPv6 addresses on the uplink.
 		if n.config[ovnVolatileUplinkIPv4] != "" {
 			uplinkIPv4 = n.config[ovnVolatileUplinkIPv4]
 		}
@@ -193,8 +182,25 @@ func (n *ovn) State() (*api.NetworkState, error) {
 		if n.config[ovnVolatileUplinkIPv6] != "" {
 			uplinkIPv6 = n.config[ovnVolatileUplinkIPv6]
 		}
+	} else if n.config["ipv4.address"] == "none" && n.config["ipv6.address"] == "none" {
+		// Networks with no uplink and no IP addresses will not have a router.
+		logicalRouterName = ""
 	}
 
+	// Add the gateway MAC address if one is present.
+	if logicalRouterName != "" {
+		var ok bool
+
+		hwaddr, ok = n.config["bridge.hwaddr"]
+		if !ok {
+			hwaddr, err = n.ovnnb.GetLogicalRouterPortHardwareAddress(context.TODO(), n.getRouterIntPortName())
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	// Get the switch MTU.
 	mtu := int(n.getBridgeMTU())
 	if mtu == 0 {
 		mtu = 1500
@@ -202,14 +208,14 @@ func (n *ovn) State() (*api.NetworkState, error) {
 
 	return &api.NetworkState{
 		Addresses: addresses,
-		Counters:  api.NetworkStateCounters{},
 		Hwaddr:    hwaddr,
 		Mtu:       mtu,
 		State:     "up",
 		Type:      "broadcast",
 		OVN: &api.NetworkStateOVN{
 			Chassis:       chassis,
-			LogicalRouter: logicalRouterName,
+			LogicalRouter: string(logicalRouterName),
+			LogicalSwitch: string(logicalSwitchName),
 			UplinkIPv4:    uplinkIPv4,
 			UplinkIPv6:    uplinkIPv6,
 		},
