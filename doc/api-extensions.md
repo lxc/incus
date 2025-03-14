@@ -2735,3 +2735,8 @@ This allows specifying pairs of CIDR networks and gateway address to be announce
 Adds a new `LogicalSwitch` field to the `NetworkStateOVN` struct which is part of the `GET /1.0/networks/NAME/state` API.
 
 This is used to get the OVN logical switch name.
+
+## `network_dns_nameservers`
+
+Introduces the `dns.nameservers` configuration option on bridged and OVN networks.
+This allows specifying IPv4 and IPv6 DNS server addresses to be announced by the DHCP server and via Router Advertisements.
