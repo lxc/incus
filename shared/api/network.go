@@ -329,6 +329,12 @@ type NetworkStateOVN struct {
 	// API extension: network_state_ovn_lr
 	LogicalRouter string `json:"logical_router" yaml:"logical_router"`
 
+	// OVN logical switch name
+	// Example: incus-net1-ls-int
+	//
+	// API extension: network_state_ovn_ls
+	LogicalSwitch string `json:"logical_switch" yaml:"logical_switch"`
+
 	// OVN network uplink ipv4 address
 	// Example: 10.0.0.1
 	//
