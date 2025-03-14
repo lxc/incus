@@ -570,25 +570,7 @@ func (d *truenas) setBlocksize(vol Volume, size int64) error {
 	return nil
 }
 
-func (d *truenas) createVolume(dataset string, size int64, options ...string) error {
-	// args := []string{"create", "-s", "-V", fmt.Sprintf("%d", size)}
-	// for _, option := range options {
-	// 	args = append(args, "-o")
-	// 	args = append(args, option)
-	// }
-
-	// args = append(args, dataset)
-
-	// _, err := subprocess.RunCommand("zfs", args...)
-	// if err != nil {
-	// 	return err
-	// }
-
-	return nil
-}
-
 func (d *truenas) getClones(dataset string) ([]string, error) {
-	//out, err := subprocess.RunCommand("zfs", "get", "-H", "-p", "-r", "-o", "value", "clones", dataset)
 	out, err := d.runTool("snapshot", "list", "-H", "-p", "-r", "-o", "clones", dataset)
 
 	if err != nil {
