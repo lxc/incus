@@ -1262,14 +1262,18 @@ func (o *NB) UpdateLogicalSwitchDHCPv4Options(ctx context.Context, switchName OV
 
 	if opts.Router != nil {
 		dhcpOption.Options["router"] = opts.Router.String()
+	} else {
+		delete(dhcpOption.Options, "router")
 	}
 
 	if len(opts.DNSSearchList) > 0 {
 		// Special quoting to allow domain names.
 		dhcpOption.Options["domain_search_list"] = fmt.Sprintf(`"%s"`, strings.Join(opts.DNSSearchList, ","))
+	} else {
+		delete(dhcpOption.Options, "domain_search_list")
 	}
 
-	if opts.RecursiveDNSServer != nil {
+	if len(opts.RecursiveDNSServer) > 0 {
 		nsIPs := make([]string, 0, len(opts.RecursiveDNSServer))
 		for _, nsIP := range opts.RecursiveDNSServer {
 			if nsIP.To4() == nil {
@@ -1280,19 +1284,27 @@ func (o *NB) UpdateLogicalSwitchDHCPv4Options(ctx context.Context, switchName OV
 		}
 
 		dhcpOption.Options["dns_server"] = fmt.Sprintf("{%s}", strings.Join(nsIPs, ","))
+	} else {
+		delete(dhcpOption.Options, "dns_server")
 	}
 
 	if opts.DomainName != "" {
 		// Special quoting to allow domain names.
 		dhcpOption.Options["domain_name"] = fmt.Sprintf(`"%s"`, opts.DomainName)
+	} else {
+		delete(dhcpOption.Options, "domain_name")
 	}
 
 	if opts.MTU > 0 {
 		dhcpOption.Options["mtu"] = fmt.Sprintf("%d", opts.MTU)
+	} else {
+		delete(dhcpOption.Options, "mtu")
 	}
 
 	if opts.Netmask != "" {
 		dhcpOption.Options["netmask"] = opts.Netmask
+	} else {
+		delete(dhcpOption.Options, "netmask")
 	}
 
 	if opts.StaticRoutes != "" {
@@ -1364,6 +1376,8 @@ func (o *NB) UpdateLogicalSwitchDHCPv6Options(ctx context.Context, switchName OV
 	if len(opts.DNSSearchList) > 0 {
 		// Special quoting to allow domain names.
 		dhcpOption.Options["domain_search"] = fmt.Sprintf(`"%s"`, strings.Join(opts.DNSSearchList, ","))
+	} else {
+		delete(dhcpOption.Options, "domain_search")
 	}
 
 	if opts.RecursiveDNSServer != nil {
@@ -1377,6 +1391,8 @@ func (o *NB) UpdateLogicalSwitchDHCPv6Options(ctx context.Context, switchName OV
 		}
 
 		dhcpOption.Options["dns_server"] = fmt.Sprintf("{%s}", strings.Join(nsIPs, ","))
+	} else {
+		delete(dhcpOption.Options, "dns_server")
 	}
 
 	// Prepare the changes.
