@@ -1426,6 +1426,12 @@ The instance generation UUID changes whenever the instance's place in time moves
 It is globally unique across all servers and projects.
 ```
 
+```{config:option} volatile.vm.definition instance-volatile
+:shortdesc: "QEMU VM definition name (used for migration between versions)"
+:type: "string"
+
+```
+
 ```{config:option} volatile.vsock_id instance-volatile
 :shortdesc: "Instance `vsock ID` used as of last start"
 :type: "string"

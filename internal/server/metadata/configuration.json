@@ -1555,6 +1555,13 @@
 						}
 					},
 					{
+						"volatile.vm.definition": {
+							"longdesc": "",
+							"shortdesc": "QEMU VM definition name (used for migration between versions)",
+							"type": "string"
+						}
+					},
+					{
 						"volatile.vsock_id": {
 							"longdesc": "",
 							"shortdesc": "Instance `vsock ID` used as of last start",
