@@ -1518,8 +1518,14 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		cpuType += "," + strings.Join(cpuExtensions, ",")
 	}
 
+	// Provide machine definition when restoring state.
+	var machineDefinition string
+	if stateful {
+		machineDefinition = d.localConfig["volatile.vm.definition"]
+	}
+
 	// Generate the QEMU configuration.
-	monHooks, err := d.generateQemuConfig(cpuInfo, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles)
+	monHooks, err := d.generateQemuConfig(machineDefinition, cpuInfo, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles)
 	if err != nil {
 		op.Done(err)
 		return err
@@ -1768,6 +1774,23 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	if err != nil {
 		op.Done(err)
 		return err
+	}
+
+	// Record the QEMU machine definition.
+	if !stateful {
+		definition, err := monitor.MachineDefinition()
+		if err != nil {
+			op.Done(err)
+			return err
+		}
+
+		err = d.VolatileSet(map[string]string{
+			"volatile.vm.definition": definition,
+		})
+		if err != nil {
+			op.Done(err)
+			return err
+		}
 	}
 
 	// Don't allow the monitor to trigger a disconnection shutdown event until cleanly started so that the
@@ -3297,11 +3320,11 @@ func (d *qemu) isWindows() bool {
 }
 
 // generateQemuConfig generates the QEMU configuration.
-func (d *qemu) generateQemuConfig(cpuInfo *cpuTopology, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
+func (d *qemu) generateQemuConfig(machineDefinition string, cpuInfo *cpuTopology, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
 	var monHooks []monitorHook
 
 	isWindows := d.isWindows()
-	conf := qemuBase(&qemuBaseOpts{d.Architecture(), util.IsTrue(d.expandedConfig["security.iommu"])})
+	conf := qemuBase(&qemuBaseOpts{d.Architecture(), util.IsTrue(d.expandedConfig["security.iommu"]), machineDefinition})
 
 	err := d.addCPUMemoryConfig(&conf, cpuInfo)
 	if err != nil {
