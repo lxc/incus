@@ -64,11 +64,15 @@ DHCPv
 Diátaxis
 Diffie
 Distrobuilder
+diskful
+Diskless
+diskless
 DNS
 dnsmasq
 DNSSEC
 DoS
 DRM
+DRBD
 EB
 Ebit
 eBPF
@@ -106,6 +110,7 @@ HAProxy
 hardcoded
 Hellman
 Homebrew
+hostname
 hotplug
 hotplugged
 hotplugging
@@ -151,6 +156,8 @@ LXCFS
 LXC's
 LXD
 LXD's
+LINSTOR
+LINSTOR's
 macOS
 macvlan
 Makefile

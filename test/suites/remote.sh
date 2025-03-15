@@ -361,4 +361,7 @@ test_remote_usage() {
   incus_remote remote remove incus2-public
 
   kill_incus "$INCUS2_DIR"
+
+  # Cleanup the image from the original remote
+  incus image delete testimage
 }

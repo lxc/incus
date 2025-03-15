@@ -2740,3 +2740,6 @@ This is used to get the OVN logical switch name.
 
 Introduces the `dns.nameservers` configuration option on bridged and OVN networks.
 This allows specifying IPv4 and IPv6 DNS server addresses to be announced by the DHCP server and via Router Advertisements.
+
+## `storage_driver_linstor`
+This adds a LINSTOR storage driver.

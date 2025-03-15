@@ -44,7 +44,7 @@ snapshots() {
 
   incus copy foo/tester foosnap1
   # FIXME: make this backend agnostic
-  if [ "$incus_backend" != "lvm" ] && [ "${incus_backend}" != "zfs" ] && [ "$incus_backend" != "ceph" ]; then
+  if [ "$incus_backend" != "lvm" ] && [ "${incus_backend}" != "zfs" ] && [ "$incus_backend" != "ceph" ] && [ "$incus_backend" != "linstor" ]; then
     [ -d "${INCUS_DIR}/containers/foosnap1/rootfs" ]
   fi
 
@@ -189,9 +189,9 @@ snap_restore() {
 
   ##########################################################
 
-  if [ "$incus_backend" != "zfs" ]; then
-    # The problem here is that you can't `zfs rollback` to a snapshot with a
-    # parent, which snap0 has (snap1).
+  # Both ZFS and LINSTOR are limited to rollback only to the latest snapshots. Since
+  # in this case we have a more recent snap1, we can't restore to snap0.
+  if [ "$incus_backend" != "zfs" ] && [ "$incus_backend" != "linstor" ]; then
     restore_and_compare_fs snap0
 
     # Check container config has been restored (limits.cpu is unset)
@@ -280,7 +280,7 @@ snap_restore() {
   # Start container and then restore snapshot to verify the running state after restore.
   incus start bar
 
-  if [ "$incus_backend" != "zfs" ]; then
+  if [ "$incus_backend" != "zfs" ] && [ "$incus_backend" != "linstor" ]; then
     # see comment above about snap0
     restore_and_compare_fs snap0
 
