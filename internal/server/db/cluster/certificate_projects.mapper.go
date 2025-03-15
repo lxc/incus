@@ -10,10 +10,7 @@ import (
 	"fmt"
 
 	"github.com/lxc/incus/v6/internal/server/db/query"
-	"github.com/lxc/incus/v6/shared/api"
 )
-
-var _ = api.ServerEnvironment{}
 
 var certificateProjectObjects = RegisterStmt(`
 SELECT certificates_projects.certificate_id, certificates_projects.project_id
@@ -93,7 +90,11 @@ func getCertificateProjectsRaw(ctx context.Context, tx *sql.Tx, sql string, args
 
 // GetCertificateProjects returns all available Projects for the Certificate.
 // generator: certificate_project GetMany
-func GetCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID int) ([]Project, error) {
+func GetCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID int) (_ []Project, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Certificate_project")
+	}()
+
 	var err error
 
 	// Result slice.
@@ -127,7 +128,11 @@ func GetCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID int) 
 
 // DeleteCertificateProjects deletes the certificate_project matching the given key parameters.
 // generator: certificate_project DeleteMany
-func DeleteCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID int) error {
+func DeleteCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID int) (_err error) {
+	defer func() {
+		_err = mapErr(_err, "Certificate_project")
+	}()
+
 	stmt, err := Stmt(tx, certificateProjectDeleteByCertificateID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"certificateProjectDeleteByCertificateID\" prepared statement: %w", err)
@@ -148,7 +153,11 @@ func DeleteCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID in
 
 // CreateCertificateProjects adds a new certificate_project to the database.
 // generator: certificate_project Create
-func CreateCertificateProjects(ctx context.Context, tx *sql.Tx, objects []CertificateProject) error {
+func CreateCertificateProjects(ctx context.Context, tx *sql.Tx, objects []CertificateProject) (_err error) {
+	defer func() {
+		_err = mapErr(_err, "Certificate_project")
+	}()
+
 	for _, object := range objects {
 		args := make([]any, 2)
 
@@ -175,7 +184,11 @@ func CreateCertificateProjects(ctx context.Context, tx *sql.Tx, objects []Certif
 
 // UpdateCertificateProjects updates the certificate_project matching the given key parameters.
 // generator: certificate_project Update
-func UpdateCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID int, projectNames []string) error {
+func UpdateCertificateProjects(ctx context.Context, tx *sql.Tx, certificateID int, projectNames []string) (_err error) {
+	defer func() {
+		_err = mapErr(_err, "Certificate_project")
+	}()
+
 	// Delete current entry.
 	err := DeleteCertificateProjects(ctx, tx, certificateID)
 	if err != nil {

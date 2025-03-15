@@ -8,14 +8,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/server/db/query"
-	"github.com/lxc/incus/v6/shared/api"
 )
-
-var _ = api.ServerEnvironment{}
 
 var imageObjects = RegisterStmt(`
 SELECT images.id, projects.name AS project, images.fingerprint, images.type, images.filename, images.size, images.public, images.architecture, images.creation_date, images.expiry_date, images.upload_date, images.cached, images.last_use_date, images.auto_update
@@ -136,7 +132,11 @@ func getImagesRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) ([]I
 
 // GetImages returns all available images.
 // generator: image GetMany
-func GetImages(ctx context.Context, tx *sql.Tx, filters ...ImageFilter) ([]Image, error) {
+func GetImages(ctx context.Context, tx *sql.Tx, filters ...ImageFilter) (_ []Image, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Image")
+	}()
+
 	var err error
 
 	// Result slice.
@@ -347,7 +347,11 @@ func GetImages(ctx context.Context, tx *sql.Tx, filters ...ImageFilter) ([]Image
 
 // GetImage returns the image with the given key.
 // generator: image GetOne
-func GetImage(ctx context.Context, tx *sql.Tx, project string, fingerprint string) (*Image, error) {
+func GetImage(ctx context.Context, tx *sql.Tx, project string, fingerprint string) (_ *Image, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Image")
+	}()
+
 	filter := ImageFilter{}
 	filter.Project = &project
 	filter.Fingerprint = &fingerprint
@@ -359,7 +363,7 @@ func GetImage(ctx context.Context, tx *sql.Tx, project string, fingerprint strin
 
 	switch len(objects) {
 	case 0:
-		return nil, api.StatusErrorf(http.StatusNotFound, "Image not found")
+		return nil, ErrNotFound
 	case 1:
 		return &objects[0], nil
 	default:

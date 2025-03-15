@@ -9,14 +9,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/server/db/query"
-	"github.com/lxc/incus/v6/shared/api"
 )
-
-var _ = api.ServerEnvironment{}
 
 var projectObjects = RegisterStmt(`
 SELECT projects.id, projects.description, projects.name
@@ -118,7 +114,11 @@ func getProjectsRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any) ([
 
 // GetProjects returns all available projects.
 // generator: project GetMany
-func GetProjects(ctx context.Context, tx *sql.Tx, filters ...ProjectFilter) ([]Project, error) {
+func GetProjects(ctx context.Context, tx *sql.Tx, filters ...ProjectFilter) (_ []Project, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Project")
+	}()
+
 	var err error
 
 	// Result slice.
@@ -209,7 +209,11 @@ func GetProjects(ctx context.Context, tx *sql.Tx, filters ...ProjectFilter) ([]P
 
 // GetProjectConfig returns all available Project Config
 // generator: project GetMany
-func GetProjectConfig(ctx context.Context, tx *sql.Tx, projectID int, filters ...ConfigFilter) (map[string]string, error) {
+func GetProjectConfig(ctx context.Context, tx *sql.Tx, projectID int, filters ...ConfigFilter) (_ map[string]string, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Project")
+	}()
+
 	projectConfig, err := GetConfig(ctx, tx, "project", filters...)
 	if err != nil {
 		return nil, err
@@ -225,7 +229,11 @@ func GetProjectConfig(ctx context.Context, tx *sql.Tx, projectID int, filters ..
 
 // GetProject returns the project with the given key.
 // generator: project GetOne
-func GetProject(ctx context.Context, tx *sql.Tx, name string) (*Project, error) {
+func GetProject(ctx context.Context, tx *sql.Tx, name string) (_ *Project, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Project")
+	}()
+
 	filter := ProjectFilter{}
 	filter.Name = &name
 
@@ -236,7 +244,7 @@ func GetProject(ctx context.Context, tx *sql.Tx, name string) (*Project, error) 
 
 	switch len(objects) {
 	case 0:
-		return nil, api.StatusErrorf(http.StatusNotFound, "Project not found")
+		return nil, ErrNotFound
 	case 1:
 		return &objects[0], nil
 	default:
@@ -246,14 +254,25 @@ func GetProject(ctx context.Context, tx *sql.Tx, name string) (*Project, error) 
 
 // ProjectExists checks if a project with the given key exists.
 // generator: project Exists
-func ProjectExists(ctx context.Context, tx *sql.Tx, name string) (bool, error) {
-	_, err := GetProjectID(ctx, tx, name)
-	if err != nil {
-		if api.StatusErrorCheck(err, http.StatusNotFound) {
-			return false, nil
-		}
+func ProjectExists(ctx context.Context, tx *sql.Tx, name string) (_ bool, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Project")
+	}()
 
-		return false, err
+	stmt, err := Stmt(tx, projectID)
+	if err != nil {
+		return false, fmt.Errorf("Failed to get \"projectID\" prepared statement: %w", err)
+	}
+
+	row := stmt.QueryRowContext(ctx, name)
+	var id int64
+	err = row.Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, fmt.Errorf("Failed to get \"projects\" ID: %w", err)
 	}
 
 	return true, nil
@@ -261,7 +280,11 @@ func ProjectExists(ctx context.Context, tx *sql.Tx, name string) (bool, error) {
 
 // CreateProject adds a new project to the database.
 // generator: project Create
-func CreateProject(ctx context.Context, tx *sql.Tx, object Project) (int64, error) {
+func CreateProject(ctx context.Context, tx *sql.Tx, object Project) (_ int64, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Project")
+	}()
+
 	// Check if a project with the same key exists.
 	exists, err := ProjectExists(ctx, tx, object.Name)
 	if err != nil {
@@ -269,7 +292,7 @@ func CreateProject(ctx context.Context, tx *sql.Tx, object Project) (int64, erro
 	}
 
 	if exists {
-		return -1, api.StatusErrorf(http.StatusConflict, "This \"projects\" entry already exists")
+		return -1, ErrConflict
 	}
 
 	args := make([]any, 2)
@@ -300,7 +323,11 @@ func CreateProject(ctx context.Context, tx *sql.Tx, object Project) (int64, erro
 
 // CreateProjectConfig adds new project Config to the database.
 // generator: project Create
-func CreateProjectConfig(ctx context.Context, tx *sql.Tx, projectID int64, config map[string]string) error {
+func CreateProjectConfig(ctx context.Context, tx *sql.Tx, projectID int64, config map[string]string) (_err error) {
+	defer func() {
+		_err = mapErr(_err, "Project")
+	}()
+
 	referenceID := int(projectID)
 	for key, value := range config {
 		insert := Config{
@@ -321,7 +348,11 @@ func CreateProjectConfig(ctx context.Context, tx *sql.Tx, projectID int64, confi
 
 // GetProjectID return the ID of the project with the given key.
 // generator: project ID
-func GetProjectID(ctx context.Context, tx *sql.Tx, name string) (int64, error) {
+func GetProjectID(ctx context.Context, tx *sql.Tx, name string) (_ int64, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Project")
+	}()
+
 	stmt, err := Stmt(tx, projectID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"projectID\" prepared statement: %w", err)
@@ -331,7 +362,7 @@ func GetProjectID(ctx context.Context, tx *sql.Tx, name string) (int64, error) {
 	var id int64
 	err = row.Scan(&id)
 	if errors.Is(err, sql.ErrNoRows) {
-		return -1, api.StatusErrorf(http.StatusNotFound, "Project not found")
+		return -1, ErrNotFound
 	}
 
 	if err != nil {
@@ -343,7 +374,11 @@ func GetProjectID(ctx context.Context, tx *sql.Tx, name string) (int64, error) {
 
 // RenameProject renames the project matching the given key parameters.
 // generator: project Rename
-func RenameProject(ctx context.Context, tx *sql.Tx, name string, to string) error {
+func RenameProject(ctx context.Context, tx *sql.Tx, name string, to string) (_err error) {
+	defer func() {
+		_err = mapErr(_err, "Project")
+	}()
+
 	stmt, err := Stmt(tx, projectRename)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"projectRename\" prepared statement: %w", err)
@@ -368,7 +403,11 @@ func RenameProject(ctx context.Context, tx *sql.Tx, name string, to string) erro
 
 // DeleteProject deletes the project matching the given key parameters.
 // generator: project DeleteOne-by-Name
-func DeleteProject(ctx context.Context, tx *sql.Tx, name string) error {
+func DeleteProject(ctx context.Context, tx *sql.Tx, name string) (_err error) {
+	defer func() {
+		_err = mapErr(_err, "Project")
+	}()
+
 	stmt, err := Stmt(tx, projectDeleteByName)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"projectDeleteByName\" prepared statement: %w", err)
@@ -385,7 +424,7 @@ func DeleteProject(ctx context.Context, tx *sql.Tx, name string) error {
 	}
 
 	if n == 0 {
-		return api.StatusErrorf(http.StatusNotFound, "Project not found")
+		return ErrNotFound
 	} else if n > 1 {
 		return fmt.Errorf("Query deleted %d Project rows instead of 1", n)
 	}
