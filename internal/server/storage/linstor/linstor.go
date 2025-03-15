@@ -19,6 +19,34 @@ type Client struct {
 	Client *linstorClient.Client
 }
 
+// linstorLogger wraps the Incus logger to use it with golinstor.
+type linstorLogger struct{}
+
+// wrapLogger wraps a logger for golinstor.
+func wrapLogger(f func(string, ...logger.Ctx), msg string, args ...any) {
+	f("LINSTOR: " + fmt.Sprintf(msg, args...))
+}
+
+// Errorf wraps logger.Error for golinstor.
+func (linstorLogger) Errorf(str string, args ...any) {
+	wrapLogger(logger.Error, str, args...)
+}
+
+// Infof wraps logger.Info for golinstor.
+func (linstorLogger) Infof(str string, args ...any) {
+	wrapLogger(logger.Info, str, args...)
+}
+
+// Debugf wraps logger.Debug for golinstor.
+func (linstorLogger) Debugf(str string, args ...any) {
+	wrapLogger(logger.Debug, str, args...)
+}
+
+// Warnf wraps logger.Warn for golinstor.
+func (linstorLogger) Warnf(str string, args ...any) {
+	wrapLogger(logger.Warn, str, args...)
+}
+
 // NewClient initializes a new Linstor client.
 func NewClient(controllerConnection, sslCACert, sslClientCert, sslClientKey string) (*Client, error) {
 	logger.Info("Creating new Linstor client", logger.Ctx{"controllerConnection": controllerConnection})
@@ -52,7 +80,7 @@ func NewClient(controllerConnection, sslCACert, sslClientCert, sslClientKey stri
 	// Setup the Linstor client.
 	httpClient := &http.Client{Transport: httpTransport}
 	controllerUrls := strings.Split(controllerConnection, ",")
-	c, err := linstorClient.NewClient(linstorClient.Controllers(controllerUrls), linstorClient.HTTPClient(httpClient))
+	c, err := linstorClient.NewClient(linstorClient.Controllers(controllerUrls), linstorClient.HTTPClient(httpClient), linstorClient.Log(linstorLogger{}))
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create Linstor client: %w", err)
 	}
