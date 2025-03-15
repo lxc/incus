@@ -469,6 +469,7 @@ var APIExtensions = []string{
 	"network_ipv4_dhcp_routes",
 	"network_state_ovn_ls",
 	"network_dns_nameservers",
+	"acme_http01_port",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
