@@ -4,25 +4,27 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 )
 
-//go:generate -command mapper generate-database db mapper -t cluster_groups.mapper.go
-//go:generate mapper reset -i -b "//go:build linux && cgo && !agent"
+// Code generation directives.
 //
-//go:generate mapper stmt -e cluster_group objects table=cluster_groups
-//go:generate mapper stmt -e cluster_group objects-by-Name table=cluster_groups
-//go:generate mapper stmt -e cluster_group id table=cluster_groups
-//go:generate mapper stmt -e cluster_group create table=cluster_groups
-//go:generate mapper stmt -e cluster_group rename table=cluster_groups
-//go:generate mapper stmt -e cluster_group delete-by-Name table=cluster_groups
-//go:generate mapper stmt -e cluster_group update table=cluster_groups
+//generate-database:mapper target cluster_groups.mapper.go
+//generate-database:mapper reset -i -b "//go:build linux && cgo && !agent"
 //
-//go:generate mapper method -i -e cluster_group GetMany
-//go:generate mapper method -i -e cluster_group GetOne
-//go:generate mapper method -i -e cluster_group ID
-//go:generate mapper method -i -e cluster_group Exists
-//go:generate mapper method -i -e cluster_group Rename
-//go:generate mapper method -i -e cluster_group Create
-//go:generate mapper method -i -e cluster_group Update
-//go:generate mapper method -i -e cluster_group DeleteOne-by-Name
+//generate-database:mapper stmt -e cluster_group objects table=cluster_groups
+//generate-database:mapper stmt -e cluster_group objects-by-Name table=cluster_groups
+//generate-database:mapper stmt -e cluster_group id table=cluster_groups
+//generate-database:mapper stmt -e cluster_group create table=cluster_groups
+//generate-database:mapper stmt -e cluster_group rename table=cluster_groups
+//generate-database:mapper stmt -e cluster_group delete-by-Name table=cluster_groups
+//generate-database:mapper stmt -e cluster_group update table=cluster_groups
+//
+//generate-database:mapper method -i -e cluster_group GetMany
+//generate-database:mapper method -i -e cluster_group GetOne
+//generate-database:mapper method -i -e cluster_group ID
+//generate-database:mapper method -i -e cluster_group Exists
+//generate-database:mapper method -i -e cluster_group Rename
+//generate-database:mapper method -i -e cluster_group Create
+//generate-database:mapper method -i -e cluster_group Update
+//generate-database:mapper method -i -e cluster_group DeleteOne-by-Name
 
 // ClusterGroup is a value object holding db-related details about a cluster group.
 type ClusterGroup struct {
