@@ -106,7 +106,10 @@ func (c *cmdAdminInit) RunAuto(cmd *cobra.Command, args []string, d incus.Instan
 			pool.Name = c.flagStoragePool
 		}
 
-		config.StoragePools = []api.StoragePoolsPost{pool}
+		config.StoragePools = []api.InitStoragePoolsProjectPost{{
+			StoragePoolsPost: pool,
+			Project:          api.ProjectDefaultName,
+		}}
 
 		// Profile entry
 		config.Profiles = []api.InitProfileProjectPost{{

@@ -24,7 +24,7 @@ type InitLocalPreseed struct {
 
 	// Storage Pools to add
 	// Example: local dir storage pool
-	StoragePools []StoragePoolsPost `json:"storage_pools" yaml:"storage_pools"`
+	StoragePools []InitStoragePoolsProjectPost `json:"storage_pools" yaml:"storage_pools"`
 
 	// Storage Volumes to add
 	// Example: local dir storage volume
@@ -39,6 +39,19 @@ type InitLocalPreseed struct {
 	// Projects to add
 	// Example: "default" project
 	Projects []ProjectsPost `json:"projects" yaml:"projects"`
+}
+
+// InitStoragePoolsProjectPost represents the fields of a new storage pool along with its associated project.
+//
+// swagger:model
+//
+// API extension: preseed.
+type InitStoragePoolsProjectPost struct {
+	StoragePoolsPost `yaml:",inline"`
+
+	// Project in which the network will reside
+	// Example: "default"
+	Project string
 }
 
 // InitNetworksProjectPost represents the fields of a new network along with its associated project.
