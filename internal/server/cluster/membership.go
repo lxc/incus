@@ -215,7 +215,7 @@ func EnsureServerCertificateTrusted(serverName string, serverCert *localtls.Cert
 	} else {
 		_, err = cluster.CreateCertificate(ctx, tx.Tx(), dbCert)
 		if err != nil {
-			return fmt.Errorf("Failed adding server certifcate to trust store: %w", err)
+			return fmt.Errorf("Failed adding server certificate to trust store: %w", err)
 		}
 	}
 
@@ -1019,7 +1019,7 @@ func Handover(state *state.State, gateway *Gateway, address string) (string, []d
 	return "", nil, nil
 }
 
-// Build an app.RolesChanges object feeded with the current cluster state.
+// Build an app.RolesChanges object fed with the current cluster state.
 func newRolesChanges(state *state.State, gateway *Gateway, nodes []db.RaftNode, unavailableMembers []string) (*app.RolesChanges, error) {
 	var domains map[string]uint64
 	err := state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {

@@ -32,7 +32,7 @@ const iptablesCommentPrefix = "generated for"
 // As its own locking mechanism isn't always available.
 var ebtablesMu sync.Mutex
 
-// Xtables is an implmentation of Incus firewall using {ip, ip6, eb}tables.
+// Xtables is an implementation of Incus firewall using {ip, ip6, eb}tables.
 type Xtables struct{}
 
 // String returns the driver name.
@@ -171,7 +171,7 @@ func (d Xtables) networkForwardIPTablesComment(networkName string) string {
 
 // networkSetupNICFilteringChain creates the NIC filtering chain if it doesn't exist, and adds the jump rules to
 // the INPUT and FORWARD filter chains. Must be called after networkSetupForwardingPolicy so that the rules are
-// prepended before the default fowarding policy rules.
+// prepended before the default forwarding policy rules.
 func (d Xtables) networkSetupNICFilteringChain(networkName string, ipVersion uint) error {
 	chain := fmt.Sprintf("%s_%s", iptablesChainNICFilterPrefix, networkName)
 
@@ -233,8 +233,8 @@ func (d Xtables) networkSetupACLFilteringChains(networkName string) error {
 		}
 
 		// Prepend baseline services rules for network.
-		// Unlike OVN networks, we add the rules first before the ACL candidate rules, aa we can't
-		// indentify "INPUT" and "OUTPUT" chain traffic once we have jumped into the ACL chain. At this
+		// Unlike OVN networks, we add the rules first before the ACL candidate rules, as we can't
+		// identify "INPUT" and "OUTPUT" chain traffic once we have jumped into the ACL chain. At this
 		// point it becomes indistinguishable from FORWARD traffic. So unlike OVN an ACL rule cannot be
 		// used to block baseline service traffic.
 
@@ -1285,7 +1285,7 @@ func (d Xtables) iptablesClear(ipVersion uint, comments []string, fromTables ...
 		if err != nil {
 			logger.Warnf("Failed getting list of tables from %q, assuming all requested tables exist", tablesFile)
 		} else {
-			tables = []string{} // Initialize the tables slice indcating we were able to open the tables file.
+			tables = []string{} // Initialize the tables slice indicating we were able to open the tables file.
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
 				tables = append(tables, scanner.Text())

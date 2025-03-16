@@ -28,7 +28,7 @@ const isoVolSuffix = ".iso"
 // DefaultBlockSize is the default size of block volumes.
 const DefaultBlockSize = "10GiB"
 
-// DefaultFilesystem filesytem to use for block devices by default.
+// DefaultFilesystem filesystem to use for block devices by default.
 const DefaultFilesystem = "ext4"
 
 // defaultFilesystemMountOpts mount options to use for filesystem block devices by default.

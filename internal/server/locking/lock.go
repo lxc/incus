@@ -58,7 +58,7 @@ func Lock(ctx context.Context, lockName string) (UnlockFunc, error) {
 		}
 
 		// An existing operation is ongoing, lets wait for that to finish and then try
-		// to get exlusive access to create a new operation again.
+		// to get exclusive access to create a new operation again.
 		locksMutex.Unlock()
 
 		select {

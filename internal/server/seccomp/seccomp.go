@@ -1985,7 +1985,7 @@ func mountFlagsToOpts(flags C.ulong) string {
 }
 
 // mountHandleHugetlbfsArgs adds user namespace root uid and gid to the
-// hugetlbfs mount options to make it useable in unprivileged containers.
+// hugetlbfs mount options to make it usable in unprivileged containers.
 func (s *Server) mountHandleHugetlbfsArgs(c Instance, args *MountArgs, nsuid int64, nsgid int64) error {
 	if args.fstype != "hugetlbfs" {
 		return nil
@@ -2011,13 +2011,13 @@ func (s *Server) mountHandleHugetlbfsArgs(c Instance, args *MountArgs, nsuid int
 			if len(uidFields) > 1 {
 				n, err := strconv.ParseInt(uidFields[1], 10, 64)
 				if err != nil {
-					// If the user specified garbage, let the kernel tell em whats what.
+					// If the user specified garbage, let the kernel tell em what's what.
 					return nil
 				}
 
 				uidOpt, _ = idmapset.ShiftIntoNS(n, 0)
 				if uidOpt < 0 {
-					// If the user specified garbage, let the kernel tell em whats what.
+					// If the user specified garbage, let the kernel tell em what's what.
 					return nil
 				}
 
@@ -2028,13 +2028,13 @@ func (s *Server) mountHandleHugetlbfsArgs(c Instance, args *MountArgs, nsuid int
 			if len(gidFields) > 1 {
 				n, err := strconv.ParseInt(gidFields[1], 10, 64)
 				if err != nil {
-					// If the user specified garbage, let the kernel tell em whats what.
+					// If the user specified garbage, let the kernel tell em what's what.
 					return nil
 				}
 
 				gidOpt, _ = idmapset.ShiftIntoNS(n, 0)
 				if gidOpt < 0 {
-					// If the user specified garbage, let the kernel tell em whats what.
+					// If the user specified garbage, let the kernel tell em what's what.
 					return nil
 				}
 
@@ -2309,7 +2309,7 @@ func (s *Server) HandleBpfSyscall(c Instance, siov *Iovec) int {
 	}
 
 	// Locking to a thread shouldn't be necessary but it still makes me
-	// queezy that Go could just wander off to somehwere.
+	// queezy that Go could just wander off to somewhere.
 	runtime.LockOSThread()
 	ret := C.handle_bpf_syscall(
 		C.pid_t(siov.req.pid),

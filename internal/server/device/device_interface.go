@@ -43,12 +43,12 @@ type Device interface {
 	// PreStartCheck indicates if the device is available for starting.
 	PreStartCheck() error
 
-	// Start peforms any host-side configuration required to start the device for the instance.
+	// Start performs any host-side configuration required to start the device for the instance.
 	// This can be when a device is plugged into a running instance or the instance is starting.
 	// Returns run-time configuration needed for configuring the instance with the new device.
 	Start() (*deviceConfig.RunConfig, error)
 
-	// Register provides the ability for a device to subcribe to daemon generated events.
+	// Register provides the ability for a device to subscribe to daemon generated events.
 	// It is called after a device is started (after Start()) or on daemon startup.
 	Register() error
 

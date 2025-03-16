@@ -268,7 +268,7 @@ func checkClusterIsUpgradable(ctx context.Context, tx *sql.Tx, target [2]int) er
 			return errSomeNodesAreBehind
 		case 2:
 			// Another node has a version greater than ours
-			// and presumeably is waiting for other nodes
+			// and presumably is waiting for other nodes
 			// to upgrade. Let's error out and shutdown
 			// since we need a greater version.
 			return fmt.Errorf("This cluster member's version is behind, please upgrade")

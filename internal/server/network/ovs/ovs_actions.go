@@ -435,7 +435,7 @@ func (o *VSwitch) AssociateInterfaceOVNSwitchPort(ctx context.Context, interface
 			return err
 		}
 
-		// Atempt to remove port, but don't fail if doesn't exist or can't be removed, at least
+		// Attempt to remove port, but don't fail if doesn't exist or can't be removed, at least
 		// the switch association has been successfully removed, so the new port being added next
 		// won't fail to work properly.
 		link := &ip.Link{Name: iface.Name}

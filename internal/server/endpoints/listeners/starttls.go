@@ -38,7 +38,7 @@ func (l *StarttlsListener) Accept() (net.Conn, error) {
 		return nil, err
 	}
 
-	// Setup bufferred connection.
+	// Setup buffered connection.
 	bufConn := BufferedUnixConn{bufio.NewReader(c), c.(*net.UnixConn)}
 
 	// Peak to see if STARTTLS.

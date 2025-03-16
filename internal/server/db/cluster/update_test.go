@@ -607,7 +607,7 @@ func TestUpdateFromV19(t *testing.T) {
 
 	assert.Equal(t, expectedArch, arch)
 
-	// Trying to create a row without specififying the architecture results
+	// Trying to create a row without specifying the architecture results
 	// in an error.
 	_, err = db.Exec(`
 INSERT INTO nodes(id, name, description, address, schema, api_extensions, heartbeat, pending)

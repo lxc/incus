@@ -29,7 +29,7 @@ const lvmBlockVolSuffix = ".block"
 // lvmISOVolSuffix suffix used for iso content type volumes.
 const lvmISOVolSuffix = ".iso"
 
-// lvmSnapshotSeparator separator character used between volume name and snaphot name in logical volume names.
+// lvmSnapshotSeparator separator character used between volume name and snapshot name in logical volume names.
 const lvmSnapshotSeparator = "-"
 
 // lvmEscapedHyphen used to escape hyphens in volume names to avoid conflicts with lvmSnapshotSeparator.

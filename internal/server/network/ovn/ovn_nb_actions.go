@@ -120,7 +120,7 @@ type OVNDHCPv6Opts struct {
 	DNSSearchList      []string
 }
 
-// OVNSwitchPortOpts options that can be applied to a swich port.
+// OVNSwitchPortOpts options that can be applied to a switch port.
 type OVNSwitchPortOpts struct {
 	MAC          net.HardwareAddr   // Optional, if nil will be set to dynamic.
 	IPV4         string             // Optional, if empty, allocate an address, if "none" then disable allocation.
@@ -1818,7 +1818,7 @@ func (o *NB) GetLogicalSwitchPortIPs(ctx context.Context, portName OVNSwitchPort
 	return addresses, nil
 }
 
-// GetLogicalSwitchPortDynamicIPs returns a list of dynamc IPs for a switch port.
+// GetLogicalSwitchPortDynamicIPs returns a list of dynamic IPs for a switch port.
 func (o *NB) GetLogicalSwitchPortDynamicIPs(ctx context.Context, portName OVNSwitchPort) ([]net.IP, error) {
 	lsp := &ovnNB.LogicalSwitchPort{
 		Name: string(portName),

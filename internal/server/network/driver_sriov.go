@@ -115,7 +115,7 @@ func (n *sriov) Update(newNetwork api.NetworkPut, targetNode string, clientType 
 		_ = n.common.update(oldNetwork, targetNode, clientType)
 	})
 
-	// Apply changes to all nodes and databse.
+	// Apply changes to all nodes and database.
 	err = n.common.update(newNetwork, targetNode, clientType)
 	if err != nil {
 		return err

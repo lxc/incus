@@ -210,7 +210,7 @@ func TestCheckClusterTargetRestriction_RestrictedTrueWithOverride(t *testing.T) 
 	certificateCache := &certificate.Cache{}
 
 	// Setting the certificate and not projects means the certificate is not restricted and therefore the user is an
-	// admin that can override the cluster targer restriction.
+	// admin that can override the cluster target restriction.
 	certificateCache.SetCertificates(map[certificate.Type]map[string]x509.Certificate{
 		certificate.TypeClient: {
 			"my-certificate-fingerprint": x509.Certificate{},

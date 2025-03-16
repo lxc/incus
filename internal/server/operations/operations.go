@@ -115,7 +115,7 @@ type Operation struct {
 	// Indicates if operation has finished.
 	finished *cancel.Canceller
 
-	// Locking for concurent access to the Operation
+	// Locking for concurrent access to the Operation
 	lock sync.Mutex
 
 	state  *state.State

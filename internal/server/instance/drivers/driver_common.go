@@ -755,7 +755,7 @@ func (d *common) runHooks(hooks []func() error) error {
 	return nil
 }
 
-// snapshot handles the common part of the snapshoting process.
+// snapshot handles the common part of the snapshotting process.
 func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time.Time, stateful bool) error {
 	revert := revert.New()
 	defer revert.Fail()
@@ -1206,7 +1206,7 @@ func (d *common) deviceLoad(inst instance.Instance, deviceName string, rawConfig
 			return nil, err
 		}
 	} else {
-		// Othewise copy the config so it cannot be modified by device.
+		// Otherwise copy the config so it cannot be modified by device.
 		configCopy = rawConfig.Clone()
 	}
 
