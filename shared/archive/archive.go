@@ -30,7 +30,7 @@ func (nwc *nullWriteCloser) Close() error {
 	return nil
 }
 
-// ExtractWithFds runs extractor process under specifc AppArmor profile.
+// ExtractWithFds runs extractor process under specific AppArmor profile.
 // The allowedCmds argument specify commands which are allowed to run by apparmor.
 // The cmd argument is automatically added to allowedCmds slice.
 //
