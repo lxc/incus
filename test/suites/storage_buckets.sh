@@ -75,7 +75,7 @@ test_storage_buckets() {
 
   # Check bucket name validation.
   ! incus storage bucket create "${poolName}" .foo || false
-  ! incus storage bucket create "${poolName}" fo || false
+  ! incus storage bucket create "${poolName}" fo || false  # codespell:ignore fo
   ! incus storage bucket create "${poolName}" fooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo || false
   ! incus storage bucket create "${poolName}" "foo bar" || false
 

@@ -2,7 +2,7 @@ test_snapshots() {
   snapshots
 
   if [ "$(storage_backend "$INCUS_DIR")" = "lvm" ]; then
-    # Test that non-thinpool lvm backends work fine with snaphots.
+    # Test that non-thinpool lvm backends work fine with snapshots.
     incus storage create "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snapshots" lvm lvm.use_thinpool=false volume.size=25MiB
     incus profile device set default root pool "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snapshots"
 
@@ -100,7 +100,7 @@ test_snap_restore() {
   snap_restore
 
   if [ "$(storage_backend "$INCUS_DIR")" = "lvm" ]; then
-    # Test that non-thinpool lvm backends work fine with snaphots.
+    # Test that non-thinpool lvm backends work fine with snapshots.
     incus storage create "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snap-restore" lvm lvm.use_thinpool=false volume.size=25MiB
     incus profile device set default root pool "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snap-restore"
 
@@ -210,21 +210,21 @@ snap_restore() {
   # test restore using full snapshot name
   restore_and_compare_fs snap1
 
-  # Check that instances UUID remain the same before and after snapshoting
+  # Check that instances UUID remain the same before and after snapshotting
   newUUID=$(incus config get bar volatile.uuid)
   if [ "${initialUUID}" != "${newUUID}" ]; then
     echo "==> UUID of the instance should remain the same after restoring its snapshot"
     false
   fi
 
-  # Check that the generation UUID from before changes compared to the one after snapshoting
+  # Check that the generation UUID from before changes compared to the one after snapshotting
   newGenerationID=$(incus config get bar volatile.uuid.generation)
   if [ "${initialGenerationID}" = "${newGenerationID}" ]; then
     echo "==> Generation UUID of the instance should change after restoring its snapshot"
     false
   fi
 
-  # Check that instances UUIS remain the same before and after snapshoting  (stateful mode)
+  # Check that instances UUIS remain the same before and after snapshotting  (stateful mode)
   if ! command -v criu >/dev/null 2>&1; then
     echo "==> SKIP: stateful snapshotting with CRIU (missing binary)"
   else

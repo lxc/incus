@@ -1,7 +1,7 @@
 #!/bin/bash
 export PATH="$GOPATH/bin:$PATH"
 
-# /tmp isn't moutned exec on most systems, so we can't actually start
+# /tmp isn't mounted exec on most systems, so we can't actually start
 # containers that are created there.
 SRC_DIR="$(pwd)"
 INCUS_DIR="$(mktemp -d -p "$(pwd)")"

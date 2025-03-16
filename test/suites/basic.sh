@@ -107,7 +107,7 @@ test_basic_usage() {
   # Test container creation
   incus init testimage foo
   incus list | grep foo | grep STOPPED
-  incus list fo | grep foo | grep STOPPED
+  incus list fo | grep foo | grep STOPPED  # codespell:ignore fo
 
   # Test list json format
   incus list --format json | jq '.[]|select(.name="foo")' | grep '"name": "foo"'

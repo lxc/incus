@@ -15,7 +15,7 @@ test_container_devices_nic_macvlan() {
   # Test pre-launch profile config is applied at launch.
   incus profile copy default "${ctName}"
 
-  # Modifiy profile nictype and parent in atomic operation to ensure validation passes.
+  # Modify profile nictype and parent in atomic operation to ensure validation passes.
   incus profile show "${ctName}" | sed  "s/nictype: p2p/nictype: macvlan\\n    parent: ${ctName}/" | incus profile edit "${ctName}"
   incus profile device set "${ctName}" eth0 mtu "1400"
 
