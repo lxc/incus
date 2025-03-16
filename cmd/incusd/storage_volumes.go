@@ -359,7 +359,7 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 			}
 
 			// The project name used for custom volumes varies based on whether the
-			// project has the featues.storage.volumes feature enabled.
+			// project has the features.storage.volumes feature enabled.
 			customVolProjectName = project.StorageVolumeProjectFromRecord(p, db.StoragePoolVolumeTypeCustom)
 
 			projectImages, err = tx.GetImagesFingerprints(ctx, requestProjectName, false)

@@ -544,7 +544,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		return nil, false, fmt.Errorf("Unsupported protocol: %v", protocol)
 	}
 
-	// Override visiblity
+	// Override visibility
 	info.Public = args.Public
 
 	// We want to enable auto-update only if we were passed an

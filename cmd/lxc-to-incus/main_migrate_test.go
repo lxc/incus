@@ -26,7 +26,7 @@ func TestValidateConfig(t *testing.T) {
 			true,
 		},
 		{
-			"container name missmatch (1)",
+			"container name mismatch (1)",
 			[]string{
 				"lxc.uts.name = c2",
 			},
@@ -34,7 +34,7 @@ func TestValidateConfig(t *testing.T) {
 			true,
 		},
 		{
-			"container name missmatch (2)",
+			"container name mismatch (2)",
 			[]string{
 				"lxc.utsname = c2",
 			},

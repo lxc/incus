@@ -1839,7 +1839,7 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 	if sig == unix.SIGPWR || sig == unix.SIGTERM {
 		if d.db.Cluster != nil {
 			// waitForOperations will block until all operations are done, or it's forced to shut down.
-			// For the latter case, we re-use the shutdown channel which is filled when a shutdown is
+			// For the latter case, we reuse the shutdown channel which is filled when a shutdown is
 			// initiated using `shutdown`.
 			waitForOperations(ctx, d.db.Cluster, s.GlobalConfig.ShutdownTimeout())
 		}

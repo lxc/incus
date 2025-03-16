@@ -63,7 +63,7 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Failed to obtain connection info: %w", err)
 	}
 
-	// Keep track of the socket path we used to succefully connect to the server
+	// Keep track of the socket path we used to successfully connect to the server
 	serverUnixPath := cinfo.SocketPath
 
 	// Validate the configuration.
