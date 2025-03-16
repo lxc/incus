@@ -23,15 +23,15 @@ For example:
     inet6 ::1/128 scope host
        valid_lft forever preferred_lft forever
 2: enp5s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
-    link/ether 00:16:3e:e3:f3:3f brd ff:ff:ff:ff:ff:ff
+    link/ether 10:66:6a:e3:f3:3f brd ff:ff:ff:ff:ff:ff
     inet 10.68.216.12/24 metric 100 brd 10.68.216.255 scope global dynamic enp5s0
        valid_lft 3028sec preferred_lft 3028sec
-    inet6 fd42:e819:7a51:5a7b:216:3eff:fee3:f33f/64 scope global mngtmpaddr noprefixroute
+    inet6 fd42:e819:7a51:5a7b:1266:6aff:fee3:f33f/64 scope global mngtmpaddr noprefixroute
        valid_lft forever preferred_lft forever
-    inet6 fe80::216:3eff:fee3:f33f/64 scope link
+    inet6 fe80::1266:6aff:fee3:f33f/64 scope link
        valid_lft forever preferred_lft forever
 3: incusbr0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
-    link/ether 00:16:3e:8d:f3:72 brd ff:ff:ff:ff:ff:ff
+    link/ether 10:66:6a:8d:f3:72 brd ff:ff:ff:ff:ff:ff
     inet 10.64.82.1/24 scope global incusbr0
        valid_lft forever preferred_lft forever
     inet6 fd42:f4ab:4399:e6eb::1/64 scope global
