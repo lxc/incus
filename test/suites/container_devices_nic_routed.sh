@@ -201,7 +201,7 @@ test_container_devices_nic_routed() {
   incus stop -f "${ctName}2"
   incus stop -f "${ctName}"
 
-  # Check routed ontop of VLAN parent with custom routing tables.
+  # Check routed on top of VLAN parent with custom routing tables.
   incus config device set "${ctName}" eth0 vlan 1234
   incus config device set "${ctName}" eth0 ipv4.host_table=100
   incus config device set "${ctName}" eth0 ipv6.host_table=101
