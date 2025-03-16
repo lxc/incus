@@ -18,7 +18,7 @@ func init() {
 	Log = newWrapper(logger)
 }
 
-// InitLogger intializes a full logging instance.
+// InitLogger initializes a full logging instance.
 func InitLogger(filepath string, syslogName string, verbose bool, debug bool, hook logrus.Hook) error {
 	logger := logrus.New()
 	logger.Level = logrus.DebugLevel

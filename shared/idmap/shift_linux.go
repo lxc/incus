@@ -64,7 +64,7 @@ struct vfs_ns_cap_data {
 #define cpu_to_le32(w32) ((u_int32_t)(w32))
 #define le32_to_cpu(w32) ((u_int32_t)(w32))
 #else
-#error Expected endianess macro to be set
+#error Expected endianness macro to be set
 #endif
 
 static __le32 native_to_le32(int n)
