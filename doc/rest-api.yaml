@@ -2360,7 +2360,7 @@ definitions:
                 x-go-name: HostName
             hwaddr:
                 description: MAC address
-                example: 00:16:3e:0c:ee:dd
+                example: 10:66:6a:0c:ee:dd
                 type: string
                 x-go-name: Hwaddr
             mtu:
@@ -2389,7 +2389,7 @@ definitions:
         properties:
             address:
                 description: IP address
-                example: fd42:4c81:5770:1eaf:216:3eff:fe0c:eedd
+                example: fd42:4c81:5770:1eaf:1266:6aff:fe0c:eedd
                 type: string
                 x-go-name: Address
             family:
@@ -3194,7 +3194,7 @@ definitions:
                 x-go-name: Hostname
             hwaddr:
                 description: The MAC address
-                example: 00:16:3e:2c:89:d9
+                example: 10:66:6a:2c:89:d9
                 type: string
                 x-go-name: Hwaddr
             location:
@@ -3576,7 +3576,7 @@ definitions:
                 $ref: '#/definitions/NetworkStateCounters'
             hwaddr:
                 description: MAC address
-                example: 00:16:3e:5a:83:57
+                example: 10:66:6a:5a:83:57
                 type: string
                 x-go-name: Hwaddr
             mtu:
