@@ -313,7 +313,7 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 	// Apply networks in the default project before other projects config applied (so that if the projects
 	// depend on a network in the default project they can have their config applied successfully).
 	for i := range config.Server.Networks {
-		// Populate default project if not specified for backwards compatbility with earlier
+		// Populate default project if not specified for backwards compatibility with earlier
 		// preseed dump files.
 		if config.Server.Networks[i].Project == "" {
 			config.Server.Networks[i].Project = api.ProjectDefaultName

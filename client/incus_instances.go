@@ -466,7 +466,7 @@ func (r *ProtocolIncus) GetInstanceFull(name string) (*api.InstanceFull, string,
 	instance := api.InstanceFull{}
 
 	if !r.HasExtension("instance_get_full") {
-		// Backware compatibility.
+		// Backward compatibility.
 		ct, _, err := r.GetInstance(name)
 		if err != nil {
 			return nil, "", err
