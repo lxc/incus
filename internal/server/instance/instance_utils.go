@@ -467,7 +467,7 @@ func LoadFromBackup(s *state.State, projectName string, instancePath string, app
 func DeviceNextInterfaceHWAddr() (string, error) {
 	// Generate a new random MAC address using the usual prefix
 	ret := bytes.Buffer{}
-	for _, c := range "00:16:3e:xx:xx:xx" {
+	for _, c := range "10:66:6a:xx:xx:xx" {
 		if c == 'x' {
 			c, err := rand.Int(rand.Reader, big.NewInt(16))
 			if err != nil {

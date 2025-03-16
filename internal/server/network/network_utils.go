@@ -947,7 +947,7 @@ func usesIPv6Firewall(netConfig map[string]string) bool {
 func randomHwaddr(r *rand.Rand) string {
 	// Generate a new random MAC address using the usual prefix.
 	ret := bytes.Buffer{}
-	for _, c := range "00:16:3e:xx:xx:xx" {
+	for _, c := range "10:66:6a:xx:xx:xx" {
 		if c == 'x' {
 			ret.WriteString(fmt.Sprintf("%x", r.Int31n(16)))
 		} else {
