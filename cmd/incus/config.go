@@ -123,7 +123,7 @@ func (c *cmdConfigEdit) helpTemplate() string {
 ### profiles:
 ### - default
 ### config:
-###   volatile.eth0.hwaddr: 00:16:3e:e9:f8:7f
+###   volatile.eth0.hwaddr: 10:66:6a:e9:f8:7f
 ### devices:
 ###   homedir:
 ###     path: /extra
