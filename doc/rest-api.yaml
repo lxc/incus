@@ -4021,7 +4021,7 @@ definitions:
                 type: string
                 x-go-name: Description
             err:
-                description: Operation error mesage
+                description: Operation error message
                 example: Some error message
                 type: string
                 x-go-name: Err
@@ -4063,7 +4063,7 @@ definitions:
                     items:
                         type: string
                     type: array
-                description: Affected resourcs
+                description: Affected resources
                 example:
                     instances:
                         - /1.0/instances/foo
@@ -9145,7 +9145,7 @@ paths:
                     $ref: '#/responses/Forbidden'
                 "500":
                     $ref: '#/responses/InternalServerError'
-            summary: Get who has access to an instnace
+            summary: Get who has access to an instance
             tags:
                 - instances
     /1.0/instances/{name}/backups:
