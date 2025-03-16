@@ -2243,11 +2243,18 @@ func (d *qemu) setupNvram() error {
 		return err
 	}
 
+	nvramPath := d.nvramPath()
+
+	// Handle the case where the firmware vars filename matches our internal one.
+	if efiVarsName == filepath.Base(nvramPath) {
+		return nil
+	}
+
 	// Generate a symlink.
 	// This is so qemu.nvram can always be assumed to be the EDK2 vars file.
 	// The real file name is then used to determine what firmware must be selected.
-	_ = os.Remove(d.nvramPath())
-	err = os.Symlink(efiVarsName, d.nvramPath())
+	_ = os.Remove(nvramPath)
+	err = os.Symlink(efiVarsName, nvramPath)
 	if err != nil {
 		return err
 	}
