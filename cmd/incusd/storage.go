@@ -24,7 +24,7 @@ import (
 )
 
 // Simple cache used to store the activated drivers on this server.
-// This allows us to avoid querying the database everytime and API call is made.
+// This allows us to avoid querying the database every time an API call is made.
 var (
 	storagePoolUsedDriversCacheVal      atomic.Value
 	storagePoolSupportedDriversCacheVal atomic.Value

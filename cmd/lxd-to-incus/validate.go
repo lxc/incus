@@ -83,7 +83,7 @@ func (c *cmdMigrate) validate(source source, target target) error {
 			return false, nil
 		}
 
-		// Check if any instance is persent.
+		// Check if any instance is present.
 		names, err = srcClient.GetInstanceNames(api.InstanceTypeAny)
 		if err != nil {
 			return false, err

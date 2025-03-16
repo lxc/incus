@@ -20,7 +20,7 @@ func mockStartDaemon() (*Daemon, error) {
 	d := defaultDaemon()
 	d.os.MockMode = true
 
-	// Setup test certificates. We re-use the ones already on disk under
+	// Setup test certificates. We reuse the ones already on disk under
 	// the test/ directory, to avoid generating new ones, which is
 	// expensive.
 	err := sys.SetupTestCerts(internalUtil.VarPath())

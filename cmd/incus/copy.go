@@ -471,7 +471,7 @@ func (c *cmdCopy) Run(cmd *cobra.Command, args []string) error {
 	keepVolatile := c.flagRefresh
 	instanceOnly := c.flagInstanceOnly
 
-	// If not target name is specified, one will be chosed by the server
+	// If target name is not specified, one will be chosen by the server
 	if len(args) < 2 {
 		return c.copyInstance(conf, args[0], "", keepVolatile, ephem, stateful, instanceOnly, mode, c.flagStorage, false)
 	}

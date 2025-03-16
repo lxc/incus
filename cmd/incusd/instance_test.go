@@ -208,7 +208,7 @@ func (suite *containerTestSuite) TestContainer_LoadFromDB() {
 	suite.Exactly(
 		apiC1,
 		apiC2,
-		"The loaded container isn't excactly the same as the created one.",
+		"The loaded container isn't exactly the same as the created one.",
 	)
 }
 

@@ -111,7 +111,7 @@ func (c *migrationConn) AcceptIncoming(r *http.Request, w http.ResponseWriter) e
 }
 
 // WebSocket returns the underlying websocket connection.
-// If the connection isn't yet active it will either wait for an incoming connection or if configured, will atempt
+// If the connection isn't yet active it will either wait for an incoming connection or if configured, will attempt
 // to initiate a new outbound connection. If the context is cancelled before the connection is established it
 // will return with an error.
 func (c *migrationConn) WebSocket(ctx context.Context) (*websocket.Conn, error) {

@@ -31,7 +31,7 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
-// Lock to prevent concurent storage pools creation.
+// Lock to prevent concurrent storage pools creation.
 var storagePoolCreateLock sync.Mutex
 
 var storagePoolsCmd = APIEndpoint{

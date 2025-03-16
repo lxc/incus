@@ -344,7 +344,7 @@ func parseField(f *types.Var, structTag string, kind string, pkgName string) (*F
 		return nil, fmt.Errorf("Unexported field name %q", name)
 	}
 
-	// Ignore fields that are marked with a tag of `db:"ingore"`
+	// Ignore fields that are marked with a tag of `db:"ignore"`
 	if structTag != "" {
 		tagValue := reflect.StructTag(structTag).Get("db")
 		if tagValue == "ignore" {
