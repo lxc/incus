@@ -42,7 +42,7 @@ func Test_Volume_ConfigSizeFromSource(t *testing.T) {
 		},
 		{
 			// Check the volume's default block disk size is used when volume is a block type and
-			// neighter volume or pool volume size is specified and empty image source volume used.
+			// neither volume or pool volume size is specified and empty image source volume used.
 			vol:    Volume{driver: &nonBlockBackedDriver, volType: VolumeTypeVM, contentType: ContentTypeBlock},
 			srcVol: Volume{volType: VolumeTypeImage},
 			err:    nil,

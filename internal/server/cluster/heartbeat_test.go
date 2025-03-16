@@ -31,7 +31,7 @@ func TestHeartbeat(t *testing.T) {
 	f.Grow()
 	f.Grow()
 
-	time.Sleep(1 * time.Second) // Wait for join notifiation triggered heartbeats to complete.
+	time.Sleep(1 * time.Second) // Wait for join notification triggered heartbeats to complete.
 
 	leader := f.Leader()
 	leaderState := f.State(leader)

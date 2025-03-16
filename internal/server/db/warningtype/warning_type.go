@@ -2,7 +2,7 @@
 
 package warningtype
 
-// Type is a numeric code indentifying the type of warning.
+// Type is a numeric code identifying the type of warning.
 type Type int
 
 const (

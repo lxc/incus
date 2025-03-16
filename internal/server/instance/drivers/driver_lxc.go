@@ -3082,7 +3082,7 @@ func (d *lxc) onStop(args map[string]string) error {
 		// Clean up devices.
 		d.cleanupDevices(false, "")
 
-		// Remove directory ownership (to avoid issue if uidmap is re-used)
+		// Remove directory ownership (to avoid issue if uidmap is reused)
 		err := os.Chown(d.Path(), 0, 0)
 		if err != nil {
 			op.Done(fmt.Errorf("Failed clearing ownership: %w", err))
@@ -8173,7 +8173,7 @@ func (d *lxc) CanMigrate() string {
 	return d.canMigrate(d)
 }
 
-// LockExclusive attempts to get exlusive access to the instance's root volume.
+// LockExclusive attempts to get exclusive access to the instance's root volume.
 func (d *lxc) LockExclusive() (*operationlock.InstanceOperation, error) {
 	if d.IsRunning() {
 		return nil, fmt.Errorf("Instance is running")
@@ -8363,7 +8363,7 @@ func (rw *lxcCgroupReadWriter) Set(version cgroup.Backend, controller string, ke
 
 // UpdateBackupFile writes the instance's backup.yaml file to storage.
 func (d *lxc) UpdateBackupFile() error {
-	// Prevent concurent updates to the backup file.
+	// Prevent concurrent updates to the backup file.
 	unlock, err := d.updateBackupFileLock(context.Background())
 	if err != nil {
 		return err

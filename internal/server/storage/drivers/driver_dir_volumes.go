@@ -449,7 +449,7 @@ func (d *dir) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) err
 
 		bwlimit := d.config["rsync.bwlimit"]
 		srcPath := GetVolumeMountPath(d.name, snapVol.volType, parentName)
-		d.Logger().Debug("Copying fileystem volume", logger.Ctx{"sourcePath": srcPath, "targetPath": snapPath, "bwlimit": bwlimit, "rsyncArgs": rsyncArgs})
+		d.Logger().Debug("Copying filesystem volume", logger.Ctx{"sourcePath": srcPath, "targetPath": snapPath, "bwlimit": bwlimit, "rsyncArgs": rsyncArgs})
 
 		// Copy filesystem volume into snapshot directory.
 		_, err = rsync.LocalCopy(srcPath, snapPath, bwlimit, true, rsyncArgs...)

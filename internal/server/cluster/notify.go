@@ -21,7 +21,7 @@ type Notifier func(hook func(incus.InstanceServer) error) error
 // some nodes are down.
 type NotifierPolicy int
 
-// Possible notifcation policies.
+// Possible notification policies.
 const (
 	NotifyAll    NotifierPolicy = iota // Requires that all nodes are up.
 	NotifyAlive                        // Only notifies nodes that are alive

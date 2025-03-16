@@ -88,7 +88,7 @@ func (d *gpuSRIOV) Start() (*deviceConfig.RunConfig, error) {
 		return nil, fmt.Errorf("Error loading %q module: %w", "vfio-pci", err)
 	}
 
-	// Get global SR-IOV lock to prevent concurent allocations of the VF.
+	// Get global SR-IOV lock to prevent concurrent allocations of the VF.
 	sriovMu.Lock()
 	defer sriovMu.Unlock()
 

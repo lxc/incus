@@ -23,7 +23,7 @@ type preparer interface {
 
 // RegisterStmt register a SQL statement.
 //
-// Registered statements will be prepared upfront and re-used, to speed up
+// Registered statements will be prepared upfront and reused, to speed up
 // execution.
 //
 // Return a unique registration code.

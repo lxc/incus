@@ -19,7 +19,7 @@ type UnixEvent struct {
 	Path   string // The absolute source path on the host.
 }
 
-// UnixSubscription used to subcribe to specific events.
+// UnixSubscription used to subscribe to specific events.
 type UnixSubscription struct {
 	Path    string                                           // The absolute source path on the host.
 	Handler func(UnixEvent) (*deviceConfig.RunConfig, error) // The function to run when an event occurs.

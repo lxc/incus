@@ -486,7 +486,7 @@ func GetCPU() (*api.ResourcesCPU, error) {
 		cpu.Total++
 	}
 
-	// Asemble the data
+	// Assemble the data
 	cpu.Sockets = []api.ResourcesCPUSocket{}
 	for _, k := range sortedMapKeys(cpuSockets) {
 		socket := cpuSockets[k]

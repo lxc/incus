@@ -561,7 +561,7 @@ func genericVFSBackupVolume(d Driver, vol Volume, tarWriter *instancewriter.Inst
 							return err
 						}
 
-						// Skip any exluded files.
+						// Skip any excluded files.
 						if util.StringHasPrefix(srcPath, exclude...) {
 							return nil
 						}
@@ -1007,7 +1007,7 @@ func genericVFSCopyVolume(d Driver, initVolume func(vol Volume) (revert.Hook, er
 
 	// Define function to send a filesystem volume.
 	sendFSVol := func(srcPath string, targetPath string) error {
-		d.Logger().Debug("Copying fileystem volume", logger.Ctx{"sourcePath": srcPath, "targetPath": targetPath, "bwlimit": bwlimit, "rsyncArgs": rsyncArgs})
+		d.Logger().Debug("Copying filesystem volume", logger.Ctx{"sourcePath": srcPath, "targetPath": targetPath, "bwlimit": bwlimit, "rsyncArgs": rsyncArgs})
 		_, err := rsync.LocalCopy(srcPath, targetPath, bwlimit, true, rsyncArgs...)
 
 		status, _ := linux.ExitStatus(err)

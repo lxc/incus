@@ -417,7 +417,7 @@ func (s *Server) addPeer(address net.IP, asn uint32, password string, holdTime u
 			return fmt.Errorf("Peer %q already used but with a different password", address)
 		}
 
-		// Re-use the existing entry.
+		// Reuse the existing entry.
 		bgpPeer.count++
 		s.peers[address.String()] = bgpPeer
 		return nil

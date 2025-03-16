@@ -17,7 +17,7 @@ type dnsHandler struct {
 }
 
 func (d dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
-	// Don't allow concurent queries.
+	// Don't allow concurrent queries.
 	d.server.mu.Lock()
 	defer d.server.mu.Unlock()
 

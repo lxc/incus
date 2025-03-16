@@ -26,7 +26,7 @@ var networkPeerTypeNames = map[int]string{
 }
 
 // CreateNetworkPeer creates a new Network Peer and returns its ID.
-// If there is a mutual peering on the target network side the both peer entries are upated to link to each other's
+// If there is a mutual peering on the target network side the both peer entries are updated to link to each other's
 // repspective network ID.
 // Returns the local peer ID and true if a mutual peering has been created.
 func (c *ClusterTx) CreateNetworkPeer(ctx context.Context, networkID int64, info *api.NetworkPeersPost) (int64, bool, error) {
@@ -277,7 +277,7 @@ func networkPeerPopulatePeerInfo(peer *api.NetworkPeer, targetPeerNetworkProject
 			peer.Status = api.NetworkStatusPending
 		} else {
 			// Peer isn't linked to a mutual peer on the target network yet and has no joining details.
-			// Perhaps it was formely joined (and had its joining details cleared) and subsequently
+			// Perhaps it was formerly joined (and had its joining details cleared) and subsequently
 			// the target peer removed its peering entry.
 			peer.Status = api.NetworkStatusErrored
 		}

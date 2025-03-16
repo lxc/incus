@@ -62,7 +62,7 @@ func (d *inotify) getEvents(ctx context.Context) {
 			return
 		case event := <-d.watcher.Event:
 			event.Name = filepath.Clean(event.Name)
-			isCreate := event.Mask&in.InCreate != 0
+			isCreate := event.Mask&in.InCreate != 0 // codespell:ignore increate
 			isDelete := event.Mask&in.InDelete != 0
 
 			// Only consider create and delete events.
@@ -168,7 +168,7 @@ func (d *inotify) watchFSTree(path string) error {
 		}
 
 		// Only watch on real paths for CREATE and DELETE events.
-		err = d.watcher.AddWatch(path, in.InCreate|in.InDelete)
+		err = d.watcher.AddWatch(path, in.InCreate|in.InDelete) // codespell:ignore increate
 		if err != nil {
 			d.logger.Warn("Failed to watch path", logger.Ctx{"path": path, "err": err})
 			return nil

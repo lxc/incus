@@ -94,7 +94,7 @@ func (d *common) validatePool(config map[string]string, driverRules map[string]f
 
 // fillVolumeConfig populates volume config with defaults from pool.
 // excludeKeys allow exclude some keys from copying to volume config.
-// Sometimes that can be useful when copying is dependant from specific conditions
+// Sometimes that can be useful when copying is dependent from specific conditions
 // and shouldn't be done in generic way.
 func (d *common) fillVolumeConfig(vol *Volume, excludedKeys ...string) error {
 	for k := range d.config {

@@ -263,7 +263,7 @@ func OpenCluster(closingCtx context.Context, name string, store driver.NodeStore
 var ErrSomeNodesAreBehind = fmt.Errorf("some nodes are behind this node's version")
 
 // ForLocalInspection is a aid for the hack in initializeDbObject, which
-// sets the db-related Deamon attributes upfront, to be backward compatible
+// sets the db-related Daemon attributes upfront, to be backward compatible
 // with the legacy patches that need to interact with the database.
 func ForLocalInspection(db *sql.DB) *Cluster {
 	return &Cluster{

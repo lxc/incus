@@ -1321,7 +1321,7 @@ func (d *nicBridged) networkClearLease(name string, network string, hwaddr strin
 
 				if dstIPv4 == nil {
 					logger.Warnf("Failed to release DHCPv4 lease for instance %q, IP %q, MAC %q, %v", name, srcIP, srcMAC, "No server address found")
-					continue // Cant send release packet if no dstIP found.
+					continue // Can't send release packet if no dstIP found.
 				}
 
 				err = d.networkDHCPv4Release(srcMAC, srcIP, dstIPv4)
@@ -1340,12 +1340,12 @@ func (d *nicBridged) networkClearLease(name string, network string, hwaddr strin
 
 				if dstIPv6 == nil {
 					logger.Warnf("Failed to release DHCPv6 lease for instance %q, IP %q, DUID %q, IAID %q: %q", name, srcIP, DUID, IAID, "No server address found")
-					continue // Cant send release packet if no dstIP found.
+					continue // Can't send release packet if no dstIP found.
 				}
 
 				if dstDUID == "" {
 					errs = append(errs, fmt.Errorf("Failed to release DHCPv6 lease for instance %q, IP %q, DUID %q, IAID %q: %s", name, srcIP, DUID, IAID, "No server DUID found"))
-					continue // Cant send release packet if no dstDUID found.
+					continue // Can't send release packet if no dstDUID found.
 				}
 
 				err = d.networkDHCPv6Release(DUID, IAID, srcIP, dstIPv6, dstDUID)

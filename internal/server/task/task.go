@@ -10,7 +10,7 @@ import (
 type Task struct {
 	f        Func          // Function to execute.
 	schedule Schedule      // Decides if and when to execute f.
-	reset    chan struct{} // Resets the shedule and starts over.
+	reset    chan struct{} // Resets the schedule and starts over.
 }
 
 // Reset the state of the task as if it had just been started.

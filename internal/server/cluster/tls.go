@@ -76,7 +76,7 @@ func tlsCheckCert(r *http.Request, networkCert *localtls.CertInfo, serverCert *l
 			return true
 		}
 
-		// Check the trusted server certficates list provided.
+		// Check the trusted server certificates list provided.
 		trusted, _ = localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeServer], networkCert, false)
 		if trusted {
 			return true

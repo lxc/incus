@@ -650,7 +650,7 @@ func OVNApplyNetworkBaselineRules(client *ovn.NB, switchName ovn.OVNSwitch, rout
 			Direction: "to-lport",
 			Action:    "allow",
 			Priority:  ovnACLPrioritySwitchAllow,
-			Match:     "(arp || nd)", // Neighbour discovery.
+			Match:     "(arp || nd)", // Neighbour discovery.  // codespell:ignore nd
 		},
 		{
 			Direction: "to-lport",
@@ -761,7 +761,7 @@ func OVNApplyNetworkBaselineRules(client *ovn.NB, switchName ovn.OVNSwitch, rout
 // OVNPortGroupDeleteIfUnused deletes unused port groups. Accepts optional ignoreUsageType and ignoreUsageNicName
 // arguments, allowing the used by logic to ignore an instance/profile NIC or network (useful if config not
 // applied to database yet). Also accepts optional list of ACLs to explicitly consider in use by OVN.
-// The combination of ignoring the specifified usage type and explicit keep ACLs allows the caller to ensure that
+// The combination of ignoring the specified usage type and explicit keep ACLs allows the caller to ensure that
 // the desired ACLs are considered unused by the usage type even if the referring config has not yet been removed
 // from the database.
 func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB, aclProjectName string, ignoreUsageType any, ignoreUsageNicName string, keepACLs ...string) error {
@@ -837,7 +837,7 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 	// Map to record ACLs being referenced by other ACLs. Need to check later if they are in use with OVN ACLs.
 	aclUsedACLS := make(map[string][]string, 0)
 
-	// Find alls ACLs that are either directly referred to by OVN entities (networks, instance/profile NICs)
+	// Find all ACLs that are either directly referred to by OVN entities (networks, instance/profile NICs)
 	// or indirectly by being referred to by a ruleset of another ACL that is itself in use by OVN entities.
 	// For the indirectly referred to ACLs, store a list of the ACLs that are referring to it.
 	err = UsedBy(s, aclProjectName, func(ctx context.Context, tx *db.ClusterTx, matchedACLNames []string, usageType any, nicName string, nicConfig map[string]string) error {

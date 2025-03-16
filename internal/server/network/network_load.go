@@ -87,7 +87,7 @@ func PatchPreCheck() error {
 		}
 
 		unavailableNetworksMu.Unlock()
-		return fmt.Errorf("Unvailable networks: %v", unavailableNetworkNames)
+		return fmt.Errorf("Unavailable networks: %v", unavailableNetworkNames)
 	}
 
 	unavailableNetworksMu.Unlock()

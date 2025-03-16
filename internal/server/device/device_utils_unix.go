@@ -24,7 +24,7 @@ import (
 // unixDefaultMode default mode to create unix devices with if not specified in device config.
 const unixDefaultMode = 0o660
 
-// unixDeviceAttributes returns the decice type, major and minor numbers for a device.
+// unixDeviceAttributes returns the device type, major and minor numbers for a device.
 func unixDeviceAttributes(path string) (string, uint32, uint32, error) {
 	// Get a stat struct from the provided path
 	stat := unix.Stat_t{}
@@ -467,7 +467,7 @@ func unixDeviceRemove(devicesPath string, typePrefix string, deviceName string, 
 			return fmt.Errorf("Failed to get UNIX device attributes for '%s': %w", absDevPath, err)
 		}
 
-		// Append a deny cgroup fule for this device.
+		// Append a deny cgroup rule for this device.
 		runConf.CGroups = append(runConf.CGroups, deviceConfig.RunConfigItem{
 			Key:   "devices.deny",
 			Value: fmt.Sprintf("%s %d:%d rwm", dType, dMajor, dMinor),
