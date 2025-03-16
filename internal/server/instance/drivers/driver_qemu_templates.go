@@ -52,6 +52,7 @@ func qemuMachineType(architecture int) string {
 type qemuBaseOpts struct {
 	architecture int
 	iommu        bool
+	definition   string
 }
 
 func qemuBase(opts *qemuBaseOpts) []cfg.Section {
@@ -64,6 +65,10 @@ func qemuBase(opts *qemuBaseOpts) []cfg.Section {
 		gicVersion = "max"
 	case osarch.ARCH_64BIT_POWERPC_LITTLE_ENDIAN:
 		capLargeDecr = "off"
+	}
+
+	if opts.definition != "" {
+		machineType = opts.definition
 	}
 
 	sections := []cfg.Section{{

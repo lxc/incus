@@ -1089,6 +1089,13 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  shortdesc: Whether to regenerate VM NVRAM the next time the instance starts
 	"volatile.apply_nvram": validate.Optional(validate.IsBool),
 
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.vm.definition)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: QEMU VM definition name (used for migration between versions)
+	"volatile.vm.definition": validate.Optional(validate.IsAny),
+
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.vsock_id)
 	//
 	// ---
