@@ -50,6 +50,7 @@ RUN sed -r -i 's/^Components: main$/Components: main contrib/g' /etc/apt/sources
       lxc-templates \
       make \
       man-db \
+      pipx \
       pkg-config \
       protoc-gen-go \
       python3-matplotlib \
@@ -68,6 +69,9 @@ RUN sed -r -i 's/^Components: main$/Components: main contrib/g' /etc/apt/sources
       # Disabled for now, very slow to install.
       # zfsutils-linux
       xz-utils
+
+# With pipx >= 1.5.0, we could use pipx --global instead.
+RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install codespell
 
 # Add vscode user and add it to sudoers.
 RUN groupadd -g 1000 $USERNAME && \
