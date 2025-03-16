@@ -125,7 +125,7 @@ type NetworkLease struct {
 	Hostname string `json:"hostname" yaml:"hostname"`
 
 	// The MAC address
-	// Example: 00:16:3e:2c:89:d9
+	// Example: 10:66:6a:2c:89:d9
 	Hwaddr string `json:"hwaddr" yaml:"hwaddr"`
 
 	// The IP address
@@ -154,7 +154,7 @@ type NetworkState struct {
 	Counters *NetworkStateCounters `json:"counters" yaml:"counters"`
 
 	// MAC address
-	// Example: 00:16:3e:5a:83:57
+	// Example: 10:66:6a:5a:83:57
 	Hwaddr string `json:"hwaddr" yaml:"hwaddr"`
 
 	// MTU
