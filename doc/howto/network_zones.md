@@ -69,8 +69,8 @@ incus.example.net.                        300  IN NS   ns1.incus.example.net.
 inctest.gw.incus.example.net.             300  IN A    192.0.2.1
 inctest.gw.incus.example.net.             300  IN AAAA fd42:4131:a53c:7211::1
 default-ovntest.uplink.incus.example.net. 300  IN A    192.0.2.20
-default-ovntest.uplink.incus.example.net. 300  IN AAAA fd42:4131:a53c:7211:216:3eff:fe4e:b794
-c1.incus.example.net.                     300  IN AAAA fd42:4131:a53c:7211:216:3eff:fe19:6ede
+default-ovntest.uplink.incus.example.net. 300  IN AAAA fd42:4131:a53c:7211:1266:6aff:fe4e:b794
+c1.incus.example.net.                     300  IN AAAA fd42:4131:a53c:7211:1266:6aff:fe19:6ede
 c1.incus.example.net.                     300  IN A    192.0.2.125
 manualtest.incus.example.net.             300  IN A    8.8.8.8
 incus.example.net.                        3600 IN SOA  incus.example.net. ns1.incus.example.net. 1669736788 120 60 86400 30

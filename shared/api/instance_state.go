@@ -142,7 +142,7 @@ type InstanceStateNetwork struct {
 	Counters InstanceStateNetworkCounters `json:"counters" yaml:"counters"`
 
 	// MAC address
-	// Example: 00:16:3e:0c:ee:dd
+	// Example: 10:66:6a:0c:ee:dd
 	Hwaddr string `json:"hwaddr" yaml:"hwaddr"`
 
 	// Name of the interface on the host
@@ -174,7 +174,7 @@ type InstanceStateNetworkAddress struct {
 	Family string `json:"family" yaml:"family"`
 
 	// IP address
-	// Example: fd42:4c81:5770:1eaf:216:3eff:fe0c:eedd
+	// Example: fd42:4c81:5770:1eaf:1266:6aff:fe0c:eedd
 	Address string `json:"address" yaml:"address"`
 
 	// Network mask

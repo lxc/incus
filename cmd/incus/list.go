@@ -73,7 +73,7 @@ Examples:
   - "type=container" will list all container instances
   - "type=container status=running" will list all running container instances
 
-A regular expression matching a configuration item or its value. (e.g. volatile.eth0.hwaddr=00:16:3e:.*).
+A regular expression matching a configuration item or its value. (e.g. volatile.eth0.hwaddr=10:66:6a:.*).
 
 When multiple filters are passed, they are added one on top of the other,
 selecting instances which satisfy them all.

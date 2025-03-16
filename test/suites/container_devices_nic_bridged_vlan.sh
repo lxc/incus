@@ -67,7 +67,7 @@ test_container_devices_nic_bridged_vlan() {
     incus exec "${prefix}-ctA" -- ip link add link eth0 name eth0.2 type vlan id 2
     incus exec "${prefix}-ctA" -- ip link set eth0.2 up
     incus exec "${prefix}-ctA" -- ip a add 192.0.2.1/24 dev eth0.2
-    incus exec "${prefix}-ctA" -- ip link set eth0.2 address 00:16:3e:92:f3:c1
+    incus exec "${prefix}-ctA" -- ip link set eth0.2 address 10:66:6a:92:f3:c1
     ! incus exec "${prefix}-ctA" -- ping -c2 -W5 192.0.2.2 || false
     ! incus exec "${prefix}-ctB" -- ping -c2 -W5 192.0.2.1 || false
     incus stop -f "${prefix}-ctA"
