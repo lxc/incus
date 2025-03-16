@@ -308,6 +308,10 @@ ifeq ($(shell command -v flake8),)
 	echo "Please install flake8"
 	exit 1
 endif
+ifeq ($(shell command -v codespell),)
+	echo "Please install codespell"
+	exit 1
+endif
 	flake8 test/deps/import-busybox
 	shellcheck --shell sh test/*.sh test/includes/*.sh test/suites/*.sh test/backends/*.sh test/lint/*.sh
 	shellcheck test/extras/*.sh

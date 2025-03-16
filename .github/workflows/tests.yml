@@ -90,10 +90,13 @@ jobs:
             libtool \
             libudev-dev \
             make \
+            pipx \
             pkg-config \
             shellcheck
 
-          python3 -m pip install flake8
+          # With pipx >= 1.5.0, we could use pipx --global instead.
+          PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin \
+            pipx install codespell flake8
 
       - name: Fix repository permissions
         run: |
