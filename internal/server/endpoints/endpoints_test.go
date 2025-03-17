@@ -30,7 +30,7 @@ import (
 func newEndpoints(t *testing.T) (*endpoints.Endpoints, *endpoints.Config, func()) {
 	dir, err := os.MkdirTemp("", "incus-endpoints-test-")
 	require.NoError(t, err)
-	require.NoError(t, os.Mkdir(filepath.Join(dir, "guestapi"), 0755))
+	require.NoError(t, os.Mkdir(filepath.Join(dir, "guestapi"), 0o755))
 
 	config := &endpoints.Config{
 		Dir:            dir,
