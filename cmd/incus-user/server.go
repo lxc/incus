@@ -178,7 +178,7 @@ func serverSetupUser(uid uint32) error {
 	defer revert.Fail()
 
 	// Create certificate directory.
-	err = os.MkdirAll(userPath, 0700)
+	err = os.MkdirAll(userPath, 0o700)
 	if err != nil {
 		return fmt.Errorf("Failed to create user directory: %w", err)
 	}
