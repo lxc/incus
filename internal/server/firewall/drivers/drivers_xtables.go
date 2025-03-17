@@ -335,7 +335,6 @@ func (d Xtables) networkSetupForwardingPolicy(networkName string, ipVersion uint
 	}
 
 	err = d.iptablesPrepend(ipVersion, comment, "filter", "FORWARD", "-o", networkName, "-j", forwardType)
-
 	if err != nil {
 		return err
 	}
@@ -390,7 +389,8 @@ func (d Xtables) networkSetupICMPDHCPDNSAccess(networkName string, ipVersion uin
 			{"4", networkName, "filter", "INPUT", "-i", networkName, "-p", "tcp", "--dport", "53", "-j", "ACCEPT"},
 			{"4", networkName, "filter", "OUTPUT", "-o", networkName, "-p", "udp", "--sport", "67", "-j", "ACCEPT"},
 			{"4", networkName, "filter", "OUTPUT", "-o", networkName, "-p", "udp", "--sport", "53", "-j", "ACCEPT"},
-			{"4", networkName, "filter", "OUTPUT", "-o", networkName, "-p", "tcp", "--sport", "53", "-j", "ACCEPT"}}
+			{"4", networkName, "filter", "OUTPUT", "-o", networkName, "-p", "tcp", "--sport", "53", "-j", "ACCEPT"},
+		}
 
 		// Allow core ICMPv4 to/from Incus host.
 		for _, icmpType := range []int{3, 11, 12} {
@@ -404,7 +404,8 @@ func (d Xtables) networkSetupICMPDHCPDNSAccess(networkName string, ipVersion uin
 			{"6", networkName, "filter", "INPUT", "-i", networkName, "-p", "tcp", "--dport", "53", "-j", "ACCEPT"},
 			{"6", networkName, "filter", "OUTPUT", "-o", networkName, "-p", "udp", "--sport", "547", "-j", "ACCEPT"},
 			{"6", networkName, "filter", "OUTPUT", "-o", networkName, "-p", "udp", "--sport", "53", "-j", "ACCEPT"},
-			{"6", networkName, "filter", "OUTPUT", "-o", networkName, "-p", "tcp", "--sport", "53", "-j", "ACCEPT"}}
+			{"6", networkName, "filter", "OUTPUT", "-o", networkName, "-p", "tcp", "--sport", "53", "-j", "ACCEPT"},
+		}
 
 		// Allow core ICMPv6 to/from Incus host.
 		for _, icmpType := range []int{1, 2, 3, 4, 133, 135, 136, 143} {
