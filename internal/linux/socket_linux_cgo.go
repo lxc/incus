@@ -101,7 +101,10 @@ func PidfdSendSignal(Pidfd int, Signal int, Flags uint32) error {
 }
 
 const (
+	// CLOSE_RANGE_UNSHARE matches CLOSE_RANGE_UNSHARE flag.
 	CLOSE_RANGE_UNSHARE uint32 = C.CLOSE_RANGE_UNSHARE
+
+	// CLOSE_RANGE_CLOEXEC matches CLOSE_RANGE_CLOEXEC flag.
 	CLOSE_RANGE_CLOEXEC uint32 = C.CLOSE_RANGE_CLOEXEC
 )
 

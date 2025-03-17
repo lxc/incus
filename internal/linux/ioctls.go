@@ -8,7 +8,12 @@ package linux
 import "C"
 
 const (
+	// IoctlBtrfsSetReceivedSubvol matches BTRFS_IOC_SET_RECEIVED_SUBVOL.
 	IoctlBtrfsSetReceivedSubvol = C.BTRFS_IOC_SET_RECEIVED_SUBVOL
-	IoctlHIDIOCGrawInfo         = C.HIDIOCGRAWINFO
-	IoctlVhostVsockSetGuestCid  = C.VHOST_VSOCK_SET_GUEST_CID
+
+	// IoctlHIDIOCGrawInfo matches HIDIOCGRAWINFO.
+	IoctlHIDIOCGrawInfo = C.HIDIOCGRAWINFO
+
+	// IoctlVhostVsockSetGuestCid matches VHOST_VSOCK_SET_GUEST_CID.
+	IoctlVhostVsockSetGuestCid = C.VHOST_VSOCK_SET_GUEST_CID
 )
