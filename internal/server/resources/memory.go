@@ -12,8 +12,10 @@ import (
 	"github.com/lxc/incus/v6/shared/units"
 )
 
-var sysDevicesNode = "/sys/devices/system/node"
-var sysDevicesSystemMemory = "/sys/devices/system/memory"
+var (
+	sysDevicesNode         = "/sys/devices/system/node"
+	sysDevicesSystemMemory = "/sys/devices/system/memory"
+)
 
 type meminfo struct {
 	Cached         uint64
