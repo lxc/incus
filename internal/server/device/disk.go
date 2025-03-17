@@ -1863,7 +1863,7 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 
 	// Create the devices directory if missing.
 	if !util.PathExists(d.inst.DevicesPath()) {
-		err := os.Mkdir(d.inst.DevicesPath(), 0711)
+		err := os.Mkdir(d.inst.DevicesPath(), 0o711)
 		if err != nil {
 			return nil, "", false, err
 		}
@@ -1886,7 +1886,7 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 
 		_ = f.Close()
 	} else {
-		err := os.Mkdir(devPath, 0700)
+		err := os.Mkdir(devPath, 0o700)
 		if err != nil {
 			return nil, "", false, err
 		}
@@ -2605,7 +2605,7 @@ func (d *disk) generateVMAgentDrive() (string, error) {
 	}
 
 	// Create agent drive dir.
-	err = os.MkdirAll(scratchDir, 0100)
+	err = os.MkdirAll(scratchDir, 0o100)
 	if err != nil {
 		return "", err
 	}
@@ -2628,7 +2628,7 @@ func (d *disk) generateVMAgentDrive() (string, error) {
 			return "", err
 		}
 
-		err = os.Chmod(agentInstallPath, 0500)
+		err = os.Chmod(agentInstallPath, 0o500)
 		if err != nil {
 			return "", err
 		}
@@ -2663,7 +2663,7 @@ func (d *disk) generateVMConfigDrive() (string, error) {
 	}
 
 	// Create config drive dir.
-	err = os.MkdirAll(scratchDir, 0100)
+	err = os.MkdirAll(scratchDir, 0o100)
 	if err != nil {
 		return "", err
 	}
@@ -2679,7 +2679,7 @@ func (d *disk) generateVMConfigDrive() (string, error) {
 		}
 	}
 
-	err = os.WriteFile(filepath.Join(scratchDir, "vendor-data"), []byte(vendorData), 0400)
+	err = os.WriteFile(filepath.Join(scratchDir, "vendor-data"), []byte(vendorData), 0o400)
 	if err != nil {
 		return "", err
 	}
@@ -2693,7 +2693,7 @@ func (d *disk) generateVMConfigDrive() (string, error) {
 		}
 	}
 
-	err = os.WriteFile(filepath.Join(scratchDir, "user-data"), []byte(userData), 0400)
+	err = os.WriteFile(filepath.Join(scratchDir, "user-data"), []byte(userData), 0o400)
 	if err != nil {
 		return "", err
 	}
@@ -2705,7 +2705,7 @@ func (d *disk) generateVMConfigDrive() (string, error) {
 	}
 
 	if networkConfig != "" {
-		err = os.WriteFile(filepath.Join(scratchDir, "network-config"), []byte(networkConfig), 0400)
+		err = os.WriteFile(filepath.Join(scratchDir, "network-config"), []byte(networkConfig), 0o400)
 		if err != nil {
 			return "", err
 		}
@@ -2717,7 +2717,7 @@ local-hostname: %s
 %s
 `, d.inst.Name(), d.inst.Name(), instanceConfig["user.meta-data"])
 
-	err = os.WriteFile(filepath.Join(scratchDir, "meta-data"), []byte(metaData), 0400)
+	err = os.WriteFile(filepath.Join(scratchDir, "meta-data"), []byte(metaData), 0o400)
 	if err != nil {
 		return "", err
 	}

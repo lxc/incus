@@ -17,8 +17,10 @@ import (
 	"github.com/lxc/incus/v6/shared/validate"
 )
 
-const ipvlanModeL3S = "l3s"
-const ipvlanModeL2 = "l2"
+const (
+	ipvlanModeL3S = "l3s"
+	ipvlanModeL2  = "l2"
+)
 
 type nicIPVLAN struct {
 	deviceCommon
