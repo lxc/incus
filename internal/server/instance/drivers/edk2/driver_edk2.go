@@ -40,6 +40,7 @@ var architectureInstallations = map[int][]Installation{
 		Path: "/usr/share/OVMF",
 		Usage: map[FirmwareUsage][]FirmwarePair{
 			GENERIC: {
+				{Code: "OVMF_CODE_4M.secboot.fd", Vars: "OVMF_VARS_4M.fd"},
 				{Code: "OVMF_CODE.4MB.fd", Vars: "OVMF_VARS.4MB.fd"},
 				{Code: "OVMF_CODE_4M.fd", Vars: "OVMF_VARS_4M.fd"},
 				{Code: "OVMF_CODE.4m.fd", Vars: "OVMF_VARS.4m.fd"},
