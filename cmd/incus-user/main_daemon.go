@@ -18,9 +18,11 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
-var mu sync.RWMutex
-var connections uint64
-var transactions uint64
+var (
+	mu           sync.RWMutex
+	connections  uint64
+	transactions uint64
+)
 
 var projectNames []string
 
@@ -44,7 +46,7 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create storage.
-	err := os.MkdirAll(internalUtil.VarPath("users"), 0700)
+	err := os.MkdirAll(internalUtil.VarPath("users"), 0o700)
 	if err != nil && !os.IsExist(err) {
 		return fmt.Errorf("Couldn't create storage: %w", err)
 	}
@@ -150,7 +152,7 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("Unable to setup unix socket: %w", err)
 		}
 
-		err = os.Chmod(unixPath, 0660)
+		err = os.Chmod(unixPath, 0o660)
 		if err != nil {
 			return fmt.Errorf("Unable to set socket permissions: %w", err)
 		}
