@@ -89,7 +89,7 @@ func (b *BucketBackup) Rename(newName string) error {
 
 	// Create the new backup path if doesn't exist.
 	if !util.PathExists(newParentBackupsPath) {
-		err := os.MkdirAll(newParentBackupsPath, 0700)
+		err := os.MkdirAll(newParentBackupsPath, 0o700)
 		if err != nil {
 			return err
 		}
