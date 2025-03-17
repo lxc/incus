@@ -22,7 +22,7 @@ import (
 )
 
 // unixDefaultMode default mode to create unix devices with if not specified in device config.
-const unixDefaultMode = 0660
+const unixDefaultMode = 0o660
 
 // unixDeviceAttributes returns the decice type, major and minor numbers for a device.
 func unixDeviceAttributes(path string) (string, uint32, uint32, error) {
@@ -191,7 +191,7 @@ func UnixDeviceCreate(s *state.State, idmapSet *idmap.Set, devicesPath string, p
 
 	// Create the devices directory if missing.
 	if !util.PathExists(devicesPath) {
-		err := os.Mkdir(devicesPath, 0711)
+		err := os.Mkdir(devicesPath, 0o711)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to create devices path: %s", err)
 		}

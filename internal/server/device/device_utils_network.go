@@ -463,7 +463,7 @@ func networkNICRouteDelete(routeDev string, routes ...string) {
 	}
 
 	if !network.InterfaceExists(routeDev) {
-		return //Routes will already be gone if device doesn't exist.
+		return // Routes will already be gone if device doesn't exist.
 	}
 
 	for _, r := range routes {
