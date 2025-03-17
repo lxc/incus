@@ -36,7 +36,7 @@ func localCreateListener(path string, group string, label string) (net.Listener,
 // so access is granted only to the process user and to the given group (or the
 // process group if group is empty).
 func localSetAccess(path string, group string, label string) error {
-	err := socketUnixSetPermissions(path, 0660)
+	err := socketUnixSetPermissions(path, 0o660)
 	if err != nil {
 		return err
 	}
