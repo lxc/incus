@@ -278,12 +278,12 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create the paths if missing.
-	err = os.MkdirAll("images", 0755)
+	err = os.MkdirAll("images", 0o755)
 	if err != nil && !os.IsExist(err) {
 		return err
 	}
 
-	err = os.MkdirAll("streams/v1", 0755)
+	err = os.MkdirAll("streams/v1", 0o755)
 	if err != nil && !os.IsExist(err) {
 		return err
 	}
@@ -432,7 +432,7 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = os.WriteFile("streams/v1/images.json", body, 0644)
+	err = os.WriteFile("streams/v1/images.json", body, 0o644)
 	if err != nil {
 		return err
 	}

@@ -32,7 +32,7 @@ func writeIndex(products *simplestreams.Products) error {
 		return err
 	}
 
-	err = os.WriteFile("streams/v1/index.json", body, 0644)
+	err = os.WriteFile("streams/v1/index.json", body, 0o644)
 	if err != nil {
 		return err
 	}
