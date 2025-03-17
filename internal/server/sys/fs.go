@@ -32,34 +32,34 @@ func (s *OS) initDirs() error {
 		path string
 		mode os.FileMode
 	}{
-		{s.VarDir, 0711},
+		{s.VarDir, 0o711},
 
 		// Instances are 0711 so the runtime can traverse to the data.
-		{filepath.Join(s.VarDir, "containers"), 0711},
-		{filepath.Join(s.VarDir, "virtual-machines"), 0711},
+		{filepath.Join(s.VarDir, "containers"), 0o711},
+		{filepath.Join(s.VarDir, "virtual-machines"), 0o711},
 
 		// Snapshots are kept 0700 as the runtime doesn't need access.
-		{filepath.Join(s.VarDir, "containers-snapshots"), 0700},
-		{filepath.Join(s.VarDir, "virtual-machines-snapshots"), 0700},
+		{filepath.Join(s.VarDir, "containers-snapshots"), 0o700},
+		{filepath.Join(s.VarDir, "virtual-machines-snapshots"), 0o700},
 
-		{filepath.Join(s.VarDir, "backups"), 0700},
-		{s.CacheDir, 0700},
-		{filepath.Join(s.CacheDir, "resources"), 0700},
-		{filepath.Join(s.VarDir, "database"), 0700},
-		{filepath.Join(s.VarDir, "devices"), 0711},
-		{filepath.Join(s.VarDir, "disks"), 0700},
-		{filepath.Join(s.VarDir, "guestapi"), 0755},
-		{filepath.Join(s.VarDir, "images"), 0700},
-		{s.LogDir, 0700},
-		{filepath.Join(s.VarDir, "networks"), 0711},
-		{s.RunDir, 0711},
-		{filepath.Join(s.VarDir, "security"), 0700},
-		{filepath.Join(s.VarDir, "security", "apparmor"), 0700},
-		{filepath.Join(s.VarDir, "security", "apparmor", "cache"), 0700},
-		{filepath.Join(s.VarDir, "security", "apparmor", "profiles"), 0700},
-		{filepath.Join(s.VarDir, "security", "seccomp"), 0700},
-		{filepath.Join(s.VarDir, "shmounts"), 0711},
-		{filepath.Join(s.VarDir, "storage-pools"), 0711},
+		{filepath.Join(s.VarDir, "backups"), 0o700},
+		{s.CacheDir, 0o700},
+		{filepath.Join(s.CacheDir, "resources"), 0o700},
+		{filepath.Join(s.VarDir, "database"), 0o700},
+		{filepath.Join(s.VarDir, "devices"), 0o711},
+		{filepath.Join(s.VarDir, "disks"), 0o700},
+		{filepath.Join(s.VarDir, "guestapi"), 0o755},
+		{filepath.Join(s.VarDir, "images"), 0o700},
+		{s.LogDir, 0o700},
+		{filepath.Join(s.VarDir, "networks"), 0o711},
+		{s.RunDir, 0o711},
+		{filepath.Join(s.VarDir, "security"), 0o700},
+		{filepath.Join(s.VarDir, "security", "apparmor"), 0o700},
+		{filepath.Join(s.VarDir, "security", "apparmor", "cache"), 0o700},
+		{filepath.Join(s.VarDir, "security", "apparmor", "profiles"), 0o700},
+		{filepath.Join(s.VarDir, "security", "seccomp"), 0o700},
+		{filepath.Join(s.VarDir, "shmounts"), 0o711},
+		{filepath.Join(s.VarDir, "storage-pools"), 0o711},
 	}
 
 	for _, dir := range dirs {
@@ -85,8 +85,8 @@ func (s *OS) initStorageDirs() error {
 		path string
 		mode os.FileMode
 	}{
-		{filepath.Join(s.VarDir, "backups", "custom"), 0700},
-		{filepath.Join(s.VarDir, "backups", "instances"), 0700},
+		{filepath.Join(s.VarDir, "backups", "custom"), 0o700},
+		{filepath.Join(s.VarDir, "backups", "instances"), 0o700},
 	}
 
 	for _, dir := range dirs {
