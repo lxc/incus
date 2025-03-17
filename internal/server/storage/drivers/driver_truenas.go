@@ -120,6 +120,7 @@ func (d *truenas) Info() Info {
 		BlockBacking:                 false,
 		RunningCopyFreeze:            true,
 		DirectIO:                     false,
+		IOUring:                      false,
 		MountedRoot:                  false,
 		Buckets:                      false,
 	}
@@ -321,22 +322,13 @@ func (d *truenas) Delete(op *operations.Operation) error {
 // Validate checks that all provide keys are supported and that no conflicting or missing configuration is present.
 func (d *truenas) Validate(config map[string]string) error {
 	rules := map[string]func(value string) error{
-		// 	"size":          validate.Optional(validate.IsSize),
-		// 	"zfs.pool_name": validate.IsAny,
-		"source":           validate.IsAny,
-		"truenas.dataset":  validate.IsAny,
-		"truenas.host":     validate.IsAny,
-		"truenas.api_key":  validate.IsAny,
-		"truenas.key_file": validate.IsAny,
-		"truenas.url":      validate.IsAny,
-
-		"truenas.clone_copy": validate.Optional(func(value string) error {
-			// if value == "rebase" {
-			// 	return nil
-			// }
-
-			return validate.IsBool(value)
-		}),
+		"source":             validate.IsAny,
+		"truenas.dataset":    validate.IsAny,
+		"truenas.host":       validate.IsAny,
+		"truenas.api_key":    validate.IsAny,
+		"truenas.key_file":   validate.IsAny,
+		"truenas.url":        validate.IsAny,
+		"truenas.clone_copy": validate.Optional(validate.IsBool),
 	}
 
 	return d.validatePool(config, rules, d.commonVolumeRules())
