@@ -87,7 +87,6 @@ func MaybeUpdate(state *state.State) error {
 		shouldUpdate = outdated
 		return nil
 	})
-
 	if err != nil {
 		// Just log the error and return.
 		return fmt.Errorf("Failed to check if this node is out-of-date: %w", err)

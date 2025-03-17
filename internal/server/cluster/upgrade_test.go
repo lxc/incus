@@ -73,7 +73,7 @@ func TestMaybeUpdate_Upgrade(t *testing.T) {
 	stamp := filepath.Join(dir, "stamp")
 	script := filepath.Join(dir, "cluster-upgrade")
 	data := []byte(fmt.Sprintf("#!/bin/sh\ntouch %s\n", stamp))
-	err = os.WriteFile(script, data, 0755)
+	err = os.WriteFile(script, data, 0o755)
 	require.NoError(t, err)
 
 	state, cleanup := state.NewTestState(t)
@@ -126,7 +126,7 @@ func TestMaybeUpdate_NothingToDo(t *testing.T) {
 	stamp := filepath.Join(dir, "stamp")
 	script := filepath.Join(dir, "cluster-upgrade")
 	data := []byte(fmt.Sprintf("#!/bin/sh\ntouch %s\n", stamp))
-	err = os.WriteFile(script, data, 0755)
+	err = os.WriteFile(script, data, 0o755)
 	require.NoError(t, err)
 
 	state, cleanup := state.NewTestState(t)

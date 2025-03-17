@@ -187,7 +187,7 @@ func Reconfigure(database *db.Node, raftNodes []db.RaftNode) error {
 
 	if len(content) > 0 {
 		filePath := filepath.Join(database.Dir(), "patch.global.sql")
-		file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
 			return err
 		}
