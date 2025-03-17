@@ -17,7 +17,7 @@ func tSetup(t *testing.T) func() {
 	}
 
 	incusEdk2Path := filepath.Join(tmpdir, "ovmf")
-	err = os.MkdirAll(incusEdk2Path, 0700)
+	err = os.MkdirAll(incusEdk2Path, 0o700)
 	if err != nil {
 		t.Fatal(err)
 	}

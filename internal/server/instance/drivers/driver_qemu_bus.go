@@ -6,10 +6,12 @@ import (
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/cfg"
 )
 
-const busFunctionGroupNone = ""           // Add a non multi-function port.
-const busFunctionGroupGeneric = "generic" // Add multi-function port to generic group (used for internal devices).
-const busFunctionGroup9p = "9p"           // Add multi-function port to 9p group (used for 9p shares).
-const busDevicePortPrefix = "qemu_pcie"   // Prefix used for name of PCIe ports.
+const (
+	busFunctionGroupNone    = ""          // Add a non multi-function port.
+	busFunctionGroupGeneric = "generic"   // Add multi-function port to generic group (used for internal devices).
+	busFunctionGroup9p      = "9p"        // Add multi-function port to 9p group (used for 9p shares).
+	busDevicePortPrefix     = "qemu_pcie" // Prefix used for name of PCIe ports.
+)
 
 type qemuBusEntry struct {
 	bridgeDev int // Device number on the root bridge.

@@ -1304,25 +1304,25 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Create all needed paths.
-	err = os.MkdirAll(d.LogPath(), 0700)
+	err = os.MkdirAll(d.LogPath(), 0o700)
 	if err != nil {
 		op.Done(err)
 		return err
 	}
 
-	err = os.MkdirAll(d.RunPath(), 0700)
+	err = os.MkdirAll(d.RunPath(), 0o700)
 	if err != nil {
 		op.Done(err)
 		return err
 	}
 
-	err = os.MkdirAll(d.DevicesPath(), 0711)
+	err = os.MkdirAll(d.DevicesPath(), 0o711)
 	if err != nil {
 		op.Done(err)
 		return err
 	}
 
-	err = os.MkdirAll(d.ShmountsPath(), 0711)
+	err = os.MkdirAll(d.ShmountsPath(), 0o711)
 	if err != nil {
 		op.Done(err)
 		return err
@@ -1434,7 +1434,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return err
 	}
 
-	err = os.Mkdir(configMntPath, 0700)
+	err = os.Mkdir(configMntPath, 0o700)
 	if err != nil {
 		err = fmt.Errorf("Failed creating device mount path %q for config drive: %w", configMntPath, err)
 		op.Done(err)
@@ -1609,7 +1609,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 				return err
 			}
 
-			err = os.Chmod(nvRAMPath, 0600)
+			err = os.Chmod(nvRAMPath, 0o600)
 			if err != nil {
 				op.Done(err)
 				return err
@@ -2904,7 +2904,7 @@ func (d *qemu) generateConfigShare() error {
 
 	// Create config drive dir if doesn't exist, if it does exist, leave it around so we don't regenerate all
 	// files causing unnecessary config drive snapshot usage.
-	err := os.MkdirAll(configDrivePath, 0500)
+	err := os.MkdirAll(configDrivePath, 0o500)
 	if err != nil {
 		return err
 	}
@@ -2918,7 +2918,7 @@ func (d *qemu) generateConfigShare() error {
 			return err
 		}
 
-		err = os.WriteFile(filepath.Join(configDrivePath, "incus-agent"), agentFile, 0700)
+		err = os.WriteFile(filepath.Join(configDrivePath, "incus-agent"), agentFile, 0o700)
 		if err != nil {
 			return err
 		}
@@ -2964,7 +2964,7 @@ func (d *qemu) generateConfigShare() error {
 				return err
 			}
 
-			err = os.Chmod(agentInstallPath, 0500)
+			err = os.Chmod(agentInstallPath, 0o500)
 			if err != nil {
 				return err
 			}
@@ -2998,23 +2998,23 @@ func (d *qemu) generateConfigShare() error {
 		return err
 	}
 
-	err = os.WriteFile(filepath.Join(configDrivePath, "server.crt"), []byte(clientCert), 0400)
+	err = os.WriteFile(filepath.Join(configDrivePath, "server.crt"), []byte(clientCert), 0o400)
 	if err != nil {
 		return err
 	}
 
-	err = os.WriteFile(filepath.Join(configDrivePath, "agent.crt"), []byte(agentCert), 0400)
+	err = os.WriteFile(filepath.Join(configDrivePath, "agent.crt"), []byte(agentCert), 0o400)
 	if err != nil {
 		return err
 	}
 
-	err = os.WriteFile(filepath.Join(configDrivePath, "agent.key"), []byte(agentKey), 0400)
+	err = os.WriteFile(filepath.Join(configDrivePath, "agent.key"), []byte(agentKey), 0o400)
 	if err != nil {
 		return err
 	}
 
 	// Systemd units.
-	err = os.MkdirAll(filepath.Join(configDrivePath, "systemd"), 0500)
+	err = os.MkdirAll(filepath.Join(configDrivePath, "systemd"), 0o500)
 	if err != nil {
 		return err
 	}
@@ -3027,7 +3027,7 @@ func (d *qemu) generateConfigShare() error {
 		return err
 	}
 
-	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "incus-agent.service"), agentFile, 0400)
+	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "incus-agent.service"), agentFile, 0o400)
 	if err != nil {
 		return err
 	}
@@ -3040,12 +3040,12 @@ func (d *qemu) generateConfigShare() error {
 		return err
 	}
 
-	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "incus-agent-setup"), agentFile, 0500)
+	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "incus-agent-setup"), agentFile, 0o500)
 	if err != nil {
 		return err
 	}
 
-	err = os.MkdirAll(filepath.Join(configDrivePath, "udev"), 0500)
+	err = os.MkdirAll(filepath.Join(configDrivePath, "udev"), 0o500)
 	if err != nil {
 		return err
 	}
@@ -3056,7 +3056,7 @@ func (d *qemu) generateConfigShare() error {
 		return err
 	}
 
-	err = os.WriteFile(filepath.Join(configDrivePath, "udev", "99-incus-agent.rules"), agentFile, 0400)
+	err = os.WriteFile(filepath.Join(configDrivePath, "udev", "99-incus-agent.rules"), agentFile, 0o400)
 	if err != nil {
 		return err
 	}
@@ -3067,7 +3067,7 @@ func (d *qemu) generateConfigShare() error {
 		return err
 	}
 
-	err = os.WriteFile(filepath.Join(configDrivePath, "install.sh"), agentFile, 0700)
+	err = os.WriteFile(filepath.Join(configDrivePath, "install.sh"), agentFile, 0o700)
 	if err != nil {
 		return err
 	}
@@ -3077,7 +3077,7 @@ func (d *qemu) generateConfigShare() error {
 
 	// Clear path and recreate.
 	_ = os.RemoveAll(templateFilesPath)
-	err = os.MkdirAll(templateFilesPath, 0500)
+	err = os.MkdirAll(templateFilesPath, 0o500)
 	if err != nil {
 		return err
 	}
@@ -3117,7 +3117,7 @@ func (d *qemu) generateConfigShare() error {
 	// Clear NICConfigDir to ensure that no leftover configuration is erroneously applied by the agent.
 	nicConfigPath := filepath.Join(configDrivePath, deviceConfig.NICConfigDir)
 	_ = os.RemoveAll(nicConfigPath)
-	err = os.MkdirAll(nicConfigPath, 0500)
+	err = os.MkdirAll(nicConfigPath, 0o500)
 	if err != nil {
 		return err
 	}
@@ -3224,7 +3224,7 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 			}
 
 			// Fix ownership and mode.
-			err = w.Chmod(0644)
+			err = w.Chmod(0o644)
 			if err != nil {
 				return err
 			}
@@ -3254,14 +3254,16 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 			}
 
 			// Render the template.
-			err = tplRender.ExecuteWriter(pongo2.Context{"trigger": trigger,
+			err = tplRender.ExecuteWriter(pongo2.Context{
+				"trigger":    trigger,
 				"path":       tplPath,
 				"instance":   instanceMeta,
 				"container":  instanceMeta, // FIXME: remove once most images have moved away.
 				"config":     d.expandedConfig,
 				"devices":    d.expandedDevices,
 				"properties": tpl.Properties,
-				"config_get": configGet}, w)
+				"config_get": configGet,
+			}, w)
 			if err != nil {
 				return err
 			}
@@ -3765,7 +3767,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuInfo *cpuTopology
 	}
 
 	agentMountFile := filepath.Join(d.Path(), "config", "agent-mounts.json")
-	err = os.WriteFile(agentMountFile, agentMountJSON, 0400)
+	err = os.WriteFile(agentMountFile, agentMountJSON, 0o400)
 	if err != nil {
 		return nil, fmt.Errorf("Failed writing agent mounts file: %w", err)
 	}
@@ -3780,7 +3782,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuInfo *cpuTopology
 func (d *qemu) writeQemuConfigFile(configPath string) error {
 	// Write the config file to disk.
 	sb := qemuStringifyCfg(d.conf...)
-	return os.WriteFile(configPath, []byte(sb.String()), 0640)
+	return os.WriteFile(configPath, []byte(sb.String()), 0o640)
 }
 
 // addCPUMemoryConfig adds the qemu config required for setting the number of virtualised CPUs and memory.
@@ -4702,7 +4704,7 @@ func (d *qemu) writeNICDevConfig(mtuStr string, devName string, nicName string, 
 
 	nicFile := filepath.Join(d.Path(), "config", deviceConfig.NICConfigDir, fmt.Sprintf("%s.json", linux.PathNameEncode(nicConfig.DeviceName)))
 
-	err = os.WriteFile(nicFile, nicConfigBytes, 0700)
+	err = os.WriteFile(nicFile, nicConfigBytes, 0o700)
 	if err != nil {
 		return fmt.Errorf("Failed writing NIC config: %w", err)
 	}
@@ -5272,7 +5274,8 @@ func (d *qemu) Restore(source instance.Instance, stateful bool) error {
 		"created":   d.creationDate,
 		"ephemeral": d.ephemeral,
 		"used":      d.lastUsedDate,
-		"source":    source.Name()}
+		"source":    source.Name(),
+	}
 
 	d.logger.Info("Restoring instance", ctxMap)
 
@@ -5335,7 +5338,8 @@ func (d *qemu) Rename(newName string, applyTemplateTrigger bool) error {
 		"created":   d.creationDate,
 		"ephemeral": d.ephemeral,
 		"used":      d.lastUsedDate,
-		"newname":   newName}
+		"newname":   newName,
+	}
 
 	d.logger.Info("Renaming instance", ctxMap)
 
@@ -6275,7 +6279,8 @@ func (d *qemu) delete(force bool) error {
 	ctxMap := logger.Ctx{
 		"created":   d.creationDate,
 		"ephemeral": d.ephemeral,
-		"used":      d.lastUsedDate}
+		"used":      d.lastUsedDate,
+	}
 
 	if d.isSnapshot {
 		d.logger.Info("Deleting instance snapshot", ctxMap)
@@ -6378,7 +6383,8 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 	ctxMap := logger.Ctx{
 		"created":   d.creationDate,
 		"ephemeral": d.ephemeral,
-		"used":      d.lastUsedDate}
+		"used":      d.lastUsedDate,
+	}
 
 	if d.IsRunning() {
 		return nil, fmt.Errorf("Cannot export a running instance as an image")
@@ -6495,7 +6501,7 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 	}
 
 	fnam = filepath.Join(tempDir, "metadata.yaml")
-	err = os.WriteFile(fnam, data, 0644)
+	err = os.WriteFile(fnam, data, 0o644)
 	if err != nil {
 		_ = tarWriter.Close()
 		d.logger.Error("Failed exporting instance", ctxMap)
@@ -6549,7 +6555,7 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 		_ = from.Close()
 	}
 
-	to, err := os.OpenFile(fPath, unix.O_DIRECT|unix.O_CREAT, 0600)
+	to, err := os.OpenFile(fPath, unix.O_DIRECT|unix.O_CREAT, 0o600)
 	if err == nil {
 		cmd = append(cmd, "-t", "none")
 		_ = to.Close()
@@ -9425,7 +9431,7 @@ func (d *qemu) ConsoleLog() (string, error) {
 
 	// If we got data back, append it to the log file for this instance.
 	if logString != "" {
-		logFile, err := os.OpenFile(d.common.ConsoleBufferLogPath(), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		logFile, err := os.OpenFile(d.common.ConsoleBufferLogPath(), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
 		if err != nil {
 			return "", err
 		}
