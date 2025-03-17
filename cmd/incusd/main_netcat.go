@@ -59,7 +59,7 @@ func (c *cmdNetcat) Run(cmd *cobra.Command, args []string) error {
 		_ = os.Remove(logPath)
 	}
 
-	logFile, logErr := os.OpenFile(logPath, os.O_WRONLY|os.O_CREATE|os.O_SYNC, 0644)
+	logFile, logErr := os.OpenFile(logPath, os.O_WRONLY|os.O_CREATE|os.O_SYNC, 0o644)
 	if logErr == nil {
 		defer func() { _ = logFile.Close() }()
 	}

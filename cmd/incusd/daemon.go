@@ -453,7 +453,6 @@ func (d *Daemon) getTrustedCertificates() (map[certificate.Type]map[string]x509.
 				Roots:     certPool,
 				KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 			})
-
 			if err != nil {
 				// Skip certificates that aren't signed by the PKI.
 				delete(certs[certType], name)
@@ -855,7 +854,6 @@ func (d *Daemon) Init() error {
 	d.startTime = time.Now()
 
 	err := d.init()
-
 	// If an error occurred synchronously while starting up, let's try to
 	// cleanup any state we produced so far. Errors happening here will be
 	// ignored.
@@ -1150,7 +1148,7 @@ func (d *Daemon) init() error {
 	testDev := internalUtil.VarPath("devices", ".test")
 	testDevNum := int(unix.Mkdev(0, 0))
 	_ = os.Remove(testDev)
-	err = unix.Mknod(testDev, 0600|unix.S_IFCHR, testDevNum)
+	err = unix.Mknod(testDev, 0o600|unix.S_IFCHR, testDevNum)
 	if err == nil {
 		fd, err := os.Open(testDev)
 		if err != nil && os.IsPermission(err) {
@@ -2493,7 +2491,7 @@ func (d *Daemon) heartbeatHandler(w http.ResponseWriter, r *http.Request, isLead
 				return
 			}
 
-			err = os.WriteFile(resourcesPath, data, 0600)
+			err = os.WriteFile(resourcesPath, data, 0o600)
 			if err != nil {
 				return
 			}

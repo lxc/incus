@@ -31,8 +31,10 @@ type metricsCacheEntry struct {
 	expiry  time.Time
 }
 
-var metricsCache map[string]metricsCacheEntry
-var metricsCacheLock sync.Mutex
+var (
+	metricsCache     map[string]metricsCacheEntry
+	metricsCacheLock sync.Mutex
+)
 
 var metricsCmd = APIEndpoint{
 	Path: "metrics",

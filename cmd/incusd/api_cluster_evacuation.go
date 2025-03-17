@@ -38,8 +38,10 @@ import (
 	"github.com/lxc/incus/v6/shared/subprocess"
 )
 
-type evacuateStopFunc func(inst instance.Instance, action string) error
-type evacuateMigrateFunc func(ctx context.Context, s *state.State, inst instance.Instance, sourceMemberInfo *db.NodeInfo, targetMemberInfo *db.NodeInfo, live bool, startInstance bool, metadata map[string]any, op *operations.Operation) error
+type (
+	evacuateStopFunc    func(inst instance.Instance, action string) error
+	evacuateMigrateFunc func(ctx context.Context, s *state.State, inst instance.Instance, sourceMemberInfo *db.NodeInfo, targetMemberInfo *db.NodeInfo, live bool, startInstance bool, metadata map[string]any, op *operations.Operation) error
+)
 
 type evacuateOpts struct {
 	s               *state.State

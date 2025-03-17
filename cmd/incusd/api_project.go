@@ -790,7 +790,6 @@ func projectChange(ctx context.Context, s *state.State, project *api.Project, re
 
 		return nil
 	})
-
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1971,7 +1970,6 @@ func projectAccess(d *Daemon, r *http.Request) response.Response {
 
 	// get the access struct
 	access, err := s.Authorizer.GetProjectAccess(context.TODO(), name)
-
 	if err != nil {
 		return response.InternalError(err)
 	}

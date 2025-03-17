@@ -26,7 +26,7 @@ var SnapshotScheduleAliases = map[string]string{
 }
 
 func snapshotIsScheduledNow(spec string, subjectID int64) bool {
-	var result = false
+	result := false
 
 	specs := buildCronSpecs(spec, subjectID)
 	for _, curSpec := range specs {
@@ -79,8 +79,8 @@ func getCronSyntax(spec string, subjectID int64) string {
 }
 
 func getObfuscatedTimeValuesForSubject(subjectID int64) (string, string) {
-	var minuteResult = "0"
-	var hourResult = "0"
+	minuteResult := "0"
+	hourResult := "0"
 
 	minSequence, minSequenceErr := localUtil.GenerateSequenceInt64(0, 60, 1)
 	min, minErr := localUtil.GetStableRandomInt64FromList(subjectID, minSequence)

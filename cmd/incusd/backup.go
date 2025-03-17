@@ -108,7 +108,7 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 	// Create the target path if needed.
 	backupsPath := internalUtil.VarPath("backups", "instances", project.Instance(sourceInst.Project().Name, sourceInst.Name()))
 	if !util.PathExists(backupsPath) {
-		err := os.MkdirAll(backupsPath, 0700)
+		err := os.MkdirAll(backupsPath, 0o700)
 		if err != nil {
 			return err
 		}
@@ -120,7 +120,7 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 
 	// Setup the tarball writer.
 	l.Debug("Opening backup tarball for writing", logger.Ctx{"path": target})
-	tarFileWriter, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0600)
+	tarFileWriter, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return fmt.Errorf("Error opening backup tarball for writing %q: %w", target, err)
 	}
@@ -284,7 +284,7 @@ func backupWriteIndex(sourceInst instance.Instance, pool storagePools.Pool, opti
 	indexFileInfo := instancewriter.FileInfo{
 		FileName:    "backup/index.yaml",
 		FileSize:    int64(len(indexData)),
-		FileMode:    0644,
+		FileMode:    0o644,
 		FileModTime: time.Now(),
 	}
 
@@ -449,7 +449,7 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 	// Create the target path if needed.
 	backupsPath := internalUtil.VarPath("backups", "custom", pool.Name(), project.StorageVolume(projectName, volumeName))
 	if !util.PathExists(backupsPath) {
-		err := os.MkdirAll(backupsPath, 0700)
+		err := os.MkdirAll(backupsPath, 0o700)
 		if err != nil {
 			return err
 		}
@@ -461,7 +461,7 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 
 	// Setup the tarball writer.
 	l.Debug("Opening backup tarball for writing", logger.Ctx{"path": target})
-	tarFileWriter, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0600)
+	tarFileWriter, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return fmt.Errorf("Error opening backup tarball for writing %q: %w", target, err)
 	}
@@ -581,7 +581,7 @@ func volumeBackupWriteIndex(s *state.State, projectName string, volumeName strin
 	indexFileInfo := instancewriter.FileInfo{
 		FileName:    "backup/index.yaml",
 		FileSize:    int64(len(indexData)),
-		FileMode:    0644,
+		FileMode:    0o644,
 		FileModTime: time.Now(),
 	}
 
@@ -695,7 +695,7 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 	// Create the target path if needed.
 	backupsPath := internalUtil.VarPath("backups", "buckets", pool.Name(), project.StorageBucket(projectName, bucketName))
 	if !util.PathExists(backupsPath) {
-		err := os.MkdirAll(backupsPath, 0700)
+		err := os.MkdirAll(backupsPath, 0o700)
 		if err != nil {
 			return err
 		}
@@ -707,7 +707,7 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 
 	// Setup the tarball writer.
 	l.Debug("Opening backup tarball for writing", logger.Ctx{"path": target})
-	tarFileWriter, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0600)
+	tarFileWriter, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return fmt.Errorf("Error opening backup tarball for writing %q: %w", target, err)
 	}
@@ -812,7 +812,7 @@ func bucketBackupWriteIndex(s *state.State, projectName string, bucketName strin
 	indexFileInfo := instancewriter.FileInfo{
 		FileName:    "backup/index.yaml",
 		FileSize:    int64(len(indexData)),
-		FileMode:    0644,
+		FileMode:    0o644,
 		FileModTime: time.Now(),
 	}
 

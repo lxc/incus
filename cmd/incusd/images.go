@@ -695,7 +695,8 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 			l.Error("Failed to move the image tarfile", logger.Ctx{
 				"err":    err,
 				"source": imageTarf.Name(),
-				"dest":   imgfname})
+				"dest":   imgfname,
+			})
 			return nil, err
 		}
 
@@ -705,7 +706,8 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 			l.Error("Failed to move the rootfs tarfile", logger.Ctx{
 				"err":    err,
 				"source": rootfsTarf.Name(),
-				"dest":   imgfname})
+				"dest":   imgfname,
+			})
 			return nil, err
 		}
 	} else {
@@ -729,7 +731,8 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 		if expectedFingerprint != "" && info.Fingerprint != expectedFingerprint {
 			l.Error("Fingerprints don't match", logger.Ctx{
 				"got":      info.Fingerprint,
-				"expected": expectedFingerprint})
+				"expected": expectedFingerprint,
+			})
 			err = fmt.Errorf("fingerprints don't match, got %s expected %s", info.Fingerprint, expectedFingerprint)
 			return nil, err
 		}
@@ -749,7 +752,8 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 			l.Error("Failed to move the tarfile", logger.Ctx{
 				"err":    err,
 				"source": post.Name(),
-				"dest":   imgfname})
+				"dest":   imgfname,
+			})
 			return nil, err
 		}
 	}
