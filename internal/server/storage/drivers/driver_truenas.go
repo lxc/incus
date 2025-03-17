@@ -395,23 +395,22 @@ func (d *truenas) Unmount() (bool, error) {
 }
 
 func (d *truenas) GetResources() (*api.ResourcesStoragePool, error) {
-	// Get the total amount of space.
-	availableStr, err := d.getDatasetProperty(d.config["truenas.dataset"], "available")
+
+	// Get the total amount of space and the used amount of space.
+	props, err := d.getDatasetProperties(d.config["truenas.dataset"], []string{"available", "used"})
 	if err != nil {
 		return nil, err
 	}
 
+	// Parse the total amount of space.
+	availableStr := props["available"]
 	available, err := strconv.ParseUint(strings.TrimSpace(availableStr), 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get the used amount of space.
-	usedStr, err := d.getDatasetProperty(d.config["truenas.dataset"], "used")
-	if err != nil {
-		return nil, err
-	}
-
+	// Parse the used amount of space.
+	usedStr := props["used"]
 	used, err := strconv.ParseUint(strings.TrimSpace(usedStr), 10, 64)
 	if err != nil {
 		return nil, err

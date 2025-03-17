@@ -3,6 +3,7 @@ package drivers
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"path/filepath"
 	"strings"
 
@@ -455,8 +456,15 @@ func (d *truenas) getDatasetsAndProperties(datasets []string, properties []strin
 		if r, ok := result.(map[string]interface{}); ok {
 			formattedMap := make(map[string]string)
 			for p, v := range r {
-				formattedMap[p] = fmt.Sprint(v)
+				var value interface{}
+				if vF, ok := v.(float64); ok && vF == math.Floor(vF) {
+					value = int64(vF)
+				} else {
+					value = v
+				}
+				formattedMap[p] = fmt.Sprint(value)
 			}
+
 			outMap[k] = formattedMap
 		}
 	}
