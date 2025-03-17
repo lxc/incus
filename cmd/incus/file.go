@@ -35,9 +35,9 @@ import (
 
 const (
 	// DirMode represents the file mode for creating dirs on `incus file pull/push`.
-	DirMode = 0755
+	DirMode = 0o755
 	// FileMode represents the file mode for creating files on `incus file create`.
-	FileMode = 0644
+	FileMode = 0o644
 )
 
 type cmdFile struct {
@@ -645,7 +645,8 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 					progress.UpdateProgress(ioprogress.ProgressData{
 						Text: fmt.Sprintf("%s (%s/s)",
 							units.GetByteSizeString(bytesReceived, 2),
-							units.GetByteSizeString(speed, 2))})
+							units.GetByteSizeString(speed, 2)),
+					})
 				},
 			},
 		}
@@ -1128,7 +1129,8 @@ func (c *cmdFile) recursivePullFile(sftpConn *sftp.Client, p string, targetDir s
 					progress.UpdateProgress(ioprogress.ProgressData{
 						Text: fmt.Sprintf("%s (%s/s)",
 							units.GetByteSizeString(bytesReceived, 2),
-							units.GetByteSizeString(speed, 2))})
+							units.GetByteSizeString(speed, 2)),
+					})
 				},
 			},
 		}
@@ -1252,7 +1254,8 @@ func (c *cmdFile) recursivePushFile(sftpConn *sftp.Client, source string, target
 					Handler: func(percent int64, speed int64) {
 						progress.UpdateProgress(ioprogress.ProgressData{
 							Text: fmt.Sprintf("%d%% (%s/s)", percent,
-								units.GetByteSizeString(speed, 2))})
+								units.GetByteSizeString(speed, 2)),
+						})
 					},
 				},
 			}, args.Content)
@@ -1533,7 +1536,7 @@ func (c *cmdFileMount) sshSFTPServer(ctx context.Context, instName string, resou
 	}
 
 	randString := func(length int) string {
-		var chars = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321")
+		chars := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321")
 		randStr := make([]rune, length)
 		for i := range randStr {
 			randStr[i] = chars[rand.Intn(len(chars))]

@@ -294,7 +294,7 @@ func (g *cmdGlobal) cmpInstanceConfigTemplates(instanceName string) ([]string, c
 	resource := resources[0]
 	client := resource.server
 
-	var instanceNameOnly = instanceName
+	instanceNameOnly := instanceName
 	if strings.Contains(instanceName, ":") {
 		instanceNameOnly = strings.Split(instanceName, ":")[1]
 	}
@@ -1122,7 +1122,7 @@ func (g *cmdGlobal) cmpStoragePoolVolumeConfigs(poolName string, volumeName stri
 	resource := resources[0]
 	client := resource.server
 
-	var pool = poolName
+	pool := poolName
 	if strings.Contains(poolName, ":") {
 		pool = strings.Split(poolName, ":")[1]
 	}
@@ -1152,7 +1152,7 @@ func (g *cmdGlobal) cmpStoragePoolVolumeInstances(poolName string, volumeName st
 	resource := resources[0]
 	client := resource.server
 
-	var pool = poolName
+	pool := poolName
 	if strings.Contains(poolName, ":") {
 		pool = strings.Split(poolName, ":")[1]
 	}
@@ -1187,7 +1187,7 @@ func (g *cmdGlobal) cmpStoragePoolVolumeProfiles(poolName string, volumeName str
 	resource := resources[0]
 	client := resource.server
 
-	var pool = poolName
+	pool := poolName
 	if strings.Contains(poolName, ":") {
 		pool = strings.Split(poolName, ":")[1]
 	}
@@ -1222,7 +1222,7 @@ func (g *cmdGlobal) cmpStoragePoolVolumeSnapshots(poolName string, volumeName st
 	resource := resources[0]
 	client := resource.server
 
-	var pool = poolName
+	pool := poolName
 	if strings.Contains(poolName, ":") {
 		pool = strings.Split(poolName, ":")[1]
 	}
@@ -1247,7 +1247,7 @@ func (g *cmdGlobal) cmpStoragePoolVolumes(poolName string) ([]string, cobra.Shel
 	resource := resources[0]
 	client := resource.server
 
-	var pool = poolName
+	pool := poolName
 	if strings.Contains(poolName, ":") {
 		pool = strings.Split(poolName, ":")[1]
 	}

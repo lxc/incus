@@ -63,7 +63,7 @@ func (c *cmdExec) controlSocketHandler(control *websocket.Conn) {
 			}
 
 		case unix.SIGHUP:
-			file, err := os.OpenFile("/dev/tty", os.O_RDONLY|unix.O_NOCTTY|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0666)
+			file, err := os.OpenFile("/dev/tty", os.O_RDONLY|unix.O_NOCTTY|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0o666)
 			if err == nil {
 				_ = file.Close()
 				err = c.forwardSignal(control, unix.SIGHUP)

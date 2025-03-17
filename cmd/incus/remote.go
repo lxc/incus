@@ -239,7 +239,7 @@ func (c *cmdRemoteAdd) addRemoteFromToken(addr string, server string, token stri
 		}
 
 		dnam := conf.ConfigPath("servercerts")
-		err := os.MkdirAll(dnam, 0750)
+		err := os.MkdirAll(dnam, 0o750)
 		if err != nil {
 			return fmt.Errorf(i18n.G("Could not create server cert dir"))
 		}
@@ -482,7 +482,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		dnam := conf.ConfigPath("servercerts")
-		err := os.MkdirAll(dnam, 0750)
+		err := os.MkdirAll(dnam, 0o750)
 		if err != nil {
 			return fmt.Errorf(i18n.G("Could not create server cert dir"))
 		}
