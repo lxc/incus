@@ -79,8 +79,10 @@ func (o *oidcTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	return http.DefaultTransport.RoundTrip(r)
 }
 
-var errRefreshAccessToken = fmt.Errorf("Failed refreshing access token")
-var oidcScopes = []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess, oidc.ScopeEmail}
+var (
+	errRefreshAccessToken = fmt.Errorf("Failed refreshing access token")
+	oidcScopes            = []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess, oidc.ScopeEmail}
+)
 
 type oidcClient struct {
 	httpClient    *http.Client
