@@ -96,7 +96,7 @@ func archiveProfileLoad(sysOS *sys.OS, output string, allowedCommandPaths []stri
 	}
 
 	// Write it to disk.
-	err = os.WriteFile(profilePath, []byte(content), 0600)
+	err = os.WriteFile(profilePath, []byte(content), 0o600)
 	if err != nil {
 		return "", err
 	}

@@ -23,9 +23,11 @@ const (
 	cmdParse  = "Q"
 )
 
-var aaCacheDir string
-var aaPath = internalUtil.VarPath("security", "apparmor")
-var aaVersion *version.DottedVersion
+var (
+	aaCacheDir string
+	aaPath     = internalUtil.VarPath("security", "apparmor")
+	aaVersion  *version.DottedVersion
+)
 
 // Init performs initial version and feature detection.
 func Init() error {
@@ -77,7 +79,6 @@ func runApparmor(sysOS *sys.OS, command string, name string) error {
 		filepath.Join(aaPath, "cache"),
 		filepath.Join(aaPath, "profiles", name),
 	}...)
-
 	if err != nil {
 		return err
 	}
@@ -96,7 +97,7 @@ func createNamespace(sysOS *sys.OS, name string) error {
 	}
 
 	p := filepath.Join("/sys/kernel/security/apparmor/policy/namespaces", name)
-	err := os.Mkdir(p, 0755)
+	err := os.Mkdir(p, 0o755)
 	if err != nil && !os.IsExist(err) {
 		return err
 	}
