@@ -102,7 +102,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 
 	defer logFile.Close()
 
-	err = logFile.Chmod(0600)
+	err = logFile.Chmod(0o600)
 	if err != nil {
 		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
 		return fmt.Errorf("Failed to set permissions on log file: %w", err)
@@ -617,7 +617,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 	if linux.IsMountPoint(sourcePaths.daemon) {
 		_, _ = logFile.WriteString("Source daemon path is a mountpoint\n")
 
-		err = os.MkdirAll(targetPaths.daemon, 0711)
+		err = os.MkdirAll(targetPaths.daemon, 0o711)
 		if err != nil {
 			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
 			return fmt.Errorf("Failed to create target directory: %w", err)
@@ -673,7 +673,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 		fmt.Println("=> Writing database patch")
 		_, _ = logFile.WriteString("Writing the database patch\n")
 
-		err = os.WriteFile(filepath.Join(targetPaths.daemon, "database", "patch.global.sql"), []byte(strings.Join(rewriteStatements, "\n")+"\n"), 0600)
+		err = os.WriteFile(filepath.Join(targetPaths.daemon, "database", "patch.global.sql"), []byte(strings.Join(rewriteStatements, "\n")+"\n"), 0o600)
 		if err != nil {
 			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
 			return fmt.Errorf("Failed to write database path: %w", err)
