@@ -1111,8 +1111,10 @@ Column shorthand chars:
 	return cmd
 }
 
-const defaultImagesColumns = "lfpdatsu"
-const defaultImagesColumnsAllProjects = "elfpdatsu"
+const (
+	defaultImagesColumns            = "lfpdatsu"
+	defaultImagesColumnsAllProjects = "elfpdatsu"
+)
 
 func (c *cmdImageList) parseColumns() ([]imageColumn, error) {
 	columnsShorthandMap := map[rune]imageColumn{
@@ -1263,14 +1265,14 @@ func (c *cmdImageList) imageShouldShow(filters []string, state *api.Image) bool 
 				list := cmdList{}
 				list.global = c.global
 				if list.dotPrefixMatch(key, configKey) {
-					//try to test filter value as a regexp
+					// try to test filter value as a regexp
 					regexpValue := value
 					if !(strings.Contains(value, "^") || strings.Contains(value, "$")) {
 						regexpValue = "^" + regexpValue + "$"
 					}
 
 					r, err := regexp.Compile(regexpValue)
-					//if not regexp compatible use original value
+					// if not regexp compatible use original value
 					if err != nil {
 						if value == configValue {
 							found = true

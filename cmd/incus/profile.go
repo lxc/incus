@@ -749,8 +749,10 @@ u - Used By`))
 	return cmd
 }
 
-const defaultProfileColumns = "ndu"
-const defaultProfileColumnsAllProjects = "endu"
+const (
+	defaultProfileColumns            = "ndu"
+	defaultProfileColumnsAllProjects = "endu"
+)
 
 func (c *cmdProfileList) parseColumns() ([]profileColumn, error) {
 	columnsShorthandMap := map[rune]profileColumn{

@@ -151,10 +151,12 @@ incus list -c ns,user.comment:comment
 	return cmd
 }
 
-const defaultColumns = "ns46tSL"
-const defaultColumnsAllProjects = "ens46tSL"
-const configColumnType = "config"
-const deviceColumnType = "devices"
+const (
+	defaultColumns            = "ns46tSL"
+	defaultColumnsAllProjects = "ens46tSL"
+	configColumnType          = "config"
+	deviceColumnType          = "devices"
+)
 
 // This seems a little excessive.
 func (c *cmdList) dotPrefixMatch(short string, full string) bool {
@@ -266,7 +268,6 @@ func (c *cmdList) evaluateShorthandFilter(key string, value string, inst *api.In
 	}
 
 	return matched
-
 }
 
 func (c *cmdList) listInstances(d incus.InstanceServer, instances []api.Instance, filters []string, columns []column) error {
@@ -619,7 +620,8 @@ func (c *cmdList) parseColumns(clustered bool) ([]column, bool, error) {
 
 	if clustered {
 		columnsShorthandMap['L'] = column{
-			i18n.G("LOCATION"), c.locationColumnData, false, false}
+			i18n.G("LOCATION"), c.locationColumnData, false, false,
+		}
 	} else {
 		if c.flagColumns != defaultColumns && c.flagColumns != defaultColumnsAllProjects {
 			if strings.ContainsAny(c.flagColumns, "L") {

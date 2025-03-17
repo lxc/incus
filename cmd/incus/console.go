@@ -200,8 +200,10 @@ func (c *cmdConsole) text(d incus.InstanceServer, name string) error {
 	defer close(sendDisconnect)
 
 	consoleArgs := incus.InstanceConsoleArgs{
-		Terminal: &readWriteCloser{stdinMirror{os.Stdin,
-			manualDisconnect, new(bool)}, os.Stdout},
+		Terminal: &readWriteCloser{stdinMirror{
+			os.Stdin,
+			manualDisconnect, new(bool),
+		}, os.Stdout},
 		Control:           handler,
 		ConsoleDisconnect: consoleDisconnect,
 	}
@@ -267,7 +269,7 @@ func (c *cmdConsole) vga(d incus.InstanceServer, name string) error {
 	if runtime.GOOS != "windows" {
 		// Create a temporary unix socket mirroring the instance's spice socket.
 		if !util.PathExists(conf.ConfigPath("sockets")) {
-			err := os.MkdirAll(conf.ConfigPath("sockets"), 0700)
+			err := os.MkdirAll(conf.ConfigPath("sockets"), 0o700)
 			if err != nil {
 				return err
 			}
