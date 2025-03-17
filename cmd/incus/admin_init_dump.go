@@ -55,6 +55,7 @@ func (c *cmdAdminInit) RunDump(d incus.InstanceServer) error {
 		storagePoolsPost.Description = storagePool.Description
 		storagePoolsPost.Name = storagePool.Name
 		storagePoolsPost.Driver = storagePool.Driver
+		storagePoolsPost.Project = api.ProjectDefaultName
 
 		config.StoragePools = append(config.StoragePools, storagePoolsPost)
 	}
