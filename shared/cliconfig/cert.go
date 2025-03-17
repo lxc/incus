@@ -113,7 +113,7 @@ func (c *Config) CopyGlobalCert(src string, dst string) error {
 	if util.PathExists(oldPath) {
 		newPath := c.ConfigPath("clientcerts", fmt.Sprintf("%s.key", dst))
 
-		err := copyFile(oldPath, newPath, 0600)
+		err := copyFile(oldPath, newPath, 0o600)
 		if err != nil {
 			return err
 		}
