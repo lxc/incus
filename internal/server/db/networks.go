@@ -316,7 +316,7 @@ func (c *ClusterTx) CreatePendingNetwork(ctx context.Context, node string, proje
 		return err
 	}
 
-	var networkID = network.id
+	networkID := network.id
 	if networkID == 0 {
 		projectID, err := cluster.GetProjectID(context.Background(), c.tx, projectName)
 		if err != nil {

@@ -80,8 +80,10 @@ SELECT instances_backups.id, instances_backups.instance_id,
     WHERE projects.name=? AND instances_backups.name=?
 `
 	arg1 := []any{projectName, name}
-	arg2 := []any{&args.ID, &args.InstanceID, &args.CreationDate,
-		&args.ExpiryDate, &instanceOnlyInt, &optimizedStorageInt}
+	arg2 := []any{
+		&args.ID, &args.InstanceID, &args.CreationDate,
+		&args.ExpiryDate, &instanceOnlyInt, &optimizedStorageInt,
+	}
 
 	err := dbQueryRowScan(ctx, c, q, arg1, arg2)
 	if err != nil {
@@ -120,8 +122,10 @@ SELECT instances_backups.name, instances_backups.instance_id,
     WHERE instances_backups.id=?
 `
 	arg1 := []any{backupID}
-	arg2 := []any{&args.Name, &args.InstanceID, &args.CreationDate,
-		&args.ExpiryDate, &instanceOnlyInt, &optimizedStorageInt}
+	arg2 := []any{
+		&args.Name, &args.InstanceID, &args.CreationDate,
+		&args.ExpiryDate, &instanceOnlyInt, &optimizedStorageInt,
+	}
 
 	err := dbQueryRowScan(ctx, c, q, arg1, arg2)
 	if err != nil {
@@ -237,7 +241,8 @@ func (c *ClusterTx) RenameInstanceBackup(ctx context.Context, oldName, newName s
 		logger.Ctx{
 			"query":   "UPDATE instances_backups SET name = ? WHERE name = ?",
 			"oldName": oldName,
-			"newName": newName})
+			"newName": newName,
+		})
 	_, err = stmt.ExecContext(ctx, newName, oldName)
 	if err != nil {
 		return err
@@ -543,7 +548,8 @@ func (c *ClusterTx) RenameVolumeBackup(ctx context.Context, oldName, newName str
 		logger.Ctx{
 			"query":   "UPDATE storage_volumes_backups SET name = ? WHERE name = ?",
 			"oldName": oldName,
-			"newName": newName})
+			"newName": newName,
+		})
 	_, err = stmt.Exec(newName, oldName)
 	if err != nil {
 		return err
@@ -723,7 +729,8 @@ func (c *ClusterTx) RenameBucketBackup(ctx context.Context, oldName, newName str
 		logger.Ctx{
 			"query":   "UPDATE storage_buckets_backups SET name = ? WHERE name = ?",
 			"oldName": oldName,
-			"newName": newName})
+			"newName": newName,
+		})
 	_, err = stmt.Exec(newName, oldName)
 	if err != nil {
 		return err
