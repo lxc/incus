@@ -265,7 +265,7 @@ func devIncusAPI(d *Daemon) http.Handler {
 func createDevIncuslListener(dir string) (net.Listener, error) {
 	path := filepath.Join(dir, "incus", "sock")
 
-	err := os.MkdirAll(filepath.Dir(path), 0755)
+	err := os.MkdirAll(filepath.Dir(path), 0o755)
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +297,7 @@ func createDevIncuslListener(dir string) (net.Listener, error) {
 		return nil, err
 	}
 
-	err = socketUnixSetPermissions(path, 0600)
+	err = socketUnixSetPermissions(path, 0o600)
 	if err != nil {
 		_ = listener.Close()
 		return nil, err

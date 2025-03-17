@@ -23,8 +23,10 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
-var servers = make(map[string]*http.Server, 2)
-var errChan = make(chan error)
+var (
+	servers = make(map[string]*http.Server, 2)
+	errChan = make(chan error)
+)
 
 type cmdAgent struct {
 	global *cmdGlobal
@@ -242,7 +244,7 @@ func (c *cmdAgent) startStatusNotifier(ctx context.Context, chConnected <-chan s
 // writeStatus writes a status code to the vserial ring buffer used to detect agent status on host.
 func (c *cmdAgent) writeStatus(status string) error {
 	if util.PathExists("/dev/virtio-ports/org.linuxcontainers.incus") {
-		vSerial, err := os.OpenFile("/dev/virtio-ports/org.linuxcontainers.incus", os.O_RDWR, 0600)
+		vSerial, err := os.OpenFile("/dev/virtio-ports/org.linuxcontainers.incus", os.O_RDWR, 0o600)
 		if err != nil {
 			return err
 		}
@@ -302,7 +304,7 @@ func tryMountShared(src string, dst string, fstype string, opts []string) error 
 	// Check mount path.
 	if !util.PathExists(dst) {
 		// Create the mount path.
-		err := os.MkdirAll(dst, 0755)
+		err := os.MkdirAll(dst, 0o755)
 		if err != nil {
 			return fmt.Errorf("Failed to create mount target %q", dst)
 		}
