@@ -389,7 +389,7 @@ func updateFromV30(ctx context.Context, tx *sql.Tx) error {
 
 func updateFromV29(ctx context.Context, tx *sql.Tx) error {
 	if util.PathExists(internalUtil.VarPath("zfs.img")) {
-		err := os.Chmod(internalUtil.VarPath("zfs.img"), 0600)
+		err := os.Chmod(internalUtil.VarPath("zfs.img"), 0o600)
 		if err != nil {
 			return err
 		}

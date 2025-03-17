@@ -218,7 +218,7 @@ func (c *ClusterTx) GetNetworkPeer(ctx context.Context, networkID int64, peerNam
 
 	var err error
 	var peerID int64 = -1
-	var peerType = -1
+	peerType := -1
 	var peer api.NetworkPeer
 	var targetPeerNetworkName string
 	var targetPeerNetworkProject string
@@ -351,7 +351,7 @@ func (c *ClusterTx) GetNetworkPeers(ctx context.Context, networkID int64) (map[i
 
 	err = query.Scan(ctx, c.tx, q, func(scan func(dest ...any) error) error {
 		var peerID int64 = -1
-		var peerType = -1
+		peerType := -1
 		var peer api.NetworkPeer
 		var targetPeerNetworkName string
 		var targetPeerNetworkProject string

@@ -1,4 +1,6 @@
 package query
 
-var GetTableData = getTableData
-var GetEntitiesSchemas = getEntitiesSchemas
+var (
+	GetTableData       = getTableData
+	GetEntitiesSchemas = getEntitiesSchemas
+)

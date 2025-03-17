@@ -284,7 +284,7 @@ func (c *ClusterTx) CreatePendingStoragePool(ctx context.Context, node string, n
 		return err
 	}
 
-	var poolID = pool.id
+	poolID := pool.id
 	if poolID == 0 {
 		// No existing pool with the given name was found, let's create
 		// one.
