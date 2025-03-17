@@ -42,7 +42,7 @@ func instanceSaveCache() error {
 		return err
 	}
 
-	err = os.WriteFile(internalUtil.CachePath("instance_types.yaml"), data, 0600)
+	err = os.WriteFile(internalUtil.CachePath("instance_types.yaml"), data, 0o600)
 	if err != nil {
 		return err
 	}

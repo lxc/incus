@@ -42,10 +42,12 @@ import (
 	"github.com/lxc/incus/v6/shared/ws"
 )
 
-const execWSControl = -1
-const execWSStdin = 0
-const execWSStdout = 1
-const execWSStderr = 2
+const (
+	execWSControl = -1
+	execWSStdin   = 0
+	execWSStdout  = 1
+	execWSStderr  = 2
+)
 
 type execWs struct {
 	req api.InstanceExecPost
@@ -724,20 +726,20 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 		if post.RecordOutput {
 			// Ensure exec-output directory exists
 			execOutputDir := inst.ExecOutputPath()
-			err = os.Mkdir(execOutputDir, 0600)
+			err = os.Mkdir(execOutputDir, 0o600)
 			if err != nil && !errors.Is(err, fs.ErrExist) {
 				return err
 			}
 
 			// Prepare stdout and stderr recording.
-			stdout, err = os.OpenFile(filepath.Join(execOutputDir, fmt.Sprintf("exec_%s.stdout", op.ID())), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+			stdout, err = os.OpenFile(filepath.Join(execOutputDir, fmt.Sprintf("exec_%s.stdout", op.ID())), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o666)
 			if err != nil {
 				return err
 			}
 
 			defer func() { _ = stdout.Close() }()
 
-			stderr, err = os.OpenFile(filepath.Join(execOutputDir, fmt.Sprintf("exec_%s.stderr", op.ID())), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+			stderr, err = os.OpenFile(filepath.Join(execOutputDir, fmt.Sprintf("exec_%s.stderr", op.ID())), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o666)
 			if err != nil {
 				return err
 			}

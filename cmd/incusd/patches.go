@@ -658,7 +658,7 @@ func patchMoveBackupsInstances(name string, d *Daemon) error {
 
 	backupsPath := internalUtil.VarPath("backups", "instances")
 
-	err := os.MkdirAll(backupsPath, 0700)
+	err := os.MkdirAll(backupsPath, 0o700)
 	if err != nil {
 		return fmt.Errorf("Failed creating instances backup directory %q: %w", backupsPath, err)
 	}
@@ -1215,7 +1215,7 @@ func patchRuntimeDirectory(name string, d *Daemon) error {
 			continue
 		}
 
-		err = os.MkdirAll(inst.RunPath(), 0700)
+		err = os.MkdirAll(inst.RunPath(), 0o700)
 		if err != nil && !os.IsExist(err) {
 			return fmt.Errorf("Failed to create runtime directory for %q in project %q: %w", inst.Name(), inst.Project(), err)
 		}

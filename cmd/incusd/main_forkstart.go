@@ -85,7 +85,7 @@ func (c *cmdForkstart) Run(cmd *cobra.Command, args []string) error {
 		_ = os.Remove(logPath)
 	}
 
-	logFile, err := os.OpenFile(logPath, os.O_WRONLY|os.O_CREATE|os.O_SYNC, 0644)
+	logFile, err := os.OpenFile(logPath, os.O_WRONLY|os.O_CREATE|os.O_SYNC, 0o644)
 	if err == nil {
 		_ = unix.Dup3(int(logFile.Fd()), 1, 0)
 		_ = unix.Dup3(int(logFile.Fd()), 2, 0)

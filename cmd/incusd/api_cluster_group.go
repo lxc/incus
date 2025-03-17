@@ -755,7 +755,6 @@ func clusterGroupDelete(d *Daemon, r *http.Request) response.Response {
 
 		return dbCluster.DeleteClusterGroup(ctx, tx.Tx(), name)
 	})
-
 	if err != nil {
 		return response.SmartError(err)
 	}

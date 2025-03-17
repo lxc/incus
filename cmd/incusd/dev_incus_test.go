@@ -50,12 +50,12 @@ func setupDir() error {
 		return err
 	}
 
-	err = os.Chmod(testDir, 0700)
+	err = os.Chmod(testDir, 0o700)
 	if err != nil {
 		return err
 	}
 
-	_ = os.MkdirAll(fmt.Sprintf("%s/devIncus", testDir), 0755)
+	_ = os.MkdirAll(fmt.Sprintf("%s/devIncus", testDir), 0o755)
 
 	return os.Setenv("INCUS_DIR", testDir)
 }

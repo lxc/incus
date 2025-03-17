@@ -281,8 +281,10 @@ type cmdForkproxy struct {
 }
 
 // UDP session tracking (map "client tuple" to udp session)
-var udpSessions = map[string]*udpSession{}
-var udpSessionsLock sync.Mutex
+var (
+	udpSessions     = map[string]*udpSession{}
+	udpSessionsLock sync.Mutex
+)
 
 type udpSession struct {
 	client    net.Addr

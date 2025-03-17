@@ -709,7 +709,7 @@ func ueventParseVendorProduct(props map[string]string, subsystem string, devname
 		return "", "", false
 	}
 
-	file, err := os.OpenFile(devname, os.O_RDWR, 0000)
+	file, err := os.OpenFile(devname, os.O_RDWR, 0o000)
 	if err != nil {
 		return "", "", false
 	}

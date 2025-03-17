@@ -83,7 +83,6 @@ func instanceAccess(d *Daemon, r *http.Request) response.Response {
 	}
 
 	access, err := s.Authorizer.GetInstanceAccess(context.TODO(), projectName, mux.Vars(r)["name"])
-
 	if err != nil {
 		return response.InternalError(err)
 	}
