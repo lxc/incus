@@ -104,7 +104,7 @@ func parse(path string, outputJSONPath string, excludedPaths []string) (*doc, er
 		}
 
 		// Parse file and create the AST
-		var fset = token.NewFileSet()
+		fset := token.NewFileSet()
 		var f *ast.File
 		f, err = parser.ParseFile(fset, path, nil, parser.ParseComments)
 		if err != nil {
@@ -230,7 +230,6 @@ func parse(path string, outputJSONPath string, excludedPaths []string) (*doc, er
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +249,7 @@ func parse(path string, outputJSONPath string, excludedPaths []string) (*doc, er
 			return nil, fmt.Errorf("Error while writing the JSON project documentation: %v", err)
 		}
 
-		err := os.WriteFile(outputJSONPath, buf.Bytes(), 0644)
+		err := os.WriteFile(outputJSONPath, buf.Bytes(), 0o644)
 		if err != nil {
 			return nil, fmt.Errorf("Error while writing the JSON project documentation: %v", err)
 		}
@@ -386,7 +385,7 @@ func writeDocFile(inputJSONPath, outputTxtPath string) error {
 		}
 	}
 
-	err = os.WriteFile(outputTxtPath, buffer.Bytes(), 0644)
+	err = os.WriteFile(outputTxtPath, buffer.Bytes(), 0o644)
 	if err != nil {
 		return fmt.Errorf("Error while writing the Markdown project documentation: %v", err)
 	}
