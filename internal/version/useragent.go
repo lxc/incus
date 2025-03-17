@@ -12,9 +12,11 @@ import (
 )
 
 // UserAgent contains a string suitable as a user-agent.
-var UserAgent = getUserAgent()
-var userAgentStorageBackends []string
-var userAgentFeatures []string
+var (
+	UserAgent                = getUserAgent()
+	userAgentStorageBackends []string
+	userAgentFeatures        []string
+)
 
 func getUserAgent() string {
 	archID, err := osarch.ArchitectureId(runtime.GOARCH)
