@@ -200,7 +200,8 @@ func (t *Transaction) getDHCPFreeIPv4(usedIPs map[[4]byte]dnsmasq.DHCPAllocation
 	if len(dhcpRanges) <= 0 {
 		dhcpRanges = append(dhcpRanges, iprange.Range{
 			Start: GetIP(subnet, 1).To4(),
-			End:   GetIP(subnet, -2).To4()},
+			End:   GetIP(subnet, -2).To4(),
+		},
 		)
 	}
 
@@ -289,7 +290,8 @@ func (t *Transaction) getDHCPFreeIPv6(usedIPs map[[16]byte]dnsmasq.DHCPAllocatio
 	if len(dhcpRanges) <= 0 {
 		dhcpRanges = append(dhcpRanges, iprange.Range{
 			Start: GetIP(subnet, 1).To16(),
-			End:   GetIP(subnet, -1).To16()},
+			End:   GetIP(subnet, -1).To16(),
+		},
 		)
 	}
 
