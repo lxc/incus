@@ -7,6 +7,8 @@ package linux
 */
 import "C"
 
-const IoctlBtrfsSetReceivedSubvol = C.BTRFS_IOC_SET_RECEIVED_SUBVOL
-const IoctlHIDIOCGrawInfo = C.HIDIOCGRAWINFO
-const IoctlVhostVsockSetGuestCid = C.VHOST_VSOCK_SET_GUEST_CID
+const (
+	IoctlBtrfsSetReceivedSubvol = C.BTRFS_IOC_SET_RECEIVED_SUBVOL
+	IoctlHIDIOCGrawInfo         = C.HIDIOCGRAWINFO
+	IoctlVhostVsockSetGuestCid  = C.VHOST_VSOCK_SET_GUEST_CID
+)
