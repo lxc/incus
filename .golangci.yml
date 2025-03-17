@@ -2,7 +2,7 @@ linters:
   enable:
     - gci
     - godot
-    - gofmt
+    - gofumpt
     - goimports
     - misspell
     - whitespace
