@@ -89,9 +89,6 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	if vol.IsVMBlock() { // or fs-img...
 		blockifyMountPath(&vol)
 	}
-	if vol.IsCustomBlock() {
-		vol.mountCustomPath = "" // we have to override the mount path in CopyFromBackup, need to un-override here.
-	}
 
 	// Create mountpoint.
 	err := vol.EnsureMountPath()
@@ -418,10 +415,6 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 // CreateVolumeFromBackup re-creates a volume from its exported state.
 func (d *truenas) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
 	// TODO: optimized version
-
-	// if vol.IsCustomBlock() {
-	// 	vol.mountCustomPath = fmt.Sprintf("%s/root.img", vol.MountPath())
-	// }
 
 	return genericVFSBackupUnpack(d, d.state.OS, vol, srcBackup.Snapshots, srcData, op)
 }
@@ -1011,16 +1004,6 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 			return ErrInUse // We don't allow online resizing of block volumes.
 		}
 
-		/*
-			we want to resize the root.img in the vol, but if we simply mount the vol
-			then ensureVolumeBlockFile function will reject a resize of an online vol, but
-			an fs-img vol counts as a separate mount-lock
-		*/
-		// fsImgVol := cloneVolAsFsImgVol(vol)
-		// if vol.IsCustomBlock() {
-		// 	fsImgVol.mountCustomPath = "" // deblockify, no need to create a secondary mount point
-		// }
-
 		err := vol.MountTask(func(mountPath string, op *operations.Operation) error {
 
 			// We expect the filler to copy the VM image into this path.
@@ -1093,9 +1076,6 @@ func (d *truenas) GetVolumeDiskPath(vol Volume) (string, error) {
 
 	if vol.IsVMBlock() { // or FS-IMG
 		blockifyMountPath(&vol) // when backend calls GetVolumeDiskPath, it needs to refer to the .block mount.
-	}
-	if vol.IsCustomBlock() {
-		vol.mountCustomPath = ""
 	}
 
 	return filepath.Join(vol.MountPath(), genericVolumeDiskFile), nil
@@ -1334,9 +1314,6 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 
 		if vol.IsVMBlock() { // OR fs-img
 			blockifyMountPath(&vol)
-		}
-		if vol.IsCustomBlock() {
-			vol.mountCustomPath = "" // need to clear the customized mount path used for CreateFromBackup
 		}
 
 		// handle an FS mount
