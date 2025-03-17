@@ -264,13 +264,13 @@ func FindOrGenCert(certf string, keyf string, certtype bool, addHosts bool) erro
 func GenCert(certf string, keyf string, certtype bool, addHosts bool) error {
 	/* Create the basenames if needed */
 	dir := filepath.Dir(certf)
-	err := os.MkdirAll(dir, 0750)
+	err := os.MkdirAll(dir, 0o750)
 	if err != nil {
 		return err
 	}
 
 	dir = filepath.Dir(keyf)
-	err = os.MkdirAll(dir, 0750)
+	err = os.MkdirAll(dir, 0o750)
 	if err != nil {
 		return err
 	}
@@ -295,7 +295,7 @@ func GenCert(certf string, keyf string, certtype bool, addHosts bool) error {
 		return fmt.Errorf("Failed to close cert file: %w", err)
 	}
 
-	keyOut, err := os.OpenFile(keyf, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	keyOut, err := os.OpenFile(keyf, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		return fmt.Errorf("Failed to open %s for writing: %w", keyf, err)
 	}
