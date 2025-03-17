@@ -398,7 +398,11 @@ func (n *ovn) Validate(config map[string]string) error {
 
 			return validate.IsNetworkAddressCIDRV4(value)
 		}),
-		"ipv4.dhcp":        validate.Optional(validate.IsBool),
+		"ipv4.dhcp": validate.Optional(validate.IsBool),
+		"ipv4.dhcp.expiry": validate.Optional(func(value string) error {
+			_, err := time.ParseDuration(value)
+			return err
+		}),
 		"ipv4.dhcp.ranges": validate.Optional(validate.IsListOf(validate.IsNetworkRangeV4)),
 		"ipv4.dhcp.routes": validate.Optional(validate.IsDHCPRouteList),
 		"ipv6.address": validate.Optional(func(value string) error {
@@ -2675,12 +2679,22 @@ func (n *ovn) setup(update bool) error {
 			dhcpV4Netmask = "255.255.255.255"
 		}
 
+		leaseTime := time.Hour * 1
+		if n.config["ipv4.dhcp.expiry"] != "" {
+			duration, err := time.ParseDuration(n.config["ipv4.dhcp.expiry"])
+			if err != nil {
+				return fmt.Errorf("Failed to parse expiry: %w", err)
+			}
+
+			leaseTime = duration
+		}
+
 		opts := &networkOVN.OVNDHCPv4Opts{
 			ServerID:           routerIntPortIPv4,
 			ServerMAC:          routerMAC,
 			Router:             routerIntPortIPv4,
 			DomainName:         n.getDomainName(),
-			LeaseTime:          time.Duration(time.Hour * 1),
+			LeaseTime:          leaseTime,
 			MTU:                bridgeMTU,
 			Netmask:            dhcpV4Netmask,
 			DNSSearchList:      n.getDNSSearchList(),
