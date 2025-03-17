@@ -204,10 +204,6 @@ func ParseIDs(r io.Reader) (map[ID]*Vendor, map[ClassCode]*Class, error) {
 		return nil
 	}
 
-	// TODO(kevlar): Parse class information, etc
-	//var class *Class
-	//var subclass *SubClass
-
 	var kind string
 
 	lines := bufio.NewReaderSize(r, 512)
