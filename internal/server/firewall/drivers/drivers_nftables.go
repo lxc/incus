@@ -22,8 +22,10 @@ import (
 	"github.com/lxc/incus/v6/shared/validate"
 )
 
-const nftablesNamespace = "incus"
-const nftablesContentTemplate = "nftablesContent"
+const (
+	nftablesNamespace       = "incus"
+	nftablesContentTemplate = "nftablesContent"
+)
 
 // nftablesChainSeparator The "." character is specifically chosen here so as to prevent the ability for collisions
 // between project prefix (which is empty if project is default) and device name combinations that both are allowed
