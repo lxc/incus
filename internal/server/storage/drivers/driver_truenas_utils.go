@@ -14,7 +14,7 @@ import (
 
 const (
 	tnToolName              = "truenas_incus_ctl"
-	tnMinVersion            = "0.4.0" // replication start
+	tnMinVersion            = "0.4.1" // -p fixes
 	tnVerifyDatasetCreation = false   // explicitly check that the dataset is created, work around for bugs in certain versions of the tool.
 )
 
@@ -397,7 +397,6 @@ func (d *truenas) deleteDataset(dataset string, options ...string) error {
 
 func (d *truenas) getDatasetProperty(dataset string, key string) (string, error) {
 
-	//output, err := subprocess.RunCommand("zfs", "get", "-H", "-p", "-o", "value", key, dataset)
 	output, err := d.runTool(d.getDatasetOrSnapshot(dataset), "list", "-H", "-p", "-o", key, dataset)
 
 	if err != nil {
@@ -491,7 +490,6 @@ func (d *truenas) deleteDatasetRecursive(dataset string) error {
 	}
 
 	// Delete the dataset (and any snapshots left).
-	//_, err = subprocess.TryRunCommand("zfs", "destroy", "-r", dataset)
 	out, err := d.runTool(d.getDatasetOrSnapshot(dataset), "delete", "-r", dataset)
 	_ = out
 	if err != nil {

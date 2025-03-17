@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/migration"
@@ -24,15 +25,10 @@ var tnVersion string
 var tnLoaded bool
 
 var tnDefaultSettings = map[string]string{
-	"atime": "off", //"relatime": "on",
-	//"mountpoint": "legacy",
-	//"setuid":  "on",
-	"exec": "on",
-	//"devices": "on",
-	"acltype": "posix", //"acltype": "posixacl",
-	"aclmode": "discard",
-	//"xattr":      "sa", 			// xattr doesn't seem able to be set via API
-	//"share_type": "nfs",
+	"atime":     "off",
+	"exec":      "on",
+	"acltype":   "posix",
+	"aclmode":   "discard",
 	"comments":  "Managed by Incus.TrueNAS", // these are set in createDataset
 	"managedby": "incus.truenas",
 }
@@ -116,8 +112,8 @@ func (d *truenas) Info() Info {
 		Version:                      tnVersion,
 		DefaultVMBlockFilesystemSize: deviceConfig.DefaultVMBlockFilesystemSize,
 		OptimizedImages:              true,
-		OptimizedBackups:             true,
-		PreservesInodes:              true,
+		OptimizedBackups:             false,
+		PreservesInodes:              false,
 		Remote:                       d.isRemote(),
 		VolumeTypes:                  []VolumeType{VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
 		VolumeMultiNode:              d.isRemote(),
@@ -399,36 +395,35 @@ func (d *truenas) Unmount() (bool, error) {
 }
 
 func (d *truenas) GetResources() (*api.ResourcesStoragePool, error) {
-	// // Get the total amount of space.
-	// availableStr, err := d.getDatasetProperty(d.config["zfs.pool_name"], "available")
-	// if err != nil {
-	// 	return nil, err
-	// }
+	// Get the total amount of space.
+	availableStr, err := d.getDatasetProperty(d.config["truenas.dataset"], "available")
+	if err != nil {
+		return nil, err
+	}
 
-	// available, err := strconv.ParseUint(strings.TrimSpace(availableStr), 10, 64)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	available, err := strconv.ParseUint(strings.TrimSpace(availableStr), 10, 64)
+	if err != nil {
+		return nil, err
+	}
 
-	// // Get the used amount of space.
-	// usedStr, err := d.getDatasetProperty(d.config["zfs.pool_name"], "used")
-	// if err != nil {
-	// 	return nil, err
-	// }
+	// Get the used amount of space.
+	usedStr, err := d.getDatasetProperty(d.config["truenas.dataset"], "used")
+	if err != nil {
+		return nil, err
+	}
 
-	// used, err := strconv.ParseUint(strings.TrimSpace(usedStr), 10, 64)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	used, err := strconv.ParseUint(strings.TrimSpace(usedStr), 10, 64)
+	if err != nil {
+		return nil, err
+	}
 
-	// // Build the struct.
-	// // Inode allocation is dynamic so no use in reporting them.
-	// res := api.ResourcesStoragePool{}
-	// res.Space.Total = used + available
-	// res.Space.Used = used
+	// Build the struct.
+	// Inode allocation is dynamic so no use in reporting them.
+	res := api.ResourcesStoragePool{}
+	res.Space.Total = used + available
+	res.Space.Used = used
 
-	//return &res, nil
-	return nil, nil
+	return &res, nil
 }
 
 // MigrationType returns the type of transfer methods to be used when doing migrations between pools in preference order.
