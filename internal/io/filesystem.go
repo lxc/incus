@@ -8,7 +8,7 @@ import (
 func GetPathMode(path string) (os.FileMode, error) {
 	fi, err := os.Stat(path)
 	if err != nil {
-		return os.FileMode(0000), err
+		return os.FileMode(0o000), err
 	}
 
 	mode, _, _ := GetOwnerMode(fi)
