@@ -67,7 +67,7 @@ func (d *common) validatePool(config map[string]string, driverRules map[string]f
 
 	// Run the validator against each field.
 	for k, validator := range rules {
-		checkedFields[k] = struct{}{} //Mark field as checked.
+		checkedFields[k] = struct{}{} // Mark field as checked.
 		err := validator(config[k])
 		if err != nil {
 			return fmt.Errorf("Invalid value for option %q: %w", k, err)
@@ -161,7 +161,7 @@ func (d *common) validateVolume(vol Volume, driverRules map[string]func(value st
 
 	// Run the validator against each field.
 	for k, validator := range rules {
-		checkedFields[k] = struct{}{} //Mark field as checked.
+		checkedFields[k] = struct{}{} // Mark field as checked.
 		err := validator(vol.config[k])
 		if err != nil {
 			return fmt.Errorf("Invalid value for volume %q option %q: %w", vol.name, k, err)

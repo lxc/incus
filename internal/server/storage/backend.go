@@ -59,8 +59,10 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
-var unavailablePools = make(map[string]struct{})
-var unavailablePoolsMu = sync.Mutex{}
+var (
+	unavailablePools   = make(map[string]struct{})
+	unavailablePoolsMu = sync.Mutex{}
+)
 
 // ConnectIfInstanceIsRemote is a reference to cluster.ConnectIfInstanceIsRemote.
 //
@@ -200,7 +202,7 @@ func (b *backend) Create(clientType request.ClientType, op *operations.Operation
 	}
 
 	// Create the storage path.
-	err = os.MkdirAll(path, 0711)
+	err = os.MkdirAll(path, 0o711)
 	if err != nil {
 		return fmt.Errorf("Failed to create storage pool directory %q: %w", path, err)
 	}
@@ -433,7 +435,7 @@ func (b *backend) Mount() (bool, error) {
 
 	// Create the storage path if needed.
 	if !internalUtil.IsDir(path) {
-		err := os.MkdirAll(path, 0711)
+		err := os.MkdirAll(path, 0o711)
 		if err != nil {
 			return false, fmt.Errorf("Failed to create storage pool directory %q: %w", path, err)
 		}
@@ -702,7 +704,7 @@ func (b *backend) CreateInstance(inst instance.Instance, op *operations.Operatio
 		filler = &drivers.VolumeFiller{
 			Fill: func(vol drivers.Volume, rootBlockPath string, allowUnsafeResize bool) (int64, error) {
 				// Create an empty rootfs.
-				err := os.Mkdir(filepath.Join(vol.MountPath(), "rootfs"), 0755)
+				err := os.Mkdir(filepath.Join(vol.MountPath(), "rootfs"), 0o755)
 				if err != nil && !os.IsExist(err) {
 					return 0, err
 				}
@@ -1455,7 +1457,6 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 				ContentType:        string(contentType),
 				Info:               &localMigration.Info{Config: srcConfig},
 			}, op)
-
 			if err != nil {
 				cancel()
 			}
@@ -1476,7 +1477,6 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 				VolumeSize:         volSize, // Block size setting override.
 				Refresh:            true,
 			}, op)
-
 			if err != nil {
 				cancel()
 			}
@@ -1734,7 +1734,8 @@ func (b *backend) imageFiller(fingerprint string, op *operations.Operation) func
 				Handler: func(percent, speed int64) {
 					operations.SetProgressMetadata(metadata, "create_instance_from_image_unpack", "Unpacking image", percent, 0, speed)
 					_ = op.UpdateMetadata(metadata)
-				}}
+				},
+			}
 		}
 
 		imageFile := internalUtil.VarPath("images", fingerprint)
@@ -1747,7 +1748,7 @@ func (b *backend) imageFiller(fingerprint string, op *operations.Operation) func
 // provided.
 func (b *backend) isoFiller(data io.Reader) func(vol drivers.Volume, rootBlockPath string, allowUnsafeResize bool) (int64, error) {
 	return func(vol drivers.Volume, rootBlockPath string, allowUnsafeResize bool) (int64, error) {
-		f, err := os.OpenFile(rootBlockPath, os.O_CREATE|os.O_WRONLY, 0600)
+		f, err := os.OpenFile(rootBlockPath, os.O_CREATE|os.O_WRONLY, 0o600)
 		if err != nil {
 			return -1, err
 		}
@@ -4874,7 +4875,6 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 			Info:               &localMigration.Info{Config: srcConfig},
 			VolumeOnly:         !snapshots,
 		}, op)
-
 		if err != nil {
 			cancel()
 		}
@@ -4895,7 +4895,6 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 			VolumeSize:         volSize, // Block size setting override.
 			VolumeOnly:         !snapshots,
 		}, op)
-
 		if err != nil {
 			cancel()
 		}
@@ -4942,7 +4941,7 @@ func (b *backend) migrationIndexHeaderSend(l logger.Logger, indexHeaderVersion u
 			return nil, fmt.Errorf("Failed sending migration index header: %w", err)
 		}
 
-		err = conn.Close() //End the frame.
+		err = conn.Close() // End the frame.
 		if err != nil {
 			return nil, fmt.Errorf("Failed closing migration index header frame: %w", err)
 		}
@@ -5001,7 +5000,7 @@ func (b *backend) migrationIndexHeaderReceive(l logger.Logger, indexHeaderVersio
 			return nil, fmt.Errorf("Failed sending migration index header response: %w", err)
 		}
 
-		err = conn.Close() //End the frame.
+		err = conn.Close() // End the frame.
 		if err != nil {
 			return nil, fmt.Errorf("Failed closing migration index header response frame: %w", err)
 		}
@@ -6190,7 +6189,7 @@ func (b *backend) createStorageStructure(path string) error {
 	for _, volType := range b.driver.Info().VolumeTypes {
 		for _, name := range drivers.BaseDirectories[volType] {
 			path := filepath.Join(path, name)
-			err := os.MkdirAll(path, 0711)
+			err := os.MkdirAll(path, 0o711)
 			if err != nil && !os.IsExist(err) {
 				return fmt.Errorf("Failed to create directory %q: %w", path, err)
 			}
@@ -6406,7 +6405,7 @@ func (b *backend) UpdateInstanceBackupFile(inst instance.Instance, snapshots boo
 			return fmt.Errorf("Failed to create file %q: %w", path, err)
 		}
 
-		err = f.Chmod(0400)
+		err = f.Chmod(0o400)
 		if err != nil {
 			return err
 		}

@@ -26,9 +26,11 @@ import (
 	"github.com/lxc/incus/v6/shared/validate"
 )
 
-var btrfsVersion string
-var btrfsLoaded bool
-var btrfsPropertyForce bool
+var (
+	btrfsVersion       string
+	btrfsLoaded        bool
+	btrfsPropertyForce bool
+)
 
 type btrfs struct {
 	common
@@ -304,7 +306,7 @@ func (d *btrfs) Delete(op *operations.Operation) error {
 		}
 
 		// And re-create as an empty directory to make the backend happy.
-		err = os.Mkdir(mountPath, 0700)
+		err = os.Mkdir(mountPath, 0o700)
 		if err != nil {
 			return fmt.Errorf("Failed creating directory %q: %w", mountPath, err)
 		}
@@ -361,7 +363,7 @@ func (d *btrfs) Update(changedConfig map[string]string) error {
 		}
 
 		// Resize loop file
-		f, err := os.OpenFile(loopPath, os.O_RDWR, 0600)
+		f, err := os.OpenFile(loopPath, os.O_RDWR, 0o600)
 		if err != nil {
 			return err
 		}

@@ -15,8 +15,10 @@ import (
 	"github.com/lxc/incus/v6/shared/validate"
 )
 
-var cephobjectVersion string
-var cephobjectLoaded bool
+var (
+	cephobjectVersion string
+	cephobjectLoaded  bool
+)
 
 // cephobjectRadosgwAdminUser admin user in radosgw.
 const cephobjectRadosgwAdminUser = "incus-admin"

@@ -181,8 +181,10 @@ func (p *Process) WaitReady(ctx context.Context) error {
 	}
 }
 
-var miniosMu sync.Mutex
-var minios = make(map[string]*Process)
+var (
+	miniosMu sync.Mutex
+	minios   = make(map[string]*Process)
+)
 
 // EnsureRunning starts a MinIO process for the bucket (if not already running) and returns running Process.
 func EnsureRunning(s *state.State, bucketVol storageDrivers.Volume) (*Process, error) {
@@ -256,7 +258,7 @@ func EnsureRunning(s *state.State, bucketVol storageDrivers.Volume) (*Process, e
 		err := bucketVol.MountTask(func(mountPath string, op *operations.Operation) error {
 			l.Debug("MinIO bucket starting")
 
-			var newDirMode os.FileMode = os.ModeDir | 0700
+			var newDirMode os.FileMode = os.ModeDir | 0o700
 
 			if !util.PathExists(bucketPath) {
 				err = os.Mkdir(bucketPath, newDirMode)

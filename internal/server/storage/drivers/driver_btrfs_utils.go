@@ -29,8 +29,10 @@ import (
 )
 
 // Errors.
-var errBtrfsNoQuota = fmt.Errorf("Quotas disabled on filesystem")
-var errBtrfsNoQGroup = fmt.Errorf("Unable to find quota group")
+var (
+	errBtrfsNoQuota  = fmt.Errorf("Quotas disabled on filesystem")
+	errBtrfsNoQGroup = fmt.Errorf("Unable to find quota group")
+)
 
 // btrfsISOVolSuffix suffix used for iso content type volumes.
 const btrfsISOVolSuffix = ".iso"
@@ -243,7 +245,7 @@ func (d *btrfs) deleteSubvolume(rootPath string, recursion bool) error {
 		}
 
 		// Temporarily change ownership & mode to help with nesting.
-		_ = os.Chmod(path, 0700)
+		_ = os.Chmod(path, 0o700)
 		_ = os.Chown(path, 0, 0)
 
 		// Delete the subvolume itself.
