@@ -153,7 +153,6 @@ DELETE FROM storage_volumes WHERE id IN (
 
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}
@@ -185,7 +184,6 @@ func patchBucketNames(b *backend) error {
 
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}

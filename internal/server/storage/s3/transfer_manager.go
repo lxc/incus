@@ -72,7 +72,7 @@ func (t TransferManager) DownloadAllFiles(bucketName string, tarWriter *instance
 		fi := instancewriter.FileInfo{
 			FileName:    fmt.Sprintf("backup/bucket/%s", objectInfo.Key),
 			FileSize:    objectInfo.Size,
-			FileMode:    0600,
+			FileMode:    0o600,
 			FileModTime: time.Now(),
 		}
 

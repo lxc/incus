@@ -393,7 +393,7 @@ func (d *zfs) receiveDataset(vol Volume, r io.Reader, tracker *ioprogress.Progre
 	}
 
 	// Setup progress tracker.
-	var stdin = r
+	stdin := r
 	if tracker != nil {
 		stdin = &ioprogress.ProgressReader{
 			Reader:  r,

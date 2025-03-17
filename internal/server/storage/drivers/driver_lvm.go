@@ -29,11 +29,15 @@ import (
 
 const lvmVgPoolMarker = "incus_pool" // Indicator tag used to mark volume groups as in use.
 
-var lvmExtentSize map[string]int64
-var lvmExtentSizeMu sync.Mutex
+var (
+	lvmExtentSize   map[string]int64
+	lvmExtentSizeMu sync.Mutex
+)
 
-var lvmLoaded bool
-var lvmVersion string
+var (
+	lvmLoaded  bool
+	lvmVersion string
+)
 
 type lvm struct {
 	common
@@ -521,7 +525,6 @@ func (d *lvm) Delete(op *operations.Operation) error {
 		if removeVg {
 			// When deleting a shared VG, it may take more than a minute for the previously released shared locks to clear.
 			_, err := subprocess.TryRunCommandAttemptsDuration(240, 500*time.Millisecond, "vgremove", "-f", d.config["lvm.vg_name"])
-
 			if err != nil {
 				return fmt.Errorf("Failed to delete the volume group for the lvm storage pool: %w", err)
 			}
@@ -659,7 +662,7 @@ func (d *lvm) Update(changedConfig map[string]string) error {
 		}
 
 		// Resize loop file
-		f, err := os.OpenFile(loopPath, os.O_RDWR, 0600)
+		f, err := os.OpenFile(loopPath, os.O_RDWR, 0o600)
 		if err != nil {
 			return err
 		}

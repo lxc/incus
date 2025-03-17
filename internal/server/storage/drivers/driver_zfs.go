@@ -36,12 +36,14 @@ var zfsSupportedVdevTypes = []string{
 	"raidz2",
 }
 
-var zfsVersion string
-var zfsLoaded bool
-var zfsDirectIO bool
-var zfsTrim bool
-var zfsRaw bool
-var zfsDelegate bool
+var (
+	zfsVersion  string
+	zfsLoaded   bool
+	zfsDirectIO bool
+	zfsTrim     bool
+	zfsRaw      bool
+	zfsDelegate bool
+)
 
 var zfsDefaultSettings = map[string]string{
 	"relatime":   "on",
@@ -496,7 +498,7 @@ func (d *zfs) Update(changedConfig map[string]string) error {
 		}
 
 		// Resize loop file
-		f, err := os.OpenFile(loopPath, os.O_RDWR, 0600)
+		f, err := os.OpenFile(loopPath, os.O_RDWR, 0o600)
 		if err != nil {
 			return err
 		}

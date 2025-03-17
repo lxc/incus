@@ -60,7 +60,6 @@ func (d *ceph) osdPoolExists() (bool, error) {
 		"get",
 		d.config["ceph.osd.pool_name"],
 		"size")
-
 	if err != nil {
 		status, _ := linux.ExitStatus(err)
 		// If the error status code is 2, the pool definitely doesn't exist.

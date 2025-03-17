@@ -494,7 +494,7 @@ func (d *cephfs) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 	sourcePath := GetVolumeMountPath(d.name, snapVol.volType, parentName)
 	cephSnapPath := filepath.Join(sourcePath, ".snap", snapName)
 
-	err := os.Mkdir(cephSnapPath, 0711)
+	err := os.Mkdir(cephSnapPath, 0o711)
 	if err != nil {
 		return fmt.Errorf("Failed to create directory '%s': %w", cephSnapPath, err)
 	}

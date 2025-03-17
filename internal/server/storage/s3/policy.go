@@ -6,8 +6,10 @@ import (
 	"sort"
 )
 
-const roleAdmin = "admin"
-const roleReadOnly = "read-only"
+const (
+	roleAdmin    = "admin"
+	roleReadOnly = "read-only"
+)
 
 // Policy defines the S3 policy.
 type Policy struct {

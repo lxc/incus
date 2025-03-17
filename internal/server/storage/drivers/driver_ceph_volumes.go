@@ -772,7 +772,6 @@ func (d *ceph) hasVolume(rbdVolumeName string) (bool, error) {
 		"info",
 		rbdVolumeName,
 	)
-
 	if err != nil {
 		runErr, ok := err.(subprocess.RunError)
 		if ok {
