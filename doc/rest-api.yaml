@@ -1268,7 +1268,7 @@ definitions:
                 description: Storage Pools to add
                 example: local dir storage pool
                 items:
-                    $ref: '#/definitions/StoragePoolsPost'
+                    $ref: '#/definitions/InitStoragePoolsProjectPost'
                 type: array
                 x-go-name: StoragePools
             storage_volumes:
@@ -1367,6 +1367,39 @@ definitions:
                 type: string
                 x-go-name: Name
         title: InitProfileProjectPost represents the fields of a new profile along with its associated project.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    InitStoragePoolsProjectPost:
+        properties:
+            Project:
+                description: Project in which the network will reside
+                example: '"default"'
+                type: string
+            config:
+                additionalProperties:
+                    type: string
+                description: Storage pool configuration map (refer to doc/storage.md)
+                example:
+                    volume.block.filesystem: ext4
+                    volume.size: 50GiB
+                type: object
+                x-go-name: Config
+            description:
+                description: Description of the storage pool
+                example: Local SSD pool
+                type: string
+                x-go-name: Description
+            driver:
+                description: Storage pool driver (btrfs, ceph, cephfs, cephobject, dir, lvm, lvmcluster or zfs)
+                example: zfs
+                type: string
+                x-go-name: Driver
+            name:
+                description: Storage pool name
+                example: local
+                type: string
+                x-go-name: Name
+        title: InitStoragePoolsProjectPost represents the fields of a new storage pool along with its associated project.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     InitStorageVolumesProjectPost:
