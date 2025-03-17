@@ -183,7 +183,8 @@ func qemuSerial(opts *qemuSerialOpts) []cfg.Section {
 		Comment: "Serial identifier",
 		Entries: []cfg.Entry{
 			{Key: "backend", Value: "ringbuf"},
-			{Key: "size", Value: fmt.Sprintf("%dB", opts.ringbufSizeBytes)}},
+			{Key: "size", Value: fmt.Sprintf("%dB", opts.ringbufSizeBytes)},
+		},
 	}, {
 		// QEMU serial device connected to the above ring buffer.
 		Name: `device "qemu_serial"`,

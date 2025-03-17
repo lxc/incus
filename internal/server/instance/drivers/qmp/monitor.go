@@ -17,8 +17,10 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
-var monitors = map[string]*Monitor{}
-var monitorsLock sync.Mutex
+var (
+	monitors     = map[string]*Monitor{}
+	monitorsLock sync.Mutex
+)
 
 // RingbufSize is the size of the agent serial ringbuffer in bytes.
 var RingbufSize = 16
@@ -196,7 +198,7 @@ func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool) error {
 	var log *os.File
 	var err error
 	if logCommand && m.logFile != "" {
-		log, err = os.OpenFile(m.logFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		log, err = os.OpenFile(m.logFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
 		if err != nil {
 			return err
 		}
