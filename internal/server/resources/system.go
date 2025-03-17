@@ -12,8 +12,10 @@ import (
 	"github.com/lxc/incus/v6/shared/subprocess"
 )
 
-var sysClassDMIID = "/sys/class/dmi/id"
-var systemType string
+var (
+	sysClassDMIID = "/sys/class/dmi/id"
+	systemType    string
+)
 
 // GetSystem returns a filled api.ResourcesSystem struct ready for use by Incus.
 func GetSystem() (*api.ResourcesSystem, error) {

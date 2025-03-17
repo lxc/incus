@@ -16,10 +16,12 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 )
 
-var devDiskByPath = "/dev/disk/by-path"
-var devDiskByID = "/dev/disk/by-id"
-var runUdevData = "/run/udev/data"
-var sysClassBlock = "/sys/class/block"
+var (
+	devDiskByPath = "/dev/disk/by-path"
+	devDiskByID   = "/dev/disk/by-id"
+	runUdevData   = "/run/udev/data"
+	sysClassBlock = "/sys/class/block"
+)
 
 func storageAddDriveInfo(devicePath string, disk *api.ResourcesStorageDisk) error {
 	// Attempt to open the device path

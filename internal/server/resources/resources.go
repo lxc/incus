@@ -9,9 +9,11 @@ import (
 )
 
 // Cache to speed up concurrent runs.
-var muResources sync.Mutex
-var lastResources *api.Resources
-var lastRun time.Time
+var (
+	muResources   sync.Mutex
+	lastResources *api.Resources
+	lastRun       time.Time
+)
 
 // GetResources returns a filled api.Resources struct ready for use by Incus.
 func GetResources() (*api.Resources, error) {
