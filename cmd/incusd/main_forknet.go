@@ -427,8 +427,6 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 
 		lease = newLease
 	}
-
-	return nil
 }
 
 func (c *cmdForknet) RunDetach(cmd *cobra.Command, args []string) error {
