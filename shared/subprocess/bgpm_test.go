@@ -16,7 +16,6 @@ func TestSignalHandling(t *testing.T) {
 	a = append(a, "testscript/signal.sh")
 	var file *os.File
 	p, err := NewProcess("sh", a, "testscript/signal_out.txt", "")
-
 	if err != nil {
 		t.Error("Failed process creation: ", err)
 	}
@@ -45,14 +44,14 @@ func TestSignalHandling(t *testing.T) {
 		t.Error("Exit code is not 1: ", ecode)
 	}
 
-	file, err = os.OpenFile("testscript/signal_out.txt", os.O_RDWR, 0644)
+	file, err = os.OpenFile("testscript/signal_out.txt", os.O_RDWR, 0o644)
 	if err != nil {
 		t.Error("Could not open file ", err)
 	}
 
 	defer func() { _ = file.Close() }()
 
-	var text = make([]byte, 1024)
+	text := make([]byte, 1024)
 	for {
 		_, err = file.Read(text)
 		// Break if finally arrived at end of file
@@ -156,7 +155,7 @@ func TestProcessStartWaitExit(t *testing.T) {
 		t.Error("Exit code is not 1: ", ecode)
 	}
 
-	file, err = os.OpenFile("testscript/out.txt", os.O_RDWR, 0644)
+	file, err = os.OpenFile("testscript/out.txt", os.O_RDWR, 0o644)
 	if err != nil {
 		t.Error("Could not open file: ", err)
 	}
