@@ -613,8 +613,7 @@ type InstanceConsoleArgs struct {
 
 // The InstanceConsoleLogArgs struct is used to pass additional options during a
 // instance console log request.
-type InstanceConsoleLogArgs struct {
-}
+type InstanceConsoleLogArgs struct{}
 
 // The InstanceExecArgs struct is used to pass additional options during instance exec.
 type InstanceExecArgs struct {

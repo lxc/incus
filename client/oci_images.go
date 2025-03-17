@@ -163,12 +163,12 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 
 	defer func() { _ = os.RemoveAll(ociPath) }()
 
-	err = os.Mkdir(filepath.Join(ociPath, "oci"), 0700)
+	err = os.Mkdir(filepath.Join(ociPath, "oci"), 0o700)
 	if err != nil {
 		return nil, err
 	}
 
-	err = os.Mkdir(filepath.Join(ociPath, "image"), 0700)
+	err = os.Mkdir(filepath.Join(ociPath, "image"), 0o700)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +224,7 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		return nil, err
 	}
 
-	err = os.WriteFile(filepath.Join(ociPath, "image", "metadata.yaml"), data, 0644)
+	err = os.WriteFile(filepath.Join(ociPath, "image", "metadata.yaml"), data, 0o644)
 	if err != nil {
 		return nil, err
 	}
@@ -363,7 +363,6 @@ func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string
 		"skopeo",
 		"inspect",
 		fmt.Sprintf("%s/%s", strings.Replace(r.httpHost, "https://", "docker://", -1), name))
-
 	if err != nil {
 		logger.Debug("Error getting image alias", logger.Ctx{"name": name, "stdout": stdout, "stderr": err})
 		return nil, "", err
