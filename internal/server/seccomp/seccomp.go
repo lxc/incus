@@ -703,7 +703,7 @@ func InstanceNeedsIntercept(s *state.State, c Instance) (bool, error) {
 
 	config := c.ExpandedConfig()
 
-	keys := map[string]func(state *state.State) error{
+	keys := map[string]func(*state.State) error{
 		"security.syscalls.intercept.mknod":              lxcSupportSeccompNotify,
 		"security.syscalls.intercept.sched_setscheduler": lxcSupportSeccompNotify,
 		"security.syscalls.intercept.setxattr":           lxcSupportSeccompNotify,
