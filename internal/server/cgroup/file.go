@@ -86,5 +86,5 @@ func (rw *fileReadWriter) Set(version Backend, controller string, key string, va
 		path = filepath.Join(rw.paths["unified"], key)
 	}
 
-	return os.WriteFile(path, []byte(value), 0600)
+	return os.WriteFile(path, []byte(value), 0o600)
 }
