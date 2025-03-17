@@ -220,7 +220,8 @@ func (s *Products) ToAPI() ([]api.Image, map[string][][]string) {
 				} else {
 					imgDownloads = [][]string{
 						{meta.Path, meta.HashSha256, "meta", fmt.Sprintf("%d", meta.Size)},
-						{root.Path, root.HashSha256, "root", fmt.Sprintf("%d", root.Size)}}
+						{root.Path, root.HashSha256, "root", fmt.Sprintf("%d", root.Size)},
+					}
 				}
 
 				// Add the deltas
@@ -252,7 +253,8 @@ func (s *Products) ToAPI() ([]api.Image, map[string][][]string) {
 						delta.Path,
 						delta.HashSha256,
 						fmt.Sprintf("root.delta-%s", srcFingerprint),
-						fmt.Sprintf("%d", delta.Size)})
+						fmt.Sprintf("%d", delta.Size),
+					})
 				}
 
 				// Add the image
