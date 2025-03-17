@@ -943,45 +943,22 @@ func (d *truenas) UpdateVolume(vol Volume, changedConfig map[string]string) erro
 	return nil
 }
 
-// // GetVolumeUsage returns the disk space used by the volume.
-// func (d *zfs) GetVolumeUsage(vol Volume) (int64, error) {
-// 	// Determine what key to use.
-// 	key := "used"
+// GetVolumeUsage returns the disk space used by the volume.
+func (d *truenas) GetVolumeUsage(vol Volume) (int64, error) {
+	// Get the current value.
+	value, err := d.getDatasetProperty(d.dataset(vol, false), "used")
+	if err != nil {
+		return -1, err
+	}
 
-// 	// If volume isn't snapshot then we can take into account the zfs.use_refquota setting.
-// 	// Snapshots should also use the "used" ZFS property because the snapshot usage size represents the CoW
-// 	// usage not the size of the snapshot volume.
-// 	if !vol.IsSnapshot() {
-// 		if util.IsTrue(vol.ExpandedConfig("zfs.use_refquota")) {
-// 			key = "referenced"
-// 		}
+	// Convert to int.
+	valueInt, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		return -1, err
+	}
 
-// 		// Shortcut for mounted refquota filesystems.
-// 		if key == "referenced" && vol.contentType == ContentTypeFS && linux.IsMountPoint(vol.MountPath()) {
-// 			var stat unix.Statfs_t
-// 			err := unix.Statfs(vol.MountPath(), &stat)
-// 			if err != nil {
-// 				return -1, err
-// 			}
-
-// 			return int64(stat.Blocks-stat.Bfree) * int64(stat.Bsize), nil
-// 		}
-// 	}
-
-// 	// Get the current value.
-// 	value, err := d.getDatasetProperty(d.dataset(vol, false), key)
-// 	if err != nil {
-// 		return -1, err
-// 	}
-
-// 	// Convert to int.
-// 	valueInt, err := strconv.ParseInt(value, 10, 64)
-// 	if err != nil {
-// 		return -1, err
-// 	}
-
-// 	return valueInt, nil
-// }
+	return valueInt, nil
+}
 
 // SetVolumeQuota applies a size limit on volume.
 // Does nothing if supplied with an empty/zero size for block volumes, and for filesystem volumes removes quota.
