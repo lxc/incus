@@ -4,8 +4,10 @@ import (
 	"sync"
 )
 
-var sbEventHandlers map[string]EventHandler
-var sbEventHandlersMu sync.Mutex
+var (
+	sbEventHandlers   map[string]EventHandler
+	sbEventHandlersMu sync.Mutex
+)
 
 // AddOVNSBHandler registers a new event handler with the OVN Southbound database.
 func AddOVNSBHandler(name string, handler EventHandler) error {

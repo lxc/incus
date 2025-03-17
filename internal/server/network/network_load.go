@@ -24,8 +24,10 @@ type ProjectNetwork struct {
 	NetworkName string
 }
 
-var unavailableNetworks = make(map[ProjectNetwork]struct{})
-var unavailableNetworksMu = sync.Mutex{}
+var (
+	unavailableNetworks   = make(map[ProjectNetwork]struct{})
+	unavailableNetworksMu = sync.Mutex{}
+)
 
 // LoadByType loads a network by driver type.
 func LoadByType(driverType string) (Type, error) {

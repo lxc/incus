@@ -74,11 +74,13 @@ const OVNIPv6AddressModeDHCPStateful OVNIPv6AddressMode = "dhcpv6_stateful"
 const OVNIPv6AddressModeDHCPStateless OVNIPv6AddressMode = "dhcpv6_stateless"
 
 // OVN External ID names used by Incus.
-const ovnExtIDIncusSwitch = "incus_switch"
-const ovnExtIDIncusSwitchPort = "incus_switch_port"
-const ovnExtIDIncusProjectID = "incus_project_id"
-const ovnExtIDIncusPortGroup = "incus_port_group"
-const ovnExtIDIncusLocation = "incus_location"
+const (
+	ovnExtIDIncusSwitch     = "incus_switch"
+	ovnExtIDIncusSwitchPort = "incus_switch_port"
+	ovnExtIDIncusProjectID  = "incus_project_id"
+	ovnExtIDIncusPortGroup  = "incus_port_group"
+	ovnExtIDIncusLocation   = "incus_location"
+)
 
 // OVNIPv6RAOpts IPv6 router advertisements options that can be applied to a router.
 type OVNIPv6RAOpts struct {
@@ -456,7 +458,6 @@ func (o *NB) DeleteLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 			Mutator: ovsdb.MutateOperationDelete,
 			Value:   []string{natRule.UUID},
 		})
-
 		if err != nil {
 			return err
 		}
