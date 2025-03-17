@@ -55,18 +55,18 @@ func LoadServerCert(dir string) (*localtls.CertInfo, error) {
 // WriteCert writes the given material to the appropriate certificate files in
 // the given directory.
 func WriteCert(dir, prefix string, cert, key, ca []byte) error {
-	err := os.WriteFile(filepath.Join(dir, prefix+".crt"), cert, 0644)
+	err := os.WriteFile(filepath.Join(dir, prefix+".crt"), cert, 0o644)
 	if err != nil {
 		return err
 	}
 
-	err = os.WriteFile(filepath.Join(dir, prefix+".key"), key, 0600)
+	err = os.WriteFile(filepath.Join(dir, prefix+".key"), key, 0o600)
 	if err != nil {
 		return err
 	}
 
 	if ca != nil {
-		err = os.WriteFile(filepath.Join(dir, prefix+".ca"), ca, 0644)
+		err = os.WriteFile(filepath.Join(dir, prefix+".ca"), ca, 0o644)
 		if err != nil {
 			return err
 		}
