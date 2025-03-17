@@ -154,7 +154,7 @@ func (c *cmdRemove) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = os.WriteFile("streams/v1/images.json", body, 0644)
+	err = os.WriteFile("streams/v1/images.json", body, 0o644)
 	if err != nil {
 		return err
 	}

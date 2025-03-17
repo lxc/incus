@@ -150,7 +150,7 @@ func (c *cmdGenerateMetadata) Run(cmd *cobra.Command, args []string) error {
 	hdr := &tar.Header{
 		Name:    "metadata.yaml",
 		Size:    int64(len(body)),
-		Mode:    0644,
+		Mode:    0o644,
 		Uname:   "root",
 		Gname:   "root",
 		ModTime: time.Now(),
