@@ -555,7 +555,7 @@ func SupportsVFS3FSCaps(prefix string) bool {
 	defer func() { _ = tmpfile.Close() }()
 	defer func() { _ = os.Remove(tmpfile.Name()) }()
 
-	err = os.Chmod(tmpfile.Name(), 0001)
+	err = os.Chmod(tmpfile.Name(), 0o001)
 	if err != nil {
 		return false
 	}

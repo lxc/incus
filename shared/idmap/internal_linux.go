@@ -29,7 +29,7 @@ func getAllXattr(path string) (map[string]string, error) {
 		return nil, fmt.Errorf("Failed getting extended attributes from %q: %w", path, err)
 	}
 
-	var xattrs = make(map[string]string, len(xattrNames))
+	xattrs := make(map[string]string, len(xattrNames))
 	for _, xattrName := range xattrNames {
 		value, err := xattr.LGet(path, xattrName)
 		if err != nil {
