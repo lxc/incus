@@ -112,7 +112,7 @@ func (lc *eventListenerClient) SetEventMode(eventMode EventMode, eventHubPushCh 
 }
 
 var (
-	eventMode             EventMode = EventModeFullMesh
+	eventMode             = EventModeFullMesh
 	eventHubAddresses     []string
 	eventHubPushCh        = make(chan api.Event, 10) // Buffer size to accommodate slow consumers before dropping events.
 	eventHubPushChTimeout = time.Duration(time.Second)
