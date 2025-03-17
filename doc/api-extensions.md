@@ -2744,3 +2744,7 @@ This allows specifying IPv4 and IPv6 DNS server addresses to be announced by the
 ## `acme_http01_port`
 
 Adds `acme.http.port` to control an alternative HTTP port for `HTTP-01` validation.
+
+## `network_ovn_ipv4_dhcp_expiry`
+
+Introduces `ipv4.dhcp.expiry` for OVN networks.
