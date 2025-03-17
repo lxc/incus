@@ -46,12 +46,16 @@ import (
 	"github.com/lxc/incus/v6/shared/validate"
 )
 
-const ovnChassisPriorityMax = 32767
-const ovnVolatileUplinkIPv4 = "volatile.network.ipv4.address"
-const ovnVolatileUplinkIPv6 = "volatile.network.ipv6.address"
+const (
+	ovnChassisPriorityMax = 32767
+	ovnVolatileUplinkIPv4 = "volatile.network.ipv4.address"
+	ovnVolatileUplinkIPv6 = "volatile.network.ipv6.address"
+)
 
-const ovnRouterPolicyPeerAllowPriority = 600
-const ovnRouterPolicyPeerDropPriority = 500
+const (
+	ovnRouterPolicyPeerAllowPriority = 600
+	ovnRouterPolicyPeerDropPriority  = 500
+)
 
 // ovnUplinkVars OVN object variables derived from uplink network.
 type ovnUplinkVars struct {
