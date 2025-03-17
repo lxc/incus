@@ -40,7 +40,7 @@ func loadInfo(database *db.Node, cert *localtls.CertInfo) (*db.RaftNode, error) 
 	// Data directory
 	dir := filepath.Join(database.Dir(), "global")
 	if !util.PathExists(dir) {
-		err := os.Mkdir(dir, 0750)
+		err := os.Mkdir(dir, 0o750)
 		if err != nil {
 			return nil, err
 		}
