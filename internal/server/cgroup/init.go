@@ -14,8 +14,10 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
-var cgControllers = map[string]Backend{}
-var cgNamespace bool
+var (
+	cgControllers = map[string]Backend{}
+	cgNamespace   bool
+)
 
 // Layout determines the cgroup layout on this system.
 type Layout int
