@@ -12,8 +12,7 @@ import (
 var LoggingServer *Server
 
 // Handler describes an event handler.
-type Handler struct {
-}
+type Handler struct{}
 
 // NewEventHandler creates and returns a new event handler.
 func NewEventHandler() logrus.Hook {
