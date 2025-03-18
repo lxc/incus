@@ -56,7 +56,7 @@ func cloneVolAsFsImgVol(vol Volume) Volume {
 func isFsImgVol(vol Volume) bool {
 	/*
 		we need a third volume type so that we can tell the difference between an
-		image:fs and an image:block, adn the image:block's config mount.
+		image:fs and an image:block, and the image:block's config mount.
 
 		Additionally, to mount the backing image for an image:fs, we need to use a
 		different contentType to obtain a separate lock, without using block (see above)
@@ -86,7 +86,7 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	defer revert.Fail()
 
 	// must mount VM.block so we can access the root.img, as well as the config filesystem
-	if vol.IsVMBlock() { // or fs-img...
+	if vol.IsVMBlock() {
 		blockifyMountPath(&vol)
 	}
 
@@ -204,7 +204,6 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		*/
 		fsImgVol := cloneVolAsFsImgVol(vol)
 
-		// TODO: this relies on "isBlockBacked" for fs-img blockbacked vols.
 		// Convert to bytes.
 		fsImgVol.config["size"] = vol.ConfigSize()
 		if fsImgVol.config["size"] == "" || fsImgVol.config["size"] == "0" {
@@ -362,14 +361,12 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 			}
 		}
 
-		//if vol.contentType == ContentTypeFS {
 		// Run EnsureMountPath again after mounting and filling to ensure the mount directory has
 		// the correct permissions set.
 		err := vol.EnsureMountPath()
 		if err != nil {
 			return err
 		}
-		//}
 
 		return nil
 	}, op)
@@ -427,13 +424,12 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 	revert := revert.New()
 	defer revert.Fail()
 
-	// must mount VM.block so we can access the root.img, as well as the config filesystem
+	// must mount VM.block so we can access the root.img, as well as the state filesystem
 	if vol.IsVMBlock() {
 		blockifyMountPath(&vol)
 		blockifyMountPath(&srcVol)
 	}
 
-	//if vol.contentType == ContentTypeFS {
 	// Create mountpoint.
 	err = vol.EnsureMountPath()
 	if err != nil {
@@ -441,7 +437,6 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 	}
 
 	revert.Add(func() { _ = os.Remove(vol.MountPath()) })
-	//}
 
 	if needsFsImgVol(vol) { // ie create the fs-img
 		/*
@@ -555,16 +550,14 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 		snapRegex := fmt.Sprintf("(snapshot-.*|%s)", snapName)
 
 		// Run the replication, snaps + copy- snap. TODO: verify necessary props are replicated.
-		args := []string{"replication", "start", "--name-regex", snapRegex, "-r"}
+		args := []string{"replication", "start", "--name-regex", snapRegex, "--recursive", "--readonly-policy=ignore"}
 
-		options := "readonly=IGNORE"
 		if refresh {
-			// refresh implies that we have a dest already, and that we want to re-replicate from scratch
-			args = append(args, "--retention-policy=source")
-			options += ",allow_from_scratch=true"
+			// refresh implies that we have a dest already, and that we may want to re-replicate from scratch
+			args = append(args, "--retention-policy=source" /* "--only-from-scratch=true", */, "-o", "allow_from_scratch=true") // TODO: tnc needs to be updated to fix a bug with --only-from-scratch
 		}
 
-		args = append(args, "-o", options, srcDataset, destDataset)
+		args = append(args, srcDataset, destDataset)
 
 		_, err := d.runTool(args...)
 		if err != nil {
@@ -600,11 +593,6 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 	// Apply the properties.
 	if vol.contentType == ContentTypeFS {
 		if !d.isBlockBacked(srcVol) {
-
-			// err := d.setDatasetProperties(d.dataset(vol, false), "mountpoint=legacy", "canmount=noauto")
-			// if err != nil {
-			// 	return err
-			// }
 
 			// Apply the blocksize.
 			err = d.setBlocksizeFromConfig(vol)
@@ -764,6 +752,7 @@ func (d *truenas) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume
 // this function will return an error.
 // For image volumes, both filesystem and block volumes will be removed.
 func (d *truenas) DeleteVolume(vol Volume, op *operations.Operation) error {
+
 	/*
 		The below code essentially tries deleting the volume with the various filesystems,
 		but since we don't use the suffix, except when an image is already deleted, we don't
@@ -1047,11 +1036,10 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 	return nil
 }
 
-// se: from driver_dir_volumes.go
 // GetVolumeDiskPath returns the location of a disk volume.
 func (d *truenas) GetVolumeDiskPath(vol Volume) (string, error) {
 
-	if vol.IsVMBlock() { // or FS-IMG
+	if vol.IsVMBlock() {
 		blockifyMountPath(&vol) // when backend calls GetVolumeDiskPath, it needs to refer to the .block mount.
 	}
 
