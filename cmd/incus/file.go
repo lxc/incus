@@ -1180,8 +1180,14 @@ func (c *cmdFile) recursivePullFile(sftpConn *sftp.Client, p string, targetDir s
 
 func (c *cmdFile) recursivePushFile(sftpConn *sftp.Client, source string, target string) error {
 	source = filepath.Clean(source)
+
 	sourceDir, _ := filepath.Split(source)
 	sourceLen := len(sourceDir)
+
+	// Special handling for relative paths.
+	if source == ".." {
+		sourceLen = 1
+	}
 
 	sendFile := func(p string, fInfo os.FileInfo, err error) error {
 		if err != nil {
