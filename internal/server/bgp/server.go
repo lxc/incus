@@ -162,7 +162,7 @@ func (s *Server) stop() error {
 		oldPeers[peerUUID] = peer
 	}
 
-	// Remove all the peers (ignore failures).
+	// Remove all the peers.
 	for _, peer := range s.peers {
 		err := s.removePeer(peer.address)
 		if err != nil {
