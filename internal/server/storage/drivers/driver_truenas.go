@@ -377,7 +377,6 @@ func (d *truenas) Mount() (bool, error) {
 		return false, err
 	}
 
-	//return imported, nil
 	return false, nil
 }
 
