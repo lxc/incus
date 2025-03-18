@@ -101,9 +101,9 @@ func (c *cmdStorageCreate) Command() *cobra.Command {
 	cmd.Short = i18n.G("Create storage pools")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create storage pools`))
-	cmd.Example = cli.FormatSection("", i18n.G(`incus create storage s1 dir
+	cmd.Example = cli.FormatSection("", i18n.G(`incus storage create s1 dir
 
-incus create storage s1 dir < config.yaml
+incus storage create s1 dir < config.yaml
     Create a storage pool using the content of config.yaml.
 	`))
 
