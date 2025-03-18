@@ -42,7 +42,7 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
-// Lock to prevent concurent networks creation.
+// Lock to prevent concurrent networks creation.
 var networkCreateLock sync.Mutex
 
 var networksCmd = APIEndpoint{
@@ -1187,7 +1187,7 @@ func networkPost(d *Daemon, r *http.Request) response.Response {
 	//        network having already been renamed in the database, which is
 	//        a chicken-and-egg problem for cluster notifications (the
 	//        serving node should typically do the database job, so the
-	//        network is not yet renamed inthe db when the notified node
+	//        network is not yet renamed in the db when the notified node
 	//        runs network.Start).
 	if s.ServerClustered {
 		return response.BadRequest(fmt.Errorf("Renaming clustered network not supported"))

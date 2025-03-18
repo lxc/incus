@@ -189,7 +189,7 @@ EOF
     incus exec c1 --project test -- mount | grep /mnt
     incus exec c1 --project test -- grep -xF "hello world" /mnt/test.txt
 
-    # Check snashot can be restored.
+    # Check snapshot can be restored.
     incus snapshot restore c1 snap0
     incus info c1
     incus exec c1 --project test -- hostname
@@ -977,7 +977,7 @@ test_backup_export_import_recover() {
     incus import "${INCUS_DIR}/c1.tar.gz" c2
     rm "${INCUS_DIR}/c1.tar.gz"
 
-    # Remove imported instance enteries from database.
+    # Remove imported instance entries from database.
     incus admin sql global "delete from instances where name = 'c2'"
     incus admin sql global "delete from storage_volumes where name = 'c2'"
 

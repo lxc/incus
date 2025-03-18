@@ -318,10 +318,10 @@ test_clustering_membership() {
   # Set cluster token expiry to 30 seconds
   INCUS_DIR="${INCUS_ONE_DIR}" incus config set cluster.join_token_expiry=30S
 
-  # Generate a join token for an eigth and ninth node
+  # Generate a join token for an eighth and ninth node
   token_valid=$(INCUS_DIR="${INCUS_ONE_DIR}" incus cluster add node8 --quiet)
 
-  # Spawn an eigth node, using join token.
+  # Spawn an eighth node, using join token.
   setup_clustering_netns 8
   INCUS_EIGHT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_EIGHT_DIR}"
@@ -1136,7 +1136,7 @@ test_clustering_network() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
   INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" | grep "| node2 | 0     |"
 
-  # Run network create on other node2 (still excpect to fail on node1, but expect node2 create to succeed).
+  # Run network create on other node2 (still expect to fail on node1, but expect node2 create to succeed).
   ! INCUS_DIR="${INCUS_TWO_DIR}" incus network create "${net}" || false
 
   # Check each node status (expect node1 to be pending and node2 to be created).
@@ -2749,7 +2749,7 @@ test_clustering_image_refresh() {
     # Copy the public image to each project
     INCUS_DIR="${INCUS_ONE_DIR}" incus image copy public:testimage local: --alias testimage --target-project "${project}"
 
-    # Diable autoupdate for testimage in project foo
+    # Disable autoupdate for testimage in project foo
     if [ "${project}" = "foo" ]; then
       auto_update=false
     else
@@ -3274,7 +3274,7 @@ test_clustering_remove_members() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster rm node4
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster rm node5
 
-  # Ensure the remaining node is working and node2, node3, node4,node5 successful reomve from cluster
+  # Ensure the remaining node is working and node2, node3, node4,node5 successful remove from cluster
   ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep -q "node2" || false
   ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep -q "node3" || false
   ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep -q "node4" || false
@@ -3284,7 +3284,7 @@ test_clustering_remove_members() {
   # Start node 6
   INCUS_NETNS="${ns6}" respawn_incus "${INCUS_SIX_DIR}" true
 
-  # make sure node6 is a spare ndoe
+  # make sure node6 is a spare node
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep -q "node6"
   ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node6 | grep -qE "\- database-standy$|\- database-leader$|\- database$" || false
 

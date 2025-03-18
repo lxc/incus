@@ -243,7 +243,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 				return fmt.Errorf(i18n.G("Failed to setup trust relationship with cluster: %w"), err)
 			}
 
-			// Now we have setup trust, don't send to server, othwerwise it will try and setup trust
+			// Now we have setup trust, don't send to server, otherwise it will try and setup trust
 			// again and if using a one-time join token, will fail.
 			config.Cluster.ClusterToken = ""
 
@@ -772,7 +772,7 @@ func (c *cmdAdminInit) askDaemon(config *api.InitPreseed, d incus.InstanceServer
 This means that unless you manually configured your host otherwise,
 you will not have enough uids and gids to allocate to your containers.
 
-Your container's own allocation can be re-used to avoid the problem.
+Your container's own allocation can be reused to avoid the problem.
 Doing so makes your nested containers slightly less safe as they could
 in theory attack their parent container and gain more privileges than
 they otherwise would.`) + "\n\n")

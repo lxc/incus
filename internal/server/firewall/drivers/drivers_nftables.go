@@ -35,7 +35,7 @@ const nftablesChainSeparator = "."
 // nftablesMinVersion We need at least 0.9.1 as this was when the arp ether saddr filters were added.
 const nftablesMinVersion = "0.9.1"
 
-// Nftables is an implmentation of Incus firewall using nftables.
+// Nftables is an implementation of Incus firewall using nftables.
 type Nftables struct{}
 
 // String returns the driver name.

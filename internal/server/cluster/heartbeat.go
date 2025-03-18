@@ -26,9 +26,9 @@ import (
 type heartbeatMode int
 
 const (
-	hearbeatNormal heartbeatMode = iota
-	hearbeatImmediate
-	hearbeatInitial
+	heartbeatNormal heartbeatMode = iota
+	heartbeatImmediate
+	heartbeatInitial
 )
 
 // APIHeartbeatMember contains specific cluster node info.
@@ -68,7 +68,7 @@ type APIHeartbeat struct {
 
 	// Indicates if heartbeat contains a fresh set of node states.
 	// This can be used to indicate to the receiving node that the state is fresh enough to
-	// trigger node refresh activies.
+	// trigger node refresh activities.
 	FullStateList bool
 }
 
@@ -235,7 +235,7 @@ func HeartbeatTask(gateway *Gateway) (task.Func, task.Schedule) {
 		if gateway.HearbeatCancelFunc() == nil {
 			ch := make(chan struct{})
 			go func() {
-				gateway.heartbeat(ctx, hearbeatNormal)
+				gateway.heartbeat(ctx, heartbeatNormal)
 				close(ch)
 			}()
 			select {
@@ -278,10 +278,10 @@ func (g *Gateway) HeartbeatRestart() bool {
 
 	// There is a cancellable heartbeat round ongoing.
 	if heartbeatCancel != nil {
-		g.heartbeatCancel() // Request ongoing hearbeat round cancel itself.
+		g.heartbeatCancel() // Request ongoing heartbeat round cancel itself.
 
 		// Start a new heartbeat round async that will run as soon as ongoing heartbeat round exits.
-		go g.heartbeat(g.ctx, hearbeatImmediate)
+		go g.heartbeat(g.ctx, heartbeatImmediate)
 
 		return true
 	}
@@ -295,7 +295,7 @@ func (g *Gateway) heartbeat(ctx context.Context, mode heartbeatMode) {
 		return
 	}
 
-	// Avoid concurent heartbeat loops.
+	// Avoid concurrent heartbeat loops.
 	// This is possible when both the regular task and the out of band heartbeat round from a dqlite
 	// connection or notification restart both kick in at the same time.
 	g.HeartbeatLock.Lock()
@@ -350,13 +350,13 @@ func (g *Gateway) heartbeat(ctx context.Context, mode heartbeatMode) {
 
 	modeStr := "normal"
 	switch mode {
-	case hearbeatImmediate:
+	case heartbeatImmediate:
 		modeStr = "immediate"
-	case hearbeatInitial:
+	case heartbeatInitial:
 		modeStr = "initial"
 	}
 
-	if mode != hearbeatNormal {
+	if mode != heartbeatNormal {
 		// Log unscheduled heartbeats with a higher level than normal heartbeats.
 		logger.Info("Starting instant heartbeat round", logger.Ctx{"mode": modeStr})
 	} else {
@@ -392,7 +392,7 @@ func (g *Gateway) heartbeat(ctx context.Context, mode heartbeatMode) {
 	// If we are doing a normal heartbeat round then spread the requests over the heartbeatInterval in order
 	// to reduce load on the cluster.
 	spreadDuration := time.Duration(0)
-	if mode == hearbeatNormal {
+	if mode == heartbeatNormal {
 		spreadDuration = heartbeatInterval
 	}
 
@@ -401,7 +401,7 @@ func (g *Gateway) heartbeat(ctx context.Context, mode heartbeatMode) {
 	// If this leader node hasn't sent a heartbeat recently, then its node state records
 	// are likely out of date, this can happen when a node becomes a leader.
 	// Send stale set to all nodes in database to get a fresh set of active nodes.
-	if mode == hearbeatInitial {
+	if mode == heartbeatInitial {
 		hbState.Update(false, raftNodes, members, g.HeartbeatOfflineThreshold)
 		hbState.Send(ctx, g.networkCert, serverCert, localClusterAddress, members, spreadDuration)
 
@@ -507,7 +507,7 @@ func (g *Gateway) heartbeat(ctx context.Context, mode heartbeatMode) {
 		logger.Warn("Cluster heartbeat took too long", logger.Ctx{"duration": duration, "interval": heartbeatInterval})
 	}
 
-	if mode != hearbeatNormal {
+	if mode != heartbeatNormal {
 		// Log unscheduled heartbeats with a higher level than normal heartbeats.
 		logger.Info("Completed instant heartbeat round", logger.Ctx{"duration": duration})
 	} else {

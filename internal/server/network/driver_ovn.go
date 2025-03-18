@@ -446,7 +446,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		return err
 	}
 
-	// Peform composite key checks after per-key validation.
+	// Perform composite key checks after per-key validation.
 
 	// Validate DNS zone names.
 	err = n.validateZoneNames(config)
@@ -3485,7 +3485,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		delete(newNetwork.Config, ovnVolatileUplinkIPv6)
 	}
 
-	// Apply changes to all nodes and databse.
+	// Apply changes to all nodes and database.
 	err = n.common.update(newNetwork, targetNode, clientType)
 	if err != nil {
 		return err
@@ -3788,7 +3788,7 @@ func (n *ovn) InstanceDevicePortValidateExternalRoutes(deviceInstance instance.I
 		return fmt.Errorf("Failed to load uplink network %q: %w", n.config["network"], err)
 	}
 
-	// Check port's external routes are suffciently small when using l2proxy ingress mode on uplink.
+	// Check port's external routes are sufficiently small when using l2proxy ingress mode on uplink.
 	if slices.Contains([]string{"l2proxy", ""}, uplink.Config["ovn.ingress_mode"]) {
 		for _, portExternalRoute := range portExternalRoutes {
 			rOnes, rBits := portExternalRoute.Mask.Size()
@@ -4391,7 +4391,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 			}
 		}
 
-		// Remove port fom ACLs requested.
+		// Remove port from ACLs requested.
 		for _, aclName := range securityACLsRemove {
 			// Don't remove ACLs that are in the add ACLs list (there are possibly added from
 			// the network assigned ACLs).
@@ -6385,7 +6385,7 @@ func (n *ovn) peerSetup(ovnnb *networkOVN.NB, targetOVNNet *ovn, opts networkOVN
 	// Ensure routes are added to target switch address sets.
 	err = n.ovnnb.UpdateAddressSetAdd(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(targetOVNNet.ID()), opts.LocalRouterRoutes...)
 	if err != nil {
-		return fmt.Errorf("Failed adding target swith subnet address set entries: %w", err)
+		return fmt.Errorf("Failed adding target switch subnet address set entries: %w", err)
 	}
 
 	err = targetOVNNet.logicalRouterPolicySetup(n.ovnnb)

@@ -255,7 +255,7 @@ func SetProject(path string, id uint32) error {
 		if info.IsDir() {
 			inherit = true // Only can set FS_XFLAG_PROJINHERIT on directories.
 		} else if !info.Mode().IsRegular() {
-			// Cannot set project ID on non-regular files after file creation. Infact trying to set
+			// Cannot set project ID on non-regular files after file creation. In fact trying to set
 			// project ID on some file types just blocks forever (such as pipe files).
 			// So skip them as they don't take up disk space anyway.
 			return nil

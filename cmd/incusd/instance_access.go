@@ -15,7 +15,7 @@ import (
 
 // swagger:operation GET /1.0/instances/{name}/access instances instance_access
 //
-//	Get who has access to an instnace
+//	Get who has access to an instance
 //
 //	Gets the access information for the instance.
 //

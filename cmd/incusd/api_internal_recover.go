@@ -319,7 +319,7 @@ func internalRecoverScan(ctx context.Context, s *state.State, userPools []api.St
 
 	// Create the pools themselves.
 	for _, pool := range pools {
-		// Create missing storage pool DB record if neeed.
+		// Create missing storage pool DB record if needed.
 		if pool.ID() == storagePools.PoolIDTemporary {
 			var instPoolVol *backupConfig.Config // Instance volume used for new pool record.
 			var poolID int64                     // Pool ID of created pool record.

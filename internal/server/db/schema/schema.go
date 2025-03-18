@@ -106,7 +106,7 @@ func (s *Schema) Check(check Check) {
 }
 
 // Fresh sets a statement that will be used to create the schema from scratch
-// when bootstraping an empty database. It should be a "flattening" of the
+// when bootstrapping an empty database. It should be a "flattening" of the
 // available updates, generated using the Dump() method. If not given, all
 // patches will be applied in order.
 func (s *Schema) Fresh(statement string) {
@@ -196,7 +196,7 @@ func (s *Schema) Ensure(db *sql.DB) (int, error) {
 }
 
 // Dump returns a text of SQL commands that can be used to create this schema
-// from scratch in one go, without going thorugh individual patches
+// from scratch in one go, without going through individual patches
 // (essentially flattening them).
 //
 // It requires that all patches in this schema have been applied, otherwise an

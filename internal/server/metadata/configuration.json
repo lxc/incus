@@ -2059,7 +2059,7 @@
 					{
 						"restricted.containers.privilege": {
 							"defaultdesc": "`unprivileged`",
-							"longdesc": "Possible values are `unprivileged`, `isolated`, and `allow`.\n\n- When set to `unpriviliged`, this option prevents setting {config:option}`instance-security:security.privileged` to `true`.\n- When set to `isolated`, this option prevents setting {config:option}`instance-security:security.privileged` and {config:option}`instance-security:security.idmap.isolated` to `true`.\n- When set to `allow`, there is no restriction.",
+							"longdesc": "Possible values are `unprivileged`, `isolated`, and `allow`.\n\n- When set to `unprivileged`, this option prevents setting {config:option}`instance-security:security.privileged` to `true`.\n- When set to `isolated`, this option prevents setting {config:option}`instance-security:security.privileged` and {config:option}`instance-security:security.idmap.isolated` to `true`.\n- When set to `allow`, there is no restriction.",
 							"shortdesc": "Which settings for privileged containers to prevent",
 							"type": "string"
 						}

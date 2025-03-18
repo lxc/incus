@@ -35,6 +35,7 @@ pkgs.mkShell {
     gopls
 
     # static-analysis
+    codespell
     debianutils
     go-licenses
     go-swagger

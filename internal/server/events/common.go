@@ -12,7 +12,7 @@ import (
 // EventHandler called when the connection receives an event from the client.
 type EventHandler func(event api.Event)
 
-// serverCommon represents an instance of a comon event server.
+// serverCommon represents an instance of a common event server.
 type serverCommon struct {
 	debug   bool
 	verbose bool

@@ -39,7 +39,7 @@ Note that this method might have ramifications for restoring snapshots.
 See {ref}`storage-zfs-limitations` below.
 
 Incus automatically enables trimming support on all newly created pools on ZFS 0.8 or later.
-This increases the lifetime of SSDs by allowing better block re-use by the controller, and it also allows to free space on the root file system when using a loop-backed ZFS pool.
+This increases the lifetime of SSDs by allowing better block reuse by the controller, and it also allows to free space on the root file system when using a loop-backed ZFS pool.
 If you are running a ZFS version earlier than 0.8 and want to enable trimming, upgrade to at least version 0.8.
 Then use the following commands to make sure that trimming is automatically enabled for the ZFS pool in the future and trim all currently unused space:
 

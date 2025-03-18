@@ -47,7 +47,7 @@ ensure the file has been cleared of content:
 
 ### Generation Directive Arguments
 
-The generation directive aruments have the following form:
+The generation directive arguments have the following form:
 
 `//generate-database:mapper <command> flags <kind> <args...>`
 

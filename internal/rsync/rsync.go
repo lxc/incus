@@ -460,7 +460,7 @@ func AtLeast(min string) bool {
 		return false
 	}
 
-	// Load minium version.
+	// Load minimum version.
 	minVer, err := version.NewDottedVersion(min)
 	if err != nil {
 		return false

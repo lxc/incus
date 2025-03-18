@@ -239,7 +239,7 @@ test_storage_local_volume_handling() {
 
           # check snapshot volumes (including config) was overridden from new source and that missing snapshot is
           # present and that the missing snapshot has been removed.
-          # Note: We are currently diffing the snapshots by name and creation date, so infact existing
+          # Note: We are currently diffing the snapshots by name and creation date, so in fact existing
           # snapshots of the same name and cretion date won't be overwritten even if their config or contents is different.
           incus storage volume get "${target_pool}" vol5 user.foo | grep -Fx "snapremovevol5"
           incus storage volume get "${target_pool}" vol5/snap0 user.foo | grep -Fx "snap0vol5"

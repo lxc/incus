@@ -9,7 +9,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/config"
 )
 
-// If the givne values contain invalid keys, they are ignored.
+// If the given values contain invalid keys, they are ignored.
 func TestSafeLoad_IgnoreInvalidKeys(t *testing.T) {
 	schema := config.Schema{"bar": {}}
 	values := map[string]string{

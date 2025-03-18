@@ -674,19 +674,19 @@ func (d *ceph) DeleteVolume(vol Volume, op *operations.Operation) error {
 			return err
 		}
 
-		hasDependendantSnapshots := false
+		hasDependentSnapshots := false
 
 		if hasReadonlySnapshot {
-			dependantSnapshots, err := d.rbdListSnapshotClones(vol, "readonly")
+			dependentSnapshots, err := d.rbdListSnapshotClones(vol, "readonly")
 			if err != nil && !response.IsNotFoundError(err) {
 				return err
 			}
 
-			hasDependendantSnapshots = len(dependantSnapshots) > 0
+			hasDependentSnapshots = len(dependentSnapshots) > 0
 		}
 
-		if hasDependendantSnapshots {
-			// If the image has dependant snapshots, then we just mark it as deleted, but don't
+		if hasDependentSnapshots {
+			// If the image has dependent snapshots, then we just mark it as deleted, but don't
 			// actually remove it yet.
 			err = d.rbdMarkVolumeDeleted(vol, vol.name)
 			if err != nil {
@@ -1007,7 +1007,7 @@ func (d *ceph) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, o
 			}
 
 			if inUse {
-				return ErrInUse // We don't allow online shrinking of filesytem volumes.
+				return ErrInUse // We don't allow online shrinking of filesystem volumes.
 			}
 
 			// Shrink filesystem first. Pass allowUnsafeResize to allow disabling of filesystem

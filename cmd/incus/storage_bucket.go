@@ -518,7 +518,7 @@ Pre-defined column shorthand chars:
 	return cmd
 }
 
-const defaultStorageBucketColumns = "nd"
+const defaultStorageBucketColumns = "nd" // codespell:ignore nd
 
 func (c *cmdStorageBucketList) parseColumns(clustered bool) ([]storageBucketColumn, error) {
 	columnsShorthandMap := map[rune]storageBucketColumn{

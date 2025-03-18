@@ -192,7 +192,7 @@ func (d *nicRouted) validateEnvironment() error {
 			}
 		}
 
-		// Check necessary devic specific sysctls are configured for use with l2proxy parent for routed mode.
+		// Check necessary device specific sysctls are configured for use with l2proxy parent for routed mode.
 		if d.config["ipv6.address"] != "" {
 			ipv6FwdPath := fmt.Sprintf("net/ipv6/conf/%s/forwarding", d.effectiveParentName)
 			sysctlVal, err := localUtil.SysctlGet(ipv6FwdPath)

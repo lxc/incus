@@ -672,7 +672,7 @@ func pruneExpiredAndAutoCreateInstanceSnapshotsTask(d *Daemon) (task.Func, task.
 			return
 		}
 
-		// Get list of instances on the local member that are due to have snaphots creating.
+		// Get list of instances on the local member that are due to have snapshots creating.
 		filter := dbCluster.InstanceFilter{Node: &s.ServerName}
 
 		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {

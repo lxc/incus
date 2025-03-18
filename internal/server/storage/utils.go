@@ -819,7 +819,7 @@ func VolumeUsedByProfileDevices(s *state.State, poolName string, projectName str
 		for _, project := range projects {
 			projectMap[project.Name], err = project.ToAPI(ctx, tx.Tx())
 			if err != nil {
-				return fmt.Errorf("Failed loading config for projec %q: %w", project.Name, err)
+				return fmt.Errorf("Failed loading config for project %q: %w", project.Name, err)
 			}
 		}
 

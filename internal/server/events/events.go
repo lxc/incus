@@ -174,7 +174,7 @@ func (s *Server) broadcast(event api.Event, eventSource EventSource) error {
 		event.Location = s.location
 	}
 
-	// If a notifcation hook is present, then call it for locally produced events.
+	// If a notification hook is present, then call it for locally produced events.
 	// This can be used to send local events to another target (such as an event-hub member).
 	if s.notify != nil && eventSource == EventSourceLocal {
 		s.notify(event)

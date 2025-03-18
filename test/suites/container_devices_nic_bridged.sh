@@ -237,7 +237,7 @@ test_container_devices_nic_bridged() {
     false
   fi
 
-  # Check profile limits are applie on hot-removal.
+  # Check profile limits are applied on hot-removal.
   if ! tc class show dev "${vethHostName}" | grep "1Mbit" ; then
     echo "limits.ingress invalid"
     false
@@ -279,25 +279,25 @@ test_container_devices_nic_bridged() {
 
   # Check removing a required option fails.
   if incus config device unset "${ctName}" eth0 parent ; then
-    echo "shouldnt be able to unset invalrequiredid option"
+    echo "shouldn't be able to unset invalrequiredid option"
     false
   fi
 
   # Check updating an invalid option fails.
   if incus config device set "${ctName}" eth0 invalid.option "invalid value" ; then
-    echo "shouldnt be able to set invalid option"
+    echo "shouldn't be able to set invalid option"
     false
   fi
 
   # Check setting invalid IPv4 route.
   if incus config device set "${ctName}" eth0 ipv4.routes "192.0.2.1/33" ; then
-      echo "shouldnt be able to set invalid ipv4.routes value"
+      echo "shouldn't be able to set invalid ipv4.routes value"
     false
   fi
 
   # Check setting invalid IPv6 route.
   if incus config device set "${ctName}" eth0 ipv6.routes "2001:db8::1/129" ; then
-      echo "shouldnt be able to set invalid ipv6.routes value"
+      echo "shouldn't be able to set invalid ipv6.routes value"
     false
   fi
 

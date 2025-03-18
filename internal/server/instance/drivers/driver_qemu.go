@@ -358,7 +358,7 @@ type qemu struct {
 }
 
 // getAgentClient returns the current agent client handle.
-// Callers should check that the instance is running (and therefore mounted) before caling this function,
+// Callers should check that the instance is running (and therefore mounted) before calling this function,
 // otherwise the qmp.Connect call will fail to use the monitor socket file.
 func (d *qemu) getAgentClient() (*http.Client, error) {
 	// Check if the agent is running.
@@ -2028,7 +2028,7 @@ func (d *qemu) setupSEV(fdFiles *[]*os.File) (*qemuSevOpts, error) {
 
 	// Get the QEMU features to check if AMD SEV is supported.
 	info := DriverStatuses()[instancetype.VM].Info
-	_, smeFound := info.Features["sme"]
+	_, smeFound := info.Features["sme"] // codespell:ignore sme
 	sev, sevFound := info.Features["sev"]
 	if !smeFound || !sevFound {
 		return nil, errors.New("AMD SEV is not supported by the host")
@@ -3364,7 +3364,7 @@ func (d *qemu) deviceBootPriorities(base int) (map[string]int, error) {
 
 	// Sort devices by priority (use SliceStable so that devices with the same boot priority stay in the same
 	// order each boot based on the device order provided by the d.expandedDevices.Sorted() function).
-	// This is important because as well as providing a predicable boot index order, the boot index number can
+	// This is important because as well as providing a predictable boot index order, the boot index number can
 	// also be used for other properties (such as disk SCSI ID) which can result in it being given different
 	// device names inside the guest based on the device order.
 	sort.SliceStable(devices, func(i, j int) bool { return devices[i].BootPrio > devices[j].BootPrio })
@@ -3689,7 +3689,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuInfo *cpuTopology
 
 	// These devices are sorted so that NICs are added first to ensure that the first NIC can use the 5th
 	// PCIe bus port and will be consistently named enp5s0 for compatibility with network configuration in our
-	// existing VM images. Even on non-PCIe busses having NICs first means that their names won't change when
+	// existing VM images. Even on non-PCIe buses having NICs first means that their names won't change when
 	// other devices are added.
 	for _, runConf := range devConfs {
 		// Add drive devices.
@@ -5058,7 +5058,7 @@ func (d *qemu) Stop(stateful bool) error {
 
 	// Setup a new operation.
 	// Allow inheriting of ongoing restart or restore operation (we are called from restartCommon and Restore).
-	// Don't allow reuse when creating a new stop operation. This prevents other operations from intefering.
+	// Don't allow reuse when creating a new stop operation. This prevents other operations from interfering.
 	// Allow reuse of a reusable ongoing stop operation as Shutdown() may be called first, which allows reuse
 	// of its operations. This allow for Stop() to inherit from Shutdown() where instance is stuck.
 	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStop, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore, operationlock.ActionMigrate}, false, true)
@@ -6143,7 +6143,7 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 		return err
 	}
 
-	// Changing the memory balloon can take time, so poll the effectice size to check it has shrunk within 1%
+	// Changing the memory balloon can take time, so poll the effective size to check it has shrunk within 1%
 	// of the target size, which we then take as success (it may still continue to shrink closer to target).
 	for i := 0; i < 10; i++ {
 		curSizeBytes, err = monitor.GetMemoryBalloonSizeBytes()
@@ -6975,7 +6975,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 
 		// Create qcow2 disk image with the maximum size set to the instance's root disk size for use as
 		// a CoW target for the migration snapshot. This will be used during migration to store writes in
-		// the guest whilst the storage driver is transferring the root disk and snapshots to the taget.
+		// the guest whilst the storage driver is transferring the root disk and snapshots to the target.
 		_, err = subprocess.RunCommand("qemu-img", "create", "-f", "qcow2", snapshotFile, fmt.Sprintf("%d", rootDiskSize))
 		if err != nil {
 			return fmt.Errorf("Failed opening file image for migration storage snapshot %q: %w", snapshotFile, err)
@@ -8250,7 +8250,7 @@ func (d *qemu) CanMigrate() string {
 	return d.canMigrate(d)
 }
 
-// LockExclusive attempts to get exlusive access to the instance's root volume.
+// LockExclusive attempts to get exclusive access to the instance's root volume.
 func (d *qemu) LockExclusive() (*operationlock.InstanceOperation, error) {
 	if d.IsRunning() {
 		return nil, fmt.Errorf("Instance is running")
@@ -8598,7 +8598,7 @@ func (d *qemu) FillNetworkDevice(name string, m deviceConfig.Device) (deviceConf
 
 // UpdateBackupFile writes the instance's backup.yaml file to storage.
 func (d *qemu) UpdateBackupFile() error {
-	// Prevent concurent updates to the backup file.
+	// Prevent concurrent updates to the backup file.
 	unlock, err := d.updateBackupFileLock(context.Background())
 	if err != nil {
 		return err
@@ -9020,9 +9020,9 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 
 		parts := strings.Split(string(cmdline), " ")
 
-		// Check if SME is enabled in the kernel command line.
+		// Check if SME is enabled in the kernel command line.  // codespell:ignore sme
 		if slices.Contains(parts, "mem_encrypt=on") {
-			features["sme"] = struct{}{}
+			features["sme"] = struct{}{} // codespell:ignore sme
 		}
 
 		// Check if SEV/SEV-ES are enabled

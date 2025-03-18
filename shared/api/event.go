@@ -138,7 +138,7 @@ type EventLogging struct {
 	Context map[string]string `yaml:"context" json:"context"`
 }
 
-// EventLifecycle represets a lifecycle type event entry
+// EventLifecycle represents a lifecycle type event entry
 //
 // API extension: event_lifecycle.
 type EventLifecycle struct {

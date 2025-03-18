@@ -380,7 +380,7 @@ func (b *backend) Delete(clientType request.ClientType, op *operations.Operation
 	} else {
 		// Remove any left over image volumes.
 		// This can occur during partial image unpack or if the storage pool has been recovered from an
-		// instace backup file and the image volume DB records were not restored.
+		// instance backup file and the image volume DB records were not restored.
 		// If non-image volumes exist, we don't delete the, even if they can then prevent the storage pool
 		// from being deleted, because they should not exist by this point and we don't want to end up
 		// removing an instance or custom volume accidentally.
@@ -2970,7 +2970,7 @@ func (b *backend) getInstanceDisk(inst instance.Instance) (string, error) {
 	return diskPath, nil
 }
 
-// CreateInstanceSnapshot creates a snaphot of an instance volume.
+// CreateInstanceSnapshot creates a snapshot of an instance volume.
 func (b *backend) CreateInstanceSnapshot(inst instance.Instance, src instance.Instance, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "src": src.Name()})
 	l.Debug("CreateInstanceSnapshot started")
@@ -3608,7 +3608,7 @@ func (b *backend) EnsureImage(fingerprint string, op *operations.Operation) erro
 
 // shouldUseOptimizedImage determines if an optimized image should be used based on the provided volume config.
 // It returns true if the volume config aligns with the pool's default configuration, and an optimized image does
-// not exist or also matches the pool's default confgiuration.
+// not exist or also matches the pool's default configuration.
 func (b *backend) shouldUseOptimizedImage(fingerprint string, contentType drivers.ContentType, volConfig map[string]string, op *operations.Operation) (bool, error) {
 	canOptimizeImage := b.driver.Info().OptimizedImages
 
@@ -4162,7 +4162,7 @@ func (b *backend) recoverMinIOKeys(projectName string, bucketName string, op *op
 		return nil, err
 	}
 
-	// We are interesed only in a json file that contains service accounts.
+	// We are interested only in a json file that contains service accounts.
 	// Find that file and extract service accounts.
 	svcAccounts := map[string]miniod.AddServiceAccountResp{}
 	for _, file := range iamZipReader.File {
@@ -6812,7 +6812,7 @@ func (b *backend) detectUnknownCustomVolume(vol *drivers.Volume, projectVols map
 		},
 	}
 
-	// Populate snaphot volumes.
+	// Populate snapshot volumes.
 	for _, snapOnlyName := range snapshots {
 		backupConf.VolumeSnapshots = append(backupConf.VolumeSnapshots, &api.StorageVolumeSnapshot{
 			Name:        snapOnlyName, // Snapshot only name, not full name.
@@ -7242,7 +7242,7 @@ func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io
 
 	revert.Add(func() { _ = VolumeDBDelete(b, srcBackup.Project, srcBackup.Name, vol.Type()) })
 
-	// Create database entries fro new storage volume snapshots.
+	// Create database entries for new storage volume snapshots.
 	for _, s := range srcBackup.Config.VolumeSnapshots {
 		snapshot := s // Local var for revert.
 		snapName := snapshot.Name

@@ -59,7 +59,7 @@ func Hourly(options ...EveryOption) Schedule {
 }
 
 // SkipFirst is an option for the Every schedule that will make the schedule
-// skip the very first invokation of the task function.
+// skip the very first invocation of the task function.
 var SkipFirst = func(every *every) { every.skipFirst = true }
 
 // EveryOption captures a tweak that can be applied to the Every schedule.

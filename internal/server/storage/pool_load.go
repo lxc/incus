@@ -251,7 +251,7 @@ func Patch(s *state.State, patchName string) error {
 		}
 
 		unavailablePoolsMu.Unlock()
-		return fmt.Errorf("Unvailable storage pools: %v", unavailablePoolNames)
+		return fmt.Errorf("Unavailable storage pools: %v", unavailablePoolNames)
 	}
 
 	unavailablePoolsMu.Unlock()

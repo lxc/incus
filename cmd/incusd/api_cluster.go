@@ -2160,8 +2160,8 @@ func internalClusterPostAccept(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("No name provided"))
 	}
 
-	// Redirect all requests to the leader, which is the one with
-	// knowning what nodes are part of the raft cluster.
+	// Redirect all requests to the leader, which is the one
+	// knowing what nodes are part of the raft cluster.
 	localClusterAddress := s.LocalConfig.ClusterAddress()
 
 	leader, err := s.Cluster.LeaderAddress()

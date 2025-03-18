@@ -60,7 +60,7 @@ func setReceivedUUID(path string, UUID string) error {
 
 	binUUID, err := strUUID.MarshalBinary()
 	if err != nil {
-		return fmt.Errorf("Failed coverting UUID: %w", err)
+		return fmt.Errorf("Failed converting UUID: %w", err)
 	}
 
 	copy(args.uuid[:], binUUID)

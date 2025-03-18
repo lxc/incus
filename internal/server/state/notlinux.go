@@ -8,7 +8,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/events"
 )
 
-// State here is just an empty shim to statisfy dependencies.
+// State here is just an empty shim to satisfy dependencies.
 type State struct {
 	Events      *events.Server
 	ShutdownCtx context.Context

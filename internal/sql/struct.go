@@ -16,7 +16,7 @@ type SQLBatch struct {
 	Results []SQLResult
 }
 
-// SQLResult reprents a query result.
+// SQLResult represents a query result.
 type SQLResult struct {
 	Type         string   `json:"type"          yaml:"type"`
 	Columns      []string `json:"columns"       yaml:"columns"`

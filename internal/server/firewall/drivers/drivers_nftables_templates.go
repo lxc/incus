@@ -306,7 +306,7 @@ chain out{{.chainSeparator}}{{.deviceLabel}} {
 var nftablesInstanceRPFilter = template.Must(template.New("nftablesInstanceRPFilter").Parse(`
 chain prert{{.chainSeparator}}{{.deviceLabel}} {
 	type filter hook prerouting priority -300; policy accept;
-	iif "{{.hostName}}" fib saddr . iif oif missing drop
+	iif "{{.hostName}}" fib saddr . iif oif missing drop  # codespell:ignore iif
 }
 `))
 

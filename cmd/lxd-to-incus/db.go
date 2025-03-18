@@ -92,7 +92,7 @@ func lz4Uncompress(zfilename string) error {
 
 	zinfo, err := zfile.Stat()
 	if err != nil {
-		return fmt.Errorf("Fialed to get file info for %q: %w", zfilename, err)
+		return fmt.Errorf("Failed to get file info for %q: %w", zfilename, err)
 	}
 
 	// use the same mode for the output file

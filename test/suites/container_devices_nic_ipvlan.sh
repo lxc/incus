@@ -66,7 +66,7 @@ test_container_devices_nic_ipvlan() {
   incus exec "${ctName}2" -- ping6 -c2 -W5 "2001:db8::1${ipRand}"
   incus stop -f "${ctName}2"
 
-  # Check IPVLAN ontop of VLAN parent with custom routing tables.
+  # Check IPVLAN on top of VLAN parent with custom routing tables.
   incus stop -f "${ctName}"
   incus config device set "${ctName}" eth0 vlan 1234
   incus config device set "${ctName}" eth0 ipv4.host_table=100

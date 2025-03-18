@@ -274,7 +274,7 @@ test_container_devices_nic_bridged_filtering() {
   incus config device unset "${ctPrefix}A" eth0 ipv4.address
   incus start "${ctPrefix}A"
   if ! grep "192.0.2.2" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0" ; then
-    echo "dnsmasq host config doesnt contain previous lease as static IPv4 config"
+    echo "dnsmasq host config doesn't contain previous lease as static IPv4 config"
     false
   fi
 
@@ -291,7 +291,7 @@ test_container_devices_nic_bridged_filtering() {
   incus start "${ctPrefix}A"
 
   if ! grep "192.0.2.3" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0" ; then
-    echo "dnsmasq host config doesnt contain sequentially allocated static IPv4 config"
+    echo "dnsmasq host config doesn't contain sequentially allocated static IPv4 config"
     false
   fi
 
@@ -301,7 +301,7 @@ test_container_devices_nic_bridged_filtering() {
   incus start "${ctPrefix}A"
 
   if ! grep "192.0.2.100" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0" ; then
-    echo "dnsmasq host config doesnt contain sequentially range allocated static IPv4 config"
+    echo "dnsmasq host config doesn't contain sequentially range allocated static IPv4 config"
     false
   fi
 
@@ -526,7 +526,7 @@ test_container_devices_nic_bridged_filtering() {
   incus config device set "${ctPrefix}A" eth0 security.ipv6_filtering true
   incus start "${ctPrefix}A"
   if ! grep "\\[2001:db8:1:0:1266:6aff:fe92:f3c1\\]" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0" ; then
-    echo "dnsmasq host config doesnt contain dynamically allocated static IPv6 config"
+    echo "dnsmasq host config doesn't contain dynamically allocated static IPv6 config"
     false
   fi
 
@@ -542,7 +542,7 @@ test_container_devices_nic_bridged_filtering() {
   incus config device set "${ctPrefix}A" eth0 security.ipv6_filtering true
   incus start "${ctPrefix}A"
   if ! grep "\\[2001:db8:1::2\\]" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0" ; then
-    echo "dnsmasq host config doesnt contain sequentially allocated static IPv6 config"
+    echo "dnsmasq host config doesn't contain sequentially allocated static IPv6 config"
     false
   fi
 

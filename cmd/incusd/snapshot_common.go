@@ -107,7 +107,7 @@ func cronSpecIsNow(spec string) (bool, error) {
 	now := time.Now()
 
 	// Truncate the time now back to the start of the minute.
-	// This is neded because the cron scheduler will add a minute to the scheduled time
+	// This is needed because the cron scheduler will add a minute to the scheduled time
 	// and we don't want the next scheduled time to roll over to the next minute and break
 	// the time comparison below.
 	now = now.Truncate(time.Minute)
