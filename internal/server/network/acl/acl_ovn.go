@@ -22,16 +22,20 @@ import (
 )
 
 // OVN ACL rule priorities.
-const ovnACLPriorityPortGroupDefaultAction = 0
-const ovnACLPriorityNICDefaultActionIngress = 100
+const (
+	ovnACLPriorityPortGroupDefaultAction  = 0
+	ovnACLPriorityNICDefaultActionIngress = 100
+)
 
 // ovnACLPriorityNICDefaultActionEgress needs to be >10 higher than ovnACLPriorityNICDefaultActionIngress so that
 // ingress reject rules (that OVN adds 10 to their priorities) don't prevent egress rules being tested first.
-const ovnACLPriorityNICDefaultActionEgress = 111
-const ovnACLPrioritySwitchAllow = 200
-const ovnACLPriorityPortGroupAllow = 300
-const ovnACLPriorityPortGroupReject = 400
-const ovnACLPriorityPortGroupDrop = 500
+const (
+	ovnACLPriorityNICDefaultActionEgress = 111
+	ovnACLPrioritySwitchAllow            = 200
+	ovnACLPriorityPortGroupAllow         = 300
+	ovnACLPriorityPortGroupReject        = 400
+	ovnACLPriorityPortGroupDrop          = 500
+)
 
 // ovnACLPortGroupPrefix prefix used when naming ACL related port groups in OVN.
 const ovnACLPortGroupPrefix = "incus_acl"

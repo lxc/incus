@@ -30,8 +30,10 @@ import (
 // Define type for rule directions.
 type ruleDirection string
 
-const ruleDirectionIngress ruleDirection = "ingress"
-const ruleDirectionEgress ruleDirection = "egress"
+const (
+	ruleDirectionIngress ruleDirection = "ingress"
+	ruleDirectionEgress  ruleDirection = "egress"
+)
 
 // ReservedNetworkSubects contains a list of reserved network peer names (those starting with @ character) that
 // cannot be used when to name peering connections. Otherwise peer connections wouldn't be able to be referenced
@@ -39,13 +41,17 @@ const ruleDirectionEgress ruleDirection = "egress"
 var ReservedNetworkSubects = []string{"internal", "external"}
 
 // Define reserved ACL subjects.
-const ruleSubjectInternal = "@internal"
-const ruleSubjectExternal = "@external"
+const (
+	ruleSubjectInternal = "@internal"
+	ruleSubjectExternal = "@external"
+)
 
 // Define aliases for reserved ACL subjects. This is to allow earlier deprecated names that used the "#" prefix.
 // They were deprecated to avoid confusion with YAML comments. So "#internal" and "#external" should not be used.
-var ruleSubjectInternalAliases = []string{ruleSubjectInternal, "#internal"}
-var ruleSubjectExternalAliases = []string{ruleSubjectExternal, "#external"}
+var (
+	ruleSubjectInternalAliases = []string{ruleSubjectInternal, "#internal"}
+	ruleSubjectExternalAliases = []string{ruleSubjectExternal, "#external"}
+)
 
 // ValidActions defines valid actions for rules.
 var ValidActions = []string{"allow", "allow-stateless", "drop", "reject"}
@@ -263,7 +269,7 @@ func (d *common) validateConfigMap(config map[string]string, rules map[string]fu
 
 	// Run the validator against each field.
 	for k, validator := range rules {
-		checkedFields[k] = struct{}{} //Mark field as checked.
+		checkedFields[k] = struct{}{} // Mark field as checked.
 		err := validator(config[k])
 		if err != nil {
 			return fmt.Errorf("Invalid value for config option %q: %w", k, err)

@@ -42,7 +42,7 @@ func NetworkLoad(sysOS *sys.OS, n network) error {
 	}
 
 	if string(content) != string(updated) {
-		err = os.WriteFile(profile, []byte(updated), 0600)
+		err = os.WriteFile(profile, []byte(updated), 0o600)
 		if err != nil {
 			return err
 		}

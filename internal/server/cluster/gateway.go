@@ -577,7 +577,7 @@ func (g *Gateway) Sync() {
 	dir := filepath.Join(g.db.Dir(), "global")
 	for _, file := range files {
 		path := filepath.Join(dir, file.Name)
-		err := os.WriteFile(path, file.Data, 0600)
+		err := os.WriteFile(path, file.Data, 0o600)
 		if err != nil {
 			logger.Warnf("Failed to dump database file %s: %v", file.Name, err)
 		}

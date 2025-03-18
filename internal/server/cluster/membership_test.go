@@ -44,7 +44,7 @@ func TestBootstrap_UnmetPreconditions(t *testing.T) {
 				f.ClusterAddress("1.2.3.4:666")
 				f.RaftNode("5.6.7.8:666")
 				filename := filepath.Join(f.state.OS.VarDir, "cluster.crt")
-				_ = os.WriteFile(filename, []byte{}, 0644)
+				_ = os.WriteFile(filename, []byte{}, 0o644)
 			},
 			"Inconsistent state: found leftover cluster certificate",
 		},

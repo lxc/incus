@@ -88,13 +88,13 @@ func (c *Config) SaveOIDCTokens() {
 	tokenParentPath := c.ConfigPath("oidctokens")
 
 	if !util.PathExists(tokenParentPath) {
-		_ = os.MkdirAll(tokenParentPath, 0755)
+		_ = os.MkdirAll(tokenParentPath, 0o755)
 	}
 
 	for remote, tokens := range c.oidcTokens {
 		tokenPath := c.OIDCTokenPath(remote)
 		data, _ := json.Marshal(tokens)
-		_ = os.WriteFile(tokenPath, data, 0600)
+		_ = os.WriteFile(tokenPath, data, 0o600)
 	}
 }
 

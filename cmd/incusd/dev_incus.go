@@ -238,7 +238,6 @@ var devIncusAPIHandler = devIncusHandler{"/1.0", func(d *Daemon, c instance.Inst
 	}
 
 	return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusMethodNotAllowed, fmt.Sprintf("method %q not allowed", r.Method)), c.Type() == instancetype.VM)
-
 }}
 
 var devIncusDevicesGet = devIncusHandler{"/1.0/devices", func(d *Daemon, c instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {

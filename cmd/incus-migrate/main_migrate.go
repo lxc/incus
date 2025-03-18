@@ -574,7 +574,7 @@ func (c *cmdMigrate) Run(cmd *cobra.Command, args []string) error {
 		// Create the rootfs directory
 		fullPath = fmt.Sprintf("%s/rootfs", path)
 
-		err = os.Mkdir(fullPath, 0755)
+		err = os.Mkdir(fullPath, 0o755)
 		if err != nil {
 			return err
 		}
@@ -615,7 +615,6 @@ func (c *cmdMigrate) Run(cmd *cobra.Command, args []string) error {
 
 			c := exec.Command(cmd[0], cmd[1:]...)
 			err = c.Run()
-
 			if err != nil {
 				return fmt.Errorf("Failed to convert image %q for importing: %w", config.SourcePath, err)
 			}
@@ -626,7 +625,7 @@ func (c *cmdMigrate) Run(cmd *cobra.Command, args []string) error {
 		fullPath = path
 		target := filepath.Join(path, "root.img")
 
-		err := os.WriteFile(target, nil, 0644)
+		err := os.WriteFile(target, nil, 0o644)
 		if err != nil {
 			return fmt.Errorf("Failed to create %q: %w", target, err)
 		}

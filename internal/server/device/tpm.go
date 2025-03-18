@@ -84,7 +84,7 @@ func (d *tpm) Start() (*deviceConfig.RunConfig, error) {
 	tpmDevPath := filepath.Join(d.inst.Path(), fmt.Sprintf("tpm.%s", d.name))
 
 	if !util.PathExists(tpmDevPath) {
-		err := os.Mkdir(tpmDevPath, 0700)
+		err := os.Mkdir(tpmDevPath, 0o700)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to create device path %q: %w", tpmDevPath, err)
 		}

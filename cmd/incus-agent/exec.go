@@ -30,10 +30,12 @@ import (
 	"github.com/lxc/incus/v6/shared/ws"
 )
 
-const execWSControl = -1
-const execWSStdin = 0
-const execWSStdout = 1
-const execWSStderr = 2
+const (
+	execWSControl = -1
+	execWSStdin   = 0
+	execWSStdout  = 1
+	execWSStderr  = 2
+)
 
 var execCmd = APIEndpoint{
 	Name: "exec",

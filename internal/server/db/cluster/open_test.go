@@ -23,7 +23,7 @@ import (
 func TestEnsureSchema_NoClustered(t *testing.T) {
 	dir, cleanup := newDir(t)
 	defer cleanup()
-	assert.NoError(t, os.Mkdir(filepath.Join(dir, "global"), 0711))
+	assert.NoError(t, os.Mkdir(filepath.Join(dir, "global"), 0o711))
 	db := newDB(t)
 	addNode(t, db, "0.0.0.0", 1, 1)
 	ready, err := cluster.EnsureSchema(db, "1.2.3.4:666", dir)

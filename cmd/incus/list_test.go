@@ -153,8 +153,10 @@ func TestShouldShow(t *testing.T) {
 }
 
 // Used by TestColumns and TestInvalidColumns.
-const shorthand = "46abcdDefFlmMnNpPsStuUL"
-const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+const (
+	shorthand = "46abcdDefFlmMnNpPsStuUL"
+	alphanum  = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+)
 
 func TestColumns(t *testing.T) {
 	keys := make([]string, 0, len(instance.InstanceConfigKeysAny)+len(instance.InstanceConfigKeysContainer)+len(instance.InstanceConfigKeysVM))
@@ -299,7 +301,6 @@ func TestColumns(t *testing.T) {
 func removeDuplicatesFromString(s string, sep string) string {
 	dup := sep + sep
 	for s = strings.Replace(s, dup, sep, -1); strings.Contains(s, dup); s = strings.Replace(s, dup, sep, -1) {
-
 	}
 
 	return s

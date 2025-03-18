@@ -6,8 +6,10 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-const ioctlReadTermios = unix.TCGETS
-const ioctlWriteTermios = unix.TCSETS
+const (
+	ioctlReadTermios  = unix.TCGETS
+	ioctlWriteTermios = unix.TCSETS
+)
 
 // State contains the state of a terminal.
 type State struct {

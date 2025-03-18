@@ -53,7 +53,7 @@ func ovnBackup(nbDB string, sbDB string, target string) error {
 
 	defer nbStdout.Close()
 
-	err = nbStdout.Chmod(0600)
+	err = nbStdout.Chmod(0o600)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func ovnBackup(nbDB string, sbDB string, target string) error {
 
 	defer sbStdout.Close()
 
-	err = sbStdout.Chmod(0600)
+	err = sbStdout.Chmod(0o600)
 	if err != nil {
 		return err
 	}

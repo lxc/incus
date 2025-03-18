@@ -39,7 +39,7 @@ func InitLogger(filepath string, syslogName string, verbose bool, debug bool, ho
 	writers := []io.Writer{os.Stderr}
 
 	if filepath != "" {
-		f, err := os.OpenFile(filepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+		f, err := os.OpenFile(filepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o600)
 		if err != nil {
 			return err
 		}

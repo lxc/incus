@@ -54,7 +54,7 @@ func UpdateStaticEntry(network string, projectName string, instanceName string, 
 	}
 
 	deviceStaticFileName := StaticAllocationFileName(projectName, instanceName, deviceName)
-	err := os.WriteFile(internalUtil.VarPath("networks", network, "dnsmasq.hosts", deviceStaticFileName), []byte(line+"\n"), 0644)
+	err := os.WriteFile(internalUtil.VarPath("networks", network, "dnsmasq.hosts", deviceStaticFileName), []byte(line+"\n"), 0o644)
 	if err != nil {
 		return err
 	}

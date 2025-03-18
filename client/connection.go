@@ -304,7 +304,7 @@ func ConnectSimpleStreams(url string, args *ConnectionArgs) (ImageServer, error)
 		}
 
 		if !util.PathExists(cachePath) {
-			err := os.Mkdir(cachePath, 0755)
+			err := os.Mkdir(cachePath, 0o755)
 			if err != nil {
 				return nil, err
 			}

@@ -36,12 +36,16 @@ type DriverStatus struct {
 }
 
 // Supported instance drivers cache variables.
-var driverStatusesMu sync.Mutex
-var driverStatuses map[instancetype.Type]*DriverStatus
+var (
+	driverStatusesMu sync.Mutex
+	driverStatuses   map[instancetype.Type]*DriverStatus
+)
 
 // Temporary instance reference storage (for hooks).
-var instanceRefsMu sync.Mutex
-var instanceRefs map[string]instance.Instance
+var (
+	instanceRefsMu sync.Mutex
+	instanceRefs   map[string]instance.Instance
+)
 
 func init() {
 	// Expose load to the instance package, to avoid circular imports.

@@ -15,8 +15,10 @@ const prefixQEMU = "qemu"
 // nameAuthorization is the name used in Starlark for the Authorization scriptlet.
 const nameAuthorization = "authorization"
 
-var programsMu sync.Mutex
-var programs = make(map[string]*starlark.Program)
+var (
+	programsMu sync.Mutex
+	programs   = make(map[string]*starlark.Program)
+)
 
 // InstancePlacementCompile compiles the instance placement scriptlet.
 func InstancePlacementCompile(name string, src string) (*starlark.Program, error) {

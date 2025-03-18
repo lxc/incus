@@ -252,7 +252,8 @@ func (d *proxy) Start() (*deviceConfig.RunConfig, error) {
 
 			// Spawn the daemon using subprocess
 			command := d.state.OS.ExecPath
-			forkproxyargs := []string{"forkproxy",
+			forkproxyargs := []string{
+				"forkproxy",
 				"--",
 				proxyValues.listenPid,
 				proxyValues.listenPidFd,

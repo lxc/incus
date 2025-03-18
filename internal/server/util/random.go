@@ -46,7 +46,7 @@ func GenerateSequenceInt64(begin, end, step int) ([]int64, error) {
 		count = (end-step-begin)/step + 1
 	}
 
-	var sequence = make([]int64, count)
+	sequence := make([]int64, count)
 	for i := 0; i < count; i, begin = i+1, begin+step {
 		sequence[i] = int64(begin)
 	}

@@ -213,7 +213,7 @@ func StarlarkUnmarshal(input starlark.Value) (any, error) {
 	case starlark.Bool:
 		return bool(v), nil
 	case starlark.Int:
-		var result, _ = v.Int64()
+		result, _ := v.Int64()
 		return result, nil
 	case starlark.Float:
 		return float64(v), nil

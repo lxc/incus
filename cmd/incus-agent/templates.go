@@ -77,7 +77,7 @@ func templatesApply(path string) ([]string, error) {
 				}
 
 				// Mode
-				fileMode := fs.FileMode(0644)
+				fileMode := fs.FileMode(0o644)
 				if tpl.Mode != "" {
 					if len(tpl.Mode) == 3 {
 						tpl.Mode = fmt.Sprintf("0%s", tpl.Mode)
@@ -92,7 +92,7 @@ func templatesApply(path string) ([]string, error) {
 				}
 
 				// Create the directories leading to the file.
-				err := os.MkdirAll(filepath.Dir(tplPath), 0755)
+				err := os.MkdirAll(filepath.Dir(tplPath), 0o755)
 				if err != nil {
 					return err
 				}
@@ -139,7 +139,6 @@ func templatesApply(path string) ([]string, error) {
 
 			return nil
 		}(tplPath, tpl)
-
 		if err != nil {
 			return nil, err
 		}

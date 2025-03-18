@@ -61,7 +61,7 @@ func TestLoad(t *testing.T) {
 // If some keys fail to load, an ErrorList with the offending issues is
 // returned.
 func TestLoad_Error(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		title   string
 		schema  config.Schema     // Test schema to use
 		values  map[string]string // Initial values
@@ -217,7 +217,7 @@ func TestMap_ChangeError(t *testing.T) {
 		"egg": {Setter: failingSetter},
 	}
 
-	var cases = []struct {
+	cases := []struct {
 		title   string
 		changes map[string]string
 		message string

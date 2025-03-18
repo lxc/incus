@@ -55,7 +55,7 @@ func (r *CSVReport) Load() error {
 
 // Write writes current records to file.
 func (r *CSVReport) Write() error {
-	file, err := os.OpenFile(r.Filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0640)
+	file, err := os.OpenFile(r.Filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o640)
 	if err != nil {
 		return err
 	}

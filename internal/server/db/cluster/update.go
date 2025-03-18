@@ -1778,7 +1778,6 @@ CREATE TABLE "nodes_config" (
     UNIQUE (node_id, key)
 );
 	`)
-
 	if err != nil {
 		return fmt.Errorf("Failed creating nodes_config table: %w", err)
 	}

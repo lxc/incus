@@ -100,8 +100,13 @@ func PidfdSendSignal(Pidfd int, Signal int, Flags uint32) error {
 	return nil
 }
 
-const CLOSE_RANGE_UNSHARE uint32 = C.CLOSE_RANGE_UNSHARE
-const CLOSE_RANGE_CLOEXEC uint32 = C.CLOSE_RANGE_CLOEXEC
+const (
+	// CLOSE_RANGE_UNSHARE matches CLOSE_RANGE_UNSHARE flag.
+	CLOSE_RANGE_UNSHARE uint32 = C.CLOSE_RANGE_UNSHARE
+
+	// CLOSE_RANGE_CLOEXEC matches CLOSE_RANGE_CLOEXEC flag.
+	CLOSE_RANGE_CLOEXEC uint32 = C.CLOSE_RANGE_CLOEXEC
+)
 
 func CloseRange(FirstFd uint32, LastFd uint32, Flags uint32) error {
 	ret, errno := C.incus_close_range(C.uint32_t(FirstFd), C.uint32_t(LastFd), C.uint32_t(Flags))

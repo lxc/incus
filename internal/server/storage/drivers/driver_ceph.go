@@ -21,8 +21,10 @@ import (
 	"github.com/lxc/incus/v6/shared/validate"
 )
 
-var cephVersion string
-var cephLoaded bool
+var (
+	cephVersion string
+	cephLoaded  bool
+)
 
 type ceph struct {
 	common

@@ -1415,7 +1415,7 @@ func (c *cmdClusterUpdateCertificate) Run(cmd *cobra.Command, args []string) err
 
 	certf := conf.ServerCertPath(resource.remote)
 	if util.PathExists(certf) {
-		err = os.WriteFile(certf, cert, 0644)
+		err = os.WriteFile(certf, cert, 0o644)
 		if err != nil {
 			return fmt.Errorf(i18n.G("Could not write new remote certificate for remote '%s' with error: %v"), resource.remote, err)
 		}

@@ -18,8 +18,10 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 )
 
-var sysClassDrm = "/sys/class/drm"
-var procDriverNvidia = "/proc/driver/nvidia"
+var (
+	sysClassDrm      = "/sys/class/drm"
+	procDriverNvidia = "/proc/driver/nvidia"
+)
 
 func loadNvidiaProc() (map[string]*api.ResourcesGPUCardNvidia, error) {
 	nvidiaCards := map[string]*api.ResourcesGPUCardNvidia{}

@@ -45,8 +45,10 @@ import (
 )
 
 // Track last autorestart of an instance.
-var instancesLastRestart = map[int][10]time.Time{}
-var muInstancesLastRestart sync.Mutex
+var (
+	instancesLastRestart   = map[int][10]time.Time{}
+	muInstancesLastRestart sync.Mutex
+)
 
 // ErrExecCommandNotFound indicates the command is not found.
 var ErrExecCommandNotFound = api.StatusErrorf(http.StatusBadRequest, "Command not found")
@@ -600,7 +602,8 @@ func (d *common) restartCommon(inst instance.Instance, timeout time.Duration) er
 		"created":   d.creationDate,
 		"ephemeral": ephemeral,
 		"used":      d.lastUsedDate,
-		"timeout":   timeout}
+		"timeout":   timeout,
+	}
 
 	d.logger.Info("Restarting instance", ctxMap)
 

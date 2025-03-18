@@ -24,8 +24,10 @@ import (
 
 var debug bool
 
-var operationsLock sync.Mutex
-var operations = make(map[string]*Operation)
+var (
+	operationsLock sync.Mutex
+	operations     = make(map[string]*Operation)
+)
 
 // OperationClass represents the OperationClass type.
 type OperationClass int

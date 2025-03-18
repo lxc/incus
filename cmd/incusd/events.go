@@ -20,8 +20,10 @@ import (
 	"github.com/lxc/incus/v6/shared/ws"
 )
 
-var eventTypes = []string{api.EventTypeLogging, api.EventTypeOperation, api.EventTypeLifecycle, api.EventTypeNetworkACL}
-var privilegedEventTypes = []string{api.EventTypeLogging}
+var (
+	eventTypes           = []string{api.EventTypeLogging, api.EventTypeOperation, api.EventTypeLifecycle, api.EventTypeNetworkACL}
+	privilegedEventTypes = []string{api.EventTypeLogging}
+)
 
 var eventsCmd = APIEndpoint{
 	Path: "events",

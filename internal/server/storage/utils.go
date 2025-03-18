@@ -597,7 +597,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 
 		// Check for separate root file.
 		if util.PathExists(imageRootfsFile) {
-			err = os.MkdirAll(rootfsPath, 0755)
+			err = os.MkdirAll(rootfsPath, 0o755)
 			if err != nil {
 				return -1, fmt.Errorf("Error creating rootfs directory")
 			}

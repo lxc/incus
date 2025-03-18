@@ -86,7 +86,7 @@ func (c *cmdRemoteProxy) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Unable to setup unix socket: %w", err)
 	}
 
-	err = os.Chmod(path, 0600)
+	err = os.Chmod(path, 0o600)
 	if err != nil {
 		return fmt.Errorf("Unable to set socket permissions: %w", err)
 	}

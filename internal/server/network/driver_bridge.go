@@ -513,7 +513,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 	// Create directory.
 	if !util.PathExists(internalUtil.VarPath("networks", n.name)) {
-		err := os.MkdirAll(internalUtil.VarPath("networks", n.name), 0711)
+		err := os.MkdirAll(internalUtil.VarPath("networks", n.name), 0o711)
 		if err != nil {
 			return err
 		}
@@ -870,11 +870,13 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 	// Start building process using subprocess package.
 	command := "dnsmasq"
-	dnsmasqCmd := []string{"--keep-in-foreground", "--strict-order", "--bind-interfaces",
+	dnsmasqCmd := []string{
+		"--keep-in-foreground", "--strict-order", "--bind-interfaces",
 		"--except-interface=lo",
 		"--pid-file=", // Disable attempt at writing a PID file.
 		"--no-ping",   // --no-ping is very important to prevent delays to lease file updates.
-		fmt.Sprintf("--interface=%s", n.name)}
+		fmt.Sprintf("--interface=%s", n.name),
+	}
 
 	dnsmasqVersion, err := dnsmasq.GetVersion()
 	if err != nil {
@@ -981,7 +983,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 		// Configure NAT.
 		if util.IsTrue(n.config["ipv4.nat"]) {
-			//If a SNAT source address is specified, use that, otherwise default to MASQUERADE mode.
+			// If a SNAT source address is specified, use that, otherwise default to MASQUERADE mode.
 			var srcIP net.IP
 			if n.config["ipv4.nat.address"] != "" {
 				srcIP = net.ParseIP(n.config["ipv4.nat.address"])
@@ -1178,7 +1180,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 		// Configure NAT.
 		if util.IsTrue(n.config["ipv6.nat"]) {
-			//If a SNAT source address is specified, use that, otherwise default to MASQUERADE mode.
+			// If a SNAT source address is specified, use that, otherwise default to MASQUERADE mode.
 			var srcIP net.IP
 			if n.config["ipv6.nat.address"] != "" {
 				srcIP = net.ParseIP(n.config["ipv6.nat.address"])
@@ -1361,7 +1363,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 
 		// Create a config file to contain additional config (and to prevent dnsmasq from reading /etc/dnsmasq.conf)
-		err = os.WriteFile(internalUtil.VarPath("networks", n.name, "dnsmasq.raw"), []byte(fmt.Sprintf("%s\n", n.config["raw.dnsmasq"])), 0644)
+		err = os.WriteFile(internalUtil.VarPath("networks", n.name, "dnsmasq.raw"), []byte(fmt.Sprintf("%s\n", n.config["raw.dnsmasq"])), 0o644)
 		if err != nil {
 			return err
 		}
@@ -1379,7 +1381,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 		// Create DHCP hosts directory.
 		if !util.PathExists(internalUtil.VarPath("networks", n.name, "dnsmasq.hosts")) {
-			err = os.MkdirAll(internalUtil.VarPath("networks", n.name, "dnsmasq.hosts"), 0755)
+			err = os.MkdirAll(internalUtil.VarPath("networks", n.name, "dnsmasq.hosts"), 0o755)
 			if err != nil {
 				return err
 			}

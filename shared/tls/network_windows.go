@@ -11,8 +11,10 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-var once sync.Once
-var systemRoots *x509.CertPool
+var (
+	once        sync.Once
+	systemRoots *x509.CertPool
+)
 
 func systemCertPool() (*x509.CertPool, error) {
 	once.Do(initSystemRoots)

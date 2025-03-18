@@ -675,7 +675,6 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 
 			return nil
 		})
-
 		if err != nil {
 			logger.Warn("Failed reverting node config", logger.Ctx{"err": err})
 		}
@@ -736,7 +735,6 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 
 			return nil
 		})
-
 		if err != nil {
 			logger.Warn("Failed reverting cluster config", logger.Ctx{"err": err})
 		}

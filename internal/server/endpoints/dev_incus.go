@@ -32,7 +32,7 @@ func createDevIncuslListener(dir string) (net.Listener, error) {
 		return nil, err
 	}
 
-	err = socketUnixSetPermissions(path, 0666)
+	err = socketUnixSetPermissions(path, 0o666)
 	if err != nil {
 		_ = listener.Close()
 		return nil, err

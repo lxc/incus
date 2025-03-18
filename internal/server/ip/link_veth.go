@@ -14,7 +14,6 @@ type Veth struct {
 // Add adds new virtual link.
 func (veth *Veth) Add() error {
 	err := veth.Link.add("veth", append([]string{"peer"}, veth.Peer.args()...))
-
 	if err != nil {
 		return err
 	}

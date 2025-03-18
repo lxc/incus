@@ -183,7 +183,6 @@ func networkZonesGet(d *Daemon, r *http.Request) response.Response {
 		// Get list of Network zones.
 		if allProjects {
 			zoneNamesMap, err = tx.GetNetworkZones(ctx)
-
 			if err != nil {
 				return err
 			}

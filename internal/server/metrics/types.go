@@ -56,7 +56,7 @@ const (
 	MemoryInactiveBytes
 	// MemoryMappedBytes represents the amount of mapped memory.
 	MemoryMappedBytes
-	//MemoryMemAvailableBytes represents the amount of available memory.
+	// MemoryMemAvailableBytes represents the amount of available memory.
 	MemoryMemAvailableBytes
 	// MemoryMemFreeBytes represents the amount of free memory.
 	MemoryMemFreeBytes

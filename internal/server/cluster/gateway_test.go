@@ -191,7 +191,7 @@ func TestGateway_RaftNodesNotLeader(t *testing.T) {
 
 // Create a new test Gateway with the given parameters, and ensure no error happens.
 func newGateway(t *testing.T, node *db.Node, networkCert *localtls.CertInfo, s *state.State) *cluster.Gateway {
-	require.NoError(t, os.Mkdir(filepath.Join(node.Dir(), "global"), 0755))
+	require.NoError(t, os.Mkdir(filepath.Join(node.Dir(), "global"), 0o755))
 	stateFunc := func() *state.State { return s }
 	gateway, err := cluster.NewGateway(context.Background(), node, networkCert, stateFunc, cluster.Latency(0.2), cluster.LogLevel("TRACE"))
 	require.NoError(t, err)

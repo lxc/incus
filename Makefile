@@ -129,7 +129,7 @@ update-protobuf:
 update-schema:
 	cd cmd/generate-database && $(GO) build -o $(GOPATH)/bin/generate-database -tags "$(TAG_SQLITE3)" $(DEBUG) && cd -
 	$(GO) generate ./...
-	gofmt -s -w ./internal/server/db/
+	gofumpt -w ./internal/server/db/
 	goimports -w ./internal/server/db/
 	@echo "Code generation completed"
 

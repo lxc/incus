@@ -466,7 +466,8 @@ func TestGetInstancePool(t *testing.T) {
 		err = cluster.CreateInstanceDevices(context.TODO(), tx.Tx(), id, map[string]cluster.Device{
 			"root": {
 				Name: "root",
-				Config: map[string]string{"path": "/",
+				Config: map[string]string{
+					"path": "/",
 					"pool": "default",
 					"type": "disk",
 				},

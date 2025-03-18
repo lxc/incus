@@ -44,8 +44,10 @@ const ActionConsoleRetrieve Action = "console_retrieve"
 // non-reusuable operation that has now completed successfully.
 var ErrNonReusuableSucceeded error = fmt.Errorf("A matching non-reusable operation has now succeeded")
 
-var instanceOperationsLock sync.Mutex
-var instanceOperations = make(map[string]*InstanceOperation)
+var (
+	instanceOperationsLock sync.Mutex
+	instanceOperations     = make(map[string]*InstanceOperation)
+)
 
 // InstanceOperation operation locking.
 type InstanceOperation struct {

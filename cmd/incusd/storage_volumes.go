@@ -2223,7 +2223,7 @@ func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProj
 
 	// Create isos directory if needed.
 	if !util.PathExists(internalUtil.VarPath("isos")) {
-		err := os.MkdirAll(internalUtil.VarPath("isos"), 0644)
+		err := os.MkdirAll(internalUtil.VarPath("isos"), 0o644)
 		if err != nil {
 			return response.InternalError(err)
 		}
