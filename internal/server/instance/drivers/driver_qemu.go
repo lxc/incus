@@ -8084,6 +8084,17 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 			}
 		}
 
+		// Populate the CPU time allocation
+		limitsCPU, ok := d.expandedConfig["limits.cpu"]
+		if ok {
+			cpuCount, err := strconv.ParseInt(limitsCPU, 10, 64)
+			if err != nil {
+				status.CPU.AllocatedTime = cpuCount * 1_000_000_000
+			}
+		} else {
+			status.CPU.AllocatedTime = qemudefault.CPUCores * 1_000_000_000
+		}
+
 		// Populate host_name for network devices.
 		for k, m := range d.ExpandedDevices() {
 			// We only care about nics.
