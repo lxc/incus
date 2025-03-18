@@ -471,6 +471,7 @@ var APIExtensions = []string{
 	"network_dns_nameservers",
 	"acme_http01_port",
 	"network_ovn_ipv4_dhcp_expiry",
+	"instance_state_cpu_time",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
