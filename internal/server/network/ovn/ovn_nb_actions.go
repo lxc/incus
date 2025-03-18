@@ -1869,6 +1869,48 @@ func (o *NB) GetLogicalSwitchPortLocation(ctx context.Context, portName OVNSwitc
 	return val, nil
 }
 
+// UpdateLogicalSwitchPortDHCP updates the DHCP options on the logical switch port.
+func (o *NB) UpdateLogicalSwitchPortDHCP(ctx context.Context, portName OVNSwitchPort, dhcpV4UUID OVNDHCPOptionsUUID, dhcpV6UUID OVNDHCPOptionsUUID) error {
+	// Get the logical switch port.
+	lsp := ovnNB.LogicalSwitchPort{
+		Name: string(portName),
+	}
+
+	err := o.get(ctx, &lsp)
+	if err != nil {
+		return err
+	}
+
+	if dhcpV4UUID != "" {
+		dhcp4opts := string(dhcpV4UUID)
+		lsp.Dhcpv4Options = &dhcp4opts
+	}
+
+	if dhcpV6UUID != "" {
+		dhcp6opts := string(dhcpV6UUID)
+		lsp.Dhcpv6Options = &dhcp6opts
+	}
+
+	// Update the record.
+	operations, err := o.client.Where(&lsp).Update(&lsp)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // UpdateLogicalSwitchPortOptions sets the options for a logical switch port.
 func (o *NB) UpdateLogicalSwitchPortOptions(ctx context.Context, portName OVNSwitchPort, options map[string]string) error {
 	// Get the logical switch port.
