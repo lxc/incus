@@ -542,6 +542,19 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 
 	// If truenas.clone_copy is disabled or source volume has snapshots, then use full copy mode.
 	if util.IsFalse(d.config["truenas.clone_copy"]) || len(snapshots) > 0 {
+
+		// Run the replication, snaps + copy- snap. TODO: verify necessary props are replicated.
+		args := []string{"replication", "start", "--recursive", "--readonly-policy=ignore"}
+
+		if refresh {
+			/*
+				refresh implies that we may have a dest already, and since the source may be unrelated,
+				we may need to replicate from scratch. The retention policy ensures obsoleted snaps are
+				removed from the dest.
+			*/
+			args = append(args, "--retention-policy=source", "--allow-from-scratch=true")
+		}
+
 		/*
 		 instead of using full replication, and then removing snapshots, we instead take advantage of the replication task's
 		 ability to filter snapshots as they are sent.
@@ -549,15 +562,7 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 		snapName := strings.SplitN(srcSnapshot, "@", 2)[1]
 		snapRegex := fmt.Sprintf("(snapshot-.*|%s)", snapName)
 
-		// Run the replication, snaps + copy- snap. TODO: verify necessary props are replicated.
-		args := []string{"replication", "start", "--name-regex", snapRegex, "--recursive", "--readonly-policy=ignore"}
-
-		if refresh {
-			// refresh implies that we have a dest already, and that we may want to re-replicate from scratch
-			args = append(args, "--retention-policy=source" /* "--only-from-scratch=true", */, "-o", "allow_from_scratch=true") // TODO: tnc needs to be updated to fix a bug with --only-from-scratch
-		}
-
-		args = append(args, srcDataset, destDataset)
+		args = append(args, "--name-regex", snapRegex, srcDataset, destDataset)
 
 		_, err := d.runTool(args...)
 		if err != nil {
