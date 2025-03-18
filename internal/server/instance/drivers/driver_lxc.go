@@ -7325,6 +7325,19 @@ func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, st
 	return instCmd, nil
 }
 
+func (d *lxc) cpuStateUsage(cg *cgroup.CGroup) (int64, bool) {
+	if !d.state.OS.CGInfo.Supports(cgroup.CPUAcct, cg) {
+		return -1, false
+	}
+
+	value, err := cg.GetCPUAcctUsage()
+	if err != nil {
+		return -1, true
+	}
+
+	return value, true
+}
+
 func (d *lxc) cpuState() api.InstanceStateCPU {
 	cpu := api.InstanceStateCPU{}
 
@@ -7333,23 +7346,31 @@ func (d *lxc) cpuState() api.InstanceStateCPU {
 		return cpu
 	}
 
-	// CPU usage in seconds
 	cg, err := d.cgroup(cc, true)
 	if err != nil {
 		return cpu
 	}
 
-	if !d.state.OS.CGInfo.Supports(cgroup.CPUAcct, cg) {
-		return cpu
+	cpuUsage, ok := d.cpuStateUsage(cg)
+	if ok {
+		cpu.Usage = cpuUsage
 	}
 
-	value, err := cg.GetCPUAcctUsage()
+	cpuCount, err := cg.GetEffectiveCPUs()
 	if err != nil {
-		cpu.Usage = -1
 		return cpu
 	}
 
-	cpu.Usage = value
+	limitPeriod, limitQuota, err := cg.GetCPUCfsLimit()
+	if err != nil {
+		return cpu
+	}
+
+	if limitQuota == -1 {
+		cpu.AllocatedTime = int64(cpuCount) * 1_000_000_000
+	} else {
+		cpu.AllocatedTime = 1_000_000_000 * limitQuota / limitPeriod
+	}
 
 	return cpu
 }
