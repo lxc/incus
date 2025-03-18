@@ -399,6 +399,18 @@ test_basic_usage() {
   [ "$(incus config get test-limits limits.cpu)" = "1" ]
   [ "$(incus config get test-limits limits.cpu.allowance)" = "50%" ]
   [ "$(incus config get test-limits limits.memory)" = "204MiB" ]
+
+  # Test CPU allocation information
+  [ "$(incus query /1.0/instances/test-limits/state | jq -r '.cpu.allocated_time')" = "1000000000" ]
+  incus config set test-limits limits.cpu.allowance 100ms/200ms
+  [ "$(incus query /1.0/instances/test-limits/state | jq -r '.cpu.allocated_time')" = "500000000" ]
+  incus config set test-limits limits.cpu 2
+  [ "$(incus query /1.0/instances/test-limits/state | jq -r '.cpu.allocated_time')" = "500000000" ]
+  incus config unset test-limits limits.cpu.allowance
+  [ "$(incus query /1.0/instances/test-limits/state | jq -r '.cpu.allocated_time')" = "2000000000" ]
+  incus config unset test-limits limits.cpu
+  [ "$(incus query /1.0/instances/test-limits/state | jq -r '.cpu.allocated_time')" = "$(nproc)000000000" ]
+
   incus delete -f test-limits
 
   # Test last_used_at field is working properly
