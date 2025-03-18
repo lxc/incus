@@ -336,9 +336,16 @@ func (n *physical) Update(newNetwork api.NetworkPut, targetNode string, clientTy
 		return err
 	}
 
-	err = n.setup(oldNetwork.Config)
-	if err != nil {
-		return err
+	if !hostNameChanged {
+		err = n.setup(oldNetwork.Config)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = n.setup(nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Update OVS bridge entries (for dependent OVN networks).
