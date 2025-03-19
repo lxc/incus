@@ -250,10 +250,10 @@ func osState() *api.InstanceStateOSInfo {
 	osInfo := &api.InstanceStateOSInfo{}
 
 	// Get information about the OS.
-	lsbRelease, err := osarch.GetLSBRelease()
+	lsbRelease, err := osarch.GetOSRelease()
 	if err == nil {
 		osInfo.OS = lsbRelease["NAME"]
-		osInfo.OSVersion = lsbRelease["VERSION"]
+		osInfo.OSVersion = lsbRelease["VERSION_ID"]
 	}
 
 	// Get information about the kernel version.

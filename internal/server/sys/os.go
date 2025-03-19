@@ -178,7 +178,7 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 	s.CGInfo = cgroup.GetInfo()
 
 	// Fill in the OS release info.
-	osInfo, err := osarch.GetLSBRelease()
+	osInfo, err := osarch.GetOSRelease()
 	if err != nil {
 		return nil, err
 	}
