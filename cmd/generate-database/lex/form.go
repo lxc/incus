@@ -12,6 +12,10 @@ func Plural(s string) string {
 		return s
 	}
 
+	if strings.HasSuffix(s, "ch") || strings.HasSuffix(s, "sh") || strings.HasSuffix(s, "ss") {
+		return s + "es"
+	}
+
 	if s[len(s)-1] != 's' {
 		return s + "s"
 	}
@@ -22,6 +26,11 @@ func Plural(s string) string {
 // Singular converts to singular form ("foos" -> "foo").
 func Singular(s string) string {
 	// TODO: smarter algorithm? :)
+	before, ok := strings.CutSuffix(s, "es")
+	if ok && (strings.HasSuffix(before, "ch") || strings.HasSuffix(before, "sh") || strings.HasSuffix(before, "ss")) {
+		return before
+	}
+
 	if s[len(s)-1] == 's' {
 		return s[:len(s)-1]
 	}
