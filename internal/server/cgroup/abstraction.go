@@ -749,6 +749,65 @@ func (cg *CGroup) SetCPUCfsLimit(limitPeriod int64, limitQuota int64) error {
 	return ErrUnknownVersion
 }
 
+// GetCPUCfsLimit gets the quota and duration in ms for each scheduling period.
+func (cg *CGroup) GetCPUCfsLimit() (int64, int64, error) {
+	version := cgControllers["cpu"]
+	switch version {
+	case Unavailable:
+		return -1, -1, ErrControllerMissing
+	case V1:
+		limitQuotaStr, err := cg.rw.Get(version, "cpu", "cpu.cfs_quota_us")
+		if err != nil {
+			return -1, -1, err
+		}
+
+		limitQuota, err := strconv.ParseInt(limitQuotaStr, 10, 64)
+		if err != nil {
+			return -1, -1, err
+		}
+
+		limitPeriodStr, err := cg.rw.Get(version, "cpu", "cpu.cfs_period_us")
+		if err != nil {
+			return -1, -1, err
+		}
+
+		limitPeriod, err := strconv.ParseInt(limitPeriodStr, 10, 64)
+		if err != nil {
+			return -1, -1, err
+		}
+
+		return limitPeriod, limitQuota, nil
+	case V2:
+		cpuMax, err := cg.rw.Get(version, "cpu", "cpu.max")
+		if err != nil {
+			return -1, -1, err
+		}
+
+		cpuMaxFields := strings.Split(cpuMax, " ")
+		if len(cpuMaxFields) != 2 {
+			return -1, -1, errors.New("Couldn't parse CFS limits")
+		}
+
+		if cpuMaxFields[0] == "max" {
+			return -1, -1, nil
+		}
+
+		limitQuota, err := strconv.ParseInt(cpuMaxFields[0], 10, 64)
+		if err != nil {
+			return -1, -1, err
+		}
+
+		limitPeriod, err := strconv.ParseInt(cpuMaxFields[1], 10, 64)
+		if err != nil {
+			return -1, -1, err
+		}
+
+		return limitPeriod, limitQuota, nil
+	}
+
+	return -1, -1, ErrUnknownVersion
+}
+
 // SetHugepagesLimit applies a limit to the number of processes.
 func (cg *CGroup) SetHugepagesLimit(pageType string, limit int64) error {
 	version := cgControllers["hugetlb"]

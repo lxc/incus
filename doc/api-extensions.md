@@ -2748,3 +2748,7 @@ Adds `acme.http.port` to control an alternative HTTP port for `HTTP-01` validati
 ## `network_ovn_ipv4_dhcp_expiry`
 
 Introduces `ipv4.dhcp.expiry` for OVN networks.
+
+## `instance_state_cpu_time`
+
+This adds an `allocated_time` field below `CPU` in the instance state API.

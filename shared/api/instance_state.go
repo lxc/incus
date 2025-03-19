@@ -98,6 +98,12 @@ type InstanceStateCPU struct {
 	// CPU usage in nanoseconds
 	// Example: 3637691016
 	Usage int64 `json:"usage" yaml:"usage"`
+
+	// CPU time available per second, in nanoseconds
+	// Example: 4000000000
+	//
+	// API extension: instance_state_cpu_time
+	AllocatedTime int64 `json:"allocated_time" yaml:"allocated_time"`
 }
 
 // InstanceStateMemory represents the memory information section of an instance's state.

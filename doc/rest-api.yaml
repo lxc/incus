@@ -2306,6 +2306,12 @@ definitions:
         x-go-package: github.com/lxc/incus/v6/shared/api
     InstanceStateCPU:
         properties:
+            allocated_time:
+                description: CPU time available per second, in nanoseconds
+                example: 4000000000
+                format: int64
+                type: integer
+                x-go-name: AllocatedTime
             usage:
                 description: CPU usage in nanoseconds
                 example: 3637691016
