@@ -35,6 +35,9 @@ This will initiate a call to `generate-database db mapper generate`,
 which will then search for `//generate-database:mapper` directives in the same file
 and process those.
 
+The following flags are available:
+* `--package` / `-p`: Package import paths to search for structs to parse. Defaults to the caller package. Can be used more than once.
+
 #### File
 
 Generally the first thing we will want to do for any newly generated file is to
@@ -83,6 +86,8 @@ Type                                  | Description
 :---                                  | :----
 `objects`                             | Creates a basic SELECT statement of the form `SELECT <columns> FROM <table> ORDER BY <columns>`.
 `objects-by-<FIELD>-and-<FIELD>...`   | Parses a pre-existing SELECT statement variable declaration of the form produced by`objects`, and appends a `WHERE` clause with the given fields located in the associated struct. Specifically looks for a variable declaration of the form `var <entity>Objects = RegisterStmt("SQL String")`
+`names`                               | Creates a basic SELECT statement of the form `SELECT <primary key> FROM <table> ORDER BY <primary key>`.
+`names-by-<FIELD>-and-<FIELD>...`     | Parses a pre-existing SELECT statement variable declaration of the form produced by`names`, and appends a `WHERE` clause with the given fields located in the associated struct. Specifically looks for a variable declaration of the form `var <entity>Objects = RegisterStmt("SQL String")`
 `create`                              | Creates a basic INSERT statement of the form `INSERT INTO <table> VALUES`.
 `create-or-replace`                   | Creates a basic INSERT statement of the form `INSERT OR REPLACE INTO <table> VALUES`.
 `delete-by-<FIELD>-and-<FIELD>...`    | Creates a DELETE statement of the form `DELETE FROM <table> WHERE <constraint>` where the constraint is based on the given fields of the associated struct.
@@ -123,6 +128,7 @@ Go function generation supports the following types:
 
 Type                                | Description
 :---                                | :----
+`GetNames`                          | Return a slice of primary keys for all rows in a table matching the filter. Cannot be used with composite keys.
 `GetMany`                           | Return a slice of structs for all rows in a table matching the filter.
 `GetOne`                            | Return a single struct corresponding to a row with the given primary keys. Depends on `GetMany`.
 `ID`                                | Return the ID column from the table corresponding to the given primary keys.
