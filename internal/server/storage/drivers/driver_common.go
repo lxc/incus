@@ -202,7 +202,7 @@ func (d *common) validateVolume(vol Volume, driverRules map[string]func(value st
 
 // MigrationType returns the type of transfer methods to be used when doing migrations between pools
 // in preference order.
-func (d *common) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool) []localMigration.Type {
+func (d *common) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []localMigration.Type {
 	var transportType migration.MigrationFSType
 	var rsyncFeatures []string
 

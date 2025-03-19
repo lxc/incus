@@ -138,7 +138,7 @@ type Pool interface {
 	RestoreCustomVolume(projectName string, volName string, snapshotName string, op *operations.Operation) error
 
 	// Custom volume migration.
-	MigrationTypes(contentType drivers.ContentType, refresh bool, copySnapshots bool) []migration.Type
+	MigrationTypes(contentType drivers.ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []migration.Type
 	CreateCustomVolumeFromMigration(projectName string, conn io.ReadWriteCloser, args migration.VolumeTargetArgs, op *operations.Operation) error
 	MigrateCustomVolume(projectName string, conn io.ReadWriteCloser, args *migration.VolumeSourceArgs, op *operations.Operation) error
 

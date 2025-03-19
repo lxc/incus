@@ -140,6 +140,7 @@ jobs:
           - lvm
           - zfs
           - ceph
+          - linstor
           - random
         os:
           - ubuntu-22.04
@@ -391,6 +392,48 @@ jobs:
           sudo microceph.ceph status
           sudo rm -f /snap/bin/rbd
 
+      - name: Setup LINSTOR
+        if: ${{ matrix.backend == 'linstor' }}
+        run: |
+          set -x
+
+          # As with Ceph, we hope for a spare disk.
+          if [ "$(stat -c '%d' /)" = "$(stat -c '%d' /mnt)" ]; then
+            echo "FAIL: rootfs and ephemeral part on the same disk, aborting"
+            exit 1
+          fi
+
+          sudo add-apt-repository ppa:linbit/linbit-drbd9-stack -y
+
+          # Install everything required to compile DRBD and run LINSTOR tools.
+          sudo apt-get install --no-install-recommends -y \
+            drbd-dkms \
+            linstor-client \
+            linstor-controller \
+            linstor-satellite \
+            linux-headers-generic \
+            python3-setuptools
+
+          # Enable DRBD.
+          sudo modprobe -r drbd
+          sudo modprobe drbd
+
+          # Get the runner IP.
+          runner_ip="$(hostname -I | cut -d' ' -f1)"
+
+          # Create a single local node.
+          sudo linstor node create local "${runner_ip}" --node-type combined
+
+          # Repurpose the ephemeral disk for LINSTOR physical storage.
+          sudo swapoff /mnt/swapfile
+          ephemeral_disk="$(findmnt --noheadings --output SOURCE --target /mnt | sed 's/[0-9]\+$//')"
+          sudo umount /mnt
+          sudo wipefs -a "${ephemeral_disk}"
+          sudo linstor physical-storage create-device-pool --storage-pool incus --pool-name linstor-incus lvmthin local "${ephemeral_disk}"
+
+          # Update the runner env.
+          echo "INCUS_LINSTOR_CLUSTER=${runner_ip}" >> "$GITHUB_ENV"
+
       - name: "Ensure offline mode (block image server)"
         run: |
           sudo nft add table inet filter
@@ -404,6 +447,7 @@ jobs:
           INCUS_CEPH_CLUSTER: "ceph"
           INCUS_CEPH_CEPHFS: "cephfs"
           INCUS_CEPH_CEPHOBJECT_RADOSGW: "http://127.0.0.1"
+          INCUS_LINSTOR_LOCAL_SATELLITE: "local"
           INCUS_CONCURRENT: "1"
           INCUS_VERBOSE: "1"
           INCUS_OFFLINE: "1"
@@ -413,7 +457,7 @@ jobs:
           chmod +x ~
           echo "root:1000000:1000000000" | sudo tee /etc/subuid /etc/subgid
           cd test
-          sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS, INCUS_BACKEND=${{ matrix.backend }} ./main.sh ${{ matrix.suite }}
+          sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_LINSTOR_LOCAL_SATELLITE,INCUS_LINSTOR_CLUSTER,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS, INCUS_BACKEND=${{ matrix.backend }} ./main.sh ${{ matrix.suite }}
 
   client:
     name: Client

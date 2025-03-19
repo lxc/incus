@@ -2870,6 +2870,46 @@
 							"shortdesc": "Volume to use to store the image tarballs",
 							"type": "string"
 						}
+					},
+					{
+						"storage.linstor.ca_cert": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "LINSTOR SSL certificate authority",
+							"type": "string"
+						}
+					},
+					{
+						"storage.linstor.client_cert": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "LINSTOR SSL client certificate",
+							"type": "string"
+						}
+					},
+					{
+						"storage.linstor.client_key": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "LINSTOR SSL client key",
+							"type": "string"
+						}
+					},
+					{
+						"storage.linstor.controller_connection": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "LINSTOR controller connection string",
+							"type": "string"
+						}
+					},
+					{
+						"storage.linstor.satellite.name": {
+							"longdesc": "Set this option to the name of the local LINSTOR satellite node, should it be different from the Incus server name.",
+							"scope": "global",
+							"shortdesc": "LINSTOR satellite node name override",
+							"type": "string"
+						}
 					}
 				]
 			},
