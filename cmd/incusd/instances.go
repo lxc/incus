@@ -209,7 +209,7 @@ func instanceShouldAutoStart(inst instance.Instance) bool {
 
 func instancesStart(s *state.State, instances []instance.Instance) {
 	// Check if the cluster is currently evacuated.
-	if s.DB.Cluster.LocalNodeIsEvacuated() {
+	if s.ServerClustered && s.DB.Cluster.LocalNodeIsEvacuated() {
 		return
 	}
 
