@@ -32,6 +32,11 @@ import (
 const ContentTypeFsImg = ContentType("fs-img")
 
 func blockifyMountPath(vol *Volume) {
+	/*
+		we need to mount filesystems to access their root.img, so that we can mount the filesystem. This
+		means we need an additional mountpoint. We use the customMountPath feature to suffix .block
+		without modifying the volume name
+	*/
 	vol.mountCustomPath = ""
 
 	if vol.IsSnapshot() {
@@ -44,7 +49,7 @@ func blockifyMountPath(vol *Volume) {
 	}
 }
 
-// returns a clone of the img, but margked as an fs-img
+// returns a clone of the vol, but margked as an fs-img
 func cloneVolAsFsImgVol(vol Volume) Volume {
 	fsImgVol := vol.Clone()
 	blockifyMountPath(&fsImgVol)
@@ -53,6 +58,7 @@ func cloneVolAsFsImgVol(vol Volume) Volume {
 	return fsImgVol
 }
 
+// returns true if the vol is an fs-img
 func isFsImgVol(vol Volume) bool {
 	/*
 		we need a third volume type so that we can tell the difference between an
@@ -65,6 +71,7 @@ func isFsImgVol(vol Volume) bool {
 
 }
 
+// returns true if the vol requires an underyling fs-img
 func needsFsImgVol(vol Volume) bool {
 	/*
 		does the volume need an underlying FsImgVol
@@ -548,6 +555,8 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 
 		if refresh {
 			/*
+				refresh is essentially an optimized form of replace.
+
 				refresh implies that we may have a dest already, and since the source may be unrelated,
 				we may need to replicate from scratch. The retention policy ensures obsoleted snaps are
 				removed from the dest.
@@ -556,8 +565,8 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 		}
 
 		/*
-		 instead of using full replication, and then removing snapshots, we instead take advantage of the replication task's
-		 ability to filter snapshots as they are sent.
+			instead of using full replication, and then removing snapshots, we instead take advantage of the replication task's
+			ability to filter snapshots as they are sent.
 		*/
 		snapName := strings.SplitN(srcSnapshot, "@", 2)[1]
 		snapRegex := fmt.Sprintf("(snapshot-.*|%s)", snapName)
@@ -872,11 +881,10 @@ func (d *truenas) commonVolumeRules() map[string]func(value string) error {
 		"block.filesystem":     validate.Optional(validate.IsOneOf(blockBackedAllowedFilesystems...)),
 		"block.mount_options":  validate.IsAny,
 		"truenas.block_mode":   validate.Optional(validate.IsBool),
-		"zfs.blocksize":        validate.Optional(ValidateZfsBlocksize),
+		"zfs.blocksize":        validate.Optional(ValidateZfsBlocksize), // zfs.blocksize is hard-coded in backend.shouldUseOptimizedImage
 		"zfs.remove_snapshots": validate.Optional(validate.IsBool),
 		"zfs.reserve_space":    validate.Optional(validate.IsBool),
 		"zfs.use_refquota":     validate.Optional(validate.IsBool),
-		"zfs.delegate":         validate.Optional(validate.IsBool),
 	}
 }
 
