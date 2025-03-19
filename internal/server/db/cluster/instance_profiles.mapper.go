@@ -44,15 +44,10 @@ DELETE FROM instances_profiles WHERE instance_id = ?
 
 // GetProfileInstances returns all available Instances for the Profile.
 // generator: instance_profile GetMany
-func GetProfileInstances(ctx context.Context, db dbtx, profileID int) (_ []Instance, _err error) {
+func GetProfileInstances(ctx context.Context, db tx, profileID int) (_ []Instance, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance_profile")
 	}()
-
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return nil, fmt.Errorf("Committable DB connection (transaction) required")
-	}
 
 	var err error
 
@@ -141,15 +136,10 @@ func getInstanceProfilesRaw(ctx context.Context, db dbtx, sql string, args ...an
 
 // GetInstanceProfiles returns all available Profiles for the Instance.
 // generator: instance_profile GetMany
-func GetInstanceProfiles(ctx context.Context, db dbtx, instanceID int) (_ []Profile, _err error) {
+func GetInstanceProfiles(ctx context.Context, db tx, instanceID int) (_ []Profile, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance_profile")
 	}()
-
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return nil, fmt.Errorf("Committable DB connection (transaction) required")
-	}
 
 	var err error
 
@@ -184,15 +174,10 @@ func GetInstanceProfiles(ctx context.Context, db dbtx, instanceID int) (_ []Prof
 
 // CreateInstanceProfiles adds a new instance_profile to the database.
 // generator: instance_profile Create
-func CreateInstanceProfiles(ctx context.Context, db dbtx, objects []InstanceProfile) (_err error) {
+func CreateInstanceProfiles(ctx context.Context, db tx, objects []InstanceProfile) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance_profile")
 	}()
-
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return fmt.Errorf("Committable DB connection (transaction) required")
-	}
 
 	for _, object := range objects {
 		args := make([]any, 3)
@@ -228,7 +213,7 @@ func CreateInstanceProfiles(ctx context.Context, db dbtx, objects []InstanceProf
 
 // DeleteInstanceProfiles deletes the instance_profile matching the given key parameters.
 // generator: instance_profile DeleteMany
-func DeleteInstanceProfiles(ctx context.Context, db dbtx, instanceID int) (_err error) {
+func DeleteInstanceProfiles(ctx context.Context, db tx, instanceID int) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance_profile")
 	}()

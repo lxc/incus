@@ -178,7 +178,7 @@ func GetClusterGroups(ctx context.Context, db dbtx, filters ...ClusterGroupFilte
 
 // GetClusterGroupConfig returns all available ClusterGroup Config
 // generator: cluster_group GetMany
-func GetClusterGroupConfig(ctx context.Context, db dbtx, clusterGroupID int, filters ...ConfigFilter) (_ map[string]string, _err error) {
+func GetClusterGroupConfig(ctx context.Context, db tx, clusterGroupID int, filters ...ConfigFilter) (_ map[string]string, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Cluster_group")
 	}()
@@ -223,7 +223,7 @@ func GetClusterGroup(ctx context.Context, db dbtx, name string) (_ *ClusterGroup
 
 // GetClusterGroupID return the ID of the cluster_group with the given key.
 // generator: cluster_group ID
-func GetClusterGroupID(ctx context.Context, db dbtx, name string) (_ int64, _err error) {
+func GetClusterGroupID(ctx context.Context, db tx, name string) (_ int64, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Cluster_group")
 	}()
@@ -349,11 +349,6 @@ func CreateClusterGroupConfig(ctx context.Context, db dbtx, clusterGroupID int64
 		_err = mapErr(_err, "Cluster_group")
 	}()
 
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return fmt.Errorf("Committable DB connection (transaction) required")
-	}
-
 	referenceID := int(clusterGroupID)
 	for key, value := range config {
 		insert := Config{
@@ -374,7 +369,7 @@ func CreateClusterGroupConfig(ctx context.Context, db dbtx, clusterGroupID int64
 
 // UpdateClusterGroup updates the cluster_group matching the given key parameters.
 // generator: cluster_group Update
-func UpdateClusterGroup(ctx context.Context, db dbtx, name string, object ClusterGroup) (_err error) {
+func UpdateClusterGroup(ctx context.Context, db tx, name string, object ClusterGroup) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Cluster_group")
 	}()
@@ -408,7 +403,7 @@ func UpdateClusterGroup(ctx context.Context, db dbtx, name string, object Cluste
 
 // UpdateClusterGroupConfig updates the cluster_group Config matching the given key parameters.
 // generator: cluster_group Update
-func UpdateClusterGroupConfig(ctx context.Context, db dbtx, clusterGroupID int64, config map[string]string) (_err error) {
+func UpdateClusterGroupConfig(ctx context.Context, db tx, clusterGroupID int64, config map[string]string) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Cluster_group")
 	}()

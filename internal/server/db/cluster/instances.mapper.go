@@ -678,7 +678,7 @@ func GetInstances(ctx context.Context, db dbtx, filters ...InstanceFilter) (_ []
 
 // GetInstanceDevices returns all available Instance Devices
 // generator: instance GetMany
-func GetInstanceDevices(ctx context.Context, db dbtx, instanceID int, filters ...DeviceFilter) (_ map[string]Device, _err error) {
+func GetInstanceDevices(ctx context.Context, db tx, instanceID int, filters ...DeviceFilter) (_ map[string]Device, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
@@ -703,7 +703,7 @@ func GetInstanceDevices(ctx context.Context, db dbtx, instanceID int, filters ..
 
 // GetInstanceConfig returns all available Instance Config
 // generator: instance GetMany
-func GetInstanceConfig(ctx context.Context, db dbtx, instanceID int, filters ...ConfigFilter) (_ map[string]string, _err error) {
+func GetInstanceConfig(ctx context.Context, db tx, instanceID int, filters ...ConfigFilter) (_ map[string]string, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
@@ -749,7 +749,7 @@ func GetInstance(ctx context.Context, db dbtx, project string, name string) (_ *
 
 // GetInstanceID return the ID of the instance with the given key.
 // generator: instance ID
-func GetInstanceID(ctx context.Context, db dbtx, project string, name string) (_ int64, _err error) {
+func GetInstanceID(ctx context.Context, db tx, project string, name string) (_ int64, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
@@ -850,15 +850,10 @@ func CreateInstance(ctx context.Context, db dbtx, object Instance) (_ int64, _er
 
 // CreateInstanceDevices adds new instance Devices to the database.
 // generator: instance Create
-func CreateInstanceDevices(ctx context.Context, db dbtx, instanceID int64, devices map[string]Device) (_err error) {
+func CreateInstanceDevices(ctx context.Context, db tx, instanceID int64, devices map[string]Device) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
-
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return fmt.Errorf("Committable DB connection (transaction) required")
-	}
 
 	for key, device := range devices {
 		device.ReferenceID = int(instanceID)
@@ -879,11 +874,6 @@ func CreateInstanceConfig(ctx context.Context, db dbtx, instanceID int64, config
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
-
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return fmt.Errorf("Committable DB connection (transaction) required")
-	}
 
 	referenceID := int(instanceID)
 	for key, value := range config {
@@ -965,7 +955,7 @@ func DeleteInstance(ctx context.Context, db dbtx, project string, name string) (
 
 // UpdateInstance updates the instance matching the given key parameters.
 // generator: instance Update
-func UpdateInstance(ctx context.Context, db dbtx, project string, name string, object Instance) (_err error) {
+func UpdateInstance(ctx context.Context, db tx, project string, name string, object Instance) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
@@ -999,7 +989,7 @@ func UpdateInstance(ctx context.Context, db dbtx, project string, name string, o
 
 // UpdateInstanceDevices updates the instance Device matching the given key parameters.
 // generator: instance Update
-func UpdateInstanceDevices(ctx context.Context, db dbtx, instanceID int64, devices map[string]Device) (_err error) {
+func UpdateInstanceDevices(ctx context.Context, db tx, instanceID int64, devices map[string]Device) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
@@ -1014,7 +1004,7 @@ func UpdateInstanceDevices(ctx context.Context, db dbtx, instanceID int64, devic
 
 // UpdateInstanceConfig updates the instance Config matching the given key parameters.
 // generator: instance Update
-func UpdateInstanceConfig(ctx context.Context, db dbtx, instanceID int64, config map[string]string) (_err error) {
+func UpdateInstanceConfig(ctx context.Context, db tx, instanceID int64, config map[string]string) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()

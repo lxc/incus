@@ -209,7 +209,7 @@ func GetNetworkIntegrations(ctx context.Context, db dbtx, filters ...NetworkInte
 
 // GetNetworkIntegrationConfig returns all available NetworkIntegration Config
 // generator: network_integration GetMany
-func GetNetworkIntegrationConfig(ctx context.Context, db dbtx, networkIntegrationID int, filters ...ConfigFilter) (_ map[string]string, _err error) {
+func GetNetworkIntegrationConfig(ctx context.Context, db tx, networkIntegrationID int, filters ...ConfigFilter) (_ map[string]string, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Network_integration")
 	}()
@@ -326,11 +326,6 @@ func CreateNetworkIntegrationConfig(ctx context.Context, db dbtx, networkIntegra
 		_err = mapErr(_err, "Network_integration")
 	}()
 
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return fmt.Errorf("Committable DB connection (transaction) required")
-	}
-
 	referenceID := int(networkIntegrationID)
 	for key, value := range config {
 		insert := Config{
@@ -351,7 +346,7 @@ func CreateNetworkIntegrationConfig(ctx context.Context, db dbtx, networkIntegra
 
 // GetNetworkIntegrationID return the ID of the network_integration with the given key.
 // generator: network_integration ID
-func GetNetworkIntegrationID(ctx context.Context, db dbtx, name string) (_ int64, _err error) {
+func GetNetworkIntegrationID(ctx context.Context, db tx, name string) (_ int64, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Network_integration")
 	}()
@@ -437,7 +432,7 @@ func DeleteNetworkIntegration(ctx context.Context, db dbtx, name string) (_err e
 
 // UpdateNetworkIntegration updates the network_integration matching the given key parameters.
 // generator: network_integration Update
-func UpdateNetworkIntegration(ctx context.Context, db dbtx, name string, object NetworkIntegration) (_err error) {
+func UpdateNetworkIntegration(ctx context.Context, db tx, name string, object NetworkIntegration) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Network_integration")
 	}()
@@ -471,7 +466,7 @@ func UpdateNetworkIntegration(ctx context.Context, db dbtx, name string, object 
 
 // UpdateNetworkIntegrationConfig updates the network_integration Config matching the given key parameters.
 // generator: network_integration Update
-func UpdateNetworkIntegrationConfig(ctx context.Context, db dbtx, networkIntegrationID int64, config map[string]string) (_err error) {
+func UpdateNetworkIntegrationConfig(ctx context.Context, db tx, networkIntegrationID int64, config map[string]string) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Network_integration")
 	}()

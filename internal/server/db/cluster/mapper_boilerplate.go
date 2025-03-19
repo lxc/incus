@@ -10,6 +10,13 @@ import (
 	"fmt"
 )
 
+type tx interface { //nolint:unused
+	dbtx
+
+	Commit() error
+	Rollback() error
+}
+
 type dbtx interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 	PrepareContext(ctx context.Context, query string) (*sql.Stmt, error)
