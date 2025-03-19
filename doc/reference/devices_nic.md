@@ -10,6 +10,11 @@ NICs support hotplugging for both containers and VMs (with the exception of the 
 Network devices, also referred to as *Network Interface Controllers* or *NICs*, supply a connection to a network.
 Incus supports several different types of network devices (*NIC types*).
 
+```{note}
+When using a USB network adapter with a VM, mainline QEMU will replace the leading two bytes of a MAC address with `40:`.
+Those affected by this may want to manually set the `hwaddr` property to a MAC address starting with `40:` to align the host and guest reporting of the MAC.
+```
+
 ## `nictype` vs. `network`
 
 When adding a network device to an instance, there are two methods to specify the type of device that you want to add: through the `nictype` device option or the `network` device option.
@@ -75,6 +80,7 @@ Key                                   | Type    | Default           | Managed | 
 `boot.priority`                       | integer | -                 | no      | Boot priority for VMs (higher value boots first)
 `host_name`                           | string  | randomly assigned | no      | The name of the interface inside the host
 `hwaddr`                              | string  | randomly assigned | no      | The MAC address of the new interface
+`io.bus`                              | string  | `virtio`          | no      | Override the bus for the device (can be `virtio` or `usb`) (VM only)
 `ipv4.address`                        | string  | -                 | no      | An IPv4 address to assign to the instance through DHCP (can be `none` to restrict all IPv4 traffic when `security.ipv4_filtering` is set)
 `ipv4.routes`                         | string  | -                 | no      | Comma-delimited list of IPv4 static routes to add on host to NIC
 `ipv4.routes.external`                | string  | -                 | no      | Comma-delimited list of IPv4 static routes to route to the NIC and publish on uplink network (BGP)
@@ -123,6 +129,7 @@ Key                     | Type    | Default           | Managed | Description
 `boot.priority`         | integer | -                 | no      | Boot priority for VMs (higher value boots first)
 `gvrp`                  | bool    | `false`           | no      | Register VLAN using GARP VLAN Registration Protocol
 `hwaddr`                | string  | randomly assigned | no      | The MAC address of the new interface
+`io.bus`                | string  | `virtio`          | no      | Override the bus for the device (can be `virtio` or `usb`) (VM only)
 `mode`                  | string  | `bridge`          | no      | Macvlan mode (one of `bridge`, `vepa`, `passthru` or `private`)
 `mtu`                   | integer | parent MTU        | yes     | The MTU of the new interface
 `name`                  | string  | kernel assigned   | no      | The name of the interface inside the instance
@@ -350,6 +357,7 @@ Key                     | Type    | Default           | Description
 `boot.priority`         | integer | -                 | Boot priority for VMs (higher value boots first)
 `host_name`             | string  | randomly assigned | The name of the interface inside the host
 `hwaddr`                | string  | randomly assigned | The MAC address of the new interface
+`io.bus`                | string  | `virtio`          | Override the bus for the device (can be `virtio` or `usb`) (VM only)
 `ipv4.routes`           | string  | -                 | Comma-delimited list of IPv4 static routes to add on host to NIC
 `ipv6.routes`           | string  | -                 | Comma-delimited list of IPv6 static routes to add on host to NIC
 `limits.egress`         | string  | -                 | I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)
@@ -429,6 +437,7 @@ Key                     | Type    | Default           | Description
 `gvrp`                  | bool    | `false`           | Register VLAN using GARP VLAN Registration Protocol
 `host_name`             | string  | randomly assigned | The name of the interface inside the host
 `hwaddr`                | string  | randomly assigned | The MAC address of the new interface
+`io.bus`                | string  | `virtio`          | Override the bus for the device (can be `virtio` or `usb`) (VM only)
 `ipv4.address`          | string  | -                 | Comma-delimited list of IPv4 static addresses to add to the instance
 `ipv4.gateway`          | string  | `auto`            | Whether to add an automatic default IPv4 gateway (can be `auto` or `none`)
 `ipv4.host_address`     | string  | `169.254.0.1`     | The IPv4 address to add to the host-side `veth` interface
