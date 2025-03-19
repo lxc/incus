@@ -65,6 +65,8 @@ func (s *Stmt) Generate(buf *file.Buffer) error {
 	switch kind {
 	case "objects":
 		return s.objects(buf)
+	case "names":
+		return s.names(buf)
 	case "delete":
 		return s.delete(buf)
 	case "create":
@@ -217,6 +219,124 @@ func (s *Stmt) objectsBy(buf *file.Buffer) error {
 	queryParts[0] = fmt.Sprintf("%sWHERE ( %s)", queryParts[0], strings.Join(where, "AND "))
 	sqlString = strings.Join(queryParts, "\n  ORDER BY")
 	s.register(buf, stmtCodeVar(s.entity, "objects", filters...), sqlString)
+
+	return nil
+}
+
+func (s *Stmt) names(buf *file.Buffer) error {
+	if strings.HasPrefix(s.kind, "names-by") {
+		return s.namesBy(buf)
+	}
+
+	mapping, err := Parse(s.localPath, s.pkgs, lex.PascalCase(s.entity), s.kind)
+	if err != nil {
+		return err
+	}
+
+	if len(mapping.NaturalKey()) > 1 {
+		return fmt.Errorf("Can't return names for composite key objects")
+	}
+
+	table := mapping.TableName(s.entity, s.config["table"])
+	boiler := stmts["names"]
+	field := mapping.NaturalKey()[0]
+	column, err := field.SelectColumn(mapping, table)
+	if err != nil {
+		return err
+	}
+
+	orderByField := field
+	if field.Config.Get("order") != "" {
+		orderByField = field
+	}
+
+	orderBy, err := orderByField.OrderBy(mapping, table)
+	if err != nil {
+		return err
+	}
+
+	sql := fmt.Sprintf(boiler, column, table, orderBy)
+	kind := strings.Replace(s.kind, "-", "_", -1)
+	stmtName := stmtCodeVar(s.entity, kind)
+	s.register(buf, stmtName, sql)
+
+	return nil
+}
+
+func (s *Stmt) namesBy(buf *file.Buffer) error {
+	mapping, err := Parse(s.localPath, s.pkgs, lex.PascalCase(s.entity), s.kind)
+	if err != nil {
+		return err
+	}
+
+	if len(mapping.NaturalKey()) > 1 {
+		return fmt.Errorf("Can't return names for composite key objects")
+	}
+
+	where := []string{}
+	filters := strings.Split(s.kind[len("names-by-"):], "-and-")
+	sqlString, err := ParseStmt(stmtCodeVar(s.entity, "names"), s.defs, s.registeredSQLStmts)
+	if err != nil {
+		return err
+	}
+
+	queryParts := strings.SplitN(sqlString, "ORDER BY", 2)
+
+	_, tableName, _ := strings.Cut(queryParts[0], "FROM ")
+	tableName, _, _ = strings.Cut(tableName, "\n")
+
+	joins := []string{}
+	for _, filter := range filters {
+		field, err := mapping.FilterFieldByName(filter)
+		if err != nil {
+			return err
+		}
+
+		table, columnName, err := field.SQLConfig()
+		if err != nil {
+			return err
+		}
+
+		var column string
+		if table != "" && columnName != "" {
+			if field.IsScalar() {
+				column = columnName
+			} else {
+				column = table + "." + columnName
+			}
+		} else if field.IsScalar() {
+			join, err := field.JoinClause(mapping, tableName)
+			if err != nil {
+				return err
+			}
+
+			joins = append(joins, join)
+			column = field.JoinConfig()
+		} else {
+			column = mapping.FieldColumnName(field.Name, tableName)
+		}
+
+		coalesce, ok := field.Config["coalesce"]
+		if ok {
+			// Ensure filters operate on the coalesced value for fields using coalesce setting.
+			where = append(where, fmt.Sprintf("coalesce(%s, %s) = ? ", column, coalesce[0]))
+		} else {
+			where = append(where, fmt.Sprintf("%s = ? ", column))
+		}
+	}
+
+	join := ""
+	if len(joins) > 0 {
+		join = strings.TrimLeftFunc(strings.Join(joins, ""), func(r rune) bool {
+			return r == ' ' || r == '\n'
+		})
+
+		join += "\n  "
+	}
+
+	queryParts[0] = fmt.Sprintf("%s%sWHERE ( %s)", queryParts[0], join, strings.Join(where, "AND "))
+	sqlString = strings.Join(queryParts, "\n  ORDER BY")
+	s.register(buf, stmtCodeVar(s.entity, "names", filters...), sqlString)
 
 	return nil
 }
@@ -417,7 +537,7 @@ func (s *Stmt) delete(buf *file.Buffer) error {
 
 // Output a line of code that registers the given statement and declares the
 // associated statement code global variable.
-func (s *Stmt) register(buf *file.Buffer, stmtName, sql string, filters ...string) {
+func (s *Stmt) register(buf *file.Buffer, stmtName, sql string) {
 	s.registeredSQLStmts[stmtName] = sql
 	if !strings.HasPrefix(sql, "`") || !strings.HasSuffix(sql, "`") {
 		sql = fmt.Sprintf("`\n%s\n`", sql)
@@ -428,6 +548,7 @@ func (s *Stmt) register(buf *file.Buffer, stmtName, sql string, filters ...strin
 
 // Map of boilerplate statements.
 var stmts = map[string]string{
+	"names":   "SELECT %s\n  FROM %s\n  ORDER BY %s",
 	"objects": "SELECT %s\n  FROM %s\n  ORDER BY %s",
 	"create":  "INSERT INTO %s (%s)\n  VALUES (%s)",
 	"replace": "INSERT OR REPLACE INTO %s (%s)\n VALUES (%s)",
