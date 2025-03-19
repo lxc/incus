@@ -69,6 +69,8 @@ func (m *Method) Generate(buf *file.Buffer) error {
 	switch operation(m.kind) {
 	case "GetMany":
 		return m.getMany(buf)
+	case "GetNames":
+		return m.getNames(buf)
 	case "GetOne":
 		return m.getOne(buf)
 	case "ID":
@@ -113,6 +115,131 @@ func (m *Method) GenerateSignature(buf *file.Buffer) error {
 	}
 
 	return m.signature(buf, true)
+}
+
+func (m *Method) getNames(buf *file.Buffer) error {
+	mapping, err := Parse(m.localPath, m.pkgs, lex.PascalCase(m.entity), m.kind)
+	if err != nil {
+		return fmt.Errorf("Parse entity struct: %w", err)
+	}
+
+	// Go type name the objects to return (e.g. api.Foo).
+	structField := mapping.NaturalKey()[0]
+
+	err = m.signature(buf, false)
+	if err != nil {
+		return err
+	}
+
+	defer m.end(buf)
+
+	buf.L("var err error")
+	buf.N()
+	buf.L("// Result slice.")
+	buf.L("names := make(%s, 0)", lex.Slice(structField.Type.Name))
+	buf.N()
+	filters, ignoredFilters := FiltersFromStmt(m.pkgs, "names", m.entity, mapping.Filters, m.registeredSQLStmts)
+	buf.N()
+	buf.L("// Pick the prepared statement and arguments to use based on active criteria.")
+	buf.L("var sqlStmt *sql.Stmt")
+	buf.L("args := []any{}")
+	buf.L("queryParts := [2]string{}")
+	buf.N()
+
+	buf.L("if len(filters) == 0 {")
+	buf.L("sqlStmt, err = Stmt(db, %s)", stmtCodeVar(m.entity, "names"))
+
+	m.ifErrNotNil(buf, false, "nil", fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, "names")))
+	buf.L("}")
+	buf.N()
+	if len(filters) > 0 {
+		buf.L("for i, filter := range filters {")
+	} else {
+		buf.L("for _, filter := range filters {")
+	}
+
+	for i, filter := range filters {
+		branch := "if"
+		if i > 0 {
+			branch = "} else if"
+		}
+
+		buf.L("%s %s {", branch, activeCriteria(filter, ignoredFilters[i]))
+		var args string
+		for _, name := range filter {
+			for _, field := range mapping.Fields {
+				if name == field.Name && util.IsNeitherFalseNorEmpty(field.Config.Get("marshal")) {
+					marshalFunc := "marshal"
+					if strings.ToLower(field.Config.Get("marshal")) == "json" {
+						marshalFunc = "marshalJSON"
+					}
+
+					buf.L("marshaledFilter%s, err := %s(filter.%s)", name, marshalFunc, name)
+					m.ifErrNotNil(buf, true, "nil", "err")
+					args += fmt.Sprintf("marshaledFilter%s,", name)
+				} else if name == field.Name {
+					args += fmt.Sprintf("filter.%s,", name)
+				}
+			}
+		}
+
+		buf.L("args = append(args, []any{%s}...)", args)
+		buf.L("if len(filters) == 1 {")
+		buf.L("sqlStmt, err = Stmt(db, %s)", stmtCodeVar(m.entity, "names", filter...))
+
+		m.ifErrNotNil(buf, true, "nil", fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, "names", filter...)))
+		buf.L("break")
+		buf.L("}")
+		buf.N()
+		buf.L("query, err := StmtString(%s)", stmtCodeVar(m.entity, "names", filter...))
+
+		m.ifErrNotNil(buf, true, "nil", fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, "names")))
+		buf.L("parts := strings.SplitN(query, \"ORDER BY\", 2)")
+		buf.L("if i == 0 {")
+		buf.L("copy(queryParts[:], parts)")
+		buf.L("continue")
+		buf.L("}")
+		buf.N()
+		buf.L("_, where, _ := strings.Cut(parts[0], \"WHERE\")")
+		buf.L("queryParts[0] += \"OR\" + where")
+	}
+
+	branch := "if"
+	if len(filters) > 0 {
+		branch = "} else if"
+	}
+
+	buf.L("%s %s {", branch, activeCriteria([]string{}, FieldNames(mapping.Filters)))
+	buf.L("return nil, fmt.Errorf(\"Cannot filter on empty %s\")", entityFilter(mapping.Name))
+	buf.L("} else {")
+	buf.L("return nil, fmt.Errorf(\"No statement exists for the given Filter\")")
+	buf.L("}")
+	buf.L("}")
+	buf.N()
+
+	buf.L("// Select.")
+	buf.L("var rows *sql.Rows")
+	buf.L("if sqlStmt != nil {")
+	buf.L("rows, err = sqlStmt.QueryContext(ctx, args...)")
+	buf.L("} else {")
+	buf.L("queryStr := strings.Join(queryParts[:], \"ORDER BY\")")
+	buf.L("rows, err = db.QueryContext(ctx, queryStr, args...)")
+	buf.L("}")
+	m.ifErrNotNil(buf, true, "nil", "err")
+	buf.L("defer func() { _ = rows.Close() }()")
+	buf.L("for rows.Next() {")
+	buf.L("var identifier %s", structField.Type.Name)
+	buf.L("err := rows.Scan(&identifier)")
+	m.ifErrNotNil(buf, true, "nil", "err")
+	buf.L("names = append(names, identifier)")
+	buf.L("}")
+	buf.N()
+	buf.L("err = rows.Err()")
+	m.ifErrNotNil(buf, true, "nil", fmt.Sprintf(`fmt.Errorf("Failed to fetch from \"%s\" table: %%w", err)`, entityTable(m.entity, m.config["table"])))
+
+	buf.L("return names, nil")
+
+	return nil
 }
 
 func (m *Method) getMany(buf *file.Buffer) error {
@@ -1314,6 +1441,10 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 				rets = fmt.Sprintf("(_ %s, _err error)", retType)
 			}
 
+		case "GetNames":
+			comment = fmt.Sprintf("returns the identifying field of %s.", m.entity)
+			args += fmt.Sprintf("filters ...%s", mapping.ImportFilterType())
+			rets = fmt.Sprintf("(_ %s, _err error)", lex.Slice(mapping.NaturalKey()[0].Type.Name))
 		case "GetOne":
 			comment = fmt.Sprintf("returns the %s with the given key.", m.entity)
 			args += mapping.FieldArgs(mapping.NaturalKey())
@@ -1448,6 +1579,8 @@ func (m *Method) begin(buf *file.Buffer, mapping *Mapping, comment string, args 
 			name = fmt.Sprintf("Get%sURIs", entity)
 		case "GetMany":
 			name = fmt.Sprintf("Get%s", lex.Plural(entity))
+		case "GetNames":
+			name = fmt.Sprintf("Get%sNames", entity)
 		case "GetOne":
 			name = fmt.Sprintf("Get%s", entity)
 		case "ID":
