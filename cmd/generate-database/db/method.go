@@ -139,7 +139,7 @@ func (m *Method) getMany(buf *file.Buffer) error {
 	}
 
 	// Go type name the objects to return (e.g. api.Foo).
-	typ := lex.PascalCase(m.entity)
+	typ := mapping.ImportType()
 
 	err = m.signature(buf, false)
 	if err != nil {
@@ -417,7 +417,12 @@ func (m *Method) getMany(buf *file.Buffer) error {
 	switch mapping.Type {
 	case AssociationTable:
 		ref := strings.Replace(mapping.Name, m.config["struct"], "", -1)
-		buf.L("result := make([]%s, len(objects))", ref)
+		refMapping, err := Parse(m.localPath, m.pkgs, ref, "")
+		if err != nil {
+			return fmt.Errorf("Could not find definition for reference struct %q: %w", ref, err)
+		}
+
+		buf.L("result := make([]%s, len(objects))", refMapping.ImportType())
 		buf.L("for i, object := range objects {")
 		buf.L("%s, err := Get%s(ctx, db, %sFilter{ID: &object.%sID})", lex.Minuscule(ref), lex.Plural(ref), ref, ref)
 
@@ -427,11 +432,11 @@ func (m *Method) getMany(buf *file.Buffer) error {
 		buf.N()
 		buf.L("return result, nil")
 	case ReferenceTable:
-		buf.L("resultMap := map[int][]%s{}", mapping.Name)
+		buf.L("resultMap := map[int][]%s{}", mapping.ImportType())
 		buf.L("for _, object := range objects {")
 		buf.L("_, ok := resultMap[object.ReferenceID]")
 		buf.L("if !ok {")
-		buf.L("resultMap[object.ReferenceID] = []%s{}", mapping.Name)
+		buf.L("resultMap[object.ReferenceID] = []%s{}", mapping.ImportType())
 		buf.L("}")
 		buf.N()
 		buf.L("resultMap[object.ReferenceID] = append(resultMap[object.ReferenceID], object)")
@@ -479,7 +484,7 @@ func (m *Method) getRefs(buf *file.Buffer, refMapping *Mapping) error {
 	case ReferenceTable:
 		buf.L("%s, err := Get%s(ctx, db, \"%s\", filters...)", refParentList, lex.Plural(refStruct), m.entity)
 		m.ifErrNotNil(buf, true, "nil", "err")
-		buf.L("%s := map[string]%s{}", refList, refStruct)
+		buf.L("%s := map[string]%s{}", refList, refMapping.ImportType())
 		buf.L("for _, ref := range %s[%sID] {", refParentList, refParent)
 		buf.L("_, ok := %s[ref.%s]", refList, refMapping.Identifier().Name)
 		buf.L("if !ok {")
@@ -519,7 +524,7 @@ func (m *Method) getOne(buf *file.Buffer) error {
 
 	defer m.end(buf)
 
-	buf.L("filter := %s{}", entityFilter(m.entity))
+	buf.L("filter := %s{}", mapping.ImportFilterType())
 	for _, field := range nk {
 		name := lex.Minuscule(field.Name)
 		if name == "type" {
@@ -1190,7 +1195,7 @@ func (m *Method) delete(buf *file.Buffer, deleteOne bool) error {
 
 // signature generates a method or interface signature with comments, arguments, and return values.
 func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
-	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
+	mapping, err := Parse(m.localPath, m.pkgs, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -1211,10 +1216,10 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 		case "GetMany":
 			comment = fmt.Sprintf("returns all available %s for the %s.", lex.Plural(ref), m.config["struct"])
 			args += fmt.Sprintf("%sID int", lex.Minuscule(m.config["struct"]))
-			rets = fmt.Sprintf("(_ []%s, _err error)", ref)
+			rets = fmt.Sprintf("(_ []%s, _err error)", refMapping.ImportType())
 		case "Create":
 			comment = fmt.Sprintf("adds a new %s to the database.", m.entity)
-			args += fmt.Sprintf("objects []%s", mapping.Name)
+			args += fmt.Sprintf("objects []%s", mapping.ImportType())
 			rets = "(_err error)"
 		case "Update":
 			comment = fmt.Sprintf("updates the %s matching the given key parameters.", m.entity)
@@ -1238,15 +1243,15 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 		switch operation(m.kind) {
 		case "GetMany":
 			comment = fmt.Sprintf("returns all available %s for the parent entity.", lex.Plural(m.entity))
-			args += fmt.Sprintf("parent string, filters ...%s", entityFilter(m.entity))
-			rets = fmt.Sprintf("(_ map[int][]%s, _err error)", mapping.Name)
+			args += fmt.Sprintf("parent string, filters ...%s", mapping.ImportFilterType())
+			rets = fmt.Sprintf("(_ map[int][]%s, _err error)", mapping.ImportType())
 		case "Create":
 			comment = fmt.Sprintf("adds a new %s to the database.", m.entity)
-			args += fmt.Sprintf("parent string, objects map[string]%s", mapping.Name)
+			args += fmt.Sprintf("parent string, objects map[string]%s", mapping.ImportType())
 			rets = "(_err error)"
 		case "Update":
 			comment = fmt.Sprintf("updates the %s matching the given key parameters.", m.entity)
-			args += fmt.Sprintf("parent string, referenceID int, %s map[string]%s", lex.Plural(m.entity), mapping.Name)
+			args += fmt.Sprintf("parent string, referenceID int, %s map[string]%s", lex.Plural(m.entity), mapping.ImportType())
 			rets = "(_err error)"
 		case "DeleteMany":
 			comment = fmt.Sprintf("deletes the %s matching the given key parameters.", m.entity)
@@ -1260,7 +1265,7 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 		switch operation(m.kind) {
 		case "GetMany":
 			comment = fmt.Sprintf("returns all available %s.", lex.Plural(m.entity))
-			args += fmt.Sprintf("parent string, filters ...%s", entityFilter(m.entity))
+			args += fmt.Sprintf("parent string, filters ...%s", entityFilter(lex.PascalCase(m.entity)))
 			rets = "(_ map[int]map[string]string, _err error)"
 		case "Create":
 			comment = fmt.Sprintf("adds a new %s to the database.", m.entity)
@@ -1282,25 +1287,26 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 		switch operation(m.kind) {
 		case "URIs":
 			comment = fmt.Sprintf("returns all available %s URIs.", m.entity)
-			args += fmt.Sprintf("filter %s", entityFilter(m.entity))
+			args += fmt.Sprintf("filter %s", mapping.ImportFilterType())
 			rets = "(_ []string, _err error)"
 		case "GetMany":
 			if m.ref == "" {
 				comment = fmt.Sprintf("returns all available %s.", lex.Plural(m.entity))
-				args += fmt.Sprintf("filters ...%s", entityFilter(m.entity))
-				rets = fmt.Sprintf("(_ %s, _err error)", lex.Slice(lex.PascalCase(m.entity)))
+				args += fmt.Sprintf("filters ...%s", mapping.ImportFilterType())
+				rets = fmt.Sprintf("(_ %s, _err error)", lex.Slice(mapping.ImportType()))
 			} else {
-				comment = fmt.Sprintf("returns all available %s %s", mapping.Name, lex.Plural(m.ref))
-				args += fmt.Sprintf("%sID int, filters ...%s", lex.Minuscule(mapping.Name), entityFilter(m.ref))
-				refMapping, err := Parse(m.pkg, m.ref, "")
+				refMapping, err := Parse(m.localPath, m.pkgs, m.ref, "")
 				if err != nil {
 					return fmt.Errorf("Parse entity struct: %w", err)
 				}
 
+				comment = fmt.Sprintf("returns all available %s %s", mapping.Name, lex.Plural(m.ref))
+				args += fmt.Sprintf("%sID int, filters ...%s", lex.Minuscule(mapping.Name), refMapping.ImportFilterType())
+
 				var retType string
 				switch refMapping.Type {
 				case ReferenceTable:
-					retType = fmt.Sprintf("map[%s]%s", refMapping.Identifier().Type.Name, refMapping.Name)
+					retType = fmt.Sprintf("map[%s]%s", refMapping.Identifier().Type.Name, refMapping.ImportType())
 				case MapTable:
 					retType = "map[string]string"
 				}
@@ -1311,7 +1317,7 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 		case "GetOne":
 			comment = fmt.Sprintf("returns the %s with the given key.", m.entity)
 			args += mapping.FieldArgs(mapping.NaturalKey())
-			rets = fmt.Sprintf("(_ %s, _err error)", lex.Star(lex.PascalCase(m.entity)))
+			rets = fmt.Sprintf("(_ %s, _err error)", lex.Star(mapping.ImportType()))
 		case "ID":
 			comment = fmt.Sprintf("return the ID of the %s with the given key.", m.entity)
 			args += mapping.FieldArgs(mapping.NaturalKey())
@@ -1321,66 +1327,75 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 			args += mapping.FieldArgs(mapping.NaturalKey())
 			rets = "(_ bool, _err error)"
 		case "Create":
-			if m.ref == "" {
-				entityCreate, ok := m.config["struct"]
-				if !ok {
-					entityCreate = mapping.Name
+			structMapping := mapping
+			if m.ref != "" {
+				structMapping, err = Parse(m.localPath, m.pkgs, m.ref, "")
+				if err != nil {
+					return fmt.Errorf("Parse entity struct: %w", err)
 				}
+			} else if m.config["struct"] != "" {
+				structMapping, err = Parse(m.localPath, m.pkgs, m.config["struct"], "")
+				if err != nil {
+					return fmt.Errorf("Parse entity struct: %w", err)
+				}
+			}
 
+			if m.ref == "" {
 				comment = fmt.Sprintf("adds a new %s to the database.", m.entity)
-				args += fmt.Sprintf("object %s", lex.PascalCase(entityCreate))
+				args += fmt.Sprintf("object %s", structMapping.ImportType())
 				rets = "(_ int64, _err error)"
 			} else {
 				comment = fmt.Sprintf("adds new %s %s to the database.", m.entity, lex.Plural(m.ref))
 				rets = "(_err error)"
 
-				refMapping, err := Parse(m.pkg, m.ref, "")
-				if err != nil {
-					return fmt.Errorf("Parse entity struct: %w", err)
-				}
-
-				switch refMapping.Type {
+				switch structMapping.Type {
 				case ReferenceTable:
-					args += fmt.Sprintf("%sID int64, %s map[%s]%s", lex.CamelCase(m.entity), lex.Plural(lex.Minuscule(m.ref)), refMapping.Identifier().Type.Name, m.ref)
+					args += fmt.Sprintf("%sID int64, %s map[%s]%s", lex.CamelCase(m.entity), lex.Plural(lex.Minuscule(m.ref)), structMapping.Identifier().Type.Name, structMapping.ImportType())
 				case MapTable:
 					args += fmt.Sprintf("%sID int64, %s map[string]string", lex.CamelCase(m.entity), lex.Minuscule(m.ref))
 				}
 			}
 		case "CreateOrReplace":
-			entityCreate, ok := m.config["struct"]
-			if !ok {
-				entityCreate = mapping.Name
+			structMapping := mapping
+			if m.config["struct"] != "" {
+				structMapping, err = Parse(m.localPath, m.pkgs, m.config["struct"], "")
+				if err != nil {
+					return fmt.Errorf("Parse entity struct: %w", err)
+				}
 			}
 
 			comment = fmt.Sprintf("adds a new %s to the database.", m.entity)
-			args += fmt.Sprintf("object %s", lex.PascalCase(entityCreate))
+			args += fmt.Sprintf("object %s", structMapping.ImportType())
 			rets = "(_ int64, _err error)"
 		case "Rename":
 			comment = fmt.Sprintf("renames the %s matching the given key parameters.", m.entity)
 			args += mapping.FieldArgs(mapping.NaturalKey(), "to string")
 			rets = "(_err error)"
 		case "Update":
-			if m.ref == "" {
-				entityUpdate, ok := m.config["struct"]
-				if !ok {
-					entityUpdate = mapping.Name
+			structMapping := mapping
+			if m.ref != "" {
+				structMapping, err = Parse(m.localPath, m.pkgs, m.ref, "")
+				if err != nil {
+					return fmt.Errorf("Parse entity struct: %w", err)
 				}
+			} else if m.config["struct"] != "" {
+				structMapping, err = Parse(m.localPath, m.pkgs, m.config["struct"], "")
+				if err != nil {
+					return fmt.Errorf("Parse entity struct: %w", err)
+				}
+			}
 
+			if m.ref == "" {
 				comment = fmt.Sprintf("updates the %s matching the given key parameters.", m.entity)
-				args += mapping.FieldArgs(mapping.NaturalKey(), fmt.Sprintf("object %s", lex.PascalCase(entityUpdate)))
+				args += mapping.FieldArgs(mapping.NaturalKey(), fmt.Sprintf("object %s", structMapping.ImportType()))
 				rets = "(_err error)"
 			} else {
 				comment = fmt.Sprintf("updates the %s %s matching the given key parameters.", m.entity, m.ref)
 				rets = "(_err error)"
 
-				refMapping, err := Parse(m.pkg, m.ref, "")
-				if err != nil {
-					return fmt.Errorf("Parse entity struct: %w", err)
-				}
-
-				switch refMapping.Type {
+				switch structMapping.Type {
 				case ReferenceTable:
-					args += fmt.Sprintf("%sID int64, %s map[%s]%s", lex.CamelCase(m.entity), lex.Minuscule(lex.Plural(m.ref)), refMapping.Identifier().Type.Name, m.ref)
+					args += fmt.Sprintf("%sID int64, %s map[%s]%s", lex.CamelCase(m.entity), lex.Minuscule(lex.Plural(m.ref)), structMapping.Identifier().Type.Name, structMapping.ImportType())
 				case MapTable:
 					args += fmt.Sprintf("%sID int64, %s map[string]string", lex.CamelCase(m.entity), lex.Minuscule(lex.Plural(m.ref)))
 				}
@@ -1569,14 +1584,14 @@ func (m *Method) getManyTemplateFuncs(buf *file.Buffer, mapping *Mapping) error 
 	// Create a function supporting prepared statements.
 	buf.L("// get%s can be used to run handwritten sql.Stmts to return a slice of objects.", lex.Plural(mapping.Name))
 	if mapping.Type != ReferenceTable && mapping.Type != MapTable {
-		buf.L("func get%s(ctx context.Context, stmt *sql.Stmt, args ...any) ([]%s, error) {", lex.Plural(mapping.Name), mapping.Name)
+		buf.L("func get%s(ctx context.Context, stmt *sql.Stmt, args ...any) ([]%s, error) {", lex.Plural(mapping.Name), mapping.ImportType())
 	} else {
-		buf.L("func get%s(ctx context.Context, stmt *sql.Stmt, parent string, args ...any) ([]%s, error) {", lex.Plural(mapping.Name), mapping.Name)
+		buf.L("func get%s(ctx context.Context, stmt *sql.Stmt, parent string, args ...any) ([]%s, error) {", lex.Plural(mapping.Name), mapping.ImportType())
 	}
 
-	buf.L("objects := make([]%s, 0)", mapping.Name)
+	buf.L("objects := make([]%s, 0)", mapping.ImportType())
 	buf.N()
-	buf.L("dest := %s", destFunc("objects", lex.PascalCase(m.entity), mapping.ColumnFields()))
+	buf.L("dest := %s", destFunc("objects", lex.PascalCase(m.entity), mapping.ImportType(), mapping.ColumnFields()))
 	buf.N()
 	buf.L("err := selectObjects(ctx, stmt, dest, args...)")
 	if mapping.Type != ReferenceTable && mapping.Type != MapTable {
@@ -1592,14 +1607,14 @@ func (m *Method) getManyTemplateFuncs(buf *file.Buffer, mapping *Mapping) error 
 	// Create a function supporting raw queries.
 	buf.L("// get%sRaw can be used to run handwritten query strings to return a slice of objects.", lex.Plural(mapping.Name))
 	if mapping.Type != ReferenceTable && mapping.Type != MapTable {
-		buf.L("func get%sRaw(ctx context.Context, db dbtx, sql string, args ...any) ([]%s, error) {", lex.Plural(mapping.Name), mapping.Name)
+		buf.L("func get%sRaw(ctx context.Context, db dbtx, sql string, args ...any) ([]%s, error) {", lex.Plural(mapping.Name), mapping.ImportType())
 	} else {
-		buf.L("func get%sRaw(ctx context.Context, db dbtx, sql string, parent string, args ...any) ([]%s, error) {", lex.Plural(mapping.Name), mapping.Name)
+		buf.L("func get%sRaw(ctx context.Context, db dbtx, sql string, parent string, args ...any) ([]%s, error) {", lex.Plural(mapping.Name), mapping.ImportType())
 	}
 
-	buf.L("objects := make([]%s, 0)", mapping.Name)
+	buf.L("objects := make([]%s, 0)", mapping.ImportType())
 	buf.N()
-	buf.L("dest := %s", destFunc("objects", lex.PascalCase(m.entity), mapping.ColumnFields()))
+	buf.L("dest := %s", destFunc("objects", lex.PascalCase(m.entity), mapping.ImportType(), mapping.ColumnFields()))
 	buf.N()
 	buf.L("err := scan(ctx, db, sql, dest, args...)")
 	if mapping.Type != ReferenceTable && mapping.Type != MapTable {

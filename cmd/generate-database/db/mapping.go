@@ -252,6 +252,26 @@ func (m *Mapping) FieldParamsMarshal(fields []*Field) string {
 	return strings.Join(args, ", ")
 }
 
+// ImportType returns the type of the entity for the mapping, prefixing the import package if necessary.
+func (m *Mapping) ImportType() string {
+	name := lex.PascalCase(m.Name)
+	if m.Local {
+		return name
+	}
+
+	return m.Package + "." + lex.PascalCase(name)
+}
+
+// ImportFilterType returns the Filter type of the entity for the mapping, prefixing the import package if necessary.
+func (m *Mapping) ImportFilterType() string {
+	name := lex.PascalCase(entityFilter(m.Name))
+	if m.FilterLocal {
+		return name
+	}
+
+	return m.Package + "." + name
+}
+
 // Field holds all information about a field in a Go struct that is relevant
 // for database code generation.
 type Field struct {
