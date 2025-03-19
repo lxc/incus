@@ -20,17 +20,24 @@ type Method struct {
 	kind               string            // Kind of statement to generate
 	ref                string            // ref is the current reference method for the method kind
 	config             map[string]string // Configuration parameters
-	pkg                *types.Package    // Package to perform for struct declaration lookup
+	localPath          string
+	pkgs               []*types.Package  // Package to perform for struct declaration lookup
 	registeredSQLStmts map[string]string // Lookup for SQL statements registered during this execution, which are therefore not included in the parsed package information
 }
 
-// NewMethod return a new method code snippet for executing a certain mapping.
-func NewMethod(parsedPkg *packages.Package, entity, kind string, config map[string]string, registeredSQLStmts map[string]string) (*Method, error) {
+// NewMethod returiiin a new method code snippet for executing a certain mapping.
+func NewMethod(localPath string, parsedPkgs []*packages.Package, entity, kind string, config map[string]string, registeredSQLStmts map[string]string) (*Method, error) {
+	pkgTypes, err := parsePkgDecls(entity, kind, parsedPkgs)
+	if err != nil {
+		return nil, err
+	}
+
 	method := &Method{
 		entity:             entity,
 		kind:               kind,
 		config:             config,
-		pkg:                parsedPkg.Types,
+		localPath:          localPath,
+		pkgs:               pkgTypes,
 		registeredSQLStmts: registeredSQLStmts,
 	}
 
@@ -39,7 +46,7 @@ func NewMethod(parsedPkg *packages.Package, entity, kind string, config map[stri
 
 // Generate the desired method.
 func (m *Method) Generate(buf *file.Buffer) error {
-	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
+	mapping, err := Parse(m.localPath, m.pkgs, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
 		return fmt.Errorf("Unable to parse go struct %q: %w", lex.PascalCase(m.entity), err)
 	}
@@ -109,7 +116,7 @@ func (m *Method) GenerateSignature(buf *file.Buffer) error {
 }
 
 func (m *Method) getMany(buf *file.Buffer) error {
-	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
+	mapping, err := Parse(m.localPath, m.pkgs, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -122,7 +129,7 @@ func (m *Method) getMany(buf *file.Buffer) error {
 	if m.config["references"] != "" {
 		refFields := strings.Split(m.config["references"], ",")
 		for _, fieldName := range refFields {
-			refMapping, err := Parse(m.pkg, fieldName, m.kind)
+			refMapping, err := Parse(m.localPath, m.pkgs, fieldName, m.kind)
 			if err != nil {
 				return fmt.Errorf("Parse entity struct: %w", err)
 			}
@@ -206,7 +213,7 @@ func (m *Method) getMany(buf *file.Buffer) error {
 
 		buf.L("args := []any{%sID}", lex.Minuscule(m.config["struct"]))
 	} else {
-		filters, ignoredFilters := FiltersFromStmt(m.pkg, "objects", m.entity, mapping.Filters, m.registeredSQLStmts)
+		filters, ignoredFilters := FiltersFromStmt(m.pkgs, "objects", m.entity, mapping.Filters, m.registeredSQLStmts)
 		buf.N()
 		buf.L("// Pick the prepared statement and arguments to use based on active criteria.")
 		buf.L("var sqlStmt *sql.Stmt")
@@ -306,7 +313,7 @@ func (m *Method) getMany(buf *file.Buffer) error {
 		refStruct := lex.Singular(field.Name)
 		refVar := lex.Minuscule(refStruct)
 		refSlice := lex.Plural(refVar)
-		refMapping, err := Parse(m.pkg, refStruct, "")
+		refMapping, err := Parse(m.localPath, m.pkgs, refStruct, "")
 		if err != nil {
 			return fmt.Errorf("Could not find definition for reference struct %q: %w", refStruct, err)
 		}
@@ -498,7 +505,7 @@ func (m *Method) getRefs(buf *file.Buffer, refMapping *Mapping) error {
 }
 
 func (m *Method) getOne(buf *file.Buffer) error {
-	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
+	mapping, err := Parse(m.localPath, m.pkgs, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -549,7 +556,7 @@ func (m *Method) id(buf *file.Buffer) error {
 		entityCreate = lex.PascalCase(m.entity)
 	}
 
-	mapping, err := Parse(m.pkg, entityCreate, m.kind)
+	mapping, err := Parse(m.localPath, m.pkgs, entityCreate, m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -599,7 +606,7 @@ func (m *Method) exists(buf *file.Buffer) error {
 		entityCreate = lex.PascalCase(m.entity)
 	}
 
-	mapping, err := Parse(m.pkg, entityCreate, m.kind)
+	mapping, err := Parse(m.localPath, m.pkgs, entityCreate, m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -644,7 +651,7 @@ func (m *Method) exists(buf *file.Buffer) error {
 }
 
 func (m *Method) create(buf *file.Buffer, replace bool) error {
-	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
+	mapping, err := Parse(m.localPath, m.pkgs, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -652,7 +659,7 @@ func (m *Method) create(buf *file.Buffer, replace bool) error {
 	if m.config["references"] != "" {
 		refFields := strings.Split(m.config["references"], ",")
 		for _, fieldName := range refFields {
-			refMapping, err := Parse(m.pkg, fieldName, m.kind)
+			refMapping, err := Parse(m.localPath, m.pkgs, fieldName, m.kind)
 			if err != nil {
 				return fmt.Errorf("Parse entity struct: %w", err)
 			}
@@ -786,7 +793,7 @@ func (m *Method) create(buf *file.Buffer, replace bool) error {
 		}
 
 		refStruct := lex.Singular(field.Name)
-		refMapping, err := Parse(m.pkg, lex.Singular(field.Name), "")
+		refMapping, err := Parse(m.localPath, m.pkgs, lex.Singular(field.Name), "")
 		if err != nil {
 			return fmt.Errorf("Parse entity struct: %w", err)
 		}
@@ -885,7 +892,7 @@ func (m *Method) createRefs(buf *file.Buffer, refMapping *Mapping) error {
 }
 
 func (m *Method) rename(buf *file.Buffer) error {
-	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
+	mapping, err := Parse(m.localPath, m.pkgs, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -929,7 +936,7 @@ func (m *Method) rename(buf *file.Buffer) error {
 }
 
 func (m *Method) update(buf *file.Buffer) error {
-	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
+	mapping, err := Parse(m.localPath, m.pkgs, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -943,7 +950,7 @@ func (m *Method) update(buf *file.Buffer) error {
 	if m.config["references"] != "" {
 		refFields := strings.Split(m.config["references"], ",")
 		for _, fieldName := range refFields {
-			refMapping, err := Parse(m.pkg, fieldName, m.kind)
+			refMapping, err := Parse(m.localPath, m.pkgs, fieldName, m.kind)
 			if err != nil {
 				return fmt.Errorf("Parse entity struct: %w", err)
 			}
@@ -964,7 +971,7 @@ func (m *Method) update(buf *file.Buffer) error {
 	switch mapping.Type {
 	case AssociationTable:
 		ref := strings.Replace(mapping.Name, m.config["struct"], "", -1)
-		refMapping, err := Parse(m.pkg, ref, "")
+		refMapping, err := Parse(m.localPath, m.pkgs, ref, "")
 		if err != nil {
 			return fmt.Errorf("Parse entity struct: %w", err)
 		}
@@ -1014,7 +1021,7 @@ func (m *Method) update(buf *file.Buffer) error {
 		buf.L("}")
 		buf.N()
 	case EntityTable:
-		updateMapping, err := Parse(m.pkg, entityUpdate, m.kind)
+		updateMapping, err := Parse(m.localPath, m.pkgs, entityUpdate, m.kind)
 		if err != nil {
 			return fmt.Errorf("Parse entity struct: %w", err)
 		}
@@ -1058,7 +1065,7 @@ func (m *Method) update(buf *file.Buffer) error {
 			}
 
 			refStruct := lex.Singular(field.Name)
-			refMapping, err := Parse(m.pkg, lex.Singular(field.Name), "")
+			refMapping, err := Parse(m.localPath, m.pkgs, lex.Singular(field.Name), "")
 			if err != nil {
 				return fmt.Errorf("Parse entity struct: %w", err)
 			}
@@ -1111,7 +1118,7 @@ func (m *Method) updateRefs(buf *file.Buffer, refMapping *Mapping) error {
 }
 
 func (m *Method) delete(buf *file.Buffer, deleteOne bool) error {
-	mapping, err := Parse(m.pkg, lex.PascalCase(m.entity), m.kind)
+	mapping, err := Parse(m.localPath, m.pkgs, lex.PascalCase(m.entity), m.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -1195,7 +1202,7 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 	switch mapping.Type {
 	case AssociationTable:
 		ref := strings.Replace(mapping.Name, m.config["struct"], "", -1)
-		refMapping, err := Parse(m.pkg, ref, "")
+		refMapping, err := Parse(m.localPath, m.pkgs, ref, "")
 		if err != nil {
 			return fmt.Errorf("Failed to parse struct %q", ref)
 		}

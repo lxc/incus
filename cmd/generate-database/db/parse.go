@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 
+	"golang.org/x/tools/go/packages"
+
 	"github.com/lxc/incus/v6/cmd/generate-database/lex"
 	"github.com/lxc/incus/v6/shared/util"
 )
@@ -20,53 +22,57 @@ import (
 // FiltersFromStmt parses all filtering statement defined for the given entity. It
 // returns all supported combinations of filters, sorted by number of criteria, and
 // the corresponding set of unused filters from the Filter struct.
-func FiltersFromStmt(pkg *types.Package, kind string, entity string, filters []*Field, registeredSQLStmts map[string]string) ([][]string, [][]string) {
-	objects := pkg.Scope().Names()
-	stmtFilters := [][]string{}
+func FiltersFromStmt(pkgs []*types.Package, kind string, entity string, filters []*Field, registeredSQLStmts map[string]string) ([][]string, [][]string) {
+	for _, pkg := range pkgs {
+		objects := pkg.Scope().Names()
+		stmtFilters := [][]string{}
 
-	prefix := fmt.Sprintf("%s%sBy", lex.CamelCase(entity), lex.PascalCase(kind))
+		prefix := fmt.Sprintf("%s%sBy", lex.CamelCase(entity), lex.PascalCase(kind))
 
-	seenNames := make(map[string]struct{}, len(objects))
+		seenNames := make(map[string]struct{}, len(objects))
 
-	for _, name := range objects {
-		if !strings.HasPrefix(name, prefix) {
-			continue
-		}
-
-		rest := name[len(prefix):]
-		stmtFilters = append(stmtFilters, strings.Split(rest, "And"))
-		seenNames[rest] = struct{}{}
-	}
-
-	for name := range registeredSQLStmts {
-		if !strings.HasPrefix(name, prefix) {
-			continue
-		}
-
-		rest := name[len(prefix):]
-
-		_, ok := seenNames[rest]
-		if ok {
-			continue
-		}
-
-		stmtFilters = append(stmtFilters, strings.Split(rest, "And"))
-	}
-
-	stmtFilters = sortFilters(stmtFilters)
-	ignoredFilters := [][]string{}
-
-	for _, filterGroup := range stmtFilters {
-		ignoredFilterGroup := []string{}
-		for _, filter := range filters {
-			if !slices.Contains(filterGroup, filter.Name) {
-				ignoredFilterGroup = append(ignoredFilterGroup, filter.Name)
+		for _, name := range objects {
+			if !strings.HasPrefix(name, prefix) {
+				continue
 			}
+
+			rest := name[len(prefix):]
+			stmtFilters = append(stmtFilters, strings.Split(rest, "And"))
+			seenNames[rest] = struct{}{}
 		}
-		ignoredFilters = append(ignoredFilters, ignoredFilterGroup)
+
+		for name := range registeredSQLStmts {
+			if !strings.HasPrefix(name, prefix) {
+				continue
+			}
+
+			rest := name[len(prefix):]
+
+			_, ok := seenNames[rest]
+			if ok {
+				continue
+			}
+
+			stmtFilters = append(stmtFilters, strings.Split(rest, "And"))
+		}
+
+		stmtFilters = sortFilters(stmtFilters)
+		ignoredFilters := [][]string{}
+
+		for _, filterGroup := range stmtFilters {
+			ignoredFilterGroup := []string{}
+			for _, filter := range filters {
+				if !slices.Contains(filterGroup, filter.Name) {
+					ignoredFilterGroup = append(ignoredFilterGroup, filter.Name)
+				}
+			}
+			ignoredFilters = append(ignoredFilters, ignoredFilterGroup)
+		}
+
+		return stmtFilters, ignoredFilters
 	}
 
-	return stmtFilters, ignoredFilters
+	return nil, nil
 }
 
 // RefFiltersFromStmt parses all filtering statement defined for the given entity reference.
@@ -151,68 +157,107 @@ func sortFilter(filter []string) []string {
 
 // Parse the structure declaration with the given name found in the given Go package.
 // Any 'Entity' struct should also have an 'EntityFilter' struct defined in the same file.
-func Parse(pkg *types.Package, name string, kind string) (*Mapping, error) {
-	// The main entity struct.
-	str := findStruct(pkg.Scope(), name)
-	if str == nil {
-		return nil, fmt.Errorf("No declaration found for %q", name)
-	}
-
-	fields, err := parseStruct(str, kind, pkg.Name())
-	if err != nil {
-		return nil, fmt.Errorf("Failed to parse %q: %w", name, err)
-	}
-
-	m := &Mapping{
-		Package:    pkg.Name(),
-		Name:       name,
-		Fields:     fields,
-		Type:       tableType(pkg, name, fields),
-		Filterable: true,
-	}
-
-	if m.Filterable {
-		// The 'EntityFilter' struct. This is used for filtering on specific fields of the entity.
-		filterName := name + "Filter"
-		filterStr := findStruct(pkg.Scope(), filterName)
-		if filterStr == nil {
-			return nil, fmt.Errorf("No declaration found for %q", filterName)
+func Parse(localPath string, pkgs []*types.Package, name string, kind string) (*Mapping, error) {
+	m := &Mapping{}
+	for _, pkg := range pkgs {
+		// Find the package that has the main entity struct.
+		str := findStruct(pkg.Scope(), name)
+		if str == nil {
+			continue
 		}
 
-		filters, err := parseStruct(filterStr, kind, pkg.Name())
+		fields, err := parseStruct(str, kind, pkg.Name())
 		if err != nil {
 			return nil, fmt.Errorf("Failed to parse %q: %w", name, err)
 		}
 
-		for i, filter := range filters {
-			// Any field in EntityFilter must be present in the original struct.
-			field := m.FieldByName(filter.Name)
-			if field == nil {
-				return nil, fmt.Errorf("Filter field %q is not in struct %q", filter.Name, name)
-			}
+		m.Local = pkg.Path() == localPath
+		m.Package = pkg.Name()
+		m.Name = name
+		m.Fields = fields
+		m.Type = tableType(pkgs, name, fields)
+		m.Filterable = true
 
-			// Assign the config tags from the main entity struct to the Filter struct.
-			filters[i].Config = field.Config
-
-			// A Filter field and its indirect references must all be in the Filter struct.
-			if field.IsIndirect() {
-				indirectField := lex.PascalCase(field.Config.Get("via"))
-				for i, f := range filters {
-					if f.Name == indirectField {
-						break
-					}
-
-					if i == len(filters)-1 {
-						return nil, fmt.Errorf("Field %q requires field %q in struct %q", field.Name, indirectField, name+"Filter")
-					}
-				}
+		oldStructHasTags := false
+		for _, f := range m.Fields {
+			if len(f.Config) > 0 {
+				oldStructHasTags = true
+				break
 			}
 		}
 
-		m.Filters = filters
+		if oldStructHasTags {
+			break
+		}
+	}
+
+	if m.Package == "" {
+		return nil, fmt.Errorf("No declaration found for %q", name)
+	}
+
+	if m.Filterable && m.Filters == nil {
+		for _, pkg := range pkgs {
+			filters, err := ParseFilter(m, kind, name, pkg)
+			if err != nil {
+				return nil, err
+			}
+
+			if filters != nil {
+				m.Filters = filters
+				m.FilterLocal = pkg.Path() == localPath
+				break
+			}
+		}
+
+		if m.Filters == nil {
+			filterName := name + "Filter"
+			return nil, fmt.Errorf("No declaration found for filter %q", filterName)
+		}
 	}
 
 	return m, nil
+}
+
+// ParseFilter finds the <entity>Filter struct in the given package.
+func ParseFilter(m *Mapping, kind string, name string, pkg *types.Package) ([]*Field, error) {
+	// The 'EntityFilter' struct. This is used for filtering on specific fields of the entity.
+	filterName := name + "Filter"
+	filterStr := findStruct(pkg.Scope(), filterName)
+	if filterStr == nil {
+		return nil, nil
+	}
+
+	filters, err := parseStruct(filterStr, kind, pkg.Name())
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse %q: %w", name, err)
+	}
+
+	for i, filter := range filters {
+		// Any field in EntityFilter must be present in the original struct.
+		field := m.FieldByName(filter.Name)
+		if field == nil {
+			return nil, fmt.Errorf("Filter field %q is not in struct %q", filter.Name, name)
+		}
+
+		// Assign the config tags from the main entity struct to the Filter struct.
+		filters[i].Config = field.Config
+
+		// A Filter field and its indirect references must all be in the Filter struct.
+		if field.IsIndirect() {
+			indirectField := lex.PascalCase(field.Config.Get("via"))
+			for i, f := range filters {
+				if f.Name == indirectField {
+					break
+				}
+
+				if i == len(filters)-1 {
+					return nil, fmt.Errorf("Field %q requires field %q in struct %q", field.Name, indirectField, name+"Filter")
+				}
+			}
+		}
+	}
+
+	return filters, nil
 }
 
 // ParseStmt returns the SQL string passed as an argument to a variable declaration of a call to RegisterStmt with the given name.
@@ -258,12 +303,22 @@ func ParseStmt(name string, defs map[*ast.Ident]types.Object, registeredSQLStmts
 }
 
 // tableType determines the TableType for the given struct fields.
-func tableType(pkg *types.Package, name string, fields []*Field) TableType {
+func tableType(pkgs []*types.Package, name string, fields []*Field) TableType {
 	fieldNames := FieldNames(fields)
 	entities := strings.Split(lex.SnakeCase(name), "_")
 	if len(entities) == 2 {
-		struct1 := findStruct(pkg.Scope(), lex.PascalCase(lex.Singular(entities[0])))
-		struct2 := findStruct(pkg.Scope(), lex.PascalCase(lex.Singular(entities[1])))
+		var struct1 *types.Struct
+		var struct2 *types.Struct
+		for _, pkg := range pkgs {
+			if struct1 == nil {
+				struct1 = findStruct(pkg.Scope(), lex.PascalCase(lex.Singular(entities[0])))
+			}
+
+			if struct2 == nil {
+				struct2 = findStruct(pkg.Scope(), lex.PascalCase(lex.Singular(entities[1])))
+			}
+		}
+
 		if struct1 != nil && struct2 != nil {
 			return AssociationTable
 		}
@@ -278,6 +333,57 @@ func tableType(pkg *types.Package, name string, fields []*Field) TableType {
 	}
 
 	return EntityTable
+}
+
+func parsePkgDecls(entity string, kind string, pkgs []*packages.Package) ([]*types.Package, error) {
+	structName := lex.PascalCase(entity)
+	pkgTypes := make([]*types.Package, 0, len(pkgs))
+	numSeenDecls := 0
+	numTaggedDecls := 0
+	for _, pkg := range pkgs {
+		for _, decl := range pkg.Types.Scope().Names() {
+			// Don't validate any structs beyond the one we care about.
+			if decl != structName {
+				continue
+			}
+
+			if numTaggedDecls > 1 {
+				return nil, fmt.Errorf("Entity declaration exists in more than one package %q: %q. Remove db tags from one definition", pkg.Name, decl)
+			}
+
+			// If we encountered a non-struct declaration, just ignore it.
+			obj := pkg.Types.Scope().Lookup(decl)
+			structDecl, ok := obj.Type().Underlying().(*types.Struct)
+			if !ok {
+				continue
+			}
+
+			numSeenDecls++
+			fields, err := parseStruct(structDecl, kind, pkg.Types.Name())
+			if err != nil {
+				return nil, err
+			}
+
+			for _, f := range fields {
+				if len(f.Config) > 0 {
+					numTaggedDecls++
+					break
+				}
+			}
+		}
+
+		pkgTypes = append(pkgTypes, pkg.Types)
+	}
+
+	if numSeenDecls > 1 && numTaggedDecls != 1 {
+		return nil, fmt.Errorf("Struct %q declaration exists in more than one package. Apply db tags to one definition", structName)
+	}
+
+	if numSeenDecls == 0 {
+		return nil, fmt.Errorf("No declaration found for struct %q", structName)
+	}
+
+	return pkgTypes, nil
 }
 
 // Find the StructType node for the structure with the given name.

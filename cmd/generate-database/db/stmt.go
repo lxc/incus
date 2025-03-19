@@ -16,23 +16,42 @@ import (
 
 // Stmt generates a particular database query statement.
 type Stmt struct {
-	entity             string                      // Name of the database entity
-	kind               string                      // Kind of statement to generate
-	config             map[string]string           // Configuration parameters
-	pkg                *types.Package              // Package to perform for struct declaration lookups
+	entity             string            // Name of the database entity
+	kind               string            // Kind of statement to generate
+	config             map[string]string // Configuration parameters
+	localPath          string
+	pkgs               []*types.Package            // Package to perform for struct declaration lookups
 	defs               map[*ast.Ident]types.Object // Defs maps identifiers to the objects they define
 	registeredSQLStmts map[string]string           // Lookup for SQL statements registered during this execution, which are therefore not included in the parsed package information
 }
 
 // NewStmt return a new statement code snippet for running the given kind of
 // query against the given database entity.
-func NewStmt(parsedPkg *packages.Package, entity, kind string, config map[string]string, registeredSQLStmts map[string]string) (*Stmt, error) {
+func NewStmt(localPath string, parsedPkgs []*packages.Package, entity, kind string, config map[string]string, registeredSQLStmts map[string]string) (*Stmt, error) {
+	defs := map[*ast.Ident]types.Object{}
+	for _, pkg := range parsedPkgs {
+		for k, v := range pkg.TypesInfo.Defs {
+			_, ok := defs[k]
+			if ok {
+				return nil, fmt.Errorf("Entity definition already exists: %q: %q", pkg.Name, v.Name())
+			}
+
+			defs[k] = v
+		}
+	}
+
+	pkgTypes, err := parsePkgDecls(entity, kind, parsedPkgs)
+	if err != nil {
+		return nil, err
+	}
+
 	stmt := &Stmt{
+		localPath:          localPath,
 		entity:             entity,
 		kind:               kind,
 		config:             config,
-		pkg:                parsedPkg.Types,
-		defs:               parsedPkg.TypesInfo.Defs,
+		pkgs:               pkgTypes,
+		defs:               defs,
 		registeredSQLStmts: registeredSQLStmts,
 	}
 
@@ -73,7 +92,7 @@ func (s *Stmt) objects(buf *file.Buffer) error {
 		return s.objectsBy(buf)
 	}
 
-	mapping, err := Parse(s.pkg, lex.PascalCase(s.entity), s.kind)
+	mapping, err := Parse(s.localPath, s.pkgs, lex.PascalCase(s.entity), s.kind)
 	if err != nil {
 		return err
 	}
@@ -140,7 +159,7 @@ func (s *Stmt) objects(buf *file.Buffer) error {
 // string using the objects-by-<FIELD> field suffixes, and then creates a new variable declaration.
 // Strictly, it will look for variables of the form 'var <entity>Objects = <database>.RegisterStmt(`SQL String`)'.
 func (s *Stmt) objectsBy(buf *file.Buffer) error {
-	mapping, err := Parse(s.pkg, lex.PascalCase(s.entity), s.kind)
+	mapping, err := Parse(s.localPath, s.pkgs, lex.PascalCase(s.entity), s.kind)
 	if err != nil {
 		return err
 	}
@@ -205,7 +224,7 @@ func (s *Stmt) objectsBy(buf *file.Buffer) error {
 func (s *Stmt) create(buf *file.Buffer, replace bool) error {
 	entityCreate := lex.PascalCase(s.entity)
 
-	mapping, err := Parse(s.pkg, entityCreate, s.kind)
+	mapping, err := Parse(s.localPath, s.pkgs, entityCreate, s.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -216,7 +235,7 @@ func (s *Stmt) create(buf *file.Buffer, replace bool) error {
 	values := make([]string, 0, len(all))
 
 	for _, field := range all {
-		column, value, err := field.InsertColumn(s.pkg, mapping, table, s.defs, s.registeredSQLStmts)
+		column, value, err := field.InsertColumn(mapping, table, s.defs, s.registeredSQLStmts)
 		if err != nil {
 			return err
 		}
@@ -247,7 +266,7 @@ func (s *Stmt) create(buf *file.Buffer, replace bool) error {
 }
 
 func (s *Stmt) id(buf *file.Buffer) error {
-	mapping, err := Parse(s.pkg, lex.PascalCase(s.entity), s.kind)
+	mapping, err := Parse(s.localPath, s.pkgs, lex.PascalCase(s.entity), s.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -288,7 +307,7 @@ func (s *Stmt) id(buf *file.Buffer) error {
 }
 
 func (s *Stmt) rename(buf *file.Buffer) error {
-	mapping, err := Parse(s.pkg, lex.PascalCase(s.entity), s.kind)
+	mapping, err := Parse(s.localPath, s.pkgs, lex.PascalCase(s.entity), s.kind)
 	if err != nil {
 		return err
 	}
@@ -297,7 +316,7 @@ func (s *Stmt) rename(buf *file.Buffer) error {
 	nk := mapping.NaturalKey()
 	updates := make([]string, 0, len(nk))
 	for _, field := range nk {
-		column, value, err := field.InsertColumn(s.pkg, mapping, table, s.defs, s.registeredSQLStmts)
+		column, value, err := field.InsertColumn(mapping, table, s.defs, s.registeredSQLStmts)
 		if err != nil {
 			return err
 		}
@@ -319,7 +338,7 @@ func (s *Stmt) rename(buf *file.Buffer) error {
 func (s *Stmt) update(buf *file.Buffer) error {
 	entityUpdate := lex.PascalCase(s.entity)
 
-	mapping, err := Parse(s.pkg, entityUpdate, s.kind)
+	mapping, err := Parse(s.localPath, s.pkgs, entityUpdate, s.kind)
 	if err != nil {
 		return fmt.Errorf("Parse entity struct: %w", err)
 	}
@@ -328,7 +347,7 @@ func (s *Stmt) update(buf *file.Buffer) error {
 	all := mapping.ColumnFields("ID") // This exclude the ID column, which is autogenerated.
 	updates := make([]string, 0, len(all))
 	for _, field := range all {
-		column, value, err := field.InsertColumn(s.pkg, mapping, table, s.defs, s.registeredSQLStmts)
+		column, value, err := field.InsertColumn(mapping, table, s.defs, s.registeredSQLStmts)
 		if err != nil {
 			return err
 		}
@@ -349,7 +368,7 @@ func (s *Stmt) update(buf *file.Buffer) error {
 }
 
 func (s *Stmt) delete(buf *file.Buffer) error {
-	mapping, err := Parse(s.pkg, lex.PascalCase(s.entity), s.kind)
+	mapping, err := Parse(s.localPath, s.pkgs, lex.PascalCase(s.entity), s.kind)
 	if err != nil {
 		return err
 	}
@@ -369,7 +388,7 @@ func (s *Stmt) delete(buf *file.Buffer) error {
 				return err
 			}
 
-			column, value, err := field.InsertColumn(s.pkg, mapping, table, s.defs, s.registeredSQLStmts)
+			column, value, err := field.InsertColumn(mapping, table, s.defs, s.registeredSQLStmts)
 			if err != nil {
 				return err
 			}
