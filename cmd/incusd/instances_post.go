@@ -956,12 +956,12 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 	var targetMemberInfo *db.NodeInfo
 	var targetGroupName string
 
-	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		target := request.QueryParam(r, "target")
-		if !s.ServerClustered && target != "" {
-			return api.StatusErrorf(http.StatusBadRequest, "Target only allowed when clustered")
-		}
+	target := request.QueryParam(r, "target")
+	if !s.ServerClustered && target != "" {
+		return response.BadRequest(fmt.Errorf("Target only allowed when clustered"))
+	}
 
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), targetProjectName)
 		if err != nil {
 			return fmt.Errorf("Failed loading project: %w", err)
