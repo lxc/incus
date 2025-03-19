@@ -1572,7 +1572,7 @@ func (d *Daemon) init() error {
 	}
 
 	// Setup the networks.
-	if !d.db.Cluster.LocalNodeIsEvacuated() {
+	if !d.serverClustered || !d.db.Cluster.LocalNodeIsEvacuated() {
 		logger.Infof("Initializing networks")
 
 		err = networkStartup(d.State())

@@ -177,7 +177,7 @@ func instanceStatePut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Check if the cluster member is evacuated.
-	if s.DB.Cluster.LocalNodeIsEvacuated() && req.Action != "stop" {
+	if s.ServerClustered && req.Action != "stop" && s.DB.Cluster.LocalNodeIsEvacuated() {
 		return response.Forbidden(fmt.Errorf("Cluster member is evacuated"))
 	}
 
