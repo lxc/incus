@@ -209,7 +209,7 @@ func createFromNone(s *state.State, r *http.Request, projectName string, profile
 }
 
 func createFromMigration(ctx context.Context, s *state.State, r *http.Request, projectName string, profiles []api.Profile, req *api.InstancesPost) response.Response {
-	if s.DB.Cluster.LocalNodeIsEvacuated() && r != nil && r.Context().Value(request.CtxProtocol) != "cluster" {
+	if  r != nil && r.Context().Value(request.CtxProtocol) != "cluster" && s.DB.Cluster.LocalNodeIsEvacuated() {
 		return response.Forbidden(fmt.Errorf("Cluster member is evacuated"))
 	}
 
