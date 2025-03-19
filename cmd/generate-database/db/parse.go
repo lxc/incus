@@ -361,13 +361,6 @@ func parseField(f *types.Var, structTag string, kind string, pkgName string) (*F
 		Name: typeName,
 	}
 
-	typeObj.Code = TypeColumn
-	if strings.HasPrefix(typeName, "[]") {
-		typeObj.Code = TypeSlice
-	} else if strings.HasPrefix(typeName, "map[") {
-		typeObj.Code = TypeMap
-	}
-
 	var config url.Values
 	if structTag != "" {
 		var err error
@@ -379,6 +372,15 @@ func parseField(f *types.Var, structTag string, kind string, pkgName string) (*F
 		err = validateFieldConfig(config)
 		if err != nil {
 			return nil, fmt.Errorf("Invalid struct tag for field %q: %v", name, err)
+		}
+	}
+
+	typeObj.Code = TypeColumn
+	if config.Get("marshal") == "" {
+		if strings.HasPrefix(typeName, "[]") {
+			typeObj.Code = TypeSlice
+		} else if strings.HasPrefix(typeName, "map[") {
+			typeObj.Code = TypeMap
 		}
 	}
 
