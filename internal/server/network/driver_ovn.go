@@ -2653,7 +2653,7 @@ func (n *ovn) setup(update bool) error {
 			}
 		}
 	} else if uplinkNet != nil {
-		dnsIPv4 = uplinkNet.dnsIPv6
+		dnsIPv4 = uplinkNet.dnsIPv4
 		dnsIPv6 = uplinkNet.dnsIPv6
 	} else {
 		dnsIPv4 = []net.IP{routerIntPortIPv4}
