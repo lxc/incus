@@ -1,11 +1,13 @@
 package device
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/network/acl"
 	"github.com/lxc/incus/v6/shared/validate"
 )
@@ -53,6 +55,7 @@ func nicValidationRules(requiredFields []string, optionalFields []string, instCo
 		"security.acls.default.egress.logged":  validate.Optional(validate.IsBool),
 		"security.promiscuous":                 validate.Optional(validate.IsBool),
 		"mode":                                 validate.Optional(validate.IsOneOf("bridge", "vepa", "passthru", "private")),
+		"io.bus":                               validate.Optional(func(_ string) error { return nicCheckIsVM(instConf) }, validate.IsOneOf("virtio", "usb")),
 	}
 
 	validators := map[string]func(value string) error{}
@@ -131,4 +134,13 @@ func nicCheckNamesUnique(instConf instance.ConfigReader) error {
 // nicCheckDNSNameConflict returns if instNameA matches instNameB (case insensitive).
 func nicCheckDNSNameConflict(instNameA string, instNameB string) bool {
 	return strings.EqualFold(instNameA, instNameB)
+}
+
+// nicCheckIsVM returns if the given instance is a VM.
+func nicCheckIsVM(instConf instance.ConfigReader) error {
+	if instConf.Type() != instancetype.VM {
+		return errors.New("This option is only supported on virtual machines")
+	}
+
+	return nil
 }

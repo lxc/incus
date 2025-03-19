@@ -81,6 +81,7 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		"ipv6.host_table",
 		"gvrp",
 		"vrf",
+		"io.bus",
 	}
 
 	rules := nicValidationRules(requiredFields, optionalFields, instConf)
@@ -508,6 +509,10 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 		{Key: "flags", Value: "up"},
 		{Key: "link", Value: peerName},
 		{Key: "hwaddr", Value: d.config["hwaddr"]},
+	}
+
+	if d.config["io.bus"] == "usb" {
+		runConf.UseUSBBus = true
 	}
 
 	if d.inst.Type() == instancetype.Container {

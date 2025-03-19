@@ -99,6 +99,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 		"security.acls.default.egress.logged",
 		"boot.priority",
 		"vlan",
+		"io.bus",
 	}
 
 	// checkWithManagedNetwork validates the device's settings against the managed network.
@@ -681,6 +682,10 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 		{Key: "flags", Value: "up"},
 		{Key: "link", Value: peerName},
 		{Key: "hwaddr", Value: d.config["hwaddr"]},
+	}
+
+	if d.config["io.bus"] == "usb" {
+		runConf.UseUSBBus = true
 	}
 
 	if d.inst.Type() == instancetype.VM {
