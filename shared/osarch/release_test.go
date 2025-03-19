@@ -15,7 +15,7 @@ func TestReleaseTestSuite(t *testing.T) {
 	suite.Run(t, new(releaseTestSuite))
 }
 
-func (s *releaseTestSuite) TestGetLSBRelease() {
+func (s *releaseTestSuite) TestGetOSRelease() {
 	content := `NAME="Ubuntu"
 ID="ubuntu"
 VERSION_ID="16.04"
@@ -23,7 +23,7 @@ VERSION_ID="16.04"
 	filename, cleanup := WriteTempFile(&s.Suite, "", "os-release", content)
 	defer cleanup()
 
-	lsbRelease, err := getLSBRelease(filename)
+	lsbRelease, err := getOSRelease(filename)
 	s.Nil(err)
 	s.Equal(
 		map[string]string{
@@ -33,27 +33,27 @@ VERSION_ID="16.04"
 		}, lsbRelease)
 }
 
-func (s *releaseTestSuite) TestGetLSBReleaseSingleQuotes() {
+func (s *releaseTestSuite) TestGetOSReleaseSingleQuotes() {
 	content := `NAME='Ubuntu'`
 	filename, cleanup := WriteTempFile(&s.Suite, "", "os-release", content)
 	defer cleanup()
 
-	lsbRelease, err := getLSBRelease(filename)
+	lsbRelease, err := getOSRelease(filename)
 	s.Nil(err)
 	s.Equal(map[string]string{"NAME": "Ubuntu"}, lsbRelease)
 }
 
-func (s *releaseTestSuite) TestGetLSBReleaseNoQuotes() {
+func (s *releaseTestSuite) TestGetOSReleaseNoQuotes() {
 	content := `NAME=Ubuntu`
 	filename, cleanup := WriteTempFile(&s.Suite, "", "os-release", content)
 	defer cleanup()
 
-	lsbRelease, err := getLSBRelease(filename)
+	lsbRelease, err := getOSRelease(filename)
 	s.Nil(err)
 	s.Equal(map[string]string{"NAME": "Ubuntu"}, lsbRelease)
 }
 
-func (s *releaseTestSuite) TestGetLSBReleaseSkipCommentsEmpty() {
+func (s *releaseTestSuite) TestGetOSReleaseSkipCommentsEmpty() {
 	content := `
 NAME="Ubuntu"
 
@@ -64,7 +64,7 @@ VERSION_ID="16.04"
 	filename, cleanup := WriteTempFile(&s.Suite, "", "os-release", content)
 	defer cleanup()
 
-	lsbRelease, err := getLSBRelease(filename)
+	lsbRelease, err := getOSRelease(filename)
 	s.Nil(err)
 	s.Equal(
 		map[string]string{
@@ -74,7 +74,7 @@ VERSION_ID="16.04"
 		}, lsbRelease)
 }
 
-func (s *releaseTestSuite) TestGetLSBReleaseInvalidLine() {
+func (s *releaseTestSuite) TestGetOSReleaseInvalidLine() {
 	content := `
 NAME="Ubuntu"
 this is invalid
@@ -83,6 +83,6 @@ ID="ubuntu"
 	filename, cleanup := WriteTempFile(&s.Suite, "", "os-release", content)
 	defer cleanup()
 
-	_, err := getLSBRelease(filename)
+	_, err := getOSRelease(filename)
 	s.EqualError(err, fmt.Sprintf("%s: invalid format on line 3", filename))
 }
