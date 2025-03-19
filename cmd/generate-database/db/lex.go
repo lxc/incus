@@ -82,14 +82,14 @@ func activeCriteria(filter []string, ignoredFilter []string) string {
 
 // Return the code for a "dest" function, to be passed as parameter to
 // selectObjects in order to scan a single row.
-func destFunc(slice string, typ string, fields []*Field) string {
+func destFunc(slice string, entity string, importType string, fields []*Field) string {
 	var builder strings.Builder
 	writeLine := func(line string) { builder.WriteString(fmt.Sprintf("%s\n", line)) }
 
 	writeLine(`func(scan func(dest ...any) error) error {`)
 
-	varName := lex.Minuscule(string(typ[0]))
-	writeLine(fmt.Sprintf("%s := %s{}", varName, typ))
+	varName := lex.Minuscule(string(entity[0]))
+	writeLine(fmt.Sprintf("%s := %s{}", varName, importType))
 
 	checkErr := func() {
 		writeLine("if err != nil {\nreturn err\n}")
