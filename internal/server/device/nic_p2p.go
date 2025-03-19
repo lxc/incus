@@ -42,6 +42,7 @@ func (d *nicP2P) validateConfig(instConf instance.ConfigReader) error {
 		"ipv4.routes",
 		"ipv6.routes",
 		"boot.priority",
+		"io.bus",
 	}
 
 	err := d.config.Validate(nicValidationRules([]string{}, optionalFields, instConf))
@@ -149,6 +150,10 @@ func (d *nicP2P) Start() (*deviceConfig.RunConfig, error) {
 		{Key: "flags", Value: "up"},
 		{Key: "link", Value: peerName},
 		{Key: "hwaddr", Value: d.config["hwaddr"]},
+	}
+
+	if d.config["io.bus"] == "usb" {
+		runConf.UseUSBBus = true
 	}
 
 	if d.inst.Type() == instancetype.VM {
