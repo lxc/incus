@@ -209,7 +209,7 @@ func GetProjects(ctx context.Context, db dbtx, filters ...ProjectFilter) (_ []Pr
 
 // GetProjectConfig returns all available Project Config
 // generator: project GetMany
-func GetProjectConfig(ctx context.Context, db dbtx, projectID int, filters ...ConfigFilter) (_ map[string]string, _err error) {
+func GetProjectConfig(ctx context.Context, db tx, projectID int, filters ...ConfigFilter) (_ map[string]string, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Project")
 	}()
@@ -325,11 +325,6 @@ func CreateProjectConfig(ctx context.Context, db dbtx, projectID int64, config m
 		_err = mapErr(_err, "Project")
 	}()
 
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return fmt.Errorf("Committable DB connection (transaction) required")
-	}
-
 	referenceID := int(projectID)
 	for key, value := range config {
 		insert := Config{
@@ -350,7 +345,7 @@ func CreateProjectConfig(ctx context.Context, db dbtx, projectID int64, config m
 
 // GetProjectID return the ID of the project with the given key.
 // generator: project ID
-func GetProjectID(ctx context.Context, db dbtx, name string) (_ int64, _err error) {
+func GetProjectID(ctx context.Context, db tx, name string) (_ int64, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Project")
 	}()

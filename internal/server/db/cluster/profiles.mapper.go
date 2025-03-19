@@ -80,7 +80,7 @@ DELETE FROM profiles WHERE project_id = (SELECT projects.id FROM projects WHERE 
 
 // GetProfileID return the ID of the profile with the given key.
 // generator: profile ID
-func GetProfileID(ctx context.Context, db dbtx, project string, name string) (_ int64, _err error) {
+func GetProfileID(ctx context.Context, db tx, project string, name string) (_ int64, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Profile")
 	}()
@@ -329,7 +329,7 @@ func GetProfiles(ctx context.Context, db dbtx, filters ...ProfileFilter) (_ []Pr
 
 // GetProfileDevices returns all available Profile Devices
 // generator: profile GetMany
-func GetProfileDevices(ctx context.Context, db dbtx, profileID int, filters ...DeviceFilter) (_ map[string]Device, _err error) {
+func GetProfileDevices(ctx context.Context, db tx, profileID int, filters ...DeviceFilter) (_ map[string]Device, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Profile")
 	}()
@@ -354,7 +354,7 @@ func GetProfileDevices(ctx context.Context, db dbtx, profileID int, filters ...D
 
 // GetProfileConfig returns all available Profile Config
 // generator: profile GetMany
-func GetProfileConfig(ctx context.Context, db dbtx, profileID int, filters ...ConfigFilter) (_ map[string]string, _err error) {
+func GetProfileConfig(ctx context.Context, db tx, profileID int, filters ...ConfigFilter) (_ map[string]string, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Profile")
 	}()
@@ -441,15 +441,10 @@ func CreateProfile(ctx context.Context, db dbtx, object Profile) (_ int64, _err 
 
 // CreateProfileDevices adds new profile Devices to the database.
 // generator: profile Create
-func CreateProfileDevices(ctx context.Context, db dbtx, profileID int64, devices map[string]Device) (_err error) {
+func CreateProfileDevices(ctx context.Context, db tx, profileID int64, devices map[string]Device) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Profile")
 	}()
-
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return fmt.Errorf("Committable DB connection (transaction) required")
-	}
 
 	for key, device := range devices {
 		device.ReferenceID = int(profileID)
@@ -470,11 +465,6 @@ func CreateProfileConfig(ctx context.Context, db dbtx, profileID int64, config m
 	defer func() {
 		_err = mapErr(_err, "Profile")
 	}()
-
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return fmt.Errorf("Committable DB connection (transaction) required")
-	}
 
 	referenceID := int(profileID)
 	for key, value := range config {
@@ -525,7 +515,7 @@ func RenameProfile(ctx context.Context, db dbtx, project string, name string, to
 
 // UpdateProfile updates the profile matching the given key parameters.
 // generator: profile Update
-func UpdateProfile(ctx context.Context, db dbtx, project string, name string, object Profile) (_err error) {
+func UpdateProfile(ctx context.Context, db tx, project string, name string, object Profile) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Profile")
 	}()
@@ -559,7 +549,7 @@ func UpdateProfile(ctx context.Context, db dbtx, project string, name string, ob
 
 // UpdateProfileDevices updates the profile Device matching the given key parameters.
 // generator: profile Update
-func UpdateProfileDevices(ctx context.Context, db dbtx, profileID int64, devices map[string]Device) (_err error) {
+func UpdateProfileDevices(ctx context.Context, db tx, profileID int64, devices map[string]Device) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Profile")
 	}()
@@ -574,7 +564,7 @@ func UpdateProfileDevices(ctx context.Context, db dbtx, profileID int64, devices
 
 // UpdateProfileConfig updates the profile Config matching the given key parameters.
 // generator: profile Update
-func UpdateProfileConfig(ctx context.Context, db dbtx, profileID int64, config map[string]string) (_err error) {
+func UpdateProfileConfig(ctx context.Context, db tx, profileID int64, config map[string]string) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Profile")
 	}()

@@ -8,11 +8,11 @@ import "context"
 type InstanceGenerated interface {
 	// GetInstanceConfig returns all available Instance Config
 	// generator: instance GetMany
-	GetInstanceConfig(ctx context.Context, db dbtx, instanceID int, filters ...ConfigFilter) (map[string]string, error)
+	GetInstanceConfig(ctx context.Context, db tx, instanceID int, filters ...ConfigFilter) (map[string]string, error)
 
 	// GetInstanceDevices returns all available Instance Devices
 	// generator: instance GetMany
-	GetInstanceDevices(ctx context.Context, db dbtx, instanceID int, filters ...DeviceFilter) (map[string]Device, error)
+	GetInstanceDevices(ctx context.Context, db tx, instanceID int, filters ...DeviceFilter) (map[string]Device, error)
 
 	// GetInstances returns all available instances.
 	// generator: instance GetMany
@@ -24,7 +24,7 @@ type InstanceGenerated interface {
 
 	// GetInstanceID return the ID of the instance with the given key.
 	// generator: instance ID
-	GetInstanceID(ctx context.Context, db dbtx, project string, name string) (int64, error)
+	GetInstanceID(ctx context.Context, db tx, project string, name string) (int64, error)
 
 	// InstanceExists checks if a instance with the given key exists.
 	// generator: instance Exists
@@ -36,7 +36,7 @@ type InstanceGenerated interface {
 
 	// CreateInstanceDevices adds new instance Devices to the database.
 	// generator: instance Create
-	CreateInstanceDevices(ctx context.Context, db dbtx, instanceID int64, devices map[string]Device) error
+	CreateInstanceDevices(ctx context.Context, db tx, instanceID int64, devices map[string]Device) error
 
 	// CreateInstance adds a new instance to the database.
 	// generator: instance Create
@@ -52,13 +52,13 @@ type InstanceGenerated interface {
 
 	// UpdateInstanceConfig updates the instance Config matching the given key parameters.
 	// generator: instance Update
-	UpdateInstanceConfig(ctx context.Context, db dbtx, instanceID int64, config map[string]string) error
+	UpdateInstanceConfig(ctx context.Context, db tx, instanceID int64, config map[string]string) error
 
 	// UpdateInstanceDevices updates the instance Device matching the given key parameters.
 	// generator: instance Update
-	UpdateInstanceDevices(ctx context.Context, db dbtx, instanceID int64, devices map[string]Device) error
+	UpdateInstanceDevices(ctx context.Context, db tx, instanceID int64, devices map[string]Device) error
 
 	// UpdateInstance updates the instance matching the given key parameters.
 	// generator: instance Update
-	UpdateInstance(ctx context.Context, db dbtx, project string, name string, object Instance) error
+	UpdateInstance(ctx context.Context, db tx, project string, name string, object Instance) error
 }

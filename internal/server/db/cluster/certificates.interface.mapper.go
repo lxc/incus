@@ -20,7 +20,7 @@ type CertificateGenerated interface {
 
 	// GetCertificateID return the ID of the certificate with the given key.
 	// generator: certificate ID
-	GetCertificateID(ctx context.Context, db dbtx, fingerprint string) (int64, error)
+	GetCertificateID(ctx context.Context, db tx, fingerprint string) (int64, error)
 
 	// CertificateExists checks if a certificate with the given key exists.
 	// generator: certificate Exists
@@ -40,5 +40,5 @@ type CertificateGenerated interface {
 
 	// UpdateCertificate updates the certificate matching the given key parameters.
 	// generator: certificate Update
-	UpdateCertificate(ctx context.Context, db dbtx, fingerprint string, object Certificate) error
+	UpdateCertificate(ctx context.Context, db tx, fingerprint string, object Certificate) error
 }

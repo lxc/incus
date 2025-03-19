@@ -415,7 +415,7 @@ func DeleteWarnings(ctx context.Context, db dbtx, entityTypeCode int, entityID i
 
 // GetWarningID return the ID of the warning with the given key.
 // generator: warning ID
-func GetWarningID(ctx context.Context, db dbtx, uuid string) (_ int64, _err error) {
+func GetWarningID(ctx context.Context, db tx, uuid string) (_ int64, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Warning")
 	}()

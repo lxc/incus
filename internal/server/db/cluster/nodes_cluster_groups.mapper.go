@@ -236,7 +236,7 @@ func NodeClusterGroupExists(ctx context.Context, db dbtx, groupID int) (_ bool, 
 
 // GetNodeClusterGroupID return the ID of the node_cluster_group with the given key.
 // generator: node_cluster_group ID
-func GetNodeClusterGroupID(ctx context.Context, db dbtx, groupID int) (_ int64, _err error) {
+func GetNodeClusterGroupID(ctx context.Context, db tx, groupID int) (_ int64, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Node_cluster_group")
 	}()

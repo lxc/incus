@@ -203,7 +203,7 @@ func GetClusterGroup(ctx context.Context, db dbtx, name string) (_ *ClusterGroup
 
 // GetClusterGroupID return the ID of the cluster_group with the given key.
 // generator: cluster_group ID
-func GetClusterGroupID(ctx context.Context, db dbtx, name string) (_ int64, _err error) {
+func GetClusterGroupID(ctx context.Context, db tx, name string) (_ int64, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Cluster_group")
 	}()
@@ -324,7 +324,7 @@ func CreateClusterGroup(ctx context.Context, db dbtx, object ClusterGroup) (_ in
 
 // UpdateClusterGroup updates the cluster_group matching the given key parameters.
 // generator: cluster_group Update
-func UpdateClusterGroup(ctx context.Context, db dbtx, name string, object ClusterGroup) (_err error) {
+func UpdateClusterGroup(ctx context.Context, db tx, name string, object ClusterGroup) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Cluster_group")
 	}()

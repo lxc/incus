@@ -81,11 +81,6 @@ func GetConfig(ctx context.Context, db dbtx, parent string, filters ...ConfigFil
 		_err = mapErr(_err, "Config")
 	}()
 
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return nil, fmt.Errorf("Committable DB connection (transaction) required")
-	}
-
 	var err error
 
 	// Result slice.
@@ -180,11 +175,6 @@ func UpdateConfig(ctx context.Context, db dbtx, parent string, referenceID int, 
 	defer func() {
 		_err = mapErr(_err, "Config")
 	}()
-
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return fmt.Errorf("Committable DB connection (transaction) required")
-	}
 
 	// Delete current entry.
 	err := DeleteConfig(ctx, db, parent, referenceID)

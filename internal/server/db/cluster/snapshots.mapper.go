@@ -244,7 +244,7 @@ func GetInstanceSnapshots(ctx context.Context, db dbtx, filters ...InstanceSnaps
 
 // GetInstanceSnapshotDevices returns all available InstanceSnapshot Devices
 // generator: instance_snapshot GetMany
-func GetInstanceSnapshotDevices(ctx context.Context, db dbtx, instanceSnapshotID int, filters ...DeviceFilter) (_ map[string]Device, _err error) {
+func GetInstanceSnapshotDevices(ctx context.Context, db tx, instanceSnapshotID int, filters ...DeviceFilter) (_ map[string]Device, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
@@ -269,7 +269,7 @@ func GetInstanceSnapshotDevices(ctx context.Context, db dbtx, instanceSnapshotID
 
 // GetInstanceSnapshotConfig returns all available InstanceSnapshot Config
 // generator: instance_snapshot GetMany
-func GetInstanceSnapshotConfig(ctx context.Context, db dbtx, instanceSnapshotID int, filters ...ConfigFilter) (_ map[string]string, _err error) {
+func GetInstanceSnapshotConfig(ctx context.Context, db tx, instanceSnapshotID int, filters ...ConfigFilter) (_ map[string]string, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
@@ -316,7 +316,7 @@ func GetInstanceSnapshot(ctx context.Context, db dbtx, project string, instance 
 
 // GetInstanceSnapshotID return the ID of the instance_snapshot with the given key.
 // generator: instance_snapshot ID
-func GetInstanceSnapshotID(ctx context.Context, db dbtx, project string, instance string, name string) (_ int64, _err error) {
+func GetInstanceSnapshotID(ctx context.Context, db tx, project string, instance string, name string) (_ int64, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
@@ -413,15 +413,10 @@ func CreateInstanceSnapshot(ctx context.Context, db dbtx, object InstanceSnapsho
 
 // CreateInstanceSnapshotDevices adds new instance_snapshot Devices to the database.
 // generator: instance_snapshot Create
-func CreateInstanceSnapshotDevices(ctx context.Context, db dbtx, instanceSnapshotID int64, devices map[string]Device) (_err error) {
+func CreateInstanceSnapshotDevices(ctx context.Context, db tx, instanceSnapshotID int64, devices map[string]Device) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
-
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return fmt.Errorf("Committable DB connection (transaction) required")
-	}
 
 	for key, device := range devices {
 		device.ReferenceID = int(instanceSnapshotID)
@@ -442,11 +437,6 @@ func CreateInstanceSnapshotConfig(ctx context.Context, db dbtx, instanceSnapshot
 	defer func() {
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
-
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return fmt.Errorf("Committable DB connection (transaction) required")
-	}
 
 	referenceID := int(instanceSnapshotID)
 	for key, value := range config {

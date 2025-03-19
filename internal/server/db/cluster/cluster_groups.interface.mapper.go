@@ -16,7 +16,7 @@ type ClusterGroupGenerated interface {
 
 	// GetClusterGroupID return the ID of the cluster_group with the given key.
 	// generator: cluster_group ID
-	GetClusterGroupID(ctx context.Context, db dbtx, name string) (int64, error)
+	GetClusterGroupID(ctx context.Context, db tx, name string) (int64, error)
 
 	// ClusterGroupExists checks if a cluster_group with the given key exists.
 	// generator: cluster_group Exists
@@ -32,7 +32,7 @@ type ClusterGroupGenerated interface {
 
 	// UpdateClusterGroup updates the cluster_group matching the given key parameters.
 	// generator: cluster_group Update
-	UpdateClusterGroup(ctx context.Context, db dbtx, name string, object ClusterGroup) error
+	UpdateClusterGroup(ctx context.Context, db tx, name string, object ClusterGroup) error
 
 	// DeleteClusterGroup deletes the cluster_group matching the given key parameters.
 	// generator: cluster_group DeleteOne-by-Name
