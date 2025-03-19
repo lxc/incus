@@ -1544,13 +1544,16 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 		}
 	}
 
+	args, err = m.sqlTxCheck(mapping, args)
+	if err != nil {
+		return err
+	}
+
 	m.begin(buf, mapping, comment, args, rets, isInterface)
 
 	if isInterface {
 		return nil
 	}
-
-	m.sqlTxCheck(buf, mapping)
 
 	return nil
 }
@@ -1635,41 +1638,35 @@ func (m *Method) begin(buf *file.Buffer, mapping *Mapping, comment string, args 
 	}
 }
 
-func (m *Method) sqlTxCheck(buf *file.Buffer, mapping *Mapping) {
+func (m *Method) sqlTxCheck(mapping *Mapping, args string) (string, error) {
 	txCheck := false
-	rets := []string{}
 
-	switch operation(m.kind) {
-	case "GetMany":
-		if mapping.Type != EntityTable || len(mapping.RefFields()) > 0 {
-			rets = []string{"nil"}
+	switch mapping.Type {
+	case EntityTable:
+		if m.kind == "Update" || m.kind == "ID" {
 			txCheck = true
+		} else if m.ref != "" {
+			refMapping, err := Parse(m.localPath, m.pkgs, m.ref, "")
+			if err != nil {
+				return "", fmt.Errorf("Parse entity struct: %w", err)
+			}
+
+			if refMapping.Type != MapTable || m.kind == "GetMany" {
+				txCheck = true
+			}
 		}
 
-	case "Create":
-		if mapping.Type == AssociationTable ||
-			mapping.Type == ReferenceTable ||
-			len(mapping.RefFields()) > 0 ||
-			m.ref != "" {
-			txCheck = true
-		}
-
-	case "Update":
-		if mapping.Type != EntityTable {
-			txCheck = true
-		}
+	case AssociationTable:
+		txCheck = true
+	case ReferenceTable:
+		txCheck = true
 	}
 
-	if !txCheck {
-		return
+	if txCheck {
+		args = strings.Replace(args, "dbtx", "tx", -1)
 	}
 
-	rets = append(rets, `fmt.Errorf("Committable DB connection (transaction) required")`)
-	buf.L(`_, ok := db.(interface{ Commit() error })`)
-	buf.L(`if !ok {`)
-	buf.L(`	return %s`, strings.Join(rets, ", "))
-	buf.L(`}`)
-	buf.N()
+	return args, nil
 }
 
 func (m *Method) ifErrNotNil(buf *file.Buffer, newLine bool, rets ...string) {
