@@ -2303,7 +2303,7 @@ func (d *qemu) deviceStart(dev device.Device, instanceRunning bool) (*deviceConf
 		if instanceRunning {
 			// Attach NIC to running instance.
 			if len(runConf.NetworkInterface) > 0 {
-				err = d.deviceAttachNIC(dev.Name(), configCopy, runConf.NetworkInterface)
+				err = d.deviceAttachNIC(dev.Name(), configCopy, runConf)
 				if err != nil {
 					return nil, err
 				}
@@ -2544,9 +2544,9 @@ func (d *qemu) deviceDetachBlockDevice(deviceName string, rawConfig deviceConfig
 }
 
 // deviceAttachNIC live attaches a NIC device to the instance.
-func (d *qemu) deviceAttachNIC(deviceName string, configCopy map[string]string, netIF []deviceConfig.RunConfigItem) error {
+func (d *qemu) deviceAttachNIC(deviceName string, configCopy map[string]string, runConf *deviceConfig.RunConfig) error {
 	devName := ""
-	for _, dev := range netIF {
+	for _, dev := range runConf.NetworkInterface {
 		if dev.Key == "link" {
 			devName = dev.Value
 			break
@@ -2569,9 +2569,10 @@ func (d *qemu) deviceAttachNIC(deviceName string, configCopy map[string]string, 
 	}
 
 	qemuDev := make(map[string]any)
-
-	// PCIe and PCI require a port device name to hotplug the NIC into.
-	if slices.Contains([]string{"pcie", "pci"}, qemuBus) {
+	if runConf.UseUSBBus {
+		qemuBus = "usb"
+		qemuDev["bus"] = "qemu_usb.0"
+	} else if slices.Contains([]string{"pcie", "pci"}, qemuBus) {
 		// Try to get a PCI address for hotplugging.
 		pciDeviceName, err := d.getPCIHotplug()
 		if err != nil {
@@ -2583,7 +2584,7 @@ func (d *qemu) deviceAttachNIC(deviceName string, configCopy map[string]string, 
 		qemuDev["addr"] = "00.0"
 	}
 
-	monHook, err := d.addNetDevConfig(qemuBus, qemuDev, nil, netIF)
+	monHook, err := d.addNetDevConfig(qemuBus, qemuDev, nil, runConf.NetworkInterface)
 	if err != nil {
 		return err
 	}
@@ -3690,7 +3691,11 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuInfo *cpuTopology
 		// Add network device.
 		if len(runConf.NetworkInterface) > 0 {
 			qemuDev := make(map[string]any)
-			if slices.Contains([]string{"pcie", "pci"}, bus.name) {
+			busName := bus.name
+			if runConf.UseUSBBus {
+				busName = "usb"
+				qemuDev["bus"] = "qemu_usb.0"
+			} else if slices.Contains([]string{"pcie", "pci"}, busName) {
 				// Allocate a PCI(e) port and write it to the config file so QMP can "hotplug" the
 				// NIC into it later.
 				devBus, devAddr, multi := bus.allocate(busFunctionGroupNone)
@@ -3704,7 +3709,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuInfo *cpuTopology
 				}
 			}
 
-			monHook, err := d.addNetDevConfig(bus.name, qemuDev, bootIndexes, runConf.NetworkInterface)
+			monHook, err := d.addNetDevConfig(busName, qemuDev, bootIndexes, runConf.NetworkInterface)
 			if err != nil {
 				return nil, err
 			}
@@ -4427,7 +4432,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 
 		// Number of vectors is number of vCPUs * 2 (RX/TX) + 2 (config/control MSI-X).
 		vectors := 2*queueCount + 2
-		if vectors > 0 {
+		if busName != "usb" {
 			qemuDev["mq"] = true
 			if slices.Contains([]string{"pcie", "pci"}, busName) {
 				qemuDev["vectors"] = vectors
@@ -4507,6 +4512,8 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 				qemuDev["driver"] = "virtio-net-pci"
 			} else if busName == "ccw" {
 				qemuDev["driver"] = "virtio-net-ccw"
+			} else if busName == "usb" {
+				qemuDev["driver"] = "usb-net"
 			}
 
 			qemuNetDev["fds"] = strings.Join(fds, ":")
@@ -4616,6 +4623,8 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 				qemuDev["driver"] = "virtio-net-pci"
 			} else if busName == "ccw" {
 				qemuDev["driver"] = "virtio-net-ccw"
+			} else if busName == "usb" {
+				qemuDev["driver"] = "usb-net"
 			}
 
 			qemuDev["netdev"] = qemuNetDev["id"].(string)
