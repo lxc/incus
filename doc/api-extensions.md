@@ -2733,3 +2733,7 @@ Introduces `ipv4.dhcp.expiry` for OVN networks.
 ## `instance_state_cpu_time`
 
 This adds an `allocated_time` field below `CPU` in the instance state API.
+
+## `network_io_bus`
+
+This introduces a new `io.bus` property for compatible network devices allowing to choose between `virtio` (default) and `usb`.
