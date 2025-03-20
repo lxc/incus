@@ -1,6 +1,7 @@
 package db_test
 
 import (
+	"go/types"
 	"testing"
 	"time"
 
@@ -36,7 +37,7 @@ func TestParse(t *testing.T) {
 	}, "")
 	require.NoError(t, err)
 
-	m, err := db.Parse(pkg[1].Types, "Teacher", "objects")
+	m, err := db.Parse(pkg[1].PkgPath, []*types.Package{pkg[1].Types}, "Teacher", "objects")
 	require.NoError(t, err)
 
 	assert.Equal(t, "db_test", m.Package)

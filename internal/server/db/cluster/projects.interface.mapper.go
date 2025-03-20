@@ -8,7 +8,7 @@ import "context"
 type ProjectGenerated interface {
 	// GetProjectConfig returns all available Project Config
 	// generator: project GetMany
-	GetProjectConfig(ctx context.Context, db dbtx, projectID int, filters ...ConfigFilter) (map[string]string, error)
+	GetProjectConfig(ctx context.Context, db tx, projectID int, filters ...ConfigFilter) (map[string]string, error)
 
 	// GetProjects returns all available projects.
 	// generator: project GetMany
@@ -32,7 +32,7 @@ type ProjectGenerated interface {
 
 	// GetProjectID return the ID of the project with the given key.
 	// generator: project ID
-	GetProjectID(ctx context.Context, db dbtx, name string) (int64, error)
+	GetProjectID(ctx context.Context, db tx, name string) (int64, error)
 
 	// RenameProject renames the project matching the given key parameters.
 	// generator: project Rename

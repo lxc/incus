@@ -24,7 +24,7 @@ type WarningGenerated interface {
 
 	// GetWarningID return the ID of the warning with the given key.
 	// generator: warning ID
-	GetWarningID(ctx context.Context, db dbtx, uuid string) (int64, error)
+	GetWarningID(ctx context.Context, db tx, uuid string) (int64, error)
 
 	// WarningExists checks if a warning with the given key exists.
 	// generator: warning Exists

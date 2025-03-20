@@ -91,15 +91,10 @@ func getCertificateProjectsRaw(ctx context.Context, db dbtx, sql string, args ..
 
 // GetCertificateProjects returns all available Projects for the Certificate.
 // generator: certificate_project GetMany
-func GetCertificateProjects(ctx context.Context, db dbtx, certificateID int) (_ []Project, _err error) {
+func GetCertificateProjects(ctx context.Context, db tx, certificateID int) (_ []Project, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Certificate_project")
 	}()
-
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return nil, fmt.Errorf("Committable DB connection (transaction) required")
-	}
 
 	var err error
 
@@ -134,7 +129,7 @@ func GetCertificateProjects(ctx context.Context, db dbtx, certificateID int) (_ 
 
 // DeleteCertificateProjects deletes the certificate_project matching the given key parameters.
 // generator: certificate_project DeleteMany
-func DeleteCertificateProjects(ctx context.Context, db dbtx, certificateID int) (_err error) {
+func DeleteCertificateProjects(ctx context.Context, db tx, certificateID int) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Certificate_project")
 	}()
@@ -159,15 +154,10 @@ func DeleteCertificateProjects(ctx context.Context, db dbtx, certificateID int) 
 
 // CreateCertificateProjects adds a new certificate_project to the database.
 // generator: certificate_project Create
-func CreateCertificateProjects(ctx context.Context, db dbtx, objects []CertificateProject) (_err error) {
+func CreateCertificateProjects(ctx context.Context, db tx, objects []CertificateProject) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Certificate_project")
 	}()
-
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return fmt.Errorf("Committable DB connection (transaction) required")
-	}
 
 	for _, object := range objects {
 		args := make([]any, 2)
@@ -202,15 +192,10 @@ func CreateCertificateProjects(ctx context.Context, db dbtx, objects []Certifica
 
 // UpdateCertificateProjects updates the certificate_project matching the given key parameters.
 // generator: certificate_project Update
-func UpdateCertificateProjects(ctx context.Context, db dbtx, certificateID int, projectNames []string) (_err error) {
+func UpdateCertificateProjects(ctx context.Context, db tx, certificateID int, projectNames []string) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Certificate_project")
 	}()
-
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return fmt.Errorf("Committable DB connection (transaction) required")
-	}
 
 	// Delete current entry.
 	err := DeleteCertificateProjects(ctx, db, certificateID)

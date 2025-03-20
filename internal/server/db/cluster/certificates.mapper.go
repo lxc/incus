@@ -235,7 +235,7 @@ func GetCertificate(ctx context.Context, db dbtx, fingerprint string) (_ *Certif
 
 // GetCertificateID return the ID of the certificate with the given key.
 // generator: certificate ID
-func GetCertificateID(ctx context.Context, db dbtx, fingerprint string) (_ int64, _err error) {
+func GetCertificateID(ctx context.Context, db tx, fingerprint string) (_ int64, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Certificate")
 	}()
@@ -387,7 +387,7 @@ func DeleteCertificates(ctx context.Context, db dbtx, name string, certificateTy
 
 // UpdateCertificate updates the certificate matching the given key parameters.
 // generator: certificate Update
-func UpdateCertificate(ctx context.Context, db dbtx, fingerprint string, object Certificate) (_err error) {
+func UpdateCertificate(ctx context.Context, db tx, fingerprint string, object Certificate) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Certificate")
 	}()

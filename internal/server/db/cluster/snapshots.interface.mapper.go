@@ -8,11 +8,11 @@ import "context"
 type InstanceSnapshotGenerated interface {
 	// GetInstanceSnapshotConfig returns all available InstanceSnapshot Config
 	// generator: instance_snapshot GetMany
-	GetInstanceSnapshotConfig(ctx context.Context, db dbtx, instanceSnapshotID int, filters ...ConfigFilter) (map[string]string, error)
+	GetInstanceSnapshotConfig(ctx context.Context, db tx, instanceSnapshotID int, filters ...ConfigFilter) (map[string]string, error)
 
 	// GetInstanceSnapshotDevices returns all available InstanceSnapshot Devices
 	// generator: instance_snapshot GetMany
-	GetInstanceSnapshotDevices(ctx context.Context, db dbtx, instanceSnapshotID int, filters ...DeviceFilter) (map[string]Device, error)
+	GetInstanceSnapshotDevices(ctx context.Context, db tx, instanceSnapshotID int, filters ...DeviceFilter) (map[string]Device, error)
 
 	// GetInstanceSnapshots returns all available instance_snapshots.
 	// generator: instance_snapshot GetMany
@@ -24,7 +24,7 @@ type InstanceSnapshotGenerated interface {
 
 	// GetInstanceSnapshotID return the ID of the instance_snapshot with the given key.
 	// generator: instance_snapshot ID
-	GetInstanceSnapshotID(ctx context.Context, db dbtx, project string, instance string, name string) (int64, error)
+	GetInstanceSnapshotID(ctx context.Context, db tx, project string, instance string, name string) (int64, error)
 
 	// InstanceSnapshotExists checks if a instance_snapshot with the given key exists.
 	// generator: instance_snapshot Exists
@@ -36,7 +36,7 @@ type InstanceSnapshotGenerated interface {
 
 	// CreateInstanceSnapshotDevices adds new instance_snapshot Devices to the database.
 	// generator: instance_snapshot Create
-	CreateInstanceSnapshotDevices(ctx context.Context, db dbtx, instanceSnapshotID int64, devices map[string]Device) error
+	CreateInstanceSnapshotDevices(ctx context.Context, db tx, instanceSnapshotID int64, devices map[string]Device) error
 
 	// CreateInstanceSnapshot adds a new instance_snapshot to the database.
 	// generator: instance_snapshot Create

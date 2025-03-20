@@ -76,15 +76,10 @@ func getDevicesRaw(ctx context.Context, db dbtx, sql string, parent string, args
 
 // GetDevices returns all available devices for the parent entity.
 // generator: device GetMany
-func GetDevices(ctx context.Context, db dbtx, parent string, filters ...DeviceFilter) (_ map[int][]Device, _err error) {
+func GetDevices(ctx context.Context, db tx, parent string, filters ...DeviceFilter) (_ map[int][]Device, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Device")
 	}()
-
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return nil, fmt.Errorf("Committable DB connection (transaction) required")
-	}
 
 	var err error
 
@@ -175,15 +170,10 @@ func GetDevices(ctx context.Context, db dbtx, parent string, filters ...DeviceFi
 
 // CreateDevices adds a new device to the database.
 // generator: device Create
-func CreateDevices(ctx context.Context, db dbtx, parent string, objects map[string]Device) (_err error) {
+func CreateDevices(ctx context.Context, db tx, parent string, objects map[string]Device) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Device")
 	}()
-
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return fmt.Errorf("Committable DB connection (transaction) required")
-	}
 
 	deviceCreateLocal := strings.Replace(deviceCreate, "%s_id", fmt.Sprintf("%s_id", parent), -1)
 	fillParent := make([]any, strings.Count(deviceCreateLocal, "%s"))
@@ -223,15 +213,10 @@ func CreateDevices(ctx context.Context, db dbtx, parent string, objects map[stri
 
 // UpdateDevices updates the device matching the given key parameters.
 // generator: device Update
-func UpdateDevices(ctx context.Context, db dbtx, parent string, referenceID int, devices map[string]Device) (_err error) {
+func UpdateDevices(ctx context.Context, db tx, parent string, referenceID int, devices map[string]Device) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Device")
 	}()
-
-	_, ok := db.(interface{ Commit() error })
-	if !ok {
-		return fmt.Errorf("Committable DB connection (transaction) required")
-	}
 
 	// Delete current entry.
 	err := DeleteDevices(ctx, db, parent, referenceID)
@@ -255,7 +240,7 @@ func UpdateDevices(ctx context.Context, db dbtx, parent string, referenceID int,
 
 // DeleteDevices deletes the device matching the given key parameters.
 // generator: device DeleteMany
-func DeleteDevices(ctx context.Context, db dbtx, parent string, referenceID int) (_err error) {
+func DeleteDevices(ctx context.Context, db tx, parent string, referenceID int) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Device")
 	}()

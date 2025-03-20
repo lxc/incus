@@ -8,7 +8,7 @@ import "context"
 type ClusterGroupGenerated interface {
 	// GetClusterGroupConfig returns all available ClusterGroup Config
 	// generator: cluster_group GetMany
-	GetClusterGroupConfig(ctx context.Context, db dbtx, clusterGroupID int, filters ...ConfigFilter) (map[string]string, error)
+	GetClusterGroupConfig(ctx context.Context, db tx, clusterGroupID int, filters ...ConfigFilter) (map[string]string, error)
 
 	// GetClusterGroups returns all available cluster_groups.
 	// generator: cluster_group GetMany
@@ -20,7 +20,7 @@ type ClusterGroupGenerated interface {
 
 	// GetClusterGroupID return the ID of the cluster_group with the given key.
 	// generator: cluster_group ID
-	GetClusterGroupID(ctx context.Context, db dbtx, name string) (int64, error)
+	GetClusterGroupID(ctx context.Context, db tx, name string) (int64, error)
 
 	// ClusterGroupExists checks if a cluster_group with the given key exists.
 	// generator: cluster_group Exists
@@ -40,11 +40,11 @@ type ClusterGroupGenerated interface {
 
 	// UpdateClusterGroupConfig updates the cluster_group Config matching the given key parameters.
 	// generator: cluster_group Update
-	UpdateClusterGroupConfig(ctx context.Context, db dbtx, clusterGroupID int64, config map[string]string) error
+	UpdateClusterGroupConfig(ctx context.Context, db tx, clusterGroupID int64, config map[string]string) error
 
 	// UpdateClusterGroup updates the cluster_group matching the given key parameters.
 	// generator: cluster_group Update
-	UpdateClusterGroup(ctx context.Context, db dbtx, name string, object ClusterGroup) error
+	UpdateClusterGroup(ctx context.Context, db tx, name string, object ClusterGroup) error
 
 	// DeleteClusterGroup deletes the cluster_group matching the given key parameters.
 	// generator: cluster_group DeleteOne-by-Name

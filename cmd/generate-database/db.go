@@ -65,7 +65,7 @@ func newDbMapper() *cobra.Command {
 }
 
 func newDbMapperGenerate() *cobra.Command {
-	var pkg string
+	var pkgs *[]string
 	var boilerplateFilename string
 
 	cmd := &cobra.Command{
@@ -76,12 +76,12 @@ func newDbMapperGenerate() *cobra.Command {
 				return errors.New("GOPACKAGE environment variable is not set")
 			}
 
-			return generate(pkg, boilerplateFilename)
+			return generate(*pkgs, boilerplateFilename)
 		},
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&pkg, "package", "p", "", "Go package where the entity struct is declared")
+	pkgs = flags.StringArrayP("package", "p", []string{}, "Go package where the entity struct is declared")
 	flags.StringVarP(&boilerplateFilename, "boilerplate-file", "b", "-", "Filename of the file where the mapper boilerplate is written to")
 
 	return cmd
@@ -89,8 +89,24 @@ func newDbMapperGenerate() *cobra.Command {
 
 const prefix = "//generate-database:mapper "
 
-func generate(pkg string, boilerplateFilename string) error {
-	parsedPkg, err := packageLoad(pkg)
+func generate(pkgs []string, boilerplateFilename string) error {
+	localPath, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	localPkg, err := packages.Load(&packages.Config{Mode: packages.NeedName}, localPath)
+	if err != nil {
+		return err
+	}
+
+	localPkgPath := localPkg[0].PkgPath
+
+	if len(pkgs) == 0 {
+		pkgs = []string{localPkgPath}
+	}
+
+	parsedPkgs, err := packageLoad(pkgs)
 	if err != nil {
 		return err
 	}
@@ -101,59 +117,61 @@ func generate(pkg string, boilerplateFilename string) error {
 	}
 
 	registeredSQLStmts := map[string]string{}
-	for _, goFile := range parsedPkg.CompiledGoFiles {
-		body, err := os.ReadFile(goFile)
-		if err != nil {
-			return err
-		}
+	for _, parsedPkg := range parsedPkgs {
+		for _, goFile := range parsedPkg.CompiledGoFiles {
+			body, err := os.ReadFile(goFile)
+			if err != nil {
+				return err
+			}
 
-		// Reset target to stdout
-		target := "-"
+			// Reset target to stdout
+			target := "-"
 
-		lines := strings.Split(string(body), "\n")
-		for _, line := range lines {
-			// Lazy matching for prefix, does not consider Go syntax and therefore
-			// lines starting with prefix, that are part of e.g. multiline strings
-			// match as well. This is highly unlikely to cause false positives.
-			if strings.HasPrefix(line, prefix) {
-				line = strings.TrimPrefix(line, prefix)
+			lines := strings.Split(string(body), "\n")
+			for _, line := range lines {
+				// Lazy matching for prefix, does not consider Go syntax and therefore
+				// lines starting with prefix, that are part of e.g. multiline strings
+				// match as well. This is highly unlikely to cause false positives.
+				if strings.HasPrefix(line, prefix) {
+					line = strings.TrimPrefix(line, prefix)
 
-				// Use csv parser to properly handle arguments surrounded by double quotes.
-				r := csv.NewReader(strings.NewReader(line))
-				r.Comma = ' ' // space
-				args, err := r.Read()
-				if err != nil {
-					return err
-				}
-
-				if len(args) == 0 {
-					return fmt.Errorf("command missing")
-				}
-
-				command := args[0]
-
-				switch command {
-				case "target":
-					if len(args) != 2 {
-						return fmt.Errorf("invalid arguments for command target, one argument for the target filename: %s", line)
+					// Use csv parser to properly handle arguments surrounded by double quotes.
+					r := csv.NewReader(strings.NewReader(line))
+					r.Comma = ' ' // space
+					args, err := r.Read()
+					if err != nil {
+						return err
 					}
 
-					target = args[1]
-				case "reset":
-					err = commandReset(args[1:], target)
+					if len(args) == 0 {
+						return fmt.Errorf("command missing")
+					}
 
-				case "stmt":
-					err = commandStmt(args[1:], target, parsedPkg, registeredSQLStmts)
+					command := args[0]
 
-				case "method":
-					err = commandMethod(args[1:], target, parsedPkg, registeredSQLStmts)
+					switch command {
+					case "target":
+						if len(args) != 2 {
+							return fmt.Errorf("invalid arguments for command target, one argument for the target filename: %s", line)
+						}
 
-				default:
-					err = fmt.Errorf("unknown command: %s", command)
-				}
+						target = args[1]
+					case "reset":
+						err = commandReset(args[1:], parsedPkgs, target, localPkgPath)
 
-				if err != nil {
-					return err
+					case "stmt":
+						err = commandStmt(args[1:], target, parsedPkgs, registeredSQLStmts, localPkgPath)
+
+					case "method":
+						err = commandMethod(args[1:], target, parsedPkgs, registeredSQLStmts, localPkgPath)
+
+					default:
+						err = fmt.Errorf("unknown command: %s", command)
+					}
+
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -162,7 +180,7 @@ func generate(pkg string, boilerplateFilename string) error {
 	return nil
 }
 
-func commandReset(commandLine []string, target string) error {
+func commandReset(commandLine []string, parsedPkgs []*packages.Package, target string, localPkgPath string) error {
 	var err error
 
 	flags := pflag.NewFlagSet("", pflag.ContinueOnError)
@@ -174,7 +192,16 @@ func commandReset(commandLine []string, target string) error {
 		return err
 	}
 
-	err = file.Reset(target, db.Imports, *buildComment, *iface)
+	imports := db.Imports
+	for _, pkg := range parsedPkgs {
+		if pkg.PkgPath == localPkgPath {
+			continue
+		}
+
+		imports = append(imports, pkg.PkgPath)
+	}
+
+	err = file.Reset(target, imports, *buildComment, *iface)
 	if err != nil {
 		return err
 	}
@@ -182,7 +209,7 @@ func commandReset(commandLine []string, target string) error {
 	return nil
 }
 
-func commandStmt(commandLine []string, target string, parsedPkg *packages.Package, registeredSQLStmts map[string]string) error {
+func commandStmt(commandLine []string, target string, parsedPkgs []*packages.Package, registeredSQLStmts map[string]string, localPkgPath string) error {
 	var err error
 
 	flags := pflag.NewFlagSet("", pflag.ContinueOnError)
@@ -203,7 +230,7 @@ func commandStmt(commandLine []string, target string, parsedPkg *packages.Packag
 		return err
 	}
 
-	stmt, err := db.NewStmt(parsedPkg, *entity, kind, config, registeredSQLStmts)
+	stmt, err := db.NewStmt(localPkgPath, parsedPkgs, *entity, kind, config, registeredSQLStmts)
 	if err != nil {
 		return err
 	}
@@ -211,7 +238,7 @@ func commandStmt(commandLine []string, target string, parsedPkg *packages.Packag
 	return file.Append(*entity, target, stmt, false)
 }
 
-func commandMethod(commandLine []string, target string, parsedPkg *packages.Package, registeredSQLStmts map[string]string) error {
+func commandMethod(commandLine []string, target string, parsedPkgs []*packages.Package, registeredSQLStmts map[string]string, localPkgPath string) error {
 	var err error
 
 	flags := pflag.NewFlagSet("", pflag.ContinueOnError)
@@ -233,7 +260,7 @@ func commandMethod(commandLine []string, target string, parsedPkg *packages.Pack
 		return err
 	}
 
-	method, err := db.NewMethod(parsedPkg, *entity, kind, config, registeredSQLStmts)
+	method, err := db.NewMethod(localPkgPath, parsedPkgs, *entity, kind, config, registeredSQLStmts)
 	if err != nil {
 		return err
 	}
@@ -241,31 +268,36 @@ func commandMethod(commandLine []string, target string, parsedPkg *packages.Pack
 	return file.Append(*entity, target, method, *iface)
 }
 
-func packageLoad(pkg string) (*packages.Package, error) {
-	var pkgPath string
-	if pkg != "" {
-		importPkg, err := build.Import(pkg, "", build.FindOnly)
-		if err != nil {
-			return nil, fmt.Errorf("Invalid import path %q: %w", pkg, err)
-		}
+func packageLoad(pkgs []string) ([]*packages.Package, error) {
+	pkgPaths := []string{}
 
-		pkgPath = importPkg.Dir
-	} else {
-		var err error
-		pkgPath, err = os.Getwd()
-		if err != nil {
-			return nil, err
+	for _, pkg := range pkgs {
+		if pkg == "" {
+			var err error
+			localPath, err := os.Getwd()
+			if err != nil {
+				return nil, err
+			}
+
+			pkgPaths = append(pkgPaths, localPath)
+		} else {
+			importPkg, err := build.Import(pkg, "", build.FindOnly)
+			if err != nil {
+				return nil, fmt.Errorf("Invalid import path %q: %w", pkg, err)
+			}
+
+			pkgPaths = append(pkgPaths, importPkg.Dir)
 		}
 	}
 
-	parsedPkg, err := packages.Load(&packages.Config{
+	parsedPkgs, err := packages.Load(&packages.Config{
 		Mode: packages.LoadTypes | packages.NeedTypesInfo,
-	}, pkgPath)
+	}, pkgPaths...)
 	if err != nil {
 		return nil, err
 	}
 
-	return parsedPkg[0], nil
+	return parsedPkgs, nil
 }
 
 func parseParams(args []string) (map[string]string, error) {

@@ -8,7 +8,7 @@ import "context"
 type NetworkIntegrationGenerated interface {
 	// GetNetworkIntegrationConfig returns all available NetworkIntegration Config
 	// generator: network_integration GetMany
-	GetNetworkIntegrationConfig(ctx context.Context, db dbtx, networkIntegrationID int, filters ...ConfigFilter) (map[string]string, error)
+	GetNetworkIntegrationConfig(ctx context.Context, db tx, networkIntegrationID int, filters ...ConfigFilter) (map[string]string, error)
 
 	// GetNetworkIntegrations returns all available network_integrations.
 	// generator: network_integration GetMany
@@ -32,7 +32,7 @@ type NetworkIntegrationGenerated interface {
 
 	// GetNetworkIntegrationID return the ID of the network_integration with the given key.
 	// generator: network_integration ID
-	GetNetworkIntegrationID(ctx context.Context, db dbtx, name string) (int64, error)
+	GetNetworkIntegrationID(ctx context.Context, db tx, name string) (int64, error)
 
 	// RenameNetworkIntegration renames the network_integration matching the given key parameters.
 	// generator: network_integration Rename
@@ -44,9 +44,9 @@ type NetworkIntegrationGenerated interface {
 
 	// UpdateNetworkIntegrationConfig updates the network_integration Config matching the given key parameters.
 	// generator: network_integration Update
-	UpdateNetworkIntegrationConfig(ctx context.Context, db dbtx, networkIntegrationID int64, config map[string]string) error
+	UpdateNetworkIntegrationConfig(ctx context.Context, db tx, networkIntegrationID int64, config map[string]string) error
 
 	// UpdateNetworkIntegration updates the network_integration matching the given key parameters.
 	// generator: network_integration Update
-	UpdateNetworkIntegration(ctx context.Context, db dbtx, name string, object NetworkIntegration) error
+	UpdateNetworkIntegration(ctx context.Context, db tx, name string, object NetworkIntegration) error
 }
