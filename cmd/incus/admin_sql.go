@@ -69,7 +69,7 @@ func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 
-		return fmt.Errorf(i18n.G("Missing required arguments"))
+		return fmt.Errorf("%s", i18n.G("Missing required arguments"))
 	}
 
 	database := args[0]
@@ -78,7 +78,7 @@ func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
 	if !slices.Contains([]string{"local", "global"}, database) {
 		_ = cmd.Help()
 
-		return fmt.Errorf(i18n.G("Invalid database type"))
+		return fmt.Errorf("%s", i18n.G("Invalid database type"))
 	}
 
 	if query == "-" {
