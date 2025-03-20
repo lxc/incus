@@ -39,7 +39,7 @@ func (c *cmdAdminRecover) Command() *cobra.Command {
 func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	if len(args) > 0 {
-		return fmt.Errorf(i18n.G("Invalid arguments"))
+		return fmt.Errorf("%s", i18n.G("Invalid arguments"))
 	}
 
 	d, err := incus.ConnectIncusUnix("", nil)
@@ -98,7 +98,7 @@ func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 
 			unknownPool.Name, err = c.global.asker.AskString(i18n.G("Name of the storage pool:")+" ", "", validate.Required(func(value string) error {
 				if value == "" {
-					return fmt.Errorf(i18n.G("Pool name cannot be empty"))
+					return fmt.Errorf("%s", i18n.G("Pool name cannot be empty"))
 				}
 
 				for _, p := range unknownPools {
@@ -128,7 +128,7 @@ func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 				_, _ = c.global.asker.AskString(i18n.G("Additional storage pool configuration property (KEY=VALUE, empty when done):")+" ", "", validate.Optional(func(value string) error {
 					configParts := strings.SplitN(value, "=", 2)
 					if len(configParts) < 2 {
-						return fmt.Errorf(i18n.G("Config option should be in the format KEY=VALUE"))
+						return fmt.Errorf("%s", i18n.G("Config option should be in the format KEY=VALUE"))
 					}
 
 					configKey = configParts[0]
