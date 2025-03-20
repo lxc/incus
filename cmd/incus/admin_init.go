@@ -69,21 +69,21 @@ func (c *cmdAdminInit) Command() *cobra.Command {
 func (c *cmdAdminInit) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	if c.flagAuto && c.flagPreseed {
-		return fmt.Errorf(i18n.G("Can't use --auto and --preseed together"))
+		return fmt.Errorf("%s", i18n.G("Can't use --auto and --preseed together"))
 	}
 
 	if c.flagMinimal && c.flagPreseed {
-		return fmt.Errorf(i18n.G("Can't use --minimal and --preseed together"))
+		return fmt.Errorf("%s", i18n.G("Can't use --minimal and --preseed together"))
 	}
 
 	if c.flagMinimal && c.flagAuto {
-		return fmt.Errorf(i18n.G("Can't use --minimal and --auto together"))
+		return fmt.Errorf("%s", i18n.G("Can't use --minimal and --auto together"))
 	}
 
 	if !c.flagAuto && (c.flagNetworkAddress != "" || c.flagNetworkPort != -1 ||
 		c.flagStorageBackend != "" || c.flagStorageDevice != "" ||
 		c.flagStorageLoopSize != -1 || c.flagStoragePool != "") {
-		return fmt.Errorf(i18n.G("Configuration flags require --auto"))
+		return fmt.Errorf("%s", i18n.G("Configuration flags require --auto"))
 	}
 
 	if c.flagDump && (c.flagAuto || c.flagMinimal ||
@@ -91,7 +91,7 @@ func (c *cmdAdminInit) Run(cmd *cobra.Command, args []string) error {
 		c.flagNetworkPort != -1 || c.flagStorageBackend != "" ||
 		c.flagStorageDevice != "" || c.flagStorageLoopSize != -1 ||
 		c.flagStoragePool != "") {
-		return fmt.Errorf(i18n.G("Can't use --dump with other flags"))
+		return fmt.Errorf("%s", i18n.G("Can't use --dump with other flags"))
 	}
 
 	// Connect to the daemon
@@ -191,7 +191,7 @@ func (c *cmdAdminInit) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		if config.Cluster.ClusterCertificate == "" {
-			return fmt.Errorf(i18n.G("Unable to connect to any of the cluster members specified in join token"))
+			return fmt.Errorf("%s", i18n.G("Unable to connect to any of the cluster members specified in join token"))
 		}
 	}
 
