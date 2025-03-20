@@ -227,6 +227,9 @@ func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts eva
 			// Done with this instance.
 			return nil
 		}
+	} else if !isRunning {
+		// Can't live migrate if we're stopped.
+		action = "migrate"
 	}
 
 	// Find a new location for the instance.
