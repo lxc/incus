@@ -132,7 +132,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 
 			host, _, _ := net.SplitHostPort(address)
 			if slices.Contains([]string{"", "[::]", "0.0.0.0"}, host) {
-				return fmt.Errorf(i18n.G("Invalid IP address or DNS name"))
+				return fmt.Errorf("%s", i18n.G("Invalid IP address or DNS name"))
 			}
 
 			if err == nil {
@@ -170,7 +170,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 
 			// Root is required to access the certificate files
 			if os.Geteuid() != 0 {
-				return fmt.Errorf(i18n.G("Joining an existing cluster requires root privileges"))
+				return fmt.Errorf("%s", i18n.G("Joining an existing cluster requires root privileges"))
 			}
 
 			var joinToken *api.ClusterMemberJoinToken
@@ -216,7 +216,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 			}
 
 			if config.Cluster.ClusterCertificate == "" {
-				return fmt.Errorf(i18n.G("Unable to connect to any of the cluster members specified in join token"))
+				return fmt.Errorf("%s", i18n.G("Unable to connect to any of the cluster members specified in join token"))
 			}
 
 			// Pass the raw join token.
@@ -229,7 +229,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 			}
 
 			if !clusterWipeMember {
-				return fmt.Errorf(i18n.G("User aborted configuration"))
+				return fmt.Errorf("%s", i18n.G("User aborted configuration"))
 			}
 
 			// Connect to existing cluster
@@ -491,7 +491,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 
 	if len(availableBackends) == 0 {
 		if poolType != internalUtil.PoolTypeAny {
-			return fmt.Errorf(i18n.G("No storage backends available"))
+			return fmt.Errorf("%s", i18n.G("No storage backends available"))
 		}
 
 		return fmt.Errorf(i18n.G("No %s storage backends available"), poolType)
@@ -697,7 +697,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 							}
 
 							if result < 1 {
-								return fmt.Errorf(i18n.G("Minimum size is 1GiB"))
+								return fmt.Errorf("%s", i18n.G("Minimum size is 1GiB"))
 							}
 
 							return nil
@@ -751,7 +751,7 @@ and make sure that your user can see and run the "thin_check" command before run
 				}
 
 				if !lvmContinueNoThin {
-					return fmt.Errorf(i18n.G("The LVM thin provisioning tools couldn't be found on the system"))
+					return fmt.Errorf("%s", i18n.G("The LVM thin provisioning tools couldn't be found on the system"))
 				}
 
 				pool.Config["lvm.use_thinpool"] = "false"
