@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -13,6 +14,7 @@ import (
 	incus "github.com/lxc/incus/v6/client"
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/iprange"
+	"github.com/lxc/incus/v6/internal/server/bgp"
 	"github.com/lxc/incus/v6/internal/server/cluster"
 	"github.com/lxc/incus/v6/internal/server/cluster/request"
 	"github.com/lxc/incus/v6/internal/server/db"
@@ -699,7 +701,7 @@ func (n *common) bgpClearPeers(config map[string]string) error {
 		// Remove the peer.
 		fields := strings.Split(peer, ",")
 		err := n.state.BGP.RemovePeer(net.ParseIP(fields[0]))
-		if err != nil {
+		if err != nil && !errors.Is(err, bgp.ErrPeerNotFound) {
 			return err
 		}
 	}
