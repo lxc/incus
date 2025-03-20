@@ -1100,6 +1100,9 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 		if req.Certificate != "" && dbInfo.Certificate != req.Certificate {
 			// Add supplied certificate.
 			block, _ := pem.Decode([]byte(req.Certificate))
+			if block == nil {
+				return response.BadRequest(fmt.Errorf("Invalid PEM encoded certificate"))
+			}
 
 			cert, err := x509.ParseCertificate(block.Bytes)
 			if err != nil {
