@@ -68,14 +68,18 @@ func (p *Process) AdminUser() string {
 
 // AdminClient returns admin client for the minio process.
 func (p *Process) AdminClient() (*AdminClient, error) {
-	binaryName := "mc"
-	_, err := exec.LookPath(binaryName)
-	if err != nil {
-		binaryName = "mcli"
-		_, err = exec.LookPath(binaryName)
-		if err != nil {
-			return nil, err
+	var binaryName string
+
+	for _, name := range []string{"miniocli", "minioc", "mcli", "mc"} {
+		_, err := exec.LookPath(name)
+		if err == nil {
+			binaryName = name
+			break
 		}
+	}
+
+	if binaryName == "" {
+		return nil, fmt.Errorf("Couldn't find the MinIO client tool")
 	}
 
 	// Encode the bucketName with base64url as only certain characters with alpha prefix are allowed
