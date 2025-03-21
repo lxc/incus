@@ -48,7 +48,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			[global]
 			driver = "ICH9-LPC"
 			property = "disable_s4"
-			value = "1"
+			value = "0"
 
 			[boot-opts]
 			strict = "on"`,
@@ -1097,7 +1097,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			Entries: []cfg.Entry{
 				{Key: "driver", Value: "ICH9-LPC"},
 				{Key: "property", Value: "disable_s4"},
-				{Key: "value", Value: "1"},
+				{Key: "value", Value: "0"},
 			},
 		}, {
 			Name: "memory",
@@ -1135,7 +1135,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			[global]
 			driver = "ICH9-LPC"
 			property = "disable_s4"
-			value = "1"
+			value = "0"
 
 			[memory]
 			size = "1024M"
@@ -1168,7 +1168,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			[global]
 			driver = "ICH9-LPC"
 			property = "disable_s4"
-			value = "1"
+			value = "0"
 
 			[memory]
 			size = "4096M"
@@ -1201,7 +1201,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				[global]
 				driver = "ICH9-LPC"
 				property = "disable_s4"
-				value = "1"
+				value = "0"
 
 				[memory]
 				size = "1024M"
@@ -1238,7 +1238,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				[global]
 				driver = "ICH9-LPC"
 				property = "disable_s4"
-				value = "1"
+				value = "0"
 
 				[memory]
 				size = "1024M"
@@ -1279,7 +1279,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				[global]
 				driver = "ICH9-LPC"
 				property = "disable_s4"
-				value = "1"
+				value = "0"
 
 				[memory]
 				size = "2048M"
@@ -1338,7 +1338,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				[global]
 				driver = "ICH9-LPC"
 				property = "disable_s4"
-				value = "1"
+				value = "0"
 
 				[memory]
 				size = "1024M"
@@ -1385,7 +1385,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				[global]
 				driver = "ICH9-LPC"
 				property = "disable_s4"
-				value = "1"
+				value = "0"
 
 				[memory]
 				size = "1024M"
@@ -1470,7 +1470,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				[global]
 				driver = "ICH9-LPC"
 				property = "disable_s4"
-				value = "1"
+				value = "0"
 
 				[memory]
 				size = "1024M"
@@ -1525,7 +1525,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				[global]
 				driver = "ICH9-LPC"
 				property = "disable_s4"
-				value = "1"
+				value = "0"
 
 				[memory]
 				size = "8192M"

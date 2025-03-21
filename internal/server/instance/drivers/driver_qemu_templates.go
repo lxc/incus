@@ -101,7 +101,7 @@ func qemuBase(opts *qemuBaseOpts) []cfg.Section {
 			Entries: []cfg.Entry{
 				{Key: "driver", Value: "ICH9-LPC"},
 				{Key: "property", Value: "disable_s4"},
-				{Key: "value", Value: "1"},
+				{Key: "value", Value: "0"},
 			},
 		}}...)
 	}
