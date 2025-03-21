@@ -534,7 +534,7 @@ JOIN cluster_groups ON cluster_groups.id = nodes_cluster_groups.group_id`
 		}
 	}
 
-	config, err := cluster.GetConfig(context.TODO(), c.Tx(), "node")
+	config, err := cluster.GetConfig(context.TODO(), c.Tx(), "nodes", "node")
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch nodes config: %w", err)
 	}
@@ -617,7 +617,7 @@ func (c *ClusterTx) BootstrapNode(name string, address string) error {
 
 // UpdateNodeConfig updates the replaces the node's config with the specified config.
 func (c *ClusterTx) UpdateNodeConfig(ctx context.Context, id int64, config map[string]string) error {
-	err := cluster.UpdateConfig(ctx, c.Tx(), "node", int(id), config)
+	err := cluster.UpdateConfig(ctx, c.Tx(), "nodes", "node", int(id), config)
 	if err != nil {
 		return fmt.Errorf("Unable to update node config: %w", err)
 	}

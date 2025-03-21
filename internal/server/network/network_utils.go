@@ -197,7 +197,7 @@ func UsedBy(s *state.State, networkProjectName string, networkID int64, networkN
 		}
 
 		// Get all the profile devices.
-		profileDevices, err := cluster.GetDevices(ctx, tx.Tx(), "profile")
+		profileDevices, err := cluster.GetAllProfileDevices(ctx, tx.Tx())
 		if err != nil {
 			return err
 		}

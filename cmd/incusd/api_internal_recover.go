@@ -80,12 +80,12 @@ func internalRecoverScan(ctx context.Context, s *state.State, userPools []api.St
 			return err
 		}
 
-		profileConfigs, err := dbCluster.GetConfig(ctx, tx.Tx(), "profile")
+		profileConfigs, err := dbCluster.GetAllProfileConfigs(ctx, tx.Tx())
 		if err != nil {
 			return err
 		}
 
-		profileDevices, err := dbCluster.GetDevices(ctx, tx.Tx(), "profile")
+		profileDevices, err := dbCluster.GetAllProfileDevices(ctx, tx.Tx())
 		if err != nil {
 			return err
 		}

@@ -214,7 +214,7 @@ DELETE FROM projects_config WHERE projects_config.project_id = ?
 		return fmt.Errorf("Delete project config: %w", err)
 	}
 
-	err = UpdateConfig(ctx, tx, "project", int(id), object.Config)
+	err = UpdateConfig(ctx, tx, "projects", "project", int(id), object.Config)
 	if err != nil {
 		return fmt.Errorf("Insert config for project: %w", err)
 	}

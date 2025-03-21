@@ -212,7 +212,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 				}
 			}
 
-			objectDevices, err := dbCluster.GetDevices(ctx, tx.Tx(), "instance")
+			objectDevices, err := dbCluster.GetAllInstanceDevices(ctx, tx.Tx())
 			if err != nil {
 				return err
 			}
