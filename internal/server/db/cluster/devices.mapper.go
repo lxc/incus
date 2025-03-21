@@ -76,7 +76,7 @@ func getDevicesRaw(ctx context.Context, db dbtx, sql string, parent string, args
 
 // GetDevices returns all available devices for the parent entity.
 // generator: device GetMany
-func GetDevices(ctx context.Context, db tx, parent string, filters ...DeviceFilter) (_ map[int][]Device, _err error) {
+func GetDevices(ctx context.Context, db tx, parentTablePrefix string, parentColumnPrefix string, filters ...DeviceFilter) (_ map[int][]Device, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Device")
 	}()
@@ -86,10 +86,10 @@ func GetDevices(ctx context.Context, db tx, parent string, filters ...DeviceFilt
 	// Result slice.
 	objects := make([]Device, 0)
 
-	deviceObjectsLocal := strings.Replace(deviceObjects, "%s_id", fmt.Sprintf("%s_id", parent), -1)
+	deviceObjectsLocal := strings.Replace(deviceObjects, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix), -1)
 	fillParent := make([]any, strings.Count(deviceObjectsLocal, "%s"))
 	for i := range fillParent {
-		fillParent[i] = strings.Replace(strings.Replace(parent, "_", "s_", -1), "clusters_", "cluster_", -1) + "s"
+		fillParent[i] = parentTablePrefix
 	}
 
 	queryStr := fmt.Sprintf(deviceObjectsLocal, fillParent...)
@@ -124,9 +124,9 @@ func GetDevices(ctx context.Context, db tx, parent string, filters ...DeviceFilt
 
 	queryStr = strings.Join(queryParts, " ORDER BY")
 	// Select.
-	objects, err = getDevicesRaw(ctx, db, queryStr, parent, args...)
+	objects, err = getDevicesRaw(ctx, db, queryStr, parentTablePrefix, args...)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch from \"%s_devices\" table: %w", parent, err)
+		return nil, fmt.Errorf("Failed to fetch from \"%s_devices\" table: %w", parentTablePrefix, err)
 	}
 
 	configFilters := []ConfigFilter{}
@@ -141,7 +141,7 @@ func GetDevices(ctx context.Context, db tx, parent string, filters ...DeviceFilt
 		}
 	}
 
-	config, err := GetConfig(ctx, db, parent+"_device", configFilters...)
+	config, err := GetConfig(ctx, db, parentTablePrefix+"_devices", parentColumnPrefix+"_device", configFilters...)
 	if err != nil {
 		return nil, err
 	}
@@ -170,22 +170,22 @@ func GetDevices(ctx context.Context, db tx, parent string, filters ...DeviceFilt
 
 // CreateDevices adds a new device to the database.
 // generator: device Create
-func CreateDevices(ctx context.Context, db tx, parent string, objects map[string]Device) (_err error) {
+func CreateDevices(ctx context.Context, db tx, parentTablePrefix string, parentColumnPrefix string, objects map[string]Device) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Device")
 	}()
 
-	deviceCreateLocal := strings.Replace(deviceCreate, "%s_id", fmt.Sprintf("%s_id", parent), -1)
+	deviceCreateLocal := strings.Replace(deviceCreate, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix), -1)
 	fillParent := make([]any, strings.Count(deviceCreateLocal, "%s"))
 	for i := range fillParent {
-		fillParent[i] = strings.Replace(strings.Replace(parent, "_", "s_", -1), "clusters_", "cluster_", -1) + "s"
+		fillParent[i] = parentTablePrefix
 	}
 
 	queryStr := fmt.Sprintf(deviceCreateLocal, fillParent...)
 	for _, object := range objects {
 		result, err := db.ExecContext(ctx, queryStr, object.ReferenceID, object.Name, object.Type)
 		if err != nil {
-			return fmt.Errorf("Insert failed for \"%s_devices\" table: %w", parent, err)
+			return fmt.Errorf("Insert failed for \"%s_devices\" table: %w", parentTablePrefix, err)
 		}
 
 		id, err := result.LastInsertId()
@@ -201,7 +201,7 @@ func CreateDevices(ctx context.Context, db tx, parent string, objects map[string
 				Value:       value,
 			}
 
-			err = CreateConfig(ctx, db, parent+"_device", insert)
+			err = CreateConfig(ctx, db, parentTablePrefix+"_devices", parentColumnPrefix+"_device", insert)
 			if err != nil {
 				return fmt.Errorf("Insert Config failed for Device: %w", err)
 			}
@@ -213,13 +213,13 @@ func CreateDevices(ctx context.Context, db tx, parent string, objects map[string
 
 // UpdateDevices updates the device matching the given key parameters.
 // generator: device Update
-func UpdateDevices(ctx context.Context, db tx, parent string, referenceID int, devices map[string]Device) (_err error) {
+func UpdateDevices(ctx context.Context, db tx, parentTablePrefix string, parentColumnPrefix string, referenceID int, devices map[string]Device) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Device")
 	}()
 
 	// Delete current entry.
-	err := DeleteDevices(ctx, db, parent, referenceID)
+	err := DeleteDevices(ctx, db, parentTablePrefix, parentColumnPrefix, referenceID)
 	if err != nil {
 		return err
 	}
@@ -230,7 +230,7 @@ func UpdateDevices(ctx context.Context, db tx, parent string, referenceID int, d
 		devices[key] = object
 	}
 
-	err = CreateDevices(ctx, db, parent, devices)
+	err = CreateDevices(ctx, db, parentTablePrefix, parentColumnPrefix, devices)
 	if err != nil {
 		return err
 	}
@@ -240,21 +240,21 @@ func UpdateDevices(ctx context.Context, db tx, parent string, referenceID int, d
 
 // DeleteDevices deletes the device matching the given key parameters.
 // generator: device DeleteMany
-func DeleteDevices(ctx context.Context, db tx, parent string, referenceID int) (_err error) {
+func DeleteDevices(ctx context.Context, db tx, parentTablePrefix string, parentColumnPrefix string, referenceID int) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Device")
 	}()
 
-	deviceDeleteLocal := strings.Replace(deviceDelete, "%s_id", fmt.Sprintf("%s_id", parent), -1)
+	deviceDeleteLocal := strings.Replace(deviceDelete, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix), -1)
 	fillParent := make([]any, strings.Count(deviceDeleteLocal, "%s"))
 	for i := range fillParent {
-		fillParent[i] = strings.Replace(strings.Replace(parent, "_", "s_", -1), "clusters_", "cluster_", -1) + "s"
+		fillParent[i] = parentTablePrefix
 	}
 
 	queryStr := fmt.Sprintf(deviceDeleteLocal, fillParent...)
 	result, err := db.ExecContext(ctx, queryStr, referenceID)
 	if err != nil {
-		return fmt.Errorf("Delete entry for \"%s_device\" failed: %w", parent, err)
+		return fmt.Errorf("Delete entry for \"%s_device\" failed: %w", parentTablePrefix, err)
 	}
 
 	_, err = result.RowsAffected()

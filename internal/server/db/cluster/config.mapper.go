@@ -76,7 +76,7 @@ func getConfigRaw(ctx context.Context, db dbtx, sql string, parent string, args 
 
 // GetConfig returns all available config.
 // generator: config GetMany
-func GetConfig(ctx context.Context, db dbtx, parent string, filters ...ConfigFilter) (_ map[int]map[string]string, _err error) {
+func GetConfig(ctx context.Context, db dbtx, parentTablePrefix string, parentColumnPrefix string, filters ...ConfigFilter) (_ map[int]map[string]string, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Config")
 	}()
@@ -86,10 +86,10 @@ func GetConfig(ctx context.Context, db dbtx, parent string, filters ...ConfigFil
 	// Result slice.
 	objects := make([]Config, 0)
 
-	configObjectsLocal := strings.Replace(configObjects, "%s_id", fmt.Sprintf("%s_id", parent), -1)
+	configObjectsLocal := strings.Replace(configObjects, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix), -1)
 	fillParent := make([]any, strings.Count(configObjectsLocal, "%s"))
 	for i := range fillParent {
-		fillParent[i] = strings.Replace(strings.Replace(parent, "_", "s_", -1), "clusters_", "cluster_", -1) + "s"
+		fillParent[i] = parentTablePrefix
 	}
 
 	queryStr := fmt.Sprintf(configObjectsLocal, fillParent...)
@@ -124,9 +124,9 @@ func GetConfig(ctx context.Context, db dbtx, parent string, filters ...ConfigFil
 
 	queryStr = strings.Join(queryParts, " ORDER BY")
 	// Select.
-	objects, err = getConfigRaw(ctx, db, queryStr, parent, args...)
+	objects, err = getConfigRaw(ctx, db, queryStr, parentTablePrefix, args...)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch from \"%s_config\" table: %w", parent, err)
+		return nil, fmt.Errorf("Failed to fetch from \"%s_config\" table: %w", parentTablePrefix, err)
 	}
 
 	resultMap := map[int]map[string]string{}
@@ -144,7 +144,7 @@ func GetConfig(ctx context.Context, db dbtx, parent string, filters ...ConfigFil
 
 // CreateConfig adds a new config to the database.
 // generator: config Create
-func CreateConfig(ctx context.Context, db dbtx, parent string, object Config) (_err error) {
+func CreateConfig(ctx context.Context, db dbtx, parentTablePrefix string, parentColumnPrefix string, object Config) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Config")
 	}()
@@ -154,16 +154,16 @@ func CreateConfig(ctx context.Context, db dbtx, parent string, object Config) (_
 		return nil
 	}
 
-	configCreateLocal := strings.Replace(configCreate, "%s_id", fmt.Sprintf("%s_id", parent), -1)
+	configCreateLocal := strings.Replace(configCreate, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix), -1)
 	fillParent := make([]any, strings.Count(configCreateLocal, "%s"))
 	for i := range fillParent {
-		fillParent[i] = strings.Replace(strings.Replace(parent, "_", "s_", -1), "clusters_", "cluster_", -1) + "s"
+		fillParent[i] = parentTablePrefix
 	}
 
 	queryStr := fmt.Sprintf(configCreateLocal, fillParent...)
 	_, err := db.ExecContext(ctx, queryStr, object.ReferenceID, object.Key, object.Value)
 	if err != nil {
-		return fmt.Errorf("Insert failed for \"%s_config\" table: %w", parent, err)
+		return fmt.Errorf("Insert failed for \"%s_config\" table: %w", parentTablePrefix, err)
 	}
 
 	return nil
@@ -171,13 +171,13 @@ func CreateConfig(ctx context.Context, db dbtx, parent string, object Config) (_
 
 // UpdateConfig updates the config matching the given key parameters.
 // generator: config Update
-func UpdateConfig(ctx context.Context, db dbtx, parent string, referenceID int, config map[string]string) (_err error) {
+func UpdateConfig(ctx context.Context, db dbtx, parentTablePrefix string, parentColumnPrefix string, referenceID int, config map[string]string) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Config")
 	}()
 
 	// Delete current entry.
-	err := DeleteConfig(ctx, db, parent, referenceID)
+	err := DeleteConfig(ctx, db, parentTablePrefix, parentColumnPrefix, referenceID)
 	if err != nil {
 		return err
 	}
@@ -190,7 +190,7 @@ func UpdateConfig(ctx context.Context, db dbtx, parent string, referenceID int, 
 			Value:       value,
 		}
 
-		err = CreateConfig(ctx, db, parent, object)
+		err = CreateConfig(ctx, db, parentTablePrefix, parentColumnPrefix, object)
 		if err != nil {
 			return err
 		}
@@ -201,21 +201,21 @@ func UpdateConfig(ctx context.Context, db dbtx, parent string, referenceID int, 
 
 // DeleteConfig deletes the config matching the given key parameters.
 // generator: config DeleteMany
-func DeleteConfig(ctx context.Context, db dbtx, parent string, referenceID int) (_err error) {
+func DeleteConfig(ctx context.Context, db dbtx, parentTablePrefix string, parentColumnPrefix string, referenceID int) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Config")
 	}()
 
-	configDeleteLocal := strings.Replace(configDelete, "%s_id", fmt.Sprintf("%s_id", parent), -1)
+	configDeleteLocal := strings.Replace(configDelete, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix), -1)
 	fillParent := make([]any, strings.Count(configDeleteLocal, "%s"))
 	for i := range fillParent {
-		fillParent[i] = strings.Replace(strings.Replace(parent, "_", "s_", -1), "clusters_", "cluster_", -1) + "s"
+		fillParent[i] = parentTablePrefix
 	}
 
 	queryStr := fmt.Sprintf(configDeleteLocal, fillParent...)
 	result, err := db.ExecContext(ctx, queryStr, referenceID)
 	if err != nil {
-		return fmt.Errorf("Delete entry for \"%s_config\" failed: %w", parent, err)
+		return fmt.Errorf("Delete entry for \"%s_config\" failed: %w", parentTablePrefix, err)
 	}
 
 	_, err = result.RowsAffected()

@@ -249,7 +249,7 @@ func GetInstanceSnapshotDevices(ctx context.Context, db tx, instanceSnapshotID i
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
 
-	instanceSnapshotDevices, err := GetDevices(ctx, db, "instance_snapshot", filters...)
+	instanceSnapshotDevices, err := GetDevices(ctx, db, "instances_snapshots", "instance_snapshot", filters...)
 	if err != nil {
 		return nil, err
 	}
@@ -274,7 +274,7 @@ func GetInstanceSnapshotConfig(ctx context.Context, db tx, instanceSnapshotID in
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
 
-	instanceSnapshotConfig, err := GetConfig(ctx, db, "instance_snapshot", filters...)
+	instanceSnapshotConfig, err := GetConfig(ctx, db, "instances_snapshots", "instance_snapshot", filters...)
 	if err != nil {
 		return nil, err
 	}
@@ -423,7 +423,7 @@ func CreateInstanceSnapshotDevices(ctx context.Context, db tx, instanceSnapshotI
 		devices[key] = device
 	}
 
-	err := CreateDevices(ctx, db, "instance_snapshot", devices)
+	err := CreateDevices(ctx, db, "instances_snapshots", "instance_snapshot", devices)
 	if err != nil {
 		return fmt.Errorf("Insert Device failed for InstanceSnapshot: %w", err)
 	}
@@ -446,7 +446,7 @@ func CreateInstanceSnapshotConfig(ctx context.Context, db dbtx, instanceSnapshot
 			Value:       value,
 		}
 
-		err := CreateConfig(ctx, db, "instance_snapshot", insert)
+		err := CreateConfig(ctx, db, "instances_snapshots", "instance_snapshot", insert)
 		if err != nil {
 			return fmt.Errorf("Insert Config failed for InstanceSnapshot: %w", err)
 		}
