@@ -213,12 +213,12 @@ func profilesGet(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if mustLoadObjects {
-			profileConfigs, err := dbCluster.GetConfig(ctx, tx.Tx(), "profile")
+			profileConfigs, err := dbCluster.GetAllProfileConfigs(ctx, tx.Tx())
 			if err != nil {
 				return err
 			}
 
-			profileDevices, err := dbCluster.GetDevices(ctx, tx.Tx(), "profile")
+			profileDevices, err := dbCluster.GetAllProfileDevices(ctx, tx.Tx())
 			if err != nil {
 				return err
 			}
@@ -476,12 +476,12 @@ func profileGet(d *Daemon, r *http.Request) response.Response {
 			return fmt.Errorf("Fetch profile: %w", err)
 		}
 
-		profileConfigs, err := dbCluster.GetConfig(ctx, tx.Tx(), "profile")
+		profileConfigs, err := dbCluster.GetAllProfileConfigs(ctx, tx.Tx())
 		if err != nil {
 			return err
 		}
 
-		profileDevices, err := dbCluster.GetDevices(ctx, tx.Tx(), "profile")
+		profileDevices, err := dbCluster.GetAllProfileDevices(ctx, tx.Tx())
 		if err != nil {
 			return err
 		}

@@ -1060,12 +1060,12 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 				return err
 			}
 
-			dbProfileConfigs, err := dbCluster.GetConfig(ctx, tx.Tx(), "profile")
+			dbProfileConfigs, err := dbCluster.GetAllProfileConfigs(ctx, tx.Tx())
 			if err != nil {
 				return err
 			}
 
-			dbProfileDevices, err := dbCluster.GetDevices(ctx, tx.Tx(), "profile")
+			dbProfileDevices, err := dbCluster.GetAllProfileDevices(ctx, tx.Tx())
 			if err != nil {
 				return err
 			}
