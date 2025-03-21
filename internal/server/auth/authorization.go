@@ -115,19 +115,20 @@ type Opts struct {
 
 // Resources represents a set of current API resources as Object slices for use when loading an Authorizer.
 type Resources struct {
-	CertificateObjects       []Object
-	StoragePoolObjects       []Object
-	ProjectObjects           []Object
-	ImageObjects             []Object
-	ImageAliasObjects        []Object
-	InstanceObjects          []Object
-	NetworkObjects           []Object
-	NetworkACLObjects        []Object
-	NetworkAddressSetObjects []Object
-	NetworkZoneObjects       []Object
-	ProfileObjects           []Object
-	StoragePoolVolumeObjects []Object
-	StorageBucketObjects     []Object
+	CertificateObjects        []Object
+	StoragePoolObjects        []Object
+	ProjectObjects            []Object
+	ImageObjects              []Object
+	ImageAliasObjects         []Object
+	InstanceObjects           []Object
+	NetworkObjects            []Object
+	NetworkACLObjects         []Object
+	NetworkAddressSetObjects  []Object
+	NetworkIntegrationObjects []Object
+	NetworkZoneObjects        []Object
+	ProfileObjects            []Object
+	StoragePoolVolumeObjects  []Object
+	StorageBucketObjects      []Object
 }
 
 // WithConfig can be passed into LoadAuthorizer to pass in driver specific configuration.

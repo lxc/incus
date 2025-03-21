@@ -2161,6 +2161,20 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 				return err
 			}
 
+			err = query.Scan(ctx, tx.Tx(), "SELECT networks_integrations.name FROM networks_integrations", func(scan func(dest ...any) error) error {
+				var networkIntegrationsName string
+				err := scan(&networkIntegrationsName)
+				if err != nil {
+					return err
+				}
+
+				resources.NetworkIntegrationObjects = append(resources.NetworkIntegrationObjects, auth.ObjectNetworkIntegration(networkIntegrationsName))
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
 			err = query.Scan(ctx, tx.Tx(), "SELECT networks_zones.name, projects.name FROM networks_zones JOIN projects ON projects.id=networks_zones.project_id", func(scan func(dest ...any) error) error {
 				var networkZoneName string
 				var projectName string
