@@ -225,6 +225,7 @@ func (m *Method) getNames(buf *file.Buffer) error {
 	buf.L("queryStr := strings.Join(queryParts[:], \"ORDER BY\")")
 	buf.L("rows, err = db.QueryContext(ctx, queryStr, args...)")
 	buf.L("}")
+	buf.N()
 	m.ifErrNotNil(buf, true, "nil", "err")
 	buf.L("defer func() { _ = rows.Close() }()")
 	buf.L("for rows.Next() {")
