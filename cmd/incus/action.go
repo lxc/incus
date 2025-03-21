@@ -184,7 +184,7 @@ func (c *cmdAction) Command(action string) *cobra.Command {
 func (c *cmdAction) doActionAll(action string, resource remoteResource) error {
 	if resource.name != "" {
 		// both --all and instance name given.
-		return fmt.Errorf(i18n.G("Both --all and instance name given"))
+		return fmt.Errorf("%s", i18n.G("Both --all and instance name given"))
 	}
 
 	remote := resource.remote
