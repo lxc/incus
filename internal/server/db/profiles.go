@@ -79,13 +79,13 @@ func (c *ClusterTx) GetProfiles(ctx context.Context, projectName string, profile
 	}
 
 	// Get all the profile configs.
-	profileConfigs, err := cluster.GetConfig(ctx, c.Tx(), "profile")
+	profileConfigs, err := cluster.GetAllProfileConfigs(ctx, c.Tx())
 	if err != nil {
 		return nil, err
 	}
 
 	// Get all the profile devices.
-	profileDevices, err := cluster.GetDevices(ctx, c.Tx(), "profile")
+	profileDevices, err := cluster.GetAllProfileDevices(ctx, c.Tx())
 	if err != nil {
 		return nil, err
 	}

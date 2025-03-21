@@ -334,7 +334,7 @@ func GetProfileDevices(ctx context.Context, db tx, profileID int, filters ...Dev
 		_err = mapErr(_err, "Profile")
 	}()
 
-	profileDevices, err := GetDevices(ctx, db, "profile", filters...)
+	profileDevices, err := GetDevices(ctx, db, "profiles", "profile", filters...)
 	if err != nil {
 		return nil, err
 	}
@@ -359,7 +359,7 @@ func GetProfileConfig(ctx context.Context, db tx, profileID int, filters ...Conf
 		_err = mapErr(_err, "Profile")
 	}()
 
-	profileConfig, err := GetConfig(ctx, db, "profile", filters...)
+	profileConfig, err := GetConfig(ctx, db, "profiles", "profile", filters...)
 	if err != nil {
 		return nil, err
 	}
@@ -451,7 +451,7 @@ func CreateProfileDevices(ctx context.Context, db tx, profileID int64, devices m
 		devices[key] = device
 	}
 
-	err := CreateDevices(ctx, db, "profile", devices)
+	err := CreateDevices(ctx, db, "profiles", "profile", devices)
 	if err != nil {
 		return fmt.Errorf("Insert Device failed for Profile: %w", err)
 	}
@@ -474,7 +474,7 @@ func CreateProfileConfig(ctx context.Context, db dbtx, profileID int64, config m
 			Value:       value,
 		}
 
-		err := CreateConfig(ctx, db, "profile", insert)
+		err := CreateConfig(ctx, db, "profiles", "profile", insert)
 		if err != nil {
 			return fmt.Errorf("Insert Config failed for Profile: %w", err)
 		}
@@ -554,7 +554,7 @@ func UpdateProfileDevices(ctx context.Context, db tx, profileID int64, devices m
 		_err = mapErr(_err, "Profile")
 	}()
 
-	err := UpdateDevices(ctx, db, "profile", int(profileID), devices)
+	err := UpdateDevices(ctx, db, "profiles", "profile", int(profileID), devices)
 	if err != nil {
 		return fmt.Errorf("Replace Device for Profile failed: %w", err)
 	}
@@ -569,7 +569,7 @@ func UpdateProfileConfig(ctx context.Context, db tx, profileID int64, config map
 		_err = mapErr(_err, "Profile")
 	}()
 
-	err := UpdateConfig(ctx, db, "profile", int(profileID), config)
+	err := UpdateConfig(ctx, db, "profiles", "profile", int(profileID), config)
 	if err != nil {
 		return fmt.Errorf("Replace Config for Profile failed: %w", err)
 	}

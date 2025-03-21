@@ -829,13 +829,13 @@ func VolumeUsedByProfileDevices(s *state.State, poolName string, projectName str
 		}
 
 		// Get all the profile configs.
-		profileConfigs, err := cluster.GetConfig(ctx, tx.Tx(), "profile")
+		profileConfigs, err := cluster.GetAllProfileConfigs(ctx, tx.Tx())
 		if err != nil {
 			return fmt.Errorf("Failed loading profile configs: %w", err)
 		}
 
 		// Get all the profile devices.
-		profileDevices, err := cluster.GetDevices(ctx, tx.Tx(), "profile")
+		profileDevices, err := cluster.GetAllProfileDevices(ctx, tx.Tx())
 		if err != nil {
 			return fmt.Errorf("Failed loading profile devices: %w", err)
 		}

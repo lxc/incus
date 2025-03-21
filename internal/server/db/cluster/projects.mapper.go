@@ -214,7 +214,7 @@ func GetProjectConfig(ctx context.Context, db tx, projectID int, filters ...Conf
 		_err = mapErr(_err, "Project")
 	}()
 
-	projectConfig, err := GetConfig(ctx, db, "project", filters...)
+	projectConfig, err := GetConfig(ctx, db, "projects", "project", filters...)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +333,7 @@ func CreateProjectConfig(ctx context.Context, db dbtx, projectID int64, config m
 			Value:       value,
 		}
 
-		err := CreateConfig(ctx, db, "project", insert)
+		err := CreateConfig(ctx, db, "projects", "project", insert)
 		if err != nil {
 			return fmt.Errorf("Insert Config failed for Project: %w", err)
 		}

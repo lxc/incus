@@ -536,13 +536,13 @@ func (c *ClusterTx) instanceProfilesFill(ctx context.Context, snapshotsMode bool
 	}
 
 	// Get all the profile configs.
-	profileConfigs, err := cluster.GetConfig(context.TODO(), c.Tx(), "profile")
+	profileConfigs, err := cluster.GetAllProfileConfigs(context.TODO(), c.Tx())
 	if err != nil {
 		return fmt.Errorf("Failed loading profile configs: %w", err)
 	}
 
 	// Get all the profile devices.
-	profileDevices, err := cluster.GetDevices(context.TODO(), c.Tx(), "profile")
+	profileDevices, err := cluster.GetAllProfileDevices(context.TODO(), c.Tx())
 	if err != nil {
 		return fmt.Errorf("Failed loading profile devices: %w", err)
 	}

@@ -84,14 +84,14 @@ func (i *Instance) ToAPI(ctx context.Context, tx *sql.Tx, instanceDevices map[in
 	}
 
 	if profileConfigs == nil {
-		profileConfigs, err = GetConfig(ctx, tx, "profile")
+		profileConfigs, err = GetAllProfileConfigs(ctx, tx)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if profileDevices == nil {
-		profileDevices, err = GetDevices(ctx, tx, "profile")
+		profileDevices, err = GetAllProfileDevices(ctx, tx)
 		if err != nil {
 			return nil, err
 		}
@@ -157,4 +157,14 @@ func (i *Instance) ToAPI(ctx context.Context, tx *sql.Tx, instanceDevices map[in
 		Type:            i.Type.String(),
 		Project:         i.Project,
 	}, nil
+}
+
+// GetAllInstanceConfigs returns a map of all instance configurations, keyed by database ID.
+func GetAllInstanceConfigs(ctx context.Context, tx *sql.Tx) (map[int]map[string]string, error) {
+	return GetConfig(ctx, tx, "instances", "instance")
+}
+
+// GetAllInstanceDevices returns a map of all instance devices, keyed by database ID.
+func GetAllInstanceDevices(ctx context.Context, tx *sql.Tx) (map[int][]Device, error) {
+	return GetDevices(ctx, tx, "instances", "instance")
 }

@@ -1257,12 +1257,12 @@ func fetchProject(tx *db.ClusterTx, projectName string, skipIfNoLimits bool) (*p
 		return nil, fmt.Errorf("Fetch profiles from database: %w", err)
 	}
 
-	dbProfileConfigs, err := cluster.GetConfig(ctx, tx.Tx(), "profile")
+	dbProfileConfigs, err := cluster.GetAllProfileConfigs(ctx, tx.Tx())
 	if err != nil {
 		return nil, fmt.Errorf("Fetch profile configs from database: %w", err)
 	}
 
-	dbProfileDevices, err := cluster.GetDevices(ctx, tx.Tx(), "profile")
+	dbProfileDevices, err := cluster.GetAllProfileDevices(ctx, tx.Tx())
 	if err != nil {
 		return nil, fmt.Errorf("Fetch profile devices from database: %w", err)
 	}
@@ -1282,7 +1282,7 @@ func fetchProject(tx *db.ClusterTx, projectName string, skipIfNoLimits bool) (*p
 		return nil, fmt.Errorf("Fetch project instances from database: %w", err)
 	}
 
-	dbInstanceDevices, err := cluster.GetDevices(ctx, tx.Tx(), "instance")
+	dbInstanceDevices, err := cluster.GetAllInstanceDevices(ctx, tx.Tx())
 	if err != nil {
 		return nil, fmt.Errorf("Fetch instance devices from database: %w", err)
 	}
