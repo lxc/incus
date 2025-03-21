@@ -17,14 +17,14 @@ import (
 //generate-database:mapper stmt -e cluster_group delete-by-Name table=cluster_groups
 //generate-database:mapper stmt -e cluster_group update table=cluster_groups
 //
-//generate-database:mapper method -i -e cluster_group GetMany
-//generate-database:mapper method -i -e cluster_group GetOne
-//generate-database:mapper method -i -e cluster_group ID
-//generate-database:mapper method -i -e cluster_group Exists
-//generate-database:mapper method -i -e cluster_group Rename
-//generate-database:mapper method -i -e cluster_group Create
-//generate-database:mapper method -i -e cluster_group Update
-//generate-database:mapper method -i -e cluster_group DeleteOne-by-Name
+//generate-database:mapper method -i -e cluster_group GetMany table=cluster_groups
+//generate-database:mapper method -i -e cluster_group GetOne table=cluster_groups
+//generate-database:mapper method -i -e cluster_group ID table=cluster_groups
+//generate-database:mapper method -i -e cluster_group Exists table=cluster_groups
+//generate-database:mapper method -i -e cluster_group Rename table=cluster_groups
+//generate-database:mapper method -i -e cluster_group Create table=cluster_groups
+//generate-database:mapper method -i -e cluster_group Update table=cluster_groups
+//generate-database:mapper method -i -e cluster_group DeleteOne-by-Name table=cluster_groups
 
 // ClusterGroup is a value object holding db-related details about a cluster group.
 type ClusterGroup struct {
