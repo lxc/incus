@@ -1042,6 +1042,22 @@ func (f *FGA) syncResources(ctx context.Context, resources Resources) error {
 		return err
 	}
 
+	// List the network integrations we have added to OpenFGA already.
+	networkIntegrationsResp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
+		User:     ObjectServer().String(),
+		Relation: relationServer,
+		Type:     string(ObjectTypeNetworkIntegration),
+	}).Execute()
+	if err != nil {
+		return err
+	}
+
+	// Compare with local network integrations.
+	err = diffObjects(relationServer, networkIntegrationsResp.GetObjects(), resources.NetworkIntegrationObjects)
+	if err != nil {
+		return err
+	}
+
 	// List the storage pools we have added to OpenFGA already.
 	storagePoolsResp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
 		User:     ObjectServer().String(),
