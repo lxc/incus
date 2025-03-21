@@ -299,16 +299,17 @@ value = "1"
 [global]
 driver = "ICH9-LPC"
 property = "disable_s4"
-value = "1"
+value = "0"
 ```
 
-To specify which section to override, specify an index.
-For example:
+The first `global` section disabled S3(Suspend to RAM), the second `global`
+section enabled S4(suspend to disk). In order to disable S4, the second `global`
+section index needs to be specified:
 
 ```
 raw.qemu.conf: |-
     [global][1]
-    value = "0"
+    value = "1"
 ```
 
 Section indexes start at 0 (which is the default value when not specified), so the above example would generate the following configuration:
@@ -322,7 +323,7 @@ value = "1"
 [global]
 driver = "ICH9-LPC"
 property = "disable_s4"
-value = "0"
+value = "1"
 ```
 
 ### Override QEMU runtime objects
