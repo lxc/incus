@@ -256,14 +256,24 @@ func (m *Method) getMany(buf *file.Buffer) error {
 	if m.config["references"] != "" {
 		parentTable := mapping.TableName(m.entity, m.config["table"])
 		refFields := strings.Split(m.config["references"], ",")
-		for _, fieldName := range refFields {
+		refs := make([]*Mapping, len(refFields))
+		for i, fieldName := range refFields {
 			refMapping, err := Parse(m.localPath, m.pkgs, fieldName, m.kind)
 			if err != nil {
 				return fmt.Errorf("Parse entity struct: %w", err)
 			}
 
-			defer func() { _ = m.getRefs(buf, parentTable, refMapping) }()
+			refs[len(refs)-1-i] = refMapping
 		}
+
+		defer func() {
+			for _, refMapping := range refs {
+				err = m.getRefs(buf, parentTable, refMapping)
+				if err != nil {
+					return
+				}
+			}
+		}()
 	}
 
 	// Go type name the objects to return (e.g. api.Foo).
@@ -792,14 +802,24 @@ func (m *Method) create(buf *file.Buffer, replace bool) error {
 	if m.config["references"] != "" {
 		parentTable := mapping.TableName(m.entity, m.config["table"])
 		refFields := strings.Split(m.config["references"], ",")
-		for _, fieldName := range refFields {
+		refs := make([]*Mapping, len(refFields))
+		for i, fieldName := range refFields {
 			refMapping, err := Parse(m.localPath, m.pkgs, fieldName, m.kind)
 			if err != nil {
 				return fmt.Errorf("Parse entity struct: %w", err)
 			}
 
-			defer func() { _ = m.createRefs(buf, parentTable, refMapping) }()
+			refs[len(refs)-1-i] = refMapping
 		}
+
+		defer func() {
+			for _, refMapping := range refs {
+				err = m.createRefs(buf, parentTable, refMapping)
+				if err != nil {
+					return
+				}
+			}
+		}()
 	}
 
 	err = m.signature(buf, false)
@@ -1083,15 +1103,26 @@ func (m *Method) update(buf *file.Buffer) error {
 
 	if m.config["references"] != "" {
 		refFields := strings.Split(m.config["references"], ",")
-		for _, fieldName := range refFields {
-			parentTable := mapping.TableName(m.entity, m.config["table"])
+		parentTable := mapping.TableName(m.entity, m.config["table"])
+		refs := make([]*Mapping, len(refFields))
+		for i, fieldName := range refFields {
 			refMapping, err := Parse(m.localPath, m.pkgs, fieldName, m.kind)
 			if err != nil {
 				return fmt.Errorf("Parse entity struct: %w", err)
 			}
 
-			defer func() { _ = m.updateRefs(buf, parentTable, refMapping) }()
+			refs[len(refs)-1-i] = refMapping
 		}
+
+		defer func() {
+			for _, refMapping := range refs {
+				err = m.updateRefs(buf, parentTable, refMapping)
+				if err != nil {
+					return
+				}
+			}
+		}()
+
 	}
 
 	nk := mapping.NaturalKey()
