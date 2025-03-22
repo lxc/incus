@@ -766,7 +766,54 @@ func (f *FGA) RenameNetworkACL(ctx context.Context, projectName string, oldNetwo
 	return f.updateTuples(ctx, writes, deletions)
 }
 
-// AddProfile adds a profile in the authorizer.
+// AddNetworkAddressSet adds a network address set to the authorization model.
+func (f *FGA) AddNetworkAddressSet(ctx context.Context, projectName string, networkAddressSetName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetworkAddressSet(projectName, networkAddressSetName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteNetworkAddressSet removes a network address set from the authorization model.
+func (f *FGA) DeleteNetworkAddressSet(ctx context.Context, projectName string, networkAddressSetName string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetworkAddressSet(projectName, networkAddressSetName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// RenameNetworkAddressSet renames an existing network address set in the authorization model.
+func (f *FGA) RenameNetworkAddressSet(ctx context.Context, projectName string, oldNetworkAddressSetName string, newNetworkAddressSetName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetworkAddressSet(projectName, newNetworkAddressSetName).String(),
+		},
+	}
+
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationProject,
+			Object:   ObjectNetworkAddressSet(projectName, oldNetworkAddressSetName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, deletions)
+}
+
+// AddProfile is a no-op.
 func (f *FGA) AddProfile(ctx context.Context, projectName string, profileName string) error {
 	writes := []client.ClientTupleKey{
 		{
@@ -956,6 +1003,7 @@ func (f *FGA) projectObjects(ctx context.Context, projectName string) ([]string,
 		ObjectTypeImageAlias,
 		ObjectTypeNetwork,
 		ObjectTypeNetworkACL,
+		ObjectTypeNetworkAddressSet,
 		ObjectTypeNetworkZone,
 		ObjectTypeProfile,
 		ObjectTypeStorageVolume,
@@ -1042,6 +1090,22 @@ func (f *FGA) syncResources(ctx context.Context, resources Resources) error {
 		return err
 	}
 
+	// List the network integrations we have added to OpenFGA already.
+	networkIntegrationsResp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
+		User:     ObjectServer().String(),
+		Relation: relationServer,
+		Type:     string(ObjectTypeNetworkIntegration),
+	}).Execute()
+	if err != nil {
+		return err
+	}
+
+	// Compare with local network integrations.
+	err = diffObjects(relationServer, networkIntegrationsResp.GetObjects(), resources.NetworkIntegrationObjects)
+	if err != nil {
+		return err
+	}
+
 	// List the storage pools we have added to OpenFGA already.
 	storagePoolsResp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
 		User:     ObjectServer().String(),
@@ -1098,6 +1162,7 @@ func (f *FGA) syncResources(ctx context.Context, resources Resources) error {
 	localProjectObjects = append(localProjectObjects, resources.NetworkObjects...)
 	localProjectObjects = append(localProjectObjects, resources.NetworkZoneObjects...)
 	localProjectObjects = append(localProjectObjects, resources.NetworkACLObjects...)
+	localProjectObjects = append(localProjectObjects, resources.NetworkAddressSetObjects...)
 	localProjectObjects = append(localProjectObjects, resources.ProfileObjects...)
 	localProjectObjects = append(localProjectObjects, resources.StoragePoolVolumeObjects...)
 	localProjectObjects = append(localProjectObjects, resources.StorageBucketObjects...)

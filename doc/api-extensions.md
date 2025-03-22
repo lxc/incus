@@ -2756,3 +2756,7 @@ This adds an `allocated_time` field below `CPU` in the instance state API.
 ## `network_io_bus`
 
 This introduces a new `io.bus` property for compatible network devices allowing to choose between `virtio` (default) and `usb`.
+
+## `network_address_set`
+
+This adds the concept of network address sets to API under the API endpoint prefix `/1.0/network-address-sets`.

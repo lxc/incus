@@ -473,6 +473,7 @@ var APIExtensions = []string{
 	"network_ovn_ipv4_dhcp_expiry",
 	"instance_state_cpu_time",
 	"network_io_bus",
+	"network_address_set",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

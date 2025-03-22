@@ -1655,3 +1655,8 @@ func (d Xtables) NetworkApplyForwards(networkName string, rules []AddressForward
 	reverter.Success()
 	return nil
 }
+
+// NetworkApplyAddressSets isn't supported under xtables.
+func (d Xtables) NetworkApplyAddressSets(networkName string, sets []AddressSet) error {
+	return fmt.Errorf("Address sets aren't supported by xtables firewalling")
+}

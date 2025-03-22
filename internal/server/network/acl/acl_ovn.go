@@ -583,7 +583,7 @@ func ovnRuleSubjectToOVNACLMatch(direction string, aclNameIDs map[string]int64, 
 
 				fieldParts = append(fieldParts, fmt.Sprintf("%s.%s == %s", protocol, direction, subjectCriterion))
 			} else {
-				// If not valid IP subnet, check if subject is ACL name or network peer name.
+				// If not valid IP subnet, check if subject is ACL name or address set or network peer name.
 				var subjectPortSelector ovn.OVNPortGroup
 				if slices.Contains(ruleSubjectInternalAliases, subjectCriterion) {
 					// Use pseudo port group name for special reserved port selector types.
@@ -597,6 +597,11 @@ func ovnRuleSubjectToOVNACLMatch(direction string, aclNameIDs map[string]int64, 
 					// Convert deprecated #external to non-deprecated @external if needed.
 					subjectPortSelector = ovn.OVNPortGroup(ruleSubjectExternal)
 					networkSpecific = true
+				} else if strings.HasPrefix(subjectCriterion, "$") {
+					// Check if subject is an address set if so we use it as it is.
+					// We may want to add mac filtering in the future.
+					fieldParts = append(fieldParts, fmt.Sprintf("ip6.%s == %s_ip6 || ip4.%s == %s_ip4", direction, subjectCriterion, direction, subjectCriterion))
+					continue
 				} else if strings.HasPrefix(subjectCriterion, "@") {
 					// Subject is a network peer name. Convert to address set criteria.
 					peerParts := strings.SplitN(strings.TrimPrefix(subjectCriterion, "@"), "/", 2)
