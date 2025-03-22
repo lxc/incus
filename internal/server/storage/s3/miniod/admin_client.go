@@ -101,11 +101,13 @@ func (c *AdminClient) isMinIOClient() bool {
 		return false
 	}
 
-	if !strings.Contains(lines[0], "mc version") && !strings.Contains(lines[0], "mcli version") {
-		return false
+	for _, name := range []string{"miniocli", "minioc", "mcli", "minio-client", "mc"} {
+		if strings.Contains(lines[0], name+" version") {
+			return true
+		}
 	}
 
-	return true
+	return false
 }
 
 // ServiceStop stops the MinIO cluster.
