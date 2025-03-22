@@ -47,7 +47,17 @@ This is done through `incus network peer create`, for example:
 incus network peer create default region ovn-region --type=remote
 ```
 
-## Configuration options
+## Integration properties
+
+Address sets have the following properties:
+
+Property         | Type     | Required | Description
+:--              | :--      | :--      | :--
+`name`           | string   | yes      | Name of the network integration
+`description`    | string   | no       | Description of the network integration
+`type`           | string   | yes      | Type of network integration (currently only `ovn`)
+
+## Integration configuration options
 
 The following configuration options are available for all network integrations:
 
