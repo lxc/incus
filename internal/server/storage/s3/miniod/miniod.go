@@ -70,7 +70,7 @@ func (p *Process) AdminUser() string {
 func (p *Process) AdminClient() (*AdminClient, error) {
 	var binaryName string
 
-	for _, name := range []string{"miniocli", "minioc", "mcli", "mc"} {
+	for _, name := range []string{"miniocli", "minioc", "mcli", "minio-client", "mc"} {
 		_, err := exec.LookPath(name)
 		if err == nil {
 			binaryName = name
