@@ -2029,7 +2029,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 		var resources auth.Resources
 
 		err = d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
-			err := query.Scan(ctx, tx.Tx(), "SELECT certificates.fingerprint from certificates", func(scan func(dest ...any) error) error {
+			err := query.Scan(ctx, tx.Tx(), "SELECT certificates.fingerprint FROM certificates", func(scan func(dest ...any) error) error {
 				var fingerprint string
 				err := scan(&fingerprint)
 				if err != nil {
@@ -2043,7 +2043,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 				return err
 			}
 
-			err = query.Scan(ctx, tx.Tx(), "SELECT name from storage_pools", func(scan func(dest ...any) error) error {
+			err = query.Scan(ctx, tx.Tx(), "SELECT name FROM storage_pools", func(scan func(dest ...any) error) error {
 				var storagePoolName string
 				err := scan(&storagePoolName)
 				if err != nil {
@@ -2057,7 +2057,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 				return err
 			}
 
-			err = query.Scan(ctx, tx.Tx(), "SELECT name from projects", func(scan func(dest ...any) error) error {
+			err = query.Scan(ctx, tx.Tx(), "SELECT name FROM projects", func(scan func(dest ...any) error) error {
 				var projectName string
 				err := scan(&projectName)
 				if err != nil {
@@ -2071,7 +2071,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 				return err
 			}
 
-			err = query.Scan(ctx, tx.Tx(), "SELECT images.fingerprint, projects.name from images JOIN projects ON projects.id=images.project_id", func(scan func(dest ...any) error) error {
+			err = query.Scan(ctx, tx.Tx(), "SELECT images.fingerprint, projects.name FROM images JOIN projects ON projects.id=images.project_id", func(scan func(dest ...any) error) error {
 				var imageFingerprint string
 				var projectName string
 				err := scan(&imageFingerprint, &projectName)
@@ -2086,7 +2086,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 				return err
 			}
 
-			err = query.Scan(ctx, tx.Tx(), "SELECT images_aliases.name, projects.name from images_aliases JOIN projects ON projects.id=images_aliases.project_id", func(scan func(dest ...any) error) error {
+			err = query.Scan(ctx, tx.Tx(), "SELECT images_aliases.name, projects.name FROM images_aliases JOIN projects ON projects.id=images_aliases.project_id", func(scan func(dest ...any) error) error {
 				var imageAliasName string
 				var projectName string
 				err := scan(&imageAliasName, &projectName)
@@ -2101,7 +2101,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 				return err
 			}
 
-			err = query.Scan(ctx, tx.Tx(), "SELECT instances.name, projects.name from instances JOIN projects ON projects.id=instances.project_id", func(scan func(dest ...any) error) error {
+			err = query.Scan(ctx, tx.Tx(), "SELECT instances.name, projects.name FROM instances JOIN projects ON projects.id=instances.project_id", func(scan func(dest ...any) error) error {
 				var instanceName string
 				var projectName string
 				err := scan(&instanceName, &projectName)
