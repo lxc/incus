@@ -1708,6 +1708,19 @@
 				]
 			}
 		},
+		"network_address_set": {
+			"common": {
+				"keys": [
+					{
+						"user.*": {
+							"longdesc": "User keys can be used in search.",
+							"shortdesc": "Free form user key/value storage",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"network_integration": {
 			"common": {
 				"keys": [
