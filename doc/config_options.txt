@@ -1592,6 +1592,14 @@ It is globally unique across all servers and projects.
 ```
 
 <!-- config group kernel-limits end -->
+<!-- config group network_address_set-common start -->
+```{config:option} user.* network_address_set-common
+:shortdesc: "Free form user key/value storage"
+:type: "string"
+User keys can be used in search.
+```
+
+<!-- config group network_address_set-common end -->
 <!-- config group network_integration-common start -->
 ```{config:option} user.* network_integration-common
 :shortdesc: "Free form user key/value storage"
