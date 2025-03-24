@@ -4366,6 +4366,9 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 		}
 
 		qemuDev["driver"] = bus
+	} else if bus == "usb" {
+		qemuDev["driver"] = "usb-storage"
+		qemuDev["bus"] = "qemu_usb.0"
 	}
 
 	if bootIndexes != nil {
