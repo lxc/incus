@@ -58,6 +58,7 @@ For block devices (disks), this is one of:
 - `nvme`
 - `virtio-blk`
 - `virtio-scsi` (default)
+- `usb`
 
 For file systems (shared directories or custom volumes), this is one of:
 - `9p`
