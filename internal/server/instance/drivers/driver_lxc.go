@@ -2378,7 +2378,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 				continue
 			}
 
-			lxcMounts = append(lxcMounts, fmt.Sprintf("/%s", fields[1]))
+			lxcMounts = append(lxcMounts, filepath.Clean(fmt.Sprintf("/%s", fields[1])))
 		}
 
 		// Configure mounts.
@@ -2389,7 +2389,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			}
 
 			// Skip all our own mounts.
-			if slices.Contains(lxcMounts, mount.Destination) {
+			if slices.Contains(lxcMounts, filepath.Clean(mount.Destination)) {
 				continue
 			}
 
