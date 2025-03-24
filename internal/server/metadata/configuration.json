@@ -88,7 +88,7 @@
 					{
 						"io.bus": {
 							"default": "`virtio-scsi` for block, `auto` for file system",
-							"longdesc": "This controls what bus a disk device should be attached to.\n\nFor block devices (disks), this is one of:\n- `nvme`\n- `virtio-blk`\n- `virtio-scsi` (default)\n\nFor file systems (shared directories or custom volumes), this is one of:\n- `9p`\n- `auto` (default) (`virtiofs` + `9p`, just `9p` if `virtiofsd` is missing)\n- `virtiofs`",
+							"longdesc": "This controls what bus a disk device should be attached to.\n\nFor block devices (disks), this is one of:\n- `nvme`\n- `virtio-blk`\n- `virtio-scsi` (default)\n- `usb`\n\nFor file systems (shared directories or custom volumes), this is one of:\n- `9p`\n- `auto` (default) (`virtiofs` + `9p`, just `9p` if `virtiofsd` is missing)\n- `virtiofs`",
 							"required": "no",
 							"shortdesc": "Only for VMs: Override the bus for the device",
 							"type": "string"
