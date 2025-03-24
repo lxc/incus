@@ -2737,3 +2737,7 @@ This adds an `allocated_time` field below `CPU` in the instance state API.
 ## `network_io_bus`
 
 This introduces a new `io.bus` property for compatible network devices allowing to choose between `virtio` (default) and `usb`.
+
+## `disk_io_bus_usb`
+
+Adds a new `usb` value for `io.bus` on `disk` devices.
