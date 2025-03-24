@@ -351,6 +351,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		// - `nvme`
 		// - `virtio-blk`
 		// - `virtio-scsi` (default)
+		// - `usb`
 		//
 		// For file systems (shared directories or custom volumes), this is one of:
 		// - `9p`
@@ -361,7 +362,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		//  default: `virtio-scsi` for block, `auto` for file system
 		//  required: no
 		//  shortdesc: Only for VMs: Override the bus for the device
-		"io.bus": validate.Optional(validate.IsOneOf("nvme", "virtio-blk", "virtio-scsi", "auto", "9p", "virtiofs")),
+		"io.bus": validate.Optional(validate.IsOneOf("nvme", "virtio-blk", "virtio-scsi", "auto", "9p", "virtiofs", "usb")),
 	}
 
 	err := d.config.Validate(rules)
@@ -1350,7 +1351,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 				}
 			} else {
 				// Confirm we're dealing with block options.
-				err := validate.Optional(validate.IsOneOf("nvme", "virtio-blk", "virtio-scsi"))(d.config["io.bus"])
+				err := validate.Optional(validate.IsOneOf("nvme", "virtio-blk", "virtio-scsi", "usb"))(d.config["io.bus"])
 				if err != nil {
 					return nil, err
 				}
