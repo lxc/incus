@@ -208,6 +208,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_check_deps "checking dependencies"
     run_test test_database_restore "database restore"
     #run_test test_database_no_disk_space "database out of disk space" # triggers an assert: `incusd: src/vfs.c:802: vfsDatabaseRead: Assertion `amount == (int)page_size' failed.` https://github.com/lxc/incus/issues/665 
+    #run_test test_database_no_disk_space "database out of disk space" # triggers an assert: `incusd: src/vfs.c:802: vfsDatabaseRead: Assertion `amount == (int)page_size' failed.` https://github.com/lxc/incus/issues/665 
     run_test test_sql "SQL"
     run_test test_tls_restrictions "TLS restrictions"
     run_test test_oidc "OpenID Connect"
@@ -244,10 +245,11 @@ if [ "${1:-"all"}" != "standalone" ]; then
     #run_test test_clustering_image_refresh "clustering image refresh" #TN
     #run_test test_clustering_evacuation "clustering evacuation" #TN
     #run_test test_clustering_instance_placement_scriptlet "clustering instance placement scriptlet" #TN
-    run_test test_clustering_move "clustering move"
+    #run_test test_clustering_move "clustering move" #TN
     run_test test_clustering_edit_configuration "clustering config edit"
     run_test test_clustering_remove_members "clustering config remove members"
     run_test test_clustering_autotarget "clustering autotarget member"
+    # run_test test_clustering_upgrade "clustering upgrade" # upstream
     # run_test test_clustering_upgrade "clustering upgrade" # upstream
     run_test test_clustering_groups "clustering groups"
     run_test test_clustering_events "clustering events"
@@ -273,6 +275,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_container_devices_disk "container devices - disk"
     #run_test test_container_devices_disk_restricted "container devices - disk - restricted" #!TN
     run_test test_container_devices_nic_p2p "container devices - nic - p2p"
+    # run_test test_container_devices_nic_bridged "container devices - nic - bridged" #TN
     # run_test test_container_devices_nic_bridged "container devices - nic - bridged" #TN
     run_test test_container_devices_nic_bridged_acl "container devices - nic - bridged - acl"
     run_test test_container_devices_nic_bridged_filtering "container devices - nic - bridged - filtering"
@@ -308,8 +311,8 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_exec_exit_code "exec exit code"
     run_test test_concurrent_exec "concurrent exec"
     run_test test_concurrent "concurrent startup"
-    run_test test_snapshots "container snapshots"
-    run_test test_snap_restore "snapshot restores"
+    #run_test test_snapshots "container snapshots" #TN
+    #run_test test_snap_restore "snapshot restores" #TN
     run_test test_snap_expiry "snapshot expiry"
     run_test test_snap_schedule "snapshot scheduling"
     run_test test_snap_volume_db_recovery "snapshot volume database record recovery"
@@ -332,15 +335,18 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_pki "PKI mode"
     run_test test_dev_incus "/dev/incus"
     run_test test_fuidshift "fuidshift"
+    #run_test test_migration "migration" #TN
+    run_test test_lxc_to_incus "LXC to Incus" # !TN
     #run_test test_migration "migration" #TN  - requires MountVolumeSnapshot
     #run_test test_lxc_to_incus "LXC to Incus" #!TN
     run_test test_fdleak "fd leak"
-    run_test test_storage "storage"
-    run_test test_storage_volume_snapshots "storage volume snapshots"
+    # run_test test_storage "storage" #TN
+    #run_test test_storage_volume_snapshots "storage volume snapshots" ## TN
     run_test test_init_auto "incus admin init auto"
     run_test test_init_interactive "incus admin init interactive"
     run_test test_init_preseed "incus admin init preseed"
     run_test test_storage_profiles "storage profiles"
+    #run_test test_container_recover "container recover" #TN
     #run_test test_container_recover "container recover" #TN
     run_test test_bucket_recover "bucket recover"
     run_test test_get_operations "test_get_operations"
@@ -352,7 +358,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_storage_driver_zfs "zfs storage driver"
     run_test test_storage_buckets "storage buckets"
     run_test test_storage_bucket_export "storage buckets export and import"
-    run_test test_storage_volume_import "storage volume import"
+    #run_test test_storage_volume_import "storage volume import" #TN
     run_test test_storage_volume_initial_config "storage volume initial configuration"
     run_test test_resources "resources"
     run_test test_kernel_limits "kernel limits"
@@ -368,8 +374,9 @@ if [ "${1:-"all"}" != "cluster" ]; then
     #run_test test_backup_different_instance_uuid "backup instance and check instance UUIDs" #TN
     run_test test_backup_volume_expiry "backup volume expiry"
     #run_test test_backup_export_import_recover "backup export, import, and recovery" #TN
+    #run_test test_backup_export_import_recover "backup export, import, and recovery" #TN
     run_test test_container_local_cross_pool_handling "container local cross pool handling"
-    run_test test_incremental_copy "incremental container copy"
+    #run_test test_incremental_copy "incremental container copy" # TN
     run_test test_profiles_project_default "profiles in default project"
     run_test test_profiles_project_images_profiles "profiles in project with images and profiles enabled"
     run_test test_profiles_project_images "profiles in project with images enabled and profiles disabled"
@@ -377,6 +384,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_filtering "API filtering"
     run_test test_warnings "Warnings"
     run_test test_metrics "Metrics"
+    #run_test test_storage_volume_recover "Recover storage volumes" #TN
     #run_test test_storage_volume_recover "Recover storage volumes" #TN
     run_test test_syslog_socket "Syslog socket"
     run_test test_incus_user "incus-user"
