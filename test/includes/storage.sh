@@ -48,6 +48,10 @@ available_storage_backends() {
         fi
     done
 
+    if [ -n "${INCUS_TN_HOST:-}" ]; then
+        backends="$backends truenas"
+    fi
+
     echo "$backends"
 }
 
