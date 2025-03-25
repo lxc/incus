@@ -95,6 +95,10 @@ test_database_no_disk_space(){
     [ "${succeeded}" = "yes" ] || false
 
     incus delete -f c
+
+    # The cleanup routine does not take care of image deletion in this test,
+    # because the socket is closed and the DB is deleted before cleanup
+    incus image delete testimage
   )
 
   shutdown_incus "${INCUS_NOSPACE_DIR}"

@@ -5502,10 +5502,14 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 		return err
 	}
 
+	clusterMove := args.ClusterMoveSourceName != ""
+	storageMove := args.StoragePool != ""
+
 	// The refresh argument passed to MigrationTypes() is always set to false here.
 	// The migration source/sender doesn't need to care whether or not it's doing a refresh as the migration
 	// sink/receiver will know this, and adjust the migration types accordingly.
-	poolMigrationTypes := pool.MigrationTypes(storagePools.InstanceContentType(d), false, args.Snapshots)
+	// The same applies for clusterMove and storageMove, which are set to the most optimized defaults.
+	poolMigrationTypes := pool.MigrationTypes(storagePools.InstanceContentType(d), false, args.Snapshots, true, false)
 	if len(poolMigrationTypes) == 0 {
 		err := fmt.Errorf("No source migration types available")
 		op.Done(err)
@@ -5614,7 +5618,8 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 		AllowInconsistent:  args.AllowInconsistent,
 		VolumeOnly:         !args.Snapshots,
 		Info:               &localMigration.Info{Config: srcConfig},
-		ClusterMove:        args.ClusterMoveSourceName != "",
+		ClusterMove:        clusterMove,
+		StorageMove:        storageMove,
 	}
 
 	// Only send the snapshots that the target requests when refreshing.
@@ -6151,10 +6156,13 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	// However, to determine the correct migration type Refresh needs to be set.
 	offerHeader.Refresh = &args.Refresh
 
+	clusterMove := args.ClusterMoveSourceName != ""
+	storageMove := args.StoragePool != ""
+
 	// Extract the source's migration type and then match it against our pool's supported types and features.
 	// If a match is found the combined features list will be sent back to requester.
 	contentType := storagePools.InstanceContentType(d)
-	respTypes, err := localMigration.MatchTypes(offerHeader, storagePools.FallbackMigrationType(contentType), pool.MigrationTypes(contentType, args.Refresh, args.Snapshots))
+	respTypes, err := localMigration.MatchTypes(offerHeader, storagePools.FallbackMigrationType(contentType), pool.MigrationTypes(contentType, args.Refresh, args.Snapshots, clusterMove, storageMove))
 	if err != nil {
 		return err
 	}
@@ -6378,6 +6386,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			VolumeSize:            offerHeader.GetVolumeSize(), // Block size setting override.
 			VolumeOnly:            !args.Snapshots,
 			ClusterMoveSourceName: args.ClusterMoveSourceName,
+			StoragePool:           args.StoragePool,
 		}
 
 		// At this point we have already figured out the parent container's root
@@ -6436,7 +6445,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			return fmt.Errorf("Failed creating instance on target: %w", err)
 		}
 
-		isRemoteClusterMove := args.ClusterMoveSourceName != "" && pool.Driver().Info().Remote
+		isRemoteClusterMove := clusterMove && pool.Driver().Info().Remote
 
 		// Only delete all instance volumes on error if the pool volume creation has succeeded to
 		// avoid deleting an existing conflicting volume.

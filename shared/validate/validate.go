@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/kballard/go-shellquote"
@@ -881,4 +882,31 @@ func IsValidCPUSet(value string) error {
 	}
 
 	return nil
+}
+
+// IsShorterThan checks whether a string is shorter than a specific length.
+func IsShorterThan(length int) func(value string) error {
+	return func(value string) error {
+		if len(value) > length {
+			return fmt.Errorf("Value is too long. Must be within %d characters", length)
+		}
+
+		return nil
+	}
+}
+
+// IsMinimumDuration validates whether a value is a duration longer than a specific minimum.
+func IsMinimumDuration(minimum time.Duration) func(value string) error {
+	return func(value string) error {
+		duration, err := time.ParseDuration(value)
+		if err != nil {
+			return fmt.Errorf("Invalid duration")
+		}
+
+		if duration < minimum {
+			return fmt.Errorf("Duration must be greater than %s", minimum)
+		}
+
+		return nil
+	}
 }
