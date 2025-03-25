@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/google/uuid"
 
@@ -87,27 +86,6 @@ func (c *AdminClient) writePolicy(policy []byte) error {
 	}
 
 	return nil
-}
-
-// isMinIOClient checks whether "mc" is the MinIO client binary or another software.
-func (c *AdminClient) isMinIOClient() bool {
-	out, err := c.runClientCommand(context.TODO(), "", "--version")
-	if err != nil {
-		return false
-	}
-
-	lines := strings.Split(out, "\n")
-	if len(lines) < 1 {
-		return false
-	}
-
-	for _, name := range []string{"miniocli", "minioc", "mcli", "minio-client", "mc"} {
-		if strings.Contains(lines[0], name+" version") {
-			return true
-		}
-	}
-
-	return false
 }
 
 // ServiceStop stops the MinIO cluster.
