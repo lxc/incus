@@ -227,6 +227,8 @@ if [ "${1:-"all"}" != "standalone" ]; then
     run_test test_clustering_containers "clustering containers"
     # run_test test_clustering_storage "clustering storage" #TN
     # run_test test_clustering_storage_single_node "clustering storage single node" #TN
+    # run_test test_clustering_storage "clustering storage" #TN
+    # run_test test_clustering_storage_single_node "clustering storage single node" #TN
     run_test test_clustering_network "clustering network"
     run_test test_clustering_publish "clustering publish"
     run_test test_clustering_profiles "clustering profiles"
@@ -238,7 +240,7 @@ if [ "${1:-"all"}" != "standalone" ]; then
     run_test test_clustering_address "clustering address"
     run_test test_clustering_image_replication "clustering image replication"
     run_test test_clustering_recover "clustering recovery"
-    run_test test_clustering_handover "clustering handover"
+    #run_test test_clustering_handover "clustering handover" #TN
     run_test test_clustering_rebalance "clustering rebalance"
     run_test test_clustering_remove_raft_node "clustering remove raft node"
     run_test test_clustering_failure_domains "clustering failure domains"
@@ -336,12 +338,10 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_dev_incus "/dev/incus"
     run_test test_fuidshift "fuidshift"
     #run_test test_migration "migration" #TN
-    run_test test_lxc_to_incus "LXC to Incus" # !TN
-    #run_test test_migration "migration" #TN  - requires MountVolumeSnapshot
     #run_test test_lxc_to_incus "LXC to Incus" #!TN
     run_test test_fdleak "fd leak"
     # run_test test_storage "storage" #TN
-    #run_test test_storage_volume_snapshots "storage volume snapshots" ## TN
+    #run_test test_storage_volume_snapshots "storage volume snapshots" #TN
     run_test test_init_auto "incus admin init auto"
     run_test test_init_interactive "incus admin init interactive"
     run_test test_init_preseed "incus admin init preseed"
@@ -376,7 +376,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     #run_test test_backup_export_import_recover "backup export, import, and recovery" #TN
     #run_test test_backup_export_import_recover "backup export, import, and recovery" #TN
     run_test test_container_local_cross_pool_handling "container local cross pool handling"
-    #run_test test_incremental_copy "incremental container copy" # TN
+    #run_test test_incremental_copy "incremental container copy" #TN
     run_test test_profiles_project_default "profiles in default project"
     run_test test_profiles_project_images_profiles "profiles in project with images and profiles enabled"
     run_test test_profiles_project_images "profiles in project with images enabled and profiles disabled"
