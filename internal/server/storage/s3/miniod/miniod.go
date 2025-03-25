@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -70,9 +71,33 @@ func (p *Process) AdminUser() string {
 func (p *Process) AdminClient() (*AdminClient, error) {
 	var binaryName string
 
+	isMinIOClient := func(name string) bool {
+		cmd := exec.Command(name, "--version")
+		b, err := cmd.Output()
+		if err != nil {
+			return false
+		}
+
+		lines := strings.Split(string(b), "\n")
+		if len(lines) < 3 {
+			return false
+		}
+
+		if strings.Contains(lines[0], name+" version") &&
+			strings.Contains(lines[2], "MinIO") {
+			return true
+		}
+
+		return false
+	}
+
 	for _, name := range []string{"miniocli", "minioc", "mcli", "minio-client", "mc"} {
 		_, err := exec.LookPath(name)
-		if err == nil {
+		if err != nil {
+			continue
+		}
+
+		if isMinIOClient(name) {
 			binaryName = name
 			break
 		}
@@ -90,10 +115,6 @@ func (p *Process) AdminClient() (*AdminClient, error) {
 		aliasPrefixedEncoded,
 		binaryName,
 		internalUtil.VarPath(""),
-	}
-
-	if !client.isMinIOClient() {
-		return nil, fmt.Errorf("'%s' binary is not MinIO client", binaryName)
 	}
 
 	return client, nil
