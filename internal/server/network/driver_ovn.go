@@ -4484,6 +4484,11 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 			return "", nil, fmt.Errorf("Failed clearing OVN default ACL rules for instance NIC: %w", err)
 		}
 
+		err := addressset.OVNAddressSetsDeleteIfUnused(n.state, n.logger, n.ovnnb, n.Project())
+		if err != nil {
+			return "", nil, fmt.Errorf("Failed removing unused OVN address sets: %w", err)
+		}
+
 		n.logger.Debug("Cleared NIC default rule", logger.Ctx{"port": instancePortName})
 	}
 
