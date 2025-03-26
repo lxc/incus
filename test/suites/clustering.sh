@@ -739,7 +739,8 @@ test_clustering_storage() {
 
   # The 'source' config key is omitted when showing the cluster
   # configuration, and included when showing the node-specific one.
-  ! INCUS_DIR="${INCUS_TWO_DIR}" incus storage show pool1 | grep -q source || false
+  ! INCUS_DIR="${INCUS_TWO_DIR}" incus storage show pool1 | grep -q source: || false
+
   source1="$(basename "${INCUS_ONE_DIR}")"
   source2="$(basename "${INCUS_TWO_DIR}")"
   if [ "${poolDriver}" = "ceph" ]; then
