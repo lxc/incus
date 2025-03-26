@@ -57,6 +57,9 @@ Restoring from older snapshots
   This method makes it possible to confirm whether a specific snapshot contains what you need.
   After determining the correct snapshot, you can {ref}`remove the newer snapshots <storage-edit-snapshots>` so that the snapshot you need is the latest one and you can restore it.
 
+  Alternatively, you can configure Incus to automatically discard the newer snapshots during restore.
+  To do so, set the [`linstor.remove_snapshots`](storage-linstor-vol-config) configuration for the volume (or the corresponding `volume.linstor.remove_snapshots` configuration on the storage pool for all volumes in the pool).
+
 ## Configuration options
 
 The following configuration options are available for storage pools that use the `linstor` driver and for storage volumes in these pools.
@@ -96,6 +99,7 @@ Key                               | Type      | Condition                       
 `drbd.on_no_quorum`               | string    |                                                   | -                                              | The DRBD policy to use on resources when quorum is lost (applied to the resource definition)
 `drbd.auto_diskful`               | string    |                                                   | -                                              | A duration string describing the time after which a primary diskless resource can be converted to diskful if storage is available on the node (applied to the resource definition)
 `drbd.auto_add_quorum_tiebreaker` | bool      |                                                   | `true`                                         | Whether to allow LINSTOR to automatically create diskless resources to act as quorum tiebreakers if needed (applied to the resource definition)
+`linstor.remove_snapshots`        | bool      |                                                   | same as `volume.zfs.remove_snapshots` or `false` | Remove snapshots as needed
 
 [^*]: {{snapshot_pattern_detail}}
 

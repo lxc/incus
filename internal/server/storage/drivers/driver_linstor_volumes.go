@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -74,6 +75,7 @@ func (d *linstor) commonVolumeRules() map[string]func(value string) error {
 		DrbdOnNoQuorumConfigKey:              validate.Optional(validate.IsOneOf("io-error", "suspend-io")),
 		DrbdAutoDiskfulConfigKey:             validate.Optional(validate.IsMinimumDuration(time.Minute)),
 		DrbdAutoAddQuorumTiebreakerConfigKey: validate.Optional(validate.IsBool),
+		LinstorRemoveSnapshotsConfigKey:      validate.Optional(validate.IsBool),
 	}
 }
 
@@ -774,9 +776,56 @@ func (d *linstor) RestoreVolume(vol Volume, snapshotName string, op *operations.
 		return err
 	}
 
-	// TODO: check if more recent snapshots exist and delete them if the user
-	// configure the storage pool to allow for such deletions. Otherwise, return
-	// a graceful error
+	resourceDefinition, err := d.getResourceDefinition(vol, false)
+	if err != nil {
+		return err
+	}
+
+	// Since LINSTOR only supports rolling back a resource definition to its latest
+	// snapshot, we need to check if the given snapshot is the latest one.
+	existingSnapshots, err := d.getSnapshots(resourceDefinition.Name)
+	if err != nil {
+		return err
+	}
+
+	// Sort all snapshots by creation date in descending order.
+	slices.SortFunc(existingSnapshots, func(a linstorClient.Snapshot, b linstorClient.Snapshot) int {
+		return a.Snapshots[0].CreateTimestamp.Compare(b.Snapshots[0].CreateTimestamp.Time) * -1
+	})
+
+	linstorSnapshotName, ok := resourceDefinition.Props[LinstorAuxSnapshotPrefix+snapshotName]
+	if !ok {
+		return fmt.Errorf("Could not find snapshot name mapping for volume %s", vol.Name())
+	}
+
+	snapshotMap, err := d.getSnapshotMap(vol)
+	if err != nil {
+		return err
+	}
+
+	// Get all snapshots taken after the one we're trying to restore.
+	snapshots := []string{}
+	for _, s := range existingSnapshots {
+		if s.Name == linstorSnapshotName {
+			break
+		}
+
+		snapshots = append(snapshots, snapshotMap[s.Name])
+	}
+
+	// Check if snapshot removal is allowed.
+	if len(snapshots) > 0 {
+		if util.IsFalseOrEmpty(vol.ExpandedConfig(LinstorRemoveSnapshotsConfigKey)) {
+			return fmt.Errorf("Snapshot %q cannot be restored due to subsequent snapshot(s). Set %s to override", snapshotName, LinstorRemoveSnapshotsConfigKey)
+		}
+
+		// Setup custom error to tell the backend what to delete.
+		err := ErrDeleteSnapshots{}
+		err.Snapshots = snapshots
+		return err
+	}
+
+	// Restore the snapshot.
 	err = d.restoreVolume(vol, snapVol)
 	if err != nil {
 		return err
@@ -1151,11 +1200,6 @@ func (d *linstor) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser,
 func (d *linstor) VolumeSnapshots(vol Volume, op *operations.Operation) ([]string, error) {
 	var snapshots []string
 
-	linstor, err := d.state.Linstor()
-	if err != nil {
-		return snapshots, err
-	}
-
 	resourceDefinition, err := d.getResourceDefinition(vol, false)
 	if err != nil {
 		return snapshots, err
@@ -1167,9 +1211,9 @@ func (d *linstor) VolumeSnapshots(vol Volume, op *operations.Operation) ([]strin
 	}
 
 	// Get the snapshots.
-	linstorSnapshots, err := linstor.Client.Resources.GetSnapshots(context.TODO(), resourceDefinition.Name)
+	linstorSnapshots, err := d.getSnapshots(resourceDefinition.Name)
 	if err != nil {
-		return snapshots, fmt.Errorf("Unable to get snapshots: %w", err)
+		return snapshots, err
 	}
 
 	for _, snapshot := range linstorSnapshots {
