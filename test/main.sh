@@ -313,7 +313,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_exec_exit_code "exec exit code"
     run_test test_concurrent_exec "concurrent exec"
     run_test test_concurrent "concurrent startup"
-    #run_test test_snapshots "container snapshots" #TN
+    run_test test_snapshots "container snapshots"
     #run_test test_snap_restore "snapshot restores" #TN
     run_test test_snap_expiry "snapshot expiry"
     run_test test_snap_schedule "snapshot scheduling"
