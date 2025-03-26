@@ -35,6 +35,7 @@ available_storage_backends() {
     backends="dir" # always available
 
     storage_backends="btrfs lvm zfs"
+    
     if [ -n "${INCUS_CEPH_CLUSTER:-}" ]; then
         storage_backends="${storage_backends} ceph"
     fi
@@ -42,15 +43,15 @@ available_storage_backends() {
         storage_backends="${storage_backends} linstor"
     fi
 
+    if [ -n "${INCUS_TN_HOST:-}" ]; then
+        backends="$backends truenas"
+    fi
+
     for backend in $storage_backends; do
         if command -v "$backend" >/dev/null 2>&1; then
             backends="$backends $backend"
         fi
     done
-
-    if [ -n "${INCUS_TN_HOST:-}" ]; then
-        backends="$backends truenas"
-    fi
 
     echo "$backends"
 }
