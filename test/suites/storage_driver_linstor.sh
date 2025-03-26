@@ -92,9 +92,20 @@ test_storage_driver_linstor() {
     incus storage volume set "incustest-$(basename "${INCUS_DIR}")-pool1" c1 size 500MiB
     incus storage volume unset "incustest-$(basename "${INCUS_DIR}")-pool1" c1 size
 
+    # Validate that we can restore to previous snapshots given that linstor.remove_snapshots is set
+    incus storage volume create "incustest-$(basename "${INCUS_DIR}")-pool1" c3
+    incus storage volume snapshot create "incustest-$(basename "${INCUS_DIR}")-pool1" c3 snap0
+    incus storage volume snapshot create "incustest-$(basename "${INCUS_DIR}")-pool1" c3 snap1
+    ! incus storage volume snapshot restore "incustest-$(basename "${INCUS_DIR}")-pool1" c3 snap0 || false
+    incus storage volume set "incustest-$(basename "${INCUS_DIR}")-pool1" c3 linstor.remove_snapshots=true
+    incus storage volume snapshot restore "incustest-$(basename "${INCUS_DIR}")-pool1" c3 snap0 || false
+    incus storage volume list "incustest-$(basename "${INCUS_DIR}")-pool1" | grep snap0
+    ! incus storage volume list "incustest-$(basename "${INCUS_DIR}")-pool1" | grep snap1 || false
+
+    # Cleanup
     incus storage volume delete "incustest-$(basename "${INCUS_DIR}")-pool1" c1
     incus storage volume delete "incustest-$(basename "${INCUS_DIR}")-pool1" c2
-
+    incus storage volume delete "incustest-$(basename "${INCUS_DIR}")-pool1" c3
     incus image delete testimage
     incus profile device remove default root
     incus storage delete "incustest-$(basename "${INCUS_DIR}")-pool1"
