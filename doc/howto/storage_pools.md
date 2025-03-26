@@ -153,14 +153,12 @@ Use the existing Ceph Object Gateway `https://www.example.com/radosgw` to create
 ````{group-tab} TrueNAS
 
 ```{note}
-To use the TrueNAS driver you must have [`truenas_incus_ctl`](https://github.com/truenas/truenas_incus_ctl/) installed and usable by root.
+To use the TrueNAS driver you must have [`truenas_incus_ctl`](https://docs.ceph.com/en/latest/radosgw/) installed and usable by root.
 ```
 
 The TrueNAS driver allows remote storage pools to be created and utilized on remote TrueNAS hosts. Each storage pool is contained in a separate dataset on the remote
 host. ZFS features on the host are utilized for optimzied image, copying and snapshot support without ZFS-on-ZFS overheads.
 
-Property | Description
--|-
 truenas.host | the remote host
 truenas.api_key | an api-key to use with the remote host
 truenas.url | the websocket API endpoint, and will be generated from host
