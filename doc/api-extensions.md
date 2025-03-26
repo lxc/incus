@@ -2760,3 +2760,7 @@ This introduces a new `io.bus` property for compatible network devices allowing 
 ## `disk_io_bus_usb`
 
 Adds a new `usb` value for `io.bus` on `disk` devices.
+
+## `storage_driver_linstor`
+
+This adds a LINSTOR storage driver.

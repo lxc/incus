@@ -63,6 +63,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/state"
 	storagePools "github.com/lxc/incus/v6/internal/server/storage"
 	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
+	"github.com/lxc/incus/v6/internal/server/storage/linstor"
 	"github.com/lxc/incus/v6/internal/server/storage/s3/miniod"
 	"github.com/lxc/incus/v6/internal/server/sys"
 	"github.com/lxc/incus/v6/internal/server/syslog"
@@ -172,6 +173,10 @@ type Daemon struct {
 
 	// API info.
 	apiExtensions int
+
+	// Linstor client.
+	linstor   *linstor.Client
+	linstorMu sync.Mutex
 }
 
 // DaemonConfig holds configuration values for Daemon.
@@ -604,6 +609,7 @@ func (d *Daemon) State() *state.State {
 		OS:                     d.os,
 		OVN:                    d.getOVN,
 		OVS:                    d.getOVS,
+		Linstor:                d.getLinstor,
 		Proxy:                  d.proxy,
 		ServerCert:             d.serverCert,
 		ServerClustered:        d.serverClustered,
@@ -2731,4 +2737,41 @@ func (d *Daemon) getOVS() (*ovs.VSwitch, error) {
 	}
 
 	return d.ovs, nil
+}
+
+func (d *Daemon) setupLinstor() error {
+	d.linstorMu.Lock()
+	defer d.linstorMu.Unlock()
+
+	// Clear any existing client.
+	d.linstor = nil
+
+	// Get the Linstor controller connection string.
+	controllerConnection := d.globalConfig.LinstorControllerConnection()
+
+	// Get the SSL certificates if needed.
+	sslCACert, sslClientCert, sslClientKey := d.globalConfig.LinstorSSL()
+
+	// Get Linstor client.
+	client, err := linstor.NewClient(controllerConnection, sslCACert, sslClientCert, sslClientKey)
+	if err != nil {
+		return fmt.Errorf("Failed to connect to Linstor: %w", err)
+	}
+
+	// Set the client.
+	d.linstor = client
+
+	return nil
+}
+
+func (d *Daemon) getLinstor() (*linstor.Client, error) {
+	// Setup the client if it does not exist.
+	if d.linstor == nil {
+		err := d.setupLinstor()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return d.linstor, nil
 }

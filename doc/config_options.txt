@@ -2603,6 +2603,41 @@ Specify the volume using the syntax `POOL/VOLUME`.
 Specify the volume using the syntax `POOL/VOLUME`.
 ```
 
+```{config:option} storage.linstor.ca_cert server-miscellaneous
+:scope: "global"
+:shortdesc: "LINSTOR SSL certificate authority"
+:type: "string"
+
+```
+
+```{config:option} storage.linstor.client_cert server-miscellaneous
+:scope: "global"
+:shortdesc: "LINSTOR SSL client certificate"
+:type: "string"
+
+```
+
+```{config:option} storage.linstor.client_key server-miscellaneous
+:scope: "global"
+:shortdesc: "LINSTOR SSL client key"
+:type: "string"
+
+```
+
+```{config:option} storage.linstor.controller_connection server-miscellaneous
+:scope: "global"
+:shortdesc: "LINSTOR controller connection string"
+:type: "string"
+
+```
+
+```{config:option} storage.linstor.satellite.name server-miscellaneous
+:scope: "global"
+:shortdesc: "LINSTOR satellite node name override"
+:type: "string"
+Set this option to the name of the local LINSTOR satellite node, should it be different from the Incus server name.
+```
+
 <!-- config group server-miscellaneous end -->
 <!-- config group server-oidc start -->
 ```{config:option} oidc.audience server-oidc

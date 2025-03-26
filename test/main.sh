@@ -57,6 +57,9 @@ if [ "$INCUS_BACKEND" != "random" ] && ! storage_backend_available "$INCUS_BACKE
   if [ "${INCUS_BACKEND}" = "ceph" ] && [ -z "${INCUS_CEPH_CLUSTER:-}" ]; then
     echo "Ceph storage backend requires that \"INCUS_CEPH_CLUSTER\" be set."
     exit 1
+  elif [ "${INCUS_BACKEND}" = "linstor" ] && [ -z "${INCUS_LINSTOR_CLUSTER:-}" ]; then
+    echo "LINSTOR storage backend requires that \"INCUS_LINSTOR_CLUSTER\" be set."
+    exit 1
   fi
   echo "Storage backend \"$INCUS_BACKEND\" is not available"
   exit 1
@@ -343,6 +346,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_storage_driver_btrfs "btrfs storage driver"
     run_test test_storage_driver_ceph "ceph storage driver"
     run_test test_storage_driver_cephfs "cephfs storage driver"
+    run_test test_storage_driver_linstor "linstor storage driver"
     run_test test_storage_driver_zfs "zfs storage driver"
     run_test test_storage_buckets "storage buckets"
     run_test test_storage_bucket_export "storage buckets export and import"

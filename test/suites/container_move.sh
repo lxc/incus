@@ -11,7 +11,11 @@ test_container_move() {
 
   # Setup.
   incus project create "${project}"
-  incus storage create "${pool2}" "${incus_backend}"
+  if [ "${incus_backend}" = "linstor" ]; then
+      incus storage create "${pool2}" "${incus_backend}" linstor.resource_group.place_count=1
+  else
+      incus storage create "${pool2}" "${incus_backend}"
+  fi
   incus profile create "${profile}" --project "${project}"
   incus profile device add "${profile}" root disk pool="${pool2}" path=/ --project "${project}"
 
