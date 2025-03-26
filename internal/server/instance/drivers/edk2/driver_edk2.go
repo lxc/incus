@@ -194,29 +194,24 @@ func GetArchitectureFirmwarePairsForUsage(hostArch int, usage FirmwareUsage) ([]
 	for _, installation := range GetArchitectureInstallations(hostArch) {
 		usage, found := installation.Usage[usage]
 		if found {
-			searchPath := installation.Path
-
-			// If listed path doesn't exist, consider EDK2 override path.
-			if !util.PathExists(searchPath) {
-				if incusEdk2Path == "" {
-					// No fallback path, skip entirely.
+			// Prefer the EDK2 override path if provided.
+			for _, searchPath := range []string{incusEdk2Path, installation.Path} {
+				if searchPath == "" || !util.PathExists(searchPath) {
 					continue
 				}
 
-				searchPath = incusEdk2Path
-			}
+				for _, firmwarePair := range usage {
+					codePath := filepath.Join(searchPath, firmwarePair.Code)
+					varsPath := filepath.Join(searchPath, firmwarePair.Vars)
+					if !util.PathExists(codePath) || !util.PathExists(varsPath) {
+						continue
+					}
 
-			for _, firmwarePair := range usage {
-				codePath := filepath.Join(searchPath, firmwarePair.Code)
-				varsPath := filepath.Join(searchPath, firmwarePair.Vars)
-				if !util.PathExists(codePath) || !util.PathExists(varsPath) {
-					continue
+					firmwares = append(firmwares, FirmwarePair{
+						Code: codePath,
+						Vars: varsPath,
+					})
 				}
-
-				firmwares = append(firmwares, FirmwarePair{
-					Code: codePath,
-					Vars: varsPath,
-				})
 			}
 		}
 	}
