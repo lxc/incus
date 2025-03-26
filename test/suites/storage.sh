@@ -763,13 +763,13 @@ test_storage() {
   )
 
   # Test applying quota (expected size ranges are in KiB and have an allowable range to account for allocation variations).
-  QUOTA1="20MiB"
-  rootMinKiB1="13800"
-  rootMaxKiB1="23000"
+  QUOTA1="400MiB"
+  rootMinKiB1="320000"
+  rootMaxKiB1="450000"
 
-  QUOTA2="25MiB"
-  rootMinKiB2="18900"
-  rootMaxKiB2="28000"
+  QUOTA2="800MiB"
+  rootMinKiB2="720000"
+  rootMaxKiB2="850000"
 
   if [ "$incus_backend" != "dir" ]; then
     incus launch testimage quota1
