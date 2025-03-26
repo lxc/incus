@@ -43,10 +43,6 @@ available_storage_backends() {
         storage_backends="${storage_backends} linstor"
     fi
 
-    if [ -n "${INCUS_TN_HOST:-}" ]; then
-        backends="$backends truenas"
-    fi
-
     for backend in $storage_backends; do
         if command -v "$backend" >/dev/null 2>&1; then
             backends="$backends $backend"
