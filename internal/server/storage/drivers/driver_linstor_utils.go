@@ -54,6 +54,9 @@ const DrbdAutoDiskfulConfigKey = "drbd.auto_diskful"
 // DrbdAutoAddQuorumTiebreakerConfigKey represents the config key that describes whether DRBD will automatically create tiebreaker resources.
 const DrbdAutoAddQuorumTiebreakerConfigKey = "drbd.auto_add_quorum_tiebreaker"
 
+// LinstorRemoveSnapshotsConfigKey represents the config key that describes whether snapshots should be automatically removed with volumes.
+const LinstorRemoveSnapshotsConfigKey = "linstor.remove_snapshots"
+
 // LinstorAuxSnapshotPrefix represents the AuxProp prefix to map Incus and LINSTOR snapshots.
 const LinstorAuxSnapshotPrefix = "Aux/Incus/snapshot-name/"
 
@@ -1076,6 +1079,22 @@ func (d *linstor) drbdPropsFromConfig(config map[string]string) (map[string]stri
 	return props, nil
 }
 
+// getSnapshots retrieves all snapshots for a given resource definition name.
+func (d *linstor) getSnapshots(resourceDefinitionName string) ([]linstorClient.Snapshot, error) {
+	linstor, err := d.state.Linstor()
+	if err != nil {
+		return []linstorClient.Snapshot{}, err
+	}
+
+	snapshots, err := linstor.Client.Resources.GetSnapshots(context.TODO(), resourceDefinitionName)
+	if err != nil {
+		return snapshots, fmt.Errorf("Unable to get snapshots: %w", err)
+	}
+
+	return snapshots, nil
+}
+
+// rsyncMigrationType returns the migration types to use for a given content type.
 func (d *linstor) rsyncMigrationType(contentType ContentType) localMigration.Type {
 	var rsyncTransportType migration.MigrationFSType
 	var rsyncFeatures []string
@@ -1100,6 +1119,7 @@ func (d *linstor) rsyncMigrationType(contentType ContentType) localMigration.Typ
 	}
 }
 
+// parseVolumeType parses a string into a volume type.
 func (d *linstor) parseVolumeType(s string) (*VolumeType, bool) {
 	for _, volType := range d.Info().VolumeTypes {
 		if s == string(volType) {
@@ -1110,6 +1130,7 @@ func (d *linstor) parseVolumeType(s string) (*VolumeType, bool) {
 	return nil, false
 }
 
+// parseContentType parses a string into a volume type.
 func (d *linstor) parseContentType(s string) (*ContentType, bool) {
 	for _, contentType := range []ContentType{ContentTypeFS, ContentTypeBlock, ContentTypeISO} {
 		if s == string(contentType) {
@@ -1120,6 +1141,7 @@ func (d *linstor) parseContentType(s string) (*ContentType, bool) {
 	return nil, false
 }
 
+// generateUUIDWithPrefix generates a new UUID (without "-") and appends it to the configured volume prefix.
 func (d *linstor) generateUUIDWithPrefix() string {
 	return d.config[LinstorVolumePrefixConfigKey] + strings.ReplaceAll(uuid.NewString(), "-", "")
 }
