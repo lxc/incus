@@ -78,7 +78,11 @@ func (s *utilsTestSuite) TestGetServerSupportedFilters() {
 		"foo", "type=container", "user.blah=a", "status=running,stopped",
 	}
 
-	supportedFilters, unsupportedFilters := getServerSupportedFilters(filters, api.InstanceFull{})
+	supportedFilters, unsupportedFilters := getServerSupportedFilters(filters, api.InstanceFull{}, false)
 	s.Equal([]string{"type=container"}, supportedFilters)
 	s.Equal([]string{"foo", "user.blah=a", "status=running,stopped"}, unsupportedFilters)
+
+	supportedFilters, unsupportedFilters = getServerSupportedFilters(filters, api.InstanceFull{}, true)
+	s.Equal([]string{"foo", "type=container"}, supportedFilters)
+	s.Equal([]string{"user.blah=a", "status=running,stopped"}, unsupportedFilters)
 }

@@ -115,10 +115,6 @@ func TestShouldShow(t *testing.T) {
 		t.Error("user.blah=abc type=container didn't match")
 	}
 
-	if list.shouldShow([]string{"bar", "u.blah=abc"}, inst, nil, false) {
-		t.Errorf("name filter didn't work")
-	}
-
 	if list.shouldShow([]string{"bar", "u.blah=other"}, inst, nil, false) {
 		t.Errorf("value filter didn't work")
 	}
