@@ -5,7 +5,7 @@
 Incus maintains different release branches in parallel:
 
 - Long term support (LTS) releases: 6.0
-- Feature releases: Incus 0.x
+- Feature releases: Incus 6.x
 
 <!-- Include end release -->
 
