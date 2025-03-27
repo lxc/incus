@@ -385,17 +385,25 @@ func structHasField(typ reflect.Type, field string) bool {
 }
 
 // getServerSupportedFilters returns two lists: one with filters supported by server and second one with not supported.
-func getServerSupportedFilters(filters []string, i interface{}) ([]string, []string) {
+func getServerSupportedFilters(filters []string, i any, singleValueServerSupport bool) ([]string, []string) {
 	supportedFilters := []string{}
 	unsupportedFilters := []string{}
 
 	for _, filter := range filters {
 		membs := strings.SplitN(filter, "=", 2)
-		// Only key/value pairs are supported by server side API
+
+		if len(membs) == 1 && singleValueServerSupport {
+			supportedFilters = append(supportedFilters, filter)
+			continue
+		} else if len(membs) == 1 && !singleValueServerSupport {
+			unsupportedFilters = append(unsupportedFilters, filter)
+			continue
+		}
+
 		// Only keys which are part of struct are supported by server side API
 		// Multiple values (separated by ',') are not supported by server side API
 		// Keys with '.' in name are not supported
-		if len(membs) < 2 || !structHasField(reflect.TypeOf(i), membs[0]) || strings.Contains(membs[1], ",") || strings.Contains(membs[0], ".") {
+		if !structHasField(reflect.TypeOf(i), membs[0]) || strings.Contains(membs[1], ",") || strings.Contains(membs[0], ".") {
 			unsupportedFilters = append(unsupportedFilters, filter)
 			continue
 		}
@@ -404,6 +412,19 @@ func getServerSupportedFilters(filters []string, i interface{}) ([]string, []str
 	}
 
 	return supportedFilters, unsupportedFilters
+}
+
+// modifySingleValueFilters applies the modifier function to filters that contain only a value (length == 1).
+func modifySingleValueFilters(filters []string, modifier func(string) string) {
+	for i, filter := range filters {
+		items := strings.SplitN(filter, "=", 2)
+
+		if len(items) != 1 {
+			continue
+		}
+
+		filters[i] = modifier(filter)
+	}
 }
 
 // guessImage checks that the image name (provided by the user) is correct given an instance remote and image remote.
