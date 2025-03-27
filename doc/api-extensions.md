@@ -2764,3 +2764,14 @@ Adds a new `usb` value for `io.bus` on `disk` devices.
 ## `storage_driver_linstor`
 
 This adds a LINSTOR storage driver.
+
+## `instance_oci_entrypoint`
+
+This introduces a set of new configuration options on the container to configure the OCI entry point:
+
+* `oci.entrypoint`
+* `oci.cwd`
+* `oci.uid`
+* `oci.gid`
+
+Those are initialized at creation time using the values from the OCI image.
