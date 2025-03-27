@@ -25,6 +25,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/ip"
 	"github.com/lxc/incus/v6/internal/server/network"
 	"github.com/lxc/incus/v6/internal/server/network/acl"
+	addressset "github.com/lxc/incus/v6/internal/server/network/address-set"
 	"github.com/lxc/incus/v6/internal/server/network/ovn"
 	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/resources"
@@ -843,7 +844,12 @@ func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		}
 
 		if len(removedACLs) > 0 {
-			err := acl.OVNPortGroupDeleteIfUnused(d.state, d.logger, d.ovnnb, d.network.Project(), d.inst, d.name, newACLs...)
+			err := addressset.OVNDeleteAddressSetsViaACLs(d.state, d.logger, d.ovnnb, d.network.Project(), removedACLs)
+			if err != nil {
+				return fmt.Errorf("Failed removing unused OVN address sets: %w", err)
+			}
+
+			err = acl.OVNPortGroupDeleteIfUnused(d.state, d.logger, d.ovnnb, d.network.Project(), d.inst, d.name, newACLs...)
 			if err != nil {
 				return fmt.Errorf("Failed removing unused OVN port groups: %w", err)
 			}

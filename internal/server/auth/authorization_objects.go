@@ -116,6 +116,7 @@ var objectValidators = map[ObjectType]objectValidator{
 	ObjectTypeInstance:           {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
 	ObjectTypeNetwork:            {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
 	ObjectTypeNetworkACL:         {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
+	ObjectTypeNetworkAddressSet:  {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
 	ObjectTypeNetworkIntegration: {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
 	ObjectTypeNetworkZone:        {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
 	ObjectTypeProfile:            {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
@@ -304,6 +305,12 @@ func ObjectNetwork(projectName string, networkName string) Object {
 // ObjectNetworkACL represents a network ACL.
 func ObjectNetworkACL(projectName string, networkACLName string) Object {
 	object, _ := NewObject(ObjectTypeNetworkACL, projectName, networkACLName)
+	return object
+}
+
+// ObjectNetworkAddressSet represents a network address set.
+func ObjectNetworkAddressSet(projectName string, networkAddressSetName string) Object {
+	object, _ := NewObject(ObjectTypeNetworkAddressSet, projectName, networkAddressSetName)
 	return object
 }
 
