@@ -335,7 +335,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     #run_test test_migration "migration" #TN  - requires MountVolumeSnapshot
     #run_test test_lxc_to_incus "LXC to Incus" #!TN
     run_test test_fdleak "fd leak"
-    #run_test test_storage "storage" #TN
+    run_test test_storage "storage"
     #run_test test_storage_volume_snapshots "storage volume snapshots" #TN
     run_test test_init_auto "incus admin init auto"
     run_test test_init_interactive "incus admin init interactive"
