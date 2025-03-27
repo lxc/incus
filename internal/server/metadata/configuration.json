@@ -730,6 +730,46 @@
 					}
 				]
 			},
+			"oci": {
+				"keys": [
+					{
+						"oci.cwd": {
+							"condition": "OCI container",
+							"liveupdate": "no",
+							"longdesc": "Override the working directory of an OCI container.",
+							"shortdesc": "OCI container working directory",
+							"type": "string"
+						}
+					},
+					{
+						"oci.entrypoint": {
+							"condition": "OCI container",
+							"liveupdate": "no",
+							"longdesc": "Override the entrypoint of an OCI container.",
+							"shortdesc": "OCI container entrypoint",
+							"type": "string"
+						}
+					},
+					{
+						"oci.gid": {
+							"condition": "OCI container",
+							"liveupdate": "no",
+							"longdesc": "Override the GID of the process run in an OCI container.",
+							"shortdesc": "OCI container GID",
+							"type": "string"
+						}
+					},
+					{
+						"oci.uid": {
+							"condition": "OCI container",
+							"liveupdate": "no",
+							"longdesc": "Override the UID of the process run in an OCI container.",
+							"shortdesc": "OCI container UID",
+							"type": "string"
+						}
+					}
+				]
+			},
 			"raw": {
 				"keys": [
 					{

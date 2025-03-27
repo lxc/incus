@@ -2344,33 +2344,65 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		}
 
 		// Configure the entry point.
-		if len(config.Process.Args) > 0 && slices.Contains([]string{"/init", "/sbin/init", "/s6-init"}, config.Process.Args[0]) {
+		entrypoint := config.Process.Args
+		if d.expandedConfig["oci.entrypoint"] != "" {
+			entrypoint, err = shellquote.Split(d.expandedConfig["oci.entrypoint"])
+			if err != nil {
+				return "", nil, err
+			}
+		}
+
+		if len(entrypoint) > 0 && slices.Contains([]string{"/init", "/sbin/init", "/s6-init"}, entrypoint[0]) {
 			// For regular init systems, call them directly as PID1.
-			err = lxcSetConfigItem(cc, "lxc.init.cmd", shellquote.Join(config.Process.Args...))
+			err = lxcSetConfigItem(cc, "lxc.init.cmd", shellquote.Join(entrypoint...))
 			if err != nil {
 				return "", nil, err
 			}
 		} else {
 			// For anything else, run them under our own PID1.
-			err = lxcSetConfigItem(cc, "lxc.execute.cmd", shellquote.Join(config.Process.Args...))
+			err = lxcSetConfigItem(cc, "lxc.execute.cmd", shellquote.Join(entrypoint...))
 			if err != nil {
 				return "", nil, err
 			}
 		}
 
-		err = lxcSetConfigItem(cc, "lxc.init.cwd", config.Process.Cwd)
-		if err != nil {
-			return "", nil, err
+		// Configure the cwd.
+		if d.expandedConfig["oci.cwd"] != "" {
+			err = lxcSetConfigItem(cc, "lxc.init.cwd", d.expandedConfig["oci.cwd"])
+			if err != nil {
+				return "", nil, err
+			}
+		} else {
+			err = lxcSetConfigItem(cc, "lxc.init.cwd", config.Process.Cwd)
+			if err != nil {
+				return "", nil, err
+			}
 		}
 
-		err = lxcSetConfigItem(cc, "lxc.init.uid", fmt.Sprintf("%d", config.Process.User.UID))
-		if err != nil {
-			return "", nil, err
+		// Configure the UID
+		if d.expandedConfig["oci.uid"] != "" {
+			err = lxcSetConfigItem(cc, "lxc.init.uid", d.expandedConfig["oci.uid"])
+			if err != nil {
+				return "", nil, err
+			}
+		} else {
+			err = lxcSetConfigItem(cc, "lxc.init.uid", fmt.Sprintf("%d", config.Process.User.UID))
+			if err != nil {
+				return "", nil, err
+			}
 		}
 
-		err = lxcSetConfigItem(cc, "lxc.init.gid", fmt.Sprintf("%d", config.Process.User.GID))
-		if err != nil {
-			return "", nil, err
+		// Configure the GID
+		if d.expandedConfig["oci.gid"] != "" {
+			err = lxcSetConfigItem(cc, "lxc.init.gid", d.expandedConfig["oci.gid"])
+			if err != nil {
+				return "", nil, err
+			}
+		} else {
+			err = lxcSetConfigItem(cc, "lxc.init.gid", fmt.Sprintf("%d", config.Process.User.GID))
+			if err != nil {
+				return "", nil, err
+			}
 		}
 
 		// Get all mounts so far.

@@ -665,6 +665,40 @@ The specified version expression is used to set `libnvidia-container NVIDIA_REQU
 ```
 
 <!-- config group instance-nvidia end -->
+<!-- config group instance-oci start -->
+```{config:option} oci.cwd instance-oci
+:condition: "OCI container"
+:liveupdate: "no"
+:shortdesc: "OCI container working directory"
+:type: "string"
+Override the working directory of an OCI container.
+```
+
+```{config:option} oci.entrypoint instance-oci
+:condition: "OCI container"
+:liveupdate: "no"
+:shortdesc: "OCI container entrypoint"
+:type: "string"
+Override the entrypoint of an OCI container.
+```
+
+```{config:option} oci.gid instance-oci
+:condition: "OCI container"
+:liveupdate: "no"
+:shortdesc: "OCI container GID"
+:type: "string"
+Override the GID of the process run in an OCI container.
+```
+
+```{config:option} oci.uid instance-oci
+:condition: "OCI container"
+:liveupdate: "no"
+:shortdesc: "OCI container UID"
+:type: "string"
+Override the UID of the process run in an OCI container.
+```
+
+<!-- config group instance-oci end -->
 <!-- config group instance-raw start -->
 ```{config:option} raw.apparmor instance-raw
 :liveupdate: "yes"
