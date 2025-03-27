@@ -240,14 +240,14 @@ if [ "${1:-"all"}" != "standalone" ]; then
     run_test test_clustering_address "clustering address"
     run_test test_clustering_image_replication "clustering image replication"
     run_test test_clustering_recover "clustering recovery"
-    #run_test test_clustering_handover "clustering handover" #TN
+    run_test test_clustering_handover "clustering handover"
     run_test test_clustering_rebalance "clustering rebalance"
     run_test test_clustering_remove_raft_node "clustering remove raft node"
     run_test test_clustering_failure_domains "clustering failure domains"
     #run_test test_clustering_image_refresh "clustering image refresh" #TN
     #run_test test_clustering_evacuation "clustering evacuation" #TN
     #run_test test_clustering_instance_placement_scriptlet "clustering instance placement scriptlet" #TN
-    #run_test test_clustering_move "clustering move" #TN
+    run_test test_clustering_move "clustering move"
     run_test test_clustering_edit_configuration "clustering config edit"
     run_test test_clustering_remove_members "clustering config remove members"
     run_test test_clustering_autotarget "clustering autotarget member"
