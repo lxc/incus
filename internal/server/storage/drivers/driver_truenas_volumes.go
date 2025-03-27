@@ -275,6 +275,17 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 			return err
 		}
 
+		// For VM images, create a filesystem volume too. Needs to be done before Setting Volume Quota, as Quota requires mounting both volumes.
+		if vol.IsVMBlock() {
+			fsVol := vol.NewVMBlockFilesystemVolume()
+			err := d.CreateVolume(fsVol, nil, op)
+			if err != nil {
+				return err
+			}
+
+			revert.Add(func() { _ = d.DeleteVolume(fsVol, op) })
+		}
+
 		// Apply the size limit.
 		err = d.SetVolumeQuota(vol, vol.ConfigSize(), false, op)
 		if err != nil {
@@ -286,17 +297,6 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		if err != nil {
 			return err
 		}
-	}
-
-	// For VM images, create a filesystem volume too.
-	if vol.IsVMBlock() {
-		fsVol := vol.NewVMBlockFilesystemVolume()
-		err := d.CreateVolume(fsVol, nil, op)
-		if err != nil {
-			return err
-		}
-
-		revert.Add(func() { _ = d.DeleteVolume(fsVol, op) })
 	}
 
 	err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
