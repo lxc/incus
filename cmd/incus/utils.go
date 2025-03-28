@@ -117,7 +117,7 @@ func parseDeviceOverrides(deviceOverrideArgs []string) (map[string]map[string]st
 
 // IsAliasesSubset returns true if the first array is completely contained in the second array.
 func IsAliasesSubset(a1 []api.ImageAlias, a2 []api.ImageAlias) bool {
-	set := make(map[string]interface{})
+	set := make(map[string]any)
 	for _, alias := range a2 {
 		set[alias.Name] = nil
 	}

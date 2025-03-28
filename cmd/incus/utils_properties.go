@@ -14,7 +14,7 @@ import (
 
 // stringToTimeHookFunc is a custom decoding hook that converts string values to time.Time using the given layout.
 func stringToTimeHookFunc(layout string) mapstructure.DecodeHookFuncType {
-	return func(from reflect.Type, to reflect.Type, data interface{}) (interface{}, error) {
+	return func(from reflect.Type, to reflect.Type, data any) (any, error) {
 		if from.Kind() == reflect.String && to == reflect.TypeOf(time.Time{}) {
 			strValue := data.(string)
 			t, err := time.Parse(layout, strValue)
@@ -31,7 +31,7 @@ func stringToTimeHookFunc(layout string) mapstructure.DecodeHookFuncType {
 
 // stringToBoolHookFunc is a custom decoding hook that converts string values to bool.
 func stringToBoolHookFunc() mapstructure.DecodeHookFunc {
-	return func(f reflect.Kind, t reflect.Kind, data interface{}) (interface{}, error) {
+	return func(f reflect.Kind, t reflect.Kind, data any) (any, error) {
 		if f != reflect.String || t != reflect.Bool {
 			return data, nil
 		}
@@ -51,7 +51,7 @@ func stringToBoolHookFunc() mapstructure.DecodeHookFunc {
 
 // stringToIntHookFunc is a custom decoding hook that converts string values to int.
 func stringToIntHookFunc() mapstructure.DecodeHookFunc {
-	return func(f reflect.Kind, t reflect.Kind, data interface{}) (interface{}, error) {
+	return func(f reflect.Kind, t reflect.Kind, data any) (any, error) {
 		if f != reflect.String || (t != reflect.Int && t != reflect.Int8 && t != reflect.Int16 && t != reflect.Int32 && t != reflect.Int64) {
 			return data, nil
 		}
@@ -68,7 +68,7 @@ func stringToIntHookFunc() mapstructure.DecodeHookFunc {
 
 // stringToFloatHookFunc is a custom decoding hook that converts string values to float.
 func stringToFloatHookFunc() mapstructure.DecodeHookFunc {
-	return func(f reflect.Kind, t reflect.Kind, data interface{}) (interface{}, error) {
+	return func(f reflect.Kind, t reflect.Kind, data any) (any, error) {
 		if f != reflect.String || (t != reflect.Float32 && t != reflect.Float64) {
 			return data, nil
 		}
