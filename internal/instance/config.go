@@ -653,12 +653,12 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	"nvidia.require.driver": validate.IsAny,
 
 	// gendoc:generate(entity=instance, group=oci, key=oci.entrypoint)
-	// Override the entrypoint of an OCI container.
+	// Override the entry point of an OCI container.
 	// ---
 	//  type: string
 	//  liveupdate: no
 	//  condition: OCI container
-	//  shortdesc: OCI container entrypoint
+	//  shortdesc: OCI container entry point
 	"oci.entrypoint": validate.IsAny,
 
 	// gendoc:generate(entity=instance, group=oci, key=oci.cwd)
