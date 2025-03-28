@@ -745,8 +745,8 @@
 						"oci.entrypoint": {
 							"condition": "OCI container",
 							"liveupdate": "no",
-							"longdesc": "Override the entrypoint of an OCI container.",
-							"shortdesc": "OCI container entrypoint",
+							"longdesc": "Override the entry point of an OCI container.",
+							"shortdesc": "OCI container entry point",
 							"type": "string"
 						}
 					},

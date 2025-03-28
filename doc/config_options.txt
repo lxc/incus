@@ -677,9 +677,9 @@ Override the working directory of an OCI container.
 ```{config:option} oci.entrypoint instance-oci
 :condition: "OCI container"
 :liveupdate: "no"
-:shortdesc: "OCI container entrypoint"
+:shortdesc: "OCI container entry point"
 :type: "string"
-Override the entrypoint of an OCI container.
+Override the entry point of an OCI container.
 ```
 
 ```{config:option} oci.gid instance-oci
