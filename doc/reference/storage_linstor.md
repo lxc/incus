@@ -99,7 +99,7 @@ Key                               | Type      | Condition                       
 `drbd.on_no_quorum`               | string    |                                                   | -                                              | The DRBD policy to use on resources when quorum is lost (applied to the resource definition)
 `drbd.auto_diskful`               | string    |                                                   | -                                              | A duration string describing the time after which a primary diskless resource can be converted to diskful if storage is available on the node (applied to the resource definition)
 `drbd.auto_add_quorum_tiebreaker` | bool      |                                                   | `true`                                         | Whether to allow LINSTOR to automatically create diskless resources to act as quorum tiebreakers if needed (applied to the resource definition)
-`linstor.remove_snapshots`        | bool      |                                                   | same as `volume.zfs.remove_snapshots` or `false` | Remove snapshots as needed
+`linstor.remove_snapshots`        | bool      |                                                   | same as `volume.linstor.remove_snapshots` or `false` | Remove snapshots as needed
 
 [^*]: {{snapshot_pattern_detail}}
 
