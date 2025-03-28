@@ -2316,7 +2316,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		}
 
 		// Allow unprivileged users to use ping.
-		maxGid := int64(4294967295)
+		maxGid := int64(4294967294)
 
 		if !d.IsPrivileged() {
 			maxGid = 0
