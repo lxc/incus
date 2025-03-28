@@ -186,7 +186,7 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		"--insecure-policy",
 		"copy",
 		"--remove-signatures",
-		fmt.Sprintf("%s/%s", strings.Replace(r.httpHost, "https://", "docker://", -1), info.Alias),
+		fmt.Sprintf("%s/%s", strings.ReplaceAll(r.httpHost, "https://", "docker://"), info.Alias),
 		fmt.Sprintf("oci:%s:latest", filepath.Join(ociPath, "oci")))
 	if err != nil {
 		logger.Debug("Error copying remote image to local", logger.Ctx{"image": info.Alias, "stdout": stdout, "stderr": err})
@@ -362,8 +362,7 @@ func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string
 		nil,
 		"skopeo",
 		"inspect",
-		fmt.Sprintf("%s/%s", strings.Replace(r.httpHost, "https://", "docker://", -1), name))
-
+		fmt.Sprintf("%s/%s", strings.ReplaceAll(r.httpHost, "https://", "docker://"), name))
 	if err != nil {
 		logger.Debug("Error getting image alias", logger.Ctx{"name": name, "stdout": stdout, "stderr": err})
 		return nil, "", err
@@ -377,7 +376,7 @@ func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string
 	}
 
 	info.Alias = name
-	info.Digest = strings.Replace(info.Digest, "sha256:", "", -1)
+	info.Digest = strings.ReplaceAll(info.Digest, "sha256:", "")
 
 	archID, err := osarch.ArchitectureId(info.Architecture)
 	if err != nil {
