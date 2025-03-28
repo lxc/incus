@@ -86,7 +86,7 @@ func GetConfig(ctx context.Context, db dbtx, parentTablePrefix string, parentCol
 	// Result slice.
 	objects := make([]Config, 0)
 
-	configObjectsLocal := strings.Replace(configObjects, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix), -1)
+	configObjectsLocal := strings.ReplaceAll(configObjects, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix))
 	fillParent := make([]any, strings.Count(configObjectsLocal, "%s"))
 	for i := range fillParent {
 		fillParent[i] = parentTablePrefix
@@ -154,7 +154,7 @@ func CreateConfig(ctx context.Context, db dbtx, parentTablePrefix string, parent
 		return nil
 	}
 
-	configCreateLocal := strings.Replace(configCreate, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix), -1)
+	configCreateLocal := strings.ReplaceAll(configCreate, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix))
 	fillParent := make([]any, strings.Count(configCreateLocal, "%s"))
 	for i := range fillParent {
 		fillParent[i] = parentTablePrefix
@@ -206,7 +206,7 @@ func DeleteConfig(ctx context.Context, db dbtx, parentTablePrefix string, parent
 		_err = mapErr(_err, "Config")
 	}()
 
-	configDeleteLocal := strings.Replace(configDelete, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix), -1)
+	configDeleteLocal := strings.ReplaceAll(configDelete, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix))
 	fillParent := make([]any, strings.Count(configDeleteLocal, "%s"))
 	for i := range fillParent {
 		fillParent[i] = parentTablePrefix

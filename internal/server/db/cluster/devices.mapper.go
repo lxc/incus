@@ -86,7 +86,7 @@ func GetDevices(ctx context.Context, db tx, parentTablePrefix string, parentColu
 	// Result slice.
 	objects := make([]Device, 0)
 
-	deviceObjectsLocal := strings.Replace(deviceObjects, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix), -1)
+	deviceObjectsLocal := strings.ReplaceAll(deviceObjects, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix))
 	fillParent := make([]any, strings.Count(deviceObjectsLocal, "%s"))
 	for i := range fillParent {
 		fillParent[i] = parentTablePrefix
@@ -175,7 +175,7 @@ func CreateDevices(ctx context.Context, db tx, parentTablePrefix string, parentC
 		_err = mapErr(_err, "Device")
 	}()
 
-	deviceCreateLocal := strings.Replace(deviceCreate, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix), -1)
+	deviceCreateLocal := strings.ReplaceAll(deviceCreate, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix))
 	fillParent := make([]any, strings.Count(deviceCreateLocal, "%s"))
 	for i := range fillParent {
 		fillParent[i] = parentTablePrefix
@@ -245,7 +245,7 @@ func DeleteDevices(ctx context.Context, db tx, parentTablePrefix string, parentC
 		_err = mapErr(_err, "Device")
 	}()
 
-	deviceDeleteLocal := strings.Replace(deviceDelete, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix), -1)
+	deviceDeleteLocal := strings.ReplaceAll(deviceDelete, "%s_id", fmt.Sprintf("%s_id", parentColumnPrefix))
 	fillParent := make([]any, strings.Count(deviceDeleteLocal, "%s"))
 	for i := range fillParent {
 		fillParent[i] = parentTablePrefix
