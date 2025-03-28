@@ -2,6 +2,7 @@ package incus
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -129,7 +130,12 @@ func (r *ProtocolIncus) GetImageSecret(fingerprint string) (string, error) {
 
 	opAPI := op.Get()
 
-	return opAPI.Metadata["secret"].(string), nil
+	secret, ok := opAPI.Metadata["secret"].(string)
+	if !ok {
+		return "", errors.New("Bad secret type")
+	}
+
+	return secret, nil
 }
 
 // GetPrivateImage is similar to GetImage but allows passing a secret download token.
@@ -273,7 +279,7 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 	}
 
 	// Hashing
-	sha256 := sha256.New()
+	hashSHA256 := sha256.New()
 
 	// Deal with split images
 	if ctype == "multipart/form-data" {
@@ -294,7 +300,7 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 			return nil, fmt.Errorf("Invalid multipart image")
 		}
 
-		size, err := io.Copy(io.MultiWriter(req.MetaFile, sha256), part)
+		size, err := io.Copy(io.MultiWriter(req.MetaFile, hashSHA256), part)
 		if err != nil {
 			return nil, err
 		}
@@ -312,7 +318,7 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 			return nil, fmt.Errorf("Invalid multipart image")
 		}
 
-		size, err = io.Copy(io.MultiWriter(req.RootfsFile, sha256), part)
+		size, err = io.Copy(io.MultiWriter(req.RootfsFile, hashSHA256), part)
 		if err != nil {
 			return nil, err
 		}
@@ -321,7 +327,7 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 		resp.RootfsName = part.FileName()
 
 		// Check the hash
-		hash := fmt.Sprintf("%x", sha256.Sum(nil))
+		hash := fmt.Sprintf("%x", hashSHA256.Sum(nil))
 		if imageType != "oci" && !strings.HasPrefix(hash, fingerprint) {
 			return nil, fmt.Errorf("Image fingerprint doesn't match. Got %s expected %s", hash, fingerprint)
 		}
@@ -340,7 +346,7 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 		return nil, fmt.Errorf("No filename in Content-Disposition header")
 	}
 
-	size, err := io.Copy(io.MultiWriter(req.MetaFile, sha256), body)
+	size, err := io.Copy(io.MultiWriter(req.MetaFile, hashSHA256), body)
 	if err != nil {
 		return nil, err
 	}
@@ -349,7 +355,7 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 	resp.MetaName = filename
 
 	// Check the hash
-	hash := fmt.Sprintf("%x", sha256.Sum(nil))
+	hash := fmt.Sprintf("%x", hashSHA256.Sum(nil))
 	if imageType != "oci" && !strings.HasPrefix(hash, fingerprint) {
 		return nil, fmt.Errorf("Image fingerprint doesn't match. Got %s expected %s", hash, fingerprint)
 	}
@@ -653,18 +659,23 @@ func (r *ProtocolIncus) tryCopyImage(req api.ImagesPost, urls []string) (RemoteO
 				return
 			}
 
-			var errors []remoteOperationResult
+			var errs []remoteOperationResult
 
 			// Get the operation data
 			op, err := rop.GetTarget()
 			if err != nil {
-				errors = append(errors, remoteOperationResult{Error: err})
-				rop.err = remoteOperationError("Failed to get operation data", errors)
+				errs = append(errs, remoteOperationResult{Error: err})
+				rop.err = remoteOperationError("Failed to get operation data", errs)
 				return
 			}
 
 			// Extract the fingerprint
-			fingerprint := op.Metadata["fingerprint"].(string)
+			fingerprint, ok := op.Metadata["fingerprint"].(string)
+			if !ok {
+				errs = append(errs, remoteOperationResult{Error: errors.New("Bad fingerprint")})
+				rop.err = remoteOperationError("Failed to get operation data", errs)
+				return
+			}
 
 			// Add the aliases
 			for _, entry := range req.Aliases {
@@ -674,8 +685,8 @@ func (r *ProtocolIncus) tryCopyImage(req api.ImagesPost, urls []string) (RemoteO
 
 				err := r.CreateImageAlias(alias)
 				if err != nil {
-					errors = append(errors, remoteOperationResult{Error: err})
-					rop.err = remoteOperationError("Failed to create image alias", errors)
+					errs = append(errs, remoteOperationResult{Error: err})
+					rop.err = remoteOperationError("Failed to create image alias", errs)
 					return
 				}
 			}
@@ -685,13 +696,13 @@ func (r *ProtocolIncus) tryCopyImage(req api.ImagesPost, urls []string) (RemoteO
 	// Forward targetOp to remote op
 	go func() {
 		success := false
-		var errors []remoteOperationResult
+		var errs []remoteOperationResult
 		for _, serverURL := range urls {
 			req.Source.Server = serverURL
 
 			op, err := r.CreateImage(req, nil)
 			if err != nil {
-				errors = append(errors, remoteOperationResult{URL: serverURL, Error: err})
+				errs = append(errs, remoteOperationResult{URL: serverURL, Error: err})
 				continue
 			}
 
@@ -705,7 +716,7 @@ func (r *ProtocolIncus) tryCopyImage(req api.ImagesPost, urls []string) (RemoteO
 
 			err = rop.targetOp.Wait()
 			if err != nil {
-				errors = append(errors, remoteOperationResult{URL: serverURL, Error: err})
+				errs = append(errs, remoteOperationResult{URL: serverURL, Error: err})
 
 				if localtls.IsConnectionError(err) {
 					continue
@@ -719,7 +730,7 @@ func (r *ProtocolIncus) tryCopyImage(req api.ImagesPost, urls []string) (RemoteO
 		}
 
 		if !success {
-			rop.err = remoteOperationError("Failed remote image download", errors)
+			rop.err = remoteOperationError("Failed remote image download", errs)
 		}
 
 		close(rop.chDone)
