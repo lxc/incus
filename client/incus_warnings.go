@@ -66,7 +66,7 @@ func (r *ProtocolIncus) UpdateWarning(UUID string, warning api.WarningPut, ETag 
 	}
 
 	// Send the request
-	_, _, err := r.query("PUT", fmt.Sprintf("/warnings/%s", url.PathEscape(UUID)), warning, "")
+	_, _, err := r.query("PUT", fmt.Sprintf("/warnings/%s", url.PathEscape(UUID)), warning, ETag)
 	if err != nil {
 		return err
 	}
