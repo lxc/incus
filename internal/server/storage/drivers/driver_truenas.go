@@ -248,7 +248,7 @@ func (d *truenas) Create() error {
 	if !exists {
 		err = d.createDataset(d.config["truenas.dataset"])
 		if err != nil {
-			return fmt.Errorf("Failed to create storgage pool on TrueNAS host: %s", d.config["source"])
+			return fmt.Errorf("Failed to create storage pool on TrueNAS host: %s", d.config["source"])
 		}
 	} else {
 		// Confirm that the existing pool/dataset is all empty.
