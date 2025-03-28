@@ -251,7 +251,7 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	}
 
 	// for  block or fs-img we need to create a dataset
-	if vol.contentType == ContentTypeBlock || isFsImgVol(vol) || (vol.contentType == ContentTypeFS && !needsFsImgVol(vol)) {
+	if vol.contentType == ContentTypeBlock || vol.contentType == ContentTypeISO || isFsImgVol(vol) || (vol.contentType == ContentTypeFS && !needsFsImgVol(vol)) {
 
 		/*
 			for a VMBlock we need to create both a .block with an root.img and a filesystem
@@ -977,7 +977,7 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 	}
 
 	// For VM block files, resize the file if needed.
-	if vol.IsBlockBacked() || vol.IsCustomBlock() || vol.IsVMBlock() {
+	if vol.IsBlockBacked() || vol.IsCustomBlock() || vol.IsVMBlock() || vol.contentType == ContentTypeISO {
 
 		if vol.IsBlockBacked() && vol.MountInUse() {
 			return ErrInUse // We don't allow online resizing of block volumes.
@@ -1288,7 +1288,7 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 	revert := revert.New()
 	defer revert.Fail()
 
-	if vol.contentType == ContentTypeFS || isFsImgVol(vol) || vol.IsVMBlock() || vol.IsCustomBlock() {
+	if vol.contentType == ContentTypeFS || isFsImgVol(vol) || vol.IsVMBlock() || vol.IsCustomBlock() || vol.contentType == ContentTypeISO {
 
 		if vol.IsVMBlock() { // OR fs-img
 			blockifyMountPath(&vol)
@@ -1405,7 +1405,7 @@ func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 		return false, ErrInUse
 	}
 
-	if (vol.contentType == ContentTypeFS || vol.IsVMBlock() || vol.IsCustomBlock() || isFsImgVol(vol)) && linux.IsMountPoint(mountPath) {
+	if (vol.contentType == ContentTypeFS || vol.IsVMBlock() || vol.IsCustomBlock() || vol.ContentType() == ContentTypeISO || isFsImgVol(vol)) && linux.IsMountPoint(mountPath) {
 
 		// Unmount the dataset.
 		err = TryUnmount(mountPath, 0)
@@ -1776,6 +1776,9 @@ func (d *truenas) restoreVolume(vol Volume, snapshotName string, migration bool,
 		err.Snapshots = snapshots
 		return err
 	}
+
+	// TODO: this looks like its manually performing the repeaated rollback. We should be able to ask middle to do this for us, the trick
+	// is just to verify its good to go, whcih I think is the case after the above check. ie --recursive
 
 	// Restore the snapshot.
 	datasets, err := d.getDatasets(d.dataset(vol, false), "snapshot")
