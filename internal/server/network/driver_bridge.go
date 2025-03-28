@@ -951,7 +951,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			}
 
 			if n.config["ipv4.dhcp.routes"] != "" {
-				dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--dhcp-option-force=121,%s", strings.Replace(n.config["ipv4.dhcp.routes"], " ", "", -1)))
+				dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--dhcp-option-force=121,%s", strings.ReplaceAll(n.config["ipv4.dhcp.routes"], " ", "")))
 			}
 
 			expiry := "1h"
@@ -962,7 +962,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			if n.config["ipv4.dhcp.ranges"] != "" {
 				for _, dhcpRange := range strings.Split(n.config["ipv4.dhcp.ranges"], ",") {
 					dhcpRange = strings.TrimSpace(dhcpRange)
-					dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-range", fmt.Sprintf("%s,%s", strings.Replace(dhcpRange, "-", ",", -1), expiry)}...)
+					dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-range", fmt.Sprintf("%s,%s", strings.ReplaceAll(dhcpRange, "-", ","), expiry)}...)
 				}
 			} else {
 				dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-range", fmt.Sprintf("%s,%s,%s", dhcpalloc.GetIP(subnet, 2).String(), dhcpalloc.GetIP(subnet, -2).String(), expiry)}...)
@@ -1104,7 +1104,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 				if n.config["ipv6.dhcp.ranges"] != "" {
 					for _, dhcpRange := range strings.Split(n.config["ipv6.dhcp.ranges"], ",") {
 						dhcpRange = strings.TrimSpace(dhcpRange)
-						dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-range", fmt.Sprintf("%s,%d,%s", strings.Replace(dhcpRange, "-", ",", -1), subnetSize, expiry)}...)
+						dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-range", fmt.Sprintf("%s,%d,%s", strings.ReplaceAll(dhcpRange, "-", ","), subnetSize, expiry)}...)
 					}
 				} else {
 					dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-range", fmt.Sprintf("%s,%s,%d,%s", dhcpalloc.GetIP(subnet, 2), dhcpalloc.GetIP(subnet, -1), subnetSize, expiry)}...)
