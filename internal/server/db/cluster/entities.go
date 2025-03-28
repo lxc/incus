@@ -96,7 +96,7 @@ func URLToEntityType(rawURL string) (int, string, string, []string, error) {
 	}
 
 	// We need to space separate the path because fmt.Sscanf uses this as a delimiter.
-	spaceSeparatedURLPath := strings.Replace(u.Path, "/", " / ", -1)
+	spaceSeparatedURLPath := strings.ReplaceAll(u.Path, "/", " / ")
 	for entityType, entityURI := range EntityURIs {
 		entityPath, _, _ := strings.Cut(entityURI, "?")
 
@@ -105,7 +105,7 @@ func URLToEntityType(rawURL string) (int, string, string, []string, error) {
 			continue
 		}
 
-		spaceSeparatedEntityPath := strings.Replace(entityPath, "/", " / ", -1)
+		spaceSeparatedEntityPath := strings.ReplaceAll(entityPath, "/", " / ")
 
 		// Make an []any for the number of expected path arguments and set each value in the slice to a *string.
 		nPathArgs := strings.Count(spaceSeparatedEntityPath, "%s")
