@@ -146,7 +146,7 @@ func (s *Stmt) objects(buf *file.Buffer) error {
 
 	table += strings.Join(joins, "")
 	sql := fmt.Sprintf(boiler, strings.Join(columns, ", "), table, strings.Join(orderBy, ", "))
-	kind := strings.Replace(s.kind, "-", "_", -1)
+	kind := strings.ReplaceAll(s.kind, "-", "_")
 	stmtName := stmtCodeVar(s.entity, kind)
 	if mapping.Type == ReferenceTable || mapping.Type == MapTable {
 		buf.L("const %s = `%s`", stmtName, sql)
@@ -256,7 +256,7 @@ func (s *Stmt) names(buf *file.Buffer) error {
 	}
 
 	sql := fmt.Sprintf(boiler, column, table, orderBy)
-	kind := strings.Replace(s.kind, "-", "_", -1)
+	kind := strings.ReplaceAll(s.kind, "-", "_")
 	stmtName := stmtCodeVar(s.entity, kind)
 	s.register(buf, stmtName, sql)
 
@@ -449,7 +449,7 @@ func (s *Stmt) rename(buf *file.Buffer) error {
 	}
 
 	sql := fmt.Sprintf(stmts[s.kind], table, strings.Join(updates, " AND "))
-	kind := strings.Replace(s.kind, "-", "_", -1)
+	kind := strings.ReplaceAll(s.kind, "-", "_")
 	stmtName := stmtCodeVar(s.entity, kind)
 	s.register(buf, stmtName, sql)
 	return nil
@@ -480,7 +480,7 @@ func (s *Stmt) update(buf *file.Buffer) error {
 	}
 
 	sql := fmt.Sprintf(stmts[s.kind], table, strings.Join(updates, ", "), "id = ?")
-	kind := strings.Replace(s.kind, "-", "_", -1)
+	kind := strings.ReplaceAll(s.kind, "-", "_")
 	stmtName := stmtCodeVar(s.entity, kind)
 	s.register(buf, stmtName, sql)
 
@@ -524,7 +524,7 @@ func (s *Stmt) delete(buf *file.Buffer) error {
 	}
 
 	sql := fmt.Sprintf(stmts["delete"], table, where)
-	kind := strings.Replace(s.kind, "-", "_", -1)
+	kind := strings.ReplaceAll(s.kind, "-", "_")
 	stmtName := stmtCodeVar(s.entity, kind)
 	if mapping.Type == ReferenceTable || mapping.Type == MapTable {
 		buf.L("const %s = `%s`", stmtName, sql)

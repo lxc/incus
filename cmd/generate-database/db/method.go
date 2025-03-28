@@ -295,7 +295,7 @@ func (m *Method) getMany(buf *file.Buffer) error {
 	if mapping.Type == ReferenceTable || mapping.Type == MapTable {
 		stmtVar := stmtCodeVar(m.entity, "objects")
 		stmtLocal := stmtVar + "Local"
-		buf.L("%s := strings.Replace(%s, \"%%s_id\", fmt.Sprintf(\"%%s_id\", parentColumnPrefix), -1)", stmtLocal, stmtVar)
+		buf.L("%s := strings.ReplaceAll(%s, \"%%s_id\", fmt.Sprintf(\"%%s_id\", parentColumnPrefix))", stmtLocal, stmtVar)
 		buf.L("fillParent := make([]any, strings.Count(%s, \"%%s\"))", stmtLocal)
 		buf.L("for i := range fillParent {")
 		buf.L("fillParent[i] = parentTablePrefix")
@@ -555,7 +555,7 @@ func (m *Method) getMany(buf *file.Buffer) error {
 
 	switch mapping.Type {
 	case AssociationTable:
-		ref := strings.Replace(mapping.Name, m.config["struct"], "", -1)
+		ref := strings.ReplaceAll(mapping.Name, m.config["struct"], "")
 		refMapping, err := Parse(m.localPath, m.pkgs, ref, "")
 		if err != nil {
 			return fmt.Errorf("Could not find definition for reference struct %q: %w", ref, err)
@@ -841,7 +841,7 @@ func (m *Method) create(buf *file.Buffer, replace bool) error {
 	if mapping.Type == ReferenceTable || mapping.Type == MapTable {
 		stmtVar := stmtCodeVar(m.entity, "create")
 		stmtLocal := stmtVar + "Local"
-		buf.L("%s := strings.Replace(%s, \"%%s_id\", fmt.Sprintf(\"%%s_id\", parentColumnPrefix), -1)", stmtLocal, stmtVar)
+		buf.L("%s := strings.ReplaceAll(%s, \"%%s_id\", fmt.Sprintf(\"%%s_id\", parentColumnPrefix))", stmtLocal, stmtVar)
 		buf.L("fillParent := make([]any, strings.Count(%s, \"%%s\"))", stmtLocal)
 		buf.L("for i := range fillParent {")
 		buf.L("fillParent[i] = parentTablePrefix")
@@ -1137,7 +1137,7 @@ func (m *Method) update(buf *file.Buffer) error {
 
 	switch mapping.Type {
 	case AssociationTable:
-		ref := strings.Replace(mapping.Name, m.config["struct"], "", -1)
+		ref := strings.ReplaceAll(mapping.Name, m.config["struct"], "")
 		refMapping, err := Parse(m.localPath, m.pkgs, ref, "")
 		if err != nil {
 			return fmt.Errorf("Parse entity struct: %w", err)
@@ -1305,7 +1305,7 @@ func (m *Method) delete(buf *file.Buffer, deleteOne bool) error {
 	} else if mapping.Type == ReferenceTable || mapping.Type == MapTable {
 		stmtVar := stmtCodeVar(m.entity, "delete")
 		stmtLocal := stmtVar + "Local"
-		buf.L("%s := strings.Replace(%s, \"%%s_id\", fmt.Sprintf(\"%%s_id\", parentColumnPrefix), -1)", stmtLocal, stmtVar)
+		buf.L("%s := strings.ReplaceAll(%s, \"%%s_id\", fmt.Sprintf(\"%%s_id\", parentColumnPrefix))", stmtLocal, stmtVar)
 		buf.L("fillParent := make([]any, strings.Count(%s, \"%%s\"))", stmtLocal)
 		buf.L("for i := range fillParent {")
 		buf.L("fillParent[i] = parentTablePrefix")
@@ -1368,7 +1368,7 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 
 	switch mapping.Type {
 	case AssociationTable:
-		ref := strings.Replace(mapping.Name, m.config["struct"], "", -1)
+		ref := strings.ReplaceAll(mapping.Name, m.config["struct"], "")
 		refMapping, err := Parse(m.localPath, m.pkgs, ref, "")
 		if err != nil {
 			return fmt.Errorf("Failed to parse struct %q", ref)
@@ -1599,7 +1599,7 @@ func (m *Method) begin(buf *file.Buffer, mapping *Mapping, comment string, args 
 
 	if mapping.Type == AssociationTable {
 		parent := m.config["struct"]
-		ref := strings.Replace(entity, parent, "", -1)
+		ref := strings.ReplaceAll(entity, parent, "")
 		switch operation(m.kind) {
 		case "GetMany":
 			name = fmt.Sprintf("Get%s%s", parent, lex.Plural(ref))
@@ -1698,7 +1698,7 @@ func (m *Method) sqlTxCheck(mapping *Mapping, args string) (string, error) {
 	}
 
 	if txCheck {
-		args = strings.Replace(args, "dbtx", "tx", -1)
+		args = strings.ReplaceAll(args, "dbtx", "tx")
 	}
 
 	return args, nil
