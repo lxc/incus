@@ -16,7 +16,7 @@ You can try Incus online at: [`https://linuxcontainers.org/incus/try-it/`](https
 
 ## Project history
 Incus, which is named after the [Cumulonimbus incus](https://en.wikipedia.org/wiki/Cumulonimbus_incus) or anvil cloud
-started as community fork of Canonical's LXD following [Canonical's takeover](https://linuxcontainers.org/lxd/) of the LXD project from the
+started as a community fork of Canonical's LXD following [Canonical's takeover](https://linuxcontainers.org/lxd/) of the LXD project from the
 Linux Containers community.
 
 The project was then adopted by the Linux Containers community, taking back the spot left empty by LXD's departure.
