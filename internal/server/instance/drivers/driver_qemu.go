@@ -1228,7 +1228,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	defer revert.Fail()
 
 	// Rotate the log files.
-	for _, logfile := range []string{d.LogFilePath(), d.common.ConsoleBufferLogPath(), d.QMPLogFilePath()} {
+	for _, logfile := range []string{d.LogFilePath(), d.ConsoleBufferLogPath(), d.QMPLogFilePath()} {
 		if util.PathExists(logfile) {
 			_ = os.Remove(logfile + ".old")
 			err := os.Rename(logfile, logfile+".old")
@@ -9464,7 +9464,7 @@ func (d *qemu) ConsoleLog() (string, error) {
 
 	// If we got data back, append it to the log file for this instance.
 	if logString != "" {
-		logFile, err := os.OpenFile(d.common.ConsoleBufferLogPath(), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
+		logFile, err := os.OpenFile(d.ConsoleBufferLogPath(), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
 		if err != nil {
 			return "", err
 		}
@@ -9478,7 +9478,7 @@ func (d *qemu) ConsoleLog() (string, error) {
 	}
 
 	// Read and return the complete log for this instance.
-	fullLog, err := os.ReadFile(d.common.ConsoleBufferLogPath())
+	fullLog, err := os.ReadFile(d.ConsoleBufferLogPath())
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			// If there's no log file yet, such as right at VM creation, return an empty string.
