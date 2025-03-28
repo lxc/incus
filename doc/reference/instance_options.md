@@ -14,6 +14,7 @@ The following options are available:
 - {ref}`instance-options-limits`
 - {ref}`instance-options-migration`
 - {ref}`instance-options-nvidia`
+- {ref}`instance-options-oci`
 - {ref}`instance-options-raw`
 - {ref}`instance-options-security`
 - {ref}`instance-options-snapshots`
@@ -220,6 +221,17 @@ The following instance options specify the NVIDIA and CUDA configuration of the 
 ```{include} ../config_options.txt
     :start-after: <!-- config group instance-nvidia start -->
     :end-before: <!-- config group instance-nvidia end -->
+```
+
+(instance-options-oci)=
+## OCI configuration
+
+The following instance options specify the OCI configuration of the instance:
+
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group instance-oci start -->
+    :end-before: <!-- config group instance-oci end -->
 ```
 
 (instance-options-raw)=
