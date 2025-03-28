@@ -180,68 +180,52 @@ func (c *cmdList) shouldShow(filters []string, inst *api.Instance, state *api.In
 	c.mapShorthandFilters()
 
 	for _, filter := range filters {
-		if strings.Contains(filter, "=") {
-			membs := strings.SplitN(filter, "=", 2)
+		membs := strings.SplitN(filter, "=", 2)
 
-			key := membs[0]
-			var value string
-			if len(membs) < 2 {
-				value = ""
-			} else {
-				value = membs[1]
-			}
+		key := membs[0]
+		var value string
+		if len(membs) < 2 {
+			value = ""
+		} else {
+			value = membs[1]
+		}
 
-			if initial || c.evaluateShorthandFilter(key, value, inst, state) {
-				continue
-			}
+		if initial || c.evaluateShorthandFilter(key, value, inst, state) {
+			continue
+		}
 
-			found := false
-			for configKey, configValue := range inst.ExpandedConfig {
-				if c.dotPrefixMatch(key, configKey) {
-					// Try to test filter value as a regexp.
-					regexpValue := value
-					if !(strings.Contains(value, "^") || strings.Contains(value, "$")) {
-						regexpValue = "^" + regexpValue + "$"
-					}
+		found := false
+		for configKey, configValue := range inst.ExpandedConfig {
+			if c.dotPrefixMatch(key, configKey) {
+				// Try to test filter value as a regexp.
+				regexpValue := value
+				if !strings.Contains(value, "^") && !strings.Contains(value, "$") {
+					regexpValue = "^" + regexpValue + "$"
+				}
 
-					r, err := regexp.Compile(regexpValue)
-					// If not regexp compatible use original value.
-					if err != nil {
-						if value == configValue {
-							found = true
-							break
-						} else {
-							// The property was found but didn't match.
-							return false
-						}
-					} else if r.MatchString(configValue) {
+				r, err := regexp.Compile(regexpValue)
+				// If not regexp compatible use original value.
+				if err != nil {
+					if value == configValue {
 						found = true
 						break
 					}
+
+					// The property was found but didn't match.
+					return false
+				} else if r.MatchString(configValue) {
+					found = true
+					break
 				}
 			}
+		}
 
-			if inst.ExpandedConfig[key] == value {
-				continue
-			}
+		if inst.ExpandedConfig[key] == value {
+			continue
+		}
 
-			if !found {
-				return false
-			}
-		} else {
-			regexpValue := filter
-			if !(strings.Contains(filter, "^") || strings.Contains(filter, "$")) {
-				regexpValue = "^" + regexpValue + "$"
-			}
-
-			r, err := regexp.Compile(regexpValue)
-			if err == nil && r.MatchString(inst.Name) {
-				continue
-			}
-
-			if !strings.HasPrefix(inst.Name, filter) {
-				return false
-			}
+		if !found {
+			return false
 		}
 	}
 
@@ -493,6 +477,7 @@ func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
 		} else if !strings.Contains(args[0], "=") {
 			remote = conf.DefaultRemote
 			name = args[0]
+			filters = args[1:]
 		}
 	}
 
@@ -524,11 +509,21 @@ func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	singleValueFilterModifier := func(value string) string {
+		regexpValue := value
+		if !strings.Contains(value, "^") && !strings.Contains(value, "$") {
+			regexpValue = "^" + regexpValue + "$"
+		}
+
+		return fmt.Sprintf("name=(%s|^%s.*)", regexpValue, value)
+	}
+
 	if needsData && d.HasExtension("container_full") {
 		// Using the GetInstancesFull shortcut
 		var instances []api.InstanceFull
 
-		serverFilters, clientFilters := getServerSupportedFilters(filters, api.InstanceFull{})
+		serverFilters, clientFilters := getServerSupportedFilters(filters, api.InstanceFull{}, true)
+		modifySingleValueFilters(serverFilters, singleValueFilterModifier)
 
 		if c.flagAllProjects {
 			instances, err = d.GetInstancesFullAllProjectsWithFilter(api.InstanceTypeAny, serverFilters)
@@ -545,7 +540,8 @@ func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
 
 	// Get the list of instances
 	var instances []api.Instance
-	serverFilters, clientFilters := getServerSupportedFilters(filters, api.Instance{})
+	serverFilters, clientFilters := getServerSupportedFilters(filters, api.Instance{}, true)
+	modifySingleValueFilters(serverFilters, singleValueFilterModifier)
 
 	if c.flagAllProjects {
 		instances, err = d.GetInstancesAllProjectsWithFilter(api.InstanceTypeAny, serverFilters)
