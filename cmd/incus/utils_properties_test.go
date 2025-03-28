@@ -35,7 +35,7 @@ func (s *utilsPropertiesTestSuite) TestStringToTimeHookFuncInvalidData() {
 
 func (s *utilsPropertiesTestSuite) TestStringToBoolHookFuncValidData() {
 	hookFunc := stringToBoolHookFunc()
-	hook := hookFunc.(func(reflect.Kind, reflect.Kind, interface{}) (interface{}, error))
+	hook := hookFunc.(func(reflect.Kind, reflect.Kind, any) (any, error))
 
 	result, err := hook(reflect.String, reflect.Bool, "t")
 	s.NoError(err)
