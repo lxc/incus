@@ -109,16 +109,18 @@ test_storage_local_volume_handling() {
     incus storage volume delete "${pool}" vol1copy
 
     # Copy volume with snapshots in different pool
-    incus storage volume copy "${pool}/vol1" "${pool}1/vol1"
+    if [ "$driver" != "truenas" ]; then # truenas has not implemented MountVolumeSnapshot yet
+      incus storage volume copy "${pool}/vol1" "${pool}1/vol1"
 
-    # Ensure the target snapshots are there
-    incus storage volume snapshot show "${pool}1" vol1/snap0
-    incus storage volume snapshot show "${pool}1" vol1/snap1
+      # Ensure the target snapshots are there
+      incus storage volume snapshot show "${pool}1" vol1/snap0
+      incus storage volume snapshot show "${pool}1" vol1/snap1
 
-    # Check snapshot volume config was copied
-    incus storage volume get "${pool}1" vol1 user.foo | grep -Fx "postsnap1"
-    incus storage volume get "${pool}1" vol1/snap0 user.foo | grep -Fx "snap0"
-    incus storage volume get "${pool}1" vol1/snap1 user.foo | grep -Fx "snap1"
+      # Check snapshot volume config was copied
+      incus storage volume get "${pool}1" vol1 user.foo | grep -Fx "postsnap1"
+      incus storage volume get "${pool}1" vol1/snap0 user.foo | grep -Fx "snap0"
+      incus storage volume get "${pool}1" vol1/snap1 user.foo | grep -Fx "snap1"
+    fi
 
     # Copy volume only
     incus storage volume copy --volume-only "${pool}/vol1" "${pool}1/vol2"
@@ -130,32 +132,36 @@ test_storage_local_volume_handling() {
     # Check snapshot volume config was copied
     incus storage volume get "${pool}1" vol2 user.foo | grep -Fx "postsnap1"
 
-    # Copy snapshot to volume
-    incus storage volume copy "${pool}/vol1/snap0" "${pool}1/vol3"
+    if [ "$driver" != "truenas" ]; then # truenas has not implemented MountVolumeSnapshot yet
+      # Copy snapshot to volume
+      incus storage volume copy "${pool}/vol1/snap0" "${pool}1/vol3"
 
-    # Check snapshot volume config was copied from snapshot
-    incus storage volume show "${pool}1" vol3
-    incus storage volume get "${pool}1" vol3 user.foo | grep -Fx "snap0"
+      # Check snapshot volume config was copied from snapshot
+      incus storage volume show "${pool}1" vol3
+      incus storage volume get "${pool}1" vol3 user.foo | grep -Fx "snap0"
 
-    # Rename custom volume using `incus storage volume move`
-    incus storage volume move "${pool}1/vol1" "${pool}1/vol4"
-    incus storage volume move "${pool}1/vol4" "${pool}1/vol1"
+      # Rename custom volume using `incus storage volume move`
+      incus storage volume move "${pool}1/vol1" "${pool}1/vol4"
+      incus storage volume move "${pool}1/vol4" "${pool}1/vol1"
 
-    # Move volume between projects
-    incus project create "${project}"
-    incus storage volume move "${pool}1/vol1" "${pool}1/vol1" --project default --target-project "${project}"
-    incus storage volume show "${pool}1" vol1 --project "${project}"
-    incus storage volume move "${pool}1/vol1" "${pool}1/vol1" --project "${project}" --target-project default
-    incus storage volume show "${pool}1" vol1 --project default
-
-    incus project delete "${project}"
-    incus storage volume delete "${pool}1" vol1
+      # Move volume between projects
+      incus project create "${project}"
+      incus storage volume move "${pool}1/vol1" "${pool}1/vol1" --project default --target-project "${project}"
+      incus storage volume show "${pool}1" vol1 --project "${project}"
+      incus storage volume move "${pool}1/vol1" "${pool}1/vol1" --project "${project}" --target-project default
+      incus storage volume show "${pool}1" vol1 --project default
+   
+      incus project delete "${project}"
+      incus storage volume delete "${pool}1" vol1
+    fi
     incus storage volume delete "${pool}1" vol2
-    incus storage volume delete "${pool}1" vol3
-    incus storage volume move "${pool}/vol1" "${pool}1/vol1"
-    ! incus storage volume show "${pool}" vol1 || false
-    incus storage volume show "${pool}1" vol1
-    incus storage volume delete "${pool}1" vol1
+    if [ "$driver" != "truenas" ]; then # truenas has not implemented MountVolumeSnapshot yet
+      incus storage volume delete "${pool}1" vol3
+      incus storage volume move "${pool}/vol1" "${pool}1/vol1"
+      ! incus storage volume show "${pool}" vol1 || false
+      incus storage volume show "${pool}1" vol1
+      incus storage volume delete "${pool}1" vol1
+    fi
     incus storage delete "${pool}1"
 
     for source_driver in "btrfs" "ceph" "cephfs" "dir" "lvm" "zfs" "linstor"; do
