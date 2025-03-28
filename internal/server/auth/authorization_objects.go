@@ -351,10 +351,10 @@ func ObjectStorageVolume(projectName string, poolName string, volumeType string,
 
 // escape escapes only the forward slash character as this is used as a delimiter. Everything else is allowed.
 func escape(s string) string {
-	return strings.Replace(s, "/", "%2F", -1)
+	return strings.ReplaceAll(s, "/", "%2F")
 }
 
 // unescape replaces only the escaped forward slashes.
 func unescape(s string) string {
-	return strings.Replace(s, "%2F", "/", -1)
+	return strings.ReplaceAll(s, "%2F", "/")
 }
