@@ -300,7 +300,9 @@ func TestColumns(t *testing.T) {
 
 func removeDuplicatesFromString(s string, sep string) string {
 	dup := sep + sep
-	for s = strings.Replace(s, dup, sep, -1); strings.Contains(s, dup); s = strings.Replace(s, dup, sep, -1) {
+
+	for strings.Contains(s, dup) {
+		s = strings.ReplaceAll(s, dup, sep)
 	}
 
 	return s
