@@ -666,7 +666,7 @@ func (d *lvm) ListVolumes() ([]Volume, error) {
 
 		// Unescape raw LVM name to storage volume name. Safe to do now we know we are not dealing
 		// with snapshot volumes.
-		volName = strings.Replace(volName, lvmEscapedHyphen, "-", -1)
+		volName = strings.ReplaceAll(volName, lvmEscapedHyphen, "-")
 
 		contentType := ContentTypeFS
 		if volType == VolumeTypeCustom && strings.HasSuffix(volName, lvmISOVolSuffix) {
