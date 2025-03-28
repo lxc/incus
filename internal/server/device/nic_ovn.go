@@ -808,6 +808,12 @@ func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 			}
 		}
 
+		// Setup address sets for new ACLs
+		_, err := addressset.OVNEnsureAddressSetsViaACLs(d.state, d.logger, d.ovnnb, d.network.Project(), newACLs)
+		if err != nil {
+			return fmt.Errorf("Failed removing unused OVN address sets: %w", err)
+		}
+
 		// Setup the logical port with new ACLs if running.
 		if isRunning {
 			// Load uplink network config.

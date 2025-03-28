@@ -1490,15 +1490,9 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	// Setup named sets for nft firewall.
 	// We apply all available address sets to avoid missing some.
 	if fwOpts.AddressSet {
-		asNet := addressset.AddressSetUsage{
-			Name:   n.Name(),
-			Type:   n.Type(),
-			ID:     int(n.ID()),
-			Config: n.Config(),
-		}
-
 		n.logger.Debug("Applying up firewall address sets")
-		err = addressset.FirewallApplyAddressSets(n.state, n.Project(), asNet)
+		aclNames := util.SplitNTrimSpace(n.config["security.acls"], ",", -1, false)
+		err = addressset.FirewallApplyAddressSetsForACLRules(n.state, "inet", n.Project(), aclNames)
 		if err != nil {
 			return err
 		}

@@ -2843,7 +2843,14 @@ func (n *ovn) setup(update bool) error {
 			n.Name(): {Name: n.Name(), Type: n.Type(), ID: n.ID(), Config: n.Config()},
 		}
 
-		cleanup, err := acl.OVNEnsureACLs(n.state, n.logger, n.ovnnb, n.Project(), aclNameIDs, aclNets, securityACLS, false)
+		cleanup, err := addressset.OVNEnsureAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), securityACLS)
+		if err != nil {
+			return fmt.Errorf("Failed ensuring address sets for added ACLs are configured in OVN for network: %w", err)
+		}
+
+		revert.Add(cleanup)
+
+		cleanup, err = acl.OVNEnsureACLs(n.state, n.logger, n.ovnnb, n.Project(), aclNameIDs, aclNets, securityACLS, false)
 		if err != nil {
 			return fmt.Errorf("Failed ensuring security ACLs are configured in OVN for network: %w", err)
 		}
@@ -3752,6 +3759,12 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 	err = n.loadBalancerBGPSetupPrefixes()
 	if err != nil {
 		return fmt.Errorf("Failed applying BGP prefixes for load balancers: %w", err)
+	}
+
+	// Delete any address set that is unused
+	err = addressset.OVNAddressSetsDeleteIfUnused(n.state, n.logger, n.ovnnb, n.Project())
+	if err != nil {
+		return fmt.Errorf("Failed removing unused OVN address sets: %w", err)
 	}
 
 	revert.Success()

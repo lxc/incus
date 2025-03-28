@@ -17,6 +17,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/cluster/request"
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
+	addressset "github.com/lxc/incus/v6/internal/server/network/address-set"
 	"github.com/lxc/incus/v6/internal/server/state"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	"github.com/lxc/incus/v6/internal/version"
@@ -666,6 +667,11 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 
 	// Apply ACL changes to non-OVN networks on this member.
 	for _, aclNet := range aclNets {
+		err = addressset.FirewallApplyAddressSetsForACLRules(d.state, "inet", d.projectName, []string{d.info.Name})
+		if err != nil {
+			return err
+		}
+
 		err = FirewallApplyACLRules(d.state, d.logger, d.projectName, aclNet)
 		if err != nil {
 			return err
@@ -674,6 +680,11 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 
 	// If there are affected bridge NICs, apply the ACL changes to the bridge interface filter.
 	if len(aclBridgeNICs) > 0 {
+		err = addressset.FirewallApplyAddressSetsForACLRules(d.state, "bridge", d.projectName, []string{d.info.Name})
+		if err != nil {
+			return err
+		}
+
 		err := BridgeUpdateACLs(d.state, d.logger, d.projectName, aclBridgeNICs)
 		if err != nil {
 			return fmt.Errorf("Failed updating bridge NIC ACL: %w", err)
@@ -710,6 +721,13 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 		cleanup, err := OVNEnsureACLs(d.state, d.logger, ovnnb, d.projectName, aclNameIDs, aclOVNNets, []string{d.info.Name}, true)
 		if err != nil {
 			return fmt.Errorf("Failed ensuring ACL is configured in OVN: %w", err)
+		}
+
+		revert.Add(cleanup)
+
+		cleanup, err = addressset.OVNEnsureAddressSetsViaACLs(d.state, d.logger, ovnnb, d.projectName, []string{d.info.Name})
+		if err != nil {
+			return fmt.Errorf("Failed ensuring Address sets is configured for ACL %s in OVN: %w", d.info.Name, err)
 		}
 
 		revert.Add(cleanup)

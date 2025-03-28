@@ -7,7 +7,9 @@ import (
 
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
-	"github.com/lxc/incus/v6/internal/server/network/acl"
+	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
+	"github.com/lxc/incus/v6/internal/server/project"
+	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/internal/server/state"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/util"
@@ -207,6 +209,16 @@ func subjectListReferences(subjects string, addressSetName string) bool {
 	return false
 }
 
+// NetworkACLUsage info about a network and what ACL it uses.
+type NetworkACLUsage struct {
+	ID           int64
+	Name         string
+	Type         string
+	Config       map[string]string
+	InstanceName string
+	DeviceName   string
+}
+
 // AddressSetUsage holds info about a network using the address set.
 type AddressSetUsage struct {
 	ID         int
@@ -231,8 +243,8 @@ func AddressSetNetworkUsage(s *state.State, projectName string, addressSetName s
 	}
 
 	// Now get network usage from those ACLs. Reuse ACL's NetworkUsage function.
-	aclNets := map[string]acl.NetworkACLUsage{}
-	err = acl.NetworkUsage(s, projectName, aclNames, aclNets)
+	aclNets := map[string]NetworkACLUsage{}
+	err = ACLNetworkUsage(s, projectName, aclNames, aclNets)
 	if err != nil {
 		return err
 	}
@@ -290,4 +302,302 @@ func GetAddressSetsForACLs(s *state.State, projectName string, ACLNames []string
 	}
 
 	return setsNames, nil
+}
+
+// Redefine ACL usage funcs because we run into circular import otherwise
+
+// ACLisInUseByDevice returns any of the supplied matching ACL names found referenced by the NIC device.
+func ACLisInUseByDevice(d deviceConfig.Device, matchACLNames ...string) []string {
+	matchedACLNames := []string{}
+
+	// Only NICs linked to managed networks can use network ACLs.
+	if d["type"] != "nic" || d["network"] == "" {
+		return matchedACLNames
+	}
+
+	for _, nicACLName := range util.SplitNTrimSpace(d["security.acls"], ",", -1, true) {
+		if slices.Contains(matchACLNames, nicACLName) {
+			matchedACLNames = append(matchedACLNames, nicACLName)
+		}
+	}
+
+	return matchedACLNames
+}
+
+// ACLUsedBy finds all networks, profiles and instance NICs that use any of the specified ACLs and executes usageFunc
+// once for each resource using one or more of the ACLs with info about the resource and matched ACLs being used.
+func ACLUsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Context, tx *db.ClusterTx, matchedACLNames []string, usageType any, nicName string, nicConfig map[string]string) error, matchACLNames ...string) error {
+	if len(matchACLNames) <= 0 {
+		return nil
+	}
+
+	var profiles []dbCluster.Profile
+	profileDevices := map[string]map[string]dbCluster.Device{}
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Find networks using the ACLs. Cheapest to do.
+		networkNames, err := tx.GetCreatedNetworkNamesByProject(ctx, aclProjectName)
+		if err != nil && !response.IsNotFoundError(err) {
+			return fmt.Errorf("Failed loading networks for project %q: %w", aclProjectName, err)
+		}
+
+		for _, networkName := range networkNames {
+			_, network, _, err := tx.GetNetworkInAnyState(ctx, aclProjectName, networkName)
+			if err != nil {
+				return fmt.Errorf("Failed to get network config for %q: %w", networkName, err)
+			}
+
+			netACLNames := util.SplitNTrimSpace(network.Config["security.acls"], ",", -1, true)
+			matchedACLNames := []string{}
+			for _, netACLName := range netACLNames {
+				if slices.Contains(matchACLNames, netACLName) {
+					matchedACLNames = append(matchedACLNames, netACLName)
+				}
+			}
+
+			if len(matchedACLNames) > 0 {
+				// Call usageFunc with a list of matched ACLs and info about the network.
+				err := usageFunc(ctx, tx, matchedACLNames, network, "", nil)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		// Look for profiles. Next cheapest to do.
+		profiles, err = dbCluster.GetProfiles(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		// Get all the profile devices.
+		profileDevicesByID, err := dbCluster.GetAllProfileDevices(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		for _, profile := range profiles {
+			devices := map[string]dbCluster.Device{}
+			for _, dev := range profileDevicesByID[profile.ID] {
+				devices[dev.Name] = dev
+			}
+
+			profileDevices[profile.Name] = devices
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, profile := range profiles {
+		// Get the profiles's effective network project name.
+		profileNetworkProjectName, _, err := project.NetworkProject(s.DB.Cluster, profile.Project)
+		if err != nil {
+			return err
+		}
+
+		// Skip profiles who's effective network project doesn't match this Network ACL's project.
+		if profileNetworkProjectName != aclProjectName {
+			continue
+		}
+
+		// Iterate through each of the instance's devices, looking for NICs that are using any of the ACLs.
+		for devName, devConfig := range deviceConfig.NewDevices(dbCluster.DevicesToAPI(profileDevices[profile.Name])) {
+			matchedACLNames := ACLisInUseByDevice(devConfig, matchACLNames...)
+			if len(matchedACLNames) > 0 {
+				// Call usageFunc with a list of matched ACLs and info about the instance NIC.
+				err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+					return usageFunc(ctx, tx, matchedACLNames, profile, devName, devConfig)
+				})
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	var aclNames []string
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Find ACLs that have rules that reference the ACLs.
+		aclNames, err = tx.GetNetworkACLs(ctx, aclProjectName)
+
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		for _, aclName := range aclNames {
+			_, aclInfo, err := tx.GetNetworkACL(ctx, aclProjectName, aclName)
+			if err != nil {
+				return err
+			}
+
+			matchedACLNames := []string{}
+
+			// Ingress rules can specify ACL names in their Source subjects.
+			for _, rule := range aclInfo.Ingress {
+				for _, subject := range util.SplitNTrimSpace(rule.Source, ",", -1, true) {
+					// Look for new matching ACLs, but ignore our own ACL reference in our own rules.
+					if slices.Contains(matchACLNames, subject) && !slices.Contains(matchedACLNames, subject) && subject != aclInfo.Name {
+						matchedACLNames = append(matchedACLNames, subject)
+					}
+				}
+			}
+
+			// Egress rules can specify ACL names in their Destination subjects.
+			for _, rule := range aclInfo.Egress {
+				for _, subject := range util.SplitNTrimSpace(rule.Destination, ",", -1, true) {
+					// Look for new matching ACLs, but ignore our own ACL reference in our own rules.
+					if slices.Contains(matchACLNames, subject) && !slices.Contains(matchedACLNames, subject) && subject != aclInfo.Name {
+						matchedACLNames = append(matchedACLNames, subject)
+					}
+				}
+			}
+
+			if len(matchedACLNames) > 0 {
+				// Call usageFunc with a list of matched ACLs and info about the ACL.
+				err = usageFunc(ctx, tx, matchedACLNames, aclInfo, "", nil)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		// Find instances using the ACLs. Most expensive to do.
+		err = tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
+			// Get the instance's effective network project name.
+			instNetworkProject := project.NetworkProjectFromRecord(&p)
+
+			// Skip instances who's effective network project doesn't match this Network ACL's project.
+			if instNetworkProject != aclProjectName {
+				return nil
+			}
+
+			devices := db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles)
+
+			// Iterate through each of the instance's devices, looking for NICs that are using any of the ACLs.
+			for devName, devConfig := range devices {
+				matchedACLNames := ACLisInUseByDevice(devConfig, matchACLNames...)
+				if len(matchedACLNames) > 0 {
+					// Call usageFunc with a list of matched ACLs and info about the instance NIC.
+					err := usageFunc(ctx, tx, matchedACLNames, inst, devName, devConfig)
+					if err != nil {
+						return err
+					}
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ACLNetworkUsage populates the provided aclNets map with networks that are using any of the specified ACLs.
+func ACLNetworkUsage(s *state.State, aclProjectName string, aclNames []string, aclNets map[string]NetworkACLUsage) error {
+	supportedNetTypes := []string{"bridge", "ovn"}
+
+	// Find all networks and instance/profile NICs that use any of the specified Network ACLs.
+	err := ACLUsedBy(s, aclProjectName, func(ctx context.Context, tx *db.ClusterTx, matchedACLNames []string, usageType any, devName string, nicConfig map[string]string) error {
+		switch u := usageType.(type) {
+		case dbCluster.Profile:
+			networkID, network, _, err := tx.GetNetworkInAnyState(ctx, aclProjectName, nicConfig["network"])
+			if err != nil {
+				return fmt.Errorf("Failed to load network %q: %w", nicConfig["network"], err)
+			}
+
+			if slices.Contains(supportedNetTypes, network.Type) {
+				_, found := aclNets[network.Name]
+				if !found {
+					aclNets[network.Name] = NetworkACLUsage{
+						ID:     networkID,
+						Name:   network.Name,
+						Type:   network.Type,
+						Config: network.Config,
+					}
+				}
+			}
+
+		case db.InstanceArgs:
+			networkID, network, _, err := tx.GetNetworkInAnyState(ctx, aclProjectName, nicConfig["network"])
+			if err != nil {
+				return fmt.Errorf("Failed to load network %q: %w", nicConfig["network"], err)
+			}
+
+			if slices.Contains(supportedNetTypes, network.Type) {
+				if network.Type == "bridge" && devName != "" {
+					// Use different key for the usage by bridge NICs to avoid overwriting the usage by the bridge network itself.
+					key := fmt.Sprintf("%s/%s/%s", network.Name, u.Name, devName)
+
+					_, found := aclNets[key]
+
+					if !found {
+						aclNets[key] = NetworkACLUsage{
+							ID:           networkID,
+							Name:         network.Name,
+							Type:         network.Type,
+							Config:       network.Config,
+							InstanceName: u.Name,
+							DeviceName:   devName,
+						}
+					}
+				} else {
+					_, found := aclNets[network.Name]
+
+					if !found {
+						aclNets[network.Name] = NetworkACLUsage{
+							ID:     networkID,
+							Name:   network.Name,
+							Type:   network.Type,
+							Config: network.Config,
+						}
+					}
+				}
+			}
+
+		case *api.Network:
+			if slices.Contains(supportedNetTypes, u.Type) {
+				_, found := aclNets[u.Name]
+				if !found {
+					networkID, network, _, err := tx.GetNetworkInAnyState(ctx, aclProjectName, u.Name)
+					if err != nil {
+						return fmt.Errorf("Failed to load network %q: %w", u.Name, err)
+					}
+
+					aclNets[u.Name] = NetworkACLUsage{
+						ID:     networkID,
+						Name:   network.Name,
+						Type:   network.Type,
+						Config: network.Config,
+					}
+				}
+			}
+
+		case *api.NetworkACL:
+			return nil // Nothing to do for ACL rules referencing us.
+		default:
+			return fmt.Errorf("Unrecognised usage type %T", u)
+		}
+
+		return nil
+	}, aclNames...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
