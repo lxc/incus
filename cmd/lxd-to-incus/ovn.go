@@ -20,14 +20,14 @@ func ovsConvert() ([][]string, error) {
 		return nil, nil
 	}
 
-	oldValue := strings.TrimSpace(strings.Replace(output, "\"", "", -1))
+	oldValue := strings.TrimSpace(strings.ReplaceAll(output, "\"", ""))
 	oldBridges := []string{}
 
 	values := strings.Split(oldValue, ",")
 	for i, value := range values {
 		fields := strings.Split(value, ":")
 		oldBridges = append(oldBridges, fields[1])
-		fields[1] = strings.Replace(fields[1], "lxdovn", "incusovn", -1)
+		fields[1] = strings.ReplaceAll(fields[1], "lxdovn", "incusovn")
 		values[i] = strings.Join(fields, ":")
 	}
 
@@ -219,14 +219,14 @@ func ovnCheckValue(table string, k string, v string) (bool, string, error) {
 		return false, "", nil
 	}
 
-	newValue := strings.Replace(v, "lxd-net", "incus-net", -1)
-	newValue = strings.Replace(newValue, "lxd_acl", "incus_acl", -1)
-	newValue = strings.Replace(newValue, "lxd_location", "incus_location", -1)
-	newValue = strings.Replace(newValue, "lxd_net", "incus_net", -1)
-	newValue = strings.Replace(newValue, "lxd_port_group", "incus_port_group", -1)
-	newValue = strings.Replace(newValue, "lxd_project_id", "incus_project_id", -1)
-	newValue = strings.Replace(newValue, "lxd_switch", "incus_switch", -1)
-	newValue = strings.Replace(newValue, "lxd_switch_port", "incus_switch_port", -1)
+	newValue := strings.ReplaceAll(v, "lxd-net", "incus-net")
+	newValue = strings.ReplaceAll(newValue, "lxd_acl", "incus_acl")
+	newValue = strings.ReplaceAll(newValue, "lxd_location", "incus_location")
+	newValue = strings.ReplaceAll(newValue, "lxd_net", "incus_net")
+	newValue = strings.ReplaceAll(newValue, "lxd_port_group", "incus_port_group")
+	newValue = strings.ReplaceAll(newValue, "lxd_project_id", "incus_project_id")
+	newValue = strings.ReplaceAll(newValue, "lxd_switch", "incus_switch")
+	newValue = strings.ReplaceAll(newValue, "lxd_switch_port", "incus_switch_port")
 
 	if v == newValue {
 		return true, "", fmt.Errorf("Couldn't convert value %q for key %q in table %q", v, k, table)
