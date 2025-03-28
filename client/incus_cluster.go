@@ -33,7 +33,7 @@ func (r *ProtocolIncus) UpdateCluster(cluster api.ClusterPut, ETag string) (Oper
 		}
 	}
 
-	op, _, err := r.queryOperation("PUT", "/cluster", cluster, "")
+	op, _, err := r.queryOperation("PUT", "/cluster", cluster, ETag)
 	if err != nil {
 		return nil, err
 	}
