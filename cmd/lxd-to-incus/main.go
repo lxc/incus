@@ -350,7 +350,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 					return fmt.Errorf("Failed to get OVN southbound database address: %w", err)
 				}
 
-				ovnSB := strings.TrimSpace(strings.Replace(out, "\"", "", -1))
+				ovnSB := strings.TrimSpace(strings.ReplaceAll(out, "\"", ""))
 
 				commands, err := ovnConvert(ovnNB, ovnSB)
 				if err != nil {
