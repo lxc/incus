@@ -116,7 +116,7 @@ func tlsHTTPClient(client *http.Client, tlsClientCert string, tlsClientKey strin
 // Any errors encountered during the setup process are also handled by the function.
 func unixHTTPClient(args *ConnectionArgs, path string) (*http.Client, error) {
 	// Setup a Unix socket dialer
-	unixDial := func(_ context.Context, network, addr string) (net.Conn, error) {
+	unixDial := func(_ context.Context, _ string, _ string) (net.Conn, error) {
 		raddr, err := net.ResolveUnixAddr("unix", path)
 		if err != nil {
 			return nil, err

@@ -74,8 +74,8 @@ type ConnectionArgs struct {
 // If connecting to an Incus daemon running in PKI mode, the PKI CA (TLSCA) must also be provided.
 //
 // Unless the remote server is trusted by the system CA, the remote certificate must be provided (TLSServerCert).
-func ConnectIncus(url string, args *ConnectionArgs) (InstanceServer, error) {
-	return ConnectIncusWithContext(context.Background(), url, args)
+func ConnectIncus(uri string, args *ConnectionArgs) (InstanceServer, error) {
+	return ConnectIncusWithContext(context.Background(), uri, args)
 }
 
 // ConnectIncusWithContext lets you connect to a remote Incus daemon over HTTPs with context.Context.
@@ -85,13 +85,13 @@ func ConnectIncus(url string, args *ConnectionArgs) (InstanceServer, error) {
 // If connecting to an Incus daemon running in PKI mode, the PKI CA (TLSCA) must also be provided.
 //
 // Unless the remote server is trusted by the system CA, the remote certificate must be provided (TLSServerCert).
-func ConnectIncusWithContext(ctx context.Context, url string, args *ConnectionArgs) (InstanceServer, error) {
+func ConnectIncusWithContext(ctx context.Context, uri string, args *ConnectionArgs) (InstanceServer, error) {
 	// Cleanup URL
-	url = strings.TrimSuffix(url, "/")
+	uri = strings.TrimSuffix(uri, "/")
 
-	logger.Debug("Connecting to a remote Incus over HTTPS", logger.Ctx{"url": url})
+	logger.Debug("Connecting to a remote Incus over HTTPS", logger.Ctx{"url": uri})
 
-	return httpsIncus(ctx, url, args)
+	return httpsIncus(ctx, uri, args)
 }
 
 // ConnectIncusHTTP lets you connect to a VM agent over a VM socket.
@@ -240,30 +240,30 @@ func ConnectIncusUnixWithContext(ctx context.Context, path string, args *Connect
 // ConnectPublicIncus lets you connect to a remote public Incus daemon over HTTPs.
 //
 // Unless the remote server is trusted by the system CA, the remote certificate must be provided (TLSServerCert).
-func ConnectPublicIncus(url string, args *ConnectionArgs) (ImageServer, error) {
-	return ConnectPublicIncusWithContext(context.Background(), url, args)
+func ConnectPublicIncus(uri string, args *ConnectionArgs) (ImageServer, error) {
+	return ConnectPublicIncusWithContext(context.Background(), uri, args)
 }
 
 // ConnectPublicIncusWithContext lets you connect to a remote public Incus daemon over HTTPs with context.Context.
 //
 // Unless the remote server is trusted by the system CA, the remote certificate must be provided (TLSServerCert).
-func ConnectPublicIncusWithContext(ctx context.Context, url string, args *ConnectionArgs) (ImageServer, error) {
+func ConnectPublicIncusWithContext(ctx context.Context, uri string, args *ConnectionArgs) (ImageServer, error) {
 	logger.Debug("Connecting to a remote public Incus over HTTPS")
 
 	// Cleanup URL
-	url = strings.TrimSuffix(url, "/")
+	uri = strings.TrimSuffix(uri, "/")
 
-	return httpsIncus(ctx, url, args)
+	return httpsIncus(ctx, uri, args)
 }
 
 // ConnectSimpleStreams lets you connect to a remote SimpleStreams image server over HTTPs.
 //
 // Unless the remote server is trusted by the system CA, the remote certificate must be provided (TLSServerCert).
-func ConnectSimpleStreams(url string, args *ConnectionArgs) (ImageServer, error) {
-	logger.Debug("Connecting to a remote simplestreams server", logger.Ctx{"URL": url})
+func ConnectSimpleStreams(uri string, args *ConnectionArgs) (ImageServer, error) {
+	logger.Debug("Connecting to a remote simplestreams server", logger.Ctx{"URL": uri})
 
 	// Cleanup URL
-	url = strings.TrimSuffix(url, "/")
+	uri = strings.TrimSuffix(uri, "/")
 
 	// Use empty args if not specified
 	if args == nil {
@@ -272,7 +272,7 @@ func ConnectSimpleStreams(url string, args *ConnectionArgs) (ImageServer, error)
 
 	// Initialize the client struct
 	server := ProtocolSimpleStreams{
-		httpHost:        url,
+		httpHost:        uri,
 		httpUserAgent:   args.UserAgent,
 		httpCertificate: args.TLSServerCert,
 	}
@@ -286,7 +286,7 @@ func ConnectSimpleStreams(url string, args *ConnectionArgs) (ImageServer, error)
 	server.http = httpClient
 
 	// Get simplestreams client
-	ssClient := simplestreams.NewClient(url, *httpClient, args.UserAgent)
+	ssClient := simplestreams.NewClient(uri, *httpClient, args.UserAgent)
 	server.ssClient = ssClient
 
 	// Setup the cache
@@ -295,7 +295,7 @@ func ConnectSimpleStreams(url string, args *ConnectionArgs) (ImageServer, error)
 			return nil, fmt.Errorf("Cache directory %q doesn't exist", args.CachePath)
 		}
 
-		hashedURL := fmt.Sprintf("%x", sha256.Sum256([]byte(url)))
+		hashedURL := fmt.Sprintf("%x", sha256.Sum256([]byte(uri)))
 
 		cachePath := filepath.Join(args.CachePath, hashedURL)
 		cacheExpiry := args.CacheExpiry

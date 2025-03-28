@@ -71,7 +71,7 @@ func (r *ProtocolOCI) GetImageFingerprints() ([]string, error) {
 }
 
 // GetImagesWithFilter returns a filtered list of available images as Image structs.
-func (r *ProtocolOCI) GetImagesWithFilter(filters []string) ([]api.Image, error) {
+func (r *ProtocolOCI) GetImagesWithFilter(_ []string) ([]api.Image, error) {
 	return nil, fmt.Errorf("Can't list images from OCI registry")
 }
 
@@ -320,17 +320,17 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 }
 
 // GetImageSecret isn't relevant for the simplestreams protocol.
-func (r *ProtocolOCI) GetImageSecret(fingerprint string) (string, error) {
+func (r *ProtocolOCI) GetImageSecret(_ string) (string, error) {
 	return "", fmt.Errorf("Private images aren't supported with OCI registry")
 }
 
 // GetPrivateImage isn't relevant for the simplestreams protocol.
-func (r *ProtocolOCI) GetPrivateImage(fingerprint string, secret string) (*api.Image, string, error) {
+func (r *ProtocolOCI) GetPrivateImage(_ string, _ string) (*api.Image, string, error) {
 	return nil, "", fmt.Errorf("Private images aren't supported with OCI registry")
 }
 
 // GetPrivateImageFile isn't relevant for the simplestreams protocol.
-func (r *ProtocolOCI) GetPrivateImageFile(fingerprint string, secret string, req ImageFileRequest) (*ImageFileResponse, error) {
+func (r *ProtocolOCI) GetPrivateImageFile(_ string, _ string, _ ImageFileRequest) (*ImageFileResponse, error) {
 	return nil, fmt.Errorf("Private images aren't supported with OCI registry")
 }
 
@@ -439,6 +439,6 @@ func (r *ProtocolOCI) GetImageAliasArchitectures(imageType string, name string) 
 }
 
 // ExportImage exports (copies) an image to a remote server.
-func (r *ProtocolOCI) ExportImage(fingerprint string, image api.ImageExportPost) (Operation, error) {
+func (r *ProtocolOCI) ExportImage(_ string, _ api.ImageExportPost) (Operation, error) {
 	return nil, fmt.Errorf("Exporting images is not supported with OCI registry")
 }

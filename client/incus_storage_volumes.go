@@ -108,12 +108,12 @@ func (r *ProtocolIncus) GetStoragePoolVolumesAllProjects(pool string) ([]api.Sto
 
 	volumes := []api.StorageVolume{}
 
-	url := api.NewURL().Path("storage-pools", pool, "volumes").
+	uri := api.NewURL().Path("storage-pools", pool, "volumes").
 		WithQuery("recursion", "1").
 		WithQuery("all-projects", "true")
 
 	// Fetch the raw value.
-	_, err = r.queryStruct("GET", url.String(), nil, "", &volumes)
+	_, err = r.queryStruct("GET", uri.String(), nil, "", &volumes)
 	if err != nil {
 		return nil, err
 	}
@@ -155,13 +155,13 @@ func (r *ProtocolIncus) GetStoragePoolVolumesWithFilterAllProjects(pool string, 
 
 	volumes := []api.StorageVolume{}
 
-	url := api.NewURL().Path("storage-pools", pool, "volumes").
+	uri := api.NewURL().Path("storage-pools", pool, "volumes").
 		WithQuery("recursion", "1").
 		WithQuery("filter", parseFilters(filters)).
 		WithQuery("all-projects", "true")
 
 	// Fetch the raw value.
-	_, err = r.queryStruct("GET", url.String(), nil, "", &volumes)
+	_, err = r.queryStruct("GET", uri.String(), nil, "", &volumes)
 	if err != nil {
 		return nil, err
 	}
@@ -636,7 +636,10 @@ func (r *ProtocolIncus) CopyStoragePoolVolume(pool string, source InstanceServer
 
 		targetSecrets := map[string]string{}
 		for k, v := range opAPI.Metadata {
-			targetSecrets[k] = v.(string)
+			val, ok := v.(string)
+			if ok {
+				targetSecrets[k] = val
+			}
 		}
 
 		// Prepare the source request
@@ -666,7 +669,10 @@ func (r *ProtocolIncus) CopyStoragePoolVolume(pool string, source InstanceServer
 	// Prepare source server secrets for remote
 	sourceSecrets := map[string]string{}
 	for k, v := range opAPI.Metadata {
-		sourceSecrets[k] = v.(string)
+		val, ok := v.(string)
+		if ok {
+			sourceSecrets[k] = val
+		}
 	}
 
 	// Relay mode migration
@@ -689,7 +695,10 @@ func (r *ProtocolIncus) CopyStoragePoolVolume(pool string, source InstanceServer
 		// Extract the websockets
 		targetSecrets := map[string]string{}
 		for k, v := range targetOpAPI.Metadata {
-			targetSecrets[k] = v.(string)
+			val, ok := v.(string)
+			if ok {
+				targetSecrets[k] = val
+			}
 		}
 
 		// Launch the relay
