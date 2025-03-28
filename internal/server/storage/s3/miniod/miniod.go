@@ -283,7 +283,7 @@ func EnsureRunning(s *state.State, bucketVol storageDrivers.Volume) (*Process, e
 		err := bucketVol.MountTask(func(mountPath string, op *operations.Operation) error {
 			l.Debug("MinIO bucket starting")
 
-			var newDirMode os.FileMode = os.ModeDir | 0o700
+			newDirMode := os.ModeDir | 0o700
 
 			if !util.PathExists(bucketPath) {
 				err = os.Mkdir(bucketPath, newDirMode)
