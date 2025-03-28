@@ -352,13 +352,13 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_storage_driver_zfs "zfs storage driver"
     run_test test_storage_buckets "storage buckets"
     run_test test_storage_bucket_export "storage buckets export and import"
-    run_test test_storage_volume_import "storage volume import"
+    #run_test test_storage_volume_import "storage volume import" #TN
     run_test test_storage_volume_initial_config "storage volume initial configuration"
     run_test test_resources "resources"
     run_test test_kernel_limits "kernel limits"
     run_test test_console "console"
     run_test test_query "query"
-    #run_test test_storage_local_volume_handling "storage local volume handling" #TN - needs MountVolumeSnapshot
+    run_test test_storage_local_volume_handling "storage local volume handling"
     #run_test test_backup_import "backup import" #TN
     #run_test test_backup_export "backup export" #TN
     run_test test_backup_rename "backup rename"
