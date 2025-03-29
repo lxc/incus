@@ -71,7 +71,7 @@ func (s *Products) ToAPI() ([]api.Image, map[string][][]string) {
 
 	for _, product := range s.Products {
 		// Skip unsupported architectures
-		architecture, err := osarch.ArchitectureId(product.Architecture)
+		architecture, err := osarch.ArchitectureID(product.Architecture)
 		if err != nil {
 			continue
 		}
