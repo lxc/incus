@@ -401,6 +401,7 @@ func GenerateMemCert(client bool, addHosts bool) ([]byte, []byte, error) {
 	return cert, key, nil
 }
 
+// ReadCert reads a PEM encoded certificate.
 func ReadCert(fpath string) (*x509.Certificate, error) {
 	cf, err := os.ReadFile(fpath)
 	if err != nil {
@@ -415,10 +416,12 @@ func ReadCert(fpath string) (*x509.Certificate, error) {
 	return x509.ParseCertificate(certBlock.Bytes)
 }
 
+// CertFingerprint returns the SHA256 fingerprint string of an x509 certificate.
 func CertFingerprint(cert *x509.Certificate) string {
 	return fmt.Sprintf("%x", sha256.Sum256(cert.Raw))
 }
 
+// CertFingerprintStr returns the SHA256 fingerprint of a PEM encoded certificate.
 func CertFingerprintStr(c string) (string, error) {
 	pemCertificate, _ := pem.Decode([]byte(c))
 	if pemCertificate == nil {
@@ -433,6 +436,7 @@ func CertFingerprintStr(c string) (string, error) {
 	return CertFingerprint(cert), nil
 }
 
+// GetRemoteCertificate gets the x509 certificate from a remote HTTPS server.
 func GetRemoteCertificate(address string, useragent string) (*x509.Certificate, error) {
 	// Setup a permissive TLS config
 	tlsConfig, err := GetTLSConfig(nil)
