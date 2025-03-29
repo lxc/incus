@@ -166,7 +166,7 @@ func NewSetFromCurrentProcess() (*Set, error) {
 }
 
 // NewSetFromSystem returns a Set for the specified user from the system's subuid/subgid configuration.
-func NewSetFromSystem(rootfs string, username string) (*Set, error) {
+func NewSetFromSystem(username string) (*Set, error) {
 	// Check if the system supports subuid/subgid.
 	pathNewUIDMap, _ := exec.LookPath("newuidmap")
 	pathNewGIDMap, _ := exec.LookPath("newgidmap")
