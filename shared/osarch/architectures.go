@@ -108,7 +108,7 @@ func ArchitectureName(arch int) (string, error) {
 }
 
 // ArchitectureID converts an architecture name to its ID.
-func ArchitectureId(arch string) (int, error) {
+func ArchitectureID(arch string) (int, error) {
 	for archID, archName := range architectureNames {
 		if archName == arch {
 			return archID, nil
@@ -153,7 +153,7 @@ func ArchitectureGetLocalID() (int, error) {
 		return -1, err
 	}
 
-	id, err := ArchitectureId(name)
+	id, err := ArchitectureID(name)
 	if err != nil {
 		return -1, err
 	}
