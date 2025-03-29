@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// nolint:revive
 const (
 	ARCH_UNKNOWN                     = 0
 	ARCH_32BIT_INTEL_X86             = 1
