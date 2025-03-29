@@ -322,7 +322,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		// ---
 		//  type: string
 		//  required: yes
-		//  shortdesc: Path inside the instance where the disk will be mounted (only for containers)
+		//  shortdesc: Path inside the instance where the disk will be mounted (only for file system disk devices)
 		"path": validate.IsAny,
 
 		// gendoc:generate(entity=devices, group=disk, key=io.cache)
