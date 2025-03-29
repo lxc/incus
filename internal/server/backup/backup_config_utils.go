@@ -25,7 +25,7 @@ func ConfigToInstanceDBArgs(state *state.State, c *config.Config, projectName st
 		return nil, nil
 	}
 
-	arch, _ := osarch.ArchitectureId(c.Container.Architecture)
+	arch, _ := osarch.ArchitectureID(c.Container.Architecture)
 	instanceType, _ := instancetype.New(c.Container.Type)
 
 	inst := &db.InstanceArgs{

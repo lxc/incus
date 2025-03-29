@@ -137,7 +137,7 @@ func instancePatch(d *Daemon, r *http.Request) response.Response {
 	if err != nil {
 		architecture = c.Architecture()
 	} else {
-		architecture, err = osarch.ArchitectureId(req.Architecture)
+		architecture, err = osarch.ArchitectureID(req.Architecture)
 		if err != nil {
 			architecture = 0
 		}

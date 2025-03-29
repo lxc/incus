@@ -564,7 +564,7 @@ func internalRecoverImportInstanceSnapshot(s *state.State, pool storagePools.Poo
 
 	internalImportRootDevicePopulate(pool.Name(), snap.Devices, snap.ExpandedDevices, profiles)
 
-	arch, err := osarch.ArchitectureId(snap.Architecture)
+	arch, err := osarch.ArchitectureID(snap.Architecture)
 	if err != nil {
 		return nil, err
 	}
