@@ -679,11 +679,11 @@ func UnshiftCaps(value string, set *Set) (string, error) {
 	return string(buf), nil
 }
 
-type IdmapStorageType string
+type StorageType string
 
 const (
-	IdmapStorageNone     = "none"
-	IdmapStorageIdmapped = "idmapped"
+	StorageTypeNone     = "none"
+	StorageTypeIdmapped = "idmapped"
 )
 
 func CanIdmapMount(path string, fstype string) bool {
