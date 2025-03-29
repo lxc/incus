@@ -383,7 +383,7 @@ func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string
 	info.Alias = name
 	info.Digest = strings.ReplaceAll(info.Digest, "sha256:", "")
 
-	archID, err := osarch.ArchitectureId(info.Architecture)
+	archID, err := osarch.ArchitectureID(info.Architecture)
 	if err != nil {
 		return nil, "", err
 	}
