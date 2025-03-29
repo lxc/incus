@@ -194,7 +194,7 @@ func runVDPANetlinkCmd(command uint8, flags int, data []*nl.RtAttr) ([][]byte, e
 }
 
 // newNetlinkAttribute creates a new netlink attribute based on the attribute type and data.
-func newNetlinkAttribute(attrType int, data interface{}) (*nl.RtAttr, error) {
+func newNetlinkAttribute(attrType int, data any) (*nl.RtAttr, error) {
 	switch attrType {
 	case vDPAAttrMgmtDevBusName, vDPAAttrMgmtDevDevName, vDPAAttrDevName:
 		strData, ok := data.(string)

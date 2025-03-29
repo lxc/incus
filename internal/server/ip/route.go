@@ -139,7 +139,7 @@ func (r *Route) Show() ([]string, error) {
 			continue
 		}
 
-		route := strings.Replace(line, "linkdown", "", -1)
+		route := strings.ReplaceAll(line, "linkdown", "")
 		routes = append(routes, route)
 	}
 

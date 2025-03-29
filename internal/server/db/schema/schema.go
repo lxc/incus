@@ -433,7 +433,7 @@ func formatSQL(statement string) string {
 			continue
 		}
 
-		lines[i] = strings.Replace(line, ", ", ",\n    ", -1)
+		lines[i] = strings.ReplaceAll(line, ", ", ",\n    ")
 	}
 
 	return strings.Join(lines, "\n")

@@ -1448,13 +1448,13 @@ func (d *nicBridged) networkDHCPv6Release(srcDUID string, srcIAID string, srcIP 
 	}
 
 	// Convert Server DUID from string to byte array
-	dstDUIDRaw, err := hex.DecodeString(strings.Replace(dstDUID, ":", "", -1))
+	dstDUIDRaw, err := hex.DecodeString(strings.ReplaceAll(dstDUID, ":", ""))
 	if err != nil {
 		return err
 	}
 
 	// Convert DUID from string to byte array
-	srcDUIDRaw, err := hex.DecodeString(strings.Replace(srcDUID, ":", "", -1))
+	srcDUIDRaw, err := hex.DecodeString(strings.ReplaceAll(srcDUID, ":", ""))
 	if err != nil {
 		return err
 	}

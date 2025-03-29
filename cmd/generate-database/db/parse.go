@@ -494,7 +494,7 @@ func parseField(f *types.Var, structTag string, kind string, pkgName string) (*F
 	omit := config.Get("omit")
 	if omit != "" {
 		omitFields := strings.Split(omit, ",")
-		stmtKind := strings.Replace(lex.SnakeCase(kind), "_", "-", -1)
+		stmtKind := strings.ReplaceAll(lex.SnakeCase(kind), "_", "-")
 		switch kind {
 		case "URIs":
 			stmtKind = "names"
