@@ -9,6 +9,6 @@ import (
 
 // Upgrader is a websocket upgrader which ignores the request Origin.
 var Upgrader = websocket.Upgrader{
-	CheckOrigin:      func(r *http.Request) bool { return true },
+	CheckOrigin:      func(_ *http.Request) bool { return true },
 	HandshakeTimeout: time.Second * 5,
 }
