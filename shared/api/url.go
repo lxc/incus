@@ -45,7 +45,7 @@ func (u *URL) Path(pathParts ...string) *URL {
 	}
 
 	u.URL.Path = path.String()
-	u.URL.RawPath = rawPath.String()
+	u.RawPath = rawPath.String()
 
 	return u
 }
