@@ -20,6 +20,7 @@ type cmdImport struct {
 	flagStorage string
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("import", i18n.G("[<remote>:] <backup file> [<instance name>]"))
@@ -36,9 +37,10 @@ func (c *cmdImport) Command() *cobra.Command {
 	return cmd
 }
 
+// Run runs the actual command logic.
 func (c *cmdImport) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 1, 3)
+	exit, err := c.global.checkArgs(cmd, args, 1, 3)
 	if exit {
 		return err
 	}
@@ -64,7 +66,7 @@ func (c *cmdImport) Run(cmd *cobra.Command, args []string) error {
 		instanceName = args[srcFilePosition+1]
 	}
 
-	resources, err := c.global.ParseServers(remote)
+	resources, err := c.global.parseServers(remote)
 	if err != nil {
 		return err
 	}

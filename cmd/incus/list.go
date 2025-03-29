@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -42,6 +43,7 @@ type cmdList struct {
 	shorthandFilters map[string]func(*api.Instance, *api.InstanceState, string) bool
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("list", i18n.G("[<remote>:] [<filter>...]"))
@@ -136,11 +138,11 @@ incus list -c ns,user.comment:comment
 	cmd.Flags().BoolVar(&c.flagFast, "fast", false, i18n.G("Fast mode (same as --columns=nsacPt)"))
 	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("Display instances from all projects"))
 
-	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
+	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
 		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
 	}
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return c.global.cmpRemotes(toComplete, false)
 		}
@@ -396,17 +398,18 @@ func (c *cmdList) showInstances(instances []api.InstanceFull, filters []string, 
 	return cli.RenderTable(os.Stdout, c.flagFormat, headers, data, instancesFiltered)
 }
 
+// Run runs the actual command logic.
 func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 0, -1)
+	exit, err := c.global.checkArgs(cmd, args, 0, -1)
 	if exit {
 		return err
 	}
 
 	if c.global.flagProject != "" && c.flagAllProjects {
-		return fmt.Errorf(i18n.G("Can't specify --project with --all-projects"))
+		return errors.New(i18n.G("Can't specify --project with --all-projects"))
 	}
 
 	// Parse the remote
@@ -492,23 +495,23 @@ func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
 
 func (c *cmdList) parseColumns(clustered bool) ([]column, bool, error) {
 	columnsShorthandMap := map[rune]column{
-		'4': {i18n.G("IPV4"), c.IP4ColumnData, true, false},
-		'6': {i18n.G("IPV6"), c.IP6ColumnData, true, false},
-		'a': {i18n.G("ARCHITECTURE"), c.ArchitectureColumnData, false, false},
-		'b': {i18n.G("STORAGE POOL"), c.StoragePoolColumnData, false, false},
-		'c': {i18n.G("CREATED AT"), c.CreatedColumnData, false, false},
+		'4': {i18n.G("IPV4"), c.ip4ColumnData, true, false},
+		'6': {i18n.G("IPV6"), c.ip6ColumnData, true, false},
+		'a': {i18n.G("ARCHITECTURE"), c.architectureColumnData, false, false},
+		'b': {i18n.G("STORAGE POOL"), c.storagePoolColumnData, false, false},
+		'c': {i18n.G("CREATED AT"), c.createdColumnData, false, false},
 		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData, false, false},
 		'D': {i18n.G("DISK USAGE"), c.diskUsageColumnData, true, false},
 		'e': {i18n.G("PROJECT"), c.projectColumnData, false, false},
 		'f': {i18n.G("BASE IMAGE"), c.baseImageColumnData, false, false},
 		'F': {i18n.G("BASE IMAGE"), c.baseImageFullColumnData, false, false},
-		'l': {i18n.G("LAST USED AT"), c.LastUsedColumnData, false, false},
+		'l': {i18n.G("LAST USED AT"), c.lastUsedColumnData, false, false},
 		'm': {i18n.G("MEMORY USAGE"), c.memoryUsageColumnData, true, false},
 		'M': {i18n.G("MEMORY USAGE%"), c.memoryUsagePercentColumnData, true, false},
 		'n': {i18n.G("NAME"), c.nameColumnData, false, false},
-		'N': {i18n.G("PROCESSES"), c.NumberOfProcessesColumnData, true, false},
-		'p': {i18n.G("PID"), c.PIDColumnData, true, false},
-		'P': {i18n.G("PROFILES"), c.ProfilesColumnData, false, false},
+		'N': {i18n.G("PROCESSES"), c.numberOfProcessesColumnData, true, false},
+		'p': {i18n.G("PID"), c.pidColumnData, true, false},
+		'P': {i18n.G("PROFILES"), c.profilesColumnData, false, false},
 		'S': {i18n.G("SNAPSHOTS"), c.numberSnapshotsColumnData, false, true},
 		's': {i18n.G("STATE"), c.statusColumnData, false, false},
 		't': {i18n.G("TYPE"), c.typeColumnData, false, false},
@@ -527,7 +530,7 @@ func (c *cmdList) parseColumns(clustered bool) ([]column, bool, error) {
 	if c.flagFast {
 		if c.flagColumns != defaultColumns && c.flagColumns != defaultColumnsAllProjects {
 			// --columns was specified too
-			return nil, false, fmt.Errorf(i18n.G("Can't specify --fast with --columns"))
+			return nil, false, errors.New(i18n.G("Can't specify --fast with --columns"))
 		}
 
 		if c.flagColumns == defaultColumnsAllProjects {
@@ -544,7 +547,7 @@ func (c *cmdList) parseColumns(clustered bool) ([]column, bool, error) {
 	} else {
 		if c.flagColumns != defaultColumns && c.flagColumns != defaultColumnsAllProjects {
 			if strings.ContainsAny(c.flagColumns, "L") {
-				return nil, false, fmt.Errorf(i18n.G("Can't specify column L when not clustered"))
+				return nil, false, errors.New(i18n.G("Can't specify column L when not clustered"))
 			}
 		}
 		c.flagColumns = strings.ReplaceAll(c.flagColumns, "L", "")
@@ -564,14 +567,14 @@ func (c *cmdList) parseColumns(clustered bool) ([]column, bool, error) {
 		if !strings.Contains(columnEntry, ".") {
 			for _, columnRune := range columnEntry {
 				column, ok := columnsShorthandMap[columnRune]
-				if ok {
-					columns = append(columns, column)
-
-					if column.NeedsState || column.NeedsSnapshots {
-						needsData = true
-					}
-				} else {
+				if !ok {
 					return nil, false, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+				}
+
+				columns = append(columns, column)
+
+				if column.NeedsState || column.NeedsSnapshots {
+					needsData = true
 				}
 			}
 		} else {
@@ -648,8 +651,8 @@ func (c *cmdList) parseColumns(clustered bool) ([]column, bool, error) {
 						v = cInfo.ExpandedDevices[d[0]][d[1]]
 					}
 
-					//// Truncate the data according to the max width.  A negative max width
-					//// indicates there is no effective limit.
+					// Truncate the data according to the max width.  A negative max width
+					// indicates there is no effective limit.
 					if maxWidth > 0 && len(v) > maxWidth {
 						return v[:maxWidth]
 					}
@@ -701,15 +704,15 @@ func (c *cmdList) statusColumnData(cInfo api.InstanceFull) string {
 	return strings.ToUpper(cInfo.Status)
 }
 
-func (c *cmdList) IP4ColumnData(cInfo api.InstanceFull) string {
+func (c *cmdList) ip4ColumnData(cInfo api.InstanceFull) string {
 	if cInfo.IsActive() && cInfo.State != nil && cInfo.State.Network != nil {
 		ipv4s := []string{}
-		for netName, net := range cInfo.State.Network {
-			if net.Type == "loopback" {
+		for netName, network := range cInfo.State.Network {
+			if network.Type == "loopback" {
 				continue
 			}
 
-			for _, addr := range net.Addresses {
+			for _, addr := range network.Addresses {
 				if slices.Contains([]string{"link", "local"}, addr.Scope) {
 					continue
 				}
@@ -727,15 +730,15 @@ func (c *cmdList) IP4ColumnData(cInfo api.InstanceFull) string {
 	return ""
 }
 
-func (c *cmdList) IP6ColumnData(cInfo api.InstanceFull) string {
+func (c *cmdList) ip6ColumnData(cInfo api.InstanceFull) string {
 	if cInfo.IsActive() && cInfo.State != nil && cInfo.State.Network != nil {
 		ipv6s := []string{}
-		for netName, net := range cInfo.State.Network {
-			if net.Type == "loopback" {
+		for netName, network := range cInfo.State.Network {
+			if network.Type == "loopback" {
 				continue
 			}
 
-			for _, addr := range net.Addresses {
+			for _, addr := range network.Addresses {
 				if slices.Contains([]string{"link", "local"}, addr.Scope) {
 					continue
 				}
@@ -828,7 +831,7 @@ func (c *cmdList) numberSnapshotsColumnData(cInfo api.InstanceFull) string {
 	return "0"
 }
 
-func (c *cmdList) PIDColumnData(cInfo api.InstanceFull) string {
+func (c *cmdList) pidColumnData(cInfo api.InstanceFull) string {
 	if cInfo.IsActive() && cInfo.State != nil {
 		return fmt.Sprintf("%d", cInfo.State.Pid)
 	}
@@ -836,11 +839,11 @@ func (c *cmdList) PIDColumnData(cInfo api.InstanceFull) string {
 	return ""
 }
 
-func (c *cmdList) ArchitectureColumnData(cInfo api.InstanceFull) string {
+func (c *cmdList) architectureColumnData(cInfo api.InstanceFull) string {
 	return cInfo.Architecture
 }
 
-func (c *cmdList) StoragePoolColumnData(cInfo api.InstanceFull) string {
+func (c *cmdList) storagePoolColumnData(cInfo api.InstanceFull) string {
 	for _, v := range cInfo.ExpandedDevices {
 		if v["type"] == "disk" && v["path"] == "/" {
 			return v["pool"]
@@ -850,11 +853,11 @@ func (c *cmdList) StoragePoolColumnData(cInfo api.InstanceFull) string {
 	return ""
 }
 
-func (c *cmdList) ProfilesColumnData(cInfo api.InstanceFull) string {
+func (c *cmdList) profilesColumnData(cInfo api.InstanceFull) string {
 	return strings.Join(cInfo.Profiles, "\n")
 }
 
-func (c *cmdList) CreatedColumnData(cInfo api.InstanceFull) string {
+func (c *cmdList) createdColumnData(cInfo api.InstanceFull) string {
 	if !cInfo.CreatedAt.IsZero() {
 		return cInfo.CreatedAt.Local().Format(dateLayout)
 	}
@@ -870,7 +873,7 @@ func (c *cmdList) startedColumnData(cInfo api.InstanceFull) string {
 	return ""
 }
 
-func (c *cmdList) LastUsedColumnData(cInfo api.InstanceFull) string {
+func (c *cmdList) lastUsedColumnData(cInfo api.InstanceFull) string {
 	if !cInfo.LastUsedAt.IsZero() {
 		return cInfo.LastUsedAt.Local().Format(dateLayout)
 	}
@@ -878,7 +881,7 @@ func (c *cmdList) LastUsedColumnData(cInfo api.InstanceFull) string {
 	return ""
 }
 
-func (c *cmdList) NumberOfProcessesColumnData(cInfo api.InstanceFull) string {
+func (c *cmdList) numberOfProcessesColumnData(cInfo api.InstanceFull) string {
 	if cInfo.IsActive() && cInfo.State != nil {
 		return fmt.Sprintf("%d", cInfo.State.Processes)
 	}

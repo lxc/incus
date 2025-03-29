@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -510,7 +511,7 @@ func textEditor(inPath string, inContent []byte) ([]byte, error) {
 				}
 			}
 			if editor == "" {
-				return []byte{}, fmt.Errorf(i18n.G("No text editor found, please set the EDITOR environment variable"))
+				return []byte{}, errors.New(i18n.G("No text editor found, please set the EDITOR environment variable"))
 			}
 		}
 	}
@@ -522,9 +523,10 @@ func textEditor(inPath string, inContent []byte) ([]byte, error) {
 			return []byte{}, err
 		}
 
-		revert := revert.New()
-		defer revert.Fail()
-		revert.Add(func() {
+		reverter := revert.New()
+		defer reverter.Fail()
+
+		reverter.Add(func() {
 			_ = f.Close()
 			_ = os.Remove(f.Name())
 		})
@@ -550,8 +552,8 @@ func textEditor(inPath string, inContent []byte) ([]byte, error) {
 			return []byte{}, err
 		}
 
-		revert.Success()
-		revert.Add(func() { _ = os.Remove(path) })
+		reverter.Success()
+		reverter.Add(func() { _ = os.Remove(path) })
 	} else {
 		path = inPath
 	}
