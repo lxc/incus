@@ -1384,7 +1384,7 @@ func getImageMetadata(fname string) (*api.ImageMetadata, string, error) {
 		return nil, "unknown", fmt.Errorf("Metadata tarball is missing metadata.yaml")
 	}
 
-	_, err = osarch.ArchitectureId(result.Architecture)
+	_, err = osarch.ArchitectureID(result.Architecture)
 	if err != nil {
 		return nil, "unknown", err
 	}

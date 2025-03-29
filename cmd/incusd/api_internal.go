@@ -932,7 +932,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 
 		baseImage := snap.Config["volatile.base_image"]
 
-		arch, err := osarch.ArchitectureId(snap.Architecture)
+		arch, err := osarch.ArchitectureID(snap.Architecture)
 		if err != nil {
 			return err
 		}

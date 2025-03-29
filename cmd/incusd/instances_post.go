@@ -130,7 +130,7 @@ func createFromImage(s *state.State, r *http.Request, p api.Project, profiles []
 			return fmt.Errorf("Image not provided for instance creation")
 		}
 
-		args.Architecture, err = osarch.ArchitectureId(img.Architecture)
+		args.Architecture, err = osarch.ArchitectureID(img.Architecture)
 		if err != nil {
 			return err
 		}
@@ -179,7 +179,7 @@ func createFromNone(s *state.State, r *http.Request, projectName string, profile
 	}
 
 	if req.Architecture != "" {
-		architecture, err := osarch.ArchitectureId(req.Architecture)
+		architecture, err := osarch.ArchitectureID(req.Architecture)
 		if err != nil {
 			return response.InternalError(err)
 		}
@@ -219,7 +219,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 	}
 
 	// Parse the architecture name
-	architecture, err := osarch.ArchitectureId(req.Architecture)
+	architecture, err := osarch.ArchitectureID(req.Architecture)
 	if err != nil {
 		return response.BadRequest(err)
 	}
@@ -1128,7 +1128,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 				}
 
 				if defaultArch != "" {
-					defaultArchID, err := osarch.ArchitectureId(defaultArch)
+					defaultArchID, err := osarch.ArchitectureID(defaultArch)
 					if err != nil {
 						return err
 					}
