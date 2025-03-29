@@ -97,7 +97,7 @@ func (c *cmdGenerateMetadata) Run(cmd *cobra.Command, args []string) error {
 	// Question - architecture
 	var incusArch string
 	metaArchitecture, err := asker.AskString("Architecture name: ", "", func(value string) error {
-		id, err := osarch.ArchitectureId(value)
+		id, err := osarch.ArchitectureID(value)
 		if err != nil {
 			return err
 		}
