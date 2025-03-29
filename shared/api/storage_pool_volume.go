@@ -251,6 +251,6 @@ type StorageVolumeSource struct {
 }
 
 // Writable converts a full StorageVolume struct into a StorageVolumePut struct (filters read-only fields).
-func (storageVolume *StorageVolume) Writable() StorageVolumePut {
-	return storageVolume.StorageVolumePut
+func (v *StorageVolume) Writable() StorageVolumePut {
+	return v.StorageVolumePut
 }
