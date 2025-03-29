@@ -186,7 +186,7 @@ type Container interface {
 	ConsoleLog(opts liblxc.ConsoleLogOptions) (string, error)
 	InsertSeccompUnixDevice(prefix string, m deviceConfig.Device, pid int) error
 	DevptsFd() (*os.File, error)
-	IdmappedStorage(path string, fstype string) idmap.IdmapStorageType
+	IdmappedStorage(path string, fstype string) idmap.StorageType
 }
 
 // VM interface is for VM specific functions.
