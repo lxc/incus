@@ -28,6 +28,7 @@ type networkAllocationColumn struct {
 	Data func(api.NetworkAllocations) string
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkListAllocations) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("list-allocations")
@@ -62,7 +63,7 @@ Pre-defined column shorthand chars:
 	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("Run against all projects"))
 	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultNetworkAllocationColumns, i18n.G("Columns")+"``")
 
-	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
+	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
 		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
 	}
 
@@ -126,13 +127,14 @@ func (c *cmdNetworkListAllocations) macAddressColumnData(alloc api.NetworkAlloca
 	return alloc.Hwaddr
 }
 
-func (c *cmdNetworkListAllocations) Run(cmd *cobra.Command, args []string) error {
+// Run runs the actual command logic.
+func (c *cmdNetworkListAllocations) Run(_ *cobra.Command, args []string) error {
 	remote := ""
 	if len(args) > 0 {
 		remote = args[0]
 	}
 
-	resources, err := c.global.ParseServers(remote)
+	resources, err := c.global.parseServers(remote)
 	if err != nil {
 		return err
 	}

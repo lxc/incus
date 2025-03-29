@@ -3,10 +3,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"slices"
-
-	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/i18n"
@@ -17,7 +16,8 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
-func (c *cmdAdminInit) RunAuto(cmd *cobra.Command, args []string, d incus.InstanceServer, server *api.Server) (*api.InitPreseed, error) {
+// RunAuto runs the actual command logic.
+func (c *cmdAdminInit) RunAuto(d incus.InstanceServer, server *api.Server) (*api.InitPreseed, error) {
 	// Quick checks.
 	if c.flagStorageBackend != "" && !slices.Contains([]string{"dir", "btrfs", "lvm", "zfs"}, c.flagStorageBackend) {
 		return nil, fmt.Errorf(i18n.G("The requested backend '%s' isn't supported by init"), c.flagStorageBackend)
@@ -29,17 +29,17 @@ func (c *cmdAdminInit) RunAuto(cmd *cobra.Command, args []string, d incus.Instan
 
 	if c.flagStorageBackend == "dir" || c.flagStorageBackend == "" {
 		if c.flagStorageLoopSize != -1 || c.flagStorageDevice != "" || c.flagStoragePool != "" {
-			return nil, fmt.Errorf(i18n.G("None of --storage-pool, --storage-create-device or --storage-create-loop may be used with the 'dir' backend"))
+			return nil, errors.New(i18n.G("None of --storage-pool, --storage-create-device or --storage-create-loop may be used with the 'dir' backend"))
 		}
 	} else {
 		if c.flagStorageLoopSize != -1 && c.flagStorageDevice != "" {
-			return nil, fmt.Errorf(i18n.G("Only one of --storage-create-device or --storage-create-loop can be specified"))
+			return nil, errors.New(i18n.G("Only one of --storage-create-device or --storage-create-loop can be specified"))
 		}
 	}
 
 	if c.flagNetworkAddress == "" {
 		if c.flagNetworkPort != -1 {
-			return nil, fmt.Errorf(i18n.G("--network-port can't be used without --network-address"))
+			return nil, errors.New(i18n.G("--network-port can't be used without --network-address"))
 		}
 	}
 
@@ -49,7 +49,7 @@ func (c *cmdAdminInit) RunAuto(cmd *cobra.Command, args []string, d incus.Instan
 	}
 
 	if len(storagePools) > 0 && (c.flagStorageBackend != "" || c.flagStorageDevice != "" || c.flagStorageLoopSize != -1 || c.flagStoragePool != "") {
-		return nil, fmt.Errorf(i18n.G("Storage has already been configured"))
+		return nil, errors.New(i18n.G("Storage has already been configured"))
 	}
 
 	// Detect the backing filesystem.

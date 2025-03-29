@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -20,6 +21,7 @@ type cmdRebuild struct {
 	flagForce bool
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRebuild) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("rebuild", i18n.G("[<remote>:]<image> [<remote>:]<instance>"))
@@ -38,30 +40,30 @@ func (c *cmdRebuild) rebuild(conf *config.Config, args []string) error {
 	var name, image, remote, iremote string
 	var err error
 
-	if len(args) > 0 {
-		if len(args) == 1 {
-			remote, name, err = conf.ParseRemote(args[0])
-			if err != nil {
-				return err
-			}
-		} else if len(args) == 2 {
-			iremote, image, err = conf.ParseRemote(args[0])
-			if err != nil {
-				return err
-			}
+	if len(args) <= 0 {
+		return errors.New(i18n.G("Missing instance name"))
+	}
 
-			remote, name, err = conf.ParseRemote(args[1])
-			if err != nil {
-				return err
-			}
+	if len(args) == 1 {
+		remote, name, err = conf.ParseRemote(args[0])
+		if err != nil {
+			return err
 		}
-	} else {
-		return fmt.Errorf(i18n.G("Missing instance name"))
+	} else if len(args) == 2 {
+		iremote, image, err = conf.ParseRemote(args[0])
+		if err != nil {
+			return err
+		}
+
+		remote, name, err = conf.ParseRemote(args[1])
+		if err != nil {
+			return err
+		}
 	}
 
 	if c.flagEmpty {
 		if len(args) > 1 {
-			return fmt.Errorf(i18n.G("--empty cannot be combined with an image name"))
+			return errors.New(i18n.G("--empty cannot be combined with an image name"))
 		}
 	}
 
@@ -117,7 +119,7 @@ func (c *cmdRebuild) rebuild(conf *config.Config, args []string) error {
 
 	if !c.flagEmpty {
 		if image == "" && iremote == "" {
-			return fmt.Errorf(i18n.G("You need to specify an image name or use --empty"))
+			return errors.New(i18n.G("You need to specify an image name or use --empty"))
 		}
 
 		iremote, image := guessImage(conf, d, remote, iremote, image)
@@ -128,7 +130,7 @@ func (c *cmdRebuild) rebuild(conf *config.Config, args []string) error {
 
 		if conf.Remotes[iremote].Protocol == "incus" {
 			if imgInfo.Type != "virtual-machine" && current.Type == "virtual-machine" {
-				return fmt.Errorf(i18n.G("Asked for a VM but image is of type container"))
+				return errors.New(i18n.G("Asked for a VM but image is of type container"))
 			}
 		}
 
@@ -158,7 +160,7 @@ func (c *cmdRebuild) rebuild(conf *config.Config, args []string) error {
 	} else {
 		// This is a rebuild as an empty instance
 		if image != "" || iremote != "" {
-			return fmt.Errorf(i18n.G("Can't use an image with --empty"))
+			return errors.New(i18n.G("Can't use an image with --empty"))
 		}
 
 		req.Source.Type = "none"
@@ -205,6 +207,7 @@ func (c *cmdRebuild) rebuild(conf *config.Config, args []string) error {
 	return nil
 }
 
+// Run runs the actual command logic.
 func (c *cmdRebuild) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 	if len(args) == 0 {

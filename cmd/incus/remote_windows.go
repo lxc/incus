@@ -11,6 +11,7 @@ type cmdRemoteProxy struct {
 	remote *cmdRemote
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRemoteProxy) Command() *cobra.Command {
 	return nil
 }

@@ -13,6 +13,7 @@ type cmdAdmin struct {
 	global *cmdGlobal
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdmin) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("admin")

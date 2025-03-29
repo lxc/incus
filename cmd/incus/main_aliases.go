@@ -167,10 +167,9 @@ func expandAlias(conf *config.Config, args []string, app *cobra.Command) ([]stri
 			// if completing we want to stop on @ARGS@ and append the completion below
 			if completion {
 				break
-			} else {
-				newArgs = append(newArgs, atArgs...)
 			}
 
+			newArgs = append(newArgs, atArgs...)
 			hasReplacedArgsVar = true
 			continue
 		}

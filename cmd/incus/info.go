@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -15,7 +16,6 @@ import (
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/shared/api"
-	config "github.com/lxc/incus/v6/shared/cliconfig"
 	"github.com/lxc/incus/v6/shared/units"
 )
 
@@ -28,6 +28,7 @@ type cmdInfo struct {
 	flagTarget     string
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdInfo) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("info", i18n.G("[<remote>:][<instance>]"))
@@ -47,7 +48,7 @@ incus info [<remote>:] [--resources]
 	cmd.Flags().BoolVar(&c.flagResources, "resources", false, i18n.G("Show the resources available to the server"))
 	cmd.Flags().StringVar(&c.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return c.global.cmpInstances(toComplete)
 		}
@@ -58,11 +59,12 @@ incus info [<remote>:] [--resources]
 	return cmd
 }
 
+// Run runs the actual command logic.
 func (c *cmdInfo) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 0, 1)
+	exit, err := c.global.checkArgs(cmd, args, 0, 1)
 	if exit {
 		return err
 	}
@@ -106,7 +108,7 @@ func (c *cmdInfo) Run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	return c.instanceInfo(d, conf.Remotes[remote], cName, c.flagShowLog)
+	return c.instanceInfo(d, cName, c.flagShowLog)
 }
 
 func (c *cmdInfo) renderGPU(gpu api.ResourcesGPUCard, prefix string, initial bool) {
@@ -383,7 +385,7 @@ func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 	// Targeting
 	if c.flagTarget != "" {
 		if !d.IsClustered() {
-			return fmt.Errorf(i18n.G("To use --target, the destination remote must be a cluster"))
+			return errors.New(i18n.G("To use --target, the destination remote must be a cluster"))
 		}
 
 		d = d.UseTarget(c.flagTarget)
@@ -391,7 +393,7 @@ func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 
 	if c.flagResources {
 		if !d.HasExtension("resources_v2") {
-			return fmt.Errorf(i18n.G("The server doesn't implement the newer v2 resources API"))
+			return errors.New(i18n.G("The server doesn't implement the newer v2 resources API"))
 		}
 
 		resources, err := d.GetServerResources()
@@ -618,10 +620,10 @@ func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 	return nil
 }
 
-func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, name string, showLog bool) error {
+func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog bool) error {
 	// Quick checks.
 	if c.flagTarget != "" {
-		return fmt.Errorf(i18n.G("--target cannot be used with instances"))
+		return errors.New(i18n.G("--target cannot be used with instances"))
 	}
 
 	// Get the full instance data.
@@ -883,17 +885,20 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, nam
 
 	if showLog {
 		var log io.Reader
-		if inst.Type == "container" {
+		switch inst.Type {
+		case "container":
 			log, err = d.GetInstanceLogfile(name, "lxc.log")
 			if err != nil {
 				return err
 			}
-		} else if inst.Type == "virtual-machine" {
+
+		case "virtual-machine":
 			log, err = d.GetInstanceLogfile(name, "qemu.log")
 			if err != nil {
 				return err
 			}
-		} else {
+
+		default:
 			return fmt.Errorf(i18n.G("Unsupported instance type: %s"), inst.Type)
 		}
 

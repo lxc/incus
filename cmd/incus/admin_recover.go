@@ -3,6 +3,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -22,6 +23,7 @@ type cmdAdminRecover struct {
 	global *cmdGlobal
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminRecover) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("recover")
@@ -36,10 +38,11 @@ func (c *cmdAdminRecover) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
+// Run runs the actual command logic.
+func (c *cmdAdminRecover) Run(_ *cobra.Command, args []string) error {
 	// Quick checks.
 	if len(args) > 0 {
-		return fmt.Errorf(i18n.G("Invalid arguments"))
+		return errors.New(i18n.G("Invalid arguments"))
 	}
 
 	d, err := incus.ConnectIncusUnix("", nil)
@@ -98,7 +101,7 @@ func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 
 			unknownPool.Name, err = c.global.asker.AskString(i18n.G("Name of the storage pool:")+" ", "", validate.Required(func(value string) error {
 				if value == "" {
-					return fmt.Errorf(i18n.G("Pool name cannot be empty"))
+					return errors.New(i18n.G("Pool name cannot be empty"))
 				}
 
 				for _, p := range unknownPools {
@@ -128,7 +131,7 @@ func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 				_, _ = c.global.asker.AskString(i18n.G("Additional storage pool configuration property (KEY=VALUE, empty when done):")+" ", "", validate.Optional(func(value string) error {
 					configParts := strings.SplitN(value, "=", 2)
 					if len(configParts) < 2 {
-						return fmt.Errorf(i18n.G("Config option should be in the format KEY=VALUE"))
+						return errors.New(i18n.G("Config option should be in the format KEY=VALUE"))
 					}
 
 					configKey = configParts[0]
@@ -210,14 +213,7 @@ func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		if len(res.DependencyErrors) > 0 {
-			fmt.Println(i18n.G("You are currently missing the following:"))
-			for _, depErr := range res.DependencyErrors {
-				fmt.Printf(" - %s\n", depErr)
-			}
-
-			_, _ = c.global.asker.AskString(i18n.G("Please create those missing entries and then hit ENTER:")+" ", "", validate.Optional())
-		} else {
+		if len(res.DependencyErrors) == 0 {
 			if len(unknownPools) == 0 && len(res.UnknownVolumes) == 0 {
 				fmt.Println(i18n.G("No unknown storage pools or volumes found. Nothing to do."))
 				return nil
@@ -225,6 +221,13 @@ func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 
 			break // Dependencies met.
 		}
+
+		fmt.Println(i18n.G("You are currently missing the following:"))
+		for _, depErr := range res.DependencyErrors {
+			fmt.Printf(" - %s\n", depErr)
+		}
+
+		_, _ = c.global.asker.AskString(i18n.G("Please create those missing entries and then hit ENTER:")+" ", "", validate.Optional())
 	}
 
 	proceed, err = c.global.asker.AskBool(i18n.G("Would you like those to be recovered?")+" (yes/no) [default=no]: ", "no")
@@ -239,9 +242,9 @@ func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 	fmt.Println(i18n.G("Starting recovery..."))
 
 	// Send /internal/recover/import request to the daemon.
-	// Don't lint next line with gosimple. It says we should convert reqValidate directly to an RecoverImportPost
+	// Don't lint next line with staticcheck. It says we should convert reqValidate directly to an RecoverImportPost
 	// because their types are identical. This is less clear and will not work if either type changes in the future.
-	reqImport := recover.ImportPost{ //nolint:gosimple
+	reqImport := recover.ImportPost{ //nolint:staticcheck
 		Pools: reqValidate.Pools,
 	}
 

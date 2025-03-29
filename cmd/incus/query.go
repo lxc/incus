@@ -27,6 +27,7 @@ type cmdQuery struct {
 	flagData     string
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdQuery) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("query", i18n.G("[<remote>:]<API path>"))
@@ -60,17 +61,18 @@ func (c *cmdQuery) pretty(input any) string {
 	return pretty.String()
 }
 
+// Run runs the actual command logic.
 func (c *cmdQuery) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 1, 1)
+	exit, err := c.global.checkArgs(cmd, args, 1, 1)
 	if exit {
 		return err
 	}
 
 	if c.global.flagProject != "" {
-		return fmt.Errorf(i18n.G("--project cannot be used with the query command"))
+		return errors.New(i18n.G("--project cannot be used with the query command"))
 	}
 
 	if !slices.Contains([]string{"GET", "PUT", "POST", "PATCH", "DELETE"}, c.flagAction) {
@@ -85,7 +87,7 @@ func (c *cmdQuery) Run(cmd *cobra.Command, args []string) error {
 
 	// Validate path
 	if !strings.HasPrefix(path, "/") {
-		return fmt.Errorf(i18n.G("Query path must start with /"))
+		return errors.New(i18n.G("Query path must start with /"))
 	}
 
 	// Attempt to connect

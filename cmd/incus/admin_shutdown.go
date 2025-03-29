@@ -3,6 +3,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -23,6 +24,7 @@ type cmdAdminShutdown struct {
 	flagTimeout int
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminShutdown) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("shutdown")
@@ -41,7 +43,8 @@ func (c *cmdAdminShutdown) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdAdminShutdown) Run(cmd *cobra.Command, args []string) error {
+// Run runs the actual command logic.
+func (c *cmdAdminShutdown) Run(_ *cobra.Command, _ []string) error {
 	connArgs := &incus.ConnectionArgs{
 		SkipGetServer: true,
 	}
@@ -65,7 +68,12 @@ func (c *cmdAdminShutdown) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		// Request shutdown, this shouldn't return until daemon has stopped so use a large request timeout.
-		httpTransport := httpClient.Transport.(*http.Transport)
+		httpTransport, ok := httpClient.Transport.(*http.Transport)
+		if !ok {
+			chResult <- errors.New("Bad http transport")
+			return
+		}
+
 		httpTransport.ResponseHeaderTimeout = 3600 * time.Second
 
 		_, _, err = d.RawQuery("PUT", fmt.Sprintf("/internal/shutdown?%s", v.Encode()), nil, "")
