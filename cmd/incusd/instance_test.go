@@ -265,10 +265,12 @@ func (suite *containerTestSuite) TestContainer_AddRoutedNicValidation() {
 		"name": "eth0", "type": "nic", "ipv4.gateway": "none",
 		"ipv6.gateway": "none", "nictype": "routed", "parent": "unknownbr0",
 	}
+
 	eth1 := deviceConfig.Device{
 		"name": "eth1", "type": "nic", "ipv4.gateway": "none",
 		"ipv6.gateway": "none", "nictype": "routed", "parent": "unknownbr0",
 	}
+
 	eth2 := deviceConfig.Device{"name": "eth2", "type": "nic", "nictype": "bridged", "parent": "unknownbr0"}
 
 	var testProfiles []api.Profile
