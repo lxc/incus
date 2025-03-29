@@ -271,7 +271,7 @@ func serverSetupUser(uid uint32) error {
 			return err
 		}
 
-		idmapset, err := idmap.NewSetFromSystem("", "root")
+		idmapset, err := idmap.NewSetFromSystem("root")
 		if err != nil && err != idmap.ErrSubidUnsupported {
 			return fmt.Errorf("Failed to load system idmap: %w", err)
 		}
