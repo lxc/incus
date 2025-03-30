@@ -107,7 +107,7 @@ For file systems (shared directories or custom volumes), this is one of:
 
 ```{config:option} path devices-disk
 :required: "yes"
-:shortdesc: "Path inside the instance where the disk will be mounted (only for containers)"
+:shortdesc: "Path inside the instance where the disk will be mounted (only for file system disk devices)"
 :type: "string"
 
 ```
