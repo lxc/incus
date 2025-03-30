@@ -1,3 +1,5 @@
+//go:build amd64 || arm64
+
 package edk2
 
 import (
