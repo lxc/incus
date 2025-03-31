@@ -42,6 +42,8 @@ func TestMatch_Instance(t *testing.T) {
 		"config.image.os eq BusyBox and expanded_devices.root.path eq /": true,
 		"name eq c2 or status eq Running":                                true,
 		"name eq c2 or name eq c3":                                       false,
+		"status eq Running,Stopped":                                      true,
+		"name eq c2,c3":                                                  false,
 	}
 
 	for s := range cases {
