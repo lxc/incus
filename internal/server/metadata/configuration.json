@@ -131,7 +131,7 @@
 						"path": {
 							"longdesc": "",
 							"required": "yes",
-							"shortdesc": "Path inside the instance where the disk will be mounted (only for containers)",
+							"shortdesc": "Path inside the instance where the disk will be mounted (only for file system disk devices)",
 							"type": "string"
 						}
 					},
