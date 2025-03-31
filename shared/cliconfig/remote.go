@@ -87,9 +87,11 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 
 			if errors.As(err, &netErr) {
 				errMsg := netErr.Unwrap().Error()
-				if errMsg == "connect: connection refused" || errMsg == "connect: no such file or directory" {
+
+				switch errMsg {
+				case "connect: connection refused", "connect: no such file or directory":
 					return nil, fmt.Errorf("The incus daemon doesn't appear to be started (socket path: %s)", netErr.Addr)
-				} else if errMsg == "connect: permission denied" {
+				case "connect: permission denied":
 					return nil, fmt.Errorf("You don't have the needed permissions to talk to the incus daemon (socket path: %s)", netErr.Addr)
 				}
 
