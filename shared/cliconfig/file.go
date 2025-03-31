@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/user"
-	"path"
 	"path/filepath"
 
 	"gopkg.in/yaml.v2"
@@ -19,7 +18,7 @@ func getConfigPaths() (string, string, error) {
 	if os.Getenv("INCUS_CONF") != "" {
 		configDir = os.Getenv("INCUS_CONF")
 	} else if os.Getenv("HOME") != "" && util.PathExists(os.Getenv("HOME")) {
-		configDir = path.Join(os.Getenv("HOME"), ".config", "incus")
+		configDir = filepath.Join(os.Getenv("HOME"), ".config", "incus")
 	} else {
 		usr, err := user.Current()
 		if err != nil {
@@ -27,7 +26,7 @@ func getConfigPaths() (string, string, error) {
 		}
 
 		if util.PathExists(usr.HomeDir) {
-			configDir = path.Join(usr.HomeDir, ".config", "incus")
+			configDir = filepath.Join(usr.HomeDir, ".config", "incus")
 		}
 	}
 
@@ -35,7 +34,7 @@ func getConfigPaths() (string, string, error) {
 		return "", "", nil
 	}
 
-	configPath := os.ExpandEnv(path.Join(configDir, "config.yml"))
+	configPath := os.ExpandEnv(filepath.Join(configDir, "config.yml"))
 
 	return configPath, filepath.Dir(configPath), nil
 }
