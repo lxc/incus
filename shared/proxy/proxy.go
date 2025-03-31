@@ -30,6 +30,7 @@ type envOnce struct {
 	val   string
 }
 
+// Get gets the environment variable.
 func (e *envOnce) Get() string {
 	e.once.Do(e.init)
 	return e.val
@@ -44,13 +45,14 @@ func (e *envOnce) init() {
 	}
 }
 
-// This is basically the same as golang's ProxyFromEnvironment, except it
+// FromEnvironment is basically the same as golang's ProxyFromEnvironment, except it
 // doesn't fall back to http_proxy when https_proxy isn't around, which is
 // incorrect behavior. It still respects HTTP_PROXY, HTTPS_PROXY, and NO_PROXY.
 func FromEnvironment(req *http.Request) (*url.URL, error) {
 	return FromConfig("", "", "")(req)
 }
 
+// FromConfig returns a proxy function for the provided proxy servers.
 func FromConfig(httpsProxy string, httpProxy string, noProxy string) func(req *http.Request) (*url.URL, error) {
 	return func(req *http.Request) (*url.URL, error) {
 		var proxy, port string
