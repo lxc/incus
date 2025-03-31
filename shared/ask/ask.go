@@ -69,7 +69,7 @@ func (a *Asker) AskInt(question string, minValue int64, maxValue int64, defaultA
 			continue
 		}
 
-		if !((minValue == -1 || result >= minValue) && (maxValue == -1 || result <= maxValue)) {
+		if (minValue > -1 && result >= minValue) || (maxValue > -1 && result <= maxValue) {
 			fmt.Fprintf(os.Stderr, "Invalid input: out of range\n\n")
 			continue
 		}
