@@ -438,7 +438,7 @@ DROP TRIGGER IF EXISTS on_image_alias_delete;
 DROP TRIGGER IF EXISTS on_image_delete;
 DROP TRIGGER IF EXISTS on_instance_backup_delete;
 DROP TRIGGER IF EXISTS on_instance_delete;
-DROP TRIGGER IF EXISTS on_instance_snaphot_delete;
+DROP TRIGGER IF EXISTS on_instance_snapshot_delete;
 DROP TRIGGER IF EXISTS on_network_acl_delete;
 DROP TRIGGER IF EXISTS on_network_delete;
 DROP TRIGGER IF EXISTS on_network_zone_delete;
