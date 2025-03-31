@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"regexp"
+	"reflect"
 	"slices"
 	"sort"
 	"strconv"
@@ -157,25 +157,7 @@ const (
 	deviceColumnType          = "devices"
 )
 
-// This seems a little excessive.
-func (c *cmdList) dotPrefixMatch(short string, full string) bool {
-	fullMembs := strings.Split(full, ".")
-	shortMembs := strings.Split(short, ".")
-
-	if len(fullMembs) != len(shortMembs) {
-		return false
-	}
-
-	for i := range fullMembs {
-		if !strings.HasPrefix(fullMembs[i], shortMembs[i]) {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (c *cmdList) shouldShow(filters []string, inst *api.Instance, state *api.InstanceState, initial bool) bool {
+func (c *cmdList) shouldShow(filters []string, inst *api.Instance, state *api.InstanceState) bool {
 	c.mapShorthandFilters()
 
 	for _, filter := range filters {
@@ -189,43 +171,11 @@ func (c *cmdList) shouldShow(filters []string, inst *api.Instance, state *api.In
 			value = membs[1]
 		}
 
-		if initial || c.evaluateShorthandFilter(key, value, inst, state) {
+		if c.evaluateShorthandFilter(key, value, inst, state) {
 			continue
 		}
 
-		found := false
-		for configKey, configValue := range inst.ExpandedConfig {
-			if c.dotPrefixMatch(key, configKey) {
-				// Try to test filter value as a regexp.
-				regexpValue := value
-				if !strings.Contains(value, "^") && !strings.Contains(value, "$") {
-					regexpValue = "^" + regexpValue + "$"
-				}
-
-				r, err := regexp.Compile(regexpValue)
-				// If not regexp compatible use original value.
-				if err != nil {
-					if value == configValue {
-						found = true
-						break
-					}
-
-					// The property was found but didn't match.
-					return false
-				} else if r.MatchString(configValue) {
-					found = true
-					break
-				}
-			}
-		}
-
-		if inst.ExpandedConfig[key] == value {
-			continue
-		}
-
-		if !found {
-			return false
-		}
+		return false
 	}
 
 	return true
@@ -421,7 +371,7 @@ func (c *cmdList) showInstances(instances []api.InstanceFull, filters []string, 
 	instancesFiltered := []api.InstanceFull{}
 
 	for _, inst := range instances {
-		if !c.shouldShow(filters, &inst.Instance, inst.State, false) {
+		if !c.shouldShow(filters, &inst.Instance, inst.State) {
 			continue
 		}
 
@@ -500,29 +450,12 @@ func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Support for alternative filter names.
-	for i, filter := range filters {
-		fields := strings.SplitN(filter, "=", 2)
-		if len(fields) == 2 && fields[0] == "state" {
-			filters[i] = fmt.Sprintf("status=%s", fields[1])
-		}
-	}
-
-	singleValueFilterModifier := func(value string) string {
-		regexpValue := value
-		if !strings.Contains(value, "^") && !strings.Contains(value, "$") {
-			regexpValue = "^" + regexpValue + "$"
-		}
-
-		return fmt.Sprintf("name=(%s|^%s.*)", regexpValue, value)
-	}
-
 	if needsData && d.HasExtension("container_full") {
 		// Using the GetInstancesFull shortcut
 		var instances []api.InstanceFull
 
-		serverFilters, clientFilters := getServerSupportedFilters(filters, api.InstanceFull{}, true)
-		modifySingleValueFilters(serverFilters, singleValueFilterModifier)
+		serverFilters, clientFilters := getServerSupportedFilters(filters, []string{"ipv4", "ipv6"}, true)
+		serverFilters = prepareInstanceServerFilters(serverFilters, api.InstanceFull{})
 
 		if c.flagAllProjects {
 			instances, err = d.GetInstancesFullAllProjectsWithFilter(api.InstanceTypeAny, serverFilters)
@@ -539,8 +472,8 @@ func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
 
 	// Get the list of instances
 	var instances []api.Instance
-	serverFilters, clientFilters := getServerSupportedFilters(filters, api.Instance{}, true)
-	modifySingleValueFilters(serverFilters, singleValueFilterModifier)
+	serverFilters, clientFilters := getServerSupportedFilters(filters, []string{"ipv4", "ipv6"}, true)
+	serverFilters = prepareInstanceServerFilters(serverFilters, api.Instance{})
 
 	if c.flagAllProjects {
 		instances, err = d.GetInstancesAllProjectsWithFilter(api.InstanceTypeAny, serverFilters)
@@ -552,18 +485,8 @@ func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Apply filters
-	instancesFiltered := []api.Instance{}
-	for _, inst := range instances {
-		if !c.shouldShow(clientFilters, &inst, nil, true) {
-			continue
-		}
-
-		instancesFiltered = append(instancesFiltered, inst)
-	}
-
 	// Fetch any remaining data and render the table
-	return c.listInstances(d, instancesFiltered, clientFilters, columns)
+	return c.listInstances(d, instances, clientFilters, columns)
 }
 
 func (c *cmdList) parseColumns(clustered bool) ([]column, bool, error) {
@@ -960,22 +883,6 @@ func (c *cmdList) locationColumnData(cInfo api.InstanceFull) string {
 	return cInfo.Location
 }
 
-func (c *cmdList) matchByType(cInfo *api.Instance, cState *api.InstanceState, query string) bool {
-	return strings.EqualFold(cInfo.Type, query)
-}
-
-func (c *cmdList) matchByStatus(cInfo *api.Instance, cState *api.InstanceState, query string) bool {
-	return strings.EqualFold(cInfo.Status, query)
-}
-
-func (c *cmdList) matchByArchitecture(cInfo *api.Instance, cState *api.InstanceState, query string) bool {
-	return strings.EqualFold(cInfo.InstancePut.Architecture, query)
-}
-
-func (c *cmdList) matchByLocation(cInfo *api.Instance, cState *api.InstanceState, query string) bool {
-	return strings.EqualFold(cInfo.Location, query)
-}
-
 func (c *cmdList) matchByNet(cState *api.InstanceState, query string, family string) bool {
 	// Skip if no state.
 	if cState == nil {
@@ -1027,12 +934,44 @@ func (c *cmdList) matchByIPV4(_ *api.Instance, cState *api.InstanceState, query 
 
 func (c *cmdList) mapShorthandFilters() {
 	c.shorthandFilters = map[string]func(*api.Instance, *api.InstanceState, string) bool{
-		"type":         c.matchByType,
-		"state":        c.matchByStatus,
-		"status":       c.matchByStatus,
-		"architecture": c.matchByArchitecture,
-		"location":     c.matchByLocation,
-		"ipv4":         c.matchByIPV4,
-		"ipv6":         c.matchByIPV6,
+		"ipv4": c.matchByIPV4,
+		"ipv6": c.matchByIPV6,
 	}
+}
+
+// prepareInstanceServerFilters processes and formats filter criteria
+// for instances, ensuring they are in a format that the server can interpret.
+func prepareInstanceServerFilters(filters []string, i any) []string {
+	formatedFilters := []string{}
+
+	for _, filter := range filters {
+		membs := strings.SplitN(filter, "=", 2)
+		key := membs[0]
+
+		if len(membs) == 1 {
+			regexpValue := key
+			if !strings.Contains(key, "^") && !strings.Contains(key, "$") {
+				regexpValue = "^" + regexpValue + "$"
+			}
+
+			filter = fmt.Sprintf("name=(%s|^%s.*)", regexpValue, key)
+		} else {
+			firstPart := key
+			if strings.Contains(key, ".") {
+				firstPart = strings.Split(key, ".")[0]
+			}
+
+			if !structHasField(reflect.TypeOf(i), firstPart) {
+				filter = fmt.Sprintf("expanded_config.%s", filter)
+			}
+
+			if key == "state" {
+				filter = fmt.Sprintf("status=%s", membs[1])
+			}
+		}
+
+		formatedFilters = append(formatedFilters, filter)
+	}
+
+	return formatedFilters
 }
