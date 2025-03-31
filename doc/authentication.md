@@ -171,92 +171,16 @@ Currently, the only authorization method that is compatible with OIDC is {ref}`a
 
 Incus supports issuing server certificates using {abbr}`ACME (Automatic Certificate Management Environment)` services, for example, [Let's Encrypt](https://letsencrypt.org/).
 
-To enable this feature, set the following server configuration:
+To enable this feature, set the [relevant server configuration options](server-options-acme).
 
-- {config:option}`server-acme:acme.domain`: The domain for which the certificate should be issued.
-- {config:option}`server-acme:acme.email`: The email address used for the account of the ACME service.
-- {config:option}`server-acme:acme.agree_tos`: Must be set to `true` to agree to the ACME service's terms of service.
-- {config:option}`server-acme:acme.ca_url`: The directory URL of the ACME service. By default, Incus uses "Let's Encrypt".
+Incus supports both `HTTP-01` and `DNS-01` challenges. The set of configuration option varies between the two.
 
-For this feature to work, Incus must be reachable from port 80.
-This can be achieved by using a reverse proxy such as [HAProxy](http://www.haproxy.org/).
+For `DNS-01`, the relevant {config:option}`server-acme:acme.provider` and {config:option}`server-acme:acme.provider.environment`
+values can be found directly in the [documentation of `lego`](https://go-acme.github.io/lego/dns/index.html),
+the ACME client that Incus uses behind the scenes.
 
-Here's a minimal HAProxy configuration that uses `incus.example.net` as the domain.
-After the certificate has been issued, Incus will be reachable from `https://incus.example.net/`.
-
-```
-# Global configuration
-global
-  log /dev/log local0
-  chroot /var/lib/haproxy
-  stats socket /run/haproxy/admin.sock mode 660 level admin
-  stats timeout 30s
-  user haproxy
-  group haproxy
-  daemon
-  ssl-default-bind-options ssl-min-ver TLSv1.2
-  tune.ssl.default-dh-param 2048
-  maxconn 100000
-
-# Default settings
-defaults
-  mode tcp
-  timeout connect 5s
-  timeout client 30s
-  timeout client-fin 30s
-  timeout server 120s
-  timeout tunnel 6h
-  timeout http-request 5s
-  maxconn 80000
-
-# Default backend - Return HTTP 301 (TLS upgrade)
-backend http-301
-  mode http
-  redirect scheme https code 301
-
-# Default backend - Return HTTP 403
-backend http-403
-  mode http
-  http-request deny deny_status 403
-
-# HTTP dispatcher
-frontend http-dispatcher
-  bind :80
-  mode http
-
-  # Backend selection
-  tcp-request inspect-delay 5s
-
-  # Dispatch
-  default_backend http-403
-  use_backend http-301 if { hdr(host) -i incus.example.net }
-
-# SNI dispatcher
-frontend sni-dispatcher
-  bind :443
-  mode tcp
-
-  # Backend selection
-  tcp-request inspect-delay 5s
-
-  # require TLS
-  tcp-request content reject unless { req.ssl_hello_type 1 }
-
-  # Dispatch
-  default_backend http-403
-  use_backend incus-nodes if { req.ssl_sni -i incus.example.net }
-
-# Incus nodes
-backend incus-nodes
-  mode tcp
-
-  option tcp-check
-
-  # Multiple servers should be listed when running a cluster
-  server incus-node01 1.2.3.4:8443 check
-  server incus-node02 1.2.3.5:8443 check
-  server incus-node03 1.2.3.6:8443 check
-```
+For `HTTP-01`, Incus will cause `lego` to temporarily listen on port `80` so the the HTTP challenge can go through.
+If your Incus server sits behind a reverse proxy, you'll need that reverse proxy to redirect HTTP traffic to HTTPS.
 
 ## Failure scenarios
 
