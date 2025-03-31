@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"sort"
 	"strings"
@@ -15,6 +16,7 @@ import (
 
 	incus "github.com/lxc/incus/v6/client"
 	cli "github.com/lxc/incus/v6/internal/cmd"
+	internalFilter "github.com/lxc/incus/v6/internal/filter"
 	"github.com/lxc/incus/v6/internal/i18n"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
@@ -1262,9 +1264,7 @@ func (c *cmdImageList) imageShouldShow(filters []string, state *api.Image) bool 
 			}
 
 			for configKey, configValue := range state.Properties {
-				list := cmdList{}
-				list.global = c.global
-				if list.dotPrefixMatch(key, configKey) {
+				if internalFilter.DotPrefixMatch(key, configKey) {
 					// try to test filter value as a regexp
 					regexpValue := value
 					if !(strings.Contains(value, "^") || strings.Contains(value, "$")) {
@@ -1353,7 +1353,8 @@ func (c *cmdImageList) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	serverFilters, clientFilters := getServerSupportedFilters(filters, api.Image{}, false)
+	serverFilters, clientFilters := getServerSupportedFilters(filters, []string{}, false)
+	serverFilters = prepareImageServerFilters(serverFilters, api.Image{})
 
 	var allImages, images []api.Image
 	if c.flagAllProjects {
@@ -1373,20 +1374,13 @@ func (c *cmdImageList) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	data := [][]string{}
 	for _, image := range allImages {
 		if !c.imageShouldShow(clientFilters, &image) {
 			continue
 		}
 
 		images = append(images, image)
-	}
-
-	// Render the table
-	data := [][]string{}
-	for _, image := range images {
-		if !c.imageShouldShow(clientFilters, &image) {
-			continue
-		}
 
 		row := []string{}
 		for _, column := range columns {
@@ -1742,4 +1736,31 @@ func structToMap(data any) map[string]any {
 	}
 
 	return mapData
+}
+
+// prepareImageServerFilter processes and formats filter criteria
+// for images, ensuring they are in a format that the server can interpret.
+func prepareImageServerFilters(filters []string, i any) []string {
+	formatedFilters := []string{}
+
+	for _, filter := range filters {
+		membs := strings.SplitN(filter, "=", 2)
+
+		if len(membs) == 1 {
+			continue
+		}
+
+		firstPart := membs[0]
+		if strings.Contains(membs[0], ".") {
+			firstPart = strings.Split(membs[0], ".")[0]
+		}
+
+		if !structHasField(reflect.TypeOf(i), firstPart) {
+			filter = fmt.Sprintf("properties.%s", filter)
+		}
+
+		formatedFilters = append(formatedFilters, filter)
+	}
+
+	return formatedFilters
 }
