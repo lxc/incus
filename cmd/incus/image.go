@@ -1358,9 +1358,14 @@ func (c *cmdImageList) Run(cmd *cobra.Command, args []string) error {
 
 	var allImages, images []api.Image
 	if c.flagAllProjects {
-		allImages, err = remoteServer.GetImagesAllProjects()
+		allImages, err = remoteServer.GetImagesAllProjectsWithFilter(serverFilters)
 		if err != nil {
-			return err
+			allImages, err = remoteServer.GetImagesAllProjects()
+			if err != nil {
+				return err
+			}
+
+			clientFilters = filters
 		}
 	} else {
 		allImages, err = remoteServer.GetImagesWithFilter(serverFilters)
