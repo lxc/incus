@@ -49,6 +49,7 @@ type ImageServer interface {
 	// Image handling functions
 	GetImages() (images []api.Image, err error)
 	GetImagesAllProjects() (images []api.Image, err error)
+	GetImagesAllProjectsWithFilter(filters []string) (images []api.Image, err error)
 	GetImageFingerprints() (fingerprints []string, err error)
 	GetImagesWithFilter(filters []string) (images []api.Image, err error)
 

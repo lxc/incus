@@ -60,6 +60,11 @@ func (r *ProtocolOCI) GetImagesAllProjects() ([]api.Image, error) {
 	return nil, fmt.Errorf("Can't list images from OCI registry")
 }
 
+// GetImagesAllProjectsWithFilter returns a filtered list of available images as Image structs.
+func (r *ProtocolOCI) GetImagesAllProjectsWithFilter(filters []string) ([]api.Image, error) {
+	return nil, fmt.Errorf("Can't list images from OCI registry")
+}
+
 // GetImageFingerprints returns a list of available image fingerprints.
 func (r *ProtocolOCI) GetImageFingerprints() ([]string, error) {
 	return nil, fmt.Errorf("Can't list images from OCI registry")
