@@ -341,7 +341,7 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 		defer f.Close()
 
 		for _, nameserver := range lease.Offer.DNS() {
-			_, err = f.Write([]byte(fmt.Sprintf("nameserver %s\n", nameserver)))
+			_, err = fmt.Fprintf(f, "nameserver %s\n", nameserver)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
 				return nil
@@ -349,7 +349,7 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 		}
 
 		if lease.Offer.DomainName() != "" {
-			_, err = f.Write([]byte(fmt.Sprintf("domain %s\n", lease.Offer.DomainName())))
+			_, err = fmt.Fprintf(f, "domain %s\n", lease.Offer.DomainName())
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
 				return nil
@@ -357,7 +357,7 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 		}
 
 		if lease.Offer.DomainSearch() != nil && len(lease.Offer.DomainSearch().Labels) > 0 {
-			_, err = f.Write([]byte(fmt.Sprintf("search %s\n", strings.Join(lease.Offer.DomainSearch().Labels, ", "))))
+			_, err = fmt.Fprintf(f, "search %s\n", strings.Join(lease.Offer.DomainSearch().Labels, ", "))
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
 				return nil
