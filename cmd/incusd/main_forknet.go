@@ -325,41 +325,43 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	if lease.Offer.YourIPAddr == nil || lease.Offer.YourIPAddr.Equal(net.IPv4zero) || lease.Offer.SubnetMask() == nil || len(lease.Offer.Router()) != 1 || len(lease.Offer.DNS()) < 1 {
+	if lease.Offer.YourIPAddr == nil || lease.Offer.YourIPAddr.Equal(net.IPv4zero) || lease.Offer.SubnetMask() == nil || len(lease.Offer.Router()) != 1 {
 		fmt.Fprintf(os.Stderr, "Giving up on DHCP, lease for %q didn't contain required fields\n", iface)
 		return nil
 	}
 
-	// DNS configuration.
-	f, err := os.Create(filepath.Join(args[0], "resolv.conf"))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
-		return nil
-	}
-
-	defer f.Close()
-
-	for _, nameserver := range lease.Offer.DNS() {
-		_, err = f.Write([]byte(fmt.Sprintf("nameserver %s\n", nameserver)))
+	if len(lease.Offer.DNS()) > 0 {
+		// DNS configuration.
+		f, err := os.Create(filepath.Join(args[0], "resolv.conf"))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
 			return nil
 		}
-	}
 
-	if lease.Offer.DomainName() != "" {
-		_, err = f.Write([]byte(fmt.Sprintf("domain %s\n", lease.Offer.DomainName())))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
-			return nil
+		defer f.Close()
+
+		for _, nameserver := range lease.Offer.DNS() {
+			_, err = f.Write([]byte(fmt.Sprintf("nameserver %s\n", nameserver)))
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
+				return nil
+			}
 		}
-	}
 
-	if lease.Offer.DomainSearch() != nil && len(lease.Offer.DomainSearch().Labels) > 0 {
-		_, err = f.Write([]byte(fmt.Sprintf("search %s\n", strings.Join(lease.Offer.DomainSearch().Labels, ", "))))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
-			return nil
+		if lease.Offer.DomainName() != "" {
+			_, err = f.Write([]byte(fmt.Sprintf("domain %s\n", lease.Offer.DomainName())))
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
+				return nil
+			}
+		}
+
+		if lease.Offer.DomainSearch() != nil && len(lease.Offer.DomainSearch().Labels) > 0 {
+			_, err = f.Write([]byte(fmt.Sprintf("search %s\n", strings.Join(lease.Offer.DomainSearch().Labels, ", "))))
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't prepare resolv.conf: %v\n", err)
+				return nil
+			}
 		}
 	}
 
