@@ -2483,14 +2483,8 @@ ff02::2 ip6-allrouters
 			return "", nil, err
 		}
 
-		f, err := os.Create(filepath.Join(d.Path(), "network", "resolv.conf"))
+		f, err := os.OpenFile(filepath.Join(d.Path(), "network", "resolv.conf"), os.O_RDWR|os.O_CREATE, 0o644)
 		if err != nil {
-			return "", nil, err
-		}
-
-		err = f.Chmod(0o644)
-		if err != nil {
-			f.Close()
 			return "", nil, err
 		}
 
