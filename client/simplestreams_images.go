@@ -31,6 +31,11 @@ func (r *ProtocolSimpleStreams) GetImagesAllProjects() ([]api.Image, error) {
 	return r.GetImages()
 }
 
+// GetImagesAllProjectsWithFilter returns a filtered list of available images as Image structs.
+func (r *ProtocolSimpleStreams) GetImagesAllProjectsWithFilter(filters []string) ([]api.Image, error) {
+	return nil, fmt.Errorf("GetImagesWithFilter is not supported by the simplestreams protocol")
+}
+
 // GetImageFingerprints returns a list of available image fingerprints.
 func (r *ProtocolSimpleStreams) GetImageFingerprints() ([]string, error) {
 	// Get all the images from simplestreams
