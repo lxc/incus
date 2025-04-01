@@ -2567,8 +2567,38 @@ func (d *lxc) Start(stateful bool) error {
 
 	name := project.Instance(d.Project().Name, d.name)
 
-	// Start the LXC container
-	_, err = subprocess.RunCommand(
+	// Setup minimal environment for forkstart.
+	envDict := map[string]string{
+		"container": "lxc",
+	}
+
+	for k, v := range d.expandedConfig {
+		if strings.HasPrefix(k, "environment.") {
+			envDict[strings.TrimPrefix(k, "environment.")] = v
+		}
+	}
+
+	for _, keepEnv := range []string{"LD_LIBRARY_PATH", "INCUS_DIR", "INCUS_SOCKET"} {
+		if os.Getenv(keepEnv) != "" {
+			envDict[keepEnv] = os.Getenv(keepEnv)
+		}
+	}
+
+	_, ok := envDict["PATH"]
+	if !ok {
+		envDict["PATH"] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+	}
+
+	env := make([]string, 0, len(envDict))
+	for k, v := range envDict {
+		env = append(env, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	// Start the LXC container.
+	_, _, err = subprocess.RunCommandSplit(
+		context.TODO(),
+		env,
+		nil,
 		d.state.OS.ExecPath,
 		"forkstart",
 		name,
