@@ -417,6 +417,17 @@ func storagePoolVolumeSnapshotsTypeGet(d *Daemon, r *http.Request) response.Resp
 	var poolID int64
 	var volumes []db.StorageVolumeArgs
 
+	// Forward if needed.
+	resp := forwardedResponseIfTargetIsRemote(s, r)
+	if resp != nil {
+		return resp
+	}
+
+	resp = forwardedResponseIfVolumeIsRemote(s, r, poolName, projectName, volumeName, volumeType)
+	if resp != nil {
+		return resp
+	}
+
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
