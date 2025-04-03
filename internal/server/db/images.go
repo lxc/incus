@@ -777,7 +777,7 @@ func (c *ClusterTx) SetImageCachedAndLastUseDate(ctx context.Context, projectNam
 
 // UpdateImage updates the image with the given ID.
 func (c *ClusterTx) UpdateImage(ctx context.Context, id int, fname string, sz int64, public bool, autoUpdate bool, architecture string, createdAt time.Time, expiresAt time.Time, properties map[string]string, project string, profileIds []int64) error {
-	arch, err := osarch.ArchitectureId(architecture)
+	arch, err := osarch.ArchitectureID(architecture)
 	if err != nil {
 		arch = 0
 	}
@@ -850,7 +850,7 @@ func (c *ClusterTx) UpdateImage(ctx context.Context, id int, fname string, sz in
 
 // CreateImage creates a new image.
 func (c *ClusterTx) CreateImage(ctx context.Context, project string, fp string, fname string, sz int64, public bool, autoUpdate bool, architecture string, createdAt time.Time, expiresAt time.Time, properties map[string]string, typeName string, profileIds []int64) error {
-	arch, err := osarch.ArchitectureId(architecture)
+	arch, err := osarch.ArchitectureID(architecture)
 	if err != nil {
 		arch = 0
 	}

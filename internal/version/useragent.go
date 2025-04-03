@@ -19,7 +19,7 @@ var (
 )
 
 func getUserAgent() string {
-	archID, err := osarch.ArchitectureId(runtime.GOARCH)
+	archID, err := osarch.ArchitectureID(runtime.GOARCH)
 	if err != nil {
 		panic(err)
 	}

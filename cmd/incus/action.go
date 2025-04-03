@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"slices"
@@ -20,8 +21,7 @@ type cmdStart struct {
 	action *cmdAction
 }
 
-// The function Command() returns a cobra.Command object representing the "start" command.
-// It is used to start one or more instances specified by the user.
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdStart) Command() *cobra.Command {
 	cmdAction := cmdAction{global: c.global}
 	c.action = &cmdAction
@@ -32,7 +32,7 @@ func (c *cmdStart) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Start instances`))
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpInstances(toComplete)
 	}
 
@@ -45,8 +45,7 @@ type cmdPause struct {
 	action *cmdAction
 }
 
-// The function Command() returns a cobra.Command object representing the "pause" command.
-// It is used to pause (or freeze) one or more instances specified by the user. This command is hidden and has an alias "freeze".
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdPause) Command() *cobra.Command {
 	cmdAction := cmdAction{global: c.global}
 	c.action = &cmdAction
@@ -58,7 +57,7 @@ func (c *cmdPause) Command() *cobra.Command {
 		`Pause instances`))
 	cmd.Aliases = []string{"freeze"}
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpInstances(toComplete)
 	}
 
@@ -71,8 +70,7 @@ type cmdResume struct {
 	action *cmdAction
 }
 
-// Command returns a cobra.Command object representing the "resume" command.
-// It is used to resume (or unfreeze) one or more instances specified by the user.
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdResume) Command() *cobra.Command {
 	cmdAction := cmdAction{global: c.global}
 	c.action = &cmdAction
@@ -84,7 +82,7 @@ func (c *cmdResume) Command() *cobra.Command {
 		`Resume instances`))
 	cmd.Aliases = []string{"unfreeze"}
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpInstances(toComplete)
 	}
 
@@ -97,8 +95,7 @@ type cmdRestart struct {
 	action *cmdAction
 }
 
-// The function Command() returns a cobra.Command object representing the "restart" command.
-// It is used to restart one or more instances specified by the user. This command restarts the instances, which is the opposite of the "pause" command.
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRestart) Command() *cobra.Command {
 	cmdAction := cmdAction{global: c.global}
 	c.action = &cmdAction
@@ -109,7 +106,7 @@ func (c *cmdRestart) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Restart instances`))
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpInstances(toComplete)
 	}
 
@@ -122,8 +119,7 @@ type cmdStop struct {
 	action *cmdAction
 }
 
-// The function Command() returns a cobra.Command object representing the "stop" command.
-// It is used to stop one or more instances specified by the user. This command stops the instances, effectively shutting them down.
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdStop) Command() *cobra.Command {
 	cmdAction := cmdAction{global: c.global}
 	c.action = &cmdAction
@@ -134,7 +130,7 @@ func (c *cmdStop) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Stop instances`))
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpInstances(toComplete)
 	}
 
@@ -152,17 +148,17 @@ type cmdAction struct {
 	flagTimeout   int
 }
 
-// Command is a method of the cmdAction structure which constructs and configures a cobra Command object.
-// It creates a command with a specific action, defines flags based on that action, and assigns appropriate help text.
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAction) Command(action string) *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.RunE = c.Run
 
 	cmd.Flags().BoolVar(&c.flagAll, "all", false, i18n.G("Run against all instances"))
 
-	if action == "stop" {
+	switch action {
+	case "stop":
 		cmd.Flags().BoolVar(&c.flagStateful, "stateful", false, i18n.G("Store the instance state"))
-	} else if action == "start" {
+	case "start":
 		cmd.Flags().BoolVar(&c.flagStateless, "stateless", false, i18n.G("Ignore the instance state"))
 	}
 
@@ -184,7 +180,7 @@ func (c *cmdAction) Command(action string) *cobra.Command {
 func (c *cmdAction) doActionAll(action string, resource remoteResource) error {
 	if resource.name != "" {
 		// both --all and instance name given.
-		return fmt.Errorf(i18n.G("Both --all and instance name given"))
+		return errors.New(i18n.G("Both --all and instance name given"))
 	}
 
 	remote := resource.remote
@@ -194,17 +190,15 @@ func (c *cmdAction) doActionAll(action string, resource remoteResource) error {
 	}
 
 	// Pause is called freeze, resume is called unfreeze.
-	if action == "pause" {
+	switch action {
+	case "pause":
 		action = "freeze"
-	} else if action == "resume" {
+	case "resume":
 		action = "unfreeze"
 	}
 
 	// Only store state if asked to.
-	state := false
-	if action == "stop" && c.flagStateful {
-		state = true
-	}
+	state := action == "stop" && c.flagStateful
 
 	req := api.InstancesPut{
 		State: &api.InstanceStatePut{
@@ -263,7 +257,7 @@ func (c *cmdAction) doAction(action string, conf *config.Config, nameArg string)
 	}
 
 	if action == "stop" && c.flagForce && c.flagConsole != "" {
-		return fmt.Errorf(i18n.G("--console can't be used while forcing instance shutdown"))
+		return errors.New(i18n.G("--console can't be used while forcing instance shutdown"))
 	}
 
 	remote, name, err := conf.ParseRemote(nameArg)
@@ -380,7 +374,7 @@ func (c *cmdAction) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		// Get all the servers.
-		resources, err := c.global.ParseServers(args...)
+		resources, err := c.global.parseServers(args...)
 		if err != nil {
 			return err
 		}
@@ -388,7 +382,7 @@ func (c *cmdAction) Run(cmd *cobra.Command, args []string) error {
 		for _, resource := range resources {
 			// We don't allow instance names with --all.
 			if resource.name != "" {
-				return fmt.Errorf(i18n.G("Both --all and instance name given"))
+				return errors.New(i18n.G("Both --all and instance name given"))
 			}
 
 			// See if we can use the bulk API.
@@ -432,11 +426,11 @@ func (c *cmdAction) Run(cmd *cobra.Command, args []string) error {
 
 	if c.flagConsole != "" {
 		if c.flagAll {
-			return fmt.Errorf(i18n.G("--console can't be used with --all"))
+			return errors.New(i18n.G("--console can't be used with --all"))
 		}
 
 		if len(names) != 1 {
-			return fmt.Errorf(i18n.G("--console only works with a single instance"))
+			return errors.New(i18n.G("--console only works with a single instance"))
 		}
 	}
 

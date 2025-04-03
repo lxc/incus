@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -16,7 +17,11 @@ import (
 func stringToTimeHookFunc(layout string) mapstructure.DecodeHookFuncType {
 	return func(from reflect.Type, to reflect.Type, data any) (any, error) {
 		if from.Kind() == reflect.String && to == reflect.TypeOf(time.Time{}) {
-			strValue := data.(string)
+			strValue, ok := data.(string)
+			if !ok {
+				return nil, errors.New("Unexpected data type")
+			}
+
 			t, err := time.Parse(layout, strValue)
 			if err != nil {
 				return nil, err
@@ -36,7 +41,11 @@ func stringToBoolHookFunc() mapstructure.DecodeHookFunc {
 			return data, nil
 		}
 
-		str := data.(string)
+		str, ok := data.(string)
+		if !ok {
+			return false, errors.New("Unexpected data type")
+		}
+
 		str = strings.ToLower(str)
 		switch str {
 		case "1", "t", "true":
@@ -56,7 +65,11 @@ func stringToIntHookFunc() mapstructure.DecodeHookFunc {
 			return data, nil
 		}
 
-		str := data.(string)
+		str, ok := data.(string)
+		if !ok {
+			return data, errors.New("Unexpected data type")
+		}
+
 		value, err := strconv.Atoi(str)
 		if err != nil {
 			return data, err
@@ -73,7 +86,11 @@ func stringToFloatHookFunc() mapstructure.DecodeHookFunc {
 			return data, nil
 		}
 
-		str := data.(string)
+		str, ok := data.(string)
+		if !ok {
+			return data, errors.New("Unexpected data type")
+		}
+
 		value, err := strconv.ParseFloat(str, 64)
 		if err != nil {
 			return data, err
@@ -83,8 +100,8 @@ func stringToFloatHookFunc() mapstructure.DecodeHookFunc {
 	}
 }
 
-// getFieldByJsonTag gets the value of a struct field by its JSON tag.
-func getFieldByJsonTag(obj any, tag string) (any, error) {
+// getFieldByJSONTag gets the value of a struct field by its JSON tag.
+func getFieldByJSONTag(obj any, tag string) (any, error) {
 	var res any
 	v := reflect.ValueOf(obj)
 	if v.Kind() == reflect.Ptr {
@@ -136,8 +153,8 @@ func getFromStruct(v reflect.Value, tag string) (bool, any) {
 	return false, nil
 }
 
-// setFieldByJsonTag sets the value of a struct field by its JSON tag.
-func setFieldByJsonTag(obj any, tag string, value any) {
+// setFieldByJSONTag sets the value of a struct field by its JSON tag.
+func setFieldByJSONTag(obj any, tag string, value any) {
 	v := reflect.ValueOf(obj).Elem()
 	var fieldName string
 
@@ -160,26 +177,26 @@ func setFieldByJsonTag(obj any, tag string, value any) {
 	}
 }
 
-// unsetFieldByJsonTag unsets (give a default value) the value of a struct field by its JSON tag.
-func unsetFieldByJsonTag(obj any, tag string) error {
-	v, err := getFieldByJsonTag(obj, tag)
+// unsetFieldByJSONTag unsets (give a default value) the value of a struct field by its JSON tag.
+func unsetFieldByJSONTag(obj any, tag string) error {
+	v, err := getFieldByJSONTag(obj, tag)
 	if err != nil {
 		return err
 	}
 
 	switch v.(type) {
 	case string:
-		setFieldByJsonTag(obj, tag, "")
+		setFieldByJSONTag(obj, tag, "")
 	case int:
-		setFieldByJsonTag(obj, tag, 0)
+		setFieldByJSONTag(obj, tag, 0)
 	case bool:
-		setFieldByJsonTag(obj, tag, false)
+		setFieldByJSONTag(obj, tag, false)
 	case float32, float64:
-		setFieldByJsonTag(obj, tag, 0.0)
+		setFieldByJSONTag(obj, tag, 0.0)
 	case time.Time:
-		setFieldByJsonTag(obj, tag, time.Time{})
+		setFieldByJSONTag(obj, tag, time.Time{})
 	case *time.Time:
-		setFieldByJsonTag(obj, tag, &time.Time{})
+		setFieldByJSONTag(obj, tag, &time.Time{})
 	}
 
 	return nil

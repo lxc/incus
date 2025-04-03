@@ -30,6 +30,7 @@ type cmdRemoteProxy struct {
 	flagTimeout int
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRemoteProxy) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("proxy", i18n.G("<remote>: <path>"))
@@ -44,9 +45,10 @@ func (c *cmdRemoteProxy) Command() *cobra.Command {
 	return cmd
 }
 
+// Run runs the actual command logic.
 func (c *cmdRemoteProxy) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 2, 2)
+	exit, err := c.global.checkArgs(cmd, args, 2, 2)
 	if exit {
 		return err
 	}
@@ -63,7 +65,7 @@ func (c *cmdRemoteProxy) Run(cmd *cobra.Command, args []string) error {
 	remote.KeepAlive = 0
 	c.global.conf.Remotes[strings.TrimSuffix(remoteName, ":")] = remote
 
-	resources, err := c.global.ParseServers(remoteName)
+	resources, err := c.global.parseServers(remoteName)
 	if err != nil {
 		return err
 	}
@@ -163,7 +165,7 @@ func (c *cmdRemoteProxy) Run(cmd *cobra.Command, args []string) error {
 					handler.mu.RUnlock()
 
 					// Daemon has been inactive for 10s, exit.
-					os.Exit(0)
+					os.Exit(0) // nolint:revive
 				}
 
 				handler.mu.RUnlock()
@@ -186,6 +188,7 @@ type remoteProxyTransport struct {
 	baseURL *url.URL
 }
 
+// RoundTrip handles an HTTP request.
 func (t remoteProxyTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	// Fix the request.
 	r.URL.Scheme = t.baseURL.Scheme
@@ -222,13 +225,13 @@ func (h remoteProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Increase counters.
 	defer func() {
 		h.mu.Lock()
-		*h.connections -= 1
+		*h.connections--
 		h.mu.Unlock()
 	}()
 
 	h.mu.Lock()
-	*h.transactions += 1
-	*h.connections += 1
+	*h.transactions++
+	*h.connections++
 	h.mu.Unlock()
 
 	// Basic auth.

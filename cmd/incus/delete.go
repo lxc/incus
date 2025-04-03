@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"slices"
@@ -24,6 +25,7 @@ type cmdDelete struct {
 	flagInteractive    bool
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<instance> [[<remote>:]<instance>...]"))
@@ -36,7 +38,7 @@ func (c *cmdDelete) Command() *cobra.Command {
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Force the removal of running instances"))
 	cmd.Flags().BoolVarP(&c.flagInteractive, "interactive", "i", false, i18n.G("Require user confirmation"))
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpInstances(toComplete)
 	}
 
@@ -50,7 +52,7 @@ func (c *cmdDelete) promptDelete(name string) error {
 	input = strings.TrimSuffix(input, "\n")
 
 	if !slices.Contains([]string{i18n.G("yes")}, strings.ToLower(input)) {
-		return fmt.Errorf(i18n.G("User aborted delete operation"))
+		return errors.New(i18n.G("User aborted delete operation"))
 	}
 
 	return nil
@@ -66,15 +68,16 @@ func (c *cmdDelete) doDelete(d incus.InstanceServer, name string) error {
 	return op.Wait()
 }
 
+// Run runs the actual command logic.
 func (c *cmdDelete) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 1, -1)
+	exit, err := c.global.checkArgs(cmd, args, 1, -1)
 	if exit {
 		return err
 	}
 
 	// Parse remote
-	resources, err := c.global.ParseServers(args...)
+	resources, err := c.global.parseServers(args...)
 	if err != nil {
 		return err
 	}
@@ -106,7 +109,7 @@ func (c *cmdDelete) Run(cmd *cobra.Command, args []string) error {
 
 		if ct.StatusCode != 0 && ct.StatusCode != api.Stopped {
 			if !c.flagForce {
-				return fmt.Errorf(i18n.G("The instance is currently running, stop it first or pass --force"))
+				return errors.New(i18n.G("The instance is currently running, stop it first or pass --force"))
 			}
 
 			req := api.InstanceStatePut{

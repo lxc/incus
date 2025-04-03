@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 
@@ -16,7 +17,7 @@ type cmdClusterRole struct {
 	cluster *cmdCluster
 }
 
-// It uses the cmdGlobal, cmdCluster, and cmdClusterRole structs for context and operation.
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterRole) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("role")
@@ -33,7 +34,7 @@ func (c *cmdClusterRole) Command() *cobra.Command {
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
-	cmd.Run = func(cmd *cobra.Command, args []string) { _ = cmd.Usage() }
+	cmd.Run = func(cmd *cobra.Command, _ []string) { _ = cmd.Usage() }
 	return cmd
 }
 
@@ -43,7 +44,7 @@ type cmdClusterRoleAdd struct {
 	clusterRole *cmdClusterRole
 }
 
-// Setting up the usage, short description, and long description of the command, as well as its RunE method.
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterRoleAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("add", i18n.G("[<remote>:]<member> <role[,role...]>"))
@@ -53,7 +54,7 @@ func (c *cmdClusterRoleAdd) Command() *cobra.Command {
 
 	cmd.RunE = c.Run
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return c.global.cmpClusterMembers(toComplete)
 		}
@@ -64,14 +65,14 @@ func (c *cmdClusterRoleAdd) Command() *cobra.Command {
 	return cmd
 }
 
-// It checks and parses input arguments, verifies role assignment, and updates the member's roles.
+// Run runs the actual command logic.
 func (c *cmdClusterRoleAdd) Run(cmd *cobra.Command, args []string) error {
-	exit, err := c.global.CheckArgs(cmd, args, 2, 2)
+	exit, err := c.global.checkArgs(cmd, args, 2, 2)
 	if exit {
 		return err
 	}
 
-	resources, err := c.global.ParseServers(args[0])
+	resources, err := c.global.parseServers(args[0])
 	if err != nil {
 		return err
 	}
@@ -79,7 +80,7 @@ func (c *cmdClusterRoleAdd) Run(cmd *cobra.Command, args []string) error {
 	resource := resources[0]
 
 	if resource.name == "" {
-		return fmt.Errorf(i18n.G("Missing cluster member name"))
+		return errors.New(i18n.G("Missing cluster member name"))
 	}
 
 	// Extract the current value
@@ -107,7 +108,7 @@ type cmdClusterRoleRemove struct {
 	clusterRole *cmdClusterRole
 }
 
-// Removing the roles from a cluster member, setting up usage, descriptions, and the RunE method.
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterRoleRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("remove", i18n.G("[<remote>:]<member> <role[,role...]>"))
@@ -117,7 +118,7 @@ func (c *cmdClusterRoleRemove) Command() *cobra.Command {
 
 	cmd.RunE = c.Run
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return c.global.cmpClusterMembers(toComplete)
 		}
@@ -132,14 +133,14 @@ func (c *cmdClusterRoleRemove) Command() *cobra.Command {
 	return cmd
 }
 
-// Run executes the removal of specified roles from a cluster member, checking inputs, validating role assignment, and updating the member's roles.
+// Run runs the actual command logic.
 func (c *cmdClusterRoleRemove) Run(cmd *cobra.Command, args []string) error {
-	exit, err := c.global.CheckArgs(cmd, args, 2, 2)
+	exit, err := c.global.checkArgs(cmd, args, 2, 2)
 	if exit {
 		return err
 	}
 
-	resources, err := c.global.ParseServers(args[0])
+	resources, err := c.global.parseServers(args[0])
 	if err != nil {
 		return err
 	}
@@ -147,7 +148,7 @@ func (c *cmdClusterRoleRemove) Run(cmd *cobra.Command, args []string) error {
 	resource := resources[0]
 
 	if resource.name == "" {
-		return fmt.Errorf(i18n.G("Missing cluster member name"))
+		return errors.New(i18n.G("Missing cluster member name"))
 	}
 
 	// Extract the current value

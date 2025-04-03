@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -84,7 +85,7 @@ func (c *cmdRemote) Command() *cobra.Command {
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
-	cmd.Run = func(cmd *cobra.Command, args []string) { _ = cmd.Usage() }
+	cmd.Run = func(cmd *cobra.Command, _ []string) { _ = cmd.Usage() }
 	return cmd
 }
 
@@ -206,7 +207,7 @@ func (c *cmdRemoteAdd) runToken(server string, token string, rawToken *api.Certi
 	}
 
 	if len(line) == 0 {
-		return fmt.Errorf(i18n.G("Failed to add remote"))
+		return errors.New(i18n.G("Failed to add remote"))
 	}
 
 	err = c.addRemoteFromToken(string(line), server, token, rawToken.Fingerprint)
@@ -240,7 +241,7 @@ func (c *cmdRemoteAdd) addRemoteFromToken(addr string, server string, token stri
 		dnam := conf.ConfigPath("servercerts")
 		err := os.MkdirAll(dnam, 0o750)
 		if err != nil {
-			return fmt.Errorf(i18n.G("Could not create server cert dir"))
+			return errors.New(i18n.G("Could not create server cert dir"))
 		}
 
 		certf := conf.ServerCertPath(server)
@@ -293,7 +294,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 1, 2)
+	exit, err := c.global.checkArgs(cmd, args, 1, 2)
 	if exit {
 		return err
 	}
@@ -307,7 +308,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 
 	// Validate the server name.
 	if strings.Contains(server, ":") {
-		return fmt.Errorf(i18n.G("Remote names may not contain colons"))
+		return errors.New(i18n.G("Remote names may not contain colons"))
 	}
 
 	// Check for existing remote
@@ -344,7 +345,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 	// Fast track image servers.
 	if slices.Contains([]string{"oci", "simplestreams"}, c.flagProtocol) {
 		if remoteURL.Scheme != "https" {
-			return fmt.Errorf(i18n.G("Only https URLs are supported for oci and simplestreams"))
+			return errors.New(i18n.G("Only https URLs are supported for oci and simplestreams"))
 		}
 
 		conf.Remotes[server] = config.Remote{Addr: addr, Public: true, Protocol: c.flagProtocol}
@@ -473,9 +474,9 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 
 			if string(line) != digest {
 				if len(line) < 1 || strings.ToLower(string(line[0])) == i18n.G("n") {
-					return fmt.Errorf(i18n.G("Server certificate NACKed by user"))
+					return errors.New(i18n.G("Server certificate NACKed by user"))
 				} else if strings.ToLower(string(line[0])) != i18n.G("y") {
-					return fmt.Errorf(i18n.G("Please type 'y', 'n' or the fingerprint:"))
+					return errors.New(i18n.G("Please type 'y', 'n' or the fingerprint:"))
 				}
 			}
 		}
@@ -483,7 +484,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 		dnam := conf.ConfigPath("servercerts")
 		err := os.MkdirAll(dnam, 0o750)
 		if err != nil {
-			return fmt.Errorf(i18n.G("Could not create server cert dir"))
+			return errors.New(i18n.G("Could not create server cert dir"))
 		}
 
 		certf := conf.ServerCertPath(server)
@@ -603,7 +604,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		if srv.Auth != "trusted" {
-			return fmt.Errorf(i18n.G("Server doesn't trust us after authentication"))
+			return errors.New(i18n.G("Server doesn't trust us after authentication"))
 		}
 
 		if c.flagAuthType == api.AuthenticationMethodTLS {
@@ -648,14 +649,14 @@ func (c *cmdRemoteGenerateCertificate) Run(cmd *cobra.Command, args []string) er
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 0, 0)
+	exit, err := c.global.checkArgs(cmd, args, 0, 0)
 	if exit {
 		return err
 	}
 
 	// Check if we already have a certificate.
 	if conf.HasClientCertificate() {
-		return fmt.Errorf(i18n.G("A client certificate is already present"))
+		return errors.New(i18n.G("A client certificate is already present"))
 	}
 
 	// Generate the certificate.
@@ -695,7 +696,7 @@ func (c *cmdRemoteGetDefault) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 0, 0)
+	exit, err := c.global.checkArgs(cmd, args, 0, 0)
 	if exit {
 		return err
 	}
@@ -749,7 +750,7 @@ Pre-defined column shorthand chars:
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G(`Format (csv|json|table|yaml|compact), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)+"``")
 	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultRemoteColumns, i18n.G("Columns")+"``")
 
-	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
+	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
 		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
 	}
 
@@ -790,7 +791,7 @@ func (c *cmdRemoteList) parseColumns() ([]remoteColumn, error) {
 	return columns, nil
 }
 
-func (c *cmdRemoteList) remoteNameColumnData(name string, rc config.Remote) string {
+func (c *cmdRemoteList) remoteNameColumnData(name string, _ config.Remote) string {
 	conf := c.global.conf
 
 	strName := name
@@ -801,15 +802,15 @@ func (c *cmdRemoteList) remoteNameColumnData(name string, rc config.Remote) stri
 	return strName
 }
 
-func (c *cmdRemoteList) addrColumnData(name string, rc config.Remote) string {
+func (c *cmdRemoteList) addrColumnData(_ string, rc config.Remote) string {
 	return rc.Addr
 }
 
-func (c *cmdRemoteList) protocolColumnData(name string, rc config.Remote) string {
+func (c *cmdRemoteList) protocolColumnData(_ string, rc config.Remote) string {
 	return rc.Protocol
 }
 
-func (c *cmdRemoteList) authTypeColumnData(name string, rc config.Remote) string {
+func (c *cmdRemoteList) authTypeColumnData(_ string, rc config.Remote) string {
 	if rc.AuthType == "" {
 		if strings.HasPrefix(rc.Addr, "unix:") {
 			rc.AuthType = "file access"
@@ -823,7 +824,7 @@ func (c *cmdRemoteList) authTypeColumnData(name string, rc config.Remote) string
 	return rc.AuthType
 }
 
-func (c *cmdRemoteList) publicColumnData(name string, rc config.Remote) string {
+func (c *cmdRemoteList) publicColumnData(_ string, rc config.Remote) string {
 	strPublic := i18n.G("NO")
 	if rc.Public {
 		strPublic = i18n.G("YES")
@@ -832,7 +833,7 @@ func (c *cmdRemoteList) publicColumnData(name string, rc config.Remote) string {
 	return strPublic
 }
 
-func (c *cmdRemoteList) staticColumnData(name string, rc config.Remote) string {
+func (c *cmdRemoteList) staticColumnData(_ string, rc config.Remote) string {
 	strStatic := i18n.G("NO")
 	if rc.Static {
 		strStatic = i18n.G("YES")
@@ -841,7 +842,7 @@ func (c *cmdRemoteList) staticColumnData(name string, rc config.Remote) string {
 	return strStatic
 }
 
-func (c *cmdRemoteList) globalColumnData(name string, rc config.Remote) string {
+func (c *cmdRemoteList) globalColumnData(_ string, rc config.Remote) string {
 	strGlobal := i18n.G("NO")
 	if rc.Global {
 		strGlobal = i18n.G("YES")
@@ -855,7 +856,7 @@ func (c *cmdRemoteList) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 0, 0)
+	exit, err := c.global.checkArgs(cmd, args, 0, 0)
 	if exit {
 		return err
 	}
@@ -868,7 +869,6 @@ func (c *cmdRemoteList) Run(cmd *cobra.Command, args []string) error {
 	// List the remotes
 	data := [][]string{}
 	for name, rc := range conf.Remotes {
-
 		line := []string{}
 		for _, column := range columns {
 			line = append(line, column.Data(name, rc))
@@ -904,7 +904,7 @@ func (c *cmdRemoteRename) Command() *cobra.Command {
 
 	cmd.RunE = c.Run
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return c.global.cmpRemoteNames()
 		}
@@ -920,7 +920,7 @@ func (c *cmdRemoteRename) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 2, 2)
+	exit, err := c.global.checkArgs(cmd, args, 2, 2)
 	if exit {
 		return err
 	}
@@ -985,7 +985,7 @@ func (c *cmdRemoteRemove) Command() *cobra.Command {
 
 	cmd.RunE = c.Run
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return c.global.cmpRemoteNames()
 		}
@@ -1001,7 +1001,7 @@ func (c *cmdRemoteRemove) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 1, 1)
+	exit, err := c.global.checkArgs(cmd, args, 1, 1)
 	if exit {
 		return err
 	}
@@ -1021,7 +1021,7 @@ func (c *cmdRemoteRemove) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if conf.DefaultRemote == args[0] {
-		return fmt.Errorf(i18n.G("Can't remove the default remote"))
+		return errors.New(i18n.G("Can't remove the default remote"))
 	}
 
 	delete(conf.Remotes, args[0])
@@ -1050,7 +1050,7 @@ func (c *cmdRemoteSwitch) Command() *cobra.Command {
 
 	cmd.RunE = c.Run
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return c.global.cmpRemoteNames()
 		}
@@ -1066,7 +1066,7 @@ func (c *cmdRemoteSwitch) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 1, 1)
+	exit, err := c.global.checkArgs(cmd, args, 1, 1)
 	if exit {
 		return err
 	}
@@ -1098,7 +1098,7 @@ func (c *cmdRemoteSetURL) Command() *cobra.Command {
 
 	cmd.RunE = c.Run
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return c.global.cmpRemoteNames()
 		}
@@ -1114,7 +1114,7 @@ func (c *cmdRemoteSetURL) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 2, 2)
+	exit, err := c.global.checkArgs(cmd, args, 2, 2)
 	if exit {
 		return err
 	}

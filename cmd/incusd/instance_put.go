@@ -121,7 +121,7 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	architecture, err := osarch.ArchitectureId(configRaw.Architecture)
+	architecture, err := osarch.ArchitectureID(configRaw.Architecture)
 	if err != nil {
 		architecture = 0
 	}

@@ -247,7 +247,7 @@ func (s *OS) GetUnixSocket() string {
 
 func getIdmapset() *idmap.Set {
 	// Try getting the system map.
-	idmapset, err := idmap.NewSetFromSystem("", "root")
+	idmapset, err := idmap.NewSetFromSystem("root")
 	if err != nil && err != idmap.ErrSubidUnsupported {
 		logger.Error("Unable to parse system idmap", logger.Ctx{"err": err})
 		return nil

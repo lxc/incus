@@ -18,6 +18,7 @@ type cmdAdminCluster struct {
 	global *cmdGlobal
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminCluster) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("cluster")
@@ -29,7 +30,8 @@ func (c *cmdAdminCluster) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdAdminCluster) Run(cmd *cobra.Command, args []string) {
+// Run runs the actual command logic.
+func (c *cmdAdminCluster) Run(_ *cobra.Command, args []string) {
 	env := getEnviron()
 	path, _ := exec.LookPath("incusd")
 	if path == "" {
@@ -48,7 +50,7 @@ func (c *cmdAdminCluster) Run(cmd *cobra.Command, args []string) {
 To do so, it's actually part of the "incusd" binary rather than "incus".
 
 You can invoke it through "incusd cluster".`))
-		os.Exit(1)
+		os.Exit(1) // nolint:revive
 	}
 
 	_ = doExec(path, append([]string{"incusd", "admin", "cluster"}, args...), env)

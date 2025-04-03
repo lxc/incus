@@ -5120,7 +5120,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     ResourcesNetworkCardVDPA:
-        description: ResourceNetworkCardVDPA represents the VDPA configuration of the network card
+        description: ResourcesNetworkCardVDPA represents the VDPA configuration of the network card
         properties:
             device:
                 description: Device identifier of the VDPA device

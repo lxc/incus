@@ -82,7 +82,7 @@ func (a sortedAliases) Less(i, j int) bool {
 	}
 
 	isPersonality := func(arch string) bool {
-		archID, err := osarch.ArchitectureId(nativeName)
+		archID, err := osarch.ArchitectureID(nativeName)
 		if err != nil {
 			return false
 		}

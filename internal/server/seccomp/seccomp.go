@@ -627,7 +627,7 @@ type Instance interface {
 	CGroup() (*cgroup.CGroup, error)
 	CurrentIdmap() (*idmap.Set, error)
 	DiskIdmap() (*idmap.Set, error)
-	IdmappedStorage(path string, fstype string) idmap.IdmapStorageType
+	IdmappedStorage(path string, fstype string) idmap.StorageType
 	InsertSeccompUnixDevice(prefix string, m deviceConfig.Device, pid int) error
 }
 
@@ -1914,7 +1914,7 @@ type MountArgs struct {
 	flags     int
 	data      string
 	pid       int
-	idmapType idmap.IdmapStorageType
+	idmapType idmap.StorageType
 	uid       int64
 	gid       int64
 	fsuid     int64
@@ -2052,7 +2052,7 @@ func (s *Server) mountHandleHugetlbfsArgs(c Instance, args *MountArgs, nsuid int
 	}
 
 	args.data = strings.Join(optStrings, ",")
-	args.idmapType = idmap.IdmapStorageNone
+	args.idmapType = idmap.StorageTypeNone
 	return nil
 }
 
@@ -2511,11 +2511,11 @@ func (s *Server) MountSyscallValid(c Instance, args *MountArgs) (bool, string) {
 }
 
 // MountSyscallShift checks whether this mount syscall needs shifting.
-func (s *Server) MountSyscallShift(c Instance, path string, fsType string) idmap.IdmapStorageType {
+func (s *Server) MountSyscallShift(c Instance, path string, fsType string) idmap.StorageType {
 	if util.IsTrue(c.ExpandedConfig()["security.syscalls.intercept.mount.shift"]) {
 		diskIdmap, err := c.DiskIdmap()
 		if err != nil {
-			return idmap.IdmapStorageNone
+			return idmap.StorageTypeNone
 		}
 
 		if diskIdmap == nil {
@@ -2523,7 +2523,7 @@ func (s *Server) MountSyscallShift(c Instance, path string, fsType string) idmap
 		}
 	}
 
-	return idmap.IdmapStorageNone
+	return idmap.StorageTypeNone
 }
 
 var pageSize = 4096

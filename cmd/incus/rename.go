@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -14,6 +15,7 @@ type cmdRename struct {
 	global *cmdGlobal
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRename) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("rename", i18n.G("[<remote>:]<instance> <instance>"))
@@ -22,7 +24,7 @@ func (c *cmdRename) Command() *cobra.Command {
 		`Rename instances`))
 	cmd.RunE = c.Run
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return c.global.cmpInstances(toComplete)
 		}
@@ -33,11 +35,12 @@ func (c *cmdRename) Command() *cobra.Command {
 	return cmd
 }
 
+// Run runs the actual command logic.
 func (c *cmdRename) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 2, 2)
+	exit, err := c.global.checkArgs(cmd, args, 2, 2)
 	if exit {
 		return err
 	}
@@ -56,7 +59,7 @@ func (c *cmdRename) Run(cmd *cobra.Command, args []string) error {
 	if sourceRemote != destRemote {
 		// We just do renames
 		if strings.Contains(args[1], ":") {
-			return fmt.Errorf(i18n.G("Can't specify a different remote for rename"))
+			return errors.New(i18n.G("Can't specify a different remote for rename"))
 		}
 
 		// Don't require the remote to be passed as both source and target

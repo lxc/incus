@@ -139,7 +139,7 @@ func (c *cmdTop) diskUsageColumnData(dd displayData) string {
 func (c *cmdTop) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
-	exit, err := c.global.CheckArgs(cmd, args, 0, 1)
+	exit, err := c.global.checkArgs(cmd, args, 0, 1)
 	if exit {
 		return err
 	}

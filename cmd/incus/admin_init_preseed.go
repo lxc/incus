@@ -7,15 +7,14 @@ import (
 	"io"
 	"os"
 
-	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 )
 
-func (c *cmdAdminInit) RunPreseed(cmd *cobra.Command, args []string, d incus.InstanceServer) (*api.InitPreseed, error) {
+// RunPreseed runs the actual command logic.
+func (c *cmdAdminInit) RunPreseed() (*api.InitPreseed, error) {
 	// Read the YAML
 	bytes, err := io.ReadAll(os.Stdin)
 	if err != nil {

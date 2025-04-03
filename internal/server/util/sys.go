@@ -20,7 +20,7 @@ func GetArchitectures() ([]int, error) {
 		return nil, err
 	}
 
-	architecture, err := osarch.ArchitectureId(architectureName)
+	architecture, err := osarch.ArchitectureID(architectureName)
 	if err != nil {
 		return nil, err
 	}

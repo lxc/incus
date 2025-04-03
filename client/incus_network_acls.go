@@ -85,13 +85,13 @@ func (r *ProtocolIncus) GetNetworkACLLogfile(name string) (io.ReadCloser, error)
 	}
 
 	// Prepare the HTTP request
-	url := fmt.Sprintf("%s/1.0/network-acls/%s/log", r.httpBaseURL.String(), url.PathEscape(name))
-	url, err := r.setQueryAttributes(url)
+	uri := fmt.Sprintf("%s/1.0/network-acls/%s/log", r.httpBaseURL.String(), url.PathEscape(name))
+	uri, err := r.setQueryAttributes(uri)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		return nil, err
 	}

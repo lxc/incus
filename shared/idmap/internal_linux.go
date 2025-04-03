@@ -43,21 +43,21 @@ func getAllXattr(path string) (map[string]string, error) {
 }
 
 // getErrno checks if the Go error is a kernel errno.
-func getErrno(err error) (errno error, iserrno bool) {
+func getErrno(err error) (iserrno bool, errno error) {
 	sysErr, ok := err.(*os.SyscallError)
 	if ok {
-		return sysErr.Err, true
+		return true, sysErr.Err
 	}
 
 	pathErr, ok := err.(*os.PathError)
 	if ok {
-		return pathErr.Err, true
+		return true, pathErr.Err
 	}
 
 	tmpErrno, ok := err.(unix.Errno)
 	if ok {
-		return tmpErrno, true
+		return true, tmpErrno
 	}
 
-	return nil, false
+	return false, nil
 }

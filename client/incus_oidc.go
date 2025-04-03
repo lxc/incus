@@ -47,13 +47,12 @@ func (r *ProtocolIncus) GetOIDCTokens() *oidc.Tokens[*oidc.IDTokenClaims] {
 	return r.oidcClient.tokens
 }
 
-// Custom transport that modifies requests to inject the audience field.
+// oidcTransport is a custom HTTP transport that injects the audience field into requests directed at the device authorization endpoint.
 type oidcTransport struct {
 	deviceAuthorizationEndpoint string
 	audience                    string
 }
 
-// oidcTransport is a custom HTTP transport that injects the audience field into requests directed at the device authorization endpoint.
 // RoundTrip is a method of oidcTransport that modifies the request, adds the audience parameter if appropriate, and sends it along.
 func (o *oidcTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	// Don't modify the request if it's not to the device authorization endpoint, or there are no
@@ -255,12 +254,12 @@ func (o *oidcClient) refresh(issuer string, clientID string) error {
 		return errRefreshAccessToken
 	}
 
-	o.tokens.Token.AccessToken = oauthTokens.AccessToken
+	o.tokens.AccessToken = oauthTokens.AccessToken
 	o.tokens.TokenType = oauthTokens.TokenType
 	o.tokens.Expiry = oauthTokens.Expiry
 
 	if oauthTokens.RefreshToken != "" {
-		o.tokens.Token.RefreshToken = oauthTokens.RefreshToken
+		o.tokens.RefreshToken = oauthTokens.RefreshToken
 	}
 
 	return nil
@@ -312,11 +311,11 @@ func (o *oidcClient) authenticate(issuer string, clientID string, audience strin
 
 	o.tokens.Expiry = time.Now().Add(time.Duration(token.ExpiresIn))
 	o.tokens.IDToken = token.IDToken
-	o.tokens.Token.AccessToken = token.AccessToken
+	o.tokens.AccessToken = token.AccessToken
 	o.tokens.TokenType = token.TokenType
 
 	if token.RefreshToken != "" {
-		o.tokens.Token.RefreshToken = token.RefreshToken
+		o.tokens.RefreshToken = token.RefreshToken
 	}
 
 	return nil

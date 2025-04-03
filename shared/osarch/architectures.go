@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// nolint:revive
 const (
 	ARCH_UNKNOWN                     = 0
 	ARCH_32BIT_INTEL_X86             = 1
@@ -94,28 +95,31 @@ var architectureSupportedPersonalities = map[int][]int{
 	ARCH_64BIT_LOONGARCH:             {},
 }
 
+// ArchitectureDefault is the fallback architecture when the local architecture can't be properly detected.
 const ArchitectureDefault = "x86_64"
 
+// ArchitectureName converts an architecture ID to its name.
 func ArchitectureName(arch int) (string, error) {
-	arch_name, exists := architectureNames[arch]
+	archName, exists := architectureNames[arch]
 	if exists {
-		return arch_name, nil
+		return archName, nil
 	}
 
 	return "unknown", fmt.Errorf("Architecture isn't supported: %d", arch)
 }
 
-func ArchitectureId(arch string) (int, error) {
-	for arch_id, arch_name := range architectureNames {
-		if arch_name == arch {
-			return arch_id, nil
+// ArchitectureID converts an architecture name to its ID.
+func ArchitectureID(arch string) (int, error) {
+	for archID, archName := range architectureNames {
+		if archName == arch {
+			return archID, nil
 		}
 	}
 
-	for arch_id, arch_aliases := range architectureAliases {
-		for _, arch_name := range arch_aliases {
-			if arch_name == arch {
-				return arch_id, nil
+	for archID, archAliases := range architectureAliases {
+		for _, archName := range archAliases {
+			if archName == arch {
+				return archID, nil
 			}
 		}
 	}
@@ -123,15 +127,17 @@ func ArchitectureId(arch string) (int, error) {
 	return ARCH_UNKNOWN, fmt.Errorf("Architecture isn't supported: %s", arch)
 }
 
+// ArchitecturePersonality returns the kernel personality name for the architecture.
 func ArchitecturePersonality(arch int) (string, error) {
-	arch_personality, exists := architecturePersonalities[arch]
+	archPersonality, exists := architecturePersonalities[arch]
 	if exists {
-		return arch_personality, nil
+		return archPersonality, nil
 	}
 
 	return "", fmt.Errorf("Architecture isn't supported: %d", arch)
 }
 
+// ArchitecturePersonalities returns the list of personalities for the provided architecture.
 func ArchitecturePersonalities(arch int) ([]int, error) {
 	personalities, exists := architectureSupportedPersonalities[arch]
 	if exists {
@@ -148,7 +154,7 @@ func ArchitectureGetLocalID() (int, error) {
 		return -1, err
 	}
 
-	id, err := ArchitectureId(name)
+	id, err := ArchitectureID(name)
 	if err != nil {
 		return -1, err
 	}
