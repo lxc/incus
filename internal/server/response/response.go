@@ -373,7 +373,7 @@ func (r *errorResponse) Render(w http.ResponseWriter) error {
 		w.WriteHeader(r.code) // Set the error code in the HTTP header response.
 	}
 
-	_, err = fmt.Fprintln(w, buf.String())
+	_, err = fmt.Fprint(w, buf.String())
 
 	return err
 }
