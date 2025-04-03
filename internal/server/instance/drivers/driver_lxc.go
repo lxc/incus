@@ -1348,7 +1348,7 @@ var (
 )
 
 // IdmappedStorage determines if the container can use idmapped mounts.
-func (d *lxc) IdmappedStorage(path string, fstype string) idmap.StorageType {
+func (d *lxc) IdmappedStorage(fspath string, fstype string) idmap.StorageType {
 	var mode idmap.StorageType = idmap.StorageTypeNone
 	var bindMount bool = fstype == "none" || fstype == ""
 
@@ -1359,9 +1359,9 @@ func (d *lxc) IdmappedStorage(path string, fstype string) idmap.StorageType {
 	buf := &unix.Statfs_t{}
 
 	if bindMount {
-		err := unix.Statfs(path, buf)
+		err := unix.Statfs(fspath, buf)
 		if err != nil {
-			d.logger.Error("Failed to statfs", logger.Ctx{"path": path, "err": err})
+			d.logger.Error("Failed to statfs", logger.Ctx{"path": fspath, "err": err})
 			return mode
 		}
 	}
@@ -1383,7 +1383,7 @@ func (d *lxc) IdmappedStorage(path string, fstype string) idmap.StorageType {
 		}
 	}
 
-	if idmap.CanIdmapMount(path, fstype) {
+	if idmap.CanIdmapMount(fspath, fstype) {
 		// Use idmapped mounts.
 		mode = idmap.StorageTypeIdmapped
 	}
