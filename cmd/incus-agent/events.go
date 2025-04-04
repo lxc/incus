@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/lxc/incus/v6/internal/server/events"
 	"github.com/lxc/incus/v6/internal/server/response"
@@ -147,7 +148,15 @@ func eventsProcess(event api.Event) {
 	// Attempt to perform the mount.
 	mntSource := fmt.Sprintf("incus_%s", e.Name)
 
-	err = tryMountShared(mntSource, e.Config["path"], "virtiofs", nil)
+	for i := 0; i < 20; i++ {
+		time.Sleep(500 * time.Millisecond)
+
+		err = tryMountShared(mntSource, e.Config["path"], "virtiofs", nil)
+		if err == nil {
+			break
+		}
+	}
+
 	if err != nil {
 		logger.Infof("Failed to mount hotplug %q (Type: %q) to %q", mntSource, "virtiofs", e.Config["path"])
 		return
