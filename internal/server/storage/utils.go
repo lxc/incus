@@ -785,7 +785,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 }
 
 // InstanceContentType returns the instance's content type.
-func InstanceContentType(inst instance.Instance) drivers.ContentType {
+func InstanceContentType(inst instance.ConfigReader) drivers.ContentType {
 	contentType := drivers.ContentTypeFS
 	if inst.Type() == instancetype.VM {
 		contentType = drivers.ContentTypeBlock
