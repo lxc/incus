@@ -380,30 +380,32 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	route := &ip.Route{
-		DevName: iface,
-		Route:   "default",
-		Via:     lease.Offer.Router()[0].String(),
-		Family:  ip.FamilyV4,
-	}
+	if lease.Offer.Options.Has(dhcpv4.OptionClasslessStaticRoute) {
+		for _, staticRoute := range lease.Offer.ClasslessStaticRoute() {
+			route := &ip.Route{
+				DevName: iface,
+				Route:   staticRoute.Dest.String(),
+				Via:     staticRoute.Router.String(),
+				Family:  ip.FamilyV4,
+			}
 
-	err = route.Add()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't add default route to %q\n", iface)
-		return nil
-	}
-
-	for _, staticRoute := range lease.Offer.ClasslessStaticRoute() {
+			err = route.Add()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't add classless static route to %q: %v\n", iface, err)
+				return nil
+			}
+		}
+	} else {
 		route := &ip.Route{
 			DevName: iface,
-			Route:   staticRoute.Dest.String(),
-			Via:     staticRoute.Router.String(),
+			Route:   "default",
+			Via:     lease.Offer.Router()[0].String(),
 			Family:  ip.FamilyV4,
 		}
 
 		err = route.Add()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't add classless static route to %q: %v\n", iface, err)
+			fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't add default route to %q\n", iface)
 			return nil
 		}
 	}
