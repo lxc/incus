@@ -64,6 +64,7 @@ type ConfigReader interface {
 	Type() instancetype.Type
 	Architecture() int
 	ID() int
+	Name() string
 
 	ExpandedConfig() map[string]string
 	ExpandedDevices() deviceConfig.Devices
@@ -133,7 +134,6 @@ type Instance interface {
 
 	// Properties.
 	Location() string
-	Name() string
 	CloudInitID() string
 	Description() string
 	CreationDate() time.Time
