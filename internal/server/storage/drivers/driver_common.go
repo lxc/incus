@@ -577,3 +577,8 @@ func (d *common) filesystemFreeze(path string) (func() error, error) {
 
 	return unfreezeFS, nil
 }
+
+// CacheVolumeSnapshots causes snapshot data to be cached for later use (for bulk queries).
+func (d *common) CacheVolumeSnapshots(vol Volume) error {
+	return nil
+}
