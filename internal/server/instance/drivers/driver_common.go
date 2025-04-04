@@ -352,6 +352,17 @@ func (d *common) Snapshots() ([]instance.Instance, error) {
 		return nil, err
 	}
 
+	// Allow storage to pre-fetch snapshot details using bulk queries.
+	pool, err := d.getStoragePool()
+	if err != nil {
+		return nil, err
+	}
+
+	err = pool.CacheInstanceSnapshots(d)
+	if err != nil {
+		return nil, err
+	}
+
 	snapshots := make([]instance.Instance, 0, len(snapshotArgs))
 	for _, snapshotArg := range snapshotArgs {
 		// Populate profile info that was already loaded.
@@ -362,6 +373,18 @@ func (d *common) Snapshots() ([]instance.Instance, error) {
 			return nil, err
 		}
 
+		// Set the storage pool to the pre-loaded one (for caching).
+		snapLXC, ok := snapInst.(*lxc)
+		if ok {
+			snapLXC.storagePool = pool
+		}
+
+		snapQEMU, ok := snapInst.(*qemu)
+		if ok {
+			snapQEMU.storagePool = pool
+		}
+
+		// Pass through the current operation.
 		snapInst.SetOperation(d.op)
 
 		snapshots = append(snapshots, instance.Instance(snapInst))
