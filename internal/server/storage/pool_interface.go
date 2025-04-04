@@ -88,6 +88,7 @@ type Pool interface {
 	UnmountInstance(inst instance.Instance, op *operations.Operation) error
 
 	// Instance snapshots.
+	CacheInstanceSnapshots(inst instance.ConfigReader) error
 	CreateInstanceSnapshot(inst instance.Instance, src instance.Instance, op *operations.Operation) error
 	RenameInstanceSnapshot(inst instance.Instance, newName string, op *operations.Operation) error
 	DeleteInstanceSnapshot(inst instance.Instance, op *operations.Operation) error
