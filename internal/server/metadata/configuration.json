@@ -2189,7 +2189,7 @@
 				"keys": [
 					{
 						"backups.compression_algorithm": {
-							"longdesc": "Specify which compression algorithm to use for backups in this project.\nPossible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.",
+							"longdesc": "Specify which compression algorithm to use for backups in this project.\nPossible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.",
 							"shortdesc": "Compression algorithm to use for backups",
 							"type": "string"
 						}
@@ -2210,7 +2210,7 @@
 					},
 					{
 						"images.compression_algorithm": {
-							"longdesc": "Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.",
+							"longdesc": "Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.",
 							"shortdesc": "Compression algorithm to use for new images in the project",
 							"type": "string"
 						}
@@ -2626,7 +2626,7 @@
 					{
 						"images.compression_algorithm": {
 							"defaultdesc": "`gzip`",
-							"longdesc": "Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.",
+							"longdesc": "Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.",
 							"scope": "global",
 							"shortdesc": "Compression algorithm to use for new images",
 							"type": "string"
@@ -2734,7 +2734,7 @@
 					{
 						"backups.compression_algorithm": {
 							"defaultdesc": "`gzip`",
-							"longdesc": "Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.",
+							"longdesc": "Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.",
 							"scope": "global",
 							"shortdesc": "Compression algorithm to use for backups",
 							"type": "string"
