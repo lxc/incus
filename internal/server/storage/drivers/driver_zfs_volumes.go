@@ -1656,7 +1656,6 @@ func (d *zfs) CacheVolumeSnapshots(vol Volume) error {
 		d.cache = map[string]map[string]int64{}
 	}
 
-
 	// Get the usage data.
 	out, err := subprocess.RunCommand("zfs", "list", "-H", "-p", "-o", "name,used,referenced", "-t", "snapshot", d.dataset(vol, false))
 	if err != nil {
@@ -1685,7 +1684,7 @@ func (d *zfs) CacheVolumeSnapshots(vol Volume) error {
 		}
 
 		d.cache[fields[0]] = map[string]int64{
-			"used": usedInt,
+			"used":       usedInt,
 			"referenced": referencedInt,
 		}
 	}

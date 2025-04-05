@@ -118,7 +118,8 @@ type Instance interface {
 	Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, stderr *os.File) (Cmd, error)
 
 	// Status
-	Render(options ...func(response any) error) (any, any, error)
+	Render() (any, any, error)
+	RenderWithUsage() (any, any, error)
 	RenderFull(hostInterfaces []net.Interface) (*api.InstanceFull, any, error)
 	RenderState(hostInterfaces []net.Interface) (*api.InstanceState, error)
 	IsRunning() bool

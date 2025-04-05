@@ -8012,8 +8012,38 @@ func (d *qemu) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, s
 	return instCmd, nil
 }
 
+// RenderWithUsage renders the API response including disk usage.
+func (d *qemu) RenderWithUsage() (any, any, error) {
+	resp, etag, err := d.Render()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Currently only snapshot data needs usage added.
+	snapResp, ok := resp.(*api.InstanceSnapshot)
+	if !ok {
+		return resp, etag, nil
+	}
+
+	pool, err := d.getStoragePool()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// It is important that the snapshot not be mounted here as mounting a snapshot can trigger a very
+	// expensive filesystem UUID regeneration, so we rely on the driver implementation to get the info
+	// we are requesting as cheaply as possible.
+	volumeState, err := pool.GetInstanceUsage(d)
+	if err != nil {
+		return resp, etag, nil
+	}
+
+	snapResp.Size = volumeState.Used
+	return snapResp, etag, nil
+}
+
 // Render returns info about the instance.
-func (d *qemu) Render(options ...func(response any) error) (any, any, error) {
+func (d *qemu) Render() (any, any, error) {
 	profileNames := make([]string, 0, len(d.profiles))
 	for _, profile := range d.profiles {
 		profileNames = append(profileNames, profile.Name)
@@ -8037,13 +8067,6 @@ func (d *qemu) Render(options ...func(response any) error) (any, any, error) {
 		snapState.Ephemeral = d.ephemeral
 		snapState.Profiles = profileNames
 		snapState.ExpiresAt = d.expiryDate
-
-		for _, option := range options {
-			err := option(&snapState)
-			if err != nil {
-				return nil, nil, err
-			}
-		}
 
 		return &snapState, d.ETag(), nil
 	}
@@ -8070,13 +8093,6 @@ func (d *qemu) Render(options ...func(response any) error) (any, any, error) {
 	instState.Profiles = profileNames
 	instState.Stateful = d.stateful
 	instState.Project = d.project.Name
-
-	for _, option := range options {
-		err := option(&instState)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
 
 	return &instState, d.ETag(), nil
 }
