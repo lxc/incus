@@ -7428,7 +7428,7 @@ func (d *lxc) diskState() map[string]api.InstanceStateDisk {
 		var usage *storagePools.VolumeUsage
 
 		if dev.Config["path"] == "/" {
-			pool, err := storagePools.LoadByInstance(d.state, d)
+			pool, err := d.getStoragePool()
 			if err != nil {
 				d.logger.Error("Error loading storage pool", logger.Ctx{"err": err})
 				continue
