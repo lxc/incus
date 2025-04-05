@@ -2586,7 +2586,7 @@ func (d *lxc) Start(stateful bool) error {
 
 	_, ok := envDict["PATH"]
 	if !ok {
-		envDict["PATH"] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+		envDict["PATH"] = os.Getenv("PATH")
 	}
 
 	env := make([]string, 0, len(envDict))
