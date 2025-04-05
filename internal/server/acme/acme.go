@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
+	"path/filepath"
 	"slices"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/subprocess"
-	localtls "github.com/lxc/incus/v6/shared/tls"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -152,13 +152,24 @@ func UpdateCertificate(s *state.State, challengeType string, clustered bool, dom
 		return nil, fmt.Errorf("Failed to run lego command: %w", err)
 	}
 
-	certInfo, err = localtls.KeyPairAndCA(tmpDir+"/certificates", domain, localtls.CertServer, true)
+	// Load the generated certificate.
+	certData, err := os.ReadFile(filepath.Join(tmpDir, "certificates", fmt.Sprintf("%s.crt", domain)))
 	if err != nil {
-		return nil, fmt.Errorf("Failed to load certificate and key file: %w", err)
+		return nil, err
+	}
+
+	caData, err := os.ReadFile(filepath.Join(tmpDir, "certificates", fmt.Sprintf("%s.issuer.crt", domain)))
+	if err != nil {
+		return nil, err
+	}
+
+	keyData, err := os.ReadFile(filepath.Join(tmpDir, "certificates", fmt.Sprintf("%s.key", domain)))
+	if err != nil {
+		return nil, err
 	}
 
 	return &CertKeyPair{
-		Certificate: certInfo.PublicKey(),
-		PrivateKey:  certInfo.PrivateKey(),
+		Certificate: append(certData, caData...),
+		PrivateKey:  keyData,
 	}, nil
 }
