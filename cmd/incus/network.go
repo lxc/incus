@@ -106,6 +106,10 @@ func (c *cmdNetwork) Command() *cobra.Command {
 	networkACLCmd := cmdNetworkACL{global: c.global}
 	cmd.AddCommand(networkACLCmd.Command())
 
+	// Address set
+	networkAddressSetCmd := cmdNetworkAddressSet{global: c.global}
+	cmd.AddCommand(networkAddressSetCmd.Command())
+
 	// Forward
 	networkForwardCmd := cmdNetworkForward{global: c.global}
 	cmd.AddCommand(networkForwardCmd.Command())

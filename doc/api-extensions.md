@@ -2775,3 +2775,7 @@ This introduces a set of new configuration options on the container to configure
 * `oci.gid`
 
 Those are initialized at creation time using the values from the OCI image.
+
+## `network_address_set`
+
+This adds the concept of network address sets to API under the API endpoint prefix `/1.0/network-address-sets`.

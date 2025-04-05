@@ -1166,6 +1166,17 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 			count--
 		}
 
+		// Delete network address sets.
+		for _, networkAddressSetName := range entries["network-address-sets"] {
+			err := target.DeleteNetworkAddressSet(networkAddressSetName)
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			// Done deleting the network address set.
+			count--
+		}
+
 		// Delete network zones.
 		for _, networkZoneName := range entries["network-zones"] {
 			err := target.DeleteNetworkZone(networkZoneName)

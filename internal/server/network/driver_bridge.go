@@ -29,6 +29,7 @@ import (
 	firewallDrivers "github.com/lxc/incus/v6/internal/server/firewall/drivers"
 	"github.com/lxc/incus/v6/internal/server/ip"
 	"github.com/lxc/incus/v6/internal/server/network/acl"
+	addressset "github.com/lxc/incus/v6/internal/server/network/address-set"
 	"github.com/lxc/incus/v6/internal/server/project"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	"github.com/lxc/incus/v6/internal/server/warnings"
@@ -1475,9 +1476,26 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 	// Setup firewall.
 	n.logger.Debug("Setting up firewall")
+
+	if n.state.Firewall.String() == "nftables" {
+		n.logger.Debug("Address set feature enabled for nftables backend")
+		fwOpts.AddressSet = true
+	}
+
 	err = n.state.Firewall.NetworkSetup(n.name, fwOpts)
 	if err != nil {
 		return fmt.Errorf("Failed to setup firewall: %w", err)
+	}
+
+	// Setup named sets for nft firewall.
+	// We apply all available address sets to avoid missing some.
+	if fwOpts.AddressSet {
+		n.logger.Debug("Applying up firewall address sets")
+		aclNames := util.SplitNTrimSpace(n.config["security.acls"], ",", -1, false)
+		err = addressset.FirewallApplyAddressSetsForACLRules(n.state, "inet", n.Project(), aclNames)
+		if err != nil {
+			return err
+		}
 	}
 
 	if fwOpts.ACL {
