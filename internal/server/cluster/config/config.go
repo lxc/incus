@@ -441,7 +441,7 @@ var ConfigSchema = config.Schema{
 	"authorization.scriptlet": {Validator: validate.Optional(scriptletLoad.AuthorizationValidate)},
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=backups.compression_algorithm)
-	// Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.
+	// Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.
 	// ---
 	//  type: string
 	//  scope: global
@@ -674,7 +674,7 @@ var ConfigSchema = config.Schema{
 	"images.auto_update_interval": {Type: config.Int64, Default: "6"},
 
 	// gendoc:generate(entity=server, group=images, key=images.compression_algorithm)
-	// Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.
+	// Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.
 	// ---
 	//  type: string
 	//  scope: global
