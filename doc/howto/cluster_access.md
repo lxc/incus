@@ -89,3 +89,11 @@ Traffic will then get balanced between all servers and as soon as a server goes 
 ```{note}
 To minimize fallback delay, one can make use of BFD alongside BGP to get sub-1s fallback time.
 ```
+
+### mDNS in L2 Network
+If you are running in an L2 network (for instance, in a typical home network) you can use mDNS
+and publish the same `.local` domain (something like `incus.local`) from multiple hosts.
+
+More than one host may send a reply in response to the  multicast request, and the client
+will receive multiple mDNS response packets - this way, at the cost of packet flood,
+you get a simple way to ensure you reach *some* cluster node.

@@ -164,6 +164,7 @@ macOS
 macvlan
 Makefile
 manpages
+mDNS
 Mbit
 MiB
 Mibit
