@@ -1340,7 +1340,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 	projectConfigKeys := map[string]func(value string) error{
 		// gendoc:generate(entity=project, group=specific, key=backups.compression_algorithm)
 		// Specify which compression algorithm to use for backups in this project.
-		// Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.
+		// Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.
 		// ---
 		//  type: string
 		//  shortdesc: Compression algorithm to use for backups
@@ -1416,7 +1416,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		"images.auto_update_interval": validate.Optional(validate.IsInt64),
 
 		// gendoc:generate(entity=project, group=specific, key=images.compression_algorithm)
-		// Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.
+		// Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.
 		// ---
 		//  type: string
 		//  shortdesc: Compression algorithm to use for new images in the project

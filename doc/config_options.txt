@@ -2066,7 +2066,7 @@ When set to `allow`, low-level VM options like {config:option}`instance-raw:raw.
 :shortdesc: "Compression algorithm to use for backups"
 :type: "string"
 Specify which compression algorithm to use for backups in this project.
-Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.
+Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.
 ```
 
 ```{config:option} images.auto_update_cached project-specific
@@ -2085,7 +2085,7 @@ To disable looking for updates to cached images, set this option to `0`.
 ```{config:option} images.compression_algorithm project-specific
 :shortdesc: "Compression algorithm to use for new images in the project"
 :type: "string"
-Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.
+Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.
 ```
 
 ```{config:option} images.default_architecture project-specific
@@ -2452,7 +2452,7 @@ To disable looking for updates to cached images, set this option to `0`.
 :scope: "global"
 :shortdesc: "Compression algorithm to use for new images"
 :type: "string"
-Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.
+Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.
 ```
 
 ```{config:option} images.default_architecture server-images
@@ -2545,7 +2545,7 @@ When using scriptlet-based authorization, this option stores the scriptlet.
 :scope: "global"
 :shortdesc: "Compression algorithm to use for backups"
 :type: "string"
-Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.
+Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.
 ```
 
 ```{config:option} instances.lxcfs.per_instance server-miscellaneous
