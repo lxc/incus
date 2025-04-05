@@ -969,12 +969,9 @@ func operationWaitGet(d *Daemon, r *http.Request) response.Response {
 			}
 
 			// Wait for the operation.
-			err = op.Wait(ctx)
-			if err != nil {
-				_ = response.SmartError(err).Render(w)
-				return nil
-			}
+			_ = op.Wait(ctx)
 
+			// Render the current state.
 			_, body, err := op.Render()
 			if err != nil {
 				_ = response.SmartError(err).Render(w)
