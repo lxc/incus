@@ -202,6 +202,11 @@ func (b *mockBackend) UnmountInstance(inst instance.Instance, op *operations.Ope
 	return nil
 }
 
+// CacheInstanceSnapshots is used to pre-fetch snapshot information ahead of bulk queries.
+func (b *mockBackend) CacheInstanceSnapshots(inst instance.ConfigReader) error {
+	return nil
+}
+
 func (b *mockBackend) CreateInstanceSnapshot(i instance.Instance, src instance.Instance, op *operations.Operation) error {
 	return nil
 }

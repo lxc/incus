@@ -1,6 +1,6 @@
 // Package response contains helpers for rendering HTTP responses.
 //
-//nolint:deadcode,unused
+//nolint:unused
 package response
 
 import (

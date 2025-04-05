@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/migration"
@@ -57,6 +58,10 @@ var zfsDefaultSettings = map[string]string{
 
 type zfs struct {
 	common
+
+	// Temporary cache (typically lives for the duration of a query).
+	cache   map[string]map[string]int64
+	cacheMu sync.Mutex
 }
 
 // load is used to run one-time action per-driver rather than per-pool.

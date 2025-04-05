@@ -23,7 +23,6 @@ import (
 	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/internal/server/state"
-	storagePools "github.com/lxc/incus/v6/internal/server/storage"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
@@ -190,7 +189,7 @@ func instanceSnapshotsGet(d *Daemon, r *http.Request) response.Response {
 		}
 
 		for _, snap := range snaps {
-			render, _, err := snap.Render(storagePools.RenderSnapshotUsage(s, snap))
+			render, _, err := snap.RenderWithUsage()
 			if err != nil {
 				continue
 			}
@@ -586,7 +585,7 @@ func snapshotPut(s *state.State, r *http.Request, snapInst instance.Instance) re
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func snapshotGet(s *state.State, snapInst instance.Instance) response.Response {
-	render, _, err := snapInst.Render(storagePools.RenderSnapshotUsage(s, snapInst))
+	render, _, err := snapInst.RenderWithUsage()
 	if err != nil {
 		return response.SmartError(err)
 	}
