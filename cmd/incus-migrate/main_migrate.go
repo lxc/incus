@@ -37,7 +37,7 @@ type cmdMigrate struct {
 	flagRsyncArgs string
 }
 
-func (c *cmdMigrate) Command() *cobra.Command {
+func (c *cmdMigrate) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "incus-migrate"
 	cmd.Short = "Physical to instance migration tool"
@@ -53,7 +53,7 @@ func (c *cmdMigrate) Command() *cobra.Command {
 
   The same set of options as ` + "`incus launch`" + ` are also supported.
 `
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().StringVar(&c.flagRsyncArgs, "rsync-args", "", "Extra arguments to pass to rsync"+"``")
 
 	return cmd
@@ -67,7 +67,7 @@ type cmdMigrateData struct {
 	Project      string
 }
 
-func (c *cmdMigrateData) Render() string {
+func (c *cmdMigrateData) render() string {
 	data := struct {
 		Name         string            `yaml:"Name"`
 		Project      string            `yaml:"Project"`
@@ -222,7 +222,8 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 	var keyPath string
 	var token string
 
-	if authMethod == authMethodTLSCertificate {
+	switch authMethod {
+	case authMethodTLSCertificate:
 		certPath, err = c.global.asker.AskString("Please provide the certificate path: ", "", func(path string) error {
 			if !util.PathExists(path) {
 				return errors.New("File does not exist")
@@ -244,7 +245,8 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 		if err != nil {
 			return nil, "", err
 		}
-	} else if authMethod == authMethodTLSCertificateToken {
+
+	case authMethodTLSCertificateToken:
 		token, err = c.global.asker.AskString("Please provide the certificate token: ", "", func(token string) error {
 			_, err := localtls.CertificateTokenDecode(token)
 			if err != nil {
@@ -268,7 +270,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 	return c.connectTarget(serverURL, certPath, keyPath, authType, token)
 }
 
-func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData, error) {
+func (c *cmdMigrate) runInteractive(server incus.InstanceServer) (cmdMigrateData, error) {
 	var err error
 
 	config := cmdMigrateData{}
@@ -289,9 +291,11 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 		return cmdMigrateData{}, err
 	}
 
-	if instanceType == 1 {
+	switch instanceType {
+	case 1:
 		config.InstanceArgs.Type = api.InstanceTypeContainer
-	} else if instanceType == 2 {
+
+	case 2:
 		config.InstanceArgs.Type = api.InstanceTypeVM
 	}
 
@@ -439,7 +443,7 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 	for {
 		fmt.Println("\nInstance to be created:")
 
-		scanner := bufio.NewScanner(strings.NewReader(config.Render()))
+		scanner := bufio.NewScanner(strings.NewReader(config.render()))
 		for scanner.Scan() {
 			fmt.Printf("  %s\n", scanner.Text())
 		}
@@ -478,7 +482,7 @@ Additional overrides can be applied at this stage:
 	}
 }
 
-func (c *cmdMigrate) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdMigrate) run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	if os.Geteuid() != 0 {
 		return fmt.Errorf("This tool must be run as root")
@@ -518,7 +522,7 @@ func (c *cmdMigrate) Run(cmd *cobra.Command, args []string) error {
 		defer func() { _ = server.DeleteCertificate(clientFingerprint) }()
 	}
 
-	config, err := c.RunInteractive(server)
+	config, err := c.runInteractive(server)
 	if err != nil {
 		return err
 	}
@@ -651,8 +655,8 @@ func (c *cmdMigrate) Run(cmd *cobra.Command, args []string) error {
 
 	config.InstanceArgs.Architecture = architectureName
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Create the instance
 	op, err := server.CreateInstance(config.InstanceArgs)
@@ -660,7 +664,7 @@ func (c *cmdMigrate) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		_, _ = server.DeleteInstance(config.InstanceArgs.Name)
 	})
 
@@ -677,7 +681,7 @@ func (c *cmdMigrate) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	progress.Done(fmt.Sprintf("Instance %s successfully created", config.InstanceArgs.Name))
-	revert.Success()
+	reverter.Success()
 
 	return nil
 }
