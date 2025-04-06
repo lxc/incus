@@ -54,7 +54,7 @@ func (c *cmdMigrate) command() *cobra.Command {
   The same set of options as ` + "`incus launch`" + ` are also supported.
 `
 	cmd.RunE = c.run
-	cmd.Flags().StringVar(&c.flagRsyncArgs, "rsync-args", "", "Extra arguments to pass to rsync"+"``")
+	cmd.Flags().StringVar(&c.flagRsyncArgs, "rsync-args", "", "Extra arguments to pass to rsync (for file transfers)"+"``")
 
 	return cmd
 }
