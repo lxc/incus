@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -137,7 +138,7 @@ func transferRootfs(ctx context.Context, dst incus.InstanceServer, op incus.Oper
 	}
 
 	if !msg.GetSuccess() {
-		return fmt.Errorf(msg.GetMessage())
+		return errors.New(msg.GetMessage())
 	}
 
 	return nil
@@ -150,7 +151,7 @@ func (m *cmdMigrate) connectLocal() (incus.InstanceServer, error) {
 	return incus.ConnectIncusUnix("", &args)
 }
 
-func (m *cmdMigrate) connectTarget(url string, certPath string, keyPath string, authType string, token string) (incus.InstanceServer, string, error) {
+func (m *cmdMigrate) connectTarget(uri string, certPath string, keyPath string, authType string, token string) (incus.InstanceServer, string, error) {
 	args := incus.ConnectionArgs{
 		AuthType: authType,
 	}
@@ -199,12 +200,12 @@ func (m *cmdMigrate) connectTarget(url string, certPath string, keyPath string, 
 
 	// Attempt to connect using the system CA
 	args.UserAgent = fmt.Sprintf("LXC-MIGRATE %s", version.Version)
-	c, err := incus.ConnectIncus(url, &args)
+	c, err := incus.ConnectIncus(uri, &args)
 
 	var certificate *x509.Certificate
 	if err != nil {
 		// Failed to connect using the system CA, so retrieve the remote certificate
-		certificate, err = localtls.GetRemoteCertificate(url, args.UserAgent)
+		certificate, err = localtls.GetRemoteCertificate(uri, args.UserAgent)
 		if err != nil {
 			return nil, "", err
 		}
@@ -216,7 +217,7 @@ func (m *cmdMigrate) connectTarget(url string, certPath string, keyPath string, 
 		args.TLSServerCert = string(serverCrt)
 
 		// Setup a new connection, this time with the remote certificate
-		c, err = incus.ConnectIncus(url, &args)
+		c, err = incus.ConnectIncus(uri, &args)
 		if err != nil {
 			return nil, "", err
 		}
@@ -304,23 +305,23 @@ func setupSource(path string, mounts []string) error {
 }
 
 func parseURL(URL string) (string, error) {
-	u, err := url.Parse(URL)
+	uri, err := url.Parse(URL)
 	if err != nil {
 		return "", err
 	}
 
 	// Create a URL with scheme and hostname since it wasn't provided
-	if u.Scheme == "" && u.Host == "" && u.Path != "" {
-		u, err = url.Parse(fmt.Sprintf("https://%s", u.Path))
+	if uri.Scheme == "" && uri.Host == "" && uri.Path != "" {
+		uri, err = url.Parse(fmt.Sprintf("https://%s", uri.Path))
 		if err != nil {
 			return "", err
 		}
 	}
 
 	// If no port was provided, use default port
-	if u.Port() == "" {
-		u.Host = fmt.Sprintf("%s:%d", u.Hostname(), ports.HTTPSDefaultPort)
+	if uri.Port() == "" {
+		uri.Host = fmt.Sprintf("%s:%d", uri.Hostname(), ports.HTTPSDefaultPort)
 	}
 
-	return u.String(), nil
+	return uri.String(), nil
 }
