@@ -485,12 +485,12 @@ Additional overrides can be applied at this stage:
 func (c *cmdMigrate) run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	if os.Geteuid() != 0 {
-		return fmt.Errorf("This tool must be run as root")
+		return errors.New("This tool must be run as root")
 	}
 
 	_, err := exec.LookPath("rsync")
 	if err != nil {
-		return err
+		return errors.New("Unable to find required command \"rsync\"")
 	}
 
 	// Server
@@ -591,6 +591,12 @@ func (c *cmdMigrate) run(cmd *cobra.Command, args []string) error {
 	} else {
 		_, ext, convCmd, _ := archive.DetectCompression(config.SourcePath)
 		if ext == ".qcow2" || ext == ".vmdk" {
+			// COnfirm the command is available.
+			_, err := exec.LookPath(convCmd[0])
+			if err != nil {
+				return fmt.Errorf("Unable to find required command %q", convCmd[0])
+			}
+
 			destImg := filepath.Join(path, "converted-raw-image.img")
 
 			cmd := []string{
@@ -629,7 +635,7 @@ func (c *cmdMigrate) run(cmd *cobra.Command, args []string) error {
 		fullPath = path
 		target := filepath.Join(path, "root.img")
 
-		err := os.WriteFile(target, nil, 0o644)
+		err = os.WriteFile(target, nil, 0o644)
 		if err != nil {
 			return fmt.Errorf("Failed to create %q: %w", target, err)
 		}
