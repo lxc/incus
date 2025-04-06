@@ -286,7 +286,7 @@ func (c *cmdMigrate) runInteractive(server incus.InstanceServer) (cmdMigrateData
 	config.InstanceArgs.Devices = map[string]map[string]string{}
 
 	// Provide instance type
-	instanceType, err := c.global.asker.AskInt("Would you like to create a container (1) or virtual-machine (2)?: ", 1, 2, "1", nil)
+	instanceType, err := c.global.asker.AskInt("Would you like to create a container (1) or virtual-machine (2)?: ", 1, 2, "", nil)
 	if err != nil {
 		return cmdMigrateData{}, err
 	}
