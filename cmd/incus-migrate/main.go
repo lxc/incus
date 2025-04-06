@@ -20,7 +20,7 @@ type cmdGlobal struct {
 func main() {
 	// migrate command (main)
 	migrateCmd := cmdMigrate{}
-	app := migrateCmd.Command()
+	app := migrateCmd.command()
 	app.SilenceUsage = true
 	app.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}
 
@@ -39,7 +39,7 @@ func main() {
 
 	// netcat sub-command
 	netcatCmd := cmdNetcat{global: &globalCmd}
-	app.AddCommand(netcatCmd.Command())
+	app.AddCommand(netcatCmd.command())
 
 	// Run the main command and handle errors
 	err := app.Execute()
