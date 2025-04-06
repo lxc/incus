@@ -222,15 +222,18 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operatio
 		return nil, nil, fmt.Errorf("Failed to expand config: %w", err)
 	}
 
-	// Validate expanded config (allows mixed instance types for profiles).
-	err = instance.ValidConfig(s.OS, d.expandedConfig, true, instancetype.Any)
-	if err != nil {
-		return nil, nil, fmt.Errorf("Invalid config: %w", err)
-	}
+	// When not a snapshot, perform full validation.
+	if !args.Snapshot {
+		// Validate expanded config (allows mixed instance types for profiles).
+		err = instance.ValidConfig(s.OS, d.expandedConfig, true, instancetype.Any)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Invalid config: %w", err)
+		}
 
-	err = instance.ValidDevices(s, d.project, d.Type(), d.localDevices, d.expandedDevices)
-	if err != nil {
-		return nil, nil, fmt.Errorf("Invalid devices: %w", err)
+		err = instance.ValidDevices(s, d.project, d.Type(), d.localDevices, d.expandedDevices)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Invalid devices: %w", err)
+		}
 	}
 
 	_, rootDiskDevice, err := d.getRootDiskDevice()
@@ -1340,14 +1343,14 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 }
 
 var (
-	idmappedStorageMap       map[unix.Fsid]idmap.IdmapStorageType = map[unix.Fsid]idmap.IdmapStorageType{}
-	idmappedStorageMapString map[string]idmap.IdmapStorageType    = map[string]idmap.IdmapStorageType{}
+	idmappedStorageMap       map[unix.Fsid]idmap.StorageType = map[unix.Fsid]idmap.StorageType{}
+	idmappedStorageMapString map[string]idmap.StorageType    = map[string]idmap.StorageType{}
 	idmappedStorageMapLock   sync.Mutex
 )
 
 // IdmappedStorage determines if the container can use idmapped mounts.
-func (d *lxc) IdmappedStorage(path string, fstype string) idmap.IdmapStorageType {
-	var mode idmap.IdmapStorageType = idmap.IdmapStorageNone
+func (d *lxc) IdmappedStorage(fspath string, fstype string) idmap.StorageType {
+	var mode idmap.StorageType = idmap.StorageTypeNone
 	var bindMount bool = fstype == "none" || fstype == ""
 
 	if !d.state.OS.LXCFeatures["idmapped_mounts_v2"] || !d.state.OS.IdmappedMounts {
@@ -1357,9 +1360,9 @@ func (d *lxc) IdmappedStorage(path string, fstype string) idmap.IdmapStorageType
 	buf := &unix.Statfs_t{}
 
 	if bindMount {
-		err := unix.Statfs(path, buf)
+		err := unix.Statfs(fspath, buf)
 		if err != nil {
-			d.logger.Error("Failed to statfs", logger.Ctx{"path": path, "err": err})
+			d.logger.Error("Failed to statfs", logger.Ctx{"path": fspath, "err": err})
 			return mode
 		}
 	}
@@ -1381,9 +1384,9 @@ func (d *lxc) IdmappedStorage(path string, fstype string) idmap.IdmapStorageType
 		}
 	}
 
-	if idmap.CanIdmapMount(path, fstype) {
+	if idmap.CanIdmapMount(fspath, fstype) {
 		// Use idmapped mounts.
-		mode = idmap.IdmapStorageIdmapped
+		mode = idmap.StorageTypeIdmapped
 	}
 
 	if bindMount {
@@ -1708,10 +1711,10 @@ func (d *lxc) deviceHandleMounts(mounts []deviceConfig.MountEntryItem) error {
 				}
 			}
 
-			var idmapType idmap.IdmapStorageType = idmap.IdmapStorageNone
+			var idmapType idmap.StorageType = idmap.StorageTypeNone
 			if !d.IsPrivileged() && mount.OwnerShift == deviceConfig.MountOwnerShiftDynamic {
 				idmapType = d.IdmappedStorage(mount.DevPath, mount.FSType)
-				if idmapType == idmap.IdmapStorageNone {
+				if idmapType == idmap.StorageTypeNone {
 					return fmt.Errorf("Required idmapping abilities not available")
 				}
 			}
@@ -1825,33 +1828,33 @@ func (d *lxc) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 	return nil
 }
 
-func (d *lxc) handleIdmappedStorage() (idmap.IdmapStorageType, *idmap.Set, error) {
+func (d *lxc) handleIdmappedStorage() (idmap.StorageType, *idmap.Set, error) {
 	diskIdmap, err := d.DiskIdmap()
 	if err != nil {
-		return idmap.IdmapStorageNone, nil, fmt.Errorf("Set last ID map: %w", err)
+		return idmap.StorageTypeNone, nil, fmt.Errorf("Set last ID map: %w", err)
 	}
 
 	nextIdmap, err := d.NextIdmap()
 	if err != nil {
-		return idmap.IdmapStorageNone, nil, fmt.Errorf("Set ID map: %w", err)
+		return idmap.StorageTypeNone, nil, fmt.Errorf("Set ID map: %w", err)
 	}
 
 	// Identical on-disk idmaps so no changes required.
 	if nextIdmap.Equals(diskIdmap) {
-		return idmap.IdmapStorageNone, nextIdmap, nil
+		return idmap.StorageTypeNone, nextIdmap, nil
 	}
 
 	// There's no on-disk idmap applied and the container can use idmapped
 	// storage.
 	idmapType := d.IdmappedStorage(d.RootfsPath(), "none")
-	if diskIdmap == nil && idmapType != idmap.IdmapStorageNone {
+	if diskIdmap == nil && idmapType != idmap.StorageTypeNone {
 		return idmapType, nextIdmap, nil
 	}
 
 	// We need to change the on-disk idmap but the container is protected
 	// against idmap changes.
 	if util.IsTrue(d.expandedConfig["security.protection.shift"]) {
-		return idmap.IdmapStorageNone, nil, fmt.Errorf("Container is protected against filesystem shifting")
+		return idmap.StorageTypeNone, nil, fmt.Errorf("Container is protected against filesystem shifting")
 	}
 
 	d.logger.Debug("Container idmap changed, remapping")
@@ -1859,7 +1862,7 @@ func (d *lxc) handleIdmappedStorage() (idmap.IdmapStorageType, *idmap.Set, error
 
 	storageType, err := d.getStorageType()
 	if err != nil {
-		return idmap.IdmapStorageNone, nil, fmt.Errorf("Storage type: %w", err)
+		return idmap.StorageTypeNone, nil, fmt.Errorf("Storage type: %w", err)
 	}
 
 	// Revert the currently applied on-disk idmap.
@@ -1873,7 +1876,7 @@ func (d *lxc) handleIdmappedStorage() (idmap.IdmapStorageType, *idmap.Set, error
 		}
 
 		if err != nil {
-			return idmap.IdmapStorageNone, nil, err
+			return idmap.StorageTypeNone, nil, err
 		}
 	}
 
@@ -1882,7 +1885,7 @@ func (d *lxc) handleIdmappedStorage() (idmap.IdmapStorageType, *idmap.Set, error
 	// If the container can't use idmapped storage apply the new on-disk
 	// idmap of the container now. Otherwise we will later instruct LXC to
 	// make use of idmapped storage.
-	if nextIdmap != nil && idmapType == idmap.IdmapStorageNone {
+	if nextIdmap != nil && idmapType == idmap.StorageTypeNone {
 		if storageType == "zfs" {
 			err = nextIdmap.ShiftPath(d.RootfsPath(), storageDrivers.ShiftZFSSkipper)
 		} else if storageType == "btrfs" {
@@ -1892,12 +1895,12 @@ func (d *lxc) handleIdmappedStorage() (idmap.IdmapStorageType, *idmap.Set, error
 		}
 
 		if err != nil {
-			return idmap.IdmapStorageNone, nil, err
+			return idmap.StorageTypeNone, nil, err
 		}
 
 		idmapJSON, err := nextIdmap.ToJSON()
 		if err != nil {
-			return idmap.IdmapStorageNone, nil, err
+			return idmap.StorageTypeNone, nil, err
 		}
 
 		jsonDiskIdmap = idmapJSON
@@ -1905,7 +1908,7 @@ func (d *lxc) handleIdmappedStorage() (idmap.IdmapStorageType, *idmap.Set, error
 
 	err = d.VolatileSet(map[string]string{"volatile.last_state.idmap": jsonDiskIdmap})
 	if err != nil {
-		return idmap.IdmapStorageNone, nextIdmap, fmt.Errorf("Set volatile.last_state.idmap config key on container %q (id %d): %w", d.name, d.id, err)
+		return idmap.StorageTypeNone, nextIdmap, fmt.Errorf("Set volatile.last_state.idmap config key on container %q (id %d): %w", d.name, d.id, err)
 	}
 
 	d.updateProgress("")
@@ -2190,7 +2193,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 				}
 			}
 
-			if !d.IsPrivileged() && idmapType == idmap.IdmapStorageIdmapped {
+			if !d.IsPrivileged() && idmapType == idmap.StorageTypeIdmapped {
 				err = lxcSetConfigItem(cc, "lxc.rootfs.options", "idmap=container")
 				if err != nil {
 					return "", nil, fmt.Errorf("Failed to set \"idmap=container\" rootfs option: %w", err)
@@ -2237,9 +2240,9 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 
 				if !d.IsPrivileged() && mount.OwnerShift == deviceConfig.MountOwnerShiftDynamic {
 					switch d.IdmappedStorage(mount.DevPath, mount.FSType) {
-					case idmap.IdmapStorageIdmapped:
+					case idmap.StorageTypeIdmapped:
 						mntOptions = strings.Join([]string{mntOptions, "idmap=container"}, ",")
-					case idmap.IdmapStorageNone:
+					case idmap.StorageTypeNone:
 						return "", nil, fmt.Errorf("Failed to setup device mount %q: %w", dev.Name(), fmt.Errorf("idmapping abilities are required but aren't supported on system"))
 					}
 				}
@@ -2313,7 +2316,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		}
 
 		// Allow unprivileged users to use ping.
-		maxGid := int64(4294967295)
+		maxGid := int64(4294967294)
 
 		if !d.IsPrivileged() {
 			maxGid = 0
@@ -2341,33 +2344,65 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		}
 
 		// Configure the entry point.
-		if len(config.Process.Args) > 0 && slices.Contains([]string{"/init", "/sbin/init", "/s6-init"}, config.Process.Args[0]) {
+		entrypoint := config.Process.Args
+		if d.expandedConfig["oci.entrypoint"] != "" {
+			entrypoint, err = shellquote.Split(d.expandedConfig["oci.entrypoint"])
+			if err != nil {
+				return "", nil, err
+			}
+		}
+
+		if len(entrypoint) > 0 && slices.Contains([]string{"/init", "/sbin/init", "/s6-init"}, entrypoint[0]) {
 			// For regular init systems, call them directly as PID1.
-			err = lxcSetConfigItem(cc, "lxc.init.cmd", shellquote.Join(config.Process.Args...))
+			err = lxcSetConfigItem(cc, "lxc.init.cmd", shellquote.Join(entrypoint...))
 			if err != nil {
 				return "", nil, err
 			}
 		} else {
 			// For anything else, run them under our own PID1.
-			err = lxcSetConfigItem(cc, "lxc.execute.cmd", shellquote.Join(config.Process.Args...))
+			err = lxcSetConfigItem(cc, "lxc.execute.cmd", shellquote.Join(entrypoint...))
 			if err != nil {
 				return "", nil, err
 			}
 		}
 
-		err = lxcSetConfigItem(cc, "lxc.init.cwd", config.Process.Cwd)
-		if err != nil {
-			return "", nil, err
+		// Configure the cwd.
+		if d.expandedConfig["oci.cwd"] != "" {
+			err = lxcSetConfigItem(cc, "lxc.init.cwd", d.expandedConfig["oci.cwd"])
+			if err != nil {
+				return "", nil, err
+			}
+		} else {
+			err = lxcSetConfigItem(cc, "lxc.init.cwd", config.Process.Cwd)
+			if err != nil {
+				return "", nil, err
+			}
 		}
 
-		err = lxcSetConfigItem(cc, "lxc.init.uid", fmt.Sprintf("%d", config.Process.User.UID))
-		if err != nil {
-			return "", nil, err
+		// Configure the UID
+		if d.expandedConfig["oci.uid"] != "" {
+			err = lxcSetConfigItem(cc, "lxc.init.uid", d.expandedConfig["oci.uid"])
+			if err != nil {
+				return "", nil, err
+			}
+		} else {
+			err = lxcSetConfigItem(cc, "lxc.init.uid", fmt.Sprintf("%d", config.Process.User.UID))
+			if err != nil {
+				return "", nil, err
+			}
 		}
 
-		err = lxcSetConfigItem(cc, "lxc.init.gid", fmt.Sprintf("%d", config.Process.User.GID))
-		if err != nil {
-			return "", nil, err
+		// Configure the GID
+		if d.expandedConfig["oci.gid"] != "" {
+			err = lxcSetConfigItem(cc, "lxc.init.gid", d.expandedConfig["oci.gid"])
+			if err != nil {
+				return "", nil, err
+			}
+		} else {
+			err = lxcSetConfigItem(cc, "lxc.init.gid", fmt.Sprintf("%d", config.Process.User.GID))
+			if err != nil {
+				return "", nil, err
+			}
 		}
 
 		// Get all mounts so far.
@@ -2378,7 +2413,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 				continue
 			}
 
-			lxcMounts = append(lxcMounts, fmt.Sprintf("/%s", fields[1]))
+			lxcMounts = append(lxcMounts, filepath.Clean(fmt.Sprintf("/%s", fields[1])))
 		}
 
 		// Configure mounts.
@@ -2389,7 +2424,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			}
 
 			// Skip all our own mounts.
-			if slices.Contains(lxcMounts, mount.Destination) {
+			if slices.Contains(lxcMounts, filepath.Clean(mount.Destination)) {
 				continue
 			}
 
@@ -2448,14 +2483,8 @@ ff02::2 ip6-allrouters
 			return "", nil, err
 		}
 
-		f, err := os.Create(filepath.Join(d.Path(), "network", "resolv.conf"))
+		f, err := os.OpenFile(filepath.Join(d.Path(), "network", "resolv.conf"), os.O_RDWR|os.O_CREATE, 0o644)
 		if err != nil {
-			return "", nil, err
-		}
-
-		err = f.Chmod(0o644)
-		if err != nil {
-			f.Close()
 			return "", nil, err
 		}
 
@@ -2749,8 +2778,38 @@ func (d *lxc) Start(stateful bool) error {
 
 	name := project.Instance(d.Project().Name, d.name)
 
-	// Start the LXC container
-	_, err = subprocess.RunCommand(
+	// Setup minimal environment for forkstart.
+	envDict := map[string]string{
+		"container": "lxc",
+	}
+
+	for k, v := range d.expandedConfig {
+		if strings.HasPrefix(k, "environment.") {
+			envDict[strings.TrimPrefix(k, "environment.")] = v
+		}
+	}
+
+	for _, keepEnv := range []string{"LD_LIBRARY_PATH", "INCUS_DIR", "INCUS_SOCKET"} {
+		if os.Getenv(keepEnv) != "" {
+			envDict[keepEnv] = os.Getenv(keepEnv)
+		}
+	}
+
+	_, ok := envDict["PATH"]
+	if !ok {
+		envDict["PATH"] = os.Getenv("PATH")
+	}
+
+	env := make([]string, 0, len(envDict))
+	for k, v := range envDict {
+		env = append(env, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	// Start the LXC container.
+	_, _, err = subprocess.RunCommandSplit(
+		context.TODO(),
+		env,
+		nil,
 		d.state.OS.ExecPath,
 		"forkstart",
 		name,
@@ -3562,8 +3621,38 @@ func (d *lxc) getLxcState() (liblxc.State, error) {
 	}
 }
 
+// RenderWithUsage renders the API response including disk usage.
+func (d *lxc) RenderWithUsage() (any, any, error) {
+	resp, etag, err := d.Render()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Currently only snapshot data needs usage added.
+	snapResp, ok := resp.(*api.InstanceSnapshot)
+	if !ok {
+		return resp, etag, nil
+	}
+
+	pool, err := d.getStoragePool()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// It is important that the snapshot not be mounted here as mounting a snapshot can trigger a very
+	// expensive filesystem UUID regeneration, so we rely on the driver implementation to get the info
+	// we are requesting as cheaply as possible.
+	volumeState, err := pool.GetInstanceUsage(d)
+	if err != nil {
+		return resp, etag, nil
+	}
+
+	snapResp.Size = volumeState.Used
+	return snapResp, etag, nil
+}
+
 // Render renders the state of the instance.
-func (d *lxc) Render(options ...func(response any) error) (any, any, error) {
+func (d *lxc) Render() (any, any, error) {
 	// Ignore err as the arch string on error is correct (unknown)
 	architectureName, _ := osarch.ArchitectureName(d.architecture)
 	profileNames := make([]string, 0, len(d.profiles))
@@ -3590,13 +3679,6 @@ func (d *lxc) Render(options ...func(response any) error) (any, any, error) {
 		snapState.Profiles = profileNames
 		snapState.ExpiresAt = d.expiryDate
 
-		for _, option := range options {
-			err := option(&snapState)
-			if err != nil {
-				return nil, nil, err
-			}
-		}
-
 		return &snapState, d.ETag(), nil
 	}
 
@@ -3622,13 +3704,6 @@ func (d *lxc) Render(options ...func(response any) error) (any, any, error) {
 	instState.Profiles = profileNames
 	instState.Stateful = d.stateful
 	instState.Project = d.project.Name
-
-	for _, option := range options {
-		err := option(&instState)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
 
 	return &instState, d.ETag(), nil
 }
@@ -4760,7 +4835,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 				}
 			} else if key == "security.guestapi" {
 				if util.IsTrueOrEmpty(value) {
-					err = d.insertMount(internalUtil.VarPath("guestapi"), "/dev/incus", "none", unix.MS_BIND, idmap.IdmapStorageNone)
+					err = d.insertMount(internalUtil.VarPath("guestapi"), "/dev/incus", "none", unix.MS_BIND, idmap.StorageTypeNone)
 					if err != nil {
 						return err
 					}
@@ -5502,10 +5577,14 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 		return err
 	}
 
+	clusterMove := args.ClusterMoveSourceName != ""
+	storageMove := args.StoragePool != ""
+
 	// The refresh argument passed to MigrationTypes() is always set to false here.
 	// The migration source/sender doesn't need to care whether or not it's doing a refresh as the migration
 	// sink/receiver will know this, and adjust the migration types accordingly.
-	poolMigrationTypes := pool.MigrationTypes(storagePools.InstanceContentType(d), false, args.Snapshots)
+	// The same applies for clusterMove and storageMove, which are set to the most optimized defaults.
+	poolMigrationTypes := pool.MigrationTypes(storagePools.InstanceContentType(d), false, args.Snapshots, true, false)
 	if len(poolMigrationTypes) == 0 {
 		err := fmt.Errorf("No source migration types available")
 		op.Done(err)
@@ -5614,7 +5693,8 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 		AllowInconsistent:  args.AllowInconsistent,
 		VolumeOnly:         !args.Snapshots,
 		Info:               &localMigration.Info{Config: srcConfig},
-		ClusterMove:        args.ClusterMoveSourceName != "",
+		ClusterMove:        clusterMove,
+		StorageMove:        storageMove,
 	}
 
 	// Only send the snapshots that the target requests when refreshing.
@@ -6151,10 +6231,13 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	// However, to determine the correct migration type Refresh needs to be set.
 	offerHeader.Refresh = &args.Refresh
 
+	clusterMove := args.ClusterMoveSourceName != ""
+	storageMove := args.StoragePool != ""
+
 	// Extract the source's migration type and then match it against our pool's supported types and features.
 	// If a match is found the combined features list will be sent back to requester.
 	contentType := storagePools.InstanceContentType(d)
-	respTypes, err := localMigration.MatchTypes(offerHeader, storagePools.FallbackMigrationType(contentType), pool.MigrationTypes(contentType, args.Refresh, args.Snapshots))
+	respTypes, err := localMigration.MatchTypes(offerHeader, storagePools.FallbackMigrationType(contentType), pool.MigrationTypes(contentType, args.Refresh, args.Snapshots, clusterMove, storageMove))
 	if err != nil {
 		return err
 	}
@@ -6378,6 +6461,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			VolumeSize:            offerHeader.GetVolumeSize(), // Block size setting override.
 			VolumeOnly:            !args.Snapshots,
 			ClusterMoveSourceName: args.ClusterMoveSourceName,
+			StoragePool:           args.StoragePool,
 		}
 
 		// At this point we have already figured out the parent container's root
@@ -6436,7 +6520,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			return fmt.Errorf("Failed creating instance on target: %w", err)
 		}
 
-		isRemoteClusterMove := args.ClusterMoveSourceName != "" && pool.Driver().Info().Remote
+		isRemoteClusterMove := clusterMove && pool.Driver().Info().Remote
 
 		// Only delete all instance volumes on error if the pool volume creation has succeeded to
 		// avoid deleting an existing conflicting volume.
@@ -7582,7 +7666,7 @@ func (d *lxc) diskState() map[string]api.InstanceStateDisk {
 		var usage *storagePools.VolumeUsage
 
 		if dev.Config["path"] == "/" {
-			pool, err := storagePools.LoadByInstance(d.state, d)
+			pool, err := d.getStoragePool()
 			if err != nil {
 				d.logger.Error("Error loading storage pool", logger.Ctx{"err": err})
 				continue
@@ -7865,7 +7949,7 @@ func (d *lxc) unmount() error {
 // we'll have a deadlock (with a timeout but still). The InitPID() call here is
 // the exception since the seccomp notifier will make sure to always pass a
 // valid PID.
-func (d *lxc) insertMountGo(source, target, fstype string, flags int, mntnsPID int, idmapType idmap.IdmapStorageType) error {
+func (d *lxc) insertMountGo(source, target, fstype string, flags int, mntnsPID int, idmapType idmap.StorageType) error {
 	pid := mntnsPID
 	if pid <= 0 {
 		// Get the init PID
@@ -7983,7 +8067,7 @@ func (d *lxc) insertMountLXC(source, target, fstype string, flags int) error {
 	return nil
 }
 
-func (d *lxc) moveMount(source, target, fstype string, flags int, idmapType idmap.IdmapStorageType) error {
+func (d *lxc) moveMount(source, target, fstype string, flags int, idmapType idmap.StorageType) error {
 	// Get the init PID
 	pid := d.InitPID()
 	if pid == -1 {
@@ -7992,8 +8076,8 @@ func (d *lxc) moveMount(source, target, fstype string, flags int, idmapType idma
 	}
 
 	switch idmapType {
-	case idmap.IdmapStorageIdmapped:
-	case idmap.IdmapStorageNone:
+	case idmap.StorageTypeIdmapped:
+	case idmap.StorageTypeNone:
 	default:
 		return fmt.Errorf("Invalid idmap value specified")
 	}
@@ -8030,12 +8114,12 @@ func (d *lxc) moveMount(source, target, fstype string, flags int, idmapType idma
 	return nil
 }
 
-func (d *lxc) insertMount(source, target, fstype string, flags int, idmapType idmap.IdmapStorageType) error {
-	if d.state.OS.IdmappedMounts && idmapType == idmap.IdmapStorageIdmapped {
+func (d *lxc) insertMount(source, target, fstype string, flags int, idmapType idmap.StorageType) error {
+	if d.state.OS.IdmappedMounts && idmapType == idmap.StorageTypeIdmapped {
 		return d.moveMount(source, target, fstype, flags, idmapType)
 	}
 
-	if d.state.OS.LXCFeatures["mount_injection_file"] && idmapType == idmap.IdmapStorageNone {
+	if d.state.OS.LXCFeatures["mount_injection_file"] && idmapType == idmap.StorageTypeNone {
 		return d.insertMountLXC(source, target, fstype, flags)
 	}
 
@@ -8149,7 +8233,7 @@ func (d *lxc) InsertSeccompUnixDevice(prefix string, m deviceConfig.Device, pid 
 
 	// Bind-mount it into the container
 	defer func() { _ = os.Remove(devPath) }()
-	return d.insertMountGo(devPath, tgtPath, "none", unix.MS_BIND, pid, idmap.IdmapStorageNone)
+	return d.insertMountGo(devPath, tgtPath, "none", unix.MS_BIND, pid, idmap.StorageTypeNone)
 }
 
 func (d *lxc) removeUnixDevices() error {

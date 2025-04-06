@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -31,6 +32,7 @@ type cmdConsole struct {
 	flagType    string
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConsole) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("console", i18n.G("[<remote>:]<instance>"))
@@ -46,7 +48,7 @@ as well as retrieve past log entries from it.`))
 	cmd.Flags().BoolVar(&c.flagShowLog, "show-log", false, i18n.G("Retrieve the instance's console log"))
 	cmd.Flags().StringVarP(&c.flagType, "type", "t", "console", i18n.G("Type of connection to establish: 'console' for serial console, 'vga' for SPICE graphical output")+"``")
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpInstances(toComplete)
 	}
 
@@ -101,11 +103,12 @@ func (er stdinMirror) Read(p []byte) (int, error) {
 	return n, err
 }
 
+// Run runs the actual command logic.
 func (c *cmdConsole) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 1, 1)
+	exit, err := c.global.checkArgs(cmd, args, 1, 1)
 	if exit {
 		return err
 	}
@@ -133,7 +136,7 @@ func (c *cmdConsole) console(d incus.InstanceServer, name string) error {
 	// Show the current log if requested.
 	if c.flagShowLog {
 		if c.flagType != "console" {
-			return fmt.Errorf(i18n.G("The --show-log flag is only supported for by 'console' output type"))
+			return errors.New(i18n.G("The --show-log flag is only supported for by 'console' output type"))
 		}
 
 		console := &incus.InstanceConsoleLogArgs{}
@@ -303,7 +306,11 @@ func (c *cmdConsole) vga(d incus.InstanceServer, name string) error {
 			return err
 		}
 
-		addr := listener.Addr().(*net.TCPAddr)
+		addr, ok := listener.Addr().(*net.TCPAddr)
+		if !ok {
+			return errors.New("Bad TCP listener")
+		}
+
 		socket = fmt.Sprintf("spice://127.0.0.1:%d", addr.Port)
 	}
 

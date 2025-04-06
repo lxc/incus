@@ -2970,6 +2970,124 @@ definitions:
         title: NetworkACLsPost used for creating an ACL.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
+    NetworkAddressSet:
+        description: Refer to doc/howto/network_address_sets.md for details.
+        properties:
+            addresses:
+                description: List of addresses in the set
+                example:
+                    - 192.0.0.1
+                    - 2001:0db8:1234::1
+                items:
+                    type: string
+                type: array
+                x-go-name: Addresses
+            config:
+                additionalProperties:
+                    type: string
+                description: Address set configuration map (refer to doc/network-address-sets.md)
+                example:
+                    user.mykey: foo
+                type: object
+                x-go-name: Config
+            description:
+                description: Description of the address set
+                example: Web servers
+                type: string
+                x-go-name: Description
+            name:
+                description: The new name of the address set
+                example: '"bar"'
+                type: string
+                x-go-name: Name
+            project:
+                description: Project name
+                example: project1
+                type: string
+                x-go-name: Project
+            used_by:
+                description: List of URLs of objects using this profile
+                example:
+                    - /1.0/network-acls/foo
+                    - /1.0/network-acls/bar
+                    - /1.0/network-acls/baz
+                items:
+                    type: string
+                readOnly: true
+                type: array
+                x-go-name: UsedBy
+        title: NetworkAddressSet represents an address set.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    NetworkAddressSetPost:
+        properties:
+            name:
+                description: The new name of the address set
+                example: '"bar"'
+                type: string
+                x-go-name: Name
+        title: NetworkAddressSetPost used for renaming an address set.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    NetworkAddressSetPut:
+        properties:
+            addresses:
+                description: List of addresses in the set
+                example:
+                    - 192.0.0.1
+                    - 2001:0db8:1234::1
+                items:
+                    type: string
+                type: array
+                x-go-name: Addresses
+            config:
+                additionalProperties:
+                    type: string
+                description: Address set configuration map (refer to doc/network-address-sets.md)
+                example:
+                    user.mykey: foo
+                type: object
+                x-go-name: Config
+            description:
+                description: Description of the address set
+                example: Web servers
+                type: string
+                x-go-name: Description
+        title: NetworkAddressSetPut used for updating an address set.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    NetworkAddressSetsPost:
+        properties:
+            addresses:
+                description: List of addresses in the set
+                example:
+                    - 192.0.0.1
+                    - 2001:0db8:1234::1
+                items:
+                    type: string
+                type: array
+                x-go-name: Addresses
+            config:
+                additionalProperties:
+                    type: string
+                description: Address set configuration map (refer to doc/network-address-sets.md)
+                example:
+                    user.mykey: foo
+                type: object
+                x-go-name: Config
+            description:
+                description: Description of the address set
+                example: Web servers
+                type: string
+                x-go-name: Description
+            name:
+                description: The new name of the address set
+                example: '"bar"'
+                type: string
+                x-go-name: Name
+        title: NetworkAddressSetsPost used for creating a new address set.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
     NetworkAllocations:
         description: |-
             NetworkAllocations used for displaying network addresses used by a consuming entity
@@ -5120,7 +5238,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     ResourcesNetworkCardVDPA:
-        description: ResourceNetworkCardVDPA represents the VDPA configuration of the network card
+        description: ResourcesNetworkCardVDPA represents the VDPA configuration of the network card
         properties:
             device:
                 description: Device identifier of the VDPA device
@@ -11123,6 +11241,308 @@ paths:
             summary: Get the network ACLs
             tags:
                 - network-acls
+    /1.0/network-address-sets:
+        get:
+            description: Returns a list of network address sets (URLs).
+            operationId: network_address_sets_get
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Retrieve network address sets from all projects
+                  example: true
+                  in: query
+                  name: all-projects
+                  type: boolean
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: API endpoints
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                description: List of endpoints
+                                example: |-
+                                    [
+                                      "/1.0/network-address-sets/foo",
+                                      "/1.0/network-address-sets/bar"
+                                    ]
+                                items:
+                                    type: string
+                                type: array
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the network address sets
+            tags:
+                - network-address-sets
+        post:
+            consumes:
+                - application/json
+            description: Creates a new network address set.
+            operationId: network_address_sets_post
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: address set
+                  in: body
+                  name: address set
+                  required: true
+                  schema:
+                    $ref: '#/definitions/NetworkAddressSetsPost'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    $ref: '#/responses/EmptySyncResponse'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Add a network address set
+            tags:
+                - network-address-sets
+    /1.0/network-address-sets/{name}:
+        delete:
+            description: Removes the network address set.
+            operationId: network_address_set_delete
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    $ref: '#/responses/EmptySyncResponse'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Delete the network address set
+            tags:
+                - network-address-sets
+        get:
+            description: Gets a specific network address set.
+            operationId: network_address_set_get
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: address set
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                $ref: '#/definitions/NetworkAddressSet'
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the network address set
+            tags:
+                - network-address-sets
+        patch:
+            consumes:
+                - application/json
+            description: Updates a subset of the network address set configuration.
+            operationId: network_address_set_patch
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Address set configuration
+                  in: body
+                  name: address set
+                  required: true
+                  schema:
+                    $ref: '#/definitions/NetworkAddressSetPut'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    $ref: '#/responses/EmptySyncResponse'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "412":
+                    $ref: '#/responses/PreconditionFailed'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Partially update the network address set
+            tags:
+                - network-address-sets
+        post:
+            consumes:
+                - application/json
+            description: Renames an existing network address set.
+            operationId: network_address_set_post
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Address set rename request
+                  in: body
+                  name: address set
+                  required: true
+                  schema:
+                    $ref: '#/definitions/NetworkAddressSetPost'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    $ref: '#/responses/EmptySyncResponse'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Rename the network address set
+            tags:
+                - network-address-sets
+        put:
+            consumes:
+                - application/json
+            description: Updates the entire network address set configuration.
+            operationId: network_address_set_put
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Address set configuration
+                  in: body
+                  name: address set
+                  required: true
+                  schema:
+                    $ref: '#/definitions/NetworkAddressSetPut'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    $ref: '#/responses/EmptySyncResponse'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "412":
+                    $ref: '#/responses/PreconditionFailed'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Update the network address set
+            tags:
+                - network-address-sets
+    /1.0/network-address-sets?recursion=1:
+        get:
+            description: Returns a list of network address sets (structs).
+            operationId: network_address_sets_get_recursion1
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Retrieve network address sets from all projects
+                  example: true
+                  in: query
+                  name: all-projects
+                  type: boolean
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: API endpoints
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                description: List of network address sets
+                                items:
+                                    $ref: '#/definitions/NetworkAddressSet'
+                                type: array
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the network address sets
+            tags:
+                - network-address-sets
     /1.0/network-allocations:
         get:
             description: Returns a list of network allocations.

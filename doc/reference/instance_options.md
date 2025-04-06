@@ -14,6 +14,7 @@ The following options are available:
 - {ref}`instance-options-limits`
 - {ref}`instance-options-migration`
 - {ref}`instance-options-nvidia`
+- {ref}`instance-options-oci`
 - {ref}`instance-options-raw`
 - {ref}`instance-options-security`
 - {ref}`instance-options-snapshots`
@@ -222,6 +223,17 @@ The following instance options specify the NVIDIA and CUDA configuration of the 
     :end-before: <!-- config group instance-nvidia end -->
 ```
 
+(instance-options-oci)=
+## OCI configuration
+
+The following instance options specify the OCI configuration of the instance:
+
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group instance-oci start -->
+    :end-before: <!-- config group instance-oci end -->
+```
+
 (instance-options-raw)=
 ## Raw instance configuration overrides
 
@@ -299,16 +311,17 @@ value = "1"
 [global]
 driver = "ICH9-LPC"
 property = "disable_s4"
-value = "1"
+value = "0"
 ```
 
-To specify which section to override, specify an index.
-For example:
+The first `global` section disabled S3(Suspend to RAM), the second `global`
+section enabled S4(suspend to disk). In order to disable S4, the second `global`
+section index needs to be specified:
 
 ```
 raw.qemu.conf: |-
     [global][1]
-    value = "0"
+    value = "1"
 ```
 
 Section indexes start at 0 (which is the default value when not specified), so the above example would generate the following configuration:
@@ -322,7 +335,7 @@ value = "1"
 [global]
 driver = "ICH9-LPC"
 property = "disable_s4"
-value = "0"
+value = "1"
 ```
 
 ### Override QEMU runtime objects

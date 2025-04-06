@@ -25,7 +25,7 @@ func ConfigToInstanceDBArgs(state *state.State, c *config.Config, projectName st
 		return nil, nil
 	}
 
-	arch, _ := osarch.ArchitectureId(c.Container.Architecture)
+	arch, _ := osarch.ArchitectureID(c.Container.Architecture)
 	instanceType, _ := instancetype.New(c.Container.Type)
 
 	inst := &db.InstanceArgs{
@@ -52,13 +52,13 @@ func ConfigToInstanceDBArgs(state *state.State, c *config.Config, projectName st
 			}
 
 			// Get all the profile configs.
-			profileConfigs, err := cluster.GetConfig(ctx, tx.Tx(), "profile")
+			profileConfigs, err := cluster.GetAllProfileConfigs(ctx, tx.Tx())
 			if err != nil {
 				return err
 			}
 
 			// Get all the profile devices.
-			profileDevices, err := cluster.GetDevices(ctx, tx.Tx(), "profile")
+			profileDevices, err := cluster.GetAllProfileDevices(ctx, tx.Tx())
 			if err != nil {
 				return err
 			}

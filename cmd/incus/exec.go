@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
 	"io"
 	"os"
 	"strconv"
@@ -34,6 +34,7 @@ type cmdExec struct {
 	interactive bool
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdExec) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("exec", i18n.G("[<remote>:]<instance> [flags] [--] <command line>"))
@@ -65,7 +66,7 @@ incus exec c1 -- ls -lh /
 	cmd.Flags().Uint32Var(&c.flagGroup, "group", 0, i18n.G("Group ID to run the command as (default 0)")+"``")
 	cmd.Flags().StringVar(&c.flagCwd, "cwd", "", i18n.G("Directory to run the command in (default /root)")+"``")
 
-	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return c.global.cmpInstances(toComplete)
 		}
@@ -93,21 +94,22 @@ func (c *cmdExec) sendTermSize(control *websocket.Conn) error {
 	return control.WriteJSON(msg)
 }
 
+// Run runs the actual command logic.
 func (c *cmdExec) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 2, -1)
+	exit, err := c.global.checkArgs(cmd, args, 2, -1)
 	if exit {
 		return err
 	}
 
 	if c.flagForceInteractive && c.flagForceNonInteractive {
-		return fmt.Errorf(i18n.G("You can't pass -t and -T at the same time"))
+		return errors.New(i18n.G("You can't pass -t and -T at the same time"))
 	}
 
 	if c.flagMode != "auto" && (c.flagForceInteractive || c.flagForceNonInteractive) {
-		return fmt.Errorf(i18n.G("You can't pass -t or -T at the same time as --mode"))
+		return errors.New(i18n.G("You can't pass -t or -T at the same time as --mode"))
 	}
 
 	// Connect to the daemon

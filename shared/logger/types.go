@@ -24,12 +24,12 @@ type Logger interface {
 
 // targetLogger represents the subset of logrus.Logger and logrus.Entry that we care about.
 type targetLogger interface {
-	Panic(args ...interface{})
-	Fatal(args ...interface{})
-	Error(args ...interface{})
-	Warn(args ...interface{})
-	Info(args ...interface{})
-	Debug(args ...interface{})
-	Trace(args ...interface{})
+	Panic(args ...any)
+	Fatal(args ...any)
+	Error(args ...any)
+	Warn(args ...any)
+	Info(args ...any)
+	Debug(args ...any)
+	Trace(args ...any)
 	WithFields(fields logrus.Fields) *logrus.Entry
 }

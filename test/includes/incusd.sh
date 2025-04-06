@@ -24,6 +24,9 @@ spawn_incus() {
     if [ "${INCUS_BACKEND}" = "ceph" ] && [ -z "${INCUS_CEPH_CLUSTER:-}" ]; then
         echo "A cluster name must be specified when using the CEPH driver." >&2
         exit 1
+    elif [ "${INCUS_BACKEND}" = "linstor" ] && [ -z "${INCUS_LINSTOR_CLUSTER:-}" ]; then
+        echo "A cluster name must be specified when using the LINSTOR driver." >&2
+        exit 1
     fi
 
     # setup storage

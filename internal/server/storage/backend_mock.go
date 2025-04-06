@@ -63,7 +63,8 @@ func (b *mockBackend) Driver() drivers.Driver {
 	return b.driver
 }
 
-func (b *mockBackend) MigrationTypes(contentType drivers.ContentType, refresh bool, copySnapshots bool) []migration.Type {
+// MigrationTypes returns the type of transfer methods to be used when doing migrations between pools in preference order.
+func (b *mockBackend) MigrationTypes(contentType drivers.ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []migration.Type {
 	return []migration.Type{
 		{
 			FSType:   FallbackMigrationType(contentType),
@@ -198,6 +199,11 @@ func (b *mockBackend) MountInstance(inst instance.Instance, op *operations.Opera
 }
 
 func (b *mockBackend) UnmountInstance(inst instance.Instance, op *operations.Operation) error {
+	return nil
+}
+
+// CacheInstanceSnapshots is used to pre-fetch snapshot information ahead of bulk queries.
+func (b *mockBackend) CacheInstanceSnapshots(inst instance.ConfigReader) error {
 	return nil
 }
 

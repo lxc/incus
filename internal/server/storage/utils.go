@@ -785,7 +785,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 }
 
 // InstanceContentType returns the instance's content type.
-func InstanceContentType(inst instance.Instance) drivers.ContentType {
+func InstanceContentType(inst instance.ConfigReader) drivers.ContentType {
 	contentType := drivers.ContentTypeFS
 	if inst.Type() == instancetype.VM {
 		contentType = drivers.ContentTypeBlock
@@ -829,13 +829,13 @@ func VolumeUsedByProfileDevices(s *state.State, poolName string, projectName str
 		}
 
 		// Get all the profile configs.
-		profileConfigs, err := cluster.GetConfig(ctx, tx.Tx(), "profile")
+		profileConfigs, err := cluster.GetAllProfileConfigs(ctx, tx.Tx())
 		if err != nil {
 			return fmt.Errorf("Failed loading profile configs: %w", err)
 		}
 
 		// Get all the profile devices.
-		profileDevices, err := cluster.GetDevices(ctx, tx.Tx(), "profile")
+		profileDevices, err := cluster.GetAllProfileDevices(ctx, tx.Tx())
 		if err != nil {
 			return fmt.Errorf("Failed loading profile devices: %w", err)
 		}
@@ -1043,30 +1043,6 @@ func FallbackMigrationType(contentType drivers.ContentType) migration.MigrationF
 	}
 
 	return migration.MigrationFSType_RSYNC
-}
-
-// RenderSnapshotUsage can be used as an optional argument to Instance.Render() to return snapshot usage.
-// As this is a relatively expensive operation it is provided as an optional feature rather than on by default.
-func RenderSnapshotUsage(s *state.State, snapInst instance.Instance) func(response any) error {
-	return func(response any) error {
-		apiRes, ok := response.(*api.InstanceSnapshot)
-		if !ok {
-			return nil
-		}
-
-		pool, err := LoadByInstance(s, snapInst)
-		if err == nil {
-			// It is important that the snapshot not be mounted here as mounting a snapshot can trigger a very
-			// expensive filesystem UUID regeneration, so we rely on the driver implementation to get the info
-			// we are requesting as cheaply as possible.
-			volumeState, err := pool.GetInstanceUsage(snapInst)
-			if err == nil {
-				apiRes.Size = volumeState.Used
-			}
-		}
-
-		return nil
-	}
 }
 
 // InstanceMount mounts an instance's storage volume (if not already mounted).

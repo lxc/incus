@@ -33,25 +33,25 @@ const (
 
 // EntityNames associates an entity code to its name.
 var EntityNames = map[int]string{
+	TypeCertificate:           "certificate",
+	TypeClusterGroup:          "cluster group",
 	TypeContainer:             "container",
 	TypeImage:                 "image",
-	TypeProfile:               "profile",
-	TypeProject:               "project",
-	TypeCertificate:           "certificate",
-	TypeInstance:              "instance",
 	TypeInstanceBackup:        "instance backup",
+	TypeInstance:              "instance",
 	TypeInstanceSnapshot:      "instance snapshot",
-	TypeNetwork:               "network",
 	TypeNetworkACL:            "network acl",
+	TypeNetwork:               "network",
 	TypeNode:                  "node",
 	TypeOperation:             "operation",
+	TypeProfile:               "profile",
+	TypeProject:               "project",
+	TypeStorageBucket:         "storage bucket",
 	TypeStoragePool:           "storage pool",
-	TypeStorageVolume:         "storage volume",
 	TypeStorageVolumeBackup:   "storage volume backup",
 	TypeStorageVolumeSnapshot: "storage volume snapshot",
-	TypeStorageBucket:         "storage bucket",
+	TypeStorageVolume:         "storage volume",
 	TypeWarning:               "warning",
-	TypeClusterGroup:          "cluster group",
 }
 
 // EntityTypes associates an entity name to its type code.
@@ -59,25 +59,25 @@ var EntityTypes = map[string]int{}
 
 // EntityURIs associates an entity code to its URI pattern.
 var EntityURIs = map[int]string{
+	TypeCertificate:           "/" + version.APIVersion + "/certificates/%s",
+	TypeClusterGroup:          "/" + version.APIVersion + "/cluster/groups/%s",
 	TypeContainer:             "/" + version.APIVersion + "/containers/%s?project=%s",
 	TypeImage:                 "/" + version.APIVersion + "/images/%s?project=%s",
-	TypeProfile:               "/" + version.APIVersion + "/profiles/%s?project=%s",
-	TypeProject:               "/" + version.APIVersion + "/projects/%s",
-	TypeCertificate:           "/" + version.APIVersion + "/certificates/%s",
-	TypeInstance:              "/" + version.APIVersion + "/instances/%s?project=%s",
 	TypeInstanceBackup:        "/" + version.APIVersion + "/instances/%s/backups/%s?project=%s",
 	TypeInstanceSnapshot:      "/" + version.APIVersion + "/instances/%s/snapshots/%s?project=%s",
-	TypeNetwork:               "/" + version.APIVersion + "/networks/%s?project=%s",
+	TypeInstance:              "/" + version.APIVersion + "/instances/%s?project=%s",
 	TypeNetworkACL:            "/" + version.APIVersion + "/network-acls/%s?project=%s",
+	TypeNetwork:               "/" + version.APIVersion + "/networks/%s?project=%s",
 	TypeNode:                  "/" + version.APIVersion + "/cluster/members/%s",
 	TypeOperation:             "/" + version.APIVersion + "/operations/%s",
+	TypeProfile:               "/" + version.APIVersion + "/profiles/%s?project=%s",
+	TypeProject:               "/" + version.APIVersion + "/projects/%s",
+	TypeStorageBucket:         "/" + version.APIVersion + "/storage-pools/%s/buckets/%s?project=%s",
 	TypeStoragePool:           "/" + version.APIVersion + "/storage-pools/%s",
-	TypeStorageVolume:         "/" + version.APIVersion + "/storage-pools/%s/volumes/%s/%s?project=%s",
 	TypeStorageVolumeBackup:   "/" + version.APIVersion + "/storage-pools/%s/volumes/%s/%s/backups/%s?project=%s",
 	TypeStorageVolumeSnapshot: "/" + version.APIVersion + "/storage-pools/%s/volumes/%s/%s/snapshots/%s?project=%s",
-	TypeStorageBucket:         "/" + version.APIVersion + "/storage-pools/%s/buckets/%s?project=%s",
+	TypeStorageVolume:         "/" + version.APIVersion + "/storage-pools/%s/volumes/%s/%s?project=%s",
 	TypeWarning:               "/" + version.APIVersion + "/warnings/%s",
-	TypeClusterGroup:          "/" + version.APIVersion + "/cluster/groups/%s",
 }
 
 func init() {
@@ -96,7 +96,7 @@ func URLToEntityType(rawURL string) (int, string, string, []string, error) {
 	}
 
 	// We need to space separate the path because fmt.Sscanf uses this as a delimiter.
-	spaceSeparatedURLPath := strings.Replace(u.Path, "/", " / ", -1)
+	spaceSeparatedURLPath := strings.ReplaceAll(u.Path, "/", " / ")
 	for entityType, entityURI := range EntityURIs {
 		entityPath, _, _ := strings.Cut(entityURI, "?")
 
@@ -105,7 +105,7 @@ func URLToEntityType(rawURL string) (int, string, string, []string, error) {
 			continue
 		}
 
-		spaceSeparatedEntityPath := strings.Replace(entityPath, "/", " / ", -1)
+		spaceSeparatedEntityPath := strings.ReplaceAll(entityPath, "/", " / ")
 
 		// Make an []any for the number of expected path arguments and set each value in the slice to a *string.
 		nPathArgs := strings.Count(spaceSeparatedEntityPath, "%s")

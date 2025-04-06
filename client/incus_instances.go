@@ -884,7 +884,10 @@ func (r *ProtocolIncus) CopyInstance(source InstanceServer, instance api.Instanc
 
 		targetSecrets := map[string]string{}
 		for k, v := range opAPI.Metadata {
-			targetSecrets[k] = v.(string)
+			val, ok := v.(string)
+			if ok {
+				targetSecrets[k] = val
+			}
 		}
 
 		// Prepare the source request
@@ -912,7 +915,10 @@ func (r *ProtocolIncus) CopyInstance(source InstanceServer, instance api.Instanc
 
 	sourceSecrets := map[string]string{}
 	for k, v := range opAPI.Metadata {
-		sourceSecrets[k] = v.(string)
+		val, ok := v.(string)
+		if ok {
+			sourceSecrets[k] = val
+		}
 	}
 
 	// Relay mode migration
@@ -932,7 +938,10 @@ func (r *ProtocolIncus) CopyInstance(source InstanceServer, instance api.Instanc
 		// Extract the websockets
 		targetSecrets := map[string]string{}
 		for k, v := range targetOpAPI.Metadata {
-			targetSecrets[k] = v.(string)
+			val, ok := v.(string)
+			if ok {
+				targetSecrets[k] = val
+			}
 		}
 
 		// Launch the relay
@@ -1190,9 +1199,14 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 
 	value, ok := opAPI.Metadata["fds"]
 	if ok {
-		values := value.(map[string]any)
-		for k, v := range values {
-			fds[k] = v.(string)
+		values, ok := value.(map[string]any)
+		if ok {
+			for k, v := range values {
+				val, ok := v.(string)
+				if ok {
+					fds[k] = val
+				}
+			}
 		}
 	}
 
@@ -1207,7 +1221,10 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 		outputs, ok := opAPI.Metadata["output"].(map[string]any)
 		if ok {
 			for k, v := range outputs {
-				outputFiles[k] = v.(string)
+				val, ok := v.(string)
+				if ok {
+					outputFiles[k] = val
+				}
 			}
 		}
 
@@ -1811,7 +1828,7 @@ func (r *ProtocolIncus) CopyInstanceSnapshot(source InstanceServer, instanceName
 			return nil, fmt.Errorf("The server is missing the required \"container_snapshot_stateful_migration\" API extension")
 		}
 
-		req.InstancePut.Stateful = snapshot.Stateful
+		req.Stateful = snapshot.Stateful
 		req.Source.Live = false // Snapshots are never running and so we don't need live migration.
 	}
 
@@ -1931,7 +1948,10 @@ func (r *ProtocolIncus) CopyInstanceSnapshot(source InstanceServer, instanceName
 
 		targetSecrets := map[string]string{}
 		for k, v := range opAPI.Metadata {
-			targetSecrets[k] = v.(string)
+			val, ok := v.(string)
+			if ok {
+				targetSecrets[k] = val
+			}
 		}
 
 		// Prepare the source request
@@ -1959,7 +1979,10 @@ func (r *ProtocolIncus) CopyInstanceSnapshot(source InstanceServer, instanceName
 
 	sourceSecrets := map[string]string{}
 	for k, v := range opAPI.Metadata {
-		sourceSecrets[k] = v.(string)
+		val, ok := v.(string)
+		if ok {
+			sourceSecrets[k] = val
+		}
 	}
 
 	// Relay mode migration
@@ -1979,7 +2002,10 @@ func (r *ProtocolIncus) CopyInstanceSnapshot(source InstanceServer, instanceName
 		// Extract the websockets
 		targetSecrets := map[string]string{}
 		for k, v := range targetOpAPI.Metadata {
-			targetSecrets[k] = v.(string)
+			val, ok := v.(string)
+			if ok {
+				targetSecrets[k] = val
+			}
 		}
 
 		// Launch the relay
@@ -2234,14 +2260,14 @@ func (r *ProtocolIncus) GetInstanceLogfile(name string, filename string) (io.Rea
 	}
 
 	// Prepare the HTTP request
-	url := fmt.Sprintf("%s/1.0%s/%s/logs/%s", r.httpBaseURL.String(), path, url.PathEscape(name), url.PathEscape(filename))
+	uri := fmt.Sprintf("%s/1.0%s/%s/logs/%s", r.httpBaseURL.String(), path, url.PathEscape(name), url.PathEscape(filename))
 
-	url, err = r.setQueryAttributes(url)
+	uri, err = r.setQueryAttributes(uri)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -2294,14 +2320,14 @@ func (r *ProtocolIncus) getInstanceExecOutputLogFile(name string, filename strin
 	}
 
 	// Prepare the HTTP request
-	url := fmt.Sprintf("%s/1.0%s/%s/logs/exec-output/%s", r.httpBaseURL.String(), path, url.PathEscape(name), url.PathEscape(filename))
+	uri := fmt.Sprintf("%s/1.0%s/%s/logs/exec-output/%s", r.httpBaseURL.String(), path, url.PathEscape(name), url.PathEscape(filename))
 
-	url, err = r.setQueryAttributes(url)
+	uri, err = r.setQueryAttributes(uri)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -2357,8 +2383,8 @@ func (r *ProtocolIncus) GetInstanceMetadata(name string) (*api.ImageMetadata, st
 
 	metadata := api.ImageMetadata{}
 
-	url := fmt.Sprintf("%s/%s/metadata", path, url.PathEscape(name))
-	etag, err := r.queryStruct("GET", url, nil, "", &metadata)
+	uri := fmt.Sprintf("%s/%s/metadata", path, url.PathEscape(name))
+	etag, err := r.queryStruct("GET", uri, nil, "", &metadata)
 	if err != nil {
 		return nil, "", err
 	}
@@ -2377,8 +2403,8 @@ func (r *ProtocolIncus) UpdateInstanceMetadata(name string, metadata api.ImageMe
 		return fmt.Errorf("The server is missing the required \"container_edit_metadata\" API extension")
 	}
 
-	url := fmt.Sprintf("%s/%s/metadata", path, url.PathEscape(name))
-	_, _, err = r.query("PUT", url, metadata, ETag)
+	uri := fmt.Sprintf("%s/%s/metadata", path, url.PathEscape(name))
+	_, _, err = r.query("PUT", uri, metadata, ETag)
 	if err != nil {
 		return err
 	}
@@ -2399,8 +2425,8 @@ func (r *ProtocolIncus) GetInstanceTemplateFiles(instanceName string) ([]string,
 
 	templates := []string{}
 
-	url := fmt.Sprintf("%s/%s/metadata/templates", path, url.PathEscape(instanceName))
-	_, err = r.queryStruct("GET", url, nil, "", &templates)
+	uri := fmt.Sprintf("%s/%s/metadata/templates", path, url.PathEscape(instanceName))
+	_, err = r.queryStruct("GET", uri, nil, "", &templates)
 	if err != nil {
 		return nil, err
 	}
@@ -2419,14 +2445,14 @@ func (r *ProtocolIncus) GetInstanceTemplateFile(instanceName string, templateNam
 		return nil, fmt.Errorf("The server is missing the required \"container_edit_metadata\" API extension")
 	}
 
-	url := fmt.Sprintf("%s/1.0%s/%s/metadata/templates?path=%s", r.httpBaseURL.String(), path, url.PathEscape(instanceName), url.QueryEscape(templateName))
+	uri := fmt.Sprintf("%s/1.0%s/%s/metadata/templates?path=%s", r.httpBaseURL.String(), path, url.PathEscape(instanceName), url.QueryEscape(templateName))
 
-	url, err = r.setQueryAttributes(url)
+	uri, err = r.setQueryAttributes(uri)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -2459,14 +2485,14 @@ func (r *ProtocolIncus) CreateInstanceTemplateFile(instanceName string, template
 		return fmt.Errorf("The server is missing the required \"container_edit_metadata\" API extension")
 	}
 
-	url := fmt.Sprintf("%s/1.0%s/%s/metadata/templates?path=%s", r.httpBaseURL.String(), path, url.PathEscape(instanceName), url.QueryEscape(templateName))
+	uri := fmt.Sprintf("%s/1.0%s/%s/metadata/templates?path=%s", r.httpBaseURL.String(), path, url.PathEscape(instanceName), url.QueryEscape(templateName))
 
-	url, err = r.setQueryAttributes(url)
+	uri, err = r.setQueryAttributes(uri)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", url, content)
+	req, err := http.NewRequest("POST", uri, content)
 	if err != nil {
 		return err
 	}
@@ -2553,9 +2579,14 @@ func (r *ProtocolIncus) ConsoleInstance(instanceName string, console api.Instanc
 
 	value, ok := opAPI.Metadata["fds"]
 	if ok {
-		values := value.(map[string]any)
-		for k, v := range values {
-			fds[k] = v.(string)
+		values, ok := value.(map[string]any)
+		if ok {
+			for k, v := range values {
+				val, ok := v.(string)
+				if ok {
+					fds[k] = val
+				}
+			}
 		}
 	}
 
@@ -2645,9 +2676,14 @@ func (r *ProtocolIncus) ConsoleInstanceDynamic(instanceName string, console api.
 
 	value, ok := opAPI.Metadata["fds"]
 	if ok {
-		values := value.(map[string]any)
-		for k, v := range values {
-			fds[k] = v.(string)
+		values, ok := value.(map[string]any)
+		if ok {
+			for k, v := range values {
+				val, ok := v.(string)
+				if ok {
+					fds[k] = val
+				}
+			}
 		}
 	}
 
@@ -2693,7 +2729,7 @@ func (r *ProtocolIncus) ConsoleInstanceDynamic(instanceName string, console api.
 // GetInstanceConsoleLog requests that Incus attaches to the console device of a instance.
 //
 // Note that it's the caller's responsibility to close the returned ReadCloser.
-func (r *ProtocolIncus) GetInstanceConsoleLog(instanceName string, args *InstanceConsoleLogArgs) (io.ReadCloser, error) {
+func (r *ProtocolIncus) GetInstanceConsoleLog(instanceName string, _ *InstanceConsoleLogArgs) (io.ReadCloser, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -2704,14 +2740,14 @@ func (r *ProtocolIncus) GetInstanceConsoleLog(instanceName string, args *Instanc
 	}
 
 	// Prepare the HTTP request
-	url := fmt.Sprintf("%s/1.0%s/%s/console", r.httpBaseURL.String(), path, url.PathEscape(instanceName))
+	uri := fmt.Sprintf("%s/1.0%s/%s/console", r.httpBaseURL.String(), path, url.PathEscape(instanceName))
 
-	url, err = r.setQueryAttributes(url)
+	uri, err = r.setQueryAttributes(uri)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -2734,7 +2770,7 @@ func (r *ProtocolIncus) GetInstanceConsoleLog(instanceName string, args *Instanc
 }
 
 // DeleteInstanceConsoleLog deletes the requested instance's console log.
-func (r *ProtocolIncus) DeleteInstanceConsoleLog(instanceName string, args *InstanceConsoleLogArgs) error {
+func (r *ProtocolIncus) DeleteInstanceConsoleLog(instanceName string, _ *InstanceConsoleLogArgs) error {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return err

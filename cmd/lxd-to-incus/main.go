@@ -350,7 +350,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 					return fmt.Errorf("Failed to get OVN southbound database address: %w", err)
 				}
 
-				ovnSB := strings.TrimSpace(strings.Replace(out, "\"", "", -1))
+				ovnSB := strings.TrimSpace(strings.ReplaceAll(out, "\"", ""))
 
 				commands, err := ovnConvert(ovnNB, ovnSB)
 				if err != nil {
@@ -438,7 +438,7 @@ DROP TRIGGER IF EXISTS on_image_alias_delete;
 DROP TRIGGER IF EXISTS on_image_delete;
 DROP TRIGGER IF EXISTS on_instance_backup_delete;
 DROP TRIGGER IF EXISTS on_instance_delete;
-DROP TRIGGER IF EXISTS on_instance_snaphot_delete;
+DROP TRIGGER IF EXISTS on_instance_snapshot_delete;
 DROP TRIGGER IF EXISTS on_network_acl_delete;
 DROP TRIGGER IF EXISTS on_network_delete;
 DROP TRIGGER IF EXISTS on_network_zone_delete;

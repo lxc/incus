@@ -10,6 +10,16 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 )
 
+func TestDotPrefixMatch(t *testing.T) {
+	pass := true
+	pass = pass && filter.DotPrefixMatch("s.privileged", "security.privileged")
+	pass = pass && filter.DotPrefixMatch("u.blah", "user.blah")
+
+	if !pass {
+		t.Error("failed prefix matching")
+	}
+}
+
 func TestValueOf_Instance(t *testing.T) {
 	date := time.Date(2020, 1, 29, 11, 10, 32, 0, time.UTC)
 	instance := api.Instance{
@@ -41,6 +51,7 @@ func TestValueOf_Instance(t *testing.T) {
 	cases["config.image.os"] = "BusyBox"
 	cases["name"] = "c1"
 	cases["expanded_config.image.os"] = "BusyBox"
+	cases["expanded_config.im.os"] = "BusyBox"
 	cases["expanded_devices.root.pool"] = "default"
 	cases["status"] = "Running"
 	cases["stateful"] = false

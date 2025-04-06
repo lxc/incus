@@ -71,7 +71,7 @@ func newStorageMigrationSource(volumeOnly bool, pushTarget *api.StorageVolumePos
 func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, poolName string, volName string, migrateOp *operations.Operation) error {
 	l := logger.AddContext(logger.Ctx{"project": projectName, "pool": poolName, "volume": volName, "push": s.pushOperationURL != ""})
 
-	ctx, cancel := context.WithTimeout(state.ShutdownCtx, time.Second*10)
+	ctx, cancel := context.WithTimeout(state.ShutdownCtx, time.Second*30)
 	defer cancel()
 
 	l.Info("Waiting for migration connections on source")
@@ -138,7 +138,8 @@ func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, po
 	// to false here. The migration source/sender doesn't need to care whether
 	// or not it's doing a refresh as the migration sink/receiver will know
 	// this, and adjust the migration types accordingly.
-	poolMigrationTypes = pool.MigrationTypes(storageDrivers.ContentType(srcConfig.Volume.ContentType), false, !s.volumeOnly)
+	// The same applies for clusterMove and storageMove, which are set to the most optimized defaults.
+	poolMigrationTypes = pool.MigrationTypes(storageDrivers.ContentType(srcConfig.Volume.ContentType), false, !s.volumeOnly, true, false)
 	if len(poolMigrationTypes) == 0 {
 		return fmt.Errorf("No source migration types available")
 	}
@@ -288,7 +289,7 @@ func newStorageMigrationSink(args *migrationSinkArgs) (*migrationSink, error) {
 func (c *migrationSink) DoStorage(state *state.State, projectName string, poolName string, req *api.StorageVolumesPost, op *operations.Operation) error {
 	l := logger.AddContext(logger.Ctx{"project": projectName, "pool": poolName, "volume": req.Name, "push": c.push})
 
-	ctx, cancel := context.WithTimeout(state.ShutdownCtx, time.Second*10)
+	ctx, cancel := context.WithTimeout(state.ShutdownCtx, time.Second*30)
 	defer cancel()
 
 	l.Info("Waiting for migration connections on target")
@@ -338,10 +339,12 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 	// Refresh needs to be set.
 	offerHeader.Refresh = &c.refresh
 
+	clusterMove := req.Source.Location != ""
+
 	// Extract the source's migration type and then match it against our pool's
 	// supported types and features. If a match is found the combined features list
 	// will be sent back to requester.
-	respTypes, err := localMigration.MatchTypes(offerHeader, storagePools.FallbackMigrationType(contentType), pool.MigrationTypes(contentType, c.refresh, !c.volumeOnly))
+	respTypes, err := localMigration.MatchTypes(offerHeader, storagePools.FallbackMigrationType(contentType), pool.MigrationTypes(contentType, c.refresh, !c.volumeOnly, clusterMove, poolName != "" && req.Source.Pool != poolName || !clusterMove))
 	if err != nil {
 		return err
 	}

@@ -161,6 +161,16 @@ func (c *Config) NetworkOVNSSL() (string, string, string) {
 	return c.m.GetString("network.ovn.ca_cert"), c.m.GetString("network.ovn.client_cert"), c.m.GetString("network.ovn.client_key")
 }
 
+// LinstorControllerConnection returns the Linstor controller connection string.
+func (c *Config) LinstorControllerConnection() string {
+	return c.m.GetString("storage.linstor.controller_connection")
+}
+
+// LinstorSSL returns all three SSL configuration keys needed for a Linstor controller connection.
+func (c *Config) LinstorSSL() (string, string, string) {
+	return c.m.GetString("storage.linstor.ca_cert"), c.m.GetString("storage.linstor.client_cert"), c.m.GetString("storage.linstor.client_key")
+}
+
 // ShutdownTimeout returns the number of minutes to wait for running operation to complete
 // before the server shuts down.
 func (c *Config) ShutdownTimeout() time.Duration {
@@ -441,7 +451,7 @@ var ConfigSchema = config.Schema{
 	"authorization.scriptlet": {Validator: validate.Optional(scriptletLoad.AuthorizationValidate)},
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=backups.compression_algorithm)
-	// Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.
+	// Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.
 	// ---
 	//  type: string
 	//  scope: global
@@ -674,7 +684,7 @@ var ConfigSchema = config.Schema{
 	"images.auto_update_interval": {Type: config.Int64, Default: "6"},
 
 	// gendoc:generate(entity=server, group=images, key=images.compression_algorithm)
-	// Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.
+	// Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.
 	// ---
 	//  type: string
 	//  scope: global
@@ -914,6 +924,38 @@ var ConfigSchema = config.Schema{
 	//  defaultdesc: Content of `/etc/ovn/key_host` if present
 	//  shortdesc: OVN SSL client key
 	"network.ovn.client_key": {Default: ""},
+
+	// gendoc:generate(entity=server, group=miscellaneous, key=storage.linstor.controller_connection)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: LINSTOR controller connection string
+	"storage.linstor.controller_connection": {Default: ""},
+
+	// gendoc:generate(entity=server, group=miscellaneous, key=storage.linstor.ca_cert)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: LINSTOR SSL certificate authority
+	"storage.linstor.ca_cert": {Default: ""},
+
+	// gendoc:generate(entity=server, group=miscellaneous, key=storage.linstor.client_cert)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: LINSTOR SSL client certificate
+	"storage.linstor.client_cert": {Default: ""},
+
+	// gendoc:generate(entity=server, group=miscellaneous, key=storage.linstor.client_key)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: LINSTOR SSL client key
+	"storage.linstor.client_key": {Default: ""},
 }
 
 func expiryValidator(value string) error {

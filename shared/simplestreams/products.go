@@ -71,7 +71,7 @@ func (s *Products) ToAPI() ([]api.Image, map[string][][]string) {
 
 	for _, product := range s.Products {
 		// Skip unsupported architectures
-		architecture, err := osarch.ArchitectureId(product.Architecture)
+		architecture, err := osarch.ArchitectureID(product.Architecture)
 		if err != nil {
 			continue
 		}
@@ -107,19 +107,24 @@ func (s *Products) ToAPI() ([]api.Image, map[string][][]string) {
 				// Figure out the fingerprint
 				fingerprint := ""
 				if root != nil {
-					if root.FileType == "root.tar.xz" {
+					switch root.FileType {
+					case "root.tar.xz":
 						if meta.CombinedSha256RootXz != "" {
 							fingerprint = meta.CombinedSha256RootXz
 						} else {
 							fingerprint = meta.CombinedSha256
 						}
-					} else if root.FileType == "squashfs" {
+
+					case "squashfs":
 						fingerprint = meta.CombinedSha256SquashFs
-					} else if root.FileType == "disk-kvm.img" {
+
+					case "disk-kvm.img":
 						fingerprint = meta.CombinedSha256DiskKvmImg
-					} else if root.FileType == "disk1.img" {
+
+					case "disk1.img":
 						fingerprint = meta.CombinedSha256DiskImg
-					} else if root.FileType == "uefi1.img" {
+
+					case "uefi1.img":
 						fingerprint = meta.CombinedSha256DiskUefiImg
 					}
 				} else {

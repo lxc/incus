@@ -35,7 +35,8 @@ func (s *utilsPropertiesTestSuite) TestStringToTimeHookFuncInvalidData() {
 
 func (s *utilsPropertiesTestSuite) TestStringToBoolHookFuncValidData() {
 	hookFunc := stringToBoolHookFunc()
-	hook := hookFunc.(func(reflect.Kind, reflect.Kind, interface{}) (interface{}, error))
+	hook, ok := hookFunc.(func(reflect.Kind, reflect.Kind, any) (any, error))
+	s.Equal(true, ok)
 
 	result, err := hook(reflect.String, reflect.Bool, "t")
 	s.NoError(err)
@@ -44,7 +45,8 @@ func (s *utilsPropertiesTestSuite) TestStringToBoolHookFuncValidData() {
 
 func (s *utilsPropertiesTestSuite) TestStringToBoolHookFuncInvalidData() {
 	hookFunc := stringToBoolHookFunc()
-	hook := hookFunc.(func(reflect.Kind, reflect.Kind, any) (any, error))
+	hook, ok := hookFunc.(func(reflect.Kind, reflect.Kind, any) (any, error))
+	s.Equal(true, ok)
 
 	_, err := hook(reflect.String, reflect.Bool, "not a boolean")
 	s.Error(err, "Expected an error but got nil")
@@ -52,7 +54,8 @@ func (s *utilsPropertiesTestSuite) TestStringToBoolHookFuncInvalidData() {
 
 func (s *utilsPropertiesTestSuite) TestStringToIntHookFuncValidData() {
 	hookFunc := stringToIntHookFunc()
-	hook := hookFunc.(func(reflect.Kind, reflect.Kind, any) (any, error))
+	hook, ok := hookFunc.(func(reflect.Kind, reflect.Kind, any) (any, error))
+	s.Equal(true, ok)
 
 	result, err := hook(reflect.String, reflect.Int, "123")
 	s.NoError(err)
@@ -61,7 +64,8 @@ func (s *utilsPropertiesTestSuite) TestStringToIntHookFuncValidData() {
 
 func (s *utilsPropertiesTestSuite) TestStringToIntHookFuncInvalidData() {
 	hookFunc := stringToIntHookFunc()
-	hook := hookFunc.(func(reflect.Kind, reflect.Kind, any) (any, error))
+	hook, ok := hookFunc.(func(reflect.Kind, reflect.Kind, any) (any, error))
+	s.Equal(true, ok)
 
 	_, err := hook(reflect.String, reflect.Int, "not an int")
 	s.Error(err, "Expected an error but got nil")
@@ -69,7 +73,8 @@ func (s *utilsPropertiesTestSuite) TestStringToIntHookFuncInvalidData() {
 
 func (s *utilsPropertiesTestSuite) TestStringToFloatHookFuncValidData() {
 	hookFunc := stringToFloatHookFunc()
-	hook := hookFunc.(func(reflect.Kind, reflect.Kind, any) (any, error))
+	hook, ok := hookFunc.(func(reflect.Kind, reflect.Kind, any) (any, error))
+	s.Equal(true, ok)
 
 	result, err := hook(reflect.String, reflect.Float64, "123.45")
 	s.NoError(err)
@@ -78,7 +83,8 @@ func (s *utilsPropertiesTestSuite) TestStringToFloatHookFuncValidData() {
 
 func (s *utilsPropertiesTestSuite) TestStringToFloatHookFuncInvalidData() {
 	hookFunc := stringToFloatHookFunc()
-	hook := hookFunc.(func(reflect.Kind, reflect.Kind, any) (any, error))
+	hook, ok := hookFunc.(func(reflect.Kind, reflect.Kind, any) (any, error))
+	s.Equal(true, ok)
 
 	_, err := hook(reflect.String, reflect.Float64, "not a float")
 	s.Error(err, "Expected an error but got nil")
@@ -89,44 +95,44 @@ type testStruct struct {
 	Age  int    `json:"age"`
 }
 
-func (s *utilsPropertiesTestSuite) TestSetFieldByJsonTagSettable() {
+func (s *utilsPropertiesTestSuite) TestSetFieldByJSONTagSettable() {
 	ts := testStruct{
 		Name: "John Doe",
 		Age:  30,
 	}
 
-	setFieldByJsonTag(&ts, "name", "Jane Doe")
+	setFieldByJSONTag(&ts, "name", "Jane Doe")
 	s.Equal("Jane Doe", ts.Name)
 }
 
-func (s *utilsPropertiesTestSuite) TestSetFieldByJsonTagNonSettable() {
+func (s *utilsPropertiesTestSuite) TestSetFieldByJSONTagNonSettable() {
 	ts := testStruct{
 		Name: "John Doe",
 		Age:  30,
 	}
 
-	setFieldByJsonTag(&ts, "invalid name", "Jane Doe")
+	setFieldByJSONTag(&ts, "invalid name", "Jane Doe")
 	s.NotEqual(ts.Name, "Jane Doe")
 }
 
-func (s *utilsPropertiesTestSuite) TestUnsetFieldByJsonTagValid() {
+func (s *utilsPropertiesTestSuite) TestUnsetFieldByJSONTagValid() {
 	ts := testStruct{
 		Name: "John Doe",
 		Age:  30,
 	}
 
-	err := unsetFieldByJsonTag(&ts, "name")
+	err := unsetFieldByJSONTag(&ts, "name")
 	s.NoError(err)
 	s.Equal("", ts.Name)
 }
 
-func (s *utilsPropertiesTestSuite) TestUnsetFieldByJsonTagInvalid() {
+func (s *utilsPropertiesTestSuite) TestUnsetFieldByJSONTagInvalid() {
 	ts := testStruct{
 		Name: "John Doe",
 		Age:  30,
 	}
 
-	err := unsetFieldByJsonTag(&ts, "invalid")
+	err := unsetFieldByJSONTag(&ts, "invalid")
 	s.Error(err, "Expected an error but got nil")
 }
 

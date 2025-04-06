@@ -81,6 +81,7 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		"ipv6.host_table",
 		"gvrp",
 		"vrf",
+		"io.bus",
 	}
 
 	rules := nicValidationRules(requiredFields, optionalFields, instConf)
@@ -188,7 +189,7 @@ func (d *nicRouted) validateEnvironment() error {
 
 			if sysctlVal != "1\n" {
 				// Replace . in parent name with / for sysctl formatting.
-				return fmt.Errorf("Routed mode requires sysctl net.ipv4.conf.%s.forwarding=1", strings.Replace(d.effectiveParentName, ".", "/", -1))
+				return fmt.Errorf("Routed mode requires sysctl net.ipv4.conf.%s.forwarding=1", strings.ReplaceAll(d.effectiveParentName, ".", "/"))
 			}
 		}
 
@@ -202,7 +203,7 @@ func (d *nicRouted) validateEnvironment() error {
 
 			if sysctlVal != "1\n" {
 				// Replace . in parent name with / for sysctl formatting.
-				return fmt.Errorf("Routed mode requires sysctl net.ipv6.conf.%s.forwarding=1", strings.Replace(d.effectiveParentName, ".", "/", -1))
+				return fmt.Errorf("Routed mode requires sysctl net.ipv6.conf.%s.forwarding=1", strings.ReplaceAll(d.effectiveParentName, ".", "/"))
 			}
 
 			ipv6ProxyNdpPath := fmt.Sprintf("net/ipv6/conf/%s/proxy_ndp", d.effectiveParentName)
@@ -213,7 +214,7 @@ func (d *nicRouted) validateEnvironment() error {
 
 			if sysctlVal != "1\n" {
 				// Replace . in parent name with / for sysctl formatting.
-				return fmt.Errorf("Routed mode requires sysctl net.ipv6.conf.%s.proxy_ndp=1", strings.Replace(d.effectiveParentName, ".", "/", -1))
+				return fmt.Errorf("Routed mode requires sysctl net.ipv6.conf.%s.proxy_ndp=1", strings.ReplaceAll(d.effectiveParentName, ".", "/"))
 			}
 		}
 	}
@@ -508,6 +509,10 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 		{Key: "flags", Value: "up"},
 		{Key: "link", Value: peerName},
 		{Key: "hwaddr", Value: d.config["hwaddr"]},
+	}
+
+	if d.config["io.bus"] == "usb" {
+		runConf.UseUSBBus = true
 	}
 
 	if d.inst.Type() == instancetype.Container {

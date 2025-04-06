@@ -88,6 +88,7 @@ type Pool interface {
 	UnmountInstance(inst instance.Instance, op *operations.Operation) error
 
 	// Instance snapshots.
+	CacheInstanceSnapshots(inst instance.ConfigReader) error
 	CreateInstanceSnapshot(inst instance.Instance, src instance.Instance, op *operations.Operation) error
 	RenameInstanceSnapshot(inst instance.Instance, newName string, op *operations.Operation) error
 	DeleteInstanceSnapshot(inst instance.Instance, op *operations.Operation) error
@@ -138,7 +139,7 @@ type Pool interface {
 	RestoreCustomVolume(projectName string, volName string, snapshotName string, op *operations.Operation) error
 
 	// Custom volume migration.
-	MigrationTypes(contentType drivers.ContentType, refresh bool, copySnapshots bool) []migration.Type
+	MigrationTypes(contentType drivers.ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []migration.Type
 	CreateCustomVolumeFromMigration(projectName string, conn io.ReadWriteCloser, args migration.VolumeTargetArgs, op *operations.Operation) error
 	MigrateCustomVolume(projectName string, conn io.ReadWriteCloser, args *migration.VolumeSourceArgs, op *operations.Operation) error
 

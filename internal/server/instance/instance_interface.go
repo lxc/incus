@@ -64,6 +64,7 @@ type ConfigReader interface {
 	Type() instancetype.Type
 	Architecture() int
 	ID() int
+	Name() string
 
 	ExpandedConfig() map[string]string
 	ExpandedDevices() deviceConfig.Devices
@@ -117,7 +118,8 @@ type Instance interface {
 	Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, stderr *os.File) (Cmd, error)
 
 	// Status
-	Render(options ...func(response any) error) (any, any, error)
+	Render() (any, any, error)
+	RenderWithUsage() (any, any, error)
 	RenderFull(hostInterfaces []net.Interface) (*api.InstanceFull, any, error)
 	RenderState(hostInterfaces []net.Interface) (*api.InstanceState, error)
 	IsRunning() bool
@@ -133,7 +135,6 @@ type Instance interface {
 
 	// Properties.
 	Location() string
-	Name() string
 	CloudInitID() string
 	Description() string
 	CreationDate() time.Time
@@ -186,7 +187,7 @@ type Container interface {
 	ConsoleLog(opts liblxc.ConsoleLogOptions) (string, error)
 	InsertSeccompUnixDevice(prefix string, m deviceConfig.Device, pid int) error
 	DevptsFd() (*os.File, error)
-	IdmappedStorage(path string, fstype string) idmap.IdmapStorageType
+	IdmappedStorage(path string, fstype string) idmap.StorageType
 }
 
 // VM interface is for VM specific functions.

@@ -86,6 +86,10 @@ type Authorizer interface {
 	DeleteNetworkACL(ctx context.Context, projectName string, networkACLName string) error
 	RenameNetworkACL(ctx context.Context, projectName string, oldNetworkACLName string, newNetworkACLName string) error
 
+	AddNetworkAddressSet(ctx context.Context, projectName string, networkAddressSetName string) error
+	DeleteNetworkAddressSet(ctx context.Context, projectName string, networkAddressSetName string) error
+	RenameNetworkAddressSet(ctx context.Context, projectName string, oldNetworkAddressSetName string, newNetworkAddressSetName string) error
+
 	AddProfile(ctx context.Context, projectName string, profileName string) error
 	DeleteProfile(ctx context.Context, projectName string, profileName string) error
 	RenameProfile(ctx context.Context, projectName string, oldProfileName string, newProfileName string) error
@@ -111,18 +115,20 @@ type Opts struct {
 
 // Resources represents a set of current API resources as Object slices for use when loading an Authorizer.
 type Resources struct {
-	CertificateObjects       []Object
-	StoragePoolObjects       []Object
-	ProjectObjects           []Object
-	ImageObjects             []Object
-	ImageAliasObjects        []Object
-	InstanceObjects          []Object
-	NetworkObjects           []Object
-	NetworkACLObjects        []Object
-	NetworkZoneObjects       []Object
-	ProfileObjects           []Object
-	StoragePoolVolumeObjects []Object
-	StorageBucketObjects     []Object
+	CertificateObjects        []Object
+	StoragePoolObjects        []Object
+	ProjectObjects            []Object
+	ImageObjects              []Object
+	ImageAliasObjects         []Object
+	InstanceObjects           []Object
+	NetworkObjects            []Object
+	NetworkACLObjects         []Object
+	NetworkAddressSetObjects  []Object
+	NetworkIntegrationObjects []Object
+	NetworkZoneObjects        []Object
+	ProfileObjects            []Object
+	StoragePoolVolumeObjects  []Object
+	StorageBucketObjects      []Object
 }
 
 // WithConfig can be passed into LoadAuthorizer to pass in driver specific configuration.

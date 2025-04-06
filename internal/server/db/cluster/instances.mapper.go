@@ -683,7 +683,7 @@ func GetInstanceDevices(ctx context.Context, db tx, instanceID int, filters ...D
 		_err = mapErr(_err, "Instance")
 	}()
 
-	instanceDevices, err := GetDevices(ctx, db, "instance", filters...)
+	instanceDevices, err := GetDevices(ctx, db, "instances", "instance", filters...)
 	if err != nil {
 		return nil, err
 	}
@@ -708,7 +708,7 @@ func GetInstanceConfig(ctx context.Context, db tx, instanceID int, filters ...Co
 		_err = mapErr(_err, "Instance")
 	}()
 
-	instanceConfig, err := GetConfig(ctx, db, "instance", filters...)
+	instanceConfig, err := GetConfig(ctx, db, "instances", "instance", filters...)
 	if err != nil {
 		return nil, err
 	}
@@ -860,7 +860,7 @@ func CreateInstanceDevices(ctx context.Context, db tx, instanceID int64, devices
 		devices[key] = device
 	}
 
-	err := CreateDevices(ctx, db, "instance", devices)
+	err := CreateDevices(ctx, db, "instances", "instance", devices)
 	if err != nil {
 		return fmt.Errorf("Insert Device failed for Instance: %w", err)
 	}
@@ -883,7 +883,7 @@ func CreateInstanceConfig(ctx context.Context, db dbtx, instanceID int64, config
 			Value:       value,
 		}
 
-		err := CreateConfig(ctx, db, "instance", insert)
+		err := CreateConfig(ctx, db, "instances", "instance", insert)
 		if err != nil {
 			return fmt.Errorf("Insert Config failed for Instance: %w", err)
 		}
@@ -994,7 +994,7 @@ func UpdateInstanceDevices(ctx context.Context, db tx, instanceID int64, devices
 		_err = mapErr(_err, "Instance")
 	}()
 
-	err := UpdateDevices(ctx, db, "instance", int(instanceID), devices)
+	err := UpdateDevices(ctx, db, "instances", "instance", int(instanceID), devices)
 	if err != nil {
 		return fmt.Errorf("Replace Device for Instance failed: %w", err)
 	}
@@ -1009,7 +1009,7 @@ func UpdateInstanceConfig(ctx context.Context, db tx, instanceID int64, config m
 		_err = mapErr(_err, "Instance")
 	}()
 
-	err := UpdateConfig(ctx, db, "instance", int(instanceID), config)
+	err := UpdateConfig(ctx, db, "instances", "instance", int(instanceID), config)
 	if err != nil {
 		return fmt.Errorf("Replace Config for Instance failed: %w", err)
 	}

@@ -32,6 +32,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/ip"
 	"github.com/lxc/incus/v6/internal/server/network"
 	"github.com/lxc/incus/v6/internal/server/network/acl"
+	addressSet "github.com/lxc/incus/v6/internal/server/network/address-set"
 	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/resources"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
@@ -99,6 +100,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 		"security.acls.default.egress.logged",
 		"boot.priority",
 		"vlan",
+		"io.bus",
 	}
 
 	// checkWithManagedNetwork validates the device's settings against the managed network.
@@ -683,6 +685,10 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 		{Key: "hwaddr", Value: d.config["hwaddr"]},
 	}
 
+	if d.config["io.bus"] == "usb" {
+		runConf.UseUSBBus = true
+	}
+
 	if d.inst.Type() == instancetype.VM {
 		runConf.NetworkInterface = append(runConf.NetworkInterface,
 			[]deviceConfig.RunConfigItem{
@@ -1082,6 +1088,12 @@ func (d *nicBridged) removeFilters(m deviceConfig.Device) {
 	if err != nil {
 		logger.Errorf("Failed to remove DHCP network assigned filters  for %q: %v", d.name, err)
 	}
+
+	d.logger.Debug("Clearing instance firewall unused address sets")
+	err = d.state.Firewall.NetworkDeleteAddressSetsIfUnused("bridge")
+	if err != nil {
+		logger.Errorf("Failed to remove network address set for %q: %v", d.name, err)
+	}
 }
 
 // setFilters sets up any network level filters defined for the instance.
@@ -1176,12 +1188,21 @@ func (d *nicBridged) setFilters() (err error) {
 	}
 
 	var aclRules []firewallDrivers.ACLRule
-
+	var aclNames []string
 	if config["security.acls"] != "" {
+		aclNames = util.SplitNTrimSpace(config["security.acls"], ",", -1, false)
 		aclRules, err = acl.FirewallACLRules(d.state, d.name, d.inst.Project().Name, d.config)
 		if err != nil {
 			return err
 		}
+
+		// Ensure address sets for ACL, we state bridge because
+		// this is the table firewall driver will use for this kind of NIC.
+		err = addressSet.FirewallApplyAddressSetsForACLRules(d.state, "bridge", d.inst.Project().Name, aclNames)
+		if err != nil {
+			return err
+		}
+
 	}
 
 	err = d.state.Firewall.InstanceSetupBridgeFilter(d.inst.Project().Name, d.inst.Name(), d.name, d.config["parent"], d.config["host_name"], d.config["hwaddr"], IPv4Nets, IPv6Nets, d.network != nil, util.IsTrue(config["security.mac_filtering"]), aclRules)
@@ -1443,13 +1464,13 @@ func (d *nicBridged) networkDHCPv6Release(srcDUID string, srcIAID string, srcIP 
 	}
 
 	// Convert Server DUID from string to byte array
-	dstDUIDRaw, err := hex.DecodeString(strings.Replace(dstDUID, ":", "", -1))
+	dstDUIDRaw, err := hex.DecodeString(strings.ReplaceAll(dstDUID, ":", ""))
 	if err != nil {
 		return err
 	}
 
 	// Convert DUID from string to byte array
-	srcDUIDRaw, err := hex.DecodeString(strings.Replace(srcDUID, ":", "", -1))
+	srcDUIDRaw, err := hex.DecodeString(strings.ReplaceAll(srcDUID, ":", ""))
 	if err != nil {
 		return err
 	}

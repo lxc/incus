@@ -88,7 +88,7 @@
 					{
 						"io.bus": {
 							"default": "`virtio-scsi` for block, `auto` for file system",
-							"longdesc": "This controls what bus a disk device should be attached to.\n\nFor block devices (disks), this is one of:\n- `nvme`\n- `virtio-blk`\n- `virtio-scsi` (default)\n\nFor file systems (shared directories or custom volumes), this is one of:\n- `9p`\n- `auto` (default) (`virtiofs` + `9p`, just `9p` if `virtiofsd` is missing)\n- `virtiofs`",
+							"longdesc": "This controls what bus a disk device should be attached to.\n\nFor block devices (disks), this is one of:\n- `nvme`\n- `virtio-blk`\n- `virtio-scsi` (default)\n- `usb`\n\nFor file systems (shared directories or custom volumes), this is one of:\n- `9p`\n- `auto` (default) (`virtiofs` + `9p`, just `9p` if `virtiofsd` is missing)\n- `virtiofs`",
 							"required": "no",
 							"shortdesc": "Only for VMs: Override the bus for the device",
 							"type": "string"
@@ -131,7 +131,7 @@
 						"path": {
 							"longdesc": "",
 							"required": "yes",
-							"shortdesc": "Path inside the instance where the disk will be mounted (only for containers)",
+							"shortdesc": "Path inside the instance where the disk will be mounted (only for file system disk devices)",
 							"type": "string"
 						}
 					},
@@ -726,6 +726,46 @@
 							"longdesc": "",
 							"shortdesc": "Whether to pass the host NVIDIA and CUDA runtime libraries into the instance",
 							"type": "bool"
+						}
+					}
+				]
+			},
+			"oci": {
+				"keys": [
+					{
+						"oci.cwd": {
+							"condition": "OCI container",
+							"liveupdate": "no",
+							"longdesc": "Override the working directory of an OCI container.",
+							"shortdesc": "OCI container working directory",
+							"type": "string"
+						}
+					},
+					{
+						"oci.entrypoint": {
+							"condition": "OCI container",
+							"liveupdate": "no",
+							"longdesc": "Override the entry point of an OCI container.",
+							"shortdesc": "OCI container entry point",
+							"type": "string"
+						}
+					},
+					{
+						"oci.gid": {
+							"condition": "OCI container",
+							"liveupdate": "no",
+							"longdesc": "Override the GID of the process run in an OCI container.",
+							"shortdesc": "OCI container GID",
+							"type": "string"
+						}
+					},
+					{
+						"oci.uid": {
+							"condition": "OCI container",
+							"liveupdate": "no",
+							"longdesc": "Override the UID of the process run in an OCI container.",
+							"shortdesc": "OCI container UID",
+							"type": "string"
 						}
 					}
 				]
@@ -1708,6 +1748,19 @@
 				]
 			}
 		},
+		"network_address_set": {
+			"common": {
+				"keys": [
+					{
+						"user.*": {
+							"longdesc": "User keys can be used in search.",
+							"shortdesc": "Free form user key/value storage",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"network_integration": {
 			"common": {
 				"keys": [
@@ -2224,7 +2277,7 @@
 				"keys": [
 					{
 						"backups.compression_algorithm": {
-							"longdesc": "Specify which compression algorithm to use for backups in this project.\nPossible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.",
+							"longdesc": "Specify which compression algorithm to use for backups in this project.\nPossible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.",
 							"shortdesc": "Compression algorithm to use for backups",
 							"type": "string"
 						}
@@ -2245,7 +2298,7 @@
 					},
 					{
 						"images.compression_algorithm": {
-							"longdesc": "Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.",
+							"longdesc": "Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.",
 							"shortdesc": "Compression algorithm to use for new images in the project",
 							"type": "string"
 						}
@@ -2661,7 +2714,7 @@
 					{
 						"images.compression_algorithm": {
 							"defaultdesc": "`gzip`",
-							"longdesc": "Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.",
+							"longdesc": "Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.",
 							"scope": "global",
 							"shortdesc": "Compression algorithm to use for new images",
 							"type": "string"
@@ -2769,7 +2822,7 @@
 					{
 						"backups.compression_algorithm": {
 							"defaultdesc": "`gzip`",
-							"longdesc": "Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.",
+							"longdesc": "Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.",
 							"scope": "global",
 							"shortdesc": "Compression algorithm to use for backups",
 							"type": "string"
@@ -2868,6 +2921,46 @@
 							"longdesc": "Specify the volume using the syntax `POOL/VOLUME`.",
 							"scope": "local",
 							"shortdesc": "Volume to use to store the image tarballs",
+							"type": "string"
+						}
+					},
+					{
+						"storage.linstor.ca_cert": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "LINSTOR SSL certificate authority",
+							"type": "string"
+						}
+					},
+					{
+						"storage.linstor.client_cert": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "LINSTOR SSL client certificate",
+							"type": "string"
+						}
+					},
+					{
+						"storage.linstor.client_key": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "LINSTOR SSL client key",
+							"type": "string"
+						}
+					},
+					{
+						"storage.linstor.controller_connection": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "LINSTOR controller connection string",
+							"type": "string"
+						}
+					},
+					{
+						"storage.linstor.satellite.name": {
+							"longdesc": "Set this option to the name of the local LINSTOR satellite node, should it be different from the Incus server name.",
+							"scope": "global",
+							"shortdesc": "LINSTOR satellite node name override",
 							"type": "string"
 						}
 					}

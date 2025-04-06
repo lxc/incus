@@ -137,7 +137,7 @@ func instancePatch(d *Daemon, r *http.Request) response.Response {
 	if err != nil {
 		architecture = c.Architecture()
 	} else {
-		architecture, err = osarch.ArchitectureId(req.Architecture)
+		architecture, err = osarch.ArchitectureID(req.Architecture)
 		if err != nil {
 			architecture = 0
 		}
@@ -191,12 +191,12 @@ func instancePatch(d *Daemon, r *http.Request) response.Response {
 			return err
 		}
 
-		profileConfigs, err := cluster.GetConfig(ctx, tx.Tx(), "profile")
+		profileConfigs, err := cluster.GetAllProfileConfigs(ctx, tx.Tx())
 		if err != nil {
 			return err
 		}
 
-		profileDevices, err := cluster.GetDevices(ctx, tx.Tx(), "profile")
+		profileDevices, err := cluster.GetAllProfileDevices(ctx, tx.Tx())
 		if err != nil {
 			return err
 		}

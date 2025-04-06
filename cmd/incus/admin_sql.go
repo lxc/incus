@@ -4,6 +4,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -23,6 +24,7 @@ type cmdAdminSQL struct {
 	flagFormat string
 }
 
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminSQL) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("sql", i18n.G("<local|global> <query>"))
@@ -54,13 +56,14 @@ func (c *cmdAdminSQL) Command() *cobra.Command {
 	cmd.RunE = c.Run
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G(`Format (csv|json|table|yaml|compact), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)+"``")
 
-	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
+	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
 		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
 	}
 
 	return cmd
 }
 
+// Run runs the actual command logic.
 func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
 	if len(args) != 2 {
 		_ = cmd.Help()
@@ -69,7 +72,7 @@ func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 
-		return fmt.Errorf(i18n.G("Missing required arguments"))
+		return errors.New(i18n.G("Missing required arguments"))
 	}
 
 	database := args[0]
@@ -78,7 +81,7 @@ func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
 	if !slices.Contains([]string{"local", "global"}, database) {
 		_ = cmd.Help()
 
-		return fmt.Errorf(i18n.G("Invalid database type"))
+		return errors.New(i18n.G("Invalid database type"))
 	}
 
 	if query == "-" {

@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -68,14 +69,42 @@ func (p *Process) AdminUser() string {
 
 // AdminClient returns admin client for the minio process.
 func (p *Process) AdminClient() (*AdminClient, error) {
-	binaryName := "mc"
-	_, err := exec.LookPath(binaryName)
-	if err != nil {
-		binaryName = "mcli"
-		_, err = exec.LookPath(binaryName)
+	var binaryName string
+
+	isMinIOClient := func(name string) bool {
+		cmd := exec.Command(name, "--version")
+		b, err := cmd.Output()
 		if err != nil {
-			return nil, err
+			return false
 		}
+
+		lines := strings.Split(string(b), "\n")
+		if len(lines) < 3 {
+			return false
+		}
+
+		if strings.Contains(lines[0], name+" version") &&
+			strings.Contains(lines[2], "MinIO") {
+			return true
+		}
+
+		return false
+	}
+
+	for _, name := range []string{"miniocli", "minioc", "mcli", "minio-client", "mc"} {
+		_, err := exec.LookPath(name)
+		if err != nil {
+			continue
+		}
+
+		if isMinIOClient(name) {
+			binaryName = name
+			break
+		}
+	}
+
+	if binaryName == "" {
+		return nil, fmt.Errorf("Couldn't find the MinIO client tool")
 	}
 
 	// Encode the bucketName with base64url as only certain characters with alpha prefix are allowed
@@ -86,10 +115,6 @@ func (p *Process) AdminClient() (*AdminClient, error) {
 		aliasPrefixedEncoded,
 		binaryName,
 		internalUtil.VarPath(""),
-	}
-
-	if !client.isMinIOClient() {
-		return nil, fmt.Errorf("'%s' binary is not MinIO client", binaryName)
 	}
 
 	return client, nil
@@ -258,7 +283,7 @@ func EnsureRunning(s *state.State, bucketVol storageDrivers.Volume) (*Process, e
 		err := bucketVol.MountTask(func(mountPath string, op *operations.Operation) error {
 			l.Debug("MinIO bucket starting")
 
-			var newDirMode os.FileMode = os.ModeDir | 0o700
+			newDirMode := os.ModeDir | 0o700
 
 			if !util.PathExists(bucketPath) {
 				err = os.Mkdir(bucketPath, newDirMode)

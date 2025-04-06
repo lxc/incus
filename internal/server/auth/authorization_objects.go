@@ -116,6 +116,7 @@ var objectValidators = map[ObjectType]objectValidator{
 	ObjectTypeInstance:           {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
 	ObjectTypeNetwork:            {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
 	ObjectTypeNetworkACL:         {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
+	ObjectTypeNetworkAddressSet:  {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
 	ObjectTypeNetworkIntegration: {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
 	ObjectTypeNetworkZone:        {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
 	ObjectTypeProfile:            {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
@@ -307,6 +308,12 @@ func ObjectNetworkACL(projectName string, networkACLName string) Object {
 	return object
 }
 
+// ObjectNetworkAddressSet represents a network address set.
+func ObjectNetworkAddressSet(projectName string, networkAddressSetName string) Object {
+	object, _ := NewObject(ObjectTypeNetworkAddressSet, projectName, networkAddressSetName)
+	return object
+}
+
 // ObjectNetworkIntegration represents a network integration.
 func ObjectNetworkIntegration(networkIntegrationName string) Object {
 	object, _ := NewObject(ObjectTypeNetworkIntegration, "", networkIntegrationName)
@@ -351,10 +358,10 @@ func ObjectStorageVolume(projectName string, poolName string, volumeType string,
 
 // escape escapes only the forward slash character as this is used as a delimiter. Everything else is allowed.
 func escape(s string) string {
-	return strings.Replace(s, "/", "%2F", -1)
+	return strings.ReplaceAll(s, "/", "%2F")
 }
 
 // unescape replaces only the escaped forward slashes.
 func unescape(s string) string {
-	return strings.Replace(s, "%2F", "/", -1)
+	return strings.ReplaceAll(s, "%2F", "/")
 }

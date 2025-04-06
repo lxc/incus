@@ -146,7 +146,7 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 		}
 
 		// Get all the profile devices.
-		profileDevicesByID, err := cluster.GetDevices(ctx, tx.Tx(), "profile")
+		profileDevicesByID, err := cluster.GetAllProfileDevices(ctx, tx.Tx())
 		if err != nil {
 			return err
 		}

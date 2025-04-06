@@ -1,0 +1,66 @@
+name: Bug report
+description: File a bug report.
+type: bug
+body:
+- type: checkboxes
+  attributes:
+    label: Is there an existing issue for this?
+    description: Please search to see if an issue already exists for the bug you encountered.
+    options:
+    - label: There is no existing issue for this bug
+      required: true
+
+- type: checkboxes
+  attributes:
+    label: Is this happening on an up to date version of Incus?
+    description: Please make sure that your system has all updates applied and is running a current version of Incus or Incus LTS.
+    options:
+    - label: This is happening on a supported version of Incus
+      required: true
+
+- type: textarea
+  attributes:
+    label: Incus system details
+    description: Output of `incus info`.
+    render: yaml
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Instance details
+    description: If the issue affects an  instance, please include the output of `incus config show NAME`.
+  validations:
+    required: false
+
+- type: textarea
+  attributes:
+    label: Instance log
+    description: If the issue is related to an instance startup failure, please include `incus info --show-log NAME`.
+  validations:
+    required: false
+
+- type: textarea
+  attributes:
+    label: Current behavior
+    description: A concise description of what you're experiencing.
+  validations:
+    required: false
+
+- type: textarea
+  attributes:
+    label: Expected behavior
+    description: A concise description of what you expected to happen.
+  validations:
+    required: false
+
+- type: textarea
+  attributes:
+    label: Steps to reproduce
+    description: Step by step instructions to reproduce the behavior.
+    placeholder: |
+      1. Step one
+      2. Step two
+      3. Step three
+  validations:
+    required: true

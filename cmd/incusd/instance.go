@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kballard/go-shellquote"
 	ociSpecs "github.com/opencontainers/runtime-spec/specs-go"
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
@@ -243,6 +244,23 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, r *http.Reques
 			if !ok {
 				args.Config[key] = value
 			}
+		}
+
+		// Set the entrypoint configuration options.
+		if len(config.Process.Args) > 0 && args.Config["oci.entrypoint"] == "" {
+			args.Config["oci.entrypoint"] = shellquote.Join(config.Process.Args...)
+		}
+
+		if config.Process.Cwd != "" && args.Config["oci.cwd"] == "" {
+			args.Config["oci.cwd"] = config.Process.Cwd
+		}
+
+		if args.Config["oci.uid"] == "" {
+			args.Config["oci.uid"] = fmt.Sprintf("%d", config.Process.User.UID)
+		}
+
+		if args.Config["oci.gid"] == "" {
+			args.Config["oci.gid"] = fmt.Sprintf("%d", config.Process.User.GID)
 		}
 
 		err = inst.Update(args, false)

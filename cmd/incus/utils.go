@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -117,7 +118,7 @@ func parseDeviceOverrides(deviceOverrideArgs []string) (map[string]map[string]st
 
 // IsAliasesSubset returns true if the first array is completely contained in the second array.
 func IsAliasesSubset(a1 []api.ImageAlias, a2 []api.ImageAlias) bool {
-	set := make(map[string]interface{})
+	set := make(map[string]any)
 	for _, alias := range a2 {
 		set[alias.Name] = nil
 	}
@@ -385,18 +386,31 @@ func structHasField(typ reflect.Type, field string) bool {
 }
 
 // getServerSupportedFilters returns two lists: one with filters supported by server and second one with not supported.
-func getServerSupportedFilters(filters []string, i interface{}) ([]string, []string) {
+func getServerSupportedFilters(filters []string, clientFilters []string, singleValueServerSupport bool) ([]string, []string) {
 	supportedFilters := []string{}
 	unsupportedFilters := []string{}
 
 	for _, filter := range filters {
 		membs := strings.SplitN(filter, "=", 2)
-		// Only key/value pairs are supported by server side API
-		// Only keys which are part of struct are supported by server side API
-		// Multiple values (separated by ',') are not supported by server side API
-		// Keys with '.' in name are not supported
-		if len(membs) < 2 || !structHasField(reflect.TypeOf(i), membs[0]) || strings.Contains(membs[1], ",") || strings.Contains(membs[0], ".") {
+
+		if len(membs) == 1 && singleValueServerSupport {
+			supportedFilters = append(supportedFilters, filter)
+			continue
+		} else if len(membs) == 1 && !singleValueServerSupport {
 			unsupportedFilters = append(unsupportedFilters, filter)
+			continue
+		}
+
+		found := false
+		for _, cf := range clientFilters {
+			if cf == membs[0] {
+				found = true
+				unsupportedFilters = append(unsupportedFilters, filter)
+				break
+			}
+		}
+
+		if found {
 			continue
 		}
 
@@ -497,7 +511,7 @@ func textEditor(inPath string, inContent []byte) ([]byte, error) {
 				}
 			}
 			if editor == "" {
-				return []byte{}, fmt.Errorf(i18n.G("No text editor found, please set the EDITOR environment variable"))
+				return []byte{}, errors.New(i18n.G("No text editor found, please set the EDITOR environment variable"))
 			}
 		}
 	}
@@ -509,9 +523,10 @@ func textEditor(inPath string, inContent []byte) ([]byte, error) {
 			return []byte{}, err
 		}
 
-		revert := revert.New()
-		defer revert.Fail()
-		revert.Add(func() {
+		reverter := revert.New()
+		defer reverter.Fail()
+
+		reverter.Add(func() {
 			_ = f.Close()
 			_ = os.Remove(f.Name())
 		})
@@ -537,8 +552,8 @@ func textEditor(inPath string, inContent []byte) ([]byte, error) {
 			return []byte{}, err
 		}
 
-		revert.Success()
-		revert.Add(func() { _ = os.Remove(path) })
+		reverter.Success()
+		reverter.Add(func() { _ = os.Remove(path) })
 	} else {
 		path = inPath
 	}

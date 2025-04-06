@@ -103,7 +103,7 @@ migration() {
   # perform existence check for various files.
   incus_remote start l2:nonlive
   # FIXME: make this backend agnostic
-  if [ "$incus2_backend" != "lvm" ] && [ "$incus2_backend" != "zfs" ] && [ "$incus2_backend" != "ceph" ]; then
+  if [ "$incus2_backend" != "lvm" ] && [ "$incus2_backend" != "zfs" ] && [ "$incus2_backend" != "ceph" ] && [ "$incus2_backend" != "linstor" ]; then
     [ -d "${incus2_dir}/containers/nonlive/rootfs" ]
   fi
   incus_remote stop l2:nonlive --force
@@ -120,7 +120,7 @@ migration() {
   incus_remote start l2:nonlive
   [ -d "${INCUS_DIR}/containers/nonlive2" ]
   # FIXME: make this backend agnostic
-  if [ "$incus2_backend" != "lvm" ] && [ "$incus2_backend" != "zfs" ] && [ "$incus2_backend" != "ceph" ]; then
+  if [ "$incus2_backend" != "lvm" ] && [ "$incus2_backend" != "zfs" ] && [ "$incus2_backend" != "ceph" ] && [ "$incus2_backend" != "linstor" ]; then
     [ -d "${incus2_dir}/containers/nonlive/rootfs/bin" ]
   fi
 
@@ -131,7 +131,7 @@ migration() {
 
   incus_remote copy l1:nonlive2/snap0 l2:nonlive3 --mode=relay
   # FIXME: make this backend agnostic
-  if [ "$incus2_backend" != "lvm" ] && [ "$incus2_backend" != "zfs" ] && [ "$incus2_backend" != "ceph" ]; then
+  if [ "$incus2_backend" != "lvm" ] && [ "$incus2_backend" != "zfs" ] && [ "$incus2_backend" != "ceph" ] && [ "$incus2_backend" != "linstor" ]; then
     [ -d "${incus2_dir}/containers/nonlive3/rootfs/bin" ]
   fi
   incus_remote delete l2:nonlive3 --force

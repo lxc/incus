@@ -2752,3 +2752,30 @@ Introduces `ipv4.dhcp.expiry` for OVN networks.
 ## `instance_state_cpu_time`
 
 This adds an `allocated_time` field below `CPU` in the instance state API.
+
+## `network_io_bus`
+
+This introduces a new `io.bus` property for compatible network devices allowing to choose between `virtio` (default) and `usb`.
+
+## `disk_io_bus_usb`
+
+Adds a new `usb` value for `io.bus` on `disk` devices.
+
+## `storage_driver_linstor`
+
+This adds a LINSTOR storage driver.
+
+## `instance_oci_entrypoint`
+
+This introduces a set of new configuration options on the container to configure the OCI entry point:
+
+* `oci.entrypoint`
+* `oci.cwd`
+* `oci.uid`
+* `oci.gid`
+
+Those are initialized at creation time using the values from the OCI image.
+
+## `network_address_set`
+
+This adds the concept of network address sets to API under the API endpoint prefix `/1.0/network-address-sets`.

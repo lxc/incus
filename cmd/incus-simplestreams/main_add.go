@@ -244,7 +244,7 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Validate the metadata.
-	_, err = osarch.ArchitectureId(metadata.Architecture)
+	_, err = osarch.ArchitectureID(metadata.Architecture)
 	if err != nil {
 		return fmt.Errorf("Invalid architecture in metadata.yaml: %w", err)
 	}

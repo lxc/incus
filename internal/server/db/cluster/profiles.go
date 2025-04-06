@@ -169,3 +169,13 @@ func ExpandInstanceDevices(devices config.Devices, profiles []api.Profile) confi
 
 	return expandedDevices
 }
+
+// GetAllProfileConfigs returns a map of all profile configurations, keyed by database ID.
+func GetAllProfileConfigs(ctx context.Context, tx *sql.Tx) (map[int]map[string]string, error) {
+	return GetConfig(ctx, tx, "profiles", "profile")
+}
+
+// GetAllProfileDevices returns a map of all profile devices, keyed by database ID.
+func GetAllProfileDevices(ctx context.Context, tx *sql.Tx) (map[int][]Device, error) {
+	return GetDevices(ctx, tx, "profiles", "profile")
+}

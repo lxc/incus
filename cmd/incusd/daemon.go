@@ -63,6 +63,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/state"
 	storagePools "github.com/lxc/incus/v6/internal/server/storage"
 	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
+	"github.com/lxc/incus/v6/internal/server/storage/linstor"
 	"github.com/lxc/incus/v6/internal/server/storage/s3/miniod"
 	"github.com/lxc/incus/v6/internal/server/sys"
 	"github.com/lxc/incus/v6/internal/server/syslog"
@@ -172,6 +173,10 @@ type Daemon struct {
 
 	// API info.
 	apiExtensions int
+
+	// Linstor client.
+	linstor   *linstor.Client
+	linstorMu sync.Mutex
 }
 
 // DaemonConfig holds configuration values for Daemon.
@@ -604,6 +609,7 @@ func (d *Daemon) State() *state.State {
 		OS:                     d.os,
 		OVN:                    d.getOVN,
 		OVS:                    d.getOVS,
+		Linstor:                d.getLinstor,
 		Proxy:                  d.proxy,
 		ServerCert:             d.serverCert,
 		ServerClustered:        d.serverClustered,
@@ -2029,7 +2035,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 		var resources auth.Resources
 
 		err = d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
-			err := query.Scan(ctx, tx.Tx(), "SELECT certificates.fingerprint from certificates", func(scan func(dest ...any) error) error {
+			err := query.Scan(ctx, tx.Tx(), "SELECT certificates.fingerprint FROM certificates", func(scan func(dest ...any) error) error {
 				var fingerprint string
 				err := scan(&fingerprint)
 				if err != nil {
@@ -2043,7 +2049,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 				return err
 			}
 
-			err = query.Scan(ctx, tx.Tx(), "SELECT name from storage_pools", func(scan func(dest ...any) error) error {
+			err = query.Scan(ctx, tx.Tx(), "SELECT name FROM storage_pools", func(scan func(dest ...any) error) error {
 				var storagePoolName string
 				err := scan(&storagePoolName)
 				if err != nil {
@@ -2057,7 +2063,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 				return err
 			}
 
-			err = query.Scan(ctx, tx.Tx(), "SELECT name from projects", func(scan func(dest ...any) error) error {
+			err = query.Scan(ctx, tx.Tx(), "SELECT name FROM projects", func(scan func(dest ...any) error) error {
 				var projectName string
 				err := scan(&projectName)
 				if err != nil {
@@ -2071,7 +2077,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 				return err
 			}
 
-			err = query.Scan(ctx, tx.Tx(), "SELECT images.fingerprint, projects.name from images JOIN projects ON projects.id=images.project_id", func(scan func(dest ...any) error) error {
+			err = query.Scan(ctx, tx.Tx(), "SELECT images.fingerprint, projects.name FROM images JOIN projects ON projects.id=images.project_id", func(scan func(dest ...any) error) error {
 				var imageFingerprint string
 				var projectName string
 				err := scan(&imageFingerprint, &projectName)
@@ -2086,7 +2092,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 				return err
 			}
 
-			err = query.Scan(ctx, tx.Tx(), "SELECT images_aliases.name, projects.name from images_aliases JOIN projects ON projects.id=images_aliases.project_id", func(scan func(dest ...any) error) error {
+			err = query.Scan(ctx, tx.Tx(), "SELECT images_aliases.name, projects.name FROM images_aliases JOIN projects ON projects.id=images_aliases.project_id", func(scan func(dest ...any) error) error {
 				var imageAliasName string
 				var projectName string
 				err := scan(&imageAliasName, &projectName)
@@ -2101,7 +2107,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 				return err
 			}
 
-			err = query.Scan(ctx, tx.Tx(), "SELECT instances.name, projects.name from instances JOIN projects ON projects.id=instances.project_id", func(scan func(dest ...any) error) error {
+			err = query.Scan(ctx, tx.Tx(), "SELECT instances.name, projects.name FROM instances JOIN projects ON projects.id=instances.project_id", func(scan func(dest ...any) error) error {
 				var instanceName string
 				var projectName string
 				err := scan(&instanceName, &projectName)
@@ -2140,6 +2146,21 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 				}
 
 				resources.NetworkACLObjects = append(resources.NetworkACLObjects, auth.ObjectNetworkACL(projectName, networkACLName))
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			err = query.Scan(ctx, tx.Tx(), "SELECT networks_address_sets.name, projects.name FROM networks_address_sets JOIN projects ON projects.id=networks_address_sets.project_id", func(scan func(dest ...any) error) error {
+				var networkAddressSetName string
+				var projectName string
+				err := scan(&networkAddressSetName, &projectName)
+				if err != nil {
+					return err
+				}
+
+				resources.NetworkAddressSetObjects = append(resources.NetworkAddressSetObjects, auth.ObjectNetworkAddressSet(projectName, networkAddressSetName))
 				return nil
 			})
 			if err != nil {
@@ -2731,4 +2752,41 @@ func (d *Daemon) getOVS() (*ovs.VSwitch, error) {
 	}
 
 	return d.ovs, nil
+}
+
+func (d *Daemon) setupLinstor() error {
+	d.linstorMu.Lock()
+	defer d.linstorMu.Unlock()
+
+	// Clear any existing client.
+	d.linstor = nil
+
+	// Get the Linstor controller connection string.
+	controllerConnection := d.globalConfig.LinstorControllerConnection()
+
+	// Get the SSL certificates if needed.
+	sslCACert, sslClientCert, sslClientKey := d.globalConfig.LinstorSSL()
+
+	// Get Linstor client.
+	client, err := linstor.NewClient(controllerConnection, sslCACert, sslClientCert, sslClientKey)
+	if err != nil {
+		return fmt.Errorf("Failed to connect to Linstor: %w", err)
+	}
+
+	// Set the client.
+	d.linstor = client
+
+	return nil
+}
+
+func (d *Daemon) getLinstor() (*linstor.Client, error) {
+	// Setup the client if it does not exist.
+	if d.linstor == nil {
+		err := d.setupLinstor()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return d.linstor, nil
 }

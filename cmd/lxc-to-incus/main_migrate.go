@@ -399,14 +399,14 @@ func convertContainer(d incus.InstanceServer, container *liblxc.Container, stora
 		arch = value[0]
 	}
 
-	archID, err := osarch.ArchitectureId(arch)
+	archID, err := osarch.ArchitectureID(arch)
 	if err != nil {
 		// If arch is linux32 or linux64, the architecture ID cannot be determined as multiple
 		// architectures have the linux32 or linux64 personality. In this case, assume the native
 		// architecture.
 		arch = runtime.GOARCH
 
-		archID, err = osarch.ArchitectureId(arch)
+		archID, err = osarch.ArchitectureID(arch)
 		if err != nil {
 			return err
 		}

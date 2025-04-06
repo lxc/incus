@@ -26,10 +26,10 @@ type DownloadableFile struct {
 }
 
 // NewClient returns a simplestreams client for the provided stream URL.
-func NewClient(url string, httpClient http.Client, useragent string) *SimpleStreams {
+func NewClient(uri string, httpClient http.Client, useragent string) *SimpleStreams {
 	return &SimpleStreams{
 		http:           &httpClient,
-		url:            url,
+		url:            uri,
 		cachedProducts: map[string]*Products{},
 		useragent:      useragent,
 	}

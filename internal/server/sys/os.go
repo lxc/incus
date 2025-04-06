@@ -56,6 +56,7 @@ type OS struct {
 	MockMode        bool   // If true some APIs will be mocked (for testing)
 	Nodev           bool
 	RunningInUserNS bool
+	Hostname        string
 
 	// Privilege dropping
 	UnprivUser  string
@@ -172,6 +173,10 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 	s.IdmapSet = getIdmapset()
 	s.ExecPath = localUtil.GetExecPath()
 	s.RunningInUserNS = linux.RunningInUserNS()
+	s.Hostname, err = os.Hostname()
+	if err != nil {
+		return nil, err
+	}
 
 	dbWarnings = s.initAppArmor()
 	cgroup.Init()
@@ -242,7 +247,7 @@ func (s *OS) GetUnixSocket() string {
 
 func getIdmapset() *idmap.Set {
 	// Try getting the system map.
-	idmapset, err := idmap.NewSetFromSystem("", "root")
+	idmapset, err := idmap.NewSetFromSystem("root")
 	if err != nil && err != idmap.ErrSubidUnsupported {
 		logger.Error("Unable to parse system idmap", logger.Ctx{"err": err})
 		return nil

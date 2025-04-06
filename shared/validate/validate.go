@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/kballard/go-shellquote"
@@ -103,15 +104,15 @@ func IsUint32Range(value string) error {
 }
 
 // IsInRange checks whether an integer is within a specific range.
-func IsInRange(min int64, max int64) func(value string) error {
+func IsInRange(minValue int64, maxValue int64) func(value string) error {
 	return func(value string) error {
 		valueInt, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			return fmt.Errorf("Invalid value for an integer %q", value)
 		}
 
-		if valueInt < min || valueInt > max {
-			return fmt.Errorf("Value isn't within valid range. Must be between %d and %d", min, max)
+		if valueInt < minValue || valueInt > maxValue {
+			return fmt.Errorf("Value isn't within valid range. Must be between %d and %d", minValue, maxValue)
 		}
 
 		return nil
@@ -153,7 +154,7 @@ func IsOneOf(valid ...string) func(value string) error {
 }
 
 // IsAny accepts all strings as valid.
-func IsAny(value string) error {
+func IsAny(_ string) error {
 	return nil
 }
 
@@ -881,4 +882,31 @@ func IsValidCPUSet(value string) error {
 	}
 
 	return nil
+}
+
+// IsShorterThan checks whether a string is shorter than a specific length.
+func IsShorterThan(length int) func(value string) error {
+	return func(value string) error {
+		if len(value) > length {
+			return fmt.Errorf("Value is too long. Must be within %d characters", length)
+		}
+
+		return nil
+	}
+}
+
+// IsMinimumDuration validates whether a value is a duration longer than a specific minimum.
+func IsMinimumDuration(minimum time.Duration) func(value string) error {
+	return func(value string) error {
+		duration, err := time.ParseDuration(value)
+		if err != nil {
+			return fmt.Errorf("Invalid duration")
+		}
+
+		if duration < minimum {
+			return fmt.Errorf("Duration must be greater than %s", minimum)
+		}
+
+		return nil
+	}
 }

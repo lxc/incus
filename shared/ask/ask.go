@@ -69,7 +69,7 @@ func (a *Asker) AskInt(question string, minValue int64, maxValue int64, defaultA
 			continue
 		}
 
-		if !((minValue == -1 || result >= minValue) && (maxValue == -1 || result <= maxValue)) {
+		if (minValue > -1 && result >= minValue) || (maxValue > -1 && result <= maxValue) {
 			fmt.Fprintf(os.Stderr, "Invalid input: out of range\n\n")
 			continue
 		}
@@ -115,12 +115,6 @@ func (a *Asker) AskString(question string, defaultAnswer string, validate func(s
 
 // AskPassword asks the user to enter a password.
 func (a *Asker) AskPassword(question string) string {
-	return AskPassword(question)
-}
-
-// AskPassword asks the user to enter a password.
-// Deprecated: Use asker.AskPassword instead.
-func AskPassword(question string) string {
 	for {
 		fmt.Print(question)
 
@@ -148,14 +142,6 @@ func AskPassword(question string) string {
 //
 // It's the same as AskPassword, but it won't ask to enter it again.
 func (a *Asker) AskPasswordOnce(question string) string {
-	return AskPasswordOnce(question)
-}
-
-// AskPasswordOnce asks the user to enter a password.
-//
-// It's the same as AskPassword, but it won't ask to enter it again.
-// Deprecated: Use asker.AskPasswordOnce instead.
-func AskPasswordOnce(question string) string {
 	for {
 		fmt.Print(question)
 		pwd, _ := term.ReadPassword(0)

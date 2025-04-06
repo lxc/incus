@@ -87,6 +87,8 @@ var api10 = []APIEndpoint{
 	networkACLCmd,
 	networkACLsCmd,
 	networkACLLogCmd,
+	networkAddressSetCmd,
+	networkAddressSetsCmd,
 	networkAllocationsCmd,
 	networkForwardCmd,
 	networkForwardsCmd,
@@ -792,6 +794,7 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 	oidcChanged := false
 	openFGAChanged := false
 	ovnChanged := false
+	linstorChanged := false
 	ovsChanged := false
 	syslogChanged := false
 
@@ -835,6 +838,9 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 
 		case "openfga.api.url", "openfga.api.token", "openfga.store.id":
 			openFGAChanged = true
+
+		case "storage.linstor.controller_connection", "storage.linstor.ca_cert", "storage.linstor.client_cert", "storage.linstor.client_key":
+			linstorChanged = true
 		}
 	}
 
@@ -997,6 +1003,13 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 
 	if syslogChanged {
 		err := d.setupSyslogSocket(nodeConfig.SyslogSocket())
+		if err != nil {
+			return err
+		}
+	}
+
+	if linstorChanged {
+		err := d.setupLinstor()
 		if err != nil {
 			return err
 		}

@@ -305,7 +305,7 @@ test_basic_usage() {
   # Test activateifneeded/shutdown
   INCUS_ACTIVATION_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_ACTIVATION_DIR}"
-  spawn_incus "${INCUS_ACTIVATION_DIR}" true
+  LINSTOR_PREFIX_OVERRIDE=incus2-volume- spawn_incus "${INCUS_ACTIVATION_DIR}" true
   (
     set -e
     # shellcheck disable=SC2030
@@ -452,7 +452,7 @@ test_basic_usage() {
 
   # test incus file edit doesn't change target file's owner and permissions
   echo "content" | incus file push - foo/tmp/edit_test
-  incus exec foo -- chown 55.55 /tmp/edit_test
+  incus exec foo -- chown 55:55 /tmp/edit_test
   incus exec foo -- chmod 555 /tmp/edit_test
   echo "new content" | incus file edit foo/tmp/edit_test
   [ "$(incus exec foo -- cat /tmp/edit_test)" = "new content" ]

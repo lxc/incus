@@ -165,12 +165,13 @@ func (b *backend) Driver() drivers.Driver {
 	return b.driver
 }
 
-// MigrationTypes returns the migration transport method preferred when sending a migration,
-// based on the migration method requested by the driver's ability. The snapshots argument
-// indicates whether snapshots are migrated as well. It is used to determine whether to use
-// optimized migration.
-func (b *backend) MigrationTypes(contentType drivers.ContentType, refresh bool, copySnapshots bool) []localMigration.Type {
-	return b.driver.MigrationTypes(contentType, refresh, copySnapshots)
+// MigrationTypes returns the migration transport method preferred when sending a migration, based
+// on the migration method requested by the driver's ability. The copySnapshots argument indicates
+// whether snapshots are migrated as well. clusterMove determines whether the migration is done
+// within a cluster and storageMove determines whether the storage pool is changed by the migration.
+// This method is used to determine whether to use optimized migration.
+func (b *backend) MigrationTypes(contentType drivers.ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []localMigration.Type {
+	return b.driver.MigrationTypes(contentType, refresh, copySnapshots, clusterMove, storageMove)
 }
 
 // Create creates the storage pool layout on the storage device.
@@ -1150,9 +1151,9 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 		l.Debug("CreateInstanceFromCopy cross-pool mode detected")
 
 		// Negotiate the migration type to use.
-		offeredTypes := srcPool.MigrationTypes(contentType, false, snapshots)
+		offeredTypes := srcPool.MigrationTypes(contentType, false, snapshots, false, true)
 		offerHeader := localMigration.TypesToHeader(offeredTypes...)
-		migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, false, snapshots))
+		migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, false, snapshots, false, true))
 		if err != nil {
 			return fmt.Errorf("Failed to negotiate copy migration type: %w", err)
 		}
@@ -1196,6 +1197,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 				AllowInconsistent:  allowInconsistent,
 				VolumeOnly:         !snapshots,
 				Info:               &localMigration.Info{Config: srcConfig},
+				StorageMove:        true,
 			}, op)
 		})
 
@@ -1208,6 +1210,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 				VolumeSize:         srcVolumeSize, // Block size setting override.
 				TrackProgress:      false,         // Do not use a progress tracker on receiver.
 				VolumeOnly:         !snapshots,
+				StoragePool:        srcPool.Name(),
 			}, op)
 		})
 
@@ -1398,9 +1401,9 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 		l.Debug("RefreshCustomVolume cross-pool mode detected")
 
 		// Negotiate the migration type to use.
-		offeredTypes := srcPool.MigrationTypes(contentType, true, snapshots)
+		offeredTypes := srcPool.MigrationTypes(contentType, true, snapshots, false, true)
 		offerHeader := localMigration.TypesToHeader(offeredTypes...)
-		migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, true, snapshots))
+		migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, true, snapshots, false, true))
 		if err != nil {
 			return fmt.Errorf("Failed to negotiate copy migration type: %w", err)
 		}
@@ -1456,6 +1459,7 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 				TrackProgress:      true, // Do use a progress tracker on sender.
 				ContentType:        string(contentType),
 				Info:               &localMigration.Info{Config: srcConfig},
+				StorageMove:        true,
 			}, op)
 			if err != nil {
 				cancel()
@@ -1476,6 +1480,7 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 				ContentType:        string(contentType),
 				VolumeSize:         volSize, // Block size setting override.
 				Refresh:            true,
+				StoragePool:        srcPoolName,
 			}, op)
 			if err != nil {
 				cancel()
@@ -1643,9 +1648,9 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 		l.Debug("RefreshInstance cross-pool mode detected")
 
 		// Negotiate the migration type to use.
-		offeredTypes := srcPool.MigrationTypes(contentType, true, snapshots)
+		offeredTypes := srcPool.MigrationTypes(contentType, true, snapshots, false, true)
 		offerHeader := localMigration.TypesToHeader(offeredTypes...)
-		migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, true, snapshots))
+		migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, true, snapshots, false, true))
 		if err != nil {
 			return fmt.Errorf("Failed to negotiate copy migration type: %w", err)
 		}
@@ -1686,6 +1691,7 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 				Refresh:            true, // Indicate to sender to use incremental streams.
 				Info:               &localMigration.Info{Config: srcConfig},
 				VolumeOnly:         !snapshots,
+				StorageMove:        true,
 			}, op)
 		})
 
@@ -1699,6 +1705,7 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 				VolumeSize:         srcVolumeSize,
 				TrackProgress:      false, // Do not use a progress tracker on receiver.
 				VolumeOnly:         !snapshots,
+				StoragePool:        srcPool.Name(),
 			}, op)
 		})
 
@@ -2968,6 +2975,40 @@ func (b *backend) getInstanceDisk(inst instance.Instance) (string, error) {
 	}
 
 	return diskPath, nil
+}
+
+// CacheInstanceSnapshots instructs the driver to pre-fetch and cache details on all snapshots.
+// This is used to significantly accelerate listing of issues with a lot of snapshots.
+func (b *backend) CacheInstanceSnapshots(inst instance.ConfigReader) error {
+	l := b.logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
+	l.Debug("CacheInstanceSnapshots started")
+	defer l.Debug("CacheInstanceSnapshots finished")
+
+	// Check we can convert the instance to the volume type needed.
+	volType, err := InstanceTypeToVolumeType(inst.Type())
+	if err != nil {
+		return err
+	}
+
+	contentVolume := InstanceContentType(inst)
+	volStorageName := project.Instance(inst.Project().Name, inst.Name())
+
+	// Load storage volume from database.
+	dbVol, err := VolumeDBGet(b, inst.Project().Name, inst.Name(), volType)
+	if err != nil {
+		return err
+	}
+
+	// Apply the main volume quota.
+	// There's no need to pass config as it's not needed when setting quotas.
+	vol := b.GetVolume(volType, contentVolume, volStorageName, dbVol.Config)
+
+	err = b.driver.CacheVolumeSnapshots(vol)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // CreateInstanceSnapshot creates a snapshot of an instance volume.
@@ -4812,9 +4853,9 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 	l.Debug("CreateCustomVolumeFromCopy cross-pool mode detected")
 
 	// Negotiate the migration type to use.
-	offeredTypes := srcPool.MigrationTypes(contentType, false, snapshots)
+	offeredTypes := srcPool.MigrationTypes(contentType, false, snapshots, false, true)
 	offerHeader := localMigration.TypesToHeader(offeredTypes...)
-	migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, false, snapshots))
+	migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, false, snapshots, false, true))
 	if err != nil {
 		return fmt.Errorf("Failed to negotiate copy migration type: %w", err)
 	}
@@ -4874,6 +4915,7 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 			ContentType:        string(contentType),
 			Info:               &localMigration.Info{Config: srcConfig},
 			VolumeOnly:         !snapshots,
+			StorageMove:        true,
 		}, op)
 		if err != nil {
 			cancel()
@@ -4894,6 +4936,7 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 			ContentType:        string(contentType),
 			VolumeSize:         volSize, // Block size setting override.
 			VolumeOnly:         !snapshots,
+			StoragePool:        srcPool.Name(),
 		}, op)
 		if err != nil {
 			cancel()

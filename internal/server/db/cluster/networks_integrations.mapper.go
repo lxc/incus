@@ -214,7 +214,7 @@ func GetNetworkIntegrationConfig(ctx context.Context, db tx, networkIntegrationI
 		_err = mapErr(_err, "Network_integration")
 	}()
 
-	networkIntegrationConfig, err := GetConfig(ctx, db, "network_integration", filters...)
+	networkIntegrationConfig, err := GetConfig(ctx, db, "networks_integrations", "network_integration", filters...)
 	if err != nil {
 		return nil, err
 	}
@@ -334,7 +334,7 @@ func CreateNetworkIntegrationConfig(ctx context.Context, db dbtx, networkIntegra
 			Value:       value,
 		}
 
-		err := CreateConfig(ctx, db, "network_integration", insert)
+		err := CreateConfig(ctx, db, "networks_integrations", "network_integration", insert)
 		if err != nil {
 			return fmt.Errorf("Insert Config failed for NetworkIntegration: %w", err)
 		}
@@ -471,7 +471,7 @@ func UpdateNetworkIntegrationConfig(ctx context.Context, db tx, networkIntegrati
 		_err = mapErr(_err, "Network_integration")
 	}()
 
-	err := UpdateConfig(ctx, db, "network_integration", int(networkIntegrationID), config)
+	err := UpdateConfig(ctx, db, "networks_integrations", "network_integration", int(networkIntegrationID), config)
 	if err != nil {
 		return fmt.Errorf("Replace Config for NetworkIntegration failed: %w", err)
 	}

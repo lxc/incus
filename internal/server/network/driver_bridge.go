@@ -29,6 +29,7 @@ import (
 	firewallDrivers "github.com/lxc/incus/v6/internal/server/firewall/drivers"
 	"github.com/lxc/incus/v6/internal/server/ip"
 	"github.com/lxc/incus/v6/internal/server/network/acl"
+	addressset "github.com/lxc/incus/v6/internal/server/network/address-set"
 	"github.com/lxc/incus/v6/internal/server/project"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	"github.com/lxc/incus/v6/internal/server/warnings"
@@ -951,7 +952,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			}
 
 			if n.config["ipv4.dhcp.routes"] != "" {
-				dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--dhcp-option-force=121,%s", strings.Replace(n.config["ipv4.dhcp.routes"], " ", "", -1)))
+				dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--dhcp-option-force=121,%s", strings.ReplaceAll(n.config["ipv4.dhcp.routes"], " ", "")))
 			}
 
 			expiry := "1h"
@@ -962,7 +963,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			if n.config["ipv4.dhcp.ranges"] != "" {
 				for _, dhcpRange := range strings.Split(n.config["ipv4.dhcp.ranges"], ",") {
 					dhcpRange = strings.TrimSpace(dhcpRange)
-					dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-range", fmt.Sprintf("%s,%s", strings.Replace(dhcpRange, "-", ",", -1), expiry)}...)
+					dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-range", fmt.Sprintf("%s,%s", strings.ReplaceAll(dhcpRange, "-", ","), expiry)}...)
 				}
 			} else {
 				dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-range", fmt.Sprintf("%s,%s,%s", dhcpalloc.GetIP(subnet, 2).String(), dhcpalloc.GetIP(subnet, -2).String(), expiry)}...)
@@ -1104,7 +1105,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 				if n.config["ipv6.dhcp.ranges"] != "" {
 					for _, dhcpRange := range strings.Split(n.config["ipv6.dhcp.ranges"], ",") {
 						dhcpRange = strings.TrimSpace(dhcpRange)
-						dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-range", fmt.Sprintf("%s,%d,%s", strings.Replace(dhcpRange, "-", ",", -1), subnetSize, expiry)}...)
+						dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-range", fmt.Sprintf("%s,%d,%s", strings.ReplaceAll(dhcpRange, "-", ","), subnetSize, expiry)}...)
 					}
 				} else {
 					dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-range", fmt.Sprintf("%s,%s,%d,%s", dhcpalloc.GetIP(subnet, 2), dhcpalloc.GetIP(subnet, -1), subnetSize, expiry)}...)
@@ -1475,9 +1476,26 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 	// Setup firewall.
 	n.logger.Debug("Setting up firewall")
+
+	if n.state.Firewall.String() == "nftables" {
+		n.logger.Debug("Address set feature enabled for nftables backend")
+		fwOpts.AddressSet = true
+	}
+
 	err = n.state.Firewall.NetworkSetup(n.name, fwOpts)
 	if err != nil {
 		return fmt.Errorf("Failed to setup firewall: %w", err)
+	}
+
+	// Setup named sets for nft firewall.
+	// We apply all available address sets to avoid missing some.
+	if fwOpts.AddressSet {
+		n.logger.Debug("Applying up firewall address sets")
+		aclNames := util.SplitNTrimSpace(n.config["security.acls"], ",", -1, false)
+		err = addressset.FirewallApplyAddressSetsForACLRules(n.state, "inet", n.Project(), aclNames)
+		if err != nil {
+			return err
+		}
 	}
 
 	if fwOpts.ACL {

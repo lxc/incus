@@ -85,7 +85,7 @@ func newMigrationSource(inst instance.Instance, stateful bool, instanceOnly bool
 func (s *migrationSourceWs) Do(state *state.State, migrateOp *operations.Operation) error {
 	l := logger.AddContext(logger.Ctx{"project": s.instance.Project().Name, "instance": s.instance.Name(), "live": s.live, "clusterMoveSourceName": s.clusterMoveSourceName, "push": s.pushOperationURL != ""})
 
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*30)
 	defer cancel()
 
 	l.Debug("Waiting for migration control connection on source")
@@ -216,7 +216,7 @@ func newMigrationSink(args *migrationSinkArgs) (*migrationSink, error) {
 func (c *migrationSink) Do(state *state.State, instOp *operationlock.InstanceOperation) error {
 	l := logger.AddContext(logger.Ctx{"project": c.instance.Project().Name, "instance": c.instance.Name(), "live": c.live, "clusterMoveSourceName": c.clusterMoveSourceName, "push": c.push})
 
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*30)
 	defer cancel()
 
 	l.Debug("Waiting for migration control connection on target")

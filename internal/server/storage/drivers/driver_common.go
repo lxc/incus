@@ -202,7 +202,7 @@ func (d *common) validateVolume(vol Volume, driverRules map[string]func(value st
 
 // MigrationType returns the type of transfer methods to be used when doing migrations between pools
 // in preference order.
-func (d *common) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool) []localMigration.Type {
+func (d *common) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []localMigration.Type {
 	var transportType migration.MigrationFSType
 	var rsyncFeatures []string
 
@@ -576,4 +576,9 @@ func (d *common) filesystemFreeze(path string) (func() error, error) {
 	}
 
 	return unfreezeFS, nil
+}
+
+// CacheVolumeSnapshots causes snapshot data to be cached for later use (for bulk queries).
+func (d *common) CacheVolumeSnapshots(vol Volume) error {
+	return nil
 }
