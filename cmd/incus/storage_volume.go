@@ -1592,6 +1592,15 @@ func (c *cmdStorageVolumeList) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List storage volumes
 
+A single keyword like "vol" which will list any storage volume with a name starting by "vol".
+A regular expression on the storage volume name. (e.g. .*vol.*01$).
+A key/value pair where the key is a storage volume field name. Multiple values must be delimited by ','.
+
+Examples:
+  - "type=custom" will list all custom storage volumes
+  - "type=custom content_type=block" will list all custom block storage volumes
+
+== Columns ==
 The -c option takes a (optionally comma-separated) list of arguments
 that control which image attributes to output when displaying in table
 or csv format.
@@ -1649,6 +1658,8 @@ func (c *cmdStorageVolumeList) Run(cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
 		filters = append(filters, args[1:]...)
 	}
+
+	filters = prepareStorageVolumeFilters(filters)
 
 	var volumes []api.StorageVolume
 	if c.flagAllProjects {
@@ -1793,6 +1804,30 @@ func (c *cmdStorageVolumeList) usageColumnData(_ api.StorageVolume, state api.St
 
 func (c *cmdStorageVolumeList) projectColumnData(vol api.StorageVolume, _ api.StorageVolumeState) string {
 	return vol.Project
+}
+
+// prepareStorageVolumeFilters processes and formats filter criteria
+// for storage volumes, ensuring they are in a format that the server can interpret.
+func prepareStorageVolumeFilters(filters []string) []string {
+	formatedFilters := []string{}
+
+	for _, filter := range filters {
+		membs := strings.SplitN(filter, "=", 2)
+		key := membs[0]
+
+		if len(membs) == 1 {
+			regexpValue := key
+			if !strings.Contains(key, "^") && !strings.Contains(key, "$") {
+				regexpValue = "^" + regexpValue + "$"
+			}
+
+			filter = fmt.Sprintf("name=(%s|^%s.*)", regexpValue, key)
+		}
+
+		formatedFilters = append(formatedFilters, filter)
+	}
+
+	return formatedFilters
 }
 
 // Move.
