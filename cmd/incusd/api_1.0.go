@@ -790,13 +790,13 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 	acmeChanged := false
 	bgpChanged := false
 	dnsChanged := false
-	lokiChanged := false
 	oidcChanged := false
 	openFGAChanged := false
 	ovnChanged := false
 	linstorChanged := false
 	ovsChanged := false
 	syslogChanged := false
+	loggingChanges := map[string]struct{}{}
 
 	for key := range clusterChanged {
 		switch key {
@@ -828,7 +828,8 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 			}
 
 		case "loki.api.url", "loki.auth.username", "loki.auth.password", "loki.api.ca_cert", "loki.instance", "loki.labels", "loki.loglevel", "loki.types":
-			lokiChanged = true
+			// Notify the logging mechanism about changes to the deprecated keys for backward compatibility.
+			loggingChanges["loki"] = struct{}{}
 
 		case "network.ovn.northbound_connection", "network.ovn.ca_cert", "network.ovn.client_cert", "network.ovn.client_key":
 			ovnChanged = true
@@ -841,6 +842,13 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 
 		case "storage.linstor.controller_connection", "storage.linstor.ca_cert", "storage.linstor.client_cert", "storage.linstor.client_key":
 			linstorChanged = true
+		default:
+			if strings.HasPrefix(key, "logging.") {
+				fields := strings.Split(key, ".")
+				if len(fields) > 2 {
+					loggingChanges[fields[1]] = struct{}{}
+				}
+			}
 		}
 	}
 
@@ -952,19 +960,12 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		}
 	}
 
-	if lokiChanged {
-		lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiInstance, lokiLoglevel, lokiLabels, lokiTypes := clusterConfig.LokiServer()
-
-		if lokiURL == "" || lokiLoglevel == "" || len(lokiTypes) == 0 {
-			d.internalListener.RemoveHandler("loki")
-		} else {
-			err := d.setupLoki(lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiInstance, lokiLoglevel, lokiLabels, lokiTypes)
-			if err != nil {
-				return err
-			}
+	if len(loggingChanges) > 0 {
+		err := d.loggingController.Reconfigure(d.State(), loggingChanges)
+		if err != nil {
+			return err
 		}
 	}
-
 	if oidcChanged {
 		oidcIssuer, oidcClientID, oidcScope, oidcAudience, oidcClaim := clusterConfig.OIDCServer()
 
