@@ -1248,6 +1248,11 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 	}
 
+	// Cleanup old sockets.
+	for _, socketPath := range []string{d.consolePath(), d.spicePath(), d.monitorPath()} {
+		_ = os.Remove(socketPath)
+	}
+
 	// Mount the instance's config volume.
 	mountInfo, err := d.mount()
 	if err != nil {
