@@ -23,6 +23,7 @@ type cmdRemove struct {
 func (c *cmdRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "remove <fingerprint>"
+	cmd.Aliases = []string{"rm", "delete"}
 	cmd.Short = "Remove an image"
 	cmd.Long = cli.FormatSection("Description",
 		`Remove an image from the server
