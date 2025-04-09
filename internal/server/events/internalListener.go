@@ -18,6 +18,7 @@ type InternalListener struct {
 	listenerCtx    context.Context
 	listenerCancel context.CancelFunc
 	lock           sync.Mutex
+	wg             sync.WaitGroup
 }
 
 // NewInternalListener returns an InternalListener.
@@ -49,7 +50,9 @@ func (l *InternalListener) startListener() {
 		l.listener = nil
 	}(l.listenerCtx)
 
+	l.wg.Add(1)
 	go func(ctx context.Context, handlers map[string]EventHandler) {
+		defer l.wg.Done()
 		for {
 			select {
 			case <-ctx.Done():
@@ -75,6 +78,7 @@ func (l *InternalListener) startListener() {
 func (l *InternalListener) stopListener() {
 	if l.listenerCancel != nil {
 		l.listenerCancel()
+		l.wg.Wait()
 	}
 }
 
