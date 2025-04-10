@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/subprocess"
 )
 
@@ -378,7 +379,85 @@ func (d *truenas) deleteNfsShare(dataset string) error {
 	return nil
 }
 
-func (d *truenas) deleteDataset(dataset string, options ...string) error {
+func (d *truenas) createIscsiShare(dataset string) error {
+	args := []string{"share", "iscsi", "create"}
+
+	args = append(args, dataset)
+
+	out, err := d.runTool(args...)
+	_ = out
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *truenas) deleteIscsiShare(dataset string) error {
+	out, err := d.runTool("share", "iscsi", "delete", dataset)
+	_ = out
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// locates a ZFS volume if already active. Returns devpath if activated, "" if not, or an error
+func (d *truenas) locateIscsiDataset(dataset string) (string, error) {
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	volDiskPath, err := d.runTool("share", "iscsi", "locate", "--parsable", dataset)
+	if err != nil {
+		return "", err
+	}
+
+	volDiskPath = strings.TrimSpace(volDiskPath)
+
+	return volDiskPath, nil
+}
+
+// activateVolume activates a ZFS volume if not already active. Returns devpath if activated, "" if not.
+func (d *truenas) activateIscsiDataset(dataset string) (string, error) {
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	volDiskPath, err := d.runTool("share", "iscsi", "activate", "--parsable", dataset)
+	if err != nil {
+		return "", err
+	}
+	reverter.Add(func() { _ = d.deactivateIscsiDataset(dataset) })
+	volDiskPath = strings.TrimSpace(volDiskPath)
+
+	if volDiskPath != "" {
+		reverter.Success()
+		return volDiskPath, nil
+	}
+
+	return "", fmt.Errorf("No path for activated TrueNAS volume: %v", dataset)
+}
+
+// deactivateVolume deactivates a ZFS volume if activate. Returns true if deactivated, false if not.
+func (d *truenas) deactivateIscsiDataset(dataset string) error {
+	_, err := d.runTool("share", "iscsi", "deactivate", dataset)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *truenas) deleteSnapshot(snapshot string, recursive bool, options ...string) error {
+	if strings.Count(snapshot, "@") != 1 {
+		return fmt.Errorf("invalid snapshot name: %s", snapshot)
+	}
+
+	return d.deleteDataset(snapshot, recursive, options...)
+}
+
+func (d *truenas) deleteDataset(dataset string, recursive bool, options ...string) error {
 	args := []string{d.getDatasetOrSnapshot(dataset), "delete"}
 
 	// for _, option := range options {
