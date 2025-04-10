@@ -25,7 +25,6 @@ import (
 	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/validate"
-	"golang.org/x/sys/unix"
 )
 
 // ContentTypeRootImg implies the filesystem contains a root.img which itself contains a filesystem
@@ -286,8 +285,7 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 			revert.Add(func() { _ = d.DeleteVolume(fsVol, op) })
 		}
 
-		// Apply the size limit.
-		err = d.SetVolumeQuota(vol, vol.ConfigSize(), false, op)
+		err = d.createIscsiShare(dataset, false)
 		if err != nil {
 			return err
 		}
@@ -585,21 +583,15 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 		}
 	} else {
 		// Perform volume clone.
-		args := []string{"snapshot", "clone"}
-		args = append(args, srcSnapshot, destDataset)
-
-		// Clone the snapshot.
-		out, err := d.runTool(args...)
-		_ = out
-
+		err = d.cloneSnapshot(srcSnapshot, destDataset)
 		if err != nil {
 			return err
 		}
-
 	}
 
 	// and share the clone/copy.
-	err = d.createNfsShare(destDataset)
+	//err = d.createNfsShare(destDataset)
+	err = d.createIscsiShare(destDataset, false)
 	if err != nil {
 		return err
 	}
@@ -1195,12 +1187,18 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 
 // GetVolumeDiskPath returns the location of a disk volume.
 func (d *truenas) GetVolumeDiskPath(vol Volume) (string, error) {
+	var dataset string
 
-	if vol.IsVMBlock() {
-		blockifyMountPath(&vol) // when backend calls GetVolumeDiskPath, it needs to refer to the .block mount.
+	if vol.IsSnapshot() {
+		parent, snapshotOnlyName, _ := api.GetParentAndSnapshotName(vol.Name())
+		parentVol := NewVolume(d, d.Name(), vol.volType, vol.contentType, parent, vol.config, vol.poolConfig)
+		parentDataset := d.dataset(parentVol, false)
+		dataset = fmt.Sprintf("%s_%s%s", parentDataset, snapshotOnlyName, tmpVolSuffix)
+	} else {
+		dataset = d.dataset(vol, false)
 	}
 
-	return filepath.Join(vol.MountPath(), genericVolumeDiskFile), nil
+	return d.locateIscsiDataset(dataset)
 }
 
 // ListVolumes returns a list of volumes in storage pool.
@@ -1793,8 +1791,13 @@ func (d *truenas) DeleteVolumeSnapshot(vol Volume, op *operations.Operation) err
 	return nil
 }
 
-// MountVolumeSnapshot simulates mounting a volume snapshot.
+// MountVolumeSnapshot mounts a storage volume snapshot.
+//
+// The snapshot is cloned to a temporary dataset that will live for the duration of the mount.
 func (d *truenas) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) error {
+	l := d.logger.AddContext(logger.Ctx{"volume": snapVol.Name()})
+	l.Debug("Mounting snapshot volume")
+
 	unlock, err := snapVol.MountLock()
 	if err != nil {
 		return err
@@ -1802,54 +1805,153 @@ func (d *truenas) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 
 	defer unlock()
 
-	_, err = d.mountVolumeSnapshot(snapVol, d.dataset(snapVol, false), snapVol.MountPath(), op)
+	rev := revert.New()
+	defer rev.Fail()
+
+	// For VMs, mount the filesystem volume.
+	if snapVol.IsVMBlock() {
+		fsVol := snapVol.NewVMBlockFilesystemVolume()
+		l.Debug("Created a new FS volume", logger.Ctx{"fsVol": fsVol})
+		return d.MountVolumeSnapshot(fsVol, op)
+	}
+
+	srcSnapshot := d.dataset(snapVol, false)
+
+	parent, snapshotOnlyName, _ := api.GetParentAndSnapshotName(snapVol.Name())
+	parentVol := NewVolume(d, d.Name(), snapVol.volType, snapVol.contentType, parent, snapVol.config, snapVol.poolConfig)
+	parentDataset := d.dataset(parentVol, false)
+	cloneDataset := fmt.Sprintf("%s_%s%s", parentDataset, snapshotOnlyName, tmpVolSuffix)
+
+	// Create a temporary clone from the snapshot.
+	err = d.cloneSnapshot(srcSnapshot, cloneDataset)
+
+	rev.Add(func() { _ = d.deleteDatasetRecursive(cloneDataset) })
+
+	// and share the clone
+	err = d.createIscsiShare(cloneDataset, snapVol.contentType != ContentTypeFS) // ro if not FS
 	if err != nil {
 		return err
 	}
 
-	snapVol.MountRefCountIncrement() // From here on it is up to caller to call UnmountVolumeSnapshot() when done.
-	return nil
-}
+	// and then activate
+	volDevPath, err := d.activateIscsiDataset(cloneDataset)
+	if err != nil {
+		return err
+	}
+	rev.Add(func() { _ = d.deactivateIscsiDataset(cloneDataset) })
 
-func (d *truenas) mountVolumeSnapshot(snapVol Volume, snapshotDataset string, mountPath string, op *operations.Operation) (revert.Hook, error) {
-	revert := revert.New()
-	defer revert.Fail()
-
-	// Check if filesystem volume already mounted.
-	if snapVol.contentType == ContentTypeFS && !d.isBlockBacked(snapVol) {
+	if snapVol.contentType == ContentTypeFS {
+		mountPath := snapVol.MountPath()
+		l.Debug("Content type FS", logger.Ctx{"mountPath": mountPath})
 		if !linux.IsMountPoint(mountPath) {
 			err := snapVol.EnsureMountPath()
 			if err != nil {
-				return nil, err
+				return err
 			}
 
-			// Mount the snapshot directly (not possible through tools).
-			err = TryMount(snapshotDataset, mountPath, "zfs", unix.MS_RDONLY, "")
+			snapVolFS := snapVol.ConfigBlockFilesystem()
+
+			if snapVol.mountFilesystemProbe {
+				snapVolFS, err = fsProbe(volDevPath)
+				if err != nil {
+					return fmt.Errorf("Failed probing filesystem: %w", err)
+				}
+			}
+
+			mountFlags, mountOptions := linux.ResolveMountOptions(strings.Split(snapVol.ConfigBlockMountOptions(), ","))
+
+			l.Debug("Regenerating filesystem UUID", logger.Ctx{"volDevPath": volDevPath, "fs": snapVolFS})
+			if renegerateFilesystemUUIDNeeded(snapVolFS) {
+				if snapVolFS == "xfs" {
+					idx := strings.Index(mountOptions, "nouuid")
+					if idx < 0 {
+						mountOptions += ",nouuid"
+					}
+				} else {
+					err = regenerateFilesystemUUID(snapVolFS, volDevPath)
+					if err != nil {
+						return err
+					}
+				}
+			}
+
+			l.Debug("Will try mount")
+			err = TryMount(volDevPath, mountPath, snapVolFS, mountFlags, mountOptions)
 			if err != nil {
-				return nil, err
+				l.Debug("Tried mounting but failed", logger.Ctx{"error": err})
+				return err
 			}
 
-			d.logger.Debug("Mounted ZFS snapshot dataset", logger.Ctx{"dev": snapshotDataset, "path": mountPath})
+			l.Debug("Mounted TrueNAS snapshot volume", logger.Ctx{"volName": snapVol.name, "dev": volDevPath, "path": mountPath, "options": mountOptions})
 		}
-	} else {
-		// snipped.
-		return nil, fmt.Errorf("contentType == ContentTypeBlock not implemented")
 	}
 
-	d.logger.Debug("Mounted ZFS snapshot dataset", logger.Ctx{"dev": snapshotDataset, "path": mountPath})
+	snapVol.MountRefCountIncrement() // From here on it is up to caller to call UnmountVolumeSnapshot() when done.
+	rev.Success()
+	return nil
+}
 
-	revert.Add(func() {
-		_, err := forceUnmount(mountPath)
-		if err != nil {
-			return
+// UnmountVolumeSnapshot unmounts a volume snapshot.
+//
+// Will delete the temporary TrueNAS snapshot clone.
+func (d *truenas) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (bool, error) {
+	l := d.logger.AddContext(logger.Ctx{"volume": snapVol.Name()})
+	l.Debug("Umounting TrueNAS snapshot volume")
+
+	unlock, err := snapVol.MountLock()
+	if err != nil {
+		return false, err
+	}
+
+	defer unlock()
+
+	// For VMs, unmount the filesystem volume.
+	if snapVol.IsVMBlock() {
+		fsVol := snapVol.NewVMBlockFilesystemVolume()
+		return d.UnmountVolumeSnapshot(fsVol, op)
+	}
+
+	ourUnmount := false
+	mountPath := snapVol.MountPath()
+	refCount := snapVol.MountRefCountDecrement()
+
+	// Attempt to unmount the filesystem
+	if snapVol.contentType == ContentTypeFS && linux.IsMountPoint(mountPath) {
+		if refCount > 0 {
+			d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": snapVol.name, "refCount": refCount})
+			return false, ErrInUse
 		}
 
-		d.logger.Debug("Unmounted ZFS snapshot dataset", logger.Ctx{"dev": snapshotDataset, "path": mountPath})
-	})
+		ourUnmount, err = forceUnmount(mountPath)
+		if err != nil {
+			return false, err
+		}
 
-	cleanup := revert.Clone().Fail
-	revert.Success()
-	return cleanup, nil
+		l.Debug("Unmounted TrueNAS snapshot volume filesystem", logger.Ctx{"path": mountPath})
+	}
+
+	parent, snapshotOnlyName, _ := api.GetParentAndSnapshotName(snapVol.Name())
+	parentVol := NewVolume(d, d.Name(), snapVol.volType, snapVol.contentType, parent, snapVol.config, snapVol.poolConfig)
+	parentDataset := d.dataset(parentVol, false)
+	cloneDataset := fmt.Sprintf("%s_%s%s", parentDataset, snapshotOnlyName, tmpVolSuffix)
+
+	l.Debug("Deleting temporary TrueNAS snapshot volume")
+
+	// Deactivate
+	err = d.deactivateIscsiDataset(cloneDataset)
+	if err != nil {
+		return false, fmt.Errorf("Could not deactivate temporary snapshot volume: %w", err)
+	}
+
+	// Destroy clone
+	err = d.deleteDatasetRecursive(cloneDataset)
+	if err != nil {
+		return false, fmt.Errorf("Could not delete temporary snapshot volume: %w", err)
+	}
+
+	l.Debug("Temporary TrueNAS snapshot volume deleted")
+
+	return ourUnmount, nil
 }
 
 // VolumeSnapshots returns a list of snapshots for the volume (in no particular order).
