@@ -242,15 +242,13 @@ test_basic_usage() {
   ! incus init testimage aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa || false
 
   # Test snapshot publish
-  if [ "$incus_backend" != "truenas" ]; then # truenas does not implement MountVolumeSnapshot yet
-    echo "==> Test snapshot publish"
-    incus snapshot create bar
-    incus publish bar/snap0 --alias foo
-    incus init foo bar2
-    incus list | grep bar2
-    incus delete bar2
-    incus image delete foo
-  fi
+  echo "==> Test snapshot publish"
+  incus snapshot create bar
+  incus publish bar/snap0 --alias foo
+  incus init foo bar2
+  incus list | grep bar2
+  incus delete bar2
+  incus image delete foo
 
   # Test alias support
   cp "${INCUS_CONF}/config.yml" "${INCUS_CONF}/config.yml.bak"
