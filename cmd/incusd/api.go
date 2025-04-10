@@ -71,6 +71,7 @@ func restServer(d *Daemon) *http.Server {
 	mux.SkipClean(true)
 	mux.UseEncodedPath() // Allow encoded values in path segments.
 
+	// Serving the UI.
 	uiPath := os.Getenv("INCUS_UI")
 	uiEnabled := uiPath != "" && util.PathExists(fmt.Sprintf("%s/index.html", uiPath))
 	if uiEnabled {
@@ -91,6 +92,12 @@ func restServer(d *Daemon) *http.Server {
 			http.Redirect(w, r, "/documentation/", http.StatusMovedPermanently)
 		})
 	}
+
+	// Serving the OS API.
+	d.createCmd(mux, "os", apiOS)
+	mux.HandleFunc("/os", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/os/", http.StatusMovedPermanently)
+	})
 
 	// OIDC browser login (code flow).
 	mux.HandleFunc("/oidc/login", func(w http.ResponseWriter, r *http.Request) {
