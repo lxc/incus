@@ -962,6 +962,150 @@ func (d *truenas) GetVolumeUsage(vol Volume) (int64, error) {
 	return valueInt, nil
 }
 
+// SetVolumeQuota sets the quota/reservation on the volume.
+// Does nothing if supplied with an empty/zero size for block volumes.
+func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op *operations.Operation) error {
+	// Convert to bytes.
+	sizeBytes, err := units.ParseByteSizeString(size)
+	if err != nil {
+		return err
+	}
+
+	inUse := vol.MountInUse()
+
+	// Handle volume datasets.
+	if d.isBlockBacked(vol) && vol.contentType == ContentTypeFS || IsContentBlock(vol.contentType) {
+		// Do nothing if size isn't specified.
+		if sizeBytes <= 0 {
+			return nil
+		}
+
+		sizeBytes, err = d.roundVolumeBlockSizeBytes(vol, sizeBytes)
+		if err != nil {
+			return err
+		}
+
+		oldSizeBytesStr, err := d.getDatasetProperty(d.dataset(vol, false), "volsize")
+		if err != nil {
+			return err
+		}
+
+		oldVolSizeBytesInt, err := strconv.ParseInt(oldSizeBytesStr, 10, 64)
+		if err != nil {
+			return err
+		}
+
+		oldVolSizeBytes := int64(oldVolSizeBytesInt)
+
+		if oldVolSizeBytes == sizeBytes {
+			return nil
+		}
+
+		if vol.contentType == ContentTypeFS {
+			// Activate volume if needed.
+			activated, volDevPath, err := d.activateVolume(vol)
+			if err != nil {
+				return err
+			}
+
+			if activated {
+				defer func() { _, _ = d.deactivateVolume(vol) }()
+			}
+
+			if vol.volType == VolumeTypeImage {
+				return fmt.Errorf("Image volumes cannot be resized: %w", ErrCannotBeShrunk)
+			}
+
+			fsType := vol.ConfigBlockFilesystem()
+
+			l := d.logger.AddContext(logger.Ctx{"dev": volDevPath, "size": fmt.Sprintf("%db", sizeBytes)})
+
+			if sizeBytes < oldVolSizeBytes {
+				if !filesystemTypeCanBeShrunk(fsType) {
+					return fmt.Errorf("Filesystem %q cannot be shrunk: %w", fsType, ErrCannotBeShrunk)
+				}
+
+				if inUse {
+					return ErrInUse // We don't allow online shrinking of filesystem block volumes.
+				}
+
+				// Shrink filesystem first.
+				// Pass allowUnsafeResize to allow disabling of filesystem resize safety checks.
+				err = shrinkFileSystem(fsType, volDevPath, vol, sizeBytes, allowUnsafeResize)
+				if err != nil {
+					return err
+				}
+
+				l.Debug("TrueNAS volume filesystem shrunk")
+
+				// Shrink the block device.
+				err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("volsize=%d", sizeBytes))
+				if err != nil {
+					// note: this should've worked, but the middleware is currently preventing it.
+					return err
+				}
+			} else if sizeBytes > oldVolSizeBytes {
+				// Grow block device first.
+				err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("volsize=%d", sizeBytes))
+				if err != nil {
+					return err
+				}
+
+				// Grow the filesystem to fill block device.
+				err = growFileSystem(fsType, volDevPath, vol)
+				if err != nil {
+					return err
+				}
+
+				l.Debug("TrueNAS volume filesystem grown")
+			}
+		} else {
+			// Block image volumes cannot be resized because they have a readonly snapshot that doesn't get
+			// updated when the volume's size is changed, and this is what instances are created from.
+			// During initial volume fill allowUnsafeResize is enabled because snapshot hasn't been taken yet.
+			if !allowUnsafeResize && vol.volType == VolumeTypeImage {
+				return ErrNotSupported
+			}
+
+			// Only perform pre-resize checks if we are not in "unsafe" mode.
+			// In unsafe mode we expect the caller to know what they are doing and understand the risks.
+			if !allowUnsafeResize {
+				if sizeBytes < oldVolSizeBytes {
+					return fmt.Errorf("Block volumes cannot be shrunk: %w", ErrCannotBeShrunk)
+				}
+			}
+
+			err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("volsize=%d", sizeBytes))
+			if err != nil {
+				return err
+			}
+		}
+
+		// Move the VM GPT alt header to end of disk if needed (not needed in unsafe resize mode as
+		// it is expected the caller will do all necessary post resize actions themselves).
+		if vol.IsVMBlock() && !allowUnsafeResize {
+			err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
+				devPath, err := d.GetVolumeDiskPath(vol)
+				if err != nil {
+					return err
+				}
+
+				return d.moveGPTAltHeader(devPath)
+			}, op)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	// Apply the new dataset quota.
+	d.setDatasetQuota(d.dataset(vol, false), sizeBytes)
+
+	return nil
+}
+
 // SetVolumeQuota applies a size limit on volume.
 // Does nothing if supplied with an empty/zero size for block volumes, and for filesystem volumes removes quota.
 func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op *operations.Operation) error {
