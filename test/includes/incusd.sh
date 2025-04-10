@@ -179,7 +179,9 @@ kill_incus() {
             done
 
             ## Delete the storage pool.
-            timeout -k 20 20 incus storage delete "${storage_pool}" --force-local || true
+            #timeout -k 20 20 incus storage delete "${storage_pool}" --force-local || true
+            timeout -k 30 30 incus storage delete "${storage_pool}" --force-local || true   #TN middleware is slow at deleting shared zvols/datasets
+
         done
 
         echo "==> Checking for locked DB tables"
