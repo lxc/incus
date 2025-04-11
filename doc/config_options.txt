@@ -1600,6 +1600,432 @@ User keys can be used in search.
 ```
 
 <!-- config group network_address_set-common end -->
+<!-- config group network_bridge-common start -->
+```{config:option} bgp.ipv4.nexthop network_bridge-common
+:condition: "BGP server"
+:default: "local address"
+:shortdesc: "Override the next-hop for advertised prefixes"
+:type: "string"
+
+```
+
+```{config:option} bgp.ipv6.nexthop network_bridge-common
+:condition: "BGP server"
+:default: "local address"
+:shortdesc: "Override the next-hop for advertised prefixes"
+:type: "string"
+
+```
+
+```{config:option} bridge.driver network_bridge-common
+:condition: "-"
+:default: "`native`"
+:shortdesc: "Bridge driver: `native` or `openvswitch`"
+:type: "string"
+
+```
+
+```{config:option} bridge.external_interfaces network_bridge-common
+:condition: "-"
+:default: "-"
+:shortdesc: "Comma-separated list of unconfigured network interfaces to include in the bridge"
+:type: "string"
+
+```
+
+```{config:option} bridge.hwaddr network_bridge-common
+:condition: "-"
+:default: "-"
+:shortdesc: "MAC address for the bridge"
+:type: "string"
+
+```
+
+```{config:option} bridge.mtu network_bridge-common
+:condition: "-"
+:default: "`1500`"
+:shortdesc: "Bridge MTU (default varies if tunnel in use)"
+:type: "integer"
+
+```
+
+```{config:option} dns.domain network_bridge-common
+:condition: "-"
+:default: "`incus`"
+:shortdesc: "Domain to advertise to DHCP clients and use for DNS resolution"
+:type: "string"
+
+```
+
+```{config:option} dns.mode network_bridge-common
+:condition: "-"
+:default: "`managed`"
+:shortdesc: "DNS registration mode: none for no DNS record, managed for Incus-generated static records or dynamic for client-generated records"
+:type: "string"
+
+```
+
+```{config:option} dns.nameservers network_bridge-common
+:condition: "-"
+:default: "IPv4 and IPv6 address"
+:shortdesc: "DNS server IPs to advertise to DHCP clients and via Router Advertisements. Both IPv4 and IPv6 addresses get pushed via DHCP, and IPv6 addresses are also advertised as RDNSS via RA."
+:type: "string"
+
+```
+
+```{config:option} dns.search network_bridge-common
+:condition: "-"
+:default: "-"
+:shortdesc: "Full comma-separated domain search list, defaulting to `dns.domain` value"
+:type: "string"
+
+```
+
+```{config:option} dns.zone.forward network_bridge-common
+:condition: "-"
+:default: "`managed`"
+:shortdesc: "Comma-separated list of DNS zone names for forward DNS records"
+:type: "string"
+
+```
+
+```{config:option} dns.zone.reverse.ipv4 network_bridge-common
+:condition: "-"
+:default: "`managed`"
+:shortdesc: "DNS zone name for IPv4 reverse DNS records"
+:type: "string"
+
+```
+
+```{config:option} dns.zone.reverse.ipv6 network_bridge-common
+:condition: "-"
+:default: "`managed`"
+:shortdesc: "DNS zone name for IPv6 reverse DNS records"
+:type: "string"
+
+```
+
+```{config:option} ipv4.address network_bridge-common
+:condition: "standard mode"
+:default: "- (initial value on creation: `auto`)"
+:shortdesc: "IPv4 address for the bridge (use `none` to turn off IPv4 or `auto` to generate a new random unused subnet) (CIDR)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.dhcp network_bridge-common
+:condition: "IPv4 address"
+:default: "`true`"
+:shortdesc: "Whether to allocate addresses using DHCP"
+:type: "bool"
+
+```
+
+```{config:option} ipv4.dhcp.expiry network_bridge-common
+:condition: "IPv4 DHCP"
+:default: "`1h`"
+:shortdesc: "When to expire DHCP leases"
+:type: "string"
+
+```
+
+```{config:option} ipv4.dhcp.gateway network_bridge-common
+:condition: "IPv4 DHCP"
+:default: "all addresses"
+:shortdesc: "Address of the gateway for the subnet"
+:type: "string"
+
+```
+
+```{config:option} ipv4.dhcp.ranges network_bridge-common
+:condition: "IPv4 DHCP"
+:default: "all addresses"
+:shortdesc: "Comma-separated list of IP ranges to use for DHCP (FIRST-LAST format)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.dhcp.routes network_bridge-common
+:condition: "IPv4 DHCP"
+:default: "-"
+:shortdesc: "Static routes to provide via DHCP option 121, as a comma-separated list of alternating subnets (CIDR) and gateway addresses (same syntax as dnsmasq)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.firewall network_bridge-common
+:condition: "IPv4 address"
+:default: "`true`"
+:shortdesc: "Whether to generate filtering firewall rules for this network"
+:type: "bool"
+
+```
+
+```{config:option} ipv4.nat network_bridge-common
+:condition: "IPv4 address"
+:default: "`false`(initial value on creation if `ipv4.address` is set to `auto`: `true`)"
+:shortdesc: "Whether to NAT"
+:type: "bool"
+
+```
+
+```{config:option} ipv4.nat.address network_bridge-common
+:condition: "IPv4 address"
+:default: "-"
+:shortdesc: "The source address used for outbound traffic from the bridge"
+:type: "string"
+
+```
+
+```{config:option} ipv4.nat.order network_bridge-common
+:condition: "IPv4 address"
+:default: "`before`"
+:shortdesc: "Whether to add the required NAT rules before or after any pre-existing rules"
+:type: "string"
+
+```
+
+```{config:option} ipv4.ovn.ranges network_bridge-common
+:condition: "-"
+:default: "-"
+:shortdesc: "Comma-separated list of IPv4 ranges to use for child OVN network routers (FIRST-LAST format)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.routes network_bridge-common
+:condition: "IPv4 address"
+:default: "-"
+:shortdesc: "Comma-separated list of additional IPv4 CIDR subnets to route to the bridge"
+:type: "string"
+
+```
+
+```{config:option} ipv4.routing network_bridge-common
+:condition: "IPv4 DHCP"
+:default: "`true`"
+:shortdesc: "Whether to route traffic in and out of the bridge"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.address network_bridge-common
+:condition: "standard mode"
+:default: "- (initial value on creation: `auto`)"
+:shortdesc: "IPv6 address for the bridge (use `none` to turn off IPv6 or `auto` to generate a new random unused subnet) (CIDR)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.dhcp network_bridge-common
+:condition: "IPv6 DHCP"
+:default: "`true`"
+:shortdesc: "Whether to provide additional network configuration over DHCP"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.dhcp.expiry network_bridge-common
+:condition: "IPv6 DHCP"
+:default: "`1h`"
+:shortdesc: "When to expire DHCP leases"
+:type: "string"
+
+```
+
+```{config:option} ipv6.dhcp.ranges network_bridge-common
+:condition: "IPv6 stateful DHCP"
+:default: "all addresses"
+:shortdesc: "Comma-separated list of IPv6 ranges to use for DHCP (FIRST-LAST format)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.dhcp.stateful network_bridge-common
+:condition: "IPv6 DHCP"
+:default: "`false`"
+:shortdesc: "Whether to allocate addresses using DHCP"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.firewall network_bridge-common
+:condition: "IPv6 address"
+:default: "`true`"
+:shortdesc: "Whether to generate filtering firewall rules for this network"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.nat network_bridge-common
+:condition: "IPv6 address"
+:default: "`false` (initial value on creation if `ipv6.address` is set to `auto`: `true`)"
+:shortdesc: "Whether to NAT"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.nat.address network_bridge-common
+:condition: "IPv6 address"
+:default: "-"
+:shortdesc: "The source address used for outbound traffic from the bridge"
+:type: "string"
+
+```
+
+```{config:option} ipv6.nat.order network_bridge-common
+:condition: "IPv6 address"
+:default: "`before`"
+:shortdesc: "Whether to add the required NAT rules before or after any pre-existing rules"
+:type: "string"
+
+```
+
+```{config:option} ipv6.ovn.ranges network_bridge-common
+:condition: "-"
+:default: "-"
+:shortdesc: "Comma-separated list of IPv6 ranges to use for child OVN network routers (FIRST-LAST format)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.routes network_bridge-common
+:condition: "IPv6"
+:default: "-"
+:shortdesc: "Comma-separated list of additional IPv6 CIDR subnets to route to the bridge"
+:type: "string"
+
+```
+
+```{config:option} ipv6.routing network_bridge-common
+:condition: "IPv6 address"
+:default: "`true`"
+:shortdesc: "Whether to route traffic in and out of the bridge"
+:type: "bool"
+
+```
+
+```{config:option} raw.dnsmasq network_bridge-common
+:condition: "-"
+:default: "-"
+:shortdesc: "Additional dnsmasq configuration to append to the configuration file"
+:type: "string"
+
+```
+
+```{config:option} security.acls network_bridge-common
+:condition: "-"
+:default: "-"
+:shortdesc: "Comma-separated list of Network ACLs to apply to NICs connected to this network (see {ref}`network-acls-bridge-limitations`)"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.egress.action network_bridge-common
+:condition: "`security.acls`"
+:default: "`reject`"
+:shortdesc: "Action to use for egress traffic that doesn't match any ACL rule"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.egress.logged network_bridge-common
+:condition: "`security.acls`"
+:default: "`false`"
+:shortdesc: "Whether to log egress traffic that doesn't match any ACL rule"
+:type: "bool"
+
+```
+
+```{config:option} security.acls.default.ingress.action network_bridge-common
+:condition: "`security.acls`"
+:default: "`reject`"
+:shortdesc: "Action to use for ingress traffic that doesn't match any ACL rule"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.ingress.logged network_bridge-common
+:condition: "`security.acls`"
+:default: "`false`"
+:shortdesc: "Whether to log ingress traffic that doesn't match any ACL rule"
+:type: "bool"
+
+```
+
+```{config:option} tunnel.NAME.group network_bridge-common
+:condition: "`vxlan`"
+:default: "`239.0.0.1`"
+:shortdesc: "Multicast address for `vxlan` (used if local and remote aren't set)"
+:type: "string"
+
+```
+
+```{config:option} tunnel.NAME.id network_bridge-common
+:condition: "`vxlan`"
+:default: "`0`"
+:shortdesc: "Specific tunnel ID to use for the `vxlan` tunnel"
+:type: "integer"
+
+```
+
+```{config:option} tunnel.NAME.interface network_bridge-common
+:condition: "`vxlan`"
+:default: "-"
+:shortdesc: "Specific host interface to use for the tunnel"
+:type: "string"
+
+```
+
+```{config:option} tunnel.NAME.local network_bridge-common
+:condition: "`gre` or `vxlan`"
+:default: "-"
+:shortdesc: "Local address for the tunnel (not necessary for multicast `vxlan`)"
+:type: "string"
+
+```
+
+```{config:option} tunnel.NAME.port network_bridge-common
+:condition: "`vxlan`"
+:default: "`0`"
+:shortdesc: "Specific port to use for the `vxlan` tunnel"
+:type: "integer"
+
+```
+
+```{config:option} tunnel.NAME.protocol network_bridge-common
+:condition: "standard mode"
+:default: "-"
+:shortdesc: "Tunneling protocol: `vxlan` or `gre`"
+:type: "string"
+
+```
+
+```{config:option} tunnel.NAME.remote network_bridge-common
+:condition: "`gre` or `vxlan`"
+:default: "-"
+:shortdesc: "Remote address for the tunnel (not necessary for multicast `vxlan`)"
+:type: "string"
+
+```
+
+```{config:option} tunnel.NAME.ttl network_bridge-common
+:condition: "`vxlan`"
+:default: "`1`"
+:shortdesc: "Specific TTL to use for multicast routing topologies"
+:type: "integer"
+
+```
+
+```{config:option} user.* network_bridge-common
+:condition: "-"
+:default: "-"
+:shortdesc: "User-provided free-form key/value pairs"
+:type: "string"
+
+```
+
+<!-- config group network_bridge-common end -->
 <!-- config group network_integration-common start -->
 ```{config:option} user.* network_integration-common
 :shortdesc: "Free form user key/value storage"
