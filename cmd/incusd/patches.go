@@ -86,6 +86,7 @@ var patches = []patch{
 	{name: "runtime_directory", stage: patchPostDaemonStorage, run: patchRuntimeDirectory},
 	{name: "lvm_node_force_reuse", stage: patchPostDaemonStorage, run: patchLvmForceReuseKey},
 	{name: "auth_openfga_viewer", stage: patchPostNetworks, run: patchGenericAuthorization},
+	{name: "auth_openfga_network_address_set", stage: patchPostNetworks, run: patchGenericAuthorization},
 }
 
 type patch struct {
