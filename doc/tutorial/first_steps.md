@@ -23,7 +23,7 @@ After going through these steps, you will have a general idea of how to use Incu
 
    To control Incus without having to run all commands as root, you can add yourself to the `incus-admin` group:
 
-       sudo adduser YOUR-USERNAME incus-admin
+       sudo adduser $USER incus-admin
        newgrp incus-admin
 
    The `newgrp` step is needed in any terminal that interacts with Incus until you restart your user session.
