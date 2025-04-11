@@ -142,14 +142,12 @@ test_storage_volume_snapshots() {
   incus delete -f "c1"
   incus storage volume delete "${storage_pool}" "vol2"
 
-  if [ "${incus_backend}" != "truenas" ]; then # truenas does not implement MountVolumeSnapshots yet
-    incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --mode pull
-    incus launch testimage "c1"
-    incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
-    incus exec "c1" -- test -f /mnt/foo
-    incus delete -f "c1"
-    incus storage volume delete "${storage_pool}" "vol2"
-  fi
+  incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --mode pull
+  incus launch testimage "c1"
+  incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
+  incus exec "c1" -- test -f /mnt/foo
+  incus delete -f "c1"
+  incus storage volume delete "${storage_pool}" "vol2"
 
   # Check snapshot copy (mode push).
   incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool}/vol2" --mode push
@@ -159,15 +157,13 @@ test_storage_volume_snapshots() {
   incus delete -f "c1"
   incus storage volume delete "${storage_pool}" "vol2"
 
-  if [ "${incus_backend}" != "truenas" ]; then # truenas does not implement MountVolumeSnapshots yet
-    # Check snapshot copy (mode push, remote).
-    incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --mode push
-    incus launch testimage "c1"
-    incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
-    incus exec "c1" -- test -f /mnt/foo
-    incus delete -f "c1"
-    incus storage volume delete "${storage_pool}" "vol2"
-  fi
+  # Check snapshot copy (mode push, remote).
+  incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --mode push
+  incus launch testimage "c1"
+  incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
+  incus exec "c1" -- test -f /mnt/foo
+  incus delete -f "c1"
+  incus storage volume delete "${storage_pool}" "vol2"
 
   # Check snapshot copy (mode relay).
   incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool}/vol2" --mode relay
@@ -177,41 +173,39 @@ test_storage_volume_snapshots() {
   incus delete -f "c1"
   incus storage volume delete "${storage_pool}" "vol2"
 
-  if [ "${incus_backend}" != "truenas" ]; then # truenas does not implement MountVolumeSnapshots yet
-    # Check snapshot copy (mode relay, remote).
-    incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --mode relay
-    incus launch testimage "c1"
-    incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
-    incus exec "c1" -- test -f /mnt/foo
-    incus delete -f "c1"
-    incus storage volume delete "${storage_pool}" "vol2"
+  # Check snapshot copy (mode relay, remote).
+  incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --mode relay
+  incus launch testimage "c1"
+  incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
+  incus exec "c1" -- test -f /mnt/foo
+  incus delete -f "c1"
+  incus storage volume delete "${storage_pool}" "vol2"
 
-    # Check snapshot copy between pools.
-    incus storage create "${storage_pool2}" dir
-    incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool2}/vol2"
-    incus launch testimage "c1"
-    incus storage volume attach "${storage_pool2}" "vol2" "c1" /mnt
-    incus exec "c1" -- test -f /mnt/foo
-    incus delete -f "c1"
-    incus storage volume delete "${storage_pool2}" "vol2"
-    incus storage delete "${storage_pool2}"
+  # Check snapshot copy between pools.
+  incus storage create "${storage_pool2}" dir
+  incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool2}/vol2"
+  incus launch testimage "c1"
+  incus storage volume attach "${storage_pool2}" "vol2" "c1" /mnt
+  incus exec "c1" -- test -f /mnt/foo
+  incus delete -f "c1"
+  incus storage volume delete "${storage_pool2}" "vol2"
+  incus storage delete "${storage_pool2}"
 
-    # Check snapshot copy between pools (remote).
-    incus storage create "${storage_pool2}" dir
-    incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool2}/vol2"
-    incus launch testimage "c1"
-    incus storage volume attach "${storage_pool2}" "vol2" "c1" /mnt
-    incus exec "c1" -- test -f /mnt/foo
-    incus delete -f "c1"
-    incus storage volume delete "${storage_pool2}" "vol2"
-    incus storage volume copy "test:${storage_pool}/vol1/snap0" "${storage_pool2}/vol2"
-    incus launch testimage "c1"
-    incus storage volume attach "${storage_pool2}" "vol2" "c1" /mnt
-    incus exec "c1" -- test -f /mnt/foo
-    incus delete -f "c1"
-    incus storage volume delete "${storage_pool2}" "vol2"
-    incus storage delete "${storage_pool2}"
-  fi
+  # Check snapshot copy between pools (remote).
+  incus storage create "${storage_pool2}" dir
+  incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool2}/vol2"
+  incus launch testimage "c1"
+  incus storage volume attach "${storage_pool2}" "vol2" "c1" /mnt
+  incus exec "c1" -- test -f /mnt/foo
+  incus delete -f "c1"
+  incus storage volume delete "${storage_pool2}" "vol2"
+  incus storage volume copy "test:${storage_pool}/vol1/snap0" "${storage_pool2}/vol2"
+  incus launch testimage "c1"
+  incus storage volume attach "${storage_pool2}" "vol2" "c1" /mnt
+  incus exec "c1" -- test -f /mnt/foo
+  incus delete -f "c1"
+  incus storage volume delete "${storage_pool2}" "vol2"
+  incus storage delete "${storage_pool2}"
 
   # Check snapshot volume only copy.
   ! incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool}/vol2" --volume-only || false
@@ -221,36 +215,30 @@ test_storage_volume_snapshots() {
 
   # Check snapshot volume only copy (remote).
   ! incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --volume-only || false
-  if [ "${incus_backend}" != "truenas" ]; then # truenas does not implement MountVolumeSnapshots yet
-    incus storage volume copy "${storage_pool}/vol1" "test:${storage_pool}/vol2" --volume-only
-    [ "$(incus query "/1.0/storage-pools/${storage_pool}/volumes/custom/vol2/snapshots" | jq "length == 0")" = "true" ]
-    incus storage volume delete "${storage_pool}" "vol2"
-  fi
+  incus storage volume copy "${storage_pool}/vol1" "test:${storage_pool}/vol2" --volume-only
+  [ "$(incus query "/1.0/storage-pools/${storage_pool}/volumes/custom/vol2/snapshots" | jq "length == 0")" = "true" ]
+  incus storage volume delete "${storage_pool}" "vol2"
 
   # Check snapshot refresh.
   incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool}/vol2"
   incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool}/vol2" --refresh
   incus storage volume delete "${storage_pool}" "vol2"
 
-  if [ "${incus_backend}" != "truenas" ]; then # truenas does not implement MountVolumeSnapshots yet
-    # Check snapshot refresh (remote).
-    incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2"
-    incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --refresh
-    incus storage volume delete "${storage_pool}" "vol2"
-  fi
+  # Check snapshot refresh (remote).
+  incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2"
+  incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --refresh
+  incus storage volume delete "${storage_pool}" "vol2"
 
   # Check snapshot copy between projects.
   incus project create project1
-  if [ "${incus_backend}" != "truenas" ]; then # truenas does not implement MountVolumeSnapshots yet
-    incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool}/vol1" --target-project project1
-    [ "$(incus query "/1.0/storage-pools/${storage_pool}/volumes?project=project1" | jq "length == 1")" = "true" ]
-    incus storage volume delete "${storage_pool}" "vol1" --project project1
+  incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool}/vol1" --target-project project1
+  [ "$(incus query "/1.0/storage-pools/${storage_pool}/volumes?project=project1" | jq "length == 1")" = "true" ]
+  incus storage volume delete "${storage_pool}" "vol1" --project project1
 
-    # Check snapshot copy between projects (remote).
-    incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol1" --target-project project1
-    [ "$(incus query "/1.0/storage-pools/${storage_pool}/volumes?project=project1" | jq "length == 1")" = "true" ]
-    incus storage volume delete "${storage_pool}" "vol1" --project project1
-  fi
+  # Check snapshot copy between projects (remote).
+  incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol1" --target-project project1
+  [ "$(incus query "/1.0/storage-pools/${storage_pool}/volumes?project=project1" | jq "length == 1")" = "true" ]
+  incus storage volume delete "${storage_pool}" "vol1" --project project1
 
   incus storage volume delete "${storage_pool}" "vol1"
   incus project delete "project1"
