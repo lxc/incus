@@ -265,6 +265,10 @@ func (b *backend) GetResources() (*api.ResourcesStoragePool, error) {
 	l.Debug("GetResources started")
 	defer l.Debug("GetResources finished")
 
+	if b.Status() == api.StoragePoolStatusPending {
+		return nil, errors.New("The pool is in pending state")
+	}
+
 	return b.driver.GetResources()
 }
 
