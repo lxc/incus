@@ -267,15 +267,15 @@ func (d *linstor) Update(changedConfig map[string]string) error {
 
 // GetResources returns utilisation and space info about the pool.
 func (d *linstor) GetResources() (*api.ResourcesStoragePool, error) {
-	sizeInfo, err := d.getResourceGroupSize()
+	freeCapacity, totalCapacity, err := d.getResourceGroupSize()
 	if err != nil {
 		return nil, fmt.Errorf("Could not fetch pool space info: %w", err)
 	}
 
 	// We have no information about inode usage, so we skip that.
 	res := api.ResourcesStoragePool{}
-	res.Space.Total = uint64(*sizeInfo.CapacityInKib) * 1024
-	res.Space.Used = (uint64(*sizeInfo.CapacityInKib) - uint64(*sizeInfo.AvailableSizeInKib)) * 1024
+	res.Space.Total = uint64(totalCapacity) * 1024
+	res.Space.Used = uint64(totalCapacity-freeCapacity) * 1024
 
 	return &res, nil
 }

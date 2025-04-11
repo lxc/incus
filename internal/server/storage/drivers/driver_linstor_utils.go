@@ -169,35 +169,34 @@ func (d *linstor) getResourceGroup() (*linstorClient.ResourceGroup, error) {
 }
 
 // getResourceGroupSize fetches the resource group size info.
-func (d *linstor) getResourceGroupSize() (*linstorClient.QuerySizeInfoResponseSpaceInfo, error) {
+func (d *linstor) getResourceGroupSize() (int64, int64, error) {
 	// Retrieve the Linstor client.
 	linstor, err := d.state.Linstor()
 	if err != nil {
-		return nil, err
-	}
-
-	placeCount, err := strconv.Atoi(d.config[LinstorResourceGroupPlaceCountConfigKey])
-	if err != nil {
-		return nil, fmt.Errorf("Could not parse resource group place count property: %w", err)
+		return 0, 0, err
 	}
 
 	resourceGroupName := d.config[LinstorResourceGroupNameConfigKey]
-	request := linstorClient.QuerySizeInfoRequest{
-		SelectFilter: &linstorClient.AutoSelectFilter{
-			PlaceCount: int32(placeCount),
-		},
-	}
-
-	if d.config[LinstorResourceGroupStoragePoolConfigKey] != "" {
-		request.SelectFilter.StoragePool = d.config[LinstorResourceGroupStoragePoolConfigKey]
-	}
-
-	response, err := linstor.Client.ResourceGroups.QuerySizeInfo(context.TODO(), resourceGroupName, request)
+	resourceGroup, err := linstor.Client.ResourceGroups.Get(context.TODO(), resourceGroupName)
 	if err != nil {
-		return nil, err
+		return 0, 0, fmt.Errorf("Could not get Linstor resource group: %w", err)
 	}
 
-	return response.SpaceInfo, nil
+	storagePools, err := linstor.Client.Nodes.GetStoragePoolView(context.TODO(), &linstorClient.ListOpts{
+		StoragePool: resourceGroup.SelectFilter.StoragePoolList,
+	})
+	if err != nil {
+		return 0, 0, fmt.Errorf("Could not get Linstor storage pools: %w", err)
+	}
+
+	freeCapacity := int64(0)
+	totalCapacity := int64(0)
+	for _, storagePool := range storagePools {
+		freeCapacity += storagePool.FreeCapacity
+		totalCapacity += storagePool.TotalCapacity
+	}
+
+	return freeCapacity, totalCapacity, nil
 }
 
 // createResourceGroup creates a new resource group for the storage pool.
