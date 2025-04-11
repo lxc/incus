@@ -10,7 +10,7 @@ The following options are available:
 - {ref}`server-options-acme`
 - {ref}`server-options-cluster`
 - {ref}`server-options-images`
-- {ref}`server-options-loki`
+- {ref}`server-options-logging`
 - {ref}`server-options-misc`
 - {ref}`server-options-oidc`
 - {ref}`server-options-openfga`
@@ -88,15 +88,38 @@ The following server options configure how to handle {ref}`images`:
     :end-before: <!-- config group server-images end -->
 ```
 
-(server-options-loki)=
-## Loki configuration
+(server-options-logging)=
+## Logging configuration
 
-The following server options configure the external log aggregation system:
+The logging system now supports multiple configurable targets, each identified by a unique name (e.g., `loki01`, `syslog01`).
+Each target can be independently configured and assigned specific log types.
+
+### Supported Targets
+
+- `loki` -  For sending logs to a Grafana Loki server
+- `syslog` - For sending logs to remote syslog endpoint
+
+### Example configuration
+
+```
+logging.loki01.target.type: loki
+logging.loki01.target.address: https://loki01.int.example.net
+logging.loki01.target.username: foo
+logging.loki01.target.password: bar
+logging.loki01.types: lifecycle,network-acl
+logging.loki01.lifecycle.types: instance
+
+logging.syslog01.target.type: syslog
+logging.syslog01.target.address: syslog01.int.example.net
+logging.syslog01.target.facility: security
+logging.syslog01.types: logging
+logging.syslog01.logging.level: warning
+```
 
 % Include content from [config_options.txt](config_options.txt)
 ```{include} config_options.txt
-    :start-after: <!-- config group server-loki start -->
-    :end-before: <!-- config group server-loki end -->
+    :start-after: <!-- config group server-logging start -->
+    :end-before: <!-- config group server-logging end -->
 ```
 
 (server-options-misc)=
