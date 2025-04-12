@@ -1,4 +1,4 @@
-package loki
+package logging
 
 import (
 	"bufio"
@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
 	"slices"
 	"sort"
@@ -17,8 +18,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
+	"github.com/lxc/incus/v6/internal/server/state"
 	"github.com/lxc/incus/v6/shared/api"
 	localtls "github.com/lxc/incus/v6/shared/tls"
 )
@@ -39,9 +39,8 @@ type config struct {
 	password string
 	labels   []string
 	instance string
-	logLevel string
-	types    []string
 	location string
+	retry    int
 
 	timeout time.Duration
 	url     *url.URL
@@ -52,8 +51,9 @@ type entry struct {
 	Entry
 }
 
-// Client represents a Loki client.
-type Client struct {
+// LokiLogger represents a Loki client.
+type LokiLogger struct {
+	common
 	cfg     config
 	client  *http.Client
 	ctx     context.Context
@@ -63,9 +63,34 @@ type Client struct {
 	wg      sync.WaitGroup
 }
 
-// NewClient returns a Client.
-func NewClient(ctx context.Context, u *url.URL, username string, password string, caCert string, instance string, location string, logLevel string, labels []string, types []string) *Client {
-	client := Client{
+// NewLokiLogger returns a logger of loki type.
+func NewLokiLogger(s *state.State, name string) (*LokiLogger, error) {
+	urlStr, username, password, caCert, instance, labels, retry := s.GlobalConfig.LoggingConfigForLoki(name)
+
+	// Validate the URL.
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		return nil, err
+	}
+
+	// Handle standalone systems.
+	var location string
+	if !s.ServerClustered {
+		hostname, err := os.Hostname()
+		if err != nil {
+			return nil, err
+		}
+
+		location = hostname
+		if instance == "" {
+			instance = hostname
+		}
+	} else if instance == "" {
+		instance = s.ServerName
+	}
+
+	loggerClient := LokiLogger{
+		common: newCommonLogger(name, s.GlobalConfig),
 		cfg: config{
 			batchSize: 10 * 1024,
 			batchWait: 1 * time.Second,
@@ -74,14 +99,13 @@ func NewClient(ctx context.Context, u *url.URL, username string, password string
 			password:  password,
 			instance:  instance,
 			location:  location,
-			labels:    labels,
-			logLevel:  logLevel,
+			labels:    sliceFromString(labels),
+			retry:     retry,
 			timeout:   10 * time.Second,
-			types:     types,
 			url:       u,
 		},
 		client:  &http.Client{},
-		ctx:     ctx,
+		ctx:     s.ShutdownCtx,
 		entries: make(chan entry),
 		quit:    make(chan struct{}),
 	}
@@ -89,27 +113,24 @@ func NewClient(ctx context.Context, u *url.URL, username string, password string
 	if caCert != "" {
 		tlsConfig, err := localtls.GetTLSConfigMem("", "", caCert, "", false)
 		if err != nil {
-			return nil
+			return nil, err
 		}
 
-		client.client.Transport = &http.Transport{
+		loggerClient.client.Transport = &http.Transport{
 			TLSClientConfig: tlsConfig,
 		}
 	} else {
-		client.client = http.DefaultClient
+		loggerClient.client = http.DefaultClient
 	}
 
-	client.wg.Add(1)
-	go client.run()
-
-	return &client
+	return &loggerClient, nil
 }
 
-func (c *Client) run() {
+func (l *LokiLogger) run() {
 	batch := newBatch()
 
 	minWaitCheckFrequency := 10 * time.Millisecond
-	maxWaitCheckFrequency := c.cfg.batchWait / 10
+	maxWaitCheckFrequency := l.cfg.batchWait / 10
 
 	if maxWaitCheckFrequency < minWaitCheckFrequency {
 		maxWaitCheckFrequency = minWaitCheckFrequency
@@ -119,23 +140,23 @@ func (c *Client) run() {
 
 	defer func() {
 		// Send all pending batches
-		c.sendBatch(batch)
-		c.wg.Done()
+		l.sendBatch(batch)
+		l.wg.Done()
 	}()
 
 	for {
 		select {
-		case <-c.ctx.Done():
+		case <-l.ctx.Done():
 			return
 
-		case <-c.quit:
+		case <-l.quit:
 			return
 
-		case e := <-c.entries:
+		case e := <-l.entries:
 			// If adding the entry to the batch will increase the size over the max
 			// size allowed, we do send the current batch and then create a new one
-			if batch.sizeBytesAfter(e) > c.cfg.batchSize {
-				c.sendBatch(batch)
+			if batch.sizeBytesAfter(e) > l.cfg.batchSize {
+				l.sendBatch(batch)
 
 				batch = newBatch(e)
 				break
@@ -146,17 +167,17 @@ func (c *Client) run() {
 
 		case <-maxWaitCheck.C:
 			// Send batch if max wait time has been reached
-			if batch.age() < c.cfg.batchWait {
+			if batch.age() < l.cfg.batchWait {
 				break
 			}
 
-			c.sendBatch(batch)
+			l.sendBatch(batch)
 			batch = newBatch()
 		}
 	}
 }
 
-func (c *Client) sendBatch(batch *batch) {
+func (l *LokiLogger) sendBatch(batch *batch) {
 	if batch.empty() {
 		return
 	}
@@ -168,28 +189,33 @@ func (c *Client) sendBatch(batch *batch) {
 
 	var status int
 
-	for i := 0; i < 30; i++ {
-		// Try to send the message.
-		status, err = c.send(c.ctx, buf)
-		if err == nil {
+	for i := 0; i < l.cfg.retry; i++ {
+		select {
+		case <-l.quit:
 			return
-		}
+		default:
+			// Try to send the message.
+			status, err = l.send(l.ctx, buf)
+			if err == nil {
+				return
+			}
 
-		// Only retry 429s, 500s and connection-level errors.
-		if status > 0 && status != 429 && status/100 != 5 {
-			return
-		}
+			// Only retry 429s, 500s and connection-level errors.
+			if status > 0 && status != 429 && status/100 != 5 {
+				return
+			}
 
-		// Retry every 10s.
-		time.Sleep(10 * time.Second)
+			// Retry every 10s.
+			time.Sleep(10 * time.Second)
+		}
 	}
 }
 
-func (c *Client) send(ctx context.Context, buf []byte) (int, error) {
-	ctx, cancel := context.WithTimeout(ctx, c.cfg.timeout)
+func (l *LokiLogger) send(ctx context.Context, buf []byte) (int, error) {
+	ctx, cancel := context.WithTimeout(ctx, l.cfg.timeout)
 	defer cancel()
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/loki/api/v1/push", c.cfg.url.String()), bytes.NewReader(buf))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/loki/api/v1/push", l.cfg.url.String()), bytes.NewReader(buf))
 	if err != nil {
 		return -1, err
 	}
@@ -197,11 +223,11 @@ func (c *Client) send(ctx context.Context, buf []byte) (int, error) {
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", contentType)
 
-	if c.cfg.username != "" && c.cfg.password != "" {
-		req.SetBasicAuth(c.cfg.username, c.cfg.password)
+	if l.cfg.username != "" && l.cfg.password != "" {
+		req.SetBasicAuth(l.cfg.username, l.cfg.password)
 	}
 
-	resp, err := c.client.Do(req)
+	resp, err := l.client.Do(req)
 	if err != nil {
 		return -1, err
 	}
@@ -220,22 +246,39 @@ func (c *Client) send(ctx context.Context, buf []byte) (int, error) {
 	return resp.StatusCode, err
 }
 
-// Stop the client.
-func (c *Client) Stop() {
-	c.once.Do(func() { close(c.quit) })
-	c.wg.Wait()
+// Start starts the loki logger.
+func (l *LokiLogger) Start() error {
+	l.wg.Add(1)
+	go l.run()
+
+	return nil
+}
+
+// Stop stops the client.
+func (l *LokiLogger) Stop() {
+	l.once.Do(func() { close(l.quit) })
+	l.wg.Wait()
+}
+
+// Validate checks whether the logger configuration is correct.
+func (l *LokiLogger) Validate() error {
+	if l.cfg.url.String() == "" {
+		return fmt.Errorf("%s: URL cannot be empty", l.name)
+	}
+
+	return nil
 }
 
 // HandleEvent handles the event received from the internal event listener.
-func (c *Client) HandleEvent(event api.Event) {
-	if !slices.Contains(c.cfg.types, event.Type) {
+func (l *LokiLogger) HandleEvent(event api.Event) {
+	if !l.processEvent(event) {
 		return
 	}
 
 	// Support overriding the location field (used on standalone systems).
 	location := event.Location
-	if c.cfg.location != "" {
-		location = c.cfg.location
+	if l.cfg.location != "" {
+		location = l.cfg.location
 	}
 
 	entry := entry{
@@ -243,16 +286,17 @@ func (c *Client) HandleEvent(event api.Event) {
 			"app":      "incus",
 			"type":     event.Type,
 			"location": location,
-			"instance": c.cfg.instance,
+			"instance": l.cfg.instance,
 		},
 		Entry: Entry{
 			Timestamp: event.Timestamp,
 		},
 	}
 
-	context := make(map[string]string)
+	ctx := make(map[string]string)
 
-	if event.Type == api.EventTypeLifecycle {
+	switch event.Type {
+	case api.EventTypeLifecycle:
 		lifecycleEvent := api.EventLifecycle{}
 
 		err := json.Unmarshal(event.Metadata, &lifecycleEvent)
@@ -270,23 +314,23 @@ func (c *Client) HandleEvent(event api.Event) {
 
 		// Build map. These key-value pairs will either be added as labels, or be part of the
 		// log message itself.
-		context["action"] = lifecycleEvent.Action
-		context["source"] = lifecycleEvent.Source
+		ctx["action"] = lifecycleEvent.Action
+		ctx["source"] = lifecycleEvent.Source
 
 		for k, v := range buildNestedContext("context", lifecycleEvent.Context) {
-			context[k] = v
+			ctx[k] = v
 		}
 
 		if lifecycleEvent.Requestor != nil {
-			context["requester-address"] = lifecycleEvent.Requestor.Address
-			context["requester-protocol"] = lifecycleEvent.Requestor.Protocol
-			context["requester-username"] = lifecycleEvent.Requestor.Username
+			ctx["requester-address"] = lifecycleEvent.Requestor.Address
+			ctx["requester-protocol"] = lifecycleEvent.Requestor.Protocol
+			ctx["requester-username"] = lifecycleEvent.Requestor.Username
 		}
 
 		// Get a sorted list of context keys.
-		keys := make([]string, 0, len(context))
+		keys := make([]string, 0, len(ctx))
 
-		for k := range context {
+		for k := range ctx {
 			keys = append(keys, k)
 		}
 
@@ -294,14 +338,14 @@ func (c *Client) HandleEvent(event api.Event) {
 
 		// Add key-value pairs as labels but don't override any labels.
 		for _, k := range keys {
-			v := context[k]
+			v := ctx[k]
 
-			if slices.Contains(c.cfg.labels, k) {
+			if slices.Contains(l.cfg.labels, k) {
 				_, ok := entry.labels[k]
 				if !ok {
 					// Label names may not contain any hyphens.
 					entry.labels[strings.ReplaceAll(k, "-", "_")] = v
-					delete(context, k)
+					delete(ctx, k)
 				}
 			}
 		}
@@ -309,25 +353,16 @@ func (c *Client) HandleEvent(event api.Event) {
 		messagePrefix := ""
 
 		// Add the remaining context as the message prefix.
-		for k, v := range context {
+		for k, v := range ctx {
 			messagePrefix += fmt.Sprintf("%s=\"%s\" ", k, v)
 		}
 
 		entry.Line = fmt.Sprintf("%s%s", messagePrefix, lifecycleEvent.Action)
-	} else if event.Type == api.EventTypeLogging || event.Type == api.EventTypeNetworkACL {
+	case api.EventTypeLogging, api.EventTypeNetworkACL:
 		logEvent := api.EventLogging{}
 
 		err := json.Unmarshal(event.Metadata, &logEvent)
 		if err != nil {
-			return
-		}
-
-		// The errors can be ignored as the values are validated elsewhere.
-		l1, _ := logrus.ParseLevel(logEvent.Level)
-		l2, _ := logrus.ParseLevel(c.cfg.logLevel)
-
-		// Only consider log messages with a certain log level.
-		if l2 < l1 {
 			return
 		}
 
@@ -340,26 +375,26 @@ func (c *Client) HandleEvent(event api.Event) {
 
 		// Build map. These key-value pairs will either be added as labels, or be part of the
 		// log message itself.
-		context["level"] = logEvent.Level
+		ctx["level"] = logEvent.Level
 
 		for k, v := range buildNestedContext("context", tmpContext) {
-			context[k] = v
+			ctx[k] = v
 		}
 
 		// Add key-value pairs as labels but don't override any labels.
-		for k, v := range context {
-			if slices.Contains(c.cfg.labels, k) {
+		for k, v := range ctx {
+			if slices.Contains(l.cfg.labels, k) {
 				_, ok := entry.labels[k]
 				if !ok {
 					entry.labels[k] = v
-					delete(context, k)
+					delete(ctx, k)
 				}
 			}
 		}
 
-		keys := make([]string, 0, len(context))
+		keys := make([]string, 0, len(ctx))
 
-		for k := range context {
+		for k := range ctx {
 			keys = append(keys, k)
 		}
 
@@ -369,7 +404,7 @@ func (c *Client) HandleEvent(event api.Event) {
 
 		// Add the remaining context as the message prefix. The keys are sorted alphabetically.
 		for _, k := range keys {
-			message.WriteString(fmt.Sprintf("%s=%q ", k, context[k]))
+			message.WriteString(fmt.Sprintf("%s=%q ", k, ctx[k]))
 		}
 
 		message.WriteString(logEvent.Message)
@@ -377,7 +412,7 @@ func (c *Client) HandleEvent(event api.Event) {
 		entry.Line = message.String()
 	}
 
-	c.entries <- entry
+	l.entries <- entry
 }
 
 func buildNestedContext(prefix string, m map[string]any) map[string]string {
