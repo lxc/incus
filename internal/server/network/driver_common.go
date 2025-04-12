@@ -896,6 +896,12 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 		}
 
 		// User keys are not validated.
+
+		// gendoc:generate(entity=network_forward, group=common, key=user.*)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: User defined key/value configuration
 		if internalInstance.IsUserConfig(k) {
 			continue
 		}
@@ -904,6 +910,12 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 	}
 
 	// Validate default target address.
+
+	// gendoc:generate(entity=network_forward, group=common, key=target_address)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: Default target address for anything not covered through a port definition
 	defaultTargetAddress := net.ParseIP(forward.Config["target_address"])
 
 	if forward.Config["target_address"] != "" {
