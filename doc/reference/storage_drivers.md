@@ -82,7 +82,7 @@ Therefore, Incus uses `rsync` instead of the optimized transfer for refreshes wi
 ## Recommended setup
 
 The two best options for use with Incus are ZFS and Btrfs.
-They have similar functionalities, but ZFS is more reliable.
+They have similar functionalities, but ZFS is out-of-tree and never be mainlined. In the past Btrfs was considered unrealiable, however it is stable now as long as RAID 5/6 is avoided.
 
 Whenever possible, you should dedicate a full disk or partition to your Incus storage pool.
 Incus allows to create loop-based storage, but this isn't recommended for production use.
