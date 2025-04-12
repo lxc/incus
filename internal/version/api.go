@@ -471,6 +471,7 @@ var APIExtensions = []string{
 	"instance_state_cpu_time",
 	"network_io_bus",
 	"disk_io_bus_usb",
+	"server_logging",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

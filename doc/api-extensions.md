@@ -2741,3 +2741,8 @@ This introduces a new `io.bus` property for compatible network devices allowing 
 ## `disk_io_bus_usb`
 
 Adds a new `usb` value for `io.bus` on `disk` devices.
+
+## `server_logging`
+
+This implements a new set of `logging` configuration keys on the server, allowing for multiple logging targets.
+The former `loki` configuration keys are being transitioned over as part of this.
