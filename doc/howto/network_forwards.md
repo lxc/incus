@@ -45,10 +45,11 @@ Property         | Type       | Required | Description
 
 Network forwards have the following configuration options:
 
-Key                 | Type      | Default | Description
-:--                 | :---      | :------ | :----------
-`user.*`            | string    | -       | User defined key/value configuration
-`target_address`    | string    | -       | Default target address for anything not covered through a port definition
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group network_forward-common start -->
+    :end-before: <!-- config group network_forward-common end -->
+```
 
 (network-forwards-listen-addresses)=
 ### Requirements for listen addresses
