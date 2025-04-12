@@ -2026,6 +2026,20 @@ User keys can be used in search.
 ```
 
 <!-- config group network_bridge-common end -->
+<!-- config group network_forward-common start -->
+```{config:option} target_address network_forward-common
+:shortdesc: "Default target address for anything not covered through a port definition"
+:type: "string"
+
+```
+
+```{config:option} user.* network_forward-common
+:shortdesc: "User defined key/value configuration"
+:type: "string"
+
+```
+
+<!-- config group network_forward-common end -->
 <!-- config group network_integration-common start -->
 ```{config:option} user.* network_integration-common
 :shortdesc: "Free form user key/value storage"

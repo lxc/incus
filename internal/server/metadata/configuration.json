@@ -2244,6 +2244,26 @@
 				]
 			}
 		},
+		"network_forward": {
+			"common": {
+				"keys": [
+					{
+						"target_address": {
+							"longdesc": "",
+							"shortdesc": "Default target address for anything not covered through a port definition",
+							"type": "string"
+						}
+					},
+					{
+						"user.*": {
+							"longdesc": "",
+							"shortdesc": "User defined key/value configuration",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"network_integration": {
 			"common": {
 				"keys": [
