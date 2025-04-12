@@ -2836,6 +2836,103 @@ Specify the number of days after which the unused cached image expires.
 ```
 
 <!-- config group server-images end -->
+<!-- config group server-logging start -->
+```{config:option} logging.NAME.lifecycle.projects server-logging
+:scope: "global"
+:shortdesc: "Comma separate list of projects, empty means all"
+:type: "string"
+
+```
+
+```{config:option} logging.NAME.lifecycle.types server-logging
+:scope: "global"
+:shortdesc: "E.g., `instance`, comma separate, empty means all"
+:type: "string"
+
+```
+
+```{config:option} logging.NAME.logging.level server-logging
+:defaultdesc: "`info`"
+:scope: "global"
+:shortdesc: "Minimum log level to send to the logger"
+:type: "string"
+
+```
+
+```{config:option} logging.NAME.target.address server-logging
+:scope: "global"
+:shortdesc: "Address of the logger"
+:type: "string"
+Specify the protocol, name or IP and port. For example `tcp://syslog01.int.example.net:514`.
+```
+
+```{config:option} logging.NAME.target.ca_cert server-logging
+:scope: "global"
+:shortdesc: "CA certificate for the server"
+:type: "string"
+
+```
+
+```{config:option} logging.NAME.target.facility server-logging
+:scope: "global"
+:shortdesc: "The syslog facility defines the category of the log message"
+:type: "string"
+
+```
+
+```{config:option} logging.NAME.target.instance server-logging
+:defaultdesc: "Local server host name or cluster member name"
+:scope: "global"
+:shortdesc: "Name to use as the instance field in Loki events."
+:type: "string"
+This allows replacing the default instance value (server host name) by a more relevant value like a cluster identifier.
+```
+
+```{config:option} logging.NAME.target.labels server-logging
+:scope: "global"
+:shortdesc: "Labels for a Loki log entry"
+:type: "string"
+Specify a comma-separated list of values that should be used as labels for a Loki log entry.
+```
+
+```{config:option} logging.NAME.target.password server-logging
+:scope: "global"
+:shortdesc: "Password used for authentication"
+:type: "string"
+
+```
+
+```{config:option} logging.NAME.target.retry server-logging
+:scope: "global"
+:shortdesc: "number of delivery retries, default 3"
+:type: "integer"
+
+```
+
+```{config:option} logging.NAME.target.type server-logging
+:scope: "global"
+:shortdesc: "The type of the logger, e.g., syslog"
+:type: "string"
+
+```
+
+```{config:option} logging.NAME.target.username server-logging
+:scope: "global"
+:shortdesc: "User name used for authentication"
+:type: "string"
+
+```
+
+```{config:option} logging.NAME.types server-logging
+:defaultdesc: "`lifecycle,logging`"
+:scope: "global"
+:shortdesc: "Events to send to the logger"
+:type: "string"
+Specify a comma-separated list of events to send to the logger.
+The events can be any combination of `lifecycle`, `logging`, and `network-acl`.
+```
+
+<!-- config group server-logging end -->
 <!-- config group server-loki start -->
 ```{config:option} loki.api.ca_cert server-loki
 :scope: "global"

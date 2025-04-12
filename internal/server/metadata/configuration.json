@@ -3153,6 +3153,117 @@
 					}
 				]
 			},
+			"logging": {
+				"keys": [
+					{
+						"logging.NAME.lifecycle.projects": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Comma separate list of projects, empty means all",
+							"type": "string"
+						}
+					},
+					{
+						"logging.NAME.lifecycle.types": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "E.g., `instance`, comma separate, empty means all",
+							"type": "string"
+						}
+					},
+					{
+						"logging.NAME.logging.level": {
+							"defaultdesc": "`info`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Minimum log level to send to the logger",
+							"type": "string"
+						}
+					},
+					{
+						"logging.NAME.target.address": {
+							"longdesc": "Specify the protocol, name or IP and port. For example `tcp://syslog01.int.example.net:514`.",
+							"scope": "global",
+							"shortdesc": "Address of the logger",
+							"type": "string"
+						}
+					},
+					{
+						"logging.NAME.target.ca_cert": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "CA certificate for the server",
+							"type": "string"
+						}
+					},
+					{
+						"logging.NAME.target.facility": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "The syslog facility defines the category of the log message",
+							"type": "string"
+						}
+					},
+					{
+						"logging.NAME.target.instance": {
+							"defaultdesc": "Local server host name or cluster member name",
+							"longdesc": "This allows replacing the default instance value (server host name) by a more relevant value like a cluster identifier.",
+							"scope": "global",
+							"shortdesc": "Name to use as the instance field in Loki events.",
+							"type": "string"
+						}
+					},
+					{
+						"logging.NAME.target.labels": {
+							"longdesc": "Specify a comma-separated list of values that should be used as labels for a Loki log entry.",
+							"scope": "global",
+							"shortdesc": "Labels for a Loki log entry",
+							"type": "string"
+						}
+					},
+					{
+						"logging.NAME.target.password": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Password used for authentication",
+							"type": "string"
+						}
+					},
+					{
+						"logging.NAME.target.retry": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "number of delivery retries, default 3",
+							"type": "integer"
+						}
+					},
+					{
+						"logging.NAME.target.type": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "The type of the logger, e.g., syslog",
+							"type": "string"
+						}
+					},
+					{
+						"logging.NAME.target.username": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "User name used for authentication",
+							"type": "string"
+						}
+					},
+					{
+						"logging.NAME.types": {
+							"defaultdesc": "`lifecycle,logging`",
+							"longdesc": "Specify a comma-separated list of events to send to the logger.\nThe events can be any combination of `lifecycle`, `logging`, and `network-acl`.",
+							"scope": "global",
+							"shortdesc": "Events to send to the logger",
+							"type": "string"
+						}
+					}
+				]
+			},
 			"loki": {
 				"keys": [
 					{
