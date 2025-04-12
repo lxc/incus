@@ -2779,3 +2779,8 @@ Those are initialized at creation time using the values from the OCI image.
 ## `network_address_set`
 
 This adds the concept of network address sets to API under the API endpoint prefix `/1.0/network-address-sets`.
+
+## `server_logging`
+
+This implements a new set of `logging` configuration keys on the server, allowing for multiple logging targets.
+The former `loki` configuration keys are being transitioned over as part of this.
