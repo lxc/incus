@@ -27,7 +27,7 @@ type Firewall interface {
 	NetworkApplyAddressSets(sets []drivers.AddressSet, nftTable string) error
 	NetworkDeleteAddressSetsIfUnused(nftTable string) error
 
-	InstanceSetupBridgeFilter(projectName string, instanceName string, deviceName string, parentName string, hostName string, hwAddr string, IPv4Nets []*net.IPNet, IPv6Nets []*net.IPNet, parentManaged bool, macFiltering bool, aclRules []drivers.ACLRule) error
+	InstanceSetupBridgeFilter(projectName string, instanceName string, deviceName string, parentName string, hostName string, hwAddr string, IPv4Nets []*net.IPNet, IPv6Nets []*net.IPNet, IPv4DNS []string, IPv6DNS []string, parentManaged bool, macFiltering bool, aclRules []drivers.ACLRule) error
 	InstanceClearBridgeFilter(projectName string, instanceName string, deviceName string, parentName string, hostName string, hwAddr string, IPv4Nets []*net.IPNet, IPv6Nets []*net.IPNet) error
 
 	InstanceSetupProxyNAT(projectName string, instanceName string, deviceName string, forward *drivers.AddressForward) error
