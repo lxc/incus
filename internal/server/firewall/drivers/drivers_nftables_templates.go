@@ -190,6 +190,24 @@ chain in{{.chainSeparator}}{{.deviceLabel}} {
 	{{ if or .aclInDropRules .aclInRejectRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule }}
 	ct state established,related accept
 
+	{{ if .dnsIPv4 }}
+	{{ range .dnsIPv4 }}
+	iifname "{{$.hostName}}" ip daddr "{{.}}" tcp dport 53 accept
+	iifname "{{$.hostName}}" ip daddr "{{.}}" udp dport 53 accept
+	{{ end }}
+	{{ end }}
+
+	{{ if .dnsIPv6 }}
+	{{ range .dnsIPv6 }}
+	iifname "{{$.hostName}}" ip6 daddr "{{.}}" tcp dport 53 accept
+	iifname "{{$.hostName}}" ip6 daddr "{{.}}" udp dport 53 accept
+	{{ end }}
+	{{ end }}
+
+	iifname "{{.hostName}}" ether type ip ip saddr 0.0.0.0 ip daddr 255.255.255.255 udp dport 67 accept
+	iifname "{{.hostName}}" ether type ip6 ip6 saddr fe80::/10 ip6 daddr ff02::1:2 udp dport 547 accept
+	iifname "{{.hostName}}" ether type ip6 ip6 saddr fe80::/10 ip6 daddr ff02::2 icmpv6 type 133 accept
+
 	iifname "{{.hostName}}" ether type arp accept
 	iifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
 	{{ end }}
@@ -322,6 +340,10 @@ chain out{{.chainSeparator}}{{.deviceLabel}} {
 
 	oifname "{{.hostName}}" ether type arp accept
 	oifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
+
+	oifname "{{.hostName}}" udp sport 67 udp dport 68 accept
+	oifname "{{.hostName}}" ip6 saddr fe80::/10 udp sport 547 accept
+	oifname "{{.hostName}}" ip6 saddr fe80::/10 icmpv6 type {1, 2, 3, 4, 128, 134, 135, 136, 143} accept
 
 	# Network ACLs
 	{{ range .aclOutDropRules}}
