@@ -3652,6 +3652,30 @@
 					}
 				]
 			}
+		},
+		"tpm": {
+			"common": {
+				"keys": [
+					{
+						"path": {
+							"default": "-",
+							"longdesc": "",
+							"required": "for containers",
+							"shortdesc": "Only for containers: path inside the instance (for example, `/dev/tpm0`)",
+							"type": "string"
+						}
+					},
+					{
+						"pathrm": {
+							"default": "-",
+							"longdesc": "",
+							"required": "for containers",
+							"shortdesc": "Only for containers: resource manager path inside the instance (for example, `/dev/tpmrm0`)",
+							"type": "string"
+						}
+					}
+				]
+			}
 		}
 	}
 }
