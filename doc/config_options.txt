@@ -3278,3 +3278,21 @@ This value is required by some providers.
 ```
 
 <!-- config group server-openfga end -->
+<!-- config group tpm-common start -->
+```{config:option} path tpm-common
+:default: "-"
+:required: "for containers"
+:shortdesc: "Only for containers: path inside the instance (for example, `/dev/tpm0`)"
+:type: "string"
+
+```
+
+```{config:option} pathrm tpm-common
+:default: "-"
+:required: "for containers"
+:shortdesc: "Only for containers: resource manager path inside the instance (for example, `/dev/tpmrm0`)"
+:type: "string"
+
+```
+
+<!-- config group tpm-common end -->
