@@ -1659,7 +1659,10 @@ func (d *zfs) CacheVolumeSnapshots(vol Volume) error {
 	// Get the usage data.
 	out, err := subprocess.RunCommand("zfs", "list", "-H", "-p", "-o", "name,used,referenced", "-t", "snapshot", d.dataset(vol, false))
 	if err != nil {
-		return err
+		d.logger.Warn("Coulnd't list volume snapshots", logger.Ctx{"err": err})
+
+		// The cache is an optional performance improvement, don't block on failure.
+		return nil
 	}
 
 	for _, line := range strings.Split(out, "\n") {
