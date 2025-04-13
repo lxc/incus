@@ -396,7 +396,7 @@ func (d Nftables) instanceDeviceLabel(projectName, instanceName, deviceName stri
 }
 
 // InstanceSetupBridgeFilter sets up the filter rules to apply bridged device IP filtering.
-func (d Nftables) InstanceSetupBridgeFilter(projectName string, instanceName string, deviceName string, parentName string, hostName string, hwAddr string, IPv4Nets []*net.IPNet, IPv6Nets []*net.IPNet, parentManaged bool, macFiltering bool, aclRules []ACLRule) error {
+func (d Nftables) InstanceSetupBridgeFilter(projectName string, instanceName string, deviceName string, parentName string, hostName string, hwAddr string, IPv4Nets []*net.IPNet, IPv6Nets []*net.IPNet, IPv4DNS []string, IPv6DNS []string, parentManaged bool, macFiltering bool, aclRules []ACLRule) error {
 	deviceLabel := d.instanceDeviceLabel(projectName, instanceName, deviceName)
 
 	mac, err := net.ParseMAC(hwAddr)
@@ -474,6 +474,10 @@ func (d Nftables) InstanceSetupBridgeFilter(projectName string, instanceName str
 	tplFields["aclOutDropRules"] = nftRules.outDropRules
 	tplFields["aclOutAcceptRules"] = nftRules.outAcceptRules
 	tplFields["aclOutDefaultRule"] = nftRules.defaultOutRule
+
+	// Required for basic connectivity
+	tplFields["dnsIPv4"] = IPv4DNS
+	tplFields["dnsIPv6"] = IPv6DNS
 
 	err = d.applyNftConfig(nftablesInstanceBridgeFilter, tplFields)
 	if err != nil {

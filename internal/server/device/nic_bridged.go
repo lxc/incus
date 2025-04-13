@@ -1175,9 +1175,48 @@ func (d *nicBridged) setFilters() (err error) {
 	defer revert.Fail()
 	revert.Add(func() { d.removeFilters(config) })
 
-	IPv4Nets, IPv6Nets, err := allowedIPNets(config)
+	ipv4Nets, ipv6Nets, err := allowedIPNets(config)
 	if err != nil {
 		return err
+	}
+
+	var ipv4DNS []string
+	var ipv6DNS []string
+
+	if d.network != nil {
+		netConfig := d.network.Config()
+
+		ipv4DNS = []string{}
+		ipv6DNS = []string{}
+
+		// Pull directly configured DNS name servers (if any).
+		nsList := util.SplitNTrimSpace(netConfig["dns.nameservers"], ",", -1, false)
+		for _, ns := range nsList {
+			if ns == "" {
+				continue
+			}
+
+			nsIP := net.ParseIP(ns)
+			if nsIP == nil {
+				return fmt.Errorf("Invalid DNS nameserver")
+			}
+
+			if nsIP.To4() == nil {
+				ipv4DNS = append(ipv4DNS, ns)
+			} else {
+				ipv6DNS = append(ipv6DNS, ns)
+			}
+		}
+
+		// Add IPv4 router.
+		if netConfig["ipv4.address"] != "" && netConfig["ipv4.address"] != "none" {
+			ipv4DNS = append(ipv4DNS, strings.Split(netConfig["ipv4.address"], "/")[0])
+		}
+
+		// Add IPv6 router.
+		if netConfig["ipv6.address"] != "" && netConfig["ipv6.address"] != "none" {
+			ipv6DNS = append(ipv6DNS, strings.Split(netConfig["ipv6.address"], "/")[0])
+		}
 	}
 
 	var aclRules []firewallDrivers.ACLRule
@@ -1189,7 +1228,7 @@ func (d *nicBridged) setFilters() (err error) {
 		}
 	}
 
-	err = d.state.Firewall.InstanceSetupBridgeFilter(d.inst.Project().Name, d.inst.Name(), d.name, d.config["parent"], d.config["host_name"], d.config["hwaddr"], IPv4Nets, IPv6Nets, d.network != nil, util.IsTrue(config["security.mac_filtering"]), aclRules)
+	err = d.state.Firewall.InstanceSetupBridgeFilter(d.inst.Project().Name, d.inst.Name(), d.name, d.config["parent"], d.config["host_name"], d.config["hwaddr"], ipv4Nets, ipv6Nets, ipv4DNS, ipv6DNS, d.network != nil, util.IsTrue(config["security.mac_filtering"]), aclRules)
 	if err != nil {
 		return err
 	}
