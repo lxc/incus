@@ -18,7 +18,8 @@ For virtual machines, TPM can be used both for sealing certificates and for vali
 
 `tpm` devices have the following device options:
 
-Key                 | Type      | Default   | Required       | Description
-:--                 | :--       | :--       | :--            | :--
-`path`              | string    | -         | for containers | Only for containers: path inside the instance (for example, `/dev/tpm0`)
-`pathrm`            | string    | -         | for containers | Only for containers: resource manager path inside the instance (for example, `/dev/tpmrm0`)
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group tpm-common start -->
+    :end-before: <!-- config group tpm-common end -->
+```
