@@ -2784,3 +2784,10 @@ This adds the concept of network address sets to API under the API endpoint pref
 
 This implements a new set of `logging` configuration keys on the server, allowing for multiple logging targets.
 The former `loki` configuration keys are being transitioned over as part of this.
+
+## `network_forward_snat`
+
+Adds a `snat` configuration option for network forwards which will cause any DNAT to get a matching SNAT applied.
+So new connections from the target will appear as coming from the network forward address.
+
+This is limited to bridged networks as OVN doesn't support flexible enough SNAT for this.

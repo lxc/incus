@@ -50,6 +50,7 @@ type forwardPortMap struct {
 	listenPorts []uint64
 	protocol    string
 	target      forwardTarget
+	snat        bool
 }
 
 type loadBalancerPortMap struct {
@@ -981,6 +982,7 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 				address: targetAddress,
 			},
 			protocol: portSpec.Protocol,
+			snat:     portSpec.SNAT,
 		}
 
 		for _, pr := range listenPortRanges {
@@ -999,6 +1001,11 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 				listenPorts[portSpec.Protocol][port] = struct{}{}
 				portMap.listenPorts = append(portMap.listenPorts, uint64(port))
 			}
+		}
+
+		// Check that SNAT is only used with bridges.
+		if portSpec.SNAT && n.netType != "bridge" {
+			return nil, fmt.Errorf("SNAT can only be used with bridge networks")
 		}
 
 		// Check valid target port(s) supplied.
