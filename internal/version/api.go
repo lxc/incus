@@ -472,6 +472,7 @@ var APIExtensions = []string{
 	"network_io_bus",
 	"disk_io_bus_usb",
 	"server_logging",
+	"network_forward_snat",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
