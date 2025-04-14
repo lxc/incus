@@ -1358,7 +1358,6 @@ func (d Nftables) NetworkApplyForwards(networkName string, rules []AddressForwar
 			targetAddressStr := rule.TargetAddress.String()
 
 			if rule.Protocol != "" {
-
 				targetPortRanges := portRangesFromSlice(rule.TargetPorts)
 
 				for _, targetPortRange := range targetPortRanges {
@@ -1372,7 +1371,6 @@ func (d Nftables) NetworkApplyForwards(networkName string, rules []AddressForwar
 				}
 
 				dnatRanges := getOptimisedDNATRanges(&rule)
-
 				for listenPortRange, targetPortRange := range dnatRanges {
 					// Format the destination host/port as appropriate
 					targetDest := targetAddressStr
@@ -1393,6 +1391,17 @@ func (d Nftables) NetworkApplyForwards(networkName string, rules []AddressForwar
 						"listenPorts":   portRangeStr(listenPortRange, "-"),
 						"targetDest":    targetDest,
 					})
+
+					if rule.SNAT {
+						snatRules = append(snatRules, map[string]any{
+							"ipFamily":      ipFamily,
+							"protocol":      rule.Protocol,
+							"listenAddress": listenAddressStr,
+							"listenPorts":   portRangeStr(listenPortRange, "-"),
+							"targetAddress": targetAddressStr,
+							"targetPorts":   portRangeStr(targetPortRange, "-"),
+						})
+					}
 				}
 			} else {
 				// Format the destination host/port as appropriate.

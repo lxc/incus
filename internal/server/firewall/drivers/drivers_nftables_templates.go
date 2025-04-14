@@ -103,7 +103,11 @@ table {{.family}} {{.namespace}} {
 	chain {{.chainPrefix}}pstrt{{.chainSeparator}}{{.label}} {
 		type nat hook postrouting priority 100; policy accept;
 		{{ range .snatRules }}
+		{{ if .targetHost }}
 		{{.ipFamily}} saddr {{.targetHost}} {{.ipFamily}} daddr {{.targetHost}} {{ if .protocol }}{{.protocol}} dport {{.targetPorts}}{{ end }} masquerade
+		{{ else }}
+		{{.ipFamily}} saddr {{.targetAddress}} {{.protocol}} sport {{.targetPorts}} snat to {{.listenAddress}}:{{.listenPorts}}
+		{{ end }}
 		{{ end }}
 	}
 }
