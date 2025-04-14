@@ -189,6 +189,7 @@ func Unpack(file string, path string, blockBackend bool, maxMemory int64, tracke
 		// so ProgressTracker is not possible.
 		command = "unsquashfs"
 		args = append(args, "-f", "-d", path, "-n")
+		args = append(args, "-user-xattrs")
 
 		if maxMemory != 0 {
 			// If maximum memory consumption is less than 256MiB, restrict unsquashfs and limit to a single thread.
