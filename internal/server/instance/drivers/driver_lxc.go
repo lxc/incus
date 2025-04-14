@@ -73,6 +73,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/template"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/idmap"
 	"github.com/lxc/incus/v6/shared/ioprogress"
@@ -2315,26 +2316,29 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			volatileSet["volatile.container.oci"] = "true"
 		}
 
-		// Allow unprivileged users to use ping.
-		maxGid := int64(4294967294)
+		// Allow unprivileged users to use ping (requires a 6.6 kernel at least).
+		minVer, _ := version.NewDottedVersion("6.6.0")
+		if d.state.OS.KernelVersion.Compare(minVer) >= 0 {
+			maxGid := int64(4294967294)
 
-		if !d.IsPrivileged() {
-			maxGid = 0
-			idMap, err := d.CurrentIdmap()
+			if !d.IsPrivileged() {
+				maxGid = 0
+				idMap, err := d.CurrentIdmap()
+				if err != nil {
+					return "", nil, err
+				}
+
+				for _, entry := range idMap.Entries {
+					if entry.NSID+entry.MapRange-1 > maxGid {
+						maxGid = entry.NSID + entry.MapRange - 1
+					}
+				}
+			}
+
+			err = lxcSetConfigItem(cc, "lxc.sysctl.net.ipv4.ping_group_range", fmt.Sprintf("0 %d", maxGid))
 			if err != nil {
 				return "", nil, err
 			}
-
-			for _, entry := range idMap.Entries {
-				if entry.NSID+entry.MapRange-1 > maxGid {
-					maxGid = entry.NSID + entry.MapRange - 1
-				}
-			}
-		}
-
-		err = lxcSetConfigItem(cc, "lxc.sysctl.net.ipv4.ping_group_range", fmt.Sprintf("0 %d", maxGid))
-		if err != nil {
-			return "", nil, err
 		}
 
 		// Allow unprivileged users to use low ports.
