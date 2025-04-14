@@ -1001,6 +1001,11 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 			}
 		}
 
+		// Check that SNAT is only used with bridges.
+		if portSpec.SNAT && n.netType != "bridge" {
+			return nil, fmt.Errorf("SNAT can only be used with bridge networks")
+		}
+
 		// Check valid target port(s) supplied.
 		targetPortRanges := util.SplitNTrimSpace(portSpec.TargetPort, ",", -1, true)
 
