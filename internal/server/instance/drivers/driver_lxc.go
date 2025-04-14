@@ -2710,7 +2710,7 @@ func (d *lxc) onStart(_ map[string]string) error {
 	}
 
 	// Trigger a rebalance
-	cgroup.TaskSchedulerTrigger("container", d.name, "started")
+	defer cgroup.TaskSchedulerTrigger("container", d.name, "started")
 
 	// Record last start state.
 	err = d.recordLastState()
@@ -3222,7 +3222,7 @@ func (d *lxc) onStop(args map[string]string) error {
 		}
 
 		// Trigger a rebalance
-		cgroup.TaskSchedulerTrigger("container", d.name, "stopped")
+		defer cgroup.TaskSchedulerTrigger("container", d.name, "stopped")
 
 		// Destroy ephemeral containers
 		if d.ephemeral {
@@ -4824,7 +4824,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 				}
 			} else if key == "limits.cpu" || key == "limits.cpu.nodes" {
 				// Trigger a scheduler re-run
-				cgroup.TaskSchedulerTrigger("container", d.name, "changed")
+				defer cgroup.TaskSchedulerTrigger("container", d.name, "changed") //nolint:revive
 			} else if key == "limits.cpu.priority" || key == "limits.cpu.allowance" {
 				// Skip if no cpu CGroup
 				if !d.state.OS.CGInfo.Supports(cgroup.CPU, cg) {
