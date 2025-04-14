@@ -64,6 +64,7 @@ DHCPv
 Diátaxis
 Diffie
 Distrobuilder
+DNAT
 DNS
 dnsmasq
 DNSSEC
@@ -252,6 +253,7 @@ SIGTERM
 simplestreams
 SLAAC
 SMTP
+SNAT
 Snapcraft
 Solaris
 SPAs
