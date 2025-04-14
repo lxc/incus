@@ -1239,6 +1239,17 @@ func (d Nftables) NetworkApplyForwards(networkName string, rules []AddressForwar
 						"listenPorts":   portRangeStr(listenPortRange, "-"),
 						"targetDest":    targetDest,
 					})
+
+					if rule.SNAT {
+						snatRules = append(snatRules, map[string]any{
+							"ipFamily":      ipFamily,
+							"protocol":      rule.Protocol,
+							"listenAddress": listenAddressStr,
+							"listenPorts":   portRangeStr(listenPortRange, "-"),
+							"targetAddress": targetAddressStr,
+							"targetPorts":   portRangeStr(targetPortRange, "-"),
+						})
+					}
 				}
 			} else {
 				// Format the destination host/port as appropriate.

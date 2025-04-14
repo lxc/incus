@@ -1580,6 +1580,11 @@ func (d Xtables) NetworkApplyForwards(networkName string, rules []AddressForward
 			targetAddressStr := rule.TargetAddress.String()
 
 			if rule.Protocol != "" {
+				// We don't support SNAT here yet.
+				if rule.SNAT {
+					return fmt.Errorf("SNAT port rules are not supported under xtables")
+				}
+
 				if len(rule.TargetPorts) == 0 {
 					rule.TargetPorts = rule.ListenPorts
 				}
