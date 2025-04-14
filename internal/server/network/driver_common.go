@@ -50,6 +50,7 @@ type forwardPortMap struct {
 	listenPorts []uint64
 	protocol    string
 	target      forwardTarget
+	snat        bool
 }
 
 type loadBalancerPortMap struct {
@@ -981,6 +982,7 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 				address: targetAddress,
 			},
 			protocol: portSpec.Protocol,
+			snat:     portSpec.SNAT,
 		}
 
 		for _, pr := range listenPortRanges {
