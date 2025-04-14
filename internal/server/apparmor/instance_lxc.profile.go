@@ -330,7 +330,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   mount options=(rw,move) /sys?*{,/**},
 
   # Block dangerous paths under /proc/sys
-  deny /proc/sys/[^fkn]*{,/**} wklx,
+  deny /proc/sys/[^fknu]*{,/**} wklx,
   deny /proc/sys/f[^s]*{,/**} wklx,
   deny /proc/sys/fs/[^b]*{,/**} wklx,
   deny /proc/sys/fs/b[^i]*{,/**} wklx,
@@ -381,6 +381,10 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   deny /proc/sys/n[^e]*{,/**} wklx,
   deny /proc/sys/ne[^t]*{,/**} wklx,
   deny /proc/sys/net?*{,/**} wklx,
+  deny /proc/sys/u[^s]*{,/**} wklx,
+  deny /proc/sys/us[^e]*{,/**} wklx,
+  deny /proc/sys/use[^r]*{,/**} wklx,
+  deny /proc/sys/user?*{,/**} wklx,
 
   # Block dangerous paths under /sys
   deny /sys/[^fdck]*{,/**} wklx,
