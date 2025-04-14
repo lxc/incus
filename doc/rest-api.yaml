@@ -3026,6 +3026,11 @@ definitions:
                 example: tcp
                 type: string
                 x-go-name: Protocol
+            snat:
+                description: SNAT controls whether to apply a matching SNAT rule to new outgoing traffic from the target
+                example: false
+                type: boolean
+                x-go-name: SNAT
             target_address:
                 description: TargetAddress to forward ListenPorts to
                 example: 198.51.100.2
