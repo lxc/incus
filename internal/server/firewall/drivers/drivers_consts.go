@@ -48,4 +48,5 @@ type AddressForward struct {
 	Protocol      string
 	ListenPorts   []uint64
 	TargetPorts   []uint64
+	SNAT          bool
 }

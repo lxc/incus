@@ -2230,6 +2230,7 @@ func (n *bridge) forwardConvertToFirewallForwards(listenAddress net.IP, defaultT
 			TargetAddress: portMap.target.address,
 			ListenPorts:   portMap.listenPorts,
 			TargetPorts:   portMap.target.ports,
+			SNAT:          portMap.snat,
 		})
 	}
 
