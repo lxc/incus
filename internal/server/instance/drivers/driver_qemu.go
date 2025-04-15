@@ -8108,6 +8108,17 @@ func (d *qemu) RenderFull(hostInterfaces []net.Interface) (*api.InstanceFull, an
 		return nil, nil, fmt.Errorf("RenderFull doesn't work with snapshots")
 	}
 
+	// Pre-fetch the data.
+	pool, err := d.getStoragePool()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = pool.CacheInstanceSnapshots(d)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	// Get the Instance struct.
 	base, etag, err := d.Render()
 	if err != nil {
