@@ -9,14 +9,11 @@ import (
 	"os"
 	"os/signal"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/subprocess"
@@ -111,23 +108,12 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 		time.Sleep(300 * time.Second)
 	}
 
-	reconfigureNetworkInterfaces()
+	osReconfigureNetworkInterfaces()
 
 	// Load the kernel driver.
-	if !util.PathExists("/dev/vsock") {
-		logger.Info("Loading vsock module")
-
-		err = linux.LoadModule("vsock")
-		if err != nil {
-			return fmt.Errorf("Unable to load the vsock kernel module: %w", err)
-		}
-
-		// Wait for vsock device to appear.
-		for i := 0; i < 5; i++ {
-			if !util.PathExists("/dev/vsock") {
-				time.Sleep(1 * time.Second)
-			}
-		}
+	err = osLoadModules()
+	if err != nil {
+		return err
 	}
 
 	// Mount shares from host.
@@ -184,9 +170,9 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Cancel context when SIGTEM is received.
+	// Cancel context on shutdown signal.
 	chSignal := make(chan os.Signal, 1)
-	signal.Notify(chSignal, unix.SIGTERM)
+	signal.Notify(chSignal, osShutdownSignal)
 
 	exitStatus := 0
 
@@ -285,7 +271,7 @@ func (c *cmdAgent) mountHostShares() {
 			continue
 		}
 
-		err = tryMountShared(mount.Source, mount.Target, mount.FSType, mount.Options)
+		err = osMountShared(mount.Source, mount.Target, mount.FSType, mount.Options)
 		if err != nil {
 			logger.Infof("Failed to mount %q (Type: %q, Options: %v) to %q: %v", mount.Source, "virtiofs", mount.Options, mount.Target, err)
 			continue
@@ -293,60 +279,4 @@ func (c *cmdAgent) mountHostShares() {
 
 		logger.Infof("Mounted %q (Type: %q, Options: %v) to %q", mount.Source, mount.FSType, mount.Options, mount.Target)
 	}
-}
-
-func tryMountShared(src string, dst string, fstype string, opts []string) error {
-	// Convert relative mounts to absolute from / otherwise dir creation fails or mount fails.
-	if !strings.HasPrefix(dst, "/") {
-		dst = fmt.Sprintf("/%s", dst)
-	}
-
-	// Check mount path.
-	if !util.PathExists(dst) {
-		// Create the mount path.
-		err := os.MkdirAll(dst, 0o755)
-		if err != nil {
-			return fmt.Errorf("Failed to create mount target %q", dst)
-		}
-	} else if linux.IsMountPoint(dst) {
-		// Already mounted.
-		return nil
-	}
-
-	// Prepare the arguments.
-	sharedArgs := []string{}
-	p9Args := []string{}
-
-	for _, opt := range opts {
-		// transport and msize mount option are specific to 9p.
-		if strings.HasPrefix(opt, "trans=") || strings.HasPrefix(opt, "msize=") {
-			p9Args = append(p9Args, "-o", opt)
-			continue
-		}
-
-		sharedArgs = append(sharedArgs, "-o", opt)
-	}
-
-	// Always try virtiofs first.
-	args := []string{"-t", "virtiofs", src, dst}
-	args = append(args, sharedArgs...)
-
-	_, err := subprocess.RunCommand("mount", args...)
-	if err == nil {
-		return nil
-	} else if fstype == "virtiofs" {
-		return err
-	}
-
-	// Then fallback to 9p.
-	args = []string{"-t", "9p", src, dst}
-	args = append(args, sharedArgs...)
-	args = append(args, p9Args...)
-
-	_, err = subprocess.RunCommand("mount", args...)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

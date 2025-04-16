@@ -12,21 +12,17 @@ import (
 	"os/exec"
 	"strconv"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/gorilla/websocket"
-	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v6/internal/jmap"
-	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/db/operationtype"
 	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/internal/server/response"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
-	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/ws"
 )
 
@@ -69,44 +65,7 @@ func execPost(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
-	// Set default value for PATH
-	_, ok := env["PATH"]
-	if !ok {
-		env["PATH"] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-	}
-
-	if util.PathExists("/snap/bin") {
-		env["PATH"] = fmt.Sprintf("%s:/snap/bin", env["PATH"])
-	}
-
-	// If running as root, set some env variables
-	if post.User == 0 {
-		// Set default value for HOME
-		_, ok = env["HOME"]
-		if !ok {
-			env["HOME"] = "/root"
-		}
-
-		// Set default value for USER
-		_, ok = env["USER"]
-		if !ok {
-			env["USER"] = "root"
-		}
-	}
-
-	// Set default value for LANG
-	_, ok = env["LANG"]
-	if !ok {
-		env["LANG"] = "C.UTF-8"
-	}
-
-	// Set the default working directory
-	if post.Cwd == "" {
-		post.Cwd = env["HOME"]
-		if post.Cwd == "" {
-			post.Cwd = "/"
-		}
-	}
+	osSetEnv(&post, env)
 
 	ws := &execWs{}
 	ws.fds = map[int]string{}
@@ -260,7 +219,8 @@ func (s *execWs) Do(op *operations.Operation) error {
 	if s.interactive {
 		ttys = make([]*os.File, 1)
 		ptys = make([]*os.File, 1)
-		ptys[0], ttys[0], err = linux.OpenPty(int64(s.uid), int64(s.gid))
+
+		ptys[0], ttys[0], err = osGetInteractiveConsole(s)
 		if err != nil {
 			return err
 		}
@@ -268,10 +228,6 @@ func (s *execWs) Do(op *operations.Operation) error {
 		stdin = ttys[0]
 		stdout = ttys[0]
 		stderr = ttys[0]
-
-		if s.width > 0 && s.height > 0 {
-			_ = linux.SetPtySize(int(ptys[0].Fd()), s.width, s.height)
-		}
 	} else {
 		ttys = make([]*os.File, 3)
 		ptys = make([]*os.File, 3)
@@ -287,10 +243,14 @@ func (s *execWs) Do(op *operations.Operation) error {
 		stderr = ttys[execWSStderr]
 	}
 
+	ctxCommand, cancel := context.WithCancel(context.Background())
 	waitAttachedChildIsDead, markAttachedChildIsDead := context.WithCancel(context.Background())
 	var wgEOF sync.WaitGroup
 
 	finisher := func(cmdResult int, cmdErr error) error {
+		// Cancel the context after we're done with cleanup.
+		defer cancel()
+
 		// Cancel this before closing the control connection so control handler can detect command ending.
 		markAttachedChildIsDead()
 
@@ -324,9 +284,9 @@ func (s *execWs) Do(op *operations.Operation) error {
 	var cmd *exec.Cmd
 
 	if len(s.command) > 1 {
-		cmd = exec.Command(s.command[0], s.command[1:]...)
+		cmd = exec.CommandContext(ctxCommand, s.command[0], s.command[1:]...)
 	} else {
-		cmd = exec.Command(s.command[0])
+		cmd = exec.CommandContext(ctxCommand, s.command[0])
 	}
 
 	// Prepare the environment
@@ -337,26 +297,9 @@ func (s *execWs) Do(op *operations.Operation) error {
 	cmd.Stdin = stdin
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Credential: &syscall.Credential{
-			Uid: s.uid,
-			Gid: s.gid,
-		},
-		// Creates a new session if the calling process is not a process group leader.
-		// The calling process is the leader of the new session, the process group leader of
-		// the new process group, and has no controlling terminal.
-		// This is important to allow remote shells to handle ctrl+c.
-		Setsid: true,
-	}
-
-	// Make the given terminal the controlling terminal of the calling process.
-	// The calling process must be a session leader and not have a controlling terminal already.
-	// This is important as allows ctrl+c to work as expected for non-shell programs.
-	if s.interactive {
-		cmd.SysProcAttr.Setctty = true
-	}
-
 	cmd.Dir = s.cwd
+
+	osPrepareExecCommand(s, cmd)
 
 	err = cmd.Start()
 	if err != nil {
@@ -399,12 +342,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 					l.Warn("Failed getting exec control websocket reader, killing command", logger.Ctx{"err": err})
 				}
 
-				err := unix.Kill(cmd.Process.Pid, unix.SIGKILL)
-				if err != nil {
-					l.Error("Failed to send SIGKILL")
-				} else {
-					l.Info("Sent SIGKILL")
-				}
+				cancel()
 
 				return
 			}
@@ -421,40 +359,14 @@ func (s *execWs) Do(op *operations.Operation) error {
 				return
 			}
 
-			command := api.InstanceExecControl{}
-			err = json.Unmarshal(buf, &command)
+			control := api.InstanceExecControl{}
+			err = json.Unmarshal(buf, &control)
 			if err != nil {
 				l.Debug("Failed to unmarshal control socket command", logger.Ctx{"err": err})
 				continue
 			}
 
-			if command.Command == "window-resize" && s.interactive {
-				winchWidth, err := strconv.Atoi(command.Args["width"])
-				if err != nil {
-					l.Debug("Unable to extract window width", logger.Ctx{"err": err})
-					continue
-				}
-
-				winchHeight, err := strconv.Atoi(command.Args["height"])
-				if err != nil {
-					l.Debug("Unable to extract window height", logger.Ctx{"err": err})
-					continue
-				}
-
-				err = linux.SetPtySize(int(ptys[0].Fd()), winchWidth, winchHeight)
-				if err != nil {
-					l.Debug("Failed to set window size", logger.Ctx{"err": err, "width": winchWidth, "height": winchHeight})
-					continue
-				}
-			} else if command.Command == "signal" {
-				err := unix.Kill(cmd.Process.Pid, unix.Signal(command.Signal))
-				if err != nil {
-					l.Debug("Failed forwarding signal", logger.Ctx{"err": err, "signal": command.Signal})
-					continue
-				}
-
-				l.Info("Forwarded signal", logger.Ctx{"signal": command.Signal})
-			}
+			osHandleExecControl(control, s, ptys[0], cmd, l)
 		}
 	}()
 
@@ -470,7 +382,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 			conn := s.conns[0]
 			s.connsLock.Unlock()
 
-			readDone, writeDone := ws.Mirror(conn, linux.NewExecWrapper(waitAttachedChildIsDead, ptys[0]))
+			readDone, writeDone := ws.Mirror(conn, osExecWrapper(waitAttachedChildIsDead, ptys[0]))
 
 			<-readDone
 			<-writeDone
@@ -503,7 +415,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 		}
 	}
 
-	exitStatus, err := linux.ExitStatus(cmd.Wait())
+	exitStatus, err := osExitStatus(cmd.Wait())
 
 	l.Debug("Instance process stopped", logger.Ctx{"err": err, "exitStatus": exitStatus})
 	return finisher(exitStatus, nil)
