@@ -3860,9 +3860,8 @@ func (d *qemu) writeQemuConfigFile(configPath string) error {
 	return os.WriteFile(configPath, []byte(sb.String()), 0o640)
 }
 
-// addCPUMemoryConfig adds the qemu config required for setting the number of virtualised CPUs and memory.
-// If sb is nil then no config is written.
-func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuInfo *cpuTopology) error {
+// getCPUOpts retrieves configuration options for virtualized CPUs and memory.
+func (d *qemu) getCPUOpts(cpuInfo *cpuTopology, memSizeBytes int64) (*qemuCPUOpts, error) {
 	// Figure out what memory object layout we're going to use.
 	// Before v6.0 or if version unknown, we use the "repeated" format, otherwise we use "indexed" format.
 	qemuMemObjectFormat := "repeated"
@@ -3876,8 +3875,6 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuInfo *cpuTopology) err
 		architecture:        d.architectureName,
 		qemuMemObjectFormat: qemuMemObjectFormat,
 	}
-
-	cpuPinning := false
 
 	hostNodes := []uint64{}
 	if cpuInfo.vcpus == nil {
@@ -3908,14 +3905,12 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuInfo *cpuTopology) err
 			// Parse the NUMA restriction.
 			numaNodeSet, err := resources.ParseNumaNodeSet(numaNodes)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 			cpuOpts.memoryHostNodes = numaNodeSet
 		}
 	} else {
-		cpuPinning = true
-
 		// Figure out socket-id/core-id/thread-id for all vcpus.
 		vcpuSocket := map[uint64]uint64{}
 		vcpuCore := map[uint64]uint64{}
@@ -3962,6 +3957,27 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuInfo *cpuTopology) err
 		cpuOpts.cpuNumaHostNodes = hostNodes
 	}
 
+	cpuOpts.hugepages = ""
+	if util.IsTrue(d.expandedConfig["limits.memory.hugepages"]) {
+		hugetlb, err := localUtil.HugepagesPath()
+		if err != nil {
+			return nil, err
+		}
+
+		cpuOpts.hugepages = hugetlb
+	}
+
+	// Determine per-node memory limit.
+	memSizeMB := memSizeBytes / 1024 / 1024
+	nodeMemory := int64(memSizeMB / int64(len(hostNodes)))
+	cpuOpts.memory = nodeMemory
+
+	return &cpuOpts, nil
+}
+
+// addCPUMemoryConfig adds the qemu config required for setting the number of virtualised CPUs and memory.
+// If sb is nil then no config is written.
+func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuInfo *cpuTopology) error {
 	// Configure memory limit.
 	memSize := d.expandedConfig["limits.memory"]
 	if memSize == "" {
@@ -3973,24 +3989,16 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuInfo *cpuTopology) err
 		return fmt.Errorf("limits.memory invalid: %w", err)
 	}
 
-	cpuOpts.hugepages = ""
-	if util.IsTrue(d.expandedConfig["limits.memory.hugepages"]) {
-		hugetlb, err := localUtil.HugepagesPath()
-		if err != nil {
-			return err
-		}
-
-		cpuOpts.hugepages = hugetlb
+	cpuOpts, err := d.getCPUOpts(cpuInfo, memSizeBytes)
+	if err != nil {
+		return err
 	}
 
-	// Determine per-node memory limit.
-	memSizeMB := memSizeBytes / 1024 / 1024
-	nodeMemory := int64(memSizeMB / int64(len(hostNodes)))
-	cpuOpts.memory = nodeMemory
+	cpuPinning := cpuInfo.vcpus != nil
 
 	if conf != nil {
-		*conf = append(*conf, qemuMemory(&qemuMemoryOpts{memSizeMB})...)
-		*conf = append(*conf, qemuCPU(&cpuOpts, cpuPinning)...)
+		*conf = append(*conf, qemuMemory(&qemuMemoryOpts{memSizeBytes / 1024 / 1024})...)
+		*conf = append(*conf, qemuCPU(cpuOpts, cpuPinning)...)
 	}
 
 	return nil
