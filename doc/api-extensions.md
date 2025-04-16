@@ -2791,3 +2791,7 @@ Adds a `snat` configuration option for network forwards which will cause any DNA
 So new connections from the target will appear as coming from the network forward address.
 
 This is limited to bridged networks as OVN doesn't support flexible enough SNAT for this.
+
+## `memory_hotplug`
+
+This adds memory hotplugging for VMs, allowing them to add memory at runtime without rebooting.
