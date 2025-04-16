@@ -119,10 +119,15 @@ type qemuMemoryOpts struct {
 }
 
 func qemuMemory(opts *qemuMemoryOpts) []cfg.Section {
+	// Sets fixed values for slots and maxmem to support memory hotplug.
 	return []cfg.Section{{
 		Name:    "memory",
 		Comment: "Memory",
-		Entries: []cfg.Entry{{Key: "size", Value: fmt.Sprintf("%dM", opts.memSizeMB)}},
+		Entries: []cfg.Entry{
+			{Key: "size", Value: fmt.Sprintf("%dM", opts.memSizeMB)},
+			{Key: "slots", Value: "16"},
+			{Key: "maxmem", Value: "1T"},
+		},
 	}}
 }
 
