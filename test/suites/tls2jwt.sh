@@ -15,18 +15,22 @@ test_tls_jwt() {
   # Ensure invalid token is not accepted
   JWT="1234567"
   [ "$(curl -k -s -H "Authorization: Bearer ${JWT}" "https://${INCUS_ADDR}/1.0/networks" | jq '.error_code')" -eq 403 ]
+  [ "$(curl -k -s "https://${INCUS_ADDR}/1.0/networks?access_token=${JWT}" | jq '.error_code')" -eq 403 ]
 
   # Ensure valid token is accepted
   JWT="$(./tls2jwt/tls2jwt "${INCUS_CONF}/jwt-client.crt" "${INCUS_CONF}/jwt-client.key" now 60)"
   [ "$(curl -k -s -H "Authorization: Bearer ${JWT}" "https://${INCUS_ADDR}/1.0/networks" | jq '.status_code')" -eq 200 ]
+  [ "$(curl -k -s "https://${INCUS_ADDR}/1.0/networks?access_token=${JWT}" | jq '.status_code')" -eq 200 ]
 
   # Ensure token not valid yet is not accepted
   JWT="$(./tls2jwt/tls2jwt "${INCUS_CONF}/jwt-client.crt" "${INCUS_CONF}/jwt-client.key" "2100-01-01T12:00:00Z" 60)"
   [ "$(curl -k -s -H "Authorization: Bearer ${JWT}" "https://${INCUS_ADDR}/1.0/networks" | jq '.error_code')" -eq 403 ]
+  [ "$(curl -k -s "https://${INCUS_ADDR}/1.0/networks?access_token=${JWT}" | jq '.error_code')" -eq 403 ]
 
   # Ensure token no longer valid is not accepted
   JWT="$(./tls2jwt/tls2jwt "${INCUS_CONF}/jwt-client.crt" "${INCUS_CONF}/jwt-client.key" now -60)"
   [ "$(curl -k -s -H "Authorization: Bearer ${JWT}" "https://${INCUS_ADDR}/1.0/networks" | jq '.error_code')" -eq 403 ]
+  [ "$(curl -k -s "https://${INCUS_ADDR}/1.0/networks?access_token=${JWT}" | jq '.error_code')" -eq 403 ]
 
   # Cleanup
   incus config trust remove "${FINGERPRINT}"

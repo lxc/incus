@@ -295,14 +295,24 @@ func IsJSONRequest(r *http.Request) bool {
 // signed with client certificate from the trusted certificates.
 // Returns whether or not the token is valid, the fingerprint of the certificate and the certificate.
 func CheckJwtToken(r *http.Request, trustedCerts map[string]x509.Certificate) (bool, string, *x509.Certificate) {
-	// Check if the request has a JWT token.
+	var tokenString string
+
+	// Try to get token from Authorization header.
 	auth := r.Header.Get("Authorization")
-	if auth == "" {
-		return false, "", nil
+	if auth != "" {
+		parts := strings.Split(auth, " ")
+		if len(parts) == 2 && strings.ToLower(parts[0]) == "bearer" {
+			tokenString = parts[1]
+		}
 	}
 
-	parts := strings.Split(auth, " ")
-	if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+	// If no token from header, check access_token query parameter.
+	if tokenString == "" {
+		tokenString = r.URL.Query().Get("access_token")
+	}
+
+	// Return if no token found.
+	if tokenString == "" {
 		return false, "", nil
 	}
 
@@ -310,26 +320,18 @@ func CheckJwtToken(r *http.Request, trustedCerts map[string]x509.Certificate) (b
 	jwtParser := jwt.NewParser()
 
 	// Parse the token.
-	token, tokenParts, err := jwtParser.ParseUnverified(parts[1], &jwt.RegisteredClaims{})
-	if err != nil {
-		return false, "", nil
-	}
-
-	if len(tokenParts) < 2 {
+	token, tokenParts, err := jwtParser.ParseUnverified(tokenString, &jwt.RegisteredClaims{})
+	if err != nil || len(tokenParts) < 2 {
 		return false, "", nil
 	}
 
 	// Make sure this isn't an OIDC JWT.
 	issuer, err := token.Claims.GetIssuer()
-	if err != nil {
+	if err != nil || issuer != "" {
 		return false, "", nil
 	}
 
-	if issuer != "" {
-		return false, "", nil
-	}
-
-	// Check if the token is valid.
+	// Check if the token is valid (not before / expiration).
 	notBefore, err := token.Claims.GetNotBefore()
 	if err != nil {
 		return false, "", nil
@@ -352,23 +354,20 @@ func CheckJwtToken(r *http.Request, trustedCerts map[string]x509.Certificate) (b
 
 	tokenCert, ok := trustedCerts[subject]
 	if !ok {
-		// No matching certificate.
 		return false, "", nil
 	}
 
-	// Get the token signing string.
+	// Verify token signature.
 	tokenSigningString, err := token.SigningString()
 	if err != nil {
 		return false, "", nil
 	}
 
-	// Extract the token's signature.
 	tokenSignature, err := base64.RawURLEncoding.DecodeString(tokenParts[2])
 	if err != nil {
 		return false, "", nil
 	}
 
-	// Validate that the token was signed by the certificate.
 	err = token.Method.Verify(tokenSigningString, tokenSignature, tokenCert.PublicKey)
 	if err != nil {
 		return false, "", nil
