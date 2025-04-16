@@ -102,12 +102,16 @@ func TestQemuConfigTemplates(t *testing.T) {
 			qemuMemoryOpts{4096},
 			`# Memory
 			[memory]
-			size = "4096M"`,
+			size = "4096M"
+			slots = "16"
+			maxmem = "1T"`,
 		}, {
 			qemuMemoryOpts{8192},
 			`# Memory
 			[memory]
-			size = "8192M"`,
+			size = "8192M"
+			slots = "16"
+			maxmem = "1T"`,
 		}}
 		for _, tc := range testCases {
 			runTest(tc.expected, qemuMemory(&tc.opts))
