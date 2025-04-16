@@ -35,6 +35,7 @@ type cmdAdd struct {
 func (c *cmdAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "add <metadata tarball> [<data file>]"
+	cmd.Aliases = []string{"import"}
 	cmd.Short = "Add an image"
 	cmd.Long = cli.FormatSection("Description",
 		`Add an image to the server

@@ -29,7 +29,7 @@ type cmdDelete struct {
 func (c *cmdDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<instance> [[<remote>:]<instance>...]"))
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Delete instances`))
