@@ -938,6 +938,31 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
+	// Special handling for instance refresh.
+	// For all other situations, we're headed towards the scheduler, but for this case, we can short circuit it.
+	if s.ServerClustered && !clusterNotification && req.Source.Type == "migration" && req.Source.Refresh {
+		client, err := cluster.ConnectIfInstanceIsRemote(s, targetProjectName, req.Name, r, instancetype.Any)
+		if err != nil && !response.IsNotFoundError(err) {
+			return response.SmartError(err)
+		}
+
+		if client != nil {
+			// The request needs to be forwarded to the correct server.
+			op, err := client.CreateInstance(req)
+			if err != nil {
+				return response.SmartError(err)
+			}
+
+			opAPI := op.Get()
+			return operations.ForwardedOperationResponse(targetProjectName, &opAPI)
+		}
+
+		if err == nil {
+			// The instance is valid and the request wasn't forwarded, so the instance is local.
+			return createFromMigration(r.Context(), s, r, targetProjectName, nil, &req)
+		}
+	}
+
 	var targetProject *api.Project
 	var profiles []api.Profile
 	var sourceInst *dbCluster.Instance
