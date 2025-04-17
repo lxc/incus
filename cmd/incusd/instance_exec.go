@@ -548,11 +548,6 @@ func (s *execWs) Do(op *operations.Operation) error {
 func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	instanceType, err := urlInstanceTypeDetect(r)
-	if err != nil {
-		return response.SmartError(err)
-	}
-
 	projectName := request.ProjectParam(r)
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
@@ -584,7 +579,7 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Forward the request if the container is remote.
-	client, err := cluster.ConnectIfInstanceIsRemote(s, projectName, name, r, instanceType)
+	client, err := cluster.ConnectIfInstanceIsRemote(s, projectName, name, r)
 	if err != nil {
 		return response.SmartError(err)
 	}

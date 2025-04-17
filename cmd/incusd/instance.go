@@ -526,11 +526,11 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 }
 
 // Load all instances of this nodes under the given project.
-func instanceLoadNodeProjectAll(ctx context.Context, s *state.State, project string, instanceType instancetype.Type) ([]instance.Instance, error) {
+func instanceLoadNodeProjectAll(ctx context.Context, s *state.State, projectName string) ([]instance.Instance, error) {
 	var err error
 	var instances []instance.Instance
 
-	filter := dbCluster.InstanceFilter{Type: instanceType.Filter(), Project: &project}
+	filter := dbCluster.InstanceFilter{Project: &projectName}
 	if s.ServerName != "" {
 		filter.Node = &s.ServerName
 	}
