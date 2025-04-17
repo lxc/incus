@@ -913,15 +913,6 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Set type from URL if missing
-	urlType, err := urlInstanceTypeDetect(r)
-	if err != nil {
-		return response.InternalError(err)
-	}
-
-	if req.Type == "" && urlType != instancetype.Any {
-		req.Type = api.InstanceType(urlType.String())
-	}
-
 	if req.Type == "" {
 		req.Type = api.InstanceTypeContainer // Default to container if not specified.
 	}
@@ -1329,7 +1320,7 @@ func clusterCopyContainerInternal(ctx context.Context, s *state.State, r *http.R
 		var err error
 
 		// Load source node.
-		nodeAddress, err = tx.GetNodeAddressOfInstance(ctx, source.Project().Name, source.Name(), source.Type())
+		nodeAddress, err = tx.GetNodeAddressOfInstance(ctx, source.Project().Name, source.Name())
 		if err != nil {
 			return fmt.Errorf("Failed to get address of instance's member: %w", err)
 		}

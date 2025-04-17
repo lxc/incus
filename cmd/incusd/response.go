@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/lxc/incus/v6/internal/server/cluster"
-	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/internal/server/state"
@@ -44,8 +43,8 @@ func forwardedResponseIfTargetIsRemote(s *state.State, r *http.Request) response
 // forwardedResponseIfInstanceIsRemote redirects a request to the node running
 // the container with the given name. If the container is local, nothing gets
 // done and nil is returned.
-func forwardedResponseIfInstanceIsRemote(s *state.State, r *http.Request, project, name string, instanceType instancetype.Type) (response.Response, error) {
-	client, err := cluster.ConnectIfInstanceIsRemote(s, project, name, r, instanceType)
+func forwardedResponseIfInstanceIsRemote(s *state.State, r *http.Request, project, name string) (response.Response, error) {
+	client, err := cluster.ConnectIfInstanceIsRemote(s, project, name, r)
 	if err != nil {
 		return nil, err
 	}

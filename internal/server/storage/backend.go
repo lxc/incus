@@ -67,7 +67,7 @@ var (
 // ConnectIfInstanceIsRemote is a reference to cluster.ConnectIfInstanceIsRemote.
 //
 //nolint:typecheck
-var ConnectIfInstanceIsRemote func(s *state.State, projectName string, instName string, r *http.Request, instanceType instancetype.Type) (incus.InstanceServer, error)
+var ConnectIfInstanceIsRemote func(s *state.State, projectName string, instName string, r *http.Request) (incus.InstanceServer, error)
 
 // instanceDiskVolumeEffectiveFields fields from the instance disks that are applied to the volume's effective
 // config (but not stored in the disk's volume database record).
@@ -5558,7 +5558,7 @@ func (b *backend) UpdateCustomVolume(projectName string, volName string, newDesc
 		}
 
 		for _, entry := range instDevices {
-			c, err := ConnectIfInstanceIsRemote(b.state, entry.args.Project, entry.args.Name, nil, entry.args.Type)
+			c, err := ConnectIfInstanceIsRemote(b.state, entry.args.Project, entry.args.Name, nil)
 			if err != nil {
 				return err
 			}
