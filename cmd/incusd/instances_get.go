@@ -16,7 +16,6 @@ import (
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/internal/server/instance"
-	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/internal/version"
@@ -24,22 +23,6 @@ import (
 	localtls "github.com/lxc/incus/v6/shared/tls"
 	"github.com/lxc/incus/v6/shared/util"
 )
-
-// urlInstanceTypeDetect detects what sort of instance type filter is being requested. Either
-// explicitly via the instance-type query param or implicitly via the endpoint URL used.
-func urlInstanceTypeDetect(r *http.Request) (instancetype.Type, error) {
-	reqInstanceType := r.URL.Query().Get("instance-type")
-	if reqInstanceType != "" {
-		instanceType, err := instancetype.New(reqInstanceType)
-		if err != nil {
-			return instancetype.Any, err
-		}
-
-		return instanceType, nil
-	}
-
-	return instancetype.Any, nil
-}
 
 // swagger:operation GET /1.0/instances instances instances_get
 //
@@ -215,11 +198,6 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 	resultFullList := []*api.InstanceFull{}
 	resultMu := sync.Mutex{}
 
-	instanceType, err := urlInstanceTypeDetect(r)
-	if err != nil {
-		return response.BadRequest(err)
-	}
-
 	// Parse the recursion field.
 	recursion, err := strconv.Atoi(r.FormValue("recursion"))
 	if err != nil {
@@ -265,7 +243,7 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 
 		offlineThreshold := s.GlobalConfig.OfflineThreshold()
 
-		memberAddressInstances, err = tx.GetInstancesByMemberAddress(ctx, offlineThreshold, filteredProjects, instanceType)
+		memberAddressInstances, err = tx.GetInstancesByMemberAddress(ctx, offlineThreshold, filteredProjects)
 		if err != nil {
 			return fmt.Errorf("Failed getting instances by member address: %w", err)
 		}
@@ -349,7 +327,7 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 				defer wg.Done()
 
 				if recursion == 1 {
-					apiInsts, err := doContainersGetFromNode(filteredProjects, memberAddress, allProjects, networkCert, s.ServerCert(), r, instanceType)
+					apiInsts, err := doInstancesGetFromNode(filteredProjects, memberAddress, allProjects, networkCert, s.ServerCert(), r)
 					if err != nil {
 						for _, inst := range instances {
 							resultErrListAppend(inst, err)
@@ -366,7 +344,7 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 					return
 				}
 
-				cs, err := doContainersFullGetFromNode(filteredProjects, memberAddress, allProjects, networkCert, s.ServerCert(), r, instanceType)
+				cs, err := doInstancesFullGetFromNode(filteredProjects, memberAddress, allProjects, networkCert, s.ServerCert(), r)
 				if err != nil {
 					for _, inst := range instances {
 						resultErrListAppend(inst, err)
@@ -403,7 +381,7 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 			// Get the local instances.
 			localInstancesByID := make(map[int64]instance.Instance)
 			for _, projectName := range filteredProjects {
-				insts, err := instanceLoadNodeProjectAll(r.Context(), s, projectName, instanceType)
+				insts, err := instanceLoadNodeProjectAll(r.Context(), s, projectName)
 				if err != nil {
 					return response.InternalError(fmt.Errorf("Failed loading instances for project %q: %w", projectName, err))
 				}
@@ -503,7 +481,7 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 
 // Fetch information about the containers on the given remote node, using the
 // rest API and with a timeout of 30 seconds.
-func doContainersGetFromNode(projects []string, node string, allProjects bool, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, r *http.Request, instanceType instancetype.Type) ([]api.Instance, error) {
+func doInstancesGetFromNode(projects []string, node string, allProjects bool, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, r *http.Request) ([]api.Instance, error) {
 	f := func() ([]api.Instance, error) {
 		client, err := cluster.Connect(node, networkCert, serverCert, r, true)
 		if err != nil {
@@ -512,7 +490,7 @@ func doContainersGetFromNode(projects []string, node string, allProjects bool, n
 
 		var containers []api.Instance
 		if allProjects {
-			containers, err = client.GetInstancesAllProjects(api.InstanceType(instanceType.String()))
+			containers, err = client.GetInstancesAllProjects(api.InstanceTypeAny)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to get instances from member %s: %w", node, err)
 			}
@@ -520,7 +498,7 @@ func doContainersGetFromNode(projects []string, node string, allProjects bool, n
 			for _, project := range projects {
 				client = client.UseProject(project)
 
-				tmpContainers, err := client.GetInstances(api.InstanceType(instanceType.String()))
+				tmpContainers, err := client.GetInstances(api.InstanceTypeAny)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get instances from member %s: %w", node, err)
 				}
@@ -552,7 +530,7 @@ func doContainersGetFromNode(projects []string, node string, allProjects bool, n
 	return containers, err
 }
 
-func doContainersFullGetFromNode(projects []string, node string, allProjects bool, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, r *http.Request, instanceType instancetype.Type) ([]api.InstanceFull, error) {
+func doInstancesFullGetFromNode(projects []string, node string, allProjects bool, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, r *http.Request) ([]api.InstanceFull, error) {
 	f := func() ([]api.InstanceFull, error) {
 		client, err := cluster.Connect(node, networkCert, serverCert, r, true)
 		if err != nil {
@@ -561,7 +539,7 @@ func doContainersFullGetFromNode(projects []string, node string, allProjects boo
 
 		var instances []api.InstanceFull
 		if allProjects {
-			instances, err = client.GetInstancesFullAllProjects(api.InstanceType(instanceType.String()))
+			instances, err = client.GetInstancesFullAllProjects(api.InstanceTypeAny)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to get instances from member %s: %w", node, err)
 			}
@@ -569,7 +547,7 @@ func doContainersFullGetFromNode(projects []string, node string, allProjects boo
 			for _, project := range projects {
 				client = client.UseProject(project)
 
-				tmpInstances, err := client.GetInstancesFull(api.InstanceType(instanceType.String()))
+				tmpInstances, err := client.GetInstancesFull(api.InstanceTypeAny)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get instances from member %s: %w", node, err)
 				}
