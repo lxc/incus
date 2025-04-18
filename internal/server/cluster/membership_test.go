@@ -24,6 +24,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/osarch"
 	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/tls/tlstest"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -81,7 +82,7 @@ func TestBootstrap_UnmetPreconditions(t *testing.T) {
 
 			c.setup(&membershipFixtures{t: t, state: state})
 
-			serverCert := localtls.TestingKeyPair()
+			serverCert := tlstest.TestingKeyPair(t)
 			state.ServerCert = func() *localtls.CertInfo { return serverCert }
 
 			gateway := newGateway(t, state.DB.Node, serverCert, state)
@@ -97,7 +98,7 @@ func TestBootstrap(t *testing.T) {
 	state, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	serverCert := localtls.TestingKeyPair()
+	serverCert := tlstest.TestingKeyPair(t)
 	state.ServerCert = func() *localtls.CertInfo { return serverCert }
 
 	gateway := newGateway(t, state.DB.Node, serverCert, state)
@@ -218,7 +219,7 @@ func TestAccept_UnmetPreconditions(t *testing.T) {
 			state, cleanup := state.NewTestState(t)
 			defer cleanup()
 
-			serverCert := localtls.TestingKeyPair()
+			serverCert := tlstest.TestingKeyPair(t)
 			state.ServerCert = func() *localtls.CertInfo { return serverCert }
 
 			gateway := newGateway(t, state.DB.Node, serverCert, state)
@@ -237,7 +238,7 @@ func TestAccept(t *testing.T) {
 	state, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	serverCert := localtls.TestingKeyPair()
+	serverCert := tlstest.TestingKeyPair(t)
 	state.ServerCert = func() *localtls.CertInfo { return serverCert }
 
 	gateway := newGateway(t, state.DB.Node, serverCert, state)
@@ -277,7 +278,7 @@ func TestAccept(t *testing.T) {
 
 func TestJoin(t *testing.T) {
 	// Setup a target node running as leader of a cluster.
-	targetCert := localtls.TestingKeyPair()
+	targetCert := tlstest.TestingKeyPair(t)
 	targetMux := http.NewServeMux()
 	targetServer := newServer(targetCert, targetMux)
 	defer targetServer.Close()
@@ -290,7 +291,7 @@ func TestJoin(t *testing.T) {
 	targetGateway := newGateway(t, targetState.DB.Node, targetCert, targetState)
 	defer func() { _ = targetGateway.Shutdown() }()
 
-	altServerCert := localtls.TestingAltKeyPair()
+	altServerCert := tlstest.TestingAltKeyPair(t)
 	trustedAltServerCert, _ := x509.ParseCertificate(altServerCert.KeyPair().Certificate[0])
 
 	trustedCerts := func() (map[certificate.Type]map[string]x509.Certificate, error) {

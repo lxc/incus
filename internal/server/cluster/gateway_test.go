@@ -20,6 +20,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/state"
 	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/tls/tlstest"
 )
 
 func trustedCerts() (map[certificate.Type]map[string]x509.Certificate, error) {
@@ -32,7 +33,7 @@ func TestGateway_Single(t *testing.T) {
 	node, cleanup := db.NewTestNode(t)
 	defer cleanup()
 
-	cert := localtls.TestingKeyPair()
+	cert := tlstest.TestingKeyPair(t)
 
 	s := &state.State{
 		ServerCert: func() *localtls.CertInfo { return cert },
@@ -86,7 +87,7 @@ func TestGateway_SingleWithNetworkAddress(t *testing.T) {
 	node, cleanup := db.NewTestNode(t)
 	defer cleanup()
 
-	cert := localtls.TestingKeyPair()
+	cert := tlstest.TestingKeyPair(t)
 	mux := http.NewServeMux()
 	server := newServer(cert, mux)
 	defer server.Close()
@@ -127,7 +128,7 @@ func TestGateway_NetworkAuth(t *testing.T) {
 	node, cleanup := db.NewTestNode(t)
 	defer cleanup()
 
-	cert := localtls.TestingKeyPair()
+	cert := tlstest.TestingKeyPair(t)
 	mux := http.NewServeMux()
 	server := newServer(cert, mux)
 	defer server.Close()
@@ -147,7 +148,7 @@ func TestGateway_NetworkAuth(t *testing.T) {
 	}
 
 	// Make a request using a certificate different than the cluster one.
-	certAlt := localtls.TestingAltKeyPair()
+	certAlt := tlstest.TestingAltKeyPair(t)
 	config, err := cluster.TLSClientConfig(certAlt, certAlt)
 	config.InsecureSkipVerify = true // Skip client-side verification
 	require.NoError(t, err)
@@ -166,7 +167,7 @@ func TestGateway_RaftNodesNotLeader(t *testing.T) {
 	node, cleanup := db.NewTestNode(t)
 	defer cleanup()
 
-	cert := localtls.TestingKeyPair()
+	cert := tlstest.TestingKeyPair(t)
 	mux := http.NewServeMux()
 	server := newServer(cert, mux)
 	defer server.Close()
