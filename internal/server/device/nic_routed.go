@@ -77,8 +77,10 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		"ipv6.routes",
 		"ipv4.host_address",
 		"ipv6.host_address",
-		"ipv4.host_table",
-		"ipv6.host_table",
+		"ipv4.host_table", //deprecated
+		"ipv6.host_table", //deprecated
+		"ipv4.host_tables",
+		"ipv6.host_tables",
 		"gvrp",
 		"vrf",
 		"io.bus",
@@ -87,6 +89,8 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 	rules := nicValidationRules(requiredFields, optionalFields, instConf)
 	rules["ipv4.address"] = validate.Optional(validate.IsListOf(validate.IsNetworkAddressV4))
 	rules["ipv6.address"] = validate.Optional(validate.IsListOf(validate.IsNetworkAddressV6))
+	rules["ipv4.host_tables"] = validate.Optional(validate.IsListOf(validate.IsInRange(0, 255)))
+    rules["ipv6.host_tables"] = validate.Optional(validate.IsListOf(validate.IsInRange(0, 255)))
 	rules["gvrp"] = validate.Optional(validate.IsBool)
 	rules["ipv4.neighbor_probe"] = validate.Optional(validate.IsBool)
 	rules["ipv6.neighbor_probe"] = validate.Optional(validate.IsBool)
@@ -415,36 +419,45 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 			}
 		}
 
-		table := "main"
-		if d.config["vrf"] != "" {
-			table = ""
+		getTables := func() []string {
+			// If host_tables is specified, use the comma defined list.
+			if v := d.config[fmt.Sprintf("%s.host_tables", keyPrefix)]; v != "" {
+				return util.SplitNTrimSpace(v, ",", -1, true)
+			}
+			// Legacy - single key is defined.
+			if v := d.config[fmt.Sprintf("%s.host_table", keyPrefix)]; v != "" {
+				return []string{v}
+			}
+			// Default: just 254 (Linux "main").
+			return []string{"254"}
 		}
+		tables := getTables()
 
 		// Perform per-address host-side configuration (static routes and neighbour proxy entries).
 		for _, addrStr := range addresses {
 			// Apply host-side static routes to main routing table or VRF.
-			r := ip.Route{
-				DevName: saveData["host_name"],
-				Route:   fmt.Sprintf("%s/%d", addrStr, subnetSize),
-				Table:   table,
-				Family:  ipFamilyArg,
-				VRF:     d.config["vrf"],
-			}
-
-			err = r.Add()
-			if err != nil {
-				return nil, fmt.Errorf("Failed adding host route %q: %w", r.Route, err)
-			}
-
-			// Add host-side static routes to instance IPs to custom routing table if specified.
-			// This is in addition to the static route added to the main routing table, which is still
-			// critical to ensure that reverse path filtering doesn't kick in blocking traffic from
-			// the instance.
-			if d.config[fmt.Sprintf("%s.host_table", keyPrefix)] != "" {
+			// If a VRF is set we still add a route into the VRF's own table (empty Table value).
+			if d.config["vrf"] != "" {
 				r := ip.Route{
 					DevName: saveData["host_name"],
 					Route:   fmt.Sprintf("%s/%d", addrStr, subnetSize),
-					Table:   d.config[fmt.Sprintf("%s.host_table", keyPrefix)],
+					Table:   "",
+					Family:  ipFamilyArg,
+					VRF:     d.config["vrf"],
+				}
+	
+				err = r.Add()
+				if err != nil {
+					return nil, fmt.Errorf("Failed adding host route %q: %w", r.Route, err)
+				}
+			}
+
+			// Add routes to all requested tables.
+			for _, tbl := range tables {
+				r := ip.Route{
+					DevName: saveData["host_name"],
+					Route:   fmt.Sprintf("%s/%d", addrStr, subnetSize),
+					Table:   tbl,
 					Family:  ipFamilyArg,
 				}
 
@@ -482,7 +495,7 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 				r := ip.Route{
 					DevName: saveData["host_name"],
 					Route:   routeStr,
-					Table:   table,
+					Table:   "",
 					Family:  ipFamilyArg,
 					Via:     addresses[0],
 					VRF:     d.config["vrf"],
