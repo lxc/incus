@@ -20,6 +20,7 @@ import (
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	"github.com/lxc/incus/v6/shared/api"
 	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/tls/tlstest"
 )
 
 // The returned notifier connects to all nodes.
@@ -27,7 +28,7 @@ func TestNewNotifier(t *testing.T) {
 	state, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	cert := localtls.TestingKeyPair()
+	cert := tlstest.TestingKeyPair(t)
 
 	f := notifyFixtures{t: t, state: state}
 	defer f.Nodes(cert, 3)()
@@ -75,7 +76,7 @@ func TestNewNotify_NotifyAllError(t *testing.T) {
 	state, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	cert := localtls.TestingKeyPair()
+	cert := tlstest.TestingKeyPair(t)
 
 	f := notifyFixtures{t: t, state: state}
 	defer f.Nodes(cert, 3)()
@@ -105,7 +106,7 @@ func TestNewNotify_NotifyAlive(t *testing.T) {
 	state, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	cert := localtls.TestingKeyPair()
+	cert := tlstest.TestingKeyPair(t)
 
 	f := notifyFixtures{t: t, state: state}
 	defer f.Nodes(cert, 3)()

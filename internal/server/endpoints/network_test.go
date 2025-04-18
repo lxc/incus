@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/tls/tlstest"
 )
 
 // If no socket-based activation is detected, and a network address is set, a
@@ -33,7 +33,7 @@ func TestEndpoints_NetworkUpdateCert(t *testing.T) {
 	require.NoError(t, endpoints.Up(config))
 
 	oldCert := config.Cert
-	newCert := localtls.TestingAltKeyPair()
+	newCert := tlstest.TestingAltKeyPair(t)
 
 	endpoints.NetworkUpdateCert(newCert)
 
