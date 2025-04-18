@@ -4,7 +4,6 @@ go 1.23.7
 
 require (
 	github.com/LINBIT/golinstor v0.55.0
-	github.com/Rican7/retry v0.3.1
 	github.com/armon/go-proxyproto v0.1.0
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/checkpoint-restore/go-criu/v6 v6.3.0
@@ -69,6 +68,7 @@ require (
 )
 
 require (
+	github.com/Rican7/retry v0.3.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bmatcuk/doublestar/v4 v4.8.1 // indirect
 	github.com/cenkalti/hub v1.0.2 // indirect
