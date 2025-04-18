@@ -66,6 +66,7 @@ require (
 )
 
 require (
+	github.com/Rican7/retry v0.3.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bmatcuk/doublestar/v4 v4.8.1 // indirect
 	github.com/cenkalti/hub v1.0.2 // indirect
