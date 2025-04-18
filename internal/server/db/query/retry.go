@@ -4,11 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"math"
+	"math/rand/v2"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/Rican7/retry/jitter"
 	"github.com/cowsql/go-cowsql/driver"
 	"github.com/mattn/go-sqlite3"
 
@@ -53,10 +54,16 @@ func Retry(ctx context.Context, f func(ctx context.Context) error) error {
 		}
 
 		logger.Debug("Database error, retrying", logger.Ctx{"attempt": i, "err": err})
-		time.Sleep(jitter.Deviation(nil, 0.8)(100 * time.Millisecond))
+		time.Sleep(jitterDeviation(0.8, 100*time.Millisecond))
 	}
 
 	return err
+}
+
+func jitterDeviation(factor float64, duration time.Duration) time.Duration {
+	floor := int64(math.Floor(float64(duration) * (1 - factor)))
+	ceil := int64(math.Ceil(float64(duration) * (1 + factor)))
+	return time.Duration(rand.Int64N(ceil-floor) + floor)
 }
 
 // IsRetriableError returns true if the given error might be transient and the
