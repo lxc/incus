@@ -941,7 +941,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 	// Special handling for instance refresh.
 	// For all other situations, we're headed towards the scheduler, but for this case, we can short circuit it.
 	if s.ServerClustered && !clusterNotification && req.Source.Type == "migration" && req.Source.Refresh {
-		client, err := cluster.ConnectIfInstanceIsRemote(s, targetProjectName, req.Name, r, instancetype.Any)
+		client, err := cluster.ConnectIfInstanceIsRemote(s, targetProjectName, req.Name, r)
 		if err != nil && !response.IsNotFoundError(err) {
 			return response.SmartError(err)
 		}
