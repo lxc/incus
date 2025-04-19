@@ -82,15 +82,92 @@ func (d *proxy) validateConfig(instConf instance.ConfigReader) error {
 	}
 
 	rules := map[string]func(string) error{
-		"listen":         validate.Required(validateAddr),
-		"connect":        validate.Required(validateAddr),
-		"bind":           validate.Optional(validateBind),
-		"mode":           validate.Optional(unixValidOctalFileMode),
-		"nat":            validate.Optional(validate.IsBool),
-		"gid":            validate.Optional(unixValidUserID),
-		"uid":            validate.Optional(unixValidUserID),
-		"security.uid":   validate.Optional(unixValidUserID),
-		"security.gid":   validate.Optional(unixValidUserID),
+		// gendoc:generate(entity=devices, group=proxy, key=listen)
+		//
+		// ---
+		// type: string
+		// required: yes
+		// shortdesc: The address and port to bind and listen (`<type>:<addr>:<port>[-<port>][,<port>]`)
+		"listen": validate.Required(validateAddr),
+
+		// gendoc:generate(entity=devices, group=proxy, key=connect)
+		//
+		// ---
+		// type: string
+		// required: yes
+		// shortdesc: The address and port to connect to (`<type>:<addr>:<port>[-<port>][,<port>]`)
+		"connect": validate.Required(validateAddr),
+
+		// gendoc:generate(entity=devices, group=proxy, key=bind)
+		//
+		// ---
+		// type: string
+		// required: no
+		// default: `host`
+		// shortdesc: Which side to bind on (`host`/`instance`)
+		"bind": validate.Optional(validateBind),
+
+		// gendoc:generate(entity=devices, group=proxy, key=mode)
+		//
+		// ---
+		// type: int
+		// required: no
+		// default: `0644`
+		// shortdesc: Mode for the listening Unix socket
+		"mode": validate.Optional(unixValidOctalFileMode),
+
+		// gendoc:generate(entity=devices, group=proxy, key=nat)
+		//
+		// ---
+		// type: bool
+		// required: no
+		// default: `false`
+		// shortdesc: Whether to optimize proxying via NAT (requires that the instance NIC has a static IP address)
+		"nat": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=devices, group=proxy, key=gid)
+		//
+		// ---
+		// type: int
+		// required: no
+		// default: `0`
+		// shortdesc: GID of the owner of the listening Unix socket
+		"gid": validate.Optional(unixValidUserID),
+
+		// gendoc:generate(entity=devices, group=proxy, key=uid)
+		//
+		// ---
+		// type: int
+		// required: no
+		// default: `0`
+		// shortdesc: UID of the owner of the listening Unix socket
+		"uid": validate.Optional(unixValidUserID),
+
+		// gendoc:generate(entity=devices, group=proxy, key=security.uid)
+		//
+		// ---
+		// type: int
+		// required: no
+		// default: `0`
+		// shortdesc: What UID to drop privilege to
+		"security.uid": validate.Optional(unixValidUserID),
+
+		// gendoc:generate(entity=devices, group=proxy, key=security.gid)
+		//
+		// ---
+		// type: int
+		// required: no
+		// default: `0`
+		// shortdesc: What GID to drop privilege to
+		"security.gid": validate.Optional(unixValidUserID),
+
+		// gendoc:generate(entity=devices, group=proxy, key=proxy_protocol)
+		//
+		// ---
+		// type: bool
+		// required: no
+		// default: `false`
+		// shortdesc: Whether to use the HAProxy PROXY protocol to transmit sender information
 		"proxy_protocol": validate.Optional(validate.IsBool),
 	}
 
