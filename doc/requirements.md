@@ -39,8 +39,8 @@ should also be installed.
 
 ## OCI
 
-To run OCI containers, Incus currently rely on both `skopeo` and `umoci`.
-Both tools should be available in the user's `PATH`.
+To run OCI containers, Incus currently rely on `skopeo`.
+`skopeo` should be available in the user's `PATH`.
 
 ## QEMU
 
