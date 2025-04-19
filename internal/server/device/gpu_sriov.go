@@ -31,9 +31,36 @@ func (d *gpuSRIOV) validateConfig(instConf instance.ConfigReader) error {
 	requiredFields := []string{}
 
 	optionalFields := []string{
+		// gendoc:generate(entity=devices, group=gpu_sriov, key=vendorid)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: The vendor ID of the parent GPU device
 		"vendorid",
+
+		// gendoc:generate(entity=devices, group=gpu_sriov, key=productid)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: The product ID of the parent GPU device
 		"productid",
+
+		// gendoc:generate(entity=devices, group=gpu_sriov, key=id)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: The DRM card ID of the parent GPU device
 		"id",
+
+		// gendoc:generate(entity=devices, group=gpu_sriov, key=pci)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: The PCI address of the parent GPU device
 		"pci",
 	}
 

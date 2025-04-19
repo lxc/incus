@@ -29,12 +29,60 @@ func (d *gpuMIG) validateConfig(instConf instance.ConfigReader) error {
 	requiredFields := []string{}
 
 	optionalFields := []string{
+		// gendoc:generate(entity=devices, group=gpu_mig, key=vendorid)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: The vendor ID of the GPU device
 		"vendorid",
+
+		// gendoc:generate(entity=devices, group=gpu_mig, key=productid)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: The product ID of the GPU device
 		"productid",
+
+		// gendoc:generate(entity=devices, group=gpu_mig, key=id)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: The DRM card ID of the GPU device
 		"id",
+
+		// gendoc:generate(entity=devices, group=gpu_mig, key=pci)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: The PCI address of the GPU device
 		"pci",
+
+		// gendoc:generate(entity=devices, group=gpu_mig, key=mig.gi)
+		//
+		// ---
+		//  type: int
+		//  required: no
+		//  shortdesc: Existing MIG GPU instance ID
 		"mig.gi",
+
+		// gendoc:generate(entity=devices, group=gpu_mig, key=mig.ci)
+		//
+		// ---
+		//  type: int
+		//  required: no
+		//  shortdesc: Existing MIG compute instance ID
 		"mig.ci",
+
+		// gendoc:generate(entity=devices, group=gpu_mig, key=mig.uuid)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: Existing MIG device UUID (MIG- prefix can be omitted)
 		"mig.uuid",
 	}
 
