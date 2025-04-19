@@ -187,6 +187,86 @@ For file systems (shared directories or custom volumes), this is one of:
 ```
 
 <!-- config group devices-disk end -->
+<!-- config group devices-proxy start -->
+```{config:option} bind devices-proxy
+:default: "`host`"
+:required: "no"
+:shortdesc: "Which side to bind on (`host`/`instance`)"
+:type: "string"
+
+```
+
+```{config:option} connect devices-proxy
+:required: "yes"
+:shortdesc: "The address and port to connect to (`<type>:<addr>:<port>[-<port>][,<port>]`)"
+:type: "string"
+
+```
+
+```{config:option} gid devices-proxy
+:default: "`0`"
+:required: "no"
+:shortdesc: "GID of the owner of the listening Unix socket"
+:type: "int"
+
+```
+
+```{config:option} listen devices-proxy
+:required: "yes"
+:shortdesc: "The address and port to bind and listen (`<type>:<addr>:<port>[-<port>][,<port>]`)"
+:type: "string"
+
+```
+
+```{config:option} mode devices-proxy
+:default: "`0644`"
+:required: "no"
+:shortdesc: "Mode for the listening Unix socket"
+:type: "int"
+
+```
+
+```{config:option} nat devices-proxy
+:default: "`false`"
+:required: "no"
+:shortdesc: "Whether to optimize proxying via NAT (requires that the instance NIC has a static IP address)"
+:type: "bool"
+
+```
+
+```{config:option} proxy_protocol devices-proxy
+:default: "`false`"
+:required: "no"
+:shortdesc: "Whether to use the HAProxy PROXY protocol to transmit sender information"
+:type: "bool"
+
+```
+
+```{config:option} security.gid devices-proxy
+:default: "`0`"
+:required: "no"
+:shortdesc: "What GID to drop privilege to"
+:type: "int"
+
+```
+
+```{config:option} security.uid devices-proxy
+:default: "`0`"
+:required: "no"
+:shortdesc: "What UID to drop privilege to"
+:type: "int"
+
+```
+
+```{config:option} uid devices-proxy
+:default: "`0`"
+:required: "no"
+:shortdesc: "UID of the owner of the listening Unix socket"
+:type: "int"
+
+```
+
+<!-- config group devices-proxy end -->
 <!-- config group devices-unix-char-block start -->
 ```{config:option} gid devices-unix-char-block
 :default: "0"

@@ -194,6 +194,98 @@
 					}
 				]
 			},
+			"proxy": {
+				"keys": [
+					{
+						"bind": {
+							"default": "`host`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Which side to bind on (`host`/`instance`)",
+							"type": "string"
+						}
+					},
+					{
+						"connect": {
+							"longdesc": "",
+							"required": "yes",
+							"shortdesc": "The address and port to connect to (`\u003ctype\u003e:\u003caddr\u003e:\u003cport\u003e[-\u003cport\u003e][,\u003cport\u003e]`)",
+							"type": "string"
+						}
+					},
+					{
+						"gid": {
+							"default": "`0`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "GID of the owner of the listening Unix socket",
+							"type": "int"
+						}
+					},
+					{
+						"listen": {
+							"longdesc": "",
+							"required": "yes",
+							"shortdesc": "The address and port to bind and listen (`\u003ctype\u003e:\u003caddr\u003e:\u003cport\u003e[-\u003cport\u003e][,\u003cport\u003e]`)",
+							"type": "string"
+						}
+					},
+					{
+						"mode": {
+							"default": "`0644`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Mode for the listening Unix socket",
+							"type": "int"
+						}
+					},
+					{
+						"nat": {
+							"default": "`false`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether to optimize proxying via NAT (requires that the instance NIC has a static IP address)",
+							"type": "bool"
+						}
+					},
+					{
+						"proxy_protocol": {
+							"default": "`false`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether to use the HAProxy PROXY protocol to transmit sender information",
+							"type": "bool"
+						}
+					},
+					{
+						"security.gid": {
+							"default": "`0`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "What GID to drop privilege to",
+							"type": "int"
+						}
+					},
+					{
+						"security.uid": {
+							"default": "`0`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "What UID to drop privilege to",
+							"type": "int"
+						}
+					},
+					{
+						"uid": {
+							"default": "`0`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "UID of the owner of the listening Unix socket",
+							"type": "int"
+						}
+					}
+				]
+			},
 			"unix-char-block": {
 				"keys": [
 					{
