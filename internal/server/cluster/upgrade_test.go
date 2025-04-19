@@ -22,6 +22,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/node"
 	"github.com/lxc/incus/v6/internal/server/state"
 	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/tls/tlstest"
 )
 
 // A node can unblock other nodes that were waiting for a cluster upgrade to
@@ -145,7 +146,7 @@ func TestUpgradeMembersWithoutRole(t *testing.T) {
 	state, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	serverCert := localtls.TestingKeyPair()
+	serverCert := tlstest.TestingKeyPair(t)
 	mux := http.NewServeMux()
 	server := newServer(serverCert, mux)
 	defer server.Close()
