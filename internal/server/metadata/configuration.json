@@ -194,6 +194,201 @@
 					}
 				]
 			},
+			"gpu_mdev": {
+				"keys": [
+					{
+						"id": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The DRM card ID of the GPU device",
+							"type": "string"
+						}
+					},
+					{
+						"mdev": {
+							"longdesc": "",
+							"required": "yes",
+							"shortdesc": "The mediated device profile to use (required - for example, `i915-GVTg_V5_4`)",
+							"type": "string"
+						}
+					},
+					{
+						"productid": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The product ID of the GPU device",
+							"type": "string"
+						}
+					},
+					{
+						"vendorid": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The vendor ID of the GPU device",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"gpu_mig": {
+				"keys": [
+					{
+						"id": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The DRM card ID of the GPU device",
+							"type": "string"
+						}
+					},
+					{
+						"mig.ci": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Existing MIG compute instance ID",
+							"type": "int"
+						}
+					},
+					{
+						"mig.gi": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Existing MIG GPU instance ID",
+							"type": "int"
+						}
+					},
+					{
+						"mig.uuid": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Existing MIG device UUID (MIG- prefix can be omitted)",
+							"type": "string"
+						}
+					},
+					{
+						"pci": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The PCI address of the GPU device",
+							"type": "string"
+						}
+					},
+					{
+						"productid": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The product ID of the GPU device",
+							"type": "string"
+						}
+					},
+					{
+						"vendorid": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The vendor ID of the GPU device",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"gpu_physical": {
+				"keys": [
+					{
+						"gid": {
+							"default": "0",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "GID of the device owner in the instance (container only)",
+							"type": "int"
+						}
+					},
+					{
+						"id": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The DRM card ID of the GPU device",
+							"type": "string"
+						}
+					},
+					{
+						"mode": {
+							"default": "0660",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Mode of the device in the instance (container only)",
+							"type": "int"
+						}
+					},
+					{
+						"pci": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The PCI address of the GPU device",
+							"type": "string"
+						}
+					},
+					{
+						"productid": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The product ID of the GPU device",
+							"type": "string"
+						}
+					},
+					{
+						"uid": {
+							"default": "0",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "UID of the device owner in the instance (container only)",
+							"type": "int"
+						}
+					},
+					{
+						"vendorid": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The vendor ID of the GPU device",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"gpu_sriov": {
+				"keys": [
+					{
+						"id": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The DRM card ID of the parent GPU device",
+							"type": "string"
+						}
+					},
+					{
+						"pci": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The PCI address of the parent GPU device",
+							"type": "string"
+						}
+					},
+					{
+						"productid": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The product ID of the parent GPU device",
+							"type": "string"
+						}
+					},
+					{
+						"vendorid": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The vendor ID of the parent GPU device",
+							"type": "string"
+						}
+					}
+				]
+			},
 			"proxy": {
 				"keys": [
 					{

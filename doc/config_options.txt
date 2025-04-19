@@ -187,6 +187,171 @@ For file systems (shared directories or custom volumes), this is one of:
 ```
 
 <!-- config group devices-disk end -->
+<!-- config group devices-gpu_mdev start -->
+```{config:option} id devices-gpu_mdev
+:required: "no"
+:shortdesc: "The DRM card ID of the GPU device"
+:type: "string"
+
+```
+
+```{config:option} mdev devices-gpu_mdev
+:required: "yes"
+:shortdesc: "The mediated device profile to use (required - for example, `i915-GVTg_V5_4`)"
+:type: "string"
+
+```
+
+```{config:option} productid devices-gpu_mdev
+:required: "no"
+:shortdesc: "The product ID of the GPU device"
+:type: "string"
+
+```
+
+```{config:option} vendorid devices-gpu_mdev
+:required: "no"
+:shortdesc: "The vendor ID of the GPU device"
+:type: "string"
+
+```
+
+<!-- config group devices-gpu_mdev end -->
+<!-- config group devices-gpu_mig start -->
+```{config:option} id devices-gpu_mig
+:required: "no"
+:shortdesc: "The DRM card ID of the GPU device"
+:type: "string"
+
+```
+
+```{config:option} mig.ci devices-gpu_mig
+:required: "no"
+:shortdesc: "Existing MIG compute instance ID"
+:type: "int"
+
+```
+
+```{config:option} mig.gi devices-gpu_mig
+:required: "no"
+:shortdesc: "Existing MIG GPU instance ID"
+:type: "int"
+
+```
+
+```{config:option} mig.uuid devices-gpu_mig
+:required: "no"
+:shortdesc: "Existing MIG device UUID (MIG- prefix can be omitted)"
+:type: "string"
+
+```
+
+```{config:option} pci devices-gpu_mig
+:required: "no"
+:shortdesc: "The PCI address of the GPU device"
+:type: "string"
+
+```
+
+```{config:option} productid devices-gpu_mig
+:required: "no"
+:shortdesc: "The product ID of the GPU device"
+:type: "string"
+
+```
+
+```{config:option} vendorid devices-gpu_mig
+:required: "no"
+:shortdesc: "The vendor ID of the GPU device"
+:type: "string"
+
+```
+
+<!-- config group devices-gpu_mig end -->
+<!-- config group devices-gpu_physical start -->
+```{config:option} gid devices-gpu_physical
+:default: "0"
+:required: "no"
+:shortdesc: "GID of the device owner in the instance (container only)"
+:type: "int"
+
+```
+
+```{config:option} id devices-gpu_physical
+:required: "no"
+:shortdesc: "The DRM card ID of the GPU device"
+:type: "string"
+
+```
+
+```{config:option} mode devices-gpu_physical
+:default: "0660"
+:required: "no"
+:shortdesc: "Mode of the device in the instance (container only)"
+:type: "int"
+
+```
+
+```{config:option} pci devices-gpu_physical
+:required: "no"
+:shortdesc: "The PCI address of the GPU device"
+:type: "string"
+
+```
+
+```{config:option} productid devices-gpu_physical
+:required: "no"
+:shortdesc: "The product ID of the GPU device"
+:type: "string"
+
+```
+
+```{config:option} uid devices-gpu_physical
+:default: "0"
+:required: "no"
+:shortdesc: "UID of the device owner in the instance (container only)"
+:type: "int"
+
+```
+
+```{config:option} vendorid devices-gpu_physical
+:required: "no"
+:shortdesc: "The vendor ID of the GPU device"
+:type: "string"
+
+```
+
+<!-- config group devices-gpu_physical end -->
+<!-- config group devices-gpu_sriov start -->
+```{config:option} id devices-gpu_sriov
+:required: "no"
+:shortdesc: "The DRM card ID of the parent GPU device"
+:type: "string"
+
+```
+
+```{config:option} pci devices-gpu_sriov
+:required: "no"
+:shortdesc: "The PCI address of the parent GPU device"
+:type: "string"
+
+```
+
+```{config:option} productid devices-gpu_sriov
+:required: "no"
+:shortdesc: "The product ID of the parent GPU device"
+:type: "string"
+
+```
+
+```{config:option} vendorid devices-gpu_sriov
+:required: "no"
+:shortdesc: "The vendor ID of the parent GPU device"
+:type: "string"
+
+```
+
+<!-- config group devices-gpu_sriov end -->
 <!-- config group devices-proxy start -->
 ```{config:option} bind devices-proxy
 :default: "`host`"
