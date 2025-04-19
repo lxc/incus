@@ -198,7 +198,6 @@ const (
 	CertServer
 )
 
-
 /*
  * Generate a list of names for which the certificate will be valid.
  * This will include the hostname and ip address.
