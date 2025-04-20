@@ -87,29 +87,184 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 	}
 
 	requiredFields := []string{
+		// gendoc:generate(entity=devices, group=nic_ovn, key=network)
+		//
+		// ---
+		//  type: string
+		//  managed: yes
+		//  shortdesc: The managed network to link the device to (required)
 		"network",
 	}
 
 	optionalFields := []string{
+		// gendoc:generate(entity=devices, group=nic_ovn, key=name)
+		//
+		// ---
+		//  type: string
+		//  default: kernel assigned
+		//  managed: no
+		//  shortdesc: The name of the interface inside the instance
 		"name",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=hwaddr)
+		//
+		// ---
+		//  type: string
+		//  default: randomly assigned
+		//  managed: no
+		//  shortdesc: The MAC address of the new interface
 		"hwaddr",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=host_name)
+		//
+		// ---
+		//  type: string
+		//  default: randomly assigned
+		//  managed: no
+		//  shortdesc: The name of the interface inside the host
 		"host_name",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=mtu)
+		//
+		// ---
+		//  type: integer
+		//  default: MTU of the parent network
+		//  managed: yes
+		//  shortdesc: The Maximum Transmit Unit (MTU) of the new interface
 		"mtu",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv4.address)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: An IPv4 address to assign to the instance through DHCP, `none` can be used to disable IP allocation
 		"ipv4.address",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv6.address)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: An IPv6 address to assign to the instance through DHCP, `none` can be used to disable IP allocation
 		"ipv6.address",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv4.routes)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Comma-delimited list of IPv4 static routes to route to the NIC
 		"ipv4.routes",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv6.routes)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Comma-delimited list of IPv6 static routes to route to the NIC
 		"ipv6.routes",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv4.routes.external)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Comma-delimited list of IPv4 static routes to route to the NIC and publish on uplink network
 		"ipv4.routes.external",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv6.routes.external)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Comma-delimited list of IPv6 static routes to route to the NIC and publish on uplink network
 		"ipv6.routes.external",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=boot.priority)
+		//
+		// ---
+		//  type: integer
+		//  managed: no
+		//  shortdesc: Boot priority for VMs (higher value boots first)
 		"boot.priority",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=security.acls)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Comma-separated list of network ACLs to apply
 		"security.acls",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=security.acls.default.ingress.action)
+		//
+		// ---
+		//  type: string
+		//  default: reject
+		//  managed: no
+		//  shortdesc: Action to use for ingress traffic that doesn't match any ACL rule
 		"security.acls.default.ingress.action",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=security.acls.default.egress.action)
+		//
+		// ---
+		//  type: string
+		//  default: reject
+		//  managed: no
+		//  shortdesc: Action to use for egress traffic that doesn't match any ACL rule
 		"security.acls.default.egress.action",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=security.acls.default.ingress.logged)
+		//
+		// ---
+		//  type: bool
+		//  default: false
+		//  managed: no
+		//  shortdesc: Whether to log ingress traffic that doesn't match any ACL rule
 		"security.acls.default.ingress.logged",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=security.acls.default.egress.logged)
+		//
+		// ---
+		//  type: bool
+		//  default: false
+		//  managed: no
+		//  shortdesc: Whether to log egress traffic that doesn't match any ACL rule
 		"security.acls.default.egress.logged",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=security.promiscuous)
+		//
+		// ---
+		//  type: bool
+		//  default: false
+		//  managed: no
+		//  shortdesc: Have OVN send unknown network traffic to this network interface (required for some nesting cases)
 		"security.promiscuous",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=acceleration)
+		//
+		// ---
+		//  type: string
+		//  default: none
+		//  managed: no
+		//  shortdesc: Enable hardware offloading (either `none`, `sriov` or `vdpa`)
 		"acceleration",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=nested)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: The parent NIC name to nest this NIC under (see also `vlan`)
 		"nested",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=vlan)
+		//
+		// ---
+		//  type: integer
+		//  managed: no
+		//  shortdesc: The VLAN ID to use when nesting (see also `nested`)
 		"vlan",
 	}
 
