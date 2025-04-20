@@ -30,41 +30,41 @@ func (d *infinibandPhysical) validateConfig(instConf instance.ConfigReader) erro
 	// gendoc:generate(entity=infiniband, group=common, key=name)
 	//
 	// ---
-	// type: string
-	// required: no
-	// defaultdesc: kernel assigned
-	// shortdesc: The name of the interface inside the instance
+	//  type: string
+	//  required: no
+	//  defaultdesc: kernel assigned
+	//  shortdesc: The name of the interface inside the instance
 
 	
 	// gendoc:generate(entity=infiniband, group=common, key=mtu)
 	//
 	// ---
-	// type: integer
-	// required: no
-	// defaultdesc: parent MTU
-	// shortdesc: The MTU of the new interface
+	//  type: integer
+	//  required: no
+	//  defaultdesc: parent MTU
+	//  shortdesc: The MTU of the new interface
 
 	// gendoc:generate(entity=infiniband, group=common, key=hwaddr)
 	//
 	// ---
-	// type: string
-	// required: no
-	// defaultdesc: randomly assigned
-	// shortdesc: The MAC address of the new interface (can be either the full 20-byte variant or the short 8-byte variant, which will only modify the last 8 bytes of the parent device)
+	//  type: string
+	//  required: no
+	//  defaultdesc: randomly assigned
+	//  shortdesc: The MAC address of the new interface (can be either the full 20-byte variant or the short 8-byte variant, which will only modify the last 8 bytes of the parent device)
 
 	// gendoc:generate(entity=infiniband, group=common, key=nictype)
 	//
 	// ---
-	// type: string
-	// required: yes
-	// shortdesc: The device type (one of `physical` or `sriov`)
+	//  type: string
+	//  required: yes
+	//  shortdesc: The device type (one of `physical` or `sriov`)
 
 	// gendoc:generate(entity=infiniband, group=common, key=parent)
 	//
 	// ---
-	// type: string
-	// required: yes
-	// shortdesc: The name of the host device or bridge
+	//  type: string
+	//  required: yes
+	//  shortdesc: The name of the host device or bridge
 
 
 	rules := nicValidationRules(requiredFields, optionalFields, instConf)
