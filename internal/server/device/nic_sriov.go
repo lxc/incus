@@ -37,13 +37,72 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader) error {
 
 	var requiredFields []string
 	optionalFields := []string{
+		// gendoc:generate(entity=devices, group=nic_sriov, key=name)
+		//
+		// ---
+		//  type: string
+		//  default: kernel assigned
+		//  managed: no
+		//  shortdesc: The name of the interface inside the instance
 		"name",
+
+		// gendoc:generate(entity=devices, group=nic_sriov, key=network)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: The managed network to link the device to (instead of specifying the `nictype` directly)
 		"network",
+
+		// gendoc:generate(entity=devices, group=nic_sriov, key=parent)
+		//
+		// ---
+		//  type: string
+		//  managed: yes
+		//  shortdesc: The name of the parent host device (required if specifying the `nictype` directly)
 		"parent",
+
+		// gendoc:generate(entity=devices, group=nic_sriov, key=hwaddr)
+		//
+		// ---
+		//  type: string
+		//  default: randomly assigned
+		//  managed: no
+		//  shortdesc: The MAC address of the new interface
 		"hwaddr",
+
+		// gendoc:generate(entity=devices, group=nic_sriov, key=mtu)
+		//
+		// ---
+		//  type: integer
+		//  default: kernel assigned
+		//  managed: yes
+		//  shortdesc: The Maximum Transmit Unit (MTU) of the new interface
 		"mtu",
+
+		// gendoc:generate(entity=devices, group=nic_sriov, key=vlan)
+		//
+		// ---
+		//  type: integer
+		//  managed: no
+		//  shortdesc: The VLAN ID to attach to
 		"vlan",
+
+		// gendoc:generate(entity=devices, group=nic_sriov, key=security.mac_filtering)
+		//
+		// ---
+		//  type: bool
+		//  default: false
+		//  managed: no
+		//  shortdesc: Prevent the instance from spoofing another instance's MAC address
 		"security.mac_filtering",
+
+		// gendoc:generate(entity=devices, group=nic_sriov, key=boot.priority)
+		//
+		// ---
+		//  type: integer
+		//  managed: no
+		//  shortdesc: Boot priority for VMs (higher value boots first)
 		"boot.priority",
 	}
 
