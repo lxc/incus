@@ -389,6 +389,1079 @@
 					}
 				]
 			},
+			"nic_bridged": {
+				"keys": [
+					{
+						"boot.priority": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Boot priority for VMs (higher value boots first)",
+							"type": "integer"
+						}
+					},
+					{
+						"host_name": {
+							"default": "randomly assigned",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The name of the interface on the host",
+							"type": "string"
+						}
+					},
+					{
+						"hwaddr": {
+							"default": "randomly assigned",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The MAC address of the new interface",
+							"type": "string"
+						}
+					},
+					{
+						"io.bus": {
+							"default": "`virtio`",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Override the bus for the device (can be `virtio` or `usb`) (VM only)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.address": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "An IPv4 address to assign to the instance through DHCP (can be `none` to restrict all IPv4 traffic when `security.ipv4_filtering` is set)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.routes": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Comma-delimited list of IPv4 static routes to add on host to NIC",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.routes.external": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Comma-delimited list of IPv4 static routes to route to the NIC and publish on uplink network (BGP)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.address": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "An IPv6 address to assign to the instance through DHCP (can be `none` to restrict all IPv6 traffic when `security.ipv6_filtering` is set)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.routes": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Comma-delimited list of IPv6 static routes to add on host to NIC",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.routes.external": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Comma-delimited list of IPv6 static routes to route to the NIC and publish on uplink network (BGP)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.egress": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.ingress": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.max": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "I/O limit in bit/s for both incoming and outgoing traffic (same as setting both limits.ingress and limits.egress)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.priority": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The priority for outgoing traffic, to be used by the kernel queuing discipline to prioritize network packets",
+							"type": "integer"
+						}
+					},
+					{
+						"mtu": {
+							"default": "MTU of the parent device",
+							"longdesc": "",
+							"managed": "yes",
+							"shortdesc": "The Maximum Transmit Unit (MTU) of the new interface",
+							"type": "integer"
+						}
+					},
+					{
+						"name": {
+							"default": "kernel assigned",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The name of the interface inside the instance",
+							"type": "string"
+						}
+					},
+					{
+						"network": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The managed network to link the device to (instead of specifying the `nictype` directly)",
+							"type": "string"
+						}
+					},
+					{
+						"parent": {
+							"longdesc": "",
+							"managed": "yes",
+							"shortdesc": "The name of the parent host device (required if specifying the `nictype` directly)",
+							"type": "string"
+						}
+					},
+					{
+						"queue.tx.length": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The transmit queue length for the NIC",
+							"type": "integer"
+						}
+					},
+					{
+						"security.acls": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Comma-separated list of network ACLs to apply",
+							"type": "string"
+						}
+					},
+					{
+						"security.acls.default.egress.action": {
+							"default": "drop",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Action to use for egress traffic that doesn't match any ACL rule",
+							"type": "string"
+						}
+					},
+					{
+						"security.acls.default.egress.logged": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Whether to log egress traffic that doesn't match any ACL rule",
+							"type": "bool"
+						}
+					},
+					{
+						"security.acls.default.ingress.action": {
+							"default": "drop",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Action to use for ingress traffic that doesn't match any ACL rule",
+							"type": "string"
+						}
+					},
+					{
+						"security.acls.default.ingress.logged": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Whether to log ingress traffic that doesn't match any ACL rule",
+							"type": "bool"
+						}
+					},
+					{
+						"security.ipv4_filtering": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Prevent the instance from spoofing another instance's IPv4 address (enables `security.mac_filtering`)",
+							"type": "bool"
+						}
+					},
+					{
+						"security.ipv6_filtering": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Prevent the instance from spoofing another instance's IPv6 address (enables `security.mac_filtering`)",
+							"type": "bool"
+						}
+					},
+					{
+						"security.mac_filtering": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Prevent the instance from spoofing another instance's MAC address",
+							"type": "bool"
+						}
+					},
+					{
+						"security.port_isolation": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Prevent the NIC from communicating with other NICs in the network that have port isolation enabled",
+							"type": "bool"
+						}
+					},
+					{
+						"vlan": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The VLAN ID to use for non-tagged traffic (can be none to remove port from default VLAN)",
+							"type": "integer"
+						}
+					},
+					{
+						"vlan.tagged": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Comma-delimited list of VLAN IDs or VLAN ranges to join for tagged traffic",
+							"type": "integer"
+						}
+					}
+				]
+			},
+			"nic_ipvlan": {
+				"keys": [
+					{
+						"gvrp": {
+							"default": "false",
+							"longdesc": "",
+							"shortdesc": "Register VLAN using GARP VLAN Registration Protocol",
+							"type": "bool"
+						}
+					},
+					{
+						"hwaddr": {
+							"default": "randomly assigned",
+							"longdesc": "",
+							"shortdesc": "The MAC address of the new interface",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.address": {
+							"longdesc": "",
+							"shortdesc": "Comma-delimited list of IPv4 static addresses to add to the instance (in l2 mode, these can be specified as CIDR values or singular addresses using a subnet of /24)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.gateway": {
+							"default": "`auto` (in `l3s` mode), `-` (in `l2` mode)",
+							"longdesc": "",
+							"shortdesc": "In `l3s` mode, whether to add an automatic default IPv4 gateway (can be `auto` or `none`). In `l2` mode, the IPv4 address of the gateway",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.host_table": {
+							"longdesc": "",
+							"shortdesc": "The custom policy routing table ID to add IPv4 static routes to (in addition to the main routing table)",
+							"type": "integer"
+						}
+					},
+					{
+						"ipv6.address": {
+							"longdesc": "",
+							"shortdesc": "Comma-delimited list of IPv6 static addresses to add to the instance (in `l2` mode, these can be specified as CIDR values or singular addresses using a subnet of /64)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.gateway": {
+							"default": "`auto` (in `l3s` mode), `-` (in `l2` mode)",
+							"longdesc": "",
+							"shortdesc": "In `l3s` mode, whether to add an automatic default IPv6 gateway (can be `auto` or `none`). In `l2` mode, the IPv6 address of the gateway",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.host_table": {
+							"longdesc": "",
+							"shortdesc": "The custom policy routing table ID to add IPv6 static routes to (in addition to the main routing table)",
+							"type": "integer"
+						}
+					},
+					{
+						"mode": {
+							"default": "`l3s`",
+							"longdesc": "",
+							"shortdesc": "The IPVLAN mode (either `l2` or `l3s`)",
+							"type": "string"
+						}
+					},
+					{
+						"mtu": {
+							"default": "MTU of the parent device",
+							"longdesc": "",
+							"shortdesc": "The Maximum Transmit Unit (MTU) of the new interface",
+							"type": "integer"
+						}
+					},
+					{
+						"name": {
+							"default": "kernel assigned",
+							"longdesc": "",
+							"shortdesc": "The name of the interface inside the instance",
+							"type": "string"
+						}
+					},
+					{
+						"parent": {
+							"longdesc": "",
+							"shortdesc": "The name of the host device (required)",
+							"type": "string"
+						}
+					},
+					{
+						"vlan": {
+							"longdesc": "",
+							"shortdesc": "The VLAN ID to attach to",
+							"type": "integer"
+						}
+					}
+				]
+			},
+			"nic_macvlan": {
+				"keys": [
+					{
+						"boot.priority": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Boot priority for VMs (higher value boots first)",
+							"type": "integer"
+						}
+					},
+					{
+						"gvrp": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Register VLAN using GARP VLAN Registration Protocol",
+							"type": "bool"
+						}
+					},
+					{
+						"hwaddr": {
+							"default": "randomly assigned",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The MAC address of the new interface",
+							"type": "string"
+						}
+					},
+					{
+						"io.bus": {
+							"default": "`virtio`",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Override the bus for the device (can be `virtio` or `usb`) (VM only)",
+							"type": "string"
+						}
+					},
+					{
+						"mode": {
+							"default": "bridge",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Macvlan mode (one of `bridge`, `vepa`, `passthru` or `private`)",
+							"type": "string"
+						}
+					},
+					{
+						"mtu": {
+							"default": "MTU of the parent device",
+							"longdesc": "",
+							"managed": "yes",
+							"shortdesc": "The Maximum Transmit Unit (MTU) of the new interface",
+							"type": "integer"
+						}
+					},
+					{
+						"name": {
+							"default": "kernel assigned",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The name of the interface inside the instance",
+							"type": "string"
+						}
+					},
+					{
+						"network": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The managed network to link the device to (instead of specifying the `nictype` directly)",
+							"type": "string"
+						}
+					},
+					{
+						"parent": {
+							"longdesc": "",
+							"managed": "yes",
+							"shortdesc": "The name of the parent host device (required if specifying the `nictype` directly)",
+							"type": "string"
+						}
+					},
+					{
+						"vlan": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The VLAN ID to attach to",
+							"type": "integer"
+						}
+					}
+				]
+			},
+			"nic_ovn": {
+				"keys": [
+					{
+						"acceleration": {
+							"default": "none",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Enable hardware offloading (either `none`, `sriov` or `vdpa`)",
+							"type": "string"
+						}
+					},
+					{
+						"boot.priority": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Boot priority for VMs (higher value boots first)",
+							"type": "integer"
+						}
+					},
+					{
+						"host_name": {
+							"default": "randomly assigned",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The name of the interface inside the host",
+							"type": "string"
+						}
+					},
+					{
+						"hwaddr": {
+							"default": "randomly assigned",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The MAC address of the new interface",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.address": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "An IPv4 address to assign to the instance through DHCP, `none` can be used to disable IP allocation",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.routes": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Comma-delimited list of IPv4 static routes to route to the NIC",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.routes.external": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Comma-delimited list of IPv4 static routes to route to the NIC and publish on uplink network",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.address": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "An IPv6 address to assign to the instance through DHCP, `none` can be used to disable IP allocation",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.routes": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Comma-delimited list of IPv6 static routes to route to the NIC",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.routes.external": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Comma-delimited list of IPv6 static routes to route to the NIC and publish on uplink network",
+							"type": "string"
+						}
+					},
+					{
+						"mtu": {
+							"default": "MTU of the parent network",
+							"longdesc": "",
+							"managed": "yes",
+							"shortdesc": "The Maximum Transmit Unit (MTU) of the new interface",
+							"type": "integer"
+						}
+					},
+					{
+						"name": {
+							"default": "kernel assigned",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The name of the interface inside the instance",
+							"type": "string"
+						}
+					},
+					{
+						"nested": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The parent NIC name to nest this NIC under (see also `vlan`)",
+							"type": "string"
+						}
+					},
+					{
+						"network": {
+							"longdesc": "",
+							"managed": "yes",
+							"shortdesc": "The managed network to link the device to (required)",
+							"type": "string"
+						}
+					},
+					{
+						"security.acls": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Comma-separated list of network ACLs to apply",
+							"type": "string"
+						}
+					},
+					{
+						"security.acls.default.egress.action": {
+							"default": "reject",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Action to use for egress traffic that doesn't match any ACL rule",
+							"type": "string"
+						}
+					},
+					{
+						"security.acls.default.egress.logged": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Whether to log egress traffic that doesn't match any ACL rule",
+							"type": "bool"
+						}
+					},
+					{
+						"security.acls.default.ingress.action": {
+							"default": "reject",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Action to use for ingress traffic that doesn't match any ACL rule",
+							"type": "string"
+						}
+					},
+					{
+						"security.acls.default.ingress.logged": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Whether to log ingress traffic that doesn't match any ACL rule",
+							"type": "bool"
+						}
+					},
+					{
+						"security.promiscuous": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Have OVN send unknown network traffic to this network interface (required for some nesting cases)",
+							"type": "bool"
+						}
+					},
+					{
+						"vlan": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The VLAN ID to use when nesting (see also `nested`)",
+							"type": "integer"
+						}
+					}
+				]
+			},
+			"nic_p2p": {
+				"keys": [
+					{
+						"boot.priotiry": {
+							"longdesc": "",
+							"shortdesc": "Boot priority for VMs (higher value boots first)",
+							"type": "integer"
+						}
+					},
+					{
+						"host_name": {
+							"default": "randomly assigned",
+							"longdesc": "",
+							"shortdesc": "The name of the interface on the host",
+							"type": "string"
+						}
+					},
+					{
+						"hwaddr": {
+							"default": "randomly assigned",
+							"longdesc": "",
+							"shortdesc": "The MAC address of the new interface",
+							"type": "string"
+						}
+					},
+					{
+						"io.bus": {
+							"default": "`virtio`",
+							"longdesc": "",
+							"shortdesc": "Override the bus for the device (can be `virtio` or `usb`) (VM only)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.routes": {
+							"longdesc": "",
+							"shortdesc": "Comma-delimited list of IPv4 static routes to add on host to NIC",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.routes": {
+							"longdesc": "",
+							"shortdesc": "Comma-delimited list of IPv6 static routes to add on host to NIC",
+							"type": "string"
+						}
+					},
+					{
+						"limits.egress": {
+							"longdesc": "",
+							"shortdesc": "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.ingress": {
+							"longdesc": "",
+							"shortdesc": "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.max": {
+							"longdesc": "",
+							"shortdesc": "I/O limit in bit/s for both incoming and outgoing traffic (same as setting both limits.ingress and limits.egress)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.priority": {
+							"longdesc": "",
+							"shortdesc": "The priority for outgoing traffic, to be used by the kernel queuing discipline to prioritize network packets",
+							"type": "integer"
+						}
+					},
+					{
+						"mtu": {
+							"default": "kernel assigned",
+							"longdesc": "",
+							"shortdesc": "The Maximum Transmit Unit (MTU) of the new interface",
+							"type": "integer"
+						}
+					},
+					{
+						"name": {
+							"default": "kernel assigned",
+							"longdesc": "",
+							"shortdesc": "The name of the interface inside the instance",
+							"type": "string"
+						}
+					},
+					{
+						"queue.tx.length": {
+							"longdesc": "",
+							"shortdesc": "The transmit queue length for the NIC",
+							"type": "integer"
+						}
+					}
+				]
+			},
+			"nic_physical": {
+				"keys": [
+					{
+						"boot.priority": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Boot priority for VMs (higher value boots first)",
+							"type": "integer"
+						}
+					},
+					{
+						"gvrp": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Register VLAN using GARP VLAN Registration Protocol",
+							"type": "bool"
+						}
+					},
+					{
+						"hwaddr": {
+							"default": "randomly assigned",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The MAC address of the new interface",
+							"type": "string"
+						}
+					},
+					{
+						"mtu": {
+							"default": "MTU of the parent device",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The Maximum Transmit Unit (MTU) of the new interface",
+							"type": "integer"
+						}
+					},
+					{
+						"name": {
+							"default": "kernel assigned",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The name of the interface inside the instance",
+							"type": "string"
+						}
+					},
+					{
+						"network": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The managed network to link the device to (instead of specifying the `nictype` directly)",
+							"type": "string"
+						}
+					},
+					{
+						"parent": {
+							"longdesc": "",
+							"managed": "yes",
+							"shortdesc": "The name of the parent host device (required if specifying the `nictype` directly)",
+							"type": "string"
+						}
+					},
+					{
+						"vlan": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The VLAN ID to attach to",
+							"type": "integer"
+						}
+					}
+				]
+			},
+			"nic_routed": {
+				"keys": [
+					{
+						"gvrp": {
+							"default": "false",
+							"longdesc": "",
+							"shortdesc": "Register VLAN using GARP VLAN Registration Protocol",
+							"type": "bool"
+						}
+					},
+					{
+						"host_name": {
+							"default": "randomly assigned",
+							"longdesc": "",
+							"shortdesc": "The name of the interface on the host",
+							"type": "string"
+						}
+					},
+					{
+						"hwaddr": {
+							"default": "randomly assigned",
+							"longdesc": "",
+							"shortdesc": "The MAC address of the new interface",
+							"type": "string"
+						}
+					},
+					{
+						"io.bus": {
+							"default": "`virtio`",
+							"longdesc": "",
+							"shortdesc": "Override the bus for the device (can be `virtio` or `usb`) (VM only)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.address": {
+							"longdesc": "",
+							"shortdesc": "Comma-delimited list of IPv4 static addresses to add to the instance",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.gateway": {
+							"default": "auto",
+							"longdesc": "",
+							"shortdesc": "Whether to add an automatic default IPv4 gateway (can be `auto` or `none`)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.host_address": {
+							"default": "`169.254.0.1`",
+							"longdesc": "",
+							"shortdesc": "The IPv4 address to add to the host-side `veth` interface",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.host_table": {
+							"longdesc": "",
+							"shortdesc": "The custom policy routing table ID to add IPv4 static routes to (in addition to the main routing table)",
+							"type": "integer"
+						}
+					},
+					{
+						"ipv4.neighbor_probe": {
+							"default": "true",
+							"longdesc": "",
+							"shortdesc": "Whether to probe the parent network for IP address availability",
+							"type": "bool"
+						}
+					},
+					{
+						"ipv4.routes": {
+							"longdesc": "",
+							"shortdesc": "Comma-delimited list of IPv4 static routes to add on host to NIC (without L2 ARP/NDP proxy)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.address": {
+							"longdesc": "",
+							"shortdesc": "Comma-delimited list of IPv6 static addresses to add to the instance",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.gateway": {
+							"default": "auto",
+							"longdesc": "",
+							"shortdesc": "Whether to add an automatic default IPv6 gateway (can be `auto` or `none`)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.host_address": {
+							"default": "`fe80::1`",
+							"longdesc": "",
+							"shortdesc": "The IPv6 address to add to the host-side `veth` interface",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.host_table": {
+							"longdesc": "",
+							"shortdesc": "The custom policy routing table ID to add IPv6 static routes to (in addition to the main routing table)",
+							"type": "integer"
+						}
+					},
+					{
+						"ipv6.neighbor_probe": {
+							"default": "true",
+							"longdesc": "",
+							"shortdesc": "Whether to probe the parent network for IP address availability",
+							"type": "bool"
+						}
+					},
+					{
+						"ipv6.routes": {
+							"longdesc": "",
+							"shortdesc": "Comma-delimited list of IPv6 static routes to add on host to NIC (without L2 ARP/NDP proxy)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.egress": {
+							"longdesc": "",
+							"shortdesc": "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.ingress": {
+							"longdesc": "",
+							"shortdesc": "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.max": {
+							"longdesc": "",
+							"shortdesc": "I/O limit in bit/s for both incoming and outgoing traffic (same as setting both limits.ingress and limits.egress)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.priority": {
+							"longdesc": "",
+							"shortdesc": "The priority for outgoing traffic, to be used by the kernel queuing discipline to prioritize network packets",
+							"type": "integer"
+						}
+					},
+					{
+						"mtu": {
+							"default": "parent MTU",
+							"longdesc": "",
+							"shortdesc": "The Maximum Transmit Unit (MTU) of the new interface",
+							"type": "integer"
+						}
+					},
+					{
+						"name": {
+							"default": "kernel assigned",
+							"longdesc": "",
+							"shortdesc": "The name of the interface inside the instance",
+							"type": "string"
+						}
+					},
+					{
+						"parent": {
+							"longdesc": "",
+							"shortdesc": "The name of the parent host device to join the instance to",
+							"type": "string"
+						}
+					},
+					{
+						"queue.tx.length": {
+							"longdesc": "",
+							"shortdesc": "The transmit queue length for the NIC",
+							"type": "integer"
+						}
+					},
+					{
+						"vlan": {
+							"longdesc": "",
+							"shortdesc": "The VLAN ID to attach to",
+							"type": "integer"
+						}
+					},
+					{
+						"vrf": {
+							"longdesc": "",
+							"shortdesc": "The VRF on the host in which the host-side interface and routes are created",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"nic_sriov": {
+				"keys": [
+					{
+						"boot.priority": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Boot priority for VMs (higher value boots first)",
+							"type": "integer"
+						}
+					},
+					{
+						"hwaddr": {
+							"default": "randomly assigned",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The MAC address of the new interface",
+							"type": "string"
+						}
+					},
+					{
+						"mtu": {
+							"default": "kernel assigned",
+							"longdesc": "",
+							"managed": "yes",
+							"shortdesc": "The Maximum Transmit Unit (MTU) of the new interface",
+							"type": "integer"
+						}
+					},
+					{
+						"name": {
+							"default": "kernel assigned",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The name of the interface inside the instance",
+							"type": "string"
+						}
+					},
+					{
+						"network": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The managed network to link the device to (instead of specifying the `nictype` directly)",
+							"type": "string"
+						}
+					},
+					{
+						"parent": {
+							"longdesc": "",
+							"managed": "yes",
+							"shortdesc": "The name of the parent host device (required if specifying the `nictype` directly)",
+							"type": "string"
+						}
+					},
+					{
+						"security.mac_filtering": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Prevent the instance from spoofing another instance's MAC address",
+							"type": "bool"
+						}
+					},
+					{
+						"vlan": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The VLAN ID to attach to",
+							"type": "integer"
+						}
+					}
+				]
+			},
 			"proxy": {
 				"keys": [
 					{
