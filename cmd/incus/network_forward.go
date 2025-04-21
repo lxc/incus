@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"sort"
 	"strings"
@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/termios"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdNetworkForward struct {
@@ -375,12 +376,7 @@ func (c *cmdNetworkForwardCreate) Run(cmd *cobra.Command, args []string) error {
 	// If stdin isn't a terminal, read yaml from it.
 	var forwardPut api.NetworkForwardPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
-		if err != nil {
-			return err
-		}
-
-		err = yaml.UnmarshalStrict(contents, &forwardPut)
+		err = util.YAMLUnmarshalStrict(os.Stdin, &forwardPut)
 		if err != nil {
 			return err
 		}
@@ -768,15 +764,10 @@ func (c *cmdNetworkForwardEdit) Run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
-		if err != nil {
-			return err
-		}
-
 		// Allow output of `incus network forward show` command to be passed in here, but only take the
 		// contents of the NetworkForwardPut fields when updating. The other fields are silently discarded.
 		newData := api.NetworkForward{}
-		err = yaml.UnmarshalStrict(contents, &newData)
+		err = util.YAMLUnmarshalStrict(os.Stdin, &newData)
 		if err != nil {
 			return err
 		}
@@ -806,7 +797,7 @@ func (c *cmdNetworkForwardEdit) Run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor.
 		newData := api.NetworkForward{} // We show the full info, but only send the writable fields.
-		err = yaml.UnmarshalStrict(content, &newData)
+		err = util.YAMLUnmarshalStrict(bytes.NewReader(content), &newData)
 		if err == nil {
 			newData.Normalise()
 			err = client.UpdateNetworkForward(resource.name, args[1], newData.Writable(), etag)

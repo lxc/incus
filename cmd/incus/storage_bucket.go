@@ -21,6 +21,7 @@ import (
 	"github.com/lxc/incus/v6/shared/ioprogress"
 	"github.com/lxc/incus/v6/shared/termios"
 	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdStorageBucket struct {
@@ -140,12 +141,7 @@ func (c *cmdStorageBucketCreate) Run(cmd *cobra.Command, args []string) error {
 	// If stdin isn't a terminal, read yaml from it.
 	var bucketPut api.StorageBucketPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
-		if err != nil {
-			return err
-		}
-
-		err = yaml.UnmarshalStrict(contents, &bucketPut)
+		err = util.YAMLUnmarshalStrict(os.Stdin, &bucketPut)
 		if err != nil {
 			return err
 		}
@@ -1119,12 +1115,7 @@ func (c *cmdStorageBucketKeyCreate) RunAdd(cmd *cobra.Command, args []string) er
 	// If stdin isn't a terminal, read yaml from it.
 	var bucketKeyPut api.StorageBucketKeyPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
-		if err != nil {
-			return err
-		}
-
-		err = yaml.UnmarshalStrict(contents, &bucketKeyPut)
+		err = util.YAMLUnmarshalStrict(os.Stdin, &bucketKeyPut)
 		if err != nil {
 			return err
 		}

@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"sort"
 	"strings"
@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/termios"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // cmdNetworkAddressSet represents the global network address set command.
@@ -282,12 +283,7 @@ func (c *cmdNetworkAddressSetCreate) Run(cmd *cobra.Command, args []string) erro
 
 	var asPut api.NetworkAddressSetPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
-		if err != nil {
-			return err
-		}
-
-		err = yaml.UnmarshalStrict(contents, &asPut)
+		err = util.YAMLUnmarshalStrict(os.Stdin, &asPut)
 		if err != nil {
 			return err
 		}
@@ -519,13 +515,8 @@ func (c *cmdNetworkAddressSetEdit) Run(cmd *cobra.Command, args []string) error 
 
 	// If stdin isn't terminal, read yaml from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
-		if err != nil {
-			return err
-		}
-
 		newdata := api.NetworkAddressSet{}
-		err = yaml.UnmarshalStrict(contents, &newdata)
+		err = util.YAMLUnmarshalStrict(os.Stdin, &newdata)
 		if err != nil {
 			return err
 		}
@@ -551,7 +542,7 @@ func (c *cmdNetworkAddressSetEdit) Run(cmd *cobra.Command, args []string) error 
 
 	for {
 		newdata := api.NetworkAddressSet{}
-		err = yaml.UnmarshalStrict(content, &newdata)
+		err = util.YAMLUnmarshalStrict(bytes.NewReader(content), &newdata)
 		if err == nil {
 			err = resource.server.UpdateNetworkAddressSet(resource.name, newdata.Writable(), etag)
 		}

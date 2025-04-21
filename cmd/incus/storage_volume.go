@@ -25,6 +25,7 @@ import (
 	"github.com/lxc/incus/v6/shared/ioprogress"
 	"github.com/lxc/incus/v6/shared/termios"
 	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type volumeColumn struct {
@@ -635,12 +636,7 @@ func (c *cmdStorageVolumeCreate) Run(cmd *cobra.Command, args []string) error {
 
 	var volumePut api.StorageVolumePut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
-		if err != nil {
-			return err
-		}
-
-		err = yaml.UnmarshalStrict(contents, &volumePut)
+		err = util.YAMLUnmarshalStrict(os.Stdin, &volumePut)
 		if err != nil {
 			return err
 		}

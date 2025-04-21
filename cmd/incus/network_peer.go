@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"slices"
 	"sort"
@@ -16,6 +16,7 @@ import (
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/termios"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdNetworkPeer struct {
@@ -401,12 +402,7 @@ func (c *cmdNetworkPeerCreate) Run(cmd *cobra.Command, args []string) error {
 	// If stdin isn't a terminal, read yaml from it.
 	var peerPut api.NetworkPeerPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
-		if err != nil {
-			return err
-		}
-
-		err = yaml.UnmarshalStrict(contents, &peerPut)
+		err = util.YAMLUnmarshalStrict(os.Stdin, &peerPut)
 		if err != nil {
 			return err
 		}
@@ -786,15 +782,10 @@ func (c *cmdNetworkPeerEdit) Run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
-		if err != nil {
-			return err
-		}
-
 		// Allow output of `incus network peer show` command to be passed in here, but only take the contents
 		// of the NetworkPeerPut fields when updating. The other fields are silently discarded.
 		newData := api.NetworkPeer{}
-		err = yaml.UnmarshalStrict(contents, &newData)
+		err = util.YAMLUnmarshalStrict(os.Stdin, &newData)
 		if err != nil {
 			return err
 		}
@@ -822,7 +813,7 @@ func (c *cmdNetworkPeerEdit) Run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor.
 		newData := api.NetworkPeer{} // We show the full info, but only send the writable fields.
-		err = yaml.UnmarshalStrict(content, &newData)
+		err = util.YAMLUnmarshalStrict(bytes.NewReader(content), &newData)
 		if err == nil {
 			err = client.UpdateNetworkPeer(resource.name, args[1], newData.Writable(), etag)
 		}

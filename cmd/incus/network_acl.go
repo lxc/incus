@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -16,6 +17,7 @@ import (
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/termios"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdNetworkACL struct {
@@ -438,12 +440,7 @@ func (c *cmdNetworkACLCreate) Run(cmd *cobra.Command, args []string) error {
 	// If stdin isn't a terminal, read yaml from it.
 	var aclPut api.NetworkACLPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
-		if err != nil {
-			return err
-		}
-
-		err = yaml.UnmarshalStrict(contents, &aclPut)
+		err = util.YAMLUnmarshalStrict(os.Stdin, &aclPut)
 		if err != nil {
 			return err
 		}
@@ -698,15 +695,10 @@ func (c *cmdNetworkACLEdit) Run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
-		if err != nil {
-			return err
-		}
-
 		// Allow output of `incus network acl show` command to be passed in here, but only take the contents
 		// of the NetworkACLPut fields when updating the ACL. The other fields are silently discarded.
 		newdata := api.NetworkACL{}
-		err = yaml.UnmarshalStrict(contents, &newdata)
+		err = util.YAMLUnmarshalStrict(os.Stdin, &newdata)
 		if err != nil {
 			return err
 		}
@@ -734,7 +726,7 @@ func (c *cmdNetworkACLEdit) Run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor.
 		newdata := api.NetworkACL{} // We show the full ACL info, but only send the writable fields.
-		err = yaml.UnmarshalStrict(content, &newdata)
+		err = util.YAMLUnmarshalStrict(bytes.NewReader(content), &newdata)
 		if err == nil {
 			err = resource.server.UpdateNetworkACL(resource.name, newdata.Writable(), etag)
 		}
