@@ -14,7 +14,7 @@ import (
 	"github.com/cowsql/go-cowsql/client"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	incus "github.com/lxc/incus/v6/client"
 	cli "github.com/lxc/incus/v6/internal/cmd"
