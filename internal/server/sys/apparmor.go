@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/syndtr/gocapability/capability"
+	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/internal/server/db/warningtype"
@@ -84,21 +84,29 @@ func (s *OS) initAppArmor() []cluster.Warning {
 }
 
 func haveMacAdmin() bool {
-	c, err := capability.NewPid2(0)
+	hdr := unix.CapUserHeader{Pid: 0}
+
+	// Get hdr version to check.
+	err := unix.Capget(&hdr, nil)
 	if err != nil {
 		return false
 	}
 
-	err = c.Load()
+	// Return false if not version 3.
+	if hdr.Version != unix.LINUX_CAPABILITY_VERSION_3 {
+		return false
+	}
+
+	var data [2]unix.CapUserData
+	err = unix.Capget(&hdr, &data[0])
 	if err != nil {
 		return false
 	}
 
-	if c.Get(capability.EFFECTIVE, capability.CAP_MAC_ADMIN) {
-		return true
-	}
+	idx := unix.CAP_MAC_ADMIN / 32
+	bit := uint(unix.CAP_MAC_ADMIN % 32)
 
-	return false
+	return ((1 << bit) & data[idx].Effective) != 0
 }
 
 // Returns true if AppArmor stacking support is available.
