@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/lxc/incus/v6/shared/api"
 )
