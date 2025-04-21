@@ -38,17 +38,66 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 
 	requiredFields := []string{}
 	optionalFields := []string{
+		// gendoc:generate(entity=devices, group=nic_physical, key=parent)
+		//
+		// ---
+		//  type: string
+		//  managed: yes
+		//  shortdesc: The name of the parent host device (required if specifying the `nictype` directly)
 		"parent",
+
+		// gendoc:generate(entity=devices, group=nic_physical, key=name)
+		//
+		// ---
+		//  type: string
+		//  default: kernel assigned
+		//  managed: no
+		//  shortdesc: The name of the interface inside the instance
 		"name",
+
+		// gendoc:generate(entity=devices, group=nic_physical, key=boot.priority)
+		//
+		// ---
+		//  type: integer
+		//  managed: no
+		//  shortdesc: Boot priority for VMs (higher value boots first)
 		"boot.priority",
+
+		// gendoc:generate(entity=devices, group=nic_physical, key=gvrp)
+		//
+		// ---
+		//  type: bool
+		//  default: false
+		//  managed: no
+		//  shortdesc: Register VLAN using GARP VLAN Registration Protocol
 		"gvrp",
+
+		// gendoc:generate(entity=devices, group=nic_physical, key=mtu)
+		//
+		// ---
+		//  type: integer
+		//  default: MTU of the parent device
+		//  managed: no
+		//  shortdesc: The Maximum Transmit Unit (MTU) of the new interface
 		"mtu",
 	}
 
 	if instConf.Type() == instancetype.Container || instConf.Type() == instancetype.Any {
+		// gendoc:generate(entity=devices, group=nic_physical, key=vlan)
+		//
+		// ---
+		//  type: integer
+		//  managed: no
+		//  shortdesc: The VLAN ID to attach to
 		optionalFields = append(optionalFields, "hwaddr", "vlan")
 	}
 
+	// gendoc:generate(entity=devices, group=nic_physical, key=network)
+	//
+	// ---
+	//  type: string
+	//  managed: no
+	//  shortdesc: The managed network to link the device to (instead of specifying the `nictype` directly)
 	if d.config["network"] != "" {
 		requiredFields = append(requiredFields, "network")
 
@@ -172,6 +221,14 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 		}
 
 		// Set the MAC address.
+
+		// gendoc:generate(entity=devices, group=nic_physical, key=hwaddr)
+		//
+		// ---
+		//  type: string
+		//  default: randomly assigned
+		//  managed: no
+		//  shortdesc: The MAC address of the new interface
 		if d.config["hwaddr"] != "" {
 			hwaddr, err := net.ParseMAC(d.config["hwaddr"])
 			if err != nil {

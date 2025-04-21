@@ -39,19 +39,84 @@ func (d *nicIPVLAN) validateConfig(instConf instance.ConfigReader) error {
 
 	requiredFields := []string{"parent"}
 	optionalFields := []string{
+		// gendoc:generate(entity=devices, group=nic_ipvlan, key=name)
+		//
+		// ---
+		//  type: string
+		//  default: kernel assigned
+		//  shortdesc: The name of the interface inside the instance
 		"name",
+
+		// gendoc:generate(entity=devices, group=nic_ipvlan, key=mtu)
+		//
+		// ---
+		//  type: integer
+		//  default: MTU of the parent device
+		//  shortdesc: The Maximum Transmit Unit (MTU) of the new interface
 		"mtu",
+
+		// gendoc:generate(entity=devices, group=nic_ipvlan, key=hwaddr)
+		//
+		// ---
+		//  type: string
+		//  default: randomly assigned
+		//  shortdesc: The MAC address of the new interface
 		"hwaddr",
+
+		// gendoc:generate(entity=devices, group=nic_ipvlan, key=vlan)
+		//
+		// ---
+		//  type: integer
+		//  shortdesc: The VLAN ID to attach to
 		"vlan",
+
+		// gendoc:generate(entity=devices, group=nic_ipvlan, key=ipv4.gateway)
+		//
+		// ---
+		//  type: string
+		//  default: `auto` (in `l3s` mode), `-` (in `l2` mode)
+		//  shortdesc: In `l3s` mode, whether to add an automatic default IPv4 gateway (can be `auto` or `none`). In `l2` mode, the IPv4 address of the gateway
 		"ipv4.gateway",
+
+		// gendoc:generate(entity=devices, group=nic_ipvlan, key=ipv6.gateway)
+		//
+		// ---
+		//  type: string
+		//  default: `auto` (in `l3s` mode), `-` (in `l2` mode)
+		//  shortdesc: In `l3s` mode, whether to add an automatic default IPv6 gateway (can be `auto` or `none`). In `l2` mode, the IPv6 address of the gateway
 		"ipv6.gateway",
+
+		// gendoc:generate(entity=devices, group=nic_ipvlan, key=ipv4.host_table)
+		//
+		// ---
+		//  type: integer
+		//  shortdesc: The custom policy routing table ID to add IPv4 static routes to (in addition to the main routing table)
 		"ipv4.host_table",
+
+		// gendoc:generate(entity=devices, group=nic_ipvlan, key=ipv6.host_table)
+		//
+		// ---
+		//  type: integer
+		//  shortdesc: The custom policy routing table ID to add IPv6 static routes to (in addition to the main routing table)
 		"ipv6.host_table",
+
+		// gendoc:generate(entity=devices, group=nic_ipvlan, key=gvrp)
+		//
+		// ---
+		//  type: bool
+		//  default: false
+		//  shortdesc: Register VLAN using GARP VLAN Registration Protocol
 		"gvrp",
 	}
 
 	rules := nicValidationRules(requiredFields, optionalFields, instConf)
 	rules["gvrp"] = validate.Optional(validate.IsBool)
+
+	// gendoc:generate(entity=devices, group=nic_ipvlan, key=ipv4.address)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: Comma-delimited list of IPv4 static addresses to add to the instance (in l2 mode, these can be specified as CIDR values or singular addresses using a subnet of /24)
 	rules["ipv4.address"] = func(value string) error {
 		if value == "" {
 			return nil
@@ -82,6 +147,11 @@ func (d *nicIPVLAN) validateConfig(instConf instance.ConfigReader) error {
 		return validate.IsListOf(validate.IsNetworkAddressV4)(value)
 	}
 
+	// gendoc:generate(entity=devices, group=nic_ipvlan, key=ipv6.address)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: Comma-delimited list of IPv6 static addresses to add to the instance (in `l2` mode, these can be specified as CIDR values or singular addresses using a subnet of /64)
 	rules["ipv6.address"] = func(value string) error {
 		if value == "" {
 			return nil
@@ -112,6 +182,12 @@ func (d *nicIPVLAN) validateConfig(instConf instance.ConfigReader) error {
 		return validate.IsListOf(validate.IsNetworkAddressV6)(value)
 	}
 
+	// gendoc:generate(entity=devices, group=nic_ipvlan, key=mode)
+	//
+	// ---
+	//  type: string
+	//  default: `l3s`
+	//  shortdesc: The IPVLAN mode (either `l2` or `l3s`)
 	rules["mode"] = func(value string) error {
 		if value == "" {
 			return nil
@@ -153,6 +229,11 @@ func (d *nicIPVLAN) validateEnvironment() error {
 		return fmt.Errorf("Requires liblxc has following API extensions: network_ipvlan, network_l2proxy, network_gateway_device_route")
 	}
 
+	// gendoc:generate(entity=devices, group=nic_ipvlan, key=parent)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: The name of the host device (required)
 	if !network.InterfaceExists(d.config["parent"]) {
 		return fmt.Errorf("Parent device '%s' doesn't exist", d.config["parent"])
 	}
