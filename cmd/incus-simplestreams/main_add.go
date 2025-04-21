@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	cli "github.com/lxc/incus/v6/internal/cmd"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
