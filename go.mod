@@ -46,7 +46,6 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.7
 	github.com/stretchr/testify v1.10.0
-	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635
 	github.com/vishvananda/netlink v1.3.1
 	github.com/zitadel/oidc/v3 v3.44.0
 	go.starlark.net v0.0.0-20250804182900-3c9dc17c5f2e
