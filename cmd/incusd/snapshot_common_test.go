@@ -10,19 +10,23 @@ import (
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 )
 
-func (suite *containerTestSuite) TestSnapshotScheduling() {
+type snapshotCommonTestSuite struct {
+	daemonTestSuite
+}
+
+func (s *snapshotCommonTestSuite) TestSnapshotScheduling() {
 	args := db.InstanceArgs{
 		Type:      instancetype.Container,
 		Ephemeral: false,
 		Name:      "hal9000",
 	}
 
-	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true)
-	suite.Req.Nil(err)
-	suite.Equal(true, snapshotIsScheduledNow("* * * * *",
+	c, op, _, err := instance.CreateInternal(s.d.State(), args, nil, true, true)
+	s.Req.Nil(err)
+	s.Equal(true, snapshotIsScheduledNow("* * * * *",
 		int64(c.ID())),
 		"snapshot.schedule config '* * * * *' should have matched now")
-	suite.Equal(true, snapshotIsScheduledNow("@daily,"+
+	s.Equal(true, snapshotIsScheduledNow("@daily,"+
 		"@hourly,"+
 		"@midnight,"+
 		"@weekly,"+
@@ -36,5 +40,5 @@ func (suite *containerTestSuite) TestSnapshotScheduling() {
 }
 
 func TestSnapshotCommon(t *testing.T) {
-	suite.Run(t, new(containerTestSuite))
+	suite.Run(t, new(snapshotCommonTestSuite))
 }
