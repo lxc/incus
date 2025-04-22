@@ -46,6 +46,12 @@ func newByType(state *state.State, projectName string, conf deviceConfig.Device)
 		}
 
 	case "infiniband":
+		// gendoc:generate(entity=infiniband, group=common, key=nictype)
+		//
+		// ---
+		//  type: string
+		//  required: yes
+		//  shortdesc: The device type (one of `physical` or `sriov`)
 		switch nicType {
 		case "physical":
 			dev = &infinibandPhysical{}
