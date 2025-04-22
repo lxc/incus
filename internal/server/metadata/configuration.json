@@ -1783,6 +1783,56 @@
 				]
 			}
 		},
+		"infiniband": {
+			"common": {
+				"keys": [
+					{
+						"hwaddr": {
+							"defaultdesc": "randomly assigned",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The MAC address of the new interface (can be either the full 20-byte variant or the short 8-byte variant, which will only modify the last 8 bytes of the parent device)",
+							"type": "string"
+						}
+					},
+					{
+						"mtu": {
+							"defaultdesc": "parent MTU",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The MTU of the new interface",
+							"type": "integer"
+						}
+					},
+					{
+						"name": {
+							"defaultdesc": "kernel assigned",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The name of the interface inside the instance",
+							"type": "string"
+						}
+					},
+					{
+						"nictype": {
+							"longdesc": "",
+							"required": "yes",
+							"shortdesc": "The device type (one of `physical` or `sriov`)",
+							"type": "string"
+						}
+					},
+					{
+						"parent": {
+							"defaultdesc": "kernel assigned",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The name of the interface inside the instance",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"instance": {
 			"boot": {
 				"keys": [
