@@ -624,7 +624,7 @@ test_basic_usage() {
   # Should succeed in overriding root device storage pool when the pool does exist and the override occurs at create time.
   incus storage create bla dir
   incus init testimage c1 -d root,pool=bla
-  incus config show c1 --expanded | grep -Pz '  root:\n    path: /\n    pool: bla\n    type: disk\n'
+  incus config show c1 --expanded | grep -Pz '    root:\n        path: /\n        pool: bla\n        type: disk\n'
 
   incus storage volume create bla vol1
   incus storage volume create bla vol2

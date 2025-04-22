@@ -95,14 +95,14 @@ test_certificate_edit() {
 
   curl -k -s --cert "${INCUS_CONF}/client.crt" --key "${INCUS_CONF}/client.key" -X PATCH -d "{\"name\": \"bar\"}" "https://${INCUS_ADDR}/1.0/certificates/${FINGERPRINT}" | grep -F '"error_code":403'
 
-  ! incus_remote config trust show "${FINGERPRINT}" | sed -e ':a;N;$!ba;s/projects:\n- blah/projects: \[\]/' | incus_remote config trust edit localhost:"${FINGERPRINT}" || false
+  ! incus_remote config trust show "${FINGERPRINT}" | sed -e ':a;N;$!ba;s/projects:\n    - blah/projects: \[\]/' | incus_remote config trust edit localhost:"${FINGERPRINT}" || false
 
   curl -k -s --cert "${INCUS_CONF}/client.crt" --key "${INCUS_CONF}/client.key" -X PATCH -d "{\"projects\": []}" "https://${INCUS_ADDR}/1.0/certificates/${FINGERPRINT}" | grep -F '"error_code":403'
 
   # Cleanup
   incus config trust show "${FINGERPRINT}" | sed -e "s/restricted: true/restricted: false/" | incus config trust edit "${FINGERPRINT}"
 
-  incus config trust show "${FINGERPRINT}" | sed -e ':a;N;$!ba;s/projects:\n- blah/projects: \[\]/' | incus config trust edit "${FINGERPRINT}"
+  incus config trust show "${FINGERPRINT}" | sed -e ':a;N;$!ba;s/projects:\n    - blah/projects: \[\]/' | incus config trust edit "${FINGERPRINT}"
 
   incus project delete blah
 }
