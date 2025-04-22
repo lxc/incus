@@ -2,7 +2,6 @@ package device
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"net/netip"
@@ -13,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/j-keck/arping"
+	"github.com/mdlayher/arp"
 	"github.com/mdlayher/ndp"
 
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
@@ -1059,7 +1058,7 @@ func networkSRIOVSetupContainerVFNIC(hostName string, config map[string]string) 
 }
 
 // isIPAvailable checks if address responds to ARP/NDP neighbour probe on the parentInterface.
-// Returns true if IP is available.
+// Returns true if IP is in use.
 func isIPAvailable(ctx context.Context, address net.IP, parentInterface string) (bool, error) {
 	deadline, ok := ctx.Deadline()
 	if !ok {
@@ -1072,11 +1071,10 @@ func isIPAvailable(ctx context.Context, address net.IP, parentInterface string) 
 
 	// Handle IPv4 address.
 	if address.To4() != nil {
-		timeout := time.Until(deadline)
-		arping.SetTimeout(timeout)
-		_, _, err := arping.PingOverIfaceByName(address, parentInterface)
+		err := pingOverIfaceByName(deadline, address, parentInterface)
 		if err != nil {
-			if errors.Is(err, arping.ErrTimeout) {
+			ne, ok := err.(net.Error)
+			if ok && ne.Timeout() {
 				return false, nil
 			}
 
@@ -1155,4 +1153,39 @@ func networkVLANListExpand(rawVLANValues []string) ([]int, error) {
 	}
 
 	return networkVLANList, nil
+}
+
+// pingOverIfaceByName sends an ARP request to the given IPv4 address using the specified network interface.
+// It respects the provided deadline and returns an error if resolution fails (unless due to timeout).
+func pingOverIfaceByName(deadline time.Time, address net.IP, parentInterface string) error {
+	// Obtain the network interface.
+	ifi, err := net.InterfaceByName(parentInterface)
+	if err != nil {
+		return err
+	}
+
+	// Open an ARP client on that interface.
+	c, err := arp.Dial(ifi)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = c.Close() }()
+
+	// Honour the caller’s deadline.
+	_ = c.SetDeadline(deadline)
+
+	// Convert to netip.Addr which arp.Client expects.
+	netipAddr, ok := netip.AddrFromSlice(address.To4())
+	if !ok {
+		return fmt.Errorf("Invalid IPv4 address: %v", address)
+	}
+
+	// Try to resolve the IP → MAC. If it answers, the IP is in use.
+	_, err = c.Resolve(netipAddr)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
