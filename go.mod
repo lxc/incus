@@ -3,6 +3,7 @@ module github.com/lxc/incus/v6
 go 1.23.7
 
 require (
+	github.com/adhocore/gronx v1.19.6
 	github.com/armon/go-proxyproto v0.1.0
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/checkpoint-restore/go-criu/v6 v6.3.0
@@ -41,7 +42,6 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.22
 	github.com/pkg/sftp v1.13.9
 	github.com/pkg/xattr v0.4.12
-	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.7
