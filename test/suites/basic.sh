@@ -254,26 +254,34 @@ test_basic_usage() {
 
   #   1. Basic built-in alias functionality
   [ "$(incus ls)" = "$(incus list)" ]
+
   #   2. Basic user-defined alias functionality
-  printf "aliases:\\n  l: list\\n" >> "${INCUS_CONF}/config.yml"
+  incus alias add "l" "list"
   [ "$(incus l)" = "$(incus list)" ]
+
   #   3. Built-in aliases and user-defined aliases can coexist
   [ "$(incus ls)" = "$(incus l)" ]
+
   #   4. Multi-argument alias keys and values
-  echo "  i ls: image list" >> "${INCUS_CONF}/config.yml"
+  incus alias add "i ls" "image list"
   [ "$(incus i ls)" = "$(incus image list)" ]
+
   #   5. Aliases where len(keys) != len(values) (expansion/contraction of number of arguments)
-  printf "  ils: image list\\n  container ls: list\\n" >> "${INCUS_CONF}/config.yml"
+  incus alias add "ils" "image list"
+  incus alias add "container ls" "list"
   [ "$(incus ils)" = "$(incus image list)" ]
   [ "$(incus container ls)" = "$(incus list)" ]
+
   #   6. User-defined aliases override built-in aliases
-  echo "  cp: list" >> "${INCUS_CONF}/config.yml"
+  incus alias add "cp" "list"
   [ "$(incus ls)" = "$(incus cp)" ]
+
   #   7. User-defined aliases override commands and don't recurse
   incus init testimage foo
-  INC_CONFIG_SHOW=$(incus config show foo --expanded)
-  echo "  config show: config show --expanded" >> "${INCUS_CONF}/config.yml"
-  [ "$(incus config show foo)" = "$INC_CONFIG_SHOW" ]
+  INCUS_CONFIG_SHOW=$(incus config show foo --expanded)
+
+  incus alias add "config show" "config show --expanded"
+  [ "$(incus config show foo)" = "$INCUS_CONFIG_SHOW" ]
   incus delete foo
 
   # Restore the config to remove the aliases
