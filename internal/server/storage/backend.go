@@ -1944,6 +1944,23 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 		return err
 	}
 
+	// Now that we got the source details, validate against the instance limits.
+	_, rootDiskConf, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+	if err != nil {
+		return err
+	}
+
+	if rootDiskConf["size"] != "" {
+		rootDiskConfBytes, err := units.ParseByteSizeString(rootDiskConf["size"])
+		if err != nil {
+			return err
+		}
+
+		if args.VolumeSize > rootDiskConfBytes {
+			return fmt.Errorf("The configured target instance root disk size is smaller than the migration source")
+		}
+	}
+
 	var volumeDescription string
 	var volumeConfig map[string]string
 
