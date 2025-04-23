@@ -411,8 +411,11 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 			route := &ip.Route{
 				DevName: iface,
 				Route:   staticRoute.Dest.String(),
-				Via:     staticRoute.Router.String(),
 				Family:  ip.FamilyV4,
+			}
+
+			if !staticRoute.Router.IsUnspecified() {
+				route.Via = staticRoute.Router.String()
 			}
 
 			err = route.Add()
