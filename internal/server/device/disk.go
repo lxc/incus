@@ -747,7 +747,7 @@ func (d *disk) Register() error {
 	d.logger.Debug("Initialising mounted disk ref counter")
 
 	// Load the pool.
-	pool, err := storagePools.LoadByInstance(d.state, d.inst)
+	pool, err := storagePools.LoadByName(d.state, d.config["pool"])
 	if err != nil {
 		return err
 	}
