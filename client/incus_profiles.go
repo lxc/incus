@@ -36,6 +36,22 @@ func (r *ProtocolIncus) GetProfiles() ([]api.Profile, error) {
 	return profiles, nil
 }
 
+// GetProfilesWithFilter returns a filtered list of available Profile structs.
+func (r *ProtocolIncus) GetProfilesWithFilter(filters []string) ([]api.Profile, error) {
+	profiles := []api.Profile{}
+
+	v := url.Values{}
+	v.Set("recursion", "1")
+	v.Set("filter", parseFilters(filters))
+
+	_, err := r.queryStruct("GET", fmt.Sprintf("/profiles?%s", v.Encode()), nil, "", &profiles)
+	if err != nil {
+		return nil, err
+	}
+
+	return profiles, nil
+}
+
 // GetProfilesAllProjects returns a list of profiles across all projects as Profile structs.
 func (r *ProtocolIncus) GetProfilesAllProjects() ([]api.Profile, error) {
 	err := r.CheckExtension("profiles_all_projects")
@@ -45,6 +61,28 @@ func (r *ProtocolIncus) GetProfilesAllProjects() ([]api.Profile, error) {
 
 	profiles := []api.Profile{}
 	_, err = r.queryStruct("GET", "/profiles?recursion=1&all-projects=true", nil, "", &profiles)
+	if err != nil {
+		return nil, err
+	}
+
+	return profiles, nil
+}
+
+// GetProfilesAllProjectsWithFilter returns a filtered list of profiles across all projects as Profile structs.
+func (r *ProtocolIncus) GetProfilesAllProjectsWithFilter(filters []string) ([]api.Profile, error) {
+	err := r.CheckExtension("profiles_all_projects")
+	if err != nil {
+		return nil, fmt.Errorf(`The server is missing the required "profiles_all_projects" API extension`)
+	}
+
+	profiles := []api.Profile{}
+
+	v := url.Values{}
+	v.Set("recursion", "1")
+	v.Set("all-projects", "true")
+	v.Set("filter", parseFilters(filters))
+
+	_, err = r.queryStruct("GET", fmt.Sprintf("/profiles?%s", v.Encode()), nil, "", &profiles)
 	if err != nil {
 		return nil, err
 	}
