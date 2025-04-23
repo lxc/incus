@@ -746,13 +746,13 @@ func (d *disk) UpdatableFields(oldDevice Type) []string {
 func (d *disk) Register() error {
 	d.logger.Debug("Initialising mounted disk ref counter")
 
-	// Load the pool.
-	pool, err := storagePools.LoadByInstance(d.state, d.inst)
-	if err != nil {
-		return err
-	}
-
 	if d.config["path"] == "/" {
+		// Load the pool.
+		pool, err := storagePools.LoadByInstance(d.state, d.inst)
+		if err != nil {
+			return err
+		}
+
 		// Try to mount the volume that should already be mounted to reinitialize the ref counter.
 		_, err = pool.MountInstance(d.inst, nil)
 		if err != nil {
@@ -762,6 +762,12 @@ func (d *disk) Register() error {
 		storageProjectName, err := project.StorageVolumeProject(d.state.DB.Cluster, d.inst.Project().Name, db.StoragePoolVolumeTypeCustom)
 		if err != nil {
 			return err
+		}
+
+		// Load the pool.
+		pool, err := storagePools.LoadByName(d.state, d.config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed to get storage pool %q: %w", d.config["pool"], err)
 		}
 
 		// Parse the volume name and path.
