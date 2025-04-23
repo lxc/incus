@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/goccy/go-yaml"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 
 	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
@@ -443,7 +443,7 @@ func (c *cmdNetworkACLCreate) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &aclPut)
+		err = yaml.UnmarshalWithOptions(contents, &aclPut, yaml.Strict())
 		if err != nil {
 			return err
 		}
@@ -706,7 +706,7 @@ func (c *cmdNetworkACLEdit) Run(cmd *cobra.Command, args []string) error {
 		// Allow output of `incus network acl show` command to be passed in here, but only take the contents
 		// of the NetworkACLPut fields when updating the ACL. The other fields are silently discarded.
 		newdata := api.NetworkACL{}
-		err = yaml.UnmarshalStrict(contents, &newdata)
+		err = yaml.UnmarshalWithOptions(contents, &newdata, yaml.Strict())
 		if err != nil {
 			return err
 		}
@@ -734,7 +734,7 @@ func (c *cmdNetworkACLEdit) Run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor.
 		newdata := api.NetworkACL{} // We show the full ACL info, but only send the writable fields.
-		err = yaml.UnmarshalStrict(content, &newdata)
+		err = yaml.UnmarshalWithOptions(content, &newdata, yaml.Strict())
 		if err == nil {
 			err = resource.server.UpdateNetworkACL(resource.name, newdata.Writable(), etag)
 		}

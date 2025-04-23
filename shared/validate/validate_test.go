@@ -2,6 +2,7 @@ package validate_test
 
 import (
 	"fmt"
+	"testing"
 
 	"github.com/lxc/incus/v6/shared/validate"
 )
@@ -139,4 +140,57 @@ func ExampleIsValidCPUSet() {
 	// Cannot define CPU multiple times
 	// Cannot define CPU multiple times
 	// Cannot define CPU multiple times
+}
+
+func TestIsYAML(t *testing.T) {
+	type ErrCheck func(error) bool
+	passNoError := func(err error) bool {
+		return err == nil
+	}
+
+	passError := func(err error) bool {
+		return err != nil
+	}
+
+	tcs := []struct {
+		name  string
+		data  string
+		check ErrCheck
+	}{
+		{"Empty", "", passNoError},
+		{"Simple Tree", "a: b", passNoError},
+		{"End Comments", "a: b # Comments", passNoError},
+		{"Start Comments", "# Comments\na: b", passNoError},
+		{"Json like", `{
+  "a": "b"
+}`, passNoError},
+		{"Sample Config", `### This is a YAML representation of the configuration.
+### Any line starting with a '# will be ignored.
+###
+### A sample configuration looks like:
+name: instance1
+profiles:
+- default
+config:
+volatile.eth0.hwaddr: 00:16:3e:e9:f8:7f
+devices:
+  homedir:
+    path: /extra
+    source: /home/user
+    type: disk
+ephemeral: false`, passNoError},
+		{"string was used where mapping is expected", "a:b", passError},
+		{"Sequence was used where mapping is expected", `- a
+- b
+- c`, passError},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validate.IsYAML(tc.data)
+			if !tc.check(err) {
+				t.Fatal(err)
+			}
+		})
+	}
 }

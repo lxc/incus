@@ -22,10 +22,10 @@ import (
 
 	dqliteClient "github.com/cowsql/go-cowsql/client"
 	"github.com/cowsql/go-cowsql/driver"
+	"github.com/goccy/go-yaml"
 	"github.com/gorilla/mux"
 	liblxc "github.com/lxc/go-lxc"
 	"golang.org/x/sys/unix"
-	yaml "gopkg.in/yaml.v2"
 
 	internalIO "github.com/lxc/incus/v6/internal/io"
 	"github.com/lxc/incus/v6/internal/linux"

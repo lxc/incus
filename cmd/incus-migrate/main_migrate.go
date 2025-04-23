@@ -14,9 +14,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/goccy/go-yaml"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
-	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
 	cli "github.com/lxc/incus/v6/internal/cmd"

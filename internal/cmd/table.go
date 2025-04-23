@@ -9,8 +9,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/goccy/go-yaml"
 	"github.com/olekukonko/tablewriter"
-	"gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/v6/internal/i18n"
 )

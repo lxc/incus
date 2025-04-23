@@ -9,8 +9,8 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/goccy/go-yaml"
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
 
 	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/shared/api"

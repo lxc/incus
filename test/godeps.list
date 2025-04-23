@@ -1,3 +1,4 @@
+github.com/goccy/go-yaml
 github.com/gorilla/websocket
 github.com/lxc/incus/v6/client
 github.com/lxc/incus/v6/shared/api
@@ -19,4 +20,3 @@ github.com/zitadel/oidc/v3/pkg/http
 github.com/zitadel/oidc/v3/pkg/oidc
 golang.org/x/crypto/ssh
 golang.org/x/oauth2
-gopkg.in/yaml.v2

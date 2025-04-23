@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/goccy/go-yaml"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 
 	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
@@ -406,7 +406,7 @@ func (c *cmdNetworkPeerCreate) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &peerPut)
+		err = yaml.UnmarshalWithOptions(contents, &peerPut, yaml.Strict())
 		if err != nil {
 			return err
 		}
@@ -794,7 +794,7 @@ func (c *cmdNetworkPeerEdit) Run(cmd *cobra.Command, args []string) error {
 		// Allow output of `incus network peer show` command to be passed in here, but only take the contents
 		// of the NetworkPeerPut fields when updating. The other fields are silently discarded.
 		newData := api.NetworkPeer{}
-		err = yaml.UnmarshalStrict(contents, &newData)
+		err = yaml.UnmarshalWithOptions(contents, &newData, yaml.Strict())
 		if err != nil {
 			return err
 		}
@@ -822,7 +822,7 @@ func (c *cmdNetworkPeerEdit) Run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor.
 		newData := api.NetworkPeer{} // We show the full info, but only send the writable fields.
-		err = yaml.UnmarshalStrict(content, &newData)
+		err = yaml.UnmarshalWithOptions(content, &newData, yaml.Strict())
 		if err == nil {
 			err = client.UpdateNetworkPeer(resource.name, args[1], newData.Writable(), etag)
 		}

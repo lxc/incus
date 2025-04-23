@@ -27,6 +27,7 @@ import (
 
 	"github.com/checkpoint-restore/go-criu/v6/crit"
 	"github.com/flosch/pongo2/v6"
+	"github.com/goccy/go-yaml"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/kballard/go-shellquote"
@@ -36,7 +37,6 @@ import (
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
 	"google.golang.org/protobuf/proto"
-	yaml "gopkg.in/yaml.v2"
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/instancewriter"

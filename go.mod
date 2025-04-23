@@ -17,6 +17,7 @@ require (
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-jose/go-jose/v4 v4.0.5
 	github.com/go-logr/logr v1.4.2
+	github.com/goccy/go-yaml v1.17.1
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.6.0
@@ -62,7 +63,6 @@ require (
 	golang.org/x/tools v0.32.0
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
-	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/utils v0.0.0-20250321185631-1f6e0b77f77e
 )
 
@@ -138,6 +138,7 @@ require (
 	golang.org/x/time v0.11.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250421163800-61c742ae3ef0 // indirect
 	google.golang.org/grpc v1.72.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
 )

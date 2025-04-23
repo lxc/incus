@@ -5,7 +5,7 @@ package main
 import (
 	"fmt"
 
-	yaml "gopkg.in/yaml.v2"
+	"github.com/goccy/go-yaml"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/i18n"

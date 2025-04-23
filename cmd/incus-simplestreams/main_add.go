@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/goccy/go-yaml"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 
 	cli "github.com/lxc/incus/v6/internal/cmd"
 	internalUtil "github.com/lxc/incus/v6/internal/util"

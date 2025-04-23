@@ -6,7 +6,7 @@ import (
 	"os/user"
 	"path/filepath"
 
-	"gopkg.in/yaml.v2"
+	"github.com/goccy/go-yaml"
 
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/util"

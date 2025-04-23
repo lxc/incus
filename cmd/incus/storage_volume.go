@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/goccy/go-yaml"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
 	cli "github.com/lxc/incus/v6/internal/cmd"
@@ -640,7 +640,7 @@ func (c *cmdStorageVolumeCreate) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &volumePut)
+		err = yaml.UnmarshalWithOptions(contents, &volumePut, yaml.Strict())
 		if err != nil {
 			return err
 		}

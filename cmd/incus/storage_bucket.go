@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/goccy/go-yaml"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
 	cli "github.com/lxc/incus/v6/internal/cmd"
@@ -145,7 +145,7 @@ func (c *cmdStorageBucketCreate) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &bucketPut)
+		err = yaml.UnmarshalWithOptions(contents, &bucketPut, yaml.Strict())
 		if err != nil {
 			return err
 		}
@@ -1124,7 +1124,7 @@ func (c *cmdStorageBucketKeyCreate) RunAdd(cmd *cobra.Command, args []string) er
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &bucketKeyPut)
+		err = yaml.UnmarshalWithOptions(contents, &bucketKeyPut, yaml.Strict())
 		if err != nil {
 			return err
 		}

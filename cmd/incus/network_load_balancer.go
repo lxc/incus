@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/goccy/go-yaml"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 
 	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
@@ -383,7 +383,7 @@ func (c *cmdNetworkLoadBalancerCreate) Run(cmd *cobra.Command, args []string) er
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &loadBalancerPut)
+		err = yaml.UnmarshalWithOptions(contents, &loadBalancerPut, yaml.Strict())
 		if err != nil {
 			return err
 		}
@@ -756,7 +756,7 @@ func (c *cmdNetworkLoadBalancerEdit) Run(cmd *cobra.Command, args []string) erro
 		// contents of the NetworkLoadBalancerPut fields when updating.
 		// The other fields are silently discarded.
 		newData := api.NetworkLoadBalancer{}
-		err = yaml.UnmarshalStrict(contents, &newData)
+		err = yaml.UnmarshalWithOptions(contents, &newData, yaml.Strict())
 		if err != nil {
 			return err
 		}
@@ -786,7 +786,7 @@ func (c *cmdNetworkLoadBalancerEdit) Run(cmd *cobra.Command, args []string) erro
 	for {
 		// Parse the text received from the editor.
 		newData := api.NetworkLoadBalancer{} // We show the full info, but only send the writable fields.
-		err = yaml.UnmarshalStrict(content, &newData)
+		err = yaml.UnmarshalWithOptions(content, &newData, yaml.Strict())
 		if err == nil {
 			newData.Normalise()
 			err = client.UpdateNetworkLoadBalancer(resource.name, args[1], newData.Writable(), etag)

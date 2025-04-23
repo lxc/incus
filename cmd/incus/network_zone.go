@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/goccy/go-yaml"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 
 	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
@@ -450,7 +450,7 @@ func (c *cmdNetworkZoneCreate) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &zonePut)
+		err = yaml.UnmarshalWithOptions(contents, &zonePut, yaml.Strict())
 		if err != nil {
 			return err
 		}
@@ -699,7 +699,7 @@ func (c *cmdNetworkZoneEdit) Run(cmd *cobra.Command, args []string) error {
 		// Allow output of `incus network zone show` command to be passed in here, but only take the contents
 		// of the NetworkZonePut fields when updating the Zone. The other fields are silently discarded.
 		newdata := api.NetworkZone{}
-		err = yaml.UnmarshalStrict(contents, &newdata)
+		err = yaml.UnmarshalWithOptions(contents, &newdata, yaml.Strict())
 		if err != nil {
 			return err
 		}
@@ -727,7 +727,7 @@ func (c *cmdNetworkZoneEdit) Run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor.
 		newdata := api.NetworkZone{} // We show the full Zone info, but only send the writable fields.
-		err = yaml.UnmarshalStrict(content, &newdata)
+		err = yaml.UnmarshalWithOptions(content, &newdata, yaml.Strict())
 		if err == nil {
 			err = resource.server.UpdateNetworkZone(resource.name, newdata.Writable(), etag)
 		}
@@ -1166,7 +1166,7 @@ func (c *cmdNetworkZoneRecordCreate) Run(cmd *cobra.Command, args []string) erro
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &recordPut)
+		err = yaml.UnmarshalWithOptions(contents, &recordPut, yaml.Strict())
 		if err != nil {
 			return err
 		}
@@ -1423,7 +1423,7 @@ func (c *cmdNetworkZoneRecordEdit) Run(cmd *cobra.Command, args []string) error 
 		// Allow output of `incus network zone show` command to be passed in here, but only take the contents
 		// of the NetworkZonePut fields when updating the Zone. The other fields are silently discarded.
 		newdata := api.NetworkZoneRecord{}
-		err = yaml.UnmarshalStrict(contents, &newdata)
+		err = yaml.UnmarshalWithOptions(contents, &newdata)
 		if err != nil {
 			return err
 		}
@@ -1451,7 +1451,7 @@ func (c *cmdNetworkZoneRecordEdit) Run(cmd *cobra.Command, args []string) error 
 	for {
 		// Parse the text received from the editor.
 		newdata := api.NetworkZoneRecord{} // We show the full Zone info, but only send the writable fields.
-		err = yaml.UnmarshalStrict(content, &newdata)
+		err = yaml.UnmarshalWithOptions(content, &newdata)
 		if err == nil {
 			err = resource.server.UpdateNetworkZoneRecord(resource.name, args[1], newdata.Writable(), etag)
 		}

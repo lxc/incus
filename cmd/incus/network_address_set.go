@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/goccy/go-yaml"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 
 	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
@@ -287,7 +287,7 @@ func (c *cmdNetworkAddressSetCreate) Run(cmd *cobra.Command, args []string) erro
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &asPut)
+		err = yaml.UnmarshalWithOptions(contents, &asPut, yaml.Strict())
 		if err != nil {
 			return err
 		}
@@ -525,7 +525,7 @@ func (c *cmdNetworkAddressSetEdit) Run(cmd *cobra.Command, args []string) error 
 		}
 
 		newdata := api.NetworkAddressSet{}
-		err = yaml.UnmarshalStrict(contents, &newdata)
+		err = yaml.UnmarshalWithOptions(contents, &newdata, yaml.Strict())
 		if err != nil {
 			return err
 		}
@@ -551,7 +551,7 @@ func (c *cmdNetworkAddressSetEdit) Run(cmd *cobra.Command, args []string) error 
 
 	for {
 		newdata := api.NetworkAddressSet{}
-		err = yaml.UnmarshalStrict(content, &newdata)
+		err = yaml.UnmarshalWithOptions(content, &newdata, yaml.Strict())
 		if err == nil {
 			err = resource.server.UpdateNetworkAddressSet(resource.name, newdata.Writable(), etag)
 		}
