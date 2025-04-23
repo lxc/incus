@@ -1,42 +1,39 @@
 package ip
 
 import (
-	"github.com/lxc/incus/v6/shared/subprocess"
+	"fmt"
+
+	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
 )
 
 // Action represents an action in filter.
 type Action interface {
-	AddAction() []string
+	toNetlink() (netlink.Action, error)
 }
 
 // ActionPolice represents an action of 'police' type.
 type ActionPolice struct {
-	Rate  string
-	Burst string
-	Mtu   string
+	Rate  uint32 // in byte/s
+	Burst uint32 // in byte
+	Mtu   uint32 // in byte
 	Drop  bool
 }
 
-// AddAction generates a part of command specific for 'police' action.
-func (a *ActionPolice) AddAction() []string {
-	result := []string{"police"}
-	if a.Rate != "" {
-		result = append(result, "rate", a.Rate)
-	}
+func (a *ActionPolice) toNetlink() (netlink.Action, error) {
+	action := netlink.NewPoliceAction()
 
-	if a.Burst != "" {
-		result = append(result, "burst", a.Burst)
-	}
-
-	if a.Mtu != "" {
-		result = append(result, "mtu", a.Mtu)
-	}
+	action.Rate = a.Rate
+	action.Burst = a.Burst
+	action.Mtu = a.Mtu
 
 	if a.Drop {
-		result = append(result, "drop")
+		action.ExceedAction = netlink.TC_POLICE_SHOT
+	} else {
+		action.ExceedAction = netlink.TC_POLICE_RECLASSIFY
 	}
 
-	return result
+	return action, nil
 }
 
 // Filter represents filter object.
@@ -50,33 +47,79 @@ type Filter struct {
 // U32Filter represents universal 32bit traffic control filter.
 type U32Filter struct {
 	Filter
-	Value   string
-	Mask    string
+	Value   uint32
+	Mask    uint32
 	Actions []Action
+}
+
+func parseProtocol(proto string) (uint16, error) {
+	switch proto {
+	case "all":
+		return unix.ETH_P_ALL, nil
+	default:
+		return 0, fmt.Errorf("Unknown protocol %q", proto)
+	}
 }
 
 // Add adds universal 32bit traffic control filter to a node.
 func (u32 *U32Filter) Add() error {
-	cmd := []string{"filter", "add", "dev", u32.Dev}
-	if u32.Parent != "" {
-		cmd = append(cmd, "parent", u32.Parent)
+	link, err := linkByName(u32.Dev)
+	if err != nil {
+		return err
 	}
 
-	cmd = append(cmd, "protocol", u32.Protocol)
-	cmd = append(cmd, "u32", "match", "u32", u32.Value, u32.Mask)
+	proto, err := parseProtocol(u32.Protocol)
+	if err != nil {
+		return err
+	}
+
+	filter := &netlink.U32{
+		FilterAttrs: netlink.FilterAttrs{
+			LinkIndex: link.Attrs().Index,
+			Protocol:  proto,
+			Chain:     nil,
+		},
+		Sel: &netlink.TcU32Sel{
+			Nkeys: 1,
+			Keys: []netlink.TcU32Key{
+				{
+					Mask: u32.Mask,
+					Val:  u32.Value,
+				},
+			},
+		},
+	}
 
 	for _, action := range u32.Actions {
-		actionCmd := action.AddAction()
-		cmd = append(cmd, actionCmd...)
+		netlinkAction, err := action.toNetlink()
+		if err != nil {
+			return err
+		}
+
+		filter.Actions = append(filter.Actions, netlinkAction)
+	}
+
+	if u32.Parent != "" {
+		parent, err := parseHandle(u32.Parent)
+		if err != nil {
+			return err
+		}
+
+		filter.Parent = parent
 	}
 
 	if u32.Flowid != "" {
-		cmd = append(cmd, "flowid", u32.Flowid)
+		flowid, err := parseHandle(u32.Flowid)
+		if err != nil {
+			return err
+		}
+
+		filter.ClassId = flowid
 	}
 
-	_, err := subprocess.RunCommand("tc", cmd...)
+	err = netlink.FilterAdd(filter)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to add filter %v: %w", filter, err)
 	}
 
 	return nil
