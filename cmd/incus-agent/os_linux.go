@@ -44,10 +44,11 @@ var (
 	osMetricsExcludeMountpoints = regexp.MustCompile(`^/(?:dev|proc|sys|var/lib/docker/.+)(?:$|/)`)
 	osMetricsExcludeFilesystems = []string{"autofs", "binfmt_misc", "bpf", "cgroup", "cgroup2", "configfs", "debugfs", "devpts", "devtmpfs", "fusectl", "hugetlbfs", "iso9660", "mqueue", "nsfs", "overlay", "proc", "procfs", "pstore", "rpc_pipefs", "securityfs", "selinuxfs", "squashfs", "sysfs", "tracefs"}
 
-	osShutdownSignal   = unix.SIGTERM
-	osExitStatus       = linux.ExitStatus
-	osExecWrapper      = linux.NewExecWrapper
-	osMetricsSupported = true
+	osShutdownSignal       = unix.SIGTERM
+	osExitStatus           = linux.ExitStatus
+	osExecWrapper          = linux.NewExecWrapper
+	osBaseWorkingDirectory = "/"
+	osMetricsSupported     = true
 )
 
 func osGetEnvironment() (*api.ServerEnvironment, error) {
