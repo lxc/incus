@@ -29,10 +29,8 @@ To create an `sriov` `infiniband` device, use the following command:
 
 `infiniband` devices have the following device options:
 
-Key                     | Type      | Default           | Required  | Description
-:--                     | :--       | :--               | :--       | :--
-`hwaddr`                | string    | randomly assigned | no        | The MAC address of the new interface (can be either the full 20-byte variant or the short 8-byte variant, which will only modify the last 8 bytes of the parent device)
-`mtu`                   | integer   | parent MTU        | no        | The MTU of the new interface
-`name`                  | string    | kernel assigned   | no        | The name of the interface inside the instance
-`nictype`               | string    | -                 | yes       | The device type (one of `physical` or `sriov`)
-`parent`                | string    | -                 | yes       | The name of the host device or bridge
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group infiniband-common start -->
+    :end-before: <!-- config group infiniband-common end -->
+```

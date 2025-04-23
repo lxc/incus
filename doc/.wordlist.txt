@@ -67,6 +67,7 @@ Distrobuilder
 diskful
 Diskless
 diskless
+DNAT
 DNS
 dnsmasq
 DNSSEC
@@ -264,6 +265,7 @@ SIGTERM
 simplestreams
 SLAAC
 SMTP
+SNAT
 Snapcraft
 Solaris
 SPAs

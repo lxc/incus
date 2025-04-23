@@ -50,7 +50,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/instance"
 	instanceDrivers "github.com/lxc/incus/v6/internal/server/instance/drivers"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
-	"github.com/lxc/incus/v6/internal/server/loki"
+	"github.com/lxc/incus/v6/internal/server/logging"
 	"github.com/lxc/incus/v6/internal/server/network/ovn"
 	"github.com/lxc/incus/v6/internal/server/network/ovs"
 	networkZone "github.com/lxc/incus/v6/internal/server/network/zone"
@@ -154,7 +154,7 @@ type Daemon struct {
 	serverName      string
 	serverClustered bool
 
-	lokiClient *loki.Client
+	loggingController *logging.Controller
 
 	// Authorization.
 	authorizer auth.Authorizer
@@ -872,48 +872,6 @@ func (d *Daemon) Init() error {
 	return nil
 }
 
-func (d *Daemon) setupLoki(URL string, cert string, key string, caCert string, instanceName string, logLevel string, labels []string, types []string) error {
-	// Stop any existing loki client.
-	if d.lokiClient != nil {
-		d.lokiClient.Stop()
-	}
-
-	// Check basic requirements for starting a new client.
-	if URL == "" || logLevel == "" || len(types) == 0 {
-		return nil
-	}
-
-	// Validate the URL.
-	u, err := url.Parse(URL)
-	if err != nil {
-		return err
-	}
-
-	// Handle standalone systems.
-	var location string
-	if !d.serverClustered {
-		hostname, err := os.Hostname()
-		if err != nil {
-			return err
-		}
-
-		location = hostname
-		if instanceName == "" {
-			instanceName = hostname
-		}
-	} else if instanceName == "" {
-		instanceName = d.serverName
-	}
-
-	// Start a new client.
-	d.lokiClient = loki.NewClient(d.shutdownCtx, u, cert, key, caCert, instanceName, location, logLevel, labels, types)
-
-	// Attach the new client to the log handler.
-	d.internalListener.AddHandler("loki", d.lokiClient.HandleEvent)
-
-	return nil
-}
-
 func (d *Daemon) init() error {
 	var err error
 
@@ -1471,7 +1429,6 @@ func (d *Daemon) init() error {
 	d.proxy = proxy.FromConfig(d.globalConfig.ProxyHTTPS(), d.globalConfig.ProxyHTTP(), d.globalConfig.ProxyIgnoreHosts())
 
 	d.gateway.HeartbeatOfflineThreshold = d.globalConfig.OfflineThreshold()
-	lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiInstance, lokiLoglevel, lokiLabels, lokiTypes := d.globalConfig.LokiServer()
 	oidcIssuer, oidcClientID, oidcScope, oidcAudience, oidcClaim := d.globalConfig.OIDCServer()
 	syslogSocketEnabled := d.localConfig.SyslogSocket()
 	openfgaAPIURL, openfgaAPIToken, openfgaStoreID := d.globalConfig.OpenFGA()
@@ -1481,12 +1438,10 @@ func (d *Daemon) init() error {
 	d.endpoints.NetworkUpdateTrustedProxy(d.globalConfig.HTTPSTrustedProxy())
 	d.globalConfigMu.Unlock()
 
-	// Setup Loki logger.
-	if lokiURL != "" {
-		err = d.setupLoki(lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiInstance, lokiLoglevel, lokiLabels, lokiTypes)
-		if err != nil {
-			return err
-		}
+	d.loggingController = logging.NewLoggingController(d.internalListener)
+	err = d.loggingController.Setup(d.State())
+	if err != nil {
+		return err
 	}
 
 	// Setup syslog listener.
@@ -1801,6 +1756,10 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 
 	// Cancelling the context will make everyone aware that we're shutting down.
 	d.shutdownCancel()
+
+	if d.loggingController != nil {
+		d.loggingController.Shutdown()
+	}
 
 	if d.gateway != nil {
 		d.stopClusterTasks()

@@ -45,10 +45,11 @@ Property         | Type       | Required | Description
 
 Network forwards have the following configuration options:
 
-Key                 | Type      | Default | Description
-:--                 | :---      | :------ | :----------
-`user.*`            | string    | -       | User defined key/value configuration
-`target_address`    | string    | -       | Default target address for anything not covered through a port definition
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group network_forward-common start -->
+    :end-before: <!-- config group network_forward-common end -->
+```
 
 (network-forwards-listen-addresses)=
 ### Requirements for listen addresses
@@ -95,6 +96,12 @@ Property          | Type       | Required | Description
 `target_address`  | string     | yes      | IP address to forward to
 `target_port`     | string     | no       | Target port(s) (e.g. `70,80-90` or `90`), same as `listen_port` if empty
 `description`     | string     | no       | Description of port(s)
+`snat`            | bool       | no       | Whether to place a matching SNAT rule to rewrite any new traffic coming from the target
+
+```{note}
+The `snat` property is currently only supported on managed `bridge` networks and with the `nftables` firewall driver.
+You also need to ensure that the target instance's port(s) aren't covered by multiple forwards to guarantee a consistent external address.
+```
 
 ## Edit a network forward
 

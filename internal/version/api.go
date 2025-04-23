@@ -477,6 +477,9 @@ var APIExtensions = []string{
 	"storage_driver_linstor",
 	"instance_oci_entrypoint",
 	"network_address_set",
+	"server_logging",
+	"network_forward_snat",
+	"memory_hotplug",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

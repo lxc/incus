@@ -73,6 +73,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/template"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/idmap"
 	"github.com/lxc/incus/v6/shared/ioprogress"
@@ -2315,26 +2316,29 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			volatileSet["volatile.container.oci"] = "true"
 		}
 
-		// Allow unprivileged users to use ping.
-		maxGid := int64(4294967294)
+		// Allow unprivileged users to use ping (requires a 6.6 kernel at least).
+		minVer, _ := version.NewDottedVersion("6.6.0")
+		if d.state.OS.KernelVersion.Compare(minVer) >= 0 {
+			maxGid := int64(4294967294)
 
-		if !d.IsPrivileged() {
-			maxGid = 0
-			idMap, err := d.CurrentIdmap()
+			if !d.IsPrivileged() {
+				maxGid = 0
+				idMap, err := d.CurrentIdmap()
+				if err != nil {
+					return "", nil, err
+				}
+
+				for _, entry := range idMap.Entries {
+					if entry.NSID+entry.MapRange-1 > maxGid {
+						maxGid = entry.NSID + entry.MapRange - 1
+					}
+				}
+			}
+
+			err = lxcSetConfigItem(cc, "lxc.sysctl.net.ipv4.ping_group_range", fmt.Sprintf("0 %d", maxGid))
 			if err != nil {
 				return "", nil, err
 			}
-
-			for _, entry := range idMap.Entries {
-				if entry.NSID+entry.MapRange-1 > maxGid {
-					maxGid = entry.NSID + entry.MapRange - 1
-				}
-			}
-		}
-
-		err = lxcSetConfigItem(cc, "lxc.sysctl.net.ipv4.ping_group_range", fmt.Sprintf("0 %d", maxGid))
-		if err != nil {
-			return "", nil, err
 		}
 
 		// Allow unprivileged users to use low ports.
@@ -2495,7 +2499,23 @@ ff02::2 ip6-allrouters
 			return "", nil, err
 		}
 
-		err = lxcSetConfigItem(cc, "lxc.hook.start-host", fmt.Sprintf("/proc/%d/exe forknet dhcp %s", os.Getpid(), filepath.Join(d.Path(), "network")))
+		forknetDhcpLogfilePath := filepath.Join(d.LogPath(), "forknet-dhcp.log")
+		forknetDhcpLogfile, err := os.Create(forknetDhcpLogfilePath)
+		if err != nil {
+			return "", nil, err
+		}
+
+		err = forknetDhcpLogfile.Close()
+		if err != nil {
+			return "", nil, err
+		}
+
+		err = lxcSetConfigItem(cc, "lxc.hook.start-host", fmt.Sprintf(
+			"/proc/%d/exe forknet dhcp %s %s",
+			os.Getpid(),
+			filepath.Join(d.Path(), "network"),
+			forknetDhcpLogfilePath,
+		))
 		if err != nil {
 			return "", nil, err
 		}
@@ -2921,7 +2941,7 @@ func (d *lxc) onStart(_ map[string]string) error {
 	}
 
 	// Trigger a rebalance
-	cgroup.TaskSchedulerTrigger("container", d.name, "started")
+	defer cgroup.TaskSchedulerTrigger("container", d.name, "started")
 
 	// Record last start state.
 	err = d.recordLastState()
@@ -3444,7 +3464,7 @@ func (d *lxc) onStop(args map[string]string) error {
 		}
 
 		// Trigger a rebalance
-		cgroup.TaskSchedulerTrigger("container", d.name, "stopped")
+		defer cgroup.TaskSchedulerTrigger("container", d.name, "stopped")
 
 		// Destroy ephemeral containers
 		if d.ephemeral {
@@ -3712,6 +3732,17 @@ func (d *lxc) Render() (any, any, error) {
 func (d *lxc) RenderFull(hostInterfaces []net.Interface) (*api.InstanceFull, any, error) {
 	if d.IsSnapshot() {
 		return nil, nil, fmt.Errorf("RenderFull only works with containers")
+	}
+
+	// Pre-fetch the data.
+	pool, err := d.getStoragePool()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = pool.CacheInstanceSnapshots(d)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	// Get the Container struct
@@ -5046,7 +5077,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 				}
 			} else if key == "limits.cpu" || key == "limits.cpu.nodes" {
 				// Trigger a scheduler re-run
-				cgroup.TaskSchedulerTrigger("container", d.name, "changed")
+				defer cgroup.TaskSchedulerTrigger("container", d.name, "changed") //nolint:revive
 			} else if key == "limits.cpu.priority" || key == "limits.cpu.allowance" {
 				// Skip if no cpu CGroup
 				if !d.state.OS.CGInfo.Supports(cgroup.CPU, cg) {

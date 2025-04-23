@@ -162,43 +162,106 @@ func (d *zfs) Info() Info {
 // Accepts warnOnExistingPolicyApplyError argument, if true will warn rather than fail if applying current policy
 // to an existing dataset fails.
 func (d zfs) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
-	args := make([]string, 0, len(zfsDefaultSettings))
+	// Build the list of datasets to query.
+	datasets := []string{d.config["zfs.pool_name"]}
+	for _, entry := range d.initialDatasets() {
+		datasets = append(datasets, filepath.Join(d.config["zfs.pool_name"], entry))
+	}
+
+	// Build the list of properties to check.
+	props := []string{"name", "mountpoint", "volmode"}
+	for k := range zfsDefaultSettings {
+		props = append(props, k)
+	}
+
+	// Get current state.
+	args := append([]string{"get", "-H", "-p", "-o", "name,property,value", strings.Join(props, ",")}, datasets...)
+	output, _ := subprocess.RunCommand("zfs", args...)
+
+	currentConfig := map[string]map[string]string{}
+	for _, entry := range strings.Split(output, "\n") {
+		if entry == "" {
+			continue
+		}
+
+		fields := strings.Fields(entry)
+		if len(fields) != 3 {
+			continue
+		}
+
+		if currentConfig[fields[0]] == nil {
+			currentConfig[fields[0]] = map[string]string{}
+		}
+
+		currentConfig[fields[0]][fields[1]] = fields[2]
+	}
+
+	// Check that the root dataset is correctly configured.
+	args = []string{}
 	for k, v := range zfsDefaultSettings {
+		current := currentConfig[d.config["zfs.pool_name"]][k]
+		if current == v {
+			continue
+		}
+
+		// Workaround for values having been renamed over time.
+		if k == "acltype" && current == "posix" {
+			continue
+		}
+
+		if k == "xattr" && current == "on" {
+			continue
+		}
+
 		args = append(args, fmt.Sprintf("%s=%s", k, v))
 	}
 
-	err := d.setDatasetProperties(d.config["zfs.pool_name"], args...)
-	if err != nil {
-		if warnOnExistingPolicyApplyError {
+	if len(args) > 0 {
+		err := d.setDatasetProperties(d.config["zfs.pool_name"], args...)
+		if err != nil {
+			if !warnOnExistingPolicyApplyError {
+				return fmt.Errorf("Failed applying policy to existing dataset %q: %w", d.config["zfs.pool_name"], err)
+			}
+
 			d.logger.Warn("Failed applying policy to existing dataset", logger.Ctx{"dataset": d.config["zfs.pool_name"], "err": err})
-		} else {
-			return fmt.Errorf("Failed applying policy to existing dataset %q: %w", d.config["zfs.pool_name"], err)
 		}
 	}
 
+	// Check the initial datasets.
 	for _, dataset := range d.initialDatasets() {
-		properties := []string{"mountpoint=legacy"}
+		properties := map[string]string{"mountpoint": "legacy"}
 		if slices.Contains([]string{"virtual-machines", "deleted/virtual-machines"}, dataset) {
-			properties = append(properties, "volmode=none")
+			properties["volmode"] = "none"
 		}
 
 		datasetPath := filepath.Join(d.config["zfs.pool_name"], dataset)
-		exists, err := d.datasetExists(datasetPath)
-		if err != nil {
-			return err
-		}
+		if currentConfig[datasetPath] != nil {
+			args := []string{}
+			for k, v := range properties {
+				if currentConfig[datasetPath][k] == v {
+					continue
+				}
 
-		if exists {
-			err = d.setDatasetProperties(datasetPath, properties...)
-			if err != nil {
-				if warnOnExistingPolicyApplyError {
+				args = append(args, fmt.Sprintf("%s=%s", k, v))
+			}
+
+			if len(args) > 0 {
+				err := d.setDatasetProperties(datasetPath, args...)
+				if err != nil {
+					if !warnOnExistingPolicyApplyError {
+						return fmt.Errorf("Failed applying policy to existing dataset %q: %w", datasetPath, err)
+					}
+
 					d.logger.Warn("Failed applying policy to existing dataset", logger.Ctx{"dataset": datasetPath, "err": err})
-				} else {
-					return fmt.Errorf("Failed applying policy to existing dataset %q: %w", datasetPath, err)
 				}
 			}
 		} else {
-			err = d.createDataset(datasetPath, properties...)
+			args := []string{}
+			for k, v := range properties {
+				args = append(args, fmt.Sprintf("%s=%s", k, v))
+			}
+
+			err := d.createDataset(datasetPath, args...)
 			if err != nil {
 				return fmt.Errorf("Failed creating dataset %q: %w", datasetPath, err)
 			}

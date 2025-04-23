@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/tls/tlstest"
 )
 
 type objectSuite struct {
@@ -19,7 +19,7 @@ func TestObjectSuite(t *testing.T) {
 
 func (s *objectSuite) TestObjectCertificate() {
 	s.Assert().NotPanics(func() {
-		fingerprint := localtls.TestingKeyPair().Fingerprint()
+		fingerprint := tlstest.TestingKeyPair(s.T()).Fingerprint()
 		o := ObjectCertificate(fingerprint)
 		s.Equal(fmt.Sprintf("certificate:%s", fingerprint), string(o))
 	})
@@ -27,7 +27,7 @@ func (s *objectSuite) TestObjectCertificate() {
 
 func (s *objectSuite) TestObjectImage() {
 	s.Assert().NotPanics(func() {
-		fingerprint := localtls.TestingKeyPair().Fingerprint()
+		fingerprint := tlstest.TestingKeyPair(s.T()).Fingerprint()
 		o := ObjectImage("default", fingerprint)
 		s.Equal(fmt.Sprintf("image:default/%s", fingerprint), string(o))
 	})

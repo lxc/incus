@@ -217,13 +217,46 @@ func (d *gpuMdev) validateConfig(instConf instance.ConfigReader) error {
 	}
 
 	requiredFields := []string{
+		// gendoc:generate(entity=devices, group=gpu_mdev, key=mdev)
+		//
+		// ---
+		//  type: string
+		//  required: yes
+		//  shortdesc: The mediated device profile to use (required - for example, `i915-GVTg_V5_4`)
 		"mdev",
 	}
 
 	optionalFields := []string{
+		// gendoc:generate(entity=devices, group=gpu_mdev, key=vendorid)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: The vendor ID of the GPU device
 		"vendorid",
+
+		// gendoc:generate(entity=devices, group=gpu_mdev, key=productid)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: The product ID of the GPU device
 		"productid",
+
+		// gendoc:generate(entity=devices, group=gpu_mdev, key=id)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: The DRM card ID of the GPU device
 		"id",
+
+		// gendoc:generate(entity=devices, group=gpu_mdev, key=pci
+		//
+		// ---
+		//  type: strong
+		//  required: no
+		//  shortdesc: The PCI address of the GPU device
 		"pci",
 	}
 

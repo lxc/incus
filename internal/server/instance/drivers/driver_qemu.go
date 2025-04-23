@@ -3860,9 +3860,8 @@ func (d *qemu) writeQemuConfigFile(configPath string) error {
 	return os.WriteFile(configPath, []byte(sb.String()), 0o640)
 }
 
-// addCPUMemoryConfig adds the qemu config required for setting the number of virtualised CPUs and memory.
-// If sb is nil then no config is written.
-func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuInfo *cpuTopology) error {
+// getCPUOpts retrieves configuration options for virtualized CPUs and memory.
+func (d *qemu) getCPUOpts(cpuInfo *cpuTopology, memSizeBytes int64) (*qemuCPUOpts, error) {
 	// Figure out what memory object layout we're going to use.
 	// Before v6.0 or if version unknown, we use the "repeated" format, otherwise we use "indexed" format.
 	qemuMemObjectFormat := "repeated"
@@ -3876,8 +3875,6 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuInfo *cpuTopology) err
 		architecture:        d.architectureName,
 		qemuMemObjectFormat: qemuMemObjectFormat,
 	}
-
-	cpuPinning := false
 
 	hostNodes := []uint64{}
 	if cpuInfo.vcpus == nil {
@@ -3908,14 +3905,12 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuInfo *cpuTopology) err
 			// Parse the NUMA restriction.
 			numaNodeSet, err := resources.ParseNumaNodeSet(numaNodes)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 			cpuOpts.memoryHostNodes = numaNodeSet
 		}
 	} else {
-		cpuPinning = true
-
 		// Figure out socket-id/core-id/thread-id for all vcpus.
 		vcpuSocket := map[uint64]uint64{}
 		vcpuCore := map[uint64]uint64{}
@@ -3962,6 +3957,27 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuInfo *cpuTopology) err
 		cpuOpts.cpuNumaHostNodes = hostNodes
 	}
 
+	cpuOpts.hugepages = ""
+	if util.IsTrue(d.expandedConfig["limits.memory.hugepages"]) {
+		hugetlb, err := localUtil.HugepagesPath()
+		if err != nil {
+			return nil, err
+		}
+
+		cpuOpts.hugepages = hugetlb
+	}
+
+	// Determine per-node memory limit.
+	memSizeMB := memSizeBytes / 1024 / 1024
+	nodeMemory := int64(memSizeMB / int64(len(hostNodes)))
+	cpuOpts.memory = nodeMemory
+
+	return &cpuOpts, nil
+}
+
+// addCPUMemoryConfig adds the qemu config required for setting the number of virtualised CPUs and memory.
+// If sb is nil then no config is written.
+func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuInfo *cpuTopology) error {
 	// Configure memory limit.
 	memSize := d.expandedConfig["limits.memory"]
 	if memSize == "" {
@@ -3973,24 +3989,16 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuInfo *cpuTopology) err
 		return fmt.Errorf("limits.memory invalid: %w", err)
 	}
 
-	cpuOpts.hugepages = ""
-	if util.IsTrue(d.expandedConfig["limits.memory.hugepages"]) {
-		hugetlb, err := localUtil.HugepagesPath()
-		if err != nil {
-			return err
-		}
-
-		cpuOpts.hugepages = hugetlb
+	cpuOpts, err := d.getCPUOpts(cpuInfo, memSizeBytes)
+	if err != nil {
+		return err
 	}
 
-	// Determine per-node memory limit.
-	memSizeMB := memSizeBytes / 1024 / 1024
-	nodeMemory := int64(memSizeMB / int64(len(hostNodes)))
-	cpuOpts.memory = nodeMemory
+	cpuPinning := cpuInfo.vcpus != nil
 
 	if conf != nil {
-		*conf = append(*conf, qemuMemory(&qemuMemoryOpts{memSizeMB})...)
-		*conf = append(*conf, qemuCPU(&cpuOpts, cpuPinning)...)
+		*conf = append(*conf, qemuMemory(&qemuMemoryOpts{memSizeBytes / 1024 / 1024})...)
+		*conf = append(*conf, qemuCPU(cpuOpts, cpuPinning)...)
 	}
 
 	return nil
@@ -6162,7 +6170,7 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 	if curSizeMB == newSizeMB {
 		return nil
 	} else if baseSizeMB < newSizeMB {
-		return fmt.Errorf("Cannot increase memory size beyond boot time size when VM is running (Boot time size %dMiB, new size %dMiB)", baseSizeMB, newSizeMB)
+		return d.hotplugMemory(monitor, newSizeBytes-curSizeBytes)
 	}
 
 	// Set effective memory size.
@@ -6196,6 +6204,79 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 	}
 
 	return fmt.Errorf("Failed setting memory to %dMiB (currently %dMiB) as it was taking too long", newSizeMB, curSizeMB)
+}
+
+// hotplugMemory attaches a memory device to a running VM,
+// respecting NUMA node placement and hugepages.
+func (d *qemu) hotplugMemory(monitor *qmp.Monitor, sizeBytes int64) error {
+	// Get CPU information.
+	cpuInfo, err := d.cpuTopology(d.expandedConfig["limits.cpu"])
+	if err != nil {
+		return err
+	}
+
+	// Fetch memory configuration
+	cpuOpts, err := d.getCPUOpts(cpuInfo, sizeBytes)
+	if err != nil {
+		return err
+	}
+
+	cpuPinning := cpuInfo.vcpus != nil
+
+	// Get CPUs and memory configuration
+	conf := qemuCPU(cpuOpts, cpuPinning)
+
+	memoryObjects := map[int]cfg.Section{}
+	for _, section := range conf {
+		// Name is in the form 'object "mem0"', so the last quote needs to be removed.
+		// This allows proper parsing of the memory object index.
+		sectionName := section.Name[:len(section.Name)-1]
+		index, err := extractTrailingNumber(sectionName, "object \"mem")
+		if err != nil {
+			continue
+		}
+
+		memoryObjects[index] = section
+	}
+
+	// Find first available memory object index.
+	nextMemIndex, err := findNextMemoryIndex(monitor)
+	if err != nil {
+		return err
+	}
+
+	// Find first available pc-dimm device index.
+	nextDimmIndex, err := findNextDimmIndex(monitor)
+	if err != nil {
+		return err
+	}
+
+	for index, memory := range memoryObjects {
+		memIndex := nextMemIndex + index
+		dimmIndex := nextDimmIndex + index
+
+		memObj := memoryConfigSectionToMap(&memory)
+		memObj["id"] = fmt.Sprintf("mem%d", memIndex)
+
+		err = monitor.AddObject(memObj)
+		if err != nil {
+			return err
+		}
+
+		memDev := map[string]any{
+			"driver": "pc-dimm",
+			"id":     fmt.Sprintf("dimm%d", dimmIndex),
+			"memdev": fmt.Sprintf("mem%d", memIndex),
+			"node":   index,
+		}
+
+		err = monitor.AddDevice(memDev)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (d *qemu) removeUnixDevices() error {
@@ -8106,6 +8187,17 @@ func (d *qemu) Render() (any, any, error) {
 func (d *qemu) RenderFull(hostInterfaces []net.Interface) (*api.InstanceFull, any, error) {
 	if d.IsSnapshot() {
 		return nil, nil, fmt.Errorf("RenderFull doesn't work with snapshots")
+	}
+
+	// Pre-fetch the data.
+	pool, err := d.getStoragePool()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = pool.CacheInstanceSnapshots(d)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	// Get the Instance struct.

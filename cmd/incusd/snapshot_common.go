@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/robfig/cron/v3"
+	"github.com/adhocore/gronx"
 
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	"github.com/lxc/incus/v6/shared/util"
@@ -98,11 +98,6 @@ func getObfuscatedTimeValuesForSubject(subjectID int64) (string, string) {
 }
 
 func cronSpecIsNow(spec string) (bool, error) {
-	sched, err := cron.ParseStandard(spec)
-	if err != nil {
-		return false, fmt.Errorf("Could not parse cron '%s'", spec)
-	}
-
 	// Check if it's time to snapshot
 	now := time.Now()
 
@@ -114,7 +109,10 @@ func cronSpecIsNow(spec string) (bool, error) {
 
 	// Calculate the next scheduled time based on the snapshots.schedule
 	// pattern and the time now.
-	next := sched.Next(now)
+	next, err := gronx.NextTickAfter(spec, now, false)
+	if err != nil {
+		return false, fmt.Errorf("Could not parse cron '%s': %w", spec, err)
+	}
 
 	if !now.Add(time.Minute).Equal(next) {
 		return false, nil

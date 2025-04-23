@@ -32,15 +32,11 @@ A `physical` GPU device passes an entire GPU through into the instance.
 
 GPU devices of type `physical` have the following device options:
 
-Key         | Type      | Default           | Description
-:--         | :--       | :--               | :--
-`gid`       | int       | `0`               | GID of the device owner in the instance (container only)
-`id`        | string    | -                 | The DRM card ID of the GPU device
-`mode`      | int       | `0660`            | Mode of the device in the instance (container only)
-`pci`       | string    | -                 | The PCI address of the GPU device
-`productid` | string    | -                 | The product ID of the GPU device
-`uid`       | int       | `0`               | UID of the device owner in the instance (container only)
-`vendorid`  | string    | -                 | The vendor ID of the GPU device
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group devices-gpu_physical start -->
+    :end-before: <!-- config group devices-gpu_physical end -->
+```
 
 (gpu-mdev)=
 ## `gputype`: `mdev`
@@ -57,13 +53,11 @@ You can check the list of available `mdev` profiles by running [`incus info --re
 
 GPU devices of type `mdev` have the following device options:
 
-Key         | Type      | Default           | Description
-:--         | :--       | :--               | :--
-`id`        | string    | -                 | The DRM card ID of the GPU device
-`mdev`      | string    | -                 | The `mdev` profile to use (required - for example, `i915-GVTg_V5_4`)
-`pci`       | string    | -                 | The PCI address of the GPU device
-`productid` | string    | -                 | The product ID of the GPU device
-`vendorid`  | string    | -                 | The vendor ID of the GPU device
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group devices-gpu_mdev start -->
+    :end-before: <!-- config group devices-gpu_mdev end -->
+```
 
 (gpu-mig)=
 ## `gputype`: `mig`
@@ -80,15 +74,11 @@ Currently, this requires NVIDIA MIG instances to be pre-created.
 
 GPU devices of type `mig` have the following device options:
 
-Key         | Type      | Default           | Description
-:--         | :--       | :--               | :--
-`id`        | string    | -                 | The DRM card ID of the GPU device
-`mig.ci`    | int       | -                 | Existing MIG compute instance ID
-`mig.gi`    | int       | -                 | Existing MIG GPU instance ID
-`mig.uuid`  | string    | -                 | Existing MIG device UUID (`MIG-` prefix can be omitted)
-`pci`       | string    | -                 | The PCI address of the GPU device
-`productid` | string    | -                 | The product ID of the GPU device
-`vendorid`  | string    | -                 | The vendor ID of the GPU device
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group devices-gpu_mig start -->
+    :end-before: <!-- config group devices-gpu_mig end -->
+```
 
 You must set either `mig.uuid` (NVIDIA drivers 470+) or both `mig.ci` and `mig.gi` (old NVIDIA drivers).
 
@@ -106,9 +96,8 @@ An `sriov` GPU device passes a virtual function of an SR-IOV-enabled GPU into th
 
 GPU devices of type `sriov` have the following device options:
 
-Key         | Type      | Default           | Description
-:--         | :--       | :--               | :--
-`id`         | string   | -                 | The DRM card ID of the parent GPU device
-`pci`        | string   | -                 | The PCI address of the parent GPU device
-`productid`  | string   | -                 | The product ID of the parent GPU device
-`vendorid`   | string   | -                 | The vendor ID of the parent GPU device
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group devices-gpu_sriov start -->
+    :end-before: <!-- config group devices-gpu_sriov end -->
+```

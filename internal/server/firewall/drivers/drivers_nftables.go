@@ -401,7 +401,7 @@ func (d Nftables) instanceDeviceLabel(projectName, instanceName, deviceName stri
 }
 
 // InstanceSetupBridgeFilter sets up the filter rules to apply bridged device IP filtering.
-func (d Nftables) InstanceSetupBridgeFilter(projectName string, instanceName string, deviceName string, parentName string, hostName string, hwAddr string, IPv4Nets []*net.IPNet, IPv6Nets []*net.IPNet, parentManaged bool, macFiltering bool, aclRules []ACLRule) error {
+func (d Nftables) InstanceSetupBridgeFilter(projectName string, instanceName string, deviceName string, parentName string, hostName string, hwAddr string, IPv4Nets []*net.IPNet, IPv6Nets []*net.IPNet, IPv4DNS []string, IPv6DNS []string, parentManaged bool, macFiltering bool, aclRules []ACLRule) error {
 	deviceLabel := d.instanceDeviceLabel(projectName, instanceName, deviceName)
 
 	mac, err := net.ParseMAC(hwAddr)
@@ -479,6 +479,10 @@ func (d Nftables) InstanceSetupBridgeFilter(projectName string, instanceName str
 	tplFields["aclOutDropRules"] = nftRules.outDropRules
 	tplFields["aclOutAcceptRules"] = nftRules.outAcceptRules
 	tplFields["aclOutDefaultRule"] = nftRules.defaultOutRule
+
+	// Required for basic connectivity
+	tplFields["dnsIPv4"] = IPv4DNS
+	tplFields["dnsIPv6"] = IPv6DNS
 
 	err = d.applyNftConfig(nftablesInstanceBridgeFilter, tplFields)
 	if err != nil {
@@ -1354,7 +1358,6 @@ func (d Nftables) NetworkApplyForwards(networkName string, rules []AddressForwar
 			targetAddressStr := rule.TargetAddress.String()
 
 			if rule.Protocol != "" {
-
 				targetPortRanges := portRangesFromSlice(rule.TargetPorts)
 
 				for _, targetPortRange := range targetPortRanges {
@@ -1368,7 +1371,6 @@ func (d Nftables) NetworkApplyForwards(networkName string, rules []AddressForwar
 				}
 
 				dnatRanges := getOptimisedDNATRanges(&rule)
-
 				for listenPortRange, targetPortRange := range dnatRanges {
 					// Format the destination host/port as appropriate
 					targetDest := targetAddressStr
@@ -1389,6 +1391,17 @@ func (d Nftables) NetworkApplyForwards(networkName string, rules []AddressForwar
 						"listenPorts":   portRangeStr(listenPortRange, "-"),
 						"targetDest":    targetDest,
 					})
+
+					if rule.SNAT {
+						snatRules = append(snatRules, map[string]any{
+							"ipFamily":      ipFamily,
+							"protocol":      rule.Protocol,
+							"listenAddress": listenAddressStr,
+							"listenPorts":   portRangeStr(listenPortRange, "-"),
+							"targetAddress": targetAddressStr,
+							"targetPorts":   portRangeStr(targetPortRange, "-"),
+						})
+					}
 				}
 			} else {
 				// Format the destination host/port as appropriate.

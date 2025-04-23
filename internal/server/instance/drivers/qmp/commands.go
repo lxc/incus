@@ -74,6 +74,35 @@ type CPUModel struct {
 	Flags map[string]any `json:"props"`
 }
 
+// MemoryDevice contains information about a memory device.
+type MemoryDevice struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"data"`
+}
+
+// PCDimmDevice contains information about a memory device of type pc-dimm.
+type PCDimmDevice struct {
+	ID           string `json:"id"`
+	Addr         uint64 `json:"addr"`
+	Slot         int    `json:"slot"`
+	Node         int    `json:"node"`
+	Memdev       string `json:"memdev"`
+	Hotpluggable bool   `json:"hotpluggable"`
+	Hotplugged   bool   `json:"hotplugged"`
+}
+
+// MemDev contains information about a memory device.
+type MemDev struct {
+	ID        string `json:"id"`
+	Size      int    `json:"size"`
+	Merge     bool   `json:"merge"`
+	Dump      bool   `json:"dump"`
+	Prealloc  bool   `json:"prealloc"`
+	Share     bool   `json:"share"`
+	Reserve   bool   `json:"reserve"`
+	HostNodes []int  `json:"host-nodes"`
+}
+
 // QueryCPUs returns a list of CPUs.
 func (m *Monitor) QueryCPUs() ([]CPU, error) {
 	// Prepare the response.
@@ -560,6 +589,71 @@ func (m *Monitor) GetMemoryBalloonSizeBytes() (int64, error) {
 func (m *Monitor) SetMemoryBalloonSizeBytes(sizeBytes int64) error {
 	args := map[string]int64{"value": sizeBytes}
 	return m.Run("balloon", args, nil)
+}
+
+// GetMemdev retrieves memory devices by executing the query-memdev QMP command.
+func (m *Monitor) GetMemdev() ([]MemDev, error) {
+	// Prepare the response.
+	var resp struct {
+		Return []MemDev `json:"return"`
+	}
+
+	err := m.Run("query-memdev", nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Return, nil
+}
+
+// GetMemoryDevices retrieves memory devices by executing the query-memory-devices QMP command.
+func (m *Monitor) GetMemoryDevices() ([]MemoryDevice, error) {
+	// Prepare the response.
+	var resp struct {
+		Return []MemoryDevice `json:"return"`
+	}
+
+	err := m.Run("query-memory-devices", nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Return, nil
+}
+
+// GetDimmDevices returns a list of memory devices of type pc-dimm.
+func (m *Monitor) GetDimmDevices() ([]PCDimmDevice, error) {
+	devices, err := m.GetMemoryDevices()
+	if err != nil {
+		return nil, err
+	}
+
+	result := []PCDimmDevice{}
+	for _, dev := range devices {
+		if dev.Type != "dimm" {
+			continue
+		}
+
+		var dimmData PCDimmDevice
+		err := json.Unmarshal(dev.Data, &dimmData)
+		if err != nil {
+			continue
+		}
+
+		result = append(result, dimmData)
+	}
+
+	return result, nil
+}
+
+// AddObject adds a new object.
+func (m *Monitor) AddObject(args map[string]any) error {
+	err := m.Run("object-add", &args, nil)
+	if err != nil {
+		return fmt.Errorf("Failed adding object: %w", err)
+	}
+
+	return nil
 }
 
 // AddBlockDevice adds a block device.

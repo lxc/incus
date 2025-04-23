@@ -1652,16 +1652,22 @@ func (d *zfs) CacheVolumeSnapshots(vol Volume) error {
 	d.cacheMu.Lock()
 	defer d.cacheMu.Unlock()
 
-	if d.cache == nil {
-		d.cache = map[string]map[string]int64{}
+	// Check if we've already cached the data.
+	if d.cache != nil {
+		return nil
 	}
 
 	// Get the usage data.
-	out, err := subprocess.RunCommand("zfs", "list", "-H", "-p", "-o", "name,used,referenced", "-t", "snapshot", d.dataset(vol, false))
+	out, err := subprocess.RunCommand("zfs", "list", "-H", "-p", "-o", "name,used,referenced", "-r", "-t", "all", d.dataset(vol, false))
 	if err != nil {
-		return err
+		d.logger.Warn("Coulnd't list volume snapshots", logger.Ctx{"err": err})
+
+		// The cache is an optional performance improvement, don't block on failure.
+		return nil
 	}
 
+	// Parse and update the cache.
+	d.cache = map[string]map[string]int64{}
 	for _, line := range strings.Split(out, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
@@ -1715,18 +1721,18 @@ func (d *zfs) GetVolumeUsage(vol Volume) (int64, error) {
 
 			return int64(stat.Blocks-stat.Bfree) * int64(stat.Bsize), nil
 		}
-	} else {
-		// Use the snapshot cache if present.
-		d.cacheMu.Lock()
-		defer d.cacheMu.Unlock()
+	}
 
-		if d.cache != nil {
-			cache, ok := d.cache[d.dataset(vol, false)]
+	// Try to use the cached data.
+	d.cacheMu.Lock()
+	defer d.cacheMu.Unlock()
+
+	if d.cache != nil {
+		cache, ok := d.cache[d.dataset(vol, false)]
+		if ok {
+			value, ok := cache[key]
 			if ok {
-				value, ok := cache[key]
-				if ok {
-					return value, nil
-				}
+				return value, nil
 			}
 		}
 	}

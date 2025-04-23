@@ -312,5 +312,5 @@ At the bottom of the page, you can see data for each instance.
 
 ```{note}
 For proper operation of the Loki part of the dashboard, you need to ensure that the `instance` field matches the Prometheus job name.
-You can change the `instance` field through the `loki.instance` configuration key.
+You can change the `instance` field through the `logging.*.target.instance` configuration key.
 ```

@@ -6,7 +6,7 @@ import (
 
 var nftablesCommonTable = template.Must(template.New("nftablesCommonTable").Parse(`
 table {{.family}} {{.namespace}} {
-	{{- template "nftablesContent" . -}}
+	{{ template "nftablesContent" . }}
 }
 `))
 
@@ -14,15 +14,15 @@ var nftablesNetForwardingPolicy = template.Must(template.New("nftablesNetForward
 chain fwd{{.chainSeparator}}{{.networkName}} {
 	type filter hook forward priority 0; policy accept;
 
-	{{if .ip4Action -}}
+	{{ if .ip4Action }}
 	ip version 4 oifname "{{.networkName}}" {{.ip4Action}}
 	ip version 4 iifname "{{.networkName}}" {{.ip4Action}}
-	{{- end}}
+	{{ end }}
 
-	{{if .ip6Action -}}
+	{{ if .ip6Action }}
 	ip6 version 6 oifname "{{.networkName}}" {{.ip6Action}}
 	ip6 version 6 iifname "{{.networkName}}" {{.ip6Action}}
-	{{- end}}
+	{{ end }}
 }
 `))
 
@@ -30,13 +30,13 @@ var nftablesNetOutboundNAT = template.Must(template.New("nftablesNetOutboundNAT"
 chain pstrt{{.chainSeparator}}{{.networkName}} {
 	type nat hook postrouting priority 100; policy accept;
 
-	{{- range $ipFamily, $config := .rules}}
-	{{if $config.SNATAddress -}}
+	{{ range $ipFamily, $config := .rules }}
+	{{ if $config.SNATAddress }}
 	{{$ipFamily}} saddr {{$config.Subnet}} {{$ipFamily}} daddr != {{$config.Subnet}} snat {{$config.SNATAddress}}
-	{{else -}}
+	{{ else }}
 	{{$ipFamily}} saddr {{$config.Subnet}} {{$ipFamily}} daddr != {{$config.Subnet}} masquerade
-	{{- end}}
-	{{- end}}
+	{{ end }}
+	{{ end }}
 }
 `))
 
@@ -47,15 +47,15 @@ chain in{{.chainSeparator}}{{.networkName}} {
 	iifname "{{.networkName}}" tcp dport 53 accept
 	iifname "{{.networkName}}" udp dport 53 accept
 
-	{{- range .ipFamilies}}
-	{{if eq . "ip" -}}
+	{{ range .ipFamilies }}
+	{{ if eq . "ip" }}
 	iifname "{{$.networkName}}" icmp type {3, 11, 12} accept
 	iifname "{{$.networkName}}" udp dport 67 accept
-	{{else -}}
+	{{ else }}
 	iifname "{{$.networkName}}" icmpv6 type {1, 2, 3, 4, 133, 135, 136, 143} accept
 	iifname "{{$.networkName}}" udp dport 547 accept
-	{{- end}}
-	{{- end}}
+	{{ end }}
+	{{ end }}
 }
 
 chain out{{.chainSeparator}}{{.networkName}} {
@@ -64,15 +64,15 @@ chain out{{.chainSeparator}}{{.networkName}} {
 	oifname "{{.networkName}}" tcp sport 53 accept
 	oifname "{{.networkName}}" udp sport 53 accept
 
-	{{- range .ipFamilies}}
-	{{if eq . "ip" -}}
+	{{ range .ipFamilies }}
+	{{ if eq . "ip" }}
 	oifname "{{$.networkName}}" icmp type {3, 11, 12} accept
 	oifname "{{$.networkName}}" udp sport 67 accept
-	{{else -}}
-	oifname "{{$.networkName}}" icmpv6 type {1, 2, 3, 4, 128, 134, 135, 136, 143}  accept
+	{{ else }}
+	oifname "{{$.networkName}}" icmpv6 type {1, 2, 3, 4, 128, 134, 135, 136, 143} accept
 	oifname "{{$.networkName}}" udp sport 547 accept
-	{{- end}}
-	{{- end}}
+	{{ end }}
+	{{ end }}
 }
 `))
 
@@ -88,23 +88,27 @@ flush chain {{.family}} {{.namespace}} {{.chainPrefix}}pstrt{{.chainSeparator}}{
 table {{.family}} {{.namespace}} {
 	chain {{.chainPrefix}}prert{{.chainSeparator}}{{.label}} {
 		type nat hook prerouting priority -100; policy accept;
-		{{- range .dnatRules}}
-		{{.ipFamily}} daddr {{.listenAddress}} {{if .protocol}}{{.protocol}} dport {{.listenPorts}}{{end}} dnat to {{.targetDest}}
-		{{- end}}
+		{{ range .dnatRules }}
+		{{.ipFamily}} daddr {{.listenAddress}} {{ if .protocol }}{{.protocol}} dport {{.listenPorts}}{{ end }} dnat to {{.targetDest}}
+		{{ end }}
 	}
 
 	chain {{.chainPrefix}}out{{.chainSeparator}}{{.label}} {
 		type nat hook output priority -100; policy accept;
-		{{- range .dnatRules}}
-		{{.ipFamily}} daddr {{.listenAddress}} {{if .protocol}}{{.protocol}} dport {{.listenPorts}}{{end}} dnat to {{.targetDest}}
-		{{- end}}
+		{{ range .dnatRules }}
+		{{.ipFamily}} daddr {{.listenAddress}} {{ if .protocol }}{{.protocol}} dport {{.listenPorts}}{{ end }} dnat to {{.targetDest}}
+		{{ end }}
 	}
 
 	chain {{.chainPrefix}}pstrt{{.chainSeparator}}{{.label}} {
 		type nat hook postrouting priority 100; policy accept;
-		{{- range .snatRules}}
-		{{.ipFamily}} saddr {{.targetHost}} {{.ipFamily}} daddr {{.targetHost}} {{if .protocol}}{{.protocol}} dport {{.targetPorts}}{{end}} masquerade
-		{{- end}}
+		{{ range .snatRules }}
+		{{ if .targetHost }}
+		{{.ipFamily}} saddr {{.targetHost}} {{.ipFamily}} daddr {{.targetHost}} {{ if .protocol }}{{.protocol}} dport {{.targetPorts}}{{ end }} masquerade
+		{{ else }}
+		{{.ipFamily}} saddr {{.targetAddress}} {{.protocol}} sport {{.targetPorts}} snat to {{.listenAddress}}:{{.listenPorts}}
+		{{ end }}
+		{{ end }}
 	}
 }
 `))
@@ -148,7 +152,7 @@ table {{.family}} {{.namespace}} {
 		oifname "{{$.networkName}}" icmp type {3, 11, 12} accept
 
 		# Allow ICMPv6 ping from host into network as dnsmasq uses this to probe IP allocations.
-		oifname "{{$.networkName}}" icmpv6 type {1, 2, 3, 4, 128, 134, 135, 136, 143}  accept
+		oifname "{{$.networkName}}" icmpv6 type {1, 2, 3, 4, 128, 134, 135, 136, 143} accept
 
 		oifname "{{.networkName}}" jump acl{{.chainSeparator}}{{.networkName}}
 	}
@@ -167,9 +171,9 @@ table {{.family}} {{.namespace}} {
 	chain acl{{.chainSeparator}}{{.networkName}} {
                 ct state established,related accept
 
-		{{- range .rules}}
+		{{ range .rules }}
 		{{.}}
-		{{- end}}
+		{{ end }}
 	}
 }
 `))
@@ -185,121 +189,177 @@ table {{.family}} {{.namespace}} {
 var nftablesInstanceBridgeFilter = template.Must(template.New("nftablesInstanceBridgeFilter").Parse(`
 chain in{{.chainSeparator}}{{.deviceLabel}} {
 	type filter hook input priority -200; policy accept;
-	{{if .macFiltering -}}
+
+	# Basic connectivity
+	{{ if or .aclInDropRules .aclInRejectRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule }}
+	ct state established,related accept
+
+	{{ if .dnsIPv4 }}
+	{{ range .dnsIPv4 }}
+	iifname "{{$.hostName}}" ip daddr "{{.}}" tcp dport 53 accept
+	iifname "{{$.hostName}}" ip daddr "{{.}}" udp dport 53 accept
+	{{ end }}
+	{{ end }}
+
+	{{ if .dnsIPv6 }}
+	{{ range .dnsIPv6 }}
+	iifname "{{$.hostName}}" ip6 daddr "{{.}}" tcp dport 53 accept
+	iifname "{{$.hostName}}" ip6 daddr "{{.}}" udp dport 53 accept
+	{{ end }}
+	{{ end }}
+
+	iifname "{{.hostName}}" ether type ip ip saddr 0.0.0.0 ip daddr 255.255.255.255 udp dport 67 accept
+	iifname "{{.hostName}}" ether type ip6 ip6 saddr fe80::/10 ip6 daddr ff02::1:2 udp dport 547 accept
+	iifname "{{.hostName}}" ether type ip6 ip6 saddr fe80::/10 ip6 daddr ff02::2 icmpv6 type 133 accept
+
+	iifname "{{.hostName}}" ether type arp accept
+	iifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
+	{{ end }}
+
+	# MAC filtering
+	{{ if .macFiltering }}
 	iifname "{{.hostName}}" ether saddr != {{.hwAddr}} drop
 	iifname "{{.hostName}}" ether type arp arp saddr ether != {{.hwAddr}} drop
 	iifname "{{.hostName}}" ether type ip6 icmpv6 type 136 @nh,528,48 != {{.hwAddrHex}} drop
-	{{- end}}
-	{{if .ipv4NetsList -}}
+	{{ end }}
+
+	# IPv4 filtering
+	{{ if .ipv4NetsList }}
 	iifname "{{.hostName}}" ether type ip ip saddr 0.0.0.0 ip daddr 255.255.255.255 udp dport 67 accept
 	iifname "{{.hostName}}" ether type arp arp saddr ip != { {{.ipv4NetsList}} } drop
 	iifname "{{.hostName}}" ether type ip ip saddr != { {{.ipv4NetsList}} } drop
-	{{- end}}
-	{{if .ipv4FilterAll -}}
+	{{ end }}
+	{{ if .ipv4FilterAll }}
 	iifname "{{.hostName}}" ether type arp drop
 	iifname "{{.hostName}}" ether type ip drop
-	{{- end}}
-	{{if .ipv6NetsList -}}
+	{{ end }}
+
+	# IPv6 filtering
+	{{ if .ipv6NetsList }}
 	iifname "{{.hostName}}" ether type ip6 ip6 saddr fe80::/10 ip6 daddr ff02::1:2 udp dport 547 accept
 	iifname "{{.hostName}}" ether type ip6 ip6 saddr fe80::/10 ip6 daddr ff02::2 icmpv6 type 133 accept
 	iifname "{{.hostName}}" ether type ip6 icmpv6 type 134 drop
 	iifname "{{.hostName}}" ether type ip6 icmpv6 type 136 {{.ipv6NetsPrefixList}} drop
 	iifname "{{.hostName}}" ether type ip6 ip6 saddr != { {{.ipv6NetsList}} } drop
-	{{- end}}
-	{{if .ipv6FilterAll -}}
+	{{ end }}
+	{{ if .ipv6FilterAll }}
 	iifname "{{.hostName}}" ether type ip6 drop
-	{{- end}}
-	{{- if or .aclInDropRules .aclInRejectRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule -}}
-	ct state established,related accept
-	{{- end}}
-	{{- range .aclInDropRules}}
+	{{ end }}
+
+	# ACLs
+	{{ range .aclInDropRules }}
 	{{.}}
-	{{- end}}
-	{{- range .aclInRejectRules}}
+	{{ end }}
+	{{ range .aclInRejectRules }}
 	{{.}}
-	{{- end}}
-	{{- range .aclInAcceptRules}}
+	{{ end }}
+	{{ range .aclInAcceptRules }}
 	{{.}}
-	{{- end}}
-	{{if .filterUnwantedFrames -}}
+	{{ end }}
+
+	{{ if .filterUnwantedFrames }}
 	iifname "{{.hostName}}" ether type != {arp, ip, ip6} drop
-	{{- end}}
-	{{if or .aclInDropRules .aclInRejectRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule -}}
-	iifname "{{.hostName}}" ether type arp accept
-	iifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
-	{{- end}}
+	{{ end }}
+
 	{{.aclInDefaultRule}}
 }
 
 chain fwd{{.chainSeparator}}{{.deviceLabel}} {
 	type filter hook forward priority -200; policy accept;
-	{{if .macFiltering -}}
+
+	# MAC filtering
+	{{ if .macFiltering }}
 	iifname "{{.hostName}}" ether saddr != {{.hwAddr}} drop
 	iifname "{{.hostName}}" ether type arp arp saddr ether != {{.hwAddr}} drop
 	iifname "{{.hostName}}" ether type ip6 icmpv6 type 136 @nh,528,48 != {{.hwAddrHex}} drop
-	{{- end}}
-	{{if .ipv4NetsList -}}
+	{{ end }}
+
+	# IPv4 filtering
+	{{ if .ipv4NetsList }}
 	iifname "{{.hostName}}" ether type arp arp saddr ip != { {{.ipv4NetsList}} } drop
 	iifname "{{.hostName}}" ether type ip ip saddr != { {{.ipv4NetsList}} } drop
-	{{end}}
-	{{if .ipv4FilterAll -}}
+	{{ end }}
+	{{ if .ipv4FilterAll }}
 	iifname "{{.hostName}}" ether type arp drop
 	iifname "{{.hostName}}" ether type ip drop
-	{{- end}}
-	{{if .ipv6NetsList -}}
+	{{ end }}
+
+	# IPv6 filtering
+	{{ if .ipv6NetsList }}
 	iifname "{{.hostName}}" ether type ip6 icmpv6 type 134 drop
 	iifname "{{.hostName}}" ether type ip6 icmpv6 type 136 {{.ipv6NetsPrefixList}} drop
 	iifname "{{.hostName}}" ether type ip6 ip6 saddr != { {{.ipv6NetsList}} } drop
-	{{- end}}
-	{{if .ipv6FilterAll -}}
+	{{ end }}
+	{{ if .ipv6FilterAll }}
 	iifname "{{.hostName}}" ether type ip6 drop
-	{{- end}}
-	{{- if or .aclInDropRules .aclInRejectRulesConverted .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRuleConverted .aclOutDefaultRule -}}
+	{{ end }}
+
+	# Network ACLs
+	{{ if or .aclInDropRules .aclInRejectRulesConverted .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRuleConverted .aclOutDefaultRule }}
 	ct state established,related accept
-	{{- end}}
-	{{- range .aclInDropRules}}
+	{{ end }}
+
+	{{ range .aclInDropRules}}
 	{{.}}
-	{{- end}}
-	{{- range .aclInRejectRulesConverted}}
+	{{ end }}
+
+	{{ range .aclInRejectRulesConverted}}
 	{{.}}
-	{{- end}}
-	{{- range .aclOutDropRules}}
+	{{ end }}
+
+	{{ range .aclOutDropRules}}
 	{{.}}
-	{{- end}}
-    {{- range .aclInAcceptRules}}
+	{{ end }}
+
+    {{ range .aclInAcceptRules }}
 	{{.}}
-	{{- end}}
-	{{- range .aclOutAcceptRules}}
+	{{ end }}
+
+	{{ range .aclOutAcceptRules }}
 	{{.}}
-	{{- end}}
-	{{if .filterUnwantedFrames -}}
+	{{ end }}
+
+	{{ if .filterUnwantedFrames }}
 	iifname "{{.hostName}}" ether type != {arp, ip, ip6} drop
-	{{- end}}
-	{{if or .aclInDropRules .aclInRejectRulesConverted .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRuleConverted .aclOutDefaultRule -}}
+	{{ end }}
+
+	{{ if or .aclInDropRules .aclInRejectRulesConverted .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRuleConverted .aclOutDefaultRule }}
 	iifname "{{.hostName}}" ether type arp accept
 	iifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
 	oifname "{{.hostName}}" ether type arp accept
 	oifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
-	{{- end}}
+	{{ end }}
+
 	{{.aclInDefaultRuleConverted}}
+
 	{{.aclOutDefaultRule}}
 }
 
-{{if or .aclInDropRules .aclInRejectRulesConverted .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule .aclOutDefaultRule -}}
+{{ if or .aclInDropRules .aclInRejectRulesConverted .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule .aclOutDefaultRule }}
 chain out{{.chainSeparator}}{{.deviceLabel}} {
 	type filter hook output priority filter; policy accept;
+
+	# Basic connectivity
 	ct state established,related accept
-	{{- range .aclOutDropRules}}
-	{{.}}
-	{{- end}}
-	{{- range .aclOutAcceptRules}}
-	{{.}}
-	{{- end}}
+
 	oifname "{{.hostName}}" ether type arp accept
 	oifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
+
+	oifname "{{.hostName}}" udp sport 67 udp dport 68 accept
+	oifname "{{.hostName}}" ip6 saddr fe80::/10 udp sport 547 accept
+	oifname "{{.hostName}}" ip6 saddr fe80::/10 icmpv6 type {1, 2, 3, 4, 128, 134, 135, 136, 143} accept
+
+	# Network ACLs
+	{{ range .aclOutDropRules}}
+	{{.}}
+	{{ end }}
+	{{ range .aclOutAcceptRules}}
+	{{.}}
+	{{ end }}
+
 	{{.aclOutDefaultRule}}
 }
-{{- end}}
+{{ end }}
 `))
 
 // nftablesInstanceRPFilter defines the rules to perform reverse path filtering.

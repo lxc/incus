@@ -78,11 +78,6 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	<-d.waitReady.Done()
 
 	// Parse the request URL.
-	instanceType, err := urlInstanceTypeDetect(r)
-	if err != nil {
-		return response.SmartError(err)
-	}
-
 	projectName := request.ProjectParam(r)
 	target := request.QueryParam(r, "target")
 
@@ -104,7 +99,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	var sourceMemberInfo *db.NodeInfo
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Load source node.
-		sourceAddress, err := tx.GetNodeAddressOfInstance(ctx, projectName, name, instanceType)
+		sourceAddress, err := tx.GetNodeAddressOfInstance(ctx, projectName, name)
 		if err != nil {
 			return fmt.Errorf("Failed to get address of instance's member: %w", err)
 		}
@@ -141,7 +136,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 		}
 	} else if target == "" || sourceMemberInfo == nil || !sourceMemberInfo.IsOffline(s.GlobalConfig.OfflineThreshold()) {
 		// Forward the request to the instance's current location (if not local).
-		resp, err := forwardedResponseIfInstanceIsRemote(s, r, projectName, name, instanceType)
+		resp, err := forwardedResponseIfInstanceIsRemote(s, r, projectName, name)
 		if err != nil {
 			return response.SmartError(err)
 		}
@@ -398,7 +393,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 			req := apiScriptlet.InstancePlacement{
 				InstancesPost: api.InstancesPost{
 					Name: name,
-					Type: api.InstanceType(instanceType.String()),
+					Type: api.InstanceTypeAny,
 					InstancePut: api.InstancePut{
 						Config:   db.ExpandInstanceConfig(inst.LocalConfig(), profiles),
 						Devices:  db.ExpandInstanceDevices(deviceConfig.NewDevices(inst.LocalDevices().CloneNative()), profiles).CloneNative(),

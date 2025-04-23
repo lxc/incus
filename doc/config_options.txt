@@ -212,6 +212,1179 @@ For file systems (shared directories or custom volumes), this is one of:
 ```
 
 <!-- config group devices-disk end -->
+<!-- config group devices-gpu_mdev start -->
+```{config:option} id devices-gpu_mdev
+:required: "no"
+:shortdesc: "The DRM card ID of the GPU device"
+:type: "string"
+
+```
+
+```{config:option} mdev devices-gpu_mdev
+:required: "yes"
+:shortdesc: "The mediated device profile to use (required - for example, `i915-GVTg_V5_4`)"
+:type: "string"
+
+```
+
+```{config:option} productid devices-gpu_mdev
+:required: "no"
+:shortdesc: "The product ID of the GPU device"
+:type: "string"
+
+```
+
+```{config:option} vendorid devices-gpu_mdev
+:required: "no"
+:shortdesc: "The vendor ID of the GPU device"
+:type: "string"
+
+```
+
+<!-- config group devices-gpu_mdev end -->
+<!-- config group devices-gpu_mig start -->
+```{config:option} id devices-gpu_mig
+:required: "no"
+:shortdesc: "The DRM card ID of the GPU device"
+:type: "string"
+
+```
+
+```{config:option} mig.ci devices-gpu_mig
+:required: "no"
+:shortdesc: "Existing MIG compute instance ID"
+:type: "int"
+
+```
+
+```{config:option} mig.gi devices-gpu_mig
+:required: "no"
+:shortdesc: "Existing MIG GPU instance ID"
+:type: "int"
+
+```
+
+```{config:option} mig.uuid devices-gpu_mig
+:required: "no"
+:shortdesc: "Existing MIG device UUID (MIG- prefix can be omitted)"
+:type: "string"
+
+```
+
+```{config:option} pci devices-gpu_mig
+:required: "no"
+:shortdesc: "The PCI address of the GPU device"
+:type: "string"
+
+```
+
+```{config:option} productid devices-gpu_mig
+:required: "no"
+:shortdesc: "The product ID of the GPU device"
+:type: "string"
+
+```
+
+```{config:option} vendorid devices-gpu_mig
+:required: "no"
+:shortdesc: "The vendor ID of the GPU device"
+:type: "string"
+
+```
+
+<!-- config group devices-gpu_mig end -->
+<!-- config group devices-gpu_physical start -->
+```{config:option} gid devices-gpu_physical
+:default: "0"
+:required: "no"
+:shortdesc: "GID of the device owner in the instance (container only)"
+:type: "int"
+
+```
+
+```{config:option} id devices-gpu_physical
+:required: "no"
+:shortdesc: "The DRM card ID of the GPU device"
+:type: "string"
+
+```
+
+```{config:option} mode devices-gpu_physical
+:default: "0660"
+:required: "no"
+:shortdesc: "Mode of the device in the instance (container only)"
+:type: "int"
+
+```
+
+```{config:option} pci devices-gpu_physical
+:required: "no"
+:shortdesc: "The PCI address of the GPU device"
+:type: "string"
+
+```
+
+```{config:option} productid devices-gpu_physical
+:required: "no"
+:shortdesc: "The product ID of the GPU device"
+:type: "string"
+
+```
+
+```{config:option} uid devices-gpu_physical
+:default: "0"
+:required: "no"
+:shortdesc: "UID of the device owner in the instance (container only)"
+:type: "int"
+
+```
+
+```{config:option} vendorid devices-gpu_physical
+:required: "no"
+:shortdesc: "The vendor ID of the GPU device"
+:type: "string"
+
+```
+
+<!-- config group devices-gpu_physical end -->
+<!-- config group devices-gpu_sriov start -->
+```{config:option} id devices-gpu_sriov
+:required: "no"
+:shortdesc: "The DRM card ID of the parent GPU device"
+:type: "string"
+
+```
+
+```{config:option} pci devices-gpu_sriov
+:required: "no"
+:shortdesc: "The PCI address of the parent GPU device"
+:type: "string"
+
+```
+
+```{config:option} productid devices-gpu_sriov
+:required: "no"
+:shortdesc: "The product ID of the parent GPU device"
+:type: "string"
+
+```
+
+```{config:option} vendorid devices-gpu_sriov
+:required: "no"
+:shortdesc: "The vendor ID of the parent GPU device"
+:type: "string"
+
+```
+
+<!-- config group devices-gpu_sriov end -->
+<!-- config group devices-nic_bridged start -->
+```{config:option} boot.priority devices-nic_bridged
+:managed: "no"
+:shortdesc: "Boot priority for VMs (higher value boots first)"
+:type: "integer"
+
+```
+
+```{config:option} host_name devices-nic_bridged
+:default: "randomly assigned"
+:managed: "no"
+:shortdesc: "The name of the interface on the host"
+:type: "string"
+
+```
+
+```{config:option} hwaddr devices-nic_bridged
+:default: "randomly assigned"
+:managed: "no"
+:shortdesc: "The MAC address of the new interface"
+:type: "string"
+
+```
+
+```{config:option} io.bus devices-nic_bridged
+:default: "`virtio`"
+:managed: "no"
+:shortdesc: "Override the bus for the device (can be `virtio` or `usb`) (VM only)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.address devices-nic_bridged
+:managed: "no"
+:shortdesc: "An IPv4 address to assign to the instance through DHCP (can be `none` to restrict all IPv4 traffic when `security.ipv4_filtering` is set)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.routes devices-nic_bridged
+:managed: "no"
+:shortdesc: "Comma-delimited list of IPv4 static routes to add on host to NIC"
+:type: "string"
+
+```
+
+```{config:option} ipv4.routes.external devices-nic_bridged
+:managed: "no"
+:shortdesc: "Comma-delimited list of IPv4 static routes to route to the NIC and publish on uplink network (BGP)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.address devices-nic_bridged
+:managed: "no"
+:shortdesc: "An IPv6 address to assign to the instance through DHCP (can be `none` to restrict all IPv6 traffic when `security.ipv6_filtering` is set)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.routes devices-nic_bridged
+:managed: "no"
+:shortdesc: "Comma-delimited list of IPv6 static routes to add on host to NIC"
+:type: "string"
+
+```
+
+```{config:option} ipv6.routes.external devices-nic_bridged
+:managed: "no"
+:shortdesc: "Comma-delimited list of IPv6 static routes to route to the NIC and publish on uplink network (BGP)"
+:type: "string"
+
+```
+
+```{config:option} limits.egress devices-nic_bridged
+:managed: "no"
+:shortdesc: "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)"
+:type: "string"
+
+```
+
+```{config:option} limits.ingress devices-nic_bridged
+:managed: "no"
+:shortdesc: "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)"
+:type: "string"
+
+```
+
+```{config:option} limits.max devices-nic_bridged
+:managed: "no"
+:shortdesc: "I/O limit in bit/s for both incoming and outgoing traffic (same as setting both limits.ingress and limits.egress)"
+:type: "string"
+
+```
+
+```{config:option} limits.priority devices-nic_bridged
+:managed: "no"
+:shortdesc: "The priority for outgoing traffic, to be used by the kernel queuing discipline to prioritize network packets"
+:type: "integer"
+
+```
+
+```{config:option} mtu devices-nic_bridged
+:default: "MTU of the parent device"
+:managed: "yes"
+:shortdesc: "The Maximum Transmit Unit (MTU) of the new interface"
+:type: "integer"
+
+```
+
+```{config:option} name devices-nic_bridged
+:default: "kernel assigned"
+:managed: "no"
+:shortdesc: "The name of the interface inside the instance"
+:type: "string"
+
+```
+
+```{config:option} network devices-nic_bridged
+:managed: "no"
+:shortdesc: "The managed network to link the device to (instead of specifying the `nictype` directly)"
+:type: "string"
+
+```
+
+```{config:option} parent devices-nic_bridged
+:managed: "yes"
+:shortdesc: "The name of the parent host device (required if specifying the `nictype` directly)"
+:type: "string"
+
+```
+
+```{config:option} queue.tx.length devices-nic_bridged
+:managed: "no"
+:shortdesc: "The transmit queue length for the NIC"
+:type: "integer"
+
+```
+
+```{config:option} security.acls devices-nic_bridged
+:managed: "no"
+:shortdesc: "Comma-separated list of network ACLs to apply"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.egress.action devices-nic_bridged
+:default: "drop"
+:managed: "no"
+:shortdesc: "Action to use for egress traffic that doesn't match any ACL rule"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.egress.logged devices-nic_bridged
+:default: "false"
+:managed: "no"
+:shortdesc: "Whether to log egress traffic that doesn't match any ACL rule"
+:type: "bool"
+
+```
+
+```{config:option} security.acls.default.ingress.action devices-nic_bridged
+:default: "drop"
+:managed: "no"
+:shortdesc: "Action to use for ingress traffic that doesn't match any ACL rule"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.ingress.logged devices-nic_bridged
+:default: "false"
+:managed: "no"
+:shortdesc: "Whether to log ingress traffic that doesn't match any ACL rule"
+:type: "bool"
+
+```
+
+```{config:option} security.ipv4_filtering devices-nic_bridged
+:default: "false"
+:managed: "no"
+:shortdesc: "Prevent the instance from spoofing another instance's IPv4 address (enables `security.mac_filtering`)"
+:type: "bool"
+
+```
+
+```{config:option} security.ipv6_filtering devices-nic_bridged
+:default: "false"
+:managed: "no"
+:shortdesc: "Prevent the instance from spoofing another instance's IPv6 address (enables `security.mac_filtering`)"
+:type: "bool"
+
+```
+
+```{config:option} security.mac_filtering devices-nic_bridged
+:default: "false"
+:managed: "no"
+:shortdesc: "Prevent the instance from spoofing another instance's MAC address"
+:type: "bool"
+
+```
+
+```{config:option} security.port_isolation devices-nic_bridged
+:default: "false"
+:managed: "no"
+:shortdesc: "Prevent the NIC from communicating with other NICs in the network that have port isolation enabled"
+:type: "bool"
+
+```
+
+```{config:option} vlan devices-nic_bridged
+:managed: "no"
+:shortdesc: "The VLAN ID to use for non-tagged traffic (can be none to remove port from default VLAN)"
+:type: "integer"
+
+```
+
+```{config:option} vlan.tagged devices-nic_bridged
+:managed: "no"
+:shortdesc: "Comma-delimited list of VLAN IDs or VLAN ranges to join for tagged traffic"
+:type: "integer"
+
+```
+
+<!-- config group devices-nic_bridged end -->
+<!-- config group devices-nic_ipvlan start -->
+```{config:option} gvrp devices-nic_ipvlan
+:default: "false"
+:shortdesc: "Register VLAN using GARP VLAN Registration Protocol"
+:type: "bool"
+
+```
+
+```{config:option} hwaddr devices-nic_ipvlan
+:default: "randomly assigned"
+:shortdesc: "The MAC address of the new interface"
+:type: "string"
+
+```
+
+```{config:option} ipv4.address devices-nic_ipvlan
+:shortdesc: "Comma-delimited list of IPv4 static addresses to add to the instance (in l2 mode, these can be specified as CIDR values or singular addresses using a subnet of /24)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.gateway devices-nic_ipvlan
+:default: "`auto` (in `l3s` mode), `-` (in `l2` mode)"
+:shortdesc: "In `l3s` mode, whether to add an automatic default IPv4 gateway (can be `auto` or `none`). In `l2` mode, the IPv4 address of the gateway"
+:type: "string"
+
+```
+
+```{config:option} ipv4.host_table devices-nic_ipvlan
+:shortdesc: "The custom policy routing table ID to add IPv4 static routes to (in addition to the main routing table)"
+:type: "integer"
+
+```
+
+```{config:option} ipv6.address devices-nic_ipvlan
+:shortdesc: "Comma-delimited list of IPv6 static addresses to add to the instance (in `l2` mode, these can be specified as CIDR values or singular addresses using a subnet of /64)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.gateway devices-nic_ipvlan
+:default: "`auto` (in `l3s` mode), `-` (in `l2` mode)"
+:shortdesc: "In `l3s` mode, whether to add an automatic default IPv6 gateway (can be `auto` or `none`). In `l2` mode, the IPv6 address of the gateway"
+:type: "string"
+
+```
+
+```{config:option} ipv6.host_table devices-nic_ipvlan
+:shortdesc: "The custom policy routing table ID to add IPv6 static routes to (in addition to the main routing table)"
+:type: "integer"
+
+```
+
+```{config:option} mode devices-nic_ipvlan
+:default: "`l3s`"
+:shortdesc: "The IPVLAN mode (either `l2` or `l3s`)"
+:type: "string"
+
+```
+
+```{config:option} mtu devices-nic_ipvlan
+:default: "MTU of the parent device"
+:shortdesc: "The Maximum Transmit Unit (MTU) of the new interface"
+:type: "integer"
+
+```
+
+```{config:option} name devices-nic_ipvlan
+:default: "kernel assigned"
+:shortdesc: "The name of the interface inside the instance"
+:type: "string"
+
+```
+
+```{config:option} parent devices-nic_ipvlan
+:shortdesc: "The name of the host device (required)"
+:type: "string"
+
+```
+
+```{config:option} vlan devices-nic_ipvlan
+:shortdesc: "The VLAN ID to attach to"
+:type: "integer"
+
+```
+
+<!-- config group devices-nic_ipvlan end -->
+<!-- config group devices-nic_macvlan start -->
+```{config:option} boot.priority devices-nic_macvlan
+:managed: "no"
+:shortdesc: "Boot priority for VMs (higher value boots first)"
+:type: "integer"
+
+```
+
+```{config:option} gvrp devices-nic_macvlan
+:default: "false"
+:managed: "no"
+:shortdesc: "Register VLAN using GARP VLAN Registration Protocol"
+:type: "bool"
+
+```
+
+```{config:option} hwaddr devices-nic_macvlan
+:default: "randomly assigned"
+:managed: "no"
+:shortdesc: "The MAC address of the new interface"
+:type: "string"
+
+```
+
+```{config:option} io.bus devices-nic_macvlan
+:default: "`virtio`"
+:managed: "no"
+:shortdesc: "Override the bus for the device (can be `virtio` or `usb`) (VM only)"
+:type: "string"
+
+```
+
+```{config:option} mode devices-nic_macvlan
+:default: "bridge"
+:managed: "no"
+:shortdesc: "Macvlan mode (one of `bridge`, `vepa`, `passthru` or `private`)"
+:type: "string"
+
+```
+
+```{config:option} mtu devices-nic_macvlan
+:default: "MTU of the parent device"
+:managed: "yes"
+:shortdesc: "The Maximum Transmit Unit (MTU) of the new interface"
+:type: "integer"
+
+```
+
+```{config:option} name devices-nic_macvlan
+:default: "kernel assigned"
+:managed: "no"
+:shortdesc: "The name of the interface inside the instance"
+:type: "string"
+
+```
+
+```{config:option} network devices-nic_macvlan
+:managed: "no"
+:shortdesc: "The managed network to link the device to (instead of specifying the `nictype` directly)"
+:type: "string"
+
+```
+
+```{config:option} parent devices-nic_macvlan
+:managed: "yes"
+:shortdesc: "The name of the parent host device (required if specifying the `nictype` directly)"
+:type: "string"
+
+```
+
+```{config:option} vlan devices-nic_macvlan
+:managed: "no"
+:shortdesc: "The VLAN ID to attach to"
+:type: "integer"
+
+```
+
+<!-- config group devices-nic_macvlan end -->
+<!-- config group devices-nic_ovn start -->
+```{config:option} acceleration devices-nic_ovn
+:default: "none"
+:managed: "no"
+:shortdesc: "Enable hardware offloading (either `none`, `sriov` or `vdpa`)"
+:type: "string"
+
+```
+
+```{config:option} boot.priority devices-nic_ovn
+:managed: "no"
+:shortdesc: "Boot priority for VMs (higher value boots first)"
+:type: "integer"
+
+```
+
+```{config:option} host_name devices-nic_ovn
+:default: "randomly assigned"
+:managed: "no"
+:shortdesc: "The name of the interface inside the host"
+:type: "string"
+
+```
+
+```{config:option} hwaddr devices-nic_ovn
+:default: "randomly assigned"
+:managed: "no"
+:shortdesc: "The MAC address of the new interface"
+:type: "string"
+
+```
+
+```{config:option} ipv4.address devices-nic_ovn
+:managed: "no"
+:shortdesc: "An IPv4 address to assign to the instance through DHCP, `none` can be used to disable IP allocation"
+:type: "string"
+
+```
+
+```{config:option} ipv4.routes devices-nic_ovn
+:managed: "no"
+:shortdesc: "Comma-delimited list of IPv4 static routes to route to the NIC"
+:type: "string"
+
+```
+
+```{config:option} ipv4.routes.external devices-nic_ovn
+:managed: "no"
+:shortdesc: "Comma-delimited list of IPv4 static routes to route to the NIC and publish on uplink network"
+:type: "string"
+
+```
+
+```{config:option} ipv6.address devices-nic_ovn
+:managed: "no"
+:shortdesc: "An IPv6 address to assign to the instance through DHCP, `none` can be used to disable IP allocation"
+:type: "string"
+
+```
+
+```{config:option} ipv6.routes devices-nic_ovn
+:managed: "no"
+:shortdesc: "Comma-delimited list of IPv6 static routes to route to the NIC"
+:type: "string"
+
+```
+
+```{config:option} ipv6.routes.external devices-nic_ovn
+:managed: "no"
+:shortdesc: "Comma-delimited list of IPv6 static routes to route to the NIC and publish on uplink network"
+:type: "string"
+
+```
+
+```{config:option} mtu devices-nic_ovn
+:default: "MTU of the parent network"
+:managed: "yes"
+:shortdesc: "The Maximum Transmit Unit (MTU) of the new interface"
+:type: "integer"
+
+```
+
+```{config:option} name devices-nic_ovn
+:default: "kernel assigned"
+:managed: "no"
+:shortdesc: "The name of the interface inside the instance"
+:type: "string"
+
+```
+
+```{config:option} nested devices-nic_ovn
+:managed: "no"
+:shortdesc: "The parent NIC name to nest this NIC under (see also `vlan`)"
+:type: "string"
+
+```
+
+```{config:option} network devices-nic_ovn
+:managed: "yes"
+:shortdesc: "The managed network to link the device to (required)"
+:type: "string"
+
+```
+
+```{config:option} security.acls devices-nic_ovn
+:managed: "no"
+:shortdesc: "Comma-separated list of network ACLs to apply"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.egress.action devices-nic_ovn
+:default: "reject"
+:managed: "no"
+:shortdesc: "Action to use for egress traffic that doesn't match any ACL rule"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.egress.logged devices-nic_ovn
+:default: "false"
+:managed: "no"
+:shortdesc: "Whether to log egress traffic that doesn't match any ACL rule"
+:type: "bool"
+
+```
+
+```{config:option} security.acls.default.ingress.action devices-nic_ovn
+:default: "reject"
+:managed: "no"
+:shortdesc: "Action to use for ingress traffic that doesn't match any ACL rule"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.ingress.logged devices-nic_ovn
+:default: "false"
+:managed: "no"
+:shortdesc: "Whether to log ingress traffic that doesn't match any ACL rule"
+:type: "bool"
+
+```
+
+```{config:option} security.promiscuous devices-nic_ovn
+:default: "false"
+:managed: "no"
+:shortdesc: "Have OVN send unknown network traffic to this network interface (required for some nesting cases)"
+:type: "bool"
+
+```
+
+```{config:option} vlan devices-nic_ovn
+:managed: "no"
+:shortdesc: "The VLAN ID to use when nesting (see also `nested`)"
+:type: "integer"
+
+```
+
+<!-- config group devices-nic_ovn end -->
+<!-- config group devices-nic_p2p start -->
+```{config:option} boot.priotiry devices-nic_p2p
+:shortdesc: "Boot priority for VMs (higher value boots first)"
+:type: "integer"
+
+```
+
+```{config:option} host_name devices-nic_p2p
+:default: "randomly assigned"
+:shortdesc: "The name of the interface on the host"
+:type: "string"
+
+```
+
+```{config:option} hwaddr devices-nic_p2p
+:default: "randomly assigned"
+:shortdesc: "The MAC address of the new interface"
+:type: "string"
+
+```
+
+```{config:option} io.bus devices-nic_p2p
+:default: "`virtio`"
+:shortdesc: "Override the bus for the device (can be `virtio` or `usb`) (VM only)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.routes devices-nic_p2p
+:shortdesc: "Comma-delimited list of IPv4 static routes to add on host to NIC"
+:type: "string"
+
+```
+
+```{config:option} ipv6.routes devices-nic_p2p
+:shortdesc: "Comma-delimited list of IPv6 static routes to add on host to NIC"
+:type: "string"
+
+```
+
+```{config:option} limits.egress devices-nic_p2p
+:shortdesc: "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)"
+:type: "string"
+
+```
+
+```{config:option} limits.ingress devices-nic_p2p
+:shortdesc: "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)"
+:type: "string"
+
+```
+
+```{config:option} limits.max devices-nic_p2p
+:shortdesc: "I/O limit in bit/s for both incoming and outgoing traffic (same as setting both limits.ingress and limits.egress)"
+:type: "string"
+
+```
+
+```{config:option} limits.priority devices-nic_p2p
+:shortdesc: "The priority for outgoing traffic, to be used by the kernel queuing discipline to prioritize network packets"
+:type: "integer"
+
+```
+
+```{config:option} mtu devices-nic_p2p
+:default: "kernel assigned"
+:shortdesc: "The Maximum Transmit Unit (MTU) of the new interface"
+:type: "integer"
+
+```
+
+```{config:option} name devices-nic_p2p
+:default: "kernel assigned"
+:shortdesc: "The name of the interface inside the instance"
+:type: "string"
+
+```
+
+```{config:option} queue.tx.length devices-nic_p2p
+:shortdesc: "The transmit queue length for the NIC"
+:type: "integer"
+
+```
+
+<!-- config group devices-nic_p2p end -->
+<!-- config group devices-nic_physical start -->
+```{config:option} boot.priority devices-nic_physical
+:managed: "no"
+:shortdesc: "Boot priority for VMs (higher value boots first)"
+:type: "integer"
+
+```
+
+```{config:option} gvrp devices-nic_physical
+:default: "false"
+:managed: "no"
+:shortdesc: "Register VLAN using GARP VLAN Registration Protocol"
+:type: "bool"
+
+```
+
+```{config:option} hwaddr devices-nic_physical
+:default: "randomly assigned"
+:managed: "no"
+:shortdesc: "The MAC address of the new interface"
+:type: "string"
+
+```
+
+```{config:option} mtu devices-nic_physical
+:default: "MTU of the parent device"
+:managed: "no"
+:shortdesc: "The Maximum Transmit Unit (MTU) of the new interface"
+:type: "integer"
+
+```
+
+```{config:option} name devices-nic_physical
+:default: "kernel assigned"
+:managed: "no"
+:shortdesc: "The name of the interface inside the instance"
+:type: "string"
+
+```
+
+```{config:option} network devices-nic_physical
+:managed: "no"
+:shortdesc: "The managed network to link the device to (instead of specifying the `nictype` directly)"
+:type: "string"
+
+```
+
+```{config:option} parent devices-nic_physical
+:managed: "yes"
+:shortdesc: "The name of the parent host device (required if specifying the `nictype` directly)"
+:type: "string"
+
+```
+
+```{config:option} vlan devices-nic_physical
+:managed: "no"
+:shortdesc: "The VLAN ID to attach to"
+:type: "integer"
+
+```
+
+<!-- config group devices-nic_physical end -->
+<!-- config group devices-nic_routed start -->
+```{config:option} gvrp devices-nic_routed
+:default: "false"
+:shortdesc: "Register VLAN using GARP VLAN Registration Protocol"
+:type: "bool"
+
+```
+
+```{config:option} host_name devices-nic_routed
+:default: "randomly assigned"
+:shortdesc: "The name of the interface on the host"
+:type: "string"
+
+```
+
+```{config:option} hwaddr devices-nic_routed
+:default: "randomly assigned"
+:shortdesc: "The MAC address of the new interface"
+:type: "string"
+
+```
+
+```{config:option} io.bus devices-nic_routed
+:default: "`virtio`"
+:shortdesc: "Override the bus for the device (can be `virtio` or `usb`) (VM only)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.address devices-nic_routed
+:shortdesc: "Comma-delimited list of IPv4 static addresses to add to the instance"
+:type: "string"
+
+```
+
+```{config:option} ipv4.gateway devices-nic_routed
+:default: "auto"
+:shortdesc: "Whether to add an automatic default IPv4 gateway (can be `auto` or `none`)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.host_address devices-nic_routed
+:default: "`169.254.0.1`"
+:shortdesc: "The IPv4 address to add to the host-side `veth` interface"
+:type: "string"
+
+```
+
+```{config:option} ipv4.host_table devices-nic_routed
+:shortdesc: "The custom policy routing table ID to add IPv4 static routes to (in addition to the main routing table)"
+:type: "integer"
+
+```
+
+```{config:option} ipv4.neighbor_probe devices-nic_routed
+:default: "true"
+:shortdesc: "Whether to probe the parent network for IP address availability"
+:type: "bool"
+
+```
+
+```{config:option} ipv4.routes devices-nic_routed
+:shortdesc: "Comma-delimited list of IPv4 static routes to add on host to NIC (without L2 ARP/NDP proxy)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.address devices-nic_routed
+:shortdesc: "Comma-delimited list of IPv6 static addresses to add to the instance"
+:type: "string"
+
+```
+
+```{config:option} ipv6.gateway devices-nic_routed
+:default: "auto"
+:shortdesc: "Whether to add an automatic default IPv6 gateway (can be `auto` or `none`)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.host_address devices-nic_routed
+:default: "`fe80::1`"
+:shortdesc: "The IPv6 address to add to the host-side `veth` interface"
+:type: "string"
+
+```
+
+```{config:option} ipv6.host_table devices-nic_routed
+:shortdesc: "The custom policy routing table ID to add IPv6 static routes to (in addition to the main routing table)"
+:type: "integer"
+
+```
+
+```{config:option} ipv6.neighbor_probe devices-nic_routed
+:default: "true"
+:shortdesc: "Whether to probe the parent network for IP address availability"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.routes devices-nic_routed
+:shortdesc: "Comma-delimited list of IPv6 static routes to add on host to NIC (without L2 ARP/NDP proxy)"
+:type: "string"
+
+```
+
+```{config:option} limits.egress devices-nic_routed
+:shortdesc: "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)"
+:type: "string"
+
+```
+
+```{config:option} limits.ingress devices-nic_routed
+:shortdesc: "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)"
+:type: "string"
+
+```
+
+```{config:option} limits.max devices-nic_routed
+:shortdesc: "I/O limit in bit/s for both incoming and outgoing traffic (same as setting both limits.ingress and limits.egress)"
+:type: "string"
+
+```
+
+```{config:option} limits.priority devices-nic_routed
+:shortdesc: "The priority for outgoing traffic, to be used by the kernel queuing discipline to prioritize network packets"
+:type: "integer"
+
+```
+
+```{config:option} mtu devices-nic_routed
+:default: "parent MTU"
+:shortdesc: "The Maximum Transmit Unit (MTU) of the new interface"
+:type: "integer"
+
+```
+
+```{config:option} name devices-nic_routed
+:default: "kernel assigned"
+:shortdesc: "The name of the interface inside the instance"
+:type: "string"
+
+```
+
+```{config:option} parent devices-nic_routed
+:shortdesc: "The name of the parent host device to join the instance to"
+:type: "string"
+
+```
+
+```{config:option} queue.tx.length devices-nic_routed
+:shortdesc: "The transmit queue length for the NIC"
+:type: "integer"
+
+```
+
+```{config:option} vlan devices-nic_routed
+:shortdesc: "The VLAN ID to attach to"
+:type: "integer"
+
+```
+
+```{config:option} vrf devices-nic_routed
+:shortdesc: "The VRF on the host in which the host-side interface and routes are created"
+:type: "string"
+
+```
+
+<!-- config group devices-nic_routed end -->
+<!-- config group devices-nic_sriov start -->
+```{config:option} boot.priority devices-nic_sriov
+:managed: "no"
+:shortdesc: "Boot priority for VMs (higher value boots first)"
+:type: "integer"
+
+```
+
+```{config:option} hwaddr devices-nic_sriov
+:default: "randomly assigned"
+:managed: "no"
+:shortdesc: "The MAC address of the new interface"
+:type: "string"
+
+```
+
+```{config:option} mtu devices-nic_sriov
+:default: "kernel assigned"
+:managed: "yes"
+:shortdesc: "The Maximum Transmit Unit (MTU) of the new interface"
+:type: "integer"
+
+```
+
+```{config:option} name devices-nic_sriov
+:default: "kernel assigned"
+:managed: "no"
+:shortdesc: "The name of the interface inside the instance"
+:type: "string"
+
+```
+
+```{config:option} network devices-nic_sriov
+:managed: "no"
+:shortdesc: "The managed network to link the device to (instead of specifying the `nictype` directly)"
+:type: "string"
+
+```
+
+```{config:option} parent devices-nic_sriov
+:managed: "yes"
+:shortdesc: "The name of the parent host device (required if specifying the `nictype` directly)"
+:type: "string"
+
+```
+
+```{config:option} security.mac_filtering devices-nic_sriov
+:default: "false"
+:managed: "no"
+:shortdesc: "Prevent the instance from spoofing another instance's MAC address"
+:type: "bool"
+
+```
+
+```{config:option} vlan devices-nic_sriov
+:managed: "no"
+:shortdesc: "The VLAN ID to attach to"
+:type: "integer"
+
+```
+
+<!-- config group devices-nic_sriov end -->
+<!-- config group devices-proxy start -->
+```{config:option} bind devices-proxy
+:default: "`host`"
+:required: "no"
+:shortdesc: "Which side to bind on (`host`/`instance`)"
+:type: "string"
+
+```
+
+```{config:option} connect devices-proxy
+:required: "yes"
+:shortdesc: "The address and port to connect to (`<type>:<addr>:<port>[-<port>][,<port>]`)"
+:type: "string"
+
+```
+
+```{config:option} gid devices-proxy
+:default: "`0`"
+:required: "no"
+:shortdesc: "GID of the owner of the listening Unix socket"
+:type: "int"
+
+```
+
+```{config:option} listen devices-proxy
+:required: "yes"
+:shortdesc: "The address and port to bind and listen (`<type>:<addr>:<port>[-<port>][,<port>]`)"
+:type: "string"
+
+```
+
+```{config:option} mode devices-proxy
+:default: "`0644`"
+:required: "no"
+:shortdesc: "Mode for the listening Unix socket"
+:type: "int"
+
+```
+
+```{config:option} nat devices-proxy
+:default: "`false`"
+:required: "no"
+:shortdesc: "Whether to optimize proxying via NAT (requires that the instance NIC has a static IP address)"
+:type: "bool"
+
+```
+
+```{config:option} proxy_protocol devices-proxy
+:default: "`false`"
+:required: "no"
+:shortdesc: "Whether to use the HAProxy PROXY protocol to transmit sender information"
+:type: "bool"
+
+```
+
+```{config:option} security.gid devices-proxy
+:default: "`0`"
+:required: "no"
+:shortdesc: "What GID to drop privilege to"
+:type: "int"
+
+```
+
+```{config:option} security.uid devices-proxy
+:default: "`0`"
+:required: "no"
+:shortdesc: "What UID to drop privilege to"
+:type: "int"
+
+```
+
+```{config:option} uid devices-proxy
+:default: "`0`"
+:required: "no"
+:shortdesc: "UID of the owner of the listening Unix socket"
+:type: "int"
+
+```
+
+<!-- config group devices-proxy end -->
 <!-- config group devices-unix-char-block start -->
 ```{config:option} gid devices-unix-char-block
 :default: "0"
@@ -402,6 +1575,47 @@ For file systems (shared directories or custom volumes), this is one of:
 ```
 
 <!-- config group image-requirements end -->
+<!-- config group infiniband-common start -->
+```{config:option} hwaddr infiniband-common
+:defaultdesc: "randomly assigned"
+:required: "no"
+:shortdesc: "The MAC address of the new interface (can be either the full 20-byte variant or the short 8-byte variant, which will only modify the last 8 bytes of the parent device)"
+:type: "string"
+
+```
+
+```{config:option} mtu infiniband-common
+:defaultdesc: "parent MTU"
+:required: "no"
+:shortdesc: "The MTU of the new interface"
+:type: "integer"
+
+```
+
+```{config:option} name infiniband-common
+:defaultdesc: "kernel assigned"
+:required: "no"
+:shortdesc: "The name of the interface inside the instance"
+:type: "string"
+
+```
+
+```{config:option} nictype infiniband-common
+:required: "yes"
+:shortdesc: "The device type (one of `physical` or `sriov`)"
+:type: "string"
+
+```
+
+```{config:option} parent infiniband-common
+:defaultdesc: "kernel assigned"
+:required: "no"
+:shortdesc: "The name of the interface inside the instance"
+:type: "string"
+
+```
+
+<!-- config group infiniband-common end -->
 <!-- config group instance-boot start -->
 ```{config:option} boot.autorestart instance-boot
 :liveupdate: "no"
@@ -1600,6 +2814,446 @@ User keys can be used in search.
 ```
 
 <!-- config group network_address_set-common end -->
+<!-- config group network_bridge-common start -->
+```{config:option} bgp.ipv4.nexthop network_bridge-common
+:condition: "BGP server"
+:default: "local address"
+:shortdesc: "Override the next-hop for advertised prefixes"
+:type: "string"
+
+```
+
+```{config:option} bgp.ipv6.nexthop network_bridge-common
+:condition: "BGP server"
+:default: "local address"
+:shortdesc: "Override the next-hop for advertised prefixes"
+:type: "string"
+
+```
+
+```{config:option} bridge.driver network_bridge-common
+:condition: "-"
+:default: "`native`"
+:shortdesc: "Bridge driver: `native` or `openvswitch`"
+:type: "string"
+
+```
+
+```{config:option} bridge.external_interfaces network_bridge-common
+:condition: "-"
+:default: "-"
+:shortdesc: "Comma-separated list of unconfigured network interfaces to include in the bridge"
+:type: "string"
+
+```
+
+```{config:option} bridge.hwaddr network_bridge-common
+:condition: "-"
+:default: "-"
+:shortdesc: "MAC address for the bridge"
+:type: "string"
+
+```
+
+```{config:option} bridge.mtu network_bridge-common
+:condition: "-"
+:default: "`1500`"
+:shortdesc: "Bridge MTU (default varies if tunnel in use)"
+:type: "integer"
+
+```
+
+```{config:option} dns.domain network_bridge-common
+:condition: "-"
+:default: "`incus`"
+:shortdesc: "Domain to advertise to DHCP clients and use for DNS resolution"
+:type: "string"
+
+```
+
+```{config:option} dns.mode network_bridge-common
+:condition: "-"
+:default: "`managed`"
+:shortdesc: "DNS registration mode: none for no DNS record, managed for Incus-generated static records or dynamic for client-generated records"
+:type: "string"
+
+```
+
+```{config:option} dns.nameservers network_bridge-common
+:condition: "-"
+:default: "IPv4 and IPv6 address"
+:shortdesc: "DNS server IPs to advertise to DHCP clients and via Router Advertisements. Both IPv4 and IPv6 addresses get pushed via DHCP, and IPv6 addresses are also advertised as RDNSS via RA."
+:type: "string"
+
+```
+
+```{config:option} dns.search network_bridge-common
+:condition: "-"
+:default: "-"
+:shortdesc: "Full comma-separated domain search list, defaulting to `dns.domain` value"
+:type: "string"
+
+```
+
+```{config:option} dns.zone.forward network_bridge-common
+:condition: "-"
+:default: "`managed`"
+:shortdesc: "Comma-separated list of DNS zone names for forward DNS records"
+:type: "string"
+
+```
+
+```{config:option} dns.zone.reverse.ipv4 network_bridge-common
+:condition: "-"
+:default: "`managed`"
+:shortdesc: "DNS zone name for IPv4 reverse DNS records"
+:type: "string"
+
+```
+
+```{config:option} dns.zone.reverse.ipv6 network_bridge-common
+:condition: "-"
+:default: "`managed`"
+:shortdesc: "DNS zone name for IPv6 reverse DNS records"
+:type: "string"
+
+```
+
+```{config:option} ipv4.address network_bridge-common
+:condition: "standard mode"
+:default: "- (initial value on creation: `auto`)"
+:shortdesc: "IPv4 address for the bridge (use `none` to turn off IPv4 or `auto` to generate a new random unused subnet) (CIDR)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.dhcp network_bridge-common
+:condition: "IPv4 address"
+:default: "`true`"
+:shortdesc: "Whether to allocate addresses using DHCP"
+:type: "bool"
+
+```
+
+```{config:option} ipv4.dhcp.expiry network_bridge-common
+:condition: "IPv4 DHCP"
+:default: "`1h`"
+:shortdesc: "When to expire DHCP leases"
+:type: "string"
+
+```
+
+```{config:option} ipv4.dhcp.gateway network_bridge-common
+:condition: "IPv4 DHCP"
+:default: "all addresses"
+:shortdesc: "Address of the gateway for the subnet"
+:type: "string"
+
+```
+
+```{config:option} ipv4.dhcp.ranges network_bridge-common
+:condition: "IPv4 DHCP"
+:default: "all addresses"
+:shortdesc: "Comma-separated list of IP ranges to use for DHCP (FIRST-LAST format)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.dhcp.routes network_bridge-common
+:condition: "IPv4 DHCP"
+:default: "-"
+:shortdesc: "Static routes to provide via DHCP option 121, as a comma-separated list of alternating subnets (CIDR) and gateway addresses (same syntax as dnsmasq)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.firewall network_bridge-common
+:condition: "IPv4 address"
+:default: "`true`"
+:shortdesc: "Whether to generate filtering firewall rules for this network"
+:type: "bool"
+
+```
+
+```{config:option} ipv4.nat network_bridge-common
+:condition: "IPv4 address"
+:default: "`false`(initial value on creation if `ipv4.address` is set to `auto`: `true`)"
+:shortdesc: "Whether to NAT"
+:type: "bool"
+
+```
+
+```{config:option} ipv4.nat.address network_bridge-common
+:condition: "IPv4 address"
+:default: "-"
+:shortdesc: "The source address used for outbound traffic from the bridge"
+:type: "string"
+
+```
+
+```{config:option} ipv4.nat.order network_bridge-common
+:condition: "IPv4 address"
+:default: "`before`"
+:shortdesc: "Whether to add the required NAT rules before or after any pre-existing rules"
+:type: "string"
+
+```
+
+```{config:option} ipv4.ovn.ranges network_bridge-common
+:condition: "-"
+:default: "-"
+:shortdesc: "Comma-separated list of IPv4 ranges to use for child OVN network routers (FIRST-LAST format)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.routes network_bridge-common
+:condition: "IPv4 address"
+:default: "-"
+:shortdesc: "Comma-separated list of additional IPv4 CIDR subnets to route to the bridge"
+:type: "string"
+
+```
+
+```{config:option} ipv4.routing network_bridge-common
+:condition: "IPv4 DHCP"
+:default: "`true`"
+:shortdesc: "Whether to route traffic in and out of the bridge"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.address network_bridge-common
+:condition: "standard mode"
+:default: "- (initial value on creation: `auto`)"
+:shortdesc: "IPv6 address for the bridge (use `none` to turn off IPv6 or `auto` to generate a new random unused subnet) (CIDR)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.dhcp network_bridge-common
+:condition: "IPv6 DHCP"
+:default: "`true`"
+:shortdesc: "Whether to provide additional network configuration over DHCP"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.dhcp.expiry network_bridge-common
+:condition: "IPv6 DHCP"
+:default: "`1h`"
+:shortdesc: "When to expire DHCP leases"
+:type: "string"
+
+```
+
+```{config:option} ipv6.dhcp.ranges network_bridge-common
+:condition: "IPv6 stateful DHCP"
+:default: "all addresses"
+:shortdesc: "Comma-separated list of IPv6 ranges to use for DHCP (FIRST-LAST format)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.dhcp.stateful network_bridge-common
+:condition: "IPv6 DHCP"
+:default: "`false`"
+:shortdesc: "Whether to allocate addresses using DHCP"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.firewall network_bridge-common
+:condition: "IPv6 address"
+:default: "`true`"
+:shortdesc: "Whether to generate filtering firewall rules for this network"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.nat network_bridge-common
+:condition: "IPv6 address"
+:default: "`false` (initial value on creation if `ipv6.address` is set to `auto`: `true`)"
+:shortdesc: "Whether to NAT"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.nat.address network_bridge-common
+:condition: "IPv6 address"
+:default: "-"
+:shortdesc: "The source address used for outbound traffic from the bridge"
+:type: "string"
+
+```
+
+```{config:option} ipv6.nat.order network_bridge-common
+:condition: "IPv6 address"
+:default: "`before`"
+:shortdesc: "Whether to add the required NAT rules before or after any pre-existing rules"
+:type: "string"
+
+```
+
+```{config:option} ipv6.ovn.ranges network_bridge-common
+:condition: "-"
+:default: "-"
+:shortdesc: "Comma-separated list of IPv6 ranges to use for child OVN network routers (FIRST-LAST format)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.routes network_bridge-common
+:condition: "IPv6"
+:default: "-"
+:shortdesc: "Comma-separated list of additional IPv6 CIDR subnets to route to the bridge"
+:type: "string"
+
+```
+
+```{config:option} ipv6.routing network_bridge-common
+:condition: "IPv6 address"
+:default: "`true`"
+:shortdesc: "Whether to route traffic in and out of the bridge"
+:type: "bool"
+
+```
+
+```{config:option} raw.dnsmasq network_bridge-common
+:condition: "-"
+:default: "-"
+:shortdesc: "Additional dnsmasq configuration to append to the configuration file"
+:type: "string"
+
+```
+
+```{config:option} security.acls network_bridge-common
+:condition: "-"
+:default: "-"
+:shortdesc: "Comma-separated list of Network ACLs to apply to NICs connected to this network (see {ref}`network-acls-bridge-limitations`)"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.egress.action network_bridge-common
+:condition: "`security.acls`"
+:default: "`reject`"
+:shortdesc: "Action to use for egress traffic that doesn't match any ACL rule"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.egress.logged network_bridge-common
+:condition: "`security.acls`"
+:default: "`false`"
+:shortdesc: "Whether to log egress traffic that doesn't match any ACL rule"
+:type: "bool"
+
+```
+
+```{config:option} security.acls.default.ingress.action network_bridge-common
+:condition: "`security.acls`"
+:default: "`reject`"
+:shortdesc: "Action to use for ingress traffic that doesn't match any ACL rule"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.ingress.logged network_bridge-common
+:condition: "`security.acls`"
+:default: "`false`"
+:shortdesc: "Whether to log ingress traffic that doesn't match any ACL rule"
+:type: "bool"
+
+```
+
+```{config:option} tunnel.NAME.group network_bridge-common
+:condition: "`vxlan`"
+:default: "`239.0.0.1`"
+:shortdesc: "Multicast address for `vxlan` (used if local and remote aren't set)"
+:type: "string"
+
+```
+
+```{config:option} tunnel.NAME.id network_bridge-common
+:condition: "`vxlan`"
+:default: "`0`"
+:shortdesc: "Specific tunnel ID to use for the `vxlan` tunnel"
+:type: "integer"
+
+```
+
+```{config:option} tunnel.NAME.interface network_bridge-common
+:condition: "`vxlan`"
+:default: "-"
+:shortdesc: "Specific host interface to use for the tunnel"
+:type: "string"
+
+```
+
+```{config:option} tunnel.NAME.local network_bridge-common
+:condition: "`gre` or `vxlan`"
+:default: "-"
+:shortdesc: "Local address for the tunnel (not necessary for multicast `vxlan`)"
+:type: "string"
+
+```
+
+```{config:option} tunnel.NAME.port network_bridge-common
+:condition: "`vxlan`"
+:default: "`0`"
+:shortdesc: "Specific port to use for the `vxlan` tunnel"
+:type: "integer"
+
+```
+
+```{config:option} tunnel.NAME.protocol network_bridge-common
+:condition: "standard mode"
+:default: "-"
+:shortdesc: "Tunneling protocol: `vxlan` or `gre`"
+:type: "string"
+
+```
+
+```{config:option} tunnel.NAME.remote network_bridge-common
+:condition: "`gre` or `vxlan`"
+:default: "-"
+:shortdesc: "Remote address for the tunnel (not necessary for multicast `vxlan`)"
+:type: "string"
+
+```
+
+```{config:option} tunnel.NAME.ttl network_bridge-common
+:condition: "`vxlan`"
+:default: "`1`"
+:shortdesc: "Specific TTL to use for multicast routing topologies"
+:type: "integer"
+
+```
+
+```{config:option} user.* network_bridge-common
+:condition: "-"
+:default: "-"
+:shortdesc: "User-provided free-form key/value pairs"
+:type: "string"
+
+```
+
+<!-- config group network_bridge-common end -->
+<!-- config group network_forward-common start -->
+```{config:option} target_address network_forward-common
+:shortdesc: "Default target address for anything not covered through a port definition"
+:type: "string"
+
+```
+
+```{config:option} user.* network_forward-common
+:shortdesc: "User defined key/value configuration"
+:type: "string"
+
+```
+
+<!-- config group network_forward-common end -->
 <!-- config group network_integration-common start -->
 ```{config:option} user.* network_integration-common
 :shortdesc: "Free form user key/value storage"
@@ -2470,6 +4124,103 @@ Specify the number of days after which the unused cached image expires.
 ```
 
 <!-- config group server-images end -->
+<!-- config group server-logging start -->
+```{config:option} logging.NAME.lifecycle.projects server-logging
+:scope: "global"
+:shortdesc: "Comma separate list of projects, empty means all"
+:type: "string"
+
+```
+
+```{config:option} logging.NAME.lifecycle.types server-logging
+:scope: "global"
+:shortdesc: "E.g., `instance`, comma separate, empty means all"
+:type: "string"
+
+```
+
+```{config:option} logging.NAME.logging.level server-logging
+:defaultdesc: "`info`"
+:scope: "global"
+:shortdesc: "Minimum log level to send to the logger"
+:type: "string"
+
+```
+
+```{config:option} logging.NAME.target.address server-logging
+:scope: "global"
+:shortdesc: "Address of the logger"
+:type: "string"
+Specify the protocol, name or IP and port. For example `tcp://syslog01.int.example.net:514`.
+```
+
+```{config:option} logging.NAME.target.ca_cert server-logging
+:scope: "global"
+:shortdesc: "CA certificate for the server"
+:type: "string"
+
+```
+
+```{config:option} logging.NAME.target.facility server-logging
+:scope: "global"
+:shortdesc: "The syslog facility defines the category of the log message"
+:type: "string"
+
+```
+
+```{config:option} logging.NAME.target.instance server-logging
+:defaultdesc: "Local server host name or cluster member name"
+:scope: "global"
+:shortdesc: "Name to use as the instance field in Loki events."
+:type: "string"
+This allows replacing the default instance value (server host name) by a more relevant value like a cluster identifier.
+```
+
+```{config:option} logging.NAME.target.labels server-logging
+:scope: "global"
+:shortdesc: "Labels for a Loki log entry"
+:type: "string"
+Specify a comma-separated list of values that should be used as labels for a Loki log entry.
+```
+
+```{config:option} logging.NAME.target.password server-logging
+:scope: "global"
+:shortdesc: "Password used for authentication"
+:type: "string"
+
+```
+
+```{config:option} logging.NAME.target.retry server-logging
+:scope: "global"
+:shortdesc: "number of delivery retries, default 3"
+:type: "integer"
+
+```
+
+```{config:option} logging.NAME.target.type server-logging
+:scope: "global"
+:shortdesc: "The type of the logger, e.g., syslog"
+:type: "string"
+
+```
+
+```{config:option} logging.NAME.target.username server-logging
+:scope: "global"
+:shortdesc: "User name used for authentication"
+:type: "string"
+
+```
+
+```{config:option} logging.NAME.types server-logging
+:defaultdesc: "`lifecycle,logging`"
+:scope: "global"
+:shortdesc: "Events to send to the logger"
+:type: "string"
+Specify a comma-separated list of events to send to the logger.
+The events can be any combination of `lifecycle`, `logging`, and `network-acl`.
+```
+
+<!-- config group server-logging end -->
 <!-- config group server-loki start -->
 ```{config:option} loki.api.ca_cert server-loki
 :scope: "global"
@@ -2741,3 +4492,21 @@ This value is required by some providers.
 ```
 
 <!-- config group server-openfga end -->
+<!-- config group tpm-common start -->
+```{config:option} path tpm-common
+:default: "-"
+:required: "for containers"
+:shortdesc: "Only for containers: path inside the instance (for example, `/dev/tpm0`)"
+:type: "string"
+
+```
+
+```{config:option} pathrm tpm-common
+:default: "-"
+:required: "for containers"
+:shortdesc: "Only for containers: resource manager path inside the instance (for example, `/dev/tpmrm0`)"
+:type: "string"
+
+```
+
+<!-- config group tpm-common end -->

@@ -685,7 +685,7 @@ func (c *cmdStorageList) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List available storage pools
 
-Default column layout: nDSdus
+Default column layout: nDdus
 
 == Columns ==
 The -c option takes a comma separated list of arguments that control
