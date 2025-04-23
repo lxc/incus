@@ -969,6 +969,12 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 }
 
 func (c *cmdFile) setOwnerMode(sftpConn *sftp.Client, targetPath string, args incus.InstanceFileArgs) error {
+	// Skip if not on UNIX.
+	_, err := sftpConn.StatVFS("/")
+	if err != nil {
+		return nil
+	}
+
 	// Get the current stat information.
 	st, err := sftpConn.Stat(targetPath)
 	if err != nil {
