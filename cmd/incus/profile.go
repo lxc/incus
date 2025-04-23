@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -729,11 +730,19 @@ type cmdProfileList struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProfileList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("list", i18n.G("[<remote>:]"))
+	cmd.Use = usage("list", i18n.G("[<remote>:] [<filter>...]"))
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List profiles")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List profiles
+
+Filters may be of the <key>=<value> form for property based filtering,
+or part of the profile name. Filters must be delimited by a ','.
+
+Examples:
+  - "foo" lists all profiles that start with the name foo
+  - "name=foo" lists all profiles that exactly have the name foo
+  - "description=.*bar.*" lists all profiles with a description that contains "bar"
 
 The -c option takes a (optionally comma-separated) list of arguments
 that control which image attributes to output when displaying in table
@@ -826,7 +835,7 @@ func (c *cmdProfileList) usedByColumnData(profile api.Profile) string {
 // Run runs the actual command logic.
 func (c *cmdProfileList) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 0, 1)
+	exit, err := c.global.checkArgs(cmd, args, 0, -1)
 	if exit {
 		return err
 	}
@@ -835,10 +844,16 @@ func (c *cmdProfileList) Run(cmd *cobra.Command, args []string) error {
 		return errors.New(i18n.G("Can't specify --project with --all-projects"))
 	}
 
-	// Parse remote
+	// Parse remote and filters.
 	remote := ""
-	if len(args) > 0 {
-		remote = args[0]
+	filters := []string{}
+
+	if len(args) != 0 {
+		filters = args
+		if strings.Contains(args[0], ":") && !strings.Contains(args[0], "=") {
+			remote = args[0]
+			filters = args[1:]
+		}
 	}
 
 	resources, err := c.global.parseServers(remote)
@@ -848,18 +863,29 @@ func (c *cmdProfileList) Run(cmd *cobra.Command, args []string) error {
 
 	resource := resources[0]
 
+	flattenedFilters := []string{}
+	for _, filter := range filters {
+		flattenedFilters = append(flattenedFilters, strings.Split(filter, ",")...)
+	}
+
+	filters = flattenedFilters
+
+	if len(filters) > 0 && !strings.Contains(filters[0], "=") {
+		filters[0] = fmt.Sprintf("name=^%s($|.*)", regexp.QuoteMeta(filters[0]))
+	}
+
+	serverFilters, _ := getServerSupportedFilters(filters, []string{}, false)
+
 	// List profiles
 	var profiles []api.Profile
 	if c.flagAllProjects {
-		profiles, err = resource.server.GetProfilesAllProjects()
-		if err != nil {
-			return err
-		}
+		profiles, err = resource.server.GetProfilesAllProjectsWithFilter(serverFilters)
 	} else {
-		profiles, err = resource.server.GetProfiles()
-		if err != nil {
-			return err
-		}
+		profiles, err = resource.server.GetProfilesWithFilter(serverFilters)
+	}
+
+	if err != nil {
+		return err
 	}
 
 	columns, err := c.parseColumns()
