@@ -193,14 +193,22 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		//  type: integer
 		//  shortdesc: The custom policy routing table ID to add IPv4 static routes to (in addition to the main routing table)
 
+<<<<<<< HEAD
 		"ipv4.host_table",
+=======
+		"ipv4.host_table", // deprecated
+>>>>>>> 274f9cdd5 (ff)
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv6.host_table)
 		//
 		// ---
 		//  type: integer
 		//  shortdesc: The custom policy routing table ID to add IPv6 static routes to (in addition to the main routing table)
 
+<<<<<<< HEAD
 		"ipv6.host_table",
+=======
+		"ipv6.host_table", // deprecated
+>>>>>>> 274f9cdd5 (ff)
 		// gendoc:generate(entity=devices, group=nic_routed, key=gvrp)
 		//
 		// ---
@@ -208,6 +216,11 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		//  default: false
 		//  shortdesc: Register VLAN using GARP VLAN Registration Protocol
 
+<<<<<<< HEAD
+=======
+    	"ipv4.host_tables",
+		"ipv6.host_tables",
+>>>>>>> 274f9cdd5 (ff)
 		"gvrp",
 		// gendoc:generate(entity=devices, group=nic_routed, key=vrf)
 		//
@@ -240,7 +253,12 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 	//  type: string
 	//  shortdesc: Comma-delimited list of IPv6 static addresses to add to the instance
 	rules["ipv6.address"] = validate.Optional(validate.IsListOf(validate.IsNetworkAddressV6))
+<<<<<<< HEAD
 
+=======
+	rules["ipv4.host_tables"] = validate.Optional(validate.IsListOf(validate.IsInRange(0, 255)))
+  	rules["ipv6.host_tables"] = validate.Optional(validate.IsListOf(validate.IsInRange(0, 255)))
+>>>>>>> 274f9cdd5 (ff)
 	rules["gvrp"] = validate.Optional(validate.IsBool)
 
 	// gendoc:generate(entity=devices, group=nic_routed, key=ipv4.neighbor_probe)
@@ -585,15 +603,21 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 		}
 
 		getTables := func() []string {
-			// If host_tables is specified, use the comma defined list.
-			if v := d.config[fmt.Sprintf("%s.host_tables", keyPrefix)]; v != "" {
-				return util.SplitNTrimSpace(v, ",", -1, true)
+			// New plural form ­– honour exactly what the user gives.
+			if v := d.config[fmt.Sprintf("%s.hosttables", keyPrefix)]; v != "" {
+				tbls := util.SplitNTrimSpace(v, ",", -1, true)
+				return tbls;
 			}
-			// Legacy - single key is defined.
+		
+			// Legacy – single key: include it plus 254.
 			if v := d.config[fmt.Sprintf("%s.host_table", keyPrefix)]; v != "" {
-				return []string{v}
+				if v == "254" {
+					return []string{"254"}               // user asked for main only
+				}
+				return []string{v, "254"}                // custom + main
 			}
-			// Default: just 254 (Linux "main").
+		
+			// Default – main only.
 			return []string{"254"}
 		}
 		tables := getTables()
