@@ -1,12 +1,18 @@
 package ip
 
 import (
-	"github.com/lxc/incus/v6/shared/subprocess"
+	"fmt"
+	"strconv"
+
+	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
+
+	"github.com/lxc/incus/v6/shared/units"
 )
 
 // Action represents an action in filter.
 type Action interface {
-	AddAction() []string
+	toNetlink() (netlink.Action, error)
 }
 
 // ActionPolice represents an action of 'police' type.
@@ -17,26 +23,46 @@ type ActionPolice struct {
 	Drop  bool
 }
 
-// AddAction generates a part of command specific for 'police' action.
-func (a *ActionPolice) AddAction() []string {
-	result := []string{"police"}
+func (a *ActionPolice) toNetlink() (netlink.Action, error) {
+	action := netlink.NewPoliceAction()
+
+	action.ExceedAction = netlink.TC_POLICE_RECLASSIFY
+
 	if a.Rate != "" {
-		result = append(result, "rate", a.Rate)
+		// TODO: just pass around as number?
+		rate, err := units.ParseBitSizeString(a.Rate)
+		if err != nil {
+			return nil, fmt.Errorf("invalid rate %q: %w", a.Rate, err)
+		}
+
+		action.Rate = uint32(rate / 8) // netlink wants the rate in bytes/s
 	}
 
 	if a.Burst != "" {
-		result = append(result, "burst", a.Burst)
+		// TODO: just pass around as number?
+		burst, err := strconv.ParseUint(a.Burst, 10, 32)
+		if err != nil {
+			return nil, fmt.Errorf("invalid burst %q: %w", a.Burst, err)
+		}
+
+		action.Burst = uint32(burst)
 	}
 
 	if a.Mtu != "" {
-		result = append(result, "mtu", a.Mtu)
+		// TODO: just pass around as number?
+		mtu, err := units.ParseByteSizeString(a.Mtu)
+		if err != nil {
+			return nil, fmt.Errorf("invalid mtu %q: %w", a.Mtu, err)
+		}
+
+		action.Mtu = uint32(mtu)
 	}
 
 	if a.Drop {
-		result = append(result, "drop")
+		action.ExceedAction = netlink.TC_POLICE_SHOT
 	}
 
-	return result
+	return action, nil
 }
 
 // Filter represents filter object.
@@ -55,28 +81,86 @@ type U32Filter struct {
 	Actions []Action
 }
 
+func parseProtocol(proto string) (uint16, error) {
+	// TODO: add other proto values
+	switch proto {
+	case "all":
+		return unix.ETH_P_ALL, nil
+	default:
+		return 0, fmt.Errorf("unknown protocol %q", proto)
+	}
+}
+
 // Add adds universal 32bit traffic control filter to a node.
 func (u32 *U32Filter) Add() error {
-	cmd := []string{"filter", "add", "dev", u32.Dev}
-	if u32.Parent != "" {
-		cmd = append(cmd, "parent", u32.Parent)
+	link, err := linkByName(u32.Dev)
+	if err != nil {
+		return err
 	}
 
-	cmd = append(cmd, "protocol", u32.Protocol)
-	cmd = append(cmd, "u32", "match", "u32", u32.Value, u32.Mask)
+	proto, err := parseProtocol(u32.Protocol)
+	if err != nil {
+		return err
+	}
+
+	// TODO: should just be passed around as an int
+	mask, err := strconv.ParseUint(u32.Mask, 10, 32)
+	if err != nil {
+		return fmt.Errorf("invalid mask %v: %w", u32.Mask, err)
+	}
+
+	value, err := strconv.ParseUint(u32.Value, 10, 32)
+	if err != nil {
+		return fmt.Errorf("invalid value %v: %w", u32.Mask, err)
+	}
+
+	filter := &netlink.U32{
+		FilterAttrs: netlink.FilterAttrs{
+			LinkIndex: link.Attrs().Index,
+			Protocol:  proto,
+			Chain:     nil,
+		},
+		Sel: &netlink.TcU32Sel{
+			Nkeys: 1,
+			Keys: []netlink.TcU32Key{
+				{
+					Mask: uint32(mask),
+					Val:  uint32(value),
+				},
+			},
+		},
+	}
 
 	for _, action := range u32.Actions {
-		actionCmd := action.AddAction()
-		cmd = append(cmd, actionCmd...)
+		netlinkAction, err := action.toNetlink()
+		if err != nil {
+			return err
+		}
+
+		filter.Actions = append(filter.Actions, netlinkAction)
+	}
+
+	if u32.Parent != "" {
+		parent, err := parseHandle(u32.Parent)
+		if err != nil {
+			return err
+		}
+
+		filter.Parent = parent
 	}
 
 	if u32.Flowid != "" {
-		cmd = append(cmd, "flowid", u32.Flowid)
+		flowid, err := parseHandle(u32.Flowid)
+		if err != nil {
+			return err
+		}
+
+		filter.ClassId = flowid
 	}
 
-	_, err := subprocess.RunCommand("tc", cmd...)
+	err = netlink.FilterAdd(filter)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to add filter %v: %w", filter, err)
 	}
 
 	return nil
