@@ -365,6 +365,63 @@ type qemu struct {
 // Callers should check that the instance is running (and therefore mounted) before calling this function,
 // otherwise the qmp.Connect call will fail to use the monitor socket file.
 func (d *qemu) getAgentClient() (*http.Client, error) {
+	if d.isWindows() {
+		// Get known network details.
+		networks, err := d.getNetworkState()
+		if err != nil {
+			return nil, errQemuAgentOffline
+		}
+
+		// The connection uses mutual authentication, so use the server's key & cert for client.
+		agentCert, _, clientCert, clientKey, err := d.generateAgentCert()
+		if err != nil {
+			return nil, err
+		}
+
+		// Get the TLS configuration.
+		tlsConfig, err := localtls.GetTLSConfigMem(clientCert, clientKey, "", agentCert, false)
+		if err != nil {
+			return nil, err
+		}
+
+		// Setup an HTTPS client.
+		client := &http.Client{}
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			// Replicate the headers.
+			req.Header = via[len(via)-1].Header
+
+			return nil
+		}
+
+		for _, netInterface := range networks {
+			for _, address := range netInterface.Addresses {
+				if address.Scope != "global" {
+					continue
+				}
+
+				networkAddress := net.JoinHostPort(address.Address, strconv.Itoa(ports.HTTPSDefaultPort))
+
+				client.Transport = &http.Transport{
+					TLSClientConfig: tlsConfig,
+					DialContext: func(_ context.Context, network, addr string) (net.Conn, error) {
+						return net.Dial("tcp", networkAddress)
+					},
+					DisableKeepAlives:     true,
+					ExpectContinueTimeout: time.Second * 30,
+					ResponseHeaderTimeout: time.Second * 3600,
+					TLSHandshakeTimeout:   time.Second * 5,
+				}
+
+				_, err := client.Get("https://agent/")
+				if err == nil {
+					return client, nil
+				}
+			}
+		}
+
+		return nil, errQemuAgentOffline
+	}
+
 	// Check if the agent is running.
 	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
 	if err != nil {
