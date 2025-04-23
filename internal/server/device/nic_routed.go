@@ -589,15 +589,27 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 		}
 
 		getTables := func() []string {
-			// If host_tables is specified, use the comma defined list.
-			if v := d.config[fmt.Sprintf("%s.host_tables", keyPrefix)]; v != "" {
-				return util.SplitNTrimSpace(v, ",", -1, true)
+			// New plural form ­– honour exactly what the user gives.
+			if v := d.config[fmt.Sprintf("%s.hosttables", keyPrefix)]; v != "" {
+				tbls := util.SplitNTrimSpace(v, ",", -1, true)
+				// Guarantee that 254 is present once.
+				for _, t := range tbls {
+					if t == "254" {
+						return tbls
+					}
+				}
+				return append(tbls, "254")
 			}
-			// Legacy - single key is defined.
+		
+			// Legacy – single key: include it plus 254.
 			if v := d.config[fmt.Sprintf("%s.host_table", keyPrefix)]; v != "" {
-				return []string{v}
+				if v == "254" {
+					return []string{"254"}               // user asked for main only
+				}
+				return []string{v, "254"}                // custom + main
 			}
-			// Default: just 254 (Linux "main").
+		
+			// Default – main only.
 			return []string{"254"}
 		}
 		tables := getTables()
