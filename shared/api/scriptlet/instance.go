@@ -17,9 +17,9 @@ const InstancePlacementReasonEvacuation = "evacuation"
 //
 // API extension: instances_placement_scriptlet.
 type InstanceResources struct {
-	CPUCores     uint64 `json:"cpu_cores"`
-	MemorySize   uint64 `json:"memory_size"`
-	RootDiskSize uint64 `json:"root_disk_size"`
+	CPUCores     uint64 `json:"cpu_cores" yaml:"cpu_cores"`
+	MemorySize   uint64 `json:"memory_size" yaml:"memory_size"`
+	RootDiskSize uint64 `json:"root_disk_size" yaml:"root_disk_size"`
 }
 
 // InstancePlacement represents the instance placement request.
@@ -28,6 +28,6 @@ type InstanceResources struct {
 type InstancePlacement struct {
 	api.InstancesPost `yaml:",inline"`
 
-	Reason  string `json:"reason"`
-	Project string `json:"project"`
+	Reason  string `json:"reason" yaml:"reason"`
+	Project string `json:"project" yaml:"project"`
 }
