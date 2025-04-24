@@ -39,7 +39,7 @@ See {ref}`clustering-instance-placement` for more information.
 To launch an instance on a member of a cluster group, follow the instructions in {ref}`cluster-target-instance`, but use the group name prefixed with `@` for the `--target` flag.
 For example:
 
-    incus launch images:ubuntu/22.04 c1 --target=@gpu
+    incus launch images:debian/12 c1 --target=@gpu
 
 ## Use with restricted projects
 

@@ -15,7 +15,7 @@ Image
   Images for various operating systems are available on the built-in remote image servers.
   See {ref}`images` for more information.
 
-  Unless the image is available locally, you must specify the name of the image server and the name of the image (for example, `images:ubuntu/22.04` for the official 22.04 Ubuntu image).
+  Unless the image is available locally, you must specify the name of the image server and the name of the image (for example, `images:debian/12` for a Debian 12 image).
 
 Instance name
 : Instance names must be unique within an Incus deployment (also within a cluster).
@@ -38,7 +38,7 @@ Instead of specifying the instance configuration as flags, you can pass it to th
 
 For example, to launch a container with the configuration from `config.yaml`, enter the following command:
 
-    incus launch images:ubuntu/22.04 ubuntu-config < config.yaml
+    incus launch images:debian/12 debian-config < config.yaml
 
 ```{tip}
 Check the contents of an existing instance configuration ([`incus config show <instance_name> --expanded`](incus_config_show.md)) to see the required syntax of the YAML file.
@@ -50,31 +50,31 @@ The following examples use [`incus launch`](incus_launch.md), but you can use [`
 
 ### Launch a container
 
-To launch a container with an Ubuntu 22.04 image from the `images` server using the instance name `ubuntu-container`, enter the following command:
+To launch a system container with a Debian 12 image from the `images` server using the instance name `debian-container`, enter the following command:
 
-    incus launch images:ubuntu/22.04 ubuntu-container
+    incus launch images:debian/12 debian-container
 
 ### Launch a virtual machine
 
-To launch a virtual machine with an Ubuntu 22.04 image from the `images` server using the instance name `ubuntu-vm`, enter the following command:
+To launch a virtual machine with a Debian 12 image from the `images` server using the instance name `debian-vm`, enter the following command:
 
-    incus launch images:ubuntu/22.04 ubuntu-vm --vm
+    incus launch images:debian/12 debian-vm --vm
 
 Or with a bigger disk:
 
-    incus launch images:ubuntu/22.04 ubuntu-vm-big --vm --device root,size=30GiB
+    incus launch images:debian/12 debian-vm-big --vm --device root,size=30GiB
 
 ### Launch a container with specific configuration options
 
 To launch a container and limit its resources to one vCPU and 192 MiB of RAM, enter the following command:
 
-    incus launch images:ubuntu/22.04 ubuntu-limited --config limits.cpu=1 --config limits.memory=192MiB
+    incus launch images:debian/12 debian-limited --config limits.cpu=1 --config limits.memory=192MiB
 
 ### Launch a VM on a specific cluster member
 
 To launch a virtual machine on the cluster member `server2`, enter the following command:
 
-    incus launch images:ubuntu/22.04 ubuntu-container --vm --target server2
+    incus launch images:debian/12 debian-container --vm --target server2
 
 ### Launch a container with a specific instance type
 
@@ -95,7 +95,7 @@ For example, the following three instance types are equivalent:
 
 To launch a container with this instance type, enter the following command:
 
-    incus launch images:ubuntu/22.04 my-instance --type t2.micro
+    incus launch images:debian/12 my-instance --type t2.micro
 
 The list of supported clouds and instance types can be found at [`https://github.com/dustinkirkland/instance-type`](https://github.com/dustinkirkland/instance-type).
 

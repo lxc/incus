@@ -12,7 +12,7 @@ You can do this from any cluster member.
 
 For example, to launch an instance named `c1` on the cluster member `server2`, use the following command:
 
-    incus launch images:ubuntu/22.04 c1 --target server2
+    incus launch images:debian/12 c1 --target server2
 
 You can launch instances on specific cluster members or on specific {ref}`cluster groups <howto-cluster-groups>`.
 

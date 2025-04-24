@@ -16,19 +16,19 @@ If you do not specify a remote, the {ref}`default remote <images-remote-default>
 ### Filter available images
 
 To filter the results that are displayed, specify a part of the alias or fingerprint after the command.
-For example, to show all Ubuntu 22.04 images, enter the following command:
+For example, to show all Debian images, enter the following command:
 
-    incus image list images: 22.04
+    incus image list images: debian
 
 You can specify several filters as well.
-For example, to show all Arm 64-bit Ubuntu 22.04 images, enter the following command:
+For example, to show all Arm 64-bit Debian images, enter the following command:
 
-    incus image list images: 22.04 arm64
+    incus image list images: debian arm64
 
 To filter for properties other than alias or fingerprint, specify the filter in `<key>=<value>` format.
 For example:
 
-    incus image list images: 22.04 architecture=x86_64
+    incus image list images: debian architecture=x86_64
 
 ## View image information
 
@@ -37,7 +37,7 @@ To view information about an image, enter the following command:
     incus image info <image_ID>
 
 As the image ID, you can specify either the image's alias or its fingerprint.
-For a remote image, remember to include the remote server (for example, `images:ubuntu/22.04`).
+For a remote image, remember to include the remote server (for example, `images:debian/12`).
 
 To display only the image properties, enter the following command:
 
@@ -47,9 +47,9 @@ You can also display a specific image property (located under the `properties` k
 
     incus image get-property <image_ID> <key>
 
-For example, to show the release name of the official Ubuntu 22.04 image, enter the following command:
+For example, to show the release name of the latest Debian 12 image, enter the following command:
 
-    incus image get-property images:ubuntu/22.04 release
+    incus image get-property images:debian/12 release
 
 (images-manage-edit)=
 ## Edit image properties
