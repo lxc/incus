@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/v6/internal/i18n"
@@ -14,11 +15,26 @@ import (
 )
 
 // RunPreseed runs the actual command logic.
-func (c *cmdAdminInit) RunPreseed() (*api.InitPreseed, error) {
+func (c *cmdAdminInit) RunPreseed(cmd *cobra.Command, args []string) (*api.InitPreseed, error) {
+	// Quick checks.
+	exit, err := c.global.checkArgs(cmd, args, 0, 1)
+	if exit {
+		return nil, err
+	}
+
 	// Read the YAML
-	bytes, err := io.ReadAll(os.Stdin)
-	if err != nil {
-		return nil, fmt.Errorf(i18n.G("Failed to read from stdin: %w"), err)
+	var bytes []byte
+
+	if len(args) == 0 {
+		bytes, err = io.ReadAll(os.Stdin)
+		if err != nil {
+			return nil, fmt.Errorf(i18n.G("Failed to read from stdin: %w"), err)
+		}
+	} else {
+		bytes, err = os.ReadFile(args[0])
+		if err != nil {
+			return nil, fmt.Errorf(i18n.G("Failed to read from file: %w"), err)
+		}
 	}
 
 	// Parse the YAML
