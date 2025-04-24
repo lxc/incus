@@ -1,12 +1,10 @@
 package ip
 
 import (
-	"bytes"
+	"fmt"
 	"net"
-	"strings"
 
-	"github.com/lxc/incus/v6/shared/subprocess"
-	"github.com/lxc/incus/v6/shared/util"
+	"github.com/vishvananda/netlink"
 )
 
 // NeighbourIPState can be { PERMANENT | NOARP | REACHABLE | STALE | NONE | INCOMPLETE | DELAY | PROBE | FAILED }.
@@ -41,6 +39,31 @@ const NeighbourIPStateProbe = "PROBE"
 // NeighbourIPStateFailed max number of probes exceeded without success, neighbor validation has ultimately failed.
 const NeighbourIPStateFailed = "FAILED"
 
+func mapNetlinkState(state int) NeighbourIPState {
+	switch state {
+	case netlink.NUD_NONE:
+		return NeighbourIPStateNone
+	case netlink.NUD_INCOMPLETE:
+		return NeighbourIPStateIncomplete
+	case netlink.NUD_REACHABLE:
+		return NeighbourIPStateReachable
+	case netlink.NUD_STALE:
+		return NeighbourIPStateStale
+	case netlink.NUD_DELAY:
+		return NeighbourIPStateDelay
+	case netlink.NUD_PROBE:
+		return NeighbourIPStateProbe
+	case netlink.NUD_FAILED:
+		return NeighbourIPStateFailed
+	case netlink.NUD_NOARP:
+		return NeighbourIPStateNoARP
+	case netlink.NUD_PERMANENT:
+		return NeighbourIPStatePermanent
+	default:
+		return NeighbourIPStateNone
+	}
+}
+
 // Neigh represents arguments for neighbour manipulation.
 type Neigh struct {
 	DevName string
@@ -51,38 +74,23 @@ type Neigh struct {
 
 // Show list neighbour entries filtered by DevName and optionally MAC address.
 func (n *Neigh) Show() ([]Neigh, error) {
-	out, err := subprocess.RunCommand("ip", "neigh", "show", "dev", n.DevName)
+	link, err := linkByName(n.DevName)
 	if err != nil {
 		return nil, err
 	}
 
-	neighbours := []Neigh{}
+	netlinkNeighbours, err := netlink.NeighList(link.Attrs().Index, netlink.FAMILY_ALL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get neighbours for link %q: %w", n.DevName, err)
+	}
 
-	for _, line := range util.SplitNTrimSpace(out, "\n", -1, true) {
-		// Split fields and early validation.
-		fields := strings.Fields(line)
-		if len(fields) != 4 {
-			continue
-		}
+	neighbours := make([]Neigh, 0, len(netlinkNeighbours))
 
-		addr := net.ParseIP(fields[0])
-		if addr == nil {
-			continue
-		}
-
-		mac, _ := net.ParseMAC(fields[2])
-
-		// Check neighbour matches desired MAC address if specified.
-		if n.MAC != nil {
-			if !bytes.Equal(n.MAC, mac) {
-				continue
-			}
-		}
-
+	for _, neighbour := range netlinkNeighbours {
 		neighbours = append(neighbours, Neigh{
-			Addr:  addr,
-			MAC:   mac,
-			State: NeighbourIPState(fields[3]),
+			Addr:  neighbour.IP,
+			MAC:   neighbour.HardwareAddr,
+			State: mapNetlinkState(neighbour.State),
 		})
 	}
 
