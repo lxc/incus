@@ -1,49 +1,84 @@
 package ip
 
+import (
+	"fmt"
+	"net"
+
+	"github.com/vishvananda/netlink"
+)
+
 // Vxlan represents arguments for link of type vxlan.
 type Vxlan struct {
 	Link
-	VxlanID string
+	VxlanID int
 	DevName string
 	Local   string
 	Remote  string
 	Group   string
-	DstPort string
-	TTL     string
-}
-
-// additionalArgs generates vxlan specific arguments.
-func (vxlan *Vxlan) additionalArgs() []string {
-	args := []string{}
-	args = append(args, "id", vxlan.VxlanID)
-	if vxlan.DevName != "" {
-		args = append(args, "dev", vxlan.DevName)
-	}
-
-	if vxlan.Group != "" {
-		args = append(args, "group", vxlan.Group)
-	}
-
-	if vxlan.Remote != "" {
-		args = append(args, "remote", vxlan.Remote)
-	}
-
-	if vxlan.Local != "" {
-		args = append(args, "local", vxlan.Local)
-	}
-
-	if vxlan.TTL != "" {
-		args = append(args, "ttl", vxlan.TTL)
-	}
-
-	if vxlan.DstPort != "" {
-		args = append(args, "dstport", vxlan.DstPort)
-	}
-
-	return args
+	DstPort int
+	TTL     int
 }
 
 // Add adds new virtual link.
 func (vxlan *Vxlan) Add() error {
-	return vxlan.Link.add("vxlan", vxlan.additionalArgs())
+	attrs, err := vxlan.netlinkAttrs()
+	if err != nil {
+		return err
+	}
+
+	var devIndex int
+	if vxlan.DevName != "" {
+		dev, err := linkByName(vxlan.DevName)
+		if err != nil {
+			return err
+		}
+
+		devIndex = dev.Attrs().Index
+	}
+
+	// TODO: all of these these can be passed net.IP
+	var group net.IP
+	if vxlan.Group != "" {
+		group = net.ParseIP(vxlan.Group)
+		if group == nil {
+			return fmt.Errorf("Invalid group address %q", vxlan.Group)
+		}
+
+		if !group.IsMulticast() {
+			return fmt.Errorf("Group address must be multicast, got %q", vxlan.Group)
+		}
+	}
+
+	if vxlan.Remote != "" {
+		if group != nil {
+			return fmt.Errorf("Group and remote can not be specified together")
+		}
+
+		group = net.ParseIP(vxlan.Remote)
+		if group == nil {
+			return fmt.Errorf("Invalid remote address %q", vxlan.Remote)
+		}
+
+		if group.IsMulticast() {
+			return fmt.Errorf("Remote address must not be multicast, got %q", vxlan.Remote)
+		}
+	}
+
+	var local net.IP
+	if vxlan.Local != "" {
+		local = net.ParseIP(vxlan.Local)
+		if local == nil {
+			return fmt.Errorf("Invalid local address %q", vxlan.Local)
+		}
+	}
+
+	return netlink.LinkAdd(&netlink.Vxlan{
+		LinkAttrs:    attrs,
+		VxlanId:      vxlan.VxlanID,
+		VtepDevIndex: devIndex,
+		SrcAddr:      local,
+		Group:        group,
+		TTL:          vxlan.TTL,
+		Port:         vxlan.DstPort,
+	})
 }

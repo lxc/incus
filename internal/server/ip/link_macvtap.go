@@ -1,5 +1,9 @@
 package ip
 
+import (
+	"github.com/vishvananda/netlink"
+)
+
 // Macvtap represents arguments for link of type macvtap.
 type Macvtap struct {
 	Macvlan
@@ -7,5 +11,15 @@ type Macvtap struct {
 
 // Add adds new virtual link.
 func (macvtap *Macvtap) Add() error {
-	return macvtap.Macvlan.Link.add("macvtap", []string{"mode", macvtap.Macvlan.Mode})
+	attrs, err := macvtap.netlinkAttrs()
+	if err != nil {
+		return err
+	}
+
+	return netlink.LinkAdd(&netlink.Macvtap{
+		Macvlan: netlink.Macvlan{
+			LinkAttrs: attrs,
+			Mode:      macvtap.netlinkMode(),
+		},
+	})
 }
