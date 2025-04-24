@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-04-23 16:05-0500\n"
+"POT-Creation-Date: 2025-04-24 01:42-0400\n"
 "PO-Revision-Date: 2024-02-09 19:02+0000\n"
 "Last-Translator: Alberto Donato <alberto.donato@gmail.com>\n"
 "Language-Team: Italian <https://hosted.weblate.org/projects/incus/cli/it/>\n"
@@ -1587,11 +1587,11 @@ msgstr ""
 msgid "Columns"
 msgstr "Colonne"
 
-#: cmd/incus/main.go:100
+#: cmd/incus/main.go:101
 msgid "Command line client for Incus"
 msgstr ""
 
-#: cmd/incus/main.go:101
+#: cmd/incus/main.go:102
 msgid ""
 "Command line client for Incus\n"
 "\n"
@@ -2210,7 +2210,7 @@ msgstr ""
 #: cmd/incus/image_alias.go:71 cmd/incus/image_alias.go:140
 #: cmd/incus/image_alias.go:196 cmd/incus/image_alias.go:386
 #: cmd/incus/import.go:28 cmd/incus/info.go:37 cmd/incus/launch.go:25
-#: cmd/incus/list.go:52 cmd/incus/main.go:101 cmd/incus/manpage.go:25
+#: cmd/incus/list.go:52 cmd/incus/main.go:102 cmd/incus/manpage.go:25
 #: cmd/incus/monitor.go:35 cmd/incus/move.go:37 cmd/incus/network.go:38
 #: cmd/incus/network.go:150 cmd/incus/network.go:249 cmd/incus/network.go:350
 #: cmd/incus/network.go:468 cmd/incus/network.go:528 cmd/incus/network.go:627
@@ -2276,9 +2276,9 @@ msgstr ""
 #: cmd/incus/operation.go:300 cmd/incus/profile.go:37 cmd/incus/profile.go:113
 #: cmd/incus/profile.go:190 cmd/incus/profile.go:283 cmd/incus/profile.go:369
 #: cmd/incus/profile.go:460 cmd/incus/profile.go:520 cmd/incus/profile.go:658
-#: cmd/incus/profile.go:736 cmd/incus/profile.go:926 cmd/incus/profile.go:1016
-#: cmd/incus/profile.go:1078 cmd/incus/profile.go:1169
-#: cmd/incus/profile.go:1235 cmd/incus/project.go:38 cmd/incus/project.go:108
+#: cmd/incus/profile.go:736 cmd/incus/profile.go:927 cmd/incus/profile.go:1017
+#: cmd/incus/profile.go:1079 cmd/incus/profile.go:1170
+#: cmd/incus/profile.go:1236 cmd/incus/project.go:38 cmd/incus/project.go:108
 #: cmd/incus/project.go:214 cmd/incus/project.go:314 cmd/incus/project.go:452
 #: cmd/incus/project.go:529 cmd/incus/project.go:750 cmd/incus/project.go:817
 #: cmd/incus/project.go:907 cmd/incus/project.go:953 cmd/incus/project.go:1016
@@ -2527,7 +2527,7 @@ msgstr ""
 msgid "Don't require user confirmation for using --force"
 msgstr ""
 
-#: cmd/incus/main.go:122
+#: cmd/incus/main.go:123
 msgid "Don't show progress information"
 msgstr ""
 
@@ -2775,7 +2775,7 @@ msgstr ""
 #: cmd/incus/network_forward.go:618 cmd/incus/network_integration.go:673
 #: cmd/incus/network_load_balancer.go:604 cmd/incus/network_peer.go:652
 #: cmd/incus/network_zone.go:571 cmd/incus/network_zone.go:1288
-#: cmd/incus/profile.go:1146 cmd/incus/project.go:881 cmd/incus/storage.go:923
+#: cmd/incus/profile.go:1147 cmd/incus/project.go:881 cmd/incus/storage.go:923
 #: cmd/incus/storage_bucket.go:732 cmd/incus/storage_volume.go:2117
 #: cmd/incus/storage_volume.go:2160
 #, c-format
@@ -2797,7 +2797,7 @@ msgstr ""
 #: cmd/incus/network_forward.go:612 cmd/incus/network_integration.go:667
 #: cmd/incus/network_load_balancer.go:598 cmd/incus/network_peer.go:646
 #: cmd/incus/network_zone.go:565 cmd/incus/network_zone.go:1282
-#: cmd/incus/profile.go:1140 cmd/incus/project.go:875 cmd/incus/storage.go:917
+#: cmd/incus/profile.go:1141 cmd/incus/project.go:875 cmd/incus/storage.go:917
 #: cmd/incus/storage_bucket.go:726 cmd/incus/storage_volume.go:2111
 #: cmd/incus/storage_volume.go:2154
 #, c-format
@@ -2809,12 +2809,12 @@ msgstr ""
 msgid "Error updating template file: %s"
 msgstr ""
 
-#: cmd/incus/main.go:353
+#: cmd/incus/main.go:354
 #, c-format
 msgid "Error while executing alias expansion: %s\n"
 msgstr ""
 
-#: cmd/incus/main.go:356
+#: cmd/incus/main.go:357
 #, c-format
 msgid "Error: %v\n"
 msgstr ""
@@ -3220,7 +3220,7 @@ msgstr "Il nome del container è: %s"
 msgid "Failed to listen for connection: %w"
 msgstr "Accetta certificato"
 
-#: cmd/incus/main.go:404 cmd/incus/main_aliases.go:221
+#: cmd/incus/main.go:405 cmd/incus/main_aliases.go:221
 #, c-format
 msgid "Failed to load configuration: %s"
 msgstr ""
@@ -3235,12 +3235,17 @@ msgstr "Accetta certificato"
 msgid "Failed to parse servers: %w"
 msgstr "Accetta certificato"
 
-#: cmd/incus/admin_init_preseed.go:29
+#: cmd/incus/admin_init_preseed.go:45
 #, fuzzy, c-format
 msgid "Failed to parse the preseed: %w"
 msgstr "Accetta certificato"
 
-#: cmd/incus/admin_init_preseed.go:21 cmd/incus/admin_sql.go:91
+#: cmd/incus/admin_init_preseed.go:36
+#, fuzzy, c-format
+msgid "Failed to read from file: %w"
+msgstr "Impossible leggere da stdin: %s"
+
+#: cmd/incus/admin_init_preseed.go:31 cmd/incus/admin_sql.go:91
 #, fuzzy, c-format
 msgid "Failed to read from stdin: %w"
 msgstr "Impossible leggere da stdin: %s"
@@ -3395,7 +3400,7 @@ msgstr "Creazione del container in corso"
 msgid "Force the removal of running instances"
 msgstr ""
 
-#: cmd/incus/main.go:118
+#: cmd/incus/main.go:119
 msgid "Force using the local unix socket"
 msgstr ""
 
@@ -3824,7 +3829,7 @@ msgstr ""
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 
-#: cmd/incus/main.go:465
+#: cmd/incus/main.go:466
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -4136,7 +4141,7 @@ msgid ""
 "Invalid name in '%s', empty string is only allowed when defining maxWidth"
 msgstr ""
 
-#: cmd/incus/main.go:562 cmd/incus/storage.go:142
+#: cmd/incus/main.go:566 cmd/incus/storage.go:142
 #, fuzzy
 msgid "Invalid number of arguments"
 msgstr "numero errato di argomenti del sottocomando"
@@ -4804,8 +4809,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:"
-"maxWidth]\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
+"\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -5455,8 +5460,8 @@ msgstr ""
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect "
-"\"custom\" (user created) volumes."
+"Unless specified through a prefix, all volume operations affect \"custom\" "
+"(user created) volumes."
 msgstr ""
 
 #: cmd/incus/remote.go:44 cmd/incus/remote.go:45
@@ -5581,7 +5586,7 @@ msgstr "Il nome del container è: %s"
 #: cmd/incus/config_template.go:119 cmd/incus/config_template.go:176
 #: cmd/incus/config_template.go:232 cmd/incus/config_template.go:335
 #: cmd/incus/config_template.go:408 cmd/incus/profile.go:150
-#: cmd/incus/profile.go:233 cmd/incus/profile.go:963 cmd/incus/rebuild.go:44
+#: cmd/incus/profile.go:233 cmd/incus/profile.go:964 cmd/incus/rebuild.go:44
 #, fuzzy
 msgid "Missing instance name"
 msgstr "Il nome del container è: %s"
@@ -5715,8 +5720,8 @@ msgid "Missing pool name"
 msgstr ""
 
 #: cmd/incus/profile.go:424 cmd/incus/profile.go:493 cmd/incus/profile.go:577
-#: cmd/incus/profile.go:697 cmd/incus/profile.go:1049 cmd/incus/profile.go:1119
-#: cmd/incus/profile.go:1202
+#: cmd/incus/profile.go:697 cmd/incus/profile.go:1050 cmd/incus/profile.go:1120
+#: cmd/incus/profile.go:1203
 msgid "Missing profile name"
 msgstr ""
 
@@ -6297,7 +6302,7 @@ msgstr ""
 msgid "Optimized Storage"
 msgstr ""
 
-#: cmd/incus/main.go:119
+#: cmd/incus/main.go:120
 msgid "Override the source project"
 msgstr ""
 
@@ -6377,7 +6382,7 @@ msgstr ""
 msgid "Partitions:"
 msgstr ""
 
-#: cmd/incus/main.go:426
+#: cmd/incus/main.go:427
 #, fuzzy, c-format
 msgid "Password for %s: "
 msgstr "Password amministratore per %s: "
@@ -6491,7 +6496,7 @@ msgstr ""
 msgid "Pretty rendering (short for --format=pretty)"
 msgstr ""
 
-#: cmd/incus/main.go:117
+#: cmd/incus/main.go:118
 msgid "Print help"
 msgstr ""
 
@@ -6499,7 +6504,7 @@ msgstr ""
 msgid "Print the raw response"
 msgstr ""
 
-#: cmd/incus/main.go:116
+#: cmd/incus/main.go:117
 msgid "Print version number"
 msgstr ""
 
@@ -6548,17 +6553,17 @@ msgstr ""
 msgid "Profile %s deleted"
 msgstr ""
 
-#: cmd/incus/profile.go:973
+#: cmd/incus/profile.go:974
 #, c-format
 msgid "Profile %s isn't currently applied to %s"
 msgstr ""
 
-#: cmd/incus/profile.go:998
+#: cmd/incus/profile.go:999
 #, c-format
 msgid "Profile %s removed from %s"
 msgstr ""
 
-#: cmd/incus/profile.go:1059
+#: cmd/incus/profile.go:1060
 #, c-format
 msgid "Profile %s renamed to %s"
 msgstr ""
@@ -6873,7 +6878,7 @@ msgstr ""
 msgid "Remove ports from a load balancer"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/profile.go:925 cmd/incus/profile.go:926
+#: cmd/incus/profile.go:926 cmd/incus/profile.go:927
 msgid "Remove profiles from instances"
 msgstr ""
 
@@ -6945,7 +6950,7 @@ msgstr "Creazione del container in corso"
 msgid "Rename networks"
 msgstr ""
 
-#: cmd/incus/profile.go:1015 cmd/incus/profile.go:1016
+#: cmd/incus/profile.go:1016 cmd/incus/profile.go:1017
 msgid "Rename profiles"
 msgstr ""
 
@@ -7382,11 +7387,11 @@ msgstr ""
 msgid "Set network zone record configuration keys"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/profile.go:1077
+#: cmd/incus/profile.go:1078
 msgid "Set profile configuration keys"
 msgstr ""
 
-#: cmd/incus/profile.go:1078
+#: cmd/incus/profile.go:1079
 msgid ""
 "Set profile configuration keys\n"
 "\n"
@@ -7531,7 +7536,7 @@ msgstr "Creazione del container in corso"
 msgid "Set the key as a network zone record property"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/profile.go:1085
+#: cmd/incus/profile.go:1086
 msgid "Set the key as a profile property"
 msgstr ""
 
@@ -7568,11 +7573,11 @@ msgstr ""
 msgid "Setup loop based storage with SIZE in GiB"
 msgstr ""
 
-#: cmd/incus/main.go:120
+#: cmd/incus/main.go:121
 msgid "Show all debug messages"
 msgstr ""
 
-#: cmd/incus/main.go:121
+#: cmd/incus/main.go:122
 msgid "Show all information messages"
 msgstr ""
 
@@ -7622,7 +7627,7 @@ msgstr ""
 msgid "Show instance snapshot configuration"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/main.go:304 cmd/incus/main.go:305
+#: cmd/incus/main.go:305 cmd/incus/main.go:306
 msgid "Show less common commands"
 msgstr ""
 
@@ -7683,7 +7688,7 @@ msgstr "Il nome del container è: %s"
 msgid "Show network zone record configurations"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/profile.go:1168 cmd/incus/profile.go:1169
+#: cmd/incus/profile.go:1169 cmd/incus/profile.go:1170
 msgid "Show profile configurations"
 msgstr ""
 
@@ -8348,7 +8353,7 @@ msgstr ""
 msgid "There is no \"image name\".  Did you want an alias?"
 msgstr ""
 
-#: cmd/incus/main.go:344
+#: cmd/incus/main.go:345
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
 "As your platform can't run native Linux instances, you must connect to a "
@@ -8399,10 +8404,11 @@ msgstr ""
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
-#: cmd/incus/main.go:470
+#: cmd/incus/main.go:474
+#, c-format
 msgid ""
-"To start your first container, try: incus launch images:ubuntu/22.04\n"
-"Or for a virtual machine: incus launch images:ubuntu/22.04 --vm"
+"To start your first container, try: incus launch images:%s\n"
+"Or for a virtual machine: incus launch images:%s --vm"
 msgstr ""
 
 #: cmd/incus/config.go:302 cmd/incus/config.go:495 cmd/incus/config.go:703
@@ -8684,7 +8690,7 @@ msgstr "Il nome del container è: %s"
 msgid "Unset network zone record configuration keys"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/profile.go:1234 cmd/incus/profile.go:1235
+#: cmd/incus/profile.go:1235 cmd/incus/profile.go:1236
 msgid "Unset profile configuration keys"
 msgstr ""
 
@@ -8764,7 +8770,7 @@ msgstr "Creazione del container in corso"
 msgid "Unset the key as a network zone record property"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/profile.go:1239
+#: cmd/incus/profile.go:1240
 msgid "Unset the key as a profile property"
 msgstr ""
 
@@ -8838,7 +8844,7 @@ msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool)"
 msgstr ""
 
-#: cmd/incus/main.go:123
+#: cmd/incus/main.go:124
 msgid "Use with help or --help to view sub-commands"
 msgstr ""
 
@@ -9375,7 +9381,7 @@ msgstr "Creazione del container in corso"
 msgid "[<remote>:]<instance> <old snapshot name> <new snapshot name>"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/profile.go:111 cmd/incus/profile.go:924
+#: cmd/incus/profile.go:111 cmd/incus/profile.go:925
 #, fuzzy
 msgid "[<remote>:]<instance> <profile>"
 msgstr "Creazione del container in corso"
@@ -9809,7 +9815,7 @@ msgstr "Creazione del container in corso"
 
 #: cmd/incus/config_device.go:329 cmd/incus/config_device.go:769
 #: cmd/incus/profile.go:367 cmd/incus/profile.go:457 cmd/incus/profile.go:518
-#: cmd/incus/profile.go:1167
+#: cmd/incus/profile.go:1168
 #, fuzzy
 msgid "[<remote>:]<profile>"
 msgstr "Creazione del container in corso"
@@ -9829,12 +9835,12 @@ msgstr "Creazione del container in corso"
 msgid "[<remote>:]<profile> <device> <type> [key=value...]"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/profile.go:656 cmd/incus/profile.go:1233
+#: cmd/incus/profile.go:656 cmd/incus/profile.go:1234
 #, fuzzy
 msgid "[<remote>:]<profile> <key>"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/profile.go:1076
+#: cmd/incus/profile.go:1077
 #, fuzzy
 msgid "[<remote>:]<profile> <key><value>..."
 msgstr "Creazione del container in corso"
@@ -9844,7 +9850,7 @@ msgstr "Creazione del container in corso"
 msgid "[<remote>:]<profile> <name>..."
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/profile.go:1013
+#: cmd/incus/profile.go:1014
 #, fuzzy
 msgid "[<remote>:]<profile> <new-name>"
 msgstr "Creazione del container in corso"
@@ -10056,13 +10062,13 @@ msgstr ""
 
 #: cmd/incus/create.go:47
 msgid ""
-"incus create images:ubuntu/22.04 u1\n"
+"incus create images:debian/12 u1\n"
 "\n"
-"incus create images:ubuntu/22.04 u1 < config.yaml\n"
+"incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
@@ -10140,28 +10146,27 @@ msgstr ""
 
 #: cmd/incus/launch.go:27
 msgid ""
-"incus launch images:ubuntu/22.04 u1\n"
+"incus launch images:debian/12 u1\n"
 "\n"
-"incus launch images:ubuntu/22.04 u1 < config.yaml\n"
+"incus launch images:debian/12 u1 < config.yaml\n"
 "    Create and start a container with configuration from config.yaml\n"
 "\n"
-"incus launch images:ubuntu/22.04 u2 -t aws:t2.micro\n"
+"incus launch images:debian/12 u2 -t aws:t2.micro\n"
 "    Create and start a container using the same size as an AWS t2.micro (1 "
 "vCPU, 1GiB of RAM)\n"
 "\n"
-"incus launch images:ubuntu/22.04 v1 --vm -c limits.cpu=4 -c limits."
-"memory=4GiB\n"
+"incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine with 4 vCPUs and 4GiB of RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
 #: cmd/incus/list.go:126
 msgid ""
-"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
-"parent:ETHP\n"
+"incus list -c "
+"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -10239,16 +10244,16 @@ msgid ""
 "incus network integration create o1 ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from config."
-"yaml"
+"    Create network integration o1 of type ovn with configuration from "
+"config.yaml"
 msgstr ""
 
 #: cmd/incus/network_integration.go:233
 msgid ""
-"incus network integration edit <network integration> < network-integration."
-"yaml\n"
-"    Update a network integration using the content of network-integration."
-"yaml"
+"incus network integration edit <network integration> < network-"
+"integration.yaml\n"
+"    Update a network integration using the content of network-"
+"integration.yaml"
 msgstr ""
 
 #: cmd/incus/network_load_balancer.go:341
