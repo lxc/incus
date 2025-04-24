@@ -116,6 +116,7 @@ func qemuBase(opts *qemuBaseOpts) []cfg.Section {
 
 type qemuMemoryOpts struct {
 	memSizeMB int64
+	maxSizeMB int64
 }
 
 func qemuMemory(opts *qemuMemoryOpts) []cfg.Section {
@@ -126,7 +127,7 @@ func qemuMemory(opts *qemuMemoryOpts) []cfg.Section {
 		Entries: []cfg.Entry{
 			{Key: "size", Value: fmt.Sprintf("%dM", opts.memSizeMB)},
 			{Key: "slots", Value: "16"},
-			{Key: "maxmem", Value: "1T"},
+			{Key: "maxmem", Value: fmt.Sprintf("%dM", opts.maxSizeMB)},
 		},
 	}}
 }
