@@ -64,7 +64,7 @@ func LoadConfig(path string) (*Config, error) {
 
 	// Decode the YAML document
 	c := NewConfig(configDir, false)
-	err = yaml.Unmarshal(content, &c)
+	err = yaml.Unmarshal(content, c)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to decode the configuration: %w", err)
 	}
@@ -80,7 +80,7 @@ func LoadConfig(path string) (*Config, error) {
 	globalConf := NewConfig("", false)
 	content, err = os.ReadFile(globalConf.GlobalConfigPath("config.yml"))
 	if err == nil {
-		err = yaml.Unmarshal(content, &globalConf)
+		err = yaml.Unmarshal(content, globalConf)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to decode the configuration: %w", err)
 		}

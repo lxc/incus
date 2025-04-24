@@ -12,7 +12,7 @@ type sortSuite struct {
 }
 
 func TestSortSuite(t *testing.T) {
-	suite.Run(t, new(sortSuite))
+	suite.Run(t, &sortSuite{})
 }
 
 // stringList can be used to sort a list of strings.

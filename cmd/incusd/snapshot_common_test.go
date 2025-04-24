@@ -40,5 +40,5 @@ func (s *snapshotCommonTestSuite) TestSnapshotScheduling() {
 }
 
 func TestSnapshotCommon(t *testing.T) {
-	suite.Run(t, new(snapshotCommonTestSuite))
+	suite.Run(t, &snapshotCommonTestSuite{})
 }
