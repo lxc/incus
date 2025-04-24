@@ -21,7 +21,7 @@ Incus requires a kernel with support for:
 The following optional features also require extra kernel options:
 
 * Namespaces (`user` and `cgroup`)
-* AppArmor (including Ubuntu patch for mount mediation)
+* AppArmor
 * Control Groups (`blkio`, `cpuset`, `devices`, `memory` and `pids`)
 * CRIU (exact details to be found with CRIU upstream)
 
@@ -34,8 +34,7 @@ Incus requires LXC 5.0.0 or higher with the following build options:
 * `apparmor` (if using Incus' AppArmor support)
 * `seccomp`
 
-To run recent version of various distributions, including Ubuntu, LXCFS
-should also be installed.
+LXCFS is strongly recommended to properly report resource consumption inside the container.
 
 ## QEMU
 
