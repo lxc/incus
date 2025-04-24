@@ -1,11 +1,11 @@
 package ip
 
 import (
+	"fmt"
 	"net"
-	"strings"
 
-	"github.com/lxc/incus/v6/shared/subprocess"
-	"github.com/lxc/incus/v6/shared/util"
+	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
 )
 
 // NeighProxy represents arguments for neighbour proxy manipulation.
@@ -16,39 +16,51 @@ type NeighProxy struct {
 
 // Show list neighbour proxy entries.
 func (n *NeighProxy) Show() ([]NeighProxy, error) {
-	out, err := subprocess.RunCommand("ip", "neigh", "show", "proxy", "dev", n.DevName)
+	link, err := linkByName(n.DevName)
 	if err != nil {
 		return nil, err
 	}
 
-	lines := util.SplitNTrimSpace(out, "\n", -1, true)
-	entries := make([]NeighProxy, 0, len(lines))
+	list, err := netlink.NeighProxyList(link.Attrs().Index, netlink.FAMILY_ALL)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get neighbour proxies for link %q: %w", n.DevName, err)
+	}
 
-	for _, line := range lines {
-		fields := strings.Fields(line)
-		if len(fields) <= 0 {
-			continue
-		}
+	entries := make([]NeighProxy, 0, len(list))
 
-		ip := net.ParseIP(fields[0])
-		if ip == nil {
-			continue
-		}
-
+	for _, neigh := range list {
 		entries = append(entries, NeighProxy{
 			DevName: n.DevName,
-			Addr:    ip,
+			Addr:    neigh.IP,
 		})
 	}
 
 	return entries, nil
 }
 
+func (n *NeighProxy) netlinkNeigh() (*netlink.Neigh, error) {
+	link, err := linkByName(n.DevName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &netlink.Neigh{
+		LinkIndex: link.Attrs().Index,
+		Flags:     unix.NTF_PROXY,
+		IP:        n.Addr,
+	}, nil
+}
+
 // Add a neighbour proxy entry.
 func (n *NeighProxy) Add() error {
-	_, err := subprocess.RunCommand("ip", "neigh", "add", "proxy", n.Addr.String(), "dev", n.DevName)
+	neigh, err := n.netlinkNeigh()
 	if err != nil {
 		return err
+	}
+
+	err = netlink.NeighAdd(neigh)
+	if err != nil {
+		return fmt.Errorf("Failed to add neighbour proxy %v: %w", neigh, err)
 	}
 
 	return nil
@@ -56,9 +68,14 @@ func (n *NeighProxy) Add() error {
 
 // Delete a neighbour proxy entry.
 func (n *NeighProxy) Delete() error {
-	_, err := subprocess.RunCommand("ip", "neigh", "delete", "proxy", n.Addr.String(), "dev", n.DevName)
+	neigh, err := n.netlinkNeigh()
 	if err != nil {
 		return err
+	}
+
+	err = netlink.NeighDel(neigh)
+	if err != nil {
+		return fmt.Errorf("Failed to delete neighbour proxy %v: %w", neigh, err)
 	}
 
 	return nil
