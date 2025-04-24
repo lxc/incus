@@ -15,6 +15,7 @@ import (
 
 	"github.com/mdlayher/arp"
 	"github.com/mdlayher/ndp"
+	"golang.org/x/sys/unix"
 
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 	pcidev "github.com/lxc/incus/v6/internal/server/device/pci"
@@ -527,14 +528,21 @@ func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, 
 	}
 
 	// Clean any existing entry
-	qdisc := &ip.Qdisc{Dev: veth, Root: true}
-	_ = qdisc.Delete()
-	qdisc = &ip.Qdisc{Dev: veth, Ingress: true}
-	_ = qdisc.Delete()
+	qdiscIngress := &ip.QdiscIngress{Qdisc: ip.Qdisc{Dev: veth, Handle: "ffff:0"}}
+	err = qdiscIngress.Delete()
+	if err != nil && !errors.Is(err, unix.ENOENT) {
+		return err
+	}
+
+	qdiscHTB := &ip.QdiscHTB{Qdisc: ip.Qdisc{Dev: veth, Handle: "1:0", Parent: "root"}}
+	err = qdiscHTB.Delete()
+	if err != nil && !errors.Is(err, unix.ENOENT) {
+		return err
+	}
 
 	// Apply new limits
 	if d.config["limits.ingress"] != "" {
-		qdiscHTB := &ip.QdiscHTB{Qdisc: ip.Qdisc{Dev: veth, Handle: "1:0", Root: true}, Default: "10"}
+		qdiscHTB = &ip.QdiscHTB{Qdisc: ip.Qdisc{Dev: veth, Handle: "1:0", Parent: "root"}, Default: 10}
 		err := qdiscHTB.Add()
 		if err != nil {
 			return fmt.Errorf("Failed to create root tc qdisc: %s", err)
@@ -554,8 +562,8 @@ func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, 
 	}
 
 	if d.config["limits.egress"] != "" {
-		qdisc = &ip.Qdisc{Dev: veth, Handle: "ffff:0", Ingress: true}
-		err := qdisc.Add()
+		qdiscIngress = &ip.QdiscIngress{Qdisc: ip.Qdisc{Dev: veth, Handle: "ffff:0"}}
+		err := qdiscIngress.Add()
 		if err != nil {
 			return fmt.Errorf("Failed to create ingress tc qdisc: %s", err)
 		}
