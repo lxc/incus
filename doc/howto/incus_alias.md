@@ -104,7 +104,7 @@ Several Incus images have been configured to create a non-root username as shown
 | :----------- | :--------------: | :----------- |
 | Alpine | `alpine` | `images:alpine/edge/cloud` |
 | Debian | `debian` | `images:debian/12/cloud` |
-| Fedora | `fedora` | `images:fedora/40/cloud` |
+| Fedora | `fedora` | `images:fedora/42/cloud` |
 | Ubuntu | `ubuntu` | `images:ubuntu/24.04/cloud` |
 
 You can get a shell into the instance for this non-root username with the following command.

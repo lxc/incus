@@ -35,9 +35,9 @@ It includes the following information:
 architecture: x86_64
 creation_date: 1424284563
 properties:
-  description: Ubuntu 22.04 LTS Intel 64bit
-  os: Ubuntu
-  release: jammy 22.04
+  description: Debian 12 Intel 64bit
+  os: Debian
+  release: bookworm 12
 templates:
   ...
 ```

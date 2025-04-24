@@ -59,8 +59,8 @@ You are prompted to confirm the remote server fingerprint and then asked for the
 To reference an image, specify its remote and its alias or fingerprint, separated with a colon.
 For example:
 
-    images:ubuntu/22.04
-    images:ubuntu/22.04
+    images:debian/12
+    images:debian/12
     local:ed7509d7e83f
 
 (images-remote-default)=

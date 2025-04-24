@@ -29,7 +29,7 @@ Rebooting the instance does not re-trigger the actions.
 To use `cloud-init`, you must base your instance on an image that has `cloud-init` installed.
 
 Images from the [`images` remote](https://images.linuxcontainers.org/) have `cloud-init`-enabled variants, which are usually bigger in size than the default variant.
-The cloud variants use the `/cloud` suffix, for example, `images:ubuntu/22.04/cloud`.
+The cloud variants use the `/cloud` suffix, for example, `images:debian/12/cloud`.
 
 ## `cloud-init` and virtual machines
 
@@ -204,7 +204,7 @@ config:
 By default, `cloud-init` configures a DHCP client on an instance's `eth0` interface.
 You can define your own network configuration using the `network-config` option to override the default configuration (this is due to how the template is structured).
 
-`cloud-init` then renders the relevant network configuration on the system using either `ifupdown` or `netplan`, depending on the Ubuntu release.
+`cloud-init` then renders the relevant network configuration on the system using either `ifupdown` or `netplan`, depending on the distribution.
 
 The configuration data is stored in the following files in the instance's root file system:
 

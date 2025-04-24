@@ -20,7 +20,7 @@ You can also filter by name.
 To list several instances, use a regular expression for the name.
 For example:
 
-    incus list ubuntu.*
+    incus list debian.*
 
 Enter [`incus list --help`](incus_list.md) to see all filter options.
 ```
@@ -33,7 +33,7 @@ You can use {ref}`rest-api-recursion` to display more information about the inst
 
 You can {ref}`filter <rest-api-filtering>` the instances that are displayed, by name, type, status or the cluster member where the instance is located:
 
-    incus query /1.0/instances?filter=name+eq+ubuntu
+    incus query /1.0/instances?filter=name+eq+debian
     incus query /1.0/instances?filter=type+eq+container
     incus query /1.0/instances?filter=status+eq+running
     incus query /1.0/instances?filter=location+eq+server1
@@ -41,7 +41,7 @@ You can {ref}`filter <rest-api-filtering>` the instances that are displayed, by 
 To list several instances, use a regular expression for the name.
 For example:
 
-    incus query /1.0/instances?filter=name+eq+ubuntu.*
+    incus query /1.0/instances?filter=name+eq+debian.*
 
 See [`GET /1.0/instances`](swagger:/instances/instances_get) for more information.
 ```

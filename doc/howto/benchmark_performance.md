@@ -37,15 +37,15 @@ Local image
 
   To do so, run a command similar to the following and specify the fingerprint (for example, `2d21da400963`) of the image when you run `incus-benchmark`:
 
-      incus image copy images:ubuntu/22.04 local:
+      incus image copy images:debian/12 local:
 
-  You can also assign an alias to the image and specify that alias (for example, `ubuntu`) when you run `incus-benchmark`:
+  You can also assign an alias to the image and specify that alias (for example, `debian`) when you run `incus-benchmark`:
 
-      incus image copy images:ubuntu/22.04 local: --alias ubuntu
+      incus image copy images:debian/12 local: --alias debian
 
 Remote image
-: If you want to include the download time in the overall result, specify a remote image (for example, `images:ubuntu/22.04`).
-  The default image that `incus-benchmark` uses is the latest Ubuntu image (`images:ubuntu`), so if you want to use this image, you can leave out the image name when running the tool.
+: If you want to include the download time in the overall result, specify a remote image (for example, `images:debian/12`).
+  The default image that `incus-benchmark` uses is the latest Debian image (`images:debian/12`), so if you want to use this image, you can leave out the image name when running the tool.
 
 ### Create and launch containers
 
@@ -63,13 +63,13 @@ For example:
 * - Command
   - Description
 * - `incus-benchmark init --count 10 --privileged`
-  - Create ten privileged containers that use the latest Ubuntu image.
+  - Create ten privileged containers that use the latest Debian image.
 * - `incus-benchmark init --count 20 --parallel 4 images:alpine/edge`
   - Create 20 containers that use the Alpine Edge image, using four parallel threads.
 * - `incus-benchmark init 2d21da400963`
   - Create one container that uses the local image with the fingerprint `2d21da400963`.
-* - `incus-benchmark init --count 10 ubuntu`
-  - Create ten containers that use the image with the alias `ubuntu`.
+* - `incus-benchmark init --count 10 debian`
+  - Create ten containers that use the image with the alias `debian`.
 
 ```
 

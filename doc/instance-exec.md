@@ -17,7 +17,7 @@ To run a single command from the terminal of the host machine, use the [`incus e
 
 For example, enter the following command to update the package list on your container:
 
-    incus exec ubuntu-container -- apt-get update
+    incus exec debian-container -- apt-get update
 
 ### Execution mode
 

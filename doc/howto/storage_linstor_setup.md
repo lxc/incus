@@ -128,11 +128,11 @@ It's also worth noting that we'll be using LVM Thin as the LINSTOR storage backe
 
    1. To test the storage, create some volumes and instances:
 
-          incus launch images:ubuntu/24.04 c1 --storage remote
+          incus launch images:debian/12 c1 --storage remote
           incus storage volume create remote fsvol
           incus storage volume attach remote fsvol c1 /mnt
 
-          incus launch images:ubuntu/24.04 v1 --storage remote --vm -c migration.stateful=true
+          incus launch images:debian/12 v1 --storage remote --vm -c migration.stateful=true
           incus storage volume create remote vol --type block size=42GiB
           incus storage volume attach remote vol v1
 
