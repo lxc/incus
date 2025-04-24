@@ -14,7 +14,7 @@ type utilsTestSuite struct {
 }
 
 func TestUtilsTestSuite(t *testing.T) {
-	suite.Run(t, new(utilsTestSuite))
+	suite.Run(t, &utilsTestSuite{})
 }
 
 func (s *utilsTestSuite) TestIsAliasesSubsetTrue() {

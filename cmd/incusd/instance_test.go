@@ -532,5 +532,5 @@ func (suite *containerTestSuite) TestContainer_findIdmap_maxed() {
 }
 
 func TestContainerTestSuite(t *testing.T) {
-	suite.Run(t, new(containerTestSuite))
+	suite.Run(t, &containerTestSuite{})
 }

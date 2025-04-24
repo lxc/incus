@@ -362,7 +362,7 @@ func restoreClusterMember(d *Daemon, r *http.Request) response.Response {
 		// Limit the number of concurrent migrations to run at the same time
 		numParallelMigrations := max(runtime.NumCPU()/16, 1)
 
-		group := new(errgroup.Group)
+		group := &errgroup.Group{}
 		group.SetLimit(numParallelMigrations)
 
 		// Migrate back the remote instances.

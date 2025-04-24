@@ -25,7 +25,7 @@ type InstanceTarWriter struct {
 
 // NewInstanceTarWriter returns a ContainerTarWriter for the provided target Writer and id map.
 func NewInstanceTarWriter(writer io.Writer, idmapSet *idmap.Set) *InstanceTarWriter {
-	ctw := new(InstanceTarWriter)
+	ctw := &InstanceTarWriter{}
 	ctw.tarWriter = tar.NewWriter(writer)
 	ctw.idmapSet = idmapSet
 	ctw.linkMap = map[uint64]string{}

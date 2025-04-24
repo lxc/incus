@@ -11,7 +11,7 @@ type versionTestSuite struct {
 }
 
 func TestVersionTestSuite(t *testing.T) {
-	suite.Run(t, new(versionTestSuite))
+	suite.Run(t, &versionTestSuite{})
 }
 
 func (s *versionTestSuite) TestNewVersion() {

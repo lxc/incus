@@ -78,7 +78,7 @@ func (s *dbTestSuite) CreateTestTx() (*sql.Tx, func()) {
 }
 
 func TestDBTestSuite(t *testing.T) {
-	suite.Run(t, new(dbTestSuite))
+	suite.Run(t, &dbTestSuite{})
 }
 
 func (s *dbTestSuite) Test_deleting_a_container_cascades_on_related_tables() {

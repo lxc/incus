@@ -13,7 +13,7 @@ type utilsPropertiesTestSuite struct {
 }
 
 func TestUtilsPropertiesTestSuite(t *testing.T) {
-	suite.Run(t, new(utilsPropertiesTestSuite))
+	suite.Run(t, &utilsPropertiesTestSuite{})
 }
 
 func (s *utilsPropertiesTestSuite) TestStringToTimeHookFuncValidData() {
