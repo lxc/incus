@@ -17,6 +17,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/cfg"
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/qmp"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v6/internal/server/resources"
 	"github.com/lxc/incus/v6/internal/server/state"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
@@ -46,22 +47,31 @@ func GetClusterCPUFlags(ctx context.Context, s *state.State, servers []string, a
 			continue
 		}
 
-		// Attempt to load the cached resources.
-		resourcesPath := internalUtil.CachePath("resources", fmt.Sprintf("%s.yaml", node.Name))
+		var res *api.Resources
+		if node.Name == s.ServerName {
+			// Get our own local data.
+			res, err = resources.GetResources()
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// Attempt to load the cached resources.
+			resourcesPath := internalUtil.CachePath("resources", fmt.Sprintf("%s.yaml", node.Name))
 
-		data, err := os.ReadFile(resourcesPath)
-		if err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				continue
+			data, err := os.ReadFile(resourcesPath)
+			if err != nil {
+				if errors.Is(err, fs.ErrNotExist) {
+					continue
+				}
+
+				return nil, err
 			}
 
-			return nil, err
-		}
-
-		res := api.Resources{}
-		err = yaml.Unmarshal(data, &res)
-		if err != nil {
-			return nil, err
+			res = &api.Resources{}
+			err = yaml.Unmarshal(data, res)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		// Skip if not the correct architecture.
