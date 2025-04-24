@@ -3996,8 +3996,17 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuInfo *cpuTopology) err
 
 	cpuPinning := cpuInfo.vcpus != nil
 
+	maxMemoryBytes, err := linux.DeviceTotalMemory()
+	if err != nil {
+		return err
+	}
+
+	if maxMemoryBytes < memSizeBytes {
+		maxMemoryBytes = memSizeBytes
+	}
+
 	if conf != nil {
-		*conf = append(*conf, qemuMemory(&qemuMemoryOpts{memSizeBytes / 1024 / 1024})...)
+		*conf = append(*conf, qemuMemory(&qemuMemoryOpts{memSizeBytes / 1024 / 1024, maxMemoryBytes / 1024 / 1024})...)
 		*conf = append(*conf, qemuCPU(cpuOpts, cpuPinning)...)
 	}
 
