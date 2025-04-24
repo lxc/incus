@@ -46,7 +46,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 
 		if targetMember == nil {
 			l.Error("Instance placement scriptlet set invalid member target", logger.Ctx{"member": memberName})
-			return starlark.String("Invalid member name"), fmt.Errorf("Invalid member name: %s", memberName)
+			return nil, fmt.Errorf("Invalid member name: %s", memberName)
 		}
 
 		l.Info("Instance placement scriptlet set member target", logger.Ctx{"member": targetMember.Name})
@@ -81,7 +81,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 			}
 
 			if targetMember == nil {
-				return starlark.String("Invalid member name"), nil
+				return nil, fmt.Errorf("Invalid member name: %s", memberName)
 			}
 
 			client, err := cluster.Connect(targetMember.Address, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
@@ -130,7 +130,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 			}
 
 			if targetMember == nil {
-				return starlark.String("Invalid member name"), nil
+				return nil, fmt.Errorf("Invalid member name: %s", memberName)
 			}
 
 			client, err := cluster.Connect(targetMember.Address, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
