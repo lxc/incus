@@ -1,83 +1,53 @@
 package ip
 
 import (
-	"github.com/lxc/incus/v6/shared/subprocess"
+	"errors"
+	"strings"
+
+	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
 )
 
 // Qdisc represents 'queueing discipline' object.
 type Qdisc struct {
-	Dev     string
-	Handle  string
-	Root    bool
-	Ingress bool
+	Dev    string
+	Handle string
+	Parent string
 }
 
-func (qdisc *Qdisc) mainCmd() []string {
-	cmd := []string{"qdisc", "add", "dev", qdisc.Dev}
-	if qdisc.Handle != "" {
-		cmd = append(cmd, "handle", qdisc.Handle)
-	}
-
-	if qdisc.Root {
-		cmd = append(cmd, "root")
-	}
-
-	if qdisc.Ingress {
-		cmd = append(cmd, "ingress")
-	}
-
-	return cmd
-}
-
-// Add adds qdisc to a node.
-func (qdisc *Qdisc) Add() error {
-	cmd := qdisc.mainCmd()
-	_, err := subprocess.RunCommand("tc", cmd...)
+func (q *Qdisc) netlinkAttrs() (netlink.QdiscAttrs, error) {
+	link, err := linkByName(q.Dev)
 	if err != nil {
-		return err
+		return netlink.QdiscAttrs{}, err
 	}
 
-	return nil
+	var handle uint32
+	if q.Handle != "" {
+		handle, err = parseHandle(q.Handle)
+		if err != nil {
+			return netlink.QdiscAttrs{}, err
+		}
+	}
+
+	var parent uint32
+	if q.Parent != "" {
+		parent, err = parseHandle(q.Parent)
+		if err != nil {
+			return netlink.QdiscAttrs{}, err
+		}
+	}
+
+	return netlink.QdiscAttrs{
+		LinkIndex: link.Attrs().Index,
+		Handle:    handle,
+		Parent:    parent,
+	}, nil
 }
 
-// Delete deletes qdisc from node.
-func (qdisc *Qdisc) Delete() error {
-	cmd := []string{"qdisc", "del", "dev", qdisc.Dev}
-	if qdisc.Root {
-		cmd = append(cmd, "root")
+func mapQdiscErr(err error) error {
+	if errors.Is(err, unix.EINVAL) && strings.Contains(err.Error(), "Invalid handle") {
+		return unix.ENOENT
 	}
 
-	if qdisc.Ingress {
-		cmd = append(cmd, "ingress")
-	}
-
-	_, err := subprocess.RunCommand("tc", cmd...)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// QdiscHTB represents the hierarchy token bucket qdisc object.
-type QdiscHTB struct {
-	Qdisc
-	Default string
-}
-
-// Add adds qdisc to a node.
-func (qdisc *QdiscHTB) Add() error {
-	cmd := qdisc.mainCmd()
-	cmd = append(cmd, "htb")
-
-	if qdisc.Default != "" {
-		cmd = append(cmd, "default", qdisc.Default)
-	}
-
-	_, err := subprocess.RunCommand("tc", cmd...)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
