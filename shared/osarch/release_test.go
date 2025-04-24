@@ -12,7 +12,7 @@ type releaseTestSuite struct {
 }
 
 func TestReleaseTestSuite(t *testing.T) {
-	suite.Run(t, new(releaseTestSuite))
+	suite.Run(t, &releaseTestSuite{})
 }
 
 func (s *releaseTestSuite) TestGetOSRelease() {

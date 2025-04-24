@@ -5934,7 +5934,7 @@ func (d *lxc) resetContainerDiskIdmap(srcIdmap *idmap.Set) error {
 	}
 
 	if dstIdmap == nil {
-		dstIdmap = new(idmap.Set)
+		dstIdmap = &idmap.Set{}
 	}
 
 	if !srcIdmap.Equals(dstIdmap) {
@@ -6122,7 +6122,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 	d.logger.Debug("Sent migration response to source")
 
-	srcIdmap := new(idmap.Set)
+	srcIdmap := &idmap.Set{}
 	for _, idmapSet := range offerHeader.Idmap {
 		e := idmap.Entry{
 			IsUID:    *idmapSet.Isuid,
@@ -6708,7 +6708,7 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 		return fmt.Errorf("Failed to read metadata: %w", err)
 	}
 
-	metadata := new(api.ImageMetadata)
+	metadata := &api.ImageMetadata{}
 	err = yaml.Unmarshal(content, &metadata)
 	if err != nil {
 		return fmt.Errorf("Could not parse %s: %w", fname, err)

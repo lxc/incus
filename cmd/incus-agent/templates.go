@@ -26,7 +26,7 @@ func templatesApply(path string) ([]string, error) {
 		return nil, fmt.Errorf("Failed to read metadata: %w", err)
 	}
 
-	metadata := new(api.ImageMetadata)
+	metadata := &api.ImageMetadata{}
 	err = yaml.Unmarshal(content, metadata)
 	if err != nil {
 		return nil, fmt.Errorf("Could not parse metadata.yaml: %w", err)

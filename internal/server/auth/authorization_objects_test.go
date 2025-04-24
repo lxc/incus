@@ -14,7 +14,7 @@ type objectSuite struct {
 }
 
 func TestObjectSuite(t *testing.T) {
-	suite.Run(t, new(objectSuite))
+	suite.Run(t, &objectSuite{})
 }
 
 func (s *objectSuite) TestObjectCertificate() {

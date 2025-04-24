@@ -23,7 +23,7 @@ func (d dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 
 	// Check if we're ready to serve queries.
 	if d.server.zoneRetriever == nil {
-		m := new(dns.Msg)
+		m := &dns.Msg{}
 		m.SetRcode(r, dns.RcodeServerFailure)
 		err := w.WriteMsg(m)
 		if err != nil {
@@ -35,7 +35,7 @@ func (d dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 
 	// Only allow a single request.
 	if len(r.Question) != 1 {
-		m := new(dns.Msg)
+		m := &dns.Msg{}
 		m.SetRcode(r, dns.RcodeServerFailure)
 		err := w.WriteMsg(m)
 		if err != nil {
@@ -47,7 +47,7 @@ func (d dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 
 	// Check that it's a supported request type.
 	if r.Question[0].Qtype != dns.TypeAXFR && r.Question[0].Qtype != dns.TypeIXFR && r.Question[0].Qtype != dns.TypeSOA {
-		m := new(dns.Msg)
+		m := &dns.Msg{}
 		m.SetRcode(r, dns.RcodeNotImplemented)
 		err := w.WriteMsg(m)
 		if err != nil {
@@ -61,7 +61,7 @@ func (d dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	name := strings.TrimSuffix(r.Question[0].Name, ".")
 	ip, _, err := net.SplitHostPort(w.RemoteAddr().String())
 	if err != nil {
-		m := new(dns.Msg)
+		m := &dns.Msg{}
 		m.SetRcode(r, dns.RcodeServerFailure)
 		err := w.WriteMsg(m)
 		if err != nil {
@@ -72,7 +72,7 @@ func (d dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	}
 
 	// Prepare the response.
-	m := new(dns.Msg)
+	m := &dns.Msg{}
 	m.SetReply(r)
 	m.Authoritative = true
 
@@ -80,7 +80,7 @@ func (d dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	zone, err := d.server.zoneRetriever(name, r.Question[0].Qtype != dns.TypeSOA)
 	if err != nil {
 		// On failure, return NXDOMAIN.
-		m := new(dns.Msg)
+		m := &dns.Msg{}
 		m.SetRcode(r, dns.RcodeNameError)
 		err := w.WriteMsg(m)
 		if err != nil {
@@ -93,7 +93,7 @@ func (d dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	// Check access.
 	if !d.isAllowed(zone.Info, ip, r.IsTsig(), w.TsigStatus() == nil) {
 		// On auth failure, return NXDOMAIN to avoid information leaks.
-		m := new(dns.Msg)
+		m := &dns.Msg{}
 		m.SetRcode(r, dns.RcodeNameError)
 		err := w.WriteMsg(m)
 		if err != nil {
@@ -111,7 +111,7 @@ func (d dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 			if err != nil {
 				logger.Errorf("Bad DNS record in zone %q: %v", name, err)
 
-				m := new(dns.Msg)
+				m := &dns.Msg{}
 				m.SetRcode(r, dns.RcodeFormatError)
 				err := w.WriteMsg(m)
 				if err != nil {
