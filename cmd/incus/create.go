@@ -44,9 +44,9 @@ func (c *cmdCreate) Command() *cobra.Command {
 	cmd.Use = usage("create", i18n.G("[<remote>:]<image> [<remote>:][<name>]"))
 	cmd.Short = i18n.G("Create instances from images")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Create instances from images`))
-	cmd.Example = cli.FormatSection("", i18n.G(`incus create images:ubuntu/22.04 u1
+	cmd.Example = cli.FormatSection("", i18n.G(`incus create images:debian/12 u1
 
-incus create images:ubuntu/22.04 u1 < config.yaml
+incus create images:debian/12 u1 < config.yaml
     Create the instance with configuration from config.yaml
 
 incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io.bus=nvme
