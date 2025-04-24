@@ -3441,6 +3441,21 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		return fmt.Errorf("Failed generating auto config: %w", err)
 	}
 
+	if clientType == request.ClientTypeNotifier {
+		// Reload BGP on notifications.
+		err = n.bgpSetup(nil)
+		if err != nil {
+			return err
+		}
+
+		err = n.loadBalancerBGPSetupPrefixes()
+		if err != nil {
+			return fmt.Errorf("Failed applying BGP prefixes for load balancers: %w", err)
+		}
+
+		return nil
+	}
+
 	dbUpdateNeeded, changedKeys, oldNetwork, err := n.common.configChanged(newNetwork)
 	if err != nil {
 		return err
@@ -3711,6 +3726,19 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 	// If uplink network is changing, start network after config applied.
 	if slices.Contains(changedKeys, "network") {
 		err = n.Start()
+		if err != nil {
+			return err
+		}
+
+		// Notify all other members to refresh their BGP prefixes.
+		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		if err != nil {
+			return err
+		}
+
+		err = notifier(func(client incus.InstanceServer) error {
+			return client.UseProject(n.project).UpdateNetwork(n.name, newNetwork, "")
+		})
 		if err != nil {
 			return err
 		}
