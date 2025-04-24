@@ -3244,7 +3244,7 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 	}
 
 	metadata := new(api.ImageMetadata)
-	err = yaml.Unmarshal(content, &metadata)
+	err = yaml.Unmarshal(content, metadata)
 	if err != nil {
 		return fmt.Errorf("Could not parse %s: %w", fname, err)
 	}
