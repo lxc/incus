@@ -290,8 +290,10 @@ type InstanceServer interface {
 
 	// Profile functions
 	GetProfilesAllProjects() (profiles []api.Profile, err error)
+	GetProfilesAllProjectsWithFilter(filters []string) ([]api.Profile, error)
 	GetProfileNames() (names []string, err error)
 	GetProfiles() (profiles []api.Profile, err error)
+	GetProfilesWithFilter(filters []string) ([]api.Profile, error)
 	GetProfile(name string) (profile *api.Profile, ETag string, err error)
 	CreateProfile(profile api.ProfilesPost) (err error)
 	UpdateProfile(name string, profile api.ProfilePut, ETag string) (err error)
