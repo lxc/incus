@@ -717,9 +717,9 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 
 	// Record properties of VF settings on the parent device.
 	volatile["last_state.vf.parent"] = vfParent
-	volatile["last_state.vf.hwaddr"] = vfInfo.Address
+	volatile["last_state.vf.hwaddr"] = vfInfo.Address.String()
 	volatile["last_state.vf.id"] = fmt.Sprintf("%d", vfID)
-	volatile["last_state.vf.vlan"] = fmt.Sprintf("%d", vfInfo.VLANs[0]["vlan"])
+	volatile["last_state.vf.vlan"] = fmt.Sprintf("%d", vfInfo.VLAN)
 	volatile["last_state.vf.spoofcheck"] = fmt.Sprintf("%t", vfInfo.SpoofCheck)
 
 	// Record the host interface we represents the VF device which we will move into instance.

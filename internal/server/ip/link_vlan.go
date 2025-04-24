@@ -19,5 +19,6 @@ func (vlan *Vlan) additionalArgs() []string {
 
 // Add adds new virtual link.
 func (vlan *Vlan) Add() error {
+	// TODO: netlink library does not support vlan flags (necessary for gvrp)
 	return vlan.Link.add("vlan", vlan.additionalArgs())
 }
