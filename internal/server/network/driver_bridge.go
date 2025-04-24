@@ -3117,7 +3117,8 @@ func (n *bridge) deleteChildren() error {
 	for _, iface := range ifaces {
 		l, err := ip.LinkFromName(iface.Name)
 		if err != nil {
-			return err
+			// If we can't load the link, chances are the interface isn't one that we should be deleting.
+			continue
 		}
 
 		if l.Master != n.name || slices.Contains(externalInterfaces, iface.Name) || !slices.Contains(kinds, l.Kind) {
