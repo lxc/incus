@@ -56,8 +56,8 @@ Uninstall the LXD package? [default=no]: yes
 ```{terminal}
 :input: incus list
 :user: root
-To start your first container, try: incus launch images:ubuntu/22.04
-Or for a virtual machine: incus launch images:ubuntu/22.04 --vm
+To start your first container, try: incus launch images:debian/12
+Or for a virtual machine: incus launch images:debian/12 --vm
 
 +------+---------+-----------------------+------------------------------------------------+-----------+-----------+
 | NAME |  STATE  |         IPV4          |                     IPV6                       |   TYPE    | SNAPSHOTS |

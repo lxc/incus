@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"math/rand"
 	"os"
 	"os/user"
 	"path"
@@ -467,8 +468,11 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, _ []string) error {
 			}
 
 			if !slices.Contains([]string{"admin", "create", "launch"}, cmd.Name()) && (cmd.Parent() == nil || cmd.Parent().Name() != "admin") {
-				fmt.Fprintf(os.Stderr, i18n.G(`To start your first container, try: incus launch images:ubuntu/22.04
-Or for a virtual machine: incus launch images:ubuntu/22.04 --vm`)+"\n")
+				images := []string{"debian/12", "fedora/42", "opensuse/tumbleweed", "ubuntu/24.04"}
+				image := images[rand.Intn(len(images))]
+
+				fmt.Fprintf(os.Stderr, i18n.G(`To start your first container, try: incus launch images:%s
+Or for a virtual machine: incus launch images:%s --vm`)+"\n", image, image)
 				flush = true
 			}
 

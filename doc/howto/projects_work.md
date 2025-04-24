@@ -78,7 +78,7 @@ If you create a project with the default settings, profiles are isolated in the 
 Therefore, the project does not have access to the default profile (which is part of the `default` project), and you will see an error similar to the following when trying to create an instance:
 
 ```{terminal}
-:input: incus launch images:ubuntu/22.04 my-instance
+:input: incus launch images:debian/12 my-instance
 
 Creating my-instance
 Error: Failed instance creation: Failed creating instance record: Failed initializing instance: Failed getting root disk: No root device could be found

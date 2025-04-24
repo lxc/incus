@@ -7,7 +7,7 @@ For virtual machines, the gateways must be configured manually or via a mechanis
 
 To configure the gateways with `cloud-init`, firstly initialize an instance:
 
-    incus init images:ubuntu/22.04 jammy --vm
+    incus init images:debian/12 jammy --vm
 
 Then add the routed NIC device:
 
