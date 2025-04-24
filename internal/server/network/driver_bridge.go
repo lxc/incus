@@ -1664,6 +1664,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 	// Configure tunnels.
 	for _, tunnel := range tunnels {
+
 		getConfig := func(key string) string {
 			return n.config[fmt.Sprintf("tunnel.%s.%s", tunnel, key)]
 		}
@@ -1724,25 +1725,32 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			}
 
 			tunPort := getConfig("port")
-			if tunPort == "" {
-				tunPort = "0"
+			if tunPort != "" {
+				vxlan.DstPort, err = strconv.Atoi(tunPort)
+				if err != nil {
+					return err
+				}
 			}
-
-			vxlan.DstPort = tunPort
 
 			tunID := getConfig("id")
 			if tunID == "" {
-				tunID = "1"
+				vxlan.VxlanID = 1
+			} else {
+				vxlan.VxlanID, err = strconv.Atoi(tunID)
+				if err != nil {
+					return err
+				}
 			}
-
-			vxlan.VxlanID = tunID
 
 			tunTTL := getConfig("ttl")
 			if tunTTL == "" {
-				tunTTL = "1"
+				vxlan.TTL = 1
+			} else {
+				vxlan.TTL, err = strconv.Atoi(tunTTL)
+				if err != nil {
+					return err
+				}
 			}
-
-			vxlan.TTL = tunTTL
 
 			err := vxlan.Add()
 			if err != nil {

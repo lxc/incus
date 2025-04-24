@@ -1,5 +1,9 @@
 package ip
 
+import (
+	"github.com/vishvananda/netlink"
+)
+
 // Bridge represents arguments for link device of type bridge.
 type Bridge struct {
 	Link
@@ -7,5 +11,12 @@ type Bridge struct {
 
 // Add adds new virtual link.
 func (b *Bridge) Add() error {
-	return b.Link.add("bridge", nil)
+	attrs, err := b.netlinkAttrs()
+	if err != nil {
+		return err
+	}
+
+	return netlink.LinkAdd(&netlink.Bridge{
+		LinkAttrs: attrs,
+	})
 }
