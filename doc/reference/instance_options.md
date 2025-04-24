@@ -89,6 +89,21 @@ You can set kernel limits on an instance, for example, you can limit the number 
 See {ref}`instance-options-limits-kernel` for more information.
 ```
 
+### Memory limits in virtual machines
+Incus supports both increasing and decreasing the memory allocation of virtual machines.
+
+Increasing the memory is done through memory hot plug, effectively adding virtual memory sticks to the VM.
+There is a limit of 16 virtual slots for this, limiting the number of memory increases that can be done without rebooting the VM.
+
+Decreasing memory is not done through hot remove as that has a high risk of causing guest issues.
+Instead the memory balloon device is used, causing memory pressure inside the guest and causing memory to be released.
+
+This is a pretty slow process, so it is common for a memory reduction to fail to meet the requested value.
+When that happens, re-applying the lower value will trigger another attempt.
+
+As each attempt will cause the effective memory available to the guest to be reduced,
+it should eventually succeed and lead to the guest having the desired memory limit applied.
+
 ### CPU limits
 
 You have different options to limit CPU usage:
