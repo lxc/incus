@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"regexp"
 	"sort"
 	"strings"
@@ -1266,17 +1267,7 @@ func (c *cmdNetworkList) Run(cmd *cobra.Command, args []string) error {
 		return errors.New(i18n.G("Filtering isn't supported yet"))
 	}
 
-	flattenedFilters := []string{}
-	for _, filter := range filters {
-		flattenedFilters = append(flattenedFilters, strings.Split(filter, ",")...)
-	}
-
-	filters = flattenedFilters
-
-	if len(filters) > 0 && !strings.Contains(filters[0], "=") {
-		filters[0] = fmt.Sprintf("name=^%s($|.*)", regexp.QuoteMeta(filters[0]))
-	}
-
+	filters = prepareNetworkServerFilters(filters)
 	serverFilters, _ := getServerSupportedFilters(filters, []string{}, false)
 
 	var networks []api.Network
@@ -1763,4 +1754,41 @@ func (c *cmdNetworkUnset) Run(cmd *cobra.Command, args []string) error {
 
 	args = append(args, "")
 	return c.networkSet.Run(cmd, args)
+}
+
+// prepareNetworkServerFilter processes and formats filter criteria
+// for networks, ensuring they are in a format that the server can interpret.
+func prepareNetworkServerFilters(filters []string) []string {
+	flattenedFilters := []string{}
+	for _, filter := range filters {
+		flattenedFilters = append(flattenedFilters, strings.Split(filter, ",")...)
+	}
+
+	formattedFilters := []string{}
+
+	for _, filter := range flattenedFilters {
+		membs := strings.SplitN(filter, "=", 2)
+		key := membs[0]
+
+		if len(membs) == 1 {
+			filter = fmt.Sprintf("name=^%s($|.*)", regexp.QuoteMeta(key))
+		} else if len(membs) == 2 {
+			firstPart := key
+			if strings.Contains(key, ".") {
+				firstPart = strings.Split(key, ".")[0]
+			}
+
+			if !structHasField(reflect.TypeOf(api.Network{}), firstPart) {
+				filter = fmt.Sprintf("config.%s", filter)
+			}
+
+			if key == "state" {
+				filter = fmt.Sprintf("status=%s", membs[1])
+			}
+		}
+
+		formattedFilters = append(formattedFilters, filter)
+	}
+
+	return formattedFilters
 }
