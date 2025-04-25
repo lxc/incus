@@ -403,7 +403,7 @@ func (n *bridge) Validate(config map[string]string) error {
 		//
 		// ---
 		//  type: string
-		//  condition: IPv6
+		//  condition: IPv6 address
 		//  default: -
 		//  shortdesc: Comma-separated list of additional IPv6 CIDR subnets to route to the bridge
 		"ipv6.routes": validate.Optional(validate.IsListOf(validate.IsNetworkV6)),
