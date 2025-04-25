@@ -1,10 +1,11 @@
 package ip
 
 import (
-	"encoding/json"
-	"errors"
-	"io"
-	"os/exec"
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/vishvananda/netlink"
 )
 
 // FamilyV4 represents IPv4 protocol family.
@@ -15,63 +16,100 @@ const FamilyV6 = "-6"
 
 // LinkInfo represents the IP link details.
 type LinkInfo struct {
-	InterfaceName    string `json:"ifname"`
-	Link             string `json:"link"`
-	Master           string `json:"master"`
-	Address          string `json:"address"`
-	TXQueueLength    uint32 `json:"txqlen"`
-	MTU              uint32 `json:"mtu"`
-	OperationalState string `json:"operstate"`
+	InterfaceName    string
+	Link             string
+	Master           string
+	Address          string
+	TXQueueLength    uint32
+	MTU              uint32
+	OperationalState string
 	Info             struct {
-		Kind      string `json:"info_kind"`
-		SlaveKind string `json:"info_slave_kind"`
+		Kind      string
+		SlaveKind string
 		Data      struct {
-			Protocol string `json:"protocol"`
-			ID       int    `json:"id"`
-		} `json:"info_data"`
-	} `json:"linkinfo"`
+			Protocol string
+			ID       int
+		}
+	}
+}
+
+func linkByName(name string) (netlink.Link, error) {
+	link, err := netlink.LinkByName(name)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get link %q: %w", name, err)
+	}
+
+	return link, nil
 }
 
 // GetLinkInfoByName returns the detailed information for the given link.
 func GetLinkInfoByName(name string) (LinkInfo, error) {
-	ipPath, err := exec.LookPath("ip")
+	info := LinkInfo{}
+
+	link, err := linkByName(name)
 	if err != nil {
-		return LinkInfo{}, errors.New("ip command not found")
+		return info, err
 	}
 
-	cmd := exec.Command(ipPath, "-j", "-d", "link", "show", name)
-	stdout, err := cmd.StdoutPipe()
+	info.InterfaceName = link.Attrs().Name
+
+	if link.Attrs().ParentIndex != 0 {
+		parentLink, err := netlink.LinkByIndex(link.Attrs().ParentIndex)
+		if err != nil {
+			return info, fmt.Errorf("failed to get parent link %d of %q: %w", link.Attrs().ParentIndex, name, err)
+		}
+
+		info.Link = parentLink.Attrs().Name
+	}
+
+	if link.Attrs().MasterIndex != 0 {
+		masterLink, err := netlink.LinkByIndex(link.Attrs().MasterIndex)
+		if err != nil {
+			return info, fmt.Errorf("failed to get master link %d of %q: %w", link.Attrs().ParentIndex, name, err)
+		}
+
+		info.Master = masterLink.Attrs().Name
+	}
+
+	info.Address = link.Attrs().HardwareAddr.String()
+	info.TXQueueLength = uint32(link.Attrs().TxQLen)
+	info.MTU = uint32(link.Attrs().MTU)
+	info.OperationalState = link.Attrs().OperState.String()
+	info.Info.Kind = link.Type()
+
+	if link.Attrs().Slave != nil {
+		info.Info.Kind = link.Attrs().Slave.SlaveType()
+	}
+
+	vlan, ok := link.(*netlink.Vlan)
+	if ok {
+		info.Info.Data.ID = vlan.VlanId
+		info.Info.Data.Protocol = vlan.VlanProtocol.String()
+	}
+
+	return info, nil
+}
+
+func parseHandle(id string) (uint32, error) {
+	if id == "root" {
+		return netlink.HANDLE_ROOT, nil
+	}
+
+	majorStr, minorStr, found := strings.Cut(id, ":")
+
+	if !found {
+		return 0, fmt.Errorf("Invalid handle %q", id)
+	}
+
+	major, err := strconv.ParseUint(majorStr, 16, 16)
 	if err != nil {
-		return LinkInfo{}, err
+		return 0, fmt.Errorf("Invalid handle %q: %w", id, err)
 	}
 
-	defer func() { _ = stdout.Close() }()
-
-	err = cmd.Start()
+	minor, err := strconv.ParseUint(minorStr, 16, 16)
 	if err != nil {
-		return LinkInfo{}, err
+		return 0, fmt.Errorf("Invalid handle %q: %w", id, err)
 	}
 
-	defer func() { _ = cmd.Wait() }()
-
-	// Struct to decode ip output into.
-	var linkInfoJSON []LinkInfo
-
-	// Decode JSON output.
-	dec := json.NewDecoder(stdout)
-	err = dec.Decode(&linkInfoJSON)
-	if err != nil && err != io.EOF {
-		return LinkInfo{}, err
-	}
-
-	err = cmd.Wait()
-	if err != nil {
-		return LinkInfo{}, errors.New("no matching link found")
-	}
-
-	if len(linkInfoJSON) == 0 {
-		return LinkInfo{}, errors.New("no matching link found")
-	}
-
-	return linkInfoJSON[0], nil
+	return netlink.MakeHandle(uint16(major), uint16(minor)), nil
 }
