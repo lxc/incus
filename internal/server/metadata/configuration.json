@@ -3233,7 +3233,7 @@
 					{
 						"ipv4.dhcp.gateway": {
 							"condition": "IPv4 DHCP",
-							"default": "all addresses",
+							"default": "IPv4 address",
 							"longdesc": "",
 							"shortdesc": "Address of the gateway for the subnet",
 							"type": "string"

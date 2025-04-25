@@ -2871,7 +2871,7 @@ It is globally unique across all servers and projects.
 
 ```{config:option} ipv4.dhcp.gateway network_bridge-common
 :condition: "IPv4 DHCP"
-:default: "all addresses"
+:default: "IPv4 address"
 :shortdesc: "Address of the gateway for the subnet"
 :type: "string"
 
