@@ -7,17 +7,17 @@ For virtual machines, the gateways must be configured manually or via a mechanis
 
 To configure the gateways with `cloud-init`, firstly initialize an instance:
 
-    incus init images:debian/12 jammy --vm
+    incus init images:debian/12 bookworm --vm
 
 Then add the routed NIC device:
 
-    incus config device add jammy eth0 nic nictype=routed parent=my-parent-network ipv4.address=192.0.2.2 ipv6.address=2001:db8::2
+    incus config device add bookworm eth0 nic nictype=routed parent=my-parent-network ipv4.address=192.0.2.2 ipv6.address=2001:db8::2
 
 In this command, `my-parent-network` is your parent network, and the IPv4 and IPv6 addresses are within the subnet of the parent.
 
 Next we will add some `netplan` configuration to the instance using the `cloud-init.network-config` configuration key:
 
-    cat <<EOF | incus config set jammy cloud-init.network-config -
+    cat <<EOF | incus config set bookworm cloud-init.network-config -
     network:
       version: 2
       ethernets:
@@ -47,7 +47,7 @@ If there is a `incusbr0` network on the host, the name server can be set to that
 
 You can then start your instance with:
 
-    incus start jammy
+    incus start bookworm
 
 ```{note}
 Before you start your instance, make sure that you have {ref}`configured the parent network <nic-routed>` to enable proxy ARP/NDP.
