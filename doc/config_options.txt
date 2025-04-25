@@ -3104,7 +3104,7 @@ User keys can be used in search.
 ```
 
 ```{config:option} ipv6.routes network_bridge-common
-:condition: "IPv6"
+:condition: "IPv6 address"
 :default: "-"
 :shortdesc: "Comma-separated list of additional IPv6 CIDR subnets to route to the bridge"
 :type: "string"
