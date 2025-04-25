@@ -1489,6 +1489,18 @@
 					}
 				]
 			},
+			"pci": {
+				"keys": [
+					{
+						"address": {
+							"longdesc": "",
+							"required": "yes",
+							"shortdesc": "PCI address of the device",
+							"type": "string"
+						}
+					}
+				]
+			},
 			"proxy": {
 				"keys": [
 					{
