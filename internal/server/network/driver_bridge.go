@@ -269,7 +269,7 @@ func (n *bridge) Validate(config map[string]string) error {
 		// ---
 		//  type: string
 		//  condition: IPv4 DHCP
-		//  default: all addresses
+		//  default: IPv4 address
 		//  shortdesc: Address of the gateway for the subnet
 		"ipv4.dhcp.gateway": validate.Optional(validate.IsNetworkAddressV4),
 		// gendoc:generate(entity=network_bridge, group=common, key=ipv4.dhcp.expiry)
