@@ -1280,6 +1280,15 @@ For file systems (shared directories or custom volumes), this is one of:
 ```
 
 <!-- config group devices-nic_sriov end -->
+<!-- config group devices-pci start -->
+```{config:option} address devices-pci
+:required: "yes"
+:shortdesc: "PCI address of the device"
+:type: "string"
+
+```
+
+<!-- config group devices-pci end -->
 <!-- config group devices-proxy start -->
 ```{config:option} bind devices-proxy
 :default: "`host`"
