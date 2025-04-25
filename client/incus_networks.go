@@ -42,6 +42,27 @@ func (r *ProtocolIncus) GetNetworks() ([]api.Network, error) {
 	return networks, nil
 }
 
+// GetNetworksWithFilter returns a list of filtered Network struct.
+func (r *ProtocolIncus) GetNetworksWithFilter(filters []string) ([]api.Network, error) {
+	if !r.HasExtension("network") {
+		return nil, fmt.Errorf("The server is missing the required \"network\" API extension")
+	}
+
+	networks := []api.Network{}
+
+	v := url.Values{}
+	v.Set("recursion", "1")
+	v.Set("filter", parseFilters(filters))
+
+	// Fetch the raw value
+	_, err := r.queryStruct("GET", fmt.Sprintf("/networks?%s", v.Encode()), nil, "", &networks)
+	if err != nil {
+		return nil, err
+	}
+
+	return networks, nil
+}
+
 // GetNetworksAllProjects gets all networks across all projects.
 func (r *ProtocolIncus) GetNetworksAllProjects() ([]api.Network, error) {
 	if !r.HasExtension("networks_all_projects") {
@@ -50,6 +71,27 @@ func (r *ProtocolIncus) GetNetworksAllProjects() ([]api.Network, error) {
 
 	networks := []api.Network{}
 	_, err := r.queryStruct("GET", "/networks?recursion=1&all-projects=true", nil, "", &networks)
+	if err != nil {
+		return nil, err
+	}
+
+	return networks, nil
+}
+
+// GetNetworksAllProjectsWithFilter gets a filtered list of all networks across all projects.
+func (r *ProtocolIncus) GetNetworksAllProjectsWithFilter(filters []string) ([]api.Network, error) {
+	if !r.HasExtension("networks_all_projects") {
+		return nil, fmt.Errorf(`The server is missing the required "networks_all_projects" API extension`)
+	}
+
+	networks := []api.Network{}
+
+	v := url.Values{}
+	v.Set("recursion", "1")
+	v.Set("all-projects", "true")
+	v.Set("filter", parseFilters(filters))
+
+	_, err := r.queryStruct("GET", fmt.Sprintf("/networks?%s", v.Encode()), nil, "", &networks)
 	if err != nil {
 		return nil, err
 	}
