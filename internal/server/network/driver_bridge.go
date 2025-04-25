@@ -2175,14 +2175,14 @@ func (n *bridge) getTunnels() []string {
 }
 
 // bootRoutesV4 returns a list of IPv4 boot routes on the network's device.
-func (n *bridge) bootRoutesV4() ([]string, error) {
+func (n *bridge) bootRoutesV4() ([]ip.Route, error) {
 	r := &ip.Route{
 		DevName: n.name,
 		Proto:   "boot",
 		Family:  ip.FamilyV4,
 	}
 
-	routes, err := r.Show()
+	routes, err := r.List()
 	if err != nil {
 		return nil, err
 	}
@@ -2191,14 +2191,14 @@ func (n *bridge) bootRoutesV4() ([]string, error) {
 }
 
 // bootRoutesV6 returns a list of IPv6 boot routes on the network's device.
-func (n *bridge) bootRoutesV6() ([]string, error) {
+func (n *bridge) bootRoutesV6() ([]ip.Route, error) {
 	r := &ip.Route{
 		DevName: n.name,
 		Proto:   "boot",
 		Family:  ip.FamilyV6,
 	}
 
-	routes, err := r.Show()
+	routes, err := r.List()
 	if err != nil {
 		return nil, err
 	}
@@ -2207,15 +2207,9 @@ func (n *bridge) bootRoutesV6() ([]string, error) {
 }
 
 // applyBootRoutesV4 applies a list of IPv4 boot routes to the network's device.
-func (n *bridge) applyBootRoutesV4(routes []string) {
+func (n *bridge) applyBootRoutesV4(routes []ip.Route) {
 	for _, route := range routes {
-		r := &ip.Route{
-			DevName: n.name,
-			Proto:   "boot",
-			Family:  ip.FamilyV4,
-		}
-
-		err := r.Replace(strings.Fields(route))
+		err := route.Replace()
 		if err != nil {
 			// If it fails, then we can't stop as the route has already gone, so just log and continue.
 			n.logger.Error("Failed to restore route", logger.Ctx{"err": err})
@@ -2224,15 +2218,9 @@ func (n *bridge) applyBootRoutesV4(routes []string) {
 }
 
 // applyBootRoutesV6 applies a list of IPv6 boot routes to the network's device.
-func (n *bridge) applyBootRoutesV6(routes []string) {
+func (n *bridge) applyBootRoutesV6(routes []ip.Route) {
 	for _, route := range routes {
-		r := &ip.Route{
-			DevName: n.name,
-			Proto:   "boot",
-			Family:  ip.FamilyV6,
-		}
-
-		err := r.Replace(strings.Fields(route))
+		err := route.Replace()
 		if err != nil {
 			// If it fails, then we can't stop as the route has already gone, so just log and continue.
 			n.logger.Error("Failed to restore route", logger.Ctx{"err": err})
