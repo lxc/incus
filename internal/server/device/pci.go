@@ -24,6 +24,12 @@ func (d *pci) validateConfig(instConf instance.ConfigReader) error {
 	}
 
 	rules := map[string]func(string) error{
+		// gendoc:generate(entity=devices, group=pci, key=address)
+		//
+		// ---
+		//  type: string
+		//  required: yes
+		//  shortdesc: PCI address of the device
 		"address": validate.IsPCIAddress,
 	}
 
