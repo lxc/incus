@@ -392,10 +392,42 @@ func (n *ovn) getExternalSubnetInUse(uplinkNetworkName string) ([]externalSubnet
 // Validate network config.
 func (n *ovn) Validate(config map[string]string) error {
 	rules := map[string]func(value string) error{
+		// gendoc:generate(entity=network_ovn, group=common, key=network)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: Uplink network to use for external network access or `none` to keep isolated
 		"network":                    validate.IsAny,
+
+		// gendoc:generate(entity=network_ovn, group=common, key=bridge.hwaddr)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: MAC address for the virtual bridge interface
+
 		"bridge.hwaddr":              validate.Optional(validate.IsNetworkMAC),
+		// gendoc:generate(entity=network_ovn, group=common, key=bridge.mtu)
+		//
+		// ---
+		//  type: integer
+		//  shortdesc: Bridge MTU (default allows host to host Geneve tunnels)
+		//  default: `1442`
+
 		"bridge.mtu":                 validate.Optional(validate.IsNetworkMTU),
+		// gendoc:generate(entity=network_ovn, group=common, key=bridge.external_interfaces)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: Comma-separated list of unconfigured network interfaces to include in the bridge
+
 		"bridge.external_interfaces": validate.Optional(validateExternalInterfaces),
+		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.address)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: IPv4 address for the bridge (use `none` to turn off IPv4 or `auto` to generate a new random unused subnet) (CIDR)
+		//  condition: standard mode
+		//  default: (initial value on creation: `auto`)
 		"ipv4.address": validate.Optional(func(value string) error {
 			if validate.IsOneOf("none", "auto")(value) == nil {
 				return nil
@@ -403,13 +435,52 @@ func (n *ovn) Validate(config map[string]string) error {
 
 			return validate.IsNetworkAddressCIDRV4(value)
 		}),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.dhcp)
+		//
+		// ---
+		//  type: bool
+		//  shortdesc: Whether to allocate addresses using DHCP
+		//  condition: IPv4 address
+		//  default: `true`
 		"ipv4.dhcp": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.dhcp.expiry)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: When to expire DHCP leases
+		//  condition: IPv4 DHCP
+		//  default: `1h`
 		"ipv4.dhcp.expiry": validate.Optional(func(value string) error {
 			_, err := time.ParseDuration(value)
 			return err
 		}),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.dhcp.ranges)
+		//
+		// ---
+		//  type: string
+		//  condition: IPv4 DHCP
+		//  default: all addresses
+		//  shortdesc: Comma-separated list of IP ranges to use for DHCP (FIRST-LAST format)
 		"ipv4.dhcp.ranges": validate.Optional(validate.IsListOf(validate.IsNetworkRangeV4)),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.dhcp.routes)
+		//
+		// ---
+		//  type: string
+		//  condition: IPv4 DHCP
+		//  shortdesc: Static routes to provide via DHCP option 121, as a comma-separated list of alternating subnets (CIDR) and gateway addresses (same syntax as dnsmasq and OVN)
 		"ipv4.dhcp.routes": validate.Optional(validate.IsDHCPRouteList),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=ipv6.address)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: IPv6 address for the bridge (use `none` to turn off IPv6 or `auto` to generate a new random unused subnet) (CIDR)
+		//  condition: standard mode
+		//  default: (initial value on creation: `auto`)
 		"ipv6.address": validate.Optional(func(value string) error {
 			if validate.IsOneOf("none", "auto")(value) == nil {
 				return nil
@@ -417,25 +488,169 @@ func (n *ovn) Validate(config map[string]string) error {
 
 			return validate.IsNetworkAddressCIDRV6(value)
 		}),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=ipv6.dhcp)
+		//
+		// ---
+		//  type: bool
+		//  condition: IPv6 address
+		//  shortdesc: Whether to provide additional network configuration over DHCP
+		//  default: `true`
 		"ipv6.dhcp":                            validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=ipv6.dhcp.stateful)
+		//
+		// ---
+		//  type: bool
+		//  condition: IPv6 DHCP
+		//  shortdesc: Whether to allocate addresses using DHCP
+		//  default: `false`
 		"ipv6.dhcp.stateful":                   validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.nat)
+		//
+		// ---
+		//  type: bool
+		//  shortdesc: Whether to NAT
+		//  condition: IPv4 address
+		//  default: `false` initial value on creation if `ipv4.address` is set to `auto: true`)
 		"ipv4.nat":                             validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.nat.address)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)
+		//  condition: IPv4 address
 		"ipv4.nat.address":                     validate.Optional(validate.IsNetworkAddressV4),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=ipv6.nat)
+		//
+		// ---
+		//  type: bool
+		//  condition: IPv6 address
+		//  shortdesc: Whether to NAT
+		//  default: `false` (initial value on creation if `ipv6.address` is set to `auto: true`)
 		"ipv6.nat":                             validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=ipv6.nat.address)
+		//
+		// ---
+		//  type: string
+		//  condition: IPv6 address
+		//  shortdesc: The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)
 		"ipv6.nat.address":                     validate.Optional(validate.IsNetworkAddressV6),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.l3only)
+		//
+		// ---
+		//  type: bool
+		//  shortdesc: Whether to enable layer 3 only mode.
+		//  condition: IPv4 address
+		//  default: `false`
 		"ipv4.l3only":                          validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=ipv6.l3only)
+		//
+		// ---
+		//  type: bool
+		//  condition: IPv6 DHCP stateful
+		//  shortdesc: Whether to enable layer 3 only mode.
+		//  default: `false`
 		"ipv6.l3only":                          validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=dns.nameservers)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: DNS server IPs to advertise to DHCP clients and via Router Advertisements. Both IPv4 and IPv6 addresses get pushed via DHCP, and the first IPv6 address is also advertised as RDNSS via RA.
+		//  default: Uplink DNS servers (IPv4 and IPv6 address if no uplink is configured)
 		"dns.nameservers":                      validate.Optional(validate.IsListOf(validate.IsNetworkAddress)),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=dns.domain)
+		//
+		// ---
+		//  type: string
+		//  default: `incus`
+		//  shortdesc: Domain to advertise to DHCP clients and use for DNS resolution
 		"dns.domain":                           validate.IsAny,
+
+		// gendoc:generate(entity=network_ovn, group=common, key=dns.search)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: Full comma-separated domain search list, defaulting to `dns.domain` value
 		"dns.search":                           validate.IsAny,
+
+		// gendoc:generate(entity=network_ovn, group=common, key=dns.zone.forward)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: Comma-separated list of DNS zone names for forward DNS records
 		"dns.zone.forward":                     validate.IsAny,
+
+		// gendoc:generate(entity=network_ovn, group=common, key=dns.zone.reverse.ipv4)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: DNS zone name for IPv4 reverse DNS records
 		"dns.zone.reverse.ipv4":                validate.IsAny,
+
+		// gendoc:generate(entity=network_ovn, group=common, key=dns.zone.reverse.ipv6)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: DNS zone name for IPv6 reverse DNS records
 		"dns.zone.reverse.ipv6":                validate.IsAny,
+
+		// gendoc:generate(entity=network_ovn, group=common, key=security.acls)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: Comma-separated list of Network ACLs to apply to NICs connected to this network
 		"security.acls":                        validate.IsAny,
+
+		// gendoc:generate(entity=network_ovn, group=common, key=security.acls.default.ingress.action)
+		//
+		// ---
+		//  type: string
+		//  condition: `security.acls`
+		//  shortdesc: Action to use for ingress traffic that doesn't match any ACL rule
+		//  default: `reject`
 		"security.acls.default.ingress.action": validate.Optional(validate.IsOneOf(acl.ValidActions...)),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=security.acls.default.egress.action)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: Action to use for egress traffic that doesn't match any ACL rule
+		//  default: `reject`
+		//  condition: `security.acls`
 		"security.acls.default.egress.action":  validate.Optional(validate.IsOneOf(acl.ValidActions...)),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=security.acls.default.ingress.logged)
+		//
+		// ---
+		//  type: bool
+		//  condition: `security.acls`
+		//  shortdesc: Whether to log ingress traffic that doesn't match any ACL rule
+		//  default: `false`
 		"security.acls.default.ingress.logged": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=security.acls.default.egress.logged)
+		//
+		// ---
+		//  type: bool
+		//  shortdesc: Whether to log egress traffic that doesn't match any ACL rule
+		//  default: `false`
+		//  condition: `security.acls`
 		"security.acls.default.egress.logged":  validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=user.*)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: User-provided free-form key/value pairs
 
 		// Volatile keys populated automatically as needed.
 		ovnVolatileUplinkIPv4: validate.Optional(validate.IsNetworkAddressV4),
