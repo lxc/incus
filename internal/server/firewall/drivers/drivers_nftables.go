@@ -387,7 +387,7 @@ func (d Nftables) NetworkClear(networkName string, _ bool, _ []uint) error {
 		return fmt.Errorf("Failed clearing nftables rules for network %q: %w", networkName, err)
 	}
 
-	err = d.RemoveIncusAddressSets("inet")
+	err = d.RemoveIncusAddressSets("bridge")
 	if err != nil {
 		return fmt.Errorf("Error in deletion of address sets: %w", err)
 	}
