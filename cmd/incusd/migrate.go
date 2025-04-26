@@ -108,6 +108,7 @@ func (c *migrationFields) sendControl(err error) {
 	c.controlLock.Lock()
 	conn, _ := c.conns[api.SecretNameControl].WebSocket(context.TODO())
 	if conn != nil {
+		_ = conn.SetWriteDeadline(time.Now().Add(time.Second * 10))
 		migration.ProtoSendControl(conn, err)
 	}
 
