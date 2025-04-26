@@ -6,13 +6,22 @@ import (
 	"strings"
 
 	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
 )
 
-// FamilyV4 represents IPv4 protocol family.
-const FamilyV4 = "-4"
+// Family can be { FamilyAll, FamilyV4, FamilyV6 }.
+type Family int
 
-// FamilyV6 represents IPv6 protocol family.
-const FamilyV6 = "-6"
+const (
+	// FamilyAll specifies any/all family.
+	FamilyAll Family = unix.AF_UNSPEC
+
+	// FamilyV4 specifies the IPv4 family.
+	FamilyV4 Family = unix.AF_INET
+
+	// FamilyV6 specifies the IPv6 family.
+	FamilyV6 Family = unix.AF_INET6
+)
 
 // LinkInfo represents the IP link details.
 type LinkInfo struct {
