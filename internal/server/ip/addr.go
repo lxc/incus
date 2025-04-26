@@ -11,7 +11,7 @@ type Addr struct {
 	DevName string
 	Address string
 	Scope   string
-	Family  string
+	Family  Family
 }
 
 // Add adds new protocol address.
@@ -63,24 +63,12 @@ func (a *Addr) scopeNum() (int, error) {
 
 // Flush flushes protocol addresses.
 func (a *Addr) Flush() error {
-	var family int
-	switch a.Family {
-	case FamilyV4:
-		family = netlink.FAMILY_V4
-	case FamilyV6:
-		family = netlink.FAMILY_V6
-	case "":
-		family = netlink.FAMILY_ALL
-	default:
-		return fmt.Errorf("unknown address family %q", a.Family)
-	}
-
 	link, err := linkByName(a.DevName)
 	if err != nil {
 		return err
 	}
 
-	addrs, err := netlink.AddrList(link, family)
+	addrs, err := netlink.AddrList(link, int(a.Family))
 	if err != nil {
 		return fmt.Errorf("Failed to get addresses for device %s: %w", a.DevName, err)
 	}
