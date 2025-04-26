@@ -364,13 +364,13 @@ func (d *nicIPVLAN) Start() (*deviceConfig.RunConfig, error) {
 
 	// Perform network configuration.
 	for _, keyPrefix := range []string{"ipv4", "ipv6"} {
-		var ipFamilyArg string
+		var ipFamily ip.Family
 
 		switch keyPrefix {
 		case "ipv4":
-			ipFamilyArg = ip.FamilyV4
+			ipFamily = ip.FamilyV4
 		case "ipv6":
-			ipFamilyArg = ip.FamilyV6
+			ipFamily = ip.FamilyV6
 		}
 
 		addresses := util.SplitNTrimSpace(d.config[fmt.Sprintf("%s.address", keyPrefix)], ",", -1, true)
@@ -394,7 +394,7 @@ func (d *nicIPVLAN) Start() (*deviceConfig.RunConfig, error) {
 					DevName: "lo",
 					Route:   addr.String(),
 					Table:   "main",
-					Family:  ipFamilyArg,
+					Family:  ipFamily,
 				}
 
 				err = r.Add()
@@ -411,7 +411,7 @@ func (d *nicIPVLAN) Start() (*deviceConfig.RunConfig, error) {
 						DevName: "lo",
 						Route:   addr.String(),
 						Table:   d.config[hostTableKey],
-						Family:  ipFamilyArg,
+						Family:  ipFamily,
 					}
 
 					err := r.Add()
@@ -538,13 +538,13 @@ func (d *nicIPVLAN) postStop() error {
 
 	// Clean up host-side network configuration.
 	for _, keyPrefix := range []string{"ipv4", "ipv6"} {
-		var ipFamilyArg string
+		var ipFamily ip.Family
 
 		switch keyPrefix {
 		case "ipv4":
-			ipFamilyArg = ip.FamilyV4
+			ipFamily = ip.FamilyV4
 		case "ipv6":
-			ipFamilyArg = ip.FamilyV6
+			ipFamily = ip.FamilyV6
 		}
 
 		addresses := util.SplitNTrimSpace(d.config[fmt.Sprintf("%s.address", keyPrefix)], ",", -1, true)
@@ -563,7 +563,7 @@ func (d *nicIPVLAN) postStop() error {
 					DevName: "lo",
 					Route:   addr.String(),
 					Table:   "main",
-					Family:  ipFamilyArg,
+					Family:  ipFamily,
 				}
 
 				err := r.Delete()
@@ -588,7 +588,7 @@ func (d *nicIPVLAN) postStop() error {
 						DevName: "lo",
 						Route:   addr.String(),
 						Table:   d.config[hostTableKey],
-						Family:  ipFamilyArg,
+						Family:  ipFamily,
 					}
 
 					err := r.Delete()
