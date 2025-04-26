@@ -21,7 +21,7 @@ type infinibandPhysical struct {
 // validateConfig checks the supplied config for correctness.
 func (d *infinibandPhysical) validateConfig(instConf instance.ConfigReader) error {
 	requiredFields := []string{
-		// gendoc:generate(entity=infiniband, group=common, key=parent)
+		// gendoc:generate(entity=devices, group=infiniband, key=parent)
 		//
 		// ---
 		//  type: string
@@ -32,7 +32,7 @@ func (d *infinibandPhysical) validateConfig(instConf instance.ConfigReader) erro
 	}
 
 	optionalFields := []string{
-		// gendoc:generate(entity=infiniband, group=common, key=name)
+		// gendoc:generate(entity=devices, group=infiniband, key=name)
 		//
 		// ---
 		//  type: string
@@ -41,7 +41,7 @@ func (d *infinibandPhysical) validateConfig(instConf instance.ConfigReader) erro
 		//  shortdesc: The name of the interface inside the instance
 		"name",
 
-		// gendoc:generate(entity=infiniband, group=common, key=mtu)
+		// gendoc:generate(entity=devices, group=infiniband, key=mtu)
 		//
 		// ---
 		//  type: integer
@@ -50,7 +50,7 @@ func (d *infinibandPhysical) validateConfig(instConf instance.ConfigReader) erro
 		//  shortdesc: The MTU of the new interface
 		"mtu",
 
-		// gendoc:generate(entity=infiniband, group=common, key=hwaddr)
+		// gendoc:generate(entity=devices, group=infiniband, key=hwaddr)
 		//
 		// ---
 		//  type: string
