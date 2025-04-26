@@ -245,45 +245,6 @@ func osGetCPUMetrics(d *Daemon) ([]metrics.CPUMetrics, error) {
 	return out, nil
 }
 
-func osGetTotalProcesses(d *Daemon) (uint64, error) {
-	entries, err := os.ReadDir("/proc")
-	if err != nil {
-		return 0, fmt.Errorf("Failed to read dir %q: %w", "/proc", err)
-	}
-
-	pidCount := uint64(0)
-
-	for _, entry := range entries {
-		// Skip everything which isn't a directory
-		if !entry.IsDir() {
-			continue
-		}
-
-		name := entry.Name()
-
-		// Skip all non-PID directories
-		_, err := strconv.ParseUint(name, 10, 64)
-		if err != nil {
-			continue
-		}
-
-		cmdlinePath := filepath.Join("/proc", name, "cmdline")
-
-		cmdline, err := os.ReadFile(cmdlinePath)
-		if err != nil {
-			continue
-		}
-
-		if string(cmdline) == "" {
-			continue
-		}
-
-		pidCount++
-	}
-
-	return pidCount, nil
-}
-
 func osGetDiskMetrics(d *Daemon) ([]metrics.DiskMetrics, error) {
 	diskStats, err := os.ReadFile("/proc/diskstats")
 	if err != nil {
@@ -637,12 +598,12 @@ func osGetNetworkState() map[string]api.InstanceStateNetwork {
 func osGetProcessesState() int64 {
 	pids := []int64{1}
 
-	// Go through the pid list, adding new pids at the end so we go through them all
+	// Go through the pid list, adding new pids at the end so we go through them all.
 	for i := 0; i < len(pids); i++ {
 		fname := fmt.Sprintf("/proc/%d/task/%d/children", pids[i], pids[i])
 		fcont, err := os.ReadFile(fname)
 		if err != nil {
-			// the process terminated during execution of this loop
+			// The process terminated during execution of this loop.
 			continue
 		}
 

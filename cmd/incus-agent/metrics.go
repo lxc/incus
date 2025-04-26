@@ -49,10 +49,7 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 		out.Network = netStats
 	}
 
-	out.ProcessesTotal, err = osGetTotalProcesses(d)
-	if err != nil {
-		logger.Warn("Failed to get total processes", logger.Ctx{"err": err})
-	}
+	out.ProcessesTotal = uint64(osGetProcessesState())
 
 	cpuStats, err := osGetCPUMetrics(d)
 	if err != nil {
