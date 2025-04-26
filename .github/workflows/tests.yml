@@ -486,19 +486,35 @@ jobs:
         run: |
             mkdir bin
 
-      - name: Build static x86_64 incus
+      - name: Build static incus (x86_64)
         env:
           CGO_ENABLED: 0
           GOARCH: amd64
         run: |
           go build -o bin/incus.x86_64 ./cmd/incus
 
-      - name: Build static aarch64 incus
+      - name: Build static incus (aarch64)
         env:
           CGO_ENABLED: 0
           GOARCH: arm64
         run: |
           go build -o bin/incus.aarch64 ./cmd/incus
+
+      - name: Build static incus-agent (x86_64)
+        if: runner.os == 'Linux' || runner.os == 'Windows'
+        env:
+          CGO_ENABLED: 0
+          GOARCH: amd64
+        run: |
+          go build -o bin/incus-agent.x86_64 ./cmd/incus-agent
+
+      - name: Build static incus-agent (aarch64)
+        if: runner.os == 'Linux' || runner.os == 'Windows'
+        env:
+          CGO_ENABLED: 0
+          GOARCH: arm64
+        run: |
+          go build -o bin/incus-agent.aarch64 ./cmd/incus-agent
 
       - name: Build static incus-migrate
         if: runner.os == 'Linux'
