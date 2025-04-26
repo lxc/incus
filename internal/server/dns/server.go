@@ -68,7 +68,7 @@ func (s *Server) start(address string) error {
 	go func() {
 		err := s.udpDNS.ListenAndServe()
 		if err != nil {
-			logger.Errorf("Failed to bind TCP DNS address %q: %v", address, err)
+			logger.Errorf("Failed to bind UDP DNS address %q: %v", address, err)
 		}
 	}()
 
