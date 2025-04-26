@@ -377,6 +377,47 @@ For file systems (shared directories or custom volumes), this is one of:
 ```
 
 <!-- config group devices-gpu_sriov end -->
+<!-- config group devices-infiniband start -->
+```{config:option} hwaddr devices-infiniband
+:defaultdesc: "randomly assigned"
+:required: "no"
+:shortdesc: "The MAC address of the new interface (can be either the full 20-byte variant or the short 8-byte variant, which will only modify the last 8 bytes of the parent device)"
+:type: "string"
+
+```
+
+```{config:option} mtu devices-infiniband
+:defaultdesc: "parent MTU"
+:required: "no"
+:shortdesc: "The MTU of the new interface"
+:type: "integer"
+
+```
+
+```{config:option} name devices-infiniband
+:defaultdesc: "kernel assigned"
+:required: "no"
+:shortdesc: "The name of the interface inside the instance"
+:type: "string"
+
+```
+
+```{config:option} nictype devices-infiniband
+:required: "yes"
+:shortdesc: "The device type (one of `physical` or `sriov`)"
+:type: "string"
+
+```
+
+```{config:option} parent devices-infiniband
+:defaultdesc: "kernel assigned"
+:required: "no"
+:shortdesc: "The name of the interface inside the instance"
+:type: "string"
+
+```
+
+<!-- config group devices-infiniband end -->
 <!-- config group devices-nic_bridged start -->
 ```{config:option} boot.priority devices-nic_bridged
 :managed: "no"
@@ -1305,6 +1346,15 @@ For file systems (shared directories or custom volumes), this is one of:
 ```
 
 <!-- config group devices-nic_sriov end -->
+<!-- config group devices-pci start -->
+```{config:option} address devices-pci
+:required: "yes"
+:shortdesc: "PCI address of the device"
+:type: "string"
+
+```
+
+<!-- config group devices-pci end -->
 <!-- config group devices-proxy start -->
 ```{config:option} bind devices-proxy
 :default: "`host`"
@@ -1385,6 +1435,24 @@ For file systems (shared directories or custom volumes), this is one of:
 ```
 
 <!-- config group devices-proxy end -->
+<!-- config group devices-tpm start -->
+```{config:option} path devices-tpm
+:default: "-"
+:required: "for containers"
+:shortdesc: "Only for containers: path inside the instance (for example, `/dev/tpm0`)"
+:type: "string"
+
+```
+
+```{config:option} pathrm devices-tpm
+:default: "-"
+:required: "for containers"
+:shortdesc: "Only for containers: resource manager path inside the instance (for example, `/dev/tpmrm0`)"
+:type: "string"
+
+```
+
+<!-- config group devices-tpm end -->
 <!-- config group devices-unix-char-block start -->
 ```{config:option} gid devices-unix-char-block
 :default: "0"
@@ -1575,47 +1643,6 @@ For file systems (shared directories or custom volumes), this is one of:
 ```
 
 <!-- config group image-requirements end -->
-<!-- config group infiniband-common start -->
-```{config:option} hwaddr infiniband-common
-:defaultdesc: "randomly assigned"
-:required: "no"
-:shortdesc: "The MAC address of the new interface (can be either the full 20-byte variant or the short 8-byte variant, which will only modify the last 8 bytes of the parent device)"
-:type: "string"
-
-```
-
-```{config:option} mtu infiniband-common
-:defaultdesc: "parent MTU"
-:required: "no"
-:shortdesc: "The MTU of the new interface"
-:type: "integer"
-
-```
-
-```{config:option} name infiniband-common
-:defaultdesc: "kernel assigned"
-:required: "no"
-:shortdesc: "The name of the interface inside the instance"
-:type: "string"
-
-```
-
-```{config:option} nictype infiniband-common
-:required: "yes"
-:shortdesc: "The device type (one of `physical` or `sriov`)"
-:type: "string"
-
-```
-
-```{config:option} parent infiniband-common
-:defaultdesc: "kernel assigned"
-:required: "no"
-:shortdesc: "The name of the interface inside the instance"
-:type: "string"
-
-```
-
-<!-- config group infiniband-common end -->
 <!-- config group instance-boot start -->
 ```{config:option} boot.autorestart instance-boot
 :liveupdate: "no"
@@ -4492,21 +4519,3 @@ This value is required by some providers.
 ```
 
 <!-- config group server-openfga end -->
-<!-- config group tpm-common start -->
-```{config:option} path tpm-common
-:default: "-"
-:required: "for containers"
-:shortdesc: "Only for containers: path inside the instance (for example, `/dev/tpm0`)"
-:type: "string"
-
-```
-
-```{config:option} pathrm tpm-common
-:default: "-"
-:required: "for containers"
-:shortdesc: "Only for containers: resource manager path inside the instance (for example, `/dev/tpmrm0`)"
-:type: "string"
-
-```
-
-<!-- config group tpm-common end -->

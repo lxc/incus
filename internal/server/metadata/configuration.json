@@ -416,6 +416,54 @@
 					}
 				]
 			},
+			"infiniband": {
+				"keys": [
+					{
+						"hwaddr": {
+							"defaultdesc": "randomly assigned",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The MAC address of the new interface (can be either the full 20-byte variant or the short 8-byte variant, which will only modify the last 8 bytes of the parent device)",
+							"type": "string"
+						}
+					},
+					{
+						"mtu": {
+							"defaultdesc": "parent MTU",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The MTU of the new interface",
+							"type": "integer"
+						}
+					},
+					{
+						"name": {
+							"defaultdesc": "kernel assigned",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The name of the interface inside the instance",
+							"type": "string"
+						}
+					},
+					{
+						"nictype": {
+							"longdesc": "",
+							"required": "yes",
+							"shortdesc": "The device type (one of `physical` or `sriov`)",
+							"type": "string"
+						}
+					},
+					{
+						"parent": {
+							"defaultdesc": "kernel assigned",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The name of the interface inside the instance",
+							"type": "string"
+						}
+					}
+				]
+			},
 			"nic_bridged": {
 				"keys": [
 					{
@@ -1489,6 +1537,18 @@
 					}
 				]
 			},
+			"pci": {
+				"keys": [
+					{
+						"address": {
+							"longdesc": "",
+							"required": "yes",
+							"shortdesc": "PCI address of the device",
+							"type": "string"
+						}
+					}
+				]
+			},
 			"proxy": {
 				"keys": [
 					{
@@ -1577,6 +1637,28 @@
 							"required": "no",
 							"shortdesc": "UID of the owner of the listening Unix socket",
 							"type": "int"
+						}
+					}
+				]
+			},
+			"tpm": {
+				"keys": [
+					{
+						"path": {
+							"default": "-",
+							"longdesc": "",
+							"required": "for containers",
+							"shortdesc": "Only for containers: path inside the instance (for example, `/dev/tpm0`)",
+							"type": "string"
+						}
+					},
+					{
+						"pathrm": {
+							"default": "-",
+							"longdesc": "",
+							"required": "for containers",
+							"shortdesc": "Only for containers: resource manager path inside the instance (for example, `/dev/tpmrm0`)",
+							"type": "string"
 						}
 					}
 				]
@@ -1805,56 +1887,6 @@
 							"longdesc": "",
 							"shortdesc": "If set to `false`, indicates that the image cannot boot under secure boot.",
 							"type": "bool"
-						}
-					}
-				]
-			}
-		},
-		"infiniband": {
-			"common": {
-				"keys": [
-					{
-						"hwaddr": {
-							"defaultdesc": "randomly assigned",
-							"longdesc": "",
-							"required": "no",
-							"shortdesc": "The MAC address of the new interface (can be either the full 20-byte variant or the short 8-byte variant, which will only modify the last 8 bytes of the parent device)",
-							"type": "string"
-						}
-					},
-					{
-						"mtu": {
-							"defaultdesc": "parent MTU",
-							"longdesc": "",
-							"required": "no",
-							"shortdesc": "The MTU of the new interface",
-							"type": "integer"
-						}
-					},
-					{
-						"name": {
-							"defaultdesc": "kernel assigned",
-							"longdesc": "",
-							"required": "no",
-							"shortdesc": "The name of the interface inside the instance",
-							"type": "string"
-						}
-					},
-					{
-						"nictype": {
-							"longdesc": "",
-							"required": "yes",
-							"shortdesc": "The device type (one of `physical` or `sriov`)",
-							"type": "string"
-						}
-					},
-					{
-						"parent": {
-							"defaultdesc": "kernel assigned",
-							"longdesc": "",
-							"required": "no",
-							"shortdesc": "The name of the interface inside the instance",
-							"type": "string"
 						}
 					}
 				]
@@ -5057,30 +5089,6 @@
 							"longdesc": "",
 							"scope": "global",
 							"shortdesc": "ID of the OpenFGA permission store",
-							"type": "string"
-						}
-					}
-				]
-			}
-		},
-		"tpm": {
-			"common": {
-				"keys": [
-					{
-						"path": {
-							"default": "-",
-							"longdesc": "",
-							"required": "for containers",
-							"shortdesc": "Only for containers: path inside the instance (for example, `/dev/tpm0`)",
-							"type": "string"
-						}
-					},
-					{
-						"pathrm": {
-							"default": "-",
-							"longdesc": "",
-							"required": "for containers",
-							"shortdesc": "Only for containers: resource manager path inside the instance (for example, `/dev/tpmrm0`)",
 							"type": "string"
 						}
 					}

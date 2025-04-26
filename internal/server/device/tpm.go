@@ -37,7 +37,7 @@ func (d *tpm) validateConfig(instConf instance.ConfigReader) error {
 	rules := map[string]func(string) error{}
 
 	if instConf.Type() == instancetype.Container {
-		// gendoc:generate(entity=tpm, group=common, key=path)
+		// gendoc:generate(entity=devices, group=tpm, key=path)
 		//
 		// ---
 		//  type: string
@@ -46,7 +46,7 @@ func (d *tpm) validateConfig(instConf instance.ConfigReader) error {
 		//  shortdesc: Only for containers: path inside the instance (for example, `/dev/tpm0`)
 		rules["path"] = validate.IsNotEmpty
 
-		// gendoc:generate(entity=tpm, group=common, key=pathrm)
+		// gendoc:generate(entity=devices, group=tpm, key=pathrm)
 		//
 		// ---
 		//  type: string
