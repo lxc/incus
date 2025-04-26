@@ -50,6 +50,28 @@ func (r *ProtocolIncus) GetStoragePoolBuckets(poolName string) ([]api.StorageBuc
 	return buckets, nil
 }
 
+// GetStoragePoolBucketsWithFilter returns a filtered list of storage buckets for the provided pool.
+func (r *ProtocolIncus) GetStoragePoolBucketsWithFilter(poolName string, filters []string) ([]api.StorageBucket, error) {
+	err := r.CheckExtension("storage_buckets")
+	if err != nil {
+		return nil, err
+	}
+
+	buckets := []api.StorageBucket{}
+
+	// Fetch the raw value
+	u := api.NewURL().Path("storage-pools", poolName, "buckets").
+		WithQuery("recursion", "1").
+		WithQuery("filter", parseFilters(filters))
+
+	_, err = r.queryStruct("GET", u.String(), nil, "", &buckets)
+	if err != nil {
+		return nil, err
+	}
+
+	return buckets, nil
+}
+
 // GetStoragePoolBucketsAllProjects gets all storage pool buckets across all projects.
 func (r *ProtocolIncus) GetStoragePoolBucketsAllProjects(poolName string) ([]api.StorageBucket, error) {
 	err := r.CheckExtension("storage_buckets_all_projects")
@@ -60,6 +82,33 @@ func (r *ProtocolIncus) GetStoragePoolBucketsAllProjects(poolName string) ([]api
 	buckets := []api.StorageBucket{}
 
 	u := api.NewURL().Path("storage-pools", poolName, "buckets").WithQuery("recursion", "1").WithQuery("all-projects", "true")
+	_, err = r.queryStruct("GET", u.String(), nil, "", &buckets)
+	if err != nil {
+		return nil, err
+	}
+
+	return buckets, nil
+}
+
+// GetStoragePoolBucketsWithFilterAllProjects gets a filtered list of storage pool buckets across all projects.
+func (r *ProtocolIncus) GetStoragePoolBucketsWithFilterAllProjects(poolName string, filters []string) ([]api.StorageBucket, error) {
+	err := r.CheckExtension("storage_buckets")
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.CheckExtension("storage_buckets_all_projects")
+	if err != nil {
+		return nil, fmt.Errorf(`The server is missing the required "storage_buckets_all_projects" API extension`)
+	}
+
+	buckets := []api.StorageBucket{}
+
+	u := api.NewURL().Path("storage-pools", poolName, "buckets").
+		WithQuery("recursion", "1").
+		WithQuery("filter", parseFilters(filters)).
+		WithQuery("all-projects", "true")
+
 	_, err = r.queryStruct("GET", u.String(), nil, "", &buckets)
 	if err != nil {
 		return nil, err
