@@ -16,7 +16,7 @@ type Route struct {
 	Table   string
 	Src     string
 	Proto   string
-	Family  string
+	Family  Family
 	Via     string
 	VRF     string
 	Scope   string
@@ -28,14 +28,9 @@ func (r *Route) netlinkRoute() (*netlink.Route, error) {
 		return nil, err
 	}
 
-	family, err := r.netlinkFamily()
-	if err != nil {
-		return nil, err
-	}
-
 	route := &netlink.Route{
 		LinkIndex: link.Attrs().Index,
-		Family:    family,
+		Family:    int(r.Family),
 	}
 
 	if r.Route != "" {
@@ -115,17 +110,6 @@ func (r *Route) tableID() (int, error) {
 		return unix.RT_TABLE_LOCAL, nil
 	default:
 		return strconv.Atoi(r.Table)
-	}
-}
-
-func (r *Route) netlinkFamily() (int, error) {
-	switch r.Family {
-	case FamilyV4:
-		return netlink.FAMILY_V4, nil
-	case FamilyV6:
-		return netlink.FAMILY_V6, nil
-	default:
-		return 0, fmt.Errorf("invalid family %q", r.Family)
 	}
 }
 
