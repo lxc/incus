@@ -209,16 +209,16 @@ func (s *execWs) Do(op *operations.Operation) error {
 	}
 
 	var err error
-	var ttys []*os.File
-	var ptys []*os.File
+	var ttys []io.ReadWriteCloser
+	var ptys []io.ReadWriteCloser
 
-	var stdin *os.File
-	var stdout *os.File
-	var stderr *os.File
+	var stdin io.ReadCloser
+	var stdout io.WriteCloser
+	var stderr io.WriteCloser
 
 	if s.interactive {
-		ttys = make([]*os.File, 1)
-		ptys = make([]*os.File, 1)
+		ttys = make([]io.ReadWriteCloser, 1)
+		ptys = make([]io.ReadWriteCloser, 1)
 
 		ptys[0], ttys[0], err = osGetInteractiveConsole(s)
 		if err != nil {
@@ -229,8 +229,8 @@ func (s *execWs) Do(op *operations.Operation) error {
 		stdout = ttys[0]
 		stderr = ttys[0]
 	} else {
-		ttys = make([]*os.File, 3)
-		ptys = make([]*os.File, 3)
+		ttys = make([]io.ReadWriteCloser, 3)
+		ptys = make([]io.ReadWriteCloser, 3)
 		for i := 0; i < len(ttys); i++ {
 			ptys[i], ttys[i], err = os.Pipe()
 			if err != nil {

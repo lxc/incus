@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"net"
 	"os"
@@ -46,7 +47,6 @@ var (
 
 	osShutdownSignal       = unix.SIGTERM
 	osExitStatus           = linux.ExitStatus
-	osExecWrapper          = linux.NewExecWrapper
 	osBaseWorkingDirectory = "/"
 	osMetricsSupported     = true
 )
@@ -825,7 +825,7 @@ func osPrepareExecCommand(s *execWs, cmd *exec.Cmd) {
 	}
 }
 
-func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty *os.File, cmd *exec.Cmd, l logger.Logger) {
+func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty io.ReadWriteCloser, cmd *exec.Cmd, l logger.Logger) {
 	if control.Command == "window-resize" && s.interactive {
 		winchWidth, err := strconv.Atoi(control.Args["width"])
 		if err != nil {
@@ -839,10 +839,13 @@ func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty *os.Fil
 			return
 		}
 
-		err = linux.SetPtySize(int(pty.Fd()), winchWidth, winchHeight)
-		if err != nil {
-			l.Debug("Failed to set window size", logger.Ctx{"err": err, "width": winchWidth, "height": winchHeight})
-			return
+		osFile, ok := pty.(*os.File)
+		if ok {
+			err = linux.SetPtySize(int(osFile.Fd()), winchWidth, winchHeight)
+			if err != nil {
+				l.Debug("Failed to set window size", logger.Ctx{"err": err, "width": winchWidth, "height": winchHeight})
+				return
+			}
 		}
 	} else if control.Command == "signal" {
 		err := unix.Kill(cmd.Process.Pid, unix.Signal(control.Signal))
@@ -853,6 +856,15 @@ func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty *os.Fil
 
 		l.Info("Forwarded signal", logger.Ctx{"signal": control.Signal})
 	}
+}
+
+func osExecWrapper(ctx context.Context, pty io.ReadWriteCloser) io.ReadWriteCloser {
+	osFile, ok := pty.(*os.File)
+	if !ok {
+		return pty
+	}
+
+	return linux.NewExecWrapper(ctx, osFile)
 }
 
 func osGetListener(port int64) (net.Listener, error) {
