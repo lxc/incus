@@ -340,7 +340,7 @@ type cmdForkexec struct {
 	global *cmdGlobal
 }
 
-func (c *cmdForkexec) Command() *cobra.Command {
+func (c *cmdForkexec) command() *cobra.Command {
 	// Main subcommand
 	cmd := &cobra.Command{}
 	cmd.Use = "forkexec <container name> <containers path> <config> <cwd> <uid> <gid> <coresched> -- env [key=value...] -- cmd <args...>"
@@ -351,12 +351,12 @@ func (c *cmdForkexec) Command() *cobra.Command {
   This internal command is used to spawn a task inside the container and
   allow the daemon to interact with it.
 `
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Hidden = true
 
 	return cmd
 }
 
-func (c *cmdForkexec) Run(_ *cobra.Command, _ []string) error {
+func (c *cmdForkexec) run(_ *cobra.Command, _ []string) error {
 	return fmt.Errorf("This command should have been intercepted in cgo")
 }

@@ -293,7 +293,7 @@ type udpSession struct {
 	timerLock sync.Mutex
 }
 
-func (c *cmdForkproxy) Command() *cobra.Command {
+func (c *cmdForkproxy) command() *cobra.Command {
 	// Main subcommand
 	cmd := &cobra.Command{}
 	cmd.Use = "forkproxy <listen PID> <listen PidFd> <listen address> <connect PID> <connect PidFd> <connect address> <log path> <pid path> <listen gid> <listen uid> <listen mode> <security gid> <security uid>"
@@ -306,7 +306,7 @@ func (c *cmdForkproxy) Command() *cobra.Command {
   container.
 `
 	cmd.Args = cobra.ExactArgs(12)
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Hidden = true
 
 	return cmd
@@ -416,7 +416,7 @@ type lStruct struct {
 	lAddrIndex int
 }
 
-func (c *cmdForkproxy) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 	// Only root should run this
 	if os.Geteuid() != 0 {
 		return fmt.Errorf("This must be run as root")

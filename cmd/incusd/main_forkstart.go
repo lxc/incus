@@ -17,7 +17,7 @@ type cmdForkstart struct {
 	global *cmdGlobal
 }
 
-func (c *cmdForkstart) Command() *cobra.Command {
+func (c *cmdForkstart) command() *cobra.Command {
 	// Main subcommand
 	cmd := &cobra.Command{}
 	cmd.Use = "forkstart <container name> <containers path> <config>"
@@ -28,13 +28,13 @@ func (c *cmdForkstart) Command() *cobra.Command {
   This internal command is used to start the container as a separate
   process.
 `
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Hidden = true
 
 	return cmd
 }
 
-func (c *cmdForkstart) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdForkstart) run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	if len(args) != 3 {
 		_ = cmd.Help()

@@ -107,7 +107,7 @@ type cmdForkfile struct {
 	global *cmdGlobal
 }
 
-func (c *cmdForkfile) Command() *cobra.Command {
+func (c *cmdForkfile) command() *cobra.Command {
 	// Main subcommand
 	cmd := &cobra.Command{}
 	cmd.Use = "forkfile <listen fd> <rootfs fd> <PIDFd> <PID>"
@@ -124,12 +124,12 @@ func (c *cmdForkfile) Command() *cobra.Command {
 `
 	cmd.Hidden = true
 	cmd.Args = cobra.ExactArgs(4)
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-func (c *cmdForkfile) Run(_ *cobra.Command, args []string) error {
+func (c *cmdForkfile) run(_ *cobra.Command, args []string) error {
 	var mu sync.RWMutex
 	var connections uint64
 	var transactions uint64

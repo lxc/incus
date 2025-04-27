@@ -224,7 +224,7 @@ type cmdForkuevent struct {
 	global *cmdGlobal
 }
 
-func (c *cmdForkuevent) Command() *cobra.Command {
+func (c *cmdForkuevent) command() *cobra.Command {
 	// Main subcommand
 	cmd := &cobra.Command{}
 	cmd.Use = "forkuevent"
@@ -240,7 +240,7 @@ func (c *cmdForkuevent) Command() *cobra.Command {
 	cmdInject := &cobra.Command{}
 	cmdInject.Use = "inject <PID> <PidFd> <len> <uevent parts>..."
 	cmdInject.Args = cobra.MinimumNArgs(4)
-	cmdInject.RunE = c.Run
+	cmdInject.RunE = c.run
 	cmd.AddCommand(cmdInject)
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
@@ -249,6 +249,6 @@ func (c *cmdForkuevent) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdForkuevent) Run(_ *cobra.Command, _ []string) error {
+func (c *cmdForkuevent) run(_ *cobra.Command, _ []string) error {
 	return fmt.Errorf("This command should have been intercepted in cgo")
 }

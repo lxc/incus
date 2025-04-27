@@ -18,7 +18,7 @@ type cmdNetcat struct {
 	global *cmdGlobal
 }
 
-func (c *cmdNetcat) Command() *cobra.Command {
+func (c *cmdNetcat) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "netcat <address> <name>"
 	cmd.Short = "Send stdin data to a unix socket"
@@ -31,13 +31,13 @@ func (c *cmdNetcat) Command() *cobra.Command {
   Its main use is when running rsync or btrfs/zfs send/receive between
   two machines over the websocket API.
 `
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Hidden = true
 
 	return cmd
 }
 
-func (c *cmdNetcat) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetcat) run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	if len(args) < 2 {
 		_ = cmd.Help()

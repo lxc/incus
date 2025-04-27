@@ -21,7 +21,7 @@ type cmdDaemon struct {
 	flagGroup string
 }
 
-func (c *cmdDaemon) Command() *cobra.Command {
+func (c *cmdDaemon) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "incusd"
 	cmd.Short = "The Incus daemon"
@@ -31,13 +31,13 @@ func (c *cmdDaemon) Command() *cobra.Command {
   This is the incus daemon command line. It's typically started directly by your
   init system and interacted with through a tool like ` + "`incus`" + `.
 `
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().StringVar(&c.flagGroup, "group", "", "The group of users that will be allowed to talk to Incus"+"``")
 
 	return cmd
 }
 
-func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdDaemon) run(cmd *cobra.Command, args []string) error {
 	if len(args) > 1 || (len(args) == 1 && args[0] != "daemon" && args[0] != "") {
 		return fmt.Errorf("unknown command \"%s\" for \"%s\"", args[0], cmd.CommandPath())
 	}

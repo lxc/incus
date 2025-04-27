@@ -641,7 +641,7 @@ type cmdForkmount struct {
 	global *cmdGlobal
 }
 
-func (c *cmdForkmount) Command() *cobra.Command {
+func (c *cmdForkmount) command() *cobra.Command {
 	// Main subcommand
 	cmd := &cobra.Command{}
 	cmd.Use = "forkmount"
@@ -658,26 +658,26 @@ func (c *cmdForkmount) Command() *cobra.Command {
 	cmdLXCMount := &cobra.Command{}
 	cmdLXCMount.Use = "lxc-mount <name> <lxcpath> <configpath> <source> <destination> <fstype> <flags>"
 	cmdLXCMount.Args = cobra.ExactArgs(7)
-	cmdLXCMount.RunE = c.Run
+	cmdLXCMount.RunE = c.run
 	cmd.AddCommand(cmdLXCMount)
 
 	cmdGoMount := &cobra.Command{}
 	cmdGoMount.Use = "go-mount <PID> <PidFd> <source> <destination> <idmapType> <flags>"
 	cmdGoMount.Args = cobra.ExactArgs(6)
-	cmdGoMount.RunE = c.Run
+	cmdGoMount.RunE = c.run
 	cmd.AddCommand(cmdGoMount)
 
 	// umount
 	cmdLXCUmount := &cobra.Command{}
 	cmdLXCUmount.Use = "lxc-umount <name> <lxcpath> <configpath> <path>"
 	cmdLXCUmount.Args = cobra.ExactArgs(4)
-	cmdLXCUmount.RunE = c.Run
+	cmdLXCUmount.RunE = c.run
 	cmd.AddCommand(cmdLXCUmount)
 
 	cmdGoUmount := &cobra.Command{}
 	cmdGoUmount.Use = "go-umount <PID> <PidFd> <path>"
 	cmdGoUmount.Args = cobra.ExactArgs(3)
-	cmdGoUmount.RunE = c.Run
+	cmdGoUmount.RunE = c.run
 	cmd.AddCommand(cmdGoUmount)
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
@@ -686,6 +686,6 @@ func (c *cmdForkmount) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdForkmount) Run(_ *cobra.Command, _ []string) error {
+func (c *cmdForkmount) run(_ *cobra.Command, _ []string) error {
 	return fmt.Errorf("This command should have been intercepted in cgo")
 }
