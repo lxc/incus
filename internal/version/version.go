@@ -22,12 +22,12 @@ func NewDottedVersion(versionString string) (*DottedVersion, error) {
 		return nil, formatError
 	}
 
-	maj, err := strconv.Atoi(split[0])
+	major, err := strconv.Atoi(split[0])
 	if err != nil {
 		return nil, formatError
 	}
 
-	min, err := strconv.Atoi(split[1])
+	minor, err := strconv.Atoi(split[1])
 	if err != nil {
 		return nil, formatError
 	}
@@ -41,8 +41,8 @@ func NewDottedVersion(versionString string) (*DottedVersion, error) {
 	}
 
 	return &DottedVersion{
-		Major: maj,
-		Minor: min,
+		Major: major,
+		Minor: minor,
 		Patch: patch,
 	}, nil
 }
