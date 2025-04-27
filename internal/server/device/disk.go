@@ -853,8 +853,8 @@ func (d *disk) startContainer() (*deviceConfig.RunConfig, error) {
 		return nil
 	})
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Deal with a rootfs.
 	if internalInstance.IsRootDiskDevice(d.config) {
@@ -944,7 +944,7 @@ func (d *disk) startContainer() (*deviceConfig.RunConfig, error) {
 				return nil, diskSourceNotFoundError{msg: "Failed mounting volume", err: err}
 			}
 
-			revert.Add(revertFunc)
+			reverter.Add(revertFunc)
 
 			// Handle post hooks.
 			runConf.PostHooks = append(runConf.PostHooks, func() error {
@@ -965,7 +965,7 @@ func (d *disk) startContainer() (*deviceConfig.RunConfig, error) {
 			return nil, err
 		}
 
-		revert.Add(revertFunc)
+		reverter.Add(revertFunc)
 
 		if isFile {
 			options = append(options, "create=file")
@@ -987,7 +987,8 @@ func (d *disk) startContainer() (*deviceConfig.RunConfig, error) {
 		runConf.PostHooks = append(runConf.PostHooks, d.postStart)
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return &runConf, nil
 }
 
@@ -1026,8 +1027,8 @@ func (d *disk) detectVMPoolMountOpts() []string {
 func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 	runConf := deviceConfig.RunConfig{}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Handle user overrides.
 	opts := []string{}
@@ -1091,7 +1092,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 			return nil, fmt.Errorf("Failed opening source path %q: %w", isoPath, err)
 		}
 
-		revert.Add(func() { _ = f.Close() })
+		reverter.Add(func() { _ = f.Close() })
 		runConf.PostHooks = append(runConf.PostHooks, f.Close)
 		runConf.Revert = func() { _ = f.Close() } // Close file on VM start failure.
 
@@ -1105,7 +1106,8 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 			},
 		}
 
-		revert.Success()
+		reverter.Success()
+
 		return &runConf, nil
 	} else if d.config["source"] == diskSourceCloudInit {
 		// This is a special virtual disk source that can be attached to a VM to provide cloud-init config.
@@ -1120,7 +1122,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 			return nil, fmt.Errorf("Failed opening source path %q: %w", isoPath, err)
 		}
 
-		revert.Add(func() { _ = f.Close() })
+		reverter.Add(func() { _ = f.Close() })
 		runConf.PostHooks = append(runConf.PostHooks, f.Close)
 		runConf.Revert = func() { _ = f.Close() } // Close file on VM start failure.
 
@@ -1134,7 +1136,8 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 			},
 		}
 
-		revert.Success()
+		reverter.Success()
+
 		return &runConf, nil
 	} else if d.config["source"] != "" {
 		if d.sourceIsCeph() {
@@ -1231,7 +1234,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					return nil, diskSourceNotFoundError{msg: "Failed mounting volume", err: err}
 				}
 
-				revert.Add(revertFunc)
+				reverter.Add(revertFunc)
 
 				mount.Opts = append(mount.Opts, d.detectVMPoolMountOpts()...)
 			}
@@ -1269,7 +1272,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					return nil, err
 				}
 
-				revert.Add(revertFunc)
+				reverter.Add(revertFunc)
 
 				mount.TargetPath = d.config["path"]
 				mount.FSType = "9p"
@@ -1323,7 +1326,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 						return err
 					}
 
-					revert.Add(revertFunc)
+					reverter.Add(revertFunc)
 
 					// Request the unix listener is closed after QEMU has connected on startup.
 					runConf.PostHooks = append(runConf.PostHooks, unixListener.Close)
@@ -1372,7 +1375,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					return nil, err
 				}
 
-				revert.Add(func() { _ = f.Close() })
+				reverter.Add(func() { _ = f.Close() })
 				runConf.PostHooks = append(runConf.PostHooks, f.Close)
 				runConf.Revert = func() { _ = f.Close() } // Close file on VM start failure.
 
@@ -1390,7 +1393,8 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 			runConf.Mounts = []deviceConfig.MountEntryItem{mount}
 		}
 
-		revert.Success()
+		reverter.Success()
+
 		return &runConf, nil
 	}
 
@@ -1680,8 +1684,8 @@ func (w *cgroupWriter) Set(version cgroup.Backend, controller string, key string
 // mountPoolVolume mounts the pool volume specified in d.config["source"] from pool specified in d.config["pool"]
 // and return the mount path and MountInfo struct. If the instance type is container volume will be shifted if needed.
 func (d *disk) mountPoolVolume() (func(), string, *storagePools.MountInfo, error) {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	var mountInfo *storagePools.MountInfo
 
@@ -1709,7 +1713,7 @@ func (d *disk) mountPoolVolume() (func(), string, *storagePools.MountInfo, error
 		return nil, "", nil, fmt.Errorf("Failed mounting custom storage volume %q on storage pool %q: %w", volName, d.pool.Name(), err)
 	}
 
-	revert.Add(func() { _, _ = d.pool.UnmountCustomVolume(storageProjectName, volName, nil) })
+	reverter.Add(func() { _, _ = d.pool.UnmountCustomVolume(storageProjectName, volName, nil) })
 
 	var dbVolume *db.StorageVolume
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -1738,8 +1742,9 @@ func (d *disk) mountPoolVolume() (func(), string, *storagePools.MountInfo, error
 		}
 	}
 
-	cleanup := revert.Clone().Fail // Clone before calling revert.Success() so we can return the Fail func.
-	revert.Success()
+	cleanup := reverter.Clone().Fail // Clone before calling revert.Success() so we can return the Fail func.
+	reverter.Success()
+
 	return cleanup, srcPath, mountInfo, err
 }
 
@@ -1747,8 +1752,8 @@ func (d *disk) mountPoolVolume() (func(), string, *storagePools.MountInfo, error
 // The srcPath argument is the source of the disk device on the host.
 // Returns the created device path, and whether the path is a file or not.
 func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Paths.
 	devPath := d.getDevicePath(d.name, d.config)
@@ -1909,10 +1914,11 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 		return nil, "", false, err
 	}
 
-	revert.Add(func() { _ = DiskMountClear(devPath) })
+	reverter.Add(func() { _ = DiskMountClear(devPath) })
 
-	cleanup := revert.Clone().Fail // Clone before calling revert.Success() so we can return the Fail func.
-	revert.Success()
+	cleanup := reverter.Clone().Fail // Clone before calling revert.Success() so we can return the Fail func.
+	reverter.Success()
+
 	return cleanup, devPath, isFile, err
 }
 

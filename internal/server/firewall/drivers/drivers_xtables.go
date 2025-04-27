@@ -937,9 +937,10 @@ func (d Xtables) InstanceSetupProxyNAT(projectName string, instanceName string, 
 	listenAddressStr := forward.ListenAddress.String()
 	targetAddressStr := forward.TargetAddress.String()
 
-	revert := revert.New()
-	defer revert.Fail()
-	revert.Add(func() { _ = d.InstanceClearProxyNAT(projectName, instanceName, deviceName) })
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	reverter.Add(func() { _ = d.InstanceClearProxyNAT(projectName, instanceName, deviceName) })
 
 	comment := d.instanceDeviceIPTablesComment(projectName, instanceName, deviceName)
 
@@ -982,7 +983,8 @@ func (d Xtables) InstanceSetupProxyNAT(projectName string, instanceName string, 
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return nil
 }
 
@@ -1658,5 +1660,6 @@ func (d Xtables) NetworkApplyForwards(networkName string, rules []AddressForward
 	}
 
 	reverter.Success()
+
 	return nil
 }

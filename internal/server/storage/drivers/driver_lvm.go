@@ -170,8 +170,8 @@ func (d *lvm) Create() error {
 	var pvName string
 	var vgTags []string
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	err = d.FillConfig()
 	if err != nil {
@@ -216,7 +216,7 @@ func (d *lvm) Create() error {
 			return fmt.Errorf("Failed to create sparse file %q: %w", d.config["source"], err)
 		}
 
-		revert.Add(func() { _ = os.Remove(d.config["source"]) })
+		reverter.Add(func() { _ = os.Remove(d.config["source"]) })
 
 		// Open the loop file.
 		loopDevPath, err := d.openLoopFile(d.config["source"])
@@ -396,7 +396,7 @@ func (d *lvm) Create() error {
 				return err
 			}
 
-			revert.Add(func() { _, _ = subprocess.TryRunCommand("pvremove", pvName) })
+			reverter.Add(func() { _, _ = subprocess.TryRunCommand("pvremove", pvName) })
 		}
 
 		// Create volume group.
@@ -412,7 +412,7 @@ func (d *lvm) Create() error {
 		}
 
 		d.logger.Debug("Volume group created", logger.Ctx{"pv_name": pvName, "vg_name": d.config["lvm.vg_name"]})
-		revert.Add(func() { _, _ = subprocess.TryRunCommand("vgremove", d.config["lvm.vg_name"]) })
+		reverter.Add(func() { _, _ = subprocess.TryRunCommand("vgremove", d.config["lvm.vg_name"]) })
 	}
 
 	// Create thin pool if needed.
@@ -435,7 +435,7 @@ func (d *lvm) Create() error {
 
 			d.logger.Debug("Thin pool created", logger.Ctx{"vg_name": d.config["lvm.vg_name"], "thinpool_name": d.thinpoolName()})
 
-			revert.Add(func() {
+			reverter.Add(func() {
 				_ = d.removeLogicalVolume(d.lvmDevPath(d.config["lvm.vg_name"], "", "", d.thinpoolName()))
 			})
 		} else if d.config["size"] != "" {
@@ -451,7 +451,7 @@ func (d *lvm) Create() error {
 
 	d.logger.Debug("Incus marker tag added to volume group", logger.Ctx{"vg_name": d.config["lvm.vg_name"]})
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 
@@ -719,8 +719,8 @@ func (d *lvm) Mount() (bool, error) {
 
 	waitDuration := time.Second * time.Duration(5)
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// If clustered LVM, start lock manager.
 	if d.clustered {
@@ -738,7 +738,7 @@ func (d *lvm) Mount() (bool, error) {
 			return false, err
 		}
 
-		revert.Add(func() { _ = loopDeviceAutoDetach(loopDevPath) })
+		reverter.Add(func() { _ = loopDeviceAutoDetach(loopDevPath) })
 
 		// Wait for volume group to be detected if wasn't detected before.
 		if !vgExists {
@@ -777,7 +777,7 @@ func (d *lvm) Mount() (bool, error) {
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
 	return ourMount, nil
 }
 

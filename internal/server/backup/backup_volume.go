@@ -66,8 +66,8 @@ func (b *VolumeBackup) Rename(newName string) error {
 	newParentName, _, _ := api.GetParentAndSnapshotName(newName)
 	newParentBackupsPath := internalUtil.VarPath("backups", "custom", b.poolName, project.StorageVolume(b.projectName, newParentName))
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Create the new backup path if doesn't exist.
 	if !util.PathExists(newParentBackupsPath) {
@@ -83,7 +83,7 @@ func (b *VolumeBackup) Rename(newName string) error {
 		return err
 	}
 
-	revert.Add(func() { _ = os.Rename(newBackupPath, oldBackupPath) })
+	reverter.Add(func() { _ = os.Rename(newBackupPath, oldBackupPath) })
 
 	// Check if we can remove the old parent directory.
 	empty, _ := internalUtil.PathIsEmpty(oldParentBackupsPath)
@@ -102,7 +102,7 @@ func (b *VolumeBackup) Rename(newName string) error {
 		return err
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 

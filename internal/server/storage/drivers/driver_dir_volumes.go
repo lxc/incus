@@ -27,8 +27,8 @@ import (
 func (d *dir) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Operation) error {
 	volPath := vol.MountPath()
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	if util.PathExists(vol.MountPath()) {
 		return fmt.Errorf("Volume path %q already exists", vol.MountPath())
@@ -40,7 +40,7 @@ func (d *dir) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 		return err
 	}
 
-	revert.Add(func() { _ = os.RemoveAll(volPath) })
+	reverter.Add(func() { _ = os.RemoveAll(volPath) })
 
 	// Get path to disk volume if volume is block or iso.
 	rootBlockPath := ""
@@ -58,7 +58,7 @@ func (d *dir) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 		}
 
 		if revertFunc != nil {
-			revert.Add(revertFunc)
+			reverter.Add(revertFunc)
 		}
 	}
 
@@ -94,7 +94,7 @@ func (d *dir) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 
@@ -117,17 +117,17 @@ func (d *dir) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 				return err
 			}
 
-			revert := revert.New()
-			defer revert.Fail()
+			reverter := revert.New()
+			defer reverter.Fail()
 
 			revertQuota, err := d.setupInitialQuota(vol)
 			if err != nil {
 				return err
 			}
 
-			revert.Add(revertQuota)
+			reverter.Add(revertQuota)
 
-			revert.Success()
+			reverter.Success()
 			return nil
 		}
 
@@ -434,11 +434,11 @@ func (d *dir) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) err
 		return err
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	snapPath := snapVol.MountPath()
-	revert.Add(func() { _ = os.RemoveAll(snapPath) })
+	reverter.Add(func() { _ = os.RemoveAll(snapPath) })
 
 	if snapVol.contentType != ContentTypeBlock || snapVol.volType != VolumeTypeCustom {
 		var rsyncArgs []string
@@ -483,7 +483,7 @@ func (d *dir) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) err
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 

@@ -400,8 +400,8 @@ func eventsConnect(address string, networkCert *localtls.CertInfo, serverCert *l
 		return nil, err
 	}
 
-	revert := revert.New()
-	revert.Add(func() {
+	reverter := revert.New()
+	reverter.Add(func() {
 		client.Disconnect()
 	})
 
@@ -410,7 +410,7 @@ func eventsConnect(address string, networkCert *localtls.CertInfo, serverCert *l
 		return nil, err
 	}
 
-	revert.Success()
+	reverter.Success()
 
 	lc := &eventListenerClient{
 		EventListener: listener,

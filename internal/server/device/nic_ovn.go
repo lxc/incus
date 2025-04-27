@@ -584,8 +584,8 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 		return nil, err
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	saveData := make(map[string]string)
 	saveData["host_name"] = d.config["host_name"]
@@ -658,7 +658,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 				return nil, fmt.Errorf("Failed setting up VF: %w", err)
 			}
 
-			revert.Add(func() {
+			reverter.Add(func() {
 				_ = networkSRIOVRestoreVF(d.deviceCommon, false, saveData)
 			})
 
@@ -719,7 +719,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 				return nil, err
 			}
 
-			revert.Add(func() {
+			reverter.Add(func() {
 				_ = networkSRIOVRestoreVF(d.deviceCommon, false, saveData)
 			})
 
@@ -770,7 +770,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 				}
 			}
 
-			revert.Add(func() { _ = network.InterfaceRemove(saveData["host_name"]) })
+			reverter.Add(func() { _ = network.InterfaceRemove(saveData["host_name"]) })
 		}
 	}
 
@@ -816,7 +816,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 	saveData["last_state.ip_addresses"] = dnsIPsStr.String()
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		_ = d.network.InstanceDevicePortStop("", &network.OVNInstanceNICStopOpts{
 			InstanceUUID: d.inst.LocalConfig()["volatile.uuid"],
 			DeviceName:   d.name,
@@ -831,7 +831,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 			return nil, err
 		}
 
-		revert.Add(cleanup)
+		reverter.Add(cleanup)
 	}
 
 	runConf := deviceConfig.RunConfig{}
@@ -913,7 +913,8 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return &runConf, nil
 }
 
@@ -1359,8 +1360,8 @@ func (d *nicOVN) Register() error {
 }
 
 func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort) (revert.Hook, error) {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Disable IPv6 on host-side veth interface (prevents host-side interface getting link-local address and
 	// accepting router advertisements) as not needed because the host-side interface is connected to a bridge.
@@ -1388,7 +1389,7 @@ func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort) (r
 		return nil, err
 	}
 
-	revert.Add(func() { _ = vswitch.DeleteBridgePort(context.TODO(), integrationBridge, hostName) })
+	reverter.Add(func() { _ = vswitch.DeleteBridgePort(context.TODO(), integrationBridge, hostName) })
 
 	// Link OVS port to OVN logical port.
 	err = vswitch.AssociateInterfaceOVNSwitchPort(context.TODO(), hostName, string(ovnPortName))
@@ -1403,7 +1404,8 @@ func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort) (r
 		return nil, fmt.Errorf("Failed to bring up the host interface %s: %w", hostName, err)
 	}
 
-	cleanup := revert.Clone().Fail
-	revert.Success()
+	cleanup := reverter.Clone().Fail
+	reverter.Success()
+
 	return cleanup, err
 }

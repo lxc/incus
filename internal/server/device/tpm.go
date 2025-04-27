@@ -127,11 +127,11 @@ func (d *tpm) startContainer() (*deviceConfig.RunConfig, error) {
 		return nil, fmt.Errorf("Failed to start process %q: %w", "swtpm", err)
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Stop the TPM emulator if anything goes wrong.
-	revert.Add(func() { _ = proc.Stop() })
+	reverter.Add(func() { _ = proc.Stop() })
 
 	pidPath := filepath.Join(d.inst.DevicesPath(), fmt.Sprintf("%s.pid", d.name))
 
@@ -202,7 +202,7 @@ func (d *tpm) startContainer() (*deviceConfig.RunConfig, error) {
 		return nil, fmt.Errorf("Failed to setup unix device: %w", err)
 	}
 
-	revert.Success()
+	reverter.Success()
 
 	return &runConf, nil
 }
@@ -233,10 +233,10 @@ func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
 		return nil, fmt.Errorf("Failed to start swtpm for device %q: %w", d.name, err)
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
-	revert.Add(func() { _ = proc.Stop() })
+	reverter.Add(func() { _ = proc.Stop() })
 
 	pidPath := filepath.Join(d.inst.DevicesPath(), fmt.Sprintf("%s.pid", d.name))
 
@@ -260,7 +260,7 @@ func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
 		return nil, fmt.Errorf("swtpm socket didn't appear within 2s")
 	}
 
-	revert.Success()
+	reverter.Success()
 
 	return &runConf, nil
 }

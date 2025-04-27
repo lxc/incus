@@ -732,8 +732,8 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 		return nil, err
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	saveData := make(map[string]string)
 	saveData["host_name"] = d.config["host_name"]
@@ -765,7 +765,7 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 		return nil, err
 	}
 
-	revert.Add(func() { _ = network.InterfaceRemove(saveData["host_name"]) })
+	reverter.Add(func() { _ = network.InterfaceRemove(saveData["host_name"]) })
 
 	// Populate device config with volatile fields if needed.
 	networkVethFillFromVolatile(d.config, saveData)
@@ -813,7 +813,7 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 		return nil, err
 	}
 
-	revert.Add(r)
+	reverter.Add(r)
 
 	// Attach host side veth interface to bridge.
 	err = network.AttachInterface(d.state, d.config["parent"], saveData["host_name"])
@@ -821,7 +821,7 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 		return nil, err
 	}
 
-	revert.Add(func() { _ = network.DetachInterface(d.state, d.config["parent"], saveData["host_name"]) })
+	reverter.Add(func() { _ = network.DetachInterface(d.state, d.config["parent"], saveData["host_name"]) })
 
 	// Attempt to disable router advertisement acceptance.
 	err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", saveData["host_name"]), "0")
@@ -918,7 +918,8 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 			}...)
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return &runConf, nil
 }
 
@@ -951,8 +952,8 @@ func (d *nicBridged) Update(oldDevices deviceConfig.Devices, isRunning bool) err
 		}
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// If instance is running, apply host side limits and filters first before rebuilding
 	// dnsmasq config below so that existing config can be used as part of the filter removal.
@@ -1000,7 +1001,7 @@ func (d *nicBridged) Update(oldDevices deviceConfig.Devices, isRunning bool) err
 			return err
 		}
 
-		revert.Add(r)
+		reverter.Add(r)
 	}
 
 	// Rebuild dnsmasq entry if needed and reload.
@@ -1036,7 +1037,8 @@ func (d *nicBridged) Update(oldDevices deviceConfig.Devices, isRunning bool) err
 		return err
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return nil
 }
 
@@ -1204,8 +1206,8 @@ func (d *nicBridged) rebuildDnsmasqEntry() error {
 // setupHostFilters applies any host side network filters.
 // Returns a revert fail function that can be used to undo this function if a subsequent step fails.
 func (d *nicBridged) setupHostFilters(oldConfig deviceConfig.Device) (revert.Hook, error) {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Check br_netfilter kernel module is loaded and enabled for IPv6 before clearing existing rules.
 	// We won't try to load it as its default mode can cause unwanted traffic blocking.
@@ -1228,11 +1230,12 @@ func (d *nicBridged) setupHostFilters(oldConfig deviceConfig.Device) (revert.Hoo
 			return nil, err
 		}
 
-		revert.Add(func() { d.removeFilters(d.config) })
+		reverter.Add(func() { d.removeFilters(d.config) })
 	}
 
-	cleanup := revert.Clone().Fail
-	revert.Success()
+	cleanup := reverter.Clone().Fail
+	reverter.Success()
+
 	return cleanup, nil
 }
 
@@ -1393,9 +1396,10 @@ func (d *nicBridged) setFilters() (err error) {
 	}
 
 	// If anything goes wrong, clean up so we don't leave orphaned rules.
-	revert := revert.New()
-	defer revert.Fail()
-	revert.Add(func() { d.removeFilters(config) })
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	reverter.Add(func() { d.removeFilters(config) })
 
 	ipv4Nets, ipv6Nets, err := allowedIPNets(config)
 	if err != nil {
@@ -1455,7 +1459,8 @@ func (d *nicBridged) setFilters() (err error) {
 		return err
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return nil
 }
 

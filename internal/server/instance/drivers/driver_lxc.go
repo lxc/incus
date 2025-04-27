@@ -167,8 +167,8 @@ func lxcStatusCode(state liblxc.State) api.StatusCode {
 // lxcCreate creates the DB storage records and sets up instance devices.
 // Returns a revert fail function that can be used to undo this function if a subsequent step fails.
 func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operations.Operation) (instance.Instance, revert.Hook, error) {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Create the container struct
 	d := &lxc{
@@ -313,7 +313,7 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operatio
 			return nil, nil, err
 		}
 
-		revert.Add(cleanup)
+		reverter.Add(cleanup)
 	}
 
 	if d.isSnapshot {
@@ -331,7 +331,7 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operatio
 			logger.Error("Failed to add instance to authorizer", logger.Ctx{"instanceName": d.Name(), "projectName": d.project.Name, "error": err})
 		}
 
-		revert.Add(func() { d.state.Authorizer.DeleteInstance(d.state.ShutdownCtx, d.project.Name, d.Name()) })
+		reverter.Add(func() { _ = d.state.Authorizer.DeleteInstance(d.state.ShutdownCtx, d.project.Name, d.Name()) })
 
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceCreated.Event(d, map[string]any{
 			"type":         api.InstanceTypeContainer,
@@ -340,8 +340,9 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operatio
 		}))
 	}
 
-	cleanup := revert.Clone().Fail
-	revert.Success()
+	cleanup := reverter.Clone().Fail
+	reverter.Success()
+
 	return d, cleanup, err
 }
 
@@ -669,8 +670,8 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 	// cleaned up (if needed) when the garbage collector destroys this instance struct.
 	d.cFinalizer.Do(func() { runtime.SetFinalizer(d, lxcUnload) })
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Load the go-lxc struct
 	cname := project.Instance(d.Project().Name, d.Name())
@@ -679,7 +680,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 		return nil, err
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		_ = cc.Release()
 	})
 
@@ -750,7 +751,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 		d.c = cc
 
-		revert.Success()
+		reverter.Success()
 		return cc, err
 	}
 
@@ -1337,7 +1338,8 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 	}
 
 	d.c = cc
-	revert.Success()
+	reverter.Success()
+
 	return cc, err
 }
 
@@ -1417,8 +1419,8 @@ func (d *lxc) deviceStart(dev device.Device, instanceRunning bool) (*deviceConfi
 	l := d.logger.AddContext(logger.Ctx{"device": dev.Name(), "type": configCopy["type"]})
 	l.Debug("Starting device")
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	if instanceRunning && !dev.CanHotPlug() {
 		return nil, fmt.Errorf("Device cannot be started when instance is running")
@@ -1429,7 +1431,7 @@ func (d *lxc) deviceStart(dev device.Device, instanceRunning bool) (*deviceConfi
 		return nil, err
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		runConf, _ := dev.Stop()
 		if runConf != nil {
 			_ = d.runHooks(runConf.PostHooks)
@@ -1482,7 +1484,8 @@ func (d *lxc) deviceStart(dev device.Device, instanceRunning bool) (*deviceConfi
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return runConf, nil
 }
 
@@ -1918,8 +1921,8 @@ func (d *lxc) handleIdmappedStorage() (idmap.StorageType, *idmap.Set, error) {
 func (d *lxc) startCommon() (string, []func() error, error) {
 	postStartHooks := []func() error{}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Assign NUMA node(s) if needed.
 	if d.expandedConfig["limits.cpu.nodes"] == "balanced" {
@@ -2035,7 +2038,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		return nil
 	})
 
-	revert.Add(func() { _ = d.unmount() })
+	reverter.Add(func() { _ = d.unmount() })
 
 	idmapType, nextIdmap, err := d.handleIdmappedStorage()
 	if err != nil {
@@ -2146,7 +2149,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		}
 
 		// Stop device on failure to setup container.
-		revert.Add(func() {
+		reverter.Add(func() {
 			err := d.deviceStop(dev, false, "")
 			if err != nil {
 				d.logger.Error("Failed to cleanup device", logger.Ctx{"device": dev.Name(), "err": err})
@@ -2158,7 +2161,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		}
 
 		if runConf.Revert != nil {
-			revert.Add(runConf.Revert)
+			reverter.Add(runConf.Revert)
 		}
 
 		// Process rootfs setup.
@@ -2426,7 +2429,8 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		return "", nil, err
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return configPath, postStartHooks, nil
 }
 
@@ -3764,8 +3768,8 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool) error {
 
 	d.logger.Debug("Mounting instance to check for CRIU state path existence")
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Ensure that storage is mounted for state path checks and for backup.yaml updates.
 	_, err = d.mount()
@@ -3774,7 +3778,7 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool) error {
 		return err
 	}
 
-	revert.Add(func() { _ = d.unmount() })
+	reverter.Add(func() { _ = d.unmount() })
 
 	// Check for CRIU if necessary, before doing a bunch of filesystem manipulations.
 	// Requires container be mounted to check StatePath exists.
@@ -3793,7 +3797,7 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool) error {
 		return err
 	}
 
-	revert.Success()
+	reverter.Success()
 
 	// Restore the rootfs.
 	err = pool.RestoreInstanceSnapshot(d, sourceContainer, nil)
@@ -4168,12 +4172,13 @@ func (d *lxc) Rename(newName string, applyTemplateTrigger bool) error {
 			return fmt.Errorf("Failed renaming instance: %w", err)
 		}
 	}
-	revert := revert.New()
-	defer revert.Fail()
+
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Set the new name in the struct.
 	d.name = newName
-	revert.Add(func() { d.name = oldName })
+	reverter.Add(func() { d.name = oldName })
 
 	// Rename the backups.
 	backups, err := d.Backups()
@@ -4192,7 +4197,7 @@ func (d *lxc) Rename(newName string, applyTemplateTrigger bool) error {
 			return err
 		}
 
-		revert.Add(func() { _ = b.Rename(oldName) })
+		reverter.Add(func() { _ = b.Rename(oldName) })
 	}
 
 	// Invalidate the go-lxc cache.
@@ -4232,7 +4237,8 @@ func (d *lxc) Rename(newName string, applyTemplateTrigger bool) error {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceRenamed.Event(d, map[string]any{"old_name": oldName}))
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return nil
 }
 
@@ -6135,8 +6141,8 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		srcIdmap.Entries = append(srcIdmap.Entries, e)
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	g, ctx := errgroup.WithContext(context.Background())
 
@@ -6298,7 +6304,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 						return fmt.Errorf("Failed creating instance snapshot record %q: %w", snapArgs.Name, err)
 					}
 
-					revert.Add(cleanup)
+					reverter.Add(cleanup)
 					defer snapInstOp.Done(err)
 				}
 			}
@@ -6314,7 +6320,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		// Only delete all instance volumes on error if the pool volume creation has succeeded to
 		// avoid deleting an existing conflicting volume.
 		if !volTargetArgs.Refresh && !isRemoteClusterMove {
-			revert.Add(func() {
+			reverter.Add(func() {
 				snapshots, _ := d.Snapshots()
 				snapshotCount := len(snapshots)
 				for k := range snapshots {
@@ -6484,7 +6490,8 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		// not collect the error, as it will just be a disconnect error from the source.
 		_ = g.Wait()
 
-		revert.Success()
+		reverter.Success()
+
 		return nil
 	}
 }
@@ -6962,8 +6969,8 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 	}
 
 	// Setup reverter.
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Create the listener.
 	_ = os.Remove(forkfilePath)
@@ -6972,7 +6979,7 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 		return nil, err
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		_ = forkfileListener.Close()
 		_ = os.Remove(forkfilePath)
 	})
@@ -7125,7 +7132,8 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 	}
 
 	// All done.
-	revert.Success()
+	reverter.Success()
+
 	return forkfileConn, nil
 }
 

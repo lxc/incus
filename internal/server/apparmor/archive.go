@@ -20,8 +20,8 @@ func ArchiveWrapper(sysOS *sys.OS, cmd *exec.Cmd, output string, allowedCmds []s
 		return func() {}, nil
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Load the profile.
 	profileName, err := archiveProfileLoad(sysOS, output, allowedCmds)
@@ -29,7 +29,7 @@ func ArchiveWrapper(sysOS *sys.OS, cmd *exec.Cmd, output string, allowedCmds []s
 		return nil, fmt.Errorf("Failed to load apparmor profile: %w", err)
 	}
 
-	revert.Add(func() { _ = deleteProfile(sysOS, profileName, profileName) })
+	reverter.Add(func() { _ = deleteProfile(sysOS, profileName, profileName) })
 
 	// Resolve aa-exec.
 	execPath, err := exec.LookPath("aa-exec")
@@ -48,14 +48,14 @@ func ArchiveWrapper(sysOS *sys.OS, cmd *exec.Cmd, output string, allowedCmds []s
 		_ = deleteProfile(sysOS, profileName, profileName)
 	}
 
-	revert.Success()
+	reverter.Success()
 
 	return cleanup, nil
 }
 
 func archiveProfileLoad(sysOS *sys.OS, output string, allowedCommandPaths []string) (string, error) {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Generate a temporary profile name.
 	name := profileName("archive", uuid.New().String())
@@ -73,7 +73,7 @@ func archiveProfileLoad(sysOS *sys.OS, output string, allowedCommandPaths []stri
 		return "", err
 	}
 
-	revert.Add(func() { os.Remove(profilePath) })
+	reverter.Add(func() { os.Remove(profilePath) })
 
 	// Load it.
 	err = loadProfile(sysOS, name)
@@ -81,7 +81,7 @@ func archiveProfileLoad(sysOS *sys.OS, output string, allowedCommandPaths []stri
 		return "", err
 	}
 
-	revert.Success()
+	reverter.Success()
 	return name, nil
 }
 
