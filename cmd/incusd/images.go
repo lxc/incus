@@ -1868,7 +1868,7 @@ func autoUpdateImages(ctx context.Context, s *state.State) error {
 			if err != nil {
 				logger.Error("Failed to update image", logger.Ctx{"err": err, "project": image.Project, "fingerprint": image.Fingerprint})
 
-				if err == context.Canceled {
+				if errors.Is(err, context.Canceled) {
 					return nil
 				}
 			} else {
@@ -1888,7 +1888,7 @@ func autoUpdateImages(ctx context.Context, s *state.State) error {
 				if err != nil {
 					logger.Error("Failed to distribute new image", logger.Ctx{"err": err, "fingerprint": newImage.Fingerprint})
 
-					if err == context.Canceled {
+					if errors.Is(err, context.Canceled) {
 						return nil
 					}
 				}
