@@ -305,6 +305,7 @@ type InstanceServer interface {
 	// Project functions
 	GetProjectNames() (names []string, err error)
 	GetProjects() (projects []api.Project, err error)
+	GetProjectsWithFilter(filters []string) (projects []api.Project, err error)
 	GetProject(name string) (project *api.Project, ETag string, err error)
 	GetProjectState(name string) (project *api.ProjectState, err error)
 	GetProjectAccess(name string) (access api.Access, err error)
