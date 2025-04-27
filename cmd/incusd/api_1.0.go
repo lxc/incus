@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -641,8 +642,9 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 		return err
 	})
 	if err != nil {
-		switch err.(type) {
-		case config.ErrorList:
+		var errorList config.ErrorList
+		switch {
+		case errors.As(err, &errorList):
 			return response.BadRequest(err)
 		default:
 			return response.SmartError(err)
@@ -704,8 +706,9 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 		return err
 	})
 	if err != nil {
-		switch err.(type) {
-		case config.ErrorList:
+		var errorList config.ErrorList
+		switch {
+		case errors.As(err, &errorList):
 			return response.BadRequest(err)
 		default:
 			return response.SmartError(err)
