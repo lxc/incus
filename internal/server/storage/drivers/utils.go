@@ -483,13 +483,12 @@ func shrinkFileSystem(fsType string, devPath string, vol Volume, byteSize int64,
 			output, err := subprocess.RunCommand("e2fsck", "-f", "-y", devPath)
 			if err != nil {
 				exitCodeFSModified := false
-				runErr, ok := err.(subprocess.RunError)
+
+				var exitError *exec.ExitError
+				ok := errors.As(err, &exitError)
 				if ok {
-					exitError, ok := runErr.Unwrap().(*exec.ExitError)
-					if ok {
-						if exitError.ExitCode() == 1 {
-							exitCodeFSModified = true
-						}
+					if exitError.ExitCode() == 1 {
+						exitCodeFSModified = true
 					}
 				}
 
