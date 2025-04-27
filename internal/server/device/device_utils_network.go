@@ -786,7 +786,7 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 		}
 
 		// Now that MAC is set on VF, we can enable spoof checking.
-		err = link.SetVfSpoofchk(volatile["last_state.vf.id"], "on")
+		err = link.SetVfSpoofchk(volatile["last_state.vf.id"], true)
 		if err != nil {
 			return vfPCIDev, 0, fmt.Errorf("Failed enabling spoof check for VF %q: %w", volatile["last_state.vf.id"], err)
 		}
@@ -799,7 +799,7 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 
 		if useSpoofCheck {
 			// Ensure spoof checking is disabled if not enabled in instance (only for real VF).
-			err = link.SetVfSpoofchk(volatile["last_state.vf.id"], "off")
+			err = link.SetVfSpoofchk(volatile["last_state.vf.id"], false)
 			if err != nil {
 				return vfPCIDev, 0, fmt.Errorf("Failed disabling spoof check for VF %q: %w", volatile["last_state.vf.id"], err)
 			}
@@ -912,13 +912,8 @@ func networkSRIOVRestoreVF(d deviceCommon, useSpoofCheck bool, volatile map[stri
 	// Reset VF MAC spoofing protection if recorded. Do this first before resetting the MAC
 	// to avoid any issues with zero MACs refusing to be set whilst spoof check is on.
 	if useSpoofCheck && volatile["last_state.vf.spoofcheck"] != "" {
-		mode := "off"
-		if util.IsTrue(volatile["last_state.vf.spoofcheck"]) {
-			mode = "on"
-		}
-
 		link := &ip.Link{Name: parent}
-		err := link.SetVfSpoofchk(volatile["last_state.vf.id"], mode)
+		err := link.SetVfSpoofchk(volatile["last_state.vf.id"], util.IsTrue(volatile["last_state.vf.spoofcheck"]))
 		if err != nil {
 			return err
 		}

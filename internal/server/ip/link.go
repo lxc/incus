@@ -328,20 +328,17 @@ func (l *Link) SetVfVlan(vf string, vlan string) error {
 }
 
 // SetVfSpoofchk turns packet spoof checking on or off for the specified VF.
-func (l *Link) SetVfSpoofchk(vf string, mode string) error {
+func (l *Link) SetVfSpoofchk(vf string, on bool) error {
 	vfInt, err := strconv.Atoi(vf)
 	if err != nil {
 		return err
 	}
 
-	// TODO: pass as bool
-	check := mode == "on"
-
 	return netlink.LinkSetVfSpoofchk(&netlink.GenericLink{
 		LinkAttrs: netlink.LinkAttrs{
 			Name: l.Name,
 		},
-	}, vfInt, check)
+	}, vfInt, on)
 }
 
 // VirtFuncInfo holds information about vf.
