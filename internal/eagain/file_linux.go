@@ -3,6 +3,7 @@
 package eagain
 
 import (
+	"errors"
 	"io"
 
 	"golang.org/x/sys/unix"
@@ -25,7 +26,7 @@ again:
 
 	// keep retrying on EAGAIN
 	errno, ok := linux.GetErrno(err)
-	if ok && (errno == unix.EAGAIN || errno == unix.EINTR) {
+	if ok && (errors.Is(errno, unix.EAGAIN) || errors.Is(errno, unix.EINTR)) {
 		goto again
 	}
 
@@ -47,7 +48,7 @@ again:
 
 	// keep retrying on EAGAIN
 	errno, ok := linux.GetErrno(err)
-	if ok && (errno == unix.EAGAIN || errno == unix.EINTR) {
+	if ok && (errors.Is(errno, unix.EAGAIN) || errors.Is(errno, unix.EINTR)) {
 		goto again
 	}
 
