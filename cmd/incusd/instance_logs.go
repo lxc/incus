@@ -472,8 +472,8 @@ func instanceExecOutputsGet(d *Daemon, r *http.Request) response.Response {
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceExecOutputGet(d *Daemon, r *http.Request) response.Response {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	s := d.State()
 
@@ -528,9 +528,9 @@ func instanceExecOutputGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	revert.Add(func() { _ = pool.UnmountInstance(inst, nil) })
-	cleanup := revert.Clone()
-	revert.Success()
+	reverter.Add(func() { _ = pool.UnmountInstance(inst, nil) })
+	cleanup := reverter.Clone()
+	reverter.Success()
 
 	ent := response.FileResponseEntry{
 		Path:     filepath.Join(inst.ExecOutputPath(), file),
