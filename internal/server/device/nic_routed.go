@@ -66,19 +66,7 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		//  type: string
 		//  default: kernel assigned
 		//  shortdesc: The name of the interface inside the instance
-		// gendoc:generate(entity=devices, group=nic_routed, key=name)
-		//
-		// ---
-		//  type: string
-		//  default: kernel assigned
-		//  shortdesc: The name of the interface inside the instance
 		"name",
-
-		// gendoc:generate(entity=devices, group=nic_routed, key=parent)
-		//
-		// ---
-		//  type: string
-		//  shortdesc: The name of the parent host device to join the instance to
 
 		// gendoc:generate(entity=devices, group=nic_routed, key=parent)
 		//
@@ -93,13 +81,6 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		//  type: integer
 		//  default: parent MTU
 		//  shortdesc: The Maximum Transmit Unit (MTU) of the new interface
-
-		// gendoc:generate(entity=devices, group=nic_routed, key=mtu)
-		//
-		// ---
-		//  type: integer
-		//  default: parent MTU
-		//  shortdesc: The Maximum Transmit Unit (MTU) of the new interface
 		"mtu",
 
 		// gendoc:generate(entity=devices, group=nic_routed, key=queue.tx.length)
@@ -107,20 +88,7 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		// ---
 		//  type: integer
 		//  shortdesc: The transmit queue length for the NIC
-
-		// gendoc:generate(entity=devices, group=nic_routed, key=queue.tx.length)
-		//
-		// ---
-		//  type: integer
-		//  shortdesc: The transmit queue length for the NIC
 		"queue.tx.length",
-
-		// gendoc:generate(entity=devices, group=nic_routed, key=hwaddr)
-		//
-		// ---
-		//  type: string
-		//  default: randomly assigned
-		//  shortdesc: The MAC address of the new interface
 
 		// gendoc:generate(entity=devices, group=nic_routed, key=hwaddr)
 		//
@@ -136,20 +104,7 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		//  type: string
 		//  default: randomly assigned
 		//  shortdesc: The name of the interface on the host
-
-		// gendoc:generate(entity=devices, group=nic_routed, key=host_name)
-		//
-		// ---
-		//  type: string
-		//  default: randomly assigned
-		//  shortdesc: The name of the interface on the host
 		"host_name",
-
-		// gendoc:generate(entity=devices, group=nic_routed, key=vlan)
-		//
-		// ---
-		//  type: integer
-		//  shortdesc: The VLAN ID to attach to
 
 		// gendoc:generate(entity=devices, group=nic_routed, key=vlan)
 		//
@@ -163,19 +118,7 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		// ---
 		//  type: string
 		//  shortdesc: I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)
-
-		// gendoc:generate(entity=devices, group=nic_routed, key=limits.ingress)
-		//
-		// ---
-		//  type: string
-		//  shortdesc: I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)
 		"limits.ingress",
-
-		// gendoc:generate(entity=devices, group=nic_routed, key=limits.egress)
-		//
-		// ---
-		//  type: string
-		//  shortdesc: I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)
 
 		// gendoc:generate(entity=devices, group=nic_routed, key=limits.egress)
 		//
@@ -189,20 +132,7 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		// ---
 		//  type: string
 		//  shortdesc: I/O limit in bit/s for both incoming and outgoing traffic (same as setting both limits.ingress and limits.egress)
-
-		// gendoc:generate(entity=devices, group=nic_routed, key=limits.max)
-		//
-		// ---
-		//  type: string
-		//  shortdesc: I/O limit in bit/s for both incoming and outgoing traffic (same as setting both limits.ingress and limits.egress)
 		"limits.max",
-
-		// gendoc:generate(entity=devices, group=nic_routed, key=limits.priority)
-		//
-		// ---
-		//  type: integer
-		//  shortdesc: The priority for outgoing traffic, to be used by the kernel queuing discipline to prioritize network packets
-
 
 		// gendoc:generate(entity=devices, group=nic_routed, key=limits.priority)
 		//
@@ -218,21 +148,7 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		//  default: auto
 		//  shortdesc: Whether to add an automatic default IPv4 gateway (can be `auto` or `none`)
 
-		// gendoc:generate(entity=devices, group=nic_routed, key=ipv4.gateway)
-		//
-		// ---
-		//  type: string
-		//  default: auto
-		//  shortdesc: Whether to add an automatic default IPv4 gateway (can be `auto` or `none`)
-
 		"ipv4.gateway",
-		// gendoc:generate(entity=devices, group=nic_routed, key=ipv6.gateway)
-		//
-		// ---
-		//  type: string
-		//  default: auto
-		//  shortdesc: Whether to add an automatic default IPv6 gateway (can be `auto` or `none`)
-
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv6.gateway)
 		//
 		// ---
@@ -247,12 +163,6 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		//  type: string
 		//  shortdesc: Comma-delimited list of IPv4 static routes to add on host to NIC (without L2 ARP/NDP proxy)
 
-		// gendoc:generate(entity=devices, group=nic_routed, key=ipv4.routes)
-		//
-		// ---
-		//  type: string
-		//  shortdesc: Comma-delimited list of IPv4 static routes to add on host to NIC (without L2 ARP/NDP proxy)
-
 		"ipv4.routes",
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv6.routes)
 		//
@@ -260,20 +170,7 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		//  type: string
 		//  shortdesc: Comma-delimited list of IPv6 static routes to add on host to NIC (without L2 ARP/NDP proxy)
 
-		// gendoc:generate(entity=devices, group=nic_routed, key=ipv6.routes)
-		//
-		// ---
-		//  type: string
-		//  shortdesc: Comma-delimited list of IPv6 static routes to add on host to NIC (without L2 ARP/NDP proxy)
-
 		"ipv6.routes",
-		// gendoc:generate(entity=devices, group=nic_routed, key=ipv4.host_address)
-		//
-		// ---
-		//  type: string
-		//  default: `169.254.0.1`
-		//  shortdesc: The IPv4 address to add to the host-side `veth` interface
-
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv4.host_address)
 		//
 		// ---
@@ -289,36 +186,22 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		//  default: `fe80::1`
 		//  shortdesc: The IPv6 address to add to the host-side `veth` interface
 
-		// gendoc:generate(entity=devices, group=nic_routed, key=ipv6.host_address)
-		//
-		// ---
-		//  type: string
-		//  default: `fe80::1`
-		//  shortdesc: The IPv6 address to add to the host-side `veth` interface
-
 		"ipv6.host_address",
+
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv4.host_table)
 		//
 		// ---
 		//  type: integer
 		//  shortdesc: The custom policy routing table ID to add IPv4 static routes to (in addition to the main routing table)
 
-<<<<<<< HEAD
-		"ipv4.host_table",
-=======
 		"ipv4.host_table", // deprecated
->>>>>>> 274f9cdd5 (ff)
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv6.host_table)
 		//
 		// ---
 		//  type: integer
 		//  shortdesc: The custom policy routing table ID to add IPv6 static routes to (in addition to the main routing table)
 
-<<<<<<< HEAD
-		"ipv6.host_table",
-=======
 		"ipv6.host_table", // deprecated
->>>>>>> 274f9cdd5 (ff)
 		// gendoc:generate(entity=devices, group=nic_routed, key=gvrp)
 		//
 		// ---
@@ -326,30 +209,15 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		//  default: false
 		//  shortdesc: Register VLAN using GARP VLAN Registration Protocol
 
-<<<<<<< HEAD
-=======
     	"ipv4.host_tables",
 		"ipv6.host_tables",
->>>>>>> 274f9cdd5 (ff)
 		"gvrp",
 		// gendoc:generate(entity=devices, group=nic_routed, key=vrf)
 		//
 		// ---
 		//  type: string
 		//  shortdesc: The VRF on the host in which the host-side interface and routes are created
-		// gendoc:generate(entity=devices, group=nic_routed, key=vrf)
-		//
-		// ---
-		//  type: string
-		//  shortdesc: The VRF on the host in which the host-side interface and routes are created
 		"vrf",
-
-		// gendoc:generate(entity=devices, group=nic_routed, key=io.bus)
-		//
-		// ---
-		//  type: string
-		//  default: `virtio`
-		//  shortdesc: Override the bus for the device (can be `virtio` or `usb`) (VM only)
 
 		// gendoc:generate(entity=devices, group=nic_routed, key=io.bus)
 		//
@@ -367,12 +235,6 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 	// ---
 	//  type: string
 	//  shortdesc: Comma-delimited list of IPv4 static addresses to add to the instance
-
-	// gendoc:generate(entity=devices, group=nic_routed, key=ipv4.address)
-	//
-	// ---
-	//  type: string
-	//  shortdesc: Comma-delimited list of IPv4 static addresses to add to the instance
 	rules["ipv4.address"] = validate.Optional(validate.IsListOf(validate.IsNetworkAddressV4))
 
 	// gendoc:generate(entity=devices, group=nic_routed, key=ipv6.address)
@@ -380,27 +242,10 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 	// ---
 	//  type: string
 	//  shortdesc: Comma-delimited list of IPv6 static addresses to add to the instance
-
-	// gendoc:generate(entity=devices, group=nic_routed, key=ipv6.address)
-	//
-	// ---
-	//  type: string
-	//  shortdesc: Comma-delimited list of IPv6 static addresses to add to the instance
 	rules["ipv6.address"] = validate.Optional(validate.IsListOf(validate.IsNetworkAddressV6))
-<<<<<<< HEAD
-
-=======
 	rules["ipv4.host_tables"] = validate.Optional(validate.IsListOf(validate.IsInRange(0, 255)))
   	rules["ipv6.host_tables"] = validate.Optional(validate.IsListOf(validate.IsInRange(0, 255)))
->>>>>>> 274f9cdd5 (ff)
 	rules["gvrp"] = validate.Optional(validate.IsBool)
-
-	// gendoc:generate(entity=devices, group=nic_routed, key=ipv4.neighbor_probe)
-	//
-	// ---
-	//  type: bool
-	//  default: true
-	//  shortdesc: Whether to probe the parent network for IP address availability
 
 	// gendoc:generate(entity=devices, group=nic_routed, key=ipv4.neighbor_probe)
 	//
@@ -416,15 +261,7 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 	//  type: bool
 	//  default: true
 	//  shortdesc: Whether to probe the parent network for IP address availability
-
-	// gendoc:generate(entity=devices, group=nic_routed, key=ipv6.neighbor_probe)
-	//
-	// ---
-	//  type: bool
-	//  default: true
-	//  shortdesc: Whether to probe the parent network for IP address availability
 	rules["ipv6.neighbor_probe"] = validate.Optional(validate.IsBool)
-
 
 	rules["vrf"] = validate.Optional(validate.IsAny)
 
@@ -757,21 +594,15 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 				tbls := util.SplitNTrimSpace(v, ",", -1, true)
 				return tbls;
 			}
-		
+
 			// Legacy – single key: include it plus 254.
 			if v := d.config[fmt.Sprintf("%s.host_table", keyPrefix)]; v != "" {
 				if v == "254" {
 					return []string{"254"}               // user asked for main only
 				}
 				return []string{v, "254"}                // custom + main
-				if v == "254" {
-					return []string{"254"}               // user asked for main only
-				}
-				return []string{v, "254"}                // custom + main
 			}
-		
-			// Default – main only.
-		
+
 			// Default – main only.
 			return []string{"254"}
 		}
