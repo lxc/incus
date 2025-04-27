@@ -341,7 +341,7 @@ func main() {
 	err = app.Execute()
 	if err != nil {
 		// Handle non-Linux systems
-		if err == config.ErrNotLinux {
+		if errors.Is(err, config.ErrNotLinux) {
 			fmt.Fprintf(os.Stderr, i18n.G(`This client hasn't been configured to use a remote server yet.
 As your platform can't run native Linux instances, you must connect to a remote server.
 

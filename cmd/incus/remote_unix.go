@@ -196,7 +196,7 @@ func (t remoteProxyTransport) RoundTrip(r *http.Request) (*http.Response, error)
 	r.RequestURI = ""
 
 	resp, err := t.s.DoHTTP(r)
-	if err == incus.ErrOIDCExpired {
+	if errors.Is(err, incus.ErrOIDCExpired) {
 		// Override the response so the client knows to retry the request.
 		resp.StatusCode = http.StatusUseProxy
 		resp.Status = "Retry the request for OIDC refresh"
