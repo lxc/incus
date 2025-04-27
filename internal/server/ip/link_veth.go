@@ -13,7 +13,7 @@ type Veth struct {
 
 // Add adds new virtual link.
 func (veth *Veth) Add() error {
-	// TODO: the netlink library does not support configuring anything except name and hwaddr on the peer
+	// TODO: blocked on https://github.com/vishvananda/netlink/pull/1079
 	err := veth.Link.add("veth", append([]string{"peer"}, veth.Peer.args()...))
 	if err != nil {
 		return err
