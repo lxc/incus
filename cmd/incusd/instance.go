@@ -39,8 +39,8 @@ import (
 
 // instanceCreateAsEmpty creates an empty instance.
 func instanceCreateAsEmpty(s *state.State, args db.InstanceArgs, op *operations.Operation) (instance.Instance, error) {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Create the instance record.
 	inst, instOp, cleanup, err := instance.CreateInternal(s, args, op, true, true)
@@ -48,7 +48,7 @@ func instanceCreateAsEmpty(s *state.State, args db.InstanceArgs, op *operations.
 		return nil, fmt.Errorf("Failed creating instance record: %w", err)
 	}
 
-	revert.Add(cleanup)
+	reverter.Add(cleanup)
 	defer instOp.Done(err)
 
 	pool, err := storagePools.LoadByInstance(s, inst)
@@ -61,14 +61,14 @@ func instanceCreateAsEmpty(s *state.State, args db.InstanceArgs, op *operations.
 		return nil, fmt.Errorf("Failed creating instance: %w", err)
 	}
 
-	revert.Add(func() { _ = inst.Delete(true) })
+	reverter.Add(func() { _ = inst.Delete(true) })
 
 	err = inst.UpdateBackupFile()
 	if err != nil {
 		return nil, err
 	}
 
-	revert.Success()
+	reverter.Success()
 	return inst, nil
 }
 
@@ -135,8 +135,8 @@ func ensureImageIsLocallyAvailable(ctx context.Context, s *state.State, r *http.
 
 // instanceCreateFromImage creates an instance from a rootfs image.
 func instanceCreateFromImage(ctx context.Context, s *state.State, r *http.Request, img *api.Image, args db.InstanceArgs, op *operations.Operation) error {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Validate the type of the image matches the type of the instance.
 	imgType, err := instancetype.New(img.Type)
@@ -164,7 +164,7 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, r *http.Reques
 		return fmt.Errorf("Failed creating instance record: %w", err)
 	}
 
-	revert.Add(cleanup)
+	reverter.Add(cleanup)
 	defer instOp.Done(nil)
 
 	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
@@ -198,7 +198,7 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, r *http.Reques
 		return fmt.Errorf("Failed creating instance from image: %w", err)
 	}
 
-	revert.Add(func() { _ = inst.Delete(true) })
+	reverter.Add(func() { _ = inst.Delete(true) })
 
 	// If dealing with an OCI image, parse the configuration.
 	if args.Type == instancetype.Container && inst.LocalConfig()["image.type"] == "oci" {
@@ -274,7 +274,7 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, r *http.Reques
 		return err
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 
@@ -329,8 +329,8 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 	var err error
 	var cleanup revert.Hook
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	if opts.refresh {
 		// Load the target instance.
@@ -348,7 +348,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 			return nil, fmt.Errorf("Failed creating instance record: %w", err)
 		}
 
-		revert.Add(cleanup)
+		reverter.Add(cleanup)
 	} else {
 		instOp, err = inst.LockExclusive()
 		if err != nil {
@@ -483,7 +483,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 				return nil, fmt.Errorf("Failed creating instance snapshot record %q: %w", newSnapName, err)
 			}
 
-			revert.Add(cleanup)
+			reverter.Add(cleanup)
 			defer snapInstOp.Done(err)
 		}
 	}
@@ -505,7 +505,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 			return nil, fmt.Errorf("Create instance from copy: %w", err)
 		}
 
-		revert.Add(func() { _ = inst.Delete(true) })
+		reverter.Add(func() { _ = inst.Delete(true) })
 
 		if opts.applyTemplateTrigger {
 			// Trigger the templates on next start.
@@ -521,7 +521,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 		return nil, err
 	}
 
-	revert.Success()
+	reverter.Success()
 	return inst, nil
 }
 

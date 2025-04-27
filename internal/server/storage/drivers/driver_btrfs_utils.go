@@ -182,8 +182,8 @@ func (d *btrfs) getSubvolumes(path string) ([]string, error) {
 // snapshotSubvolume creates a snapshot of the specified path at the dest supplied. If recursion is true and
 // sub volumes are found below the path then they are created at the relative location in dest.
 func (d *btrfs) snapshotSubvolume(path string, dest string, recursion bool) (revert.Hook, error) {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Single subvolume creation.
 	snapshot := func(path string, dest string) error {
@@ -192,7 +192,7 @@ func (d *btrfs) snapshotSubvolume(path string, dest string, recursion bool) (rev
 			return err
 		}
 
-		revert.Add(func() {
+		reverter.Add(func() {
 			// Don't delete recursive since there already is a revert hook
 			// for each subvolume that got created.
 			_ = d.deleteSubvolume(dest, false)
@@ -230,8 +230,8 @@ func (d *btrfs) snapshotSubvolume(path string, dest string, recursion bool) (rev
 		}
 	}
 
-	cleanup := revert.Clone().Fail
-	revert.Success()
+	cleanup := reverter.Clone().Fail
+	reverter.Success()
 	return cleanup, nil
 }
 

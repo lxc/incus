@@ -174,8 +174,8 @@ func serverSetupUser(uid uint32) error {
 	}
 
 	// Setup reverter.
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Create certificate directory.
 	err = os.MkdirAll(userPath, 0o700)
@@ -183,7 +183,7 @@ func serverSetupUser(uid uint32) error {
 		return fmt.Errorf("Failed to create user directory: %w", err)
 	}
 
-	revert.Add(func() { _ = os.RemoveAll(userPath) })
+	reverter.Add(func() { _ = os.RemoveAll(userPath) })
 
 	// Generate certificate.
 	if !util.PathExists(filepath.Join(userPath, "client.crt")) || !util.PathExists(filepath.Join(userPath, "client.key")) {
@@ -229,7 +229,7 @@ func serverSetupUser(uid uint32) error {
 			return fmt.Errorf("Unable to create project: %w", err)
 		}
 
-		revert.Add(func() { _ = client.DeleteProject(projectName) })
+		reverter.Add(func() { _ = client.DeleteProject(projectName) })
 
 		// Create user-specific bridge.
 		network := api.NetworksPost{}
@@ -324,13 +324,13 @@ func serverSetupUser(uid uint32) error {
 		return fmt.Errorf("Unable to add user certificate: %w", err)
 	}
 
-	revert.Add(func() { _ = client.DeleteCertificate(localtls.CertFingerprint(x509Cert)) })
+	reverter.Add(func() { _ = client.DeleteCertificate(localtls.CertFingerprint(x509Cert)) })
 
 	// Add the new project to our list.
 	if !slices.Contains(projectNames, projectName) {
 		projectNames = append(projectNames, projectName)
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }

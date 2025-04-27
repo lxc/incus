@@ -857,17 +857,17 @@ func (n *bridge) Rename(newName string) error {
 func (n *bridge) Start() error {
 	n.logger.Debug("Start")
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
-	revert.Add(func() { n.setUnavailable() })
+	reverter.Add(func() { n.setUnavailable() })
 
 	err := n.setup(nil)
 	if err != nil {
 		return err
 	}
 
-	revert.Success()
+	reverter.Success()
 
 	// Ensure network is marked as available now its started.
 	n.setAvailable()
@@ -884,8 +884,8 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 	n.logger.Debug("Setting up network")
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Create directory.
 	if !util.PathExists(internalUtil.VarPath("networks", n.name)) {
@@ -981,7 +981,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 				return err
 			}
 
-			revert.Add(func() { _ = vswitch.DeleteBridge(context.Background(), n.name) })
+			reverter.Add(func() { _ = vswitch.DeleteBridge(context.Background(), n.name) })
 		} else {
 			// Add and configure the interface in one operation to reduce the number of executions and
 			// to avoid systemd-udevd from applying the default MACAddressPolicy=persistent policy.
@@ -990,7 +990,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 				return err
 			}
 
-			revert.Add(func() { _ = bridge.Delete() })
+			reverter.Add(func() { _ = bridge.Delete() })
 		}
 	} else {
 		// If bridge already exists then re-apply settings. If we just created a bridge then we don't
@@ -1059,7 +1059,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 		err = dummy.Add()
 		if err == nil {
-			revert.Add(func() { _ = dummy.Delete() })
+			reverter.Add(func() { _ = dummy.Delete() })
 			err = dummy.SetUp()
 			if err == nil {
 				_ = AttachInterface(n.state, n.name, fmt.Sprintf("%s-mtu", n.name))
@@ -1900,7 +1900,8 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		return err
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return nil
 }
 
@@ -2002,13 +2003,13 @@ func (n *bridge) Update(newNetwork api.NetworkPut, targetNode string, clientType
 		return n.common.update(newNetwork, targetNode, clientType)
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Perform any pre-update cleanup needed if local member network was already created.
 	if len(changedKeys) > 0 {
 		// Define a function which reverts everything.
-		revert.Add(func() {
+		reverter.Add(func() {
 			// Reset changes to all nodes and database.
 			_ = n.common.update(oldNetwork, targetNode, clientType)
 
@@ -2080,7 +2081,8 @@ func (n *bridge) Update(newNetwork api.NetworkPut, targetNode string, clientType
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return nil
 }
 
@@ -2567,8 +2569,8 @@ func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType reque
 		}
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	var forwardID int64
 
@@ -2582,7 +2584,7 @@ func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType reque
 		return err
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		_ = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			return tx.DeleteNetworkForward(ctx, n.ID(), forwardID)
 		})
@@ -2676,7 +2678,8 @@ func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType reque
 		return fmt.Errorf("Failed applying BGP prefixes for address forwards: %w", err)
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return nil
 }
 
@@ -2722,8 +2725,8 @@ func (n *bridge) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, 
 		return nil // Nothing has changed.
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		return tx.UpdateNetworkForward(ctx, n.ID(), curForwardID, &newForward.NetworkForwardPut)
@@ -2732,7 +2735,7 @@ func (n *bridge) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, 
 		return err
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		_ = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			return tx.UpdateNetworkForward(ctx, n.ID(), curForwardID, &curForward.NetworkForwardPut)
 		})
@@ -2745,7 +2748,8 @@ func (n *bridge) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, 
 		return err
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return nil
 }
 
@@ -2766,8 +2770,8 @@ func (n *bridge) ForwardDelete(listenAddress string, clientType request.ClientTy
 		return err
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		return tx.DeleteNetworkForward(ctx, n.ID(), forwardID)
@@ -2776,7 +2780,7 @@ func (n *bridge) ForwardDelete(listenAddress string, clientType request.ClientTy
 		return err
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		newForward := api.NetworkForwardsPost{
 			NetworkForwardPut: forward.NetworkForwardPut,
 			ListenAddress:     forward.ListenAddress,
@@ -2803,7 +2807,8 @@ func (n *bridge) ForwardDelete(listenAddress string, clientType request.ClientTy
 		return fmt.Errorf("Failed applying BGP prefixes for address forwards: %w", err)
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return nil
 }
 

@@ -311,8 +311,8 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		}
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	instanceOnly := req.Source.InstanceOnly
 
@@ -331,7 +331,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 			return response.InternalError(fmt.Errorf("Failed creating instance record: %w", err))
 		}
 
-		revert.Add(cleanup)
+		reverter.Add(cleanup)
 	} else {
 		instOp, err = inst.LockExclusive()
 		if err != nil {
@@ -339,7 +339,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		}
 	}
 
-	revert.Add(func() { instOp.Done(err) })
+	reverter.Add(func() { instOp.Done(err) })
 
 	push := false
 	var dialer *websocket.Dialer
@@ -381,10 +381,10 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 	}
 
 	// Copy reverter so far so we can use it inside run after this function has finished.
-	runRevert := revert.Clone()
+	runReverter := reverter.Clone()
 
 	run := func(op *operations.Operation) error {
-		defer runRevert.Fail()
+		defer runReverter.Fail()
 
 		sink.instance.SetOperation(op)
 
@@ -448,7 +448,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 			}
 		}
 
-		runRevert.Success()
+		runReverter.Success()
 
 		return instanceCreateFinish(s, req, args, op)
 	}
@@ -469,7 +469,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
 	return operations.OperationResponse(op)
 }
 
@@ -633,8 +633,8 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 }
 
 func createFromBackup(s *state.State, r *http.Request, projectName string, data io.Reader, pool string, instanceName string) response.Response {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Create temporary file to store uploaded backup data.
 	backupFile, err := os.CreateTemp(internalUtil.VarPath("backups"), fmt.Sprintf("%s_", backup.WorkingDirPrefix))
@@ -643,7 +643,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 	}
 
 	defer func() { _ = os.Remove(backupFile.Name()) }()
-	revert.Add(func() { _ = backupFile.Close() })
+	reverter.Add(func() { _ = backupFile.Close() })
 
 	// Stream uploaded backup data into temporary file.
 	_, err = io.Copy(backupFile, data)
@@ -780,11 +780,11 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 	}
 
 	// Copy reverter so far so we can use it inside run after this function has finished.
-	runRevert := revert.Clone()
+	runReverter := reverter.Clone()
 
 	run := func(op *operations.Operation) error {
 		defer func() { _ = backupFile.Close() }()
-		defer runRevert.Fail()
+		defer runReverter.Fail()
 
 		pool, err := storagePools.LoadByName(s, bInfo.Pool)
 		if err != nil {
@@ -806,7 +806,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 			return fmt.Errorf("Create instance from backup: %w", err)
 		}
 
-		runRevert.Add(revertHook)
+		runReverter.Add(revertHook)
 
 		err = internalImportFromBackup(context.TODO(), s, bInfo.Project, bInfo.Name, instanceName != "")
 		if err != nil {
@@ -819,7 +819,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		}
 
 		// Clean up created instance if the post hook fails below.
-		runRevert.Add(func() { _ = inst.Delete(true) })
+		runReverter.Add(func() { _ = inst.Delete(true) })
 
 		// Run the storage post hook to perform any final actions now that the instance has been created
 		// in the database (this normally includes unmounting volumes that were mounted).
@@ -830,7 +830,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 			}
 		}
 
-		runRevert.Success()
+		runReverter.Success()
 
 		return instanceCreateFinish(s, &req, db.InstanceArgs{Name: bInfo.Name, Project: bInfo.Project}, op)
 	}
@@ -843,7 +843,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		return response.InternalError(err)
 	}
 
-	revert.Success()
+	reverter.Success()
 	return operations.OperationResponse(op)
 }
 

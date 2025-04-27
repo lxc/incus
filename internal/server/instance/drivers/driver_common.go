@@ -785,8 +785,8 @@ func (d *common) runHooks(hooks []func() error) error {
 
 // snapshot handles the common part of the snapshotting process.
 func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time.Time, stateful bool) error {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Setup the arguments.
 	args := db.InstanceArgs{
@@ -809,7 +809,7 @@ func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time
 		return fmt.Errorf("Failed creating instance snapshot record %q: %w", name, err)
 	}
 
-	revert.Add(cleanup)
+	reverter.Add(cleanup)
 	defer snapInstOp.Done(err)
 
 	pool, err := storagePools.LoadByInstance(d.state, snap)
@@ -822,7 +822,7 @@ func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time
 		return fmt.Errorf("Create instance snapshot: %w", err)
 	}
 
-	revert.Add(func() { _ = snap.Delete(true) })
+	reverter.Add(func() { _ = snap.Delete(true) })
 
 	// Mount volume for backup.yaml writing.
 	_, err = pool.MountInstance(inst, d.op)
@@ -838,7 +838,8 @@ func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time
 		return err
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return nil
 }
 
@@ -1275,8 +1276,8 @@ func (d *common) deviceRemove(dev device.Device, instanceRunning bool) error {
 
 // devicesAdd adds devices to instance.
 func (d *common) devicesAdd(inst instance.Instance, instanceRunning bool) (revert.Hook, error) {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	for _, entry := range d.expandedDevices.Sorted() {
 		dev, err := d.deviceLoad(inst, entry.Name, entry.Config)
@@ -1308,11 +1309,12 @@ func (d *common) devicesAdd(inst instance.Instance, instanceRunning bool) (rever
 			return nil, fmt.Errorf("Failed to add device %q: %w", dev.Name(), err)
 		}
 
-		revert.Add(func() { _ = d.deviceRemove(dev, instanceRunning) })
+		reverter.Add(func() { _ = d.deviceRemove(dev, instanceRunning) })
 	}
 
-	cleanup := revert.Clone().Fail
-	revert.Success()
+	cleanup := reverter.Clone().Fail
+	reverter.Success()
+
 	return cleanup, nil
 }
 
@@ -1333,8 +1335,8 @@ func (d *common) devicesRegister(inst instance.Instance) {
 
 // devicesUpdate applies device changes to an instance.
 func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfig.Devices, addDevices deviceConfig.Devices, updateDevices deviceConfig.Devices, oldExpandedDevices deviceConfig.Devices, instanceRunning bool, userRequested bool) error {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	dm, ok := inst.(deviceManager)
 	if !ok {
@@ -1412,7 +1414,7 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 			l.Error("Failed to add device, skipping as non-user requested", logger.Ctx{"err": err})
 		}
 
-		revert.Add(func() { _ = d.deviceRemove(dev, instanceRunning) })
+		reverter.Add(func() { _ = d.deviceRemove(dev, instanceRunning) })
 
 		if instanceRunning {
 			err = dev.PreStartCheck()
@@ -1425,7 +1427,7 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 				return fmt.Errorf("Failed to start device %q: %w", dev.Name(), err)
 			}
 
-			revert.Add(func() { _ = dm.deviceStop(dev, instanceRunning, "") })
+			reverter.Add(func() { _ = dm.deviceStop(dev, instanceRunning, "") })
 		}
 	}
 
@@ -1475,7 +1477,8 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return nil
 }
 

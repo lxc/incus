@@ -76,17 +76,17 @@ func storagePoolCreateGlobal(ctx context.Context, s *state.State, req api.Storag
 	// so that it doesn't need to be explicitly called in every failing
 	// return path. Track whether or not we want to undo the changes
 	// using a closure.
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
-	revert.Add(func() { _ = dbStoragePoolDeleteAndUpdateCache(context.Background(), s, req.Name) })
+	reverter.Add(func() { _ = dbStoragePoolDeleteAndUpdateCache(context.Background(), s, req.Name) })
 
 	_, err = storagePoolCreateLocal(ctx, s, id, req, clientType)
 	if err != nil {
 		return err
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 
@@ -94,8 +94,8 @@ func storagePoolCreateGlobal(ctx context.Context, s *state.State, req api.Storag
 // Returns resulting config.
 func storagePoolCreateLocal(ctx context.Context, s *state.State, poolID int64, req api.StoragePoolsPost, clientType request.ClientType) (map[string]string, error) {
 	// Setup revert.
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Load pool record.
 	pool, err := storagePools.LoadByName(s, req.Name)
@@ -115,7 +115,7 @@ func storagePoolCreateLocal(ctx context.Context, s *state.State, poolID int64, r
 		return nil, err
 	}
 
-	revert.Add(func() { _ = pool.Delete(clientType, nil) })
+	reverter.Add(func() { _ = pool.Delete(clientType, nil) })
 
 	// Mount the pool.
 	_, err = pool.Mount()
@@ -148,7 +148,7 @@ func storagePoolCreateLocal(ctx context.Context, s *state.State, poolID int64, r
 
 	logger.Debug("Marked storage pool local status as created", logger.Ctx{"pool": req.Name})
 
-	revert.Success()
+	reverter.Success()
 	return pool.Driver().Config(), nil
 }
 

@@ -194,8 +194,8 @@ func qemuInstantiate(s *state.State, args db.InstanceArgs, expandedDevices devic
 // qemuCreate creates a new storage volume record and returns an initialized Instance.
 // Returns a revert fail function that can be used to undo this function if a subsequent step fails.
 func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operations.Operation) (instance.Instance, revert.Hook, error) {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Create the instance struct.
 	d := &qemu{
@@ -308,7 +308,7 @@ func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operati
 			return nil, nil, err
 		}
 
-		revert.Add(cleanup)
+		reverter.Add(cleanup)
 	}
 
 	if d.isSnapshot {
@@ -325,7 +325,7 @@ func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operati
 			logger.Error("Failed to add instance to authorizer", logger.Ctx{"name": d.Name(), "project": d.project.Name, "error": err})
 		}
 
-		revert.Add(func() { d.state.Authorizer.DeleteInstance(d.state.ShutdownCtx, d.project.Name, d.Name()) })
+		reverter.Add(func() { _ = d.state.Authorizer.DeleteInstance(d.state.ShutdownCtx, d.project.Name, d.Name()) })
 
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceCreated.Event(d, map[string]any{
 			"type":         api.InstanceTypeVM,
@@ -334,8 +334,9 @@ func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operati
 		}))
 	}
 
-	cleanup := revert.Clone().Fail
-	revert.Success()
+	cleanup := reverter.Clone().Fail
+	reverter.Success()
+
 	return d, cleanup, err
 }
 
@@ -1224,8 +1225,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return err
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Rotate the log files.
 	for _, logfile := range []string{d.LogFilePath(), d.ConsoleBufferLogPath(), d.QMPLogFilePath()} {
@@ -1260,7 +1261,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return err
 	}
 
-	revert.Add(func() { _ = d.unmount() })
+	reverter.Add(func() { _ = d.unmount() })
 
 	// Define a set of files to open and pass their file descriptors to QEMU command.
 	fdFiles := make([]*os.File, 0)
@@ -1409,7 +1410,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			return err
 		}
 
-		revert.Add(func() {
+		reverter.Add(func() {
 			err := d.deviceStop(dev, false, "")
 			if err != nil {
 				d.logger.Error("Failed to cleanup device", logger.Ctx{"device": dev.Name(), "err": err})
@@ -1421,7 +1422,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 
 		if runConf.Revert != nil {
-			revert.Add(runConf.Revert)
+			reverter.Add(runConf.Revert)
 		}
 
 		// Add post-start hooks
@@ -1449,7 +1450,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return err
 	}
 
-	revert.Add(func() { _ = d.configDriveMountPathClear() })
+	reverter.Add(func() { _ = d.configDriveMountPathClear() })
 
 	// Mount the config drive device as readonly. This way it will be readonly irrespective of whether its
 	// exported via 9p for virtio-fs.
@@ -1835,7 +1836,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return err
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		_ = d.killQemuProcess(pid)
 	})
 
@@ -2004,7 +2005,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return err
 	}
 
-	revert.Success()
+	reverter.Success()
 
 	// Post-start startup hook
 	err = d.startupHook(monitor, "post-start")
@@ -2348,8 +2349,8 @@ func (d *qemu) deviceStart(dev device.Device, instanceRunning bool) (*deviceConf
 	l := d.logger.AddContext(logger.Ctx{"device": dev.Name(), "type": configCopy["type"]})
 	l.Debug("Starting device")
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	if instanceRunning && !dev.CanHotPlug() {
 		return nil, fmt.Errorf("Device cannot be started when instance is running")
@@ -2360,7 +2361,7 @@ func (d *qemu) deviceStart(dev device.Device, instanceRunning bool) (*deviceConf
 		return nil, err
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		runConf, _ := dev.Stop()
 		if runConf != nil {
 			_ = d.runHooks(runConf.PostHooks)
@@ -2419,7 +2420,8 @@ func (d *qemu) deviceStart(dev device.Device, instanceRunning bool) (*deviceConf
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return runConf, nil
 }
 
@@ -4409,8 +4411,8 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 	}
 
 	monHook := func(m *qmp.Monitor) error {
-		revert := revert.New()
-		defer revert.Fail()
+		reverter := revert.New()
+		defer reverter.Fail()
 
 		nodeName := d.blockNodeName(escapedDeviceName)
 
@@ -4446,7 +4448,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 				return fmt.Errorf("Failed sending file descriptor of %q for disk device %q: %w", f.Name(), driveConf.DevName, err)
 			}
 
-			revert.Add(func() {
+			reverter.Add(func() {
 				_ = m.RemoveFDFromFDSet(nodeName)
 			})
 
@@ -4465,7 +4467,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 			}
 		}
 
-		revert.Success()
+		reverter.Success()
 		return nil
 	}
 
@@ -4621,6 +4623,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 			}
 
 			reverter.Success()
+
 			return nil
 		}
 	}
@@ -4647,15 +4650,15 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 		// Detect TAP interface and use IOCTL TUNSETIFF on /dev/net/tun to get the file handle to it.
 		// This is so we can open a file handle to the tap device and pass it to the qemu process.
 		devFile := func() (*os.File, error) {
-			revert := revert.New()
-			defer revert.Fail()
+			reverter := revert.New()
+			defer reverter.Fail()
 
 			f, err := os.OpenFile("/dev/net/tun", os.O_RDWR, 0)
 			if err != nil {
 				return nil, err
 			}
 
-			revert.Add(func() { _ = f.Close() })
+			reverter.Add(func() { _ = f.Close() })
 
 			ifr, err := unix.NewIfreq(nicName)
 			if err != nil {
@@ -4672,7 +4675,8 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 				return nil, fmt.Errorf("Error getting TAP file handle for %q: %w", nicName, err)
 			}
 
-			revert.Success()
+			reverter.Success()
+
 			return f, nil
 		}
 
@@ -4769,6 +4773,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 	}
 
 	reverter.Success()
+
 	return monHook, nil
 }
 
@@ -4953,8 +4958,8 @@ func (d *qemu) addUSBDeviceConfig(usbDev deviceConfig.USBDeviceItem) (monitorHoo
 	}
 
 	monHook := func(m *qmp.Monitor) error {
-		revert := revert.New()
-		defer revert.Fail()
+		reverter := revert.New()
+		defer reverter.Fail()
 
 		f, err := os.OpenFile(usbDev.HostDevicePath, unix.O_RDWR, 0)
 		if err != nil {
@@ -4968,7 +4973,7 @@ func (d *qemu) addUSBDeviceConfig(usbDev deviceConfig.USBDeviceItem) (monitorHoo
 			return fmt.Errorf("Failed to send file descriptor: %w", err)
 		}
 
-		revert.Add(func() {
+		reverter.Add(func() {
 			_ = m.RemoveFDFromFDSet(qemuDev["id"].(string))
 		})
 
@@ -4979,7 +4984,8 @@ func (d *qemu) addUSBDeviceConfig(usbDev deviceConfig.USBDeviceItem) (monitorHoo
 			return fmt.Errorf("Failed to add device: %w", err)
 		}
 
-		revert.Success()
+		reverter.Success()
+
 		return nil
 	}
 
@@ -5549,12 +5555,12 @@ func (d *qemu) Rename(newName string, applyTemplateTrigger bool) error {
 		}
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Set the new name in the struct.
 	d.name = newName
-	revert.Add(func() { d.name = oldName })
+	reverter.Add(func() { d.name = oldName })
 
 	// Rename the backups.
 	backups, err := d.Backups()
@@ -5573,7 +5579,7 @@ func (d *qemu) Rename(newName string, applyTemplateTrigger bool) error {
 			return err
 		}
 
-		revert.Add(func() { _ = b.Rename(oldName) })
+		reverter.Add(func() { _ = b.Rename(oldName) })
 	}
 
 	// Update lease files.
@@ -5609,7 +5615,8 @@ func (d *qemu) Rename(newName string, applyTemplateTrigger bool) error {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceRenamed.Event(d, map[string]any{"old_name": oldName}))
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return nil
 }
 
@@ -5624,8 +5631,8 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 	defer op.Done(nil)
 
 	// Setup the reverter.
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Set sane defaults for unset keys.
 	if args.Project == "" {
@@ -5742,7 +5749,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 	oldExpiryDate := d.expiryDate
 
 	// Revert local changes if update fails.
-	revert.Add(func() {
+	reverter.Add(func() {
 		d.description = oldDescription
 		d.architecture = oldArchitecture
 		d.ephemeral = oldEphemeral
@@ -6065,7 +6072,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 	}
 
 	// Changes have been applied and recorded, do not revert if an error occurs from here.
-	revert.Success()
+	reverter.Success()
 
 	if isRunning {
 		// Send devIncus notifications only for user.* key changes
@@ -6717,8 +6724,8 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 		"qemu-img", "convert", "-p", "-f", "raw", "-O", "qcow2", "-c",
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Check for Direct I/O support.
 	from, err := os.OpenFile(mountInfo.DiskPath, unix.O_DIRECT|unix.O_RDONLY, 0)
@@ -6733,7 +6740,7 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 		_ = to.Close()
 	}
 
-	revert.Add(func() { _ = os.Remove(fPath) })
+	reverter.Add(func() { _ = os.Remove(fPath) })
 
 	cmd = append(cmd, mountInfo.DiskPath, fPath)
 
@@ -6770,7 +6777,7 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 		return nil, err
 	}
 
-	revert.Success()
+	reverter.Success()
 	d.logger.Info("Exported instance", ctxMap)
 	return &meta, nil
 }
@@ -7066,7 +7073,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 	// then we can treat this as shared storage and avoid needing to sync the root disk.
 	sameSharedStorage := clusterMoveSourceName != "" && pool.Driver().Info().Remote && storagePool == ""
 
-	revert := revert.New()
+	reverter := revert.New()
 
 	// Non-shared storage snapshot setup.
 	if !sameSharedStorage {
@@ -7158,7 +7165,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 			return fmt.Errorf("Failed taking temporary migration storage snapshot: %w", err)
 		}
 
-		revert.Add(func() {
+		reverter.Add(func() {
 			// Resume guest (this is needed as it will prevent merging the snapshot if paused).
 			err = monitor.Start()
 			if err != nil {
@@ -7172,7 +7179,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 			}
 		})
 
-		defer revert.Fail() // Run the revert fail before the earlier defers.
+		defer reverter.Fail() // Run the revert fail before the earlier defers.
 
 		d.logger.Debug("Setup temporary migration storage snapshot")
 	} else {
@@ -7281,7 +7288,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 			return fmt.Errorf("Failed adding NBD device: %w", err)
 		}
 
-		revert.Add(func() {
+		reverter.Add(func() {
 			time.Sleep(time.Second) // Wait for it to be released.
 			err := monitor.RemoveBlockDevice(nbdTargetDiskName)
 			if err != nil {
@@ -7300,7 +7307,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 			return fmt.Errorf("Failed transferring migration storage snapshot: %w", err)
 		}
 
-		revert.Add(func() {
+		reverter.Add(func() {
 			err = monitor.BlockJobCancel(rootSnapshotDiskName)
 			if err != nil {
 				d.logger.Error("Failed cancelling block job", logger.Ctx{"err": err})
@@ -7400,7 +7407,8 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 		d.logger.Debug("Merge migration storage snapshot on source finished")
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return nil
 }
 
@@ -7569,8 +7577,8 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		}
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	g, ctx := errgroup.WithContext(context.Background())
 
@@ -7725,7 +7733,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 						return fmt.Errorf("Failed creating instance snapshot record %q: %w", snapArgs.Name, err)
 					}
 
-					revert.Add(cleanup)
+					reverter.Add(cleanup)
 					defer snapInstOp.Done(err)
 				}
 			}
@@ -7778,7 +7786,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		// avoid deleting an existing conflicting volume.
 		isRemoteClusterMove := clusterMove && poolInfo.Remote
 		if !volTargetArgs.Refresh && !isRemoteClusterMove {
-			revert.Add(func() {
+			reverter.Add(func() {
 				snapshots, _ := d.Snapshots()
 				snapshotCount := len(snapshots)
 				for k := range snapshots {
@@ -7868,7 +7876,8 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		// not collect the error, as it will just be a disconnect error from the source.
 		_ = g.Wait()
 
-		revert.Success()
+		reverter.Success()
+
 		return nil
 	}
 }
@@ -8037,8 +8046,8 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 
 // Exec a command inside the instance.
 func (d *qemu) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, stderr *os.File) (instance.Cmd, error) {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	client, err := d.getAgentClient()
 	if err != nil {
@@ -8051,7 +8060,7 @@ func (d *qemu) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, s
 		return nil, fmt.Errorf("Failed to connect to the agent")
 	}
 
-	revert.Add(agent.Disconnect)
+	reverter.Add(agent.Disconnect)
 
 	dataDone := make(chan bool)
 	controlSendCh := make(chan api.InstanceExecControl)
@@ -8096,14 +8105,15 @@ func (d *qemu) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, s
 		cmd:              op,
 		attachedChildPid: 0, // Process is not running on the host.
 		dataDone:         args.DataDone,
-		cleanupFunc:      revert.Clone().Fail, // Pass revert function clone as clean up function.
+		cleanupFunc:      reverter.Clone().Fail, // Pass revert function clone as clean up function.
 		controlSendCh:    controlSendCh,
 		controlResCh:     controlResCh,
 	}
 
 	d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceExec.Event(d, logger.Ctx{"command": req.Command}))
 
-	revert.Success()
+	reverter.Success()
+
 	return instCmd, nil
 }
 
@@ -8541,15 +8551,15 @@ func (d *qemu) getVsockID() (uint32, error) {
 // acquireVsockID tries to occupy the given vsock Context ID.
 // If the ID is free it returns the corresponding file handle.
 func (d *qemu) acquireVsockID(vsockID uint32) (*os.File, error) {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	vsockF, err := os.OpenFile("/dev/vhost-vsock", os.O_RDWR, 0)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to open vhost socket: %w", err)
 	}
 
-	revert.Add(func() { _ = vsockF.Close() })
+	reverter.Add(func() { _ = vsockF.Close() })
 
 	// The vsock Context ID cannot be supplied as type uint32.
 	vsockIDInt := uint64(vsockID)
@@ -8565,7 +8575,8 @@ func (d *qemu) acquireVsockID(vsockID uint32) (*os.File, error) {
 		return nil, nil
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return vsockF, nil
 }
 
@@ -9454,8 +9465,8 @@ func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {
 		return nil
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// More CPUs requested.
 	if count > totalReservedCPUs {
@@ -9492,7 +9503,7 @@ func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {
 				return fmt.Errorf("Failed to add device: %w", err)
 			}
 
-			revert.Add(func() {
+			reverter.Add(func() {
 				err := monitor.RemoveDevice(devID)
 				d.logger.Warn("Failed to remove CPU device", logger.Ctx{"err": err})
 			})
@@ -9515,7 +9526,7 @@ func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {
 				return fmt.Errorf("Failed to remove CPU: %w", err)
 			}
 
-			revert.Add(func() {
+			reverter.Add(func() {
 				err := monitor.AddDevice(map[string]any{
 					"id":        devID,
 					"driver":    cpu.Type,
@@ -9532,7 +9543,7 @@ func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {
 		time.Sleep(time.Second)
 	}
 
-	revert.Success()
+	reverter.Success()
 
 	// Run post-hotplug tasks.
 	err = d.postCPUHotplug(monitor)

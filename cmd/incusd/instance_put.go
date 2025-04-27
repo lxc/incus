@@ -87,15 +87,15 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	unlock, err := instanceOperationLock(s.ShutdownCtx, projectName, name)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		unlock()
 	})
 
@@ -200,7 +200,7 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 		return response.InternalError(err)
 	}
 
-	revert.Success()
+	reverter.Success()
 	return operations.OperationResponse(op)
 }
 

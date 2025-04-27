@@ -63,8 +63,8 @@ func (d *gpuMdev) startVM() (*deviceConfig.RunConfig, error) {
 		return nil, err
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	var pciAddress string
 	for _, gpu := range gpus.Cards {
@@ -137,7 +137,7 @@ func (d *gpuMdev) startVM() (*deviceConfig.RunConfig, error) {
 				return nil, fmt.Errorf("Failed to create virtual gpu %q: %w", mdevUUID, err)
 			}
 
-			revert.Add(func() {
+			reverter.Add(func() {
 				path := fmt.Sprintf("/sys/bus/mdev/devices/%s", mdevUUID)
 
 				if util.PathExists(path) {
@@ -179,7 +179,7 @@ func (d *gpuMdev) startVM() (*deviceConfig.RunConfig, error) {
 		return nil, err
 	}
 
-	revert.Success()
+	reverter.Success()
 
 	return &runConf, nil
 }

@@ -40,8 +40,8 @@ func (d *btrfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Op
 	volPath := vol.MountPath()
 
 	// Setup revert.
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Create the volume itself.
 	_, err := subprocess.RunCommand("btrfs", "subvolume", "create", volPath)
@@ -49,7 +49,7 @@ func (d *btrfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Op
 		return err
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		_ = d.deleteSubvolume(volPath, false)
 		_ = os.Remove(volPath)
 	})
@@ -148,7 +148,7 @@ func (d *btrfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Op
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 
@@ -168,8 +168,8 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 		return nil, nil, fmt.Errorf("Cannot restore volume, already exists on target")
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Define a revert function that will be used both to revert if an error occurs inside this
 	// function but also return it for use from the calling functions if no error internally.
@@ -184,7 +184,7 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 		_ = d.DeleteVolume(vol, op)
 	}
 	// Only execute the revert function if we have had an error internally.
-	revert.Add(revertHook)
+	reverter.Add(revertHook)
 
 	// Find the compression algorithm used for backup source data.
 	_, err = srcData.Seek(0, io.SeekStart)
@@ -403,14 +403,14 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil, revertHook, nil
 }
 
 // CreateVolumeFromCopy provides same-pool volume copying functionality.
 func (d *btrfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool, allowInconsistent bool, op *operations.Operation) error {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Scan source for subvolumes (so we can apply the readonly properties on the new volume).
 	subVols, err := d.getSubvolumesMetaData(srcVol)
@@ -427,7 +427,7 @@ func (d *btrfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bo
 	}
 
 	if cleanup != nil {
-		revert.Add(cleanup)
+		reverter.Add(cleanup)
 	}
 
 	// Restore readonly property on subvolumes in reverse order (except root which should be left writable).
@@ -487,7 +487,7 @@ func (d *btrfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bo
 			}
 
 			if cleanup != nil {
-				revert.Add(cleanup)
+				reverter.Add(cleanup)
 			}
 
 			err = d.setSubvolumeReadonlyProperty(dstSnapshot, true)
@@ -495,11 +495,11 @@ func (d *btrfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bo
 				return err
 			}
 
-			revert.Add(func() { _ = d.deleteSubvolume(dstSnapshot, true) })
+			reverter.Add(func() { _ = d.deleteSubvolume(dstSnapshot, true) })
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 
@@ -611,8 +611,8 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 }
 
 func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *VolumeFiller, subvolumes []BTRFSSubVolume, op *operations.Operation) error {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	type btrfsCopyOp struct {
 		src          string
@@ -699,7 +699,7 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 			return err
 		}
 
-		revert.Add(func() { _ = deleteParentSnapshotDirIfEmpty(d.name, vol.volType, vol.name) })
+		reverter.Add(func() { _ = deleteParentSnapshotDirIfEmpty(d.name, vol.volType, vol.name) })
 
 		// Transfer the snapshots.
 		for _, snapshot := range volTargetArgs.Snapshots {
@@ -779,7 +779,7 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 
@@ -1235,8 +1235,8 @@ func (d *btrfs) RenameVolume(vol Volume, newVolName string, op *operations.Opera
 // readonlySnapshot creates a readonly snapshot.
 // Returns a revert fail function that can be used to undo this function if a subsequent step fails.
 func (d *btrfs) readonlySnapshot(vol Volume) (string, revert.Hook, error) {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	sourcePath := vol.MountPath()
 	poolPath := GetPoolMountPath(d.name)
@@ -1245,7 +1245,7 @@ func (d *btrfs) readonlySnapshot(vol Volume) (string, revert.Hook, error) {
 		return "", nil, err
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		_ = os.RemoveAll(tmpDir)
 	})
 
@@ -1262,7 +1262,7 @@ func (d *btrfs) readonlySnapshot(vol Volume) (string, revert.Hook, error) {
 	}
 
 	if cleanup != nil {
-		revert.Add(cleanup)
+		reverter.Add(cleanup)
 	}
 
 	err = d.setSubvolumeReadonlyProperty(mountPath, true)
@@ -1272,8 +1272,8 @@ func (d *btrfs) readonlySnapshot(vol Volume) (string, revert.Hook, error) {
 
 	d.logger.Debug("Created read-only backup snapshot", logger.Ctx{"sourcePath": sourcePath, "path": mountPath})
 
-	cleanup = revert.Clone().Fail
-	revert.Success()
+	cleanup = reverter.Clone().Fail
+	reverter.Success()
 	return mountPath, cleanup, nil
 }
 
@@ -1793,8 +1793,8 @@ func (d *btrfs) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) e
 		return err
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	cleanup, err := d.snapshotSubvolume(srcPath, snapPath, true)
 	if err != nil {
@@ -1802,7 +1802,7 @@ func (d *btrfs) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) e
 	}
 
 	if cleanup != nil {
-		revert.Add(cleanup)
+		reverter.Add(cleanup)
 	}
 
 	err = d.setSubvolumeReadonlyProperty(snapPath, true)
@@ -1826,7 +1826,7 @@ func (d *btrfs) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) e
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 
@@ -1943,8 +1943,8 @@ func (d *btrfs) volumeSnapshotsSorted(vol Volume, op *operations.Operation) ([]s
 
 // RestoreVolume restores a volume from a snapshot.
 func (d *btrfs) RestoreVolume(vol Volume, snapshotName string, op *operations.Operation) error {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	srcVol := NewVolume(d, d.name, vol.volType, vol.contentType, GetSnapshotVolumeName(vol.name, snapshotName), vol.config, vol.poolConfig)
 
@@ -1963,7 +1963,7 @@ func (d *btrfs) RestoreVolume(vol Volume, snapshotName string, op *operations.Op
 		return fmt.Errorf("Failed to rename %q to %q: %w", target, backupSubvolume, err)
 	}
 
-	revert.Add(func() { _ = os.Rename(backupSubvolume, target) })
+	reverter.Add(func() { _ = os.Rename(backupSubvolume, target) })
 
 	// Restore the snapshot.
 	cleanup, err := d.snapshotSubvolume(srcVol.MountPath(), target, true)
@@ -1972,7 +1972,7 @@ func (d *btrfs) RestoreVolume(vol Volume, snapshotName string, op *operations.Op
 	}
 
 	if cleanup != nil {
-		revert.Add(cleanup)
+		reverter.Add(cleanup)
 	}
 
 	// Restore readonly property on subvolumes in reverse order (except root which should be left writable).
@@ -1989,7 +1989,7 @@ func (d *btrfs) RestoreVolume(vol Volume, snapshotName string, op *operations.Op
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
 
 	// Remove the backup subvolume.
 	return d.deleteSubvolume(backupSubvolume, true)

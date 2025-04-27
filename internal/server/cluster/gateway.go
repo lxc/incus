@@ -1047,15 +1047,15 @@ func dqliteNetworkDial(ctx context.Context, name string, addr string, g *Gateway
 	deadline, _ := ctx.Deadline()
 	dialer := &net.Dialer{Timeout: time.Until(deadline)}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	conn, err := tls.DialWithDialer(dialer, "tcp", addr, config)
 	if err != nil {
 		return nil, fmt.Errorf("Failed connecting to HTTP endpoint %q: %w", addr, err)
 	}
 
-	revert.Add(func() { _ = conn.Close() })
+	reverter.Add(func() { _ = conn.Close() })
 
 	l := logger.AddContext(logger.Ctx{"name": name, "local": conn.LocalAddr(), "remote": conn.RemoteAddr()})
 	l.Debug("Dqlite connected outbound")
@@ -1102,7 +1102,7 @@ func dqliteNetworkDial(ctx context.Context, name string, addr string, g *Gateway
 		return nil, fmt.Errorf("Missing or unexpected Upgrade header in response")
 	}
 
-	revert.Success()
+	reverter.Success()
 	return conn, nil
 }
 

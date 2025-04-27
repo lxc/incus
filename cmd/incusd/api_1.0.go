@@ -651,10 +651,10 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 		}
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		for key := range nodeValues {
 			val, ok := oldNodeConfig[key]
 			if !ok {
@@ -714,7 +714,7 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 		}
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		for key := range req.Config {
 			val, ok := oldClusterConfig[key]
 			if !ok {
@@ -777,7 +777,7 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 		return response.SmartError(err)
 	}
 
-	revert.Success()
+	reverter.Success()
 
 	s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.ConfigUpdated.Event(request.CreateRequestor(r), nil))
 

@@ -115,8 +115,8 @@ func (d *cephfs) FillConfig() error {
 // Create is called during pool creation and is effectively using an empty driver struct.
 // WARNING: The Create() function cannot rely on any of the struct attributes being set.
 func (d *cephfs) Create() error {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	err := d.FillConfig()
 	if err != nil {
@@ -191,7 +191,7 @@ func (d *cephfs) Create() error {
 					return fmt.Errorf("Failed to create ceph OSD pool %q: %w", pool, err)
 				}
 
-				revert.Add(func() {
+				reverter.Add(func() {
 					// Delete the OSD pool.
 					_, _ = subprocess.RunCommand("ceph",
 						"--name", fmt.Sprintf("client.%s", d.config["cephfs.user.name"]),
@@ -221,7 +221,7 @@ func (d *cephfs) Create() error {
 			return fmt.Errorf("Failed to create CephFS %q: %w", fsName, err)
 		}
 
-		revert.Add(func() {
+		reverter.Add(func() {
 			// Set the FS to fail so that we can remove it.
 			_, _ = subprocess.RunCommand("ceph",
 				"--name", fmt.Sprintf("client.%s", d.config["cephfs.user.name"]),
@@ -310,7 +310,7 @@ func (d *cephfs) Create() error {
 		return fmt.Errorf("Only empty CephFS paths can be used as a storage pool")
 	}
 
-	revert.Success()
+	reverter.Success()
 
 	return nil
 }
