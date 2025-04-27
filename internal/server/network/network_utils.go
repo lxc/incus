@@ -1334,14 +1334,14 @@ func ParseIPCIDRToNet(ipAddressCIDR string) (*net.IPNet, error) {
 
 // IPToNet converts an IP to a single host IPNet.
 func IPToNet(ip net.IP) net.IPNet {
-	len := 32
+	bits := 32
 	if ip.To4() == nil {
-		len = 128
+		bits = 128
 	}
 
 	return net.IPNet{
 		IP:   ip,
-		Mask: net.CIDRMask(len, len),
+		Mask: net.CIDRMask(bits, bits),
 	}
 }
 
