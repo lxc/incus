@@ -523,7 +523,7 @@ func (f *Field) InsertColumn(mapping *Mapping, primaryTable string, defs map[*as
 	return column, value, nil
 }
 
-func (f Field) JoinConfig() string {
+func (f *Field) JoinConfig() string {
 	join := f.Config.Get("join")
 	if join == "" {
 		join = f.Config.Get("leftjoin")
@@ -533,7 +533,7 @@ func (f Field) JoinConfig() string {
 }
 
 // SQLConfig returns the table and column specified by the 'sql' config key, if present.
-func (f Field) SQLConfig() (string, string, error) {
+func (f *Field) SQLConfig() (string, string, error) {
 	where := f.Config.Get("sql")
 
 	if where == "" {
@@ -549,7 +549,7 @@ func (f Field) SQLConfig() (string, string, error) {
 }
 
 // ScalarTableColumn gets the table and column from the join configuration.
-func (f Field) ScalarTableColumn() (string, string, error) {
+func (f *Field) ScalarTableColumn() (string, string, error) {
 	join := f.JoinConfig()
 
 	if join == "" {
