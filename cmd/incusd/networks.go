@@ -1414,12 +1414,12 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 
 	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
 
-	response := doNetworkUpdate(n, req, targetNode, clientType, r.Method, s.ServerClustered)
+	resp = doNetworkUpdate(n, req, targetNode, clientType, r.Method, s.ServerClustered)
 
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(projectName, lifecycle.NetworkUpdated.Event(n, requestor, nil))
 
-	return response
+	return resp
 }
 
 // swagger:operation PATCH /1.0/networks/{name} networks network_patch
