@@ -292,7 +292,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 		}
 
 		// Make VM disconnections (shutdown/reboot) match containers.
-		if cmdErr == drivers.ErrExecDisconnected {
+		if errors.Is(cmdErr, drivers.ErrExecDisconnected) {
 			cmdResult = 129
 			cmdErr = nil
 		}

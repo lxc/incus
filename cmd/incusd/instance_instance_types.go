@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -172,7 +173,7 @@ func instanceRefreshTypes(ctx context.Context, s *state.State) error {
 	sources := map[string]string{}
 	err := downloadParse(".yaml", &sources)
 	if err != nil {
-		if err != ctx.Err() {
+		if !errors.Is(err, ctx.Err()) {
 			logger.Warnf("Failed to update instance types: %v", err)
 		}
 

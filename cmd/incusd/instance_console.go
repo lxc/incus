@@ -692,7 +692,7 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 				return response.SmartError(err)
 			}
 
-			if errno == unix.ENODATA {
+			if errors.Is(errno, unix.ENODATA) {
 				return response.FileResponse(r, nil, nil)
 			}
 
@@ -852,7 +852,7 @@ func instanceConsoleLogDelete(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(err)
 		}
 
-		if errno == unix.ENODATA {
+		if errors.Is(errno, unix.ENODATA) {
 			return response.SmartError(nil)
 		}
 

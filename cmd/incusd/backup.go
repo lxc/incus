@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -58,7 +59,7 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 		return tx.CreateInstanceBackup(ctx, args)
 	})
 	if err != nil {
-		if err == db.ErrAlreadyDefined {
+		if errors.Is(err, db.ErrAlreadyDefined) {
 			return fmt.Errorf("Backup %q already exists", args.Name)
 		}
 
@@ -412,7 +413,7 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 		return tx.CreateStoragePoolVolumeBackup(ctx, args)
 	})
 	if err != nil {
-		if err == db.ErrAlreadyDefined {
+		if errors.Is(err, db.ErrAlreadyDefined) {
 			return fmt.Errorf("Backup %q already exists", args.Name)
 		}
 
@@ -659,7 +660,7 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 		return tx.CreateStoragePoolBucketBackup(ctx, args)
 	})
 	if err != nil {
-		if err == db.ErrAlreadyDefined {
+		if errors.Is(err, db.ErrAlreadyDefined) {
 			return fmt.Errorf("Backup %q already exists", args.Name)
 		}
 

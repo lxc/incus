@@ -474,7 +474,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 			return tx.CreatePendingNetwork(ctx, targetNode, projectName, req.Name, req.Description, netType.DBType(), req.Config)
 		})
 		if err != nil {
-			if err == db.ErrAlreadyDefined {
+			if errors.Is(err, db.ErrAlreadyDefined) {
 				return response.Conflict(fmt.Errorf("Network %q is already defined on member %q", req.Name, targetNode))
 			}
 

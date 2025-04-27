@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -393,7 +394,7 @@ func storagePoolsPost(d *Daemon, r *http.Request) response.Response {
 			return tx.CreatePendingStoragePool(ctx, targetNode, req.Name, req.Driver, req.Config)
 		})
 		if err != nil {
-			if err == db.ErrAlreadyDefined {
+			if errors.Is(err, db.ErrAlreadyDefined) {
 				return response.BadRequest(fmt.Errorf("The storage pool already defined on member %q", targetNode))
 			}
 
