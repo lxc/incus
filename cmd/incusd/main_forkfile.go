@@ -129,7 +129,7 @@ func (c *cmdForkfile) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdForkfile) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdForkfile) Run(_ *cobra.Command, args []string) error {
 	var mu sync.RWMutex
 	var connections uint64
 	var transactions uint64

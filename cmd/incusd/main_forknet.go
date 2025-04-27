@@ -277,7 +277,7 @@ func (c *cmdForknet) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdForknet) RunInfo(cmd *cobra.Command, args []string) error {
+func (c *cmdForknet) RunInfo(_ *cobra.Command, _ []string) error {
 	hostInterfaces, _ := net.Interfaces()
 	networks, err := netutils.NetnsGetifaddrs(-1, hostInterfaces)
 	if err != nil {
@@ -295,7 +295,7 @@ func (c *cmdForknet) RunInfo(cmd *cobra.Command, args []string) error {
 }
 
 // RunDHCP runs a one time DHCPv4 client and applies address, route and DNS configuration.
-func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
+func (c *cmdForknet) RunDHCP(_ *cobra.Command, args []string) error {
 	logger := logrus.New()
 	logger.Level = logrus.DebugLevel
 
@@ -462,7 +462,7 @@ func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
 	}
 }
 
-func (c *cmdForknet) RunDetach(cmd *cobra.Command, args []string) error {
+func (c *cmdForknet) RunDetach(_ *cobra.Command, args []string) error {
 	daemonPID := args[1]
 	ifName := args[2]
 	hostName := args[3]

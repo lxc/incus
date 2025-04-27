@@ -28,7 +28,7 @@ type cmdGlobal struct {
 	flagLogVerbose bool
 }
 
-func (c *cmdGlobal) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdGlobal) Run(_ *cobra.Command, _ []string) error {
 	// Configure dqlite to *not* disable internal SQLite locking, since we
 	// use SQLite both through dqlite and through go-dqlite, potentially
 	// from different threads at the same time. We need to call this

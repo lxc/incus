@@ -40,7 +40,7 @@ func (c *cmdShutdown) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdShutdown) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdShutdown) Run(_ *cobra.Command, _ []string) error {
 	connArgs := &incus.ConnectionArgs{
 		SkipGetServer: true,
 	}

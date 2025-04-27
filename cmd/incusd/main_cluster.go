@@ -143,7 +143,7 @@ func (c *cmdClusterEdit) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdClusterEdit) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdClusterEdit) Run(_ *cobra.Command, _ []string) error {
 	// Make sure that the daemon is not running.
 	_, err := incus.ConnectIncusUnix("", nil)
 	if err == nil {
@@ -311,7 +311,7 @@ func (c *cmdClusterShow) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdClusterShow) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdClusterShow) Run(_ *cobra.Command, _ []string) error {
 	database, err := db.OpenNode(filepath.Join(sys.DefaultOS().VarDir, "database"), nil)
 	if err != nil {
 		return err
@@ -375,7 +375,7 @@ func (c *cmdClusterListDatabase) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdClusterListDatabase) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdClusterListDatabase) Run(_ *cobra.Command, _ []string) error {
 	defaultOS := sys.DefaultOS()
 
 	dbconn, err := db.OpenNode(filepath.Join(defaultOS.VarDir, "database"), nil)
@@ -416,7 +416,7 @@ func (c *cmdClusterRecoverFromQuorumLoss) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdClusterRecoverFromQuorumLoss) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdClusterRecoverFromQuorumLoss) Run(_ *cobra.Command, _ []string) error {
 	// Make sure that the daemon is not running.
 	_, err := incus.ConnectIncusUnix("", nil)
 	if err == nil {

@@ -357,6 +357,6 @@ func (c *cmdForkexec) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdForkexec) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdForkexec) Run(_ *cobra.Command, _ []string) error {
 	return fmt.Errorf("This command should have been intercepted in cgo")
 }
