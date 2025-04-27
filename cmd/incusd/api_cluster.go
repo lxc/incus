@@ -538,8 +538,8 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 			return fmt.Errorf("Failed to connect to local server: %w", err)
 		}
 
-		revert := revert.New()
-		defer revert.Fail()
+		reverter := revert.New()
+		defer reverter.Fail()
 
 		// Update server name.
 		oldServerName := d.serverName
@@ -547,7 +547,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		d.serverName = req.ServerName
 		d.serverClustered = true
 		d.globalConfigMu.Unlock()
-		revert.Add(func() {
+		reverter.Add(func() {
 			d.globalConfigMu.Lock()
 			d.serverName = oldServerName
 			d.serverClustered = false
@@ -716,7 +716,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 
 		// Start clustering tasks.
 		d.startClusterTasks()
-		revert.Add(func() { d.stopClusterTasks() })
+		reverter.Add(func() { d.stopClusterTasks() })
 
 		// Load the configuration.
 		var nodeConfig *node.Config
@@ -797,7 +797,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 
 		s.Events.SendLifecycle(request.ProjectParam(r), lifecycle.ClusterMemberAdded.Event(req.ServerName, op.Requestor(), nil))
 
-		revert.Success()
+		reverter.Success()
 		return nil
 	}
 

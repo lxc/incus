@@ -822,8 +822,8 @@ func doCustomVolumeRefresh(s *state.State, r *http.Request, requestProjectName s
 	}
 
 	run := func(op *operations.Operation) error {
-		revert := revert.New()
-		defer revert.Fail()
+		reverter := revert.New()
+		defer reverter.Fail()
 
 		if req.Source.Name == "" {
 			return fmt.Errorf("No source volume name supplied")
@@ -834,7 +834,7 @@ func doCustomVolumeRefresh(s *state.State, r *http.Request, requestProjectName s
 			return err
 		}
 
-		revert.Success()
+		reverter.Success()
 		return nil
 	}
 
@@ -1559,8 +1559,8 @@ func storagePoolVolumeTypePostRename(s *state.State, r *http.Request, poolName s
 		return response.SmartError(err)
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Update devices using the volume in instances and profiles.
 	err = storagePoolVolumeUpdateUsers(r.Context(), s, projectName, pool.Name(), vol, pool.Name(), &newVol)
@@ -1577,7 +1577,7 @@ func storagePoolVolumeTypePostRename(s *state.State, r *http.Request, poolName s
 		return response.SmartError(err)
 	}
 
-	revert.Success()
+	reverter.Success()
 
 	u := api.NewURL().Path(version.APIVersion, "storage-pools", pool.Name(), "volumes", db.StoragePoolVolumeTypeNameCustom, req.Name).Project(projectName)
 
@@ -1600,8 +1600,8 @@ func storagePoolVolumeTypePostMove(s *state.State, r *http.Request, poolName str
 	}
 
 	run := func(op *operations.Operation) error {
-		revert := revert.New()
-		defer revert.Fail()
+		reverter := revert.New()
+		defer reverter.Fail()
 
 		// Update devices using the volume in instances and profiles.
 		err = storagePoolVolumeUpdateUsers(context.TODO(), s, requestProjectName, pool.Name(), vol, newPool.Name(), &newVol)
@@ -1609,7 +1609,7 @@ func storagePoolVolumeTypePostMove(s *state.State, r *http.Request, poolName str
 			return err
 		}
 
-		revert.Add(func() {
+		reverter.Add(func() {
 			_ = storagePoolVolumeUpdateUsers(context.TODO(), s, projectName, newPool.Name(), &newVol, pool.Name(), vol)
 		})
 
@@ -1625,7 +1625,7 @@ func storagePoolVolumeTypePostMove(s *state.State, r *http.Request, poolName str
 			return err
 		}
 
-		revert.Success()
+		reverter.Success()
 		return nil
 	}
 
@@ -2214,8 +2214,8 @@ func storagePoolVolumeDelete(d *Daemon, r *http.Request) response.Response {
 }
 
 func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProjectName string, projectName string, data io.Reader, pool string, volName string) response.Response {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	if volName == "" {
 		return response.BadRequest(fmt.Errorf("Missing volume name"))
@@ -2236,7 +2236,7 @@ func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProj
 	}
 
 	defer func() { _ = os.Remove(isoFile.Name()) }()
-	revert.Add(func() { _ = isoFile.Close() })
+	reverter.Add(func() { _ = isoFile.Close() })
 
 	// Stream uploaded ISO data into temporary file.
 	size, err := io.Copy(isoFile, data)
@@ -2245,11 +2245,11 @@ func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProj
 	}
 
 	// Copy reverter so far so we can use it inside run after this function has finished.
-	runRevert := revert.Clone()
+	runReverter := reverter.Clone()
 
 	run := func(op *operations.Operation) error {
 		defer func() { _ = isoFile.Close() }()
-		defer runRevert.Fail()
+		defer runReverter.Fail()
 
 		pool, err := storagePools.LoadByName(s, pool)
 		if err != nil {
@@ -2262,7 +2262,7 @@ func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProj
 			return fmt.Errorf("Failed creating custom volume from ISO: %w", err)
 		}
 
-		runRevert.Success()
+		runReverter.Success()
 		return nil
 	}
 
@@ -2274,13 +2274,13 @@ func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProj
 		return response.InternalError(err)
 	}
 
-	revert.Success()
+	reverter.Success()
 	return operations.OperationResponse(op)
 }
 
 func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestProjectName string, projectName string, data io.Reader, pool string, volName string) response.Response {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Create temporary file to store uploaded backup data.
 	backupFile, err := os.CreateTemp(internalUtil.VarPath("backups"), fmt.Sprintf("%s_", backup.WorkingDirPrefix))
@@ -2289,7 +2289,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 	}
 
 	defer func() { _ = os.Remove(backupFile.Name()) }()
-	revert.Add(func() { _ = backupFile.Close() })
+	reverter.Add(func() { _ = backupFile.Close() })
 
 	// Stream uploaded backup data into temporary file.
 	_, err = io.Copy(backupFile, data)
@@ -2406,11 +2406,11 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 	}
 
 	// Copy reverter so far so we can use it inside run after this function has finished.
-	runRevert := revert.Clone()
+	runReverter := reverter.Clone()
 
 	run := func(op *operations.Operation) error {
 		defer func() { _ = backupFile.Close() }()
-		defer runRevert.Fail()
+		defer runReverter.Fail()
 
 		pool, err := storagePools.LoadByName(s, bInfo.Pool)
 		if err != nil {
@@ -2428,7 +2428,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 			return fmt.Errorf("Create custom volume from backup: %w", err)
 		}
 
-		runRevert.Success()
+		runReverter.Success()
 		return nil
 	}
 
@@ -2440,6 +2440,6 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 		return response.InternalError(err)
 	}
 
-	revert.Success()
+	reverter.Success()
 	return operations.OperationResponse(op)
 }

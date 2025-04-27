@@ -572,8 +572,8 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		return response.Conflict(fmt.Errorf("Network %q already exists", req.Name))
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Populate default config.
 	if clientType != clusterRequest.ClientTypeJoiner {
@@ -593,7 +593,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(fmt.Errorf("Error inserting %q into database: %w", req.Name, err))
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		_ = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 			return tx.DeleteNetwork(ctx, projectName, req.Name)
 		})
@@ -617,7 +617,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(projectName, lifecycle.NetworkCreated.Event(n, requestor, nil))
 
-	revert.Success()
+	reverter.Success()
 	return resp
 }
 
@@ -794,8 +794,8 @@ func networksPostCluster(ctx context.Context, s *state.State, projectName string
 // Create the network on the system. The clusterNotification flag is used to indicate whether creation request
 // is coming from a cluster notification (and if so we should not delete the database record on error).
 func doNetworksCreate(ctx context.Context, s *state.State, n network.Network, clientType clusterRequest.ClientType) error {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	validateConfig := n.Config()
 
@@ -829,7 +829,7 @@ func doNetworksCreate(ctx context.Context, s *state.State, n network.Network, cl
 		return err
 	}
 
-	revert.Add(func() { _ = n.Delete(clientType) })
+	reverter.Add(func() { _ = n.Delete(clientType) })
 
 	// Only start networks when not doing a cluster pre-join phase (this ensures that networks are only started
 	// once the node has fully joined the clustered database and has consistent config with rest of the nodes).
@@ -850,7 +850,7 @@ func doNetworksCreate(ctx context.Context, s *state.State, n network.Network, cl
 
 	logger.Debug("Marked network local status as created", logger.Ctx{"project": n.Project(), "network": n.Name()})
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 

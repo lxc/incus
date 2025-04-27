@@ -457,15 +457,15 @@ func storagePoolBucketsPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(fmt.Errorf("Failed loading storage pool: %w", err))
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	err = pool.CreateBucket(bucketProjectName, req, nil)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed creating storage bucket: %w", err))
 	}
 
-	revert.Add(func() { _ = pool.DeleteBucket(bucketProjectName, req.Name, nil) })
+	reverter.Add(func() { _ = pool.DeleteBucket(bucketProjectName, req.Name, nil) })
 
 	// Create admin key for new bucket.
 	adminKeyReq := api.StorageBucketKeysPost{
@@ -495,7 +495,7 @@ func storagePoolBucketsPost(d *Daemon, r *http.Request) response.Response {
 
 	u := api.NewURL().Path(version.APIVersion, "storage-pools", pool.Name(), "buckets", req.Name)
 
-	revert.Success()
+	reverter.Success()
 	return response.SyncResponseLocation(true, adminKey, u.String())
 }
 

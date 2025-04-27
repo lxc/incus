@@ -486,8 +486,8 @@ func patchVMRenameUUIDKey(name string, d *Daemon) error {
 
 // patchThinpoolTypoFix renames any config incorrectly set config file entries due to the lvm.thinpool_name typo.
 func patchThinpoolTypoFix(name string, d *Daemon) error {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Setup a transaction.
 	tx, err := d.db.Cluster.Begin()
@@ -495,7 +495,7 @@ func patchThinpoolTypoFix(name string, d *Daemon) error {
 		return fmt.Errorf("Failed to begin transaction: %w", err)
 	}
 
-	revert.Add(func() { _ = tx.Rollback() })
+	reverter.Add(func() { _ = tx.Rollback() })
 
 	// Fetch the IDs of all existing nodes.
 	nodeIDs, err := query.SelectIntegers(context.TODO(), tx, "SELECT id FROM nodes")
@@ -546,7 +546,7 @@ INSERT INTO storage_pools_config(storage_pool_id, node_id, key, value)
 		return fmt.Errorf("Failed to commit transaction: %w", err)
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 
@@ -1259,8 +1259,8 @@ func patchRuntimeDirectory(name string, d *Daemon) error {
 
 // The lvm.vg.force_reuse config key is node-specific and need to be linked to nodes.
 func patchLvmForceReuseKey(name string, d *Daemon) error {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Setup a transaction.
 	tx, err := d.db.Cluster.Begin()
@@ -1268,7 +1268,7 @@ func patchLvmForceReuseKey(name string, d *Daemon) error {
 		return fmt.Errorf("Failed to begin transaction: %w", err)
 	}
 
-	revert.Add(func() { _ = tx.Rollback() })
+	reverter.Add(func() { _ = tx.Rollback() })
 
 	// Fetch the IDs of all existing nodes.
 	nodeIDs, err := query.SelectIntegers(context.TODO(), tx, "SELECT id FROM nodes")
@@ -1317,7 +1317,7 @@ INSERT INTO storage_pools_config(storage_pool_id, node_id, key, value)
 		return fmt.Errorf("Failed to commit transaction: %w", err)
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 

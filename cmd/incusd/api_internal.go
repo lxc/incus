@@ -845,8 +845,8 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 
 	internalImportRootDevicePopulate(instancePoolName, backupConf.Container.Devices, backupConf.Container.ExpandedDevices, profiles)
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	if backupConf.Container == nil {
 		return fmt.Errorf("No instance config in backup config")
@@ -862,7 +862,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 		return fmt.Errorf("Failed creating instance record: %w", err)
 	}
 
-	revert.Add(cleanup)
+	reverter.Add(cleanup)
 	defer instOp.Done(err)
 
 	instancePath := storagePools.InstancePath(instanceType, projectName, backupConf.Container.Name, false)
@@ -976,7 +976,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 			return fmt.Errorf("Failed creating instance snapshot record %q: %w", snap.Name, err)
 		}
 
-		revert.Add(cleanup)
+		reverter.Add(cleanup)
 		defer snapInstOp.Done(err)
 
 		// Recreate missing mountpoints and symlinks.
@@ -991,7 +991,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 
