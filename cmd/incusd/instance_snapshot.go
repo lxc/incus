@@ -667,7 +667,7 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 
 		run := func(op *operations.Operation) error {
 			ws.instance.SetOperation(op)
-			return ws.Do(op)
+			return ws.do(op)
 		}
 
 		if req.Target != nil {

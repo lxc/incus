@@ -324,7 +324,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 
 		// Create the instance DB record for main instance.
 		// Note: At this stage we do not yet know if snapshots are going to be received and so we cannot
-		// create their DB records. This will be done if needed in the migrationSink.Do() function called
+		// create their DB records. This will be done if needed in the migrationSink.do() function called
 		// as part of the operation below.
 		inst, instOp, cleanup, err = instance.CreateInternal(s, args, nil, true, false)
 		if err != nil {
@@ -389,7 +389,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		sink.instance.SetOperation(op)
 
 		// And finally run the migration.
-		err = sink.Do(instOp)
+		err = sink.do(instOp)
 		if err != nil {
 			err = fmt.Errorf("Error transferring instance data: %w", err)
 			instOp.Done(err) // Complete operation that was created earlier, to release lock.

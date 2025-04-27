@@ -81,7 +81,7 @@ func newMigrationSource(inst instance.Instance, stateful bool, instanceOnly bool
 	return &ret, nil
 }
 
-func (s *migrationSourceWs) Do(migrateOp *operations.Operation) error {
+func (s *migrationSourceWs) do(migrateOp *operations.Operation) error {
 	l := logger.AddContext(logger.Ctx{"project": s.instance.Project().Name, "instance": s.instance.Name(), "live": s.live, "clusterMoveSourceName": s.clusterMoveSourceName, "push": s.pushOperationURL != ""})
 
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*30)
@@ -212,7 +212,7 @@ func newMigrationSink(args *migrationSinkArgs) (*migrationSink, error) {
 	return &sink, nil
 }
 
-func (c *migrationSink) Do(instOp *operationlock.InstanceOperation) error {
+func (c *migrationSink) do(instOp *operationlock.InstanceOperation) error {
 	l := logger.AddContext(logger.Ctx{"project": c.instance.Project().Name, "instance": c.instance.Name(), "live": c.live, "clusterMoveSourceName": c.clusterMoveSourceName, "push": c.push})
 
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*30)
