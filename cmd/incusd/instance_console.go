@@ -70,7 +70,7 @@ type consoleWs struct {
 	protocol string
 }
 
-func (s *consoleWs) Metadata() any {
+func (s *consoleWs) metadata() any {
 	fds := jmap.Map{}
 	for fd, secret := range s.fds {
 		if fd == -1 {
@@ -83,7 +83,7 @@ func (s *consoleWs) Metadata() any {
 	return jmap.Map{"fds": fds}
 }
 
-func (s *consoleWs) Connect(_ *operations.Operation, r *http.Request, w http.ResponseWriter) error {
+func (s *consoleWs) connect(_ *operations.Operation, r *http.Request, w http.ResponseWriter) error {
 	switch s.protocol {
 	case instance.ConsoleTypeConsole:
 		return s.connectConsole(r, w)
@@ -196,7 +196,7 @@ func (s *consoleWs) connectVGA(r *http.Request, w http.ResponseWriter) error {
 	return os.ErrPermission
 }
 
-func (s *consoleWs) Do(op *operations.Operation) error {
+func (s *consoleWs) do(op *operations.Operation) error {
 	s.instance.SetOperation(op)
 
 	switch s.protocol {
@@ -389,7 +389,7 @@ func (s *consoleWs) doVGA() error {
 }
 
 // Cancel is responsible for closing websocket connections.
-func (s *consoleWs) Cancel(*operations.Operation) error {
+func (s *consoleWs) cancel(*operations.Operation) error {
 	s.connsLock.Lock()
 	conn := s.conns[-1]
 	s.connsLock.Unlock()
@@ -570,7 +570,7 @@ func instanceConsolePost(d *Daemon, r *http.Request) response.Response {
 	resources := map[string][]api.URL{}
 	resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", ws.instance.Name())}
 
-	op, err := operations.OperationCreate(s, projectName, operations.OperationClassWebsocket, operationtype.ConsoleShow, resources, ws.Metadata(), ws.Do, ws.Cancel, ws.Connect, r)
+	op, err := operations.OperationCreate(s, projectName, operations.OperationClassWebsocket, operationtype.ConsoleShow, resources, ws.metadata(), ws.do, ws.cancel, ws.connect, r)
 	if err != nil {
 		return response.InternalError(err)
 	}
