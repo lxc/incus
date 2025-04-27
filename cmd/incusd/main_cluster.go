@@ -65,8 +65,8 @@ func (c *cmdCluster) Command() *cobra.Command {
 	cmd.AddCommand(listDatabase.Command())
 
 	// Recover
-	recover := cmdClusterRecoverFromQuorumLoss{global: c.global}
-	cmd.AddCommand(recover.Command())
+	recoverFromQuorumLoss := cmdClusterRecoverFromQuorumLoss{global: c.global}
+	cmd.AddCommand(recoverFromQuorumLoss.Command())
 
 	// Remove a raft node.
 	removeRaftNode := cmdClusterRemoveRaftNode{global: c.global}
