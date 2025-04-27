@@ -6,8 +6,6 @@ import (
 
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
-
-	"github.com/lxc/incus/v6/shared/units"
 )
 
 // Action represents an action in filter.
@@ -17,49 +15,23 @@ type Action interface {
 
 // ActionPolice represents an action of 'police' type.
 type ActionPolice struct {
-	Rate  string
-	Burst string
-	Mtu   string
+	Rate  uint32 // in byte/s
+	Burst uint32 // in byte
+	Mtu   uint32 // in byte
 	Drop  bool
 }
 
 func (a *ActionPolice) toNetlink() (netlink.Action, error) {
 	action := netlink.NewPoliceAction()
 
-	action.ExceedAction = netlink.TC_POLICE_RECLASSIFY
-
-	if a.Rate != "" {
-		// TODO: just pass around as number?
-		rate, err := units.ParseBitSizeString(a.Rate)
-		if err != nil {
-			return nil, fmt.Errorf("invalid rate %q: %w", a.Rate, err)
-		}
-
-		action.Rate = uint32(rate / 8) // netlink wants the rate in bytes/s
-	}
-
-	if a.Burst != "" {
-		// TODO: just pass around as number?
-		burst, err := strconv.ParseUint(a.Burst, 10, 32)
-		if err != nil {
-			return nil, fmt.Errorf("invalid burst %q: %w", a.Burst, err)
-		}
-
-		action.Burst = uint32(burst)
-	}
-
-	if a.Mtu != "" {
-		// TODO: just pass around as number?
-		mtu, err := units.ParseByteSizeString(a.Mtu)
-		if err != nil {
-			return nil, fmt.Errorf("invalid mtu %q: %w", a.Mtu, err)
-		}
-
-		action.Mtu = uint32(mtu)
-	}
+	action.Rate = a.Rate
+	action.Burst = a.Burst
+	action.Mtu = a.Mtu
 
 	if a.Drop {
 		action.ExceedAction = netlink.TC_POLICE_SHOT
+	} else {
+		action.ExceedAction = netlink.TC_POLICE_RECLASSIFY
 	}
 
 	return action, nil
