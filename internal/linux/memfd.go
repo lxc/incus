@@ -10,8 +10,8 @@ import (
 
 // CreateMemfd creates a new memfd for the provided byte slice.
 func CreateMemfd(content []byte) (*os.File, error) {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Create the memfd.
 	fd, err := unix.MemfdCreate("memfd", unix.MFD_CLOEXEC)
@@ -19,7 +19,7 @@ func CreateMemfd(content []byte) (*os.File, error) {
 		return nil, err
 	}
 
-	revert.Add(func() { unix.Close(fd) })
+	reverter.Add(func() { unix.Close(fd) })
 
 	// Set its size.
 	err = unix.Ftruncate(fd, int64(len(content)))
@@ -42,6 +42,7 @@ func CreateMemfd(content []byte) (*os.File, error) {
 		return nil, err
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return os.NewFile(uintptr(fd), "memfd"), nil
 }
