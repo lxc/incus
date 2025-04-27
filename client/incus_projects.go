@@ -44,6 +44,26 @@ func (r *ProtocolIncus) GetProjects() ([]api.Project, error) {
 	return projects, nil
 }
 
+// GetProjectsWithFilter returns a filtered list of projects as Project structs.
+func (r *ProtocolIncus) GetProjectsWithFilter(filters []string) ([]api.Project, error) {
+	if !r.HasExtension("projects") {
+		return nil, fmt.Errorf("The server is missing the required \"projects\" API extension")
+	}
+
+	projects := []api.Project{}
+
+	v := url.Values{}
+	v.Set("recursion", "1")
+	v.Set("filter", parseFilters(filters))
+
+	_, err := r.queryStruct("GET", fmt.Sprintf("/projects?%s", v.Encode()), nil, "", &projects)
+	if err != nil {
+		return nil, err
+	}
+
+	return projects, nil
+}
+
 // GetProject returns a Project entry for the provided name.
 func (r *ProtocolIncus) GetProject(name string) (*api.Project, string, error) {
 	if !r.HasExtension("projects") {
