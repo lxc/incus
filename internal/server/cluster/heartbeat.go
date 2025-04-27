@@ -31,6 +31,19 @@ const (
 	heartbeatInitial
 )
 
+func (m *heartbeatMode) name() string {
+	switch *m {
+	case heartbeatNormal:
+		return "normal"
+	case heartbeatImmediate:
+		return "immediate"
+	case heartbeatInitial:
+		return "initial"
+	default:
+		return "unknown"
+	}
+}
+
 // APIHeartbeatMember contains specific cluster node info.
 type APIHeartbeatMember struct {
 	ID            int64            // ID field value in nodes table.
@@ -348,13 +361,7 @@ func (g *Gateway) heartbeat(ctx context.Context, mode heartbeatMode) {
 		return
 	}
 
-	modeStr := "normal"
-	switch mode {
-	case heartbeatImmediate:
-		modeStr = "immediate"
-	case heartbeatInitial:
-		modeStr = "initial"
-	}
+	modeStr := mode.name()
 
 	if mode != heartbeatNormal {
 		// Log unscheduled heartbeats with a higher level than normal heartbeats.
