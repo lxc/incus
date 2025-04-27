@@ -276,7 +276,7 @@ func (c *Instance) Writable() InstancePut {
 // IsActive checks whether the instance state indicates the instance is active.
 //
 // API extension: instances.
-func (c Instance) IsActive() bool {
+func (c *Instance) IsActive() bool {
 	switch c.StatusCode {
 	case Stopped:
 		return false
