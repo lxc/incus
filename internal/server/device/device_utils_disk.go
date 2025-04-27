@@ -227,10 +227,10 @@ again:
 		"unmap",
 		unmapImageName)
 	if err != nil {
-		runError, ok := err.(subprocess.RunError)
-		if ok {
-			exitError, ok := runError.Unwrap().(*exec.ExitError)
-			if ok {
+		var runError subprocess.RunError
+		if errors.As(err, &runError) {
+			var exitError *exec.ExitError
+			if errors.As(runError.Unwrap(), &exitError) {
 				if exitError.ExitCode() == 22 {
 					// EINVAL (already unmapped)
 					return nil

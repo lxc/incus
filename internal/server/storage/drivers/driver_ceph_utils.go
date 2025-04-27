@@ -204,10 +204,10 @@ again:
 		"unmap",
 		rbdVol)
 	if err != nil {
-		runError, ok := err.(subprocess.RunError)
-		if ok {
-			exitError, ok := runError.Unwrap().(*exec.ExitError)
-			if ok {
+		var runError subprocess.RunError
+		if errors.As(err, &runError) {
+			var exitError *exec.ExitError
+			if errors.As(runError.Unwrap(), &exitError) {
 				if exitError.ExitCode() == 22 {
 					// EINVAL (already unmapped).
 					if ourDeactivate {
@@ -256,10 +256,10 @@ again:
 		"unmap",
 		d.getRBDVolumeName(vol, snapshotName, false))
 	if err != nil {
-		runError, ok := err.(subprocess.RunError)
-		if ok {
-			exitError, ok := runError.Unwrap().(*exec.ExitError)
-			if ok {
+		var runError subprocess.RunError
+		if errors.As(err, &runError) {
+			var exitError *exec.ExitError
+			if errors.As(runError.Unwrap(), &exitError) {
 				if exitError.ExitCode() == 22 {
 					// EINVAL (already unmapped).
 					return nil
@@ -308,10 +308,10 @@ func (d *ceph) rbdProtectVolumeSnapshot(vol Volume, snapshotName string) error {
 		"--snap", snapshotName,
 		d.getRBDVolumeName(vol, "", false))
 	if err != nil {
-		runError, ok := err.(subprocess.RunError)
-		if ok {
-			exitError, ok := runError.Unwrap().(*exec.ExitError)
-			if ok {
+		var runError subprocess.RunError
+		if errors.As(err, &runError) {
+			var exitError *exec.ExitError
+			if errors.As(runError.Unwrap(), &exitError) {
 				if exitError.ExitCode() == 16 {
 					// EBUSY (snapshot already protected).
 					return nil
@@ -339,10 +339,10 @@ func (d *ceph) rbdUnprotectVolumeSnapshot(vol Volume, snapshotName string) error
 		"--snap", snapshotName,
 		d.getRBDVolumeName(vol, "", false))
 	if err != nil {
-		runError, ok := err.(subprocess.RunError)
-		if ok {
-			exitError, ok := runError.Unwrap().(*exec.ExitError)
-			if ok {
+		var runError subprocess.RunError
+		if errors.As(err, &runError) {
+			var exitError *exec.ExitError
+			if errors.As(runError.Unwrap(), &exitError) {
 				if exitError.ExitCode() == 22 {
 					// EBUSY (snapshot already unprotected).
 					return nil

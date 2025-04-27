@@ -3334,8 +3334,8 @@ func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.I
 
 	err = b.driver.RestoreVolume(vol, snapshotName, op)
 	if err != nil {
-		snapErr, ok := err.(drivers.ErrDeleteSnapshots)
-		if ok {
+		var snapErr drivers.ErrDeleteSnapshots
+		if errors.As(err, &snapErr) {
 			// We need to delete some snapshots and try again.
 			snaps, err := inst.Snapshots()
 			if err != nil {
@@ -6224,8 +6224,8 @@ func (b *backend) RestoreCustomVolume(projectName, volName string, snapshotName 
 
 	err = b.driver.RestoreVolume(vol, snapshotName, op)
 	if err != nil {
-		snapErr, ok := err.(drivers.ErrDeleteSnapshots)
-		if ok {
+		var snapErr drivers.ErrDeleteSnapshots
+		if errors.As(err, &snapErr) {
 			// We need to delete some snapshots and try again.
 			for _, snapName := range snapErr.Snapshots {
 				err := b.DeleteCustomVolumeSnapshot(projectName, fmt.Sprintf("%s/%s", volName, snapName), op)

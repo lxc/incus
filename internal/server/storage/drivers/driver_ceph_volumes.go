@@ -774,10 +774,10 @@ func (d *ceph) hasVolume(rbdVolumeName string) (bool, error) {
 		rbdVolumeName,
 	)
 	if err != nil {
-		runErr, ok := err.(subprocess.RunError)
-		if ok {
-			exitError, ok := runErr.Unwrap().(*exec.ExitError)
-			if ok {
+		var runErr subprocess.RunError
+		if errors.As(err, &runErr) {
+			var exitError *exec.ExitError
+			if errors.As(runErr.Unwrap(), &exitError) {
 				if exitError.ExitCode() == 2 {
 					return false, nil
 				}
