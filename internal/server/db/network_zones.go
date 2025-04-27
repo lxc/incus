@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -131,7 +132,7 @@ func (c *ClusterTx) GetNetworkZone(ctx context.Context, name string) (int64, str
 
 	err := c.tx.QueryRowContext(ctx, q, name).Scan(&id, &projectName, &zone.Description)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return -1, "", nil, api.StatusErrorf(http.StatusNotFound, "Network zone not found")
 		}
 
@@ -140,7 +141,7 @@ func (c *ClusterTx) GetNetworkZone(ctx context.Context, name string) (int64, str
 
 	err = networkZoneConfig(ctx, c, id, &zone)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return -1, "", nil, api.StatusErrorf(http.StatusNotFound, "Network zone not found")
 		}
 
@@ -167,7 +168,7 @@ func (c *ClusterTx) GetNetworkZoneByProject(ctx context.Context, projectName str
 
 	err := c.tx.QueryRowContext(ctx, q, projectName, name).Scan(&id, &zone.Description)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return -1, nil, api.StatusErrorf(http.StatusNotFound, "Network zone not found")
 		}
 
@@ -176,7 +177,7 @@ func (c *ClusterTx) GetNetworkZoneByProject(ctx context.Context, projectName str
 
 	err = networkZoneConfig(ctx, c, id, &zone)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return -1, nil, api.StatusErrorf(http.StatusNotFound, "Network zone not found")
 		}
 
@@ -342,7 +343,7 @@ func (c *ClusterTx) GetNetworkZoneRecord(ctx context.Context, zone int64, name s
 
 	err := c.tx.QueryRowContext(ctx, q, zone, name).Scan(&id, &record.Description, &entries)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return -1, nil, api.StatusErrorf(http.StatusNotFound, "Network zone record not found")
 		}
 
@@ -351,7 +352,7 @@ func (c *ClusterTx) GetNetworkZoneRecord(ctx context.Context, zone int64, name s
 
 	err = networkZoneRecordConfig(ctx, c, id, &record)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return -1, nil, api.StatusErrorf(http.StatusNotFound, "Network zone record not found")
 		}
 

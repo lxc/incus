@@ -2,6 +2,7 @@ package rsync
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -107,13 +108,11 @@ func LocalCopy(source string, dest string, bwlimit string, xattrs bool, rsyncArg
 
 	msg, err := rsync(args...)
 	if err != nil {
-		runError, ok := err.(subprocess.RunError)
+		var exitError *exec.ExitError
+		ok := errors.As(err, &exitError)
 		if ok {
-			exitError, ok := runError.Unwrap().(*exec.ExitError)
-			if ok {
-				if exitError.ExitCode() == 24 {
-					return msg, nil
-				}
+			if exitError.ExitCode() == 24 {
+				return msg, nil
 			}
 		}
 

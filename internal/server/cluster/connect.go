@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -135,14 +136,14 @@ func ConnectIfVolumeIsRemote(s *state.State, poolName string, projectName string
 
 		return nil
 	})
-	if err != nil && err != db.ErrNoClusterMember {
+	if err != nil && !errors.Is(err, db.ErrNoClusterMember) {
 		return nil, err
 	}
 
 	// If volume uses a remote storage driver and so has no explicit cluster member, then we need to check
 	// whether it is exclusively attached to remote instance, and if so then we need to forward the request to
 	// the node whereit is currently used. This avoids conflicting with another member when using it locally.
-	if err == db.ErrNoClusterMember {
+	if errors.Is(err, db.ErrNoClusterMember) {
 		// GetStoragePoolVolume returns a volume with an empty Location field for remote drivers.
 		var dbVolume *db.StorageVolume
 		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -164,7 +165,7 @@ func ConnectIfVolumeIsRemote(s *state.State, poolName string, projectName string
 			remoteInstance = &dbInst
 			return nil
 		})
-		if err != nil && err != db.ErrInstanceListStop {
+		if err != nil && !errors.Is(err, db.ErrInstanceListStop) {
 			return nil, err
 		}
 

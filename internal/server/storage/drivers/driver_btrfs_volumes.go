@@ -1019,7 +1019,7 @@ func (d *btrfs) GetVolumeUsage(vol Volume) (int64, error) {
 	// Attempt to get the qgroup information.
 	_, usage, err := d.getQGroup(vol.MountPath())
 	if err != nil {
-		if err == errBtrfsNoQuota {
+		if errors.Is(err, errBtrfsNoQuota) {
 			return -1, ErrNotSupported
 		}
 
@@ -1080,7 +1080,7 @@ func (d *btrfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, 
 	qgroup, _, err := d.getQGroup(volPath)
 	if err != nil && !d.state.OS.RunningInUserNS {
 		// If quotas are disabled, attempt to enable them.
-		if err == errBtrfsNoQuota {
+		if errors.Is(err, errBtrfsNoQuota) {
 			if sizeBytes <= 0 {
 				// Nothing to do if the quota is being removed and we don't currently have quota.
 				return nil
@@ -1098,7 +1098,7 @@ func (d *btrfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, 
 		}
 
 		// If there's no qgroup, attempt to create one.
-		if err == errBtrfsNoQGroup {
+		if errors.Is(err, errBtrfsNoQGroup) {
 			// Find the volume ID.
 			var output string
 			output, err = subprocess.RunCommand("btrfs", "subvolume", "show", volPath)

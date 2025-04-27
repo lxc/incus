@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -1194,9 +1195,11 @@ func (f *FGA) GetInstanceAccess(ctx context.Context, projectName string, instanc
 			UserFilters: userFilters,
 		}).Execute()
 		if err != nil {
-			fgaAPIErr, ok := err.(openfga.FgaApiValidationError)
+			var fgaAPIErr openfga.FgaApiValidationError
+			ok := errors.As(err, &fgaAPIErr)
 			if !ok || fgaAPIErr.ResponseCode() != openfga.ERRORCODE_RELATION_NOT_FOUND {
-				fgaNotFoundErr, ok := err.(openfga.FgaApiNotFoundError)
+				var fgaNotFoundErr openfga.FgaApiNotFoundError
+				ok := errors.As(err, &fgaNotFoundErr)
 				if ok && fgaNotFoundErr.ResponseCode() == openfga.NOTFOUNDERRORCODE_UNDEFINED_ENDPOINT {
 					return nil, fmt.Errorf("OpenFGA server doesn't support listing users")
 				}
@@ -1248,9 +1251,11 @@ func (f *FGA) GetProjectAccess(ctx context.Context, projectName string) (*api.Ac
 			UserFilters: userFilters,
 		}).Execute()
 		if err != nil {
-			fgaAPIErr, ok := err.(openfga.FgaApiValidationError)
+			var fgaAPIErr openfga.FgaApiValidationError
+			ok := errors.As(err, &fgaAPIErr)
 			if !ok || fgaAPIErr.ResponseCode() != openfga.ERRORCODE_RELATION_NOT_FOUND {
-				fgaNotFoundErr, ok := err.(openfga.FgaApiNotFoundError)
+				var fgaNotFoundErr openfga.FgaApiNotFoundError
+				ok := errors.As(err, &fgaNotFoundErr)
 				if ok && fgaNotFoundErr.ResponseCode() == openfga.NOTFOUNDERRORCODE_UNDEFINED_ENDPOINT {
 					return nil, fmt.Errorf("OpenFGA server doesn't support listing users")
 				}

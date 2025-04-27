@@ -90,7 +90,7 @@ func Kill(name string, reload bool) error {
 
 	if reload {
 		err = p.Reload()
-		if err != nil && err != subprocess.ErrNotRunning {
+		if err != nil && !errors.Is(err, subprocess.ErrNotRunning) {
 			return fmt.Errorf("Could not reload dnsmasq: %s", err)
 		}
 
@@ -98,7 +98,7 @@ func Kill(name string, reload bool) error {
 	}
 
 	err = p.Stop()
-	if err != nil && err != subprocess.ErrNotRunning {
+	if err != nil && !errors.Is(err, subprocess.ErrNotRunning) {
 		return fmt.Errorf("Unable to kill dnsmasq: %s", err)
 	}
 

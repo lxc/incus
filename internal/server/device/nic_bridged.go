@@ -1376,7 +1376,7 @@ func (d *nicBridged) setFilters() (err error) {
 				config["ipv4.address"] = IPv4.String()
 
 				// If DHCP not supported, skip error and set the address to "none", and will result in total protocol filter.
-				if err == dhcpalloc.ErrDHCPNotSupported {
+				if errors.Is(err, dhcpalloc.ErrDHCPNotSupported) {
 					config["ipv4.address"] = "none"
 				} else if err != nil {
 					return err
@@ -1388,7 +1388,7 @@ func (d *nicBridged) setFilters() (err error) {
 				config["ipv6.address"] = IPv6.String()
 
 				// If DHCP not supported, skip error and set the address to "none", and will result in total protocol filter.
-				if err == dhcpalloc.ErrDHCPNotSupported {
+				if errors.Is(err, dhcpalloc.ErrDHCPNotSupported) {
 					config["ipv6.address"] = "none"
 				} else if err != nil {
 					return err
@@ -1397,7 +1397,7 @@ func (d *nicBridged) setFilters() (err error) {
 
 			return nil
 		})
-		if err != nil && err != dhcpalloc.ErrDHCPNotSupported {
+		if err != nil && !errors.Is(err, dhcpalloc.ErrDHCPNotSupported) {
 			return err
 		}
 	}

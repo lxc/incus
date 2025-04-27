@@ -5,6 +5,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -56,7 +57,7 @@ func (c *ClusterTx) getInstanceBackupID(ctx context.Context, name string) (int, 
 	arg2 := []any{&id}
 
 	err := dbQueryRowScan(ctx, c, q, arg1, arg2)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return -1, api.StatusErrorf(http.StatusNotFound, "Instance backup not found")
 	}
 
@@ -87,7 +88,7 @@ SELECT instances_backups.id, instances_backups.instance_id,
 
 	err := dbQueryRowScan(ctx, c, q, arg1, arg2)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return args, api.StatusErrorf(http.StatusNotFound, "Instance backup not found")
 		}
 
@@ -129,7 +130,7 @@ SELECT instances_backups.name, instances_backups.instance_id,
 
 	err := dbQueryRowScan(ctx, c, q, arg1, arg2)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return args, api.StatusErrorf(http.StatusNotFound, "Instance backup not found")
 		}
 
@@ -446,7 +447,7 @@ func (c *ClusterTx) getStoragePoolVolumeBackupID(ctx context.Context, name strin
 	arg2 := []any{&id}
 
 	err := dbQueryRowScan(ctx, c, q, arg1, arg2)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return -1, api.StatusErrorf(http.StatusNotFound, "Storage volume backup not found")
 	}
 
@@ -490,7 +491,7 @@ WHERE projects.name=? AND backups.name=?
 
 	err := dbQueryRowScan(ctx, c, q, arg1, outfmt)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return args, api.StatusErrorf(http.StatusNotFound, "Storage volume backup not found")
 		}
 
@@ -522,7 +523,7 @@ WHERE backups.id=?
 
 	err := dbQueryRowScan(ctx, c, q, arg1, outfmt)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return args, api.StatusErrorf(http.StatusNotFound, "Storage volume backup not found")
 		}
 
@@ -618,7 +619,7 @@ func (c *ClusterTx) getStoragePoolBucketBackupID(ctx context.Context, name strin
 	arg2 := []any{&id}
 
 	err := dbQueryRowScan(ctx, c, q, arg1, arg2)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return -1, api.StatusErrorf(http.StatusNotFound, "Storage volume backup not found")
 	}
 
@@ -660,7 +661,7 @@ WHERE projects.name=? AND backups.name=?
 
 	err := dbQueryRowScan(ctx, c, q, arg1, outfmt)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return args, api.StatusErrorf(http.StatusNotFound, "Storage bucket backup not found")
 		}
 

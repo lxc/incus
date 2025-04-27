@@ -2,6 +2,7 @@ package device
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/netip"
@@ -1077,8 +1078,8 @@ func isIPAvailable(ctx context.Context, address net.IP, parentInterface string) 
 	if address.To4() != nil {
 		err := pingOverIfaceByName(deadline, address, parentInterface)
 		if err != nil {
-			ne, ok := err.(net.Error)
-			if ok && ne.Timeout() {
+			var ne net.Error
+			if errors.As(err, &ne) && ne.Timeout() {
 				return false, nil
 			}
 
@@ -1124,8 +1125,8 @@ func isIPAvailable(ctx context.Context, address net.IP, parentInterface string) 
 	_ = conn.SetDeadline(deadline)
 	msg, _, _, err := conn.ReadFrom()
 	if err != nil {
-		cause, ok := err.(net.Error)
-		if ok && cause.Timeout() {
+		var cause net.Error
+		if errors.As(err, &cause) && cause.Timeout() {
 			return false, nil
 		}
 

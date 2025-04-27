@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -119,7 +120,7 @@ func storagePoolVolumeTypeStateGet(d *Daemon, r *http.Request) response.Response
 	if volumeType == db.StoragePoolVolumeTypeCustom {
 		// Custom volumes.
 		usage, err = pool.GetCustomVolumeUsage(projectName, volumeName)
-		if err != nil && err != storageDrivers.ErrNotSupported {
+		if err != nil && !errors.Is(err, storageDrivers.ErrNotSupported) {
 			return response.SmartError(err)
 		}
 	} else {
@@ -139,7 +140,7 @@ func storagePoolVolumeTypeStateGet(d *Daemon, r *http.Request) response.Response
 		}
 
 		usage, err = pool.GetInstanceUsage(inst)
-		if err != nil && err != storageDrivers.ErrNotSupported {
+		if err != nil && !errors.Is(err, storageDrivers.ErrNotSupported) {
 			return response.SmartError(err)
 		}
 	}

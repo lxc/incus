@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -32,7 +33,7 @@ func Transaction(ctx context.Context, db *sql.DB, f func(context.Context, *sql.T
 	}
 
 	err = tx.Commit()
-	if err == sql.ErrTxDone {
+	if errors.Is(err, sql.ErrTxDone) {
 		err = nil // Ignore duplicate commits/rollbacks
 	}
 

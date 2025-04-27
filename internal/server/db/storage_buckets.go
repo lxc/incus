@@ -620,7 +620,7 @@ WHERE storage_buckets.id = ?
 
 	err := c.tx.QueryRowContext(ctx, stmt, bucketID).Scan(&response.Project, &response.PoolName, &response.ID, &response.PoolID, &response.Name, &response.Description, &response.Location)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return StorageBucket{}, api.StatusErrorf(http.StatusNotFound, "Storage pool bucket not found")
 		}
 

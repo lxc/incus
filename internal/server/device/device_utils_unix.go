@@ -158,7 +158,7 @@ func UnixDeviceCreate(s *state.State, idmapSet *idmap.Set, devicesPath string, p
 		d.Mode, err = internalIO.GetPathMode(srcPath)
 		if err != nil {
 			errno, isErrno := linux.GetErrno(err)
-			if !isErrno || errno != unix.ENOENT {
+			if !isErrno || !errors.Is(errno, unix.ENOENT) {
 				return nil, fmt.Errorf("Failed to retrieve mode of device %s: %w", srcPath, err)
 			}
 

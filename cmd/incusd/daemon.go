@@ -648,8 +648,8 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		// Authentication
 		trusted, username, protocol, err := d.Authenticate(w, r)
 		if err != nil {
-			_, ok := err.(*oidc.AuthError)
-			if ok {
+			var authError *oidc.AuthError
+			if errors.As(err, &authError) {
 				// Ensure the OIDC headers are set if needed.
 				if d.oidcVerifier != nil {
 					_ = d.oidcVerifier.WriteHeaders(w)
@@ -747,7 +747,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 			return false
 		}
 
-		if d.shutdownCtx.Err() == context.Canceled && !allowedDuringShutdown() {
+		if errors.Is(d.shutdownCtx.Err(), context.Canceled) && !allowedDuringShutdown() {
 			_ = response.Unavailable(fmt.Errorf("Shutting down")).Render(w)
 			return
 		}

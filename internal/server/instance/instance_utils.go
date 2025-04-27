@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"database/sql"
+	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -1003,7 +1004,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 		return nil
 	})
 	if err != nil {
-		if err == db.ErrAlreadyDefined {
+		if errors.Is(err, db.ErrAlreadyDefined) {
 			thing := "Instance"
 			if instance.IsSnapshot(args.Name) {
 				thing = "Snapshot"

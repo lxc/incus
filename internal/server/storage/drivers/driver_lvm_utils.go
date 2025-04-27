@@ -2,6 +2,7 @@ package drivers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -95,13 +96,10 @@ func (d *lvm) openLoopFile(source string) (string, error) {
 // isLVMNotFoundExitError checks whether the supplied error is an exit error from an LVM command
 // meaning that the object was not found. Returns true if it is (exit status 5) false if not.
 func (d *lvm) isLVMNotFoundExitError(err error) bool {
-	runErr, ok := err.(subprocess.RunError)
-	if ok {
-		exitError, ok := runErr.Unwrap().(*exec.ExitError)
-		if ok {
-			if exitError.ExitCode() == 5 {
-				return true
-			}
+	var exitError *exec.ExitError
+	if errors.As(err, &exitError) {
+		if exitError.ExitCode() == 5 {
+			return true
 		}
 	}
 

@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"errors"
 	"time"
 )
 
@@ -33,14 +34,14 @@ func (t *Task) loop(ctx context.Context) {
 		var timer <-chan time.Time
 
 		schedule, err := t.schedule()
-		switch err {
-		case ErrSkip:
+		switch {
+		case errors.Is(err, ErrSkip):
 			// Reset the delay to be exactly the schedule, so we
 			// rule out the case where it's set to immediately
 			// because it's the first iteration or we got reset.
 			delay = schedule
 			fallthrough // Fall to case nil, to apply normal non-error logic
-		case nil:
+		case err == nil:
 			// If the schedule is greater than zero, setup a timer
 			// that will expire after 'delay' seconds (or after the
 			// schedule in case of ErrSkip, to avoid triggering
@@ -79,6 +80,7 @@ func (t *Task) loop(ctx context.Context) {
 				if delay < 0 {
 					delay = immediately
 				}
+
 			} else {
 				// Don't execute the task function, and set the
 				// delay to run it immediately whenever the

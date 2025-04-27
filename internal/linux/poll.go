@@ -2,6 +2,7 @@ package linux
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -23,7 +24,7 @@ func GetPollRevents(fd int, timeout int, flags int) (int, int, error) {
 again:
 	n, err := unix.Poll(pollFds, timeout)
 	if err != nil {
-		if err == unix.EAGAIN || err == unix.EINTR {
+		if errors.Is(err, unix.EAGAIN) || errors.Is(err, unix.EINTR) {
 			goto again
 		}
 

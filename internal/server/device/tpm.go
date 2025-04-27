@@ -2,6 +2,7 @@ package device
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -282,7 +283,7 @@ func (d *tpm) Stop() (*deviceConfig.RunConfig, error) {
 		// i.e. the instance is stopped. Therefore, we only fail if the running process couldn't
 		// be stopped.
 		err = proc.Stop()
-		if err != nil && err != subprocess.ErrNotRunning {
+		if err != nil && !errors.Is(err, subprocess.ErrNotRunning) {
 			return nil, fmt.Errorf("Failed to stop imported process %q: %w", pidPath, err)
 		}
 	}

@@ -215,7 +215,7 @@ func (c *ClusterTx) GetNetworkNameAndProjectWithID(ctx context.Context, networkI
 
 	err := dbQueryRowScan(ctx, c, q, inargs, outargs)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return "", "", api.StatusErrorf(http.StatusNotFound, "Network not found")
 		}
 

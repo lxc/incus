@@ -3,6 +3,7 @@ package ovn
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net"
@@ -24,7 +25,7 @@ func (o *ICNB) CreateTransitSwitch(ctx context.Context, name string, mayExist bo
 	}
 
 	err := o.client.Get(ctx, &transitSwitch)
-	if err != nil && err != ovsdbClient.ErrNotFound {
+	if err != nil && !errors.Is(err, ovsdbClient.ErrNotFound) {
 		return err
 	}
 
@@ -216,7 +217,7 @@ func (o *ICNB) DeleteTransitSwitch(ctx context.Context, name string, force bool)
 	err := o.client.Get(ctx, &transitSwitch)
 	if err != nil {
 		// Already deleted.
-		if err == ErrNotFound {
+		if errors.Is(err, ErrNotFound) {
 			return nil
 		}
 

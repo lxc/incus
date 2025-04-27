@@ -2,6 +2,7 @@ package ovn
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"slices"
@@ -210,7 +211,7 @@ func (o *NB) CreateLogicalRouter(ctx context.Context, routerName OVNRouter, mayE
 
 	// Check if already exists.
 	err := o.get(ctx, &logicalRouter)
-	if err != nil && err != ErrNotFound {
+	if err != nil && !errors.Is(err, ErrNotFound) {
 		return err
 	}
 
@@ -267,7 +268,7 @@ func (o *NB) DeleteLogicalRouter(ctx context.Context, routerName OVNRouter) erro
 	err := o.get(ctx, &logicalRouter)
 	if err != nil {
 		// Logical router is already gone.
-		if err == ErrNotFound {
+		if errors.Is(err, ErrNotFound) {
 			return nil
 		}
 
@@ -718,7 +719,7 @@ func (o *NB) CreateLogicalRouterPort(ctx context.Context, routerName OVNRouter, 
 
 	// Check if the entry already exists.
 	err := o.get(ctx, &logicalRouterPort)
-	if err != nil && err != ErrNotFound {
+	if err != nil && !errors.Is(err, ErrNotFound) {
 		return err
 	}
 
@@ -811,7 +812,7 @@ func (o *NB) DeleteLogicalRouterPort(ctx context.Context, routerName OVNRouter, 
 	err := o.get(ctx, &logicalRouterPort)
 	if err != nil {
 		// Logical router port is already gone.
-		if err == ErrNotFound {
+		if errors.Is(err, ErrNotFound) {
 			return nil
 		}
 
@@ -938,7 +939,7 @@ func (o *NB) CreateLogicalSwitch(ctx context.Context, switchName OVNSwitch, mayE
 
 	// Check if already exists.
 	err := o.get(ctx, &logicalSwitch)
-	if err != nil && err != ErrNotFound {
+	if err != nil && !errors.Is(err, ErrNotFound) {
 		return err
 	}
 
@@ -1657,7 +1658,7 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 
 	// Check if the entry already exists.
 	err := o.get(ctx, &logicalSwitchPort)
-	if err != nil && err != ErrNotFound {
+	if err != nil && !errors.Is(err, ErrNotFound) {
 		return err
 	}
 
@@ -2187,7 +2188,7 @@ func (o *NB) logicalSwitchPortDeleteOperations(ctx context.Context, switchName O
 	err := o.get(ctx, &logicalSwitchPort)
 	if err != nil {
 		// Logical switch port is already gone.
-		if err == ErrNotFound {
+		if errors.Is(err, ErrNotFound) {
 			return nil, nil
 		}
 
@@ -2385,7 +2386,7 @@ func (o *NB) CreateChassisGroup(ctx context.Context, haChassisGroupName OVNChass
 
 	// Check if already exists.
 	err := o.get(ctx, &haChassisGroup)
-	if err != nil && err != ErrNotFound {
+	if err != nil && !errors.Is(err, ErrNotFound) {
 		return err
 	}
 
@@ -2427,7 +2428,7 @@ func (o *NB) DeleteChassisGroup(ctx context.Context, haChassisGroupName OVNChass
 	err := o.get(ctx, &haChassisGroup)
 	if err != nil {
 		// Already gone.
-		if err == ErrNotFound {
+		if errors.Is(err, ErrNotFound) {
 			return nil
 		}
 
@@ -2568,7 +2569,7 @@ func (o *NB) GetPortGroupInfo(ctx context.Context, portGroupName OVNPortGroup) (
 
 	err := o.get(ctx, pg)
 	if err != nil {
-		if err == ovsClient.ErrNotFound {
+		if errors.Is(err, ovsClient.ErrNotFound) {
 			return "", false, nil
 		}
 
@@ -2645,7 +2646,7 @@ func (o *NB) DeletePortGroup(ctx context.Context, portGroupNames ...OVNPortGroup
 
 		err := o.get(ctx, &pg)
 		if err != nil {
-			if err == ErrNotFound {
+			if errors.Is(err, ErrNotFound) {
 				// Already gone.
 				continue
 			}
@@ -3048,7 +3049,7 @@ func (o *NB) CreateLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBal
 		}
 
 		err := o.get(ctx, &lb)
-		if err == nil || err == ErrTooMany {
+		if err == nil || errors.Is(err, ErrTooMany) {
 			// Delete the load balancer (by name in case there are duplicates).
 			lb := ovnNB.LoadBalancer{
 				Name: name,
@@ -3060,7 +3061,7 @@ func (o *NB) CreateLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBal
 			}
 
 			operations = append(operations, deleteOps...)
-		} else if err != ErrNotFound {
+		} else if !errors.Is(err, ErrNotFound) {
 			return err
 		}
 	}
@@ -3350,7 +3351,7 @@ func (o *NB) DeleteLoadBalancer(ctx context.Context, loadBalancerNames ...OVNLoa
 			}
 
 			operations = append(operations, deleteOps...)
-		} else if err != ErrNotFound {
+		} else if !errors.Is(err, ErrNotFound) {
 			return err
 		}
 
@@ -3368,7 +3369,7 @@ func (o *NB) DeleteLoadBalancer(ctx context.Context, loadBalancerNames ...OVNLoa
 			}
 
 			operations = append(operations, deleteOps...)
-		} else if err != ErrNotFound {
+		} else if !errors.Is(err, ErrNotFound) {
 			return err
 		}
 	}
@@ -3497,7 +3498,7 @@ func (o *NB) UpdateAddressSetAdd(ctx context.Context, addressSetPrefix OVNAddres
 	}
 
 	err := o.get(ctx, &ipv4Set)
-	if err != nil && err != ErrNotFound {
+	if err != nil && !errors.Is(err, ErrNotFound) {
 		return err
 	}
 
@@ -3510,7 +3511,7 @@ func (o *NB) UpdateAddressSetAdd(ctx context.Context, addressSetPrefix OVNAddres
 	}
 
 	err = o.get(ctx, &ipv6Set)
-	if err != nil && err != ErrNotFound {
+	if err != nil && !errors.Is(err, ErrNotFound) {
 		return err
 	}
 
@@ -3676,7 +3677,7 @@ func (o *NB) DeleteAddressSet(ctx context.Context, addressSetPrefix OVNAddressSe
 	}
 
 	err := o.get(ctx, &ipv4Set)
-	if err != nil && err != ErrNotFound {
+	if err != nil && !errors.Is(err, ErrNotFound) {
 		return err
 	}
 
@@ -3685,7 +3686,7 @@ func (o *NB) DeleteAddressSet(ctx context.Context, addressSetPrefix OVNAddressSe
 	}
 
 	err = o.get(ctx, &ipv6Set)
-	if err != nil && err != ErrNotFound {
+	if err != nil && !errors.Is(err, ErrNotFound) {
 		return err
 	}
 
@@ -4120,7 +4121,7 @@ func (o *NB) DeleteLogicalRouterPeering(ctx context.Context, opts OVNRouterPeeri
 
 		err := o.get(ctx, &logicalRouterPort)
 		if err != nil {
-			if err == ErrNotFound {
+			if errors.Is(err, ErrNotFound) {
 				// Logical router port is already gone.
 				return nil
 			}

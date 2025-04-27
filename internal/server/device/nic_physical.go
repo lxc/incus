@@ -1,6 +1,7 @@
 package device
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -260,7 +261,7 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 		ueventPath := fmt.Sprintf("/sys/class/net/%s/device/uevent", saveData["host_name"])
 		pciDev, err := pcidev.ParseUeventFile(ueventPath)
 		if err != nil {
-			if err == pcidev.ErrDeviceIsUSB {
+			if errors.Is(err, pcidev.ErrDeviceIsUSB) {
 				// Device is USB rather than PCI.
 				return d.startVMUSB(saveData["host_name"])
 			}

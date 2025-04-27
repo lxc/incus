@@ -31,6 +31,7 @@ func SmartError(err error) Response {
 	for httpStatusCode, checkErrs := range httpResponseErrors {
 		for _, checkErr := range checkErrs {
 			if errors.Is(err, checkErr) {
+				// This is intended to not be `errors.Is`, so we check if it is a wrapped error.
 				if err != checkErr {
 					// If the error has been wrapped return the top-level error message.
 					return &errorResponse{httpStatusCode, err.Error()}
