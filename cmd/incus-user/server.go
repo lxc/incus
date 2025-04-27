@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -272,7 +273,7 @@ func serverSetupUser(uid uint32) error {
 		}
 
 		idmapset, err := idmap.NewSetFromSystem("root")
-		if err != nil && err != idmap.ErrSubidUnsupported {
+		if err != nil && !errors.Is(err, idmap.ErrSubidUnsupported) {
 			return fmt.Errorf("Failed to load system idmap: %w", err)
 		}
 
