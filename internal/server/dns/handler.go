@@ -91,7 +91,7 @@ func (d dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	}
 
 	// Check access.
-	if !d.isAllowed(zone.Info, ip, r.IsTsig(), w.TsigStatus() == nil) {
+	if !isAllowed(zone.Info, ip, r.IsTsig(), w.TsigStatus() == nil) {
 		// On auth failure, return NXDOMAIN to avoid information leaks.
 		m := &dns.Msg{}
 		m.SetRcode(r, dns.RcodeNameError)
@@ -138,7 +138,7 @@ func (d dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	}
 }
 
-func (d *dnsHandler) isAllowed(zone api.NetworkZone, ip string, tsig *dns.TSIG, tsigStatus bool) bool {
+func isAllowed(zone api.NetworkZone, ip string, tsig *dns.TSIG, tsigStatus bool) bool {
 	type peer struct {
 		address string
 		key     string
