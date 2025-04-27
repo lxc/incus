@@ -5,64 +5,42 @@ import (
 	"net"
 
 	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
 )
 
-// NeighbourIPState can be { PERMANENT | NOARP | REACHABLE | STALE | NONE | INCOMPLETE | DELAY | PROBE | FAILED }.
-type NeighbourIPState string
+// NeighbourIPState can be { NeighbourIPStatePermanent | NeighbourIPStateNoARP | NeighbourIPStateReachable | NeighbourIPStateStale | NeighbourIPStateNone | NeighbourIPStateIncomplete | NeighbourIPStateDelay | NeighbourIPStateProbe | NeighbourIPStateFailed }.
+type NeighbourIPState int
 
-// NeighbourIPStatePermanent the neighbour entry is valid forever and can be only be removed administratively.
-const NeighbourIPStatePermanent = "PERMANENT"
+const (
+	// NeighbourIPStatePermanent the neighbour entry is valid forever and can be only be removed administratively.
+	NeighbourIPStatePermanent NeighbourIPState = unix.NUD_PERMANENT
 
-// NeighbourIPStateNoARP the neighbour entry is valid. No attempts to validate this entry will be made but it can
-// be removed when its lifetime expires.
-const NeighbourIPStateNoARP = "NOARP"
+	// NeighbourIPStateNoARP the neighbour entry is valid. No attempts to validate this entry will be made but it can
+	// be removed when its lifetime expires.
+	NeighbourIPStateNoARP NeighbourIPState = unix.NUD_NOARP
 
-// NeighbourIPStateReachable the neighbour entry is valid until the reachability timeout expires.
-const NeighbourIPStateReachable = "REACHABLE"
+	// NeighbourIPStateReachable the neighbour entry is valid until the reachability timeout expires.
+	NeighbourIPStateReachable NeighbourIPState = unix.NUD_REACHABLE
 
-// NeighbourIPStateStale the neighbour entry is valid but suspicious.
-const NeighbourIPStateStale = "STALE"
+	// NeighbourIPStateStale the neighbour entry is valid but suspicious.
+	NeighbourIPStateStale NeighbourIPState = unix.NUD_STALE
 
-// NeighbourIPStateNone this is a pseudo state used when initially creating a neighbour entry or after trying to
-// remove it before it becomes free to do so.
-const NeighbourIPStateNone = "NONE"
+	// NeighbourIPStateNone this is a pseudo state used when initially creating a neighbour entry or after trying to
+	// remove it before it becomes free to do so.
+	NeighbourIPStateNone NeighbourIPState = unix.NUD_NONE
 
-// NeighbourIPStateIncomplete the neighbour entry has not (yet) been validated/resolved.
-const NeighbourIPStateIncomplete = "INCOMPLETE"
+	// NeighbourIPStateIncomplete the neighbour entry has not (yet) been validated/resolved.
+	NeighbourIPStateIncomplete NeighbourIPState = unix.NUD_INCOMPLETE
 
-// NeighbourIPStateDelay neighbor entry validation is currently delayed.
-const NeighbourIPStateDelay = "DELAY"
+	// NeighbourIPStateDelay neighbor entry validation is currently delayed.
+	NeighbourIPStateDelay NeighbourIPState = unix.NUD_DELAY
 
-// NeighbourIPStateProbe neighbor is being probed.
-const NeighbourIPStateProbe = "PROBE"
+	// NeighbourIPStateProbe neighbor is being probed.
+	NeighbourIPStateProbe NeighbourIPState = unix.NUD_PROBE
 
-// NeighbourIPStateFailed max number of probes exceeded without success, neighbor validation has ultimately failed.
-const NeighbourIPStateFailed = "FAILED"
-
-func mapNetlinkState(state int) NeighbourIPState {
-	switch state {
-	case netlink.NUD_NONE:
-		return NeighbourIPStateNone
-	case netlink.NUD_INCOMPLETE:
-		return NeighbourIPStateIncomplete
-	case netlink.NUD_REACHABLE:
-		return NeighbourIPStateReachable
-	case netlink.NUD_STALE:
-		return NeighbourIPStateStale
-	case netlink.NUD_DELAY:
-		return NeighbourIPStateDelay
-	case netlink.NUD_PROBE:
-		return NeighbourIPStateProbe
-	case netlink.NUD_FAILED:
-		return NeighbourIPStateFailed
-	case netlink.NUD_NOARP:
-		return NeighbourIPStateNoARP
-	case netlink.NUD_PERMANENT:
-		return NeighbourIPStatePermanent
-	default:
-		return NeighbourIPStateNone
-	}
-}
+	// NeighbourIPStateFailed max number of probes exceeded without success, neighbor validation has ultimately failed.
+	NeighbourIPStateFailed NeighbourIPState = unix.NUD_FAILED
+)
 
 // Neigh represents arguments for neighbour manipulation.
 type Neigh struct {
@@ -90,7 +68,7 @@ func (n *Neigh) Show() ([]Neigh, error) {
 		neighbours = append(neighbours, Neigh{
 			Addr:  neighbour.IP,
 			MAC:   neighbour.HardwareAddr,
-			State: mapNetlinkState(neighbour.State),
+			State: NeighbourIPState(neighbour.State),
 		})
 	}
 
