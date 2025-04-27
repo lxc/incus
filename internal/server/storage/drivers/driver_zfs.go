@@ -161,7 +161,7 @@ func (d *zfs) Info() Info {
 // ensureInitialDatasets creates missing initial datasets or configures existing ones with current policy.
 // Accepts warnOnExistingPolicyApplyError argument, if true will warn rather than fail if applying current policy
 // to an existing dataset fails.
-func (d zfs) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
+func (d *zfs) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
 	// Build the list of datasets to query.
 	datasets := []string{d.config["zfs.pool_name"]}
 	for _, entry := range d.initialDatasets() {
