@@ -171,7 +171,7 @@ func (c *cmdForknet) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdForknet) RunInfo(cmd *cobra.Command, args []string) error {
+func (c *cmdForknet) RunInfo(_ *cobra.Command, _ []string) error {
 	hostInterfaces, _ := net.Interfaces()
 	networks, err := netutils.NetnsGetifaddrs(-1, hostInterfaces)
 	if err != nil {
@@ -188,7 +188,7 @@ func (c *cmdForknet) RunInfo(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (c *cmdForknet) RunDetach(cmd *cobra.Command, args []string) error {
+func (c *cmdForknet) RunDetach(_ *cobra.Command, args []string) error {
 	daemonPID := args[1]
 	ifName := args[2]
 	hostName := args[3]

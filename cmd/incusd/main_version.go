@@ -25,7 +25,7 @@ func (c *cmdVersion) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdVersion) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdVersion) Run(_ *cobra.Command, _ []string) error {
 	fmt.Println(version.Version)
 
 	return nil

@@ -47,7 +47,7 @@ func (c *cmdActivateifneeded) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdActivateifneeded) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdActivateifneeded) Run(_ *cobra.Command, _ []string) error {
 	// Only root should run this
 	if os.Geteuid() != 0 {
 		return fmt.Errorf("This must be run as root")

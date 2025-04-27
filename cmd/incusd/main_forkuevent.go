@@ -249,6 +249,6 @@ func (c *cmdForkuevent) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdForkuevent) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdForkuevent) Run(_ *cobra.Command, _ []string) error {
 	return fmt.Errorf("This command should have been intercepted in cgo")
 }
