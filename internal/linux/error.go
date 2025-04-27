@@ -10,18 +10,18 @@ import (
 
 // GetErrno checks if the Go error is a kernel errno.
 func GetErrno(err error) (errno error, iserrno bool) {
-	sysErr, ok := err.(*os.SyscallError)
-	if ok {
+	var sysErr *os.SyscallError
+	if errors.As(err, &sysErr) {
 		return sysErr.Err, true
 	}
 
-	pathErr, ok := err.(*os.PathError)
-	if ok {
+	var pathErr *os.PathError
+	if errors.As(err, &pathErr) {
 		return pathErr.Err, true
 	}
 
-	tmpErrno, ok := err.(unix.Errno)
-	if ok {
+	var tmpErrno unix.Errno
+	if errors.As(err, &tmpErrno) {
 		return tmpErrno, true
 	}
 
