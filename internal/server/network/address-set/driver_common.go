@@ -2,6 +2,7 @@ package addressset
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -94,7 +95,7 @@ func (d *common) usedBy(firstOnly bool) ([]string, error) {
 		return nil
 	}, d.info.Name)
 	if err != nil {
-		if err == db.ErrInstanceListStop {
+		if errors.Is(err, db.ErrInstanceListStop) {
 			return usedBy, nil
 		}
 

@@ -5,6 +5,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -112,7 +113,7 @@ WHERE volumes.id=?
 
 	err := dbQueryRowScan(ctx, c, q, arg1, outfmt)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return args, api.StatusErrorf(http.StatusNotFound, "Storage pool volume snapshot not found")
 		}
 
@@ -138,7 +139,7 @@ func (c *ClusterTx) GetStorageVolumeSnapshotExpiry(ctx context.Context, volumeID
 
 	err := dbQueryRowScan(ctx, c, query, inargs, outargs)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return expiry, api.StatusErrorf(http.StatusNotFound, "Storage pool volume snapshot not found")
 		}
 

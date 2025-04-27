@@ -3,6 +3,7 @@ package acl
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -172,7 +173,7 @@ func (d *common) usedBy(firstOnly bool) ([]string, error) {
 		return nil
 	}, d.Info().Name)
 	if err != nil {
-		if err == db.ErrInstanceListStop {
+		if errors.Is(err, db.ErrInstanceListStop) {
 			return usedBy, nil
 		}
 

@@ -250,7 +250,7 @@ func UsedBy(s *state.State, networkProjectName string, networkID int64, networkN
 		return nil
 	})
 	if err != nil {
-		if err == db.ErrInstanceListStop {
+		if errors.Is(err, db.ErrInstanceListStop) {
 			return usedBy, nil
 		}
 

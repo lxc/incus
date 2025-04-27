@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"slices"
@@ -355,12 +356,12 @@ func (n *physical) Update(newNetwork api.NetworkPut, targetNode string, clientTy
 			ovsBridge := fmt.Sprintf("incusovn%d", n.id)
 
 			err := vswitch.DeleteBridgePort(context.TODO(), ovsBridge, oldNetwork.Config["parent"])
-			if err != nil && err != ovs.ErrNotFound {
+			if err != nil && !errors.Is(err, ovs.ErrNotFound) {
 				return err
 			}
 
 			err = vswitch.CreateBridgePort(context.TODO(), ovsBridge, newNetwork.Config["parent"], true)
-			if err != nil && err != ovs.ErrNotFound {
+			if err != nil && !errors.Is(err, ovs.ErrNotFound) {
 				return err
 			}
 		}

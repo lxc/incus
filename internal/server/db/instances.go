@@ -5,6 +5,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -835,7 +836,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 
 	err := c.tx.QueryRowContext(ctx, q, inargs...).Scan(&inst.ID, &inst.Project, &inst.Name, &inst.Node, &inst.Type, &inst.Architecture, &inst.Ephemeral, &inst.CreationDate, &inst.Stateful, &inst.LastUseDate, &inst.Description, &inst.ExpiryDate)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, api.StatusErrorf(http.StatusNotFound, "Instance not found")
 		}
 
@@ -876,7 +877,7 @@ SELECT storage_pools.name FROM storage_pools
 
 	err := c.tx.QueryRowContext(ctx, query, inargs...).Scan(outargs...)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return "", api.StatusErrorf(http.StatusNotFound, "Instance storage pool not found")
 		}
 
@@ -908,7 +909,7 @@ SELECT projects.name, instances.name
 WHERE instances.id=?
 `
 	err := c.tx.QueryRowContext(ctx, q, id).Scan(&project, &name)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return "", "", api.StatusErrorf(http.StatusNotFound, "Instance not found")
 	}
 
@@ -929,7 +930,7 @@ func (c *ClusterTx) GetInstanceConfig(ctx context.Context, id int, key string) (
 	value := ""
 
 	err := c.tx.QueryRowContext(ctx, q, id, key).Scan(&value)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return "", api.StatusErrorf(http.StatusNotFound, "Instance config not found")
 	}
 

@@ -2,6 +2,7 @@ package addressset
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 
@@ -185,7 +186,7 @@ func AddressSetUsedBy(s *state.State, projectName string, usageFunc func(aclName
 		if refFound {
 			err = usageFunc(aclName)
 			if err != nil {
-				if err == db.ErrInstanceListStop {
+				if errors.Is(err, db.ErrInstanceListStop) {
 					return err
 				}
 

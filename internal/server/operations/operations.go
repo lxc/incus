@@ -2,6 +2,7 @@ package operations
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -126,7 +127,7 @@ type Operation struct {
 // created, it returns an error.
 func OperationCreate(s *state.State, projectName string, opClass OperationClass, opType operationtype.Type, opResources map[string][]api.URL, opMetadata any, onRun func(*Operation) error, onCancel func(*Operation) error, onConnect func(*Operation, *http.Request, http.ResponseWriter) error, r *http.Request) (*Operation, error) {
 	// Don't allow new operations when Incus is shutting down.
-	if s != nil && s.ShutdownCtx.Err() == context.Canceled {
+	if s != nil && errors.Is(s.ShutdownCtx.Err(), context.Canceled) {
 		return nil, fmt.Errorf("Incus is shutting down")
 	}
 

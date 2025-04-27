@@ -2,6 +2,7 @@ package resources
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net"
 	"unsafe"
@@ -185,7 +186,7 @@ func ethtoolGset(ethtoolFd int, req *ethtoolReq, info *api.ResourcesNetworkCardP
 
 	_, _, errno := unix.Syscall(unix.SYS_IOCTL, uintptr(ethtoolFd), unix.SIOCETHTOOL, uintptr(unsafe.Pointer(req)))
 	if errno != 0 {
-		if unix.Errno(errno) == unix.EOPNOTSUPP || unix.Errno(errno) == unix.ENODEV {
+		if errors.Is(errno, unix.EOPNOTSUPP) || errors.Is(errno, unix.ENODEV) {
 			// Driver doesn't support it, skip.
 			return nil
 		}

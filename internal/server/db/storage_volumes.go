@@ -94,7 +94,7 @@ WHERE storage_volumes.id = ?
 
 	err := c.tx.QueryRowContext(ctx, stmt, volumeID).Scan(&response.ID, &response.Name, &response.Description, &response.CreationDate, &response.Type, &response.NodeID, &response.PoolName, &response.ProjectName)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return StorageVolumeArgs{}, api.StatusErrorf(http.StatusNotFound, "Storage pool volume not found")
 		}
 

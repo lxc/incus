@@ -5,6 +5,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -727,7 +728,7 @@ func (c *ClusterTx) UpdateNodeFailureDomain(ctx context.Context, id int64, domai
 		row := c.tx.QueryRowContext(ctx, "SELECT id FROM nodes_failure_domains WHERE name=?", domain)
 		err := row.Scan(&domainID)
 		if err != nil {
-			if err != sql.ErrNoRows {
+			if !errors.Is(err, sql.ErrNoRows) {
 				return fmt.Errorf("Load failure domain name: %w", err)
 			}
 

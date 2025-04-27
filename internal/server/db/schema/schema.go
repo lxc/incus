@@ -3,6 +3,7 @@ package schema
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"slices"
 	"sort"
@@ -156,7 +157,7 @@ func (s *Schema) Ensure(db *sql.DB) (int, error) {
 
 		if s.check != nil {
 			err := s.check(ctx, current, tx)
-			if err == ErrGracefulAbort {
+			if errors.Is(err, ErrGracefulAbort) {
 				// Abort the update gracefully, committing what
 				// we've done so far.
 				aborted = true

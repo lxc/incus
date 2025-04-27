@@ -3,6 +3,7 @@ package network
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"net"
@@ -1560,7 +1561,7 @@ func (n *ovn) startUplinkPortPhysical(uplinkNet Network) error {
 	}
 
 	_, err = vswitch.GetBridge(context.TODO(), uplinkHostName)
-	if err != nil && err != ovs.ErrNotFound {
+	if err != nil && !errors.Is(err, ovs.ErrNotFound) {
 		return err
 	} else if err == nil {
 		return n.startUplinkPortBridgeOVS(uplinkNet, uplinkHostName)
@@ -1798,7 +1799,7 @@ func (n *ovn) deleteUplinkPortPhysical(uplinkNet Network) error {
 	}
 
 	_, err = vswitch.GetBridge(context.TODO(), uplinkHostName)
-	if err != nil && err != ovs.ErrNotFound {
+	if err != nil && !errors.Is(err, ovs.ErrNotFound) {
 		return err
 	} else if err == nil {
 		return n.deleteUplinkPortBridgeOVS(uplinkNet, uplinkHostName)
@@ -2223,7 +2224,7 @@ func (n *ovn) setup(update bool) error {
 		}
 	} else {
 		err := n.ovnnb.DeleteLogicalRouter(context.TODO(), n.getRouterName())
-		if err != nil && err != networkOVN.ErrNotFound {
+		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 			return fmt.Errorf("Failed deleting router: %w", err)
 		}
 	}
@@ -2611,7 +2612,7 @@ func (n *ovn) setup(update bool) error {
 		}
 	} else {
 		err := n.ovnnb.DeleteLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterIntPortName())
-		if err != nil && err != ovs.ErrNotFound {
+		if err != nil && !errors.Is(err, ovs.ErrNotFound) {
 			return fmt.Errorf("Failed deleting logical router port: %w", err)
 		}
 	}
@@ -2777,7 +2778,7 @@ func (n *ovn) setup(update bool) error {
 		}
 	} else {
 		err = n.ovnnb.UpdateLogicalRouterPort(context.TODO(), n.getRouterIntPortName(), &networkOVN.OVNIPv6RAOpts{})
-		if err != nil && err != networkOVN.ErrNotFound {
+		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 			return fmt.Errorf("Failed removing internal router port IPv6 advertisement settings: %w", err)
 		}
 	}
@@ -2801,7 +2802,7 @@ func (n *ovn) setup(update bool) error {
 		}
 	} else {
 		err := n.ovnnb.DeleteLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), n.getIntSwitchRouterPortName())
-		if err != nil && err != networkOVN.ErrNotFound {
+		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 			return fmt.Errorf("Failed removing logical switch port: %w", err)
 		}
 	}
@@ -3057,7 +3058,7 @@ func (n *ovn) deleteChassisGroupEntry() error {
 	}
 
 	err = n.ovnnb.SetChassisGroupPriority(context.TODO(), n.getChassisGroupName(), chassisID, -1)
-	if err != nil && err != ovs.ErrNotFound {
+	if err != nil && !errors.Is(err, ovs.ErrNotFound) {
 		return fmt.Errorf("Failed deleting OVS chassis %q from chassis group %q: %w", chassisID, n.getChassisGroupName(), err)
 	}
 
@@ -3076,25 +3077,25 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 	if clientType == request.ClientTypeNormal {
 		// Delete the router and anything tied to it (router ports, static routes, policies, nat, ...).
 		err = n.ovnnb.DeleteLogicalRouter(context.TODO(), n.getRouterName())
-		if err != nil && err != networkOVN.ErrNotFound {
+		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 			return err
 		}
 
 		// Delete the external logical switch and anything tied to it (ports, ...).
 		err = n.ovnnb.DeleteLogicalSwitch(context.TODO(), n.getExtSwitchName())
-		if err != nil && err != networkOVN.ErrNotFound {
+		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 			return err
 		}
 
 		// Delete the internal logical switch and anything tied to it (ports, ...).
 		err = n.ovnnb.DeleteLogicalSwitch(context.TODO(), n.getIntSwitchName())
-		if err != nil && err != networkOVN.ErrNotFound {
+		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 			return err
 		}
 
 		// Delete any related address sets.
 		err = n.ovnnb.DeleteAddressSet(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()))
-		if err != nil && err != networkOVN.ErrNotFound {
+		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 			return err
 		}
 
@@ -3109,7 +3110,7 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 
 		// Delete the chassis group for the network.
 		err = n.ovnnb.DeleteChassisGroup(context.TODO(), n.getChassisGroupName())
-		if err != nil && err != networkOVN.ErrNotFound {
+		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 			return err
 		}
 
@@ -4182,7 +4183,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 				if len(dynamicIPs) > 0 {
 					break
 				}
-			} else if err != ovsClient.ErrNotFound {
+			} else if !errors.Is(err, ovsClient.ErrNotFound) {
 				return "", nil, err
 			}
 
@@ -6198,7 +6199,7 @@ func (n *ovn) remotePeerCreate(peer api.NetworkPeersPost) error {
 	for i := 0; i < 10; i++ {
 		// Try to get the switch.
 		logicalSwitch, err := n.ovnnb.GetLogicalSwitch(ctx, tsName)
-		if err != nil && err != networkOVN.ErrNotFound {
+		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 			return err
 		}
 
@@ -6644,7 +6645,7 @@ func (n *ovn) remotePeerDelete(peer *api.NetworkPeer) error {
 
 	// Delete chassis group.
 	err = n.ovnnb.DeleteChassisGroup(ctx, cgName)
-	if err != nil && err != networkOVN.ErrNotManaged {
+	if err != nil && !errors.Is(err, networkOVN.ErrNotManaged) {
 		return err
 	}
 
@@ -6656,7 +6657,7 @@ func (n *ovn) remotePeerDelete(peer *api.NetworkPeer) error {
 
 	if len(icSwitch.Ports) == 0 {
 		err = icnb.DeleteTransitSwitch(ctx, string(tsName), false)
-		if err != nil && err != networkOVN.ErrNotManaged {
+		if err != nil && !errors.Is(err, networkOVN.ErrNotManaged) {
 			return err
 		}
 	} else {
