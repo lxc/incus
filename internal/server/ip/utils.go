@@ -23,25 +23,6 @@ const (
 	FamilyV6 Family = unix.AF_INET6
 )
 
-// LinkInfo represents the IP link details.
-type LinkInfo struct {
-	InterfaceName    string
-	Link             string
-	Master           string
-	Address          string
-	TXQueueLength    uint32
-	MTU              uint32
-	OperationalState string
-	Info             struct {
-		Kind      string
-		SlaveKind string
-		Data      struct {
-			Protocol string
-			ID       int
-		}
-	}
-}
-
 func linkByName(name string) (netlink.Link, error) {
 	link, err := netlink.LinkByName(name)
 	if err != nil {
@@ -49,54 +30,6 @@ func linkByName(name string) (netlink.Link, error) {
 	}
 
 	return link, nil
-}
-
-// GetLinkInfoByName returns the detailed information for the given link.
-func GetLinkInfoByName(name string) (LinkInfo, error) {
-	info := LinkInfo{}
-
-	link, err := linkByName(name)
-	if err != nil {
-		return info, err
-	}
-
-	info.InterfaceName = link.Attrs().Name
-
-	if link.Attrs().ParentIndex != 0 {
-		parentLink, err := netlink.LinkByIndex(link.Attrs().ParentIndex)
-		if err != nil {
-			return info, fmt.Errorf("failed to get parent link %d of %q: %w", link.Attrs().ParentIndex, name, err)
-		}
-
-		info.Link = parentLink.Attrs().Name
-	}
-
-	if link.Attrs().MasterIndex != 0 {
-		masterLink, err := netlink.LinkByIndex(link.Attrs().MasterIndex)
-		if err != nil {
-			return info, fmt.Errorf("failed to get master link %d of %q: %w", link.Attrs().ParentIndex, name, err)
-		}
-
-		info.Master = masterLink.Attrs().Name
-	}
-
-	info.Address = link.Attrs().HardwareAddr.String()
-	info.TXQueueLength = uint32(link.Attrs().TxQLen)
-	info.MTU = uint32(link.Attrs().MTU)
-	info.OperationalState = link.Attrs().OperState.String()
-	info.Info.Kind = link.Type()
-
-	if link.Attrs().Slave != nil {
-		info.Info.Kind = link.Attrs().Slave.SlaveType()
-	}
-
-	vlan, ok := link.(*netlink.Vlan)
-	if ok {
-		info.Info.Data.ID = vlan.VlanId
-		info.Info.Data.Protocol = vlan.VlanProtocol.String()
-	}
-
-	return info, nil
 }
 
 func parseHandle(id string) (uint32, error) {
