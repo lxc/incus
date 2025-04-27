@@ -122,8 +122,8 @@ func (s *Server) reconfigure(address string) error {
 	oldAddress := s.address
 
 	// Setup reverter.
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Stop the listener.
 	err := s.stop()
@@ -134,7 +134,7 @@ func (s *Server) reconfigure(address string) error {
 	// Check if we should start.
 	if address != "" {
 		// Restore old address on failure.
-		revert.Add(func() { _ = s.start(oldAddress) })
+		reverter.Add(func() { _ = s.start(oldAddress) })
 
 		// Start the listener with the new address.
 		err = s.start(address)
@@ -144,7 +144,8 @@ func (s *Server) reconfigure(address string) error {
 	}
 
 	// All done.
-	revert.Success()
+	reverter.Success()
+
 	return nil
 }
 

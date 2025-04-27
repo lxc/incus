@@ -142,8 +142,8 @@ func (d *btrfs) Create() error {
 	// Store the provided source as we are likely to be mangling it.
 	d.config["volatile.initial_source"] = d.config["source"]
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	err := d.FillConfig()
 	if err != nil {
@@ -166,7 +166,7 @@ func (d *btrfs) Create() error {
 			return fmt.Errorf("Failed to create the sparse file: %w", err)
 		}
 
-		revert.Add(func() { _ = os.Remove(d.config["source"]) })
+		reverter.Add(func() { _ = os.Remove(d.config["source"]) })
 
 		// Format the file.
 		_, err = makeFSType(d.config["source"], "btrfs", &mkfsOptions{Label: d.name})
@@ -255,7 +255,7 @@ func (d *btrfs) Create() error {
 		return fmt.Errorf(`Invalid "source" property`)
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 

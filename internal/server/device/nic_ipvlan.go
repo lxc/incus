@@ -309,8 +309,8 @@ func (d *nicIPVLAN) Start() (*deviceConfig.RunConfig, error) {
 	networkCreateSharedDeviceLock.Lock()
 	defer networkCreateSharedDeviceLock.Unlock()
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	saveData := make(map[string]string)
 
@@ -402,7 +402,7 @@ func (d *nicIPVLAN) Start() (*deviceConfig.RunConfig, error) {
 					return nil, fmt.Errorf("Failed adding host route %q: %w", r.Route, err)
 				}
 
-				revert.Add(func() { _ = r.Delete() })
+				reverter.Add(func() { _ = r.Delete() })
 
 				// Add static routes to instance IPs from custom routing tables if specified.
 				hostTableKey := fmt.Sprintf("%s.host_table", keyPrefix)
@@ -419,7 +419,7 @@ func (d *nicIPVLAN) Start() (*deviceConfig.RunConfig, error) {
 						return nil, fmt.Errorf("Failed adding host route %q: %w", r.Route, err)
 					}
 
-					revert.Add(func() { _ = r.Delete() })
+					reverter.Add(func() { _ = r.Delete() })
 				}
 
 				// Add neighbour proxy entries on the host for l3s mode.
@@ -433,7 +433,7 @@ func (d *nicIPVLAN) Start() (*deviceConfig.RunConfig, error) {
 					return nil, fmt.Errorf("Failed adding neighbour proxy %q to %q: %w", np.Addr.String(), np.DevName, err)
 				}
 
-				revert.Add(func() { _ = np.Delete() })
+				reverter.Add(func() { _ = np.Delete() })
 			}
 		}
 
@@ -458,7 +458,8 @@ func (d *nicIPVLAN) Start() (*deviceConfig.RunConfig, error) {
 
 	runConf.NetworkInterface = nic
 
-	revert.Success()
+	reverter.Success()
+
 	return &runConf, nil
 }
 

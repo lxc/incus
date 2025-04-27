@@ -34,12 +34,12 @@ func (d *dir) setupInitialQuota(vol Volume) (revert.Hook, error) {
 		return nil, err
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Define a function to revert the quota being setup.
 	revertFunc := func() { _ = d.deleteQuota(volPath, volID) }
-	revert.Add(revertFunc)
+	reverter.Add(revertFunc)
 
 	// Initialize the volume's project using the volume ID and set the quota.
 	sizeBytes, err := units.ParseByteSizeString(vol.ConfigSize())
@@ -52,7 +52,7 @@ func (d *dir) setupInitialQuota(vol Volume) (revert.Hook, error) {
 		return nil, err
 	}
 
-	revert.Success()
+	reverter.Success()
 	return revertFunc, nil
 }
 

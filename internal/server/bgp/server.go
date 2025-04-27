@@ -204,8 +204,8 @@ func (s *Server) configure(address string, asn uint32, routerID net.IP) error {
 	oldRouterID := s.routerID
 
 	// Setup reverter.
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Stop the listener.
 	err := s.stop()
@@ -216,7 +216,7 @@ func (s *Server) configure(address string, asn uint32, routerID net.IP) error {
 	// Check if we should start.
 	if address != "" && asn > 0 && routerID != nil {
 		// Restore old address on failure.
-		revert.Add(func() { _ = s.start(oldAddress, oldASN, oldRouterID) })
+		reverter.Add(func() { _ = s.start(oldAddress, oldASN, oldRouterID) })
 
 		// Start the listener with the new address.
 		err = s.start(address, asn, routerID)
@@ -226,7 +226,7 @@ func (s *Server) configure(address string, asn uint32, routerID net.IP) error {
 	}
 
 	// All done.
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 

@@ -270,8 +270,8 @@ func (d *zone) Update(config *api.NetworkZonePut, clientType request.ClientType)
 		return err
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Update the database and notify the rest of the cluster.
 	if clientType == request.ClientTypeNormal {
@@ -287,7 +287,7 @@ func (d *zone) Update(config *api.NetworkZonePut, clientType request.ClientType)
 		d.info.NetworkZonePut = *config
 		d.init(d.state, d.id, d.projectName, d.info)
 
-		revert.Add(func() {
+		reverter.Add(func() {
 			_ = d.state.DB.Cluster.UpdateNetworkZone(d.id, &oldConfig)
 			d.info.NetworkZonePut = oldConfig
 			d.init(d.state, d.id, d.projectName, d.info)
@@ -313,7 +313,7 @@ func (d *zone) Update(config *api.NetworkZonePut, clientType request.ClientType)
 		return err
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 

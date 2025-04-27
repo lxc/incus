@@ -323,8 +323,8 @@ func (d *infinibandSRIOV) postStop() error {
 // setupSriovParent configures a SR-IOV virtual function (VF) device on parent and stores original properties of
 // the physical device into voltatile for restoration on detach. Returns VF PCI device info.
 func (d *infinibandSRIOV) setupSriovParent(parentPCIAddress string, vfID int, volatile map[string]string) (pcidev.Device, error) {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	volatile["last_state.pci.parent"] = parentPCIAddress
 	volatile["last_state.vf.id"] = fmt.Sprintf("%d", vfID)
@@ -342,7 +342,7 @@ func (d *infinibandSRIOV) setupSriovParent(parentPCIAddress string, vfID int, vo
 		return vfPCIDev, err
 	}
 
-	revert.Add(func() { _ = pcidev.DeviceProbe(vfPCIDev) })
+	reverter.Add(func() { _ = pcidev.DeviceProbe(vfPCIDev) })
 
 	// Register VF device with vfio-pci driver so it can be passed to VM.
 	err = pcidev.DeviceDriverOverride(vfPCIDev, "vfio-pci")
@@ -353,7 +353,7 @@ func (d *infinibandSRIOV) setupSriovParent(parentPCIAddress string, vfID int, vo
 	// Record original driver used by VF device for restore.
 	volatile["last_state.pci.driver"] = vfPCIDev.Driver
 
-	revert.Success()
+	reverter.Success()
 
 	return vfPCIDev, nil
 }

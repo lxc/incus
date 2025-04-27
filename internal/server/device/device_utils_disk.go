@@ -294,8 +294,8 @@ func diskCephfsOptions(clusterName string, userName string, fsName string, fsPat
 // type if process cannot be started for other reasons.
 // Returns revert function and listener file handle on success.
 func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath string, pidPath string, logPath string, sharePath string, idmaps []idmap.Entry, cacheOption string) (func(), net.Listener, error) {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	if !filepath.IsAbs(sharePath) {
 		return nil, nil, fmt.Errorf("Share path not absolute: %q", sharePath)
@@ -343,7 +343,7 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 		return nil, nil, fmt.Errorf("Failed to create unix listener for virtiofsd: %w", err)
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		_ = listener.Close()
 		_ = os.Remove(socketPath)
 	})
@@ -414,15 +414,16 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 		return nil, nil, fmt.Errorf("Failed to start virtiofsd: %w", err)
 	}
 
-	revert.Add(func() { _ = proc.Stop() })
+	reverter.Add(func() { _ = proc.Stop() })
 
 	err = proc.Save(pidPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed to save virtiofsd state: %w", err)
 	}
 
-	cleanup := revert.Clone().Fail
-	revert.Success()
+	cleanup := reverter.Clone().Fail
+	reverter.Success()
+
 	return cleanup, listener, err
 }
 

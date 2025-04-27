@@ -105,8 +105,8 @@ func DeviceProbe(pciDev Device) error {
 // DeviceDriverOverride unbinds the device, sets the driver override preference, then probes the device, and
 // waits for it to be activated with the specified driver.
 func DeviceDriverOverride(pciDev Device, driverOverride string) error {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Unbind the device from the host (ignore if not bound).
 	err := DeviceUnbind(pciDev)
@@ -114,7 +114,7 @@ func DeviceDriverOverride(pciDev Device, driverOverride string) error {
 		return err
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		// Reset the driver override and rebind to original driver (if needed).
 		_ = DeviceUnbind(pciDev)
 		_ = DeviceSetDriverOverride(pciDev, pciDev.Driver)
@@ -146,7 +146,8 @@ func DeviceDriverOverride(pciDev Device, driverOverride string) error {
 		}
 	}
 
-	revert.Success()
+	reverter.Success()
+
 	return nil
 }
 

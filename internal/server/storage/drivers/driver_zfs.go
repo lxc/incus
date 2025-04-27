@@ -454,10 +454,10 @@ func (d *zfs) Create() error {
 	}
 
 	// Setup revert in case of problems
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
-	revert.Add(func() { _ = d.Delete(nil) })
+	reverter.Add(func() { _ = d.Delete(nil) })
 
 	// Apply our default configuration.
 	err = d.ensureInitialDatasets(false)
@@ -465,7 +465,7 @@ func (d *zfs) Create() error {
 		return err
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 

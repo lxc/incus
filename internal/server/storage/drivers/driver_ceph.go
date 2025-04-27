@@ -124,8 +124,8 @@ func (d *ceph) FillConfig() error {
 // Create is called during pool creation and is effectively using an empty driver struct.
 // WARNING: The Create() function cannot rely on any of the struct attributes being set.
 func (d *ceph) Create() error {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	d.config["volatile.initial_source"] = d.config["source"]
 
@@ -175,7 +175,7 @@ func (d *ceph) Create() error {
 			return err
 		}
 
-		revert.Add(func() { _ = d.osdDeletePool() })
+		reverter.Add(func() { _ = d.osdDeletePool() })
 
 		// Initialize the pool. This is not necessary but allows the pool to be monitored.
 		_, err = subprocess.TryRunCommand("rbd",
@@ -249,7 +249,7 @@ func (d *ceph) Create() error {
 		d.config["ceph.osd.pg_num"] = msg
 	}
 
-	revert.Success()
+	reverter.Success()
 
 	return nil
 }
