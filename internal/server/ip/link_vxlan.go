@@ -3,7 +3,6 @@ package ip
 import (
 	"fmt"
 	"net"
-	"strconv"
 
 	"github.com/vishvananda/netlink"
 )
@@ -11,25 +10,18 @@ import (
 // Vxlan represents arguments for link of type vxlan.
 type Vxlan struct {
 	Link
-	VxlanID string
+	VxlanID int
 	DevName string
 	Local   string
 	Remote  string
 	Group   string
-	DstPort string
-	TTL     string
+	DstPort int
+	TTL     int
 }
 
 // Add adds new virtual link.
 func (vxlan *Vxlan) Add() error {
 	attrs, err := vxlan.netlinkAttrs()
-	if err != nil {
-		return err
-	}
-
-	// TODO: all of these these can be passed as int or net.IP
-
-	vxlanID, err := strconv.Atoi(vxlan.VxlanID)
 	if err != nil {
 		return err
 	}
@@ -44,6 +36,7 @@ func (vxlan *Vxlan) Add() error {
 		devIndex = dev.Attrs().Index
 	}
 
+	// TODO: all of these these can be passed net.IP
 	var group net.IP
 	if vxlan.Group != "" {
 		group = net.ParseIP(vxlan.Group)
@@ -79,29 +72,13 @@ func (vxlan *Vxlan) Add() error {
 		}
 	}
 
-	var ttl int
-	if vxlan.TTL != "" {
-		ttl, err = strconv.Atoi(vxlan.TTL)
-		if err != nil {
-			return err
-		}
-	}
-
-	var dstport int
-	if vxlan.DstPort != "" {
-		dstport, err = strconv.Atoi(vxlan.DstPort)
-		if err != nil {
-			return err
-		}
-	}
-
 	return netlink.LinkAdd(&netlink.Vxlan{
 		LinkAttrs:    attrs,
-		VxlanId:      vxlanID,
+		VxlanId:      vxlan.VxlanID,
 		VtepDevIndex: devIndex,
 		SrcAddr:      local,
 		Group:        group,
-		TTL:          ttl,
-		Port:         dstport,
+		TTL:          vxlan.TTL,
+		Port:         vxlan.DstPort,
 	})
 }
