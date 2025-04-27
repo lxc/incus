@@ -2,7 +2,6 @@ package ip
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
@@ -48,8 +47,8 @@ type Filter struct {
 // U32Filter represents universal 32bit traffic control filter.
 type U32Filter struct {
 	Filter
-	Value   string
-	Mask    string
+	Value   uint32
+	Mask    uint32
 	Actions []Action
 }
 
@@ -75,17 +74,6 @@ func (u32 *U32Filter) Add() error {
 		return err
 	}
 
-	// TODO: should just be passed around as an int
-	mask, err := strconv.ParseUint(u32.Mask, 10, 32)
-	if err != nil {
-		return fmt.Errorf("invalid mask %v: %w", u32.Mask, err)
-	}
-
-	value, err := strconv.ParseUint(u32.Value, 10, 32)
-	if err != nil {
-		return fmt.Errorf("invalid value %v: %w", u32.Mask, err)
-	}
-
 	filter := &netlink.U32{
 		FilterAttrs: netlink.FilterAttrs{
 			LinkIndex: link.Attrs().Index,
@@ -96,8 +84,8 @@ func (u32 *U32Filter) Add() error {
 			Nkeys: 1,
 			Keys: []netlink.TcU32Key{
 				{
-					Mask: uint32(mask),
-					Val:  uint32(value),
+					Mask: u32.Mask,
+					Val:  u32.Value,
 				},
 			},
 		},
