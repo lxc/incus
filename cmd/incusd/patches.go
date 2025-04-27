@@ -157,7 +157,7 @@ func patchesApply(d *Daemon, stage patchStage) error {
 
 // Patches begin here
 
-func patchDnsmasqEntriesIncludeDeviceName(name string, d *Daemon) error {
+func patchDnsmasqEntriesIncludeDeviceName(_ string, d *Daemon) error {
 	err := network.UpdateDNSMasqStatic(d.State(), "")
 	if err != nil {
 		return err
@@ -166,7 +166,7 @@ func patchDnsmasqEntriesIncludeDeviceName(name string, d *Daemon) error {
 	return nil
 }
 
-func patchRemoveWarningsWithEmptyNode(name string, d *Daemon) error {
+func patchRemoveWarningsWithEmptyNode(_ string, d *Daemon) error {
 	err := d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		warnings, err := dbCluster.GetWarnings(ctx, tx.Tx())
 		if err != nil {
@@ -288,7 +288,7 @@ func patchClusteringServerCertTrust(name string, d *Daemon) error {
 // It was decided that the user experience of having the default actions at the ACL level was confusing when using
 // multiple ACLs, and that the interplay between conflicting default actions on multiple ACLs was difficult to
 // understand. Instead it will be replace with a network and NIC level defaults settings.
-func patchNetworkACLRemoveDefaults(name string, d *Daemon) error {
+func patchNetworkACLRemoveDefaults(_ string, d *Daemon) error {
 	var err error
 	var projectNames []string
 
@@ -429,7 +429,7 @@ PRAGMA legacy_alter_table = OFF; -- So views check integrity again.
 }
 
 // patchVMRenameUUIDKey renames the volatile.vm.uuid key to volatile.uuid in instance and snapshot configs.
-func patchVMRenameUUIDKey(name string, d *Daemon) error {
+func patchVMRenameUUIDKey(_ string, d *Daemon) error {
 	oldUUIDKey := "volatile.vm.uuid"
 	newUUIDKey := "volatile.uuid"
 
@@ -487,7 +487,7 @@ func patchVMRenameUUIDKey(name string, d *Daemon) error {
 }
 
 // patchThinpoolTypoFix renames any config incorrectly set config file entries due to the lvm.thinpool_name typo.
-func patchThinpoolTypoFix(name string, d *Daemon) error {
+func patchThinpoolTypoFix(_ string, d *Daemon) error {
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -554,7 +554,7 @@ INSERT INTO storage_pools_config(storage_pool_id, node_id, key, value)
 
 // patchNetworkOVNRemoveRoutes removes the "ipv4.routes.external" and "ipv6.routes.external" settings from OVN
 // networks. It was decided that the OVN NIC level equivalent settings were sufficient.
-func patchNetworkOVNRemoveRoutes(name string, d *Daemon) error {
+func patchNetworkOVNRemoveRoutes(_ string, d *Daemon) error {
 	err := d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		projectNetworks, err := tx.GetCreatedNetworks(ctx)
 		if err != nil {
@@ -606,7 +606,7 @@ func patchNetworkOVNRemoveRoutes(name string, d *Daemon) error {
 // This is to ensure existing networks retain the old behaviour of always having NAT enabled as we introduce
 // the new NAT settings which default to disabled if not specified.
 // patchNetworkCearBridgeVolatileHwaddr removes the unsupported `volatile.bridge.hwaddr` config key from networks.
-func patchNetworkOVNEnableNAT(name string, d *Daemon) error {
+func patchNetworkOVNEnableNAT(_ string, d *Daemon) error {
 	err := d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		projectNetworks, err := tx.GetCreatedNetworks(ctx)
 		if err != nil {
@@ -653,7 +653,7 @@ func patchNetworkOVNEnableNAT(name string, d *Daemon) error {
 }
 
 // Moves backups from internalUtil.VarPath("backups") to internalUtil.VarPath("backups", "instances").
-func patchMoveBackupsInstances(name string, d *Daemon) error {
+func patchMoveBackupsInstances(_ string, _ *Daemon) error {
 	if !util.PathExists(internalUtil.VarPath("backups")) {
 		return nil // Nothing to do, no backups directory.
 	}
@@ -706,7 +706,7 @@ func patchGenericNetwork(f func(name string, d *Daemon) error) func(name string,
 	}
 }
 
-func patchClusteringDropDatabaseRole(name string, d *Daemon) error {
+func patchClusteringDropDatabaseRole(_ string, d *Daemon) error {
 	return d.State().DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		members, err := tx.GetNodes(ctx)
 		if err != nil {
@@ -724,7 +724,7 @@ func patchClusteringDropDatabaseRole(name string, d *Daemon) error {
 }
 
 // patchNetworkClearBridgeVolatileHwaddr removes the unsupported `volatile.bridge.hwaddr` config key from networks.
-func patchNetworkClearBridgeVolatileHwaddr(name string, d *Daemon) error {
+func patchNetworkClearBridgeVolatileHwaddr(_ string, d *Daemon) error {
 	// Use api.ProjectDefaultName, as bridge networks don't support projects.
 	projectName := api.ProjectDefaultName
 
@@ -761,7 +761,7 @@ func patchNetworkClearBridgeVolatileHwaddr(name string, d *Daemon) error {
 
 // patchStorageRenameCustomISOBlockVolumes renames existing custom ISO volumes by adding the ".iso" suffix so they can be distinguished from regular custom block volumes.
 // This patch doesn't use the patchGenericStorage function because the storage drivers themselves aren't aware of custom ISO volumes.
-func patchStorageRenameCustomISOBlockVolumes(name string, d *Daemon) error {
+func patchStorageRenameCustomISOBlockVolumes(_ string, d *Daemon) error {
 	s := d.State()
 
 	var pools []string
@@ -874,7 +874,7 @@ func patchStorageRenameCustomISOBlockVolumes(name string, d *Daemon) error {
 }
 
 // patchZfsSetContentTypeUserProperty adds the `incus:content_type` user property to custom storage volumes. In case of recovery, this allows for proper detection of block-mode enabled volumes.
-func patchZfsSetContentTypeUserProperty(name string, d *Daemon) error {
+func patchZfsSetContentTypeUserProperty(_ string, d *Daemon) error {
 	s := d.State()
 
 	var pools []string
@@ -961,7 +961,7 @@ func patchZfsSetContentTypeUserProperty(name string, d *Daemon) error {
 }
 
 // patchSnapshotsRename renames the "snapshots" directory to "container-snapshots".
-func patchSnapshotsRename(name string, d *Daemon) error {
+func patchSnapshotsRename(_ string, _ *Daemon) error {
 	// Remove what should be an empty directory.
 	os.Remove(internalUtil.VarPath("containers-snapshots"))
 
@@ -1203,7 +1203,7 @@ func patchStorageZfsUnsetInvalidBlockSettingsV2(_ string, d *Daemon) error {
 	return nil
 }
 
-func patchRuntimeDirectory(name string, d *Daemon) error {
+func patchRuntimeDirectory(_ string, d *Daemon) error {
 	s := d.State()
 
 	// Get the list of local instances.
@@ -1260,7 +1260,7 @@ func patchRuntimeDirectory(name string, d *Daemon) error {
 }
 
 // The lvm.vg.force_reuse config key is node-specific and need to be linked to nodes.
-func patchLvmForceReuseKey(name string, d *Daemon) error {
+func patchLvmForceReuseKey(_ string, d *Daemon) error {
 	reverter := revert.New()
 	defer reverter.Fail()
 

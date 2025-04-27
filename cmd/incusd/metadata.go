@@ -48,6 +48,6 @@ var metadataConfigurationCmd = APIEndpoint{
 //	    $ref: "#/responses/Forbidden"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func metadataConfigurationGet(d *Daemon, r *http.Request) response.Response {
+func metadataConfigurationGet(_ *Daemon, _ *http.Request) response.Response {
 	return response.SyncResponse(true, metadata.Data)
 }

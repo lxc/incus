@@ -1354,7 +1354,7 @@ func (d *Daemon) init() error {
 
 	// Mount the storage pools.
 	logger.Infof("Initializing storage pools")
-	err = storageStartup(d.State(), false)
+	err = storageStartup(d.State())
 	if err != nil {
 		return err
 	}
@@ -1824,7 +1824,7 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 
 		// Full shutdown requested.
 		if sig == unix.SIGPWR {
-			instancesShutdown(s, instances)
+			instancesShutdown(instances)
 
 			logger.Info("Stopping networks")
 			networkShutdown(s)
@@ -2315,7 +2315,7 @@ func (d *Daemon) hasMemberStateChanged(heartbeatData *cluster.APIHeartbeat) bool
 }
 
 // heartbeatHandler handles heartbeat requests from other cluster members.
-func (d *Daemon) heartbeatHandler(w http.ResponseWriter, r *http.Request, isLeader bool, hbData *cluster.APIHeartbeat) {
+func (d *Daemon) heartbeatHandler(w http.ResponseWriter, _ *http.Request, isLeader bool, hbData *cluster.APIHeartbeat) {
 	s := d.State()
 
 	var err error

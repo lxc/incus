@@ -311,7 +311,7 @@ func instanceFileGet(s *state.State, inst instance.Instance, path string, r *htt
 //	    $ref: "#/responses/NotFound"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func instanceFileHead(s *state.State, inst instance.Instance, path string, r *http.Request) response.Response {
+func instanceFileHead(_ *state.State, inst instance.Instance, path string, _ *http.Request) response.Response {
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -588,7 +588,7 @@ func instanceFilePost(s *state.State, inst instance.Instance, path string, r *ht
 //	    $ref: "#/responses/NotFound"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func instanceFileDelete(s *state.State, inst instance.Instance, path string, r *http.Request) response.Response {
+func instanceFileDelete(s *state.State, inst instance.Instance, path string, _ *http.Request) response.Response {
 	// Get a SFTP client.
 	client, err := inst.FileSFTP()
 	if err != nil {

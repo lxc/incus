@@ -1414,7 +1414,7 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 
 	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
 
-	response := doNetworkUpdate(projectName, n, req, targetNode, clientType, r.Method, s.ServerClustered)
+	response := doNetworkUpdate(n, req, targetNode, clientType, r.Method, s.ServerClustered)
 
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(projectName, lifecycle.NetworkUpdated.Event(n, requestor, nil))
@@ -1467,7 +1467,7 @@ func networkPatch(d *Daemon, r *http.Request) response.Response {
 
 // doNetworkUpdate loads the current local network config, merges with the requested network config, validates
 // and applies the changes. Will also notify other cluster nodes of non-node specific config if needed.
-func doNetworkUpdate(projectName string, n network.Network, req api.NetworkPut, targetNode string, clientType clusterRequest.ClientType, httpMethod string, clustered bool) response.Response {
+func doNetworkUpdate(n network.Network, req api.NetworkPut, targetNode string, clientType clusterRequest.ClientType, httpMethod string, clustered bool) response.Response {
 	if req.Config == nil {
 		req.Config = map[string]string{}
 	}

@@ -83,18 +83,18 @@ func (s *consoleWs) Metadata() any {
 	return jmap.Map{"fds": fds}
 }
 
-func (s *consoleWs) Connect(op *operations.Operation, r *http.Request, w http.ResponseWriter) error {
+func (s *consoleWs) Connect(_ *operations.Operation, r *http.Request, w http.ResponseWriter) error {
 	switch s.protocol {
 	case instance.ConsoleTypeConsole:
-		return s.connectConsole(op, r, w)
+		return s.connectConsole(r, w)
 	case instance.ConsoleTypeVGA:
-		return s.connectVGA(op, r, w)
+		return s.connectVGA(r, w)
 	default:
 		return fmt.Errorf("Unknown protocol %q", s.protocol)
 	}
 }
 
-func (s *consoleWs) connectConsole(op *operations.Operation, r *http.Request, w http.ResponseWriter) error {
+func (s *consoleWs) connectConsole(r *http.Request, w http.ResponseWriter) error {
 	secret := r.FormValue("secret")
 	if secret == "" {
 		return fmt.Errorf("missing secret")
@@ -135,7 +135,7 @@ func (s *consoleWs) connectConsole(op *operations.Operation, r *http.Request, w 
 	return os.ErrPermission
 }
 
-func (s *consoleWs) connectVGA(op *operations.Operation, r *http.Request, w http.ResponseWriter) error {
+func (s *consoleWs) connectVGA(r *http.Request, w http.ResponseWriter) error {
 	secret := r.FormValue("secret")
 	if secret == "" {
 		return fmt.Errorf("missing secret")
@@ -201,15 +201,15 @@ func (s *consoleWs) Do(op *operations.Operation) error {
 
 	switch s.protocol {
 	case instance.ConsoleTypeConsole:
-		return s.doConsole(op)
+		return s.doConsole()
 	case instance.ConsoleTypeVGA:
-		return s.doVGA(op)
+		return s.doVGA()
 	default:
 		return fmt.Errorf("Unknown protocol %q", s.protocol)
 	}
 }
 
-func (s *consoleWs) doConsole(op *operations.Operation) error {
+func (s *consoleWs) doConsole() error {
 	defer logger.Debug("Console websocket finished")
 	<-s.allConnected
 
@@ -342,7 +342,7 @@ func (s *consoleWs) doConsole(op *operations.Operation) error {
 	return nil
 }
 
-func (s *consoleWs) doVGA(op *operations.Operation) error {
+func (s *consoleWs) doVGA() error {
 	defer logger.Debug("VGA websocket finished")
 
 	consoleDoneCh := make(chan struct{})
@@ -389,7 +389,7 @@ func (s *consoleWs) doVGA(op *operations.Operation) error {
 }
 
 // Cancel is responsible for closing websocket connections.
-func (s *consoleWs) Cancel(op *operations.Operation) error {
+func (s *consoleWs) Cancel(*operations.Operation) error {
 	s.connsLock.Lock()
 	conn := s.conns[-1]
 	s.connsLock.Unlock()

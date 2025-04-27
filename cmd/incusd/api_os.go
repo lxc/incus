@@ -22,7 +22,7 @@ var apiOS = APIEndpoint{
 	Head:   APIEndpointAction{Handler: apiOSProxy, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
-func apiOSProxy(d *Daemon, r *http.Request) response.Response {
+func apiOSProxy(_ *Daemon, r *http.Request) response.Response {
 	// Check if this is an Incus OS system.
 	if !util.PathExists("/run/incus-os/unix.socket") {
 		return response.BadRequest(errors.New("System isn't running Incus OS"))

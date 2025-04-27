@@ -79,7 +79,7 @@ func (s *execWs) Metadata() any {
 	}
 }
 
-func (s *execWs) Connect(op *operations.Operation, r *http.Request, w http.ResponseWriter) error {
+func (s *execWs) Connect(_ *operations.Operation, r *http.Request, w http.ResponseWriter) error {
 	secret := r.FormValue("secret")
 	if secret == "" {
 		return fmt.Errorf("missing secret")

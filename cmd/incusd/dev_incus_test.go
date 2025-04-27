@@ -23,7 +23,7 @@ type DevIncusDialer struct {
 	Path string
 }
 
-func (d DevIncusDialer) DevIncusDial(ctx context.Context, network, path string) (net.Conn, error) {
+func (d DevIncusDialer) DevIncusDial(context.Context, string, string) (net.Conn, error) {
 	addr, err := net.ResolveUnixAddr("unix", d.Path)
 	if err != nil {
 		return nil, err

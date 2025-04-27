@@ -498,7 +498,7 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 
 	// Write index file.
 	l.Debug("Adding backup index file")
-	err = volumeBackupWriteIndex(s, projectName, volumeName, pool, backupRow.OptimizedStorage, !backupRow.VolumeOnly, tarWriter)
+	err = volumeBackupWriteIndex(projectName, volumeName, pool, backupRow.OptimizedStorage, !backupRow.VolumeOnly, tarWriter)
 
 	// Check compression errors.
 	if compressErr != nil {
@@ -542,7 +542,7 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 }
 
 // volumeBackupWriteIndex generates an index.yaml file and then writes it to the root of the backup tarball.
-func volumeBackupWriteIndex(s *state.State, projectName string, volumeName string, pool storagePools.Pool, optimized bool, snapshots bool, tarWriter *instancewriter.InstanceTarWriter) error {
+func volumeBackupWriteIndex(projectName string, volumeName string, pool storagePools.Pool, optimized bool, snapshots bool, tarWriter *instancewriter.InstanceTarWriter) error {
 	// Indicate whether the driver will include a driver-specific optimized header.
 	poolDriverOptimizedHeader := false
 	if optimized {
@@ -744,7 +744,7 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 
 	// Write index file.
 	l.Debug("Adding backup index file")
-	err = bucketBackupWriteIndex(s, projectName, bucketName, pool, tarWriter)
+	err = bucketBackupWriteIndex(projectName, bucketName, pool, tarWriter)
 
 	// Check compression errors.
 	if compressErr != nil {
@@ -788,7 +788,7 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 }
 
 // bucketBackupWriteIndex generates an index.yaml file and then writes it to the root of the backup tarball.
-func bucketBackupWriteIndex(s *state.State, projectName string, bucketName string, pool storagePools.Pool, tarWriter *instancewriter.InstanceTarWriter) error {
+func bucketBackupWriteIndex(projectName string, bucketName string, pool storagePools.Pool, tarWriter *instancewriter.InstanceTarWriter) error {
 	config, err := pool.GenerateBucketBackupConfig(projectName, bucketName, nil)
 	if err != nil {
 		return fmt.Errorf("Failed generating storage backup config: %w", err)
