@@ -700,7 +700,7 @@ func bgpRemovePrefix(d *deviceCommon, config map[string]string) error {
 	return nil
 }
 
-// networkSRIOVParentVFInfo returns info about an SR-IOV virtual function from the parent NIC using the ip tool.
+// networkSRIOVParentVFInfo returns info about an SR-IOV virtual function from the parent NIC.
 func networkSRIOVParentVFInfo(vfParent string, vfID int) (ip.VirtFuncInfo, error) {
 	link := &ip.Link{Name: vfParent}
 	vfi, err := link.GetVFInfo(vfID)
