@@ -101,8 +101,8 @@ func reconfigureNetworkInterfaces() {
 
 	// configureNIC applies any config specified for the interface based on its current MAC address.
 	configureNIC := func(currentNIC net.Interface) error {
-		revert := revert.New()
-		defer revert.Fail()
+		reverter := revert.New()
+		defer reverter.Fail()
 
 		// Look for a NIC config entry for this interface based on its MAC address.
 		nic, ok := nicData[currentNIC.HardwareAddr.String()]
@@ -133,7 +133,7 @@ func reconfigureNetworkInterfaces() {
 			return err
 		}
 
-		revert.Add(func() {
+		reverter.Add(func() {
 			_ = link.SetUp()
 		})
 
@@ -144,7 +144,7 @@ func reconfigureNetworkInterfaces() {
 				return err
 			}
 
-			revert.Add(func() {
+			reverter.Add(func() {
 				err := link.SetName(currentNIC.Name)
 				if err != nil {
 					return
@@ -165,7 +165,7 @@ func reconfigureNetworkInterfaces() {
 
 			link.MTU = nic.MTU
 
-			revert.Add(func() {
+			reverter.Add(func() {
 				err := link.SetMTU(uint32(currentNIC.MTU))
 				if err != nil {
 					return
@@ -180,7 +180,7 @@ func reconfigureNetworkInterfaces() {
 			return err
 		}
 
-		revert.Success()
+		reverter.Success()
 		return nil
 	}
 
