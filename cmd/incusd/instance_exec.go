@@ -61,7 +61,7 @@ type execWs struct {
 	s                     *state.State
 }
 
-func (s *execWs) Metadata() any {
+func (s *execWs) metadata() any {
 	fds := jmap.Map{}
 	for fd, secret := range s.fds {
 		if fd == execWSControl {
@@ -79,7 +79,7 @@ func (s *execWs) Metadata() any {
 	}
 }
 
-func (s *execWs) Connect(_ *operations.Operation, r *http.Request, w http.ResponseWriter) error {
+func (s *execWs) connect(_ *operations.Operation, r *http.Request, w http.ResponseWriter) error {
 	secret := r.FormValue("secret")
 	if secret == "" {
 		return fmt.Errorf("missing secret")
@@ -159,7 +159,7 @@ func (s *execWs) Connect(_ *operations.Operation, r *http.Request, w http.Respon
 	return os.ErrPermission
 }
 
-func (s *execWs) Do(op *operations.Operation) error {
+func (s *execWs) do(op *operations.Operation) error {
 	s.instance.SetOperation(op)
 
 	// Once this function ends ensure that any connected websockets are closed.
@@ -702,7 +702,7 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 		resources := map[string][]api.URL{}
 		resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", ws.instance.Name())}
 
-		op, err := operations.OperationCreate(s, projectName, operations.OperationClassWebsocket, operationtype.CommandExec, resources, ws.Metadata(), ws.Do, nil, ws.Connect, r)
+		op, err := operations.OperationCreate(s, projectName, operations.OperationClassWebsocket, operationtype.CommandExec, resources, ws.metadata(), ws.do, nil, ws.connect, r)
 		if err != nil {
 			return response.InternalError(err)
 		}
