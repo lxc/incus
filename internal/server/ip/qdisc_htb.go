@@ -2,7 +2,6 @@ package ip
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/vishvananda/netlink"
 )
@@ -10,7 +9,7 @@ import (
 // QdiscHTB represents the hierarchy token bucket qdisc object.
 type QdiscHTB struct {
 	Qdisc
-	Default string
+	Default uint32
 }
 
 // Add adds a htb qdisc to a device.
@@ -22,14 +21,7 @@ func (q *QdiscHTB) Add() error {
 
 	htb := netlink.NewHtb(attrs)
 
-	if q.Default != "" {
-		defcls, err := strconv.Atoi(q.Default)
-		if err != nil {
-			return fmt.Errorf("invalid htb default class %q: %w", q.Default, err)
-		}
-
-		htb.Defcls = uint32(defcls)
-	}
+	htb.Defcls = q.Default
 
 	err = netlink.QdiscAdd(htb)
 	if err != nil {
