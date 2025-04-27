@@ -754,7 +754,7 @@ func (d *qemu) Shutdown(timeout time.Duration) error {
 	// Send the system_powerdown command.
 	err = monitor.Powerdown()
 	if err != nil {
-		if err == qmp.ErrMonitorDisconnect {
+		if errors.Is(err, qmp.ErrMonitorDisconnect) {
 			op.Done(nil)
 			return nil
 		}
@@ -816,7 +816,7 @@ func (d *qemu) Rebuild(img *api.Image, op *operations.Operation) error {
 func (d *qemu) killQemuProcess(pid int) error {
 	proc, err := os.FindProcess(pid)
 	if err != nil {
-		if err == os.ErrProcessDone {
+		if errors.Is(err, os.ErrProcessDone) {
 			return nil
 		}
 
@@ -825,7 +825,7 @@ func (d *qemu) killQemuProcess(pid int) error {
 
 	err = proc.Kill()
 	if err != nil {
-		if err == os.ErrProcessDone {
+		if errors.Is(err, os.ErrProcessDone) {
 			return nil
 		}
 
@@ -8630,7 +8630,7 @@ func (d *qemu) statusCode() api.StatusCode {
 
 	status, err := monitor.Status()
 	if err != nil {
-		if err == qmp.ErrMonitorDisconnect {
+		if errors.Is(err, qmp.ErrMonitorDisconnect) {
 			// If cannot connect to monitor, but qemu process in pid file still exists, then likely
 			// qemu is unresponsive and this instance is in an error state.
 			pid, _ := d.pid()
@@ -8903,7 +8903,7 @@ func (d *qemu) devIncusEventSend(eventType string, eventMessage map[string]any) 
 	client, err := d.getAgentClient()
 	if err != nil {
 		// Don't fail if the VM simply doesn't have an agent.
-		if err == errQemuAgentOffline {
+		if errors.Is(err, errQemuAgentOffline) {
 			return nil
 		}
 

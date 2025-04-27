@@ -438,7 +438,7 @@ func DiskVMVirtiofsdStop(socketPath string, pidPath string) error {
 		err = proc.Stop()
 		// The virtiofsd process will terminate automatically once the VM has stopped.
 		// We therefore should only return an error if it's still running and fails to stop.
-		if err != nil && err != subprocess.ErrNotRunning {
+		if err != nil && !errors.Is(err, subprocess.ErrNotRunning) {
 			return err
 		}
 

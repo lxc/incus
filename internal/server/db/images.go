@@ -656,7 +656,7 @@ func (c *ClusterTx) GetImageAlias(ctx context.Context, projectName string, image
 	arg2 := []any{&id, &fingerprint, &imageType, &description}
 	err = c.tx.QueryRowContext(ctx, q, arg1...).Scan(arg2...)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return -1, api.ImageAliasesEntry{}, api.StatusErrorf(http.StatusNotFound, "Image alias not found")
 		}
 

@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -141,7 +142,7 @@ func EnsureSchema(db *sql.DB, address string, dir string) (bool, error) {
 		}
 
 		err = checkClusterIsUpgradable(ctx, tx, [2]int{len(updates), apiExtensions})
-		if err == errSomeNodesAreBehind {
+		if errors.Is(err, errSomeNodesAreBehind) {
 			someNodesAreBehind = true
 			return schema.ErrGracefulAbort
 		}

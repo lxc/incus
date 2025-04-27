@@ -2,6 +2,7 @@ package ovs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"slices"
@@ -81,7 +82,7 @@ func (o *VSwitch) CreateBridge(ctx context.Context, bridgeName string, mayExist 
 
 	if mayExist {
 		err = o.client.Get(ctx, &bridge)
-		if err != nil && err != ovsdbClient.ErrNotFound {
+		if err != nil && !errors.Is(err, ovsdbClient.ErrNotFound) {
 			return err
 		}
 
@@ -197,7 +198,7 @@ func (o *VSwitch) CreateBridgePort(ctx context.Context, bridgeName string, portN
 	}
 
 	err = o.client.Get(ctx, &port)
-	if err != nil && err != ovsdbClient.ErrNotFound {
+	if err != nil && !errors.Is(err, ovsdbClient.ErrNotFound) {
 		return err
 	}
 
@@ -255,7 +256,7 @@ func (o *VSwitch) DeleteBridgePort(ctx context.Context, bridgeName string, portN
 	err := o.client.Get(ctx, &bridgePort)
 	if err != nil {
 		// Logical switch port is already gone.
-		if err == ErrNotFound {
+		if errors.Is(err, ErrNotFound) {
 			return nil
 		}
 

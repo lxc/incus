@@ -412,7 +412,7 @@ func begin(db *sql.DB) (*sql.Tx, error) {
 // TxCommit commits the given transaction.
 func TxCommit(tx *sql.Tx) error {
 	err := tx.Commit()
-	if err == nil || err == sql.ErrTxDone { // Ignore duplicate commits/rollbacks
+	if err == nil || errors.Is(err, sql.ErrTxDone) { // Ignore duplicate commits/rollbacks
 		return nil
 	}
 

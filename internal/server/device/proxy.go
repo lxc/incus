@@ -3,6 +3,7 @@ package device
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -666,7 +667,7 @@ func (d *proxy) killProxyProc(pidPath string) error {
 	}
 
 	err = p.Stop()
-	if err != nil && err != subprocess.ErrNotRunning {
+	if err != nil && !errors.Is(err, subprocess.ErrNotRunning) {
 		return fmt.Errorf("Unable to kill forkproxy: %s", err)
 	}
 

@@ -1311,7 +1311,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 							// Fallback to 9p-only.
 							busOption = "9p"
 
-							if errUnsupported == ErrMissingVirtiofsd {
+							if errors.Is(errUnsupported, ErrMissingVirtiofsd) {
 								_ = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 									return tx.UpsertWarningLocalNode(ctx, d.inst.Project().Name, cluster.TypeInstance, d.inst.ID(), warningtype.MissingVirtiofsd, "Using 9p as a fallback")
 								})

@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -132,7 +133,7 @@ func triggerUpdate() error {
 // raft configuration. It's used for upgrading a cluster from a version without roles support.
 func UpgradeMembersWithoutRole(gateway *Gateway, members []db.NodeInfo) error {
 	nodes, err := gateway.currentRaftNodes()
-	if err == ErrNotLeader {
+	if errors.Is(err, ErrNotLeader) {
 		return nil
 	}
 

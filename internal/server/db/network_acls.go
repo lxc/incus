@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -125,7 +126,7 @@ func (c *ClusterTx) GetNetworkACL(ctx context.Context, projectName string, name 
 
 	err := c.tx.QueryRowContext(ctx, q, projectName, name).Scan(&id, &acl.Description, &ingressJSON, &egressJSON)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return -1, nil, api.StatusErrorf(http.StatusNotFound, "Network ACL not found")
 		}
 
@@ -134,7 +135,7 @@ func (c *ClusterTx) GetNetworkACL(ctx context.Context, projectName string, name 
 
 	err = networkACLConfig(ctx, c, id, &acl)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return -1, nil, api.StatusErrorf(http.StatusNotFound, "Network ACL not found")
 		}
 
@@ -169,7 +170,7 @@ func (c *ClusterTx) GetNetworkACLNameAndProjectWithID(ctx context.Context, netwo
 
 	err := c.tx.QueryRowContext(ctx, q, networkACLID).Scan(&networkACLName, &projectName)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return "", "", api.StatusErrorf(http.StatusNotFound, "Network ACL not found")
 		}
 

@@ -1366,7 +1366,7 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 			}
 
 			err = d.deviceRemove(dev, instanceRunning)
-			if err != nil && err != device.ErrUnsupportedDevType {
+			if err != nil && !errors.Is(err, device.ErrUnsupportedDevType) {
 				return fmt.Errorf("Failed to remove device %q: %w", dev.Name(), err)
 			}
 		}
@@ -1423,7 +1423,7 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 			}
 
 			_, err := dm.deviceStart(dev, instanceRunning)
-			if err != nil && err != device.ErrUnsupportedDevType {
+			if err != nil && !errors.Is(err, device.ErrUnsupportedDevType) {
 				return fmt.Errorf("Failed to start device %q: %w", dev.Name(), err)
 			}
 
@@ -1463,7 +1463,7 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 				}
 
 				err = d.deviceRemove(dev, instanceRunning)
-				if err != nil && err != device.ErrUnsupportedDevType {
+				if err != nil && !errors.Is(err, device.ErrUnsupportedDevType) {
 					l.Error("Failed to remove device after update validation failed", logger.Ctx{"err": err})
 				}
 			}

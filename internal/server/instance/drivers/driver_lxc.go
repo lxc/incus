@@ -485,7 +485,7 @@ func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 
 		for _, ent := range rawMaps.Entries {
 			err := set.AddSafe(ent)
-			if err != nil && err == idmap.ErrHostIDIsSubID {
+			if err != nil && errors.Is(err, idmap.ErrHostIDIsSubID) {
 				return nil, err
 			}
 		}
@@ -517,7 +517,7 @@ func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 		// Apply the raw idmap entries.
 		for _, ent := range rawMaps.Entries {
 			err := newIdmapset.AddSafe(ent)
-			if err != nil && err == idmap.ErrHostIDIsSubID {
+			if err != nil && errors.Is(err, idmap.ErrHostIDIsSubID) {
 				return nil, 0, err
 			}
 		}
@@ -537,7 +537,7 @@ func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 		}
 
 		set, err := mkIdmap(offset, size)
-		if err != nil && err == idmap.ErrHostIDIsSubID {
+		if err != nil && errors.Is(err, idmap.ErrHostIDIsSubID) {
 			return nil, 0, err
 		}
 
@@ -600,7 +600,7 @@ func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 			}
 
 			set, err := mkIdmap(offset, size)
-			if err != nil && err == idmap.ErrHostIDIsSubID {
+			if err != nil && errors.Is(err, idmap.ErrHostIDIsSubID) {
 				return nil, 0, err
 			}
 
@@ -615,7 +615,7 @@ func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 		offset = mapentries.Entries[i-1].HostID + mapentries.Entries[i-1].MapRange
 		if offset+size < mapentries.Entries[i].HostID {
 			set, err := mkIdmap(offset, size)
-			if err != nil && err == idmap.ErrHostIDIsSubID {
+			if err != nil && errors.Is(err, idmap.ErrHostIDIsSubID) {
 				return nil, 0, err
 			}
 
@@ -627,7 +627,7 @@ func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 
 	if offset+size <= d.state.OS.IdmapSet.Entries[0].HostID+d.state.OS.IdmapSet.Entries[0].MapRange {
 		set, err := mkIdmap(offset, size)
-		if err != nil && err == idmap.ErrHostIDIsSubID {
+		if err != nil && errors.Is(err, idmap.ErrHostIDIsSubID) {
 			return nil, 0, err
 		}
 
@@ -3172,7 +3172,7 @@ func (d *lxc) onStop(args map[string]string) error {
 
 			// Stop LXCFS.
 			err = lxcfs.Stop()
-			if err != nil && err != subprocess.ErrNotRunning {
+			if err != nil && !errors.Is(err, subprocess.ErrNotRunning) {
 				op.Done(fmt.Errorf("Failed to stop LXCFS: %w", err))
 				return
 			}
