@@ -1189,12 +1189,12 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 				}
 			} else if vlanID > 0 {
 				// If the interface exists and VLAN ID was provided, ensure it has the same parent and VLAN ID and is not attached to a different network.
-				linkInfo, err := ip.GetLinkInfoByName(entry)
+				linkInfo, err := ip.LinkByName(entry)
 				if err != nil {
 					return fmt.Errorf("Failed to get link info for external interface %q", entry)
 				}
 
-				if linkInfo.Info.Kind != "vlan" || linkInfo.Link != ifParent || linkInfo.Info.Data.ID != vlanID || !(linkInfo.Master == "" || linkInfo.Master == n.name) {
+				if linkInfo.Kind != "vlan" || linkInfo.Parent != ifParent || linkInfo.VlanID != vlanID || (linkInfo.Master != "" && linkInfo.Master != n.name) {
 					return fmt.Errorf("External interface %q already in use", entry)
 				}
 			}
@@ -3423,7 +3423,7 @@ func (n *bridge) deleteChildren() error {
 	}
 
 	for _, iface := range ifaces {
-		l, err := ip.LinkFromName(iface.Name)
+		l, err := ip.LinkByName(iface.Name)
 		if err != nil {
 			// If we can't load the link, chances are the interface isn't one that we should be deleting.
 			continue

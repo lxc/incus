@@ -75,11 +75,11 @@ func (l *Link) netlinkAttrs() (netlink.LinkAttrs, error) {
 	return linkAttrs, nil
 }
 
-// LinkFromName returns a Link from a device name.
-func LinkFromName(name string) (*Link, error) {
+// LinkByName returns a Link from a device name.
+func LinkByName(name string) (LinkInfo, error) {
 	link, err := linkByName(name)
 	if err != nil {
-		return nil, err
+		return LinkInfo{}, err
 	}
 
 	var parent, master string
@@ -87,7 +87,7 @@ func LinkFromName(name string) (*Link, error) {
 	if link.Attrs().ParentIndex != 0 {
 		parentLink, err := netlink.LinkByIndex(link.Attrs().ParentIndex)
 		if err != nil {
-			return nil, err
+			return LinkInfo{}, err
 		}
 
 		parent = parentLink.Attrs().Name
@@ -96,22 +96,32 @@ func LinkFromName(name string) (*Link, error) {
 	if link.Attrs().MasterIndex != 0 {
 		masterLink, err := netlink.LinkByIndex(link.Attrs().MasterIndex)
 		if err != nil {
-			return nil, err
+			return LinkInfo{}, err
 		}
 
 		master = masterLink.Attrs().Name
 	}
 
-	return &Link{
-		Name:          link.Attrs().Name,
-		Kind:          link.Type(),
-		MTU:           uint32(link.Attrs().MTU),
-		Parent:        parent,
-		Address:       link.Attrs().HardwareAddr,
-		TXQueueLength: uint32(link.Attrs().TxQLen),
-		AllMulticast:  link.Attrs().Allmulti == 1,
-		Master:        master,
-		Up:            (link.Attrs().Flags & net.FlagUp) != 0,
+	var vlanID int
+	vlan, ok := link.(*netlink.Vlan)
+	if ok {
+		vlanID = vlan.VlanId
+	}
+
+	return LinkInfo{
+		Link: Link{
+			Name:          link.Attrs().Name,
+			Kind:          link.Type(),
+			MTU:           uint32(link.Attrs().MTU),
+			Parent:        parent,
+			Address:       link.Attrs().HardwareAddr,
+			TXQueueLength: uint32(link.Attrs().TxQLen),
+			AllMulticast:  link.Attrs().Allmulti == 1,
+			Master:        master,
+			Up:            (link.Attrs().Flags & net.FlagUp) != 0,
+		},
+		OperationalState: link.Attrs().OperState.String(),
+		VlanID:           vlanID,
 	}, nil
 }
 
