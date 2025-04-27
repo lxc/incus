@@ -15,7 +15,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 )
 
-func doProfileUpdate(ctx context.Context, s *state.State, p api.Project, profileName string, id int64, profile *api.Profile, req api.ProfilePut) error {
+func doProfileUpdate(ctx context.Context, s *state.State, p api.Project, profileName string, profile *api.Profile, req api.ProfilePut) error {
 	// Check project limits.
 	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		return project.AllowProfileUpdate(tx, p.Name, profileName, req)

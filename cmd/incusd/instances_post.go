@@ -43,7 +43,7 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
-func ensureDownloadedImageFitWithinBudget(ctx context.Context, s *state.State, r *http.Request, op *operations.Operation, p api.Project, img *api.Image, imgAlias string, source api.InstanceSource, imgType string) (*api.Image, error) {
+func ensureDownloadedImageFitWithinBudget(ctx context.Context, s *state.State, r *http.Request, op *operations.Operation, p api.Project, imgAlias string, source api.InstanceSource, imgType string) (*api.Image, error) {
 	var autoUpdate bool
 	var err error
 	if p.Config["images.auto_update_cached"] != "" {
@@ -117,12 +117,12 @@ func createFromImage(s *state.State, r *http.Request, p api.Project, profiles []
 		}
 
 		if req.Source.Server != "" {
-			img, err = ensureDownloadedImageFitWithinBudget(context.TODO(), s, r, op, p, img, imgAlias, req.Source, string(req.Type))
+			img, err = ensureDownloadedImageFitWithinBudget(context.TODO(), s, r, op, p, imgAlias, req.Source, string(req.Type))
 			if err != nil {
 				return err
 			}
 		} else if img != nil {
-			err := ensureImageIsLocallyAvailable(context.TODO(), s, r, img, args.Project, args.Type)
+			err := ensureImageIsLocallyAvailable(context.TODO(), s, r, img, args.Project)
 			if err != nil {
 				return err
 			}
@@ -136,7 +136,7 @@ func createFromImage(s *state.State, r *http.Request, p api.Project, profiles []
 		}
 
 		// Actually create the instance.
-		err = instanceCreateFromImage(context.TODO(), s, r, img, args, op)
+		err = instanceCreateFromImage(context.TODO(), s, img, args, op)
 		if err != nil {
 			return err
 		}
@@ -389,7 +389,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		sink.instance.SetOperation(op)
 
 		// And finally run the migration.
-		err = sink.Do(s, instOp)
+		err = sink.Do(instOp)
 		if err != nil {
 			err = fmt.Errorf("Error transferring instance data: %w", err)
 			instOp.Done(err) // Complete operation that was created earlier, to release lock.
