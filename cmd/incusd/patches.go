@@ -89,10 +89,12 @@ var patches = []patch{
 	{name: "auth_openfga_network_address_set", stage: patchPostNetworks, run: patchGenericAuthorization},
 }
 
+type patchRun func(name string, d *Daemon) error
+
 type patch struct {
 	name  string
 	stage patchStage
-	run   func(name string, d *Daemon) error
+	run   patchRun
 }
 
 func (p *patch) apply(d *Daemon) error {
