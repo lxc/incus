@@ -17,7 +17,7 @@ type cmdForklimits struct {
 	global *cmdGlobal
 }
 
-func (c *cmdForklimits) Command() *cobra.Command {
+func (c *cmdForklimits) command() *cobra.Command {
 	// Main subcommand
 	cmd := &cobra.Command{}
 	cmd.Use = "forklimits [fd=<number>...] [limit=<name>:<softlimit>:<hardlimit>...] -- <command> [<arg>...]"
@@ -28,13 +28,13 @@ func (c *cmdForklimits) Command() *cobra.Command {
   This internal command is used to spawn a command with limits set. It can also pass through one or more filed escriptors specified by fd=n arguments.
   These are passed through in the order they are specified.
 `
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Hidden = true
 
 	return cmd
 }
 
-func (c *cmdForklimits) Run(cmd *cobra.Command, _ []string) error {
+func (c *cmdForklimits) run(cmd *cobra.Command, _ []string) error {
 	// Use raw args instead of cobra passed args, as we need to access the "--" argument.
 	args := c.global.rawArgs(cmd)
 

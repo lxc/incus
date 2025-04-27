@@ -32,15 +32,14 @@ type cmdAdmin struct {
 	global *cmdGlobal
 }
 
-// Command returns a cobra command for inclusion.
-func (c *cmdAdmin) Command() *cobra.Command {
+func (c *cmdAdmin) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Hidden = true
 	cmd.Use = "admin"
 
 	// Cluster
 	clusterCmd := cmdCluster{global: c.global}
-	cmd.AddCommand(clusterCmd.Command())
+	cmd.AddCommand(clusterCmd.command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -53,7 +52,7 @@ type cmdCluster struct {
 }
 
 // Command returns a cobra command for inclusion.
-func (c *cmdCluster) Command() *cobra.Command {
+func (c *cmdCluster) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "cluster"
 	cmd.Short = "Low-level cluster administration commands"
@@ -62,23 +61,23 @@ func (c *cmdCluster) Command() *cobra.Command {
 `
 	// List database nodes
 	listDatabase := cmdClusterListDatabase{global: c.global}
-	cmd.AddCommand(listDatabase.Command())
+	cmd.AddCommand(listDatabase.command())
 
 	// Recover
 	recoverFromQuorumLoss := cmdClusterRecoverFromQuorumLoss{global: c.global}
-	cmd.AddCommand(recoverFromQuorumLoss.Command())
+	cmd.AddCommand(recoverFromQuorumLoss.command())
 
 	// Remove a raft node.
 	removeRaftNode := cmdClusterRemoveRaftNode{global: c.global}
-	cmd.AddCommand(removeRaftNode.Command())
+	cmd.AddCommand(removeRaftNode.command())
 
 	// Edit cluster configuration.
 	clusterEdit := cmdClusterEdit{global: c.global}
-	cmd.AddCommand(clusterEdit.Command())
+	cmd.AddCommand(clusterEdit.command())
 
 	// Show cluster configuration.
 	clusterShow := cmdClusterShow{global: c.global}
-	cmd.AddCommand(clusterShow.Command())
+	cmd.AddCommand(clusterShow.command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -132,18 +131,18 @@ type cmdClusterEdit struct {
 	global *cmdGlobal
 }
 
-func (c *cmdClusterEdit) Command() *cobra.Command {
+func (c *cmdClusterEdit) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "edit"
 	cmd.Short = "Edit cluster configuration as YAML"
 	cmd.Long = `Description:
 	Edit cluster configuration as YAML.`
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-func (c *cmdClusterEdit) Run(_ *cobra.Command, _ []string) error {
+func (c *cmdClusterEdit) run(_ *cobra.Command, _ []string) error {
 	// Make sure that the daemon is not running.
 	_, err := incus.ConnectIncusUnix("", nil)
 	if err == nil {
@@ -300,18 +299,18 @@ type cmdClusterShow struct {
 	global *cmdGlobal
 }
 
-func (c *cmdClusterShow) Command() *cobra.Command {
+func (c *cmdClusterShow) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "show"
 	cmd.Short = "Show cluster configuration as YAML"
 	cmd.Long = `Description:
 	Show cluster configuration as YAML.`
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-func (c *cmdClusterShow) Run(_ *cobra.Command, _ []string) error {
+func (c *cmdClusterShow) run(_ *cobra.Command, _ []string) error {
 	database, err := db.OpenNode(filepath.Join(sys.DefaultOS().VarDir, "database"), nil)
 	if err != nil {
 		return err
@@ -359,7 +358,7 @@ type cmdClusterListDatabase struct {
 	flagFormat string
 }
 
-func (c *cmdClusterListDatabase) Command() *cobra.Command {
+func (c *cmdClusterListDatabase) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "list-database"
 	cmd.Aliases = []string{"ls"}
@@ -370,12 +369,12 @@ func (c *cmdClusterListDatabase) Command() *cobra.Command {
 		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
 	}
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-func (c *cmdClusterListDatabase) Run(_ *cobra.Command, _ []string) error {
+func (c *cmdClusterListDatabase) run(_ *cobra.Command, _ []string) error {
 	defaultOS := sys.DefaultOS()
 
 	dbconn, err := db.OpenNode(filepath.Join(defaultOS.VarDir, "database"), nil)
@@ -404,19 +403,19 @@ type cmdClusterRecoverFromQuorumLoss struct {
 	flagNonInteractive bool
 }
 
-func (c *cmdClusterRecoverFromQuorumLoss) Command() *cobra.Command {
+func (c *cmdClusterRecoverFromQuorumLoss) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "recover-from-quorum-loss"
 	cmd.Short = "Recover an instance whose cluster has lost quorum"
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.Flags().BoolVarP(&c.flagNonInteractive, "quiet", "q", false, "Don't require user confirmation")
 
 	return cmd
 }
 
-func (c *cmdClusterRecoverFromQuorumLoss) Run(_ *cobra.Command, _ []string) error {
+func (c *cmdClusterRecoverFromQuorumLoss) run(_ *cobra.Command, _ []string) error {
 	// Make sure that the daemon is not running.
 	_, err := incus.ConnectIncusUnix("", nil)
 	if err == nil {
@@ -474,19 +473,19 @@ type cmdClusterRemoveRaftNode struct {
 	flagNonInteractive bool
 }
 
-func (c *cmdClusterRemoveRaftNode) Command() *cobra.Command {
+func (c *cmdClusterRemoveRaftNode) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "remove-raft-node <address>"
 	cmd.Short = "Remove a raft node from the raft configuration"
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.Flags().BoolVarP(&c.flagNonInteractive, "quiet", "q", false, "Don't require user confirmation")
 
 	return cmd
 }
 
-func (c *cmdClusterRemoveRaftNode) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdClusterRemoveRaftNode) run(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		_ = cmd.Help()
 		return fmt.Errorf("Missing required arguments")
