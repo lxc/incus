@@ -529,17 +529,17 @@ func qemuCPU(opts *qemuCPUOpts, pinning bool) []cfg.Section {
 		}
 
 		// Cap the max number of CPUs to 64 unless directly assigned more.
-		max := 64
-		if int(cpu.Total) < max {
-			max = int(cpu.Total)
-		} else if opts.cpuRequested > max {
-			max = opts.cpuRequested
-		} else if opts.cpuCount > max {
-			max = opts.cpuCount
+		maxCpus := 64
+		if int(cpu.Total) < maxCpus {
+			maxCpus = int(cpu.Total)
+		} else if opts.cpuRequested > maxCpus {
+			maxCpus = opts.cpuRequested
+		} else if opts.cpuCount > maxCpus {
+			maxCpus = opts.cpuCount
 		}
 
 		entries = append(entries, cfg.Entry{
-			Key: "maxcpus", Value: fmt.Sprintf("%d", max),
+			Key: "maxcpus", Value: fmt.Sprintf("%d", maxCpus),
 		})
 	}
 

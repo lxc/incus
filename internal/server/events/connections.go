@@ -52,9 +52,9 @@ func NewWebsocketListenerConnection(connection *websocket.Conn) EventListenerCon
 }
 
 func (e *websockListenerConnection) Reader(ctx context.Context, recvFunc EventHandler) {
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancelFunc := context.WithCancel(ctx)
 
-	close := func() {
+	closeFunc := func() {
 		e.lock.Lock()
 		defer e.lock.Unlock()
 
@@ -62,11 +62,15 @@ func (e *websockListenerConnection) Reader(ctx context.Context, recvFunc EventHa
 			return
 		}
 
-		_ = e.Close()
-		cancel()
+		err := e.Close()
+		if err != nil {
+			logger.Warn("Failed closing connection", logger.Ctx{"err": err})
+		}
+
+		cancelFunc()
 	}
 
-	defer close()
+	defer closeFunc()
 
 	pingInterval := time.Second * 10
 	e.pongsPending = 0
@@ -80,7 +84,7 @@ func (e *websockListenerConnection) Reader(ctx context.Context, recvFunc EventHa
 
 	// Start reader from client.
 	go func() {
-		defer close()
+		defer closeFunc()
 
 		if recvFunc != nil {
 			for {
@@ -170,7 +174,7 @@ X-Content-Type-Options: nosniff
 func (e *streamListenerConnection) Reader(ctx context.Context, recvFunc EventHandler) {
 	ctx, cancelFunc := context.WithCancel(ctx)
 
-	close := func() {
+	closeFunc := func() {
 		e.lock.Lock()
 		defer e.lock.Unlock()
 
@@ -186,11 +190,11 @@ func (e *streamListenerConnection) Reader(ctx context.Context, recvFunc EventHan
 		cancelFunc()
 	}
 
-	defer close()
+	defer closeFunc()
 
 	// Start reader from client.
 	go func() {
-		defer close()
+		defer closeFunc()
 
 		buf := make([]byte, 1)
 
@@ -239,7 +243,7 @@ func NewSimpleListenerConnection(rwc io.ReadWriteCloser) EventListenerConnection
 func (e *simpleListenerConnection) Reader(ctx context.Context, recvFunc EventHandler) {
 	ctx, cancelFunc := context.WithCancel(ctx)
 
-	close := func() {
+	closeFunc := func() {
 		e.lock.Lock()
 		defer e.lock.Unlock()
 
@@ -255,11 +259,11 @@ func (e *simpleListenerConnection) Reader(ctx context.Context, recvFunc EventHan
 		cancelFunc()
 	}
 
-	defer close()
+	defer closeFunc()
 
 	// Start reader from client.
 	go func() {
-		defer close()
+		defer closeFunc()
 
 		buf := make([]byte, 1)
 
