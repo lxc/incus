@@ -228,9 +228,6 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 		}
 
 		rootDiskDeviceKey, _, _ := instance.GetRootDiskDevice(entry.Devices)
-		if err != nil {
-			return err
-		}
 
 		if rootDiskDeviceKey != "" && pool != "" {
 			entry.Devices[rootDiskDeviceKey]["pool"] = pool

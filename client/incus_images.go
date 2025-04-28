@@ -462,7 +462,6 @@ func (r *ProtocolIncus) CreateImage(image api.ImagesPost, args *ImageCreateArgs)
 	}
 
 	// Prepare the body
-	var ioErr error
 	var body io.Reader
 	var contentType string
 	if args.RootfsFile == nil {
@@ -609,10 +608,6 @@ func (r *ProtocolIncus) CreateImage(image api.ImagesPost, args *ImageCreateArgs)
 	}
 
 	defer func() { _ = resp.Body.Close() }()
-
-	if ioErr != nil {
-		return nil, err
-	}
 
 	// Handle errors
 	response, _, err := incusParseResponse(resp)

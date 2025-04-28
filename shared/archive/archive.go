@@ -194,7 +194,7 @@ func Unpack(file string, path string, blockBackend bool, maxMemory int64, tracke
 		if maxMemory != 0 {
 			// If maximum memory consumption is less than 256MiB, restrict unsquashfs and limit to a single thread.
 			mem := maxMemory / 1024 / 1024
-			if err == nil && mem < 256 {
+			if mem < 256 {
 				args = append(args, "-da", fmt.Sprintf("%d", mem), "-fr", fmt.Sprintf("%d", mem), "-p", "1")
 			}
 		}

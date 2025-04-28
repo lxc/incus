@@ -570,10 +570,6 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 			return fmt.Errorf("Failed to relink instance database data: %w", err)
 		}
 
-		if err != nil {
-			return fmt.Errorf("Failed creating mount point of instance on target node: %w", err)
-		}
-
 		// Import the instance into the storage.
 		_, err = sourcePool.ImportInstance(inst, nil, nil)
 		if err != nil {
@@ -834,9 +830,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		}
 
 		target = target.UseProject(inst.Project().Name)
-		if targetMemberInfo != nil {
-			target = target.UseTarget(targetMemberInfo.Name)
-		}
+		target = target.UseTarget(targetMemberInfo.Name)
 
 		// Get the source member info if missing.
 		if sourceMemberInfo == nil {
