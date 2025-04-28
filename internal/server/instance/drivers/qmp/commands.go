@@ -1299,6 +1299,7 @@ func (m *Monitor) RingbufRead(device string) (string, error) {
 			break
 		}
 	}
+
 	if !deviceFound {
 		return "", fmt.Errorf("Specified qemu device %q doesn't exist", device)
 	}
