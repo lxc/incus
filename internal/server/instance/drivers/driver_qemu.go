@@ -8291,7 +8291,9 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 				// Fallback data if agent is not reachable.
 				status = &api.InstanceState{}
 				status.Processes = -1
+			}
 
+			if len(status.Network) == 0 {
 				status.Network, err = d.getNetworkState()
 				if err != nil {
 					return nil, err
