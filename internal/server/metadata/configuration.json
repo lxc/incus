@@ -1528,6 +1528,15 @@
 						}
 					},
 					{
+						"hwspoofchk": {
+							"default": "true",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Enable hardware spoofchecking for use with security.mac_filtering",
+							"type": "bool"
+						}
+					},
+					{
 						"vlan": {
 							"longdesc": "",
 							"managed": "no",

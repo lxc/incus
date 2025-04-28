@@ -97,6 +97,15 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader) error {
 		//  shortdesc: Prevent the instance from spoofing another instance's MAC address
 		"security.mac_filtering",
 
+		// gendoc:generate(entity=devices, group=nic_sriov, key=hwspoofchk)
+		//
+		// ---
+		//  type: bool
+		//  default: true
+		//  managed: no
+		//  shortdesc: Enable hardware spoofchecking for use with security.mac_filtering
+		"hwspoofchk",
+		
 		// gendoc:generate(entity=devices, group=nic_sriov, key=boot.priority)
 		//
 		// ---
@@ -217,7 +226,7 @@ func (d *nicSRIOV) Start() (*deviceConfig.RunConfig, error) {
 	}
 
 	// Claim the SR-IOV virtual function (VF) on the parent (PF) and get the PCI information.
-	vfPCIDev, pciIOMMUGroup, err := networkSRIOVSetupVF(d.deviceCommon, d.config["parent"], vfDev, vfID, true, saveData)
+	vfPCIDev, pciIOMMUGroup, err := networkSRIOVSetupVF(d.deviceCommon, d.config["parent"], vfDev, vfID, util.IsTrueOrEmpty(d.config["hwspoofchk"]), saveData)
 	if err != nil {
 		network.SRIOVVirtualFunctionMutex.Unlock()
 		return nil, err

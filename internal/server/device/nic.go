@@ -33,6 +33,7 @@ func nicValidationRules(requiredFields []string, optionalFields []string, instCo
 		"security.ipv4_filtering":              validate.IsAny,
 		"security.ipv6_filtering":              validate.IsAny,
 		"security.port_isolation":              validate.Optional(validate.IsBool),
+		"hwspoofchk":				validate.Optional(validate.IsBool),
 		"ipv4.address":                         validate.Optional(validate.IsNetworkAddressV4),
 		"ipv6.address":                         validate.Optional(validate.IsNetworkAddressV6),
 		"ipv4.routes":                          validate.Optional(validate.IsListOf(validate.IsNetworkV4)),
