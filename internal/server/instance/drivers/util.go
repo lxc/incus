@@ -159,31 +159,31 @@ func memoryConfigSectionToMap(section *cfg.Section) map[string]any {
 	obj := map[string]any{}
 	hostNodes := []int{}
 
-	for _, entry := range section.Entries {
-		if strings.HasPrefix(entry.Key, "host-nodes") {
-			hostNode, err := strconv.Atoi(entry.Value)
+	for key, value := range section.Entries {
+		if strings.HasPrefix(key, "host-nodes") {
+			hostNode, err := strconv.Atoi(value)
 			if err != nil {
 				continue
 			}
 
 			hostNodes = append(hostNodes, hostNode)
-		} else if entry.Key == "size" {
+		} else if key == "size" {
 			// Size in the config is specified in the format: 1024M, so the last character needs to be removed before parsing.
-			memSizeMB, err := strconv.Atoi(entry.Value[:len(entry.Value)-1])
+			memSizeMB, err := strconv.Atoi(value[:len(value)-1])
 			if err != nil {
 				continue
 			}
 
 			obj["size"] = roundDownToBlockSize(int64(memSizeMB)*1024*1024, blockSize)
-		} else if entry.Key == "merge" || entry.Key == "dump" || entry.Key == "prealloc" || entry.Key == "share" || entry.Key == "reserve" {
+		} else if key == "merge" || key == "dump" || key == "prealloc" || key == "share" || key == "reserve" {
 			val := false
-			if entry.Value == "on" {
+			if value == "on" {
 				val = true
 			}
 
-			obj[entry.Key] = val
+			obj[key] = val
 		} else {
-			obj[entry.Key] = entry.Value
+			obj[key] = value
 		}
 	}
 

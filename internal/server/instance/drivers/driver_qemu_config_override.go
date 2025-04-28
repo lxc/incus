@@ -21,22 +21,6 @@ type rawConfigKey struct {
 
 type configMap map[rawConfigKey]string
 
-func sortedConfigKeys(confMap configMap) []rawConfigKey {
-	rv := []rawConfigKey{}
-
-	for k := range confMap {
-		rv = append(rv, k)
-	}
-
-	sort.SliceStable(rv, func(i, j int) bool {
-		return rv[i].sectionName < rv[j].sectionName ||
-			rv[i].index < rv[j].index ||
-			rv[i].entryKey < rv[j].entryKey
-	})
-
-	return rv
-}
-
 func parseConfOverride(confOverride string) configMap {
 	s := confOverride
 	rv := configMap{}
@@ -113,45 +97,33 @@ func parseConfOverride(confOverride string) configMap {
 	return rv
 }
 
-func updateEntries(entries []cfg.Entry, sk rawConfigKey, confMap configMap) []cfg.Entry {
-	rv := []cfg.Entry{}
+func updateEntries(entries map[string]string, sk rawConfigKey, confMap configMap) map[string]string {
+	rv := make(map[string]string)
 
-	for _, entry := range entries {
-		newEntry := cfg.Entry{
-			Key:   entry.Key,
-			Value: entry.Value,
-		}
-
-		ek := rawConfigKey{sk.sectionName, sk.index, entry.Key}
+	for key, value := range entries {
+		ek := rawConfigKey{sk.sectionName, sk.index, key}
 		val, ok := confMap[ek]
 		if ok {
 			// override
 			delete(confMap, ek)
-			newEntry.Value = val
+			value = val
 		}
 
-		rv = append(rv, newEntry)
+		rv[key] = value
 	}
 
 	return rv
 }
 
-func appendEntries(entries []cfg.Entry, sk rawConfigKey, confMap configMap) []cfg.Entry {
-	// sort to have deterministic output in the appended entries
-	sortedKeys := sortedConfigKeys(confMap)
+func appendEntries(entries map[string]string, sk rawConfigKey, confMap configMap) map[string]string {
 	// processed all modifications for the current section, now
 	// handle new entries
-	for _, rawKey := range sortedKeys {
+	for rawKey, value := range confMap {
 		if rawKey.sectionName != sk.sectionName || rawKey.index != sk.index {
 			continue
 		}
 
-		newEntry := cfg.Entry{
-			Key:   rawKey.entryKey,
-			Value: confMap[rawKey],
-		}
-
-		entries = append(entries, newEntry)
+		entries[rawKey.entryKey] = value
 		delete(confMap, rawKey)
 	}
 
@@ -199,10 +171,8 @@ func updateSections(conf []cfg.Section, confMap configMap) []cfg.Section {
 
 func appendSections(newConf []cfg.Section, confMap configMap) []cfg.Section {
 	tmp := map[rawConfigKey]cfg.Section{}
-	// sort to have deterministic output in the appended entries
-	sortedKeys := sortedConfigKeys(confMap)
 
-	for _, k := range sortedKeys {
+	for k, value := range confMap {
 		if k.entryKey == "" {
 			// makes no sense to process section deletions (the only case where
 			// entryKey == "") since we are only adding new sections now
@@ -213,13 +183,12 @@ func appendSections(newConf []cfg.Section, confMap configMap) []cfg.Section {
 		section, found := tmp[sectionKey]
 		if !found {
 			section = cfg.Section{
-				Name: k.sectionName,
+				Name:    k.sectionName,
+				Entries: make(map[string]string),
 			}
 		}
-		section.Entries = append(section.Entries, cfg.Entry{
-			Key:   k.entryKey,
-			Value: confMap[k],
-		})
+
+		section.Entries[k.entryKey] = value
 		tmp[sectionKey] = section
 	}
 

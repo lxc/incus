@@ -19,10 +19,9 @@ func qemuStringifyCfg(conf ...cfg.Section) *strings.Builder {
 
 		sb.WriteString(fmt.Sprintf("[%s]\n", section.Name))
 
-		for _, entry := range section.Entries {
-			value := entry.Value
+		for key, value := range section.Entries {
 			if value != "" {
-				sb.WriteString(fmt.Sprintf("%s = \"%s\"\n", entry.Key, value))
+				sb.WriteString(fmt.Sprintf("%s = \"%s\"\n", key, value))
 			}
 		}
 
@@ -74,34 +73,34 @@ func qemuBase(opts *qemuBaseOpts) []cfg.Section {
 	sections := []cfg.Section{{
 		Name:    "machine",
 		Comment: "Machine",
-		Entries: []cfg.Entry{
-			{Key: "graphics", Value: "off"},
-			{Key: "type", Value: machineType},
-			{Key: "gic-version", Value: gicVersion},
-			{Key: "cap-large-decr", Value: capLargeDecr},
-			{Key: "accel", Value: "kvm"},
-			{Key: "usb", Value: "off"},
+		Entries: map[string]string{
+			"graphics":       "off",
+			"type":           machineType,
+			"gic-version":    gicVersion,
+			"cap-large-decr": capLargeDecr,
+			"accel":          "kvm",
+			"usb":            "off",
 		},
 	}}
 
 	if opts.iommu {
-		sections[0].Entries = append(sections[0].Entries, cfg.Entry{Key: "kernel-irqchip", Value: "split"})
+		sections[0].Entries["kernel-irqchip"] = "split"
 	}
 
 	if opts.architecture == osarch.ARCH_64BIT_INTEL_X86 {
 		sections = append(sections, []cfg.Section{{
 			Name: "global",
-			Entries: []cfg.Entry{
-				{Key: "driver", Value: "ICH9-LPC"},
-				{Key: "property", Value: "disable_s3"},
-				{Key: "value", Value: "1"},
+			Entries: map[string]string{
+				"driver":   "ICH9-LPC",
+				"property": "disable_s3",
+				"value":    "1",
 			},
 		}, {
 			Name: "global",
-			Entries: []cfg.Entry{
-				{Key: "driver", Value: "ICH9-LPC"},
-				{Key: "property", Value: "disable_s4"},
-				{Key: "value", Value: "0"},
+			Entries: map[string]string{
+				"driver":   "ICH9-LPC",
+				"property": "disable_s4",
+				"value":    "0",
 			},
 		}}...)
 	}
@@ -110,7 +109,7 @@ func qemuBase(opts *qemuBaseOpts) []cfg.Section {
 		sections,
 		cfg.Section{
 			Name:    "boot-opts",
-			Entries: []cfg.Entry{{Key: "strict", Value: "on"}},
+			Entries: map[string]string{"strict": "on"},
 		})
 }
 
@@ -124,10 +123,10 @@ func qemuMemory(opts *qemuMemoryOpts) []cfg.Section {
 	return []cfg.Section{{
 		Name:    "memory",
 		Comment: "Memory",
-		Entries: []cfg.Entry{
-			{Key: "size", Value: fmt.Sprintf("%dM", opts.memSizeMB)},
-			{Key: "slots", Value: "16"},
-			{Key: "maxmem", Value: fmt.Sprintf("%dM", opts.maxSizeMB)},
+		Entries: map[string]string{
+			"size":   fmt.Sprintf("%dM", opts.memSizeMB),
+			"slots":  "16",
+			"maxmem": fmt.Sprintf("%dM", opts.maxSizeMB),
 		},
 	}}
 }
@@ -145,21 +144,19 @@ type qemuDevEntriesOpts struct {
 	ccwName string
 }
 
-func qemuDeviceEntries(opts *qemuDevEntriesOpts) []cfg.Entry {
-	entries := []cfg.Entry{}
+func qemuDeviceEntries(opts *qemuDevEntriesOpts) map[string]string {
+	entries := make(map[string]string)
 
 	if opts.dev.busName == "pci" || opts.dev.busName == "pcie" {
-		entries = append(entries, []cfg.Entry{
-			{Key: "driver", Value: opts.pciName},
-			{Key: "bus", Value: opts.dev.devBus},
-			{Key: "addr", Value: opts.dev.devAddr},
-		}...)
+		entries["driver"] = opts.pciName
+		entries["bus"] = opts.dev.devBus
+		entries["addr"] = opts.dev.devAddr
 	} else if opts.dev.busName == "ccw" {
-		entries = append(entries, cfg.Entry{Key: "driver", Value: opts.ccwName})
+		entries["driver"] = opts.ccwName
 	}
 
 	if opts.dev.multifunction {
-		entries = append(entries, cfg.Entry{Key: "multifunction", Value: "on"})
+		entries["multifunction"] = "on"
 	}
 
 	return entries
@@ -187,18 +184,18 @@ func qemuSerial(opts *qemuSerialOpts) []cfg.Section {
 		// its content via QMP using "ringbuf-read" command.
 		Name:    fmt.Sprintf(`chardev "%s"`, opts.charDevName),
 		Comment: "Serial identifier",
-		Entries: []cfg.Entry{
-			{Key: "backend", Value: "ringbuf"},
-			{Key: "size", Value: fmt.Sprintf("%dB", opts.ringbufSizeBytes)},
+		Entries: map[string]string{
+			"backend": "ringbuf",
+			"size":    fmt.Sprintf("%dB", opts.ringbufSizeBytes),
 		},
 	}, {
 		// QEMU serial device connected to the above ring buffer.
 		Name: `device "qemu_serial"`,
-		Entries: []cfg.Entry{
-			{Key: "driver", Value: "virtserialport"},
-			{Key: "name", Value: "org.linuxcontainers.incus"},
-			{Key: "chardev", Value: opts.charDevName},
-			{Key: "bus", Value: "dev-qemu_serial.0"},
+		Entries: map[string]string{
+			"driver":  "virtserialport",
+			"name":    "org.linuxcontainers.incus",
+			"chardev": opts.charDevName,
+			"bus":     "dev-qemu_serial.0",
 		},
 	}, {
 		// Legacy QEMU serial device, not connected to any ring buffer. Its purpose is to
@@ -206,40 +203,40 @@ func qemuSerial(opts *qemuSerialOpts) []cfg.Section {
 		// This is necessary for backward compatibility with virtual machines lacking the
 		// updated incus-agent-loader package, which includes updated udev rules and a systemd unit.
 		Name: `device "qemu_serial_legacy"`,
-		Entries: []cfg.Entry{
-			{Key: "driver", Value: "virtserialport"},
-			{Key: "name", Value: "org.linuxcontainers.lxd"},
-			{Key: "bus", Value: "dev-qemu_serial.0"},
+		Entries: map[string]string{
+			"driver": "virtserialport",
+			"name":   "org.linuxcontainers.lxd",
+			"bus":    "dev-qemu_serial.0",
 		},
 	}, {
 		Name:    `chardev "qemu_spice-chardev"`,
 		Comment: "Spice agent",
-		Entries: []cfg.Entry{
-			{Key: "backend", Value: "spicevmc"},
-			{Key: "name", Value: "vdagent"},
+		Entries: map[string]string{
+			"backend": "spicevmc",
+			"name":    "vdagent",
 		},
 	}, {
 		Name: `device "qemu_spice"`,
-		Entries: []cfg.Entry{
-			{Key: "driver", Value: "virtserialport"},
-			{Key: "name", Value: "com.redhat.spice.0"},
-			{Key: "chardev", Value: "qemu_spice-chardev"},
-			{Key: "bus", Value: "dev-qemu_serial.0"},
+		Entries: map[string]string{
+			"driver":  "virtserialport",
+			"name":    "com.redhat.spice.0",
+			"chardev": "qemu_spice-chardev",
+			"bus":     "dev-qemu_serial.0",
 		},
 	}, {
 		Name:    `chardev "qemu_spicedir-chardev"`,
 		Comment: "Spice folder",
-		Entries: []cfg.Entry{
-			{Key: "backend", Value: "spiceport"},
-			{Key: "name", Value: "org.spice-space.webdav.0"},
+		Entries: map[string]string{
+			"backend": "spiceport",
+			"name":    "org.spice-space.webdav.0",
 		},
 	}, {
 		Name: `device "qemu_spicedir"`,
-		Entries: []cfg.Entry{
-			{Key: "driver", Value: "virtserialport"},
-			{Key: "name", Value: "org.spice-space.webdav.0"},
-			{Key: "chardev", Value: "qemu_spicedir-chardev"},
-			{Key: "bus", Value: "dev-qemu_serial.0"},
+		Entries: map[string]string{
+			"driver":  "virtserialport",
+			"name":    "org.spice-space.webdav.0",
+			"chardev": "qemu_spicedir-chardev",
+			"bus":     "dev-qemu_serial.0",
 		},
 	}}
 }
@@ -252,15 +249,15 @@ type qemuPCIeOpts struct {
 }
 
 func qemuPCIe(opts *qemuPCIeOpts) []cfg.Section {
-	entries := []cfg.Entry{
-		{Key: "driver", Value: "pcie-root-port"},
-		{Key: "bus", Value: "pcie.0"},
-		{Key: "addr", Value: opts.devAddr},
-		{Key: "chassis", Value: fmt.Sprintf("%d", opts.index)},
+	entries := map[string]string{
+		"driver":  "pcie-root-port",
+		"bus":     "pcie.0",
+		"addr":    opts.devAddr,
+		"chassis": fmt.Sprintf("%d", opts.index),
 	}
 
 	if opts.multifunction {
-		entries = append(entries, cfg.Entry{Key: "multifunction", Value: "on"})
+		entries["multifunction"] = "on"
 	}
 
 	return []cfg.Section{{
@@ -298,23 +295,23 @@ func qemuBalloon(opts *qemuDevOpts) []cfg.Section {
 }
 
 func qemuRNG(opts *qemuDevOpts) []cfg.Section {
-	entriesOpts := qemuDevEntriesOpts{
+	entries := qemuDeviceEntries(&qemuDevEntriesOpts{
 		dev:     *opts,
 		pciName: "virtio-rng-pci",
 		ccwName: "virtio-rng-ccw",
-	}
+	})
+	entries["rng"] = "qemu_rng"
 
 	return []cfg.Section{{
 		Name:    `object "qemu_rng"`,
 		Comment: "Random number generator",
-		Entries: []cfg.Entry{
-			{Key: "qom-type", Value: "rng-random"},
-			{Key: "filename", Value: "/dev/urandom"},
+		Entries: map[string]string{
+			"qom-type": "rng-random",
+			"filename": "/dev/urandom",
 		},
 	}, {
-		Name: `device "dev-qemu_rng"`,
-		Entries: append(qemuDeviceEntries(&entriesOpts),
-			cfg.Entry{Key: "rng", Value: "qemu_rng"}),
+		Name:    `device "dev-qemu_rng"`,
+		Entries: entries,
 	}}
 }
 
@@ -322,9 +319,7 @@ func qemuCoreInfo() []cfg.Section {
 	return []cfg.Section{{
 		Name:    `device "qemu_vmcoreinfo"`,
 		Comment: "VM core info driver",
-		Entries: []cfg.Entry{
-			{Key: "driver", Value: "vmcoreinfo"},
-		},
+		Entries: map[string]string{"driver": "vmcoreinfo"},
 	}}
 }
 
@@ -333,10 +328,10 @@ func qemuIOMMU(opts *qemuDevOpts, isWindows bool) []cfg.Section {
 		return []cfg.Section{{
 			Name:    `device "intel-iommu"`,
 			Comment: "IOMMU driver",
-			Entries: []cfg.Entry{
-				{Key: "driver", Value: "intel-iommu"},
-				{Key: "intremap", Value: "on"},
-				{Key: "caching-mode", Value: "on"},
+			Entries: map[string]string{
+				"driver":       "intel-iommu",
+				"intremap":     "on",
+				"caching-mode": "on",
 			},
 		}}
 	}
@@ -362,15 +357,16 @@ type qemuSevOpts struct {
 }
 
 func qemuSEV(opts *qemuSevOpts) []cfg.Section {
-	entries := []cfg.Entry{
-		{Key: "qom-type", Value: "sev-guest"},
-		{Key: "cbitpos", Value: fmt.Sprintf("%d", opts.cbitpos)},
-		{Key: "reduced-phys-bits", Value: fmt.Sprintf("%d", opts.reducedPhysBits)},
-		{Key: "policy", Value: opts.policy},
+	entries := map[string]string{
+		"qom-type":          "sev-guest",
+		"cbitpos":           fmt.Sprintf("%d", opts.cbitpos),
+		"reduced-phys-bits": fmt.Sprintf("%d", opts.reducedPhysBits),
+		"policy":            opts.policy,
 	}
 
 	if opts.dhCertFD != "" && opts.sessionDataFD != "" {
-		entries = append(entries, cfg.Entry{Key: "dh-cert-file", Value: opts.dhCertFD}, cfg.Entry{Key: "session-file", Value: opts.sessionDataFD})
+		entries["dh-cert-file"] = opts.dhCertFD
+		entries["session-file"] = opts.sessionDataFD
 	}
 
 	return []cfg.Section{{
@@ -387,18 +383,18 @@ type qemuVsockOpts struct {
 }
 
 func qemuVsock(opts *qemuVsockOpts) []cfg.Section {
-	entriesOpts := qemuDevEntriesOpts{
+	entries := qemuDeviceEntries(&qemuDevEntriesOpts{
 		dev:     opts.dev,
 		pciName: "vhost-vsock-pci",
 		ccwName: "vhost-vsock-ccw",
-	}
+	})
+	entries["guest-cid"] = fmt.Sprintf("%d", opts.vsockID)
+	entries["vhostfd"] = fmt.Sprintf("%d", opts.vsockFD)
 
 	return []cfg.Section{{
 		Name:    `device "qemu_vsock"`,
 		Comment: "Vsock",
-		Entries: append(qemuDeviceEntries(&entriesOpts),
-			cfg.Entry{Key: "guest-cid", Value: fmt.Sprintf("%d", opts.vsockID)},
-			cfg.Entry{Key: "vhostfd", Value: fmt.Sprintf("%d", opts.vsockFD)}),
+		Entries: entries,
 	}}
 }
 
@@ -481,47 +477,39 @@ type qemuCPUOpts struct {
 }
 
 func qemuCPUNumaHostNode(opts *qemuCPUOpts, index int) []cfg.Section {
-	entries := []cfg.Entry{}
+	entries := make(map[string]string)
 
 	if opts.hugepages != "" {
-		entries = append(entries, []cfg.Entry{
-			{Key: "qom-type", Value: "memory-backend-file"},
-			{Key: "mem-path", Value: opts.hugepages},
-			{Key: "prealloc", Value: "on"},
-			{Key: "discard-data", Value: "on"},
-		}...)
+		entries["qom-type"] = "memory-backend-file"
+		entries["mem-path"] = opts.hugepages
+		entries["prealloc"] = "on"
+		entries["discard-data"] = "on"
 	} else {
-		entries = append(entries, cfg.Entry{Key: "qom-type", Value: "memory-backend-memfd"})
+		entries["qom-type"] = "memory-backend-memfd"
 	}
 
-	entries = append(entries, cfg.Entry{Key: "size", Value: fmt.Sprintf("%dM", opts.memory)})
+	entries["size"] = fmt.Sprintf("%dM", opts.memory)
 
 	return []cfg.Section{{
 		Name:    fmt.Sprintf("object \"mem%d\"", index),
 		Entries: entries,
 	}, {
 		Name: "numa",
-		Entries: []cfg.Entry{
-			{Key: "type", Value: "node"},
-			{Key: "nodeid", Value: fmt.Sprintf("%d", index)},
-			{Key: "memdev", Value: fmt.Sprintf("mem%d", index)},
+		Entries: map[string]string{
+			"type":   "node",
+			"nodeid": fmt.Sprintf("%d", index),
+			"memdev": fmt.Sprintf("mem%d", index),
 		},
 	}}
 }
 
 func qemuCPU(opts *qemuCPUOpts, pinning bool) []cfg.Section {
-	entries := []cfg.Entry{
-		{Key: "cpus", Value: fmt.Sprintf("%d", opts.cpuCount)},
-	}
+	entries := map[string]string{"cpus": fmt.Sprintf("%d", opts.cpuCount)}
 
 	if pinning {
-		entries = append(entries, cfg.Entry{
-			Key: "sockets", Value: fmt.Sprintf("%d", opts.cpuSockets),
-		}, cfg.Entry{
-			Key: "cores", Value: fmt.Sprintf("%d", opts.cpuCores),
-		}, cfg.Entry{
-			Key: "threads", Value: fmt.Sprintf("%d", opts.cpuThreads),
-		})
+		entries["sockets"] = fmt.Sprintf("%d", opts.cpuSockets)
+		entries["cores"] = fmt.Sprintf("%d", opts.cpuCores)
+		entries["threads"] = fmt.Sprintf("%d", opts.cpuThreads)
 	} else {
 		cpu, err := resources.GetCPU()
 		if err != nil {
@@ -538,9 +526,7 @@ func qemuCPU(opts *qemuCPUOpts, pinning bool) []cfg.Section {
 			maxCpus = opts.cpuCount
 		}
 
-		entries = append(entries, cfg.Entry{
-			Key: "maxcpus", Value: fmt.Sprintf("%d", maxCpus),
-		})
+		entries["maxcpus"] = fmt.Sprintf("%d", maxCpus)
 	}
 
 	sections := []cfg.Section{{
@@ -553,18 +539,16 @@ func qemuCPU(opts *qemuCPUOpts, pinning bool) []cfg.Section {
 		return sections
 	}
 
-	share := cfg.Entry{Key: "share", Value: "on"}
-
 	if len(opts.cpuNumaHostNodes) == 0 {
 		// Add one mem and one numa sections with index 0.
 		numaHostNode := qemuCPUNumaHostNode(opts, 0)
 
 		// Unconditionally append "share = "on" to the [object "mem0"] section
-		numaHostNode[0].Entries = append(numaHostNode[0].Entries, share)
+		numaHostNode[0].Entries["share"] = "on"
 
 		// If NUMA memory restrictions are set, apply them.
 		if len(opts.memoryHostNodes) > 0 {
-			extraMemEntries := []cfg.Entry{{Key: "policy", Value: "bind"}}
+			numaHostNode[0].Entries["policy"] = "bind"
 
 			for index, element := range opts.memoryHostNodes {
 				var hostNodesKey string
@@ -574,12 +558,8 @@ func qemuCPU(opts *qemuCPUOpts, pinning bool) []cfg.Section {
 					hostNodesKey = "host-nodes"
 				}
 
-				hostNode := cfg.Entry{Key: hostNodesKey, Value: fmt.Sprintf("%d", element)}
-				extraMemEntries = append(extraMemEntries, hostNode)
+				numaHostNode[0].Entries[hostNodesKey] = fmt.Sprintf("%d", element)
 			}
-
-			// Append the extra entries to the [object "mem{{idx}}"] section.
-			numaHostNode[0].Entries = append(numaHostNode[0].Entries, extraMemEntries...)
 		}
 
 		return append(sections, numaHostNode...)
@@ -588,11 +568,11 @@ func qemuCPU(opts *qemuCPUOpts, pinning bool) []cfg.Section {
 	for index, element := range opts.cpuNumaHostNodes {
 		numaHostNode := qemuCPUNumaHostNode(opts, index)
 
-		extraMemEntries := []cfg.Entry{{Key: "policy", Value: "bind"}}
+		numaHostNode[0].Entries["policy"] = "bind"
 
 		if opts.hugepages != "" {
 			// append share = "on" only if hugepages is set
-			extraMemEntries = append(extraMemEntries, share)
+			numaHostNode[0].Entries["share"] = "on"
 		}
 
 		var hostNodesKey string
@@ -602,22 +582,19 @@ func qemuCPU(opts *qemuCPUOpts, pinning bool) []cfg.Section {
 			hostNodesKey = "host-nodes"
 		}
 
-		hostNode := cfg.Entry{Key: hostNodesKey, Value: fmt.Sprintf("%d", element)}
-		extraMemEntries = append(extraMemEntries, hostNode)
-		// append the extra entries to the [object "mem{{idx}}"] section
-		numaHostNode[0].Entries = append(numaHostNode[0].Entries, extraMemEntries...)
+		numaHostNode[0].Entries[hostNodesKey] = fmt.Sprintf("%d", element)
 		sections = append(sections, numaHostNode...)
 	}
 
 	for _, numa := range opts.cpuNumaMapping {
 		sections = append(sections, cfg.Section{
 			Name: "numa",
-			Entries: []cfg.Entry{
-				{Key: "type", Value: "cpu"},
-				{Key: "node-id", Value: fmt.Sprintf("%d", numa.node)},
-				{Key: "socket-id", Value: fmt.Sprintf("%d", numa.socket)},
-				{Key: "core-id", Value: fmt.Sprintf("%d", numa.core)},
-				{Key: "thread-id", Value: fmt.Sprintf("%d", numa.thread)},
+			Entries: map[string]string{
+				"type":      "cpu",
+				"node-id":   fmt.Sprintf("%d", numa.node),
+				"socket-id": fmt.Sprintf("%d", numa.socket),
+				"core-id":   fmt.Sprintf("%d", numa.core),
+				"thread-id": fmt.Sprintf("%d", numa.thread),
 			},
 		})
 	}
@@ -633,17 +610,17 @@ func qemuControlSocket(opts *qemuControlSocketOpts) []cfg.Section {
 	return []cfg.Section{{
 		Name:    `chardev "monitor"`,
 		Comment: "Qemu control",
-		Entries: []cfg.Entry{
-			{Key: "backend", Value: "socket"},
-			{Key: "path", Value: opts.path},
-			{Key: "server", Value: "on"},
-			{Key: "wait", Value: "off"},
+		Entries: map[string]string{
+			"backend": "socket",
+			"path":    opts.path,
+			"server":  "on",
+			"wait":    "off",
 		},
 	}, {
 		Name: "mon",
-		Entries: []cfg.Entry{
-			{Key: "chardev", Value: "monitor"},
-			{Key: "mode", Value: "control"},
+		Entries: map[string]string{
+			"chardev": "monitor",
+			"mode":    "control",
 		},
 	}}
 }
@@ -652,9 +629,9 @@ func qemuConsole() []cfg.Section {
 	return []cfg.Section{{
 		Name:    `chardev "console"`,
 		Comment: "Console",
-		Entries: []cfg.Entry{
-			{Key: "backend", Value: "ringbuf"},
-			{Key: "size", Value: "1048576"},
+		Entries: map[string]string{
+			"backend": "ringbuf",
+			"size":    "1048576",
 		},
 	}}
 }
@@ -668,21 +645,21 @@ func qemuDriveFirmware(opts *qemuDriveFirmwareOpts) []cfg.Section {
 	return []cfg.Section{{
 		Name:    "drive",
 		Comment: "Firmware (read only)",
-		Entries: []cfg.Entry{
-			{Key: "file", Value: opts.roPath},
-			{Key: "if", Value: "pflash"},
-			{Key: "format", Value: "raw"},
-			{Key: "unit", Value: "0"},
-			{Key: "readonly", Value: "on"},
+		Entries: map[string]string{
+			"file":     opts.roPath,
+			"if":       "pflash",
+			"format":   "raw",
+			"unit":     "0",
+			"readonly": "on",
 		},
 	}, {
 		Name:    "drive",
 		Comment: "Firmware settings (writable)",
-		Entries: []cfg.Entry{
-			{Key: "file", Value: opts.nvramPath},
-			{Key: "if", Value: "pflash"},
-			{Key: "format", Value: "raw"},
-			{Key: "unit", Value: "1"},
+		Entries: map[string]string{
+			"file":   opts.nvramPath,
+			"if":     "pflash",
+			"format": "raw",
+			"unit":   "1",
 		},
 	}}
 }
@@ -702,8 +679,8 @@ type qemuHostDriveOpts struct {
 }
 
 func qemuHostDrive(opts *qemuHostDriveOpts) []cfg.Section {
-	var extraDeviceEntries []cfg.Entry
 	var driveSection cfg.Section
+	var entries map[string]string
 	deviceOpts := qemuDevEntriesOpts{dev: opts.dev}
 
 	if opts.protocol == "9p" {
@@ -717,39 +694,35 @@ func qemuHostDrive(opts *qemuHostDriveOpts) []cfg.Section {
 		driveSection = cfg.Section{
 			Name:    fmt.Sprintf(`fsdev "%s"`, opts.name),
 			Comment: opts.comment,
-			Entries: []cfg.Entry{
-				{Key: "fsdriver", Value: opts.fsdriver},
-				{Key: "sock_fd", Value: opts.sockFd},
-				{Key: "security_model", Value: opts.securityModel},
-				{Key: "readonly", Value: readonly},
-				{Key: "path", Value: opts.path},
+			Entries: map[string]string{
+				"fsdriver":       opts.fsdriver,
+				"sock_fd":        opts.sockFd,
+				"security_model": opts.securityModel,
+				"readonly":       readonly,
+				"path":           opts.path,
 			},
 		}
 
 		deviceOpts.pciName = "virtio-9p-pci"
 		deviceOpts.ccwName = "virtio-9p-ccw"
-
-		extraDeviceEntries = []cfg.Entry{
-			{Key: "mount_tag", Value: opts.mountTag},
-			{Key: "fsdev", Value: opts.name},
-		}
+		entries = qemuDeviceEntries(&deviceOpts)
+		entries["mount_tag"] = opts.mountTag
+		entries["fsdev"] = opts.name
 	} else if opts.protocol == "virtio-fs" {
 		driveSection = cfg.Section{
 			Name:    fmt.Sprintf(`chardev "%s"`, opts.name),
 			Comment: opts.comment,
-			Entries: []cfg.Entry{
-				{Key: "backend", Value: "socket"},
-				{Key: "path", Value: opts.path},
+			Entries: map[string]string{
+				"backend": "socket",
+				"path":    opts.path,
 			},
 		}
 
 		deviceOpts.pciName = "vhost-user-fs-pci"
 		deviceOpts.ccwName = "vhost-user-fs-ccw"
-
-		extraDeviceEntries = []cfg.Entry{
-			{Key: "tag", Value: opts.mountTag},
-			{Key: "chardev", Value: opts.name},
-		}
+		entries = qemuDeviceEntries(&deviceOpts)
+		entries["tag"] = opts.mountTag
+		entries["chardev"] = opts.name
 	} else {
 		return []cfg.Section{}
 	}
@@ -758,7 +731,7 @@ func qemuHostDrive(opts *qemuHostDriveOpts) []cfg.Section {
 		driveSection,
 		{
 			Name:    fmt.Sprintf(`device "dev-%s%s-%s"`, opts.name, opts.nameSuffix, opts.protocol),
-			Entries: append(qemuDeviceEntries(&deviceOpts), extraDeviceEntries...),
+			Entries: entries,
 		},
 	}
 }
@@ -822,9 +795,8 @@ func qemuPCIPhysical(opts *qemuPCIPhysicalOpts) []cfg.Section {
 		ccwName: "vfio-ccw",
 	}
 
-	entries := append(qemuDeviceEntries(&deviceOpts), []cfg.Entry{
-		{Key: "host", Value: opts.pciSlotName},
-	}...)
+	entries := qemuDeviceEntries(&deviceOpts)
+	entries["host"] = opts.pciSlotName
 
 	return []cfg.Section{{
 		Name:    fmt.Sprintf(`device "%s%s"`, qemuDeviceIDPrefix, opts.devName),
@@ -852,13 +824,13 @@ func qemuGPUDevPhysical(opts *qemuGPUDevPhysicalOpts) []cfg.Section {
 
 	if opts.vgpu != "" {
 		sysfsdev := fmt.Sprintf("/sys/bus/mdev/devices/%s", opts.vgpu)
-		entries = append(entries, cfg.Entry{Key: "sysfsdev", Value: sysfsdev})
+		entries["sysfsdev"] = sysfsdev
 	} else {
-		entries = append(entries, cfg.Entry{Key: "host", Value: opts.pciSlotName})
+		entries["host"] = opts.pciSlotName
 	}
 
 	if opts.vga {
-		entries = append(entries, cfg.Entry{Key: "x-vga", Value: "on"})
+		entries["x-vga"] = "on"
 	}
 
 	return []cfg.Section{{
@@ -886,28 +858,28 @@ func qemuUSB(opts *qemuUSBOpts) []cfg.Section {
 		pciName: "qemu-xhci",
 	}
 
+	entries := qemuDeviceEntries(&deviceOpts)
+	entries["p2"] = fmt.Sprintf("%d", opts.ports)
+	entries["p3"] = fmt.Sprintf("%d", opts.ports)
 	sections := []cfg.Section{{
 		Name:    `device "qemu_usb"`,
 		Comment: "USB controller",
-		Entries: append(qemuDeviceEntries(&deviceOpts), []cfg.Entry{
-			{Key: "p2", Value: fmt.Sprintf("%d", opts.ports)},
-			{Key: "p3", Value: fmt.Sprintf("%d", opts.ports)},
-		}...),
+		Entries: entries,
 	}}
 
 	for i := 1; i <= 3; i++ {
 		chardev := fmt.Sprintf("qemu_spice-usb-chardev%d", i)
 		sections = append(sections, []cfg.Section{{
 			Name: fmt.Sprintf(`chardev "%s"`, chardev),
-			Entries: []cfg.Entry{
-				{Key: "backend", Value: "spicevmc"},
-				{Key: "name", Value: "usbredir"},
+			Entries: map[string]string{
+				"backend": "spicevmc",
+				"name":    "usbredir",
 			},
 		}, {
 			Name: fmt.Sprintf(`device "qemu_spice-usb%d"`, i),
-			Entries: []cfg.Entry{
-				{Key: "driver", Value: "usb-redir"},
-				{Key: "chardev", Value: chardev},
+			Entries: map[string]string{
+				"driver":  "usb-redir",
+				"chardev": chardev,
 			},
 		}}...)
 	}
@@ -926,21 +898,21 @@ func qemuTPM(opts *qemuTPMOpts) []cfg.Section {
 
 	return []cfg.Section{{
 		Name: fmt.Sprintf(`chardev "%s"`, chardev),
-		Entries: []cfg.Entry{
-			{Key: "backend", Value: "socket"},
-			{Key: "path", Value: opts.path},
+		Entries: map[string]string{
+			"backend": "socket",
+			"path":    opts.path,
 		},
 	}, {
 		Name: fmt.Sprintf(`tpmdev "%s"`, tpmdev),
-		Entries: []cfg.Entry{
-			{Key: "type", Value: "emulator"},
-			{Key: "chardev", Value: chardev},
+		Entries: map[string]string{
+			"type":    "emulator",
+			"chardev": chardev,
 		},
 	}, {
 		Name: fmt.Sprintf(`device "%s%s"`, qemuDeviceIDPrefix, opts.devName),
-		Entries: []cfg.Entry{
-			{Key: "driver", Value: "tpm-crb"},
-			{Key: "tpmdev", Value: tpmdev},
+		Entries: map[string]string{
+			"driver": "tpm-crb",
+			"tpmdev": tpmdev,
 		},
 	}}
 }
@@ -953,9 +925,9 @@ func qemuVmgen(opts *qemuVmgenIDOpts) []cfg.Section {
 	return []cfg.Section{{
 		Name:    `device "vmgenid0"`,
 		Comment: "VM Generation ID",
-		Entries: []cfg.Entry{
-			{Key: "driver", Value: "vmgenid"},
-			{Key: "guid", Value: opts.guid},
+		Entries: map[string]string{
+			"driver": "vmgenid",
+			"guid":   opts.guid,
 		},
 	}}
 }
