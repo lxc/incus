@@ -151,7 +151,7 @@ func eventsProcess(event api.Event) {
 	for i := 0; i < 20; i++ {
 		time.Sleep(500 * time.Millisecond)
 
-		err = tryMountShared(mntSource, e.Config["path"], "virtiofs", nil)
+		err = osMountShared(mntSource, e.Config["path"], "virtiofs", nil)
 		if err == nil {
 			break
 		}
