@@ -1287,7 +1287,7 @@ func (m *Monitor) RingbufRead(device string) (string, error) {
 		return "", err
 	}
 
-	deviceFound := true
+	deviceFound := false
 	for _, qemuDevice := range queryResp.Return {
 		if qemuDevice.Label == device {
 			deviceFound = true
