@@ -131,11 +131,8 @@ func IsMountPoint(path string) bool {
 	// Btrfs annoyingly uses a different Dev id for different subvolumes on the same mount.
 	// So for btrfs, we require a matching mount entry in mountinfo.
 	fs, _ := DetectFilesystem(path)
-	if err == nil && fs == "btrfs" {
-		return false
-	}
 
-	return true
+	return fs != "btrfs"
 }
 
 // SyncFS will force a filesystem sync for the filesystem backing the provided path.
