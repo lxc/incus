@@ -25,18 +25,20 @@ func (e Error) Error() string {
 
 // ErrorList is a list of configuration Errors occurred during Load() or
 // Map.Change().
-type ErrorList []*Error
+type ErrorList struct {
+	errors []Error
+}
 
 // ErrorList implements the error interface.
-func (l ErrorList) Error() string {
-	errorCount := len(l)
+func (l *ErrorList) Error() string {
+	errorCount := l.Len()
 	if errorCount == 0 {
 		return "no errors"
 	}
 
 	errorMessage := strings.Builder{}
 
-	firstError := l[0].Error()
+	firstError := l.errors[0].Error()
 	errorMessage.WriteString(firstError)
 
 	if errorCount > 1 {
@@ -46,15 +48,19 @@ func (l ErrorList) Error() string {
 	return errorMessage.String()
 }
 
-// ErrorList implements the sort Interface.
-func (l ErrorList) Len() int           { return len(l) }
-func (l ErrorList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
-func (l ErrorList) Less(i, j int) bool { return l[i].Name < l[j].Name }
+// Len returns the amount of errors contained in the list. This is needed to implement the sort Interface.
+func (l *ErrorList) Len() int { return len(l.errors) }
+
+// Swap swaps two errors at two indices. This is needed to implement the sort Interface.
+func (l *ErrorList) Swap(i, j int) { l.errors[i], l.errors[j] = l.errors[j], l.errors[i] }
+
+// Less defines an ordering of errors inside the error list. This is needed to implement the sort Interface.
+func (l *ErrorList) Less(i, j int) bool { return l.errors[i].Name < l.errors[j].Name }
 
 // Sort sorts an ErrorList. *Error entries are sorted by key name.
-func (l ErrorList) sort() { sort.Sort(l) }
+func (l *ErrorList) sort() { sort.Sort(l) }
 
 // Add adds an Error with given key name, value and reason.
 func (l *ErrorList) add(name string, value any, reason string) {
-	*l = append(*l, &Error{name, value, reason})
+	l.errors = append(l.errors, Error{name, value, reason})
 }

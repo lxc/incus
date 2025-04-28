@@ -8,7 +8,7 @@ import (
 
 func Test_ErrorList_Error_NoErrors(t *testing.T) {
 	// arrange
-	errors := ErrorList{}
+	errors := &ErrorList{}
 
 	// assert
 	assert.EqualError(t, errors, "no errors")
@@ -16,7 +16,7 @@ func Test_ErrorList_Error_NoErrors(t *testing.T) {
 
 func Test_ErrorList_Error_OneError(t *testing.T) {
 	// arrange
-	errors := ErrorList{}
+	errors := &ErrorList{}
 	errors.add("qux", "zzz", "bean")
 
 	// assert
@@ -25,7 +25,7 @@ func Test_ErrorList_Error_OneError(t *testing.T) {
 
 func Test_ErrorList_Error_TwoErrorsSorted(t *testing.T) {
 	// arrange
-	errors := ErrorList{}
+	errors := &ErrorList{}
 	errors.add("foo", "xxx", "boom")
 	errors.add("bar", "yyy", "ugh")
 
@@ -38,7 +38,7 @@ func Test_ErrorList_Error_TwoErrorsSorted(t *testing.T) {
 
 func Test_ErrorList_Error_TwoErrorsUnsorted(t *testing.T) {
 	// arrange
-	errors := ErrorList{}
+	errors := &ErrorList{}
 	errors.add("foo", "xxx", "boom")
 	errors.add("bar", "yyy", "ugh")
 
@@ -48,7 +48,7 @@ func Test_ErrorList_Error_TwoErrorsUnsorted(t *testing.T) {
 
 func Test_ErrorList_Error_MoreThanTwoErrorsUnsorted(t *testing.T) {
 	// arrange
-	errors := ErrorList{}
+	errors := &ErrorList{}
 	errors.add("foo", "xxx", "boom")
 	errors.add("bar", "yyy", "ugh")
 	errors.add("qux", "zzz", "bean")

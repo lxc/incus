@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/lxc/incus/v6/shared/logger"
@@ -12,12 +13,13 @@ import (
 func SafeLoad(schema Schema, values map[string]string) (Map, error) {
 	m, err := Load(schema, values)
 	if err != nil {
-		errors, ok := err.(ErrorList)
+		var errs *ErrorList
+		ok := errors.As(err, &errs)
 		if !ok {
 			return m, err
 		}
 
-		for _, e := range errors {
+		for _, e := range errs.errors {
 			message := fmt.Sprintf("Invalid configuration key: %s", e.Reason)
 			logger.Error(message, logger.Ctx{"key": e.Name})
 		}
