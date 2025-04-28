@@ -1274,7 +1274,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		// --quiet options are only supported on >2.67.
 		minVer, _ := version.NewDottedVersion("2.67")
 
-		if err == nil && dnsmasqVersion.Compare(minVer) > 0 {
+		if dnsmasqVersion.Compare(minVer) > 0 {
 			dnsmasqCmd = append(dnsmasqCmd, []string{"--quiet-dhcp", "--quiet-dhcp6", "--quiet-ra"}...)
 		}
 	}
@@ -1607,7 +1607,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		// Configure the tunnel.
 		if tunProtocol == "gre" {
 			// Skip partial configs.
-			if tunProtocol == "" || tunLocal == "" || tunRemote == "" {
+			if tunLocal == "" || tunRemote == "" {
 				continue
 			}
 
@@ -1624,11 +1624,6 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		} else if tunProtocol == "vxlan" {
 			tunGroup := getConfig("group")
 			tunInterface := getConfig("interface")
-
-			// Skip partial configs.
-			if tunProtocol == "" {
-				continue
-			}
 
 			vxlan := &ip.Vxlan{
 				Link:  ip.Link{Name: tunName},

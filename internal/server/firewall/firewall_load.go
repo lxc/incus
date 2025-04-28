@@ -40,7 +40,7 @@ func New() Firewall {
 	// The most common scenario for this is when xtables is using nft shim commands but the nft command itself
 	// is not installed. In this case Incus will use the xtables shim commands but with the potential of problems
 	// due to differences between the original xtables commands and the shim commands provided by nft.
-	if nftablesCompatErr != nil && xtablesCompatErr != nil {
+	if xtablesCompatErr != nil {
 		logger.Warnf(`Firewall failed to detect any compatible driver, falling back to "xtables" (but some features may not work as expected due to: %v)`, xtablesCompatErr)
 		return xtables
 	}

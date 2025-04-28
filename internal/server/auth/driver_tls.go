@@ -68,10 +68,6 @@ func (t *TLS) CheckPermission(ctx context.Context, r *http.Request, object Objec
 			return nil
 		}
 
-		if entitlement == EntitlementCanViewSensitive && certType == certificate.TypeClient && isNotRestricted {
-			return nil
-		}
-
 		return api.StatusErrorf(http.StatusForbidden, "Certificate is restricted")
 	case ObjectTypeStoragePool, ObjectTypeCertificate:
 		if entitlement == EntitlementCanView {
@@ -145,10 +141,6 @@ func (t *TLS) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 	switch objectType {
 	case ObjectTypeServer:
 		if entitlement == EntitlementCanView || entitlement == EntitlementCanViewResources || entitlement == EntitlementCanViewMetrics {
-			return allowFunc(true), nil
-		}
-
-		if entitlement == EntitlementCanViewSensitive && certType == certificate.TypeClient && isNotRestricted {
 			return allowFunc(true), nil
 		}
 
