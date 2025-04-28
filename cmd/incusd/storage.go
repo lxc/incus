@@ -46,7 +46,7 @@ func readStoragePoolDriversCache() ([]api.ServerStorageDriverInfo, map[string]st
 	return supportedDrivers.([]api.ServerStorageDriverInfo), usedDrivers.(map[string]string)
 }
 
-func storageStartup(s *state.State, forceCheck bool) error {
+func storageStartup(s *state.State) error {
 	// Update the storage drivers supported and used cache in api_1.0.go.
 	storagePoolDriversCacheUpdate(s.ShutdownCtx, s)
 

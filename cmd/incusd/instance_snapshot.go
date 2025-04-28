@@ -369,7 +369,7 @@ func instanceSnapshotHandler(d *Daemon, r *http.Request) response.Response {
 
 	switch r.Method {
 	case "GET":
-		return snapshotGet(s, snapInst)
+		return snapshotGet(snapInst)
 	case "POST":
 		return snapshotPost(s, r, snapInst)
 	case "DELETE":
@@ -569,7 +569,7 @@ func snapshotPut(s *state.State, r *http.Request, snapInst instance.Instance) re
 //	    $ref: "#/responses/Forbidden"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func snapshotGet(s *state.State, snapInst instance.Instance) response.Response {
+func snapshotGet(snapInst instance.Instance) response.Response {
 	render, _, err := snapInst.RenderWithUsage()
 	if err != nil {
 		return response.SmartError(err)
@@ -667,7 +667,7 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 
 		run := func(op *operations.Operation) error {
 			ws.instance.SetOperation(op)
-			return ws.Do(s, op)
+			return ws.do(op)
 		}
 
 		if req.Target != nil {

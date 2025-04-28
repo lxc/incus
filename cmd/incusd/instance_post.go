@@ -504,7 +504,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	resources := map[string][]api.URL{}
 	resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", name)}
 	run := func(op *operations.Operation) error {
-		return ws.Do(s, op)
+		return ws.do(op)
 	}
 
 	cancel := func(op *operations.Operation) error {
@@ -868,7 +868,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		}
 
 		run := func(op *operations.Operation) error {
-			return sourceMigration.Do(s, op)
+			return sourceMigration.do(op)
 		}
 
 		cancel := func(op *operations.Operation) error {

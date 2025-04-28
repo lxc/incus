@@ -28,7 +28,7 @@ type cmdGlobal struct {
 	flagLogVerbose bool
 }
 
-func (c *cmdGlobal) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdGlobal) run(_ *cobra.Command, _ []string) error {
 	// Configure dqlite to *not* disable internal SQLite locking, since we
 	// use SQLite both through dqlite and through go-dqlite, potentially
 	// from different threads at the same time. We need to call this
@@ -78,7 +78,7 @@ func (c *cmdGlobal) rawArgs(cmd *cobra.Command) []string {
 func main() {
 	// daemon command (main)
 	daemonCmd := cmdDaemon{}
-	app := daemonCmd.Command()
+	app := daemonCmd.command()
 	app.SilenceUsage = true
 	app.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}
 
@@ -93,7 +93,7 @@ func main() {
 	// Global flags
 	globalCmd := cmdGlobal{cmd: app}
 	daemonCmd.global = &globalCmd
-	app.PersistentPreRunE = globalCmd.Run
+	app.PersistentPreRunE = globalCmd.run
 	app.PersistentFlags().BoolVar(&globalCmd.flagVersion, "version", false, "Print version number")
 	app.PersistentFlags().BoolVarP(&globalCmd.flagHelp, "help", "h", false, "Print help")
 	app.PersistentFlags().StringVar(&globalCmd.flagLogFile, "logfile", "", "Path to the log file"+"``")
@@ -108,94 +108,94 @@ func main() {
 
 	// activateifneeded sub-command
 	activateifneededCmd := cmdActivateifneeded{global: &globalCmd}
-	app.AddCommand(activateifneededCmd.Command())
+	app.AddCommand(activateifneededCmd.command())
 
 	// callhook sub-command
 	callhookCmd := cmdCallhook{global: &globalCmd}
-	app.AddCommand(callhookCmd.Command())
+	app.AddCommand(callhookCmd.command())
 
 	// forkconsole sub-command
 	forkconsoleCmd := cmdForkconsole{global: &globalCmd}
-	app.AddCommand(forkconsoleCmd.Command())
+	app.AddCommand(forkconsoleCmd.command())
 
 	// forkexec sub-command
 	forkexecCmd := cmdForkexec{global: &globalCmd}
-	app.AddCommand(forkexecCmd.Command())
+	app.AddCommand(forkexecCmd.command())
 
 	// forkfile sub-command
 	forkfileCmd := cmdForkfile{global: &globalCmd}
-	app.AddCommand(forkfileCmd.Command())
+	app.AddCommand(forkfileCmd.command())
 
 	// forklimits sub-command
 	forklimitsCmd := cmdForklimits{global: &globalCmd}
-	app.AddCommand(forklimitsCmd.Command())
+	app.AddCommand(forklimitsCmd.command())
 
 	// forkmigrate sub-command
 	forkmigrateCmd := cmdForkmigrate{global: &globalCmd}
-	app.AddCommand(forkmigrateCmd.Command())
+	app.AddCommand(forkmigrateCmd.command())
 
 	// forksyscall sub-command
 	forksyscallCmd := cmdForksyscall{global: &globalCmd}
-	app.AddCommand(forksyscallCmd.Command())
+	app.AddCommand(forksyscallCmd.command())
 
 	// forkcoresched sub-command
 	forkcoreschedCmd := cmdForkcoresched{global: &globalCmd}
-	app.AddCommand(forkcoreschedCmd.Command())
+	app.AddCommand(forkcoreschedCmd.command())
 
 	// forkmount sub-command
 	forkmountCmd := cmdForkmount{global: &globalCmd}
-	app.AddCommand(forkmountCmd.Command())
+	app.AddCommand(forkmountCmd.command())
 
 	// forknet sub-command
 	forknetCmd := cmdForknet{global: &globalCmd}
-	app.AddCommand(forknetCmd.Command())
+	app.AddCommand(forknetCmd.command())
 
 	// forkproxy sub-command
 	forkproxyCmd := cmdForkproxy{global: &globalCmd}
-	app.AddCommand(forkproxyCmd.Command())
+	app.AddCommand(forkproxyCmd.command())
 
 	// forkstart sub-command
 	forkstartCmd := cmdForkstart{global: &globalCmd}
-	app.AddCommand(forkstartCmd.Command())
+	app.AddCommand(forkstartCmd.command())
 
 	// forkuevent sub-command
 	forkueventCmd := cmdForkuevent{global: &globalCmd}
-	app.AddCommand(forkueventCmd.Command())
+	app.AddCommand(forkueventCmd.command())
 
 	// forkzfs sub-command
 	forkzfsCmd := cmdForkZFS{global: &globalCmd}
-	app.AddCommand(forkzfsCmd.Command())
+	app.AddCommand(forkzfsCmd.command())
 
 	// manpage sub-command
 	manpageCmd := cmdManpage{global: &globalCmd}
-	app.AddCommand(manpageCmd.Command())
+	app.AddCommand(manpageCmd.command())
 
 	// migratedumpsuccess sub-command
 	migratedumpsuccessCmd := cmdMigratedumpsuccess{global: &globalCmd}
-	app.AddCommand(migratedumpsuccessCmd.Command())
+	app.AddCommand(migratedumpsuccessCmd.command())
 
 	// netcat sub-command
 	netcatCmd := cmdNetcat{global: &globalCmd}
-	app.AddCommand(netcatCmd.Command())
+	app.AddCommand(netcatCmd.command())
 
 	// shutdown sub-command
 	shutdownCmd := cmdShutdown{global: &globalCmd}
-	app.AddCommand(shutdownCmd.Command())
+	app.AddCommand(shutdownCmd.command())
 
 	// version sub-command
 	versionCmd := cmdVersion{global: &globalCmd}
-	app.AddCommand(versionCmd.Command())
+	app.AddCommand(versionCmd.command())
 
 	// waitready sub-command
 	waitreadyCmd := cmdWaitready{global: &globalCmd}
-	app.AddCommand(waitreadyCmd.Command())
+	app.AddCommand(waitreadyCmd.command())
 
 	// cluster sub-command (also admin cluster)
 	adminCmd := cmdAdmin{global: &globalCmd}
-	app.AddCommand(adminCmd.Command())
+	app.AddCommand(adminCmd.command())
 
 	clusterCmd := cmdCluster{global: &globalCmd}
-	app.AddCommand(clusterCmd.Command())
+	app.AddCommand(clusterCmd.command())
 
 	// Run the main command and handle errors
 	err := app.Execute()

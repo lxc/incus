@@ -16,7 +16,7 @@ type cmdWaitready struct {
 	flagTimeout int
 }
 
-func (c *cmdWaitready) Command() *cobra.Command {
+func (c *cmdWaitready) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "waitready"
 	cmd.Short = "Wait for the daemon to be ready to process requests"
@@ -27,14 +27,14 @@ func (c *cmdWaitready) Command() *cobra.Command {
   is done with early start tasks like re-starting previously started
   containers.
 `
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Hidden = true
 	cmd.Flags().IntVarP(&c.flagTimeout, "timeout", "t", 0, "Number of seconds to wait before giving up"+"``")
 
 	return cmd
 }
 
-func (c *cmdWaitready) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdWaitready) run(_ *cobra.Command, _ []string) error {
 	finger := make(chan error, 1)
 	var errLast error
 	go func() {

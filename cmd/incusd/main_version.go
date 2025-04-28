@@ -13,19 +13,19 @@ type cmdVersion struct {
 	global *cmdGlobal
 }
 
-func (c *cmdVersion) Command() *cobra.Command {
+func (c *cmdVersion) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "version"
 	cmd.Short = "Show the server version"
 	cmd.Long = cli.FormatSection("Description",
 		`Show the server version`)
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-func (c *cmdVersion) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdVersion) run(_ *cobra.Command, _ []string) error {
 	fmt.Println(version.Version)
 
 	return nil

@@ -16,7 +16,7 @@ type cmdCallhook struct {
 	global *cmdGlobal
 }
 
-func (c *cmdCallhook) Command() *cobra.Command {
+func (c *cmdCallhook) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "callhook <path> [<instance id>|<instance project> <instance name>] <hook>"
 	cmd.Short = "Call container lifecycle hook"
@@ -26,13 +26,13 @@ func (c *cmdCallhook) Command() *cobra.Command {
   This internal command notifies the daemon about a container lifecycle event
   (start, stopns, stop, restart) and blocks until it has been processed.
 `
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Hidden = true
 
 	return cmd
 }
 
-func (c *cmdCallhook) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdCallhook) run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	if len(args) < 2 {
 		_ = cmd.Help()

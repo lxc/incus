@@ -264,7 +264,7 @@ func internalOptimizeImage(d *Daemon, r *http.Request) response.Response {
 	return response.EmptySyncResponse
 }
 
-func internalRefreshImage(d *Daemon, r *http.Request) response.Response {
+func internalRefreshImage(d *Daemon, _ *http.Request) response.Response {
 	s := d.State()
 
 	err := autoUpdateImages(s.ShutdownCtx, s)
@@ -275,7 +275,7 @@ func internalRefreshImage(d *Daemon, r *http.Request) response.Response {
 	return response.EmptySyncResponse
 }
 
-func internalWaitReady(d *Daemon, r *http.Request) response.Response {
+func internalWaitReady(d *Daemon, _ *http.Request) response.Response {
 	// Check that we're not shutting down.
 	isClosing := d.State().ShutdownCtx.Err() != nil
 	if isClosing {
@@ -1089,7 +1089,7 @@ func internalImportRootDevicePopulate(instancePoolName string, localDevices map[
 	}
 }
 
-func internalGC(d *Daemon, r *http.Request) response.Response {
+func internalGC(_ *Daemon, _ *http.Request) response.Response {
 	logger.Infof("Started forced garbage collection run")
 	runtime.GC()
 	runtimeDebug.FreeOSMemory()
@@ -1106,19 +1106,19 @@ func internalGC(d *Daemon, r *http.Request) response.Response {
 	return response.EmptySyncResponse
 }
 
-func internalRAFTSnapshot(d *Daemon, r *http.Request) response.Response {
+func internalRAFTSnapshot(_ *Daemon, _ *http.Request) response.Response {
 	logger.Warn("Forced RAFT snapshot not supported")
 
 	return response.InternalError(fmt.Errorf("Not supported"))
 }
 
-func internalBGPState(d *Daemon, r *http.Request) response.Response {
+func internalBGPState(d *Daemon, _ *http.Request) response.Response {
 	s := d.State()
 
 	return response.SyncResponse(true, s.BGP.Debug())
 }
 
-func internalRebalanceLoad(d *Daemon, r *http.Request) response.Response {
+func internalRebalanceLoad(d *Daemon, _ *http.Request) response.Response {
 	err := autoRebalanceCluster(context.TODO(), d)
 	if err != nil {
 		return response.SmartError(err)

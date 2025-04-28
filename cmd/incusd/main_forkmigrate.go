@@ -13,7 +13,7 @@ type cmdForkmigrate struct {
 	global *cmdGlobal
 }
 
-func (c *cmdForkmigrate) Command() *cobra.Command {
+func (c *cmdForkmigrate) command() *cobra.Command {
 	// Main subcommand
 	cmd := &cobra.Command{}
 	cmd.Use = "forkmigrate <container name> <containers path> <config> <images path> <preserve>"
@@ -24,13 +24,13 @@ func (c *cmdForkmigrate) Command() *cobra.Command {
   This internal command is used to start the container as a separate
   process, restoring its recorded state.
 `
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Hidden = true
 
 	return cmd
 }
 
-func (c *cmdForkmigrate) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdForkmigrate) run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	if len(args) != 5 {
 		_ = cmd.Help()

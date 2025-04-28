@@ -18,7 +18,7 @@ type cmdForkZFS struct {
 	global *cmdGlobal
 }
 
-func (c *cmdForkZFS) Command() *cobra.Command {
+func (c *cmdForkZFS) command() *cobra.Command {
 	// Main subcommand
 	cmd := &cobra.Command{}
 	cmd.Use = "forkzfs [<arguments>...]"
@@ -28,13 +28,13 @@ func (c *cmdForkZFS) Command() *cobra.Command {
 
   This internal command is used to run ZFS in some specific cases.
 `
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Hidden = true
 
 	return cmd
 }
 
-func (c *cmdForkZFS) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdForkZFS) run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	if len(args) < 1 {
 		_ = cmd.Help()

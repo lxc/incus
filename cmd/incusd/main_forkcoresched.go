@@ -96,7 +96,7 @@ type cmdForkcoresched struct {
 	global *cmdGlobal
 }
 
-func (c *cmdForkcoresched) Command() *cobra.Command {
+func (c *cmdForkcoresched) command() *cobra.Command {
 	// Main subcommand
 	cmd := &cobra.Command{}
 	cmd.Use = "forkcoresched <hook> <PID> [...]"
@@ -107,12 +107,12 @@ func (c *cmdForkcoresched) Command() *cobra.Command {
   This command is used to move a set of processes into a new core scheduling
   domain.
 `
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Hidden = true
 
 	return cmd
 }
 
-func (c *cmdForkcoresched) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdForkcoresched) run(_ *cobra.Command, _ []string) error {
 	return fmt.Errorf("This command should have been intercepted in cgo")
 }

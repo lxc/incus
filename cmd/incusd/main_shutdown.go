@@ -19,7 +19,7 @@ type cmdShutdown struct {
 	flagTimeout int
 }
 
-func (c *cmdShutdown) Command() *cobra.Command {
+func (c *cmdShutdown) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "shutdown"
 	cmd.Short = "Tell the daemon to shutdown all instances and exit"
@@ -32,7 +32,7 @@ func (c *cmdShutdown) Command() *cobra.Command {
   This can take quite a while as instances can take a long time to
   shutdown, especially if a non-standard timeout was configured for them.
 `
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().IntVarP(&c.flagTimeout, "timeout", "t", 0, "Number of seconds to wait before giving up"+"``")
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, "Force shutdown instead of waiting for running operations to finish"+"``")
 	cmd.Hidden = true
@@ -40,7 +40,7 @@ func (c *cmdShutdown) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdShutdown) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdShutdown) run(_ *cobra.Command, _ []string) error {
 	connArgs := &incus.ConnectionArgs{
 		SkipGetServer: true,
 	}
