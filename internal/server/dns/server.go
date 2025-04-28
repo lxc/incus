@@ -2,7 +2,9 @@ package dns
 
 import (
 	"context"
+	"fmt"
 	"sync"
+	"time"
 
 	"github.com/miekg/dns"
 
@@ -10,7 +12,6 @@ import (
 	"github.com/lxc/incus/v6/internal/server/db"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/logger"
-	"github.com/lxc/incus/v6/shared/revert"
 )
 
 // ZoneRetriever is a function which fetches a DNS zone.
@@ -28,7 +29,25 @@ type Server struct {
 	// Internal state (to handle reconfiguration).
 	address string
 
+	cmd chan serverCmdInfo
+
 	mu sync.Mutex
+}
+
+type serverCmd int
+
+const (
+	serverCmdStart serverCmd = iota
+	serverCmdRestart
+	serverCmdStop
+	serverCmdReconfigure
+	serverCmdHandleError
+)
+
+type serverCmdInfo struct {
+	cmd     serverCmd
+	address string
+	err     error
 }
 
 // NewServer returns a new server instance.
@@ -38,13 +57,114 @@ func NewServer(db *db.Cluster, retriever ZoneRetriever) *Server {
 	return s
 }
 
+func (s *Server) handleErr(err error) {
+	s.cmd <- serverCmdInfo{
+		cmd: serverCmdHandleError,
+		err: err,
+	}
+}
+
+func (s *Server) runDNSServer() {
+	shouldRun := false
+	address := ""
+
+	for cmd := range s.cmd {
+		switch cmd.cmd {
+		case serverCmdStart:
+			if shouldRun {
+				continue
+			}
+
+			shouldRun = true
+			address = cmd.address
+			s.mu.Lock()
+			err := s.start(cmd.address)
+			if err != nil {
+				// Run in new goroutine to avoid deadlock.
+				go s.handleErr(err)
+			}
+
+			s.mu.Unlock()
+		case serverCmdRestart:
+			s.mu.Lock()
+			// don't start if the server shouldn't run or is already running (s.address is set when the server starts)
+			if !shouldRun || s.address != "" {
+				s.mu.Unlock()
+				continue
+			}
+
+			err := s.start(address)
+			if err != nil {
+				// Run in new goroutine to avoid deadlock.
+				go s.handleErr(err)
+			}
+
+			s.mu.Unlock()
+		case serverCmdStop:
+			shouldRun = false
+			s.mu.Lock()
+			s.stop()
+			s.mu.Unlock()
+		case serverCmdReconfigure:
+			s.mu.Lock()
+			s.stop()
+
+			if cmd.address == "" {
+				shouldRun = false
+			} else {
+				shouldRun = true
+				address = cmd.address
+				err := s.start(cmd.address)
+				if err != nil {
+					// Run in new goroutine to avoid deadlock.
+					go s.handleErr(err)
+				}
+			}
+
+			s.mu.Unlock()
+		case serverCmdHandleError:
+			if cmd.err == nil {
+				continue
+			}
+
+			logger.Errorf("DNS server encountered an error, restarting in 10s: %v", cmd.err)
+			s.mu.Lock()
+			s.stop()
+			s.mu.Unlock()
+			go func() {
+				<-time.NewTimer(time.Second * 10).C
+				s.cmd <- serverCmdInfo{cmd: serverCmdRestart}
+			}()
+		}
+	}
+}
+
 // Start sets up the DNS listener.
 func (s *Server) Start(address string) error {
-	// Locking.
 	s.mu.Lock()
-	defer s.mu.Unlock()
 
-	return s.start(address)
+	start := s.cmd == nil
+
+	if start {
+		s.cmd = make(chan serverCmdInfo)
+		go s.runDNSServer()
+	}
+
+	s.mu.Unlock()
+
+	if start {
+		s.cmd <- serverCmdInfo{
+			cmd:     serverCmdStart,
+			address: address,
+		}
+	} else {
+		s.cmd <- serverCmdInfo{
+			cmd:     serverCmdReconfigure,
+			address: address,
+		}
+	}
+
+	return nil
 }
 
 func (s *Server) start(address string) error {
@@ -60,7 +180,7 @@ func (s *Server) start(address string) error {
 	go func() {
 		err := s.tcpDNS.ListenAndServe()
 		if err != nil {
-			logger.Errorf("Failed to bind TCP DNS address %q: %v", address, err)
+			s.handleErr(fmt.Errorf("Failed to listen on TCP DNS address %q: %v", address, err))
 		}
 	}()
 
@@ -68,7 +188,7 @@ func (s *Server) start(address string) error {
 	go func() {
 		err := s.udpDNS.ListenAndServe()
 		if err != nil {
-			logger.Errorf("Failed to bind UDP DNS address %q: %v", address, err)
+			s.handleErr(fmt.Errorf("Failed to listen on UDP DNS address %q: %v", address, err))
 		}
 	}()
 
@@ -86,17 +206,17 @@ func (s *Server) start(address string) error {
 
 // Stop tears down the DNS listener.
 func (s *Server) Stop() error {
-	// Locking.
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.cmd <- serverCmdInfo{
+		cmd: serverCmdStop,
+	}
 
-	return s.stop()
+	return nil
 }
 
-func (s *Server) stop() error {
+func (s *Server) stop() {
 	// Skip if no instance.
 	if s.tcpDNS == nil || s.udpDNS == nil {
-		return nil
+		return
 	}
 
 	// Stop the listener.
@@ -105,48 +225,11 @@ func (s *Server) stop() error {
 
 	// Unset the address.
 	s.address = ""
-	return nil
 }
 
 // Reconfigure updates the listener with a new configuration.
 func (s *Server) Reconfigure(address string) error {
-	// Locking.
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	return s.reconfigure(address)
-}
-
-func (s *Server) reconfigure(address string) error {
-	// Get the old address.
-	oldAddress := s.address
-
-	// Setup reverter.
-	reverter := revert.New()
-	defer reverter.Fail()
-
-	// Stop the listener.
-	err := s.stop()
-	if err != nil {
-		return err
-	}
-
-	// Check if we should start.
-	if address != "" {
-		// Restore old address on failure.
-		reverter.Add(func() { _ = s.start(oldAddress) })
-
-		// Start the listener with the new address.
-		err = s.start(address)
-		if err != nil {
-			return err
-		}
-	}
-
-	// All done.
-	reverter.Success()
-
-	return nil
+	return s.Start(address)
 }
 
 // UpdateTSIG fetches all TSIG keys and loads them into the DNS server.
