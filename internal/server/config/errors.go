@@ -6,27 +6,26 @@ import (
 	"strings"
 )
 
-// Error generated when trying to set a certain config key to certain value.
-type Error struct {
-	Name   string // The name of the key this error is associated with.
-	Value  any    // The value that the key was tried to be set to.
-	Reason string // Human-readable reason of the error.
+// configurationError is generated when trying to set a config key to an erroneous value.
+type configurationError struct {
+	configKey      string
+	erroneousValue any
+	reason         string
 }
 
-// Error implements the error interface.
-func (e Error) Error() string {
-	message := fmt.Sprintf("cannot set '%s'", e.Name)
-	if e.Value != nil {
-		message += fmt.Sprintf(" to '%v'", e.Value)
+// ConfigurationError implements the error interface.
+func (e configurationError) Error() string {
+	message := fmt.Sprintf("cannot set '%s'", e.configKey)
+	if e.erroneousValue != nil {
+		message += fmt.Sprintf(" to '%v'", e.erroneousValue)
 	}
 
-	return message + fmt.Sprintf(": %s", e.Reason)
+	return message + fmt.Sprintf(": %s", e.reason)
 }
 
-// ErrorList is a list of configuration Errors occurred during Load() or
-// Map.Change().
+// ErrorList is a list of configuration Errors occurred during Load() or Map.Change().
 type ErrorList struct {
-	errors []Error
+	errors []configurationError
 }
 
 // ErrorList implements the error interface.
@@ -55,12 +54,12 @@ func (l *ErrorList) Len() int { return len(l.errors) }
 func (l *ErrorList) Swap(i, j int) { l.errors[i], l.errors[j] = l.errors[j], l.errors[i] }
 
 // Less defines an ordering of errors inside the error list. This is needed to implement the sort Interface.
-func (l *ErrorList) Less(i, j int) bool { return l.errors[i].Name < l.errors[j].Name }
+func (l *ErrorList) Less(i, j int) bool { return l.errors[i].configKey < l.errors[j].configKey }
 
-// Sort sorts an ErrorList. *Error entries are sorted by key name.
+// sort sorts an ErrorList. *ConfigurationError entries are sorted by key name.
 func (l *ErrorList) sort() { sort.Sort(l) }
 
-// Add adds an Error with given key name, value and reason.
-func (l *ErrorList) add(name string, value any, reason string) {
-	l.errors = append(l.errors, Error{name, value, reason})
+// add adds an ConfigurationError with given key name, value and reason.
+func (l *ErrorList) add(configKey string, erroneousValue any, errorReason string) {
+	l.errors = append(l.errors, configurationError{configKey, erroneousValue, errorReason})
 }
