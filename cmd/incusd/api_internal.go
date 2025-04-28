@@ -743,7 +743,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 		return err
 	}
 
-	if allowNameOverride && instName != "" {
+	if allowNameOverride {
 		backupConf.Container.Name = instName
 	}
 
