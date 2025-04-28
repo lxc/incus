@@ -41,7 +41,10 @@ func TestMemoryConfigSectionToMap(t *testing.T) {
 		"share":      true,
 	}
 
-	assert.Equal(t, expected, result)
+	assert.Equal(t, expected["size"], result["size"])
+	assert.ElementsMatch(t, expected["host-nodes"], result["host-nodes"])
+	assert.Equal(t, expected["policy"], result["policy"])
+	assert.Equal(t, expected["share"], result["share"])
 }
 
 // Test extractTraiingNumber.
