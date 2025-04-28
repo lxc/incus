@@ -473,7 +473,7 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 				RsyncFeatures:       rsyncFeatures,
 				Snapshots:           respHeader.Snapshots,
 				VolumeOnly:          c.volumeOnly,
-				VolumeSize:          *respHeader.VolumeSize,
+				VolumeSize:          respHeader.GetVolumeSize(),
 				Refresh:             c.refresh,
 				RefreshExcludeOlder: c.refreshExcludeOlder,
 			}
