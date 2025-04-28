@@ -24,6 +24,7 @@ type cmdPublish struct {
 	flagMakePublic           bool
 	flagForce                bool
 	flagReuse                bool
+	flagFormat               string
 }
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
@@ -41,6 +42,7 @@ func (c *cmdPublish) Command() *cobra.Command {
 	cmd.Flags().StringVar(&c.flagCompressionAlgorithm, "compression", "", i18n.G("Compression algorithm to use (`none` for uncompressed)"))
 	cmd.Flags().StringVar(&c.flagExpiresAt, "expire", "", i18n.G("Image expiration date (format: rfc3339)")+"``")
 	cmd.Flags().BoolVar(&c.flagReuse, "reuse", false, i18n.G("If the image alias already exists, delete and create a new one"))
+	cmd.Flags().StringVar(&c.flagFormat, "format", "unified", i18n.G("Image format")+"``")
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -256,6 +258,8 @@ func (c *cmdPublish) Run(cmd *cobra.Command, args []string) error {
 
 		return fmt.Errorf(i18n.G("Aliases already exists: %s"), strings.Join(names, ", "))
 	}
+
+	req.Format = c.flagFormat
 
 	op, err := s.CreateImage(req, nil)
 	if err != nil {
