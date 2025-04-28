@@ -474,6 +474,7 @@ var APIExtensions = []string{
 	"server_logging",
 	"network_forward_snat",
 	"memory_hotplug",
+	"instance_nic_routed_host_tables",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

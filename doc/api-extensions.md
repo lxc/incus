@@ -2757,3 +2757,7 @@ This is limited to bridged networks as OVN doesn't support flexible enough SNAT 
 ## `memory_hotplug`
 
 This adds memory hotplugging for VMs, allowing them to add memory at runtime without rebooting.
+
+## `instance_nic_routed_host_tables`
+
+This adds support for specifying host-routing tables on `nic` devices that use the routed mode.
