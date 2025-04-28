@@ -311,7 +311,7 @@ func (s *Stmt) namesBy(buf *file.Buffer) error {
 			}
 
 			joins = append(joins, join)
-			column = field.JoinConfig()
+			column = field.joinConfig()
 		} else {
 			column = mapping.FieldColumnName(field.Name, tableName)
 		}
@@ -403,7 +403,7 @@ func (s *Stmt) id(buf *file.Buffer) error {
 
 		var column string
 		if field.IsScalar() {
-			column = field.JoinConfig()
+			column = field.joinConfig()
 
 			join, err := field.JoinClause(mapping, table)
 			joins = append(joins, join)
