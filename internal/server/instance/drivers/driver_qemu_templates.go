@@ -12,15 +12,15 @@ import (
 
 func writeHeader(sb *strings.Builder, comment string, name string) {
 	if comment != "" {
-		sb.WriteString(fmt.Sprintf("# %s\n", comment))
+		fmt.Fprintf(sb, "# %s\n", comment)
 	}
 
-	sb.WriteString(fmt.Sprintf("[%s]\n", name))
+	fmt.Fprintf(sb, "[%s]\n", name)
 }
 
 func writeEntry(sb *strings.Builder, key string, value string) {
 	if value != "" {
-		sb.WriteString(fmt.Sprintf("%s = \"%s\"\n", key, value))
+		fmt.Fprintf(sb, "%s = \"%s\"\n", key, value)
 	}
 }
 
