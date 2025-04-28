@@ -295,7 +295,7 @@ func (f *Field) Stmt() string {
 
 // IsScalar returns true if the field is a scalar column value from a joined table.
 func (f *Field) IsScalar() bool {
-	return f.JoinConfig() != ""
+	return f.joinConfig() != ""
 }
 
 // IsIndirect returns true if the field is a scalar column value from a joined
@@ -318,7 +318,7 @@ func (f *Field) Column() string {
 
 	column := lex.SnakeCase(f.Name)
 
-	join := f.JoinConfig()
+	join := f.joinConfig()
 	if join != "" {
 		column = fmt.Sprintf("%s AS %s", join, column)
 	}
@@ -353,7 +353,7 @@ func (f *Field) SelectColumn(mapping *Mapping, primaryTable string) (string, err
 	}
 
 	var column string
-	join := f.JoinConfig()
+	join := f.joinConfig()
 	if join != "" {
 		column = join
 	} else {
@@ -419,7 +419,7 @@ func (f *Field) JoinClause(mapping *Mapping, table string) (string, error) {
 		return "", fmt.Errorf("Cannot join and leftjoin at the same time for field %q of struct %q", f.Name, mapping.Name)
 	}
 
-	join := f.JoinConfig()
+	join := f.joinConfig()
 	if f.Config.Get("leftjoin") != "" {
 		joinTemplate = strings.ReplaceAll(joinTemplate, "JOIN", "LEFT JOIN")
 	}
@@ -484,7 +484,7 @@ func (f *Field) InsertColumn(mapping *Mapping, primaryTable string, defs map[*as
 			}
 		}
 
-		table, _, ok := strings.Cut(f.JoinConfig(), ".")
+		table, _, ok := strings.Cut(f.joinConfig(), ".")
 		if !ok {
 			return "", "", fmt.Errorf("'join' tag of field %q of struct %q must be of form <table>.<column>", f.Name, mapping.Name)
 		}
@@ -523,7 +523,7 @@ func (f *Field) InsertColumn(mapping *Mapping, primaryTable string, defs map[*as
 	return column, value, nil
 }
 
-func (f Field) JoinConfig() string {
+func (f *Field) joinConfig() string {
 	join := f.Config.Get("join")
 	if join == "" {
 		join = f.Config.Get("leftjoin")
@@ -533,7 +533,7 @@ func (f Field) JoinConfig() string {
 }
 
 // SQLConfig returns the table and column specified by the 'sql' config key, if present.
-func (f Field) SQLConfig() (string, string, error) {
+func (f *Field) SQLConfig() (string, string, error) {
 	where := f.Config.Get("sql")
 
 	if where == "" {
@@ -549,8 +549,8 @@ func (f Field) SQLConfig() (string, string, error) {
 }
 
 // ScalarTableColumn gets the table and column from the join configuration.
-func (f Field) ScalarTableColumn() (string, string, error) {
-	join := f.JoinConfig()
+func (f *Field) ScalarTableColumn() (string, string, error) {
+	join := f.joinConfig()
 
 	if join == "" {
 		return "", "", fmt.Errorf("Missing join config for field %q", f.Name)
