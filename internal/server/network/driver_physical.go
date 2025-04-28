@@ -31,19 +31,93 @@ func (n *physical) DBType() db.NetworkType {
 // Validate network config.
 func (n *physical) Validate(config map[string]string) error {
 	rules := map[string]func(value string) error{
+		// gendoc:generate(entity=network_physical, group=common, key=parent)
+		//
+		// ---
+		// type: string
+		// shortdesc: Existing interface to use for network
 		"parent":                      validate.Required(validate.IsNotEmpty, validate.IsInterfaceName),
+		// gendoc:generate(entity=network_physical, group=common, key=mtu)
+		//
+		// ---
+		// type: integer
+		// shortdesc: The MTU of the new interface
 		"mtu":                         validate.Optional(validate.IsNetworkMTU),
+		// gendoc:generate(entity=network_physical, group=common, key=vlan)
+		//
+		// ---
+		// type: integer
+		// shortdesc: The VLAN ID to attach to
 		"vlan":                        validate.Optional(validate.IsNetworkVLAN),
+		// gendoc:generate(entity=network_physical, group=common, key=gvrp)
+		//
+		// ---
+		// type: bool
+		// defaultdesc: 'false'
+		// shortdesc: Register VLAN using GARP VLAN Registration Protocol 
 		"gvrp":                        validate.Optional(validate.IsBool),
+		// gendoc:generate(entity=network_physical, group=common, key=ipv4.gateway)
+		//
+		// ---
+		// type: string
+		// shortdesc: IPv4 address (standard mode) for the gateway and network (CIDR)
 		"ipv4.gateway":                validate.Optional(validate.IsNetworkAddressCIDRV4),
+		// gendoc:generate(entity=network_physical, group=common, key=ipv6.gateway)
+		//
+		// ---
+		// type: string
+		// shortdesc: IPv6 address (standard mode) for the gateway and network (CIDR)
 		"ipv6.gateway":                validate.Optional(validate.IsNetworkAddressCIDRV6),
+		// gendoc:generate(entity=network_physical, group=common, key=ipv4.ovn.ranges)
+		//
+		// ---
+		// type: string
+		// shortdesc: Comma-separated list of IPv4 ranges to use for child OVN network routers (FIRST-LAST format)
 		"ipv4.ovn.ranges":             validate.Optional(validate.IsListOf(validate.IsNetworkRangeV4)),
+		// gendoc:generate(entity=network_physical, group=common, key=ipv6.ovn.ranges)
+		//
+		// ---
+		// type: string
+		// shortdesc: Comma-separated list of IPv6 ranges to use for child OVN network routers (FIRST-LAST format)
 		"ipv6.ovn.ranges":             validate.Optional(validate.IsListOf(validate.IsNetworkRangeV6)),
+		// gendoc:generate(entity=network_physical, group=common, key=ipv4.routes)
+		//
+		// ---
+		// type: string
+		// shortdesc: Comma-separated list of additional IPv4 CIDR subnets that can be used with child OVN networks `ipv4.routes.external` setting
 		"ipv4.routes":                 validate.Optional(validate.IsListOf(validate.IsNetworkV4)),
+		// gendoc:generate(entity=network_physical, group=common, key=ipv4.routes.anycast)
+		//
+		// ---
+		// type: bool
+		// defaultdesc: 'false'
+		// shortdesc: Allow the overlapping routes to be used on multiple networks/NIC at the same time
 		"ipv4.routes.anycast":         validate.Optional(validate.IsBool),
+		// gendoc:generate(entity=network_physical, group=common, key=ipv6.routes)
+		//
+		// ---
+		// type: string
+		// shortdesc: Comma-separated list of additional IPv6 CIDR subnets that can be used with child OVN networks `ipv6.routes.external` setting
 		"ipv6.routes":                 validate.Optional(validate.IsListOf(validate.IsNetworkV6)),
+		// gendoc:generate(entity=network_physical, group=common, key=ipv6.routes.anycast)
+		//
+		// ---
+		// type: bool
+		// defaultdesc: 'false'
+		// shortdesc: Allow the overlapping routes to be used on multiple networks/NIC at the same time 
 		"ipv6.routes.anycast":         validate.Optional(validate.IsBool),
+		// gendoc:generate(entity=network_physical, group=common, key=dns.nameservers)
+		//
+		// ---
+		// type: string
+		// shortdesc: List of DNS server IPs (standard mode) on `physical` network
 		"dns.nameservers":             validate.Optional(validate.IsListOf(validate.IsNetworkAddress)),
+		// gendoc:generate(entity=network_physical, group=ovn, key=ovn.ingress_mode)
+		//
+		// ---
+		// type: string
+		// defaultdesc: `l2proxy`
+		// shortdesc: Sets the method how OVN NIC external IPs (standard mode) will be advertised on uplink network: `l2proxy` (proxy ARP/NDP) or `routed`  	
 		"ovn.ingress_mode":            validate.Optional(validate.IsOneOf("l2proxy", "routed")),
 		"volatile.last_state.created": validate.Optional(validate.IsBool),
 	}

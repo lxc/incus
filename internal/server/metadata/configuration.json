@@ -3792,6 +3792,118 @@
 				]
 			}
 		},
+		"network_physical": {
+			"common": {
+				"keys": [
+					{
+						"dns.nameservers": {
+							"longdesc": "",
+							"shortdesc": "List of DNS server IPs (standard mode) on `physical` network",
+							"type": "string"
+						}
+					},
+					{
+						"gvrp": {
+							"defaultdesc": "'false'",
+							"longdesc": "",
+							"shortdesc": "Register VLAN using GARP VLAN Registration Protocol",
+							"type": "bool"
+						}
+					},
+					{
+						"ipv4.gateway": {
+							"longdesc": "",
+							"shortdesc": "IPv4 address (standard mode) for the gateway and network (CIDR)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.ovn.ranges": {
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of IPv4 ranges to use for child OVN network routers (FIRST-LAST format)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.routes": {
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of additional IPv4 CIDR subnets that can be used with child OVN networks `ipv4.routes.external` setting",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.routes.anycast": {
+							"defaultdesc": "'false'",
+							"longdesc": "",
+							"shortdesc": "Allow the overlapping routes to be used on multiple networks/NIC at the same time",
+							"type": "bool"
+						}
+					},
+					{
+						"ipv6.gateway": {
+							"longdesc": "",
+							"shortdesc": "IPv6 address (standard mode) for the gateway and network (CIDR)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.ovn.ranges": {
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of IPv6 ranges to use for child OVN network routers (FIRST-LAST format)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.routes": {
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of additional IPv6 CIDR subnets that can be used with child OVN networks `ipv6.routes.external` setting",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.routes.anycast": {
+							"defaultdesc": "'false'",
+							"longdesc": "",
+							"shortdesc": "Allow the overlapping routes to be used on multiple networks/NIC at the same time",
+							"type": "bool"
+						}
+					},
+					{
+						"mtu": {
+							"longdesc": "",
+							"shortdesc": "The MTU of the new interface",
+							"type": "integer"
+						}
+					},
+					{
+						"parent": {
+							"longdesc": "",
+							"shortdesc": "Existing interface to use for network",
+							"type": "string"
+						}
+					},
+					{
+						"vlan": {
+							"longdesc": "",
+							"shortdesc": "The VLAN ID to attach to",
+							"type": "integer"
+						}
+					}
+				]
+			},
+			"ovn": {
+				"keys": [
+					{
+						"ovn.ingress_mode": {
+							"defaultdesc": "`l2proxy`",
+							"longdesc": "",
+							"shortdesc": "Sets the method how OVN NIC external IPs (standard mode) will be advertised on uplink network: `l2proxy` (proxy ARP/NDP) or `routed`",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"network_zone": {
 			"common": {
 				"keys": [

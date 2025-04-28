@@ -3353,6 +3353,98 @@ User keys can be used in search.
 ```
 
 <!-- config group network_load_balancer-common end -->
+<!-- config group network_physical-common start -->
+```{config:option} dns.nameservers network_physical-common
+:shortdesc: "List of DNS server IPs (standard mode) on `physical` network"
+:type: "string"
+
+```
+
+```{config:option} gvrp network_physical-common
+:defaultdesc: "'false'"
+:shortdesc: "Register VLAN using GARP VLAN Registration Protocol"
+:type: "bool"
+
+```
+
+```{config:option} ipv4.gateway network_physical-common
+:shortdesc: "IPv4 address (standard mode) for the gateway and network (CIDR)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.ovn.ranges network_physical-common
+:shortdesc: "Comma-separated list of IPv4 ranges to use for child OVN network routers (FIRST-LAST format)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.routes network_physical-common
+:shortdesc: "Comma-separated list of additional IPv4 CIDR subnets that can be used with child OVN networks `ipv4.routes.external` setting"
+:type: "string"
+
+```
+
+```{config:option} ipv4.routes.anycast network_physical-common
+:defaultdesc: "'false'"
+:shortdesc: "Allow the overlapping routes to be used on multiple networks/NIC at the same time"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.gateway network_physical-common
+:shortdesc: "IPv6 address (standard mode) for the gateway and network (CIDR)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.ovn.ranges network_physical-common
+:shortdesc: "Comma-separated list of IPv6 ranges to use for child OVN network routers (FIRST-LAST format)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.routes network_physical-common
+:shortdesc: "Comma-separated list of additional IPv6 CIDR subnets that can be used with child OVN networks `ipv6.routes.external` setting"
+:type: "string"
+
+```
+
+```{config:option} ipv6.routes.anycast network_physical-common
+:defaultdesc: "'false'"
+:shortdesc: "Allow the overlapping routes to be used on multiple networks/NIC at the same time"
+:type: "bool"
+
+```
+
+```{config:option} mtu network_physical-common
+:shortdesc: "The MTU of the new interface"
+:type: "integer"
+
+```
+
+```{config:option} parent network_physical-common
+:shortdesc: "Existing interface to use for network"
+:type: "string"
+
+```
+
+```{config:option} vlan network_physical-common
+:shortdesc: "The VLAN ID to attach to"
+:type: "integer"
+
+```
+
+<!-- config group network_physical-common end -->
+<!-- config group network_physical-ovn start -->
+```{config:option} ovn.ingress_mode network_physical-ovn
+:defaultdesc: "`l2proxy`"
+:shortdesc: "Sets the method how OVN NIC external IPs (standard mode) will be advertised on uplink network: `l2proxy` (proxy ARP/NDP) or `routed`"
+:type: "string"
+
+```
+
+<!-- config group network_physical-ovn end -->
 <!-- config group network_zone-common start -->
 ```{config:option} dns.nameservers network_zone-common
 :required: "no"
