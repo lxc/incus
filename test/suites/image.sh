@@ -201,3 +201,16 @@ test_image_refresh() {
   incus remote rm l2
   kill_incus "${INCUS2_DIR}"
 }
+
+test_image_split() {
+  ensure_import_testimage
+  incus init testimage c
+  incus publish c --alias splitimage --format=split
+  incus delete c
+  incus image export splitimage splitimage.file
+  incus image delete splitimage
+  incus image import splitimage.file splitimage.file.root --alias splitimage
+  incus init splitimage c
+  incus delete c
+  incus image delete splitimage
+}

@@ -297,6 +297,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_image_import_dir "import image from directory"
     run_test test_image_import_with_reuse "import image with reuse flag"
     run_test test_image_refresh "image refresh"
+    run_test test_image_split "image split"
     run_test test_image_acl "image acl"
     run_test test_cloud_init "cloud-init"
     run_test test_exec "exec"
