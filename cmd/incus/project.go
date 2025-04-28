@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"slices"
 	"sort"
 	"strings"
@@ -523,7 +524,7 @@ type cmdProjectList struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProjectList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("list", i18n.G("[<remote>:]"))
+	cmd.Use = usage("list", i18n.G("[<remote>:] [<filter>...]"))
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List projects")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -692,8 +693,16 @@ func (c *cmdProjectList) Run(cmd *cobra.Command, args []string) error {
 
 	resource := resources[0]
 
+	// Process the filters
+	filters := []string{}
+	if len(args) > 1 {
+		filters = append(filters, args[1:]...)
+	}
+
+	filters = prepareProjectServerFilters(filters, api.Project{})
+
 	// List projects
-	projects, err := resource.server.GetProjects()
+	projects, err := resource.server.GetProjectsWithFilter(filters)
 	if err != nil {
 		return err
 	}
@@ -1230,4 +1239,37 @@ func (c *cmdProjectGetCurrent) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// prepareProjectServerFilter processes and formats filter criteria
+// for projects, ensuring they are in a format that the server can interpret.
+func prepareProjectServerFilters(filters []string, i any) []string {
+	formattedFilters := []string{}
+
+	for _, filter := range filters {
+		membs := strings.SplitN(filter, "=", 2)
+		key := membs[0]
+
+		if len(membs) == 1 {
+			regexpValue := key
+			if !strings.Contains(key, "^") && !strings.Contains(key, "$") {
+				regexpValue = "^" + regexpValue + "$"
+			}
+
+			filter = fmt.Sprintf("name=(%s|^%s.*)", regexpValue, key)
+		} else {
+			firstPart := key
+			if strings.Contains(key, ".") {
+				firstPart = strings.Split(key, ".")[0]
+			}
+
+			if !structHasField(reflect.TypeOf(i), firstPart) {
+				filter = fmt.Sprintf("config.%s", filter)
+			}
+		}
+
+		formattedFilters = append(formattedFilters, filter)
+	}
+
+	return formattedFilters
 }
