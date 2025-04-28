@@ -64,6 +64,7 @@ type cmdMigrateData struct {
 	SourceFormat     string
 	Mounts           []string
 	InstanceArgs     api.InstancesPost
+	CustomVolumeArgs api.StorageVolumesPost
 	Pool             string
 	Project          string
 }
@@ -108,6 +109,29 @@ func (c *cmdMigrateData) renderInstance() string {
 	network, ok := c.InstanceArgs.Devices["eth0"]
 	if ok {
 		data.Network = network["parent"]
+	}
+
+	out, err := yaml.Marshal(&data)
+	if err != nil {
+		return ""
+	}
+
+	return string(out)
+}
+
+func (c *cmdMigrateData) renderCustomVolume() string {
+	data := struct {
+		Name         string `yaml:"Name"`
+		Project      string `yaml:"Project"`
+		Type         string `yaml:"Type"`
+		Source       string `yaml:"Source"`
+		SourceFormat string `yaml:"Source format,omitempty"`
+	}{
+		c.CustomVolumeArgs.Name,
+		c.Project,
+		c.CustomVolumeArgs.ContentType,
+		c.SourcePath,
+		c.SourceFormat,
 	}
 
 	out, err := yaml.Marshal(&data)
@@ -433,6 +457,115 @@ Additional overrides can be applied at this stage:
 	}
 }
 
+func (c *cmdMigrate) gatherCustomVolumeInfo(server incus.InstanceServer, migrationType MigrationType) (cmdMigrateData, error) {
+	var err error
+
+	config := cmdMigrateData{}
+
+	config.CustomVolumeArgs = api.StorageVolumesPost{
+		Type: "custom",
+		Source: api.StorageVolumeSource{
+			Type: "migration",
+			Mode: "push",
+		},
+	}
+
+	if migrationType == MigrationTypeVolumeFilesystem {
+		config.CustomVolumeArgs.ContentType = "filesystem"
+	} else {
+		config.CustomVolumeArgs.ContentType = "block"
+	}
+
+	// Project
+	err = c.askProject(server, &config)
+	if err != nil {
+		return cmdMigrateData{}, err
+	}
+
+	if config.Project != "" {
+		server = server.UseProject(config.Project)
+	}
+
+	// Pool
+	pools, err := server.GetStoragePools()
+	if err != nil {
+		return cmdMigrateData{}, err
+	}
+
+	poolNames := []string{}
+	for _, p := range pools {
+		poolNames = append(poolNames, p.Name)
+	}
+
+	for {
+		poolName, err := c.global.asker.AskString("Name of the pool: ", "", nil)
+		if err != nil {
+			return cmdMigrateData{}, err
+		}
+
+		if !slices.Contains(poolNames, poolName) {
+			fmt.Printf("Pool %q doesn't exists\n", poolName)
+			continue
+		}
+
+		config.Pool = poolName
+		break
+	}
+
+	// Custom volume name
+	volumes, err := server.GetStoragePoolVolumes(config.Pool)
+	if err != nil {
+		return cmdMigrateData{}, err
+	}
+
+	volumeNames := []string{}
+	for _, v := range volumes {
+		if v.Type != "custom" {
+			continue
+		}
+
+		volumeNames = append(volumeNames, v.Name)
+	}
+
+	for {
+		volumeName, err := c.global.asker.AskString("Name of the new custom volume: ", "", nil)
+		if err != nil {
+			return cmdMigrateData{}, err
+		}
+
+		if slices.Contains(volumeNames, volumeName) {
+			fmt.Printf("Storage volume %q already exists\n", volumeName)
+			continue
+		}
+
+		config.CustomVolumeArgs.Name = volumeName
+		break
+	}
+
+	err = c.askSourcePath(&config, migrationType)
+	if err != nil {
+		return cmdMigrateData{}, err
+	}
+
+	fmt.Println("\nCustom volume to be created:")
+
+	scanner := bufio.NewScanner(strings.NewReader(config.renderCustomVolume()))
+	for scanner.Scan() {
+		fmt.Printf("  %s\n", scanner.Text())
+	}
+
+	shouldMigrate, err := c.global.asker.AskBool("Do you want to continue? [default=yes]: ", "yes")
+	if err != nil {
+		return cmdMigrateData{}, err
+	}
+
+	if !shouldMigrate {
+		return cmdMigrateData{}, nil
+	}
+
+	return config, nil
+}
+
 func (c *cmdMigrate) migrateInstance(ctx context.Context, server incus.InstanceServer, migrationType MigrationType) error {
 	if migrationType != MigrationTypeVM && migrationType != MigrationTypeContainer {
 		return fmt.Errorf("Wrong migration type for migrateInstance")
@@ -478,6 +611,54 @@ func (c *cmdMigrate) migrateInstance(ctx context.Context, server incus.InstanceS
 		}
 
 		progress.Done(fmt.Sprintf("Instance %s successfully created", config.InstanceArgs.Name))
+		reverter.Success()
+
+		return nil
+	})
+}
+
+func (c *cmdMigrate) migrateCustomVolume(ctx context.Context, server incus.InstanceServer, migrationType MigrationType) error {
+	if migrationType != MigrationTypeVolumeBlock && migrationType != MigrationTypeVolumeFilesystem {
+		return fmt.Errorf("Wrong migration type for migrateCustomVolume")
+	}
+
+	config, err := c.gatherCustomVolumeInfo(server, migrationType)
+	if err != nil {
+		return err
+	}
+
+	// User decided not to migrate.
+	if config.CustomVolumeArgs.Name == "" {
+		return nil
+	}
+
+	return c.runMigration(ctx, server, &config, migrationType, func(ctx context.Context, server incus.InstanceServer, config *cmdMigrateData, path string, migrationType MigrationType) error {
+		reverter := revert.New()
+		defer reverter.Fail()
+
+		// Create the custom volume
+		op, err := server.CreateStoragePoolVolumeFromMigration(config.Pool, config.CustomVolumeArgs)
+		if err != nil {
+			return err
+		}
+
+		reverter.Add(func() {
+			_ = server.DeleteStoragePoolVolume(config.Pool, "custom", config.CustomVolumeArgs.Name)
+		})
+
+		progress := cli.ProgressRenderer{Format: "Transferring custom volume: %s"}
+		_, err = op.AddHandler(progress.UpdateOp)
+		if err != nil {
+			progress.Done("")
+			return err
+		}
+
+		err = transferRootfs(ctx, op, path, c.flagRsyncArgs, migrationType)
+		if err != nil {
+			return err
+		}
+
+		progress.Done(fmt.Sprintf("Custom volume %s successfully created", config.CustomVolumeArgs.Name))
 		reverter.Success()
 
 		return nil
@@ -532,7 +713,7 @@ func (c *cmdMigrate) runMigration(ctx context.Context, server incus.InstanceServ
 
 	var fullPath string
 
-	if migrationType == MigrationTypeContainer {
+	if migrationType == MigrationTypeContainer || migrationType == MigrationTypeVolumeFilesystem {
 		// Create the rootfs directory
 		fullPath = fmt.Sprintf("%s/rootfs", path)
 
@@ -659,8 +840,10 @@ func (c *cmdMigrate) run(_ *cobra.Command, _ []string) error {
 What would you like to create?
 1) Container
 2) Virtual Machine
+3) Custom Volume (from filesystem)
+4) Custom Volume (from disk)
 
-Please enter the number of your choice: `, 1, 2, "", nil)
+Please enter the number of your choice: `, 1, 4, "", nil)
 	if err != nil {
 		return err
 	}
@@ -670,6 +853,10 @@ Please enter the number of your choice: `, 1, 2, "", nil)
 		return c.migrateInstance(ctx, server, MigrationTypeContainer)
 	case 2:
 		return c.migrateInstance(ctx, server, MigrationTypeVM)
+	case 3:
+		return c.migrateCustomVolume(ctx, server, MigrationTypeVolumeFilesystem)
+	case 4:
+		return c.migrateCustomVolume(ctx, server, MigrationTypeVolumeBlock)
 	}
 
 	return nil
@@ -821,7 +1008,7 @@ func (c *cmdMigrate) askSourcePath(config *cmdMigrateData, migrationType Migrati
 	var err error
 
 	// Provide source path
-	if migrationType == MigrationTypeVM {
+	if migrationType == MigrationTypeVM || migrationType == MigrationTypeVolumeBlock {
 		question = "Please provide the path to a disk, partition, or qcow2/raw/vmdk image file: "
 	} else {
 		question = "Please provide the path to a root filesystem: "
@@ -838,7 +1025,7 @@ func (c *cmdMigrate) askSourcePath(config *cmdMigrateData, migrationType Migrati
 		}
 
 		// When migrating a disk, report the detected source format
-		if migrationType == MigrationTypeVM {
+		if migrationType == MigrationTypeVM || migrationType == MigrationTypeVolumeBlock {
 			if linux.IsBlockdevPath(s) {
 				config.SourceFormat = "Block device"
 			} else if _, ext, _, _ := archive.DetectCompression(s); ext == ".qcow2" {

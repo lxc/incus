@@ -35,6 +35,12 @@ const MigrationTypeContainer = MigrationType("container")
 // MigrationTypeVM defines the migration type value for a virtual-machine.
 const MigrationTypeVM = MigrationType("virtual-machine")
 
+// MigrationTypeVolumeFilesystem defines the migration type value for a custom volume of type filesystem.
+const MigrationTypeVolumeFilesystem = MigrationType("volume-filesystem")
+
+// MigrationTypeVolumeBlock defines the migration type value for a custom volume of type block.
+const MigrationTypeVolumeBlock = MigrationType("volume-block")
+
 func transferRootfs(ctx context.Context, op incus.Operation, rootfs string, rsyncArgs string, migrationType MigrationType) error {
 	opAPI := op.Get()
 
@@ -58,7 +64,7 @@ func transferRootfs(ctx context.Context, op incus.Operation, rootfs string, rsyn
 	var fs migration.MigrationFSType
 	var rsyncHasFeature bool
 
-	if migrationType == MigrationTypeVM {
+	if migrationType == MigrationTypeVM || migrationType == MigrationTypeVolumeBlock {
 		fs = migration.MigrationFSType_BLOCK_AND_RSYNC
 		rsyncHasFeature = false
 	} else {
@@ -75,7 +81,7 @@ func transferRootfs(ctx context.Context, op incus.Operation, rootfs string, rsyn
 		Fs: &fs,
 	}
 
-	if migrationType == MigrationTypeVM {
+	if migrationType == MigrationTypeVM || migrationType == MigrationTypeVolumeBlock {
 		stat, err := os.Stat(filepath.Join(rootfs, "root.img"))
 		if err != nil {
 			return abort(err)
@@ -105,12 +111,14 @@ func transferRootfs(ctx context.Context, op incus.Operation, rootfs string, rsyn
 	}
 
 	// Send the filesystem
-	err = rsyncSend(ctx, wsFs, rootfs, rsyncArgs, migrationType)
-	if err != nil {
-		return abort(fmt.Errorf("Failed sending filesystem volume: %w", err))
+	if migrationType != MigrationTypeVolumeBlock {
+		err = rsyncSend(ctx, wsFs, rootfs, rsyncArgs, migrationType)
+		if err != nil {
+			return abort(fmt.Errorf("Failed sending filesystem volume: %w", err))
+		}
 	}
 
-	if migrationType == MigrationTypeVM {
+	if migrationType == MigrationTypeVM || migrationType == MigrationTypeVolumeBlock {
 		// Send block volume
 		f, err := os.Open(filepath.Join(rootfs, "root.img"))
 		if err != nil {

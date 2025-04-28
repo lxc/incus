@@ -82,11 +82,11 @@ func rsyncSendSetup(ctx context.Context, path string, rsyncArgs string, migratio
 		"--sparse",
 	}
 
-	if migrationType == MigrationTypeContainer {
+	if migrationType == MigrationTypeContainer || migrationType == MigrationTypeVolumeFilesystem {
 		args = append(args, "--xattrs", "--delete", "--compress", "--compress-level=2")
 	}
 
-	if migrationType == MigrationTypeVM {
+	if migrationType == MigrationTypeVM || migrationType == MigrationTypeVolumeBlock {
 		args = append(args, "--exclude", "*.img")
 	}
 
