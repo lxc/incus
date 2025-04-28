@@ -6581,7 +6581,7 @@ func (d *qemu) delete(force bool) error {
 }
 
 // Export publishes the instance.
-func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time.Time, tracker *ioprogress.ProgressTracker) (*api.ImageMetadata, error) {
+func (d *qemu) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties map[string]string, expiration time.Time, tracker *ioprogress.ProgressTracker) (*api.ImageMetadata, error) {
 	ctxMap := logger.Ctx{
 		"created":   d.creationDate,
 		"ephemeral": d.ephemeral,
@@ -6604,18 +6604,18 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 	defer func() { _ = d.unmount() }()
 
 	// Create the tarball.
-	tarWriter := instancewriter.NewInstanceTarWriter(w, nil)
+	metaTarWriter := instancewriter.NewInstanceTarWriter(metaWriter, nil)
 
 	// Path inside the tar image is the pathname starting after cDir.
 	cDir := d.Path()
 	offset := len(cDir) + 1
 
-	writeToTar := func(path string, fi os.FileInfo, err error) error {
+	writeToMetaTar := func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		err = tarWriter.WriteFile(path[offset:], path, fi, false)
+		err = metaTarWriter.WriteFile(path[offset:], path, fi, false)
 		if err != nil {
 			d.logger.Debug("Error tarring up", logger.Ctx{"path": path, "err": err})
 			return err
@@ -6630,7 +6630,7 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 		parentName, _, _ := api.GetParentAndSnapshotName(d.name)
 		parent, err := instance.LoadByProjectAndName(d.state, d.project.Name, parentName)
 		if err != nil {
-			_ = tarWriter.Close()
+			_ = metaTarWriter.Close()
 			d.logger.Error("Failed exporting instance", ctxMap)
 			return nil, err
 		}
@@ -6656,14 +6656,14 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 		// Parse the metadata.
 		content, err := os.ReadFile(fnam)
 		if err != nil {
-			_ = tarWriter.Close()
+			_ = metaTarWriter.Close()
 			d.logger.Error("Failed exporting instance", ctxMap)
 			return nil, err
 		}
 
 		err = yaml.Unmarshal(content, &meta)
 		if err != nil {
-			_ = tarWriter.Close()
+			_ = metaTarWriter.Close()
 			d.logger.Error("Failed exporting instance", ctxMap)
 			return nil, err
 		}
@@ -6688,7 +6688,7 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 	// Write the new metadata.yaml.
 	tempDir, err := os.MkdirTemp("", "incus_metadata_")
 	if err != nil {
-		_ = tarWriter.Close()
+		_ = metaTarWriter.Close()
 		d.logger.Error("Failed exporting instance", ctxMap)
 		return nil, err
 	}
@@ -6697,7 +6697,7 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 
 	data, err := yaml.Marshal(&meta)
 	if err != nil {
-		_ = tarWriter.Close()
+		_ = metaTarWriter.Close()
 		d.logger.Error("Failed exporting instance", ctxMap)
 		return nil, err
 	}
@@ -6705,7 +6705,7 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 	fnam = filepath.Join(tempDir, "metadata.yaml")
 	err = os.WriteFile(fnam, data, 0o644)
 	if err != nil {
-		_ = tarWriter.Close()
+		_ = metaTarWriter.Close()
 		d.logger.Error("Failed exporting instance", ctxMap)
 		return nil, err
 	}
@@ -6713,15 +6713,15 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 	// Add metadata.yaml to the tarball.
 	fi, err := os.Lstat(fnam)
 	if err != nil {
-		_ = tarWriter.Close()
+		_ = metaTarWriter.Close()
 		d.logger.Error("Failed exporting instance", ctxMap)
 		return nil, err
 	}
 
 	tmpOffset := len(filepath.Dir(fnam)) + 1
-	err = tarWriter.WriteFile(fnam[tmpOffset:], fnam, fi, false)
+	err = metaTarWriter.WriteFile(fnam[tmpOffset:], fnam, fi, false)
 	if err != nil {
-		_ = tarWriter.Close()
+		_ = metaTarWriter.Close()
 		d.logger.Debug("Error writing to tarfile", logger.Ctx{"err": err})
 		d.logger.Error("Failed exporting instance", ctxMap)
 		return nil, err
@@ -6772,29 +6772,43 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 		return nil, fmt.Errorf("Failed converting instance to qcow2: %w", err)
 	}
 
-	// Read converted file info and write file to tarball.
-	fi, err = os.Lstat(fPath)
-	if err != nil {
-		return nil, err
-	}
+	// Read converted file info and write file to tarball in the case of unified image
+	// For split images, just write as a qcow2 file
+	if rootfsWriter == nil {
+		imgOffset := len(tmpPath) + 1
+		fi, err = os.Lstat(fPath)
+		if err != nil {
+			return nil, err
+		}
 
-	imgOffset := len(tmpPath) + 1
-	err = tarWriter.WriteFile(fPath[imgOffset:], fPath, fi, false)
-	if err != nil {
-		return nil, err
+		err = metaTarWriter.WriteFile(fPath[imgOffset:], fPath, fi, false)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		f, err := os.Open(fPath)
+		if err != nil {
+			return nil, err
+		}
+
+		r := io.Reader(f)
+		_, err = io.Copy(rootfsWriter, r)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Include all the templates.
 	fnam = d.TemplatesPath()
 	if util.PathExists(fnam) {
-		err = filepath.Walk(fnam, writeToTar)
+		err = filepath.Walk(fnam, writeToMetaTar)
 		if err != nil {
 			d.logger.Error("Failed exporting instance", ctxMap)
 			return nil, err
 		}
 	}
 
-	err = tarWriter.Close()
+	err = metaTarWriter.Close()
 	if err != nil {
 		d.logger.Error("Failed exporting instance", ctxMap)
 		return nil, err
