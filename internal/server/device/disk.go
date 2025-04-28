@@ -2632,11 +2632,21 @@ func (d *disk) generateVMAgentDrive() (string, error) {
 
 	// Include the most likely agent.
 	if util.PathExists(os.Getenv("INCUS_AGENT_PATH")) {
-		agentInstallPath := filepath.Join(scratchDir, "incus-agent")
+		var srcFilename string
+		var dstFilename string
 
+		if strings.Contains(strings.ToLower(d.inst.ExpandedConfig()["image.os"]), "windows") {
+			srcFilename = fmt.Sprintf("incus-agent.windows.%s", d.state.OS.Uname.Machine)
+			dstFilename = "incus-agent.exe"
+		} else {
+			srcFilename = fmt.Sprintf("incus-agent.linux.%s", d.state.OS.Uname.Machine)
+			dstFilename = "incus-agent"
+		}
+
+		agentInstallPath := filepath.Join(scratchDir, dstFilename)
 		os.Remove(agentInstallPath)
 
-		err = internalUtil.FileCopy(filepath.Join(os.Getenv("INCUS_AGENT_PATH"), fmt.Sprintf("incus-agent.linux.%s", d.state.OS.Uname.Machine)), agentInstallPath)
+		err = internalUtil.FileCopy(filepath.Join(os.Getenv("INCUS_AGENT_PATH"), srcFilename), agentInstallPath)
 		if err != nil {
 			return "", err
 		}
