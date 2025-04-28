@@ -29,14 +29,14 @@ func DHCPValidIP(subnet *net.IPNet, ranges []iprange.Range, IP net.IP) bool {
 		return false
 	}
 
-	if len(ranges) > 0 {
-		for _, IPRange := range ranges {
-			if bytes.Compare(IP, IPRange.Start) >= 0 && bytes.Compare(IP, IPRange.End) <= 0 {
-				return true
-			}
-		}
-	} else if inSubnet {
+	if len(ranges) == 0 {
 		return true
+	}
+
+	for _, IPRange := range ranges {
+		if bytes.Compare(IP, IPRange.Start) >= 0 && bytes.Compare(IP, IPRange.End) <= 0 {
+			return true
+		}
 	}
 
 	return false
