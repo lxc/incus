@@ -43,7 +43,7 @@ func Load(schema Schema, values map[string]string) (Map, error) {
 func (m *Map) Change(changes map[string]string) (map[string]string, error) {
 	values := make(map[string]string, len(m.schema))
 
-	errors := ErrorList{}
+	errors := &ErrorList{}
 	for name, change := range changes {
 		// Ensure that we were actually passed a string.
 		s := reflect.ValueOf(change)
@@ -173,7 +173,7 @@ func (m *Map) update(values map[string]string) ([]string, error) {
 
 	// Update our keys with the values from the given map, and keep track
 	// of which keys actually changed their value.
-	errors := ErrorList{}
+	errors := &ErrorList{}
 	names := []string{}
 	for name, value := range values {
 		changed, err := m.set(name, value, initial)
