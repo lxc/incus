@@ -907,7 +907,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 			return err
 		}
 
-		// If a storage volume entry exists only proceed if force was specified.
+		// If the storage volume entry does already exist we error here
 		if dbVolume != nil {
 			return fmt.Errorf(`Storage volume for snapshot %q already exists in the database`, snapInstName)
 		}
