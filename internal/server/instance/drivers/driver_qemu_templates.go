@@ -2,6 +2,7 @@ package drivers
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/cfg"
@@ -9,20 +10,51 @@ import (
 	"github.com/lxc/incus/v6/shared/osarch"
 )
 
+func writeHeader(sb *strings.Builder, comment string, name string) {
+	if comment != "" {
+		sb.WriteString(fmt.Sprintf("# %s\n", comment))
+	}
+
+	sb.WriteString(fmt.Sprintf("[%s]\n", name))
+}
+
+func writeEntry(sb *strings.Builder, key string, value string) {
+	if value != "" {
+		sb.WriteString(fmt.Sprintf("%s = \"%s\"\n", key, value))
+	}
+}
+
 func qemuStringifyCfg(conf ...cfg.Section) *strings.Builder {
 	sb := &strings.Builder{}
 
 	for _, section := range conf {
-		if section.Comment != "" {
-			sb.WriteString(fmt.Sprintf("# %s\n", section.Comment))
-		}
-
-		sb.WriteString(fmt.Sprintf("[%s]\n", section.Name))
+		writeHeader(sb, section.Comment, section.Name)
 
 		for key, value := range section.Entries {
-			if value != "" {
-				sb.WriteString(fmt.Sprintf("%s = \"%s\"\n", key, value))
-			}
+			writeEntry(sb, key, value)
+		}
+
+		sb.WriteString("\n")
+	}
+
+	return sb
+}
+
+// qemuStringifyCfgPredictably is only there to ensure tests reproducibility.
+func qemuStringifyCfgPredictably(conf ...cfg.Section) *strings.Builder {
+	sb := &strings.Builder{}
+
+	for _, section := range conf {
+		writeHeader(sb, section.Comment, section.Name)
+
+		keys := make([]string, 0, len(section.Entries))
+		for key := range section.Entries {
+			keys = append(keys, key)
+		}
+
+		sort.Strings(keys)
+		for _, key := range keys {
+			writeEntry(sb, key, section.Entries[key])
 		}
 
 		sb.WriteString("\n")
