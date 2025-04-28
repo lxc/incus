@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"sort"
+	"strings"
 )
 
 // Error generated when trying to set a certain config key to certain value.
@@ -28,14 +29,21 @@ type ErrorList []*Error
 
 // ErrorList implements the error interface.
 func (l ErrorList) Error() string {
-	switch len(l) {
-	case 0:
+	errorCount := len(l)
+	if errorCount == 0 {
 		return "no errors"
-	case 1:
-		return l[0].Error()
 	}
 
-	return fmt.Sprintf("%s (and %d more errors)", l[0], len(l)-1)
+	errorMessage := strings.Builder{}
+
+	firstError := l[0].Error()
+	errorMessage.WriteString(firstError)
+
+	if errorCount > 1 {
+		errorMessage.WriteString(fmt.Sprintf(" (and %d more errors)", errorCount-1))
+	}
+
+	return errorMessage.String()
 }
 
 // ErrorList implements the sort Interface.
