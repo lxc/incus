@@ -152,7 +152,7 @@ type qemuMemoryOpts struct {
 
 func qemuMemory(opts *qemuMemoryOpts) []cfg.Section {
 	// Sets fixed values for slots and maxmem to support memory hotplug.
-	return []cfg.Section{{
+	section := cfg.Section{
 		Name:    "memory",
 		Comment: "Memory",
 		Entries: map[string]string{
@@ -160,7 +160,14 @@ func qemuMemory(opts *qemuMemoryOpts) []cfg.Section {
 			"slots":  "16",
 			"maxmem": fmt.Sprintf("%dM", opts.maxSizeMB),
 		},
-	}}
+	}
+
+	// Disable hotplug when already at maximum.
+	if section.Entries["size"] == section.Entries["maxmem"] {
+		delete(section.Entries, "slots")
+	}
+
+	return []cfg.Section{section}
 }
 
 type qemuDevOpts struct {
