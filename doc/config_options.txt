@@ -3380,6 +3380,224 @@ User keys can be used in search.
 ```
 
 <!-- config group network_load_balancer-common end -->
+<!-- config group network_ovn-common start -->
+```{config:option} bridge.external_interfaces network_ovn-common
+:shortdesc: "Comma-separated list of unconfigured network interfaces to include in the bridge"
+:type: "string"
+
+```
+
+```{config:option} bridge.hwaddr network_ovn-common
+:shortdesc: "MAC address for the virtual bridge interface"
+:type: "string"
+
+```
+
+```{config:option} bridge.mtu network_ovn-common
+:default: "`1442`"
+:shortdesc: "Bridge MTU (default allows host to host Geneve tunnels)"
+:type: "integer"
+
+```
+
+```{config:option} dns.domain network_ovn-common
+:default: "`incus`"
+:shortdesc: "Domain to advertise to DHCP clients and use for DNS resolution"
+:type: "string"
+
+```
+
+```{config:option} dns.nameservers network_ovn-common
+:default: "Uplink DNS servers (IPv4 and IPv6 address if no uplink is configured)"
+:shortdesc: "DNS server IPs to advertise to DHCP clients and via Router Advertisements. Both IPv4 and IPv6 addresses get pushed via DHCP, and the first IPv6 address is also advertised as RDNSS via RA."
+:type: "string"
+
+```
+
+```{config:option} dns.search network_ovn-common
+:shortdesc: "Full comma-separated domain search list, defaulting to `dns.domain` value"
+:type: "string"
+
+```
+
+```{config:option} dns.zone.forward network_ovn-common
+:shortdesc: "Comma-separated list of DNS zone names for forward DNS records"
+:type: "string"
+
+```
+
+```{config:option} dns.zone.reverse.ipv4 network_ovn-common
+:shortdesc: "DNS zone name for IPv4 reverse DNS records"
+:type: "string"
+
+```
+
+```{config:option} dns.zone.reverse.ipv6 network_ovn-common
+:shortdesc: "DNS zone name for IPv6 reverse DNS records"
+:type: "string"
+
+```
+
+```{config:option} ipv4.address network_ovn-common
+:condition: "standard mode"
+:default: "(initial value on creation: `auto`)"
+:shortdesc: "IPv4 address for the bridge (use `none` to turn off IPv4 or `auto` to generate a new random unused subnet) (CIDR)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.dhcp network_ovn-common
+:condition: "IPv4 address"
+:default: "`true`"
+:shortdesc: "Whether to allocate addresses using DHCP"
+:type: "bool"
+
+```
+
+```{config:option} ipv4.dhcp.expiry network_ovn-common
+:condition: "IPv4 DHCP"
+:default: "`1h`"
+:shortdesc: "When to expire DHCP leases"
+:type: "string"
+
+```
+
+```{config:option} ipv4.dhcp.ranges network_ovn-common
+:condition: "IPv4 DHCP"
+:default: "all addresses"
+:shortdesc: "Comma-separated list of IP ranges to use for DHCP (FIRST-LAST format)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.dhcp.routes network_ovn-common
+:condition: "IPv4 DHCP"
+:shortdesc: "Static routes to provide via DHCP option 121, as a comma-separated list of alternating subnets (CIDR) and gateway addresses (same syntax as dnsmasq and OVN)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.l3only network_ovn-common
+:condition: "IPv4 address"
+:default: "`false`"
+:shortdesc: "Whether to enable layer 3 only mode."
+:type: "bool"
+
+```
+
+```{config:option} ipv4.nat network_ovn-common
+:condition: "IPv4 address"
+:default: "`false` initial value on creation if `ipv4.address` is set to `auto: true`)"
+:shortdesc: "Whether to NAT"
+:type: "bool"
+
+```
+
+```{config:option} ipv4.nat.address network_ovn-common
+:condition: "IPv4 address"
+:shortdesc: "The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.address network_ovn-common
+:condition: "standard mode"
+:default: "(initial value on creation: `auto`)"
+:shortdesc: "IPv6 address for the bridge (use `none` to turn off IPv6 or `auto` to generate a new random unused subnet) (CIDR)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.dhcp network_ovn-common
+:condition: "IPv6 address"
+:default: "`true`"
+:shortdesc: "Whether to provide additional network configuration over DHCP"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.dhcp.stateful network_ovn-common
+:condition: "IPv6 DHCP"
+:default: "`false`"
+:shortdesc: "Whether to allocate addresses using DHCP"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.l3only network_ovn-common
+:condition: "IPv6 DHCP stateful"
+:default: "`false`"
+:shortdesc: "Whether to enable layer 3 only mode."
+:type: "bool"
+
+```
+
+```{config:option} ipv6.nat network_ovn-common
+:condition: "IPv6 address"
+:default: "`false` (initial value on creation if `ipv6.address` is set to `auto: true`)"
+:shortdesc: "Whether to NAT"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.nat.address network_ovn-common
+:condition: "IPv6 address"
+:shortdesc: "The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)"
+:type: "string"
+
+```
+
+```{config:option} network network_ovn-common
+:shortdesc: "Uplink network to use for external network access or `none` to keep isolated"
+:type: "string"
+
+```
+
+```{config:option} security.acls network_ovn-common
+:shortdesc: "Comma-separated list of Network ACLs to apply to NICs connected to this network"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.egress.action network_ovn-common
+:condition: "`security.acls`"
+:default: "`reject`"
+:shortdesc: "Action to use for egress traffic that doesn't match any ACL rule"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.egress.logged network_ovn-common
+:condition: "`security.acls`"
+:default: "`false`"
+:shortdesc: "Whether to log egress traffic that doesn't match any ACL rule"
+:type: "bool"
+
+```
+
+```{config:option} security.acls.default.ingress.action network_ovn-common
+:condition: "`security.acls`"
+:default: "`reject`"
+:shortdesc: "Action to use for ingress traffic that doesn't match any ACL rule"
+:type: "string"
+
+```
+
+```{config:option} security.acls.default.ingress.logged network_ovn-common
+:condition: "`security.acls`"
+:default: "`false`"
+:shortdesc: "Whether to log ingress traffic that doesn't match any ACL rule"
+:type: "bool"
+
+```
+
+```{config:option} user.* network_ovn-common
+:shortdesc: "User-provided free-form key/value pairs"
+:type: "string"
+
+```
+
+<!-- config group network_ovn-common end -->
 <!-- config group network_zone-common start -->
 ```{config:option} dns.nameservers network_zone-common
 :required: "no"
