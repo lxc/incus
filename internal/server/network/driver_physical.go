@@ -32,22 +32,156 @@ func (n *physical) DBType() db.NetworkType {
 // Validate network config.
 func (n *physical) Validate(config map[string]string) error {
 	rules := map[string]func(value string) error{
+		// gendoc:generate(entity=network_physical, group=common, key=parent)
+		//
+		// ---
+		// type: string
+		// condition: -
+		// shortdesc: Existing interface to use for network
 		"parent":                      validate.Required(validate.IsNotEmpty, validate.IsInterfaceName),
+
+		// gendoc:generate(entity=network_physical, group=common, key=mtu)
+		//
+		// ---
+		// type: integer
+		// condition: -
+		// shortdesc: The MTU of the new interface
 		"mtu":                         validate.Optional(validate.IsNetworkMTU),
+
+		// gendoc:generate(entity=network_physical, group=common, key=vlan)
+		//
+		// ---
+		// type: integer
+		// condition: -
+		// shortdesc: The VLAN ID to attach to
 		"vlan":                        validate.Optional(validate.IsNetworkVLAN),
+
+		// gendoc:generate(entity=network_physical, group=common, key=gvrp)
+		//
+		// ---
+		// type: bool
+		// condition: -
+		// defaultdesc: 'false'
+		// shortdesc: Register VLAN using GARP VLAN Registration Protocol
 		"gvrp":                        validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_physical, group=ipv4, key=ipv4.gateway)
+		//
+		// ---
+		// type: string
+		// condition: standard mode
+		// shortdesc: IPv4 address for the gateway and network (CIDR)
 		"ipv4.gateway":                validate.Optional(validate.IsNetworkAddressCIDRV4),
+
+		// gendoc:generate(entity=network_physical, group=ipv6, key=ipv6.gateway)
+		//
+		// ---
+		// type: string
+		// condition: standard mode
+		// shortdesc: IPv6 address for the gateway and network (CIDR)
 		"ipv6.gateway":                validate.Optional(validate.IsNetworkAddressCIDRV6),
+
+		// gendoc:generate(entity=network_physical, group=ipv4, key=ipv4.ovn.ranges)
+		//
+		// ---
+		// type: string
+		// condition: -
+		// shortdesc: Comma-separated list of IPv4 ranges to use for child OVN network routers (FIRST-LAST format)
 		"ipv4.ovn.ranges":             validate.Optional(validate.IsListOf(validate.IsNetworkRangeV4)),
+
+		// gendoc:generate(entity=network_physical, group=ipv6, key=ipv6.ovn.ranges)
+		//
+		// ---
+		// type: string
+		// condition: -
+		// shortdesc: Comma-separated list of IPv6 ranges to use for child OVN network routers (FIRST-LAST format)
 		"ipv6.ovn.ranges":             validate.Optional(validate.IsListOf(validate.IsNetworkRangeV6)),
+
+		// gendoc:generate(entity=network_physical, group=ipv4, key=ipv4.routes)
+		//
+		// ---
+		// type: string
+		// condition: IPv4 address
+		// shortdesc: Comma-separated list of additional IPv4 CIDR subnets that can be used with child OVN networks `ipv4.routes.external` setting
 		"ipv4.routes":                 validate.Optional(validate.IsListOf(validate.IsNetworkV4)),
+
+		// gendoc:generate(entity=network_physical, group=ipv4, key=ipv4.routes.anycast)
+		//
+		// ---
+		// type: bool
+		// condition: IPv4 address
+		// defaultdesc: 'false'
+		// shortdesc: Allow the overlapping routes to be used on multiple networks/NIC at the same time
 		"ipv4.routes.anycast":         validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_physical, group=ipv6, key=ipv6.routes)
+		//
+		// ---
+		// type: string
+		// condition: IPv6 address
+		// shortdesc: Comma-separated list of additional IPv6 CIDR subnets that can be used with child OVN networks `ipv6.routes.external` setting
 		"ipv6.routes":                 validate.Optional(validate.IsListOf(validate.IsNetworkV6)),
+
+		// gendoc:generate(entity=network_physical, group=ipv6, key=ipv6.routes.anycast)
+		//
+		// ---
+		// type: bool
+		// condition: IPv6 address
+		// defaultdesc: 'false'
+		// shortdesc: Allow the overlapping routes to be used on multiple networks/NIC at the same time
 		"ipv6.routes.anycast":         validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_physical, group=dns, key=dns.nameservers)
+		//
+		// ---
+		// type: string
+		// condition: standard mode
+		// shortdesc: List of DNS server IPs on `physical` network
 		"dns.nameservers":             validate.Optional(validate.IsListOf(validate.IsNetworkAddress)),
+
+		// gendoc:generate(entity=network_physical, group=ovn, key=ovn.ingress_mode)
+		//
+		// ---
+		// type: string
+		// condition: standard mode
+		// defaultdesc: `l2proxy`
+		// shortdesc: Sets the method how OVN NIC external IPs will be advertised on uplink network: `l2proxy` (proxy ARP/NDP) or `routed`
 		"ovn.ingress_mode":            validate.Optional(validate.IsOneOf("l2proxy", "routed")),
+
 		"volatile.last_state.created": validate.Optional(validate.IsBool),
 	}
+
+	// gendoc:generate(entity=network_physical, group=bgp, key=bgp.peers.NAME.address)
+	//
+	// ---
+	// type: string
+	// condition: BGP server
+	// defaultdesc: -
+	// shortdesc: Peer address (IPv4 or IPv6) for use by `ovn` downstream networks
+
+	// gendoc:generate(entity=network_physical, group=bgp, key=bgp.peers.NAME.asn)
+	//
+	// ---
+	// type: integer
+	// condition: BGP server
+	// defaultdesc: -
+	// shortdesc: Peer AS number for use by `ovn` downstream networks
+
+	// gendoc:generate(entity=network_physical, group=bgp, key=bgp.peers.NAME.password)
+	//
+	// ---
+	// type: string
+	// condition: BGP server
+	// defaultdesc: - (no password)
+	// shortdesc: Peer session password (optional) for use by `ovn` downstream networks
+
+	// gendoc:generate(entity=network_physical, group=bgp, key=bgp.peers.NAME.holdtime)
+	//
+	// ---
+	// type: integer
+	// condition: BGP server
+	// defaultdesc: `180`
+	// shortdesc: Peer session hold time (in seconds; optional)
 
 	// Add the BGP validation rules.
 	bgpRules, err := n.bgpValidationRules(config)
