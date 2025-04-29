@@ -2767,6 +2767,40 @@ It is globally unique across all servers and projects.
 ```
 
 <!-- config group kernel-limits end -->
+<!-- config group network_bridge-bgp start -->
+```{config:option} bgp.peers.NAME.address network_bridge-bgp
+:condition: "BGP server"
+:defaultdesc: "-"
+:shortdesc: "Peer address (IPv4 or IPv6) for use by `ovn` downstream networks"
+:type: "string"
+
+```
+
+```{config:option} bgp.peers.NAME.asn network_bridge-bgp
+:condition: "BGP server"
+:defaultdesc: "-"
+:shortdesc: "Peer AS number for use by `ovn` downstream networks"
+:type: "integer"
+
+```
+
+```{config:option} bgp.peers.NAME.holdtime network_bridge-bgp
+:condition: "BGP server"
+:defaultdesc: "`180`"
+:shortdesc: "Peer session hold time (in seconds; optional)"
+:type: "integer"
+
+```
+
+```{config:option} bgp.peers.NAME.password network_bridge-bgp
+:condition: "BGP server"
+:defaultdesc: "- (no password)"
+:shortdesc: "Peer session password (optional) for use by `ovn` downstream networks"
+:type: "string"
+
+```
+
+<!-- config group network_bridge-bgp end -->
 <!-- config group network_bridge-common start -->
 ```{config:option} bgp.ipv4.nexthop network_bridge-common
 :condition: "BGP server"
@@ -3524,6 +3558,152 @@ User keys can be used in search.
 ```
 
 <!-- config group network_ovn-common end -->
+<!-- config group network_physical-bgp start -->
+```{config:option} bgp.peers.NAME.address network_physical-bgp
+:condition: "BGP server"
+:defaultdesc: "-"
+:shortdesc: "Peer address (IPv4 or IPv6) for use by `ovn` downstream networks"
+:type: "string"
+
+```
+
+```{config:option} bgp.peers.NAME.asn network_physical-bgp
+:condition: "BGP server"
+:defaultdesc: "-"
+:shortdesc: "Peer AS number for use by `ovn` downstream networks"
+:type: "integer"
+
+```
+
+```{config:option} bgp.peers.NAME.holdtime network_physical-bgp
+:condition: "BGP server"
+:defaultdesc: "`180`"
+:shortdesc: "Peer session hold time (in seconds; optional)"
+:type: "integer"
+
+```
+
+```{config:option} bgp.peers.NAME.password network_physical-bgp
+:condition: "BGP server"
+:defaultdesc: "- (no password)"
+:shortdesc: "Peer session password (optional) for use by `ovn` downstream networks"
+:type: "string"
+
+```
+
+<!-- config group network_physical-bgp end -->
+<!-- config group network_physical-common start -->
+```{config:option} gvrp network_physical-common
+:condition: "-"
+:defaultdesc: "'false'"
+:shortdesc: "Register VLAN using GARP VLAN Registration Protocol"
+:type: "bool"
+
+```
+
+```{config:option} mtu network_physical-common
+:condition: "-"
+:shortdesc: "The MTU of the new interface"
+:type: "integer"
+
+```
+
+```{config:option} parent network_physical-common
+:condition: "-"
+:shortdesc: "Existing interface to use for network"
+:type: "string"
+
+```
+
+```{config:option} vlan network_physical-common
+:condition: "-"
+:shortdesc: "The VLAN ID to attach to"
+:type: "integer"
+
+```
+
+<!-- config group network_physical-common end -->
+<!-- config group network_physical-dns start -->
+```{config:option} dns.nameservers network_physical-dns
+:condition: "standard mode"
+:shortdesc: "List of DNS server IPs on `physical` network"
+:type: "string"
+
+```
+
+<!-- config group network_physical-dns end -->
+<!-- config group network_physical-ipv4 start -->
+```{config:option} ipv4.gateway network_physical-ipv4
+:condition: "standard mode"
+:shortdesc: "IPv4 address for the gateway and network (CIDR)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.ovn.ranges network_physical-ipv4
+:condition: "-"
+:shortdesc: "Comma-separated list of IPv4 ranges to use for child OVN network routers (FIRST-LAST format)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.routes network_physical-ipv4
+:condition: "IPv4 address"
+:shortdesc: "Comma-separated list of additional IPv4 CIDR subnets that can be used with child OVN networks `ipv4.routes.external` setting"
+:type: "string"
+
+```
+
+```{config:option} ipv4.routes.anycast network_physical-ipv4
+:condition: "IPv4 address"
+:defaultdesc: "'false'"
+:shortdesc: "Allow the overlapping routes to be used on multiple networks/NIC at the same time"
+:type: "bool"
+
+```
+
+<!-- config group network_physical-ipv4 end -->
+<!-- config group network_physical-ipv6 start -->
+```{config:option} ipv6.gateway network_physical-ipv6
+:condition: "standard mode"
+:shortdesc: "IPv6 address for the gateway and network (CIDR)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.ovn.ranges network_physical-ipv6
+:condition: "-"
+:shortdesc: "Comma-separated list of IPv6 ranges to use for child OVN network routers (FIRST-LAST format)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.routes network_physical-ipv6
+:condition: "IPv6 address"
+:shortdesc: "Comma-separated list of additional IPv6 CIDR subnets that can be used with child OVN networks `ipv6.routes.external` setting"
+:type: "string"
+
+```
+
+```{config:option} ipv6.routes.anycast network_physical-ipv6
+:condition: "IPv6 address"
+:defaultdesc: "'false'"
+:shortdesc: "Allow the overlapping routes to be used on multiple networks/NIC at the same time"
+:type: "bool"
+
+```
+
+<!-- config group network_physical-ipv6 end -->
+<!-- config group network_physical-ovn start -->
+```{config:option} ovn.ingress_mode network_physical-ovn
+:condition: "standard mode"
+:defaultdesc: "`l2proxy`"
+:shortdesc: "Sets the method how OVN NIC external IPs will be advertised on uplink network: `l2proxy` (proxy ARP/NDP) or `routed`"
+:type: "string"
+
+```
+
+<!-- config group network_physical-ovn end -->
 <!-- config group network_zone-common start -->
 ```{config:option} dns.nameservers network_zone-common
 :required: "no"
