@@ -7,8 +7,6 @@ import (
 	"sync"
 	"time"
 
-	tomb "gopkg.in/tomb.v2"
-
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/endpoints/listeners"
 	"github.com/lxc/incus/v6/internal/util"
@@ -157,7 +155,7 @@ func Up(config *Config) (*Endpoints, error) {
 // Endpoints are in charge of bringing up and down the HTTP endpoints for
 // serving the REST API.
 type Endpoints struct {
-	tomb      *tomb.Tomb            // Controls the HTTP servers shutdown.
+	tomb      *Tomb                 // Controls the HTTP servers shutdown.
 	mu        sync.RWMutex          // Serialize access to internal state.
 	listeners map[kind]net.Listener // Activer listeners by endpoint type.
 	servers   map[kind]*http.Server // HTTP servers by endpoint type.
@@ -425,7 +423,7 @@ func (e *Endpoints) serve(kind kind) {
 	// Defer the creation of the tomb, so Down() doesn't wait on it unless
 	// we actually have spawned at least a server.
 	if e.tomb == nil {
-		e.tomb = &tomb.Tomb{}
+		e.tomb = &Tomb{}
 	}
 
 	e.tomb.Go(func() error {
@@ -500,4 +498,60 @@ var descriptions = map[kind]string{
 	metrics:        "metrics socket",
 	vmvsock:        "VM socket",
 	storageBuckets: "Storage buckets socket",
+}
+
+// Tomb tracks the lifecycle of one or more goroutines.
+type Tomb struct {
+	wg      sync.WaitGroup
+	count   int
+	mutex   sync.RWMutex
+	errOnce sync.Once
+	err     error
+}
+
+func (g *Tomb) add(delta int) {
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
+	g.count += delta
+	if g.count >= 0 {
+		g.wg.Add(delta)
+	}
+}
+
+// Go runs f in a new goroutine and tracks its termination.
+func (g *Tomb) Go(f func() error) {
+	g.add(1)
+
+	go func() {
+		defer g.add(-1)
+
+		err := f()
+		if err != nil {
+			g.errOnce.Do(func() {
+				g.err = err
+			})
+		}
+	}()
+}
+
+// Kill marks all running goroutings done.
+func (g *Tomb) Kill(err error) {
+	if err != nil {
+		g.errOnce.Do(func() {
+			g.err = err
+		})
+	}
+
+	g.mutex.RLock()
+	count := g.count
+	g.mutex.RUnlock()
+	if count != 0 {
+		g.add(-count)
+	}
+}
+
+// Wait blocks until all goroutines have finished running.
+func (g *Tomb) Wait() error {
+	g.wg.Wait()
+	return g.err
 }

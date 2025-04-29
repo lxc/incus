@@ -58,7 +58,6 @@ require (
 	golang.org/x/text v0.28.0
 	golang.org/x/tools v0.36.0
 	google.golang.org/protobuf v1.36.7
-	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 )
