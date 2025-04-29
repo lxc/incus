@@ -121,24 +121,20 @@ func (c *cmdAdminInit) Run(cmd *cobra.Command, args []string) error {
 	// Prepare the input data
 	var config *api.InitPreseed
 
-	// Preseed mode
-	if c.flagPreseed {
+	switch {
+	case c.flagPreseed:
 		config, err = c.RunPreseed(cmd, args)
 		if err != nil {
 			return err
 		}
-	}
 
-	// Auto mode
-	if c.flagAuto || c.flagMinimal {
+	case c.flagAuto || c.flagMinimal:
 		config, err = c.RunAuto(d, server)
 		if err != nil {
 			return err
 		}
-	}
 
-	// Interactive mode
-	if !c.flagAuto && !c.flagMinimal && !c.flagPreseed {
+	default:
 		config, err = c.RunInteractive(cmd, d, server)
 		if err != nil {
 			return err
