@@ -58,6 +58,16 @@ The following configuration options are available for the `bridge` network type:
     :end-before: <!-- config group network_bridge-common end -->
 ```
 
+## BGP options
+
+These options configure BGP peering for OVN downstream networks:
+
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group network_bridge-bgp start -->
+    :end-before: <!-- config group network_bridge-bgp end -->
+```
+
 ```{note}
 The `bridge.external_interfaces` option supports an extended format allowing the creation of missing VLAN interfaces.
 The extended format is `<interfaceName>/<parentInterfaceName>/<vlanId>`.
