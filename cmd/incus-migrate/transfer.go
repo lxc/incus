@@ -15,14 +15,13 @@ import (
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/migration"
 	"github.com/lxc/incus/v6/internal/rsync"
-	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/ws"
 )
 
 // Send an rsync stream of a path over a websocket.
-func rsyncSend(ctx context.Context, conn *websocket.Conn, path string, rsyncArgs string, instanceType api.InstanceType) error {
-	cmd, dataSocket, stderr, err := rsyncSendSetup(ctx, path, rsyncArgs, instanceType)
+func rsyncSend(ctx context.Context, conn *websocket.Conn, path string, rsyncArgs string, migrationType MigrationType) error {
+	cmd, dataSocket, stderr, err := rsyncSendSetup(ctx, path, rsyncArgs, migrationType)
 	if err != nil {
 		return err
 	}
@@ -53,7 +52,7 @@ func rsyncSend(ctx context.Context, conn *websocket.Conn, path string, rsyncArgs
 }
 
 // Spawn the rsync process.
-func rsyncSendSetup(ctx context.Context, path string, rsyncArgs string, instanceType api.InstanceType) (*exec.Cmd, net.Conn, io.ReadCloser, error) {
+func rsyncSendSetup(ctx context.Context, path string, rsyncArgs string, migrationType MigrationType) (*exec.Cmd, net.Conn, io.ReadCloser, error) {
 	auds := fmt.Sprintf("@incus-migrate/%s", uuid.New().String())
 	if len(auds) > linux.ABSTRACT_UNIX_SOCK_LEN-1 {
 		auds = auds[:linux.ABSTRACT_UNIX_SOCK_LEN-1]
@@ -83,11 +82,11 @@ func rsyncSendSetup(ctx context.Context, path string, rsyncArgs string, instance
 		"--sparse",
 	}
 
-	if instanceType == api.InstanceTypeContainer {
+	if migrationType == MigrationTypeContainer || migrationType == MigrationTypeVolumeFilesystem {
 		args = append(args, "--xattrs", "--delete", "--compress", "--compress-level=2")
 	}
 
-	if instanceType == api.InstanceTypeVM {
+	if migrationType == MigrationTypeVM || migrationType == MigrationTypeVolumeBlock {
 		args = append(args, "--exclude", "*.img")
 	}
 

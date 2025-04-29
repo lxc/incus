@@ -990,6 +990,19 @@ func (r *ProtocolIncus) GetStorageVolumeBackupFile(pool string, volName string, 
 	return &resp, nil
 }
 
+// CreateStoragePoolVolumeFromMigration defines a new storage volume.
+// In contrast to CreateStoragePoolVolume, it also returns an operation object.
+func (r *ProtocolIncus) CreateStoragePoolVolumeFromMigration(pool string, volume api.StorageVolumesPost) (Operation, error) {
+	// Send the request
+	path := fmt.Sprintf("/storage-pools/%s/volumes/%s", url.PathEscape(pool), url.PathEscape(volume.Type))
+	op, _, err := r.queryOperation("POST", path, volume, "")
+	if err != nil {
+		return nil, err
+	}
+
+	return op, nil
+}
+
 // CreateStoragePoolVolumeFromISO creates a custom volume from an ISO file.
 func (r *ProtocolIncus) CreateStoragePoolVolumeFromISO(pool string, args StorageVolumeBackupArgs) (Operation, error) {
 	err := r.CheckExtension("custom_volume_iso")
