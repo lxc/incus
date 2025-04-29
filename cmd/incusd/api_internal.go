@@ -743,7 +743,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 		return err
 	}
 
-	if allowNameOverride && instName != "" {
+	if allowNameOverride {
 		backupConf.Container.Name = instName
 	}
 
@@ -907,27 +907,9 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 			return err
 		}
 
-		// If a storage volume entry exists only proceed if force was specified.
+		// If the storage volume entry does already exist we error here
 		if dbVolume != nil {
 			return fmt.Errorf(`Storage volume for snapshot %q already exists in the database`, snapInstName)
-		}
-
-		if snapErr == nil {
-			err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.DeleteInstance(ctx, projectName, snapInstName)
-			})
-			if err != nil {
-				return err
-			}
-		}
-
-		if dbVolume != nil {
-			err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.RemoveStoragePoolVolume(ctx, projectName, snapInstName, instanceDBVolType, pool.ID())
-			})
-			if err != nil {
-				return err
-			}
 		}
 
 		baseImage := snap.Config["volatile.base_image"]
