@@ -729,7 +729,10 @@ test_projects_limits() {
   ! incus project set p1 limits.disk 1GiB || false
 
   # Set a disk limit on the default profile and also on instance c2
-  incus profile device set default root size=200MiB
+  if [ "$INCUS_BACKEND" != "truenas" ]; then
+    # FIXME: truenas complaining that block backed volumes can't be shrunk
+    incus profile device set default root size=200MiB
+  fi
   incus config device add c2 root disk path="/" pool="${pool}" size=150MiB
 
   if [ "${INCUS_BACKEND}" = "lvm" ]; then
