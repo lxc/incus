@@ -3824,6 +3824,258 @@
 				]
 			}
 		},
+		"network_ovn": {
+			"common": {
+				"keys": [
+					{
+						"bridge.external_interfaces": {
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of unconfigured network interfaces to include in the bridge",
+							"type": "string"
+						}
+					},
+					{
+						"bridge.hwaddr": {
+							"longdesc": "",
+							"shortdesc": "MAC address for the virtual bridge interface",
+							"type": "string"
+						}
+					},
+					{
+						"bridge.mtu": {
+							"default": "`1442`",
+							"longdesc": "",
+							"shortdesc": "Bridge MTU (default allows host to host Geneve tunnels)",
+							"type": "integer"
+						}
+					},
+					{
+						"dns.domain": {
+							"default": "`incus`",
+							"longdesc": "",
+							"shortdesc": "Domain to advertise to DHCP clients and use for DNS resolution",
+							"type": "string"
+						}
+					},
+					{
+						"dns.nameservers": {
+							"default": "Uplink DNS servers (IPv4 and IPv6 address if no uplink is configured)",
+							"longdesc": "",
+							"shortdesc": "DNS server IPs to advertise to DHCP clients and via Router Advertisements. Both IPv4 and IPv6 addresses get pushed via DHCP, and the first IPv6 address is also advertised as RDNSS via RA.",
+							"type": "string"
+						}
+					},
+					{
+						"dns.search": {
+							"longdesc": "",
+							"shortdesc": "Full comma-separated domain search list, defaulting to `dns.domain` value",
+							"type": "string"
+						}
+					},
+					{
+						"dns.zone.forward": {
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of DNS zone names for forward DNS records",
+							"type": "string"
+						}
+					},
+					{
+						"dns.zone.reverse.ipv4": {
+							"longdesc": "",
+							"shortdesc": "DNS zone name for IPv4 reverse DNS records",
+							"type": "string"
+						}
+					},
+					{
+						"dns.zone.reverse.ipv6": {
+							"longdesc": "",
+							"shortdesc": "DNS zone name for IPv6 reverse DNS records",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.address": {
+							"condition": "standard mode",
+							"default": "(initial value on creation: `auto`)",
+							"longdesc": "",
+							"shortdesc": "IPv4 address for the bridge (use `none` to turn off IPv4 or `auto` to generate a new random unused subnet) (CIDR)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.dhcp": {
+							"condition": "IPv4 address",
+							"default": "`true`",
+							"longdesc": "",
+							"shortdesc": "Whether to allocate addresses using DHCP",
+							"type": "bool"
+						}
+					},
+					{
+						"ipv4.dhcp.expiry": {
+							"condition": "IPv4 DHCP",
+							"default": "`1h`",
+							"longdesc": "",
+							"shortdesc": "When to expire DHCP leases",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.dhcp.ranges": {
+							"condition": "IPv4 DHCP",
+							"default": "all addresses",
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of IP ranges to use for DHCP (FIRST-LAST format)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.dhcp.routes": {
+							"condition": "IPv4 DHCP",
+							"longdesc": "",
+							"shortdesc": "Static routes to provide via DHCP option 121, as a comma-separated list of alternating subnets (CIDR) and gateway addresses (same syntax as dnsmasq and OVN)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.l3only": {
+							"condition": "IPv4 address",
+							"default": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether to enable layer 3 only mode.",
+							"type": "bool"
+						}
+					},
+					{
+						"ipv4.nat": {
+							"condition": "IPv4 address",
+							"default": "`false` initial value on creation if `ipv4.address` is set to `auto: true`)",
+							"longdesc": "",
+							"shortdesc": "Whether to NAT",
+							"type": "bool"
+						}
+					},
+					{
+						"ipv4.nat.address": {
+							"condition": "IPv4 address",
+							"longdesc": "",
+							"shortdesc": "The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.address": {
+							"condition": "standard mode",
+							"default": "(initial value on creation: `auto`)",
+							"longdesc": "",
+							"shortdesc": "IPv6 address for the bridge (use `none` to turn off IPv6 or `auto` to generate a new random unused subnet) (CIDR)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.dhcp": {
+							"condition": "IPv6 address",
+							"default": "`true`",
+							"longdesc": "",
+							"shortdesc": "Whether to provide additional network configuration over DHCP",
+							"type": "bool"
+						}
+					},
+					{
+						"ipv6.dhcp.stateful": {
+							"condition": "IPv6 DHCP",
+							"default": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether to allocate addresses using DHCP",
+							"type": "bool"
+						}
+					},
+					{
+						"ipv6.l3only": {
+							"condition": "IPv6 DHCP stateful",
+							"default": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether to enable layer 3 only mode.",
+							"type": "bool"
+						}
+					},
+					{
+						"ipv6.nat": {
+							"condition": "IPv6 address",
+							"default": "`false` (initial value on creation if `ipv6.address` is set to `auto: true`)",
+							"longdesc": "",
+							"shortdesc": "Whether to NAT",
+							"type": "bool"
+						}
+					},
+					{
+						"ipv6.nat.address": {
+							"condition": "IPv6 address",
+							"longdesc": "",
+							"shortdesc": "The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)",
+							"type": "string"
+						}
+					},
+					{
+						"network": {
+							"longdesc": "",
+							"shortdesc": "Uplink network to use for external network access or `none` to keep isolated",
+							"type": "string"
+						}
+					},
+					{
+						"security.acls": {
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of Network ACLs to apply to NICs connected to this network",
+							"type": "string"
+						}
+					},
+					{
+						"security.acls.default.egress.action": {
+							"condition": "`security.acls`",
+							"default": "`reject`",
+							"longdesc": "",
+							"shortdesc": "Action to use for egress traffic that doesn't match any ACL rule",
+							"type": "string"
+						}
+					},
+					{
+						"security.acls.default.egress.logged": {
+							"condition": "`security.acls`",
+							"default": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether to log egress traffic that doesn't match any ACL rule",
+							"type": "bool"
+						}
+					},
+					{
+						"security.acls.default.ingress.action": {
+							"condition": "`security.acls`",
+							"default": "`reject`",
+							"longdesc": "",
+							"shortdesc": "Action to use for ingress traffic that doesn't match any ACL rule",
+							"type": "string"
+						}
+					},
+					{
+						"security.acls.default.ingress.logged": {
+							"condition": "`security.acls`",
+							"default": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether to log ingress traffic that doesn't match any ACL rule",
+							"type": "bool"
+						}
+					},
+					{
+						"user.*": {
+							"longdesc": "",
+							"shortdesc": "User-provided free-form key/value pairs",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"network_zone": {
 			"common": {
 				"keys": [
