@@ -24,12 +24,12 @@ func TestMemoryConfigSectionToMap(t *testing.T) {
 	result := memoryConfigSectionToMap(
 		&cfg.Section{
 			Name: "object \"mem0\"",
-			Entries: []cfg.Entry{
-				{Key: "size", Value: "1024M"},
-				{Key: "host-nodes.0", Value: "0"},
-				{Key: "host-nodes.1", Value: "1"},
-				{Key: "policy", Value: "bind"},
-				{Key: "share", Value: "on"},
+			Entries: map[string]string{
+				"size":         "1024M",
+				"host-nodes.0": "0",
+				"host-nodes.1": "1",
+				"policy":       "bind",
+				"share":        "on",
 			},
 		},
 	)
@@ -41,7 +41,10 @@ func TestMemoryConfigSectionToMap(t *testing.T) {
 		"share":      true,
 	}
 
-	assert.Equal(t, expected, result)
+	assert.Equal(t, expected["size"], result["size"])
+	assert.ElementsMatch(t, expected["host-nodes"], result["host-nodes"])
+	assert.Equal(t, expected["policy"], result["policy"])
+	assert.Equal(t, expected["share"], result["share"])
 }
 
 // Test extractTraiingNumber.

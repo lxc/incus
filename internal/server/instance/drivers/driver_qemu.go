@@ -3727,7 +3727,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuInfo *cpuTopology
 		if sevOpts != nil {
 			for i := range conf {
 				if conf[i].Name == "machine" {
-					conf[i].Entries = append(conf[i].Entries, cfg.Entry{Key: "memory-encryption", Value: "sev0"})
+					conf[i].Entries["memory-encryption"] = "sev0"
 					break
 				}
 			}
