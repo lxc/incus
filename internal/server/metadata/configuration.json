@@ -3204,6 +3204,46 @@
 			}
 		},
 		"network_bridge": {
+			"bgp": {
+				"keys": [
+					{
+						"bgp.peers.NAME.address": {
+							"condition": "BGP server",
+							"defaultdesc": "-",
+							"longdesc": "",
+							"shortdesc": "Peer address (IPv4 or IPv6) for use by `ovn` downstream networks",
+							"type": "string"
+						}
+					},
+					{
+						"bgp.peers.NAME.asn": {
+							"condition": "BGP server",
+							"defaultdesc": "-",
+							"longdesc": "",
+							"shortdesc": "Peer AS number for use by `ovn` downstream networks",
+							"type": "integer"
+						}
+					},
+					{
+						"bgp.peers.NAME.holdtime": {
+							"condition": "BGP server",
+							"defaultdesc": "`180`",
+							"longdesc": "",
+							"shortdesc": "Peer session hold time (in seconds; optional)",
+							"type": "integer"
+						}
+					},
+					{
+						"bgp.peers.NAME.password": {
+							"condition": "BGP server",
+							"defaultdesc": "- (no password)",
+							"longdesc": "",
+							"shortdesc": "Peer session password (optional) for use by `ovn` downstream networks",
+							"type": "string"
+						}
+					}
+				]
+			},
 			"common": {
 				"keys": [
 					{
@@ -4070,6 +4110,184 @@
 						"user.*": {
 							"longdesc": "",
 							"shortdesc": "User-provided free-form key/value pairs",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"network_physical": {
+			"bgp": {
+				"keys": [
+					{
+						"bgp.peers.NAME.address": {
+							"condition": "BGP server",
+							"defaultdesc": "-",
+							"longdesc": "",
+							"shortdesc": "Peer address (IPv4 or IPv6) for use by `ovn` downstream networks",
+							"type": "string"
+						}
+					},
+					{
+						"bgp.peers.NAME.asn": {
+							"condition": "BGP server",
+							"defaultdesc": "-",
+							"longdesc": "",
+							"shortdesc": "Peer AS number for use by `ovn` downstream networks",
+							"type": "integer"
+						}
+					},
+					{
+						"bgp.peers.NAME.holdtime": {
+							"condition": "BGP server",
+							"defaultdesc": "`180`",
+							"longdesc": "",
+							"shortdesc": "Peer session hold time (in seconds; optional)",
+							"type": "integer"
+						}
+					},
+					{
+						"bgp.peers.NAME.password": {
+							"condition": "BGP server",
+							"defaultdesc": "- (no password)",
+							"longdesc": "",
+							"shortdesc": "Peer session password (optional) for use by `ovn` downstream networks",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"common": {
+				"keys": [
+					{
+						"gvrp": {
+							"condition": "-",
+							"defaultdesc": "'false'",
+							"longdesc": "",
+							"shortdesc": "Register VLAN using GARP VLAN Registration Protocol",
+							"type": "bool"
+						}
+					},
+					{
+						"mtu": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "The MTU of the new interface",
+							"type": "integer"
+						}
+					},
+					{
+						"parent": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "Existing interface to use for network",
+							"type": "string"
+						}
+					},
+					{
+						"vlan": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "The VLAN ID to attach to",
+							"type": "integer"
+						}
+					}
+				]
+			},
+			"dns": {
+				"keys": [
+					{
+						"dns.nameservers": {
+							"condition": "standard mode",
+							"longdesc": "",
+							"shortdesc": "List of DNS server IPs on `physical` network",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"ipv4": {
+				"keys": [
+					{
+						"ipv4.gateway": {
+							"condition": "standard mode",
+							"longdesc": "",
+							"shortdesc": "IPv4 address for the gateway and network (CIDR)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.ovn.ranges": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of IPv4 ranges to use for child OVN network routers (FIRST-LAST format)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.routes": {
+							"condition": "IPv4 address",
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of additional IPv4 CIDR subnets that can be used with child OVN networks `ipv4.routes.external` setting",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.routes.anycast": {
+							"condition": "IPv4 address",
+							"defaultdesc": "'false'",
+							"longdesc": "",
+							"shortdesc": "Allow the overlapping routes to be used on multiple networks/NIC at the same time",
+							"type": "bool"
+						}
+					}
+				]
+			},
+			"ipv6": {
+				"keys": [
+					{
+						"ipv6.gateway": {
+							"condition": "standard mode",
+							"longdesc": "",
+							"shortdesc": "IPv6 address for the gateway and network (CIDR)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.ovn.ranges": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of IPv6 ranges to use for child OVN network routers (FIRST-LAST format)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.routes": {
+							"condition": "IPv6 address",
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of additional IPv6 CIDR subnets that can be used with child OVN networks `ipv6.routes.external` setting",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.routes.anycast": {
+							"condition": "IPv6 address",
+							"defaultdesc": "'false'",
+							"longdesc": "",
+							"shortdesc": "Allow the overlapping routes to be used on multiple networks/NIC at the same time",
+							"type": "bool"
+						}
+					}
+				]
+			},
+			"ovn": {
+				"keys": [
+					{
+						"ovn.ingress_mode": {
+							"condition": "standard mode",
+							"defaultdesc": "`l2proxy`",
+							"longdesc": "",
+							"shortdesc": "Sets the method how OVN NIC external IPs will be advertised on uplink network: `l2proxy` (proxy ARP/NDP) or `routed`",
 							"type": "string"
 						}
 					}
