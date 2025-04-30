@@ -139,76 +139,76 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		// ---
 		//  type: integer
 		//  shortdesc: The priority for outgoing traffic, to be used by the kernel queuing discipline to prioritize network packets
-
 		"limits.priority",
+
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv4.gateway)
 		//
 		// ---
 		//  type: string
 		//  default: auto
 		//  shortdesc: Whether to add an automatic default IPv4 gateway (can be `auto` or `none`)
-
 		"ipv4.gateway",
+
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv6.gateway)
 		//
 		// ---
 		//  type: string
 		//  default: auto
 		//  shortdesc: Whether to add an automatic default IPv6 gateway (can be `auto` or `none`)
-
 		"ipv6.gateway",
+
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv4.routes)
 		//
 		// ---
 		//  type: string
 		//  shortdesc: Comma-delimited list of IPv4 static routes to add on host to NIC (without L2 ARP/NDP proxy)
-
 		"ipv4.routes",
+
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv6.routes)
 		//
 		// ---
 		//  type: string
 		//  shortdesc: Comma-delimited list of IPv6 static routes to add on host to NIC (without L2 ARP/NDP proxy)
-
 		"ipv6.routes",
+
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv4.host_address)
 		//
 		// ---
 		//  type: string
 		//  default: `169.254.0.1`
 		//  shortdesc: The IPv4 address to add to the host-side `veth` interface
-
 		"ipv4.host_address",
+
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv6.host_address)
 		//
 		// ---
 		//  type: string
 		//  default: `fe80::1`
 		//  shortdesc: The IPv6 address to add to the host-side `veth` interface
-
 		"ipv6.host_address",
+
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv4.host_table)
 		//
 		// ---
 		//  type: integer
 		//  shortdesc: The custom policy routing table ID to add IPv4 static routes to (in addition to the main routing table)
-
 		"ipv4.host_table",
+
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv6.host_table)
 		//
 		// ---
 		//  type: integer
 		//  shortdesc: The custom policy routing table ID to add IPv6 static routes to (in addition to the main routing table)
-
 		"ipv6.host_table",
+
 		// gendoc:generate(entity=devices, group=nic_routed, key=gvrp)
 		//
 		// ---
 		//  type: bool
 		//  default: false
 		//  shortdesc: Register VLAN using GARP VLAN Registration Protocol
-
 		"gvrp",
+
 		// gendoc:generate(entity=devices, group=nic_routed, key=vrf)
 		//
 		// ---
