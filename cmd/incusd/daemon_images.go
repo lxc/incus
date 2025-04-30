@@ -494,17 +494,17 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		defer func() { _ = f.Close() }()
 
 		// Hashing
-		sha256 := sha256.New()
+		hash256 := sha256.New()
 
 		// Download the image
-		writer := internalIO.NewQuotaWriter(io.MultiWriter(f, sha256), args.Budget)
+		writer := internalIO.NewQuotaWriter(io.MultiWriter(f, hash256), args.Budget)
 		size, err := io.Copy(writer, body)
 		if err != nil {
 			return nil, false, err
 		}
 
 		// Validate hash
-		result := fmt.Sprintf("%x", sha256.Sum(nil))
+		result := fmt.Sprintf("%x", hash256.Sum(nil))
 		if result != fp {
 			return nil, false, fmt.Errorf("Hash mismatch for %q: %s != %s", args.Server, result, fp)
 		}

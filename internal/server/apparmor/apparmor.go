@@ -241,9 +241,9 @@ func profileName(prefix string, name string) string {
 
 	// Max length in AppArmor is 253 chars.
 	if len(name)+len(prefix)+3+separators >= 253 {
-		hash := sha256.New()
-		_, _ = io.WriteString(hash, name)
-		name = fmt.Sprintf("%x", hash.Sum(nil))
+		hash256 := sha256.New()
+		_, _ = io.WriteString(hash256, name)
+		name = fmt.Sprintf("%x", hash256.Sum(nil))
 	}
 
 	if len(prefix) > 0 {

@@ -285,7 +285,7 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 		},
 	}
 
-	sha256 := sha256.New()
+	hash256 := sha256.New()
 	var compress string
 	var writer io.Writer
 
@@ -322,7 +322,7 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 		tarReader, tarWriter := io.Pipe()
 		imageProgressWriter.WriteCloser = tarWriter
 		writer = imageProgressWriter
-		compressWriter := io.MultiWriter(imageFile, sha256)
+		compressWriter := io.MultiWriter(imageFile, hash256)
 		go func() {
 			defer wg.Done()
 			compressErr = compressFile(compress, tarReader, compressWriter)
@@ -334,7 +334,7 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 		}()
 	} else {
 		imageProgressWriter.WriteCloser = imageFile
-		writer = io.MultiWriter(imageProgressWriter, sha256)
+		writer = io.MultiWriter(imageProgressWriter, hash256)
 	}
 
 	// Tracker instance for the export phase.
@@ -379,7 +379,7 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 	}
 
 	info.Size = fi.Size()
-	info.Fingerprint = fmt.Sprintf("%x", sha256.Sum(nil))
+	info.Fingerprint = fmt.Sprintf("%x", hash256.Sum(nil))
 	info.CreatedAt = time.Now().UTC()
 
 	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
@@ -602,7 +602,7 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 		ctype = "application/octet-stream"
 	}
 
-	sha256 := sha256.New()
+	hash256 := sha256.New()
 	var size int64
 
 	if ctype == "multipart/form-data" {
@@ -632,7 +632,7 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 			return nil, fmt.Errorf("Invalid multipart image")
 		}
 
-		size, err = io.Copy(io.MultiWriter(imageTarf, sha256), part)
+		size, err = io.Copy(io.MultiWriter(imageTarf, hash256), part)
 		info.Size += size
 
 		_ = imageTarf.Close()
@@ -665,7 +665,7 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 
 		defer func() { _ = os.Remove(rootfsTarf.Name()) }()
 
-		size, err = io.Copy(io.MultiWriter(rootfsTarf, sha256), part)
+		size, err = io.Copy(io.MultiWriter(rootfsTarf, hash256), part)
 		info.Size += size
 
 		_ = rootfsTarf.Close()
@@ -675,7 +675,7 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 		}
 
 		info.Filename = part.FileName()
-		info.Fingerprint = fmt.Sprintf("%x", sha256.Sum(nil))
+		info.Fingerprint = fmt.Sprintf("%x", hash256.Sum(nil))
 
 		expectedFingerprint := r.Header.Get("X-Incus-fingerprint")
 		if expectedFingerprint != "" && info.Fingerprint != expectedFingerprint {
@@ -716,7 +716,7 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 			return nil, err
 		}
 
-		size, err = io.Copy(sha256, post)
+		size, err = io.Copy(hash256, post)
 		if err != nil {
 			l.Error("Failed to copy the tarfile", logger.Ctx{"err": err})
 			return nil, err
@@ -725,7 +725,7 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 		info.Size = size
 
 		info.Filename = r.Header.Get("X-Incus-filename")
-		info.Fingerprint = fmt.Sprintf("%x", sha256.Sum(nil))
+		info.Fingerprint = fmt.Sprintf("%x", hash256.Sum(nil))
 
 		expectedFingerprint := r.Header.Get("X-Incus-fingerprint")
 		if expectedFingerprint != "" && info.Fingerprint != expectedFingerprint {
