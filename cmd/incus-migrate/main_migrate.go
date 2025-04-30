@@ -283,6 +283,9 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 		if err != nil {
 			return nil, "", err
 		}
+
+	case authMethodTLSTemporaryCertificate:
+		// Intentionally ignored
 	}
 
 	var authType string
