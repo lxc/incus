@@ -38,7 +38,7 @@ func (n *physical) Validate(config map[string]string) error {
 		// type: string
 		// condition: -
 		// shortdesc: Existing interface to use for network
-		"parent":                      validate.Required(validate.IsNotEmpty, validate.IsInterfaceName),
+		"parent": validate.Required(validate.IsNotEmpty, validate.IsInterfaceName),
 
 		// gendoc:generate(entity=network_physical, group=common, key=mtu)
 		//
@@ -46,7 +46,7 @@ func (n *physical) Validate(config map[string]string) error {
 		// type: integer
 		// condition: -
 		// shortdesc: The MTU of the new interface
-		"mtu":                         validate.Optional(validate.IsNetworkMTU),
+		"mtu": validate.Optional(validate.IsNetworkMTU),
 
 		// gendoc:generate(entity=network_physical, group=common, key=vlan)
 		//
@@ -54,7 +54,7 @@ func (n *physical) Validate(config map[string]string) error {
 		// type: integer
 		// condition: -
 		// shortdesc: The VLAN ID to attach to
-		"vlan":                        validate.Optional(validate.IsNetworkVLAN),
+		"vlan": validate.Optional(validate.IsNetworkVLAN),
 
 		// gendoc:generate(entity=network_physical, group=common, key=gvrp)
 		//
@@ -63,7 +63,7 @@ func (n *physical) Validate(config map[string]string) error {
 		// condition: -
 		// defaultdesc: 'false'
 		// shortdesc: Register VLAN using GARP VLAN Registration Protocol
-		"gvrp":                        validate.Optional(validate.IsBool),
+		"gvrp": validate.Optional(validate.IsBool),
 
 		// gendoc:generate(entity=network_physical, group=ipv4, key=ipv4.gateway)
 		//
@@ -71,7 +71,7 @@ func (n *physical) Validate(config map[string]string) error {
 		// type: string
 		// condition: standard mode
 		// shortdesc: IPv4 address for the gateway and network (CIDR)
-		"ipv4.gateway":                validate.Optional(validate.IsNetworkAddressCIDRV4),
+		"ipv4.gateway": validate.Optional(validate.IsNetworkAddressCIDRV4),
 
 		// gendoc:generate(entity=network_physical, group=ipv6, key=ipv6.gateway)
 		//
@@ -79,7 +79,7 @@ func (n *physical) Validate(config map[string]string) error {
 		// type: string
 		// condition: standard mode
 		// shortdesc: IPv6 address for the gateway and network (CIDR)
-		"ipv6.gateway":                validate.Optional(validate.IsNetworkAddressCIDRV6),
+		"ipv6.gateway": validate.Optional(validate.IsNetworkAddressCIDRV6),
 
 		// gendoc:generate(entity=network_physical, group=ipv4, key=ipv4.ovn.ranges)
 		//
@@ -87,7 +87,7 @@ func (n *physical) Validate(config map[string]string) error {
 		// type: string
 		// condition: -
 		// shortdesc: Comma-separated list of IPv4 ranges to use for child OVN network routers (FIRST-LAST format)
-		"ipv4.ovn.ranges":             validate.Optional(validate.IsListOf(validate.IsNetworkRangeV4)),
+		"ipv4.ovn.ranges": validate.Optional(validate.IsListOf(validate.IsNetworkRangeV4)),
 
 		// gendoc:generate(entity=network_physical, group=ipv6, key=ipv6.ovn.ranges)
 		//
@@ -95,7 +95,7 @@ func (n *physical) Validate(config map[string]string) error {
 		// type: string
 		// condition: -
 		// shortdesc: Comma-separated list of IPv6 ranges to use for child OVN network routers (FIRST-LAST format)
-		"ipv6.ovn.ranges":             validate.Optional(validate.IsListOf(validate.IsNetworkRangeV6)),
+		"ipv6.ovn.ranges": validate.Optional(validate.IsListOf(validate.IsNetworkRangeV6)),
 
 		// gendoc:generate(entity=network_physical, group=ipv4, key=ipv4.routes)
 		//
@@ -103,7 +103,7 @@ func (n *physical) Validate(config map[string]string) error {
 		// type: string
 		// condition: IPv4 address
 		// shortdesc: Comma-separated list of additional IPv4 CIDR subnets that can be used with child OVN networks `ipv4.routes.external` setting
-		"ipv4.routes":                 validate.Optional(validate.IsListOf(validate.IsNetworkV4)),
+		"ipv4.routes": validate.Optional(validate.IsListOf(validate.IsNetworkV4)),
 
 		// gendoc:generate(entity=network_physical, group=ipv4, key=ipv4.routes.anycast)
 		//
@@ -112,7 +112,7 @@ func (n *physical) Validate(config map[string]string) error {
 		// condition: IPv4 address
 		// defaultdesc: 'false'
 		// shortdesc: Allow the overlapping routes to be used on multiple networks/NIC at the same time
-		"ipv4.routes.anycast":         validate.Optional(validate.IsBool),
+		"ipv4.routes.anycast": validate.Optional(validate.IsBool),
 
 		// gendoc:generate(entity=network_physical, group=ipv6, key=ipv6.routes)
 		//
@@ -120,7 +120,7 @@ func (n *physical) Validate(config map[string]string) error {
 		// type: string
 		// condition: IPv6 address
 		// shortdesc: Comma-separated list of additional IPv6 CIDR subnets that can be used with child OVN networks `ipv6.routes.external` setting
-		"ipv6.routes":                 validate.Optional(validate.IsListOf(validate.IsNetworkV6)),
+		"ipv6.routes": validate.Optional(validate.IsListOf(validate.IsNetworkV6)),
 
 		// gendoc:generate(entity=network_physical, group=ipv6, key=ipv6.routes.anycast)
 		//
@@ -129,7 +129,7 @@ func (n *physical) Validate(config map[string]string) error {
 		// condition: IPv6 address
 		// defaultdesc: 'false'
 		// shortdesc: Allow the overlapping routes to be used on multiple networks/NIC at the same time
-		"ipv6.routes.anycast":         validate.Optional(validate.IsBool),
+		"ipv6.routes.anycast": validate.Optional(validate.IsBool),
 
 		// gendoc:generate(entity=network_physical, group=dns, key=dns.nameservers)
 		//
@@ -137,7 +137,7 @@ func (n *physical) Validate(config map[string]string) error {
 		// type: string
 		// condition: standard mode
 		// shortdesc: List of DNS server IPs on `physical` network
-		"dns.nameservers":             validate.Optional(validate.IsListOf(validate.IsNetworkAddress)),
+		"dns.nameservers": validate.Optional(validate.IsListOf(validate.IsNetworkAddress)),
 
 		// gendoc:generate(entity=network_physical, group=ovn, key=ovn.ingress_mode)
 		//
@@ -146,7 +146,7 @@ func (n *physical) Validate(config map[string]string) error {
 		// condition: standard mode
 		// defaultdesc: `l2proxy`
 		// shortdesc: Sets the method how OVN NIC external IPs will be advertised on uplink network: `l2proxy` (proxy ARP/NDP) or `routed`
-		"ovn.ingress_mode":            validate.Optional(validate.IsOneOf("l2proxy", "routed")),
+		"ovn.ingress_mode": validate.Optional(validate.IsOneOf("l2proxy", "routed")),
 
 		"volatile.last_state.created": validate.Optional(validate.IsBool),
 	}

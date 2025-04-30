@@ -1164,8 +1164,16 @@ For file systems (shared directories or custom volumes), this is one of:
 ```
 
 ```{config:option} ipv4.host_table devices-nic_routed
-:shortdesc: "The custom policy routing table ID to add IPv4 static routes to (in addition to the main routing table)"
+:shortdesc: "Deprecated: Use `ipv4.host_tables` instead"
 :type: "integer"
+The custom policy routing table ID to add IPv4 static routes to (in addition to the main routing table)
+
+```
+
+```{config:option} ipv4.host_tables devices-nic_routed
+:default: "254"
+:shortdesc: "Comma-delimited list of routing tables IDs to add IPv4 static routes to"
+:type: "string"
 
 ```
 
@@ -1203,8 +1211,16 @@ For file systems (shared directories or custom volumes), this is one of:
 ```
 
 ```{config:option} ipv6.host_table devices-nic_routed
-:shortdesc: "The custom policy routing table ID to add IPv6 static routes to (in addition to the main routing table)"
+:shortdesc: "Deprecated: Use `ipv6.host_tables` instead"
 :type: "integer"
+The custom policy routing table ID to add IPv6 static routes to (in addition to the main routing table)
+
+```
+
+```{config:option} ipv6.host_tables devices-nic_routed
+:default: "254"
+:shortdesc: "Comma-delimited list of routing tables IDs to add IPv6 static routes to"
+:type: "string"
 
 ```
 

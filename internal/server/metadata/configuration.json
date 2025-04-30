@@ -1326,9 +1326,17 @@
 					},
 					{
 						"ipv4.host_table": {
-							"longdesc": "",
-							"shortdesc": "The custom policy routing table ID to add IPv4 static routes to (in addition to the main routing table)",
+							"longdesc": "The custom policy routing table ID to add IPv4 static routes to (in addition to the main routing table)\n",
+							"shortdesc": "Deprecated: Use `ipv4.host_tables` instead",
 							"type": "integer"
+						}
+					},
+					{
+						"ipv4.host_tables": {
+							"default": "254",
+							"longdesc": "",
+							"shortdesc": "Comma-delimited list of routing tables IDs to add IPv4 static routes to",
+							"type": "string"
 						}
 					},
 					{
@@ -1371,9 +1379,17 @@
 					},
 					{
 						"ipv6.host_table": {
-							"longdesc": "",
-							"shortdesc": "The custom policy routing table ID to add IPv6 static routes to (in addition to the main routing table)",
+							"longdesc": "The custom policy routing table ID to add IPv6 static routes to (in addition to the main routing table)\n",
+							"shortdesc": "Deprecated: Use `ipv6.host_tables` instead",
 							"type": "integer"
+						}
+					},
+					{
+						"ipv6.host_tables": {
+							"default": "254",
+							"longdesc": "",
+							"shortdesc": "Comma-delimited list of routing tables IDs to add IPv6 static routes to",
+							"type": "string"
 						}
 					},
 					{

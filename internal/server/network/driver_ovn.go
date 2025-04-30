@@ -398,7 +398,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		// ---
 		//  type: string
 		//  shortdesc: Uplink network to use for external network access or `none` to keep isolated
-		"network":                    validate.IsAny,
+		"network": validate.IsAny,
 
 		// gendoc:generate(entity=network_ovn, group=common, key=bridge.hwaddr)
 		//
@@ -406,7 +406,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		//  type: string
 		//  shortdesc: MAC address for the virtual bridge interface
 
-		"bridge.hwaddr":              validate.Optional(validate.IsNetworkMAC),
+		"bridge.hwaddr": validate.Optional(validate.IsNetworkMAC),
 		// gendoc:generate(entity=network_ovn, group=common, key=bridge.mtu)
 		//
 		// ---
@@ -414,7 +414,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		//  shortdesc: Bridge MTU (default allows host to host Geneve tunnels)
 		//  default: `1442`
 
-		"bridge.mtu":                 validate.Optional(validate.IsNetworkMTU),
+		"bridge.mtu": validate.Optional(validate.IsNetworkMTU),
 		// gendoc:generate(entity=network_ovn, group=common, key=bridge.external_interfaces)
 		//
 		// ---
@@ -497,7 +497,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		//  condition: IPv6 address
 		//  shortdesc: Whether to provide additional network configuration over DHCP
 		//  default: `true`
-		"ipv6.dhcp":                            validate.Optional(validate.IsBool),
+		"ipv6.dhcp": validate.Optional(validate.IsBool),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=ipv6.dhcp.stateful)
 		//
@@ -506,7 +506,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		//  condition: IPv6 DHCP
 		//  shortdesc: Whether to allocate addresses using DHCP
 		//  default: `false`
-		"ipv6.dhcp.stateful":                   validate.Optional(validate.IsBool),
+		"ipv6.dhcp.stateful": validate.Optional(validate.IsBool),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.nat)
 		//
@@ -515,7 +515,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		//  shortdesc: Whether to NAT
 		//  condition: IPv4 address
 		//  default: `false` initial value on creation if `ipv4.address` is set to `auto: true`)
-		"ipv4.nat":                             validate.Optional(validate.IsBool),
+		"ipv4.nat": validate.Optional(validate.IsBool),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.nat.address)
 		//
@@ -523,7 +523,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		//  type: string
 		//  shortdesc: The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)
 		//  condition: IPv4 address
-		"ipv4.nat.address":                     validate.Optional(validate.IsNetworkAddressV4),
+		"ipv4.nat.address": validate.Optional(validate.IsNetworkAddressV4),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=ipv6.nat)
 		//
@@ -532,7 +532,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		//  condition: IPv6 address
 		//  shortdesc: Whether to NAT
 		//  default: `false` (initial value on creation if `ipv6.address` is set to `auto: true`)
-		"ipv6.nat":                             validate.Optional(validate.IsBool),
+		"ipv6.nat": validate.Optional(validate.IsBool),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=ipv6.nat.address)
 		//
@@ -540,7 +540,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		//  type: string
 		//  condition: IPv6 address
 		//  shortdesc: The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)
-		"ipv6.nat.address":                     validate.Optional(validate.IsNetworkAddressV6),
+		"ipv6.nat.address": validate.Optional(validate.IsNetworkAddressV6),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.l3only)
 		//
@@ -549,7 +549,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		//  shortdesc: Whether to enable layer 3 only mode.
 		//  condition: IPv4 address
 		//  default: `false`
-		"ipv4.l3only":                          validate.Optional(validate.IsBool),
+		"ipv4.l3only": validate.Optional(validate.IsBool),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=ipv6.l3only)
 		//
@@ -558,7 +558,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		//  condition: IPv6 DHCP stateful
 		//  shortdesc: Whether to enable layer 3 only mode.
 		//  default: `false`
-		"ipv6.l3only":                          validate.Optional(validate.IsBool),
+		"ipv6.l3only": validate.Optional(validate.IsBool),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=dns.nameservers)
 		//
@@ -566,7 +566,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		//  type: string
 		//  shortdesc: DNS server IPs to advertise to DHCP clients and via Router Advertisements. Both IPv4 and IPv6 addresses get pushed via DHCP, and the first IPv6 address is also advertised as RDNSS via RA.
 		//  default: Uplink DNS servers (IPv4 and IPv6 address if no uplink is configured)
-		"dns.nameservers":                      validate.Optional(validate.IsListOf(validate.IsNetworkAddress)),
+		"dns.nameservers": validate.Optional(validate.IsListOf(validate.IsNetworkAddress)),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=dns.domain)
 		//
@@ -574,42 +574,42 @@ func (n *ovn) Validate(config map[string]string) error {
 		//  type: string
 		//  default: `incus`
 		//  shortdesc: Domain to advertise to DHCP clients and use for DNS resolution
-		"dns.domain":                           validate.IsAny,
+		"dns.domain": validate.IsAny,
 
 		// gendoc:generate(entity=network_ovn, group=common, key=dns.search)
 		//
 		// ---
 		//  type: string
 		//  shortdesc: Full comma-separated domain search list, defaulting to `dns.domain` value
-		"dns.search":                           validate.IsAny,
+		"dns.search": validate.IsAny,
 
 		// gendoc:generate(entity=network_ovn, group=common, key=dns.zone.forward)
 		//
 		// ---
 		//  type: string
 		//  shortdesc: Comma-separated list of DNS zone names for forward DNS records
-		"dns.zone.forward":                     validate.IsAny,
+		"dns.zone.forward": validate.IsAny,
 
 		// gendoc:generate(entity=network_ovn, group=common, key=dns.zone.reverse.ipv4)
 		//
 		// ---
 		//  type: string
 		//  shortdesc: DNS zone name for IPv4 reverse DNS records
-		"dns.zone.reverse.ipv4":                validate.IsAny,
+		"dns.zone.reverse.ipv4": validate.IsAny,
 
 		// gendoc:generate(entity=network_ovn, group=common, key=dns.zone.reverse.ipv6)
 		//
 		// ---
 		//  type: string
 		//  shortdesc: DNS zone name for IPv6 reverse DNS records
-		"dns.zone.reverse.ipv6":                validate.IsAny,
+		"dns.zone.reverse.ipv6": validate.IsAny,
 
 		// gendoc:generate(entity=network_ovn, group=common, key=security.acls)
 		//
 		// ---
 		//  type: string
 		//  shortdesc: Comma-separated list of Network ACLs to apply to NICs connected to this network
-		"security.acls":                        validate.IsAny,
+		"security.acls": validate.IsAny,
 
 		// gendoc:generate(entity=network_ovn, group=common, key=security.acls.default.ingress.action)
 		//
@@ -627,7 +627,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		//  shortdesc: Action to use for egress traffic that doesn't match any ACL rule
 		//  default: `reject`
 		//  condition: `security.acls`
-		"security.acls.default.egress.action":  validate.Optional(validate.IsOneOf(acl.ValidActions...)),
+		"security.acls.default.egress.action": validate.Optional(validate.IsOneOf(acl.ValidActions...)),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=security.acls.default.ingress.logged)
 		//
@@ -645,7 +645,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		//  shortdesc: Whether to log egress traffic that doesn't match any ACL rule
 		//  default: `false`
 		//  condition: `security.acls`
-		"security.acls.default.egress.logged":  validate.Optional(validate.IsBool),
+		"security.acls.default.egress.logged": validate.Optional(validate.IsBool),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=user.*)
 		//
