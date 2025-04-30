@@ -195,9 +195,8 @@ func starlarkMarshal(input any, parent *starlark.Dict) (starlark.Value, error) {
 				return nil, err
 			}
 		}
-	}
 
-	if sv == nil {
+	default:
 		return nil, fmt.Errorf("Unrecognised type %v for value %+v", v.Type(), v.Interface())
 	}
 
