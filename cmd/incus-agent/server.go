@@ -17,20 +17,20 @@ import (
 )
 
 func restServer(tlsConfig *tls.Config, cert *x509.Certificate, debug bool, d *Daemon) *http.Server {
-	mux := mux.NewRouter()
-	mux.StrictSlash(false) // Don't redirect to URL with trailing slash.
-	mux.UseEncodedPath()   // Allow encoded values in path segments.
+	router := mux.NewRouter()
+	router.StrictSlash(false) // Don't redirect to URL with trailing slash.
+	router.UseEncodedPath()   // Allow encoded values in path segments.
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = response.SyncResponse(true, []string{"/1.0"}).Render(w)
 	})
 
 	for _, c := range api10 {
-		createCmd(mux, "1.0", c, cert, debug, d)
+		createCmd(router, "1.0", c, cert, debug, d)
 	}
 
-	return &http.Server{Handler: mux, TLSConfig: tlsConfig}
+	return &http.Server{Handler: router, TLSConfig: tlsConfig}
 }
 
 func createCmd(restAPI *mux.Router, version string, c APIEndpoint, cert *x509.Certificate, debug bool, d *Daemon) {
