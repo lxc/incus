@@ -71,6 +71,16 @@ var storagePoolVolumeTypeCmd = APIEndpoint{
 	Put:    APIEndpointAction{Handler: storagePoolVolumePut, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName", "location")},
 }
 
+var storagePoolVolumeFileCmd = APIEndpoint{
+	Path: "storage-pools/{poolName}/volumes/{type}/{volumeName}/file",
+	Get: APIEndpointAction{Handler: storagePoolVolumeFileGet, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanView, "poolName", "type", "volumeName", "location")},
+	Post: APIEndpointAction{Handler: storagePoolVolumeFilePost, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName", "location")},
+	Head: APIEndpointAction{Handler: storagePoolVolumeFileHead, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanView, "poolName", "type", "volumeName", "location")},
+	Delete: APIEndpointAction{Handler: storagePoolVolumeFileDelete, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName", "location")},
+}
+
+
+
 // swagger:operation GET /1.0/storage-pools/{poolName}/volumes storage storage_pool_volumes_get
 //
 //  Get the storage volumes
@@ -2443,3 +2453,24 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 	reverter.Success()
 	return operations.OperationResponse(op)
 }
+
+
+
+
+
+
+
+// swagger:operation GET /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/file storage storage_pool_volume_file_get
+func storagePoolVolumeFileGet(d *Daemon, r *http.Request) response.Response {
+	return nil
+}
+func storagePoolVolumeFilePost(d *Daemon, r *http.Request) response.Response {
+	return response.EmptySyncResponse
+}
+func storagePoolVolumeFileHead(d *Daemon, r *http.Request) response.Response {
+	return nil
+}
+func storagePoolVolumeFileDelete(d *Daemon, r *http.Request) response.Response {
+	return nil
+}
+

@@ -133,6 +133,7 @@ var api10 = []APIEndpoint{
 	storagePoolVolumeTypeCustomBackupCmd,
 	storagePoolVolumeTypeCustomBackupExportCmd,
 	storagePoolVolumeTypeStateCmd,
+	storagePoolVolumeFileCmd,
 	warningsCmd,
 	warningCmd,
 	metricsCmd,
