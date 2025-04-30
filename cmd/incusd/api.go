@@ -66,18 +66,18 @@ import (
 //	          example: ["/1.0"]
 func restServer(d *Daemon) *http.Server {
 	/* Setup the web server */
-	mux := mux.NewRouter()
-	mux.StrictSlash(false) // Don't redirect to URL with trailing slash.
-	mux.SkipClean(true)
-	mux.UseEncodedPath() // Allow encoded values in path segments.
+	router := mux.NewRouter()
+	router.StrictSlash(false) // Don't redirect to URL with trailing slash.
+	router.SkipClean(true)
+	router.UseEncodedPath() // Allow encoded values in path segments.
 
 	// Serving the UI.
 	uiPath := os.Getenv("INCUS_UI")
 	uiEnabled := uiPath != "" && util.PathExists(fmt.Sprintf("%s/index.html", uiPath))
 	if uiEnabled {
 		uiHttpDir := uiHttpDir{http.Dir(uiPath)}
-		mux.PathPrefix("/ui/").Handler(http.StripPrefix("/ui/", http.FileServer(uiHttpDir)))
-		mux.HandleFunc("/ui", func(w http.ResponseWriter, r *http.Request) {
+		router.PathPrefix("/ui/").Handler(http.StripPrefix("/ui/", http.FileServer(uiHttpDir)))
+		router.HandleFunc("/ui", func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/ui/", http.StatusMovedPermanently)
 		})
 	}
@@ -87,20 +87,20 @@ func restServer(d *Daemon) *http.Server {
 	docEnabled := documentationPath != "" && util.PathExists(documentationPath)
 	if docEnabled {
 		documentationHttpDir := documentationHttpDir{http.Dir(documentationPath)}
-		mux.PathPrefix("/documentation/").Handler(http.StripPrefix("/documentation/", http.FileServer(documentationHttpDir)))
-		mux.HandleFunc("/documentation", func(w http.ResponseWriter, r *http.Request) {
+		router.PathPrefix("/documentation/").Handler(http.StripPrefix("/documentation/", http.FileServer(documentationHttpDir)))
+		router.HandleFunc("/documentation", func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/documentation/", http.StatusMovedPermanently)
 		})
 	}
 
 	// Serving the OS API.
-	d.createCmd(mux, "os", apiOS)
-	mux.HandleFunc("/os", func(w http.ResponseWriter, r *http.Request) {
+	d.createCmd(router, "os", apiOS)
+	router.HandleFunc("/os", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/os/", http.StatusMovedPermanently)
 	})
 
 	// OIDC browser login (code flow).
-	mux.HandleFunc("/oidc/login", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/oidc/login", func(w http.ResponseWriter, r *http.Request) {
 		if d.oidcVerifier == nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -109,7 +109,7 @@ func restServer(d *Daemon) *http.Server {
 		d.oidcVerifier.Login(w, r)
 	})
 
-	mux.HandleFunc("/oidc/callback", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/oidc/callback", func(w http.ResponseWriter, r *http.Request) {
 		if d.oidcVerifier == nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -118,7 +118,7 @@ func restServer(d *Daemon) *http.Server {
 		d.oidcVerifier.Callback(w, r)
 	})
 
-	mux.HandleFunc("/oidc/logout", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/oidc/logout", func(w http.ResponseWriter, r *http.Request) {
 		if d.oidcVerifier == nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -127,7 +127,7 @@ func restServer(d *Daemon) *http.Server {
 		d.oidcVerifier.Logout(w, r)
 	})
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		ua := r.Header.Get("User-Agent")
@@ -141,11 +141,11 @@ func restServer(d *Daemon) *http.Server {
 	})
 
 	for endpoint, f := range d.gateway.HandlerFuncs(d.heartbeatHandler, d.getTrustedCertificates) {
-		mux.HandleFunc(endpoint, f)
+		router.HandleFunc(endpoint, f)
 	}
 
 	for _, c := range api10 {
-		d.createCmd(mux, "1.0", c)
+		d.createCmd(router, "1.0", c)
 
 		// Create any alias endpoints using the same handlers as the parent endpoint but
 		// with a different path and name (so the handler can differentiate being called via
@@ -154,26 +154,26 @@ func restServer(d *Daemon) *http.Server {
 			ac := c
 			ac.Name = alias.Name
 			ac.Path = alias.Path
-			d.createCmd(mux, "1.0", ac)
+			d.createCmd(router, "1.0", ac)
 		}
 	}
 
 	for _, c := range apiInternal {
-		d.createCmd(mux, "internal", c)
+		d.createCmd(router, "internal", c)
 	}
 
 	for _, c := range apiACME {
-		d.createCmd(mux, "", c)
+		d.createCmd(router, "", c)
 	}
 
-	mux.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("Sending top level 404", logger.Ctx{"url": r.URL, "method": r.Method, "remote": r.RemoteAddr})
 		w.Header().Set("Content-Type", "application/json")
 		_ = response.NotFound(nil).Render(w)
 	})
 
 	return &http.Server{
-		Handler:     &httpServer{r: mux, d: d},
+		Handler:     &httpServer{r: router, d: d},
 		ConnContext: request.SaveConnectionInContext,
 		IdleTimeout: 30 * time.Second,
 	}
@@ -203,38 +203,38 @@ func vSockServer(d *Daemon) *http.Server {
 
 func metricsServer(d *Daemon) *http.Server {
 	/* Setup the web server */
-	mux := mux.NewRouter()
-	mux.StrictSlash(false)
-	mux.SkipClean(true)
+	router := mux.NewRouter()
+	router.StrictSlash(false)
+	router.SkipClean(true)
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = response.SyncResponse(true, []string{"/1.0"}).Render(w)
 	})
 
 	for endpoint, f := range d.gateway.HandlerFuncs(d.heartbeatHandler, d.getTrustedCertificates) {
-		mux.HandleFunc(endpoint, f)
+		router.HandleFunc(endpoint, f)
 	}
 
-	d.createCmd(mux, "1.0", api10Cmd)
-	d.createCmd(mux, "1.0", metricsCmd)
+	d.createCmd(router, "1.0", api10Cmd)
+	d.createCmd(router, "1.0", metricsCmd)
 
-	mux.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("Sending top level 404", logger.Ctx{"url": r.URL, "method": r.Method, "remote": r.RemoteAddr})
 		w.Header().Set("Content-Type", "application/json")
 		_ = response.NotFound(nil).Render(w)
 	})
 
-	return &http.Server{Handler: &httpServer{r: mux, d: d}}
+	return &http.Server{Handler: &httpServer{r: router, d: d}}
 }
 
 func storageBucketsServer(d *Daemon) *http.Server {
 	/* Setup the web server */
-	m := mux.NewRouter()
-	m.StrictSlash(false)
-	m.SkipClean(true)
+	router := mux.NewRouter()
+	router.StrictSlash(false)
+	router.SkipClean(true)
 
-	m.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Wait until daemon is fully started.
 		<-d.waitReady.Done()
 
@@ -294,7 +294,7 @@ func storageBucketsServer(d *Daemon) *http.Server {
 	})
 
 	// We use the NotFoundHandler to reverse proxy requests to dynamically started local MinIO processes.
-	m.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Wait until daemon is fully started.
 		<-d.waitReady.Done()
 
@@ -366,7 +366,7 @@ func storageBucketsServer(d *Daemon) *http.Server {
 		rproxy.ServeHTTP(w, r)
 	})
 
-	return &http.Server{Handler: &httpServer{r: m, d: d}}
+	return &http.Server{Handler: &httpServer{r: router, d: d}}
 }
 
 type httpServer struct {
