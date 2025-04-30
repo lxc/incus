@@ -1094,6 +1094,11 @@ definitions:
                 example: image.tar.xz
                 type: string
                 x-go-name: Filename
+            format:
+                description: Type of image format
+                example: split
+                type: string
+                x-go-name: Format
             profiles:
                 description: List of profiles to use when creating from this image (if none provided by user)
                 example:
