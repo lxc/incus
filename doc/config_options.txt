@@ -3356,6 +3356,43 @@ User keys can be used in search.
 ```
 
 <!-- config group network_load_balancer-common end -->
+<!-- config group network_macvlan-common start -->
+```{config:option} gvrp network_macvlan-common
+:condition: "-"
+:default: "`false`"
+:shortdesc: "Register VLAN using GARP VLAN Registration Protocol"
+:type: "bool"
+
+```
+
+```{config:option} mtu network_macvlan-common
+:condition: "-"
+:shortdesc: "The MTU of the new interface"
+:type: "int"
+
+```
+
+```{config:option} parent network_macvlan-common
+:condition: "-"
+:shortdesc: "Parent interface to create macvlan NICs on"
+:type: "string"
+
+```
+
+```{config:option} user.* network_macvlan-common
+:shortdesc: "User-provided free-form key/value pairs"
+:type: "string"
+
+```
+
+```{config:option} vlan network_macvlan-common
+:condition: "-"
+:shortdesc: "The VLAN ID to attach to"
+:type: "int"
+
+```
+
+<!-- config group network_macvlan-common end -->
 <!-- config group network_ovn-common start -->
 ```{config:option} bridge.external_interfaces network_ovn-common
 :shortdesc: "Comma-separated list of unconfigured network interfaces to include in the bridge"

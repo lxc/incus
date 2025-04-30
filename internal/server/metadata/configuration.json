@@ -3792,6 +3792,52 @@
 				]
 			}
 		},
+		"network_macvlan": {
+			"common": {
+				"keys": [
+					{
+						"gvrp": {
+							"condition": "-",
+							"default": "`false`",
+							"longdesc": "",
+							"shortdesc": "Register VLAN using GARP VLAN Registration Protocol",
+							"type": "bool"
+						}
+					},
+					{
+						"mtu": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "The MTU of the new interface",
+							"type": "int"
+						}
+					},
+					{
+						"parent": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "Parent interface to create macvlan NICs on",
+							"type": "string"
+						}
+					},
+					{
+						"user.*": {
+							"longdesc": "",
+							"shortdesc": "User-provided free-form key/value pairs",
+							"type": "string"
+						}
+					},
+					{
+						"vlan": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "The VLAN ID to attach to",
+							"type": "int"
+						}
+					}
+				]
+			}
+		},
 		"network_ovn": {
 			"common": {
 				"keys": [
