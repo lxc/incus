@@ -1956,7 +1956,9 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 			return err
 		}
 
-		if args.VolumeSize > rootDiskConfBytes {
+		// Compare volume size with configured root size.
+		// Add a 4MiB allowed extra to account for round to nearest extent (16k on ZFS, 4MiB on LVM).
+		if args.VolumeSize > (rootDiskConfBytes + (4 * 1024 * 1024)) {
 			return fmt.Errorf("The configured target instance root disk size is smaller than the migration source")
 		}
 	}
