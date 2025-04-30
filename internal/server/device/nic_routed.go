@@ -189,16 +189,20 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv4.host_table)
 		//
+		// The custom policy routing table ID to add IPv4 static routes to (in addition to the main routing table)
+		//
 		// ---
 		//  type: integer
-		//  shortdesc: The custom policy routing table ID to add IPv4 static routes to (in addition to the main routing table)
+		//  shortdesc: Deprecated: Use `ipv4.host_tables` instead
 		"ipv4.host_table",
 
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv6.host_table)
 		//
+		// The custom policy routing table ID to add IPv6 static routes to (in addition to the main routing table)
+		//
 		// ---
 		//  type: integer
-		//  shortdesc: The custom policy routing table ID to add IPv6 static routes to (in addition to the main routing table)
+		//  shortdesc: Deprecated: Use `ipv6.host_tables` instead
 		"ipv6.host_table",
 
 		// gendoc:generate(entity=devices, group=nic_routed, key=ipv4.host_tables)
