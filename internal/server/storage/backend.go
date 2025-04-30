@@ -4040,7 +4040,7 @@ func (b *backend) UpdateBucket(projectName string, bucketName string, bucket api
 		}
 	}
 
-	b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Update the database record.
 		return tx.UpdateStoragePoolBucket(ctx, b.id, curBucket.ID, &bucket)
 	})
@@ -4608,7 +4608,7 @@ func (b *backend) DeleteBucketKey(projectName string, bucketName string, keyName
 		}
 	}
 
-	b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		return tx.DeleteStoragePoolBucketKey(ctx, bucket.ID, bucketKey.ID)
 	})
 	if err != nil {
