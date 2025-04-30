@@ -24,10 +24,44 @@ func (n *macvlan) DBType() db.NetworkType {
 // Validate network config.
 func (n *macvlan) Validate(config map[string]string) error {
 	rules := map[string]func(value string) error{
+		// gendoc:generate(entity=network_macvlan, group=common, key=parent)
+		//
+		// ---
+		//  type: string
+		//  condition: -
+		//  shortdesc: Parent interface to create macvlan NICs on
 		"parent": validate.Required(validate.IsNotEmpty, validate.IsInterfaceName),
+
+		// gendoc:generate(entity=network_macvlan, group=common, key=mtu)
+		//
+		// ---
+		//  type: int
+		//  condition: -
+		//  shortdesc: The MTU of the new interface
 		"mtu":    validate.Optional(validate.IsNetworkMTU),
+
+		// gendoc:generate(entity=network_macvlan, group=common, key=vlan)
+		//
+		// ---
+		//  type: int
+		//  condition: -
+		//  shortdesc: The VLAN ID to attach to
 		"vlan":   validate.Optional(validate.IsNetworkVLAN),
+
+		// gendoc:generate(entity=network_macvlan, group=common, key=gvrp)
+		//
+		// ---
+		//  type: bool
+		//  condition: -
+		//  default: `false`
+		//  shortdesc: Register VLAN using GARP VLAN Registration Protocol
 		"gvrp":   validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_macvlan, group=common, key=user.*)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: User-provided free-form key/value pairs
 	}
 
 	err := n.validate(config, rules)
