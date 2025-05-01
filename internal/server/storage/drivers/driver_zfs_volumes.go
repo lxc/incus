@@ -2995,28 +2995,28 @@ func (d *zfs) CreateVolumeSnapshot(vol Volume, op *operations.Operation) error {
 func (d *zfs) DeleteVolumeSnapshot(vol Volume, op *operations.Operation) error {
 	parentName, _, _ := api.GetParentAndSnapshotName(vol.name)
 
-	// Handle clones.
-	clones, err := d.getClones(d.dataset(vol, false))
-	if err != nil {
-		return err
-	}
-
-	if len(clones) > 0 {
-		// Move to the deleted path.
-		_, err := subprocess.RunCommand("zfs", "rename", d.dataset(vol, false), d.dataset(vol, true))
+	// Attempt to delete the snapshot.
+	_, errDelete := subprocess.RunCommand("zfs", "destroy", "-r", d.dataset(vol, false))
+	if errDelete != nil {
+		// Handle clones.
+		clones, err := d.getClones(d.dataset(vol, false))
 		if err != nil {
 			return err
 		}
-	} else {
-		// Delete the snapshot.
-		_, err := subprocess.RunCommand("zfs", "destroy", "-r", d.dataset(vol, false))
+
+		if len(clones) == 0 {
+			return errDelete
+		}
+
+		// Move to the deleted path.
+		_, err = subprocess.RunCommand("zfs", "rename", d.dataset(vol, false), d.dataset(vol, true))
 		if err != nil {
 			return err
 		}
 	}
 
 	// Delete the mountpoint.
-	err = os.Remove(vol.MountPath())
+	err := os.Remove(vol.MountPath())
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("Failed to remove '%s': %w", vol.MountPath(), err)
 	}
