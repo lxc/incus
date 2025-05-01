@@ -1251,7 +1251,7 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 		// Detect if a volume is block content type using only the dataset type.
 		isBlock := zfsContentType == "volume"
 
-		if volType == VolumeTypeVM && /*!isBlock*/ !strings.HasSuffix(volName, zfsBlockVolSuffix) {
+		if volType == VolumeTypeVM && (!isBlock || !strings.HasSuffix(volName, zfsBlockVolSuffix)) {
 			continue // Ignore VM filesystem volumes as we will just return the VM's block volume.
 		}
 
@@ -1299,6 +1299,48 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 	}
 
 	return volList, nil
+}
+
+// activateVolume activates a ZFS volume if not already active. Returns true if activated, false if not.
+func (d *truenas) activateVolume(vol Volume) (bool, string, error) {
+	if !IsContentBlock(vol.contentType) && !vol.IsBlockBacked() {
+		return false, "", nil // Nothing to do for non-block or non-block backed volumes.
+	}
+
+	dataset := d.dataset(vol, false)
+
+	// Check if already active.
+	didActivate, devPath, err := d.locateOrActivateIscsiDataset(dataset)
+	if err != nil {
+		return false, "", err
+	}
+
+	if didActivate {
+		d.logger.Debug("Activated TrueNAS volume", logger.Ctx{"volName": vol.Name(), "dev": dataset})
+	}
+
+	return didActivate, devPath, nil
+}
+
+// deactivateVolume deactivates a ZFS volume if activate. Returns true if deactivated, false if not.
+func (d *truenas) deactivateVolume(vol Volume) (bool, error) {
+	if vol.contentType != ContentTypeBlock && !vol.IsBlockBacked() {
+		return false, nil // Nothing to do for non-block and non-block backed volumes.
+	}
+
+	dataset := d.dataset(vol, false)
+
+	// Check if currently active.
+	didDeactivate, err := d.deactivateIscsiDatasetIfActive(dataset)
+	if err != nil {
+		return false, fmt.Errorf("Failed deactivating TrueNAS volume: %w", err)
+	}
+
+	if didDeactivate {
+		d.logger.Debug("Deactivated TrueNAS volume", logger.Ctx{"volName": vol.name, "dev": dataset})
+	}
+
+	return didDeactivate, nil
 }
 
 func (d *truenas) activateAndMountFsImg(vol Volume, op *operations.Operation) error {
