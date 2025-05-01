@@ -75,7 +75,7 @@ func getSortedKeysFromMap[K string, V IterableAny](m map[K]V) []K {
 
 func parse(path string, outputJSONPath string, excludedPaths []string) (*doc, error) {
 	jsonDoc := &doc{}
-	docKeys := make(map[string]struct{}, 0)
+	docKeys := make(map[string]struct{})
 	projectEntries := make(map[string]any)
 	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
