@@ -26,6 +26,7 @@ type InstanceMigration struct {
 
 	flagRsyncArgs string
 	instanceArgs  api.InstancesPost
+	volumes       []*VolumeMigration
 }
 
 // NewInstanceMigration returns a new InstanceMigration.
@@ -188,10 +189,11 @@ Additional overrides can be applied at this stage:
 3) Set additional configuration options
 4) Change instance storage pool or volume size
 5) Change instance network
+6) Add additional disk
 
 `)
 
-		choice, err := m.asker.AskInt("Please pick one of the options above [default=1]: ", 1, 5, "1", nil)
+		choice, err := m.asker.AskInt("Please pick one of the options above [default=1]: ", 1, 6, "1", nil)
 		if err != nil {
 			return err
 		}
@@ -207,6 +209,8 @@ Additional overrides can be applied at this stage:
 			err = m.askStorage()
 		case 5:
 			err = m.askNetwork()
+		case 6:
+			err = m.askDisk()
 		}
 
 		if err != nil {
@@ -219,6 +223,14 @@ Additional overrides can be applied at this stage:
 func (m *InstanceMigration) migrate() error {
 	if m.migrationType != MigrationTypeVM && m.migrationType != MigrationTypeContainer {
 		return fmt.Errorf("Wrong migration type for migrate")
+	}
+
+	// Prioritize migrating all additional disks before the main instance.
+	for _, vol := range m.volumes {
+		err := vol.migrate()
+		if err != nil {
+			return err
+		}
 	}
 
 	return m.runMigration(func(path string) error {
@@ -269,17 +281,18 @@ func (m *InstanceMigration) renderObject() error {
 
 func (m *InstanceMigration) render() string {
 	data := struct {
-		Name         string            `yaml:"Name"`
-		Project      string            `yaml:"Project"`
-		Type         api.InstanceType  `yaml:"Type"`
-		Source       string            `yaml:"Source"`
-		SourceFormat string            `yaml:"Source format,omitempty"`
-		Mounts       []string          `yaml:"Mounts,omitempty"`
-		Profiles     []string          `yaml:"Profiles,omitempty"`
-		StoragePool  string            `yaml:"Storage pool,omitempty"`
-		StorageSize  string            `yaml:"Storage pool size,omitempty"`
-		Network      string            `yaml:"Network name,omitempty"`
-		Config       map[string]string `yaml:"Config,omitempty"`
+		Name         string                       `yaml:"Name"`
+		Project      string                       `yaml:"Project"`
+		Type         api.InstanceType             `yaml:"Type"`
+		Source       string                       `yaml:"Source"`
+		SourceFormat string                       `yaml:"Source format,omitempty"`
+		Mounts       []string                     `yaml:"Mounts,omitempty"`
+		Profiles     []string                     `yaml:"Profiles,omitempty"`
+		StoragePool  string                       `yaml:"Storage pool,omitempty"`
+		StorageSize  string                       `yaml:"Storage pool size,omitempty"`
+		Network      string                       `yaml:"Network name,omitempty"`
+		Config       map[string]string            `yaml:"Config,omitempty"`
+		Disks        map[string]map[string]string `yaml:"Disks,omitempty"`
 	}{
 		m.instanceArgs.Name,
 		m.project,
@@ -292,6 +305,7 @@ func (m *InstanceMigration) render() string {
 		"",
 		"",
 		m.instanceArgs.Config,
+		make(map[string]map[string]string),
 	}
 
 	disk, ok := m.instanceArgs.Devices["root"]
@@ -307,6 +321,14 @@ func (m *InstanceMigration) render() string {
 	network, ok := m.instanceArgs.Devices["eth0"]
 	if ok {
 		data.Network = network["parent"]
+	}
+
+	for k, v := range m.instanceArgs.Devices {
+		if v["type"] != "disk" || v["path"] == "/" {
+			continue
+		}
+
+		data.Disks[k] = v
 	}
 
 	out, err := yaml.Marshal(&data)
@@ -434,6 +456,43 @@ func (m *InstanceMigration) askNetwork() error {
 		"parent":  network,
 		"name":    "eth0",
 	}
+
+	return nil
+}
+
+func (m *InstanceMigration) askDisk() error {
+	volMigrator, ok := NewVolumeMigration(m.ctx, m.server, m.asker, m.flagRsyncArgs).(*VolumeMigration)
+	if !ok {
+		return fmt.Errorf("Migrator should be of type VolumeMigration")
+	}
+
+	volMigrator.project = m.project
+
+	err := volMigrator.gatherInfo()
+	if err != nil {
+		return err
+	}
+
+	if m.migrationType == MigrationTypeContainer && volMigrator.migrationType == MigrationTypeVolumeBlock {
+		return fmt.Errorf("Block disk is not supported by the container")
+	}
+
+	m.instanceArgs.Devices[volMigrator.customVolumeArgs.Name] = map[string]string{
+		"type":   "disk",
+		"pool":   volMigrator.pool,
+		"source": volMigrator.customVolumeArgs.Name,
+	}
+
+	if volMigrator.migrationType == MigrationTypeVolumeFilesystem {
+		mountPath, err := m.asker.AskString("Provide mount path for this disk: ", "", nil)
+		if err != nil {
+			return err
+		}
+
+		m.instanceArgs.Devices[volMigrator.customVolumeArgs.Name]["path"] = mountPath
+	}
+
+	m.volumes = append(m.volumes, volMigrator)
 
 	return nil
 }
