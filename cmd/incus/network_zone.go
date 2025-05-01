@@ -1572,6 +1572,7 @@ func (c *cmdNetworkZoneRecordEntry) Command() *cobra.Command {
 func (c *cmdNetworkZoneRecordEntry) CommandAdd() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("add", i18n.G("[<remote>:]<zone> <record> <type> <value>"))
+	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add a network zone record entry")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add entries to a network zone record"))
 	cmd.RunE = c.RunAdd

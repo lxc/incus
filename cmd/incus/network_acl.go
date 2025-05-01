@@ -910,6 +910,7 @@ func (c *cmdNetworkACLRule) Command() *cobra.Command {
 func (c *cmdNetworkACLRule) CommandAdd() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("add", i18n.G("[<remote>:]<ACL> <direction> <key>=<value>..."))
+	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add rules to an ACL")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add rules to an ACL"))
 
