@@ -1251,7 +1251,7 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 		// Detect if a volume is block content type using only the dataset type.
 		isBlock := zfsContentType == "volume"
 
-		if volType == VolumeTypeVM && !isBlock {
+		if volType == VolumeTypeVM && /*!isBlock*/ !strings.HasSuffix(volName, zfsBlockVolSuffix) {
 			continue // Ignore VM filesystem volumes as we will just return the VM's block volume.
 		}
 
