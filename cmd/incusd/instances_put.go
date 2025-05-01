@@ -146,7 +146,7 @@ func instancesPut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Determine operation type.
-	opType, err := instanceActionToOptype(req.State.Action)
+	opType, err := instanceActionToOpType(req.State.Action)
 	if err != nil {
 		return response.BadRequest(err)
 	}
