@@ -393,6 +393,7 @@ type cmdNetworkACLCreate struct {
 func (c *cmdNetworkACLCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("create", i18n.G("[<remote>:]<ACL> [key=value...]"))
+	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new network ACLs")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network ACLs"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network acl create a1

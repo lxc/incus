@@ -97,6 +97,7 @@ type cmdStorageBucketCreate struct {
 func (c *cmdStorageBucketCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("create", i18n.G("[<remote>:]<pool> <bucket> [key=value...]"))
+	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new custom storage buckets")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Create new custom storage buckets`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus storage bucket create p1 b01
@@ -1094,6 +1095,7 @@ type cmdStorageBucketKeyCreate struct {
 func (c *cmdStorageBucketKeyCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("create", i18n.G("[<remote>:]<pool> <bucket> <key>"))
+	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create key for a storage bucket")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create key for a storage bucket"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus storage bucket key create p1 b01 k1
