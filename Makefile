@@ -297,6 +297,9 @@ static-analysis:
 ifeq ($(shell command -v go-licenses),)
 	(cd / ; $(GO) install -v -x github.com/google/go-licenses@latest)
 endif
+ifeq ($(shell command -v govulncheck),)
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+endif
 ifeq ($(shell command -v golangci-lint),)
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$($(GO) env GOPATH)/bin
 endif
