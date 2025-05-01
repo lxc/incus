@@ -3864,7 +3864,16 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuInfo *cpuTopology
 	}
 
 	// process any user-specified overrides
-	d.conf = qemuRawCfgOverride(conf, d.expandedConfig)
+	confOverride, ok := d.expandedConfig["raw.qemu.conf"]
+	if ok {
+		d.conf, err = qemuRawCfgOverride(conf, confOverride)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		d.conf = conf
+	}
+
 	return monHooks, nil
 }
 

@@ -1,16 +1,13 @@
 package drivers
 
 import (
-	"regexp"
+	"bufio"
+	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/cfg"
 )
-
-const pattern = `\s*(?m:(?:\[([^\]]+)\](?:\[(\d+)\])?)|(?:([^=]+)[ \t]*=[ \t]*(?:"([^"]*)"|([^\n]*)))$)`
-
-var parser = regexp.MustCompile(pattern)
 
 // sectionContent represents the content of a section, without its name.
 type sectionContent struct {
@@ -25,13 +22,7 @@ type section struct {
 }
 
 // qemuRawCfgOverride generates a new QEMU configuration from an original one and an override entry.
-func qemuRawCfgOverride(conf []cfg.Section, expandedConfig map[string]string) []cfg.Section {
-	confOverride, ok := expandedConfig["raw.qemu.conf"]
-	if !ok {
-		// If we don’t have an override, we can return the original configuration.
-		return conf
-	}
-
+func qemuRawCfgOverride(conf []cfg.Section, confOverride string) ([]cfg.Section, error) {
 	// We define a data structure optimized for lookup and insertion…
 	indexedSections := map[string]map[int]*sectionContent{}
 	// … and another one keeping insertion order. This saves us a few cycles at the expense of a few
@@ -66,34 +57,48 @@ func qemuRawCfgOverride(conf []cfg.Section, expandedConfig map[string]string) []
 
 	var currentIndexedSection map[int]*sectionContent
 	var currentIndex int
+	var currentSectionName string
 	// We set the changed flag to true for our first iteration.
 	changed := true
 
+	scanner := bufio.NewScanner(strings.NewReader(confOverride))
+
 	// Then, we parse the override string.
-	for {
-		loc := parser.FindStringSubmatchIndex(confOverride)
-		if loc == nil {
-			break
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		length := len(line)
+		if length == 0 {
+			continue
 		}
 
-		if loc[2] > 0 {
+		if strings.HasPrefix(line, "[") {
+			// Find closing `]` for section name.
+			end := strings.IndexByte(line, ']')
+			if end <= 1 {
+				return nil, fmt.Errorf("Invalid section header (must be a section name enclosed in square brackets): %q", line)
+			}
+
 			// If a section is defined in the override but has no key, remove its entries.
 			if !changed {
 				(*currentIndexedSection[currentIndex]).entries = make(map[string]string)
 			}
 
 			changed = false
-			currentSectionName := strings.TrimSpace(confOverride[loc[2]:loc[3]])
-
-			if loc[4] > 0 {
-				i, err := strconv.Atoi(confOverride[loc[4]:loc[5]])
-				if err != nil || i < 0 {
-					panic("failed to parse index")
+			currentSectionName = strings.TrimSpace(line[1:end])
+			currentIndex = 0
+			if length > end+1 {
+				// Optional section index
+				rest := line[end+1:]
+				e := fmt.Errorf("Invalid section index (must be an integer enclosed in square brackets): %q", rest)
+				if !strings.HasPrefix(rest, "[") || !strings.HasSuffix(rest, "]") {
+					return nil, e
 				}
 
-				currentIndex = i
-			} else {
-				currentIndex = 0
+				var err error
+				currentIndex, err = strconv.Atoi(rest[1 : len(rest)-1])
+				if err != nil {
+					return nil, e
+				}
 			}
 
 			var ok bool
@@ -116,27 +121,34 @@ func qemuRawCfgOverride(conf []cfg.Section, expandedConfig map[string]string) []
 				})
 			}
 		} else {
-			entryKey := strings.TrimSpace(confOverride[loc[6]:loc[7]])
-			var value string
+			if currentSectionName == "" {
+				return nil, fmt.Errorf("Expected section header, got: %q", line)
+			}
 
-			if loc[8] > 0 {
-				// quoted value
-				value = confOverride[loc[8]:loc[9]]
-			} else {
-				// unquoted value
-				value = strings.TrimSpace(confOverride[loc[10]:loc[11]])
+			eqLoc := strings.IndexByte(line, '=')
+			if eqLoc < 1 {
+				return nil, fmt.Errorf("Invalid property override line (must be `key=value`): %q", line)
+			}
+
+			key := strings.TrimSpace(line[:eqLoc])
+			value := strings.TrimSpace(line[eqLoc+1:])
+			if strings.HasPrefix(value, "\"") {
+				// We are dealing with a quoted value.
+				var err error
+				value, err = strconv.Unquote(value)
+				if err != nil {
+					return nil, fmt.Errorf("Invalid quoted value: %q", value)
+				}
 			}
 
 			changed = true
 			if value == "" {
 				// If the value associated to this key is empty, delete the key.
-				delete((*currentIndexedSection[currentIndex]).entries, entryKey)
+				delete((*currentIndexedSection[currentIndex]).entries, key)
 			} else {
-				(*currentIndexedSection[currentIndex]).entries[entryKey] = value
+				(*currentIndexedSection[currentIndex]).entries[key] = value
 			}
 		}
-
-		confOverride = confOverride[loc[1]:]
 	}
 
 	// Same as above, if a section is defined in the override but has no key, remove its entries.
@@ -155,5 +167,5 @@ func qemuRawCfgOverride(conf []cfg.Section, expandedConfig map[string]string) []
 		}
 	}
 
-	return res
+	return res, nil
 }
