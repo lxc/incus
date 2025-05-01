@@ -20,6 +20,12 @@ SELECT networks_peers.id, networks_peers.network_id, networks_peers.name, networ
   ORDER BY networks_peers.name
 `)
 
+var networkPeerNames = RegisterStmt(`
+SELECT networks_peers.name
+  FROM networks_peers
+  ORDER BY networks_peers.name
+`)
+
 var networkPeerObjectsByName = RegisterStmt(`
 SELECT networks_peers.id, networks_peers.network_id, networks_peers.name, networks_peers.description, networks_peers.type, networks_peers.target_network_project, networks_peers.target_network_name, networks_peers.target_network_integration_id, networks_peers.target_network_id
   FROM networks_peers
@@ -41,6 +47,27 @@ SELECT networks_peers.id, networks_peers.network_id, networks_peers.name, networ
   ORDER BY networks_peers.name
 `)
 
+var networkPeerObjectsByNetworkIDAndName = RegisterStmt(`
+SELECT networks_peers.id, networks_peers.network_id, networks_peers.name, networks_peers.description, networks_peers.type, networks_peers.target_network_project, networks_peers.target_network_name, networks_peers.target_network_integration_id, networks_peers.target_network_id
+  FROM networks_peers
+  WHERE ( networks_peers.network_id = ? AND networks_peers.name = ? )
+  ORDER BY networks_peers.name
+`)
+
+var networkPeerObjectsByNetworkIDAndID = RegisterStmt(`
+SELECT networks_peers.id, networks_peers.network_id, networks_peers.name, networks_peers.description, networks_peers.type, networks_peers.target_network_project, networks_peers.target_network_name, networks_peers.target_network_integration_id, networks_peers.target_network_id
+  FROM networks_peers
+  WHERE ( networks_peers.network_id = ? AND networks_peers.id = ? )
+  ORDER BY networks_peers.name
+`)
+
+var networkPeerNamesByNetworkID = RegisterStmt(`
+SELECT networks_peers.name
+  FROM networks_peers
+  WHERE ( networks_peers.network_id = ? )
+  ORDER BY networks_peers.name
+`)
+
 var networkPeerCreate = RegisterStmt(`
 INSERT INTO networks_peers (network_id, name, description, type, target_network_project, target_network_name, target_network_integration_id, target_network_id)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -57,8 +84,8 @@ UPDATE networks_peers
  WHERE id = ?
 `)
 
-var networkPeerDeleteByName = RegisterStmt(`
-DELETE FROM networks_peers WHERE name = ?
+var networkPeerDeleteByNetworkIDAndID = RegisterStmt(`
+DELETE FROM networks_peers WHERE network_id = ? AND id = ?
 `)
 
 // networkPeerColumns returns a string of column names to be used with a SELECT statement for the entity.
@@ -140,7 +167,55 @@ func GetNetworkPeers(ctx context.Context, db dbtx, filters ...NetworkPeerFilter)
 	}
 
 	for i, filter := range filters {
-		if filter.NetworkID != nil && filter.ID == nil && filter.Name == nil {
+		if filter.NetworkID != nil && filter.Name != nil && filter.ID == nil {
+			args = append(args, []any{filter.NetworkID, filter.Name}...)
+			if len(filters) == 1 {
+				sqlStmt, err = Stmt(db, networkPeerObjectsByNetworkIDAndName)
+				if err != nil {
+					return nil, fmt.Errorf("Failed to get \"networkPeerObjectsByNetworkIDAndName\" prepared statement: %w", err)
+				}
+
+				break
+			}
+
+			query, err := StmtString(networkPeerObjectsByNetworkIDAndName)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to get \"networkPeerObjects\" prepared statement: %w", err)
+			}
+
+			parts := strings.SplitN(query, "ORDER BY", 2)
+			if i == 0 {
+				copy(queryParts[:], parts)
+				continue
+			}
+
+			_, where, _ := strings.Cut(parts[0], "WHERE")
+			queryParts[0] += "OR" + where
+		} else if filter.NetworkID != nil && filter.ID != nil && filter.Name == nil {
+			args = append(args, []any{filter.NetworkID, filter.ID}...)
+			if len(filters) == 1 {
+				sqlStmt, err = Stmt(db, networkPeerObjectsByNetworkIDAndID)
+				if err != nil {
+					return nil, fmt.Errorf("Failed to get \"networkPeerObjectsByNetworkIDAndID\" prepared statement: %w", err)
+				}
+
+				break
+			}
+
+			query, err := StmtString(networkPeerObjectsByNetworkIDAndID)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to get \"networkPeerObjects\" prepared statement: %w", err)
+			}
+
+			parts := strings.SplitN(query, "ORDER BY", 2)
+			if i == 0 {
+				copy(queryParts[:], parts)
+				continue
+			}
+
+			_, where, _ := strings.Cut(parts[0], "WHERE")
+			queryParts[0] += "OR" + where
+		} else if filter.NetworkID != nil && filter.ID == nil && filter.Name == nil {
 			args = append(args, []any{filter.NetworkID}...)
 			if len(filters) == 1 {
 				sqlStmt, err = Stmt(db, networkPeerObjectsByNetworkID)
@@ -279,6 +354,94 @@ func GetNetworkPeer(ctx context.Context, db dbtx, name string) (_ *NetworkPeer, 
 	}
 }
 
+// GetNetworkPeerNames returns the identifying field of network_peer.
+// generator: network_peer GetNames-by-NetworkID
+func GetNetworkPeerNames(ctx context.Context, db dbtx, filters ...NetworkPeerFilter) (_ []string, _err error) {
+	defer func() {
+		_err = mapErr(_err, "Network_peer")
+	}()
+
+	var err error
+
+	// Result slice.
+	names := make([]string, 0)
+
+	// Pick the prepared statement and arguments to use based on active criteria.
+	var sqlStmt *sql.Stmt
+	args := []any{}
+	queryParts := [2]string{}
+
+	if len(filters) == 0 {
+		sqlStmt, err = Stmt(db, networkPeerNames)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to get \"networkPeerNames\" prepared statement: %w", err)
+		}
+	}
+
+	for i, filter := range filters {
+		if filter.NetworkID != nil && filter.ID == nil && filter.Name == nil {
+			args = append(args, []any{filter.NetworkID}...)
+			if len(filters) == 1 {
+				sqlStmt, err = Stmt(db, networkPeerNamesByNetworkID)
+				if err != nil {
+					return nil, fmt.Errorf("Failed to get \"networkPeerNamesByNetworkID\" prepared statement: %w", err)
+				}
+
+				break
+			}
+
+			query, err := StmtString(networkPeerNamesByNetworkID)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to get \"networkPeerNames\" prepared statement: %w", err)
+			}
+
+			parts := strings.SplitN(query, "ORDER BY", 2)
+			if i == 0 {
+				copy(queryParts[:], parts)
+				continue
+			}
+
+			_, where, _ := strings.Cut(parts[0], "WHERE")
+			queryParts[0] += "OR" + where
+		} else if filter.ID == nil && filter.Name == nil && filter.NetworkID == nil {
+			return nil, fmt.Errorf("Cannot filter on empty NetworkPeerFilter")
+		} else {
+			return nil, fmt.Errorf("No statement exists for the given Filter")
+		}
+	}
+
+	// Select.
+	var rows *sql.Rows
+	if sqlStmt != nil {
+		rows, err = sqlStmt.QueryContext(ctx, args...)
+	} else {
+		queryStr := strings.Join(queryParts[:], "ORDER BY")
+		rows, err = db.QueryContext(ctx, queryStr, args...)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = rows.Close() }()
+	for rows.Next() {
+		var identifier string
+		err := rows.Scan(&identifier)
+		if err != nil {
+			return nil, err
+		}
+
+		names = append(names, identifier)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to fetch from \"networks_peers\" table: %w", err)
+	}
+
+	return names, nil
+}
+
 // NetworkPeerExists checks if a network_peer with the given key exists.
 // generator: network_peer Exists
 func NetworkPeerExists(ctx context.Context, db dbtx, name string) (_ bool, _err error) {
@@ -403,18 +566,18 @@ func GetNetworkPeerID(ctx context.Context, db tx, name string) (_ int64, _err er
 }
 
 // DeleteNetworkPeer deletes the network_peer matching the given key parameters.
-// generator: network_peer DeleteOne-by-Name
-func DeleteNetworkPeer(ctx context.Context, db dbtx, name string) (_err error) {
+// generator: network_peer DeleteOne-by-NetworkID-and-ID
+func DeleteNetworkPeer(ctx context.Context, db dbtx, networkID int64, id int64) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Network_peer")
 	}()
 
-	stmt, err := Stmt(db, networkPeerDeleteByName)
+	stmt, err := Stmt(db, networkPeerDeleteByNetworkIDAndID)
 	if err != nil {
-		return fmt.Errorf("Failed to get \"networkPeerDeleteByName\" prepared statement: %w", err)
+		return fmt.Errorf("Failed to get \"networkPeerDeleteByNetworkIDAndID\" prepared statement: %w", err)
 	}
 
-	result, err := stmt.Exec(name)
+	result, err := stmt.Exec(networkID, id)
 	if err != nil {
 		return fmt.Errorf("Delete \"networks_peers\": %w", err)
 	}

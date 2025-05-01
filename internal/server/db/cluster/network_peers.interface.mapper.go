@@ -18,6 +18,10 @@ type NetworkPeerGenerated interface {
 	// generator: network_peer GetOne
 	GetNetworkPeer(ctx context.Context, db dbtx, name string) (*NetworkPeer, error)
 
+	// GetNetworkPeerNames returns the identifying field of network_peer.
+	// generator: network_peer GetNames-by-NetworkID
+	GetNetworkPeerNames(ctx context.Context, db dbtx, filters ...NetworkPeerFilter) ([]string, error)
+
 	// NetworkPeerExists checks if a network_peer with the given key exists.
 	// generator: network_peer Exists
 	NetworkPeerExists(ctx context.Context, db dbtx, name string) (bool, error)
@@ -35,8 +39,8 @@ type NetworkPeerGenerated interface {
 	GetNetworkPeerID(ctx context.Context, db tx, name string) (int64, error)
 
 	// DeleteNetworkPeer deletes the network_peer matching the given key parameters.
-	// generator: network_peer DeleteOne-by-Name
-	DeleteNetworkPeer(ctx context.Context, db dbtx, name string) error
+	// generator: network_peer DeleteOne-by-NetworkID-and-ID
+	DeleteNetworkPeer(ctx context.Context, db dbtx, networkID int64, id int64) error
 
 	// UpdateNetworkPeerConfig updates the network_peer Config matching the given key parameters.
 	// generator: network_peer Update
