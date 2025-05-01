@@ -941,6 +941,7 @@ func (c *cmdNetworkForwardPort) Command() *cobra.Command {
 func (c *cmdNetworkForwardPort) CommandAdd() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("add", i18n.G("[<remote>:]<network> <listen_address> <protocol> <listen_port(s)> <target_address> [<target_port(s)>]"))
+	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add ports to a forward")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add ports to a forward"))
 	cmd.RunE = c.RunAdd

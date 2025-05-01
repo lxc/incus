@@ -48,6 +48,7 @@ type cmdClusterRoleAdd struct {
 func (c *cmdClusterRoleAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("add", i18n.G("[<remote>:]<member> <role[,role...]>"))
+	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add roles to a cluster member")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Add roles to a cluster member`))

@@ -58,6 +58,7 @@ type cmdAliasAdd struct {
 func (c *cmdAliasAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("add", i18n.G("<alias> <target>"))
+	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add new aliases")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Add new aliases`))

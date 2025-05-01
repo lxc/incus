@@ -920,6 +920,7 @@ func (c *cmdNetworkLoadBalancerBackend) Command() *cobra.Command {
 func (c *cmdNetworkLoadBalancerBackend) CommandAdd() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("add", i18n.G("[<remote>:]<network> <listen_address> <backend_name> <target_address> [<target_port(s)>]"))
+	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add backends to a load balancer")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add backend to a load balancer"))
 	cmd.RunE = c.RunAdd
@@ -1117,6 +1118,7 @@ func (c *cmdNetworkLoadBalancerPort) Command() *cobra.Command {
 func (c *cmdNetworkLoadBalancerPort) CommandAdd() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("add", i18n.G("[<remote>:]<network> <listen_address> <protocol> <listen_port(s)> <backend_name>[,<backend_name>...]"))
+	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add ports to a load balancer")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add ports to a load balancer"))
 	cmd.RunE = c.RunAdd
