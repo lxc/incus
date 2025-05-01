@@ -300,7 +300,8 @@ func (t Type) Permission() (auth.ObjectType, auth.Entitlement) {
 		return auth.ObjectTypeStorageVolume, auth.EntitlementCanManageBackups
 	case BucketBackupRestore:
 		return auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit
-	}
 
-	return "", ""
+	default:
+		return "", ""
+	}
 }
