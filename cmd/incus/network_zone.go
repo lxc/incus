@@ -1633,6 +1633,7 @@ func (c *cmdNetworkZoneRecordEntry) RunAdd(cmd *cobra.Command, args []string) er
 func (c *cmdNetworkZoneRecordEntry) CommandRemove() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("remove", i18n.G("[<remote>:]<zone> <record> <type> <value>"))
+	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove a network zone record entry")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Remove entries from a network zone record"))
 	cmd.RunE = c.RunRemove

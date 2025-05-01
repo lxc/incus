@@ -770,7 +770,7 @@ type cmdConfigTrustRemove struct {
 func (c *cmdConfigTrustRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("remove", i18n.G("[<remote>:]<fingerprint>"))
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove trusted client")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Remove trusted client`))

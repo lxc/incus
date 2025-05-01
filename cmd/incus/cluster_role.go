@@ -113,6 +113,7 @@ type cmdClusterRoleRemove struct {
 func (c *cmdClusterRoleRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("remove", i18n.G("[<remote>:]<member> <role[,role...]>"))
+	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove roles from a cluster member")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Remove roles from a cluster member`))

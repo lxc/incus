@@ -509,7 +509,7 @@ func (c *cmdConfigDeviceRemove) Command() *cobra.Command {
 		cmd.Use = usage("remove", i18n.G("[<remote>:]<profile> <name>..."))
 	}
 
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove instance devices")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Remove instance devices`))

@@ -224,7 +224,7 @@ type cmdAliasRemove struct {
 func (c *cmdAliasRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("remove", i18n.G("<alias>"))
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove aliases")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Remove aliases`))
