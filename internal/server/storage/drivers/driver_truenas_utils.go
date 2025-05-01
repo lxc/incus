@@ -16,7 +16,7 @@ import (
 
 const (
 	tnToolName              = "truenas_incus_ctl"
-	tnMinVersion            = "0.5.1" // iscsi support with target-prefix
+	tnMinVersion            = "0.5.3" // `iscsi locate --activate` support
 	tnVerifyDatasetCreation = false   // explicitly check that the dataset is created, work around for bugs in certain versions of the tool.
 )
 
@@ -436,6 +436,34 @@ func (d *truenas) locateIscsiDataset(dataset string) (string, error) {
 	return volDiskPath, nil
 }
 
+// activateVolume activates a ZFS volume if not already active, then returns the devpath even if already activated, and if activation was required
+func (d *truenas) locateOrActivateIscsiDataset(dataset string) (bool, string, error) {
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	statusPath, err := d.runTool("share", "iscsi", "locate", "--activate", "--target-prefix=incus", "--parsable", dataset)
+	if err != nil {
+		return false, "", err
+	}
+	reverter.Add(func() { _ = d.deactivateIscsiDataset(dataset) })
+
+	status, volDiskPath, found := strings.Cut(statusPath, "\t")
+	if !found {
+		return false, "", fmt.Errorf("No status when activating TrueNAS volume: %v", dataset)
+	}
+
+	didActivate := status == "activated"
+
+	volDiskPath = strings.TrimSpace(volDiskPath)
+
+	if volDiskPath != "" {
+		reverter.Success()
+		return didActivate, volDiskPath, nil
+	}
+
+	return false, "", fmt.Errorf("No path for activated TrueNAS volume: %v", dataset)
+}
+
 // activateVolume activates a ZFS volume if not already active. Returns devpath if activated, "" if not.
 func (d *truenas) activateIscsiDataset(dataset string) (string, error) {
 	reverter := revert.New()
@@ -454,6 +482,27 @@ func (d *truenas) activateIscsiDataset(dataset string) (string, error) {
 	}
 
 	return "", fmt.Errorf("No path for activated TrueNAS volume: %v", dataset)
+}
+
+// deactivates a dataset if activated, returns true if deactivated
+func (d *truenas) deactivateIscsiDatasetIfActive(dataset string) (bool, error) {
+	statusPath, err := d.runTool("share", "iscsi", "locate", "--deactivate", "--target-prefix=incus", "--parsable", dataset)
+	if err != nil {
+		return false, err
+	}
+
+	if statusPath == "" {
+		return false, nil
+	}
+
+	status, _, _ := strings.Cut(statusPath, "\t")
+
+	if status != "deactivated" {
+		return false, fmt.Errorf("Unexpected status when decativating TrueNAS volume: %v, '%s'", dataset, statusPath)
+	}
+
+	return true, nil
+
 }
 
 // deactivateVolume deactivates a ZFS volume if activate. Returns true if deactivated, false if not.
