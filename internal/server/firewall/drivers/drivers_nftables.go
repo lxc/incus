@@ -241,7 +241,7 @@ func (d Nftables) networkSetupForwardingPolicy(networkName string, ip4Allow *boo
 // If srcIP is non-nil then SNAT is used with the specified address, otherwise MASQUERADE mode is used.
 // Append mode is always on and so the append argument is ignored.
 func (d Nftables) networkSetupOutboundNAT(networkName string, SNATV4 *SNATOpts, SNATV6 *SNATOpts) error {
-	rules := make(map[string]*SNATOpts, 0)
+	rules := make(map[string]*SNATOpts)
 
 	tplFields := map[string]any{
 		"namespace":      nftablesNamespace,

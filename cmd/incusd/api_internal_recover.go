@@ -519,11 +519,11 @@ func internalRecoverImportInstance(s *state.State, pool storagePools.Pool, proje
 
 	// Add root device if needed.
 	if poolVol.Container.Devices == nil {
-		poolVol.Container.Devices = make(map[string]map[string]string, 0)
+		poolVol.Container.Devices = make(map[string]map[string]string)
 	}
 
 	if poolVol.Container.ExpandedDevices == nil {
-		poolVol.Container.ExpandedDevices = make(map[string]map[string]string, 0)
+		poolVol.Container.ExpandedDevices = make(map[string]map[string]string)
 	}
 
 	internalImportRootDevicePopulate(pool.Name(), poolVol.Container.Devices, poolVol.Container.ExpandedDevices, profiles)
@@ -555,11 +555,11 @@ func internalRecoverImportInstanceSnapshot(s *state.State, pool storagePools.Poo
 
 	// Add root device if needed.
 	if snap.Devices == nil {
-		snap.Devices = make(map[string]map[string]string, 0)
+		snap.Devices = make(map[string]map[string]string)
 	}
 
 	if snap.ExpandedDevices == nil {
-		snap.ExpandedDevices = make(map[string]map[string]string, 0)
+		snap.ExpandedDevices = make(map[string]map[string]string)
 	}
 
 	internalImportRootDevicePopulate(pool.Name(), snap.Devices, snap.ExpandedDevices, profiles)

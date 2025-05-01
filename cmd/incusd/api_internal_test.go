@@ -11,7 +11,7 @@ import (
 // Test that an instance with a local root disk device just gets its pool property modified.
 func TestInternalImportRootDevicePopulate_LocalDevice(t *testing.T) {
 	instancePoolName := "test"
-	localDevices := make(map[string]map[string]string, 0)
+	localDevices := make(map[string]map[string]string)
 
 	localRootDev := map[string]string{
 		"type": "disk",
@@ -35,8 +35,8 @@ func TestInternalImportRootDevicePopulate_LocalDevice(t *testing.T) {
 // modified.
 func TestInternalImportRootDevicePopulate_ExpandedDeviceProfileDeviceMismatch(t *testing.T) {
 	instancePoolName := "test"
-	localDevices := make(map[string]map[string]string, 0)
-	expandedDevices := make(map[string]map[string]string, 0)
+	localDevices := make(map[string]map[string]string)
+	expandedDevices := make(map[string]map[string]string)
 
 	expandedRootDev := map[string]string{
 		"type": "disk",
@@ -67,8 +67,8 @@ func TestInternalImportRootDevicePopulate_ExpandedDeviceProfileDeviceMismatch(t 
 // disk device.
 func TestInternalImportRootDevicePopulate_ExpandedDeviceProfileDeviceMatch(t *testing.T) {
 	instancePoolName := "test"
-	localDevices := make(map[string]map[string]string, 0)
-	expandedDevices := make(map[string]map[string]string, 0)
+	localDevices := make(map[string]map[string]string)
+	expandedDevices := make(map[string]map[string]string)
 
 	expandedRootDev := map[string]string{
 		"type": "disk",
@@ -83,7 +83,7 @@ func TestInternalImportRootDevicePopulate_ExpandedDeviceProfileDeviceMatch(t *te
 		{
 			Name: "default",
 			ProfilePut: api.ProfilePut{
-				Devices: make(map[string]map[string]string, 0),
+				Devices: make(map[string]map[string]string),
 			},
 		},
 	}
@@ -104,8 +104,8 @@ func TestInternalImportRootDevicePopulate_ExpandedDeviceProfileDeviceMatch(t *te
 // target pool that the old expanded root device is added as a local root disk device (with the pool modified).
 func TestInternalImportRootDevicePopulate_ExpandedDeviceProfileDevicePoolMismatch(t *testing.T) {
 	instancePoolName := "test"
-	localDevices := make(map[string]map[string]string, 0)
-	expandedDevices := make(map[string]map[string]string, 0)
+	localDevices := make(map[string]map[string]string)
+	expandedDevices := make(map[string]map[string]string)
 
 	expandedRootDev := map[string]string{
 		"type": "disk",
@@ -120,7 +120,7 @@ func TestInternalImportRootDevicePopulate_ExpandedDeviceProfileDevicePoolMismatc
 		{
 			Name: "default",
 			ProfilePut: api.ProfilePut{
-				Devices: make(map[string]map[string]string, 0),
+				Devices: make(map[string]map[string]string),
 			},
 		},
 	}
@@ -144,7 +144,7 @@ func TestInternalImportRootDevicePopulate_ExpandedDeviceProfileDevicePoolMismatc
 // device is added using the target pool.
 func TestInternalImportRootDevicePopulate_NoExistingRootDiskDevice(t *testing.T) {
 	instancePoolName := "test"
-	localDevices := make(map[string]map[string]string, 0)
+	localDevices := make(map[string]map[string]string)
 
 	internalImportRootDevicePopulate(instancePoolName, localDevices, nil, nil)
 
@@ -158,7 +158,7 @@ func TestInternalImportRootDevicePopulate_NoExistingRootDiskDevice(t *testing.T)
 // disk device is added under an automatically generated name.
 func TestInternalImportRootDevicePopulate_NoExistingRootDiskDeviceNameConflict(t *testing.T) {
 	instancePoolName := "test"
-	localDevices := make(map[string]map[string]string, 0)
+	localDevices := make(map[string]map[string]string)
 
 	localConflictingRootDev := map[string]string{
 		"type":    "nic",

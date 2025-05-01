@@ -4393,7 +4393,7 @@ FROM storage_volumes
 
 	// Duplicate each volume row across all nodes, and keep track of the
 	// new volume IDs that we've inserted.
-	created := make(map[int][]int64, 0) // Existing volume ID to new volumes IDs.
+	created := make(map[int][]int64) // Existing volume ID to new volumes IDs.
 	columns := []string{"name", "storage_pool_id", "node_id", "type", "description"}
 	for _, volume := range volumes {
 		for _, nodeID := range nodeIDs {

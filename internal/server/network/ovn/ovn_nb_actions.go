@@ -3885,8 +3885,8 @@ func (o *NB) CreateLogicalRouterPeering(ctx context.Context, opts OVNRouterPeeri
 	}
 
 	// Will use the first IP from each family of the router port interfaces.
-	localRouterGatewayIPs := make(map[uint]net.IP, 0)
-	targetRouterGatewayIPs := make(map[uint]net.IP, 0)
+	localRouterGatewayIPs := make(map[uint]net.IP)
+	targetRouterGatewayIPs := make(map[uint]net.IP)
 
 	// Create the local router port.
 	localPeerName := string(opts.TargetRouterPort)
