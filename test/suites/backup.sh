@@ -240,6 +240,10 @@ linstor.volume.prefix=$(incus storage get "${poolName}" linstor.volume.prefix)
 linstor.resource_group.name=$(incus storage get "${poolName}" linstor.resource_group.name)
 "
       ;;
+      truenas)
+        poolExtraConfig="$(truenas_api_key)
+"
+      ;;
     esac
 
     incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
@@ -298,8 +302,8 @@ test_bucket_recover() {
     poolDriver=$(incus storage show "${poolName}" | awk '/^driver:/ {print $2}')
     bucketName="bucket123"
 
-    # Skip ceph and linstor drivers, as they do not support storage buckets
-    if [ "${poolDriver}" = "ceph" ] || [ "${poolDriver}" = "linstor" ]; then
+    # Skip ceph, linstor and truenas drivers, as they do not support storage buckets
+    if [ "${poolDriver}" = "ceph" ] || [ "${poolDriver}" = "linstor" ] || [ "${poolDriver}" = "truenas" ]; then
       return 0
     fi
 
