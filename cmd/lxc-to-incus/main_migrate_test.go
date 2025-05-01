@@ -225,7 +225,7 @@ func TestConvertNetworkConfig(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		devices := make(map[string]map[string]string, 0)
+		devices := make(map[string]map[string]string)
 		err = convertNetworkConfig(c, devices)
 		if tt.shouldFail {
 			require.EqualError(t, err, tt.expectedError)
@@ -328,7 +328,7 @@ func TestConvertStorageConfig(t *testing.T) {
 
 	for i, tt := range tests {
 		log.Printf("Running test #%d: %s", i, tt.name)
-		devices := make(map[string]map[string]string, 0)
+		devices := make(map[string]map[string]string)
 		err := convertStorageConfig(tt.config, devices)
 		if tt.shouldFail {
 			require.EqualError(t, err, tt.expectedError)
