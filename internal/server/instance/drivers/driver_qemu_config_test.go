@@ -1,7 +1,6 @@
 package drivers
 
 import (
-	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -1355,17 +1354,17 @@ func TestQemuConfigTemplates(t *testing.T) {
 				bus = "qemu_pci2"
 				driver = "virtio-keyboard-pci"
 
+				[object1]
+				key1 = "value1"
+				key2 = "value2"
+				key6 = "value6"
+
 				[object "2"]
 				key3 = "value3"
 				key5 = "value5"
 
 				[object "3"]
-				key4 = "value4"
-
-				[object1]
-				key1 = "value1"
-				key2 = "value2"
-				key6 = "value6"`,
+				key4 = "value4"`,
 		}, {
 			// add/remove sections
 			conf,
@@ -1502,6 +1501,50 @@ func TestQemuConfigTemplates(t *testing.T) {
 				[object]
 				k11 = "v11"`,
 		}, {
+			// create multiple sections with same name, with decreasing indices
+			conf,
+			map[string]string{
+				"raw.qemu.conf": `
+						[object][3]
+						k1 =        "v1"
+						[object][3]
+						k2 =        "v2"
+						[object][2]
+						k3 =        "v1"
+						[object][2]
+						k2 =        "v2"`,
+			},
+			`[global]
+				driver = "ICH9-LPC"
+				property = "disable_s3"
+				value = "1"
+
+				[global]
+				driver = "ICH9-LPC"
+				property = "disable_s4"
+				value = "0"
+
+				[memory]
+				size = "1024M"
+
+				[device "qemu_gpu"]
+				addr = "00.0"
+				bus = "qemu_pci3"
+				driver = "virtio-gpu-pci"
+
+				[device "qemu_keyboard"]
+				addr = "00.1"
+				bus = "qemu_pci2"
+				driver = "virtio-keyboard-pci"
+
+				[object]
+				k1 = "v1"
+				k2 = "v2"
+
+				[object]
+				k2 = "v2"
+				k3 = "v1"`,
+		}, {
 			// mix all operations
 			conf,
 			map[string]string{
@@ -1537,52 +1580,15 @@ func TestQemuConfigTemplates(t *testing.T) {
 				driver = "virtio-keyboard-pci"
 				multifunction = "on"
 
-				[object "2"]
-				key3 = "value3"
-
 				[object "3"]
 				key4 = " value4 "
-				key5 = "value5"`,
+				key5 = "value5"
+
+				[object "2"]
+				key3 = "value3"`,
 		}}
 		for _, tc := range testCases {
 			runTest(tc.expected, qemuRawCfgOverride(tc.cfg, tc.overrides))
-		}
-	})
-
-	t.Run("parse_conf_override", func(t *testing.T) {
-		input := `
-		[global]
-		key1 = "val1"
-		key3 = "val3"
-
-		[global][0]
-		key2 = "val2"
-
-		[global][1]
-		key1 = "val3"
-
-		[global][4]
-		key2 = "val4"
-
-		[global]
-
-		[global][4]
-		[global][5]
-		`
-		expected := configMap{
-			{"global", 0, "key1"}: "val1",
-			{"global", 0, "key3"}: "val3",
-			{"global", 0, "key2"}: "val2",
-			{"global", 1, "key1"}: "val3",
-			{"global", 4, "key2"}: "val4",
-			{"global", 0, ""}:     "",
-			{"global", 4, ""}:     "",
-			{"global", 5, ""}:     "",
-		}
-
-		actual := parseConfOverride(input)
-		if !reflect.DeepEqual(expected, actual) {
-			t.Errorf("Expected: %v. Got: %v", expected, actual)
 		}
 	})
 }
