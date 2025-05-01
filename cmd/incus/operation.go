@@ -61,7 +61,7 @@ type cmdOperationDelete struct {
 func (c *cmdOperationDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<operation>"))
-	cmd.Aliases = []string{"cancel", "rm"}
+	cmd.Aliases = []string{"cancel", "rm", "remove"}
 	cmd.Short = i18n.G("Delete a background operation (will attempt to cancel)")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Delete a background operation (will attempt to cancel)`))

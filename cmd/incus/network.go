@@ -462,7 +462,7 @@ type cmdNetworkDelete struct {
 func (c *cmdNetworkDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<network>"))
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete networks")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Delete networks`))
