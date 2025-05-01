@@ -767,7 +767,7 @@ type cmdNetworkZoneDelete struct {
 func (c *cmdNetworkZoneDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<Zone>"))
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network zones")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete network zones"))
 	cmd.RunE = c.Run
@@ -1492,7 +1492,7 @@ type cmdNetworkZoneRecordDelete struct {
 func (c *cmdNetworkZoneRecordDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<zone> <record>"))
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network zone record")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete network zone record"))
 	cmd.RunE = c.Run

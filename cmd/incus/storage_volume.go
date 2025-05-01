@@ -709,7 +709,7 @@ type cmdStorageVolumeDelete struct {
 func (c *cmdStorageVolumeDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<pool> <volume>"))
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete custom storage volumes")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Delete custom storage volumes`))
@@ -2678,7 +2678,7 @@ type cmdStorageVolumeSnapshotDelete struct {
 func (c *cmdStorageVolumeSnapshotDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<pool> <volume> <snapshot>"))
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete storage volume snapshots")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Delete storage volume snapshots`))

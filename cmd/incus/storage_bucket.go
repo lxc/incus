@@ -210,7 +210,7 @@ type cmdStorageBucketDelete struct {
 func (c *cmdStorageBucketDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<pool> <bucket>"))
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete storage buckets")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Delete storage buckets`))
 
@@ -1209,6 +1209,7 @@ type cmdStorageBucketKeyDelete struct {
 func (c *cmdStorageBucketKeyDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<pool> <bucket> <key>"))
+	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete key from a storage bucket")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete key from a storage bucket"))
 	cmd.RunE = c.RunRemove
