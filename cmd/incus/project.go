@@ -105,6 +105,7 @@ type cmdProjectCreate struct {
 func (c *cmdProjectCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("create", i18n.G("[<remote>:]<project>"))
+	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create projects")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create projects`))

@@ -344,6 +344,7 @@ type cmdNetworkCreate struct {
 func (c *cmdNetworkCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("create", i18n.G("[<remote>:]<network> [key=value...]"))
+	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new networks")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Create new networks`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network create foo

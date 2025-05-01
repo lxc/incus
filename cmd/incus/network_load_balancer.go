@@ -336,6 +336,7 @@ type cmdNetworkLoadBalancerCreate struct {
 func (c *cmdNetworkLoadBalancerCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("create", i18n.G("[<remote>:]<network> <listen_address> [key=value...]"))
+	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new network load balancers")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network load balancers"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network load-balancer create n1 127.0.0.1
