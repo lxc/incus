@@ -1122,45 +1122,16 @@ func TestQemuConfigTemplates(t *testing.T) {
 		}}
 		testCases := []struct {
 			cfg       []cfg.Section
-			overrides map[string]string
+			overrides string
 			expected  string
 		}{{
-			// unmodified
-			conf,
-			map[string]string{},
-			`[global]
-			driver = "ICH9-LPC"
-			property = "disable_s3"
-			value = "1"
-
-			[global]
-			driver = "ICH9-LPC"
-			property = "disable_s4"
-			value = "0"
-
-			[memory]
-			size = "1024M"
-
-			[device "qemu_gpu"]
-			addr = "00.0"
-			bus = "qemu_pci3"
-			driver = "virtio-gpu-pci"
-
-			[device "qemu_keyboard"]
-			addr = "00.1"
-			bus = "qemu_pci2"
-			driver = "virtio-keyboard-pci"`,
-		}, {
 			// override some keys
 			conf,
-			map[string]string{
-				"raw.qemu.conf": `
-						[memory]
-						size = "4096M"
+			`[memory]
+			size = "4096M"
 
-						[device "qemu_gpu"]
-						driver = "qxl-vga"`,
-			},
+			[device "qemu_gpu"]
+			driver = "qxl-vga"`,
 			`[global]
 			driver = "ICH9-LPC"
 			property = "disable_s3"
@@ -1186,14 +1157,11 @@ func TestQemuConfigTemplates(t *testing.T) {
 		}, {
 			// delete some keys
 			conf,
-			map[string]string{
-				"raw.qemu.conf": `
-						[device "qemu_keyboard"]
-						driver = ""
+			`[device "qemu_keyboard"]
+			driver = ""
 
-						[device "qemu_gpu"]
-						addr = ""`,
-			},
+			[device "qemu_gpu"]
+			addr = ""`,
 			`[global]
 				driver = "ICH9-LPC"
 				property = "disable_s3"
@@ -1217,20 +1185,17 @@ func TestQemuConfigTemplates(t *testing.T) {
 		}, {
 			// add some keys to existing sections
 			conf,
-			map[string]string{
-				"raw.qemu.conf": `
-						[memory]
-						somekey = "somevalue"
-						somekey2 =             "somevalue2"
-						somekey3 =   "somevalue3"
-						somekey4="somevalue4"
+			`[memory]
+			somekey = "somevalue"
+			somekey2 =             "somevalue2"
+			somekey3 =   "somevalue3"
+			somekey4="somevalue4"
 
-						[device "qemu_keyboard"]
-						multifunction="off"
+			[device "qemu_keyboard"]
+			multifunction="off"
 
-						[device "qemu_gpu"]
-						multifunction=      "on"`,
-			},
+			[device "qemu_gpu"]
+			multifunction=      "on"`,
 			`[global]
 				driver = "ICH9-LPC"
 				property = "disable_s3"
@@ -1262,16 +1227,13 @@ func TestQemuConfigTemplates(t *testing.T) {
 		}, {
 			// edit/add/remove
 			conf,
-			map[string]string{
-				"raw.qemu.conf": `
-						[memory]
-						size = "2048M"
-						[device "qemu_gpu"]
-						multifunction = "on"
-						[device "qemu_keyboard"]
-						addr = ""
-						bus = ""`,
-			},
+			`[memory]
+			size = "2048M"
+			[device "qemu_gpu"]
+			multifunction = "on"
+			[device "qemu_keyboard"]
+			addr = ""
+			bus = ""`,
 			`[global]
 				driver = "ICH9-LPC"
 				property = "disable_s3"
@@ -1296,12 +1258,9 @@ func TestQemuConfigTemplates(t *testing.T) {
 		}, {
 			// delete sections
 			conf,
-			map[string]string{
-				"raw.qemu.conf": `
-						[memory]
-						[device "qemu_keyboard"]
-						[global][1]`,
-			},
+			`[memory]
+			[device "qemu_keyboard"]
+			[global][1]`,
 			`[global]
 				driver = "ICH9-LPC"
 				property = "disable_s3"
@@ -1314,23 +1273,20 @@ func TestQemuConfigTemplates(t *testing.T) {
 		}, {
 			// add sections
 			conf,
-			map[string]string{
-				"raw.qemu.conf": `
-						[object1]
-						key1     = "value1"
-						key2     = "value2"
+			`[object1]
+			key1     = "value1"
+			key2     = "value2"
 
-						[object "2"]
-						key3  = "value3"
-						[object "3"]
-						key4  = "value4"
+			[object "2"]
+			key3  = "value3"
+			[object "3"]
+			key4  = "value4"
 
-						[object "2"]
-						key5  = "value5"
+			[object "2"]
+			key5  = "value5"
 
-						[object1]
-						key6     = "value6"`,
-			},
+			[object1]
+			key6     = "value6"`,
 			`[global]
 				driver = "ICH9-LPC"
 				property = "disable_s3"
@@ -1368,16 +1324,13 @@ func TestQemuConfigTemplates(t *testing.T) {
 		}, {
 			// add/remove sections
 			conf,
-			map[string]string{
-				"raw.qemu.conf": `
-						[device "qemu_gpu"]
-						[object "2"]
-						key3  = "value3"
-						[object "3"]
-						key4  = "value4"
-						[object "2"]
-						key5  = "value5"`,
-			},
+			`[device "qemu_gpu"]
+			[object "2"]
+			key3  = "value3"
+			[object "3"]
+			key4  = "value4"
+			[object "2"]
+			key5  = "value5"`,
 			`[global]
 				driver = "ICH9-LPC"
 				property = "disable_s3"
@@ -1405,19 +1358,16 @@ func TestQemuConfigTemplates(t *testing.T) {
 		}, {
 			// edit keys of repeated sections
 			conf,
-			map[string]string{
-				"raw.qemu.conf": `
-						[global][1]
-						property ="disable_s1"
-						[global]
-						property ="disable_s5"
-						[global][1]
-						value = ""
-						[global][0]
-						somekey ="somevalue"
-						[global][1]
-						anotherkey = "anothervalue"`,
-			},
+			`[global][1]
+			property ="disable_s1"
+			[global]
+			property ="disable_s5"
+			[global][1]
+			value = ""
+			[global][0]
+			somekey ="somevalue"
+			[global][1]
+			anotherkey = "anothervalue"`,
 			`[global]
 				driver = "ICH9-LPC"
 				property = "disable_s5"
@@ -1446,23 +1396,20 @@ func TestQemuConfigTemplates(t *testing.T) {
 			conf,
 			// note that for appending new sections, all that matters is that
 			// the index is higher than the existing indexes
-			map[string]string{
-				"raw.qemu.conf": `
-						[global][2]
-						property =  "new section"
-						[global][2]
-						value =     "new value"
-						[object][3]
-						k1 =        "v1"
-						[object][3]
-						k2 =        "v2"
-						[object][4]
-						k3 =        "v1"
-						[object][4]
-						k2 =        "v2"
-						[object][11]
-						k11 =  "v11"`,
-			},
+			`[global][2]
+			property =  "new section"
+			[global][2]
+			value =     "new value"
+			[object][3]
+			k1 =        "v1"
+			[object][3]
+			k2 =        "v2"
+			[object][4]
+			k3 =        "v1"
+			[object][4]
+			k2 =        "v2"
+			[object][11]
+			k11 =  "v11"`,
 			`[global]
 				driver = "ICH9-LPC"
 				property = "disable_s3"
@@ -1503,17 +1450,14 @@ func TestQemuConfigTemplates(t *testing.T) {
 		}, {
 			// create multiple sections with same name, with decreasing indices
 			conf,
-			map[string]string{
-				"raw.qemu.conf": `
-						[object][3]
-						k1 =        "v1"
-						[object][3]
-						k2 =        "v2"
-						[object][2]
-						k3 =        "v1"
-						[object][2]
-						k2 =        "v2"`,
-			},
+			`[object][3]
+			k1 =        "v1"
+			[object][3]
+			k2 =        "v2"
+			[object][2]
+			k3 =        "v1"
+			[object][2]
+			k2 =        "v2"`,
 			`[global]
 				driver = "ICH9-LPC"
 				property = "disable_s3"
@@ -1547,21 +1491,18 @@ func TestQemuConfigTemplates(t *testing.T) {
 		}, {
 			// mix all operations
 			conf,
-			map[string]string{
-				"raw.qemu.conf": `
-						[memory]
-						size = "8192M"
-						[device "qemu_keyboard"]
-						multifunction=on
-						bus =
-						[device "qemu_gpu"]
-						[object "3"]
-						key4 = " value4 "
-						[object "2"]
-						key3 =   value3
-						[object "3"]
-						key5 = "value5"`,
-			},
+			`[memory]
+			size = "8192M"
+			[device "qemu_keyboard"]
+			multifunction=on
+			bus =
+			[device "qemu_gpu"]
+			[object "3"]
+			key4 = " value4 "
+			[object "2"]
+			key3 =   value3
+			[object "3"]
+			key5 = "value5"`,
 			`[global]
 				driver = "ICH9-LPC"
 				property = "disable_s3"
@@ -1588,7 +1529,12 @@ func TestQemuConfigTemplates(t *testing.T) {
 				key3 = "value3"`,
 		}}
 		for _, tc := range testCases {
-			runTest(tc.expected, qemuRawCfgOverride(tc.cfg, tc.overrides))
+			overridden, err := qemuRawCfgOverride(tc.cfg, tc.overrides)
+			if err != nil {
+				t.Error(err)
+			}
+
+			runTest(tc.expected, overridden)
 		}
 	})
 }
