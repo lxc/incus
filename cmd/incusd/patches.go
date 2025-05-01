@@ -809,7 +809,7 @@ func patchStorageRenameCustomISOBlockVolumes(_ string, d *Daemon) error {
 	}
 
 	volTypeCustom := db.StoragePoolVolumeTypeCustom
-	customPoolVolumes := make(map[string][]*db.StorageVolume, 0)
+	customPoolVolumes := make(map[string][]*db.StorageVolume)
 
 	err = s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
 		for _, pool := range pools {
@@ -898,7 +898,7 @@ func patchZfsSetContentTypeUserProperty(_ string, d *Daemon) error {
 	}
 
 	volTypeCustom := db.StoragePoolVolumeTypeCustom
-	customPoolVolumes := make(map[string][]*db.StorageVolume, 0)
+	customPoolVolumes := make(map[string][]*db.StorageVolume)
 
 	err = s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
 		for _, pool := range pools {
@@ -995,8 +995,8 @@ func patchStorageZfsUnsetInvalidBlockSettings(_ string, d *Daemon) error {
 	volTypeCustom := db.StoragePoolVolumeTypeCustom
 	volTypeVM := db.StoragePoolVolumeTypeVM
 
-	poolIDNameMap := make(map[int64]string, 0)
-	poolVolumes := make(map[int64][]*db.StorageVolume, 0)
+	poolIDNameMap := make(map[int64]string)
+	poolVolumes := make(map[int64][]*db.StorageVolume)
 
 	err = s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
 		for _, pool := range pools {
@@ -1113,8 +1113,8 @@ func patchStorageZfsUnsetInvalidBlockSettingsV2(_ string, d *Daemon) error {
 	volTypeCustom := db.StoragePoolVolumeTypeCustom
 	volTypeVM := db.StoragePoolVolumeTypeVM
 
-	poolIDNameMap := make(map[int64]string, 0)
-	poolVolumes := make(map[int64][]*db.StorageVolume, 0)
+	poolIDNameMap := make(map[int64]string)
+	poolVolumes := make(map[int64][]*db.StorageVolume)
 
 	err = s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
 		for _, pool := range pools {
