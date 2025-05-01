@@ -309,14 +309,14 @@ func hoistReq(f func(*Daemon, instance.Instance, http.ResponseWriter, *http.Requ
 }
 
 func devIncusAPI(d *Daemon, f hoistFunc) http.Handler {
-	m := mux.NewRouter()
-	m.UseEncodedPath() // Allow encoded values in path segments.
+	router := mux.NewRouter()
+	router.UseEncodedPath() // Allow encoded values in path segments.
 
 	for _, handler := range handlers {
-		m.HandleFunc(handler.path, f(handler.f, d))
+		router.HandleFunc(handler.path, f(handler.f, d))
 	}
 
-	return m
+	return router
 }
 
 /*
