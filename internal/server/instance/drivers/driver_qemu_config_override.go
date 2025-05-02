@@ -1,230 +1,171 @@
 package drivers
 
 import (
-	"regexp"
-	"sort"
+	"bufio"
+	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/cfg"
 )
 
-const pattern = `\s*(?m:(?:\[([^\]]+)\](?:\[(\d+)\])?)|(?:([^=]+)[ \t]*=[ \t]*(?:"([^"]*)"|([^\n]*)))$)`
-
-var parser = regexp.MustCompile(pattern)
-
-type rawConfigKey struct {
-	sectionName string
-	index       uint
-	entryKey    string
+// sectionContent represents the content of a section, without its name.
+type sectionContent struct {
+	comment string
+	entries map[string]string
 }
 
-type configMap map[rawConfigKey]string
-
-func parseConfOverride(confOverride string) configMap {
-	s := confOverride
-	rv := configMap{}
-	currentSectionName := ""
-	var currentIndex uint
-	currentEntryCount := 0
-
-	for {
-		loc := parser.FindStringSubmatchIndex(s)
-		if loc == nil {
-			break
-		}
-
-		if loc[2] > 0 {
-			if currentSectionName != "" && currentEntryCount == 0 {
-				// new section started and previous section ended without entries
-				k := rawConfigKey{
-					sectionName: currentSectionName,
-					index:       currentIndex,
-					entryKey:    "",
-				}
-
-				rv[k] = ""
-			}
-
-			currentEntryCount = 0
-			currentSectionName = strings.TrimSpace(s[loc[2]:loc[3]])
-			if loc[4] > 0 {
-				i, err := strconv.Atoi(s[loc[4]:loc[5]])
-				if err != nil || i < 0 {
-					panic("failed to parse index")
-				}
-
-				currentIndex = uint(i)
-			} else {
-				currentIndex = 0
-			}
-		} else {
-			entryKey := strings.TrimSpace(s[loc[6]:loc[7]])
-			var value string
-
-			if loc[8] > 0 {
-				// quoted value
-				value = s[loc[8]:loc[9]]
-			} else {
-				// unquoted value
-				value = strings.TrimSpace(s[loc[10]:loc[11]])
-			}
-
-			k := rawConfigKey{
-				sectionName: currentSectionName,
-				index:       currentIndex,
-				entryKey:    entryKey,
-			}
-
-			rv[k] = value
-			currentEntryCount++
-		}
-
-		s = s[loc[1]:]
-	}
-
-	if currentSectionName != "" && currentEntryCount == 0 {
-		// previous section ended without entries
-		k := rawConfigKey{
-			sectionName: currentSectionName,
-			index:       currentIndex,
-			entryKey:    "",
-		}
-
-		rv[k] = ""
-	}
-
-	return rv
+// section represents a section pointing to its content.
+type section struct {
+	name    string
+	content *sectionContent
 }
 
-func updateEntries(entries map[string]string, sk rawConfigKey, confMap configMap) map[string]string {
-	rv := make(map[string]string)
+// qemuRawCfgOverride generates a new QEMU configuration from an original one and an override entry.
+func qemuRawCfgOverride(conf []cfg.Section, confOverride string) ([]cfg.Section, error) {
+	// We define a data structure optimized for lookup and insertion…
+	indexedSections := map[string]map[int]*sectionContent{}
+	// … and another one keeping insertion order. This saves us a few cycles at the expense of a few
+	// bytes of RAM.
+	orderedSections := []section{}
 
-	for key, value := range entries {
-		ek := rawConfigKey{sk.sectionName, sk.index, key}
-		val, ok := confMap[ek]
-		if ok {
-			// override
-			delete(confMap, ek)
-			value = val
+	// We first iterate over the original config to populate both our data structures.
+	for _, sec := range conf {
+		indexedSection, ok := indexedSections[sec.Name]
+		if !ok {
+			indexedSection = map[int]*sectionContent{}
+			indexedSections[sec.Name] = indexedSection
 		}
 
-		rv[key] = value
+		// We perform a copy of the map to avoid modifying the original one
+		entries := make(map[string]string, len(sec.Entries))
+		for k, v := range sec.Entries {
+			entries[k] = v
+		}
+
+		content := &sectionContent{
+			comment: sec.Comment,
+			entries: entries,
+		}
+
+		indexedSection[len(indexedSection)] = content
+		orderedSections = append(orderedSections, section{
+			name:    sec.Name,
+			content: content,
+		})
 	}
 
-	return rv
-}
+	var currentIndexedSection map[int]*sectionContent
+	var currentIndex int
+	var currentSectionName string
+	// We set the changed flag to true for our first iteration.
+	changed := true
 
-func appendEntries(entries map[string]string, sk rawConfigKey, confMap configMap) map[string]string {
-	// processed all modifications for the current section, now
-	// handle new entries
-	for rawKey, value := range confMap {
-		if rawKey.sectionName != sk.sectionName || rawKey.index != sk.index {
+	scanner := bufio.NewScanner(strings.NewReader(confOverride))
+
+	// Then, we parse the override string.
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		length := len(line)
+		if length == 0 {
 			continue
 		}
 
-		entries[rawKey.entryKey] = value
-		delete(confMap, rawKey)
-	}
+		if strings.HasPrefix(line, "[") {
+			// Find closing `]` for section name.
+			end := strings.IndexByte(line, ']')
+			if end <= 1 {
+				return nil, fmt.Errorf("Invalid section header (must be a section name enclosed in square brackets): %q", line)
+			}
 
-	return entries
-}
+			// If a section is defined in the override but has no key, remove its entries.
+			if !changed {
+				(*currentIndexedSection[currentIndex]).entries = make(map[string]string)
+			}
 
-func updateSections(conf []cfg.Section, confMap configMap) []cfg.Section {
-	newConf := []cfg.Section{}
-	sectionCounts := map[string]uint{}
+			changed = false
+			currentSectionName = strings.TrimSpace(line[1:end])
+			currentIndex = 0
+			if length > end+1 {
+				// Optional section index
+				rest := line[end+1:]
+				e := fmt.Errorf("Invalid section index (must be an integer enclosed in square brackets): %q", rest)
+				if !strings.HasPrefix(rest, "[") || !strings.HasSuffix(rest, "]") {
+					return nil, e
+				}
 
-	for _, section := range conf {
-		count, ok := sectionCounts[section.Name]
+				var err error
+				currentIndex, err = strconv.Atoi(rest[1 : len(rest)-1])
+				if err != nil {
+					return nil, e
+				}
+			}
 
-		if ok {
-			sectionCounts[section.Name] = count + 1
+			var ok bool
+			currentIndexedSection, ok = indexedSections[currentSectionName]
+			if !ok {
+				// If there is no section with this name, we are creating a new section.
+				currentIndexedSection = map[int]*sectionContent{}
+				indexedSections[currentSectionName] = currentIndexedSection
+			}
+
+			_, ok = currentIndexedSection[currentIndex]
+			if !ok {
+				// If there is no section with this index, we are creating a new section.
+				emptyContent := &sectionContent{entries: make(map[string]string)}
+				currentIndexedSection[currentIndex] = emptyContent
+				indexedSections[currentSectionName] = currentIndexedSection
+				orderedSections = append(orderedSections, section{
+					name:    currentSectionName,
+					content: emptyContent,
+				})
+			}
 		} else {
-			sectionCounts[section.Name] = 1
-		}
+			if currentSectionName == "" {
+				return nil, fmt.Errorf("Expected section header, got: %q", line)
+			}
 
-		index := sectionCounts[section.Name] - 1
-		sk := rawConfigKey{section.Name, index, ""}
+			eqLoc := strings.IndexByte(line, '=')
+			if eqLoc < 1 {
+				return nil, fmt.Errorf("Invalid property override line (must be `key=value`): %q", line)
+			}
 
-		val, ok := confMap[sk]
-		if ok {
-			if val == "" {
-				// deleted section
-				delete(confMap, sk)
-				continue
+			key := strings.TrimSpace(line[:eqLoc])
+			value := strings.TrimSpace(line[eqLoc+1:])
+			if strings.HasPrefix(value, "\"") {
+				// We are dealing with a quoted value.
+				var err error
+				value, err = strconv.Unquote(value)
+				if err != nil {
+					return nil, fmt.Errorf("Invalid quoted value: %q", value)
+				}
+			}
+
+			changed = true
+			if value == "" {
+				// If the value associated to this key is empty, delete the key.
+				delete((*currentIndexedSection[currentIndex]).entries, key)
+			} else {
+				(*currentIndexedSection[currentIndex]).entries[key] = value
 			}
 		}
+	}
 
-		newSection := cfg.Section{
-			Name:    section.Name,
-			Comment: section.Comment,
+	// Same as above, if a section is defined in the override but has no key, remove its entries.
+	if !changed {
+		(*currentIndexedSection[currentIndex]).entries = make(map[string]string)
+	}
+
+	res := []cfg.Section{}
+	for _, orderedSection := range orderedSections {
+		if len((*orderedSection.content).entries) > 0 {
+			res = append(res, cfg.Section{
+				Name:    orderedSection.name,
+				Comment: (*orderedSection.content).comment,
+				Entries: (*orderedSection.content).entries,
+			})
 		}
-
-		newSection.Entries = updateEntries(section.Entries, sk, confMap)
-		newSection.Entries = appendEntries(newSection.Entries, sk, confMap)
-
-		newConf = append(newConf, newSection)
 	}
 
-	return newConf
-}
-
-func appendSections(newConf []cfg.Section, confMap configMap) []cfg.Section {
-	tmp := map[rawConfigKey]cfg.Section{}
-
-	for k, value := range confMap {
-		if k.entryKey == "" {
-			// makes no sense to process section deletions (the only case where
-			// entryKey == "") since we are only adding new sections now
-			continue
-		}
-
-		sectionKey := rawConfigKey{k.sectionName, k.index, ""}
-		section, found := tmp[sectionKey]
-		if !found {
-			section = cfg.Section{
-				Name:    k.sectionName,
-				Entries: make(map[string]string),
-			}
-		}
-
-		section.Entries[k.entryKey] = value
-		tmp[sectionKey] = section
-	}
-
-	rawSections := []rawConfigKey{}
-	for rawSection := range tmp {
-		rawSections = append(rawSections, rawSection)
-	}
-
-	// Sort to have deterministic output in the appended sections
-	sort.SliceStable(rawSections, func(i, j int) bool {
-		return rawSections[i].sectionName < rawSections[j].sectionName ||
-			rawSections[i].index < rawSections[j].index
-	})
-
-	for _, rawSection := range rawSections {
-		newConf = append(newConf, tmp[rawSection])
-	}
-
-	return newConf
-}
-
-func qemuRawCfgOverride(conf []cfg.Section, expandedConfig map[string]string) []cfg.Section {
-	confOverride, ok := expandedConfig["raw.qemu.conf"]
-	if !ok {
-		return conf
-	}
-
-	confMap := parseConfOverride(confOverride)
-
-	if len(confMap) == 0 {
-		// If no keys are found, we return the conf unmodified.
-		return conf
-	}
-
-	newConf := updateSections(conf, confMap)
-	newConf = appendSections(newConf, confMap)
-
-	return newConf
+	return res, nil
 }
