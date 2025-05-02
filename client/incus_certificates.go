@@ -42,7 +42,7 @@ func (r *ProtocolIncus) GetCertificatesWithFilter(filters []string) ([]api.Certi
 
 	v := url.Values{}
 	v.Set("recursion", "1")
-	v.Set("filter", parseFitlers(filters))
+	v.Set("filter", parseFilters(filters))
 
 	// Fetch the raw value
 	_, err := r.queryStruct("GET",  fmt.Sprintf("/certificates?%s", v.Encode()), nil, "", &certificates)
