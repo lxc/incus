@@ -15,14 +15,14 @@ import (
 )
 
 var networkLoadBalancerObjects = RegisterStmt(`
-SELECT networks_loads_balancers.id, networks_loads_balancers.network_id, nodes.id AS node_id, networks_loads_balancers.listen_address, networks_loads_balancers.description, networks_loads_balancers.backends, networks_loads_balancers.ports
+SELECT networks_loads_balancers.id, networks_loads_balancers.network_id, networks_loads_balancers.node_id, nodes.name AS location, networks_loads_balancers.listen_address, networks_loads_balancers.description, networks_loads_balancers.backends, networks_loads_balancers.ports
   FROM networks_loads_balancers
   JOIN nodes ON networks_loads_balancers.node_id = nodes.id
   ORDER BY networks_loads_balancers.network_id, networks_loads_balancers.listen_address
 `)
 
 var networkLoadBalancerObjectsByNetworkID = RegisterStmt(`
-SELECT networks_loads_balancers.id, networks_loads_balancers.network_id, nodes.id AS node_id, networks_loads_balancers.listen_address, networks_loads_balancers.description, networks_loads_balancers.backends, networks_loads_balancers.ports
+SELECT networks_loads_balancers.id, networks_loads_balancers.network_id, networks_loads_balancers.node_id, nodes.name AS location, networks_loads_balancers.listen_address, networks_loads_balancers.description, networks_loads_balancers.backends, networks_loads_balancers.ports
   FROM networks_loads_balancers
   JOIN nodes ON networks_loads_balancers.node_id = nodes.id
   WHERE ( networks_loads_balancers.network_id = ? )
@@ -30,7 +30,7 @@ SELECT networks_loads_balancers.id, networks_loads_balancers.network_id, nodes.i
 `)
 
 var networkLoadBalancerObjectsByNetworkIDAndListenAddress = RegisterStmt(`
-SELECT networks_loads_balancers.id, networks_loads_balancers.network_id, nodes.id AS node_id, networks_loads_balancers.listen_address, networks_loads_balancers.description, networks_loads_balancers.backends, networks_loads_balancers.ports
+SELECT networks_loads_balancers.id, networks_loads_balancers.network_id, networks_loads_balancers.node_id, nodes.name AS location, networks_loads_balancers.listen_address, networks_loads_balancers.description, networks_loads_balancers.backends, networks_loads_balancers.ports
   FROM networks_loads_balancers
   JOIN nodes ON networks_loads_balancers.node_id = nodes.id
   WHERE ( networks_loads_balancers.network_id = ? AND networks_loads_balancers.listen_address = ? )
@@ -43,13 +43,13 @@ SELECT networks_loads_balancers.id FROM networks_loads_balancers
 `)
 
 var networkLoadBalancerCreate = RegisterStmt(`
-INSERT INTO networks_loads_balancers (network_id, node_id, listen_address, description, backends, ports)
-  VALUES (?, (SELECT nodes.id FROM nodes WHERE nodes.name = ?), ?, ?, ?, ?)
+INSERT INTO networks_loads_balancers (network_id, node_id, node_id, listen_address, description, backends, ports)
+  VALUES (?, ?, (SELECT nodes.id FROM nodes WHERE nodes.name = ?), ?, ?, ?, ?)
 `)
 
 var networkLoadBalancerUpdate = RegisterStmt(`
 UPDATE networks_loads_balancers
-  SET network_id = ?, node_id = (SELECT nodes.id FROM nodes WHERE nodes.name = ?), listen_address = ?, description = ?, backends = ?, ports = ?
+  SET network_id = ?, node_id = ?, node_id = (SELECT nodes.id FROM nodes WHERE nodes.name = ?), listen_address = ?, description = ?, backends = ?, ports = ?
  WHERE id = ?
 `)
 
@@ -60,7 +60,7 @@ DELETE FROM networks_loads_balancers WHERE network_id = ? AND id = ?
 // networkLoadBalancerColumns returns a string of column names to be used with a SELECT statement for the entity.
 // Use this function when building statements to retrieve database entries matching the NetworkLoadBalancer entity.
 func networkLoadBalancerColumns() string {
-	return "networks_loads_balancers.id, networks_loads_balancers.network_id, nodes.id AS node_id, networks_loads_balancers.listen_address, networks_loads_balancers.description, networks_loads_balancers.backends, networks_loads_balancers.ports"
+	return "networks_loads_balancers.id, networks_loads_balancers.network_id, networks_loads_balancers.node_id, nodes.name AS location, networks_loads_balancers.listen_address, networks_loads_balancers.description, networks_loads_balancers.backends, networks_loads_balancers.ports"
 }
 
 // getNetworkLoadBalancers can be used to run handwritten sql.Stmts to return a slice of objects.
@@ -69,7 +69,19 @@ func getNetworkLoadBalancers(ctx context.Context, stmt *sql.Stmt, args ...any) (
 
 	dest := func(scan func(dest ...any) error) error {
 		n := NetworkLoadBalancer{}
-		err := scan(&n.ID, &n.NetworkID, &n.NodeID, &n.ListenAddress, &n.Description, &n.Backends, &n.Ports)
+		var backendsStr string
+		var portsStr string
+		err := scan(&n.ID, &n.NetworkID, &n.NodeID, &n.Location, &n.ListenAddress, &n.Description, &backendsStr, &portsStr)
+		if err != nil {
+			return err
+		}
+
+		err = unmarshalJSON(backendsStr, &n.Backends)
+		if err != nil {
+			return err
+		}
+
+		err = unmarshalJSON(portsStr, &n.Ports)
 		if err != nil {
 			return err
 		}
@@ -93,7 +105,19 @@ func getNetworkLoadBalancersRaw(ctx context.Context, db dbtx, sql string, args .
 
 	dest := func(scan func(dest ...any) error) error {
 		n := NetworkLoadBalancer{}
-		err := scan(&n.ID, &n.NetworkID, &n.NodeID, &n.ListenAddress, &n.Description, &n.Backends, &n.Ports)
+		var backendsStr string
+		var portsStr string
+		err := scan(&n.ID, &n.NetworkID, &n.NodeID, &n.Location, &n.ListenAddress, &n.Description, &backendsStr, &portsStr)
+		if err != nil {
+			return err
+		}
+
+		err = unmarshalJSON(backendsStr, &n.Backends)
+		if err != nil {
+			return err
+		}
+
+		err = unmarshalJSON(portsStr, &n.Ports)
 		if err != nil {
 			return err
 		}
@@ -285,15 +309,26 @@ func CreateNetworkLoadBalancer(ctx context.Context, db dbtx, object NetworkLoadB
 		_err = mapErr(_err, "Network_load_balancer")
 	}()
 
-	args := make([]any, 6)
+	args := make([]any, 7)
 
 	// Populate the statement arguments.
 	args[0] = object.NetworkID
 	args[1] = object.NodeID
-	args[2] = object.ListenAddress
-	args[3] = object.Description
-	args[4] = object.Backends
-	args[5] = object.Ports
+	args[2] = object.Location
+	args[3] = object.ListenAddress
+	args[4] = object.Description
+	marshaledBackends, err := marshalJSON(object.Backends)
+	if err != nil {
+		return -1, err
+	}
+
+	args[5] = marshaledBackends
+	marshaledPorts, err := marshalJSON(object.Ports)
+	if err != nil {
+		return -1, err
+	}
+
+	args[6] = marshaledPorts
 
 	// Prepared statement to use.
 	stmt, err := Stmt(db, networkLoadBalancerCreate)
@@ -364,7 +399,17 @@ func UpdateNetworkLoadBalancer(ctx context.Context, db tx, networkID int, listen
 		return fmt.Errorf("Failed to get \"networkLoadBalancerUpdate\" prepared statement: %w", err)
 	}
 
-	result, err := stmt.Exec(object.NetworkID, object.NodeID, object.ListenAddress, object.Description, object.Backends, object.Ports, id)
+	marshaledBackends, err := marshalJSON(object.Backends)
+	if err != nil {
+		return err
+	}
+
+	marshaledPorts, err := marshalJSON(object.Ports)
+	if err != nil {
+		return err
+	}
+
+	result, err := stmt.Exec(object.NetworkID, object.NodeID, object.Location, object.ListenAddress, object.Description, marshaledBackends, marshaledPorts, id)
 	if err != nil {
 		return fmt.Errorf("Update \"networks_loads_balancers\" entry failed: %w", err)
 	}
