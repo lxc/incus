@@ -157,8 +157,10 @@ func qemuMemory(opts *qemuMemoryOpts) []cfg.Section {
 		Comment: "Memory",
 		Entries: map[string]string{
 			"size":   fmt.Sprintf("%dM", opts.memSizeMB),
-			"slots":  "16",
 			"maxmem": fmt.Sprintf("%dM", opts.maxSizeMB),
+			// Some systems hit odd errors when using more than 8 hotplug slots.
+			// That's even with maxmem capped at the total system memory.
+			"slots": "8",
 		},
 	}
 
