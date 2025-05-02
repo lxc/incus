@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
-	"os"
 
 	"github.com/gorilla/mux"
 
@@ -339,15 +339,18 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 
 	// Check if user specified an s3 target
 	if req.S3BackupTarget != "" {
-		url := req.S3BackupTarget
+		s3Url := req.S3BackupTarget
 		backup, err := instance.BackupLoadByName(s, projectName, fullName)
+		if err != nil {
+			return response.SmartError(err)
+		}
 		filePath := internalUtil.VarPath("backups", "instances", project.Instance(projectName, backup.Name()))
 
 		file, err := os.Open(filePath)
 		if err != nil {
 			return response.SmartError(err)
 		}
-		httpReq, err := http.NewRequest("PUT", url, file)
+		httpReq, err := http.NewRequest("PUT", s3Url, file)
 		if err != nil {
 			return response.SmartError(err)
 		}
@@ -360,7 +363,10 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 		if resp.StatusCode != http.StatusOK {
 			return response.SmartError(fmt.Errorf("Failed to upload backup to S3: %s", resp.Status))
 		}
-		backup.Delete()
+		err = backup.Delete()
+		if err != nil {
+			return response.SmartError(err)
+		}
 	}
 
 	return operations.OperationResponse(op)
