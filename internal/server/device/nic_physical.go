@@ -1,21 +1,31 @@
 package device
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"strconv"
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/server/db"
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 	pcidev "github.com/lxc/incus/v6/internal/server/device/pci"
+	"github.com/lxc/incus/v6/internal/server/dnsmasq"
+	"github.com/lxc/incus/v6/internal/server/dnsmasq/dhcpalloc"
+	firewallDrivers "github.com/lxc/incus/v6/internal/server/firewall/drivers"
+	"github.com/lxc/incus/v6/internal/server/network/acl"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/ip"
 	"github.com/lxc/incus/v6/internal/server/network"
+	addressSet "github.com/lxc/incus/v6/internal/server/network/address-set"
 	"github.com/lxc/incus/v6/internal/server/resources"
+	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/util"
 )
@@ -169,6 +179,8 @@ func (d *nicPhysical) validateEnvironment() error {
 
 // Start is run when the device is added to a running instance or instance is starting up.
 func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
+	d.logger.Debug("HELLOOOOOOOOOOOOOOOOOOO")
+	
 	err := d.validateEnvironment()
 	if err != nil {
 		return nil, err
@@ -177,6 +189,12 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 	// Lock to avoid issues with containers starting in parallel.
 	networkCreateSharedDeviceLock.Lock()
 	defer networkCreateSharedDeviceLock.Unlock()
+
+	// initiate completely different startup sequence if parent is bridge
+	if util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", d.config["parent"])) {
+		d.logger.Debug("Parent is a Bridge, doing bridge start")
+		return d.startBridge()
+	}
 
 	saveData := make(map[string]string)
 
@@ -211,7 +229,6 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 				_ = networkRemoveInterfaceIfNeeded(d.state, saveData["host_name"], d.inst, d.config["parent"], d.config["vlan"])
 			})
 		}
-
 		// If we didn't create the device we should track various properties so we can restore them when the
 		// instance is stopped or the device is detached.
 		if util.IsFalse(saveData["last_state.created"]) {
@@ -242,7 +259,7 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 				return nil, fmt.Errorf("Failed to set the MAC address: %s", err)
 			}
 		}
-
+		// IGNORE, VEth pair brings back mtu
 		// Set the MTU.
 		if d.config["mtu"] != "" {
 			mtu, err := strconv.ParseUint(d.config["mtu"], 10, 32)
@@ -293,9 +310,9 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 		{Key: "type", Value: "phys"},
 		{Key: "name", Value: d.config["name"]},
 		{Key: "flags", Value: "up"},
-		{Key: "link", Value: saveData["host_name"]},
+		{Key: "link", Value: saveData["host_name"]}, // Will be our host-side VEth peer
 	}
-
+	
 	if d.inst.Type() == instancetype.VM {
 		runConf.NetworkInterface = append(runConf.NetworkInterface,
 			[]deviceConfig.RunConfigItem{
@@ -308,6 +325,217 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 	reverter.Success()
 
 	return &runConf, nil
+}
+
+// Run through similar logic as nic bridged!
+func (d *nicPhysical) startBridge() (*deviceConfig.RunConfig, error) {
+	var err error
+	var peerName string
+	var mtu uint32
+
+	saveData := make(map[string]string)
+
+	reverter := revert.New()
+	defer reverter.Fail()
+	
+	saveData["host_name"] = d.config["host_name"]
+
+	// Create veth pair and configure peer end
+	if d.inst.Type() == instancetype.Container {
+		if saveData["host_name"] == "" {
+			saveData["host_name"], err = d.generateHostName("veth", d.config["hwaddr"])
+			if err != nil {
+				return nil, err
+			}
+		}
+		peerName, mtu, err = networkCreateVethPair(saveData["host_name"], d.config)
+	} else if d.inst.Type() == instancetype.VM {
+		if saveData["host_name"] == "" {
+			saveData["host_name"], err = d.generateHostName("tap", d.config["hwaddr"])
+			if err != nil {
+				return nil, err
+			}
+		}
+		peerName = saveData["host_name"]
+		mtu, err = networkCreateTap(saveData["host_name"], d.config)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	reverter.Add(func() { _ = network.InterfaceRemove(saveData["host_name"])})
+
+	// Populate device config with volatile fields if needed.
+	networkVethFillFromVolatile(d.config, saveData)
+
+	
+	// are we a managed bridge like lxcd0? The example he gave was unmanaged?
+	// Rebuild dnsmasq config if parent is a managed bridge network using dnsmasq and static lease file is
+	// missing.
+	bridgeNet, ok := d.network.(bridgeNetwork)
+	if ok && d.network.IsManaged() && bridgeNet.UsesDNSMasq() {
+		deviceStaticFileName := dnsmasq.DHCPStaticAllocationPath(d.network.Name(), dnsmasq.StaticAllocationFileName(d.inst.Project().Name, d.inst.Name(), d.Name()))
+		if !util.PathExists(deviceStaticFileName) {
+			err = d.rebuildDnsmasqEntry()
+			if err != nil {
+				return nil, fmt.Errorf("Failed creating DHCP static allocation: %w", err)
+			}
+		}
+	}
+
+	// Apply host-side routes to bridge interface.
+	routes := []string{}
+	routes = append(routes, util.SplitNTrimSpace(d.config["ipv4.routes"], ",", -1, true)...)
+	routes = append(routes, util.SplitNTrimSpace(d.config["ipv6.routes"], ",", -1, true)...)
+	routes = append(routes, util.SplitNTrimSpace(d.config["ipv4.routes.external"], ",", -1, true)...)
+	routes = append(routes, util.SplitNTrimSpace(d.config["ipv6.routes.external"], ",", -1, true)...)
+	err = networkNICRouteAdd(d.config["parent"], routes...)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply host-side limits.
+	err = networkSetupHostVethLimits(&d.deviceCommon, nil, true)
+	if err != nil {
+		return nil, err
+	}
+
+	// Disable IPv6 on host-side veth interface (prevents host-side interface getting link-local address)
+	// which isn't needed because the host-side interface is connected to a bridge.
+	err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", saveData["host_name"]), "1")
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+
+	// Apply and host-side network filters (uses enriched host_name from networkVethFillFromVolatile).
+	r, err := d.setupHostFilters(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	reverter.Add(r)
+
+	// Attach host side veth interface to bridge.
+	err = network.AttachInterface(d.state, d.config["parent"], saveData["host_name"])
+	if err != nil {
+		return nil, err
+	}
+
+	reverter.Add(func() { _ = network.DetachInterface(d.state, d.config["parent"], saveData["host_name"]) })
+
+	// IMPORTANT
+
+	// Attempt to disable router advertisement acceptance.
+	err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", saveData["host_name"]), "0")
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+
+	// IMPORTANT
+
+	// Attempt to enable port isolation.
+	if util.IsTrue(d.config["security.port_isolation"]) {
+		link := &ip.Link{Name: saveData["host_name"]}
+		err = link.BridgeLinkSetIsolated(true)
+		if err != nil {
+			return nil, err
+		}
+	}
+	
+	// Detect bridge type.
+	nativeBridge := network.IsNativeBridge(d.config["parent"])
+
+	// Setup VLAN settings on bridge port.
+	if nativeBridge {
+		err = d.setupNativeBridgePortVLANs(saveData["host_name"])
+	} else {
+		err = d.setupOVSBridgePortVLANs(saveData["host_name"])
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if hairpin mode needs to be enabled.
+	if nativeBridge && d.network != nil {
+		brNetfilterEnabled := false
+		for _, ipVersion := range []uint{4, 6} {
+			if network.BridgeNetfilterEnabled(ipVersion) == nil {
+				brNetfilterEnabled = true
+				break
+			}
+		}
+
+		if brNetfilterEnabled {
+			var listenAddresses map[int64]string
+
+			err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				listenAddresses, err = tx.GetNetworkForwardListenAddresses(ctx, d.network.ID(), true)
+
+				return err
+			})
+			if err != nil {
+				return nil, fmt.Errorf("Failed loading network forwards: %w", err)
+			}
+
+			// If br_netfilter is enabled and bridge has forwards, we enable hairpin mode on NIC's
+			// bridge port in case any of the forwards target this NIC and the instance attempts to
+			// connect to the forward's listener. Without hairpin mode on the target of the forward
+			// will not be able to connect to the listener.
+			if len(listenAddresses) > 0 {
+				link := &ip.Link{Name: saveData["host_name"]}
+				err = link.BridgeLinkSetHairpin(true)
+				if err != nil {
+					return nil, fmt.Errorf("Error enabling hairpin mode on bridge port %q: %w", link.Name, err)
+				}
+
+				d.logger.Debug("Enabled hairpin mode on NIC bridge port", logger.Ctx{"dev": link.Name})
+			}
+		}
+	}
+	err = d.volatileSet(saveData)
+	
+	if err != nil {
+		return nil, err
+	}
+
+	runConf := deviceConfig.RunConfig{}
+	runConf.PostHooks = []func() error{d.bridgePostStart}
+
+	runConf.NetworkInterface = []deviceConfig.RunConfigItem{
+		{Key: "type", Value: "phys"},
+		{Key: "name", Value: d.config["name"]},
+		{Key: "flags", Value: "up"},
+		{Key: "link", Value: peerName},
+		{Key: "hwaddr", Value: d.config["hwaddr"]},
+	}
+
+	if d.config["io.bus"] == "usb" {
+		runConf.UseUSBBus = true
+	}
+
+	if d.inst.Type() == instancetype.VM {
+		runConf.NetworkInterface = append(runConf.NetworkInterface,
+			[]deviceConfig.RunConfigItem{
+				{Key: "devName", Value: d.name},
+				{Key: "mtu", Value: fmt.Sprintf("%d", mtu)},
+			}...)
+	}
+
+	reverter.Success()
+
+	return &runConf, nil
+}
+
+// bridgePostStart is run after the device is added to the instance.
+func (d *nicPhysical) bridgePostStart() error {
+	err := bgpAddPrefix(&d.deviceCommon, d.network, d.config)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (d *nicPhysical) startVMUSB(name string) (*deviceConfig.RunConfig, error) {
@@ -380,6 +608,14 @@ func (d *nicPhysical) Stop() (*deviceConfig.RunConfig, error) {
 		PostHooks: []func() error{d.postStop},
 	}
 
+	// Detach from bridge if NIC not dynamically created
+	if util.IsFalse(v["last_state.created"]) && util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", d.config["parent"])) {
+		err := network.DetachInterface(d.state, d.config["parent"], v["host_name"])
+		if err != nil {
+			return nil, fmt.Errorf("Failed to detach NIC %q from bridge %q: %w", v["host_name"], d.config["parent"], err)
+		}
+	}
+
 	if v["last_state.usb.bus"] != "" && v["last_state.usb.device"] != "" {
 		// Handle USB NICs.
 		runConf.USBDevice = append(runConf.USBDevice, deviceConfig.USBDeviceItem{
@@ -440,6 +676,462 @@ func (d *nicPhysical) postStop() error {
 			}
 		}
 	}
+
+	return nil
+}
+
+// rebuildDnsmasqEntry rebuilds the dnsmasq host entry if connected to a managed network and reloads dnsmasq.
+func (d *nicPhysical) rebuildDnsmasqEntry() error {
+	// Rebuild dnsmasq config if parent is a managed bridge network using dnsmasq.
+	bridgeNet, ok := d.network.(bridgeNetwork)
+	if !ok || !d.network.IsManaged() || !bridgeNet.UsesDNSMasq() {
+		return nil
+	}
+
+	dnsmasq.ConfigMutex.Lock()
+	defer dnsmasq.ConfigMutex.Unlock()
+
+	ipv4Address := d.config["ipv4.address"]
+	ipv6Address := d.config["ipv6.address"]
+
+	// If address is set to none treat it the same as not being specified
+	if ipv4Address == "none" {
+		ipv4Address = ""
+	}
+
+	if ipv6Address == "none" {
+		ipv6Address = ""
+	}
+
+	// If IP filtering is enabled, and no static IP in config, check if there is already a
+	// dynamically assigned static IP in dnsmasq config and write that back out in new config.
+	if (util.IsTrue(d.config["security.ipv4_filtering"]) && ipv4Address == "") || (util.IsTrue(d.config["security.ipv6_filtering"]) && ipv6Address == "") {
+		deviceStaticFileName := dnsmasq.StaticAllocationFileName(d.inst.Project().Name, d.inst.Name(), d.Name())
+		_, curIPv4, curIPv6, err := dnsmasq.DHCPStaticAllocation(d.config["parent"], deviceStaticFileName)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
+
+		if ipv4Address == "" && curIPv4.IP != nil {
+			ipv4Address = curIPv4.IP.String()
+		}
+
+		if ipv6Address == "" && curIPv6.IP != nil {
+			ipv6Address = curIPv6.IP.String()
+		}
+	}
+
+	err := dnsmasq.UpdateStaticEntry(d.config["parent"], d.inst.Project().Name, d.inst.Name(), d.Name(), d.network.Config(), d.config["hwaddr"], ipv4Address, ipv6Address)
+	if err != nil {
+		return err
+	}
+
+	// Reload dnsmasq to apply new settings.
+	err = dnsmasq.Kill(d.config["parent"], true)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// setupNativeBridgePortVLANs configures the bridge port with the specified VLAN settings on the native bridge.
+func (d *nicPhysical) setupNativeBridgePortVLANs(hostName string) error {
+	link := &ip.Link{Name: hostName}
+
+	// Check vlan_filtering is enabled on bridge if needed.
+	if d.config["vlan"] != "" || d.config["vlan.tagged"] != "" {
+		vlanFilteringStatus, err := network.BridgeVLANFilteringStatus(d.config["parent"])
+		if err != nil {
+			return err
+		}
+
+		if vlanFilteringStatus != "1" {
+			return fmt.Errorf("VLAN filtering is not enabled in parent bridge %q", d.config["parent"])
+		}
+	}
+
+	// Set port on bridge to specified untagged PVID.
+	if d.config["vlan"] != "" {
+		// Reject VLAN ID 0 if specified (as validation allows VLAN ID 0 on unmanaged bridges for OVS).
+		if d.config["vlan"] == "0" {
+			return fmt.Errorf("VLAN ID 0 is not allowed for native Linux bridges")
+		}
+
+		// Get default PVID membership on port.
+		defaultPVID, err := network.BridgeVLANDefaultPVID(d.config["parent"])
+		if err != nil {
+			return err
+		}
+
+		// If the bridge has a default PVID and it is different to the specified untagged VLAN or if tagged
+		// VLAN is set to "none" then remove the default untagged membership.
+		if defaultPVID != "0" && (defaultPVID != d.config["vlan"] || d.config["vlan"] == "none") {
+			err = link.BridgeVLANDelete(defaultPVID, false)
+			if err != nil {
+				return fmt.Errorf("Failed removing default PVID membership: %w", err)
+			}
+		}
+
+		// Configure the untagged membership settings of the port if VLAN ID specified.
+		if d.config["vlan"] != "none" {
+			err = link.BridgeVLANAdd(d.config["vlan"], true, true, false)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Add any tagged VLAN memberships.
+	if d.config["vlan.tagged"] != "" {
+		networkVLANList, err := networkVLANListExpand(util.SplitNTrimSpace(d.config["vlan.tagged"], ",", -1, true))
+		if err != nil {
+			return err
+		}
+
+		for _, vlanID := range networkVLANList {
+			// Reject VLAN ID 0 if specified (as validation allows VLAN ID 0 on unmanaged bridges for OVS).
+			if vlanID == 0 {
+				return fmt.Errorf("VLAN tagged ID 0 is not allowed for native Linux bridges")
+			}
+
+			err := link.BridgeVLANAdd(fmt.Sprintf("%d", vlanID), false, false, false)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// setupOVSBridgePortVLANs configures the bridge port with the specified VLAN settings on the openvswitch bridge.
+func (d *nicPhysical) setupOVSBridgePortVLANs(hostName string) error {
+	vswitch, err := d.state.OVS()
+	if err != nil {
+		return fmt.Errorf("Failed to connect to OVS: %w", err)
+	}
+
+	// Set port on bridge to specified untagged PVID.
+	if d.config["vlan"] != "" {
+		if d.config["vlan"] == "none" && d.config["vlan.tagged"] == "" {
+			return fmt.Errorf("vlan=none is not supported with openvswitch bridges when not using vlan.tagged")
+		}
+
+		// Configure the untagged 'native' membership settings of the port if VLAN ID specified.
+		// Also set the vlan_mode=access, which will drop any tagged frames.
+		// Order is important here, as vlan_mode is set to "access", assuming that vlan.tagged is not used.
+		// If vlan.tagged is specified, then we expect it to also change the vlan_mode as needed.
+		if d.config["vlan"] != "none" {
+			vlanID, err := strconv.Atoi(d.config["vlan"])
+			if err != nil {
+				return err
+			}
+
+			err = vswitch.UpdateBridgePortVLANs(context.TODO(), hostName, "access", vlanID, nil)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Add any tagged VLAN memberships.
+	if d.config["vlan.tagged"] != "" {
+		intNetworkVLANs, err := networkVLANListExpand(util.SplitNTrimSpace(d.config["vlan.tagged"], ",", -1, true))
+		if err != nil {
+			return err
+		}
+
+		vlanMode := "trunk" // Default to only allowing tagged frames (drop untagged frames).
+		if d.config["vlan"] != "none" {
+			// If untagged vlan mode isn't "none" then allow untagged frames for port's 'native' VLAN.
+			vlanMode = "native-untagged"
+		}
+
+		// Configure the tagged membership settings of the port if VLAN ID specified.
+		// Also set the vlan_mode as needed from above.
+		// Must come after the PortSet command used for setting "vlan" mode above so that the correct
+		// vlan_mode is retained.
+		err = vswitch.UpdateBridgePortVLANs(context.TODO(), hostName, vlanMode, 0, intNetworkVLANs)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// setupHostFilters applies any host side network filters.
+// Returns a revert fail function that can be used to undo this function if a subsequent step fails.
+func (d *nicPhysical) setupHostFilters(oldConfig deviceConfig.Device) (revert.Hook, error) {
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Check br_netfilter kernel module is loaded and enabled for IPv6 before clearing existing rules.
+	// We won't try to load it as its default mode can cause unwanted traffic blocking.
+	if util.IsTrue(d.config["security.ipv6_filtering"]) {
+		err := network.BridgeNetfilterEnabled(6)
+		if err != nil {
+			return nil, fmt.Errorf("security.ipv6_filtering requires bridge netfilter: %w", err)
+		}
+	}
+
+	// Remove any old network filters if non-empty oldConfig supplied as part of update.
+	if oldConfig != nil && (util.IsTrue(oldConfig["security.mac_filtering"]) || util.IsTrue(oldConfig["security.ipv4_filtering"]) || util.IsTrue(oldConfig["security.ipv6_filtering"]) || oldConfig["security.acls"] != "") {
+		d.removeFilters(oldConfig)
+	}
+
+	// Setup network filters.
+	if util.IsTrue(d.config["security.mac_filtering"]) || util.IsTrue(d.config["security.ipv4_filtering"]) || util.IsTrue(d.config["security.ipv6_filtering"]) || d.config["security.acls"] != "" {
+		err := d.setFilters()
+		if err != nil {
+			return nil, err
+		}
+
+		reverter.Add(func() { d.removeFilters(d.config) })
+	}
+
+	cleanup := reverter.Clone().Fail
+	reverter.Success()
+
+	return cleanup, nil
+}
+
+// removeFilters removes any network level filters defined for the instance.
+func (d *nicPhysical) removeFilters(m deviceConfig.Device) {
+	if m["hwaddr"] == "" {
+		d.logger.Error("Failed to remove network filters: hwaddr not defined")
+		return
+	}
+
+	if m["host_name"] == "" {
+		d.logger.Error("Failed to remove network filters: host_name not defined")
+		return
+	}
+
+	IPv4Nets, IPv6Nets, err := allowedIPNets(m)
+	if err != nil {
+		d.logger.Error("Failed to calculate static IP network filters", logger.Ctx{"err": err})
+		return
+	}
+
+	// Remove filters for static MAC and IPs (if specified above).
+	// This covers the case when filtering is used with an unmanaged bridge.
+	d.logger.Debug("Clearing instance firewall static filters", logger.Ctx{"parent": m["parent"], "host_name": m["host_name"], "hwaddr": m["hwaddr"], "IPv4Nets": IPv4Nets, "IPv6Nets": IPv6Nets})
+	err = d.state.Firewall.InstanceClearBridgeFilter(d.inst.Project().Name, d.inst.Name(), d.name, m["parent"], m["host_name"], m["hwaddr"], IPv4Nets, IPv6Nets)
+	if err != nil {
+		d.logger.Error("Failed to remove static IP network filters", logger.Ctx{"err": err})
+	}
+
+	// If allowedIPNets returned nil for IPv4 or IPv6, it is possible that total protocol blocking was set up
+	// because the device has a managed parent network with DHCP disabled. Pass in empty slices to catch this case.
+	d.logger.Debug("Clearing instance total protocol filters", logger.Ctx{"parent": m["parent"], "host_name": m["host_name"], "hwaddr": m["hwaddr"], "IPv4Nets": IPv4Nets, "IPv6Nets": IPv6Nets})
+	err = d.state.Firewall.InstanceClearBridgeFilter(d.inst.Project().Name, d.inst.Name(), d.name, m["parent"], m["host_name"], m["hwaddr"], make([]*net.IPNet, 0), make([]*net.IPNet, 0))
+	if err != nil {
+		d.logger.Error("Failed to remove total protocol network filters", logger.Ctx{"err": err})
+	}
+
+	// Read current static DHCP IP allocation configured from dnsmasq host config (if exists).
+	// This covers the case when IPs are not defined in config, but have been assigned in managed DHCP.
+	deviceStaticFileName := dnsmasq.StaticAllocationFileName(d.inst.Project().Name, d.inst.Name(), d.Name())
+	_, IPv4Alloc, IPv6Alloc, err := dnsmasq.DHCPStaticAllocation(m["parent"], deviceStaticFileName)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return
+		}
+
+		d.logger.Error("Failed to get static IP allocations for filter removal", logger.Ctx{"err": err})
+		return
+	}
+
+	// We have already cleared any "ipv{n}.routes" etc. above, so we just need to clear the DHCP allocated IPs.
+	var IPv4AllocNets []*net.IPNet
+	if len(IPv4Alloc.IP) > 0 {
+		_, IPv4AllocNet, err := net.ParseCIDR(fmt.Sprintf("%s/32", IPv4Alloc.IP.String()))
+		if err != nil {
+			d.logger.Error("Failed to generate subnet from dynamically generated IPv4 address", logger.Ctx{"err": err})
+		} else {
+			IPv4AllocNets = append(IPv4AllocNets, IPv4AllocNet)
+		}
+	}
+
+	var IPv6AllocNets []*net.IPNet
+	if len(IPv6Alloc.IP) > 0 {
+		_, IPv6AllocNet, err := net.ParseCIDR(fmt.Sprintf("%s/128", IPv6Alloc.IP.String()))
+		if err != nil {
+			d.logger.Error("Failed to generate subnet from dynamically generated IPv6Address", logger.Ctx{"err": err})
+		} else {
+			IPv6AllocNets = append(IPv6AllocNets, IPv6AllocNet)
+		}
+	}
+
+	d.logger.Debug("Clearing instance firewall dynamic filters", logger.Ctx{"parent": m["parent"], "host_name": m["host_name"], "hwaddr": m["hwaddr"], "ipv4": IPv4Alloc.IP, "ipv6": IPv6Alloc.IP})
+	err = d.state.Firewall.InstanceClearBridgeFilter(d.inst.Project().Name, d.inst.Name(), d.name, m["parent"], m["host_name"], m["hwaddr"], IPv4AllocNets, IPv6AllocNets)
+	if err != nil {
+		logger.Errorf("Failed to remove DHCP network assigned filters  for %q: %v", d.name, err)
+	}
+
+	d.logger.Debug("Clearing instance firewall unused address sets")
+	err = d.state.Firewall.NetworkDeleteAddressSetsIfUnused("bridge")
+	if err != nil {
+		logger.Errorf("Failed to remove network address set for %q: %v", d.name, err)
+	}
+}
+
+// setFilters sets up any network level filters defined for the instance.
+// These are controlled by the security.mac_filtering, security.ipv4_Filtering, security.ipv6_filtering and security.acls config keys.
+func (d *nicPhysical) setFilters() (err error) {
+	if d.config["hwaddr"] == "" {
+		return fmt.Errorf("Failed to set network filters: require hwaddr defined")
+	}
+
+	if d.config["host_name"] == "" {
+		return fmt.Errorf("Failed to set network filters: require host_name defined")
+	}
+
+	if d.config["parent"] == "" {
+		return fmt.Errorf("Failed to set network filters: require parent defined")
+	}
+
+	// Parse device config.
+	mac, err := net.ParseMAC(d.config["hwaddr"])
+	if err != nil {
+		return fmt.Errorf("Invalid hwaddr: %w", err)
+	}
+
+	// Parse static IPs, relies on invalid IPs being set to nil.
+	IPv4 := net.ParseIP(d.config["ipv4.address"])
+	IPv6 := net.ParseIP(d.config["ipv6.address"])
+
+	// If parent bridge is unmanaged check that a manually specified IP is available if IP filtering enabled.
+	if d.network == nil {
+		if util.IsTrue(d.config["security.ipv4_filtering"]) && d.config["ipv4.address"] == "" {
+			return fmt.Errorf("IPv4 filtering requires a manually specified ipv4.address when using an unmanaged parent bridge")
+		}
+
+		if util.IsTrue(d.config["security.ipv6_filtering"]) && d.config["ipv6.address"] == "" {
+			return fmt.Errorf("IPv6 filtering requires a manually specified ipv6.address when using an unmanaged parent bridge")
+		}
+	}
+
+	// Use a clone of the config. This can be amended with the allocated IPs so that the correct ones are added to the firewall.
+	config := d.config.Clone()
+
+	// If parent bridge is managed, allocate the static IPs (if needed).
+	if d.network != nil && (IPv4 == nil || IPv6 == nil) {
+		opts := &dhcpalloc.Options{
+			ProjectName: d.inst.Project().Name,
+			HostName:    d.inst.Name(),
+			DeviceName:  d.Name(),
+			HostMAC:     mac,
+			Network:     d.network,
+		}
+
+		err = dhcpalloc.AllocateTask(opts, func(t *dhcpalloc.Transaction) error {
+			if util.IsTrue(config["security.ipv4_filtering"]) && IPv4 == nil && config["ipv4.address"] != "none" {
+				IPv4, err = t.AllocateIPv4()
+				config["ipv4.address"] = IPv4.String()
+
+				// If DHCP not supported, skip error and set the address to "none", and will result in total protocol filter.
+				if errors.Is(err, dhcpalloc.ErrDHCPNotSupported) {
+					config["ipv4.address"] = "none"
+				} else if err != nil {
+					return err
+				}
+			}
+
+			if util.IsTrue(config["security.ipv6_filtering"]) && IPv6 == nil && config["ipv6.address"] != "none" {
+				IPv6, err = t.AllocateIPv6()
+				config["ipv6.address"] = IPv6.String()
+
+				// If DHCP not supported, skip error and set the address to "none", and will result in total protocol filter.
+				if errors.Is(err, dhcpalloc.ErrDHCPNotSupported) {
+					config["ipv6.address"] = "none"
+				} else if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+		if err != nil && !errors.Is(err, dhcpalloc.ErrDHCPNotSupported) {
+			return err
+		}
+	}
+
+	// If anything goes wrong, clean up so we don't leave orphaned rules.
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	reverter.Add(func() { d.removeFilters(config) })
+
+	ipv4Nets, ipv6Nets, err := allowedIPNets(config)
+	if err != nil {
+		return err
+	}
+
+	var ipv4DNS []string
+	var ipv6DNS []string
+
+	if d.network != nil {
+		netConfig := d.network.Config()
+
+		ipv4DNS = []string{}
+		ipv6DNS = []string{}
+
+		// Pull directly configured DNS name servers (if any).
+		nsList := util.SplitNTrimSpace(netConfig["dns.nameservers"], ",", -1, false)
+		for _, ns := range nsList {
+			if ns == "" {
+				continue
+			}
+
+			nsIP := net.ParseIP(ns)
+			if nsIP == nil {
+				return fmt.Errorf("Invalid DNS nameserver")
+			}
+
+			if nsIP.To4() == nil {
+				ipv4DNS = append(ipv4DNS, ns)
+			} else {
+				ipv6DNS = append(ipv6DNS, ns)
+			}
+		}
+
+		// Add IPv4 router.
+		if netConfig["ipv4.address"] != "" && netConfig["ipv4.address"] != "none" {
+			ipv4DNS = append(ipv4DNS, strings.Split(netConfig["ipv4.address"], "/")[0])
+		}
+
+		// Add IPv6 router.
+		if netConfig["ipv6.address"] != "" && netConfig["ipv6.address"] != "none" {
+			ipv6DNS = append(ipv6DNS, strings.Split(netConfig["ipv6.address"], "/")[0])
+		}
+	}
+
+	var aclRules []firewallDrivers.ACLRule
+	var aclNames []string
+	if config["security.acls"] != "" {
+		aclNames = util.SplitNTrimSpace(config["security.acls"], ",", -1, false)
+		aclRules, err = acl.FirewallACLRules(d.state, d.name, d.inst.Project().Name, d.config)
+		if err != nil {
+			return err
+		}
+
+		// Ensure address sets for ACL, we state bridge because
+		// this is the table firewall driver will use for this kind of NIC.
+		err = addressSet.FirewallApplyAddressSetsForACLRules(d.state, "bridge", d.inst.Project().Name, aclNames)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = d.state.Firewall.InstanceSetupBridgeFilter(d.inst.Project().Name, d.inst.Name(), d.name, d.config["parent"], d.config["host_name"], d.config["hwaddr"], ipv4Nets, ipv6Nets, ipv4DNS, ipv6DNS, d.network != nil, util.IsTrue(config["security.mac_filtering"]), aclRules)
+	if err != nil {
+		return err
+	}
+
+	reverter.Success()
 
 	return nil
 }
