@@ -89,6 +89,7 @@ type InstanceServer interface {
 	// Certificate functions
 	GetCertificateFingerprints() (fingerprints []string, err error)
 	GetCertificates() (certificates []api.Certificate, err error)
+	GetCertificatesWithFilter(filters []string) ([]api.Certificate, error)
 	GetCertificate(fingerprint string) (certificate *api.Certificate, ETag string, err error)
 	CreateCertificate(certificate api.CertificatesPost) (err error)
 	UpdateCertificate(fingerprint string, certificate api.CertificatePut, ETag string) (err error)
