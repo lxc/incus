@@ -16,11 +16,11 @@ type NetworkLoadBalancerGenerated interface {
 
 	// GetNetworkLoadBalancer returns the network_load_balancer with the given key.
 	// generator: network_load_balancer GetOne
-	GetNetworkLoadBalancer(ctx context.Context, db dbtx, networkID int, listenAddress string) (*NetworkLoadBalancer, error)
+	GetNetworkLoadBalancer(ctx context.Context, db dbtx, networkID int64, listenAddress string) (*NetworkLoadBalancer, error)
 
 	// GetNetworkLoadBalancerID return the ID of the network_load_balancer with the given key.
 	// generator: network_load_balancer ID
-	GetNetworkLoadBalancerID(ctx context.Context, db tx, networkID int, listenAddress string) (int64, error)
+	GetNetworkLoadBalancerID(ctx context.Context, db tx, networkID int64, listenAddress string) (int64, error)
 
 	// CreateNetworkLoadBalancerConfig adds new network_load_balancer Config to the database.
 	// generator: network_load_balancer Create
@@ -36,9 +36,9 @@ type NetworkLoadBalancerGenerated interface {
 
 	// UpdateNetworkLoadBalancer updates the network_load_balancer matching the given key parameters.
 	// generator: network_load_balancer Update
-	UpdateNetworkLoadBalancer(ctx context.Context, db tx, networkID int, listenAddress string, object NetworkLoadBalancer) error
+	UpdateNetworkLoadBalancer(ctx context.Context, db tx, networkID int64, listenAddress string, object NetworkLoadBalancer) error
 
 	// DeleteNetworkLoadBalancer deletes the network_load_balancer matching the given key parameters.
 	// generator: network_load_balancer DeleteOne-by-NetworkID-and-ID
-	DeleteNetworkLoadBalancer(ctx context.Context, db dbtx, networkID int, id int) error
+	DeleteNetworkLoadBalancer(ctx context.Context, db dbtx, networkID int64, id int64) error
 }

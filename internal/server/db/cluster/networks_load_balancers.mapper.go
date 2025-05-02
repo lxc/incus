@@ -43,13 +43,13 @@ SELECT networks_loads_balancers.id FROM networks_loads_balancers
 `)
 
 var networkLoadBalancerCreate = RegisterStmt(`
-INSERT INTO networks_loads_balancers (network_id, node_id, node_id, listen_address, description, backends, ports)
-  VALUES (?, ?, (SELECT nodes.id FROM nodes WHERE nodes.name = ?), ?, ?, ?, ?)
+INSERT INTO networks_loads_balancers (network_id, node_id, listen_address, description, backends, ports)
+  VALUES (?, ?, ?, ?, ?, ?)
 `)
 
 var networkLoadBalancerUpdate = RegisterStmt(`
 UPDATE networks_loads_balancers
-  SET network_id = ?, node_id = ?, node_id = (SELECT nodes.id FROM nodes WHERE nodes.name = ?), listen_address = ?, description = ?, backends = ?, ports = ?
+  SET network_id = ?, node_id = ?, listen_address = ?, description = ?, backends = ?, ports = ?
  WHERE id = ?
 `)
 
@@ -252,7 +252,7 @@ func GetNetworkLoadBalancerConfig(ctx context.Context, db tx, networkLoadBalance
 
 // GetNetworkLoadBalancer returns the network_load_balancer with the given key.
 // generator: network_load_balancer GetOne
-func GetNetworkLoadBalancer(ctx context.Context, db dbtx, networkID int, listenAddress string) (_ *NetworkLoadBalancer, _err error) {
+func GetNetworkLoadBalancer(ctx context.Context, db dbtx, networkID int64, listenAddress string) (_ *NetworkLoadBalancer, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Network_load_balancer")
 	}()
@@ -278,7 +278,7 @@ func GetNetworkLoadBalancer(ctx context.Context, db dbtx, networkID int, listenA
 
 // GetNetworkLoadBalancerID return the ID of the network_load_balancer with the given key.
 // generator: network_load_balancer ID
-func GetNetworkLoadBalancerID(ctx context.Context, db tx, networkID int, listenAddress string) (_ int64, _err error) {
+func GetNetworkLoadBalancerID(ctx context.Context, db tx, networkID int64, listenAddress string) (_ int64, _err error) {
 	defer func() {
 		_err = mapErr(_err, "Network_load_balancer")
 	}()
@@ -309,26 +309,25 @@ func CreateNetworkLoadBalancer(ctx context.Context, db dbtx, object NetworkLoadB
 		_err = mapErr(_err, "Network_load_balancer")
 	}()
 
-	args := make([]any, 7)
+	args := make([]any, 6)
 
 	// Populate the statement arguments.
 	args[0] = object.NetworkID
 	args[1] = object.NodeID
-	args[2] = object.Location
-	args[3] = object.ListenAddress
-	args[4] = object.Description
+	args[2] = object.ListenAddress
+	args[3] = object.Description
 	marshaledBackends, err := marshalJSON(object.Backends)
 	if err != nil {
 		return -1, err
 	}
 
-	args[5] = marshaledBackends
+	args[4] = marshaledBackends
 	marshaledPorts, err := marshalJSON(object.Ports)
 	if err != nil {
 		return -1, err
 	}
 
-	args[6] = marshaledPorts
+	args[5] = marshaledPorts
 
 	// Prepared statement to use.
 	stmt, err := Stmt(db, networkLoadBalancerCreate)
@@ -384,7 +383,7 @@ func CreateNetworkLoadBalancerConfig(ctx context.Context, db dbtx, networkLoadBa
 
 // UpdateNetworkLoadBalancer updates the network_load_balancer matching the given key parameters.
 // generator: network_load_balancer Update
-func UpdateNetworkLoadBalancer(ctx context.Context, db tx, networkID int, listenAddress string, object NetworkLoadBalancer) (_err error) {
+func UpdateNetworkLoadBalancer(ctx context.Context, db tx, networkID int64, listenAddress string, object NetworkLoadBalancer) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Network_load_balancer")
 	}()
@@ -409,7 +408,7 @@ func UpdateNetworkLoadBalancer(ctx context.Context, db tx, networkID int, listen
 		return err
 	}
 
-	result, err := stmt.Exec(object.NetworkID, object.NodeID, object.Location, object.ListenAddress, object.Description, marshaledBackends, marshaledPorts, id)
+	result, err := stmt.Exec(object.NetworkID, object.NodeID, object.ListenAddress, object.Description, marshaledBackends, marshaledPorts, id)
 	if err != nil {
 		return fmt.Errorf("Update \"networks_loads_balancers\" entry failed: %w", err)
 	}
@@ -443,7 +442,7 @@ func UpdateNetworkLoadBalancerConfig(ctx context.Context, db tx, networkLoadBala
 
 // DeleteNetworkLoadBalancer deletes the network_load_balancer matching the given key parameters.
 // generator: network_load_balancer DeleteOne-by-NetworkID-and-ID
-func DeleteNetworkLoadBalancer(ctx context.Context, db dbtx, networkID int, id int) (_err error) {
+func DeleteNetworkLoadBalancer(ctx context.Context, db dbtx, networkID int64, id int64) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Network_load_balancer")
 	}()
