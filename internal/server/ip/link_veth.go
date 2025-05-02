@@ -8,11 +8,12 @@ import (
 type Veth struct {
 	Link
 	Peer   Link
-	Master string
+	Master string // TODO: Link already has a master, and the way this one is used does not suggest that it is different
 }
 
 // Add adds new virtual link.
 func (veth *Veth) Add() error {
+	// TODO: blocked on https://github.com/vishvananda/netlink/pull/1079
 	err := veth.Link.add("veth", append([]string{"peer"}, veth.Peer.args()...))
 	if err != nil {
 		return err

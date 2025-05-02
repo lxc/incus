@@ -19,5 +19,6 @@ func (vlan *Vlan) additionalArgs() []string {
 
 // Add adds new virtual link.
 func (vlan *Vlan) Add() error {
+	// TODO: blocked on https://github.com/vishvananda/netlink/pull/1078
 	return vlan.Link.add("vlan", vlan.additionalArgs())
 }
