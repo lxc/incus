@@ -1142,10 +1142,56 @@ func (n *common) getExternalSubnetInUse(ctx context.Context, tx *db.ClusterTx, u
 	}
 
 	// Get all network load balancer listen addresses for all networks (of any type) connected to our uplink.
-	projectNetworksLoadBalancersOnUplink, err = tx.GetProjectNetworkLoadBalancerListenAddressesByUplink(ctx, uplinkNetworkName, memberSpecific)
+	// all network names for all project names
+	networksByProjects, err := tx.GetNetworksAllProjects(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("Failed loading network forward listen addresses: %w", err)
+		return nil, fmt.Errorf("Failed loading network load balancer listen addresses: %w", err)
 	}
+
+	for projectName, networks := range networksByProjects {
+		for _, networkName := range networks {
+			networkID, err := tx.GetNetworkID(ctx, projectName, networkName)
+			if err != nil {
+				return nil, fmt.Errorf("Failed loading network load balancer listen addresses: %w", err)
+			}
+			
+			// check uplink network requirements
+			satisfiesUplinkReq := projectName == "default" && networkName == uplinkNetworkName	// network is the uplink network in default project
+			if !satisfiesUplinkReq {
+				// get the network config for this network
+				_, apiNetwork, _, err := tx.GetNetworkInAnyState(ctx, projectName, networkName)
+				if err != nil {
+					return nil, fmt.Errorf("Failed loading network load balancer listen addresses: %w", err)
+				}
+				networkConfig := apiNetwork.Config
+				satisfiesUplinkReq = networkConfig["network"] == uplinkNetworkName				// network references uplink network in its config
+			}
+			if !satisfiesUplinkReq {
+				continue
+			}
+			// get all load balancers associated with this network
+			loadBalancers, err := dbCluster.GetNetworkLoadBalancers(ctx, tx.Tx(), dbCluster.NetworkLoadBalancerFilter{
+				NetworkID: &networkID,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("Failed loading network load balancer listen addresses: %w", err)
+			}
+			for _, lb := range loadBalancers {
+				// memberSpecific requirements
+				if !memberSpecific || !lb.NodeID.Valid || (lb.NodeID.Valid && lb.NodeID.Int64 == tx.GetNodeID()) {
+					if projectNetworksLoadBalancersOnUplink[projectName] == nil {
+						projectNetworksLoadBalancersOnUplink[projectName] = make(map[string][]string)
+					}
+
+					projectNetworksLoadBalancersOnUplink[projectName][networkName] = append(projectNetworksLoadBalancersOnUplink[projectName][networkName], lb.ListenAddress)
+
+				}
+			}
+			
+				
+		}
+	}
+	
 
 	externalSubnets := make([]externalSubnetUsage, 0, len(projectNetworksForwardsOnUplink)+len(projectNetworksLoadBalancersOnUplink))
 

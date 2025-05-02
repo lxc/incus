@@ -5994,7 +5994,19 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 		})
 
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.UpdateNetworkLoadBalancer(ctx, n.ID(), curLoadBalancerID, &newLoadBalancer.NetworkLoadBalancerPut)
+			oldLoadBalancer, err := dbCluster.GetNetworkLoadBalancer(ctx, tx.Tx(), n.ID(), listenAddress)
+			if err != nil {
+				return err
+			}
+			lb := dbCluster.NetworkLoadBalancer{
+				NetworkID: n.ID(),
+				NodeID: oldLoadBalancer.NodeID,
+				ListenAddress: listenAddress,
+				Description: newLoadBalancer.Description,
+				Backends: newLoadBalancer.Backends,
+				Ports: newLoadBalancer.Ports,
+			}
+			return dbCluster.UpdateNetworkLoadBalancer(ctx, tx.Tx(), n.ID(), listenAddress, lb)
 		})
 		if err != nil {
 			return err
