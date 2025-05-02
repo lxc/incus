@@ -521,6 +521,7 @@ func (c *cmdConfigTrustList) projectColumnData(rowData rowData) string {
 }
 
 // Run runs the actual command logic.
+// alter stuff here 
 func (c *cmdConfigTrustList) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	exit, err := c.global.checkArgs(cmd, args, 0, 1)
@@ -547,8 +548,18 @@ func (c *cmdConfigTrustList) Run(cmd *cobra.Command, args []string) error {
 
 	resource := resources[0]
 
+	client := resource.server
+
+	// Process the filters
+	filters := []string{}
+	if len(args) > 1 {
+		filters = append(filters, args[1:]...)
+	}
+
+	filters = prepareCertificatesFilters(filters)
+
 	// List trust relationships
-	trust, err := resource.server.GetCertificates()
+	trust, err := resource.server.GetCertificatesWithFilter(filters)
 	if err != nil {
 		return err
 	}
@@ -928,4 +939,28 @@ func (c *cmdConfigTrustShow) Run(cmd *cobra.Command, args []string) error {
 	fmt.Printf("%s", data)
 
 	return nil
+}
+
+// prepareCertificatesFilters processes and formats filter criteria
+// for storage buckets, ensuring they are in a format that the server can interpret.
+func prepareCertificatesFilters(filters []string) []string {
+	formatedFilters := []string{}
+
+	for _, filter := range filters {
+		membs := strings.SplitN(filter, "=", 2)
+		key := membs[0]
+
+		if len(membs) == 1 {
+			regexpValue := key
+			if !strings.Contains(key, "^") && !strings.Contains(key, "$") {
+				regexpValue = "^" + regexpValue + "$"
+			}
+
+			filter = fmt.Sprintf("name=(%s|^%s.*)", regexpValue, key)
+		}
+
+		formatedFilters = append(formatedFilters, filter)
+	}
+
+	return formatedFilters
 }
