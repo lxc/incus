@@ -2455,22 +2455,729 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 }
 
 
-
-
-
-
-
 // swagger:operation GET /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/file storage storage_pool_volume_file_get
+//
+//	Get a file from a custom storage volume
+//
+//	Downloads a file or returns metadata for a file or directory from a custom storage volume.
+//
+//	---
+//	produces:
+//	  - application/json
+//	  - application/octet-stream
+//	parameters:
+//	  - in: path
+//	    name: poolName
+//	    type: string
+//	    required: true
+//	    description: Name of the storage pool
+//	  - in: path
+//	    name: type
+//	    type: string
+//	    required: true
+//	    description: Volume type (custom, image, etc.)
+//	  - in: path
+//	    name: volumeName
+//	    type: string
+//	    required: true
+//	    description: Name of the storage volume
+//	  - in: query
+//	    name: path
+//	    type: string
+//	    required: true
+//	    description: Path to the file within the volume
+//	  - in: query
+//	    name: location
+//	    type: string
+//	    required: true
+//	    description: Cluster member name
+//	responses:
+//	  "200":
+//	    description: File download or directory listing
+//	    headers:
+//	      X-Incus-uid:
+//	         description: File owner UID
+//	         schema:
+//	           type: integer
+//	      X-Incus-gid:
+//	         description: File owner GID
+//	         schema:
+//	           type: integer
+//	      X-Incus-mode:
+//	         description: Mode mask
+//	         schema:
+//	           type: integer
+//	      X-Incus-modified:
+//	         description: Last modified date
+//	         schema:
+//	           type: string
+//	      X-Incus-type:
+//	         description: Type of file (file, symlink or directory)
+//	         schema:
+//	           type: string
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+
 func storagePoolVolumeFileGet(d *Daemon, r *http.Request) response.Response {
-	return nil
+    s := d.State()
+
+    // Get the name of the storage volume.
+    volumeName, err := url.PathUnescape(mux.Vars(r)["volumeName"])
+    if err != nil {
+        return response.SmartError(err)
+    }
+
+    // Get the name of the storage pool the volume is supposed to be attached to.
+    poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+    if err != nil {
+        return response.SmartError(err)
+    }
+
+    // Get the type of the storage volume.
+    volumeTypeName, err := url.PathUnescape(mux.Vars(r)["type"])
+    if err != nil {
+        return response.SmartError(err)
+    }
+
+    location := r.URL.Query().Get("location")
+    if location == "" {
+        return response.BadRequest(fmt.Errorf("Missing location"))
+    }
+
+    resp := forwardedResponseIfTargetIsRemote(s, r)
+    if resp != nil {
+        return resp
+    }
+
+    resp = forwardedResponseIfVolumeIsRemote(s, r, poolName, "", volumeName, volumeTypeName)
+    if resp != nil {
+        return resp
+    }
+
+	// DONE: replace this with volumeType, projectName, volume, and volume.Mount()
+	// TODO: check this work for pool and volume
+	volumeType, err := storagePools.VolumeTypeNameToDBType(volumeTypeName)
+	if(err != nil){
+		return response.SmartError(err)
+	}
+
+	projectName, err := project.StorageVolumeProject(s.DB.Cluster, request.ProjectParam(r), volumeType)
+	if(err != nil){
+		return response.SmartError(err)
+	}
+
+	volume, err := storagePools.VolumeLoadByType(s, poolName, projectName, volumeType, volumeName)
+	if(err != nil){
+		return response.SmartError(err)
+	}
+
+	err = volume.Mount()
+	if(err != nil){
+		return response.SmartError(err)
+	}
+	defer volume.Unmount()
+
+	// TODO: check logic 
+	path := r.URL.Query().Get("path")
+	if path == "" {
+		return response.BadRequest(fmt.Errorf("Missing path"))
+	}
+	
+	path = filepath.Clean(path)
+	if strings.Contains(path, "..") {
+		return response.BadRequest(fmt.Errorf("Invalid path"))
+	}
+	
+	filePath := filepath.Join(volume.MountPath(), path)	
+
+    fileInfo, err := os.Stat(filePath)
+    if err != nil {
+        return response.SmartError(err)
+    }
+
+    fileSize := fileInfo.Size()
+    fileModTime := fileInfo.ModTime()
+
+    w := r.Context().Value(http.ResponseWriterKey).(http.ResponseWriter)
+
+    w.Header().Set("Content-Length", strconv.FormatInt(fileSize, 10))
+    w.Header().Set("Last-Modified", fileModTime.Format(http.TimeFormat))
+
+	// TODO: check logic 
+    file, err := os.Open(filePath)
+	if err != nil {
+		return response.SmartError(err)
+	}
+	defer file.Close()
+
+	stat, err := file.Stat()
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	headers := map[string]string{
+		"X-Incus-uid":      fmt.Sprintf("%d", stat.Sys().(*syscall.Stat_t).Uid),
+		"X-Incus-gid":      fmt.Sprintf("%d", stat.Sys().(*syscall.Stat_t).Gid),
+		"X-Incus-mode":     fmt.Sprintf("%04o", stat.Mode().Perm()),
+		"X-Incus-modified": stat.ModTime().UTC().String(),
+		"X-Incus-type":     "file", // or "directory" / "symlink"
+	}
+
+	files := []response.FileResponseEntry{
+		{
+			Identifier:    filepath.Base(path),
+			Filename:      filepath.Base(path),
+			File:          file,
+			FileSize:      stat.Size(),
+			FileModified:  stat.ModTime(),
+			Cleanup:       func() {},
+		},
+	}
+
+	return response.FileResponse(r, files, headers)
+
 }
+
+// swagger:operation POST /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/file storage storage_pool_volume_file_post
+//
+//	Upload a file to a custom storage volume
+//
+//	Creates or replaces a file, directory, or symlink on a custom storage volume.
+//
+//	---
+//	consumes:
+//	  - application/octet-stream
+//	parameters:
+//	  - in: path
+//	    name: poolName
+//	    type: string
+//	    required: true
+//	    description: Name of the storage pool
+//	  - in: path
+//	    name: type
+//	    type: string
+//	    required: true
+//	    description: Volume type (custom, image, etc.)
+//	  - in: path
+//	    name: volumeName
+//	    type: string
+//	    required: true
+//	    description: Name of the storage volume
+//	  - in: query
+//	    name: path
+//	    type: string
+//	    required: true
+//	    description: Path where the file should be created in the volume
+//	  - in: query
+//	    name: location
+//	    type: string
+//	    required: true
+//	    description: Cluster member name
+//	  - in: header
+//	    name: X-Incus-uid
+//	    type: integer
+//	    description: File owner UID
+//	  - in: header
+//	    name: X-Incus-gid
+//	    description: File owner GID
+//	    schema:
+//	      type: integer
+//	    example: 1000
+//	  - in: header
+//	    name: X-Incus-mode
+//	    description: File mode
+//	    schema:
+//	      type: integer
+//	    example: 0644
+//	  - in: header
+//	    name: X-Incus-type
+//	    description: Type of file (file, symlink or directory)
+//	    schema:
+//	      type: string
+//	    example: file
+//	  - in: header
+//	    name: X-Incus-write
+//	    description: Write mode (overwrite or append)
+//	    schema:
+//	      type: string
+//	    example: overwrite
+//	responses:
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeFilePost(d *Daemon, r *http.Request) response.Response {
-	return response.EmptySyncResponse
+    s := d.State()
+
+    // Get the name of the storage volume.
+    volumeName, err := url.PathUnescape(mux.Vars(r)["volumeName"])
+    if err != nil {
+        return response.SmartError(err)
+    }
+
+    // Get the name of the storage pool the volume is supposed to be attached to.
+    poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+    if err != nil {
+        return response.SmartError(err)
+    }
+
+    // Get the type of the storage volume.
+    volumeTypeName, err := url.PathUnescape(mux.Vars(r)["type"])
+    if err != nil {
+        return response.SmartError(err)
+    }
+
+    location := r.URL.Query().Get("location")
+    if location == "" {
+        return response.BadRequest(fmt.Errorf("Missing location"))
+    }
+
+    resp := forwardedResponseIfTargetIsRemote(s, r)
+    if resp != nil {
+        return resp
+    }
+
+    resp = forwardedResponseIfVolumeIsRemote(s, r, poolName, "", volumeName, volumeTypeName)
+    if resp != nil {
+        return resp
+    }
+
+    // DONE: replace this with volumeType, projectName, volume, and volume.Mount()
+	// TODO: check this work for pool and volume
+	volumeType, err := storagePools.VolumeTypeNameToDBType(volumeTypeName)
+	if(err != nil){
+		return response.SmartError(err)
+	}
+
+	projectName, err := project.StorageVolumeProject(s.DB.Cluster, request.ProjectParam(r), volumeType)
+	if(err != nil){
+		return response.SmartError(err)
+	}
+
+	volume, err := storagePools.VolumeLoadByType(s, poolName, projectName, volumeType, volumeName)
+	if(err != nil){
+		return response.SmartError(err)
+	}
+
+	err = volume.Mount()
+	if(err != nil){
+		return response.SmartError(err)
+	}
+	defer volume.Unmount()
+
+	// TODO: check logic 
+	path := r.URL.Query().Get("path")
+	if path == "" {
+		return response.BadRequest(fmt.Errorf("Missing path"))
+	}
+	
+	path = filepath.Clean(path)
+	if strings.Contains(path, "..") {
+		return response.BadRequest(fmt.Errorf("Invalid path"))
+	}
+	
+	filePath := filepath.Join(volume.MountPath(), path)	
+
+	uid, gid, mode, fileType, writeMode := api.ParseFileHeaders(r.Header)
+	if !slices.Contains([]string{"overwrite", "append"}, writeMode) {
+		return response.BadRequest(fmt.Errorf("Invalid write mode: %s", writeMode))
+	}
+
+	// Check if the file already exists. 
+	_, err = os.Stat(fullPath)
+	exists := err == nil
+
+	if(fileType == "file"){
+		fileMode := os.O_RDWR
+		if( write == "overwrite"){
+			fileMode |= os.O_CREATE | os.O_TRUNC
+		}
+
+		// Open/create the file. 
+		file, err := os.OpenFile(filePath, fileMode)
+		if(err != nil){
+			return response.SmartError(err)
+		}
+		defer func(){
+			_ = file.Close()
+		}
+
+		// Go to the end of the file. 
+		_, err = file.Seek(0, io.SeekEnd)
+		if(err != nil){
+			return response.SmartError(err)
+		}
+
+		// Write the file.
+		_, err = io.Copy(file, r.Body)
+		if(err != nil){
+			return response.SmartError(err)
+		}
+
+		if(!exists){
+			// Set file permissions. 
+			if(mode >= 0){
+				err = file.Chmod(os.FileMode(mode))
+					if(err != nil){
+						return response.SmartError(err)
+					}			
+			}
+			// Set file ownership. 
+			if(uid >= 0 && gid >= 0){
+				err = file.Chown((int) uid, int(gid))
+					if(err != nil){
+						return response.SmartError(err)
+					}
+			}
+		}
+		
+		s.Events.SendLifecycle(projectName, lifecycle.StorageVolumeFilePushed.Event(volume, logger.Ctx{"path": path}))
+		return response.EmptySyncResponse
+	}
+	else if(fileType == "directory"){
+		// Check if it already exists 
+		if exists{
+			return response.EmptySynchResponse
+		}
+		// Create the directory.
+		err = os.Mkdir(filePath, os.FileMode(mode))
+		if(err != nil){
+			return response.SmartError(err)
+		}
+		
+		// TODO: check if this is the default for directories 
+		// Set file permissions 
+		if(mode < 0){
+			mode = 0o755
+		}
+
+		err = os.Chmod(filePath, os.FileMode(mode))
+		if(err != nil){
+			return response.SmartError(err)
+		}
+		// Set file ownership.
+		if(uid >= 0 && gid >= 0){
+			err = os.Chown(filePath, int(uid), int(grid))
+			if(err != nil){
+				return response.SmartError(err)
+			}
+		}
+		s.Events.SendLifecycle(projectName, lifecycle.StorageVolumeFilePushed.Event(volume, logger.Ctx{"path": path}))
+		return response.EmptySyncResponse
+	}
+	else if(fileType == "symlink"){
+		// Figure out target. 
+		target, err := io.readAll(r.Body)
+		if(err != nil){
+			return response.SmartError(err)
+		}
+
+		// Create the symlink. 
+		err = os.Symlink(string(target), filePath)
+		if(err != nil){
+			return response.SmartError(err)
+		}
+
+		s.Events.SendLifecycle(projectName, lifecycle.StorageVolumeFilePushed.Event(volume, logger.Ctx{"path": path}))
+		return response.EmptySyncResponse
+	}
+	else{
+		return response.BadRequest(fmt.Errorf("Invalid file type: %s", fileType))
+	}
 }
+
+// swagger:operation HEAD /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/file storage storage_pool_volume_file_head
+//
+//	Get metadata for a file or directory on a custom volume
+//
+//	Returns headers describing file ownership, permissions, and timestamps without transferring the file content.
+//
+//	---
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: path
+//	    name: poolName
+//	    type: string
+//	    required: true
+//	    description: Name of the storage pool
+//	  - in: path
+//	    name: type
+//	    type: string
+//	    required: true
+//	    description: Volume type (custom, image, etc.)
+//	  - in: path
+//	    name: volumeName
+//	    type: string
+//	    required: true
+//	    description: Name of the storage volume
+//	  - in: query
+//	    name: path
+//	    type: string
+//	    required: true
+//	    description: Path to the file within the volume
+//	  - in: query
+//	    name: location
+//	    type: string
+//	    required: true
+//	    description: Cluster member name
+//	responses:
+//	  "200":
+//	    description: File or directory metadata
+//	    headers:
+//	      X-Incus-uid:
+//	         description: File owner UID
+//	         schema:
+//	           type: integer
+//	      X-Incus-gid:
+//	         description: File owner GID
+//	         schema:
+//	           type: integer
+//	      X-Incus-mode:
+//	         description: Mode mask
+//	         schema:
+//	           type: integer
+//	      X-Incus-modified:
+//	         description: Last modified date
+//	         schema:
+//	           type: string
+//	      X-Incus-type:
+//	         description: Type of file (file, symlink or directory)
+//	         schema:
+//	           type: string
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeFileHead(d *Daemon, r *http.Request) response.Response {
-	return nil
+    s := d.State()
+
+    // Get the name of the storage volume.
+    volumeName, err := url.PathUnescape(mux.Vars(r)["volumeName"])
+    if err != nil {
+        return response.SmartError(err)
+    }
+
+    // Get the name of the storage pool the volume is supposed to be attached to.
+    poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+    if err != nil {
+        return response.SmartError(err)
+    }
+
+    // Get the type of the storage volume.
+    volumeTypeName, err := url.PathUnescape(mux.Vars(r)["type"])
+    if err != nil {
+        return response.SmartError(err)
+    }
+
+    location := r.URL.Query().Get("location")
+    if location == "" {
+        return response.BadRequest(fmt.Errorf("Missing location"))
+    }
+
+    resp := forwardedResponseIfTargetIsRemote(s, r)
+    if resp != nil {
+        return resp
+    }
+
+    resp = forwardedResponseIfVolumeIsRemote(s, r, poolName, "", volumeName, volumeTypeName)
+    if resp != nil {
+        return resp
+    }
+
+    // DONE: replace this with volumeType, projectName, volume, and volume.Mount()
+	// TODO: check this work for pool and volume
+	volumeType, err := storagePools.VolumeTypeNameToDBType(volumeTypeName)
+	if(err != nil){
+		return response.SmartError(err)
+	}
+
+	projectName, err := project.StorageVolumeProject(s.DB.Cluster, request.ProjectParam(r), volumeType)
+	if(err != nil){
+		return response.SmartError(err)
+	}
+
+	volume, err := storagePools.VolumeLoadByType(s, poolName, projectName, volumeType, volumeName)
+	if(err != nil){
+		return response.SmartError(err)
+	}
+
+	err = volume.Mount()
+	if(err != nil){
+		return response.SmartError(err)
+	}
+	defer volume.Unmount()
+
+	// TODO: check logic 
+	path := r.URL.Query().Get("path")
+	if path == "" {
+		return response.BadRequest(fmt.Errorf("Missing path"))
+	}
+	
+	path = filepath.Clean(path)
+	if strings.Contains(path, "..") {
+		return response.BadRequest(fmt.Errorf("Invalid path"))
+	}
+	
+	filePath := filepath.Join(volume.MountPath(), path)	
+
+    fileInfo, err := os.Stat(filePath)
+    if err != nil {
+        return response.SmartError(err)
+    }
+
+    fileSize := fileInfo.Size()
+    fileModTime := fileInfo.ModTime()
+
+    w := r.Context().Value(http.ResponseWriterKey).(http.ResponseWriter)
+
+    w.Header().Set("Content-Length", strconv.FormatInt(fileSize, 10))
+    w.Header().Set("Last-Modified", fileModTime.Format(http.TimeFormat))
+
+    return nil
 }
+
+// swagger:operation DELETE /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/file storage storage_pool_volume_file_delete
+//
+//	Delete a file from a custom storage volume
+//
+//	Removes a file, directory, or symlink from a custom volume's filesystem.
+//
+//	---
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: path
+//	    name: poolName
+//	    type: string
+//	    required: true
+//	    description: Name of the storage pool
+//	  - in: path
+//	    name: type
+//	    type: string
+//	    required: true
+//	    description: Volume type (custom, image, etc.)
+//	  - in: path
+//	    name: volumeName
+//	    type: string
+//	    required: true
+//	    description: Name of the storage volume
+//	  - in: query
+//	    name: path
+//	    type: string
+//	    required: true
+//	    description: Path to the file within the volume
+//	  - in: query
+//	    name: location
+//	    type: string
+//	    required: true
+//	    description: Cluster member name
+//	responses:
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeFileDelete(d *Daemon, r *http.Request) response.Response {
-	return nil
+    s := d.State()
+
+    // Get the name of the storage volume.
+    volumeName, err := url.PathUnescape(mux.Vars(r)["volumeName"])
+    if err != nil {
+        return response.SmartError(err)
+    }
+
+    // Get the name of the storage pool the volume is supposed to be attached to.
+    poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+    if err != nil {
+        return response.SmartError(err)
+    }
+
+    // Get the type of the storage volume.
+    volumeTypeName, err := url.PathUnescape(mux.Vars(r)["type"])
+    if err != nil {
+        return response.SmartError(err)
+    }
+
+    location := r.URL.Query().Get("location")
+    if location == "" {
+        return response.BadRequest(fmt.Errorf("Missing location"))
+    }
+
+    resp := forwardedResponseIfTargetIsRemote(s, r)
+    if resp != nil {
+        return resp
+    }
+
+    resp = forwardedResponseIfVolumeIsRemote(s, r, poolName, "", volumeName, volumeTypeName)
+    if resp != nil {
+        return resp
+    }
+
+    // DONE: replace this with volumeType, projectName, volume, and volume.Mount()
+	// TODO: check this work for pool and volume
+	volumeType, err := storagePools.VolumeTypeNameToDBType(volumeTypeName)
+	if(err != nil){
+		return response.SmartError(err)
+	}
+
+	projectName, err := project.StorageVolumeProject(s.DB.Cluster, request.ProjectParam(r), volumeType)
+	if(err != nil){
+		return response.SmartError(err)
+	}
+
+	volume, err := storagePools.VolumeLoadByType(s, poolName, projectName, volumeType, volumeName)
+	if(err != nil){
+		return response.SmartError(err)
+	}
+
+	err = volume.Mount()
+	if(err != nil){
+		return response.SmartError(err)
+	}
+	defer volume.Unmount()
+
+	// TODO: check logic 
+	path := r.URL.Query().Get("path")
+	if path == "" {
+		return response.BadRequest(fmt.Errorf("Missing path"))
+	}
+	
+	path = filepath.Clean(path)
+	if strings.Contains(path, "..") {
+		return response.BadRequest(fmt.Errorf("Invalid path"))
+	}
+	
+	filePath := filepath.Join(volume.MountPath(), path)	
+
+    err = os.Remove(filePath)
+    if err != nil {
+        return response.SmartError(err)
+    }
+
+    return response.EmptySyncResponse
 }
+
+
 
