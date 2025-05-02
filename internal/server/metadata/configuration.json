@@ -4356,6 +4356,44 @@
 				]
 			}
 		},
+		"network_sriov": {
+			"common": {
+				"keys": [
+					{
+						"mtu": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "The MTU of the new interface",
+							"type": "integer"
+						}
+					},
+					{
+						"parent": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "Parent interface to create `sriov` NICs on",
+							"type": "string"
+						}
+					},
+					{
+						"user.*": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "User-provided free-form key/value pairs",
+							"type": "string"
+						}
+					},
+					{
+						"vlan": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "The VLAN ID to attach to",
+							"type": "integer"
+						}
+					}
+				]
+			}
+		},
 		"network_zone": {
 			"common": {
 				"keys": [
