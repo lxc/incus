@@ -2830,16 +2830,16 @@ func storagePoolVolumeFilePost(d *Daemon, r *http.Request) response.Response {
 			// Set file permissions. 
 			if(mode >= 0){
 				err = file.Chmod(os.FileMode(mode))
-					if(err != nil){
-						return response.SmartError(err)
-					}			
+				if(err != nil){
+					return response.SmartError(err)
+				}			
 			}
 			// Set file ownership. 
 			if(uid >= 0 && gid >= 0){
-				err = file.Chown((int) uid, int(gid))
-					if(err != nil){
-						return response.SmartError(err)
-					}
+				err = file.Chown(int(uid), int(gid))
+				if(err != nil){
+					return response.SmartError(err)
+				}
 			}
 		}
 		
