@@ -175,7 +175,7 @@ func Parse(localPath string, pkgs []*types.Package, name string, kind string) (*
 		m.Package = pkg.Name()
 		m.Name = name
 		m.Fields = fields
-		m.Type = tableType(pkgs, name, fields)
+		m.Type = tableType(pkgs, fields)
 		m.Filterable = true
 
 		oldStructHasTags := false
@@ -303,19 +303,33 @@ func ParseStmt(name string, defs map[*ast.Ident]types.Object, registeredSQLStmts
 }
 
 // tableType determines the TableType for the given struct fields.
-func tableType(pkgs []*types.Package, name string, fields []*Field) TableType {
+func tableType(pkgs []*types.Package, fields []*Field) TableType {
 	fieldNames := FieldNames(fields)
-	entities := strings.Split(lex.SnakeCase(name), "_")
-	if len(entities) == 2 {
+	idFields := []string{}
+	for _, field := range fields {
+		if field.Name == "ID" {
+			idFields = nil
+			break
+		}
+
+		if strings.HasSuffix(lex.SnakeCase(field.Name), "_id") {
+			structName, ok := strings.CutSuffix(field.Name, "ID")
+			if ok {
+				idFields = append(idFields, structName)
+			}
+		}
+	}
+
+	if len(idFields) == 2 {
 		var struct1 *types.Struct
 		var struct2 *types.Struct
 		for _, pkg := range pkgs {
 			if struct1 == nil {
-				struct1 = findStruct(pkg.Scope(), lex.PascalCase(lex.Singular(entities[0])))
+				struct1 = findStruct(pkg.Scope(), lex.PascalCase(lex.Singular(idFields[0])))
 			}
 
 			if struct2 == nil {
-				struct2 = findStruct(pkg.Scope(), lex.PascalCase(lex.Singular(entities[1])))
+				struct2 = findStruct(pkg.Scope(), lex.PascalCase(lex.Singular(idFields[1])))
 			}
 		}
 
