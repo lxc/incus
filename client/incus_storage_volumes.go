@@ -94,6 +94,26 @@ func (r *ProtocolIncus) GetStoragePoolVolumes(pool string) ([]api.StorageVolume,
 	return volumes, nil
 }
 
+// GetStoragePoolVolumesWithFilter returns a filtered list of StorageVolume entries for the provided pool.
+func (r *ProtocolIncus) GetStoragePoolVolumesWithFilter(pool string, filters []string) ([]api.StorageVolume, error) {
+	if !r.HasExtension("storage") {
+		return nil, fmt.Errorf("The server is missing the required \"storage\" API extension")
+	}
+
+	volumes := []api.StorageVolume{}
+
+	v := url.Values{}
+	v.Set("recursion", "1")
+	v.Set("filter", parseFilters(filters))
+	// Fetch the raw value
+	_, err := r.queryStruct("GET", fmt.Sprintf("/storage-pools/%s/volumes?%s", url.PathEscape(pool), v.Encode()), nil, "", &volumes)
+	if err != nil {
+		return nil, err
+	}
+
+	return volumes, nil
+}
+
 // GetStoragePoolVolumesAllProjects returns a list of StorageVolume entries for the provided pool for all projects.
 func (r *ProtocolIncus) GetStoragePoolVolumesAllProjects(pool string) ([]api.StorageVolume, error) {
 	err := r.CheckExtension("storage")

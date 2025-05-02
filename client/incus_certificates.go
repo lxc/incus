@@ -36,6 +36,23 @@ func (r *ProtocolIncus) GetCertificates() ([]api.Certificate, error) {
 	return certificates, nil
 }
 
+//  GetCertificatesWithFilter returns a filtered list of certficiates.
+func (r *ProtocolIncus) GetCertificatesWithFilter(filters []string) ([]api.Certificate, error) {
+	certificates := []api.Certificate{}
+
+	v := url.Values{}
+	v.Set("recursion", "1")
+	v.Set("filter", parseFitlers(filters))
+
+	// Fetch the raw value
+	_, err := r.queryStruct("GET",  fmt.Sprintf("/certificates?%s", v.Encode()), nil, "", &certificates)
+	if err != nil {
+		return nil, err
+	}
+
+	return certificates, nil
+}
+
 // GetCertificate returns the certificate entry for the provided fingerprint.
 func (r *ProtocolIncus) GetCertificate(fingerprint string) (*api.Certificate, string, error) {
 	certificate := api.Certificate{}
