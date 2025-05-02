@@ -836,11 +836,11 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 
 	// Add root device if needed.
 	if backupConf.Container.Devices == nil {
-		backupConf.Container.Devices = make(map[string]map[string]string, 0)
+		backupConf.Container.Devices = make(map[string]map[string]string)
 	}
 
 	if backupConf.Container.ExpandedDevices == nil {
-		backupConf.Container.ExpandedDevices = make(map[string]map[string]string, 0)
+		backupConf.Container.ExpandedDevices = make(map[string]map[string]string)
 	}
 
 	internalImportRootDevicePopulate(instancePoolName, backupConf.Container.Devices, backupConf.Container.ExpandedDevices, profiles)
@@ -930,11 +930,11 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 
 		// Add root device if needed.
 		if snap.Devices == nil {
-			snap.Devices = make(map[string]map[string]string, 0)
+			snap.Devices = make(map[string]map[string]string)
 		}
 
 		if snap.ExpandedDevices == nil {
-			snap.ExpandedDevices = make(map[string]map[string]string, 0)
+			snap.ExpandedDevices = make(map[string]map[string]string)
 		}
 
 		internalImportRootDevicePopulate(instancePoolName, snap.Devices, snap.ExpandedDevices, profiles)

@@ -193,8 +193,7 @@ func (n *common) validateZoneNames(config map[string]string) error {
 			return fmt.Errorf("Invalid %q must contain only single DNS zone name", keyName)
 		}
 
-		zoneProjectsUsed := make(map[string]struct{}, 0)
-
+		zoneProjectsUsed := make(map[string]struct{})
 		for _, keyZoneName := range keyZoneNames {
 			zoneProjectName, found := zoneProjects[keyZoneName]
 			if !found {

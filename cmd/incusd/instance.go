@@ -628,7 +628,7 @@ func pruneExpiredAndAutoCreateInstanceSnapshotsTask(d *Daemon) (task.Func, task.
 
 			if len(expiredSnaps) > 0 {
 				expiredSnapshots := make([]dbCluster.Instance, 0, len(expiredSnaps))
-				parents := make(map[string]*dbCluster.Instance, 0)
+				parents := make(map[string]*dbCluster.Instance)
 
 				// Enrich expired snapshot list with info from parent (opportunistically loading
 				// the parent info from the DB if not already loaded).
