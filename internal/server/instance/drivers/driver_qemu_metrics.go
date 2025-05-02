@@ -155,6 +155,11 @@ func (d *qemu) getQemuMemoryMetrics(monitor *qmp.Monitor) (metrics.MemoryMetrics
 		return out, err
 	}
 
+	// Handle host usage being larger than limit.
+	if memRSS > memTotalBytes {
+		memRSS = memTotalBytes
+	}
+
 	// Prepare struct.
 	out = metrics.MemoryMetrics{
 		MemAvailableBytes: uint64(memTotalBytes - memRSS),
