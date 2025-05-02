@@ -3757,6 +3757,36 @@ User keys can be used in search.
 ```
 
 <!-- config group network_physical-ovn end -->
+<!-- config group network_sriov-common start -->
+```{config:option} mtu network_sriov-common
+:condition: "-"
+:shortdesc: "The MTU of the new interface"
+:type: "integer"
+
+```
+
+```{config:option} parent network_sriov-common
+:condition: "-"
+:shortdesc: "Parent interface to create `sriov` NICs on"
+:type: "string"
+
+```
+
+```{config:option} user.* network_sriov-common
+:condition: "-"
+:shortdesc: "User-provided free-form key/value pairs"
+:type: "string"
+
+```
+
+```{config:option} vlan network_sriov-common
+:condition: "-"
+:shortdesc: "The VLAN ID to attach to"
+:type: "integer"
+
+```
+
+<!-- config group network_sriov-common end -->
 <!-- config group network_zone-common start -->
 ```{config:option} dns.nameservers network_zone-common
 :required: "no"
