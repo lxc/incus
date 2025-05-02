@@ -38,7 +38,7 @@ func (n *macvlan) Validate(config map[string]string) error {
 		//  type: int
 		//  condition: -
 		//  shortdesc: The MTU of the new interface
-		"mtu":    validate.Optional(validate.IsNetworkMTU),
+		"mtu": validate.Optional(validate.IsNetworkMTU),
 
 		// gendoc:generate(entity=network_macvlan, group=common, key=vlan)
 		//
@@ -46,7 +46,7 @@ func (n *macvlan) Validate(config map[string]string) error {
 		//  type: int
 		//  condition: -
 		//  shortdesc: The VLAN ID to attach to
-		"vlan":   validate.Optional(validate.IsNetworkVLAN),
+		"vlan": validate.Optional(validate.IsNetworkVLAN),
 
 		// gendoc:generate(entity=network_macvlan, group=common, key=gvrp)
 		//
@@ -55,7 +55,7 @@ func (n *macvlan) Validate(config map[string]string) error {
 		//  condition: -
 		//  default: `false`
 		//  shortdesc: Register VLAN using GARP VLAN Registration Protocol
-		"gvrp":   validate.Optional(validate.IsBool),
+		"gvrp": validate.Optional(validate.IsBool),
 
 		// gendoc:generate(entity=network_macvlan, group=common, key=user.*)
 		//
