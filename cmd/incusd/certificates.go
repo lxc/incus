@@ -652,13 +652,22 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 	// Extract the certificate.
 	var cert *x509.Certificate
 	if req.Certificate != "" {
-		// Add supplied certificate.
-		data, err := base64.StdEncoding.DecodeString(req.Certificate)
-		if err != nil {
-			return response.BadRequest(err)
+		var der []byte
+
+		// Try to parse as PEM.
+		block, rest := pem.Decode([]byte(req.Certificate))
+		if block != nil {
+			der = block.Bytes
+		} else {
+			data, err := base64.StdEncoding.DecodeString(string(rest))
+			if err != nil {
+				return response.BadRequest(err)
+			}
+
+			der = data
 		}
 
-		cert, err = x509.ParseCertificate(data)
+		cert, err = x509.ParseCertificate(der)
 		if err != nil {
 			return response.BadRequest(fmt.Errorf("Invalid certificate material: %w", err))
 		}
