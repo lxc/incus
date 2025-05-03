@@ -217,7 +217,7 @@ func (d *nicSRIOV) Start() (*deviceConfig.RunConfig, error) {
 	}
 
 	// Claim the SR-IOV virtual function (VF) on the parent (PF) and get the PCI information.
-	vfPCIDev, pciIOMMUGroup, err := networkSRIOVSetupVF(d.deviceCommon, d.config["parent"], vfDev, vfID, true, saveData)
+	vfPCIDev, pciIOMMUGroup, err := networkSRIOVSetupVF(d.deviceCommon, d.config["parent"], vfDev, vfID, saveData)
 	if err != nil {
 		network.SRIOVVirtualFunctionMutex.Unlock()
 		return nil, err
