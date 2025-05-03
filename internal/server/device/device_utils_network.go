@@ -706,7 +706,7 @@ func networkSRIOVParentVFInfo(vfParent string, vfID int) (ip.VirtFuncInfo, error
 // The useSpoofCheck argument controls whether to use the spoof check feature for the VF on the parent device.
 // If this is false then "security.mac_filtering" must not be enabled.
 // Returns VF PCI device info and IOMMU group number for VMs.
-func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID int, useSpoofCheck bool, volatile map[string]string) (pcidev.Device, uint64, error) {
+func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID int, volatile map[string]string) (pcidev.Device, uint64, error) {
 	var vfPCIDev pcidev.Device
 
 	// Retrieve VF settings from parent device.
@@ -762,10 +762,6 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 	// The ordering of this section is very important, as Intel cards require a very specific
 	// order of setup to allow setting custom MACs when using spoof check mode.
 	if util.IsTrue(d.config["security.mac_filtering"]) {
-		if !useSpoofCheck {
-			return pcidev.Device{}, 0, fmt.Errorf("security.mac_filtering cannot be enabled when VF spoof check not enabled")
-		}
-
 		// If no MAC specified in config, use current VF interface MAC.
 		mac := d.config["hwaddr"]
 		if mac == "" {
@@ -791,12 +787,10 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 		link := &ip.Link{Name: vfParent}
 		_ = link.SetVfAddress(volatile["last_state.vf.id"], "00:00:00:00:00:00")
 
-		if useSpoofCheck {
-			// Ensure spoof checking is disabled if not enabled in instance (only for real VF).
-			err = link.SetVfSpoofchk(volatile["last_state.vf.id"], "off")
-			if err != nil {
-				return vfPCIDev, 0, fmt.Errorf("Failed disabling spoof check for VF %q: %w", volatile["last_state.vf.id"], err)
-			}
+		// Ensure spoof checking is disabled if not enabled in instance (only for real VF).
+		err = link.SetVfSpoofchk(volatile["last_state.vf.id"], "off")
+		if err != nil && d.config["security.mac_filtering"] != "" {
+			return vfPCIDev, 0, fmt.Errorf("Failed disabling spoof check for VF %q: %w", volatile["last_state.vf.id"], err)
 		}
 
 		// Set MAC on VF if specified (this should be passed through into VM when it is bound to vfio-pci).
@@ -906,7 +900,7 @@ func networkSRIOVRestoreVF(d deviceCommon, useSpoofCheck bool, volatile map[stri
 
 	// Reset VF MAC spoofing protection if recorded. Do this first before resetting the MAC
 	// to avoid any issues with zero MACs refusing to be set whilst spoof check is on.
-	if useSpoofCheck && volatile["last_state.vf.spoofcheck"] != "" {
+	if volatile["last_state.vf.spoofcheck"] != "" {
 		mode := "off"
 		if util.IsTrue(volatile["last_state.vf.spoofcheck"]) {
 			mode = "on"
@@ -914,7 +908,7 @@ func networkSRIOVRestoreVF(d deviceCommon, useSpoofCheck bool, volatile map[stri
 
 		link := &ip.Link{Name: parent}
 		err := link.SetVfSpoofchk(volatile["last_state.vf.id"], mode)
-		if err != nil {
+		if err != nil && d.config["security.mac_filtering"] != "" {
 			return err
 		}
 	}
