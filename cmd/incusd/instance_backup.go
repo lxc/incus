@@ -344,12 +344,13 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 		if err != nil {
 			return response.SmartError(err)
 		}
-		filePath := internalUtil.VarPath("backups", "instances", project.Instance(projectName, backup.Name()))
 
+		filePath := internalUtil.VarPath("backups", "instances", project.Instance(projectName, backup.Name()))
 		file, err := os.Open(filePath)
 		if err != nil {
 			return response.SmartError(err)
 		}
+
 		httpReq, err := http.NewRequest("PUT", s3Url, file)
 		if err != nil {
 			return response.SmartError(err)
@@ -360,9 +361,11 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 		if err != nil {
 			return response.SmartError(err)
 		}
+
 		if resp.StatusCode != http.StatusOK {
 			return response.SmartError(fmt.Errorf("Failed to upload backup to S3: %s", resp.Status))
 		}
+
 		err = backup.Delete()
 		if err != nil {
 			return response.SmartError(err)
