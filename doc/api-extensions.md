@@ -2799,3 +2799,7 @@ This adds memory hotplugging for VMs, allowing them to add memory at runtime wit
 ## `instance_nic_routed_host_tables`
 
 This adds support for specifying host-routing tables on `nic` devices that use the routed mode.
+
+## `instance_publish_split`
+
+This adds support for creating a split format image out of an existing instance.

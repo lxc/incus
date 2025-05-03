@@ -57,6 +57,12 @@ type ImagesPost struct {
 	// API extension: image_compression_algorithm
 	CompressionAlgorithm string `json:"compression_algorithm" yaml:"compression_algorithm"`
 
+	// Type of image format
+	// Example: split
+	//
+	// API extension: instance_publish_split
+	Format string `json:"format" yaml:"format"`
+
 	// Aliases to add to the image
 	// Example: [{"name": "foo"}, {"name": "bar"}]
 	//
