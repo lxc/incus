@@ -6502,11 +6502,26 @@ func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
 	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
-		// Check if there is an existing peer using the same name, or whether there is already a peering (in any
-		// state) to the target network.
-		peers, err = tx.GetNetworkPeers(ctx, n.ID())
+		// Use generated function to get peers.
+		netID := n.ID()
+		filter := dbCluster.NetworkPeerFilter{NetworkID: &netID}
+		dbPeers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx(), filter)
+		if err != nil {
+			return fmt.Errorf("Failed loading network peer DB objects: %w", err)
+		}
 
-		return err
+		// Convert DB objects to API objects and build the map.
+		peers = make(map[int64]*api.NetworkPeer, len(dbPeers))
+		for _, dbPeer := range dbPeers {
+			peer, err := dbPeer.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return fmt.Errorf("Failed converting network peer DB object to API object: %w", err)
+			}
+
+			peers[dbPeer.ID] = peer
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
@@ -6541,7 +6556,14 @@ func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
 	}
 
 	reverter.Add(func() {
-		_ = n.state.DB.Cluster.DeleteNetworkPeer(n.ID(), peerID)
+		_ = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			err := dbCluster.DeleteNetworkPeer(ctx, tx.Tx(), n.ID(), peerID)
+			if errors.Is(err, dbCluster.ErrNotFound) {
+				return nil
+			}
+
+			return err
+		})
 	})
 
 	// Apply the OVN configuration.
@@ -6737,7 +6759,38 @@ func (n *ovn) PeerUpdate(peerName string, req api.NetworkPeerPut) error {
 	}
 
 	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.UpdateNetworkPeer(ctx, n.ID(), curPeerID, &newPeer.NetworkPeerPut)
+		// Fetch the current peer object to get its name and current state.
+		peers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx(), dbCluster.NetworkPeerFilter{NetworkID: &n.id, ID: &curPeerID})
+		if err != nil {
+			return fmt.Errorf("Failed to get network peer: %w", err)
+		}
+
+		if len(peers) == 0 {
+			return fmt.Errorf("Network peer not found")
+		}
+
+		if len(peers) > 1 {
+			return fmt.Errorf("Multiple network peers found")
+		}
+
+		currentPeer := peers[0]
+
+		// Update the description field from the input.
+		currentPeer.Description = newPeer.Description
+
+		// Update the main peer object.
+		err = dbCluster.UpdateNetworkPeer(ctx, tx.Tx(), currentPeer.Name, currentPeer)
+		if err != nil {
+			return fmt.Errorf("Failed to update network peer: %w", err)
+		}
+
+		// Update the peer configuration.
+		err = dbCluster.UpdateNetworkPeerConfig(ctx, tx.Tx(), curPeerID, newPeer.Config)
+		if err != nil {
+			return fmt.Errorf("Failed to update network peer config: %w", err)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
@@ -6925,7 +6978,14 @@ func (n *ovn) PeerDelete(peerName string) error {
 		}
 	}
 
-	err = n.state.DB.Cluster.DeleteNetworkPeer(n.ID(), peerID)
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		err := dbCluster.DeleteNetworkPeer(ctx, tx.Tx(), n.ID(), peerID)
+		if errors.Is(err, dbCluster.ErrNotFound) {
+			return api.StatusErrorf(http.StatusNotFound, "Network peer not found")
+		}
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -6940,9 +7000,26 @@ func (n *ovn) forPeers(f func(targetOVNNet *ovn) error) error {
 	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
-		peers, err = tx.GetNetworkPeers(ctx, n.ID())
+		// Use generated function to get peers.
+		netID := n.ID()
+		filter := dbCluster.NetworkPeerFilter{NetworkID: &netID}
+		dbPeers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx(), filter)
+		if err != nil {
+			return fmt.Errorf("Failed loading network peer DB objects: %w", err)
+		}
 
-		return err
+		// Convert DB objects to API objects and build the map.
+		peers = make(map[int64]*api.NetworkPeer, len(dbPeers))
+		for _, dbPeer := range dbPeers {
+			peer, err := dbPeer.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return fmt.Errorf("Failed converting network peer DB object to API object: %w", err)
+			}
+
+			peers[dbPeer.ID] = peer
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
