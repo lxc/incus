@@ -324,6 +324,7 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 		if err != nil {
 			return fmt.Errorf("Create backup: %w", err)
 		}
+		
 		return nil
 	}
 
