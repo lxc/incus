@@ -70,7 +70,6 @@ type NetworkPeerFilter struct {
 
 // ToAPI converts the database NetworkPeer to API type.
 func (n *NetworkPeer) ToAPI(ctx context.Context, tx *sql.Tx) (*api.NetworkPeer, error) {
-	// Load config for this peer
 	configMap, err := GetNetworkPeerConfig(ctx, tx, int(n.ID))
 	if err != nil {
 		return nil, err
@@ -85,9 +84,10 @@ func (n *NetworkPeer) ToAPI(ctx context.Context, tx *sql.Tx) (*api.NetworkPeer, 
 		TargetProject:     n.TargetNetworkProject.String,
 		TargetNetwork:     n.TargetNetworkName.String,
 		Type:              networkPeerTypeNames[n.Type],
-		Status:            "", // status should be set by caller based on lookup
+		Status:            "",
 		UsedBy:            []string{},
-		TargetIntegration: "", // integration not stored in this struct
+		TargetIntegration: "",
 	}
+
 	return &resp, nil
 }
