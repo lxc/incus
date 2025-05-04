@@ -16,11 +16,11 @@ import (
 	"github.com/lxc/incus/v6/internal/server/dnsmasq"
 	"github.com/lxc/incus/v6/internal/server/dnsmasq/dhcpalloc"
 	firewallDrivers "github.com/lxc/incus/v6/internal/server/firewall/drivers"
-	"github.com/lxc/incus/v6/internal/server/network/acl"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/ip"
 	"github.com/lxc/incus/v6/internal/server/network"
+	"github.com/lxc/incus/v6/internal/server/network/acl"
 	addressSet "github.com/lxc/incus/v6/internal/server/network/address-set"
 	"github.com/lxc/incus/v6/internal/server/resources"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
@@ -179,7 +179,6 @@ func (d *nicPhysical) validateEnvironment() error {
 
 // Start is run when the device is added to a running instance or instance is starting up.
 func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
-	
 	err := d.validateEnvironment()
 	if err != nil {
 		return nil, err
@@ -313,7 +312,7 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 		{Key: "flags", Value: "up"},
 		{Key: "link", Value: saveData["host_name"]}, // Will be our host-side VEth peer
 	}
-	
+
 	if d.inst.Type() == instancetype.VM {
 		runConf.NetworkInterface = append(runConf.NetworkInterface,
 			[]deviceConfig.RunConfigItem{
@@ -338,7 +337,7 @@ func (d *nicPhysical) startBridge() (*deviceConfig.RunConfig, error) {
 
 	reverter := revert.New()
 	defer reverter.Fail()
-	
+
 	saveData["host_name"] = d.config["host_name"]
 
 	// Create veth pair and configure peer end
@@ -365,12 +364,11 @@ func (d *nicPhysical) startBridge() (*deviceConfig.RunConfig, error) {
 		return nil, err
 	}
 
-	reverter.Add(func() { _ = network.InterfaceRemove(saveData["host_name"])})
+	reverter.Add(func() { _ = network.InterfaceRemove(saveData["host_name"]) })
 
 	// Populate device config with volatile fields if needed.
 	networkVethFillFromVolatile(d.config, saveData)
 
-	
 	// are we a managed bridge like lxcd0? The example he gave was unmanaged?
 	// Rebuild dnsmasq config if parent is a managed bridge network using dnsmasq and static lease file is
 	// missing.
@@ -425,15 +423,11 @@ func (d *nicPhysical) startBridge() (*deviceConfig.RunConfig, error) {
 
 	reverter.Add(func() { _ = network.DetachInterface(d.state, d.config["parent"], saveData["host_name"]) })
 
-	// IMPORTANT
-
 	// Attempt to disable router advertisement acceptance.
 	err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", saveData["host_name"]), "0")
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
-
-	// IMPORTANT
 
 	// Attempt to enable port isolation.
 	if util.IsTrue(d.config["security.port_isolation"]) {
@@ -443,7 +437,7 @@ func (d *nicPhysical) startBridge() (*deviceConfig.RunConfig, error) {
 			return nil, err
 		}
 	}
-	
+
 	// Detect bridge type.
 	nativeBridge := network.IsNativeBridge(d.config["parent"])
 
@@ -495,8 +489,8 @@ func (d *nicPhysical) startBridge() (*deviceConfig.RunConfig, error) {
 			}
 		}
 	}
+
 	err = d.volatileSet(saveData)
-	
 	if err != nil {
 		return nil, err
 	}
