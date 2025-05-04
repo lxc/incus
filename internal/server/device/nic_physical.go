@@ -179,7 +179,6 @@ func (d *nicPhysical) validateEnvironment() error {
 
 // Start is run when the device is added to a running instance or instance is starting up.
 func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
-	d.logger.Debug("HELLOOOOOOOOOOOOOOOOOOO")
 	
 	err := d.validateEnvironment()
 	if err != nil {
@@ -195,6 +194,8 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 		d.logger.Debug("Parent is a Bridge, doing bridge start")
 		return d.startBridge()
 	}
+
+	// Parent is not a bridge
 
 	saveData := make(map[string]string)
 
