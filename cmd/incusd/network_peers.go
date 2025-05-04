@@ -502,9 +502,28 @@ func networkPeerGet(d *Daemon, r *http.Request) response.Response {
 	var peer *api.NetworkPeer
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		_, peer, err = tx.GetNetworkPeer(ctx, n.ID(), peerName)
+		netID := n.ID()
+		filter := dbCluster.NetworkPeerFilter{NetworkID: &netID, Name: &peerName}
+		dbPeers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx(), filter)
+		if err != nil {
+			return fmt.Errorf("Failed getting network peer DB object: %w", err)
+		}
 
-		return err
+		if len(dbPeers) == 0 {
+			return api.StatusErrorf(http.StatusNotFound, "Network peer %q not found", peerName)
+		}
+
+		if len(dbPeers) > 1 {
+			return fmt.Errorf("Multiple network peers found for name %q", peerName)
+		}
+
+		dbPeer := dbPeers[0]
+		peer, err = dbPeer.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed converting network peer DB object to API object: %w", err)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return response.SmartError(err)

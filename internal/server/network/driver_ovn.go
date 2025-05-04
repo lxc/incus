@@ -6208,9 +6208,28 @@ func (n *ovn) localPeerCreate(peer api.NetworkPeersPost) error {
 		var err error
 
 		// Load peering to get mutual peering info.
-		_, peerInfo, err = tx.GetNetworkPeer(ctx, n.ID(), peer.Name)
+		filter := dbCluster.NetworkPeerFilter{NetworkID: &n.id, Name: &peer.Name}
+		dbPeers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx(), filter)
+		if err != nil {
+			return fmt.Errorf("Failed getting network peer DB object: %w", err)
+		}
 
-		return err
+		if len(dbPeers) == 0 {
+			return fmt.Errorf("Network peer %q not found", peer.Name)
+		}
+
+		if len(dbPeers) > 1 {
+			return fmt.Errorf("Multiple network peers found for name %q", peer.Name)
+		}
+
+		dbPeer := dbPeers[0]
+		var apiErr error
+		peerInfo, apiErr = dbPeer.ToAPI(ctx, tx.Tx())
+		if apiErr != nil {
+			return fmt.Errorf("Failed converting network peer DB object to API object: %w", apiErr)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
@@ -6724,11 +6743,28 @@ func (n *ovn) PeerUpdate(peerName string, req api.NetworkPeerPut) error {
 	var curPeer *api.NetworkPeer
 
 	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		var err error
+		filter := dbCluster.NetworkPeerFilter{NetworkID: &n.id, Name: &peerName}
+		dbPeers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx(), filter)
+		if err != nil {
+			return fmt.Errorf("Failed getting network peer DB object: %w", err)
+		}
 
-		curPeerID, curPeer, err = tx.GetNetworkPeer(ctx, n.ID(), peerName)
+		if len(dbPeers) == 0 {
+			return fmt.Errorf("Network peer %q not found", peerName)
+		}
 
-		return err
+		if len(dbPeers) > 1 {
+			return fmt.Errorf("Multiple network peers found for name %q", peerName)
+		}
+
+		dbPeer := dbPeers[0]
+		curPeerID = dbPeer.ID
+		curPeer, err = dbPeer.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed converting network peer DB object to API object: %w", err)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
@@ -6945,11 +6981,28 @@ func (n *ovn) PeerDelete(peerName string) error {
 	var peer *api.NetworkPeer
 
 	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		var err error
+		filter := dbCluster.NetworkPeerFilter{NetworkID: &n.id, Name: &peerName}
+		dbPeers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx(), filter)
+		if err != nil {
+			return fmt.Errorf("Failed getting network peer DB object: %w", err)
+		}
 
-		peerID, peer, err = tx.GetNetworkPeer(ctx, n.ID(), peerName)
+		if len(dbPeers) == 0 {
+			return fmt.Errorf("Network peer %q not found", peerName)
+		}
 
-		return err
+		if len(dbPeers) > 1 {
+			return fmt.Errorf("Multiple network peers found for name %q", peerName)
+		}
+
+		dbPeer := dbPeers[0]
+		peerID = dbPeer.ID
+		peer, err = dbPeer.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed converting network peer DB object to API object: %w", err)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err

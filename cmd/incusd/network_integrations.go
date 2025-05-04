@@ -198,7 +198,8 @@ func networkIntegrationsGet(d *Daemon, r *http.Request) response.Response {
 				}
 
 				// Add UsedBy field.
-				usedBy, err := tx.GetNetworkPeersURLByIntegration(ctx, integration.Name)
+				integrationID := integration.ID
+				allPeers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx()) // Fetch all peers
 				if err != nil {
 					return fmt.Errorf("Failed to load network peers: %w", err)
 				}
@@ -385,7 +386,7 @@ func networkIntegrationDelete(d *Daemon, r *http.Request) response.Response {
 	// Delete the DB record.
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get UsedBy for the integration.
-		usedBy, err := tx.GetNetworkPeersURLByIntegration(ctx, integrationName)
+		integrationID, err := dbCluster.GetNetworkIntegrationID(ctx, tx.Tx(), integrationName)
 		if err != nil {
 			return fmt.Errorf("Failed to get network integration ID: %w", err)
 		}
@@ -532,9 +533,10 @@ func networkIntegrationGet(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Add UsedBy field.
-		usedBy, err := tx.GetNetworkPeersURLByIntegration(ctx, info.Name)
+		integrationID := dbRecord.ID
+		allPeers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx()) // Fetch all peers
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to load network peers: %w", err)
 		}
 
 		usedBy := []string{}
@@ -661,7 +663,8 @@ func networkIntegrationPut(d *Daemon, r *http.Request) response.Response {
 			return err
 		}
 
-		usedBy, err = tx.GetNetworkPeersURLByIntegration(ctx, integrationName)
+		integrationID := dbRecord.ID
+		allPeers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx()) // Fetch all peers
 		if err != nil {
 			return fmt.Errorf("Failed to load network peers: %w", err)
 		}

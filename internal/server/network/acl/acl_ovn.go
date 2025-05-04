@@ -105,7 +105,42 @@ func OVNEnsureACLs(s *state.State, l logger.Logger, client *ovn.NB, aclProjectNa
 		return nil, err
 	}
 
-	peerTargetNetIDs, err := s.DB.Cluster.GetNetworkPeersTargetNetworkIDs(aclProjectName, db.NetworkTypeOVN)
+	peerTargetNetIDs := make(map[db.NetworkPeer]int64)
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Get created networks for the project.
+		networks, err := tx.GetCreatedNetworksByProject(ctx, aclProjectName)
+		if err != nil {
+			return fmt.Errorf("Failed getting created networks for project %q: %w", aclProjectName, err)
+		}
+
+		for netID, network := range networks {
+			// Filter for OVN networks in Go.
+			if network.Type != "ovn" {
+				continue
+			}
+
+			// Get peers for the current OVN network.
+			peerFilter := cluster.NetworkPeerFilter{NetworkID: &netID}
+			dbPeers, err := cluster.GetNetworkPeers(ctx, tx.Tx(), peerFilter)
+			if err != nil {
+				return fmt.Errorf("Failed loading network peers for network ID %d: %w", netID, err)
+			}
+
+			for _, dbPeer := range dbPeers {
+				// Only include peers with a valid target network ID.
+				if dbPeer.TargetNetworkID.Valid {
+					peerKey := db.NetworkPeer{
+						NetworkName: network.Name,
+						PeerName:    dbPeer.Name,
+					}
+
+					peerTargetNetIDs[peerKey] = dbPeer.TargetNetworkID.Int64
+				}
+			}
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, fmt.Errorf("Failed getting peer connection mappings: %w", err)
 	}
