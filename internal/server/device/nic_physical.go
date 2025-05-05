@@ -1,16 +1,20 @@
 package device
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io/fs"
 	"net"
+	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/db/cluster"
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 	pcidev "github.com/lxc/incus/v6/internal/server/device/pci"
 	"github.com/lxc/incus/v6/internal/server/dnsmasq"
@@ -22,12 +26,14 @@ import (
 	"github.com/lxc/incus/v6/internal/server/network"
 	"github.com/lxc/incus/v6/internal/server/network/acl"
 	addressSet "github.com/lxc/incus/v6/internal/server/network/address-set"
+	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/resources"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 type nicPhysical struct {
@@ -48,6 +54,8 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 	}
 
 	requiredFields := []string{}
+
+	// NOTE: may need to add more fields due to bridge code
 	optionalFields := []string{
 		// gendoc:generate(entity=devices, group=nic_physical, key=parent)
 		//
@@ -103,6 +111,116 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 		optionalFields = append(optionalFields, "hwaddr", "vlan")
 	}
 
+	// checkWithManagedNetwork validates the device's settings against the managed network.
+	checkWithManagedNetwork := func(n network.Network) error {
+		if n.Status() != api.NetworkStatusCreated {
+			return fmt.Errorf("Specified network is not fully created")
+		}
+
+		// NOTE: type is supposed to be 'physical'
+		// if n.Type() != "bridge" {
+		// 	return fmt.Errorf("Specified network must be of type bridge")
+		// }
+
+		netConfig := n.Config()
+
+		if d.config["ipv4.address"] != "" {
+			dhcpv4Subnet := n.DHCPv4Subnet()
+
+			// Check that DHCPv4 is enabled on parent network (needed to use static assigned IPs) when
+			// IP filtering isn't enabled (if it is we allow the use of static IPs for this purpose).
+			if dhcpv4Subnet == nil && util.IsFalseOrEmpty(d.config["security.ipv4_filtering"]) {
+				return fmt.Errorf(`Cannot specify "ipv4.address" when DHCP is disabled (unless using security.ipv4_filtering) on network %q`, n.Name())
+			}
+
+			// Check the static IP supplied is valid for the linked network. It should be part of the
+			// network's subnet, but not necessarily part of the dynamic allocation ranges.
+			if dhcpv4Subnet != nil && d.config["ipv4.address"] != "none" && !dhcpalloc.DHCPValidIP(dhcpv4Subnet, nil, net.ParseIP(d.config["ipv4.address"])) {
+				return fmt.Errorf("Device IP address %q not within network %q subnet", d.config["ipv4.address"], n.Name())
+			}
+
+			parentAddress := netConfig["ipv4.address"]
+			if slices.Contains([]string{"", "none"}, parentAddress) {
+				return nil
+			}
+
+			ipAddr, _, err := net.ParseCIDR(parentAddress)
+			if err != nil {
+				return fmt.Errorf("Invalid network ipv4.address: %w", err)
+			}
+
+			if d.config["ipv4.address"] == "none" && util.IsFalseOrEmpty(d.config["security.ipv4_filtering"]) {
+				return fmt.Errorf("Cannot have ipv4.address as none unless using security.ipv4_filtering")
+			}
+
+			// IP should not be the same as the parent managed network address.
+			if ipAddr.Equal(net.ParseIP(d.config["ipv4.address"])) {
+				return fmt.Errorf("IP address %q is assigned to parent managed network device %q", d.config["ipv4.address"], d.config["parent"])
+			}
+		}
+
+		if d.config["ipv6.address"] != "" {
+			dhcpv6Subnet := n.DHCPv6Subnet()
+
+			// Check that DHCPv6 is enabled on parent network (needed to use static assigned IPs) when
+			// IP filtering isn't enabled (if it is we allow the use of static IPs for this purpose).
+			if (dhcpv6Subnet == nil || util.IsFalseOrEmpty(netConfig["ipv6.dhcp.stateful"])) && util.IsFalseOrEmpty(d.config["security.ipv6_filtering"]) {
+				return fmt.Errorf(`Cannot specify "ipv6.address" when DHCP or "ipv6.dhcp.stateful" are disabled (unless using security.ipv6_filtering) on network %q`, n.Name())
+			}
+
+			// Check the static IP supplied is valid for the linked network. It should be part of the
+			// network's subnet, but not necessarily part of the dynamic allocation ranges.
+			if dhcpv6Subnet != nil && d.config["ipv6.address"] != "none" && !dhcpalloc.DHCPValidIP(dhcpv6Subnet, nil, net.ParseIP(d.config["ipv6.address"])) {
+				return fmt.Errorf("Device IP address %q not within network %q subnet", d.config["ipv6.address"], n.Name())
+			}
+
+			parentAddress := netConfig["ipv6.address"]
+			if slices.Contains([]string{"", "none"}, parentAddress) {
+				return nil
+			}
+
+			ipAddr, _, err := net.ParseCIDR(parentAddress)
+			if err != nil {
+				return fmt.Errorf("Invalid network ipv6.address: %w", err)
+			}
+
+			if d.config["ipv6.address"] == "none" && util.IsFalseOrEmpty(d.config["security.ipv6_filtering"]) {
+				return fmt.Errorf("Cannot have ipv6.address as none unless using security.ipv6_filtering")
+			}
+
+			// IP should not be the same as the parent managed network address.
+			if ipAddr.Equal(net.ParseIP(d.config["ipv6.address"])) {
+				return fmt.Errorf("IP address %q is assigned to parent managed network device %q", d.config["ipv6.address"], d.config["parent"])
+			}
+		}
+
+		// When we know the parent network is managed, we can validate the NIC's VLAN settings based on
+		// on the bridge driver type.
+		if slices.Contains([]string{"", "native"}, netConfig["bridge.driver"]) {
+			// Check VLAN 0 isn't set when using a native Linux managed bridge, as not supported.
+			if d.config["vlan"] == "0" {
+				return fmt.Errorf("VLAN ID 0 is not allowed for native Linux bridges")
+			}
+
+			// Check that none of the supplied VLAN IDs are VLAN 0 when using a native Linux managed
+			// bridge, as not supported.
+			networkVLANList, err := networkVLANListExpand(util.SplitNTrimSpace(d.config["vlan.tagged"], ",", -1, true))
+			if err != nil {
+				return err
+			}
+
+			for _, vlanID := range networkVLANList {
+				if vlanID == 0 {
+					return fmt.Errorf("VLAN tagged ID 0 is not allowed for native Linux bridges")
+				}
+			}
+		}
+
+		return nil
+	}
+
+	var isParentBridge bool
+
 	// gendoc:generate(entity=devices, group=nic_physical, key=network)
 	//
 	// ---
@@ -140,6 +258,21 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 		// Get actual parent device from network's parent setting.
 		d.config["parent"] = netConfig["parent"]
 
+		// check if we have a bridge parent
+		isParentBridge = util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", d.config["parent"]))
+
+		if isParentBridge {
+			// Validate NIC settings with managed network.
+			err = checkWithManagedNetwork(d.network)
+			if err != nil {
+				return err
+			}
+
+			if netConfig["bridge.mtu"] != "" {
+				d.config["mtu"] = netConfig["bridge.mtu"]
+			}
+		}
+
 		// Copy certain keys verbatim from the network's settings.
 		for _, field := range optionalFields {
 			_, found := netConfig[field]
@@ -147,17 +280,225 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 				d.config[field] = netConfig[field]
 			}
 		}
+	} else if util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", d.config["parent"])) {
+		isParentBridge = true
+
+		// If no network property supplied, then parent property is required.
+		requiredFields = append(requiredFields, "parent")
+		// Check if parent is a managed network.
+		// api.ProjectDefaultName is used here as bridge networks don't support projects.
+		d.network, _ = network.LoadByName(d.state, api.ProjectDefaultName, d.config["parent"])
+		if d.network != nil {
+			// Validate NIC settings with managed network.
+			err := checkWithManagedNetwork(d.network)
+			if err != nil {
+				return err
+			}
+		} else {
+			// Check that static IPs are only specified with IP filtering when using an unmanaged
+			// parent bridge.
+			if util.IsTrue(d.config["security.ipv4_filtering"]) {
+				if d.config["ipv4.address"] == "" {
+					return fmt.Errorf("IPv4 filtering requires a manually specified ipv4.address when using an unmanaged parent bridge")
+				}
+			} else if d.config["ipv4.address"] != "" {
+				// Static IP cannot be used with unmanaged parent.
+				return fmt.Errorf("Cannot use manually specified ipv4.address when using unmanaged parent bridge")
+			}
+
+			if util.IsTrue(d.config["security.ipv6_filtering"]) {
+				if d.config["ipv6.address"] == "" {
+					return fmt.Errorf("IPv6 filtering requires a manually specified ipv6.address when using an unmanaged parent bridge")
+				}
+			} else if d.config["ipv6.address"] != "" {
+				// Static IP cannot be used with unmanaged parent.
+				return fmt.Errorf("Cannot use manually specified ipv6.address when using unmanaged parent bridge")
+			}
+		}
 	} else {
 		// If no network property supplied, then parent property is required.
 		requiredFields = append(requiredFields, "parent")
 	}
 
-	err := d.config.Validate(nicValidationRules(requiredFields, optionalFields, instConf))
+	rules := nicValidationRules(requiredFields, optionalFields, instConf)
+
+	if isParentBridge {
+		// Check that IP filtering isn't being used with VLAN filtering.
+		if util.IsTrue(d.config["security.ipv4_filtering"]) || util.IsTrue(d.config["security.ipv6_filtering"]) {
+			if d.config["vlan"] != "" || d.config["vlan.tagged"] != "" {
+				return fmt.Errorf("IP filtering cannot be used with VLAN filtering")
+			}
+		}
+
+		// Check there isn't another NIC with any of the same addresses specified on the same cluster member.
+		// Can only validate this when the instance is supplied (and not doing profile validation).
+		if d.inst != nil {
+			err := d.checkAddressConflict()
+			if err != nil {
+				return err
+			}
+		}
+
+		// Check if security ACL(s) are configured.
+		if d.config["security.acls"] != "" {
+			if d.state.Firewall.String() != "nftables" {
+				return fmt.Errorf("Security ACLs are only supported when using nftables firewall")
+			}
+
+			// The NIC's network may be a non-default project, so lookup project and get network's project name.
+			networkProjectName, _, err := project.NetworkProject(d.state.DB.Cluster, instConf.Project().Name)
+			if err != nil {
+				return fmt.Errorf("Failed loading network project name: %w", err)
+			}
+
+			err = acl.Exists(d.state, networkProjectName, util.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)...)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Add bridge validation rules
+		// Add bridge specific vlan validation.
+		rules["vlan"] = func(value string) error {
+			if value == "" || value == "none" {
+				return nil
+			}
+
+			return validate.IsNetworkVLAN(value)
+		}
+
+		// Add bridge specific vlan.tagged validation.
+
+		// gendoc:generate(entity=devices, group=nic_physical, key=vlan.tagged)
+		//
+		// ---
+		//  type: integer
+		//  managed: no
+		//  shortdesc: Comma-delimited list of VLAN IDs or VLAN ranges to join for tagged traffic
+		rules["vlan.tagged"] = func(value string) error {
+			if value == "" {
+				return nil
+			}
+
+			// Check that none of the supplied VLAN IDs are the same as the untagged VLAN ID.
+			for _, vlanID := range util.SplitNTrimSpace(value, ",", -1, true) {
+				if vlanID == d.config["vlan"] {
+					return fmt.Errorf("Tagged VLAN ID %q cannot be the same as untagged VLAN ID", vlanID)
+				}
+
+				_, _, err := validate.ParseNetworkVLANRange(vlanID)
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		}
+
+		// Add bridge specific ipv4/ipv6 validation rules
+		rules["ipv4.address"] = func(value string) error {
+			if value == "" || value == "none" {
+				return nil
+			}
+
+			return validate.IsNetworkAddressV4(value)
+		}
+
+		rules["ipv6.address"] = func(value string) error {
+			if value == "" || value == "none" {
+				return nil
+			}
+
+			return validate.IsNetworkAddressV6(value)
+		}
+	}
+
+	err := d.config.Validate(rules)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// checkAddressConflict checks for conflicting IP/MAC addresses on another NIC connected to same network on the
+// same cluster member. Can only validate this when the instance is supplied (and not doing profile validation).
+// Returns api.StatusError with status code set to http.StatusConflict if conflicting address found.
+func (d *nicPhysical) checkAddressConflict() error {
+	node := d.inst.Location()
+
+	ourNICIPs := make(map[string]net.IP, 2)
+	ourNICIPs["ipv4.address"] = net.ParseIP(d.config["ipv4.address"])
+	ourNICIPs["ipv6.address"] = net.ParseIP(d.config["ipv6.address"])
+
+	ourNICMAC, _ := net.ParseMAC(d.config["hwaddr"])
+	if ourNICMAC == nil {
+		ourNICMAC, _ = net.ParseMAC(d.volatileGet()["hwaddr"])
+	}
+
+	// Check if any instance devices use this network.
+	// Managed bridge networks have a per-server DHCP daemon so perform a node level search.
+	filter := cluster.InstanceFilter{Node: &node}
+
+	// Set network name for comparison (needs to support connecting to unmanaged networks).
+	networkName := d.config["parent"]
+	if d.network != nil {
+		networkName = d.network.Name()
+	}
+
+	// Bridge networks are always in the default project.
+	return network.UsedByInstanceDevices(d.state, api.ProjectDefaultName, networkName, "bridge", func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
+		// Skip our own device. This avoids triggering duplicate device errors during
+		// updates or when making temporary copies of our instance during migrations.
+		sameLogicalInstance := instance.IsSameLogicalInstance(d.inst, &inst)
+		if sameLogicalInstance && d.Name() == nicName {
+			return nil
+		}
+
+		// Skip NICs connected to other VLANs (not perfect though as one NIC could
+		// explicitly specify the default untagged VLAN and these would be connected to
+		// same L2 even though the values are different, and there is a different default
+		// value for native and openvswith parent bridges).
+		if d.config["vlan"] != nicConfig["vlan"] {
+			return nil
+		}
+
+		// Check there isn't another instance with the same DNS name connected to a managed network
+		// that has DNS enabled and is connected to the same untagged VLAN.
+		if d.network != nil && d.network.Config()["dns.mode"] != "none" && nicCheckDNSNameConflict(d.inst.Name(), inst.Name) {
+			if sameLogicalInstance {
+				return api.StatusErrorf(http.StatusConflict, "Instance DNS name %q conflict between %q and %q because both are connected to same network", strings.ToLower(inst.Name), d.name, nicName)
+			}
+
+			return api.StatusErrorf(http.StatusConflict, "Instance DNS name %q already used on network", strings.ToLower(inst.Name))
+		}
+
+		// Check NIC's MAC address doesn't match this NIC's MAC address.
+		devNICMAC, _ := net.ParseMAC(nicConfig["hwaddr"])
+		if devNICMAC == nil {
+			devNICMAC, _ = net.ParseMAC(inst.Config[fmt.Sprintf("volatile.%s.hwaddr", nicName)])
+		}
+
+		if ourNICMAC != nil && devNICMAC != nil && bytes.Equal(ourNICMAC, devNICMAC) {
+			return api.StatusErrorf(http.StatusConflict, "MAC address %q already defined on another NIC", devNICMAC.String())
+		}
+
+		// Check NIC's static IPs don't match this NIC's static IPs.
+		for _, key := range []string{"ipv4.address", "ipv6.address"} {
+			if d.config[key] == "" {
+				continue // No static IP specified on this NIC.
+			}
+
+			// Parse IPs to avoid being tripped up by presentation differences.
+			devNICIP := net.ParseIP(nicConfig[key])
+
+			if ourNICIPs[key] != nil && devNICIP != nil && ourNICIPs[key].Equal(devNICIP) {
+				return api.StatusErrorf(http.StatusConflict, "IP address %q already defined on another NIC", devNICIP.String())
+			}
+		}
+
+		return nil
+	}, filter)
 }
 
 // validateEnvironment checks the runtime environment for correctness.
@@ -599,16 +940,25 @@ func (d *nicPhysical) startVMUSB(name string) (*deviceConfig.RunConfig, error) {
 func (d *nicPhysical) Stop() (*deviceConfig.RunConfig, error) {
 	v := d.volatileGet()
 
-	runConf := deviceConfig.RunConfig{
-		PostHooks: []func() error{d.postStop},
+	isParentBridge := util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", v["parent"]))
+	if isParentBridge {
+		// Remove BGP announcements.
+		err := bgpRemovePrefix(&d.deviceCommon, d.config)
+		if err != nil {
+			return nil, err
+		}
+
+		// Populate device config with volatile fields (hwaddr and host_name) if needed.
+		networkVethFillFromVolatile(d.config, d.volatileGet())
+
+		err = networkClearHostVethLimits(&d.deviceCommon)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// Detach from bridge if NIC not dynamically created
-	if util.IsFalse(v["last_state.created"]) && util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", d.config["parent"])) {
-		err := network.DetachInterface(d.state, d.config["parent"], v["host_name"])
-		if err != nil {
-			return nil, fmt.Errorf("Failed to detach NIC %q from bridge %q: %w", v["host_name"], d.config["parent"], err)
-		}
+	runConf := deviceConfig.RunConfig{
+		PostHooks: []func() error{d.postStop},
 	}
 
 	if v["last_state.usb.bus"] != "" && v["last_state.usb.device"] != "" {
@@ -644,30 +994,67 @@ func (d *nicPhysical) postStop() error {
 
 	v := d.volatileGet()
 
-	// If VM physical pass through, unbind from vfio-pci and bind back to host driver.
-	if d.inst.Type() == instancetype.VM && v["last_state.pci.slot.name"] != "" {
-		vfioDev := pcidev.Device{
-			Driver:   "vfio-pci",
-			SlotName: v["last_state.pci.slot.name"],
+	isParentBridge := util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", v["parent"]))
+	if isParentBridge {
+		// Handle the case where validation fails but the device still must be removed.
+		bridgeName := d.config["parent"]
+		if bridgeName == "" && d.config["network"] != "" {
+			bridgeName = d.config["network"]
 		}
 
-		err := pcidev.DeviceDriverOverride(vfioDev, v["last_state.pci.driver"])
-		if err != nil {
-			return err
-		}
-	} else if d.inst.Type() == instancetype.Container {
-		hostName := network.GetHostDevice(d.config["parent"], d.config["vlan"])
+		networkVethFillFromVolatile(d.config, v)
 
-		// This will delete the parent interface if we created it for VLAN parent.
-		if util.IsTrue(v["last_state.created"]) {
-			err := networkRemoveInterfaceIfNeeded(d.state, hostName, d.inst, d.config["parent"], d.config["vlan"])
+		if d.config["host_name"] != "" && network.InterfaceExists(d.config["host_name"]) {
+			// Detach host-side end of veth pair from bridge (required for openvswitch particularly).
+			err := network.DetachInterface(d.state, bridgeName, d.config["host_name"])
+			if err != nil {
+				return fmt.Errorf("Failed to detach interface %q from %q: %w", d.config["host_name"], bridgeName, err)
+			}
+
+			// Removing host-side end of veth pair will delete the peer end too.
+			err = network.InterfaceRemove(d.config["host_name"])
+			if err != nil {
+				return fmt.Errorf("Failed to remove interface %q: %w", d.config["host_name"], err)
+			}
+		}
+
+		// Remove host-side routes from bridge interface.
+		routes := []string{}
+		routes = append(routes, util.SplitNTrimSpace(d.config["ipv4.routes"], ",", -1, true)...)
+		routes = append(routes, util.SplitNTrimSpace(d.config["ipv6.routes"], ",", -1, true)...)
+		routes = append(routes, util.SplitNTrimSpace(d.config["ipv4.routes.external"], ",", -1, true)...)
+		routes = append(routes, util.SplitNTrimSpace(d.config["ipv6.routes.external"], ",", -1, true)...)
+		networkNICRouteDelete(bridgeName, routes...)
+
+		if util.IsTrue(d.config["security.mac_filtering"]) || util.IsTrue(d.config["security.ipv4_filtering"]) || util.IsTrue(d.config["security.ipv6_filtering"]) || d.config["security.acls"] != "" {
+			d.removeFilters(d.config)
+		}
+	} else {
+		// If VM physical pass through, unbind from vfio-pci and bind back to host driver.
+		if d.inst.Type() == instancetype.VM && v["last_state.pci.slot.name"] != "" {
+			vfioDev := pcidev.Device{
+				Driver:   "vfio-pci",
+				SlotName: v["last_state.pci.slot.name"],
+			}
+
+			err := pcidev.DeviceDriverOverride(vfioDev, v["last_state.pci.driver"])
 			if err != nil {
 				return err
 			}
-		} else if v["last_state.pci.slot.name"] == "" {
-			err := networkRestorePhysicalNIC(hostName, v)
-			if err != nil {
-				return err
+		} else if d.inst.Type() == instancetype.Container {
+			hostName := network.GetHostDevice(d.config["parent"], d.config["vlan"])
+
+			// This will delete the parent interface if we created it for VLAN parent.
+			if util.IsTrue(v["last_state.created"]) {
+				err := networkRemoveInterfaceIfNeeded(d.state, hostName, d.inst, d.config["parent"], d.config["vlan"])
+				if err != nil {
+					return err
+				}
+			} else if v["last_state.pci.slot.name"] == "" {
+				err := networkRestorePhysicalNIC(hostName, v)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
