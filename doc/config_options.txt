@@ -3564,12 +3564,6 @@ User keys can be used in search.
 
 ```
 
-```{config:option} ipv4.gateway.hwaddr network_ovn-common
-:shortdesc: "MAC address to pin as the IPv4 default-gateway on the uplink router port (e.g. 00:00:5E:00:01:10)"
-:type: "string"
-
-```
-
 ```{config:option} ipv4.l3only network_ovn-common
 :condition: "IPv4 address"
 :default: "`false`"
@@ -3614,12 +3608,6 @@ User keys can be used in search.
 :default: "`false`"
 :shortdesc: "Whether to allocate addresses using DHCP"
 :type: "bool"
-
-```
-
-```{config:option} ipv6.gateway.hwaddr network_ovn-common
-:shortdesc: "MAC address to pin as the IPv6 default-gateway on the uplink router port (e.g. 00:00:5E:00:01:20)"
-:type: "string"
 
 ```
 

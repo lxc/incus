@@ -475,20 +475,6 @@ func (n *ovn) Validate(config map[string]string) error {
 		//  shortdesc: Static routes to provide via DHCP option 121, as a comma-separated list of alternating subnets (CIDR) and gateway addresses (same syntax as dnsmasq and OVN)
 		"ipv4.dhcp.routes": validate.Optional(validate.IsDHCPRouteList),
 
-		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.gateway.hwaddr)
-		//
-		// ---
-		//  type: string
-		//  shortdesc: MAC address to pin as the IPv4 default-gateway on the uplink router port (e.g. 00:00:5E:00:01:10)
-		"ipv4.gateway.hwaddr": validate.Optional(validate.IsNetworkMAC),
-
-		// gendoc:generate(entity=network_ovn, group=common, key=ipv6.gateway.hwaddr)
-		//
-		// ---
-		//  type: string
-		//  shortdesc: MAC address to pin as the IPv6 default-gateway on the uplink router port (e.g. 00:00:5E:00:01:20)
-		"ipv6.gateway.hwaddr": validate.Optional(validate.IsNetworkMAC),
-
 		// gendoc:generate(entity=network_ovn, group=common, key=ipv6.address)
 		//
 		// ---
