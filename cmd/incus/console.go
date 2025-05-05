@@ -129,6 +129,20 @@ func (c *cmdConsole) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Fetch instance config to apply console defaults
+	instance, _, err := d.GetInstance(name)
+	if err != nil {
+		return err
+	}
+
+	cfg := instance.ExpandedConfig
+	if c.flagType == "" {
+		c.flagType = cfg["console.type"]
+		if c.flagType == "" {
+			c.flagType = "console"
+		}
+	}
+
 	return c.console(d, name)
 }
 
@@ -358,53 +372,30 @@ func (c *cmdConsole) vga(d incus.InstanceServer, name string) error {
 		}
 	}()
 
-	// Use either spicy or remote-viewer if available.
-	remoteViewer := c.findCommand("remote-viewer")
-	spicy := c.findCommand("spicy")
+	
+	consoleExecutable := cfg["console.executable"]
+	consoleArgs := cfg["console.args"]
 
-	if remoteViewer != "" || spicy != "" {
-		var cmd *exec.Cmd
+	var cmd *exec.Cmd
+	if consoleExecutable != "" {
+		// Split custom args (basic split; consider shellwords lib for full parsing)
+		args := []string{}
+		if consoleArgs != "" {
+			args = append(args, util.SplitNArgs(consoleArgs, -1)...)
+		}
+		args = append(args, socket)
+		cmd = exec.Command(consoleExecutable, args...)
+	} else {
+		remoteViewer := c.findCommand("remote-viewer")
+		spicy := c.findCommand("spicy")
+
 		if remoteViewer != "" {
 			cmd = exec.Command(remoteViewer, socket)
-		} else {
+		} else if spicy != "" {
 			cmd = exec.Command(spicy, fmt.Sprintf("--uri=%s", socket))
 		}
-
-		// Start the command.
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err := cmd.Start()
-		if err != nil {
-			return fmt.Errorf(i18n.G("Failed starting command: %w"), err)
-		}
-
-		// Handle the command exiting.
-		go func() {
-			_ = cmd.Wait()
-			close(chViewer)
-		}()
-
-		// Kill the viewer on remote disconnection.
-		go func() {
-			<-chConnected
-			wgConnections.Wait()
-
-			if cmd.Process == nil {
-				return
-			}
-
-			_ = cmd.Process.Kill()
-		}()
-	} else {
-		fmt.Println(i18n.G("The client automatically uses either spicy or remote-viewer when present."))
-		fmt.Println(i18n.G("As neither could be found, the raw SPICE socket can be found at:"))
-		fmt.Printf("  %s\n", socket)
-
-		// Wait for all connections to complete.
-		<-chConnected
-		wgConnections.Wait()
-		close(chViewer)
 	}
+
 
 	// Wait for the operation to complete.
 	err = op.Wait()
