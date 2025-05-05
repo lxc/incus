@@ -1068,9 +1068,25 @@ func (n *common) forwardBGPSetupPrefixes() error {
 		var err error
 
 		// Retrieve network forwards before clearing existing prefixes, and separate them by IP family.
-		fwdListenAddresses, err = tx.GetNetworkForwardListenAddresses(ctx, n.ID(), true)
+		networkID := int64(n.ID())
+		dbRecords, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{
+			NetworkID: &networkID,
+		})
+		if err != nil {
+			return err
+		}
 
-		return err
+		fwdListenAddresses = make(map[int64]string)
+		for _, dbRecord := range dbRecords {
+			// memberSpecific filtering
+			if !dbRecord.NodeID.Valid || (dbRecord.NodeID.Int64 == tx.GetNodeID()) {
+				// Get listen address
+				forwardID := int64(dbRecord.ID)
+				fwdListenAddresses[forwardID] = dbRecord.ListenAddress
+			}
+		}
+
+		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("Failed loading network forwards: %w", err)
@@ -1167,14 +1183,9 @@ func (n *common) getExternalSubnetInUse(ctx context.Context, tx *db.ClusterTx, u
 		}
 	}
 
-	// Get all network forward listen addresses for all networks (of any type) connected to our uplink.
-	projectNetworksForwardsOnUplink, err := tx.GetProjectNetworkForwardListenAddressesByUplink(ctx, uplinkNetworkName, memberSpecific)
-	if err != nil {
-		return nil, fmt.Errorf("Failed loading network forward listen addresses: %w", err)
-	}
-
-	// Get all network load balancer listen addresses for all networks (of any type) connected to our uplink.
+	// Get all network load balancer and forward listen addresses for all networks (of any type) connected to our uplink.
 	projectNetworksLoadBalancersOnUplink := map[string]map[string][]string{}
+	projectNetworksForwardsOnUplink := map[string]map[string][]string{}
 
 	for networkID, relatedNetwork := range relatedNetworks {
 		// Get all load balancers associated with this network.
@@ -1191,6 +1202,24 @@ func (n *common) getExternalSubnetInUse(ctx context.Context, tx *db.ClusterTx, u
 			}
 
 			projectNetworksLoadBalancersOnUplink[relatedNetwork.Project][relatedNetwork.Name] = append(projectNetworksLoadBalancersOnUplink[relatedNetwork.Project][relatedNetwork.Name], lb.ListenAddress)
+		}
+
+		// Get all network forwards associated with this network.
+		networkForwards, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{
+			NetworkID: &networkID,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("Failed getting list of network forward: %w", err)
+		}
+
+		for _, fwd := range networkForwards {
+			if !memberSpecific || (!fwd.NodeID.Valid || (fwd.NodeID.Int64 == tx.GetNodeID())) {
+				if projectNetworksForwardsOnUplink[relatedNetwork.Project] == nil {
+					projectNetworksForwardsOnUplink[relatedNetwork.Project] = map[string][]string{}
+				}
+
+				projectNetworksForwardsOnUplink[relatedNetwork.Project][relatedNetwork.Name] = append(projectNetworksForwardsOnUplink[relatedNetwork.Project][relatedNetwork.Name], fwd.ListenAddress)
+			}
 		}
 	}
 
