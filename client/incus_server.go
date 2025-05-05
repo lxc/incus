@@ -537,6 +537,16 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 		}
 	}
 
+	// Apply certificate configuration.
+	if len(config.Server.Certificates) > 0 {
+		for _, certificate := range config.Server.Certificates {
+			err := r.CreateCertificate(certificate)
+			if err != nil {
+				return fmt.Errorf("Failed to create certificate %q: %w", certificate.Name, err)
+			}
+		}
+	}
+
 	// Cluster configuration.
 	if config.Cluster != nil && config.Cluster.Enabled {
 		// Get the current cluster configuration
