@@ -368,13 +368,6 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 		}
 
 		// Add bridge specific vlan.tagged validation.
-
-		// gendoc:generate(entity=devices, group=nic_physical, key=vlan.tagged)
-		//
-		// ---
-		//  type: integer
-		//  managed: no
-		//  shortdesc: Comma-delimited list of VLAN IDs or VLAN ranges to join for tagged traffic
 		rules["vlan.tagged"] = func(value string) error {
 			if value == "" {
 				return nil
