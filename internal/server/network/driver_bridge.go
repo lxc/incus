@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -2487,9 +2488,38 @@ func (n *bridge) getExternalSubnetInUse() ([]externalSubnetUsage, error) {
 		}
 
 		// Get all network forward listen addresses for forwards assigned to this specific cluster member.
-		projectNetworksForwardsOnUplink, err = tx.GetProjectNetworkForwardListenAddressesOnMember(ctx)
+		networksByProjects, err := tx.GetNetworksAllProjects(ctx)
 		if err != nil {
 			return fmt.Errorf("Failed loading network forward listen addresses: %w", err)
+		}
+
+		for projectName, networks := range networksByProjects {
+			for _, networkName := range networks {
+				networkID, err := tx.GetNetworkID(ctx, projectName, networkName)
+				if err != nil {
+					return fmt.Errorf("Failed loading network forward listen addresses: %w", err)
+				}
+
+				// Get all network forward listen addresses for all networks (of any type) connected to our uplink.
+				networkForwards, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{
+					NetworkID: &networkID,
+				})
+				if err != nil {
+					return fmt.Errorf("Failed loading network forward listen addresses: %w", err)
+				}
+
+				projectNetworksForwardsOnUplink = make(map[string]map[int64][]string)
+				for _, forward := range networkForwards {
+					// Filter network forwards that belong to this specific cluster member
+					if forward.NodeID.Valid && (forward.NodeID.Int64 == tx.GetNodeID()) {
+						if projectNetworksForwardsOnUplink[projectName] == nil {
+							projectNetworksForwardsOnUplink[projectName] = make(map[int64][]string)
+						}
+
+						projectNetworksForwardsOnUplink[projectName][networkID] = append(projectNetworksForwardsOnUplink[projectName][networkID], forward.ListenAddress)
+					}
+				}
+			}
 		}
 
 		externalSubnets, err = n.common.getExternalSubnetInUse(ctx, tx, n.name, true)
@@ -2589,9 +2619,37 @@ func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType reque
 
 	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Check if there is an existing forward using the same listen address.
-		_, _, err := tx.GetNetworkForward(ctx, n.ID(), memberSpecific, forward.ListenAddress)
+		networkID := n.ID()
+		dbRecords, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{
+			NetworkID:     &networkID,
+			ListenAddress: &forward.ListenAddress,
+		})
+		if err != nil {
+			return err
+		}
 
-		return err
+		filteredRecords := make([]dbCluster.NetworkForward, 0, len(dbRecords))
+		for _, dbRecord := range dbRecords {
+			// bridge supports per-member forwards so do memberSpecific filtering
+			if !dbRecord.NodeID.Valid || (dbRecord.NodeID.Int64 == tx.GetNodeID()) {
+				filteredRecords = append(filteredRecords, dbRecord)
+			}
+		}
+
+		if len(filteredRecords) == 0 {
+			return api.StatusErrorf(http.StatusNotFound, "Network forward not found")
+		}
+
+		if len(filteredRecords) > 1 {
+			return api.StatusErrorf(http.StatusConflict, "Network forward found on more than one cluster member. Please target a specific member")
+		}
+
+		_, err = filteredRecords[0].ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err == nil {
 		return api.StatusErrorf(http.StatusConflict, "A forward for that listen address already exists")
@@ -2638,9 +2696,34 @@ func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType reque
 
 	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Create forward DB record.
-		forwardID, err = tx.CreateNetworkForward(ctx, n.ID(), memberSpecific, &forward)
+		nodeID := sql.NullInt64{
+			Valid: memberSpecific,
+			Int64: tx.GetNodeID(),
+		}
 
-		return err
+		dbRecord := dbCluster.NetworkForward{
+			NetworkID:     n.ID(),
+			NodeID:        nodeID,
+			ListenAddress: forward.ListenAddress,
+			Description:   forward.Description,
+			Ports:         forward.Ports,
+		}
+
+		if forward.Ports == nil {
+			dbRecord.Ports = []api.NetworkForwardPort{}
+		}
+
+		forwardID, err = dbCluster.CreateNetworkForward(ctx, tx.Tx(), dbRecord)
+		if err != nil {
+			return err
+		}
+
+		err = dbCluster.CreateNetworkForwardConfig(ctx, tx.Tx(), forwardID, forward.Config)
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
@@ -2648,7 +2731,7 @@ func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType reque
 
 	reverter.Add(func() {
 		_ = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.DeleteNetworkForward(ctx, n.ID(), forwardID)
+			return dbCluster.DeleteNetworkForward(ctx, tx.Tx(), n.ID(), forwardID)
 		})
 		_ = n.forwardSetupFirewall()
 		_ = n.forwardBGPSetupPrefixes()
@@ -2677,7 +2760,20 @@ func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType reque
 			var listenAddresses map[int64]string
 
 			err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-				listenAddresses, err = tx.GetNetworkForwardListenAddresses(ctx, n.ID(), true)
+				networkID := n.ID()
+				dbRecords, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{
+					NetworkID: &networkID,
+				})
+				if err != nil {
+					return err
+				}
+
+				listenAddresses = make(map[int64]string)
+				for _, dbRecord := range dbRecords {
+					if !dbRecord.NodeID.Valid || (dbRecord.NodeID.Int64 == tx.GetNodeID()) {
+						listenAddresses[dbRecord.ID] = dbRecord.ListenAddress
+					}
+				}
 
 				return err
 			})
@@ -2747,17 +2843,47 @@ func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType reque
 
 // ForwardUpdate updates a network forward.
 func (n *bridge) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, clientType request.ClientType) error {
-	memberSpecific := true // bridge supports per-member forwards.
-
 	var curForwardID int64
 	var curForward *api.NetworkForward
+
+	var curNodeID sql.NullInt64
 
 	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
-		curForwardID, curForward, err = tx.GetNetworkForward(ctx, n.ID(), memberSpecific, listenAddress)
+		networkID := n.ID()
+		dbRecords, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{
+			NetworkID:     &networkID,
+			ListenAddress: &listenAddress,
+		})
+		if err != nil {
+			return err
+		}
 
-		return err
+		filteredRecords := make([]dbCluster.NetworkForward, 0, len(dbRecords))
+		for _, dbRecord := range dbRecords {
+			// bridge supports per-member forwards so do memberSpecific filtering
+			if !dbRecord.NodeID.Valid || (dbRecord.NodeID.Int64 == tx.GetNodeID()) {
+				filteredRecords = append(filteredRecords, dbRecord)
+			}
+		}
+
+		if len(filteredRecords) == 0 {
+			return api.StatusErrorf(http.StatusNotFound, "Network forward not found")
+		}
+
+		if len(filteredRecords) > 1 {
+			return api.StatusErrorf(http.StatusConflict, "Network forward found on more than one cluster member. Please target a specific member")
+		}
+
+		curForwardID = filteredRecords[0].ID
+		curNodeID = filteredRecords[0].NodeID
+		curForward, err = filteredRecords[0].ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
@@ -2791,7 +2917,25 @@ func (n *bridge) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, 
 	defer reverter.Fail()
 
 	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.UpdateNetworkForward(ctx, n.ID(), curForwardID, &newForward.NetworkForwardPut)
+		fwd := dbCluster.NetworkForward{
+			NetworkID:     n.ID(),
+			NodeID:        curNodeID,
+			ListenAddress: listenAddress,
+			Description:   newForward.Description,
+			Ports:         newForward.Ports,
+		}
+
+		err = dbCluster.UpdateNetworkForward(ctx, tx.Tx(), n.ID(), listenAddress, fwd)
+		if err != nil {
+			return err
+		}
+
+		err = dbCluster.UpdateNetworkForwardConfig(ctx, tx.Tx(), curForwardID, newForward.Config)
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
@@ -2799,7 +2943,25 @@ func (n *bridge) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, 
 
 	reverter.Add(func() {
 		_ = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.UpdateNetworkForward(ctx, n.ID(), curForwardID, &curForward.NetworkForwardPut)
+			fwd := dbCluster.NetworkForward{
+				NetworkID:     n.ID(),
+				NodeID:        curNodeID,
+				ListenAddress: listenAddress,
+				Description:   curForward.Description,
+				Ports:         curForward.Ports,
+			}
+
+			err = dbCluster.UpdateNetworkForward(ctx, tx.Tx(), n.ID(), listenAddress, fwd)
+			if err != nil {
+				return err
+			}
+
+			err = dbCluster.UpdateNetworkForwardConfig(ctx, tx.Tx(), curForwardID, curForward.Config)
+			if err != nil {
+				return err
+			}
+
+			return nil
 		})
 		_ = n.forwardSetupFirewall()
 		_ = n.forwardBGPSetupPrefixes()
@@ -2824,9 +2986,38 @@ func (n *bridge) ForwardDelete(listenAddress string, clientType request.ClientTy
 	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
-		forwardID, forward, err = tx.GetNetworkForward(ctx, n.ID(), memberSpecific, listenAddress)
+		networkID := n.ID()
+		dbRecords, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{
+			NetworkID:     &networkID,
+			ListenAddress: &listenAddress,
+		})
+		if err != nil {
+			return err
+		}
 
-		return err
+		filteredRecords := make([]dbCluster.NetworkForward, 0, len(dbRecords))
+		for _, dbRecord := range dbRecords {
+			// bridge supports per-member forwards so do memberSpecific filtering
+			if !dbRecord.NodeID.Valid || (dbRecord.NodeID.Int64 == tx.GetNodeID()) {
+				filteredRecords = append(filteredRecords, dbRecord)
+			}
+		}
+
+		if len(filteredRecords) == 0 {
+			return api.StatusErrorf(http.StatusNotFound, "Network forward not found")
+		}
+
+		if len(filteredRecords) > 1 {
+			return api.StatusErrorf(http.StatusConflict, "Network forward found on more than one cluster member. Please target a specific member")
+		}
+
+		forwardID = filteredRecords[0].ID
+		forward, err = filteredRecords[0].ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
@@ -2836,20 +3027,40 @@ func (n *bridge) ForwardDelete(listenAddress string, clientType request.ClientTy
 	defer reverter.Fail()
 
 	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.DeleteNetworkForward(ctx, n.ID(), forwardID)
+		return dbCluster.DeleteNetworkForward(ctx, tx.Tx(), n.ID(), forwardID)
 	})
 	if err != nil {
 		return err
 	}
 
 	reverter.Add(func() {
-		newForward := api.NetworkForwardsPost{
-			NetworkForwardPut: forward.NetworkForwardPut,
-			ListenAddress:     forward.ListenAddress,
-		}
-
 		_ = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			_, _ = tx.CreateNetworkForward(ctx, n.ID(), memberSpecific, &newForward)
+			nodeID := sql.NullInt64{
+				Valid: memberSpecific,
+				Int64: tx.GetNodeID(),
+			}
+
+			dbRecord := dbCluster.NetworkForward{
+				NetworkID:     n.ID(),
+				NodeID:        nodeID,
+				ListenAddress: forward.ListenAddress,
+				Description:   forward.Description,
+				Ports:         forward.Ports,
+			}
+
+			if forward.Ports == nil {
+				dbRecord.Ports = []api.NetworkForwardPort{}
+			}
+
+			forwardID, err = dbCluster.CreateNetworkForward(ctx, tx.Tx(), dbRecord)
+			if err != nil {
+				return err
+			}
+
+			err = dbCluster.CreateNetworkForwardConfig(ctx, tx.Tx(), forwardID, forward.Config)
+			if err != nil {
+				return err
+			}
 
 			return nil
 		})
@@ -2876,14 +3087,30 @@ func (n *bridge) ForwardDelete(listenAddress string, clientType request.ClientTy
 
 // forwardSetupFirewall applies all network address forwards defined for this network and this member.
 func (n *bridge) forwardSetupFirewall() error {
-	memberSpecific := true // Get all forwards for this cluster member.
-
 	var forwards map[int64]*api.NetworkForward
 
 	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
-		forwards, err = tx.GetNetworkForwards(ctx, n.ID(), memberSpecific)
+		networkID := n.ID()
+		dbRecords, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{
+			NetworkID: &networkID,
+		})
+		if err != nil {
+			return err
+		}
+
+		forwards = make(map[int64]*api.NetworkForward)
+		for _, dbRecord := range dbRecords {
+			if !dbRecord.NodeID.Valid || (dbRecord.NodeID.Int64 == tx.GetNodeID()) {
+				forward, err := dbRecord.ToAPI(ctx, tx.Tx())
+				if err != nil {
+					return err
+				}
+
+				forwards[dbRecord.ID] = forward
+			}
+		}
 
 		return err
 	})

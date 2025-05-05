@@ -892,14 +892,27 @@ func (n *ovn) Validate(config map[string]string) error {
 	}
 
 	// Check any existing network forward target addresses are suitable for this network's subnet.
-	memberSpecific := false // OVN doesn't support per-member forwards.
-
 	var forwards map[int64]*api.NetworkForward
-
 	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		forwards, err = tx.GetNetworkForwards(ctx, n.ID(), memberSpecific)
+		networkID := n.ID()
+		dbRecords, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{
+			NetworkID: &networkID,
+		})
+		if err != nil {
+			return err
+		}
 
-		return err
+		forwards = make(map[int64]*api.NetworkForward)
+		for _, dbRecord := range dbRecords {
+			forward, err := dbRecord.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			forwards[dbRecord.ID] = forward
+		}
+
+		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("Failed loading network forwards: %w", err)
@@ -3417,16 +3430,16 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 		}
 
 		// Delete any network forwards and load balancers.
-		memberSpecific := false // OVN doesn't support per-member forwards.
-
-		var forwardListenAddresses map[int64]string
+		forwardListenAddresses := map[int64]string{}
 		loadBalancerListenAddresses := map[int64]string{}
 
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			networkID := n.ID()
 
 			// Get the forward addresses.
-			forwardListenAddresses, err = tx.GetNetworkForwardListenAddresses(ctx, networkID, memberSpecific)
+			dbForwards, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{
+				NetworkID: &networkID,
+			})
 			if err != nil {
 				return fmt.Errorf("Failed loading network forwards: %w", err)
 			}
@@ -3437,6 +3450,10 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 			})
 			if err != nil {
 				return fmt.Errorf("Failed loading network load balancers: %w", err)
+			}
+
+			for _, fwd := range dbForwards {
+				forwardListenAddresses[fwd.ID] = fwd.ListenAddress
 			}
 
 			for _, lb := range dbLoadBalancers {
@@ -5481,7 +5498,7 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 
 		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			// Check if there is an existing forward using the same listen address.
-			_, _, err := tx.GetNetworkForward(ctx, n.ID(), memberSpecific, forward.ListenAddress)
+			_, err := dbCluster.GetNetworkForward(ctx, tx.Tx(), n.ID(), forward.ListenAddress)
 
 			return err
 		})
@@ -5567,9 +5584,34 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			// Create forward DB record.
-			forwardID, err = tx.CreateNetworkForward(ctx, n.ID(), memberSpecific, &forward)
+			nodeID := sql.NullInt64{
+				Valid: memberSpecific,
+				Int64: tx.GetNodeID(),
+			}
 
-			return err
+			dbRecord := dbCluster.NetworkForward{
+				NetworkID:     n.ID(),
+				NodeID:        nodeID,
+				ListenAddress: forward.ListenAddress,
+				Description:   forward.Description,
+				Ports:         forward.Ports,
+			}
+
+			if forward.Ports == nil {
+				dbRecord.Ports = []api.NetworkForwardPort{}
+			}
+
+			forwardID, err = dbCluster.CreateNetworkForward(ctx, tx.Tx(), dbRecord)
+			if err != nil {
+				return err
+			}
+
+			err = dbCluster.CreateNetworkForwardConfig(ctx, tx.Tx(), forwardID, forward.Config)
+			if err != nil {
+				return err
+			}
+
+			return nil
 		})
 		if err != nil {
 			return err
@@ -5577,7 +5619,7 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 
 		reverter.Add(func() {
 			_ = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.DeleteNetworkForward(ctx, n.ID(), forwardID)
+				return dbCluster.DeleteNetworkForward(ctx, tx.Tx(), n.ID(), forwardID)
 			})
 
 			_ = n.ovnnb.DeleteLoadBalancer(context.TODO(), n.getLoadBalancerName(forward.ListenAddress))
@@ -5646,17 +5688,25 @@ func (n *ovn) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, cli
 	defer reverter.Fail()
 
 	if clientType == request.ClientTypeNormal {
-		memberSpecific := false // OVN doesn't support per-member forwards.
-
 		var curForwardID int64
 		var curForward *api.NetworkForward
 
 		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			var err error
 
-			curForwardID, curForward, err = tx.GetNetworkForward(ctx, n.ID(), memberSpecific, listenAddress)
+			// No memberSpecific filtering needed because OVN doesn't support per-member-forwards
+			dbRecord, err := dbCluster.GetNetworkForward(ctx, tx.Tx(), n.ID(), listenAddress)
+			if err != nil {
+				return err
+			}
 
-			return err
+			curForwardID = dbRecord.ID
+			curForward, err = dbRecord.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			return nil
 		})
 		if err != nil {
 			return err
@@ -5703,7 +5753,24 @@ func (n *ovn) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, cli
 		})
 
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.UpdateNetworkForward(ctx, n.ID(), curForwardID, &newForward.NetworkForwardPut)
+			fwd := dbCluster.NetworkForward{
+				NetworkID:     n.ID(),
+				ListenAddress: listenAddress,
+				Description:   newForward.Description,
+				Ports:         newForward.Ports,
+			}
+
+			err = dbCluster.UpdateNetworkForward(ctx, tx.Tx(), n.ID(), listenAddress, fwd)
+			if err != nil {
+				return err
+			}
+
+			err = dbCluster.UpdateNetworkForwardConfig(ctx, tx.Tx(), curForwardID, newForward.Config)
+			if err != nil {
+				return err
+			}
+
+			return nil
 		})
 		if err != nil {
 			return err
@@ -5711,7 +5778,24 @@ func (n *ovn) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, cli
 
 		reverter.Add(func() {
 			_ = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.UpdateNetworkForward(ctx, n.ID(), curForwardID, &curForward.NetworkForwardPut)
+				fwd := dbCluster.NetworkForward{
+					NetworkID:     n.ID(),
+					ListenAddress: listenAddress,
+					Description:   curForward.Description,
+					Ports:         curForward.Ports,
+				}
+
+				err = dbCluster.UpdateNetworkForward(ctx, tx.Tx(), n.ID(), listenAddress, fwd)
+				if err != nil {
+					return err
+				}
+
+				err = dbCluster.UpdateNetworkForwardConfig(ctx, tx.Tx(), curForwardID, curForward.Config)
+				if err != nil {
+					return err
+				}
+
+				return nil
 			})
 		})
 
@@ -5742,17 +5826,25 @@ func (n *ovn) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, cli
 // ForwardDelete deletes a network forward.
 func (n *ovn) ForwardDelete(listenAddress string, clientType request.ClientType) error {
 	if clientType == request.ClientTypeNormal {
-		memberSpecific := false // OVN doesn't support per-member forwards.
-
 		var forwardID int64
 		var forward *api.NetworkForward
 
 		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			var err error
 
-			forwardID, forward, err = tx.GetNetworkForward(ctx, n.ID(), memberSpecific, listenAddress)
+			// No memberSpecific filtering needed because OVN doesn't support per-member-forwards
+			dbRecord, err := dbCluster.GetNetworkForward(ctx, tx.Tx(), n.ID(), listenAddress)
+			if err != nil {
+				return err
+			}
 
-			return err
+			forwardID = dbRecord.ID
+			forward, err = dbRecord.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			return nil
 		})
 		if err != nil {
 			return err
@@ -5774,7 +5866,7 @@ func (n *ovn) ForwardDelete(listenAddress string, clientType request.ClientType)
 
 		// Delete the database records.
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.DeleteNetworkForward(ctx, n.ID(), forwardID)
+			return dbCluster.DeleteNetworkForward(ctx, tx.Tx(), n.ID(), forwardID)
 		})
 		if err != nil {
 			return err
