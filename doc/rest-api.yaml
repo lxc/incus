@@ -1216,6 +1216,13 @@ definitions:
         x-go-package: github.com/lxc/incus/v6/shared/api
     InitLocalPreseed:
         properties:
+            certificates:
+                description: Certificates to add
+                example: PEM encoded certificate
+                items:
+                    $ref: '#/definitions/CertificatesPost'
+                type: array
+                x-go-name: Certificates
             config:
                 additionalProperties:
                     type: string
