@@ -470,9 +470,10 @@ func (c *cmdMigrate) run(_ *cobra.Command, _ []string) error {
 What would you like to create?
 1) Container
 2) Virtual Machine
-3) Custom Volume
+3) Virtual Machine (from .ova)
+4) Custom Volume
 
-Please enter the number of your choice: `, 1, 3, "", nil)
+Please enter the number of your choice: `, 1, 4, "", nil)
 	if err != nil {
 		return err
 	}
@@ -484,6 +485,8 @@ Please enter the number of your choice: `, 1, 3, "", nil)
 	case 2:
 		migrator = NewInstanceMigration(ctx, server, c.global.asker, c.flagRsyncArgs, MigrationTypeVM)
 	case 3:
+		migrator = NewOVAMigration(ctx, server, c.global.asker, c.flagRsyncArgs)
+	case 4:
 		migrator = NewVolumeMigration(ctx, server, c.global.asker, c.flagRsyncArgs)
 	}
 
