@@ -23,7 +23,7 @@ import (
 //generate-database:mapper stmt -e NetworkACL create table=networks_acls
 //generate-database:mapper stmt -e NetworkACL rename table=networks_acls
 //generate-database:mapper stmt -e NetworkACL update table=networks_acls
-//generate-database:mapper stmt -e NetworkACL delete-by-Project-and-Name table=networks_acls
+//generate-database:mapper stmt -e NetworkACL delete-by-ID table=networks_acls
 //
 // Methods:
 //generate-database:mapper method -i -e NetworkACL GetMany references=Config table=networks_acls
@@ -33,7 +33,7 @@ import (
 //generate-database:mapper method -i -e NetworkACL ID table=networks_acls
 //generate-database:mapper method -i -e NetworkACL Rename table=networks_acls
 //generate-database:mapper method -i -e NetworkACL Update references=Config table=networks_acls
-//generate-database:mapper method -i -e NetworkACL DeleteOne-by-Project-and-Name table=networks_acls
+//generate-database:mapper method -i -e NetworkACL DeleteOne-by-ID table=networks_acls
 
 // NetworkACL is a value object holding db-related details about a network ACL.
 type NetworkACL struct {

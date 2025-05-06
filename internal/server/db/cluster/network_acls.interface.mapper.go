@@ -47,6 +47,6 @@ type NetworkACLGenerated interface {
 	UpdateNetworkACL(ctx context.Context, db tx, project string, name string, object NetworkACL) error
 
 	// DeleteNetworkACL deletes the NetworkACL matching the given key parameters.
-	// generator: NetworkACL DeleteOne-by-Project-and-Name
-	DeleteNetworkACL(ctx context.Context, db dbtx, project string, name string) error
+	// generator: NetworkACL DeleteOne-by-ID
+	DeleteNetworkACL(ctx context.Context, db dbtx, id int) error
 }
