@@ -477,6 +477,7 @@ var APIExtensions = []string{
 	"instance_nic_routed_host_tables",
 	"instance_publish_split",
 	"init_preseed_certificates",
+	"custom_volume_sftp",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

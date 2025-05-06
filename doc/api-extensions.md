@@ -2769,3 +2769,7 @@ This adds support for creating a split format image out of an existing instance.
 ## `init_preseed_certificates`
 
 This API extension provides the ability to configure certificates in preseed init.
+
+## `custom_volume_sftp`
+
+This adds the SFTP API to custom storage volumes.
