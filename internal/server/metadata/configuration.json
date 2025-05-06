@@ -4295,6 +4295,13 @@
 						}
 					},
 					{
+						"ipv4.gateway.hwaddr": {
+							"longdesc": "",
+							"shortdesc": "MAC address of the gateway (to avoid discovery)",
+							"type": "string"
+						}
+					},
+					{
 						"ipv4.ovn.ranges": {
 							"condition": "-",
 							"longdesc": "",
@@ -4328,6 +4335,13 @@
 							"condition": "standard mode",
 							"longdesc": "",
 							"shortdesc": "IPv6 address for the gateway and network (CIDR)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.gateway.hwaddr": {
+							"longdesc": "",
+							"shortdesc": "MAC address of the gateway (to avoid discovery)",
 							"type": "string"
 						}
 					},
