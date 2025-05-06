@@ -476,6 +476,7 @@ var APIExtensions = []string{
 	"memory_hotplug",
 	"instance_nic_routed_host_tables",
 	"instance_publish_split",
+	"init_preseed_certificates",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
