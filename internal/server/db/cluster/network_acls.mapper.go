@@ -74,8 +74,8 @@ UPDATE networks_acls
  WHERE id = ?
 `)
 
-var networkACLDeleteByProjectAndName = RegisterStmt(`
-DELETE FROM networks_acls WHERE project_id = (SELECT projects.id FROM projects WHERE projects.name = ?) AND name = ?
+var networkACLDeleteByID = RegisterStmt(`
+DELETE FROM networks_acls WHERE id = ?
 `)
 
 // networkACLColumns returns a string of column names to be used with a SELECT statement for the entity.
@@ -564,18 +564,18 @@ func UpdateNetworkACLConfig(ctx context.Context, db tx, networkACLID int64, conf
 }
 
 // DeleteNetworkACL deletes the NetworkACL matching the given key parameters.
-// generator: NetworkACL DeleteOne-by-Project-and-Name
-func DeleteNetworkACL(ctx context.Context, db dbtx, project string, name string) (_err error) {
+// generator: NetworkACL DeleteOne-by-ID
+func DeleteNetworkACL(ctx context.Context, db dbtx, id int) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "NetworkACL")
 	}()
 
-	stmt, err := Stmt(db, networkACLDeleteByProjectAndName)
+	stmt, err := Stmt(db, networkACLDeleteByID)
 	if err != nil {
-		return fmt.Errorf("Failed to get \"networkACLDeleteByProjectAndName\" prepared statement: %w", err)
+		return fmt.Errorf("Failed to get \"networkACLDeleteByID\" prepared statement: %w", err)
 	}
 
-	result, err := stmt.Exec(project, name)
+	result, err := stmt.Exec(id)
 	if err != nil {
 		return fmt.Errorf("Delete \"networks_acls\": %w", err)
 	}

@@ -774,7 +774,7 @@ func (d *common) Delete() error {
 	}
 
 	return d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.DeleteNetworkACL(ctx, d.id)
+		return dbCluster.DeleteNetworkACL(ctx, tx.Tx(), int(d.id))
 	})
 }
 
