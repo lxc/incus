@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"slices"
 	"sort"
@@ -750,7 +751,17 @@ func (d *common) Rename(newName string) error {
 	}
 
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.RenameNetworkACL(ctx, d.id, newName)
+		idInt := int(d.id)
+		acls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{ID: &idInt})
+		if err != nil {
+			return err
+		}
+
+		if len(acls) == 0 {
+			return api.StatusErrorf(http.StatusNotFound, "Network ACL not found")
+		}
+
+		return dbCluster.RenameNetworkACL(ctx, tx.Tx(), acls[0].Project, acls[0].Name, newName)
 	})
 	if err != nil {
 		return err
