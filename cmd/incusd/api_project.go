@@ -260,12 +260,16 @@ func projectUsedBy(ctx context.Context, tx *db.ClusterTx, project *cluster.Proje
 
 	usedBy = append(usedBy, networks...)
 
-	networkACLs, err := tx.GetNetworkACLURIs(ctx, project.ID, project.Name)
-	if err != nil {
-		return nil, err
-	}
 
-	usedBy = append(usedBy, networkACLs...)
+       acls, err := cluster.GetNetworkACLs(ctx, tx.Tx(), cluster.NetworkACLFilter{Project: &project.Name})
+       if err != nil {
+               return nil, fmt.Errorf("Unable to get URIs for network acl: %w", err)
+       }
+
+       for _, acl := range acls {
+		apiNetworkACL := api.NetworkACL{NetworkACLPost: api.NetworkACLPost{Name: acl.Name}}
+		usedBy = append(usedBy, apiNetworkACL.URL(version.APIVersion, project.Name).String())
+       }
 
 	networkZones, err := tx.GetNetworkZoneURIs(ctx, project.ID, project.Name)
 	if err != nil {
