@@ -44,8 +44,8 @@ func (r *ProtocolIncus) GetNetworkAddressSets() ([]api.NetworkAddressSet, error)
 
 // GetNetworkAddressSetsAllProjects returns a list of network address set structs across all projects.
 func (r *ProtocolIncus) GetNetworkAddressSetsAllProjects() ([]api.NetworkAddressSet, error) {
-	if !r.HasExtension("network_address_sets_all_projects") {
-		return nil, fmt.Errorf(`The server is missing the required "network_address_sets_all_projects" API extension`)
+	if !r.HasExtension("network_address_set") {
+		return nil, fmt.Errorf(`The server is missing the required "network_address_set" API extension`)
 	}
 
 	addressSets := []api.NetworkAddressSet{}
