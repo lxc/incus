@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/lxc/incus/v6/internal/server/db/cluster"
-	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 )
 
@@ -152,23 +151,4 @@ func (c *ClusterTx) DeleteNetworkACL(ctx context.Context, id int64) error {
 	}
 
 	return cluster.DeleteNetworkACL(ctx, c.tx, acls[0].Project, acls[0].Name)
-}
-
-// GetNetworkACLURIs returns the URIs for the network ACLs with the given project.
-func (c *ClusterTx) GetNetworkACLURIs(ctx context.Context, projectID int, project string) ([]string, error) {
-	filter := cluster.NetworkACLFilter{Project: &project}
-	acls, err := cluster.GetNetworkACLs(ctx, c.tx, filter)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to get URIs for network acl: %w", err)
-	}
-
-	uris := make([]string, len(acls))
-	for i, acl := range acls {
-		uris[i] = api.NewURL().
-			Path(version.APIVersion, "network-acls", acl.Name).
-			Project(project).
-			String()
-	}
-
-	return uris, nil
 }
