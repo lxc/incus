@@ -54,9 +54,28 @@ func Create(s *state.State, projectName string, aclInfo *api.NetworkACLsPost) er
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Insert DB record.
-		_, err := tx.CreateNetworkACL(ctx, projectName, aclInfo)
 
-		return err
+		acl := cluster.NetworkACL{
+			Project:     projectName,
+			Name:        aclInfo.Name,
+			Description: aclInfo.Description,
+			Ingress:     aclInfo.Ingress,
+			Egress:      aclInfo.Egress,
+		}
+
+		id, err := cluster.CreateNetworkACL(ctx, tx.Tx(), acl)
+		if err != nil {
+			return err
+		}
+
+		if aclInfo.Config != nil {
+			err := cluster.CreateNetworkACLConfig(ctx, tx.Tx(), id, aclInfo.Config)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
