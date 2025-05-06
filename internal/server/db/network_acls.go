@@ -46,21 +46,6 @@ func (c *ClusterTx) GetNetworkACL(ctx context.Context, projectName, name string)
 	return int64(acl.ID), apiACL, nil
 }
 
-// GetNetworkACLNameAndProjectWithID returns the network ACL name and project name for the given ID.
-func (c *ClusterTx) GetNetworkACLNameAndProjectWithID(ctx context.Context, networkACLID int) (string, string, error) {
-	filter := cluster.NetworkACLFilter{ID: &networkACLID}
-	acls, err := cluster.GetNetworkACLs(ctx, c.tx, filter)
-	if err != nil {
-		return "", "", err
-	}
-
-	if len(acls) == 0 {
-		return "", "", api.StatusErrorf(http.StatusNotFound, "Network ACL not found")
-	}
-
-	return acls[0].Name, acls[0].Project, nil
-}
-
 // UpdateNetworkACL updates the Network ACL with the given ID.
 func (c *ClusterTx) UpdateNetworkACL(ctx context.Context, id int64, put *api.NetworkACLPut) error {
 	// Fetch existing to recover project and name.
