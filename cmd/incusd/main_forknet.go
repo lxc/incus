@@ -226,6 +226,7 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/dhcpv6/nclient6"
+	"github.com/insomniacslk/dhcp/iana"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -497,6 +498,50 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 	if err != nil {
 		logger.WithError(err).Error("Giving up on DHCPv6, error during DHCPv6 Solicit")
 		errorChannel <- err
+		return
+	}
+
+	// Check if we're dealing with stateless DHCPv6.
+	if advertisement.Options.Status().StatusCode == iana.StatusNoAddrsAvail {
+		// Get interface details.
+		i, err := net.InterfaceByName(iface)
+		if err != nil {
+			logger.WithError(err).Error("Giving up on DHCPv6, couldn't get interface details")
+			errorChannel <- err
+			return
+		}
+
+		// Try to get some information.
+		infoRequest, err := dhcpv6.NewSolicit(i.HardwareAddr)
+		if err != nil {
+			logger.WithError(err).Error("Giving up on DHCPv6, error preparing DHCPv6 Info Request")
+			errorChannel <- err
+			return
+		}
+
+		infoRequest.MessageType = dhcpv6.MessageTypeInformationRequest
+		infoRequest.Options.Del(dhcpv6.OptionIANA)
+		reply, err := client.SendAndRead(context.Background(), nclient6.AllDHCPRelayAgentsAndServers, infoRequest, nclient6.IsMessageType(dhcpv6.MessageTypeReply))
+		if err != nil {
+			logger.WithError(err).Error("Giving up on DHCPv6, error during DHCPv6 Info Request")
+			errorChannel <- err
+			return
+		}
+
+		// Update DNS.
+		c.applyDNSMu.Lock()
+		c.dhcpv6Lease = reply
+		c.applyDNSMu.Unlock()
+
+		err = c.dhcpApplyDNS(logger)
+		if err != nil {
+			logger.WithError(err).Error("Giving up on DHCPv6, error applying DNS")
+			errorChannel <- err
+			return
+		}
+
+		// We're dealing with stateless DHCPv6, no need to keep running.
+		errorChannel <- nil
 		return
 	}
 
