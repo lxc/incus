@@ -24,6 +24,7 @@ type NAT struct {
 	ExternalIP        string            `ovsdb:"external_ip"`
 	ExternalMAC       *string           `ovsdb:"external_mac"`
 	ExternalPortRange string            `ovsdb:"external_port_range"`
+	GatewayPort       *string           `ovsdb:"gateway_port"`
 	LogicalIP         string            `ovsdb:"logical_ip"`
 	LogicalPort       *string           `ovsdb:"logical_port"`
 	Options           map[string]string `ovsdb:"options"`

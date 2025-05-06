@@ -40,12 +40,13 @@ func FullDatabaseModel() (model.ClientDBModel, error) {
 		"Port_Group":                  &PortGroup{},
 		"QoS":                         &QoS{},
 		"SSL":                         &SSL{},
+		"Static_MAC_Binding":          &StaticMACBinding{},
 	})
 }
 
 var schema = `{
   "name": "OVN_Northbound",
-  "version": "6.1.0",
+  "version": "6.3.0",
   "tables": {
     "ACL": {
       "columns": {
@@ -1560,6 +1561,17 @@ var schema = `{
         "external_port_range": {
           "type": "string"
         },
+        "gateway_port": {
+          "type": {
+            "key": {
+              "type": "uuid",
+              "refTable": "Logical_Router_Port",
+              "refType": "weak"
+            },
+            "min": 0,
+            "max": 1
+          }
+        },
         "logical_ip": {
           "type": "string"
         },
@@ -1832,6 +1844,29 @@ var schema = `{
           "type": "string"
         }
       }
+    },
+    "Static_MAC_Binding": {
+      "columns": {
+        "ip": {
+          "type": "string"
+        },
+        "logical_port": {
+          "type": "string"
+        },
+        "mac": {
+          "type": "string"
+        },
+        "override_dynamic_mac": {
+          "type": "boolean"
+        }
+      },
+      "indexes": [
+        [
+          "logical_port",
+          "ip"
+        ]
+      ],
+      "isRoot": true
     }
   }
 }`
