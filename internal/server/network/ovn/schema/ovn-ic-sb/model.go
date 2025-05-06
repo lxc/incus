@@ -27,7 +27,7 @@ func FullDatabaseModel() (model.ClientDBModel, error) {
 
 var schema = `{
   "name": "OVN_IC_Southbound",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "tables": {
     "Availability_Zone": {
       "columns": {
@@ -401,6 +401,15 @@ var schema = `{
           "type": "string"
         }
       },
+      "indexes": [
+        [
+          "transit_switch",
+          "availability_zone",
+          "route_table",
+          "ip_prefix",
+          "nexthop"
+        ]
+      ],
       "isRoot": true
     },
     "SSL": {
