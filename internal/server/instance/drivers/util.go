@@ -9,10 +9,12 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/server/cluster"
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/cfg"
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/qmp"
@@ -42,36 +44,15 @@ func GetClusterCPUFlags(ctx context.Context, s *state.State, servers []string, a
 	coreCount := 0
 
 	for _, node := range nodes {
-		// Skip if not in the list.
+		// Skip if not in the list of servers we're interested in.
 		if servers != nil && !slices.Contains(servers, node.Name) {
 			continue
 		}
 
-		var res *api.Resources
-		if node.Name == s.ServerName {
-			// Get our own local data.
-			res, err = resources.GetResources()
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			// Attempt to load the cached resources.
-			resourcesPath := internalUtil.CachePath("resources", fmt.Sprintf("%s.yaml", node.Name))
-
-			data, err := os.ReadFile(resourcesPath)
-			if err != nil {
-				if errors.Is(err, fs.ErrNotExist) {
-					continue
-				}
-
-				return nil, err
-			}
-
-			res = &api.Resources{}
-			err = yaml.Unmarshal(data, res)
-			if err != nil {
-				return nil, err
-			}
+		// Get node resources.
+		res, err := getNodeResources(s, node.Name)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to get resources for %s: %w", node.Name, err)
 		}
 
 		// Skip if not the correct architecture.
@@ -255,4 +236,52 @@ func findNextMemoryIndex(monitor *qmp.Monitor) (int, error) {
 	}
 
 	return memIndex + 1, nil
+}
+
+// getNodeResources updates the cluster resource cache..
+func getNodeResources(s *state.State, name string) (*api.Resources, error) {
+	resourcesPath := internalUtil.CachePath("resources", fmt.Sprintf("%s.yaml", name))
+
+	// Check if cache is recent (less than 24 hours).
+	fi, err := os.Stat(resourcesPath)
+	if err == nil && time.Since(fi.ModTime()) < 24*time.Hour {
+		data, err := os.ReadFile(resourcesPath)
+		if err == nil {
+			var res api.Resources
+			if yaml.Unmarshal(data, &res) == nil {
+				return &res, nil
+			}
+		}
+	} else if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+
+	var res *api.Resources
+	if name == s.ServerName {
+		// Handle the local node.
+		// We still cache the data as it's not particularly cheap to get.
+		res, err = resources.GetResources()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Handle remote nodes.
+		client, err := cluster.Connect(name, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
+		if err != nil {
+			return nil, err
+		}
+
+		res, err = client.GetServerResources()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Cache the data.
+	data, err := yaml.Marshal(res)
+	if err == nil {
+		_ = os.WriteFile(resourcesPath, data, 0o600)
+	}
+
+	return res, nil
 }
