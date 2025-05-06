@@ -120,19 +120,3 @@ func (c *ClusterTx) UpdateNetworkACL(ctx context.Context, id int64, put *api.Net
 
 	return nil
 }
-
-// RenameNetworkACL renames a Network ACL.
-func (c *ClusterTx) RenameNetworkACL(ctx context.Context, id int64, newName string) error {
-	idInt := int(id)
-	filter := cluster.NetworkACLFilter{ID: &idInt}
-	acls, err := cluster.GetNetworkACLs(ctx, c.tx, filter)
-	if err != nil {
-		return err
-	}
-
-	if len(acls) == 0 {
-		return api.StatusErrorf(http.StatusNotFound, "Network ACL not found")
-	}
-
-	return cluster.RenameNetworkACL(ctx, c.tx, acls[0].Project, acls[0].Name, newName)
-}
