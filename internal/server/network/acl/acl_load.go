@@ -17,13 +17,13 @@ import (
 
 // LoadByName loads and initializes a Network ACL from the database by project and name.
 func LoadByName(s *state.State, projectName string, name string) (NetworkACL, error) {
-	var id int64
+	var id int
 	var aclInfo *api.NetworkACL
 
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
-		id, aclInfo, err = tx.GetNetworkACL(ctx, projectName, name)
+		id, aclInfo, err = cluster.GetNetworkACLAPI(ctx, tx.Tx(), projectName, name)
 
 		return err
 	})
@@ -32,7 +32,7 @@ func LoadByName(s *state.State, projectName string, name string) (NetworkACL, er
 	}
 
 	var acl NetworkACL = &common{} // Only a single driver currently.
-	acl.init(s, id, projectName, aclInfo)
+	acl.init(s, int64(id), projectName, aclInfo)
 
 	return acl, nil
 }
@@ -54,9 +54,28 @@ func Create(s *state.State, projectName string, aclInfo *api.NetworkACLsPost) er
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Insert DB record.
-		_, err := tx.CreateNetworkACL(ctx, projectName, aclInfo)
 
-		return err
+		acl := cluster.NetworkACL{
+			Project:     projectName,
+			Name:        aclInfo.Name,
+			Description: aclInfo.Description,
+			Ingress:     aclInfo.Ingress,
+			Egress:      aclInfo.Egress,
+		}
+
+		id, err := cluster.CreateNetworkACL(ctx, tx.Tx(), acl)
+		if err != nil {
+			return err
+		}
+
+		if aclInfo.Config != nil {
+			err := cluster.CreateNetworkACLConfig(ctx, tx.Tx(), id, aclInfo.Config)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
@@ -71,11 +90,17 @@ func Exists(s *state.State, projectName string, name ...string) error {
 	var existingACLNames []string
 
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		var err error
+		acls, err := cluster.GetNetworkACLs(ctx, tx.Tx(), cluster.NetworkACLFilter{Project: &projectName})
+		if err != nil {
+			return err
+		}
 
-		existingACLNames, err = tx.GetNetworkACLs(ctx, projectName)
+		existingACLNames = make([]string, len(acls))
+		for i, acl := range acls {
+			existingACLNames[i] = acl.Name
+		}
 
-		return err
+		return nil
 	})
 	if err != nil {
 		return err
@@ -196,10 +221,17 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 	var aclNames []string
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Find ACLs that have rules that reference the ACLs.
-		aclNames, err = tx.GetNetworkACLs(ctx, aclProjectName)
+		acls, err := cluster.GetNetworkACLs(ctx, tx.Tx(), cluster.NetworkACLFilter{Project: &aclProjectName})
+		if err != nil {
+			return err
+		}
 
-		return err
+		aclNames = make([]string, len(acls))
+		for i, acl := range acls {
+			aclNames[i] = acl.Name
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
@@ -207,7 +239,7 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		for _, aclName := range aclNames {
-			_, aclInfo, err := tx.GetNetworkACL(ctx, aclProjectName, aclName)
+			_, aclInfo, err := cluster.GetNetworkACLAPI(ctx, tx.Tx(), aclProjectName, aclName)
 			if err != nil {
 				return err
 			}

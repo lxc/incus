@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"slices"
 	"sort"
@@ -315,9 +316,17 @@ func (d *common) validateRule(direction ruleDirection, rule api.NetworkACLRule) 
 		var err error
 
 		// Get map of ACL names to DB IDs (used for generating OVN port group names).
-		acls, err = tx.GetNetworkACLIDsByNames(ctx, d.Project())
+		acls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &d.projectName})
+		if err != nil {
+			return err
+		}
 
-		return err
+		out := make(map[string]int64, len(acls))
+		for _, acl := range acls {
+			out[acl.Name] = int64(acl.ID)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("Failed getting network ACLs for security ACL subject validation: %w", err)
@@ -621,7 +630,7 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			// Update database. Its important this occurs before we attempt to apply to networks using the ACL
 			// as usage functions will inspect the database.
-			return tx.UpdateNetworkACL(ctx, d.id, config)
+			return dbCluster.UpdateNetworkACLAPI(ctx, tx.Tx(), d.id, config)
 		})
 		if err != nil {
 			return err
@@ -633,7 +642,7 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 
 		reverter.Add(func() {
 			_ = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.UpdateNetworkACL(ctx, d.id, &oldConfig)
+				return dbCluster.UpdateNetworkACLAPI(ctx, tx.Tx(), d.id, &oldConfig)
 			})
 
 			d.info.NetworkACLPut = oldConfig
@@ -705,9 +714,17 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 
 		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			// Get map of ACL names to DB IDs (used for generating OVN port group names).
-			aclNameIDs, err = tx.GetNetworkACLIDsByNames(ctx, d.Project())
+			acls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &d.projectName})
+			if err != nil {
+				return err
+			}
 
-			return err
+			aclNameIDs = make(map[string]int64, len(acls))
+			for _, acl := range acls {
+				aclNameIDs[acl.Name] = int64(acl.ID)
+			}
+
+			return nil
 		})
 		if err != nil {
 			return fmt.Errorf("Failed getting network ACL IDs for security ACL update: %w", err)
@@ -784,7 +801,17 @@ func (d *common) Rename(newName string) error {
 	}
 
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.RenameNetworkACL(ctx, d.id, newName)
+		idInt := int(d.id)
+		acls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{ID: &idInt})
+		if err != nil {
+			return err
+		}
+
+		if len(acls) == 0 {
+			return api.StatusErrorf(http.StatusNotFound, "Network ACL not found")
+		}
+
+		return dbCluster.RenameNetworkACL(ctx, tx.Tx(), acls[0].Project, acls[0].Name, newName)
 	})
 	if err != nil {
 		return err
@@ -808,7 +835,7 @@ func (d *common) Delete() error {
 	}
 
 	return d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.DeleteNetworkACL(ctx, d.id)
+		return dbCluster.DeleteNetworkACL(ctx, tx.Tx(), int(d.id))
 	})
 }
 
