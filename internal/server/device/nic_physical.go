@@ -131,7 +131,7 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 		d.config["parent"] = netConfig["parent"]
 
 		// If parent is bridge, ensure it's managed
-		isParentBridge := util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"]))
+		isParentBridge := d.config["parent"] != "" && util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"]))
 		if isParentBridge && d.network == nil {
 			return fmt.Errorf("Error parent bridges expected to be managed")
 		}
@@ -197,14 +197,23 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 	networkCreateSharedDeviceLock.Lock()
 	defer networkCreateSharedDeviceLock.Unlock()
 
+	// Make sure parent is defined before we check if it exists
+	if d.config["parent"] == "" {
+		return nil, fmt.Errorf("Missing parent device name")
+	}
+
 	isParentBridge := util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"]))
 	if isParentBridge {
 		bridgedConfig := d.config.Clone()
 		bridgedConfig["nictype"] = "bridged"
-		bridged, err := newByType(d.state, d.inst.Project().Name, d.config)
+
+		// Create and properly initialize the bridged device
+		bridged := &nicBridged{}
+		err := bridged.init(d.inst, d.state, d.name, bridgedConfig, d.volatileGet, d.volatileSet)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Failed to initialize bridged device: %w", err)
 		}
+
 		return bridged.Start()
 	}
 
@@ -408,10 +417,14 @@ func (d *nicPhysical) Stop() (*deviceConfig.RunConfig, error) {
 	if isParentBridge {
 		bridgedConfig := d.config.Clone()
 		bridgedConfig["nictype"] = "bridged"
-		bridged, err := newByType(d.state, d.inst.Project().Name, d.config)
+
+		// Create and properly initialize the bridged device
+		bridged := &nicBridged{}
+		err := bridged.init(d.inst, d.state, d.name, bridgedConfig, d.volatileGet, d.volatileSet)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Failed to initialize bridged device: %w", err)
 		}
+
 		return bridged.Stop()
 	}
 
