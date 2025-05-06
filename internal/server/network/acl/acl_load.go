@@ -17,13 +17,13 @@ import (
 
 // LoadByName loads and initializes a Network ACL from the database by project and name.
 func LoadByName(s *state.State, projectName string, name string) (NetworkACL, error) {
-	var id int64
+	var id int
 	var aclInfo *api.NetworkACL
 
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
-		id, aclInfo, err = tx.GetNetworkACL(ctx, projectName, name)
+		id, aclInfo, err = cluster.GetNetworkACLAPI(ctx, tx.Tx(), projectName, name)
 
 		return err
 	})
@@ -32,7 +32,7 @@ func LoadByName(s *state.State, projectName string, name string) (NetworkACL, er
 	}
 
 	var acl NetworkACL = &common{} // Only a single driver currently.
-	acl.init(s, id, projectName, aclInfo)
+	acl.init(s, int64(id), projectName, aclInfo)
 
 	return acl, nil
 }
@@ -239,7 +239,7 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		for _, aclName := range aclNames {
-			_, aclInfo, err := tx.GetNetworkACL(ctx, aclProjectName, aclName)
+			_, aclInfo, err := cluster.GetNetworkACLAPI(ctx, tx.Tx(), aclProjectName, aclName)
 			if err != nil {
 				return err
 			}

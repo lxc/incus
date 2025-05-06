@@ -152,7 +152,7 @@ func AddressSetUsedBy(s *state.State, projectName string, usageFunc func(aclName
 	for _, aclName := range aclNames {
 		var aclInfo *api.NetworkACL
 		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			_, aclInfo, err = tx.GetNetworkACL(ctx, projectName, aclName)
+			_, aclInfo, err = dbCluster.GetNetworkACLAPI(ctx, tx.Tx(), projectName, aclName)
 			return err
 		})
 		if err != nil {
@@ -449,7 +449,7 @@ func ACLUsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		for _, aclName := range aclNames {
-			_, aclInfo, err := tx.GetNetworkACL(ctx, aclProjectName, aclName)
+			_, aclInfo, err := dbCluster.GetNetworkACLAPI(ctx, tx.Tx(), aclProjectName, aclName)
 			if err != nil {
 				return err
 			}
