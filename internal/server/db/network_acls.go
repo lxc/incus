@@ -61,31 +61,6 @@ func (c *ClusterTx) GetNetworkACLNameAndProjectWithID(ctx context.Context, netwo
 	return acls[0].Name, acls[0].Project, nil
 }
 
-// CreateNetworkACL creates a new Network ACL.
-func (c *ClusterTx) CreateNetworkACL(ctx context.Context, projectName string, info *api.NetworkACLsPost) (int64, error) {
-	acl := cluster.NetworkACL{
-		Project:     projectName,
-		Name:        info.Name,
-		Description: info.Description,
-		Ingress:     info.Ingress,
-		Egress:      info.Egress,
-	}
-
-	id, err := cluster.CreateNetworkACL(ctx, c.tx, acl)
-	if err != nil {
-		return -1, err
-	}
-
-	if info.Config != nil {
-		err := cluster.CreateNetworkACLConfig(ctx, c.tx, id, info.Config)
-		if err != nil {
-			return -1, err
-		}
-	}
-
-	return id, nil
-}
-
 // UpdateNetworkACL updates the Network ACL with the given ID.
 func (c *ClusterTx) UpdateNetworkACL(ctx context.Context, id int64, put *api.NetworkACLPut) error {
 	// Fetch existing to recover project and name.
