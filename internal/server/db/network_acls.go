@@ -12,21 +12,6 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 )
 
-// GetNetworkACLsAllProjects returns the names of existing Network ACLs.
-func (c *ClusterTx) GetNetworkACLsAllProjects(ctx context.Context) (map[string][]string, error) {
-	acls, err := cluster.GetNetworkACLs(ctx, c.tx)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make(map[string][]string, len(acls))
-	for _, acl := range acls {
-		result[acl.Project] = append(result[acl.Project], acl.Name)
-	}
-
-	return result, nil
-}
-
 // GetNetworkACLIDsByNames returns a map of names to IDs of existing Network ACLs.
 func (c *ClusterTx) GetNetworkACLIDsByNames(ctx context.Context, project string) (map[string]int64, error) {
 	acls, err := cluster.GetNetworkACLs(ctx, c.tx, cluster.NetworkACLFilter{Project: &project})
