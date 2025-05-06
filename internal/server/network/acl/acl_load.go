@@ -71,11 +71,17 @@ func Exists(s *state.State, projectName string, name ...string) error {
 	var existingACLNames []string
 
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		var err error
+		acls, err := cluster.GetNetworkACLs(ctx, tx.Tx(), cluster.NetworkACLFilter{Project: &projectName})
+		if err != nil {
+			return err
+		}
 
-		existingACLNames, err = tx.GetNetworkACLs(ctx, projectName)
+		existingACLNames = make([]string, len(acls))
+		for i, acl := range acls {
+			existingACLNames[i] = acl.Name
+		}
 
-		return err
+		return nil
 	})
 	if err != nil {
 		return err
@@ -196,10 +202,17 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 	var aclNames []string
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Find ACLs that have rules that reference the ACLs.
-		aclNames, err = tx.GetNetworkACLs(ctx, aclProjectName)
+		acls, err := cluster.GetNetworkACLs(ctx, tx.Tx(), cluster.NetworkACLFilter{Project: &aclProjectName})
+		if err != nil {
+			return err
+		}
 
-		return err
+		aclNames = make([]string, len(acls))
+		for i, acl := range acls {
+			aclNames[i] = acl.Name
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
