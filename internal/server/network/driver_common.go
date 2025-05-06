@@ -1527,12 +1527,19 @@ func (n *common) peerUsedBy(peerName string, firstOnly bool) ([]string, error) {
 	var aclNames []string
 
 	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		var err error
+		projectName := n.Project()
 
-		// Find ACLs that have rules that reference the peer connection.
-		aclNames, err = tx.GetNetworkACLs(ctx, n.Project())
+		acls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &projectName})
+		if err != nil {
+			return err
+		}
 
-		return err
+		aclNames = make([]string, len(acls))
+		for i, acl := range acls {
+			aclNames[i] = acl.Name
+		}
+
+		return nil
 	})
 	if err != nil {
 		return nil, err
