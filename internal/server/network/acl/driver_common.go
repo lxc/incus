@@ -316,9 +316,17 @@ func (d *common) validateRule(direction ruleDirection, rule api.NetworkACLRule) 
 		var err error
 
 		// Get map of ACL names to DB IDs (used for generating OVN port group names).
-		acls, err = tx.GetNetworkACLIDsByNames(ctx, d.Project())
+		acls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &d.projectName})
+		if err != nil {
+			return err
+		}
 
-		return err
+		out := make(map[string]int64, len(acls))
+		for _, acl := range acls {
+			out[acl.Name] = int64(acl.ID)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("Failed getting network ACLs for security ACL subject validation: %w", err)
@@ -706,9 +714,17 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 
 		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			// Get map of ACL names to DB IDs (used for generating OVN port group names).
-			aclNameIDs, err = tx.GetNetworkACLIDsByNames(ctx, d.Project())
+			acls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &d.projectName})
+			if err != nil {
+				return err
+			}
 
-			return err
+			aclNameIDs = make(map[string]int64, len(acls))
+			for _, acl := range acls {
+				aclNameIDs[acl.Name] = int64(acl.ID)
+			}
+
+			return nil
 		})
 		if err != nil {
 			return fmt.Errorf("Failed getting network ACL IDs for security ACL update: %w", err)
