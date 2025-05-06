@@ -2803,3 +2803,7 @@ This adds support for specifying host-routing tables on `nic` devices that use t
 ## `instance_publish_split`
 
 This adds support for creating a split format image out of an existing instance.
+
+## `init_preseed_certificates`
+
+This API extension provides the ability to configure certificates in preseed init.
