@@ -39,6 +39,12 @@ type InitLocalPreseed struct {
 	// Projects to add
 	// Example: "default" project
 	Projects []ProjectsPost `json:"projects" yaml:"projects"`
+
+	// Certificates to add
+	// Example: PEM encoded certificate
+	//
+	// API extension: init_preseed_certificates.
+	Certificates []CertificatesPost `json:"certificates" yaml:"certificates"`
 }
 
 // InitNetworksProjectPost represents the fields of a new network along with its associated project.
