@@ -15,6 +15,7 @@ type LogicalSwitchPort struct {
 	Enabled          *bool             `ovsdb:"enabled"`
 	ExternalIDs      map[string]string `ovsdb:"external_ids"`
 	HaChassisGroup   *string           `ovsdb:"ha_chassis_group"`
+	MirrorRules      []string          `ovsdb:"mirror_rules"`
 	Name             string            `ovsdb:"name"`
 	Options          map[string]string `ovsdb:"options"`
 	ParentName       *string           `ovsdb:"parent_name"`

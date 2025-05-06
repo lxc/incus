@@ -7,22 +7,27 @@ const PortBindingTable = "Port_Binding"
 
 // PortBinding defines an object in Port_Binding table
 type PortBinding struct {
-	UUID             string            `ovsdb:"_uuid"`
-	Chassis          *string           `ovsdb:"chassis"`
-	Datapath         string            `ovsdb:"datapath"`
-	Encap            *string           `ovsdb:"encap"`
-	ExternalIDs      map[string]string `ovsdb:"external_ids"`
-	GatewayChassis   []string          `ovsdb:"gateway_chassis"`
-	HaChassisGroup   *string           `ovsdb:"ha_chassis_group"`
-	LogicalPort      string            `ovsdb:"logical_port"`
-	MAC              []string          `ovsdb:"mac"`
-	NatAddresses     []string          `ovsdb:"nat_addresses"`
-	Options          map[string]string `ovsdb:"options"`
-	ParentPort       *string           `ovsdb:"parent_port"`
-	RequestedChassis *string           `ovsdb:"requested_chassis"`
-	Tag              *int              `ovsdb:"tag"`
-	TunnelKey        int               `ovsdb:"tunnel_key"`
-	Type             string            `ovsdb:"type"`
-	Up               *bool             `ovsdb:"up"`
-	VirtualParent    *string           `ovsdb:"virtual_parent"`
+	UUID                       string            `ovsdb:"_uuid"`
+	AdditionalChassis          []string          `ovsdb:"additional_chassis"`
+	AdditionalEncap            []string          `ovsdb:"additional_encap"`
+	Chassis                    *string           `ovsdb:"chassis"`
+	Datapath                   string            `ovsdb:"datapath"`
+	Encap                      *string           `ovsdb:"encap"`
+	ExternalIDs                map[string]string `ovsdb:"external_ids"`
+	GatewayChassis             []string          `ovsdb:"gateway_chassis"`
+	HaChassisGroup             *string           `ovsdb:"ha_chassis_group"`
+	LogicalPort                string            `ovsdb:"logical_port"`
+	MAC                        []string          `ovsdb:"mac"`
+	MirrorRules                []string          `ovsdb:"mirror_rules"`
+	NatAddresses               []string          `ovsdb:"nat_addresses"`
+	Options                    map[string]string `ovsdb:"options"`
+	ParentPort                 *string           `ovsdb:"parent_port"`
+	PortSecurity               []string          `ovsdb:"port_security"`
+	RequestedAdditionalChassis []string          `ovsdb:"requested_additional_chassis"`
+	RequestedChassis           *string           `ovsdb:"requested_chassis"`
+	Tag                        *int              `ovsdb:"tag"`
+	TunnelKey                  int               `ovsdb:"tunnel_key"`
+	Type                       string            `ovsdb:"type"`
+	Up                         *bool             `ovsdb:"up"`
+	VirtualParent              *string           `ovsdb:"virtual_parent"`
 }
