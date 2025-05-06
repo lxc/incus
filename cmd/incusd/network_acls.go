@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/v6/internal/server/cluster/request"
 	"github.com/lxc/incus/v6/internal/server/db"
+	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/internal/server/lifecycle"
 	"github.com/lxc/incus/v6/internal/server/network/acl"
 	"github.com/lxc/incus/v6/internal/server/project"
@@ -198,16 +199,19 @@ func networkACLsGet(d *Daemon, r *http.Request) response.Response {
 			}
 		} else {
 			// Get list of Network ACLs.
-			acls, err := tx.GetNetworkACLs(ctx, projectName)
+			filter := dbCluster.NetworkACLFilter{Project: &projectName}
+			acls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), filter)
 			if err != nil {
 				return err
 			}
 
-			aclNames = map[string][]string{}
-			aclNames[projectName] = acls
+			aclNames := make([]string, len(acls))
+			for i, acl := range acls {
+				aclNames[i] = acl.Name
+			}
 		}
 
-		return err
+		return nil
 	})
 	if err != nil {
 		return response.InternalError(err)

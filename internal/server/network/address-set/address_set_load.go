@@ -132,8 +132,17 @@ func AddressSetUsedBy(s *state.State, projectName string, usageFunc func(aclName
 	var err error
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		aclNames, err = tx.GetNetworkACLs(ctx, projectName)
-		return err
+		acls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &projectName})
+		if err != nil {
+			return err
+		}
+
+		aclNames = make([]string, len(acls))
+		for i, acl := range acls {
+			aclNames[i] = acl.Name
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
@@ -422,10 +431,17 @@ func ACLUsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context
 	var aclNames []string
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Find ACLs that have rules that reference the ACLs.
-		aclNames, err = tx.GetNetworkACLs(ctx, aclProjectName)
+		acls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &aclProjectName})
+		if err != nil {
+			return err
+		}
 
-		return err
+		aclNames = make([]string, len(acls))
+		for i, acl := range acls {
+			aclNames[i] = acl.Name
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
