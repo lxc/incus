@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
@@ -36,6 +37,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/internal/server/state"
 	storagePools "github.com/lxc/incus/v6/internal/server/storage"
+	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/internal/version"
@@ -69,6 +71,14 @@ var storagePoolVolumeTypeCmd = APIEndpoint{
 	Patch:  APIEndpointAction{Handler: storagePoolVolumePatch, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName", "location")},
 	Post:   APIEndpointAction{Handler: storagePoolVolumePost, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName", "location")},
 	Put:    APIEndpointAction{Handler: storagePoolVolumePut, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName", "location")},
+}
+
+var storagePoolVolumeFileCmd = APIEndpoint{
+	Path:   "storage-pools/{poolName}/volumes/{type}/{volumeName}/file",
+	Get:    APIEndpointAction{Handler: storagePoolVolumeFileGet, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanView, "poolName", "type", "volumeName", "location")},
+	Post:   APIEndpointAction{Handler: storagePoolVolumeFilePost, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName", "location")},
+	Head:   APIEndpointAction{Handler: storagePoolVolumeFileHead, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanView, "poolName", "type", "volumeName", "location")},
+	Delete: APIEndpointAction{Handler: storagePoolVolumeFileDelete, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName", "location")},
 }
 
 // swagger:operation GET /1.0/storage-pools/{poolName}/volumes storage storage_pool_volumes_get
@@ -2442,4 +2452,169 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 
 	reverter.Success()
 	return operations.OperationResponse(op)
+}
+
+// swagger:operation GET /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/file storage storage_pool_volume_file_get
+//
+//  Get a file from a custom storage volume
+//
+//  Downloads a file or returns metadata for a file or directory from a custom storage volume.
+//
+//  ---
+//  produces:
+//    - application/json
+//    - application/octet-stream
+//  parameters:
+//    - in: path
+//      name: poolName
+//      type: string
+//      required: true
+//      description: Name of the storage pool
+//    - in: path
+//      name: type
+//      type: string
+//      required: true
+//      description: Volume type (custom, image, etc.)
+//    - in: path
+//      name: volumeName
+//      type: string
+//      required: true
+//      description: Name of the storage volume
+//    - in: query
+//      name: path
+//      type: string
+//      required: true
+//      description: Path to the file within the volume
+//    - in: query
+//      name: location
+//      type: string
+//      required: true
+//      description: Cluster member name
+//  responses:
+//    "200":
+//      description: File download or directory listing
+//      headers:
+//        X-Incus-uid:
+//           description: File owner UID
+//           schema:
+//             type: integer
+//        X-Incus-gid:
+//           description: File owner GID
+//           schema:
+//             type: integer
+//        X-Incus-mode:
+//           description: Mode mask
+//           schema:
+//             type: integer
+//        X-Incus-modified:
+//           description: Last modified date
+//           schema:
+//             type: string
+//        X-Incus-type:
+//           description: Type of file (file, symlink or directory)
+//           schema:
+//             type: string
+//    "400":
+//      $ref: "#/responses/BadRequest"
+//    "403":
+//      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "500":
+//      $ref: "#/responses/InternalServerError"
+
+func storagePoolVolumeFileGet(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	// Parse API parameters
+	volumeTypeName, err := url.PathUnescape(mux.Vars(r)["type"])
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	volumeName, err := url.PathUnescape(mux.Vars(r)["volumeName"])
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	filePath := r.URL.Query().Get("path")
+	if filePath == "" {
+		return response.BadRequest(fmt.Errorf("Missing 'path' query parameter"))
+	}
+
+	filePath = strings.TrimPrefix(filePath, "/")
+
+	volumeType, err := storagePools.VolumeTypeNameToDBType(volumeTypeName)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	if !slices.Contains(supportedVolumeTypes, volumeType) {
+		return response.BadRequest(fmt.Errorf("Invalid volume type: %q", volumeTypeName))
+	}
+
+	requestProjectName := request.ProjectParam(r)
+	volumeProjectName, err := project.StorageVolumeProject(s.DB.Cluster, requestProjectName, volumeType)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	client, err := cluster.ConnectIfVolumeIsRemote(s, poolName, volumeProjectName, volumeName, volumeType, s.Endpoints.NetworkCert(), s.ServerCert(), r)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if client != nil {
+		return response.BadRequest(fmt.Errorf("Volume is remote"))
+	}
+
+	pool, err := storagePools.LoadByName(s, poolName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	diskVolName := project.StorageVolume(volumeProjectName, volumeName)
+	vol := pool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentTypeFS, diskVolName, nil)
+
+	var content []byte
+	err = vol.MountTask(func(mountPath string, _ *operations.Operation) error {
+		fullPath := filepath.Join(mountPath, filePath)
+		if !strings.HasPrefix(fullPath, mountPath) {
+			return fmt.Errorf("Invalid path: %q", filePath)
+		}
+
+		content, err = os.ReadFile(fullPath)
+		if err != nil {
+			return fmt.Errorf("Failed to read file %q: %w", fullPath, err)
+		}
+
+		return nil
+	}, nil)
+	if err != nil {
+		return response.SmartError(err)
+	}
+	// return response.SyncResponsePlain(true, false, string(content))
+	return response.SyncResponse(true, map[string]string{
+		"content": string(content),
+	})
+}
+
+func storagePoolVolumeFilePost(d *Daemon, r *http.Request) response.Response {
+	fmt.Println("Reached storagePoolVolumeFilePost")
+	return response.SyncResponsePlain(true, false, "hello from volume file post")
+}
+
+func storagePoolVolumeFileHead(d *Daemon, r *http.Request) response.Response {
+	fmt.Println("Reached storagePoolVolumeFileHead")
+	return response.SyncResponsePlain(true, false, "hello from volume file head")
+}
+
+func storagePoolVolumeFileDelete(d *Daemon, r *http.Request) response.Response {
+	fmt.Println("Reached storagePoolVolumeFileDelete")
+	return response.SyncResponsePlain(true, false, "hello from volume file delete")
 }

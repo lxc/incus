@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
@@ -135,6 +136,10 @@ Unless specified through a prefix, all volume operations affect "custom" (user c
 	// Unset
 	storageVolumeUnsetCmd := cmdStorageVolumeUnset{global: c.global, storage: c.storage, storageVolume: c, storageVolumeSet: &storageVolumeSetCmd}
 	cmd.AddCommand(storageVolumeUnsetCmd.Command())
+
+	// Volume file.
+	storageVolumeFileCmd := cmdStorageVolumeFile{global: c.global, storage: c.storage, storageVolume: c}
+	cmd.AddCommand(storageVolumeFileCmd.Command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -3353,4 +3358,77 @@ func (c *cmdStorageVolumeImport) Run(cmd *cobra.Command, args []string) error {
 	progress.Done("")
 
 	return nil
+}
+
+type cmdStorageVolumeFile struct {
+	global        *cmdGlobal
+	storage       *cmdStorage
+	storageVolume *cmdStorageVolume
+}
+
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
+func (c *cmdStorageVolumeFile) Command() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "file [<remote>:]<pool> <volume> <remote-path> [local-path]",
+		Short: i18n.G("Pull a file from a custom storage volume"),
+		Long: cli.FormatSection(i18n.G("Description"), i18n.G(
+			`Pull a file from a custom storage volume.`)),
+		Args: cobra.RangeArgs(3, 4),
+		RunE: c.Run,
+	}
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpStoragePools(toComplete)
+		}
+
+		if len(args) == 1 {
+			return c.global.cmpStoragePoolVolumes(args[0])
+		}
+
+		return nil, cobra.ShellCompDirectiveDefault
+	}
+
+	return cmd
+}
+
+// Run runs the actual command logic.
+func (c *cmdStorageVolumeFile) Run(cmd *cobra.Command, args []string) error {
+	// Parse remote.
+	resources, err := c.global.parseServers(args[0])
+	if err != nil {
+		return err
+	}
+
+	resource := resources[0]
+	client := resource.server
+
+	// Parse volume.
+	volName, volType := parseVolume("custom", args[1])
+	remotePath := filepath.Clean(args[2])
+
+	var localPath string
+	if len(args) == 4 {
+		localPath = args[3]
+	} else {
+		localPath = filepath.Base(remotePath)
+	}
+
+	// Fetch file content.
+	content, err := client.GetStoragePoolVolumeFile(resource.name, volType, volName, remotePath)
+	if err != nil {
+		if api.StatusErrorCheck(err, 404) {
+			return fmt.Errorf("file %q not found in volume %q", remotePath, volName)
+		}
+
+		return err
+	}
+
+	// Write to stdout or file.
+	if localPath == "-" {
+		fmt.Print(content)
+		return nil
+	}
+
+	return os.WriteFile(localPath, []byte(content), 0o644)
 }

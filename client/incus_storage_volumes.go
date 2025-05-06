@@ -1119,3 +1119,26 @@ func (r *ProtocolIncus) CreateStoragePoolVolumeFromBackup(pool string, args Stor
 
 	return &op, nil
 }
+
+// GetStoragePoolVolumeFile retrieves a file from a custom storage volume.
+func (r *ProtocolIncus) GetStoragePoolVolumeFile(pool, volType, volName, path string) (string, error) {
+	if !r.HasExtension("storage_volumes_files") {
+		return "", fmt.Errorf("The server is missing the required \"storage_volumes_files\" API extension")
+	}
+
+	pathURL := fmt.Sprintf("/storage-pools/%s/volumes/%s/%s/file?path=%s",
+		url.PathEscape(pool), url.PathEscape(volType), url.PathEscape(volName), url.QueryEscape(path))
+
+	// Container to hold response from API.
+	var result struct {
+		Content string `json:"content"`
+	}
+
+	// Send API GET request.
+	_, err := r.queryStruct("GET", pathURL, nil, "", &result)
+	if err != nil {
+		return "", err
+	}
+
+	return result.Content, nil
+}

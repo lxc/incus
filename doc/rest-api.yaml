@@ -16316,6 +16316,64 @@ paths:
             summary: Get the storage volume backups
             tags:
                 - storage
+    /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/file:
+        get:
+            description: Downloads a file or returns metadata for a file or directory from a custom storage volume.
+            operationId: storage_pool_volume_file_get
+            parameters:
+                - description: Name of the storage pool
+                  in: path
+                  name: poolName
+                  required: true
+                  type: string
+                - description: Volume type (custom, image, etc.)
+                  in: path
+                  name: type
+                  required: true
+                  type: string
+                - description: Name of the storage volume
+                  in: path
+                  name: volumeName
+                  required: true
+                  type: string
+                - description: Path to the file within the volume
+                  in: query
+                  name: path
+                  required: true
+                  type: string
+                - description: Cluster member name
+                  in: query
+                  name: location
+                  required: true
+                  type: string
+            produces:
+                - application/json
+                - application/octet-stream
+            responses:
+                "200":
+                    description: File download or directory listing
+                    headers:
+                        X-Incus-gid:
+                            description: File owner GID
+                        X-Incus-mode:
+                            description: Mode mask
+                        X-Incus-modified:
+                            description: Last modified date
+                        X-Incus-type:
+                            description: Type of file (file, symlink or directory)
+                        X-Incus-uid:
+                            description: File owner UID
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get a file from a custom storage volume
+            tags:
+                - storage
     /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/snapshots:
         get:
             description: Returns a list of storage volume snapshots (URLs).
