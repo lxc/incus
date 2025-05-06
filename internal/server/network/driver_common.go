@@ -1549,7 +1549,7 @@ func (n *common) peerUsedBy(peerName string, firstOnly bool) ([]string, error) {
 		var aclInfo *api.NetworkACL
 
 		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			_, aclInfo, err = tx.GetNetworkACL(ctx, n.Project(), aclName)
+			_, aclInfo, err = dbCluster.GetNetworkACLAPI(ctx, tx.Tx(), n.Project(), aclName)
 
 			return err
 		})

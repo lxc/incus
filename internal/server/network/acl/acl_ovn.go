@@ -143,7 +143,7 @@ func OVNEnsureACLs(s *state.State, l logger.Logger, client *ovn.NB, aclProjectNa
 
 			err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 				// Load the config we'll need to create the port group with ACL rules.
-				_, aclInfo, err = tx.GetNetworkACL(ctx, aclProjectName, aclName)
+				_, aclInfo, err = cluster.GetNetworkACLAPI(ctx, tx.Tx(), aclProjectName, aclName)
 
 				return err
 			})
@@ -177,7 +177,7 @@ func OVNEnsureACLs(s *state.State, l logger.Logger, client *ovn.NB, aclProjectNa
 			// new per-ACL-per-network port groups.
 			if reapplyRules || !portGroupHasACLs || len(addACLNets) > 0 {
 				err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-					_, aclInfo, err = tx.GetNetworkACL(ctx, aclProjectName, aclName)
+					_, aclInfo, err = cluster.GetNetworkACLAPI(ctx, tx.Tx(), aclProjectName, aclName)
 
 					return err
 				})

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/lxc/incus/v6/internal/server/db"
+	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	firewallDrivers "github.com/lxc/incus/v6/internal/server/firewall/drivers"
 	"github.com/lxc/incus/v6/internal/server/state"
 	"github.com/lxc/incus/v6/shared/api"
@@ -80,7 +81,7 @@ func FirewallACLRules(s *state.State, aclDeviceName string, aclProjectName strin
 		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			var err error
 
-			_, aclInfo, err = tx.GetNetworkACL(ctx, aclProjectName, aclName)
+			_, aclInfo, err = dbCluster.GetNetworkACLAPI(ctx, tx.Tx(), aclProjectName, aclName)
 
 			return err
 		})

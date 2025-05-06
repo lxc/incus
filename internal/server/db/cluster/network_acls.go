@@ -4,7 +4,8 @@ package cluster
 
 import (
 	"context"
-	"database/sql"
+	"fmt"
+	"net/http"
 
 	"github.com/lxc/incus/v6/shared/api"
 )
@@ -54,8 +55,8 @@ type NetworkACLFilter struct {
 }
 
 // ToAPI converts the DB record into the shared/api form.
-func (n *NetworkACL) ToAPI(ctx context.Context, tx *sql.Tx) (*api.NetworkACL, error) {
-	cfg, err := GetNetworkACLConfig(ctx, tx, n.ID)
+func (n *NetworkACL) ToAPI(ctx context.Context, db tx) (*api.NetworkACL, error) {
+	cfg, err := GetNetworkACLConfig(ctx, db, n.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -73,4 +74,59 @@ func (n *NetworkACL) ToAPI(ctx context.Context, tx *sql.Tx) (*api.NetworkACL, er
 	}
 
 	return &out, nil
+}
+
+// GetNetworkACLAPI returns the Network ACL API struct for the ACL with the given name in the given project.
+func GetNetworkACLAPI(ctx context.Context, db tx, projectName string, name string) (int, *api.NetworkACL, error) {
+	acls, err := GetNetworkACLs(ctx, db, NetworkACLFilter{Project: &projectName, Name: &name})
+	if err != nil {
+		return -1, nil, err
+	}
+
+	if len(acls) == 0 {
+		return -1, nil, api.StatusErrorf(http.StatusNotFound, "Network ACL not found")
+	}
+
+	acl := acls[0]
+	apiACL, err := acl.ToAPI(ctx, db)
+	if err != nil {
+		return -1, nil, fmt.Errorf("Failed loading config: %w", err)
+	}
+
+	return acl.ID, apiACL, nil
+}
+
+// UpdateNetworkACLAPI updates the Network ACL with the given ID using the provided API struct.
+func UpdateNetworkACLAPI(ctx context.Context, db tx, id int64, put *api.NetworkACLPut) error {
+	// Fetch existing to recover project and name.
+	idInt := int(id)
+	acls, err := GetNetworkACLs(ctx, db, NetworkACLFilter{ID: &idInt})
+	if err != nil {
+		return err
+	}
+
+	if len(acls) == 0 {
+		return api.StatusErrorf(http.StatusNotFound, "Network ACL not found")
+	}
+
+	curr := acls[0]
+	upd := NetworkACL{
+		Project:     curr.Project,
+		Name:        curr.Name,
+		Description: put.Description,
+		Ingress:     put.Ingress,
+		Egress:      put.Egress,
+	}
+
+	err = UpdateNetworkACL(ctx, db, curr.Project, curr.Name, upd)
+	if err != nil {
+		return err
+	}
+
+	err = UpdateNetworkACLConfig(ctx, db, id, put.Config)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
