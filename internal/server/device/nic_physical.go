@@ -208,8 +208,7 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 		bridgedConfig["nictype"] = "bridged"
 
 		// Create and properly initialize the bridged device
-		bridged := &nicBridged{}
-		err := bridged.init(d.inst, d.state, d.name, bridgedConfig, d.volatileGet, d.volatileSet)
+		bridged, err := newByType(d.state, d.inst.Project().Name, bridgedConfig)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to initialize bridged device: %w", err)
 		}
@@ -419,8 +418,7 @@ func (d *nicPhysical) Stop() (*deviceConfig.RunConfig, error) {
 		bridgedConfig["nictype"] = "bridged"
 
 		// Create and properly initialize the bridged device
-		bridged := &nicBridged{}
-		err := bridged.init(d.inst, d.state, d.name, bridgedConfig, d.volatileGet, d.volatileSet)
+		bridged, err := newByType(d.state, d.inst.Project().Name, bridgedConfig)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to initialize bridged device: %w", err)
 		}
