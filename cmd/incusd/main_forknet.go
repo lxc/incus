@@ -479,6 +479,9 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 }
 
 func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname string, logger *logrus.Logger) {
+	// Wait a couple of seconds for IPv6 link-local.
+	time.Sleep(2 * time.Second)
+
 	// Get a new DHCPv6 client.
 	client, err := nclient6.New(iface)
 	if err != nil {
