@@ -383,6 +383,7 @@ type InstanceServer interface {
 	DeleteStorageVolumeBackup(pool string, volName string, name string) (op Operation, err error)
 	GetStorageVolumeBackupFile(pool string, volName string, name string, req *BackupFileRequest) (resp *BackupFileResponse, err error)
 	CreateStoragePoolVolumeFromBackup(pool string, args StorageVolumeBackupArgs) (op Operation, err error)
+	GetStoragePoolVolumeFile(pool, volType, volName, path string) (string, error)
 
 	// Storage volume ISO import function ("custom_volume_iso" API extension)
 	CreateStoragePoolVolumeFromISO(pool string, args StorageVolumeBackupArgs) (op Operation, err error)
