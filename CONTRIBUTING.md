@@ -18,6 +18,22 @@ By default, any contribution to this project is made under the Apache
 The author of a change remains the copyright holder of their code
 (no copyright assignment).
 
+## No Large Language Models (LLMs) or similar AI tools
+
+All contributions to this project are expected to be done by human
+beings or through standard predictable tooling (e.g. scripts, formatters, ...).
+
+We expect all contributors to be able to reason about the code that they
+contribute and explain why they're taking a particular approach.
+
+LLMs and similar predictive tools have the annoying tendency of
+producing large amount of low quality code with subtle issues which end
+up taking the maintainers more time to debug than it would have taken to
+write the code by hand in the first place.
+
+Any attempt at hiding the use of LLMs or similar tools in Incus contributions
+will result in a revert of the affected changes and a ban from the project.
+
 ## Pull requests
 
 Changes to this project should be proposed as pull requests on GitHub
