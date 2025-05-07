@@ -2,16 +2,12 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
-	"math/rand"
 	"net"
 	"os"
-	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -19,7 +15,6 @@ import (
 
 	"github.com/pkg/sftp"
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh"
 
 	incus "github.com/lxc/incus/v6/client"
 	cli "github.com/lxc/incus/v6/internal/cmd"
@@ -28,7 +23,6 @@ import (
 	"github.com/lxc/incus/v6/shared/ioprogress"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/termios"
-	localtls "github.com/lxc/incus/v6/shared/tls"
 	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 )
@@ -1452,272 +1446,19 @@ func (c *cmdFileMount) Run(cmd *cobra.Command, args []string) error {
 
 	// Look for sshfs command if no SSH SFTP listener mode specified and a target mount path was specified.
 	if c.flagListen == "" && targetPath != "" {
-		sshfsPath, err := exec.LookPath("sshfs")
-		if err != nil {
-			// If sshfs command not found, then advise user of the --listen flag.
-			return errors.New(i18n.G("sshfs not found. Try SSH SFTP mode using the --listen flag"))
-		}
-
 		// Setup sourcePath with leading / to ensure we reference the instance path from / location.
 		instPath := filepath.Join(string(filepath.Separator), filepath.Clean(instSpec[1]))
 
-		// If sshfs command is found, use it to mount the SFTP connection to the targetPath.
-		return c.sshfsMount(cmd.Context(), resource, instName, instPath, sshfsPath, targetPath)
-	}
-
-	// If SSH SFTP listener specified or no target mount path specified, then use SSH SFTP server.
-	return c.sshSFTPServer(cmd.Context(), instName, resource)
-}
-
-// sshfsMount mounts the instance's filesystem using sshfs by piping the instance's SFTP connection to sshfs.
-func (c *cmdFileMount) sshfsMount(ctx context.Context, resource remoteResource, instName string, instPath string, sshfsPath string, targetPath string) error {
-	sftpConn, err := resource.server.GetInstanceFileSFTPConn(instName)
-	if err != nil {
-		return fmt.Errorf(i18n.G("Failed connecting to instance SFTP: %w"), err)
-	}
-
-	defer func() { _ = sftpConn.Close() }()
-
-	// Use the format "incus.<instance_name>" as the source "host" (although not used for communication)
-	// so that the mount can be seen to be associated with Incus and the instance in the local mount table.
-	sourceURL := fmt.Sprintf("incus.%s:%s", instName, instPath)
-
-	sshfsCmd := exec.Command(sshfsPath, "-o", "slave", sourceURL, targetPath)
-
-	// Setup pipes.
-	stdin, err := sshfsCmd.StdinPipe()
-	if err != nil {
-		return err
-	}
-
-	stdout, err := sshfsCmd.StdoutPipe()
-	if err != nil {
-		return err
-	}
-
-	sshfsCmd.Stderr = os.Stderr
-
-	err = sshfsCmd.Start()
-	if err != nil {
-		return fmt.Errorf(i18n.G("Failed starting sshfs: %w"), err)
-	}
-
-	fmt.Printf(i18n.G("sshfs mounting %q on %q")+"\n", fmt.Sprintf("%s%s", instName, instPath), targetPath)
-	fmt.Println(i18n.G("Press ctrl+c to finish"))
-
-	ctx, cancel := context.WithCancel(ctx)
-	chSignal := make(chan os.Signal, 1)
-	signal.Notify(chSignal, os.Interrupt)
-	go func() {
-		select {
-		case <-chSignal:
-		case <-ctx.Done():
-		}
-
-		cancel()                                  // Prevents error output when the io.Copy functions finish.
-		_ = sshfsCmd.Process.Signal(os.Interrupt) // This will cause sshfs to unmount.
-		_ = stdin.Close()
-	}()
-
-	go func() {
-		_, err := io.Copy(stdin, sftpConn)
-		if ctx.Err() == nil {
-			if err != nil {
-				fmt.Fprintf(os.Stderr, i18n.G("I/O copy from instance to sshfs failed: %v")+"\n", err)
-			} else {
-				fmt.Println(i18n.G("Instance disconnected"))
-			}
-		}
-		cancel() // Ask sshfs to end.
-	}()
-
-	_, err = io.Copy(sftpConn, stdout)
-	if err != nil && ctx.Err() == nil {
-		fmt.Fprintf(os.Stderr, i18n.G("I/O copy from sshfs to instance failed: %v")+"\n", err)
-	}
-
-	cancel() // Ask sshfs to end.
-
-	err = sshfsCmd.Wait()
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(i18n.G("sshfs has stopped"))
-
-	return sftpConn.Close()
-}
-
-// sshSFTPServer runs an SSH server listening on a random port of 127.0.0.1.
-// It provides an unauthenticated SFTP server connected to the instance's filesystem.
-func (c *cmdFileMount) sshSFTPServer(ctx context.Context, instName string, resource remoteResource) error {
-	// Check instance exists.
-	_, _, err := resource.server.GetInstance(instName)
-	if err != nil {
-		return err
-	}
-
-	randString := func(length int) string {
-		chars := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321")
-		randStr := make([]rune, length)
-		for i := range randStr {
-			randStr[i] = chars[rand.Intn(len(chars))]
-		}
-
-		return string(randStr)
-	}
-
-	// Setup an SSH SFTP server.
-	config := &ssh.ServerConfig{}
-
-	var authUser, authPass string
-
-	if c.flagAuthNone {
-		config.NoClientAuth = true
-	} else {
-		if c.flagAuthUser != "" {
-			authUser = c.flagAuthUser
-		} else {
-			authUser = randString(8)
-		}
-
-		authPass = randString(8)
-		config.PasswordCallback = func(c ssh.ConnMetadata, pass []byte) (*ssh.Permissions, error) {
-			if c.User() == authUser && string(pass) == authPass {
-				return nil, nil
-			}
-
-			return nil, fmt.Errorf(i18n.G("Password rejected for %q"), c.User())
-		}
-	}
-
-	// Generate random host key.
-	_, privKey, err := localtls.GenerateMemCert(false, false)
-	if err != nil {
-		return fmt.Errorf(i18n.G("Failed generating SSH host key: %w"), err)
-	}
-
-	private, err := ssh.ParsePrivateKey(privKey)
-	if err != nil {
-		return fmt.Errorf(i18n.G("Failed parsing SSH host key: %w"), err)
-	}
-
-	config.AddHostKey(private)
-
-	listenAddr := c.flagListen
-	if listenAddr == "" {
-		listenAddr = "127.0.0.1:0" // Listen on a random local port if not specified.
-	}
-
-	listener, err := net.Listen("tcp", listenAddr)
-	if err != nil {
-		return fmt.Errorf(i18n.G("Failed to listen for connection: %w"), err)
-	}
-
-	fmt.Printf(i18n.G("SSH SFTP listening on %v")+"\n", listener.Addr())
-
-	if config.PasswordCallback != nil {
-		fmt.Printf(i18n.G("Login with username %q and password %q")+"\n", authUser, authPass)
-	} else {
-		fmt.Println(i18n.G("Login without username and password"))
-	}
-
-	for {
-		// Wait for new SSH connections.
-		nConn, err := listener.Accept()
+		// Connect to SFTP.
+		sftpConn, err := resource.server.GetInstanceFileSFTPConn(instName)
 		if err != nil {
-			return fmt.Errorf(i18n.G("Failed to accept incoming connection: %w"), err)
+			return fmt.Errorf(i18n.G("Failed connecting to instance SFTP: %w"), err)
 		}
 
-		// Handle each SSH connection in its own go routine.
-		go func() {
-			fmt.Printf(i18n.G("SSH client connected %q")+"\n", nConn.RemoteAddr())
-			defer fmt.Printf(i18n.G("SSH client disconnected %q")+"\n", nConn.RemoteAddr())
-			defer func() { _ = nConn.Close() }()
+		defer func() { _ = sftpConn.Close() }()
 
-			// Before use, a handshake must be performed on the incoming net.Conn.
-			_, chans, reqs, err := ssh.NewServerConn(nConn, config)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, i18n.G("Failed SSH handshake with client %q: %v")+"\n", nConn.RemoteAddr(), err)
-				return
-			}
-
-			// The incoming Request channel must be serviced.
-			go ssh.DiscardRequests(reqs)
-
-			// Service the incoming Channel requests.
-			for newChannel := range chans {
-				localChannel := newChannel
-
-				// Channels have a type, depending on the application level protocol intended.
-				// In the case of an SFTP session, this is "subsystem" with a payload string of
-				// "<length=4>sftp"
-				if localChannel.ChannelType() != "session" {
-					_ = localChannel.Reject(ssh.UnknownChannelType, "unknown channel type")
-					fmt.Fprintf(os.Stderr, i18n.G("Unknown channel type for client %q: %s")+"\n", nConn.RemoteAddr(), localChannel.ChannelType())
-					continue
-				}
-
-				// Accept incoming channel request.
-				channel, requests, err := localChannel.Accept()
-				if err != nil {
-					fmt.Fprintf(os.Stderr, i18n.G("Failed accepting channel client %q: %v")+"\n", err)
-					return
-				}
-
-				// Sessions have out-of-band requests such as "shell", "pty-req" and "env".
-				// Here we handle only the "subsystem" request.
-				go func(in <-chan *ssh.Request) {
-					for req := range in {
-						ok := false
-						switch req.Type {
-						case "subsystem":
-							if string(req.Payload[4:]) == "sftp" {
-								ok = true
-							}
-						}
-
-						_ = req.Reply(ok, nil)
-					}
-				}(requests)
-
-				// Handle each channel in its own go routine.
-				go func() {
-					defer func() { _ = channel.Close() }()
-
-					// Connect to the instance's SFTP server.
-					sftpConn, err := resource.server.GetInstanceFileSFTPConn(instName)
-					if err != nil {
-						fmt.Fprintf(os.Stderr, i18n.G("Failed connecting to instance SFTP for client %q: %v")+"\n", nConn.RemoteAddr(), err)
-						return
-					}
-
-					defer func() { _ = sftpConn.Close() }()
-
-					// Copy SFTP data between client and remote instance.
-					ctx, cancel := context.WithCancel(ctx)
-					go func() {
-						_, err := io.Copy(channel, sftpConn)
-						if ctx.Err() == nil {
-							if err != nil {
-								fmt.Fprintf(os.Stderr, i18n.G("I/O copy from instance to SSH failed: %v")+"\n", err)
-							} else {
-								fmt.Printf(i18n.G("Instance disconnected for client %q")+"\n", nConn.RemoteAddr())
-							}
-						}
-						cancel() // Prevents error output when other io.Copy finishes.
-						_ = channel.Close()
-					}()
-
-					_, err = io.Copy(sftpConn, channel)
-					if err != nil && ctx.Err() == nil {
-						fmt.Fprintf(os.Stderr, i18n.G("I/O copy from SSH to instance failed: %v")+"\n", err)
-					}
-
-					cancel() // Prevents error output when other io.Copy finishes.
-					_ = sftpConn.Close()
-				}()
-			}
-		}()
+		return sshfsMount(cmd.Context(), sftpConn, instName, instPath, targetPath)
 	}
+
+	return sshSFTPServer(cmd.Context(), func() (net.Conn, error) { return resource.server.GetInstanceFileSFTPConn(instName) }, instName, c.flagAuthNone, c.flagAuthUser, c.flagListen)
 }
