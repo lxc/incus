@@ -528,6 +528,7 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 		if d.network == nil {
 			return nil, fmt.Errorf("Error loading %s because it's unmanaged", d.config["parent"])
 		}
+
 		return d.startBridge()
 	}
 
@@ -816,6 +817,7 @@ func (d *nicPhysical) startBridge() (*deviceConfig.RunConfig, error) {
 			}
 		}
 	}
+
 	err = d.volatileSet(saveData)
 	if err != nil {
 		return nil, err
