@@ -694,6 +694,10 @@ test_basic_usage() {
     PID=$(incus info c1 | awk '/^PID/ {print $2}')
     kill -9 "${PID}"
     sleep 3
+      # FIXME: truenas volume create/delete is slow (known issue)
+    if [ "$incus_backend" = "truenas" ]; then
+      sleep 1
+    fi
   done
 
   [ "$(incus list -cs -fcsv c1)" = "RUNNING" ] || false
