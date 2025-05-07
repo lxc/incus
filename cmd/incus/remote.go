@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"crypto/sha256"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -14,7 +16,9 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
@@ -82,6 +86,14 @@ func (c *cmdRemote) Command() *cobra.Command {
 	// Set URL
 	remoteSetURLCmd := cmdRemoteSetURL{global: c.global, remote: c}
 	cmd.AddCommand(remoteSetURLCmd.Command())
+
+	// Get client certificate
+	remoteGetClientCertificateCmd := cmdRemoteGetClientCertificate{global: c.global, remote: c}
+	cmd.AddCommand(remoteGetClientCertificateCmd.Command())
+
+	// Get client token
+	remoteGetClientTokenCmd := cmdRemoteGetClientToken{global: c.global, remote: c}
+	cmd.AddCommand(remoteGetClientTokenCmd.Command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -689,6 +701,141 @@ func (c *cmdRemoteGetDefault) Command() *cobra.Command {
 	cmd.RunE = c.Run
 
 	return cmd
+}
+
+// Get client certificate.
+type cmdRemoteGetClientCertificate struct {
+	global *cmdGlobal
+	remote *cmdRemote
+}
+
+// Command returns a cobra.Command for get-client-certificate.
+func (c *cmdRemoteGetClientCertificate) Command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = usage("get-client-certificate")
+	cmd.Short = i18n.G("Print the client certificate used by this Incus client")
+	cmd.RunE = c.Run
+	return cmd
+}
+
+// Run runs the actual command logic.
+func (c *cmdRemoteGetClientCertificate) Run(cmd *cobra.Command, args []string) error {
+	conf := c.global.conf
+
+	// Quick checks.
+	exit, err := c.global.checkArgs(cmd, args, 0, 0)
+	if exit {
+		return err
+	}
+
+	// Check if we need to generate a new certificate.
+	if !conf.HasClientCertificate() {
+		if !c.global.flagQuiet {
+			fmt.Fprintf(os.Stderr, i18n.G("Generating a client certificate. This may take a minute...")+"\n")
+		}
+
+		err = conf.GenerateClientCertificate()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Read the certificate.
+	content, err := os.ReadFile(conf.ConfigPath("client.crt"))
+	if err != nil {
+		return fmt.Errorf("Failed to read certificate: %w", err)
+	}
+
+	fmt.Print(string(content))
+	return nil
+}
+
+type cmdRemoteGetClientToken struct {
+	global *cmdGlobal
+	remote *cmdRemote
+}
+
+// Command returns a cobra.Command for get-client-token.
+func (c *cmdRemoteGetClientToken) Command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = usage("get-client-token <expiry>")
+	cmd.Short = i18n.G("Generate a client token derived from the client certificate")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+		`Generate a client trust token derived from the existing client certificate and private key.
+
+This is useful for remote authentication workflows where a token is passed to another Incus server.`))
+	cmd.RunE = c.Run
+	return cmd
+}
+
+// Run runs the get-client-token logic.
+func (c *cmdRemoteGetClientToken) Run(cmd *cobra.Command, args []string) error {
+	conf := c.global.conf
+
+	// Quick checks.
+	exit, err := c.global.checkArgs(cmd, args, 1, 1)
+	if exit {
+		return err
+	}
+
+	// Parse the expiry.
+	expiry, err := time.ParseDuration(args[0])
+	if err != nil {
+		return err
+	}
+
+	// Check if we need to generate a new certificate.
+	if !conf.HasClientCertificate() {
+		if !c.global.flagQuiet {
+			fmt.Fprintf(os.Stderr, i18n.G("Generating a client certificate. This may take a minute...")+"\n")
+		}
+
+		err = conf.GenerateClientCertificate()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Read the key pair.
+	cert, err := os.ReadFile(conf.ConfigPath("client.crt"))
+	if err != nil {
+		return fmt.Errorf("Failed to read certificate: %w", err)
+	}
+
+	key, err := os.ReadFile(conf.ConfigPath("client.key"))
+	if err != nil {
+		return fmt.Errorf("Failed to read private key: %w", err)
+	}
+
+	keypair, err := tls.X509KeyPair(cert, key)
+	if err != nil {
+		return err
+	}
+
+	// Use SHA-256 fingerprint of the first cert in the chain.
+	fingerprint := sha256.Sum256(keypair.Certificate[0])
+	subject := fmt.Sprintf("%x", fingerprint)
+
+	now := time.Now()
+	claims := jwt.RegisteredClaims{
+		Subject:   subject,
+		IssuedAt:  jwt.NewNumericDate(now),
+		NotBefore: jwt.NewNumericDate(now),
+		ExpiresAt: jwt.NewNumericDate(now.Add(expiry)),
+	}
+
+	// Trying signing with both ES384 and RS256.
+	for _, alg := range []jwt.SigningMethod{jwt.SigningMethodES384, jwt.SigningMethodRS256} {
+		token := jwt.NewWithClaims(alg, claims)
+		tokenStr, err := token.SignedString(keypair.PrivateKey)
+		if err == nil {
+			fmt.Println(tokenStr)
+
+			return nil
+		}
+	}
+
+	return fmt.Errorf("Unable to sign JWT with available key algorithms")
 }
 
 // Run is used in the RunE field of the cobra.Command returned by Command.
