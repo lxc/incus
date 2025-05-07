@@ -16316,6 +16316,27 @@ paths:
             summary: Get the storage volume backups
             tags:
                 - storage
+    /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/sftp:
+        get:
+            description: Upgrades the request to an SFTP connection of the storage volume's filesystem.
+            operationId: storage_pool_volume_type_sftp_get
+            produces:
+                - application/json
+                - application/octet-stream
+            responses:
+                "101":
+                    description: Switching protocols to SFTP
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the storage volume SFTP connection
+            tags:
+                - storage
     /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/snapshots:
         get:
             description: Returns a list of storage volume snapshots (URLs).

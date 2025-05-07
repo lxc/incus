@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
@@ -135,6 +137,10 @@ Unless specified through a prefix, all volume operations affect "custom" (user c
 	// Unset
 	storageVolumeUnsetCmd := cmdStorageVolumeUnset{global: c.global, storage: c.storage, storageVolume: c, storageVolumeSet: &storageVolumeSetCmd}
 	cmd.AddCommand(storageVolumeUnsetCmd.Command())
+
+	// File
+	storageVolumeFileCmd := cmdStorageVolumeFile{global: c.global, storage: c.storage, storageVolume: c}
+	cmd.AddCommand(storageVolumeFileCmd.Command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -2340,6 +2346,136 @@ func (c *cmdStorageVolumeUnset) Run(cmd *cobra.Command, args []string) error {
 
 	args = append(args, "")
 	return c.storageVolumeSet.Run(cmd, args)
+}
+
+// File.
+type cmdStorageVolumeFile struct {
+	global        *cmdGlobal
+	storage       *cmdStorage
+	storageVolume *cmdStorageVolume
+}
+
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
+func (c *cmdStorageVolumeFile) Command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = usage("file")
+	cmd.Short = i18n.G("Manage files in custom volumes")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+		`Manage files in custom volumes`))
+
+	// Mount
+	storageVolumeFileMountCmd := cmdStorageVolumeFileMount{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeFile: c}
+	cmd.AddCommand(storageVolumeFileMountCmd.Command())
+
+	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
+	cmd.Args = cobra.NoArgs
+	cmd.Run = func(cmd *cobra.Command, _ []string) { _ = cmd.Usage() }
+	return cmd
+}
+
+// Mount.
+type cmdStorageVolumeFileMount struct {
+	global            *cmdGlobal
+	storage           *cmdStorage
+	storageVolume     *cmdStorageVolume
+	storageVolumeFile *cmdStorageVolumeFile
+
+	flagListen   string
+	flagAuthNone bool
+	flagAuthUser string
+}
+
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
+func (c *cmdStorageVolumeFileMount) Command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = usage("mount", i18n.G("[<remote>:]<pool> <volume> [<target path>]"))
+	cmd.Short = i18n.G("Mount files from custom storage volumes")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+		`Mount files from custom storage volumes`))
+
+	cmd.Flags().StringVar(&c.flagListen, "listen", "", i18n.G("Setup SSH SFTP listener on address:port instead of mounting"))
+	cmd.Flags().BoolVar(&c.flagAuthNone, "no-auth", false, i18n.G("Disable authentication when using SSH SFTP listener"))
+	cmd.Flags().StringVar(&c.flagAuthUser, "auth-user", "", i18n.G("Set authentication user when using SSH SFTP listener"))
+
+	cmd.RunE = c.Run
+
+	// completion for pool, volume, host path
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpStoragePools(toComplete)
+		}
+
+		if len(args) == 1 {
+			return c.global.cmpStoragePoolVolumes(args[0])
+		}
+
+		if len(args) == 2 {
+			return nil, cobra.ShellCompDirectiveDefault
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+// Run runs the actual command logic.
+func (c *cmdStorageVolumeFileMount) Run(cmd *cobra.Command, args []string) error {
+	// Quick checks.
+	exit, err := c.global.checkArgs(cmd, args, 2, 3)
+	if exit {
+		return err
+	}
+
+	// Parse the input
+	volName, volType := parseVolume("custom", args[1])
+
+	// Parse remote.
+	resources, err := c.global.parseServers(args[0])
+	if err != nil {
+		return err
+	}
+
+	resource := resources[0]
+
+	var targetPath string
+
+	// Determine the target if specified.
+	if len(args) >= 2 {
+		targetPath = filepath.Clean(args[len(args)-1])
+		sb, err := os.Stat(targetPath)
+		if err != nil {
+			return err
+		}
+
+		if !sb.IsDir() {
+			return errors.New(i18n.G("Target path must be a directory"))
+		}
+	}
+
+	// Check which mode we should operate in. If target path is provided we use sshfs mode.
+	if targetPath != "" && c.flagListen != "" {
+		return errors.New(i18n.G("Target path and --listen flag cannot be used together"))
+	}
+
+	// Look for sshfs command if no SSH SFTP listener mode specified and a target mount path was specified.
+	entity := fmt.Sprintf("%s/%s/%s", resource.name, volType, volName)
+
+	if c.flagListen == "" && targetPath != "" {
+		// Connect to SFTP.
+		sftpConn, err := resource.server.GetStoragePoolVolumeFileSFTPConn(resource.name, volType, volName)
+		if err != nil {
+			return fmt.Errorf(i18n.G("Failed connecting to instance SFTP: %w"), err)
+		}
+
+		defer func() { _ = sftpConn.Close() }()
+
+		return sshfsMount(cmd.Context(), sftpConn, entity, "", targetPath)
+	}
+
+	return sshSFTPServer(cmd.Context(), func() (net.Conn, error) {
+		return resource.server.GetStoragePoolVolumeFileSFTPConn(resource.name, volType, volName)
+	}, entity, c.flagAuthNone, c.flagAuthUser, c.flagListen)
 }
 
 // Snapshot.
