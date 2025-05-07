@@ -149,6 +149,22 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		//  shortdesc: An IPv6 address to assign to the instance through DHCP, `none` can be used to disable IP allocation
 		"ipv6.address",
 
+		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv4.address.external)
+		//
+		// ---
+		// type: string
+		// managed: no
+		// shortdesc: Select a specific external address (typically from a network forward)
+		"ipv4.address.external",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv6.address.external)
+		//
+		// ---
+		// type: string
+		// managed: no
+		// shortdesc: Select a specific external address (typically from a network forward)
+		"ipv6.address.external",
+
 		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv4.routes)
 		//
 		// ---
@@ -427,6 +443,26 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 
 		return validate.IsNetworkAddressV6(value)
 	})
+
+	// Validate the external address against the list of network forwards.
+	isNetworkForward := func(value string) error {
+		return d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			netID, _, _, err := tx.GetNetworkInAnyState(ctx, networkProjectName, d.config["network"])
+			if err != nil {
+				return fmt.Errorf("Failed getting network ID: %w", err)
+			}
+
+			_, _, err = tx.GetNetworkForward(ctx, netID, false, value)
+			if err != nil {
+				return fmt.Errorf("External address %q is not a network forward on network %q: %w", value, d.config["network"], err)
+			}
+
+			return nil
+		})
+	}
+
+	rules["ipv4.address.external"] = validate.Optional(validate.And(validate.IsNetworkAddressV4, isNetworkForward))
+	rules["ipv6.address.external"] = validate.Optional(validate.And(validate.IsNetworkAddressV6, isNetworkForward))
 
 	// Now run normal validation.
 	err = d.config.Validate(rules)
