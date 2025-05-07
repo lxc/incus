@@ -12,6 +12,11 @@ import (
 	"strconv"
 	"sync"
 
+	"fmt"
+    "os"
+    "os/exec"
+    "strings"
+
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
 
@@ -143,7 +148,48 @@ func (c *cmdConsole) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	return c.console(d, name)
+	instance, etag, err := c.server.GetInstance(args[0])
+	if err != nil {
+		return fmt.Errorf("failed to get instance: %w", err)
+	}
+
+	// Get config map
+	config := instance.ExpandedConfig
+
+	// Read console.type and console.executable
+	consoleType := config["console.type"]
+	if consoleType == "" {
+		consoleType = "lxc"
+	}
+
+	consoleExec := config["console.executable"]
+	if consoleExec == "" {
+		consoleExec = consoleType
+	}
+
+	// Read console.args and split into fields
+	consoleArgs := []string{}
+	if rawArgs, ok := config["console.args"]; ok && rawArgs != "" {
+		consoleArgs = strings.Fields(rawArgs)
+	} else {
+		consoleArgs = []string{"console", args[0]}
+	}
+
+	// Debug logging (optional)
+	fmt.Printf("Launching console with: %s %v\n", consoleExec, consoleArgs)
+
+	// Run the console command
+	cmd := exec.Command(consoleExec, consoleArgs...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
+
+	// return c.console(d, name)
 }
 
 func (c *cmdConsole) console(d incus.InstanceServer, name string) error {
