@@ -149,6 +149,22 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		//  shortdesc: An IPv6 address to assign to the instance through DHCP, `none` can be used to disable IP allocation
 		"ipv6.address",
 
+		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv4.address.external)
+		//
+		// ---
+		// type: string
+		// managed: no
+		// shortdesc: Use this network-forward IPv4 address for SNAT egress
+		"ipv4.address.external",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv6.address.external)
+		//
+		// ---
+		// type: string
+		// managed: no
+		// shortdesc: Use this network-forward IPv4 address for SNAT egress
+		"ipv6.address.external",
+
 		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv4.routes)
 		//
 		// ---
@@ -428,10 +444,44 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		return validate.IsNetworkAddressV6(value)
 	})
 
+	rules["ipv4.address.external"] = validate.Optional(func(value string) error{
+		if value == "none" {
+			return nil
+		}
+		
+		return validate.IsNetworkAddressV4(value)
+	})
+
+	rules["ipv6.address.external"] = validate.Optional(func(value string) error{
+		if value == "none" {
+			return nil
+		}
+		
+		return validate.IsNetworkAddressV6(value)
+	})
+
 	// Now run normal validation.
-	err = d.config.Validate(rules)
-	if err != nil {
+	// err = d.config.Validate(rules)
+	// if err != nil {
+	// 	return err
+	// }
+
+	//Updated for address.external
+	if err := d.config.Validate(rules); err != nil {
 		return err
+	}
+
+	//verify that any non-empty address belongs to a forward
+	for _, key := range []string{"ipv4.address.external", "ipv6.address.external"} {
+		//trim might not be needed
+		ip := strings.TrimSpace(d.config[key])
+		if ip == "" || strings.EqualFold(ip, "none") {
+			continue //unset
+		}
+
+		if err := d.externalIPBelongsForward(ip); err != nil {
+			return err
+		}
 	}
 
 	// Check IP external routes are within the network's external routes.
@@ -463,6 +513,28 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 	}
 
 	return nil
+}
+
+// Helper method used in validation of address.external 
+// externalIPBelongsForward (name is up for consideration) returns nil if extIP is the address of an already existing network forward that is found 
+// in the NIC's network, return an error otherwise
+func (d *nicOVN) externalIPBelongsForward(extIP string) error {
+	return d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+
+		projectName := d.inst.Project().Name
+
+		netID, _, _, err := tx.GetNetworkInAnyState(ctx, projectName, d.config["network"])
+		if err != nil {
+			return fmt.Errorf("failed getting network ID: %w", err)
+		}
+
+		_, _, err = tx.GetNetworkForward(ctx, netID, false, extIP)
+		if err != nil {
+			return fmt.Errorf("external address %s is not a network forward on network %q: %w",
+				extIP, d.config["network"], err)
+		}
+		return nil
+	})
 }
 
 // checkAddressConflict checks for conflicting IP/MAC addresses on another NIC connected to same network.
@@ -608,6 +680,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 		uplinkConfig = uplink.Config
 	}
+	
 
 	// Setup the host network interface (if not nested).
 	var peerName, integrationBridgeNICName string
