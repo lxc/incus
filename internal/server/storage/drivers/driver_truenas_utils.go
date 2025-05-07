@@ -28,9 +28,7 @@ func (d *truenas) dataset(vol Volume, deleted bool) string {
 		deleted... in which case we probably can.
 	*/
 
-	// need to disambiguate different images based on the root.img filesystem
-	//if vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS && d.isBlockBacked(vol) {
-	if deleted && vol.volType == VolumeTypeImage && ((vol.contentType == ContentTypeFS && needsFsImgVol(vol)) || isFsImgVol(vol)) {
+	if vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS && d.isBlockBacked(vol) {
 		name = fmt.Sprintf("%s_%s", name, vol.ConfigBlockFilesystem())
 	}
 
@@ -449,7 +447,22 @@ func (d *truenas) locateOrActivateIscsiDataset(dataset string) (bool, string, er
 
 	status, volDiskPath, found := strings.Cut(statusPath, "\t")
 	if !found {
-		return false, "", fmt.Errorf("No status when activating TrueNAS volume: %v", dataset)
+		// okay, it failed, probably because there was no share, so try creating a share...
+		err = d.createIscsiShare(dataset, false)
+		if err != nil {
+			return false, "", fmt.Errorf("Unable to activate volume: %s, error while creating iscsi share: %w", dataset, err)
+		}
+
+		// and then directly activating
+		volDiskPath, err = d.activateIscsiDataset(dataset)
+		if err != nil {
+			return false, "", err
+		}
+		if volDiskPath != "" {
+			status = "activated"
+		}
+
+		// and continue...
 	}
 
 	didActivate := status == "activated"
@@ -491,14 +504,14 @@ func (d *truenas) deactivateIscsiDatasetIfActive(dataset string) (bool, error) {
 		return false, err
 	}
 
-	if statusPath == "" {
+	status, _, _ := strings.Cut(statusPath, "\t")
+
+	if status == "failed" || status == "" {
 		return false, nil
 	}
 
-	status, _, _ := strings.Cut(statusPath, "\t")
-
 	if status != "deactivated" {
-		return false, fmt.Errorf("Unexpected status when decativating TrueNAS volume: %v, '%s'", dataset, statusPath)
+		return false, fmt.Errorf("Unexpected status when deactivating TrueNAS volume: %v, '%s'", dataset, statusPath)
 	}
 
 	return true, nil
