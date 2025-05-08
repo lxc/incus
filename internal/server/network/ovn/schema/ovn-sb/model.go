@@ -13,43 +13,44 @@ import (
 // FullDatabaseModel returns the DatabaseModel object to be used in libovsdb
 func FullDatabaseModel() (model.ClientDBModel, error) {
 	return model.NewClientDBModel("OVN_Southbound", map[string]model.Model{
-		"Address_Set":      &AddressSet{},
-		"BFD":              &BFD{},
-		"Chassis":          &Chassis{},
-		"Chassis_Private":  &ChassisPrivate{},
-		"Connection":       &Connection{},
-		"Controller_Event": &ControllerEvent{},
-		"DHCP_Options":     &DHCPOptions{},
-		"DHCPv6_Options":   &DHCPv6Options{},
-		"DNS":              &DNS{},
-		"Datapath_Binding": &DatapathBinding{},
-		"Encap":            &Encap{},
-		"FDB":              &FDB{},
-		"Gateway_Chassis":  &GatewayChassis{},
-		"HA_Chassis":       &HAChassis{},
-		"HA_Chassis_Group": &HAChassisGroup{},
-		"IGMP_Group":       &IGMPGroup{},
-		"IP_Multicast":     &IPMulticast{},
-		"Load_Balancer":    &LoadBalancer{},
-		"Logical_DP_Group": &LogicalDPGroup{},
-		"Logical_Flow":     &LogicalFlow{},
-		"MAC_Binding":      &MACBinding{},
-		"Meter":            &Meter{},
-		"Meter_Band":       &MeterBand{},
-		"Multicast_Group":  &MulticastGroup{},
-		"Port_Binding":     &PortBinding{},
-		"Port_Group":       &PortGroup{},
-		"RBAC_Permission":  &RBACPermission{},
-		"RBAC_Role":        &RBACRole{},
-		"SB_Global":        &SBGlobal{},
-		"SSL":              &SSL{},
-		"Service_Monitor":  &ServiceMonitor{},
+		"Address_Set":        &AddressSet{},
+		"BFD":                &BFD{},
+		"Chassis":            &Chassis{},
+		"Chassis_Private":    &ChassisPrivate{},
+		"Connection":         &Connection{},
+		"Controller_Event":   &ControllerEvent{},
+		"DHCP_Options":       &DHCPOptions{},
+		"DHCPv6_Options":     &DHCPv6Options{},
+		"DNS":                &DNS{},
+		"Datapath_Binding":   &DatapathBinding{},
+		"Encap":              &Encap{},
+		"FDB":                &FDB{},
+		"Gateway_Chassis":    &GatewayChassis{},
+		"HA_Chassis":         &HAChassis{},
+		"HA_Chassis_Group":   &HAChassisGroup{},
+		"IGMP_Group":         &IGMPGroup{},
+		"IP_Multicast":       &IPMulticast{},
+		"Load_Balancer":      &LoadBalancer{},
+		"Logical_DP_Group":   &LogicalDPGroup{},
+		"Logical_Flow":       &LogicalFlow{},
+		"MAC_Binding":        &MACBinding{},
+		"Meter":              &Meter{},
+		"Meter_Band":         &MeterBand{},
+		"Multicast_Group":    &MulticastGroup{},
+		"Port_Binding":       &PortBinding{},
+		"Port_Group":         &PortGroup{},
+		"RBAC_Permission":    &RBACPermission{},
+		"RBAC_Role":          &RBACRole{},
+		"SB_Global":          &SBGlobal{},
+		"SSL":                &SSL{},
+		"Service_Monitor":    &ServiceMonitor{},
+		"Static_MAC_Binding": &StaticMACBinding{},
 	})
 }
 
 var schema = `{
   "name": "OVN_Southbound",
-  "version": "20.21.0",
+  "version": "20.23.0",
   "tables": {
     "Address_Set": {
       "columns": {
@@ -1205,6 +1206,28 @@ var schema = `{
     },
     "Port_Binding": {
       "columns": {
+        "additional_chassis": {
+          "type": {
+            "key": {
+              "type": "uuid",
+              "refTable": "Chassis",
+              "refType": "weak"
+            },
+            "min": 0,
+            "max": "unlimited"
+          }
+        },
+        "additional_encap": {
+          "type": {
+            "key": {
+              "type": "uuid",
+              "refTable": "Encap",
+              "refType": "weak"
+            },
+            "min": 0,
+            "max": "unlimited"
+          }
+        },
         "chassis": {
           "type": {
             "key": {
@@ -1309,6 +1332,26 @@ var schema = `{
             },
             "min": 0,
             "max": 1
+          }
+        },
+        "port_security": {
+          "type": {
+            "key": {
+              "type": "string"
+            },
+            "min": 0,
+            "max": "unlimited"
+          }
+        },
+        "requested_additional_chassis": {
+          "type": {
+            "key": {
+              "type": "uuid",
+              "refTable": "Chassis",
+              "refType": "weak"
+            },
+            "min": 0,
+            "max": "unlimited"
           }
         },
         "requested_chassis": {
@@ -1624,6 +1667,37 @@ var schema = `{
           "ip",
           "port",
           "protocol"
+        ]
+      ],
+      "isRoot": true
+    },
+    "Static_MAC_Binding": {
+      "columns": {
+        "datapath": {
+          "type": {
+            "key": {
+              "type": "uuid",
+              "refTable": "Datapath_Binding"
+            }
+          }
+        },
+        "ip": {
+          "type": "string"
+        },
+        "logical_port": {
+          "type": "string"
+        },
+        "mac": {
+          "type": "string"
+        },
+        "override_dynamic_mac": {
+          "type": "boolean"
+        }
+      },
+      "indexes": [
+        [
+          "logical_port",
+          "ip"
         ]
       ],
       "isRoot": true
