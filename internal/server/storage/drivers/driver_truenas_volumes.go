@@ -693,6 +693,7 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 // CreateVolumeFromMigration creates a volume being sent via a migration.
 func (d *truenas) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
 	if volTargetArgs.ClusterMoveSourceName != "" && volTargetArgs.StoragePool == "" {
+		d.logger.Debug("Detected migration between cluster members on the same storage pool")
 		err := vol.EnsureMountPath()
 		if err != nil {
 			return err
