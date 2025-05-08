@@ -400,6 +400,7 @@ type cmdNetworkZoneCreate struct {
 func (c *cmdNetworkZoneCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("create", i18n.G("[<remote>:]<Zone> [key=value...]"))
+	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new network zones")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network zones"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network zone create z1
@@ -766,7 +767,7 @@ type cmdNetworkZoneDelete struct {
 func (c *cmdNetworkZoneDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<Zone>"))
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network zones")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete network zones"))
 	cmd.RunE = c.Run
@@ -1113,6 +1114,7 @@ type cmdNetworkZoneRecordCreate struct {
 func (c *cmdNetworkZoneRecordCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("create", i18n.G("[<remote>:]<zone> <record> [key=value...]"))
+	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new network zone record")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network zone record"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network zone record create z1 r1
@@ -1490,7 +1492,7 @@ type cmdNetworkZoneRecordDelete struct {
 func (c *cmdNetworkZoneRecordDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<zone> <record>"))
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network zone record")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete network zone record"))
 	cmd.RunE = c.Run
@@ -1570,6 +1572,7 @@ func (c *cmdNetworkZoneRecordEntry) Command() *cobra.Command {
 func (c *cmdNetworkZoneRecordEntry) CommandAdd() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("add", i18n.G("[<remote>:]<zone> <record> <type> <value>"))
+	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add a network zone record entry")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add entries to a network zone record"))
 	cmd.RunE = c.RunAdd
@@ -1630,6 +1633,7 @@ func (c *cmdNetworkZoneRecordEntry) RunAdd(cmd *cobra.Command, args []string) er
 func (c *cmdNetworkZoneRecordEntry) CommandRemove() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("remove", i18n.G("[<remote>:]<zone> <record> <type> <value>"))
+	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove a network zone record entry")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Remove entries from a network zone record"))
 	cmd.RunE = c.RunRemove
