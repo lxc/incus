@@ -459,6 +459,11 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		// A targetNode was specified, let's just define the node's network without actually creating it.
 		// Check that only NodeSpecificNetworkConfig keys are specified.
 		for key := range req.Config {
+			// Special-case: allow "parent=none". Used to indicate that this node should not act as a gateway chassis.
+			if key == "parent" && req.Config[key] == "none" {
+				continue
+			}
+
 			if !slices.Contains(db.NodeSpecificNetworkConfig, key) {
 				return response.BadRequest(fmt.Errorf("Config key %q may not be used as member-specific key", key))
 			}
