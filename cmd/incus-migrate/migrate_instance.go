@@ -112,29 +112,9 @@ func (m *InstanceMigration) gatherInfo() error {
 		return err
 	}
 
-	if m.instanceArgs.Type == api.InstanceTypeVM {
-		architectureName, _ := osarch.ArchitectureGetLocal()
-
-		if slices.Contains([]string{"x86_64", "aarch64"}, architectureName) {
-			hasUEFI, err := m.asker.AskBool("Does the VM support UEFI booting? [default=yes]: ", "yes")
-			if err != nil {
-				return err
-			}
-
-			if hasUEFI {
-				hasSecureBoot, err := m.asker.AskBool("Does the VM support UEFI Secure Boot? [default=yes]: ", "yes")
-				if err != nil {
-					return err
-				}
-
-				if !hasSecureBoot {
-					m.instanceArgs.Config["security.secureboot"] = "false"
-				}
-			} else {
-				m.instanceArgs.Config["security.csm"] = "true"
-				m.instanceArgs.Config["security.secureboot"] = "false"
-			}
-		}
+	err = m.askUEFISupport()
+	if err != nil {
+		return err
 	}
 
 	var mounts []string
@@ -174,49 +154,7 @@ func (m *InstanceMigration) gatherInfo() error {
 		}
 	}
 
-	for {
-		fmt.Println("\nInstance to be created:")
-
-		scanner := bufio.NewScanner(strings.NewReader(m.render()))
-		for scanner.Scan() {
-			fmt.Printf("  %s\n", scanner.Text())
-		}
-
-		fmt.Print(`
-Additional overrides can be applied at this stage:
-1) Begin the migration with the above configuration
-2) Override profile list
-3) Set additional configuration options
-4) Change instance storage pool or volume size
-5) Change instance network
-6) Add additional disk
-
-`)
-
-		choice, err := m.asker.AskInt("Please pick one of the options above [default=1]: ", 1, 6, "1", nil)
-		if err != nil {
-			return err
-		}
-
-		switch choice {
-		case 1:
-			return nil
-		case 2:
-			err = m.askProfiles()
-		case 3:
-			err = m.askConfig()
-		case 4:
-			err = m.askStorage()
-		case 5:
-			err = m.askNetwork()
-		case 6:
-			err = m.askDisk()
-		}
-
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
+	return nil
 }
 
 // migrate performs the instance migration.
@@ -276,7 +214,52 @@ func (m *InstanceMigration) migrate() error {
 
 // renderObject renders the state of the instance.
 func (m *InstanceMigration) renderObject() error {
-	return nil
+	for {
+		fmt.Println("\nInstance to be created:")
+
+		scanner := bufio.NewScanner(strings.NewReader(m.render()))
+		for scanner.Scan() {
+			fmt.Printf("  %s\n", scanner.Text())
+		}
+
+		fmt.Print(`
+Additional overrides can be applied at this stage:
+1) Begin the migration with the above configuration
+2) Override profile list
+3) Set additional configuration options
+4) Change instance storage pool or volume size
+5) Change instance network
+6) Add additional disk
+7) Change additional disk storage pool
+
+`)
+
+		choice, err := m.asker.AskInt("Please pick one of the options above [default=1]: ", 1, 6, "1", nil)
+		if err != nil {
+			return err
+		}
+
+		switch choice {
+		case 1:
+			return nil
+		case 2:
+			err = m.askProfiles()
+		case 3:
+			err = m.askConfig()
+		case 4:
+			err = m.askStorage()
+		case 5:
+			err = m.askNetwork()
+		case 6:
+			err = m.askDisk()
+		case 7:
+			err = m.askDiskStorage()
+		}
+
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 }
 
 func (m *InstanceMigration) render() string {
@@ -439,6 +422,46 @@ func (m *InstanceMigration) askStorage() error {
 	return nil
 }
 
+func (m *InstanceMigration) askDiskStorage() error {
+	diskNames := []string{}
+	for _, vol := range m.volumes {
+		diskNames = append(diskNames, vol.customVolumeArgs.Name)
+	}
+
+	if len(diskNames) == 0 {
+		return fmt.Errorf("No additional disks available")
+	}
+
+	diskName, err := m.asker.AskChoice("Please provide the disk name: ", diskNames, "")
+	if err != nil {
+		return err
+	}
+
+	storagePools, err := m.server.GetStoragePoolNames()
+	if err != nil {
+		return err
+	}
+
+	if len(storagePools) == 0 {
+		return fmt.Errorf("No storage pools available")
+	}
+
+	storagePool, err := m.asker.AskChoice("Please provide the storage pool to use: ", storagePools, "")
+	if err != nil {
+		return err
+	}
+
+	m.instanceArgs.Devices[diskName]["pool"] = storagePool
+	for _, vol := range m.volumes {
+		if vol.customVolumeArgs.Name == diskName {
+			vol.pool = storagePool
+			break
+		}
+	}
+
+	return nil
+}
+
 func (m *InstanceMigration) askNetwork() error {
 	networks, err := m.server.GetNetworkNames()
 	if err != nil {
@@ -493,6 +516,35 @@ func (m *InstanceMigration) askDisk() error {
 	}
 
 	m.volumes = append(m.volumes, volMigrator)
+
+	return nil
+}
+
+func (m *InstanceMigration) askUEFISupport() error {
+	if m.instanceArgs.Type == api.InstanceTypeVM {
+		architectureName, _ := osarch.ArchitectureGetLocal()
+
+		if slices.Contains([]string{"x86_64", "aarch64"}, architectureName) {
+			hasUEFI, err := m.asker.AskBool("Does the VM support UEFI booting? [default=yes]: ", "yes")
+			if err != nil {
+				return err
+			}
+
+			if hasUEFI {
+				hasSecureBoot, err := m.asker.AskBool("Does the VM support UEFI Secure Boot? [default=yes]: ", "yes")
+				if err != nil {
+					return err
+				}
+
+				if !hasSecureBoot {
+					m.instanceArgs.Config["security.secureboot"] = "false"
+				}
+			} else {
+				m.instanceArgs.Config["security.csm"] = "true"
+				m.instanceArgs.Config["security.secureboot"] = "false"
+			}
+		}
+	}
 
 	return nil
 }
