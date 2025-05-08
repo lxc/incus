@@ -168,12 +168,16 @@ func (c *ClusterTx) GetURIFromEntity(ctx context.Context, entityType int, entity
 
 		uri = fmt.Sprintf(cluster.EntityURIs[entityType], networkName, projectName)
 	case cluster.TypeNetworkACL:
-		networkACLName, projectName, err := c.GetNetworkACLNameAndProjectWithID(ctx, entityID)
+		acls, err := cluster.GetNetworkACLs(ctx, c.tx, cluster.NetworkACLFilter{ID: &entityID})
 		if err != nil {
-			return "", fmt.Errorf("Failed to get network ACL name and project name: %w", err)
+			return "", err
 		}
 
-		uri = fmt.Sprintf(cluster.EntityURIs[entityType], networkACLName, projectName)
+		if len(acls) == 0 {
+			return "", ErrUnknownEntityID
+		}
+
+		uri = fmt.Sprintf(cluster.EntityURIs[entityType], acls[0].Name, acls[0].Project)
 	case cluster.TypeNode:
 		nodeInfo, err := c.GetNodeWithID(ctx, entityID)
 		if err != nil {

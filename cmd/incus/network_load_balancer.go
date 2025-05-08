@@ -336,6 +336,7 @@ type cmdNetworkLoadBalancerCreate struct {
 func (c *cmdNetworkLoadBalancerCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("create", i18n.G("[<remote>:]<network> <listen_address> [key=value...]"))
+	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new network load balancers")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network load balancers"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network load-balancer create n1 127.0.0.1
@@ -826,7 +827,7 @@ type cmdNetworkLoadBalancerDelete struct {
 func (c *cmdNetworkLoadBalancerDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<network> <listen_address>"))
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network load balancers")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete network load balancers"))
 	cmd.RunE = c.Run
@@ -919,6 +920,7 @@ func (c *cmdNetworkLoadBalancerBackend) Command() *cobra.Command {
 func (c *cmdNetworkLoadBalancerBackend) CommandAdd() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("add", i18n.G("[<remote>:]<network> <listen_address> <backend_name> <target_address> [<target_port(s)>]"))
+	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add backends to a load balancer")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add backend to a load balancer"))
 	cmd.RunE = c.RunAdd
@@ -999,6 +1001,7 @@ func (c *cmdNetworkLoadBalancerBackend) RunAdd(cmd *cobra.Command, args []string
 func (c *cmdNetworkLoadBalancerBackend) CommandRemove() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("remove", i18n.G("[<remote>:]<network> <listen_address> <backend_name>"))
+	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove backends from a load balancer")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Remove backend from a load balancer"))
 	cmd.RunE = c.RunRemove
@@ -1116,6 +1119,7 @@ func (c *cmdNetworkLoadBalancerPort) Command() *cobra.Command {
 func (c *cmdNetworkLoadBalancerPort) CommandAdd() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("add", i18n.G("[<remote>:]<network> <listen_address> <protocol> <listen_port(s)> <backend_name>[,<backend_name>...]"))
+	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add ports to a load balancer")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add ports to a load balancer"))
 	cmd.RunE = c.RunAdd
@@ -1193,6 +1197,7 @@ func (c *cmdNetworkLoadBalancerPort) RunAdd(cmd *cobra.Command, args []string) e
 func (c *cmdNetworkLoadBalancerPort) CommandRemove() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("remove", i18n.G("[<remote>:]<network> <listen_address> [<protocol>] [<listen_port(s)>]"))
+	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove ports from a load balancer")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Remove ports from a load balancer"))
 	cmd.Flags().BoolVar(&c.flagRemoveForce, "force", false, i18n.G("Remove all ports that match"))

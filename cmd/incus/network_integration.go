@@ -82,6 +82,7 @@ type cmdNetworkIntegrationCreate struct {
 func (c *cmdNetworkIntegrationCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("create", i18n.G("[<remote>:]<network integration> <type>"))
+	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create network integrations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create network integrations`))
@@ -174,7 +175,7 @@ type cmdNetworkIntegrationDelete struct {
 func (c *cmdNetworkIntegrationDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<network integration>"))
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network integrations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Delete network integrations`))

@@ -147,6 +147,11 @@ type NetworkACL struct {
 	Project string `json:"project" yaml:"project"` // Project the ACL belongs to.
 }
 
+// URL returns the URL for the network ACL.
+func (acl *NetworkACL) URL(apiVersion string, project string) *URL {
+	return NewURL().Path(apiVersion, "network-acls", acl.Name).Project(project)
+}
+
 // Writable converts a full NetworkACL struct into a NetworkACLPut struct (filters read-only fields).
 func (acl *NetworkACL) Writable() NetworkACLPut {
 	return acl.NetworkACLPut
