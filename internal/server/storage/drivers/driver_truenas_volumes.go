@@ -587,10 +587,16 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 		if err != nil {
 			return err
 		}
+
+		// Note: user props aren't cloned, so we re-add the content_type if necessary
+		if vol.volType == VolumeTypeCustom {
+			// Add custom property incus:content_type which allows distinguishing between regular volumes, block_mode enabled volumes, and ISO volumes.
+			props := fmt.Sprintf("user-props=incus:content_type=%s", vol.contentType) // TODO: this needs to be better.
+			d.setDatasetProperties(destDataset, props)
+		}
 	}
 
 	// and share the clone/copy.
-	//err = d.createNfsShare(destDataset)
 	err = d.createIscsiShare(destDataset, false)
 	if err != nil {
 		return err
@@ -690,7 +696,7 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 	return d.createOrRefeshVolumeFromCopy(vol, srcVol, false, copySnapshots, allowInconsistent, op) // not refreshing.
 }
 
-// CreateVolumeFromMigration creates a volume being sent via a migration.
+// CreateVolumeFromMigration creates a volume being sent via a migration. TODO: need to ensure that incus:content_type is copied.
 func (d *truenas) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
 	if volTargetArgs.ClusterMoveSourceName != "" && volTargetArgs.StoragePool == "" {
 		d.logger.Debug("Detected migration between cluster members on the same storage pool")
