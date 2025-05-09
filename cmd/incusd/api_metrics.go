@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"runtime"
@@ -22,6 +23,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/internal/server/state"
+	internalutil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 )
@@ -366,6 +368,29 @@ func internalMetrics(ctx context.Context, daemonStartTime time.Time, tx *db.Clus
 	out.AddSamples(metrics.GoStackInuseBytes, metrics.Sample{Value: float64(ms.StackInuse)})
 	out.AddSamples(metrics.GoStackSysBytes, metrics.Sample{Value: float64(ms.StackSys)})
 	out.AddSamples(metrics.GoSysBytes, metrics.Sample{Value: float64(ms.Sys)})
+
+	// If on Incus OS, include OS metrics.
+	if internalutil.IsIncusOS() {
+		client := http.Client{}
+		client.Transport = &http.Transport{
+			DialContext: func(_ context.Context, network, addr string) (net.Conn, error) {
+				return net.DialTimeout("tcp", "127.0.0.1:9100", 50*time.Millisecond)
+			},
+			DisableKeepAlives:     true,
+			ExpectContinueTimeout: time.Second * 3,
+			ResponseHeaderTimeout: time.Second * 3,
+		}
+
+		resp, err := client.Get("http://incus-os/metrics")
+		if err == nil {
+			defer resp.Body.Close()
+
+			osMetrics, err := io.ReadAll(resp.Body)
+			if err == nil {
+				out.AddRaw(osMetrics)
+			}
+		}
+	}
 
 	return out
 }
