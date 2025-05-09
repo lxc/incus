@@ -1213,13 +1213,20 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 	vols := make(map[string]Volume)
 	_ = vols
 
+	/* from backend.ListUnknownVolumes
+	// Get a list of volumes on the storage pool. We only expect to get 1 volume per logical Incus volume.
+	// So for VMs we only expect to get the block volume for a VM and not its filesystem one too. This way we
+	// can operate on the volume using the existing storage pool functions and let the pool then handle the
+	// associated filesystem volume as needed.
+	*/
+
 	// Get just filesystem and volume datasets, not snapshots.
 	// The ZFS driver uses two approaches to indicating block volumes; firstly for VM and image volumes it
 	// creates both a filesystem dataset and an associated volume ending in zfsBlockVolSuffix.
 	// However for custom block volumes it does not also end the volume name in zfsBlockVolSuffix (unlike the
 	// LVM and Ceph drivers), so we must also retrieve the dataset type here and look for "volume" types
 	// which also indicate this is a block volume.
-	out, err := d.runTool("list", "-H", "-o", "name,type,incus:content_type", "-r", "-t", "filesystem,volume", d.config["truenas.dataset"])
+	out, err := d.runTool("list", "-H", "-o", "name,incus:content_type", "-r", "-t", "volume", d.config["truenas.dataset"])
 	if err != nil {
 		return nil, err
 	}
@@ -1231,13 +1238,13 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 
 		// Splitting fields on tab should be safe as ZFS doesn't appear to allow tabs in dataset names.
 		parts := strings.Split(line, "\t")
-		if len(parts) != 3 {
+		if len(parts) != 2 {
 			return nil, fmt.Errorf("Unexpected volume line %q", line)
 		}
 
 		zfsVolName := parts[0]
-		zfsContentType := parts[1]
-		incusContentType := parts[2]
+		//zfsContentType := parts[1]
+		incusContentType := parts[1]
 
 		var volType VolumeType
 		var volName string
@@ -1255,24 +1262,21 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 			continue // Ignore unrecognised volume.
 		}
 
-		// Detect if a volume is block content type using only the dataset type.
-		isBlock := zfsContentType == "volume"
+		contentType := ContentTypeFS
 
-		if volType == VolumeTypeVM && (!isBlock || !strings.HasSuffix(volName, zfsBlockVolSuffix)) {
+		if volType == VolumeTypeVM && !strings.HasSuffix(volName, zfsBlockVolSuffix) {
 			continue // Ignore VM filesystem volumes as we will just return the VM's block volume.
 		}
 
-		contentType := ContentTypeFS
-		if isBlock {
-			contentType = ContentTypeBlock
-		}
-
-		if volType == VolumeTypeCustom && isBlock && strings.HasSuffix(volName, zfsISOVolSuffix) {
+		if volType == VolumeTypeCustom && strings.HasSuffix(volName, zfsISOVolSuffix) {
 			contentType = ContentTypeISO
 			volName = strings.TrimSuffix(volName, zfsISOVolSuffix)
-		} else if volType == VolumeTypeVM || isBlock {
+		} else if volType == VolumeTypeVM || (volType == VolumeTypeImage && strings.HasSuffix(volName, zfsBlockVolSuffix)) {
+			contentType = ContentTypeBlock
 			volName = strings.TrimSuffix(volName, zfsBlockVolSuffix)
 		}
+
+		// TODO: need to split images at _ to determine filesystem, or to ignore the filesystem.
 
 		// If a new volume has been found, or the volume will replace an existing image filesystem volume
 		// then proceed to add the volume to the map. We allow image volumes to overwrite existing
@@ -1282,15 +1286,17 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 		if !foundExisting || (existingVol.Type() == VolumeTypeImage && existingVol.ContentType() == ContentTypeFS) {
 			v := NewVolume(d, d.name, volType, contentType, volName, make(map[string]string), d.config)
 
-			if isBlock {
-				// Get correct content type from incus:content_type property.
-				if incusContentType != "-" {
-					v.contentType = ContentType(incusContentType)
-				}
+			// Get correct content type from incus:content_type property.
+			if incusContentType != "-" {
+				v.contentType = ContentType(incusContentType)
+			}
 
-				if v.contentType == ContentTypeBlock {
-					v.SetMountFilesystemProbe(true)
-				}
+			/*
+				if its a filesystem, we need to probe it, but VMBlock's have an implicit filesystem Volume, and that Volume inherits the probe
+				setting from the block volume.
+			*/
+			if v.contentType == ContentTypeFS || v.IsVMBlock() {
+				v.SetMountFilesystemProbe(true)
 			}
 
 			vols[volName] = v
