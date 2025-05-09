@@ -72,7 +72,7 @@ const VolumeTypeVM = VolumeType("virtual-machines")
 // ContentType indicates the format of the volume.
 type ContentType string
 
-// ContentTypeFS indicates the volume will be populated with a mountabble filesystem.
+// ContentTypeFS indicates the volume will be populated with a mountable filesystem.
 const ContentTypeFS = ContentType("filesystem")
 
 // ContentTypeBlock indicates the volume will be a block device and its contents and we do not
