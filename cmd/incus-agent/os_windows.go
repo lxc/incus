@@ -26,6 +26,7 @@ var (
 	osShutdownSignal       = os.Interrupt
 	osBaseWorkingDirectory = "C:\\"
 	osMetricsSupported     = false
+	osGuestAPISupport      = false
 )
 
 func osGetEnvironment() (*api.ServerEnvironment, error) {
