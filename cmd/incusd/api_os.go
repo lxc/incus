@@ -9,7 +9,7 @@ import (
 
 	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/response"
-	"github.com/lxc/incus/v6/shared/util"
+	internalutil "github.com/lxc/incus/v6/internal/util"
 )
 
 var apiOS = APIEndpoint{
@@ -24,7 +24,7 @@ var apiOS = APIEndpoint{
 
 func apiOSProxy(_ *Daemon, r *http.Request) response.Response {
 	// Check if this is an Incus OS system.
-	if !util.PathExists("/run/incus-os/unix.socket") {
+	if !internalutil.IsIncusOS() {
 		return response.BadRequest(errors.New("System isn't running Incus OS"))
 	}
 
