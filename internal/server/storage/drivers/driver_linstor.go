@@ -237,6 +237,11 @@ func (d *linstor) Info() Info {
 
 // Mount mounts the storage pool.
 func (d *linstor) Mount() (bool, error) {
+	_, err := d.state.Linstor()
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
 
