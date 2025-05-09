@@ -240,7 +240,7 @@ if [ "${1:-"all"}" != "standalone" ]; then
     run_test test_clustering_address "clustering address"
     run_test test_clustering_image_replication "clustering image replication"
     run_test test_clustering_recover "clustering recovery"
-    # run_test test_clustering_handover "clustering handover" #TN - failed with daemon
+    run_test test_clustering_handover "clustering handover"
     run_test test_clustering_rebalance "clustering rebalance"
     run_test test_clustering_remove_raft_node "clustering remove raft node"
     run_test test_clustering_failure_domains "clustering failure domains"
@@ -271,7 +271,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_projects_images_default "images from the global default project"
     run_test test_projects_storage "projects and storage pools"
     run_test test_projects_network "projects and networks"
-    # run_test test_projects_limits "projects limits" # TN - zvol shrinking
+    # run_test test_projects_limits "projects limits" #TN - zvol shrinking
     # run_test test_projects_usage "projects usage" #TN - zvol shrinking
     run_test test_projects_restrictions "projects restrictions"
     run_test test_container_devices_disk "container devices - disk"
@@ -333,7 +333,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_network_zone "network DNS zones"
     run_test test_idmap "id mapping"
     run_test test_template "file templating"
-    #run_test test_pki "PKI mode" # TN: this requires entering prompts, and stalls the tests.
+    #run_test test_pki "PKI mode" # TN: this requires entering prompts, and stalls the tests, but does pass.
     run_test test_dev_incus "/dev/incus"
     run_test test_fuidshift "fuidshift"
     run_test test_migration "migration"
@@ -366,13 +366,12 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_backup_import "backup import"
     run_test test_backup_export "backup export"
     run_test test_backup_rename "backup rename"
-    #run_test test_backup_volume_export "backup volume export" #TN: with daemon: "cat: /home/stux/git/incus/test/tmp.CK8/wlV/non-optimized/backup/volume-snapshots/test-snap0/test: No such file or directory"
+    run_test test_backup_volume_export "backup volume export"
     run_test test_backup_export_import_instance_only "backup export and import instance only"
     run_test test_backup_volume_rename_delete "backup volume rename and delete"
     run_test test_backup_different_instance_uuid "backup instance and check instance UUIDs"
     run_test test_backup_volume_expiry "backup volume expiry"
-    #run_test test_backup_export_import_recover "backup export, import, and recovery" #TN
-    #run_test test_backup_export_import_recover "backup export, import, and recovery" #TN
+    run_test test_backup_export_import_recover "backup export, import, and recovery"
     run_test test_container_local_cross_pool_handling "container local cross pool handling"
     run_test test_incremental_copy "incremental container copy"
     run_test test_profiles_project_default "profiles in default project"
