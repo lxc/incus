@@ -405,7 +405,7 @@ func (d *truenas) createIscsiShare(dataset string, readonly bool) error {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			d.logger.Debug(fmt.Sprintf("Detected error while attempting to create iscsi share for: %s, %v", dataset, err))
 
-			// there's a race when obtaining an iscsi id in `iscsi create`, lets try sleeping for a bit, and retrying.
+			// there's a race when obtaining an iscsi id in `iscsi create`, lets try sleeping for a bit, and retrying. (NAS-135784)
 			time.Sleep(500 * time.Millisecond)
 			return d.createIscsiShare(dataset, readonly)
 		}
