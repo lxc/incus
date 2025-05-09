@@ -1706,17 +1706,7 @@ func (d *truenas) BackupVolume(vol Volume, tarWriter *instancewriter.InstanceTar
 
 // CreateVolumeSnapshot creates a snapshot of a volume.
 func (d *truenas) CreateVolumeSnapshot(vol Volume, op *operations.Operation) error {
-
-	origVol := vol.Clone() // when calling Create/Delete we need the original vol
-
-	// must mount VM.block so we can access the root.img, as well as the config filesystem
-	parentName, snapName, _ := api.GetParentAndSnapshotName(vol.name)
-
-	if vol.IsVMBlock() { // or fs-img...
-		// for a VM, we need to prefix the name
-		vol.name = fmt.Sprintf("%s.block/%s", parentName, snapName)
-		parentName += ".block"
-	}
+	parentName, _, _ := api.GetParentAndSnapshotName(vol.name)
 
 	// Revert handling.
 	revert := revert.New()
@@ -1734,17 +1724,20 @@ func (d *truenas) CreateVolumeSnapshot(vol Volume, op *operations.Operation) err
 		return err
 	}
 
-	if vol.IsVMBlock() {
+	// Sync the Volume
+	if vol.contentType == ContentTypeFS {
 		/*
 			We want to ensure the current state is flushed to the server before snapping.
 
-			Incus will Freeze the Instance before the snapshot, but if its a VM it won't Sync the FS
-			correctly as it targets the ./rootfs as used by lxc
+			Although Incus will Freeze Instances and VMs before Snapshot, then perform a SyncFS on the rootfs,
+			that is only when going via CreateInstanceSnapshot, ie a Custom Volume will miss out as that goes
+			via CreateCustomVolumeSnapshot, and there is no SyncFS.
 
-			In future, a better solution may be to correct the Freeze/Unfreeze logic to figure out to
-			use the VM's filesystem.
+			We may as well just sync any mounted filesystem, and if its already been synced there shouldn't be
+			too many changes to flush to the server.
 
-			Ideally, this whole function needs to return ASAP so that the VM will be unfrozen ASAP
+			In theory, a similar problem can exist with raw devices... and we may want to look at using something
+			similar to `blockdev --flushbufs` to flush the block device before the snap.
 		*/
 		volMountPath := GetVolumeMountPath(vol.pool, vol.volType, parentName)
 		if linux.IsMountPoint(volMountPath) {
@@ -1756,18 +1749,16 @@ func (d *truenas) CreateVolumeSnapshot(vol Volume, op *operations.Operation) err
 	}
 
 	// Make the snapshot.
-	dataset := d.dataset(origVol, false)
-	err = d.createSnapshot(dataset, false)
+	err = d.createSnapshot(d.dataset(vol, false), false)
 	if err != nil {
 		return err
 	}
 
-	revert.Add(func() { _ = d.DeleteVolumeSnapshot(origVol, op) })
+	revert.Add(func() { _ = d.DeleteVolumeSnapshot(vol, op) })
 
 	// For VM images, create a filesystem volume too.
 	if vol.IsVMBlock() {
-
-		fsVol := origVol.NewVMBlockFilesystemVolume()
+		fsVol := vol.NewVMBlockFilesystemVolume()
 		err := d.CreateVolumeSnapshot(fsVol, op)
 		if err != nil {
 			return err
