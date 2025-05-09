@@ -4397,6 +4397,53 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		checkAndStoreIP(net.ParseIP(staticIP))
 	}
 
+	// Per‑NIC SNAT — if the device requests an external address use it for outbound NAT.
+	for _, rule := range []struct {
+		cfgKey string
+		ip     net.IP
+	}{
+		{"ipv4.address.external", dnsIPv4},
+		{"ipv6.address.external", dnsIPv6},
+	} {
+	extStr := opts.DeviceConfig[rule.cfgKey]
+	if rule.ip == nil || extStr == "" || strings.EqualFold(extStr, "none") {
+		continue
+	}
+
+	extIP := net.ParseIP(extStr)
+	if extIP == nil {
+		return "", nil, fmt.Errorf("Invalid %s %q", rule.cfgKey, extStr)
+	}
+
+	prefix := IPToNet(rule.ip)
+	if rule.ip.To4() == nil {
+		prefix.Mask = net.CIDRMask(128, 128)
+	}
+
+	if err := n.ovnnb.CreateLogicalRouterNAT(
+		context.TODO(),
+		n.getRouterName(),
+		"snat",
+		&prefix,
+		extIP,
+		nil,
+		false,
+		true,
+	); err != nil {
+		return "", nil, fmt.Errorf("Failed to add SNAT (%s): %w", extStr, err)
+	}
+
+	reverter.Add(func() {
+		_ = n.ovnnb.DeleteLogicalRouterNAT(
+			context.TODO(),
+			n.getRouterName(),
+			"snat",
+			false,
+			extIP,
+		)
+	})
+	}
+
 	// Get dynamic IPs for switch port if any IPs not assigned statically.
 	if (ipv4 != "none" && dnsIPv4 == nil) || (ipv6 != "none" && dnsIPv6 == nil) {
 		var dynamicIPs []net.IP
@@ -4449,6 +4496,8 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 			}
 		}
 	}
+
+	
 
 	// Publish NIC's IPs on uplink network if NAT is disabled and using l2proxy ingress mode on uplink.
 	if slices.Contains([]string{"l2proxy", ""}, opts.UplinkConfig["ovn.ingress_mode"]) {
@@ -4923,6 +4972,27 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 		err = n.ovnnb.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat_and_snat", false, removeNATIPs...)
 		if err != nil {
 			return err
+		}
+	}
+
+	//  Tear down per‑NIC egress SNAT rules (ipv4/ipv6.address.external)
+	for _, k := range []string{"ipv4.address.external", "ipv6.address.external"} {
+		ext := opts.DeviceConfig[k]
+		if ext == "" || strings.EqualFold(ext, "none") {
+			continue
+		}
+
+		if ip := net.ParseIP(ext); ip != nil {
+			// Delete only the row that matches this external IP.
+			if err := n.ovnnb.DeleteLogicalRouterNAT(
+				context.TODO(),
+				n.getRouterName(),
+				"snat",
+				false,
+				ip,
+			); err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
+				return err
+			}
 		}
 	}
 
@@ -7098,3 +7168,4 @@ func (n *ovn) loadBalancerBGPSetupPrefixes() error {
 
 	return nil
 }
+
