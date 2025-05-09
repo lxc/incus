@@ -92,13 +92,14 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 			return nil, err
 		}
 
-		request, err := json.Marshal(value)
-		if err != nil {
-			return nil, err
+		request, ok := value.(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("value type not map[string]any: %v", value)
 		}
 
+		request["logok"] = true
 		var resp map[string]any
-		err = m.RunJSON(request, &resp, true)
+		err = m.RunJSON(request, &resp)
 		if err != nil {
 			return nil, err
 		}
