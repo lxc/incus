@@ -92,7 +92,7 @@ func (c *cmdNetworkZoneList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("list", i18n.G("[<remote>:]"))
 	cmd.Aliases = []string{"ls"}
-	cmd.Short = i18n.G("List available network zoneS")
+	cmd.Short = i18n.G("List available network zones")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List available network zone
 
