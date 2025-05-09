@@ -103,19 +103,81 @@ type MemDev struct {
 	HostNodes []int  `json:"host-nodes"`
 }
 
+// Error represents a QEMU QMP response error.
+type Error struct {
+	Class string `json:"class,omitempty"`
+	Desc  string `json:"desc,omitempty"`
+}
+
+type rawResponse struct {
+	// Optional id for transaction identification associated with the response
+	ID  uint32 `json:"id"`
+	b   []byte // raw data, json field ignored
+	err error  // runtime error, json field ignored
+}
+
+// Response represents a QEMU QMP response.
+type Response struct {
+	// Optional id for transaction identification associated with the response
+	ID uint32 `json:"id,omitempty"`
+
+	// Return response return
+	Return any `json:"return,omitempty"`
+
+	// Error response error
+	Error *Error `json:"error,omitempty"`
+}
+
+// Event represents a QEMU QMP event.
+// See http://wiki.qemu.org/QMP
+type Event struct {
+	// Event name, e.g., BLOCK_JOB_COMPLETE
+	Event string `json:"event"`
+
+	// Arbitrary event data
+	Data map[string]any `json:"data"`
+
+	// Event timestamp, provided by QEMU.
+	Timestamp *struct {
+		Seconds      int64 `json:"seconds"`
+		Microseconds int64 `json:"microseconds"`
+	} `json:"timestamp"`
+}
+
+// Command represents a QMP command.
+type Command struct {
+	// Name of the command to run
+	Execute string `json:"execute,omitempty"`
+
+	// Name of the Out-off-band execution to run
+	ExecuteOutOfBand string `json:"exec-oob,omitempty"`
+
+	// Optional arguments for the above command.
+	Arguments any `json:"arguments,omitempty"`
+
+	// Optional id for transaction identification associated with the command
+	// execution
+	//
+	// According QMP spec it should be any json value type. For incus `uint32`
+	// (skip zero) is good enough to identify transaction.
+	ID uint32 `json:"id,omitempty"`
+
+	logok bool // nolog tag, json ignore
+}
+
 // QueryCPUs returns a list of CPUs.
 func (m *Monitor) QueryCPUs() ([]CPU, error) {
 	// Prepare the response.
-	var resp struct {
+	rep := &struct {
 		Return []CPU `json:"return"`
-	}
+	}{}
 
-	err := m.Run("query-cpus-fast", nil, &resp)
+	err := m.Run("query-cpus-fast", nil, rep)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to query CPUs: %w", err)
 	}
 
-	return resp.Return, nil
+	return rep.Return, nil
 }
 
 // QueryHotpluggableCPUs returns a list of hotpluggable CPUs.
@@ -205,23 +267,15 @@ func (m *Monitor) SendFile(name string, file *os.File) error {
 		return ErrMonitorDisconnect
 	}
 
-	var req struct {
-		Execute   string `json:"execute"`
-		Arguments struct {
-			FDName string `json:"fdname"`
-		} `json:"arguments"`
-	}
-
-	req.Execute = "getfd"
-	req.Arguments.FDName = name
-
-	reqJSON, err := json.Marshal(req)
-	if err != nil {
-		return err
+	req := &Command{
+		Execute: "getfd",
+		Arguments: map[string]string{
+			"fdname": name,
+		},
 	}
 
 	// Query the status.
-	_, err = m.qmp.RunWithFile(reqJSON, file)
+	err := m.RunWithFile(req, file, nil)
 	if err != nil {
 		// Confirm the daemon didn't die.
 		errPing := m.ping()
@@ -258,27 +312,25 @@ func (m *Monitor) SendFileWithFDSet(name string, file *os.File, readonly bool) (
 		return nil, ErrMonitorDisconnect
 	}
 
-	var req struct {
-		Execute   string `json:"execute"`
-		Arguments struct {
-			Opaque string `json:"opaque"`
-		} `json:"arguments"`
-	}
-
 	permissions := "rdwr"
 	if readonly {
 		permissions = "rdonly"
 	}
 
-	req.Execute = "add-fd"
-	req.Arguments.Opaque = fmt.Sprintf("%s:%s", permissions, name)
+	opaque := fmt.Sprintf("%s:%s", permissions, name)
 
-	reqJSON, err := json.Marshal(req)
-	if err != nil {
-		return nil, err
+	req := &Command{
+		Execute: "add-fd",
+		Arguments: map[string]string{
+			"opaque": opaque,
+		},
 	}
 
-	ret, err := m.qmp.RunWithFile(reqJSON, file)
+	rep := &struct {
+		Return AddFdInfo `json:"return"`
+	}{}
+
+	err := m.RunWithFile(req, file, rep)
 	if err != nil {
 		// Confirm the daemon didn't die.
 		errPing := m.ping()
@@ -289,17 +341,7 @@ func (m *Monitor) SendFileWithFDSet(name string, file *os.File, readonly bool) (
 		return nil, err
 	}
 
-	// Prepare the response.
-	var resp struct {
-		Return AddFdInfo `json:"return"`
-	}
-
-	err = json.Unmarshal(ret, &resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return &resp.Return, nil
+	return &rep.Return, nil
 }
 
 // RemoveFDFromFDSet removes an FD with the given name from an FD set.

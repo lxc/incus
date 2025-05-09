@@ -9,7 +9,6 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/checkpoint-restore/go-criu/v6 v6.3.0
 	github.com/cowsql/go-cowsql v1.22.0
-	github.com/digitalocean/go-qemu v0.0.0-20250212194115-ee9b0668d242
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e
 	github.com/dustinkirkland/golang-petname v0.0.0-20240428194347-eebcea082ee0
 	github.com/flosch/pongo2/v6 v6.0.0
@@ -75,7 +74,6 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dgryski/go-farm v0.0.0-20240924180020-3414d57e47da // indirect
-	github.com/digitalocean/go-libvirt v0.0.0-20250417173424-a6a66ef779d6 // indirect
 	github.com/donovanhide/eventsource v0.0.0-20210830082556-c59027999da0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/eapache/channels v1.1.0 // indirect

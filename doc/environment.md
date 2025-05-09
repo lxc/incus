@@ -35,6 +35,7 @@ Name                            | Description
 `INCUS_DOCUMENTATION`           | Path to the documentation to serve through the web server
 `INCUS_EDK2_PATH`               | Path to EDK2 firmware build including `*_CODE.fd` and `*_VARS.fd`
 `INCUS_EXEC_PATH`               | Full path to the Incus binary (used when forking subcommands)
+`INCUS_QMP_EVENTS_DEBUG`        | If set to `true`, QMP log events when log file available
 `INCUS_IDMAPPED_MOUNTS_DISABLE` | Disable idmapped mounts support (useful when testing traditional UID shifting)
 `INCUS_LXC_TEMPLATE_CONFIG`     | Path to the LXC template configuration directory
 `INCUS_SECURITY_APPARMOR`       | If set to `false`, forces AppArmor off
