@@ -1801,26 +1801,36 @@ func (d *lxc) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 
 	// Generate uevent inside container if requested.
 	if len(runConf.Uevents) > 0 {
-		pidFdNr, pidFd := d.inheritInitPidFd()
-		if pidFdNr >= 0 {
+		pidFd := d.inheritInitPidFd()
+		pidFdNr := "-1"
+		if pidFd != nil {
 			defer func() { _ = pidFd.Close() }()
+			pidFdNr = "3"
 		}
 
 		for _, eventParts := range runConf.Uevents {
-			ueventArray := make([]string, 6)
-			ueventArray[0] = "forkuevent"
-			ueventArray[1] = "inject"
-			ueventArray[2] = "--"
-			ueventArray[3] = fmt.Sprintf("%d", d.InitPID())
-			ueventArray[4] = fmt.Sprintf("%d", pidFdNr)
 			length := 0
 			for _, part := range eventParts {
 				length = length + len(part) + 1
 			}
 
-			ueventArray[5] = fmt.Sprintf("%d", length)
-			ueventArray = append(ueventArray, eventParts...)
-			_, _, err := subprocess.RunCommandSplit(context.TODO(), nil, []*os.File{pidFd}, d.state.OS.ExecPath, ueventArray...)
+			args := []string{
+				"forkuevent",
+				"inject",
+				"--",
+				fmt.Sprintf("%d", d.InitPID()),
+				pidFdNr,
+				fmt.Sprintf("%d", length),
+			}
+
+			args = append(args, eventParts...)
+
+			_, _, err := subprocess.RunCommandSplit(
+				context.TODO(),
+				nil,
+				[]*os.File{pidFd},
+				d.state.OS.ExecPath,
+				args...)
 			if err != nil {
 				return err
 			}
@@ -6979,17 +6989,17 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 	return nil
 }
 
-func (d *lxc) inheritInitPidFd() (int, *os.File) {
+func (d *lxc) inheritInitPidFd() *os.File {
 	if d.state.OS.PidFds {
 		pidFdFile, err := d.InitPidFd()
 		if err != nil {
-			return -1, nil
+			return nil
 		}
 
-		return 3, pidFdFile
+		return pidFdFile
 	}
 
-	return -1, nil
+	return nil
 }
 
 // FileSFTPConn returns a connection to the forkfile handler.
@@ -7114,8 +7124,8 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 		extraFiles = append(extraFiles, rootfsFile)
 
 		// Get the pidfd.
-		pidFdNr, pidFd := d.inheritInitPidFd()
-		if pidFdNr >= 0 {
+		pidFd := d.inheritInitPidFd()
+		if pidFd != nil {
 			defer func() { _ = pidFd.Close() }()
 			args = append(args, "5")
 			extraFiles = append(extraFiles, pidFd)
@@ -7658,9 +7668,11 @@ func (d *lxc) networkState(hostInterfaces []net.Interface) map[string]api.Instan
 	}
 
 	if !couldUseNetnsGetifaddrs {
-		pidFdNr, pidFd := d.inheritInitPidFd()
-		if pidFdNr >= 0 {
+		pidFd := d.inheritInitPidFd()
+		pidFdNr := "-1"
+		if pidFd != nil {
 			defer func() { _ = pidFd.Close() }()
+			pidFdNr = "3"
 		}
 
 		// Get the network state from the container
@@ -7673,7 +7685,7 @@ func (d *lxc) networkState(hostInterfaces []net.Interface) map[string]api.Instan
 			"info",
 			"--",
 			fmt.Sprintf("%d", pid),
-			fmt.Sprintf("%d", pidFdNr))
+			pidFdNr)
 		// Process forkgetnet response
 		if err != nil {
 			d.logger.Error("Error calling 'forknet", logger.Ctx{"err": err, "pid": pid})
@@ -8025,9 +8037,11 @@ func (d *lxc) removeMount(mount string) error {
 		}
 	} else {
 		// Remove the mount from the container
-		pidFdNr, pidFd := d.inheritInitPidFd()
-		if pidFdNr >= 0 {
+		pidFd := d.inheritInitPidFd()
+		pidFdNr := "-1"
+		if pidFd != nil {
 			defer func() { _ = pidFd.Close() }()
+			pidFdNr = "3"
 		}
 
 		_, err := subprocess.RunCommandInheritFds(
@@ -8038,7 +8052,7 @@ func (d *lxc) removeMount(mount string) error {
 			"go-umount",
 			"--",
 			fmt.Sprintf("%d", pid),
-			fmt.Sprintf("%d", pidFdNr),
+			pidFdNr,
 			mount)
 		if err != nil {
 			return err
