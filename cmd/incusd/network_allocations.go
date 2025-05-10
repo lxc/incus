@@ -191,7 +191,24 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 			var forwards map[int64]*api.NetworkForward
 
 			err = d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-				forwards, err = tx.GetNetworkForwards(ctx, n.ID(), false)
+				networkID := int(n.ID())
+				dbRecords, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{
+					NetworkID: &networkID,
+				})
+				if err != nil {
+					return err
+				}
+
+				forwards = make(map[int64]*api.NetworkForward)
+				for _, dbRecord := range dbRecords {
+					// Change to api format
+					forwardID := int64(dbRecord.ID)
+					forward, err := dbRecord.ToAPI(ctx, tx.Tx())
+					if err != nil {
+						return err
+					}
+					forwards[forwardID] = forward
+				}
 
 				return err
 			})
