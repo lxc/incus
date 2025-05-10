@@ -1,20 +1,32 @@
 package qmp
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
-	"github.com/digitalocean/go-qemu/qmp"
+	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
+)
+
+const (
+	// EventQueueLength is the queue length of events.
+	EventQueueLength = 128
+
+	// ZeroKey is the zero key, which represent err channel key.
+	ZeroKey = uint32(0)
 )
 
 var (
@@ -37,13 +49,27 @@ var EventVMShutdownReasonDisconnect = "disconnect"
 // EventDiskEjected is used to indicate that a disk device was ejected by the guest.
 var EventDiskEjected = "DEVICE_TRAY_MOVED"
 
-// ExcludedCommands is used to filter verbose commands from the QMP logs.
-var ExcludedCommands = []string{"ringbuf-read"}
-
 // Monitor represents a QMP monitor.
 type Monitor struct {
 	path string
-	qmp  *qmp.SocketMonitor
+
+	// Capability OOB supported or not
+	oobSupported bool
+
+	// Underlying connection
+	c net.Conn
+
+	// Serialize running command against domain
+	mu sync.Mutex
+
+	// Events channel
+	events <-chan Event
+
+	// Auto increase command id
+	id atomic.Uint32
+
+	// ID: <- chan rawResponse map
+	replies sync.Map
 
 	agentStarted      bool
 	agentStartedMu    sync.Mutex
@@ -52,7 +78,11 @@ type Monitor struct {
 	eventHandler      func(name string, data map[string]any)
 	serialCharDev     string
 	onDisconnectEvent bool
-	logFile           string
+
+	// QMP Log Path
+	logPath string
+	// QMP Log File
+	logFile *os.File
 }
 
 // start handles the background goroutines for event handling and monitoring the ringbuffer.
@@ -97,7 +127,7 @@ func (m *Monitor) start() error {
 	}
 
 	// Start event monitoring go routine.
-	chEvents, err := m.qmp.Events(context.Background())
+	chEvents, err := m.Events(context.Background())
 	if err != nil {
 		return err
 	}
@@ -179,7 +209,7 @@ func (m *Monitor) ping() error {
 	}
 
 	// Query the capabilities to validate the monitor.
-	_, err := m.qmp.Run([]byte("{'execute': 'query-version'}"))
+	err := m.RunCommand(&Command{Execute: "query-version"}, nil)
 	if err != nil {
 		m.Disconnect()
 		return ErrMonitorDisconnect
@@ -189,29 +219,35 @@ func (m *Monitor) ping() error {
 }
 
 // RunJSON executes a JSON-formatted command.
-func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool) error {
+func (m *Monitor) RunJSON(b []byte, resp any, logok bool) error {
+	req := &Command{
+		logok: logok,
+	}
+
+	err := json.Unmarshal(b, req)
+	if err != nil {
+		logger.Errorf("failed to unmarshal: %v", err)
+		return err
+	}
+
+	err = m.runJSON(req, resp)
+	if err != nil {
+		logger.Errorf("failed to run json: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (m *Monitor) runJSON(req *Command, rep any) error {
 	// Check if disconnected
 	if m.disconnected {
 		return ErrMonitorDisconnect
 	}
+	// req := &Command{}
 
-	var log *os.File
-	var err error
-	if logCommand && m.logFile != "" {
-		log, err = os.OpenFile(m.logFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
-		if err != nil {
-			return err
-		}
-
-		defer log.Close()
-
-		_, err = fmt.Fprintf(log, "[%s] QUERY: %s\n", time.Now().Format(time.RFC3339), request)
-		if err != nil {
-			return err
-		}
-	}
-
-	out, err := m.qmp.Run(request)
+	// err := json.Unmarshal(b, req)
+	err := m.RunCommand(req, rep)
 	if err != nil {
 		// Confirm the daemon didn't die.
 		errPing := m.ping()
@@ -222,52 +258,18 @@ func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool) error {
 		return err
 	}
 
-	// Handle weird QEMU QMP bug.
-	responses := strings.Split(string(out), "\r\n")
-	out = []byte(responses[len(responses)-1])
-
-	if logCommand && m.logFile != "" {
-		_, err = fmt.Fprintf(log, "[%s] REPLY: %s\n\n", time.Now().Format(time.RFC3339), out)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Decode the response if needed.
-	if resp != nil {
-		err = json.Unmarshal(out, &resp)
-		if err != nil {
-			// Confirm the daemon didn't die.
-			errPing := m.ping()
-			if errPing != nil {
-				return errPing
-			}
-
-			return fmt.Errorf("Unexpected monitor response: %w (%q)", err, string(out))
-		}
-	}
-
 	return nil
 }
 
-// run executes a command.
+// Run executes a command.
 func (m *Monitor) Run(cmd string, args any, resp any) error {
 	// Construct the command.
-	requestArgs := struct {
-		Execute   string `json:"execute"`
-		Arguments any    `json:"arguments,omitempty"`
-	}{
+	req := &Command{
 		Execute:   cmd,
 		Arguments: args,
 	}
 
-	request, err := json.Marshal(requestArgs)
-	if err != nil {
-		return err
-	}
-
-	logCommand := !slices.Contains(ExcludedCommands, cmd)
-	return m.RunJSON(request, resp, logCommand)
+	return m.runJSON(req, resp)
 }
 
 // Connect creates or retrieves an existing QMP monitor for the path.
@@ -282,15 +284,19 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 		return monitor, nil
 	}
 
-	// Setup the connection.
-	qmpConn, err := qmp.NewSocketMonitor("unix", path, time.Second)
+	c, err := net.DialTimeout("unix", path, time.Second)
 	if err != nil {
 		return nil, err
 	}
 
+	monitor = &Monitor{
+		path: path,
+		c:    c,
+	}
+
 	chError := make(chan error, 1)
 	go func() {
-		err = qmpConn.Connect()
+		err = monitor.connect()
 		chError <- err
 	}()
 
@@ -301,20 +307,20 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 		}
 
 	case <-time.After(5 * time.Second):
-		_ = qmpConn.Disconnect()
+		_ = monitor.disconnect()
 		return nil, fmt.Errorf("QMP connection timed out")
 	}
 
-	// Setup the monitor struct.
-	monitor = &Monitor{}
-	monitor.path = path
-	monitor.qmp = qmpConn
 	monitor.chDisconnect = make(chan struct{}, 1)
 	monitor.eventHandler = eventHandler
 	monitor.serialCharDev = serialCharDev
 
 	if util.PathExists(filepath.Dir(logFile)) {
-		monitor.logFile = logFile
+		monitor.logPath = logFile
+		err = monitor.initQMPLog()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Default to generating a shutdown event when the monitor disconnects so that devices can be
@@ -351,7 +357,7 @@ func (m *Monitor) Disconnect() {
 	if !m.disconnected {
 		close(m.chDisconnect)
 		m.disconnected = true
-		_ = m.qmp.Disconnect()
+		_ = m.disconnect()
 	}
 
 	// Remove from the map.
@@ -371,4 +377,316 @@ func (m *Monitor) Wait() (chan struct{}, error) {
 // SetOnDisconnectEvent enables or disables the on disconnect event.
 func (m *Monitor) SetOnDisconnectEvent(enable bool) {
 	m.onDisconnectEvent = enable
+}
+
+// Disconnect closes the QEMU monitor socket connection.
+func (m *Monitor) disconnect() error {
+	err := m.c.Close()
+	if m.logFile != nil {
+		_ = m.logFile.Close()
+		m.logFile = nil
+	}
+
+	return err
+}
+
+// Connect sets up a QEMU QMP connection.
+func (m *Monitor) connect() error {
+	enc := json.NewEncoder(m.c)
+	dec := json.NewDecoder(m.c)
+
+	// Check for banner on startup
+	ban := struct {
+		QMP struct {
+			Capabilities []string `json:"capabilities"`
+		} `json:"QMP"`
+	}{}
+
+	err := dec.Decode(&ban)
+	if err != nil {
+		return err
+	}
+
+	m.oobSupported = slices.Contains(ban.QMP.Capabilities, "oob")
+
+	// Issue capabilities handshake
+	cmd := Command{Execute: "qmp_capabilities"}
+	err = enc.Encode(cmd)
+	if err != nil {
+		return err
+	}
+
+	// Check for no error on return
+	r := &Response{}
+	err = dec.Decode(r)
+	if err != nil {
+		return err
+	}
+
+	if r.Error != nil {
+		err = fmt.Errorf("%s: %s", r.Error.Class, r.Error.Desc)
+		return err
+	}
+
+	// Make sure events dispatch non blocking
+	events := make(chan Event, EventQueueLength)
+
+	go m.listen(m.c, events, &m.replies)
+
+	m.events = events
+
+	return nil
+}
+
+// Events streams QEMU QMP Events.
+//
+// Events should only be called once per Socket.  If used with a qemu.Domain,
+// qemu.Domain.Events should be called to retrieve events instead.
+func (m *Monitor) Events(context.Context) (<-chan Event, error) {
+	return m.events, nil
+}
+
+// listen listens for incoming data from a QEMU monitor socket.
+//
+// It determines if the data is an asynchronous event or a response to a
+// command, and returns the data on the appropriate channel.
+func (m *Monitor) listen(r io.Reader, events chan<- Event, replies *sync.Map) {
+	defer close(events)
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		e := Event{}
+
+		b := scanner.Bytes()
+		err := json.Unmarshal(b, &e)
+		if err != nil {
+			logger.Errorf("failed to unmarshal event: %v", err)
+			continue
+		}
+
+		if e.Event != "" {
+			// Make sure events dispatch non blocking
+			logf := m.eventLog(&e)
+			select {
+			case events <- e:
+				if logf != nil {
+					_, err = logf("EVENT(dispatched): %s", b)
+				}
+
+			default:
+				if logf != nil {
+					_, err = logf("EVENT(discarded): %s", b)
+				}
+			}
+
+			if err != nil {
+				logger.Errorf("failed to log the event: %v", err)
+			}
+
+			continue
+		}
+
+		r := rawResponse{}
+		err = json.Unmarshal(b, &r)
+		if err != nil {
+			logger.Errorf("failed to unmarshal raw response: %v", err)
+			continue
+		}
+
+		key := r.ID
+		if key == ZeroKey { // discard
+			logger.Debugf("Discard unknown response: %s", b)
+			continue
+		}
+
+		val, ok := replies.LoadAndDelete(key)
+		if !ok { // discard
+			logger.Debug("no need reply, discard")
+			continue
+		}
+
+		reply, ok := val.(chan rawResponse)
+		if !ok { // discard
+			logger.Errorf("failed to cast chan rawResponse")
+			continue
+		}
+
+		// copy raw byte slice to avoid the weird QEMU QMP bug
+		r.b = make([]byte, len(b))
+		copy(r.b, b)
+
+		reply <- r
+	}
+
+	err := scanner.Err()
+	if err != nil {
+		r := rawResponse{
+			err: err,
+		}
+
+		errReply := make(chan rawResponse, 1)
+		replies.Store(ZeroKey, errReply)
+		errReply <- r
+	}
+}
+
+// RunCommand executes the given QAPI command against a domain's QEMU instance.
+// For a list of available QAPI commands, see:
+//
+//	http://git.qemu.org/?p=qemu.git;a=blob;f=qapi-schema.json;hb=HEAD
+func (m *Monitor) RunCommand(req *Command, rep any) error {
+	// Just call RunWithFile with no file
+	return m.RunWithFile(req, nil, rep)
+}
+
+// increaseID increase ID and skip zero.
+func (m *Monitor) increaseID() uint32 {
+	id := m.id.Add(1)
+	if id == ZeroKey {
+		id = m.id.Add(1)
+	}
+
+	return id
+}
+
+func (m *Monitor) writeMsg(b []byte, file *os.File) error {
+	if file == nil {
+		// Just send a normal command through.
+		_, err := m.c.Write(b)
+		if err != nil {
+			return err
+		}
+	} else {
+		unixConn, ok := m.c.(*net.UnixConn)
+		if !ok {
+			return fmt.Errorf("RunWithFile only works with unix monitor sockets")
+		}
+
+		if !m.oobSupported {
+			return fmt.Errorf("The QEMU server doesn't support oob (needed for RunWithFile)")
+		}
+
+		// Send the command along with the file descriptor.
+		oob := unix.UnixRights(int(file.Fd()))
+		_, _, err := unixConn.WriteMsgUnix(b, oob, nil)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Monitor) initQMPLog() error {
+	if m.logFile == nil && m.logPath != "" {
+		var logfile *os.File
+		logfile, err := os.OpenFile(m.logPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
+		if err != nil {
+			return err
+		}
+
+		m.logFile = logfile
+	}
+
+	return nil
+}
+
+func (m *Monitor) queryLog(req *Command) func(string, ...any) (int, error) {
+	if m.logFile == nil {
+		return nil
+	}
+
+	excludedCommands := []string{"ringbuf-read"}
+	logok := req.logok
+	if !logok {
+		logok = !slices.Contains(excludedCommands, req.Execute)
+	}
+
+	if logok {
+		logf := func(format string, a ...any) (int, error) {
+			format = "[%s] " + format
+			a = append([]any{time.Now().Format(time.RFC3339)}, a...)
+			return fmt.Fprintf(m.logFile, format, a...)
+		}
+
+		return logf
+	}
+
+	return nil
+}
+
+func (m *Monitor) eventLog(e *Event) func(string, ...any) (int, error) {
+	if m.logFile != nil &&
+		e != nil && e.Event != "" &&
+		util.IsTrue(os.Getenv("INCUS_QMP_EVENTS_DEBUG")) {
+		return func(format string, a ...any) (int, error) {
+			format = "[%s] " + format
+			a = append([]any{time.Now().Format(time.RFC3339)}, a...)
+			return fmt.Fprintf(m.logFile, format, a...)
+		}
+	}
+	return nil
+}
+
+// RunWithFile behaves like RunCommand but allows for passing a file through
+// out-of-band data.
+func (m *Monitor) RunWithFile(req *Command, file *os.File, rep any) error {
+	// Only allow a single command to be run at a time to ensure that responses
+	// to a command cannot be mixed with responses from another command
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	id := m.increaseID()
+	req.ID = id
+	b, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+
+	logf := m.queryLog(req)
+	if logf != nil {
+		_, err = logf("QUERY: %s\n", b)
+		if err != nil {
+			return err
+		}
+	}
+
+	repCh := make(chan rawResponse, 1)
+	m.replies.Store(id, repCh)
+	err = m.writeMsg(b, file)
+	if err != nil {
+		m.replies.Delete(id)
+		return err
+	}
+
+	// Wait for a response or error to our command
+	r := <-repCh
+
+	if r.err != nil {
+		return r.err
+	}
+
+	if rep == nil { // Skip response parsing
+		return nil
+	}
+
+	// Handle weird QEMU QMP bug:
+	//
+	//  out := r.b
+	//  responses := strings.Split(string(out), "\r\n")
+	//  out = []byte(responses[len(responses)-1])
+	//
+	// The weird bug should be caused by raw response bytes slice not copied in scan
+	// loop, the bytes slice has been copied, so remove the workaround.
+
+	if logf != nil {
+		_, err = logf("REPLY: %s\n\n", r.b)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = json.Unmarshal(r.b, rep)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
