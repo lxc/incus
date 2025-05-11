@@ -270,9 +270,16 @@ func projectUsedBy(ctx context.Context, tx *db.ClusterTx, project *cluster.Proje
 		usedBy = append(usedBy, apiNetworkACL.URL(version.APIVersion, project.Name).String())
 	}
 
-	networkZones, err := tx.GetNetworkZoneURIs(ctx, project.ID, project.Name)
+	var zones []cluster.NetworkZone
+	zones, err = cluster.GetNetworkZones(ctx, tx.Tx(), cluster.NetworkZoneFilter{Project: &project.Name})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Unable to get URIs for network zones: %w", err)
+	}
+
+	// Create URIs for each zone
+	networkZones := make([]string, len(zones))
+	for i, zone := range zones {
+		networkZones[i] = api.NewURL().Path(version.APIVersion, "network-zones", zone.Name).Project(project.Name).String()
 	}
 
 	usedBy = append(usedBy, networkZones...)

@@ -3,6 +3,7 @@ package dns
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 
 	"github.com/lxc/incus/v6/internal/ports"
 	"github.com/lxc/incus/v6/internal/server/db"
+	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/logger"
 )
@@ -247,15 +249,44 @@ func (s *Server) updateTSIG() error {
 		return nil
 	}
 
-	var secrets map[string]string
+	secrets := make(map[string]string)
 
 	err := s.db.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		var err error
+		// Get all zones
+		zones, err := dbCluster.GetNetworkZones(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
 
-		// Get all the secrets.
-		secrets, err = tx.GetNetworkZoneKeys(ctx)
+		// For each zone, get its config
+		for _, zone := range zones {
+			// Get all configs for this zone
+			config, err := dbCluster.GetNetworkZoneConfig(ctx, tx.Tx(), zone.ID)
+			if err != nil {
+				return err
+			}
 
-		return err
+			// Process each config entry
+			for key, value := range config {
+				// Check if the key matches the pattern 'peers.%.key'
+				if !strings.HasPrefix(key, "peers.") || !strings.HasSuffix(key, ".key") {
+					continue
+				}
+
+				// Split the key to extract the peer name
+				fields := strings.SplitN(key, ".", 3)
+				if len(fields) != 3 {
+					// Skip invalid values
+					continue
+				}
+
+				// Format as a valid TSIG secret (encode domain name, key name and make valid FQDN)
+				secretKey := fmt.Sprintf("%s_%s.", zone.Name, fields[1])
+				secrets[secretKey] = value
+			}
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
