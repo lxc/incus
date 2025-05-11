@@ -570,7 +570,7 @@ func HeartbeatNode(taskCtx context.Context, address string, networkCert *localtl
 	defer func() { _ = response.Body.Close() }()
 
 	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("Heartbeat request failed with status: %w", api.StatusErrorf(response.StatusCode, response.Status))
+		return fmt.Errorf("Heartbeat request failed with status: %w", api.StatusErrorf(response.StatusCode, "%s", response.Status))
 	}
 
 	return nil

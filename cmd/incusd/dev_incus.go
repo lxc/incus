@@ -216,7 +216,7 @@ var devIncusAPIHandler = devIncusHandler{"/1.0", func(d *Daemon, c instance.Inst
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusBadRequest, err.Error()), c.Type() == instancetype.VM)
+			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusBadRequest, "%s", err.Error()), c.Type() == instancetype.VM)
 		}
 
 		state := api.StatusCodeFromString(req.State)
@@ -227,7 +227,7 @@ var devIncusAPIHandler = devIncusHandler{"/1.0", func(d *Daemon, c instance.Inst
 
 		err = c.VolatileSet(map[string]string{"volatile.last_state.ready": strconv.FormatBool(state == api.Ready)})
 		if err != nil {
-			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusInternalServerError, err.Error()), c.Type() == instancetype.VM)
+			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusInternalServerError, "%s", err.Error()), c.Type() == instancetype.VM)
 		}
 
 		if state == api.Ready {
@@ -237,7 +237,7 @@ var devIncusAPIHandler = devIncusHandler{"/1.0", func(d *Daemon, c instance.Inst
 		return response.DevIncusResponse(http.StatusOK, "", "raw", c.Type() == instancetype.VM)
 	}
 
-	return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusMethodNotAllowed, fmt.Sprintf("method %q not allowed", r.Method)), c.Type() == instancetype.VM)
+	return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusMethodNotAllowed, "%s", fmt.Sprintf("method %q not allowed", r.Method)), c.Type() == instancetype.VM)
 }}
 
 var devIncusDevicesGet = devIncusHandler{"/1.0/devices", func(d *Daemon, c instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {

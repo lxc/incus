@@ -73,7 +73,7 @@ func transferRootfs(dst incus.InstanceServer, op incus.Operation, rootfs string,
 	}
 
 	if !msg.GetSuccess() {
-		return fmt.Errorf(msg.GetMessage())
+		return fmt.Errorf("%s", msg.GetMessage())
 	}
 
 	return nil

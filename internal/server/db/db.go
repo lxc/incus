@@ -405,7 +405,7 @@ func begin(db *sql.DB) (*sql.Tx, error) {
 	}
 
 	logger.Debugf("DbBegin: DB still locked")
-	logger.Debugf(logger.GetStack())
+	logger.Debugf("%s", logger.GetStack())
 	return nil, fmt.Errorf("DB is locked")
 }
 
