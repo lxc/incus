@@ -2916,3 +2916,7 @@ This adds two categories of configuration options, `systemd.credential.*` and `s
 
 A `used_by` field was added to the `GET /1.0/cluster/groups/{name}` endpoint.
 `used_by` holds the URLs of all instances and projects using the cluster group.
+
+## `bpf_token_delegation`
+
+This adds support for [eBPF token delegation](https://docs.ebpf.io/linux/concepts/token/).
