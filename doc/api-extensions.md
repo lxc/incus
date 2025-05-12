@@ -2811,3 +2811,7 @@ This API extension provides the ability to configure certificates in preseed ini
 ## `custom_volume_sftp`
 
 This adds the SFTP API to custom storage volumes.
+
+## `bpf_token_delegation`
+
+This adds support for [eBPF token delegation](https://docs.ebpf.io/linux/concepts/token/).
