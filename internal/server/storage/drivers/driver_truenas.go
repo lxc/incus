@@ -264,12 +264,12 @@ func (d *truenas) Create() error {
 	}
 
 	// Setup revert in case of problems
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
-	revert.Add(func() { _ = d.Delete(nil) })
+	reverter.Add(func() { _ = d.Delete(nil) })
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 
