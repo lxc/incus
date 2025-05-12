@@ -2557,6 +2557,52 @@
 						}
 					},
 					{
+						"security.bpffs.delegate_attachs": {
+							"condition": "unprivileged container",
+							"liveupdate": "no",
+							"longdesc": "See {ref}`bpf-tokens` for more information.\n",
+							"shortdesc": "What BPF attach types to delegate",
+							"type": "string"
+						}
+					},
+					{
+						"security.bpffs.delegate_cmds": {
+							"condition": "unprivileged container",
+							"liveupdate": "no",
+							"longdesc": "See {ref}`bpf-tokens` for more information.\n",
+							"shortdesc": "What BPF command types to delegate",
+							"type": "string"
+						}
+					},
+					{
+						"security.bpffs.delegate_maps": {
+							"condition": "unprivileged container",
+							"liveupdate": "no",
+							"longdesc": "See {ref}`bpf-tokens` for more information.\n",
+							"shortdesc": "What BPF map types to delegate",
+							"type": "string"
+						}
+					},
+					{
+						"security.bpffs.delegate_progs": {
+							"condition": "unprivileged container",
+							"liveupdate": "no",
+							"longdesc": "See {ref}`bpf-tokens` for more information.\n",
+							"shortdesc": "What BPF program types to delegate",
+							"type": "string"
+						}
+					},
+					{
+						"security.bpffs.path": {
+							"condition": "unprivileged container",
+							"defaultdesc": "`/sys/fs/bpf`",
+							"liveupdate": "no",
+							"longdesc": "The specified path must exist in the container.\nThe BPF file system is only mounted if any of the `security.bpffs.delegate_*` options are set.\nSee {ref}`bpf-tokens` for more information.\n",
+							"shortdesc": "The path to mount the BPF file system at",
+							"type": "string"
+						}
+					},
+					{
 						"security.csm": {
 							"condition": "virtual machine",
 							"defaultdesc": "`false`",
