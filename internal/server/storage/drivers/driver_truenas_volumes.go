@@ -766,29 +766,28 @@ func (d *truenas) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume
 // For image volumes, both filesystem and block volumes will be removed.
 func (d *truenas) DeleteVolume(vol Volume, op *operations.Operation) error {
 
-	/*
-		The below code essentially tries deleting the volume with the various filesystems,
-		but since we don't use the suffix, except when an image is already deleted, we don't
-		need to check the suffixes.
+	// We need to be able to delete the block-backed fs even if we don't know the filesystem.
+	if vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS {
+		// We need to clone vol the otherwise changing `zfs.block_mode`
+		// in tmpVol will also change it in vol.
+		tmpVol := vol.Clone()
 
-		The suffix can be tested by grabbing an image, and then changing the volume filesytem
-		which will cause a different image to be created, and "delete" the old one. The deleted
-		image will then be deleted when its last clone is removed.
-	*/
-	// if vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS {
-	// 	// We need to clone vol the otherwise changing `zfs.block_mode`
-	// 	// in tmpVol will also change it in vol.
-	// 	tmpVol := vol.Clone()
+		// TODO: use bulk existance checks, before iterating.
 
-	// 	for _, filesystem := range blockBackedAllowedFilesystems {
-	// 		tmpVol.config["block.filesystem"] = filesystem
+		// we don't pre-delete the filesystem that would be deleted by the main call to deleteVolume.
+		volFs := vol.ConfigBlockFilesystem()
 
-	// 		err := d.deleteVolume(tmpVol, op)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 	}
-	// }
+		for _, filesystem := range blockBackedAllowedFilesystems {
+			if filesystem != volFs {
+				tmpVol.config["block.filesystem"] = filesystem
+
+				err := d.deleteVolume(tmpVol, op)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
 
 	return d.deleteVolume(vol, op)
 }
@@ -1248,6 +1247,7 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 
 		var volType VolumeType
 		var volName string
+		var volFs string
 
 		for _, volumeType := range d.Info().VolumeTypes {
 			prefix := fmt.Sprintf("%s/%s/", d.config["truenas.dataset"], volumeType)
@@ -1276,6 +1276,11 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 			volName = strings.TrimSuffix(volName, zfsBlockVolSuffix)
 		}
 
+		// FS images have the FS encoded after a _ separator
+		if volType == VolumeTypeImage && strings.Contains(volName, "_") {
+			volName, volFs, _ = strings.Cut(volName, "_")
+		}
+
 		// TODO: need to split images at _ to determine filesystem, or to ignore the filesystem.
 
 		// If a new volume has been found, or the volume will replace an existing image filesystem volume
@@ -1286,16 +1291,20 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 		if !foundExisting || (existingVol.Type() == VolumeTypeImage && existingVol.ContentType() == ContentTypeFS) {
 			v := NewVolume(d, d.name, volType, contentType, volName, make(map[string]string), d.config)
 
+			if volFs != "" {
+				v.config["block.filesystem"] = volFs
+			}
+
 			// Get correct content type from incus:content_type property.
 			if incusContentType != "-" {
 				v.contentType = ContentType(incusContentType)
 			}
 
 			/*
-				if its a filesystem, we need to probe it, but VMBlock's have an implicit filesystem Volume, and that Volume inherits the probe
-				setting from the block volume.
+				if its a filesystem, we need to probe it, unless we know the fs, but VMBlock's have an implicit filesystem Volume, and that Volume
+				inherits the probe setting from the block volume.
 			*/
-			if v.contentType == ContentTypeFS || v.IsVMBlock() {
+			if (v.contentType == ContentTypeFS && volFs == "") || v.IsVMBlock() {
 				v.SetMountFilesystemProbe(true)
 			}
 
