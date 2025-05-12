@@ -146,12 +146,10 @@ func (d *truenas) getDatasetOrSnapshot(dataset string) string {
 }
 
 func (d *truenas) datasetExists(dataset string) (bool, error) {
-	//out, err := d.runTool("dataset", "get", "-H", "-o", "name", dataset)
-	//out, err := d.runTool("dataset", "list", "-H", "-o", "name", dataset)
 	out, err := d.runTool(d.getDatasetOrSnapshot(dataset), "list", "-H", "-o", "name", dataset)
 
 	if err != nil {
-		return false, nil
+		return false, nil // TODO: need to check if tool returns errors for bad connections, vs not-found. Ie, this occurs when recovering with a bad API key or HOST.
 	}
 
 	return strings.TrimSpace(out) == dataset, nil
