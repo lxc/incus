@@ -501,6 +501,7 @@ var APIExtensions = []string{
 	"init_preseed_cluster_groups",
 	"usb_attached",
 	"backup_iso",
+	"bpf_token_delegation",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

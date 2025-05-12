@@ -2907,3 +2907,7 @@ This introduces a new `attached` property to USB devices describing whether they
 ## `backup_iso`
 
 This allows to backup ISO custom volumes by simply copying them. It enables exporting ISO volumes with `incus storage volume export` and get an ISO back.
+
+## `bpf_token_delegation`
+
+This adds support for [eBPF token delegation](https://docs.ebpf.io/linux/concepts/token/).
