@@ -14,6 +14,7 @@ __hidden extern int close_inherited(int *fds_to_ignore, size_t len_fds);
 __hidden extern void error(char *msg);
 __hidden extern void forkcoresched();
 __hidden extern void forkexec();
+__hidden extern void forkbpf();
 __hidden extern void forkfile();
 __hidden extern void forkmount();
 __hidden extern void forknet();

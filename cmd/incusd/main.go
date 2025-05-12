@@ -139,6 +139,10 @@ func main() {
 	app.AddCommand(forksyscallCmd.command())
 
 	// forkcoresched sub-command
+	forkbpfCmd := cmdForkbpf{global: &globalCmd}
+	app.AddCommand(forkbpfCmd.command())
+
+	// forkcoresched sub-command
 	forkcoreschedCmd := cmdForkcoresched{global: &globalCmd}
 	app.AddCommand(forkcoreschedCmd.command())
 
