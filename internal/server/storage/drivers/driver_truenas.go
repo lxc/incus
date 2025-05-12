@@ -174,6 +174,11 @@ func (d *truenas) FillConfig() error {
 		d.config["source"] = d.config["truenas.dataset"]
 	}
 
+	err := d.parseSource()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -230,11 +235,6 @@ func (d *truenas) Create() error {
 	d.config["volatile.initial_source"] = d.config["source"]
 
 	err := d.FillConfig()
-	if err != nil {
-		return err
-	}
-
-	err = d.parseSource()
 	if err != nil {
 		return err
 	}
