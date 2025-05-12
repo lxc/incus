@@ -2825,3 +2825,7 @@ Allows setting the MAC address of the IPv4 and IPv6 gateways when used with OVN.
 ## `backup_s3_upload`
 
 Adds support for immediately uploading instance or volume backups to an S3 compatible endpoint.
+
+## `bpf_token_delegation`
+
+This adds support for [eBPF token delegation](https://docs.ebpf.io/linux/concepts/token/).
