@@ -2911,3 +2911,7 @@ This allows to backup ISO custom volumes by simply copying them. It enables expo
 ## `instance_systemd_credentials`
 
 This adds two categories of configuration options, `systemd.credential.*` and `systemd.credential-binary.*`, which allow passing systemd credentials through a bind-mounted directory for containers and `SMBIOS Type 11` for virtual machines.
+
+## `bpf_token_delegation`
+
+This adds support for [eBPF token delegation](https://docs.ebpf.io/linux/concepts/token/).
