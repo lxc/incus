@@ -878,6 +878,10 @@ func isContainerLowLevelOptionForbidden(key string) bool {
 		return true
 	}
 
+	if strings.HasPrefix(key, "security.bpffs") {
+		return true
+	}
+
 	if slices.Contains([]string{
 		"boot.host_shutdown_action",
 		"boot.host_shutdown_timeout",
