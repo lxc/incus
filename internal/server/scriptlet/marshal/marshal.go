@@ -97,7 +97,7 @@ func starlarkMarshal(input any, parent *starlark.Dict) (starlark.Value, error) {
 		vlen := v.Len()
 		listElems := make([]starlark.Value, 0, vlen)
 
-		for i := 0; i < vlen; i++ {
+		for i := range vlen {
 			lv, err := StarlarkMarshal(v.Index(i).Interface())
 			if err != nil {
 				return nil, err
@@ -141,7 +141,7 @@ func starlarkMarshal(input any, parent *starlark.Dict) (starlark.Value, error) {
 			d = starlark.NewDict(fieldCount)
 		}
 
-		for i := 0; i < fieldCount; i++ {
+		for i := range fieldCount {
 			field := v.Type().Field(i)
 			fieldValue := v.Field(i)
 
@@ -223,7 +223,7 @@ func StarlarkUnmarshal(input starlark.Value) (any, error) {
 		result := make([]any, length)
 
 		// Iterate over the Starlark List
-		for i := 0; i < length; i++ {
+		for i := range length {
 			value, err := StarlarkUnmarshal(v.Index(i))
 			if err != nil {
 				return nil, err

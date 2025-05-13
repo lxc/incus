@@ -12,7 +12,7 @@ import (
 // expressions.
 func Params(n int) string {
 	tokens := make([]string, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		tokens[i] = "?"
 	}
 

@@ -353,11 +353,7 @@ func networkCreateTap(hostName string, m deviceConfig.Device) (uint32, error) {
 		instanceMTU = uint32(mtu)
 	}
 
-	if instanceMTU > parentMTU {
-		mtu = instanceMTU
-	} else {
-		mtu = parentMTU
-	}
+	mtu = max(instanceMTU, parentMTU)
 
 	err = NetworkSetDevMTU(hostName, mtu)
 	if err != nil {

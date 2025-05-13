@@ -256,7 +256,7 @@ func GetCPU() (*api.ResourcesCPU, error) {
 		threadIDs = append(threadIDs, id)
 	}
 
-	sort.Slice(threadIDs, func(i, j int) bool { return threadIDs[i] < threadIDs[j] })
+	slices.Sort(threadIDs)
 
 	// CPU flags
 	var flagList []string

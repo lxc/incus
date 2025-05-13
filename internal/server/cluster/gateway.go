@@ -865,7 +865,7 @@ func (g *Gateway) init(bootstrap bool) error {
 func (g *Gateway) WaitLeadership() error {
 	n := 80
 	sleep := 250 * time.Millisecond
-	for i := 0; i < n; i++ {
+	for range n {
 		g.lock.RLock()
 		isLeader, err := g.isLeader()
 		if err != nil {

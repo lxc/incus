@@ -1727,8 +1727,9 @@ func CheckTarget(ctx context.Context, authorizer auth.Authorizer, r *http.Reques
 	// Extract the target.
 	var targetGroupName string
 	var targetMemberName string
-	if strings.HasPrefix(target, "@") {
-		targetGroupName = strings.TrimPrefix(target, "@")
+	after, ok := strings.CutPrefix(target, "@")
+	if ok {
+		targetGroupName = after
 	} else {
 		targetMemberName = target
 	}

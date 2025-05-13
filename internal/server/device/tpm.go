@@ -148,7 +148,7 @@ func (d *tpm) startContainer() (*deviceConfig.RunConfig, error) {
 	// We need to capture the output of the TPM emulator since it contains the device path. To do
 	// that, we wait until something has been written to the log file (stdout redirect), and then
 	// read it.
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		fi, err := os.Stat(logPath)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to stat %q: %w", logPath, err)
@@ -248,7 +248,7 @@ func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
 
 	// Wait for the socket to be available.
 	exists := false
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		if util.PathExists(socketPath) {
 			exists = true
 			break

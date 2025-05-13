@@ -62,7 +62,7 @@ func (e *Endpoints) ClusterUpdateAddress(address string) error {
 		var err error
 		var listener net.Listener
 
-		for i := 0; i < 10; i++ { // Ten retries over a second seems reasonable.
+		for range 10 { // Ten retries over a second seems reasonable.
 			listener, err = net.Listen("tcp", address)
 			if err == nil {
 				break

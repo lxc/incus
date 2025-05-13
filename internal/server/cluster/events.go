@@ -133,13 +133,7 @@ func ServerEventMode() EventMode {
 
 // RoleInSlice returns whether or not the rule is within the roles list.
 func RoleInSlice(role db.ClusterRole, roles []db.ClusterRole) bool {
-	for _, r := range roles {
-		if r == role {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(roles, role)
 }
 
 // EventListenerWait waits for there to be listener connected to the specified address, or one of the event hubs

@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/instance"
@@ -219,10 +220,8 @@ func LoadByInstance(s *state.State, inst instance.Instance) (Pool, error) {
 		return nil, err
 	}
 
-	for _, supportedType := range pool.Driver().Info().VolumeTypes {
-		if supportedType == volType {
-			return pool, nil
-		}
+	if slices.Contains(pool.Driver().Info().VolumeTypes, volType) {
+		return pool, nil
 	}
 
 	// Return drivers not supported error for consistency with predefined errors returned by

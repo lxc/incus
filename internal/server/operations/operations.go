@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"sync"
 	"time"
@@ -618,9 +619,7 @@ func (op *Operation) ExtendMetadata(metadata any) error {
 	if op.metadata == nil {
 		newMetadata = extraMetadata
 	} else {
-		for k, v := range extraMetadata {
-			newMetadata[k] = v
-		}
+		maps.Copy(newMetadata, extraMetadata)
 	}
 
 	// Update the operation.

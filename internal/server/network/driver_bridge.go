@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"net"
 	"net/http"
 	"os"
@@ -700,9 +701,7 @@ func (n *bridge) Validate(config map[string]string) error {
 		return err
 	}
 
-	for k, v := range bgpRules {
-		rules[k] = v
-	}
+	maps.Copy(rules, bgpRules)
 
 	// gendoc:generate(entity=network_bridge, group=common, key=user.*)
 	//
@@ -1801,7 +1800,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 
 		// Create a config file to contain additional config (and to prevent dnsmasq from reading /etc/dnsmasq.conf)
-		err = os.WriteFile(internalUtil.VarPath("networks", n.name, "dnsmasq.raw"), []byte(fmt.Sprintf("%s\n", n.config["raw.dnsmasq"])), 0o644)
+		err = os.WriteFile(internalUtil.VarPath("networks", n.name, "dnsmasq.raw"), fmt.Appendf(nil, "%s\n", n.config["raw.dnsmasq"]), 0o644)
 		if err != nil {
 			return err
 		}

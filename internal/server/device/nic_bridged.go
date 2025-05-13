@@ -414,10 +414,8 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 				return err
 			}
 
-			for _, vlanID := range networkVLANList {
-				if vlanID == 0 {
-					return fmt.Errorf("VLAN tagged ID 0 is not allowed for native Linux bridges")
-				}
+			if slices.Contains(networkVLANList, 0) {
+				return fmt.Errorf("VLAN tagged ID 0 is not allowed for native Linux bridges")
 			}
 		}
 

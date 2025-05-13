@@ -15,7 +15,7 @@ import (
 )
 
 func createVsockListener(cert *localtls.CertInfo) (net.Listener, error) {
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		// Get random port between 1024 and 65535.
 		port := 1024 + rand.Int31n(math.MaxUint16-1024)
 

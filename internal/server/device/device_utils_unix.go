@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -331,9 +332,7 @@ func unixDeviceSetup(s *state.State, devicesPath string, typePrefix string, devi
 // config then the origin device does not need to be accessed for its file mode.
 func unixDeviceSetupCharNum(s *state.State, devicesPath string, typePrefix string, deviceName string, m deviceConfig.Device, major uint32, minor uint32, path string, defaultMode bool, runConf *deviceConfig.RunConfig) error {
 	configCopy := deviceConfig.Device{}
-	for k, v := range m {
-		configCopy[k] = v
-	}
+	maps.Copy(configCopy, m)
 
 	// Overridng these in the config copy should avoid the need for unixDeviceSetup to stat
 	// the origin device to ascertain this information.
@@ -352,9 +351,7 @@ func unixDeviceSetupCharNum(s *state.State, devicesPath string, typePrefix strin
 // config then the origin device does not need to be accessed for its file mode.
 func unixDeviceSetupBlockNum(s *state.State, devicesPath string, typePrefix string, deviceName string, m deviceConfig.Device, major uint32, minor uint32, path string, defaultMode bool, runConf *deviceConfig.RunConfig) error {
 	configCopy := deviceConfig.Device{}
-	for k, v := range m {
-		configCopy[k] = v
-	}
+	maps.Copy(configCopy, m)
 
 	// Overridng these in the config copy should avoid the need for unixDeviceSetup to stat
 	// the origin device to ascertain this information.
@@ -442,13 +439,7 @@ func unixDeviceRemove(devicesPath string, typePrefix string, deviceName string, 
 		ourEncRelDestFile := ourDev[idx+1:]
 
 		// Look for devices for other devices that match the same path.
-		dupe := false
-		for _, encRelDevFile := range encRelDevFiles {
-			if encRelDevFile == ourEncRelDestFile {
-				dupe = true
-				break
-			}
-		}
+		dupe := slices.Contains(encRelDevFiles, ourEncRelDestFile)
 
 		// If a device has been found that points to the same device inside the instance
 		// then we cannot request it be umounted inside the instance as it's still in use.

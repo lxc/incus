@@ -3,6 +3,7 @@ package node
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	"github.com/lxc/incus/v6/internal/ports"
 	"github.com/lxc/incus/v6/internal/server/config"
@@ -134,9 +135,7 @@ func (c *Config) Replace(values map[string]string) (map[string]string, error) {
 // Patch changes only the configuration keys in the given map.
 func (c *Config) Patch(patch map[string]string) (map[string]string, error) {
 	values := c.Dump() // Use current values as defaults
-	for name, value := range patch {
-		values[name] = value
-	}
+	maps.Copy(values, patch)
 
 	return c.update(values)
 }
