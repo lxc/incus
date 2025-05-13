@@ -1758,56 +1758,6 @@ func (d *truenas) DeleteVolumeSnapshot(vol Volume, op *operations.Operation) err
 	return nil
 }
 
-// DeleteVolumeSnapshot removes a snapshot from the storage device.
-func (d *truenas) DeleteVolumeSnapshotOld(vol Volume, op *operations.Operation) error {
-	dataset := d.dataset(vol, false)
-
-	// Handle clones.
-	clones, err := d.getClones(dataset)
-	if err != nil {
-		return err
-	}
-
-	if len(clones) > 0 {
-		// Move to the deleted path.
-		deletedDataset := d.dataset(vol, true)
-		err = d.renameSnapshot(dataset, deletedDataset)
-		if err != nil {
-			return err
-		}
-	} else {
-		// Delete the snapshot.
-		err := d.deleteSnapshot(dataset, true)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Delete the mountpoint.
-	err = os.Remove(vol.MountPath())
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return fmt.Errorf("Failed to remove '%s': %w", vol.MountPath(), err)
-	}
-
-	// Remove the parent snapshot directory if this is the last snapshot being removed.
-	parentName, _, _ := api.GetParentAndSnapshotName(vol.name)
-	err = deleteParentSnapshotDirIfEmpty(d.name, vol.volType, parentName)
-	if err != nil {
-		return err
-	}
-
-	// For VM images, create a filesystem volume too.
-	if vol.IsVMBlock() {
-		fsVol := vol.NewVMBlockFilesystemVolume()
-		err := d.DeleteVolumeSnapshot(fsVol, op)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 // MountVolumeSnapshot mounts a storage volume snapshot.
 //
 // The snapshot is cloned to a temporary dataset that will live for the duration of the mount.
