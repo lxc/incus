@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/lxc/incus/v6/internal/migration"
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
@@ -35,6 +36,10 @@ var tnDefaultSettings = map[string]string{
 
 type truenas struct {
 	common
+
+	// Temporary cache (typically lives for the duration of a query).
+	cache   map[string]map[string]int64
+	cacheMu sync.Mutex
 }
 
 func (d *truenas) isVersionGE(thisVersion version.DottedVersion, thatVersion string) bool {
