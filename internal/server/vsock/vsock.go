@@ -35,7 +35,7 @@ func HTTPClient(vsockID uint32, port int, tlsClientCert string, tlsClientKey str
 			var err error
 
 			// Retry for up to 1s at 100ms interval to handle various failures.
-			for i := 0; i < 10; i++ {
+			for range 10 {
 				conn, err = Dial(vsockID, uint32(port))
 				if err == nil {
 					break

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"slices"
 	"strings"
@@ -1930,9 +1931,7 @@ func (o *NB) UpdateLogicalSwitchPortOptions(ctx context.Context, portName OVNSwi
 		lsp.Options = map[string]string{}
 	}
 
-	for key, value := range options {
-		lsp.Options[key] = value
-	}
+	maps.Copy(lsp.Options, options)
 
 	// Update the record.
 	operations, err := o.client.Where(&lsp).Update(&lsp)
@@ -2842,9 +2841,7 @@ func (o *NB) aclRuleAddOperations(ctx context.Context, entityTable string, entit
 			}
 		}
 
-		for k, v := range externalIDs {
-			acl.ExternalIDs[k] = v
-		}
+		maps.Copy(acl.ExternalIDs, externalIDs)
 
 		createOps, err := o.client.Create(&acl)
 		if err != nil {

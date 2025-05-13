@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -1630,9 +1631,7 @@ func (d *zfs) UpdateVolume(vol Volume, changedConfig map[string]string) error {
 	}
 
 	defer func() {
-		for k, v := range old {
-			vol.config[k] = v
-		}
+		maps.Copy(vol.config, old)
 	}()
 
 	// If any of the relevant keys changed, re-apply the quota.
@@ -3360,8 +3359,9 @@ func (d *zfs) VolumeSnapshots(vol Volume, op *operations.Operation) ([]string, e
 	// Filter only the snapshots.
 	snapshots := []string{}
 	for _, entry := range entries {
-		if strings.HasPrefix(entry, "@snapshot-") {
-			snapshots = append(snapshots, strings.TrimPrefix(entry, "@snapshot-"))
+		after, ok := strings.CutPrefix(entry, "@snapshot-")
+		if ok {
+			snapshots = append(snapshots, after)
 		}
 	}
 
@@ -3393,9 +3393,10 @@ func (d *zfs) restoreVolume(vol Volume, snapshotName string, migration bool, op 
 			continue
 		}
 
-		if strings.HasPrefix(entry, "@snapshot-") {
+		after, ok := strings.CutPrefix(entry, "@snapshot-")
+		if ok {
 			// Located a normal snapshot following ours.
-			snapshots = append(snapshots, strings.TrimPrefix(entry, "@snapshot-"))
+			snapshots = append(snapshots, after)
 			continue
 		}
 

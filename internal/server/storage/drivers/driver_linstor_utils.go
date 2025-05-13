@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -655,8 +656,9 @@ func (d *linstor) getSnapshotMap(parentVol Volume) (map[string]string, error) {
 	}
 
 	for key, value := range resourceDefinition.Props {
-		if strings.HasPrefix(key, LinstorAuxSnapshotPrefix) {
-			result[value] = strings.TrimPrefix(key, LinstorAuxSnapshotPrefix)
+		after, ok := strings.CutPrefix(key, LinstorAuxSnapshotPrefix)
+		if ok {
+			result[value] = after
 		}
 	}
 
@@ -986,9 +988,7 @@ func (d *linstor) setResourceDefinitionProperties(vol Volume, resourceDefinition
 		return fmt.Errorf("Could parse config into DRBD options: %w", err)
 	}
 
-	for k, v := range drbdProps {
-		overrideProps[k] = v
-	}
+	maps.Copy(overrideProps, drbdProps)
 
 	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceDefinitionName, linstorClient.GenericPropsModify{
 		OverrideProps: overrideProps,

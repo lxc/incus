@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"os"
 	"slices"
@@ -132,9 +133,7 @@ func (n *common) validate(config map[string]string, driverRules map[string]func(
 	rules := n.validationRules()
 
 	// Merge driver specific rules into common rules.
-	for field, validator := range driverRules {
-		rules[field] = validator
-	}
+	maps.Copy(rules, driverRules)
 
 	// Run the validator against each field.
 	for k, validator := range rules {
@@ -990,7 +989,7 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 				return nil, fmt.Errorf("Invalid listen port in port specification %d: %w", portSpecID, err)
 			}
 
-			for i := int64(0); i < portRange; i++ {
+			for i := range portRange {
 				port := portFirst + i
 				_, found := listenPorts[portSpec.Protocol][port]
 				if found {
@@ -1020,7 +1019,7 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 					return nil, fmt.Errorf("Invalid target port in port specification %d", portSpecID)
 				}
 
-				for i := int64(0); i < portRange; i++ {
+				for i := range portRange {
 					port := portFirst + i
 					portMap.target.ports = append(portMap.target.ports, uint64(port))
 				}
@@ -1340,7 +1339,7 @@ func (n *common) loadBalancerValidate(listenAddress net.IP, forward *api.Network
 				return nil, fmt.Errorf("Invalid backend port specification %d in backend specification %d: %w", portSpecID, backendSpecID, err)
 			}
 
-			for i := int64(0); i < portRange; i++ {
+			for i := range portRange {
 				port := portFirst + i
 				target.ports = append(target.ports, uint64(port))
 			}
@@ -1374,7 +1373,7 @@ func (n *common) loadBalancerValidate(listenAddress net.IP, forward *api.Network
 				return nil, fmt.Errorf("Invalid listen port in port specification %d: %w", portSpecID, err)
 			}
 
-			for i := int64(0); i < portRange; i++ {
+			for i := range portRange {
 				port := portFirst + i
 				_, found := listenPorts[portSpec.Protocol][port]
 				if found {
