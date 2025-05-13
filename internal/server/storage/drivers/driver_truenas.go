@@ -136,7 +136,7 @@ func (d *truenas) Info() Info {
 // ensureInitialDatasets creates missing initial datasets or configures existing ones with current policy.
 // Accepts warnOnExistingPolicyApplyError argument, if true will warn rather than fail if applying current policy
 // to an existing dataset fails.
-func (d truenas) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
+func (d *truenas) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
 	args := make([]string, 0, len(tnDefaultSettings))
 	for k, v := range tnDefaultSettings {
 		args = append(args, fmt.Sprintf("%s=%s", k, v))
