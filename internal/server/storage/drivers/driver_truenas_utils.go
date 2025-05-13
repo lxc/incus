@@ -23,11 +23,6 @@ const (
 func (d *truenas) dataset(vol Volume, deleted bool) string {
 	name, snapName, _ := api.GetParentAndSnapshotName(vol.name)
 
-	/*
-		update, we can't tell the when generating an image name, thus we MUST not append <filesytem> to an image name... unless its
-		deleted... in which case we probably can.
-	*/
-
 	if vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS && d.isBlockBacked(vol) {
 		name = fmt.Sprintf("%s_%s", name, vol.ConfigBlockFilesystem())
 	}
@@ -642,9 +637,9 @@ func (d *truenas) renameDataset(sourceDataset string, destDataset string, update
 		return err
 	}
 
-	if updateShares {
-		_ = d.createIscsiShare(destDataset, false) // TODO: remove this when --update-shares supports iscsi
-	}
+	// if updateShares {
+	// 	_ = d.createIscsiShare(destDataset, false) // TODO: remove this when --update-shares supports iscsi
+	// }
 
 	return nil
 }
