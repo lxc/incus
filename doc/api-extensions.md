@@ -2838,3 +2838,7 @@ on schedule.
 This adds tracking of CPU address sizes in the resources API.
 The main use of this is within clusters to calculate a cluster-wide
 maximum memory amount for hotplugging into virtual machines.
+
+## `disk_attached`
+
+This introduces a new `attached` property to disk devices describing whether disks are attached or ejected.
