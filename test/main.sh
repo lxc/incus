@@ -271,8 +271,8 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_projects_images_default "images from the global default project"
     run_test test_projects_storage "projects and storage pools"
     run_test test_projects_network "projects and networks"
-    # run_test test_projects_limits "projects limits" #TN - zvol shrinking
-    # run_test test_projects_usage "projects usage" #TN - zvol shrinking
+    run_test test_projects_limits "projects limits"
+    run_test test_projects_usage "projects usage"
     run_test test_projects_restrictions "projects restrictions"
     run_test test_container_devices_disk "container devices - disk"
     #run_test test_container_devices_disk_restricted "container devices - disk - restricted" #!TN
