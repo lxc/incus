@@ -125,7 +125,7 @@ func TestColumns(t *testing.T) {
 			l = rand.Intn(20) + 20
 		}
 
-		for i := 0; i < l; i++ {
+		for range l {
 			buffer.WriteByte(alphanum[rand.Intn(len(alphanum))])
 		}
 	}
@@ -183,7 +183,7 @@ func TestColumns(t *testing.T) {
 		buffer.WriteRune(',')
 	}
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		go func() {
 			var buffer bytes.Buffer
 
@@ -193,7 +193,7 @@ func TestColumns(t *testing.T) {
 			}
 
 			num := l
-			for j := 0; j < l; j++ {
+			for range l {
 				switch rand.Intn(5) {
 				case 0:
 					if buffer.Len() > 0 {
