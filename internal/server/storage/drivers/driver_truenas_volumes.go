@@ -924,10 +924,102 @@ func (d *truenas) UpdateVolume(vol Volume, changedConfig map[string]string) erro
 	return nil
 }
 
+// CacheVolumeSnapshots fetches snapshot usage properties for all snapshots on the volume.
+func (d *truenas) CacheVolumeSnapshots(vol Volume) error {
+
+	// NOTE: this actually gets info for all datasets and snapshots.
+
+	// Lock the cache.
+	d.cacheMu.Lock()
+	defer d.cacheMu.Unlock()
+
+	// Check if we've already cached the data.
+	if d.cache != nil {
+		return nil
+	}
+
+	// Get the usage data.
+	out, err := d.runTool("list", "-H", "-p", "-o", "name,used,referenced", "-r", "-t", "snap,fs,vol", d.dataset(vol, false))
+	if err != nil {
+		d.logger.Warn("Coulnd't list volume snapshots", logger.Ctx{"err": err})
+
+		// The cache is an optional performance improvement, don't block on failure.
+		return nil
+	}
+
+	// Parse and update the cache.
+	d.cache = map[string]map[string]int64{}
+	for _, line := range strings.Split(out, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		fields := strings.Fields(line)
+		if len(fields) != 3 {
+			continue
+		}
+
+		usedInt, err := strconv.ParseInt(fields[1], 10, 64)
+		if err != nil {
+			continue
+		}
+
+		referencedInt, err := strconv.ParseInt(fields[2], 10, 64)
+		if err != nil {
+			continue
+		}
+
+		d.cache[fields[0]] = map[string]int64{
+			"used":       usedInt,
+			"referenced": referencedInt,
+		}
+	}
+
+	return nil
+}
+
 // GetVolumeUsage returns the disk space used by the volume.
 func (d *truenas) GetVolumeUsage(vol Volume) (int64, error) {
+	// Determine what key to use.
+	key := "used"
+
+	// If volume isn't snapshot then we can take into account the zfs.use_refquota setting.
+	// Snapshots should also use the "used" ZFS property because the snapshot usage size represents the CoW
+	// usage not the size of the snapshot volume.
+	if !vol.IsSnapshot() {
+		if util.IsTrue(vol.ExpandedConfig("zfs.use_refquota")) {
+			key = "referenced"
+		}
+
+		// Shortcut for mounted refquota filesystems.
+		if key == "referenced" && vol.contentType == ContentTypeFS && linux.IsMountPoint(vol.MountPath()) {
+			var stat unix.Statfs_t
+			err := unix.Statfs(vol.MountPath(), &stat)
+			if err != nil {
+				return -1, err
+			}
+
+			return int64(stat.Blocks-stat.Bfree) * int64(stat.Bsize), nil
+		}
+	}
+
+	// Try to use the cached data.
+	d.cacheMu.Lock()
+	defer d.cacheMu.Unlock()
+
+	if d.cache != nil {
+		cache, ok := d.cache[d.dataset(vol, false)]
+		if ok {
+			value, ok := cache[key]
+			if ok {
+				return value, nil
+			}
+		}
+	}
+
 	// Get the current value.
-	value, err := d.getDatasetProperty(d.dataset(vol, false), "used")
+	value, err := d.getDatasetProperty(d.dataset(vol, false), key)
 	if err != nil {
 		return -1, err
 	}
@@ -1829,6 +1921,8 @@ func (d *truenas) CreateVolumeSnapshot(vol Volume, op *operations.Operation) err
 
 // DeleteVolumeSnapshot removes a snapshot from the storage device.
 func (d *truenas) DeleteVolumeSnapshot(vol Volume, op *operations.Operation) error {
+
+	// Delete the snapshot, which will fail if there are clones.
 	dataset := d.dataset(vol, false)
 	errDelete := d.deleteSnapshot(dataset, true)
 
