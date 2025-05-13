@@ -951,6 +951,7 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 	}
 
 	inUse := vol.MountInUse()
+	dataset := d.dataset(vol, false)
 
 	// Handle volume datasets.
 	if d.isBlockBacked(vol) && vol.contentType == ContentTypeFS || IsContentBlock(vol.contentType) {
@@ -964,7 +965,7 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 			return err
 		}
 
-		oldSizeBytesStr, err := d.getDatasetProperty(d.dataset(vol, false), "volsize")
+		oldSizeBytesStr, err := d.getDatasetProperty(dataset, "volsize")
 		if err != nil {
 			return err
 		}
@@ -1018,14 +1019,14 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 				l.Debug("TrueNAS volume filesystem shrunk")
 
 				// Shrink the block device.
-				err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("volsize=%d", sizeBytes))
+				err = d.setVolsize(dataset, sizeBytes, true) // ignores shrink errors.
 				if err != nil {
-					// note: this should've worked, but the middleware is currently preventing it.
 					return err
 				}
 			} else if sizeBytes > oldVolSizeBytes {
-				// Grow block device first.
-				err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("volsize=%d", sizeBytes))
+				// Grow block device first, ignoring any shrink errors, which could happen because we've
+				// already ignored a shrink error when shrinking.
+				err = d.setVolsize(dataset, sizeBytes, true)
 				if err != nil {
 					return err
 				}
@@ -1054,7 +1055,8 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 				}
 			}
 
-			err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("volsize=%d", sizeBytes))
+			// Adjust zvol size, ignoring any shrink errors.
+			err = d.setVolsize(dataset, sizeBytes, true)
 			if err != nil {
 				return err
 			}
@@ -1080,7 +1082,7 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 	}
 
 	// Apply the new dataset quota.
-	d.setDatasetQuota(d.dataset(vol, false), sizeBytes)
+	d.setDatasetQuota(dataset, sizeBytes)
 
 	return nil
 }
