@@ -16,9 +16,8 @@ import (
 )
 
 const (
-	tnToolName              = "truenas_incus_ctl"
-	tnMinVersion            = "0.5.3" // `iscsi locate --activate` support
-	tnVerifyDatasetCreation = false   // explicitly check that the dataset is created, work around for bugs in certain versions of the tool.
+	tnToolName   = "truenas_incus_ctl"
+	tnMinVersion = "0.5.3" // `iscsi locate --activate` support
 )
 
 func (d *truenas) dataset(vol Volume, deleted bool) string {
@@ -343,44 +342,31 @@ func (d *truenas) createDataset(dataset string, options ...string) error {
 		return err
 	}
 
-	// previous versions of the tool didnt' properly handle dataset creation failure
-	if tnVerifyDatasetCreation {
-		exists, _ := d.datasetExists(dataset)
-		if !exists {
-			return fmt.Errorf("Failed to createDataset: %s", dataset)
-		}
-	}
-
 	return nil
 }
 
-func (d *truenas) createNfsShare(dataset string) error {
-	args := []string{"share", "nfs"}
+func (d *truenas) createVolume(dataset string, size int64, options ...string) error {
+	args := []string{"dataset", "create", "-s", "-V", fmt.Sprintf("%d", size)}
 
-	/*
-		`update --create` will create a share if it does not exist, with the supplied props, otherwise
-		it will update the share with the supplied props if the share does not yet have them.
+	// for _, option := range options {
+	// 	args = append(args, "-o")
+	// 	args = append(args, option)
+	// }
 
-		This allows a share to be created, or even updated, "just-in-time" before mounting, as the tool will first lookup
-		the share's existance, before modifying it, without risking duplicating the share
+	for _, option := range options {
+		args = append(args, fmt.Sprintf("--%s", option))
+	}
 
-		This also means that if we add additional flags, or change them in the future to the share, they can be applied
-	*/
-	args = append(args, "update", "--create")
-	args = append(args, "--comment", tnDefaultSettings["comments"], "--maproot-user=root", "--maproot-group=root")
+	// optionString := optionsToOptionString(options...)
+	// if optionString != "" {
+	// 	args = append(args, "-o", optionString)
+	// }
+
+	args = append(args, "--managedby", tnDefaultSettings["managedby"], "--comments", tnDefaultSettings["comments"])
+
 	args = append(args, dataset)
 
 	out, err := d.runTool(args...)
-	_ = out
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (d *truenas) deleteNfsShare(dataset string) error {
-	out, err := d.runTool("share", "nfs", "delete", dataset)
 	_ = out
 	if err != nil {
 		return err

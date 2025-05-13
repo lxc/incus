@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -25,63 +24,8 @@ import (
 	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/validate"
+	"golang.org/x/sys/unix"
 )
-
-// ContentTypeRootImg implies the filesystem contains a root.img which itself contains a filesystem
-const ContentTypeFsImg = ContentType("fs-img")
-
-func blockifyMountPath(vol *Volume) {
-	/*
-		we need to mount filesystems to access their root.img, so that we can mount the filesystem. This
-		means we need an additional mountpoint. We use the customMountPath feature to suffix .block
-		without modifying the volume name
-	*/
-	vol.mountCustomPath = ""
-
-	if vol.IsSnapshot() {
-		deSnap := vol.Clone()
-		parentName, snapName, _ := api.GetParentAndSnapshotName(deSnap.name)
-		deSnap.name = fmt.Sprintf("%s.block/%s", parentName, snapName)
-		vol.mountCustomPath = deSnap.MountPath()
-	} else {
-		vol.mountCustomPath = vol.MountPath() + ".block"
-	}
-}
-
-// returns a clone of the vol, but margked as an fs-img
-func cloneVolAsFsImgVol(vol Volume) Volume {
-	fsImgVol := vol.Clone()
-	blockifyMountPath(&fsImgVol)
-	fsImgVol.contentType = ContentTypeFsImg
-
-	return fsImgVol
-}
-
-// returns true if the vol is an fs-img
-func isFsImgVol(vol Volume) bool {
-	/*
-		we need a third volume type so that we can tell the difference between an
-		image:fs and an image:block, and the image:block's config mount.
-
-		Additionally, to mount the backing image for an image:fs, we need to use a
-		different contentType to obtain a separate lock, without using block (see above)
-	*/
-	return vol.contentType == ContentTypeFsImg
-
-}
-
-// returns true if the vol requires an underyling fs-img
-func needsFsImgVol(vol Volume) bool {
-	/*
-		does the volume need an underlying FsImgVol
-
-		the trick is to make sure that Images etc that aren't created via NewVMBlockFilesystemVolume
-		are marked as loop-vols, where as NewVMBlockFilesystemVolume must not be.
-
-		This is accomplished by ensuring that block.filesistem is applied in FillVolumeConfig
-	*/
-	return vol.contentType == ContentTypeFS && vol.config["block.filesystem"] != ""
-}
 
 // CreateVolume creates an empty volume and can optionally fill it by executing the supplied
 // filler function.
@@ -1440,123 +1384,6 @@ func (d *truenas) deactivateVolume(vol Volume) (bool, error) {
 	return didDeactivate, nil
 }
 
-func (d *truenas) activateAndMountFsImg(vol Volume, op *operations.Operation) error {
-
-	reverter := revert.New()
-	defer reverter.Fail()
-
-	// mount underlying dataset, then loop mount the root.img
-	fsImgVol := cloneVolAsFsImgVol(vol)
-
-	err := d.MountVolume(fsImgVol, op)
-	if err != nil {
-		return err
-	}
-	reverter.Add(func() {
-		_, _ = d.UnmountVolume(fsImgVol, false, op)
-	})
-
-	// We expect the filler to copy the VM image into this path.
-	rootBlockPath, err := d.GetVolumeDiskPath(fsImgVol)
-	if err != nil {
-		return err
-	}
-
-	fsType, err := fsProbe(rootBlockPath)
-	if err != nil {
-		return fmt.Errorf("Failed probing filesystem: %w", err)
-	}
-	if fsType == "" {
-		// if we couldn't probe it, we won't be able to mount it.
-		return fmt.Errorf("Failed probing filesystem: %s", rootBlockPath)
-	}
-
-	loopDevPath, err := loopDeviceSetup(rootBlockPath)
-	if err != nil {
-		return err
-	}
-	reverter.Add(func() {
-		loopDeviceAutoDetach(loopDevPath)
-	})
-
-	mountPath := vol.MountPath()
-
-	//var volOptions []string
-	volOptions := strings.Split(vol.ConfigBlockMountOptions(), ",")
-
-	mountFlags, mountOptions := linux.ResolveMountOptions(volOptions)
-	_ = mountFlags
-	err = TryMount(loopDevPath, mountPath, fsType, mountFlags, mountOptions)
-	if err != nil {
-		defer func() { _ = loopDeviceAutoDetach(loopDevPath) }()
-		return err
-	}
-	d.logger.Debug("Mounted TrueNAS volume", logger.Ctx{"volName": vol.name, "dev": rootBlockPath, "path": mountPath, "options": mountOptions})
-
-	reverter.Success()
-
-	return nil
-}
-
-func (d *truenas) mountNfsDataset(vol Volume) error {
-
-	err := vol.EnsureMountPath()
-	if err != nil {
-		return err
-	}
-
-	dataset := d.dataset(vol, false)
-
-	var volOptions []string
-
-	//note: to implement getDatasetProperties, we'd like `truenas-admin dataset inspect` to be implemented
-	atime, err := d.getDatasetProperty(dataset, "atime")
-	if err != nil {
-		return err
-	}
-	if atime == "off" {
-		volOptions = append(volOptions, "noatime")
-	}
-
-	host := d.config["truenas.host"]
-	if host == "" {
-		return fmt.Errorf("`truenas.host` must be specified")
-	}
-
-	ip4and6, err := net.LookupIP(host)
-	if err != nil {
-		return err
-	}
-
-	// NFS
-	volOptions = append(volOptions, "vers=4.2")                  // TODO: decide on default options
-	volOptions = append(volOptions, "addr="+ip4and6[0].String()) // TODO: pick ip4 or ip6
-
-	mountFlags, mountOptions := linux.ResolveMountOptions(volOptions)
-	mountPath := vol.MountPath()
-
-	remotePath := fmt.Sprintf("%s:/mnt/%s", host, dataset)
-
-	// Mount the dataset.
-	err = TryMount(remotePath, mountPath, "nfs", mountFlags, mountOptions) // TODO: if local we want to bind mount.
-
-	if err != nil {
-		// try once more, after re-creating the share.
-		err = d.createNfsShare(dataset)
-		if err != nil {
-			return err
-		}
-		err = TryMount(remotePath, mountPath, "nfs", mountFlags, mountOptions)
-		if err != nil {
-			return err
-		}
-	}
-
-	d.logger.Debug("Mounted TrueNAS dataset", logger.Ctx{"volName": vol.name, "host": host, "dev": dataset, "path": mountPath})
-
-	return nil
-}
-
 // MountVolume mounts a volume and increments ref counter. Please call UnmountVolume() when done with the volume.
 func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 	unlock, err := vol.MountLock()
@@ -1677,40 +1504,8 @@ func (d *truenas) MountVolumeNfs(vol Volume, op *operations.Operation) error {
 	return nil
 }
 
-func (d *truenas) deactivateVolume(vol Volume, op *operations.Operation) (bool, error) {
-	ourUnmount := true
-
-	// need to unlink the loop
-	// mount underlying dataset, then loop mount the root.img
-	// we need to mount the underlying dataset
-	fsImgVol := cloneVolAsFsImgVol(vol)
-
-	// We expect the filler to copy the VM image into this path.
-	rootBlockPath, err := d.GetVolumeDiskPath(fsImgVol)
-	if err != nil {
-		return false, err
-	}
-	loopDevPath, err := loopDeviceSetup(rootBlockPath)
-	if err != nil {
-		return false, err
-	}
-	err = loopDeviceAutoDetach(loopDevPath)
-	if err != nil {
-		return false, err
-	}
-
-	// and then unmount the root.img dataset
-
-	_, err = d.UnmountVolume(fsImgVol, false, op)
-	if err != nil {
-		return false, err
-	}
-
-	return ourUnmount, nil
-}
-
-// UnmountVolume unmounts volume if mounted and not in use. Returns true if this unmounted the volume.
-// keepBlockDev indicates if backing block device should be not be deactivated when volume is unmounted.
+// UnmountVolume simulates unmounting a volume.
+// keepBlockDev indicates if backing block device should be not be unmapped if volume is unmounted.
 func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operation) (bool, error) {
 	unlock, err := vol.MountLock()
 	if err != nil {
@@ -1719,22 +1514,36 @@ func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 
 	defer unlock()
 
-	if vol.IsVMBlock() {
-		blockifyMountPath(&vol)
-	}
-
 	ourUnmount := false
-	dataset := d.dataset(vol, false)
 	mountPath := vol.MountPath()
 
 	refCount := vol.MountRefCountDecrement()
 
-	if keepBlockDev {
-		d.logger.Debug("keepBlockDevTrue", logger.Ctx{"volName": vol.name, "refCount": refCount})
-	}
+	// Attempt to unmount the volume.
+	if vol.contentType == ContentTypeFS && linux.IsMountPoint(mountPath) {
+		if refCount > 0 {
+			d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": vol.name, "refCount": refCount})
+			return false, ErrInUse
+		}
 
-	if vol.contentType == ContentTypeBlock || vol.contentType == ContentTypeISO {
-		// For VMs and ISOs, unmount the filesystem volume.
+		err = TryUnmount(mountPath, unix.MNT_DETACH)
+		if err != nil {
+			return false, err
+		}
+
+		d.logger.Debug("Unmounted TrueNAS volume", logger.Ctx{"volName": vol.name, "path": mountPath, "keepBlockDev": keepBlockDev})
+
+		// And deactivate.
+		if !keepBlockDev {
+			_, err = d.deactivateVolume(vol)
+			if err != nil {
+				return false, err
+			}
+		}
+
+		ourUnmount = true
+	} else if vol.contentType == ContentTypeBlock {
+		// For VMs, unmount the filesystem volume.
 		if vol.IsVMBlock() {
 			fsVol := vol.NewVMBlockFilesystemVolume()
 			ourUnmount, err = d.UnmountVolume(fsVol, false, op)
@@ -1742,40 +1551,19 @@ func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 				return false, err
 			}
 		}
-	}
 
-	if refCount > 0 {
-		d.logger.Debug("Skipping TrueNAS unmount as in use", logger.Ctx{"volName": vol.name, "host": d.config["truenas.host"], "dataset": dataset, "path": mountPath})
-		return false, ErrInUse
-	}
+		if !keepBlockDev {
+			if refCount > 0 {
+				d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": vol.name, "refCount": refCount})
+				return false, ErrInUse
+			}
 
-	if (vol.contentType == ContentTypeFS || vol.IsVMBlock() || vol.IsCustomBlock() || vol.ContentType() == ContentTypeISO || isFsImgVol(vol)) && linux.IsMountPoint(mountPath) {
-
-		// Unmount the dataset.
-		err = TryUnmount(mountPath, 0)
-		if err != nil {
-			return false, err
-		}
-		ourUnmount = true
-
-		// if we're a loop mounted volume...
-		if needsFsImgVol(vol) {
-
-			// then we've unmounted the volume
-
-			d.logger.Debug("Unmounted TrueNAS volume", logger.Ctx{"volName": vol.name, "host": d.config["truenas.host"], "dataset": dataset, "path": mountPath})
-
-			// now we can take down the loop and the fs-img dataset
-			_, err = d.deactivateVolume(vol, op)
+			// and de-activate the block device
+			_, err := d.deactivateVolume(vol)
 			if err != nil {
 				return false, err
 			}
-
-		} else {
-			// otherwise, we're just a regular dataset mount.
-			d.logger.Debug("Unmounted TrueNAS dataset", logger.Ctx{"volName": vol.name, "host": d.config["truenas.host"], "dataset": dataset, "path": mountPath})
 		}
-
 	}
 
 	return ourUnmount, nil
