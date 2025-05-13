@@ -749,6 +749,21 @@ func (d *truenas) setBlocksize(vol Volume, size int64) error {
 	return nil
 }
 
+// set the volsize property of a zvol, optionally ignoring shrink errors (and warning), requires a zvol
+func (d *truenas) setVolsize(dataset string, sizeBytes int64, ignoreShrinkError bool) error {
+	volsizeProp := fmt.Sprintf("volsize=%d", sizeBytes)
+	err := d.setDatasetProperties(dataset, volsizeProp)
+	if err != nil {
+		if ignoreShrinkError && strings.Contains(err.Error(), "cannot shrink a zvol") {
+			// middleware currently prevents volume shrinking.
+			d.logger.Warn(fmt.Sprintf("Unable to shrink zvol on TrueNAS server due to middleware restriction, use `zfs set %s %s` to change zvol size manually", volsizeProp, dataset))
+		} else {
+			return err
+		}
+	}
+	return nil
+}
+
 func (d *truenas) getClones(dataset string) ([]string, error) {
 	out, err := d.runTool("snapshot", "list", "-H", "-p", "-r", "-o", "clones", dataset)
 
