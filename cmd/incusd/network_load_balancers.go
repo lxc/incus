@@ -13,6 +13,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/v6/internal/server/cluster/request"
 	"github.com/lxc/incus/v6/internal/server/db"
+	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/internal/server/lifecycle"
 	"github.com/lxc/incus/v6/internal/server/network"
 	"github.com/lxc/incus/v6/internal/server/project"
@@ -197,9 +198,29 @@ func networkLoadBalancersGet(d *Daemon, r *http.Request) response.Response {
 		var records map[int64]*api.NetworkLoadBalancer
 
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			records, err = tx.GetNetworkLoadBalancers(ctx, n.ID(), memberSpecific)
+			network_id := n.ID()
+			dbLoadBalancers, err := dbCluster.GetNetworkLoadBalancers(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
 
-			return err
+			records = make(map[int64]*api.NetworkLoadBalancer)
+
+			for _, lb := range dbLoadBalancers {
+				// memberSpecific filtering
+				if !memberSpecific ||
+					!lb.NodeID.Valid ||
+					(lb.NodeID.Valid && lb.NodeID.Int64 == network_id) {
+						// format to api
+						apiLoadBalancer, err := lb.ToAPI(ctx, tx.Tx())
+						if err != nil {
+							return err
+						}
+						records[lb.ID] = apiLoadBalancer
+					}
+			}
+
+			return nil
 		})
 		if err != nil {
 			return response.SmartError(fmt.Errorf("Failed loading network load balancers: %w", err))
@@ -225,9 +246,27 @@ func networkLoadBalancersGet(d *Daemon, r *http.Request) response.Response {
 		var listenAddresses map[int64]string
 
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			listenAddresses, err = tx.GetNetworkLoadBalancerListenAddresses(ctx, n.ID(), memberSpecific)
+			network_id := n.ID()
+			dbLoadBalancers, err := dbCluster.GetNetworkLoadBalancers(ctx, tx.Tx(), dbCluster.NetworkLoadBalancerFilter{
+				NetworkID: &network_id,
+			})
+			if err != nil {
+				return fmt.Errorf("Failed loading network load balancers: %w", err)
+			}
 
-			return err
+			listenAddresses = make(map[int64]string)
+
+			// filter according to memberSpecific
+			node_id := tx.GetNodeID()
+			for _, lb := range dbLoadBalancers {
+				if !memberSpecific ||
+					!lb.NodeID.Valid ||
+					(lb.NodeID.Valid && lb.NodeID.Int64 == node_id) {
+					listenAddresses[lb.ID] = lb.ListenAddress
+				}
+			}
+
+			return nil
 		})
 		if err != nil {
 			return response.SmartError(fmt.Errorf("Failed loading network load balancers: %w", err))
@@ -488,7 +527,32 @@ func networkLoadBalancerGet(d *Daemon, r *http.Request) response.Response {
 	var loadBalancer *api.NetworkLoadBalancer
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		_, loadBalancer, err = tx.GetNetworkLoadBalancer(ctx, n.ID(), memberSpecific, listenAddress)
+		network_id := n.ID()
+		dbLoadBalancers, err := dbCluster.GetNetworkLoadBalancers(ctx, tx.Tx(), dbCluster.NetworkLoadBalancerFilter{
+			NetworkID: &network_id,
+			ListenAddress: &listenAddress,
+		})
+		if err != nil {
+			return err
+		}
+		filtered := make([]dbCluster.NetworkLoadBalancer, 0, len(dbLoadBalancers))
+		for _, dbLB := range dbLoadBalancers {
+			if !memberSpecific ||
+				!dbLB.NodeID.Valid ||
+				(dbLB.NodeID.Valid && dbLB.NodeID.Int64 == tx.GetNodeID()) {
+					filtered = append(filtered, dbLB)
+				}
+		}
+		if len(filtered) == 0 {
+			return api.StatusErrorf(http.StatusNotFound, "Network load balancer not found")
+		}
+		if len(filtered) > 1 {
+			return api.StatusErrorf(http.StatusConflict, "Network load balancer found on more than one cluster member. Please target a specific member")
+		}
+
+		// change to api format
+		dbLoadBalancer := filtered[0]
+		loadBalancer, err = dbLoadBalancer.ToAPI(ctx, tx.Tx())
 
 		return err
 	})
@@ -619,7 +683,32 @@ func networkLoadBalancerPut(d *Daemon, r *http.Request) response.Response {
 		var loadBalancer *api.NetworkLoadBalancer
 
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			_, loadBalancer, err = tx.GetNetworkLoadBalancer(ctx, n.ID(), memberSpecific, listenAddress)
+			network_id := n.ID()
+			dbLoadBalancers, err := dbCluster.GetNetworkLoadBalancers(ctx, tx.Tx(), dbCluster.NetworkLoadBalancerFilter{
+				NetworkID: &network_id,
+				ListenAddress: &listenAddress,
+			})
+			if err != nil {
+				return err
+			}
+			filtered := make([]dbCluster.NetworkLoadBalancer, 0, len(dbLoadBalancers))
+			for _, dbLB := range dbLoadBalancers {
+				if !memberSpecific ||
+					!dbLB.NodeID.Valid ||
+					(dbLB.NodeID.Valid && dbLB.NodeID.Int64 == tx.GetNodeID()) {
+						filtered = append(filtered, dbLB)
+					}
+			}
+			if len(filtered) == 0 {
+				return api.StatusErrorf(http.StatusNotFound, "Network load balancer not found")
+			}
+			if len(filtered) > 1 {
+				return api.StatusErrorf(http.StatusConflict, "Network load balancer found on more than one cluster member. Please target a specific member")
+			}
+
+			// change to api format
+			dbLoadBalancer := filtered[0]
+			loadBalancer, err = dbLoadBalancer.ToAPI(ctx, tx.Tx())
 
 			return err
 		})
@@ -742,7 +831,33 @@ func networkLoadBalancerStateGet(d *Daemon, r *http.Request) response.Response {
 
 	var loadBalancer *api.NetworkLoadBalancer
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		_, loadBalancer, err = tx.GetNetworkLoadBalancer(ctx, n.ID(), false, listenAddress)
+		memberSpecific := false
+		network_id := n.ID()
+		dbLoadBalancers, err := dbCluster.GetNetworkLoadBalancers(ctx, tx.Tx(), dbCluster.NetworkLoadBalancerFilter{
+			NetworkID: &network_id,
+			ListenAddress: &listenAddress,
+		})
+		if err != nil {
+			return err
+		}
+		filtered := make([]dbCluster.NetworkLoadBalancer, 0, len(dbLoadBalancers))
+		for _, dbLB := range dbLoadBalancers {
+			if !memberSpecific ||
+				!dbLB.NodeID.Valid ||
+				(dbLB.NodeID.Valid && dbLB.NodeID.Int64 == tx.GetNodeID()) {
+					filtered = append(filtered, dbLB)
+				}
+		}
+		if len(filtered) == 0 {
+			return api.StatusErrorf(http.StatusNotFound, "Network load balancer not found")
+		}
+		if len(filtered) > 1 {
+			return api.StatusErrorf(http.StatusConflict, "Network load balancer found on more than one cluster member. Please target a specific member")
+		}
+
+		// change to api format
+		dbLoadBalancer := filtered[0]
+		loadBalancer, err = dbLoadBalancer.ToAPI(ctx, tx.Tx())
 
 		return err
 	})
