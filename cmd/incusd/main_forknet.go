@@ -629,6 +629,12 @@ func (c *cmdForknet) dhcpApplyDNS(logger *logrus.Logger) error {
 	c.applyDNSMu.Lock()
 	defer c.applyDNSMu.Unlock()
 
+	// Skip touching resolv.conf if no leases.
+	if c.dhcpv4Lease == nil && c.dhcpv6Lease == nil {
+		return nil
+	}
+
+	// Create resolv.conf.
 	f, err := os.Create(filepath.Join(c.instNetworkPath, "resolv.conf"))
 	if err != nil {
 		logger.WithError(err).Error("Giving up on DHCP, couldn't create resolv.conf")
@@ -637,6 +643,7 @@ func (c *cmdForknet) dhcpApplyDNS(logger *logrus.Logger) error {
 
 	defer f.Close()
 
+	// IPv4 addresses.
 	if c.dhcpv4Lease != nil {
 		if len(c.dhcpv4Lease.Offer.DNS()) > 0 {
 			for _, nameserver := range c.dhcpv4Lease.Offer.DNS() {
@@ -665,6 +672,7 @@ func (c *cmdForknet) dhcpApplyDNS(logger *logrus.Logger) error {
 		}
 	}
 
+	// IPv6 addresses.
 	if c.dhcpv6Lease != nil {
 		if len(c.dhcpv6Lease.Options.DNS()) > 0 {
 			for _, nameserver := range c.dhcpv6Lease.Options.DNS() {
