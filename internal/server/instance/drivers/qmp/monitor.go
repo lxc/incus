@@ -37,6 +37,9 @@ var EventVMShutdownReasonDisconnect = "disconnect"
 // EventDiskEjected is used to indicate that a disk device was ejected by the guest.
 var EventDiskEjected = "DEVICE_TRAY_MOVED"
 
+// EventRTCChange is used to get RTC adjustment.
+var EventRTCChange = "RTC_CHANGE"
+
 // ExcludedCommands is used to filter verbose commands from the QMP logs.
 var ExcludedCommands = []string{"ringbuf-read"}
 
