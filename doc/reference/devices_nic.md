@@ -71,6 +71,7 @@ You can select this NIC type through the `nictype` option or the `network` optio
 
 A `bridged` NIC uses an existing bridge on the host and creates a virtual device pair to connect the host bridge to the instance.
 
+
 #### Device options
 
 NIC devices of type `bridged` have the following device options:
@@ -149,6 +150,36 @@ You can select this NIC type only through the `network` option (see {ref}`networ
 ```
 
 An `ovn` NIC uses an existing OVN network and creates a virtual device pair to connect the instance to it.
+
+#### External address SNAT override
+
+By default, instances using an `ovn` NIC will have their outbound traffic SNATed to a network-specific address assigned by the OVN network.
+
+If you want an instance to use a specific external IP address (from a network forward) as its **default source address** for outgoing connections, you can configure the NIC with:
+
+- `ipv4.address.external`
+- `ipv6.address.external`
+
+These options override the default SNAT behavior. The specified address must exactly match one of the `target_address` values configured on a **network forward** attached to the same OVN network.
+
+When configured, Incus will inject a static SNAT rule into OVN, ensuring outbound traffic from the instance appears to come from that external IP.
+
+#### Example usage
+
+```note
+#bash
+# Create an OVN network
+incus network create ovn-net --type=ovn
+
+# Add a network forward on that network
+incus network forward create ovn-net 203.0.113.100
+
+# Attach the forward to an instance
+incus network forward add ovn-net 203.0.113.100 device=my-instance
+
+# Assign the external address as SNAT IP
+incus config device set my-instance eth0 ipv4.address.external=203.0.113.100
+
 
 (devices-nic-hw-acceleration)=
 SR-IOV hardware acceleration
