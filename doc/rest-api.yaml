@@ -1619,6 +1619,11 @@ definitions:
                 example: true
                 type: boolean
                 x-go-name: OptimizedStorage
+            s3_backup_target:
+                description: Where to store the backup if needed. Uses a presigned S3 URL
+                example: '"https://<bucket-name>.s3.<region>.amazonaws.com/<object-key>?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=<credential>&X-Amz-Date=<timestamp>&X-Amz-Expires=<expiration>&X-Amz-SignedHeaders=host&X-Amz-Signature=<signature>"'
+                type: string
+                x-go-name: S3BackupTarget
         title: InstanceBackupsPost represents the fields available for a new instance backup.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
@@ -6550,6 +6555,11 @@ definitions:
                 example: true
                 type: boolean
                 x-go-name: OptimizedStorage
+            s3_backup_target:
+                description: Where to store the backup if needed. Uses a presigned S3 URL
+                example: '"https://<bucket-name>.s3.<region>.amazonaws.com/<object-key>?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=<credential>&X-Amz-Date=<timestamp>&X-Amz-Expires=<expiration>&X-Amz-SignedHeaders=host&X-Amz-Signature=<signature>"'
+                type: string
+                x-go-name: S3BackupTarget
             volume_only:
                 description: Whether to ignore snapshots
                 example: false
