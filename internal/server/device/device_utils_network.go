@@ -15,6 +15,7 @@ import (
 
 	"github.com/mdlayher/arp"
 	"github.com/mdlayher/ndp"
+	"golang.org/x/sys/unix"
 
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 	pcidev "github.com/lxc/incus/v6/internal/server/device/pci"
@@ -531,14 +532,21 @@ func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, 
 	}
 
 	// Clean any existing entry
-	qdisc := &ip.Qdisc{Dev: veth, Root: true}
-	_ = qdisc.Delete()
-	qdisc = &ip.Qdisc{Dev: veth, Ingress: true}
-	_ = qdisc.Delete()
+	qdiscIngress := &ip.QdiscIngress{Qdisc: ip.Qdisc{Dev: veth, Handle: "ffff:0"}}
+	err = qdiscIngress.Delete()
+	if err != nil && !errors.Is(err, unix.ENOENT) {
+		return err
+	}
+
+	qdiscHTB := &ip.QdiscHTB{Qdisc: ip.Qdisc{Dev: veth, Handle: "1:0", Parent: "root"}}
+	err = qdiscHTB.Delete()
+	if err != nil && !errors.Is(err, unix.ENOENT) {
+		return err
+	}
 
 	// Apply new limits
 	if d.config["limits.ingress"] != "" {
-		qdiscHTB := &ip.QdiscHTB{Qdisc: ip.Qdisc{Dev: veth, Handle: "1:0", Root: true}, Default: "10"}
+		qdiscHTB = &ip.QdiscHTB{Qdisc: ip.Qdisc{Dev: veth, Handle: "1:0", Parent: "root"}, Default: 10}
 		err := qdiscHTB.Add()
 		if err != nil {
 			return fmt.Errorf("Failed to create root tc qdisc: %s", err)
@@ -550,7 +558,7 @@ func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, 
 			return fmt.Errorf("Failed to create limit tc class: %s", err)
 		}
 
-		filter := &ip.U32Filter{Filter: ip.Filter{Dev: veth, Parent: "1:0", Protocol: "all", Flowid: "1:1"}, Value: "0", Mask: "0"}
+		filter := &ip.U32Filter{Filter: ip.Filter{Dev: veth, Parent: "1:0", Protocol: "all", Flowid: "1:1"}, Value: 0, Mask: 0}
 		err = filter.Add()
 		if err != nil {
 			return fmt.Errorf("Failed to create tc filter: %s", err)
@@ -558,14 +566,14 @@ func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, 
 	}
 
 	if d.config["limits.egress"] != "" {
-		qdisc = &ip.Qdisc{Dev: veth, Handle: "ffff:0", Ingress: true}
-		err := qdisc.Add()
+		qdiscIngress = &ip.QdiscIngress{Qdisc: ip.Qdisc{Dev: veth, Handle: "ffff:0"}}
+		err := qdiscIngress.Add()
 		if err != nil {
 			return fmt.Errorf("Failed to create ingress tc qdisc: %s", err)
 		}
 
-		police := &ip.ActionPolice{Rate: fmt.Sprintf("%dbit", egressInt), Burst: fmt.Sprintf("%d", egressInt/40), Mtu: "64kb", Drop: true}
-		filter := &ip.U32Filter{Filter: ip.Filter{Dev: veth, Parent: "ffff:0", Protocol: "all"}, Value: "0", Mask: "0", Actions: []ip.Action{police}}
+		police := &ip.ActionPolice{Rate: uint32(egressInt / 8), Burst: uint32(egressInt / 40), Mtu: 65535, Drop: true}
+		filter := &ip.U32Filter{Filter: ip.Filter{Dev: veth, Parent: "ffff:0", Protocol: "all"}, Value: 0, Mask: 0, Actions: []ip.Action{police}}
 		err = filter.Add()
 		if err != nil {
 			return fmt.Errorf("Failed to create ingress tc filter: %s", err)
@@ -694,7 +702,7 @@ func bgpRemovePrefix(d *deviceCommon, config map[string]string) error {
 	return nil
 }
 
-// networkSRIOVParentVFInfo returns info about an SR-IOV virtual function from the parent NIC using the ip tool.
+// networkSRIOVParentVFInfo returns info about an SR-IOV virtual function from the parent NIC.
 func networkSRIOVParentVFInfo(vfParent string, vfID int) (ip.VirtFuncInfo, error) {
 	link := &ip.Link{Name: vfParent}
 	vfi, err := link.GetVFInfo(vfID)
@@ -720,9 +728,9 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 
 	// Record properties of VF settings on the parent device.
 	volatile["last_state.vf.parent"] = vfParent
-	volatile["last_state.vf.hwaddr"] = vfInfo.Address
+	volatile["last_state.vf.hwaddr"] = vfInfo.Address.String()
 	volatile["last_state.vf.id"] = fmt.Sprintf("%d", vfID)
-	volatile["last_state.vf.vlan"] = fmt.Sprintf("%d", vfInfo.VLANs[0]["vlan"])
+	volatile["last_state.vf.vlan"] = fmt.Sprintf("%d", vfInfo.VLAN)
 	volatile["last_state.vf.spoofcheck"] = fmt.Sprintf("%t", vfInfo.SpoofCheck)
 
 	// Record the host interface we represents the VF device which we will move into instance.
@@ -776,7 +784,7 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 		}
 
 		// Now that MAC is set on VF, we can enable spoof checking.
-		err = link.SetVfSpoofchk(volatile["last_state.vf.id"], "on")
+		err = link.SetVfSpoofchk(volatile["last_state.vf.id"], true)
 		if err != nil {
 			return vfPCIDev, 0, fmt.Errorf("Failed enabling spoof check for VF %q: %w", volatile["last_state.vf.id"], err)
 		}
@@ -788,7 +796,7 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 		_ = link.SetVfAddress(volatile["last_state.vf.id"], "00:00:00:00:00:00")
 
 		// Ensure spoof checking is disabled if not enabled in instance (only for real VF).
-		err = link.SetVfSpoofchk(volatile["last_state.vf.id"], "off")
+		err = link.SetVfSpoofchk(volatile["last_state.vf.id"], false)
 		if err != nil && d.config["security.mac_filtering"] != "" {
 			return vfPCIDev, 0, fmt.Errorf("Failed disabling spoof check for VF %q: %w", volatile["last_state.vf.id"], err)
 		}
@@ -901,11 +909,7 @@ func networkSRIOVRestoreVF(d deviceCommon, useSpoofCheck bool, volatile map[stri
 	// Reset VF MAC spoofing protection if recorded. Do this first before resetting the MAC
 	// to avoid any issues with zero MACs refusing to be set whilst spoof check is on.
 	if volatile["last_state.vf.spoofcheck"] != "" {
-		mode := "off"
-		if util.IsTrue(volatile["last_state.vf.spoofcheck"]) {
-			mode = "on"
-		}
-
+		mode := util.IsTrue(volatile["last_state.vf.spoofcheck"])
 		link := &ip.Link{Name: parent}
 		err := link.SetVfSpoofchk(volatile["last_state.vf.id"], mode)
 		if err != nil && d.config["security.mac_filtering"] != "" {

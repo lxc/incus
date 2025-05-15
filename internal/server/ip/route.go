@@ -1,9 +1,12 @@
 package ip
 
 import (
-	"strings"
+	"fmt"
+	"net"
+	"strconv"
 
-	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
 )
 
 // Route represents arguments for route manipulation.
@@ -13,38 +16,163 @@ type Route struct {
 	Table   string
 	Src     string
 	Proto   string
-	Family  string
+	Family  Family
 	Via     string
 	VRF     string
 }
 
-// Add adds new route.
-func (r *Route) Add() error {
-	cmd := []string{r.Family, "route", "add"}
+func (r *Route) netlinkRoute() (*netlink.Route, error) {
+	link, err := linkByName(r.DevName)
+	if err != nil {
+		return nil, err
+	}
+
+	route := &netlink.Route{
+		LinkIndex: link.Attrs().Index,
+		Family:    int(r.Family),
+	}
+
+	if r.Route != "" {
+		_, dst, err := net.ParseCIDR(r.Route)
+		if err != nil {
+			return nil, fmt.Errorf("invalid destination %q: %w", r.Route, err)
+		}
+
+		route.Dst = dst
+	}
+
 	if r.Table != "" {
-		cmd = append(cmd, "table", r.Table)
+		tableID, err := r.tableID()
+		if err != nil {
+			return nil, fmt.Errorf("invalid table %q: %w", r.Table, err)
+		}
+
+		route.Table = tableID
+	} else if r.VRF != "" {
+		vrfDev, err := linkByName(r.VRF)
+		if err != nil {
+			return nil, err
+		}
+
+		vrf, ok := vrfDev.(*netlink.Vrf)
+		if !ok {
+			return nil, fmt.Errorf("%q is not a vrf", r.VRF)
+		}
+
+		route.Table = int(vrf.Table)
 	}
 
 	if r.Via != "" {
-		cmd = append(cmd, "via", r.Via)
+		via := net.ParseIP(r.Via)
+		if via == nil {
+			return nil, fmt.Errorf("invalid via address %q", r.Via)
+		}
+
+		route.Gw = via
+	} else {
+		route.Scope = netlink.SCOPE_LINK
 	}
 
-	cmd = append(cmd, r.Route, "dev", r.DevName)
 	if r.Src != "" {
-		cmd = append(cmd, "src", r.Src)
+		src := net.ParseIP(r.Src)
+		if src == nil {
+			return nil, fmt.Errorf("invalid src address %q", r.Src)
+		}
+
+		route.Src = src
 	}
 
 	if r.Proto != "" {
-		cmd = append(cmd, "proto", r.Proto)
+		proto, err := r.netlinkProto()
+		if err != nil {
+			return nil, err
+		}
+
+		route.Protocol = proto
 	}
 
-	if r.VRF != "" {
-		cmd = append(cmd, "vrf", r.VRF)
-	}
+	return route, nil
+}
 
-	_, err := subprocess.RunCommand("ip", cmd...)
+func (r *Route) tableID() (int, error) {
+	switch r.Table {
+	case "default":
+		return unix.RT_TABLE_DEFAULT, nil
+	case "main":
+		return unix.RT_TABLE_MAIN, nil
+	case "local":
+		return unix.RT_TABLE_LOCAL, nil
+	default:
+		return strconv.Atoi(r.Table)
+	}
+}
+
+func (r *Route) netlinkProto() (netlink.RouteProtocol, error) {
+	switch r.Proto {
+	case "babel":
+		return unix.RTPROT_BABEL, nil
+	case "bgp":
+		return unix.RTPROT_BGP, nil
+	case "bird":
+		return unix.RTPROT_BIRD, nil
+	case "boot":
+		return unix.RTPROT_BOOT, nil
+	case "dhcp":
+		return unix.RTPROT_DHCP, nil
+	case "dnrouted":
+		return unix.RTPROT_DNROUTED, nil
+	case "eigrp":
+		return unix.RTPROT_EIGRP, nil
+	case "gated":
+		return unix.RTPROT_GATED, nil
+	case "isis":
+		return unix.RTPROT_ISIS, nil
+	case "keepalived":
+		return unix.RTPROT_KEEPALIVED, nil
+	case "kernel":
+		return unix.RTPROT_KERNEL, nil
+	case "mrouted":
+		return unix.RTPROT_MROUTED, nil
+	case "mrt":
+		return unix.RTPROT_MRT, nil
+	case "ntk":
+		return unix.RTPROT_NTK, nil
+	case "ospf":
+		return unix.RTPROT_OSPF, nil
+	case "ra":
+		return unix.RTPROT_RA, nil
+	case "redirect":
+		return unix.RTPROT_REDIRECT, nil
+	case "rip":
+		return unix.RTPROT_RIP, nil
+	case "static":
+		return unix.RTPROT_STATIC, nil
+	case "unspec":
+		return unix.RTPROT_UNSPEC, nil
+	case "xorp":
+		return unix.RTPROT_XORP, nil
+	case "zebra":
+		return unix.RTPROT_ZEBRA, nil
+	default:
+		proto, err := strconv.Atoi(r.Proto)
+		if err != nil {
+			return 0, err
+		}
+
+		return netlink.RouteProtocol(proto), nil
+	}
+}
+
+// Add adds new route.
+func (r *Route) Add() error {
+	route, err := r.netlinkRoute()
 	if err != nil {
 		return err
+	}
+
+	err = netlink.RouteAdd(route)
+	if err != nil {
+		return fmt.Errorf("failed to add route %v: %w", route, err)
 	}
 
 	return nil
@@ -52,95 +180,128 @@ func (r *Route) Add() error {
 
 // Delete deletes routing table.
 func (r *Route) Delete() error {
-	cmd := []string{r.Family, "route", "delete", r.Route, "dev", r.DevName}
-
-	if r.VRF != "" {
-		cmd = append(cmd, "vrf", r.VRF)
-	} else if r.Table != "" {
-		cmd = append(cmd, "table", r.Table)
-	}
-
-	_, err := subprocess.RunCommand("ip", cmd...)
+	route, err := r.netlinkRoute()
 	if err != nil {
 		return err
+	}
+
+	err = netlink.RouteDel(route)
+	if err != nil {
+		return fmt.Errorf("failed to delete route %v: %w", route, err)
 	}
 
 	return nil
 }
 
+func routeFilterMask(route *netlink.Route) uint64 {
+	var filterMask uint64
+
+	if route.Dst != nil {
+		filterMask |= netlink.RT_FILTER_DST
+	}
+
+	if route.Gw != nil {
+		filterMask |= netlink.RT_FILTER_GW
+	}
+
+	if route.Protocol != 0 {
+		filterMask |= netlink.RT_FILTER_PROTOCOL
+	}
+
+	if route.Table != 0 {
+		filterMask |= netlink.RT_FILTER_TABLE
+	}
+
+	return filterMask
+}
+
 // Flush flushes routing tables.
 func (r *Route) Flush() error {
-	cmd := []string{}
-	if r.Family != "" {
-		cmd = append(cmd, r.Family)
-	}
-
-	cmd = append(cmd, "route", "flush")
-	if r.Route != "" {
-		cmd = append(cmd, r.Route)
-	}
-
-	if r.Via != "" {
-		cmd = append(cmd, "via", r.Via)
-	}
-
-	cmd = append(cmd, "dev", r.DevName)
-	if r.Proto != "" {
-		cmd = append(cmd, "proto", r.Proto)
-	}
-
-	if r.VRF != "" {
-		cmd = append(cmd, "vrf", r.VRF)
-	}
-
-	_, err := subprocess.RunCommand("ip", cmd...)
+	route, err := r.netlinkRoute()
 	if err != nil {
 		return err
+	}
+
+	var iterErr error
+
+	err = netlink.RouteListFilteredIter(route.Family, route, routeFilterMask(route), func(route netlink.Route) (cont bool) {
+		iterErr = netlink.RouteDel(&route)
+		return iterErr == nil
+	})
+	if err != nil {
+		return fmt.Errorf("could not flush routes %v: %w", route, err)
+	}
+
+	if iterErr != nil {
+		return fmt.Errorf("could not flush routes %v: %w", route, iterErr)
 	}
 
 	return nil
 }
 
 // Replace changes or adds new route.
-func (r *Route) Replace(routes []string) error {
-	cmd := []string{r.Family, "route", "replace", "dev", r.DevName, "proto", r.Proto}
-
-	if r.VRF != "" {
-		cmd = append(cmd, "vrf", r.VRF)
-	}
-
-	cmd = append(cmd, routes...)
-	_, err := subprocess.RunCommand("ip", cmd...)
+// If there is already a route with the same destination, metric, tos and table then that route is updated,
+// otherwise a new route is added.
+func (r *Route) Replace() error {
+	route, err := r.netlinkRoute()
 	if err != nil {
 		return err
+	}
+
+	err = netlink.RouteReplace(route)
+	if err != nil {
+		return fmt.Errorf("could not replace route %s: %w", route, err)
 	}
 
 	return nil
 }
 
-// Show lists routes.
-func (r *Route) Show() ([]string, error) {
-	routes := []string{}
-
-	cmd := []string{r.Family, "route", "show", "dev", r.DevName, "proto", r.Proto}
-
-	if r.VRF != "" {
-		cmd = append(cmd, "vrf", r.VRF)
-	}
-
-	out, err := subprocess.RunCommand("ip", cmd...)
+// Show lists matching routes.
+func (r *Route) Show() ([]Route, error) {
+	route, err := r.netlinkRoute()
 	if err != nil {
-		return routes, err
+		return nil, err
 	}
 
-	for _, line := range strings.Split(out, "\n") {
-		line = strings.TrimSpace(line)
-		if len(line) == 0 {
-			continue
+	netlinkRoutes, err := netlink.RouteListFiltered(route.Family, route, routeFilterMask(route))
+	if err != nil {
+		return nil, fmt.Errorf("failed to list routes matching %v: %w", route, err)
+	}
+
+	routes := make([]Route, 0, len(netlinkRoutes))
+
+	for _, netlinkRoute := range netlinkRoutes {
+		var src, gw, table string
+
+		if len(netlinkRoute.Src) > 0 {
+			src = netlinkRoute.Src.String()
 		}
 
-		route := strings.ReplaceAll(line, "linkdown", "")
-		routes = append(routes, route)
+		if len(netlinkRoute.Gw) > 0 {
+			gw = netlinkRoute.Gw.String()
+		}
+
+		switch netlinkRoute.Table {
+		case unix.RT_TABLE_MAIN:
+			table = "main"
+		case unix.RT_TABLE_LOCAL:
+			table = "local"
+		case unix.RT_TABLE_DEFAULT:
+			table = "default"
+		default:
+			table = strconv.Itoa(netlinkRoute.Table)
+		}
+
+		routes = append(routes, Route{
+			DevName: r.DevName,
+			Route:   netlinkRoute.Dst.String(),
+			Src:     src,
+			Via:     gw,
+			Table:   table,
+			VRF:     "", // adding a route to a VRF just adds it to the table associated with the VRF, so when retrieving routes that information is not available anymore and we just set the table
+			Proto:   netlinkRoute.Protocol.String(),
+			Family:  r.Family, // routes are filtered by family
+		})
 	}
 
 	return routes, nil
