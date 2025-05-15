@@ -110,6 +110,11 @@ func (d *truenas) load() error {
 	return nil
 }
 
+// isRemote returns true indicating this driver uses remote storage.
+func (d *truenas) isRemote() bool {
+	return true
+}
+
 // Info returns info about the driver and its environment.
 func (d *truenas) Info() Info {
 	info := Info{
@@ -121,8 +126,8 @@ func (d *truenas) Info() Info {
 		PreservesInodes:              false,
 		Remote:                       d.isRemote(),
 		VolumeTypes:                  []VolumeType{VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
-		VolumeMultiNode:              d.isRemote(),
-		BlockBacking:                 false,
+		VolumeMultiNode:              false, // can only use the same volume if its read-only.d.isRemote(),
+		BlockBacking:                 true,
 		RunningCopyFreeze:            true,
 		DirectIO:                     false,
 		IOUring:                      false,
@@ -327,13 +332,14 @@ func (d *truenas) Delete(op *operations.Operation) error {
 // Validate checks that all provide keys are supported and that no conflicting or missing configuration is present.
 func (d *truenas) Validate(config map[string]string) error {
 	rules := map[string]func(value string) error{
-		"source":             validate.IsAny,
-		"truenas.dataset":    validate.IsAny,
-		"truenas.host":       validate.IsAny,
-		"truenas.api_key":    validate.IsAny,
-		"truenas.key_file":   validate.IsAny,
-		"truenas.url":        validate.IsAny,
-		"truenas.clone_copy": validate.Optional(validate.IsBool),
+		"source":              validate.IsAny,
+		"truenas.dataset":     validate.IsAny,
+		"truenas.host":        validate.IsAny,
+		"truenas.api_key":     validate.IsAny,
+		"truenas.key_file":    validate.IsAny,
+		"truenas.url":         validate.IsAny,
+		"truenas.clone_copy":  validate.Optional(validate.IsBool),
+		"truenas.force_reuse": validate.Optional(validate.IsBool),
 	}
 
 	return d.validatePool(config, rules, d.commonVolumeRules())
