@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -1119,93 +1118,6 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 
 	// Apply the new dataset quota.
 	d.setDatasetQuota(dataset, sizeBytes)
-
-	return nil
-}
-
-// SetVolumeQuota applies a size limit on volume.
-// Does nothing if supplied with an empty/zero size for block volumes, and for filesystem volumes removes quota.
-func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op *operations.Operation) error {
-	// Convert to bytes.
-	sizeBytes, err := units.ParseByteSizeString(size)
-	if err != nil {
-		return err
-	}
-
-	// Do nothing if size isn't specified.
-	if sizeBytes <= 0 {
-		return nil
-	}
-
-	// For VM block files, resize the file if needed.
-	if vol.IsBlockBacked() || vol.IsCustomBlock() || vol.IsVMBlock() || vol.contentType == ContentTypeISO {
-
-		if vol.IsBlockBacked() && vol.MountInUse() {
-			return ErrInUse // We don't allow online resizing of block volumes.
-		}
-
-		err := vol.MountTask(func(mountPath string, op *operations.Operation) error {
-
-			// We expect the filler to copy the VM image into this path.
-			rootBlockPath, err := d.GetVolumeDiskPath(vol)
-			if err != nil {
-				return err
-			}
-
-			_, err = ensureVolumeBlockFile(vol, rootBlockPath, sizeBytes, allowUnsafeResize)
-			if err == ErrInUse {
-				/*
-					this error is expected because we have the vol mounted...
-					but now that we've passed the size check we can perform an unsafe
-					resize to bypass the mounted check
-				*/
-				_, err = ensureVolumeBlockFile(vol, rootBlockPath, sizeBytes, true)
-			}
-			if err != nil {
-				return err
-			}
-
-			// Move the VM GPT alt header to end of disk if needed (not needed in unsafe resize mode as
-			// it is expected the caller will do all necessary post resize actions themselves).
-			if vol.IsVMBlock() && !allowUnsafeResize {
-				err = d.moveGPTAltHeader(rootBlockPath)
-				if err != nil {
-					return err
-				}
-			}
-
-			return nil
-		}, op)
-		if err != nil {
-			return err
-		}
-
-	} else if vol.Type() != VolumeTypeBucket {
-		// For non-VM block volumes, set filesystem quota.
-		volID, err := d.getVolID(vol.volType, vol.name)
-		_ = volID
-		if err != nil {
-			return err
-		}
-
-		// Custom handling for filesystem volume associated with a VM, if the file is in the state dataaset. which its not currently
-		volPath := vol.MountPath()
-		if sizeBytes > 0 && vol.volType == VolumeTypeVM && util.PathExists(filepath.Join(volPath, genericVolumeDiskFile)) {
-			// Get the size of the VM image.
-			blockSize, err := BlockDiskSizeBytes(filepath.Join(volPath, genericVolumeDiskFile))
-			if err != nil {
-				return err
-			}
-
-			// Add that to the requested filesystem size (to ignore it from the quota).
-			sizeBytes += blockSize
-			d.logger.Debug("Accounting for VM image file size", logger.Ctx{"sizeBytes": sizeBytes})
-		}
-
-		//return d.setQuota(vol.MountPath(), volID, sizeBytes)
-		dataset := d.dataset(vol, false)
-		return d.setDatasetQuota(dataset, sizeBytes)
-	}
 
 	return nil
 }
