@@ -258,9 +258,9 @@ func (d *truenas) Create() error {
 	if !exists {
 		err = d.createDataset(d.config["truenas.dataset"])
 		if err != nil {
-			return fmt.Errorf("Failed to create storage pool on TrueNAS host: %s", d.config["source"])
+			return fmt.Errorf("Failed to create storage pool on TrueNAS host: %s, err: %w", d.config["source"], err)
 		}
-	} else {
+	} else if util.IsFalseOrEmpty(d.config["truenas.force_reuse"]) {
 		// Confirm that the existing pool/dataset is all empty.
 		datasets, err := d.getDatasets(d.config["truenas.dataset"], "all")
 		if err != nil {
@@ -270,7 +270,6 @@ func (d *truenas) Create() error {
 		if len(datasets) > 0 {
 			return fmt.Errorf(`Remote TrueNAS dataset isn't empty: %s`, d.config["truenas.dataset"])
 		}
-
 	}
 
 	// Setup revert in case of problems
