@@ -1015,7 +1015,7 @@ func (d *ceph) parseParent(parent string) (Volume, string, error) {
 		}
 
 		// Remove prefix from name.
-		name = strings.SplitN(name, "virtual_machine_", 2)[1]
+		name = strings.SplitN(name, "virtual-machine_", 2)[1]
 
 		// Check for block indicator.
 		if strings.HasSuffix(name, ".block") {
