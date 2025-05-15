@@ -999,7 +999,7 @@ func (d *ceph) parseParent(parent string) (Volume, string, error) {
 	}
 
 	// Handle virtual-machines volumes.
-	if strings.HasPrefix(parentName, "virtual_machine_") || strings.HasPrefix(parentName, "zombie_virtual_machine_") {
+	if strings.HasPrefix(parentName, "virtual-machine_") || strings.HasPrefix(parentName, "zombie_virtual-machine_") {
 		vol.volType = VolumeTypeVM
 
 		// Split snapshot name.
