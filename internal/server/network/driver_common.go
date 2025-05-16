@@ -1063,7 +1063,23 @@ func (n *common) forwardBGPSetupPrefixes() error {
 		var err error
 
 		// Retrieve network forwards before clearing existing prefixes, and separate them by IP family.
-		fwdListenAddresses, err = tx.GetNetworkForwardListenAddresses(ctx, n.ID(), true)
+		networkID := int(n.ID())
+		dbRecords, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{
+			NetworkID: &networkID,
+		})
+		if err != nil {
+			return err
+		}
+
+		fwdListenAddresses = make(map[int64]string)
+		for _, dbRecord := range dbRecords {
+			// memberSpecific filtering
+			if !dbRecord.NodeID.Valid || (dbRecord.NodeID.Int64 == tx.GetNodeID()) {
+				// Get listen address
+				forwardID := int64(dbRecord.ID)
+				fwdListenAddresses[forwardID] = dbRecord.ListenAddress
+			}
+		}
 
 		return err
 	})
@@ -1135,10 +1151,58 @@ func (n *common) getExternalSubnetInUse(ctx context.Context, tx *db.ClusterTx, u
 	var err error
 	var projectNetworksForwardsOnUplink, projectNetworksLoadBalancersOnUplink map[string]map[string][]string
 
-	// Get all network forward listen addresses for all networks (of any type) connected to our uplink.
-	projectNetworksForwardsOnUplink, err = tx.GetProjectNetworkForwardListenAddressesByUplink(ctx, uplinkNetworkName, memberSpecific)
+	networksByProjects, err := tx.GetNetworksAllProjects(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("Failed loading network forward listen addresses: %w", err)
+		return nil, err
+	}
+
+	for projectName, networks := range networksByProjects {
+		for _, networkName := range networks {
+			networkID, err := tx.GetNetworkID(ctx, projectName, networkName)
+			if err != nil {
+				return nil, err
+			}
+
+			// check uplink network requirements
+			satisfiesUplinkReq := projectName == "default" && networkName == uplinkNetworkName // network is the uplink network in default project
+			if !satisfiesUplinkReq {
+				// get the network config for this network
+				_, apiNetwork, _, err := tx.GetNetworkInAnyState(ctx, projectName, networkName)
+				if err != nil {
+					return nil, err
+				}
+
+				networkConfig := apiNetwork.Config
+				satisfiesUplinkReq = networkConfig["network"] == uplinkNetworkName // network references uplink network in its config
+			}
+
+			if !satisfiesUplinkReq {
+				continue
+			}
+
+			// Get all network forward listen addresses for all networks (of any type) connected to our uplink.
+			forwardNetworkID := int(networkID)
+			networkForwards, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{
+				NetworkID: &(forwardNetworkID),
+			})
+			if err != nil {
+				return nil, fmt.Errorf("Failed loading network forward listen addresses: %w", err)
+			}
+
+			projectNetworksForwardsOnUplink = make(map[string]map[string][]string)
+			for _, forward := range networkForwards {
+				// memberSpecific requirements
+				if !memberSpecific || (!forward.NodeID.Valid || (forward.NodeID.Int64 == tx.GetNodeID())) {
+					if projectNetworksForwardsOnUplink[projectName] == nil {
+						projectNetworksForwardsOnUplink[projectName] = make(map[string][]string)
+					}
+
+					projectNetworksForwardsOnUplink[projectName][networkName] = append(projectNetworksForwardsOnUplink[projectName][networkName], forward.ListenAddress)
+				}
+			}
+
+			// TODO: Filling projectNetworksLoadBalancerOnUpLink goes here
+		}
 	}
 
 	// Get all network load balancer listen addresses for all networks (of any type) connected to our uplink.
