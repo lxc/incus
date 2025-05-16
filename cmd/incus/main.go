@@ -463,11 +463,7 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, _ []string) error {
 
 			flush := false
 			if runInit && (cmd.Name() != "init" || cmd.Parent() == nil || cmd.Parent().Name() != "admin") {
-<<<<<<< HEAD
-				fmt.Fprintf(os.Stderr, "%s", i18n.G("If this is your first time running Incus on this machine, you should also run: incus admin init")+"\n")
-=======
 				fmt.Fprint(os.Stderr, i18n.G("If this is your first time running Incus on this machine, you should also run: incus admin init")+"\n")
->>>>>>> NathanChase22/temp
 				flush = true
 			}
 

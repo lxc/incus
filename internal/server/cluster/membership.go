@@ -1204,11 +1204,7 @@ func membershipCheckClusterStateForLeave(ctx context.Context, tx *db.ClusterTx, 
 	}
 
 	if message != "" {
-<<<<<<< HEAD
-		return fmt.Errorf("%s", message)
-=======
 		return errors.New(message)
->>>>>>> NathanChase22/temp
 	}
 
 	// Check that it's not the last member.

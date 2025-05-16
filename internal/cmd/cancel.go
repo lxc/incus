@@ -57,21 +57,13 @@ func CancelableWait(rawOp any, progress *ProgressRenderer) error {
 			}
 
 			if err == nil {
-<<<<<<< HEAD
-				return fmt.Errorf("%s", i18n.G("Remote operation canceled by user"))
-=======
 				return errors.New(i18n.G("Remote operation canceled by user"))
->>>>>>> NathanChase22/temp
 			}
 
 			count++
 
 			if count == 3 {
-<<<<<<< HEAD
-				return fmt.Errorf("%s", i18n.G("User signaled us three times, exiting. The remote operation will keep running"))
-=======
 				return errors.New(i18n.G("User signaled us three times, exiting. The remote operation will keep running"))
->>>>>>> NathanChase22/temp
 			}
 
 			if progress != nil {

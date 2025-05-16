@@ -74,11 +74,7 @@ func transferRootfs(dst incus.InstanceServer, op incus.Operation, rootfs string,
 	}
 
 	if !msg.GetSuccess() {
-<<<<<<< HEAD
-		return fmt.Errorf("%s", msg.GetMessage())
-=======
 		return errors.New(msg.GetMessage())
->>>>>>> NathanChase22/temp
 	}
 
 	return nil

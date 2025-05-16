@@ -1013,11 +1013,7 @@ func (c *cmdImageInfo) Run(cmd *cobra.Command, args []string) error {
 	fmt.Printf(i18n.G("Architecture: %s")+"\n", info.Architecture)
 	fmt.Printf(i18n.G("Type: %s")+"\n", imgType)
 	fmt.Printf(i18n.G("Public: %s")+"\n", public)
-<<<<<<< HEAD
-	fmt.Printf("%s", i18n.G("Timestamps:") + "\n")
-=======
 	fmt.Print(i18n.G("Timestamps:") + "\n")
->>>>>>> NathanChase22/temp
 
 	if !info.CreatedAt.IsZero() {
 		fmt.Printf("    "+i18n.G("Created: %s")+"\n", info.CreatedAt.Local().Format(dateLayout))
@@ -1028,21 +1024,13 @@ func (c *cmdImageInfo) Run(cmd *cobra.Command, args []string) error {
 	if !info.ExpiresAt.IsZero() {
 		fmt.Printf("    "+i18n.G("Expires: %s")+"\n", info.ExpiresAt.Local().Format(dateLayout))
 	} else {
-<<<<<<< HEAD
-		fmt.Printf("%s", "    " + i18n.G("Expires: never") + "\n")
-=======
 		fmt.Print("    " + i18n.G("Expires: never") + "\n")
->>>>>>> NathanChase22/temp
 	}
 
 	if !info.LastUsedAt.IsZero() {
 		fmt.Printf("    "+i18n.G("Last used: %s")+"\n", info.LastUsedAt.Local().Format(dateLayout))
 	} else {
-<<<<<<< HEAD
-		fmt.Printf("%s", "    " + i18n.G("Last used: never") + "\n")
-=======
 		fmt.Print("    " + i18n.G("Last used: never") + "\n")
->>>>>>> NathanChase22/temp
 	}
 
 	fmt.Println(i18n.G("Properties:"))
@@ -1070,11 +1058,7 @@ func (c *cmdImageInfo) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(info.Profiles) == 0 {
-<<<<<<< HEAD
-		fmt.Printf("%s", i18n.G("Profiles: ") + "[]\n")
-=======
 		fmt.Print(i18n.G("Profiles: ") + "[]\n")
->>>>>>> NathanChase22/temp
 	} else {
 		fmt.Println(i18n.G("Profiles:"))
 		for _, name := range info.Profiles {

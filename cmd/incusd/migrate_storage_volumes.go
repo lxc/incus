@@ -242,11 +242,7 @@ func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, po
 
 	if !msg.GetSuccess() {
 		logger.Errorf("Failed to send storage volume")
-<<<<<<< HEAD
-		return fmt.Errorf("%s", msg.GetMessage())
-=======
 		return errors.New(msg.GetMessage())
->>>>>>> NathanChase22/temp
 	}
 
 	logger.Debugf("Migration source finished transferring storage volume")
@@ -529,11 +525,7 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 			if !msg.GetSuccess() {
 				c.disconnect()
 
-<<<<<<< HEAD
-				return fmt.Errorf("%s", msg.GetMessage())
-=======
 				return errors.New(msg.GetMessage())
->>>>>>> NathanChase22/temp
 			}
 
 			// The source can only tell us it failed (e.g. if

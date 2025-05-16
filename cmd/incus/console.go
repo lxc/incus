@@ -229,11 +229,7 @@ func (c *cmdConsole) text(d incus.InstanceServer, name string) error {
 		return err
 	}
 
-<<<<<<< HEAD
-	fmt.Printf("%s\n\r", i18n.G("To detach from the console, press: <ctrl>+a q"))
-=======
 	fmt.Print(i18n.G("To detach from the console, press: <ctrl>+a q") + "\n\r")
->>>>>>> NathanChase22/temp
 
 	// Wait for the operation to complete
 	err = op.Wait()

@@ -80,9 +80,5 @@ func (c *cmdMigratedumpsuccess) run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-<<<<<<< HEAD
-	return fmt.Errorf("%s", op.Err)
-=======
 	return errors.New(op.Err)
->>>>>>> NathanChase22/temp
 }

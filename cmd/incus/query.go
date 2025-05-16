@@ -176,11 +176,7 @@ func (c *cmdQuery) Run(cmd *cobra.Command, args []string) error {
 		op := api.Operation{}
 		err = json.Unmarshal(resp.Metadata, &op)
 		if err == nil && op.Err != "" {
-<<<<<<< HEAD
-			return fmt.Errorf("%s", op.Err)
-=======
 			return errors.New(op.Err)
->>>>>>> NathanChase22/temp
 		}
 	}
 
