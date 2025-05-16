@@ -220,7 +220,7 @@ func (c *cmdConsole) text(d incus.InstanceServer, name string) error {
 		close(consoleDisconnect)
 
 		// Make sure we leave the user back to a clean prompt.
-		fmt.Printf("\r\n")
+		fmt.Print("\r\n")
 	}()
 
 	// Attach to the instance console
@@ -229,7 +229,7 @@ func (c *cmdConsole) text(d incus.InstanceServer, name string) error {
 		return err
 	}
 
-	fmt.Printf(i18n.G("To detach from the console, press: <ctrl>+a q") + "\n\r")
+	fmt.Print(i18n.G("To detach from the console, press: <ctrl>+a q") + "\n\r")
 
 	// Wait for the operation to complete
 	err = op.Wait()

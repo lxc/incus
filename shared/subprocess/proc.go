@@ -4,6 +4,7 @@ package subprocess
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -312,7 +313,7 @@ func (p *Process) Signal(signal int64) error {
 // Wait will wait for the given process object exit code.
 func (p *Process) Wait(ctx context.Context) (int64, error) {
 	if !p.hasMonitor {
-		return -1, fmt.Errorf("Unable to wait on process we didn't spawn")
+		return -1, errors.New("Unable to wait on process we didn't spawn")
 	}
 
 	select {

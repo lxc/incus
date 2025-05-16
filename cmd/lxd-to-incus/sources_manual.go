@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"time"
 
@@ -33,7 +33,7 @@ func (s *srcManual) stop() error {
 	// Request shutdown, this shouldn't return until daemon has stopped so use a large request timeout.
 	httpTransport, ok := httpClient.Transport.(*http.Transport)
 	if !ok {
-		return fmt.Errorf("Bad transport type")
+		return errors.New("Bad transport type")
 	}
 
 	httpTransport.ResponseHeaderTimeout = 3600 * time.Second

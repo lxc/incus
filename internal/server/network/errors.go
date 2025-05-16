@@ -1,11 +1,11 @@
 package network
 
 import (
-	"fmt"
+	"errors"
 )
 
 // ErrUnknownDriver is the "Unknown driver" error.
-var ErrUnknownDriver = fmt.Errorf("Unknown driver")
+var ErrUnknownDriver = errors.New("Unknown driver")
 
 // ErrNotImplemented is the "Not implemented" error.
-var ErrNotImplemented = fmt.Errorf("Not implemented")
+var ErrNotImplemented = errors.New("Not implemented")

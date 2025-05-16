@@ -1,7 +1,7 @@
 package util
 
 import (
-	"fmt"
+	"errors"
 	"os"
 	"os/exec"
 	"runtime"
@@ -29,7 +29,7 @@ func OpenBrowser(url string) error {
 	case "darwin":
 		err = exec.Command("open", url).Start()
 	default:
-		err = fmt.Errorf("unsupported platform")
+		err = errors.New("unsupported platform")
 	}
 
 	if err != nil {

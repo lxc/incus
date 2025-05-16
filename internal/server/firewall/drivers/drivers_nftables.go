@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"os/exec"
@@ -54,7 +55,7 @@ func (d Nftables) Compat() (bool, error) {
 	// We require a >= 5.2 kernel to avoid weird conflicts with xtables and support for inet table NAT rules.
 	releaseLen := len(uname.Release)
 	if releaseLen > 1 {
-		verErr := fmt.Errorf("Kernel version does not meet minimum requirement of 5.2")
+		verErr := errors.New("Kernel version does not meet minimum requirement of 5.2")
 		releaseParts := strings.SplitN(uname.Release, ".", 3)
 		if len(releaseParts) < 2 {
 			return false, fmt.Errorf("Failed parsing kernel version number into parts: %w", err)
@@ -507,22 +508,22 @@ func (d Nftables) InstanceClearBridgeFilter(projectName string, instanceName str
 // InstanceSetupProxyNAT creates DNAT rules for proxy devices.
 func (d Nftables) InstanceSetupProxyNAT(projectName string, instanceName string, deviceName string, forward *AddressForward) error {
 	if forward.ListenAddress == nil {
-		return fmt.Errorf("Listen address is required")
+		return errors.New("Listen address is required")
 	}
 
 	if forward.TargetAddress == nil {
-		return fmt.Errorf("Target address is required")
+		return errors.New("Target address is required")
 	}
 
 	listenPortsLen := len(forward.ListenPorts)
 	if listenPortsLen <= 0 {
-		return fmt.Errorf("At least 1 listen port must be supplied")
+		return errors.New("At least 1 listen port must be supplied")
 	}
 
 	// If multiple target ports supplied, check they match the listen port(s) count.
 	targetPortsLen := len(forward.TargetPorts)
 	if targetPortsLen != 1 && targetPortsLen != listenPortsLen {
-		return fmt.Errorf("Mismatch between listen port(s) and target port(s) count")
+		return errors.New("Mismatch between listen port(s) and target port(s) count")
 	}
 
 	ipFamily := "ip"
@@ -690,7 +691,7 @@ func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftR
 			}
 
 			if partial {
-				return nil, fmt.Errorf("Invalid default rule generated")
+				return nil, errors.New("Invalid default rule generated")
 			}
 
 			continue
@@ -779,10 +780,10 @@ func (d Nftables) aclRuleToNftRules(hostNameQuoted string, rule ACLRule) ([]stri
 		}
 
 		if len(nft6Rules) == 0 {
-			return nil, nil, nil, fmt.Errorf("Invalid empty rule generated")
+			return nil, nil, nil, errors.New("Invalid empty rule generated")
 		}
 	} else if len(nft4Rules) == 0 {
-		return nil, nil, nil, fmt.Errorf("Invalid empty rule generated")
+		return nil, nil, nil, errors.New("Invalid empty rule generated")
 	}
 
 	nftRules := []string{}

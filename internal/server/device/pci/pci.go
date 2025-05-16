@@ -16,7 +16,7 @@ import (
 )
 
 // ErrDeviceIsUSB is returned when dealing with a USB device.
-var ErrDeviceIsUSB = fmt.Errorf("Device is USB instead of PCI")
+var ErrDeviceIsUSB = errors.New("Device is USB instead of PCI")
 
 // Device represents info about a PCI uevent device.
 type Device struct {
@@ -59,7 +59,7 @@ func ParseUeventFile(ueventFilePath string) (Device, error) {
 	}
 
 	if dev.SlotName == "" {
-		return dev, fmt.Errorf("Device uevent file could not be parsed")
+		return dev, errors.New("Device uevent file could not be parsed")
 	}
 
 	return dev, nil

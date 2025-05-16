@@ -2,6 +2,7 @@ package template
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -38,7 +39,7 @@ func (l ChrootLoader) Get(path string) (io.Reader, error) {
 
 	// Validate that we're under the expected prefix
 	if !strings.HasPrefix(path, basePath) {
-		return nil, fmt.Errorf("Attempting to access a file outside the instance")
+		return nil, errors.New("Attempting to access a file outside the instance")
 	}
 
 	// Open and read the file

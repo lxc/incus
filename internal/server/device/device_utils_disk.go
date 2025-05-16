@@ -211,7 +211,7 @@ func diskCephRbdMap(clusterName string, userName string, poolName string, volume
 
 	idx := strings.Index(devPath, "/dev/rbd")
 	if idx < 0 {
-		return "", fmt.Errorf("Failed to detect mapped device path")
+		return "", errors.New("Failed to detect mapped device path")
 	}
 
 	devPath = devPath[idx:]
@@ -350,7 +350,7 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 
 	unixListener, ok := listener.(*net.UnixListener)
 	if !ok {
-		return nil, nil, fmt.Errorf("Failed getting UnixListener for virtiofsd")
+		return nil, nil, errors.New("Failed getting UnixListener for virtiofsd")
 	}
 
 	unixFile, err := unixListener.File()

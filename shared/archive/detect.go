@@ -2,7 +2,7 @@ package archive
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
 	"io"
 	"os"
 )
@@ -60,6 +60,6 @@ func DetectCompressionFile(f io.Reader) ([]string, string, []string, error) {
 	case bytes.Equal(header[0:4], []byte{0x04, 0x22, 0x4d, 0x18}):
 		return []string{"-Ilz4", "-xf"}, ".tar.lz4", []string{"lz4", "-d"}, nil
 	default:
-		return nil, "", nil, fmt.Errorf("Unsupported compression")
+		return nil, "", nil, errors.New("Unsupported compression")
 	}
 }

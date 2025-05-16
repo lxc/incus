@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -363,7 +364,7 @@ func storagePoolBucketGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if !pool.Driver().Info().Buckets {
-		return response.BadRequest(fmt.Errorf("Storage pool does not support buckets"))
+		return response.BadRequest(errors.New("Storage pool does not support buckets"))
 	}
 
 	bucketName, err := url.PathUnescape(mux.Vars(r)["bucketName"])
@@ -1094,7 +1095,7 @@ func storagePoolBucketKeyGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if !pool.Driver().Info().Buckets {
-		return response.BadRequest(fmt.Errorf("Storage pool does not support buckets"))
+		return response.BadRequest(errors.New("Storage pool does not support buckets"))
 	}
 
 	bucketName, err := url.PathUnescape(mux.Vars(r)["bucketName"])

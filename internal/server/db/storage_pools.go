@@ -57,7 +57,7 @@ func (c *ClusterTx) GetStoragePoolID(ctx context.Context, name string) (int64, e
 	case 1:
 		return int64(ids[0]), nil
 	default:
-		return -1, fmt.Errorf("More than one pool has the given name")
+		return -1, errors.New("More than one pool has the given name")
 	}
 }
 
@@ -75,7 +75,7 @@ func (c *ClusterTx) GetStoragePoolDriver(ctx context.Context, id int64) (string,
 	case 1:
 		return drivers[0], nil
 	default:
-		return "", fmt.Errorf("More than one pool has the given id")
+		return "", errors.New("More than one pool has the given id")
 	}
 }
 
@@ -141,7 +141,7 @@ func (c *ClusterTx) UpdateRemoteStoragePoolAfterNodeJoin(ctx context.Context, po
 	}
 
 	if len(nodeIDs) == 0 {
-		return fmt.Errorf("Remote pool is not linked to any server")
+		return errors.New("Remote pool is not linked to any server")
 	}
 
 	otherNodeID := nodeIDs[0]
@@ -172,7 +172,7 @@ SELECT id FROM storage_volumes WHERE storage_pool_id=? AND node_id=?
 	}
 
 	if len(volumeIDs) != len(otherVolumeIDs) { // Quick check.
-		return fmt.Errorf("Not all remote volumes were copied")
+		return errors.New("Not all remote volumes were copied")
 	}
 
 	for i, otherVolumeID := range otherVolumeIDs {
@@ -273,7 +273,7 @@ func (c *ClusterTx) CreatePendingStoragePool(ctx context.Context, node string, n
 	err := query.Scan(ctx, c.tx, sql, func(scan func(dest ...any) error) error {
 		// Ensure that there is at most one pool with the given name.
 		if count != 0 {
-			return fmt.Errorf("more than one pool exists with the given name")
+			return errors.New("more than one pool exists with the given name")
 		}
 
 		count++
@@ -298,11 +298,11 @@ func (c *ClusterTx) CreatePendingStoragePool(ctx context.Context, node string, n
 		// Check that the existing pools matches the given driver and
 		// is in the pending state.
 		if pool.driver != driver {
-			return fmt.Errorf("Storage pool already exists with a different driver")
+			return errors.New("Storage pool already exists with a different driver")
 		}
 
 		if pool.state != StoragePoolPending {
-			return fmt.Errorf("Storage pool is not in pending state")
+			return errors.New("Storage pool is not in pending state")
 		}
 	}
 
@@ -629,7 +629,7 @@ func (c *ClusterTx) GetStoragePool(ctx context.Context, poolName string) (int64,
 		return poolID, &pool, poolMembers[poolID], err // Only single pool in map.
 	}
 
-	return -1, nil, nil, fmt.Errorf("Unexpected pool list size")
+	return -1, nil, nil, errors.New("Unexpected pool list size")
 }
 
 // GetStoragePoolInAnyState returns the storage pool with the given name.
@@ -649,7 +649,7 @@ func (c *ClusterTx) GetStoragePoolInAnyState(ctx context.Context, poolName strin
 		return poolID, &pool, poolMembers[poolID], err // Only single pool in map.
 	}
 
-	return -1, nil, nil, fmt.Errorf("Unexpected pool list size")
+	return -1, nil, nil, errors.New("Unexpected pool list size")
 }
 
 // GetStoragePoolWithID returns the storage pool with the given ID.

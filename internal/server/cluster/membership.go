@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -26,10 +27,10 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
-// clusterBusyError is returned by dqlite if attempting attempting to join a cluster at the same time as a role-change.
+// errClusterBusy is returned by dqlite if attempting attempting to join a cluster at the same time as a role-change.
 // This error tells us we can retry and probably join the cluster or fail due to something else.
 // The error code here is SQLITE_BUSY.
-var clusterBusyError = fmt.Errorf("A configuration change is already in progress (5)")
+var errClusterBusy = errors.New("A configuration change is already in progress (5)")
 
 // Bootstrap turns a non-clustered server into the first (and leader)
 // member of a new cluster.
@@ -39,7 +40,7 @@ var clusterBusyError = fmt.Errorf("A configuration change is already in progress
 func Bootstrap(state *state.State, gateway *Gateway, serverName string) error {
 	// Check parameters
 	if serverName == "" {
-		return fmt.Errorf("Server name must not be empty")
+		return errors.New("Server name must not be empty")
 	}
 
 	err := membershipCheckNoLeftoverClusterCert(state.OS.VarDir)
@@ -231,11 +232,11 @@ func EnsureServerCertificateTrusted(serverName string, serverCert *localtls.Cert
 func Accept(state *state.State, gateway *Gateway, name, address string, schema, api, arch int) ([]db.RaftNode, error) {
 	// Check parameters
 	if name == "" {
-		return nil, fmt.Errorf("Member name must not be empty")
+		return nil, errors.New("Member name must not be empty")
 	}
 
 	if address == "" {
-		return nil, fmt.Errorf("Member address must not be empty")
+		return nil, errors.New("Member address must not be empty")
 	}
 
 	// Insert the new node into the nodes table.
@@ -316,7 +317,7 @@ func Accept(state *state.State, gateway *Gateway, name, address string, schema, 
 func Join(state *state.State, gateway *Gateway, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, name string, raftNodes []db.RaftNode) error {
 	// Check parameters
 	if name == "" {
-		return fmt.Errorf("Member name must not be empty")
+		return errors.New("Member name must not be empty")
 	}
 
 	var localClusterAddress string
@@ -447,7 +448,7 @@ func Join(state *state.State, gateway *Gateway, networkCert *localtls.CertInfo, 
 			return fmt.Errorf("Failed to join cluster: %w", ctx.Err())
 		default:
 			err = client.Add(ctx, info.NodeInfo)
-			if err != nil && err.Error() == clusterBusyError.Error() {
+			if err != nil && err.Error() == errClusterBusy.Error() {
 				// If the cluster is busy with a role change, sleep a second and then keep trying to join.
 				time.Sleep(1 * time.Second)
 				continue
@@ -727,7 +728,7 @@ func Assign(state *state.State, gateway *Gateway, nodes []db.RaftNode) error {
 
 	// Ensure we actually have an address.
 	if address == "" {
-		return fmt.Errorf("Cluster member is not exposed on the network")
+		return errors.New("Cluster member is not exposed on the network")
 	}
 
 	// Figure out our node identity.
@@ -740,7 +741,7 @@ func Assign(state *state.State, gateway *Gateway, nodes []db.RaftNode) error {
 
 	// Ensure that our address was actually included in the given list of raft nodes.
 	if info == nil {
-		return fmt.Errorf("This member is not included in the given list of database nodes")
+		return errors.New("This member is not included in the given list of database nodes")
 	}
 
 	// Replace our local list of raft nodes with the given one (which
@@ -865,7 +866,7 @@ assign:
 			}
 		}
 		if !notified {
-			return fmt.Errorf("Timeout waiting for configuration change notification")
+			return errors.New("Timeout waiting for configuration change notification")
 		}
 	}
 
@@ -1133,15 +1134,15 @@ func membershipCheckNodeStateForBootstrapOrJoin(ctx context.Context, tx *db.Node
 	// Ensure that we're not in an inconsistent situation, where no cluster address is set, but still there
 	// are entries in the raft_nodes table.
 	if !hasClusterAddress && hasRaftNodes {
-		return fmt.Errorf("Inconsistent state: found leftover entries in raft_nodes")
+		return errors.New("Inconsistent state: found leftover entries in raft_nodes")
 	}
 
 	if !hasClusterAddress {
-		return fmt.Errorf("No cluster.https_address config is set on this member")
+		return errors.New("No cluster.https_address config is set on this member")
 	}
 
 	if hasRaftNodes {
-		return fmt.Errorf("The member is already part of a cluster")
+		return errors.New("The member is already part of a cluster")
 	}
 
 	return nil
@@ -1156,7 +1157,7 @@ func membershipCheckClusterStateForBootstrapOrJoin(ctx context.Context, tx *db.C
 	}
 
 	if len(members) != 1 {
-		return fmt.Errorf("Inconsistent state: Found leftover entries in cluster members")
+		return errors.New("Inconsistent state: Found leftover entries in cluster members")
 	}
 
 	return nil
@@ -1170,7 +1171,7 @@ func membershipCheckClusterStateForAccept(ctx context.Context, tx *db.ClusterTx,
 	}
 
 	if len(members) == 1 && members[0].Address == "0.0.0.0" {
-		return fmt.Errorf("Clustering isn't enabled")
+		return errors.New("Clustering isn't enabled")
 	}
 
 	for _, member := range members {
@@ -1203,7 +1204,7 @@ func membershipCheckClusterStateForLeave(ctx context.Context, tx *db.ClusterTx, 
 	}
 
 	if message != "" {
-		return fmt.Errorf(message)
+		return errors.New(message)
 	}
 
 	// Check that it's not the last member.
@@ -1213,7 +1214,7 @@ func membershipCheckClusterStateForLeave(ctx context.Context, tx *db.ClusterTx, 
 	}
 
 	if len(members) == 1 {
-		return fmt.Errorf("Member is the only member in the cluster")
+		return errors.New("Member is the only member in the cluster")
 	}
 
 	return nil
@@ -1224,7 +1225,7 @@ func membershipCheckNoLeftoverClusterCert(dir string) error {
 	// Ensure that there's no leftover cluster certificate.
 	for _, basename := range []string{"cluster.crt", "cluster.key", "cluster.ca"} {
 		if util.PathExists(filepath.Join(dir, basename)) {
-			return fmt.Errorf("Inconsistent state: found leftover cluster certificate")
+			return errors.New("Inconsistent state: found leftover cluster certificate")
 		}
 	}
 

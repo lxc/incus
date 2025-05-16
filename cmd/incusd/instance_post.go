@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -88,11 +89,11 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 	// Quick checks.
 	if internalInstance.IsSnapshot(name) {
-		return response.BadRequest(fmt.Errorf("Invalid instance name"))
+		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
 	if target != "" && !s.ServerClustered {
-		return response.BadRequest(fmt.Errorf("Target only allowed when clustered"))
+		return response.BadRequest(errors.New("Target only allowed when clustered"))
 	}
 
 	// Check if the server the instance is running on is currently online.
@@ -124,7 +125,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 	// More checks.
 	if target == "" && sourceMemberInfo != nil && sourceMemberInfo.IsOffline(s.GlobalConfig.OfflineThreshold()) {
-		return response.BadRequest(fmt.Errorf("Can't perform action as server is currently offline"))
+		return response.BadRequest(errors.New("Can't perform action as server is currently offline"))
 	}
 
 	// Handle request forwarding.
@@ -220,7 +221,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 	// Start handling migrations.
 	if inst.IsSnapshot() {
-		return response.BadRequest(fmt.Errorf("Instance snapshots cannot be moved on their own"))
+		return response.BadRequest(errors.New("Instance snapshots cannot be moved on their own"))
 	}
 
 	// Checks for running instances.
@@ -228,28 +229,28 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 		if req.Pool != "" || req.Project != "" || target != "" {
 			// Stateless migrations need the instance stopped.
 			if !req.Live {
-				return response.BadRequest(fmt.Errorf("Instance must be stopped to be moved statelessly"))
+				return response.BadRequest(errors.New("Instance must be stopped to be moved statelessly"))
 			}
 
 			// Storage pool changes require a target flag.
 			if req.Pool != "" {
 				if inst.Type() != instancetype.VM {
-					return response.BadRequest(fmt.Errorf("Storage pool change supported only by virtual-machines"))
+					return response.BadRequest(errors.New("Storage pool change supported only by virtual-machines"))
 				}
 
 				if target == "" {
-					return response.BadRequest(fmt.Errorf("Storage pool can be specified only together with target flag"))
+					return response.BadRequest(errors.New("Storage pool can be specified only together with target flag"))
 				}
 			}
 
 			// Project changes require a stopped instance.
 			if req.Project != "" {
-				return response.BadRequest(fmt.Errorf("Instance must be stopped to be moved across projects"))
+				return response.BadRequest(errors.New("Instance must be stopped to be moved across projects"))
 			}
 
 			// Name changes require a stopped instance.
 			if req.Name != "" {
-				return response.BadRequest(fmt.Errorf("Instance must be stopped to change their names"))
+				return response.BadRequest(errors.New("Instance must be stopped to change their names"))
 			}
 		}
 	} else {
@@ -259,7 +260,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 	// Check for offline sources.
 	if sourceMemberInfo != nil && sourceMemberInfo.IsOffline(s.GlobalConfig.OfflineThreshold()) && (req.Pool != "" || req.Project != "" || req.Name != "") {
-		return response.BadRequest(fmt.Errorf("Instance server is currently offline"))
+		return response.BadRequest(errors.New("Instance server is currently offline"))
 	}
 
 	// When in a cluster, default to keeping current location.
@@ -432,14 +433,14 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 			}
 
 			if len(filteredCandidateMembers) == 0 {
-				return response.InternalError(fmt.Errorf("Couldn't find a cluster member for the instance"))
+				return response.InternalError(errors.New("Couldn't find a cluster member for the instance"))
 			}
 
 			targetMemberInfo = &filteredCandidateMembers[0]
 		}
 
 		if targetMemberInfo.IsOffline(s.GlobalConfig.OfflineThreshold()) {
-			return response.BadRequest(fmt.Errorf("Target cluster member is offline"))
+			return response.BadRequest(errors.New("Target cluster member is offline"))
 		}
 	}
 
@@ -451,7 +452,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 	// Check that we're not requested to move to the same location we're currently on.
 	if target != "" && targetMemberInfo.Name == inst.Location() {
-		return response.BadRequest(fmt.Errorf("Requested target server is the same as current server"))
+		return response.BadRequest(errors.New("Requested target server is the same as current server"))
 	}
 
 	// If the instance needs to move, make sure it doesn't have backups.
@@ -468,7 +469,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if len(backups) > 0 {
-			return response.BadRequest(fmt.Errorf("Instances with backups cannot be moved"))
+			return response.BadRequest(errors.New("Instances with backups cannot be moved"))
 		}
 	}
 
@@ -541,7 +542,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 
 	// Check that we're not requested to move to the same storage pool we're currently use.
 	if req.Pool != "" && req.Pool == sourcePool.Name() {
-		return fmt.Errorf("Requested storage pool is the same as current pool")
+		return errors.New("Requested storage pool is the same as current pool")
 	}
 
 	// Get the DB volume type for the instance.

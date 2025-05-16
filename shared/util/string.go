@@ -1,6 +1,7 @@
 package util
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -12,7 +13,7 @@ func ParseUint32Range(value string) (uint32, uint32, error) {
 	rangeParts := strings.SplitN(value, "-", 2)
 	rangeLen := len(rangeParts)
 	if rangeLen != 1 && rangeLen != 2 {
-		return 0, 0, fmt.Errorf("Range must contain a single number or start and end numbers")
+		return 0, 0, errors.New("Range must contain a single number or start and end numbers")
 	}
 
 	startNum, err := strconv.ParseUint(rangeParts[0], 10, 32)

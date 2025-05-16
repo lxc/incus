@@ -4,6 +4,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -81,7 +82,7 @@ func (n *NodeTx) GetRaftNodeAddress(ctx context.Context, id int64) (string, erro
 	default:
 		// This should never happen since we have a UNIQUE constraint
 		// on the raft_nodes.id column.
-		return "", fmt.Errorf("more than one match found")
+		return "", errors.New("more than one match found")
 	}
 }
 
@@ -99,7 +100,7 @@ func (n *NodeTx) CreateFirstRaftNode(address string, name string) error {
 	}
 
 	if id != 1 {
-		return fmt.Errorf("could not set raft node ID to 1")
+		return errors.New("could not set raft node ID to 1")
 	}
 
 	return nil

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -425,7 +426,7 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 
 	// Validate the name.
 	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(fmt.Errorf("Backup names may not contain slashes"))
+		return response.BadRequest(errors.New("Backup names may not contain slashes"))
 	}
 
 	fullName := volumeName + internalInstance.SnapshotDelimiter + req.Name
@@ -670,7 +671,7 @@ func storagePoolVolumeTypeCustomBackupPost(d *Daemon, r *http.Request) response.
 
 	// Validate the name
 	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(fmt.Errorf("Backup names may not contain slashes"))
+		return response.BadRequest(errors.New("Backup names may not contain slashes"))
 	}
 
 	oldName := volumeName + internalInstance.SnapshotDelimiter + backupName

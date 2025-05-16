@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"errors"
 	"io"
 	"net"
 	"os"
@@ -37,7 +37,7 @@ func (c *cmdNetcat) Run(cmd *cobra.Command, args []string) error {
 	// Handle mandatory arguments
 	if len(args) != 1 {
 		_ = cmd.Help()
-		return fmt.Errorf("Missing required argument")
+		return errors.New("Missing required argument")
 	}
 
 	// Connect to the provided address

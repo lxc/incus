@@ -5,6 +5,7 @@ package cluster
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -114,7 +115,7 @@ ORDER BY certificates.fingerprint
 	}
 
 	if len(fingerprints) > 1 {
-		return nil, fmt.Errorf("More than one certificate matches")
+		return nil, errors.New("More than one certificate matches")
 	}
 
 	if len(fingerprints) == 0 {

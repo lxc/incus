@@ -165,7 +165,7 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 	}
 
 	if volExists {
-		return nil, nil, fmt.Errorf("Cannot restore volume, already exists on target")
+		return nil, nil, errors.New("Cannot restore volume, already exists on target")
 	}
 
 	reverter := revert.New()
@@ -960,7 +960,7 @@ func (d *btrfs) DeleteVolume(vol Volume, op *operations.Operation) error {
 	}
 
 	if len(snapshots) > 0 {
-		return fmt.Errorf("Cannot remove a volume that has snapshots")
+		return errors.New("Cannot remove a volume that has snapshots")
 	}
 
 	volName := vol.name
@@ -1304,7 +1304,7 @@ func (d *btrfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *l
 	// Handle btrfs send/receive migration.
 	if volSrcArgs.MultiSync || volSrcArgs.FinalSync {
 		// This is not needed if the migration is performed using btrfs send/receive.
-		return fmt.Errorf("MultiSync should not be used with optimized migration")
+		return errors.New("MultiSync should not be used with optimized migration")
 	}
 
 	var snapshots []string
@@ -1328,7 +1328,7 @@ func (d *btrfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *l
 	if !slices.Contains(volSrcArgs.MigrationType.Features, migration.BTRFSFeatureMigrationHeader) || !slices.Contains(volSrcArgs.MigrationType.Features, migration.BTRFSFeatureSubvolumes) {
 		for _, subVol := range migrationHeader.Subvolumes {
 			if subVol.Path != string(filepath.Separator) {
-				return fmt.Errorf("Subvolumes detected in source but target does not support receiving subvolumes")
+				return errors.New("Subvolumes detected in source but target does not support receiving subvolumes")
 			}
 		}
 	}

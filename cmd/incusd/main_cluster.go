@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -146,7 +147,7 @@ func (c *cmdClusterEdit) run(_ *cobra.Command, _ []string) error {
 	// Make sure that the daemon is not running.
 	_, err := incus.ConnectIncusUnix("", nil)
 	if err == nil {
-		return fmt.Errorf("The daemon is running, please stop it first.")
+		return errors.New("The daemon is running, please stop it first.")
 	}
 
 	database, err := db.OpenNode(filepath.Join(sys.DefaultOS().VarDir, "database"), nil)
@@ -163,7 +164,7 @@ func (c *cmdClusterEdit) run(_ *cobra.Command, _ []string) error {
 
 		clusterAddress := config.ClusterAddress()
 		if clusterAddress == "" {
-			return fmt.Errorf(`Can't edit cluster configuration as server isn't clustered (missing "cluster.https_address" config)`)
+			return errors.New(`Can't edit cluster configuration as server isn't clustered (missing "cluster.https_address" config)`)
 		}
 
 		nodes, err = tx.GetRaftNodes(ctx)
@@ -256,11 +257,11 @@ func (c *cmdClusterEdit) run(_ *cobra.Command, _ []string) error {
 
 func validateNewConfig(oldNodes []db.RaftNode, newNodes []db.RaftNode) error {
 	if len(oldNodes) > len(newNodes) {
-		return fmt.Errorf("Removing cluster members is not supported")
+		return errors.New("Removing cluster members is not supported")
 	}
 
 	if len(oldNodes) < len(newNodes) {
-		return fmt.Errorf("Adding cluster members is not supported")
+		return errors.New("Adding cluster members is not supported")
 	}
 
 	numNewVoters := 0
@@ -269,12 +270,12 @@ func validateNewConfig(oldNodes []db.RaftNode, newNodes []db.RaftNode) error {
 
 		// IDs should not be reordered among cluster members.
 		if oldNode.ID != newNode.ID {
-			return fmt.Errorf("Changing cluster member ID is not supported")
+			return errors.New("Changing cluster member ID is not supported")
 		}
 
 		// If the name field could not be populated, just ignore the new value.
 		if oldNode.Name != "" && newNode.Name != "" && oldNode.Name != newNode.Name {
-			return fmt.Errorf("Changing cluster member name is not supported")
+			return errors.New("Changing cluster member name is not supported")
 		}
 
 		if oldNode.Role == db.RaftSpare && newNode.Role == db.RaftVoter {
@@ -419,7 +420,7 @@ func (c *cmdClusterRecoverFromQuorumLoss) run(_ *cobra.Command, _ []string) erro
 	// Make sure that the daemon is not running.
 	_, err := incus.ConnectIncusUnix("", nil)
 	if err == nil {
-		return fmt.Errorf("The daemon is running, please stop it first.")
+		return errors.New("The daemon is running, please stop it first.")
 	}
 
 	// Prompt for confirmation unless --quiet was passed.
@@ -462,7 +463,7 @@ Do you want to proceed? (yes/no): `)
 	input = strings.TrimSuffix(input, "\n")
 
 	if !slices.Contains([]string{"yes"}, strings.ToLower(input)) {
-		return fmt.Errorf("Recover operation aborted")
+		return errors.New("Recover operation aborted")
 	}
 
 	return nil
@@ -488,7 +489,7 @@ func (c *cmdClusterRemoveRaftNode) command() *cobra.Command {
 func (c *cmdClusterRemoveRaftNode) run(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		_ = cmd.Help()
-		return fmt.Errorf("Missing required arguments")
+		return errors.New("Missing required arguments")
 	}
 
 	address := internalUtil.CanonicalNetworkAddress(args[0], ports.HTTPSDefaultPort)
@@ -526,7 +527,7 @@ Do you want to proceed? (yes/no): `)
 	input = strings.TrimSuffix(input, "\n")
 
 	if !slices.Contains([]string{"yes"}, strings.ToLower(input)) {
-		return fmt.Errorf("Remove raft node operation aborted")
+		return errors.New("Remove raft node operation aborted")
 	}
 
 	return nil
@@ -551,7 +552,7 @@ func textEditor(inPath string, inContent []byte) ([]byte, error) {
 				}
 			}
 			if editor == "" {
-				return []byte{}, fmt.Errorf("No text editor found, please set the EDITOR environment variable")
+				return []byte{}, errors.New("No text editor found, please set the EDITOR environment variable")
 			}
 		}
 	}

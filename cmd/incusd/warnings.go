@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -372,7 +373,7 @@ func warningPut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if status != warningtype.StatusAcknowledged && status != warningtype.StatusNew {
-		return response.Forbidden(fmt.Errorf(`Status may only be set to "acknowledge" or "new"`))
+		return response.Forbidden(errors.New(`Status may only be set to "acknowledge" or "new"`))
 	}
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -508,7 +509,7 @@ func getWarningEntityURL(ctx context.Context, tx *sql.Tx, warning *cluster.Warni
 
 	_, ok := cluster.EntityNames[warning.EntityTypeCode]
 	if !ok {
-		return "", fmt.Errorf("Unknown entity type")
+		return "", errors.New("Unknown entity type")
 	}
 
 	var url string

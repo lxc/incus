@@ -86,12 +86,12 @@ func (o *ICNB) CreateTransitSwitchAllocation(ctx context.Context, switchName str
 
 	// Check that it's managed by us.
 	if transitSwitch.ExternalIDs == nil || transitSwitch.ExternalIDs["incus-managed"] != "true" {
-		return nil, nil, fmt.Errorf("Transit switch isn't Incus managed")
+		return nil, nil, errors.New("Transit switch isn't Incus managed")
 	}
 
 	// Check that prefixes are set.
 	if transitSwitch.ExternalIDs["incus-subnet-ipv4"] == "" || transitSwitch.ExternalIDs["incus-subnet-ipv6"] == "" {
-		return nil, nil, fmt.Errorf("No configured subnets on the transit switch")
+		return nil, nil, errors.New("No configured subnets on the transit switch")
 	}
 
 	// Get the allocated addresses.
@@ -127,7 +127,7 @@ func (o *ICNB) CreateTransitSwitchAllocation(ctx context.Context, switchName str
 	for {
 		v4Addr = v4Addr.Next()
 		if !v4Prefix.Contains(v4Addr) {
-			return nil, nil, fmt.Errorf("Transit switch is out of IPv4 addresses")
+			return nil, nil, errors.New("Transit switch is out of IPv4 addresses")
 		}
 
 		if !slices.Contains(v4Addresses, v4Addr.String()) {
@@ -139,7 +139,7 @@ func (o *ICNB) CreateTransitSwitchAllocation(ctx context.Context, switchName str
 	for {
 		v6Addr = v6Addr.Next()
 		if !v6Prefix.Contains(v6Addr) {
-			return nil, nil, fmt.Errorf("Transit switch is out of IPv6 addresses")
+			return nil, nil, errors.New("Transit switch is out of IPv6 addresses")
 		}
 
 		if !slices.Contains(v6Addresses, v6Addr.String()) {
@@ -182,7 +182,7 @@ func (o *ICNB) DeleteTransitSwitchAllocation(ctx context.Context, switchName str
 
 	// Check that it's managed by us.
 	if transitSwitch.ExternalIDs == nil || transitSwitch.ExternalIDs["incus-managed"] != "true" {
-		return fmt.Errorf("Transit switch isn't Incus managed")
+		return errors.New("Transit switch isn't Incus managed")
 	}
 
 	// Update the record.

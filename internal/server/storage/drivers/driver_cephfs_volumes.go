@@ -251,7 +251,7 @@ func (d *cephfs) DeleteVolume(vol Volume, op *operations.Operation) error {
 	}
 
 	if len(snapshots) > 0 {
-		return fmt.Errorf("Cannot remove a volume that has snapshots")
+		return errors.New("Cannot remove a volume that has snapshots")
 	}
 
 	volPath := GetVolumeMountPath(d.name, vol.volType, vol.name)

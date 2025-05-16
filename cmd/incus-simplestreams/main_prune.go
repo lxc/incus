@@ -95,7 +95,7 @@ func (c *cmdPrune) pruneFiles(products *simplestreams.Products, filesToPreserve 
 	}
 
 	if c.flagVerbose && len(deletedFiles) > 0 {
-		fmt.Printf("Following files were removed:\n")
+		fmt.Print("Following files were removed:\n")
 		for _, file := range deletedFiles {
 			fmt.Println(file)
 		}
@@ -175,14 +175,14 @@ func (c *cmdPrune) prune() error {
 
 	if c.flagVerbose {
 		if len(deletedItems) > 0 {
-			fmt.Printf("Following items were removed from images.json:\n")
+			fmt.Print("Following items were removed from images.json:\n")
 			for _, item := range deletedItems {
 				fmt.Println(item)
 			}
 		}
 
 		if len(deletedVersions) > 0 {
-			fmt.Printf("Following versions were removed:\n")
+			fmt.Print("Following versions were removed:\n")
 			for _, version := range deletedVersions {
 				fmt.Println(version)
 			}

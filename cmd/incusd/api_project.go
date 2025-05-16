@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -727,7 +728,7 @@ func projectChange(ctx context.Context, s *state.State, project *api.Project, re
 	// Quick checks.
 	if len(featuresChanged) > 0 {
 		if project.Name == api.ProjectDefaultName {
-			return response.BadRequest(fmt.Errorf("You can't change the features of the default project"))
+			return response.BadRequest(errors.New("You can't change the features of the default project"))
 		}
 
 		// Consider the project empty if it is only used by the default profile.
@@ -845,7 +846,7 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 
 	// Quick checks.
 	if name == api.ProjectDefaultName {
-		return response.Forbidden(fmt.Errorf("The 'default' project cannot be renamed"))
+		return response.Forbidden(errors.New("The 'default' project cannot be renamed"))
 	}
 
 	// Perform the rename.
@@ -872,7 +873,7 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 			}
 
 			if !empty {
-				return fmt.Errorf("Only empty projects can be renamed")
+				return errors.New("Only empty projects can be renamed")
 			}
 
 			id, err = cluster.GetProjectID(ctx, tx.Tx(), name)
@@ -945,7 +946,7 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 
 	// Quick checks.
 	if name == api.ProjectDefaultName {
-		return response.Forbidden(fmt.Errorf("The 'default' project cannot be deleted"))
+		return response.Forbidden(errors.New("The 'default' project cannot be deleted"))
 	}
 
 	var id int64
@@ -963,7 +964,7 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 			}
 
 			if !empty {
-				return fmt.Errorf("Only empty projects can be removed.")
+				return errors.New("Only empty projects can be removed.")
 			}
 		} else {
 			usedBy, err = projectUsedBy(ctx, tx, project)
@@ -1225,7 +1226,7 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 
 		// Check if anything is left.
 		if count != 0 {
-			return response.BadRequest(fmt.Errorf("Project couldn't be automatically emptied"))
+			return response.BadRequest(errors.New("Project couldn't be automatically emptied"))
 		}
 	}
 
@@ -1831,7 +1832,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 	// be bypassed by settings from the default project's profiles that are not checked against this project's
 	// restrictions when they are configured.
 	if util.IsTrue(config["restricted"]) && util.IsFalse(config["features.profiles"]) {
-		return fmt.Errorf("Projects without their own profiles cannot be restricted")
+		return errors.New("Projects without their own profiles cannot be restricted")
 	}
 
 	return nil
@@ -1839,27 +1840,27 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 
 func projectValidateName(name string) error {
 	if name == "" {
-		return fmt.Errorf("No name provided")
+		return errors.New("No name provided")
 	}
 
 	if strings.Contains(name, "/") {
-		return fmt.Errorf("Project names may not contain slashes")
+		return errors.New("Project names may not contain slashes")
 	}
 
 	if strings.Contains(name, " ") {
-		return fmt.Errorf("Project names may not contain spaces")
+		return errors.New("Project names may not contain spaces")
 	}
 
 	if strings.Contains(name, "_") {
-		return fmt.Errorf("Project names may not contain underscores")
+		return errors.New("Project names may not contain underscores")
 	}
 
 	if strings.Contains(name, "'") || strings.Contains(name, `"`) {
-		return fmt.Errorf("Project names may not contain quotes")
+		return errors.New("Project names may not contain quotes")
 	}
 
 	if name == "*" {
-		return fmt.Errorf("Reserved project name")
+		return errors.New("Reserved project name")
 	}
 
 	if slices.Contains([]string{".", ".."}, name) {

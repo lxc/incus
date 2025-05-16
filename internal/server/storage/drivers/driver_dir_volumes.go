@@ -173,7 +173,7 @@ func (d *dir) DeleteVolume(vol Volume, op *operations.Operation) error {
 	}
 
 	if len(snapshots) > 0 {
-		return fmt.Errorf("Cannot remove a volume that has snapshots")
+		return errors.New("Cannot remove a volume that has snapshots")
 	}
 
 	volPath := vol.MountPath()
@@ -244,7 +244,7 @@ func (d *dir) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
 	}
 
 	if vol.config["size"] != "" && vol.volType == VolumeTypeBucket {
-		return fmt.Errorf("Size cannot be specified for buckets")
+		return errors.New("Size cannot be specified for buckets")
 	}
 
 	return nil
@@ -578,7 +578,7 @@ func (d *dir) RestoreVolume(vol Volume, snapshotName string, op *operations.Oper
 
 	srcPath := snapVol.MountPath()
 	if !util.PathExists(srcPath) {
-		return fmt.Errorf("Snapshot not found")
+		return errors.New("Snapshot not found")
 	}
 
 	volPath := vol.MountPath()

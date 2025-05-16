@@ -287,7 +287,7 @@ func (m *cmdMigrate) connectTarget(uri string, certPath string, keyPath string, 
 	}
 
 	if srv.Auth == "untrusted" {
-		return nil, "", fmt.Errorf("Server doesn't trust us after authentication")
+		return nil, "", errors.New("Server doesn't trust us after authentication")
 	}
 
 	fmt.Printf("\nRemote server:\n  Hostname: %s\n  Version: %s\n\n", srv.Environment.ServerName, srv.Environment.ServerVersion)
