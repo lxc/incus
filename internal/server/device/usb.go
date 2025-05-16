@@ -52,7 +52,7 @@ func (d *usb) validateConfig(instConf instance.ConfigReader) error {
 	}
 
 	if instConf.Architecture() == osarch.ARCH_64BIT_S390_BIG_ENDIAN {
-		return fmt.Errorf("USB devices aren't supported on s390x")
+		return errors.New("USB devices aren't supported on s390x")
 	}
 
 	rules := map[string]func(string) error{
@@ -218,7 +218,7 @@ func (d *usb) startContainer() (*deviceConfig.RunConfig, error) {
 	}
 
 	if d.isRequired() && len(runConf.Mounts) <= 0 {
-		return nil, fmt.Errorf("Required USB device not found")
+		return nil, errors.New("Required USB device not found")
 	}
 
 	return &runConf, nil
@@ -226,7 +226,7 @@ func (d *usb) startContainer() (*deviceConfig.RunConfig, error) {
 
 func (d *usb) startVM() (*deviceConfig.RunConfig, error) {
 	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
-		return nil, fmt.Errorf("USB devices cannot be used when migration.stateful is enabled")
+		return nil, errors.New("USB devices cannot be used when migration.stateful is enabled")
 	}
 
 	usbs, err := d.loadUsb()
@@ -247,7 +247,7 @@ func (d *usb) startVM() (*deviceConfig.RunConfig, error) {
 	}
 
 	if d.isRequired() && len(runConf.USBDevice) <= 0 {
-		return nil, fmt.Errorf("Required USB device not found")
+		return nil, errors.New("Required USB device not found")
 	}
 
 	return &runConf, nil

@@ -1,7 +1,7 @@
 package ioprogress
 
 import (
-	"fmt"
+	"errors"
 	"io"
 )
 
@@ -20,7 +20,7 @@ func (pt *ProgressReader) Read(p []byte) (int, error) {
 	} else if pt.Reader != nil {
 		reader = pt.Reader
 	} else {
-		return -1, fmt.Errorf("ProgressReader is missing a reader")
+		return -1, errors.New("ProgressReader is missing a reader")
 	}
 
 	// Do normal reader tasks

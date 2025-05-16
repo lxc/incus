@@ -3,11 +3,11 @@
 package logger
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/sirupsen/logrus"
 )
 
 func setupSyslog(logger *logrus.Logger, syslogName string) error {
-	return fmt.Errorf("Syslog logging isn't supported on this platform")
+	return errors.New("Syslog logging isn't supported on this platform")
 }

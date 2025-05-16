@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -22,7 +23,7 @@ const (
 )
 
 // ErrUnknownDriver is the "Unknown driver" error.
-var ErrUnknownDriver = fmt.Errorf("Unknown driver")
+var ErrUnknownDriver = errors.New("Unknown driver")
 
 var authorizers = map[string]func() authorizer{
 	DriverTLS:       func() authorizer { return &TLS{} },

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -143,7 +144,7 @@ func daemonStorageMount(s *state.State) error {
 func daemonStorageSplitVolume(volume string) (string, string, error) {
 	fields := strings.Split(volume, "/")
 	if len(fields) != 2 {
-		return "", "", fmt.Errorf("Invalid syntax for volume, must be <pool>/<volume>")
+		return "", "", errors.New("Invalid syntax for volume, must be <pool>/<volume>")
 	}
 
 	poolName := fields[0]
@@ -195,7 +196,7 @@ func daemonStorageValidate(s *state.State, target string) error {
 	}
 
 	if len(snapshots) != 0 {
-		return fmt.Errorf("Storage volumes for use by Incus itself cannot have snapshots")
+		return errors.New("Storage volumes for use by Incus itself cannot have snapshots")
 	}
 
 	pool, err := storagePools.LoadByName(s, poolName)

@@ -1,6 +1,7 @@
 package device
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"sync"
@@ -93,7 +94,7 @@ func (d *gpuSRIOV) validateConfig(instConf instance.ConfigReader) error {
 // validateEnvironment checks the runtime environment for correctness.
 func (d *gpuSRIOV) validateEnvironment() error {
 	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
-		return fmt.Errorf("GPU devices cannot be used when migration.stateful is enabled")
+		return errors.New("GPU devices cannot be used when migration.stateful is enabled")
 	}
 
 	return validatePCIDevice(d.config["pci"])
@@ -296,7 +297,7 @@ func (d *gpuSRIOV) getVF() (string, int, error) {
 
 	// Check if any physical GPU was found to match.
 	if pciAddress == "" {
-		return "", -1, fmt.Errorf("Couldn't find a matching GPU with available VFs")
+		return "", -1, errors.New("Couldn't find a matching GPU with available VFs")
 	}
 
 	return pciAddress, vfID, nil

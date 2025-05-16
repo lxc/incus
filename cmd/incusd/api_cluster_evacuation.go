@@ -62,18 +62,18 @@ func evacuateClusterSetState(s *state.State, name string, newState int) error {
 		}
 
 		if node.State == db.ClusterMemberStatePending {
-			return fmt.Errorf("Cannot evacuate or restore a pending cluster member")
+			return errors.New("Cannot evacuate or restore a pending cluster member")
 		}
 
 		// Do nothing if the node is already in expected state.
 		if node.State == newState {
 			if newState == db.ClusterMemberStateEvacuated {
-				return fmt.Errorf("Cluster member is already evacuated")
+				return errors.New("Cluster member is already evacuated")
 			} else if newState == db.ClusterMemberStateCreated {
-				return fmt.Errorf("Cluster member is already restored")
+				return errors.New("Cluster member is already restored")
 			}
 
-			return fmt.Errorf("Cluster member is already in requested state")
+			return errors.New("Cluster member is already in requested state")
 		}
 
 		// Set node status to requested value.
@@ -161,7 +161,7 @@ func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.O
 
 func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 	if opts.migrateInstance == nil {
-		return fmt.Errorf("Missing migration callback function")
+		return errors.New("Missing migration callback function")
 	}
 
 	// Limit the number of concurrent evacuations to run at the same time
@@ -619,7 +619,7 @@ func evacuateClusterSelectTarget(ctx context.Context, s *state.State, inst insta
 	}
 
 	if targetMemberInfo == nil {
-		return nil, nil, fmt.Errorf("Couldn't find a cluster member for the instance")
+		return nil, nil, errors.New("Couldn't find a cluster member for the instance")
 	}
 
 	return sourceMemberInfo, targetMemberInfo, nil

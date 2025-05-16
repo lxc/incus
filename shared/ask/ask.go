@@ -70,7 +70,7 @@ func (a *Asker) AskInt(question string, minValue int64, maxValue int64, defaultA
 		}
 
 		if (minValue > -1 && result < minValue) || (maxValue > -1 && result > maxValue) {
-			fmt.Fprintf(os.Stderr, "Invalid input: out of range\n\n")
+			fmt.Fprint(os.Stderr, "Invalid input: out of range\n\n")
 			continue
 		}
 
@@ -177,5 +177,5 @@ func (a *Asker) readAnswer(defaultAnswer string) (string, error) {
 
 // Print an invalid input message on the error stream.
 func invalidInput() {
-	fmt.Fprintf(os.Stderr, "Invalid input, try again.\n\n")
+	fmt.Fprint(os.Stderr, "Invalid input, try again.\n\n")
 }

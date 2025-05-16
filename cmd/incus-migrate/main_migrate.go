@@ -174,11 +174,11 @@ func (m *Migration) runMigration(migrationHandler func(path string) error) error
 
 func (m *Migration) setSourceFormat() error {
 	if m.sourcePath == "" {
-		return fmt.Errorf("Missing source path")
+		return errors.New("Missing source path")
 	}
 
 	if m.migrationType == "" {
-		return fmt.Errorf("Missing migration type")
+		return errors.New("Missing migration type")
 	}
 
 	// When migrating a disk, report the detected source format
@@ -319,7 +319,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 		}
 
 		if len(line) < 1 || line[0] != 'y' && line[0] != 'Y' {
-			return nil, "", fmt.Errorf("Server certificate rejected by user")
+			return nil, "", errors.New("Server certificate rejected by user")
 		}
 
 		args.InsecureSkipVerify = true

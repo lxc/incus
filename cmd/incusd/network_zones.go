@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -301,7 +302,7 @@ func networkZonesPost(d *Daemon, r *http.Request) response.Response {
 	// Create the zone.
 	err = zone.Exists(s, req.Name)
 	if err == nil {
-		return response.BadRequest(fmt.Errorf("The network zone already exists"))
+		return response.BadRequest(errors.New("The network zone already exists"))
 	}
 
 	err = zone.Create(s, projectName, &req)

@@ -61,7 +61,7 @@ func (c *ClusterTx) UpdateStorageVolumeSnapshot(ctx context.Context, projectName
 	var err error
 
 	if !strings.Contains(volumeName, internalInstance.SnapshotDelimiter) {
-		return fmt.Errorf("Volume is not a snapshot")
+		return errors.New("Volume is not a snapshot")
 	}
 
 	volume, err := c.GetStoragePoolVolume(ctx, poolID, projectName, volumeType, volumeName, true)
@@ -121,7 +121,7 @@ WHERE volumes.id=?
 	}
 
 	if !strings.Contains(args.Name, internalInstance.SnapshotDelimiter) {
-		return args, fmt.Errorf("Volume is not a snapshot")
+		return args, errors.New("Volume is not a snapshot")
 	}
 
 	args.TypeName = StoragePoolVolumeTypeNames[args.Type]

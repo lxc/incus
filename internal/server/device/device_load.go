@@ -1,6 +1,7 @@
 package device
 
 import (
+	"errors"
 	"fmt"
 
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
@@ -13,7 +14,7 @@ import (
 // newByType returns a new uninitialized device based of the type indicated by the project and device config.
 func newByType(state *state.State, projectName string, conf deviceConfig.Device) (device, error) {
 	if conf["type"] == "" {
-		return nil, fmt.Errorf("Missing device type in config")
+		return nil, errors.New("Missing device type in config")
 	}
 
 	// NIC type is required to lookup network devices.

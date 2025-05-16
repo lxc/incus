@@ -1,6 +1,7 @@
 package device
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -80,7 +81,7 @@ func (d *infinibandPhysical) validateConfig(instConf instance.ConfigReader) erro
 // validateEnvironment checks the runtime environment for correctness.
 func (d *infinibandPhysical) validateEnvironment() error {
 	if d.inst.Type() == instancetype.Container && d.config["name"] == "" {
-		return fmt.Errorf("Requires name property to start")
+		return errors.New("Requires name property to start")
 	}
 
 	if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"])) {

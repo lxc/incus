@@ -306,7 +306,7 @@ func (d *zfs) FillConfig() error {
 			d.config["size"] = fmt.Sprintf("%dGiB", defaultSize)
 		}
 	} else if sliceAny(devices, func(device string) bool { return !linux.IsBlockdevPath(device) }) {
-		return fmt.Errorf("Custom loop file locations are not supported")
+		return errors.New("Custom loop file locations are not supported")
 	} else {
 		// Set default pool_name.
 		if d.config["zfs.pool_name"] == "" {
@@ -336,7 +336,7 @@ func (d *zfs) Create() error {
 	if len(devices) == 1 && !filepath.IsAbs(devices[0]) {
 		// Validate pool_name.
 		if d.config["zfs.pool_name"] != devices[0] {
-			return fmt.Errorf("The source must match zfs.pool_name if specified")
+			return errors.New("The source must match zfs.pool_name if specified")
 		}
 
 		if strings.Contains(d.config["zfs.pool_name"], "/") {
@@ -372,7 +372,7 @@ func (d *zfs) Create() error {
 	} else if len(devices) == 1 && devices[0] == loopPath {
 		// Validate pool_name.
 		if strings.Contains(d.config["zfs.pool_name"], "/") {
-			return fmt.Errorf("zfs.pool_name can't point to a dataset when source isn't set")
+			return errors.New("zfs.pool_name can't point to a dataset when source isn't set")
 		}
 
 		// Create the loop file itself.
@@ -410,7 +410,7 @@ func (d *zfs) Create() error {
 		// At this moment, we have assurance from FillConfig that all devices are existing block devices
 		// Validate pool_name.
 		if strings.Contains(d.config["zfs.pool_name"], "/") {
-			return fmt.Errorf("zfs.pool_name can't point to a dataset when source isn't set")
+			return errors.New("zfs.pool_name can't point to a dataset when source isn't set")
 		}
 
 		var createArgs []string
@@ -552,7 +552,7 @@ func (d *zfs) Validate(config map[string]string) error {
 func (d *zfs) Update(changedConfig map[string]string) error {
 	_, ok := changedConfig["zfs.pool_name"]
 	if ok {
-		return fmt.Errorf("zfs.pool_name cannot be modified")
+		return errors.New("zfs.pool_name cannot be modified")
 	}
 
 	size, ok := changedConfig["size"]
@@ -562,7 +562,7 @@ func (d *zfs) Update(changedConfig map[string]string) error {
 
 		_, devices := d.parseSource()
 		if len(devices) != 1 || devices[0] != loopPath {
-			return fmt.Errorf("Cannot resize non-loopback pools")
+			return errors.New("Cannot resize non-loopback pools")
 		}
 
 		// Resize loop file
@@ -613,7 +613,7 @@ func (d *zfs) importPool() (bool, error) {
 	}
 
 	if exists {
-		return false, fmt.Errorf("ZFS zpool exists but dataset is missing")
+		return false, errors.New("ZFS zpool exists but dataset is missing")
 	}
 
 	// Import the pool.
@@ -637,7 +637,7 @@ func (d *zfs) importPool() (bool, error) {
 	}
 
 	if !exists {
-		return false, fmt.Errorf("ZFS zpool exists but dataset is missing")
+		return false, errors.New("ZFS zpool exists but dataset is missing")
 	}
 
 	// We need to explicitly import the keys here so containers can start. This

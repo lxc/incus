@@ -4,6 +4,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -29,7 +30,7 @@ func (c *ClusterTx) UpsertWarningLocalNode(ctx context.Context, projectName stri
 	}
 
 	if localName == "" {
-		return fmt.Errorf("Local member name not available")
+		return errors.New("Local member name not available")
 	}
 
 	return c.UpsertWarning(ctx, localName, projectName, entityTypeCode, entityID, typeCode, message)
@@ -153,7 +154,7 @@ func (c *ClusterTx) createWarning(ctx context.Context, object cluster.Warning) (
 	}
 
 	if exists {
-		return -1, fmt.Errorf("This warning already exists")
+		return -1, errors.New("This warning already exists")
 	}
 
 	args := make([]any, 12)

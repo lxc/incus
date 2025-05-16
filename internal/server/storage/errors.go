@@ -1,11 +1,11 @@
 package storage
 
 import (
-	"fmt"
+	"errors"
 )
 
 // ErrNilValue is the "Nil value provided" error.
-var ErrNilValue = fmt.Errorf("Nil value provided")
+var ErrNilValue = errors.New("Nil value provided")
 
 // ErrBackupSnapshotsMismatch is the "Backup snapshots mismatch" error.
-var ErrBackupSnapshotsMismatch = fmt.Errorf("Backup snapshots mismatch")
+var ErrBackupSnapshotsMismatch = errors.New("Backup snapshots mismatch")

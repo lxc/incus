@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -298,7 +299,7 @@ func networkAddressSetsPost(d *Daemon, r *http.Request) response.Response {
 
 	_, err = addressset.LoadByName(s, projectName, req.Name)
 	if err == nil {
-		return response.BadRequest(fmt.Errorf("The network address set already exists"))
+		return response.BadRequest(errors.New("The network address set already exists"))
 	}
 
 	err = addressset.Create(s, projectName, &req)

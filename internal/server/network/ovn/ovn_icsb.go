@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"fmt"
+	"errors"
 	"runtime"
 	"strings"
 	"time"
@@ -51,11 +51,11 @@ func NewICSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey
 	if strings.Contains(dbAddr, "ssl:") {
 		// Validation.
 		if sslClientCert == "" {
-			return nil, fmt.Errorf("OVN IC Southbound database is configured to use SSL but no client certificate was found")
+			return nil, errors.New("OVN IC Southbound database is configured to use SSL but no client certificate was found")
 		}
 
 		if sslClientKey == "" {
-			return nil, fmt.Errorf("OVN IC Southbound database is configured to use SSL but no client key was found")
+			return nil, errors.New("OVN IC Southbound database is configured to use SSL but no client key was found")
 		}
 
 		// Prepare the client.
@@ -73,7 +73,7 @@ func NewICSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey
 		if sslCACert != "" {
 			tlsCAder, _ := pem.Decode([]byte(sslCACert))
 			if tlsCAder == nil {
-				return nil, fmt.Errorf("Couldn't parse CA certificate")
+				return nil, errors.New("Couldn't parse CA certificate")
 			}
 
 			tlsCAcert, err := x509.ParseCertificate(tlsCAder.Bytes)
@@ -89,7 +89,7 @@ func NewICSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey
 
 			tlsConfig.VerifyPeerCertificate = func(rawCerts [][]byte, chains [][]*x509.Certificate) error {
 				if len(rawCerts) < 1 {
-					return fmt.Errorf("Missing server certificate")
+					return errors.New("Missing server certificate")
 				}
 
 				// Load the chain.
@@ -104,7 +104,7 @@ func NewICSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey
 				// Load the main server certificate.
 				cert, _ := x509.ParseCertificate(rawCerts[0])
 				if cert == nil {
-					return fmt.Errorf("Bad server certificate")
+					return errors.New("Bad server certificate")
 				}
 
 				// Validate.

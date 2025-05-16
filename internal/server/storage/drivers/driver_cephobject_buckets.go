@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -48,7 +49,7 @@ func (d *cephobject) s3Client(creds S3Credentials) (*minio.Client, error) {
 
 		ok := rootCAs.AppendCertsFromPEM(certs)
 		if !ok {
-			return nil, fmt.Errorf("Failed adding S3 client certificates")
+			return nil, errors.New("Failed adding S3 client certificates")
 		}
 
 		// Trust the cert pool in our client.

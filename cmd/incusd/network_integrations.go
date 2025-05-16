@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -365,7 +366,7 @@ func networkIntegrationDelete(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if len(usedBy) > 0 {
-			return fmt.Errorf("Network integration is currently in use")
+			return errors.New("Network integration is currently in use")
 		}
 
 		err = dbCluster.DeleteNetworkIntegration(ctx, tx.Tx(), integrationName)
@@ -804,7 +805,7 @@ func networkIntegrationValidate(integrationType string, inUse bool, oldConfig ma
 	}
 
 	if oldConfig != nil && oldConfig["ovn.transit.pattern"] != config["ovn.transit.pattern"] && inUse {
-		return fmt.Errorf("The OVN transit switch pattern cannot be changed while the integration is in use")
+		return errors.New("The OVN transit switch pattern cannot be changed while the integration is in use")
 	}
 
 	return nil

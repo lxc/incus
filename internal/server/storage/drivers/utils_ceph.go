@@ -3,6 +3,7 @@ package drivers
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -248,7 +249,7 @@ func cephGetKeyFromFile(path string) (string, error) {
 	}
 
 	if cephSecret == "" {
-		return "", fmt.Errorf("Couldn't find a keyring entry")
+		return "", errors.New("Couldn't find a keyring entry")
 	}
 
 	return cephSecret, nil
@@ -318,7 +319,7 @@ func cephKeyringFromFile(cluster string, client string) (string, error) {
 	}
 
 	if cephSecret == "" {
-		return "", fmt.Errorf("Couldn't find a keyring entry")
+		return "", errors.New("Couldn't find a keyring entry")
 	}
 
 	return cephSecret, nil

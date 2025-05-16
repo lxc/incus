@@ -3,7 +3,7 @@ package listeners
 import (
 	"bufio"
 	"crypto/tls"
-	"fmt"
+	"errors"
 	"net"
 	"sync"
 
@@ -50,7 +50,7 @@ func (l *StarttlsListener) Accept() (net.Conn, error) {
 		}
 
 		if discarded < 9 {
-			return nil, fmt.Errorf("Bad STARTTLS header on connection")
+			return nil, errors.New("Bad STARTTLS header on connection")
 		}
 
 		l.mu.RLock()

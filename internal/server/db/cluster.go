@@ -4,6 +4,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/lxc/incus/v6/internal/server/db/cluster"
@@ -54,7 +55,7 @@ WHERE cluster_groups.name = ? ORDER BY cluster_groups.name
 		sql = `SELECT cluster_groups.name FROM cluster_groups ORDER BY cluster_groups.name`
 		args = []any{}
 	} else {
-		return nil, fmt.Errorf("No statement exists for the given Filter")
+		return nil, errors.New("No statement exists for the given Filter")
 	}
 
 	names, err := query.SelectStrings(ctx, c.tx, sql, args...)

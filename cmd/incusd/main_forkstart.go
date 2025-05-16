@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -43,12 +44,12 @@ func (c *cmdForkstart) run(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 
-		return fmt.Errorf("Missing required arguments")
+		return errors.New("Missing required arguments")
 	}
 
 	// Only root should run this
 	if os.Geteuid() != 0 {
-		return fmt.Errorf("This must be run as root")
+		return errors.New("This must be run as root")
 	}
 
 	name := args[0]
@@ -57,7 +58,7 @@ func (c *cmdForkstart) run(cmd *cobra.Command, args []string) error {
 
 	err := linux.CloseRange(uint32(os.Stderr.Fd())+1, ^uint32(0), linux.CLOSE_RANGE_CLOEXEC)
 	if err != nil {
-		return fmt.Errorf("Aborting attach to prevent leaking file descriptors into container")
+		return errors.New("Aborting attach to prevent leaking file descriptors into container")
 	}
 
 	d, err := liblxc.NewContainer(name, lxcpath)

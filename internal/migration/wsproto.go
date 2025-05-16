@@ -1,7 +1,7 @@
 package migration
 
 import (
-	"fmt"
+	"errors"
 	"io"
 
 	"github.com/gorilla/websocket"
@@ -13,7 +13,7 @@ import (
 // ProtoRecv gets a protobuf message from a websocket.
 func ProtoRecv(ws *websocket.Conn, msg proto.Message) error {
 	if ws == nil {
-		return fmt.Errorf("Empty websocket connection")
+		return errors.New("Empty websocket connection")
 	}
 
 	mt, r, err := ws.NextReader()
@@ -22,7 +22,7 @@ func ProtoRecv(ws *websocket.Conn, msg proto.Message) error {
 	}
 
 	if mt != websocket.BinaryMessage {
-		return fmt.Errorf("Only binary messages allowed")
+		return errors.New("Only binary messages allowed")
 	}
 
 	buf, err := io.ReadAll(r)
@@ -41,7 +41,7 @@ func ProtoRecv(ws *websocket.Conn, msg proto.Message) error {
 // ProtoSend sends a protobuf message over a websocket.
 func ProtoSend(ws *websocket.Conn, msg proto.Message) error {
 	if ws == nil {
-		return fmt.Errorf("Empty websocket connection")
+		return errors.New("Empty websocket connection")
 	}
 
 	w, err := ws.NextWriter(websocket.BinaryMessage)
