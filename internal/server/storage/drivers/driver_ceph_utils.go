@@ -999,7 +999,7 @@ func (d *ceph) parseParent(parent string) (Volume, string, error) {
 	}
 
 	// Handle virtual-machines volumes.
-	if strings.HasPrefix(parentName, "virtual_machine_") || strings.HasPrefix(parentName, "zombie_virtual_machine_") {
+	if strings.HasPrefix(parentName, "virtual-machine_") || strings.HasPrefix(parentName, "zombie_virtual-machine_") {
 		vol.volType = VolumeTypeVM
 
 		// Split snapshot name.
@@ -1015,7 +1015,7 @@ func (d *ceph) parseParent(parent string) (Volume, string, error) {
 		}
 
 		// Remove prefix from name.
-		name = strings.SplitN(name, "virtual_machine_", 2)[1]
+		name = strings.SplitN(name, "virtual-machine_", 2)[1]
 
 		// Check for block indicator.
 		if strings.HasSuffix(name, ".block") {

@@ -111,6 +111,10 @@ func api10Put(d *Daemon, r *http.Request) response.Response {
 }
 
 func startDevIncusServer(d *Daemon) error {
+	if !osGuestAPISupport {
+		return nil
+	}
+
 	d.DevIncusMu.Lock()
 	defer d.DevIncusMu.Unlock()
 
@@ -148,6 +152,10 @@ func startDevIncusServer(d *Daemon) error {
 }
 
 func stopDevIncusServer(d *Daemon) error {
+	if !osGuestAPISupport {
+		return nil
+	}
+
 	d.DevIncusMu.Lock()
 	d.DevIncusRunning = false
 	d.DevIncusMu.Unlock()

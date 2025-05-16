@@ -49,6 +49,7 @@ var (
 	osExitStatus           = linux.ExitStatus
 	osBaseWorkingDirectory = "/"
 	osMetricsSupported     = true
+	osGuestAPISupport      = true
 )
 
 func osGetEnvironment() (*api.ServerEnvironment, error) {

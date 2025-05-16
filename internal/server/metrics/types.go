@@ -10,6 +10,7 @@ type Sample struct {
 type MetricSet struct {
 	set    map[MetricType][]Sample
 	labels map[string]string
+	suffix []byte
 }
 
 // MetricType is a numeric code identifying the metric.

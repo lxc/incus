@@ -306,7 +306,6 @@ endif
 ifeq ($(shell command -v shellcheck),)
 	echo "Please install shellcheck"
 	exit 1
-else
 endif
 ifeq ($(shell command -v flake8),)
 	echo "Please install flake8"

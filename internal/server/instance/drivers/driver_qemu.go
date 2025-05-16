@@ -404,12 +404,12 @@ func (d *qemu) getAgentClient() (*http.Client, error) {
 				client.Transport = &http.Transport{
 					TLSClientConfig: tlsConfig,
 					DialContext: func(_ context.Context, network, addr string) (net.Conn, error) {
-						return net.Dial("tcp", networkAddress)
+						return net.DialTimeout("tcp", networkAddress, 100*time.Millisecond)
 					},
 					DisableKeepAlives:     true,
-					ExpectContinueTimeout: time.Second * 30,
+					ExpectContinueTimeout: time.Second * 3,
 					ResponseHeaderTimeout: time.Second * 3600,
-					TLSHandshakeTimeout:   time.Second * 5,
+					TLSHandshakeTimeout:   time.Second * 3,
 				}
 
 				_, err := client.Get("https://agent/")

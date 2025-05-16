@@ -65,6 +65,11 @@ func (m *MetricSet) AddSamples(metricType MetricType, samples ...Sample) {
 	m.set[metricType] = append(m.set[metricType], samples...)
 }
 
+// AddRaw allows for adding extra metrics directly to the output without having to parse them first.
+func (m *MetricSet) AddRaw(rawData []byte) {
+	m.suffix = append(m.suffix, rawData...)
+}
+
 // Merge merges two MetricSets. Missing labels from m's samples are added to all samples in n.
 func (m *MetricSet) Merge(metricSet *MetricSet) {
 	if metricSet == nil {
@@ -83,6 +88,10 @@ func (m *MetricSet) Merge(metricSet *MetricSet) {
 
 			m.set[metricType] = append(m.set[metricType], sample)
 		}
+	}
+
+	if metricSet.suffix != nil {
+		m.suffix = append(m.suffix, metricSet.suffix...)
 	}
 }
 
@@ -158,7 +167,12 @@ func (m *MetricSet) String() string {
 		}
 	}
 
-	_, err := out.WriteString("# EOF\n")
+	_, err := out.Write(m.suffix)
+	if err != nil {
+		return ""
+	}
+
+	_, err = out.WriteString("# EOF\n")
 	if err != nil {
 		return ""
 	}
