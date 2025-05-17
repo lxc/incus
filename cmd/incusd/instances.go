@@ -403,7 +403,7 @@ func instancesShutdown(instances []instance.Instance) {
 		maxConcurrent = instCount
 	}
 
-	for i := 0; i < maxConcurrent; i++ {
+	for range maxConcurrent {
 		go func(instShutdownCh <-chan instance.Instance) {
 			for inst := range instShutdownCh {
 				// Determine how long to wait for the instance to shutdown cleanly.

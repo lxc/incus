@@ -85,7 +85,7 @@ func deviceNetlinkListener() (chan []string, chan device.USBEvent, chan device.U
 			ueventParts := strings.Split(string(ueventBuf), "\x00")
 			for i, part := range ueventParts {
 				if strings.HasPrefix(part, "SEQNUM=") {
-					ueventParts = append(ueventParts[:i], ueventParts[i+1:]...)
+					ueventParts = slices.Delete(ueventParts, i, i+1)
 					break
 				}
 			}

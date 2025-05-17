@@ -337,7 +337,6 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 					}
 
 					for _, apiInst := range apiInsts {
-						apiInst := apiInst // Local variable for append.
 						resultFullListAppend(&api.InstanceFull{Instance: apiInst})
 					}
 
@@ -354,7 +353,6 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 				}
 
 				for _, c := range cs {
-					c := c // Local variable for append.
 					resultFullListAppend(&c)
 				}
 			}(memberAddress, instances)
@@ -371,10 +369,7 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 				}})
 			}
 		} else {
-			threads := 4
-			if len(instances) < threads {
-				threads = len(instances)
-			}
+			threads := min(len(instances), 4)
 
 			hostInterfaces, _ := net.Interfaces()
 
@@ -393,7 +388,7 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 
 			queue := make(chan db.Instance, threads)
 
-			for i := 0; i < threads; i++ {
+			for range threads {
 				wg.Add(1)
 
 				go func() {
