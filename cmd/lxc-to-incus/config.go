@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	internalUtil "github.com/lxc/incus/v6/internal/util"
@@ -54,14 +55,7 @@ func getUnsupportedKeys(config []string) []string {
 	var out []string
 
 	for _, a := range config {
-		supported := false
-
-		for _, b := range checkedKeys {
-			if a == b {
-				supported = true
-				break
-			}
-		}
+		supported := slices.Contains(checkedKeys, a)
 
 		if !supported {
 			out = append(out, a)

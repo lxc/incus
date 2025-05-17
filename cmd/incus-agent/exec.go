@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"net/http"
 	"os"
 	"os/exec"
@@ -60,9 +61,7 @@ func execPost(d *Daemon, r *http.Request) response.Response {
 	env := map[string]string{}
 
 	if post.Environment != nil {
-		for k, v := range post.Environment {
-			env[k] = v
-		}
+		maps.Copy(env, post.Environment)
 	}
 
 	osSetEnv(&post, env)
@@ -231,7 +230,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 	} else {
 		ttys = make([]io.ReadWriteCloser, 3)
 		ptys = make([]io.ReadWriteCloser, 3)
-		for i := 0; i < len(ttys); i++ {
+		for i := range ttys {
 			ptys[i], ttys[i], err = os.Pipe()
 			if err != nil {
 				return err
@@ -390,7 +389,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 		}()
 	} else {
 		wgEOF.Add(len(ttys) - 1)
-		for i := 0; i < len(ttys); i++ {
+		for i := range ttys {
 			go func(i int) {
 				l.Debug("Exec mirror websocket started", logger.Ctx{"number": i})
 				defer l.Debug("Exec mirror websocket finished", logger.Ctx{"number": i})
