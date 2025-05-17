@@ -237,7 +237,7 @@ func (c *cmdAgent) writeStatus(status string) error {
 
 		defer vSerial.Close()
 
-		_, err = vSerial.Write([]byte(fmt.Sprintf("%s\n", status)))
+		_, err = vSerial.Write(fmt.Appendf(nil, "%s\n", status))
 		if err != nil {
 			return err
 		}

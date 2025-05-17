@@ -148,7 +148,7 @@ func eventsProcess(event api.Event) {
 	// Attempt to perform the mount.
 	mntSource := fmt.Sprintf("incus_%s", e.Name)
 
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		time.Sleep(500 * time.Millisecond)
 
 		err = osMountShared(mntSource, e.Config["path"], "virtiofs", nil)
