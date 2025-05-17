@@ -235,7 +235,7 @@ func (s *execWs) do(op *operations.Operation) error {
 			// For VMs we rely on the agent PTY running inside the VM guest.
 			ttys = make([]*os.File, 2)
 			ptys = make([]*os.File, 2)
-			for i := 0; i < len(ttys); i++ {
+			for i := range ttys {
 				ptys[i], ttys[i], err = os.Pipe()
 				if err != nil {
 					return err
@@ -248,7 +248,7 @@ func (s *execWs) do(op *operations.Operation) error {
 	} else {
 		ttys = make([]*os.File, 3)
 		ptys = make([]*os.File, 3)
-		for i := 0; i < len(ttys); i++ {
+		for i := range ttys {
 			ptys[i], ttys[i], err = os.Pipe()
 			if err != nil {
 				return err
@@ -445,7 +445,7 @@ func (s *execWs) do(op *operations.Operation) error {
 		}()
 	} else {
 		wgEOF.Add(len(ttys) - 1)
-		for i := 0; i < len(ttys); i++ {
+		for i := range ttys {
 			go func(i int) {
 				var err error
 				l.Debug("Exec mirror websocket started", logger.Ctx{"number": i})
@@ -619,8 +619,9 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 
 	// Override any environment variable settings from the instance if not manually specified in post.
 	for k, v := range inst.ExpandedConfig() {
-		if strings.HasPrefix(k, "environment.") {
-			envKey := strings.TrimPrefix(k, "environment.")
+		after, ok := strings.CutPrefix(k, "environment.")
+		if ok {
+			envKey := after
 			_, found := post.Environment[envKey]
 			if !found {
 				post.Environment[envKey] = v

@@ -224,7 +224,7 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Start metrics builder routines.
-	for i := 0; i < maxConcurrent; i++ {
+	for range maxConcurrent {
 		go func(instMetricsCh <-chan instance.Instance) {
 			for inst := range instMetricsCh {
 				projectName := inst.Project().Name

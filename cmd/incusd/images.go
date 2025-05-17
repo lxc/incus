@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"math"
 	"math/rand"
 	"mime"
@@ -562,9 +563,7 @@ func imgPostRemoteInfo(ctx context.Context, s *state.State, r *http.Request, req
 		}
 
 		// Allow overriding or adding properties
-		for k, v := range req.Properties {
-			info.Properties[k] = v
-		}
+		maps.Copy(info.Properties, req.Properties)
 
 		// Get profile IDs
 		if req.Profiles == nil {
@@ -671,9 +670,7 @@ func imgPostURLInfo(ctx context.Context, s *state.State, r *http.Request, req ap
 		}
 
 		// Allow overriding or adding properties
-		for k, v := range req.Properties {
-			info.Properties[k] = v
-		}
+		maps.Copy(info.Properties, req.Properties)
 
 		if req.Public || req.AutoUpdate || req.Filename != "" || len(req.Properties) > 0 {
 			err := tx.UpdateImage(ctx, id, req.Filename, info.Size, req.Public, req.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, info.Properties, "", nil)
@@ -2124,11 +2121,8 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 			// skip distributing the image to this cluster member.
 			// If the option is unset, distribute the image.
 			if vol != "" {
-				for _, imageVolume := range imageVolumes {
-					if imageVolume == vol {
-						skipDistribution = true
-						break
-					}
+				if slices.Contains(imageVolumes, vol) {
+					skipDistribution = true
 				}
 
 				if skipDistribution {
@@ -4827,7 +4821,7 @@ func imageSyncBetweenNodes(ctx context.Context, s *state.State, r *http.Request,
 	}
 
 	// Replicate on as many nodes as needed.
-	for i := 0; i < int(nodeCount); i++ {
+	for range int(nodeCount) {
 		var addresses []string
 
 		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
@@ -4880,9 +4874,7 @@ func createTokenResponse(s *state.State, r *http.Request, projectName string, fi
 
 	meta := jmap.Map{}
 
-	for k, v := range metadata {
-		meta[k] = v
-	}
+	maps.Copy(meta, metadata)
 
 	meta["secret"] = secret
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"maps"
 
 	clusterConfig "github.com/lxc/incus/v6/internal/server/cluster/config"
 	"github.com/lxc/incus/v6/internal/server/db"
@@ -14,9 +15,7 @@ func daemonConfigRender(state *state.State) (map[string]string, error) {
 	config := map[string]string{}
 
 	// Turn the config into a JSON-compatible map.
-	for key, value := range state.GlobalConfig.Dump() {
-		config[key] = value
-	}
+	maps.Copy(config, state.GlobalConfig.Dump())
 
 	// Apply the local config.
 	err := state.DB.Node.Transaction(context.Background(), func(ctx context.Context, tx *db.NodeTx) error {
@@ -25,9 +24,7 @@ func daemonConfigRender(state *state.State) (map[string]string, error) {
 			return err
 		}
 
-		for key, value := range nodeConfig.Dump() {
-			config[key] = value
-		}
+		maps.Copy(config, nodeConfig.Dump())
 
 		return nil
 	})

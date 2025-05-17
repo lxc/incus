@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"net/http"
 	"net/url"
@@ -751,9 +752,7 @@ func networksPostCluster(ctx context.Context, s *state.State, projectName string
 		nodeConfig := util.CloneMap(netConfig)
 
 		// Merge node specific config items into global config.
-		for key, value := range nodeConfigs[server.Environment.ServerName] {
-			nodeConfig[key] = value
-		}
+		maps.Copy(nodeConfig, nodeConfigs[server.Environment.ServerName])
 
 		// Create fresh request based on existing network to send to node.
 		nodeReq := api.NetworksPost{
