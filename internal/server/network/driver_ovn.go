@@ -2552,6 +2552,57 @@ func (n *ovn) setup(update bool) error {
 			}
 		}
 
+		// Check if uplink network states its gateway mac for static mac binding
+		if uplinkNet != nil {
+			// uplink net config
+			uplinkNetworkObj, err := LoadByName(n.state, api.ProjectDefaultName, n.config["network"])
+			if err != nil {
+				return fmt.Errorf("Failed loading uplink network %q: %w", n.config["network"], err)
+			}
+			uplinkConfig := uplinkNetworkObj.Config()
+
+			if uplinkConfig["ipv4.gateway.hwaddr"] != "" {
+				// create static mac binding uplink gateway ip to uplink gateway mac at the external port of the logical router
+				uplinkGatewayIP, _, err := net.ParseCIDR(uplinkConfig["ipv4.gateway"])
+				if err != nil {
+					return err
+				}
+
+				uplinkGatewayMAC, err := net.ParseMAC(uplinkConfig["ipv4.gateway.hwaddr"])
+				if err != nil {
+					return err
+				}
+				err = n.ovnnb.CreateStaticMacBinding(context.TODO(), n.getRouterExtPortName(), uplinkGatewayIP, uplinkGatewayMAC, true, true)
+				if err != nil {
+					return err
+				}
+			}
+
+			if uplinkConfig["ipv6.gateway.hwaddr"] != "" {
+				// create static mac binding uplink gateway ip to uplink gateway mac at the external port of the logical router
+				uplinkGatewayIP, _, err := net.ParseCIDR(uplinkConfig["ipv6.gateway"])
+				if err != nil {
+					return err
+				}
+
+				uplinkGatewayMAC, err := net.ParseMAC(uplinkConfig["ipv6.gateway.hwaddr"])
+				if err != nil {
+					return err
+				}
+				err = n.ovnnb.CreateStaticMacBinding(context.TODO(), n.getRouterExtPortName(), uplinkGatewayIP, uplinkGatewayMAC, true, true)
+				if err != nil {
+					return err
+				}
+			}
+
+			// Clear bindings if uplink is not configured for them
+			err = n.ovnnb.DeleteAllStaticMacBindings(context.TODO(), n.getRouterExtPortName(), uplinkConfig["ipv4.gateway.hwaddr"] == "", uplinkConfig["ipv6.gateway.hwaddr"] == "")
+			if err != nil {
+				return err
+			}
+		}
+
+
 		// Clear default routes (if existing) and re-apply based on current config.
 		defaultIPv4Route := net.IPNet{IP: net.IPv4zero, Mask: net.CIDRMask(0, 32)}
 		defaultIPv6Route := net.IPNet{IP: net.IPv6zero, Mask: net.CIDRMask(0, 128)}
@@ -5160,7 +5211,7 @@ func (n *ovn) uplinkHasIngressRoutedAnycastIPv6(uplink *api.Network) bool {
 // handleDependencyChange applies changes from uplink network if specific watched keys have changed.
 func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]string, changedKeys []string) error {
 	// Detect changes that need to be applied to the network.
-	for _, k := range []string{"dns.nameservers"} {
+	for _, k := range []string{"dns.nameservers", "ipv4.gateway", "ipv6.gateway", "ipv4.gateway.hwaddr", "ipv6.gateway.hwaddr"} {
 		if slices.Contains(changedKeys, k) {
 			n.logger.Debug("Applying changes from uplink network", logger.Ctx{"uplink": uplinkName})
 

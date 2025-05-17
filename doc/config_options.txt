@@ -3767,6 +3767,12 @@ User keys can be used in search.
 
 ```
 
+```{config:option} ipv4.gateway.hwaddr network_physical-ipv4
+:shortdesc: "Gateway MAC address used for static MAC binding in child OVN network routers"
+:type: "string"
+
+```
+
 ```{config:option} ipv4.ovn.ranges network_physical-ipv4
 :condition: "-"
 :shortdesc: "Comma-separated list of IPv4 ranges to use for child OVN network routers (FIRST-LAST format)"
@@ -3794,6 +3800,12 @@ User keys can be used in search.
 ```{config:option} ipv6.gateway network_physical-ipv6
 :condition: "standard mode"
 :shortdesc: "IPv6 address for the gateway and network (CIDR)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.gateway.hwaddr network_physical-ipv6
+:shortdesc: "Gateway MAC address used for static MAC binding in child OVN network routers"
 :type: "string"
 
 ```
