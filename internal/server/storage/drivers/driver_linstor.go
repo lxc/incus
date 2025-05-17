@@ -1,6 +1,7 @@
 package drivers
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
@@ -237,6 +238,21 @@ func (d *linstor) Info() Info {
 
 // Mount mounts the storage pool.
 func (d *linstor) Mount() (bool, error) {
+	linstorClient, err := d.state.Linstor()
+	if err != nil {
+		return false, err
+	}
+
+	satelliteName := d.getSatelliteName()
+	node, err := linstorClient.Client.Nodes.Get(context.TODO(), satelliteName)
+	if err != nil {
+		return false, err
+	}
+
+	if node.ConnectionStatus != "ONLINE" {
+		return false, fmt.Errorf("Node %s is offline", satelliteName)
+	}
+
 	return true, nil
 }
 
