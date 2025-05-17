@@ -176,19 +176,13 @@ func AddressSetUsedBy(s *state.State, projectName string, usageFunc func(aclName
 			return false
 		}
 
-		for _, ingress := range aclInfo.Ingress {
-			if checkRule(ingress) {
-				refFound = true
-				break
-			}
+		if slices.ContainsFunc(aclInfo.Ingress, checkRule) {
+			refFound = true
 		}
 
 		if !refFound {
-			for _, egress := range aclInfo.Egress {
-				if checkRule(egress) {
-					refFound = true
-					break
-				}
+			if slices.ContainsFunc(aclInfo.Egress, checkRule) {
+				refFound = true
 			}
 		}
 
@@ -211,12 +205,7 @@ func AddressSetUsedBy(s *state.State, projectName string, usageFunc func(aclName
 func subjectListReferences(subjects string, addressSetName string) bool {
 	parts := util.SplitNTrimSpace(subjects, ",", -1, false)
 	needle := "$" + addressSetName
-	for _, p := range parts {
-		if p == needle {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(parts, needle)
 }
 
 // NetworkACLUsage info about a network and what ACL it uses.

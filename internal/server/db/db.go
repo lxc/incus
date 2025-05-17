@@ -390,7 +390,7 @@ func (c *Cluster) Begin() (*sql.Tx, error) {
 }
 
 func begin(db *sql.DB) (*sql.Tx, error) {
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		tx, err := db.Begin()
 		if err == nil {
 			return tx, nil

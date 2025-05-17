@@ -28,7 +28,7 @@ type PolicyStatement struct {
 func BucketPolicy(bucketName string, roleName string) (json.RawMessage, error) {
 	switch roleName {
 	case roleAdmin:
-		return []byte(fmt.Sprintf(`{
+		return fmt.Appendf(nil, `{
 			"Version": "2012-10-17",
 			"Statement": [{
 				"Effect": "Allow",
@@ -39,9 +39,9 @@ func BucketPolicy(bucketName string, roleName string) (json.RawMessage, error) {
 					"arn:aws:s3:::%s/*"
 				]
 			}]
-		}`, bucketName)), nil
+		}`, bucketName), nil
 	case roleReadOnly:
-		return []byte(fmt.Sprintf(`{
+		return fmt.Appendf(nil, `{
 			"Version": "2012-10-17",
 			"Statement": [{
 				"Effect": "Allow",
@@ -55,7 +55,7 @@ func BucketPolicy(bucketName string, roleName string) (json.RawMessage, error) {
 					"arn:aws:s3:::%s/*"
 				]
 			}]
-		}`, bucketName)), nil
+		}`, bucketName), nil
 	}
 
 	return nil, fmt.Errorf("Invalid key role")

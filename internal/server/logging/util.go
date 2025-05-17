@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"slices"
 	"strings"
 )
 
@@ -19,12 +20,7 @@ func sliceFromString(input string) []string {
 
 // contains checks if the target string is part of the slice.
 func contains(slice []string, target string) bool {
-	for _, v := range slice {
-		if v == target {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(slice, target)
 }
 
 // hasAnyPrefix checks if any string in the prefixes slice is a prefix of s.

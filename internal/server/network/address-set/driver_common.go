@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"slices"
 	"strings"
 
 	incus "github.com/lxc/incus/v6/client"
@@ -67,7 +68,7 @@ func (d *common) Info() *api.NetworkAddressSet {
 	info := api.NetworkAddressSet{}
 	info.Name = d.info.Name
 	info.Description = d.info.Description
-	info.Addresses = append([]string(nil), d.info.Addresses...)
+	info.Addresses = slices.Clone(d.info.Addresses)
 	info.Config = localUtil.CopyConfig(d.info.Config)
 	info.UsedBy = nil // To indicate its not populated (use Usedby() function to populate).
 	info.Project = d.projectName

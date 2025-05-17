@@ -62,7 +62,7 @@ func Uname() (*Utsname, error) {
 func intArrayToString(arr any) string {
 	slice := reflect.ValueOf(arr)
 	s := ""
-	for i := 0; i < slice.Len(); i++ {
+	for i := range slice.Len() {
 		val := slice.Index(i)
 		valInt := int64(-1)
 

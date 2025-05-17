@@ -1079,7 +1079,7 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 			for _, frag := range matchFragments {
 				// if fragment contain IP address sets of different family than icmp drop fragment
 				// This is ok for icmp only as we may apply both ipv4 and ipv6 restriction in match field for tcp/udp
-				ruleFragments = append(ruleFragments, append(append([]string{}, baseArgs...), frag))
+				ruleFragments = append(ruleFragments, append(slices.Clone(baseArgs), frag))
 			}
 		}
 	}
@@ -1111,7 +1111,7 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 
 				for _, frag := range ruleFragments {
 					for _, df := range matchFragments {
-						newRule := append(append([]string{}, frag...), df)
+						newRule := append(slices.Clone(frag), df)
 
 						if !contains(combined, newRule) {
 							combined = append(combined, newRule)
@@ -1123,7 +1123,7 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 			} else {
 				// If no source criteria were provided, start with baseArgs and add destination fragments.
 				for _, df := range matchFragments {
-					ruleFragments = append(ruleFragments, append(append([]string{}, baseArgs...), df))
+					ruleFragments = append(ruleFragments, append(slices.Clone(baseArgs), df))
 				}
 			}
 		}
@@ -1131,7 +1131,7 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 
 	// If source and destination are empty we want to build base rules at least
 	if rule.Source == "" && rule.Destination == "" {
-		ruleFragments = append(ruleFragments, append([]string{}, baseArgs...))
+		ruleFragments = append(ruleFragments, slices.Clone(baseArgs))
 	}
 
 	// Build the remaining parts (protocol, ports, logging, action).
@@ -1198,9 +1198,10 @@ func (d Nftables) aclRuleSubjectToACLMatch(direction string, ipVersion uint, sub
 
 	// Process each criterion
 	for _, subjectCriterion := range subjectCriteria {
-		if strings.HasPrefix(subjectCriterion, "$") {
+		after, ok := strings.CutPrefix(subjectCriterion, "$")
+		if ok {
 			// This is an address set reference.
-			setName := strings.TrimPrefix(subjectCriterion, "$")
+			setName := after
 			// With an address we won't guess if it only contains ipv4 or ipv6 address so partial is set
 			partial = true
 			switch ipVersion {
