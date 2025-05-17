@@ -959,6 +959,14 @@
 						}
 					},
 					{
+						"ipv4.address.external": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Select a specific external address (typically from a network forward)",
+							"type": "string"
+						}
+					},
+					{
 						"ipv4.routes": {
 							"longdesc": "",
 							"managed": "no",
@@ -979,6 +987,14 @@
 							"longdesc": "",
 							"managed": "no",
 							"shortdesc": "An IPv6 address to assign to the instance through DHCP, `none` can be used to disable IP allocation",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.address.external": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Select a specific external address (typically from a network forward)",
 							"type": "string"
 						}
 					},

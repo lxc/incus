@@ -847,6 +847,13 @@ For file systems (shared directories or custom volumes), this is one of:
 
 ```
 
+```{config:option} ipv4.address.external devices-nic_ovn
+:managed: "no"
+:shortdesc: "Select a specific external address (typically from a network forward)"
+:type: "string"
+
+```
+
 ```{config:option} ipv4.routes devices-nic_ovn
 :managed: "no"
 :shortdesc: "Comma-delimited list of IPv4 static routes to route to the NIC"
@@ -864,6 +871,13 @@ For file systems (shared directories or custom volumes), this is one of:
 ```{config:option} ipv6.address devices-nic_ovn
 :managed: "no"
 :shortdesc: "An IPv6 address to assign to the instance through DHCP, `none` can be used to disable IP allocation"
+:type: "string"
+
+```
+
+```{config:option} ipv6.address.external devices-nic_ovn
+:managed: "no"
+:shortdesc: "Select a specific external address (typically from a network forward)"
 :type: "string"
 
 ```
