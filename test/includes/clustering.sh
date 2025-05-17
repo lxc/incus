@@ -6,9 +6,9 @@ setup_clustering_bridge() {
   echo "==> Setup clustering bridge ${name}"
 
   ip link add "${name}" up type bridge
-  ip addr add 10.1.1.1/16 dev "${name}"
+  ip addr add 100.64.1.1/16 dev "${name}"
 
-  iptables -w -t nat -A POSTROUTING -s 10.1.0.0/16 -d 0.0.0.0/0 -j MASQUERADE
+  iptables -w -t nat -A POSTROUTING -s 100.64.0.0/16 -d 0.0.0.0/0 -j MASQUERADE
   echo 1 > /proc/sys/net/ipv4/ip_forward
 }
 
@@ -18,7 +18,7 @@ teardown_clustering_bridge() {
   if [ -e "/sys/class/net/${name}" ]; then
       echo "==> Teardown clustering bridge ${name}"
       echo 0 > /proc/sys/net/ipv4/ip_forward
-      iptables -w -t nat -D POSTROUTING -s 10.1.0.0/16 -d 0.0.0.0/0 -j MASQUERADE
+      iptables -w -t nat -D POSTROUTING -s 100.64.0.0/16 -d 0.0.0.0/0 -j MASQUERADE
       ip link del dev "${name}"
   fi
 }
@@ -80,8 +80,8 @@ set -e
 ip link set dev lo up
 ip link set dev "${veth2}" name eth0
 ip link set eth0 up
-ip addr add "10.1.1.10${id}/16" dev eth0
-ip route add default via 10.1.1.1
+ip addr add "100.64.1.10${id}/16" dev eth0
+ip route add default via 100.64.1.1
 EOF
 }
 
@@ -133,11 +133,11 @@ spawn_incus_and_bootstrap_cluster() {
 
     cat > "${INCUS_DIR}/preseed.yaml" <<EOF
 config:
-  core.https_address: 10.1.1.101:8443
+  core.https_address: 100.64.1.101:8443
 EOF
     if [ "${port}" != "" ]; then
       cat >> "${INCUS_DIR}/preseed.yaml" <<EOF
-  cluster.https_address: 10.1.1.101:${port}
+  cluster.https_address: 100.64.1.101:${port}
 EOF
     fi
     cat >> "${INCUS_DIR}/preseed.yaml" <<EOF
@@ -231,15 +231,15 @@ spawn_incus_and_join_cluster() {
     # If a custom cluster port was given, we need to first set the REST
     # API address.
     if [ "${port}" != "8443" ]; then
-      incus config set core.https_address "10.1.1.10${index}:8443"
+      incus config set core.https_address "100.64.1.10${index}:8443"
     fi
 
     cat > "${INCUS_DIR}/preseed.yaml" <<EOF
 cluster:
   enabled: true
   server_name: node${index}
-  server_address: 10.1.1.10${index}:${port}
-  cluster_address: 10.1.1.10${target}:8443
+  server_address: 100.64.1.10${index}:${port}
+  cluster_address: 100.64.1.10${target}:8443
   cluster_certificate: "$cert"
   cluster_token: ${token}
   member_config:

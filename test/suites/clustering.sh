@@ -252,8 +252,8 @@ test_clustering_membership() {
 
   # Client certificate are shared across all nodes.
   token="$(INCUS_DIR=${INCUS_ONE_DIR} incus config trust add foo -q)"
-  incus remote add cluster 10.1.1.101:8443 --accept-certificate --token "${token}"
-  incus remote set-url cluster https://10.1.1.102:8443
+  incus remote add cluster 100.64.1.101:8443 --accept-certificate --token "${token}"
+  incus remote set-url cluster https://100.64.1.102:8443
   incus network list cluster: | grep -q "${bridge}"
   incus remote remove cluster
 
@@ -809,7 +809,7 @@ test_clustering_storage() {
     # Manually send the join request.
     cert=$(sed ':a;N;$!ba;s/\n/\\n/g' "${INCUS_ONE_DIR}/cluster.crt")
     token="$(incus cluster add node3 --quiet)"
-    op=$(curl --unix-socket "${INCUS_THREE_DIR}/unix.socket" -X PUT "incus/1.0/cluster" -d "{\"server_name\":\"node3\",\"enabled\":true,\"member_config\":[${member_config}],\"server_address\":\"10.1.1.103:8443\",\"cluster_address\":\"10.1.1.101:8443\",\"cluster_certificate\":\"${cert}\",\"cluster_token\":\"${token}\"}" | jq -r .operation)
+    op=$(curl --unix-socket "${INCUS_THREE_DIR}/unix.socket" -X PUT "incus/1.0/cluster" -d "{\"server_name\":\"node3\",\"enabled\":true,\"member_config\":[${member_config}],\"server_address\":\"100.64.1.103:8443\",\"cluster_address\":\"100.64.1.101:8443\",\"cluster_certificate\":\"${cert}\",\"cluster_token\":\"${token}\"}" | jq -r .operation)
     curl --unix-socket "${INCUS_THREE_DIR}/unix.socket" "incus${op}/wait"
 
     # Ensure that node-specific config appears on all nodes,
@@ -1765,7 +1765,7 @@ test_clustering_join_api() {
   INCUS_NETNS="${ns2}" spawn_incus "${INCUS_TWO_DIR}" false
 
   token="$(incus cluster add node2 --quiet)"
-  op=$(curl --unix-socket "${INCUS_TWO_DIR}/unix.socket" -X PUT "incus/1.0/cluster" -d "{\"server_name\":\"node2\",\"enabled\":true,\"member_config\":[{\"entity\": \"storage-pool\",\"name\":\"data\",\"key\":\"source\",\"value\":\"\"}],\"server_address\":\"10.1.1.102:8443\",\"cluster_address\":\"10.1.1.101:8443\",\"cluster_certificate\":\"${cert}\",\"cluster_token\":\"${token}\"}" | jq -r .operation)
+  op=$(curl --unix-socket "${INCUS_TWO_DIR}/unix.socket" -X PUT "incus/1.0/cluster" -d "{\"server_name\":\"node2\",\"enabled\":true,\"member_config\":[{\"entity\": \"storage-pool\",\"name\":\"data\",\"key\":\"source\",\"value\":\"\"}],\"server_address\":\"100.64.1.102:8443\",\"cluster_address\":\"100.64.1.101:8443\",\"cluster_certificate\":\"${cert}\",\"cluster_token\":\"${token}\"}" | jq -r .operation)
   curl --unix-socket "${INCUS_TWO_DIR}/unix.socket" "incus${op}/wait"
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node2 | grep -q "message: Fully operational"
@@ -1942,7 +1942,7 @@ test_clustering_address() {
 
   # Add a remote using the core.https_address of the bootstrap node, and check
   # that the REST API is exposed.
-  url="https://10.1.1.101:8443"
+  url="https://100.64.1.101:8443"
   token="$(INCUS_DIR="${INCUS_ONE_DIR}" incus config trust add foo --quiet)"
   incus remote add cluster --token "${token}" --accept-certificate "${url}"
   incus storage list cluster: | grep -q data
@@ -1965,13 +1965,13 @@ test_clustering_address() {
 
   # The core.https_address config value can be changed and the REST API is still
   # accessible.
-  INCUS_DIR="${INCUS_ONE_DIR}" incus config set "core.https_address" 10.1.1.101:9999
-  url="https://10.1.1.101:9999"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus config set "core.https_address" 100.64.1.101:9999
+  url="https://100.64.1.101:9999"
   incus remote set-url cluster "${url}"
   incus storage list cluster:| grep -q data
 
   # The cluster.https_address config value can't be changed.
-  ! INCUS_DIR="${INCUS_ONE_DIR}" incus config set "cluster.https_address" "10.1.1.101:8448" || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incus config set "cluster.https_address" "100.64.1.101:8448" || false
 
   # Create a container using the REST API exposed over core.https_address.
   INCUS_DIR="${INCUS_ONE_DIR}" deps/import-busybox --alias testimage
@@ -2197,9 +2197,9 @@ test_clustering_recover() {
   sleep 5
 
   # Check the current database nodes
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd cluster list-database | grep -q "10.1.1.101:8443"
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd cluster list-database | grep -q "10.1.1.102:8443"
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd cluster list-database | grep -q "10.1.1.103:8443"
+  INCUS_DIR="${INCUS_ONE_DIR}" incusd cluster list-database | grep -q "100.64.1.101:8443"
+  INCUS_DIR="${INCUS_ONE_DIR}" incusd cluster list-database | grep -q "100.64.1.102:8443"
+  INCUS_DIR="${INCUS_ONE_DIR}" incusd cluster list-database | grep -q "100.64.1.103:8443"
 
   # Create a test project, just to insert something in the database.
   INCUS_DIR="${INCUS_ONE_DIR}" incus project create p1
@@ -2221,8 +2221,8 @@ test_clustering_recover() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus project list | grep -q p1
 
   # The database nodes have been updated
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd cluster list-database | grep -q "10.1.1.101:8443"
-  ! INCUS_DIR="${INCUS_ONE_DIR}" incusd cluster list-database | grep -q "10.1.1.102:8443" || false
+  INCUS_DIR="${INCUS_ONE_DIR}" incusd cluster list-database | grep -q "100.64.1.101:8443"
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incusd cluster list-database | grep -q "100.64.1.102:8443" || false
 
   # Cleanup the dead node.
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster remove node2 --force --yes
@@ -2514,7 +2514,7 @@ test_clustering_remove_raft_node() {
   # Remove the second node from the database but not from the raft configuration.
   retries=10
   while [ "${retries}" != "0" ]; do
-    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "DELETE FROM nodes WHERE address = '10.1.1.102:8443'" && break
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "DELETE FROM nodes WHERE address = '100.64.1.102:8443'" && break
     sleep 0.5
     retries=$((retries-1))
   done
@@ -2537,10 +2537,10 @@ test_clustering_remove_raft_node() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node4 | grep -q "\- database$"
 
   # The second node is still in the raft_nodes table.
-  INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql local "SELECT * FROM raft_nodes" | grep -q "10.1.1.102"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql local "SELECT * FROM raft_nodes" | grep -q "100.64.1.102"
 
   # Force removing the raft node.
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd cluster remove-raft-node -q "10.1.1.102"
+  INCUS_DIR="${INCUS_ONE_DIR}" incusd cluster remove-raft-node -q "100.64.1.102"
 
   # Wait for a heartbeat to propagate and a rebalance to be performed.
   sleep 12
@@ -2552,7 +2552,7 @@ test_clustering_remove_raft_node() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node4 | grep -q "\- database$"
 
   # The second node is gone from the raft_nodes_table.
-  ! INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql local "SELECT * FROM raft_nodes" | grep -q "10.1.1.102" || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql local "SELECT * FROM raft_nodes" | grep -q "100.64.1.102" || false
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
@@ -2728,13 +2728,13 @@ test_clustering_image_refresh() {
   dir_configure "${INCUS_REMOTE_DIR}"
   INCUS_DIR="${INCUS_REMOTE_DIR}" deps/import-busybox --alias testimage --public
 
-  INCUS_DIR="${INCUS_REMOTE_DIR}" incus config set core.https_address "10.1.1.104:8443"
+  INCUS_DIR="${INCUS_REMOTE_DIR}" incus config set core.https_address "100.64.1.104:8443"
 
   # Add remotes
   token="$(INCUS_DIR="${INCUS_ONE_DIR}" incus config trust add foo --quiet)"
-  incus remote add public "https://10.1.1.104:8443" --accept-certificate --token foo --public
+  incus remote add public "https://100.64.1.104:8443" --accept-certificate --token foo --public
   token="$(INCUS_DIR="${INCUS_ONE_DIR}" incus config trust add foo --quiet)"
-  incus remote add cluster "https://10.1.1.101:8443" --accept-certificate --token "${token}"
+  incus remote add cluster "https://100.64.1.101:8443" --accept-certificate --token "${token}"
 
   INCUS_DIR="${INCUS_REMOTE_DIR}" incus init testimage c1
 
@@ -3427,7 +3427,7 @@ test_clustering_groups() {
   spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
   token="$(INCUS_DIR="${INCUS_ONE_DIR}" incus config trust add foo --quiet)"
-  incus remote add cluster --token "${token}" --accept-certificate "https://10.1.1.101:8443"
+  incus remote add cluster --token "${token}" --accept-certificate "https://100.64.1.101:8443"
 
   # Initially, there is only the default group
   incus cluster group show cluster:default
@@ -3876,7 +3876,7 @@ test_clustering_openfga() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus config set "oidc.issuer=http://127.0.0.1:$(cat "${TEST_DIR}/oidc.port")/"
   INCUS_DIR="${INCUS_ONE_DIR}" incus config set "oidc.client.id=device"
 
-  BROWSER=curl incus remote add --accept-certificate oidc-openfga "https://10.1.1.101:8443" --auth-type oidc
+  BROWSER=curl incus remote add --accept-certificate oidc-openfga "https://100.64.1.101:8443" --auth-type oidc
   ! incus_remote info oidc-openfga: | grep -Fq 'core.https_address' || false
 
   run_openfga
@@ -3903,7 +3903,7 @@ test_clustering_openfga() {
   # After the second node has joined there should exist only one authorization model.
   [ "$(fga model list --store-id "${OPENFGA_STORE_ID}" | jq '.authorization_models | length')" = 1 ]
 
-  BROWSER=curl incus remote add --accept-certificate node2 "https://10.1.1.102:8443" --auth-type oidc
+  BROWSER=curl incus remote add --accept-certificate node2 "https://100.64.1.102:8443" --auth-type oidc
   ! incus_remote info node2: | grep -Fq 'core.https_address' || false
 
   # Add self as server admin. Should be able to see config now.
