@@ -75,24 +75,12 @@ func (m *Set) Less(i, j int) bool {
 
 // Intersects checks if any of the Entry in the set intersects with the provided entry.
 func (m *Set) Intersects(i Entry) bool {
-	for _, e := range m.Entries {
-		if i.Intersects(e) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(m.Entries, i.Intersects)
 }
 
 // HostIDsIntersect checks if any of the Entry hostids in the set intersects with the provided entry.
 func (m *Set) HostIDsIntersect(i Entry) bool {
-	for _, e := range m.Entries {
-		if i.HostIDsIntersect(e) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(m.Entries, i.HostIDsIntersect)
 }
 
 // Usable checks that all Entry in the set are usable.
