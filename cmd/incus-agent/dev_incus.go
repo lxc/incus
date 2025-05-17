@@ -121,7 +121,7 @@ var DevIncusMetadataGet = devIncusHandler{"/1.0/meta-data", func(d *Daemon, w ht
 	var client incus.InstanceServer
 	var err error
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		client, err = getVsockClient(d)
 		if err == nil {
 			break

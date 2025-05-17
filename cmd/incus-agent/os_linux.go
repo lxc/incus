@@ -91,7 +91,7 @@ func osLoadModules() error {
 		}
 
 		// Wait for vsock device to appear.
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			if !util.PathExists("/dev/vsock") {
 				time.Sleep(1 * time.Second)
 			}
@@ -600,7 +600,7 @@ func osGetProcessesState() int64 {
 	pids := []int64{1}
 
 	// Go through the pid list, adding new pids at the end so we go through them all.
-	for i := 0; i < len(pids); i++ {
+	for i := range pids {
 		fname := fmt.Sprintf("/proc/%d/task/%d/children", pids[i], pids[i])
 		fcont, err := os.ReadFile(fname)
 		if err != nil {
@@ -609,7 +609,7 @@ func osGetProcessesState() int64 {
 		}
 
 		content := strings.Split(string(fcont), " ")
-		for j := 0; j < len(content); j++ {
+		for j := range content {
 			pid, err := strconv.ParseInt(content[j], 10, 64)
 			if err == nil {
 				pids = append(pids, pid)
