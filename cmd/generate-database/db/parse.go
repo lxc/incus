@@ -424,7 +424,7 @@ func findStruct(scope *types.Scope, name string) *types.Struct {
 func parseStruct(str *types.Struct, kind string, pkgName string) ([]*Field, error) {
 	fields := make([]*Field, 0)
 
-	for i := 0; i < str.NumFields(); i++ {
+	for i := range str.NumFields() {
 		f := str.Field(i)
 		if f.Embedded() {
 			// Check if this is a parent struct.
