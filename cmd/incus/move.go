@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -327,9 +328,7 @@ func (c *cmdMove) moveInstance(sourceResource string, destResource string, state
 
 		for devName, dev := range deviceMap {
 			fullDev := inst.ExpandedDevices[devName]
-			for k, v := range dev {
-				fullDev[k] = v
-			}
+			maps.Copy(fullDev, dev)
 
 			req.Devices[devName] = fullDev
 		}
