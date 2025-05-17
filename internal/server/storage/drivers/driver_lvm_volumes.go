@@ -202,7 +202,7 @@ func (d *lvm) DeleteVolume(vol Volume, op *operations.Operation) error {
 	}
 
 	if len(snapshots) > 0 {
-		return fmt.Errorf("Cannot remove a volume that has snapshots")
+		return errors.New("Cannot remove a volume that has snapshots")
 	}
 
 	volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
@@ -338,11 +338,11 @@ func (d *lvm) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
 	}
 
 	if d.usesThinpool() && vol.config["lvm.stripes"] != "" {
-		return fmt.Errorf("lvm.stripes cannot be used with thin pool volumes")
+		return errors.New("lvm.stripes cannot be used with thin pool volumes")
 	}
 
 	if d.usesThinpool() && vol.config["lvm.stripes.size"] != "" {
-		return fmt.Errorf("lvm.stripes.size cannot be used with thin pool volumes")
+		return errors.New("lvm.stripes.size cannot be used with thin pool volumes")
 	}
 
 	return nil
@@ -360,12 +360,12 @@ func (d *lvm) UpdateVolume(vol Volume, changedConfig map[string]string) error {
 
 	_, changed := changedConfig["lvm.stripes"]
 	if changed {
-		return fmt.Errorf("lvm.stripes cannot be changed")
+		return errors.New("lvm.stripes cannot be changed")
 	}
 
 	_, changed = changedConfig["lvm.stripes.size"]
 	if changed {
-		return fmt.Errorf("lvm.stripes.size cannot be changed")
+		return errors.New("lvm.stripes.size cannot be changed")
 	}
 
 	return nil

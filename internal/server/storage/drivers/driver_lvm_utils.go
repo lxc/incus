@@ -71,7 +71,7 @@ func (d *lvm) thinpoolName() string {
 // openLoopFile opens a loop device and returns the device path.
 func (d *lvm) openLoopFile(source string) (string, error) {
 	if source == "" {
-		return "", fmt.Errorf("No source property found for the storage pool")
+		return "", errors.New("No source property found for the storage pool")
 	}
 
 	if filepath.IsAbs(source) && !linux.IsBlockdevPath(source) {
@@ -90,7 +90,7 @@ func (d *lvm) openLoopFile(source string) (string, error) {
 		return loopDeviceName, nil
 	}
 
-	return "", fmt.Errorf("Source is not loop file")
+	return "", errors.New("Source is not loop file")
 }
 
 // isLVMNotFoundExitError checks whether the supplied error is an exit error from an LVM command
@@ -765,7 +765,7 @@ func (d *lvm) thinPoolVolumeUsage(volDevPath string) (uint64, uint64, error) {
 
 	parts := util.SplitNTrimSpace(out, ",", -1, true)
 	if len(parts) < 2 {
-		return 0, 0, fmt.Errorf("Unexpected output from lvs command")
+		return 0, 0, errors.New("Unexpected output from lvs command")
 	}
 
 	total, err := strconv.ParseUint(parts[0], 10, 64)

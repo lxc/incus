@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -104,7 +105,7 @@ func (p *Process) AdminClient() (*AdminClient, error) {
 	}
 
 	if binaryName == "" {
-		return nil, fmt.Errorf("Couldn't find the MinIO client tool")
+		return nil, errors.New("Couldn't find the MinIO client tool")
 	}
 
 	// Encode the bucketName with base64url as only certain characters with alpha prefix are allowed

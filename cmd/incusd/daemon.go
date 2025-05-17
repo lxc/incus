@@ -421,7 +421,7 @@ func (d *Daemon) checkTrustedClient(r *http.Request) error {
 			return err
 		}
 
-		return fmt.Errorf("Not authorized")
+		return errors.New("Not authorized")
 	}
 
 	return nil
@@ -511,22 +511,22 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 
 	// DevIncus unix socket credentials on main API.
 	if r.RemoteAddr == "@dev_incus" {
-		return false, "", "", fmt.Errorf("Main API query can't come from /dev/incus socket")
+		return false, "", "", errors.New("Main API query can't come from /dev/incus socket")
 	}
 
 	// Cluster notification with wrong certificate.
 	if isClusterNotification(r) {
-		return false, "", "", fmt.Errorf("Cluster notification isn't using trusted server certificate")
+		return false, "", "", errors.New("Cluster notification isn't using trusted server certificate")
 	}
 
 	// Cluster internal client with wrong certificate.
 	if isClusterInternal(r) {
-		return false, "", "", fmt.Errorf("Cluster internal client isn't using trusted server certificate")
+		return false, "", "", errors.New("Cluster internal client isn't using trusted server certificate")
 	}
 
 	// Bad query, no TLS found.
 	if r.TLS == nil {
-		return false, "", "", fmt.Errorf("Bad/missing TLS on network query")
+		return false, "", "", errors.New("Bad/missing TLS on network query")
 	}
 
 	// Load the certificates.
@@ -638,7 +638,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 			select {
 			case <-d.setupChan:
 			default:
-				response := response.Unavailable(fmt.Errorf("Daemon is starting up"))
+				response := response.Unavailable(errors.New("Daemon is starting up"))
 				_ = response.Render(w)
 				return
 			}
@@ -747,7 +747,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		}
 
 		if errors.Is(d.shutdownCtx.Err(), context.Canceled) && !allowedDuringShutdown() {
-			_ = response.Unavailable(fmt.Errorf("Shutting down")).Render(w)
+			_ = response.Unavailable(errors.New("Shutting down")).Render(w)
 			return
 		}
 

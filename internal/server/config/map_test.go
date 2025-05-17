@@ -1,7 +1,7 @@
 package config_test
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 	"testing"
 
@@ -313,7 +313,7 @@ func TestMap_GettersPanic(t *testing.T) {
 
 // A Key setter that always fail.
 func failingSetter(string) (string, error) {
-	return "", fmt.Errorf("boom")
+	return "", errors.New("boom")
 }
 
 // A Key setter that uppercases the value.

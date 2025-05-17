@@ -1,7 +1,7 @@
 package instance
 
 import (
-	"fmt"
+	"errors"
 )
 
 // IsRootDiskDevice returns true if the given device representation is configured as root disk for
@@ -19,7 +19,7 @@ func IsRootDiskDevice(device map[string]string) bool {
 }
 
 // ErrNoRootDisk means there is no root disk device found.
-var ErrNoRootDisk = fmt.Errorf("No root device could be found")
+var ErrNoRootDisk = errors.New("No root device could be found")
 
 // GetRootDiskDevice returns the instance device that is configured as root disk.
 // Returns the device name and device config map.
@@ -30,7 +30,7 @@ func GetRootDiskDevice(devices map[string]map[string]string) (string, map[string
 	for n, d := range devices {
 		if IsRootDiskDevice(d) {
 			if devName != "" {
-				return "", nil, fmt.Errorf("More than one root device found")
+				return "", nil, errors.New("More than one root device found")
 			}
 
 			devName = n

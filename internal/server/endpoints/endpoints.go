@@ -1,6 +1,7 @@
 package endpoints
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -120,23 +121,23 @@ type Config struct {
 // config.RestServer to it.
 func Up(config *Config) (*Endpoints, error) {
 	if config.Dir == "" {
-		return nil, fmt.Errorf("No directory configured")
+		return nil, errors.New("No directory configured")
 	}
 
 	if config.UnixSocket == "" {
-		return nil, fmt.Errorf("No unix socket configured")
+		return nil, errors.New("No unix socket configured")
 	}
 
 	if config.RestServer == nil {
-		return nil, fmt.Errorf("No REST server configured")
+		return nil, errors.New("No REST server configured")
 	}
 
 	if config.DevIncusServer == nil {
-		return nil, fmt.Errorf("No devIncus server configured")
+		return nil, errors.New("No devIncus server configured")
 	}
 
 	if config.Cert == nil {
-		return nil, fmt.Errorf("No TLS certificate configured")
+		return nil, errors.New("No TLS certificate configured")
 	}
 
 	endpoints := &Endpoints{

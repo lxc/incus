@@ -84,7 +84,7 @@ func EnsureSchema(db *sql.DB, address string, dir string) (bool, error) {
 
 		if n > 1 {
 			// This should never happen, since we only add cluster members with valid addresses.
-			return fmt.Errorf("Found more than one cluster member with a standalone address (0.0.0.0)")
+			return errors.New("Found more than one cluster member with a standalone address (0.0.0.0)")
 		} else if n == 1 {
 			clustered = false
 		}
@@ -130,7 +130,7 @@ func EnsureSchema(db *sql.DB, address string, dir string) (bool, error) {
 
 		if n > 1 {
 			// This should never happen, since we only add nodes with valid addresses.
-			return fmt.Errorf("Found more than one cluster member with a standalone address (0.0.0.0)")
+			return errors.New("Found more than one cluster member with a standalone address (0.0.0.0)")
 		} else if n == 1 {
 			address = "0.0.0.0" // We're not clustered
 		}
@@ -272,7 +272,7 @@ func checkClusterIsUpgradable(ctx context.Context, tx *sql.Tx, target [2]int) er
 			// and presumably is waiting for other nodes
 			// to upgrade. Let's error out and shutdown
 			// since we need a greater version.
-			return fmt.Errorf("This cluster member's version is behind, please upgrade")
+			return errors.New("This cluster member's version is behind, please upgrade")
 		default:
 			panic("Unexpected return value from compareVersions")
 		}
@@ -280,4 +280,4 @@ func checkClusterIsUpgradable(ctx context.Context, tx *sql.Tx, target [2]int) er
 	return nil
 }
 
-var errSomeNodesAreBehind = fmt.Errorf("Some cluster members are behind this cluster member's version")
+var errSomeNodesAreBehind = errors.New("Some cluster members are behind this cluster member's version")

@@ -2,6 +2,7 @@ package bgp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -69,7 +70,7 @@ func (s *Server) start(address string, asn uint32, routerID net.IP) error {
 
 	// Check if already running
 	if s.bgp != nil {
-		return fmt.Errorf("BGP listener is already running")
+		return errors.New("BGP listener is already running")
 	}
 
 	// Spawn the BGP goroutines.

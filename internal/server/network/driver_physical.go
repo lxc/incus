@@ -435,7 +435,7 @@ func (n *physical) Update(newNetwork api.NetworkPut, targetNode string, clientTy
 		if hostNameChanged {
 			isUsed, err := n.IsUsed(true)
 			if isUsed || err != nil {
-				return fmt.Errorf("Cannot update network parent interface when in use")
+				return errors.New("Cannot update network parent interface when in use")
 			}
 
 			inUse, err := n.checkParentUse(newNetwork.Config)

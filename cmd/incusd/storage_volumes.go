@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -666,11 +667,11 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 
 	// Quick checks.
 	if req.Name == "" {
-		return response.BadRequest(fmt.Errorf("No name provided"))
+		return response.BadRequest(errors.New("No name provided"))
 	}
 
 	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(fmt.Errorf("Storage volume names may not contain slashes"))
+		return response.BadRequest(errors.New("Storage volume names may not contain slashes"))
 	}
 
 	// Backward compatibility.
@@ -723,7 +724,7 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 	if err != nil {
 		return response.SmartError(err)
 	} else if dbVolume != nil && !req.Source.Refresh {
-		return response.Conflict(fmt.Errorf("Volume by that name already exists"))
+		return response.Conflict(errors.New("Volume by that name already exists"))
 	}
 
 	target := request.QueryParam(r, "target")
@@ -748,7 +749,7 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if nodeAddress == "" {
-			return response.BadRequest(fmt.Errorf("The source is currently offline"))
+			return response.BadRequest(errors.New("The source is currently offline"))
 		}
 
 		return clusterCopyCustomVolumeInternal(s, r, nodeAddress, projectName, poolName, &req)
@@ -832,7 +833,7 @@ func doCustomVolumeRefresh(s *state.State, r *http.Request, requestProjectName s
 		defer reverter.Fail()
 
 		if req.Source.Name == "" {
-			return fmt.Errorf("No source volume name supplied")
+			return errors.New("No source volume name supplied")
 		}
 
 		err = pool.RefreshCustomVolume(projectName, srcProjectName, req.Name, req.Description, req.Config, req.Source.Pool, req.Source.Name, !req.Source.VolumeOnly, req.Source.RefreshExcludeOlder, op)
@@ -918,7 +919,7 @@ func doVolumeMigration(s *state.State, r *http.Request, requestProjectName strin
 	if req.Source.Certificate != "" {
 		certBlock, _ := pem.Decode([]byte(req.Source.Certificate))
 		if certBlock == nil {
-			return response.InternalError(fmt.Errorf("Invalid certificate"))
+			return response.InternalError(errors.New("Invalid certificate"))
 		}
 
 		cert, err = x509.ParseCertificate(certBlock.Bytes)
@@ -1045,7 +1046,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if internalInstance.IsSnapshot(volumeName) {
-		return response.BadRequest(fmt.Errorf("Invalid volume name"))
+		return response.BadRequest(errors.New("Invalid volume name"))
 	}
 
 	// Get the name of the storage pool the volume is supposed to be attached to.
@@ -1064,12 +1065,12 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 
 	// Quick checks.
 	if req.Name == "" {
-		return response.BadRequest(fmt.Errorf("No name provided"))
+		return response.BadRequest(errors.New("No name provided"))
 	}
 
 	// Check requested new volume name is not a snapshot volume.
 	if internalInstance.IsSnapshot(req.Name) {
-		return response.BadRequest(fmt.Errorf("Storage volume names may not contain slashes"))
+		return response.BadRequest(errors.New("Storage volume names may not contain slashes"))
 	}
 
 	// We currently only allow to create storage volumes of type storagePoolVolumeTypeCustom.
@@ -1095,11 +1096,11 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 		// and this means that the volume would effectively be moved into the default project, and so we
 		// require the user explicitly indicates this by targeting it directly.
 		if targetProjectName != req.Project {
-			return response.BadRequest(fmt.Errorf("Target project does not have features.storage.volumes enabled"))
+			return response.BadRequest(errors.New("Target project does not have features.storage.volumes enabled"))
 		}
 
 		if projectName == targetProjectName {
-			return response.BadRequest(fmt.Errorf("Project and target project are the same"))
+			return response.BadRequest(errors.New("Project and target project are the same"))
 		}
 
 		// Check if user has access to effective storage target project
@@ -1192,7 +1193,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 				})
 				if err != nil {
 					if s.ServerClustered && targetIsSet && volumeNotFound {
-						return response.NotFound(fmt.Errorf("Storage volume not found on this cluster member"))
+						return response.NotFound(errors.New("Storage volume not found on this cluster member"))
 					}
 
 					return response.SmartError(err)
@@ -1243,7 +1244,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if targetMemberInfo.IsOffline(s.GlobalConfig.OfflineThreshold()) {
-			return response.BadRequest(fmt.Errorf("Target cluster member is offline"))
+			return response.BadRequest(errors.New("Target cluster member is offline"))
 		}
 
 		run := func(op *operations.Operation) error {
@@ -1315,7 +1316,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 			return response.InternalError(err)
 		}
 
-		return response.Conflict(fmt.Errorf("Volume by that name already exists"))
+		return response.Conflict(errors.New("Volume by that name already exists"))
 	}
 
 	// Check if the daemon itself is using it.
@@ -1325,7 +1326,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if used {
-		return response.SmartError(fmt.Errorf("Volume is used by Incus itself and cannot be renamed"))
+		return response.SmartError(errors.New("Volume is used by Incus itself and cannot be renamed"))
 	}
 
 	var dbVolume *db.StorageVolume
@@ -1352,7 +1353,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 	})
 	if err != nil {
 		if s.ServerClustered && targetIsSet && volumeNotFound {
-			return response.NotFound(fmt.Errorf("Storage volume not found on this cluster member"))
+			return response.NotFound(errors.New("Storage volume not found on this cluster member"))
 		}
 
 		return response.SmartError(err)
@@ -1366,7 +1367,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if inst.IsRunning() {
-			return fmt.Errorf("Volume is still in use by running instances")
+			return errors.New("Volume is still in use by running instances")
 		}
 
 		return nil
@@ -1386,7 +1387,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 
 func migrateStorageVolume(s *state.State, r *http.Request, sourceVolumeName string, sourcePoolName string, targetNode string, projectName string, req api.StorageVolumePost, op *operations.Operation) error {
 	if targetNode == req.Source.Location {
-		return fmt.Errorf("Target must be different than storage volumes' current location")
+		return errors.New("Target must be different than storage volumes' current location")
 	}
 
 	var err error
@@ -1430,7 +1431,7 @@ func storageVolumePostClusteringMigrate(s *state.State, r *http.Request, srcPool
 	// Make sure that the source member is online if we end up being called from another member after a
 	// redirection due to the source member being offline.
 	if srcMemberOffline {
-		return nil, fmt.Errorf("The cluster member hosting the storage volume is offline")
+		return nil, errors.New("The cluster member hosting the storage volume is offline")
 	}
 
 	run := func(op *operations.Operation) error {
@@ -1929,7 +1930,7 @@ func storagePoolVolumePut(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(err)
 		}
 	} else {
-		return response.SmartError(fmt.Errorf("Invalid volume type"))
+		return response.SmartError(errors.New("Invalid volume type"))
 	}
 
 	return response.EmptySyncResponse
@@ -1989,7 +1990,7 @@ func storagePoolVolumePatch(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if internalInstance.IsSnapshot(volumeName) {
-		return response.BadRequest(fmt.Errorf("Invalid volume name"))
+		return response.BadRequest(errors.New("Invalid volume name"))
 	}
 
 	// Get the name of the storage pool the volume is supposed to be attached to.
@@ -2195,7 +2196,7 @@ func storagePoolVolumeDelete(d *Daemon, r *http.Request) response.Response {
 
 	if len(volumeUsedBy) > 0 {
 		if len(volumeUsedBy) != 1 || volumeType != db.StoragePoolVolumeTypeImage || !isImageURL(volumeUsedBy[0], dbVolume.Name) {
-			return response.BadRequest(fmt.Errorf("The storage volume is still in use"))
+			return response.BadRequest(errors.New("The storage volume is still in use"))
 		}
 	}
 
@@ -2224,7 +2225,7 @@ func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProj
 	defer reverter.Fail()
 
 	if volName == "" {
-		return response.BadRequest(fmt.Errorf("Missing volume name"))
+		return response.BadRequest(errors.New("Missing volume name"))
 	}
 
 	// Create isos directory if needed.

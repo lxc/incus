@@ -3,7 +3,7 @@ package util
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
+	"errors"
 
 	"github.com/lxc/incus/v6/shared/api"
 )
@@ -22,19 +22,19 @@ func JoinTokenDecode(input string) (*api.ClusterMemberJoinToken, error) {
 	}
 
 	if j.ServerName == "" {
-		return nil, fmt.Errorf("No server name in join token")
+		return nil, errors.New("No server name in join token")
 	}
 
 	if len(j.Addresses) < 1 {
-		return nil, fmt.Errorf("No cluster member addresses in join token")
+		return nil, errors.New("No cluster member addresses in join token")
 	}
 
 	if j.Secret == "" {
-		return nil, fmt.Errorf("No secret in join token")
+		return nil, errors.New("No secret in join token")
 	}
 
 	if j.Fingerprint == "" {
-		return nil, fmt.Errorf("No certificate fingerprint in join token")
+		return nil, errors.New("No certificate fingerprint in join token")
 	}
 
 	return &j, nil

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"sort"
@@ -206,7 +207,7 @@ func (m *Map) set(name string, value string, initial bool) (bool, error) {
 		for _, r := range strings.TrimPrefix(name, "user.") {
 			// Only allow letters, digits, and punctuation characters.
 			if !unicode.In(r, unicode.Letter, unicode.Digit, unicode.Punct) {
-				return false, fmt.Errorf("Invalid key name")
+				return false, errors.New("Invalid key name")
 			}
 		}
 
@@ -236,7 +237,7 @@ func (m *Map) set(name string, value string, initial bool) (bool, error) {
 
 	key, ok := m.schema[name]
 	if !ok {
-		return false, fmt.Errorf("unknown key")
+		return false, errors.New("unknown key")
 	}
 
 	// When unsetting a config key, the value argument will be empty.

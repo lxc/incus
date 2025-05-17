@@ -1,7 +1,7 @@
 package incus
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/lxc/incus/v6/shared/api"
 )
@@ -11,7 +11,7 @@ func (r *ProtocolIncus) GetMetadataConfiguration() (*api.MetadataConfiguration, 
 	metadataConfiguration := api.MetadataConfiguration{}
 
 	if !r.HasExtension("metadata_configuration") {
-		return nil, fmt.Errorf("The server is missing the required \"metadata_configuration\" API extension")
+		return nil, errors.New("The server is missing the required \"metadata_configuration\" API extension")
 	}
 
 	_, err := r.queryStruct("GET", "/metadata/configuration", nil, "", &metadataConfiguration)

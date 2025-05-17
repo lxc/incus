@@ -2,7 +2,7 @@ package ovs
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"runtime"
 	"time"
 
@@ -72,7 +72,7 @@ func NewVSwitch(dbAddr string) (*VSwitch, error) {
 	// Get the root UUID.
 	rows := ovs.Cache().Table("Open_vSwitch").Rows()
 	if len(rows) != 1 {
-		return nil, fmt.Errorf("Cannot find the OVS root switch")
+		return nil, errors.New("Cannot find the OVS root switch")
 	}
 
 	for uuid := range rows {

@@ -130,7 +130,7 @@ func (d *gpuPhysical) validateConfig(instConf instance.ConfigReader) error {
 // validateEnvironment checks the runtime environment for correctness.
 func (d *gpuPhysical) validateEnvironment() error {
 	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
-		return fmt.Errorf("GPU devices cannot be used when migration.stateful is enabled")
+		return errors.New("GPU devices cannot be used when migration.stateful is enabled")
 	}
 
 	return validatePCIDevice(d.config["pci"])
@@ -254,7 +254,7 @@ func (d *gpuPhysical) startContainer() (*deviceConfig.RunConfig, error) {
 	}
 
 	if !found {
-		return nil, fmt.Errorf("Failed to detect requested GPU device")
+		return nil, errors.New("Failed to detect requested GPU device")
 	}
 
 	return &runConf, nil
@@ -296,14 +296,14 @@ func (d *gpuPhysical) startVM() (*deviceConfig.RunConfig, error) {
 		}
 
 		if pciAddress != "" {
-			return nil, fmt.Errorf("VMs cannot match multiple GPUs per device")
+			return nil, errors.New("VMs cannot match multiple GPUs per device")
 		}
 
 		pciAddress = gpu.PCIAddress
 	}
 
 	if pciAddress == "" {
-		return nil, fmt.Errorf("Failed to detect requested GPU device")
+		return nil, errors.New("Failed to detect requested GPU device")
 	}
 
 	// Make sure that vfio-pci is loaded.

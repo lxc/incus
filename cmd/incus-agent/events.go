@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -62,7 +63,7 @@ func eventsSocket(d *Daemon, r *http.Request, w http.ResponseWriter) error {
 	} else {
 		h, ok := w.(http.Hijacker)
 		if !ok {
-			return fmt.Errorf("Missing implemented http.Hijacker interface")
+			return errors.New("Missing implemented http.Hijacker interface")
 		}
 
 		conn, _, err := h.Hijack()

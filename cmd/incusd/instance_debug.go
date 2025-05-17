@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -63,7 +63,7 @@ func instanceDebugMemoryGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if internalInstance.IsSnapshot(name) {
-		return response.BadRequest(fmt.Errorf("Invalid instance name"))
+		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
 	// Handle requests targeted to a container on a different node
@@ -83,16 +83,16 @@ func instanceDebugMemoryGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if inst.Type() != instancetype.VM {
-		return response.BadRequest(fmt.Errorf("Memory dumps are only supported for virtual machines"))
+		return response.BadRequest(errors.New("Memory dumps are only supported for virtual machines"))
 	}
 
 	if !inst.IsRunning() {
-		return response.BadRequest(fmt.Errorf("Instance must be running to dump memory"))
+		return response.BadRequest(errors.New("Instance must be running to dump memory"))
 	}
 
 	v, ok := inst.(instance.VM)
 	if !ok {
-		return response.InternalError(fmt.Errorf("Failed to cast inst to VM"))
+		return response.InternalError(errors.New("Failed to cast inst to VM"))
 	}
 
 	// Wrap up the request.
