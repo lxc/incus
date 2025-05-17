@@ -80,8 +80,9 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 	}
 
 	// Unix socket
-	if strings.HasPrefix(remote.Addr, "unix:") {
-		d, err := incus.ConnectIncusUnix(strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//"), args)
+	remoteAddr, hasUnixPrefix := strings.CutPrefix(remote.Addr, "unix:")
+	if hasUnixPrefix {
+		d, err := incus.ConnectIncusUnix(strings.TrimPrefix(remoteAddr, "//"), args)
 		if err != nil {
 			var netErr *net.OpError
 
@@ -171,8 +172,9 @@ func (c *Config) GetImageServer(name string) (incus.ImageServer, error) {
 	}
 
 	// Unix socket
-	if strings.HasPrefix(remote.Addr, "unix:") {
-		d, err := incus.ConnectIncusUnix(strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//"), args)
+	remoteAddr, hasUnixPrefix := strings.CutPrefix(remote.Addr, "unix:")
+	if hasUnixPrefix {
+		d, err := incus.ConnectIncusUnix(strings.TrimPrefix(remoteAddr, "//"), args)
 		if err != nil {
 			return nil, err
 		}
