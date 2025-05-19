@@ -44,6 +44,7 @@ type Migration struct {
 	server        incus.InstanceServer
 	sourceFormat  string
 	sourcePath    string
+	target        string
 }
 
 func (m *Migration) runMigration(migrationHandler func(path string) error) error {
@@ -195,6 +196,30 @@ func (m *Migration) setSourceFormat() error {
 			m.sourceFormat = "raw"
 		}
 	}
+
+	return nil
+}
+
+func (m *Migration) askTarget() error {
+	if !m.server.IsClustered() {
+		return nil
+	}
+
+	ok, err := m.asker.AskBool("Would you like to target a specific server or group in the cluster? [default=no]: ", "no")
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		return nil
+	}
+
+	clusterTarget, err := m.asker.AskString("Target name: ", "", nil)
+	if err != nil {
+		return err
+	}
+
+	m.target = clusterTarget
 
 	return nil
 }
