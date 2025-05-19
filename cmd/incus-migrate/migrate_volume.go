@@ -62,6 +62,14 @@ func (m *VolumeMigration) gatherInfo() error {
 		m.server = m.server.UseProject(m.project)
 	}
 
+	// Target
+	err = m.askTarget()
+	if err != nil {
+		return err
+	}
+
+	m.server = m.server.UseTarget(m.target)
+
 	// Pool
 	pools, err := m.server.GetStoragePools()
 	if err != nil {
