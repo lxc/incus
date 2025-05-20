@@ -235,11 +235,15 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 			// Storage pool changes require a target flag.
 			if req.Pool != "" {
 				if inst.Type() != instancetype.VM {
-					return response.BadRequest(fmt.Errorf("Storage pool change supported only by virtual-machines"))
+					return response.BadRequest(fmt.Errorf("Live storage pool changes aren't supported for containers"))
+				}
+
+				if !s.ServerClustered {
+					return response.BadRequest(fmt.Errorf("Live storage pool changes aren't supported on standalone systems"))
 				}
 
 				if target == "" {
-					return response.BadRequest(fmt.Errorf("Storage pool can be specified only together with target flag"))
+					return response.BadRequest(fmt.Errorf("Live storage pool changes require the VM be moved to another cluster member"))
 				}
 			}
 
