@@ -216,7 +216,6 @@ func (d *truenas) parseSource() error {
 		source += d.name
 	}
 
-	// legacy stores source in truenas.dataset
 	d.config["truenas.dataset"] = source
 
 	if host != "" {
@@ -228,11 +227,6 @@ func (d *truenas) parseSource() error {
 		d.config["truenas.host"] = host
 	}
 	d.config["source"] = source
-
-	// set host url
-	if d.config["truenas.url"] == "" && d.config["truenas.host"] != "" {
-		d.config["truenas.url"] = fmt.Sprintf("wss://%s/api/current", d.config["truenas.host"])
-	}
 
 	return nil
 }
@@ -331,12 +325,18 @@ func (d *truenas) Delete(op *operations.Operation) error {
 // Validate checks that all provide keys are supported and that no conflicting or missing configuration is present.
 func (d *truenas) Validate(config map[string]string) error {
 	rules := map[string]func(value string) error{
-		"source":              validate.IsAny,
-		"truenas.dataset":     validate.IsAny,
-		"truenas.host":        validate.IsAny,
-		"truenas.api_key":     validate.IsAny,
-		"truenas.key_file":    validate.IsAny,
-		"truenas.url":         validate.IsAny,
+		// only truenas.dataset is required. the tool has default behaviour/connections defined.
+		"source":          validate.IsAny, // can be used as a shortcut to specify datset and optionaly host.
+		"truenas.dataset": validate.IsAny,
+
+		// global flags for the tool
+		"truenas.allow_insecure": validate.Optional(validate.IsBool),
+		"truenas.api_key":        validate.IsAny,
+		"truenas.config":         validate.IsAny,
+		"truenas.config_file":    validate.IsAny,
+		"truenas.host":           validate.IsAny,
+
+		// controls behaviour of the driver
 		"truenas.clone_copy":  validate.Optional(validate.IsBool),
 		"truenas.force_reuse": validate.Optional(validate.IsBool),
 	}
@@ -352,17 +352,39 @@ func (d *truenas) Update(changedConfig map[string]string) error {
 		return fmt.Errorf("truenas.dataset cannot be modified")
 	}
 
+	allow_insecure, ok := changedConfig["truenas.allow_insecure"]
+	if ok {
+		d.config["truenas.allow_insecure"] = allow_insecure
+	}
+
+	apikey, ok := changedConfig["truenas.api_key"]
+	if ok {
+		d.config["truenas.api_key"] = apikey
+	}
+
+	config, ok := changedConfig["truenas.config"]
+	if ok {
+		d.config["truenas.config"] = config
+	}
+
+	config_file, ok := changedConfig["truenas.config_file"]
+	if ok {
+		d.config["truenas.config_file"] = config_file
+	}
+
 	host, ok := changedConfig["truenas.host"]
 	if ok {
 		d.config["truenas.host"] = host
 	}
-	url, ok := changedConfig["truenas.host"]
+
+	clone_copy, ok := changedConfig["truenas.clone_copy"]
 	if ok {
-		d.config["truenas.url"] = url
+		d.config["truenas.clone_copy"] = clone_copy
 	}
-	apikey, ok := changedConfig["truenas.api_key"]
+
+	force_reuse, ok := changedConfig["truenas.force_reuse"]
 	if ok {
-		d.config["truenas.api_key"] = apikey
+		d.config["truenas.force_reuse"] = force_reuse
 	}
 
 	return nil
