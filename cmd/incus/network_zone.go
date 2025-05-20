@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 
@@ -573,9 +575,7 @@ func (c *cmdNetworkZoneSet) Run(cmd *cobra.Command, args []string) error {
 			}
 		}
 	} else {
-		for k, v := range keys {
-			writable.Config[k] = v
-		}
+		maps.Copy(writable.Config, keys)
 	}
 
 	return resource.server.UpdateNetworkZone(resource.name, writable, etag)
@@ -1291,9 +1291,7 @@ func (c *cmdNetworkZoneRecordSet) Run(cmd *cobra.Command, args []string) error {
 			}
 		}
 	} else {
-		for k, v := range keys {
-			writable.Config[k] = v
-		}
+		maps.Copy(writable.Config, keys)
 	}
 
 	return resource.server.UpdateNetworkZoneRecord(resource.name, args[1], writable, etag)
@@ -1685,7 +1683,7 @@ func (c *cmdNetworkZoneRecordEntry) RunRemove(cmd *cobra.Command, args []string)
 		}
 
 		found = true
-		netRecord.Entries = append(netRecord.Entries[:i], netRecord.Entries[i+1:]...)
+		netRecord.Entries = slices.Delete(netRecord.Entries, i, i+1)
 	}
 
 	if !found {

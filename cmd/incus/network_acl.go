@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"reflect"
 	"sort"
@@ -568,9 +569,7 @@ func (c *cmdNetworkACLSet) Run(cmd *cobra.Command, args []string) error {
 			}
 		}
 	} else {
-		for k, v := range keys {
-			writable.Config[k] = v
-		}
+		maps.Copy(writable.Config, keys)
 	}
 
 	return resource.server.UpdateNetworkACL(resource.name, writable, etag)
@@ -943,7 +942,7 @@ func networkACLRuleJSONStructFieldMap() map[string]int {
 	ruleType := reflect.TypeOf(api.NetworkACLRule{})
 	allowedKeys := make(map[string]int, ruleType.NumField())
 
-	for i := 0; i < ruleType.NumField(); i++ {
+	for i := range ruleType.NumField() {
 		field := ruleType.Field(i)
 		if field.PkgPath != "" {
 			continue // Skip unexported fields. It is empty for upper case (exported) field names.

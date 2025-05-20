@@ -1,6 +1,8 @@
 package device
 
 import (
+	"slices"
+
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 )
 
@@ -12,11 +14,5 @@ func instanceSupported(instType instancetype.Type, supportedTypes ...instancetyp
 		return true
 	}
 
-	for _, supportedType := range supportedTypes {
-		if instType == supportedType {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(supportedTypes, instType)
 }

@@ -3,6 +3,7 @@ package drivers
 import (
 	"bufio"
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 
@@ -39,9 +40,7 @@ func qemuRawCfgOverride(conf []cfg.Section, confOverride string) ([]cfg.Section,
 
 		// We perform a copy of the map to avoid modifying the original one
 		entries := make(map[string]string, len(sec.Entries))
-		for k, v := range sec.Entries {
-			entries[k] = v
-		}
+		maps.Copy(entries, sec.Entries)
 
 		content := &sectionContent{
 			comment: sec.Comment,

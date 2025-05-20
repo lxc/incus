@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"net"
 	"net/http"
 	"net/url"
@@ -289,13 +290,7 @@ func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operati
 		return nil, nil, err
 	}
 
-	storagePoolSupported := false
-	for _, supportedType := range d.storagePool.Driver().Info().VolumeTypes {
-		if supportedType == volType {
-			storagePoolSupported = true
-			break
-		}
-	}
+	storagePoolSupported := slices.Contains(d.storagePool.Driver().Info().VolumeTypes, volType)
 
 	if !storagePoolSupported {
 		return nil, nil, fmt.Errorf("Storage pool does not support instance type")
@@ -3344,13 +3339,7 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 			var w *os.File
 
 			// Check if the template should be applied now.
-			found := false
-			for _, tplTrigger := range tpl.When {
-				if tplTrigger == string(trigger) {
-					found = true
-					break
-				}
-			}
+			found := slices.Contains(tpl.When, string(trigger))
 
 			if !found {
 				return nil
@@ -3899,7 +3888,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuInfo *cpuTopology
 	}
 
 	// Allocate 8 PCI slots for hotplug devices.
-	for i := 0; i < 8; i++ {
+	for range 8 {
 		bus.allocate(busFunctionGroupNone)
 	}
 
@@ -3995,9 +3984,9 @@ func (d *qemu) getCPUOpts(cpuInfo *cpuTopology, memSizeBytes int64) (*qemuCPUOpt
 		vcpuCore := map[uint64]uint64{}
 		vcpuThread := map[uint64]uint64{}
 		vcpu := uint64(0)
-		for i := 0; i < cpuInfo.sockets; i++ {
-			for j := 0; j < cpuInfo.cores; j++ {
-				for k := 0; k < cpuInfo.threads; k++ {
+		for i := range cpuInfo.sockets {
+			for j := range cpuInfo.cores {
+				for k := range cpuInfo.threads {
 					vcpuSocket[vcpu] = uint64(i)
 					vcpuCore[vcpu] = uint64(j)
 					vcpuThread[vcpu] = uint64(k)
@@ -4594,10 +4583,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 	// Returns the number of queues to use with NIC.
 	configureQueues := func(cpuCount int) int {
 		// Number of queues is the same as number of vCPUs. Run with a minimum of two queues.
-		queueCount := cpuCount
-		if queueCount < 2 {
-			queueCount = 2
-		}
+		queueCount := max(cpuCount, 2)
 
 		// Number of vectors is number of vCPUs * 2 (RX/TX) + 2 (config/control MSI-X).
 		vectors := 2*queueCount + 2
@@ -4632,7 +4618,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 			// Open the device once for each queue and pass to QEMU.
 			fds := make([]string, 0, queueCount)
 			vhostfds := make([]string, 0, queueCount)
-			for i := 0; i < queueCount; i++ {
+			for i := range queueCount {
 				devFile, err := deviceFile()
 				if err != nil {
 					return fmt.Errorf("Error opening netdev file for queue %d: %w", i, err)
@@ -6274,7 +6260,7 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 
 	// Changing the memory balloon can take time, so poll the effective size to check it has shrunk within 1%
 	// of the target size, which we then take as success (it may still continue to shrink closer to target).
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		curSizeBytes, err = monitor.GetMemoryBalloonSizeBytes()
 		if err != nil {
 			return err
@@ -6731,9 +6717,7 @@ func (d *qemu) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties m
 		meta.Properties = map[string]string{}
 	}
 
-	for k, v := range properties {
-		meta.Properties[k] = v
-	}
+	maps.Copy(meta.Properties, properties)
 
 	if !expiration.IsZero() {
 		meta.ExpiryDate = expiration.UTC().Unix()
@@ -7577,10 +7561,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 	// Respond with our maximum supported header version if the requested version is higher than ours.
 	// Otherwise just return the requested header version to the source.
-	indexHeaderVersion := offerHeader.GetIndexHeaderVersion()
-	if indexHeaderVersion > localMigration.IndexHeaderVersion {
-		indexHeaderVersion = localMigration.IndexHeaderVersion
-	}
+	indexHeaderVersion := min(offerHeader.GetIndexHeaderVersion(), localMigration.IndexHeaderVersion)
 
 	respHeader.IndexHeaderVersion = &indexHeaderVersion
 	respHeader.SnapshotNames = offerHeader.SnapshotNames
@@ -9574,7 +9555,7 @@ func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {
 		}
 
 		// Only allocate the difference in CPUs.
-		for i := 0; i < count-totalReservedCPUs; i++ {
+		for i := range count - totalReservedCPUs {
 			cpu := availableCPUs[i]
 
 			devID := fmt.Sprintf("cpu%d%d%d", cpu.Props.SocketID, cpu.Props.CoreID, cpu.Props.ThreadID)
@@ -9608,7 +9589,7 @@ func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {
 		}
 
 		// Less CPUs requested.
-		for i := 0; i < totalReservedCPUs-count; i++ {
+		for i := range totalReservedCPUs - count {
 			cpu := hotpluggedCPUs[i]
 
 			fields := strings.Split(cpu.QOMPath, "/")

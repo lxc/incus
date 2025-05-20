@@ -843,7 +843,7 @@ assign:
 		}
 
 		notified := false
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			time.Sleep(500 * time.Millisecond)
 			servers, err := local.Cluster(context.Background())
 			if err != nil {

@@ -2,6 +2,7 @@ package osarch
 
 import (
 	"fmt"
+	"slices"
 )
 
 // nolint:revive
@@ -117,10 +118,8 @@ func ArchitectureID(arch string) (int, error) {
 	}
 
 	for archID, archAliases := range architectureAliases {
-		for _, archName := range archAliases {
-			if archName == arch {
-				return archID, nil
-			}
+		if slices.Contains(archAliases, arch) {
+			return archID, nil
 		}
 	}
 

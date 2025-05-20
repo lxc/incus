@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
 	"os"
@@ -130,11 +131,7 @@ func (l *LokiLogger) run() {
 	batch := newBatch()
 
 	minWaitCheckFrequency := 10 * time.Millisecond
-	maxWaitCheckFrequency := l.cfg.batchWait / 10
-
-	if maxWaitCheckFrequency < minWaitCheckFrequency {
-		maxWaitCheckFrequency = minWaitCheckFrequency
-	}
+	maxWaitCheckFrequency := max(l.cfg.batchWait/10, minWaitCheckFrequency)
 
 	maxWaitCheck := time.NewTicker(maxWaitCheckFrequency)
 
@@ -189,7 +186,7 @@ func (l *LokiLogger) sendBatch(batch *batch) {
 
 	var status int
 
-	for i := 0; i < l.cfg.retry; i++ {
+	for range l.cfg.retry {
 		select {
 		case <-l.quit:
 			return
@@ -317,9 +314,7 @@ func (l *LokiLogger) HandleEvent(event api.Event) {
 		ctx["action"] = lifecycleEvent.Action
 		ctx["source"] = lifecycleEvent.Source
 
-		for k, v := range buildNestedContext("context", lifecycleEvent.Context) {
-			ctx[k] = v
-		}
+		maps.Copy(ctx, buildNestedContext("context", lifecycleEvent.Context))
 
 		if lifecycleEvent.Requestor != nil {
 			ctx["requester-address"] = lifecycleEvent.Requestor.Address
@@ -377,9 +372,7 @@ func (l *LokiLogger) HandleEvent(event api.Event) {
 		// log message itself.
 		ctx["level"] = logEvent.Level
 
-		for k, v := range buildNestedContext("context", tmpContext) {
-			ctx[k] = v
-		}
+		maps.Copy(ctx, buildNestedContext("context", tmpContext))
 
 		// Add key-value pairs as labels but don't override any labels.
 		for k, v := range ctx {
@@ -443,7 +436,7 @@ func buildNestedContext(prefix string, m map[string]any) map[string]string {
 
 // MarshalJSON returns the JSON encoding of Entry.
 func (e Entry) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("[\"%d\", %s]", e.Timestamp.UnixNano(), strconv.Quote(e.Line))), nil
+	return fmt.Appendf(nil, "[\"%d\", %s]", e.Timestamp.UnixNano(), strconv.Quote(e.Line)), nil
 }
 
 // String implements the Stringer interface. It returns a formatted/sorted set of label key/value pairs.

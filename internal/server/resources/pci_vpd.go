@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"maps"
 	"sort"
 	"strings"
 
@@ -119,9 +120,7 @@ func parsePCIVPD(buf []byte) api.ResourcesPCIVPD {
 			buf, entries = vpdReadEntries(buf, length)
 
 			// Append values since there might be multiple sections.
-			for key, value := range entries {
-				vpd.Entries[key] = value
-			}
+			maps.Copy(vpd.Entries, entries)
 
 		default:
 			// Check that we aren't past the buffer (invalid length).

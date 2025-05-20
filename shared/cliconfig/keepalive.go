@@ -41,7 +41,7 @@ func (c *Config) handleKeepAlive(remote Remote, name string, args *incus.Connect
 		}
 
 		// Try up to 10 times over 5s.
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			if util.PathExists(socketPath) {
 				break
 			}

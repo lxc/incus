@@ -364,7 +364,7 @@ func (d *proxy) Start() (*deviceConfig.RunConfig, error) {
 			}
 
 			// Poll log file a few times until we see "Started" to indicate successful start.
-			for i := 0; i < 10; i++ {
+			for range 10 {
 				started, err := d.checkProcStarted(logPath)
 				if err != nil {
 					_ = p.Stop()

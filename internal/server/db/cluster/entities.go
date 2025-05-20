@@ -110,7 +110,7 @@ func URLToEntityType(rawURL string) (int, string, string, []string, error) {
 		// Make an []any for the number of expected path arguments and set each value in the slice to a *string.
 		nPathArgs := strings.Count(spaceSeparatedEntityPath, "%s")
 		pathArgsAny := make([]any, 0, nPathArgs)
-		for i := 0; i < nPathArgs; i++ {
+		for range nPathArgs {
 			var pathComponentStr string
 			pathArgsAny = append(pathArgsAny, &pathComponentStr)
 		}

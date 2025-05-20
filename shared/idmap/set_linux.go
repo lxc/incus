@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -113,11 +114,8 @@ func (m *Set) doShiftIntoContainer(dir string, how string, skipper ShiftSkipper)
 		}
 
 		if stat.Nlink >= 2 {
-			for _, linkInode := range hardLinks {
-				// File was already shifted through hardlink.
-				if linkInode == stat.Ino {
-					return nil
-				}
+			if slices.Contains(hardLinks, stat.Ino) {
+				return nil
 			}
 
 			hardLinks = append(hardLinks, stat.Ino)

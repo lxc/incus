@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"maps"
 )
 
 // MetadataConfiguration represents a server's exposed configuration metadata
@@ -33,9 +34,7 @@ func (m *MetadataConfiguration) GetKeys(entity string, group string) (map[string
 
 	// Go over the keys.
 	for _, k := range configGroup.Keys {
-		for name, entry := range k {
-			keys[name] = entry
-		}
+		maps.Copy(keys, k)
 	}
 
 	return keys, nil

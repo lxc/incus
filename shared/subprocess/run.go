@@ -149,7 +149,7 @@ func TryRunCommandAttemptsDuration(attempts int, delay time.Duration, name strin
 	var err error
 	var output string
 
-	for i := 0; i < attempts; i++ {
+	for range attempts {
 		output, err = RunCommand(name, arg...)
 		if err == nil {
 			break

@@ -50,7 +50,7 @@ func (m *MetricSet) FilterSamples(permissionChecker func(object auth.Object) boo
 
 // AddSamples adds samples of the type metricType to the MetricSet.
 func (m *MetricSet) AddSamples(metricType MetricType, samples ...Sample) {
-	for i := 0; i < len(samples); i++ {
+	for i := range samples {
 		// Add global labels to samples
 		for labelName, labelValue := range m.labels {
 			// Ensure we always have a valid Labels map

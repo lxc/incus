@@ -242,15 +242,12 @@ func (t *TLS) GetInstanceAccess(ctx context.Context, projectName string, instanc
 		}
 
 		// Restricted
-		for _, proj := range certificateProjects {
-			if proj == projectName {
-				access = append(access, api.AccessEntry{
-					Identifier: fingerprint,
-					Role:       "operator",
-					Provider:   "tls",
-				})
-				break
-			}
+		if slices.Contains(certificateProjects, projectName) {
+			access = append(access, api.AccessEntry{
+				Identifier: fingerprint,
+				Role:       "operator",
+				Provider:   "tls",
+			})
 		}
 	}
 
@@ -270,15 +267,12 @@ func (t *TLS) GetInstanceAccess(ctx context.Context, projectName string, instanc
 		}
 
 		// Restricted
-		for _, proj := range certificateProjects {
-			if proj == projectName {
-				access = append(access, api.AccessEntry{
-					Identifier: fingerprint,
-					Role:       "view",
-					Provider:   "tls",
-				})
-				break
-			}
+		if slices.Contains(certificateProjects, projectName) {
+			access = append(access, api.AccessEntry{
+				Identifier: fingerprint,
+				Role:       "view",
+				Provider:   "tls",
+			})
 		}
 	}
 
@@ -304,15 +298,12 @@ func (t *TLS) GetProjectAccess(ctx context.Context, projectName string) (*api.Ac
 			})
 		}
 
-		for _, project := range certificateProjects {
-			if project == projectName {
-				access = append(access, api.AccessEntry{
-					Identifier: fingerprint,
-					Role:       "operator",
-					Provider:   "tls",
-				})
-				break
-			}
+		if slices.Contains(certificateProjects, projectName) {
+			access = append(access, api.AccessEntry{
+				Identifier: fingerprint,
+				Role:       "operator",
+				Provider:   "tls",
+			})
 		}
 	}
 
@@ -327,15 +318,12 @@ func (t *TLS) GetProjectAccess(ctx context.Context, projectName string) (*api.Ac
 			})
 		}
 
-		for _, project := range certificateProjects {
-			if project == projectName {
-				access = append(access, api.AccessEntry{
-					Identifier: fingerprint,
-					Role:       "view",
-					Provider:   "tls",
-				})
-				break
-			}
+		if slices.Contains(certificateProjects, projectName) {
+			access = append(access, api.AccessEntry{
+				Identifier: fingerprint,
+				Role:       "view",
+				Provider:   "tls",
+			})
 		}
 	}
 

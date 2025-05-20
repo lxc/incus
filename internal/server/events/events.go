@@ -157,13 +157,7 @@ func (s *Server) Inject(event api.Event, eventSource EventSource) {
 
 func (s *Server) broadcast(event api.Event, eventSource EventSource) error {
 	sourceInSlice := func(source EventSource, sources []EventSource) bool {
-		for _, i := range sources {
-			if source == i {
-				return true
-			}
-		}
-
-		return false
+		return slices.Contains(sources, source)
 	}
 
 	s.lock.Lock()

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"net"
 	"net/http"
 	"os"
@@ -257,13 +258,7 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operatio
 		return nil, nil, err
 	}
 
-	storagePoolSupported := false
-	for _, supportedType := range d.storagePool.Driver().Info().VolumeTypes {
-		if supportedType == volType {
-			storagePoolSupported = true
-			break
-		}
-	}
+	storagePoolSupported := slices.Contains(d.storagePool.Driver().Info().VolumeTypes, volType)
 
 	if !storagePoolSupported {
 		return nil, nil, fmt.Errorf("Storage pool does not support instance type")
@@ -1067,8 +1062,9 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 		//  type: string
 		//  liveupdate: yes (exec)
 		//  shortdesc: Environment variables to export
-		if strings.HasPrefix(k, "environment.") {
-			err = lxcSetConfigItem(cc, "lxc.environment", fmt.Sprintf("%s=%s", strings.TrimPrefix(k, "environment."), v))
+		after, ok := strings.CutPrefix(k, "environment.")
+		if ok {
+			err = lxcSetConfigItem(cc, "lxc.environment", fmt.Sprintf("%s=%s", after, v))
 			if err != nil {
 				return nil, err
 			}
@@ -1295,8 +1291,9 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 	// Setup process limits
 	for k, v := range d.expandedConfig {
-		if strings.HasPrefix(k, "limits.kernel.") {
-			prlimitSuffix := strings.TrimPrefix(k, "limits.kernel.")
+		after, ok := strings.CutPrefix(k, "limits.kernel.")
+		if ok {
+			prlimitSuffix := after
 			prlimitKey := fmt.Sprintf("lxc.prlimit.%s", prlimitSuffix)
 			err = lxcSetConfigItem(cc, prlimitKey, v)
 			if err != nil {
@@ -1314,8 +1311,9 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 		//  liveupdate: no
 		//  condition: container
 		//  shortdesc: Override for the corresponding `sysctl` setting in the container
-		if strings.HasPrefix(k, "linux.sysctl.") {
-			sysctlSuffix := strings.TrimPrefix(k, "linux.sysctl.")
+		after, ok := strings.CutPrefix(k, "linux.sysctl.")
+		if ok {
+			sysctlSuffix := after
 			sysctlKey := fmt.Sprintf("lxc.sysctl.%s", sysctlSuffix)
 			err = lxcSetConfigItem(cc, sysctlKey, v)
 			if err != nil {
@@ -2472,7 +2470,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			return "", nil, err
 		}
 
-		err = os.WriteFile(filepath.Join(d.Path(), "network", "hosts"), []byte(fmt.Sprintf(`127.0.0.1   localhost
+		err = os.WriteFile(filepath.Join(d.Path(), "network", "hosts"), fmt.Appendf(nil, `127.0.0.1   localhost
 127.0.1.1   %s
 
 ::1     localhost ip6-localhost ip6-loopback
@@ -2480,7 +2478,7 @@ fe00::0 ip6-localnet
 ff00::0 ip6-mcastprefix
 ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
-`, d.name)), 0o644)
+`, d.name), 0o644)
 		if err != nil {
 			return "", nil, err
 		}
@@ -2490,7 +2488,7 @@ ff02::2 ip6-allrouters
 			return "", nil, err
 		}
 
-		err = os.WriteFile(filepath.Join(d.Path(), "network", "hostname"), []byte(fmt.Sprintf("%s\n", d.name)), 0o644)
+		err = os.WriteFile(filepath.Join(d.Path(), "network", "hostname"), fmt.Appendf(nil, "%s\n", d.name), 0o644)
 		if err != nil {
 			return "", nil, err
 		}
@@ -2818,8 +2816,9 @@ func (d *lxc) Start(stateful bool) error {
 	}
 
 	for k, v := range d.expandedConfig {
-		if strings.HasPrefix(k, "environment.") {
-			envDict[strings.TrimPrefix(k, "environment.")] = v
+		after, ok := strings.CutPrefix(k, "environment.")
+		if ok {
+			envDict[after] = v
 		}
 	}
 
@@ -5448,9 +5447,7 @@ func (d *lxc) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties ma
 		meta.Properties = map[string]string{}
 	}
 
-	for k, v := range properties {
-		meta.Properties[k] = v
-	}
+	maps.Copy(meta.Properties, properties)
 
 	if !expiration.IsZero() {
 		meta.ExpiryDate = expiration.UTC().Unix()
@@ -6367,10 +6364,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 	// Respond with our maximum supported header version if the requested version is higher than ours.
 	// Otherwise just return the requested header version to the source.
-	indexHeaderVersion := offerHeader.GetIndexHeaderVersion()
-	if indexHeaderVersion > localMigration.IndexHeaderVersion {
-		indexHeaderVersion = localMigration.IndexHeaderVersion
-	}
+	indexHeaderVersion := min(offerHeader.GetIndexHeaderVersion(), localMigration.IndexHeaderVersion)
 
 	respHeader.IndexHeaderVersion = &indexHeaderVersion
 	respHeader.SnapshotNames = offerHeader.SnapshotNames
@@ -7092,13 +7086,7 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 			var w *os.File
 
 			// Check if the template should be applied now
-			found := false
-			for _, tplTrigger := range tpl.When {
-				if tplTrigger == string(trigger) {
-					found = true
-					break
-				}
-			}
+			found := slices.Contains(tpl.When, string(trigger))
 
 			if !found {
 				return nil
@@ -7418,7 +7406,7 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 
 		// Write PID file.
 		pidFile := filepath.Join(d.RunPath(), "forkfile.pid")
-		err = os.WriteFile(pidFile, []byte(fmt.Sprintf("%d\n", forkfile.Process.Pid)), 0o600)
+		err = os.WriteFile(pidFile, fmt.Appendf(nil, "%d\n", forkfile.Process.Pid), 0o600)
 		if err != nil {
 			chReady <- fmt.Errorf("Failed to write forkfile PID: %w", err)
 			return
@@ -7988,7 +7976,7 @@ func (d *lxc) processesState(pid int) (int64, error) {
 	pids := []int64{int64(pid)}
 
 	// Go through the pid list, adding new pids at the end so we go through them all
-	for i := 0; i < len(pids); i++ {
+	for i := range pids {
 		fname := fmt.Sprintf("/proc/%d/task/%d/children", pids[i], pids[i])
 		fcont, err := os.ReadFile(fname)
 		if err != nil {
@@ -7997,7 +7985,7 @@ func (d *lxc) processesState(pid int) (int64, error) {
 		}
 
 		content := strings.Split(string(fcont), " ")
-		for j := 0; j < len(content); j++ {
+		for j := range content {
 			pid, err := strconv.ParseInt(content[j], 10, 64)
 			if err == nil {
 				pids = append(pids, pid)

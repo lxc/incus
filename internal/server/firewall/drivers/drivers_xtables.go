@@ -124,13 +124,7 @@ func (d Xtables) iptablesInUse(iptablesCmd string) bool {
 		return false
 	}
 
-	for _, table := range []string{"filter", "nat", "mangle", "raw"} {
-		if tableIsUse(table) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc([]string{"filter", "nat", "mangle", "raw"}, tableIsUse)
 }
 
 // ebtablesInUse returns whether the ebtables backend command has any rules defined.

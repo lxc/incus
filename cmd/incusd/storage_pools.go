@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
 	"slices"
@@ -560,9 +561,7 @@ func storagePoolsPostCluster(ctx context.Context, s *state.State, pool *api.Stor
 	nodeReq := req
 
 	// Merge node specific config items into global config.
-	for key, value := range configs[s.ServerName] {
-		nodeReq.Config[key] = value
-	}
+	maps.Copy(nodeReq.Config, configs[s.ServerName])
 
 	updatedConfig, err := storagePoolCreateLocal(ctx, s, poolID, req, clientType)
 	if err != nil {
@@ -591,9 +590,7 @@ func storagePoolsPostCluster(ctx context.Context, s *state.State, pool *api.Stor
 		nodeReq.Config = util.CloneMap(req.Config)
 
 		// Merge node specific config items into global config.
-		for key, value := range configs[server.Environment.ServerName] {
-			nodeReq.Config[key] = value
-		}
+		maps.Copy(nodeReq.Config, configs[server.Environment.ServerName])
 
 		err = client.CreateStoragePool(nodeReq)
 		if err != nil {

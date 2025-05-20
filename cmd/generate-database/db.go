@@ -132,8 +132,9 @@ func generate(pkgs []string, boilerplateFilename string) error {
 				// Lazy matching for prefix, does not consider Go syntax and therefore
 				// lines starting with prefix, that are part of e.g. multiline strings
 				// match as well. This is highly unlikely to cause false positives.
-				if strings.HasPrefix(line, prefix) {
-					line = strings.TrimPrefix(line, prefix)
+				after, ok := strings.CutPrefix(line, prefix)
+				if ok {
+					line = after
 
 					// Use csv parser to properly handle arguments surrounded by double quotes.
 					r := csv.NewReader(strings.NewReader(line))

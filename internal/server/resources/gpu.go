@@ -289,9 +289,10 @@ func gpuAddDeviceInfo(devicePath string, nvidiaCards map[string]*api.ResourcesGP
 			entryName := entry.Name()
 			entryPath := filepath.Join(drmPath, entryName)
 
-			if strings.HasPrefix(entryName, "card") {
+			after, ok := strings.CutPrefix(entryName, "card")
+			if ok {
 				// Get the card ID
-				idStr := strings.TrimPrefix(entryName, "card")
+				idStr := after
 				id, err := strconv.ParseUint(idStr, 10, 64)
 				if err != nil {
 					return fmt.Errorf("Failed to parse card number: %w", err)

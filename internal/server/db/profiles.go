@@ -5,6 +5,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	"github.com/lxc/incus/v6/internal/server/db/cluster"
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
@@ -170,15 +171,11 @@ func ExpandInstanceConfig(config map[string]string, profiles []api.Profile) map[
 	}
 
 	for i := range profileConfigs {
-		for k, v := range profileConfigs[i] {
-			expandedConfig[k] = v
-		}
+		maps.Copy(expandedConfig, profileConfigs[i])
 	}
 
 	// Stick the given config on top
-	for k, v := range config {
-		expandedConfig[k] = v
-	}
+	maps.Copy(expandedConfig, config)
 
 	return expandedConfig
 }
@@ -195,15 +192,11 @@ func ExpandInstanceDevices(devices deviceConfig.Devices, profiles []api.Profile)
 	}
 
 	for i := range profileDevices {
-		for k, v := range profileDevices[i] {
-			expandedDevices[k] = v
-		}
+		maps.Copy(expandedDevices, profileDevices[i])
 	}
 
 	// Stick the given devices on top
-	for k, v := range devices {
-		expandedDevices[k] = v
-	}
+	maps.Copy(expandedDevices, devices)
 
 	return expandedDevices
 }

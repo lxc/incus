@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 
@@ -372,7 +373,7 @@ func instancesExist(resources []remoteResource) error {
 func structHasField(typ reflect.Type, field string) bool {
 	var parent reflect.Type
 
-	for i := 0; i < typ.NumField(); i++ {
+	for i := range typ.NumField() {
 		fieldType := typ.Field(i)
 		yaml := fieldType.Tag.Get("yaml")
 
@@ -409,12 +410,9 @@ func getServerSupportedFilters(filters []string, clientFilters []string, singleV
 		}
 
 		found := false
-		for _, cf := range clientFilters {
-			if cf == membs[0] {
-				found = true
-				unsupportedFilters = append(unsupportedFilters, filter)
-				break
-			}
+		if slices.Contains(clientFilters, membs[0]) {
+			found = true
+			unsupportedFilters = append(unsupportedFilters, filter)
 		}
 
 		if found {
@@ -592,13 +590,13 @@ func removeElementsFromSlice[T comparable](list []T, elements ...T) []T {
 		for j := len(list) - 1; j >= 0; j-- {
 			if element == list[j] {
 				match = true
-				list = append(list[:j], list[j+1:]...)
+				list = slices.Delete(list, j, j+1)
 				break
 			}
 		}
 
 		if match {
-			elements = append(elements[:i], elements[i+1:]...)
+			elements = slices.Delete(elements, i, i+1)
 		}
 	}
 

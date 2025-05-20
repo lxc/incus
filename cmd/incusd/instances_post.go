@@ -270,7 +270,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		// Make sure that we do not overwrite a device the user is currently using under the
 		// name "root".
 		rootDevName := "root"
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			if args.Devices[rootDevName] == nil {
 				break
 			}
@@ -1064,7 +1064,6 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		if len(req.Profiles) > 0 {
 			profileFilters := make([]dbCluster.ProfileFilter, 0, len(req.Profiles))
 			for _, profileName := range req.Profiles {
-				profileName := profileName
 				profileFilters = append(profileFilters, dbCluster.ProfileFilter{
 					Project: &profileProject,
 					Name:    &profileName,

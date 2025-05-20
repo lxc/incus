@@ -793,7 +793,7 @@ func healClusterMember(d *Daemon, op *operations.Operation, name string) error {
 
 	// Attempt up to 5 evacuations.
 	var err error
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		err = evacuateClusterMember(context.Background(), s, op, name, "heal", nil, migrateFunc)
 		if err == nil {
 			s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.ClusterMemberHealed.Event(name, op.Requestor(), nil))

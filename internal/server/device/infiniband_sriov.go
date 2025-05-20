@@ -386,7 +386,7 @@ func (d *infinibandSRIOV) findFreeVirtualFunction(parentDev pcidev.Device) (int,
 
 	vfID := -1
 
-	for i := 0; i < sriovNum; i++ {
+	for i := range sriovNum {
 		pciDev, err := pcidev.ParseUeventFile(fmt.Sprintf("/sys/bus/pci/devices/%s/virtfn%d/uevent", parentDev.SlotName, i))
 		if err != nil {
 			return 0, err
