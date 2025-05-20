@@ -13,11 +13,12 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 const (
 	tnToolName   = "truenas_incus_ctl"
-	tnMinVersion = "0.5.3" // `iscsi locate --activate` support
+	tnMinVersion = "0.6" // refactored global flags, -H -> --no-headers
 )
 
 func (d *truenas) dataset(vol Volume, deleted bool) string {
@@ -53,20 +54,24 @@ func (d *truenas) dataset(vol Volume, deleted bool) string {
 func (d *truenas) runTool(args ...string) (string, error) {
 	baseArgs := []string{}
 
-	if d.config["truenas.url"] == "" && d.config["truenas.host"] != "" {
-		d.config["truenas.url"] = fmt.Sprintf("wss://%s/api/current", d.config["truenas.host"])
-	}
-
-	if d.config["truenas.url"] != "" {
-		baseArgs = append(baseArgs, "--url", d.config["truenas.url"])
+	if util.IsTrue(d.config["truenas.allow_insecure"]) {
+		baseArgs = append(baseArgs, "--allow-insecure")
 	}
 
 	if d.config["truenas.api_key"] != "" {
 		baseArgs = append(baseArgs, "--api-key", d.config["truenas.api_key"])
 	}
 
-	if d.config["truenas.key_file"] != "" {
-		baseArgs = append(baseArgs, "--key-file", d.config["truenas.key_file"])
+	if d.config["truenas.config"] != "" {
+		baseArgs = append(baseArgs, "--config", d.config["truenas.config"])
+	}
+
+	if d.config["truenas.config_file"] != "" {
+		baseArgs = append(baseArgs, "--config-file", d.config["truenas.config_file"])
+	}
+
+	if d.config["truenas.host"] != "" {
+		baseArgs = append(baseArgs, "--host", d.config["truenas.host"])
 	}
 
 	args = append(baseArgs, args...)
@@ -140,7 +145,7 @@ func (d *truenas) getDatasetOrSnapshot(dataset string) string {
 }
 
 func (d *truenas) datasetExists(dataset string) (bool, error) {
-	out, err := d.runTool(d.getDatasetOrSnapshot(dataset), "list", "-H", "-o", "name", dataset)
+	out, err := d.runTool(d.getDatasetOrSnapshot(dataset), "list", "--no-headers", "-o", "name", dataset)
 
 	if err != nil {
 		return false, nil // TODO: need to check if tool returns errors for bad connections, vs not-found. Ie, this occurs when recovering with a bad API key or HOST.
@@ -158,7 +163,7 @@ func (d *truenas) objectsExist(objects []string, optType string) (map[string]boo
 	} else {
 		t = optType
 	}
-	args := []string{"list", "-H", "-o", "name", "-t", t}
+	args := []string{"list", "--no-headers", "-o", "name", "-t", t}
 	args = append(args, objects...)
 
 	out, err := d.runTool(args...)
@@ -220,7 +225,7 @@ func (d *truenas) getDatasets(dataset string, types string) ([]string, error) {
 		types = "filesystem,volume,snapshot"
 	}
 
-	out, err := d.runTool("list", "-H", "-r", "-o", "name", "-t", types, dataset)
+	out, err := d.runTool("list", "--no-headers", "-r", "-o", "name", "-t", types, dataset)
 	if err != nil {
 		return nil, err
 	}
@@ -543,7 +548,7 @@ func (d *truenas) deleteDataset(dataset string, recursive bool, options ...strin
 
 func (d *truenas) getDatasetProperty(dataset string, key string) (string, error) {
 
-	output, err := d.runTool(d.getDatasetOrSnapshot(dataset), "list", "-H", "-p", "-o", key, dataset)
+	output, err := d.runTool(d.getDatasetOrSnapshot(dataset), "list", "--no-headers", "-p", "-o", key, dataset)
 
 	if err != nil {
 		return "", err
@@ -731,9 +736,22 @@ func (d *truenas) setBlocksize(vol Volume, size int64) error {
 }
 
 // set the volsize property of a zvol, optionally ignoring shrink errors (and warning), requires a zvol
-func (d *truenas) setVolsize(dataset string, sizeBytes int64, ignoreShrinkError bool) error {
-	volsizeProp := fmt.Sprintf("volsize=%d", sizeBytes)
-	err := d.setDatasetProperties(dataset, volsizeProp)
+func (d *truenas) setVolsize(dataset string, sizeBytes int64, allowShrink bool) error {
+
+	ignoreShrinkError := true
+
+	volsizeProp := fmt.Sprintf("--volsize=%d", sizeBytes)
+	args := []string{"dataset", "update", volsizeProp}
+
+	if allowShrink {
+		// although the middleware doesn't currently support shrinking, when it does, the tool will support it via this flag.
+		args = append(args, "--allow-shrink")
+	}
+
+	args = append(args, dataset)
+
+	_, err := d.runTool(args...)
+
 	if err != nil {
 		if ignoreShrinkError && strings.Contains(err.Error(), "cannot shrink a zvol") {
 			// middleware currently prevents volume shrinking.
@@ -746,7 +764,7 @@ func (d *truenas) setVolsize(dataset string, sizeBytes int64, ignoreShrinkError 
 }
 
 func (d *truenas) getClones(dataset string) ([]string, error) {
-	out, err := d.runTool("snapshot", "list", "-H", "-p", "-r", "-o", "clones", dataset)
+	out, err := d.runTool("snapshot", "list", "--no-headers", "-p", "-r", "-o", "clones", dataset)
 
 	if err != nil {
 		return nil, err
