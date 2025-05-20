@@ -193,10 +193,6 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 		return nil, err
 	}
 
-	// Lock to avoid issues with containers starting in parallel.
-	networkCreateSharedDeviceLock.Lock()
-	defer networkCreateSharedDeviceLock.Unlock()
-
 	// Make sure parent is defined before we check if it exists
 	if d.config["parent"] == "" {
 		return nil, fmt.Errorf("Missing parent device name")
@@ -205,16 +201,27 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 	isParentBridge := util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"]))
 	if isParentBridge {
 		bridgedConfig := d.config.Clone()
+		bridgedConfig["type"] = "nic"
 		bridgedConfig["nictype"] = "bridged"
+		bridgedConfig["network"] = ""
 
 		// Create and properly initialize the bridged device
-		bridged, err := newByType(d.state, d.inst.Project().Name, bridgedConfig)
+		bridged, err := load(d.inst, d.state, d.inst.Project().Name, d.inst.Name(), bridgedConfig, d.volatileGet, d.volatileSet)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to initialize bridged device: %w", err)
 		}
 
+		bridged, ok := bridged.(*nicBridged)
+		if !ok {
+			return nil, fmt.Errorf("Device not configured as bridged NIC")
+		}
+
 		return bridged.Start()
 	}
+
+	// Lock to avoid issues with containers starting in parallel.
+	networkCreateSharedDeviceLock.Lock()
+	defer networkCreateSharedDeviceLock.Unlock()
 
 	saveData := make(map[string]string)
 
@@ -415,12 +422,19 @@ func (d *nicPhysical) Stop() (*deviceConfig.RunConfig, error) {
 	isParentBridge := util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"]))
 	if isParentBridge {
 		bridgedConfig := d.config.Clone()
+		bridgedConfig["type"] = "nic"
 		bridgedConfig["nictype"] = "bridged"
+		bridgedConfig["network"] = ""
 
 		// Create and properly initialize the bridged device
-		bridged, err := newByType(d.state, d.inst.Project().Name, bridgedConfig)
+		bridged, err := load(d.inst, d.state, d.inst.Project().Name, d.inst.Name(), bridgedConfig, d.volatileGet, d.volatileSet)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to initialize bridged device: %w", err)
+		}
+
+		bridged, ok := bridged.(*nicBridged)
+		if !ok {
+			return nil, fmt.Errorf("Device not configured as bridged NIC")
 		}
 
 		return bridged.Stop()
