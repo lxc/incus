@@ -882,7 +882,7 @@ func (d *truenas) CacheVolumeSnapshots(vol Volume) error {
 	}
 
 	// Get the usage data.
-	out, err := d.runTool("list", "-H", "-p", "-o", "name,used,referenced", "-r", "-t", "snap,fs,vol", d.dataset(vol, false))
+	out, err := d.runTool("list", "--no-headers", "-p", "-o", "name,used,referenced", "-r", "-t", "snap,fs,vol", d.dataset(vol, false))
 	if err != nil {
 		d.logger.Warn("Coulnd't list volume snapshots", logger.Ctx{"err": err})
 
@@ -1054,14 +1054,14 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 				l.Debug("TrueNAS volume filesystem shrunk")
 
 				// Shrink the block device.
-				err = d.setVolsize(dataset, sizeBytes, true) // ignores shrink errors.
+				err = d.setVolsize(dataset, sizeBytes, true) // allow shrink, shrink errors will be ignored.
 				if err != nil {
 					return err
 				}
 			} else if sizeBytes > oldVolSizeBytes {
 				// Grow block device first, ignoring any shrink errors, which could happen because we've
 				// already ignored a shrink error when shrinking.
-				err = d.setVolsize(dataset, sizeBytes, true)
+				err = d.setVolsize(dataset, sizeBytes, false)
 				if err != nil {
 					return err
 				}
@@ -1090,7 +1090,7 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 				}
 			}
 
-			// Adjust zvol size, ignoring any shrink errors.
+			// Adjust zvol size
 			err = d.setVolsize(dataset, sizeBytes, true)
 			if err != nil {
 				return err
@@ -1156,7 +1156,7 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 	// However for custom block volumes it does not also end the volume name in zfsBlockVolSuffix (unlike the
 	// LVM and Ceph drivers), so we must also retrieve the dataset type here and look for "volume" types
 	// which also indicate this is a block volume.
-	out, err := d.runTool("list", "-H", "-o", "name,incus:content_type", "-r", "-t", "volume", d.config["truenas.dataset"])
+	out, err := d.runTool("list", "--no-headers", "-o", "name,incus:content_type", "-r", "-t", "volume", d.config["truenas.dataset"])
 	if err != nil {
 		return nil, err
 	}
