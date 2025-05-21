@@ -1629,6 +1629,11 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 	}
 
+	if util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+		// Add +invtsc for fast TSC when not expected to be migratable.
+		cpuExtensions = append(cpuExtensions, "migratable=no", "+invtsc")
+	}
+
 	if len(cpuExtensions) > 0 {
 		cpuType += "," + strings.Join(cpuExtensions, ",")
 	}
