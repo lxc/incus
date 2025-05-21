@@ -18,7 +18,7 @@ import (
 
 const (
 	tnToolName   = "truenas_incus_ctl"
-	tnMinVersion = "0.6" // refactored global flags, -H -> --no-headers
+	tnMinVersion = "0.6.1" // adds `locate --create` support
 )
 
 func (d *truenas) dataset(vol Volume, deleted bool) string {
@@ -401,8 +401,7 @@ func (d *truenas) createIscsiShare(dataset string, readonly bool) error {
 }
 
 func (d *truenas) deleteIscsiShare(dataset string) error {
-	out, err := d.runTool("share", "iscsi", "delete", "--target-prefix=incus", dataset)
-	_ = out
+	_, err := d.runTool("share", "iscsi", "delete", "--target-prefix=incus", dataset)
 	if err != nil {
 		return err
 	}
@@ -426,39 +425,28 @@ func (d *truenas) locateIscsiDataset(dataset string) (string, error) {
 	return volDiskPath, nil
 }
 
-// activateVolume activates a ZFS volume if not already active, then returns the devpath even if already activated, and if activation was required
+// ensures a dataset is activated, and returns the dev path. Will create the share if necessary and returns a bool to determine if activation was required
 func (d *truenas) locateOrActivateIscsiDataset(dataset string) (bool, string, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	statusPath, err := d.runTool("share", "iscsi", "locate", "--activate", "--target-prefix=incus", "--parsable", dataset)
+	statusPath, err := d.runTool("share", "iscsi", "locate", "--create", "--target-prefix=incus", "--parsable", dataset) // --create implies activate
 	if err != nil {
 		return false, "", err
 	}
 	reverter.Add(func() { _ = d.deactivateIscsiDataset(dataset) })
 
 	status, volDiskPath, found := strings.Cut(statusPath, "\t")
-	if !found {
-		// okay, it failed, probably because there was no share, so try creating a share...
-		err = d.createIscsiShare(dataset, false)
-		if err != nil {
-			return false, "", fmt.Errorf("Unable to activate volume: %s, error while creating iscsi share: %w", dataset, err)
-		}
+	_ = found
 
-		// and then directly activating
-		volDiskPath, err = d.activateIscsiDataset(dataset)
-		if err != nil {
-			return false, "", err
-		}
-		if volDiskPath != "" {
-			status = "activated"
-		}
-
-		// and continue...
+	// when `locate --create`` has to create a share, it outputs two lines, one for the creation, a second for the activation, we need to discard the first.
+	if status == "created" {
+		d.logger.Debug(fmt.Sprintf("Created iscsi share for TrueNAS volume: %s", volDiskPath))
+		_, statusPath, _ := strings.Cut(statusPath, "\n")
+		status, volDiskPath, found = strings.Cut(statusPath, "\t")
 	}
 
 	didActivate := status == "activated"
-
 	volDiskPath = strings.TrimSpace(volDiskPath)
 
 	if volDiskPath != "" {
