@@ -50,7 +50,7 @@ func GetClusterCPUFlags(ctx context.Context, s *state.State, servers []string, a
 		}
 
 		// Get node resources.
-		res, err := getNodeResources(s, node.Name)
+		res, err := getNodeResources(s, node.Name, node.Address)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get resources for %s: %w", node.Name, err)
 		}
@@ -239,7 +239,7 @@ func findNextMemoryIndex(monitor *qmp.Monitor) (int, error) {
 }
 
 // getNodeResources updates the cluster resource cache..
-func getNodeResources(s *state.State, name string) (*api.Resources, error) {
+func getNodeResources(s *state.State, name string, address string) (*api.Resources, error) {
 	resourcesPath := internalUtil.CachePath("resources", fmt.Sprintf("%s.yaml", name))
 
 	// Check if cache is recent (less than 24 hours).
@@ -266,7 +266,7 @@ func getNodeResources(s *state.State, name string) (*api.Resources, error) {
 		}
 	} else {
 		// Handle remote nodes.
-		client, err := cluster.Connect(name, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
+		client, err := cluster.Connect(address, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
 		if err != nil {
 			return nil, err
 		}
