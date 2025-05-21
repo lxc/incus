@@ -1,3 +1,4 @@
+github.com/apex/log
 github.com/gorilla/websocket
 github.com/lxc/incus/v6/client
 github.com/lxc/incus/v6/shared/api
@@ -13,6 +14,10 @@ github.com/lxc/incus/v6/shared/tls
 github.com/lxc/incus/v6/shared/units
 github.com/lxc/incus/v6/shared/util
 github.com/lxc/incus/v6/shared/ws
+github.com/opencontainers/umoci
+github.com/opencontainers/umoci/oci/cas/dir
+github.com/opencontainers/umoci/oci/casext
+github.com/opencontainers/umoci/oci/layer
 github.com/pkg/sftp
 github.com/zitadel/oidc/v3/pkg/client/rp
 github.com/zitadel/oidc/v3/pkg/http
