@@ -570,14 +570,6 @@ func (d *proxy) setupNAT() error {
 	return nil
 }
 
-func (d *proxy) rewriteHostAddr(addr string) string {
-	fields := strings.SplitN(addr, ":", 2)
-	proto := fields[0]
-	addr = fields[1]
-
-	return fmt.Sprintf("%s:%s", proto, addr)
-}
-
 func (d *proxy) setupProxyProcInfo() (*proxyProcInfo, error) {
 	cname := project.Instance(d.inst.Project().Name, d.inst.Name())
 	cc, err := liblxc.NewContainer(cname, d.state.OS.LxcPath)
@@ -617,16 +609,12 @@ func (d *proxy) setupProxyProcInfo() (*proxyProcInfo, error) {
 
 		connectPid = containerPid
 		connectPidFd = fmt.Sprintf("%d", containerPidFd)
-
-		listenAddr = d.rewriteHostAddr(listenAddr)
 	case "instance", "guest", "container":
 		listenPid = containerPid
 		listenPidFd = fmt.Sprintf("%d", containerPidFd)
 
 		connectPid = daemonPid
 		connectPidFd = fmt.Sprintf("%d", daemonPidFd)
-
-		connectAddr = d.rewriteHostAddr(connectAddr)
 	default:
 		return nil, fmt.Errorf("Invalid binding side given. Must be \"host\" or \"instance\"")
 	}
