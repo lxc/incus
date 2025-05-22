@@ -351,6 +351,43 @@ container_devices_proxy_unix() {
 
   rm -f "${HOST_SOCK}"
 
+  # Switch to bind=container.
+  (
+    umask 0000
+    exec socat unix-listen:"${HOST_SOCK}",unlink-early exec:/bin/cat
+  ) &
+  SOCAT_PID=$!
+
+  # We need to swap connect= and listen= so it's simpler to just remove the
+  # device and re-add it with the right configuration.
+  incus config device remove proxyTester proxyDev
+  incus config device add proxyTester proxyDev proxy \
+    bind=container connect="unix:${HOST_SOCK}" listen="unix:/tmp/incustest-$(basename "${INCUS_DIR}").sock" \
+    mode=0777 uid=1234 gid=1234 security.uid=1234 security.gid=1234
+  sleep 0.5
+
+  PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+  CTR_SOCK="/proc/${PID}/root/tmp/incustest-$(basename "${INCUS_DIR}").sock"
+  # Double-check that the listen socket exists.
+  # <https://github.com/lxc/incus/pull/2136>
+  if ! [ -S "${CTR_SOCK}" ]; then
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    echo "Proxy device with bind=container did not create a container-side listen socket"
+    false
+  fi
+
+  ECHO="$( ( echo "${MESSAGE}"; sleep 0.5 ) | nsenter -n -U -t "${PID}" -- socat - unix:"${CTR_SOCK}")"
+  kill "${SOCAT_PID}" 2>/dev/null || true
+  wait "${SOCAT_PID}" 2>/dev/null || true
+
+  if [ "${ECHO}" != "${MESSAGE}" ]; then
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    echo "Proxy device with bind=container did not properly send data from container to host"
+    false
+  fi
+
+  rm -f "${HOST_SOCK}"
+
   # Cleanup
   incus delete -f proxyTester
 }
@@ -430,6 +467,39 @@ container_devices_proxy_tcp_unix() {
     false
   fi
 
+  # Switch to bind=container.
+  HOST_TCP_PORT2=$(local_tcp_port)
+  socat tcp-listen:"${HOST_TCP_PORT2}" exec:/bin/cat &
+  SOCAT_PID=$!
+
+  # We need to swap connect= and listen= so it's simpler to just remove the
+  # device and re-add it with the right configuration.
+  incus config device remove proxyTester proxyDev
+  incus config device add proxyTester proxyDev proxy \
+    bind=container connect="tcp:127.0.0.1:${HOST_TCP_PORT2}" listen="unix:/tmp/incustest-$(basename "${INCUS_DIR}").sock" \
+    mode=0777 uid=1234 gid=1234 security.uid=1234 security.gid=1234
+  sleep 0.5
+
+  PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+  CTR_SOCK="/proc/${PID}/root/tmp/incustest-$(basename "${INCUS_DIR}").sock"
+  # Double-check that the listen socket exists.
+  # <https://github.com/lxc/incus/pull/2136>
+  if ! [ -S "${CTR_SOCK}" ]; then
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    echo "Proxy device with bind=container did not create a container-side listen socket"
+    false
+  fi
+
+  ECHO="$( ( echo "${MESSAGE}"; sleep 0.5 ) | nsenter -n -U -t "${PID}" -- socat - unix:"${CTR_SOCK}")"
+  kill "${SOCAT_PID}" 2>/dev/null || true
+  wait "${SOCAT_PID}" 2>/dev/null || true
+
+  if [ "${ECHO}" != "${MESSAGE}" ]; then
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    echo "Proxy device with bind=container did not properly send data from container to host"
+    false
+  fi
+
   # Cleanup
   incus delete -f proxyTester
 }
@@ -498,6 +568,34 @@ container_devices_proxy_unix_tcp() {
 
   rm -f "${HOST_SOCK}"
 
+  # Switch to bind=container.
+  (
+    umask 0000
+    exec socat unix-listen:"${HOST_SOCK}",unlink-early exec:/bin/cat
+  ) &
+  SOCAT_PID=$!
+
+  # We need to swap connect= and listen= so it's simpler to just remove the
+  # device and re-add it with the right configuration.
+  incus config device remove proxyTester proxyDev
+  incus config device add proxyTester proxyDev proxy \
+    bind=container connect="unix:${HOST_SOCK}" listen="tcp:0.0.0.0:4321" \
+    security.uid=1234 security.gid=1234
+  sleep 0.5
+
+  PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+  ECHO="$( ( echo "${MESSAGE}"; sleep 0.5 ) | nsenter -n -U -t "${PID}" -- socat - tcp:127.0.0.1:4321)"
+  kill "${SOCAT_PID}" 2>/dev/null || true
+  wait "${SOCAT_PID}" 2>/dev/null || true
+
+  if [ "${ECHO}" != "${MESSAGE}" ]; then
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    echo "Proxy device with bind=container did not properly send data from container to host"
+    false
+  fi
+
+  rm -f "${HOST_SOCK}"
+
   # Cleanup
   incus delete -f proxyTester
 }
@@ -557,6 +655,30 @@ container_devices_proxy_udp() {
   if [ "${ECHO}" != "${MESSAGE}" ]; then
     cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly restart when config was updated"
+    false
+  fi
+
+  # Switch to bind=container.
+  HOST_UDP_PORT2=$(local_tcp_port)
+  socat udp-listen:"${HOST_UDP_PORT2}" exec:/bin/cat &
+  SOCAT_PID=$!
+
+  # We need to swap connect= and listen= so it's simpler to just remove the
+  # device and re-add it with the right configuration.
+  incus config device remove proxyTester proxyDev
+  incus config device add proxyTester proxyDev proxy \
+    bind=container connect="udp:127.0.0.1:${HOST_UDP_PORT2}" listen="udp:127.0.0.1:4321" \
+    security.uid=1234 security.gid=1234
+  sleep 0.5
+
+  PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+  ECHO="$( ( echo "${MESSAGE}"; sleep 0.5 ) | nsenter -n -U -t "${PID}" -- socat - udp:127.0.0.1:4321)"
+  kill "${SOCAT_PID}" 2>/dev/null || true
+  wait "${SOCAT_PID}" 2>/dev/null || true
+
+  if [ "${ECHO}" != "${MESSAGE}" ]; then
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    echo "Proxy device with bind=container did not properly send data from container to host"
     false
   fi
 
@@ -628,6 +750,40 @@ container_devices_proxy_unix_udp() {
 
   rm -f "${HOST_SOCK}"
 
+  # Switch to bind=container (we use connect=udp for the host because
+  # listen=udp doesn't work with non-udp connect= proxies).
+  HOST_UDP_PORT=$(local_tcp_port)
+  socat udp-listen:"${HOST_UDP_PORT}" exec:/bin/cat &
+  SOCAT_PID=$!
+
+  # We need to swap connect= and listen= so it's simpler to just remove the
+  # device and re-add it with the right configuration.
+  incus config device remove proxyTester proxyDev
+  incus config device add proxyTester proxyDev proxy \
+    bind=container connect="udp:127.0.0.1:${HOST_UDP_PORT}" listen="unix:/tmp/incustest-$(basename "${INCUS_DIR}").sock" \
+    mode=0777 uid=1234 gid=1234 security.uid=1234 security.gid=1234
+  sleep 0.5
+
+  PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+  CTR_SOCK="/proc/${PID}/root/tmp/incustest-$(basename "${INCUS_DIR}").sock"
+  # Double-check that the listen socket exists.
+  # <https://github.com/lxc/incus/pull/2136>
+  if ! [ -S "${CTR_SOCK}" ]; then
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    echo "Proxy device with bind=container did not create a container-side listen socket"
+    false
+  fi
+
+  ECHO="$( ( echo "${MESSAGE}"; sleep 0.5 ) | nsenter -n -U -t "${PID}" -- socat - unix:"${CTR_SOCK}")"
+  kill "${SOCAT_PID}" 2>/dev/null || true
+  wait "${SOCAT_PID}" 2>/dev/null || true
+
+  if [ "${ECHO}" != "${MESSAGE}" ]; then
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    echo "Proxy device with bind=container did not properly send data from container to host"
+    false
+  fi
+
   # Cleanup
   incus delete -f proxyTester
 }
@@ -687,6 +843,31 @@ container_devices_proxy_tcp_udp() {
   if [ "${ECHO}" != "${MESSAGE}" ]; then
     cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly restart when config was updated"
+    false
+  fi
+
+  # Switch to bind=container (we use connect=udp for the host because
+  # listen=udp doesn't work with non-udp connect= proxies).
+  HOST_UDP_PORT=$(local_tcp_port)
+  socat udp-listen:"${HOST_UDP_PORT}" exec:/bin/cat &
+  SOCAT_PID=$!
+
+  # We need to swap connect= and listen= so it's simpler to just remove the
+  # device and re-add it with the right configuration.
+  incus config device remove proxyTester proxyDev
+  incus config device add proxyTester proxyDev proxy \
+    bind=container connect="udp:127.0.0.1:${HOST_UDP_PORT}" listen="tcp:127.0.0.1:4321" \
+    security.uid=1234 security.gid=1234
+  sleep 0.5
+
+  PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
+  ECHO="$( ( echo "${MESSAGE}"; sleep 0.5 ) | nsenter -n -U -t "${PID}" -- socat - tcp:127.0.0.1:4321)"
+  kill "${SOCAT_PID}" 2>/dev/null || true
+  wait "${SOCAT_PID}" 2>/dev/null || true
+
+  if [ "${ECHO}" != "${MESSAGE}" ]; then
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    echo "Proxy device with bind=container did not properly send data from container to host"
     false
   fi
 
