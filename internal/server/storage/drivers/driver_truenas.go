@@ -166,11 +166,7 @@ func (d *truenas) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) err
 		fullDatasetPaths[i] = filepath.Join(d.config["truenas.dataset"], datasets[i])
 	}
 
-	//properties := []string{"mountpoint=legacy"}
 	properties := []string{}
-	// if slices.Contains([]string{"virtual-machines", "deleted/virtual-machines"}, dataset) {
-	// 	properties = append(properties, "volmode=none")
-	// }
 
 	shouldCreateMissingDatasets := true
 	return d.updateDatasets(fullDatasetPaths, shouldCreateMissingDatasets, properties...)
