@@ -348,39 +348,22 @@ func (d *truenas) Update(changedConfig map[string]string) error {
 		return fmt.Errorf("truenas.dataset cannot be modified")
 	}
 
-	allow_insecure, ok := changedConfig["truenas.allow_insecure"]
-	if ok {
-		d.config["truenas.allow_insecure"] = allow_insecure
+	// prop changes we want to accept
+	props := []string{
+		"truenas.allow_insecure",
+		"truenas.api_key",
+		"truenas.config",
+		"truenas.config_file",
+		"truenas.host",
+		"truenas.clone_copy",
+		"truenas.force_reuse",
 	}
 
-	apikey, ok := changedConfig["truenas.api_key"]
-	if ok {
-		d.config["truenas.api_key"] = apikey
-	}
-
-	config, ok := changedConfig["truenas.config"]
-	if ok {
-		d.config["truenas.config"] = config
-	}
-
-	config_file, ok := changedConfig["truenas.config_file"]
-	if ok {
-		d.config["truenas.config_file"] = config_file
-	}
-
-	host, ok := changedConfig["truenas.host"]
-	if ok {
-		d.config["truenas.host"] = host
-	}
-
-	clone_copy, ok := changedConfig["truenas.clone_copy"]
-	if ok {
-		d.config["truenas.clone_copy"] = clone_copy
-	}
-
-	force_reuse, ok := changedConfig["truenas.force_reuse"]
-	if ok {
-		d.config["truenas.force_reuse"] = force_reuse
+	for _, prop := range props {
+		value, ok := changedConfig[prop]
+		if ok {
+			d.config[prop] = value
+		}
 	}
 
 	return nil
