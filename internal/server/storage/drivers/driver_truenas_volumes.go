@@ -159,46 +159,43 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		// After this point we have a filesystem, so setup reverter.
 		reverter.Add(func() { _ = d.DeleteVolume(vol, op) })
 
-				if vol.contentType == ContentTypeFS {
-					_, err := makeFSType(rootBlockPath, filesystem, nil)
-					if err != nil {
-						return 0, err
-					}
-				}
-				sizeBytes, err := units.ParseByteSizeString(innerVol.config["size"])
-				if err != nil {
-					return 0, err
-				}
-				// sizeBytes should be correct
-				return sizeBytes, nil
-			},
-		}
-
-		/*
-			create volume will mount, create the image file, then call our filler, and unmount, and then we can take care of the mounting the side-car
-			in MountVolume
-		*/
-		err = d.CreateVolume(fsImgVol, fsImgFiller, op)
+		// Apply the size limit.
+		err = d.SetVolumeQuota(vol, vol.ConfigSize(), false, op)
 		if err != nil {
 			return err
 		}
 
-		// After this point we have a backing volume, so setup revert.
-		revert.Add(func() { _ = d.DeleteVolume(fsImgVol, op) })
-	}
+		// Apply the blocksize.
+		err = d.setBlocksizeFromConfig(vol)
+		if err != nil {
+			return err
+		}
+	} else {
+		var opts []string
 
-	// for  block or fs-img we need to create a dataset
-	if vol.contentType == ContentTypeBlock || vol.contentType == ContentTypeISO || isFsImgVol(vol) || (vol.contentType == ContentTypeFS && !needsFsImgVol(vol)) {
+		// Add custom property incus:content_type which allows distinguishing between regular volumes, block_mode enabled volumes, and ISO volumes.
+		if vol.volType == VolumeTypeCustom {
+			opts = append(opts, fmt.Sprintf("user-props=incus:content_type=%s", vol.contentType))
+		}
 
-		/*
-			for a VMBlock we need to create both a .block with an root.img and a filesystem
-			volume. The filesystem volume has to be separate so that it can have a separate quota
-			to the root.img/block volume.
-		*/
+		blockSize := vol.ExpandedConfig("truenas.blocksize")
+		if blockSize != "" {
+			// Convert to bytes.
+			sizeBytes, err := units.ParseByteSizeString(blockSize)
+			if err != nil {
+				return err
+			}
 
-		// Create the filesystem dataset.
-		dataset := d.dataset(vol, false)
-		err := d.createDataset(dataset) // TODO: we should set the filesystem on the dataset so that it can be recovered eventually in ListVolumes (and possibly mount options)
+			// truenas.blocksize can have value in range from 512 to 16MiB because it's used for volblocksize and recordsize
+			// volblocksize maximum value is 128KiB so if the value of truenas.blocksize is bigger set it to 128KiB.
+			if sizeBytes > zfsMaxVolBlocksize {
+				sizeBytes = zfsMaxVolBlocksize
+			}
+
+			opts = append(opts, fmt.Sprintf("volblocksize=%d", sizeBytes))
+		}
+
+		sizeBytes, err := units.ParseByteSizeString(vol.ConfigSize())
 		if err != nil {
 			return err
 		}
@@ -692,7 +689,7 @@ func (d *truenas) DeleteVolume(vol Volume, op *operations.Operation) error {
 
 	// We need to be able to delete the block-backed fs even if we don't know the filesystem.
 	if vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS {
-		// We need to clone vol the otherwise changing `zfs.block_mode`
+		// We need to clone vol the otherwise changing `truenas.block_mode`
 		// in tmpVol will also change it in vol.
 		tmpVol := vol.Clone()
 
@@ -800,13 +797,13 @@ func (d *truenas) HasVolume(vol Volume) (bool, error) {
 // commonVolumeRules returns validation rules which are common for pool and volume.
 func (d *truenas) commonVolumeRules() map[string]func(value string) error {
 	return map[string]func(value string) error{
-		"block.filesystem":     validate.Optional(validate.IsOneOf(blockBackedAllowedFilesystems...)),
-		"block.mount_options":  validate.IsAny,
-		"truenas.block_mode":   validate.Optional(validate.IsBool),
-		"zfs.blocksize":        validate.Optional(ValidateZfsBlocksize), // zfs.blocksize is hard-coded in backend.shouldUseOptimizedImage
-		"zfs.remove_snapshots": validate.Optional(validate.IsBool),
-		"zfs.reserve_space":    validate.Optional(validate.IsBool),
-		"zfs.use_refquota":     validate.Optional(validate.IsBool),
+		"block.filesystem":         validate.Optional(validate.IsOneOf(blockBackedAllowedFilesystems...)),
+		"block.mount_options":      validate.IsAny,
+		"truenas.block_mode":       validate.Optional(validate.IsBool),      // TODO: this is effectively always true and should be removed.
+		"truenas.blocksize":        validate.Optional(ValidateZfsBlocksize), // NOTE: zfs.blocksize is hard-coded in backend.shouldUseOptimizedImage
+		"truenas.remove_snapshots": validate.Optional(validate.IsBool),
+		"truenas.reserve_space":    validate.Optional(validate.IsBool),
+		"truenas.use_refquota":     validate.Optional(validate.IsBool),
 	}
 }
 
@@ -831,12 +828,12 @@ func (d *truenas) UpdateVolume(vol Volume, changedConfig map[string]string) erro
 	// Mangle the current volume to its old values.
 	old := make(map[string]string)
 	for k, v := range changedConfig {
-		if k == "size" || k == "zfs.use_refquota" || k == "zfs.reserve_space" {
+		if k == "size" || k == "truenas.use_refquota" || k == "truenas.reserve_space" {
 			old[k] = vol.config[k]
 			vol.config[k] = v
 		}
 
-		if k == "zfs.blocksize" {
+		if k == "truenas.blocksize" {
 			// Convert to bytes.
 			sizeBytes, err := units.ParseByteSizeString(v)
 			if err != nil {
@@ -927,11 +924,11 @@ func (d *truenas) GetVolumeUsage(vol Volume) (int64, error) {
 	// Determine what key to use.
 	key := "used"
 
-	// If volume isn't snapshot then we can take into account the zfs.use_refquota setting.
+	// If volume isn't snapshot then we can take into account the truenas.use_refquota setting.
 	// Snapshots should also use the "used" ZFS property because the snapshot usage size represents the CoW
 	// usage not the size of the snapshot volume.
 	if !vol.IsSnapshot() {
-		if util.IsTrue(vol.ExpandedConfig("zfs.use_refquota")) {
+		if util.IsTrue(vol.ExpandedConfig("truenas.use_refquota")) {
 			key = "referenced"
 		}
 
@@ -1166,14 +1163,12 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 
-		// Splitting fields on tab should be safe as ZFS doesn't appear to allow tabs in dataset names.
 		parts := strings.Split(line, "\t")
 		if len(parts) != 2 {
 			return nil, fmt.Errorf("Unexpected volume line %q", line)
 		}
 
 		zfsVolName := parts[0]
-		//zfsContentType := parts[1]
 		incusContentType := parts[1]
 
 		var volType VolumeType
@@ -1892,8 +1887,8 @@ func (d *truenas) restoreVolume(vol Volume, snapshotName string, migration bool,
 
 	// Check if snapshot removal is allowed.
 	if len(snapshots) > 0 {
-		if util.IsFalseOrEmpty(vol.ExpandedConfig("zfs.remove_snapshots")) {
-			return fmt.Errorf("Snapshot %q cannot be restored due to subsequent snapshot(s). Set zfs.remove_snapshots to override", snapshotName)
+		if util.IsFalseOrEmpty(vol.ExpandedConfig("truenas.remove_snapshots")) {
+			return fmt.Errorf("Snapshot %q cannot be restored due to subsequent snapshot(s). Set truenas.remove_snapshots to override", snapshotName)
 		}
 
 		// Setup custom error to tell the backend what to delete.

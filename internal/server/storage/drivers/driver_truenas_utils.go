@@ -13,6 +13,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -498,7 +499,7 @@ func (d *truenas) deactivateIscsiDatasetIfActive(dataset string) (bool, error) {
 
 }
 
-// deactivateVolume deactivates a ZFS volume if activate. Returns true if deactivated, false if not.
+// deactivates an iscsi share if active
 func (d *truenas) deactivateIscsiDataset(dataset string) error {
 	_, err := d.runTool("share", "iscsi", "deactivate", "--target-prefix=incus", dataset)
 	if err != nil {
@@ -694,20 +695,18 @@ func (d *truenas) version() (string, error) {
 }
 
 func (d *truenas) setBlocksizeFromConfig(vol Volume) error {
-	// size := vol.ExpandedConfig("zfs.blocksize")
-	// if size == "" {
-	// 	return nil
-	// }
+	size := vol.ExpandedConfig("truenas.blocksize")
+	if size == "" {
+		return nil
+	}
 
-	// Convert to bytes.
-	// sizeBytes, err := units.ParseByteSizeString(size)
-	// if err != nil {
-	// 	return err
-	// }
+	//Convert to bytes.
+	sizeBytes, err := units.ParseByteSizeString(size)
+	if err != nil {
+		return err
+	}
 
-	// return d.setBlocksize(vol, sizeBytes)
-
-	return nil
+	return d.setBlocksize(vol, sizeBytes)
 }
 
 func (d *truenas) setBlocksize(vol Volume, size int64) error {
