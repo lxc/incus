@@ -732,7 +732,7 @@ func (d *truenas) setVolsize(dataset string, sizeBytes int64, allowShrink bool) 
 
 	if allowShrink {
 		// although the middleware doesn't currently support shrinking, when it does, the tool will support it via this flag.
-		//args = append(args, "--allow-shrink")
+		args = append(args, "--allow-shrink")
 	}
 
 	args = append(args, dataset)
