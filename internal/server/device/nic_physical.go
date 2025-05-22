@@ -198,7 +198,7 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 		return nil, fmt.Errorf("Missing parent device name")
 	}
 
-	isParentBridge := util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"]))
+	isParentBridge := util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", d.config["parent"]))
 	if isParentBridge {
 		bridgedConfig := d.config.Clone()
 		bridgedConfig["type"] = "nic"
@@ -419,7 +419,7 @@ func (d *nicPhysical) startVMUSB(name string) (*deviceConfig.RunConfig, error) {
 
 // Stop is run when the device is removed from the instance.
 func (d *nicPhysical) Stop() (*deviceConfig.RunConfig, error) {
-	isParentBridge := util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"]))
+	isParentBridge := util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", d.config["parent"]))
 	if isParentBridge {
 		bridgedConfig := d.config.Clone()
 		bridgedConfig["type"] = "nic"
