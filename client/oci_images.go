@@ -155,11 +155,6 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		return nil, fmt.Errorf("OCI image export currently requires root access")
 	}
 
-	_, err = exec.LookPath("umoci")
-	if err != nil {
-		return nil, fmt.Errorf("OCI container handling requires \"umoci\" be present on the system")
-	}
-
 	// Get some temporary storage.
 	ociPath, err := os.MkdirTemp("", "incus-oci-")
 	if err != nil {
@@ -183,6 +178,8 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		req.ProgressHandler(ioprogress.ProgressData{Text: "Retrieving OCI image from registry"})
 	}
 
+	imageTag := "latest"
+
 	stdout, _, err := subprocess.RunCommandSplit(
 		ctx,
 		env,
@@ -192,7 +189,7 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		"copy",
 		"--remove-signatures",
 		fmt.Sprintf("%s/%s", strings.Replace(r.httpHost, "https://", "docker://", 1), info.Alias),
-		fmt.Sprintf("oci:%s:latest", filepath.Join(ociPath, "oci")))
+		fmt.Sprintf("oci:%s:%s", filepath.Join(ociPath, "oci"), imageTag))
 	if err != nil {
 		logger.Debug("Error copying remote image to local", logger.Ctx{"image": info.Alias, "stdout": stdout, "stderr": err})
 		return nil, err
@@ -203,14 +200,9 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		req.ProgressHandler(ioprogress.ProgressData{Text: "Unpacking the OCI image"})
 	}
 
-	stdout, err = subprocess.RunCommand(
-		"umoci",
-		"unpack",
-		"--keep-dirlinks",
-		"--image", filepath.Join(ociPath, "oci"),
-		filepath.Join(ociPath, "image"))
+	err = unpackOCIImage(filepath.Join(ociPath, "oci"), imageTag, filepath.Join(ociPath, "image"))
 	if err != nil {
-		logger.Debug("Error unpacking OCI image", logger.Ctx{"image": filepath.Join(ociPath, "oci"), "stdout": stdout, "stderr": err})
+		logger.Debug("Error unpacking OCI image", logger.Ctx{"image": filepath.Join(ociPath, "oci"), "err": err})
 		return nil, err
 	}
 
