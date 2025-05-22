@@ -537,7 +537,7 @@ func (d *truenas) deleteDataset(dataset string, recursive bool, options ...strin
 
 func (d *truenas) getDatasetProperty(dataset string, key string) (string, error) {
 
-	output, err := d.runTool(d.getDatasetOrSnapshot(dataset), "list", "--no-headers", "-p", "-o", key, dataset)
+	output, err := d.runTool(d.getDatasetOrSnapshot(dataset), "list", "--no-headers", "--parsable", "-o", key, dataset)
 
 	if err != nil {
 		return "", err
@@ -559,7 +559,7 @@ func (d *truenas) getDatasetProperties(dataset string, properties []string) (map
 
 func (d *truenas) getDatasetsAndProperties(datasets []string, properties []string) (map[string]map[string]string, error) {
 	propsStr := strings.Join(properties, ",")
-	out, err := d.runTool(append([]string{"list", "-j", "-p", "-o", propsStr}, datasets...)...)
+	out, err := d.runTool(append([]string{"list", "--json", "--parsable", "-o", propsStr}, datasets...)...)
 	if err != nil {
 		return nil, err
 	}
@@ -751,7 +751,7 @@ func (d *truenas) setVolsize(dataset string, sizeBytes int64, allowShrink bool) 
 }
 
 func (d *truenas) getClones(dataset string) ([]string, error) {
-	out, err := d.runTool("snapshot", "list", "--no-headers", "-p", "-r", "-o", "clones", dataset)
+	out, err := d.runTool("snapshot", "list", "--no-headers", "--parsable", "-r", "-o", "clones", dataset)
 
 	if err != nil {
 		return nil, err
