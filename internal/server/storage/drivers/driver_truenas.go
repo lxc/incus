@@ -489,12 +489,11 @@ func (d *truenas) MigrationTypes(contentType ContentType, refresh bool, copySnap
 }
 
 // roundVolumeBlockSizeBytes returns sizeBytes rounded up to the next multiple
-// of `vol`'s "zfs.blocksize".
+// of `vol`'s "truenas.blocksize".
 func (d *truenas) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) (int64, error) {
-	// NOTE: "zfs.blocksize" has support througout incus
-	minBlockSize, err := units.ParseByteSizeString(vol.ExpandedConfig("zfs.blocksize"))
+	minBlockSize, err := units.ParseByteSizeString(vol.ExpandedConfig("truenas.blocksize"))
 
-	// minBlockSize will be 0 if zfs.blocksize=""
+	// minBlockSize will be 0 if truenas.blocksize=""
 	if minBlockSize <= 0 || err != nil {
 		// 16KiB is the default volblocksize
 		minBlockSize = 16 * 1024
