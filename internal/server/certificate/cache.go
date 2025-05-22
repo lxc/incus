@@ -2,6 +2,7 @@ package certificate
 
 import (
 	"crypto/x509"
+	"maps"
 	"sync"
 )
 
@@ -50,9 +51,7 @@ func (c *Cache) GetCertificatesAndProjects() (map[Type]map[string]x509.Certifica
 	certificates := make(map[Type]map[string]x509.Certificate, len(c.certificates))
 	for t, m := range c.certificates {
 		certificates[t] = make(map[string]x509.Certificate, len(m))
-		for f, cert := range m {
-			certificates[t][f] = cert
-		}
+		maps.Copy(certificates[t], m)
 	}
 
 	projects := make(map[string][]string, len(c.projects))
@@ -73,9 +72,7 @@ func (c *Cache) GetCertificates() map[Type]map[string]x509.Certificate {
 	certificates := make(map[Type]map[string]x509.Certificate, len(c.certificates))
 	for t, m := range c.certificates {
 		certificates[t] = make(map[string]x509.Certificate, len(m))
-		for f, cert := range m {
-			certificates[t][f] = cert
-		}
+		maps.Copy(certificates[t], m)
 	}
 
 	return certificates

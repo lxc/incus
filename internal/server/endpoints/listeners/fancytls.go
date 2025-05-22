@@ -3,6 +3,7 @@ package listeners
 import (
 	"crypto/tls"
 	"net"
+	"slices"
 	"sync"
 
 	"github.com/armon/go-proxyproto"
@@ -75,10 +76,5 @@ func isProxy(addr string, proxies []net.IP) bool {
 
 	hostIP := net.ParseIP(host)
 
-	for _, p := range proxies {
-		if hostIP.Equal(p) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(proxies, hostIP.Equal)
 }

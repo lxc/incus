@@ -270,7 +270,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		// Make sure that we do not overwrite a device the user is currently using under the
 		// name "root".
 		rootDevName := "root"
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			if args.Devices[rootDevName] == nil {
 				break
 			}
@@ -400,51 +400,60 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		instOp.Done(nil) // Complete operation that was created earlier, to release lock.
 
 		if migrationArgs.StoragePool != "" {
-			// Update root device for the instance.
-			err = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
-				devs := inst.LocalDevices().CloneNative()
-				rootDevKey, _, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
-				if err != nil {
-					if !errors.Is(err, internalInstance.ErrNoRootDisk) {
-						return err
-					}
+			// Update root device for the instance if needed.
+			updateNeeded := false
 
-					rootDev := map[string]string{}
-					rootDev["type"] = "disk"
-					rootDev["path"] = "/"
-					rootDev["pool"] = storagePool
-
-					devs["root"] = rootDev
-				} else {
-					// Copy the device if not a local device.
-					_, ok := devs[rootDevKey]
-					if !ok {
-						devs[rootDevKey] = inst.ExpandedDevices().CloneNative()[rootDevKey]
-					}
-
-					// Apply the override.
-					devs[rootDevKey]["pool"] = storagePool
+			devs := inst.LocalDevices().CloneNative()
+			rootDevKey, _, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+			if err != nil {
+				if !errors.Is(err, internalInstance.ErrNoRootDisk) {
+					return err
 				}
 
+				rootDev := map[string]string{}
+				rootDev["type"] = "disk"
+				rootDev["path"] = "/"
+				rootDev["pool"] = storagePool
+
+				devs["root"] = rootDev
+
+				updateNeeded = true
+			} else {
+				// Copy the device if not a local device.
+				_, ok := devs[rootDevKey]
+				if !ok {
+					devs[rootDevKey] = inst.ExpandedDevices().CloneNative()[rootDevKey]
+				}
+
+				// Apply the override.
+				if devs[rootDevKey]["pool"] != storagePool {
+					devs[rootDevKey]["pool"] = storagePool
+					updateNeeded = true
+				}
+			}
+
+			if updateNeeded {
 				devices, err := dbCluster.APIToDevices(devs)
 				if err != nil {
 					return err
 				}
 
-				id, err := dbCluster.GetInstanceID(ctx, tx.Tx(), inst.Project().Name, inst.Name())
-				if err != nil {
-					return fmt.Errorf("Failed to get ID of moved instance: %w", err)
-				}
+				err = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+					id, err := dbCluster.GetInstanceID(ctx, tx.Tx(), inst.Project().Name, inst.Name())
+					if err != nil {
+						return fmt.Errorf("Failed to get ID of moved instance: %w", err)
+					}
 
-				err = dbCluster.UpdateInstanceDevices(ctx, tx.Tx(), int64(id), devices)
+					err = dbCluster.UpdateInstanceDevices(ctx, tx.Tx(), int64(id), devices)
+					if err != nil {
+						return err
+					}
+
+					return nil
+				})
 				if err != nil {
 					return err
 				}
-
-				return nil
-			})
-			if err != nil {
-				return err
 			}
 		}
 
@@ -1064,7 +1073,6 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		if len(req.Profiles) > 0 {
 			profileFilters := make([]dbCluster.ProfileFilter, 0, len(req.Profiles))
 			for _, profileName := range req.Profiles {
-				profileName := profileName
 				profileFilters = append(profileFilters, dbCluster.ProfileFilter{
 					Project: &profileProject,
 					Name:    &profileName,

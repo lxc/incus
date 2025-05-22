@@ -7,7 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -228,7 +228,7 @@ func sortedMapKeys[M ~map[int64]V, V any](m M) []int64 {
 		r = append(r, k)
 	}
 
-	sort.Slice(r, func(i, j int) bool { return r[i] < r[j] })
+	slices.Sort(r)
 
 	return r
 }

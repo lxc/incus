@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/v6/internal/server/cluster/request"
 	"github.com/lxc/incus/v6/internal/server/db"
+	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/internal/server/lifecycle"
 	"github.com/lxc/incus/v6/internal/server/network/acl"
 	"github.com/lxc/incus/v6/internal/server/project"
@@ -185,29 +186,33 @@ func networkACLsGet(d *Daemon, r *http.Request) response.Response {
 
 	mustLoadObjects := recursion || (clauses != nil && len(clauses.Clauses) > 0)
 
-	var aclNames map[string][]string
+	aclNames := map[string][]string{}
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		var err error
+		var acls []dbCluster.NetworkACL
 
+		// Get list of Network ACLs.
 		if allProjects {
-			// Get list of Network ACLs across all projects.
-			aclNames, err = tx.GetNetworkACLsAllProjects(ctx)
+			acls, err = dbCluster.GetNetworkACLs(ctx, tx.Tx())
 			if err != nil {
 				return err
 			}
 		} else {
-			// Get list of Network ACLs.
-			acls, err := tx.GetNetworkACLs(ctx, projectName)
+			acls, err = dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &projectName})
 			if err != nil {
 				return err
 			}
-
-			aclNames = map[string][]string{}
-			aclNames[projectName] = acls
 		}
 
-		return err
+		for _, acl := range acls {
+			if aclNames[acl.Project] == nil {
+				aclNames[acl.Project] = []string{}
+			}
+
+			aclNames[acl.Project] = append(aclNames[acl.Project], acl.Name)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return response.InternalError(err)

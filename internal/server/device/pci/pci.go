@@ -83,7 +83,7 @@ func DeviceSetDriverOverride(pciDev Device, driverOverride string) error {
 	overridePath := filepath.Join("/sys/bus/pci/devices", pciDev.SlotName, "driver_override")
 
 	// The "\n" at end is important to allow the driver override to be cleared by passing "" in.
-	err := os.WriteFile(overridePath, []byte(fmt.Sprintf("%s\n", driverOverride)), 0o600)
+	err := os.WriteFile(overridePath, fmt.Appendf(nil, "%s\n", driverOverride), 0o600)
 	if err != nil {
 		return fmt.Errorf("Failed setting driver override %q for device %q via %q: %w", driverOverride, pciDev.SlotName, overridePath, err)
 	}
@@ -155,7 +155,7 @@ func DeviceDriverOverride(pciDev Device, driverOverride string) error {
 func deviceProbeWait(pciDev Device) error {
 	driverPath := fmt.Sprintf("/sys/bus/pci/drivers/%s/%s", pciDev.Driver, pciDev.SlotName)
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		if util.PathExists(driverPath) {
 			return nil
 		}

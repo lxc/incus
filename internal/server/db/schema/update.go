@@ -48,7 +48,7 @@ func DotGo(updates map[int]Update, name string) error {
 	defer file.Close()
 
 	pkg := path.Base(path.Dir(filename))
-	_, err = file.Write([]byte(fmt.Sprintf(dotGoTemplate, pkg, dump)))
+	_, err = file.Write(fmt.Appendf(nil, dotGoTemplate, pkg, dump))
 	if err != nil {
 		return fmt.Errorf("failed to write to Go file: %w", err)
 	}

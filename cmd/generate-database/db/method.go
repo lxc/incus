@@ -621,7 +621,7 @@ func (m *Method) getRefs(buf *file.Buffer, parentTable string, refMapping *Mappi
 
 	switch refMapping.Type {
 	case ReferenceTable:
-		buf.L("%s, err := Get%s(ctx, db, \"%s\", \"%s\", filters...)", refParentList, lex.Plural(refStruct), parentTable, m.entity)
+		buf.L("%s, err := Get%s(ctx, db, \"%s\", \"%s\", filters...)", refParentList, lex.Plural(refStruct), parentTable, lex.SnakeCase(m.entity))
 		m.ifErrNotNil(buf, true, "nil", "err")
 		buf.L("%s := map[string]%s{}", refList, refMapping.ImportType())
 		buf.L("for _, ref := range %s[%sID] {", refParentList, refParent)
@@ -634,7 +634,7 @@ func (m *Method) getRefs(buf *file.Buffer, parentTable string, refMapping *Mappi
 		buf.L("}")
 		buf.N()
 	case MapTable:
-		buf.L("%s, err := Get%s(ctx, db, \"%s\", \"%s\", filters...)", refParentList, lex.Plural(refStruct), parentTable, m.entity)
+		buf.L("%s, err := Get%s(ctx, db, \"%s\", \"%s\", filters...)", refParentList, lex.Plural(refStruct), parentTable, lex.SnakeCase(m.entity))
 		m.ifErrNotNil(buf, true, "nil", "err")
 		buf.L("%s, ok := %s[%sID]", refList, refParentList, refParent)
 		buf.L("if !ok {")
@@ -1023,7 +1023,7 @@ func (m *Method) createRefs(buf *file.Buffer, parentTable string, refMapping *Ma
 		buf.L("%s[key] = %s", lex.Plural(refVar), refVar)
 		buf.L("}")
 		buf.N()
-		buf.L("err := Create%s(ctx, db, \"%s\", \"%s\", %s)", lex.Plural(refStruct), parentTable, m.entity, lex.Plural(refVar))
+		buf.L("err := Create%s(ctx, db, \"%s\", \"%s\", %s)", lex.Plural(refStruct), parentTable, lex.SnakeCase(m.entity), lex.Plural(refVar))
 		m.ifErrNotNil(buf, false, fmt.Sprintf("fmt.Errorf(\"Insert %s failed for %s: %%w\", err)", refStruct, lex.PascalCase(m.entity)))
 	case MapTable:
 		buf.L("referenceID := int(%sID)", refParent)
@@ -1035,7 +1035,7 @@ func (m *Method) createRefs(buf *file.Buffer, parentTable string, refMapping *Ma
 
 		buf.L("}")
 		buf.N()
-		buf.L("err := Create%s(ctx, db, \"%s\", \"%s\", insert)", refStruct, parentTable, m.entity)
+		buf.L("err := Create%s(ctx, db, \"%s\", \"%s\", insert)", refStruct, parentTable, lex.SnakeCase(m.entity))
 		m.ifErrNotNil(buf, true, fmt.Sprintf("fmt.Errorf(\"Insert %s failed for %s: %%w\", err)", refStruct, lex.PascalCase(m.entity)))
 		buf.L("}")
 	}
@@ -1277,7 +1277,7 @@ func (m *Method) updateRefs(buf *file.Buffer, parentTable string, refMapping *Ma
 	refList := lex.Plural(refVar)
 	refParent := lex.CamelCase(m.entity)
 
-	buf.L("err := Update%s(ctx, db, \"%s\", \"%s\", int(%sID), %s)", lex.Plural(refStruct), parentTable, m.entity, refParent, refList)
+	buf.L("err := Update%s(ctx, db, \"%s\", \"%s\", int(%sID), %s)", lex.Plural(refStruct), parentTable, lex.SnakeCase(m.entity), refParent, refList)
 	m.ifErrNotNil(buf, true, fmt.Sprintf("fmt.Errorf(\"Replace %s for %s failed: %%w\", err)", refStruct, lex.PascalCase(m.entity)))
 	buf.L("return nil")
 

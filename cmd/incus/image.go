@@ -310,7 +310,7 @@ type cmdImageDelete struct {
 func (c *cmdImageDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<image> [[<remote>:]<image>...]"))
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete images")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Delete images`))

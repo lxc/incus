@@ -25,7 +25,6 @@ import (
 	"github.com/gorilla/mux"
 	liblxc "github.com/lxc/go-lxc"
 	"golang.org/x/sys/unix"
-	yaml "gopkg.in/yaml.v2"
 
 	internalIO "github.com/lxc/incus/v6/internal/io"
 	"github.com/lxc/incus/v6/internal/linux"
@@ -2337,8 +2336,6 @@ func (d *Daemon) hasMemberStateChanged(heartbeatData *cluster.APIHeartbeat) bool
 
 // heartbeatHandler handles heartbeat requests from other cluster members.
 func (d *Daemon) heartbeatHandler(w http.ResponseWriter, _ *http.Request, isLeader bool, hbData *cluster.APIHeartbeat) {
-	s := d.State()
-
 	var err error
 
 	// Look for time skews.
@@ -2427,55 +2424,6 @@ func (d *Daemon) heartbeatHandler(w http.ResponseWriter, _ *http.Request, isLead
 		}
 
 		logger.Debug("Partial heartbeat received")
-	}
-
-	// Refresh cluster member resource info cache.
-	var muRefresh sync.Mutex
-
-	for _, member := range hbData.Members {
-		// Ignore offline servers.
-		if !member.Online {
-			continue
-		}
-
-		if member.Name == s.ServerName {
-			continue
-		}
-
-		go func(name string, address string) {
-			muRefresh.Lock()
-			defer muRefresh.Unlock()
-
-			// Check if we have a recent local cache entry already.
-			resourcesPath := internalUtil.CachePath("resources", fmt.Sprintf("%s.yaml", name))
-			fi, err := os.Stat(resourcesPath)
-			if err == nil && time.Since(fi.ModTime()) < time.Hour {
-				return
-			}
-
-			// Connect to the server.
-			client, err := cluster.Connect(address, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
-			if err != nil {
-				return
-			}
-
-			// Get the server resources.
-			resources, err := client.GetServerResources()
-			if err != nil {
-				return
-			}
-
-			// Write to cache.
-			data, err := yaml.Marshal(resources)
-			if err != nil {
-				return
-			}
-
-			err = os.WriteFile(resourcesPath, data, 0o600)
-			if err != nil {
-				return
-			}
-		}(member.Name, member.Address)
 	}
 }
 

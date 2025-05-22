@@ -2147,7 +2147,7 @@ func updateFromV42(ctx context.Context, tx *sql.Tx) error {
 		rowIDs := strings.Split(r.dupeRowIDs, ",")
 
 		// Iterate and delete all but 1 of the rowIDs so we leave just one left.
-		for i := 0; i < len(rowIDs)-1; i++ {
+		for i := range len(rowIDs) - 1 {
 			rowID, err := strconv.Atoi(rowIDs[i])
 			if err != nil {
 				return fmt.Errorf("Failed converting row ID: %w", err)
@@ -2213,7 +2213,7 @@ func updateFromV41(ctx context.Context, tx *sql.Tx) error {
 		rowIDs := strings.Split(r.dupeRowIDs, ",")
 
 		// Iterate and delete all but 1 of the rowIDs so we leave just one left.
-		for i := 0; i < len(rowIDs)-1; i++ {
+		for i := range len(rowIDs) - 1 {
 			rowID, err := strconv.Atoi(rowIDs[i])
 			if err != nil {
 				return fmt.Errorf("Failed converting row ID: %w", err)

@@ -132,8 +132,17 @@ func AddressSetUsedBy(s *state.State, projectName string, usageFunc func(aclName
 	var err error
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		aclNames, err = tx.GetNetworkACLs(ctx, projectName)
-		return err
+		acls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &projectName})
+		if err != nil {
+			return err
+		}
+
+		aclNames = make([]string, len(acls))
+		for i, acl := range acls {
+			aclNames[i] = acl.Name
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
@@ -143,7 +152,7 @@ func AddressSetUsedBy(s *state.State, projectName string, usageFunc func(aclName
 	for _, aclName := range aclNames {
 		var aclInfo *api.NetworkACL
 		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			_, aclInfo, err = tx.GetNetworkACL(ctx, projectName, aclName)
+			_, aclInfo, err = dbCluster.GetNetworkACLAPI(ctx, tx.Tx(), projectName, aclName)
 			return err
 		})
 		if err != nil {
@@ -167,19 +176,13 @@ func AddressSetUsedBy(s *state.State, projectName string, usageFunc func(aclName
 			return false
 		}
 
-		for _, ingress := range aclInfo.Ingress {
-			if checkRule(ingress) {
-				refFound = true
-				break
-			}
+		if slices.ContainsFunc(aclInfo.Ingress, checkRule) {
+			refFound = true
 		}
 
 		if !refFound {
-			for _, egress := range aclInfo.Egress {
-				if checkRule(egress) {
-					refFound = true
-					break
-				}
+			if slices.ContainsFunc(aclInfo.Egress, checkRule) {
+				refFound = true
 			}
 		}
 
@@ -202,12 +205,7 @@ func AddressSetUsedBy(s *state.State, projectName string, usageFunc func(aclName
 func subjectListReferences(subjects string, addressSetName string) bool {
 	parts := util.SplitNTrimSpace(subjects, ",", -1, false)
 	needle := "$" + addressSetName
-	for _, p := range parts {
-		if p == needle {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(parts, needle)
 }
 
 // NetworkACLUsage info about a network and what ACL it uses.
@@ -422,10 +420,17 @@ func ACLUsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context
 	var aclNames []string
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Find ACLs that have rules that reference the ACLs.
-		aclNames, err = tx.GetNetworkACLs(ctx, aclProjectName)
+		acls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &aclProjectName})
+		if err != nil {
+			return err
+		}
 
-		return err
+		aclNames = make([]string, len(acls))
+		for i, acl := range acls {
+			aclNames[i] = acl.Name
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
@@ -433,7 +438,7 @@ func ACLUsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		for _, aclName := range aclNames {
-			_, aclInfo, err := tx.GetNetworkACL(ctx, aclProjectName, aclName)
+			_, aclInfo, err := dbCluster.GetNetworkACLAPI(ctx, tx.Tx(), aclProjectName, aclName)
 			if err != nil {
 				return err
 			}

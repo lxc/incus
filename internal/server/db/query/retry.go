@@ -25,7 +25,7 @@ const maxRetries = 250
 // This should by typically used to wrap transactions.
 func Retry(ctx context.Context, f func(ctx context.Context) error) error {
 	var err error
-	for i := 0; i < maxRetries; i++ {
+	for i := range maxRetries {
 		err = f(ctx)
 		if err == nil {
 			// The function succeeded, we're done here.

@@ -121,7 +121,7 @@ func (o *VSwitch) CreateBridge(ctx context.Context, bridgeName string, mayExist 
 	}
 
 	// Wait for kernel interface to appear.
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		time.Sleep(100 * time.Millisecond)
 
 		if util.PathExists(fmt.Sprintf("/sys/class/net/%s", bridgeName)) {
@@ -580,10 +580,8 @@ func (o *VSwitch) AddOVNBridgeMapping(ctx context.Context, bridgeName string, pr
 
 	// Check if the mapping is already present.
 	newMapping := fmt.Sprintf("%s:%s", providerName, bridgeName)
-	for _, mapping := range mappings {
-		if mapping == newMapping {
-			return nil // Mapping is already present, nothing to do.
-		}
+	if slices.Contains(mappings, newMapping) {
+		return nil // Mapping is already present, nothing to do.
 	}
 
 	// Add the new mapping.

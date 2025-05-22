@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"strings"
 
@@ -729,9 +730,7 @@ func (c *cmdConfigSet) Run(cmd *cobra.Command, args []string) error {
 		server.Config = map[string]string{}
 	}
 
-	for k, v := range keys {
-		server.Config[k] = v
-	}
+	maps.Copy(server.Config, keys)
 
 	return resource.server.UpdateServer(server.Writable(), etag)
 }

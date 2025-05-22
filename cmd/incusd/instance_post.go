@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
 	"strings"
@@ -234,11 +235,15 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 			// Storage pool changes require a target flag.
 			if req.Pool != "" {
 				if inst.Type() != instancetype.VM {
-					return response.BadRequest(fmt.Errorf("Storage pool change supported only by virtual-machines"))
+					return response.BadRequest(fmt.Errorf("Live storage pool changes aren't supported for containers"))
+				}
+
+				if !s.ServerClustered {
+					return response.BadRequest(fmt.Errorf("Live storage pool changes aren't supported on standalone systems"))
 				}
 
 				if target == "" {
-					return response.BadRequest(fmt.Errorf("Storage pool can be specified only together with target flag"))
+					return response.BadRequest(fmt.Errorf("Live storage pool changes require the VM be moved to another cluster member"))
 				}
 			}
 
@@ -445,8 +450,9 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 	// If the user requested a specific server group, make sure we can have it recorded.
 	var targetGroupName string
-	if strings.HasPrefix(target, targetGroupPrefix) {
-		targetGroupName = strings.TrimPrefix(target, targetGroupPrefix)
+	after, ok := strings.CutPrefix(target, targetGroupPrefix)
+	if ok {
+		targetGroupName = after
 	}
 
 	// Check that we're not requested to move to the same location we're currently on.
@@ -611,14 +617,10 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 	}
 
 	// Apply the config overrides.
-	for k, v := range req.Config {
-		targetInstInfo.Config[k] = v
-	}
+	maps.Copy(targetInstInfo.Config, req.Config)
 
 	// Apply the device overrides.
-	for k, v := range req.Devices {
-		targetInstInfo.Devices[k] = v
-	}
+	maps.Copy(targetInstInfo.Devices, req.Devices)
 
 	// Apply the profile overrides.
 	if req.Profiles != nil {

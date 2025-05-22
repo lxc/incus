@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"os"
 	"slices"
@@ -132,9 +133,7 @@ func (n *common) validate(config map[string]string, driverRules map[string]func(
 	rules := n.validationRules()
 
 	// Merge driver specific rules into common rules.
-	for field, validator := range driverRules {
-		rules[field] = validator
-	}
+	maps.Copy(rules, driverRules)
 
 	// Run the validator against each field.
 	for k, validator := range rules {
@@ -990,7 +989,7 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 				return nil, fmt.Errorf("Invalid listen port in port specification %d: %w", portSpecID, err)
 			}
 
-			for i := int64(0); i < portRange; i++ {
+			for i := range portRange {
 				port := portFirst + i
 				_, found := listenPorts[portSpec.Protocol][port]
 				if found {
@@ -1020,7 +1019,7 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 					return nil, fmt.Errorf("Invalid target port in port specification %d", portSpecID)
 				}
 
-				for i := int64(0); i < portRange; i++ {
+				for i := range portRange {
 					port := portFirst + i
 					portMap.target.ports = append(portMap.target.ports, uint64(port))
 				}
@@ -1340,7 +1339,7 @@ func (n *common) loadBalancerValidate(listenAddress net.IP, forward *api.Network
 				return nil, fmt.Errorf("Invalid backend port specification %d in backend specification %d: %w", portSpecID, backendSpecID, err)
 			}
 
-			for i := int64(0); i < portRange; i++ {
+			for i := range portRange {
 				port := portFirst + i
 				target.ports = append(target.ports, uint64(port))
 			}
@@ -1374,7 +1373,7 @@ func (n *common) loadBalancerValidate(listenAddress net.IP, forward *api.Network
 				return nil, fmt.Errorf("Invalid listen port in port specification %d: %w", portSpecID, err)
 			}
 
-			for i := int64(0); i < portRange; i++ {
+			for i := range portRange {
 				port := portFirst + i
 				_, found := listenPorts[portSpec.Protocol][port]
 				if found {
@@ -1527,12 +1526,19 @@ func (n *common) peerUsedBy(peerName string, firstOnly bool) ([]string, error) {
 	var aclNames []string
 
 	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		var err error
+		projectName := n.Project()
 
-		// Find ACLs that have rules that reference the peer connection.
-		aclNames, err = tx.GetNetworkACLs(ctx, n.Project())
+		acls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &projectName})
+		if err != nil {
+			return err
+		}
 
-		return err
+		aclNames = make([]string, len(acls))
+		for i, acl := range acls {
+			aclNames[i] = acl.Name
+		}
+
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -1542,7 +1548,7 @@ func (n *common) peerUsedBy(peerName string, firstOnly bool) ([]string, error) {
 		var aclInfo *api.NetworkACL
 
 		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			_, aclInfo, err = tx.GetNetworkACL(ctx, n.Project(), aclName)
+			_, aclInfo, err = dbCluster.GetNetworkACLAPI(ctx, tx.Tx(), n.Project(), aclName)
 
 			return err
 		})

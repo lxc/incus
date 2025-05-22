@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"sort"
 	"strings"
@@ -82,6 +83,7 @@ type cmdNetworkIntegrationCreate struct {
 func (c *cmdNetworkIntegrationCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("create", i18n.G("[<remote>:]<network integration> <type>"))
+	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create network integrations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create network integrations`))
@@ -174,7 +176,7 @@ type cmdNetworkIntegrationDelete struct {
 func (c *cmdNetworkIntegrationDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<network integration>"))
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network integrations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Delete network integrations`))
@@ -674,9 +676,7 @@ func (c *cmdNetworkIntegrationSet) Run(cmd *cobra.Command, args []string) error 
 			}
 		}
 	} else {
-		for k, v := range keys {
-			writable.Config[k] = v
-		}
+		maps.Copy(writable.Config, keys)
 	}
 
 	return resource.server.UpdateNetworkIntegration(resource.name, writable, etag)

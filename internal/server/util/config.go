@@ -31,13 +31,7 @@ func CompareConfigs(config1, config2 map[string]string, exclude []string) error 
 		}
 
 		if config1[key] != value {
-			present := false
-			for i := range delta {
-				if delta[i] == key {
-					present = true
-					break
-				}
-			}
+			present := slices.Contains(delta, key)
 			if !present {
 				delta = append(delta, key)
 			}

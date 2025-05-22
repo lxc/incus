@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"sort"
 	"strings"
@@ -333,6 +334,7 @@ type cmdNetworkForwardCreate struct {
 func (c *cmdNetworkForwardCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("create", i18n.G("[<remote>:]<network> <listen_address> [key=value...]"))
+	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new network forwards")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network forwards"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network forward create n1 127.0.0.1
@@ -619,9 +621,7 @@ func (c *cmdNetworkForwardSet) Run(cmd *cobra.Command, args []string) error {
 			}
 		}
 	} else {
-		for k, v := range keys {
-			writable.Config[k] = v
-		}
+		maps.Copy(writable.Config, keys)
 	}
 
 	writable.Normalise()
@@ -846,7 +846,7 @@ type cmdNetworkForwardDelete struct {
 func (c *cmdNetworkForwardDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("delete", i18n.G("[<remote>:]<network> <listen_address>"))
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network forwards")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete network forwards"))
 	cmd.RunE = c.Run
@@ -940,6 +940,7 @@ func (c *cmdNetworkForwardPort) Command() *cobra.Command {
 func (c *cmdNetworkForwardPort) CommandAdd() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("add", i18n.G("[<remote>:]<network> <listen_address> <protocol> <listen_port(s)> <target_address> [<target_port(s)>]"))
+	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add ports to a forward")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add ports to a forward"))
 	cmd.RunE = c.RunAdd
@@ -1025,6 +1026,7 @@ func (c *cmdNetworkForwardPort) RunAdd(cmd *cobra.Command, args []string) error 
 func (c *cmdNetworkForwardPort) CommandRemove() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("remove", i18n.G("[<remote>:]<network> <listen_address> [<protocol>] [<listen_port(s)>]"))
+	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove ports from a forward")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Remove ports from a forward"))
 	cmd.Flags().BoolVar(&c.flagRemoveForce, "force", false, i18n.G("Remove all ports that match"))

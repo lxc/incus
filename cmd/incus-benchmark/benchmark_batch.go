@@ -31,8 +31,8 @@ func processBatch(count int, batchSize int, process func(index int, wg *sync.Wai
 	logf("Batch processing start")
 	timeStart := time.Now()
 
-	for i := 0; i < batches; i++ {
-		for j := 0; j < batchSize; j++ {
+	for range batches {
+		for range batchSize {
 			wg.Add(1)
 			go process(processed, &wg)
 			processed++
@@ -47,7 +47,7 @@ func processBatch(count int, batchSize int, process func(index int, wg *sync.Wai
 		}
 	}
 
-	for k := 0; k < remainder; k++ {
+	for range remainder {
 		wg.Add(1)
 		go process(processed, &wg)
 		processed++

@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -77,6 +78,7 @@ type cmdConfigDeviceAdd struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigDeviceAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
+	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add instance devices")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Add instance devices`))
@@ -508,7 +510,7 @@ func (c *cmdConfigDeviceRemove) Command() *cobra.Command {
 		cmd.Use = usage("remove", i18n.G("[<remote>:]<profile> <name>..."))
 	}
 
-	cmd.Aliases = []string{"rm"}
+	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove instance devices")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Remove instance devices`))
@@ -706,9 +708,7 @@ func (c *cmdConfigDeviceSet) Run(cmd *cobra.Command, args []string) error {
 			return errors.New(i18n.G("Device doesn't exist"))
 		}
 
-		for k, v := range keys {
-			dev[k] = v
-		}
+		maps.Copy(dev, keys)
 
 		profile.Devices[devname] = dev
 
@@ -732,9 +732,7 @@ func (c *cmdConfigDeviceSet) Run(cmd *cobra.Command, args []string) error {
 			return errors.New(i18n.G("Device from profile(s) cannot be modified for individual instance. Override device or modify profile instead"))
 		}
 
-		for k, v := range keys {
-			dev[k] = v
-		}
+		maps.Copy(dev, keys)
 
 		inst.Devices[devname] = dev
 

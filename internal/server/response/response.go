@@ -3,18 +3,22 @@ package response
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	incus "github.com/lxc/incus/v6/client"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/tcp"
 )
 
 var debug bool
@@ -604,4 +608,92 @@ func Unauthorized(err error) Response {
 	}
 
 	return &errorResponse{http.StatusUnauthorized, message}
+}
+
+// SFTPResponse upgrades the connection for sftp and connects to the backend server.
+func SFTPResponse(r *http.Request, conn net.Conn) Response {
+	return &sftpResponse{req: r, conn: conn}
+}
+
+type sftpResponse struct {
+	req  *http.Request
+	conn net.Conn
+}
+
+// String returns the response type name.
+func (r *sftpResponse) String() string {
+	return "sftp handler"
+}
+
+// Code returns the HTTP code.
+func (r *sftpResponse) Code() int {
+	return http.StatusOK
+}
+
+// Render handles the HTTP connection.
+func (r *sftpResponse) Render(w http.ResponseWriter) error {
+	defer func() { _ = r.conn.Close() }()
+
+	hijacker, ok := w.(http.Hijacker)
+	if !ok {
+		return api.StatusErrorf(http.StatusInternalServerError, "Webserver doesn't support hijacking")
+	}
+
+	remoteConn, _, err := hijacker.Hijack()
+	if err != nil {
+		return api.StatusErrorf(http.StatusInternalServerError, "Failed to hijack connection: %v", err)
+	}
+
+	defer func() { _ = remoteConn.Close() }()
+
+	remoteTCP, _ := tcp.ExtractConn(remoteConn)
+	if remoteTCP != nil {
+		// Apply TCP timeouts if remote connection is TCP (rather than Unix).
+		err = tcp.SetTimeouts(remoteTCP, 0)
+		if err != nil {
+			return api.StatusErrorf(http.StatusInternalServerError, "Failed setting TCP timeouts on remote connection: %v", err)
+		}
+	}
+
+	err = Upgrade(remoteConn, "sftp")
+	if err != nil {
+		return api.StatusErrorf(http.StatusInternalServerError, err.Error())
+	}
+
+	ctx, cancel := context.WithCancel(r.req.Context())
+	l := logger.AddContext(logger.Ctx{
+		"local":  remoteConn.LocalAddr(),
+		"remote": remoteConn.RemoteAddr(),
+	})
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		_, err := io.Copy(remoteConn, r.conn)
+		if err != nil {
+			if ctx.Err() == nil {
+				l.Warn("Failed copying SFTP instance connection to remote connection", logger.Ctx{"err": err})
+			}
+		}
+		cancel()               // Cancel context first so when remoteConn is closed it doesn't cause a warning.
+		_ = remoteConn.Close() // Trigger the cancellation of the io.Copy reading from remoteConn.
+	}()
+
+	_, err = io.Copy(r.conn, remoteConn)
+	if err != nil {
+		if ctx.Err() == nil {
+			l.Warn("Failed copying SFTP remote connection to instance connection", logger.Ctx{"err": err})
+		}
+	}
+	cancel() // Cancel context first so when conn is closed it doesn't cause a warning.
+
+	err = r.conn.Close() // Trigger the cancellation of the io.Copy reading from conn.
+	if err != nil {
+		return fmt.Errorf("Failed closing connection to remote server: %w", err)
+	}
+
+	wg.Wait() // Wait for copy go routine to finish.
+
+	return nil
 }

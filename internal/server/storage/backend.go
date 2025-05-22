@@ -1301,14 +1301,7 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 		return fmt.Errorf("Volume of content type %q cannot be refreshed", contentType)
 	}
 
-	storagePoolSupported := false
-	for _, supportedType := range b.Driver().Info().VolumeTypes {
-		if supportedType == drivers.VolumeTypeCustom {
-			storagePoolSupported = true
-			break
-		}
-	}
-
+	storagePoolSupported := slices.Contains(b.Driver().Info().VolumeTypes, drivers.VolumeTypeCustom)
 	if !storagePoolSupported {
 		return fmt.Errorf("Storage pool does not support custom volume type")
 	}
@@ -4680,14 +4673,7 @@ func (b *backend) CreateCustomVolume(projectName string, volName string, desc st
 	volStorageName := project.StorageVolume(projectName, volName)
 	vol := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageName, config)
 
-	storagePoolSupported := false
-	for _, supportedType := range b.Driver().Info().VolumeTypes {
-		if supportedType == drivers.VolumeTypeCustom {
-			storagePoolSupported = true
-			break
-		}
-	}
-
+	storagePoolSupported := slices.Contains(b.Driver().Info().VolumeTypes, drivers.VolumeTypeCustom)
 	if !storagePoolSupported {
 		return fmt.Errorf("Storage pool does not support custom volume type")
 	}
@@ -4784,13 +4770,7 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 		return err
 	}
 
-	storagePoolSupported := false
-	for _, supportedType := range b.Driver().Info().VolumeTypes {
-		if supportedType == drivers.VolumeTypeCustom {
-			storagePoolSupported = true
-			break
-		}
-	}
+	storagePoolSupported := slices.Contains(b.Driver().Info().VolumeTypes, drivers.VolumeTypeCustom)
 
 	if !storagePoolSupported {
 		return fmt.Errorf("Storage pool does not support custom volume type")
@@ -5138,13 +5118,7 @@ func (b *backend) CreateCustomVolumeFromMigration(projectName string, conn io.Re
 		return err
 	}
 
-	storagePoolSupported := false
-	for _, supportedType := range b.Driver().Info().VolumeTypes {
-		if supportedType == drivers.VolumeTypeCustom {
-			storagePoolSupported = true
-			break
-		}
-	}
+	storagePoolSupported := slices.Contains(b.Driver().Info().VolumeTypes, drivers.VolumeTypeCustom)
 
 	if !storagePoolSupported {
 		return fmt.Errorf("Storage pool does not support custom volume type")

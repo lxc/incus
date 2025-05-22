@@ -388,6 +388,10 @@ type InstanceServer interface {
 	CreateStoragePoolVolumeFromISO(pool string, args StorageVolumeBackupArgs) (op Operation, err error)
 	CreateStoragePoolVolumeFromMigration(pool string, volume api.StorageVolumesPost) (op Operation, err error)
 
+	// Storage volume SFTP functions ("custom_volume_sftp" API extension)
+	GetStoragePoolVolumeFileSFTPConn(pool string, volType string, volName string) (net.Conn, error)
+	GetStoragePoolVolumeFileSFTP(pool string, volType string, volName string) (*sftp.Client, error)
+
 	// Cluster functions ("cluster" API extensions)
 	GetCluster() (cluster *api.Cluster, ETag string, err error)
 	UpdateCluster(cluster api.ClusterPut, ETag string) (op Operation, err error)

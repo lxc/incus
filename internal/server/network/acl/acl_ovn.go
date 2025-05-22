@@ -178,7 +178,7 @@ func OVNEnsureACLs(s *state.State, l logger.Logger, client *ovn.NB, aclProjectNa
 
 			err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 				// Load the config we'll need to create the port group with ACL rules.
-				_, aclInfo, err = tx.GetNetworkACL(ctx, aclProjectName, aclName)
+				_, aclInfo, err = cluster.GetNetworkACLAPI(ctx, tx.Tx(), aclProjectName, aclName)
 
 				return err
 			})
@@ -212,7 +212,7 @@ func OVNEnsureACLs(s *state.State, l logger.Logger, client *ovn.NB, aclProjectNa
 			// new per-ACL-per-network port groups.
 			if reapplyRules || !portGroupHasACLs || len(addACLNets) > 0 {
 				err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-					_, aclInfo, err = tx.GetNetworkACL(ctx, aclProjectName, aclName)
+					_, aclInfo, err = cluster.GetNetworkACLAPI(ctx, tx.Tx(), aclProjectName, aclName)
 
 					return err
 				})
@@ -379,8 +379,9 @@ func ovnAddReferencedACLs(info *api.NetworkACL, referencedACLNames map[string]st
 func replaceAddressSetNames(subject string, addressSetIDs map[string]int) string {
 	subjects := util.SplitNTrimSpace(subject, ",", -1, true)
 	for i, subj := range subjects {
-		if strings.HasPrefix(subj, "$") {
-			setID, found := addressSetIDs[strings.TrimPrefix(subj, "$")]
+		after, ok := strings.CutPrefix(subj, "$")
+		if ok {
+			setID, found := addressSetIDs[after]
 			if found {
 				subjects[i] = fmt.Sprintf("$incus_set%d", setID)
 			}
@@ -702,37 +703,40 @@ func ovnRuleSubjectToOVNACLMatch(s *state.State, direction string, aclNameIDs ma
 					fieldParts = append(fieldParts, fmt.Sprintf("ip6.%s == %s_ip6 || ip4.%s == %s_ip4", direction, subjectCriterion, direction, subjectCriterion))
 
 					continue
-				} else if strings.HasPrefix(subjectCriterion, "@") {
-					// Subject is a network peer name. Convert to address set criteria.
-					peerParts := strings.SplitN(strings.TrimPrefix(subjectCriterion, "@"), "/", 2)
-					if len(peerParts) != 2 {
-						return "", false, nil, fmt.Errorf("Cannot parse subject as peer %q", subjectCriterion)
-					}
-
-					peer := db.NetworkPeer{
-						NetworkName: peerParts[0],
-						PeerName:    peerParts[1],
-					}
-
-					networkID, found := peerTargetNetIDs[peer]
-					if !found {
-						return "", false, nil, fmt.Errorf("Cannot find network ID for peer %q", subjectCriterion)
-					}
-
-					addrSetPrefix := OVNIntSwitchPortGroupAddressSetPrefix(networkID)
-
-					fieldParts = append(fieldParts, fmt.Sprintf("ip6.%s == $%s_ip6 || ip4.%s == $%s_ip4", direction, addrSetPrefix, direction, addrSetPrefix))
-					networkPeersNeeded = append(networkPeersNeeded, peer)
-
-					continue // Not a port based selector.
 				} else {
-					// Assume the bare name is an ACL name and convert to port group.
-					aclID, found := aclNameIDs[subjectCriterion]
-					if !found {
-						return "", false, nil, fmt.Errorf("Cannot find security ACL ID for %q", subjectCriterion)
-					}
+					after, ok := strings.CutPrefix(subjectCriterion, "@")
+					if ok {
+						// Subject is a network peer name. Convert to address set criteria.
+						peerParts := strings.SplitN(after, "/", 2)
+						if len(peerParts) != 2 {
+							return "", false, nil, fmt.Errorf("Cannot parse subject as peer %q", subjectCriterion)
+						}
 
-					subjectPortSelector = OVNACLPortGroupName(aclID)
+						peer := db.NetworkPeer{
+							NetworkName: peerParts[0],
+							PeerName:    peerParts[1],
+						}
+
+						networkID, found := peerTargetNetIDs[peer]
+						if !found {
+							return "", false, nil, fmt.Errorf("Cannot find network ID for peer %q", subjectCriterion)
+						}
+
+						addrSetPrefix := OVNIntSwitchPortGroupAddressSetPrefix(networkID)
+
+						fieldParts = append(fieldParts, fmt.Sprintf("ip6.%s == $%s_ip6 || ip4.%s == $%s_ip4", direction, addrSetPrefix, direction, addrSetPrefix))
+						networkPeersNeeded = append(networkPeersNeeded, peer)
+
+						continue // Not a port based selector.
+					} else {
+						// Assume the bare name is an ACL name and convert to port group.
+						aclID, found := aclNameIDs[subjectCriterion]
+						if !found {
+							return "", false, nil, fmt.Errorf("Cannot find security ACL ID for %q", subjectCriterion)
+						}
+
+						subjectPortSelector = OVNACLPortGroupName(aclID)
+					}
 				}
 
 				portType := "inport"
@@ -877,16 +881,16 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
-		// Get map of ACL names to DB IDs (used for generating OVN port group names).
-		aclNameIDs, err = tx.GetNetworkACLIDsByNames(ctx, aclProjectName)
+		// Get all the ACLs.
+		acls, err := cluster.GetNetworkACLs(ctx, tx.Tx(), cluster.NetworkACLFilter{Project: &aclProjectName})
 		if err != nil {
-			return fmt.Errorf("Failed getting network ACL IDs for security ACL port group removal: %w", err)
+			return err
 		}
 
-		// Convert aclNameIDs to aclNames slice for use with UsedBy.
-		aclNames = make([]string, 0, len(aclNameIDs))
-		for aclName := range aclNameIDs {
-			aclNames = append(aclNames, aclName)
+		// Convert acls to aclNames slice for use with UsedBy.
+		aclNames = make([]string, 0, len(acls))
+		for _, acl := range acls {
+			aclNames = append(aclNames, acl.Name)
 		}
 
 		// Get project ID.
