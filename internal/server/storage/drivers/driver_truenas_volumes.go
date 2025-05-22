@@ -879,7 +879,7 @@ func (d *truenas) CacheVolumeSnapshots(vol Volume) error {
 	}
 
 	// Get the usage data.
-	out, err := d.runTool("list", "--no-headers", "-p", "-o", "name,used,referenced", "-r", "-t", "snap,fs,vol", d.dataset(vol, false))
+	out, err := d.runTool("list", "--no-headers", "--parsable", "-o", "name,used,referenced", "-r", "-t", "snap,fs,vol", d.dataset(vol, false))
 	if err != nil {
 		d.logger.Warn("Coulnd't list volume snapshots", logger.Ctx{"err": err})
 
