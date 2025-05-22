@@ -141,7 +141,7 @@ void forkproxy(void)
 		if (in_same_namespace(getpid(), listen_nsfd, "user") > 0)
 			setns_flags |= CLONE_NEWUSER;
 
-		if (needs_mntns & CONNECT_NEEDS_MNTNS)
+		if (needs_mntns & LISTEN_NEEDS_MNTNS)
 			setns_flags |= CLONE_NEWNS;
 
 		if (!change_namespaces(listen_pidfd, listen_nsfd, setns_flags)) {
