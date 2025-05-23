@@ -474,8 +474,7 @@ func (d *truenas) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) (int64,
 
 	// minBlockSize will be 0 if truenas.blocksize=""
 	if minBlockSize <= 0 || err != nil {
-		// 16KiB is the default volblocksize
-		minBlockSize = 16 * 1024
+		minBlockSize = tnDefaultVolblockSize // 16KiB
 	}
 
 	return roundAbove(minBlockSize, sizeBytes), nil
