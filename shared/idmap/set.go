@@ -2,7 +2,7 @@ package idmap
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"reflect"
 	"slices"
 	"sort"
@@ -11,10 +11,10 @@ import (
 )
 
 // ErrHostIDIsSubID indicates that an expected host ID is part of a subid range.
-var ErrHostIDIsSubID = fmt.Errorf("Host ID is in the range of subids")
+var ErrHostIDIsSubID = errors.New("Host ID is in the range of subids")
 
 // ErrNoSuitableSubmap indicates that it was impossible to split a submap with the requested characteristics.
-var ErrNoSuitableSubmap = fmt.Errorf("Couldn't find a suitable submap")
+var ErrNoSuitableSubmap = errors.New("Couldn't find a suitable submap")
 
 // Set is a list of Entry with some functions on it.
 type Set struct {
@@ -248,7 +248,7 @@ func (m *Set) Append(s string) (*Set, error) {
 	}
 
 	if m.Intersects(e) {
-		return m, fmt.Errorf("Conflicting id mapping")
+		return m, errors.New("Conflicting id mapping")
 	}
 
 	m.Entries = append(m.Entries, e)

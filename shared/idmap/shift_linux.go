@@ -401,6 +401,7 @@ static int create_detached_idmapped_mount(const char *path, const char *fstype)
 import "C"
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -586,7 +587,7 @@ func SupportsVFS3FSCaps(prefix string) bool {
 // UnshiftACL unshifts the uid/gid in the raw ACL entry.
 func UnshiftACL(value string, set *Set) (string, error) {
 	if set == nil {
-		return "", fmt.Errorf("Invalid Set supplied")
+		return "", errors.New("Invalid Set supplied")
 	}
 
 	buf := []byte(value)
@@ -596,7 +597,7 @@ func UnshiftACL(value string, set *Set) (string, error) {
 
 	size := len(buf)
 	if size < int(unsafe.Sizeof(*header)) {
-		return "", fmt.Errorf("Invalid ACL size")
+		return "", errors.New("Invalid ACL size")
 	}
 
 	if header.a_version != C.native_to_le32(C.POSIX_ACL_XATTR_VERSION) {
@@ -605,11 +606,11 @@ func UnshiftACL(value string, set *Set) (string, error) {
 
 	count := C.posix_acl_xattr_count(C.size_t(size))
 	if count < 0 {
-		return "", fmt.Errorf("Invalid ACL count")
+		return "", errors.New("Invalid ACL count")
 	}
 
 	if count == 0 {
-		return "", fmt.Errorf("No valid ACLs found")
+		return "", errors.New("No valid ACLs found")
 	}
 
 	entryPtr := C.posix_entry_start(unsafe.Pointer(header))
@@ -656,7 +657,7 @@ func UnshiftACL(value string, set *Set) (string, error) {
 // UnshiftCaps unshifts the uid/gid in the raw fscaps.
 func UnshiftCaps(value string, set *Set) (string, error) {
 	if set == nil {
-		return "", fmt.Errorf("Invalid Set supplied")
+		return "", errors.New("Invalid Set supplied")
 	}
 
 	buf := []byte(value)

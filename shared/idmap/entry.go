@@ -1,6 +1,7 @@
 package idmap
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -216,7 +217,7 @@ func (e *Entry) parse(s string) error {
 
 	// Wrap around.
 	if e.HostID+e.MapRange < e.HostID || e.NSID+e.MapRange < e.NSID {
-		return fmt.Errorf("Bad mapping: id wraparound")
+		return errors.New("Bad mapping: id wraparound")
 	}
 
 	return nil
@@ -227,7 +228,7 @@ func (e *Entry) parse(s string) error {
 func (e *Entry) shiftIntoNS(id int64) (int64, error) {
 	if id < e.NSID || id >= e.NSID+e.MapRange {
 		// This mapping doesn't apply.
-		return 0, fmt.Errorf("ID mapping doesn't apply")
+		return 0, errors.New("ID mapping doesn't apply")
 	}
 
 	return id - e.NSID + e.HostID, nil
@@ -238,7 +239,7 @@ func (e *Entry) shiftIntoNS(id int64) (int64, error) {
 func (e *Entry) shiftFromNS(id int64) (int64, error) {
 	if id < e.HostID || id >= e.HostID+e.MapRange {
 		// This mapping doesn't apply.
-		return 0, fmt.Errorf("ID mapping doesn't apply")
+		return 0, errors.New("ID mapping doesn't apply")
 	}
 
 	return id - e.HostID + e.NSID, nil
