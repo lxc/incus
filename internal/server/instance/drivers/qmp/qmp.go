@@ -20,13 +20,13 @@ type qemuMachineProtocal struct {
 	c            net.Conn           // Underlying connection
 	mu           sync.Mutex         // Serialize running command
 	stream       <-chan rawResponse // Send command responses and errors
-	events       <-chan Event       // Events channel
+	events       <-chan qmpEvent    // Events channel
 	listeners    atomic.Uint32      // Listeners number
 	cid          atomic.Uint32      // Auto increase command id
 }
 
-// Event represents a QEMU QMP event.
-type Event struct {
+// qmpEvent represents a QEMU QMP event.
+type qmpEvent struct {
 	// Event name, e.g., BLOCK_JOB_COMPLETE
 	Event string `json:"event"`
 
@@ -40,8 +40,8 @@ type Event struct {
 	} `json:"timestamp"`
 }
 
-// Command represents a QMP command.
-type Command struct {
+// qmpCommand represents a QMP command.
+type qmpCommand struct {
 	// Name of the command to run
 	Execute string `json:"execute,omitempty"`
 
@@ -59,8 +59,8 @@ type Command struct {
 	ID uint32 `json:"id,omitempty"`
 }
 
-// Response represents a QMP response with id and return.
-type Response struct {
+// qmpResponse represents a QMP response with id and return.
+type qmpResponse struct {
 	// Optional id for transaction identification associated with the response
 	ID uint32 `json:"id,omitempty"`
 
@@ -68,13 +68,13 @@ type Response struct {
 	Return any `json:"return,omitempty"`
 }
 
-// Error represents a QMP response error.
-type Error struct {
+// qmpError represents a QMP response error.
+type qmpError struct {
 	Class string `json:"class,omitempty"`
 	Desc  string `json:"desc,omitempty"`
 }
 
-func (e *Error) Error() string {
+func (e *qmpError) Error() string {
 	if e == nil {
 		return ""
 	}
@@ -88,14 +88,14 @@ type rawResponse struct {
 	ID uint32 `json:"id"`
 
 	// Error response error
-	Error *Error `json:"error,omitempty"`
+	Error *qmpError `json:"error,omitempty"`
 
 	raw []byte // raw data, json field ignored
 	err error  // runtime error, json field ignored
 }
 
-// Disconnect closes the QEMU monitor socket connection.
-func (qmp *qemuMachineProtocal) Disconnect() error {
+// disconnect closes the QEMU monitor socket connection.
+func (qmp *qemuMachineProtocal) disconnect() error {
 	qmp.listeners.Store(0)
 	return qmp.c.Close()
 }
@@ -111,8 +111,8 @@ func (qmp *qemuMachineProtocal) qmpIncreaseID() uint32 {
 	return id
 }
 
-// Connect sets up a QMP connection.
-func (qmp *qemuMachineProtocal) Connect() error {
+// connect sets up a QMP connection.
+func (qmp *qemuMachineProtocal) connect() error {
 	enc := json.NewEncoder(qmp.c)
 	dec := json.NewDecoder(qmp.c)
 
@@ -132,7 +132,7 @@ func (qmp *qemuMachineProtocal) Connect() error {
 
 	// Issue capabilities handshake
 	id := qmp.qmpIncreaseID()
-	cmd := Command{Execute: "qmp_capabilities", ID: id}
+	cmd := qmpCommand{Execute: "qmp_capabilities", ID: id}
 	err = enc.Encode(cmd)
 	if err != nil {
 		return err
@@ -154,7 +154,7 @@ func (qmp *qemuMachineProtocal) Connect() error {
 	}
 
 	// Initialize listener for command responses and asynchronous events
-	events := make(chan Event)
+	events := make(chan qmpEvent)
 	stream := make(chan rawResponse)
 	go qmp.listen(qmp.c, events, stream)
 
@@ -164,19 +164,19 @@ func (qmp *qemuMachineProtocal) Connect() error {
 	return nil
 }
 
-// Events streams QEMU QMP Events.
-func (qmp *qemuMachineProtocal) Events(context.Context) (<-chan Event, error) {
+// getEvents streams QEMU QMP Events.
+func (qmp *qemuMachineProtocal) getEvents(context.Context) (<-chan qmpEvent, error) {
 	qmp.listeners.Add(1)
 	return qmp.events, nil
 }
 
-func (qmp *qemuMachineProtocal) listen(r io.Reader, events chan<- Event, stream chan<- rawResponse) {
+func (qmp *qemuMachineProtocal) listen(r io.Reader, events chan<- qmpEvent, stream chan<- rawResponse) {
 	defer close(events)
 	defer close(stream)
 
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		var e Event
+		var e qmpEvent
 
 		b := scanner.Bytes()
 		err := json.Unmarshal(b, &e)
@@ -212,14 +212,14 @@ func (qmp *qemuMachineProtocal) listen(r io.Reader, events chan<- Event, stream 
 	}
 }
 
-// Run executes the given QAPI command against a domain's QEMU instance.
-func (qmp *qemuMachineProtocal) Run(command []byte) ([]byte, error) {
+// run executes the given QAPI command against a domain's QEMU instance.
+func (qmp *qemuMachineProtocal) run(command []byte) ([]byte, error) {
 	// Just call RunWithFile with no file
-	return qmp.RunWithFile(command, nil)
+	return qmp.runWithFile(command, nil)
 }
 
-// RunWithFile executes for passing a file through out-of-band data.
-func (qmp *qemuMachineProtocal) RunWithFile(command []byte, file *os.File) ([]byte, error) {
+// runWithFile executes for passing a file through out-of-band data.
+func (qmp *qemuMachineProtocal) runWithFile(command []byte, file *os.File) ([]byte, error) {
 	// Only allow a single command to be run at a time to ensure that responses
 	// to a command cannot be mixed with responses from another command
 	qmp.mu.Lock()
