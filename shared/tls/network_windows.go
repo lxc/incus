@@ -4,7 +4,7 @@ package tls
 
 import (
 	"crypto/x509"
-	"fmt"
+	"errors"
 	"sync"
 	"unsafe"
 
@@ -19,7 +19,7 @@ var (
 func systemCertPool() (*x509.CertPool, error) {
 	once.Do(initSystemRoots)
 	if systemRoots == nil {
-		return nil, fmt.Errorf("Bad system root pool")
+		return nil, errors.New("Bad system root pool")
 	}
 
 	return systemRoots, nil
