@@ -228,7 +228,7 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if hdr == nil || hdr.Name != "metadata.yaml" {
-		return fmt.Errorf("Couldn't find metadata.yaml in metadata tarball")
+		return errors.New("Couldn't find metadata.yaml in metadata tarball")
 	}
 
 	// Parse the metadata.
@@ -251,7 +251,7 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if metadata.CreationDate == 0 {
-		return fmt.Errorf("Missing creation date in metadata.yaml")
+		return errors.New("Missing creation date in metadata.yaml")
 	}
 
 	for _, prop := range []string{"os", "release", "variant", "architecture", "description"} {
