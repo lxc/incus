@@ -865,7 +865,23 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 			var listenAddresses map[int64]string
 
 			err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-				listenAddresses, err = tx.GetNetworkForwardListenAddresses(ctx, d.network.ID(), true)
+				networkID := int(d.network.ID())
+				dbRecords, err := cluster.GetNetworkForwards(ctx, tx.Tx(), cluster.NetworkForwardFilter{
+					NetworkID: &networkID,
+				})
+				if err != nil {
+					return err
+				}
+
+				listenAddresses = make(map[int64]string)
+				for _, dbRecord := range dbRecords {
+					// memberSpecific filtering
+					if !dbRecord.NodeID.Valid || (dbRecord.NodeID.Int64 == tx.GetNodeID()) {
+						// Get listen address
+						forwardID := int64(dbRecord.ID)
+						listenAddresses[forwardID] = dbRecord.ListenAddress
+					}
+				}
 
 				return err
 			})
