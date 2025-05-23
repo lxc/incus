@@ -2,6 +2,7 @@ package filter
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -57,7 +58,7 @@ func Match(obj any, set ClauseSet) (bool, error) {
 		case set.Ops.Or:
 			match = match || clauseMatch
 		default:
-			return false, fmt.Errorf("unexpected clause operator")
+			return false, errors.New("unexpected clause operator")
 		}
 	}
 
@@ -270,7 +271,7 @@ func (s ClauseSet) match(c Clause, objValue any) (bool, error) {
 		}
 
 	default:
-		return false, fmt.Errorf("Unsupported operation")
+		return false, errors.New("Unsupported operation")
 	}
 
 	return false, fmt.Errorf("Unsupported filter type %q for field %q", kind.String(), c.Field)
