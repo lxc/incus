@@ -3,7 +3,7 @@ package util
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
+	"errors"
 )
 
 // RandomHexString returns a random string of hexadecimal characters.
@@ -15,7 +15,7 @@ func RandomHexString(length int) (string, error) {
 	}
 
 	if n != len(buf) {
-		return "", fmt.Errorf("not enough random bytes read")
+		return "", errors.New("not enough random bytes read")
 	}
 
 	return hex.EncodeToString(buf), nil
