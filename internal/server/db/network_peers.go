@@ -52,7 +52,7 @@ func (c *ClusterTx) CreateNetworkPeer(ctx context.Context, networkID int64, info
 	} else if info.Type == networkPeerTypeNames[networkPeerTypeRemote] {
 		// Get the target integration.
 		if info.TargetIntegration == "" {
-			return -1, false, fmt.Errorf("Missing network integration name")
+			return -1, false, errors.New("Missing network integration name")
 		}
 
 		networkIntegration, err := dbCluster.GetNetworkIntegration(ctx, c.tx, info.TargetIntegration)

@@ -657,7 +657,7 @@ func (r *sftpResponse) Render(w http.ResponseWriter) error {
 
 	err = Upgrade(remoteConn, "sftp")
 	if err != nil {
-		return api.StatusErrorf(http.StatusInternalServerError, err.Error())
+		return api.StatusErrorf(http.StatusInternalServerError, "%s", err.Error())
 	}
 
 	ctx, cancel := context.WithCancel(r.req.Context())

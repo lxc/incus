@@ -3,6 +3,7 @@ package util
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -43,7 +44,7 @@ func (l *inMemoryListener) Accept() (net.Conn, error) {
 	case conn := <-l.conns:
 		return conn, nil
 	case <-l.closed:
-		return nil, fmt.Errorf("closed")
+		return nil, errors.New("closed")
 	}
 }
 
@@ -105,7 +106,7 @@ func SysctlGet(path string) (string, error) {
 func SysctlSet(parts ...string) error {
 	partsLen := len(parts)
 	if partsLen%2 != 0 {
-		return fmt.Errorf("Requires even number of arguments")
+		return errors.New("Requires even number of arguments")
 	}
 
 	for i := 0; i < partsLen; i = i + 2 {

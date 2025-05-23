@@ -586,7 +586,7 @@ func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, 
 	if oldConfig == nil || oldConfig["limits.priority"] != d.config["limits.priority"] {
 		if networkPriority != 0 {
 			if bridged && d.state.Firewall.String() == "xtables" {
-				return fmt.Errorf("Failed to setup instance device network priority. The xtables firewall driver does not support required functionality.")
+				return errors.New("Failed to setup instance device network priority. The xtables firewall driver does not support required functionality.")
 			}
 
 			err = d.state.Firewall.InstanceSetupNetPrio(d.inst.Project().Name, d.inst.Name(), veth, uint32(networkPriority))
@@ -1094,7 +1094,7 @@ func isIPAvailable(ctx context.Context, address net.IP, parentInterface string) 
 
 	netipAddr, ok := netip.AddrFromSlice(address)
 	if !ok {
-		return false, fmt.Errorf("Couldn't convert address to netip")
+		return false, errors.New("Couldn't convert address to netip")
 	}
 
 	solicitedNodeMulticast, err := ndp.SolicitedNodeMulticast(netipAddr)

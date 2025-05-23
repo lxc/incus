@@ -186,7 +186,7 @@ func (c *ClusterTx) GetNetworkLoadBalancer(ctx context.Context, networkID int64,
 		return loadBalancerID, loadBalancer, nil // Only single load balancer in map.
 	}
 
-	return -1, nil, fmt.Errorf("Unexpected load balancer list size")
+	return -1, nil, errors.New("Unexpected load balancer list size")
 }
 
 // networkLoadBalancerConfig populates the config map of the Network Load Balancer with the given ID.

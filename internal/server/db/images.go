@@ -393,7 +393,7 @@ func (c *ClusterTx) GetImageByFingerprintPrefix(ctx context.Context, fingerprint
 	case 1:
 		object = images[0]
 	default:
-		return -1, nil, fmt.Errorf("More than one image matches")
+		return -1, nil, errors.New("More than one image matches")
 	}
 
 	image.Fingerprint = object.Fingerprint
@@ -561,7 +561,7 @@ WHERE images.fingerprint = ?
 	}
 
 	if len(addresses) == 0 {
-		return "", fmt.Errorf("Image not available on any online member")
+		return "", errors.New("Image not available on any online member")
 	}
 
 	if slices.Contains(addresses, localAddress) {

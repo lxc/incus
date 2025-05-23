@@ -2,6 +2,7 @@ package s3
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 )
@@ -58,7 +59,7 @@ func BucketPolicy(bucketName string, roleName string) (json.RawMessage, error) {
 		}`, bucketName), nil
 	}
 
-	return nil, fmt.Errorf("Invalid key role")
+	return nil, errors.New("Invalid key role")
 }
 
 // BucketPolicyRole compares the given bucket policy with the predefined bucket policies
@@ -91,7 +92,7 @@ func BucketPolicyRole(bucketName string, jsonPolicy string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("Policy does not match any role")
+	return "", errors.New("Policy does not match any role")
 }
 
 // comparePolicy checks whether two policies are equal.

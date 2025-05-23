@@ -270,11 +270,11 @@ func clusterPut(d *Daemon, r *http.Request) response.Response {
 
 	// Quick checks.
 	if req.ServerName == "" && req.Enabled {
-		return response.BadRequest(fmt.Errorf("ServerName is required when enabling clustering"))
+		return response.BadRequest(errors.New("ServerName is required when enabling clustering"))
 	}
 
 	if req.ServerName != "" && !req.Enabled {
-		return response.BadRequest(fmt.Errorf("ServerName must be empty when disabling clustering"))
+		return response.BadRequest(errors.New("ServerName must be empty when disabling clustering"))
 	}
 
 	if req.ServerName != "" && strings.HasPrefix(req.ServerName, targetGroupPrefix) {
@@ -393,16 +393,16 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 
 	// Make sure basic pre-conditions are met.
 	if len(req.ClusterCertificate) == 0 {
-		return response.BadRequest(fmt.Errorf("No target cluster member certificate provided"))
+		return response.BadRequest(errors.New("No target cluster member certificate provided"))
 	}
 
 	if s.ServerClustered {
-		return response.BadRequest(fmt.Errorf("This server is already clustered"))
+		return response.BadRequest(errors.New("This server is already clustered"))
 	}
 
 	// Validate server address.
 	if req.ServerAddress == "" {
-		return response.BadRequest(fmt.Errorf("No server address provided for this member"))
+		return response.BadRequest(errors.New("No server address provided for this member"))
 	}
 
 	// Check that the provided address is an IP address or DNS, not wildcard and isn't required to specify a port.
@@ -890,7 +890,7 @@ func clusterPutDisable(d *Daemon, r *http.Request, req api.ClusterPut) response.
 		if ok {
 			f.Flush()
 		} else {
-			return fmt.Errorf("http.ResponseWriter is not type http.Flusher")
+			return errors.New("http.ResponseWriter is not type http.Flusher")
 		}
 
 		return nil
@@ -1277,7 +1277,7 @@ func clusterNodesPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if !s.ServerClustered {
-		return response.BadRequest(fmt.Errorf("This server is not clustered"))
+		return response.BadRequest(errors.New("This server is not clustered"))
 	}
 
 	expiry, err := internalInstance.GetExpiry(time.Now(), s.GlobalConfig.ClusterJoinTokenExpiry())
@@ -1319,7 +1319,7 @@ func clusterNodesPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if len(onlineNodeAddresses) < 1 {
-		return response.InternalError(fmt.Errorf("There are no online cluster members"))
+		return response.InternalError(errors.New("There are no online cluster members"))
 	}
 
 	// Lock to prevent concurrent requests racing the operationsGetByType function and creating duplicates.
@@ -1654,7 +1654,7 @@ func updateClusterNode(s *state.State, gateway *cluster.Gateway, r *http.Request
 
 	// Nodes must belong to at least one group.
 	if len(req.Groups) == 0 {
-		return response.BadRequest(fmt.Errorf("Cluster members need to belong to at least one group"))
+		return response.BadRequest(errors.New("Cluster members need to belong to at least one group"))
 	}
 
 	// Convert the roles.
@@ -1993,7 +1993,7 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 			if ok {
 				f.Flush()
 			} else {
-				return fmt.Errorf("http.ResponseWriter is not type http.Flusher")
+				return errors.New("http.ResponseWriter is not type http.Flusher")
 			}
 
 			return nil
@@ -2157,7 +2157,7 @@ func internalClusterPostAccept(d *Daemon, r *http.Request) response.Response {
 
 	// Quick checks.
 	if req.Name == "" {
-		return response.BadRequest(fmt.Errorf("No name provided"))
+		return response.BadRequest(errors.New("No name provided"))
 	}
 
 	// Redirect all requests to the leader, which is the one
@@ -2173,7 +2173,7 @@ func internalClusterPostAccept(d *Daemon, r *http.Request) response.Response {
 		logger.Debugf("Redirect member accept request to %s", leader)
 
 		if leader == "" {
-			return response.SmartError(fmt.Errorf("Unable to find leader address"))
+			return response.SmartError(errors.New("Unable to find leader address"))
 		}
 
 		url := &url.URL{
@@ -2416,7 +2416,7 @@ findLeader:
 	}
 
 	if leader == "" {
-		return fmt.Errorf("No leader address found")
+		return errors.New("No leader address found")
 	}
 
 	if leader == localClusterAddress {
@@ -2456,7 +2456,7 @@ func internalClusterPostAssign(d *Daemon, r *http.Request) response.Response {
 
 	// Quick checks.
 	if len(req.RaftNodes) == 0 {
-		return response.BadRequest(fmt.Errorf("No raft members provided"))
+		return response.BadRequest(errors.New("No raft members provided"))
 	}
 
 	nodes := make([]db.RaftNode, len(req.RaftNodes))
@@ -2493,7 +2493,7 @@ func internalClusterPostHandover(d *Daemon, r *http.Request) response.Response {
 
 	// Quick checks.
 	if req.Address == "" {
-		return response.BadRequest(fmt.Errorf("No id provided"))
+		return response.BadRequest(errors.New("No id provided"))
 	}
 
 	// Redirect all requests to the leader, which is the one with
@@ -2506,7 +2506,7 @@ func internalClusterPostHandover(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if leader == "" {
-		return response.SmartError(fmt.Errorf("No leader address found"))
+		return response.SmartError(errors.New("No leader address found"))
 	}
 
 	if localClusterAddress != leader {

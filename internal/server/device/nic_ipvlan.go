@@ -1,6 +1,7 @@
 package device
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"slices"
@@ -212,7 +213,7 @@ func (d *nicIPVLAN) validateConfig(instConf instance.ConfigReader) error {
 	}
 
 	if d.config["mode"] == ipvlanModeL2 && d.config["host_table"] != "" {
-		return fmt.Errorf("host_table option cannot be used in l2 mode")
+		return errors.New("host_table option cannot be used in l2 mode")
 	}
 
 	return nil
@@ -221,12 +222,12 @@ func (d *nicIPVLAN) validateConfig(instConf instance.ConfigReader) error {
 // validateEnvironment checks the runtime environment for correctness.
 func (d *nicIPVLAN) validateEnvironment() error {
 	if d.inst.Type() == instancetype.Container && d.config["name"] == "" {
-		return fmt.Errorf("Requires name property to start")
+		return errors.New("Requires name property to start")
 	}
 
 	extensions := d.state.OS.LXCFeatures
 	if !extensions["network_ipvlan"] || !extensions["network_l2proxy"] || !extensions["network_gateway_device_route"] {
-		return fmt.Errorf("Requires liblxc has following API extensions: network_ipvlan, network_l2proxy, network_gateway_device_route")
+		return errors.New("Requires liblxc has following API extensions: network_ipvlan, network_l2proxy, network_gateway_device_route")
 	}
 
 	// gendoc:generate(entity=devices, group=nic_ipvlan, key=parent)
@@ -239,7 +240,7 @@ func (d *nicIPVLAN) validateEnvironment() error {
 	}
 
 	if d.config["parent"] == "" && d.config["vlan"] != "" {
-		return fmt.Errorf("The vlan setting can only be used when combined with a parent interface")
+		return errors.New("The vlan setting can only be used when combined with a parent interface")
 	}
 
 	// Only check sysctls for l2proxy if mode is l3s.

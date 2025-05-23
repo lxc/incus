@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"errors"
 	"os"
 
 	sqlite3 "github.com/mattn/go-sqlite3"
@@ -50,7 +50,7 @@ func (c *cmdActivateifneeded) command() *cobra.Command {
 func (c *cmdActivateifneeded) run(_ *cobra.Command, _ []string) error {
 	// Only root should run this
 	if os.Geteuid() != 0 {
-		return fmt.Errorf("This must be run as root")
+		return errors.New("This must be run as root")
 	}
 
 	// Don't start a full daemon, we just need database access

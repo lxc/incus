@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 )
 
@@ -22,17 +23,17 @@ func Count(ctx context.Context, tx *sql.Tx, table string, where string, args ...
 
 	// Ensure we read one and only one row.
 	if !rows.Next() {
-		return -1, fmt.Errorf("no rows returned")
+		return -1, errors.New("no rows returned")
 	}
 
 	var count int
 	err = rows.Scan(&count)
 	if err != nil {
-		return -1, fmt.Errorf("failed to scan count column")
+		return -1, errors.New("failed to scan count column")
 	}
 
 	if rows.Next() {
-		return -1, fmt.Errorf("more than one row returned")
+		return -1, errors.New("more than one row returned")
 	}
 
 	err = rows.Err()

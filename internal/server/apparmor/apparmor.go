@@ -189,7 +189,7 @@ func deleteProfile(sysOS *sys.OS, fullName string, name string) error {
 	}
 
 	if aaCacheDir == "" {
-		return fmt.Errorf("Couldn't identify AppArmor cache directory")
+		return errors.New("Couldn't identify AppArmor cache directory")
 	}
 
 	err := unloadProfile(sysOS, fullName, name)
@@ -217,7 +217,7 @@ func parserSupports(sysOS *sys.OS, feature string) (bool, error) {
 	}
 
 	if aaVersion == nil {
-		return false, fmt.Errorf("Couldn't identify AppArmor version")
+		return false, errors.New("Couldn't identify AppArmor version")
 	}
 
 	if feature == "unix" {

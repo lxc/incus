@@ -88,7 +88,7 @@ func (d *linstor) drbdVersion() (string, error) {
 	modulePath := "/sys/module/drbd/version"
 
 	if !util.PathExists(modulePath) {
-		return "", fmt.Errorf("Could not determine DRBD module version: Module not loaded")
+		return "", errors.New("Could not determine DRBD module version: Module not loaded")
 	}
 
 	ver, err := os.ReadFile(modulePath)
@@ -912,7 +912,7 @@ loop:
 		case clonestatus.Cloning:
 			time.Sleep(1 * time.Second)
 		case clonestatus.Failed:
-			return fmt.Errorf("Clone operation failed")
+			return errors.New("Clone operation failed")
 		}
 	}
 

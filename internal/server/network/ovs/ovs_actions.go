@@ -129,7 +129,7 @@ func (o *VSwitch) CreateBridge(ctx context.Context, bridgeName string, mayExist 
 		}
 	}
 
-	return fmt.Errorf("Bridge interface failed to appear")
+	return errors.New("Bridge interface failed to appear")
 }
 
 // DeleteBridge deletes a bridge.

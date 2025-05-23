@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -18,7 +19,7 @@ func parseMetadata(metadata any) (map[string]any, error) {
 	if s.Kind() == reflect.Map {
 		for _, k := range s.MapKeys() {
 			if k.Kind() != reflect.String {
-				return nil, fmt.Errorf("Invalid metadata provided (key isn't a string)")
+				return nil, errors.New("Invalid metadata provided (key isn't a string)")
 			}
 
 			newMetadata[k.String()] = s.MapIndex(k).Interface()
@@ -26,7 +27,7 @@ func parseMetadata(metadata any) (map[string]any, error) {
 	} else if s.Kind() == reflect.Ptr && !s.Elem().IsValid() {
 		return nil, nil
 	} else {
-		return nil, fmt.Errorf("Invalid metadata provided (type isn't a map)")
+		return nil, errors.New("Invalid metadata provided (type isn't a map)")
 	}
 
 	return newMetadata, nil

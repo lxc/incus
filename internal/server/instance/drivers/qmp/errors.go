@@ -1,14 +1,14 @@
 package qmp
 
 import (
-	"fmt"
+	"errors"
 )
 
 // ErrMonitorDisconnect is returned when interacting with a disconnected Monitor.
-var ErrMonitorDisconnect = fmt.Errorf("Monitor is disconnected")
+var ErrMonitorDisconnect = errors.New("Monitor is disconnected")
 
 // ErrMonitorBadConsole is returned when the requested console doesn't exist.
-var ErrMonitorBadConsole = fmt.Errorf("Requested console couldn't be found")
+var ErrMonitorBadConsole = errors.New("Requested console couldn't be found")
 
 // ErrNotARingbuf is returned when the requested device isn't a ring buffer.
-var ErrNotARingbuf = fmt.Errorf("Requested device isn't a ring buffer")
+var ErrNotARingbuf = errors.New("Requested device isn't a ring buffer")

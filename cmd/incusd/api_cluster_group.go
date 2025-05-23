@@ -77,7 +77,7 @@ func clusterGroupsPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	if !s.ServerClustered {
-		return response.BadRequest(fmt.Errorf("This server is not clustered"))
+		return response.BadRequest(errors.New("This server is not clustered"))
 	}
 
 	req := api.ClusterGroupsPost{}
@@ -226,7 +226,7 @@ func clusterGroupsGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	if !s.ServerClustered {
-		return response.BadRequest(fmt.Errorf("This server is not clustered"))
+		return response.BadRequest(errors.New("This server is not clustered"))
 	}
 
 	recursion := localUtil.IsRecursionRequest(r)
@@ -321,7 +321,7 @@ func clusterGroupGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if !s.ServerClustered {
-		return response.BadRequest(fmt.Errorf("This server is not clustered"))
+		return response.BadRequest(errors.New("This server is not clustered"))
 	}
 
 	var apiGroup *api.ClusterGroup
@@ -396,7 +396,7 @@ func clusterGroupPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if !s.ServerClustered {
-		return response.BadRequest(fmt.Errorf("This server is not clustered"))
+		return response.BadRequest(errors.New("This server is not clustered"))
 	}
 
 	req := api.ClusterGroupPost{}
@@ -475,7 +475,7 @@ func clusterGroupPut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if !s.ServerClustered {
-		return response.BadRequest(fmt.Errorf("This server is not clustered"))
+		return response.BadRequest(errors.New("This server is not clustered"))
 	}
 
 	req := api.ClusterGroupPut{}
@@ -637,7 +637,7 @@ func clusterGroupPatch(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if !s.ServerClustered {
-		return response.BadRequest(fmt.Errorf("This server is not clustered"))
+		return response.BadRequest(errors.New("This server is not clustered"))
 	}
 
 	var clusterGroup *api.ClusterGroup
@@ -829,7 +829,7 @@ func clusterGroupDelete(d *Daemon, r *http.Request) response.Response {
 
 	// Quick checks.
 	if name == "default" {
-		return response.Forbidden(fmt.Errorf("The 'default' cluster group cannot be deleted"))
+		return response.Forbidden(errors.New("The 'default' cluster group cannot be deleted"))
 	}
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -839,7 +839,7 @@ func clusterGroupDelete(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if len(members) > 0 {
-			return fmt.Errorf("Only empty cluster groups can be removed")
+			return errors.New("Only empty cluster groups can be removed")
 		}
 
 		return dbCluster.DeleteClusterGroup(ctx, tx.Tx(), name)
@@ -856,27 +856,27 @@ func clusterGroupDelete(d *Daemon, r *http.Request) response.Response {
 
 func clusterGroupValidateName(name string) error {
 	if name == "" {
-		return fmt.Errorf("No name provided")
+		return errors.New("No name provided")
 	}
 
 	if strings.Contains(name, "/") {
-		return fmt.Errorf("Cluster group names may not contain slashes")
+		return errors.New("Cluster group names may not contain slashes")
 	}
 
 	if strings.Contains(name, " ") {
-		return fmt.Errorf("Cluster group names may not contain spaces")
+		return errors.New("Cluster group names may not contain spaces")
 	}
 
 	if strings.Contains(name, "_") {
-		return fmt.Errorf("Cluster group names may not contain underscores")
+		return errors.New("Cluster group names may not contain underscores")
 	}
 
 	if strings.Contains(name, "'") || strings.Contains(name, `"`) {
-		return fmt.Errorf("Cluster group names may not contain quotes")
+		return errors.New("Cluster group names may not contain quotes")
 	}
 
 	if name == "*" {
-		return fmt.Errorf("Reserved cluster group name")
+		return errors.New("Reserved cluster group name")
 	}
 
 	if slices.Contains([]string{".", ".."}, name) {
@@ -955,11 +955,11 @@ func clusterGroupFill(ctx context.Context, s *state.State, servers []string, req
 		}
 
 		if baseline != "kvm64" || arch != "x86_64" {
-			return fmt.Errorf("Automatic CPU flags are currently only supported on \"x86_64\" with the \"kvm64\" baseline")
+			return errors.New("Automatic CPU flags are currently only supported on \"x86_64\" with the \"kvm64\" baseline")
 		}
 
 		if len(servers) == 0 {
-			return fmt.Errorf("Can't compute automatic CPU flags when no servers are in the cluster group")
+			return errors.New("Can't compute automatic CPU flags when no servers are in the cluster group")
 		}
 
 		// Fill in the flags.

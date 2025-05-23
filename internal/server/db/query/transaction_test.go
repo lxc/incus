@@ -3,7 +3,7 @@ package query_test
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -30,7 +30,7 @@ func TestTransaction_FunctionError(t *testing.T) {
 	err := query.Transaction(context.TODO(), db, func(ctx context.Context, tx *sql.Tx) error {
 		_, err := tx.Exec("CREATE TABLE test (id INTEGER)")
 		assert.NoError(t, err)
-		return fmt.Errorf("boom")
+		return errors.New("boom")
 	})
 	assert.EqualError(t, err, "boom")
 

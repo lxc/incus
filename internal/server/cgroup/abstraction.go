@@ -1002,7 +1002,7 @@ func (cg *CGroup) GetOOMKills() (int64, error) {
 		}
 	}
 
-	return -1, fmt.Errorf("Failed getting oom_kill")
+	return -1, errors.New("Failed getting oom_kill")
 }
 
 // GetIOStats returns disk stats.

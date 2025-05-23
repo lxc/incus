@@ -3,6 +3,7 @@ package cluster
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -16,11 +17,11 @@ import (
 // Return a TLS configuration suitable for establishing intra-member network connections using the server cert.
 func tlsClientConfig(networkCert *localtls.CertInfo, serverCert *localtls.CertInfo) (*tls.Config, error) {
 	if networkCert == nil {
-		return nil, fmt.Errorf("Invalid networkCert")
+		return nil, errors.New("Invalid networkCert")
 	}
 
 	if serverCert == nil {
-		return nil, fmt.Errorf("Invalid serverCert")
+		return nil, errors.New("Invalid serverCert")
 	}
 
 	keypair := serverCert.KeyPair()

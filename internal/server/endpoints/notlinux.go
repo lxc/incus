@@ -3,14 +3,14 @@
 package endpoints
 
 import (
-	"fmt"
+	"errors"
 	"net"
 )
 
 func localCreateListener(path string, group string) (net.Listener, error) {
-	return nil, fmt.Errorf("Platform isn't supported")
+	return nil, errors.New("Platform isn't supported")
 }
 
 func createDevIncuslListener(path string) (net.Listener, error) {
-	return nil, fmt.Errorf("Platform isn't supported")
+	return nil, errors.New("Platform isn't supported")
 }

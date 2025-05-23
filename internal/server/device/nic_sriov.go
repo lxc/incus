@@ -1,6 +1,7 @@
 package device
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -126,11 +127,11 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader) error {
 		}
 
 		if d.network.Status() != api.NetworkStatusCreated {
-			return fmt.Errorf("Specified network is not fully created")
+			return errors.New("Specified network is not fully created")
 		}
 
 		if d.network.Type() != "sriov" {
-			return fmt.Errorf("Specified network must be of type macvlan")
+			return errors.New("Specified network must be of type macvlan")
 		}
 
 		netConfig := d.network.Config()
@@ -177,11 +178,11 @@ func (d *nicSRIOV) PreStartCheck() error {
 // validateEnvironment checks the runtime environment for correctness.
 func (d *nicSRIOV) validateEnvironment() error {
 	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
-		return fmt.Errorf("Network SR-IOV devices cannot be used when migration.stateful is enabled")
+		return errors.New("Network SR-IOV devices cannot be used when migration.stateful is enabled")
 	}
 
 	if d.inst.Type() == instancetype.Container && d.config["name"] == "" {
-		return fmt.Errorf("Requires name property to start")
+		return errors.New("Requires name property to start")
 	}
 
 	if !network.InterfaceExists(d.config["parent"]) {

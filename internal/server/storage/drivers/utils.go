@@ -329,7 +329,7 @@ func ensureSparseFile(filePath string, sizeBytes int64) error {
 // instead return ErrNotSupported.
 func ensureVolumeBlockFile(vol Volume, path string, sizeBytes int64, allowUnsafeResize bool, unsupportedResizeTypes ...VolumeType) (bool, error) {
 	if sizeBytes <= 0 {
-		return false, fmt.Errorf("Size cannot be zero")
+		return false, errors.New("Size cannot be zero")
 	}
 
 	// Get rounded block size to avoid QEMU boundary issues.
@@ -578,7 +578,7 @@ func regenerateFilesystemUUID(fsType string, devPath string) error {
 		return regenerateFilesystemXFSUUID(devPath)
 	}
 
-	return fmt.Errorf("Filesystem not supported")
+	return errors.New("Filesystem not supported")
 }
 
 // regenerateFilesystemBTRFSUUID changes the BTRFS filesystem UUID to a new randomly generated one.
@@ -861,7 +861,7 @@ func loopFileSizeDefault() (uint64, error) {
 		return gibAvailable, nil // Need at least 5GiB free.
 	}
 
-	return 0, fmt.Errorf("Insufficient free space to create default sized 5GiB pool")
+	return 0, errors.New("Insufficient free space to create default sized 5GiB pool")
 }
 
 // loopFileSetup sets up a loop device for the provided sourcePath.
