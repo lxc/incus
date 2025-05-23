@@ -3,11 +3,11 @@
 package cliconfig
 
 import (
-	"fmt"
+	"errors"
 
 	incus "github.com/lxc/incus/v6/client"
 )
 
 func (c *Config) handleKeepAlive(remote Remote, name string, args *incus.ConnectionArgs) (incus.InstanceServer, error) {
-	return nil, fmt.Errorf("Keepalive isn't supported on Windows")
+	return nil, errors.New("Keepalive isn't supported on Windows")
 }
