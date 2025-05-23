@@ -13,7 +13,6 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/subprocess"
-	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -25,7 +24,7 @@ const (
 func (d *truenas) dataset(vol Volume, deleted bool) string {
 	name, snapName, _ := api.GetParentAndSnapshotName(vol.name)
 
-	if vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS && d.isBlockBacked(vol) {
+	if vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS {
 		name = fmt.Sprintf("%s_%s", name, vol.ConfigBlockFilesystem())
 	}
 
@@ -93,25 +92,6 @@ func optionsToOptionString(options ...string) string {
 	optionString := builder.String()
 
 	return optionString
-}
-
-// zero, or >= 1GiB
-func (d *truenas) setDatasetQuota(dataset string, sizeBytes int64) error {
-
-	if sizeBytes < 0 {
-		return fmt.Errorf("negative quota not allowed: %d", sizeBytes)
-	}
-	if sizeBytes > 0 && sizeBytes < 1073741824 {
-		sizeBytes = 1073741824 // middleware rejects < 1GiB
-	}
-
-	props := []string{fmt.Sprintf("quota=%d", sizeBytes), "refquota=0", "reservation=0", "refreservation=0"}
-
-	err := d.setDatasetProperties(dataset, props...)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (d *truenas) setDatasetProperties(dataset string, options ...string) error {
@@ -692,21 +672,6 @@ func (d *truenas) version() (string, error) {
 	}
 
 	return "", fmt.Errorf("Could not determine TrueNAS driver version")
-}
-
-func (d *truenas) setBlocksizeFromConfig(vol Volume) error {
-	size := vol.ExpandedConfig("truenas.blocksize")
-	if size == "" {
-		return nil
-	}
-
-	//Convert to bytes.
-	sizeBytes, err := units.ParseByteSizeString(size)
-	if err != nil {
-		return err
-	}
-
-	return d.setBlocksize(vol, sizeBytes)
 }
 
 func (d *truenas) setBlocksize(vol Volume, size int64) error {
