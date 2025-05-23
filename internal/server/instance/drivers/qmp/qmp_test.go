@@ -39,12 +39,12 @@ func TestConnectDisconnect(t *testing.T) {
 	eg := &errgroup.Group{}
 	m := mockMonitorServer(t, eg)
 
-	err := m.Connect()
+	err := m.connect()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = m.Disconnect()
+	err = m.disconnect()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +57,7 @@ func TestConnectDisconnect(t *testing.T) {
 
 func TestEvents(t *testing.T) {
 	eg := &errgroup.Group{}
-	es := []Event{
+	es := []qmpEvent{
 		{Event: "STOP"},
 		{Event: "SHUTDOWN"},
 		{Event: "RESET"},
@@ -76,12 +76,12 @@ func TestEvents(t *testing.T) {
 		return nil
 	})
 
-	err := m.Connect()
+	err := m.connect()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	events, err := m.Events(context.Background())
+	events, err := m.getEvents(context.Background())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestListenEmptyStream(t *testing.T) {
 
 	r := strings.NewReader("")
 
-	events := make(chan Event)
+	events := make(chan qmpEvent)
 	stream := make(chan rawResponse)
 
 	mon.listen(r, events, stream)
@@ -126,7 +126,7 @@ func TestListenScannerErr(t *testing.T) {
 	errFoo := errors.New("foo")
 	r := &testingErrReader{err: errFoo}
 
-	events := make(chan Event)
+	events := make(chan qmpEvent)
 	stream := make(chan rawResponse)
 
 	go mon.listen(r, events, stream)
@@ -142,7 +142,7 @@ func TestListenInvalidJson(t *testing.T) {
 
 	r := strings.NewReader("<html>")
 
-	events := make(chan Event)
+	events := make(chan qmpEvent)
 	stream := make(chan rawResponse)
 
 	mon.listen(r, events, stream)
@@ -159,7 +159,7 @@ func TestListenStreamResponse(t *testing.T) {
 	want := `{"foo": "bar"}`
 	r := strings.NewReader(want)
 
-	events := make(chan Event)
+	events := make(chan qmpEvent)
 	stream := make(chan rawResponse)
 
 	go mon.listen(r, events, stream)
@@ -180,7 +180,7 @@ func TestListenEventNoListeners(t *testing.T) {
 
 	r := strings.NewReader(`{"event":"STOP"}`)
 
-	events := make(chan Event)
+	events := make(chan qmpEvent)
 	stream := make(chan rawResponse)
 
 	go mon.listen(r, events, stream)
@@ -198,7 +198,7 @@ func TestListenEventOneListener(t *testing.T) {
 	eventStop := "STOP"
 	r := strings.NewReader(fmt.Sprintf(`{"event":%q}`, eventStop))
 
-	events := make(chan Event)
+	events := make(chan qmpEvent)
 	stream := make(chan rawResponse)
 
 	go mon.listen(r, events, stream)
@@ -227,7 +227,7 @@ func mockMonitorServer(t *testing.T, eg *errgroup.Group, hands ...func(net.Conn)
 			return err
 		}
 
-		var cmd Command
+		var cmd qmpCommand
 		err = dec.Decode(&cmd)
 		if err != nil {
 			err = fmt.Errorf("unexpected error: %w", err)
@@ -242,7 +242,7 @@ func mockMonitorServer(t *testing.T, eg *errgroup.Group, hands ...func(net.Conn)
 			return err
 		}
 
-		err = enc.Encode(Response{ID: cmd.ID})
+		err = enc.Encode(qmpResponse{ID: cmd.ID})
 		if err != nil {
 			err = fmt.Errorf("unexpected error: %w", err)
 			t.Log(err)
