@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/digitalocean/go-qemu/qmp"
 
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
@@ -44,7 +43,7 @@ var ExcludedCommands = []string{"ringbuf-read"}
 // Monitor represents a QMP monitor.
 type Monitor struct {
 	path string
-	qmp  *qmp.SocketMonitor
+	qmp  *qemuMachineProtocal
 
 	agentStarted      bool
 	agentStartedMu    sync.Mutex
@@ -284,9 +283,13 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 	}
 
 	// Setup the connection.
-	qmpConn, err := qmp.NewSocketMonitor("unix", path, time.Second)
+	c, err := net.DialTimeout("unix", path, time.Second)
 	if err != nil {
 		return nil, err
+	}
+
+	qmpConn := &qemuMachineProtocal{
+		c: c,
 	}
 
 	chError := make(chan error, 1)
