@@ -689,7 +689,7 @@ func (d *truenas) DeleteVolume(vol Volume, op *operations.Operation) error {
 
 	// We need to be able to delete the block-backed fs even if we don't know the filesystem.
 	if vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS {
-		// We need to clone vol the otherwise changing `truenas.block_mode`
+		// We need to clone vol the otherwise changing `block.filesystem`
 		// in tmpVol will also change it in vol.
 		tmpVol := vol.Clone()
 
@@ -799,7 +799,6 @@ func (d *truenas) commonVolumeRules() map[string]func(value string) error {
 	return map[string]func(value string) error{
 		"block.filesystem":         validate.Optional(validate.IsOneOf(blockBackedAllowedFilesystems...)),
 		"block.mount_options":      validate.IsAny,
-		"truenas.block_mode":       validate.Optional(validate.IsBool),      // TODO: this is effectively always true and should be removed.
 		"truenas.blocksize":        validate.Optional(ValidateZfsBlocksize), // NOTE: zfs.blocksize is hard-coded in backend.shouldUseOptimizedImage
 		"truenas.remove_snapshots": validate.Optional(validate.IsBool),
 		"truenas.reserve_space":    validate.Optional(validate.IsBool),
@@ -2015,8 +2014,6 @@ func (d *truenas) FillVolumeConfig(vol Volume) error {
 	// Copy volume.* configuration options from pool.
 	// If vol has a source, ignore the block mode related config keys from the pool.
 	if vol.hasSource || vol.IsVMBlock() || vol.volType == VolumeTypeCustom && vol.contentType == ContentTypeBlock {
-		excludedKeys = []string{"truenas.block_mode", "block.filesystem", "block.mount_options"}
-	} else if vol.volType == VolumeTypeCustom && !vol.IsBlockBacked() {
 		excludedKeys = []string{"block.filesystem", "block.mount_options"}
 	}
 
@@ -2032,13 +2029,6 @@ func (d *truenas) FillVolumeConfig(vol Volume) error {
 	// associated filesystem volume).
 
 	if vol.ContentType() == ContentTypeFS {
-		//we default block_mode to true...
-		if vol.config["truenas.block_mode"] == "" {
-			//vol.config["truenas.block_mode"] = "true"
-		}
-	}
-
-	if vol.ContentType() == ContentTypeFS /*|| vol.IsVMBlock()*/ {
 		// Inherit filesystem from pool if not set.
 		if vol.config["block.filesystem"] == "" {
 			vol.config["block.filesystem"] = d.config["volume.block.filesystem"]
@@ -2066,6 +2056,5 @@ func (d *truenas) FillVolumeConfig(vol Volume) error {
 }
 
 func (d *truenas) isBlockBacked(vol Volume) bool {
-	//return util.IsTrue(vol.Config()["truenas.block_mode"])
-	return vol.contentType == ContentTypeFS && vol.config["block.filesystem"] != ""
+	return d.Info().BlockBacking
 }
