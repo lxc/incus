@@ -160,7 +160,7 @@ func (m *InstanceMigration) gatherInfo() error {
 // migrate performs the instance migration.
 func (m *InstanceMigration) migrate() error {
 	if m.migrationType != MigrationTypeVM && m.migrationType != MigrationTypeContainer {
-		return fmt.Errorf("Wrong migration type for migrate")
+		return errors.New("Wrong migration type for migrate")
 	}
 
 	// Prioritize migrating all additional disks before the main instance.
@@ -388,7 +388,7 @@ func (m *InstanceMigration) askStorage() error {
 	}
 
 	if len(storagePools) == 0 {
-		return fmt.Errorf("No storage pools available")
+		return errors.New("No storage pools available")
 	}
 
 	storagePool, err := m.asker.AskChoice("Please provide the storage pool to use: ", storagePools, "")
@@ -429,7 +429,7 @@ func (m *InstanceMigration) askDiskStorage() error {
 	}
 
 	if len(diskNames) == 0 {
-		return fmt.Errorf("No additional disks available")
+		return errors.New("No additional disks available")
 	}
 
 	diskName, err := m.asker.AskChoice("Please provide the disk name: ", diskNames, "")
@@ -443,7 +443,7 @@ func (m *InstanceMigration) askDiskStorage() error {
 	}
 
 	if len(storagePools) == 0 {
-		return fmt.Errorf("No storage pools available")
+		return errors.New("No storage pools available")
 	}
 
 	storagePool, err := m.asker.AskChoice("Please provide the storage pool to use: ", storagePools, "")
@@ -486,7 +486,7 @@ func (m *InstanceMigration) askNetwork() error {
 func (m *InstanceMigration) askDisk() error {
 	volMigrator, ok := NewVolumeMigration(m.ctx, m.server, m.asker, m.flagRsyncArgs).(*VolumeMigration)
 	if !ok {
-		return fmt.Errorf("Migrator should be of type VolumeMigration")
+		return errors.New("Migrator should be of type VolumeMigration")
 	}
 
 	volMigrator.project = m.project
@@ -497,7 +497,7 @@ func (m *InstanceMigration) askDisk() error {
 	}
 
 	if m.migrationType == MigrationTypeContainer && volMigrator.migrationType == MigrationTypeVolumeBlock {
-		return fmt.Errorf("Block disk is not supported by the container")
+		return errors.New("Block disk is not supported by the container")
 	}
 
 	m.instanceArgs.Devices[volMigrator.customVolumeArgs.Name] = map[string]string{

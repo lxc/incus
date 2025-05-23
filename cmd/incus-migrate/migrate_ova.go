@@ -208,7 +208,7 @@ func (m *OVAMigration) gatherInfo() error {
 // migrate performs the instance migration.
 func (m *OVAMigration) migrate() error {
 	if m.migrationType != MigrationTypeVM {
-		return fmt.Errorf("Wrong migration type for migrate")
+		return errors.New("Wrong migration type for migrate")
 	}
 
 	// Create the temporary directory to be used for the ova files.
@@ -389,7 +389,7 @@ func (m *OVAMigration) readOVFData(env Envelope) error {
 func (m *OVAMigration) addDisk(diskFileName string, index int) error {
 	volMigrator, ok := NewVolumeMigration(m.ctx, m.server, m.asker, m.flagRsyncArgs).(*VolumeMigration)
 	if !ok {
-		return fmt.Errorf("Migrator should be of type VolumeMigration")
+		return errors.New("Migrator should be of type VolumeMigration")
 	}
 
 	diskName := fmt.Sprintf("%s-disk%d", m.instance.instanceArgs.Name, index)
