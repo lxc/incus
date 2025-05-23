@@ -26,7 +26,7 @@ func (b *Buffer) L(format string, a ...any) {
 
 // N accumulates a single new line.
 func (b *Buffer) N() {
-	fmt.Fprintf(b.buf, "\n")
+	fmt.Fprint(b.buf, "\n")
 }
 
 // Returns the source code to add to the target file.
