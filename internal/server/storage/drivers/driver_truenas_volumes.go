@@ -745,7 +745,6 @@ func (d *truenas) commonVolumeRules() map[string]func(value string) error {
 		"block.mount_options":      validate.IsAny,
 		"truenas.blocksize":        validate.Optional(ValidateTrueNasVolBlocksize), // used for volblocksize only. NOTE: zfs.blocksize is hard-coded in backend.shouldUseOptimizedImage...
 		"truenas.remove_snapshots": validate.Optional(validate.IsBool),
-		"truenas.reserve_space":    validate.Optional(validate.IsBool),
 		"truenas.use_refquota":     validate.Optional(validate.IsBool),
 	}
 }
@@ -771,7 +770,7 @@ func (d *truenas) UpdateVolume(vol Volume, changedConfig map[string]string) erro
 	// Mangle the current volume to its old values.
 	old := make(map[string]string)
 	for k, v := range changedConfig {
-		if k == "size" || k == "truenas.use_refquota" || k == "truenas.reserve_space" {
+		if k == "size" || k == "truenas.use_refquota" {
 			old[k] = vol.config[k]
 			vol.config[k] = v
 		}
@@ -878,8 +877,9 @@ func (d *truenas) GetVolumeUsage(vol Volume) (int64, error) {
 	d.cacheMu.Lock()
 	defer d.cacheMu.Unlock()
 
+	dataset := d.dataset(vol, false)
 	if d.cache != nil {
-		cache, ok := d.cache[d.dataset(vol, false)]
+		cache, ok := d.cache[dataset]
 		if ok {
 			value, ok := cache[key]
 			if ok {
@@ -889,7 +889,7 @@ func (d *truenas) GetVolumeUsage(vol Volume) (int64, error) {
 	}
 
 	// Get the current value.
-	value, err := d.getDatasetProperty(d.dataset(vol, false), key)
+	value, err := d.getDatasetProperty(dataset, key)
 	if err != nil {
 		return -1, err
 	}
@@ -1779,7 +1779,8 @@ func (d *truenas) RestoreVolume(vol Volume, snapshotName string, op *operations.
 
 func (d *truenas) restoreVolume(vol Volume, snapshotName string, migration bool, op *operations.Operation) error {
 	// Get the list of snapshots.
-	entries, err := d.getDatasets(d.dataset(vol, false), "snapshot")
+	dataset := d.dataset(vol, false)
+	entries, err := d.getDatasets(dataset, "snapshot")
 	if err != nil {
 		return err
 	}
@@ -1821,11 +1822,11 @@ func (d *truenas) restoreVolume(vol Volume, snapshotName string, migration bool,
 		return err
 	}
 
-	// TODO: this looks like its manually performing the repeaated rollback. We should be able to ask middle to do this for us, the trick
-	// is just to verify its good to go, whcih I think is the case after the above check. ie --recursive
+	// TODO: this looks like its manually performing the repeated rollback. We should be able to ask middle to do this for us, the trick
+	// is just to verify its good to go, which I think is the case after the above check. ie --recursive
 
 	// Restore the snapshot.
-	datasets, err := d.getDatasets(d.dataset(vol, false), "snapshot")
+	datasets, err := d.getDatasets(dataset, "snapshot")
 	if err != nil {
 		return err
 	}
