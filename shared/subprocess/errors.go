@@ -3,8 +3,8 @@
 package subprocess
 
 import (
-	"fmt"
+	"errors"
 )
 
 // ErrNotRunning is returned when performing an action against a stopped process.
-var ErrNotRunning = fmt.Errorf("The process isn't running")
+var ErrNotRunning = errors.New("The process isn't running")
