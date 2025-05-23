@@ -42,7 +42,7 @@ func (c *cmdDaemon) Command() *cobra.Command {
 func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 	// Only root should run this.
 	if os.Geteuid() != 0 {
-		return fmt.Errorf("This must be run as root")
+		return errors.New("This must be run as root")
 	}
 
 	// Create storage.
@@ -92,7 +92,7 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 	// Setup the unix socket.
 	listeners := linux.GetSystemdListeners(linux.SystemdListenFDsStart)
 	if len(listeners) > 1 {
-		return fmt.Errorf("More than one socket-activation FD received")
+		return errors.New("More than one socket-activation FD received")
 	}
 
 	var listener *net.UnixListener
@@ -100,7 +100,7 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 		// Handle socket activation.
 		unixListener, ok := listeners[0].(*net.UnixListener)
 		if !ok {
-			return fmt.Errorf("Socket-activation FD isn't a unix socket")
+			return errors.New("Socket-activation FD isn't a unix socket")
 		}
 
 		listener = unixListener
