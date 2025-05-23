@@ -1,6 +1,7 @@
 package incus
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -56,7 +57,7 @@ func (r *ProtocolIncus) GetProfilesWithFilter(filters []string) ([]api.Profile, 
 func (r *ProtocolIncus) GetProfilesAllProjects() ([]api.Profile, error) {
 	err := r.CheckExtension("profiles_all_projects")
 	if err != nil {
-		return nil, fmt.Errorf(`The server is missing the required "profiles_all_projects" API extension`)
+		return nil, errors.New(`The server is missing the required "profiles_all_projects" API extension`)
 	}
 
 	profiles := []api.Profile{}
@@ -72,7 +73,7 @@ func (r *ProtocolIncus) GetProfilesAllProjects() ([]api.Profile, error) {
 func (r *ProtocolIncus) GetProfilesAllProjectsWithFilter(filters []string) ([]api.Profile, error) {
 	err := r.CheckExtension("profiles_all_projects")
 	if err != nil {
-		return nil, fmt.Errorf(`The server is missing the required "profiles_all_projects" API extension`)
+		return nil, errors.New(`The server is missing the required "profiles_all_projects" API extension`)
 	}
 
 	profiles := []api.Profile{}

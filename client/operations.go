@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 
@@ -29,7 +28,7 @@ type operation struct {
 // AddHandler adds a function to be called whenever an event is received.
 func (op *operation) AddHandler(function func(api.Operation)) (*EventTarget, error) {
 	if op.skipListener {
-		return nil, fmt.Errorf("Cannot add handler, client operation does not support event listeners")
+		return nil, errors.New("Cannot add handler, client operation does not support event listeners")
 	}
 
 	// Make sure we have a listener setup
@@ -84,7 +83,7 @@ func (op *operation) GetWebsocket(secret string) (*websocket.Conn, error) {
 // RemoveHandler removes a function to be called whenever an event is received.
 func (op *operation) RemoveHandler(target *EventTarget) error {
 	if op.skipListener {
-		return fmt.Errorf("Cannot remove handler, client operation does not support event listeners")
+		return errors.New("Cannot remove handler, client operation does not support event listeners")
 	}
 
 	// Make sure we're not racing with ourselves
@@ -180,7 +179,7 @@ func (op *operation) WaitContext(ctx context.Context) error {
 // and triggers a manual refresh of the operation's state to prevent race conditions.
 func (op *operation) setupListener() error {
 	if op.skipListener {
-		return fmt.Errorf("Cannot set up event listener, client operation does not support event listeners")
+		return errors.New("Cannot set up event listener, client operation does not support event listeners")
 	}
 
 	// Make sure we're not racing with ourselves
@@ -350,7 +349,7 @@ func (op *remoteOperation) AddHandler(function func(api.Operation)) (*EventTarge
 // CancelTarget attempts to cancel the target operation.
 func (op *remoteOperation) CancelTarget() error {
 	if op.targetOp == nil {
-		return fmt.Errorf("No associated target operation")
+		return errors.New("No associated target operation")
 	}
 
 	return op.targetOp.Cancel()
@@ -359,7 +358,7 @@ func (op *remoteOperation) CancelTarget() error {
 // GetTarget returns the target operation.
 func (op *remoteOperation) GetTarget() (*api.Operation, error) {
 	if op.targetOp == nil {
-		return nil, fmt.Errorf("No associated target operation")
+		return nil, errors.New("No associated target operation")
 	}
 
 	opAPI := op.targetOp.Get()

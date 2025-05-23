@@ -3,6 +3,7 @@ package incus
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -23,7 +24,7 @@ import (
 )
 
 // ErrOIDCExpired is returned when the token is expired and we can't retry the request ourselves.
-var ErrOIDCExpired = fmt.Errorf("OIDC token expired, please re-try the request")
+var ErrOIDCExpired = errors.New("OIDC token expired, please re-try the request")
 
 // setupOIDCClient initializes the OIDC (OpenID Connect) client with given tokens if it hasn't been set up already.
 // It also assigns the protocol's http client to the oidcClient's httpClient.
@@ -79,7 +80,7 @@ func (o *oidcTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 }
 
 var (
-	errRefreshAccessToken = fmt.Errorf("Failed refreshing access token")
+	errRefreshAccessToken = errors.New("Failed refreshing access token")
 	oidcScopes            = []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess, oidc.ScopeEmail}
 )
 

@@ -45,7 +45,7 @@ func (r *ProtocolIncus) GetImagesAllProjects() ([]api.Image, error) {
 	v.Set("all-projects", "true")
 
 	if !r.HasExtension("images_all_projects") {
-		return nil, fmt.Errorf("The server is missing the required \"images_all_projects\" API extension")
+		return nil, errors.New("The server is missing the required \"images_all_projects\" API extension")
 	}
 
 	_, err := r.queryStruct("GET", fmt.Sprintf("/images?%s", v.Encode()), nil, "", &images)
@@ -66,7 +66,7 @@ func (r *ProtocolIncus) GetImagesAllProjectsWithFilter(filters []string) ([]api.
 	v.Set("filter", parseFilters(filters))
 
 	if !r.HasExtension("images_all_projects") {
-		return nil, fmt.Errorf("The server is missing the required \"images_all_projects\" API extension")
+		return nil, errors.New("The server is missing the required \"images_all_projects\" API extension")
 	}
 
 	_, err := r.queryStruct("GET", fmt.Sprintf("/images?%s", v.Encode()), nil, "", &images)
@@ -80,7 +80,7 @@ func (r *ProtocolIncus) GetImagesAllProjectsWithFilter(filters []string) ([]api.
 // GetImagesWithFilter returns a filtered list of available images as Image structs.
 func (r *ProtocolIncus) GetImagesWithFilter(filters []string) ([]api.Image, error) {
 	if !r.HasExtension("api_filtering") {
-		return nil, fmt.Errorf("The server is missing the required \"api_filtering\" API extension")
+		return nil, errors.New("The server is missing the required \"api_filtering\" API extension")
 	}
 
 	images := []api.Image{}
@@ -170,7 +170,7 @@ func (r *ProtocolIncus) GetPrivateImage(fingerprint string, secret string) (*api
 func (r *ProtocolIncus) GetPrivateImageFile(fingerprint string, secret string, req ImageFileRequest) (*ImageFileResponse, error) {
 	// Quick checks.
 	if req.MetaFile == nil && req.RootfsFile == nil {
-		return nil, fmt.Errorf("No file requested")
+		return nil, errors.New("No file requested")
 	}
 
 	uri := fmt.Sprintf("/1.0/images/%s/export", url.PathEscape(fingerprint))
@@ -284,7 +284,7 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 	// Deal with split images
 	if ctype == "multipart/form-data" {
 		if req.MetaFile == nil || req.RootfsFile == nil {
-			return nil, fmt.Errorf("Multi-part image but only one target file provided")
+			return nil, errors.New("Multi-part image but only one target file provided")
 		}
 
 		// Parse the POST data
@@ -297,7 +297,7 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 		}
 
 		if part.FormName() != "metadata" {
-			return nil, fmt.Errorf("Invalid multipart image")
+			return nil, errors.New("Invalid multipart image")
 		}
 
 		size, err := io.Copy(io.MultiWriter(req.MetaFile, hash256), part)
@@ -315,7 +315,7 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 		}
 
 		if !slices.Contains([]string{"rootfs", "rootfs.img"}, part.FormName()) {
-			return nil, fmt.Errorf("Invalid multipart image")
+			return nil, errors.New("Invalid multipart image")
 		}
 
 		size, err = io.Copy(io.MultiWriter(req.RootfsFile, hash256), part)
@@ -343,7 +343,7 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 
 	filename, ok := cdParams["filename"]
 	if !ok {
-		return nil, fmt.Errorf("No filename in Content-Disposition header")
+		return nil, errors.New("No filename in Content-Disposition header")
 	}
 
 	size, err := io.Copy(io.MultiWriter(req.MetaFile, hash256), body)
@@ -416,7 +416,7 @@ func (r *ProtocolIncus) GetImageAliasType(imageType string, name string) (*api.I
 		}
 
 		if alias.Type != imageType {
-			return nil, "", fmt.Errorf("Alias doesn't exist for the specified type")
+			return nil, "", errors.New("Alias doesn't exist for the specified type")
 		}
 	}
 
@@ -442,7 +442,7 @@ func (r *ProtocolIncus) GetImageAliasArchitectures(imageType string, name string
 func (r *ProtocolIncus) CreateImage(image api.ImagesPost, args *ImageCreateArgs) (Operation, error) {
 	if image.CompressionAlgorithm != "" {
 		if !r.HasExtension("image_compression_algorithm") {
-			return nil, fmt.Errorf("The server is missing the required \"image_compression_algorithm\" API extension")
+			return nil, errors.New("The server is missing the required \"image_compression_algorithm\" API extension")
 		}
 	}
 
@@ -458,7 +458,7 @@ func (r *ProtocolIncus) CreateImage(image api.ImagesPost, args *ImageCreateArgs)
 
 	// Prepare an image upload
 	if args.MetaFile == nil {
-		return nil, fmt.Errorf("Metadata file is required")
+		return nil, errors.New("Metadata file is required")
 	}
 
 	// Prepare the body
@@ -634,7 +634,7 @@ func (r *ProtocolIncus) CreateImage(image api.ImagesPost, args *ImageCreateArgs)
 // tryCopyImage iterates through the source server URLs until one lets it download the image.
 func (r *ProtocolIncus) tryCopyImage(req api.ImagesPost, urls []string) (RemoteOperation, error) {
 	if len(urls) == 0 {
-		return nil, fmt.Errorf("The source server isn't listening on the network")
+		return nil, errors.New("The source server isn't listening on the network")
 	}
 
 	rop := remoteOperation{
@@ -738,13 +738,13 @@ func (r *ProtocolIncus) tryCopyImage(req api.ImagesPost, urls []string) (RemoteO
 func (r *ProtocolIncus) CopyImage(source ImageServer, image api.Image, args *ImageCopyArgs) (RemoteOperation, error) {
 	// Quick checks.
 	if r.isSameServer(source) {
-		return nil, fmt.Errorf("The source and target servers must be different")
+		return nil, errors.New("The source and target servers must be different")
 	}
 
 	// Handle profile list overrides.
 	if args != nil && args.Profiles != nil {
 		if !r.HasExtension("image_copy_profile") {
-			return nil, fmt.Errorf("The server is missing the required \"image_copy_profile\" API extension")
+			return nil, errors.New("The server is missing the required \"image_copy_profile\" API extension")
 		}
 
 		image.Profiles = args.Profiles
@@ -798,7 +798,7 @@ func (r *ProtocolIncus) CopyImage(source ImageServer, image api.Image, args *Ima
 
 		secret, ok := opAPI.Metadata["secret"]
 		if !ok {
-			return nil, fmt.Errorf("No token provided")
+			return nil, errors.New("No token provided")
 		}
 
 		req := api.ImageExportPost{
@@ -1009,7 +1009,7 @@ func (r *ProtocolIncus) DeleteImage(fingerprint string) (Operation, error) {
 // RefreshImage requests that Incus issues an image refresh.
 func (r *ProtocolIncus) RefreshImage(fingerprint string) (Operation, error) {
 	if !r.HasExtension("image_force_refresh") {
-		return nil, fmt.Errorf("The server is missing the required \"image_force_refresh\" API extension")
+		return nil, errors.New("The server is missing the required \"image_force_refresh\" API extension")
 	}
 
 	// Send the request
@@ -1079,7 +1079,7 @@ func (r *ProtocolIncus) DeleteImageAlias(name string) error {
 // ExportImage exports (copies) an image to a remote server.
 func (r *ProtocolIncus) ExportImage(fingerprint string, image api.ImageExportPost) (Operation, error) {
 	if !r.HasExtension("images_push_relay") {
-		return nil, fmt.Errorf("The server is missing the required \"images_push_relay\" API extension")
+		return nil, errors.New("The server is missing the required \"images_push_relay\" API extension")
 	}
 
 	// Send the request
