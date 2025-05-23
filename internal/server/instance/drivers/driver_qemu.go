@@ -1176,7 +1176,7 @@ func (d *qemu) checkStateStorage() error {
 	}
 
 	if stateDiskSize < memoryLimit {
-		return errors.New("Stateful stop and snapshots require that the instance limits.memory is less than size.state on the root disk device")
+		return errors.New("Stateful stop and snapshots require the instance limits.memory be less than or equal to the root disk size.state property")
 	}
 
 	return nil
