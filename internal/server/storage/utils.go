@@ -89,7 +89,7 @@ func VolumeTypeNameToDBType(volumeTypeName string) (int, error) {
 		return db.StoragePoolVolumeTypeCustom, nil
 	}
 
-	return -1, fmt.Errorf("Invalid storage volume type name")
+	return -1, errors.New("Invalid storage volume type name")
 }
 
 // VolumeTypeToDBType converts volume type to internal volume type DB code.
@@ -133,7 +133,7 @@ func InstanceTypeToVolumeType(instType instancetype.Type) (drivers.VolumeType, e
 		return drivers.VolumeTypeVM, nil
 	}
 
-	return "", fmt.Errorf("Invalid instance type")
+	return "", errors.New("Invalid instance type")
 }
 
 // VolumeTypeToAPIInstanceType converts storage driver volume type to API instance type type.
@@ -145,7 +145,7 @@ func VolumeTypeToAPIInstanceType(volType drivers.VolumeType) (api.InstanceType, 
 		return api.InstanceTypeVM, nil
 	}
 
-	return api.InstanceTypeAny, fmt.Errorf("Volume type doesn't have equivalent instance type")
+	return api.InstanceTypeAny, errors.New("Volume type doesn't have equivalent instance type")
 }
 
 // VolumeContentTypeToDBContentType converts volume type to internal code.
@@ -159,7 +159,7 @@ func VolumeContentTypeToDBContentType(contentType drivers.ContentType) (int, err
 		return db.StoragePoolVolumeContentTypeISO, nil
 	}
 
-	return -1, fmt.Errorf("Invalid volume content type")
+	return -1, errors.New("Invalid volume content type")
 }
 
 // VolumeDBContentTypeToContentType converts internal content type DB code to driver representation.
@@ -173,7 +173,7 @@ func VolumeDBContentTypeToContentType(volDBType int) (drivers.ContentType, error
 		return drivers.ContentTypeISO, nil
 	}
 
-	return "", fmt.Errorf("Invalid volume content type")
+	return "", errors.New("Invalid volume content type")
 }
 
 // VolumeContentTypeNameToContentType converts volume content type string internal code.
@@ -187,14 +187,14 @@ func VolumeContentTypeNameToContentType(contentTypeName string) (int, error) {
 		return db.StoragePoolVolumeContentTypeISO, nil
 	}
 
-	return -1, fmt.Errorf("Invalid volume content type name")
+	return -1, errors.New("Invalid volume content type name")
 }
 
 // VolumeDBGet loads a volume from the database.
 func VolumeDBGet(pool Pool, projectName string, volumeName string, volumeType drivers.VolumeType) (*db.StorageVolume, error) {
 	p, ok := pool.(*backend)
 	if !ok {
-		return nil, fmt.Errorf("Pool is not a backend")
+		return nil, errors.New("Pool is not a backend")
 	}
 
 	volDBType, err := VolumeTypeToDBType(volumeType)
@@ -229,12 +229,12 @@ func VolumeDBGet(pool Pool, projectName string, volumeName string, volumeType dr
 func VolumeDBCreate(pool Pool, projectName string, volumeName string, volumeDescription string, volumeType drivers.VolumeType, snapshot bool, volumeConfig map[string]string, creationDate time.Time, expiryDate time.Time, contentType drivers.ContentType, removeUnknownKeys bool, hasSource bool) error {
 	p, ok := pool.(*backend)
 	if !ok {
-		return fmt.Errorf("Pool is not a backend")
+		return errors.New("Pool is not a backend")
 	}
 
 	// Prevent using this function to create storage volume bucket records.
 	if volumeType == drivers.VolumeTypeBucket {
-		return fmt.Errorf("Cannot store volume using bucket type")
+		return errors.New("Cannot store volume using bucket type")
 	}
 
 	// If the volumeType represents an instance type then check that the volumeConfig doesn't contain any of
@@ -307,7 +307,7 @@ func VolumeDBCreate(pool Pool, projectName string, volumeName string, volumeDesc
 func VolumeDBDelete(pool Pool, projectName string, volumeName string, volumeType drivers.VolumeType) error {
 	p, ok := pool.(*backend)
 	if !ok {
-		return fmt.Errorf("Pool is not a backend")
+		return errors.New("Pool is not a backend")
 	}
 
 	// Convert the volume type to our internal integer representation.
@@ -330,7 +330,7 @@ func VolumeDBDelete(pool Pool, projectName string, volumeName string, volumeType
 func VolumeDBSnapshotsGet(pool Pool, projectName string, volume string, volumeType drivers.VolumeType) ([]db.StorageVolumeArgs, error) {
 	p, ok := pool.(*backend)
 	if !ok {
-		return nil, fmt.Errorf("Pool is not a backend")
+		return nil, errors.New("Pool is not a backend")
 	}
 
 	volDBType, err := VolumeTypeToDBType(volumeType)
@@ -356,7 +356,7 @@ func VolumeDBSnapshotsGet(pool Pool, projectName string, volume string, volumeTy
 func BucketDBGet(pool Pool, projectName string, bucketName string, memberSpecific bool) (*db.StorageBucket, error) {
 	p, ok := pool.(*backend)
 	if !ok {
-		return nil, fmt.Errorf("Pool is not a backend")
+		return nil, errors.New("Pool is not a backend")
 	}
 
 	var err error
@@ -388,7 +388,7 @@ func BucketDBGet(pool Pool, projectName string, bucketName string, memberSpecifi
 func BucketDBCreate(ctx context.Context, pool Pool, projectName string, memberSpecific bool, bucket *api.StorageBucketsPost) (int64, error) {
 	p, ok := pool.(*backend)
 	if !ok {
-		return -1, fmt.Errorf("Pool is not a backend")
+		return -1, errors.New("Pool is not a backend")
 	}
 
 	// Make sure that we don't pass a nil to the next function.
@@ -436,7 +436,7 @@ func BucketDBCreate(ctx context.Context, pool Pool, projectName string, memberSp
 func BucketDBDelete(ctx context.Context, pool Pool, bucketID int64) error {
 	p, ok := pool.(*backend)
 	if !ok {
-		return fmt.Errorf("Pool is not a backend")
+		return errors.New("Pool is not a backend")
 	}
 
 	err := p.state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
@@ -453,7 +453,7 @@ func BucketDBDelete(ctx context.Context, pool Pool, bucketID int64) error {
 func BucketKeysDBGet(pool Pool, bucketID int64) ([]*db.StorageBucketKey, error) {
 	p, ok := pool.(*backend)
 	if !ok {
-		return nil, fmt.Errorf("Pool is not a backend")
+		return nil, errors.New("Pool is not a backend")
 	}
 
 	var err error
@@ -599,7 +599,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 		if util.PathExists(imageRootfsFile) {
 			err = os.MkdirAll(rootfsPath, 0o755)
 			if err != nil {
-				return -1, fmt.Errorf("Error creating rootfs directory")
+				return -1, errors.New("Error creating rootfs directory")
 			}
 
 			err = archive.Unpack(imageRootfsFile, rootfsPath, vol.IsBlockBacked(), maxMemory, tracker)
@@ -1090,7 +1090,7 @@ func InstanceDiskBlockSize(pool Pool, inst instance.Instance, op *operations.Ope
 	defer func() { _ = InstanceUnmount(pool, inst, op) }()
 
 	if mountInfo.DiskPath == "" {
-		return -1, fmt.Errorf("No disk path available from mount")
+		return -1, errors.New("No disk path available from mount")
 	}
 
 	blockDiskSize, err := drivers.BlockDiskSizeBytes(mountInfo.DiskPath)
@@ -1181,7 +1181,7 @@ func CalculateVolumeSnapshotSize(projectName string, pool Pool, contentType driv
 	err := snapVol.MountTask(func(mountPath string, op *operations.Operation) error {
 		poolBackend, ok := pool.(*backend)
 		if !ok {
-			return fmt.Errorf("Pool is not a backend")
+			return errors.New("Pool is not a backend")
 		}
 
 		volDiskPath, err := poolBackend.driver.GetVolumeDiskPath(snapVol)

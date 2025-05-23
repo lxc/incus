@@ -3,7 +3,6 @@ package linux
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"time"
@@ -74,9 +73,9 @@ func (w *execWrapper) Read(p []byte) (int, error) {
 			case err != nil:
 				opErr = err
 			case revents&unix.POLLERR > 0:
-				opErr = fmt.Errorf("Got POLLERR event")
+				opErr = errors.New("Got POLLERR event")
 			case revents&unix.POLLNVAL > 0:
-				opErr = fmt.Errorf("Got POLLNVAL event")
+				opErr = errors.New("Got POLLNVAL event")
 			case revents&(unix.POLLIN|unix.POLLPRI) > 0:
 				// If there is something to read then read it.
 				n, opErr = unix.Read(int(fd), p)

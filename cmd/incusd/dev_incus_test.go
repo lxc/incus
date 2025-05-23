@@ -169,7 +169,7 @@ func TestHttpRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !strings.Contains(string(resp), pidNotInContainerErr.Error()) {
+	if !strings.Contains(string(resp), errPIDNotInContainer.Error()) {
 		t.Fatal("resp error not expected: ", string(resp))
 	}
 }

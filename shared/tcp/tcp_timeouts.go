@@ -2,7 +2,7 @@ package tcp
 
 import (
 	"crypto/tls"
-	"fmt"
+	"errors"
 	"net"
 	"reflect"
 	"time"
@@ -24,12 +24,12 @@ func ExtractConn(conn net.Conn) (*net.TCPConn, error) {
 
 		tcpConn, ok = c.(*net.TCPConn)
 		if !ok {
-			return nil, fmt.Errorf("Underlying tls.Conn connection is not a net.TCPConn")
+			return nil, errors.New("Underlying tls.Conn connection is not a net.TCPConn")
 		}
 	} else {
 		tcpConn, ok = conn.(*net.TCPConn)
 		if !ok {
-			return nil, fmt.Errorf("Connection is not a net.TCPConn")
+			return nil, errors.New("Connection is not a net.TCPConn")
 		}
 	}
 

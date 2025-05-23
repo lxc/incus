@@ -3,6 +3,7 @@ package schema_test
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -223,7 +224,7 @@ func TestSchemaEnsure_FailingUpdate(t *testing.T) {
 func TestSchemaEnsure_FailingHook(t *testing.T) {
 	schema, db := newSchemaAndDB(t)
 	schema.Add(updateCreateTable)
-	schema.Hook(func(context.Context, int, *sql.Tx) error { return fmt.Errorf("boom") })
+	schema.Hook(func(context.Context, int, *sql.Tx) error { return errors.New("boom") })
 	_, err := schema.Ensure(db)
 	assert.EqualError(t, err, "failed to execute hook (version 0): boom")
 
@@ -491,5 +492,5 @@ func updateAddColumn(ctx context.Context, tx *sql.Tx) error {
 
 // An update that unconditionally fails with an error.
 func updateBoom(ctx context.Context, tx *sql.Tx) error {
-	return fmt.Errorf("boom")
+	return errors.New("boom")
 }

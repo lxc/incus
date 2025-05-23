@@ -150,7 +150,7 @@ func (v Volume) ExpandedConfig(key string) string {
 // NewSnapshot instantiates a new Volume struct representing a snapshot of the parent volume.
 func (v Volume) NewSnapshot(snapshotName string) (Volume, error) {
 	if v.IsSnapshot() {
-		return Volume{}, fmt.Errorf("Cannot create a snapshot volume from a snapshot")
+		return Volume{}, errors.New("Cannot create a snapshot volume from a snapshot")
 	}
 
 	fullSnapName := GetSnapshotVolumeName(v.name, snapshotName)
@@ -373,7 +373,7 @@ func (v Volume) UnmountTask(task func(op *operations.Operation) error, keepBlock
 // Snapshots returns a list of snapshots for the volume (in no particular order).
 func (v Volume) Snapshots(op *operations.Operation) ([]Volume, error) {
 	if v.IsSnapshot() {
-		return nil, fmt.Errorf("Volume is a snapshot")
+		return nil, errors.New("Volume is a snapshot")
 	}
 
 	snapshots, err := v.driver.VolumeSnapshots(v, op)
@@ -398,7 +398,7 @@ func (v Volume) Snapshots(op *operations.Operation) ([]Volume, error) {
 // necessarily in the same order).
 func (v Volume) SnapshotsMatch(snapNames []string, op *operations.Operation) error {
 	if v.IsSnapshot() {
-		return fmt.Errorf("Volume is a snapshot")
+		return errors.New("Volume is a snapshot")
 	}
 
 	snapshots, err := v.driver.VolumeSnapshots(v, op)

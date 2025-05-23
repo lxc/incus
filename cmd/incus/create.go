@@ -174,13 +174,13 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 	if !c.global.flagQuiet {
 		if d.HasExtension("instance_create_start") && launch {
 			if name == "" {
-				fmt.Printf(i18n.G("Launching the instance") + "\n")
+				fmt.Print(i18n.G("Launching the instance") + "\n")
 			} else {
 				fmt.Printf(i18n.G("Launching %s")+"\n", name)
 			}
 		} else {
 			if name == "" {
-				fmt.Printf(i18n.G("Creating the instance") + "\n")
+				fmt.Print(i18n.G("Creating the instance") + "\n")
 			} else {
 				fmt.Printf(i18n.G("Creating %s")+"\n", name)
 			}
@@ -471,7 +471,7 @@ func (c *cmdCreate) checkNetwork(d incus.InstanceServer, name string) {
 		}
 	}
 
-	fmt.Fprintf(os.Stderr, "\n"+i18n.G("The instance you are starting doesn't have any network attached to it.")+"\n")
-	fmt.Fprintf(os.Stderr, "  "+i18n.G("To create a new network, use: incus network create")+"\n")
-	fmt.Fprintf(os.Stderr, "  "+i18n.G("To attach a network to an instance, use: incus network attach")+"\n\n")
+	fmt.Fprint(os.Stderr, "\n"+i18n.G("The instance you are starting doesn't have any network attached to it.")+"\n")
+	fmt.Fprint(os.Stderr, "  "+i18n.G("To create a new network, use: incus network create")+"\n")
+	fmt.Fprint(os.Stderr, "  "+i18n.G("To attach a network to an instance, use: incus network attach")+"\n\n")
 }

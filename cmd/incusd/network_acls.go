@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -315,7 +316,7 @@ func networkACLsPost(d *Daemon, r *http.Request) response.Response {
 
 	_, err = acl.LoadByName(s, projectName, req.Name)
 	if err == nil {
-		return response.BadRequest(fmt.Errorf("The network ACL already exists"))
+		return response.BadRequest(errors.New("The network ACL already exists"))
 	}
 
 	err = acl.Create(s, projectName, &req)

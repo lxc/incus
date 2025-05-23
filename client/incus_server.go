@@ -1,6 +1,7 @@
 package incus
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -85,7 +86,7 @@ func (r *ProtocolIncus) IsClustered() bool {
 // GetServerResources returns the resources available to a given Incus server.
 func (r *ProtocolIncus) GetServerResources() (*api.Resources, error) {
 	if !r.HasExtension("resources") {
-		return nil, fmt.Errorf("The server is missing the required \"resources\" API extension")
+		return nil, errors.New("The server is missing the required \"resources\" API extension")
 	}
 
 	resources := api.Resources{}
@@ -154,7 +155,7 @@ func (r *ProtocolIncus) IsAgent() bool {
 func (r *ProtocolIncus) GetMetrics() (string, error) {
 	// Check that the server supports it.
 	if !r.HasExtension("metrics") {
-		return "", fmt.Errorf("The server is missing the required \"metrics\" API extension")
+		return "", errors.New("The server is missing the required \"metrics\" API extension")
 	}
 
 	// Prepare the request.

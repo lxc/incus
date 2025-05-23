@@ -2,6 +2,7 @@ package scriptlet
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"go.starlark.net/starlark"
@@ -483,7 +484,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 	// Retrieve a global variable from starlark environment.
 	instancePlacement := globals["instance_placement"]
 	if instancePlacement == nil {
-		return nil, fmt.Errorf("Scriptlet missing instance_placement function")
+		return nil, errors.New("Scriptlet missing instance_placement function")
 	}
 
 	rv, err := marshal.StarlarkMarshal(req)

@@ -31,7 +31,7 @@ var RunWrapper func(cmd *exec.Cmd, source string, destination string) (func(), e
 // rsync is a wrapper for the rsync command which will respect RunWrapper.
 func rsync(args ...string) (string, error) {
 	if len(args) < 2 {
-		return "", fmt.Errorf("rsync call expects a minimum of two arguments (source and destination)")
+		return "", errors.New("rsync call expects a minimum of two arguments (source and destination)")
 	}
 
 	// Setup the command.

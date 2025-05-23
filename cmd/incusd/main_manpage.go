@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -35,7 +35,7 @@ func (c *cmdManpage) run(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 
-		return fmt.Errorf("Missing required arguments")
+		return errors.New("Missing required arguments")
 	}
 
 	// Generate the manpages

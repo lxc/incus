@@ -359,7 +359,7 @@ func (d *common) Rename(newName string) error {
 	}
 
 	if len(usedBy) > 0 {
-		return fmt.Errorf("Cannot rename address set that is in use")
+		return errors.New("Cannot rename address set that is in use")
 	}
 
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -381,14 +381,14 @@ func (d *common) Delete() error {
 	}
 
 	if len(usedBy) > 0 {
-		return fmt.Errorf("Cannot delete address set that is in use")
+		return errors.New("Cannot delete address set that is in use")
 	}
 
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		return dbCluster.DeleteNetworkAddressSet(ctx, tx.Tx(), d.projectName, d.info.Name)
 	})
 	if err != nil {
-		return fmt.Errorf("Error while deleting address set from db")
+		return errors.New("Error while deleting address set from db")
 	}
 
 	return nil

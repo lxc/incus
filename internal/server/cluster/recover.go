@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -53,13 +54,13 @@ func Recover(database *db.Node) error {
 
 	// If we're not a database node, return an error.
 	if info == nil {
-		return fmt.Errorf("This server has no database role")
+		return errors.New("This server has no database role")
 	}
 
 	// If this is a standalone node not exposed to the network, return an
 	// error.
 	if info.Address == "" {
-		return fmt.Errorf("This server is not clustered")
+		return errors.New("This server is not clustered")
 	}
 
 	dir := filepath.Join(database.Dir(), "global")
@@ -141,7 +142,7 @@ func Reconfigure(database *db.Node, raftNodes []db.RaftNode) error {
 	}
 
 	if info == nil {
-		return fmt.Errorf("This cluster member has no raft role")
+		return errors.New("This cluster member has no raft role")
 	}
 
 	localAddress := info.Address

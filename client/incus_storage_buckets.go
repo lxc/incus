@@ -1,6 +1,7 @@
 package incus
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -76,7 +77,7 @@ func (r *ProtocolIncus) GetStoragePoolBucketsWithFilter(poolName string, filters
 func (r *ProtocolIncus) GetStoragePoolBucketsAllProjects(poolName string) ([]api.StorageBucket, error) {
 	err := r.CheckExtension("storage_buckets_all_projects")
 	if err != nil {
-		return nil, fmt.Errorf(`The server is missing the required "storage_buckets_all_projects" API extension`)
+		return nil, errors.New(`The server is missing the required "storage_buckets_all_projects" API extension`)
 	}
 
 	buckets := []api.StorageBucket{}
@@ -99,7 +100,7 @@ func (r *ProtocolIncus) GetStoragePoolBucketsWithFilterAllProjects(poolName stri
 
 	err = r.CheckExtension("storage_buckets_all_projects")
 	if err != nil {
-		return nil, fmt.Errorf(`The server is missing the required "storage_buckets_all_projects" API extension`)
+		return nil, errors.New(`The server is missing the required "storage_buckets_all_projects" API extension`)
 	}
 
 	buckets := []api.StorageBucket{}
@@ -407,7 +408,7 @@ func (r *ProtocolIncus) GetStoragePoolBucketBackupFile(pool string, bucketName s
 // CreateStoragePoolBucketFromBackup creates a new storage bucket from a backup.
 func (r *ProtocolIncus) CreateStoragePoolBucketFromBackup(pool string, args StoragePoolBucketBackupArgs) (Operation, error) {
 	if !r.HasExtension("storage_bucket_backup") {
-		return nil, fmt.Errorf(`The server is missing the required "custom_volume_backup" API extension`)
+		return nil, errors.New(`The server is missing the required "custom_volume_backup" API extension`)
 	}
 
 	path := fmt.Sprintf("/storage-pools/%s/buckets", url.PathEscape(pool))

@@ -176,7 +176,7 @@ func (c *cmdQuery) Run(cmd *cobra.Command, args []string) error {
 		op := api.Operation{}
 		err = json.Unmarshal(resp.Metadata, &op)
 		if err == nil && op.Err != "" {
-			return fmt.Errorf(op.Err)
+			return errors.New(op.Err)
 		}
 	}
 

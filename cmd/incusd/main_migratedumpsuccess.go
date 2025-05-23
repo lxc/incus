@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -40,12 +41,12 @@ func (c *cmdMigratedumpsuccess) run(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 
-		return fmt.Errorf("Missing required arguments")
+		return errors.New("Missing required arguments")
 	}
 
 	// Only root should run this
 	if os.Geteuid() != 0 {
-		return fmt.Errorf("This must be run as root")
+		return errors.New("This must be run as root")
 	}
 
 	clientArgs := incus.ConnectionArgs{
@@ -79,5 +80,5 @@ func (c *cmdMigratedumpsuccess) run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	return fmt.Errorf(op.Err)
+	return errors.New(op.Err)
 }

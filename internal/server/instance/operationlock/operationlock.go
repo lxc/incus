@@ -2,6 +2,7 @@ package operationlock
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"sync"
@@ -43,7 +44,7 @@ const ActionConsoleRetrieve Action = "console_retrieve"
 
 // ErrNonReusuableSucceeded is returned when no operation is created due to having to wait for a matching
 // non-reusuable operation that has now completed successfully.
-var ErrNonReusuableSucceeded error = fmt.Errorf("A matching non-reusable operation has now succeeded")
+var ErrNonReusuableSucceeded error = errors.New("A matching non-reusable operation has now succeeded")
 
 var (
 	instanceOperationsLock sync.Mutex
@@ -68,7 +69,7 @@ type InstanceOperation struct {
 // which will then trigger a reset of the timeout to TimeoutDefault on the existing lock and return it.
 func Create(projectName string, instanceName string, apiOp *operations.Operation, action Action, createReusuable bool, reuseExisting bool) (*InstanceOperation, error) {
 	if projectName == "" || instanceName == "" {
-		return nil, fmt.Errorf("Invalid project or instance name")
+		return nil, errors.New("Invalid project or instance name")
 	}
 
 	instanceOperationsLock.Lock()

@@ -2,6 +2,7 @@ package warnings
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -28,7 +29,7 @@ func ResolveWarningsByLocalNodeOlderThan(dbCluster *db.Cluster, date time.Time) 
 	}
 
 	if localName == "" {
-		return fmt.Errorf("Local member name not available")
+		return errors.New("Local member name not available")
 	}
 
 	err = dbCluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -78,7 +79,7 @@ func ResolveWarningsByLocalNodeAndType(dbCluster *db.Cluster, typeCode warningty
 	}
 
 	if localName == "" {
-		return fmt.Errorf("Local member name not available")
+		return errors.New("Local member name not available")
 	}
 
 	return ResolveWarningsByNodeAndType(dbCluster, localName, typeCode)
@@ -161,7 +162,7 @@ func ResolveWarningsByLocalNodeAndProjectAndType(dbCluster *db.Cluster, projectN
 	}
 
 	if localName == "" {
-		return fmt.Errorf("Local member name not available")
+		return errors.New("Local member name not available")
 	}
 
 	return ResolveWarningsByNodeAndProjectAndType(dbCluster, localName, projectName, typeCode)
@@ -217,7 +218,7 @@ func ResolveWarningsByLocalNodeAndProjectAndTypeAndEntity(dbCluster *db.Cluster,
 	}
 
 	if localName == "" {
-		return fmt.Errorf("Local member name not available")
+		return errors.New("Local member name not available")
 	}
 
 	return ResolveWarningsByNodeAndProjectAndTypeAndEntity(dbCluster, localName, projectName, typeCode, entityTypeCode, entityID)
@@ -273,7 +274,7 @@ func DeleteWarningsByLocalNodeAndProjectAndTypeAndEntity(dbCluster *db.Cluster, 
 	}
 
 	if localName == "" {
-		return fmt.Errorf("Local member name not available")
+		return errors.New("Local member name not available")
 	}
 
 	return DeleteWarningsByNodeAndProjectAndTypeAndEntity(dbCluster, localName, projectName, typeCode, entityTypeCode, entityID)

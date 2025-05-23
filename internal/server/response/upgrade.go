@@ -1,6 +1,7 @@
 package response
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -24,7 +25,7 @@ func Upgrade(hijackedConn net.Conn, protocolName string) error {
 	}
 
 	if n != sb.Len() {
-		return fmt.Errorf("Failed writing upgrade headers")
+		return errors.New("Failed writing upgrade headers")
 	}
 
 	return nil

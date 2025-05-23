@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"time"
 )
@@ -78,7 +79,7 @@ func (op *Operation) ToCertificateAddToken() (*CertificateAddToken, error) {
 
 	clientName, ok := req["name"].(string)
 	if !ok {
-		return nil, fmt.Errorf("Failed to get client name")
+		return nil, errors.New("Failed to get client name")
 	}
 
 	secret, ok := op.Metadata["secret"].(string)

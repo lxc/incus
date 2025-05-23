@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -52,27 +53,27 @@ func (r *ProtocolOCI) getProxyHost() (*url.URL, error) {
 
 // GetImages returns a list of available images as Image structs.
 func (r *ProtocolOCI) GetImages() ([]api.Image, error) {
-	return nil, fmt.Errorf("Can't list images from OCI registry")
+	return nil, errors.New("Can't list images from OCI registry")
 }
 
 // GetImagesAllProjects returns a list of available images as Image structs.
 func (r *ProtocolOCI) GetImagesAllProjects() ([]api.Image, error) {
-	return nil, fmt.Errorf("Can't list images from OCI registry")
+	return nil, errors.New("Can't list images from OCI registry")
 }
 
 // GetImagesAllProjectsWithFilter returns a filtered list of available images as Image structs.
 func (r *ProtocolOCI) GetImagesAllProjectsWithFilter(filters []string) ([]api.Image, error) {
-	return nil, fmt.Errorf("Can't list images from OCI registry")
+	return nil, errors.New("Can't list images from OCI registry")
 }
 
 // GetImageFingerprints returns a list of available image fingerprints.
 func (r *ProtocolOCI) GetImageFingerprints() ([]string, error) {
-	return nil, fmt.Errorf("Can't list images from OCI registry")
+	return nil, errors.New("Can't list images from OCI registry")
 }
 
 // GetImagesWithFilter returns a filtered list of available images as Image structs.
 func (r *ProtocolOCI) GetImagesWithFilter(_ []string) ([]api.Image, error) {
-	return nil, fmt.Errorf("Can't list images from OCI registry")
+	return nil, errors.New("Can't list images from OCI registry")
 }
 
 // GetImage returns an Image struct for the provided fingerprint.
@@ -81,10 +82,10 @@ func (r *ProtocolOCI) GetImage(fingerprint string) (*api.Image, string, error) {
 	if !ok {
 		_, err := exec.LookPath("skopeo")
 		if err != nil {
-			return nil, "", fmt.Errorf("OCI container handling requires \"skopeo\" be present on the system")
+			return nil, "", errors.New("OCI container handling requires \"skopeo\" be present on the system")
 		}
 
-		return nil, "", fmt.Errorf("Image not found")
+		return nil, "", errors.New("Image not found")
 	}
 
 	img := api.Image{
@@ -140,19 +141,19 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 	if !ok {
 		_, err := exec.LookPath("skopeo")
 		if err != nil {
-			return nil, fmt.Errorf("OCI container handling requires \"skopeo\" be present on the system")
+			return nil, errors.New("OCI container handling requires \"skopeo\" be present on the system")
 		}
 
-		return nil, fmt.Errorf("Image not found")
+		return nil, errors.New("Image not found")
 	}
 
 	// Quick checks.
 	if req.MetaFile == nil && req.RootfsFile == nil {
-		return nil, fmt.Errorf("No file requested")
+		return nil, errors.New("No file requested")
 	}
 
 	if os.Geteuid() != 0 {
-		return nil, fmt.Errorf("OCI image export currently requires root access")
+		return nil, errors.New("OCI image export currently requires root access")
 	}
 
 	// Get some temporary storage.
@@ -313,27 +314,27 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 
 // GetImageSecret isn't relevant for the simplestreams protocol.
 func (r *ProtocolOCI) GetImageSecret(_ string) (string, error) {
-	return "", fmt.Errorf("Private images aren't supported with OCI registry")
+	return "", errors.New("Private images aren't supported with OCI registry")
 }
 
 // GetPrivateImage isn't relevant for the simplestreams protocol.
 func (r *ProtocolOCI) GetPrivateImage(_ string, _ string) (*api.Image, string, error) {
-	return nil, "", fmt.Errorf("Private images aren't supported with OCI registry")
+	return nil, "", errors.New("Private images aren't supported with OCI registry")
 }
 
 // GetPrivateImageFile isn't relevant for the simplestreams protocol.
 func (r *ProtocolOCI) GetPrivateImageFile(_ string, _ string, _ ImageFileRequest) (*ImageFileResponse, error) {
-	return nil, fmt.Errorf("Private images aren't supported with OCI registry")
+	return nil, errors.New("Private images aren't supported with OCI registry")
 }
 
 // GetImageAliases returns the list of available aliases as ImageAliasesEntry structs.
 func (r *ProtocolOCI) GetImageAliases() ([]api.ImageAliasesEntry, error) {
-	return nil, fmt.Errorf("Can't list image aliases from OCI registry")
+	return nil, errors.New("Can't list image aliases from OCI registry")
 }
 
 // GetImageAliasNames returns the list of available alias names.
 func (r *ProtocolOCI) GetImageAliasNames() ([]string, error) {
-	return nil, fmt.Errorf("Can't list image aliases from OCI registry")
+	return nil, errors.New("Can't list image aliases from OCI registry")
 }
 
 // GetImageAlias returns an existing alias as an ImageAliasesEntry struct.
@@ -405,7 +406,7 @@ func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string
 // GetImageAliasType returns an existing alias as an ImageAliasesEntry struct.
 func (r *ProtocolOCI) GetImageAliasType(imageType string, name string) (*api.ImageAliasesEntry, string, error) {
 	if api.InstanceType(imageType) == api.InstanceTypeVM {
-		return nil, "", fmt.Errorf("OCI images are only supported for containers")
+		return nil, "", errors.New("OCI images are only supported for containers")
 	}
 
 	return r.GetImageAlias(name)
@@ -414,7 +415,7 @@ func (r *ProtocolOCI) GetImageAliasType(imageType string, name string) (*api.Ima
 // GetImageAliasArchitectures returns a map of architectures / targets.
 func (r *ProtocolOCI) GetImageAliasArchitectures(imageType string, name string) (map[string]*api.ImageAliasesEntry, error) {
 	if api.InstanceType(imageType) == api.InstanceTypeVM {
-		return nil, fmt.Errorf("OCI images are only supported for containers")
+		return nil, errors.New("OCI images are only supported for containers")
 	}
 
 	alias, _, err := r.GetImageAlias(name)
@@ -432,5 +433,5 @@ func (r *ProtocolOCI) GetImageAliasArchitectures(imageType string, name string) 
 
 // ExportImage exports (copies) an image to a remote server.
 func (r *ProtocolOCI) ExportImage(_ string, _ api.ImageExportPost) (Operation, error) {
-	return nil, fmt.Errorf("Exporting images is not supported with OCI registry")
+	return nil, errors.New("Exporting images is not supported with OCI registry")
 }

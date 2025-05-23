@@ -2,6 +2,7 @@ package drivers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os/exec"
@@ -121,7 +122,7 @@ func (d *cephobject) FillConfig() error {
 	}
 
 	if d.config["cephobject.radosgw.endpoint"] == "" {
-		return fmt.Errorf(`"cephobject.radosgw.endpoint" option is required`)
+		return errors.New(`"cephobject.radosgw.endpoint" option is required`)
 	}
 
 	return nil
@@ -177,7 +178,7 @@ func (d *cephobject) Update(changedConfig map[string]string) error {
 
 		for _, bucketName := range buckets {
 			if strings.HasPrefix(bucketName, d.config["cephobject.bucket.name_prefix"]) {
-				return fmt.Errorf(`Cannot change "cephobject.bucket.name_prefix" when there are existing buclets`)
+				return errors.New(`Cannot change "cephobject.bucket.name_prefix" when there are existing buclets`)
 			}
 		}
 	}

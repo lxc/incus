@@ -123,7 +123,7 @@ SELECT nodes.id, nodes.address
 	}
 
 	if rows.Next() {
-		return "", fmt.Errorf("More than one cluster member associated with instance")
+		return "", errors.New("More than one cluster member associated with instance")
 	}
 
 	err = rows.Err()
@@ -208,7 +208,7 @@ func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThre
 }
 
 // ErrInstanceListStop used as return value from InstanceList's instanceFunc when prematurely stopping the search.
-var ErrInstanceListStop = fmt.Errorf("search stopped")
+var ErrInstanceListStop = errors.New("search stopped")
 
 // InstanceList loads all instances across all projects and for each instance runs the instanceFunc passing in the
 // instance and it's project and profiles. Accepts optional filter arguments to specify a subset of instances.
@@ -608,7 +608,7 @@ func (c *ClusterTx) InstancesToInstanceArgs(ctx context.Context, fillProfiles bo
 	}
 
 	if instanceCount > 0 && snapshotCount > 0 {
-		return nil, fmt.Errorf("Cannot use InstancesToInstanceArgs with mixed instance and instance snapshots")
+		return nil, errors.New("Cannot use InstancesToInstanceArgs with mixed instance and instance snapshots")
 	}
 
 	// Populate instance config.

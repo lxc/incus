@@ -1,7 +1,7 @@
 package certificate
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/lxc/incus/v6/shared/api"
 )
@@ -29,5 +29,5 @@ func FromAPIType(apiType string) (Type, error) {
 		return TypeMetrics, nil
 	}
 
-	return -1, fmt.Errorf("Invalid certificate type")
+	return -1, errors.New("Invalid certificate type")
 }

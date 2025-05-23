@@ -920,7 +920,7 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 			ignoreInst, isIgnoreInst := ignoreUsageType.(instance.Instance)
 
 			if isIgnoreInst && ignoreUsageNicName == "" {
-				return fmt.Errorf("ignoreUsageNicName should be specified when providing an instance in ignoreUsageType")
+				return errors.New("ignoreUsageNicName should be specified when providing an instance in ignoreUsageType")
 			}
 
 			// If an ignore instance was provided, then skip the device that the ACLs were just removed
@@ -948,7 +948,7 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 			ignoreNet, isIgnoreNet := ignoreUsageType.(*api.Network)
 
 			if isIgnoreNet && ignoreUsageNicName != "" {
-				return fmt.Errorf("ignoreUsageNicName should be empty when providing a network in ignoreUsageType")
+				return errors.New("ignoreUsageNicName should be empty when providing a network in ignoreUsageType")
 			}
 
 			// If an ignore network was provided, then skip the network that the ACLs were just removed
@@ -976,7 +976,7 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 			ignoreProfile, isIgnoreProfile := ignoreUsageType.(cluster.Profile)
 
 			if isIgnoreProfile && ignoreUsageNicName == "" {
-				return fmt.Errorf("ignoreUsageNicName should be specified when providing a profile in ignoreUsageType")
+				return errors.New("ignoreUsageNicName should be specified when providing a profile in ignoreUsageType")
 			}
 
 			// If an ignore profile was provided, then skip the device that the ACLs were just removed

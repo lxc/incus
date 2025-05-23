@@ -1,6 +1,7 @@
 package addressset
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/lxc/incus/v6/shared/util"
@@ -10,7 +11,7 @@ import (
 // ValidName checks the address set name is valid.
 func ValidName(name string) error {
 	if name == "" {
-		return fmt.Errorf("Name is required")
+		return errors.New("Name is required")
 	}
 
 	// Don't allow address set names to start with dollar or arobase.

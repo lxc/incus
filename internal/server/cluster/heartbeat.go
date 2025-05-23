@@ -470,7 +470,7 @@ func (g *Gateway) heartbeat(ctx context.Context, mode heartbeatMode) {
 	err = query.Retry(ctx, func(ctx context.Context) error {
 		// Durating cluster member fluctuations/upgrades the cluster can become unavailable so check here.
 		if g.Cluster == nil {
-			return fmt.Errorf("Cluster unavailable")
+			return errors.New("Cluster unavailable")
 		}
 
 		return g.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -570,7 +570,7 @@ func HeartbeatNode(taskCtx context.Context, address string, networkCert *localtl
 	defer func() { _ = response.Body.Close() }()
 
 	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("Heartbeat request failed with status: %w", api.StatusErrorf(response.StatusCode, response.Status))
+		return fmt.Errorf("Heartbeat request failed with status: %w", api.StatusErrorf(response.StatusCode, "%s", response.Status))
 	}
 
 	return nil

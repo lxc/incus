@@ -404,7 +404,7 @@ func (o *NB) CreateLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 func (o *NB) DeleteLogicalRouterNAT(ctx context.Context, routerName OVNRouter, natType string, all bool, extIPs ...net.IP) error {
 	// Quick checks.
 	if all && len(extIPs) != 0 {
-		return fmt.Errorf("Can't ask for all NAT rules to be deleted and specify specific addresses")
+		return errors.New("Can't ask for all NAT rules to be deleted and specify specific addresses")
 	}
 
 	// Get the logical router.
@@ -1067,12 +1067,12 @@ func (o *NB) logicalSwitchParseExcludeIPs(ips []iprange.Range) ([]string, error)
 	excludeIPs := make([]string, 0, len(ips))
 	for _, v := range ips {
 		if v.Start == nil || v.Start.To4() == nil {
-			return nil, fmt.Errorf("Invalid exclude IPv4 range start address")
+			return nil, errors.New("Invalid exclude IPv4 range start address")
 		} else if v.End == nil {
 			excludeIPs = append(excludeIPs, v.Start.String())
 		} else {
 			if v.End != nil && v.End.To4() == nil {
-				return nil, fmt.Errorf("Invalid exclude IPv4 range end address")
+				return nil, errors.New("Invalid exclude IPv4 range end address")
 			}
 
 			excludeIPs = append(excludeIPs, fmt.Sprintf("%s..%s", v.Start.String(), v.End.String()))
@@ -1688,7 +1688,7 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 			logicalSwitchPort.Options = map[string]string{"router-port": string(opts.RouterPort)}
 		} else {
 			if (opts.IPV4 == "none" && opts.IPV6 != "none") || (opts.IPV6 == "none" && opts.IPV4 != "none") {
-				return fmt.Errorf("OVN doesn't support disabling IP allocation on only one protocol")
+				return errors.New("OVN doesn't support disabling IP allocation on only one protocol")
 			}
 
 			addresses := []string{}
@@ -1978,7 +1978,7 @@ func (o *NB) UpdateLogicalSwitchPortDNS(ctx context.Context, switchName OVNSwitc
 	} else if len(dnsRecords) == 0 {
 		dnsRecord = ovnNB.DNS{}
 	} else {
-		return "", fmt.Errorf("Found more than one matching DNS record")
+		return "", errors.New("Found more than one matching DNS record")
 	}
 
 	// Make sure the external IDs are set.
@@ -2078,7 +2078,7 @@ func (o *NB) GetLogicalSwitchPortDNS(ctx context.Context, portName OVNSwitchPort
 	}
 
 	if len(dnsRecords[0].Records) > 1 {
-		return "", "", nil, fmt.Errorf("More than one DNS record found for logical switch port")
+		return "", "", nil, errors.New("More than one DNS record found for logical switch port")
 	}
 
 	var ips []net.IP
@@ -3094,11 +3094,11 @@ func (o *NB) CreateLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBal
 	// Build up the commands to add VIPs to the load balancer.
 	for _, r := range vips {
 		if r.ListenAddress == nil {
-			return fmt.Errorf("Missing VIP listen address")
+			return errors.New("Missing VIP listen address")
 		}
 
 		if len(r.Targets) == 0 {
-			return fmt.Errorf("Missing VIP target(s)")
+			return errors.New("Missing VIP target(s)")
 		}
 
 		for _, lb := range []*ovnNB.LoadBalancer{lbtcp, lbudp} {
@@ -3113,7 +3113,7 @@ func (o *NB) CreateLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBal
 			targetAddresses := []string{}
 			for _, target := range r.Targets {
 				if (r.ListenPort > 0 && target.Port <= 0) || (target.Port > 0 && r.ListenPort <= 0) {
-					return fmt.Errorf("The listen and target ports must be specified together")
+					return errors.New("The listen and target ports must be specified together")
 				}
 
 				// Determine the target address.
@@ -3262,13 +3262,13 @@ func (o *NB) CreateLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBal
 				ip := net.ParseIP(target)
 				if ip.To4() == nil {
 					if healthCheck.CheckerIPV6 == nil {
-						return fmt.Errorf("No IPv6 address for load balancer health check")
+						return errors.New("No IPv6 address for load balancer health check")
 					}
 
 					lb.IPPortMappings[fmt.Sprintf("[%s]", target)] = fmt.Sprintf("%s:[%s]", lspName, healthCheck.CheckerIPV6.String())
 				} else {
 					if healthCheck.CheckerIPV4 == nil {
-						return fmt.Errorf("No IPv4 address for load balancer health check")
+						return errors.New("No IPv4 address for load balancer health check")
 					}
 
 					lb.IPPortMappings[target] = fmt.Sprintf("%s:%s", lspName, healthCheck.CheckerIPV4.String())
@@ -3895,7 +3895,7 @@ func (o *NB) CreateLogicalRouterPeering(ctx context.Context, opts OVNRouterPeeri
 	operations := []ovsdb.Operation{}
 
 	if len(opts.LocalRouterPortIPs) <= 0 || len(opts.TargetRouterPortIPs) <= 0 {
-		return fmt.Errorf("IPs not populated for both router ports")
+		return errors.New("IPs not populated for both router ports")
 	}
 
 	// Remove peering router ports and static routes using ports from both routers.
@@ -4107,7 +4107,7 @@ func (o *NB) DeleteLogicalRouterPeering(ctx context.Context, opts OVNRouterPeeri
 
 	// Remove peering router ports and static routes using ports from both routers.
 	if opts.LocalRouter == "" || opts.TargetRouter == "" {
-		return fmt.Errorf("Router names not populated for both routers")
+		return errors.New("Router names not populated for both routers")
 	}
 
 	deleteLogicalRouterPort := func(routerName OVNRouter, portName OVNRouterPort) error {

@@ -3,6 +3,7 @@ package idmap
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -14,10 +15,10 @@ import (
 )
 
 // ErrNoUserMap indicates that no entry could be found for the user.
-var ErrNoUserMap = fmt.Errorf("No map found for user")
+var ErrNoUserMap = errors.New("No map found for user")
 
 // ErrSubidUnsupported indicates that the system is lacking support for subuid/subgid.
-var ErrSubidUnsupported = fmt.Errorf("System doesn't support subuid/subgid")
+var ErrSubidUnsupported = errors.New("System doesn't support subuid/subgid")
 
 // DefaultFullKernelSet is the default Set of uid/gid with no mapping at all.
 var DefaultFullKernelSet = &Set{Entries: []Entry{
@@ -332,7 +333,7 @@ func getFromProc(fname string) ([][]int64, error) {
 	}
 
 	if len(entries) == 0 {
-		return nil, fmt.Errorf("Namespace doesn't have any map set")
+		return nil, errors.New("Namespace doesn't have any map set")
 	}
 
 	return entries, nil

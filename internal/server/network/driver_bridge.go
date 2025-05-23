@@ -77,7 +77,7 @@ func (n *bridge) checkClusterWideMACSafe(config map[string]string) error {
 	// We can't be sure that multiple clustered nodes aren't connected to the same network segment so don't
 	// use a static MAC address for the bridge interface to avoid introducing a MAC conflict.
 	if config["bridge.external_interfaces"] != "" && config["ipv4.address"] == "none" && config["ipv6.address"] == "none" {
-		return fmt.Errorf(`Cannot use static "bridge.hwaddr" MAC address when bridge has no IP addresses and has external interfaces set`)
+		return errors.New(`Cannot use static "bridge.hwaddr" MAC address when bridge has no IP addresses and has external interfaces set`)
 	}
 
 	return nil
@@ -737,12 +737,12 @@ func (n *bridge) Validate(config map[string]string) error {
 
 			ipv6 := config["ipv6.address"]
 			if ipv6 != "" && ipv6 != "none" && mtu < 1280 {
-				return fmt.Errorf("The minimum MTU for an IPv6 network is 1280")
+				return errors.New("The minimum MTU for an IPv6 network is 1280")
 			}
 
 			ipv4 := config["ipv4.address"]
 			if ipv4 != "" && ipv4 != "none" && mtu < 68 {
-				return fmt.Errorf("The minimum MTU for an IPv4 network is 68")
+				return errors.New("The minimum MTU for an IPv4 network is 68")
 			}
 		}
 	}
@@ -762,7 +762,7 @@ func (n *bridge) Validate(config map[string]string) error {
 
 		if dhcpSubnet != nil {
 			if config["ipv4.dhcp.ranges"] == "" {
-				return fmt.Errorf(`"ipv4.ovn.ranges" must be used in conjunction with non-overlapping "ipv4.dhcp.ranges" when DHCPv4 is enabled`)
+				return errors.New(`"ipv4.ovn.ranges" must be used in conjunction with non-overlapping "ipv4.dhcp.ranges" when DHCPv4 is enabled`)
 			}
 
 			allowedNets = append(allowedNets, dhcpSubnet)
@@ -794,7 +794,7 @@ func (n *bridge) Validate(config map[string]string) error {
 
 		if dhcpSubnet != nil {
 			if config["ipv6.dhcp.ranges"] == "" && util.IsTrue(config["ipv6.dhcp.stateful"]) {
-				return fmt.Errorf(`"ipv6.ovn.ranges" must be used in conjunction with non-overlapping "ipv6.dhcp.ranges" when stateful DHCPv6 is enabled`)
+				return errors.New(`"ipv6.ovn.ranges" must be used in conjunction with non-overlapping "ipv6.dhcp.ranges" when stateful DHCPv6 is enabled`)
 			}
 
 			allowedNets = append(allowedNets, dhcpSubnet)
@@ -1081,7 +1081,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	// IPv6 bridge configuration.
 	if !util.IsNoneOrEmpty(n.config["ipv6.address"]) {
 		if !util.PathExists("/proc/sys/net/ipv6") {
-			return fmt.Errorf("Network has ipv6.address but kernel IPv6 support is missing")
+			return errors.New("Network has ipv6.address but kernel IPv6 support is missing")
 		}
 
 		err := localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", n.name), "0")
@@ -1211,7 +1211,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			}
 
 			if !unused {
-				return fmt.Errorf("Only unconfigured network interfaces can be bridged")
+				return errors.New("Only unconfigured network interfaces can be bridged")
 			}
 
 			err = AttachInterface(n.state, n.name, entry)
@@ -1828,7 +1828,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		// Check for dnsmasq.
 		_, err := exec.LookPath("dnsmasq")
 		if err != nil {
-			return fmt.Errorf("dnsmasq is required for managed bridges")
+			return errors.New("dnsmasq is required for managed bridges")
 		}
 
 		// Update the static leases.

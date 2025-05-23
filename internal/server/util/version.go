@@ -1,7 +1,7 @@
 package util
 
 import (
-	"fmt"
+	"errors"
 )
 
 // CompareVersions compares the versions of two cluster members.
@@ -37,5 +37,5 @@ func CompareVersions(version1, version2 [2]int, checkExtensions bool) (int, erro
 		return 2, nil
 	}
 
-	return -1, fmt.Errorf("Cluster members have inconsistent versions")
+	return -1, errors.New("Cluster members have inconsistent versions")
 }

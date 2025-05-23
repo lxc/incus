@@ -2,7 +2,7 @@ package task_test
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 	"time"
 
@@ -52,7 +52,7 @@ func TestTask_ZeroInterval(t *testing.T) {
 // If the schedule returns an error, the task is aborted.
 func TestTask_ScheduleError(t *testing.T) {
 	schedule := func() (time.Duration, error) {
-		return 0, fmt.Errorf("boom")
+		return 0, errors.New("boom")
 	}
 
 	f, _ := newFunc(t, 0)
@@ -69,7 +69,7 @@ func TestTask_ScheduleTemporaryError(t *testing.T) {
 	schedule := func() (time.Duration, error) {
 		if !errored {
 			errored = true
-			return time.Millisecond, fmt.Errorf("boom")
+			return time.Millisecond, errors.New("boom")
 		}
 
 		return time.Second, nil

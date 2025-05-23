@@ -2,7 +2,7 @@ package incus
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"sync"
 
 	"github.com/lxc/incus/v6/shared/api"
@@ -30,7 +30,7 @@ type EventTarget struct {
 // AddHandler adds a function to be called whenever an event is received.
 func (e *EventListener) AddHandler(types []string, function func(api.Event)) (*EventTarget, error) {
 	if function == nil {
-		return nil, fmt.Errorf("A valid function must be provided")
+		return nil, errors.New("A valid function must be provided")
 	}
 
 	// Handle locking
@@ -52,7 +52,7 @@ func (e *EventListener) AddHandler(types []string, function func(api.Event)) (*E
 // RemoveHandler removes a function to be called whenever an event is received.
 func (e *EventListener) RemoveHandler(target *EventTarget) error {
 	if target == nil {
-		return fmt.Errorf("A valid event target must be provided")
+		return errors.New("A valid event target must be provided")
 	}
 
 	// Handle locking
@@ -69,7 +69,7 @@ func (e *EventListener) RemoveHandler(target *EventTarget) error {
 		}
 	}
 
-	return fmt.Errorf("Couldn't find this function and event types combination")
+	return errors.New("Couldn't find this function and event types combination")
 }
 
 // Disconnect must be used once done listening for events.
