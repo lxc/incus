@@ -72,6 +72,14 @@ func (m *InstanceMigration) gatherInfo() error {
 		m.server = m.server.UseProject(m.project)
 	}
 
+	// Target
+	err = m.askTarget()
+	if err != nil {
+		return err
+	}
+
+	m.server = m.server.UseTarget(m.target)
+
 	// Instance name
 	instanceNames, err := m.server.GetInstanceNames(api.InstanceTypeAny)
 	if err != nil {
