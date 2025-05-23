@@ -184,22 +184,6 @@ func (d *truenas) initialDatasets() []string {
 	return entries
 }
 
-func (d *truenas) needsRecursion(dataset string) bool {
-	// Ignore snapshots for the test.
-	dataset = strings.Split(dataset, "@")[0]
-
-	entries, err := d.getDatasets(dataset, "filesystem,volume")
-	if err != nil {
-		return false
-	}
-
-	if len(entries) == 0 {
-		return false
-	}
-
-	return true
-}
-
 func (d *truenas) getDatasets(dataset string, types string) ([]string, error) {
 
 	// tool does not support "all", but it also supports "nfs"
@@ -611,10 +595,6 @@ func (d *truenas) renameDataset(sourceDataset string, destDataset string, update
 	if err != nil {
 		return err
 	}
-
-	// if updateShares {
-	// 	_ = d.createIscsiShare(destDataset, false) // TODO: remove this when --update-shares supports iscsi
-	// }
 
 	return nil
 }
