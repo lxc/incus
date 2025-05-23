@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -51,13 +52,13 @@ func (c *cmdShift) Run(cmd *cobra.Command, args []string) error {
 
 	// Quick checks.
 	if !c.flagTestMode && os.Geteuid() != 0 {
-		return fmt.Errorf("This tool must be run as root")
+		return errors.New("This tool must be run as root")
 	}
 
 	// Handle mandatory arguments
 	if len(args) < 2 {
 		_ = cmd.Help()
-		return fmt.Errorf("Missing required arguments")
+		return errors.New("Missing required arguments")
 	}
 
 	directory := args[0]
@@ -66,7 +67,7 @@ func (c *cmdShift) Run(cmd *cobra.Command, args []string) error {
 	if c.flagTestMode {
 		skipper = func(dir string, absPath string, fi os.FileInfo, newuid int64, newgid int64) error {
 			fmt.Printf("I would shift %q to %d %d\n", absPath, newuid, newgid)
-			return fmt.Errorf("dry run")
+			return errors.New("dry run")
 		}
 	}
 
