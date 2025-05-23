@@ -3,6 +3,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/types"
@@ -237,7 +238,7 @@ func (s *Stmt) names(buf *file.Buffer) error {
 	}
 
 	if len(mapping.NaturalKey()) > 1 {
-		return fmt.Errorf("Can't return names for composite key objects")
+		return errors.New("Can't return names for composite key objects")
 	}
 
 	table := mapping.TableName(s.entity, s.config["table"])
@@ -273,7 +274,7 @@ func (s *Stmt) namesBy(buf *file.Buffer) error {
 	}
 
 	if len(mapping.NaturalKey()) > 1 {
-		return fmt.Errorf("Can't return names for composite key objects")
+		return errors.New("Can't return names for composite key objects")
 	}
 
 	where := []string{}

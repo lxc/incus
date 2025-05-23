@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/spf13/cobra"
 )
@@ -14,7 +14,7 @@ func newRoot() *cobra.Command {
 		Long: `This is the entry point for all "go:generate" directives
 used in Incus' source code.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return fmt.Errorf("Not implemented")
+			return errors.New("Not implemented")
 		},
 		CompletionOptions: cobra.CompletionOptions{DisableDefaultCmd: true},
 	}
