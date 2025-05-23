@@ -1,6 +1,7 @@
 package incus
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -80,7 +81,7 @@ func (r *ProtocolIncus) CreateCertificate(certificate api.CertificatesPost) erro
 // UpdateCertificate updates the certificate definition.
 func (r *ProtocolIncus) UpdateCertificate(fingerprint string, certificate api.CertificatePut, ETag string) error {
 	if !r.HasExtension("certificate_update") {
-		return fmt.Errorf("The server is missing the required \"certificate_update\" API extension")
+		return errors.New("The server is missing the required \"certificate_update\" API extension")
 	}
 
 	// Send the request
@@ -106,11 +107,11 @@ func (r *ProtocolIncus) DeleteCertificate(fingerprint string) error {
 // CreateCertificateToken requests a certificate add token.
 func (r *ProtocolIncus) CreateCertificateToken(certificate api.CertificatesPost) (Operation, error) {
 	if !r.HasExtension("certificate_token") {
-		return nil, fmt.Errorf("The server is missing the required \"certificate_token\" API extension")
+		return nil, errors.New("The server is missing the required \"certificate_token\" API extension")
 	}
 
 	if !certificate.Token {
-		return nil, fmt.Errorf("Token needs to be true if requesting a token")
+		return nil, errors.New("Token needs to be true if requesting a token")
 	}
 
 	// Send the request

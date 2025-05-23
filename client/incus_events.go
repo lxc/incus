@@ -3,7 +3,7 @@ package incus
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"slices"
 	"time"
 
@@ -31,7 +31,7 @@ func (r *ProtocolIncus) getEvents(allProjects bool) (*EventListener, error) {
 
 	connInfo, _ := r.GetConnectionInfo()
 	if connInfo.Project == "" {
-		return nil, fmt.Errorf("Unexpected empty project in connection info")
+		return nil, errors.New("Unexpected empty project in connection info")
 	}
 
 	if !allProjects {
@@ -184,7 +184,7 @@ func (r *ProtocolIncus) SendEvent(event api.Event) error {
 	}
 
 	if eventConn == nil {
-		return fmt.Errorf("No available event listener connection")
+		return errors.New("No available event listener connection")
 	}
 
 	deadline, ok := r.ctx.Deadline()

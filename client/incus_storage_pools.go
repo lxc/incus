@@ -1,6 +1,7 @@
 package incus
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -12,7 +13,7 @@ import (
 // GetStoragePoolNames returns the names of all storage pools.
 func (r *ProtocolIncus) GetStoragePoolNames() ([]string, error) {
 	if !r.HasExtension("storage") {
-		return nil, fmt.Errorf("The server is missing the required \"storage\" API extension")
+		return nil, errors.New("The server is missing the required \"storage\" API extension")
 	}
 
 	// Fetch the raw URL values.
@@ -30,7 +31,7 @@ func (r *ProtocolIncus) GetStoragePoolNames() ([]string, error) {
 // GetStoragePools returns a list of StoragePool entries.
 func (r *ProtocolIncus) GetStoragePools() ([]api.StoragePool, error) {
 	if !r.HasExtension("storage") {
-		return nil, fmt.Errorf("The server is missing the required \"storage\" API extension")
+		return nil, errors.New("The server is missing the required \"storage\" API extension")
 	}
 
 	pools := []api.StoragePool{}
@@ -47,7 +48,7 @@ func (r *ProtocolIncus) GetStoragePools() ([]api.StoragePool, error) {
 // GetStoragePool returns a StoragePool entry for the provided pool name.
 func (r *ProtocolIncus) GetStoragePool(name string) (*api.StoragePool, string, error) {
 	if !r.HasExtension("storage") {
-		return nil, "", fmt.Errorf("The server is missing the required \"storage\" API extension")
+		return nil, "", errors.New("The server is missing the required \"storage\" API extension")
 	}
 
 	pool := api.StoragePool{}
@@ -64,7 +65,7 @@ func (r *ProtocolIncus) GetStoragePool(name string) (*api.StoragePool, string, e
 // CreateStoragePool defines a new storage pool using the provided StoragePool struct.
 func (r *ProtocolIncus) CreateStoragePool(pool api.StoragePoolsPost) error {
 	if !r.HasExtension("storage") {
-		return fmt.Errorf("The server is missing the required \"storage\" API extension")
+		return errors.New("The server is missing the required \"storage\" API extension")
 	}
 
 	// Send the request
@@ -79,7 +80,7 @@ func (r *ProtocolIncus) CreateStoragePool(pool api.StoragePoolsPost) error {
 // UpdateStoragePool updates the pool to match the provided StoragePool struct.
 func (r *ProtocolIncus) UpdateStoragePool(name string, pool api.StoragePoolPut, ETag string) error {
 	if !r.HasExtension("storage") {
-		return fmt.Errorf("The server is missing the required \"storage\" API extension")
+		return errors.New("The server is missing the required \"storage\" API extension")
 	}
 
 	// Send the request
@@ -94,7 +95,7 @@ func (r *ProtocolIncus) UpdateStoragePool(name string, pool api.StoragePoolPut, 
 // DeleteStoragePool deletes a storage pool.
 func (r *ProtocolIncus) DeleteStoragePool(name string) error {
 	if !r.HasExtension("storage") {
-		return fmt.Errorf("The server is missing the required \"storage\" API extension")
+		return errors.New("The server is missing the required \"storage\" API extension")
 	}
 
 	// Send the request
@@ -109,7 +110,7 @@ func (r *ProtocolIncus) DeleteStoragePool(name string) error {
 // GetStoragePoolResources gets the resources available to a given storage pool.
 func (r *ProtocolIncus) GetStoragePoolResources(name string) (*api.ResourcesStoragePool, error) {
 	if !r.HasExtension("resources") {
-		return nil, fmt.Errorf("The server is missing the required \"resources\" API extension")
+		return nil, errors.New("The server is missing the required \"resources\" API extension")
 	}
 
 	res := api.ResourcesStoragePool{}

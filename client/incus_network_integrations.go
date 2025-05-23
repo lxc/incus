@@ -1,6 +1,7 @@
 package incus
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -10,7 +11,7 @@ import (
 // GetNetworkIntegrationNames returns a list of network integration names.
 func (r *ProtocolIncus) GetNetworkIntegrationNames() ([]string, error) {
 	if !r.HasExtension("network_integrations") {
-		return nil, fmt.Errorf(`The server is missing the required "network_integrations" API extension`)
+		return nil, errors.New(`The server is missing the required "network_integrations" API extension`)
 	}
 
 	// Fetch the raw URL values.
@@ -28,7 +29,7 @@ func (r *ProtocolIncus) GetNetworkIntegrationNames() ([]string, error) {
 // GetNetworkIntegrations returns a list of network integration structs.
 func (r *ProtocolIncus) GetNetworkIntegrations() ([]api.NetworkIntegration, error) {
 	if !r.HasExtension("network_integrations") {
-		return nil, fmt.Errorf(`The server is missing the required "network_integrations" API extension`)
+		return nil, errors.New(`The server is missing the required "network_integrations" API extension`)
 	}
 
 	integrations := []api.NetworkIntegration{}
@@ -45,7 +46,7 @@ func (r *ProtocolIncus) GetNetworkIntegrations() ([]api.NetworkIntegration, erro
 // GetNetworkIntegration returns a network integration entry.
 func (r *ProtocolIncus) GetNetworkIntegration(name string) (*api.NetworkIntegration, string, error) {
 	if !r.HasExtension("network_integrations") {
-		return nil, "", fmt.Errorf(`The server is missing the required "network_integrations" API extension`)
+		return nil, "", errors.New(`The server is missing the required "network_integrations" API extension`)
 	}
 
 	integration := api.NetworkIntegration{}
@@ -63,7 +64,7 @@ func (r *ProtocolIncus) GetNetworkIntegration(name string) (*api.NetworkIntegrat
 // Returns true if the integration connection has been mutually created. Returns false if integrationing has been only initiated.
 func (r *ProtocolIncus) CreateNetworkIntegration(integration api.NetworkIntegrationsPost) error {
 	if !r.HasExtension("network_integrations") {
-		return fmt.Errorf(`The server is missing the required "network_integrations" API extension`)
+		return errors.New(`The server is missing the required "network_integrations" API extension`)
 	}
 
 	// Send the request.
@@ -78,7 +79,7 @@ func (r *ProtocolIncus) CreateNetworkIntegration(integration api.NetworkIntegrat
 // UpdateNetworkIntegration updates the network integration to match the provided struct.
 func (r *ProtocolIncus) UpdateNetworkIntegration(name string, integration api.NetworkIntegrationPut, ETag string) error {
 	if !r.HasExtension("network_integrations") {
-		return fmt.Errorf(`The server is missing the required "network_integrations" API extension`)
+		return errors.New(`The server is missing the required "network_integrations" API extension`)
 	}
 
 	// Send the request.
@@ -93,7 +94,7 @@ func (r *ProtocolIncus) UpdateNetworkIntegration(name string, integration api.Ne
 // RenameNetworkIntegration renames an existing network integration entry.
 func (r *ProtocolIncus) RenameNetworkIntegration(name string, network api.NetworkIntegrationPost) error {
 	if !r.HasExtension("network_integrations") {
-		return fmt.Errorf("The server is missing the required \"network_integrations\" API extension")
+		return errors.New("The server is missing the required \"network_integrations\" API extension")
 	}
 
 	// Send the request
@@ -108,7 +109,7 @@ func (r *ProtocolIncus) RenameNetworkIntegration(name string, network api.Networ
 // DeleteNetworkIntegration deletes an existing network integration.
 func (r *ProtocolIncus) DeleteNetworkIntegration(name string) error {
 	if !r.HasExtension("network_integrations") {
-		return fmt.Errorf(`The server is missing the required "network_integrations" API extension`)
+		return errors.New(`The server is missing the required "network_integrations" API extension`)
 	}
 
 	// Send the request.

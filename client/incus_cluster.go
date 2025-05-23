@@ -1,6 +1,7 @@
 package incus
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/lxc/incus/v6/shared/api"
@@ -9,7 +10,7 @@ import (
 // GetCluster returns information about a cluster.
 func (r *ProtocolIncus) GetCluster() (*api.Cluster, string, error) {
 	if !r.HasExtension("clustering") {
-		return nil, "", fmt.Errorf("The server is missing the required \"clustering\" API extension")
+		return nil, "", errors.New("The server is missing the required \"clustering\" API extension")
 	}
 
 	cluster := &api.Cluster{}
@@ -24,12 +25,12 @@ func (r *ProtocolIncus) GetCluster() (*api.Cluster, string, error) {
 // UpdateCluster requests to bootstrap a new cluster or join an existing one.
 func (r *ProtocolIncus) UpdateCluster(cluster api.ClusterPut, ETag string) (Operation, error) {
 	if !r.HasExtension("clustering") {
-		return nil, fmt.Errorf("The server is missing the required \"clustering\" API extension")
+		return nil, errors.New("The server is missing the required \"clustering\" API extension")
 	}
 
 	if cluster.ServerAddress != "" || cluster.ClusterToken != "" || len(cluster.MemberConfig) > 0 {
 		if !r.HasExtension("clustering_join") {
-			return nil, fmt.Errorf("The server is missing the required \"clustering_join\" API extension")
+			return nil, errors.New("The server is missing the required \"clustering_join\" API extension")
 		}
 	}
 
@@ -45,7 +46,7 @@ func (r *ProtocolIncus) UpdateCluster(cluster api.ClusterPut, ETag string) (Oper
 // depending on the force flag).
 func (r *ProtocolIncus) DeleteClusterMember(name string, force bool) error {
 	if !r.HasExtension("clustering") {
-		return fmt.Errorf("The server is missing the required \"clustering\" API extension")
+		return errors.New("The server is missing the required \"clustering\" API extension")
 	}
 
 	params := ""
@@ -64,7 +65,7 @@ func (r *ProtocolIncus) DeleteClusterMember(name string, force bool) error {
 // GetClusterMemberNames returns the URLs of the current members in the cluster.
 func (r *ProtocolIncus) GetClusterMemberNames() ([]string, error) {
 	if !r.HasExtension("clustering") {
-		return nil, fmt.Errorf("The server is missing the required \"clustering\" API extension")
+		return nil, errors.New("The server is missing the required \"clustering\" API extension")
 	}
 
 	// Fetch the raw URL values.
@@ -82,7 +83,7 @@ func (r *ProtocolIncus) GetClusterMemberNames() ([]string, error) {
 // GetClusterMembers returns the current members of the cluster.
 func (r *ProtocolIncus) GetClusterMembers() ([]api.ClusterMember, error) {
 	if !r.HasExtension("clustering") {
-		return nil, fmt.Errorf("The server is missing the required \"clustering\" API extension")
+		return nil, errors.New("The server is missing the required \"clustering\" API extension")
 	}
 
 	members := []api.ClusterMember{}
@@ -97,7 +98,7 @@ func (r *ProtocolIncus) GetClusterMembers() ([]api.ClusterMember, error) {
 // GetClusterMember returns information about the given member.
 func (r *ProtocolIncus) GetClusterMember(name string) (*api.ClusterMember, string, error) {
 	if !r.HasExtension("clustering") {
-		return nil, "", fmt.Errorf("The server is missing the required \"clustering\" API extension")
+		return nil, "", errors.New("The server is missing the required \"clustering\" API extension")
 	}
 
 	member := api.ClusterMember{}
@@ -112,12 +113,12 @@ func (r *ProtocolIncus) GetClusterMember(name string) (*api.ClusterMember, strin
 // UpdateClusterMember updates information about the given member.
 func (r *ProtocolIncus) UpdateClusterMember(name string, member api.ClusterMemberPut, ETag string) error {
 	if !r.HasExtension("clustering_edit_roles") {
-		return fmt.Errorf("The server is missing the required \"clustering_edit_roles\" API extension")
+		return errors.New("The server is missing the required \"clustering_edit_roles\" API extension")
 	}
 
 	if member.FailureDomain != "" {
 		if !r.HasExtension("clustering_failure_domains") {
-			return fmt.Errorf("The server is missing the required \"clustering_failure_domains\" API extension")
+			return errors.New("The server is missing the required \"clustering_failure_domains\" API extension")
 		}
 	}
 
@@ -133,7 +134,7 @@ func (r *ProtocolIncus) UpdateClusterMember(name string, member api.ClusterMembe
 // RenameClusterMember changes the name of an existing member.
 func (r *ProtocolIncus) RenameClusterMember(name string, member api.ClusterMemberPost) error {
 	if !r.HasExtension("clustering") {
-		return fmt.Errorf("The server is missing the required \"clustering\" API extension")
+		return errors.New("The server is missing the required \"clustering\" API extension")
 	}
 
 	_, _, err := r.query("POST", fmt.Sprintf("/cluster/members/%s", name), member, "")
@@ -147,7 +148,7 @@ func (r *ProtocolIncus) RenameClusterMember(name string, member api.ClusterMembe
 // CreateClusterMember generates a join token to add a cluster member.
 func (r *ProtocolIncus) CreateClusterMember(member api.ClusterMembersPost) (Operation, error) {
 	if !r.HasExtension("clustering_join_token") {
-		return nil, fmt.Errorf("The server is missing the required \"clustering_join_token\" API extension")
+		return nil, errors.New("The server is missing the required \"clustering_join_token\" API extension")
 	}
 
 	op, _, err := r.queryOperation("POST", "/cluster/members", member, "")
@@ -161,7 +162,7 @@ func (r *ProtocolIncus) CreateClusterMember(member api.ClusterMembersPost) (Oper
 // UpdateClusterCertificate updates the cluster certificate for every node in the cluster.
 func (r *ProtocolIncus) UpdateClusterCertificate(certs api.ClusterCertificatePut, ETag string) error {
 	if !r.HasExtension("clustering_update_cert") {
-		return fmt.Errorf("The server is missing the required \"clustering_update_cert\" API extension")
+		return errors.New("The server is missing the required \"clustering_update_cert\" API extension")
 	}
 
 	_, _, err := r.query("PUT", "/cluster/certificate", certs, ETag)
@@ -192,7 +193,7 @@ func (r *ProtocolIncus) GetClusterMemberState(name string) (*api.ClusterMemberSt
 // UpdateClusterMemberState evacuates or restores a cluster member.
 func (r *ProtocolIncus) UpdateClusterMemberState(name string, state api.ClusterMemberStatePost) (Operation, error) {
 	if !r.HasExtension("clustering_evacuation") {
-		return nil, fmt.Errorf("The server is missing the required \"clustering_evacuation\" API extension")
+		return nil, errors.New("The server is missing the required \"clustering_evacuation\" API extension")
 	}
 
 	op, _, err := r.queryOperation("POST", fmt.Sprintf("/cluster/members/%s/state", name), state, "")
@@ -206,7 +207,7 @@ func (r *ProtocolIncus) UpdateClusterMemberState(name string, state api.ClusterM
 // GetClusterGroups returns the cluster groups.
 func (r *ProtocolIncus) GetClusterGroups() ([]api.ClusterGroup, error) {
 	if !r.HasExtension("clustering_groups") {
-		return nil, fmt.Errorf("The server is missing the required \"clustering_groups\" API extension")
+		return nil, errors.New("The server is missing the required \"clustering_groups\" API extension")
 	}
 
 	groups := []api.ClusterGroup{}
@@ -222,7 +223,7 @@ func (r *ProtocolIncus) GetClusterGroups() ([]api.ClusterGroup, error) {
 // GetClusterGroupNames returns the cluster group names.
 func (r *ProtocolIncus) GetClusterGroupNames() ([]string, error) {
 	if !r.HasExtension("clustering_groups") {
-		return nil, fmt.Errorf("The server is missing the required \"clustering_groups\" API extension")
+		return nil, errors.New("The server is missing the required \"clustering_groups\" API extension")
 	}
 
 	urls := []string{}
@@ -239,7 +240,7 @@ func (r *ProtocolIncus) GetClusterGroupNames() ([]string, error) {
 // RenameClusterGroup changes the name of an existing cluster group.
 func (r *ProtocolIncus) RenameClusterGroup(name string, group api.ClusterGroupPost) error {
 	if !r.HasExtension("clustering_groups") {
-		return fmt.Errorf("The server is missing the required \"clustering_groups\" API extension")
+		return errors.New("The server is missing the required \"clustering_groups\" API extension")
 	}
 
 	_, _, err := r.query("POST", fmt.Sprintf("/cluster/groups/%s", name), group, "")
@@ -253,7 +254,7 @@ func (r *ProtocolIncus) RenameClusterGroup(name string, group api.ClusterGroupPo
 // CreateClusterGroup creates a new cluster group.
 func (r *ProtocolIncus) CreateClusterGroup(group api.ClusterGroupsPost) error {
 	if !r.HasExtension("clustering_groups") {
-		return fmt.Errorf("The server is missing the required \"clustering_groups\" API extension")
+		return errors.New("The server is missing the required \"clustering_groups\" API extension")
 	}
 
 	_, _, err := r.query("POST", "/cluster/groups", group, "")
@@ -267,7 +268,7 @@ func (r *ProtocolIncus) CreateClusterGroup(group api.ClusterGroupsPost) error {
 // DeleteClusterGroup deletes an existing cluster group.
 func (r *ProtocolIncus) DeleteClusterGroup(name string) error {
 	if !r.HasExtension("clustering_groups") {
-		return fmt.Errorf("The server is missing the required \"clustering_groups\" API extension")
+		return errors.New("The server is missing the required \"clustering_groups\" API extension")
 	}
 
 	_, _, err := r.query("DELETE", fmt.Sprintf("/cluster/groups/%s", name), nil, "")
@@ -281,7 +282,7 @@ func (r *ProtocolIncus) DeleteClusterGroup(name string) error {
 // UpdateClusterGroup updates information about the given cluster group.
 func (r *ProtocolIncus) UpdateClusterGroup(name string, group api.ClusterGroupPut, ETag string) error {
 	if !r.HasExtension("clustering_groups") {
-		return fmt.Errorf("The server is missing the required \"clustering_groups\" API extension")
+		return errors.New("The server is missing the required \"clustering_groups\" API extension")
 	}
 
 	// Send the request
@@ -296,7 +297,7 @@ func (r *ProtocolIncus) UpdateClusterGroup(name string, group api.ClusterGroupPu
 // GetClusterGroup returns information about the given cluster group.
 func (r *ProtocolIncus) GetClusterGroup(name string) (*api.ClusterGroup, string, error) {
 	if !r.HasExtension("clustering_groups") {
-		return nil, "", fmt.Errorf("The server is missing the required \"clustering_groups\" API extension")
+		return nil, "", errors.New("The server is missing the required \"clustering_groups\" API extension")
 	}
 
 	group := api.ClusterGroup{}

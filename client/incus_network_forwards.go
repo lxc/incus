@@ -1,6 +1,7 @@
 package incus
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -10,7 +11,7 @@ import (
 // GetNetworkForwardAddresses returns a list of network forward listen addresses.
 func (r *ProtocolIncus) GetNetworkForwardAddresses(networkName string) ([]string, error) {
 	if !r.HasExtension("network_forward") {
-		return nil, fmt.Errorf(`The server is missing the required "network_forward" API extension`)
+		return nil, errors.New(`The server is missing the required "network_forward" API extension`)
 	}
 
 	// Fetch the raw URL values.
@@ -28,7 +29,7 @@ func (r *ProtocolIncus) GetNetworkForwardAddresses(networkName string) ([]string
 // GetNetworkForwards returns a list of Network forward structs.
 func (r *ProtocolIncus) GetNetworkForwards(networkName string) ([]api.NetworkForward, error) {
 	if !r.HasExtension("network_forward") {
-		return nil, fmt.Errorf(`The server is missing the required "network_forward" API extension`)
+		return nil, errors.New(`The server is missing the required "network_forward" API extension`)
 	}
 
 	forwards := []api.NetworkForward{}
@@ -45,7 +46,7 @@ func (r *ProtocolIncus) GetNetworkForwards(networkName string) ([]api.NetworkFor
 // GetNetworkForward returns a Network forward entry for the provided network and listen address.
 func (r *ProtocolIncus) GetNetworkForward(networkName string, listenAddress string) (*api.NetworkForward, string, error) {
 	if !r.HasExtension("network_forward") {
-		return nil, "", fmt.Errorf(`The server is missing the required "network_forward" API extension`)
+		return nil, "", errors.New(`The server is missing the required "network_forward" API extension`)
 	}
 
 	forward := api.NetworkForward{}
@@ -62,7 +63,7 @@ func (r *ProtocolIncus) GetNetworkForward(networkName string, listenAddress stri
 // CreateNetworkForward defines a new network forward using the provided struct.
 func (r *ProtocolIncus) CreateNetworkForward(networkName string, forward api.NetworkForwardsPost) error {
 	if !r.HasExtension("network_forward") {
-		return fmt.Errorf(`The server is missing the required "network_forward" API extension`)
+		return errors.New(`The server is missing the required "network_forward" API extension`)
 	}
 
 	// Send the request.
@@ -77,7 +78,7 @@ func (r *ProtocolIncus) CreateNetworkForward(networkName string, forward api.Net
 // UpdateNetworkForward updates the network forward to match the provided struct.
 func (r *ProtocolIncus) UpdateNetworkForward(networkName string, listenAddress string, forward api.NetworkForwardPut, ETag string) error {
 	if !r.HasExtension("network_forward") {
-		return fmt.Errorf(`The server is missing the required "network_forward" API extension`)
+		return errors.New(`The server is missing the required "network_forward" API extension`)
 	}
 
 	// Send the request.
@@ -92,7 +93,7 @@ func (r *ProtocolIncus) UpdateNetworkForward(networkName string, listenAddress s
 // DeleteNetworkForward deletes an existing network forward.
 func (r *ProtocolIncus) DeleteNetworkForward(networkName string, listenAddress string) error {
 	if !r.HasExtension("network_forward") {
-		return fmt.Errorf(`The server is missing the required "network_forward" API extension`)
+		return errors.New(`The server is missing the required "network_forward" API extension`)
 	}
 
 	// Send the request.

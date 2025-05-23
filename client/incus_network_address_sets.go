@@ -1,6 +1,7 @@
 package incus
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -10,7 +11,7 @@ import (
 // GetNetworkAddressSetNames returns a list of network address set names.
 func (r *ProtocolIncus) GetNetworkAddressSetNames() ([]string, error) {
 	if !r.HasExtension("network_address_set") {
-		return nil, fmt.Errorf(`The server is missing the required "network_address_set" API extension`)
+		return nil, errors.New(`The server is missing the required "network_address_set" API extension`)
 	}
 
 	// Fetch the raw URL values.
@@ -28,7 +29,7 @@ func (r *ProtocolIncus) GetNetworkAddressSetNames() ([]string, error) {
 // GetNetworkAddressSets returns a list of network address set structs.
 func (r *ProtocolIncus) GetNetworkAddressSets() ([]api.NetworkAddressSet, error) {
 	if !r.HasExtension("network_address_set") {
-		return nil, fmt.Errorf(`The server is missing the required "network_address_set" API extension`)
+		return nil, errors.New(`The server is missing the required "network_address_set" API extension`)
 	}
 
 	addressSets := []api.NetworkAddressSet{}
@@ -45,7 +46,7 @@ func (r *ProtocolIncus) GetNetworkAddressSets() ([]api.NetworkAddressSet, error)
 // GetNetworkAddressSetsAllProjects returns a list of network address set structs across all projects.
 func (r *ProtocolIncus) GetNetworkAddressSetsAllProjects() ([]api.NetworkAddressSet, error) {
 	if !r.HasExtension("network_address_set") {
-		return nil, fmt.Errorf(`The server is missing the required "network_address_set" API extension`)
+		return nil, errors.New(`The server is missing the required "network_address_set" API extension`)
 	}
 
 	addressSets := []api.NetworkAddressSet{}
@@ -60,7 +61,7 @@ func (r *ProtocolIncus) GetNetworkAddressSetsAllProjects() ([]api.NetworkAddress
 // GetNetworkAddressSet returns a network address set entry for the provided name.
 func (r *ProtocolIncus) GetNetworkAddressSet(name string) (*api.NetworkAddressSet, string, error) {
 	if !r.HasExtension("network_address_set") {
-		return nil, "", fmt.Errorf(`The server is missing the required "network_address_set" API extension`)
+		return nil, "", errors.New(`The server is missing the required "network_address_set" API extension`)
 	}
 
 	addrSet := api.NetworkAddressSet{}
@@ -77,7 +78,7 @@ func (r *ProtocolIncus) GetNetworkAddressSet(name string) (*api.NetworkAddressSe
 // CreateNetworkAddressSet defines a new network address set using the provided struct.
 func (r *ProtocolIncus) CreateNetworkAddressSet(as api.NetworkAddressSetsPost) error {
 	if !r.HasExtension("network_address_set") {
-		return fmt.Errorf(`The server is missing the required "network_address_set" API extension`)
+		return errors.New(`The server is missing the required "network_address_set" API extension`)
 	}
 
 	// Send the request.
@@ -92,7 +93,7 @@ func (r *ProtocolIncus) CreateNetworkAddressSet(as api.NetworkAddressSetsPost) e
 // UpdateNetworkAddressSet updates the network address set to match the provided struct.
 func (r *ProtocolIncus) UpdateNetworkAddressSet(name string, as api.NetworkAddressSetPut, ETag string) error {
 	if !r.HasExtension("network_address_set") {
-		return fmt.Errorf(`The server is missing the required "network_address_set" API extension`)
+		return errors.New(`The server is missing the required "network_address_set" API extension`)
 	}
 
 	// Send the request.
@@ -107,7 +108,7 @@ func (r *ProtocolIncus) UpdateNetworkAddressSet(name string, as api.NetworkAddre
 // RenameNetworkAddressSet renames an existing network address set entry.
 func (r *ProtocolIncus) RenameNetworkAddressSet(name string, as api.NetworkAddressSetPost) error {
 	if !r.HasExtension("network_address_set") {
-		return fmt.Errorf(`The server is missing the required "network_address_set" API extension`)
+		return errors.New(`The server is missing the required "network_address_set" API extension`)
 	}
 
 	// Send the request.
@@ -122,7 +123,7 @@ func (r *ProtocolIncus) RenameNetworkAddressSet(name string, as api.NetworkAddre
 // DeleteNetworkAddressSet deletes an existing network address set.
 func (r *ProtocolIncus) DeleteNetworkAddressSet(name string) error {
 	if !r.HasExtension("network_address_set") {
-		return fmt.Errorf(`The server is missing the required "network_address_set" API extension`)
+		return errors.New(`The server is missing the required "network_address_set" API extension`)
 	}
 
 	// Send the request.
