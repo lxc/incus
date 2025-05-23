@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	tnToolName   = "truenas_incus_ctl"
-	tnMinVersion = "0.6.1" // adds `locate --create` support
+	tnToolName            = "truenas_incus_ctl"
+	tnMinVersion          = "0.6.1" // adds `locate --create` support
+	tnDefaultVolblockSize = 16 * 1024
 )
 
 func (d *truenas) dataset(vol Volume, deleted bool) string {
@@ -672,19 +673,6 @@ func (d *truenas) version() (string, error) {
 	}
 
 	return "", fmt.Errorf("Could not determine TrueNAS driver version")
-}
-
-func (d *truenas) setBlocksize(vol Volume, size int64) error {
-	if vol.contentType != ContentTypeFS {
-		return nil
-	}
-
-	err := d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("recordsize=%d", size))
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // set the volsize property of a zvol, optionally ignoring shrink errors (and warning), requires a zvol

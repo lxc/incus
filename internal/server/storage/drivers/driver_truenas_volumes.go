@@ -153,7 +153,6 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 			return err
 		}
 
-		// truenas.blocksize can have value in range from 512 to 16MiB because it's used for volblocksize and recordsize
 		// volblocksize maximum value is 128KiB so if the value of truenas.blocksize is bigger set it to 128KiB.
 		if sizeBytes > zfsMaxVolBlocksize {
 			sizeBytes = zfsMaxVolBlocksize
@@ -718,12 +717,33 @@ func (d *truenas) HasVolume(vol Volume) (bool, error) {
 	return d.datasetExists(dataset)
 }
 
+// ValidateTruenasBlocksize validates blocksize property value on the pool, matches volblocksize
+func ValidateTrueNasVolBlocksize(value string) error {
+
+	/*
+		For volumes, specifies the block size of the volume.  The blocksize cannot be changed once the volume has been written,
+		so it should be set at volume creation time.  The default blocksize for volumes is 16 KiB.  Any power of 2 from 512 bytes to 128 KiB is valid.
+	*/
+
+	// Convert to bytes.
+	sizeBytes, err := units.ParseByteSizeString(value)
+	if err != nil {
+		return err
+	}
+
+	if sizeBytes < zfsMinBlocksize || sizeBytes > zfsMaxVolBlocksize || (sizeBytes&(sizeBytes-1)) != 0 {
+		return fmt.Errorf("Value should be between 512B and 128KiB, and be power of 2")
+	}
+
+	return nil
+}
+
 // commonVolumeRules returns validation rules which are common for pool and volume.
 func (d *truenas) commonVolumeRules() map[string]func(value string) error {
 	return map[string]func(value string) error{
 		"block.filesystem":         validate.Optional(validate.IsOneOf(blockBackedAllowedFilesystems...)),
 		"block.mount_options":      validate.IsAny,
-		"truenas.blocksize":        validate.Optional(ValidateZfsBlocksize), // NOTE: zfs.blocksize is hard-coded in backend.shouldUseOptimizedImage
+		"truenas.blocksize":        validate.Optional(ValidateTrueNasVolBlocksize), // used for volblocksize only. NOTE: zfs.blocksize is hard-coded in backend.shouldUseOptimizedImage...
 		"truenas.remove_snapshots": validate.Optional(validate.IsBool),
 		"truenas.reserve_space":    validate.Optional(validate.IsBool),
 		"truenas.use_refquota":     validate.Optional(validate.IsBool),
@@ -754,19 +774,6 @@ func (d *truenas) UpdateVolume(vol Volume, changedConfig map[string]string) erro
 		if k == "size" || k == "truenas.use_refquota" || k == "truenas.reserve_space" {
 			old[k] = vol.config[k]
 			vol.config[k] = v
-		}
-
-		if k == "truenas.blocksize" {
-			// Convert to bytes.
-			sizeBytes, err := units.ParseByteSizeString(v)
-			if err != nil {
-				return err
-			}
-
-			err = d.setBlocksize(vol, sizeBytes)
-			if err != nil {
-				return err
-			}
 		}
 	}
 
