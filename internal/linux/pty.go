@@ -1,6 +1,7 @@
 package linux
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"unsafe"
@@ -54,7 +55,7 @@ func OpenPtyInDevpts(devpts_fd int, uid, gid int64) (*os.File, *os.File, error) 
 		pty = os.NewFile(ptyFd, fmt.Sprintf("/dev/pts/%d", id))
 	} else {
 		if devpts_fd >= 0 {
-			return nil, nil, fmt.Errorf("TIOCGPTPEER required but not available")
+			return nil, nil, errors.New("TIOCGPTPEER required but not available")
 		}
 
 		// Get the pty side.
