@@ -1,7 +1,7 @@
 package instance
 
 import (
-	"fmt"
+	"errors"
 	"regexp"
 	"strconv"
 	"strings"
@@ -42,12 +42,12 @@ func GetExpiry(refDate time.Time, s string) (time.Time, error) {
 	for _, value := range values {
 		fields := re.FindStringSubmatch(value)
 		if fields == nil {
-			return time.Time{}, fmt.Errorf("Invalid expiry expression")
+			return time.Time{}, errors.New("Invalid expiry expression")
 		}
 
 		if expiry[fields[2]] > 0 {
 			// We don't allow fields to be set multiple times
-			return time.Time{}, fmt.Errorf("Invalid expiry expression")
+			return time.Time{}, errors.New("Invalid expiry expression")
 		}
 
 		val, err := strconv.Atoi(fields[1])
