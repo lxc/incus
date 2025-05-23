@@ -91,7 +91,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 
 	// Confirm that we're root.
 	if os.Geteuid() != 0 {
-		return fmt.Errorf("This tool must be run as root")
+		return errors.New("This tool must be run as root")
 	}
 
 	// Create log file.
@@ -126,7 +126,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 
 	if source == nil {
 		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
-		return fmt.Errorf("No source server could be found")
+		return errors.New("No source server could be found")
 	}
 
 	fmt.Printf("==> Detected: %s\n", source.name())
@@ -146,7 +146,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 
 	if target == nil {
 		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
-		return fmt.Errorf("No target server could be found")
+		return errors.New("No target server could be found")
 	}
 
 	fmt.Printf("==> Detected: %s\n", target.name())
@@ -203,7 +203,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 			fmt.Println("")
 
 			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: Bad config keys: %v\n", badEntries))
-			return fmt.Errorf("Unable to interact with the source server")
+			return errors.New("Unable to interact with the source server")
 		}
 
 		// Get the source server info.
@@ -268,7 +268,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 			clusterMembers, err := srcClient.GetClusterMembers()
 			if err != nil {
 				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
-				return fmt.Errorf("Failed to retrieve the list of cluster members")
+				return errors.New("Failed to retrieve the list of cluster members")
 			}
 
 			for _, member := range clusterMembers {
@@ -533,7 +533,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 		clusterMembers, err := srcClient.GetClusterMembers()
 		if err != nil {
 			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
-			return fmt.Errorf("Failed to retrieve the list of cluster members")
+			return errors.New("Failed to retrieve the list of cluster members")
 		}
 
 		for _, member := range clusterMembers {
@@ -640,7 +640,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 		fmt.Println("")
 		fmt.Printf("WARNING: %s was detected to be a mountpoint.\n", sourcePaths.daemon)
 		fmt.Printf("The migration logic has moved this mount to the new target path at %s.\n", targetPaths.daemon)
-		fmt.Printf("However it is your responsibility to modify your system settings to ensure this mount will be properly restored on reboot.\n")
+		fmt.Print("However it is your responsibility to modify your system settings to ensure this mount will be properly restored on reboot.\n")
 		fmt.Println("")
 	} else {
 		_, _ = logFile.WriteString("Moving data over\n")
@@ -801,7 +801,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 			fmt.Println("=> Waiting for other cluster servers")
 			fmt.Println("")
-			fmt.Printf("Please run `lxd-to-incus --cluster-member` on all other servers in the cluster\n\n")
+			fmt.Print("Please run `lxd-to-incus --cluster-member` on all other servers in the cluster\n\n")
 			for {
 				ok, err := c.global.asker.AskBool("The command has been started on all other servers? [default=no]: ", "no")
 				if !ok || err != nil {
@@ -895,7 +895,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 		clusterMembers, err := targetClient.GetClusterMembers()
 		if err != nil {
 			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
-			return fmt.Errorf("Failed to retrieve the list of cluster members")
+			return errors.New("Failed to retrieve the list of cluster members")
 		}
 
 		for _, member := range clusterMembers {
