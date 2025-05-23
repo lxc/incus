@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"fmt"
+	"errors"
 	"reflect"
 	"runtime"
 	"strings"
@@ -61,11 +61,11 @@ func NewNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey s
 	if strings.Contains(dbAddr, "ssl:") {
 		// Validation.
 		if sslClientCert == "" {
-			return nil, fmt.Errorf("OVN is configured to use SSL but no client certificate was found")
+			return nil, errors.New("OVN is configured to use SSL but no client certificate was found")
 		}
 
 		if sslClientKey == "" {
-			return nil, fmt.Errorf("OVN is configured to use SSL but no client key was found")
+			return nil, errors.New("OVN is configured to use SSL but no client key was found")
 		}
 
 		// Prepare the client.
@@ -83,7 +83,7 @@ func NewNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey s
 		if sslCACert != "" {
 			tlsCAder, _ := pem.Decode([]byte(sslCACert))
 			if tlsCAder == nil {
-				return nil, fmt.Errorf("Couldn't parse CA certificate")
+				return nil, errors.New("Couldn't parse CA certificate")
 			}
 
 			tlsCAcert, err := x509.ParseCertificate(tlsCAder.Bytes)
@@ -99,7 +99,7 @@ func NewNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey s
 
 			tlsConfig.VerifyPeerCertificate = func(rawCerts [][]byte, chains [][]*x509.Certificate) error {
 				if len(rawCerts) < 1 {
-					return fmt.Errorf("Missing server certificate")
+					return errors.New("Missing server certificate")
 				}
 
 				// Load the chain.
@@ -114,7 +114,7 @@ func NewNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey s
 				// Load the main server certificate.
 				cert, _ := x509.ParseCertificate(rawCerts[0])
 				if cert == nil {
-					return fmt.Errorf("Bad server certificate")
+					return errors.New("Bad server certificate")
 				}
 
 				// Validate.
@@ -199,12 +199,12 @@ func (o *NB) get(ctx context.Context, m ovsdbModel.Model) error {
 
 	rVal := reflect.ValueOf(collection)
 	if rVal.Kind() != reflect.Pointer {
-		return fmt.Errorf("Bad collection type")
+		return errors.New("Bad collection type")
 	}
 
 	rVal = rVal.Elem()
 	if rVal.Kind() != reflect.Slice {
-		return fmt.Errorf("Bad collection type")
+		return errors.New("Bad collection type")
 	}
 
 	if rVal.Len() == 0 {

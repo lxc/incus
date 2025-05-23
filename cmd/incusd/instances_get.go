@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -218,7 +219,7 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 	allProjects := util.IsTrue(r.FormValue("all-projects"))
 
 	if allProjects && projectName != "" {
-		return response.BadRequest(fmt.Errorf("Cannot specify a project when requesting all projects"))
+		return response.BadRequest(errors.New("Cannot specify a project when requesting all projects"))
 	} else if !allProjects && projectName == "" {
 		projectName = api.ProjectDefaultName
 	}
@@ -312,7 +313,7 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 		// Mark instances on unavailable projectInstanceToNodeName as down.
 		if mustLoadObjects && memberAddress == "0.0.0.0" {
 			for _, inst := range instances {
-				resultErrListAppend(inst, fmt.Errorf("unavailable"))
+				resultErrListAppend(inst, errors.New("unavailable"))
 			}
 
 			continue

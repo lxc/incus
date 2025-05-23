@@ -3,6 +3,7 @@ package resources
 import (
 	"bufio"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -28,7 +29,7 @@ func loadNvidiaProc() (map[string]*api.ResourcesGPUCardNvidia, error) {
 
 	gpusPath := filepath.Join(procDriverNvidia, "gpus")
 	if !sysfsExists(gpusPath) {
-		return nil, fmt.Errorf("No NVIDIA GPU proc driver")
+		return nil, errors.New("No NVIDIA GPU proc driver")
 	}
 
 	// List the GPUs from /proc

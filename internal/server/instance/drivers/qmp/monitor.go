@@ -3,6 +3,7 @@ package qmp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -302,7 +303,7 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 
 	case <-time.After(5 * time.Second):
 		_ = qmpConn.Disconnect()
-		return nil, fmt.Errorf("QMP connection timed out")
+		return nil, errors.New("QMP connection timed out")
 	}
 
 	// Setup the monitor struct.

@@ -215,7 +215,7 @@ void forkuevent(void)
 import "C"
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/spf13/cobra"
 )
@@ -250,5 +250,5 @@ func (c *cmdForkuevent) command() *cobra.Command {
 }
 
 func (c *cmdForkuevent) run(_ *cobra.Command, _ []string) error {
-	return fmt.Errorf("This command should have been intercepted in cgo")
+	return errors.New("This command should have been intercepted in cgo")
 }

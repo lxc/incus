@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -44,7 +45,7 @@ func (c *cmdDaemon) run(cmd *cobra.Command, args []string) error {
 
 	// Only root should run this
 	if os.Geteuid() != 0 {
-		return fmt.Errorf("This must be run as root")
+		return errors.New("This must be run as root")
 	}
 
 	neededPrograms := []string{"ip", "rsync", "setfattr", "tar", "unsquashfs", "xz"}

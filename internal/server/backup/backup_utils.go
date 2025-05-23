@@ -3,7 +3,7 @@ package backup
 import (
 	"archive/tar"
 	"context"
-	"fmt"
+	"errors"
 	"io"
 
 	"github.com/lxc/incus/v6/internal/server/sys"
@@ -23,7 +23,7 @@ func TarReader(r io.ReadSeeker, sysOS *sys.OS, outputPath string) (*tar.Reader, 
 	}
 
 	if unpacker == nil {
-		return nil, nil, fmt.Errorf("Unsupported backup compression")
+		return nil, nil, errors.New("Unsupported backup compression")
 	}
 
 	tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, outputPath)

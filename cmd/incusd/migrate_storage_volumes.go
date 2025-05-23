@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -141,7 +142,7 @@ func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, po
 	// The same applies for clusterMove and storageMove, which are set to the most optimized defaults.
 	poolMigrationTypes = pool.MigrationTypes(storageDrivers.ContentType(srcConfig.Volume.ContentType), false, !s.volumeOnly, true, false)
 	if len(poolMigrationTypes) == 0 {
-		return fmt.Errorf("No source migration types available")
+		return errors.New("No source migration types available")
 	}
 
 	// Convert the pool's migration type options to an offer header to target.
@@ -241,7 +242,7 @@ func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, po
 
 	if !msg.GetSuccess() {
 		logger.Errorf("Failed to send storage volume")
-		return fmt.Errorf(msg.GetMessage())
+		return errors.New(msg.GetMessage())
 	}
 
 	logger.Debugf("Migration source finished transferring storage volume")
@@ -521,7 +522,7 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 			if !msg.GetSuccess() {
 				c.disconnect()
 
-				return fmt.Errorf(msg.GetMessage())
+				return errors.New(msg.GetMessage())
 			}
 
 			// The source can only tell us it failed (e.g. if

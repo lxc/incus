@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"sort"
@@ -101,13 +102,13 @@ func (v *Key) validate(value string) error {
 	case String:
 	case Bool:
 		if !slices.Contains(booleans, strings.ToLower(value)) {
-			return fmt.Errorf("invalid boolean")
+			return errors.New("invalid boolean")
 		}
 
 	case Int64:
 		_, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
-			return fmt.Errorf("invalid integer")
+			return errors.New("invalid integer")
 		}
 
 	default:

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -127,7 +128,7 @@ func UpdateCertificate(s *state.State, challengeType string, clustered bool, dom
 		env = append(env, environment...)
 
 		if provider == "" {
-			return nil, fmt.Errorf("DNS-01 challenge type requires acme.dns.provider configuration key to be set")
+			return nil, errors.New("DNS-01 challenge type requires acme.dns.provider configuration key to be set")
 		}
 
 		args = append(args, "--dns", provider)

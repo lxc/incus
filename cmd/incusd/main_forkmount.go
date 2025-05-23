@@ -629,7 +629,7 @@ void forkmount(void)
 import "C"
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/spf13/cobra"
 
@@ -687,5 +687,5 @@ func (c *cmdForkmount) command() *cobra.Command {
 }
 
 func (c *cmdForkmount) run(_ *cobra.Command, _ []string) error {
-	return fmt.Errorf("This command should have been intercepted in cgo")
+	return errors.New("This command should have been intercepted in cgo")
 }

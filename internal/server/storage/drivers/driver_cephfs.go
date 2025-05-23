@@ -125,11 +125,11 @@ func (d *cephfs) Create() error {
 
 	// Config validation.
 	if d.config["source"] == "" {
-		return fmt.Errorf("Missing required source name/path")
+		return errors.New("Missing required source name/path")
 	}
 
 	if d.config["cephfs.path"] != "" && d.config["cephfs.path"] != d.config["source"] {
-		return fmt.Errorf("cephfs.path must match the source")
+		return errors.New("cephfs.path must match the source")
 	}
 
 	d.config["cephfs.path"] = d.config["source"]
@@ -307,7 +307,7 @@ func (d *cephfs) Create() error {
 	// Check that the existing path is empty.
 	ok, _ := internalUtil.PathIsEmpty(filepath.Join(mountPoint, fsPath))
 	if !ok {
-		return fmt.Errorf("Only empty CephFS paths can be used as a storage pool")
+		return errors.New("Only empty CephFS paths can be used as a storage pool")
 	}
 
 	reverter.Success()

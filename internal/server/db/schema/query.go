@@ -3,6 +3,7 @@ package schema
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 
@@ -24,7 +25,7 @@ SELECT COUNT(name) FROM sqlite_master WHERE type = 'table' AND name = 'schema'
 	defer func() { _ = rows.Close() }()
 
 	if !rows.Next() {
-		return false, fmt.Errorf("schema table query returned no rows")
+		return false, errors.New("schema table query returned no rows")
 	}
 
 	var count int

@@ -2,6 +2,7 @@ package project
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -500,7 +501,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 					disabled := util.IsFalseOrEmpty(instanceValue)
 
 					if restrictionValue != "allow" && !disabled {
-						return fmt.Errorf("Container syscall interception is forbidden")
+						return errors.New("Container syscall interception is forbidden")
 					}
 
 					return nil
@@ -509,7 +510,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		case "restricted.containers.nesting":
 			containerConfigChecks["security.nesting"] = func(instanceValue string) error {
 				if restrictionValue == "block" && util.IsTrue(instanceValue) {
-					return fmt.Errorf("Container nesting is forbidden")
+					return errors.New("Container nesting is forbidden")
 				}
 
 				return nil
@@ -523,7 +524,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		case "restricted.containers.privilege":
 			containerConfigChecks["security.privileged"] = func(instanceValue string) error {
 				if restrictionValue != "allow" && util.IsTrue(instanceValue) {
-					return fmt.Errorf("Privileged containers are forbidden")
+					return errors.New("Privileged containers are forbidden")
 				}
 
 				return nil
@@ -531,7 +532,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 
 			containerConfigChecks["security.idmap.isolated"] = func(instanceValue string) error {
 				if restrictionValue == "isolated" && util.IsFalseOrEmpty(instanceValue) {
-					return fmt.Errorf("Non-isolated containers are forbidden")
+					return errors.New("Non-isolated containers are forbidden")
 				}
 
 				return nil
@@ -545,7 +546,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		case "restricted.devices.unix-char":
 			devicesChecks["unix-char"] = func(device map[string]string) error {
 				if restrictionValue != "allow" {
-					return fmt.Errorf("Unix character devices are forbidden")
+					return errors.New("Unix character devices are forbidden")
 				}
 
 				return nil
@@ -554,7 +555,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		case "restricted.devices.unix-block":
 			devicesChecks["unix-block"] = func(device map[string]string) error {
 				if restrictionValue != "allow" {
-					return fmt.Errorf("Unix block devices are forbidden")
+					return errors.New("Unix block devices are forbidden")
 				}
 
 				return nil
@@ -563,7 +564,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		case "restricted.devices.unix-hotplug":
 			devicesChecks["unix-hotplug"] = func(device map[string]string) error {
 				if restrictionValue != "allow" {
-					return fmt.Errorf("Unix hotplug devices are forbidden")
+					return errors.New("Unix hotplug devices are forbidden")
 				}
 
 				return nil
@@ -572,7 +573,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		case "restricted.devices.infiniband":
 			devicesChecks["infiniband"] = func(device map[string]string) error {
 				if restrictionValue != "allow" {
-					return fmt.Errorf("Infiniband devices are forbidden")
+					return errors.New("Infiniband devices are forbidden")
 				}
 
 				return nil
@@ -581,7 +582,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		case "restricted.devices.gpu":
 			devicesChecks["gpu"] = func(device map[string]string) error {
 				if restrictionValue != "allow" {
-					return fmt.Errorf("GPU devices are forbidden")
+					return errors.New("GPU devices are forbidden")
 				}
 
 				return nil
@@ -590,7 +591,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		case "restricted.devices.usb":
 			devicesChecks["usb"] = func(device map[string]string) error {
 				if restrictionValue != "allow" {
-					return fmt.Errorf("USB devices are forbidden")
+					return errors.New("USB devices are forbidden")
 				}
 
 				return nil
@@ -599,7 +600,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		case "restricted.devices.pci":
 			devicesChecks["pci"] = func(device map[string]string) error {
 				if restrictionValue != "allow" {
-					return fmt.Errorf("PCI devices are forbidden")
+					return errors.New("PCI devices are forbidden")
 				}
 
 				return nil
@@ -608,7 +609,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		case "restricted.devices.proxy":
 			devicesChecks["proxy"] = func(device map[string]string) error {
 				if restrictionValue != "allow" {
-					return fmt.Errorf("Proxy devices are forbidden")
+					return errors.New("Proxy devices are forbidden")
 				}
 
 				return nil
@@ -619,10 +620,10 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 				// Check if the NICs are allowed at all.
 				switch restrictionValue {
 				case "block":
-					return fmt.Errorf("Network devices are forbidden")
+					return errors.New("Network devices are forbidden")
 				case "managed":
 					if device["network"] == "" {
-						return fmt.Errorf("Only managed network devices are allowed")
+						return errors.New("Only managed network devices are allowed")
 					}
 				}
 
@@ -630,11 +631,11 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 				// restricted.devices.nic and restricted.networks.access settings.
 				if device["network"] != "" {
 					if !NetworkAllowed(project.Config, device["network"], true) {
-						return fmt.Errorf("Network not allowed in project")
+						return errors.New("Network not allowed in project")
 					}
 				} else if device["parent"] != "" {
 					if !NetworkAllowed(project.Config, device["parent"], false) {
-						return fmt.Errorf("Network not allowed in project")
+						return errors.New("Network not allowed in project")
 					}
 				}
 
@@ -660,10 +661,10 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 
 				switch restrictionValue {
 				case "block":
-					return fmt.Errorf("Disk devices are forbidden")
+					return errors.New("Disk devices are forbidden")
 				case "managed":
 					if device["pool"] == "" {
-						return fmt.Errorf("Attaching disks not backed by a pool is forbidden")
+						return errors.New("Attaching disks not backed by a pool is forbidden")
 					}
 
 				case "allow":
@@ -1490,7 +1491,7 @@ func getInstanceLimits(inst api.Instance, keys []string, skipUnset bool) (map[st
 var aggregateLimitConfigValueParsers = map[string]func(string) (int64, error){
 	"limits.memory": func(value string) (int64, error) {
 		if strings.HasSuffix(value, "%") {
-			return -1, fmt.Errorf("Value can't be a percentage")
+			return -1, errors.New("Value can't be a percentage")
 		}
 
 		return units.ParseByteSizeString(value)
@@ -1505,7 +1506,7 @@ var aggregateLimitConfigValueParsers = map[string]func(string) (int64, error){
 	},
 	"limits.cpu": func(value string) (int64, error) {
 		if strings.Contains(value, ",") || strings.Contains(value, "-") {
-			return -1, fmt.Errorf("CPUs can't be pinned if project limits are used")
+			return -1, errors.New("CPUs can't be pinned if project limits are used")
 		}
 
 		limit, err := strconv.Atoi(value)
@@ -1688,7 +1689,7 @@ func CheckTargetMember(p *api.Project, targetMemberName string, allMembers []db.
 			// If restricted groups are specified then check member is in at least one of them.
 			err := AllowClusterMember(p, &potentialMember)
 			if err != nil {
-				return nil, api.StatusErrorf(http.StatusForbidden, err.Error())
+				return nil, api.StatusErrorf(http.StatusForbidden, "%s", err.Error())
 			}
 
 			return &potentialMember, nil
@@ -1703,7 +1704,7 @@ func CheckTargetGroup(ctx context.Context, tx *db.ClusterTx, p *api.Project, gro
 	// If restricted groups are specified then check the requested group is in the list.
 	err := AllowClusterGroup(p, groupName)
 	if err != nil {
-		return api.StatusErrorf(http.StatusForbidden, err.Error())
+		return api.StatusErrorf(http.StatusForbidden, "%s", err.Error())
 	}
 
 	// Check if the target group exists.

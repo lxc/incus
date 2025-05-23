@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"strconv"
@@ -1013,7 +1014,7 @@ func offlineThresholdValidator(value string) error {
 	// which is the lower bound granularity of the offline check.
 	threshold, err := strconv.Atoi(value)
 	if err != nil {
-		return fmt.Errorf("Offline threshold is not a number")
+		return errors.New("Offline threshold is not a number")
 	}
 
 	if threshold <= minThreshold {
@@ -1026,11 +1027,11 @@ func offlineThresholdValidator(value string) error {
 func imageMinimalReplicaValidator(value string) error {
 	count, err := strconv.Atoi(value)
 	if err != nil {
-		return fmt.Errorf("Minimal image replica count is not a number")
+		return errors.New("Minimal image replica count is not a number")
 	}
 
 	if count < 1 && count != -1 {
-		return fmt.Errorf("Invalid value for image replica count")
+		return errors.New("Invalid value for image replica count")
 	}
 
 	return nil
@@ -1039,11 +1040,11 @@ func imageMinimalReplicaValidator(value string) error {
 func maxVotersValidator(value string) error {
 	n, err := strconv.Atoi(value)
 	if err != nil {
-		return fmt.Errorf("Value is not a number")
+		return errors.New("Value is not a number")
 	}
 
 	if n < 3 || n%2 != 1 {
-		return fmt.Errorf("Value must be an odd number equal to or higher than 3")
+		return errors.New("Value must be an odd number equal to or higher than 3")
 	}
 
 	return nil
@@ -1052,11 +1053,11 @@ func maxVotersValidator(value string) error {
 func maxStandByValidator(value string) error {
 	n, err := strconv.Atoi(value)
 	if err != nil {
-		return fmt.Errorf("Value is not a number")
+		return errors.New("Value is not a number")
 	}
 
 	if n < 0 || n > 5 {
-		return fmt.Errorf("Value must be between 0 and 5")
+		return errors.New("Value must be between 0 and 5")
 	}
 
 	return nil
@@ -1065,11 +1066,11 @@ func maxStandByValidator(value string) error {
 func rebalanceThresholdValidator(value string) error {
 	n, err := strconv.Atoi(value)
 	if err != nil {
-		return fmt.Errorf("Value is not a number")
+		return errors.New("Value is not a number")
 	}
 
 	if n < 10 || n > 100 {
-		return fmt.Errorf("Value must be between 10 and 100")
+		return errors.New("Value must be between 10 and 100")
 	}
 
 	return nil

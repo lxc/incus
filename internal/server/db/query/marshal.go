@@ -1,7 +1,7 @@
 package query
 
 import (
-	"fmt"
+	"errors"
 )
 
 type Marshaler interface {
@@ -15,7 +15,7 @@ type Unmarshaler interface {
 func Marshal(v any) (string, error) {
 	marshaller, ok := v.(Marshaler)
 	if !ok {
-		return "", fmt.Errorf("Cannot marshal data, type does not implement DBMarshaler")
+		return "", errors.New("Cannot marshal data, type does not implement DBMarshaler")
 	}
 
 	return marshaller.MarshalDB()
@@ -23,12 +23,12 @@ func Marshal(v any) (string, error) {
 
 func Unmarshal(data string, v any) error {
 	if v == nil {
-		return fmt.Errorf("Cannot unmarshal data into nil value")
+		return errors.New("Cannot unmarshal data into nil value")
 	}
 
 	unmarshaler, ok := v.(Unmarshaler)
 	if !ok {
-		return fmt.Errorf("Cannot marshal data, type does not implement DBUnmarshaler")
+		return errors.New("Cannot marshal data, type does not implement DBUnmarshaler")
 	}
 
 	return unmarshaler.UnmarshalDB(data)

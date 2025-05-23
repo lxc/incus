@@ -1,7 +1,7 @@
 package drivers
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/lxc/incus/v6/internal/server/storage/quota"
 	"github.com/lxc/incus/v6/shared/logger"
@@ -64,7 +64,7 @@ func (d *dir) deleteQuota(path string, volID int64) error {
 	}
 
 	if volID == 0 {
-		return fmt.Errorf("Missing volume ID")
+		return errors.New("Missing volume ID")
 	}
 
 	ok, err := quota.Supported(path)
@@ -99,7 +99,7 @@ func (d *dir) setQuota(path string, volID int64, sizeBytes int64) error {
 	}
 
 	if volID == 0 {
-		return fmt.Errorf("Missing volume ID")
+		return errors.New("Missing volume ID")
 	}
 
 	ok, err := quota.Supported(path)

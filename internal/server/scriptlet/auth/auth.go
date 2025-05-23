@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 
 	"go.starlark.net/starlark"
@@ -40,7 +41,7 @@ func AuthorizationRun(l logger.Logger, details *common.RequestDetails, object st
 	// Retrieve a global variable from starlark environment.
 	authorizer := globals["authorize"]
 	if authorizer == nil {
-		return false, fmt.Errorf("Scriptlet missing authorize function")
+		return false, errors.New("Scriptlet missing authorize function")
 	}
 
 	detailsv, err := marshal.StarlarkMarshal(details)

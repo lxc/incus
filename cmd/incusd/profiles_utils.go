@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
@@ -69,7 +70,7 @@ func doProfileUpdate(ctx context.Context, s *state.State, p api.Project, profile
 						// Found the profile.
 						if inst.Profiles[i].Name == profileName {
 							// If it's the current profile, then we can't modify that root device.
-							return fmt.Errorf("At least one instance relies on this profile's root disk device")
+							return errors.New("At least one instance relies on this profile's root disk device")
 						}
 
 						// If it's not, then move on to the next instance.

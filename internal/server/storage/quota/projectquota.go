@@ -171,7 +171,7 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
-var errNoDevice = fmt.Errorf("Couldn't find backing device for mountpoint")
+var errNoDevice = errors.New("Couldn't find backing device for mountpoint")
 
 func devForPath(path string) (string, error) {
 	// Get major/minor

@@ -3,6 +3,7 @@
 package device
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -98,7 +99,7 @@ func (d *unixHotplug) validateConfig(instConf instance.ConfigReader) error {
 	}
 
 	if d.config["vendorid"] == "" && d.config["productid"] == "" {
-		return fmt.Errorf("Unix hotplug devices require a vendorid or a productid")
+		return errors.New("Unix hotplug devices require a vendorid or a productid")
 	}
 
 	return nil
@@ -168,7 +169,7 @@ func (d *unixHotplug) Start() (*deviceConfig.RunConfig, error) {
 
 	device := d.loadUnixDevice()
 	if d.isRequired() && device == nil {
-		return nil, fmt.Errorf("Required Unix Hotplug device not found")
+		return nil, errors.New("Required Unix Hotplug device not found")
 	}
 
 	if device == nil {

@@ -199,7 +199,7 @@ func (c *ClusterTx) GetNetworkID(ctx context.Context, projectName string, name s
 	case 1:
 		return int64(ids[0]), nil
 	default:
-		return -1, fmt.Errorf("More than one network has the given name")
+		return -1, errors.New("More than one network has the given name")
 	}
 }
 
@@ -305,7 +305,7 @@ func (c *ClusterTx) CreatePendingNetwork(ctx context.Context, node string, proje
 	err := query.Scan(ctx, c.tx, sql, func(scan func(dest ...any) error) error {
 		// Ensure that there is at most one network with the given name.
 		if count != 0 {
-			return fmt.Errorf("More than one network exists with the given name")
+			return errors.New("More than one network exists with the given name")
 		}
 
 		count++
@@ -333,12 +333,12 @@ func (c *ClusterTx) CreatePendingNetwork(ctx context.Context, node string, proje
 	} else {
 		// Check that the existing network is in the networkPending state.
 		if network.state != networkPending {
-			return fmt.Errorf("Network is not in pending state")
+			return errors.New("Network is not in pending state")
 		}
 
 		// Check that the existing network type matches the requested type.
 		if network.netType != netType {
-			return fmt.Errorf("Requested network type doesn't match type in existing database record")
+			return errors.New("Requested network type doesn't match type in existing database record")
 		}
 	}
 

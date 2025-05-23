@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -28,7 +29,7 @@ func setupWebsocketDialer(certificate string) (*websocket.Dialer, error) {
 	if certificate != "" {
 		certBlock, _ := pem.Decode([]byte(certificate))
 		if certBlock == nil {
-			return nil, fmt.Errorf("Failed PEM decoding certificate")
+			return nil, errors.New("Failed PEM decoding certificate")
 		}
 
 		cert, err = x509.ParseCertificate(certBlock.Bytes)
@@ -83,7 +84,7 @@ func (c *migrationConn) AcceptIncoming(r *http.Request, w http.ResponseWriter) e
 	defer c.mu.Unlock()
 
 	if c.disconnected {
-		return fmt.Errorf("Connection already disconnected")
+		return errors.New("Connection already disconnected")
 	}
 
 	if c.conn != nil {
@@ -119,7 +120,7 @@ func (c *migrationConn) WebSocket(ctx context.Context) (*websocket.Conn, error) 
 
 	if c.disconnected {
 		c.mu.Unlock()
-		return nil, fmt.Errorf("Connection already disconnected")
+		return nil, errors.New("Connection already disconnected")
 	}
 
 	if c.conn != nil {

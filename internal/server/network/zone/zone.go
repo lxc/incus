@@ -2,6 +2,7 @@ package zone
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"slices"
@@ -150,11 +151,11 @@ func (d *zone) Etag() []any {
 // validateName checks name is valid.
 func (d *zone) validateName(name string) error {
 	if name == "" {
-		return fmt.Errorf("Name is required")
+		return errors.New("Name is required")
 	}
 
 	if strings.HasPrefix(name, "/") {
-		return fmt.Errorf(`Name cannot start with "/"`)
+		return errors.New(`Name cannot start with "/"`)
 	}
 
 	return nil
@@ -325,7 +326,7 @@ func (d *zone) Delete() error {
 	}
 
 	if isUsed {
-		return fmt.Errorf("Cannot delete a zone that is in use")
+		return errors.New("Cannot delete a zone that is in use")
 	}
 
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {

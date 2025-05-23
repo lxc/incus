@@ -1,7 +1,7 @@
 package config
 
 import (
-	"fmt"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -33,7 +33,7 @@ var validateCases = []struct {
 // Validator that returns an error if the value is not the empty string.
 func isNotEmptyString(value string) error {
 	if value == "" {
-		return fmt.Errorf("empty value not valid")
+		return errors.New("empty value not valid")
 	}
 
 	return nil
@@ -57,7 +57,7 @@ var validateErrorCases = []struct {
 }{
 	{Key{Type: Int64}, "1.2", "invalid integer"},
 	{Key{Type: Bool}, "yyy", "invalid boolean"},
-	{Key{Validator: func(string) error { return fmt.Errorf("ugh") }}, "", "ugh"},
+	{Key{Validator: func(string) error { return errors.New("ugh") }}, "", "ugh"},
 	{Key{Deprecated: "don't use this"}, "foo", "deprecated: don't use this"},
 }
 

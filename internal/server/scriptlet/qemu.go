@@ -382,7 +382,7 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 	// Retrieve a global variable from starlark environment.
 	qemuHook := globals["qemu_hook"]
 	if qemuHook == nil {
-		return fmt.Errorf("Scriptlet missing qemu_hook function")
+		return errors.New("Scriptlet missing qemu_hook function")
 	}
 
 	instancev, err := marshal.StarlarkMarshal(instance)

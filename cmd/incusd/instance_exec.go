@@ -82,7 +82,7 @@ func (s *execWs) metadata() any {
 func (s *execWs) connect(_ *operations.Operation, r *http.Request, w http.ResponseWriter) error {
 	secret := r.FormValue("secret")
 	if secret == "" {
-		return fmt.Errorf("missing secret")
+		return errors.New("missing secret")
 	}
 
 	for fd, fdSecret := range s.fds {
@@ -147,9 +147,9 @@ func (s *execWs) connect(_ *operations.Operation, r *http.Request, w http.Respon
 				s.waitRequiredConnected.Cancel() // All required connections now connected.
 				return nil
 			} else if !found {
-				return fmt.Errorf("Unknown websocket number")
+				return errors.New("Unknown websocket number")
 			} else {
-				return fmt.Errorf("Websocket number already connected")
+				return errors.New("Websocket number already connected")
 			}
 		}
 	}
@@ -180,7 +180,7 @@ func (s *execWs) do(op *operations.Operation) error {
 	case <-s.waitRequiredConnected.Done():
 		break
 	case <-time.After(time.Second * 5):
-		return fmt.Errorf("Timed out waiting for websockets to connect")
+		return errors.New("Timed out waiting for websockets to connect")
 	}
 
 	var err error
@@ -555,7 +555,7 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if internalInstance.IsSnapshot(name) {
-		return response.BadRequest(fmt.Errorf("Invalid instance name"))
+		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
 	post := api.InstanceExecPost{}
@@ -605,11 +605,11 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if !inst.IsRunning() {
-		return response.BadRequest(fmt.Errorf("Instance is not running"))
+		return response.BadRequest(errors.New("Instance is not running"))
 	}
 
 	if inst.IsFrozen() {
-		return response.BadRequest(fmt.Errorf("Instance is frozen"))
+		return response.BadRequest(errors.New("Instance is frozen"))
 	}
 
 	// Process environment.

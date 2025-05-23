@@ -125,7 +125,7 @@ func (d *unixCommon) validateConfig(instConf instance.ConfigReader) error {
 	}
 
 	if d.config["source"] == "" && d.config["path"] == "" {
-		return fmt.Errorf("Unix device entry is missing the required \"source\" or \"path\" property")
+		return errors.New("Unix device entry is missing the required \"source\" or \"path\" property")
 	}
 
 	return nil
@@ -249,7 +249,7 @@ func (d *unixCommon) Start() (*deviceConfig.RunConfig, error) {
 			}
 		} else if d.isRequired() {
 			// If the file is missing and the device is required then we cannot proceed.
-			return nil, fmt.Errorf("The required device path doesn't exist and the major and minor settings are not specified")
+			return nil, errors.New("The required device path doesn't exist and the major and minor settings are not specified")
 		}
 	}
 

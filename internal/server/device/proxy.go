@@ -76,7 +76,7 @@ func (d *proxy) validateConfig(instConf instance.ConfigReader) error {
 	// If an empty value is supplied the default behavior is to assume "host" bind mode.
 	validateBind := func(input string) error {
 		if !slices.Contains([]string{"host", "instance", "guest", "container"}, d.config["bind"]) {
-			return fmt.Errorf("Invalid binding side given. Must be \"host\" or \"instance\"")
+			return errors.New("Invalid binding side given. Must be \"host\" or \"instance\"")
 		}
 
 		return nil
@@ -178,7 +178,7 @@ func (d *proxy) validateConfig(instConf instance.ConfigReader) error {
 	}
 
 	if instConf.Type() == instancetype.VM && util.IsFalseOrEmpty(d.config["nat"]) {
-		return fmt.Errorf("Only NAT mode is supported for proxies on VM instances")
+		return errors.New("Only NAT mode is supported for proxies on VM instances")
 	}
 
 	listenAddr, err := network.ProxyParseAddr(d.config["listen"])
@@ -198,16 +198,16 @@ func (d *proxy) validateConfig(instConf instance.ConfigReader) error {
 
 	if (listenAddr.ConnType != "unix" && len(connectAddr.Ports) > len(listenAddr.Ports)) || (listenAddr.ConnType == "unix" && len(connectAddr.Ports) > 1) {
 		// Cannot support single address (or port) -> multiple port.
-		return fmt.Errorf("Mismatch between listen port(s) and connect port(s) count")
+		return errors.New("Mismatch between listen port(s) and connect port(s) count")
 	}
 
 	if util.IsTrue(d.config["proxy_protocol"]) && (!strings.HasPrefix(d.config["connect"], "tcp") || util.IsTrue(d.config["nat"])) {
-		return fmt.Errorf("The PROXY header can only be sent to tcp servers in non-nat mode")
+		return errors.New("The PROXY header can only be sent to tcp servers in non-nat mode")
 	}
 
 	if (!strings.HasPrefix(d.config["listen"], "unix:") || strings.HasPrefix(d.config["listen"], "unix:@")) &&
 		(d.config["uid"] != "" || d.config["gid"] != "" || d.config["mode"] != "") {
-		return fmt.Errorf("Only proxy devices for non-abstract unix sockets can carry uid, gid, or mode properties")
+		return errors.New("Only proxy devices for non-abstract unix sockets can carry uid, gid, or mode properties")
 	}
 
 	if util.IsTrue(d.config["nat"]) {
@@ -219,12 +219,12 @@ func (d *proxy) validateConfig(instConf instance.ConfigReader) error {
 				// Prevent use of NAT mode on non-default projects with networks feature.
 				// This is because OVN networks don't allow the host to communicate directly with
 				// instance NICs and so DNAT rules on the host won't work.
-				return fmt.Errorf("NAT mode cannot be used in projects that have the networks feature")
+				return errors.New("NAT mode cannot be used in projects that have the networks feature")
 			}
 		}
 
 		if d.config["bind"] != "" && d.config["bind"] != "host" {
-			return fmt.Errorf("Only host-bound proxies can use NAT")
+			return errors.New("Only host-bound proxies can use NAT")
 		}
 
 		// Support TCP <-> TCP and UDP <-> UDP only.
@@ -252,7 +252,7 @@ func (d *proxy) validateConfig(instConf instance.ConfigReader) error {
 		}
 
 		if listenIPVersion != connectIPVersion {
-			return fmt.Errorf("Cannot mix IP versions between listen and connect in nat mode")
+			return errors.New("Cannot mix IP versions between listen and connect in nat mode")
 		}
 	}
 
@@ -262,7 +262,7 @@ func (d *proxy) validateConfig(instConf instance.ConfigReader) error {
 // validateEnvironment checks the runtime environment for correctness.
 func (d *proxy) validateEnvironment() error {
 	if d.name == "" {
-		return fmt.Errorf("Device name cannot be empty")
+		return errors.New("Device name cannot be empty")
 	}
 
 	return nil
@@ -540,7 +540,7 @@ func (d *proxy) setupNAT() error {
 		}
 
 		if hostName == "" {
-			return fmt.Errorf("Proxy cannot find bridge port host_name to enable hairpin mode")
+			return errors.New("Proxy cannot find bridge port host_name to enable hairpin mode")
 		}
 
 		// br_netfilter is enabled, so we need to enable hairpin mode on instance's bridge port otherwise
@@ -616,7 +616,7 @@ func (d *proxy) setupProxyProcInfo() (*proxyProcInfo, error) {
 		connectPid = daemonPid
 		connectPidFd = fmt.Sprintf("%d", daemonPidFd)
 	default:
-		return nil, fmt.Errorf("Invalid binding side given. Must be \"host\" or \"instance\"")
+		return nil, errors.New("Invalid binding side given. Must be \"host\" or \"instance\"")
 	}
 
 	listenAddrMode := "0644"

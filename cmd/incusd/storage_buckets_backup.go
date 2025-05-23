@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -176,7 +177,7 @@ func storagePoolBucketBackupsGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if !pool.Driver().Info().Buckets {
-		return response.BadRequest(fmt.Errorf("Storage pool does not support buckets"))
+		return response.BadRequest(errors.New("Storage pool does not support buckets"))
 	}
 
 	bucketName, err := url.PathUnescape(mux.Vars(r)["bucketName"])
@@ -265,7 +266,7 @@ func storagePoolBucketBackupsPost(d *Daemon, r *http.Request) response.Response 
 	}
 
 	if !pool.Driver().Info().Buckets {
-		return response.BadRequest(fmt.Errorf("Storage pool does not support buckets"))
+		return response.BadRequest(errors.New("Storage pool does not support buckets"))
 	}
 
 	bucketName, err := url.PathUnescape(mux.Vars(r)["bucketName"])
@@ -356,7 +357,7 @@ func storagePoolBucketBackupsPost(d *Daemon, r *http.Request) response.Response 
 
 	// Validate the name.
 	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(fmt.Errorf("Backup names may not contain slashes"))
+		return response.BadRequest(errors.New("Backup names may not contain slashes"))
 	}
 
 	fullName := bucketName + internalInstance.SnapshotDelimiter + req.Name
@@ -460,7 +461,7 @@ func storagePoolBucketBackupGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if !pool.Driver().Info().Buckets {
-		return response.BadRequest(fmt.Errorf("Storage pool does not support buckets"))
+		return response.BadRequest(errors.New("Storage pool does not support buckets"))
 	}
 
 	bucketName, err := url.PathUnescape(mux.Vars(r)["bucketName"])
@@ -544,7 +545,7 @@ func storagePoolBucketBackupPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if !pool.Driver().Info().Buckets {
-		return response.BadRequest(fmt.Errorf("Storage pool does not support buckets"))
+		return response.BadRequest(errors.New("Storage pool does not support buckets"))
 	}
 
 	bucketName, err := url.PathUnescape(mux.Vars(r)["bucketName"])
@@ -565,7 +566,7 @@ func storagePoolBucketBackupPost(d *Daemon, r *http.Request) response.Response {
 
 	// Validate the name
 	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(fmt.Errorf("Backup names may not contain slashes"))
+		return response.BadRequest(errors.New("Backup names may not contain slashes"))
 	}
 
 	oldName := bucketName + internalInstance.SnapshotDelimiter + backupName
@@ -655,7 +656,7 @@ func storagePoolBucketBackupDelete(d *Daemon, r *http.Request) response.Response
 	}
 
 	if !pool.Driver().Info().Buckets {
-		return response.BadRequest(fmt.Errorf("Storage pool does not support buckets"))
+		return response.BadRequest(errors.New("Storage pool does not support buckets"))
 	}
 
 	bucketName, err := url.PathUnescape(mux.Vars(r)["bucketName"])
@@ -749,7 +750,7 @@ func storagePoolBucketBackupExportGet(d *Daemon, r *http.Request) response.Respo
 	}
 
 	if !pool.Driver().Info().Buckets {
-		return response.BadRequest(fmt.Errorf("Storage pool does not support buckets"))
+		return response.BadRequest(errors.New("Storage pool does not support buckets"))
 	}
 
 	bucketName, err := url.PathUnescape(mux.Vars(r)["bucketName"])

@@ -2,6 +2,7 @@ package ovn
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -24,7 +25,7 @@ func (o *SB) GetLogicalRouterPortActiveChassisHostname(ctx context.Context, ovnR
 	}
 
 	if pb.Chassis == nil {
-		return "", fmt.Errorf("No chassis found")
+		return "", errors.New("No chassis found")
 	}
 
 	// Get the associated chassis.

@@ -2,6 +2,7 @@ package drivers
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net"
 )
@@ -134,13 +135,13 @@ func subnetMask(ipNet *net.IPNet) string {
 // is "fd25c7e35dece4dd"). Only for use with IPv6 networks.
 func subnetPrefixHex(ipNet *net.IPNet) (string, error) {
 	if ipNet == nil || ipNet.IP.To4() != nil {
-		return "", fmt.Errorf("Cannot create a hex prefix for empty or IPv4 subnets")
+		return "", errors.New("Cannot create a hex prefix for empty or IPv4 subnets")
 	}
 
 	hexStr := hex.EncodeToString(ipNet.IP)
 	ones, _ := ipNet.Mask.Size()
 	if ones%8 != 0 {
-		return "", fmt.Errorf("Cannot create a hex prefix for an IPv6 subnet whose CIDR range is not divisible by 8")
+		return "", errors.New("Cannot create a hex prefix for an IPv6 subnet whose CIDR range is not divisible by 8")
 	}
 
 	return hexStr[:ones/4], nil

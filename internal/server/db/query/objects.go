@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -61,11 +62,11 @@ type Dest func(scan func(dest ...any) error) error
 func UpsertObject(tx *sql.Tx, table string, columns []string, values []any) (int64, error) {
 	n := len(columns)
 	if n == 0 {
-		return -1, fmt.Errorf("columns length is zero")
+		return -1, errors.New("columns length is zero")
 	}
 
 	if n != len(values) {
-		return -1, fmt.Errorf("columns length does not match values length")
+		return -1, errors.New("columns length does not match values length")
 	}
 
 	stmt := fmt.Sprintf(
@@ -102,7 +103,7 @@ func DeleteObject(tx *sql.Tx, table string, id int64) (bool, error) {
 	}
 
 	if n > 1 {
-		return true, fmt.Errorf("more than one row was deleted")
+		return true, errors.New("more than one row was deleted")
 	}
 
 	return n == 1, nil

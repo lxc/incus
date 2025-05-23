@@ -419,7 +419,7 @@ type lStruct struct {
 func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 	// Only root should run this
 	if os.Geteuid() != 0 {
-		return fmt.Errorf("This must be run as root")
+		return errors.New("This must be run as root")
 	}
 
 	// Quick checks.
@@ -430,12 +430,12 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 
-		return fmt.Errorf("Missing required arguments")
+		return errors.New("Missing required arguments")
 	}
 
 	// Check where we are in initialization
 	if C.whoami != C.FORKPROXY_PARENT && C.whoami != C.FORKPROXY_CHILD {
-		return fmt.Errorf("Failed to call forkproxy constructor")
+		return errors.New("Failed to call forkproxy constructor")
 	}
 
 	listenAddr := args[2]
@@ -451,7 +451,7 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 	}
 
 	if (lAddr.ConnType == "udp" || lAddr.ConnType == "tcp") && cAddr.ConnType == "udp" || cAddr.ConnType == "tcp" {
-		err := fmt.Errorf("Invalid port range")
+		err := errors.New("Invalid port range")
 		if len(lAddr.Ports) > 1 && len(cAddr.Ports) > 1 && (len(cAddr.Ports) != len(lAddr.Ports)) {
 			fmt.Println(err)
 			return err
@@ -638,7 +638,7 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 
 	epFd := C.epoll_create1(C.EPOLL_CLOEXEC)
 	if epFd < 0 {
-		return fmt.Errorf("Failed to create new epoll instance")
+		return errors.New("Failed to create new epoll instance")
 	}
 
 	// Wait for SIGTERM and close the listener in order to exit the loop below
@@ -673,7 +673,7 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 		*(*C.int)(unsafe.Pointer(&ev.data)) = C.int(f.Fd())
 		ret := C.epoll_ctl(epFd, C.EPOLL_CTL_ADD, C.int(f.Fd()), &ev)
 		if ret < 0 {
-			return fmt.Errorf("Error: Failed to add listener fd to epoll instance")
+			return errors.New("Error: Failed to add listener fd to epoll instance")
 		}
 	}
 
@@ -789,7 +789,7 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 				udpSessionsLock.Unlock()
 
 				if us == nil {
-					return fmt.Errorf("Connection expired")
+					return errors.New("Connection expired")
 				}
 
 				us.timerLock.Lock()
@@ -916,7 +916,7 @@ func unixRelayer(src *net.UnixConn, dst *net.UnixConn, ch chan error) {
 		}
 
 		if sData != tData || sOob != tOob {
-			ch <- fmt.Errorf("Lost oob data during transfer")
+			ch <- errors.New("Lost oob data during transfer")
 			return
 		}
 
@@ -1003,7 +1003,7 @@ func tryListenUDP(protocol string, addr string) (*os.File, error) {
 	}
 
 	if UDPConn == nil {
-		return nil, fmt.Errorf("Failed to setup UDP listener")
+		return nil, errors.New("Failed to setup UDP listener")
 	}
 
 	file, err := UDPConn.File()
@@ -1028,7 +1028,7 @@ func getListenerFile(protocol string, addr string) (*os.File, error) {
 	case *net.UnixListener:
 		file, err = l.File()
 	default:
-		return nil, fmt.Errorf("Could not get listener file: invalid listener type")
+		return nil, errors.New("Could not get listener file: invalid listener type")
 	}
 
 	if err != nil {

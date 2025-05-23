@@ -1,6 +1,7 @@
 package device
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -53,7 +54,7 @@ func (d *infinibandSRIOV) validateConfig(instConf instance.ConfigReader) error {
 // validateEnvironment checks the runtime environment for correctness.
 func (d *infinibandSRIOV) validateEnvironment() error {
 	if d.inst.Type() == instancetype.Container && d.config["name"] == "" {
-		return fmt.Errorf("Requires name property to start")
+		return errors.New("Requires name property to start")
 	}
 
 	if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"])) {
@@ -90,7 +91,7 @@ func (d *infinibandSRIOV) startContainer() (*deviceConfig.RunConfig, error) {
 	}
 
 	if len(ibDevs) < 1 {
-		return nil, fmt.Errorf("All virtual functions on parent device are already in use")
+		return nil, errors.New("All virtual functions on parent device are already in use")
 	}
 
 	// Get first VF device that is free.
@@ -201,7 +202,7 @@ func (d *infinibandSRIOV) startVM() (*deviceConfig.RunConfig, error) {
 	}
 
 	if vfID == -1 {
-		return nil, fmt.Errorf("All virtual functions on parent device are already in use")
+		return nil, errors.New("All virtual functions on parent device are already in use")
 	}
 
 	vfPCIDev, err := d.setupSriovParent(parentPCIAddress, vfID, saveData)

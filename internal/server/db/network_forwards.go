@@ -172,7 +172,7 @@ func (c *ClusterTx) GetNetworkForward(ctx context.Context, networkID int64, memb
 		return forwardID, forward, nil // Only single forward in map.
 	}
 
-	return -1, nil, fmt.Errorf("Unexpected forward list size")
+	return -1, nil, errors.New("Unexpected forward list size")
 }
 
 // networkForwardConfig populates the config map of the Network Forward with the given ID.

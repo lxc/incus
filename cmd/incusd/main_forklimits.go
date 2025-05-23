@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -45,7 +46,7 @@ func (c *cmdForklimits) run(cmd *cobra.Command, _ []string) error {
 
 	// Only root should run this
 	if os.Geteuid() != 0 {
-		return fmt.Errorf("This must be run as root")
+		return errors.New("This must be run as root")
 	}
 
 	type limit struct {
@@ -71,7 +72,7 @@ func (c *cmdForklimits) run(cmd *cobra.Command, _ []string) error {
 			fdNum, err := strconv.Atoi(fdParts[1])
 			if err != nil {
 				_ = cmd.Help()
-				return fmt.Errorf("Invalid file descriptor number")
+				return errors.New("Invalid file descriptor number")
 			}
 
 			fds = append(fds, uintptr(fdNum))
@@ -83,7 +84,7 @@ func (c *cmdForklimits) run(cmd *cobra.Command, _ []string) error {
 			break // No more passing of arguments needed.
 		} else {
 			_ = cmd.Help()
-			return fmt.Errorf("Unrecognised argument")
+			return errors.New("Unrecognised argument")
 		}
 	}
 
@@ -128,7 +129,7 @@ func (c *cmdForklimits) run(cmd *cobra.Command, _ []string) error {
 
 	if len(cmdParts) == 0 {
 		_ = cmd.Help()
-		return fmt.Errorf("Missing required command argument")
+		return errors.New("Missing required command argument")
 	}
 
 	// Clear the cloexec flag on the file descriptors we are passing through.

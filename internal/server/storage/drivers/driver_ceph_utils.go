@@ -178,7 +178,7 @@ func (d *ceph) rbdMapVolume(vol Volume) (string, error) {
 
 	idx := strings.Index(devPath, "/dev/rbd")
 	if idx < 0 {
-		return "", fmt.Errorf("Failed to detect mapped device path")
+		return "", errors.New("Failed to detect mapped device path")
 	}
 
 	devPath = strings.TrimSpace(devPath[idx:])
@@ -516,7 +516,7 @@ func (d *ceph) rbdGetVolumeParent(vol Volume) (string, error) {
 
 	idx = strings.Index(msg, "\n")
 	if idx == -1 {
-		return "", fmt.Errorf("Unexpected parsing error")
+		return "", errors.New("Unexpected parsing error")
 	}
 
 	msg = msg[:idx]
@@ -574,12 +574,12 @@ func (d *ceph) rbdListVolumeSnapshots(vol Volume) ([]string, error) {
 	for _, v := range data {
 		_, ok := v["name"]
 		if !ok {
-			return []string{}, fmt.Errorf("No \"name\" property found")
+			return []string{}, errors.New("No \"name\" property found")
 		}
 
 		name, ok := v["name"].(string)
 		if !ok {
-			return []string{}, fmt.Errorf("\"name\" property did not have string type")
+			return []string{}, errors.New("\"name\" property did not have string type")
 		}
 
 		name = strings.TrimSpace(name)
@@ -884,7 +884,7 @@ func (d *ceph) parseParent(parent string) (Volume, string, error) {
 
 	fields := strings.SplitN(parent, "/", 2)
 	if len(fields) != 2 {
-		return vol, "", fmt.Errorf("Pool delimiter not found")
+		return vol, "", errors.New("Pool delimiter not found")
 	}
 
 	parentName := fields[1]
@@ -1040,7 +1040,7 @@ func (d *ceph) parseParent(parent string) (Volume, string, error) {
 func (d *ceph) parseClone(clone string) (string, string, string, bool, error) {
 	fields := strings.SplitN(clone, "/", 2)
 	if len(fields) != 2 {
-		return "", "", "", false, fmt.Errorf("Pool delimiter not found")
+		return "", "", "", false, errors.New("Pool delimiter not found")
 	}
 
 	volumeName := fields[1]
@@ -1052,7 +1052,7 @@ func (d *ceph) parseClone(clone string) (string, string, string, bool, error) {
 
 	f := strings.SplitN(volumeName, "_", 2)
 	if len(f) != 2 {
-		return "", "", "", false, fmt.Errorf("Unexpected parsing error")
+		return "", "", "", false, errors.New("Unexpected parsing error")
 	}
 
 	volumeType := f[0]

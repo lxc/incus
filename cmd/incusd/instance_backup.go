@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -129,7 +130,7 @@ func instanceBackupsGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if internalInstance.IsSnapshot(cname) {
-		return response.BadRequest(fmt.Errorf("Invalid instance name"))
+		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
 	// Handle requests targeted to a container on a different node
@@ -217,7 +218,7 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if internalInstance.IsSnapshot(name) {
-		return response.BadRequest(fmt.Errorf("Invalid instance name"))
+		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -302,7 +303,7 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 
 	// Validate the name.
 	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(fmt.Errorf("Backup names may not contain slashes"))
+		return response.BadRequest(errors.New("Backup names may not contain slashes"))
 	}
 
 	fullName := name + internalInstance.SnapshotDelimiter + req.Name
@@ -390,7 +391,7 @@ func instanceBackupGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if internalInstance.IsSnapshot(name) {
-		return response.BadRequest(fmt.Errorf("Invalid instance name"))
+		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
 	backupName, err := url.PathUnescape(mux.Vars(r)["backupName"])
@@ -459,7 +460,7 @@ func instanceBackupPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if internalInstance.IsSnapshot(name) {
-		return response.BadRequest(fmt.Errorf("Invalid instance name"))
+		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
 	backupName, err := url.PathUnescape(mux.Vars(r)["backupName"])
@@ -485,7 +486,7 @@ func instanceBackupPost(d *Daemon, r *http.Request) response.Response {
 
 	// Validate the name
 	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(fmt.Errorf("Backup names may not contain slashes"))
+		return response.BadRequest(errors.New("Backup names may not contain slashes"))
 	}
 
 	oldName := name + internalInstance.SnapshotDelimiter + backupName
@@ -553,7 +554,7 @@ func instanceBackupDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if internalInstance.IsSnapshot(name) {
-		return response.BadRequest(fmt.Errorf("Invalid instance name"))
+		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
 	backupName, err := url.PathUnescape(mux.Vars(r)["backupName"])
@@ -630,7 +631,7 @@ func instanceBackupExportGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if internalInstance.IsSnapshot(name) {
-		return response.BadRequest(fmt.Errorf("Invalid instance name"))
+		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
 	backupName, err := url.PathUnescape(mux.Vars(r)["backupName"])

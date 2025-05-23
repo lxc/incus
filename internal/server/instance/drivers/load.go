@@ -99,7 +99,7 @@ func validDevices(state *state.State, p api.Project, instanceType instancetype.T
 			// Enforce a maximum name length of 64 characters.
 			// This is a safe maximum allowing use for sockets and other filesystem use.
 			if len(deviceName) > 64 {
-				return fmt.Errorf("The maximum device name length is 64 characters")
+				return errors.New("The maximum device name length is 64 characters")
 			}
 
 			err := device.Validate(instConf, state, deviceName, deviceConfig)
@@ -152,7 +152,7 @@ func create(s *state.State, args db.InstanceArgs, p api.Project, op *operations.
 		return qemuCreate(s, args, p, op)
 	}
 
-	return nil, nil, fmt.Errorf("Instance type invalid")
+	return nil, nil, errors.New("Instance type invalid")
 }
 
 // DriverStatuses returns a map of DriverStatus structs for all instance type drivers.

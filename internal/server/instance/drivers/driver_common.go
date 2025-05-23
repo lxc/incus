@@ -415,7 +415,7 @@ func (d *common) VolatileSet(changes map[string]string) error {
 	// Quick check.
 	for key := range changes {
 		if !strings.HasPrefix(key, internalInstance.ConfigVolatilePrefix) {
-			return fmt.Errorf("Only volatile keys can be modified with VolatileSet")
+			return errors.New("Only volatile keys can be modified with VolatileSet")
 		}
 	}
 
@@ -665,7 +665,7 @@ func (d *common) restartCommon(inst instance.Instance, timeout time.Duration) er
 		}
 	} else {
 		if inst.IsFrozen() {
-			err = fmt.Errorf("Instance is not running")
+			err = errors.New("Instance is not running")
 			op.Done(err)
 			return err
 		}
@@ -897,7 +897,7 @@ func (d *common) isRunningStatusCode(statusCode api.StatusCode) bool {
 // isStartableStatusCode returns an error if the status code means the instance cannot be started currently.
 func (d *common) isStartableStatusCode(statusCode api.StatusCode) error {
 	if d.isRunningStatusCode(statusCode) {
-		return fmt.Errorf("The instance is already running")
+		return errors.New("The instance is already running")
 	}
 
 	// If the instance process exists but is crashed, don't allow starting until its been cleaned up, as it
@@ -951,7 +951,7 @@ func (d *common) validateStartup(stateful bool, statusCode api.StatusCode) error
 
 	// Validate architecture.
 	if !slices.Contains(d.state.OS.Architectures, d.architecture) {
-		return fmt.Errorf("Requested architecture isn't supported by this host")
+		return errors.New("Requested architecture isn't supported by this host")
 	}
 
 	// Must happen before creating operation Start lock to avoid the status check returning Stopped due to the
@@ -1257,7 +1257,7 @@ func (d *common) deviceAdd(dev device.Device, instanceRunning bool) error {
 	l.Debug("Adding device")
 
 	if instanceRunning && !dev.CanHotPlug() {
-		return fmt.Errorf("Device cannot be added when instance is running")
+		return errors.New("Device cannot be added when instance is running")
 	}
 
 	return dev.Add()
@@ -1269,7 +1269,7 @@ func (d *common) deviceRemove(dev device.Device, instanceRunning bool) error {
 	l.Debug("Removing device")
 
 	if instanceRunning && !dev.CanHotPlug() {
-		return fmt.Errorf("Device cannot be removed when instance is running")
+		return errors.New("Device cannot be removed when instance is running")
 	}
 
 	return dev.Remove()
@@ -1341,7 +1341,7 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 
 	dm, ok := inst.(deviceManager)
 	if !ok {
-		return fmt.Errorf("Instance is not compatible with deviceManager interface")
+		return errors.New("Instance is not compatible with deviceManager interface")
 	}
 
 	// Remove devices in reverse order to how they were added.
@@ -1640,7 +1640,7 @@ func (d *common) processStartedAt(pid int) (time.Time, error) {
 
 	linuxInfo, ok := file.Sys().(*syscall.Stat_t)
 	if !ok {
-		return time.Time{}, fmt.Errorf("Bad stat type")
+		return time.Time{}, errors.New("Bad stat type")
 	}
 
 	return time.Unix(int64(linuxInfo.Ctim.Sec), int64(linuxInfo.Ctim.Nsec)), nil

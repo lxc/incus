@@ -3,6 +3,7 @@ package qmp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -418,7 +419,7 @@ func (m *Monitor) MigrateWait(state string) error {
 		}
 
 		if resp.Return.Status == "failed" {
-			return fmt.Errorf("Migrate call failed")
+			return errors.New("Migrate call failed")
 		}
 
 		if resp.Return.Status == state {
@@ -487,7 +488,7 @@ func (m *Monitor) MigrateIncoming(ctx context.Context, name string) error {
 		}
 
 		if resp.Return.Status == "failed" {
-			return fmt.Errorf("Migrate incoming call failed")
+			return errors.New("Migrate incoming call failed")
 		}
 
 		if resp.Return.Status == "completed" {
@@ -663,7 +664,7 @@ func (m *Monitor) AddBlockDevice(blockDev map[string]any, device map[string]any)
 
 	nodeName, ok := blockDev["node-name"].(string)
 	if !ok {
-		return fmt.Errorf("Device node name must be a string")
+		return errors.New("Device node name must be a string")
 	}
 
 	if blockDev != nil {
@@ -697,7 +698,7 @@ func (m *Monitor) RemoveBlockDevice(blockDevName string) error {
 		err := m.Run("blockdev-del", blockDevName, nil)
 		if err != nil {
 			if strings.Contains(err.Error(), "is in use") {
-				return api.StatusErrorf(http.StatusLocked, err.Error())
+				return api.StatusErrorf(http.StatusLocked, "%s", err.Error())
 			}
 
 			if strings.Contains(err.Error(), "Failed to find") {
@@ -1090,7 +1091,7 @@ func (m *Monitor) blockJobWaitReady(jobID string) error {
 		}
 
 		if !found {
-			return fmt.Errorf("Specified block job not found")
+			return errors.New("Specified block job not found")
 		}
 
 		time.Sleep(1 * time.Second)

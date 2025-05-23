@@ -120,6 +120,7 @@ import "C"
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -194,15 +195,15 @@ func (c *cmdForknet) runDetach(_ *cobra.Command, args []string) error {
 	hostName := args[3]
 
 	if daemonPID == "" {
-		return fmt.Errorf("Daemon PID argument is required")
+		return errors.New("Daemon PID argument is required")
 	}
 
 	if ifName == "" {
-		return fmt.Errorf("ifname argument is required")
+		return errors.New("ifname argument is required")
 	}
 
 	if hostName == "" {
-		return fmt.Errorf("hostname argument is required")
+		return errors.New("hostname argument is required")
 	}
 
 	// Check if the interface exists.

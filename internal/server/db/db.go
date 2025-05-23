@@ -260,7 +260,7 @@ func OpenCluster(closingCtx context.Context, name string, store driver.NodeStore
 
 // ErrSomeNodesAreBehind is returned by OpenCluster if some of the nodes in the
 // cluster have a schema or API version that is less recent than this node.
-var ErrSomeNodesAreBehind = fmt.Errorf("some nodes are behind this node's version")
+var ErrSomeNodesAreBehind = errors.New("some nodes are behind this node's version")
 
 // ForLocalInspection is a aid for the hack in initializeDbObject, which
 // sets the db-related Daemon attributes upfront, to be backward compatible
@@ -405,8 +405,8 @@ func begin(db *sql.DB) (*sql.Tx, error) {
 	}
 
 	logger.Debugf("DbBegin: DB still locked")
-	logger.Debugf(logger.GetStack())
-	return nil, fmt.Errorf("DB is locked")
+	logger.Debug(logger.GetStack())
+	return nil, errors.New("DB is locked")
 }
 
 // TxCommit commits the given transaction.

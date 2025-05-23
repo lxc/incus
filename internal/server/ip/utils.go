@@ -2,7 +2,7 @@ package ip
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
 	"os/exec"
 )
@@ -36,7 +36,7 @@ type LinkInfo struct {
 func GetLinkInfoByName(name string) (LinkInfo, error) {
 	ipPath, err := exec.LookPath("ip")
 	if err != nil {
-		return LinkInfo{}, fmt.Errorf("ip command not found")
+		return LinkInfo{}, errors.New("ip command not found")
 	}
 
 	cmd := exec.Command(ipPath, "-j", "-d", "link", "show", name)
@@ -66,11 +66,11 @@ func GetLinkInfoByName(name string) (LinkInfo, error) {
 
 	err = cmd.Wait()
 	if err != nil {
-		return LinkInfo{}, fmt.Errorf("no matching link found")
+		return LinkInfo{}, errors.New("no matching link found")
 	}
 
 	if len(linkInfoJSON) == 0 {
-		return LinkInfo{}, fmt.Errorf("no matching link found")
+		return LinkInfo{}, errors.New("no matching link found")
 	}
 
 	return linkInfoJSON[0], nil

@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -548,16 +549,16 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 
 	// Quick check.
 	if req.Token && req.Certificate != "" {
-		return response.BadRequest(fmt.Errorf("Can't use certificate if token is requested"))
+		return response.BadRequest(errors.New("Can't use certificate if token is requested"))
 	}
 
 	if req.Token {
 		if req.Type != "client" {
-			return response.BadRequest(fmt.Errorf("Tokens can only be issued for client certificates"))
+			return response.BadRequest(errors.New("Tokens can only be issued for client certificates"))
 		}
 
 		if localHTTPSAddress == "" {
-			return response.BadRequest(fmt.Errorf("Can't issue token when server isn't listening on network"))
+			return response.BadRequest(errors.New("Can't issue token when server isn't listening on network"))
 		}
 	}
 
@@ -570,7 +571,7 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 
 	// User isn't an admin and is already trusted, can't add more certs.
 	if trusted && req.Certificate == "" && !req.Token {
-		return response.BadRequest(fmt.Errorf("Client is already trusted"))
+		return response.BadRequest(errors.New("Client is already trusted"))
 	}
 
 	// Handle requests by non-admin users.
@@ -603,7 +604,7 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 			}
 
 			if joinOp == nil {
-				return response.Forbidden(fmt.Errorf("No matching cluster join operation found"))
+				return response.Forbidden(errors.New("No matching cluster join operation found"))
 			}
 		} else {
 			// Check if certificate add token supplied as token.
@@ -616,7 +617,7 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 				}
 
 				if joinOp == nil {
-					return response.Forbidden(fmt.Errorf("No matching certificate add operation found"))
+					return response.Forbidden(errors.New("No matching certificate add operation found"))
 				}
 
 				// Create a new request from the token data as the user isn't allowed to override anything.
@@ -636,7 +637,7 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 					}
 
 				default:
-					return response.InternalError(fmt.Errorf("Bad certificate add operation data"))
+					return response.InternalError(errors.New("Bad certificate add operation data"))
 				}
 			} else {
 				return response.Forbidden(nil)
@@ -730,12 +731,12 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 			// This can happen if the client doesn't send a client certificate or if the server is in
 			// CA mode. We rely on this check to prevent non-CA trusted client certificates from being
 			// added when in CA mode.
-			return response.BadRequest(fmt.Errorf("No client certificate provided"))
+			return response.BadRequest(errors.New("No client certificate provided"))
 		}
 
 		cert = r.TLS.PeerCertificates[len(r.TLS.PeerCertificates)-1]
 	} else {
-		return response.BadRequest(fmt.Errorf("Can't use TLS data on non-TLS link"))
+		return response.BadRequest(errors.New("Can't use TLS data on non-TLS link"))
 	}
 
 	// Check validity.
@@ -1052,17 +1053,17 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 		certProjects := req.Projects
 		if !userCanEditCertificate {
 			if r.TLS == nil {
-				response.Forbidden(fmt.Errorf("Cannot update certificate information"))
+				response.Forbidden(errors.New("Cannot update certificate information"))
 			}
 
 			// Ensure the user in not trying to change fields other than the certificate.
 			if dbInfo.Restricted != req.Restricted || dbInfo.Name != req.Name || len(dbInfo.Projects) != len(req.Projects) {
-				return response.Forbidden(fmt.Errorf("Only the certificate can be changed"))
+				return response.Forbidden(errors.New("Only the certificate can be changed"))
 			}
 
 			for i := range dbInfo.Projects {
 				if dbInfo.Projects[i] != req.Projects[i] {
-					return response.Forbidden(fmt.Errorf("Only the certificate can be changed"))
+					return response.Forbidden(errors.New("Only the certificate can be changed"))
 				}
 			}
 
@@ -1101,7 +1102,7 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 				}
 
 				if !trusted {
-					return response.Forbidden(fmt.Errorf("Certificate cannot be changed"))
+					return response.Forbidden(errors.New("Certificate cannot be changed"))
 				}
 			}
 		}
@@ -1110,7 +1111,7 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 			// Add supplied certificate.
 			block, _ := pem.Decode([]byte(req.Certificate))
 			if block == nil {
-				return response.BadRequest(fmt.Errorf("Invalid PEM encoded certificate"))
+				return response.BadRequest(errors.New("Invalid PEM encoded certificate"))
 			}
 
 			cert, err := x509.ParseCertificate(block.Bytes)
@@ -1209,7 +1210,7 @@ func certificateDelete(d *Daemon, r *http.Request) response.Response {
 		// Non-admins are able to delete only their own certificate.
 		if !userCanEditCertificate {
 			if r.TLS == nil {
-				response.Forbidden(fmt.Errorf("Cannot delete certificate"))
+				response.Forbidden(errors.New("Cannot delete certificate"))
 			}
 
 			certBlock, _ := pem.Decode([]byte(certInfo.Certificate))
@@ -1234,7 +1235,7 @@ func certificateDelete(d *Daemon, r *http.Request) response.Response {
 			}
 
 			if !trusted {
-				return response.Forbidden(fmt.Errorf("Certificate cannot be deleted"))
+				return response.Forbidden(errors.New("Certificate cannot be deleted"))
 			}
 		}
 
@@ -1276,22 +1277,22 @@ func certificateDelete(d *Daemon, r *http.Request) response.Response {
 
 func certificateValidate(cert *x509.Certificate) error {
 	if time.Now().Before(cert.NotBefore) {
-		return fmt.Errorf("The provided certificate isn't valid yet")
+		return errors.New("The provided certificate isn't valid yet")
 	}
 
 	if time.Now().After(cert.NotAfter) {
-		return fmt.Errorf("The provided certificate is expired")
+		return errors.New("The provided certificate is expired")
 	}
 
 	if cert.PublicKeyAlgorithm == x509.RSA {
 		pubKey, ok := cert.PublicKey.(*rsa.PublicKey)
 		if !ok {
-			return fmt.Errorf("Unable to validate the RSA certificate")
+			return errors.New("Unable to validate the RSA certificate")
 		}
 
 		// Check that we're dealing with at least 2048bit (Size returns a value in bytes).
 		if pubKey.Size()*8 < 2048 {
-			return fmt.Errorf("RSA key is too weak (minimum of 2048bit)")
+			return errors.New("RSA key is too weak (minimum of 2048bit)")
 		}
 	}
 

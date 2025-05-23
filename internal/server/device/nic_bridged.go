@@ -320,11 +320,11 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 	// checkWithManagedNetwork validates the device's settings against the managed network.
 	checkWithManagedNetwork := func(n network.Network) error {
 		if n.Status() != api.NetworkStatusCreated {
-			return fmt.Errorf("Specified network is not fully created")
+			return errors.New("Specified network is not fully created")
 		}
 
 		if n.Type() != "bridge" {
-			return fmt.Errorf("Specified network must be of type bridge")
+			return errors.New("Specified network must be of type bridge")
 		}
 
 		netConfig := n.Config()
@@ -355,7 +355,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 			}
 
 			if d.config["ipv4.address"] == "none" && util.IsFalseOrEmpty(d.config["security.ipv4_filtering"]) {
-				return fmt.Errorf("Cannot have ipv4.address as none unless using security.ipv4_filtering")
+				return errors.New("Cannot have ipv4.address as none unless using security.ipv4_filtering")
 			}
 
 			// IP should not be the same as the parent managed network address.
@@ -390,7 +390,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 			}
 
 			if d.config["ipv6.address"] == "none" && util.IsFalseOrEmpty(d.config["security.ipv6_filtering"]) {
-				return fmt.Errorf("Cannot have ipv6.address as none unless using security.ipv6_filtering")
+				return errors.New("Cannot have ipv6.address as none unless using security.ipv6_filtering")
 			}
 
 			// IP should not be the same as the parent managed network address.
@@ -404,7 +404,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 		if slices.Contains([]string{"", "native"}, netConfig["bridge.driver"]) {
 			// Check VLAN 0 isn't set when using a native Linux managed bridge, as not supported.
 			if d.config["vlan"] == "0" {
-				return fmt.Errorf("VLAN ID 0 is not allowed for native Linux bridges")
+				return errors.New("VLAN ID 0 is not allowed for native Linux bridges")
 			}
 
 			// Check that none of the supplied VLAN IDs are VLAN 0 when using a native Linux managed
@@ -415,7 +415,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 			}
 
 			if slices.Contains(networkVLANList, 0) {
-				return fmt.Errorf("VLAN tagged ID 0 is not allowed for native Linux bridges")
+				return errors.New("VLAN tagged ID 0 is not allowed for native Linux bridges")
 			}
 		}
 
@@ -474,20 +474,20 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 			// parent bridge.
 			if util.IsTrue(d.config["security.ipv4_filtering"]) {
 				if d.config["ipv4.address"] == "" {
-					return fmt.Errorf("IPv4 filtering requires a manually specified ipv4.address when using an unmanaged parent bridge")
+					return errors.New("IPv4 filtering requires a manually specified ipv4.address when using an unmanaged parent bridge")
 				}
 			} else if d.config["ipv4.address"] != "" {
 				// Static IP cannot be used with unmanaged parent.
-				return fmt.Errorf("Cannot use manually specified ipv4.address when using unmanaged parent bridge")
+				return errors.New("Cannot use manually specified ipv4.address when using unmanaged parent bridge")
 			}
 
 			if util.IsTrue(d.config["security.ipv6_filtering"]) {
 				if d.config["ipv6.address"] == "" {
-					return fmt.Errorf("IPv6 filtering requires a manually specified ipv6.address when using an unmanaged parent bridge")
+					return errors.New("IPv6 filtering requires a manually specified ipv6.address when using an unmanaged parent bridge")
 				}
 			} else if d.config["ipv6.address"] != "" {
 				// Static IP cannot be used with unmanaged parent.
-				return fmt.Errorf("Cannot use manually specified ipv6.address when using unmanaged parent bridge")
+				return errors.New("Cannot use manually specified ipv6.address when using unmanaged parent bridge")
 			}
 		}
 	}
@@ -495,7 +495,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 	// Check that IP filtering isn't being used with VLAN filtering.
 	if util.IsTrue(d.config["security.ipv4_filtering"]) || util.IsTrue(d.config["security.ipv6_filtering"]) {
 		if d.config["vlan"] != "" || d.config["vlan.tagged"] != "" {
-			return fmt.Errorf("IP filtering cannot be used with VLAN filtering")
+			return errors.New("IP filtering cannot be used with VLAN filtering")
 		}
 	}
 
@@ -511,7 +511,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 	// Check if security ACL(s) are configured.
 	if d.config["security.acls"] != "" {
 		if d.state.Firewall.String() != "nftables" {
-			return fmt.Errorf("Security ACLs are only supported when using nftables firewall")
+			return errors.New("Security ACLs are only supported when using nftables firewall")
 		}
 
 		// The NIC's network may be a non-default project, so lookup project and get network's project name.
@@ -674,7 +674,7 @@ func (d *nicBridged) checkAddressConflict() error {
 // validateEnvironment checks the runtime environment for correctness.
 func (d *nicBridged) validateEnvironment() error {
 	if d.inst.Type() == instancetype.Container && d.config["name"] == "" {
-		return fmt.Errorf("Requires name property to start")
+		return errors.New("Requires name property to start")
 	}
 
 	if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"])) {
@@ -1316,15 +1316,15 @@ func (d *nicBridged) removeFilters(m deviceConfig.Device) {
 // These are controlled by the security.mac_filtering, security.ipv4_Filtering, security.ipv6_filtering and security.acls config keys.
 func (d *nicBridged) setFilters() (err error) {
 	if d.config["hwaddr"] == "" {
-		return fmt.Errorf("Failed to set network filters: require hwaddr defined")
+		return errors.New("Failed to set network filters: require hwaddr defined")
 	}
 
 	if d.config["host_name"] == "" {
-		return fmt.Errorf("Failed to set network filters: require host_name defined")
+		return errors.New("Failed to set network filters: require host_name defined")
 	}
 
 	if d.config["parent"] == "" {
-		return fmt.Errorf("Failed to set network filters: require parent defined")
+		return errors.New("Failed to set network filters: require parent defined")
 	}
 
 	// Parse device config.
@@ -1340,11 +1340,11 @@ func (d *nicBridged) setFilters() (err error) {
 	// If parent bridge is unmanaged check that a manually specified IP is available if IP filtering enabled.
 	if d.network == nil {
 		if util.IsTrue(d.config["security.ipv4_filtering"]) && d.config["ipv4.address"] == "" {
-			return fmt.Errorf("IPv4 filtering requires a manually specified ipv4.address when using an unmanaged parent bridge")
+			return errors.New("IPv4 filtering requires a manually specified ipv4.address when using an unmanaged parent bridge")
 		}
 
 		if util.IsTrue(d.config["security.ipv6_filtering"]) && d.config["ipv6.address"] == "" {
-			return fmt.Errorf("IPv6 filtering requires a manually specified ipv6.address when using an unmanaged parent bridge")
+			return errors.New("IPv6 filtering requires a manually specified ipv6.address when using an unmanaged parent bridge")
 		}
 	}
 
@@ -1422,7 +1422,7 @@ func (d *nicBridged) setFilters() (err error) {
 
 			nsIP := net.ParseIP(ns)
 			if nsIP == nil {
-				return fmt.Errorf("Invalid DNS nameserver")
+				return errors.New("Invalid DNS nameserver")
 			}
 
 			if nsIP.To4() == nil {
@@ -1802,7 +1802,7 @@ func (d *nicBridged) setupNativeBridgePortVLANs(hostName string) error {
 	if d.config["vlan"] != "" {
 		// Reject VLAN ID 0 if specified (as validation allows VLAN ID 0 on unmanaged bridges for OVS).
 		if d.config["vlan"] == "0" {
-			return fmt.Errorf("VLAN ID 0 is not allowed for native Linux bridges")
+			return errors.New("VLAN ID 0 is not allowed for native Linux bridges")
 		}
 
 		// Get default PVID membership on port.
@@ -1839,7 +1839,7 @@ func (d *nicBridged) setupNativeBridgePortVLANs(hostName string) error {
 		for _, vlanID := range networkVLANList {
 			// Reject VLAN ID 0 if specified (as validation allows VLAN ID 0 on unmanaged bridges for OVS).
 			if vlanID == 0 {
-				return fmt.Errorf("VLAN tagged ID 0 is not allowed for native Linux bridges")
+				return errors.New("VLAN tagged ID 0 is not allowed for native Linux bridges")
 			}
 
 			err := link.BridgeVLANAdd(fmt.Sprintf("%d", vlanID), false, false, false)
@@ -1862,7 +1862,7 @@ func (d *nicBridged) setupOVSBridgePortVLANs(hostName string) error {
 	// Set port on bridge to specified untagged PVID.
 	if d.config["vlan"] != "" {
 		if d.config["vlan"] == "none" && d.config["vlan.tagged"] == "" {
-			return fmt.Errorf("vlan=none is not supported with openvswitch bridges when not using vlan.tagged")
+			return errors.New("vlan=none is not supported with openvswitch bridges when not using vlan.tagged")
 		}
 
 		// Configure the untagged 'native' membership settings of the port if VLAN ID specified.

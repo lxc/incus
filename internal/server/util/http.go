@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -18,6 +19,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/lxc/incus/v6/internal/ports"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
@@ -104,7 +106,7 @@ func HTTPClient(certificate string, proxy proxyFunc) (*http.Client, error) {
 	if certificate != "" {
 		certBlock, _ := pem.Decode([]byte(certificate))
 		if certBlock == nil {
-			return nil, fmt.Errorf("Invalid certificate")
+			return nil, errors.New("Invalid certificate")
 		}
 
 		cert, err = x509.ParseCertificate(certBlock.Bytes)

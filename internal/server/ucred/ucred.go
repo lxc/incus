@@ -2,7 +2,7 @@ package ucred
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net"
 
 	"golang.org/x/sys/unix"
@@ -13,7 +13,7 @@ import (
 )
 
 // ErrNotUnixSocket is returned when the underlying connection isn't a unix socket.
-var ErrNotUnixSocket = fmt.Errorf("Connection isn't a unix socket")
+var ErrNotUnixSocket = errors.New("Connection isn't a unix socket")
 
 // GetConnFromContext extracts the connection from the request context on a HTTP listener.
 func GetConnFromContext(ctx context.Context) net.Conn {

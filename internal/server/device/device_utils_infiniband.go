@@ -1,6 +1,7 @@
 package device
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -73,7 +74,7 @@ func infinibandDevices(nics *api.ResourcesNetwork, parent string) map[string]*ap
 // supplied runConfig with the Cgroup rules and mount instructions to pass the device into instance.
 func infinibandAddDevices(s *state.State, devicesPath string, deviceName string, ibDev *api.ResourcesNetworkCardPort, runConf *deviceConfig.RunConfig) error {
 	if ibDev.Infiniband == nil {
-		return fmt.Errorf("No infiniband devices supplied")
+		return errors.New("No infiniband devices supplied")
 	}
 
 	// Add IsSM device if defined.
@@ -122,7 +123,7 @@ func infinibandValidMAC(value string) error {
 
 	// Check valid lengths and delimiter.
 	if err != nil || (len(value) != 23 && len(value) != 59) || strings.ContainsAny(value, "-.") {
-		return fmt.Errorf("Invalid value, must be either 8 or 20 bytes of hex separated by colons")
+		return errors.New("Invalid value, must be either 8 or 20 bytes of hex separated by colons")
 	}
 
 	return nil
@@ -148,5 +149,5 @@ func infinibandSetDevMAC(ibDev string, hwaddr string) error {
 		return NetworkSetDevMAC(ibDev, fmt.Sprintf("%s%s", curHwaddr[:36], hwaddr))
 	}
 
-	return fmt.Errorf("Invalid length")
+	return errors.New("Invalid length")
 }

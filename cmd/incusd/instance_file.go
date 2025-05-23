@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -37,7 +38,7 @@ func instanceFileHandler(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if internalInstance.IsSnapshot(name) {
-		return response.BadRequest(fmt.Errorf("Invalid instance name"))
+		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
 	// Redirect to correct server if needed.
@@ -59,7 +60,7 @@ func instanceFileHandler(d *Daemon, r *http.Request) response.Response {
 	// Parse and cleanup the path.
 	path := r.FormValue("path")
 	if path == "" {
-		return response.BadRequest(fmt.Errorf("Missing path argument"))
+		return response.BadRequest(errors.New("Missing path argument"))
 	}
 
 	if !strings.HasPrefix(path, "/") {

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"net/url"
 
@@ -56,7 +56,7 @@ func instanceDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if internalInstance.IsSnapshot(name) {
-		return response.BadRequest(fmt.Errorf("Invalid instance name"))
+		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
 	// Handle requests targeted to a container on a different node
@@ -75,7 +75,7 @@ func instanceDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if inst.IsRunning() {
-		return response.BadRequest(fmt.Errorf("Instance is running"))
+		return response.BadRequest(errors.New("Instance is running"))
 	}
 
 	run := func(op *operations.Operation) error {

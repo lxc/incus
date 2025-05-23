@@ -1,7 +1,7 @@
 package task
 
 import (
-	"fmt"
+	"errors"
 	"time"
 )
 
@@ -27,7 +27,7 @@ type Schedule func() (time.Duration, error)
 // ErrSkip is a special error that may be returned by a Schedule function to
 // mean to skip a particular execution of the task function, and just wait the
 // returned interval before re-evaluating.
-var ErrSkip = fmt.Errorf("skip execution of task function")
+var ErrSkip = errors.New("skip execution of task function")
 
 // Every returns a Schedule that always returns the given time interval.
 func Every(interval time.Duration, options ...EveryOption) Schedule {

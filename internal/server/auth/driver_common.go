@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -19,7 +20,7 @@ type commonAuthorizer struct {
 
 func (c *commonAuthorizer) init(driverName string, l logger.Logger) error {
 	if l == nil {
-		return fmt.Errorf("Cannot initialize authorizer: nil logger provided")
+		return errors.New("Cannot initialize authorizer: nil logger provided")
 	}
 
 	l = l.AddContext(logger.Ctx{"driver": driverName})
@@ -75,29 +76,29 @@ func (r *requestDetails) actualDetails() *common.RequestDetails {
 
 func (c *commonAuthorizer) requestDetails(r *http.Request) (*requestDetails, error) {
 	if r == nil {
-		return nil, fmt.Errorf("Cannot inspect nil request")
+		return nil, errors.New("Cannot inspect nil request")
 	} else if r.URL == nil {
-		return nil, fmt.Errorf("Request URL is not set")
+		return nil, errors.New("Request URL is not set")
 	}
 
 	val := r.Context().Value(request.CtxUsername)
 	if val == nil {
-		return nil, fmt.Errorf("Username not present in request context")
+		return nil, errors.New("Username not present in request context")
 	}
 
 	username, ok := val.(string)
 	if !ok {
-		return nil, fmt.Errorf("Request context username has incorrect type")
+		return nil, errors.New("Request context username has incorrect type")
 	}
 
 	val = r.Context().Value(request.CtxProtocol)
 	if val == nil {
-		return nil, fmt.Errorf("Protocol not present in request context")
+		return nil, errors.New("Protocol not present in request context")
 	}
 
 	protocol, ok := val.(string)
 	if !ok {
-		return nil, fmt.Errorf("Request context protocol has incorrect type")
+		return nil, errors.New("Request context protocol has incorrect type")
 	}
 
 	var forwardedUsername string
@@ -105,7 +106,7 @@ func (c *commonAuthorizer) requestDetails(r *http.Request) (*requestDetails, err
 	if val != nil {
 		forwardedUsername, ok = val.(string)
 		if !ok {
-			return nil, fmt.Errorf("Request context forwarded username has incorrect type")
+			return nil, errors.New("Request context forwarded username has incorrect type")
 		}
 	}
 
@@ -114,7 +115,7 @@ func (c *commonAuthorizer) requestDetails(r *http.Request) (*requestDetails, err
 	if val != nil {
 		forwardedProtocol, ok = val.(string)
 		if !ok {
-			return nil, fmt.Errorf("Request context forwarded username has incorrect type")
+			return nil, errors.New("Request context forwarded username has incorrect type")
 		}
 	}
 

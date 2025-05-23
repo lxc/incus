@@ -2,6 +2,7 @@ package drivers
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -141,7 +142,7 @@ func (d *qemu) getQemuMemoryMetrics(monitor *qmp.Monitor) (metrics.MemoryMetrics
 	}
 
 	if memRSS == -1 {
-		return out, fmt.Errorf("Couldn't find VM memory usage")
+		return out, errors.New("Couldn't find VM memory usage")
 	}
 
 	// Get max memory usage.

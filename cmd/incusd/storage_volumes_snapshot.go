@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -174,7 +175,7 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 	}
 
 	if used {
-		return response.BadRequest(fmt.Errorf("Volumes used by Incus itself cannot have snapshots"))
+		return response.BadRequest(errors.New("Volumes used by Incus itself cannot have snapshots"))
 	}
 
 	// Retrieve the storage pool (and check if the storage pool exists).
@@ -598,11 +599,11 @@ func storagePoolVolumeSnapshotTypePost(d *Daemon, r *http.Request) response.Resp
 
 	// Quick checks.
 	if req.Name == "" {
-		return response.BadRequest(fmt.Errorf("No name provided"))
+		return response.BadRequest(errors.New("No name provided"))
 	}
 
 	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(fmt.Errorf("Storage volume names may not contain slashes"))
+		return response.BadRequest(errors.New("Storage volume names may not contain slashes"))
 	}
 
 	// This is a migration request so send back requested secrets.

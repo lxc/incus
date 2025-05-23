@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -41,7 +42,7 @@ func (c *cmdCallhook) run(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 
-		return fmt.Errorf("Missing required arguments")
+		return errors.New("Missing required arguments")
 	}
 
 	path := args[0]
@@ -63,7 +64,7 @@ func (c *cmdCallhook) run(cmd *cobra.Command, args []string) error {
 
 	// Only root should run this.
 	if os.Geteuid() != 0 {
-		return fmt.Errorf("This must be run as root")
+		return errors.New("This must be run as root")
 	}
 
 	// Connect to daemon.
@@ -117,14 +118,14 @@ func (c *cmdCallhook) run(cmd *cobra.Command, args []string) error {
 
 		break
 	case <-time.After(30 * time.Second):
-		return fmt.Errorf("Hook didn't finish within 30s")
+		return errors.New("Hook didn't finish within 30s")
 	}
 
 	// If the container is rebooting, we purposefully tell LXC that this hook failed so that
 	// it won't reboot the container, which lets us start it again in the OnStop function.
 	// Other hook types can return without error safely.
 	if hook == "stop" && target == "reboot" {
-		return fmt.Errorf("Reboot must be handled by Incus")
+		return errors.New("Reboot must be handled by Incus")
 	}
 
 	return nil

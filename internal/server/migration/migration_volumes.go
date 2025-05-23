@@ -32,7 +32,7 @@ type InfoResponse struct {
 // Err returns the error of the response.
 func (r *InfoResponse) Err() error {
 	if r.StatusCode != http.StatusOK {
-		return api.StatusErrorf(r.StatusCode, r.Error)
+		return api.StatusErrorf(r.StatusCode, "%s", r.Error)
 	}
 
 	return nil

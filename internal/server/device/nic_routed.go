@@ -313,7 +313,7 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 
 	// Ensure that VLAN setting is only used with parent setting.
 	if d.config["parent"] == "" && d.config["vlan"] != "" {
-		return fmt.Errorf("The vlan setting can only be used when combined with a parent interface")
+		return errors.New("The vlan setting can only be used when combined with a parent interface")
 	}
 
 	return nil
@@ -322,7 +322,7 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 // validateEnvironment checks the runtime environment for correctness.
 func (d *nicRouted) validateEnvironment() error {
 	if d.inst.Type() == instancetype.Container && d.config["name"] == "" {
-		return fmt.Errorf("Requires name property to start")
+		return errors.New("Requires name property to start")
 	}
 
 	if d.config["parent"] != "" {

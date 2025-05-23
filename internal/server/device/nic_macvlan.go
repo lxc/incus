@@ -150,11 +150,11 @@ func (d *nicMACVLAN) validateConfig(instConf instance.ConfigReader) error {
 		}
 
 		if d.network.Status() != api.NetworkStatusCreated {
-			return fmt.Errorf("Specified network is not fully created")
+			return errors.New("Specified network is not fully created")
 		}
 
 		if d.network.Type() != "macvlan" {
-			return fmt.Errorf("Specified network must be of type macvlan")
+			return errors.New("Specified network must be of type macvlan")
 		}
 
 		netConfig := d.network.Config()
@@ -201,7 +201,7 @@ func (d *nicMACVLAN) PreStartCheck() error {
 // validateEnvironment checks the runtime environment for correctness.
 func (d *nicMACVLAN) validateEnvironment() error {
 	if d.inst.Type() == instancetype.Container && d.config["name"] == "" {
-		return fmt.Errorf("Requires name property to start")
+		return errors.New("Requires name property to start")
 	}
 
 	if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"])) {

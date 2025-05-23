@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -75,7 +76,7 @@ func instanceState(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if internalInstance.IsSnapshot(name) {
-		return response.BadRequest(fmt.Errorf("Invalid instance name"))
+		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
 	// Handle requests targeted to a container on a different node
@@ -144,7 +145,7 @@ func instanceStatePut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if internalInstance.IsSnapshot(name) {
-		return response.BadRequest(fmt.Errorf("Invalid instance name"))
+		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
 	// Handle requests targeted to a container on a different node
@@ -168,7 +169,7 @@ func instanceStatePut(d *Daemon, r *http.Request) response.Response {
 
 	// Check if the cluster member is evacuated.
 	if s.ServerClustered && req.Action != "stop" && s.DB.Cluster.LocalNodeIsEvacuated() {
-		return response.Forbidden(fmt.Errorf("Cluster member is evacuated"))
+		return response.Forbidden(errors.New("Cluster member is evacuated"))
 	}
 
 	// Don't mess with instances while in setup mode.

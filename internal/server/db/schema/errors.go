@@ -1,7 +1,7 @@
 package schema
 
 import (
-	"fmt"
+	"errors"
 )
 
 // ErrGracefulAbort is a special error that can be returned by a Check function
@@ -9,4 +9,4 @@ import (
 //
 // Every change performed so by the Check will be committed, although
 // ErrGracefulAbort will be returned.
-var ErrGracefulAbort = fmt.Errorf("schema check gracefully aborted")
+var ErrGracefulAbort = errors.New("schema check gracefully aborted")

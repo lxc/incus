@@ -3,6 +3,7 @@
 package endpoints
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -56,7 +57,7 @@ func CheckAlreadyRunning(path string) error {
 
 	// If the connection succeeded it means there's another daemon running.
 	if err == nil {
-		return fmt.Errorf("Incus is already running")
+		return errors.New("Incus is already running")
 	}
 
 	return nil
