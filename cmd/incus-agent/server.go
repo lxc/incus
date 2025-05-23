@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -46,7 +47,7 @@ func createCmd(restAPI *mux.Router, version string, c APIEndpoint, cert *x509.Ce
 
 		if !authenticate(r, cert) {
 			logger.Error("Not authorized")
-			_ = response.InternalError(fmt.Errorf("Not authorized")).Render(w)
+			_ = response.InternalError(errors.New("Not authorized")).Render(w)
 			return
 		}
 
