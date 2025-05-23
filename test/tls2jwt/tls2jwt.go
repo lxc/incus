@@ -61,6 +61,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	fmt.Fprintf(os.Stderr, "Error: Couldn't sign the token (unsupported algorithm?)\n")
+	fmt.Fprint(os.Stderr, "Error: Couldn't sign the token (unsupported algorithm?)\n")
 	os.Exit(1)
 }
