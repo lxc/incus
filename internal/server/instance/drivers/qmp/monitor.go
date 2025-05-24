@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/digitalocean/go-qemu/qmp"
 
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
@@ -44,7 +43,7 @@ var ExcludedCommands = []string{"ringbuf-read"}
 // Monitor represents a QMP monitor.
 type Monitor struct {
 	path string
-	qmp  *qmp.SocketMonitor
+	qmp  *qemuMachineProtocal
 
 	agentStarted      bool
 	agentStartedMu    sync.Mutex
@@ -98,7 +97,7 @@ func (m *Monitor) start() error {
 	}
 
 	// Start event monitoring go routine.
-	chEvents, err := m.qmp.Events(context.Background())
+	chEvents, err := m.qmp.getEvents(context.Background())
 	if err != nil {
 		return err
 	}
@@ -180,7 +179,7 @@ func (m *Monitor) ping() error {
 	}
 
 	// Query the capabilities to validate the monitor.
-	_, err := m.qmp.Run([]byte("{'execute': 'query-version'}"))
+	_, err := m.qmp.run([]byte("{'execute': 'query-version'}"))
 	if err != nil {
 		m.Disconnect()
 		return ErrMonitorDisconnect
@@ -212,7 +211,7 @@ func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool) error {
 		}
 	}
 
-	out, err := m.qmp.Run(request)
+	out, err := m.qmp.run(request)
 	if err != nil {
 		// Confirm the daemon didn't die.
 		errPing := m.ping()
@@ -284,14 +283,18 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 	}
 
 	// Setup the connection.
-	qmpConn, err := qmp.NewSocketMonitor("unix", path, time.Second)
+	c, err := net.DialTimeout("unix", path, time.Second)
 	if err != nil {
 		return nil, err
 	}
 
+	qmpConn := &qemuMachineProtocal{
+		c: c,
+	}
+
 	chError := make(chan error, 1)
 	go func() {
-		err = qmpConn.Connect()
+		err = qmpConn.connect()
 		chError <- err
 	}()
 
@@ -302,7 +305,7 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 		}
 
 	case <-time.After(5 * time.Second):
-		_ = qmpConn.Disconnect()
+		_ = qmpConn.disconnect()
 		return nil, errors.New("QMP connection timed out")
 	}
 
@@ -352,7 +355,7 @@ func (m *Monitor) Disconnect() {
 	if !m.disconnected {
 		close(m.chDisconnect)
 		m.disconnected = true
-		_ = m.qmp.Disconnect()
+		_ = m.qmp.disconnect()
 	}
 
 	// Remove from the map.
