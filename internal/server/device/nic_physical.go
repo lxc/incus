@@ -130,6 +130,12 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 		// Get actual parent device from network's parent setting.
 		d.config["parent"] = netConfig["parent"]
 
+		// If parent is bridge, ensure it's managed
+		isParentBridge := d.config["parent"] != "" && util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"]))
+		if isParentBridge && d.network == nil {
+			return fmt.Errorf("Error parent bridges expected to be managed")
+		}
+
 		// Copy certain keys verbatim from the network's settings.
 		for _, field := range optionalFields {
 			_, found := netConfig[field]
@@ -152,12 +158,25 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 
 // validateEnvironment checks the runtime environment for correctness.
 func (d *nicPhysical) validateEnvironment() error {
+	// Add nil check to prevent panic
+	if d.inst == nil {
+		return fmt.Errorf("Instance is nil")
+	}
+
+	if d.config == nil {
+		return fmt.Errorf("Device config is nil")
+	}
+
 	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
 		return errors.New("Network physical devices cannot be used when migration.stateful is enabled")
 	}
 
 	if d.inst.Type() == instancetype.Container && d.config["name"] == "" {
 		return errors.New("Requires name property to start")
+	}
+
+	if d.config["parent"] == "" {
+		return fmt.Errorf("Parent device name is missing")
 	}
 
 	if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"])) {
@@ -172,6 +191,32 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 	err := d.validateEnvironment()
 	if err != nil {
 		return nil, err
+	}
+
+	// Make sure parent is defined before we check if it exists
+	if d.config["parent"] == "" {
+		return nil, fmt.Errorf("Missing parent device name")
+	}
+
+	isParentBridge := util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", d.config["parent"]))
+	if isParentBridge {
+		bridgedConfig := d.config.Clone()
+		bridgedConfig["type"] = "nic"
+		bridgedConfig["nictype"] = "bridged"
+		bridgedConfig["network"] = ""
+
+		// Create and properly initialize the bridged device
+		bridged, err := load(d.inst, d.state, d.inst.Project().Name, d.inst.Name(), bridgedConfig, d.volatileGet, d.volatileSet)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to initialize bridged device: %w", err)
+		}
+
+		bridged, ok := bridged.(*nicBridged)
+		if !ok {
+			return nil, fmt.Errorf("Device not configured as bridged NIC")
+		}
+
+		return bridged.Start()
 	}
 
 	// Lock to avoid issues with containers starting in parallel.
@@ -374,6 +419,27 @@ func (d *nicPhysical) startVMUSB(name string) (*deviceConfig.RunConfig, error) {
 
 // Stop is run when the device is removed from the instance.
 func (d *nicPhysical) Stop() (*deviceConfig.RunConfig, error) {
+	isParentBridge := util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", d.config["parent"]))
+	if isParentBridge {
+		bridgedConfig := d.config.Clone()
+		bridgedConfig["type"] = "nic"
+		bridgedConfig["nictype"] = "bridged"
+		bridgedConfig["network"] = ""
+
+		// Create and properly initialize the bridged device
+		bridged, err := load(d.inst, d.state, d.inst.Project().Name, d.inst.Name(), bridgedConfig, d.volatileGet, d.volatileSet)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to initialize bridged device: %w", err)
+		}
+
+		bridged, ok := bridged.(*nicBridged)
+		if !ok {
+			return nil, fmt.Errorf("Device not configured as bridged NIC")
+		}
+
+		return bridged.Stop()
+	}
+
 	v := d.volatileGet()
 
 	runConf := deviceConfig.RunConfig{
