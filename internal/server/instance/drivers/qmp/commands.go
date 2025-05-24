@@ -206,15 +206,12 @@ func (m *Monitor) SendFile(name string, file *os.File) error {
 		return ErrMonitorDisconnect
 	}
 
-	var req struct {
-		Execute   string `json:"execute"`
-		Arguments struct {
-			FDName string `json:"fdname"`
-		} `json:"arguments"`
+	id := m.qmp.qmpIncreaseID()
+	req := &qmpCommand{
+		ID:        id,
+		Execute:   "getfd",
+		Arguments: map[string]any{"fdname": name},
 	}
-
-	req.Execute = "getfd"
-	req.Arguments.FDName = name
 
 	reqJSON, err := json.Marshal(req)
 	if err != nil {
@@ -222,7 +219,7 @@ func (m *Monitor) SendFile(name string, file *os.File) error {
 	}
 
 	// Query the status.
-	_, err = m.qmp.runWithFile(reqJSON, file)
+	_, err = m.qmp.runWithFile(reqJSON, file, id)
 	if err != nil {
 		// Confirm the daemon didn't die.
 		errPing := m.ping()
@@ -259,27 +256,26 @@ func (m *Monitor) SendFileWithFDSet(name string, file *os.File, readonly bool) (
 		return nil, ErrMonitorDisconnect
 	}
 
-	var req struct {
-		Execute   string `json:"execute"`
-		Arguments struct {
-			Opaque string `json:"opaque"`
-		} `json:"arguments"`
-	}
-
 	permissions := "rdwr"
 	if readonly {
 		permissions = "rdonly"
 	}
 
-	req.Execute = "add-fd"
-	req.Arguments.Opaque = fmt.Sprintf("%s:%s", permissions, name)
+	id := m.qmp.qmpIncreaseID()
+	req := &qmpCommand{
+		ID:      id,
+		Execute: "add-fd",
+		Arguments: map[string]any{
+			"opaque": fmt.Sprintf("%s:%s", permissions, name),
+		},
+	}
 
 	reqJSON, err := json.Marshal(req)
 	if err != nil {
 		return nil, err
 	}
 
-	ret, err := m.qmp.runWithFile(reqJSON, file)
+	ret, err := m.qmp.runWithFile(reqJSON, file, id)
 	if err != nil {
 		// Confirm the daemon didn't die.
 		errPing := m.ping()

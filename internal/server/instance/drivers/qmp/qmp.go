@@ -240,9 +240,9 @@ func (qmp *qemuMachineProtocal) listen(r io.Reader, events chan<- qmpEvent, repl
 }
 
 // run executes the given QAPI command against a domain's QEMU instance.
-func (qmp *qemuMachineProtocal) run(command []byte) ([]byte, error) {
+func (qmp *qemuMachineProtocal) run(command []byte, id uint32) ([]byte, error) {
 	// Just call RunWithFile with no file
-	return qmp.runWithFile(command, nil)
+	return qmp.runWithFile(command, nil, id)
 }
 
 func (qmp *qemuMachineProtocal) qmpWriteMsg(b []byte, file *os.File) error {
@@ -267,22 +267,26 @@ func (qmp *qemuMachineProtocal) qmpWriteMsg(b []byte, file *os.File) error {
 }
 
 // runWithFile executes for passing a file through out-of-band data.
-func (qmp *qemuMachineProtocal) runWithFile(command []byte, file *os.File) ([]byte, error) {
+func (qmp *qemuMachineProtocal) runWithFile(command []byte, file *os.File, id uint32) ([]byte, error) {
 	// Only allow a single command to be run at a time to ensure that responses
 	// to a command cannot be mixed with responses from another command
 	qmp.mu.Lock()
 	defer qmp.mu.Unlock()
 
-	id := qmp.qmpIncreaseID()
-	command, err := qmp.qmpInjectID(command, id)
-	if err != nil {
-		return nil, err
+	if id == 0 {
+		id = qmp.qmpIncreaseID()
+		b, err := qmp.qmpInjectID(command, id)
+		if err != nil {
+			return nil, err
+		}
+
+		command = b
 	}
 
 	repCh := make(chan rawResponse, 1)
 	qmp.replies.Store(id, repCh)
 
-	err = qmp.qmpWriteMsg(command, file)
+	err := qmp.qmpWriteMsg(command, file)
 	if err != nil {
 		qmp.replies.Delete(id)
 		return nil, err
