@@ -3111,6 +3111,20 @@
 						}
 					},
 					{
+						"volatile.vm.rtc_adjustment": {
+							"longdesc": "Real Time Clock adjustment time to allow virtual machines to run on a different base than the host.",
+							"shortdesc": "Real Time Clock change adjustment",
+							"type": "int64"
+						}
+					},
+					{
+						"volatile.vm.rtc_offset": {
+							"longdesc": "Real Time Clock offset to allow virtual machines to run on a different base than the host.",
+							"shortdesc": "Real Time Clock change offset",
+							"type": "int64"
+						}
+					},
+					{
 						"volatile.vsock_id": {
 							"longdesc": "",
 							"shortdesc": "Instance `vsock ID` used as of last start",
