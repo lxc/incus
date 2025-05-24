@@ -2737,6 +2737,28 @@ The cluster member that the instance lived on before evacuation.
 
 ```
 
+```{config:option} volatile.rtc_change.adjustment instance-volatile
+:condition: "virtual machine"
+:defaultdesc: "`0`"
+:liveupdate: "no"
+:shortdesc: "RTC change adjustment"
+:type: "int64"
+For container, default value `0`.
+When VM starting, accumulate `offset` to `adjustment`, apply `adjustment` to `-rtc base`, and reset `offset` to `0`.
+
+```
+
+```{config:option} volatile.rtc_change.offset instance-volatile
+:condition: "virtual machine"
+:defaultdesc: "`0`"
+:liveupdate: "no"
+:shortdesc: "RTC change offset"
+:type: "int64"
+For container, keep default value `0`.
+When VM running, get the offset (in seconds) from QMP `RTC_CHANGE` event, and save `offset` of RTC change in seconds.
+When VM starting, accumulate `offset` to `adjustment`, apply `adjustment` to `-rtc base`, and reset `offset` to `0`.
+```
+
 ```{config:option} volatile.uuid instance-volatile
 :shortdesc: "Instance UUID"
 :type: "string"

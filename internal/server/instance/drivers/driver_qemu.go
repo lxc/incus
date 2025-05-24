@@ -455,7 +455,7 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 	state := d.state
 
 	return func(event string, data map[string]any) {
-		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventAgentStarted}, event) {
+		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventAgentStarted, qmp.EventRTCChange}, event) {
 			return // Don't bother loading the instance from DB if we aren't going to handle the event.
 		}
 
@@ -481,14 +481,16 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 
 		d = inst.(*qemu)
 
-		if event == qmp.EventAgentStarted {
+		switch event {
+		case qmp.EventAgentStarted:
 			d.logger.Debug("Instance agent started")
 			err := d.advertiseVsockAddress()
 			if err != nil {
 				d.logger.Warn("Failed to advertise vsock address to instance agent", logger.Ctx{"err": err})
 				return
 			}
-		} else if event == qmp.EventVMShutdown {
+
+		case qmp.EventVMShutdown:
 			target := "stop"
 			entry, ok := data["reason"]
 			if ok && entry == "guest-reset" {
@@ -505,6 +507,22 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 			if err != nil {
 				d.logger.Error("Failed to cleanly stop instance", logger.Ctx{"err": err})
 				return
+			}
+
+		case qmp.EventRTCChange:
+			val, ok := data["offset"].(float64)
+			if !ok {
+				d.logger.Debug("No offset in data", logger.Ctx{"data": data})
+				return
+			}
+
+			offset := int(val)
+			err = d.onRTCChange(offset)
+			if err != nil {
+				d.logger.Error("Failed to apply rtc change", logger.Ctx{
+					"offset": offset,
+					"err":    err,
+				})
 			}
 		}
 	}
@@ -1696,10 +1714,16 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 	}
 
-	// Set RTC to localtime on Windows.
-	if d.isWindows() {
-		qemuArgs = append(qemuArgs, "-rtc", "base=localtime")
+	adjustment := d.updateAdjustment()
+	base := time.Now().Add(adjustment)
+	if d.isWindows() { // Set base to localtime on windows.
+		base = base.Local()
+	} else { // set base to utc on !windows.
+		base = base.UTC()
 	}
+
+	datetime := base.Format("2006-01-02T15:04:05")
+	qemuArgs = append(qemuArgs, "-rtc", fmt.Sprintf("base=%s", datetime))
 
 	// SMBIOS only on x86_64 and aarch64.
 	if d.architectureSupportsUEFI(d.architecture) {
@@ -3459,6 +3483,60 @@ func (d *qemu) deviceBootPriorities(base int) (map[string]int, error) {
 // isWindows returns whether the VM is Windows.
 func (d *qemu) isWindows() bool {
 	return strings.Contains(strings.ToLower(d.expandedConfig["image.os"]), "windows")
+}
+
+func (d *qemu) updateAdjustment() time.Duration {
+	adjustment := d.getRTCChange("volatile.rtc_change.adjustment")
+	offset := d.getRTCChange("volatile.rtc_change.offset")
+	adjustment += offset
+	offset = 0
+	changes := map[string]string{
+		"volatile.rtc_change.adjustment": strconv.Itoa(adjustment),
+		"volatile.rtc_change.offset":     strconv.Itoa(offset),
+	}
+
+	err := d.VolatileSet(changes)
+	if err != nil {
+		d.logger.Error("Failed to set rtc change offset ",
+			logger.Ctx{"changes": changes, "err": err})
+	}
+
+	return time.Duration(adjustment) * time.Second
+}
+
+func (d *qemu) getRTCChange(key string) int {
+	if key != "volatile.rtc_change.offset" && key != "volatile.rtc_change.adjustment" {
+		return 0
+	}
+
+	offset := 0
+	val, ok := d.localConfig[key]
+	if ok {
+		var err error
+		offset, err = strconv.Atoi(val)
+		if err != nil {
+			offset = 0
+			d.logger.Error("Failed to convert rtc change offset")
+		}
+	}
+
+	return offset
+}
+
+// onRTCChange saves rtc change.
+func (d *qemu) onRTCChange(change int) error {
+	offset := d.getRTCChange("volatile.rtc_change.offset")
+	if offset != change {
+		changes := map[string]string{"volatile.rtc_change.offset": strconv.Itoa(change)}
+		err := d.VolatileSet(changes)
+		if err != nil {
+			d.logger.Error("Failed to set rtc change offset ", logger.Ctx{"changes": changes, "err": err})
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 // generateQemuConfig generates the QEMU configuration.
