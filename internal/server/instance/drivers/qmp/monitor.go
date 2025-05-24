@@ -82,13 +82,14 @@ func (m *Monitor) start() error {
 			status := entries[len(entries)-2]
 
 			m.agentStartedMu.Lock()
-			if status == "STARTED" {
+			switch status {
+			case "STARTED":
 				if !m.agentStarted && m.eventHandler != nil {
 					go m.eventHandler(EventAgentStarted, nil)
 				}
 
 				m.agentStarted = true
-			} else if status == "STOPPED" {
+			case "STOPPED":
 				m.agentStarted = false
 			}
 
@@ -221,10 +222,6 @@ func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool) error {
 
 		return err
 	}
-
-	// Handle weird QEMU QMP bug.
-	responses := strings.Split(string(out), "\r\n")
-	out = []byte(responses[len(responses)-1])
 
 	if logCommand && m.logFile != "" {
 		_, err = fmt.Fprintf(log, "[%s] REPLY: %s\n\n", time.Now().Format(time.RFC3339), out)
