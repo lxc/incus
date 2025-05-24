@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -18,6 +19,7 @@ import (
 type qemuMachineProtocal struct {
 	oobSupported bool               // Out of band support or not
 	c            net.Conn           // Underlying connection
+	uc           *net.UnixConn      // Underlying unix socket connection
 	mu           sync.Mutex         // Serialize running command
 	stream       <-chan rawResponse // Send command responses and errors
 	events       <-chan qmpEvent    // Events channel
@@ -218,6 +220,27 @@ func (qmp *qemuMachineProtocal) run(command []byte) ([]byte, error) {
 	return qmp.runWithFile(command, nil)
 }
 
+func (qmp *qemuMachineProtocal) qmpWriteMsg(b []byte, file *os.File) error {
+	if file == nil {
+		// Just send a normal command through.
+		_, err := qmp.c.Write(b)
+		return err
+	}
+
+	if !qmp.oobSupported {
+		return errors.New("The QEMU server doesn't support oob (needed for RunWithFile)")
+	}
+
+	// Send the command along with the file descriptor.
+	oob := unix.UnixRights(int(file.Fd()))
+	_, _, err := qmp.uc.WriteMsgUnix(b, oob, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // runWithFile executes for passing a file through out-of-band data.
 func (qmp *qemuMachineProtocal) runWithFile(command []byte, file *os.File) ([]byte, error) {
 	// Only allow a single command to be run at a time to ensure that responses
@@ -225,28 +248,9 @@ func (qmp *qemuMachineProtocal) runWithFile(command []byte, file *os.File) ([]by
 	qmp.mu.Lock()
 	defer qmp.mu.Unlock()
 
-	if file == nil {
-		// Just send a normal command through.
-		_, err := qmp.c.Write(command)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		unixConn, ok := qmp.c.(*net.UnixConn)
-		if !ok {
-			return nil, fmt.Errorf("RunWithFile only works with unix monitor sockets")
-		}
-
-		if !qmp.oobSupported {
-			return nil, fmt.Errorf("The QEMU server doesn't support oob (needed for RunWithFile)")
-		}
-
-		// Send the command along with the file descriptor.
-		oob := unix.UnixRights(int(file.Fd()))
-		_, _, err := unixConn.WriteMsgUnix(command, oob, nil)
-		if err != nil {
-			return nil, err
-		}
+	err := qmp.qmpWriteMsg(command, file)
+	if err != nil {
+		return nil, err
 	}
 
 	// Wait for a response or error to our command
