@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -336,6 +337,41 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 		operationtype.BackupCreate, resources, nil, backup, nil, nil, r)
 	if err != nil {
 		return response.InternalError(err)
+	}
+
+	// Check if user specified an s3 target
+	if req.S3BackupTarget != "" {
+		s3Url := req.S3BackupTarget
+		backup, err := instance.BackupLoadByName(s, projectName, fullName)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		filePath := internalUtil.VarPath("backups", "instances", project.Instance(projectName, backup.Name()))
+		file, err := os.Open(filePath)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		httpReq, err := http.NewRequest("PUT", s3Url, file)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		client := &http.Client{}
+		resp, err := client.Do(httpReq)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return response.SmartError(fmt.Errorf("Failed to upload backup to S3: %s", resp.Status))
+		}
+
+		err = backup.Delete()
+		if err != nil {
+			return response.SmartError(err)
+		}
 	}
 
 	return operations.OperationResponse(op)

@@ -56,6 +56,10 @@ type StorageVolumeBackupsPost struct {
 	// What compression algorithm to use
 	// Example: gzip
 	CompressionAlgorithm string `json:"compression_algorithm" yaml:"compression_algorithm"`
+
+	// Where to store the backup if needed. Uses a presigned S3 URL
+	// Example: "https://<bucket-name>.s3.<region>.amazonaws.com/<object-key>?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=<credential>&X-Amz-Date=<timestamp>&X-Amz-Expires=<expiration>&X-Amz-SignedHeaders=host&X-Amz-Signature=<signature>"
+	S3BackupTarget string `json:"s3_backup_target,omitempty" yaml:"s3_backup_target,omitempty"`
 }
 
 // StorageVolumeBackupPost represents the fields available for the renaming of a volume backup
