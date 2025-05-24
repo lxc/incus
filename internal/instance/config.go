@@ -1138,6 +1138,30 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  type: string
 	//  shortdesc: Instance `vsock ID` used as of last start
 	"volatile.vsock_id": validate.Optional(validate.IsInt64),
+
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.rtc_change.offset)
+	// For container, keep default value `0`.
+	// When VM running, get the offset (in seconds) from QMP `RTC_CHANGE` event, and save `offset` of RTC change in seconds.
+	// When VM starting, accumulate `offset` to `adjustment`, apply `adjustment` to `-rtc base`, and reset `offset` to `0`.
+	// ---
+	//  type: int64
+	//  defaultdesc: `0`
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: RTC change offset
+	"volatile.rtc_change.offset": validate.Optional(validate.IsInt64),
+
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.rtc_change.adjustment)
+	// For container, default value `0`.
+	// When VM starting, accumulate `offset` to `adjustment`, apply `adjustment` to `-rtc base`, and reset `offset` to `0`.
+	//
+	// ---
+	//  type: int64
+	//  defaultdesc: `0`
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: RTC change adjustment
+	"volatile.rtc_change.adjustment": validate.Optional(validate.IsInt64),
 }
 
 // ConfigKeyChecker returns a function that will check whether or not

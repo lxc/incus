@@ -3074,6 +3074,26 @@
 						}
 					},
 					{
+						"volatile.rtc_change.adjustment": {
+							"condition": "virtual machine",
+							"defaultdesc": "`0`",
+							"liveupdate": "no",
+							"longdesc": "For container, default value `0`.\nWhen VM starting, accumulate `offset` to `adjustment`, apply `adjustment` to `-rtc base`, and reset `offset` to `0`.\n",
+							"shortdesc": "RTC change adjustment",
+							"type": "int64"
+						}
+					},
+					{
+						"volatile.rtc_change.offset": {
+							"condition": "virtual machine",
+							"defaultdesc": "`0`",
+							"liveupdate": "no",
+							"longdesc": "For container, keep default value `0`.\nWhen VM running, get the offset (in seconds) from QMP `RTC_CHANGE` event, and save `offset` of RTC change in seconds.\nWhen VM starting, accumulate `offset` to `adjustment`, apply `adjustment` to `-rtc base`, and reset `offset` to `0`.",
+							"shortdesc": "RTC change offset",
+							"type": "int64"
+						}
+					},
+					{
 						"volatile.uuid": {
 							"longdesc": "The instance UUID is globally unique across all servers and projects.",
 							"shortdesc": "Instance UUID",
