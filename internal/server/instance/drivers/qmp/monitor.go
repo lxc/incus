@@ -289,6 +289,11 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 		c: c,
 	}
 
+	qmpConn.uc, ok = c.(*net.UnixConn)
+	if !ok {
+		return nil, errors.New("RunWithFile only works with unix monitor sockets")
+	}
+
 	chError := make(chan error, 1)
 	go func() {
 		err = qmpConn.connect()
