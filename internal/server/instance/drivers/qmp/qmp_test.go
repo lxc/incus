@@ -105,19 +105,19 @@ func TestListenEmptyStream(t *testing.T) {
 	r := strings.NewReader("")
 
 	events := make(chan qmpEvent)
-	stream := make(chan rawResponse)
+	replies := &mon.replies
 
-	mon.listen(r, events, stream)
+	mon.listen(r, events, replies)
 
 	_, ok := <-events
 	if ok {
 		t.Fatal("events channel should be closed")
 	}
 
-	_, ok = <-stream
-	if ok {
-		t.Fatal("stream channel should be closed")
-	}
+	replies.Range(func(key, value any) bool {
+		t.Fatal("replies should be empty")
+		return false
+	})
 }
 
 func TestListenScannerErr(t *testing.T) {
@@ -127,11 +127,21 @@ func TestListenScannerErr(t *testing.T) {
 	r := &testingErrReader{err: errFoo}
 
 	events := make(chan qmpEvent)
-	stream := make(chan rawResponse)
+	replies := &mon.replies
 
-	go mon.listen(r, events, stream)
-	res := <-stream
+	mon.listen(r, events, replies)
 
+	val, ok := replies.LoadAndDelete(0)
+	if !ok {
+		t.Fatal("no error found")
+	}
+
+	errCh, ok := val.(chan rawResponse)
+	if !ok {
+		t.Fatal("no error found")
+	}
+
+	res := <-errCh
 	if errFoo != res.err {
 		t.Fatalf("unexpected error:\n- want: %v\n-  got: %v", errFoo, res.err)
 	}
@@ -143,28 +153,28 @@ func TestListenInvalidJson(t *testing.T) {
 	r := strings.NewReader("<html>")
 
 	events := make(chan qmpEvent)
-	stream := make(chan rawResponse)
+	replies := &mon.replies
 
-	mon.listen(r, events, stream)
+	mon.listen(r, events, replies)
 
-	_, ok := <-stream
-	if ok {
-		t.Fatal("stream channel should be closed")
-	}
+	replies.Range(func(key, value any) bool {
+		t.Fatal("replies should be empty")
+		return false
+	})
 }
 
 func TestListenStreamResponse(t *testing.T) {
 	mon := &qemuMachineProtocal{}
-
-	want := `{"foo": "bar"}`
+	id := uint32(1)
+	want := `{"foo": "bar", "id": 1}`
 	r := strings.NewReader(want)
 
 	events := make(chan qmpEvent)
-	stream := make(chan rawResponse)
-
-	go mon.listen(r, events, stream)
-
-	res := <-stream
+	replies := &mon.replies
+	repCh := make(chan rawResponse, 1)
+	replies.Store(id, repCh)
+	go mon.listen(r, events, replies)
+	res := <-repCh
 	if res.err != nil {
 		t.Fatalf("unexpected error: %v", res.err)
 	}
@@ -181,9 +191,9 @@ func TestListenEventNoListeners(t *testing.T) {
 	r := strings.NewReader(`{"event":"STOP"}`)
 
 	events := make(chan qmpEvent)
-	stream := make(chan rawResponse)
+	replies := &mon.replies
 
-	go mon.listen(r, events, stream)
+	go mon.listen(r, events, replies)
 
 	_, ok := <-events
 	if ok {
@@ -199,9 +209,9 @@ func TestListenEventOneListener(t *testing.T) {
 	r := strings.NewReader(fmt.Sprintf(`{"event":%q}`, eventStop))
 
 	events := make(chan qmpEvent)
-	stream := make(chan rawResponse)
+	replies := &mon.replies
 
-	go mon.listen(r, events, stream)
+	go mon.listen(r, events, replies)
 
 	e := <-events
 	want, got := eventStop, e.Event
