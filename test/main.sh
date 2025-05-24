@@ -97,6 +97,9 @@ cleanup() {
     echo "::endgroup::"
   fi
 
+  echo "netstat -peanut output:"
+  netstat -peanut
+
   if [ -n "${GITHUB_ACTIONS:-}" ]; then
     echo "==> Skipping cleanup (GitHub Action runner detected)"
   else

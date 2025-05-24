@@ -90,6 +90,7 @@ jobs:
             libtool \
             libudev-dev \
             make \
+            net-tools \
             pipx \
             pkg-config \
             shellcheck
