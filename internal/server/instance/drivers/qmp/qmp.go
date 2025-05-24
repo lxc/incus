@@ -14,17 +14,27 @@ import (
 	"sync/atomic"
 
 	"golang.org/x/sys/unix"
+
+	"github.com/lxc/incus/v6/shared/logger"
+)
+
+const (
+	// qmpEventQueueLength is the queue length of events.
+	qmpEventQueueLength = 128
+
+	// qmpZeroKey is the zero key, which represent err channel key.
+	qmpZeroKey = uint32(0)
 )
 
 type qemuMachineProtocal struct {
-	oobSupported bool               // Out of band support or not
-	c            net.Conn           // Underlying connection
-	uc           *net.UnixConn      // Underlying unix socket connection
-	mu           sync.Mutex         // Serialize running command
-	stream       <-chan rawResponse // Send command responses and errors
-	events       <-chan qmpEvent    // Events channel
-	listeners    atomic.Uint32      // Listeners number
-	cid          atomic.Uint32      // Auto increase command id
+	oobSupported bool            // Out of band support or not
+	c            net.Conn        // Underlying connection
+	uc           *net.UnixConn   // Underlying unix socket connection
+	mu           sync.Mutex      // Serialize running command
+	replies      sync.Map        // Replies channels
+	events       <-chan qmpEvent // Events channel
+	listeners    atomic.Uint32   // Listeners number
+	cid          atomic.Uint32   // Auto increase command id
 }
 
 // qmpEvent represents a QEMU QMP event.
@@ -156,13 +166,9 @@ func (qmp *qemuMachineProtocal) connect() error {
 	}
 
 	// Initialize listener for command responses and asynchronous events
-	events := make(chan qmpEvent)
-	stream := make(chan rawResponse)
-	go qmp.listen(qmp.c, events, stream)
-
+	events := make(chan qmpEvent, qmpEventQueueLength)
+	go qmp.listen(qmp.c, events, &qmp.replies)
 	qmp.events = events
-	qmp.stream = stream
-
 	return nil
 }
 
@@ -172,9 +178,8 @@ func (qmp *qemuMachineProtocal) getEvents(context.Context) (<-chan qmpEvent, err
 	return qmp.events, nil
 }
 
-func (qmp *qemuMachineProtocal) listen(r io.Reader, events chan<- qmpEvent, stream chan<- rawResponse) {
+func (qmp *qemuMachineProtocal) listen(r io.Reader, events chan<- qmpEvent, replies *sync.Map) {
 	defer close(events)
-	defer close(stream)
 
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
@@ -194,9 +199,27 @@ func (qmp *qemuMachineProtocal) listen(r io.Reader, events chan<- qmpEvent, stre
 				continue
 			}
 
+			key := r.ID
+			if key == qmpZeroKey { // discard unknown
+				logger.Debugf("Discard unknown response: %s", b)
+				continue
+			}
+
+			val, ok := replies.LoadAndDelete(key)
+			if !ok { // discard
+				logger.Debug("no need reply, discard")
+				continue
+			}
+
+			reply, ok := val.(chan rawResponse)
+			if !ok { // discard
+				logger.Error("failed to cast reply to chan rawResponse")
+				continue
+			}
+
 			r.raw = make([]byte, len(b))
 			copy(r.raw, b)
-			stream <- r
+			reply <- r
 			continue
 		}
 
@@ -205,12 +228,20 @@ func (qmp *qemuMachineProtocal) listen(r io.Reader, events chan<- qmpEvent, stre
 			continue
 		}
 
-		events <- e
+		select {
+		case events <- e:
+			logger.Debugf("Event dispatched: %s", b)
+		default:
+			logger.Debugf("Event discarded: %s", b)
+		}
 	}
 
 	err := scanner.Err()
 	if err != nil {
-		stream <- rawResponse{err: err}
+		r := rawResponse{err: err}
+		errReply := make(chan rawResponse, 1)
+		replies.Store(qmpZeroKey, errReply)
+		errReply <- r
 	}
 }
 
@@ -248,13 +279,23 @@ func (qmp *qemuMachineProtocal) runWithFile(command []byte, file *os.File) ([]by
 	qmp.mu.Lock()
 	defer qmp.mu.Unlock()
 
-	err := qmp.qmpWriteMsg(command, file)
+	id := qmp.qmpIncreaseID()
+	command, err := qmp.qmpInjectID(command, id)
 	if err != nil {
 		return nil, err
 	}
 
+	repCh := make(chan rawResponse, 1)
+	qmp.replies.Store(id, repCh)
+
+	err = qmp.qmpWriteMsg(command, file)
+	if err != nil {
+		qmp.replies.Delete(id)
+		return nil, err
+	}
+
 	// Wait for a response or error to our command
-	res := <-qmp.stream
+	res := <-repCh
 	if res.err != nil {
 		return nil, res.err
 	}
@@ -264,4 +305,20 @@ func (qmp *qemuMachineProtocal) runWithFile(command []byte, file *os.File) ([]by
 	}
 
 	return res.raw, nil
+}
+
+func (qmp *qemuMachineProtocal) qmpInjectID(command []byte, id uint32) ([]byte, error) {
+	req := &qmpCommand{}
+	err := json.Unmarshal(command, req)
+	if err != nil {
+		return nil, err
+	}
+
+	req.ID = id
+	b, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }
