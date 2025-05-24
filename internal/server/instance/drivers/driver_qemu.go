@@ -1221,8 +1221,17 @@ func (d *qemu) startupHook(monitor *qmp.Monitor, stage string) error {
 		}
 
 		for _, command := range commandList {
-			jsonCommand, _ := json.Marshal(command)
-			err = monitor.RunJSON(jsonCommand, nil, true)
+			id := monitor.IncreaseID()
+			command["id"] = id
+
+			var jsonCommand []byte
+			jsonCommand, err = json.Marshal(command)
+			if err != nil {
+				err = fmt.Errorf("Failed to marshal command at %s stage: %w", stage, err)
+				return err
+			}
+
+			err = monitor.RunJSON(jsonCommand, nil, true, id)
 			if err != nil {
 				err = fmt.Errorf("Failed to run QMP command %s at %s stage: %w", jsonCommand, stage, err)
 				return err
