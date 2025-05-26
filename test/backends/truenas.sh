@@ -4,7 +4,7 @@ truenas_setup() {
 
   INCUS_DIR=$1
 
-  echo "==> Setting up TrueBAS backend in ${INCUS_DIR}"
+  echo "==> Setting up TrueNAS backend in ${INCUS_DIR}"
 }
 
 truenas_configure() {
