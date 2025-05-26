@@ -911,16 +911,25 @@ assign:
 // Upon success, return the address of the leaving node.
 //
 // This function must be called by the cluster leader.
-func Leave(state *state.State, gateway *Gateway, name string, force bool) (string, error) {
+func Leave(s *state.State, gateway *Gateway, name string, force bool, pending bool) (string, error) {
 	logger.Debugf("Make node %s leave the cluster", name)
 
 	// Check if the node can be deleted and track its address.
 	var address string
-	err := state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get the node (if it doesn't exists an error is returned).
-		node, err := tx.GetNodeByName(ctx, name)
-		if err != nil {
-			return err
+		var node db.NodeInfo
+		var err error
+		if pending {
+			node, err = tx.GetPendingNodeByName(ctx, name)
+			if err != nil {
+				return fmt.Errorf("Failed to get member %q: %w", name, err)
+			}
+		} else {
+			node, err = tx.GetNodeByName(ctx, name)
+			if err != nil {
+				return fmt.Errorf("Failed to get member %q: %w", name, err)
+			}
 		}
 
 		// Check that the node is eligeable for leaving.
@@ -1061,14 +1070,23 @@ func newRolesChanges(state *state.State, gateway *Gateway, nodes []db.RaftNode, 
 }
 
 // Purge removes a node entirely from the cluster database.
-func Purge(c *db.Cluster, name string) error {
+func Purge(c *db.Cluster, name string, pending bool) error {
 	logger.Debugf("Remove node %s from the database", name)
 
 	return c.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get the node (if it doesn't exists an error is returned).
-		node, err := tx.GetNodeByName(ctx, name)
-		if err != nil {
-			return fmt.Errorf("Failed to get member %q: %w", name, err)
+		var node db.NodeInfo
+		var err error
+		if pending {
+			node, err = tx.GetPendingNodeByName(ctx, name)
+			if err != nil {
+				return fmt.Errorf("Failed to get member %q: %w", name, err)
+			}
+		} else {
+			node, err = tx.GetNodeByName(ctx, name)
+			if err != nil {
+				return fmt.Errorf("Failed to get member %q: %w", name, err)
+			}
 		}
 
 		err = tx.ClearNode(ctx, node.ID)
