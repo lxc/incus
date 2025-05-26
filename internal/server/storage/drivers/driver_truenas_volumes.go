@@ -1131,8 +1131,6 @@ func (d *truenas) ListVolumes() ([]Volume, error) {
 			volName, volFs, _ = strings.Cut(volName, "_")
 		}
 
-		// TODO: need to split images at _ to determine filesystem, or to ignore the filesystem.
-
 		// If a new volume has been found, or the volume will replace an existing image filesystem volume
 		// then proceed to add the volume to the map. We allow image volumes to overwrite existing
 		// filesystem volumes of the same name so that for VM images we only return the block content type
