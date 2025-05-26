@@ -576,9 +576,18 @@ func (d *truenas) getDatasetsAndProperties(datasets []string, properties []strin
 	return outMap, nil
 }
 
-// same as renameDataset, except that there's no point updating shares on a snapshot rename
-func (d *truenas) renameSnapshot(sourceDataset string, destDataset string) (string, error) {
-	return d.renameDataset(sourceDataset, destDataset, false)
+// renameSnapshot renames sourceSnapshot to destSnapshot.
+// sourceSnapshot: <dataset>@<snap-name>
+// destSnapshot: [dataset]@<snap-name>
+func (d *truenas) renameSnapshot(sourceSnapshot string, destSnapshot string) error {
+	args := []string{"snapshot", "rename", sourceSnapshot, destSnapshot}
+
+	_, err := d.runTool(args...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // will rename a dataset, or snapshot. updateShares is relatively expensive if there is no possibility of there being a share
