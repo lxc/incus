@@ -262,6 +262,24 @@ func (c *ClusterTx) GetPendingNodeByAddress(ctx context.Context, address string)
 	}
 }
 
+// GetPendingNodeByName returns the pending node with the given name.
+func (c *ClusterTx) GetPendingNodeByName(ctx context.Context, name string) (NodeInfo, error) {
+	null := NodeInfo{}
+	nodes, err := c.nodes(ctx, true /* pending */, "name=?", name)
+	if err != nil {
+		return null, err
+	}
+
+	switch len(nodes) {
+	case 0:
+		return null, api.StatusErrorf(http.StatusNotFound, "Cluster member not found")
+	case 1:
+		return nodes[0], nil
+	default:
+		return null, errors.New("More than one cluster member matches")
+	}
+}
+
 // GetNodeByName returns the node with the given name.
 func (c *ClusterTx) GetNodeByName(ctx context.Context, name string) (NodeInfo, error) {
 	null := NodeInfo{}
