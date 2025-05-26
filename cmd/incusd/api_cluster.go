@@ -622,6 +622,13 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 			return err
 		}
 
+		reverter.Add(func() {
+			err = client.DeletePendingClusterMember(req.ServerName, true)
+			if err != nil {
+				logger.Errorf("Failed request to delete cluster member: %v", err)
+			}
+		})
+
 		// Now request for this node to be added to the list of cluster nodes.
 		info, err := clusterAcceptMember(client, req.ServerName, localHTTPSAddress, cluster.SchemaVersion, version.APIExtensionsCount(), pools, networks)
 		if err != nil {
@@ -1900,6 +1907,11 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 		force = 0
 	}
 
+	pending, err := strconv.Atoi(r.FormValue("pending"))
+	if err != nil {
+		pending = 0
+	}
+
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)
@@ -1966,9 +1978,16 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(err)
 		}
 
-		err = client.DeleteClusterMember(name, force == 1)
-		if err != nil {
-			return response.SmartError(err)
+		if pending == 0 {
+			err = client.DeleteClusterMember(name, force == 1)
+			if err != nil {
+				return response.SmartError(err)
+			}
+		} else {
+			err = client.DeletePendingClusterMember(name, force == 1)
+			if err != nil {
+				return response.SmartError(err)
+			}
 		}
 
 		// If we are the only remaining node, wait until promotion to leader,
@@ -2034,7 +2053,7 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 
 	// First check that the node is clear from containers and images and
 	// make it leave the database cluster, if it's part of it.
-	address, err := cluster.Leave(s, d.gateway, name, force == 1)
+	address, err := cluster.Leave(s, d.gateway, name, force == 1, pending == 1)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -2099,7 +2118,7 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Remove node from the database
-	err = cluster.Purge(s.DB.Cluster, name)
+	err = cluster.Purge(s.DB.Cluster, name, pending == 1)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed to remove member from database: %w", err))
 	}
