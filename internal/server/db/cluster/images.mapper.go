@@ -7,6 +7,7 @@ package cluster
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -324,7 +325,7 @@ func GetImages(ctx context.Context, db dbtx, filters ...ImageFilter) (_ []Image,
 		} else if filter.ID == nil && filter.Project == nil && filter.Fingerprint == nil && filter.Public == nil && filter.Cached == nil && filter.AutoUpdate == nil {
 			return nil, fmt.Errorf("Cannot filter on empty ImageFilter")
 		} else {
-			return nil, fmt.Errorf("No statement exists for the given Filter")
+			return nil, errors.New("No statement exists for the given Filter")
 		}
 	}
 

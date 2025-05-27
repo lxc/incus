@@ -320,7 +320,7 @@ func GetNetworkAddressSets(ctx context.Context, db dbtx, filters ...NetworkAddre
 		} else if filter.ID == nil && filter.Name == nil && filter.Project == nil {
 			return nil, fmt.Errorf("Cannot filter on empty NetworkAddressSetFilter")
 		} else {
-			return nil, fmt.Errorf("No statement exists for the given Filter")
+			return nil, errors.New("No statement exists for the given Filter")
 		}
 	}
 
