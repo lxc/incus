@@ -82,6 +82,20 @@ func (n *physical) Validate(config map[string]string) error {
 		// shortdesc: IPv6 address for the gateway and network (CIDR)
 		"ipv6.gateway": validate.Optional(validate.IsNetworkAddressCIDRV6),
 
+		// gendoc:generate(entity=network_physical, group=ipv4, key=ipv4.gateway.hwaddr)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: MAC address of the gateway (to avoid discovery)
+		"ipv4.gateway.hwaddr": validate.Optional(validate.IsNetworkMAC),
+
+		// gendoc:generate(entity=network_physical, group=ipv6, key=ipv6.gateway.hwaddr)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: MAC address of the gateway (to avoid discovery)
+		"ipv6.gateway.hwaddr": validate.Optional(validate.IsNetworkMAC),
+
 		// gendoc:generate(entity=network_physical, group=ipv4, key=ipv4.ovn.ranges)
 		//
 		// ---
