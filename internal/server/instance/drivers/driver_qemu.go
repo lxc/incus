@@ -481,14 +481,16 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 
 		d = inst.(*qemu)
 
-		if event == qmp.EventAgentStarted {
+		switch event {
+		case qmp.EventAgentStarted:
 			d.logger.Debug("Instance agent started")
 			err := d.advertiseVsockAddress()
 			if err != nil {
 				d.logger.Warn("Failed to advertise vsock address to instance agent", logger.Ctx{"err": err})
 				return
 			}
-		} else if event == qmp.EventVMShutdown {
+
+		case qmp.EventVMShutdown:
 			target := "stop"
 			entry, ok := data["reason"]
 			if ok && entry == "guest-reset" {
