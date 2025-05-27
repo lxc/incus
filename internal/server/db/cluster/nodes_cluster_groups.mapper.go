@@ -149,7 +149,7 @@ func GetNodeClusterGroups(ctx context.Context, db dbtx, filters ...NodeClusterGr
 		} else if filter.GroupID == nil {
 			return nil, fmt.Errorf("Cannot filter on empty NodeClusterGroupFilter")
 		} else {
-			return nil, fmt.Errorf("No statement exists for the given Filter")
+			return nil, errors.New("No statement exists for the given Filter")
 		}
 	}
 

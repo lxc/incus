@@ -223,7 +223,7 @@ func GetInstanceSnapshots(ctx context.Context, db dbtx, filters ...InstanceSnaps
 		} else if filter.ID == nil && filter.Project == nil && filter.Instance == nil && filter.Name == nil {
 			return nil, fmt.Errorf("Cannot filter on empty InstanceSnapshotFilter")
 		} else {
-			return nil, fmt.Errorf("No statement exists for the given Filter")
+			return nil, errors.New("No statement exists for the given Filter")
 		}
 	}
 

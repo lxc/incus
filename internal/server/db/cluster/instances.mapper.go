@@ -657,7 +657,7 @@ func GetInstances(ctx context.Context, db dbtx, filters ...InstanceFilter) (_ []
 		} else if filter.ID == nil && filter.Project == nil && filter.Name == nil && filter.Node == nil && filter.Type == nil {
 			return nil, fmt.Errorf("Cannot filter on empty InstanceFilter")
 		} else {
-			return nil, fmt.Errorf("No statement exists for the given Filter")
+			return nil, errors.New("No statement exists for the given Filter")
 		}
 	}
 

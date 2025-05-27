@@ -212,7 +212,7 @@ func GetOperations(ctx context.Context, db dbtx, filters ...OperationFilter) (_ 
 		} else if filter.ID == nil && filter.NodeID == nil && filter.UUID == nil {
 			return nil, fmt.Errorf("Cannot filter on empty OperationFilter")
 		} else {
-			return nil, fmt.Errorf("No statement exists for the given Filter")
+			return nil, errors.New("No statement exists for the given Filter")
 		}
 	}
 
