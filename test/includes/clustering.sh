@@ -252,8 +252,11 @@ spawn_incus_and_join_cluster() {
     fi
 
     # If there is a satellite name override, apply it.
-    if [ "${driver}" = "linstor" ] && [ -n "${INCUS_LINSTOR_LOCAL_SATELLITE:-}" ]; then
-      incus config set storage.linstor.satellite.name "${INCUS_LINSTOR_LOCAL_SATELLITE}"
+    if [ "${driver}" = "linstor" ]; then
+      incus config set storage.linstor.controller_connection "${INCUS_LINSTOR_CLUSTER}"
+      if [ -n "${INCUS_LINSTOR_LOCAL_SATELLITE:-}" ]; then
+        incus config set storage.linstor.satellite.name "${INCUS_LINSTOR_LOCAL_SATELLITE}"
+      fi
     fi
 
     cat > "${INCUS_DIR}/preseed.yaml" <<EOF
