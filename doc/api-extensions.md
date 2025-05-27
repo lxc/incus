@@ -2817,3 +2817,7 @@ This adds the SFTP API to custom storage volumes.
 This adds support for configuring a custom external IPv4 or IPv6 address
 for a given instance so long as that address is available through a
 network forward.
+
+## `network_physical_gateway_hwaddr`
+
+Allows setting the MAC address of the IPv4 and IPv6 gateways when used with OVN.
