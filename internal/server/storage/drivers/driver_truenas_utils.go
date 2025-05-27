@@ -381,9 +381,15 @@ func (d *truenas) locateIscsiDataset(dataset string) (string, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	volDiskPath, err := d.runTool("share", "iscsi", "locate", "--target-prefix=incus", "--parsable", dataset)
+	statusPath, err := d.runTool("share", "iscsi", "locate", "--target-prefix=incus", "--parsable", dataset)
 	if err != nil {
 		return "", err
+	}
+
+	status, volDiskPath, found := strings.Cut(statusPath, "\t")
+	if !found {
+		// early versions of locate returned no status.
+		volDiskPath = status
 	}
 
 	volDiskPath = strings.TrimSpace(volDiskPath)
