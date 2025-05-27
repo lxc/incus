@@ -62,6 +62,26 @@ func (r *ProtocolIncus) DeleteClusterMember(name string, force bool) error {
 	return nil
 }
 
+// DeletePendingClusterMember makes the given pending member leave the cluster (gracefully or not,
+// depending on the force flag).
+func (r *ProtocolIncus) DeletePendingClusterMember(name string, force bool) error {
+	if !r.HasExtension("clustering") {
+		return errors.New("The server is missing the required \"clustering\" API extension")
+	}
+
+	params := "?pending=1"
+	if force {
+		params += "&force=1"
+	}
+
+	_, _, err := r.query("DELETE", fmt.Sprintf("/cluster/members/%s%s", name, params), nil, "")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetClusterMemberNames returns the URLs of the current members in the cluster.
 func (r *ProtocolIncus) GetClusterMemberNames() ([]string, error) {
 	if !r.HasExtension("clustering") {
