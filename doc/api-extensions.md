@@ -2811,3 +2811,9 @@ This API extension provides the ability to configure certificates in preseed ini
 ## `custom_volume_sftp`
 
 This adds the SFTP API to custom storage volumes.
+
+## `network_ovn_external_nic_address`
+
+This adds support for configuring a custom external IPv4 or IPv6 address
+for a given instance so long as that address is available through a
+network forward.

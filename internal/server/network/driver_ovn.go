@@ -4387,6 +4387,67 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		checkAndStoreIP(net.ParseIP(staticIP))
 	}
 
+	// Apply device specific external address if any.
+	for _, keyPrefix := range []string{"ipv4", "ipv6"} {
+		// Check if the address is present.
+		value := opts.DeviceConfig[fmt.Sprintf("%s.address.external", keyPrefix)]
+		if value == "" {
+			continue
+		}
+
+		// Check if the family is configured.
+		if keyPrefix == "ipv4" && ipv4 == "" {
+			continue
+		}
+
+		if keyPrefix == "ipv6" && ipv6 == "" {
+			continue
+		}
+
+		// Parse the internal address.
+		var intNet *net.IPNet
+		if keyPrefix == "ipv4" {
+			_, intNet, err = net.ParseCIDR(fmt.Sprintf("%s/32", ipv4))
+			if err != nil {
+				return "", nil, fmt.Errorf("Invalid internal address %q: %w", ipv4, err)
+			}
+		} else {
+			_, intNet, err = net.ParseCIDR(fmt.Sprintf("%s/128", ipv6))
+			if err != nil {
+				return "", nil, fmt.Errorf("Invalid internal address %q: %w", ipv6, err)
+			}
+		}
+
+		// Parse the external address.
+		extIP := net.ParseIP(value)
+		if extIP == nil {
+			return "", nil, fmt.Errorf("Invalid external address %q", value)
+		}
+
+		if err := n.ovnnb.CreateLogicalRouterNAT(
+			context.TODO(),
+			n.getRouterName(),
+			"snat",
+			intNet,
+			extIP,
+			nil,
+			false,
+			true,
+		); err != nil {
+			return "", nil, fmt.Errorf("Failed to add SNAT %q: %w", value, err)
+		}
+
+		reverter.Add(func() {
+			_ = n.ovnnb.DeleteLogicalRouterNAT(
+				context.TODO(),
+				n.getRouterName(),
+				"snat",
+				false,
+				extIP,
+			)
+		})
+	}
+
 	// Get dynamic IPs for switch port if any IPs not assigned statically.
 	if (ipv4 != "none" && dnsIPv4 == nil) || (ipv6 != "none" && dnsIPv6 == nil) {
 		var dynamicIPs []net.IP
@@ -4912,6 +4973,27 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 	if len(removeNATIPs) > 0 {
 		err = n.ovnnb.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat_and_snat", false, removeNATIPs...)
 		if err != nil {
+			return err
+		}
+	}
+
+	// Tear down per‑NIC egress SNAT rules (ipv4/ipv6.address.external)
+	for _, keyPrefix := range []string{"ipv4", "ipv6"} {
+		// Check if the address is present.
+		value := opts.DeviceConfig[fmt.Sprintf("%s.address.external", keyPrefix)]
+		if value == "" {
+			continue
+		}
+
+		// Validate the address.
+		extIP := net.ParseIP(value)
+		if extIP == nil {
+			return fmt.Errorf("Invalid external address %q", value)
+		}
+
+		// Remove the SNAT entry.
+		err := n.ovnnb.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "snat", false, extIP)
+		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 			return err
 		}
 	}
