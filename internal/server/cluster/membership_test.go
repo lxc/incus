@@ -429,11 +429,11 @@ func TestJoin(t *testing.T) {
 	assert.Equal(t, 2, count)
 
 	// Leave the cluster.
-	leaving, err := cluster.Leave(state, targetGateway, "rusp", false /* force */)
+	leaving, err := cluster.Leave(state, targetGateway, "rusp", false /* force */, false)
 	require.NoError(t, err)
 	assert.Equal(t, address, leaving)
 	dbCluster.PreparedStmts = targetStmts
-	err = cluster.Purge(targetState.DB.Cluster, "rusp")
+	err = cluster.Purge(targetState.DB.Cluster, "rusp", false)
 	require.NoError(t, err)
 
 	// The node has gone from the cluster db.
