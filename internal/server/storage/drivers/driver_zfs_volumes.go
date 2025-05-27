@@ -3259,7 +3259,7 @@ func (d *zfs) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (b
 
 	// For block devices, we make them disappear.
 	if snapVol.contentType == ContentTypeBlock || snapVol.contentType == ContentTypeFS && d.isBlockBacked(snapVol) {
-		// For VMs, also mount the filesystem dataset.
+		// For VMs, also unmount the filesystem dataset.
 		if snapVol.IsVMBlock() {
 			fsSnapVol := snapVol.NewVMBlockFilesystemVolume()
 			ourUnmount, err = d.UnmountVolumeSnapshot(fsSnapVol, op)

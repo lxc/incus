@@ -784,7 +784,7 @@ type ResourcesStoragePool struct {
 	// Disk space usage
 	Space ResourcesStoragePoolSpace `json:"space,omitempty" yaml:"space,omitempty"`
 
-	// DIsk inode usage
+	// Disk inode usage
 	Inodes ResourcesStoragePoolInodes `json:"inodes,omitempty" yaml:"inodes,omitempty"`
 }
 
