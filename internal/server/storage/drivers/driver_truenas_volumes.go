@@ -1762,8 +1762,9 @@ func (d *truenas) VolumeSnapshots(vol Volume, op *operations.Operation) ([]strin
 	// Filter only the snapshots.
 	snapshots := []string{}
 	for _, entry := range entries {
-		if strings.HasPrefix(entry, "@snapshot-") {
-			snapshots = append(snapshots, strings.TrimPrefix(entry, "@snapshot-"))
+		after, ok := strings.CutPrefix(entry, "@snapshot-")
+		if ok {
+			snapshots = append(snapshots, after)
 		}
 	}
 
@@ -1796,9 +1797,10 @@ func (d *truenas) restoreVolume(vol Volume, snapshotName string, migration bool,
 			continue
 		}
 
-		if strings.HasPrefix(entry, "@snapshot-") {
+		after, ok := strings.CutPrefix(entry, "@snapshot-")
+		if ok {
 			// Located a normal snapshot following ours.
-			snapshots = append(snapshots, strings.TrimPrefix(entry, "@snapshot-"))
+			snapshots = append(snapshots, after)
 			continue
 		}
 
