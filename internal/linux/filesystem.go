@@ -42,6 +42,16 @@ func DetectFilesystem(path string) (string, error) {
 	return FSTypeToName(int32(fs.Type))
 }
 
+// IsNFS returns true if the path exists and is on a NFS mount.
+func IsNFS(path string) bool {
+	backingFs, err := DetectFilesystem(path)
+	if err != nil {
+		return false
+	}
+
+	return backingFs == "nfs"
+}
+
 // FSTypeToName returns the name of the given fs type.
 // The fsType is from the Type field of unix.Statfs_t. We use int32 so that this function behaves the same on both
 // 32bit and 64bit platforms by requiring any 64bit FS types to be overflowed before being passed in. They will
