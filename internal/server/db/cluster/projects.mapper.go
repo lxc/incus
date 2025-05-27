@@ -188,7 +188,7 @@ func GetProjects(ctx context.Context, db dbtx, filters ...ProjectFilter) (_ []Pr
 		} else if filter.ID == nil && filter.Name == nil {
 			return nil, fmt.Errorf("Cannot filter on empty ProjectFilter")
 		} else {
-			return nil, fmt.Errorf("No statement exists for the given Filter")
+			return nil, errors.New("No statement exists for the given Filter")
 		}
 	}
 

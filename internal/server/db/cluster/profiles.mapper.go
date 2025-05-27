@@ -308,7 +308,7 @@ func GetProfiles(ctx context.Context, db dbtx, filters ...ProfileFilter) (_ []Pr
 		} else if filter.ID == nil && filter.Project == nil && filter.Name == nil {
 			return nil, fmt.Errorf("Cannot filter on empty ProfileFilter")
 		} else {
-			return nil, fmt.Errorf("No statement exists for the given Filter")
+			return nil, errors.New("No statement exists for the given Filter")
 		}
 	}
 

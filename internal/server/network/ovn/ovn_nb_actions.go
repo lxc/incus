@@ -485,6 +485,108 @@ func (o *NB) DeleteLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 	return nil
 }
 
+// CreateStaticMACBinding ensures a Static_Mac_Binding row exists in NB for this router port/IP.
+func (o *NB) CreateStaticMACBinding(ctx context.Context, portName OVNRouterPort, ip net.IP, mac net.HardwareAddr, mayExist bool) error {
+	binding := ovnNB.StaticMACBinding{
+		LogicalPort:        string(portName),
+		IP:                 ip.String(),
+		MAC:                mac.String(),
+		OverrideDynamicMAC: true,
+	}
+
+	// Check if the binding already exists.
+	err := o.get(ctx, &binding)
+	if err != nil && !errors.Is(err, ErrNotFound) {
+		return err
+	}
+
+	if binding.UUID != "" {
+		if !mayExist {
+			return ErrExists
+		}
+
+		if binding.LogicalPort == string(portName) && binding.IP == ip.String() && binding.MAC == mac.String() && binding.OverrideDynamicMAC {
+			return nil
+		}
+	}
+
+	// Create the record.
+	var operations []ovsdb.Operation
+
+	if binding.UUID == "" {
+		operations, err = o.client.Create(&binding)
+		if err != nil {
+			return err
+		}
+	} else {
+		operations, err = o.client.Where(&binding).Update(&binding)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Apply the changes.
+	reply, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(reply, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteStaticMACBindings deletes all static MAC bindings from the specified router port.
+// It allows filtering what family to flush.
+func (o *NB) DeleteStaticMACBindings(ctx context.Context, portName OVNRouterPort, ipv4 bool, ipv6 bool) error {
+	if !ipv4 && !ipv6 {
+		return nil
+	}
+
+	// Get all the entries for this router port.
+	staticMACBindings := []ovnNB.StaticMACBinding{}
+	err := o.client.WhereCache(func(smb *ovnNB.StaticMACBinding) bool {
+		return smb.LogicalPort == string(portName)
+	}).List(ctx, &staticMACBindings)
+	if err != nil {
+		return err
+	}
+
+	// Check what needs to be deleted.
+	var operations []ovsdb.Operation
+	for _, binding := range staticMACBindings {
+		ip := net.ParseIP(binding.IP)
+		if ip != nil && ((ip.To4() != nil && ipv4) || (ip.To4() == nil && ipv6)) {
+			op, err := o.client.Where(&ovnNB.StaticMACBinding{UUID: binding.UUID}).Delete()
+			if err != nil {
+				return err
+			}
+
+			operations = append(operations, op...)
+		}
+	}
+
+	if len(operations) == 0 {
+		return nil
+	}
+
+	// Apply the database changes.
+	reply, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(reply, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // CreateLogicalRouterRoute adds a static route to the logical router.
 func (o *NB) CreateLogicalRouterRoute(ctx context.Context, routerName OVNRouter, mayExist bool, routes ...OVNRouterRoute) error {
 	// Get the logical router.

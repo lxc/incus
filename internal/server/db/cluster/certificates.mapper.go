@@ -189,7 +189,7 @@ func GetCertificates(ctx context.Context, db dbtx, filters ...CertificateFilter)
 		} else if filter.ID == nil && filter.Fingerprint == nil && filter.Name == nil && filter.Type == nil {
 			return nil, fmt.Errorf("Cannot filter on empty CertificateFilter")
 		} else {
-			return nil, fmt.Errorf("No statement exists for the given Filter")
+			return nil, errors.New("No statement exists for the given Filter")
 		}
 	}
 

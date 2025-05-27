@@ -313,7 +313,7 @@ func GetWarnings(ctx context.Context, db dbtx, filters ...WarningFilter) (_ []Wa
 		} else if filter.ID == nil && filter.UUID == nil && filter.Project == nil && filter.Node == nil && filter.TypeCode == nil && filter.EntityTypeCode == nil && filter.EntityID == nil && filter.Status == nil {
 			return nil, fmt.Errorf("Cannot filter on empty WarningFilter")
 		} else {
-			return nil, fmt.Errorf("No statement exists for the given Filter")
+			return nil, errors.New("No statement exists for the given Filter")
 		}
 	}
 
