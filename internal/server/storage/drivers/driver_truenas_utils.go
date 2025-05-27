@@ -2,6 +2,7 @@ package drivers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"path/filepath"
@@ -550,7 +551,7 @@ func (d *truenas) getDatasetsAndProperties(datasets []string, properties []strin
 		}
 	}
 	if resultsMap == nil {
-		return nil, fmt.Errorf("Could not find object inside list --json response")
+		return nil, errors.New("Could not find object inside list --json response")
 	}
 
 	objectsAsMap := make(map[string]bool)
@@ -667,7 +668,7 @@ func (d *truenas) version() (string, error) {
 		return strings.TrimSpace(string(out)), nil
 	}
 
-	return "", fmt.Errorf("Could not determine TrueNAS driver version")
+	return "", errors.New("Could not determine TrueNAS driver version")
 }
 
 // set the volsize property of a zvol, optionally ignoring shrink errors (and warning), requires a zvol

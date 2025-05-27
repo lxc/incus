@@ -732,7 +732,7 @@ func ValidateTrueNasVolBlocksize(value string) error {
 	}
 
 	if sizeBytes < zfsMinBlocksize || sizeBytes > zfsMaxVolBlocksize || (sizeBytes&(sizeBytes-1)) != 0 {
-		return fmt.Errorf("Value should be between 512B and 128KiB, and be power of 2")
+		return errors.New("Value should be between 512B and 128KiB, and be power of 2")
 	}
 
 	return nil

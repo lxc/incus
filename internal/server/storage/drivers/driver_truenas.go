@@ -1,6 +1,7 @@
 package drivers
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"path/filepath"
@@ -199,7 +200,7 @@ func (d *truenas) parseSource() error {
 	}
 
 	if source == "" || filepath.IsAbs(source) {
-		return fmt.Errorf(`TrueNAS Driver requires "source" to be specified using the format: [<remote host>:]<remote pool>[[/<remote dataset>]...][/]`)
+		return errors.New(`TrueNAS Driver requires "source" to be specified using the format: [<remote host>:]<remote pool>[[/<remote dataset>]...][/]`)
 	}
 
 	// a pool... means we create a dataset in the root
@@ -345,7 +346,7 @@ func (d *truenas) Update(changedConfig map[string]string) error {
 
 	_, ok := changedConfig["truenas.dataset"]
 	if ok {
-		return fmt.Errorf("truenas.dataset cannot be modified")
+		return errors.New("truenas.dataset cannot be modified")
 	}
 
 	// prop changes we want to accept
