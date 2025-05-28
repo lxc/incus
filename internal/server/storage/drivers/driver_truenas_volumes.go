@@ -1043,15 +1043,24 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 	return nil
 }
 
+// getTempSnapshotVolName returns a derived volume name for the server specific clone of the specified snapshot volume
+func (d *truenas) getTempSnapshotVolName(vol Volume) string {
+	parent, snapshotOnlyName, _ := api.GetParentAndSnapshotName(vol.Name())
+	parentVol := NewVolume(d, d.Name(), vol.volType, vol.contentType, parent, vol.config, vol.poolConfig)
+	parentDataset := d.dataset(parentVol, false)
+
+	// serverName to allow other cluster members to mount the same snapshot at the same time.
+	dataset := fmt.Sprintf("%s_%s_%s%s", parentDataset, snapshotOnlyName, d.state.ServerName, tmpVolSuffix)
+
+	return dataset
+}
+
 // GetVolumeDiskPath returns the location of a root disk block device.
 func (d *truenas) GetVolumeDiskPath(vol Volume) (string, error) {
 	var dataset string
 
 	if vol.IsSnapshot() {
-		parent, snapshotOnlyName, _ := api.GetParentAndSnapshotName(vol.Name())
-		parentVol := NewVolume(d, d.Name(), vol.volType, vol.contentType, parent, vol.config, vol.poolConfig)
-		parentDataset := d.dataset(parentVol, false)
-		dataset = fmt.Sprintf("%s_%s%s", parentDataset, snapshotOnlyName, tmpVolSuffix)
+		dataset = d.getTempSnapshotVolName(vol)
 	} else {
 		dataset = d.dataset(vol, false)
 	}
@@ -1612,11 +1621,7 @@ func (d *truenas) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 	}
 
 	srcSnapshot := d.dataset(snapVol, false)
-
-	parent, snapshotOnlyName, _ := api.GetParentAndSnapshotName(snapVol.Name())
-	parentVol := NewVolume(d, d.Name(), snapVol.volType, snapVol.contentType, parent, snapVol.config, snapVol.poolConfig)
-	parentDataset := d.dataset(parentVol, false)
-	cloneDataset := fmt.Sprintf("%s_%s%s", parentDataset, snapshotOnlyName, tmpVolSuffix)
+	cloneDataset := d.getTempSnapshotVolName(snapVol)
 
 	// Create a temporary clone from the snapshot.
 	err = d.cloneSnapshot(srcSnapshot, cloneDataset)
@@ -1729,10 +1734,7 @@ func (d *truenas) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation
 		l.Debug("Unmounted TrueNAS snapshot volume filesystem", logger.Ctx{"path": mountPath})
 	}
 
-	parent, snapshotOnlyName, _ := api.GetParentAndSnapshotName(snapVol.Name())
-	parentVol := NewVolume(d, d.Name(), snapVol.volType, snapVol.contentType, parent, snapVol.config, snapVol.poolConfig)
-	parentDataset := d.dataset(parentVol, false)
-	cloneDataset := fmt.Sprintf("%s_%s%s", parentDataset, snapshotOnlyName, tmpVolSuffix)
+	cloneDataset := d.getTempSnapshotVolName(snapVol)
 
 	l.Debug("Deleting temporary TrueNAS snapshot volume")
 
