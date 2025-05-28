@@ -1745,15 +1745,6 @@ func (d *truenas) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation
 	}
 
 	// Destroy clone
-
-	// TODO: we sometimes recieve a "busy" error here... which I think is a race, although iSCSI should've finished with the zvol by the time
-	// deleteIscsiShare returns, maybe it hasn't yet, Perhaps a retry loop with timeout?
-	/*
-		Error -32001
-		Method call error
-		[EBUSY] Failed to delete dataset: cannot destroy 'dozer/incus-tests/DMH/containers/c1-foo_c1-foo-snap0.incustmp': dataset is busy)
-	*/
-
 	err = d.deleteDatasetRecursive(cloneDataset)
 	if err != nil {
 		return false, fmt.Errorf("Could not delete temporary snapshot volume: %w", err)
