@@ -1668,3 +1668,17 @@ func (d *common) ETag() []any {
 
 	return etag
 }
+
+// ClearLimitsCPUNodes clears the "volatile.cpu.nodes" configuration if necessary.
+func (d *common) ClearLimitsCPUNodes(changedConfig []string) {
+	if !slices.Contains(changedConfig, "limits.cpu.nodes") {
+		return
+	}
+
+	value := d.expandedConfig["limits.cpu.nodes"]
+	if value == "balanced" {
+		return
+	}
+
+	d.localConfig["volatile.cpu.nodes"] = ""
+}
