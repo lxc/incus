@@ -267,12 +267,12 @@ func (d *cephfs) Create() error {
 	clusterName := d.config["cephfs.cluster_name"]
 	userName := d.config["cephfs.user.name"]
 
-	fsid, err := CephFsid(clusterName)
+	fsid, err := CephFsid(clusterName, userName)
 	if err != nil {
 		return err
 	}
 
-	monitors, err := CephMonitors(clusterName)
+	monitors, err := CephMonitors(clusterName, userName)
 	if err != nil {
 		return err
 	}
@@ -344,12 +344,12 @@ func (d *cephfs) Delete(op *operations.Operation) error {
 	clusterName := d.config["cephfs.cluster_name"]
 	userName := d.config["cephfs.user.name"]
 
-	fsid, err := CephFsid(clusterName)
+	fsid, err := CephFsid(clusterName, userName)
 	if err != nil {
 		return err
 	}
 
-	monitors, err := CephMonitors(clusterName)
+	monitors, err := CephMonitors(clusterName, userName)
 	if err != nil {
 		return err
 	}
@@ -438,12 +438,12 @@ func (d *cephfs) Mount() (bool, error) {
 	clusterName := d.config["cephfs.cluster_name"]
 	userName := d.config["cephfs.user.name"]
 
-	fsid, err := CephFsid(clusterName)
+	fsid, err := CephFsid(clusterName, userName)
 	if err != nil {
 		return false, err
 	}
 
-	monitors, err := CephMonitors(clusterName)
+	monitors, err := CephMonitors(clusterName, userName)
 	if err != nil {
 		return false, err
 	}

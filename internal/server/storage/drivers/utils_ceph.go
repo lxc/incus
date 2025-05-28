@@ -136,7 +136,7 @@ type Monitors struct {
 }
 
 // CephMonitors returns a list of public monitor IP:ports for the given cluster.
-func CephMonitors(cluster string) (Monitors, error) {
+func CephMonitors(cluster string, client string) (Monitors, error) {
 	// Get the monitor dump, there may be other better ways but this is quick and easy.
 	monitors := struct {
 		Mons []struct {
@@ -151,6 +151,7 @@ func CephMonitors(cluster string) (Monitors, error) {
 
 	err := callCephJSON(&monitors,
 		"--cluster", cluster,
+		"--name", EnsureClientPrefix(client),
 		"mon", "dump",
 	)
 	if err != nil {
@@ -192,13 +193,8 @@ func CephKeyring(cluster string, client string) (string, error) {
 		return value, nil
 	}
 
-	// If client isn't prefixed, prefix it with 'client.'.
-	if !strings.Contains(client, ".") {
-		client = "client." + client
-	}
-
 	// Check that cephx is enabled.
-	authType, err := callCeph("--cluster", cluster, "config", "get", client, "auth_service_required")
+	authType, err := callCeph("--cluster", cluster, "config", "get", EnsureClientPrefix(client), "auth_service_required")
 	if err != nil {
 		return "", fmt.Errorf("Failed to query ceph config for auth_service_required: %w", err)
 	}
@@ -326,16 +322,26 @@ func cephKeyringFromFile(cluster string, client string) (string, error) {
 }
 
 // CephFsid retrieves the FSID for the given cluster.
-func CephFsid(cluster string) (string, error) {
+func CephFsid(cluster string, client string) (string, error) {
 	// Call ceph fsid.
 	fsid := struct {
 		Fsid string `json:"fsid"`
 	}{}
 
-	err := callCephJSON(&fsid, "--cluster", cluster, "fsid")
+	err := callCephJSON(&fsid, "--cluster", cluster, "--name", EnsureClientPrefix(client), "fsid")
 	if err != nil {
 		return "", fmt.Errorf("Couldn't get fsid for %q: %w", cluster, err)
 	}
 
 	return fsid.Fsid, nil
+}
+
+// EnsureClientPrefix returns the given client string with the "client" prefix added,
+// but only if it does not already start with that prefix.
+func EnsureClientPrefix(client string) string {
+	if strings.Contains(client, ".") {
+		return client
+	}
+
+	return "client." + client
 }
