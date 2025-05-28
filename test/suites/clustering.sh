@@ -808,6 +808,10 @@ test_clustering_storage() {
     ns3="${prefix}3"
     INCUS_NETNS="${ns3}" spawn_incus "${INCUS_THREE_DIR}" false
 
+    if [ "${poolDriver}" = "linstor" ]; then
+      linstor_preconfigure "${INCUS_THREE_DIR}"
+    fi
+
     key=$(echo "${driver_config}" | cut -d'=' -f1)
     value=$(echo "${driver_config}" | cut -d'=' -f2-)
 
@@ -836,10 +840,6 @@ test_clustering_storage() {
   fi
 
   if [ "${poolDriver}" = "ceph" ] || [ "${poolDriver}" = "linstor" ]; then
-    if [ "${poolDriver}" = "linstor" ]; then
-      linstor_preconfigure "${INCUS_THREE_DIR}"
-    fi
-
     # Move the container to node3, renaming it
     INCUS_DIR="${INCUS_TWO_DIR}" incus move foo bar --target node3
     INCUS_DIR="${INCUS_TWO_DIR}" incus info bar | grep -q "Location: node3"
