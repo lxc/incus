@@ -92,13 +92,21 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 			return nil, err
 		}
 
+		id := uint32(0)
+		req, ok := value.(map[string]any)
+		if ok {
+			id = m.IncreaseID()
+			req["id"] = id
+			value = req
+		}
+
 		request, err := json.Marshal(value)
 		if err != nil {
 			return nil, err
 		}
 
 		var resp map[string]any
-		err = m.RunJSON(request, &resp, true)
+		err = m.RunJSON(request, &resp, true, id)
 		if err != nil {
 			return nil, err
 		}

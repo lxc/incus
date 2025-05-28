@@ -14,17 +14,19 @@ import (
 	"sync/atomic"
 
 	"golang.org/x/sys/unix"
+
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 type qemuMachineProtocal struct {
-	oobSupported bool               // Out of band support or not
-	c            net.Conn           // Underlying connection
-	uc           *net.UnixConn      // Underlying unix socket connection
-	mu           sync.Mutex         // Serialize running command
-	stream       <-chan rawResponse // Send command responses and errors
-	events       <-chan qmpEvent    // Events channel
-	listeners    atomic.Uint32      // Listeners number
-	cid          atomic.Uint32      // Auto increase command id
+	oobSupported bool            // Out of band support or not
+	c            net.Conn        // Underlying connection
+	uc           *net.UnixConn   // Underlying unix socket connection
+	mu           sync.Mutex      // Serialize running command
+	replies      sync.Map        // Replies channels
+	events       <-chan qmpEvent // Events channel
+	listeners    atomic.Uint32   // Listeners number
+	cid          atomic.Uint32   // Auto increase command id
 }
 
 // qmpEvent represents a QEMU QMP event.
@@ -104,9 +106,8 @@ func (qmp *qemuMachineProtocal) disconnect() error {
 
 // qmpIncreaseID increase ID and skip zero.
 func (qmp *qemuMachineProtocal) qmpIncreaseID() uint32 {
-	const ZeroKey = uint32(0)
 	id := qmp.cid.Add(1)
-	if id == ZeroKey {
+	if id == 0 {
 		id = qmp.cid.Add(1)
 	}
 
@@ -155,14 +156,10 @@ func (qmp *qemuMachineProtocal) connect() error {
 		return fmt.Errorf("reply id %d and command id %d mismatch", r.ID, id)
 	}
 
-	// Initialize listener for command responses and asynchronous events
-	events := make(chan qmpEvent)
-	stream := make(chan rawResponse)
-	go qmp.listen(qmp.c, events, stream)
-
+	// Initialize listener for command responses and asynchronous events.
+	events := make(chan qmpEvent, 128)
+	go qmp.listen(qmp.c, events, &qmp.replies)
 	qmp.events = events
-	qmp.stream = stream
-
 	return nil
 }
 
@@ -172,9 +169,8 @@ func (qmp *qemuMachineProtocal) getEvents(context.Context) (<-chan qmpEvent, err
 	return qmp.events, nil
 }
 
-func (qmp *qemuMachineProtocal) listen(r io.Reader, events chan<- qmpEvent, stream chan<- rawResponse) {
+func (qmp *qemuMachineProtocal) listen(r io.Reader, events chan<- qmpEvent, replies *sync.Map) {
 	defer close(events)
-	defer close(stream)
 
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
@@ -194,9 +190,29 @@ func (qmp *qemuMachineProtocal) listen(r io.Reader, events chan<- qmpEvent, stre
 				continue
 			}
 
+			key := r.ID
+			if key == 0 {
+				// Discard response without a request ID.
+				continue
+			}
+
+			val, ok := replies.LoadAndDelete(key)
+			if !ok {
+				// Discard unexpected response.
+				continue
+			}
+
+			reply, ok := val.(chan rawResponse)
+			if !ok {
+				// Skip bad messages.
+				logger.Error("Failed to cast QMP reply to chan rawResponse")
+				continue
+			}
+
 			r.raw = make([]byte, len(b))
 			copy(r.raw, b)
-			stream <- r
+			reply <- r
+
 			continue
 		}
 
@@ -205,19 +221,28 @@ func (qmp *qemuMachineProtocal) listen(r io.Reader, events chan<- qmpEvent, stre
 			continue
 		}
 
-		events <- e
+		select {
+		case events <- e:
+			logger.Debugf("Event dispatched: %s", b)
+		default:
+			logger.Debugf("Event discarded: %s", b)
+		}
 	}
 
 	err := scanner.Err()
 	if err != nil {
-		stream <- rawResponse{err: err}
+		errReply := make(chan rawResponse, 1)
+		replies.Store(0, errReply)
+
+		r := rawResponse{err: err}
+		errReply <- r
 	}
 }
 
 // run executes the given QAPI command against a domain's QEMU instance.
-func (qmp *qemuMachineProtocal) run(command []byte) ([]byte, error) {
+func (qmp *qemuMachineProtocal) run(command []byte, id uint32) ([]byte, error) {
 	// Just call RunWithFile with no file
-	return qmp.runWithFile(command, nil)
+	return qmp.runWithFile(command, nil, id)
 }
 
 func (qmp *qemuMachineProtocal) qmpWriteMsg(b []byte, file *os.File) error {
@@ -242,19 +267,33 @@ func (qmp *qemuMachineProtocal) qmpWriteMsg(b []byte, file *os.File) error {
 }
 
 // runWithFile executes for passing a file through out-of-band data.
-func (qmp *qemuMachineProtocal) runWithFile(command []byte, file *os.File) ([]byte, error) {
+func (qmp *qemuMachineProtocal) runWithFile(command []byte, file *os.File, id uint32) ([]byte, error) {
 	// Only allow a single command to be run at a time to ensure that responses
 	// to a command cannot be mixed with responses from another command
 	qmp.mu.Lock()
 	defer qmp.mu.Unlock()
 
+	if id == 0 {
+		id = qmp.qmpIncreaseID()
+		b, err := qmp.qmpInjectID(command, id)
+		if err != nil {
+			return nil, err
+		}
+
+		command = b
+	}
+
+	repCh := make(chan rawResponse, 1)
+	qmp.replies.Store(id, repCh)
+
 	err := qmp.qmpWriteMsg(command, file)
 	if err != nil {
+		qmp.replies.Delete(id)
 		return nil, err
 	}
 
 	// Wait for a response or error to our command
-	res := <-qmp.stream
+	res := <-repCh
 	if res.err != nil {
 		return nil, res.err
 	}
@@ -264,4 +303,20 @@ func (qmp *qemuMachineProtocal) runWithFile(command []byte, file *os.File) ([]by
 	}
 
 	return res.raw, nil
+}
+
+func (qmp *qemuMachineProtocal) qmpInjectID(command []byte, id uint32) ([]byte, error) {
+	req := &qmpCommand{}
+	err := json.Unmarshal(command, req)
+	if err != nil {
+		return nil, err
+	}
+
+	req.ID = id
+	b, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }
