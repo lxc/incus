@@ -6145,6 +6145,9 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 		}
 	}
 
+	// Clear the "volatile.cpu.nodes" if needed.
+	d.ClearLimitsCPUNodes(changedConfig)
+
 	if d.architectureSupportsUEFI(d.architecture) && (slices.Contains(changedConfig, "security.secureboot") || slices.Contains(changedConfig, "security.csm")) {
 		// setupNvram() requires instance's config volume to be mounted.
 		// The easiest way to detect that is to check if instance is running.

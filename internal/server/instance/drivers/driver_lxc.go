@@ -5091,6 +5091,9 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 					}
 				}
 			} else if key == "limits.cpu" || key == "limits.cpu.nodes" {
+				// Clear the "volatile.cpu.nodes" if needed.
+				d.ClearLimitsCPUNodes(changedConfig)
+
 				// Trigger a scheduler re-run
 				defer cgroup.TaskSchedulerTrigger("container", d.name, "changed") //nolint:revive
 			} else if key == "limits.cpu.priority" || key == "limits.cpu.allowance" {
