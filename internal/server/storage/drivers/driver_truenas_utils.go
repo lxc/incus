@@ -1,6 +1,7 @@
 package drivers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/subprocess"
 	"github.com/lxc/incus/v6/shared/util"
@@ -489,6 +491,36 @@ func (d *truenas) deleteSnapshot(snapshot string, recursive bool, options ...str
 	return d.deleteDataset(snapshot, recursive, options...)
 }
 
+// tryDeleteDataset attempts to delete a dataset, repeating if busy until success, or the context is ended
+func (d *truenas) tryDeleteBusyDataset(ctx context.Context, dataset string, recursive bool, options ...string) error {
+	for {
+		if ctx.Err() != nil {
+			return fmt.Errorf("Failed to delete dataset for %q: %w", dataset, ctx.Err())
+		}
+
+		// we sometimes we recieve a "busy" error when deleting... which I think is a race, although iSCSI should've finished with the zvol by the time
+		// deleteIscsiShare returns, maybe it hasn't yet... so we retry... in general if incus is calling deleteDataset it shouldn't be busy.
+		err := d.deleteDataset(dataset, recursive, options...)
+		if err == nil {
+			return nil
+		}
+
+		/*
+			Error -32001
+			Method call error
+			[EBUSY] Failed to delete dataset: cannot destroy '<dataset>': dataset is busy)
+		*/
+		if !strings.Contains(err.Error(), "[EBUSY]") {
+			return err
+		}
+
+		d.logger.Warn("Error while trying to delete dataset, will retry", logger.Ctx{"dataset": dataset, "err": err})
+
+		// was busy, lets try again.
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
 func (d *truenas) deleteDataset(dataset string, recursive bool, options ...string) error {
 	args := []string{d.getDatasetOrSnapshot(dataset), "delete"}
 
@@ -622,9 +654,10 @@ func (d *truenas) deleteDatasetRecursive(dataset string) error {
 		return err
 	}
 
-	// Delete the dataset (and any snapshots left).
-	out, err := d.runTool(d.getDatasetOrSnapshot(dataset), "delete", "-r", dataset)
-	_ = out
+	// Try delete the dataset (and any snapshots left), waiting up to 5 seconds if its busy
+	ctx, cancel := context.WithTimeout(d.state.ShutdownCtx, 5*time.Second)
+	defer cancel()
+	err = d.tryDeleteBusyDataset(ctx, dataset, true)
 	if err != nil {
 		return err
 	}
