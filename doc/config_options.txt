@@ -2770,6 +2770,18 @@ It is globally unique across all servers and projects.
 
 ```
 
+```{config:option} volatile.vm.rtc_adjustment instance-volatile
+:shortdesc: "Real Time Clock change adjustment"
+:type: "int64"
+Real Time Clock adjustment time to allow virtual machines to run on a different base than the host.
+```
+
+```{config:option} volatile.vm.rtc_offset instance-volatile
+:shortdesc: "Real Time Clock change offset"
+:type: "int64"
+Real Time Clock offset to allow virtual machines to run on a different base than the host.
+```
+
 ```{config:option} volatile.vsock_id instance-volatile
 :shortdesc: "Instance `vsock ID` used as of last start"
 :type: "string"
