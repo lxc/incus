@@ -198,8 +198,9 @@ func storagePoolsGet(d *Daemon, r *http.Request) response.Response {
 		return response.InternalError(err)
 	}
 
-	var linkResults []string
-	var fullResults []api.StoragePool
+	linkResults := make([]string, 0)
+	fullResults := make([]api.StoragePool, 0)
+
 	for _, poolName := range poolNames {
 		// Hide storage pools with a 0 project limit.
 		if slices.Contains(hiddenPoolNames, poolName) {
