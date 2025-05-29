@@ -16,7 +16,7 @@ truenas_configure() {
 
   echo "==> Configuring TrueNAS backend in ${INCUS_DIR}"
 
-  incus storage create "incustest-$(basename "${INCUS_DIR}")" truenas "$(truenas_source)/$(basename "${INCUS_DIR}")" $(truenas_api_key)
+  incus storage create "incustest-$(basename "${INCUS_DIR}")" truenas "$(truenas_source)/$(basename "${INCUS_DIR}")" "$(truenas_api_key)"
   incus profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
 }
 
