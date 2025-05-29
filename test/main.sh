@@ -353,6 +353,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_storage_driver_ceph "ceph storage driver"
     run_test test_storage_driver_cephfs "cephfs storage driver"
     run_test test_storage_driver_linstor "linstor storage driver"
+    #run_test test_storage_driver_truenas "truenas storage driver" # not implemented yet.
     run_test test_storage_driver_zfs "zfs storage driver"
     run_test test_storage_buckets "storage buckets"
     run_test test_storage_bucket_export "storage buckets export and import"
