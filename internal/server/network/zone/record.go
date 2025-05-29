@@ -3,12 +3,14 @@ package zone
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"slices"
 
 	"github.com/miekg/dns"
 
 	"github.com/lxc/incus/v6/internal/server/cluster/request"
 	"github.com/lxc/incus/v6/internal/server/db"
+	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/shared/api"
 )
 
@@ -26,10 +28,27 @@ func (d *zone) AddRecord(req api.NetworkZoneRecordsPost) error {
 	}
 
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Add the new record.
-		_, err = tx.CreateNetworkZoneRecord(ctx, d.id, req)
+		// Create the network zone record object.
+		dbRecord := dbCluster.NetworkZoneRecord{
+			NetworkZoneID: int(d.id),
+			Name:          req.Name,
+			Description:   req.Description,
+			Entries:       req.Entries,
+		}
 
-		return err
+		// Add the new record.
+		id, err := dbCluster.CreateNetworkZoneRecord(ctx, tx.Tx(), dbRecord)
+		if err != nil {
+			return err
+		}
+
+		// Add the config.
+		err = dbCluster.CreateNetworkZoneRecordConfig(ctx, tx.Tx(), id, req.Config)
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
@@ -41,27 +60,27 @@ func (d *zone) AddRecord(req api.NetworkZoneRecordsPost) error {
 func (d *zone) GetRecords() ([]api.NetworkZoneRecord, error) {
 	s := d.state
 
-	var names []string
 	records := []api.NetworkZoneRecord{}
-	var record *api.NetworkZoneRecord
 
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		var err error
+		zoneID := int(d.id)
+		filter := dbCluster.NetworkZoneRecordFilter{
+			NetworkZoneID: &zoneID,
+		}
 
-		// Get the record names.
-		names, err = tx.GetNetworkZoneRecordNames(ctx, d.id)
+		dbRecords, err := dbCluster.GetNetworkZoneRecords(ctx, tx.Tx(), filter)
 		if err != nil {
 			return err
 		}
 
-		// Load all the records.
-		for _, name := range names {
-			_, record, err = tx.GetNetworkZoneRecord(ctx, d.id, name)
+		// Convert each record to API format.
+		for _, dbRecord := range dbRecords {
+			apiRecord, err := dbRecord.ToAPI(ctx, tx.Tx())
 			if err != nil {
 				return err
 			}
 
-			records = append(records, *record)
+			records = append(records, *apiRecord)
 		}
 
 		return nil
@@ -77,12 +96,29 @@ func (d *zone) GetRecord(name string) (*api.NetworkZoneRecord, error) {
 	var record *api.NetworkZoneRecord
 
 	err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		var err error
+		zoneID := int(d.id)
+		filter := dbCluster.NetworkZoneRecordFilter{
+			NetworkZoneID: &zoneID,
+			Name:          &name,
+		}
 
-		// Get the record.
-		_, record, err = tx.GetNetworkZoneRecord(ctx, d.id, name)
+		dbRecords, err := dbCluster.GetNetworkZoneRecords(ctx, tx.Tx(), filter)
+		if err != nil {
+			return err
+		}
 
-		return err
+		if len(dbRecords) == 0 {
+			return api.StatusErrorf(http.StatusNotFound, "Network zone record not found")
+		}
+
+		// Convert to API format.
+		apiRecord, err := dbRecords[0].ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		record = apiRecord
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -107,14 +143,34 @@ func (d *zone) UpdateRecord(name string, req api.NetworkZoneRecordPut, clientTyp
 	}
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Get the record.
-		id, _, err := tx.GetNetworkZoneRecord(ctx, d.id, name)
+		zoneID := int(d.id)
+		filter := dbCluster.NetworkZoneRecordFilter{
+			NetworkZoneID: &zoneID,
+			Name:          &name,
+		}
+
+		// Get the records matching the filter, not using exist because we need record ID and it would be redundant with Get.
+		dbRecords, err := dbCluster.GetNetworkZoneRecords(ctx, tx.Tx(), filter)
 		if err != nil {
 			return err
 		}
 
+		if len(dbRecords) == 0 {
+			return api.StatusErrorf(http.StatusNotFound, "Network zone record not found")
+		}
+
 		// Update the record.
-		err = tx.UpdateNetworkZoneRecord(ctx, id, req)
+		dbRecord := dbRecords[0]
+		dbRecord.Description = req.Description
+		dbRecord.Entries = req.Entries
+
+		err = dbCluster.UpdateNetworkZoneRecord(ctx, tx.Tx(), zoneID, name, dbRecord)
+		if err != nil {
+			return err
+		}
+
+		// Update the config.
+		err = dbCluster.UpdateNetworkZoneRecordConfig(ctx, tx.Tx(), int64(dbRecord.ID), req.Config)
 		if err != nil {
 			return err
 		}
@@ -132,14 +188,24 @@ func (d *zone) DeleteRecord(name string) error {
 	s := d.state
 
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Get the record.
-		id, _, err := tx.GetNetworkZoneRecord(ctx, d.id, name)
+		zoneID := int(d.id)
+		filter := dbCluster.NetworkZoneRecordFilter{
+			NetworkZoneID: &zoneID,
+			Name:          &name,
+		}
+
+		// Get the records matching the filter, not using exist because we need record ID and it would be redundant with Get.
+		dbRecords, err := dbCluster.GetNetworkZoneRecords(ctx, tx.Tx(), filter)
 		if err != nil {
 			return err
 		}
 
+		if len(dbRecords) == 0 {
+			return api.StatusErrorf(http.StatusNotFound, "Network zone record not found")
+		}
+
 		// Delete the record.
-		err = tx.DeleteNetworkZoneRecord(ctx, id)
+		err = dbCluster.DeleteNetworkZoneRecord(ctx, tx.Tx(), int(d.id), dbRecords[0].ID)
 		if err != nil {
 			return err
 		}
