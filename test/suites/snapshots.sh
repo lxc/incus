@@ -280,7 +280,7 @@ snap_restore() {
   # Start container and then restore snapshot to verify the running state after restore.
   incus start bar
 
-  if [ "$incus_backend" != "zfs" && "$incus_backend" != "linstor" ] && [ "$incus_backend" != "truenas" ]; then
+  if [ "$incus_backend" != "zfs" ] && [ "$incus_backend" != "linstor" ] && [ "$incus_backend" != "truenas" ]; then
     # see comment above about snap0
     restore_and_compare_fs snap0
 
