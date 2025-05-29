@@ -44,7 +44,7 @@ snapshots() {
 
   incus copy foo/tester foosnap1
   # FIXME: make this backend agnostic
-  if [ "$incus_backend" != "lvm" ] && [ "${incus_backend}" != "zfs" ] && [ "$incus_backend" != "ceph" && [ "$incus_backend" != "linstor"  ] && [ "$incus_backend" != "truenas" ]; then
+  if [ "$incus_backend" != "lvm" ] && [ "${incus_backend}" != "zfs" ] && [ "$incus_backend" != "ceph" ] && [ "$incus_backend" != "linstor"  ] && [ "$incus_backend" != "truenas" ]; then
     [ -d "${INCUS_DIR}/containers/foosnap1/rootfs" ]
   fi
 
