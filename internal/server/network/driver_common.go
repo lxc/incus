@@ -170,11 +170,17 @@ func (n *common) validateZoneNames(config map[string]string) error {
 	}
 
 	var err error
-	var zoneProjects map[string]string
+	var zones []dbCluster.NetworkZone
+	zoneProjects := make(map[string]string)
+
 	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		zoneProjects, err = tx.GetNetworkZones(ctx)
+		zones, err = dbCluster.GetNetworkZones(ctx, tx.Tx())
 		if err != nil {
 			return fmt.Errorf("Failed to load all network zones: %w", err)
+		}
+
+		for _, zone := range zones {
+			zoneProjects[zone.Name] = zone.Project
 		}
 
 		return nil
