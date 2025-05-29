@@ -1551,7 +1551,7 @@ func (n *common) peerUsedBy(peerName string, firstOnly bool) ([]string, error) {
 					continue // Not a valid network/peer name combination.
 				}
 
-				peer := db.NetworkPeer{
+				peer := dbCluster.NetworkPeerConnection{
 					NetworkName: peerParts[0],
 					PeerName:    peerParts[1],
 				}
