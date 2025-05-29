@@ -45,7 +45,7 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	}
 
 	// Look for previously deleted images. (don't look for underlying, or we'll look after we've looked)
-	if vol.volType == VolumeTypeImage && !isFsImgVol(vol) {
+	if vol.volType == VolumeTypeImage {
 		dataset := d.dataset(vol, true)
 		exists, err := d.datasetExists(dataset)
 		if err != nil {
@@ -226,6 +226,15 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		// Run the volume filler function if supplied.
 		if filler != nil && filler.Fill != nil {
 			var err error
+			var devPath string
+
+			if IsContentBlock(vol.contentType) {
+				// Get the device path.
+				devPath, err = d.GetVolumeDiskPath(vol)
+				if err != nil {
+					return err
+				}
+			}
 
 			allowUnsafeResize := false
 			if vol.volType == VolumeTypeImage {
@@ -243,29 +252,27 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 			}
 
 			// Run the filler.
-			if vol.IsVMBlock() { // can do for FS-IMG too
-				vol.mountCustomPath = "" // need to zap path... or the filler will fill into the .block path...
-				// the fillter expects the metadata volume to passed in.
-			}
-			err = d.runFiller(vol, rootBlockPath, filler, allowUnsafeResize)
+			err = d.runFiller(vol, devPath, filler, allowUnsafeResize)
 			if err != nil {
 				return err
 			}
 
 			// Move the GPT alt header to end of disk if needed.
-			if vol.IsVMBlock() { // TODO: this will corrupt our image that we lay down.
-				err = d.moveGPTAltHeader(rootBlockPath)
+			if vol.IsVMBlock() {
+				err = d.moveGPTAltHeader(devPath)
 				if err != nil {
 					return err
 				}
 			}
 		}
 
-		// Run EnsureMountPath again after mounting and filling to ensure the mount directory has
-		// the correct permissions set.
-		err := vol.EnsureMountPath()
-		if err != nil {
-			return err
+		if vol.contentType == ContentTypeFS {
+			// Run EnsureMountPath again after mounting and filling to ensure the mount directory has
+			// the correct permissions set.
+			err := vol.EnsureMountPath()
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -275,7 +282,7 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	}
 
 	// Setup snapshot and unset mountpoint on image.
-	if vol.volType == VolumeTypeImage && !isFsImgVol(vol) {
+	if vol.volType == VolumeTypeImage {
 
 		// ideally, we don't want to snap the underlying when we create the img, but rather after we've unpacked.
 		// note: we may need to sync the underlying filesystem, it depends if its still mounted, I think it shouldn't be.
@@ -323,17 +330,12 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	// must mount VM.block so we can access the root.img, as well as the state filesystem
-	if vol.IsVMBlock() {
-		blockifyMountPath(&vol)
-		blockifyMountPath(&srcVol)
-	}
-
-	// Create mountpoint.
-	err = vol.EnsureMountPath()
-	if err != nil {
-		return err
-	}
+	if vol.contentType == ContentTypeFS {
+		// Create mountpoint.
+		err = vol.EnsureMountPath()
+		if err != nil {
+			return err
+		}
 
 		reverter.Add(func() { _ = os.Remove(vol.MountPath()) })
 	}
@@ -365,17 +367,14 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 	}
 
 	// When not allowing inconsistent copies and the volume has a mounted filesystem, we must ensure it is
-	// consistent by syncing. Ideally we'd freeze the fs too.
+	// consistent by syncing and freezing the filesystem to ensure unwritten pages are flushed and that no
+	// further modifications occur while taking the source snapshot.
+	var unfreezeFS func() error
 	sourcePath := srcVol.MountPath()
-	if !allowInconsistent && linux.IsMountPoint(sourcePath) {
-		/*
-			The Instance was already frozen if it were running. Incus tries to flush the filesystem, but
-			it only flushes lxc rootfs directories. We need to separately flush the whole NFS mount which
-			contains the root.img if applicable.
-		*/
-		err := linux.SyncFS(sourcePath)
+	if !allowInconsistent && srcVol.contentType == ContentTypeFS && linux.IsMountPoint(sourcePath) {
+		unfreezeFS, err = d.filesystemFreeze(sourcePath)
 		if err != nil {
-			return fmt.Errorf("Failed syncing filesystem %q: %w", sourcePath, err)
+			return err
 		}
 
 		reverter.Add(func() { _ = unfreezeFS() })
@@ -402,8 +401,7 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 			// Delete the snapshot at the end.
 			defer func() {
 				// Delete snapshot (or mark for deferred deletion if cannot be deleted currently).
-				out, err := d.runTool("snapshot", "delete", "-r", "--defer", srcSnapshot)
-				_ = out
+				err = d.deleteSnapshot(srcSnapshot, true, "defer")
 
 				if err != nil {
 					d.logger.Warn("Failed deleting temporary snapshot for copy", logger.Ctx{"snapshot": srcSnapshot, "err": err})
@@ -413,13 +411,18 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 			// Delete the snapshot on revert.
 			reverter.Add(func() {
 				// Delete snapshot (or mark for deferred deletion if cannot be deleted currently).
-				out, err := d.runTool("snapshot", "delete", "-r", "--defer", srcSnapshot)
-				_ = out
+				err = d.deleteSnapshot(srcSnapshot, true, "defer")
+
 				if err != nil {
 					d.logger.Warn("Failed deleting temporary snapshot for copy", logger.Ctx{"snapshot": srcSnapshot, "err": err})
 				}
 			})
 		}
+	}
+
+	// Now that source snapshot has been taken we can safely unfreeze the source filesystem.
+	if unfreezeFS != nil {
+		_ = unfreezeFS()
 	}
 
 	// Delete the volume created on failure.
@@ -461,7 +464,8 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 		}
 
 		// Delete the copy- snapshot on the dest.
-		_, err = d.runTool("snapshot", "delete", "-r", fmt.Sprintf("%s@%s", destDataset, snapName))
+		err = d.deleteSnapshot(fmt.Sprintf("%s@%s", destDataset, snapName), true)
+
 		if err != nil {
 			return err
 		}
@@ -657,8 +661,7 @@ func (d *truenas) deleteVolume(vol Volume, op *operations.Operation) error {
 
 		if len(clones) > 0 {
 			// Move to the deleted path.
-			out, err := d.renameDataset(dataset, d.dataset(vol, true), false)
-			_ = out
+			err := d.renameDataset(dataset, d.dataset(vol, true), false)
 			if err != nil {
 				return err
 			}
@@ -670,31 +673,17 @@ func (d *truenas) deleteVolume(vol Volume, op *operations.Operation) error {
 		}
 	}
 
-	// must mount VM.block so we can access the root.img, as well as the config filesystem
-	if vol.IsVMBlock() {
-		blockifyMountPath(&vol)
-	}
-
-	// Delete the mountpoint if present.
-	err = os.Remove(vol.MountPath())
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return fmt.Errorf("Failed to remove '%s': %w", vol.MountPath(), err)
-	}
-
 	if vol.contentType == ContentTypeFS {
+		// Delete the mountpoint if present.
+		err := os.Remove(vol.MountPath())
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("Failed to remove '%s': %w", vol.MountPath(), err)
+		}
+
 		// Delete the snapshot storage.
 		err = os.RemoveAll(GetVolumeSnapshotDir(d.name, vol.volType, vol.name))
 		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return fmt.Errorf("Failed to remove '%s': %w", GetVolumeSnapshotDir(d.name, vol.volType, vol.name), err)
-		}
-
-		// TODO: we should probably cleanup using DeleteVolume.
-		if needsFsImgVol(vol) {
-			fsImgVol := cloneVolAsFsImgVol(vol)
-			err := os.Remove(fsImgVol.MountPath())
-			if err != nil && !errors.Is(err, fs.ErrNotExist) {
-				return fmt.Errorf("Failed to remove '%s': %w", fsImgVol.MountPath(), err)
-			}
 		}
 	}
 
@@ -1027,11 +1016,11 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 	// Move the VM GPT alt header to end of disk if needed (not needed in unsafe resize mode as
 	// it is expected the caller will do all necessary post resize actions themselves).
 	if vol.IsVMBlock() && !allowUnsafeResize {
-			err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
-				devPath, err := d.GetVolumeDiskPath(vol)
-				if err != nil {
-					return err
-				}
+		err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
+			devPath, err := d.GetVolumeDiskPath(vol)
+			if err != nil {
+				return err
+			}
 
 			return d.moveGPTAltHeader(devPath)
 		}, op)
@@ -1285,63 +1274,6 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 	return nil
 }
 
-// MountVolume mounts a volume and increments ref counter. Please call UnmountVolume() when done with the volume.
-func (d *truenas) MountVolumeNfs(vol Volume, op *operations.Operation) error {
-	unlock, err := vol.MountLock()
-	if err != nil {
-		return err
-	}
-
-	defer unlock()
-
-	reverter := revert.New()
-	defer reverter.Fail()
-
-	if vol.contentType == ContentTypeFS || isFsImgVol(vol) || vol.IsVMBlock() || vol.IsCustomBlock() || vol.contentType == ContentTypeISO {
-
-		if vol.IsVMBlock() { // OR fs-img
-			blockifyMountPath(&vol)
-		}
-
-		// handle an FS mount
-
-		mountPath := vol.MountPath()
-		if !linux.IsMountPoint(mountPath) {
-
-			if needsFsImgVol(vol) {
-
-				// mount underlying fs, then create a loop device for the fs-img, and mount that
-				err = d.activateAndMountFsImg(vol, op)
-				if err != nil {
-					return err
-				}
-
-			} else {
-
-				// otherwise, we can just NFS mount a dataset
-				err = d.mountNfsDataset(vol)
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-	}
-
-	// now, if we were a VM block we also need to mount the config filesystem
-	if vol.IsVMBlock() {
-		fsVol := vol.NewVMBlockFilesystemVolume()
-		err = d.MountVolume(fsVol, op)
-		if err != nil {
-			return err
-		}
-	} // PS: not 100% sure what to do about ISOs yet.
-
-	vol.MountRefCountIncrement() // From here on it is up to caller to call UnmountVolume() when done.
-	reverter.Success()
-	return nil
-}
-
 // UnmountVolume simulates unmounting a volume.
 // keepBlockDev indicates if backing block device should be not be unmapped if volume is unmounted.
 func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operation) (bool, error) {
@@ -1426,8 +1358,7 @@ func (d *truenas) RenameVolume(vol Volume, newVolName string, op *operations.Ope
 	})
 
 	// Rename the ZFS datasets.
-	out, err := d.renameDataset(d.dataset(vol, false), d.dataset(newVol, false), true)
-	_ = out
+	err = d.renameDataset(d.dataset(vol, false), d.dataset(newVol, false), true)
 	if err != nil {
 		return err
 	}
@@ -1859,7 +1790,7 @@ func (d *truenas) restoreVolume(vol Volume, snapshotName string, migration bool,
 			return err
 		}
 
-		//defer func() { _, _ = d.deactivateVolume(vol) }()
+		defer func() { _, _ = d.deactivateVolume(vol) }()
 
 		volPath, err := d.GetVolumeDiskPath(vol)
 		if err != nil {
@@ -1905,10 +1836,8 @@ func (d *truenas) RenameVolumeSnapshot(vol Volume, newSnapshotName string, op *o
 	})
 
 	// Rename the ZFS datasets.
-	//_, err = subprocess.RunCommand("zfs", "rename", d.dataset(vol, false), d.dataset(newVol, false))
-	out, err := d.renameSnapshot(d.dataset(vol, false), d.dataset(newVol, false))
+	err = d.renameSnapshot(d.dataset(vol, false), d.dataset(newVol, false))
 
-	_ = out
 	if err != nil {
 		return err
 	}

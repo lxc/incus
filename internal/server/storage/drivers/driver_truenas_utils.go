@@ -103,9 +103,13 @@ func (d *truenas) setDatasetProperties(dataset string, options ...string) error 
 
 	// TODO: either move the "--" prepending here, or have the -o syntax work!
 
-	optionString := optionsToOptionString(options...)
-	if optionString != "" {
-		args = append(args, "-o", optionString)
+	// optionString := optionsToOptionString(options...)
+	// if optionString != "" {
+	// 	args = append(args, "-o", optionString)
+	// }
+
+	for _, option := range options {
+		args = append(args, fmt.Sprintf("--%s", option))
 	}
 
 	args = append(args, dataset)
@@ -524,10 +528,13 @@ func (d *truenas) tryDeleteBusyDataset(ctx context.Context, dataset string, recu
 func (d *truenas) deleteDataset(dataset string, recursive bool, options ...string) error {
 	args := []string{d.getDatasetOrSnapshot(dataset), "delete"}
 
-	// for _, option := range options {
-	// 	args = append(args, "-o")
-	// 	args = append(args, option)
-	// }
+	if recursive {
+		args = append(args, "-r")
+	}
+
+	for _, option := range options {
+		args = append(args, fmt.Sprintf("--%s", option))
+	}
 
 	args = append(args, dataset)
 
@@ -630,10 +637,11 @@ func (d *truenas) renameSnapshot(sourceSnapshot string, destSnapshot string) err
 }
 
 // will rename a dataset, or snapshot. updateShares is relatively expensive if there is no possibility of there being a share
-func (d *truenas) renameDataset(sourceDataset string, destDataset string, updateShares bool) (string, error) {
+func (d *truenas) renameDataset(sourceDataset string, destDataset string, updateShares bool) error {
 	args := []string{d.getDatasetOrSnapshot(sourceDataset), "rename"}
 
 	if updateShares {
+		_ = d.deleteIscsiShare(sourceDataset) // TODO: remove this when --update-shares supports iscsi
 		args = append(args, "--update-shares")
 	}
 

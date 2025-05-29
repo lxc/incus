@@ -131,16 +131,6 @@ func CompressedTarReader(ctx context.Context, r io.ReadSeeker, unpacker []string
 	return tr, cancelFunc, nil
 }
 
-// returns true if the path exists and is NFS
-func isNfs(path string) bool {
-	backingFs, err := linux.DetectFilesystem(path)
-	if err != nil {
-		return false
-	}
-
-	return backingFs == "nfs"
-}
-
 // Unpack extracts image from archive.
 func Unpack(file string, path string, blockBackend bool, maxMemory int64, tracker *ioprogress.ProgressTracker) error {
 	extractArgs, extension, unpacker, err := DetectCompression(file)
