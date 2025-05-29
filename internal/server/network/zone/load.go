@@ -15,45 +15,74 @@ import (
 
 // LoadByName loads and initializes a Network zone from the database by name.
 func LoadByName(s *state.State, name string) (NetworkZone, error) {
-	var id int64
-	var projectName string
+	var dbZone []cluster.NetworkZone
 	var zoneInfo *api.NetworkZone
 
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
+		filter := cluster.NetworkZoneFilter{Name: &name}
+		dbZone, err = cluster.GetNetworkZones(ctx, tx.Tx(), filter)
+		if err != nil {
+			return err
+		}
 
-		id, projectName, zoneInfo, err = tx.GetNetworkZone(ctx, name)
+		if len(dbZone) != 1 {
+			return fmt.Errorf("Loading network zone named %s returned an unexpected amount of results: %d", name, len(dbZone))
+		}
 
-		return err
+		zoneInfo, err = dbZone[0].ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	var zone NetworkZone = &zone{}
-	zone.init(s, id, projectName, zoneInfo)
+	zone.init(s, int64(dbZone[0].ID), dbZone[0].Project, zoneInfo)
 
 	return zone, nil
 }
 
 // LoadByNameAndProject loads and initializes a Network zone from the database by project and name.
 func LoadByNameAndProject(s *state.State, projectName string, name string) (NetworkZone, error) {
-	var id int64
+	var dbZone *cluster.NetworkZone
 	var zoneInfo *api.NetworkZone
 
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
-		id, zoneInfo, err = tx.GetNetworkZoneByProject(ctx, projectName, name)
+		filter := cluster.NetworkZoneFilter{
+			Project: &projectName,
+			Name:    &name,
+		}
 
-		return err
+		zones, err := cluster.GetNetworkZones(ctx, tx.Tx(), filter)
+		if err != nil {
+			return err
+		}
+
+		if len(zones) == 0 {
+			return api.StatusErrorf(http.StatusNotFound, "Network zone not found")
+		}
+
+		dbZone = &zones[0]
+		zoneInfo, err = dbZone.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	var zone NetworkZone = &zone{}
-	zone.init(s, id, projectName, zoneInfo)
+	zone.init(s, int64(dbZone.ID), projectName, zoneInfo)
 
 	return zone, nil
 }
@@ -107,10 +136,23 @@ func Create(s *state.State, projectName string, zoneInfo *api.NetworkZonesPost) 
 	}
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Insert DB record.
-		_, err = tx.CreateNetworkZone(ctx, projectName, zoneInfo)
+		dbZone := cluster.NetworkZone{
+			Project:     projectName,
+			Name:        zoneInfo.Name,
+			Description: zoneInfo.Description,
+		}
 
-		return err
+		id, err := cluster.CreateNetworkZone(ctx, tx.Tx(), dbZone)
+		if err != nil {
+			return err
+		}
+
+		err = cluster.CreateNetworkZoneConfig(ctx, tx.Tx(), id, zoneInfo.Config)
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		return err
@@ -132,9 +174,23 @@ func Exists(s *state.State, name ...string) error {
 
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		for _, zoneName := range name {
-			_, _, _, err := tx.GetNetworkZone(ctx, zoneName)
+			filter := cluster.NetworkZoneFilter{Name: &zoneName}
+			dbZone, err := cluster.GetNetworkZones(ctx, tx.Tx(), filter)
 			if err != nil {
+				return err
+			}
+
+			if len(dbZone) != 1 {
+				return fmt.Errorf("Loading network zone named %s returned an unexpected amount of results: %d", zoneName, len(dbZone))
+			}
+
+			status, err := cluster.NetworkZoneExists(ctx, tx.Tx(), dbZone[0].Project, zoneName)
+			if !status {
 				return fmt.Errorf("Network zone %q does not exist", zoneName)
+			}
+
+			if err != nil {
+				return fmt.Errorf("Error when checking existence of %q network zone in project %q", zoneName, dbZone[0].Project)
 			}
 
 			_, found := checkedzoneNames[zoneName]
