@@ -913,20 +913,26 @@ func (n *ovn) Validate(config map[string]string) error {
 		}
 	}
 
-	var loadBalancers map[int64]*api.NetworkLoadBalancer
-
+	var dbLoadBalancers []dbCluster.NetworkLoadBalancer
 	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Check any existing network load balancer backend addresses are suitable for this network's subnet.
-		loadBalancers, err = tx.GetNetworkLoadBalancers(ctx, n.ID(), memberSpecific)
+		networkID := n.ID()
 
-		return err
+		// Get the load balancers.
+		dbLoadBalancers, err = dbCluster.GetNetworkLoadBalancers(ctx, tx.Tx(), dbCluster.NetworkLoadBalancerFilter{
+			NetworkID: &networkID,
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("Failed loading network load balancers: %w", err)
 	}
 
-	for _, loadBalancer := range loadBalancers {
-		for _, port := range loadBalancer.Backends {
+	for _, dbLoadBalancer := range dbLoadBalancers {
+		for _, port := range dbLoadBalancer.Backends {
 			targetIP := net.ParseIP(port.TargetAddress)
 
 			netSubnet := netSubnets["ipv4.address"]
@@ -935,7 +941,7 @@ func (n *ovn) Validate(config map[string]string) error {
 			}
 
 			if !SubnetContainsIP(netSubnet, targetIP) {
-				return api.StatusErrorf(http.StatusBadRequest, "Network load balancer for %q has a backend target address %q that is not within the network subnet", loadBalancer.ListenAddress, targetIP.String())
+				return api.StatusErrorf(http.StatusBadRequest, "Network load balancer for %q has a backend target address %q that is not within the network subnet", dbLoadBalancer.ListenAddress, targetIP.String())
 			}
 		}
 	}
@@ -3397,17 +3403,27 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 		memberSpecific := false // OVN doesn't support per-member forwards.
 
 		var forwardListenAddresses map[int64]string
-		var loadBalancerListenAddresses map[int64]string
+		loadBalancerListenAddresses := map[int64]string{}
 
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			forwardListenAddresses, err = tx.GetNetworkForwardListenAddresses(ctx, n.ID(), memberSpecific)
+			networkID := n.ID()
+
+			// Get the forward addresses.
+			forwardListenAddresses, err = tx.GetNetworkForwardListenAddresses(ctx, networkID, memberSpecific)
 			if err != nil {
 				return fmt.Errorf("Failed loading network forwards: %w", err)
 			}
 
-			loadBalancerListenAddresses, err = tx.GetNetworkLoadBalancerListenAddresses(ctx, n.ID(), memberSpecific)
+			// Get the load balancers.
+			dbLoadBalancers, err := dbCluster.GetNetworkLoadBalancers(ctx, tx.Tx(), dbCluster.NetworkLoadBalancerFilter{
+				NetworkID: &networkID,
+			})
 			if err != nil {
-				return fmt.Errorf("Failed loading network forwards: %w", err)
+				return fmt.Errorf("Failed loading network load balancers: %w", err)
+			}
+
+			for _, lb := range dbLoadBalancers {
+				loadBalancerListenAddresses[lb.ID] = lb.ListenAddress
 			}
 
 			return nil
@@ -5818,13 +5834,14 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 	defer reverter.Fail()
 
 	if clientType == request.ClientTypeNormal {
-		memberSpecific := false // OVN doesn't support per-member load balancers.
-
 		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			// Check if there is an existing load balancer using the same listen address.
-			_, _, err := tx.GetNetworkLoadBalancer(ctx, n.ID(), memberSpecific, loadBalancer.ListenAddress)
+			_, err := dbCluster.GetNetworkLoadBalancer(ctx, tx.Tx(), n.ID(), loadBalancer.ListenAddress)
+			if err != nil {
+				return err
+			}
 
-			return err
+			return nil
 		})
 		if err == nil {
 			return api.StatusErrorf(http.StatusConflict, "A load balancer for that listen address already exists")
@@ -5908,9 +5925,20 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			// Create load balancer DB record.
-			loadBalancerID, err = tx.CreateNetworkLoadBalancer(ctx, n.ID(), memberSpecific, &loadBalancer)
+			lb := dbCluster.NetworkLoadBalancer{
+				NetworkID:     n.ID(),
+				ListenAddress: loadBalancer.ListenAddress,
+				Description:   loadBalancer.Description,
+				Backends:      loadBalancer.Backends,
+				Ports:         loadBalancer.Ports,
+			}
 
-			return err
+			loadBalancerID, err = dbCluster.CreateNetworkLoadBalancer(ctx, tx.Tx(), lb)
+			if err != nil {
+				return err
+			}
+
+			return nil
 		})
 		if err != nil {
 			return err
@@ -5918,7 +5946,7 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 
 		reverter.Add(func() {
 			_ = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.DeleteNetworkLoadBalancer(ctx, n.ID(), loadBalancerID)
+				return dbCluster.DeleteNetworkLoadBalancer(ctx, tx.Tx(), n.ID(), loadBalancerID)
 			})
 
 			_ = n.ovnnb.DeleteLoadBalancer(context.TODO(), n.getLoadBalancerName(loadBalancer.ListenAddress))
@@ -5999,17 +6027,31 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 	defer reverter.Fail()
 
 	if clientType == request.ClientTypeNormal {
-		memberSpecific := false // OVN doesn't support per-member load balancers.
-
-		var curLoadBalancerID int64
 		var curLoadBalancer *api.NetworkLoadBalancer
 
 		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			var err error
+			networkID := n.ID()
 
-			curLoadBalancerID, curLoadBalancer, err = tx.GetNetworkLoadBalancer(ctx, n.ID(), memberSpecific, listenAddress)
+			// Get the load balancer.
+			dbLoadBalancers, err := dbCluster.GetNetworkLoadBalancers(ctx, tx.Tx(), dbCluster.NetworkLoadBalancerFilter{
+				NetworkID:     &networkID,
+				ListenAddress: &listenAddress,
+			})
+			if err != nil {
+				return err
+			}
 
-			return err
+			if len(dbLoadBalancers) != 1 {
+				return api.StatusErrorf(http.StatusNotFound, "Network load balancer not found")
+			}
+
+			// Get the API struct.
+			curLoadBalancer, err = dbLoadBalancers[0].ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			return nil
 		})
 		if err != nil {
 			return err
@@ -6069,7 +6111,15 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 		})
 
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.UpdateNetworkLoadBalancer(ctx, n.ID(), curLoadBalancerID, &newLoadBalancer.NetworkLoadBalancerPut)
+			lb := dbCluster.NetworkLoadBalancer{
+				NetworkID:     n.ID(),
+				ListenAddress: listenAddress,
+				Description:   newLoadBalancer.Description,
+				Backends:      newLoadBalancer.Backends,
+				Ports:         newLoadBalancer.Ports,
+			}
+
+			return dbCluster.UpdateNetworkLoadBalancer(ctx, tx.Tx(), n.ID(), listenAddress, lb)
 		})
 		if err != nil {
 			return err
@@ -6077,7 +6127,15 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 
 		reverter.Add(func() {
 			_ = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.UpdateNetworkLoadBalancer(ctx, n.ID(), curLoadBalancerID, &curLoadBalancer.NetworkLoadBalancerPut)
+				lb := dbCluster.NetworkLoadBalancer{
+					NetworkID:     n.ID(),
+					ListenAddress: listenAddress,
+					Description:   curLoadBalancer.Description,
+					Backends:      curLoadBalancer.Backends,
+					Ports:         curLoadBalancer.Ports,
+				}
+
+				return dbCluster.UpdateNetworkLoadBalancer(ctx, tx.Tx(), n.ID(), listenAddress, lb)
 			})
 		})
 
@@ -6163,30 +6221,39 @@ func (n *ovn) LoadBalancerState(lb api.NetworkLoadBalancer) (*api.NetworkLoadBal
 // LoadBalancerDelete deletes a network load balancer.
 func (n *ovn) LoadBalancerDelete(listenAddress string, clientType request.ClientType) error {
 	if clientType == request.ClientTypeNormal {
-		memberSpecific := false // OVN doesn't support per-member forwards.
-
-		var loadBalancerID int64
-		var forward *api.NetworkLoadBalancer
+		var lb *dbCluster.NetworkLoadBalancer
 
 		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			var err error
+			networkID := n.ID()
 
-			loadBalancerID, forward, err = tx.GetNetworkLoadBalancer(ctx, n.ID(), memberSpecific, listenAddress)
+			dbLoadBalancers, err := dbCluster.GetNetworkLoadBalancers(ctx, tx.Tx(), dbCluster.NetworkLoadBalancerFilter{
+				NetworkID:     &networkID,
+				ListenAddress: &listenAddress,
+			})
+			if err != nil {
+				return err
+			}
 
-			return err
+			if len(dbLoadBalancers) != 1 {
+				return api.StatusErrorf(http.StatusNotFound, "Network load balancer not found")
+			}
+
+			lb = &dbLoadBalancers[0]
+
+			return nil
 		})
 		if err != nil {
 			return err
 		}
 
 		// Delete the load balancer itself.
-		err = n.ovnnb.DeleteLoadBalancer(context.TODO(), n.getLoadBalancerName(forward.ListenAddress))
+		err = n.ovnnb.DeleteLoadBalancer(context.TODO(), n.getLoadBalancerName(lb.ListenAddress))
 		if err != nil {
 			return fmt.Errorf("Failed deleting OVN load balancer: %w", err)
 		}
 
 		// Delete static route to load-balancer if present.
-		vip, err := ParseIPToNet(forward.ListenAddress)
+		vip, err := ParseIPToNet(lb.ListenAddress)
 		if err != nil {
 			return err
 		}
@@ -6195,7 +6262,7 @@ func (n *ovn) LoadBalancerDelete(listenAddress string, clientType request.Client
 
 		// Delete the database records.
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.DeleteNetworkLoadBalancer(ctx, n.ID(), loadBalancerID)
+			return dbCluster.DeleteNetworkLoadBalancer(ctx, tx.Tx(), n.ID(), lb.ID)
 		})
 		if err != nil {
 			return err
@@ -6208,7 +6275,7 @@ func (n *ovn) LoadBalancerDelete(listenAddress string, clientType request.Client
 		}
 
 		err = notifier(func(client incus.InstanceServer) error {
-			return client.UseProject(n.project).DeleteNetworkLoadBalancer(n.name, forward.ListenAddress)
+			return client.UseProject(n.project).DeleteNetworkLoadBalancer(n.name, lb.ListenAddress)
 		})
 		if err != nil {
 			return err
@@ -7131,15 +7198,23 @@ func (n *ovn) forPeers(f func(targetOVNNet *ovn) error) error {
 
 // loadBalancerBGPSetupPrefixes exports external load balancer addresses as prefixes.
 func (n *ovn) loadBalancerBGPSetupPrefixes() error {
-	var listenAddresses map[int64]string
+	listenAddresses := []string{}
 
 	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		var err error
+		networkID := n.ID()
 
-		// Retrieve network forwards before clearing existing prefixes, and separate them by IP family.
-		listenAddresses, err = tx.GetNetworkLoadBalancerListenAddresses(ctx, n.ID(), true)
+		dbLoadBalancers, err := dbCluster.GetNetworkLoadBalancers(ctx, tx.Tx(), dbCluster.NetworkLoadBalancerFilter{
+			NetworkID: &networkID,
+		})
+		if err != nil {
+			return err
+		}
 
-		return err
+		for _, lb := range dbLoadBalancers {
+			listenAddresses = append(listenAddresses, lb.ListenAddress)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("Failed loading network forwards: %w", err)
