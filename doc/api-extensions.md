@@ -2869,3 +2869,7 @@ The following target keys are supported:
 * `logging.NAME.target.retry` (How many times to retry the transmission)
 
 The webhook data matches what's sent over the existing events API.
+
+## `storage_driver_truenas`
+
+This adds a TrueNAS storage driver.
