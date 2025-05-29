@@ -229,7 +229,6 @@ func Unpack(file string, path string, blockBackend bool, maxMemory int64, tracke
 	if err != nil {
 		// We can't create char/block devices in unpriv containers so ignore related errors.
 		if command == "unsquashfs" {
-
 			runError, ok := err.(subprocess.RunError)
 			if !ok {
 				return err
