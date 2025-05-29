@@ -489,6 +489,7 @@ var APIExtensions = []string{
 	"backup_s3_upload",
 	"snapshot_manual_expiry",
 	"resources_cpu_address_sizes",
+	"storage_driver_truenas",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
