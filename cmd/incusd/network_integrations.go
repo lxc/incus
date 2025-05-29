@@ -199,11 +199,38 @@ func networkIntegrationsGet(d *Daemon, r *http.Request) response.Response {
 				}
 
 				// Add UsedBy field.
-				usedBy, err := tx.GetNetworkPeersURLByIntegration(ctx, integration.Name)
+				integrationID := integration.ID
+				allPeers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx()) // Fetch all peers
 				if err != nil {
-					return err
+					return fmt.Errorf("Failed to load network peers: %w", err)
 				}
 
+				usedBy := []string{}
+				for _, peer := range allPeers {
+					if peer.TargetNetworkIntegrationID.Valid && peer.TargetNetworkIntegrationID.Int64 == int64(integrationID) {
+						// Fetch the network associated with the peer
+						networkName, networkProjectName, err := tx.GetNetworkNameAndProjectWithID(ctx, int(peer.NetworkID))
+						if err != nil {
+							continue
+						}
+
+						_, network, _, err := tx.GetNetworkInAnyState(ctx, networkProjectName, networkName)
+						if err != nil {
+							continue
+						}
+
+						// Fetch the project associated with the network
+						project, err := dbCluster.GetProject(ctx, tx.Tx(), networkProjectName)
+						if err != nil {
+							continue
+						}
+
+						// Construct the URL
+						url := api.NewURL().Path(version.APIVersion, "networks", network.Name, "peers", peer.Name).Project(project.Name).String()
+						usedBy = append(usedBy, url)
+					}
+				}
+				// Assign the collected URLs (original 'err' check is implicitly handled by checks above)
 				result.UsedBy = usedBy
 
 				if clauses != nil && len(clauses.Clauses) > 0 {
@@ -360,9 +387,40 @@ func networkIntegrationDelete(d *Daemon, r *http.Request) response.Response {
 	// Delete the DB record.
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get UsedBy for the integration.
-		usedBy, err := tx.GetNetworkPeersURLByIntegration(ctx, integrationName)
+		integrationID, err := dbCluster.GetNetworkIntegrationID(ctx, tx.Tx(), integrationName)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to get network integration ID: %w", err)
+		}
+
+		allPeers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx()) // Fetch all peers
+		if err != nil {
+			return fmt.Errorf("Failed to load network peers: %w", err)
+		}
+
+		usedBy := []string{}
+		for _, peer := range allPeers {
+			if peer.TargetNetworkIntegrationID.Valid && peer.TargetNetworkIntegrationID.Int64 == int64(integrationID) {
+				// Fetch the network associated with the peer
+				networkName, networkProjectName, err := tx.GetNetworkNameAndProjectWithID(ctx, int(peer.NetworkID))
+				if err != nil {
+					continue
+				}
+
+				_, network, _, err := tx.GetNetworkInAnyState(ctx, networkProjectName, networkName)
+				if err != nil {
+					continue
+				}
+
+				// Fetch the project associated with the network
+				project, err := dbCluster.GetProject(ctx, tx.Tx(), networkProjectName)
+				if err != nil {
+					continue
+				}
+
+				// Construct the URL
+				url := api.NewURL().Path(version.APIVersion, "networks", network.Name, "peers", peer.Name).Project(project.Name).String()
+				usedBy = append(usedBy, url)
+			}
 		}
 
 		if len(usedBy) > 0 {
@@ -476,11 +534,38 @@ func networkIntegrationGet(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Add UsedBy field.
-		usedBy, err := tx.GetNetworkPeersURLByIntegration(ctx, info.Name)
+		integrationID := dbRecord.ID
+		allPeers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx()) // Fetch all peers
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to load network peers: %w", err)
 		}
 
+		usedBy := []string{}
+		for _, peer := range allPeers {
+			if peer.TargetNetworkIntegrationID.Valid && peer.TargetNetworkIntegrationID.Int64 == int64(integrationID) {
+				// Fetch the network associated with the peer
+				networkName, networkProjectName, err := tx.GetNetworkNameAndProjectWithID(ctx, int(peer.NetworkID))
+				if err != nil {
+					continue
+				}
+
+				_, network, _, err := tx.GetNetworkInAnyState(ctx, networkProjectName, networkName)
+				if err != nil {
+					continue
+				}
+
+				// Fetch the project associated with the network
+				project, err := dbCluster.GetProject(ctx, tx.Tx(), networkProjectName)
+				if err != nil {
+					continue
+				}
+
+				// Construct the URL
+				url := api.NewURL().Path(version.APIVersion, "networks", network.Name, "peers", peer.Name).Project(project.Name).String()
+				usedBy = append(usedBy, url)
+			}
+		}
+		// Assign the collected URLs (original 'err' check is implicitly handled by checks above)
 		info.UsedBy = usedBy
 
 		return nil
@@ -579,9 +664,44 @@ func networkIntegrationPut(d *Daemon, r *http.Request) response.Response {
 			return err
 		}
 
-		usedBy, err = tx.GetNetworkPeersURLByIntegration(ctx, integrationName)
+		integrationID := dbRecord.ID
+		allPeers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx()) // Fetch all peers
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to load network peers: %w", err)
+		}
+
+		// Build usedBy slice in two passes to avoid SA4010.
+		count := 0
+		for _, peer := range allPeers {
+			if peer.TargetNetworkIntegrationID.Valid && peer.TargetNetworkIntegrationID.Int64 == int64(integrationID) {
+				count++
+			}
+		}
+		usedBy = make([]string, count)
+		idx := 0
+		for _, peer := range allPeers {
+			if peer.TargetNetworkIntegrationID.Valid && peer.TargetNetworkIntegrationID.Int64 == int64(integrationID) {
+				// Fetch the network associated with the peer
+				networkName, networkProjectName, err := tx.GetNetworkNameAndProjectWithID(ctx, int(peer.NetworkID))
+				if err != nil {
+					continue
+				}
+
+				_, network, _, err := tx.GetNetworkInAnyState(ctx, networkProjectName, networkName)
+				if err != nil {
+					continue
+				}
+
+				// Fetch the project associated with the network
+				project, err := dbCluster.GetProject(ctx, tx.Tx(), networkProjectName)
+				if err != nil {
+					continue
+				}
+
+				// Construct the URL
+				usedBy[idx] = api.NewURL().Path(version.APIVersion, "networks", network.Name, "peers", peer.Name).Project(project.Name).String()
+				idx++
+			}
 		}
 
 		return nil
