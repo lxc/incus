@@ -2842,3 +2842,7 @@ maximum memory amount for hotplugging into virtual machines.
 ## `disk_attached`
 
 This introduces a new `attached` property to disk devices describing whether disks are attached or ejected.
+
+## `storage_driver_truenas`
+
+This adds a TrueNAS storage driver.
