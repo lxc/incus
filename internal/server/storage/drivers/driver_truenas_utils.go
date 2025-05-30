@@ -55,6 +55,7 @@ func (d *truenas) dataset(vol Volume, deleted bool) string {
 	return filepath.Join(d.config["truenas.dataset"], string(vol.volType), name)
 }
 
+// runTool runs the truenas control tool with the supplied arguments, whilst applying the global flags as appropriate.
 func (d *truenas) runTool(args ...string) (string, error) {
 	baseArgs := []string{}
 
@@ -82,6 +83,25 @@ func (d *truenas) runTool(args ...string) (string, error) {
 
 	// will allow us to prepend args
 	return subprocess.RunCommand(tnToolName, args...)
+}
+
+// runIscsiCmd runs the supplied args against the tools `share iscsi` command whilst applying the appropriate iscsi global flags.
+func (d *truenas) runIscsiCmd(args ...string) (string, error) {
+	baseArgs := []string{"share", "iscsi"}
+
+	args = append(baseArgs, args...)
+
+	args = append(args, "--target-prefix=incus")
+
+	if d.config["truenas.portal"] != "" {
+		args = append(args, "--portal", d.config["truenas.portal"])
+	}
+
+	if d.config["truenas.initiator"] != "" {
+		args = append(args, "--initiator", d.config["truenas.initiator"])
+	}
+
+	return d.runTool(args...)
 }
 
 func optionsToOptionString(options ...string) string {
@@ -352,7 +372,7 @@ func (d *truenas) createVolume(dataset string, size int64, options ...string) er
 }
 
 func (d *truenas) createIscsiShare(dataset string, readonly bool) error {
-	args := []string{"share", "iscsi", "create", "--target-prefix=incus"}
+	args := []string{"create"}
 
 	if readonly {
 		args = append(args, "--readonly")
@@ -360,7 +380,7 @@ func (d *truenas) createIscsiShare(dataset string, readonly bool) error {
 
 	args = append(args, dataset)
 
-	_, err := d.runTool(args...)
+	_, err := d.runIscsiCmd(args...)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			d.logger.Debug(fmt.Sprintf("Detected error while attempting to create iscsi share for: %s, %v", dataset, err))
@@ -377,7 +397,7 @@ func (d *truenas) createIscsiShare(dataset string, readonly bool) error {
 }
 
 func (d *truenas) deleteIscsiShare(dataset string) error {
-	_, err := d.runTool("share", "iscsi", "delete", "--target-prefix=incus", dataset)
+	_, err := d.runIscsiCmd("delete", dataset)
 	if err != nil {
 		return err
 	}
@@ -390,7 +410,7 @@ func (d *truenas) locateIscsiDataset(dataset string) (string, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	statusPath, err := d.runTool("share", "iscsi", "locate", "--target-prefix=incus", "--parsable", dataset)
+	statusPath, err := d.runIscsiCmd("locate", "--parsable", dataset)
 	if err != nil {
 		return "", err
 	}
@@ -412,7 +432,7 @@ func (d *truenas) locateOrActivateIscsiDataset(dataset string) (bool, string, er
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	statusPath, err := d.runTool("share", "iscsi", "locate", "--create", "--target-prefix=incus", "--parsable", dataset) // --create implies activate
+	statusPath, err := d.runIscsiCmd("locate", "--create", "--parsable", dataset) // --create implies activate
 	if err != nil {
 		return false, "", err
 	}
@@ -443,7 +463,7 @@ func (d *truenas) activateIscsiDataset(dataset string) (string, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	volDiskPath, err := d.runTool("share", "iscsi", "activate", "--target-prefix=incus", "--parsable", dataset)
+	volDiskPath, err := d.runIscsiCmd("activate", "--parsable", dataset)
 	if err != nil {
 		return "", err
 	}
@@ -460,7 +480,7 @@ func (d *truenas) activateIscsiDataset(dataset string) (string, error) {
 
 // deactivateIscsiDatasetIfActive deactivates a dataset if activated, returns true if deactivated.
 func (d *truenas) deactivateIscsiDatasetIfActive(dataset string) (bool, error) {
-	statusPath, err := d.runTool("share", "iscsi", "locate", "--deactivate", "--target-prefix=incus", "--parsable", dataset)
+	statusPath, err := d.runIscsiCmd("locate", "--deactivate", "--parsable", dataset)
 	if err != nil {
 		return false, err
 	}
@@ -480,7 +500,7 @@ func (d *truenas) deactivateIscsiDatasetIfActive(dataset string) (bool, error) {
 
 // deactivateIscsiDataset deactivates an iscsi share if active.
 func (d *truenas) deactivateIscsiDataset(dataset string) error {
-	_, err := d.runTool("share", "iscsi", "deactivate", "--target-prefix=incus", dataset)
+	_, err := d.runIscsiCmd("deactivate", dataset)
 	if err != nil {
 		return err
 	}
