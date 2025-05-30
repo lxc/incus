@@ -330,6 +330,10 @@ func (d *truenas) Validate(config map[string]string) error {
 		"truenas.config_file":    validate.IsAny,
 		"truenas.host":           validate.IsAny,
 
+		// flags for the tool's iscsi commands
+		"truenas.initiator": validate.IsAny,
+		"truenas.portal":    validate.IsAny,
+
 		// controls behaviour of the driver
 		"truenas.clone_copy":  validate.Optional(validate.IsBool),
 		"truenas.force_reuse": validate.Optional(validate.IsBool),
@@ -352,6 +356,8 @@ func (d *truenas) Update(changedConfig map[string]string) error {
 		"truenas.config",
 		"truenas.config_file",
 		"truenas.host",
+		"truenas.initiator",
+		"truenas.portal",
 		"truenas.clone_copy",
 		"truenas.force_reuse",
 	}
