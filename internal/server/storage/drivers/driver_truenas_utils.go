@@ -21,7 +21,7 @@ import (
 
 const (
 	tnToolName            = "truenas_incus_ctl"
-	tnMinVersion          = "0.6.1" // adds `locate --create` support
+	tnMinVersion          = "0.6.2" // adds `--allow-shrinking` placeholder command
 	tnDefaultVolblockSize = 16 * 1024
 )
 
