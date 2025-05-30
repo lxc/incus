@@ -502,7 +502,7 @@ func (d *truenas) tryDeleteBusyDataset(ctx context.Context, dataset string, recu
 			return fmt.Errorf("Failed to delete dataset for %q: %w", dataset, ctx.Err())
 		}
 
-		// we sometimes we recieve a "busy" error when deleting... which I think is a race, although iSCSI should've finished with the zvol by the time
+		// we sometimes we receive a "busy" error when deleting... which I think is a race, although iSCSI should've finished with the zvol by the time
 		// deleteIscsiShare returns, maybe it hasn't yet... so we retry... in general if incus is calling deleteDataset it shouldn't be busy.
 		err := d.deleteDataset(dataset, recursive, options...)
 		if err == nil {
