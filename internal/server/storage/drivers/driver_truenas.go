@@ -55,12 +55,12 @@ func (d *truenas) isVersionGE(thisVersion version.DottedVersion, thatVersion str
 func (d *truenas) initVersionAndCapabilities() error {
 	// Get the version information.
 	if tnVersion == "" {
-		version, err := d.version()
+		ver, err := d.version()
 		if err != nil {
 			return err
 		}
 
-		tnVersion = version
+		tnVersion = ver
 	}
 
 	ourVer, err := version.Parse(tnVersion)
@@ -154,11 +154,10 @@ func (d *truenas) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) err
 
 	err := d.setDatasetProperties(d.config["truenas.dataset"], args...)
 	if err != nil {
-		if warnOnExistingPolicyApplyError {
-			d.logger.Warn("Failed applying policy to existing dataset", logger.Ctx{"dataset": d.config["truenas.dataset"], "err": err})
-		} else {
+		if !warnOnExistingPolicyApplyError {
 			return fmt.Errorf("Failed applying policy to existing dataset %q: %w", d.config["truenas.dataset"], err)
 		}
+		d.logger.Warn("Failed applying policy to existing dataset", logger.Ctx{"dataset": d.config["truenas.dataset"], "err": err})
 	}
 
 	datasets := d.initialDatasets()
@@ -175,7 +174,6 @@ func (d *truenas) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) err
 
 // FillConfig populates the storage pool's configuration file with the default values.
 func (d *truenas) FillConfig() error {
-
 	// populate source if not already present
 	if d.config["truenas.dataset"] != "" && d.config["source"] == "" {
 		d.config["source"] = d.config["truenas.dataset"]
@@ -190,7 +188,6 @@ func (d *truenas) FillConfig() error {
 }
 
 func (d *truenas) parseSource() error {
-
 	// fill config may modify.
 	source := d.config["source"]
 	host, source, found := strings.Cut(source, ":")
@@ -231,7 +228,6 @@ func (d *truenas) parseSource() error {
 // Create is called during pool creation and is effectively using an empty driver struct.
 // WARNING: The Create() function cannot rely on any of the struct attributes being set.
 func (d *truenas) Create() error {
-
 	// Store the provided source as we are likely to be mangling it.
 	d.config["volatile.initial_source"] = d.config["source"]
 
@@ -342,7 +338,6 @@ func (d *truenas) Validate(config map[string]string) error {
 
 // Update applies any driver changes required from a configuration change.
 func (d *truenas) Update(changedConfig map[string]string) error {
-
 	_, ok := changedConfig["truenas.dataset"]
 	if ok {
 		return errors.New("truenas.dataset cannot be modified")
@@ -371,7 +366,6 @@ func (d *truenas) Update(changedConfig map[string]string) error {
 
 // Mount mounts the storage pool.
 func (d *truenas) Mount() (bool, error) {
-
 	// verify pool dataset exists
 	exists, err := d.datasetExists(d.config["truenas.dataset"])
 	if err != nil {
@@ -396,8 +390,8 @@ func (d *truenas) Unmount() (bool, error) {
 	return true, nil
 }
 
+// GetResources returns the pool resource usage information.
 func (d *truenas) GetResources() (*api.ResourcesStoragePool, error) {
-
 	// Get the total amount of space and the used amount of space.
 	props, err := d.getDatasetProperties(d.config["truenas.dataset"], []string{"available", "used"})
 	if err != nil {
@@ -427,9 +421,8 @@ func (d *truenas) GetResources() (*api.ResourcesStoragePool, error) {
 	return &res, nil
 }
 
-// MigrationType returns the type of transfer methods to be used when doing migrations between pools in preference order.
+// MigrationTypes returns the type of transfer methods to be used when doing migrations between pools in preference order.
 func (d *truenas) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []localMigration.Type {
-
 	// TODO: investigate "storageMove" that came from the linstor driver.
 
 	var rsyncFeatures []string

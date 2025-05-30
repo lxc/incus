@@ -29,7 +29,6 @@ import (
 // CreateVolume creates an empty volume and can optionally fill it by executing the supplied
 // filler function.
 func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Operation) error {
-
 	// Revert handling
 	reverter := revert.New()
 	defer reverter.Fail()
@@ -55,7 +54,7 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		if exists {
 			canRestore := true
 
-			//check if the cached image volume is larger than the current pool volume.size setting (if so we won't be
+			// check if the cached image volume is larger than the current pool volume.size setting (if so we won't be
 			// able to resize the snapshot to that the smaller size later).
 			volSize, err := d.getDatasetProperty(dataset, "volsize")
 			if err != nil {
@@ -188,7 +187,6 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	}
 
 	if vol.contentType == ContentTypeFS {
-
 		// activateIscsiDataset does not check if the dataset has been activated.
 		devPath, err := d.activateIscsiDataset(dataset)
 		if err != nil {
@@ -283,7 +281,6 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 
 	// Setup snapshot and unset mountpoint on image.
 	if vol.volType == VolumeTypeImage {
-
 		// ideally, we don't want to snap the underlying when we create the img, but rather after we've unpacked.
 		// note: we may need to sync the underlying filesystem, it depends if its still mounted, I think it shouldn't be.
 
@@ -434,7 +431,6 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 
 	// If truenas.clone_copy is disabled or source volume has snapshots, then use full copy mode.
 	if util.IsFalse(d.config["truenas.clone_copy"]) || len(snapshots) > 0 {
-
 		// Run the replication, snaps + copy- snap. TODO: verify necessary props are replicated.
 		args := []string{"replication", "start", "--recursive", "--readonly-policy=ignore"}
 
@@ -480,7 +476,10 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 		if vol.volType == VolumeTypeCustom {
 			// Add custom property incus:content_type which allows distinguishing between regular volumes, block_mode enabled volumes, and ISO volumes.
 			props := fmt.Sprintf("user-props=incus:content_type=%s", vol.contentType) // TODO: this needs to be better.
-			d.setDatasetProperties(destDataset, props)
+			err = d.setDatasetProperties(destDataset, props)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -492,9 +491,7 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 
 	// Apply the properties.
 	if vol.contentType == ContentTypeFS {
-
 		if renegerateFilesystemUUIDNeeded(vol.ConfigBlockFilesystem()) {
-
 			// regen must be done with vol unmounted.
 
 			_, volPath, err := d.activateVolume(vol)
@@ -595,7 +592,6 @@ func (d *truenas) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume
 
 	// If there are no source or target snapshots, perform a simple replacement copy
 	if len(srcSnapshotsAll) == 0 || len(targetSnapshots) == 0 {
-
 		// this ensures that recursive deletions are performed.
 		err = d.DeleteVolume(vol, op)
 		if err != nil {
@@ -613,7 +609,6 @@ func (d *truenas) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume
 // this function will return an error.
 // For image volumes, both filesystem and block volumes will be removed.
 func (d *truenas) DeleteVolume(vol Volume, op *operations.Operation) error {
-
 	// We need to be able to delete the block-backed fs even if we don't know the filesystem.
 	if vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS {
 		// We need to clone vol the otherwise changing `block.filesystem`
@@ -641,7 +636,6 @@ func (d *truenas) DeleteVolume(vol Volume, op *operations.Operation) error {
 }
 
 func (d *truenas) deleteVolume(vol Volume, op *operations.Operation) error {
-
 	// Check that we have a dataset to delete.
 	dataset := d.dataset(vol, false)
 	exists, err := d.datasetExists(dataset)
@@ -706,9 +700,8 @@ func (d *truenas) HasVolume(vol Volume) (bool, error) {
 	return d.datasetExists(dataset)
 }
 
-// ValidateTruenasBlocksize validates blocksize property value on the pool, matches volblocksize
+// ValidateTrueNasVolBlocksize validates blocksize property value on the pool, matches volblocksize.
 func ValidateTrueNasVolBlocksize(value string) error {
-
 	/*
 		For volumes, specifies the block size of the volume.  The blocksize cannot be changed once the volume has been written,
 		so it should be set at volume creation time.  The default blocksize for volumes is 16 KiB.  Any power of 2 from 512 bytes to 128 KiB is valid.
@@ -754,7 +747,7 @@ func (d *truenas) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
 	return d.validateVolume(vol, commonRules, removeUnknownKeys)
 }
 
-// // UpdateVolume applies config changes to the volume.
+// UpdateVolume applies config changes to the volume.
 func (d *truenas) UpdateVolume(vol Volume, changedConfig map[string]string) error {
 	// Mangle the current volume to its old values.
 	old := make(map[string]string)
@@ -784,7 +777,6 @@ func (d *truenas) UpdateVolume(vol Volume, changedConfig map[string]string) erro
 
 // CacheVolumeSnapshots fetches snapshot usage properties for all snapshots on the volume.
 func (d *truenas) CacheVolumeSnapshots(vol Volume) error {
-
 	// NOTE: this actually gets info for all datasets and snapshots.
 
 	// Lock the cache.
@@ -1032,7 +1024,7 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 	return nil
 }
 
-// getTempSnapshotVolName returns a derived volume name for the server specific clone of the specified snapshot volume
+// getTempSnapshotVolName returns a derived volume name for the server specific clone of the specified snapshot volume.
 func (d *truenas) getTempSnapshotVolName(vol Volume) string {
 	parent, snapshotOnlyName, _ := api.GetParentAndSnapshotName(vol.Name())
 	parentVol := NewVolume(d, d.Name(), vol.volType, vol.contentType, parent, vol.config, vol.poolConfig)
@@ -1233,7 +1225,8 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 		reverter.Add(func() { _, _ = d.deactivateVolume(vol) })
 	}
 
-	if vol.contentType == ContentTypeFS {
+	switch vol.contentType {
+	case ContentTypeFS:
 		mountPath := vol.MountPath()
 		if !linux.IsMountPoint(mountPath) {
 			err := vol.EnsureMountPath()
@@ -1258,7 +1251,7 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 
 			d.logger.Debug("Mounted TrueNAS volume", logger.Ctx{"volName": vol.name, "dev": volDevPath, "path": mountPath, "options": mountOptions})
 		}
-	} else if vol.contentType == ContentTypeBlock {
+	case ContentTypeBlock:
 		// For VMs, mount the filesystem volume.
 		if vol.IsVMBlock() {
 			fsVol := vol.NewVMBlockFilesystemVolume()
@@ -1478,7 +1471,6 @@ func (d *truenas) CreateVolumeSnapshot(vol Volume, op *operations.Operation) err
 
 // DeleteVolumeSnapshot removes a snapshot from the storage device.
 func (d *truenas) DeleteVolumeSnapshot(vol Volume, op *operations.Operation) error {
-
 	// Delete the snapshot, which will fail if there are clones.
 	dataset := d.dataset(vol, false)
 	errDelete := d.deleteSnapshot(dataset, true)
@@ -1499,7 +1491,6 @@ func (d *truenas) DeleteVolumeSnapshot(vol Volume, op *operations.Operation) err
 		if err != nil {
 			return err
 		}
-
 	}
 
 	// Delete the mountpoint.
@@ -1712,7 +1703,7 @@ func (d *truenas) RestoreVolume(vol Volume, snapshotName string, op *operations.
 	return d.restoreVolume(vol, snapshotName, false, op)
 }
 
-func (d *truenas) restoreVolume(vol Volume, snapshotName string, migration bool, op *operations.Operation) error {
+func (d *truenas) restoreVolume(vol Volume, snapshotName string, isMigration bool, op *operations.Operation) error {
 	// Get the list of snapshots.
 	dataset := d.dataset(vol, false)
 	entries, err := d.getDatasets(dataset, "snapshot")
@@ -1805,9 +1796,9 @@ func (d *truenas) restoreVolume(vol Volume, snapshotName string, migration bool,
 	}
 
 	// For VM images, restore the associated filesystem dataset too.
-	if !migration && vol.IsVMBlock() {
+	if !isMigration && vol.IsVMBlock() {
 		fsVol := vol.NewVMBlockFilesystemVolume()
-		err := d.restoreVolume(fsVol, snapshotName, migration, op)
+		err := d.restoreVolume(fsVol, snapshotName, isMigration, op)
 		if err != nil {
 			return err
 		}
@@ -1868,7 +1859,6 @@ func (d *truenas) RenameVolumeSnapshot(vol Volume, newSnapshotName string, op *o
 
 // FillVolumeConfig populate volume with default config.
 func (d *truenas) FillVolumeConfig(vol Volume) error {
-
 	var excludedKeys []string
 
 	// Copy volume.* configuration options from pool.
