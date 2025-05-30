@@ -11,7 +11,7 @@ import (
 )
 
 // Code generation directives.
-//generate-database:mapper target network_acls.mapper.go
+//generate-database:mapper target networks_acls.mapper.go
 //generate-database:mapper reset -i -b "//go:build linux && cgo && !agent"
 //
 // Statements:
