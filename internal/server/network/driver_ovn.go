@@ -5938,6 +5938,12 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 				return err
 			}
 
+			// Save the load balancer configuration.
+			err = dbCluster.CreateNetworkLoadBalancerConfig(ctx, tx.Tx(), loadBalancerID, loadBalancer.Config)
+			if err != nil {
+				return err
+			}
+
 			return nil
 		})
 		if err != nil {
@@ -6028,6 +6034,7 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 
 	if clientType == request.ClientTypeNormal {
 		var curLoadBalancer *api.NetworkLoadBalancer
+		var curLoadBalancerID int64
 
 		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			networkID := n.ID()
@@ -6051,6 +6058,8 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 				return err
 			}
 
+			curLoadBalancerID = dbLoadBalancers[0].ID
+
 			return nil
 		})
 		if err != nil {
@@ -6062,7 +6071,7 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 			return err
 		}
 
-		curForwardEtagHash, err := localUtil.EtagHash(curLoadBalancer.Etag())
+		curEtagHash, err := localUtil.EtagHash(curLoadBalancer.Etag())
 		if err != nil {
 			return err
 		}
@@ -6077,7 +6086,7 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 			return err
 		}
 
-		if curForwardEtagHash == newLoadBalancerEtagHash {
+		if curEtagHash == newLoadBalancerEtagHash {
 			return nil // Nothing has changed.
 		}
 
@@ -6119,7 +6128,17 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 				Ports:         newLoadBalancer.Ports,
 			}
 
-			return dbCluster.UpdateNetworkLoadBalancer(ctx, tx.Tx(), n.ID(), listenAddress, lb)
+			err = dbCluster.UpdateNetworkLoadBalancer(ctx, tx.Tx(), n.ID(), listenAddress, lb)
+			if err != nil {
+				return err
+			}
+
+			err = dbCluster.UpdateNetworkLoadBalancerConfig(ctx, tx.Tx(), curLoadBalancerID, newLoadBalancer.Config)
+			if err != nil {
+				return err
+			}
+
+			return nil
 		})
 		if err != nil {
 			return err
@@ -6135,7 +6154,17 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 					Ports:         curLoadBalancer.Ports,
 				}
 
-				return dbCluster.UpdateNetworkLoadBalancer(ctx, tx.Tx(), n.ID(), listenAddress, lb)
+				err = dbCluster.UpdateNetworkLoadBalancer(ctx, tx.Tx(), n.ID(), listenAddress, lb)
+				if err != nil {
+					return err
+				}
+
+				err = dbCluster.UpdateNetworkLoadBalancerConfig(ctx, tx.Tx(), curLoadBalancerID, curLoadBalancer.Config)
+				if err != nil {
+					return err
+				}
+
+				return nil
 			})
 		})
 
