@@ -316,14 +316,14 @@ func (d *common) validateRule(direction ruleDirection, rule api.NetworkACLRule) 
 		var err error
 
 		// Get map of ACL names to DB IDs (used for generating OVN port group names).
-		acls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &d.projectName})
+		dbAcls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &d.projectName})
 		if err != nil {
 			return err
 		}
 
-		out := make(map[string]int64, len(acls))
-		for _, acl := range acls {
-			out[acl.Name] = int64(acl.ID)
+		acls = make(map[string]int64, len(dbAcls))
+		for _, acl := range dbAcls {
+			acls[acl.Name] = int64(acl.ID)
 		}
 
 		return nil
