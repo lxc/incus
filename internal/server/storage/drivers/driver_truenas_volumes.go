@@ -620,7 +620,7 @@ func (d *truenas) DeleteVolume(vol Volume, op *operations.Operation) error {
 		// in tmpVol will also change it in vol.
 		tmpVol := vol.Clone()
 
-		// TODO: use bulk existance checks, before iterating.
+		// TODO: use bulk existence checks, before iterating.
 
 		// we don't pre-delete the filesystem that would be deleted by the main call to deleteVolume.
 		volFs := vol.ConfigBlockFilesystem()
@@ -1396,7 +1396,7 @@ func (d *truenas) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs 
 		return genericVFSMigrateVolume(d, d.state, vol, conn, volSrcArgs, op)
 	}
 
-	// TODO: optmized migration between TrueNAS or ZFS storage pools?
+	// TODO: optimized migration between TrueNAS or ZFS storage pools?
 
 	return ErrNotSupported
 }

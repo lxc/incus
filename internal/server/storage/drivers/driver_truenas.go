@@ -322,7 +322,7 @@ func (d *truenas) Delete(op *operations.Operation) error {
 func (d *truenas) Validate(config map[string]string) error {
 	rules := map[string]func(value string) error{
 		// only truenas.dataset is required. the tool has default behaviour/connections defined.
-		"source":          validate.IsAny, // can be used as a shortcut to specify datset and optionaly host.
+		"source":          validate.IsAny, // can be used as a shortcut to specify dataset and optionally host.
 		"truenas.dataset": validate.IsAny,
 
 		// global flags for the tool
