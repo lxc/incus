@@ -93,6 +93,10 @@ func expandAlias(conf *config.Config, args []string, app *cobra.Command) ([]stri
 		return nil, false, nil
 	}
 
+	if fset.Arg(0) == "incus" {
+		return nil, false, nil
+	}
+
 	lastFlagIndex := slices.Index(args, fset.Arg(firstPosArgIndex))
 
 	// newArgs contains all the flags before the first positional argument
