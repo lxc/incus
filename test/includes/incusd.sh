@@ -138,13 +138,13 @@ kill_incus() {
         # Delete all containers
         echo "==> Deleting all containers"
         for container in $(timeout -k 2 2 incus list --force-local --format csv --columns n); do
-            timeout -k 10 10 incus delete "${container}" --force-local -f || true
+            timeout -k 20 20 incus delete "${container}" --force-local -f || true
         done
 
         # Delete all images
         echo "==> Deleting all images"
         for image in $(timeout -k 2 2 incus image list --force-local --format csv --columns f); do
-            timeout -k 10 10 incus image delete "${image}" --force-local || true
+            timeout -k 20 20 incus image delete "${image}" --force-local || true
         done
 
         # Delete all profiles
@@ -179,7 +179,9 @@ kill_incus() {
             done
 
             ## Delete the storage pool.
-            timeout -k 20 20 incus storage delete "${storage_pool}" --force-local || true
+            #timeout -k 20 20 incus storage delete "${storage_pool}" --force-local || true
+            timeout -k 30 30 incus storage delete "${storage_pool}" --force-local || true   #TN middleware is slow at deleting shared zvols/datasets
+
         done
 
         echo "==> Checking for locked DB tables"

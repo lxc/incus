@@ -27,6 +27,10 @@ test_storage_local_volume_handling() {
       fi
     fi
 
+    if storage_backend_available "truenas"; then
+      incus storage create "${pool_base}-truenas" truenas source="${INCUS_TN_HOST}:${INCUS_TN_DATASET}/$(uuidgen)" truenas.api_key="${INCUS_TN_APIKEY}"
+    fi
+
     incus storage create "${pool_base}-dir" dir
 
     if storage_backend_available "lvm"; then
@@ -58,6 +62,10 @@ test_storage_local_volume_handling() {
 
     if [ "$driver" = "ceph" ]; then
       pool_opts="volume.size=25MiB ceph.osd.pg_num=16"
+    fi
+
+    if [ "$driver" = "truenas" ]; then
+      pool_opts="source=${INCUS_TN_HOST}:${INCUS_TN_DATASET}/$(uuidgen) truenas.api_key=${INCUS_TN_APIKEY}"
     fi
 
     if [ "$driver" = "lvm" ]; then
@@ -139,7 +147,7 @@ test_storage_local_volume_handling() {
     incus storage volume show "${pool}1" vol1 --project "${project}"
     incus storage volume move "${pool}1/vol1" "${pool}1/vol1" --project "${project}" --target-project default
     incus storage volume show "${pool}1" vol1 --project default
-
+  
     incus project delete "${project}"
     incus storage volume delete "${pool}1" vol1
     incus storage volume delete "${pool}1" vol2

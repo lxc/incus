@@ -2821,3 +2821,7 @@ network forward.
 ## `network_physical_gateway_hwaddr`
 
 Allows setting the MAC address of the IPv4 and IPv6 gateways when used with OVN.
+
+## `storage_driver_truenas`
+
+This adds a TrueNAS storage driver.
