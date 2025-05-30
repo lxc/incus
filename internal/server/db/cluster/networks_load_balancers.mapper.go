@@ -15,24 +15,21 @@ import (
 )
 
 var networkLoadBalancerObjects = RegisterStmt(`
-SELECT networks_load_balancers.id, networks_load_balancers.network_id, networks_load_balancers.node_id, nodes.name AS location, networks_load_balancers.listen_address, networks_load_balancers.description, networks_load_balancers.backends, networks_load_balancers.ports
+SELECT networks_load_balancers.id, networks_load_balancers.network_id, networks_load_balancers.listen_address, networks_load_balancers.description, networks_load_balancers.backends, networks_load_balancers.ports
   FROM networks_load_balancers
-  JOIN nodes ON networks_load_balancers.node_id = nodes.id
   ORDER BY networks_load_balancers.network_id, networks_load_balancers.listen_address
 `)
 
 var networkLoadBalancerObjectsByNetworkID = RegisterStmt(`
-SELECT networks_load_balancers.id, networks_load_balancers.network_id, networks_load_balancers.node_id, nodes.name AS location, networks_load_balancers.listen_address, networks_load_balancers.description, networks_load_balancers.backends, networks_load_balancers.ports
+SELECT networks_load_balancers.id, networks_load_balancers.network_id, networks_load_balancers.listen_address, networks_load_balancers.description, networks_load_balancers.backends, networks_load_balancers.ports
   FROM networks_load_balancers
-  JOIN nodes ON networks_load_balancers.node_id = nodes.id
   WHERE ( networks_load_balancers.network_id = ? )
   ORDER BY networks_load_balancers.network_id, networks_load_balancers.listen_address
 `)
 
 var networkLoadBalancerObjectsByNetworkIDAndListenAddress = RegisterStmt(`
-SELECT networks_load_balancers.id, networks_load_balancers.network_id, networks_load_balancers.node_id, nodes.name AS location, networks_load_balancers.listen_address, networks_load_balancers.description, networks_load_balancers.backends, networks_load_balancers.ports
+SELECT networks_load_balancers.id, networks_load_balancers.network_id, networks_load_balancers.listen_address, networks_load_balancers.description, networks_load_balancers.backends, networks_load_balancers.ports
   FROM networks_load_balancers
-  JOIN nodes ON networks_load_balancers.node_id = nodes.id
   WHERE ( networks_load_balancers.network_id = ? AND networks_load_balancers.listen_address = ? )
   ORDER BY networks_load_balancers.network_id, networks_load_balancers.listen_address
 `)
@@ -43,13 +40,13 @@ SELECT networks_load_balancers.id FROM networks_load_balancers
 `)
 
 var networkLoadBalancerCreate = RegisterStmt(`
-INSERT INTO networks_load_balancers (network_id, node_id, listen_address, description, backends, ports)
-  VALUES (?, ?, ?, ?, ?, ?)
+INSERT INTO networks_load_balancers (network_id, listen_address, description, backends, ports)
+  VALUES (?, ?, ?, ?, ?)
 `)
 
 var networkLoadBalancerUpdate = RegisterStmt(`
 UPDATE networks_load_balancers
-  SET network_id = ?, node_id = ?, listen_address = ?, description = ?, backends = ?, ports = ?
+  SET network_id = ?, listen_address = ?, description = ?, backends = ?, ports = ?
  WHERE id = ?
 `)
 
@@ -60,7 +57,7 @@ DELETE FROM networks_load_balancers WHERE network_id = ? AND id = ?
 // networkLoadBalancerColumns returns a string of column names to be used with a SELECT statement for the entity.
 // Use this function when building statements to retrieve database entries matching the NetworkLoadBalancer entity.
 func networkLoadBalancerColumns() string {
-	return "networks_load_balancers.id, networks_load_balancers.network_id, networks_load_balancers.node_id, nodes.name AS location, networks_load_balancers.listen_address, networks_load_balancers.description, networks_load_balancers.backends, networks_load_balancers.ports"
+	return "networks_load_balancers.id, networks_load_balancers.network_id, networks_load_balancers.listen_address, networks_load_balancers.description, networks_load_balancers.backends, networks_load_balancers.ports"
 }
 
 // getNetworkLoadBalancers can be used to run handwritten sql.Stmts to return a slice of objects.
@@ -71,7 +68,7 @@ func getNetworkLoadBalancers(ctx context.Context, stmt *sql.Stmt, args ...any) (
 		n := NetworkLoadBalancer{}
 		var backendsStr string
 		var portsStr string
-		err := scan(&n.ID, &n.NetworkID, &n.NodeID, &n.Location, &n.ListenAddress, &n.Description, &backendsStr, &portsStr)
+		err := scan(&n.ID, &n.NetworkID, &n.ListenAddress, &n.Description, &backendsStr, &portsStr)
 		if err != nil {
 			return err
 		}
@@ -107,7 +104,7 @@ func getNetworkLoadBalancersRaw(ctx context.Context, db dbtx, sql string, args .
 		n := NetworkLoadBalancer{}
 		var backendsStr string
 		var portsStr string
-		err := scan(&n.ID, &n.NetworkID, &n.NodeID, &n.Location, &n.ListenAddress, &n.Description, &backendsStr, &portsStr)
+		err := scan(&n.ID, &n.NetworkID, &n.ListenAddress, &n.Description, &backendsStr, &portsStr)
 		if err != nil {
 			return err
 		}
@@ -160,7 +157,7 @@ func GetNetworkLoadBalancers(ctx context.Context, db dbtx, filters ...NetworkLoa
 	}
 
 	for i, filter := range filters {
-		if filter.NetworkID != nil && filter.ListenAddress != nil && filter.ID == nil && filter.NodeID == nil {
+		if filter.NetworkID != nil && filter.ListenAddress != nil && filter.ID == nil {
 			args = append(args, []any{filter.NetworkID, filter.ListenAddress}...)
 			if len(filters) == 1 {
 				sqlStmt, err = Stmt(db, networkLoadBalancerObjectsByNetworkIDAndListenAddress)
@@ -184,7 +181,7 @@ func GetNetworkLoadBalancers(ctx context.Context, db dbtx, filters ...NetworkLoa
 
 			_, where, _ := strings.Cut(parts[0], "WHERE")
 			queryParts[0] += "OR" + where
-		} else if filter.NetworkID != nil && filter.ID == nil && filter.ListenAddress == nil && filter.NodeID == nil {
+		} else if filter.NetworkID != nil && filter.ID == nil && filter.ListenAddress == nil {
 			args = append(args, []any{filter.NetworkID}...)
 			if len(filters) == 1 {
 				sqlStmt, err = Stmt(db, networkLoadBalancerObjectsByNetworkID)
@@ -208,10 +205,10 @@ func GetNetworkLoadBalancers(ctx context.Context, db dbtx, filters ...NetworkLoa
 
 			_, where, _ := strings.Cut(parts[0], "WHERE")
 			queryParts[0] += "OR" + where
-		} else if filter.ID == nil && filter.NetworkID == nil && filter.ListenAddress == nil && filter.NodeID == nil {
+		} else if filter.ID == nil && filter.NetworkID == nil && filter.ListenAddress == nil {
 			return nil, fmt.Errorf("Cannot filter on empty NetworkLoadBalancerFilter")
 		} else {
-			return nil, fmt.Errorf("No statement exists for the given Filter")
+			return nil, errors.New("No statement exists for the given Filter")
 		}
 	}
 
@@ -309,25 +306,24 @@ func CreateNetworkLoadBalancer(ctx context.Context, db dbtx, object NetworkLoadB
 		_err = mapErr(_err, "Network_load_balancer")
 	}()
 
-	args := make([]any, 6)
+	args := make([]any, 5)
 
 	// Populate the statement arguments.
 	args[0] = object.NetworkID
-	args[1] = object.NodeID
-	args[2] = object.ListenAddress
-	args[3] = object.Description
+	args[1] = object.ListenAddress
+	args[2] = object.Description
 	marshaledBackends, err := marshalJSON(object.Backends)
 	if err != nil {
 		return -1, err
 	}
 
-	args[4] = marshaledBackends
+	args[3] = marshaledBackends
 	marshaledPorts, err := marshalJSON(object.Ports)
 	if err != nil {
 		return -1, err
 	}
 
-	args[5] = marshaledPorts
+	args[4] = marshaledPorts
 
 	// Prepared statement to use.
 	stmt, err := Stmt(db, networkLoadBalancerCreate)
@@ -408,7 +404,7 @@ func UpdateNetworkLoadBalancer(ctx context.Context, db tx, networkID int64, list
 		return err
 	}
 
-	result, err := stmt.Exec(object.NetworkID, object.NodeID, object.ListenAddress, object.Description, marshaledBackends, marshaledPorts, id)
+	result, err := stmt.Exec(object.NetworkID, object.ListenAddress, object.Description, marshaledBackends, marshaledPorts, id)
 	if err != nil {
 		return fmt.Errorf("Update \"networks_load_balancers\" entry failed: %w", err)
 	}
