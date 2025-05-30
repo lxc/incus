@@ -135,7 +135,6 @@ func (d *truenas) getDatasetOrSnapshot(dataset string) string {
 
 func (d *truenas) datasetExists(dataset string) (bool, error) {
 	out, err := d.runTool(d.getDatasetOrSnapshot(dataset), "list", "--no-headers", "-o", "name", dataset)
-
 	if err != nil {
 		return false, nil // TODO: need to check if tool returns errors for bad connections, vs not-found. Ie, this occurs when recovering with a bad API key or HOST.
 	}
@@ -315,7 +314,6 @@ func (d *truenas) createSnapshot(snapName string, deleteFirst bool) error {
 
 func (d *truenas) createDataset(dataset string, options ...string) error {
 	err := d.createDatasets([]string{dataset}, options...)
-
 	if err != nil {
 		return err
 	}
@@ -551,7 +549,6 @@ func (d *truenas) deleteDataset(dataset string, recursive bool, options ...strin
 
 func (d *truenas) getDatasetProperty(dataset string, key string) (string, error) {
 	output, err := d.runTool(d.getDatasetOrSnapshot(dataset), "list", "--no-headers", "--parsable", "-o", key, dataset)
-
 	if err != nil {
 		return "", err
 	}
@@ -729,7 +726,6 @@ func (d *truenas) setVolsize(dataset string, sizeBytes int64, allowShrink bool) 
 	args = append(args, dataset)
 
 	_, err := d.runTool(args...)
-
 	if err != nil {
 		if !ignoreShrinkError || !strings.Contains(err.Error(), "cannot shrink a zvol") {
 			return err
@@ -742,7 +738,6 @@ func (d *truenas) setVolsize(dataset string, sizeBytes int64, allowShrink bool) 
 
 func (d *truenas) getClones(dataset string) ([]string, error) {
 	out, err := d.runTool("snapshot", "list", "--no-headers", "--parsable", "-r", "-o", "clones", dataset)
-
 	if err != nil {
 		return nil, err
 	}

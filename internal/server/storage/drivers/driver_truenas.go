@@ -23,8 +23,10 @@ import (
 	"github.com/lxc/incus/v6/shared/validate"
 )
 
-var tnVersion string
-var tnLoaded bool
+var (
+	tnVersion string
+	tnLoaded  bool
+)
 
 var tnDefaultSettings = map[string]string{
 	"atime":     "off",

@@ -123,7 +123,6 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 				if vol.IsVMBlock() {
 					fsVol := vol.NewVMBlockFilesystemVolume()
 					_, err := d.runTool("dataset", "rename", d.dataset(fsVol, true), d.dataset(fsVol, false))
-
 					if err != nil {
 						return err
 					}
@@ -399,7 +398,6 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 			defer func() {
 				// Delete snapshot (or mark for deferred deletion if cannot be deleted currently).
 				err = d.deleteSnapshot(srcSnapshot, true, "defer")
-
 				if err != nil {
 					d.logger.Warn("Failed deleting temporary snapshot for copy", logger.Ctx{"snapshot": srcSnapshot, "err": err})
 				}
@@ -409,7 +407,6 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 			reverter.Add(func() {
 				// Delete snapshot (or mark for deferred deletion if cannot be deleted currently).
 				err = d.deleteSnapshot(srcSnapshot, true, "defer")
-
 				if err != nil {
 					d.logger.Warn("Failed deleting temporary snapshot for copy", logger.Ctx{"snapshot": srcSnapshot, "err": err})
 				}
@@ -461,7 +458,6 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 
 		// Delete the copy- snapshot on the dest.
 		err = d.deleteSnapshot(fmt.Sprintf("%s@%s", destDataset, snapName), true)
-
 		if err != nil {
 			return err
 		}
@@ -1828,7 +1824,6 @@ func (d *truenas) RenameVolumeSnapshot(vol Volume, newSnapshotName string, op *o
 
 	// Rename the ZFS datasets.
 	err = d.renameSnapshot(d.dataset(vol, false), d.dataset(newVol, false))
-
 	if err != nil {
 		return err
 	}
