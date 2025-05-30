@@ -11,6 +11,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"golang.org/x/sys/unix"
+
 	"github.com/lxc/incus/v6/internal/instancewriter"
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/migration"
@@ -23,7 +25,6 @@ import (
 	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/validate"
-	"golang.org/x/sys/unix"
 )
 
 // CreateVolume creates an empty volume and can optionally fill it by executing the supplied
