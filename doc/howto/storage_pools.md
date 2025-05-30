@@ -157,7 +157,7 @@ To use the TrueNAS driver you must have [`truenas_incus_ctl`](https://github.com
 ```
 
 The TrueNAS driver allows remote storage pools to be created and utilized on remote TrueNAS hosts. Each storage pool is contained in a separate dataset on the remote
-host. ZFS features on the host are utilized for optimzied image, copying and snapshot support without ZFS-on-ZFS overheads.
+host. ZFS features on the host are utilized for optimized image, copying and snapshot support without ZFS-on-ZFS overheads.
 
 Property | Description
 -|-
