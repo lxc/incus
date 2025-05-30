@@ -207,8 +207,7 @@ fi
 if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_check_deps "checking dependencies"
     run_test test_database_restore "database restore"
-    #run_test test_database_no_disk_space "database out of disk space" # triggers an assert: `incusd: src/vfs.c:802: vfsDatabaseRead: Assertion `amount == (int)page_size' failed.` https://github.com/lxc/incus/issues/665 
-    #run_test test_database_no_disk_space "database out of disk space" # triggers an assert: `incusd: src/vfs.c:802: vfsDatabaseRead: Assertion `amount == (int)page_size' failed.` https://github.com/lxc/incus/issues/665 
+    run_test test_database_no_disk_space "database out of disk space"
     run_test test_sql "SQL"
     run_test test_tls_restrictions "TLS restrictions"
     run_test test_oidc "OpenID Connect"
@@ -225,10 +224,8 @@ if [ "${1:-"all"}" != "standalone" ]; then
     run_test test_clustering_enable "clustering enable"
     run_test test_clustering_membership "clustering membership"
     run_test test_clustering_containers "clustering containers"
-    # run_test test_clustering_storage "clustering storage" #TN
-    # run_test test_clustering_storage_single_node "clustering storage single node" #TN
-    # run_test test_clustering_storage "clustering storage" #TN
-    # run_test test_clustering_storage_single_node "clustering storage single node" #TN
+    run_test test_clustering_storage "clustering storage"
+    run_test test_clustering_storage_single_node "clustering storage single node"
     run_test test_clustering_network "clustering network"
     run_test test_clustering_publish "clustering publish"
     run_test test_clustering_profiles "clustering profiles"
@@ -236,7 +233,7 @@ if [ "${1:-"all"}" != "standalone" ]; then
     run_test test_clustering_shutdown_nodes "clustering shutdown"
     run_test test_clustering_projects "clustering projects"
     run_test test_clustering_update_cert "clustering update cert"
-    #run_test test_clustering_update_cert_reversion "clustering update cert reversion" #TN test seems flaky.
+    run_test test_clustering_update_cert_reversion "clustering update cert reversion"
     run_test test_clustering_address "clustering address"
     run_test test_clustering_image_replication "clustering image replication"
     run_test test_clustering_recover "clustering recovery"
@@ -244,15 +241,14 @@ if [ "${1:-"all"}" != "standalone" ]; then
     run_test test_clustering_rebalance "clustering rebalance"
     run_test test_clustering_remove_raft_node "clustering remove raft node"
     run_test test_clustering_failure_domains "clustering failure domains"
-    #run_test test_clustering_image_refresh "clustering image refresh" #TN
-    #run_test test_clustering_evacuation "clustering evacuation" #TN
-    #run_test test_clustering_instance_placement_scriptlet "clustering instance placement scriptlet" #TN
+    run_test test_clustering_image_refresh "clustering image refresh"
+    run_test test_clustering_evacuation "clustering evacuation"
+    run_test test_clustering_instance_placement_scriptlet "clustering instance placement scriptlet"
     run_test test_clustering_move "clustering move"
     run_test test_clustering_edit_configuration "clustering config edit"
     run_test test_clustering_remove_members "clustering config remove members"
     run_test test_clustering_autotarget "clustering autotarget member"
-    # run_test test_clustering_upgrade "clustering upgrade" # upstream
-    # run_test test_clustering_upgrade "clustering upgrade" # upstream
+    # run_test test_clustering_upgrade "clustering upgrade"
     run_test test_clustering_groups "clustering groups"
     run_test test_clustering_events "clustering events"
     run_test test_clustering_uuid "clustering uuid"
@@ -275,7 +271,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_projects_usage "projects usage"
     run_test test_projects_restrictions "projects restrictions"
     run_test test_container_devices_disk "container devices - disk"
-    #run_test test_container_devices_disk_restricted "container devices - disk - restricted" #!TN
+    run_test test_container_devices_disk_restricted "container devices - disk - restricted"
     run_test test_container_devices_nic_p2p "container devices - nic - p2p"
     run_test test_container_devices_nic_bridged "container devices - nic - bridged"
     run_test test_container_devices_nic_bridged_acl "container devices - nic - bridged - acl"
@@ -288,13 +284,13 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_container_devices_nic_routed "container devices - nic - routed"
     run_test test_container_devices_infiniband_physical "container devices - infiniband - physical"
     run_test test_container_devices_infiniband_sriov "container devices - infiniband - sriov"
-    #run_test test_container_devices_proxy "container devices - proxy" #!TN
+    run_test test_container_devices_proxy "container devices - proxy"
     run_test test_container_devices_gpu "container devices - gpu"
     run_test test_container_devices_unix_char "container devices - unix-char"
     run_test test_container_devices_unix_block "container devices - unix-block"
     run_test test_container_devices_tpm "container devices - tpm"
     run_test test_container_move "container server-side move"
-    #run_test test_container_oci "OCI containers" #!TN
+    run_test test_container_oci "OCI containers"
     run_test test_container_syscall_interception "container syscall interception"
     run_test test_security "security features"
     run_test test_security_protection "container protection"
@@ -326,18 +322,18 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_server_config "server configuration"
     run_test test_filemanip "file manipulations"
     run_test test_network "network management"
-    #run_test test_network_dhcp_routes "network dhcp routes" #!TN
+    run_test test_network_dhcp_routes "network dhcp routes"
     run_test test_network_acl "network ACL management"
     run_test test_address_set "network address set"
     run_test test_network_forward "network address forwards"
     run_test test_network_zone "network DNS zones"
     run_test test_idmap "id mapping"
     run_test test_template "file templating"
-    #run_test test_pki "PKI mode" # TN: this requires entering prompts, and stalls the tests, but does pass.
+    run_test test_pki "PKI mode"
     run_test test_dev_incus "/dev/incus"
     run_test test_fuidshift "fuidshift"
     run_test test_migration "migration"
-    #run_test test_lxc_to_incus "LXC to Incus" #!TN
+    run_test test_lxc_to_incus "LXC to Incus"
     run_test test_fdleak "fd leak"
     run_test test_storage "storage"
     run_test test_storage_volume_snapshots "storage volume snapshots"
