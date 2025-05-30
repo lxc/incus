@@ -123,8 +123,8 @@ func (d *truenas) setDatasetProperties(dataset string, options ...string) error 
 	return nil
 }
 
-// returns "dataset" or "snapshot" depending on the supplied name
-// used to disambiguate truenas-admin commands
+// getDatasetOrSnapshotreturns "dataset" or "snapshot" depending on the supplied name
+// used to disambiguate truenas-admin commands.
 func (d *truenas) getDatasetOrSnapshot(dataset string) string {
 	if strings.Contains(dataset, "@") {
 		return "snapshot"
@@ -143,15 +143,21 @@ func (d *truenas) datasetExists(dataset string) (bool, error) {
 	return strings.TrimSpace(out) == dataset, nil
 }
 
-func (d *truenas) objectsExist(objects []string, optType string) (map[string]bool, error) {
+// objectsExist returns a map of existence for a number of objects (snaps, vols, etc).
+// unused currently but planned to be used in DeleteVolume.
+func (d *truenas) objectsExist(objects []string, optType string) (map[string]bool, error) { //nolint:unused
 	var t string
-	if optType == "" {
+
+	// unlike zfs, `list` will return nfs and other objects for all.
+	switch optType {
+	case "":
 		t = "fs,vol,snap"
-	} else if optType == "dataset" {
+	case "dataset":
 		t = "fs,vol"
-	} else {
+	default:
 		t = optType
 	}
+
 	args := []string{"list", "--no-headers", "-o", "name", "-t", t}
 	args = append(args, objects...)
 
@@ -192,7 +198,6 @@ func (d *truenas) initialDatasets() []string {
 }
 
 func (d *truenas) getDatasets(dataset string, types string) ([]string, error) {
-
 	// tool does not support "all", but it also supports "nfs"
 	if types == "all" {
 		types = "filesystem,volume,snapshot"
@@ -217,7 +222,7 @@ func (d *truenas) getDatasets(dataset string, types string) ([]string, error) {
 	return children, nil
 }
 
-// batch updates or creates one or more datasets with the same options
+// updateDatasets batch updates or creates one or more datasets with the same options.
 func (d *truenas) updateDatasets(datasets []string, orCreate bool, options ...string) error {
 	args := []string{"dataset", "update"}
 
@@ -248,7 +253,7 @@ func (d *truenas) updateDatasets(datasets []string, orCreate bool, options ...st
 	return nil
 }
 
-// batch creates one or more datasets with the same options
+// createDatasets batch creates one or more datasets with the same options.
 func (d *truenas) createDatasets(datasets []string, options ...string) error {
 	args := []string{"dataset", "create"}
 
@@ -275,7 +280,7 @@ func (d *truenas) createDatasets(datasets []string, options ...string) error {
 	return nil
 }
 
-// create a dataset by cloning a snapshot
+// cloneSnapshot create a dataset by cloning a snapshot.
 func (d *truenas) cloneSnapshot(srcSnapshot string, destDataset string) error {
 	args := []string{"snapshot", "clone", srcSnapshot, destDataset}
 
@@ -288,7 +293,7 @@ func (d *truenas) cloneSnapshot(srcSnapshot string, destDataset string) error {
 	return nil
 }
 
-// take a recursive snapshot of dataset@snapname, and optionally delete the old snapshot first
+// createSnapshot take a recursive snapshot of dataset@snapname, and optionally delete the old snapshot first.
 func (d *truenas) createSnapshot(snapName string, deleteFirst bool) error {
 	args := []string{"snapshot", "create", "-r"}
 
@@ -382,9 +387,8 @@ func (d *truenas) deleteIscsiShare(dataset string) error {
 	return nil
 }
 
-// locates a ZFS volume if already active. Returns devpath if activated, "" if not, or an error
+// locateIscsiDataset locates a ZFS volume if already active. Returns devpath if activated, "" if not, or an error.
 func (d *truenas) locateIscsiDataset(dataset string) (string, error) {
-
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -404,7 +408,8 @@ func (d *truenas) locateIscsiDataset(dataset string) (string, error) {
 	return volDiskPath, nil
 }
 
-// ensures a dataset is activated, and returns the dev path. Will create the share if necessary and returns a bool to determine if activation was required
+// locateOrActivateIscsiDataset ensures a dataset is activated, and returns the dev path. Will create
+// the share if necessary and returns a bool to determine if activation was required.
 func (d *truenas) locateOrActivateIscsiDataset(dataset string) (bool, string, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
@@ -415,14 +420,13 @@ func (d *truenas) locateOrActivateIscsiDataset(dataset string) (bool, string, er
 	}
 	reverter.Add(func() { _ = d.deactivateIscsiDataset(dataset) })
 
-	status, volDiskPath, found := strings.Cut(statusPath, "\t")
-	_ = found
+	status, volDiskPath, _ := strings.Cut(statusPath, "\t")
 
 	// when `locate --create`` has to create a share, it outputs two lines, one for the creation, a second for the activation, we need to discard the first.
 	if status == "created" {
 		d.logger.Debug(fmt.Sprintf("Created iscsi share for TrueNAS volume: %s", volDiskPath))
 		_, statusPath, _ := strings.Cut(statusPath, "\n")
-		status, volDiskPath, found = strings.Cut(statusPath, "\t")
+		status, volDiskPath, _ = strings.Cut(statusPath, "\t")
 	}
 
 	didActivate := status == "activated"
@@ -456,7 +460,7 @@ func (d *truenas) activateIscsiDataset(dataset string) (string, error) {
 	return "", fmt.Errorf("No path for activated TrueNAS volume: %v", dataset)
 }
 
-// deactivates a dataset if activated, returns true if deactivated
+// deactivateIscsiDatasetIfActive deactivates a dataset if activated, returns true if deactivated.
 func (d *truenas) deactivateIscsiDatasetIfActive(dataset string) (bool, error) {
 	statusPath, err := d.runTool("share", "iscsi", "locate", "--deactivate", "--target-prefix=incus", "--parsable", dataset)
 	if err != nil {
@@ -474,10 +478,9 @@ func (d *truenas) deactivateIscsiDatasetIfActive(dataset string) (bool, error) {
 	}
 
 	return true, nil
-
 }
 
-// deactivates an iscsi share if active
+// deactivateIscsiDataset deactivates an iscsi share if active.
 func (d *truenas) deactivateIscsiDataset(dataset string) error {
 	_, err := d.runTool("share", "iscsi", "deactivate", "--target-prefix=incus", dataset)
 	if err != nil {
@@ -495,7 +498,7 @@ func (d *truenas) deleteSnapshot(snapshot string, recursive bool, options ...str
 	return d.deleteDataset(snapshot, recursive, options...)
 }
 
-// tryDeleteDataset attempts to delete a dataset, repeating if busy until success, or the context is ended
+// tryDeleteBusyDataset attempts to delete a dataset, repeating if busy until success, or the context is ended.
 func (d *truenas) tryDeleteBusyDataset(ctx context.Context, dataset string, recursive bool, options ...string) error {
 	for {
 		if ctx.Err() != nil {
@@ -547,7 +550,6 @@ func (d *truenas) deleteDataset(dataset string, recursive bool, options ...strin
 }
 
 func (d *truenas) getDatasetProperty(dataset string, key string) (string, error) {
-
 	output, err := d.runTool(d.getDatasetOrSnapshot(dataset), "list", "--no-headers", "--parsable", "-o", key, dataset)
 
 	if err != nil {
@@ -575,15 +577,15 @@ func (d *truenas) getDatasetsAndProperties(datasets []string, properties []strin
 		return nil, err
 	}
 
-	var response interface{}
+	var response any
 	if err = json.Unmarshal([]byte(out), &response); err != nil {
 		return nil, err
 	}
 
-	var resultsMap map[string]interface{}
-	if responseMap, ok := response.(map[string]interface{}); ok {
+	var resultsMap map[string]any
+	if responseMap, ok := response.(map[string]any); ok {
 		for _, v := range responseMap {
-			if r, ok := v.(map[string]interface{}); ok {
+			if r, ok := v.(map[string]any); ok {
 				resultsMap = r
 				break
 			}
@@ -603,10 +605,10 @@ func (d *truenas) getDatasetsAndProperties(datasets []string, properties []strin
 		if _, exists := objectsAsMap[k]; !exists {
 			continue
 		}
-		if r, ok := result.(map[string]interface{}); ok {
+		if r, ok := result.(map[string]any); ok {
 			formattedMap := make(map[string]string)
 			for p, v := range r {
-				var value interface{}
+				var value any
 				if vF, ok := v.(float64); ok && vF == math.Floor(vF) {
 					value = int64(vF)
 				} else {
@@ -623,8 +625,8 @@ func (d *truenas) getDatasetsAndProperties(datasets []string, properties []strin
 }
 
 // renameSnapshot renames sourceSnapshot to destSnapshot.
-// sourceSnapshot: <dataset>@<snap-name>
-// destSnapshot: [dataset]@<snap-name>
+// sourceSnapshot: <dataset>@<snap-name>.
+// destSnapshot: [dataset]@<snap-name>.
 func (d *truenas) renameSnapshot(sourceSnapshot string, destSnapshot string) error {
 	args := []string{"snapshot", "rename", sourceSnapshot, destSnapshot}
 
@@ -636,7 +638,7 @@ func (d *truenas) renameSnapshot(sourceSnapshot string, destSnapshot string) err
 	return nil
 }
 
-// will rename a dataset, or snapshot. updateShares is relatively expensive if there is no possibility of there being a share
+// renameDatasetwill rename a dataset, or snapshot. updateShares is relatively expensive if there is no possibility of there being a share.
 func (d *truenas) renameDataset(sourceDataset string, destDataset string, updateShares bool) error {
 	args := []string{d.getDatasetOrSnapshot(sourceDataset), "rename"}
 
@@ -712,9 +714,8 @@ func (d *truenas) version() (string, error) {
 	return "", errors.New("Could not determine TrueNAS driver version")
 }
 
-// set the volsize property of a zvol, optionally ignoring shrink errors (and warning), requires a zvol
+// setVolsize sets the volsize property of a zvol, optionally ignoring shrink errors (and warning), requires a zvol.
 func (d *truenas) setVolsize(dataset string, sizeBytes int64, allowShrink bool) error {
-
 	ignoreShrinkError := true
 
 	volsizeProp := fmt.Sprintf("--volsize=%d", sizeBytes)
@@ -730,12 +731,11 @@ func (d *truenas) setVolsize(dataset string, sizeBytes int64, allowShrink bool) 
 	_, err := d.runTool(args...)
 
 	if err != nil {
-		if ignoreShrinkError && strings.Contains(err.Error(), "cannot shrink a zvol") {
-			// middleware currently prevents volume shrinking.
-			d.logger.Warn(fmt.Sprintf("Unable to shrink zvol on TrueNAS server due to middleware restriction, use `zfs set %s %s` to change zvol size manually", volsizeProp, dataset))
-		} else {
+		if !ignoreShrinkError || !strings.Contains(err.Error(), "cannot shrink a zvol") {
 			return err
 		}
+		// middleware currently prevents volume shrinking.
+		d.logger.Warn(fmt.Sprintf("Unable to shrink zvol on TrueNAS server due to middleware restriction, use `zfs set %s %s` to change zvol size manually", volsizeProp, dataset))
 	}
 	return nil
 }
