@@ -782,8 +782,10 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 
 		// Convert acls to aclNames slice for use with UsedBy.
 		aclNames = make([]string, 0, len(acls))
+		aclNameIDs = make(map[string]int64)
 		for _, acl := range acls {
 			aclNames = append(aclNames, acl.Name)
+			aclNameIDs[acl.Name] = int64(acl.ID)
 		}
 
 		// Get project ID.
@@ -844,6 +846,7 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 	// For the indirectly referred to ACLs, store a list of the ACLs that are referring to it.
 	err = UsedBy(s, aclProjectName, func(ctx context.Context, tx *db.ClusterTx, matchedACLNames []string, usageType any, nicName string, nicConfig map[string]string) error {
 		switch u := usageType.(type) {
+
 		case db.InstanceArgs:
 			ignoreInst, isIgnoreInst := ignoreUsageType.(instance.Instance)
 
@@ -872,6 +875,7 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 					delete(removeACLPortGroups, OVNACLNetworkPortGroupName(aclNameIDs[matchedACLName], netID))
 				}
 			}
+
 		case *api.Network:
 			ignoreNet, isIgnoreNet := ignoreUsageType.(*api.Network)
 
@@ -900,6 +904,7 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 					delete(removeACLPortGroups, OVNACLNetworkPortGroupName(aclNameIDs[matchedACLName], netID))
 				}
 			}
+
 		case cluster.Profile:
 			ignoreProfile, isIgnoreProfile := ignoreUsageType.(cluster.Profile)
 
@@ -928,6 +933,7 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 					delete(removeACLPortGroups, OVNACLNetworkPortGroupName(aclNameIDs[matchedACLName], netID))
 				}
 			}
+
 		case *api.NetworkACL:
 			// Record which ACLs this ACL's ruleset refers to.
 			for _, matchedACLName := range matchedACLNames {
@@ -940,6 +946,7 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 					aclUsedACLS[matchedACLName] = append(aclUsedACLS[matchedACLName], u.Name)
 				}
 			}
+
 		default:
 			return fmt.Errorf("Unrecognised usage type %T", u)
 		}
