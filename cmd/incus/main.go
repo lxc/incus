@@ -94,7 +94,7 @@ func aliases() []string {
 	return aliases
 }
 
-func createApp() (*cobra.Command, *cmdGlobal) {
+func createApp() (*cobra.Command, *cmdGlobal, error) {
 	// Setup the parser
 	app := &cobra.Command{}
 	app.Use = "incus"
@@ -111,9 +111,17 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	app.CompletionOptions = cobra.CompletionOptions{HiddenDefaultCmd: true}
 	app.ValidArgs = aliases()
 
-	// Global flags
+	// Global struct.
 	globalCmd := cmdGlobal{cmd: app, asker: ask.NewAsker(bufio.NewReader(os.Stdin))}
 
+	conf, err := config.LoadConfig("")
+	if err != nil {
+		return nil, nil, fmt.Errorf(i18n.G("Failed to load configuration: %s"), err)
+	}
+
+	globalCmd.conf = conf
+
+	// Global flags.
 	app.PersistentFlags().BoolVar(&globalCmd.flagVersion, "version", false, i18n.G("Print version number"))
 	app.PersistentFlags().BoolVarP(&globalCmd.flagHelp, "help", "h", false, i18n.G("Print help"))
 	app.PersistentFlags().BoolVar(&globalCmd.flagForceLocal, "force-local", false, i18n.G("Force using the local unix socket"))
@@ -305,14 +313,18 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	app.Flags().BoolVar(&globalCmd.flagHelpAll, "all", false, i18n.G("Show less common commands"))
 	help.Flags().BoolVar(&globalCmd.flagHelpAll, "all", false, i18n.G("Show less common commands"))
 
-	return app, &globalCmd
+	return app, &globalCmd, nil
 }
 
 func main() {
-	app, globalCmd := createApp()
+	app, globalCmd, err := createApp()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
 
 	// Deal with --all and --sub-commands flags as well as process aliases.
-	err := app.ParseFlags(os.Args[1:])
+	err = app.ParseFlags(os.Args[1:])
 	if err == nil {
 		if globalCmd.flagHelpAll {
 			// Show all commands
@@ -398,11 +410,6 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, _ []string) error {
 		if err != nil && !os.IsExist(err) {
 			cachePath = ""
 		}
-	}
-
-	c.conf, err = config.LoadConfig("")
-	if err != nil {
-		return fmt.Errorf(i18n.G("Failed to load configuration: %s"), err)
 	}
 
 	// If no config dir could be found, treat as if --force-local was passed.

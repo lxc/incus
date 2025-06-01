@@ -97,7 +97,7 @@ func TestExpandAliases(t *testing.T) {
 	conf := &config.Config{Aliases: aliases}
 
 	for _, tc := range testcases {
-		app, _ := createApp()
+		app, _, _ := createApp()
 		_ = app.ParseFlags(tc.input[1:])
 		result, expanded, err := expandAlias(conf, tc.input, app)
 		if tc.expectErr {
