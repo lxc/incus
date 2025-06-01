@@ -20,7 +20,6 @@ import (
 
 type qemuMachineProtocal struct {
 	oobSupported bool            // Out of band support or not
-	c            net.Conn        // Underlying connection
 	uc           *net.UnixConn   // Underlying unix socket connection
 	mu           sync.Mutex      // Serialize running command
 	replies      sync.Map        // Replies channels
@@ -101,7 +100,7 @@ type rawResponse struct {
 // disconnect closes the QEMU monitor socket connection.
 func (qmp *qemuMachineProtocal) disconnect() error {
 	qmp.listeners.Store(0)
-	return qmp.c.Close()
+	return qmp.uc.Close()
 }
 
 // qmpIncreaseID increase ID and skip zero.
@@ -116,8 +115,8 @@ func (qmp *qemuMachineProtocal) qmpIncreaseID() uint32 {
 
 // connect sets up a QMP connection.
 func (qmp *qemuMachineProtocal) connect() error {
-	enc := json.NewEncoder(qmp.c)
-	dec := json.NewDecoder(qmp.c)
+	enc := json.NewEncoder(qmp.uc)
+	dec := json.NewDecoder(qmp.uc)
 
 	// Check for banner on startup
 	ban := struct {
@@ -158,7 +157,7 @@ func (qmp *qemuMachineProtocal) connect() error {
 
 	// Initialize listener for command responses and asynchronous events.
 	events := make(chan qmpEvent, 128)
-	go qmp.listen(qmp.c, events, &qmp.replies)
+	go qmp.listen(qmp.uc, events, &qmp.replies)
 	qmp.events = events
 	return nil
 }
@@ -248,7 +247,7 @@ func (qmp *qemuMachineProtocal) run(command []byte, id uint32) ([]byte, error) {
 func (qmp *qemuMachineProtocal) qmpWriteMsg(b []byte, file *os.File) error {
 	if file == nil {
 		// Just send a normal command through.
-		_, err := qmp.c.Write(b)
+		_, err := qmp.uc.Write(b)
 		return err
 	}
 

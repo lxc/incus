@@ -291,19 +291,17 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 	}
 
 	// Setup the connection.
-	c, err := net.DialTimeout("unix", path, time.Second)
+	unixaddr, err := net.ResolveUnixAddr("unix", path)
 	if err != nil {
 		return nil, err
 	}
 
-	qmpConn := &qemuMachineProtocal{
-		c: c,
+	uc, err := net.DialUnix("unix", nil, unixaddr)
+	if err != nil {
+		return nil, err
 	}
 
-	qmpConn.uc, ok = c.(*net.UnixConn)
-	if !ok {
-		return nil, errors.New("RunWithFile only works with unix monitor sockets")
-	}
+	qmpConn := &qemuMachineProtocal{uc: uc}
 
 	chError := make(chan error, 1)
 	go func() {
