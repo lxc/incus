@@ -198,7 +198,8 @@ func (d *truenas) objectsExist(objects []string, optType string) (map[string]boo
 			continue
 		}
 
-		if _, exists := existsMap[l]; exists {
+		_, exists := existsMap[l]
+		if exists {
 			existsMap[l] = true
 		}
 	}
@@ -587,7 +588,8 @@ func (d *truenas) getDatasetProperties(dataset string, properties []string) (map
 		return nil, err
 	}
 
-	if result, exists := response[dataset]; exists {
+	result, exists := response[dataset]
+	if exists {
 		return result, nil
 	}
 
@@ -607,9 +609,11 @@ func (d *truenas) getDatasetsAndProperties(datasets []string, properties []strin
 	}
 
 	var resultsMap map[string]any
-	if responseMap, ok := response.(map[string]any); ok {
+	responseMap, ok := response.(map[string]any)
+	if ok {
 		for _, v := range responseMap {
-			if r, ok := v.(map[string]any); ok {
+			r, ok := v.(map[string]any)
+			if ok {
 				resultsMap = r
 				break
 			}
@@ -627,15 +631,18 @@ func (d *truenas) getDatasetsAndProperties(datasets []string, properties []strin
 
 	outMap := make(map[string]map[string]string)
 	for k, result := range resultsMap {
-		if _, exists := objectsAsMap[k]; !exists {
+		_, exists := objectsAsMap[k]
+		if !exists {
 			continue
 		}
 
-		if r, ok := result.(map[string]any); ok {
+		r, ok := result.(map[string]any)
+		if ok {
 			formattedMap := make(map[string]string)
 			for p, v := range r {
 				var value any
-				if vF, ok := v.(float64); ok && vF == math.Floor(vF) {
+				vF, ok := v.(float64)
+				if ok && vF == math.Floor(vF) {
 					value = int64(vF)
 				} else {
 					value = v
