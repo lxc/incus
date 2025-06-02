@@ -111,8 +111,10 @@ func optionsToOptionString(options ...string) string {
 		if i > 0 {
 			builder.WriteString(",")
 		}
+
 		builder.WriteString(option)
 	}
+
 	optionString := builder.String()
 
 	return optionString
@@ -195,6 +197,7 @@ func (d *truenas) objectsExist(objects []string, optType string) (map[string]boo
 		if l == "" || l == "-" {
 			continue
 		}
+
 		if _, exists := existsMap[l]; exists {
 			existsMap[l] = true
 		}
@@ -436,6 +439,7 @@ func (d *truenas) locateOrActivateIscsiDataset(dataset string) (bool, string, er
 	if err != nil {
 		return false, "", err
 	}
+
 	reverter.Add(func() { _ = d.deactivateIscsiDataset(dataset) })
 
 	status, volDiskPath, _ := strings.Cut(statusPath, "\t")
@@ -467,6 +471,7 @@ func (d *truenas) activateIscsiDataset(dataset string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	reverter.Add(func() { _ = d.deactivateIscsiDataset(dataset) })
 	volDiskPath = strings.TrimSpace(volDiskPath)
 
@@ -581,9 +586,11 @@ func (d *truenas) getDatasetProperties(dataset string, properties []string) (map
 	if err != nil {
 		return nil, err
 	}
+
 	if result, exists := response[dataset]; exists {
 		return result, nil
 	}
+
 	return nil, nil
 }
 
@@ -608,6 +615,7 @@ func (d *truenas) getDatasetsAndProperties(datasets []string, properties []strin
 			}
 		}
 	}
+
 	if resultsMap == nil {
 		return nil, errors.New("Could not find object inside list --json response")
 	}
@@ -622,6 +630,7 @@ func (d *truenas) getDatasetsAndProperties(datasets []string, properties []strin
 		if _, exists := objectsAsMap[k]; !exists {
 			continue
 		}
+
 		if r, ok := result.(map[string]any); ok {
 			formattedMap := make(map[string]string)
 			for p, v := range r {
@@ -631,6 +640,7 @@ func (d *truenas) getDatasetsAndProperties(datasets []string, properties []strin
 				} else {
 					value = v
 				}
+
 				formattedMap[p] = fmt.Sprint(value)
 			}
 
@@ -753,6 +763,7 @@ func (d *truenas) setVolsize(dataset string, sizeBytes int64, allowShrink bool) 
 		// middleware currently prevents volume shrinking.
 		d.logger.Warn(fmt.Sprintf("Unable to shrink zvol on TrueNAS server due to middleware restriction, use `zfs set %s %s` to change zvol size manually", volsizeProp, dataset))
 	}
+
 	return nil
 }
 
