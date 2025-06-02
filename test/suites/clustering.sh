@@ -1001,7 +1001,6 @@ test_clustering_storage_single_node() {
     ns1="${prefix}1"
     spawn_incus_and_bootstrap_cluster "${ns1}" "${bridge}" "${INCUS_ONE_DIR}" "${poolDriver}"
 
-
     # Create a pending storage pool on the node.
     driver_config=""
     if [ "${poolDriver}" = "btrfs" ]; then
