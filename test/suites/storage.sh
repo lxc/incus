@@ -892,7 +892,7 @@ test_storage() {
       incus storage create "$storage_pool" "$incus_backend" linstor.resource_group.place_count=1
   elif [ "${incus_backend}" = "truenas" ]; then
     incus storage create "$storage_pool" "$incus_backend" "$(truenas_source_uuid)" "$(truenas_api_key)"
-  else 
+  else
     incus storage create "$storage_pool" "$incus_backend"
   fi
   incus init -s "${storage_pool}" testimage c1
