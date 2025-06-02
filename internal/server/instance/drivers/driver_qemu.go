@@ -1652,8 +1652,12 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 	}
 
-	if util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
-		// Add +invtsc for fast TSC when not expected to be migratable.
+	// Get the feature flags.
+	info := DriverStatuses()[instancetype.VM].Info
+	_, nested := info.Features["nested"]
+
+	// Add +invtsc for fast TSC on x86 when not expected to be migratable and not nested.
+	if !nested && d.architecture == osarch.ARCH_64BIT_INTEL_X86 && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
 		cpuExtensions = append(cpuExtensions, "migratable=no", "+invtsc")
 	}
 
@@ -9402,6 +9406,25 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 	// Check if vhost-net accelerator (for NIC CPU offloading) is available.
 	if util.PathExists("/dev/vhost-net") {
 		features["vhost_net"] = struct{}{}
+	}
+
+	// Check if running nested.
+	cpus, err := resources.GetCPU()
+	if err != nil {
+		return nil, err
+	}
+
+	nested := false
+	for _, socket := range cpus.Sockets {
+		for _, core := range socket.Cores {
+			if slices.Contains(core.Flags, "hypervisor") {
+				nested = true
+			}
+		}
+	}
+
+	if nested {
+		features["nested"] = struct{}{}
 	}
 
 	// Get the host CPU model (x86_64 only for now).
