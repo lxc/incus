@@ -9,6 +9,7 @@ allocator
 AMD
 Ansible
 Ansible's
+api
 APIs
 AppArmor
 ARMv
@@ -35,8 +36,8 @@ bugfix
 bugfixes
 Centos
 Ceph
-CephFS
 Ceph's
+CephFS
 CFS
 cgroup
 cgroupfs
@@ -139,6 +140,7 @@ IPAM
 IPs
 IPv
 IPVLAN
+iSCSI
 JIT
 jq
 JSON
@@ -161,8 +163,8 @@ LTS
 LV
 LVM
 LXC
-LXCFS
 LXC's
+LXCFS
 LXD
 LXD's
 macOS
@@ -246,6 +248,7 @@ RBD
 RDNSS
 README
 reconfiguring
+refquota
 requestor
 resolvers
 RESTful
@@ -315,6 +318,7 @@ tmpfs
 toolchain
 topologies
 TPM
+truenas
 TrueNAS
 TSIG
 TTL
