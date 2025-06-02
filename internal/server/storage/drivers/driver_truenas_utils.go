@@ -21,7 +21,7 @@ import (
 
 const (
 	tnToolName            = "truenas_incus_ctl"
-	tnMinVersion          = "0.6.2" // adds `--allow-shrinking` placeholder command
+	tnMinVersion          = "0.6.3" // adds `--initiator`  and `--portal` iscsi placeholder flags
 	tnDefaultVolblockSize = 16 * 1024
 )
 
@@ -86,20 +86,20 @@ func (d *truenas) runTool(args ...string) (string, error) {
 }
 
 // runIscsiCmd runs the supplied args against the tools `share iscsi` command whilst applying the appropriate iscsi global flags.
-func (d *truenas) runIscsiCmd(args ...string) (string, error) {
-	baseArgs := []string{"share", "iscsi"}
+func (d *truenas) runIscsiCmd(cmd string, args ...string) (string, error) {
+	baseArgs := []string{"share", "iscsi", cmd}
 
-	args = append(baseArgs, args...)
-
-	args = append(args, "--target-prefix=incus")
+	baseArgs = append(baseArgs, "--target-prefix=incus")
 
 	if d.config["truenas.portal"] != "" {
-		args = append(args, "--portal", d.config["truenas.portal"])
+		baseArgs = append(baseArgs, "--portal", d.config["truenas.portal"])
 	}
 
 	if d.config["truenas.initiator"] != "" {
-		args = append(args, "--initiator", d.config["truenas.initiator"])
+		baseArgs = append(baseArgs, "--initiator", d.config["truenas.initiator"])
 	}
+
+	args = append(baseArgs, args...)
 
 	return d.runTool(args...)
 }
@@ -372,7 +372,7 @@ func (d *truenas) createVolume(dataset string, size int64, options ...string) er
 }
 
 func (d *truenas) createIscsiShare(dataset string, readonly bool) error {
-	args := []string{"create"}
+	args := []string{}
 
 	if readonly {
 		args = append(args, "--readonly")
@@ -380,7 +380,7 @@ func (d *truenas) createIscsiShare(dataset string, readonly bool) error {
 
 	args = append(args, dataset)
 
-	_, err := d.runIscsiCmd(args...)
+	_, err := d.runIscsiCmd("create", args...)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			d.logger.Debug(fmt.Sprintf("Detected error while attempting to create iscsi share for: %s, %v", dataset, err))
