@@ -207,7 +207,7 @@ fi
 if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_check_deps "checking dependencies"
     run_test test_database_restore "database restore"
-    #run_test test_database_no_disk_space "database out of disk space" # triggers an assert: `incusd: src/vfs.c:802: vfsDatabaseRead: Assertion `amount == (int)page_size' failed.` https://github.com/lxc/incus/issues/665 
+    #run_test test_database_no_disk_space "database out of disk space" # triggers an assert: `incusd: src/vfs.c:802: vfsDatabaseRead: Assertion `amount == (int)page_size' failed.` https://github.com/lxc/incus/issues/665
     run_test test_sql "SQL"
     run_test test_tls_restrictions "TLS restrictions"
     run_test test_oidc "OpenID Connect"
