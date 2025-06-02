@@ -1248,6 +1248,7 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 
 			d.logger.Debug("Mounted TrueNAS volume", logger.Ctx{"volName": vol.name, "dev": volDevPath, "path": mountPath, "options": mountOptions})
 		}
+
 	case ContentTypeBlock:
 		// For VMs, mount the filesystem volume.
 		if vol.IsVMBlock() {
@@ -1547,6 +1548,7 @@ func (d *truenas) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 	if err != nil {
 		return err
 	}
+
 	reverter.Add(func() { _ = d.deleteDatasetRecursive(cloneDataset) })
 
 	// and share the clone
@@ -1554,6 +1556,7 @@ func (d *truenas) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 	if err != nil {
 		return err
 	}
+
 	reverter.Add(func() { _ = d.deleteIscsiShare(cloneDataset) })
 
 	// and then activate
@@ -1561,6 +1564,7 @@ func (d *truenas) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 	if err != nil {
 		return err
 	}
+
 	reverter.Add(func() { _ = d.deactivateIscsiDataset(cloneDataset) })
 
 	if snapVol.contentType == ContentTypeFS {
