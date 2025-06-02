@@ -159,6 +159,7 @@ func (d *truenas) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) err
 		if !warnOnExistingPolicyApplyError {
 			return fmt.Errorf("Failed applying policy to existing dataset %q: %w", d.config["truenas.dataset"], err)
 		}
+
 		d.logger.Warn("Failed applying policy to existing dataset", logger.Ctx{"dataset": d.config["truenas.dataset"], "err": err})
 	}
 
@@ -222,6 +223,7 @@ func (d *truenas) parseSource() error {
 		source = fmt.Sprintf("%s:%s", host, source)
 		d.config["truenas.host"] = host
 	}
+
 	d.config["source"] = source
 
 	return nil
