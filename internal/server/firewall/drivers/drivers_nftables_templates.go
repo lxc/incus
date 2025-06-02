@@ -194,7 +194,6 @@ chain in{{.chainSeparator}}{{.deviceLabel}} {
 
 	# Basic connectivity
 	{{ if or .aclInDropRules .aclInRejectRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule }}
-	ct state established,related accept
 
 	{{ if .dnsIPv4 }}
 	{{ range .dnsIPv4 }}
@@ -213,9 +212,6 @@ chain in{{.chainSeparator}}{{.deviceLabel}} {
 	iifname "{{.hostName}}" ether type ip ip saddr 0.0.0.0 ip daddr 255.255.255.255 udp dport 67 accept
 	iifname "{{.hostName}}" ether type ip6 ip6 saddr fe80::/10 ip6 daddr ff02::1:2 udp dport 547 accept
 	iifname "{{.hostName}}" ether type ip6 ip6 saddr fe80::/10 ip6 daddr ff02::2 icmpv6 type 133 accept
-
-	iifname "{{.hostName}}" ether type arp accept
-	iifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
 	{{ end }}
 
 	# MAC filtering
@@ -246,6 +242,13 @@ chain in{{.chainSeparator}}{{.deviceLabel}} {
 	{{ end }}
 	{{ if .ipv6FilterAll }}
 	iifname "{{.hostName}}" ether type ip6 drop
+	{{ end }}
+
+	{{ if or .aclInDropRules .aclInRejectRules .aclInAcceptRules .aclOutDropRules .aclOutAcceptRules .aclInDefaultRule }}
+	ct state established,related accept
+
+	iifname "{{.hostName}}" ether type arp accept
+	iifname "{{.hostName}}" ip6 nexthdr ipv6-icmp icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert } accept
 	{{ end }}
 
 	# ACLs
