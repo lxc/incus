@@ -1018,7 +1018,7 @@ test_clustering_storage_single_node() {
   elif [ "${poolDriver}" = "truenas" ]; then
       driver_config="$(truenas_source)/incustest-$(basename "${TEST_DIR}")-pool1 $(truenas_api_key)"
   fi
-  
+
   driver_config_node="${driver_config}"
   if [ "${poolDriver}" = "zfs" ]; then
       driver_config_node="${driver_config_node} zfs.pool_name=pool1-$(basename "${TEST_DIR}")-${ns1}"
