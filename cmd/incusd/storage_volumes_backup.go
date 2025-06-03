@@ -443,9 +443,31 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 			CompressionAlgorithm: req.CompressionAlgorithm,
 		}
 
+		// Create the backup.
 		err := volumeBackupCreate(s, args, projectName, poolName, volumeName)
 		if err != nil {
-			return fmt.Errorf("Create volume backup: %w", err)
+			return err
+		}
+
+		// Upload it if requested.
+		if req.Target != nil {
+			// Load the backup.
+			entry, err := storagePoolVolumeBackupLoadByName(r.Context(), s, projectName, poolName, volumeName)
+			if err != nil {
+				return err
+			}
+
+			// Upload it.
+			err = entry.Upload(req.Target)
+			if err != nil {
+				return err
+			}
+
+			// Delete the backup on successful upload.
+			err = entry.Delete()
+			if err != nil {
+				return err
+			}
 		}
 
 		s.Events.SendLifecycle(projectName, lifecycle.StorageVolumeBackupCreated.Event(poolName, volumeTypeName, args.Name, projectName, op.Requestor(), logger.Ctx{"type": volumeTypeName}))
