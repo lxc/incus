@@ -56,6 +56,12 @@ type StorageVolumeBackupsPost struct {
 	// What compression algorithm to use
 	// Example: gzip
 	CompressionAlgorithm string `json:"compression_algorithm" yaml:"compression_algorithm"`
+
+	// External upload target
+	// The backup will be uploaded and then deleted from local storage.
+	//
+	// API extension: backup_s3_upload
+	Target *BackupTarget `json:"target" yaml:"target"`
 }
 
 // StorageVolumeBackupPost represents the fields available for the renaming of a volume backup
