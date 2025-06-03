@@ -320,9 +320,31 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 			CompressionAlgorithm: req.CompressionAlgorithm,
 		}
 
+		// Create the backup.
 		err := backupCreate(s, args, inst, op)
 		if err != nil {
-			return fmt.Errorf("Create backup: %w", err)
+			return err
+		}
+
+		// Upload it if requested.
+		if req.Target != nil {
+			// Load the backup.
+			entry, err := instance.BackupLoadByName(s, projectName, fullName)
+			if err != nil {
+				return err
+			}
+
+			// Upload it.
+			err = entry.Upload(req.Target)
+			if err != nil {
+				return err
+			}
+
+			// Delete the backup on successful upload.
+			err = entry.Delete()
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
