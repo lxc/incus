@@ -148,3 +148,9 @@ func (b *VolumeBackup) Render() *api.StorageVolumeBackup {
 		OptimizedStorage: b.optimizedStorage,
 	}
 }
+
+// Upload pushes the backup to external storage.
+func (b *VolumeBackup) Upload(req *api.BackupTarget) error {
+	backupPath := internalUtil.VarPath("backups", "custom", b.poolName, project.StorageVolume(b.projectName, b.name))
+	return b.upload(backupPath, req)
+}
