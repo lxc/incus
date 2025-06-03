@@ -153,3 +153,9 @@ func (b *InstanceBackup) Render() *api.InstanceBackup {
 		OptimizedStorage: b.optimizedStorage,
 	}
 }
+
+// Upload pushes the backup to external storage.
+func (b *InstanceBackup) Upload(req *api.BackupTarget) error {
+	backupPath := internalUtil.VarPath("backups", "instances", project.Instance(b.instance.Project().Name, b.name))
+	return b.upload(backupPath, req)
+}
