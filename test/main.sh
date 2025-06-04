@@ -60,7 +60,10 @@ if [ "$INCUS_BACKEND" != "random" ] && ! storage_backend_available "$INCUS_BACKE
     elif [ "${INCUS_BACKEND}" = "linstor" ] && [ -z "${INCUS_LINSTOR_CLUSTER:-}" ]; then
         echo "LINSTOR storage backend requires that \"INCUS_LINSTOR_CLUSTER\" be set."
         exit 1
-    fi
+    elif [ "${INCUS_BACKEND}" = "truenas" ] && [ -z "${INCUS_TRUENAS_DATASET:-}" ]; then
+        echo "TrueNAS storage backend requires that \"INCUS_TRUENAS_DATASET\" be set."
+        exit 1
+  fi
     echo "Storage backend \"$INCUS_BACKEND\" is not available"
     exit 1
 fi
