@@ -15,11 +15,11 @@ test_storage() {
   storage_pool="incustest-$(basename "${INCUS_DIR}")-pool"
   storage_volume="${storage_pool}-vol"
   if [ "${incus_backend}" = "linstor" ]; then
-      incus storage create "$storage_pool" "$incus_backend" linstor.resource_group.place_count=1 --description foo
+    incus storage create "$storage_pool" "$incus_backend" linstor.resource_group.place_count=1 --description foo
   elif [ "${incus_backend}" = "truenas" ]; then
-       incus storage create "$storage_pool" "$incus_backend" "$(truenas_source)/" "$(truenas_config)" "$(truenas_config_file)" "$(truenas_api_key)" --description foo
+    incus storage create "$storage_pool" "$incus_backend" "$(truenas_source)/" "$(truenas_config)" "$(truenas_config_file)" "$(truenas_api_key)" --description foo
   else
-       incus storage create "$storage_pool" "$incus_backend" --description foo
+    incus storage create "$storage_pool" "$incus_backend" --description foo
   fi
   incus storage show "$storage_pool" | grep -q 'description: foo'
   incus storage show "$storage_pool" | sed 's/^description:.*/description: bar/' | incus storage edit "$storage_pool"
@@ -889,7 +889,7 @@ test_storage() {
   INCUS_DIR="${INCUS_DIR}"
   storage_pool="incustest-$(basename "${INCUS_DIR}")-pool26"
   if [ "${incus_backend}" = "linstor" ]; then
-      incus storage create "$storage_pool" "$incus_backend" linstor.resource_group.place_count=1
+    incus storage create "$storage_pool" "$incus_backend" linstor.resource_group.place_count=1
   elif [ "${incus_backend}" = "truenas" ]; then
     incus storage create "$storage_pool" "$incus_backend" "$(truenas_source)/$(basename "${INCUS_DIR}")-pool26" "$(truenas_config)" "$(truenas_config_file)" "$(truenas_api_key)"
   else
