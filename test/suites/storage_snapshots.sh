@@ -142,7 +142,7 @@ test_storage_volume_snapshots() {
   incus delete -f "c1"
   incus storage volume delete "${storage_pool}" "vol2"
 
-  # Check snapshot copy (mode pull, remote).	
+  # Check snapshot copy (mode pull, remote).
   incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --mode pull
   incus launch testimage "c1"
   incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
