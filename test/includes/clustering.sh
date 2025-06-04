@@ -181,7 +181,7 @@ EOF
       cat >> "${INCUS_DIR}/preseed.yaml" <<EOF
   config:
     source: $(truenas_host_dataset)/incustest-$(basename "${TEST_DIR}")
-    truenas.api_key: \"${INCUS_TN_APIKEY}\"
+    truenas.api_key: \"${INCUS_TRUENAS_API_KEY}\"
 EOF
     fi
     if [ "${driver}" = "ceph" ]; then

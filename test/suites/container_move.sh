@@ -14,7 +14,7 @@ test_container_move() {
   if [ "${incus_backend}" = "linstor" ]; then
       incus storage create "${pool2}" "${incus_backend}" linstor.resource_group.place_count=1
   elif [ "$incus_backend" = "truenas" ]; then
-    incus storage create "${pool2}" "${incus_backend}" "source=${INCUS_TN_HOST}:${INCUS_TN_DATASET}/$(uuidgen)" "truenas.api_key=${INCUS_TN_APIKEY}"
+    incus storage create "${pool2}" "${incus_backend}" "source=${INCUS_TRUENAS_HOST}:${INCUS_TRUENAS_DATASET}/$(uuidgen)" "truenas.api_key=${INCUS_TRUENAS_API_KEY}"
   else
     incus storage create "${pool2}" "${incus_backend}"
   fi
