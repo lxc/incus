@@ -28,7 +28,7 @@ test_storage_local_volume_handling() {
     fi
 
     if storage_backend_available "truenas"; then
-      incus storage create "${pool_base}-truenas" truenas source="${INCUS_TRUENAS_HOST}:${INCUS_TRUENAS_DATASET}/$(uuidgen)" truenas.api_key="${INCUS_TRUENAS_API_KEY}"
+      incus storage create "${pool_base}-truenas" truenas "$(truenas_source)/$(uuidgen)" "$(truenas_config)" "$(truenas_config_file)" "$(truenas_api_key)"
     fi
 
     incus storage create "${pool_base}-dir" dir
@@ -65,7 +65,7 @@ test_storage_local_volume_handling() {
     fi
 
     if [ "$driver" = "truenas" ]; then
-      pool_opts="source=${INCUS_TRUENAS_HOST}:${INCUS_TRUENAS_DATASET}/$(uuidgen) truenas.api_key=${INCUS_TRUENAS_API_KEY}"
+      pool_opts="$(truenas_source)/$(uuidgen) $(truenas_config) $(truenas_config_file) $(truenas_api_key)"
     fi
 
     if [ "$driver" = "lvm" ]; then
