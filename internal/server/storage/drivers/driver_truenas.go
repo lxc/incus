@@ -269,6 +269,11 @@ func (d *truenas) Create() error {
 
 	reverter.Add(func() { _ = d.Delete(nil) })
 
+	err = d.verifyIscsiFunctionality(false)
+	if err != nil {
+		return fmt.Errorf("Unable to verify TrueNAS iSCSI service: %v", err)
+	}
+
 	reverter.Success()
 	return nil
 }
