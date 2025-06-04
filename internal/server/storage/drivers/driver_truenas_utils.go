@@ -379,7 +379,7 @@ func (d *truenas) verifyIscsiFunctionality(ensureSetup bool) error {
 	args := []string{"--parsable"}
 
 	if ensureSetup {
-		//args = append(args, "--setup") // eventually we can pass "--setup" to do the needful.
+		args = append(args, "--setup")
 	}
 
 	_, err := d.runIscsiCmd("test", args...)
