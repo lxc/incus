@@ -2367,15 +2367,22 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			}
 		}
 
+		// Compute the entrypoint string.
+		initCmd := shellquote.Join(entrypoint...)
+
+		// As we feed this to execve and not to a real shell, un-escape some sequences.
+		initCmd = strings.ReplaceAll(initCmd, "\\(", "(")
+		initCmd = strings.ReplaceAll(initCmd, "\\)", ")")
+
 		if len(entrypoint) > 0 && slices.Contains([]string{"/init", "/sbin/init", "/s6-init"}, entrypoint[0]) {
 			// For regular init systems, call them directly as PID1.
-			err = lxcSetConfigItem(cc, "lxc.init.cmd", shellquote.Join(entrypoint...))
+			err = lxcSetConfigItem(cc, "lxc.init.cmd", initCmd)
 			if err != nil {
 				return "", nil, err
 			}
 		} else {
 			// For anything else, run them under our own PID1.
-			err = lxcSetConfigItem(cc, "lxc.execute.cmd", shellquote.Join(entrypoint...))
+			err = lxcSetConfigItem(cc, "lxc.execute.cmd", initCmd)
 			if err != nil {
 				return "", nil, err
 			}
