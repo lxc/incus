@@ -17,7 +17,7 @@ test_storage() {
     if [ "${incus_backend}" = "linstor" ]; then
         incus storage create "$storage_pool" "$incus_backend" linstor.resource_group.place_count=1 --description foo
     elif [ "${incus_backend}" = "truenas" ]; then
-        incus storage create "$storage_pool" "$incus_backend" "$(truenas_source)/" "$(truenas_api_key)" --description foo
+        incus storage create "$storage_pool" "$incus_backend" "$(truenas_source)/" "$(truenas_config)" "$(truenas_api_key)" --description foo
     else
         incus storage create "$storage_pool" "$incus_backend" --description foo
     fi
@@ -891,7 +891,7 @@ test_storage() {
     if [ "${incus_backend}" = "linstor" ]; then
         incus storage create "$storage_pool" "$incus_backend" linstor.resource_group.place_count=1
     elif [ "${incus_backend}" = "truenas" ]; then
-        incus storage create "$storage_pool" "$incus_backend" "$(truenas_source_uuid)" "$(truenas_api_key)"
+        incus storage create "$storage_pool" "$incus_backend" "$(truenas_source)/$(basename "${INCUS_DIR}")-pool26" "$(truenas_config)" "$(truenas_api_key)"
     else 
         incus storage create "$storage_pool" "$incus_backend"
     fi
