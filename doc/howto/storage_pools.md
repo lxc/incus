@@ -209,7 +209,7 @@ Then create the storage pool without specifying the `--target` flag to actually 
 For example, the following series of commands sets up a storage pool with the name `my-pool` at different locations and with different sizes on three cluster members:
 
 ```{terminal}
-:input: incus storage create my-pool zfs source=/dev/sdX size=10GiB --target=vm01x
+:input: incus storage create my-pool zfs source=/dev/sdX size=10GiB --target=vm01
 Storage pool my-pool pending on member vm01
 :input: incus storage create my-pool zfs source=/dev/sdX size=15GiB --target=vm02
 Storage pool my-pool pending on member vm02
