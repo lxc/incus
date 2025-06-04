@@ -130,6 +130,12 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 		// Get actual parent device from network's parent setting.
 		d.config["parent"] = netConfig["parent"]
 
+		// If parent is a bridge, ensure it's managed.
+		isParentBridge := d.config["parent"] != "" && util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", d.config["parent"]))
+		if isParentBridge && d.network == nil {
+			return fmt.Errorf("Parent device is a bridge, use nictype=bridged instead")
+		}
+
 		// Copy certain keys verbatim from the network's settings.
 		for _, field := range optionalFields {
 			_, found := netConfig[field]
