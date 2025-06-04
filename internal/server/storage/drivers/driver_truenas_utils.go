@@ -21,7 +21,7 @@ import (
 
 const (
 	tnToolName            = "truenas_incus_ctl"
-	tnMinVersion          = "0.6.3" // adds `--initiator`  and `--portal` iscsi placeholder flags
+	tnMinVersion          = "0.7.0" // adds `service`, `iscsi test` `--initiator`  and `--portal` functionality
 	tnDefaultVolblockSize = 16 * 1024
 )
 
@@ -368,6 +368,21 @@ func (d *truenas) createVolume(dataset string, size int64, options ...string) er
 
 	out, err := d.runTool(args...)
 	_ = out
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *truenas) verifyIscsiFunctionality(ensureSetup bool) error {
+	args := []string{"--parsable"}
+
+	if ensureSetup {
+		//args = append(args, "--setup") // eventually we can pass "--setup" to do the needful.
+	}
+
+	_, err := d.runIscsiCmd("test", args...)
 	if err != nil {
 		return err
 	}
