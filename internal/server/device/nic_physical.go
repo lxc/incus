@@ -180,6 +180,25 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 		return nil, err
 	}
 
+	// Handle the case where the parent is a bridge.
+	isParentBridge := util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", d.config["parent"]))
+	if isParentBridge {
+		// Convert the device to a nictype=bridged internally.
+		bridgedConfig := d.config.Clone()
+		bridgedConfig["type"] = "nic"
+		bridgedConfig["nictype"] = "bridged"
+		bridgedConfig["network"] = ""
+
+		// Instantiate the new device.
+		bridged, err := load(d.inst, d.state, d.inst.Project().Name, d.inst.Name(), bridgedConfig, d.volatileGet, d.volatileSet)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to initialize bridged device: %w", err)
+		}
+
+		// Forward the start call.
+		return bridged.Start()
+	}
+
 	// Lock to avoid issues with containers starting in parallel.
 	networkCreateSharedDeviceLock.Lock()
 	defer networkCreateSharedDeviceLock.Unlock()
@@ -380,6 +399,25 @@ func (d *nicPhysical) startVMUSB(name string) (*deviceConfig.RunConfig, error) {
 
 // Stop is run when the device is removed from the instance.
 func (d *nicPhysical) Stop() (*deviceConfig.RunConfig, error) {
+	// Handle the case where the parent is a bridge.
+	isParentBridge := util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", d.config["parent"]))
+	if isParentBridge {
+		// Convert the device to a nictype=bridged internally.
+		bridgedConfig := d.config.Clone()
+		bridgedConfig["type"] = "nic"
+		bridgedConfig["nictype"] = "bridged"
+		bridgedConfig["network"] = ""
+
+		// Instantiate the new device.
+		bridged, err := load(d.inst, d.state, d.inst.Project().Name, d.inst.Name(), bridgedConfig, d.volatileGet, d.volatileSet)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to initialize bridged device: %w", err)
+		}
+
+		// Forward the stop call.
+		return bridged.Stop()
+	}
+
 	v := d.volatileGet()
 
 	runConf := deviceConfig.RunConfig{
