@@ -1,14 +1,14 @@
 test_storage_driver_truenas() {
   do_storage_driver_truenas ext4
-  # do_storage_driver_truenas xfs
-  # do_storage_driver_truenas btrfs
+  do_storage_driver_truenas xfs
+  do_storage_driver_truenas btrfs
 }
 
 do_storage_driver_truenas() {
   filesystem="$1"
 
   if ! command -v "mkfs.${filesystem}" >/dev/null 2>&1; then
-    echo "==> SKIP: Skipping block mode test on ${filesystem} due to missing tools."
+    echo "==> SKIP: Skipping TrueNAS block mode test on ${filesystem} due to missing tools."
     return
   fi
 
@@ -46,7 +46,8 @@ do_storage_driver_truenas() {
   [ "$(call_truenas_tool dataset list --no-headers -o name "${truenas_dataset}/images/${fingerprint}_ext4")" = "${truenas_dataset}/images/${fingerprint}_ext4" ]
   [ "$(call_truenas_tool snapshot list --no-headers -o name "${truenas_dataset}/images/${fingerprint}_ext4@readonly")" = "${truenas_dataset}/images/${fingerprint}_ext4@readonly" ]
 
-  # Set block filesystem  incus storage set incustest-"$(basename "${INCUS_DIR}")" volume.block.filesystem "${filesystem}"
+  # Set block filesystem
+  incus storage set incustest-"$(basename "${INCUS_DIR}")" volume.block.filesystem "${filesystem}"
 
   incus launch testimage c2
   incus config device override c2 root size=11GiB
@@ -71,9 +72,7 @@ do_storage_driver_truenas() {
   incus stop -f c1 c2
 
   # Try renaming instance
-  #incus rename c2 c3    # FIXME: this seems to trigger a bug where c2 is not unmounted before the rename.
-  incus copy c2 c3
-  incus rm c2
+  incus rename c2 c3
 
   # Create snapshot
   incus snapshot create c3 snap0
@@ -168,6 +167,7 @@ do_storage_driver_truenas() {
   incus rm -f c1 c3
   incus rm -f c11 c21
   incus rm -f c4 c5
+
   incus storage volume rm incustest-"$(basename "${INCUS_DIR}")" vol1
   incus storage volume rm incustest-"$(basename "${INCUS_DIR}")" vol1-clone
   incus storage volume rm incustest-"$(basename "${INCUS_DIR}")" vol2
