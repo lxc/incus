@@ -3,6 +3,7 @@ package network
 import (
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/lxc/incus/v6/internal/iprange"
 )
@@ -136,4 +137,46 @@ func Example_ipRangesOverlap() {
 	// Range1: 10.1.1.4, Range2: 10.1.1.4, overlapped: true
 	// Range1: 10.1.1.4, Range2: 10.1.1.8-10.1.1.9, overlapped: false
 	// Range1: 10.1.1.8-10.1.1.9, Range2: 10.1.1.4, overlapped: false
+}
+
+func Example_complementRanges() {
+	_, ipnet, err := net.ParseCIDR("10.1.1.0/24")
+	if err != nil {
+		fmt.Printf("Err: %v\n", err)
+		return
+	}
+
+	ranges := [][]*iprange.Range{
+		{
+			{Start: net.ParseIP("10.1.1.1"), End: net.ParseIP("10.1.1.10")},
+		},
+		{
+			{Start: net.ParseIP("10.1.1.10"), End: net.ParseIP("10.1.1.100")},
+			{Start: net.ParseIP("10.1.1.200"), End: net.ParseIP("10.1.1.230")},
+		},
+		{
+			{Start: net.ParseIP("10.1.1.10"), End: net.ParseIP("10.1.1.20")},
+			{Start: net.ParseIP("10.1.1.15"), End: net.ParseIP("10.1.1.25")},
+		},
+	}
+
+	for idx, r := range ranges {
+		result, err := complementRanges(r, ipnet)
+		if err != nil {
+			fmt.Printf("Err: %v\n", err)
+			return
+		}
+
+		parts := make([]string, len(result))
+		for i, r := range result {
+			parts[i] = fmt.Sprintf("%s-%s", r.Start.String(), r.End.String())
+		}
+
+		fmt.Printf("Range%d: %s\n", idx+1, strings.Join(parts, ", "))
+	}
+
+	// Output:
+	// Range1: 10.1.1.11-10.1.1.254
+	// Range2: 10.1.1.1-10.1.1.9, 10.1.1.101-10.1.1.199, 10.1.1.231-10.1.1.254
+	// Range3: 10.1.1.1-10.1.1.9, 10.1.1.26-10.1.1.254
 }
