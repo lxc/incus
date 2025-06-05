@@ -506,6 +506,7 @@ func (d *truenas) deactivateIscsiDatasetIfActive(dataset string) (bool, error) {
 		if strings.Contains(err.Error(), "iscsiadm: Could not stat") {
 			return false, nil // this error seems to be a race in iscsiadm. it basically means its already deactivated.
 		}
+
 		return false, err
 	}
 
