@@ -2989,6 +2989,7 @@ func (n *ovn) setup(update bool) error {
 			ServerID:           routerMAC,
 			DNSSearchList:      n.getDNSSearchList(),
 			RecursiveDNSServer: dnsIPv6,
+			DHCPv6Stateless:    util.IsFalseOrEmpty(n.config["ipv6.dhcp.stateful"]),
 		}
 
 		err = n.ovnnb.UpdateLogicalSwitchDHCPv6Options(context.TODO(), n.getIntSwitchName(), dhcpv6UUID, dhcpV6Subnet, opts)
