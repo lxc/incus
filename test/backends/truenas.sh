@@ -55,3 +55,8 @@ truenas_config_file() {
     echo "truenas.config_file=${INCUS_TRUENAS_CONFIG_FILE:-}"
 }
 
+call_truenas_tool() {
+  # usage: call_truenas_tool dataset list -r --no-headers "${truenas_dataset}"
+  truenas_incus_ctl --config=${INCUS_TRUENAS_CONFIG:-} --config-file=${INCUS_TRUENAS_CONFIG_FILE:-} --host=${INCUS_TRUENAS_HOST:-} --api-key=${INCUS_TRUENAS_API_KEY:-}  "$@"
+}
+
