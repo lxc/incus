@@ -503,6 +503,9 @@ func (d *truenas) activateIscsiDataset(dataset string) (string, error) {
 func (d *truenas) deactivateIscsiDatasetIfActive(dataset string) (bool, error) {
 	statusPath, err := d.runIscsiCmd("locate", "--deactivate", "--parsable", dataset)
 	if err != nil {
+		if strings.Contains(err.Error(), "iscsiadm: Could not stat") {
+			return false, nil // this error seems to be a race in iscsiadm. it basically means its alrady deactivate.
+		}
 		return false, err
 	}
 
