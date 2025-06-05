@@ -366,9 +366,9 @@ test_snap_schedule() {
 
   if [ "$incus_backend" != "truenas" ]; then
     incus rm -f c1 c2 c3 c4 c5
-  else 
+  else
     # FIXME: truenas create/delete is very slow, this causes issues with the default 120s timeout when doing mass instance deletes.
-    incus rm -f c1 c2 
+    incus rm -f c1 c2
     incus rm -f c3 c4
     incus rm -f c5
   fi
