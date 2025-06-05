@@ -120,6 +120,7 @@ type OVNDHCPv6Opts struct {
 	ServerID           net.HardwareAddr
 	RecursiveDNSServer []net.IP
 	DNSSearchList      []string
+	DHCPv6Stateless    bool
 }
 
 // OVNSwitchPortOpts options that can be applied to a switch port.
@@ -1477,6 +1478,10 @@ func (o *NB) UpdateLogicalSwitchDHCPv6Options(ctx context.Context, switchName OV
 	dhcpOption.ExternalIDs[ovnExtIDIncusSwitch] = string(switchName)
 	dhcpOption.Cidr = subnet.String()
 	dhcpOption.Options["server_id"] = opts.ServerID.String()
+
+	if opts.DHCPv6Stateless {
+		dhcpOption.Options["dhcpv6_stateless"] = "true"
+	}
 
 	if len(opts.DNSSearchList) > 0 {
 		// Special quoting to allow domain names.

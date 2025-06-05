@@ -2925,12 +2925,19 @@ func (n *ovn) setup(update bool) error {
 				dnsIPv6 = append(dnsIPv6, nsIP)
 			}
 		}
-	} else if uplinkNet != nil {
-		dnsIPv4 = uplinkNet.dnsIPv4
-		dnsIPv6 = uplinkNet.dnsIPv6
 	} else {
-		dnsIPv4 = []net.IP{routerIntPortIPv4}
-		dnsIPv6 = []net.IP{routerIntPortIPv6}
+		if uplinkNet != nil {
+			dnsIPv4 = uplinkNet.dnsIPv4
+			dnsIPv6 = uplinkNet.dnsIPv6
+		}
+
+		if len(dnsIPv4) == 0 {
+			dnsIPv4 = []net.IP{routerIntPortIPv4}
+		}
+
+		if len(dnsIPv6) == 0 {
+			dnsIPv6 = []net.IP{routerIntPortIPv6}
+		}
 	}
 
 	var dhcpv4Created, dhcpv6Created bool
@@ -2982,6 +2989,7 @@ func (n *ovn) setup(update bool) error {
 			ServerID:           routerMAC,
 			DNSSearchList:      n.getDNSSearchList(),
 			RecursiveDNSServer: dnsIPv6,
+			DHCPv6Stateless:    util.IsFalseOrEmpty(n.config["ipv6.dhcp.stateful"]),
 		}
 
 		err = n.ovnnb.UpdateLogicalSwitchDHCPv6Options(context.TODO(), n.getIntSwitchName(), dhcpv6UUID, dhcpV6Subnet, opts)

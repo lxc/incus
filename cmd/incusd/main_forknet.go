@@ -503,7 +503,7 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 	}
 
 	// Check if we're dealing with stateless DHCPv6.
-	if advertisement.Options.Status().StatusCode == iana.StatusNoAddrsAvail {
+	if advertisement.Options.Status() == nil || advertisement.Options.Status().StatusCode == iana.StatusNoAddrsAvail {
 		// Get interface details.
 		i, err := net.InterfaceByName(iface)
 		if err != nil {
