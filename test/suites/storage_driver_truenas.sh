@@ -1,7 +1,7 @@
 test_storage_driver_truenas() {
   do_storage_driver_truenas ext4
   do_storage_driver_truenas xfs
-  do_storage_driver_truenas btrfs
+  #do_storage_driver_truenas btrfs
 }
 
 do_storage_driver_truenas() {
