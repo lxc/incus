@@ -672,6 +672,25 @@ func (n *ovn) Validate(config map[string]string) error {
 		return err
 	}
 
+	if config["ipv4.address"] != "" {
+		ipv4Addr, ipv4Net, _ := net.ParseCIDR(config["ipv4.address"])
+		if ipv4Net != nil {
+			ovnRouter, err := netip.ParseAddr(dhcpalloc.GetIP(ipv4Net, -2).String())
+			if err != nil {
+				return err
+			}
+
+			addr, err := netip.ParseAddr(ipv4Addr.String())
+			if err != nil {
+				return err
+			}
+
+			if ovnRouter.Compare(addr) == 0 {
+				return fmt.Errorf("'ipv4.address' cannot be set to %s because it is reserved for OVN load-balancer health checks", ovnRouter.String())
+			}
+		}
+	}
+
 	// Check that if IPv6 enabled then the network size must be at least a /64 as both RA and DHCPv6
 	// in OVN (as it generates addresses using EUI64) require at least a /64 subnet to operate.
 	_, ipv6Net, _ := net.ParseCIDR(config["ipv6.address"])
@@ -2234,46 +2253,35 @@ func (n *ovn) getDHCPv4Reservations() ([]iprange.Range, error) {
 				return nil, err
 			}
 
-			lastIP := routerIntPortIPv4
-
 			sort.Slice(dhcpRanges, func(i, j int) bool {
 				return bytes.Compare(dhcpRanges[i].Start, dhcpRanges[j].Start) < 0
 			})
 
-			for _, dhcpRange := range dhcpRanges {
-				startRangeAddr, err := netip.ParseAddr(dhcpRange.Start.String())
-				if err != nil {
-					return nil, err
-				}
-
-				endRangeAddr, err := netip.ParseAddr(dhcpRange.End.String())
-				if err != nil {
-					return nil, err
-				}
-
-				prevStartRangeIP, nextEndRangeIP := startRangeAddr.Prev().String(), endRangeAddr.Next().String()
-				complementRange := iprange.Range{Start: lastIP, End: net.ParseIP(prevStartRangeIP)}
-
-				lastIP = net.ParseIP(nextEndRangeIP)
-				dhcpReserveIPv4s = append(dhcpReserveIPv4s, complementRange)
+			reserverdIPs, err := complementRanges(dhcpRanges, ipv4Net)
+			if err != nil {
+				return nil, err
 			}
 
-			dhcpReserveIPv4s = append(dhcpReserveIPv4s, iprange.Range{Start: lastIP, End: dhcpalloc.GetIP(ipv4Net, -2)})
+			dhcpReserveIPv4s = append(dhcpReserveIPv4s, reserverdIPs...)
+
+			if !ipInRanges(routerIntPortIPv4, dhcpReserveIPv4s) {
+				dhcpReserveIPv4s = append(dhcpReserveIPv4s, iprange.Range{Start: routerIntPortIPv4})
+			}
+
+			// Convert the 4-byte IPv4 address returned by 'dhcpalloc.GetIP' to a 16-byte form
+			// using net.ParseIP, to ensure compatibility with other IPs stored in 16-byte format.
+			// This is necessary because direct comparison with 4-byte IPs would fail.
+			ovnRouter := net.ParseIP(dhcpalloc.GetIP(ipv4Net, -2).String())
+			if !ipInRanges(ovnRouter, dhcpReserveIPv4s) {
+				dhcpReserveIPv4s = append(dhcpReserveIPv4s, iprange.Range{Start: ovnRouter})
+			}
 		}
 	}
 
 	err = UsedByInstanceDevices(n.state, n.Project(), n.Name(), n.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
 		ip := net.ParseIP(nicConfig["ipv4.address"])
 		if ip != nil {
-			containsIP := false
-			for _, reservedDhcpRange := range dhcpReserveIPv4s {
-				containsIP = reservedDhcpRange.ContainsIP(ip)
-				if containsIP {
-					break
-				}
-			}
-
-			if !containsIP {
+			if !ipInRanges(ip, dhcpReserveIPv4s) {
 				dhcpReserveIPv4s = append(dhcpReserveIPv4s, iprange.Range{Start: ip})
 			}
 		}
