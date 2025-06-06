@@ -289,9 +289,21 @@ do_storage_driver_zfs() {
   # Create storage volumes
   incus storage volume create incustest-"$(basename "${INCUS_DIR}")" vol1
   [ "$(zfs get -H -o value type incustest-"$(basename "${INCUS_DIR}")/custom/default_vol1")" = "volume" ]
+  [ "$(zfs get -H -o value incus:content_type incustest-"$(basename "${INCUS_DIR}")/custom/default_vol1")" = "filesystem" ]
 
-  incus storage volume create incustest-"$(basename "${INCUS_DIR}")" vol2 zfs.block_mode=false
-  [ "$(zfs get -H -o value type incustest-"$(basename "${INCUS_DIR}")/custom/default_vol2")" = "filesystem" ]
+  incus storage volume create incustest-"$(basename "${INCUS_DIR}")" --type=block vol2
+  [ "$(zfs get -H -o value type incustest-"$(basename "${INCUS_DIR}")/custom/default_vol2")" = "volume" ]
+  [ "$(zfs get -H -o value incus:content_type incustest-"$(basename "${INCUS_DIR}")/custom/default_vol2")" = "block" ]
+
+  # verify incus:content_type is not lost when cloning
+  incus storage volume copy incustest-"$(basename "${INCUS_DIR}")"/vol1  incustest-"$(basename "${INCUS_DIR}")"/vol1-clone
+  incus storage volume copy incustest-"$(basename "${INCUS_DIR}")"/vol2  incustest-"$(basename "${INCUS_DIR}")"/vol2-clone
+  [ "$(zfs get -H -o value incus:content_type incustest-"$(basename "${INCUS_DIR}")/custom/default_vol1-clone")" = "filesystem" ]
+  [ "$(zfs get -H -o value incus:content_type incustest-"$(basename "${INCUS_DIR}")/custom/default_vol2-clone")" = "block" ]
+
+
+  incus storage volume create incustest-"$(basename "${INCUS_DIR}")" vol3 zfs.block_mode=false
+  [ "$(zfs get -H -o value type incustest-"$(basename "${INCUS_DIR}")/custom/default_vol3")" = "filesystem" ]
 
   incus storage volume attach incustest-"$(basename "${INCUS_DIR}")" vol1 c1 /mnt
   incus storage volume attach incustest-"$(basename "${INCUS_DIR}")" vol1 c3 /mnt
@@ -343,7 +355,10 @@ do_storage_driver_zfs() {
   # Clean up
   incus rm -f c1 c3 c11 c21 c4 c5 c6 c7
   incus storage volume rm incustest-"$(basename "${INCUS_DIR}")" vol1
+  incus storage volume rm incustest-"$(basename "${INCUS_DIR}")" vol1-clone
   incus storage volume rm incustest-"$(basename "${INCUS_DIR}")" vol2
+  incus storage volume rm incustest-"$(basename "${INCUS_DIR}")" vol2-clone
+  incus storage volume rm incustest-"$(basename "${INCUS_DIR}")" vol3
 
   # Turn off block mode
   incus storage unset incustest-"$(basename "${INCUS_DIR}")" volume.zfs.block_mode
