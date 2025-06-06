@@ -1,7 +1,12 @@
 test_storage_driver_truenas() {
   do_storage_driver_truenas ext4
   do_storage_driver_truenas xfs
-  #do_storage_driver_truenas btrfs
+  do_storage_driver_truenas btrfs
+}
+
+maybe_list_datasets() {
+   # full list of datasets and snaps
+  call_truenas_tool list -r --no-headers "$1"
 }
 
 do_storage_driver_truenas() {
@@ -26,6 +31,10 @@ do_storage_driver_truenas() {
 
   truenas_storage_pool="incustest-$(basename "${INCUS_DIR}")"
   truenas_dataset=$(incus storage get "${truenas_storage_pool}" truenas.dataset)
+
+  # block.filesystem defaults to ext4
+  incus storage unset incustest-"$(basename "${INCUS_DIR}")" volume.block.filesystem
+
    # Import image into default storage pool.
   ensure_import_testimage
 
@@ -34,10 +43,7 @@ do_storage_driver_truenas() {
   # Create non-block container
   incus launch testimage c1
 
-  # full list of datasets
-  call_truenas_tool list -r --no-headers "${truenas_dataset}"
-
-  # block.filesystem defaults to ext4
+  maybe_list_datasets "${truenas_dataset}"
 
   # Check created container and image volumes
   [ "$(call_truenas_tool dataset list --no-headers -o name "${truenas_dataset}/containers/c1")" = "${truenas_dataset}/containers/c1" ]
@@ -51,6 +57,8 @@ do_storage_driver_truenas() {
 
   incus launch testimage c2
   incus config device override c2 root size=11GiB
+
+  maybe_list_datasets "${truenas_dataset}"
 
   # Check created truenas volumes
   [ "$(call_truenas_tool dataset list --no-headers -o name "${truenas_dataset}/containers/c2")" = "${truenas_dataset}/containers/c2" ]
@@ -66,6 +74,8 @@ do_storage_driver_truenas() {
   # Delete image volume
   incus storage volume rm incustest-"$(basename "${INCUS_DIR}")" image/"${fingerprint}"
 
+  maybe_list_datasets "${truenas_dataset}"
+
   [ "$(call_truenas_tool dataset list --no-headers -o name "${truenas_dataset}/deleted/images/${fingerprint}_${filesystem}")" = "${truenas_dataset}/deleted/images/${fingerprint}_${filesystem}" ]
   [ "$(call_truenas_tool snapshot list --no-headers -o name "${truenas_dataset}/deleted/images/${fingerprint}_${filesystem}@readonly")" = "${truenas_dataset}/deleted/images/${fingerprint}_${filesystem}@readonly" ]
 
@@ -76,6 +86,9 @@ do_storage_driver_truenas() {
 
   # Create snapshot
   incus snapshot create c3 snap0
+
+  maybe_list_datasets "${truenas_dataset}"
+
   [ "$(call_truenas_tool list --no-headers -o type "${truenas_dataset}/containers/c3@snapshot-snap0")" = "snapshot" ]
 
 
@@ -83,26 +96,36 @@ do_storage_driver_truenas() {
   incus copy c1 c11
   [ "$(call_truenas_tool dataset list --no-headers -o type "${truenas_dataset}/containers/c11")" = "volume" ]
 
+  maybe_list_datasets "${truenas_dataset}"
 
   incus copy c3 c21
   [ "$(call_truenas_tool dataset list --no-headers -o type "${truenas_dataset}/containers/c21")" = "volume" ]
   [ "$(call_truenas_tool list --no-headers -o type "${truenas_dataset}/containers/c21@snapshot-snap0")" = "snapshot" ]
 
+  maybe_list_datasets "${truenas_dataset}"
 
   # Create storage volumes
   incus storage volume create incustest-"$(basename "${INCUS_DIR}")" vol1
   [ "$(call_truenas_tool dataset list --no-headers -o type "${truenas_dataset}/custom/default_vol1")" = "volume" ]
   [ "$(call_truenas_tool dataset list --no-headers -o incus:content_type "${truenas_dataset}/custom/default_vol1")" = "filesystem" ]
 
+  maybe_list_datasets "${truenas_dataset}"
+
   incus storage volume copy incustest-"$(basename "${INCUS_DIR}")"/vol1  incustest-"$(basename "${INCUS_DIR}")"/vol1-clone
   [ "$(call_truenas_tool dataset list --no-headers -o incus:content_type "${truenas_dataset}/custom/default_vol1")" = "filesystem" ]
 
-
+  maybe_list_datasets "${truenas_dataset}"
 
   incus storage volume create incustest-"$(basename "${INCUS_DIR}")" vol2 --type=block
   [ "$(call_truenas_tool dataset list --no-headers -o type "${truenas_dataset}/custom/default_vol2")" = "volume" ]
   [ "$(call_truenas_tool dataset list --no-headers -o incus:content_type "${truenas_dataset}/custom/default_vol2")" = "block" ]
+
+  maybe_list_datasets "${truenas_dataset}"
+
   incus storage volume copy incustest-"$(basename "${INCUS_DIR}")"/vol2  incustest-"$(basename "${INCUS_DIR}")"/vol2-clone
+
+  maybe_list_datasets "${truenas_dataset}"
+
   [ "$(call_truenas_tool dataset list --no-headers -o incus:content_type "${truenas_dataset}/custom/default_vol2")" = "block" ]
 
   incus storage volume attach incustest-"$(basename "${INCUS_DIR}")" vol1 c1 /mnt
@@ -172,6 +195,8 @@ do_storage_driver_truenas() {
   incus storage volume rm incustest-"$(basename "${INCUS_DIR}")" vol1-clone
   incus storage volume rm incustest-"$(basename "${INCUS_DIR}")" vol2
   incus storage volume rm incustest-"$(basename "${INCUS_DIR}")" vol2-clone
+
+  maybe_list_datasets "${truenas_dataset}"
 
   # shellcheck disable=SC2031
   kill_incus "${INCUS_STORAGE_DIR}"
