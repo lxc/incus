@@ -833,6 +833,11 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 			args = append(args, "-o", "volmode=none")
 		}
 
+		if vol.volType == VolumeTypeCustom {
+			// Regenerate incus:content_type, which was lost when cloning
+			args = append(args, "-o", fmt.Sprintf("incus:content_type=%s", vol.contentType))
+		}
+
 		args = append(args, srcSnapshot, d.dataset(vol, false))
 
 		// Clone the snapshot.
