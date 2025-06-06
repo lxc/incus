@@ -397,6 +397,12 @@ func (d *truenas) Mount() (bool, error) {
 		return false, err
 	}
 
+	// As we have already created the storage pool, and it exists on the host, presumably we already had iscsi setup in the past, so restore it if necessary.
+	err = d.verifyIscsiFunctionality(true)
+	if err != nil {
+		return false, err
+	}
+
 	return false, nil
 }
 
