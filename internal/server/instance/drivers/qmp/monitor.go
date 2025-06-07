@@ -55,7 +55,6 @@ type Monitor struct {
 	eventHandler      func(name string, data map[string]any)
 	serialCharDev     string
 	onDisconnectEvent bool
-	logFile           string
 }
 
 // start handles the background goroutines for event handling and monitoring the ringbuffer.
@@ -204,8 +203,8 @@ func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool, id uint32) 
 
 	var log *os.File
 	var err error
-	if logCommand && m.logFile != "" {
-		log, err = os.OpenFile(m.logFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
+	if logCommand && m.qmp.logFile != "" {
+		log, err = os.OpenFile(m.qmp.logFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
 		if err != nil {
 			return err
 		}
@@ -229,7 +228,7 @@ func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool, id uint32) 
 		return err
 	}
 
-	if logCommand && m.logFile != "" {
+	if logCommand && m.qmp.logFile != "" {
 		_, err = fmt.Fprintf(log, "[%s] REPLY: %s\n\n", time.Now().Format(time.RFC3339), out)
 		if err != nil {
 			return err
@@ -329,7 +328,7 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 	monitor.serialCharDev = serialCharDev
 
 	if util.PathExists(filepath.Dir(logFile)) {
-		monitor.logFile = logFile
+		monitor.qmp.logFile = logFile
 	}
 
 	// Default to generating a shutdown event when the monitor disconnects so that devices can be

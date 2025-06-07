@@ -26,6 +26,7 @@ type qemuMachineProtocal struct {
 	events       <-chan qmpEvent // Events channel
 	listeners    atomic.Uint32   // Listeners number
 	cid          atomic.Uint32   // Auto increase command id
+	logFile      string          // Log file
 }
 
 // qmpEvent represents a QEMU QMP event.
