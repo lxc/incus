@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -201,17 +200,9 @@ func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool, id uint32) 
 		return ErrMonitorDisconnect
 	}
 
-	var log *os.File
 	var err error
-	if logCommand && m.qmp.logFile != "" {
-		log, err = os.OpenFile(m.qmp.logFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
-		if err != nil {
-			return err
-		}
-
-		defer log.Close()
-
-		_, err = fmt.Fprintf(log, "[%s] QUERY: %s\n", time.Now().Format(time.RFC3339), request)
+	if logCommand && m.qmp.log != nil {
+		_, err = fmt.Fprintf(m.qmp.log, "[%s] QUERY: %s\n", time.Now().Format(time.RFC3339), request)
 		if err != nil {
 			return err
 		}
@@ -228,8 +219,8 @@ func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool, id uint32) 
 		return err
 	}
 
-	if logCommand && m.qmp.logFile != "" {
-		_, err = fmt.Fprintf(log, "[%s] REPLY: %s\n\n", time.Now().Format(time.RFC3339), out)
+	if logCommand && m.qmp.log != nil {
+		_, err = fmt.Fprintf(m.qmp.log, "[%s] REPLY: %s\n\n", time.Now().Format(time.RFC3339), out)
 		if err != nil {
 			return err
 		}
@@ -301,6 +292,14 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 	}
 
 	qmpConn := &qemuMachineProtocal{uc: uc}
+	if util.PathExists(filepath.Dir(logFile)) {
+		qlog, err := newQmpLog(logFile)
+		if err != nil {
+			return nil, err
+		}
+
+		qmpConn.log = qlog
+	}
 
 	chError := make(chan error, 1)
 	go func() {
@@ -326,10 +325,6 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 	monitor.chDisconnect = make(chan struct{}, 1)
 	monitor.eventHandler = eventHandler
 	monitor.serialCharDev = serialCharDev
-
-	if util.PathExists(filepath.Dir(logFile)) {
-		monitor.qmp.logFile = logFile
-	}
 
 	// Default to generating a shutdown event when the monitor disconnects so that devices can be
 	// cleaned up. This will be disabled after a shutdown event is received from QEMU itself to avoid

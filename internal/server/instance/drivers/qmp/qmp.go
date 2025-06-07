@@ -26,7 +26,7 @@ type qemuMachineProtocal struct {
 	events       <-chan qmpEvent // Events channel
 	listeners    atomic.Uint32   // Listeners number
 	cid          atomic.Uint32   // Auto increase command id
-	logFile      string          // Log file
+	log          *qmpLog         // qmp log
 }
 
 // qmpEvent represents a QEMU QMP event.
@@ -101,6 +101,15 @@ type rawResponse struct {
 // disconnect closes the QEMU monitor socket connection.
 func (qmp *qemuMachineProtocal) disconnect() error {
 	qmp.listeners.Store(0)
+	if qmp.log != nil {
+		err := qmp.log.Close()
+		if err != nil {
+			return err
+		}
+
+		qmp.log = nil
+	}
+
 	return qmp.uc.Close()
 }
 
