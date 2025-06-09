@@ -864,7 +864,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 			return fmt.Errorf("Failed setting up instance migration on source: %w", err)
 		}
 
-		run := func(op *operations.Operation) error {
+		run := func(_ *operations.Operation) error {
 			return sourceMigration.do(op)
 		}
 
