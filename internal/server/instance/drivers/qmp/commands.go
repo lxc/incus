@@ -104,6 +104,39 @@ type MemDev struct {
 	HostNodes []int  `json:"host-nodes"`
 }
 
+// MigrationStatus contains information about the ongoing migration.
+type MigrationStatus struct {
+	Status string `json:"status"`
+	RAM    struct {
+		Transferred             int64   `json:"transferred"`
+		Remaining               int64   `json:"remaining"`
+		Total                   int64   `json:"total"`
+		Duplicate               int64   `json:"duplicate"`
+		Normal                  int64   `json:"normal"`
+		NormalBytes             int64   `json:"normal-bytes"`
+		DirtyPagesRate          int64   `json:"diry-pages-rate"`
+		MBps                    float64 `json:"mbps"`
+		DirtySyncCount          int64   `json:"diry-sync-count"`
+		PostcopyRequests        int64   `json:"postcopy-requests"`
+		PageSize                int64   `json:"page-size"`
+		MultiFDBytes            int64   `json:"multifd-bytes"`
+		PagesPerSecond          int64   `json:"pages-per-second"`
+		PrecopyBytes            int64   `json:"precopy-bytes"`
+		DowntimeBytes           int64   `json:"downtime-bytes"`
+		PostcopyBytes           int64   `json:"postcopy-bytes"`
+		DirtySyncMissedZeroCopy int64   `json:"diry-sync-missed-zero-copy"`
+	} `json:"ram"`
+	TotalTime                      int64   `json:"total-time"`
+	DownTime                       int64   `json:"down-time"`
+	ExpectedDowntime               int64   `json:"expected-downtime"`
+	SetupTime                      int64   `json:"setup-time"`
+	CPUThrottlePercentage          int64   `json:"cpu-throttle-percentage"`
+	PostcopyBlocktime              int64   `json:"postcopy-blocktime"`
+	PostcopyVCPUBlocktime          []int64 `json:"postcopy-vcpu-blocktime"`
+	DirtyLimitThrottleTimePerRound int64   `json:"dirty-limit-throttle-time-per-round"`
+	DirtyLimitRingFullTime         int64   `json:"dirty-limit-ring-full-time"`
+}
+
 // QueryCPUs returns a list of CPUs.
 func (m *Monitor) QueryCPUs() ([]CPU, error) {
 	// Prepare the response.
@@ -404,6 +437,20 @@ func (m *Monitor) Migrate(name string) error {
 	}
 
 	return nil
+}
+
+// QueryMigrate gets the current migration status.
+func (m *Monitor) QueryMigrate() (*MigrationStatus, error) {
+	var resp struct {
+		Return MigrationStatus `json:"return"`
+	}
+
+	err := m.Run("query-migrate", nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp.Return, nil
 }
 
 // MigrateWait waits until migration job reaches the specified status.
