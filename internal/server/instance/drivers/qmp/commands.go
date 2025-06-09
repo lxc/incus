@@ -365,6 +365,16 @@ func (m *Monitor) MigrateSetCapabilities(caps map[string]bool) error {
 	return nil
 }
 
+// MigrateSetParameters sets the parameters used during migration.
+func (m *Monitor) MigrateSetParameters(parameters map[string]any) error {
+	err := m.Run("migrate-set-parameters", parameters, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Migrate starts a migration stream.
 func (m *Monitor) Migrate(name string) error {
 	// Query the status.
