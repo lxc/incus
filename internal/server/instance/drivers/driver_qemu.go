@@ -7272,6 +7272,16 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 			return fmt.Errorf("Failed setting migration capabilities: %w", err)
 		}
 
+		parameters := map[string]any{
+			"cpu-throttle-initial":       50,
+			"throttle-trigger-threshold": 20,
+		}
+
+		err = monitor.MigrateSetParameters(parameters)
+		if err != nil {
+			return fmt.Errorf("Failed setting migration parameters: %w", err)
+		}
+
 		// Create snapshot of the root disk.
 		// We use the VM's config volume for this so that the maximum size of the snapshot can be limited
 		// by setting the root disk's `size.state` property.
@@ -7367,6 +7377,16 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 		err = monitor.MigrateSetCapabilities(capabilities)
 		if err != nil {
 			return fmt.Errorf("Failed setting migration capabilities: %w", err)
+		}
+
+		parameters := map[string]any{
+			"cpu-throttle-initial":       50,
+			"throttle-trigger-threshold": 20,
+		}
+
+		err = monitor.MigrateSetParameters(parameters)
+		if err != nil {
+			return fmt.Errorf("Failed setting migration parameters: %w", err)
 		}
 	}
 
