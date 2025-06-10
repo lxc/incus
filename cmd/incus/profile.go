@@ -1075,7 +1075,7 @@ type cmdProfileSet struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProfileSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("set", i18n.G("[<remote>:]<profile> <key><value>..."))
+	cmd.Use = usage("set", i18n.G("[<remote>:]<profile> <key>=<value>..."))
 	cmd.Short = i18n.G("Set profile configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Set profile configuration keys
