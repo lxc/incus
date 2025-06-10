@@ -7378,6 +7378,10 @@ func (b *backend) BackupBucket(projectName string, bucketName string, tarWriter 
 	}
 
 	bucketURL := b.GetBucketURL(bucket.Name)
+	if bucketURL == nil {
+		return errors.New("The server is lacking a storage buckets listener address")
+	}
+
 	transferManager := s3.NewTransferManager(bucketURL, backupKey.AccessKey, backupKey.SecretKey)
 
 	err = transferManager.DownloadAllFiles(bucket.Name, tarWriter)
@@ -7439,6 +7443,10 @@ func (b *backend) CreateBucketFromBackup(srcBackup backup.Info, srcData io.ReadS
 	}
 
 	bucketURL := b.GetBucketURL(srcBackup.Name)
+	if bucketURL == nil {
+		return errors.New("The server is lacking a storage buckets listener address")
+	}
+
 	transferManager := s3.NewTransferManager(bucketURL, backupKey.AccessKey, backupKey.SecretKey)
 	err = transferManager.UploadAllFiles(srcBackup.Name, srcData)
 	if err != nil {
