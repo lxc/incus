@@ -475,11 +475,11 @@ func (d *truenas) locateOrActivateIscsiDataset(dataset string) (bool, string, er
 		return didActivate, volDiskPath, nil
 	}
 
-	return false, "", fmt.Errorf("No path for activated TrueNAS volume: %v", dataset)
+	return false, "", fmt.Errorf("No path for locate-activated TrueNAS volume: %v", dataset)
 }
 
 // activateVolume activates a ZFS volume if not already active. Returns devpath if activated, "" if not.
-func (d *truenas) activateIscsiDataset(dataset string) (string, error) {
+func (d *truenas) activateIscsiDataset(dataset string) (string, error) { //nolint:unused
 	reverter := revert.New()
 	defer reverter.Fail()
 

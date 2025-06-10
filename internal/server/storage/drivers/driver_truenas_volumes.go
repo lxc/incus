@@ -188,7 +188,8 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 
 	if vol.contentType == ContentTypeFS {
 		// activateIscsiDataset does not check if the dataset has been activated.
-		devPath, err := d.activateIscsiDataset(dataset)
+		// devPath, err := d.activateIscsiDataset(dataset)
+		_, devPath, err := d.locateOrActivateIscsiDataset(dataset)
 		if err != nil {
 			return err
 		}
@@ -1560,7 +1561,8 @@ func (d *truenas) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 	reverter.Add(func() { _ = d.deleteIscsiShare(cloneDataset) })
 
 	// and then activate
-	volDevPath, err := d.activateIscsiDataset(cloneDataset)
+	// volDevPath, err := d.activateIscsiDataset(cloneDataset)
+	_, volDevPath, err := d.locateOrActivateIscsiDataset(cloneDataset)
 	if err != nil {
 		return err
 	}
