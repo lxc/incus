@@ -10842,8 +10842,8 @@ msgid "[<remote>:]<profile> <key>"
 msgstr "[<remote>:]<profile> <key>"
 
 #: cmd/incus/profile.go:1078
-msgid "[<remote>:]<profile> <key><value>..."
-msgstr "[<remote>:]<profile> <key><value>..."
+msgid "[<remote>:]<profile> <key>=<value>..."
+msgstr "[<remote>:]<profile> <key>=<value>..."
 
 #: cmd/incus/config_device.go:510
 msgid "[<remote>:]<profile> <name>..."

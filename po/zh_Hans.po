@@ -9652,7 +9652,7 @@ msgid "[<remote>:]<profile> <key>"
 msgstr ""
 
 #: cmd/incus/profile.go:1078
-msgid "[<remote>:]<profile> <key><value>..."
+msgid "[<remote>:]<profile> <key>=<value>..."
 msgstr ""
 
 #: cmd/incus/config_device.go:510

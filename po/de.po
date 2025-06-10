@@ -10694,7 +10694,7 @@ msgstr ""
 
 #: cmd/incus/profile.go:1078
 #, fuzzy
-msgid "[<remote>:]<profile> <key><value>..."
+msgid "[<remote>:]<profile> <key>=<value>..."
 msgstr ""
 "Ändert den Laufzustand eines Containers in %s.\n"
 "\n"

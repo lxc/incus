@@ -9913,7 +9913,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 
 #: cmd/incus/profile.go:1078
 #, fuzzy
-msgid "[<remote>:]<profile> <key><value>..."
+msgid "[<remote>:]<profile> <key>=<value>..."
 msgstr "No se puede proveer el nombre del container a la lista"
 
 #: cmd/incus/config_device.go:510

@@ -9892,7 +9892,7 @@ msgstr "Creazione del container in corso"
 
 #: cmd/incus/profile.go:1078
 #, fuzzy
-msgid "[<remote>:]<profile> <key><value>..."
+msgid "[<remote>:]<profile> <key>=<value>..."
 msgstr "Creazione del container in corso"
 
 #: cmd/incus/config_device.go:510
