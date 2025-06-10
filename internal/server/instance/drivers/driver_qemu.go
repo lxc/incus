@@ -7272,6 +7272,16 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 			return fmt.Errorf("Failed setting migration capabilities: %w", err)
 		}
 
+		parameters := map[string]any{
+			"cpu-throttle-initial":       50,
+			"throttle-trigger-threshold": 20,
+		}
+
+		err = monitor.MigrateSetParameters(parameters)
+		if err != nil {
+			return fmt.Errorf("Failed setting migration parameters: %w", err)
+		}
+
 		// Create snapshot of the root disk.
 		// We use the VM's config volume for this so that the maximum size of the snapshot can be limited
 		// by setting the root disk's `size.state` property.
@@ -7367,6 +7377,16 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 		err = monitor.MigrateSetCapabilities(capabilities)
 		if err != nil {
 			return fmt.Errorf("Failed setting migration capabilities: %w", err)
+		}
+
+		parameters := map[string]any{
+			"cpu-throttle-initial":       50,
+			"throttle-trigger-threshold": 20,
+		}
+
+		err = monitor.MigrateSetParameters(parameters)
+		if err != nil {
+			return fmt.Errorf("Failed setting migration parameters: %w", err)
 		}
 	}
 
@@ -7512,6 +7532,45 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 		return fmt.Errorf("Failed starting state transfer to target: %w", err)
 	}
 
+	// Start monitoring the migration progress.
+	chMonitor := make(chan bool, 1)
+
+	if d.op != nil {
+		go func() {
+			for {
+				// Wait for next update.
+				select {
+				case <-chMonitor:
+					return
+
+				case <-time.After(time.Second):
+				}
+
+				// Get current migration progress.
+				progress, err := monitor.QueryMigrate()
+				if err != nil {
+					// Stop monitoring on error.
+					return
+				}
+
+				// Post update.
+				percent := int64(float64(progress.RAM.Transferred) / float64(progress.RAM.Total) * float64(100))
+				speed := int64(progress.RAM.MBps * 1024 * 1024 / 8)
+
+				metadata := map[string]any{}
+				metadata["progress"] = map[string]string{
+					"stage":     "live_migrate_instance",
+					"processed": strconv.FormatInt(progress.RAM.Transferred, 10),
+					"percent":   strconv.FormatInt(percent, 10),
+					"speed":     strconv.FormatInt(speed, 10),
+				}
+
+				metadata["live_migrate_instance_progress"] = fmt.Sprintf("Live migration: %s remaining (%s/s) (%d%% CPU throttle)", units.GetByteSizeString(progress.RAM.Remaining, 2), units.GetByteSizeString(speed, 2), progress.CPUThrottlePercentage)
+				_ = d.op.UpdateMetadata(metadata)
+			}
+		}()
+	}
+
 	// Non-shared storage snapshot transfer finalization.
 	if !sameSharedStorage {
 		// Wait until state transfer has reached pre-switchover state (the guest OS will remain paused).
@@ -7545,6 +7604,8 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 	if err != nil {
 		return fmt.Errorf("Failed waiting for state transfer to reach completed stage: %w", err)
 	}
+
+	close(chMonitor)
 
 	d.logger.Debug("Stateful migration checkpoint send finished")
 
