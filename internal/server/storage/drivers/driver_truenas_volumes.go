@@ -1029,7 +1029,7 @@ func (d *truenas) getTempSnapshotVolName(vol Volume) string {
 	parentDataset := d.dataset(parentVol, false)
 
 	// serverName to allow other cluster members to mount the same snapshot at the same time.
-	dataset := fmt.Sprintf("%s_%s_%s%s", parentDataset, snapshotOnlyName, d.state.ServerName, tmpVolSuffix)
+	dataset := fmt.Sprintf("%s_%s_%s-%d%s", parentDataset, snapshotOnlyName, d.state.ServerName, os.Getpid(), tmpVolSuffix)
 
 	return dataset
 }
@@ -1286,6 +1286,11 @@ func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 		if refCount > 0 {
 			d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": vol.name, "refCount": refCount})
 			return false, ErrInUse
+		}
+
+		err := linux.SyncFS(mountPath)
+		if err != nil {
+			return false, fmt.Errorf("Failed syncing filesystem %q: %w", mountPath, err)
 		}
 
 		err = TryUnmount(mountPath, unix.MNT_DETACH)
@@ -1649,6 +1654,11 @@ func (d *truenas) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation
 		if refCount > 0 {
 			d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": snapVol.name, "refCount": refCount})
 			return false, ErrInUse
+		}
+
+		err := linux.SyncFS(mountPath)
+		if err != nil {
+			return false, fmt.Errorf("Failed syncing filesystem %q: %w", mountPath, err)
 		}
 
 		ourUnmount, err = forceUnmount(mountPath)
