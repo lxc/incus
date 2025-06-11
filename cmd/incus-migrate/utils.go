@@ -17,6 +17,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/migration"
 	"github.com/lxc/incus/v6/internal/ports"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
@@ -82,12 +83,12 @@ func transferRootfs(ctx context.Context, op incus.Operation, rootfs string, rsyn
 	}
 
 	if migrationType == MigrationTypeVM || migrationType == MigrationTypeVolumeBlock {
-		stat, err := os.Stat(filepath.Join(rootfs, "root.img"))
+		sourcePath := filepath.Join(rootfs, "root.img")
+		size, err := BlockDiskSizeBytes(sourcePath)
 		if err != nil {
 			return abort(err)
 		}
 
-		size := stat.Size()
 		offerHeader.VolumeSize = &size
 		rootfs = internalUtil.AddSlash(rootfs)
 	}
@@ -341,4 +342,34 @@ func parseURL(URL string) (string, error) {
 	}
 
 	return uri.String(), nil
+}
+
+// BlockDiskSizeBytes returns the size of a block disk (path can be either block device or raw file).
+func BlockDiskSizeBytes(blockDiskPath string) (int64, error) {
+	if linux.IsBlockdevPath(blockDiskPath) {
+		// Attempt to open the device path.
+		f, err := os.Open(blockDiskPath)
+		if err != nil {
+			return -1, err
+		}
+
+		defer func() { _ = f.Close() }()
+		fd := int(f.Fd())
+
+		// Retrieve the block device size.
+		res, err := unix.IoctlGetInt(fd, unix.BLKGETSIZE64)
+		if err != nil {
+			return -1, err
+		}
+
+		return int64(res), nil
+	}
+
+	// Block device is assumed to be a raw file.
+	fi, err := os.Lstat(blockDiskPath)
+	if err != nil {
+		return -1, err
+	}
+
+	return fi.Size(), nil
 }
