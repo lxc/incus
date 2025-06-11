@@ -12,6 +12,7 @@ import (
 	"slices"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"golang.org/x/sys/unix"
 
@@ -225,6 +226,13 @@ func (qmp *qemuMachineProtocal) listen(r io.Reader, events chan<- qmpEvent, repl
 			continue
 		}
 
+		if qmp.log != nil {
+			_, err := fmt.Fprintf(qmp.log, "[%s] Event: %s\n\n", time.Now().Format(time.RFC3339), b)
+			if err != nil {
+				logger.Debugf("Failed to log event: %v", err)
+			}
+		}
+
 		// If nobody is listening for events, do not bother sending them.
 		if qmp.listeners.Load() == 0 {
 			continue
@@ -232,9 +240,9 @@ func (qmp *qemuMachineProtocal) listen(r io.Reader, events chan<- qmpEvent, repl
 
 		select {
 		case events <- e:
-			logger.Debugf("Event dispatched: %s", b)
+			logger.Debugf("Event dispatched: %s", e.Event)
 		default:
-			logger.Debugf("Event discarded: %s", b)
+			logger.Debugf("Event discarded: %s", e.Event)
 		}
 	}
 
