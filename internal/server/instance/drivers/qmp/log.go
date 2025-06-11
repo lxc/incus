@@ -1,6 +1,7 @@
 package qmp
 
 import (
+	"fmt"
 	"os"
 	"sync"
 )
@@ -12,6 +13,10 @@ type qmpLog struct {
 }
 
 func newQmpLog(logFile string) (*qmpLog, error) {
+	if logFile == "" {
+		return nil, fmt.Errorf("Log file path is empty")
+	}
+
 	ql := &qmpLog{
 		logFile: logFile,
 	}

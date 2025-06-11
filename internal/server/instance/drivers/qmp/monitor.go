@@ -292,7 +292,7 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 	}
 
 	qmpConn := &qemuMachineProtocal{uc: uc}
-	if util.PathExists(filepath.Dir(logFile)) {
+	if logFile != "" && util.PathExists(filepath.Dir(logFile)) {
 		qlog, err := newQmpLog(logFile)
 		if err != nil {
 			return nil, err
