@@ -21,7 +21,7 @@ import (
 
 const (
 	tnToolName            = "truenas_incus_ctl"
-	tnMinVersion          = "0.7.0" // adds `service`, `iscsi test` `--initiator`  and `--portal` functionality
+	tnMinVersion          = "0.7.2" // deactivate --wait with sync funcitonality
 	tnDefaultVolblockSize = 16 * 1024
 )
 
@@ -416,7 +416,7 @@ func (d *truenas) createIscsiShare(dataset string, readonly bool) error {
 }
 
 func (d *truenas) deleteIscsiShare(dataset string) error {
-	_, err := d.runIscsiCmd("delete", dataset)
+	_, err := d.runIscsiCmd("delete", dataset) // implies `deactivate --wait`
 	if err != nil {
 		return err
 	}
@@ -460,7 +460,7 @@ func (d *truenas) locateOrActivateIscsiDataset(dataset string) (bool, string, er
 
 	status, volDiskPath, _ := strings.Cut(statusPath, "\t")
 
-	// when `locate --create`` has to create a share, it outputs two lines, one for the creation, a second for the activation, we need to discard the first.
+	// when `locate --create` has to create a share, it outputs two lines, one for the creation, a second for the activation, we need to discard the first.
 	if status == "created" {
 		d.logger.Debug(fmt.Sprintf("Created iscsi share for TrueNAS volume: %s", volDiskPath))
 		_, statusPath, _ := strings.Cut(statusPath, "\n")
@@ -501,7 +501,7 @@ func (d *truenas) activateIscsiDataset(dataset string) (string, error) { //nolin
 
 // deactivateIscsiDatasetIfActive deactivates a dataset if activated, returns true if deactivated.
 func (d *truenas) deactivateIscsiDatasetIfActive(dataset string) (bool, error) {
-	statusPath, err := d.runIscsiCmd("locate", "--deactivate", "--parsable", dataset)
+	statusPath, err := d.runIscsiCmd("locate", "--deactivate", "--parsable", "--wait", dataset)
 	if err != nil {
 		return false, err
 	}
@@ -521,7 +521,7 @@ func (d *truenas) deactivateIscsiDatasetIfActive(dataset string) (bool, error) {
 
 // deactivateIscsiDataset deactivates an iscsi share if active.
 func (d *truenas) deactivateIscsiDataset(dataset string) error {
-	_, err := d.runIscsiCmd("deactivate", dataset)
+	_, err := d.deactivateIscsiDatasetIfActive(dataset)
 	if err != nil {
 		return err
 	}
@@ -709,6 +709,11 @@ func (d *truenas) renameDataset(sourceDataset string, destDataset string, update
 func (d *truenas) deleteDatasetRecursive(dataset string) error {
 	// Locate the origin snapshot (if any).
 	origin, err := d.getDatasetProperty(dataset, "origin")
+	if err != nil {
+		return err
+	}
+
+	err = d.deleteIscsiShare(dataset)
 	if err != nil {
 		return err
 	}
