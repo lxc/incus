@@ -81,8 +81,17 @@ func (d *truenas) runTool(args ...string) (string, error) {
 
 	args = append(baseArgs, args...)
 
+	out, err := subprocess.RunCommand(tnToolName, args...)
+
+	if err != nil && strings.Contains(err.Error(), "Post \"http://unix/tnc-daemon\": EOF)") {
+		// this error indicates that the connection to the server was closed when the command was posted. It should be safe to retry the command
+		// the daemon *should've* re-opened the connection, but as of 0.7.2 it doesn't, re-trying should force the connection to be re-opened.
+		d.logger.Error("TrueNAS Tool POST failed with socket EOF, will retry", logger.Ctx{"args": args, "err": err})
+		out, err = subprocess.RunCommand(tnToolName, args...)
+	}
+
 	// will allow us to prepend args
-	return subprocess.RunCommand(tnToolName, args...)
+	return out, err
 }
 
 // runIscsiCmd runs the supplied args against the tools `share iscsi` command whilst applying the appropriate iscsi global flags.
