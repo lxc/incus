@@ -86,7 +86,7 @@ func (d *truenas) runTool(args ...string) (string, error) {
 	if err != nil && strings.Contains(err.Error(), "Post \"http://unix/tnc-daemon\": EOF)") {
 		// this error indicates that the connection to the server was closed when the command was posted. It should be safe to retry the command
 		// the daemon *should've* re-opened the connection, but as of 0.7.2 it doesn't, re-trying should force the connection to be re-opened.
-		d.logger.Error("TrueNAS Tool POST failed with socket EOF, will retry", logger.Ctx{"args": args, "err": err})
+		d.logger.Error("TrueNAS Tool POST failed with socket EOF, will retry", logger.Ctx{"err": err})
 		out, err = subprocess.RunCommand(tnToolName, args...)
 	}
 
