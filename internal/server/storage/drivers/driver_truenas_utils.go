@@ -21,7 +21,7 @@ import (
 
 const (
 	tnToolName            = "truenas_incus_ctl"
-	tnMinVersion          = "0.7.2" // deactivate --wait with sync funcitonality
+	tnMinVersion          = "0.7.2" // deactivate --wait with sync functionality
 	tnDefaultVolblockSize = 16 * 1024
 )
 
