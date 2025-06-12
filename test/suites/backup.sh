@@ -241,7 +241,9 @@ linstor.resource_group.name=$(incus storage get "${poolName}" linstor.resource_g
 "
       ;;
       truenas)
-        poolExtraConfig="$(truenas_config) $(truenas_config_file) $(truenas_api_key)
+        poolExtraConfig="$(truenas_config) 
+$(truenas_config_file) 
+$(truenas_api_key)
 "
       ;;
     esac
