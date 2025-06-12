@@ -1424,7 +1424,7 @@ func (d *truenas) CreateVolumeSnapshot(vol Volume, op *operations.Operation) err
 		return err
 	}
 
-	// Sync the Volume
+	// Sync the filesystem
 	if vol.contentType == ContentTypeFS {
 		/*
 			We want to ensure the current state is flushed to the server before snapping.
@@ -1448,8 +1448,22 @@ func (d *truenas) CreateVolumeSnapshot(vol Volume, op *operations.Operation) err
 		}
 	}
 
+	snapDataset := d.dataset(vol, false)
+
+	// Sync the device. It may not be enough to just sync the mountpoint... because the device may not be mounted.
+	parentDataset, _, ok := strings.Cut(snapDataset, "@")
+	if ok {
+		devPath, err := d.locateIscsiDataset(parentDataset)
+		if err == nil && devPath != "" {
+			err := linux.SyncFS(devPath)
+			if err != nil {
+				return fmt.Errorf("Failed syncing device %q: %w", devPath, err)
+			}
+		}
+	}
+
 	// Make the snapshot.
-	err = d.createSnapshot(d.dataset(vol, false), false)
+	err = d.createSnapshot(snapDataset, false)
 	if err != nil {
 		return err
 	}
@@ -1630,7 +1644,7 @@ func (d *truenas) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 // Will delete the temporary TrueNAS snapshot clone.
 func (d *truenas) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (bool, error) {
 	l := d.logger.AddContext(logger.Ctx{"volume": snapVol.Name()})
-	l.Debug("Umounting TrueNAS snapshot volume")
+	l.Debug("Umounting TrueNAS snapshot volume", logger.Ctx{"vol": snapVol})
 
 	unlock, err := snapVol.MountLock()
 	if err != nil {
@@ -1666,7 +1680,7 @@ func (d *truenas) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation
 			return false, err
 		}
 
-		l.Debug("Unmounted TrueNAS snapshot volume filesystem", logger.Ctx{"path": mountPath})
+		l.Debug("Unmounted TrueNAS snapshot volume filesystem", logger.Ctx{"vol": snapVol, "path": mountPath})
 	}
 
 	cloneDataset := d.getTempSnapshotVolName(snapVol)
