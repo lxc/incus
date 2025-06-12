@@ -32,7 +32,7 @@ do_storage_driver_truenas() {
   truenas_storage_pool="incustest-$(basename "${INCUS_DIR}")"
   truenas_dataset=$(incus storage get "${truenas_storage_pool}" truenas.dataset)
 
-  # block.filesystem defaults to ext4
+  # block.filesystem defaults to ext4, but other tests can set this.
   incus storage unset incustest-"$(basename "${INCUS_DIR}")" volume.block.filesystem
 
    # Import image into default storage pool.
@@ -184,6 +184,8 @@ do_storage_driver_truenas() {
   incus launch testimage c5
   incus storage unset incustest-"$(basename "${INCUS_DIR}")" volume.size
 
+  # restore default back to ext4, otherwise it can affect future tests.
+  incus storage unset incustest-"$(basename "${INCUS_DIR}")" volume.block.filesystem
 
   # Clean up  # FIXME: when deletes aren't so slow, combine this into one line
   #incus rm -f c1 c3 c11 c21 c4 c5
