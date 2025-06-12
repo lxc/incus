@@ -615,14 +615,14 @@ func (d *truenas) DeleteVolume(vol Volume, op *operations.Operation) error {
 	return d.deleteVolume(vol, nil, op)
 }
 
-// deleteImageFsVolume efficiently deletes all filesystem variations of an ImageFS (use for vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS )
+// deleteImageFsVolume efficiently deletes all filesystem variations of an ImageFS (use for vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS ).
 func (d *truenas) deleteImageFsVolume(vol Volume, op *operations.Operation) error {
 	if vol.volType != VolumeTypeImage || vol.contentType != ContentTypeFS {
 		return fmt.Errorf("deleteImageFsVolume called on invalid volume: %v", vol)
 	}
 
 	/*
-		the basic idea is to avoid the iterative existance checks for each filesystem, since we expect all but one not to exist
+		the basic idea is to avoid the iterative existence checks for each filesystem, since we expect all but one not to exist
 	*/
 
 	// We need to clone vol the otherwise changing `block.filesystem` in tmpVol will also change it in vol.
@@ -631,34 +631,35 @@ func (d *truenas) deleteImageFsVolume(vol Volume, op *operations.Operation) erro
 	// form a list of FSs without the actual volume's FS.
 	fsList := []string{}
 	volFs := vol.ConfigBlockFilesystem()
-	for _, fs := range blockBackedAllowedFilesystems {
-		if fs == volFs {
+	for _, filesystem := range blockBackedAllowedFilesystems {
+		if filesystem == volFs {
 			continue
 		}
-		fsList = append(fsList, fs)
+
+		fsList = append(fsList, filesystem)
 	}
 
-	// generate a list of all the datasets to be existance checked
+	// generate a list of all the datasets to be existence checked
 	datasets := []string{d.dataset(vol, false)}
-	for _, fs := range fsList {
-		tmpVol.config["block.filesystem"] = fs
+	for _, filesystem := range fsList {
+		tmpVol.config["block.filesystem"] = filesystem
 		datasets = append(datasets, d.dataset(tmpVol, false))
 	}
 
-	// returns a map of all the datasets existance, including those that don't exist.
+	// returns a map of all the datasets existence, including those that don't exist.
 	existsMap, err := d.objectsExist(datasets, "dataset")
 	if err != nil {
-		return fmt.Errorf("Unable to verify existance of FS Images, Error: %w", err)
+		return fmt.Errorf("Unable to verify existence of FS Images, Error: %w", err)
 	}
 
 	// delete all the other file systems
-	for _, fs := range fsList {
-		tmpVol.config["block.filesystem"] = fs
+	for _, filesystem := range fsList {
+		tmpVol.config["block.filesystem"] = filesystem
 
 		dataset := d.dataset(tmpVol, false)
 		exists, ok := existsMap[dataset]
 		if ok && exists {
-			d.deleteVolume(tmpVol, &exists, op)
+			_ = d.deleteVolume(tmpVol, &exists, op)
 		}
 	}
 
@@ -666,7 +667,7 @@ func (d *truenas) deleteImageFsVolume(vol Volume, op *operations.Operation) erro
 	dataset := d.dataset(vol, false)
 	exists, ok := existsMap[dataset]
 	if !ok {
-		return fmt.Errorf("Unable to retrieve existance of FS Image: %s", dataset)
+		return fmt.Errorf("Unable to retrieve existence of FS Image: %s", dataset)
 	}
 
 	// cleans up mount points etc
@@ -678,14 +679,14 @@ func (d *truenas) deleteImageFsVolume(vol Volume, op *operations.Operation) erro
 	return nil
 }
 
-// deleteVolume deletes the volume if it exists, and cleans up, pass optionalExistance if you know
+// deleteVolume deletes the volume if it exists, and cleans up, pass optionalExistance if you know.
 func (d *truenas) deleteVolume(vol Volume, optionalExistance *bool, op *operations.Operation) error {
 	// Check that we have a dataset to delete.
 	dataset := d.dataset(vol, false)
 
 	var exists bool
 
-	// allows performing bulk existance checks.
+	// allows performing bulk existence checks.
 	if optionalExistance != nil {
 		exists = *optionalExistance
 	} else {
@@ -693,6 +694,7 @@ func (d *truenas) deleteVolume(vol Volume, optionalExistance *bool, op *operatio
 		if err != nil {
 			return err
 		}
+
 		exists = e // declared and not used: exists
 	}
 
