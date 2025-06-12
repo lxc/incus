@@ -607,38 +607,93 @@ func (d *truenas) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume
 // this function will return an error.
 // For image volumes, both filesystem and block volumes will be removed.
 func (d *truenas) DeleteVolume(vol Volume, op *operations.Operation) error {
-	// We need to be able to delete the block-backed fs even if we don't know the filesystem.
 	if vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS {
-		// We need to clone vol the otherwise changing `block.filesystem`
-		// in tmpVol will also change it in vol.
-		tmpVol := vol.Clone()
+		// deletes all block.filesystem permutations
+		return d.deleteImageFsVolume(vol, op)
+	}
 
-		// TODO: use bulk existence checks, before iterating.
+	return d.deleteVolume(vol, nil, op)
+}
 
-		// we don't pre-delete the filesystem that would be deleted by the main call to deleteVolume.
-		volFs := vol.ConfigBlockFilesystem()
+// deleteImageFsVolume efficiently deletes all filesystem variations of an ImageFS (use for vol.volType == VolumeTypeImage && vol.contentType == ContentTypeFS )
+func (d *truenas) deleteImageFsVolume(vol Volume, op *operations.Operation) error {
+	if vol.volType != VolumeTypeImage || vol.contentType != ContentTypeFS {
+		return fmt.Errorf("deleteImageFsVolume called on invalid volume: %v", vol)
+	}
 
-		for _, filesystem := range blockBackedAllowedFilesystems {
-			if filesystem != volFs {
-				tmpVol.config["block.filesystem"] = filesystem
+	/*
+		the basic idea is to avoid the iterative existance checks for each filesystem, since we expect all but one not to exist
+	*/
 
-				err := d.deleteVolume(tmpVol, op)
-				if err != nil {
-					return err
-				}
-			}
+	// We need to clone vol the otherwise changing `block.filesystem` in tmpVol will also change it in vol.
+	tmpVol := vol.Clone()
+
+	// form a list of FSs without the actual volume's FS.
+	fsList := []string{}
+	volFs := vol.ConfigBlockFilesystem()
+	for _, fs := range blockBackedAllowedFilesystems {
+		if fs == volFs {
+			continue
+		}
+		fsList = append(fsList, fs)
+	}
+
+	// generate a list of all the datasets to be existance checked
+	datasets := []string{d.dataset(vol, false)}
+	for _, fs := range fsList {
+		tmpVol.config["block.filesystem"] = fs
+		datasets = append(datasets, d.dataset(tmpVol, false))
+	}
+
+	// returns a map of all the datasets existance, including those that don't exist.
+	existsMap, err := d.objectsExist(datasets, "dataset")
+	if err != nil {
+		return fmt.Errorf("Unable to verify existance of FS Images, Error: %w", err)
+	}
+
+	// delete all the other file systems
+	for _, fs := range fsList {
+		tmpVol.config["block.filesystem"] = fs
+
+		dataset := d.dataset(tmpVol, false)
+		exists, ok := existsMap[dataset]
+		if ok && exists {
+			d.deleteVolume(tmpVol, &exists, op)
 		}
 	}
 
-	return d.deleteVolume(vol, op)
-}
-
-func (d *truenas) deleteVolume(vol Volume, op *operations.Operation) error {
-	// Check that we have a dataset to delete.
+	// and finally, delete the actual volume, with whatever its FS is that we specifically skipped earlier.
 	dataset := d.dataset(vol, false)
-	exists, err := d.datasetExists(dataset)
+	exists, ok := existsMap[dataset]
+	if !ok {
+		return fmt.Errorf("Unable to retrieve existance of FS Image: %s", dataset)
+	}
+
+	// cleans up mount points etc
+	err = d.deleteVolume(vol, &exists, op)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// deleteVolume deletes the volume if it exists, and cleans up, pass optionalExistance if you know
+func (d *truenas) deleteVolume(vol Volume, optionalExistance *bool, op *operations.Operation) error {
+	// Check that we have a dataset to delete.
+	dataset := d.dataset(vol, false)
+
+	var exists bool
+
+	// allows performing bulk existance checks.
+	if optionalExistance != nil {
+		exists = *optionalExistance
+	} else {
+		e, err := d.datasetExists(dataset)
+		if err != nil {
+			return err
+		}
+		exists = e // declared and not used: exists
 	}
 
 	if exists {
@@ -1029,7 +1084,7 @@ func (d *truenas) getTempSnapshotVolName(vol Volume) string {
 	parentDataset := d.dataset(parentVol, false)
 
 	// serverName to allow other cluster members to mount the same snapshot at the same time.
-	dataset := fmt.Sprintf("%s_%s_%s%s", parentDataset, snapshotOnlyName, d.state.ServerName, tmpVolSuffix)
+	dataset := fmt.Sprintf("%s_%s_%s-%d%s", parentDataset, snapshotOnlyName, d.state.ServerName, os.Getpid(), tmpVolSuffix)
 
 	return dataset
 }
@@ -1288,6 +1343,11 @@ func (d *truenas) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 			return false, ErrInUse
 		}
 
+		err := linux.SyncFS(mountPath)
+		if err != nil {
+			return false, fmt.Errorf("Failed syncing filesystem %q: %w", mountPath, err)
+		}
+
 		err = TryUnmount(mountPath, unix.MNT_DETACH)
 		if err != nil {
 			return false, err
@@ -1419,7 +1479,7 @@ func (d *truenas) CreateVolumeSnapshot(vol Volume, op *operations.Operation) err
 		return err
 	}
 
-	// Sync the Volume
+	// Sync the filesystem
 	if vol.contentType == ContentTypeFS {
 		/*
 			We want to ensure the current state is flushed to the server before snapping.
@@ -1443,8 +1503,22 @@ func (d *truenas) CreateVolumeSnapshot(vol Volume, op *operations.Operation) err
 		}
 	}
 
+	snapDataset := d.dataset(vol, false)
+
+	// Sync the device. It may not be enough to just sync the mountpoint... because the device may not be mounted.
+	parentDataset, _, ok := strings.Cut(snapDataset, "@")
+	if ok {
+		devPath, err := d.locateIscsiDataset(parentDataset)
+		if err == nil && devPath != "" {
+			err := linux.SyncFS(devPath)
+			if err != nil {
+				return fmt.Errorf("Failed syncing device %q: %w", devPath, err)
+			}
+		}
+	}
+
 	// Make the snapshot.
-	err = d.createSnapshot(d.dataset(vol, false), false)
+	err = d.createSnapshot(snapDataset, false)
 	if err != nil {
 		return err
 	}
@@ -1625,7 +1699,7 @@ func (d *truenas) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 // Will delete the temporary TrueNAS snapshot clone.
 func (d *truenas) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (bool, error) {
 	l := d.logger.AddContext(logger.Ctx{"volume": snapVol.Name()})
-	l.Debug("Umounting TrueNAS snapshot volume")
+	l.Debug("Umounting TrueNAS snapshot volume", logger.Ctx{"vol": snapVol})
 
 	unlock, err := snapVol.MountLock()
 	if err != nil {
@@ -1651,12 +1725,17 @@ func (d *truenas) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation
 			return false, ErrInUse
 		}
 
+		err := linux.SyncFS(mountPath)
+		if err != nil {
+			return false, fmt.Errorf("Failed syncing filesystem %q: %w", mountPath, err)
+		}
+
 		ourUnmount, err = forceUnmount(mountPath)
 		if err != nil {
 			return false, err
 		}
 
-		l.Debug("Unmounted TrueNAS snapshot volume filesystem", logger.Ctx{"path": mountPath})
+		l.Debug("Unmounted TrueNAS snapshot volume filesystem", logger.Ctx{"vol": snapVol, "path": mountPath})
 	}
 
 	cloneDataset := d.getTempSnapshotVolName(snapVol)
