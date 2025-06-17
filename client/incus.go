@@ -468,7 +468,14 @@ func (r *ProtocolIncus) rawWebsocket(url string) (*websocket.Conn, error) {
 	conn, resp, err := r.DoWebsocket(dialer, url, req)
 	if err != nil {
 		if resp != nil {
-			_, _, err = incusParseResponse(resp)
+			apiResp, _, parseErr := incusParseResponse(resp)
+			if parseErr != nil {
+				err = errors.Join(err, parseErr)
+			}
+
+			if apiResp != nil && apiResp.Error != "" {
+				err = errors.Join(err, fmt.Errorf(apiResp.Error))
+			}
 		}
 
 		return nil, err
