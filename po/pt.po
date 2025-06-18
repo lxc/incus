@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-05-29 02:38-0400\n"
-"PO-Revision-Date: 2025-06-18 23:04+0000\n"
+"PO-Revision-Date: 2025-06-18 23:59+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
 "\n"
@@ -5663,7 +5663,7 @@ msgstr ""
 
 #: cmd/incus/warning.go:75
 msgid "List warnings"
-msgstr ""
+msgstr "Lista avisos"
 
 #: cmd/incus/warning.go:76
 msgid ""
@@ -5687,6 +5687,27 @@ msgid ""
 "    u - UUID\n"
 "    t - Type"
 msgstr ""
+"Lista avisos\n"
+"\n"
+"A opção -c recebe uma lista (opcionalmente separada por vírgulas) de "
+"argumentos\n"
+"que controlam quais atributos de zona de rede são incluídos ao mostrar em "
+"formato\n"
+"de tabela ou csv.\n"
+"\n"
+"Disposição predefinida de coluna: utSscpLl\n"
+"\n"
+"Caracteres curtos da coluna:\n"
+"\n"
+"    c - Contagem\n"
+"    l - Ultima vez visto\n"
+"    L - Localização\n"
+"    f - Primeira vez visto\n"
+"    p - Projeto\n"
+"    s - Severidade\n"
+"    S - Estado\n"
+"    u - UUID\n"
+"    t - Tipo"
 
 #: cmd/incus/operation.go:31 cmd/incus/operation.go:32
 msgid "List, show and delete background operations"
@@ -6020,65 +6041,65 @@ msgstr ""
 
 #: cmd/incus/remote.go:48 cmd/incus/remote.go:49
 msgid "Manage the list of remote servers"
-msgstr ""
+msgstr "Gerir a lista de servidores remotos"
 
 #: cmd/incus/config_trust.go:36 cmd/incus/config_trust.go:37
 msgid "Manage trusted clients"
-msgstr ""
+msgstr "Gerir clientes de confiança"
 
 #: cmd/incus/warning.go:31 cmd/incus/warning.go:32
 msgid "Manage warnings"
-msgstr ""
+msgstr "Gerir avisos"
 
 #: cmd/incus/remote.go:651
 msgid "Manually trigger the generation of a client certificate"
-msgstr ""
+msgstr "Acionar manualmente a geração de um certificado de cliente"
 
 #: cmd/incus/info.go:168 cmd/incus/info.go:277
 #, c-format
 msgid "Maximum number of VFs: %d"
-msgstr ""
+msgstr "Número máximo de VFs: %d"
 
 #: cmd/incus/info.go:179
 msgid "Mdev profiles:"
-msgstr ""
+msgstr "Perfil de Mdev:"
 
 #: cmd/incus/cluster_role.go:97
 #, c-format
 msgid "Member %q already has role %q"
-msgstr ""
+msgstr "Membro %q já tem função %q"
 
 #: cmd/incus/cluster_role.go:166
 #, c-format
 msgid "Member %q does not have role %q"
-msgstr ""
+msgstr "Membro %q não tem função %q"
 
 #: cmd/incus/cluster.go:1073
 #, c-format
 msgid "Member %s join token:"
-msgstr ""
+msgstr "Testemunho de junção do membro %s:"
 
 #: cmd/incus/cluster.go:785
 #, c-format
 msgid "Member %s removed"
-msgstr ""
+msgstr "Membro %s removido"
 
 #: cmd/incus/cluster.go:688
 #, c-format
 msgid "Member %s renamed to %s"
-msgstr ""
+msgstr "Membro %s renomeado para %s"
 
 #: cmd/incus/info.go:722
 msgid "Memory (current)"
-msgstr ""
+msgstr "Memória (atual)"
 
 #: cmd/incus/info.go:726
 msgid "Memory (peak)"
-msgstr ""
+msgstr "Memória (pico)"
 
 #: cmd/incus/info.go:738
 msgid "Memory usage:"
-msgstr ""
+msgstr "Utilização de memória:"
 
 #: cmd/incus/info.go:517
 msgid "Memory:"
@@ -6395,11 +6416,11 @@ msgstr "A mover o volume de armazenamento: %s"
 
 #: cmd/incus/network_forward.go:1121 cmd/incus/network_load_balancer.go:1287
 msgid "Multiple ports match. Use --force to remove them all"
-msgstr ""
+msgstr "Múltiplos portos correspondem. Use --force para removê-los a todos"
 
 #: cmd/incus/network_acl.go:1158
 msgid "Multiple rules match. Use --force to remove them all"
-msgstr ""
+msgstr "Múltiplas regras correspondem. Use --force para removê-las a todas"
 
 #: cmd/incus/image.go:710
 msgid "Must run as root to import from directory"
@@ -6490,7 +6511,7 @@ msgstr "Nome da pool de armazenamento OSD"
 #: cmd/incus/admin_init_interactive.go:730
 #, c-format
 msgid "Name of the existing %s pool or dataset:"
-msgstr ""
+msgstr "Nome da pool ou conjunto de dados existente %s:"
 
 #: cmd/incus/admin_init_interactive.go:623
 #: cmd/incus/admin_init_interactive.go:717
@@ -6507,33 +6528,33 @@ msgstr "Nome da pool de armazenamento OSD existente"
 
 #: cmd/incus/admin_init_interactive.go:315
 msgid "Name of the existing bridge or host interface:"
-msgstr ""
+msgstr "Nome da interface de ponte ou de máquina existente:"
 
 #: cmd/incus/admin_init_interactive.go:522
 msgid "Name of the new storage pool"
-msgstr ""
+msgstr "Nome da nova pool de armazenamento"
 
 #: cmd/incus/remote.go:172
 msgid "Name of the project to use for this remote:"
-msgstr ""
+msgstr "Nome do projeto a usar para este remoto:"
 
 #: cmd/incus/admin_init_interactive.go:655
 msgid "Name of the shared LVM volume group:"
-msgstr ""
+msgstr "Nome do grupo de volume LVM partilhado:"
 
 #: cmd/incus/admin_recover.go:119
 #, c-format
 msgid "Name of the storage backend (%s):"
-msgstr ""
+msgstr "Nome do backend de armazenamento (%s):"
 
 #: cmd/incus/admin_init_interactive.go:560
 #, c-format
 msgid "Name of the storage backend to use (%s)"
-msgstr ""
+msgstr "Nome do backend de armazenamento a usar (%s)"
 
 #: cmd/incus/admin_recover.go:102
 msgid "Name of the storage pool:"
-msgstr ""
+msgstr "Nome da pool de armazenamento"
 
 #: cmd/incus/info.go:636 cmd/incus/network.go:1004
 #: cmd/incus/storage_volume.go:1454
