@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-05-29 02:38-0400\n"
-"PO-Revision-Date: 2025-06-17 19:01+0000\n"
+"PO-Revision-Date: 2025-06-18 23:04+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
 "\n"
@@ -896,7 +896,7 @@ msgstr "Adiciona membro a grupo"
 
 #: cmd/incus/alias.go:62 cmd/incus/alias.go:63
 msgid "Add new aliases"
-msgstr "Adiciona novos nomes alternativos"
+msgstr "Adiciona novos aliases"
 
 #: cmd/incus/remote.go:121
 msgid "Add new remote servers"
@@ -1718,7 +1718,7 @@ msgstr "Copiar uma instância de estado sem estado"
 
 #: cmd/incus/image.go:160
 msgid "Copy aliases from source"
-msgstr "Copias nomes alternativos (aliases) da fonte"
+msgstr "Copia nomes alternativos (aliases) da fonte"
 
 #: cmd/incus/storage_volume.go:375 cmd/incus/storage_volume.go:376
 msgid "Copy custom storage volumes"
@@ -1739,7 +1739,7 @@ msgstr ""
 "\n"
 "A bandeira de atualização automática instrui o servidor para manter esta "
 "imagem atualizada.\n"
-"Exige que a fonte seja um nome alternativo e que seja pública."
+"Exige que a fonte seja um alias (nome alternativo) e que seja pública."
 
 #: cmd/incus/copy.go:43
 msgid "Copy instances within or in between servers"
@@ -1882,7 +1882,7 @@ msgstr "Criar uma máquina virtual"
 
 #: cmd/incus/image_alias.go:71 cmd/incus/image_alias.go:72
 msgid "Create aliases for existing images"
-msgstr "Criar nomes alternativos para imagens existentes"
+msgstr "Criar aliases para imagens existentes"
 
 #: cmd/incus/create.go:68
 msgid "Create an empty instance"
@@ -2110,7 +2110,7 @@ msgstr "Apaga ficheiros em instâncias"
 
 #: cmd/incus/image_alias.go:140 cmd/incus/image_alias.go:141
 msgid "Delete image aliases"
-msgstr "Apaga nomes alternativos de imagem"
+msgstr "Apaga aliases de imagem"
 
 #: cmd/incus/image.go:314 cmd/incus/image.go:315
 msgid "Delete images"
@@ -2828,7 +2828,7 @@ msgstr "Erro ao descodificar dados: %v"
 #: cmd/incus/publish.go:250 cmd/incus/utils.go:226
 #, c-format
 msgid "Error retrieving aliases: %w"
-msgstr "Erro ao obter nomes alternativos: %w"
+msgstr "Erro ao obter aliases: %w"
 
 #: cmd/incus/cluster.go:579 cmd/incus/cluster_group.go:1035
 #: cmd/incus/config.go:643 cmd/incus/config.go:675 cmd/incus/network.go:1628
@@ -2873,7 +2873,7 @@ msgstr "Erro ao atualizar ficheiro modelo: %s"
 #: cmd/incus/main.go:354
 #, c-format
 msgid "Error while executing alias expansion: %s\n"
-msgstr "Erro ao executar a expansão de nome alternativo: %s\n"
+msgstr "Erro ao executar a expansão de alias: %s\n"
 
 #: cmd/incus/main.go:357
 #, c-format
@@ -3279,7 +3279,7 @@ msgstr "Falhou ao criar %q: %w"
 #: cmd/incus/utils.go:199
 #, c-format
 msgid "Failed to create alias %s: %w"
-msgstr "Falhou ao criar nome alternativo %s: %w"
+msgstr "Falhou ao criar alias %s: %w"
 
 #: cmd/incus/storage_bucket.go:1542
 #, c-format
@@ -3370,7 +3370,7 @@ msgstr "Falhou ao refrescar instância alvo: '%s': %v"
 #: cmd/incus/utils.go:188
 #, c-format
 msgid "Failed to remove alias %s: %w"
-msgstr "Falhou ao remover nome alternativo %s: %w"
+msgstr "Falhou ao remover alias %s: %w"
 
 #: cmd/incus/export.go:184
 #, c-format
@@ -3881,7 +3881,7 @@ msgstr "Nome de máquina"
 
 #: cmd/incus/info.go:519 cmd/incus/info.go:530
 msgid "Hugepages:\n"
-msgstr ""
+msgstr "Hugepages:\n"
 
 #: cmd/incus/utils.go:832
 #, c-format
@@ -3968,7 +3968,7 @@ msgstr "Se uma instância estiver a correr, pára-a e depois recompila-a"
 
 #: cmd/incus/image.go:686 cmd/incus/publish.go:44
 msgid "If the image alias already exists, delete and create a new one"
-msgstr "Se o nome alternativo da imagem já existir, apaga e cria um novo"
+msgstr "Se o alias da imagem já existir, apaga e cria um novo"
 
 #: cmd/incus/snapshot.go:95 cmd/incus/storage_volume.go:2554
 msgid "If the snapshot name already exists, delete and create a new one"
@@ -4001,7 +4001,7 @@ msgstr "Ignorar o estado de instância"
 
 #: cmd/incus/image_alias.go:75
 msgid "Image alias description"
-msgstr "Descrição do nome alternativo de imagem"
+msgstr "Descrição do alias de imagem"
 
 #: cmd/incus/image.go:1510
 msgid "Image already up to date."
@@ -4418,7 +4418,7 @@ msgstr "Velocidade do Link: %dMbit/s (%s duplex)"
 
 #: cmd/incus/network.go:1330
 msgid "List DHCP leases"
-msgstr ""
+msgstr "Listar leases do DHCP"
 
 #: cmd/incus/network.go:1331
 msgid ""
@@ -4443,18 +4443,40 @@ msgid ""
 "  t - Type\n"
 "  L - Location of the DHCP Lease (e.g. its cluster member)"
 msgstr ""
+"Lista leases DHCP\n"
+"\n"
+"Disposição predefinida de coluna: hmitL\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede incluir quando mostra em formato tabela ou\n"
+"csv.\n"
+"\n"
+"Os argumentos da coluna são ou caracteres curtos pre-definidos (veja em "
+"baixo),\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos de coluna pre-definidos:\n"
+"  h - Nome de máquina\n"
+"  m - Endereço MAC\n"
+"  i - Endereço IP\n"
+"  t - Tipo\n"
+"  L - Localização do lease DHCP (ex. é membro de agrupamento)"
 
 #: cmd/incus/network_address_set.go:99
 msgid "List address sets across all projects"
-msgstr ""
+msgstr "Lista conjuntos de endereços entre todos os projetos"
 
 #: cmd/incus/alias.go:112 cmd/incus/alias.go:113
 msgid "List aliases"
-msgstr ""
+msgstr "Lista aliases"
 
 #: cmd/incus/config_trust.go:615
 msgid "List all active certificate add tokens"
-msgstr ""
+msgstr "Lista todos os testemunhos de adição de certificado ativos"
 
 #: cmd/incus/config_trust.go:616
 msgid ""
@@ -4477,10 +4499,30 @@ msgid ""
 "  t - Token\n"
 "  E - Expires At"
 msgstr ""
+"Lista todos os testemunhos de adição de certificado ativos\n"
+"\n"
+"Disposição predefinida de coluna: ntE\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"OS argumentos de coluna são ou caracteres curtos predefinidos(veja abaixo),\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos pre-definidos de coluna:\n"
+"  n - Nome\n"
+"  t - Testemunho (Token)\n"
+"  E - Expira Em"
 
 #: cmd/incus/cluster.go:1099
 msgid "List all active cluster member join tokens"
-msgstr ""
+msgstr "Lista todos os testemunhos ativos de junção de membros de agrupamento"
 
 #: cmd/incus/cluster.go:1100
 msgid ""
@@ -4503,6 +4545,26 @@ msgid ""
 "  t - Token\n"
 "  E - Expires At"
 msgstr ""
+"Lista todos os testemunhos ativos de junção de membros de agrupamento\n"
+"\n"
+"Disposição predefinida de coluna: nte\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos(veja abaixo),\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos pre-definidos de coluna:\n"
+"  n - Nome\n"
+"  t - Testemunho (Token)\n"
+"  E - Expira Em"
 
 #: cmd/incus/cluster_group.go:466
 msgid "List all the cluster groups"
@@ -4529,6 +4591,26 @@ msgid ""
 "  d - Description\n"
 "  m - Member"
 msgstr ""
+"Lista todos os grupos de agrupamento\n"
+"\n"
+"Disposição predefinida de coluna: ndm\n"
+"\n"
+"== Columns ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos(veja abaixo),\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos pre-definidos de coluna:\n"
+"  n - Nome\n"
+"  d - Descrição\n"
+"  m - Membro"
 
 #: cmd/incus/cluster.go:133
 msgid "List all the cluster members"
@@ -4555,26 +4637,46 @@ msgid ""
 "    s - Status\n"
 "    m - Message"
 msgstr ""
+"Lista todos os membros de agrupamento\n"
+"\n"
+"\tA opção -c recebe uma lista (opcionalmente separada por vírgulas de "
+"argumentos\n"
+"\tque controlam quais atributos de imagem são incluídos ao mostrar em "
+"formato\n"
+"\tde tabela ou csv.\n"
+"\n"
+"\tDisposição predefinida de coluna é: nurafdsm\n"
+"\n"
+"\tCaracteres curtos de coluna:\n"
+"\n"
+"    n - Nome do servidor\n"
+"    u - URL\n"
+"    r - Funções\n"
+"    a - Arquitetura\n"
+"    f - Domínio de Falha\n"
+"    d - Descrição\n"
+"    s - Estado\n"
+"    m - Mensagem"
 
 #: cmd/incus/warning.go:99
 msgid "List all warnings"
-msgstr ""
+msgstr "Lista todos os avisos"
 
 #: cmd/incus/network_acl.go:98
 msgid "List available network ACL"
-msgstr ""
+msgstr "Lista ACL de rede disponível"
 
 #: cmd/incus/network_acl.go:97
 msgid "List available network ACLS"
-msgstr ""
+msgstr "Lista ACLs de rede disponíveis"
 
 #: cmd/incus/network_address_set.go:94 cmd/incus/network_address_set.go:95
 msgid "List available network address sets"
-msgstr ""
+msgstr "Lista de conjuntos de endereços de rede disponíveis"
 
 #: cmd/incus/network_forward.go:94
 msgid "List available network forwards"
-msgstr ""
+msgstr "Lista de encaminhamentos de rede disponíveis"
 
 #: cmd/incus/network_forward.go:95
 msgid ""
@@ -4599,10 +4701,32 @@ msgid ""
 "p - Port\n"
 "L - Location of the network zone (e.g. its cluster member)"
 msgstr ""
+"Lista de encaminhamentos de rede disponíveis\n"
+"\n"
+"Disposição predefinida de coluna: ldDp\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos(veja abaixo),\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos pre-definidos de coluna:\n"
+"l - Endereço de Escuta\n"
+"d - Descrição\n"
+"D - Endereço Alvo Predefinido\n"
+"p - Porto\n"
+"L - Localização da zona de rede (ex. o seu membro de agrupamento)"
 
 #: cmd/incus/network_load_balancer.go:103
 msgid "List available network load balancers"
-msgstr ""
+msgstr "Lista balanceadores de carga de rede disponíveis"
 
 #: cmd/incus/network_load_balancer.go:104
 msgid ""
@@ -4626,10 +4750,31 @@ msgid ""
 "  p - Ports\n"
 "  L - Location of the operation (e.g. its cluster member)"
 msgstr ""
+"Lista balanceadores de carga de rede disponíveis\n"
+"\n"
+"Disposição predefinida de coluna: ldp\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos(veja abaixo),\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos pre-definidos da coluna:\n"
+"  l - Endereço de Escuta\n"
+"  d - Descrição\n"
+"  p - Portos\n"
+"  L - Localização da operação (ex. os seus membro de agrupamento)"
 
 #: cmd/incus/network_peer.go:90
 msgid "List available network peers"
-msgstr ""
+msgstr "Lista peers de rede disponíveis"
 
 #: cmd/incus/network_peer.go:91
 msgid ""
@@ -4654,10 +4799,32 @@ msgid ""
 "  t - Type\n"
 "  s - State"
 msgstr ""
+"Lista peers de rede disponíveis\n"
+"\n"
+"Disposição predefinida de coluna: ndpts\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos(veja abaixo),\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos pre-definidos da coluna:\n"
+"  n - Nome\n"
+"  d - Descrição\n"
+"  p - Peer\n"
+"  t - Tipo\n"
+"  s - Estado"
 
 #: cmd/incus/network_zone.go:887 cmd/incus/network_zone.go:888
 msgid "List available network zone records"
-msgstr ""
+msgstr "Lista registos de zona de rede disponíveis"
 
 #: cmd/incus/network_zone.go:96
 msgid ""
@@ -4681,14 +4848,35 @@ msgid ""
 "  n - Name\n"
 "  u - Used by"
 msgstr ""
+"Lista zona de rede disponível\n"
+"\n"
+"Disposição predefinida de coluna: nDSdus\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos(veja abaixo),\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos pre-definidos da coluna:\n"
+"  d - Descrição\n"
+"  e - Nome do projeto\n"
+"  n - Nome\n"
+"  u - Usado por"
 
 #: cmd/incus/network_zone.go:95
 msgid "List available network zones"
-msgstr ""
+msgstr "Lista zonas de rede disponíveis"
 
 #: cmd/incus/network.go:1110
 msgid "List available networks"
-msgstr ""
+msgstr "Lista redes disponíveis"
 
 #: cmd/incus/network.go:1111
 msgid ""
@@ -4718,10 +4906,38 @@ msgid ""
 "t - Interface type\n"
 "u - Used by (count)"
 msgstr ""
+"Lista redes disponíveis\n"
+"\n"
+"Os filtros podem ser do formato <chave>=<valor> para filtragem baseada em "
+"propriedade,\n"
+"ou parte do nome da rede. OS filtros têm de ser delimitados por um ','.\n"
+"\n"
+"Exemplo:\n"
+"  - \"foo\" lista todas as redes que começam com o nome foo\n"
+"  - \"name=foo\" lista todas as redes que têm exatamente o nome foo\n"
+"  - \"type=bridge\" lista todas as redes com o tipo bridge\n"
+"\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Disposição predefinida de coluna: ntm46dus\n"
+"Caracteres curtos pre-definidos da coluna:\n"
+"4 - Endereços IPv4\n"
+"6 - Endereços IPv6\n"
+"d - Descrição\n"
+"e - Nome do projeto\n"
+"m - Estado de gestão\n"
+"n - Nome da Interface de Rede\n"
+"s - Estado\n"
+"t - Tipo de Interface\n"
+"u - Usado por (contagem)"
 
 #: cmd/incus/storage.go:686
 msgid "List available storage pools"
-msgstr ""
+msgstr "Lista pools de armazenamento disponíveis"
 
 #: cmd/incus/storage.go:687
 msgid ""
@@ -4747,10 +4963,33 @@ msgid ""
 "  u - used by\n"
 "  s - state"
 msgstr ""
+"Lista pools de armazenamento disponíveis\n"
+"\n"
+"Disposição predefinida de coluna: nDdus\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos(veja abaixo),\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos pre-definidos da coluna:\n"
+"  n - Nome\n"
+"  D - Driver\n"
+"  d - Descrição\n"
+"  S - Fonte\n"
+"  u - Usado por\n"
+"  s - Estado"
 
 #: cmd/incus/operation.go:118
 msgid "List background operations"
-msgstr ""
+msgstr "Lista operações nos bastidores"
 
 #: cmd/incus/operation.go:119
 msgid ""
@@ -4777,10 +5016,35 @@ msgid ""
 "  C - Created\n"
 "  L - Location of the operation (e.g. its cluster member)"
 msgstr ""
+"Lista operações nos bastidores\n"
+"\n"
+"Disposição predefinida de coluna: itdscCl\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo),"
+"\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos pre-definidos da coluna:\n"
+"  i - ID\n"
+"  t - Tipo\n"
+"  d - Descrição\n"
+"  s - Estado\n"
+"  c - Cancelável\n"
+"  C - Criado\n"
+"  L - Localização da operação (ex. seu membro do agrupamento)"
 
 #: cmd/incus/image_alias.go:196
 msgid "List image aliases"
-msgstr ""
+msgstr "Lista aliases de imagem"
 
 #: cmd/incus/image_alias.go:197
 msgid ""
@@ -4805,10 +5069,33 @@ msgid ""
 "  t - Type\n"
 "  d - Description"
 msgstr ""
+"Lista aliases de imagem\n"
+"\n"
+"Filtros podem ser parte do hash da imagem ou parte do nome alias da imagem.\n"
+"Disposição predefinida de coluna: aftd\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo),"
+"\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos pre-definidos da coluna:\n"
+"  a - Alias\n"
+"  f - Impressão digital\n"
+"  t - Tipo\n"
+"  d - Descrição"
 
 #: cmd/incus/image.go:1087
 msgid "List images"
-msgstr ""
+msgstr "Lista imagens"
 
 #: cmd/incus/image.go:1088
 msgid ""
@@ -4837,18 +5124,46 @@ msgid ""
 "    u - Upload date\n"
 "    t - Type"
 msgstr ""
+"Lista imagens\n"
+"\n"
+"Os filtros podem ser do formato <chave>=<valor> para filtragem baseada em "
+"propriedade,\n"
+"ou parte do hash da imagem ou parte do nome de alias da imagem.\n"
+"\n"
+"A opção -c recebe uma lista (opcionalmente separada por vírgulas) de "
+"argumentos\n"
+"que controlam quais atributos de zona de rede são incluídos ao mostrar em "
+"formato\n"
+"de tabela ou csv.\n"
+"\n"
+"Disposição predefinida de coluna: lfpdasu\n"
+"\n"
+"Caracteres curtos pre-definidos da coluna:\n"
+"\n"
+"    l - Alias de imagem mais curto (e opcionalmente um número de outros "
+"aliases)\n"
+"    L - Lista separada por nova linha de todos os aliases da imagem\n"
+"    f - Impressão digital (curta)\n"
+"    F - Impressão digital (longa)\n"
+"    p - Se a imagem é pública\n"
+"    d - Descrição\n"
+"    e - Projeto\n"
+"    a - Arquitetura\n"
+"    s - Tamanho\n"
+"    u - Data do envio\n"
+"    t - Tipo"
 
 #: cmd/incus/config_device.go:325 cmd/incus/config_device.go:326
 msgid "List instance devices"
-msgstr ""
+msgstr "Lista dispositivos de instância"
 
 #: cmd/incus/config_template.go:297 cmd/incus/config_template.go:298
 msgid "List instance file templates"
-msgstr ""
+msgstr "Lista modelos de ficheiro de instância"
 
 #: cmd/incus/snapshot.go:301
 msgid "List instance snapshots"
-msgstr ""
+msgstr "Lista instantâneos de instância"
 
 #: cmd/incus/snapshot.go:302
 msgid ""
@@ -4872,6 +5187,28 @@ msgid ""
 "  E - Expires At\n"
 "  s - Stateful"
 msgstr ""
+"Lista instantâneos de instância\n"
+"\n"
+"Disposição predefinida de coluna: nTEs\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo),"
+"\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos pre-definidos da coluna:\n"
+"  n - Nome\n"
+"  T - Tomado Em\n"
+"  E - Expira Em\n"
+"  s - Com Estado"
 
 #: cmd/incus/list.go:51
 msgid "List instances"
@@ -4963,11 +5300,11 @@ msgstr ""
 
 #: cmd/incus/network_acl.go:102
 msgid "List network ACLs across all projects"
-msgstr ""
+msgstr "Lista ACLs de rede entre todos os projetos"
 
 #: cmd/incus/network_allocations.go:35
 msgid "List network allocations in use"
-msgstr ""
+msgstr "Lista alocações de rede em uso"
 
 #: cmd/incus/network_allocations.go:36
 msgid ""
@@ -4991,10 +5328,32 @@ msgid ""
 "  n - NAT\n"
 "  m - Mac Address"
 msgstr ""
+"Lista alocações de rede em uso\n"
+"Disposição predefinida de coluna: uatnm\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo),"
+"\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos pre-definidos da coluna:\n"
+"  u - Usado por\n"
+"  a - Endereço\n"
+"  t - Tipo\n"
+"  n - NAT\n"
+"  m - Endereço Mac"
 
 #: cmd/incus/network_integration.go:418
 msgid "List network integrations"
-msgstr ""
+msgstr "Lista integrações de rede"
 
 #: cmd/incus/network_integration.go:419
 msgid ""
@@ -5018,18 +5377,40 @@ msgid ""
 "\tt - Type\n"
 "\tu - Used by"
 msgstr ""
+"Lista integrações de rede\n"
+"\n"
+"Disposição predefinida de coluna: ndtu\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo),"
+"\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos pre-definidos da coluna:\n"
+"\tn - Nome\n"
+"\td - Descrição\n"
+"\tt - Tipo\n"
+"\tu - Usado por"
 
 #: cmd/incus/network.go:1140
 msgid "List networks in all projects"
-msgstr ""
+msgstr "Lista redes em todos os projetos"
 
 #: cmd/incus/config_trust.go:100 cmd/incus/config_trust.go:185
 msgid "List of projects to restrict the certificate to"
-msgstr ""
+msgstr "Lista de projetos para restringir o certificado a"
 
 #: cmd/incus/operation.go:143
 msgid "List operations from all projects"
-msgstr ""
+msgstr "Lista de operações de todos os projetos"
 
 #: cmd/incus/profile.go:736
 msgid "List profiles"
@@ -5062,7 +5443,7 @@ msgstr ""
 
 #: cmd/incus/project.go:531
 msgid "List projects"
-msgstr ""
+msgstr "Lista projetos"
 
 #: cmd/incus/project.go:532
 msgid ""
@@ -5084,6 +5465,25 @@ msgid ""
 "d - Description\n"
 "u - Used By"
 msgstr ""
+"Lista projetos\n"
+"\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"Disposição predefinida de coluna: nipvbwzdu\n"
+"Caracteres curtos pre-definidos da coluna:\n"
+"\n"
+"n - Nome do Projeto\n"
+"i - Imagens\n"
+"p - Perfis\n"
+"v - Volumes de Armazenamento\n"
+"b - Buckets de Armazenamento\n"
+"w - Redes\n"
+"z - Zonas de Rede\n"
+"d - Descrição\n"
+"u - Usado por"
 
 #: cmd/incus/storage_bucket.go:945
 msgid "List storage bucket keys"
@@ -5140,7 +5540,7 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:2772 cmd/incus/storage_volume.go:2773
 msgid "List storage volume snapshots"
-msgstr ""
+msgstr "Lista instantâneos de volume de armazenamento"
 
 #: cmd/incus/storage_volume.go:2779
 msgid ""
@@ -5155,6 +5555,18 @@ msgid ""
 "\t\tT - Taken at\n"
 "\t\tE - Expiry"
 msgstr ""
+"Lista instantâneos de volume de armazenamento\n"
+"\n"
+"\tA opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"\tquais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"\tou csv.\n"
+"\n"
+"\tCaracteres curtos pre-definidos da coluna:\n"
+"\t\tn - Nome\n"
+"\t\tT - Tomado Em\n"
+"\t\tE - Termo"
 
 #: cmd/incus/storage_volume.go:1595
 msgid "List storage volumes"
@@ -5278,45 +5690,45 @@ msgstr ""
 
 #: cmd/incus/operation.go:31 cmd/incus/operation.go:32
 msgid "List, show and delete background operations"
-msgstr ""
+msgstr "Lista, mostra e apaga operações dos bastidores"
 
 #: cmd/incus/network_load_balancer.go:351
 msgid "Load balancer description"
-msgstr ""
+msgstr "Carrega descrição do balanceador"
 
 #: cmd/incus/info.go:496
 msgid "Load:"
-msgstr ""
+msgstr "Carga:"
 
 #: cmd/incus/info.go:658 cmd/incus/storage_volume.go:1472
 #, c-format
 msgid "Location: %s"
-msgstr ""
+msgstr "Localização: %s"
 
 #: cmd/incus/monitor.go:83
 msgid "Log level filtering can only be used with pretty formatting"
-msgstr ""
+msgstr "Filtragem de nível de relatório só pode ser usada com formatação bonita"
 
 #: cmd/incus/info.go:916
 msgid "Log:"
-msgstr ""
+msgstr "Relatório:"
 
 #: cmd/incus/network.go:1076
 msgid "Logical router"
-msgstr ""
+msgstr "Roteador lógico"
 
 #: cmd/incus/network.go:1080
 msgid "Logical switch"
-msgstr ""
+msgstr "Switch lógico"
 
 #: cmd/incus/utils.go:738
 #, c-format
 msgid "Login with username %q and password %q"
-msgstr ""
+msgstr "Login com nome de utilizador %q e palavra passe %q"
 
 #: cmd/incus/utils.go:740
 msgid "Login without username and password"
-msgstr ""
+msgstr "Login sem nome de utilizador e palavra passe"
 
 #: cmd/incus/admin_cluster.go:26
 msgid "Low level administration tools for inspecting and recovering clusters."
@@ -5330,83 +5742,83 @@ msgstr "Comandos de baixo nível de administração de agrupamento"
 
 #: cmd/incus/network.go:1062
 msgid "Lower device"
-msgstr ""
+msgstr "Dispositivo baixo"
 
 #: cmd/incus/network.go:1043
 msgid "Lower devices"
-msgstr ""
+msgstr "Dispositivos baixos"
 
 #: cmd/incus/network.go:1377 cmd/incus/network_allocations.go:81
 msgid "MAC ADDRESS"
-msgstr ""
+msgstr "ENDEREÇO MAC"
 
 #: cmd/incus/info.go:763
 msgid "MAC address"
-msgstr ""
+msgstr "Endereço MAC"
 
 #: cmd/incus/network.go:1007
 #, c-format
 msgid "MAC address: %s"
-msgstr ""
+msgstr "Endereço MAC: %s"
 
 #: cmd/incus/info.go:264
 #, c-format
 msgid "MAD: %s (%s)"
-msgstr ""
+msgstr "MAD: %s (%s)"
 
 #: cmd/incus/network.go:1166
 msgid "MANAGED"
-msgstr ""
+msgstr "GERIDO"
 
 #: cmd/incus/cluster_group.go:512
 msgid "MEMBERS"
-msgstr ""
+msgstr "MEMBROS"
 
 #: cmd/incus/top.go:82
 msgid "MEMORY"
-msgstr ""
+msgstr "MEMÓRIA"
 
 #: cmd/incus/list.go:506
 msgid "MEMORY USAGE"
-msgstr ""
+msgstr "UTILIZAÇÃO DE MEMÓRIA"
 
 #: cmd/incus/list.go:507
 #, c-format
 msgid "MEMORY USAGE%"
-msgstr ""
+msgstr "UTILIZAÇÃO DE MEMÓRIA%"
 
 #: cmd/incus/cluster.go:186
 msgid "MESSAGE"
-msgstr ""
+msgstr "MENSAGEM"
 
 #: cmd/incus/network.go:1041
 msgid "MII Frequency"
-msgstr ""
+msgstr "Frequência MII"
 
 #: cmd/incus/network.go:1042
 msgid "MII state"
-msgstr ""
+msgstr "Estado MII"
 
 #: cmd/incus/info.go:767
 msgid "MTU"
-msgstr ""
+msgstr "MTU"
 
 #: cmd/incus/network.go:1010
 #, c-format
 msgid "MTU: %d"
-msgstr ""
+msgstr "MTU: %d"
 
 #: cmd/incus/image.go:159 cmd/incus/image.go:685
 msgid "Make image public"
-msgstr ""
+msgstr "Torna a imagem pública"
 
 #: cmd/incus/publish.go:39
 msgid "Make the image public"
-msgstr ""
+msgstr "Torna a imagem pública"
 
 #: cmd/incus/network.go:40 cmd/incus/network.go:41
 msgid "Manage and attach instances to networks"
-msgstr ""
+msgstr "Gerir e anexar instâncias a redes"
 
 #: cmd/incus/cluster_group.go:36 cmd/incus/cluster_group.go:37
 msgid "Manage cluster groups"
@@ -5414,35 +5826,35 @@ msgstr "Gerir grupos de agrupamento"
 
 #: cmd/incus/cluster.go:37 cmd/incus/cluster.go:38
 msgid "Manage cluster members"
-msgstr ""
+msgstr "Gerir membros de agrupamentos"
 
 #: cmd/incus/cluster_role.go:24 cmd/incus/cluster_role.go:25
 msgid "Manage cluster roles"
-msgstr ""
+msgstr "Gerir funções de agrupamento"
 
 #: cmd/incus/alias.go:23 cmd/incus/alias.go:24
 msgid "Manage command aliases"
-msgstr ""
+msgstr "Gerir aliases de comando"
 
 #: cmd/incus/config_device.go:26 cmd/incus/config_device.go:27
 msgid "Manage devices"
-msgstr ""
+msgstr "Gerir dispositivos"
 
 #: cmd/incus/storage_volume.go:2362 cmd/incus/storage_volume.go:2363
 msgid "Manage files in custom volumes"
-msgstr ""
+msgstr "Gerir ficheiros em volumes personalizados"
 
 #: cmd/incus/file.go:52 cmd/incus/file.go:53
 msgid "Manage files in instances"
-msgstr ""
+msgstr "Gerir ficheiros em instâncias"
 
 #: cmd/incus/image_alias.go:31 cmd/incus/image_alias.go:32
 msgid "Manage image aliases"
-msgstr ""
+msgstr "Gerir aliases de imagem"
 
 #: cmd/incus/image.go:43
 msgid "Manage images"
-msgstr ""
+msgstr "Gerir imagens"
 
 #: cmd/incus/image.go:44
 msgid ""
@@ -5463,117 +5875,136 @@ msgid ""
 "Images can be referenced by their full hash, shortest unique partial\n"
 "hash or alias name (if one is set)."
 msgstr ""
+"Gerir imagens\n"
+"\n"
+"AS instâncias são criadas a partir de imagens. Essas imagens são elas "
+"próprias\n"
+"ou geradas a partir duma instância existente ou descarregadas de um "
+"servidor\n"
+"de imagem.\n"
+"\n"
+"Quando se usa imagens remotas, o servidor automaticamente mete as imagens "
+"em\n"
+"cache para si e remove-as após expirarem.\n"
+"\n"
+"O identificador único de imagem é o hash (sha-256) da sua representação\n"
+"como um tarball comprimido (ou para imagens divididas, o concatenação dos\n"
+"metadados e tarballs rootfs).\n"
+"\n"
+"As imagens podem ser referenciadas pelo seu hash completo, hash parcial "
+"único\n"
+"curto ou nome de alias (se um estiver definido)."
 
 #: cmd/incus/admin.go:20 cmd/incus/admin.go:21 cmd/incus/admin_other.go:20
 #: cmd/incus/admin_other.go:21
 msgid "Manage incus daemon"
-msgstr ""
+msgstr "Gerir daemon do incus"
 
 #: cmd/incus/config.go:33 cmd/incus/config.go:34
 msgid "Manage instance and server configuration options"
-msgstr ""
+msgstr "Gerir opções de configuração de instância e servidor"
 
 #: cmd/incus/config_template.go:27 cmd/incus/config_template.go:28
 msgid "Manage instance file templates"
-msgstr ""
+msgstr "Gerir modelos de ficheiro de instância"
 
 #: cmd/incus/config_metadata.go:27 cmd/incus/config_metadata.go:28
 msgid "Manage instance metadata files"
-msgstr ""
+msgstr "Gerir ficheiros de metadados da instância"
 
 #: cmd/incus/snapshot.go:32 cmd/incus/snapshot.go:33
 msgid "Manage instance snapshots"
-msgstr ""
+msgstr "Gerir instantâneos da instância"
 
 #: cmd/incus/network_acl.go:896 cmd/incus/network_acl.go:897
 msgid "Manage network ACL rules"
-msgstr ""
+msgstr "Gerir regras ACL de rede"
 
 #: cmd/incus/network_acl.go:30 cmd/incus/network_acl.go:31
 msgid "Manage network ACLs"
-msgstr ""
+msgstr "Gerir ACLs de rede"
 
 #: cmd/incus/network_address_set.go:31 cmd/incus/network_address_set.go:32
 msgid "Manage network address sets"
-msgstr ""
+msgstr "Gerir conjuntos de endereços de rede"
 
 #: cmd/incus/network_forward.go:927 cmd/incus/network_forward.go:928
 msgid "Manage network forward ports"
-msgstr ""
+msgstr "Gerir portos de encaminhamento de rede"
 
 #: cmd/incus/network_forward.go:30 cmd/incus/network_forward.go:31
 msgid "Manage network forwards"
-msgstr ""
+msgstr "Gerir encaminhamentos de rede"
 
 #: cmd/incus/network_integration.go:29 cmd/incus/network_integration.go:30
 msgid "Manage network integrations"
-msgstr ""
+msgstr "Gerir integrações de rede"
 
 #: cmd/incus/network_load_balancer.go:906
 #: cmd/incus/network_load_balancer.go:907
 msgid "Manage network load balancer backends"
-msgstr ""
+msgstr "Gerir backends de balanceador de carga de rede"
 
 #: cmd/incus/network_load_balancer.go:1105
 #: cmd/incus/network_load_balancer.go:1106
 msgid "Manage network load balancer ports"
-msgstr ""
+msgstr "Gerir portos de balanceador de carga de rede"
 
 #: cmd/incus/network_load_balancer.go:31 cmd/incus/network_load_balancer.go:32
 msgid "Manage network load balancers"
-msgstr ""
+msgstr "Gerir balanceadores de carga de rede"
 
 #: cmd/incus/network_peer.go:30 cmd/incus/network_peer.go:31
 msgid "Manage network peerings"
-msgstr ""
+msgstr "Gerir peerings de rede"
 
 #: cmd/incus/network_zone.go:1557 cmd/incus/network_zone.go:1558
 msgid "Manage network zone record entries"
-msgstr ""
+msgstr "Gerir entradas de registro de zona de rede"
 
 #: cmd/incus/network_zone.go:829 cmd/incus/network_zone.go:830
 msgid "Manage network zone records"
-msgstr ""
+msgstr "Gerir registros de zona de rede"
 
 #: cmd/incus/network_zone.go:35 cmd/incus/network_zone.go:36
 msgid "Manage network zones"
-msgstr ""
+msgstr "Gerir zonas de rede"
 
 #: cmd/incus/profile.go:37 cmd/incus/profile.go:38
 msgid "Manage profiles"
-msgstr ""
+msgstr "Gerir perfis"
 
 #: cmd/incus/project.go:39 cmd/incus/project.go:40
 msgid "Manage projects"
-msgstr ""
+msgstr "Gerir projetos"
 
 #: cmd/incus/storage_bucket.go:898
 msgid "Manage storage bucket keys"
-msgstr ""
+msgstr "Gerir chaves do bucket de armazenamento"
 
 #: cmd/incus/storage_bucket.go:899
 msgid "Manage storage bucket keys."
-msgstr ""
+msgstr "Gerir chaves do bucket de armazenamento."
 
 #: cmd/incus/storage_bucket.go:36
 msgid "Manage storage buckets"
-msgstr ""
+msgstr "Gerir buckets de armazenamento"
 
 #: cmd/incus/storage_bucket.go:37
 msgid "Manage storage buckets."
-msgstr ""
+msgstr "Gerir buckets de armazenamento."
 
 #: cmd/incus/storage.go:39 cmd/incus/storage.go:40
 msgid "Manage storage pools and volumes"
-msgstr ""
+msgstr "Gerir pools e volumes de armazenamento"
 
 #: cmd/incus/storage_volume.go:2492 cmd/incus/storage_volume.go:2493
 msgid "Manage storage volume snapshots"
-msgstr ""
+msgstr "Gerir instantâneos de volume de armazenamento"
 
 #: cmd/incus/storage_volume.go:60
 msgid "Manage storage volumes"
-msgstr ""
+msgstr "Gerir volumes de armazenamento"
 
 #: cmd/incus/storage_volume.go:61
 msgid ""
@@ -5582,6 +6013,10 @@ msgid ""
 "Unless specified through a prefix, all volume operations affect \"custom\" "
 "(user created) volumes."
 msgstr ""
+"Gerir volumes de armazenamento\n"
+"\n"
+"A menos que especificado por um prefixo, todas as operações de volume afetam "
+"volumes \"custom\" (criados pelo utilizador)."
 
 #: cmd/incus/remote.go:48 cmd/incus/remote.go:49
 msgid "Manage the list of remote servers"
@@ -5647,30 +6082,32 @@ msgstr ""
 
 #: cmd/incus/info.go:517
 msgid "Memory:"
-msgstr ""
+msgstr "Memória:"
 
 #: cmd/incus/move.go:340
 #, c-format
 msgid "Migration API failure: %w"
-msgstr ""
+msgstr "Falha na migração da API: %w"
 
 #: cmd/incus/move.go:359
 #, c-format
 msgid "Migration operation failure: %w"
-msgstr ""
+msgstr "Falha de operação de migração: %w"
 
 #: cmd/incus/admin_init.go:57
 msgid "Minimal configuration (non-interactive)"
-msgstr ""
+msgstr "Configuração mínima (não interativa)"
 
 #: cmd/incus/monitor.go:54
 msgid ""
 "Minimum level for log messages (only available when using pretty format)"
 msgstr ""
+"Nível mínimo para mensagens de relatório (apenas disponível quando se usa "
+"formato bonito)"
 
 #: cmd/incus/admin_init_interactive.go:699
 msgid "Minimum size is 1GiB"
-msgstr ""
+msgstr "Tamanho mínimo é 1GiB"
 
 #: cmd/incus/storage_bucket.go:139 cmd/incus/storage_bucket.go:245
 #: cmd/incus/storage_bucket.go:323 cmd/incus/storage_bucket.go:444
@@ -5679,23 +6116,23 @@ msgstr ""
 #: cmd/incus/storage_bucket.go:1242 cmd/incus/storage_bucket.go:1323
 #: cmd/incus/storage_bucket.go:1448 cmd/incus/storage_bucket.go:1524
 msgid "Missing bucket name"
-msgstr ""
+msgstr "Nome do bucket em falta"
 
 #: cmd/incus/config_trust.go:318 cmd/incus/config_trust.go:922
 msgid "Missing certificate fingerprint"
-msgstr ""
+msgstr "Impressão digital de certificado em falta"
 
 #: cmd/incus/cluster_group.go:245 cmd/incus/cluster_group.go:315
 #: cmd/incus/cluster_group.go:375 cmd/incus/cluster_group.go:797
 msgid "Missing cluster group name"
-msgstr ""
+msgstr "Nome do grupo de agrupamento em falta"
 
 #: cmd/incus/cluster.go:939 cmd/incus/cluster.go:1552
 #: cmd/incus/cluster_group.go:147 cmd/incus/cluster_group.go:660
 #: cmd/incus/cluster_group.go:864 cmd/incus/cluster_role.go:84
 #: cmd/incus/cluster_role.go:153
 msgid "Missing cluster member name"
-msgstr ""
+msgstr "Nome de membro de agrupamento em falta"
 
 #: cmd/incus/config_metadata.go:114 cmd/incus/config_metadata.go:225
 #: cmd/incus/config_template.go:120 cmd/incus/config_template.go:177
@@ -5703,12 +6140,12 @@ msgstr ""
 #: cmd/incus/config_template.go:409 cmd/incus/profile.go:151
 #: cmd/incus/profile.go:234 cmd/incus/profile.go:965 cmd/incus/rebuild.go:44
 msgid "Missing instance name"
-msgstr ""
+msgstr "Nome de instância em falta"
 
 #: cmd/incus/storage_bucket.go:1142 cmd/incus/storage_bucket.go:1246
 #: cmd/incus/storage_bucket.go:1327 cmd/incus/storage_bucket.go:1452
 msgid "Missing key name"
-msgstr ""
+msgstr "Nome da chave em falta"
 
 #: cmd/incus/network_forward.go:299 cmd/incus/network_forward.go:374
 #: cmd/incus/network_forward.go:495 cmd/incus/network_forward.go:582
@@ -5726,14 +6163,14 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:1243
 #: cmd/incus/network_load_balancer.go:1353
 msgid "Missing listen address"
-msgstr ""
+msgstr "Endereço de escuta em falta"
 
 #: cmd/incus/config_device.go:137 cmd/incus/config_device.go:272
 #: cmd/incus/config_device.go:368 cmd/incus/config_device.go:444
 #: cmd/incus/config_device.go:558 cmd/incus/config_device.go:689
 #: cmd/incus/config_device.go:808
 msgid "Missing name"
-msgstr ""
+msgstr "Nome em falta"
 
 #: cmd/incus/network_acl.go:231 cmd/incus/network_acl.go:293
 #: cmd/incus/network_acl.go:358 cmd/incus/network_acl.go:437
@@ -5741,21 +6178,21 @@ msgstr ""
 #: cmd/incus/network_acl.go:809 cmd/incus/network_acl.go:868
 #: cmd/incus/network_acl.go:1012 cmd/incus/network_acl.go:1103
 msgid "Missing network ACL name"
-msgstr ""
+msgstr "Nome de ACL de rede em falta"
 
 #: cmd/incus/network_address_set.go:217 cmd/incus/network_address_set.go:282
 #: cmd/incus/network_address_set.go:383 cmd/incus/network_address_set.go:517
 #: cmd/incus/network_address_set.go:622 cmd/incus/network_address_set.go:677
 #: cmd/incus/network_address_set.go:731 cmd/incus/network_address_set.go:784
 msgid "Missing network address set name"
-msgstr ""
+msgstr "Nome do conjunto de endereços de rede em falta"
 
 #: cmd/incus/network_integration.go:134 cmd/incus/network_integration.go:206
 #: cmd/incus/network_integration.go:269 cmd/incus/network_integration.go:380
 #: cmd/incus/network_integration.go:591 cmd/incus/network_integration.go:648
 #: cmd/incus/network_integration.go:757
 msgid "Missing network integration name"
-msgstr ""
+msgstr "Nome de integração de rede em falta"
 
 #: cmd/incus/network.go:190 cmd/incus/network.go:289 cmd/incus/network.go:505
 #: cmd/incus/network.go:569 cmd/incus/network.go:668 cmd/incus/network.go:783
@@ -5782,7 +6219,7 @@ msgstr ""
 #: cmd/incus/network_peer.go:531 cmd/incus/network_peer.go:617
 #: cmd/incus/network_peer.go:778 cmd/incus/network_peer.go:901
 msgid "Missing network name"
-msgstr ""
+msgstr "Nome de rede em falta"
 
 #: cmd/incus/network_zone.go:295 cmd/incus/network_zone.go:366
 #: cmd/incus/network_zone.go:445 cmd/incus/network_zone.go:547
@@ -5792,17 +6229,17 @@ msgstr ""
 #: cmd/incus/network_zone.go:1529 cmd/incus/network_zone.go:1610
 #: cmd/incus/network_zone.go:1670
 msgid "Missing network zone name"
-msgstr ""
+msgstr "Nome da zona de rede em falta"
 
 #: cmd/incus/network_zone.go:1078 cmd/incus/network_zone.go:1413
 msgid "Missing network zone record name"
-msgstr ""
+msgstr "Nome de registro de zona de rede em falta"
 
 #: cmd/incus/network_peer.go:298 cmd/incus/network_peer.go:386
 #: cmd/incus/network_peer.go:535 cmd/incus/network_peer.go:621
 #: cmd/incus/network_peer.go:782 cmd/incus/network_peer.go:905
 msgid "Missing peer name"
-msgstr ""
+msgstr "Nome de peer em falta"
 
 #: cmd/incus/storage.go:259 cmd/incus/storage.go:339 cmd/incus/storage.go:459
 #: cmd/incus/storage.go:539 cmd/incus/storage.go:893 cmd/incus/storage.go:999
@@ -5823,61 +6260,61 @@ msgstr ""
 #: cmd/incus/storage_volume.go:2985 cmd/incus/storage_volume.go:3072
 #: cmd/incus/storage_volume.go:3151
 msgid "Missing pool name"
-msgstr ""
+msgstr "Nome de pool em falta"
 
 #: cmd/incus/profile.go:425 cmd/incus/profile.go:494 cmd/incus/profile.go:578
 #: cmd/incus/profile.go:698 cmd/incus/profile.go:1051 cmd/incus/profile.go:1121
 #: cmd/incus/profile.go:1202
 msgid "Missing profile name"
-msgstr ""
+msgstr "Nome de perfil em falta"
 
 #: cmd/incus/project.go:167 cmd/incus/project.go:270 cmd/incus/project.go:374
 #: cmd/incus/project.go:493 cmd/incus/project.go:794 cmd/incus/project.go:865
 #: cmd/incus/project.go:995 cmd/incus/project.go:1134
 msgid "Missing project name"
-msgstr ""
+msgstr "Nome do projeto em falta"
 
 #: cmd/incus/admin_sql.go:75
 msgid "Missing required arguments"
-msgstr ""
+msgstr "Argumentos requeridos em falta"
 
 #: cmd/incus/profile.go:324
 msgid "Missing source profile name"
-msgstr ""
+msgstr "Nome de perfil da fonte em falta"
 
 #: cmd/incus/storage_volume.go:420 cmd/incus/storage_volume.go:1897
 msgid "Missing source volume name"
-msgstr ""
+msgstr "Nome de volume da fonte em falta"
 
 #: cmd/incus/storage_volume.go:1399
 msgid "Missing storage pool name"
-msgstr ""
+msgstr "Nome de pool de armazenamento em falta"
 
 #: cmd/incus/file.go:827
 msgid "Missing target directory"
-msgstr ""
+msgstr "Directório alvo em falta"
 
 #: cmd/incus/network_peer.go:390
 msgid "Missing target network or integration"
-msgstr ""
+msgstr "Rede alvo ou integração em falta"
 
 #: cmd/incus/network.go:1037
 msgid "Mode"
-msgstr ""
+msgstr "Modo"
 
 #: cmd/incus/info.go:299
 #, c-format
 msgid "Model: %s"
-msgstr ""
+msgstr "Modelo: %s"
 
 #: cmd/incus/info.go:159
 #, c-format
 msgid "Model: %v"
-msgstr ""
+msgstr "Modelo: %v"
 
 #: cmd/incus/monitor.go:34
 msgid "Monitor a local or remote server"
-msgstr ""
+msgstr "Monitorizar um servidor local ou remoto"
 
 #: cmd/incus/monitor.go:35
 msgid ""
@@ -5885,19 +6322,23 @@ msgid ""
 "\n"
 "By default the monitor will listen to all message types."
 msgstr ""
+"Monitorizar um servidor local ou remoto\n"
+"\n"
+"Por predefinição o monitor irá escutar todos os tipos de mensagens."
 
 #: cmd/incus/network.go:589 cmd/incus/network.go:688
 #: cmd/incus/storage_volume.go:851 cmd/incus/storage_volume.go:950
 msgid "More than one device matches, specify the device name"
 msgstr ""
+"Mais do que um dispositivo corresponde, especifique o nome do dispositivo"
 
 #: cmd/incus/file.go:510
 msgid "More than one file to download, but target is not a directory"
-msgstr ""
+msgstr "Mais de um ficheiro para descarregar, mas o alvo não é um diretório"
 
 #: cmd/incus/storage_volume.go:2392 cmd/incus/storage_volume.go:2393
 msgid "Mount files from custom storage volumes"
-msgstr ""
+msgstr "Montar ficheiros de volumes de armazenamento personalizados"
 
 #: cmd/incus/file.go:1357 cmd/incus/file.go:1358
 msgid "Mount files from instances"
@@ -5926,6 +6367,18 @@ msgid ""
 "The pull transfer mode is the default as it is compatible with all server "
 "versions.\n"
 msgstr ""
+"Move instâncias dentro ou entre servidores\n"
+"\n"
+"Modos de transferência (--mode):\n"
+" - pull: Servidor alvo puxa os dados do servidor fonte (a fonte tem de "
+"escutar na rede)\n"
+" - push: Servidor fonte empurra os dados para o servidor alvo (o alvo tem de "
+"escutar na rede)\n"
+" - relay: A CLI liga-se a ambos fonte e servidor e faz proxy aos dados ("
+"ambos fonte e alvo têm de escutar na rede)\n"
+"\n"
+"O modo de transferência pull é o predefinido pois é compatível com todas as "
+"versões de servidor.\n"
 
 #: cmd/incus/move.go:63
 msgid "Move the instance without its snapshots"
