@@ -2532,6 +2532,7 @@ type cmdStorageVolumeSnapshotCreate struct {
 	storageVolumeSnapshot *cmdStorageVolumeSnapshot
 
 	flagNoExpiry    bool
+	flagExpiry      string
 	flagReuse       bool
 	flagDescription string
 }
@@ -2550,6 +2551,7 @@ func (c *cmdStorageVolumeSnapshotCreate) Command() *cobra.Command {
 incus storage volume snapshot create default vol1 snap0 < config.yaml
     Create a snapshot of "foo" in pool "default" called "snap0" with the configuration from "config.yaml"`))
 
+	cmd.Flags().StringVar(&c.flagExpiry, "expiry", "", i18n.G("Expiry date or time span for the new snapshot"))
 	cmd.Flags().BoolVar(&c.flagNoExpiry, "no-expiry", false, i18n.G("Ignore any configured auto-expiry for the storage volume"))
 	cmd.Flags().BoolVar(&c.flagReuse, "reuse", false, i18n.G("If the snapshot name already exists, delete and create a new one"))
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -2580,6 +2582,10 @@ func (c *cmdStorageVolumeSnapshotCreate) Run(cmd *cobra.Command, args []string) 
 	exit, err := c.global.checkArgs(cmd, args, 2, 3)
 	if exit {
 		return err
+	}
+
+	if c.flagNoExpiry && c.flagExpiry != "" {
+		return errors.New(i18n.G("Can't use both --no-expiry and --expiry"))
 	}
 
 	// If stdin isn't a terminal, read text from it
@@ -2638,6 +2644,22 @@ func (c *cmdStorageVolumeSnapshotCreate) Run(cmd *cobra.Command, args []string) 
 
 	if c.flagNoExpiry {
 		req.ExpiresAt = &time.Time{}
+	} else if c.flagExpiry != "" {
+		// Try to parse as a duration.
+		expiry, err := instance.GetExpiry(time.Now(), c.flagExpiry)
+		if err != nil {
+			if !errors.Is(err, instance.ErrInvalidExpiry) {
+				return err
+			}
+
+			// Fallback to date parsing.
+			expiry, err = time.Parse(dateLayout, c.flagExpiry)
+			if err != nil {
+				return err
+			}
+		}
+
+		req.ExpiresAt = &expiry
 	} else if stdinData.ExpiresAt != nil && !stdinData.ExpiresAt.IsZero() {
 		req.ExpiresAt = stdinData.ExpiresAt
 	}
