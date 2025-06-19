@@ -94,6 +94,7 @@ Key                               | Type      | Condition                       
 `security.unmapped`               | bool      | custom volume                                     | same as `volume.security.unmapped` or `false`  | Disable ID mapping for the volume
 `size`                            | string    |                                                   | same as `volume.size`                          | Size/quota of the storage volume
 `snapshots.expiry`                | string    | custom volume                                     | same as `volume.snapshots.expiry`              | {{snapshot_expiry_format}}
+`snapshots.expiry.manual`         | string    | custom volume                                     | same as `volume.snapshots.expiry.manual`       | {{snapshot_expiry_format}}
 `snapshots.pattern`               | string    | custom volume                                     | same as `volume.snapshots.pattern` or `snap%d` | {{snapshot_pattern_format}} [^*]
 `snapshots.schedule`              | string    | custom volume                                     | same as `volume.snapshots.schedule`            | {{snapshot_schedule_format}}
 `drbd.on_no_quorum`               | string    |                                                   | -                                              | The DRBD policy to use on resources when quorum is lost (applied to the resource definition)
