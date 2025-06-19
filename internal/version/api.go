@@ -487,6 +487,7 @@ var APIExtensions = []string{
 	"network_ovn_external_nic_address",
 	"network_physical_gateway_hwaddr",
 	"backup_s3_upload",
+	"snapshot_manual_expiry",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

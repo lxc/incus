@@ -2825,3 +2825,10 @@ Allows setting the MAC address of the IPv4 and IPv6 gateways when used with OVN.
 ## `backup_s3_upload`
 
 Adds support for immediately uploading instance or volume backups to an S3 compatible endpoint.
+
+## `snapshot_manual_expiry`
+
+Introduces a `snapshots.expiry.manual` configuration key to both
+instances and storage volumes which allows overriding the default expiry
+value for snapshots created directly by the user as opposed to created
+on schedule.
