@@ -8,6 +8,9 @@ import (
 	"time"
 )
 
+// ErrInvalidExpiry is returned if the provided expiry cannot be parsed.
+var ErrInvalidExpiry = errors.New("Invalid expiry expression")
+
 // GetExpiry returns the expiry date based on the reference date and a length of time.
 // The length of time format is "<integer>(S|M|H|d|w|m|y)", and can contain multiple such fields, e.g.
 // "1d 3H" (1 day and 3 hours).
@@ -42,12 +45,12 @@ func GetExpiry(refDate time.Time, s string) (time.Time, error) {
 	for _, value := range values {
 		fields := re.FindStringSubmatch(value)
 		if fields == nil {
-			return time.Time{}, errors.New("Invalid expiry expression")
+			return time.Time{}, ErrInvalidExpiry
 		}
 
 		if expiry[fields[2]] > 0 {
 			// We don't allow fields to be set multiple times
-			return time.Time{}, errors.New("Invalid expiry expression")
+			return time.Time{}, ErrInvalidExpiry
 		}
 
 		val, err := strconv.Atoi(fields[1])
