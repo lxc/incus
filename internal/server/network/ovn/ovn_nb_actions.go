@@ -1481,6 +1481,8 @@ func (o *NB) UpdateLogicalSwitchDHCPv6Options(ctx context.Context, switchName OV
 
 	if opts.DHCPv6Stateless {
 		dhcpOption.Options["dhcpv6_stateless"] = "true"
+	} else {
+		dhcpOption.Options["dhcpv6_stateless"] = "false"
 	}
 
 	if len(opts.DNSSearchList) > 0 {

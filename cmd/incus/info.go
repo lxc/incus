@@ -913,7 +913,7 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog bool
 			return err
 		}
 
-		fmt.Print("\n"+i18n.G("Log:")+"\n\n%s\n", string(stuff))
+		fmt.Printf("\n"+i18n.G("Log:")+"\n\n%s\n", string(stuff))
 	}
 
 	return nil
