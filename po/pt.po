@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-05-29 02:38-0400\n"
-"PO-Revision-Date: 2025-06-18 23:59+0000\n"
+"PO-Revision-Date: 2025-06-19 07:06+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
 "\n"
@@ -5414,7 +5414,7 @@ msgstr "Lista de operações de todos os projetos"
 
 #: cmd/incus/profile.go:736
 msgid "List profiles"
-msgstr ""
+msgstr "Lista perfis"
 
 #: cmd/incus/profile.go:737
 msgid ""
@@ -5440,6 +5440,30 @@ msgid ""
 "d - Description\n"
 "u - Used By"
 msgstr ""
+"Lista perfis\n"
+"\n"
+"Os filtros podem ser do formato <chave>=<valor> para filtragem baseada em "
+"propriedade,\n"
+"ou parte do nome do perfil. Os filtros têm de ser delimitados por um ','.\n"
+"\n"
+"Exemplos:\n"
+"  - \"foo\" lista todos os perfis que começam com o nome foo\n"
+"  - \"name=foo\" lista todos os perfis que têm exatamente o nome foo\n"
+"  - \"description=.*bar.*\" lista todos os perfis com uma descrição que "
+"contenha \"bar\"\n"
+"\n"
+"A opção -c recebe uma lista (opcionalmente separada por vírgulas) de "
+"argumentos\n"
+"que controlam quais atributos de zona de rede são incluídos ao mostrar em "
+"formato\n"
+"de tabela ou csv.\n"
+"\n"
+"Disposição predefinida de coluna: ndu\n"
+"\n"
+"Caracteres curtos da coluna:\n"
+"n - Nome do Perfil\n"
+"d - Descrição\n"
+"u - Usado Por"
 
 #: cmd/incus/project.go:531
 msgid "List projects"
@@ -5487,7 +5511,7 @@ msgstr ""
 
 #: cmd/incus/storage_bucket.go:945
 msgid "List storage bucket keys"
-msgstr ""
+msgstr "Lista de chaves de bucket de armazenamento"
 
 #: cmd/incus/storage_bucket.go:947
 msgid ""
@@ -5510,10 +5534,31 @@ msgid ""
 "  d - Description\n"
 "  r - Role"
 msgstr ""
+"Lista de chaves de bucket de armazenamento\n"
+"\n"
+"Disposição predefinida de coluna: ndr\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo),"
+"\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos pre-definidos da coluna:\n"
+"  n - Nome\n"
+"  d - Descrição\n"
+"  r - Função"
 
 #: cmd/incus/storage_bucket.go:498
 msgid "List storage buckets"
-msgstr ""
+msgstr "Lista buckets de armazenamento"
 
 #: cmd/incus/storage_bucket.go:500
 msgid ""
@@ -5537,6 +5582,28 @@ msgid ""
 "  d - Description\n"
 "  L - Location of the storage bucket (e.g. its cluster member)"
 msgstr ""
+"Lista buckets de armazenamento\n"
+"\n"
+"Disposição predefinida de coluna: ndL\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo),"
+"\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos pre-definidos da coluna:\n"
+"  e - Nome do projeto\n"
+"  n - Nome\n"
+"  d - Descrição\n"
+"  L - Localização do bucket de armazenamento (ex. seu membro do agrupamento)"
 
 #: cmd/incus/storage_volume.go:2772 cmd/incus/storage_volume.go:2773
 msgid "List storage volume snapshots"
@@ -6554,253 +6621,258 @@ msgstr "Nome do backend de armazenamento a usar (%s)"
 
 #: cmd/incus/admin_recover.go:102
 msgid "Name of the storage pool:"
-msgstr "Nome da pool de armazenamento"
+msgstr "Nome da pool de armazenamento:"
 
 #: cmd/incus/info.go:636 cmd/incus/network.go:1004
 #: cmd/incus/storage_volume.go:1454
 #, c-format
 msgid "Name: %s"
-msgstr ""
+msgstr "Nome: %s"
 
 #: cmd/incus/info.go:333
 #, c-format
 msgid "Name: %v"
-msgstr ""
+msgstr "Nome: %v"
 
 #: cmd/incus/network.go:453
 #, c-format
 msgid "Network %s created"
-msgstr ""
+msgstr "Rede %s criada"
 
 #: cmd/incus/network.go:515
 #, c-format
 msgid "Network %s deleted"
-msgstr ""
+msgstr "Rede %s apagada"
 
 #: cmd/incus/network.go:451
 #, c-format
 msgid "Network %s pending on member %s"
-msgstr ""
+msgstr "Rede %s pendente de membro %s"
 
 #: cmd/incus/network.go:1534
 #, c-format
 msgid "Network %s renamed to %s"
-msgstr ""
+msgstr "Rede %s renomeada para %s"
 
 #: cmd/incus/network_acl.go:485
 #, c-format
 msgid "Network ACL %s created"
-msgstr ""
+msgstr "ACL de rede %s criado"
 
 #: cmd/incus/network_acl.go:878
 #, c-format
 msgid "Network ACL %s deleted"
-msgstr ""
+msgstr "ACL de rede %s apagado"
 
 #: cmd/incus/network_acl.go:819
 #, c-format
 msgid "Network ACL %s renamed to %s"
-msgstr ""
+msgstr "ACL de rede %s renomeado para %s"
 
 #: cmd/incus/network_acl.go:405
 msgid "Network ACL description"
-msgstr ""
+msgstr "Descrição de ACL de rede"
 
 #: cmd/incus/network_zone.go:491
 #, c-format
 msgid "Network Zone %s created"
-msgstr ""
+msgstr "Zona de Rede %s criada"
 
 #: cmd/incus/network_zone.go:813
 #, c-format
 msgid "Network Zone %s deleted"
-msgstr ""
+msgstr "Zona de Rede %s apagada"
 
 #: cmd/incus/network_address_set.go:334
 #, c-format
 msgid "Network address set %s created"
-msgstr ""
+msgstr "Conjunto de endereços de rede %s criado"
 
 #: cmd/incus/network_address_set.go:686
 #, c-format
 msgid "Network address set %s deleted"
-msgstr ""
+msgstr "Conjunto de endereços de rede %s apagado"
 
 #: cmd/incus/network_address_set.go:631
 #, c-format
 msgid "Network address set %s renamed to %s"
-msgstr ""
+msgstr "Conjunto de endereços de rede %s renomeado para %s"
 
 #: cmd/incus/network_address_set.go:255
 msgid "Network address set description"
-msgstr ""
+msgstr "Descrição do conjunto de endereços de rede"
 
 #: cmd/incus/network.go:366
 msgid "Network description"
-msgstr ""
+msgstr "Descrição da rede"
 
 #: cmd/incus/network_forward.go:430
 #, c-format
 msgid "Network forward %s created"
-msgstr ""
+msgstr "Encaminhamento de rede %s criado"
 
 #: cmd/incus/network_forward.go:909
 #, c-format
 msgid "Network forward %s deleted"
-msgstr ""
+msgstr "Encaminhamento de rede %s apagado"
 
 #: cmd/incus/network_forward.go:348
 msgid "Network forward description"
-msgstr ""
+msgstr "Descrição do encaminhamento de rede"
 
 #: cmd/incus/network_integration.go:163
 #, c-format
 msgid "Network integration %s created"
-msgstr ""
+msgstr "Integração de rede %s criada"
 
 #: cmd/incus/network_integration.go:216
 #, c-format
 msgid "Network integration %s deleted"
-msgstr ""
+msgstr "Integração de rede %s apagada"
 
 #: cmd/incus/network_integration.go:601
 #, c-format
 msgid "Network integration %s renamed to %s"
-msgstr ""
+msgstr "Integração de rede %s renomeada para %s"
 
 #: cmd/incus/network_load_balancer.go:433
 #, c-format
 msgid "Network load balancer %s created"
-msgstr ""
+msgstr "Balanceador de carga de rede %s criado"
 
 #: cmd/incus/network_load_balancer.go:889
 #, c-format
 msgid "Network load balancer %s deleted"
-msgstr ""
+msgstr "Balanceador de carga de rede %s apagado"
 
 #: cmd/incus/create.go:63
 msgid "Network name"
-msgstr ""
+msgstr "Nome da rede"
 
 #: cmd/incus/network_peer.go:465
 #, c-format
 msgid "Network peer %s created"
-msgstr ""
+msgstr "Peer de rede %s criado"
 
 #: cmd/incus/network_peer.go:917
 #, c-format
 msgid "Network peer %s deleted"
-msgstr ""
+msgstr "Peer de rede %s apagado"
 
 #: cmd/incus/network_peer.go:469
 #, c-format
 msgid "Network peer %s is in unexpected state %q"
-msgstr ""
+msgstr "Peer de rede %s está e estado inesperado %q"
 
 #: cmd/incus/network_peer.go:467
 #, c-format
 msgid ""
 "Network peer %s pending (please complete mutual peering on peer network)"
 msgstr ""
+"Peer de rede %s pendente (por favor complete o peering mútuo na rede peer)"
 
 #: cmd/incus/network.go:365
 msgid "Network type"
-msgstr ""
+msgstr "Tipo de rede"
 
 #: cmd/incus/info.go:788 cmd/incus/network.go:1026
 msgid "Network usage:"
-msgstr ""
+msgstr "Utilização de rede:"
 
 #: cmd/incus/network_zone.go:1206
 #, c-format
 msgid "Network zone record %s created"
-msgstr ""
+msgstr "Registro de zona de rede %s criado"
 
 #: cmd/incus/network_zone.go:1539
 #, c-format
 msgid "Network zone record %s deleted"
-msgstr ""
+msgstr "Registro de zona de rede %s apagado"
 
 #: cmd/incus/publish.go:40
 msgid "New alias to define at target"
-msgstr ""
+msgstr "Novo alias para definir no alvo"
 
 #: cmd/incus/image.go:162 cmd/incus/image.go:687
 msgid "New aliases to add to the image"
-msgstr ""
+msgstr "Novos aliases para adicionar à imagem"
 
 #: cmd/incus/copy.go:57 cmd/incus/create.go:60 cmd/incus/move.go:60
 msgid "New key/value to apply to a specific device"
-msgstr ""
+msgstr "Nova chave/valor para aplicar a um dispositivo específico"
 
 #: cmd/incus/admin_init_interactive.go:499
 #, c-format
 msgid "No %s storage backends available"
-msgstr ""
+msgstr "Nenhum %s backend de armazenamento disponível"
 
 #: cmd/incus/config_trust.go:881
 #, c-format
 msgid "No certificate add token for member %s on remote: %s"
-msgstr ""
+msgstr "Nenhum testemunho de adição de certificado para membro %s em remoto: %s"
 
 #: cmd/incus/cluster.go:1342
 #, c-format
 msgid "No cluster join token for member %s on remote: %s"
-msgstr ""
+msgstr "Nenhum testemunho de adesão a agrupamento para membro %s em remoto: %s"
 
 #: cmd/incus/network.go:598 cmd/incus/network.go:697
 msgid "No device found for this network"
-msgstr ""
+msgstr "Nenhum dispositivo encontrado para esta rede"
 
 #: cmd/incus/storage_volume.go:860 cmd/incus/storage_volume.go:959
 msgid "No device found for this storage volume"
-msgstr ""
+msgstr "Nenhum dispositivo encontrado para este volume de armazenamento"
 
 #: cmd/incus/network_load_balancer.go:1365
 msgid "No load-balancer health information available"
-msgstr ""
+msgstr "Nenhuma informação sobre a saúde do balanceador de carga disponível"
 
 #: cmd/incus/network_load_balancer.go:1077
 msgid "No matching backend found"
-msgstr ""
+msgstr "Nenhum backend correspondente encontrado"
 
 #: cmd/incus/network_forward.go:1132 cmd/incus/network_load_balancer.go:1298
 msgid "No matching port(s) found"
-msgstr ""
+msgstr "Nenhuns porto(s) correspondente encontrados"
 
 #: cmd/incus/network_acl.go:1169
 msgid "No matching rule(s) found"
-msgstr ""
+msgstr "Nenhuma regra(s) correspondente encontrada"
 
 #: cmd/incus/admin_init_interactive.go:496
 msgid "No storage backends available"
-msgstr ""
+msgstr "Nenhum backend de armazenamento disponível"
 
 #: cmd/incus/storage_volume.go:434 cmd/incus/storage_volume.go:1906
 msgid "No storage pool for source volume specified"
-msgstr ""
+msgstr "Nenhuma pool de armazenamento para o volume de fonte especificado"
 
 #: cmd/incus/storage_volume.go:484 cmd/incus/storage_volume.go:1917
 msgid "No storage pool for target volume specified"
-msgstr ""
+msgstr "Nenhuma pool de armazenamento para o volume alvo especificado"
 
 #: cmd/incus/utils.go:519
 msgid "No text editor found, please set the EDITOR environment variable"
 msgstr ""
+"Nenhum editor de texto encontrado, por favor defina a variável de ambiente "
+"EDITOR"
 
 #: cmd/incus/admin_recover.go:218
 msgid "No unknown storage pools or volumes found. Nothing to do."
 msgstr ""
+"Nenhuns pools ou volumes de armazenamento desconhecidos encontrados. Nada "
+"para fazer."
 
 #: cmd/incus/config_device.go:148 cmd/incus/config_device.go:468
 #, c-format
 msgid "No value found in %q"
-msgstr ""
+msgstr "Nenhum valor encontrado em %q"
 
 #: cmd/incus/info.go:528
 #, c-format
 msgid "Node %d:\n"
-msgstr ""
+msgstr "Nó %d:\n"
 
 #: cmd/incus/admin_init_auto.go:32
 msgid ""
