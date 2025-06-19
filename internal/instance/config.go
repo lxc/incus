@@ -341,6 +341,18 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 		return err
 	},
 
+	// gendoc:generate(entity=instance, group=snapshots, key=snapshots.expiry.manual)
+	// Specify an expression like `1M 2H 3d 4w 5m 6y`.
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  shortdesc: When snapshots are to be deleted (for those not created through scheduling)
+	"snapshots.expiry.manual": func(value string) error {
+		// Validate expression
+		_, err := GetExpiry(time.Time{}, value)
+		return err
+	},
+
 	// Volatile keys.
 
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.apply_template)
