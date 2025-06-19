@@ -2495,6 +2495,13 @@ This system call can be used to get cgroup-based resource usage information.
 Specify an expression like `1M 2H 3d 4w 5m 6y`.
 ```
 
+```{config:option} snapshots.expiry.manual instance-snapshots
+:liveupdate: "no"
+:shortdesc: "When snapshots are to be deleted (for those not created through scheduling)"
+:type: "string"
+Specify an expression like `1M 2H 3d 4w 5m 6y`.
+```
+
 ```{config:option} snapshots.pattern instance-snapshots
 :defaultdesc: "`snap%d`"
 :liveupdate: "no"
