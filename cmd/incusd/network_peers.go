@@ -12,6 +12,7 @@ import (
 	"github.com/lxc/incus/v6/internal/filter"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/db"
+	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/internal/server/lifecycle"
 	"github.com/lxc/incus/v6/internal/server/network"
 	"github.com/lxc/incus/v6/internal/server/project"
@@ -188,9 +189,27 @@ func networkPeersGet(d *Daemon, r *http.Request) response.Response {
 		var peers map[int64]*api.NetworkPeer
 
 		err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			peers, err = tx.GetNetworkPeers(ctx, n.ID())
+			// Use generated function to get peers.
+			netID := n.ID()
+			filter := dbCluster.NetworkPeerFilter{NetworkID: &netID}
+			dbPeers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx(), filter)
+			if err != nil {
+				return fmt.Errorf("Failed loading network peer DB objects: %w", err)
+			}
 
-			return err
+			// Convert DB objects to API objects and build the map.
+			peers = make(map[int64]*api.NetworkPeer, len(dbPeers))
+			for _, dbPeer := range dbPeers {
+				peer, err := dbPeer.ToAPI(ctx, tx.Tx())
+				if err != nil {
+					// Use fmt.Errorf as requested, though logging might be preferable in some contexts.
+					return fmt.Errorf("Failed converting network peer DB object to API object for peer ID %d: %w", dbPeer.ID, err)
+				}
+
+				peers[dbPeer.ID] = peer
+			}
+
+			return nil
 		})
 		if err != nil {
 			return response.SmartError(fmt.Errorf("Failed loading network peers: %w", err))
@@ -217,9 +236,20 @@ func networkPeersGet(d *Daemon, r *http.Request) response.Response {
 		var peerNames map[int64]string
 
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			peerNames, err = tx.GetNetworkPeerNames(ctx, n.ID())
+			// Use the generated GetNetworkPeers function with a filter.
+			netID := n.ID()
+			filter := dbCluster.NetworkPeerFilter{NetworkID: &netID}
+			peers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx(), filter)
+			if err != nil {
+				return err
+			}
 
-			return err
+			peerNames = make(map[int64]string, len(peers))
+			for _, peer := range peers {
+				peerNames[peer.ID] = peer.Name
+			}
+
+			return nil
 		})
 		if err != nil {
 			return response.SmartError(fmt.Errorf("Failed loading network peers: %w", err))
@@ -472,9 +502,18 @@ func networkPeerGet(d *Daemon, r *http.Request) response.Response {
 	var peer *api.NetworkPeer
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		_, peer, err = tx.GetNetworkPeer(ctx, n.ID(), peerName)
+		netID := n.ID()
+		dbPeer, err := dbCluster.GetNetworkPeer(ctx, tx.Tx(), netID, peerName)
+		if err != nil {
+			return fmt.Errorf("Failed getting network peer DB object: %w", err)
+		}
 
-		return err
+		peer, err = dbPeer.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed converting network peer DB object to API object: %w", err)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return response.SmartError(err)
