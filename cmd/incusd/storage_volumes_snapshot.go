@@ -251,7 +251,12 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 	if req.ExpiresAt != nil {
 		expiry = *req.ExpiresAt
 	} else {
-		expiry, err = internalInstance.GetExpiry(time.Now(), parentDBVolume.Config["snapshots.expiry"])
+		duration := parentDBVolume.Config["snapshots.expiry.manual"]
+		if duration == "" {
+			duration = parentDBVolume.Config["snapshots.expiry"]
+		}
+
+		expiry, err = internalInstance.GetExpiry(time.Now(), duration)
 		if err != nil {
 			return response.BadRequest(err)
 		}

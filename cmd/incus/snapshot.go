@@ -70,6 +70,7 @@ type cmdSnapshotCreate struct {
 
 	flagStateful bool
 	flagNoExpiry bool
+	flagExpiry   string
 	flagReuse    bool
 }
 
@@ -91,6 +92,7 @@ incus snapshot create u1 snap0 < config.yaml
 	Create a snapshot of "u1" called "snap0" with the configuration from "config.yaml".`))
 
 	cmd.Flags().BoolVar(&c.flagStateful, "stateful", false, i18n.G("Whether or not to snapshot the instance's running state"))
+	cmd.Flags().StringVar(&c.flagExpiry, "expiry", "", i18n.G("Expiry date or time span for the new snapshot"))
 	cmd.Flags().BoolVar(&c.flagNoExpiry, "no-expiry", false, i18n.G("Ignore any configured auto-expiry for the instance"))
 	cmd.Flags().BoolVar(&c.flagReuse, "reuse", false, i18n.G("If the snapshot name already exists, delete and create a new one"))
 
@@ -116,6 +118,10 @@ func (c *cmdSnapshotCreate) Run(cmd *cobra.Command, args []string) error {
 	exit, err := c.global.checkArgs(cmd, args, 1, 2)
 	if exit {
 		return err
+	}
+
+	if c.flagNoExpiry && c.flagExpiry != "" {
+		return errors.New(i18n.G("Can't use both --no-expiry and --expiry"))
 	}
 
 	// If stdin isn't a terminal, read text from it
@@ -180,6 +186,22 @@ func (c *cmdSnapshotCreate) Run(cmd *cobra.Command, args []string) error {
 
 	if c.flagNoExpiry {
 		req.ExpiresAt = &time.Time{}
+	} else if c.flagExpiry != "" {
+		// Try to parse as a duration.
+		expiry, err := instance.GetExpiry(time.Now(), c.flagExpiry)
+		if err != nil {
+			if !errors.Is(err, instance.ErrInvalidExpiry) {
+				return err
+			}
+
+			// Fallback to date parsing.
+			expiry, err = time.Parse(dateLayout, c.flagExpiry)
+			if err != nil {
+				return err
+			}
+		}
+
+		req.ExpiresAt = &expiry
 	} else if !stdinData.ExpiresAt.IsZero() {
 		req.ExpiresAt = &stdinData.ExpiresAt
 	}

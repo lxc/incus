@@ -2799,6 +2799,14 @@
 						}
 					},
 					{
+						"snapshots.expiry.manual": {
+							"liveupdate": "no",
+							"longdesc": "Specify an expression like `1M 2H 3d 4w 5m 6y`.",
+							"shortdesc": "When snapshots are to be deleted (for those not created through scheduling)",
+							"type": "string"
+						}
+					},
+					{
 						"snapshots.pattern": {
 							"defaultdesc": "`snap%d`",
 							"liveupdate": "no",
