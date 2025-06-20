@@ -72,7 +72,9 @@ func InitTLSConfig() *tls.Config {
 	return config
 }
 
-func finalizeTLSConfig(tlsConfig *tls.Config, tlsRemoteCert *x509.Certificate) {
+// TLSConfigWithTrustedCert sets the given remote certificate as a CA and assigns the certificate's first DNS Name as the tls.Config ServerName.
+// This lets us maintain default verification without strictly matching a request URL to the certificate SANs.
+func TLSConfigWithTrustedCert(tlsConfig *tls.Config, tlsRemoteCert *x509.Certificate) {
 	// Setup RootCA
 	if tlsConfig.RootCAs == nil {
 		tlsConfig.RootCAs, _ = systemCertPool()
@@ -102,7 +104,7 @@ func finalizeTLSConfig(tlsConfig *tls.Config, tlsRemoteCert *x509.Certificate) {
 func GetTLSConfig(tlsRemoteCert *x509.Certificate) (*tls.Config, error) {
 	tlsConfig := InitTLSConfig()
 
-	finalizeTLSConfig(tlsConfig, tlsRemoteCert)
+	TLSConfigWithTrustedCert(tlsConfig, tlsRemoteCert)
 
 	return tlsConfig, nil
 }
@@ -143,7 +145,7 @@ func GetTLSConfigMem(tlsClientCert string, tlsClientKey string, tlsClientCA stri
 		tlsConfig.RootCAs = caPool
 	}
 
-	finalizeTLSConfig(tlsConfig, tlsRemoteCert)
+	TLSConfigWithTrustedCert(tlsConfig, tlsRemoteCert)
 
 	// Only skip TLS verification if no remote certificate is available.
 	if tlsRemoteCert == nil {
