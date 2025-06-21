@@ -273,9 +273,40 @@ func (d *proxy) validateEnvironment() error {
 // the same port number).
 func (d *proxy) validateListenAddressConflicts(proxyListenAddr net.IP) error {
 	return d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		projectNetworksForwardsOnUplink, err := tx.GetProjectNetworkForwardListenAddressesOnMember(ctx)
+		var projectNetworksForwardsOnUplink map[string]map[int64][]string
+
+		networksByProjects, err := tx.GetNetworksAllProjects(ctx)
 		if err != nil {
 			return fmt.Errorf("Failed loading network forward listen addresses: %w", err)
+		}
+
+		for projectName, networks := range networksByProjects {
+			for _, networkName := range networks {
+				networkID, err := tx.GetNetworkID(ctx, projectName, networkName)
+				if err != nil {
+					return fmt.Errorf("Failed loading network forward listen addresses: %w", err)
+				}
+
+				// Get all network forward listen addresses for all networks (of any type) connected to our uplink.
+				networkForwards, err := cluster.GetNetworkForwards(ctx, tx.Tx(), cluster.NetworkForwardFilter{
+					NetworkID: &networkID,
+				})
+				if err != nil {
+					return fmt.Errorf("Failed loading network forward listen addresses: %w", err)
+				}
+
+				projectNetworksForwardsOnUplink = make(map[string]map[int64][]string)
+				for _, forward := range networkForwards {
+					// Filter network forwards that belong to this specific cluster member
+					if forward.NodeID.Valid && (forward.NodeID.Int64 == tx.GetNodeID()) {
+						if projectNetworksForwardsOnUplink[projectName] == nil {
+							projectNetworksForwardsOnUplink[projectName] = make(map[int64][]string)
+						}
+
+						projectNetworksForwardsOnUplink[projectName][networkID] = append(projectNetworksForwardsOnUplink[projectName][networkID], forward.ListenAddress)
+					}
+				}
+			}
 		}
 
 		for _, networks := range projectNetworksForwardsOnUplink {

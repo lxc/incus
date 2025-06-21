@@ -17,6 +17,7 @@ import (
 
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/db"
+	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 	pcidev "github.com/lxc/incus/v6/internal/server/device/pci"
 	"github.com/lxc/incus/v6/internal/server/dnsmasq/dhcpalloc"
@@ -452,7 +453,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 				return fmt.Errorf("Failed getting network ID: %w", err)
 			}
 
-			_, _, err = tx.GetNetworkForward(ctx, netID, false, value)
+			_, err = dbCluster.GetNetworkForward(ctx, tx.Tx(), netID, value)
 			if err != nil {
 				return fmt.Errorf("External address %q is not a network forward on network %q: %w", value, d.config["network"], err)
 			}
