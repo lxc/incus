@@ -32,8 +32,12 @@ func compile(programName string, src string, preDeclared []string) (*starlark.Pr
 		return slices.Contains(preDeclared, name)
 	}
 
+	// Prepare options.
+	opts := syntax.LegacyFileOptions()
+	opts.Set = true
+
 	// Parse, resolve, and compile a Starlark source file.
-	_, mod, err := starlark.SourceProgramOptions(syntax.LegacyFileOptions(), programName, src, isPreDeclared)
+	_, mod, err := starlark.SourceProgramOptions(opts, programName, src, isPreDeclared)
 	if err != nil {
 		return nil, err
 	}
