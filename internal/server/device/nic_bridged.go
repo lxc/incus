@@ -2001,22 +2001,22 @@ func (d *nicBridged) State() (*api.InstanceStateNetwork, error) {
 	// Get IP addresses from IP neighbour cache if present.
 	neighIPs, err := network.GetNeighbourIPs(d.config["parent"], hwAddr)
 	if err == nil {
-		validStates := []string{
-			string(ip.NeighbourIPStatePermanent),
-			string(ip.NeighbourIPStateNoARP),
-			string(ip.NeighbourIPStateReachable),
+		validStates := []ip.NeighbourIPState{
+			ip.NeighbourIPStatePermanent,
+			ip.NeighbourIPStateNoARP,
+			ip.NeighbourIPStateReachable,
 		}
 
 		// Add any valid-state neighbour IP entries first.
 		for _, neighIP := range neighIPs {
-			if slices.Contains(validStates, string(neighIP.State)) {
+			if slices.Contains(validStates, neighIP.State) {
 				ipStore(neighIP.Addr)
 			}
 		}
 
 		// Add any non-failed-state entries.
 		for _, neighIP := range neighIPs {
-			if neighIP.State != ip.NeighbourIPStateFailed && !slices.Contains(validStates, string(neighIP.State)) {
+			if neighIP.State != ip.NeighbourIPStateFailed && !slices.Contains(validStates, neighIP.State) {
 				ipStore(neighIP.Addr)
 			}
 		}

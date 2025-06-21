@@ -1,18 +1,11 @@
 package ip
 
 import (
-	"bufio"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"net"
-	"os/exec"
-	"regexp"
 	"strconv"
 
-	"github.com/lxc/incus/v6/shared/subprocess"
-	"github.com/lxc/incus/v6/shared/util"
+	"github.com/vishvananda/netlink"
 )
 
 // Link represents base arguments for link device.
@@ -28,483 +21,351 @@ type Link struct {
 	Up            bool
 }
 
-type jsonLink struct {
-	Name          string `json:"ifname"`
-	MTU           uint32 `json:"mtu"`
-	Parent        string `json:"link"`
-	Address       string `json:"address"`
-	TXQueueLength uint32 `json:"txqlen"`
-	AllMulticast  int    `json:"allmulti"`
-	Master        string `json:"master"`
-	Up            string `json:"operstate"`
-	Type          string `json:"link_type"`
-	Info          struct {
-		Kind string `json:"info_kind"`
-	} `json:"linkinfo"`
+// LinkInfo has additional information about a link.
+type LinkInfo struct {
+	Link
+	OperationalState string
+	SlaveKind        string
+	VlanID           int
 }
 
-// args generate common arguments for the virtual link.
-func (l *Link) args() []string {
-	var result []string
+func (l *Link) netlinkAttrs() (netlink.LinkAttrs, error) {
+	linkAttrs := netlink.NewLinkAttrs()
 
-	if l.Name != "" {
-		result = append(result, "name", l.Name)
-	}
+	linkAttrs.Name = l.Name
 
-	if l.Parent != "" {
-		result = append(result, "link", l.Parent)
-	}
-
-	if l.MTU > 0 {
-		result = append(result, "mtu", fmt.Sprintf("%d", l.MTU))
+	if l.MTU != 0 {
+		linkAttrs.MTU = int(l.MTU)
 	}
 
 	if l.Address != nil {
-		result = append(result, "address", l.Address.String())
+		linkAttrs.HardwareAddr = l.Address
 	}
 
-	if l.TXQueueLength > 0 {
-		result = append(result, "txqueuelen", fmt.Sprintf("%d", l.TXQueueLength))
+	if l.TXQueueLength != 0 {
+		linkAttrs.TxQLen = int(l.TXQueueLength)
 	}
 
-	if l.AllMulticast {
-		result = append(result, "allmulticast", "on")
+	if l.Parent != "" {
+		parentLink, err := linkByName(l.Parent)
+		if err != nil {
+			return netlink.LinkAttrs{}, err
+		}
+
+		linkAttrs.ParentIndex = parentLink.Attrs().Index
 	}
 
 	if l.Master != "" {
-		result = append(result, "master", l.Master)
+		masterLink, err := linkByName(l.Master)
+		if err != nil {
+			return netlink.LinkAttrs{}, err
+		}
+
+		linkAttrs.MasterIndex = masterLink.Attrs().Index
 	}
 
 	if l.Up {
-		result = append(result, "up")
+		linkAttrs.Flags |= net.FlagUp
 	}
 
-	return result
+	if l.AllMulticast {
+		linkAttrs.Allmulti = 1
+	}
+
+	return linkAttrs, nil
 }
 
-// add adds new virtual link.
-func (l *Link) add(linkType string, additionalArgs []string) error {
-	cmd := append([]string{"link", "add"}, l.args()...)
-	cmd = append(cmd, "type", linkType)
-	cmd = append(cmd, additionalArgs...)
-
-	_, err := subprocess.RunCommand("ip", cmd...)
+// LinkByName returns a Link from a device name.
+func LinkByName(name string) (LinkInfo, error) {
+	link, err := linkByName(name)
 	if err != nil {
-		return fmt.Errorf("Failed adding link: %w", err)
+		return LinkInfo{}, err
 	}
 
-	return nil
-}
+	var parent, master string
 
-// LinkFromName returns a Link from a device name.
-func LinkFromName(name string) (*Link, error) {
-	out, err := subprocess.RunCommand("ip", "-d", "-j", "link", "show", name)
-	if err != nil {
-		return nil, err
-	}
-
-	var links []jsonLink
-	err = json.Unmarshal([]byte(out), &links)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to decode JSON link representation: %w", err)
-	}
-
-	jl := &links[0]
-	l := &Link{
-		Name:          jl.Name,
-		Kind:          jl.Info.Kind,
-		MTU:           jl.MTU,
-		Parent:        jl.Parent,
-		TXQueueLength: jl.TXQueueLength,
-		Master:        jl.Master,
-	}
-
-	if jl.Type == "ether" && jl.Address != "" {
-		l.Address, err = net.ParseMAC(jl.Address)
+	if link.Attrs().ParentIndex != 0 {
+		parentLink, err := netlink.LinkByIndex(link.Attrs().ParentIndex)
 		if err != nil {
-			return nil, err
+			return LinkInfo{}, err
 		}
+
+		parent = parentLink.Attrs().Name
 	}
 
-	if jl.AllMulticast == 1 {
-		l.AllMulticast = true
+	if link.Attrs().MasterIndex != 0 {
+		masterLink, err := netlink.LinkByIndex(link.Attrs().MasterIndex)
+		if err != nil {
+			return LinkInfo{}, err
+		}
+
+		master = masterLink.Attrs().Name
 	}
 
-	if jl.Up == "UP" {
-		l.Up = true
+	var vlanID int
+	vlan, ok := link.(*netlink.Vlan)
+	if ok {
+		vlanID = vlan.VlanId
 	}
 
-	return l, err
+	return LinkInfo{
+		Link: Link{
+			Name:          link.Attrs().Name,
+			Kind:          link.Type(),
+			MTU:           uint32(link.Attrs().MTU),
+			Parent:        parent,
+			Address:       link.Attrs().HardwareAddr,
+			TXQueueLength: uint32(link.Attrs().TxQLen),
+			AllMulticast:  link.Attrs().Allmulti == 1,
+			Master:        master,
+			Up:            (link.Attrs().Flags & net.FlagUp) != 0,
+		},
+		OperationalState: link.Attrs().OperState.String(),
+		VlanID:           vlanID,
+	}, nil
 }
 
 // SetUp enables the link device.
 func (l *Link) SetUp() error {
-	_, err := subprocess.RunCommand("ip", "link", "set", "dev", l.Name, "up")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return netlink.LinkSetUp(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	})
 }
 
 // SetDown disables the link device.
 func (l *Link) SetDown() error {
-	_, err := subprocess.RunCommand("ip", "link", "set", "dev", l.Name, "down")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return netlink.LinkSetDown(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	})
 }
 
 // SetMTU sets the MTU of the link device.
 func (l *Link) SetMTU(mtu uint32) error {
-	_, err := subprocess.RunCommand("ip", "link", "set", "dev", l.Name, "mtu", fmt.Sprintf("%d", mtu))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return netlink.LinkSetMTU(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	}, int(mtu))
 }
 
 // SetTXQueueLength sets the txqueuelen of the link device.
 func (l *Link) SetTXQueueLength(queueLength uint32) error {
-	_, err := subprocess.RunCommand("ip", "link", "set", "dev", l.Name, "txqueuelen", fmt.Sprintf("%d", queueLength))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return netlink.LinkSetTxQLen(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	}, int(queueLength))
 }
 
 // SetAddress sets the address of the link device.
 func (l *Link) SetAddress(address net.HardwareAddr) error {
-	_, err := subprocess.RunCommand("ip", "link", "set", "dev", l.Name, "address", address.String())
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return netlink.LinkSetHardwareAddr(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	}, address)
 }
 
 // SetAllMulticast when enabled instructs network driver to retrieve all multicast packets from the network to the
 // kernel for further processing.
 func (l *Link) SetAllMulticast(enabled bool) error {
-	mode := "off"
-	if enabled {
-		mode = "on"
+	link := &netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
 	}
 
-	_, err := subprocess.RunCommand("ip", "link", "set", "dev", l.Name, "allmulticast", mode)
-	return err
+	if enabled {
+		return netlink.LinkSetAllmulticastOn(link)
+	}
+
+	return netlink.LinkSetAllmulticastOff(link)
 }
 
 // SetMaster sets the master of the link device.
 func (l *Link) SetMaster(master string) error {
-	_, err := subprocess.RunCommand("ip", "link", "set", "dev", l.Name, "master", master)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return netlink.LinkSetMaster(
+		&netlink.GenericLink{
+			LinkAttrs: netlink.LinkAttrs{
+				Name: l.Name,
+			},
+		},
+		&netlink.GenericLink{
+			LinkAttrs: netlink.LinkAttrs{
+				Name: master,
+			},
+		},
+	)
 }
 
 // SetNoMaster removes the master of the link device.
 func (l *Link) SetNoMaster() error {
-	_, err := subprocess.RunCommand("ip", "link", "set", "dev", l.Name, "nomaster")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return netlink.LinkSetNoMaster(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	})
 }
 
 // SetName sets the name of the link device.
 func (l *Link) SetName(newName string) error {
-	_, err := subprocess.RunCommand("ip", "link", "set", "dev", l.Name, "name", newName)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return netlink.LinkSetName(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	}, newName)
 }
 
 // SetNetns moves the link to the selected network namespace.
-func (l *Link) SetNetns(netns string) error {
-	_, err := subprocess.RunCommand("ip", "link", "set", "dev", l.Name, "netns", netns)
+func (l *Link) SetNetns(netnsPid string) error {
+	pid, err := strconv.Atoi(netnsPid)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return netlink.LinkSetNsPid(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	}, pid)
 }
 
 // SetVfAddress changes the address for the specified vf.
 func (l *Link) SetVfAddress(vf string, address string) error {
-	_, err := subprocess.TryRunCommand("ip", "link", "set", "dev", l.Name, "vf", vf, "mac", address)
+	vfInt, err := strconv.Atoi(vf)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	hwAddress, err := net.ParseMAC(address)
+	if err != nil {
+		return err
+	}
+
+	return netlink.LinkSetVfHardwareAddr(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	}, vfInt, hwAddress)
 }
 
 // SetVfVlan changes the assigned VLAN for the specified vf.
 func (l *Link) SetVfVlan(vf string, vlan string) error {
-	_, err := subprocess.TryRunCommand("ip", "link", "set", "dev", l.Name, "vf", vf, "vlan", vlan)
+	vfInt, err := strconv.Atoi(vf)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	vlanInt, err := strconv.Atoi(vlan)
+	if err != nil {
+		return err
+	}
+
+	return netlink.LinkSetVfVlan(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	}, vfInt, vlanInt)
 }
 
 // SetVfSpoofchk turns packet spoof checking on or off for the specified VF.
-func (l *Link) SetVfSpoofchk(vf string, mode string) error {
-	_, err := subprocess.TryRunCommand("ip", "link", "set", "dev", l.Name, "vf", vf, "spoofchk", mode)
+func (l *Link) SetVfSpoofchk(vf string, on bool) error {
+	vfInt, err := strconv.Atoi(vf)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return netlink.LinkSetVfSpoofchk(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	}, vfInt, on)
 }
 
 // VirtFuncInfo holds information about vf.
 type VirtFuncInfo struct {
-	VF         int              `json:"vf"`
-	Address    string           `json:"address"`
-	MAC        string           `json:"mac"` // Deprecated
-	VLANs      []map[string]int `json:"vlan_list"`
-	SpoofCheck bool             `json:"spoofchk"`
+	VF         int
+	Address    net.HardwareAddr
+	VLAN       int
+	SpoofCheck bool
 }
 
 // GetVFInfo returns info about virtual function.
 func (l *Link) GetVFInfo(vfID int) (VirtFuncInfo, error) {
-	vf := VirtFuncInfo{}
-	vfNotFoundErr := errors.New("no matching virtual function found")
-
-	ipPath, err := exec.LookPath("ip")
+	link, err := linkByName(l.Name)
 	if err != nil {
-		return vf, errors.New("ip command not found")
+		return VirtFuncInfo{}, err
 	}
 
-	// Function to get VF info using regex matching, for older versions of ip tool. Less reliable.
-	vfFindByRegex := func(devName string, vfID int) (VirtFuncInfo, error) {
-		cmd := exec.Command(ipPath, "link", "show", devName)
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			return vf, err
-		}
-
-		defer func() { _ = stdout.Close() }()
-
-		err = cmd.Start()
-		if err != nil {
-			return vf, err
-		}
-
-		defer func() { _ = cmd.Wait() }()
-
-		// Try and match: "vf 1 MAC 00:00:00:00:00:00, vlan 4095, spoof checking off"
-		reVlan, err := regexp.Compile(fmt.Sprintf(`vf %d MAC ((?:[[:xdigit:]]{2}:){5}[[:xdigit:]]{2}).*, vlan (\d+), spoof checking (\w+)`, vfID))
-		if err != nil {
-			return vf, err
-		}
-
-		// IP link command doesn't show the vlan property if its set to 0, so we need to detect that.
-		// Try and match: "vf 1 MAC 00:00:00:00:00:00, spoof checking off"
-		reNoVlan, err := regexp.Compile(fmt.Sprintf(`vf %d MAC ((?:[[:xdigit:]]{2}:){5}[[:xdigit:]]{2}).*, spoof checking (\w+)`, vfID))
-		if err != nil {
-			return vf, err
-		}
-
-		scanner := bufio.NewScanner(stdout)
-		for scanner.Scan() {
-			// First try and find VF and read its properties with VLAN activated.
-			res := reVlan.FindStringSubmatch(scanner.Text())
-			if len(res) == 4 {
-				vlan, err := strconv.Atoi(res[2])
-				if err != nil {
-					return vf, err
-				}
-
-				vf.Address = res[1]
-				vf.VLANs = append(vf.VLANs, map[string]int{"vlan": vlan})
-				vf.SpoofCheck = util.IsTrue(res[3])
-
-				return vf, err
-			}
-
-			// Next try and find VF and read its properties with VLAN missing.
-			res = reNoVlan.FindStringSubmatch(scanner.Text())
-			if len(res) == 3 {
-				vf.Address = res[1]
-				// Missing VLAN ID means 0 when resetting later.
-				vf.VLANs = append(vf.VLANs, map[string]int{"vlan": 0})
-				vf.SpoofCheck = util.IsTrue(res[2])
-
-				return vf, err
-			}
-		}
-
-		err = scanner.Err()
-		if err != nil {
-			return vf, err
-		}
-
-		return vf, vfNotFoundErr
-	}
-
-	// First try using the JSON output format as is more reliable to parse.
-	cmd := exec.Command(ipPath, "-j", "link", "show", l.Name)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return vf, err
-	}
-
-	defer func() { _ = stdout.Close() }()
-
-	err = cmd.Start()
-	if err != nil {
-		return vf, err
-	}
-
-	defer func() { _ = cmd.Wait() }()
-
-	// Temporary struct to decode ip output into.
-	var ifInfo []struct {
-		VFList []VirtFuncInfo `json:"vfinfo_list"`
-	}
-
-	// Decode JSON output.
-	dec := json.NewDecoder(stdout)
-	err = dec.Decode(&ifInfo)
-	if err != nil && err != io.EOF {
-		return vf, err
-	}
-
-	err = cmd.Wait()
-	if err != nil {
-		// If JSON command fails, fallback to using regex match mode for older versions of ip tool.
-		// This does not support the newer VF "link/ether" output prefix.
-		return vfFindByRegex(l.Name, vfID)
-	}
-
-	if len(ifInfo) == 0 {
-		return vf, vfNotFoundErr
-	}
-
-	// Search VFs returned for match.
-	found := false
-	for _, vfInfo := range ifInfo[0].VFList {
-		if vfInfo.VF == vfID {
-			vf = vfInfo // Found a match.
-			found = true
+	for _, vf := range link.Attrs().Vfs {
+		if vf.ID == vfID {
+			return VirtFuncInfo{
+				VF:         vfID,
+				Address:    vf.Mac,
+				VLAN:       vf.Vlan,
+				SpoofCheck: vf.Spoofchk,
+			}, nil
 		}
 	}
 
-	if !found {
-		return vf, vfNotFoundErr
-	}
-
-	// Always populate VLANs slice if not already populated. Missing VLAN ID means 0 when resetting later.
-	if len(vf.VLANs) == 0 {
-		vf.VLANs = append(vf.VLANs, map[string]int{"vlan": 0})
-	}
-
-	// Ensure empty VLAN entry is consistently populated.
-	if _, found = vf.VLANs[0]["vlan"]; !found {
-		vf.VLANs[0]["vlan"] = 0
-	}
-
-	// If ip tool has provided old mac field, copy into newer address field.
-	if vf.MAC != "" && vf.Address == "" {
-		vf.Address = vf.MAC
-	}
-
-	return vf, nil
+	return VirtFuncInfo{}, fmt.Errorf("No matching virtual function found")
 }
 
 // Delete deletes the link device.
 func (l *Link) Delete() error {
-	_, err := subprocess.RunCommand("ip", "link", "delete", "dev", l.Name)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return netlink.LinkDel(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	})
 }
 
 // BridgeVLANAdd adds a new vlan filter entry.
 func (l *Link) BridgeVLANAdd(vid string, pvid bool, untagged bool, self bool) error {
-	cmd := []string{"vlan", "add", "dev", l.Name, "vid", vid}
-
-	if pvid {
-		cmd = append(cmd, "pvid")
-	}
-
-	if untagged {
-		cmd = append(cmd, "untagged")
-	}
-
-	if self {
-		cmd = append(cmd, "self")
-	} else {
-		cmd = append(cmd, "master")
-	}
-
-	_, err := subprocess.RunCommand("bridge", cmd...)
+	vidInt, err := strconv.Atoi(vid)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return netlink.BridgeVlanAdd(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	}, uint16(vidInt), pvid, untagged, self, !self)
 }
 
 // BridgeVLANDelete removes an existing vlan filter entry.
 func (l *Link) BridgeVLANDelete(vid string, self bool) error {
-	cmd := []string{"vlan", "del", "dev", l.Name, "vid", vid}
-
-	if self {
-		cmd = append(cmd, "self")
-	} else {
-		cmd = append(cmd, "master")
-	}
-
-	_, err := subprocess.RunCommand("bridge", cmd...)
+	vidInt, err := strconv.Atoi(vid)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return netlink.BridgeVlanDel(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	}, uint16(vidInt), false, false, self, !self)
 }
 
 // BridgeLinkSetIsolated sets bridge 'isolated' attribute on a port.
 func (l *Link) BridgeLinkSetIsolated(isolated bool) error {
-	isolatedState := "on"
-	if !isolated {
-		isolatedState = "off"
-	}
-
-	_, err := subprocess.RunCommand("bridge", "link", "set", "dev", l.Name, "isolated", isolatedState)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return netlink.LinkSetIsolated(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	}, isolated)
 }
 
 // BridgeLinkSetHairpin sets bridge 'hairpin' attribute on a port.
 func (l *Link) BridgeLinkSetHairpin(hairpin bool) error {
-	hairpinState := "on"
-	if !hairpin {
-		hairpinState = "off"
-	}
-
-	_, err := subprocess.RunCommand("bridge", "link", "set", "dev", l.Name, "hairpin", hairpinState)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return netlink.LinkSetHairpin(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	}, hairpin)
 }

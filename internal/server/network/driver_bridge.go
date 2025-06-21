@@ -1189,12 +1189,12 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 				}
 			} else if vlanID > 0 {
 				// If the interface exists and VLAN ID was provided, ensure it has the same parent and VLAN ID and is not attached to a different network.
-				linkInfo, err := ip.GetLinkInfoByName(entry)
+				linkInfo, err := ip.LinkByName(entry)
 				if err != nil {
 					return fmt.Errorf("Failed to get link info for external interface %q", entry)
 				}
 
-				if linkInfo.Info.Kind != "vlan" || linkInfo.Link != ifParent || linkInfo.Info.Data.ID != vlanID || !(linkInfo.Master == "" || linkInfo.Master == n.name) {
+				if linkInfo.Kind != "vlan" || linkInfo.Parent != ifParent || linkInfo.VlanID != vlanID || (linkInfo.Master != "" && linkInfo.Master != n.name) {
 					return fmt.Errorf("External interface %q already in use", entry)
 				}
 			}
@@ -1664,6 +1664,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 	// Configure tunnels.
 	for _, tunnel := range tunnels {
+
 		getConfig := func(key string) string {
 			return n.config[fmt.Sprintf("tunnel.%s.%s", tunnel, key)]
 		}
@@ -1724,25 +1725,32 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			}
 
 			tunPort := getConfig("port")
-			if tunPort == "" {
-				tunPort = "0"
+			if tunPort != "" {
+				vxlan.DstPort, err = strconv.Atoi(tunPort)
+				if err != nil {
+					return err
+				}
 			}
-
-			vxlan.DstPort = tunPort
 
 			tunID := getConfig("id")
 			if tunID == "" {
-				tunID = "1"
+				vxlan.VxlanID = 1
+			} else {
+				vxlan.VxlanID, err = strconv.Atoi(tunID)
+				if err != nil {
+					return err
+				}
 			}
-
-			vxlan.VxlanID = tunID
 
 			tunTTL := getConfig("ttl")
 			if tunTTL == "" {
-				tunTTL = "1"
+				vxlan.TTL = 1
+			} else {
+				vxlan.TTL, err = strconv.Atoi(tunTTL)
+				if err != nil {
+					return err
+				}
 			}
-
-			vxlan.TTL = tunTTL
 
 			err := vxlan.Add()
 			if err != nil {
@@ -2167,7 +2175,7 @@ func (n *bridge) getTunnels() []string {
 }
 
 // bootRoutesV4 returns a list of IPv4 boot routes on the network's device.
-func (n *bridge) bootRoutesV4() ([]string, error) {
+func (n *bridge) bootRoutesV4() ([]ip.Route, error) {
 	r := &ip.Route{
 		DevName: n.name,
 		Proto:   "boot",
@@ -2183,7 +2191,7 @@ func (n *bridge) bootRoutesV4() ([]string, error) {
 }
 
 // bootRoutesV6 returns a list of IPv6 boot routes on the network's device.
-func (n *bridge) bootRoutesV6() ([]string, error) {
+func (n *bridge) bootRoutesV6() ([]ip.Route, error) {
 	r := &ip.Route{
 		DevName: n.name,
 		Proto:   "boot",
@@ -2199,15 +2207,9 @@ func (n *bridge) bootRoutesV6() ([]string, error) {
 }
 
 // applyBootRoutesV4 applies a list of IPv4 boot routes to the network's device.
-func (n *bridge) applyBootRoutesV4(routes []string) {
+func (n *bridge) applyBootRoutesV4(routes []ip.Route) {
 	for _, route := range routes {
-		r := &ip.Route{
-			DevName: n.name,
-			Proto:   "boot",
-			Family:  ip.FamilyV4,
-		}
-
-		err := r.Replace(strings.Fields(route))
+		err := route.Replace()
 		if err != nil {
 			// If it fails, then we can't stop as the route has already gone, so just log and continue.
 			n.logger.Error("Failed to restore route", logger.Ctx{"err": err})
@@ -2216,15 +2218,9 @@ func (n *bridge) applyBootRoutesV4(routes []string) {
 }
 
 // applyBootRoutesV6 applies a list of IPv6 boot routes to the network's device.
-func (n *bridge) applyBootRoutesV6(routes []string) {
+func (n *bridge) applyBootRoutesV6(routes []ip.Route) {
 	for _, route := range routes {
-		r := &ip.Route{
-			DevName: n.name,
-			Proto:   "boot",
-			Family:  ip.FamilyV6,
-		}
-
-		err := r.Replace(strings.Fields(route))
+		err := route.Replace()
 		if err != nil {
 			// If it fails, then we can't stop as the route has already gone, so just log and continue.
 			n.logger.Error("Failed to restore route", logger.Ctx{"err": err})
@@ -3427,7 +3423,7 @@ func (n *bridge) deleteChildren() error {
 	}
 
 	for _, iface := range ifaces {
-		l, err := ip.LinkFromName(iface.Name)
+		l, err := ip.LinkByName(iface.Name)
 		if err != nil {
 			// If we can't load the link, chances are the interface isn't one that we should be deleting.
 			continue
