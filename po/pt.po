@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-06-19 14:10-0400\n"
-"PO-Revision-Date: 2025-06-19 11:49+0000\n"
+"PO-Revision-Date: 2025-06-21 07:02+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.12.1\n"
+"X-Generator: Weblate 5.13-dev\n"
 
 #: cmd/incus/info.go:441
 msgid "  Chassis:"
@@ -1412,7 +1412,7 @@ msgstr "Não pode usar uma imagem com --empty"
 
 #: cmd/incus/snapshot.go:124 cmd/incus/storage_volume.go:2588
 msgid "Can't use both --no-expiry and --expiry"
-msgstr ""
+msgstr "Não pode usar ambos --no-expiry e --expiry"
 
 #: cmd/incus/create.go:357
 #, c-format
@@ -3017,7 +3017,7 @@ msgstr "Expira: nunca"
 
 #: cmd/incus/snapshot.go:95 cmd/incus/storage_volume.go:2554
 msgid "Expiry date or time span for the new snapshot"
-msgstr ""
+msgstr "Data de validade ou tempo de envergadura para o novo instantâneo"
 
 #: cmd/incus/debug.go:44
 msgid "Export a virtual machine's memory state"
@@ -5220,7 +5220,7 @@ msgstr ""
 
 #: cmd/incus/list.go:51
 msgid "List instances"
-msgstr ""
+msgstr "Lista instâncias"
 
 #: cmd/incus/list.go:52
 #, c-format
@@ -5645,7 +5645,7 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:1595
 msgid "List storage volumes"
-msgstr ""
+msgstr "Lista volumes de armazenamento"
 
 #: cmd/incus/storage_volume.go:1600
 msgid ""
@@ -7449,72 +7449,81 @@ msgid ""
 "  pools but are not in the database. It will then offer to recreate these "
 "database records."
 msgstr ""
+"Recupera instâncias e volumes em falta de pools de armazenamento existentes "
+"e desconhecidos\n"
+"\n"
+"  Este comando é muito usado para recuperação de desastres. Irá perguntar-"
+"lhe acerca de pools de armazenamento desconhecidos e tentar\n"
+"  aceder-lhes, juntamente com pools de armazenamento existentes, e "
+"identificar quaisquer instâncias e volumes em falta que existem em\n"
+"  pools mas não na base de dados. Depois irá oferecer o recriar destes "
+"registos da base de dados."
 
 #: cmd/incus/file.go:465 cmd/incus/file.go:698
 msgid "Recursively transfer files"
-msgstr ""
+msgstr "Transfere ficheiros recursivamente"
 
 #: cmd/incus/storage_volume.go:384
 msgid "Refresh and update the existing storage volume copies"
-msgstr ""
+msgstr "Refresca e atualiza as cópias de volume de armazenamento existentes"
 
 #: cmd/incus/image.go:1443 cmd/incus/image.go:1444
 msgid "Refresh images"
-msgstr ""
+msgstr "Refresca imagens"
 
 #: cmd/incus/copy.go:403
 #, c-format
 msgid "Refreshing instance: %s"
-msgstr ""
+msgstr "A refrescar instância: %s"
 
 #: cmd/incus/image.go:1477
 #, c-format
 msgid "Refreshing the image: %s"
-msgstr ""
+msgstr "A refrescar a imagem: %s"
 
 #: cmd/incus/remote.go:1087
 #, c-format
 msgid "Remote %s already exists"
-msgstr ""
+msgstr "Remoto %s já existe"
 
 #: cmd/incus/project.go:1060 cmd/incus/project.go:1232 cmd/incus/remote.go:1078
 #: cmd/incus/remote.go:1159 cmd/incus/remote.go:1224 cmd/incus/remote.go:1272
 #, c-format
 msgid "Remote %s doesn't exist"
-msgstr ""
+msgstr "Remoto %s não existe"
 
 #: cmd/incus/remote.go:329
 #, c-format
 msgid "Remote %s exists as <%s>"
-msgstr ""
+msgstr "Remoto %s existe como <%s>"
 
 #: cmd/incus/remote.go:1167
 #, c-format
 msgid "Remote %s is global and cannot be removed"
-msgstr ""
+msgstr "Remoto %s é global e não pode ser removido"
 
 #: cmd/incus/remote.go:1082 cmd/incus/remote.go:1163 cmd/incus/remote.go:1276
 #, c-format
 msgid "Remote %s is static and cannot be modified"
-msgstr ""
+msgstr "Remoto %s é estático e não pode ser modificado"
 
 #: cmd/incus/remote.go:323
 msgid "Remote names may not contain colons"
-msgstr ""
+msgstr "Nomes remotos podem não conter dois pontos"
 
 #: cmd/incus/remote.go:133
 msgid "Remote trust token"
-msgstr ""
+msgstr "Testemunho de confiança de remoto"
 
 #: cmd/incus/info.go:313
 #, c-format
 msgid "Removable: %v"
-msgstr ""
+msgstr "Removível: %v"
 
 #: cmd/incus/delete.go:50
 #, c-format
 msgid "Remove %s (yes/no): "
-msgstr ""
+msgstr "Remover %s (sim/não): "
 
 #: cmd/incus/project.go:237
 #, c-format
@@ -7522,180 +7531,183 @@ msgid ""
 "Remove %s and everything it contains (instances, images, volumes, "
 "networks, ...) (yes/no): "
 msgstr ""
+"Remover %s e tudo o que contém (instâncias, imagens, volumes, redes, ...) ("
+"sim/não): "
 
 #: cmd/incus/cluster_group.go:623
 msgid "Remove a cluster member from a cluster group"
-msgstr ""
+msgstr "Remove um membro de agrupamento de um grupo de agrupamento"
 
 #: cmd/incus/cluster.go:708 cmd/incus/cluster.go:709
 msgid "Remove a member from the cluster"
-msgstr ""
+msgstr "Remove um membro do agrupamento"
 
 #: cmd/incus/network_zone.go:1635
 msgid "Remove a network zone record entry"
-msgstr ""
+msgstr "Remove uma entrada de registro de zona de rede"
 
 #: cmd/incus/network_address_set.go:755 cmd/incus/network_address_set.go:756
 msgid "Remove addresses from a network address set"
-msgstr ""
+msgstr "Remove endereços de um conjunto de endereços de rede"
 
 #: cmd/incus/alias.go:228 cmd/incus/alias.go:229
 msgid "Remove aliases"
-msgstr ""
+msgstr "Remove aliases"
 
 #: cmd/incus/network_forward.go:1032 cmd/incus/network_load_balancer.go:1202
 msgid "Remove all ports that match"
-msgstr ""
+msgstr "Remove todos os portos que correspondem"
 
 #: cmd/incus/network_acl.go:1063
 msgid "Remove all rules that match"
-msgstr ""
+msgstr "Remove todas as regras que correspondem"
 
 #: cmd/incus/network_load_balancer.go:1005
 msgid "Remove backend from a load balancer"
-msgstr ""
+msgstr "Remove backend de um balanceador de carga"
 
 #: cmd/incus/network_load_balancer.go:1004
 msgid "Remove backends from a load balancer"
-msgstr ""
+msgstr "Remove backends de um balanceador de carga"
 
 #: cmd/incus/network_zone.go:1636
 msgid "Remove entries from a network zone record"
-msgstr ""
+msgstr "Remove entradas de um registro de zona de rede"
 
 #: cmd/incus/config_device.go:514 cmd/incus/config_device.go:515
 msgid "Remove instance devices"
-msgstr ""
+msgstr "Remove dispositivos de instância"
 
 #: cmd/incus/cluster_group.go:622
 msgid "Remove member from group"
-msgstr ""
+msgstr "Remove membro de grupo"
 
 #: cmd/incus/network_forward.go:1030 cmd/incus/network_forward.go:1031
 msgid "Remove ports from a forward"
-msgstr ""
+msgstr "Remove portos de um encaminhamento"
 
 #: cmd/incus/network_load_balancer.go:1200
 #: cmd/incus/network_load_balancer.go:1201
 msgid "Remove ports from a load balancer"
-msgstr ""
+msgstr "Remove portos de um balanceador de carga"
 
 #: cmd/incus/profile.go:927 cmd/incus/profile.go:928
 msgid "Remove profiles from instances"
-msgstr ""
+msgstr "Remove perfis de instâncias"
 
 #: cmd/incus/remote.go:1129 cmd/incus/remote.go:1130
 msgid "Remove remotes"
-msgstr ""
+msgstr "Remove remotos"
 
 #: cmd/incus/cluster_role.go:117 cmd/incus/cluster_role.go:118
 msgid "Remove roles from a cluster member"
-msgstr ""
+msgstr "Remove funções de um membro do agrupamento"
 
 #: cmd/incus/network_acl.go:1061 cmd/incus/network_acl.go:1062
 msgid "Remove rules from an ACL"
-msgstr ""
+msgstr "Remove regras de um ACL"
 
 #: cmd/incus/snapshot.go:281
 #, c-format
 msgid "Remove snapshot %s from %s (yes/no): "
-msgstr ""
+msgstr "Remover instantâneo %s de %s (sim/não): "
 
 #: cmd/incus/config_trust.go:774 cmd/incus/config_trust.go:775
 msgid "Remove trusted client"
-msgstr ""
+msgstr "Remove cliente de confiança"
 
 #: cmd/incus/cluster_group.go:707 cmd/incus/cluster_group.go:708
 msgid "Rename a cluster group"
-msgstr ""
+msgstr "Renomeia um grupo do agrupamento"
 
 #: cmd/incus/cluster.go:648 cmd/incus/cluster.go:649
 msgid "Rename a cluster member"
-msgstr ""
+msgstr "Renomeia um membro do agrupamento"
 
 #: cmd/incus/alias.go:173 cmd/incus/alias.go:174 cmd/incus/image_alias.go:386
 #: cmd/incus/image_alias.go:387
 msgid "Rename aliases"
-msgstr ""
+msgstr "Renomeia aliases"
 
 #: cmd/incus/storage_volume.go:1950 cmd/incus/storage_volume.go:1951
 msgid "Rename custom storage volumes"
-msgstr ""
+msgstr "Renomeia volumes de armazenamento personalizados"
 
 #: cmd/incus/snapshot.go:484 cmd/incus/snapshot.go:485
 msgid "Rename instance snapshots"
-msgstr ""
+msgstr "Renomeia instantâneos de instância"
 
 #: cmd/incus/rename.go:22 cmd/incus/rename.go:23
 msgid "Rename instances"
-msgstr ""
+msgstr "Renomeia instâncias"
 
 #: cmd/incus/network_acl.go:777 cmd/incus/network_acl.go:778
 msgid "Rename network ACLs"
-msgstr ""
+msgstr "Renomeia ACLs de rede"
 
 #: cmd/incus/network_address_set.go:593 cmd/incus/network_address_set.go:594
 msgid "Rename network address sets"
-msgstr ""
+msgstr "Renomeia conjuntos de endereços de rede"
 
 #: cmd/incus/network_integration.go:565 cmd/incus/network_integration.go:566
 msgid "Rename network integrations"
-msgstr ""
+msgstr "Renomeia integrações de rede"
 
 #: cmd/incus/network.go:1490 cmd/incus/network.go:1491
 msgid "Rename networks"
-msgstr ""
+msgstr "Renomeia redes"
 
 #: cmd/incus/profile.go:1017 cmd/incus/profile.go:1018
 msgid "Rename profiles"
-msgstr ""
+msgstr "Renomeia perfis"
 
 #: cmd/incus/project.go:760 cmd/incus/project.go:761
 msgid "Rename projects"
-msgstr ""
+msgstr "Renomeia projetos"
 
 #: cmd/incus/remote.go:1048 cmd/incus/remote.go:1049
 msgid "Rename remotes"
-msgstr ""
+msgstr "Renomeia remotos"
 
 #: cmd/incus/storage_volume.go:2963 cmd/incus/storage_volume.go:2964
 msgid "Rename storage volume snapshots"
-msgstr ""
+msgstr "Renomeia instantâneos de volume de armazenamento"
 
 #: cmd/incus/storage_volume.go:2013
 #, c-format
 msgid "Renamed storage volume from \"%s\" to \"%s\""
-msgstr ""
+msgstr "A renomear volume de armazenamento de \"%s\" para \"%s\""
 
 #: cmd/incus/storage_volume.go:3036
 #, c-format
 msgid "Renamed storage volume snapshot from \"%s\" to \"%s\""
-msgstr ""
+msgstr "Instantâneo de volume de armazenamento renomeado de \"%s\" para \"%s\""
 
 #: cmd/incus/info.go:151
 #, c-format
 msgid "Render: %s (%s)"
-msgstr ""
+msgstr "Renderização: %s (%s)"
 
 #: cmd/incus/cluster.go:1019 cmd/incus/cluster.go:1020
 msgid "Request a join token for adding a cluster member"
 msgstr ""
+"Requisita um testemunho de adesão para adicionar um membro ao agrupamento"
 
 #: cmd/incus/delete.go:39 cmd/incus/snapshot.go:234
 msgid "Require user confirmation"
-msgstr ""
+msgstr "Requer confirmação do utilizador"
 
 #: cmd/incus/info.go:689
 msgid "Resources:"
-msgstr ""
+msgstr "Recursos:"
 
 #: cmd/incus/action.go:105 cmd/incus/action.go:106
 msgid "Restart instances"
-msgstr ""
+msgstr "Reinicia instâncias"
 
 #: cmd/incus/cluster.go:1512 cmd/incus/cluster.go:1513
 msgid "Restore cluster member"
-msgstr ""
+msgstr "Restaura membro do agrupamento"
 
 #: cmd/incus/snapshot.go:548
 msgid ""
@@ -7703,234 +7715,237 @@ msgid ""
 "\n"
 "If --stateful is passed, then the running state will be restored too."
 msgstr ""
+"Restaura instância de instantâneos\n"
+"\n"
+"Se --stateful for passado, então o estado em execução será também restaurado."
 
 #: cmd/incus/snapshot.go:547
 msgid "Restore instance snapshots"
-msgstr ""
+msgstr "Restaura instantâneos de instância"
 
 #: cmd/incus/storage_volume.go:3052 cmd/incus/storage_volume.go:3053
 msgid "Restore storage volume snapshots"
-msgstr ""
+msgstr "Restaura instantâneos de volume de armazenamento"
 
 #: cmd/incus/cluster.go:1579
 #, c-format
 msgid "Restoring cluster member: %s"
-msgstr ""
+msgstr "A restaurar membro do agrupamento: %s"
 
 #: cmd/incus/config_trust.go:99 cmd/incus/config_trust.go:184
 msgid "Restrict the certificate to one or more projects"
-msgstr ""
+msgstr "Restringir o certificado a um ou mais projetos"
 
 #: cmd/incus/action.go:80 cmd/incus/action.go:81
 msgid "Resume instances"
-msgstr ""
+msgstr "Resumir instâncias"
 
 #: cmd/incus/console.go:48
 msgid "Retrieve the instance's console log"
-msgstr ""
+msgstr "Obter o relatório de consola da instância"
 
 #: cmd/incus/create.go:400
 #, c-format
 msgid "Retrieving image: %s"
-msgstr ""
+msgstr "A obter imagem: %s"
 
 #: cmd/incus/config_trust.go:822 cmd/incus/config_trust.go:823
 msgid "Revoke certificate add token"
-msgstr ""
+msgstr "Revoga testemunho de adição de certificado"
 
 #: cmd/incus/cluster.go:1266
 msgid "Revoke cluster member join token"
-msgstr ""
+msgstr "Revoga testemunho de adesão de membro de agrupamento"
 
 #: cmd/incus/storage_bucket.go:1109
 msgid "Role (admin or read-only)"
-msgstr ""
+msgstr "Função (administrar ou só leitura)"
 
 #: cmd/incus/admin_sql.go:155
 #, c-format
 msgid "Rows affected: %d"
-msgstr ""
+msgstr "Linhas afetadas: %d"
 
 #: cmd/incus/network_acl.go:916
 msgid "Rule description"
-msgstr ""
+msgstr "Descrição de regra"
 
 #: cmd/incus/remote_unix.go:37
 msgid "Run a local API proxy"
-msgstr ""
+msgstr "Corre o proxy API local"
 
 #: cmd/incus/remote_unix.go:38
 msgid "Run a local API proxy for the remote"
-msgstr ""
+msgstr "Corre o proxy API local para o remoto"
 
 #: cmd/incus/network_allocations.go:62
 msgid "Run again a specific project"
-msgstr ""
+msgstr "Corre de novo um projeto específico"
 
 #: cmd/incus/action.go:156
 msgid "Run against all instances"
-msgstr ""
+msgstr "Corre contra todas as instâncias"
 
 #: cmd/incus/network_allocations.go:63
 msgid "Run against all projects"
-msgstr ""
+msgstr "Corre contra todos os projetos"
 
 #: cmd/incus/warning.go:223
 msgid "SEVERITY"
-msgstr ""
+msgstr "GRAVIDADE"
 
 #: cmd/incus/image.go:1150
 msgid "SIZE"
-msgstr ""
+msgstr "TAMANHO"
 
 #: cmd/incus/info.go:428
 #, c-format
 msgid "SKU: %v"
-msgstr ""
+msgstr "SKU: %v"
 
 #: cmd/incus/list.go:512
 msgid "SNAPSHOTS"
-msgstr ""
+msgstr "INSTANTÂNEOS"
 
 #: cmd/incus/storage.go:737
 msgid "SOURCE"
-msgstr ""
+msgstr "FONTE"
 
 #: cmd/incus/info.go:166 cmd/incus/info.go:275
 msgid "SR-IOV information:"
-msgstr ""
+msgstr "Informação de SR-IOV:"
 
 #: cmd/incus/utils.go:735
 #, c-format
 msgid "SSH SFTP listening on %v"
-msgstr ""
+msgstr "SSH SFTP a escutar em %v"
 
 #: cmd/incus/utils.go:752
 #, c-format
 msgid "SSH client connected %q"
-msgstr ""
+msgstr "Cliente SSH ligado %q"
 
 #: cmd/incus/utils.go:753
 #, c-format
 msgid "SSH client disconnected %q"
-msgstr ""
+msgstr "Cliente SSH desligado %q"
 
 #: cmd/incus/list.go:516
 msgid "STARTED AT"
-msgstr ""
+msgstr "COMEÇADO EM"
 
 #: cmd/incus/list.go:513 cmd/incus/network.go:1171
 #: cmd/incus/network_peer.go:140 cmd/incus/operation.go:162
 #: cmd/incus/storage.go:739 cmd/incus/warning.go:224
 msgid "STATE"
-msgstr ""
+msgstr "ESTADO"
 
 #: cmd/incus/snapshot.go:372
 msgid "STATEFUL"
-msgstr ""
+msgstr "STATEFUL"
 
 #: cmd/incus/remote.go:916
 msgid "STATIC"
-msgstr ""
+msgstr "ESTÁTICO"
 
 #: cmd/incus/cluster.go:185
 msgid "STATUS"
-msgstr ""
+msgstr "ESTATÍSTICAS"
 
 #: cmd/incus/project.go:580
 msgid "STORAGE BUCKETS"
-msgstr ""
+msgstr "BUCKETS DE ARMAZENAMENTO"
 
 #: cmd/incus/list.go:498
 msgid "STORAGE POOL"
-msgstr ""
+msgstr "POOL DE ARMAZENAMENTO"
 
 #: cmd/incus/project.go:579
 msgid "STORAGE VOLUMES"
-msgstr ""
+msgstr "VOLUMES DE ARMAZENAMENTO"
 
 #: cmd/incus/network.go:1051
 msgid "STP"
-msgstr ""
+msgstr "STP"
 
 #: cmd/incus/admin_recover.go:172
 msgid "Scanning for unknown volumes..."
-msgstr ""
+msgstr "A procurar por volumes desconhecidos..."
 
 #: cmd/incus/storage_bucket.go:1111
 msgid "Secret key (auto-generated if empty)"
-msgstr ""
+msgstr "Chave secreta (auto-gerada se vazia)"
 
 #: cmd/incus/storage_bucket.go:1195
 #, c-format
 msgid "Secret key: %s"
-msgstr ""
+msgstr "Chave secreta: %s"
 
 #: cmd/incus/query.go:34 cmd/incus/query.go:35
 msgid "Send a raw query to the server"
-msgstr ""
+msgstr "Envia uma consulta em cru para o servidor"
 
 #: cmd/incus/info.go:370
 #, c-format
 msgid "Serial Number: %v"
-msgstr ""
+msgstr "Número de Série: %v"
 
 #: cmd/incus/info.go:455 cmd/incus/info.go:471
 #, c-format
 msgid "Serial: %s"
-msgstr ""
+msgstr "Série: %s"
 
 #: cmd/incus/info.go:432
 #, c-format
 msgid "Serial: %v"
-msgstr ""
+msgstr "Série: %v"
 
 #: cmd/incus/remote.go:135
 msgid "Server authentication type (tls or oidc)"
-msgstr ""
+msgstr "Tipo de autenticação do servidor (tls ou oidc)"
 
 #: cmd/incus/remote.go:489
 msgid "Server certificate NACKed by user"
-msgstr ""
+msgstr "Certificado de servidor NACKed pelo utilizador"
 
 #: cmd/incus/remote.go:619
 msgid "Server doesn't trust us after authentication"
-msgstr ""
+msgstr "O servidor não confia em nós após a autenticação"
 
 #: cmd/incus/cluster.go:281 cmd/incus/cluster.go:1205 cmd/incus/cluster.go:1304
 #: cmd/incus/cluster.go:1414 cmd/incus/cluster_group.go:577
 msgid "Server isn't part of a cluster"
-msgstr ""
+msgstr "Servidor não faz parte de um agrupamento"
 
 #: cmd/incus/remote.go:134
 msgid "Server protocol (incus, oci or simplestreams)"
-msgstr ""
+msgstr "Protocolo de servidor (incus, oci ou simplestreams)"
 
 #: cmd/incus/version.go:60
 #, c-format
 msgid "Server version: %s\n"
-msgstr ""
+msgstr "Versão do servidor: %s\n"
 
 #: cmd/incus/image.go:1055
 #, c-format
 msgid "Server: %s"
-msgstr ""
+msgstr "Servidor: %s"
 
 #: cmd/incus/cluster_group.go:978
 msgid "Set a cluster group's configuration keys"
-msgstr ""
+msgstr "Define as chaves de configuração de um grupo dum agrupamento"
 
 #: cmd/incus/cluster.go:522
 msgid "Set a cluster member's configuration keys"
-msgstr ""
+msgstr "Define as chaves de configuração de um membro do agrupamento"
 
 #: cmd/incus/file.go:1366 cmd/incus/storage_volume.go:2398
 msgid "Set authentication user when using SSH SFTP listener"
-msgstr ""
+msgstr "Define a autenticação do utilizador quando se usa escuta SSH SFTP"
 
 #: cmd/incus/config_device.go:630
 msgid "Set device configuration keys"
-msgstr ""
+msgstr "Define chaves de configuração do dispositivo"
 
 #: cmd/incus/config_device.go:633
 msgid ""
@@ -7940,6 +7955,12 @@ msgid ""
 "with:\n"
 "    incus config device set [<remote>:]<instance> <device> <key> <value>"
 msgstr ""
+"Define chaves de configuração do dispositivo\n"
+"\n"
+"Para compatibilidade com versões anteriores, ainda pode ser definida uma "
+"única chave de configuração com:\n"
+"    incus config device set [<remoto>:]<instância> <dispositivo> <chave> "
+"<valor>"
 
 #: cmd/incus/config_device.go:640
 msgid ""
@@ -7949,14 +7970,19 @@ msgid ""
 "with:\n"
 "    incus profile device set [<remote>:]<profile> <device> <key> <value>"
 msgstr ""
+"Define chaves de configuração do dispositivo\n"
+"\n"
+"Para compatibilidade com versões anteriores, ainda pode ser definida uma "
+"única chave de configuração com:\n"
+"    incus config device set [<remoto>:]<perfil> <dispositivo> <chave> <valor>"
 
 #: cmd/incus/image.go:1665 cmd/incus/image.go:1666
 msgid "Set image properties"
-msgstr ""
+msgstr "Define propriedades de imagem"
 
 #: cmd/incus/config.go:526
 msgid "Set instance or server configuration keys"
-msgstr ""
+msgstr "Define chaves de configuração de instância ou servidor"
 
 #: cmd/incus/config.go:527
 msgid ""
@@ -7966,10 +7992,15 @@ msgid ""
 "with:\n"
 "    incus config set [<remote>:][<instance>] <key> <value>"
 msgstr ""
+"Define chaves de configuração de instância ou servidor\n"
+"\n"
+"Para compatibilidade com versões anteriores, ainda pode ser definida uma "
+"única chave de configuração com:\n"
+"    incus config set [<remoto>:][<instância>] <chave> <valor>"
 
 #: cmd/incus/network_acl.go:503
 msgid "Set network ACL configuration keys"
-msgstr ""
+msgstr "Define chaves de configuração de ACL de rede"
 
 #: cmd/incus/network_acl.go:504
 msgid ""
@@ -7979,14 +8010,19 @@ msgid ""
 "with:\n"
 "    incus network set [<remote>:]<ACL> <key> <value>"
 msgstr ""
+"Define chaves de configuração de ACL de rede\n"
+"\n"
+"Para compatibilidade com versões anteriores, ainda pode ser definida uma "
+"única chave de configuração com:\n"
+"    incus network set [<remoto>:]<ACL> <chave> <valor>"
 
 #: cmd/incus/network_address_set.go:352 cmd/incus/network_address_set.go:353
 msgid "Set network address set configuration keys"
-msgstr ""
+msgstr "Define chaves de configuração de conjunto de endereço de rede"
 
 #: cmd/incus/network.go:1552
 msgid "Set network configuration keys"
-msgstr ""
+msgstr "Define chaves de configuração de rede"
 
 #: cmd/incus/network.go:1553
 msgid ""
@@ -7996,10 +8032,15 @@ msgid ""
 "with:\n"
 "    incus network set [<remote>:]<network> <key> <value>"
 msgstr ""
+"Define chaves de configuração de rede\n"
+"\n"
+"Para compatibilidade com versões anteriores, ainda pode ser definida uma "
+"única chave de configuração com:\n"
+"    incus network set [<remoto>:]<rede> <chave> <valor>"
 
 #: cmd/incus/network_forward.go:535
 msgid "Set network forward keys"
-msgstr ""
+msgstr "Define chaves de encaminhamento rede"
 
 #: cmd/incus/network_forward.go:536
 msgid ""
@@ -8009,10 +8050,15 @@ msgid ""
 "with:\n"
 "    incus network set [<remote>:]<network> <listen_address> <key> <value>"
 msgstr ""
+"Define chaves de encaminhamento rede\n"
+"\n"
+"Para compatibilidade com versões anteriores, ainda pode ser definida uma "
+"única chave de configuração com:\n"
+"    incus network set [<remoto>:]<rede> <endereço_de_escuta> <chave> <valor>"
 
 #: cmd/incus/network_integration.go:619
 msgid "Set network integration configuration keys"
-msgstr ""
+msgstr "Define chaves de configuração de integração de rede"
 
 #: cmd/incus/network_integration.go:620
 msgid ""
@@ -8023,10 +8069,16 @@ msgid ""
 "    incus network integration set [<remote>:]<network integration> <key> "
 "<value>"
 msgstr ""
+"Define chaves de configuração de integração de rede\n"
+"\n"
+"Para compatibilidade com versões anteriores, ainda pode ser definida uma "
+"única chave de configuração com:\n"
+"    incus network integration set [<remoto>:]<integração de rede> <chave> "
+"<valor>"
 
 #: cmd/incus/network_load_balancer.go:521
 msgid "Set network load balancer keys"
-msgstr ""
+msgstr "Define chaves do balanceador de carga de rede"
 
 #: cmd/incus/network_load_balancer.go:522
 msgid ""
@@ -8036,10 +8088,15 @@ msgid ""
 "with:\n"
 "    incus network set [<remote>:]<network> <listen_address> <key> <value>"
 msgstr ""
+"Define chaves do balanceador de carga de rede\n"
+"\n"
+"Para compatibilidade com versões anteriores, ainda pode ser definida uma "
+"única chave de configuração com:\n"
+"    incus network set [<remoto>:]<rede> <endereço_de_escuta> <chave> <valor>"
 
 #: cmd/incus/network_peer.go:575
 msgid "Set network peer keys"
-msgstr ""
+msgstr "Define chaves de peer de rede"
 
 #: cmd/incus/network_peer.go:576
 msgid ""
@@ -8049,10 +8106,15 @@ msgid ""
 "with:\n"
 "    incus network set [<remote>:]<network> <peer_name> <key> <value>"
 msgstr ""
+"Define chaves de peer de rede\n"
+"\n"
+"Para compatibilidade com versões anteriores, ainda pode ser definida uma "
+"única chave de configuração com:\n"
+"    incus network set [<remoto>:]<rede> <nome_do_peer> <chave> <valor>"
 
 #: cmd/incus/network_zone.go:509
 msgid "Set network zone configuration keys"
-msgstr ""
+msgstr "Define chaves de configuração de zona de rede"
 
 #: cmd/incus/network_zone.go:510
 msgid ""
@@ -8062,14 +8124,19 @@ msgid ""
 "with:\n"
 "    incus network set [<remote>:]<Zone> <key> <value>"
 msgstr ""
+"Define chaves de configuração de zona de rede\n"
+"\n"
+"Para compatibilidade com versões anteriores, ainda pode ser definida uma "
+"única chave de configuração com:\n"
+"    incus network set [<remoto>:]<Zona> <chave> <valor>"
 
 #: cmd/incus/network_zone.go:1224 cmd/incus/network_zone.go:1225
 msgid "Set network zone record configuration keys"
-msgstr ""
+msgstr "Define chaves de configuração de registro de zona de rede"
 
 #: cmd/incus/profile.go:1079
 msgid "Set profile configuration keys"
-msgstr ""
+msgstr "Define chaves de configuração do perfil"
 
 #: cmd/incus/profile.go:1080
 msgid ""
@@ -8079,10 +8146,15 @@ msgid ""
 "with:\n"
 "    incus profile set [<remote>:]<profile> <key> <value>"
 msgstr ""
+"Define chaves de configuração do perfil\n"
+"\n"
+"Para compatibilidade com versões anteriores, ainda pode ser definida uma "
+"única chave de configuração com:\n"
+"    incus profile set [<remoto>:]<perfil> <chave> <valor>"
 
 #: cmd/incus/project.go:827
 msgid "Set project configuration keys"
-msgstr ""
+msgstr "Define chaves de configuração do projeto"
 
 #: cmd/incus/project.go:828
 msgid ""
@@ -8092,10 +8164,15 @@ msgid ""
 "with:\n"
 "    incus project set [<remote>:]<project> <key> <value>"
 msgstr ""
+"Define chaves de configuração do projeto\n"
+"\n"
+"Para compatibilidade com versões anteriores, ainda pode ser definida uma "
+"única chave de configuração com:\n"
+"    incus project set [<remoto>:]<projeto> <chave> <valor>"
 
 #: cmd/incus/storage_bucket.go:673
 msgid "Set storage bucket configuration keys"
-msgstr ""
+msgstr "Define chaves de configuração do bucket de armazenamento"
 
 #: cmd/incus/storage_bucket.go:674
 msgid ""
@@ -8105,10 +8182,15 @@ msgid ""
 "with:\n"
 "    incus storage bucket set [<remote>:]<pool> <bucket> <key> <value>"
 msgstr ""
+"Define chaves de configuração do bucket de armazenamento\n"
+"\n"
+"Para compatibilidade com versões anteriores, ainda pode ser definida uma "
+"única chave de configuração com:\n"
+"    incus storage bucket set [<remoto>:]<pool> <bucket> <chave> <valor>"
 
 #: cmd/incus/storage.go:853
 msgid "Set storage pool configuration keys"
-msgstr ""
+msgstr "Define chaves de configuração do pool de armazenamento"
 
 #: cmd/incus/storage.go:854
 msgid ""
@@ -8118,10 +8200,15 @@ msgid ""
 "with:\n"
 "    incus storage set [<remote>:]<pool> <key> <value>"
 msgstr ""
+"Define chaves de configuração do pool de armazenamento\n"
+"\n"
+"Para compatibilidade com versões anteriores, ainda pode ser definida uma "
+"única chave de configuração com:\n"
+"    incus storage set [<remoto>:]<pool> <chave> <valor>"
 
 #: cmd/incus/storage_volume.go:2032
 msgid "Set storage volume configuration keys"
-msgstr ""
+msgstr "Define chaves de configuração de volume de armazenamento"
 
 #: cmd/incus/storage_volume.go:2033
 msgid ""
@@ -8136,243 +8223,253 @@ msgid ""
 "Supported values for type are \"custom\", \"container\" and \"virtual-"
 "machine\"."
 msgstr ""
+"Define chaves de configuração de volume de armazenamento\n"
+"\n"
+"Para compatibilidade com versões anteriores, ainda pode ser definida uma "
+"única chave de configuração com:\n"
+"    incus storage volume set [<remoto>:]<pool> [<tipo>/]<volume> <chave "
+"<valor>\n"
+"\n"
+"Se o tipo não for especificado, o Incus assume que tipo é \"custom\".\n"
+"Valores suportados para tipo são \"custom\", \"container\" e "
+"\"virtual-machine\"."
 
 #: cmd/incus/remote.go:1242 cmd/incus/remote.go:1243
 msgid "Set the URL for the remote"
-msgstr ""
+msgstr "Define a URL para o remoto"
 
 #: cmd/incus/file.go:110
 msgid "Set the file's gid on create"
-msgstr ""
+msgstr "Define o gid do ficheiro ao ser criado"
 
 #: cmd/incus/file.go:701
 msgid "Set the file's gid on push"
-msgstr ""
+msgstr "Define o gid do ficheiro ao ser enviado"
 
 #: cmd/incus/file.go:112
 msgid "Set the file's perms on create"
-msgstr ""
+msgstr "Define as permissões do ficheiro ao ser criado"
 
 #: cmd/incus/file.go:702
 msgid "Set the file's perms on push"
-msgstr ""
+msgstr "Define as permissões do ficheiro ao ser enviado"
 
 #: cmd/incus/file.go:111
 msgid "Set the file's uid on create"
-msgstr ""
+msgstr "Define o uid do ficheiro ao ser criado"
 
 #: cmd/incus/file.go:700
 msgid "Set the file's uid on push"
-msgstr ""
+msgstr "Define o uid do ficheiro ao ser enviado"
 
 #: cmd/incus/cluster_group.go:981
 msgid "Set the key as a cluster group property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de grupo de agrupamento"
 
 #: cmd/incus/cluster.go:525
 msgid "Set the key as a cluster property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de agrupamento"
 
 #: cmd/incus/network_acl.go:510
 msgid "Set the key as a network ACL property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de ACL de rede"
 
 #: cmd/incus/network_address_set.go:355
 msgid "Set the key as a network address set property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de conjunto de endereços de rede"
 
 #: cmd/incus/network_forward.go:543
 msgid "Set the key as a network forward property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de encaminhamento de rede"
 
 #: cmd/incus/network_integration.go:627
 msgid "Set the key as a network integration property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de integração de rede"
 
 #: cmd/incus/network_load_balancer.go:529
 msgid "Set the key as a network load balancer property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de balanceador de carga de rede"
 
 #: cmd/incus/network_peer.go:583
 msgid "Set the key as a network peer property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de peer de rede"
 
 #: cmd/incus/network.go:1560
 msgid "Set the key as a network property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de rede"
 
 #: cmd/incus/network_zone.go:517
 msgid "Set the key as a network zone property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de zona de rede"
 
 #: cmd/incus/network_zone.go:1230
 msgid "Set the key as a network zone record property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de registro de zona de rede"
 
 #: cmd/incus/profile.go:1087
 msgid "Set the key as a profile property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de perfil"
 
 #: cmd/incus/project.go:835
 msgid "Set the key as a project property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de projeto"
 
 #: cmd/incus/storage_bucket.go:681
 msgid "Set the key as a storage bucket property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de bucket de armazenamento"
 
 #: cmd/incus/storage.go:861
 msgid "Set the key as a storage property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de armazenamento"
 
 #: cmd/incus/storage_volume.go:2049
 msgid "Set the key as a storage volume property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de volume de armazenamento"
 
 #: cmd/incus/config.go:540
 msgid "Set the key as an instance property"
-msgstr ""
+msgstr "Define a chave como uma propriedade de instância"
 
 #: cmd/incus/file.go:1364 cmd/incus/storage_volume.go:2396
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
-msgstr ""
+msgstr "Configura escuta SSH SFTP no endereço:porto em vez de montar"
 
 #: cmd/incus/admin_init.go:64
 msgid "Setup device based storage using DEVICE"
-msgstr ""
+msgstr "Configura armazenamento baseado em dispositivo usando DEVICE"
 
 #: cmd/incus/admin_init.go:65
 msgid "Setup loop based storage with SIZE in GiB"
-msgstr ""
+msgstr "Configura armazenamento baseado em loop com TAMANHO em GiB"
 
 #: cmd/incus/main.go:129
 msgid "Show all debug messages"
-msgstr ""
+msgstr "Mostra todas as mensagens de depuração"
 
 #: cmd/incus/main.go:130
 msgid "Show all information messages"
-msgstr ""
+msgstr "Mostra todas as mensagens de informação"
 
 #: cmd/incus/cluster_group.go:763 cmd/incus/cluster_group.go:764
 msgid "Show cluster group configurations"
-msgstr ""
+msgstr "Mostra configurações de grupo de agrupamento"
 
 #: cmd/incus/config_template.go:371 cmd/incus/config_template.go:372
 msgid "Show content of instance file templates"
-msgstr ""
+msgstr "Mostrar conteúdo de modelos de ficheiro de instância"
 
 #: cmd/incus/cluster.go:327 cmd/incus/cluster.go:328
 msgid "Show details of a cluster member"
-msgstr ""
+msgstr "Mostra detalhes de um membro de agrupamento"
 
 #: cmd/incus/operation.go:299 cmd/incus/operation.go:300
 msgid "Show details on a background operation"
-msgstr ""
+msgstr "Mostra detalhes sobre uma operação nos bastidores"
 
 #: cmd/incus/monitor.go:52
 msgid "Show events from all projects"
-msgstr ""
+msgstr "Mostra eventos de todos os projetos"
 
 #: cmd/incus/config_device.go:770 cmd/incus/config_device.go:771
 msgid "Show full device configuration"
-msgstr ""
+msgstr "Mostra configuração completa do dispositivo"
 
 #: cmd/incus/image.go:1529 cmd/incus/image.go:1530
 msgid "Show image properties"
-msgstr ""
+msgstr "Mostra propriedades de imagem"
 
 #: cmd/incus/config_metadata.go:191 cmd/incus/config_metadata.go:192
 msgid "Show instance metadata files"
-msgstr ""
+msgstr "Mostra ficheiros de metadados de instância"
 
 #: cmd/incus/config.go:750 cmd/incus/config.go:751
 msgid "Show instance or server configurations"
-msgstr ""
+msgstr "Mostra configurações de instância ou servidor"
 
 #: cmd/incus/info.go:36 cmd/incus/info.go:37
 msgid "Show instance or server information"
-msgstr ""
+msgstr "Mostra informações de instância ou servidor"
 
 #: cmd/incus/snapshot.go:626 cmd/incus/snapshot.go:627
 msgid "Show instance snapshot configuration"
-msgstr ""
+msgstr "Mostra configuração de instantâneo de instância"
 
 #: cmd/incus/main.go:313 cmd/incus/main.go:314
 msgid "Show less common commands"
-msgstr ""
+msgstr "Mostra comandos menos comuns"
 
 #: cmd/incus/version.go:22 cmd/incus/version.go:23
 msgid "Show local and remote versions"
-msgstr ""
+msgstr "Mostra versões locais e remotas"
 
 #: cmd/incus/network_acl.go:199 cmd/incus/network_acl.go:200
 msgid "Show network ACL configurations"
-msgstr ""
+msgstr "Mostra configurações ACL de rede"
 
 #: cmd/incus/network_acl.go:262 cmd/incus/network_acl.go:263
 msgid "Show network ACL log"
-msgstr ""
+msgstr "Mostra relatório ACL de rede"
 
 #: cmd/incus/network_address_set.go:188 cmd/incus/network_address_set.go:189
 msgid "Show network address set configuration"
-msgstr ""
+msgstr "Mostra configuração de conjunto de endereços de rede"
 
 #: cmd/incus/network.go:1648 cmd/incus/network.go:1649
 msgid "Show network configurations"
-msgstr ""
+msgstr "Mostra configurações de rede"
 
 #: cmd/incus/network_forward.go:257 cmd/incus/network_forward.go:258
 msgid "Show network forward configurations"
-msgstr ""
+msgstr "Mostra configurações de encaminhamento de rede"
 
 #: cmd/incus/network_integration.go:731 cmd/incus/network_integration.go:732
 msgid "Show network integration options"
-msgstr ""
+msgstr "Mostra opções de integração de rede"
 
 #: cmd/incus/network_load_balancer.go:261
 #: cmd/incus/network_load_balancer.go:262
 msgid "Show network load balancer configurations"
-msgstr ""
+msgstr "Mostra configurações de balanceador de carga de rede"
 
 #: cmd/incus/network_peer.go:258 cmd/incus/network_peer.go:259
 msgid "Show network peer configurations"
-msgstr ""
+msgstr "Mostra configurações de peer de rede"
 
 #: cmd/incus/network_zone.go:263 cmd/incus/network_zone.go:264
 msgid "Show network zone configurations"
-msgstr ""
+msgstr "Mostra configurações de zona de rede"
 
 #: cmd/incus/network_zone.go:971
 msgid "Show network zone record configuration"
-msgstr ""
+msgstr "Mostra configuração de registro de zona de rede"
 
 #: cmd/incus/network_zone.go:972
 msgid "Show network zone record configurations"
-msgstr ""
+msgstr "Mostra configurações de registro de zona de rede"
 
 #: cmd/incus/profile.go:1168 cmd/incus/profile.go:1169
 msgid "Show profile configurations"
-msgstr ""
+msgstr "Mostra configurações de perfil"
 
 #: cmd/incus/project.go:961 cmd/incus/project.go:962
 msgid "Show project options"
-msgstr ""
+msgstr "Mostra opções de projeto"
 
 #: cmd/incus/storage_bucket.go:791 cmd/incus/storage_bucket.go:792
 msgid "Show storage bucket configurations"
-msgstr ""
+msgstr "Mostra configurações do bucket de armazenamento"
 
 #: cmd/incus/storage_bucket.go:1415 cmd/incus/storage_bucket.go:1416
 msgid "Show storage bucket key configurations"
-msgstr ""
+msgstr "Mostra configurações de chave de bucket de armazenamento"
 
 #: cmd/incus/storage.go:957 cmd/incus/storage.go:958
 msgid "Show storage pool configurations and resources"
-msgstr ""
+msgstr "Mostra configurações e recursos do pool de armazenamento"
 
 #: cmd/incus/storage_volume.go:2195
 msgid "Show storage volume configurations"
-msgstr ""
+msgstr "Mostra configurações de volume de armazenamento"
 
 #: cmd/incus/storage_volume.go:2196
 msgid ""
@@ -8385,18 +8482,26 @@ msgid ""
 "For snapshots, add the snapshot name (only if type is one of custom, "
 "container or virtual-machine)."
 msgstr ""
+"Mostra configurações de volume de armazenamento\n"
+"\n"
+"Se o tipo não for especificado, Incus assume que o tipo é \"custom\".\n"
+"Os valores suportados para o tipo são \"custom\", \"container\" e "
+"\"virtual-machine\".\n"
+"\n"
+"Para instantâneos, adiciona o nome do instantâneo (apenas se o tipo é um de "
+"custom, container ou virtual-machine)."
 
 #: cmd/incus/storage_volume.go:3135
 msgid "Show storage volume snapshhot configurations"
-msgstr ""
+msgstr "Mostra configurações de instantâneo de volume de armazenamento"
 
 #: cmd/incus/storage_volume.go:3134
 msgid "Show storage volume snapshot configurations"
-msgstr ""
+msgstr "Mostra configurações de instantâneo de volume de armazenamento"
 
 #: cmd/incus/storage_volume.go:1352
 msgid "Show storage volume state information"
-msgstr ""
+msgstr "Mostra informações de estado de volume de armazenamento"
 
 #: cmd/incus/storage_volume.go:1353
 msgid ""
@@ -8406,308 +8511,317 @@ msgid ""
 "Supported values for type are \"custom\", \"container\" and \"virtual-"
 "machine\"."
 msgstr ""
+"Mostra informações de estado de volume de armazenamento\n"
+"\n"
+"Se o tipo não for especificado, o Incus assume que o tipo é \"custom\".\n"
+"Valores suportados para tipo são \"custom\", \"container\" e "
+"\"virtual-machine\"."
 
 #: cmd/incus/project.go:1210 cmd/incus/project.go:1211
 msgid "Show the current project"
-msgstr ""
+msgstr "Mostra o projeto atual"
 
 #: cmd/incus/remote.go:697 cmd/incus/remote.go:698
 msgid "Show the default remote"
-msgstr ""
+msgstr "Mostra o remoto predefinido"
 
 #: cmd/incus/config.go:754
 msgid "Show the expanded configuration"
-msgstr ""
+msgstr "Mostra a configuração expandida"
 
 #: cmd/incus/info.go:47 cmd/incus/project.go:1097
 msgid "Show the instance's access list"
-msgstr ""
+msgstr "Mostra a lista de acesso da instância"
 
 #: cmd/incus/info.go:48
 msgid "Show the instance's recent log entries"
-msgstr ""
+msgstr "Mostra as entradas de relatório recentes da instância"
 
 #: cmd/incus/info.go:49
 msgid "Show the resources available to the server"
-msgstr ""
+msgstr "Mostra os recursos disponíveis para o servidor"
 
 #: cmd/incus/storage.go:961
 msgid "Show the resources available to the storage pool"
-msgstr ""
+msgstr "Mostra os recursos disponíveis para a piscina de armazenamento"
 
 #: cmd/incus/storage.go:507
 msgid "Show the used and free space in bytes"
-msgstr ""
+msgstr "Mostra o espaço usado e livre em bytes"
 
 #: cmd/incus/config_trust.go:895 cmd/incus/config_trust.go:896
 msgid "Show trust configurations"
-msgstr ""
+msgstr "Mostra configurações de confiança"
 
 #: cmd/incus/cluster.go:386 cmd/incus/cluster.go:387
 msgid "Show useful information about a cluster member"
-msgstr ""
+msgstr "Mostra informação útil sobre um membro do agrupamento"
 
 #: cmd/incus/image.go:942 cmd/incus/image.go:943
 msgid "Show useful information about images"
-msgstr ""
+msgstr "Mostra informações úteis sobre imagens"
 
 #: cmd/incus/storage.go:503 cmd/incus/storage.go:504
 msgid "Show useful information about storage pools"
-msgstr ""
+msgstr "Mostra informações úteis sobre piscinas de armazenamento"
 
 #: cmd/incus/warning.go:315 cmd/incus/warning.go:316
 msgid "Show warning"
-msgstr ""
+msgstr "Mostra aviso"
 
 #: cmd/incus/admin_init_interactive.go:688
 msgid "Size in GiB of the new loop device"
-msgstr ""
+msgstr "Tamanho em GiB do novo dispositivo de loop"
 
 #: cmd/incus/image.go:1012
 #, c-format
 msgid "Size: %.2fMiB"
-msgstr ""
+msgstr "Tamanho: %.2fMiB"
 
 #: cmd/incus/info.go:306 cmd/incus/info.go:322
 #, c-format
 msgid "Size: %s"
-msgstr ""
+msgstr "Tamanho: %s"
 
 #: cmd/incus/storage_volume.go:2558
 msgid "Snapshot description"
-msgstr ""
+msgstr "Descrição do instantâneo"
 
 #: cmd/incus/storage_volume.go:2545 cmd/incus/storage_volume.go:2546
 msgid "Snapshot storage volumes"
-msgstr ""
+msgstr "Instantâneo de volumes de armazenamento"
 
 #: cmd/incus/storage_volume.go:2137
 msgid "Snapshots are read-only and can't have their configuration changed"
-msgstr ""
+msgstr "Os instantâneos são só leitura e não se pode alterar a sua configuração"
 
 #: cmd/incus/info.go:800 cmd/incus/storage_volume.go:1493
 msgid "Snapshots:"
-msgstr ""
+msgstr "Instantâneos:"
 
 #: cmd/incus/info.go:511
 #, c-format
 msgid "Socket %d:"
-msgstr ""
+msgstr "Socket %d:"
 
 #: cmd/incus/action.go:462
 #, c-format
 msgid "Some instances failed to %s"
-msgstr ""
+msgstr "Algumas instâncias falharam a %s"
 
 #: cmd/incus/top.go:452
 msgid "Sorting Method:"
-msgstr ""
+msgstr "Método de Ordenar:"
 
 #: cmd/incus/admin_recover.go:124
 msgid ""
 "Source of the storage pool (block device, volume group, dataset, path, ... "
 "as applicable):"
 msgstr ""
+"Fonte do pool de armazenamento (dispositivo de bloco, grupo de volume, "
+"conjunto de dados, caminho, ... como aplicável):"
 
 #: cmd/incus/image.go:1054
 msgid "Source:"
-msgstr ""
+msgstr "Fonte:"
 
 #: cmd/incus/action.go:31 cmd/incus/action.go:32
 msgid "Start instances"
-msgstr ""
+msgstr "Inicia instâncias"
 
 #: cmd/incus/info.go:675
 #, c-format
 msgid "Started: %s"
-msgstr ""
+msgstr "Iniciado: %s"
 
 #: cmd/incus/launch.go:119
 #, c-format
 msgid "Starting %s"
-msgstr ""
+msgstr "A iniciar %s"
 
 #: cmd/incus/admin_recover.go:242
 msgid "Starting recovery..."
-msgstr ""
+msgstr "A iniciar recuperação..."
 
 #: cmd/incus/info.go:757
 msgid "State"
-msgstr ""
+msgstr "Estado"
 
 #: cmd/incus/network.go:1011
 #, c-format
 msgid "State: %s"
-msgstr ""
+msgstr "Estado: %s"
 
 #: cmd/incus/info.go:834
 msgid "Stateful"
-msgstr ""
+msgstr "Stateful"
 
 #: cmd/incus/info.go:638
 #, c-format
 msgid "Status: %s"
-msgstr ""
+msgstr "Estatuto: %s"
 
 #: cmd/incus/action.go:129 cmd/incus/action.go:130
 msgid "Stop instances"
-msgstr ""
+msgstr "Para instâncias"
 
 #: cmd/incus/publish.go:41
 msgid "Stop the instance if currently running"
-msgstr ""
+msgstr "Pára a instância se estiver atualmente em execução"
 
 #: cmd/incus/publish.go:158
 msgid "Stopping instance failed!"
-msgstr ""
+msgstr "Falhou a paragem da instância!"
 
 #: cmd/incus/delete.go:128
 #, c-format
 msgid "Stopping the instance failed: %s"
-msgstr ""
+msgstr "Falhou a paragem da instância: %s"
 
 #: cmd/incus/admin_init.go:63
 msgid "Storage backend to use (btrfs, dir, lvm or zfs, default: dir)"
 msgstr ""
+"Backend de armazenamento a usar (btrfs, dir, lvm ou zfs, predefinição: dir)"
 
 #: cmd/incus/storage_bucket.go:193
 #, c-format
 msgid "Storage bucket %q created"
-msgstr ""
+msgstr "Bucket de armazenamento %q criado"
 
 #: cmd/incus/storage_bucket.go:262
 #, c-format
 msgid "Storage bucket %q deleted"
-msgstr ""
+msgstr "Bucket de armazenamento %q apagado"
 
 #: cmd/incus/storage_bucket.go:1193
 #, c-format
 msgid "Storage bucket key %q added"
-msgstr ""
+msgstr "Bucket de armazenamento %q adicionado"
 
 #: cmd/incus/storage_bucket.go:1262
 #, c-format
 msgid "Storage bucket key %q removed"
-msgstr ""
+msgstr "Bucket de armazenamento %q removido"
 
 #: cmd/incus/admin_init_auto.go:52
 msgid "Storage has already been configured"
-msgstr ""
+msgstr "O armazenamento já foi configurado"
 
 #: cmd/incus/admin_recover.go:109
 #, c-format
 msgid "Storage pool %q is already on recover list"
-msgstr ""
+msgstr "O pool de armazenamento %q já está na lista de recuperação"
 
 #: cmd/incus/admin_recover.go:205
 #, c-format
 msgid "Storage pool %q of type %q"
-msgstr ""
+msgstr "Pool de armazenamento %q do tipo %q"
 
 #: cmd/incus/storage.go:207
 #, c-format
 msgid "Storage pool %s created"
-msgstr ""
+msgstr "Pool de armazenamento %s criado"
 
 #: cmd/incus/storage.go:269
 #, c-format
 msgid "Storage pool %s deleted"
-msgstr ""
+msgstr "Pool de armazenamento %s apagado"
 
 #: cmd/incus/storage.go:205
 #, c-format
 msgid "Storage pool %s pending on member %s"
-msgstr ""
+msgstr "Pool de armazenamento %s pendente de membro %s"
 
 #: cmd/incus/storage.go:116
 msgid "Storage pool description"
-msgstr ""
+msgstr "Descrição de pool de armazenamento"
 
 #: cmd/incus/copy.go:63 cmd/incus/create.go:64 cmd/incus/import.go:35
 #: cmd/incus/move.go:66
 msgid "Storage pool name"
-msgstr ""
+msgstr "Nome de pool de armazenamento"
 
 #: cmd/incus/admin_init.go:66
 msgid "Storage pool to use or create"
-msgstr ""
+msgstr "Pool de armazenamento a usar ou criar"
 
 #: cmd/incus/storage_volume.go:696
 #, c-format
 msgid "Storage volume %s created"
-msgstr ""
+msgstr "Volume de armazenamento %s criado"
 
 #: cmd/incus/storage_volume.go:772
 #, c-format
 msgid "Storage volume %s deleted"
-msgstr ""
+msgstr "Volume de armazenamento %s apagado"
 
 #: cmd/incus/storage_volume.go:497
 msgid "Storage volume copied successfully!"
-msgstr ""
+msgstr "Volume de armazenamento copiado com sucesso!"
 
 #: cmd/incus/storage_volume.go:501
 msgid "Storage volume moved successfully!"
-msgstr ""
+msgstr "Volume de armazenamento movido com sucesso!"
 
 #: cmd/incus/storage_volume.go:2770
 #, c-format
 msgid "Storage volume snapshot %s deleted from %s"
-msgstr ""
+msgstr "Instantâneo de volume de armazenamento %s apagado de %s"
 
 #: cmd/incus/action.go:160
 msgid "Store the instance state"
-msgstr ""
+msgstr "Armazena o estado da instância"
 
 #: cmd/incus/cluster.go:1454
 msgid "Successfully updated cluster certificates"
-msgstr ""
+msgstr "Certificados de agrupamento atualizados com sucesso"
 
 #: cmd/incus/info.go:235
 #, c-format
 msgid "Supported modes: %s"
-msgstr ""
+msgstr "Modos suportados: %s"
 
 #: cmd/incus/info.go:239
 #, c-format
 msgid "Supported ports: %s"
-msgstr ""
+msgstr "Portos suportados: %s"
 
 #: cmd/incus/info.go:730
 msgid "Swap (current)"
-msgstr ""
+msgstr "Swap (atual)"
 
 #: cmd/incus/info.go:734
 msgid "Swap (peak)"
-msgstr ""
+msgstr "Swap (pico)"
 
 #: cmd/incus/project.go:1024 cmd/incus/project.go:1025
 msgid "Switch the current project"
-msgstr ""
+msgstr "Altera o projeto atual"
 
 #: cmd/incus/remote.go:1194 cmd/incus/remote.go:1195
 msgid "Switch the default remote"
-msgstr ""
+msgstr "Altera o remoto predefinido"
 
 #: cmd/incus/file.go:141
 msgid "Symlink target path can only be used for type \"symlink\""
 msgstr ""
+"O caminho do alvo do link simbólico só pode ser usado para o tipo \"symlink\""
 
 #: cmd/incus/info.go:406
 msgid "System:"
-msgstr ""
+msgstr "Sistema:"
 
 #: cmd/incus/snapshot.go:370 cmd/incus/storage_volume.go:2905
 msgid "TAKEN AT"
-msgstr ""
+msgstr "TOMADO EM"
 
 #: cmd/incus/alias.go:155
 msgid "TARGET"
-msgstr ""
+msgstr "ALVO"
 
 #: cmd/incus/cluster.go:1140 cmd/incus/config_trust.go:652
 msgid "TOKEN"
-msgstr ""
+msgstr "TESTEMUNHO"
 
 #: cmd/incus/config_trust.go:448 cmd/incus/image.go:1151
 #: cmd/incus/image_alias.go:258 cmd/incus/list.go:514 cmd/incus/network.go:1165
@@ -8716,23 +8830,23 @@ msgstr ""
 #: cmd/incus/operation.go:160 cmd/incus/storage_volume.go:1727
 #: cmd/incus/warning.go:225
 msgid "TYPE"
-msgstr ""
+msgstr "TIPO"
 
 #: cmd/incus/info.go:832 cmd/incus/info.go:883 cmd/incus/storage_volume.go:1565
 msgid "Taken at"
-msgstr ""
+msgstr "Tomado em"
 
 #: cmd/incus/file.go:1418 cmd/incus/storage_volume.go:2458
 msgid "Target path and --listen flag cannot be used together"
-msgstr ""
+msgstr "O caminho do alvo e bandeira --listen não podem ser usados juntamente"
 
 #: cmd/incus/file.go:1412 cmd/incus/storage_volume.go:2452
 msgid "Target path must be a directory"
-msgstr ""
+msgstr "O caminho alvo tem de ser um diretório"
 
 #: cmd/incus/admin_shutdown.go:31
 msgid "Tell the daemon to shutdown all instances and exit"
-msgstr ""
+msgstr "Diz ao daemon para encerrar todas as instâncias e terminar"
 
 #: cmd/incus/admin_shutdown.go:32
 msgid ""
@@ -8744,21 +8858,34 @@ msgid ""
 "  This can take quite a while as instances can take a long time to\n"
 "  shutdown, especially if a non-standard timeout was configured for them."
 msgstr ""
+"Diz ao daemon para encerrar todas as instâncias e terminar\n"
+"\n"
+"  Isto vai dizer ao daemon para iniciar o encerrar limpo de todas as "
+"instâncias,\n"
+"  seguindo dele próprio encerar-se e terminar.\n"
+"\n"
+"  Isto pode demorar bastante tempo pois as instâncias podem levar muito "
+"tempo a\n"
+"  encerrar, especialmente se um tempo limite não-standard foi configurado "
+"para elas."
 
 #: cmd/incus/admin_init_interactive.go:537
 #, c-format
 msgid "The %s storage pool already exists"
-msgstr ""
+msgstr "O pool de armazenamento %s já existe"
 
 #: cmd/incus/console.go:139
 msgid "The --show-log flag is only supported for by 'console' output type"
-msgstr ""
+msgstr "A bandeira --show-log só é suportada pelo tipo de saída 'console'"
 
 #: cmd/incus/admin_init_interactive.go:753
 msgid "The LVM thin provisioning tools couldn't be found on the system"
 msgstr ""
+"As ferramentas de provisionamento fino LVM não podem ser encontradas no "
+"sistema"
 
 #: cmd/incus/admin_init_interactive.go:741
+#, fuzzy
 msgid ""
 "The LVM thin provisioning tools couldn't be found.\n"
 "LVM can still be used without thin provisioning but this will disable over-"
@@ -8771,6 +8898,16 @@ msgid ""
 "and make sure that your user can see and run the \"thin_check\" command "
 "before running \"init\" again."
 msgstr ""
+"As ferramentas de provisionamento fino LVM não podem ser encontradas.\n"
+"LVM can still be used without thin provisioning but this will disable over-"
+"provisioning,\n"
+"increase the space requirements and creation time of images, instances and "
+"snapshots.\n"
+"\n"
+"If you wish to use thin provisioning, abort now, install the tools from your "
+"Linux distribution\n"
+"and make sure that your user can see and run the \"thin_check\" command "
+"before running \"init\" again."
 
 #: cmd/incus/admin_cluster.go:49
 msgid ""
@@ -9118,61 +9255,63 @@ msgstr ""
 #: cmd/incus/remote.go:591
 #, c-format
 msgid "Trust token for %s: "
-msgstr ""
+msgstr "Testemunho de confiança para %s: "
 
 #: cmd/incus/action.go:333 cmd/incus/launch.go:156
 #, c-format
 msgid "Try `incus info --show-log %s%s` for more info"
-msgstr ""
+msgstr "Tente `incus info --show-log %s%s` para mais informação"
 
 #: cmd/incus/info.go:756
 msgid "Type"
-msgstr ""
+msgstr "Tipo"
 
 #: cmd/incus/config_trust.go:187
 msgid "Type of certificate"
-msgstr ""
+msgstr "Tipo de certificado"
 
 #: cmd/incus/console.go:49
 msgid ""
 "Type of connection to establish: 'console' for serial console, 'vga' for "
 "SPICE graphical output"
 msgstr ""
+"Tipo de ligação a estabelecer: 'console' para consola série, 'vga' para "
+"saída gráfica SPICE"
 
 #: cmd/incus/network_peer.go:347
 msgid "Type of peer (local or remote)"
-msgstr ""
+msgstr "Tipo de peer (local ou remoto)"
 
 #: cmd/incus/image.go:1014 cmd/incus/info.go:303 cmd/incus/info.go:436
 #: cmd/incus/info.go:447 cmd/incus/info.go:653 cmd/incus/network.go:1012
 #: cmd/incus/storage_volume.go:1463
 #, c-format
 msgid "Type: %s"
-msgstr ""
+msgstr "Tipo: %s"
 
 #: cmd/incus/project.go:1164
 msgid "UNLIMITED"
-msgstr ""
+msgstr "SEM LIMITE"
 
 #: cmd/incus/image.go:1152
 msgid "UPLOAD DATE"
-msgstr ""
+msgstr "DATA DE ENVIO"
 
 #: cmd/incus/cluster.go:180 cmd/incus/remote.go:912
 msgid "URL"
-msgstr ""
+msgstr "URL"
 
 #: cmd/incus/project.go:1194 cmd/incus/storage_volume.go:1732
 msgid "USAGE"
-msgstr ""
+msgstr "UTILIZAÇÃO"
 
 #: cmd/incus/info.go:584
 msgid "USB device:"
-msgstr ""
+msgstr "Dispositivo USB:"
 
 #: cmd/incus/info.go:587
 msgid "USB devices:"
-msgstr ""
+msgstr "Dispositivos USB:"
 
 #: cmd/incus/network.go:1170 cmd/incus/network_acl.go:179
 #: cmd/incus/network_address_set.go:168 cmd/incus/network_allocations.go:77
@@ -9180,39 +9319,41 @@ msgstr ""
 #: cmd/incus/profile.go:789 cmd/incus/project.go:584 cmd/incus/storage.go:738
 #: cmd/incus/storage_volume.go:1731
 msgid "USED BY"
-msgstr ""
+msgstr "USADO POR"
 
 #: cmd/incus/warning.go:226
 msgid "UUID"
-msgstr ""
+msgstr "UUID"
 
 #: cmd/incus/info.go:162 cmd/incus/info.go:408
 #, c-format
 msgid "UUID: %v"
-msgstr ""
+msgstr "UUID: %v"
 
 #: cmd/incus/admin_init.go:193 cmd/incus/admin_init_interactive.go:221
 msgid "Unable to connect to any of the cluster members specified in join token"
 msgstr ""
+"Incapaz de se ligar a qualquer um dos membros do agrupamento especificados "
+"no testemunho de junção"
 
 #: cmd/incus/file.go:412
 #, c-format
 msgid "Unable to create a temporary file: %v"
-msgstr ""
+msgstr "Incapaz de criar um ficheiro temporário: %v"
 
 #: cmd/incus/remote.go:245 cmd/incus/remote.go:279
 msgid "Unavailable remote server"
-msgstr ""
+msgstr "Servidor remoto não disponível"
 
 #: cmd/incus/config_trust.go:205
 #, c-format
 msgid "Unknown certificate type %q"
-msgstr ""
+msgstr "Tipo de certificado desconhecido %q"
 
 #: cmd/incus/utils.go:775
 #, c-format
 msgid "Unknown channel type for client %q: %s"
-msgstr ""
+msgstr "Tipo de canal desconhecido para cliente %q: %s"
 
 #: cmd/incus/cluster.go:201 cmd/incus/cluster.go:1155
 #: cmd/incus/cluster_group.go:527 cmd/incus/config_trust.go:469
@@ -9229,119 +9370,123 @@ msgstr ""
 #: cmd/incus/top.go:98 cmd/incus/warning.go:251
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
-msgstr ""
+msgstr "Caractere curto de coluna desconhecido '%c' in '%s'"
 
 #: cmd/incus/console.go:169
 #, c-format
 msgid "Unknown console type %q"
-msgstr ""
+msgstr "Tipo de consola desconhecido %q"
 
 #: cmd/incus/file.go:1171
 #, c-format
 msgid "Unknown file type '%s'"
-msgstr ""
+msgstr "Tipo de ficheiro desconhecido '%s'"
 
 #: cmd/incus/network_acl.go:981 cmd/incus/network_acl.go:1125
 #, c-format
 msgid "Unknown key: %s"
-msgstr ""
+msgstr "Chave desconhecida: %s"
 
 #: cmd/incus/console.go:118
 #, c-format
 msgid "Unknown output type %q"
-msgstr ""
+msgstr "Tipo de saída desconhecido %q"
 
 #: cmd/incus/cluster_group.go:1058
 msgid "Unset a cluster group's configuration keys"
-msgstr ""
+msgstr "Retira definições das chaves de configuração de um grupo de agrupamento"
 
 #: cmd/incus/cluster.go:602
 msgid "Unset a cluster member's configuration keys"
 msgstr ""
+"Retira definições das chaves de configuração de um membro de agrupamento"
 
 #: cmd/incus/move.go:62
 msgid "Unset all profiles on the target instance"
-msgstr ""
+msgstr "Retira definições de todos os perfis na instância alvo"
 
 #: cmd/incus/config_device.go:857 cmd/incus/config_device.go:858
 msgid "Unset device configuration keys"
-msgstr ""
+msgstr "Retira definições de chaves de configuração"
 
 #: cmd/incus/image.go:1731 cmd/incus/image.go:1732
 msgid "Unset image properties"
-msgstr ""
+msgstr "Retira propriedades da imagem"
 
 #: cmd/incus/config.go:882 cmd/incus/config.go:883
 msgid "Unset instance or server configuration keys"
-msgstr ""
+msgstr "Retira definições das chaves de configuração de instância ou servidor"
 
 #: cmd/incus/network_acl.go:591 cmd/incus/network_acl.go:592
 msgid "Unset network ACL configuration keys"
-msgstr ""
+msgstr "Retira definições das chaves de configuração de ACL de rede"
 
 #: cmd/incus/network_address_set.go:428 cmd/incus/network_address_set.go:429
 msgid "Unset network address set configuration keys"
 msgstr ""
+"Retira definições das chaves de configuração de conjuntos de endereços de "
+"rede"
 
 #: cmd/incus/network.go:1722 cmd/incus/network.go:1723
 msgid "Unset network configuration keys"
-msgstr ""
+msgstr "Retira definições de chaves de configuração de rede"
 
 #: cmd/incus/network_forward.go:645
 msgid "Unset network forward configuration keys"
-msgstr ""
+msgstr "Retira definições de chaves de configuração de encaminhamento de rede"
 
 #: cmd/incus/network_forward.go:646
 msgid "Unset network forward keys"
-msgstr ""
+msgstr "Retira definições de chaves de encaminhamento e rede"
 
 #: cmd/incus/network_integration.go:698 cmd/incus/network_integration.go:699
 msgid "Unset network integration configuration keys"
-msgstr ""
+msgstr "Retira definições de chaves de configuração de integração de rede"
 
 #: cmd/incus/network_load_balancer.go:631
 msgid "Unset network load balancer configuration keys"
 msgstr ""
+"Retira definições de chaves de configuração de balanceador de carga de rede"
 
 #: cmd/incus/network_load_balancer.go:632
 msgid "Unset network load balancer keys"
-msgstr ""
+msgstr "Retira definições de chaves de balanceador de carga de rede"
 
 #: cmd/incus/network_peer.go:677
 msgid "Unset network peer configuration keys"
-msgstr ""
+msgstr "Retira definições de chaves de configuração de peer de rede"
 
 #: cmd/incus/network_peer.go:678
 msgid "Unset network peer keys"
-msgstr ""
+msgstr "Retira definições de chaves de peer de rede"
 
 #: cmd/incus/network_zone.go:597 cmd/incus/network_zone.go:598
 msgid "Unset network zone configuration keys"
-msgstr ""
+msgstr "Retira definições de chaves de configuração de zona de rede"
 
 #: cmd/incus/network_zone.go:1313 cmd/incus/network_zone.go:1314
 msgid "Unset network zone record configuration keys"
-msgstr ""
+msgstr "Retira definições de chaves de configuração de registo de zona de rede"
 
 #: cmd/incus/profile.go:1234 cmd/incus/profile.go:1235
 msgid "Unset profile configuration keys"
-msgstr ""
+msgstr "Retira definições de chaves de configuração de perfis"
 
 #: cmd/incus/project.go:915 cmd/incus/project.go:916
 msgid "Unset project configuration keys"
-msgstr ""
+msgstr "Retira definições de chaves de configuração de projeto"
 
 #: cmd/incus/storage_bucket.go:862 cmd/incus/storage_bucket.go:863
 msgid "Unset storage bucket configuration keys"
-msgstr ""
+msgstr "Retira definições de chaves de configuração de bucket de armazenamento"
 
 #: cmd/incus/storage.go:1053 cmd/incus/storage.go:1054
 msgid "Unset storage pool configuration keys"
-msgstr ""
+msgstr "Retira definições de chaves de configuração de pool de armazenamento"
 
 #: cmd/incus/storage_volume.go:2302
 msgid "Unset storage volume configuration keys"
-msgstr ""
+msgstr "Retira definições de chaves de configuração de volume de armazenamento"
 
 #: cmd/incus/storage_volume.go:2303
 msgid ""
@@ -9351,182 +9496,193 @@ msgid ""
 "Supported values for type are \"custom\", \"container\" and \"virtual-"
 "machine\"."
 msgstr ""
+"Retira definições de chaves de configuração de volume de armazenamento\n"
+"\n"
+"Se o tipo não for especificado, o Incus assume que o tipo é \"custom\".\n"
+"Valores suportados para tipo são \"custom\", \"container\" e "
+"\"virtual-machine\"."
 
 #: cmd/incus/cluster_group.go:1061
 msgid "Unset the key as a cluster group property"
-msgstr ""
+msgstr "Retira definições da chave como propriedade de grupo de agrupamento"
 
 #: cmd/incus/cluster.go:605
 msgid "Unset the key as a cluster property"
-msgstr ""
+msgstr "Retira definições da chave como propriedade de agrupamento"
 
 #: cmd/incus/network_acl.go:595
 msgid "Unset the key as a network ACL property"
-msgstr ""
+msgstr "Retira definições da chave como propriedade de ACL de rede"
 
 #: cmd/incus/network_address_set.go:432
 msgid "Unset the key as a network address set property"
 msgstr ""
+"Retira definições da chave como propriedade de conjunto de endereços de rede"
 
 #: cmd/incus/network_forward.go:649
 msgid "Unset the key as a network forward property"
-msgstr ""
+msgstr "Retira definições da chave como propriedade de encaminhamento de rede"
 
 #: cmd/incus/network_integration.go:703
 msgid "Unset the key as a network integration property"
-msgstr ""
+msgstr "Retira definições da chave como propriedade de integração de rede"
 
 #: cmd/incus/network_load_balancer.go:635
 msgid "Unset the key as a network load balancer property"
 msgstr ""
+"Retira definições da chave como propriedade de balanceador de carga de rede"
 
 #: cmd/incus/network_peer.go:681
 msgid "Unset the key as a network peer property"
-msgstr ""
+msgstr "Retira definições da chave como propriedade de peer de rede"
 
 #: cmd/incus/network.go:1727
 msgid "Unset the key as a network property"
-msgstr ""
+msgstr "Retira definições da chave como propriedade de rede"
 
 #: cmd/incus/network_zone.go:601
 msgid "Unset the key as a network zone property"
-msgstr ""
+msgstr "Retira definições da chave como propriedade de zona de rede"
 
 #: cmd/incus/network_zone.go:1317
 msgid "Unset the key as a network zone record property"
-msgstr ""
+msgstr "Retira definições da chave como propriedade de registo de zona de rede"
 
 #: cmd/incus/profile.go:1239
 msgid "Unset the key as a profile property"
-msgstr ""
+msgstr "Retira definições da chave como propriedade de perfil"
 
 #: cmd/incus/project.go:920
 msgid "Unset the key as a project property"
-msgstr ""
+msgstr "Retira definições da chave como propriedade de projeto"
 
 #: cmd/incus/storage_bucket.go:866
 msgid "Unset the key as a storage bucket property"
-msgstr ""
+msgstr "Retira definições da chave como propriedade de bucket de armazenamento"
 
 #: cmd/incus/storage.go:1058
 msgid "Unset the key as a storage property"
-msgstr ""
+msgstr "Retira definições da chave como propriedade de armazenamento"
 
 #: cmd/incus/storage_volume.go:2315
 msgid "Unset the key as a storage volume property"
-msgstr ""
+msgstr "Retira definições da chave como propriedade de volume de armazenamento"
 
 #: cmd/incus/config.go:887
 msgid "Unset the key as an instance property"
-msgstr ""
+msgstr "Retira definições da chave como propriedade de instância"
 
 #: cmd/incus/info.go:908
 #, c-format
 msgid "Unsupported instance type: %s"
-msgstr ""
+msgstr "Tipo de instância não suportado: %s"
 
 #: cmd/incus/network.go:1039
 msgid "Up delay"
-msgstr ""
+msgstr "Atraso para subir"
 
 #: cmd/incus/cluster.go:1356
 msgid "Update cluster certificate"
-msgstr ""
+msgstr "Atualiza certificado de agrupamento"
 
 #: cmd/incus/cluster.go:1358
 msgid ""
 "Update cluster certificate with PEM certificate and key read from input "
 "files."
 msgstr ""
+"Atualiza certificado de agrupamento com certificado PEM e chave lida de "
+"ficheiros de entrada."
 
 #: cmd/incus/profile.go:287
 msgid "Update the target profile from the source if it already exists"
-msgstr ""
+msgstr "Atualiza o perfil do alvo a partir da fonte se já existir"
 
 #: cmd/incus/top.go:251
 #, c-format
 msgid "Updated interval to %v"
-msgstr ""
+msgstr "Intervalo atualizado para %v"
 
 #: cmd/incus/image.go:1022
 #, c-format
 msgid "Uploaded: %s"
-msgstr ""
+msgstr "Enviado: %s"
 
 #: cmd/incus/network.go:1055
 msgid "Upper devices"
-msgstr ""
+msgstr "Dispositivos de cima"
 
 #: cmd/incus/storage_volume.go:1476
 #, c-format
 msgid "Usage: %s"
-msgstr ""
+msgstr "Utilização: %s"
 
 #: cmd/incus/export.go:43 cmd/incus/storage_volume.go:3229
 msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool)"
 msgstr ""
+"Usa o formato optimizado do driver de armazenamento (só pode ser restaurado "
+"num pool semelhante)"
 
 #: cmd/incus/main.go:132
 msgid "Use with help or --help to view sub-commands"
-msgstr ""
+msgstr "Usa com ajuda ou --help para visualizar sub-comandos"
 
 #: cmd/incus/info.go:521 cmd/incus/info.go:532 cmd/incus/info.go:537
 #: cmd/incus/info.go:543
 #, c-format
 msgid "Used: %v"
-msgstr ""
+msgstr "Usado: %v"
 
 #: cmd/incus/exec.go:65
 msgid "User ID to run the command as (default 0)"
-msgstr ""
+msgstr "ID de utilizador para correr o comando como (predefinição 0)"
 
 #: cmd/incus/admin_init_interactive.go:234
 msgid "User aborted configuration"
-msgstr ""
+msgstr "Configuração abortada pelo utilizador"
 
 #: cmd/incus/cluster.go:748 cmd/incus/delete.go:55 cmd/incus/project.go:242
 #: cmd/incus/snapshot.go:286
 msgid "User aborted delete operation"
-msgstr ""
+msgstr "Operação de apagar abortada pelo utilizador"
 
 #: cmd/incus/info.go:170 cmd/incus/info.go:279
 #, c-format
 msgid "VFs: %d"
-msgstr ""
+msgstr "VFs: %d"
 
 #: cmd/incus/network.go:1063
 msgid "VLAN ID"
-msgstr ""
+msgstr "ID DE VLAN"
 
 #: cmd/incus/network.go:1054
 msgid "VLAN filtering"
-msgstr ""
+msgstr "Filtragem VLAN"
 
 #: cmd/incus/network.go:1061
 msgid "VLAN:"
-msgstr ""
+msgstr "VLAN:"
 
 #: cmd/incus/info.go:364 cmd/incus/info.go:377
 #, c-format
 msgid "Vendor ID: %v"
-msgstr ""
+msgstr "ID do fornecedor: %v"
 
 #: cmd/incus/info.go:443 cmd/incus/info.go:463 cmd/incus/info.go:483
 #, c-format
 msgid "Vendor: %s"
-msgstr ""
+msgstr "Fornecedor: %s"
 
 #: cmd/incus/info.go:329 cmd/incus/info.go:363 cmd/incus/info.go:376
 #: cmd/incus/info.go:412
 #, c-format
 msgid "Vendor: %v"
-msgstr ""
+msgstr "Fornecedor: %v"
 
 #: cmd/incus/info.go:123 cmd/incus/info.go:209
 #, c-format
 msgid "Vendor: %v (%v)"
-msgstr ""
+msgstr "Fornecedor: %v (%v)"
 
 #: cmd/incus/info.go:268
 #, c-format
@@ -9536,29 +9692,29 @@ msgstr ""
 #: cmd/incus/info.go:451 cmd/incus/info.go:475 cmd/incus/info.go:487
 #, c-format
 msgid "Version: %s"
-msgstr ""
+msgstr "Versão: %s"
 
 #: cmd/incus/info.go:424
 #, c-format
 msgid "Version: %v"
-msgstr ""
+msgstr "Versão: %v"
 
 #: cmd/incus/storage_volume.go:1567
 msgid "Volume Only"
-msgstr ""
+msgstr "Apenas Volume"
 
 #: cmd/incus/storage_volume.go:607
 msgid "Volume description"
-msgstr ""
+msgstr "Descrição do volume"
 
 #: cmd/incus/info.go:309
 #, c-format
 msgid "WWN: %s"
-msgstr ""
+msgstr "WWN: %s"
 
 #: cmd/incus/admin_waitready.go:27
 msgid "Wait for the daemon to be ready to process requests"
-msgstr ""
+msgstr "Aguarda que o daemon esteja pronto para processar pedidos"
 
 #: cmd/incus/admin_waitready.go:28
 msgid ""
@@ -9569,10 +9725,17 @@ msgid ""
 "  is done with early start tasks like re-starting previously started\n"
 "  containers."
 msgstr ""
+"Aguarda que o daemon esteja pronto para processar pedidos\n"
+"\n"
+"  Este comando irá bloquear até que o daemon esteja contatável no seu REST "
+"API e\n"
+"  é feito com tarefas de arranque antecipado como re-iniciar contentores "
+"previamente\n"
+"  arrancados."
 
 #: cmd/incus/query.go:43
 msgid "Wait for the operation to complete"
-msgstr ""
+msgstr "Aguarde que a operação complete"
 
 #: cmd/incus/admin_init_interactive.go:770
 msgid ""
@@ -9589,41 +9752,46 @@ msgstr ""
 #: cmd/incus/webui_unix.go:120
 #, c-format
 msgid "Web server running at: %s"
-msgstr ""
+msgstr "Servidor Web a correr em: %s"
 
 #: cmd/incus/admin_init_interactive.go:156
 msgid "What IP address or DNS name should be used to reach this server?"
-msgstr ""
+msgstr "Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
 
 #: cmd/incus/admin_init_interactive.go:370
 msgid "What IPv4 address should be used?"
-msgstr ""
+msgstr "Que endereço IPv4 deve ser usado?"
 
 #: cmd/incus/admin_init_interactive.go:391
 msgid "What IPv6 address should be used?"
-msgstr ""
+msgstr "Que endereço IPv6 deve ser usado?"
 
 #: cmd/incus/admin_init_interactive.go:122
 msgid "What member name should be used to identify this server in the cluster?"
 msgstr ""
+"Que nome de membro deve ser usado para identificar este servidor no "
+"agrupamento?"
 
 #: cmd/incus/admin_init_interactive.go:351
 msgid "What should the new bridge be called?"
-msgstr ""
+msgstr "Como deve ser chamada a nova ponte?"
 
 #: cmd/incus/admin_init_interactive.go:570
 msgid "Where should this storage pool store its data?"
-msgstr ""
+msgstr "Onde deve este pool de armazenamento guardar os seus dados?"
 
 #: cmd/incus/export.go:41
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr ""
+"Se é ou não para apenas fazer salvaguarda da instância (sem os instantâneos)"
 
 #: cmd/incus/snapshot.go:556
 msgid ""
 "Whether or not to restore the instance's running state from snapshot (if "
 "available)"
 msgstr ""
+"Se é ou não para restaurar o estado de execução da instância a partir do "
+"instantâneo (se disponível)"
 
 #: cmd/incus/snapshot.go:94
 msgid "Whether or not to snapshot the instance's running state"
@@ -10088,11 +10256,11 @@ msgstr ""
 
 #: cmd/incus/network.go:866 cmd/incus/network.go:1721
 msgid "[<remote>:]<network> <key>"
-msgstr ""
+msgstr "[<remoto>:]<rede> <chave>"
 
 #: cmd/incus/network.go:1551
 msgid "[<remote>:]<network> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<rede> <chave>=<valor>..."
 
 #: cmd/incus/network_forward.go:256 cmd/incus/network_forward.go:693
 #: cmd/incus/network_forward.go:848 cmd/incus/network_load_balancer.go:260
@@ -10100,11 +10268,11 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:828
 #: cmd/incus/network_load_balancer.go:1323
 msgid "[<remote>:]<network> <listen_address>"
-msgstr ""
+msgstr "[<remoto>:]<rede> <endereço_de_escuta>"
 
 #: cmd/incus/network_load_balancer.go:1002
 msgid "[<remote>:]<network> <listen_address> <backend_name>"
-msgstr ""
+msgstr "[<remoto>:]<rede> <endereço_de_escuta> <nome_backend>"
 
 #: cmd/incus/network_load_balancer.go:921
 msgid ""
@@ -10182,12 +10350,12 @@ msgstr ""
 
 #: cmd/incus/operation.go:63 cmd/incus/operation.go:298
 msgid "[<remote>:]<operation>"
-msgstr ""
+msgstr "[<remoto>:]<operação>"
 
 #: cmd/incus/storage.go:223 cmd/incus/storage.go:284 cmd/incus/storage.go:502
 #: cmd/incus/storage.go:956 cmd/incus/storage_bucket.go:496
 msgid "[<remote>:]<pool>"
-msgstr ""
+msgstr "[<remoto>:]<pool>"
 
 #: cmd/incus/storage_bucket.go:1638
 msgid "[<remote>:]<pool> <backup file> [<bucket>]"
@@ -10200,33 +10368,33 @@ msgstr ""
 #: cmd/incus/storage_bucket.go:213 cmd/incus/storage_bucket.go:277
 #: cmd/incus/storage_bucket.go:790 cmd/incus/storage_bucket.go:943
 msgid "[<remote>:]<pool> <bucket>"
-msgstr ""
+msgstr "[<remoto>:]<pool> <bucket>"
 
 #: cmd/incus/storage_bucket.go:412 cmd/incus/storage_bucket.go:861
 #: cmd/incus/storage_bucket.go:1096 cmd/incus/storage_bucket.go:1210
 #: cmd/incus/storage_bucket.go:1277 cmd/incus/storage_bucket.go:1414
 msgid "[<remote>:]<pool> <bucket> <key>"
-msgstr ""
+msgstr "[<remoto>:]<pool> <bucket> <chave>"
 
 #: cmd/incus/storage_bucket.go:672
 msgid "[<remote>:]<pool> <bucket> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<pool> <bucket> <chave>=<valor>..."
 
 #: cmd/incus/storage_bucket.go:1487
 msgid "[<remote>:]<pool> <bucket> [<path>]"
-msgstr ""
+msgstr "[<remoto>:]<pool> <bucket> [<caminho>]"
 
 #: cmd/incus/storage_bucket.go:100
 msgid "[<remote>:]<pool> <bucket> [key=value...]"
-msgstr ""
+msgstr "[<remoto>:]<pool> <bucket> [chave=valor...]"
 
 #: cmd/incus/storage.go:104
 msgid "[<remote>:]<pool> <driver> [key=value...]"
-msgstr ""
+msgstr "[<remoto>:]<pool> <driver> [chave=valor...]"
 
 #: cmd/incus/storage.go:418 cmd/incus/storage.go:1052
 msgid "[<remote>:]<pool> <key>"
-msgstr ""
+msgstr "[<remoto>:]<pool> <chave>"
 
 #: cmd/incus/storage.go:852
 msgid "[<remote>:]<pool> <key> <value>"
@@ -10415,64 +10583,72 @@ msgstr ""
 
 #: cmd/incus/cluster.go:1018
 msgid "[[<remote>:]<member>]"
-msgstr ""
+msgstr "[[<remoto>:]<membro>]"
 
 #: cmd/incus/info.go:646
 msgid "application"
-msgstr ""
+msgstr "aplicação"
 
 #: cmd/incus/project.go:729 cmd/incus/remote.go:946
 msgid "current"
-msgstr ""
+msgstr "atual"
 
 #: cmd/incus/storage.go:571
 msgid "description"
-msgstr ""
+msgstr "descrição"
 
 #: cmd/incus/image.go:1001
 msgid "disabled"
-msgstr ""
+msgstr "desativado"
 
 #: cmd/incus/storage.go:570
 msgid "driver"
-msgstr ""
+msgstr "driver"
 
 #: cmd/incus/image.go:1003
 msgid "enabled"
-msgstr ""
+msgstr "ativado"
 
 #: cmd/incus/info.go:650
 msgid "ephemeral"
-msgstr ""
+msgstr "efémero"
 
 #: cmd/incus/action.go:454
 #, c-format
 msgid "error: %v"
-msgstr ""
+msgstr "erro: %v"
 
 #: cmd/incus/alias.go:65
 msgid ""
 "incus alias add list \"list -c ns46S\"\n"
 "    Overwrite the \"list\" command to pass -c ns46S."
 msgstr ""
+"incus alias add list \"list -c ns46S\"\n"
+"    Sobrepõe o comando \"list\" para passar -c ns46S."
 
 #: cmd/incus/alias.go:231
 msgid ""
 "incus alias remove my-list\n"
 "    Remove the \"my-list\" alias."
 msgstr ""
+"incus alias remove my-list\n"
+"    Remove o alias\"my-list\"."
 
 #: cmd/incus/alias.go:176
 msgid ""
 "incus alias rename list my-list\n"
 "    Rename existing alias \"list\" to \"my-list\"."
 msgstr ""
+"incus alias rename list my-list\n"
+"    Renomeia alias existente \"list\" para \"my-list\"."
 
 #: cmd/incus/cluster.go:899
 msgid ""
 "incus cluster edit <cluster member> < member.yaml\n"
 "    Update a cluster member using the content of member.yaml"
 msgstr ""
+"incus cluster edit <membro de agrupamento> < member.yaml\n"
+"    Atualiza membro de agrupamento usando o conteúdo de member.yaml"
 
 #: cmd/incus/cluster_group.go:105
 msgid ""
@@ -11012,60 +11188,60 @@ msgstr ""
 
 #: cmd/incus/storage.go:568
 msgid "info"
-msgstr ""
+msgstr "informação"
 
 #: cmd/incus/remote.go:488
 msgid "n"
-msgstr ""
+msgstr "n"
 
 #: cmd/incus/storage.go:569
 msgid "name"
-msgstr ""
+msgstr "nome"
 
 #: cmd/incus/config_trust.go:512 cmd/incus/image.go:991 cmd/incus/image.go:996
 #: cmd/incus/image.go:1209
 msgid "no"
-msgstr ""
+msgstr "não"
 
 #: cmd/incus/remote.go:480
 msgid "ok (y/n/[fingerprint])?"
-msgstr ""
+msgstr "ok (s/n/[impressão digital])?"
 
 #: cmd/incus/config.go:57
 msgid "please use `incus profile`"
-msgstr ""
+msgstr "por favor use `incus profile`"
 
 #: cmd/incus/storage.go:573
 msgid "space used"
-msgstr ""
+msgstr "espaço usado"
 
 #: cmd/incus/utils.go:673
 msgid "sshfs has stopped"
-msgstr ""
+msgstr "sshfs parou"
 
 #: cmd/incus/utils.go:632
 #, c-format
 msgid "sshfs mounting %q on %q"
-msgstr ""
+msgstr "sshfs a montar %q em %q"
 
 #: cmd/incus/storage.go:572
 msgid "total space"
-msgstr ""
+msgstr "espaço total"
 
 #: cmd/incus/version.go:50
 msgid "unreachable"
-msgstr ""
+msgstr "inacessível"
 
 #: cmd/incus/storage.go:567
 msgid "used by"
-msgstr ""
+msgstr "usado por"
 
 #: cmd/incus/remote.go:490
 msgid "y"
-msgstr ""
+msgstr "s"
 
 #: cmd/incus/cluster.go:747 cmd/incus/config_trust.go:509
 #: cmd/incus/delete.go:54 cmd/incus/image.go:993 cmd/incus/image.go:998
 #: cmd/incus/image.go:1206 cmd/incus/project.go:241 cmd/incus/snapshot.go:285
 msgid "yes"
-msgstr ""
+msgstr "sim"
