@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-06-19 14:10-0400\n"
-"PO-Revision-Date: 2025-06-21 07:02+0000\n"
+"PO-Revision-Date: 2025-06-22 23:18+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
 "\n"
@@ -5305,6 +5305,92 @@ msgid ""
 "  MAXWIDTH: Max width of the column (longer results are truncated).\n"
 "  Defaults to -1 (unlimited). Use 0 to limit to the column header size."
 msgstr ""
+"Lista instâncias\n"
+"\n"
+"Disposição predefinida de coluna: ns46tS\n"
+"Disposição rápida de coluna: nsacPt\n"
+"\n"
+"Uma única palavra chave como \"web\" que irá listar qualquer instância com o "
+"nome a começar por \"web\".\n"
+"Uma expressão regular no nome da instância. (ex. .*web.*01$).\n"
+"Um par chave/valor que se refere a um item de configuração. Para estes, o\n"
+"espaço do nome pode ser abreviado a identificador ambíguo menor.\n"
+"Um par chave/valor onde a chave é uma abreviação. Múltiplos valores têm de "
+"ser delimitados por ','. Abreviações disponíveis:\n"
+"  - type={tipo de instância}\n"
+"  - status={estatuto de ciclo de vida da instância}\n"
+"  - architecture={arquitectura da instância}\n"
+"  - location={nome da localização}\n"
+"  - ipv4={ip ou CIDR}\n"
+"  - ipv6={ip ou CIDR}\n"
+"\n"
+"Examplos:\n"
+"  - \"user.blah=abc\" irá listar todas as instâncias com a propriedade de "
+"utilizador \"blah\" definida para \"abc\".\n"
+"  - \"u.blah=abc\" irá fazer o mesmo\n"
+"  - \"security.privileged=true\" irá listar todas as instâncias "
+"privilegiadas\n"
+"  - \"s.privileged=true\" irá fazer o mesmo\n"
+"  - \"type=container\" irá listar todas as instâncias contentor\n"
+"  - \"type=container status=running\" irá listar todas as instâncias "
+"contentor a correr\n"
+"\n"
+"Uma expressão regular a corresponder a um item de configuração ou o seu "
+"valor. (ex. volatile.eth0.hwaddr=10:66:6a:.*).\n"
+"\n"
+"Quando múltiplos filtros são passados, eles são adicionados um em ciam do "
+"outro,\n"
+"selecionando instâncias que os satisfaz a todos.\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo),"
+"\n"
+"ou chaves de configuração (estendidas).\n"
+"\n"
+"As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
+"\n"
+"Caracteres curtos pre-definidos da coluna:\n"
+"  4 - Endereço IPv4\n"
+"  6 - Endereço IPv6\n"
+"  a - Arquitectura\n"
+"  b - Pool de armazenamento\n"
+"  c - Data da criação\n"
+"  d - Descrição\n"
+"  D - Utilização do disco\n"
+"  e - Nome do projeto\n"
+"  l - Data de última utilização\n"
+"  m - Utilização de memória\n"
+"  M - Utilização de memória (%)\n"
+"  n - Nome\n"
+"  N - Numero de processos\n"
+"  p - PID do processo de iniciação da instância\n"
+"  P - Perfis\n"
+"  s - Estado\n"
+"  S - Numero de instantâneos\n"
+"  t - Tipo (persistente ou efêmero)\n"
+"  u - Utilização da CPU (em segundos)\n"
+"  U - Data de iniciado\n"
+"  L - Localização da instância (ex. seu membro do agrupamento)\n"
+"  f - Impressão digital de Imagem Base (curta)\n"
+"  F - Impressão digital de Imagem Base (longa)\n"
+"\n"
+"Colunas personalizadas são definidas com "
+"\"[config:|devices:]key[:name][:maxWidth]\":\n"
+"  KEY: A cave (estendida) de configuração ou dispositivos a mostrar. Se "
+"[config:|devices:] for omitido então predefine para a chave de configuração."
+"\n"
+"  NAME: Nome a mostrar no cabeçalho da coluna.\n"
+"  Predefine para a chave se não especificado ou vazio.\n"
+"\n"
+"  MAXWIDTH: Largura máxima da coluna (resultados mas longos são truncados).\n"
+"  Predefine para -1 (sem limite). Use 0 para limitar o tamanho do cabeçalho "
+"da coluna."
 
 #: cmd/incus/network_acl.go:102
 msgid "List network ACLs across all projects"
@@ -5677,6 +5763,36 @@ msgid ""
 "    u - Number of references (used by)\n"
 "    U - Current disk usage"
 msgstr ""
+"Lista volumes de armazanamento\n"
+"\n"
+"Uma única palavra chave como \"vol\" que irá listar qualquer volume de "
+"armazenamento com um nome que começa por \"vol\".\n"
+"Uma expressão regular no nome do volume de armazenamento (ex. .*vol.*01$).\n"
+"Um par de chave/valor onde a chave é um nome de campo de volume de "
+"armazenamento. Múltiplos valores têm de ser delimitados por ','.\n"
+"\n"
+"Exemplos:\n"
+"  - \"type=custom\" irá listar todos os volumes de armazenamento "
+"personalizados\n"
+"  - \"type=custom content_type=block\" irá listar todos os volumes de "
+"armazenamento de bloco personalizados\n"
+"\n"
+"== Colunas ==\n"
+"A opção -c recebe uma lista separada por vírgulas de argumentos que "
+"controlam\n"
+"quais atributos de zona de rede são incluídos ao mostrar em formato de "
+"tabela\n"
+"ou csv.\n"
+"\n"
+"Caracteres curtos da coluna:\n"
+"    c - Tipo de conteúdo (sistema de ficheiros ou bloco)\n"
+"    d - Descrição\n"
+"    e - Nome do projeto\n"
+"    L - Localização da instância (ex. seu membro do agrupamento)\n"
+"    n - Nome\n"
+"    t - Tipo de volume (custom, image, container ou virtual-machine)\n"
+"    u - Numero de referências (usado por)\n"
+"    U - Utilização de disco atual"
 
 #: cmd/incus/remote.go:871
 msgid "List the available remotes"
@@ -8885,7 +9001,6 @@ msgstr ""
 "sistema"
 
 #: cmd/incus/admin_init_interactive.go:741
-#, fuzzy
 msgid ""
 "The LVM thin provisioning tools couldn't be found.\n"
 "LVM can still be used without thin provisioning but this will disable over-"
@@ -8899,15 +9014,15 @@ msgid ""
 "before running \"init\" again."
 msgstr ""
 "As ferramentas de provisionamento fino LVM não podem ser encontradas.\n"
-"LVM can still be used without thin provisioning but this will disable over-"
-"provisioning,\n"
-"increase the space requirements and creation time of images, instances and "
-"snapshots.\n"
+"LVM ainda pode se usado sem provisionamento fino mas isto vai desactivar o "
+"sobre-provisionamento,\n"
+"aumentar os requerimentos de espaço e o tempo de criação da imagens, "
+"instâncias e instantâneos.\n"
 "\n"
-"If you wish to use thin provisioning, abort now, install the tools from your "
-"Linux distribution\n"
-"and make sure that your user can see and run the \"thin_check\" command "
-"before running \"init\" again."
+"Se você deseja usar provisionamento fino, aborte agora, instale as "
+"ferramentas da sua distribuição Linux\n"
+"e certifique-se que o seu utilizador consegue ver e correr o comando "
+"\"thin_check\" antes de correr \"init\" outra vez."
 
 #: cmd/incus/admin_cluster.go:49
 msgid ""
@@ -8917,189 +9032,206 @@ msgid ""
 "\n"
 "You can invoke it through \"incusd cluster\"."
 msgstr ""
+"O sub-comando \"cluster\" requer acesso aos dados do servidor interno.\n"
+"Para o fazer, é na realidade parte do binário \"incusd\" em vez de \"incus\"."
+"\n"
+"\n"
+"Você pode invoca-lo através de \"incusd cluster\"."
 
 #: cmd/incus/console.go:399
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""
+"O cliente usa automaticamente um visualizador picante ou remoto quando "
+"presente."
 
 #: cmd/incus/config_device.go:169 cmd/incus/config_device.go:186
 #: cmd/incus/config_device.go:456
 msgid "The device already exists"
-msgstr ""
+msgstr "O dispositivo já existe"
 
 #: cmd/incus/network_acl.go:1050 cmd/incus/network_acl.go:1192
 msgid "The direction argument must be one of: ingress, egress"
-msgstr ""
+msgstr "O argumento de direção deve ser um de: ingress, egress"
 
 #: cmd/incus/admin_recover.go:203
 msgid "The following unknown storage pools have been found:"
-msgstr ""
+msgstr "Foram encontradas as seguintes pools de armazenamento desconhecidas:"
 
 #: cmd/incus/admin_recover.go:210
 msgid "The following unknown volumes have been found:"
-msgstr ""
+msgstr "Os seguintes volumes desconhecidos foram encontrados:"
 
 #: cmd/incus/delete.go:112
 msgid "The instance is currently running, stop it first or pass --force"
 msgstr ""
+"A instância está atualmente em execução, pare-a primeiro ou passe --force"
 
 #: cmd/incus/publish.go:127
 msgid ""
 "The instance is currently running. Use --force to have it stopped and "
 "restarted"
 msgstr ""
+"A instância está atualmente em execução. Use --force para a parar e reiniciar"
 
 #: cmd/incus/create.go:474
 msgid "The instance you are starting doesn't have any network attached to it."
-msgstr ""
+msgstr "A instância que você está a iniciar não tem nenhuma rede anexada a ela."
 
 #: cmd/incus/config.go:655
 msgid "The is no config key to set on an instance snapshot."
 msgstr ""
+"Não há nenhuma chave de configuração a definir a um instantâneo de instância."
 
 #: cmd/incus/cluster_group.go:959
 #, c-format
 msgid "The key %q does not exist on cluster group %q"
-msgstr ""
+msgstr "A chave %q não existe no grupo de agrupamento %q"
 
 #: cmd/incus/cluster.go:503
 #, c-format
 msgid "The key %q does not exist on cluster member %q"
-msgstr ""
+msgstr "A chave %q não existe no membro do agrupamento %q"
 
 #: cmd/incus/utils.go:455
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:%q' instead."
 msgstr ""
+"A imagem local '%q' não pôde ser encontrada, a tentar '%q:%q' em vez disto."
 
 #: cmd/incus/utils.go:451
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:' instead."
 msgstr ""
+"A imagem local '%q' não pôde ser encontrada, a tentar '%q:' em vez disto."
 
 #: cmd/incus/top.go:173
 msgid "The minimum refresh rate is 10s"
-msgstr ""
+msgstr "A taxa de atualização mínima é de 10s"
 
 #: cmd/incus/config_device.go:461
 msgid "The profile device doesn't exist"
-msgstr ""
+msgstr "O dispositivo de perfil não existe"
 
 #: cmd/incus/cluster_group.go:950
 #, c-format
 msgid "The property %q does not exist on the cluster group %q: %v"
-msgstr ""
+msgstr "A propriedade %q não existe no grupo de agrupamento %q: %v"
 
 #: cmd/incus/cluster.go:494
 #, c-format
 msgid "The property %q does not exist on the cluster member %q: %v"
-msgstr ""
+msgstr "A propriedade %q não existe no membro do agrupamento %q: %v"
 
 #: cmd/incus/config.go:476
 #, c-format
 msgid "The property %q does not exist on the instance %q: %v"
-msgstr ""
+msgstr "A propriedade %q não existe na instância %q: %v"
 
 #: cmd/incus/config.go:452
 #, c-format
 msgid "The property %q does not exist on the instance snapshot %s/%s: %v"
-msgstr ""
+msgstr "A propriedade %q não existe no instantâneo da instância %s/%s: %v"
 
 #: cmd/incus/network_load_balancer.go:494
 #, c-format
 msgid "The property %q does not exist on the load balancer %q: %v"
-msgstr ""
+msgstr "A propriedade %q não existe no balanceador de carga %q: %v"
 
 #: cmd/incus/network.go:925
 #, c-format
 msgid "The property %q does not exist on the network %q: %v"
-msgstr ""
+msgstr "A propriedade %q não existe na rede %q: %v"
 
 #: cmd/incus/network_acl.go:370
 #, c-format
 msgid "The property %q does not exist on the network ACL %q: %v"
-msgstr ""
+msgstr "A propriedade %q não existe no ACL de rede %q: %v"
 
 #: cmd/incus/network_forward.go:508
 #, c-format
 msgid "The property %q does not exist on the network forward %q: %v"
-msgstr ""
+msgstr "A propriedade %q não existe no encaminhamento de rede %q: %v"
 
 #: cmd/incus/network_integration.go:393
 #, c-format
 msgid "The property %q does not exist on the network integration %q: %v"
-msgstr ""
+msgstr "A propriedade %q não existe na integração de rede %q: %v"
 
 #: cmd/incus/network_peer.go:548
 #, c-format
 msgid "The property %q does not exist on the network peer %q: %v"
-msgstr ""
+msgstr "A propriedade %q não existe no peer de rede %q: %v"
 
 #: cmd/incus/network_zone.go:378
 #, c-format
 msgid "The property %q does not exist on the network zone %q: %v"
-msgstr ""
+msgstr "A propriedade %q não existe na zona de rede %q: %v"
 
 #: cmd/incus/network_zone.go:1090
 #, c-format
 msgid "The property %q does not exist on the network zone record %q: %v"
-msgstr ""
+msgstr "A propriedade %q não existe no registro da zona de rede %q: %v"
 
 #: cmd/incus/profile.go:711
 #, c-format
 msgid "The property %q does not exist on the profile %q: %v"
-msgstr ""
+msgstr "A propriedade %q não existe no perfil %q: %v"
 
 #: cmd/incus/project.go:506
 #, c-format
 msgid "The property %q does not exist on the project %q: %v"
-msgstr ""
+msgstr "A propriedade %q não existe no projeto %q: %v"
 
 #: cmd/incus/storage_bucket.go:464
 #, c-format
 msgid "The property %q does not exist on the storage bucket %q: %v"
-msgstr ""
+msgstr "A propriedade %q não existe no bucket de armazenamento %q: %v"
 
 #: cmd/incus/storage.go:477
 #, c-format
 msgid "The property %q does not exist on the storage pool %q: %v"
-msgstr ""
+msgstr "A propriedade %q não existe na pool de armazenamento %q: %v"
 
 #: cmd/incus/storage_volume.go:1327
 #, c-format
 msgid "The property %q does not exist on the storage pool volume %q: %v"
-msgstr ""
+msgstr "A propriedade %q não existe no volume do pool de armazenamento %q: %v"
 
 #: cmd/incus/storage_volume.go:1299
 #, c-format
 msgid ""
 "The property %q does not exist on the storage pool volume snapshot %s/%s: %v"
 msgstr ""
+"A propriedade %q não existe no instantâneo do volume do pool de "
+"armazenamento %s/%s: %v]"
 
 #: cmd/incus/utils_properties.go:117
 #, c-format
 msgid "The property with tag %q does not exist"
-msgstr ""
+msgstr "A propriedade com etiqueta %q não existe"
 
 #: cmd/incus/admin_recover.go:154
 msgid "The recovery process will be scanning the following storage pools:"
 msgstr ""
+"O processo de recuperação irá sondar as seguintes piscinas de armazenamento:"
 
 #: cmd/incus/admin_init_auto.go:27
 #, c-format
 msgid ""
 "The requested backend '%s' isn't available on your system (missing tools)"
 msgstr ""
+"O backend solicitado '%s' não está disponível em seu sistema (ferramentas em "
+"falta)"
 
 #: cmd/incus/admin_init_auto.go:23
 #, c-format
 msgid "The requested backend '%s' isn't supported by init"
-msgstr ""
+msgstr "O backend solicitado '%s' não é suportado pelo init"
 
 #: cmd/incus/admin_init_interactive.go:321
 msgid "The requested interface doesn't exist. Please choose another one."
-msgstr ""
+msgstr "A interface solicitada não existe. Por favor escolha outra."
 
 #: cmd/incus/admin_init_interactive.go:358
 #, c-format
@@ -9107,37 +9239,40 @@ msgid ""
 "The requested network bridge \"%s\" already exists. Please choose another "
 "name."
 msgstr ""
+"A ponte de rede solicitada \"%s\" já existe. Por favor, escolha outro nome."
 
 #: cmd/incus/admin_init_interactive.go:533
 #, c-format
 msgid ""
 "The requested storage pool \"%s\" already exists. Please choose another name."
 msgstr ""
+"O pool de armazenamento solicitado \"%s\" já existe. Por favor, escolha "
+"outro nome."
 
 #: cmd/incus/webui_unix.go:73
 msgid "The server doesn't have a web UI installed"
-msgstr ""
+msgstr "O servidor não tem uma Interface de Utilizador web instalada"
 
 #: cmd/incus/info.go:397
 msgid "The server doesn't implement the newer v2 resources API"
-msgstr ""
+msgstr "O servidor não implementa a nova API de recursos v2"
 
 #: cmd/incus/network.go:603 cmd/incus/network.go:702
 #: cmd/incus/storage_volume.go:865 cmd/incus/storage_volume.go:964
 msgid "The specified device doesn't exist"
-msgstr ""
+msgstr "O dispositivo especificado não existe"
 
 #: cmd/incus/network.go:607 cmd/incus/network.go:706
 msgid "The specified device doesn't match the network"
-msgstr ""
+msgstr "O dispositivo especificado não corresponde à rede"
 
 #: cmd/incus/file.go:113
 msgid "The type to create (file, symlink, or directory)"
-msgstr ""
+msgstr "O tipo a criar (ficheiro, link simbólico, ou diretório)"
 
 #: cmd/incus/publish.go:100
 msgid "There is no \"image name\".  Did you want an alias?"
-msgstr ""
+msgstr "Não há \"nome de imagem\".  Deseja um alias?"
 
 #: cmd/incus/main.go:357
 msgid ""
@@ -9148,46 +9283,52 @@ msgid ""
 "If you already added a remote server, make it the default with \"incus "
 "remote switch NAME\"."
 msgstr ""
+"Este cliente ainda não foi configurado para utilizar um servidor remoto.\n"
+"Como a sua plataforma não pode correr instâncias nativas do Linux, você tem "
+"de se ligar a um servidor remoto.\n"
+"\n"
+"Se você já adicionou um servidor remoto, torne-o predefinido com "
+"\"incus remote switch NOME\"."
 
 #: cmd/incus/webui_windows.go:15
 msgid "This command isn't supported on Windows"
-msgstr ""
+msgstr "Este comando não é suportado no Windows"
 
 #: cmd/incus/admin_recover.go:66
 msgid "This server currently has the following storage pools:"
-msgstr ""
+msgstr "Este servidor possui atualmente as seguintes pools de armazenamento:"
 
 #: cmd/incus/cluster.go:865
 msgid "This server is already clustered"
-msgstr ""
+msgstr "Este servidor já está agrupado"
 
 #: cmd/incus/cluster.go:855
 msgid "This server is not available on the network"
-msgstr ""
+msgstr "Este servidor não está disponível na rede"
 
 #: cmd/incus/info.go:347
 msgid "Threads:"
-msgstr ""
+msgstr "Threads:"
 
 #: cmd/incus/action.go:172
 msgid "Time to wait for the instance to shutdown cleanly"
-msgstr ""
+msgstr "Tempo a esperar para a instância desligar de maneira limpa"
 
 #: cmd/incus/image.go:1016
 msgid "Timestamps:"
-msgstr ""
+msgstr "Marcas temporais:"
 
 #: cmd/incus/create.go:476
 msgid "To attach a network to an instance, use: incus network attach"
-msgstr ""
+msgstr "Para anexar uma rede a uma instância, use: incus network attach"
 
 #: cmd/incus/create.go:475
 msgid "To create a new network, use: incus network create"
-msgstr ""
+msgstr "Para criar uma nova rede, use: incus network create"
 
 #: cmd/incus/console.go:232
 msgid "To detach from the console, press: <ctrl>+a q"
-msgstr ""
+msgstr "Para separar da consola, pressione: <ctrl>+a q"
 
 #: cmd/incus/main.go:481
 #, c-format
@@ -9195,62 +9336,64 @@ msgid ""
 "To start your first container, try: incus launch images:%s\n"
 "Or for a virtual machine: incus launch images:%s --vm"
 msgstr ""
+"Para iniciar seu primeiro contentor, tente: incus launch images:%s\n"
+"Ou para uma máquina virtual: incus launch images:%s --vm"
 
 #: cmd/incus/config.go:303 cmd/incus/config.go:496 cmd/incus/config.go:704
 #: cmd/incus/config.go:802 cmd/incus/copy.go:147 cmd/incus/info.go:389
 #: cmd/incus/network.go:992 cmd/incus/storage.go:545
 msgid "To use --target, the destination remote must be a cluster"
-msgstr ""
+msgstr "Para usar --target, o remoto alvo tem de ser um agrupamento"
 
 #: cmd/incus/storage_volume.go:1478
 #, c-format
 msgid "Total: %s"
-msgstr ""
+msgstr "Total: %s"
 
 #: cmd/incus/info.go:522 cmd/incus/info.go:533 cmd/incus/info.go:538
 #: cmd/incus/info.go:544
 #, c-format
 msgid "Total: %v"
-msgstr ""
+msgstr "Total: %v"
 
 #: cmd/incus/info.go:247
 #, c-format
 msgid "Transceiver type: %s"
-msgstr ""
+msgstr "Tipo de transceptor: %s"
 
 #: cmd/incus/storage_volume.go:1859
 msgid "Transfer mode, one of pull (default), push or relay"
-msgstr ""
+msgstr "Modo de transferência, um de pull (predefinido), push ou relay"
 
 #: cmd/incus/image.go:164
 msgid "Transfer mode. One of pull (default), push or relay"
-msgstr ""
+msgstr "Modo de transferência. Um de pull (predefinido), push ou relay"
 
 #: cmd/incus/storage_volume.go:379
 msgid "Transfer mode. One of pull (default), push or relay."
-msgstr ""
+msgstr "Modo de transferência. Um de pull (predefinido), push ou relay."
 
 #: cmd/incus/copy.go:60
 msgid "Transfer mode. One of pull, push or relay"
-msgstr ""
+msgstr "Modo de transferência. Um de pull, push ou relay"
 
 #: cmd/incus/move.go:64
 msgid "Transfer mode. One of pull, push or relay."
-msgstr ""
+msgstr "Modo de transferência. Um de pull, push ou relay."
 
 #: cmd/incus/image.go:810
 #, c-format
 msgid "Transferring image: %s"
-msgstr ""
+msgstr "A transferir imagem: %s"
 
 #: cmd/incus/copy.go:359 cmd/incus/move.go:345
 #, c-format
 msgid "Transferring instance: %s"
-msgstr ""
+msgstr "A transferir instância: %s"
 
 #: cmd/incus/network.go:1038
 msgid "Transmit policy"
-msgstr ""
+msgstr "Política de transmissão"
 
 #: cmd/incus/remote.go:591
 #, c-format
@@ -9687,7 +9830,7 @@ msgstr "Fornecedor: %v (%v)"
 #: cmd/incus/info.go:268
 #, c-format
 msgid "Verb: %s (%s)"
-msgstr ""
+msgstr "Verb: %s (%s)"
 
 #: cmd/incus/info.go:451 cmd/incus/info.go:475 cmd/incus/info.go:487
 #, c-format
@@ -9748,6 +9891,17 @@ msgid ""
 "in theory attack their parent container and gain more privileges than\n"
 "they otherwise would."
 msgstr ""
+"Detectamos que você está a correr dentro dum contentor sem privilégios.\n"
+"Isto significa que a menos que caso contrário tenha configurado manualmente "
+"a sua máquina,\n"
+"você não vai ter uids e gids suficientes para alocar aos seus contentores.\n"
+"\n"
+"A alocação própria do seu contentor pode ser reutilizada para evitar o "
+"problema.\n"
+"Fazê-lo torna os seus contentores aninhados um pouco menos seguros pois eles "
+"podem\n"
+"em teoria atacar o seu contentor pai e ganhar mais privilégios do que caso\n"
+"contrário poderiam."
 
 #: cmd/incus/webui_unix.go:120
 #, c-format
@@ -9795,119 +9949,124 @@ msgstr ""
 
 #: cmd/incus/snapshot.go:94
 msgid "Whether or not to snapshot the instance's running state"
-msgstr ""
+msgstr "Se deve-se ou não tirar instantâneo ao estado de execução da instância"
 
 #: cmd/incus/rebuild.go:29
 msgid ""
 "Wipe the instance root disk and re-initialize with a new image (or empty "
 "volume)."
 msgstr ""
+"Limpa o disco raiz da instância e re-inicializa com uma nova imagem (ou "
+"volume vazio)."
 
 #: cmd/incus/admin_init_interactive.go:82
 msgid "Would you like a YAML \"init\" preseed to be printed?"
-msgstr ""
+msgstr "Deseja que a pré-semente \"init\" do YAML seja escrita?"
 
 #: cmd/incus/admin_init_interactive.go:845
 msgid "Would you like stale cached images to be updated automatically?"
 msgstr ""
+"Deseja que as imagens em cache obsoletas seja atualizadas automaticamente?"
 
 #: cmd/incus/admin_init_interactive.go:791
 msgid "Would you like the server to be available over the network?"
-msgstr ""
+msgstr "Deseja que o servidor esteja disponível através da rede?"
 
 #: cmd/incus/admin_recover.go:233
 msgid "Would you like those to be recovered?"
-msgstr ""
+msgstr "Deseja que esses sejam recuperados?"
 
 #: cmd/incus/admin_init_interactive.go:382
 msgid "Would you like to NAT IPv4 traffic on your bridge?"
-msgstr ""
+msgstr "Deseja fazer NAT ao tráfego IPv4 na sua ponte?"
 
 #: cmd/incus/admin_init_interactive.go:403
 msgid "Would you like to NAT IPv6 traffic on your bridge?"
-msgstr ""
+msgstr "Deseja fazer NAT ao tráfego IPv6 na sua ponte?"
 
 #: cmd/incus/admin_recover.go:163
 msgid "Would you like to continue with scanning for lost volumes?"
-msgstr ""
+msgstr "Deseja continuar a sondar por volumes perdidos?"
 
 #: cmd/incus/admin_init_interactive.go:585
 #, c-format
 msgid "Would you like to create a new btrfs subvolume under %s?"
-msgstr ""
+msgstr "Deseja criar um novo sub-volume btrfs sob %s?"
 
 #: cmd/incus/admin_init_interactive.go:301
 msgid "Would you like to create a new local network bridge?"
-msgstr ""
+msgstr "Deseja criar uma nova ponte de rede local?"
 
 #: cmd/incus/admin_init_interactive.go:601
 msgid "Would you like to create a new zfs dataset under rpool/incus?"
-msgstr ""
+msgstr "Deseja criar um novo conjunto de dados zfs sob rpool/incus?"
 
 #: cmd/incus/admin_init_interactive.go:779
 msgid "Would you like to have your containers share their parent's allocation?"
-msgstr ""
+msgstr "Deseja que os seus contentores compartilhem a sua alocação dos pais?"
 
 #: cmd/incus/admin_recover.go:80
 msgid "Would you like to recover another storage pool?"
-msgstr ""
+msgstr "Deseja recuperar outra pool de armazenamento?"
 
 #: cmd/incus/admin_init_interactive.go:308
 msgid "Would you like to use an existing bridge or host interface?"
-msgstr ""
+msgstr "Deseja usar uma ponte existente ou interface de máquina?"
 
 #: cmd/incus/admin_init_interactive.go:661
 msgid ""
 "Would you like to use an existing empty block device (e.g. a disk or "
 "partition)?"
 msgstr ""
+"Deseja usar um dispositivo de bloco vazio existente (ex. um disco ou "
+"partição)?"
 
 #: cmd/incus/admin_init_interactive.go:112
 msgid "Would you like to use clustering?"
-msgstr ""
+msgstr "Deseja usar agrupamento?"
 
 #: cmd/incus/network.go:1210 cmd/incus/operation.go:212
 #: cmd/incus/project.go:616 cmd/incus/project.go:625 cmd/incus/project.go:634
 #: cmd/incus/project.go:643 cmd/incus/project.go:652 cmd/incus/project.go:661
 #: cmd/incus/remote.go:977 cmd/incus/remote.go:986 cmd/incus/remote.go:995
 msgid "YES"
-msgstr ""
+msgstr "SIM"
 
 #: cmd/incus/admin_recover.go:225
 msgid "You are currently missing the following:"
-msgstr ""
+msgstr "Você tem atualmente em falta o seguinte:"
 
 #: cmd/incus/exec.go:108
 msgid "You can't pass -t and -T at the same time"
-msgstr ""
+msgstr "Você não pode passar -t e -T ao mesmo tempo"
 
 #: cmd/incus/exec.go:112
 msgid "You can't pass -t or -T at the same time as --mode"
-msgstr ""
+msgstr "Você não pode passar -t ou -T ao mesmo tempo como --mode"
 
 #: cmd/incus/copy.go:118
 msgid "You must specify a destination instance name"
-msgstr ""
+msgstr "Você tem de especificar um nome de instância de destino"
 
 #: cmd/incus/copy.go:101 cmd/incus/move.go:254
 msgid "You must specify a source instance name"
-msgstr ""
+msgstr "Você tem de especificar um nome de instância fonte"
 
 #: cmd/incus/rebuild.go:122
 msgid "You need to specify an image name or use --empty"
-msgstr ""
+msgstr "Você tem de especificar um nome de imagem ou usar --empty"
 
 #: cmd/incus/network_zone.go:415
 msgid "Zone description"
-msgstr ""
+msgstr "Descrição da zona"
 
 #: cmd/incus/storage_volume.go:888
 msgid "[<remote:>]<pool> <volume> <profile> [<device name>]"
-msgstr ""
+msgstr "[<remoto:>]<pool> <volume> <perfil> [<nome dispositivo>]"
 
 #: cmd/incus/storage_volume.go:264
 msgid "[<remote:>]<pool> <volume> <profile> [<device name>] [<path>]"
-msgstr ""
+msgstr "[<remoto:>]<pool> <volume> <perfil> [<nome dispositivo>] [<caminho>]"
 
 #: cmd/incus/cluster.go:131 cmd/incus/cluster.go:1098
 #: cmd/incus/cluster_group.go:464 cmd/incus/config_trust.go:409
@@ -9917,342 +10076,348 @@ msgstr ""
 #: cmd/incus/operation.go:116 cmd/incus/storage.go:684 cmd/incus/top.go:41
 #: cmd/incus/version.go:21 cmd/incus/warning.go:73 cmd/incus/webui.go:17
 msgid "[<remote>:]"
-msgstr ""
+msgstr "[<remoto>:]"
 
 #: cmd/incus/import.go:26
 msgid "[<remote>:] <backup file> [<instance name>]"
-msgstr ""
+msgstr "[<remoto>:] <ficheiro salvaguarda> [<nome instância>]"
 
 #: cmd/incus/cluster.go:1354
 msgid "[<remote>:] <cert.crt> <cert.key>"
-msgstr ""
+msgstr "[<remoto>:] <chave.cert> <chave.cert>"
 
 #: cmd/incus/config_trust.go:174
 msgid "[<remote>:] <cert>"
-msgstr ""
+msgstr "[<remoto>:] <cert>"
 
 #: cmd/incus/cluster.go:800 cmd/incus/config_trust.go:821
 msgid "[<remote>:] <name>"
-msgstr ""
+msgstr "[<remoto>:] <nome>"
 
 #: cmd/incus/image.go:1085 cmd/incus/list.go:49 cmd/incus/network.go:1108
 #: cmd/incus/profile.go:734 cmd/incus/project.go:529
 msgid "[<remote>:] [<filter>...]"
-msgstr ""
+msgstr "[<remoto>:] [<filtro>...]"
 
 #: cmd/incus/image_alias.go:194
 msgid "[<remote>:] [<filters>...]"
-msgstr ""
+msgstr "[<remoto>:] [<filtros>...]"
 
 #: cmd/incus/network_acl.go:198 cmd/incus/network_acl.go:261
 #: cmd/incus/network_acl.go:635 cmd/incus/network_acl.go:834
 msgid "[<remote>:]<ACL>"
-msgstr ""
+msgstr "[<remoto>:]<ACL>"
 
 #: cmd/incus/network_acl.go:911 cmd/incus/network_acl.go:1059
 msgid "[<remote>:]<ACL> <direction> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<ACL> <direção> <chave>=<valor>..."
 
 #: cmd/incus/network_acl.go:319 cmd/incus/network_acl.go:590
 msgid "[<remote>:]<ACL> <key>"
-msgstr ""
+msgstr "[<remoto>:]<ACL> <chave>"
 
 #: cmd/incus/network_acl.go:502
 msgid "[<remote>:]<ACL> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<ACL> <chave>=<valor>..."
 
 #: cmd/incus/network_acl.go:775
 msgid "[<remote>:]<ACL> <new-name>"
-msgstr ""
+msgstr "[<remoto>:]<ACL> <novo-nome>"
 
 #: cmd/incus/network_acl.go:396
 msgid "[<remote>:]<ACL> [key=value...]"
-msgstr ""
+msgstr "[<remoto>:]<ACL> [chave=valor...]"
 
 #: cmd/incus/query.go:33
 msgid "[<remote>:]<API path>"
-msgstr ""
+msgstr "[<remoto>:]<caminho da API>"
 
 #: cmd/incus/network_zone.go:262 cmd/incus/network_zone.go:641
 #: cmd/incus/network_zone.go:769
 msgid "[<remote>:]<Zone>"
-msgstr ""
+msgstr "[<remoto>:]<Zona>"
 
 #: cmd/incus/network_zone.go:327 cmd/incus/network_zone.go:596
 msgid "[<remote>:]<Zone> <key>"
-msgstr ""
+msgstr "[<remoto>:]<Zona> <chave>"
 
 #: cmd/incus/network_zone.go:508
 msgid "[<remote>:]<Zone> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<Zona> <chave>=<valor>..."
 
 #: cmd/incus/network_zone.go:404
 msgid "[<remote>:]<Zone> [key=value...]"
-msgstr ""
+msgstr "[<remoto>:]<Zona> [chave=valor...]"
 
 #: cmd/incus/network_address_set.go:187 cmd/incus/network_address_set.go:470
 #: cmd/incus/network_address_set.go:646
 msgid "[<remote>:]<address-set>"
-msgstr ""
+msgstr "[<remoto>:]<conjunto-endereços>"
 
 #: cmd/incus/network_address_set.go:701 cmd/incus/network_address_set.go:754
 msgid "[<remote>:]<address-set> <address>..."
-msgstr ""
+msgstr "[<remoto>:]<conjunto-endereços><endereço>..."
 
 #: cmd/incus/network_address_set.go:427
 msgid "[<remote>:]<address-set> <key>"
-msgstr ""
+msgstr "[<remoto>:]<conjunto-endereços><chave>"
 
 #: cmd/incus/network_address_set.go:351
 msgid "[<remote>:]<address-set> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<conjunto-endereços><chave>=<valor>..."
 
 #: cmd/incus/network_address_set.go:591
 msgid "[<remote>:]<address-set> <new-name>"
-msgstr ""
+msgstr "[<remoto>:]<conjunto-endereços><novo-nome>"
 
 #: cmd/incus/network_address_set.go:247
 msgid "[<remote>:]<address-set> [key=value...]"
-msgstr ""
+msgstr "[<remoto>:]<conjunto-endereços> [chave=valor...]"
 
 #: cmd/incus/image_alias.go:138
 msgid "[<remote>:]<alias>"
-msgstr ""
+msgstr "[<remoto>:]<alias>"
 
 #: cmd/incus/image_alias.go:69
 msgid "[<remote>:]<alias> <fingerprint>"
-msgstr ""
+msgstr "[<remoto>:]<alias> <impressão digital>"
 
 #: cmd/incus/image_alias.go:384
 msgid "[<remote>:]<alias> <new-name>"
-msgstr ""
+msgstr "[<remoto>:]<alias> <novo-nome>"
 
 #: cmd/incus/config_trust.go:283 cmd/incus/config_trust.go:772
 #: cmd/incus/config_trust.go:894
 msgid "[<remote>:]<fingerprint>"
-msgstr ""
+msgstr "[<remoto>:]<impressão digital>"
 
 #: cmd/incus/cluster_group.go:188 cmd/incus/cluster_group.go:279
 #: cmd/incus/cluster_group.go:340 cmd/incus/cluster_group.go:762
 msgid "[<remote>:]<group>"
-msgstr ""
+msgstr "[<remoto>:]<grupo>"
 
 #: cmd/incus/cluster_group.go:902 cmd/incus/cluster_group.go:1057
 msgid "[<remote>:]<group> <key>"
-msgstr ""
+msgstr "[<remoto>:]<grupo> <chave>"
 
 #: cmd/incus/cluster_group.go:977
 msgid "[<remote>:]<group> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<grupo> <chave>=<valor>..."
 
 #: cmd/incus/cluster_group.go:705
 msgid "[<remote>:]<group> <new-name>"
-msgstr ""
+msgstr "[<remoto>:]<grupo> <novo-nome>"
 
 #: cmd/incus/image.go:370 cmd/incus/image.go:941 cmd/incus/image.go:1528
 msgid "[<remote>:]<image>"
-msgstr ""
+msgstr "[<remoto>:]<imagem>"
 
 #: cmd/incus/image.go:1597 cmd/incus/image.go:1730
 msgid "[<remote>:]<image> <key>"
-msgstr ""
+msgstr "[<remoto>:]<imagem> <chave>"
 
 #: cmd/incus/image.go:1664
 msgid "[<remote>:]<image> <key> <value>"
-msgstr ""
+msgstr "[<remoto>:]<imagem> <chave> <valor>"
 
 #: cmd/incus/image.go:150
 msgid "[<remote>:]<image> <remote>:"
-msgstr ""
+msgstr "[<remoto>:]<imagem> <remoto>:"
 
 #: cmd/incus/rebuild.go:27
 msgid "[<remote>:]<image> [<remote>:]<instance>"
-msgstr ""
+msgstr "[<remoto>:]<imagem> [<remoto>:]<instância>"
 
 #: cmd/incus/create.go:45 cmd/incus/launch.go:23
 msgid "[<remote>:]<image> [<remote>:][<name>]"
-msgstr ""
+msgstr "[<remoto>:]<imagem> [<remoto>:][<nome>]"
 
 #: cmd/incus/image.go:507
 msgid "[<remote>:]<image> [<target>]"
-msgstr ""
+msgstr "[<remoto>:]<imagem> [<alvo>]"
 
 #: cmd/incus/image.go:312 cmd/incus/image.go:1442
 msgid "[<remote>:]<image> [[<remote>:]<image>...]"
-msgstr ""
+msgstr "[<remoto>:]<imagem> [[<remoto>:]<imagem>...]"
 
 #: cmd/incus/config_device.go:329 cmd/incus/config_device.go:765
 #: cmd/incus/config_metadata.go:55 cmd/incus/config_metadata.go:190
 #: cmd/incus/config_template.go:296 cmd/incus/console.go:38
 #: cmd/incus/snapshot.go:322
 msgid "[<remote>:]<instance>"
-msgstr ""
+msgstr "[<remoto>:]<instância>"
 
 #: cmd/incus/config_device.go:221 cmd/incus/config_device.go:852
 msgid "[<remote>:]<instance> <device> <key>"
-msgstr ""
+msgstr "[<remoto>:]<instância> <dispositivo> <chave>"
 
 #: cmd/incus/config_device.go:632
 msgid "[<remote>:]<instance> <device> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<instância> <dispositivo> <chave>=<valor>..."
 
 #: cmd/incus/config_device.go:86
 msgid "[<remote>:]<instance> <device> <type> [key=value...]"
-msgstr ""
+msgstr "[<remoto>:]<instância> <dispositivo> <tipo> [chave=valor...]"
 
 #: cmd/incus/config_device.go:409
 msgid "[<remote>:]<instance> <device> [key=value...]"
-msgstr ""
+msgstr "[<remoto>:]<instância> <dispositivo> [chave=valor...]"
 
 #: cmd/incus/rename.go:21
 msgid "[<remote>:]<instance> <instance>"
-msgstr ""
+msgstr "[<remoto>:]<instância> <instância>"
 
 #: cmd/incus/config_device.go:508
 msgid "[<remote>:]<instance> <name>..."
-msgstr ""
+msgstr "[<remoto>:]<instância> <nome>..."
 
 #: cmd/incus/snapshot.go:483
 msgid "[<remote>:]<instance> <old snapshot name> <new snapshot name>"
 msgstr ""
+"[<remoto>:]<instância> <nome instantâneo antigo> <nome instantâneo novo>"
 
 #: cmd/incus/profile.go:112 cmd/incus/profile.go:926
 msgid "[<remote>:]<instance> <profile>"
-msgstr ""
+msgstr "[<remoto>:]<instância> <perfil>"
 
 #: cmd/incus/profile.go:188
 msgid "[<remote>:]<instance> <profiles>"
-msgstr ""
+msgstr "[<remoto>:]<instância> <perfis>"
 
 #: cmd/incus/snapshot.go:228 cmd/incus/snapshot.go:546
 msgid "[<remote>:]<instance> <snapshot name>"
-msgstr ""
+msgstr "[<remoto>:]<instância> <nome de instantâneo>"
 
 #: cmd/incus/snapshot.go:625
 msgid "[<remote>:]<instance> <snapshot>"
-msgstr ""
+msgstr "[<remoto>:]<instância> <instantâneo>"
 
 #: cmd/incus/config_template.go:67 cmd/incus/config_template.go:137
 #: cmd/incus/config_template.go:194 cmd/incus/config_template.go:370
 msgid "[<remote>:]<instance> <template>"
-msgstr ""
+msgstr "[<remoto>:]<instância> < modelo>"
 
 #: cmd/incus/move.go:35
 msgid "[<remote>:]<instance> [<remote>:][<instance>]"
-msgstr ""
+msgstr "[<remoto>:]<instância> [<remoto>:][<instância>]"
 
 #: cmd/incus/snapshot.go:80
 msgid "[<remote>:]<instance> [<snapshot name>]"
-msgstr ""
+msgstr "[<remoto>:]<instância> [<nome de instantâneo>]"
 
 #: cmd/incus/action.go:30 cmd/incus/action.go:54 cmd/incus/action.go:79
 #: cmd/incus/action.go:104 cmd/incus/action.go:128 cmd/incus/delete.go:31
 msgid "[<remote>:]<instance> [[<remote>:]<instance>...]"
-msgstr ""
+msgstr "[<remoto>:]<instância> [[<remoto>:]<instância>]"
 
 #: cmd/incus/exec.go:40
 msgid "[<remote>:]<instance> [flags] [--] <command line>"
-msgstr ""
+msgstr "[<remoto>:]<instância> [bandeiras] [--] <linha de comandos>"
 
 #: cmd/incus/debug.go:43
 msgid "[<remote>:]<instance> [target] [--format]"
-msgstr ""
+msgstr "[<remoto>:]<instância> [alvo] [--format]"
 
 #: cmd/incus/export.go:31
 msgid "[<remote>:]<instance> [target] [--instance-only] [--optimized-storage]"
-msgstr ""
+msgstr "[<remoto>:]<instância> [alvo] [--instance-only] [--optimized-storage]"
 
 #: cmd/incus/file.go:376
 msgid "[<remote>:]<instance>/<path>"
-msgstr ""
+msgstr "[<remoto>:]<instância>/<caminho>"
 
 #: cmd/incus/file.go:98
 msgid "[<remote>:]<instance>/<path> [<symlink target path>]"
-msgstr ""
+msgstr "[<remoto>:]<instância>/<caminho> [<caminho alvo do link simbólico>]"
 
 #: cmd/incus/file.go:291
 msgid "[<remote>:]<instance>/<path> [[<remote>:]<instance>/<path>...]"
-msgstr ""
+msgstr "[<remoto>:]<instância>/<caminho> [[<remoto>:]<instância>/<caminho>...]"
 
 #: cmd/incus/file.go:456
 msgid ""
 "[<remote>:]<instance>/<path> [[<remote>:]<instance>/<path>...] <target path>"
 msgstr ""
+"[<remoto>:]<instância>/<caminho> [[<remoto>:]<instância>/<caminho>...] "
+"<caminho do alvo>"
 
 #: cmd/incus/file.go:1356
 msgid "[<remote>:]<instance>[/<path>] [<target path>]"
-msgstr ""
+msgstr "[<remoto>:]<instância>[/<caminho>] [<caminho do alvo>]"
 
 #: cmd/incus/publish.go:33
 msgid "[<remote>:]<instance>[/<snapshot>] [<remote>:] [flags] [key=value...]"
 msgstr ""
+"[<remoto>:]<instância>[/<instantâneo>] [<remoto>:] [bandeiras] "
+"[chave=valor...]"
 
 #: cmd/incus/cluster.go:326 cmd/incus/cluster.go:385 cmd/incus/cluster.go:706
 #: cmd/incus/cluster.go:895 cmd/incus/cluster.go:1265 cmd/incus/cluster.go:1481
 #: cmd/incus/cluster.go:1511
 msgid "[<remote>:]<member>"
-msgstr ""
+msgstr "[<remoto>:]<membro>"
 
 #: cmd/incus/cluster_group.go:100 cmd/incus/cluster_group.go:621
 #: cmd/incus/cluster_group.go:825
 msgid "[<remote>:]<member> <group>"
-msgstr ""
+msgstr "[<remoto>:]<membro> <grupo>"
 
 #: cmd/incus/cluster.go:446 cmd/incus/cluster.go:601
 msgid "[<remote>:]<member> <key>"
-msgstr ""
+msgstr "[<remoto>:]<membro> <chave>"
 
 #: cmd/incus/cluster.go:521
 msgid "[<remote>:]<member> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<membro> <chave>=<valor>..."
 
 #: cmd/incus/cluster.go:646
 msgid "[<remote>:]<member> <new-name>"
-msgstr ""
+msgstr "[<remoto>:]<membro> <nome-novo>"
 
 #: cmd/incus/cluster_role.go:50 cmd/incus/cluster_role.go:115
 msgid "[<remote>:]<member> <role[,role...]>"
-msgstr ""
+msgstr "[<remoto>:]<membro> <função[,função...]>"
 
 #: cmd/incus/config_trust.go:91
 msgid "[<remote>:]<name>"
-msgstr ""
+msgstr "[<remoto>:]<nome>"
 
 #: cmd/incus/network_integration.go:178 cmd/incus/network_integration.go:231
 #: cmd/incus/network_integration.go:730
 msgid "[<remote>:]<network integration>"
-msgstr ""
+msgstr "[<remoto>:]<integração de rede>"
 
 #: cmd/incus/network_integration.go:353 cmd/incus/network_integration.go:697
 msgid "[<remote>:]<network integration> <key>"
-msgstr ""
+msgstr "[<remoto>:]<integração de rede> <chave>"
 
 #: cmd/incus/network_integration.go:618
 msgid "[<remote>:]<network integration> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<integração de rede> <chave>=<valor>..."
 
 #: cmd/incus/network_integration.go:563
 msgid "[<remote>:]<network integration> <new-name>"
-msgstr ""
+msgstr "[<remoto>:]<integração de rede> <novo-nome>"
 
 #: cmd/incus/network_integration.go:85
 msgid "[<remote>:]<network integration> <type>"
-msgstr ""
+msgstr "[<remoto>:]<integração de rede> <tipo>"
 
 #: cmd/incus/network.go:469 cmd/incus/network.go:728 cmd/incus/network.go:949
 #: cmd/incus/network.go:1329 cmd/incus/network.go:1647
 #: cmd/incus/network_forward.go:92 cmd/incus/network_load_balancer.go:101
 #: cmd/incus/network_peer.go:88
 msgid "[<remote>:]<network>"
-msgstr ""
+msgstr "[<remoto>:]<rede>"
 
 #: cmd/incus/network.go:530
 msgid "[<remote>:]<network> <instance> [<device name>]"
-msgstr ""
+msgstr "[<remoto>:]<rede> <instância> [<nome dispositivo>]"
 
 #: cmd/incus/network.go:151
 msgid "[<remote>:]<network> <instance> [<device name>] [<interface name>]"
 msgstr ""
+"[<remoto>:]<rede> <instância> [<nome dispositivo>] [<nome de interface>]"
 
 #: cmd/incus/network.go:866 cmd/incus/network.go:1721
 msgid "[<remote>:]<network> <key>"
@@ -10279,74 +10444,83 @@ msgid ""
 "[<remote>:]<network> <listen_address> <backend_name> <target_address> "
 "[<target_port(s)>]"
 msgstr ""
+"[<remoto>:]<rede> <endereço_escuta> <nome_backend> <endereço_alvo> "
+"[<porto(s)_alvo>]"
 
 #: cmd/incus/network_forward.go:447 cmd/incus/network_forward.go:644
 #: cmd/incus/network_load_balancer.go:450
 #: cmd/incus/network_load_balancer.go:630
 msgid "[<remote>:]<network> <listen_address> <key>"
-msgstr ""
+msgstr "[<remoto>:]<rede> <endereço_escuta> <chave>"
 
 #: cmd/incus/network_forward.go:534 cmd/incus/network_load_balancer.go:520
 msgid "[<remote>:]<network> <listen_address> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<rede> <endereço_escuta> <chave>=<valor>..."
 
 #: cmd/incus/network_load_balancer.go:1120
 msgid ""
 "[<remote>:]<network> <listen_address> <protocol> <listen_port(s)> "
 "<backend_name>[,<backend_name>...]"
 msgstr ""
+"[<remoto>:]<rede> <endereço_escuta> <protocolo> <porto(s)_escuta(s)> "
+"<nome_backend>[,<nome_backend>...]"
 
 #: cmd/incus/network_forward.go:942
 msgid ""
 "[<remote>:]<network> <listen_address> <protocol> <listen_port(s)> "
 "<target_address> [<target_port(s)>]"
 msgstr ""
+"[<remoto>:]<rede> <endereço_escuta> <protocolo> <porto(s)_escuta(s)> "
+"<endereço_alvo> [<porto(s)_alvo(s)>]"
 
 #: cmd/incus/network_forward.go:1028 cmd/incus/network_load_balancer.go:1198
 msgid "[<remote>:]<network> <listen_address> [<protocol>] [<listen_port(s)>]"
 msgstr ""
+"[<remoto>:]<rede> <endereço_escuta> [<protocolo>] [<porto(s)_escuta(s)>]"
 
 #: cmd/incus/network_forward.go:336 cmd/incus/network_load_balancer.go:339
 msgid "[<remote>:]<network> <listen_address> [key=value...]"
-msgstr ""
+msgstr "[<remoto>:]<rede> <endereço_escuta> [chave=valor...]"
 
 #: cmd/incus/network.go:1488
 msgid "[<remote>:]<network> <new-name>"
-msgstr ""
+msgstr "[<remoto>:]<rede> <novo-nome>"
 
 #: cmd/incus/network_peer.go:257
 msgid "[<remote>:]<network> <peer name>"
-msgstr ""
+msgstr "[<remoto>:]<rede> <nome peer>"
 
 #: cmd/incus/network_peer.go:725 cmd/incus/network_peer.go:863
 msgid "[<remote>:]<network> <peer_name>"
-msgstr ""
+msgstr "[<remoto>:]<rede> <nome_peer>"
 
 #: cmd/incus/network_peer.go:331
 msgid ""
 "[<remote>:]<network> <peer_name> <[target project/]<target network or "
 "integration> [key=value...]"
 msgstr ""
+"[<remoto>:]<rede> <nome_peer> <[projeto alvo/]<rede ou integração alvo> "
+"[chave=valor...]"
 
 #: cmd/incus/network_peer.go:487 cmd/incus/network_peer.go:676
 msgid "[<remote>:]<network> <peer_name> <key>"
-msgstr ""
+msgstr "[<remoto>:]<rede> <nome_peer> <chave>"
 
 #: cmd/incus/network_peer.go:574
 msgid "[<remote>:]<network> <peer_name> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<rede> <nome_peer> <chave>=<valor>..."
 
 #: cmd/incus/network.go:629
 msgid "[<remote>:]<network> <profile> [<device name>]"
-msgstr ""
+msgstr "[<remoto>:]<rede> <perfil> [<nome dispositivo>]"
 
 #: cmd/incus/network.go:250
 msgid "[<remote>:]<network> <profile> [<device name>] [<interface name>]"
-msgstr ""
+msgstr "[<remoto>:]<rede> <perfil> [<nome dispositivo>] [<nome interface>]"
 
 #: cmd/incus/network.go:351
 msgid "[<remote>:]<network> [key=value...]"
-msgstr ""
+msgstr "[<remoto>:]<rede> [chave=valor...]"
 
 #: cmd/incus/operation.go:63 cmd/incus/operation.go:298
 msgid "[<remote>:]<operation>"
@@ -10359,11 +10533,11 @@ msgstr "[<remoto>:]<pool>"
 
 #: cmd/incus/storage_bucket.go:1638
 msgid "[<remote>:]<pool> <backup file> [<bucket>]"
-msgstr ""
+msgstr "[<remoto>:]<pool> <ficheiro salvaguarda> [<bucket>]"
 
 #: cmd/incus/storage_volume.go:3390
 msgid "[<remote>:]<pool> <backup file> [<volume name>]"
-msgstr ""
+msgstr "[<remoto>:]<pool> <ficheiro salvaguarda> [<nome volume>]"
 
 #: cmd/incus/storage_bucket.go:213 cmd/incus/storage_bucket.go:277
 #: cmd/incus/storage_bucket.go:790 cmd/incus/storage_bucket.go:943
@@ -10398,188 +10572,188 @@ msgstr "[<remoto>:]<pool> <chave>"
 
 #: cmd/incus/storage.go:852
 msgid "[<remote>:]<pool> <key> <value>"
-msgstr ""
+msgstr "[<remoto>:]<pool> <chave> <valor>"
 
 #: cmd/incus/storage_volume.go:1949
 msgid "[<remote>:]<pool> <old name> <new name>"
-msgstr ""
+msgstr "[<remoto>:]<pool> <nome antigo> <nome novo>"
 
 #: cmd/incus/storage_volume.go:712 cmd/incus/storage_volume.go:2793
 msgid "[<remote>:]<pool> <volume>"
-msgstr ""
+msgstr "[<remoto>:]<pool> <volume>"
 
 #: cmd/incus/storage_volume.go:788
 msgid "[<remote>:]<pool> <volume> <instance> [<device name>]"
-msgstr ""
+msgstr "[<remoto>:]<pool> <volume> <instância> [<nome dispositivo>]"
 
 #: cmd/incus/storage_volume.go:171
 msgid "[<remote>:]<pool> <volume> <instance> [<device name>] [<path>]"
-msgstr ""
+msgstr "[<remoto>:]<pool> <volume> <instância> [<nome dispositivo>] [<caminho>]"
 
 #: cmd/incus/storage_volume.go:2962
 msgid "[<remote>:]<pool> <volume> <old snapshot> <new snapshot>"
-msgstr ""
+msgstr "[<remoto>:]<pool> <volume> <instantâneo antigo> <instantâneo novo>"
 
 #: cmd/incus/storage_volume.go:2701 cmd/incus/storage_volume.go:3051
 msgid "[<remote>:]<pool> <volume> <snapshot>"
-msgstr ""
+msgstr "[<remoto>:]<pool> <volume> <instantâneo>"
 
 #: cmd/incus/storage_volume.go:3222
 msgid "[<remote>:]<pool> <volume> [<path>]"
-msgstr ""
+msgstr "[<remoto>:]<pool> <volume> [<caminho>]"
 
 #: cmd/incus/storage_volume.go:2543
 msgid "[<remote>:]<pool> <volume> [<snapshot>]"
-msgstr ""
+msgstr "[<remoto>:]<pool> <volume> [<instantâneo>]"
 
 #: cmd/incus/storage_volume.go:2391
 msgid "[<remote>:]<pool> <volume> [<target path>]"
-msgstr ""
+msgstr "[<remoto>:]<pool> <volume> [<caminho alvo>]"
 
 #: cmd/incus/storage_volume.go:594
 msgid "[<remote>:]<pool> <volume> [key=value...]"
-msgstr ""
+msgstr "[<remoto>:]<pool> <volume> [chave=valor...]"
 
 #: cmd/incus/storage_volume.go:3133
 msgid "[<remote>:]<pool> <volume>/<snapshot>"
-msgstr ""
+msgstr "[<remoto>:]<pool> <volume>/<instantâneo>"
 
 #: cmd/incus/storage_volume.go:1593
 msgid "[<remote>:]<pool> [<filter>...]"
-msgstr ""
+msgstr "[<remoto>:]<pool> [<filtro>...]"
 
 #: cmd/incus/storage_volume.go:987 cmd/incus/storage_volume.go:1351
 #: cmd/incus/storage_volume.go:2194
 msgid "[<remote>:]<pool> [<type>/]<volume>"
-msgstr ""
+msgstr "[<remoto>:]<pool> [<tipo>/]<volume>"
 
 #: cmd/incus/storage_volume.go:2301
 msgid "[<remote>:]<pool> [<type>/]<volume> <key>"
-msgstr ""
+msgstr "[<remoto>:]<pool> [<tipo>/]<volume> <chave>"
 
 #: cmd/incus/storage_volume.go:2031
 msgid "[<remote>:]<pool> [<type>/]<volume> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<pool> [<tipo>/]<volume> <chave>=<valor>..."
 
 #: cmd/incus/storage_volume.go:1213
 msgid "[<remote>:]<pool> [<type>/]<volume>[/<snapshot>] <key>"
-msgstr ""
+msgstr "[<remoto>:]<pool> [<tipo>/]<volume>[/<instantâneo>] <chave>"
 
 #: cmd/incus/storage_volume.go:1853
 msgid "[<remote>:]<pool>/<volume> [<remote>:]<pool>/<volume>"
-msgstr ""
+msgstr "[<remoto>:]<pool>/<volume> [<remoto>:]<pool>/<volume>"
 
 #: cmd/incus/storage_volume.go:373
 msgid "[<remote>:]<pool>/<volume>[/<snapshot>] [<remote>:]<pool>/<volume>"
-msgstr ""
+msgstr "[<remoto>:]<pool>/<volume>[/<instantâneo>] [<remoto>:]<pool>/<volume>"
 
 #: cmd/incus/config_device.go:331 cmd/incus/config_device.go:767
 #: cmd/incus/profile.go:368 cmd/incus/profile.go:458 cmd/incus/profile.go:519
 #: cmd/incus/profile.go:1167
 msgid "[<remote>:]<profile>"
-msgstr ""
+msgstr "[<remoto>:]<perfil>"
 
 #: cmd/incus/config_device.go:223 cmd/incus/config_device.go:854
 msgid "[<remote>:]<profile> <device> <key>"
-msgstr ""
+msgstr "[<remoto>:]<perfil> <dispositivo> <chave>"
 
 #: cmd/incus/config_device.go:639
 msgid "[<remote>:]<profile> <device> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<perfil> <dispositivo> <chave>=<valor>..."
 
 #: cmd/incus/config_device.go:94
 msgid "[<remote>:]<profile> <device> <type> [key=value...]"
-msgstr ""
+msgstr "[<remoto>:]<perfil> <dispositivo> <tipo> [chave=valor...]"
 
 #: cmd/incus/profile.go:657 cmd/incus/profile.go:1233
 msgid "[<remote>:]<profile> <key>"
-msgstr ""
+msgstr "[<remoto>:]<perfil> <chave>"
 
 #: cmd/incus/profile.go:1078
 msgid "[<remote>:]<profile> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<perfil> <chave>=<valor>..."
 
 #: cmd/incus/config_device.go:510
 msgid "[<remote>:]<profile> <name>..."
-msgstr ""
+msgstr "[<remoto>:]<perfil> <nome>..."
 
 #: cmd/incus/profile.go:1015
 msgid "[<remote>:]<profile> <new-name>"
-msgstr ""
+msgstr "[<remoto>:]<perfil> <novo-nome>"
 
 #: cmd/incus/profile.go:281
 msgid "[<remote>:]<profile> [<remote>:]<profile>"
-msgstr ""
+msgstr "[<remoto>:]<perfil> [<remoto>:]<perfil>"
 
 #: cmd/incus/project.go:108 cmd/incus/project.go:214 cmd/incus/project.go:315
 #: cmd/incus/project.go:960 cmd/incus/project.go:1023 cmd/incus/project.go:1093
 msgid "[<remote>:]<project>"
-msgstr ""
+msgstr "[<remoto>:]<projeto>"
 
 #: cmd/incus/project.go:453 cmd/incus/project.go:914
 msgid "[<remote>:]<project> <key>"
-msgstr ""
+msgstr "[<remoto>:]<projeto> <chave>"
 
 #: cmd/incus/project.go:826
 msgid "[<remote>:]<project> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<projeto> <chave>=<valor>..."
 
 #: cmd/incus/project.go:758
 msgid "[<remote>:]<project> <new-name>"
-msgstr ""
+msgstr "[<remoto>:]<projeto> <novo-nome>"
 
 #: cmd/incus/copy.go:41
 msgid "[<remote>:]<source>[/<snapshot>] [[<remote>:]<destination>]"
-msgstr ""
+msgstr "[<remoto>:]<fonte>[/<instantâneo>] [[<remoto>:]<destino>]"
 
 #: cmd/incus/warning.go:270 cmd/incus/warning.go:314 cmd/incus/warning.go:369
 msgid "[<remote>:]<warning-uuid>"
-msgstr ""
+msgstr "[<remoto>:]<aviso-uuid>"
 
 #: cmd/incus/network_zone.go:885
 msgid "[<remote>:]<zone>"
-msgstr ""
+msgstr "[<remoto>:]<zona>"
 
 #: cmd/incus/network_zone.go:970 cmd/incus/network_zone.go:1361
 #: cmd/incus/network_zone.go:1492
 msgid "[<remote>:]<zone> <record>"
-msgstr ""
+msgstr "[<remoto>:]<zona> <registo>"
 
 #: cmd/incus/network_zone.go:1036 cmd/incus/network_zone.go:1312
 msgid "[<remote>:]<zone> <record> <key>"
-msgstr ""
+msgstr "[<remoto>:]<zona> <registo> <chave>"
 
 #: cmd/incus/network_zone.go:1223
 msgid "[<remote>:]<zone> <record> <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:]<zona> <registo> <chave>=<valor>..."
 
 #: cmd/incus/network_zone.go:1572 cmd/incus/network_zone.go:1633
 msgid "[<remote>:]<zone> <record> <type> <value>"
-msgstr ""
+msgstr "[<remoto>:]<zona> <registo> <tipo> <valor>"
 
 #: cmd/incus/network_zone.go:1116
 msgid "[<remote>:]<zone> <record> [key=value...]"
-msgstr ""
+msgstr "[<remoto>:]<zona> <registo> [chave=valor...]"
 
 #: cmd/incus/config.go:95 cmd/incus/config.go:749
 msgid "[<remote>:][<instance>[/<snapshot>]]"
-msgstr ""
+msgstr "[<remoto>:][<instância>[/<instantâneo>]]"
 
 #: cmd/incus/info.go:35
 msgid "[<remote>:][<instance>]"
-msgstr ""
+msgstr "[<remoto>:][<instância>]"
 
 #: cmd/incus/config.go:388 cmd/incus/config.go:881
 msgid "[<remote>:][<instance>] <key>"
-msgstr ""
+msgstr "[<remoto>:][<instância>] <chave>"
 
 #: cmd/incus/config.go:525
 msgid "[<remote>:][<instance>] <key>=<value>..."
-msgstr ""
+msgstr "[<remoto>:][<instância>] <chave>=<valor>..."
 
 #: cmd/incus/remote.go:120
 msgid "[<remote>] <IP|FQDN|URL|token>"
-msgstr ""
+msgstr "[<remoto>] <IP|FQDN|URL|testemunho>"
 
 #: cmd/incus/cluster.go:1018
 msgid "[[<remote>:]<member>]"
@@ -10658,6 +10832,11 @@ msgid ""
 "incus cluster group assign foo default\n"
 "    Reset \"foo\" to only using the \"default\" cluster group."
 msgstr ""
+"incus cluster group assign foo default,bar\n"
+"    Define os grupos para \"foo\" para \"default\" e \"bar\".\n"
+"\n"
+"incus cluster group assign foo default\n"
+"    Re-define \"foo\" para apenas usar o grupo de agrupamento \"default\"."
 
 #: cmd/incus/cluster_group.go:193
 msgid ""
@@ -10666,6 +10845,10 @@ msgid ""
 "incus cluster group create g1 < config.yaml\n"
 "\tCreate a cluster group with configuration from config.yaml"
 msgstr ""
+"incus cluster group create g1\n"
+"\n"
+"incus cluster group create g1 < config.yaml\n"
+"\tCria um grupo de agrupamento com configuração de config.yaml"
 
 #: cmd/incus/config_device.go:87
 msgid ""
@@ -10677,12 +10860,21 @@ msgid ""
 "pool source=some-volume path=/opt\n"
 "    Will mount the some-volume volume on some-pool onto /opt in the instance."
 msgstr ""
+"incus config device add [<remoto>:]instance1 <nome-dispositivo> disk source=/"
+"share/c1 path=/opt\n"
+"    Irá montar o /share/c1 do anfitrião em /opt na instância.\n"
+"\n"
+"incus config device add [<remoto>:]instance1 <nome-dispositivo> disk pool"
+"=some-pool source=some-volume path=/opt\n"
+"    Irá montar o volume some-volume em some-pool em /opt na instância."
 
 #: cmd/incus/config.go:99
 msgid ""
 "incus config edit <instance> < instance.yaml\n"
 "    Update the instance configuration from config.yaml."
 msgstr ""
+"incus config edit <instância> < instance.yaml\n"
+"    Atualiza a configuração da instância a partir de config.yaml."
 
 #: cmd/incus/config.go:532
 msgid ""
@@ -10692,6 +10884,11 @@ msgid ""
 "incus config set core.https_address=[::]:8443\n"
 "    Will have the server listen on IPv4 and IPv6 port 8443."
 msgstr ""
+"incus config set [<remoto>:]<instância> limits.cpu=2\n"
+"    Irá definir um limite de CPU de \"2\" para a instância.\n"
+"\n"
+"incus config set core.https_address=[::]:8443\n"
+"    Irá fazer o servidor escutar em IPv4 e IPv6 porto 8443."
 
 #: cmd/incus/config_template.go:72
 msgid ""
@@ -10700,6 +10897,10 @@ msgid ""
 "incus config template create u1 t1 < config.tpl\n"
 "    Create template t1 for instance u1 from config.tpl"
 msgstr ""
+"incus config template create u1 t1\n"
+"\n"
+"incus config template create u1 t1 < config.tpl\n"
+"    Cria modelo t1 para instância u1 a partir de config.tpl"
 
 #: cmd/incus/create.go:48
 msgid ""
@@ -10712,12 +10913,23 @@ msgid ""
 "root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
+"incus create images:debian/12 u1\n"
+"\n"
+"incus create images:debian/12 u1 < config.yaml\n"
+"    Cria a instância com configuração a partir de config.yaml\n"
+"\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io.bus="
+"nvme\n"
+"    Cria e arranca uma máquina virtual, sobrepondo o tamanho de disco e "
+"barramento"
 
 #: cmd/incus/debug.go:48
 msgid ""
 "incus debug dump-memory vm1 memory-dump.elf --format=elf\n"
 "    Creates an ELF format memory dump of the vm1 instance."
 msgstr ""
+"incus debug dump-memory vm1 memory-dump.elf --format=elf\n"
+"    Cria uma descarga de memória em formato ELF da instância vm1."
 
 #: cmd/incus/exec.go:53
 msgid ""
@@ -10727,12 +10939,19 @@ msgid ""
 "incus exec c1 -- ls -lh /\n"
 "\tRun the \"ls -lh /\" command in instance \"c1\""
 msgstr ""
+"incus exec c1 bash\n"
+"\tCorre o comando \"bash\" na instância \"c1\"\n"
+"\n"
+"incus exec c1 -- ls -lh /\n"
+"\tCorre o comando \"ls -lh /\" na instância \"c1\""
 
 #: cmd/incus/export.go:35
 msgid ""
 "incus export u1 backup0.tar.gz\n"
 "    Download a backup tarball of the u1 instance."
 msgstr ""
+"incus export u1 backup0.tar.gz\n"
+"    Descarrega o tarball de salvaguarda da instância u1."
 
 #: cmd/incus/file.go:102
 msgid ""
@@ -10741,12 +10960,18 @@ msgid ""
 "incus file create --type=symlink foo/bar baz\n"
 "\t   To create a symlink /bar in instance foo whose target is baz."
 msgstr ""
+"incus file create foo/bar\n"
+"\t   Para criar um ficheiro /bar na instância foo.\n"
+"incus file create --type=symlink foo/bar baz\n"
+"\t   Para criar um link simbólico /bar na instância foo cujo alvo é baz."
 
 #: cmd/incus/file.go:1360
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory."
 msgstr ""
+"incus file mount foo/root fooroot\n"
+"   Para montar /root da instância foo no directório fooroot local."
 
 #: cmd/incus/file.go:460
 msgid ""
@@ -10754,12 +10979,16 @@ msgid ""
 "   To pull /etc/hosts from the instance and write it to the current "
 "directory."
 msgstr ""
+"incus file pull foo/etc/hosts .\n"
+"   Para puxar /etc/hosts da instância e escrevê-lo no directório atual."
 
 #: cmd/incus/file.go:694
 msgid ""
 "incus file push /etc/hosts foo/etc/hosts\n"
 "   To push /etc/hosts into the instance \"foo\"."
 msgstr ""
+"incus file push /etc/hosts foo/etc/hosts\n"
+"   Para enviar /etc/hosts para a instância \"foo\"."
 
 #: cmd/incus/image.go:374
 msgid ""
@@ -10769,12 +10998,19 @@ msgid ""
 "incus image edit <image> < image.yaml\n"
 "    Load the image properties from a YAML file"
 msgstr ""
+"incus image edit <imagem>\n"
+"    Lança um editor de texto para editar as propriedades\n"
+"\n"
+"incus image edit <imagem> < image.yaml\n"
+"    Carrega as propriedades da imagem a partir dum ficheiro YAML"
 
 #: cmd/incus/import.go:30
 msgid ""
 "incus import backup0.tar.gz\n"
 "    Create a new instance using backup0.tar.gz as the source."
 msgstr ""
+"incus import backup0.tar.gz\n"
+"    Cria uma nova instância usando backup0.tar.gz como fonte."
 
 #: cmd/incus/info.go:39
 msgid ""
@@ -10784,6 +11020,11 @@ msgid ""
 "incus info [<remote>:] [--resources]\n"
 "    For server information."
 msgstr ""
+"incus info [<remoto>:]<instância> [--show-log]\n"
+"    Para informação da instância.\n"
+"\n"
+"incus info [<remoto>:] [--resources]\n"
+"    Para informação do servidor."
 
 #: cmd/incus/launch.go:27
 msgid ""
@@ -10803,6 +11044,22 @@ msgid ""
 "root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
+"incus launch images:debian/12 u1\n"
+"\n"
+"incus launch images:debian/12 u1 < config.yaml\n"
+"    Cria e arranca contentor com configuração de config.yaml\n"
+"\n"
+"incus launch images:debian/12 u2 -t aws:t2.micro\n"
+"    Cria e arranca contentor usando o mesmo tamanho que um AWS t2.micro (1 "
+"vCPU, 1GiB de RAM)\n"
+"\n"
+"incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
+"    Cria e arranca uma máquina virtual com 4 vCPUs e 4GiB de RAM\n"
+"\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io.bus="
+"nvme\n"
+"    Cria e arranca uma máquina virtual, sobrepondo o tamanho de disco e "
+"barramento"
 
 #: cmd/incus/list.go:126
 msgid ""
@@ -10817,6 +11074,17 @@ msgid ""
 "incus list -c ns,user.comment:comment\n"
 "  List instances with their running state and user comment."
 msgstr ""
+"incus list -c "
+"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
+"  Mostra instâncias usando as colunas \"NAME\", \"BASE IMAGE\", \"STATE\", "
+"\"IPV4\", \"IPV6\" e \"MAC\".\n"
+"  \"BASE IMAGE\", \"MAC\" e \"IMAGE OS\" são coluna personalizadas geradas "
+"pelas chaves de configuração da instância.\n"
+"  \"ETHP\" é uma coluna personalizada gerada de uma chave de dispositivo.\n"
+"\n"
+"incus list -c ns,user.comment:comment\n"
+"  Lista instâncias com o seu estado de funcionamento e comentário de "
+"utilizador."
 
 #: cmd/incus/monitor.go:39
 msgid ""
@@ -10829,6 +11097,14 @@ msgid ""
 "incus monitor --type=lifecycle\n"
 "    Only show lifecycle events."
 msgstr ""
+"incus monitor --type=logging\n"
+"    Apenas mostra mensagens de relatório.\n"
+"\n"
+"incus monitor --pretty --type=logging --loglevel=info\n"
+"    Mostra um relatório bonito de mensagens com o nível info ou superior.\n"
+"\n"
+"incus monitor --type=lifecycle\n"
+"    Apenas mostra eventos de ciclo de vida."
 
 #: cmd/incus/move.go:48
 msgid ""
@@ -10843,6 +11119,17 @@ msgid ""
 "incus move <instance>/<old snapshot name> <instance>/<new snapshot name>\n"
 "    Rename a snapshot."
 msgstr ""
+"incus move [<remoto>:]<instância fonte> [<remoto>:][<instância destino>] "
+"[--instance-only]\n"
+"    Move uma instância entre duas máquinas, renomeando-a se o nome de "
+"destino for diferente.\n"
+"\n"
+"incus move <nome antigo> <nome novo> [--instance-only]\n"
+"    Renomeia uma instância local.\n"
+"\n"
+"incus move <instância>/<nome antigo instantâneo> <instância>/<nome novo "
+"instantâneo>\n"
+"    Renomeia um instantâneo."
 
 #: cmd/incus/network_acl.go:400
 msgid ""
@@ -10851,6 +11138,10 @@ msgid ""
 "incus network acl create a1 < config.yaml\n"
 "    Create network acl with configuration from config.yaml"
 msgstr ""
+"incus network acl create a1\n"
+"\n"
+"incus network acl create a1 < config.yaml\n"
+"    Cria acl de rede com configuração de config.yaml"
 
 #: cmd/incus/network_address_set.go:250
 msgid ""
@@ -10859,6 +11150,10 @@ msgid ""
 "incus network address-set create as1 < config.yaml\n"
 "    Create network address set with configuration from config.yaml"
 msgstr ""
+"incus network address-set create as1\n"
+"\n"
+"incus network address-set create as1 < config.yaml\n"
+"    Cria conjunto de endereços de rede com configuração de config.yaml"
 
 #: cmd/incus/network.go:355
 msgid ""
@@ -10871,6 +11166,14 @@ msgid ""
 "incus network create bar network=baz --type ovn\n"
 "    Create a new OVN network called bar using baz as its uplink network"
 msgstr ""
+"incus network create foo\n"
+"    Cria una nova rede chamada foo\n"
+"\n"
+"incus network create foo < config.yaml\n"
+"    Cria una nova rede chamada foo usando o conteúdo de config.yaml.\n"
+"\n"
+"incus network create bar network=baz --type ovn\n"
+"    Cria una nova rede OVN chamada bar usando baz como sua rede uplink"
 
 #: cmd/incus/network_forward.go:340
 msgid ""
@@ -10879,6 +11182,10 @@ msgid ""
 "incus network forward create n1 127.0.0.1 < config.yaml\n"
 "    Create a new network forward for network n1 from config.yaml"
 msgstr ""
+"incus network forward create n1 127.0.0.1\n"
+"\n"
+"incus network forward create n1 127.0.0.1 < config.yaml\n"
+"    Cria um novo encaminhamento de rede para rede n1 a partir de config.yaml"
 
 #: cmd/incus/network_integration.go:90
 msgid ""
@@ -10888,6 +11195,10 @@ msgid ""
 "    Create network integration o1 of type ovn with configuration from "
 "config.yaml"
 msgstr ""
+"incus network integration create o1 ovn\n"
+"\n"
+"incus network integration create o1 ovn < config.yaml\n"
+"    Cria integração de rede o1 do tipo ovn com configuração de config.yaml"
 
 #: cmd/incus/network_integration.go:235
 msgid ""
@@ -10896,6 +11207,10 @@ msgid ""
 "    Update a network integration using the content of network-"
 "integration.yaml"
 msgstr ""
+"incus network integration edit <integração de rede> < network-integration."
+"yaml\n"
+"    Atualiza uma integração de rede usando o conteúdo de network-"
+"integration.yaml"
 
 #: cmd/incus/network_load_balancer.go:343
 msgid ""
@@ -10905,6 +11220,11 @@ msgid ""
 "    Create network load-balancer for network n1 with configuration from "
 "config.yaml"
 msgstr ""
+"incus network load-balancer create n1 127.0.0.1\n"
+"\n"
+"incus network load-balancer create n1 127.0.0.1 < config.yaml\n"
+"    Cria balanceador de carga de rede para a rede n1 com configuração de "
+"config.yaml"
 
 #: cmd/incus/network_peer.go:335
 msgid ""
@@ -10921,6 +11241,18 @@ msgid ""
 "network default in the web project using the configuration\n"
 "\tin the file config.yaml"
 msgstr ""
+"incus network peer create default peer1 web/default\n"
+"    Cria um novo peering entre rede \"default\" no projeto atual e rede "
+"\"default\" no projeto \"web\"\n"
+"\n"
+"incus network peer create default peer2 ovn-ic --type=remote\n"
+"    Cria um novo peering entre rede \"default\" no projeto atual e outras "
+"redes remotas através da integração \"ovn-ic\"\n"
+"\n"
+"incus network peer create default peer3 web/default < config.yaml\n"
+"\tCria um novo peering entre rede default no projeto atual e a rede default "
+"no projeto web usando a configuração\n"
+"\tno ficheiro config.yaml"
 
 #: cmd/incus/network_zone.go:408
 msgid ""
@@ -10929,6 +11261,10 @@ msgid ""
 "incus network zone create z1 < config.yaml\n"
 "    Create network zone z1 with configuration from config.yaml"
 msgstr ""
+"incus network zone create z1\n"
+"\n"
+"incus network zone create z1 < config.yaml\n"
+"    Cria zona de rede z1 com configuração de config.yaml"
 
 #: cmd/incus/network_zone.go:1120
 msgid ""
@@ -10937,12 +11273,18 @@ msgid ""
 "incus network zone record create z1 r1 < config.yaml\n"
 "    Create record r1 for zone z1 with configuration from config.yaml"
 msgstr ""
+"incus network zone record create z1 r1\n"
+"\n"
+"incus network zone record create z1 r1 < config.yaml\n"
+"    Cria registo r1 para zona z1 com configuração de config.yaml"
 
 #: cmd/incus/operation.go:302
 msgid ""
 "incus operation show 344a79e4-d88a-45bf-9c39-c72c26f6ab8a\n"
 "    Show details on that operation UUID"
 msgstr ""
+"incus operation show 344a79e4-d88a-45bf-9c39-c72c26f6ab8a\n"
+"    Mostra detalhes desse UUID de operação"
 
 #: cmd/incus/profile.go:193
 msgid ""
@@ -10955,6 +11297,14 @@ msgid ""
 "incus profile assign foo ''\n"
 "    Remove all profile from \"foo\""
 msgstr ""
+"incus profile assign foo default,bar\n"
+"    Define os perfis para \"foo\" para \"default\" e \"bar\".\n"
+"\n"
+"incus profile assign foo default\n"
+"    Redefine \"foo\" para apenas usar o perfil \"default\".\n"
+"\n"
+"incus profile assign foo ''\n"
+"    Remove todos os perfis de \"foo\""
 
 #: cmd/incus/profile.go:372
 msgid ""
@@ -10964,6 +11314,11 @@ msgid ""
 "incus profile create p1 < config.yaml\n"
 "    Create a profile named p1 with configuration from config.yaml"
 msgstr ""
+"incus profile create p1\n"
+"    Cria um perfil chamado p1\n"
+"\n"
+"incus profile create p1 < config.yaml\n"
+"    Cria um perfil chamado p1 com configuração de config.yaml"
 
 #: cmd/incus/config_device.go:95
 msgid ""
@@ -10975,12 +11330,21 @@ msgid ""
 "pool source=some-volume path=/opt\n"
 "    Will mount the some-volume volume on some-pool onto /opt in the instance."
 msgstr ""
+"incus profile device add [<remoto>:]profile1 <nome-dispositivo> disk source=/"
+"share/c1 path=/opt\n"
+"    Irá montar o /share/c1 da máquina em /opt na instância.\n"
+"\n"
+"incus profile device add [<remoto>:]profile1 <nome-dispositivo> disk pool"
+"=some-pool source=some-volume path=/opt\n"
+"    Irá montar o volume some-volume em some-pool em /opt na instância."
 
 #: cmd/incus/profile.go:523
 msgid ""
 "incus profile edit <profile> < profile.yaml\n"
 "    Update a profile using the content of profile.yaml"
 msgstr ""
+"incus profile edit <perfil> < profile.yaml\n"
+"    Atualiza um perfil usando o conteúdo de profile.yaml"
 
 #: cmd/incus/project.go:113
 msgid ""
@@ -10990,18 +11354,27 @@ msgid ""
 "incus project create p1 < config.yaml\n"
 "    Create a project named p1 with configuration from config.yaml"
 msgstr ""
+"incus project create p1\n"
+"    Cria um projeto chamado p1\n"
+"\n"
+"incus project create p1 < config.yaml\n"
+"    Cria um projeto chamado p1 com configuração de config.yaml"
 
 #: cmd/incus/project.go:319
 msgid ""
 "incus project edit <project> < project.yaml\n"
 "    Update a project using the content of project.yaml"
 msgstr ""
+"incus project edit <project> < project.yaml\n"
+"    Atualiza um projeto usando o conteúdo de project.yaml"
 
 #: cmd/incus/query.go:37
 msgid ""
 "incus query -X DELETE --wait /1.0/instances/c1\n"
 "    Delete local instance \"c1\"."
 msgstr ""
+"incus query -X DELETE --wait /1.0/instances/c1\n"
+"    Apaga instância local \"c1\"."
 
 #: cmd/incus/snapshot.go:88
 msgid ""
@@ -11012,12 +11385,20 @@ msgid ""
 "\tCreate a snapshot of \"u1\" called \"snap0\" with the configuration from "
 "\"config.yaml\"."
 msgstr ""
+"incus snapshot create u1 snap0\n"
+"\tCria um instantâneo de \"u1\" chamado \"snap0\".\n"
+"\n"
+"incus snapshot create u1 snap0 < config.yaml\n"
+"\tCria um instantâneo de \"u1\" chamado \"snap0\" com a configuração de "
+"\"config.yaml\"."
 
 #: cmd/incus/snapshot.go:552
 msgid ""
 "incus snapshot restore u1 snap0\n"
 "    Restore instance u1 to snapshot snap0"
 msgstr ""
+"incus snapshot restore u1 snap0\n"
+"    Restaura instância u1 para instantâneo snap0"
 
 #: cmd/incus/storage_bucket.go:104
 msgid ""
@@ -11028,30 +11409,47 @@ msgid ""
 "\tCreate a new storage bucket named b01 in storage pool p1 using the content "
 "of config.yaml"
 msgstr ""
+"incus storage bucket create p1 b01\n"
+"\tCria um novo bucket de armazenamento chamado b01 na pool de armazenamento "
+"p1\n"
+"\n"
+"incus storage bucket create p1 b01 < config.yaml\n"
+"\tCria um novo bucket de armazenamento chamado b01 na pool de armazenamento "
+"p1 usando o conteúdo de config.yaml"
 
 #: cmd/incus/storage_bucket.go:280
 msgid ""
 "incus storage bucket edit [<remote>:]<pool> <bucket> < bucket.yaml\n"
 "    Update a storage bucket using the content of bucket.yaml."
 msgstr ""
+"incus storage bucket edit [<remote>:]<pool> <bucket> < bucket.yaml\n"
+"    Atualiza um bucket de armazenamento usando o conteúdo de bucket.yaml."
 
 #: cmd/incus/storage_bucket.go:1280
 msgid ""
 "incus storage bucket edit [<remote>:]<pool> <bucket> <key> < key.yaml\n"
 "    Update a storage bucket key using the content of key.yaml."
 msgstr ""
+"incus storage bucket edit [<remote>:]<pool> <bucket> <key> < key.yaml\n"
+"    Atualiza uma chave de bucket de armazenamento usando o conteúdo de "
+"key.yaml."
 
 #: cmd/incus/storage_bucket.go:1491
 msgid ""
 "incus storage bucket export default b1\n"
 "    Download a backup tarball of the b1 storage bucket from the default pool."
 msgstr ""
+"incus storage bucket export default b1\n"
+"    Descarrega um tarball de salvaguarda do bucket de armazenamento b1 da "
+"pool predefinida."
 
 #: cmd/incus/storage_bucket.go:1642
 msgid ""
 "incus storage bucket import default backup0.tar.gz\n"
 "\t\tCreate a new storage bucket using backup0.tar.gz as the source."
 msgstr ""
+"incus storage bucket import default backup0.tar.gz\n"
+"\t\tCria um novo bucket de armazenamento usando backup0.tar.gz como fonte."
 
 #: cmd/incus/storage_bucket.go:1100
 msgid ""
@@ -11062,6 +11460,12 @@ msgid ""
 "\tCreate a key called k1 for the bucket b01 in the pool p1 using the content "
 "of config.yaml."
 msgstr ""
+"incus storage bucket key create p1 b01 k1\n"
+"\tCria uma chave chamada k1 para o bucket b01 na pool p1.\n"
+"\n"
+"incus storage bucket key create p1 b01 k1 < config.yaml\n"
+"\tCria uma chave chamada k1 para o bucket b01 na pool p1 usando o conteúdo "
+"de config.yaml."
 
 #: cmd/incus/storage_bucket.go:1417
 msgid ""
@@ -11069,6 +11473,9 @@ msgid ""
 "    Will show the properties of a bucket key called \"foo\" for a bucket "
 "called \"data\" in the \"default\" pool."
 msgstr ""
+"incus storage bucket key show default data foo\n"
+"    Irá mostrar as propriedades da chave de bucket chamada \"foo\" para um "
+"bucket chamado \"data\" na pool \"default\"."
 
 #: cmd/incus/storage_bucket.go:793
 msgid ""
@@ -11076,6 +11483,9 @@ msgid ""
 "    Will show the properties of a bucket called \"data\" in the \"default\" "
 "pool."
 msgstr ""
+"incus storage bucket show default data\n"
+"    Irá mostrar as propriedades dum bucket chamado \"data\" na pool "
+"\"default\"."
 
 #: cmd/incus/storage.go:109
 msgid ""
@@ -11085,12 +11495,19 @@ msgid ""
 "    Create a storage pool using the content of config.yaml.\n"
 "\t"
 msgstr ""
+"incus storage create s1 dir\n"
+"\n"
+"incus storage create s1 dir < config.yaml\n"
+"    Cria uma pool de armazenamento usando o conteúdo de config.yaml.\n"
+"\t"
 
 #: cmd/incus/storage.go:288
 msgid ""
 "incus storage edit [<remote>:]<pool> < pool.yaml\n"
 "    Update a storage pool using the content of pool.yaml."
 msgstr ""
+"incus storage edit [<remoto>:]<pool> < pool.yaml\n"
+"    Atualiza uma pool de armazenamento usando o conteúdo de pool.yaml."
 
 #: cmd/incus/storage_volume.go:599
 msgid ""
@@ -11101,6 +11518,13 @@ msgid ""
 "    Create custom storage volume \"foo\" in pool \"default\" with "
 "configuration from config.yaml"
 msgstr ""
+"incus storage volume create default foo\n"
+"    Cria o volume de armazenamento personalizado \"foo\" na pool \"default\""
+"\n"
+"\n"
+"incus storage volume create default foo < config.yaml\n"
+"    Cria o volume de armazenamento personalizado \"foo\" na pool \"default\" "
+"com configuração de config.yaml"
 
 #: cmd/incus/storage_volume.go:994
 msgid ""
@@ -11111,6 +11535,12 @@ msgid ""
 "    Edit custom storage volume \"foo\" in pool \"default\" using the content "
 "of volume.yaml"
 msgstr ""
+"incus storage volume edit default container/c1\n"
+"    Edita contentor de volume de armazenamento \"c1\" na pool \"default\"\n"
+"\n"
+"incus storage volume edit default foo < volume.yaml\n"
+"    Edita contentor de volume de armazenamento \"c1\" na pool \"default\" "
+"usando o conteúdo de volume.yaml"
 
 #: cmd/incus/storage_volume.go:1222
 msgid ""
@@ -11121,6 +11551,12 @@ msgid ""
 "    Returns the snapshot expiration period for a virtual machine \"data\" in "
 "pool \"default\""
 msgstr ""
+"incus storage volume get default data size\n"
+"    Retorna o tamanho do volume personalizado \"data\" na pool \"default\"\n"
+"\n"
+"incus storage volume get default virtual-machine/data snapshots.expiry\n"
+"    Retorna o período de validade de instantâneo para uma máquina virtual "
+"\"data\" na pool \"default\""
 
 #: cmd/incus/storage_volume.go:3394
 msgid ""
@@ -11131,6 +11567,12 @@ msgid ""
 "    Create a new custom volume storing some-installer.iso for use as a CD-"
 "ROM image"
 msgstr ""
+"incus storage volume import default backup0.tar.gz\n"
+"    Cria um novo volume personalizado usando backup0.tar.gz como fonte\n"
+"\n"
+"incus storage volume import default some-installer.iso installer --type=iso\n"
+"    Cria um novo volume personalizado armazenando some-installer.iso para "
+"usar como imagem de CD-ROM"
 
 #: cmd/incus/storage_volume.go:1358
 msgid ""
@@ -11141,6 +11583,13 @@ msgid ""
 "incus storage volume info default virtual-machine/v1\n"
 "    Returns state information for virtual machine \"v1\" in pool \"default\""
 msgstr ""
+"incus storage volume info default foo\n"
+"    Retorna informação de estado para um volume personalizado \"foo\" na "
+"pool \"default\"\n"
+"\n"
+"incus storage volume info default virtual-machine/v1\n"
+"    Retorna informação de estado para máquina virtual \"v1\" na pool "
+"\"default\""
 
 #: cmd/incus/storage_volume.go:2041
 msgid ""
@@ -11151,6 +11600,13 @@ msgid ""
 "    Sets the snapshot expiration period for a virtual machine \"data\" in "
 "pool \"default\" to seven days"
 msgstr ""
+"incus storage volume set default data size=1GiB\n"
+"    Define o tamanho do volume personalizado \"data\" na pool \"default\" "
+"para 1 GiB\n"
+"\n"
+"incus storage volume set default virtual-machine/data snapshots.expiry=7d\n"
+"    Define o período de validade de instantâneo para a máquina virtual "
+"\"data\" na pool \"default\" para sete dias"
 
 #: cmd/incus/storage_volume.go:2203
 msgid ""
@@ -11165,6 +11621,17 @@ msgid ""
 "    Will show the properties of the container volume \"c1\" in pool "
 "\"default\""
 msgstr ""
+"incus storage volume show default foo\n"
+"    Irá mostrar as propriedades do volume personalizado \"foo\" na pool "
+"\"default\"\n"
+"\n"
+"incus storage volume show default virtual-machine/v1\n"
+"    Irá mostrar as propriedades do volume de máquina-virtual \"v1\" na pool "
+"\"default\"\n"
+"\n"
+"incus storage volume show default container/c1\n"
+"    Irá mostrar as propriedades do volume de contentor \"c1\" na pool "
+"\"default\""
 
 #: cmd/incus/storage_volume.go:2548
 msgid ""
@@ -11175,6 +11642,12 @@ msgid ""
 "    Create a snapshot of \"foo\" in pool \"default\" called \"snap0\" with "
 "the configuration from \"config.yaml\""
 msgstr ""
+"incus storage volume snapshot create default foo snap0\n"
+"    Cria um instantâneo de \"foo\" na pool \"default\" chamado \"snap0\"\n"
+"\n"
+"incus storage volume snapshot create default vol1 snap0 < config.yaml\n"
+"    Cria um instantâneo de \"foo\" na pool \"default\" chamado \"snap0\" com "
+"a configuração de \"config.yaml\""
 
 #: cmd/incus/storage_volume.go:2308
 msgid ""
@@ -11185,6 +11658,13 @@ msgid ""
 "    Removes the snapshot expiration period of virtual machine volume \"v1\" "
 "in pool \"default\""
 msgstr ""
+"incus storage volume unset default foo size\n"
+"    Remove o tamanho/cota do volume personalizado \"foo\" na pool \"default\""
+"\n"
+"\n"
+"incus storage volume unset default virtual-machine/v1 snapshots.expiry\n"
+"    Remove o período de validade de instantâneo do volume de máquina virtual "
+"\"v1\" na pool \"default\""
 
 #: cmd/incus/storage.go:568
 msgid "info"
