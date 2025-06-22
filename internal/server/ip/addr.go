@@ -2,6 +2,7 @@ package ip
 
 import (
 	"fmt"
+	"net"
 
 	"github.com/vishvananda/netlink"
 )
@@ -9,18 +10,13 @@ import (
 // Addr represents arguments for address protocol manipulation.
 type Addr struct {
 	DevName string
-	Address string
+	Address *net.IPNet
 	Scope   string
 	Family  Family
 }
 
 // Add adds new protocol address.
 func (a *Addr) Add() error {
-	addr, err := netlink.ParseIPNet(a.Address)
-	if err != nil {
-		return err
-	}
-
 	scope, err := a.scopeNum()
 	if err != nil {
 		return err
@@ -31,11 +27,11 @@ func (a *Addr) Add() error {
 			Name: a.DevName,
 		},
 	}, &netlink.Addr{
-		IPNet: addr,
+		IPNet: a.Address,
 		Scope: scope,
 	})
 	if err != nil {
-		return fmt.Errorf("Failed to add address %v: %w", addr, err)
+		return fmt.Errorf("Failed to add address %q: %w", a.Address.String(), err)
 	}
 
 	return nil

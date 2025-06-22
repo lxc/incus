@@ -21,9 +21,9 @@ import (
 	"github.com/lxc/incus/v6/shared/validate"
 )
 
-var nicRoutedIPGateway = map[string]string{
-	"ipv4": "169.254.0.1",
-	"ipv6": "fe80::1",
+var nicRoutedIPGateway = map[string]net.IP{
+	"ipv4": net.IPv4(169, 254, 0, 1),                                  // 169.254.0.1
+	"ipv6": {0xfe, 0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x01}, // fe80::1
 }
 
 type nicRouted struct {
@@ -589,8 +589,11 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 			// halt whilst ARP/NDP is re-detected (which is what happens with just neighbour proxies).
 			addr := &ip.Addr{
 				DevName: saveData["host_name"],
-				Address: fmt.Sprintf("%s/%d", d.ipHostAddress(keyPrefix), subnetSize),
-				Family:  ipFamilyArg,
+				Address: &net.IPNet{
+					IP:   d.ipHostAddress(keyPrefix),
+					Mask: net.CIDRMask(subnetSize, subnetSize),
+				},
+				Family: ipFamilyArg,
 			}
 
 			err = addr.Add()
@@ -632,14 +635,22 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 		for _, addrStr := range addresses {
 			// Apply host-side static routes to main routing table or VRF.
 
+			address := net.ParseIP(addrStr)
+			if address == nil {
+				return nil, fmt.Errorf("Invalid address %q", addrStr)
+			}
+
 			// If a VRF is set we still add a route into the VRF's own table (empty Table value).
 			if d.config["vrf"] != "" {
 				r := ip.Route{
 					DevName: saveData["host_name"],
-					Route:   fmt.Sprintf("%s/%d", addrStr, subnetSize),
-					Table:   "",
-					Family:  ipFamilyArg,
-					VRF:     d.config["vrf"],
+					Route: &net.IPNet{
+						IP:   address,
+						Mask: net.CIDRMask(subnetSize, subnetSize),
+					},
+					Table:  "",
+					Family: ipFamilyArg,
+					VRF:    d.config["vrf"],
 				}
 
 				err = r.Add()
@@ -652,9 +663,12 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 			for _, tbl := range tables {
 				r := ip.Route{
 					DevName: saveData["host_name"],
-					Route:   fmt.Sprintf("%s/%d", addrStr, subnetSize),
-					Table:   tbl,
-					Family:  ipFamilyArg,
+					Route: &net.IPNet{
+						IP:   address,
+						Mask: net.CIDRMask(subnetSize, subnetSize),
+					},
+					Table:  tbl,
+					Family: ipFamilyArg,
 				}
 
 				err = r.Add()
@@ -686,16 +700,25 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 				return nil, fmt.Errorf("%s.routes requires %s.address to be set", keyPrefix, keyPrefix)
 			}
 
+			viaAddress := net.ParseIP(addresses[0])
+			if viaAddress == nil {
+				return nil, fmt.Errorf("Invalid address %q", addresses[0])
+			}
+
 			// Add routes
 			for _, routeStr := range routes {
+				route, err := ip.ParseIPNet(routeStr)
+				if err != nil {
+					return nil, fmt.Errorf("Invalid route %q: %w", routeStr, err)
+				}
 				// If a VRF is set we still add a route into the VRF's own table (empty Table value).
 				if d.config["vrf"] != "" {
 					r := ip.Route{
 						DevName: saveData["host_name"],
-						Route:   routeStr,
+						Route:   route,
 						Table:   "",
 						Family:  ipFamilyArg,
-						Via:     addresses[0],
+						Via:     viaAddress,
 						VRF:     d.config["vrf"],
 					}
 
@@ -709,10 +732,10 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 				for _, tbl := range tables {
 					r := ip.Route{
 						DevName: saveData["host_name"],
-						Route:   routeStr,
+						Route:   route,
 						Table:   tbl,
 						Family:  ipFamilyArg,
-						Via:     addresses[0],
+						Via:     viaAddress,
 					}
 
 					err = r.Add()
@@ -750,7 +773,7 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 			// Use a fixed address as the auto next-hop default gateway if using this IP family.
 			if len(ipAddresses) > 0 && nicHasAutoGateway(d.config[fmt.Sprintf("%s.gateway", keyPrefix)]) {
 				runConf.NetworkInterface = append(runConf.NetworkInterface,
-					deviceConfig.RunConfigItem{Key: fmt.Sprintf("%s.gateway", keyPrefix), Value: d.ipHostAddress(keyPrefix)},
+					deviceConfig.RunConfigItem{Key: fmt.Sprintf("%s.gateway", keyPrefix), Value: d.ipHostAddress(keyPrefix).String()},
 				)
 			}
 
@@ -918,10 +941,10 @@ func (d *nicRouted) postStop() error {
 	return nil
 }
 
-func (d *nicRouted) ipHostAddress(ipFamily string) string {
+func (d *nicRouted) ipHostAddress(ipFamily string) net.IP {
 	key := fmt.Sprintf("%s.host_address", ipFamily)
 	if d.config[key] != "" {
-		return d.config[key]
+		return net.ParseIP(d.config[key])
 	}
 
 	return nicRoutedIPGateway[ipFamily]

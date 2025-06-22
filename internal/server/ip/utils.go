@@ -2,6 +2,7 @@ package ip
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 
@@ -54,4 +55,10 @@ func parseHandle(id string) (uint32, error) {
 	}
 
 	return netlink.MakeHandle(uint16(major), uint16(minor)), nil
+}
+
+// ParseIPNet parses a CIDR string and returns a *net.IPNet containing both the full address and the netmask,
+// Unlike net.ParseCIDR which zeroes out the host part in the returned *net.IPNet and returns the full address separately.
+func ParseIPNet(addr string) (*net.IPNet, error) {
+	return netlink.ParseIPNet(addr)
 }

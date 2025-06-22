@@ -12,9 +12,9 @@ type Vxlan struct {
 	Link
 	VxlanID int
 	DevName string
-	Local   string
-	Remote  string
-	Group   string
+	Local   net.IP
+	Remote  net.IP
+	Group   net.IP
 	DstPort int
 	TTL     int
 }
@@ -36,47 +36,32 @@ func (vxlan *Vxlan) Add() error {
 		devIndex = dev.Attrs().Index
 	}
 
-	// TODO: all of these these can be passed net.IP
 	var group net.IP
-	if vxlan.Group != "" {
-		group = net.ParseIP(vxlan.Group)
-		if group == nil {
-			return fmt.Errorf("Invalid group address %q", vxlan.Group)
-		}
-
-		if !group.IsMulticast() {
+	if vxlan.Group != nil {
+		if !vxlan.Group.IsMulticast() {
 			return fmt.Errorf("Group address must be multicast, got %q", vxlan.Group)
 		}
+
+		group = vxlan.Group
 	}
 
-	if vxlan.Remote != "" {
+	if vxlan.Remote != nil {
 		if group != nil {
 			return fmt.Errorf("Group and remote can not be specified together")
 		}
 
-		group = net.ParseIP(vxlan.Remote)
-		if group == nil {
-			return fmt.Errorf("Invalid remote address %q", vxlan.Remote)
-		}
-
-		if group.IsMulticast() {
+		if vxlan.Remote.IsMulticast() {
 			return fmt.Errorf("Remote address must not be multicast, got %q", vxlan.Remote)
 		}
-	}
 
-	var local net.IP
-	if vxlan.Local != "" {
-		local = net.ParseIP(vxlan.Local)
-		if local == nil {
-			return fmt.Errorf("Invalid local address %q", vxlan.Local)
-		}
+		group = vxlan.Remote
 	}
 
 	return netlink.LinkAdd(&netlink.Vxlan{
 		LinkAttrs:    attrs,
 		VxlanId:      vxlan.VxlanID,
 		VtepDevIndex: devIndex,
-		SrcAddr:      local,
+		SrcAddr:      vxlan.Local,
 		Group:        group,
 		TTL:          vxlan.TTL,
 		Port:         vxlan.DstPort,

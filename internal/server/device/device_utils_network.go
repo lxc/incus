@@ -413,20 +413,20 @@ func networkNICRouteAdd(routeDev string, routes ...string) error {
 
 	for _, r := range routes {
 		route := r // Local var for revert.
-		ipAddress, _, err := net.ParseCIDR(route)
+		ipNet, err := ip.ParseIPNet(route)
 		if err != nil {
 			return fmt.Errorf("Invalid route %q: %w", route, err)
 		}
 
 		ipVersion := ip.FamilyV4
-		if ipAddress.To4() == nil {
+		if ipNet.IP.To4() == nil {
 			ipVersion = ip.FamilyV6
 		}
 
 		// Add IP route (using boot proto to avoid conflicts with network defined static routes).
 		r := &ip.Route{
 			DevName: routeDev,
-			Route:   route,
+			Route:   ipNet,
 			Proto:   "boot",
 			Family:  ipVersion,
 		}
@@ -439,7 +439,7 @@ func networkNICRouteAdd(routeDev string, routes ...string) error {
 		reverter.Add(func() {
 			r := &ip.Route{
 				DevName: routeDev,
-				Route:   route,
+				Route:   ipNet,
 				Proto:   "boot",
 				Family:  ipVersion,
 			}
@@ -467,21 +467,21 @@ func networkNICRouteDelete(routeDev string, routes ...string) {
 
 	for _, r := range routes {
 		route := r // Local var for revert.
-		ipAddress, _, err := net.ParseCIDR(route)
+		ipNet, err := ip.ParseIPNet(route)
 		if err != nil {
 			logger.Errorf("Failed to remove static route %q to %q: %v", route, routeDev, err)
 			continue
 		}
 
 		ipVersion := ip.FamilyV4
-		if ipAddress.To4() == nil {
+		if ipNet.IP.To4() == nil {
 			ipVersion = ip.FamilyV6
 		}
 
 		// Add IP route (using boot proto to avoid conflicts with network defined static routes).
 		r := &ip.Route{
 			DevName: routeDev,
-			Route:   route,
+			Route:   ipNet,
 			Proto:   "boot",
 			Family:  ipVersion,
 		}

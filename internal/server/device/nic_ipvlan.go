@@ -393,7 +393,7 @@ func (d *nicIPVLAN) Start() (*deviceConfig.RunConfig, error) {
 				// Apply host-side static routes to main routing table to allow neighbour proxy.
 				r := ip.Route{
 					DevName: "lo",
-					Route:   addr.String(),
+					Route:   addr,
 					Table:   "main",
 					Family:  ipFamily,
 				}
@@ -410,7 +410,7 @@ func (d *nicIPVLAN) Start() (*deviceConfig.RunConfig, error) {
 				if d.config[hostTableKey] != "" {
 					r := &ip.Route{
 						DevName: "lo",
-						Route:   addr.String(),
+						Route:   addr,
 						Table:   d.config[hostTableKey],
 						Family:  ipFamily,
 					}
@@ -563,7 +563,7 @@ func (d *nicIPVLAN) postStop() error {
 			if mode == ipvlanModeL3S {
 				r := ip.Route{
 					DevName: "lo",
-					Route:   addr.String(),
+					Route:   addr,
 					Table:   "main",
 					Family:  ipFamily,
 				}
@@ -588,7 +588,7 @@ func (d *nicIPVLAN) postStop() error {
 				if d.config[hostTableKey] != "" {
 					r := &ip.Route{
 						DevName: "lo",
-						Route:   addr.String(),
+						Route:   addr,
 						Table:   d.config[hostTableKey],
 						Family:  ipFamily,
 					}
