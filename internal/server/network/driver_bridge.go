@@ -1416,8 +1416,11 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		// Add the address.
 		addr := &ip.Addr{
 			DevName: n.name,
-			Address: n.config["ipv4.address"],
-			Family:  ip.FamilyV4,
+			Address: &net.IPNet{
+				IP:   ipAddress,
+				Mask: subnet.Mask,
+			},
+			Family: ip.FamilyV4,
 		}
 
 		err = addr.Add()
@@ -1446,7 +1449,11 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		// Add additional routes.
 		if n.config["ipv4.routes"] != "" {
 			for _, route := range strings.Split(n.config["ipv4.routes"], ",") {
-				route = strings.TrimSpace(route)
+				route, err := ip.ParseIPNet(strings.TrimSpace(route))
+				if err != nil {
+					return err
+				}
+
 				r := &ip.Route{
 					DevName: n.name,
 					Route:   route,
@@ -1613,8 +1620,11 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		// Add the address.
 		addr := &ip.Addr{
 			DevName: n.name,
-			Address: n.config["ipv6.address"],
-			Family:  ip.FamilyV6,
+			Address: &net.IPNet{
+				IP:   ipAddress,
+				Mask: subnet.Mask,
+			},
+			Family: ip.FamilyV6,
 		}
 
 		err = addr.Add()
@@ -1643,7 +1653,11 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		// Add additional routes.
 		if n.config["ipv6.routes"] != "" {
 			for _, route := range strings.Split(n.config["ipv6.routes"], ",") {
-				route = strings.TrimSpace(route)
+				route, err := ip.ParseIPNet(route)
+				if err != nil {
+					return err
+				}
+
 				r := &ip.Route{
 					DevName: n.name,
 					Route:   route,
@@ -1670,14 +1684,14 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 
 		tunProtocol := getConfig("protocol")
-		tunLocal := getConfig("local")
-		tunRemote := getConfig("remote")
+		tunLocal := net.ParseIP(getConfig("local"))
+		tunRemote := net.ParseIP(getConfig("remote"))
 		tunName := fmt.Sprintf("%s-%s", n.name, tunnel)
 
 		// Configure the tunnel.
 		if tunProtocol == "gre" {
 			// Skip partial configs.
-			if tunLocal == "" || tunRemote == "" {
+			if tunLocal == nil || tunRemote == nil {
 				continue
 			}
 
@@ -1692,7 +1706,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 				return err
 			}
 		} else if tunProtocol == "vxlan" {
-			tunGroup := getConfig("group")
+			tunGroup := net.ParseIP(getConfig("group"))
 			tunInterface := getConfig("interface")
 
 			vxlan := &ip.Vxlan{
@@ -1700,16 +1714,16 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 				Local: tunLocal,
 			}
 
-			if tunRemote != "" {
+			if tunRemote != nil {
 				// Skip partial configs.
-				if tunLocal == "" {
+				if tunLocal == nil {
 					continue
 				}
 
 				vxlan.Remote = tunRemote
 			} else {
-				if tunGroup == "" {
-					tunGroup = "239.0.0.1"
+				if tunGroup == nil {
+					tunGroup = net.IPv4(239, 0, 0, 1) // 239.0.0.1
 				}
 
 				devName := tunInterface

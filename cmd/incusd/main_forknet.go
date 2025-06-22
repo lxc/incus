@@ -413,12 +413,13 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 	}
 
 	// Network configuration.
-	netMask, _ := lease.Offer.SubnetMask().Size()
-
 	addr := &ip.Addr{
 		DevName: iface,
-		Address: fmt.Sprintf("%s/%d", lease.Offer.YourIPAddr, netMask),
-		Family:  ip.FamilyV4,
+		Address: &net.IPNet{
+			IP:   lease.Offer.YourIPAddr,
+			Mask: lease.Offer.SubnetMask(),
+		},
+		Family: ip.FamilyV4,
 	}
 
 	err = addr.Add()
@@ -432,12 +433,12 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 		for _, staticRoute := range lease.Offer.ClasslessStaticRoute() {
 			route := &ip.Route{
 				DevName: iface,
-				Route:   staticRoute.Dest.String(),
+				Route:   staticRoute.Dest,
 				Family:  ip.FamilyV4,
 			}
 
 			if !staticRoute.Router.IsUnspecified() {
-				route.Via = staticRoute.Router.String()
+				route.Via = staticRoute.Router
 			}
 
 			err = route.Add()
@@ -450,8 +451,8 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 	} else {
 		route := &ip.Route{
 			DevName: iface,
-			Route:   "default",
-			Via:     lease.Offer.Router()[0].String(),
+			Route:   nil,
+			Via:     lease.Offer.Router()[0],
 			Family:  ip.FamilyV4,
 		}
 
@@ -575,8 +576,11 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 	for _, iaaddr := range ia.Options.Addresses() {
 		addr := &ip.Addr{
 			DevName: iface,
-			Address: fmt.Sprintf("%s/64", iaaddr.IPv6Addr),
-			Family:  ip.FamilyV6,
+			Address: &net.IPNet{
+				IP:   iaaddr.IPv6Addr,
+				Mask: net.CIDRMask(64, 128),
+			},
+			Family: ip.FamilyV6,
 		}
 
 		err = addr.Add()

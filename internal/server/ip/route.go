@@ -12,12 +12,12 @@ import (
 // Route represents arguments for route manipulation.
 type Route struct {
 	DevName string
-	Route   string
+	Route   *net.IPNet
 	Table   string
-	Src     string
+	Src     net.IP
 	Proto   string
 	Family  Family
-	Via     string
+	Via     net.IP
 	VRF     string
 	Scope   string
 }
@@ -31,15 +31,9 @@ func (r *Route) netlinkRoute() (*netlink.Route, error) {
 	route := &netlink.Route{
 		LinkIndex: link.Attrs().Index,
 		Family:    int(r.Family),
-	}
-
-	if r.Route != "" {
-		_, dst, err := net.ParseCIDR(r.Route)
-		if err != nil {
-			return nil, fmt.Errorf("Invalid destination %q: %w", r.Route, err)
-		}
-
-		route.Dst = dst
+		Dst:       r.Route,
+		Src:       r.Src,
+		Gw:        r.Via,
 	}
 
 	if r.Table != "" {
@@ -63,29 +57,13 @@ func (r *Route) netlinkRoute() (*netlink.Route, error) {
 		route.Table = int(vrf.Table)
 	}
 
-	if r.Via != "" {
-		via := net.ParseIP(r.Via)
-		if via == nil {
-			return nil, fmt.Errorf("Invalid via address %q", r.Via)
-		}
-
-		route.Gw = via
-	} else {
-		route.Scope = netlink.SCOPE_LINK
-	}
-
 	route.Scope, err = r.netlinkScope()
 	if err != nil {
 		return nil, err
 	}
 
-	if r.Src != "" {
-		src := net.ParseIP(r.Src)
-		if src == nil {
-			return nil, fmt.Errorf("Invalid src address %q", r.Src)
-		}
-
-		route.Src = src
+	if r.Via == nil {
+		route.Scope = netlink.SCOPE_LINK
 	}
 
 	if r.Proto != "" {
@@ -301,15 +279,7 @@ func (r *Route) List() ([]Route, error) {
 	routes := make([]Route, 0, len(netlinkRoutes))
 
 	for _, netlinkRoute := range netlinkRoutes {
-		var src, gw, table string
-
-		if len(netlinkRoute.Src) > 0 {
-			src = netlinkRoute.Src.String()
-		}
-
-		if len(netlinkRoute.Gw) > 0 {
-			gw = netlinkRoute.Gw.String()
-		}
+		var table string
 
 		switch netlinkRoute.Table {
 		case unix.RT_TABLE_MAIN:
@@ -324,9 +294,9 @@ func (r *Route) List() ([]Route, error) {
 
 		routes = append(routes, Route{
 			DevName: r.DevName, // routes are always filtered by device so we can use the device name that was passed in
-			Route:   netlinkRoute.Dst.String(),
-			Src:     src,
-			Via:     gw,
+			Route:   netlinkRoute.Dst,
+			Src:     netlinkRoute.Src,
+			Via:     netlinkRoute.Gw,
 			Scope:   netlinkRoute.Scope.String(),
 			Table:   table,
 			VRF:     "", // adding a route to a VRF just adds it to the table associated with the VRF, so when retrieving routes that information is not available anymore and we just set the table
