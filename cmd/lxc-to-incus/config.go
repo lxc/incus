@@ -16,6 +16,7 @@ var checkedKeys = []string{
 	"lxc.aa_allow_incomplete",
 	"lxc.aa_profile",
 	"lxc.apparmor.allow_incomplete",
+	"lxc.apparmor.allow_nesting",
 	"lxc.apparmor.profile",
 	"lxc.arch",
 	"lxc.autodev",

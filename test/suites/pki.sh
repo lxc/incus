@@ -24,8 +24,8 @@ test_pki() {
         ./easyrsa init-pki
         echo "incus" | ./easyrsa build-ca nopass
         ./easyrsa gen-crl
-        ./easyrsa build-client-full incus-client nopass
-        ./easyrsa build-client-full incus-client-revoked nopass
+        echo "yes" | ./easyrsa build-client-full incus-client nopass
+        echo "yes" | ./easyrsa build-client-full incus-client-revoked nopass
         mkdir keys
         cp pki/private/* keys/
         cp pki/issued/* keys/

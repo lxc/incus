@@ -70,12 +70,12 @@ container_devices_proxy_tcp() {
   incus launch testimage proxyTester
 
   # Initial test
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp4-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   incus config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:$HOST_TCP_PORT" connect=tcp:127.0.0.1:4321 bind=host
   sleep 0.5
 
-  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp:127.0.0.1:"${HOST_TCP_PORT}")
+  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
   kill "${NSENTER_PID}" 2>/dev/null || true
   wait "${NSENTER_PID}" 2>/dev/null || true
 
@@ -87,11 +87,11 @@ container_devices_proxy_tcp() {
 
   # Restart the container
   incus restart -f proxyTester
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp4-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   sleep 1
 
-  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp:127.0.0.1:"${HOST_TCP_PORT}")
+  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
   kill "${NSENTER_PID}" 2>/dev/null || true
   wait "${NSENTER_PID}" 2>/dev/null || true
 
@@ -102,12 +102,12 @@ container_devices_proxy_tcp() {
   fi
 
   # Change the port
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp-listen:1337 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp4-listen:1337 exec:/bin/cat &
   NSENTER_PID=$!
   incus config device set proxyTester proxyDev connect tcp:127.0.0.1:1337
   sleep 0.5
 
-  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp:127.0.0.1:"${HOST_TCP_PORT}")
+  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
   kill "${NSENTER_PID}" 2>/dev/null || true
   wait "${NSENTER_PID}" 2>/dev/null || true
 
@@ -120,17 +120,17 @@ container_devices_proxy_tcp() {
   # Initial test
   incus config device remove proxyTester proxyDev
   HOST_TCP_PORT2=$(local_tcp_port)
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp4-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp-listen:4322 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp4-listen:4322 exec:/bin/cat &
   NSENTER_PID1=$!
   incus config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:$HOST_TCP_PORT,$HOST_TCP_PORT2" connect=tcp:127.0.0.1:4321-4322 bind=host
   sleep 0.5
 
-  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp:127.0.0.1:"${HOST_TCP_PORT}")
+  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
   kill "${NSENTER_PID}" 2>/dev/null || true
   wait "${NSENTER_PID}" 2>/dev/null || true
-  ECHO1=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp:127.0.0.1:"${HOST_TCP_PORT2}")
+  ECHO1=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT2}")
   kill "${NSENTER_PID1}" 2>/dev/null || true
   wait "${NSENTER_PID1}" 2>/dev/null || true
 
@@ -414,7 +414,7 @@ container_devices_proxy_tcp_unix() {
   incus config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:${HOST_TCP_PORT}" connect=unix:/tmp/"incustest-$(basename "${INCUS_DIR}").sock" bind=host
   sleep 0.5
 
-  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp:127.0.0.1:"${HOST_TCP_PORT}")
+  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
   kill "${NSENTER_PID}" 2>/dev/null || true
   wait "${NSENTER_PID}" 2>/dev/null || true
 
@@ -435,7 +435,7 @@ container_devices_proxy_tcp_unix() {
   NSENTER_PID=$!
   sleep 1
 
-  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp:127.0.0.1:"${HOST_TCP_PORT}")
+  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
   kill "${NSENTER_PID}" 2>/dev/null || true
   wait "${NSENTER_PID}" 2>/dev/null || true
 
@@ -457,7 +457,7 @@ container_devices_proxy_tcp_unix() {
   incus config device set proxyTester proxyDev connect unix:/tmp/"incustest-$(basename "${INCUS_DIR}")-2.sock"
   sleep 0.5
 
-  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp:127.0.0.1:"${HOST_TCP_PORT}")
+  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
   kill "${NSENTER_PID}" 2>/dev/null || true
   wait "${NSENTER_PID}" 2>/dev/null || true
 
@@ -469,7 +469,7 @@ container_devices_proxy_tcp_unix() {
 
   # Switch to bind=container.
   HOST_TCP_PORT2=$(local_tcp_port)
-  socat tcp-listen:"${HOST_TCP_PORT2}" exec:/bin/cat &
+  socat tcp4-listen:"${HOST_TCP_PORT2}" exec:/bin/cat &
   SOCAT_PID=$!
 
   # We need to swap connect= and listen= so it's simpler to just remove the
@@ -515,7 +515,7 @@ container_devices_proxy_unix_tcp() {
   incus launch testimage proxyTester
 
   # Initial test
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp4-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   incus config device add proxyTester proxyDev proxy "listen=unix:${HOST_SOCK}" connect=tcp:127.0.0.1:4321 bind=host
   sleep 0.5
@@ -534,7 +534,7 @@ container_devices_proxy_unix_tcp() {
 
   # Restart the container
   incus restart -f proxyTester
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp4-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   sleep 1
 
@@ -551,7 +551,7 @@ container_devices_proxy_unix_tcp() {
   rm -f "${HOST_SOCK}"
 
   # Change the port
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp-listen:1337 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp4-listen:1337 exec:/bin/cat &
   NSENTER_PID=$!
   incus config device set proxyTester proxyDev connect tcp:127.0.0.1:1337
   sleep 0.5
@@ -584,7 +584,7 @@ container_devices_proxy_unix_tcp() {
   sleep 0.5
 
   PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
-  ECHO="$( ( echo "${MESSAGE}"; sleep 0.5 ) | nsenter -n -U -t "${PID}" -- socat - tcp:127.0.0.1:4321)"
+  ECHO="$( ( echo "${MESSAGE}"; sleep 0.5 ) | nsenter -n -U -t "${PID}" -- socat - tcp4:127.0.0.1:4321)"
   kill "${SOCAT_PID}" 2>/dev/null || true
   wait "${SOCAT_PID}" 2>/dev/null || true
 
@@ -611,12 +611,12 @@ container_devices_proxy_udp() {
   incus launch testimage proxyTester
 
   # Initial test
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   incus config device add proxyTester proxyDev proxy "listen=udp:127.0.0.1:$HOST_UDP_PORT" connect=udp:127.0.0.1:4321 bind=host
   sleep 0.5
 
-  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - udp:127.0.0.1:"${HOST_UDP_PORT}")
+  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - udp4:127.0.0.1:"${HOST_UDP_PORT}")
   kill "${NSENTER_PID}" 2>/dev/null || true
   wait "${NSENTER_PID}" 2>/dev/null || true
 
@@ -628,11 +628,11 @@ container_devices_proxy_udp() {
 
   # Restart the container
   incus restart -f proxyTester
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   sleep 1
 
-  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - udp:127.0.0.1:"${HOST_UDP_PORT}")
+  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - udp4:127.0.0.1:"${HOST_UDP_PORT}")
   kill "${NSENTER_PID}" 2>/dev/null || true
   wait "${NSENTER_PID}" 2>/dev/null || true
 
@@ -643,12 +643,12 @@ container_devices_proxy_udp() {
   fi
 
   # Change the port
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:1337 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:1337 exec:/bin/cat &
   NSENTER_PID=$!
   incus config device set proxyTester proxyDev connect udp:127.0.0.1:1337
   sleep 0.5
 
-  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - udp:127.0.0.1:"${HOST_UDP_PORT}")
+  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - udp4:127.0.0.1:"${HOST_UDP_PORT}")
   kill "${NSENTER_PID}" 2>/dev/null || true
   wait "${NSENTER_PID}" 2>/dev/null || true
 
@@ -660,7 +660,7 @@ container_devices_proxy_udp() {
 
   # Switch to bind=container.
   HOST_UDP_PORT2=$(local_tcp_port)
-  socat udp-listen:"${HOST_UDP_PORT2}" exec:/bin/cat &
+  socat udp4-listen:"${HOST_UDP_PORT2}" exec:/bin/cat &
   SOCAT_PID=$!
 
   # We need to swap connect= and listen= so it's simpler to just remove the
@@ -672,7 +672,7 @@ container_devices_proxy_udp() {
   sleep 0.5
 
   PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
-  ECHO="$( ( echo "${MESSAGE}"; sleep 0.5 ) | nsenter -n -U -t "${PID}" -- socat - udp:127.0.0.1:4321)"
+  ECHO="$( ( echo "${MESSAGE}"; sleep 0.5 ) | nsenter -n -U -t "${PID}" -- socat - udp4:127.0.0.1:4321)"
   kill "${SOCAT_PID}" 2>/dev/null || true
   wait "${SOCAT_PID}" 2>/dev/null || true
 
@@ -697,7 +697,7 @@ container_devices_proxy_unix_udp() {
   incus launch testimage proxyTester
 
   # Initial test
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   incus config device add proxyTester proxyDev proxy "listen=unix:${HOST_SOCK}" connect=udp:127.0.0.1:4321 bind=host
   sleep 0.5
@@ -716,7 +716,7 @@ container_devices_proxy_unix_udp() {
 
   # Restart the container
   incus restart -f proxyTester
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   sleep 1
 
@@ -733,7 +733,7 @@ container_devices_proxy_unix_udp() {
   rm -f "${HOST_SOCK}"
 
   # Change the port
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:1337 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:1337 exec:/bin/cat &
   NSENTER_PID=$!
   incus config device set proxyTester proxyDev connect udp:127.0.0.1:1337
   sleep 0.5
@@ -753,7 +753,7 @@ container_devices_proxy_unix_udp() {
   # Switch to bind=container (we use connect=udp for the host because
   # listen=udp doesn't work with non-udp connect= proxies).
   HOST_UDP_PORT=$(local_tcp_port)
-  socat udp-listen:"${HOST_UDP_PORT}" exec:/bin/cat &
+  socat udp4-listen:"${HOST_UDP_PORT}" exec:/bin/cat &
   SOCAT_PID=$!
 
   # We need to swap connect= and listen= so it's simpler to just remove the
@@ -799,12 +799,12 @@ container_devices_proxy_tcp_udp() {
   incus launch testimage proxyTester
 
   # Initial test
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   incus config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:$HOST_TCP_PORT" connect=udp:127.0.0.1:4321 bind=host
   sleep 0.5
 
-  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp:127.0.0.1:"${HOST_TCP_PORT}")
+  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
   kill "${NSENTER_PID}" 2>/dev/null || true
   wait "${NSENTER_PID}" 2>/dev/null || true
 
@@ -816,11 +816,11 @@ container_devices_proxy_tcp_udp() {
 
   # Restart the container
   incus restart -f proxyTester
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   sleep 1
 
-  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp:127.0.0.1:"${HOST_TCP_PORT}")
+  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
   kill "${NSENTER_PID}" 2>/dev/null || true
   wait "${NSENTER_PID}" 2>/dev/null || true
 
@@ -831,12 +831,12 @@ container_devices_proxy_tcp_udp() {
   fi
 
   # Change the port
-  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:1337 exec:/bin/cat &
+  nsenter -n -U -t "$(incus query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp4-listen:1337 exec:/bin/cat &
   NSENTER_PID=$!
   incus config device set proxyTester proxyDev connect udp:127.0.0.1:1337
   sleep 0.5
 
-  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp:127.0.0.1:"${HOST_TCP_PORT}")
+  ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp4:127.0.0.1:"${HOST_TCP_PORT}")
   kill "${NSENTER_PID}" 2>/dev/null || true
   wait "${NSENTER_PID}" 2>/dev/null || true
 
@@ -849,7 +849,7 @@ container_devices_proxy_tcp_udp() {
   # Switch to bind=container (we use connect=udp for the host because
   # listen=udp doesn't work with non-udp connect= proxies).
   HOST_UDP_PORT=$(local_tcp_port)
-  socat udp-listen:"${HOST_UDP_PORT}" exec:/bin/cat &
+  socat udp4-listen:"${HOST_UDP_PORT}" exec:/bin/cat &
   SOCAT_PID=$!
 
   # We need to swap connect= and listen= so it's simpler to just remove the
@@ -861,7 +861,7 @@ container_devices_proxy_tcp_udp() {
   sleep 0.5
 
   PID="$(incus query /1.0/instances/proxyTester/state | jq .pid)"
-  ECHO="$( ( echo "${MESSAGE}"; sleep 0.5 ) | nsenter -n -U -t "${PID}" -- socat - tcp:127.0.0.1:4321)"
+  ECHO="$( ( echo "${MESSAGE}"; sleep 0.5 ) | nsenter -n -U -t "${PID}" -- socat - tcp4:127.0.0.1:4321)"
   kill "${SOCAT_PID}" 2>/dev/null || true
   wait "${SOCAT_PID}" 2>/dev/null || true
 

@@ -143,49 +143,49 @@ jobs:
           - linstor
           - random
         os:
-          - ubuntu-22.04
+          - ubuntu-24.04
         include:
           - go: oldstable
             suite: cluster
             backend: dir
-            os: ubuntu-22.04
+            os: ubuntu-24.04
           - go: oldstable
             suite: standalone
             backend: dir
-            os: ubuntu-22.04
+            os: ubuntu-24.04
           - go: tip
             suite: cluster
             backend: dir
-            os: ubuntu-22.04
+            os: ubuntu-24.04
           - go: tip
             suite: standalone
             backend: dir
-            os: ubuntu-22.04
+            os: ubuntu-24.04
 
           - go: oldstable
             suite: cluster
             backend: dir
-            os: ubuntu-22.04-arm
+            os: ubuntu-24.04-arm
           - go: oldstable
             suite: standalone
             backend: dir
-            os: ubuntu-22.04-arm
+            os: ubuntu-24.04-arm
           - go: stable
             suite: cluster
             backend: dir
-            os: ubuntu-22.04-arm
+            os: ubuntu-24.04-arm
           - go: stable
             suite: standalone
             backend: dir
-            os: ubuntu-22.04-arm
+            os: ubuntu-24.04-arm
           - go: tip
             suite: cluster
             backend: dir
-            os: ubuntu-22.04-arm
+            os: ubuntu-24.04-arm
           - go: tip
             suite: standalone
             backend: dir
-            os: ubuntu-22.04-arm
+            os: ubuntu-24.04-arm
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -429,7 +429,7 @@ jobs:
           ephemeral_disk="$(findmnt --noheadings --output SOURCE --target /mnt | sed 's/[0-9]\+$//')"
           sudo umount /mnt
           sudo wipefs -a "${ephemeral_disk}"
-          sudo linstor physical-storage create-device-pool --storage-pool incus --pool-name linstor-incus lvmthin local "${ephemeral_disk}"
+          sudo linstor physical-storage create-device-pool --storage-pool incus --pool-name linstor-incus zfsthin local "${ephemeral_disk}"
 
           # Update the runner env.
           echo "INCUS_LINSTOR_CLUSTER=${runner_ip}" >> "$GITHUB_ENV"

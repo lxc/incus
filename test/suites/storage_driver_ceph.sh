@@ -54,9 +54,9 @@ test_storage_driver_ceph() {
     incus list -c b c4pool2 | grep "incustest-$(basename "${INCUS_DIR}")-pool2"
 
     incus storage set "incustest-$(basename "${INCUS_DIR}")-pool1" volume.block.filesystem xfs
-    # xfs is unhappy with block devices < 48 MiB. It seems to calculate the
+    # xfs is unhappy with block devices < 300 MiB. It seems to calculate the
     # ag{count,size} parameters wrong and/or sets the data area too big.
-    incus storage set "incustest-$(basename "${INCUS_DIR}")-pool1" volume.size 48MiB
+    incus storage set "incustest-$(basename "${INCUS_DIR}")-pool1" volume.size 300MiB
     incus init testimage c5pool1 -s "incustest-$(basename "${INCUS_DIR}")-pool1"
 
     # Test whether dependency tracking is working correctly. We should be able
