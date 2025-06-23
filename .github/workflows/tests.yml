@@ -429,7 +429,7 @@ jobs:
           ephemeral_disk="$(findmnt --noheadings --output SOURCE --target /mnt | sed 's/[0-9]\+$//')"
           sudo umount /mnt
           sudo wipefs -a "${ephemeral_disk}"
-          sudo linstor physical-storage create-device-pool --storage-pool incus --pool-name linstor-incus lvmthin local "${ephemeral_disk}"
+          sudo linstor physical-storage create-device-pool --storage-pool incus --pool-name linstor-incus zfsthin local "${ephemeral_disk}"
 
           # Update the runner env.
           echo "INCUS_LINSTOR_CLUSTER=${runner_ip}" >> "$GITHUB_ENV"
