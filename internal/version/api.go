@@ -482,6 +482,7 @@ var APIExtensions = []string{
 	"network_physical_gateway_hwaddr",
 	"backup_s3_upload",
 	"snapshot_manual_expiry",
+	"resources_cpu_address_sizes",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
