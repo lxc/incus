@@ -4600,6 +4600,19 @@ definitions:
                 x-go-name: Total
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
+    ResourcesCPUAddressSizes:
+        properties:
+            physical_bits:
+                format: uint64
+                type: integer
+                x-go-name: PhysicalBits
+            virtual_bits:
+                format: uint64
+                type: integer
+                x-go-name: VirtualBits
+        title: ResourcesCPUAddressSizes resprents address size information for a CPU socket.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
     ResourcesCPUCache:
         description: ResourcesCPUCache represents a CPU cache
         properties:
@@ -4661,6 +4674,8 @@ definitions:
     ResourcesCPUSocket:
         description: ResourcesCPUSocket represents a CPU socket on the system
         properties:
+            address_sizes:
+                $ref: '#/definitions/ResourcesCPUAddressSizes'
             cache:
                 description: List of CPU caches
                 items:
