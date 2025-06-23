@@ -431,6 +431,7 @@ test_storage() {
 
       # Test that changing block filesystem works
       incus storage set "incustest-$(basename "${INCUS_DIR}")-pool6" volume.block.filesystem xfs
+      incus storage set "incustest-$(basename "${INCUS_DIR}")-pool6" volume.size 300MiB
       incus init testimage c1pool6 -s "incustest-$(basename "${INCUS_DIR}")-pool6"
       incus storage set "incustest-$(basename "${INCUS_DIR}")-pool6" volume.block.filesystem btrfs
       incus storage set "incustest-$(basename "${INCUS_DIR}")-pool6" volume.size 120MiB
