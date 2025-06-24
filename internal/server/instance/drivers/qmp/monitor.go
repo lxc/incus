@@ -45,7 +45,7 @@ var ExcludedCommands = []string{"ringbuf-read"}
 // Monitor represents a QMP monitor.
 type Monitor struct {
 	path string
-	qmp  *qemuMachineProtocal
+	qmp  *qemuMachineProtocol
 
 	agentStarted      bool
 	agentStartedMu    sync.Mutex
@@ -291,7 +291,7 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 		return nil, err
 	}
 
-	qmpConn := &qemuMachineProtocal{uc: uc}
+	qmpConn := &qemuMachineProtocol{uc: uc}
 	if logFile != "" && util.PathExists(filepath.Dir(logFile)) {
 		qlog, err := newQmpLog(logFile)
 		if err != nil {
