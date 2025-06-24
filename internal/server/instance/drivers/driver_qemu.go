@@ -4197,6 +4197,11 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuType string, cpuInfo *
 		// Calculate the max memory limit.
 		maxMemoryBytes = int64(math.Pow(2, float64(cpuPhysBits)))
 
+		// Cap to 1TB.
+		if maxMemoryBytes > 1024*1024*1024*1024 {
+			maxMemoryBytes = 1024 * 1024 * 1024 * 1024
+		}
+
 		// Allow the user to go past any expected limit.
 		if maxMemoryBytes < memSizeBytes {
 			maxMemoryBytes = memSizeBytes
