@@ -777,17 +777,25 @@ func clusterCopyCustomVolumeInternal(s *state.State, r *http.Request, sourceAddr
 		return response.SmartError(err)
 	}
 
-	client = client.UseProject(req.Source.Project)
+	sourceProject := projectName
+	if req.Source.Project != "" {
+		sourceProject = req.Source.Project
+	}
+
+	client = client.UseProject(sourceProject)
 
 	pullReq := api.StorageVolumePost{
 		Name:       req.Source.Name,
 		Pool:       req.Source.Pool,
 		Migration:  true,
 		VolumeOnly: req.Source.VolumeOnly,
-		Project:    req.Source.Project,
 		Source: api.StorageVolumeSource{
 			Location: req.Source.Location,
 		},
+	}
+
+	if sourceProject != projectName {
+		pullReq.Project = projectName
 	}
 
 	op, err := client.MigrateStoragePoolVolume(req.Source.Pool, pullReq)
