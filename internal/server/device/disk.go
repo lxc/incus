@@ -2521,7 +2521,7 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 				continue
 			}
 
-			if fields[1] != "ONLINE" {
+			if !slices.Contains([]string{"ONLINE", "DEGRADED"}, fields[1]) {
 				continue
 			}
 
