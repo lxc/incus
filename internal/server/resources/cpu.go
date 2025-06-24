@@ -329,7 +329,7 @@ func GetCPU() (*api.ResourcesCPU, error) {
 					}
 
 					// Check if we already have the data and seek to next
-					if resSocket.Vendor != "" && resSocket.Name != "" && len(flagList) > 0 {
+					if resSocket.Vendor != "" && resSocket.Name != "" && len(flagList) > 0 && resSocket.AddressSizes != nil {
 						continue
 					}
 
@@ -355,6 +355,30 @@ func GetCPU() (*api.ResourcesCPU, error) {
 
 					if key == "flags" {
 						flagList = strings.SplitN(value, " ", -1)
+						continue
+					}
+
+					if key == "address sizes" {
+						fields := strings.Split(value, " ")
+						if len(fields) != 6 {
+							continue
+						}
+
+						physicalBits, err := strconv.ParseUint(fields[0], 10, 64)
+						if err != nil {
+							return nil, err
+						}
+
+						virtualBits, err := strconv.ParseUint(fields[3], 10, 64)
+						if err != nil {
+							return nil, err
+						}
+
+						resSocket.AddressSizes = &api.ResourcesCPUAddressSizes{
+							PhysicalBits: physicalBits,
+							VirtualBits:  virtualBits,
+						}
+
 						continue
 					}
 				}

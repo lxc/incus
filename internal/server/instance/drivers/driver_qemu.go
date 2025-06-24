@@ -17,6 +17,7 @@ import (
 	"io"
 	"io/fs"
 	"maps"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -1672,7 +1673,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Generate the QEMU configuration.
-	monHooks, err := d.generateQemuConfig(machineDefinition, cpuInfo, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles)
+	monHooks, err := d.generateQemuConfig(machineDefinition, strings.Split(cpuType, ",")[0], cpuInfo, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles)
 	if err != nil {
 		op.Done(err)
 		return err
@@ -3554,13 +3555,13 @@ func (d *qemu) onRTCChange(change int) error {
 }
 
 // generateQemuConfig generates the QEMU configuration.
-func (d *qemu) generateQemuConfig(machineDefinition string, cpuInfo *cpuTopology, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
+func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuInfo *cpuTopology, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
 	var monHooks []monitorHook
 
 	isWindows := d.isWindows()
 	conf := qemuBase(&qemuBaseOpts{d.Architecture(), util.IsTrue(d.expandedConfig["security.iommu"]), machineDefinition})
 
-	err := d.addCPUMemoryConfig(&conf, cpuInfo)
+	err := d.addCPUMemoryConfig(&conf, cpuType, cpuInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -4142,7 +4143,7 @@ func (d *qemu) getCPUOpts(cpuInfo *cpuTopology, memSizeBytes int64) (*qemuCPUOpt
 
 // addCPUMemoryConfig adds the qemu config required for setting the number of virtualised CPUs and memory.
 // If sb is nil then no config is written.
-func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuInfo *cpuTopology) error {
+func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuType string, cpuInfo *cpuTopology) error {
 	// Configure memory limit.
 	memSize := d.expandedConfig["limits.memory"]
 	if memSize == "" {
@@ -4161,12 +4162,47 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuInfo *cpuTopology) err
 
 	cpuPinning := cpuInfo.vcpus != nil
 
-	maxMemoryBytes, err := linux.DeviceTotalMemory()
-	if err != nil {
-		return err
-	}
+	// Set hotplug limits.
+	// kvm64 has a limit of 39 bits for aarch64 and 40 bits on x86_64, so just limit everyone to 39 bits (512GB).
+	// Other types we don't know so just don't allow hotplug.
 
-	if maxMemoryBytes < memSizeBytes {
+	var maxMemoryBytes int64
+	cpuPhysBits := uint64(39)
+	if cpuType == "host" || cpuType == "kvm64" {
+		// Attempt to get the CPU physical address space limits.
+		cpu, err := resources.GetCPU()
+		if err != nil {
+			return err
+		}
+
+		var lowestPhysBits uint64
+
+		for _, socket := range cpu.Sockets {
+			if socket.AddressSizes != nil && (socket.AddressSizes.PhysicalBits < lowestPhysBits || lowestPhysBits == 0) {
+				lowestPhysBits = socket.AddressSizes.PhysicalBits
+			}
+		}
+
+		if cpuType == "host" && lowestPhysBits > 0 {
+			// Line up cpuPhysBits with the lowest physical CPU value.
+			cpuPhysBits = lowestPhysBits
+		} else if lowestPhysBits < cpuPhysBits {
+			// Reduce curPhysBits below the default of 39 if a physical CPU uses a lower value.
+			cpuPhysBits = lowestPhysBits
+		}
+
+		// Reduce the maximum by one bit to allow QEMU some headroom.
+		cpuPhysBits--
+
+		// Calculate the max memory limit.
+		maxMemoryBytes = int64(math.Pow(2, float64(cpuPhysBits)))
+
+		// Allow the user to go past any expected limit.
+		if maxMemoryBytes < memSizeBytes {
+			maxMemoryBytes = memSizeBytes
+		}
+	} else {
+		// Prevent memory hotplug.
 		maxMemoryBytes = memSizeBytes
 	}
 
