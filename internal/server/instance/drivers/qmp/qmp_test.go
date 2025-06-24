@@ -39,7 +39,7 @@ func (r *testingErrReader) Read(b []byte) (int, error) {
 
 func TestConnectDisconnect(t *testing.T) {
 	eg := &errgroup.Group{}
-	m := &qemuMachineProtocal{}
+	m := &qemuMachineProtocol{}
 	mockMonitorServer(t, eg, m)
 
 	err := m.connect()
@@ -66,7 +66,7 @@ func TestEvents(t *testing.T) {
 		{Event: "RESET"},
 	}
 
-	m := &qemuMachineProtocal{}
+	m := &qemuMachineProtocol{}
 	mockMonitorServer(t, eg, m, func(nc net.Conn) error {
 		enc := json.NewEncoder(nc)
 		for i, e := range es {
@@ -104,7 +104,7 @@ func TestEvents(t *testing.T) {
 }
 
 func TestListenEmptyStream(t *testing.T) {
-	mon := &qemuMachineProtocal{}
+	mon := &qemuMachineProtocol{}
 
 	r := strings.NewReader("")
 
@@ -125,7 +125,7 @@ func TestListenEmptyStream(t *testing.T) {
 }
 
 func TestListenScannerErr(t *testing.T) {
-	mon := &qemuMachineProtocal{}
+	mon := &qemuMachineProtocol{}
 
 	errFoo := errors.New("foo")
 	r := &testingErrReader{err: errFoo}
@@ -152,7 +152,7 @@ func TestListenScannerErr(t *testing.T) {
 }
 
 func TestListenInvalidJson(t *testing.T) {
-	mon := &qemuMachineProtocal{}
+	mon := &qemuMachineProtocol{}
 
 	r := strings.NewReader("<html>")
 
@@ -168,7 +168,7 @@ func TestListenInvalidJson(t *testing.T) {
 }
 
 func TestListenStreamResponse(t *testing.T) {
-	mon := &qemuMachineProtocal{}
+	mon := &qemuMachineProtocol{}
 	id := uint32(1)
 	want := `{"foo": "bar", "id": 1}`
 	r := strings.NewReader(want)
@@ -190,7 +190,7 @@ func TestListenStreamResponse(t *testing.T) {
 }
 
 func TestListenEventNoListeners(t *testing.T) {
-	mon := &qemuMachineProtocal{}
+	mon := &qemuMachineProtocol{}
 
 	r := strings.NewReader(`{"event":"STOP"}`)
 
@@ -206,7 +206,7 @@ func TestListenEventNoListeners(t *testing.T) {
 }
 
 func TestListenEventOneListener(t *testing.T) {
-	mon := &qemuMachineProtocal{}
+	mon := &qemuMachineProtocol{}
 	mon.listeners.Store(1)
 
 	eventStop := "STOP"
@@ -224,7 +224,7 @@ func TestListenEventOneListener(t *testing.T) {
 	}
 }
 
-func mockMonitorServer(t *testing.T, eg *errgroup.Group, qmp *qemuMachineProtocal, hands ...func(net.Conn) error) {
+func mockMonitorServer(t *testing.T, eg *errgroup.Group, qmp *qemuMachineProtocol, hands ...func(net.Conn) error) {
 	t.Helper()
 	unixsock := filepath.Join(t.TempDir(), "mockmonitor.sock")
 	unixaddr, err := net.ResolveUnixAddr("unix", unixsock)

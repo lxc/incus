@@ -19,7 +19,7 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
-type qemuMachineProtocal struct {
+type qemuMachineProtocol struct {
 	oobSupported bool            // Out of band support or not
 	uc           *net.UnixConn   // Underlying unix socket connection
 	mu           sync.Mutex      // Serialize running command
@@ -100,7 +100,7 @@ type rawResponse struct {
 }
 
 // disconnect closes the QEMU monitor socket connection.
-func (qmp *qemuMachineProtocal) disconnect() error {
+func (qmp *qemuMachineProtocol) disconnect() error {
 	qmp.listeners.Store(0)
 	if qmp.log != nil {
 		err := qmp.log.Close()
@@ -115,7 +115,7 @@ func (qmp *qemuMachineProtocal) disconnect() error {
 }
 
 // qmpIncreaseID increase ID and skip zero.
-func (qmp *qemuMachineProtocal) qmpIncreaseID() uint32 {
+func (qmp *qemuMachineProtocol) qmpIncreaseID() uint32 {
 	id := qmp.cid.Add(1)
 	if id == 0 {
 		id = qmp.cid.Add(1)
@@ -125,7 +125,7 @@ func (qmp *qemuMachineProtocal) qmpIncreaseID() uint32 {
 }
 
 // connect sets up a QMP connection.
-func (qmp *qemuMachineProtocal) connect() error {
+func (qmp *qemuMachineProtocol) connect() error {
 	enc := json.NewEncoder(qmp.uc)
 	dec := json.NewDecoder(qmp.uc)
 
@@ -174,12 +174,12 @@ func (qmp *qemuMachineProtocal) connect() error {
 }
 
 // getEvents streams QEMU QMP Events.
-func (qmp *qemuMachineProtocal) getEvents(context.Context) (<-chan qmpEvent, error) {
+func (qmp *qemuMachineProtocol) getEvents(context.Context) (<-chan qmpEvent, error) {
 	qmp.listeners.Add(1)
 	return qmp.events, nil
 }
 
-func (qmp *qemuMachineProtocal) listen(r io.Reader, events chan<- qmpEvent, replies *sync.Map) {
+func (qmp *qemuMachineProtocol) listen(r io.Reader, events chan<- qmpEvent, replies *sync.Map) {
 	defer close(events)
 
 	scanner := bufio.NewScanner(r)
@@ -257,12 +257,12 @@ func (qmp *qemuMachineProtocal) listen(r io.Reader, events chan<- qmpEvent, repl
 }
 
 // run executes the given QAPI command against a domain's QEMU instance.
-func (qmp *qemuMachineProtocal) run(command []byte, id uint32) ([]byte, error) {
+func (qmp *qemuMachineProtocol) run(command []byte, id uint32) ([]byte, error) {
 	// Just call RunWithFile with no file
 	return qmp.runWithFile(command, nil, id)
 }
 
-func (qmp *qemuMachineProtocal) qmpWriteMsg(b []byte, file *os.File) error {
+func (qmp *qemuMachineProtocol) qmpWriteMsg(b []byte, file *os.File) error {
 	if file == nil {
 		// Just send a normal command through.
 		_, err := qmp.uc.Write(b)
@@ -284,7 +284,7 @@ func (qmp *qemuMachineProtocal) qmpWriteMsg(b []byte, file *os.File) error {
 }
 
 // runWithFile executes for passing a file through out-of-band data.
-func (qmp *qemuMachineProtocal) runWithFile(command []byte, file *os.File, id uint32) ([]byte, error) {
+func (qmp *qemuMachineProtocol) runWithFile(command []byte, file *os.File, id uint32) ([]byte, error) {
 	// Only allow a single command to be run at a time to ensure that responses
 	// to a command cannot be mixed with responses from another command
 	qmp.mu.Lock()
@@ -322,7 +322,7 @@ func (qmp *qemuMachineProtocal) runWithFile(command []byte, file *os.File, id ui
 	return res.raw, nil
 }
 
-func (qmp *qemuMachineProtocal) qmpInjectID(command []byte, id uint32) ([]byte, error) {
+func (qmp *qemuMachineProtocol) qmpInjectID(command []byte, id uint32) ([]byte, error) {
 	req := &qmpCommand{}
 	err := json.Unmarshal(command, req)
 	if err != nil {
