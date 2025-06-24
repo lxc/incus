@@ -482,7 +482,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 			}
 
 			_, err = config.Patch(map[string]string{
-				"cluster.https_address": localHTTPSAddress,
+				"cluster.https_address": req.ServerAddress,
 			})
 			return err
 		})
