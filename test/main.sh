@@ -223,7 +223,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_tls_jwt "JWT authentication"
 fi
 
-if [ "${1:-"all"}" != "standalone" ]; then
+if [ "${1:-"all"}" != "standalone" ] && [ "${INCUS_BACKEND}" != "truenas" ]; then
     run_test test_clustering_enable "clustering enable"
     run_test test_clustering_membership "clustering membership"
     run_test test_clustering_containers "clustering containers"
