@@ -500,6 +500,9 @@ func (d *lvm) acquireExclusive(vol Volume) (func(), error) {
 		return func() {}, nil
 	}
 
+	lvmActivation.Lock()
+	defer lvmActivation.Unlock()
+
 	_, err := subprocess.TryRunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volDevPath)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to acquire exclusive lock on LVM logical volume %q: %w", volDevPath, err)
@@ -838,6 +841,9 @@ func (d *lvm) activateVolume(vol Volume) (bool, error) {
 	}
 
 	if !util.PathExists(volDevPath) {
+		lvmActivation.Lock()
+		defer lvmActivation.Unlock()
+
 		if d.clustered {
 			_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
 			if err != nil {
@@ -880,6 +886,9 @@ func (d *lvm) deactivateVolume(vol Volume) (bool, error) {
 	}
 
 	if util.PathExists(volDevPath) {
+		lvmActivation.Lock()
+		defer lvmActivation.Unlock()
+
 		// Keep trying to deactivate a few times in case the device is still being flushed.
 		_, err := subprocess.TryRunCommand("lvchange", "--activate", "n", "--ignoreactivationskip", volDevPath)
 		if err != nil {
