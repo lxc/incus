@@ -29,6 +29,8 @@ import (
 
 const lvmVgPoolMarker = "incus_pool" // Indicator tag used to mark volume groups as in use.
 
+var lvmActivation sync.Mutex
+
 var (
 	lvmExtentSize   map[string]int64
 	lvmExtentSizeMu sync.Mutex
