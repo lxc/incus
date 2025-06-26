@@ -533,6 +533,9 @@ For backward compatibility, a single configuration key may still be set with:
 		`incus config set [<remote>:]<instance> limits.cpu=2
     Will set a CPU limit of "2" for the instance.
 
+incus config set my-instance cloud-init.user-data - < cloud-init.yaml
+    Sets the cloud-init user-data for instance "my-instance" by reading "cloud-init.yaml" through stdin.
+
 incus config set core.https_address=[::]:8443
     Will have the server listen on IPv4 and IPv6 port 8443.`))
 
