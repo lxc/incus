@@ -928,6 +928,9 @@ func (d *lvm) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *mig
 	if d.clustered && volSrcArgs.ClusterMove && !volSrcArgs.StorageMove {
 		// Ensure the volume allows shared access.
 		if vol.volType == VolumeTypeVM || vol.IsCustomBlock() {
+			lvmActivation.Lock()
+			defer lvmActivation.Unlock()
+
 			// Block volume.
 			volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.Name())
 			if util.PathExists(volDevPath) {
