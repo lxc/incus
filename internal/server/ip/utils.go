@@ -1,77 +1,64 @@
 package ip
 
 import (
-	"encoding/json"
-	"errors"
-	"io"
-	"os/exec"
+	"fmt"
+	"net"
+	"strconv"
+	"strings"
+
+	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
 )
 
-// FamilyV4 represents IPv4 protocol family.
-const FamilyV4 = "-4"
+// Family can be { FamilyAll, FamilyV4, FamilyV6 }.
+type Family int
 
-// FamilyV6 represents IPv6 protocol family.
-const FamilyV6 = "-6"
+const (
+	// FamilyAll specifies any/all family.
+	FamilyAll Family = unix.AF_UNSPEC
 
-// LinkInfo represents the IP link details.
-type LinkInfo struct {
-	InterfaceName    string `json:"ifname"`
-	Link             string `json:"link"`
-	Master           string `json:"master"`
-	Address          string `json:"address"`
-	TXQueueLength    uint32 `json:"txqlen"`
-	MTU              uint32 `json:"mtu"`
-	OperationalState string `json:"operstate"`
-	Info             struct {
-		Kind      string `json:"info_kind"`
-		SlaveKind string `json:"info_slave_kind"`
-		Data      struct {
-			Protocol string `json:"protocol"`
-			ID       int    `json:"id"`
-		} `json:"info_data"`
-	} `json:"linkinfo"`
+	// FamilyV4 specifies the IPv4 family.
+	FamilyV4 Family = unix.AF_INET
+
+	// FamilyV6 specifies the IPv6 family.
+	FamilyV6 Family = unix.AF_INET6
+)
+
+func linkByName(name string) (netlink.Link, error) {
+	link, err := netlink.LinkByName(name)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get link %q: %w", name, err)
+	}
+
+	return link, nil
 }
 
-// GetLinkInfoByName returns the detailed information for the given link.
-func GetLinkInfoByName(name string) (LinkInfo, error) {
-	ipPath, err := exec.LookPath("ip")
+func parseHandle(id string) (uint32, error) {
+	if id == "root" {
+		return netlink.HANDLE_ROOT, nil
+	}
+
+	majorStr, minorStr, found := strings.Cut(id, ":")
+
+	if !found {
+		return 0, fmt.Errorf("Invalid handle %q", id)
+	}
+
+	major, err := strconv.ParseUint(majorStr, 16, 16)
 	if err != nil {
-		return LinkInfo{}, errors.New("ip command not found")
+		return 0, fmt.Errorf("Invalid handle %q: %w", id, err)
 	}
 
-	cmd := exec.Command(ipPath, "-j", "-d", "link", "show", name)
-	stdout, err := cmd.StdoutPipe()
+	minor, err := strconv.ParseUint(minorStr, 16, 16)
 	if err != nil {
-		return LinkInfo{}, err
+		return 0, fmt.Errorf("Invalid handle %q: %w", id, err)
 	}
 
-	defer func() { _ = stdout.Close() }()
+	return netlink.MakeHandle(uint16(major), uint16(minor)), nil
+}
 
-	err = cmd.Start()
-	if err != nil {
-		return LinkInfo{}, err
-	}
-
-	defer func() { _ = cmd.Wait() }()
-
-	// Struct to decode ip output into.
-	var linkInfoJSON []LinkInfo
-
-	// Decode JSON output.
-	dec := json.NewDecoder(stdout)
-	err = dec.Decode(&linkInfoJSON)
-	if err != nil && err != io.EOF {
-		return LinkInfo{}, err
-	}
-
-	err = cmd.Wait()
-	if err != nil {
-		return LinkInfo{}, errors.New("no matching link found")
-	}
-
-	if len(linkInfoJSON) == 0 {
-		return LinkInfo{}, errors.New("no matching link found")
-	}
-
-	return linkInfoJSON[0], nil
+// ParseIPNet parses a CIDR string and returns a *net.IPNet containing both the full address and the netmask,
+// Unlike net.ParseCIDR which zeroes out the host part in the returned *net.IPNet and returns the full address separately.
+func ParseIPNet(addr string) (*net.IPNet, error) {
+	return netlink.ParseIPNet(addr)
 }

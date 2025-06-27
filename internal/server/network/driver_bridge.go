@@ -1189,12 +1189,12 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 				}
 			} else if vlanID > 0 {
 				// If the interface exists and VLAN ID was provided, ensure it has the same parent and VLAN ID and is not attached to a different network.
-				linkInfo, err := ip.GetLinkInfoByName(entry)
+				linkInfo, err := ip.LinkByName(entry)
 				if err != nil {
 					return fmt.Errorf("Failed to get link info for external interface %q", entry)
 				}
 
-				if linkInfo.Info.Kind != "vlan" || linkInfo.Link != ifParent || linkInfo.Info.Data.ID != vlanID || !(linkInfo.Master == "" || linkInfo.Master == n.name) {
+				if linkInfo.Kind != "vlan" || linkInfo.Parent != ifParent || linkInfo.VlanID != vlanID || (linkInfo.Master != "" && linkInfo.Master != n.name) {
 					return fmt.Errorf("External interface %q already in use", entry)
 				}
 			}
@@ -1416,8 +1416,11 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		// Add the address.
 		addr := &ip.Addr{
 			DevName: n.name,
-			Address: n.config["ipv4.address"],
-			Family:  ip.FamilyV4,
+			Address: &net.IPNet{
+				IP:   ipAddress,
+				Mask: subnet.Mask,
+			},
+			Family: ip.FamilyV4,
 		}
 
 		err = addr.Add()
@@ -1446,7 +1449,11 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		// Add additional routes.
 		if n.config["ipv4.routes"] != "" {
 			for _, route := range strings.Split(n.config["ipv4.routes"], ",") {
-				route = strings.TrimSpace(route)
+				route, err := ip.ParseIPNet(strings.TrimSpace(route))
+				if err != nil {
+					return err
+				}
+
 				r := &ip.Route{
 					DevName: n.name,
 					Route:   route,
@@ -1613,8 +1620,11 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		// Add the address.
 		addr := &ip.Addr{
 			DevName: n.name,
-			Address: n.config["ipv6.address"],
-			Family:  ip.FamilyV6,
+			Address: &net.IPNet{
+				IP:   ipAddress,
+				Mask: subnet.Mask,
+			},
+			Family: ip.FamilyV6,
 		}
 
 		err = addr.Add()
@@ -1643,7 +1653,11 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		// Add additional routes.
 		if n.config["ipv6.routes"] != "" {
 			for _, route := range strings.Split(n.config["ipv6.routes"], ",") {
-				route = strings.TrimSpace(route)
+				route, err := ip.ParseIPNet(route)
+				if err != nil {
+					return err
+				}
+
 				r := &ip.Route{
 					DevName: n.name,
 					Route:   route,
@@ -1664,19 +1678,20 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 	// Configure tunnels.
 	for _, tunnel := range tunnels {
+
 		getConfig := func(key string) string {
 			return n.config[fmt.Sprintf("tunnel.%s.%s", tunnel, key)]
 		}
 
 		tunProtocol := getConfig("protocol")
-		tunLocal := getConfig("local")
-		tunRemote := getConfig("remote")
+		tunLocal := net.ParseIP(getConfig("local"))
+		tunRemote := net.ParseIP(getConfig("remote"))
 		tunName := fmt.Sprintf("%s-%s", n.name, tunnel)
 
 		// Configure the tunnel.
 		if tunProtocol == "gre" {
 			// Skip partial configs.
-			if tunLocal == "" || tunRemote == "" {
+			if tunLocal == nil || tunRemote == nil {
 				continue
 			}
 
@@ -1691,7 +1706,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 				return err
 			}
 		} else if tunProtocol == "vxlan" {
-			tunGroup := getConfig("group")
+			tunGroup := net.ParseIP(getConfig("group"))
 			tunInterface := getConfig("interface")
 
 			vxlan := &ip.Vxlan{
@@ -1699,16 +1714,16 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 				Local: tunLocal,
 			}
 
-			if tunRemote != "" {
+			if tunRemote != nil {
 				// Skip partial configs.
-				if tunLocal == "" {
+				if tunLocal == nil {
 					continue
 				}
 
 				vxlan.Remote = tunRemote
 			} else {
-				if tunGroup == "" {
-					tunGroup = "239.0.0.1"
+				if tunGroup == nil {
+					tunGroup = net.IPv4(239, 0, 0, 1) // 239.0.0.1
 				}
 
 				devName := tunInterface
@@ -1724,25 +1739,32 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			}
 
 			tunPort := getConfig("port")
-			if tunPort == "" {
-				tunPort = "0"
+			if tunPort != "" {
+				vxlan.DstPort, err = strconv.Atoi(tunPort)
+				if err != nil {
+					return err
+				}
 			}
-
-			vxlan.DstPort = tunPort
 
 			tunID := getConfig("id")
 			if tunID == "" {
-				tunID = "1"
+				vxlan.VxlanID = 1
+			} else {
+				vxlan.VxlanID, err = strconv.Atoi(tunID)
+				if err != nil {
+					return err
+				}
 			}
-
-			vxlan.VxlanID = tunID
 
 			tunTTL := getConfig("ttl")
 			if tunTTL == "" {
-				tunTTL = "1"
+				vxlan.TTL = 1
+			} else {
+				vxlan.TTL, err = strconv.Atoi(tunTTL)
+				if err != nil {
+					return err
+				}
 			}
-
-			vxlan.TTL = tunTTL
 
 			err := vxlan.Add()
 			if err != nil {
@@ -2167,14 +2189,14 @@ func (n *bridge) getTunnels() []string {
 }
 
 // bootRoutesV4 returns a list of IPv4 boot routes on the network's device.
-func (n *bridge) bootRoutesV4() ([]string, error) {
+func (n *bridge) bootRoutesV4() ([]ip.Route, error) {
 	r := &ip.Route{
 		DevName: n.name,
 		Proto:   "boot",
 		Family:  ip.FamilyV4,
 	}
 
-	routes, err := r.Show()
+	routes, err := r.List()
 	if err != nil {
 		return nil, err
 	}
@@ -2183,14 +2205,14 @@ func (n *bridge) bootRoutesV4() ([]string, error) {
 }
 
 // bootRoutesV6 returns a list of IPv6 boot routes on the network's device.
-func (n *bridge) bootRoutesV6() ([]string, error) {
+func (n *bridge) bootRoutesV6() ([]ip.Route, error) {
 	r := &ip.Route{
 		DevName: n.name,
 		Proto:   "boot",
 		Family:  ip.FamilyV6,
 	}
 
-	routes, err := r.Show()
+	routes, err := r.List()
 	if err != nil {
 		return nil, err
 	}
@@ -2199,15 +2221,9 @@ func (n *bridge) bootRoutesV6() ([]string, error) {
 }
 
 // applyBootRoutesV4 applies a list of IPv4 boot routes to the network's device.
-func (n *bridge) applyBootRoutesV4(routes []string) {
+func (n *bridge) applyBootRoutesV4(routes []ip.Route) {
 	for _, route := range routes {
-		r := &ip.Route{
-			DevName: n.name,
-			Proto:   "boot",
-			Family:  ip.FamilyV4,
-		}
-
-		err := r.Replace(strings.Fields(route))
+		err := route.Replace()
 		if err != nil {
 			// If it fails, then we can't stop as the route has already gone, so just log and continue.
 			n.logger.Error("Failed to restore route", logger.Ctx{"err": err})
@@ -2216,15 +2232,9 @@ func (n *bridge) applyBootRoutesV4(routes []string) {
 }
 
 // applyBootRoutesV6 applies a list of IPv6 boot routes to the network's device.
-func (n *bridge) applyBootRoutesV6(routes []string) {
+func (n *bridge) applyBootRoutesV6(routes []ip.Route) {
 	for _, route := range routes {
-		r := &ip.Route{
-			DevName: n.name,
-			Proto:   "boot",
-			Family:  ip.FamilyV6,
-		}
-
-		err := r.Replace(strings.Fields(route))
+		err := route.Replace()
 		if err != nil {
 			// If it fails, then we can't stop as the route has already gone, so just log and continue.
 			n.logger.Error("Failed to restore route", logger.Ctx{"err": err})
@@ -3427,7 +3437,7 @@ func (n *bridge) deleteChildren() error {
 	}
 
 	for _, iface := range ifaces {
-		l, err := ip.LinkFromName(iface.Name)
+		l, err := ip.LinkByName(iface.Name)
 		if err != nil {
 			// If we can't load the link, chances are the interface isn't one that we should be deleting.
 			continue

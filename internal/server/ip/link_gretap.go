@@ -1,18 +1,28 @@
 package ip
 
+import (
+	"net"
+
+	"github.com/vishvananda/netlink"
+)
+
 // Gretap represents arguments for link of type gretap.
 type Gretap struct {
 	Link
-	Local  string
-	Remote string
-}
-
-// additionalArgs generates gretap specific arguments.
-func (g *Gretap) additionalArgs() []string {
-	return []string{"local", g.Local, "remote", g.Remote}
+	Local  net.IP
+	Remote net.IP
 }
 
 // Add adds new virtual link.
 func (g *Gretap) Add() error {
-	return g.Link.add("gretap", g.additionalArgs())
+	attrs, err := g.netlinkAttrs()
+	if err != nil {
+		return err
+	}
+
+	return netlink.LinkAdd(&netlink.Gretap{
+		LinkAttrs: attrs,
+		Local:     g.Local,
+		Remote:    g.Remote,
+	})
 }

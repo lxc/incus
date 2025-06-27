@@ -1,7 +1,11 @@
 package ip
 
 import (
-	"github.com/lxc/incus/v6/shared/subprocess"
+	"fmt"
+
+	"github.com/vishvananda/netlink"
+
+	"github.com/lxc/incus/v6/shared/units"
 )
 
 // Class represents qdisc class object.
@@ -19,19 +23,45 @@ type ClassHTB struct {
 
 // Add adds class to a node.
 func (class *ClassHTB) Add() error {
-	cmd := []string{"class", "add", "dev", class.Dev, "parent", class.Parent}
-	if class.Classid != "" {
-		cmd = append(cmd, "classid", class.Classid)
-	}
-
-	cmd = append(cmd, "htb")
-	if class.Rate != "" {
-		cmd = append(cmd, "rate", class.Rate)
-	}
-
-	_, err := subprocess.RunCommand("tc", cmd...)
+	link, err := linkByName(class.Dev)
 	if err != nil {
 		return err
+	}
+
+	parent, err := parseHandle(class.Parent)
+	if err != nil {
+		return err
+	}
+
+	classAttrs := netlink.ClassAttrs{
+		LinkIndex:  link.Attrs().Index,
+		Parent:     parent,
+		Statistics: nil,
+	}
+
+	htbClassAttrs := netlink.HtbClassAttrs{}
+
+	if class.Classid != "" {
+		handle, err := parseHandle(class.Classid)
+		if err != nil {
+			return err
+		}
+
+		classAttrs.Handle = handle
+	}
+
+	if class.Rate != "" {
+		rate, err := units.ParseBitSizeString(class.Rate)
+		if err != nil {
+			return fmt.Errorf("Invalid rate %q: %w", class.Rate, err)
+		}
+
+		htbClassAttrs.Rate = uint64(rate)
+	}
+
+	err = netlink.ClassAdd(netlink.NewHtbClass(classAttrs, htbClassAttrs))
+	if err != nil {
+		return fmt.Errorf("Failed to add htb class: %w", err)
 	}
 
 	return nil
