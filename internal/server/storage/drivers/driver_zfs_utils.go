@@ -463,6 +463,11 @@ func (d *zfs) randomVolumeName(vol Volume) string {
 func (d *zfs) delegateDataset(vol Volume, pid int) error {
 	_, err := subprocess.RunCommand("zfs", "zone", fmt.Sprintf("/proc/%d/ns/user", pid), d.dataset(vol, false))
 	if err != nil {
+		// Detect cases where the same dataset is attached multiple times.
+		if strings.Contains(err.Error(), "dataset already exists") {
+			return nil
+		}
+
 		return err
 	}
 
