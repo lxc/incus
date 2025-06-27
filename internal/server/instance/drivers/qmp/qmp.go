@@ -238,12 +238,7 @@ func (qmp *qemuMachineProtocol) listen(r io.Reader, events chan<- qmpEvent, repl
 			continue
 		}
 
-		select {
-		case events <- e:
-			logger.Debugf("Event dispatched: %s", e.Event)
-		default:
-			logger.Debugf("Event discarded: %s", e.Event)
-		}
+		events <- e
 	}
 
 	err := scanner.Err()
