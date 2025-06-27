@@ -1435,7 +1435,10 @@ func (c *cmdFileMount) Run(cmd *cobra.Command, args []string) error {
 	// Look for sshfs command if no SSH SFTP listener mode specified and a target mount path was specified.
 	if c.flagListen == "" && targetPath != "" {
 		// Setup sourcePath with leading / to ensure we reference the instance path from / location.
-		instPath := filepath.Join(string(filepath.Separator), filepath.Clean(instSpec[1]))
+		instPath := instSpec[1]
+		if instPath[0] != '/' {
+			instPath = "/" + instPath
+		}
 
 		// Connect to SFTP.
 		sftpConn, err := resource.server.GetInstanceFileSFTPConn(instName)
