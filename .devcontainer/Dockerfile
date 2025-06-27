@@ -96,6 +96,7 @@ RUN go install -v github.com/google/go-licenses@latest && \
     go install -v github.com/go-delve/delve/cmd/dlv@latest && \
     go install -v golang.org/x/tools/cmd/goimports@latest && \
     go install -v golang.org/x/vuln/cmd/govulncheck@latest && \
+    go install -v mvdan.cc/gofumpt@latest && \
     curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
 
 # Make dependencies
