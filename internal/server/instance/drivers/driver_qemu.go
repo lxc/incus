@@ -6923,7 +6923,12 @@ func (d *qemu) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties m
 	// Convert to qcow2 image.
 	cmd := []string{
 		"nice", "-n19", // Run with low priority to reduce CPU impact on other processes.
-		"qemu-img", "convert", "-p", "-f", "raw", "-O", "qcow2", "-c",
+		"qemu-img", "convert", "-p", "-f", "raw", "-O", "qcow2",
+	}
+
+	if rootfsWriter != nil {
+		// Compress the qcow2 image if publishing a split image.
+		cmd = append(cmd, "-c")
 	}
 
 	reverter := revert.New()

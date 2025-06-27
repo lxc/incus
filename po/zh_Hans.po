@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-06-19 14:10-0400\n"
+"POT-Creation-Date: 2025-06-26 09:14-0600\n"
 "PO-Revision-Date: 2025-03-01 08:01+0000\n"
 "Last-Translator: Loge X <wazolm5643@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -699,7 +699,7 @@ msgstr "--console 只适用于单个实例"
 msgid "--empty cannot be combined with an image name"
 msgstr "--empty 不能与图像名称组合"
 
-#: cmd/incus/config.go:490 cmd/incus/config.go:796
+#: cmd/incus/config.go:490 cmd/incus/config.go:799
 msgid "--expanded cannot be used with a server"
 msgstr "--expanded 不能与服务器一起使用"
 
@@ -727,8 +727,8 @@ msgstr "--refresh 只能与实例一起使用"
 msgid "--target can only be used with clusters"
 msgstr "--target 只能与集群一起使用"
 
-#: cmd/incus/config.go:167 cmd/incus/config.go:440 cmd/incus/config.go:617
-#: cmd/incus/config.go:822 cmd/incus/info.go:627
+#: cmd/incus/config.go:167 cmd/incus/config.go:440 cmd/incus/config.go:620
+#: cmd/incus/config.go:825 cmd/incus/info.go:627
 msgid "--target cannot be used with instances"
 msgstr "--target 不能与实例一起使用"
 
@@ -1364,7 +1364,7 @@ msgstr "未集群时无法指定列 L"
 msgid "Can't supply uid/gid/mode in recursive mode"
 msgstr "无法在递归模式下提供 uid/gid/mode"
 
-#: cmd/incus/config.go:683
+#: cmd/incus/config.go:686
 #, c-format
 msgid "Can't unset key '%s', it's not currently set"
 msgstr "无法取消设置键“%s”，当前尚未设置"
@@ -1530,8 +1530,8 @@ msgstr "集群成员 %s 已在组 %s 中"
 msgid "Cluster member %s removed from group %s"
 msgstr "已从组 %s 中移除集群成员 %s"
 
-#: cmd/incus/config.go:103 cmd/incus/config.go:395 cmd/incus/config.go:539
-#: cmd/incus/config.go:755 cmd/incus/config.go:886 cmd/incus/copy.go:64
+#: cmd/incus/config.go:103 cmd/incus/config.go:395 cmd/incus/config.go:542
+#: cmd/incus/config.go:758 cmd/incus/config.go:889 cmd/incus/copy.go:64
 #: cmd/incus/create.go:66 cmd/incus/info.go:50 cmd/incus/move.go:67
 #: cmd/incus/network.go:364 cmd/incus/network.go:871 cmd/incus/network.go:954
 #: cmd/incus/network.go:1559 cmd/incus/network.go:1652
@@ -2182,8 +2182,8 @@ msgstr "删除警告"
 #: cmd/incus/cluster_group.go:979 cmd/incus/cluster_group.go:1059
 #: cmd/incus/cluster_role.go:25 cmd/incus/cluster_role.go:53
 #: cmd/incus/cluster_role.go:118 cmd/incus/config.go:34 cmd/incus/config.go:97
-#: cmd/incus/config.go:390 cmd/incus/config.go:527 cmd/incus/config.go:751
-#: cmd/incus/config.go:883 cmd/incus/config_device.go:27
+#: cmd/incus/config.go:390 cmd/incus/config.go:527 cmd/incus/config.go:754
+#: cmd/incus/config.go:886 cmd/incus/config_device.go:27
 #: cmd/incus/config_device.go:83 cmd/incus/config_device.go:227
 #: cmd/incus/config_device.go:326 cmd/incus/config_device.go:411
 #: cmd/incus/config_device.go:515 cmd/incus/config_device.go:633
@@ -2781,7 +2781,7 @@ msgid "Error retrieving aliases: %w"
 msgstr "检索别名时出错：%w"
 
 #: cmd/incus/cluster.go:579 cmd/incus/cluster_group.go:1035
-#: cmd/incus/config.go:643 cmd/incus/config.go:675 cmd/incus/network.go:1628
+#: cmd/incus/config.go:646 cmd/incus/config.go:678 cmd/incus/network.go:1628
 #: cmd/incus/network_acl.go:568 cmd/incus/network_address_set.go:406
 #: cmd/incus/network_forward.go:620 cmd/incus/network_integration.go:675
 #: cmd/incus/network_load_balancer.go:606 cmd/incus/network_peer.go:654
@@ -2798,7 +2798,7 @@ msgstr "设置属性时出错：%v"
 msgid "Error setting term size %s"
 msgstr "设置术语大小 %s 时出错"
 
-#: cmd/incus/config.go:637 cmd/incus/config.go:669
+#: cmd/incus/config.go:640 cmd/incus/config.go:672
 #, c-format
 msgid "Error unsetting properties: %v"
 msgstr "取消设置属性时出错：%v"
@@ -7555,7 +7555,7 @@ msgstr ""
 msgid "Set the key as a storage volume property"
 msgstr ""
 
-#: cmd/incus/config.go:540
+#: cmd/incus/config.go:543
 msgid "Set the key as an instance property"
 msgstr ""
 
@@ -7611,7 +7611,7 @@ msgstr ""
 msgid "Show instance metadata files"
 msgstr ""
 
-#: cmd/incus/config.go:750 cmd/incus/config.go:751
+#: cmd/incus/config.go:753 cmd/incus/config.go:754
 msgid "Show instance or server configurations"
 msgstr ""
 
@@ -7742,7 +7742,7 @@ msgstr ""
 msgid "Show the default remote"
 msgstr ""
 
-#: cmd/incus/config.go:754
+#: cmd/incus/config.go:757
 msgid "Show the expanded configuration"
 msgstr ""
 
@@ -8145,7 +8145,7 @@ msgstr ""
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
 
-#: cmd/incus/config.go:655
+#: cmd/incus/config.go:658
 msgid "The is no config key to set on an instance snapshot."
 msgstr ""
 
@@ -8387,8 +8387,8 @@ msgid ""
 "Or for a virtual machine: incus launch images:%s --vm"
 msgstr ""
 
-#: cmd/incus/config.go:303 cmd/incus/config.go:496 cmd/incus/config.go:704
-#: cmd/incus/config.go:802 cmd/incus/copy.go:147 cmd/incus/info.go:389
+#: cmd/incus/config.go:303 cmd/incus/config.go:496 cmd/incus/config.go:707
+#: cmd/incus/config.go:805 cmd/incus/copy.go:147 cmd/incus/info.go:389
 #: cmd/incus/network.go:992 cmd/incus/storage.go:545
 msgid "To use --target, the destination remote must be a cluster"
 msgstr ""
@@ -8599,7 +8599,7 @@ msgstr ""
 msgid "Unset image properties"
 msgstr ""
 
-#: cmd/incus/config.go:882 cmd/incus/config.go:883
+#: cmd/incus/config.go:885 cmd/incus/config.go:886
 msgid "Unset instance or server configuration keys"
 msgstr ""
 
@@ -8746,7 +8746,7 @@ msgstr ""
 msgid "Unset the key as a storage volume property"
 msgstr ""
 
-#: cmd/incus/config.go:887
+#: cmd/incus/config.go:890
 msgid "Unset the key as an instance property"
 msgstr ""
 
@@ -9725,7 +9725,7 @@ msgstr ""
 msgid "[<remote>:]<zone> <record> [key=value...]"
 msgstr ""
 
-#: cmd/incus/config.go:95 cmd/incus/config.go:749
+#: cmd/incus/config.go:95 cmd/incus/config.go:752
 msgid "[<remote>:][<instance>[/<snapshot>]]"
 msgstr ""
 
@@ -9733,7 +9733,7 @@ msgstr ""
 msgid "[<remote>:][<instance>]"
 msgstr ""
 
-#: cmd/incus/config.go:388 cmd/incus/config.go:881
+#: cmd/incus/config.go:388 cmd/incus/config.go:884
 msgid "[<remote>:][<instance>] <key>"
 msgstr ""
 
@@ -9844,6 +9844,10 @@ msgstr ""
 msgid ""
 "incus config set [<remote>:]<instance> limits.cpu=2\n"
 "    Will set a CPU limit of \"2\" for the instance.\n"
+"\n"
+"incus config set my-instance cloud-init.user-data - < cloud-init.yaml\n"
+"    Sets the cloud-init user-data for instance \"my-instance\" by reading "
+"\"cloud-init.yaml\" through stdin.\n"
 "\n"
 "incus config set core.https_address=[::]:8443\n"
 "    Will have the server listen on IPv4 and IPv6 port 8443."

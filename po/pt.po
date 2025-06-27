@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-06-19 14:10-0400\n"
+"POT-Creation-Date: 2025-06-26 09:14-0600\n"
 "PO-Revision-Date: 2025-06-22 23:18+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
-"\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
+">\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -708,7 +708,7 @@ msgstr "-- console só funciona com uma única instância"
 msgid "--empty cannot be combined with an image name"
 msgstr "--empty não pode ser combinado com um nome de imagem"
 
-#: cmd/incus/config.go:490 cmd/incus/config.go:796
+#: cmd/incus/config.go:490 cmd/incus/config.go:799
 msgid "--expanded cannot be used with a server"
 msgstr "--expanded não pode ser usado com um servidor"
 
@@ -736,8 +736,8 @@ msgstr "--refresh só pode ser usado com instâncias"
 msgid "--target can only be used with clusters"
 msgstr "--target só pode ser usado com agrupamentos"
 
-#: cmd/incus/config.go:167 cmd/incus/config.go:440 cmd/incus/config.go:617
-#: cmd/incus/config.go:822 cmd/incus/info.go:627
+#: cmd/incus/config.go:167 cmd/incus/config.go:440 cmd/incus/config.go:620
+#: cmd/incus/config.go:825 cmd/incus/info.go:627
 msgid "--target cannot be used with instances"
 msgstr "--target não pode ser usado com instâncias"
 
@@ -1385,7 +1385,7 @@ msgstr "Não pode especificar column L quando não em agrupamento"
 msgid "Can't supply uid/gid/mode in recursive mode"
 msgstr "Não pode fornecer modo uid/gid em modo recursivo"
 
-#: cmd/incus/config.go:683
+#: cmd/incus/config.go:686
 #, c-format
 msgid "Can't unset key '%s', it's not currently set"
 msgstr "Não pode des-definir chave '%s', não está definida atualmente"
@@ -1560,8 +1560,8 @@ msgstr "Membro do agrupamento %s já está no grupo %s"
 msgid "Cluster member %s removed from group %s"
 msgstr "Membro do agrupamento %s removido do grupo %s"
 
-#: cmd/incus/config.go:103 cmd/incus/config.go:395 cmd/incus/config.go:539
-#: cmd/incus/config.go:755 cmd/incus/config.go:886 cmd/incus/copy.go:64
+#: cmd/incus/config.go:103 cmd/incus/config.go:395 cmd/incus/config.go:542
+#: cmd/incus/config.go:758 cmd/incus/config.go:889 cmd/incus/copy.go:64
 #: cmd/incus/create.go:66 cmd/incus/info.go:50 cmd/incus/move.go:67
 #: cmd/incus/network.go:364 cmd/incus/network.go:871 cmd/incus/network.go:954
 #: cmd/incus/network.go:1559 cmd/incus/network.go:1652
@@ -2219,8 +2219,8 @@ msgstr "Apaga aviso"
 #: cmd/incus/cluster_group.go:979 cmd/incus/cluster_group.go:1059
 #: cmd/incus/cluster_role.go:25 cmd/incus/cluster_role.go:53
 #: cmd/incus/cluster_role.go:118 cmd/incus/config.go:34 cmd/incus/config.go:97
-#: cmd/incus/config.go:390 cmd/incus/config.go:527 cmd/incus/config.go:751
-#: cmd/incus/config.go:883 cmd/incus/config_device.go:27
+#: cmd/incus/config.go:390 cmd/incus/config.go:527 cmd/incus/config.go:754
+#: cmd/incus/config.go:886 cmd/incus/config_device.go:27
 #: cmd/incus/config_device.go:83 cmd/incus/config_device.go:227
 #: cmd/incus/config_device.go:326 cmd/incus/config_device.go:411
 #: cmd/incus/config_device.go:515 cmd/incus/config_device.go:633
@@ -2835,7 +2835,7 @@ msgid "Error retrieving aliases: %w"
 msgstr "Erro ao obter aliases: %w"
 
 #: cmd/incus/cluster.go:579 cmd/incus/cluster_group.go:1035
-#: cmd/incus/config.go:643 cmd/incus/config.go:675 cmd/incus/network.go:1628
+#: cmd/incus/config.go:646 cmd/incus/config.go:678 cmd/incus/network.go:1628
 #: cmd/incus/network_acl.go:568 cmd/incus/network_address_set.go:406
 #: cmd/incus/network_forward.go:620 cmd/incus/network_integration.go:675
 #: cmd/incus/network_load_balancer.go:606 cmd/incus/network_peer.go:654
@@ -2852,7 +2852,7 @@ msgstr "Erro ao definir propriedades: %v"
 msgid "Error setting term size %s"
 msgstr "Erro ao definir o tamanho do termo %s"
 
-#: cmd/incus/config.go:637 cmd/incus/config.go:669
+#: cmd/incus/config.go:640 cmd/incus/config.go:672
 #, c-format
 msgid "Error unsetting properties: %v"
 msgstr "Erro ao remover definições de propriedades: %v"
@@ -5349,8 +5349,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo),"
-"\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5380,11 +5380,11 @@ msgstr ""
 "  f - Impressão digital de Imagem Base (curta)\n"
 "  F - Impressão digital de Imagem Base (longa)\n"
 "\n"
-"Colunas personalizadas são definidas com "
-"\"[config:|devices:]key[:name][:maxWidth]\":\n"
+"Colunas personalizadas são definidas com \"[config:|devices:]key[:name]"
+"[:maxWidth]\":\n"
 "  KEY: A cave (estendida) de configuração ou dispositivos a mostrar. Se "
-"[config:|devices:] for omitido então predefine para a chave de configuração."
-"\n"
+"[config:|devices:] for omitido então predefine para a chave de "
+"configuração.\n"
 "  NAME: Nome a mostrar no cabeçalho da coluna.\n"
 "  Predefine para a chave se não especificado ou vazio.\n"
 "\n"
@@ -7647,8 +7647,8 @@ msgid ""
 "Remove %s and everything it contains (instances, images, volumes, "
 "networks, ...) (yes/no): "
 msgstr ""
-"Remover %s e tudo o que contém (instâncias, imagens, volumes, redes, ...) ("
-"sim/não): "
+"Remover %s e tudo o que contém (instâncias, imagens, volumes, redes, ...) "
+"(sim/não): "
 
 #: cmd/incus/cluster_group.go:623
 msgid "Remove a cluster member from a cluster group"
@@ -8347,8 +8347,8 @@ msgstr ""
 "<valor>\n"
 "\n"
 "Se o tipo não for especificado, o Incus assume que tipo é \"custom\".\n"
-"Valores suportados para tipo são \"custom\", \"container\" e "
-"\"virtual-machine\"."
+"Valores suportados para tipo são \"custom\", \"container\" e \"virtual-"
+"machine\"."
 
 #: cmd/incus/remote.go:1242 cmd/incus/remote.go:1243
 msgid "Set the URL for the remote"
@@ -8442,7 +8442,7 @@ msgstr "Define a chave como uma propriedade de armazenamento"
 msgid "Set the key as a storage volume property"
 msgstr "Define a chave como uma propriedade de volume de armazenamento"
 
-#: cmd/incus/config.go:540
+#: cmd/incus/config.go:543
 msgid "Set the key as an instance property"
 msgstr "Define a chave como uma propriedade de instância"
 
@@ -8498,7 +8498,7 @@ msgstr "Mostra propriedades de imagem"
 msgid "Show instance metadata files"
 msgstr "Mostra ficheiros de metadados de instância"
 
-#: cmd/incus/config.go:750 cmd/incus/config.go:751
+#: cmd/incus/config.go:753 cmd/incus/config.go:754
 msgid "Show instance or server configurations"
 msgstr "Mostra configurações de instância ou servidor"
 
@@ -8601,8 +8601,8 @@ msgstr ""
 "Mostra configurações de volume de armazenamento\n"
 "\n"
 "Se o tipo não for especificado, Incus assume que o tipo é \"custom\".\n"
-"Os valores suportados para o tipo são \"custom\", \"container\" e "
-"\"virtual-machine\".\n"
+"Os valores suportados para o tipo são \"custom\", \"container\" e \"virtual-"
+"machine\".\n"
 "\n"
 "Para instantâneos, adiciona o nome do instantâneo (apenas se o tipo é um de "
 "custom, container ou virtual-machine)."
@@ -8630,8 +8630,8 @@ msgstr ""
 "Mostra informações de estado de volume de armazenamento\n"
 "\n"
 "Se o tipo não for especificado, o Incus assume que o tipo é \"custom\".\n"
-"Valores suportados para tipo são \"custom\", \"container\" e "
-"\"virtual-machine\"."
+"Valores suportados para tipo são \"custom\", \"container\" e \"virtual-"
+"machine\"."
 
 #: cmd/incus/project.go:1210 cmd/incus/project.go:1211
 msgid "Show the current project"
@@ -8641,7 +8641,7 @@ msgstr "Mostra o projeto atual"
 msgid "Show the default remote"
 msgstr "Mostra o remoto predefinido"
 
-#: cmd/incus/config.go:754
+#: cmd/incus/config.go:757
 msgid "Show the expanded configuration"
 msgstr "Mostra a configuração expandida"
 
@@ -8709,7 +8709,8 @@ msgstr "Instantâneo de volumes de armazenamento"
 
 #: cmd/incus/storage_volume.go:2137
 msgid "Snapshots are read-only and can't have their configuration changed"
-msgstr "Os instantâneos são só leitura e não se pode alterar a sua configuração"
+msgstr ""
+"Os instantâneos são só leitura e não se pode alterar a sua configuração"
 
 #: cmd/incus/info.go:800 cmd/incus/storage_volume.go:1493
 msgid "Snapshots:"
@@ -9033,8 +9034,8 @@ msgid ""
 "You can invoke it through \"incusd cluster\"."
 msgstr ""
 "O sub-comando \"cluster\" requer acesso aos dados do servidor interno.\n"
-"Para o fazer, é na realidade parte do binário \"incusd\" em vez de \"incus\"."
-"\n"
+"Para o fazer, é na realidade parte do binário \"incusd\" em vez de "
+"\"incus\".\n"
 "\n"
 "Você pode invoca-lo através de \"incusd cluster\"."
 
@@ -9076,9 +9077,10 @@ msgstr ""
 
 #: cmd/incus/create.go:474
 msgid "The instance you are starting doesn't have any network attached to it."
-msgstr "A instância que você está a iniciar não tem nenhuma rede anexada a ela."
+msgstr ""
+"A instância que você está a iniciar não tem nenhuma rede anexada a ela."
 
-#: cmd/incus/config.go:655
+#: cmd/incus/config.go:658
 msgid "The is no config key to set on an instance snapshot."
 msgstr ""
 "Não há nenhuma chave de configuração a definir a um instantâneo de instância."
@@ -9287,8 +9289,8 @@ msgstr ""
 "Como a sua plataforma não pode correr instâncias nativas do Linux, você tem "
 "de se ligar a um servidor remoto.\n"
 "\n"
-"Se você já adicionou um servidor remoto, torne-o predefinido com "
-"\"incus remote switch NOME\"."
+"Se você já adicionou um servidor remoto, torne-o predefinido com \"incus "
+"remote switch NOME\"."
 
 #: cmd/incus/webui_windows.go:15
 msgid "This command isn't supported on Windows"
@@ -9339,8 +9341,8 @@ msgstr ""
 "Para iniciar seu primeiro contentor, tente: incus launch images:%s\n"
 "Ou para uma máquina virtual: incus launch images:%s --vm"
 
-#: cmd/incus/config.go:303 cmd/incus/config.go:496 cmd/incus/config.go:704
-#: cmd/incus/config.go:802 cmd/incus/copy.go:147 cmd/incus/info.go:389
+#: cmd/incus/config.go:303 cmd/incus/config.go:496 cmd/incus/config.go:707
+#: cmd/incus/config.go:805 cmd/incus/copy.go:147 cmd/incus/info.go:389
 #: cmd/incus/network.go:992 cmd/incus/storage.go:545
 msgid "To use --target, the destination remote must be a cluster"
 msgstr "Para usar --target, o remoto alvo tem de ser um agrupamento"
@@ -9537,7 +9539,8 @@ msgstr "Tipo de saída desconhecido %q"
 
 #: cmd/incus/cluster_group.go:1058
 msgid "Unset a cluster group's configuration keys"
-msgstr "Retira definições das chaves de configuração de um grupo de agrupamento"
+msgstr ""
+"Retira definições das chaves de configuração de um grupo de agrupamento"
 
 #: cmd/incus/cluster.go:602
 msgid "Unset a cluster member's configuration keys"
@@ -9556,7 +9559,7 @@ msgstr "Retira definições de chaves de configuração"
 msgid "Unset image properties"
 msgstr "Retira propriedades da imagem"
 
-#: cmd/incus/config.go:882 cmd/incus/config.go:883
+#: cmd/incus/config.go:885 cmd/incus/config.go:886
 msgid "Unset instance or server configuration keys"
 msgstr "Retira definições das chaves de configuração de instância ou servidor"
 
@@ -9642,8 +9645,8 @@ msgstr ""
 "Retira definições de chaves de configuração de volume de armazenamento\n"
 "\n"
 "Se o tipo não for especificado, o Incus assume que o tipo é \"custom\".\n"
-"Valores suportados para tipo são \"custom\", \"container\" e "
-"\"virtual-machine\"."
+"Valores suportados para tipo são \"custom\", \"container\" e \"virtual-"
+"machine\"."
 
 #: cmd/incus/cluster_group.go:1061
 msgid "Unset the key as a cluster group property"
@@ -9711,7 +9714,7 @@ msgstr "Retira definições da chave como propriedade de armazenamento"
 msgid "Unset the key as a storage volume property"
 msgstr "Retira definições da chave como propriedade de volume de armazenamento"
 
-#: cmd/incus/config.go:887
+#: cmd/incus/config.go:890
 msgid "Unset the key as an instance property"
 msgstr "Retira definições da chave como propriedade de instância"
 
@@ -9910,7 +9913,8 @@ msgstr "Servidor Web a correr em: %s"
 
 #: cmd/incus/admin_init_interactive.go:156
 msgid "What IP address or DNS name should be used to reach this server?"
-msgstr "Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
+msgstr ""
+"Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
 
 #: cmd/incus/admin_init_interactive.go:370
 msgid "What IPv4 address should be used?"
@@ -10588,7 +10592,8 @@ msgstr "[<remoto>:]<pool> <volume> <instância> [<nome dispositivo>]"
 
 #: cmd/incus/storage_volume.go:171
 msgid "[<remote>:]<pool> <volume> <instance> [<device name>] [<path>]"
-msgstr "[<remoto>:]<pool> <volume> <instância> [<nome dispositivo>] [<caminho>]"
+msgstr ""
+"[<remoto>:]<pool> <volume> <instância> [<nome dispositivo>] [<caminho>]"
 
 #: cmd/incus/storage_volume.go:2962
 msgid "[<remote>:]<pool> <volume> <old snapshot> <new snapshot>"
@@ -10735,7 +10740,7 @@ msgstr "[<remoto>:]<zona> <registo> <tipo> <valor>"
 msgid "[<remote>:]<zone> <record> [key=value...]"
 msgstr "[<remoto>:]<zona> <registo> [chave=valor...]"
 
-#: cmd/incus/config.go:95 cmd/incus/config.go:749
+#: cmd/incus/config.go:95 cmd/incus/config.go:752
 msgid "[<remote>:][<instance>[/<snapshot>]]"
 msgstr "[<remoto>:][<instância>[/<instantâneo>]]"
 
@@ -10743,7 +10748,7 @@ msgstr "[<remoto>:][<instância>[/<instantâneo>]]"
 msgid "[<remote>:][<instance>]"
 msgstr "[<remoto>:][<instância>]"
 
-#: cmd/incus/config.go:388 cmd/incus/config.go:881
+#: cmd/incus/config.go:388 cmd/incus/config.go:884
 msgid "[<remote>:][<instance>] <key>"
 msgstr "[<remoto>:][<instância>] <chave>"
 
@@ -10864,8 +10869,8 @@ msgstr ""
 "share/c1 path=/opt\n"
 "    Irá montar o /share/c1 do anfitrião em /opt na instância.\n"
 "\n"
-"incus config device add [<remoto>:]instance1 <nome-dispositivo> disk pool"
-"=some-pool source=some-volume path=/opt\n"
+"incus config device add [<remoto>:]instance1 <nome-dispositivo> disk "
+"pool=some-pool source=some-volume path=/opt\n"
 "    Irá montar o volume some-volume em some-pool em /opt na instância."
 
 #: cmd/incus/config.go:99
@@ -10877,9 +10882,14 @@ msgstr ""
 "    Atualiza a configuração da instância a partir de config.yaml."
 
 #: cmd/incus/config.go:532
+#, fuzzy
 msgid ""
 "incus config set [<remote>:]<instance> limits.cpu=2\n"
 "    Will set a CPU limit of \"2\" for the instance.\n"
+"\n"
+"incus config set my-instance cloud-init.user-data - < cloud-init.yaml\n"
+"    Sets the cloud-init user-data for instance \"my-instance\" by reading "
+"\"cloud-init.yaml\" through stdin.\n"
 "\n"
 "incus config set core.https_address=[::]:8443\n"
 "    Will have the server listen on IPv4 and IPv6 port 8443."
@@ -10918,8 +10928,8 @@ msgstr ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Cria a instância com configuração a partir de config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io.bus="
-"nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Cria e arranca uma máquina virtual, sobrepondo o tamanho de disco e "
 "barramento"
 
@@ -11056,8 +11066,8 @@ msgstr ""
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Cria e arranca uma máquina virtual com 4 vCPUs e 4GiB de RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io.bus="
-"nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Cria e arranca uma máquina virtual, sobrepondo o tamanho de disco e "
 "barramento"
 
@@ -11119,8 +11129,8 @@ msgid ""
 "incus move <instance>/<old snapshot name> <instance>/<new snapshot name>\n"
 "    Rename a snapshot."
 msgstr ""
-"incus move [<remoto>:]<instância fonte> [<remoto>:][<instância destino>] "
-"[--instance-only]\n"
+"incus move [<remoto>:]<instância fonte> [<remoto>:][<instância destino>] [--"
+"instance-only]\n"
 "    Move uma instância entre duas máquinas, renomeando-a se o nome de "
 "destino for diferente.\n"
 "\n"
@@ -11207,8 +11217,8 @@ msgid ""
 "    Update a network integration using the content of network-"
 "integration.yaml"
 msgstr ""
-"incus network integration edit <integração de rede> < network-integration."
-"yaml\n"
+"incus network integration edit <integração de rede> < network-"
+"integration.yaml\n"
 "    Atualiza uma integração de rede usando o conteúdo de network-"
 "integration.yaml"
 
@@ -11334,8 +11344,8 @@ msgstr ""
 "share/c1 path=/opt\n"
 "    Irá montar o /share/c1 da máquina em /opt na instância.\n"
 "\n"
-"incus profile device add [<remoto>:]profile1 <nome-dispositivo> disk pool"
-"=some-pool source=some-volume path=/opt\n"
+"incus profile device add [<remoto>:]profile1 <nome-dispositivo> disk "
+"pool=some-pool source=some-volume path=/opt\n"
 "    Irá montar o volume some-volume em some-pool em /opt na instância."
 
 #: cmd/incus/profile.go:523
@@ -11519,8 +11529,8 @@ msgid ""
 "configuration from config.yaml"
 msgstr ""
 "incus storage volume create default foo\n"
-"    Cria o volume de armazenamento personalizado \"foo\" na pool \"default\""
-"\n"
+"    Cria o volume de armazenamento personalizado \"foo\" na pool "
+"\"default\"\n"
 "\n"
 "incus storage volume create default foo < config.yaml\n"
 "    Cria o volume de armazenamento personalizado \"foo\" na pool \"default\" "
@@ -11659,8 +11669,8 @@ msgid ""
 "in pool \"default\""
 msgstr ""
 "incus storage volume unset default foo size\n"
-"    Remove o tamanho/cota do volume personalizado \"foo\" na pool \"default\""
-"\n"
+"    Remove o tamanho/cota do volume personalizado \"foo\" na pool "
+"\"default\"\n"
 "\n"
 "incus storage volume unset default virtual-machine/v1 snapshots.expiry\n"
 "    Remove o período de validade de instantâneo do volume de máquina virtual "
