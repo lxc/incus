@@ -2,6 +2,7 @@ package ip
 
 import (
 	"fmt"
+	"golang.org/x/sys/unix"
 	"net"
 	"strconv"
 
@@ -69,7 +70,7 @@ func (l *Link) netlinkAttrs() (netlink.LinkAttrs, error) {
 	}
 
 	if l.AllMulticast {
-		linkAttrs.Allmulti = 1
+		linkAttrs.Flags |= unix.IFF_ALLMULTI
 	}
 
 	return linkAttrs, nil
