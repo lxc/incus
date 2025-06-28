@@ -1,9 +1,11 @@
 package ip
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
+	"syscall"
 
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
@@ -234,6 +236,13 @@ func (r *Route) Flush() error {
 
 	err = netlink.RouteListFilteredIter(route.Family, route, routeFilterMask(route), func(route netlink.Route) (cont bool) {
 		iterErr = netlink.RouteDel(&route)
+		// Ignore missing routes.
+		if errors.Is(iterErr, syscall.ESRCH) {
+			iterErr = nil
+
+			return true
+		}
+
 		return iterErr == nil
 	})
 	if err != nil {
