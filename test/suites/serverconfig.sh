@@ -15,6 +15,11 @@ test_server_config_access() {
 
   # test authentication type
   curl --unix-socket "$INCUS_DIR/unix.socket" "incus/1.0" | jq .metadata.auth_methods | grep tls
+
+  # test fetch metadata validation.
+  [ "$(curl --silent --unix-socket "$INCUS_DIR/unix.socket" -w "%{http_code}" -o /dev/null -H 'Sec-Fetch-Site: same-origin' "incus/1.0")" = "200" ]
+  [ "$(curl --silent --unix-socket "$INCUS_DIR/unix.socket" -w "%{http_code}" -o /dev/null -H 'Sec-Fetch-Site: cross-site' "incus/1.0")" = "403" ]
+  [ "$(curl --silent --unix-socket "$INCUS_DIR/unix.socket" -w "%{http_code}" -o /dev/null -H 'Sec-Fetch-Site: same-site' "incus/1.0")" = "403" ]
 }
 
 test_server_config_storage() {
