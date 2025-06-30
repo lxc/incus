@@ -458,7 +458,15 @@ func (s *Stmt) rename(buf *file.Buffer) error {
 		updates = append(updates, fmt.Sprintf("%s = %s", column, value))
 	}
 
-	sql := fmt.Sprintf(stmts[s.kind], table, strings.Join(updates, " AND "))
+	updatedAt := ""
+	for _, field := range mapping.Fields {
+		if field.Config.Has("update_timestamp") {
+			updatedAt = fmt.Sprintf(", %s = ?", field.Column())
+			break
+		}
+	}
+
+	sql := fmt.Sprintf(stmts[s.kind], table, updatedAt, strings.Join(updates, " AND "))
 	kind := strings.ReplaceAll(s.kind, "-", "_")
 	stmtName := stmtCodeVar(s.entity, kind)
 	s.register(buf, stmtName, sql)
@@ -563,7 +571,7 @@ var stmts = map[string]string{
 	"create":  "INSERT INTO %s (%s)\n  VALUES (%s)",
 	"replace": "INSERT OR REPLACE INTO %s (%s)\n VALUES (%s)",
 	"id":      "SELECT %s.id FROM %s\n  WHERE %s",
-	"rename":  "UPDATE %s SET name = ? WHERE %s",
+	"rename":  "UPDATE %s SET name = ?%s WHERE %s",
 	"update":  "UPDATE %s\n  SET %s\n WHERE %s",
 	"delete":  "DELETE FROM %s WHERE %s",
 }
