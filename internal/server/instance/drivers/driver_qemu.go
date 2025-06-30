@@ -4202,6 +4202,16 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuType string, cpuInfo *
 			maxMemoryBytes = 1024 * 1024 * 1024 * 1024
 		}
 
+		// On standalone systems, further cap to the system's total memory.
+		if !d.state.ServerClustered {
+			totalMemory, err := linux.DeviceTotalMemory()
+			if err != nil {
+				return err
+			}
+
+			maxMemoryBytes = totalMemory
+		}
+
 		// Allow the user to go past any expected limit.
 		if maxMemoryBytes < memSizeBytes {
 			maxMemoryBytes = memSizeBytes
