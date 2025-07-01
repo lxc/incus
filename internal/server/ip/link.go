@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
 )
 
 // Link represents base arguments for link device.
@@ -69,7 +70,7 @@ func (l *Link) netlinkAttrs() (netlink.LinkAttrs, error) {
 	}
 
 	if l.AllMulticast {
-		linkAttrs.Allmulti = 1
+		linkAttrs.Flags |= unix.IFF_ALLMULTI
 	}
 
 	return linkAttrs, nil
