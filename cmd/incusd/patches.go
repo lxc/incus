@@ -87,6 +87,7 @@ var patches = []patch{
 	{name: "lvm_node_force_reuse", stage: patchPostDaemonStorage, run: patchLvmForceReuseKey},
 	{name: "auth_openfga_viewer", stage: patchPostNetworks, run: patchGenericAuthorization},
 	{name: "auth_openfga_network_address_set", stage: patchPostNetworks, run: patchGenericAuthorization},
+	{name: "db_json_columns", stage: patchPreDaemonStorage, run: patchConvertJSONColumn},
 }
 
 type patchRun func(name string, d *Daemon) error
@@ -1321,6 +1322,24 @@ INSERT INTO storage_pools_config(storage_pool_id, node_id, key, value)
 	}
 
 	reverter.Success()
+	return nil
+}
+
+// The database generator expects valid JSON. An empty string isn't valid JSON.
+func patchConvertJSONColumn(_ string, d *Daemon) error {
+	s := d.State()
+
+	_, err := s.DB.Cluster.DB().Exec(`
+UPDATE networks_acls SET egress="null" WHERE egress="";
+UPDATE networks_acls SET ingress="null" WHERE ingress="";
+UPDATE networks_forwards SET ports="null" WHERE ports="";
+UPDATE networks_load_balancers SET backends="null" WHERE backends="";
+UPDATE networks_load_balancers SET ports="null" WHERE ports="";
+`)
+	if err != nil {
+		return fmt.Errorf("Failed to fix JSON columns: %w", err)
+	}
+
 	return nil
 }
 
