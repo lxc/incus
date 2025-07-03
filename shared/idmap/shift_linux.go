@@ -527,6 +527,11 @@ func shiftACLType(path string, aclType int, shiftIDs func(uid int64, gid int64) 
 			_, newID = shiftIDs(-1, (int64)(*idp))
 		}
 
+		// Skip values that are out of range.
+		if newID == -1 {
+			continue
+		}
+
 		// Update the new entry with the shifted value
 		ret = C.acl_set_qualifier(ent, unsafe.Pointer(&newID))
 		if ret == -1 {
