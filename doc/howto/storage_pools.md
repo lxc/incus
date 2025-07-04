@@ -150,6 +150,50 @@ Use the existing Ceph Object Gateway `https://www.example.com/radosgw` to create
 
     incus storage create pool1 cephobject cephobject.radosgw.endpoint=https://www.example.com/radosgw
 ````
+````{group-tab} TrueNAS
+
+```{note}
+To use the TrueNAS driver you must have [`truenas_incus_ctl`](https://github.com/truenas/truenas_incus_ctl/) installed and usable by root.
+```
+
+The TrueNAS driver allows remote storage pools to be created and utilized on remote TrueNAS hosts. Each storage pool is contained in a separate dataset on the remote
+host. ZFS features on the host are utilized for optimized image, copying and snapshot support without ZFS-on-ZFS overheads.
+
+Property | Description
+-|-
+source | can be used to specify `truenas.dataset` and optionally `truenas.host`
+block.filesystem | Filesystem to use when formatting a filesystem block device
+block.mount_options | Mount options to use when mounting a filesystem block device
+truenas.allow-insecure | Allows specifying the `allow-insecure` flag when performing TrueNAS operations
+truenas.api_key | Allows specifying the `api-key` flag when performing TrueNAS operations
+truenas.blocksize | blocksize to use when creating remote block devices
+truenas.host | Allows specifying the `host` flag when performing TrueNAS operations
+truenas.config | Allows specifying the `config` flag when performing TrueNAS operations
+truenas.config-file | Allows specifying the `config-file` flag when performing TrueNAS operations
+truenas.dataset | The remote dataset on the TrueNAS host
+truenas.initiator | Allows specifying the "initiator" flag when performing TrueNAS iSCSI operations
+truenas.portal  | Allows specifying the "initiator" flag when performing TrueNAS iSCSI operations
+truenas.remove_snapshots | Remove snapshots as needed
+truenas.use_refquota |  Use `refquota` instead of `quota` for space
+
+`truenas.host` and `truenas.dataset` can be set by specifying a `source` using the format: `[<remote host>:]<remote pool>[[/<remote dataset>]...][/]`
+
+The remote dataset will be created if it does not exist. If there is a trailing `/` then the remote dataset will be named after the storage pool
+
+```
+
+Create or use a remote dataset on remote pool tank on host truenas.example.com named after the storage pool, ie tank/pool1 with the API_KEY specified to host the storage pool
+
+    incus storage create pool1 truenas source=truenas.example.com:tank/ truenas.api_key=$TN_APIKEY
+
+Create or use remote dataset on remote pool tank on host truenas.example.com with the API KEY specified to host the storage pool,
+
+    incus storage create pool1 truenas source=truenas.example.com:tank/remote-dataset truenas.api_key=$TN_APIKEY
+
+    alternative, the host can be specified separately:
+
+    incus storage create pool1 truenas source=tank/remote-dataset truenas.host=truenas.example.com truenas.api_key=$TN_APIKEY
+````
 `````
 
 (storage-pools-cluster)=
