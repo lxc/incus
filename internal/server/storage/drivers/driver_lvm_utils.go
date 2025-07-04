@@ -397,7 +397,11 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 		return fmt.Errorf("Error creating LVM logical volume %q: %w", lvFullName, err)
 	}
 
-	volDevPath := d.lvmDevPath(vgName, vol.volType, vol.contentType, vol.name)
+	volPath := d.lvmPath(vgName, vol.volType, vol.contentType, vol.name)
+	volDevPath, err := d.lvmDevPath(volPath)
+	if err != nil {
+		return err
+	}
 
 	if vol.contentType == ContentTypeFS {
 		_, err = makeFSType(volDevPath, vol.ConfigBlockFilesystem(), nil)
@@ -420,9 +424,9 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 	if isRecent {
 		// Disable auto activation of volume on LVM versions that support it.
 		// Must be done after volume create so that zeroing and signature wiping can take place.
-		_, err := subprocess.TryRunCommand("lvchange", "--setactivationskip", "y", volDevPath)
+		_, err := subprocess.TryRunCommand("lvchange", "--setactivationskip", "y", volPath)
 		if err != nil {
-			return fmt.Errorf("Failed to set activation skip on LVM logical volume %q: %w", volDevPath, err)
+			return fmt.Errorf("Failed to set activation skip on LVM logical volume %q: %w", volPath, err)
 		}
 	}
 
@@ -432,15 +436,15 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 
 // createLogicalVolumeSnapshot creates a snapshot of a logical volume.
 func (d *lvm) createLogicalVolumeSnapshot(vgName string, srcVol Volume, snapVol Volume, readonly bool, makeThinLv bool) (string, error) {
-	srcVolDevPath := d.lvmDevPath(vgName, srcVol.volType, srcVol.contentType, srcVol.name)
+	srcVolPath := d.lvmPath(vgName, srcVol.volType, srcVol.contentType, srcVol.name)
 	isRecent, err := d.lvmVersionIsAtLeast(lvmVersion, "2.02.99")
 	if err != nil {
 		return "", fmt.Errorf("Error checking LVM version: %w", err)
 	}
 
 	snapLvName := d.lvmFullVolumeName(snapVol.volType, snapVol.contentType, snapVol.name)
-	logCtx := logger.Ctx{"vg_name": vgName, "lv_name": snapLvName, "src_dev": srcVolDevPath, "thin": makeThinLv}
-	args := []string{"-n", snapLvName, "-s", srcVolDevPath}
+	logCtx := logger.Ctx{"vg_name": vgName, "lv_name": snapLvName, "src_dev": srcVolPath, "thin": makeThinLv}
+	args := []string{"-n", snapLvName, "-s", srcVolPath}
 
 	if isRecent {
 		args = append(args, "--setactivationskip", "y")
@@ -483,27 +487,34 @@ func (d *lvm) createLogicalVolumeSnapshot(vgName string, srcVol Volume, snapVol 
 	d.logger.Debug("Logical volume snapshot created", logCtx)
 
 	reverter.Add(func() {
-		_ = d.removeLogicalVolume(d.lvmDevPath(vgName, snapVol.volType, snapVol.contentType, snapVol.name))
+		_ = d.removeLogicalVolume(d.lvmPath(vgName, snapVol.volType, snapVol.contentType, snapVol.name))
 	})
 
-	targetVolDevPath := d.lvmDevPath(vgName, snapVol.volType, snapVol.contentType, snapVol.name)
+	targetVolPath := d.lvmPath(vgName, snapVol.volType, snapVol.contentType, snapVol.name)
 
 	reverter.Success()
-	return targetVolDevPath, nil
+	return targetVolPath, nil
 }
 
 // acquireExclusive switches a volume lock to exclusive mode.
 func (d *lvm) acquireExclusive(vol Volume) (func(), error) {
-	volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
-
-	if !d.clustered || !util.PathExists(volDevPath) {
+	if !d.clustered {
 		return func() {}, nil
+	}
+
+	volDevPath, err := d.lvmDevPath(d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name))
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return func() {}, nil
+		}
+
+		return nil, err
 	}
 
 	lvmActivation.Lock()
 	defer lvmActivation.Unlock()
 
-	_, err := subprocess.TryRunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volDevPath)
+	_, err = subprocess.TryRunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volDevPath)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to acquire exclusive lock on LVM logical volume %q: %w", volDevPath, err)
 	}
@@ -559,14 +570,44 @@ func (d *lvm) lvmFullVolumeName(volType VolumeType, contentType ContentType, vol
 	return fmt.Sprintf("%s_%s%s", volType, lvName, contentTypeSuffix)
 }
 
-// lvmDevPath returns the path to the LVM volume device. Empty string is returned if invalid volType supplied.
-func (d *lvm) lvmDevPath(vgName string, volType VolumeType, contentType ContentType, volName string) string {
+// lvmPath returns the VG/LV path suitable to pass to LVM commands.
+func (d *lvm) lvmPath(vgName string, volType VolumeType, contentType ContentType, volName string) string {
 	fullVolName := d.lvmFullVolumeName(volType, contentType, volName)
 	if fullVolName == "" {
 		return "" // Invalid volType supplied.
 	}
 
-	return fmt.Sprintf("/dev/%s/%s", vgName, fullVolName)
+	return fmt.Sprintf("%s/%s", vgName, fullVolName)
+}
+
+// lvmDevPath returns the /dev path for the LV.
+func (d *lvm) lvmDevPath(pathName string) (string, error) {
+	// Get the block dev.
+	output, err := subprocess.TryRunCommand("lvdisplay", "-c", pathName)
+	if err != nil {
+		return "", err
+	}
+
+	// Grab the major and minor.
+	fields := strings.Split(output, ":")
+
+	if len(fields) < 2 {
+		return "", errors.New("Bad lvdisplay output")
+	}
+
+	major := strings.TrimSpace(fields[len(fields)-2])
+	minor := strings.TrimSpace(fields[len(fields)-1])
+
+	if major == "-1" || minor == "-1" {
+		return "", os.ErrNotExist
+	}
+
+	target, err := os.Readlink(filepath.Join("/sys/dev/block", major+":"+minor))
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join("/dev", filepath.Base(target)), nil
 }
 
 // resizeLogicalVolume resizes an LVM logical volume. This function does not resize any filesystem inside the LV.
@@ -636,7 +677,7 @@ func (d *lvm) copyThinpoolVolume(vol, srcVol Volume, srcSnapshots []Volume, refr
 			}
 
 			reverter.Add(func() {
-				_ = d.removeLogicalVolume(d.lvmDevPath(d.config["lvm.vg_name"], newSnapVol.volType, newSnapVol.contentType, newSnapVol.name))
+				_ = d.removeLogicalVolume(d.lvmPath(d.config["lvm.vg_name"], newSnapVol.volType, newSnapVol.contentType, newSnapVol.name))
 			})
 		}
 	}
@@ -649,12 +690,12 @@ func (d *lvm) copyThinpoolVolume(vol, srcVol Volume, srcSnapshots []Volume, refr
 
 	if volExists {
 		if refresh {
-			newVolDevPath := d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
+			newVolPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
 			tmpVolName := fmt.Sprintf("%s%s", vol.name, tmpVolSuffix)
-			tmpVolDevPath := d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, tmpVolName)
+			tmpVolPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, tmpVolName)
 
 			// Rename existing volume to temporary new name so we can revert if needed.
-			err := d.renameLogicalVolume(newVolDevPath, tmpVolDevPath)
+			err := d.renameLogicalVolume(newVolPath, tmpVolPath)
 			if err != nil {
 				return fmt.Errorf("Error temporarily renaming original LVM logical volume: %w", err)
 			}
@@ -664,7 +705,7 @@ func (d *lvm) copyThinpoolVolume(vol, srcVol Volume, srcSnapshots []Volume, refr
 
 			reverter.Add(func() {
 				// Rename the original volume back to the original name.
-				_ = d.renameLogicalVolume(tmpVolDevPath, newVolDevPath)
+				_ = d.renameLogicalVolume(tmpVolPath, newVolPath)
 			})
 		} else {
 			return fmt.Errorf("LVM volume already exists %q", vol.name)
@@ -685,10 +726,10 @@ func (d *lvm) copyThinpoolVolume(vol, srcVol Volume, srcSnapshots []Volume, refr
 		return fmt.Errorf("Error creating LVM logical volume snapshot: %w", err)
 	}
 
-	volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
+	volPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
 
 	reverter.Add(func() {
-		_ = d.removeLogicalVolume(volDevPath)
+		_ = d.removeLogicalVolume(volPath)
 	})
 
 	if vol.contentType == ContentTypeFS {
@@ -697,6 +738,11 @@ func (d *lvm) copyThinpoolVolume(vol, srcVol Volume, srcSnapshots []Volume, refr
 		// resize as some filesystems will need to mount the filesystem to resize.
 		if renegerateFilesystemUUIDNeeded(vol.ConfigBlockFilesystem()) {
 			_, err = d.activateVolume(vol)
+			if err != nil {
+				return err
+			}
+
+			volDevPath, err := d.lvmDevPath(volPath)
 			if err != nil {
 				return err
 			}
@@ -726,7 +772,7 @@ func (d *lvm) copyThinpoolVolume(vol, srcVol Volume, srcSnapshots []Volume, refr
 
 	// Finally clean up original volumes left that were renamed with a tmpVolSuffix suffix.
 	for _, removeVolName := range removeVols {
-		err := d.removeLogicalVolume(d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, removeVolName))
+		err := d.removeLogicalVolume(d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, removeVolName))
 		if err != nil {
 			return fmt.Errorf("Error removing LVM volume %q: %w", vol.name, err)
 		}
@@ -830,51 +876,57 @@ func (d *lvm) parseLogicalVolumeSnapshot(parent Volume, lvmVolName string) strin
 
 // activateVolume activates an LVM logical volume if not already present. Returns true if activated, false if not.
 func (d *lvm) activateVolume(vol Volume) (bool, error) {
-	var volDevPath string
+	var volPath string
 
 	if d.usesThinpool() {
-		volDevPath = d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
+		volPath = d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
 	} else {
 		// Use parent for non-thinpool vols as activating the parent volume also activates its snapshots.
 		parent, _, _ := api.GetParentAndSnapshotName(vol.Name())
-		volDevPath = d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, parent)
+		volPath = d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, parent)
 	}
 
-	if !util.PathExists(volDevPath) {
-		lvmActivation.Lock()
-		defer lvmActivation.Unlock()
+	_, err := d.lvmDevPath(volPath)
+	if err == nil {
+		// Already active.
+		return false, nil
+	}
 
-		if d.clustered {
-			_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
-			if err != nil {
-				return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volDevPath, err)
-			}
-		} else {
-			_, err := subprocess.RunCommand("lvchange", "--activate", "y", "--ignoreactivationskip", volDevPath)
-			if err != nil {
-				return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volDevPath, err)
-			}
+	if !errors.Is(err, os.ErrNotExist) {
+		// Actual failure.
+		return false, err
+	}
+
+	// Activate the volume.
+	lvmActivation.Lock()
+	defer lvmActivation.Unlock()
+
+	if d.clustered {
+		_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volPath)
+		if err != nil {
+			return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volPath, err)
 		}
-
-		d.logger.Debug("Activated logical volume", logger.Ctx{"volName": vol.Name(), "dev": volDevPath})
-
-		return true, nil
+	} else {
+		_, err := subprocess.RunCommand("lvchange", "--activate", "y", "--ignoreactivationskip", volPath)
+		if err != nil {
+			return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volPath, err)
+		}
 	}
 
-	return false, nil
+	d.logger.Debug("Activated logical volume", logger.Ctx{"volName": vol.Name(), "dev": volPath})
+
+	return true, nil
 }
 
 // deactivateVolume deactivates an LVM logical volume if present. Returns true if deactivated, false if not.
 func (d *lvm) deactivateVolume(vol Volume) (bool, error) {
-	var volDevPath string
+	var volPath string
 
 	if d.usesThinpool() {
-		volDevPath = d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
+		volPath = d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
 	} else {
 		// Use parent for non-thinpool vols as deactivating the parent volume also activates its snapshots.
 		parent, _, _ := api.GetParentAndSnapshotName(vol.Name())
-		volDevPath = d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, parent)
-
 		if vol.IsSnapshot() {
 			parentVol := NewVolume(d, d.name, vol.volType, vol.contentType, parent, nil, d.config)
 
@@ -883,23 +935,32 @@ func (d *lvm) deactivateVolume(vol Volume) (bool, error) {
 				return false, nil
 			}
 		}
+
+		volPath = d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, parent)
 	}
 
-	if util.PathExists(volDevPath) {
-		lvmActivation.Lock()
-		defer lvmActivation.Unlock()
-
-		// Keep trying to deactivate a few times in case the device is still being flushed.
-		_, err := subprocess.TryRunCommand("lvchange", "--activate", "n", "--ignoreactivationskip", volDevPath)
-		if err != nil {
-			return false, fmt.Errorf("Failed to deactivate LVM logical volume %q: %w", volDevPath, err)
-		}
-
-		d.logger.Debug("Deactivated logical volume", logger.Ctx{"volName": vol.Name(), "dev": volDevPath})
-		return true, nil
+	_, err := d.lvmDevPath(volPath)
+	if errors.Is(err, os.ErrNotExist) {
+		// Already deactivated.
+		return false, nil
 	}
 
-	return false, nil
+	if err != nil {
+		// Actual failure.
+		return false, err
+	}
+
+	lvmActivation.Lock()
+	defer lvmActivation.Unlock()
+
+	// Keep trying to deactivate a few times in case the device is still being flushed.
+	_, err = subprocess.TryRunCommand("lvchange", "--activate", "n", "--ignoreactivationskip", volPath)
+	if err != nil {
+		return false, fmt.Errorf("Failed to deactivate LVM logical volume %q: %w", volPath, err)
+	}
+
+	d.logger.Debug("Deactivated logical volume", logger.Ctx{"volName": vol.Name(), "dev": volPath})
+	return true, nil
 }
 
 // getSourceType determines the source type based on the config["source"] value.

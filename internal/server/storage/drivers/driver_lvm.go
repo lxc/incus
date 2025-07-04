@@ -438,7 +438,7 @@ func (d *lvm) Create() error {
 			d.logger.Debug("Thin pool created", logger.Ctx{"vg_name": d.config["lvm.vg_name"], "thinpool_name": d.thinpoolName()})
 
 			reverter.Add(func() {
-				_ = d.removeLogicalVolume(d.lvmDevPath(d.config["lvm.vg_name"], "", "", d.thinpoolName()))
+				_ = d.removeLogicalVolume(d.lvmPath(d.config["lvm.vg_name"], "", "", d.thinpoolName()))
 			})
 		} else if d.config["size"] != "" {
 			return errors.New("Cannot specify size when using an existing thin pool")
@@ -512,7 +512,7 @@ func (d *lvm) Delete(op *operations.Operation) error {
 					} else if thinVolCount == 0 && lvCount > 1 {
 						// Otherwise, if the thin pool is empty but the volume group has
 						// other volumes, then just remove the thin pool volume.
-						err = d.removeLogicalVolume(d.lvmDevPath(d.config["lvm.vg_name"], "", "", d.thinpoolName()))
+						err = d.removeLogicalVolume(d.lvmPath(d.config["lvm.vg_name"], "", "", d.thinpoolName()))
 						if err != nil {
 							return fmt.Errorf("Failed to delete thin pool %q from volume group %q: %w", d.thinpoolName(), d.config["lvm.vg_name"], err)
 						}
@@ -695,7 +695,7 @@ func (d *lvm) Update(changedConfig map[string]string) error {
 		}
 
 		if d.usesThinpool() {
-			lvPath := d.lvmDevPath(d.config["lvm.vg_name"], "", "", d.thinpoolName())
+			lvPath := d.lvmPath(d.config["lvm.vg_name"], "", "", d.thinpoolName())
 
 			// Use the remaining space in the volume group.
 			_, err = subprocess.RunCommand("lvresize", "-f", "-l", "+100%FREE", lvPath)
@@ -803,7 +803,7 @@ func (d *lvm) GetResources() (*api.ResourcesStoragePool, error) {
 	// Thinpools will always report zero free space on the volume group, so calculate approx
 	// used space using the thinpool logical volume allocated (data and meta) percentages.
 	if d.usesThinpool() {
-		volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], "", "", d.thinpoolName())
+		volDevPath := d.lvmPath(d.config["lvm.vg_name"], "", "", d.thinpoolName())
 		totalSize, usedSize, err := d.thinPoolVolumeUsage(volDevPath)
 		if err != nil {
 			return nil, err
