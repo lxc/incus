@@ -80,6 +80,7 @@ func (u32 *U32Filter) Add() error {
 			Chain:     nil,
 		},
 		Sel: &netlink.TcU32Sel{
+			Flags: netlink.TC_U32_TERMINAL,
 			Nkeys: 1,
 			Keys: []netlink.TcU32Key{
 				{
