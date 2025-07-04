@@ -1319,7 +1319,7 @@ func (d *nicOVN) State() (*api.InstanceStateNetwork, error) {
 			})
 		}
 
-		if d.config["ipv6.address"] != "" && d.config["ipv4.address"] != "none" {
+		if d.config["ipv6.address"] != "" && d.config["ipv6.address"] != "none" {
 			// Static DHCPv6 allocation present, that is likely to be the NIC's IPv6. So assume that.
 			addresses = append(addresses, api.InstanceStateNetworkAddress{
 				Family:  "inet6",
