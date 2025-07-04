@@ -542,7 +542,7 @@ func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, 
 
 	// Apply new limits
 	if d.config["limits.ingress"] != "" {
-		qdiscHTB = &ip.QdiscHTB{Qdisc: ip.Qdisc{Dev: veth, Handle: "1:0", Parent: "root"}, Default: 10}
+		qdiscHTB = &ip.QdiscHTB{Qdisc: ip.Qdisc{Dev: veth, Handle: "1:0", Parent: "root"}, Default: 0x10}
 		err := qdiscHTB.Add()
 		if err != nil {
 			return fmt.Errorf("Failed to create root tc qdisc: %s", err)
