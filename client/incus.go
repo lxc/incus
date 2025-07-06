@@ -474,7 +474,7 @@ func (r *ProtocolIncus) rawWebsocket(url string) (*websocket.Conn, error) {
 			}
 
 			if apiResp != nil && apiResp.Error != "" {
-				err = errors.Join(err, fmt.Errorf(apiResp.Error))
+				err = errors.Join(err, errors.New(apiResp.Error))
 			}
 		}
 
