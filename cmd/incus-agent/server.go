@@ -9,8 +9,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
 	internalIO "github.com/lxc/incus/v6/internal/io"
 	"github.com/lxc/incus/v6/internal/server/response"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
@@ -18,9 +16,7 @@ import (
 )
 
 func restServer(tlsConfig *tls.Config, cert *x509.Certificate, debug bool, d *Daemon) *http.Server {
-	router := mux.NewRouter()
-	router.StrictSlash(false) // Don't redirect to URL with trailing slash.
-	router.UseEncodedPath()   // Allow encoded values in path segments.
+	router := http.NewServeMux()
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -34,7 +30,7 @@ func restServer(tlsConfig *tls.Config, cert *x509.Certificate, debug bool, d *Da
 	return &http.Server{Handler: router, TLSConfig: tlsConfig}
 }
 
-func createCmd(restAPI *mux.Router, version string, c APIEndpoint, cert *x509.Certificate, debug bool, d *Daemon) {
+func createCmd(restAPI *http.ServeMux, version string, c APIEndpoint, cert *x509.Certificate, debug bool, d *Daemon) {
 	var uri string
 	if c.Path == "" {
 		uri = fmt.Sprintf("/%s", version)
@@ -42,7 +38,7 @@ func createCmd(restAPI *mux.Router, version string, c APIEndpoint, cert *x509.Ce
 		uri = fmt.Sprintf("/%s/%s", version, c.Path)
 	}
 
-	route := restAPI.HandleFunc(uri, func(w http.ResponseWriter, r *http.Request) {
+	restAPI.HandleFunc(uri, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		if !authenticate(r, cert) {
@@ -101,12 +97,6 @@ func createCmd(restAPI *mux.Router, version string, c APIEndpoint, cert *x509.Ce
 			}
 		}
 	})
-
-	// If the endpoint has a canonical name then record it so it can be used to build URLS
-	// and accessed in the context of the request by the handler function.
-	if c.Name != "" {
-		route.Name(c.Name)
-	}
 }
 
 func authenticate(r *http.Request, cert *x509.Certificate) bool {
