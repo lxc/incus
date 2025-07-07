@@ -5,12 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/v6/internal/jmap"
 	"github.com/lxc/incus/v6/internal/server/operations"
@@ -44,9 +41,9 @@ var operationWait = APIEndpoint{
 }
 
 func operationDelete(d *Daemon, r *http.Request) response.Response {
-	id, err := url.PathUnescape(mux.Vars(r)["id"])
-	if err != nil {
-		return response.SmartError(err)
+	id := r.PathValue("id")
+	if id == "" {
+		return response.BadRequest(fmt.Errorf("Failed to extract operation ID from URL"))
 	}
 
 	// First check if the query is for a local operation from this node
@@ -64,9 +61,9 @@ func operationDelete(d *Daemon, r *http.Request) response.Response {
 }
 
 func operationGet(d *Daemon, r *http.Request) response.Response {
-	id, err := url.PathUnescape(mux.Vars(r)["id"])
-	if err != nil {
-		return response.SmartError(err)
+	id := r.PathValue("id")
+	if id == "" {
+		return response.BadRequest(fmt.Errorf("Failed to extract operation ID from URL"))
 	}
 
 	var body *api.Operation
@@ -153,9 +150,9 @@ func operationsGet(d *Daemon, r *http.Request) response.Response {
 }
 
 func operationWebsocketGet(d *Daemon, r *http.Request) response.Response {
-	id, err := url.PathUnescape(mux.Vars(r)["id"])
-	if err != nil {
-		return response.SmartError(err)
+	id := r.PathValue("id")
+	if id == "" {
+		return response.BadRequest(fmt.Errorf("Failed to extract operation ID from URL"))
 	}
 
 	// First check if the query is for a local operation from this node
@@ -168,17 +165,21 @@ func operationWebsocketGet(d *Daemon, r *http.Request) response.Response {
 }
 
 func operationWaitGet(d *Daemon, r *http.Request) response.Response {
-	id, err := url.PathUnescape(mux.Vars(r)["id"])
-	if err != nil {
-		return response.InternalError(fmt.Errorf("Failed to extract operation ID from URL: %w", err))
+	id := r.PathValue("id")
+	if id == "" {
+		return response.BadRequest(fmt.Errorf("Failed to extract operation ID from URL"))
 	}
 
-	timeoutSecs := -1
-	if r.FormValue("timeout") != "" {
-		timeoutSecs, err = strconv.Atoi(r.FormValue("timeout"))
+	var err error
+	var timeoutSecs int
+	timeout := r.FormValue("timeout")
+	if timeout != "" {
+		timeoutSecs, err = strconv.Atoi(timeout)
 		if err != nil {
 			return response.InternalError(fmt.Errorf("Failed to extract operation wait timeout from URL: %w", err))
 		}
+	} else {
+		timeoutSecs = -1
 	}
 
 	var ctx context.Context

@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/gorilla/mux"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/server/daemon"
@@ -86,8 +83,8 @@ var DevIncusConfigGet = devIncusHandler{"/1.0/config", func(d *Daemon, w http.Re
 }}
 
 var DevIncusConfigKeyGet = devIncusHandler{"/1.0/config/{key}", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devIncusResponse {
-	key, err := url.PathUnescape(mux.Vars(r)["key"])
-	if err != nil {
+	key := r.PathValue("key")
+	if key == "" {
 		return &devIncusResponse{"bad request", http.StatusBadRequest, "raw"}
 	}
 
@@ -251,8 +248,7 @@ func hoistReq(f func(*Daemon, http.ResponseWriter, *http.Request) *devIncusRespo
 }
 
 func devIncusAPI(d *Daemon) http.Handler {
-	router := mux.NewRouter()
-	router.UseEncodedPath() // Allow encoded values in path segments.
+	router := http.NewServeMux()
 
 	for _, handler := range handlers {
 		router.HandleFunc(handler.path, hoistReq(handler.f, d))
