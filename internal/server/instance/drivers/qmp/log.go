@@ -49,6 +49,12 @@ func (ql *qmpLog) open() error {
 func (ql *qmpLog) Write(p []byte) (n int, err error) {
 	ql.mu.Lock()
 	defer ql.mu.Unlock()
+
+	// Ignore writes after close.
+	if ql.log == nil {
+		return 0, nil
+	}
+
 	return ql.log.Write(p)
 }
 
@@ -57,6 +63,7 @@ func (ql *qmpLog) Close() error {
 	if ql.log != nil {
 		ql.mu.Lock()
 		defer ql.mu.Unlock()
+
 		err := ql.log.Close()
 		ql.log = nil
 		return err
