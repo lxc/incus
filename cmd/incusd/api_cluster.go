@@ -457,8 +457,6 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		if err != nil {
 			return response.SmartError(err)
 		}
-
-		localHTTPSAddress = req.ServerAddress
 	} else {
 		// The user has previously set core.https_address and
 		// is now providing a cluster address as well. If they
@@ -468,8 +466,6 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 			if err != nil {
 				return response.SmartError(err)
 			}
-
-			localHTTPSAddress = req.ServerAddress
 		}
 
 		// Update the cluster.https_address config key.
@@ -644,7 +640,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		})
 
 		// Now request for this node to be added to the list of cluster nodes.
-		info, err := clusterAcceptMember(client, req.ServerName, localHTTPSAddress, cluster.SchemaVersion, version.APIExtensionsCount(), pools, networks)
+		info, err := clusterAcceptMember(client, req.ServerName, req.ServerAddress, cluster.SchemaVersion, version.APIExtensionsCount(), pools, networks)
 		if err != nil {
 			return fmt.Errorf("Failed request to add member: %w", err)
 		}
