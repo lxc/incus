@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -862,6 +863,10 @@ func IsNodeSpecificNetworkConfig(key string) bool {
 		return true
 	}
 
+	if nodeSpecificNetworkConfigRe.MatchString(key) {
+		return true
+	}
+
 	return false
 }
 
@@ -881,10 +886,13 @@ func StripNodeSpecificNetworkConfig(config map[string]string) map[string]string 
 	return strippedConfig
 }
 
-// nodeSpecificNetworkConfig lists all network config keys which are node-specific.
+// nodeSpecificNetworkConfig lists all static network config keys which are node-specific.
 var nodeSpecificNetworkConfig = []string{
 	"bgp.ipv4.nexthop",
 	"bgp.ipv6.nexthop",
 	"bridge.external_interfaces",
 	"parent",
 }
+
+// nodeSpecificNetworkConfigRe lists dynamic network config keys which are node-specific.
+var nodeSpecificNetworkConfigRe = regexp.MustCompile(`^tunnel\.[^.]+\.(interface|local)$`)
