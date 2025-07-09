@@ -803,7 +803,7 @@ func networkConfigAdd(tx *sql.Tx, networkID, nodeID int64, config map[string]str
 		}
 
 		var nodeIDValue any
-		if !slices.Contains(NodeSpecificNetworkConfig, k) {
+		if !IsNodeSpecificNetworkConfig(k) {
 			nodeIDValue = nil
 		} else {
 			nodeIDValue = nodeID
@@ -855,8 +855,34 @@ func (c *ClusterTx) RenameNetwork(ctx context.Context, project string, oldName s
 	return err
 }
 
-// NodeSpecificNetworkConfig lists all network config keys which are node-specific.
-var NodeSpecificNetworkConfig = []string{
+// IsNodeSpecificNetworkConfig returns true for a given network config key, if
+// the key is node-specific. Otherwise false is returned.
+func IsNodeSpecificNetworkConfig(key string) bool {
+	if slices.Contains(nodeSpecificNetworkConfig, key) {
+		return true
+	}
+
+	return false
+}
+
+// StripNodeSpecificNetworkConfig returns a new network config map with all the
+// node-specific keys removed. The source map is left unchanged.
+func StripNodeSpecificNetworkConfig(config map[string]string) map[string]string {
+	strippedConfig := make(map[string]string, len(config))
+
+	for key, value := range config {
+		if IsNodeSpecificNetworkConfig(key) {
+			continue
+		}
+
+		strippedConfig[key] = value
+	}
+
+	return strippedConfig
+}
+
+// nodeSpecificNetworkConfig lists all network config keys which are node-specific.
+var nodeSpecificNetworkConfig = []string{
 	"bgp.ipv4.nexthop",
 	"bgp.ipv6.nexthop",
 	"bridge.external_interfaces",
