@@ -425,76 +425,81 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		return response.BadRequest(fmt.Errorf("Invalid server address %q: %w", req.ServerAddress, err))
 	}
 
-	localHTTPSAddress := s.LocalConfig.HTTPSAddress()
-
-	var config *node.Config
-
-	if localHTTPSAddress == "" {
-		// As the user always provides a server address, but no networking
-		// was setup on this node, let's do the job and open the
-		// port. We'll use the same address both for the REST API and
-		// for clustering.
-
-		// First try to listen to the provided address. If we fail, we
-		// won't actually update the database config.
-		err := s.Endpoints.NetworkUpdateAddress(req.ServerAddress)
-		if err != nil {
-			return response.SmartError(err)
-		}
-
-		err = s.DB.Node.Transaction(r.Context(), func(ctx context.Context, tx *db.NodeTx) error {
-			config, err = node.ConfigLoad(ctx, tx)
-			if err != nil {
-				return fmt.Errorf("Failed to load cluster config: %w", err)
-			}
-
-			_, err = config.Patch(map[string]string{
-				"core.https_address":    req.ServerAddress,
-				"cluster.https_address": req.ServerAddress,
-			})
-			return err
-		})
-		if err != nil {
-			return response.SmartError(err)
-		}
-
-		localHTTPSAddress = req.ServerAddress
-	} else {
-		// The user has previously set core.https_address and
-		// is now providing a cluster address as well. If they
-		// differ we need to listen to it.
+	// Verify provided address against cluster.https_address if set.
+	localHTTPSAddress := s.LocalConfig.ClusterAddress()
+	if localHTTPSAddress != "" {
 		if !internalUtil.IsAddressCovered(req.ServerAddress, localHTTPSAddress) {
-			err := s.Endpoints.ClusterUpdateAddress(req.ServerAddress)
+			return response.BadRequest(fmt.Errorf(`Server address %q is not covered by %q from "cluster.https_address"`, req.ServerAddress, localHTTPSAddress))
+		}
+	} else {
+		// If cluster.https_address is not set, check against core.https_address
+		localHTTPSAddress = s.LocalConfig.HTTPSAddress()
+
+		var config *node.Config
+
+		if localHTTPSAddress == "" {
+			// As the user always provides a server address, but no networking
+			// was setup on this node, let's do the job and open the
+			// port. We'll use the same address both for the REST API and
+			// for clustering.
+
+			// First try to listen to the provided address. If we fail, we
+			// won't actually update the database config.
+			err := s.Endpoints.NetworkUpdateAddress(req.ServerAddress)
 			if err != nil {
 				return response.SmartError(err)
 			}
 
-			localHTTPSAddress = req.ServerAddress
-		}
+			err = s.DB.Node.Transaction(r.Context(), func(ctx context.Context, tx *db.NodeTx) error {
+				config, err = node.ConfigLoad(ctx, tx)
+				if err != nil {
+					return fmt.Errorf("Failed to load cluster config: %w", err)
+				}
 
-		// Update the cluster.https_address config key.
-		err := s.DB.Node.Transaction(r.Context(), func(ctx context.Context, tx *db.NodeTx) error {
-			var err error
-
-			config, err = node.ConfigLoad(ctx, tx)
+				_, err = config.Patch(map[string]string{
+					"core.https_address":    req.ServerAddress,
+					"cluster.https_address": req.ServerAddress,
+				})
+				return err
+			})
 			if err != nil {
-				return fmt.Errorf("Failed to load cluster config: %w", err)
+				return response.SmartError(err)
+			}
+		} else {
+			// The user has previously set core.https_address and
+			// is now providing a cluster address as well. If they
+			// differ we need to listen to it.
+			if !internalUtil.IsAddressCovered(req.ServerAddress, localHTTPSAddress) {
+				err := s.Endpoints.ClusterUpdateAddress(req.ServerAddress)
+				if err != nil {
+					return response.SmartError(err)
+				}
 			}
 
-			_, err = config.Patch(map[string]string{
-				"cluster.https_address": req.ServerAddress,
-			})
-			return err
-		})
-		if err != nil {
-			return response.SmartError(err)
-		}
-	}
+			// Update the cluster.https_address config key.
+			err := s.DB.Node.Transaction(r.Context(), func(ctx context.Context, tx *db.NodeTx) error {
+				var err error
 
-	// Update local config cache.
-	d.globalConfigMu.Lock()
-	d.localConfig = config
-	d.globalConfigMu.Unlock()
+				config, err = node.ConfigLoad(ctx, tx)
+				if err != nil {
+					return fmt.Errorf("Failed to load cluster config: %w", err)
+				}
+
+				_, err = config.Patch(map[string]string{
+					"cluster.https_address": req.ServerAddress,
+				})
+				return err
+			})
+			if err != nil {
+				return response.SmartError(err)
+			}
+		}
+
+		// Update local config cache.
+		d.globalConfigMu.Lock()
+		d.localConfig = config
+		d.globalConfigMu.Unlock()
+	}
 
 	// Client parameters to connect to the target cluster node.
 	serverCert := s.ServerCert()
@@ -644,7 +649,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		})
 
 		// Now request for this node to be added to the list of cluster nodes.
-		info, err := clusterAcceptMember(client, req.ServerName, localHTTPSAddress, cluster.SchemaVersion, version.APIExtensionsCount(), pools, networks)
+		info, err := clusterAcceptMember(client, req.ServerName, req.ServerAddress, cluster.SchemaVersion, version.APIExtensionsCount(), pools, networks)
 		if err != nil {
 			return fmt.Errorf("Failed request to add member: %w", err)
 		}
