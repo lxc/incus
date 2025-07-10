@@ -3500,6 +3500,11 @@ func (n *ovn) Rename(newName string) error {
 // chassisEnabled checks the cluster config to see if this particular
 // member should act as an OVN chassis.
 func (n *ovn) chassisEnabled(ctx context.Context, tx *db.ClusterTx) (bool, error) {
+	// If parent is "none", this network is standalone and should not act as a chassis.
+	if n.config["parent"] == "none" {
+		return false, nil
+	}
+
 	// Get the member info.
 	memberID := tx.GetNodeID()
 	members, err := tx.GetNodes(ctx)
@@ -3540,6 +3545,13 @@ func (n *ovn) Start() error {
 	var err error
 
 	reverter.Add(func() { n.setUnavailable() })
+
+	// Skip full start logic if parent=none.
+	if n.config["parent"] == "none" {
+		n.logger.Info("Skipping OVN Start due to parent=none", logger.Ctx{"project": n.project, "name": n.name})
+		n.setAvailable()
+		return nil
+	}
 
 	// Check that uplink network is available.
 	if n.config["network"] != "" && n.config["network"] != "none" && !IsAvailable(api.ProjectDefaultName, n.config["network"]) {
