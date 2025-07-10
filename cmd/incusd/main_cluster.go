@@ -364,7 +364,7 @@ func (c *cmdClusterListDatabase) command() *cobra.Command {
 	cmd.Use = "list-database"
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = "Print the addresses of the cluster members serving the database"
-	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", `Format (csv|json|table|yaml|compact), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)
+	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", `Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)
 
 	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
 		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
