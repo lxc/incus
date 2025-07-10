@@ -460,7 +460,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		// A targetNode was specified, let's just define the node's network without actually creating it.
 		// Check that only NodeSpecificNetworkConfig keys are specified.
 		for key := range req.Config {
-			if !slices.Contains(db.NodeSpecificNetworkConfig, key) {
+			if !db.IsNodeSpecificNetworkConfig(key) {
 				return response.BadRequest(fmt.Errorf("Config key %q may not be used as member-specific key", key))
 			}
 		}
@@ -634,7 +634,7 @@ func networkPartiallyCreated(netInfo *api.Network) bool {
 	// If the network has global config keys, then it has previously been created by having its global config
 	// inserted, and this means it is partialled created.
 	for key := range netInfo.Config {
-		if !slices.Contains(db.NodeSpecificNetworkConfig, key) {
+		if !db.IsNodeSpecificNetworkConfig(key) {
 			return true
 		}
 	}
@@ -648,7 +648,7 @@ func networkPartiallyCreated(netInfo *api.Network) bool {
 func networksPostCluster(ctx context.Context, s *state.State, projectName string, netInfo *api.Network, req api.NetworksPost, clientType clusterRequest.ClientType, netType network.Type) error {
 	// Check that no node-specific config key has been supplied in request.
 	for key := range req.Config {
-		if slices.Contains(db.NodeSpecificNetworkConfig, key) {
+		if db.IsNodeSpecificNetworkConfig(key) {
 			return fmt.Errorf("Config key %q is cluster member specific", key)
 		}
 	}
@@ -736,9 +736,7 @@ func networksPostCluster(ctx context.Context, s *state.State, projectName string
 	logger.Debug("Created network on local cluster member", logger.Ctx{"project": projectName, "network": req.Name, "config": netConfig})
 
 	// Remove this node's node specific config keys.
-	for _, key := range db.NodeSpecificNetworkConfig {
-		delete(netConfig, key)
-	}
+	netConfig = db.StripNodeSpecificNetworkConfig(netConfig)
 
 	// Notify other nodes to create the network.
 	err = notifier(func(client incus.InstanceServer) error {
@@ -987,9 +985,7 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 
 		// If no member is specified, we omit the node-specific fields.
 		if allNodes {
-			for _, key := range db.NodeSpecificNetworkConfig {
-				delete(apiNet.Config, key)
-			}
+			apiNet.Config = db.StripNodeSpecificNetworkConfig(apiNet.Config)
 		}
 	} else if osInfo != nil && int(osInfo.Flags&net.FlagLoopback) > 0 {
 		apiNet.Type = "loopback"
@@ -1370,9 +1366,7 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 	// the e-tag can be generated correctly. This is because the GET request used to populate the request
 	// will also remove node-specific keys when no target is specified.
 	if targetNode == "" && s.ServerClustered {
-		for _, key := range db.NodeSpecificNetworkConfig {
-			delete(etagConfig, key)
-		}
+		etagConfig = db.StripNodeSpecificNetworkConfig(etagConfig)
 	}
 
 	// Validate the ETag.
@@ -1392,19 +1386,27 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 	// In clustered mode, we differentiate between node specific and non-node specific config keys based on
 	// whether the user has specified a target to apply the config to.
 	if s.ServerClustered {
+		curConfig := n.Config()
+		changedConfig := make(map[string]string, len(req.Config))
+		for key, value := range req.Config {
+			if curConfig[key] == value {
+				continue
+			}
+
+			changedConfig[key] = value
+		}
+
 		if targetNode == "" {
 			// If no target is specified, then ensure only non-node-specific config keys are changed.
-			for k := range req.Config {
-				if slices.Contains(db.NodeSpecificNetworkConfig, k) {
+			for k := range changedConfig {
+				if db.IsNodeSpecificNetworkConfig(k) {
 					return response.BadRequest(fmt.Errorf("Config key %q is cluster member specific", k))
 				}
 			}
 		} else {
-			curConfig := n.Config()
-
 			// If a target is specified, then ensure only node-specific config keys are changed.
-			for k, v := range req.Config {
-				if !slices.Contains(db.NodeSpecificNetworkConfig, k) && curConfig[k] != v {
+			for k := range changedConfig {
+				if !db.IsNodeSpecificNetworkConfig(k) {
 					return response.BadRequest(fmt.Errorf("Config key %q may not be used as member-specific key", k))
 				}
 			}
@@ -1478,7 +1480,7 @@ func doNetworkUpdate(n network.Network, req api.NetworkPut, targetNode string, c
 		// node-specific network config with the submitted config to allow validation.
 		// This allows removal of non-node specific keys when they are absent from request config.
 		for k, v := range n.Config() {
-			if slices.Contains(db.NodeSpecificNetworkConfig, k) {
+			if db.IsNodeSpecificNetworkConfig(k) {
 				req.Config[k] = v
 			}
 		}

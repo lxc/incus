@@ -397,14 +397,9 @@ func (n *common) update(applyNetwork api.NetworkPut, targetNode string, clientTy
 
 			sendNetwork := applyNetwork
 			sendNetwork.Config = make(map[string]string)
-			for k, v := range applyNetwork.Config {
-				// Don't forward node specific keys (these will be merged in on recipient node).
-				if slices.Contains(db.NodeSpecificNetworkConfig, k) {
-					continue
-				}
 
-				sendNetwork.Config[k] = v
-			}
+			// Don't forward node specific keys (these will be merged in on recipient node).
+			applyNetwork.Config = db.StripNodeSpecificNetworkConfig(applyNetwork.Config)
 
 			err = notifier(func(client incus.InstanceServer) error {
 				return client.UseProject(n.project).UpdateNetwork(n.name, sendNetwork, "")
