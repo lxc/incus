@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-08-12 19:25-0400\n"
+"POT-Creation-Date: 2025-08-12 19:35-0400\n"
 "PO-Revision-Date: 2022-03-10 15:06+0000\n"
 "Last-Translator: Александр Киль <shorrey@gmail.com>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/linux-containers/"
@@ -3000,7 +3000,7 @@ msgstr "Копирование образа: %s"
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr ""
 
-#: cmd/incus/file.go:1443 cmd/incus/storage_volume.go:2468
+#: cmd/incus/file.go:1446 cmd/incus/storage_volume.go:2468
 #, fuzzy, c-format
 msgid "Failed connecting to instance SFTP: %w"
 msgstr "Копирование образа: %s"
@@ -3419,8 +3419,8 @@ msgstr ""
 
 #: cmd/incus/cluster.go:1119
 msgid ""
-"Format (csv|json|table|yaml|compact), use suffix \",noheader\" to disable "
-"headers and \",header\" to enable if demanded, e.g. csv,header"
+"Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
+"disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr ""
 
 #: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:115 cmd/incus/cluster.go:155
@@ -3438,8 +3438,8 @@ msgstr ""
 #: cmd/incus/storage_bucket.go:966 cmd/incus/storage_volume.go:1625
 #: cmd/incus/storage_volume.go:2812 cmd/incus/warning.go:98
 msgid ""
-"Format (csv|json|table|yaml|compact), use suffix \",noheader\" to disable "
-"headers and \",header\" to enable it if missing, e.g. csv,header"
+"Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
+"disable headers and \",header\" to enable it if missing, e.g. csv,header"
 msgstr ""
 
 #: cmd/incus/monitor.go:55

@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2025-08-12 19:25-0400\n"
+        "POT-Creation-Date: 2025-08-12 19:35-0400\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2313,7 +2313,7 @@ msgstr  ""
 msgid   "Failed connecting to instance SFTP for client %q: %v"
 msgstr  ""
 
-#: cmd/incus/file.go:1443 cmd/incus/storage_volume.go:2468
+#: cmd/incus/file.go:1446 cmd/incus/storage_volume.go:2468
 #, c-format
 msgid   "Failed connecting to instance SFTP: %w"
 msgstr  ""
@@ -2719,11 +2719,11 @@ msgid   "Forces a connection to the console, even if there is already an active 
 msgstr  ""
 
 #: cmd/incus/cluster.go:1119
-msgid   "Format (csv|json|table|yaml|compact), use suffix \",noheader\" to disable headers and \",header\" to enable if demanded, e.g. csv,header"
+msgid   "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr  ""
 
 #: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:115 cmd/incus/cluster.go:155 cmd/incus/cluster_group.go:475 cmd/incus/config_template.go:300 cmd/incus/config_trust.go:434 cmd/incus/config_trust.go:635 cmd/incus/image.go:1115 cmd/incus/image_alias.go:218 cmd/incus/list.go:136 cmd/incus/network.go:1135 cmd/incus/network.go:1348 cmd/incus/network_acl.go:101 cmd/incus/network_allocations.go:61 cmd/incus/network_forward.go:118 cmd/incus/network_integration.go:440 cmd/incus/network_load_balancer.go:126 cmd/incus/network_peer.go:114 cmd/incus/network_zone.go:118 cmd/incus/network_zone.go:891 cmd/incus/operation.go:142 cmd/incus/profile.go:761 cmd/incus/project.go:553 cmd/incus/project.go:1098 cmd/incus/remote.go:897 cmd/incus/snapshot.go:345 cmd/incus/storage.go:711 cmd/incus/storage_bucket.go:521 cmd/incus/storage_bucket.go:966 cmd/incus/storage_volume.go:1625 cmd/incus/storage_volume.go:2812 cmd/incus/warning.go:98
-msgid   "Format (csv|json|table|yaml|compact), use suffix \",noheader\" to disable headers and \",header\" to enable it if missing, e.g. csv,header"
+msgid   "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to disable headers and \",header\" to enable it if missing, e.g. csv,header"
 msgstr  ""
 
 #: cmd/incus/monitor.go:55
