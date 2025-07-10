@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"slices"
 	"strings"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 	"gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/v6/internal/i18n"
@@ -17,11 +18,12 @@ import (
 
 // Table list format.
 const (
-	TableFormatCSV     = "csv"
-	TableFormatJSON    = "json"
-	TableFormatTable   = "table"
-	TableFormatYAML    = "yaml"
-	TableFormatCompact = "compact"
+	TableFormatCSV      = "csv"
+	TableFormatJSON     = "json"
+	TableFormatTable    = "table"
+	TableFormatYAML     = "yaml"
+	TableFormatCompact  = "compact"
+	TableFormatMarkdown = "markdown"
 )
 
 const (
@@ -49,14 +51,31 @@ func RenderTable(w io.Writer, format string, header []string, data [][]string, r
 	switch format {
 	case TableFormatTable:
 		table := getBaseTable(w, header, data)
-		table.SetRowLine(true)
+		table.Options(tablewriter.WithRendition(tw.Rendition{
+			Settings: tw.Settings{
+				Separators: tw.Separators{
+					BetweenRows: tw.On,
+				},
+			},
+		}))
 		table.Render()
+
 	case TableFormatCompact:
 		table := getBaseTable(w, header, data)
-		table.SetColumnSeparator("")
-		table.SetHeaderLine(false)
-		table.SetBorder(false)
+		table.Options(tablewriter.WithRendition(tw.Rendition{
+			Borders: tw.BorderNone,
+			Settings: tw.Settings{
+				Lines:      tw.LinesNone,
+				Separators: tw.SeparatorsNone,
+			},
+		}))
 		table.Render()
+
+	case TableFormatMarkdown:
+		table := getBaseTable(w, header, data)
+		table.Options(tablewriter.WithRenderer(renderer.NewMarkdown()))
+		table.Render()
+
 	case TableFormatCSV:
 		w := csv.NewWriter(w)
 		if slices.Contains(options, TableOptionHeader) {
@@ -91,6 +110,7 @@ func RenderTable(w io.Writer, format string, header []string, data [][]string, r
 		}
 
 		_, _ = fmt.Fprintf(w, "%s", out)
+
 	default:
 		return fmt.Errorf(i18n.G("Invalid format %q"), format)
 	}
@@ -99,11 +119,17 @@ func RenderTable(w io.Writer, format string, header []string, data [][]string, r
 }
 
 func getBaseTable(w io.Writer, header []string, data [][]string) *tablewriter.Table {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetAutoWrapText(false)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetHeader(header)
-	table.AppendBulk(data)
+	table := tablewriter.NewTable(
+		w,
+		tablewriter.WithRowAlignment(tw.AlignLeft),
+		tablewriter.WithRowAutoWrap(tw.WrapNone),
+		tablewriter.WithHeaderAutoFormat(tw.Off),
+		tablewriter.WithRendition(tw.Rendition{
+			Symbols: tw.NewSymbols(tw.StyleASCII),
+		}),
+	)
+	table.Header(header)
+	table.Bulk(data)
 	return table
 }
 
@@ -134,7 +160,7 @@ func ValidateFlagFormatForListOutput(value string) error {
 	}
 
 	switch format {
-	case "csv", "json", "table", "yaml", "compact":
+	case TableFormatCSV, TableFormatJSON, TableFormatTable, TableFormatYAML, TableFormatCompact, TableFormatMarkdown:
 	default:
 		return fmt.Errorf(`Invalid value %q for flag "--format"`, format)
 	}
