@@ -20,7 +20,7 @@ func (g *Gretap) Add() error {
 		return err
 	}
 
-	return netlink.LinkAdd(&netlink.Gretap{
+	return g.addLink(&netlink.Gretap{
 		LinkAttrs: attrs,
 		Local:     g.Local,
 		Remote:    g.Remote,

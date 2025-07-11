@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/vishvananda/netlink"
-	"golang.org/x/sys/unix"
 )
 
 // Link represents base arguments for link device.
@@ -69,11 +68,22 @@ func (l *Link) netlinkAttrs() (netlink.LinkAttrs, error) {
 		linkAttrs.Flags |= net.FlagUp
 	}
 
-	if l.AllMulticast {
-		linkAttrs.Flags |= unix.IFF_ALLMULTI
+	return linkAttrs, nil
+}
+
+func (l *Link) addLink(link netlink.Link) error {
+	err := netlink.LinkAdd(link)
+	if err != nil {
+		return err
 	}
 
-	return linkAttrs, nil
+	// ALLMULTI can't be set on create
+	err = l.SetAllMulticast(l.AllMulticast)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // LinkByName returns a Link from a device name.

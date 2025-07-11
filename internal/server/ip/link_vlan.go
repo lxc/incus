@@ -26,7 +26,7 @@ func (vlan *Vlan) Add() error {
 		return fmt.Errorf("Invalid VLAN ID: %w", err)
 	}
 
-	return netlink.LinkAdd(&netlink.Vlan{
+	return vlan.addLink(&netlink.Vlan{
 		LinkAttrs: attrs,
 		VlanId:    id,
 		Gvrp:      &vlan.Gvrp,

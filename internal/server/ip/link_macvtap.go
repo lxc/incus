@@ -16,7 +16,7 @@ func (macvtap *Macvtap) Add() error {
 		return err
 	}
 
-	return netlink.LinkAdd(&netlink.Macvtap{
+	return macvtap.addLink(&netlink.Macvtap{
 		Macvlan: netlink.Macvlan{
 			LinkAttrs: attrs,
 			Mode:      macvtap.netlinkMode(),

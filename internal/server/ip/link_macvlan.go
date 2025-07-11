@@ -36,7 +36,7 @@ func (macvlan *Macvlan) Add() error {
 		return err
 	}
 
-	return netlink.LinkAdd(&netlink.Macvlan{
+	return macvlan.addLink(&netlink.Macvlan{
 		LinkAttrs: attrs,
 		Mode:      macvlan.netlinkMode(),
 	})
