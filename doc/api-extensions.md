@@ -2838,3 +2838,7 @@ on schedule.
 This adds tracking of CPU address sizes in the resources API.
 The main use of this is within clusters to calculate a cluster-wide
 maximum memory amount for hotplugging into virtual machines.
+
+## `storage_driver_truenas`
+
+This adds a TrueNAS storage driver.

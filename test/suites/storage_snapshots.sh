@@ -19,10 +19,13 @@ test_storage_volume_snapshots() {
   storage_volume="${storage_pool}-vol"
 
   if [ "${incus_backend}" = "linstor" ]; then
-      incus storage create "$storage_pool" "$incus_backend" linstor.resource_group.place_count=1
+    incus storage create "$storage_pool" "$incus_backend" linstor.resource_group.place_count=1
+  elif [ "${incus_backend}" = "truenas" ]; then
+    incus storage create "$storage_pool" "$incus_backend" "$(truenas_source)/" "$(truenas_config)" "$(truenas_config_file)" "$(truenas_api_key)"
   else
-      incus storage create "$storage_pool" "$incus_backend"
+    incus storage create "$storage_pool" "$incus_backend"
   fi
+
   incus storage volume create "${storage_pool}" "${storage_volume}"
   incus launch testimage c1 -s "${storage_pool}"
   incus storage volume attach "${storage_pool}" "${storage_volume}" c1 /mnt
