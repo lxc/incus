@@ -32,5 +32,5 @@ func (veth *Veth) Add() error {
 	link.PeerTxQLen = peerAttrs.TxQLen
 	link.PeerHardwareAddr = peerAttrs.HardwareAddr
 
-	return netlink.LinkAdd(link)
+	return veth.addLink(link)
 }
