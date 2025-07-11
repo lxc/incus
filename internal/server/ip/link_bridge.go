@@ -16,7 +16,7 @@ func (b *Bridge) Add() error {
 		return err
 	}
 
-	return netlink.LinkAdd(&netlink.Bridge{
+	return b.addLink(&netlink.Bridge{
 		LinkAttrs: attrs,
 	})
 }

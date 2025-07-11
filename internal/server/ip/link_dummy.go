@@ -16,7 +16,7 @@ func (d *Dummy) Add() error {
 		return err
 	}
 
-	return netlink.LinkAdd(&netlink.Dummy{
+	return d.addLink(&netlink.Dummy{
 		LinkAttrs: attrs,
 	})
 }

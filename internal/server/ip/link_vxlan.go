@@ -57,7 +57,7 @@ func (vxlan *Vxlan) Add() error {
 		group = vxlan.Remote
 	}
 
-	return netlink.LinkAdd(&netlink.Vxlan{
+	return vxlan.addLink(&netlink.Vxlan{
 		LinkAttrs:    attrs,
 		VxlanId:      vxlan.VxlanID,
 		VtepDevIndex: devIndex,
