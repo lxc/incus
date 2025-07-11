@@ -50,7 +50,11 @@ func RenderTable(w io.Writer, format string, header []string, data [][]string, r
 
 	switch format {
 	case TableFormatTable:
-		table := getBaseTable(w, header, data)
+		table, err := getBaseTable(w, header, data)
+		if err != nil {
+			return err
+		}
+
 		table.Options(tablewriter.WithRendition(tw.Rendition{
 			Settings: tw.Settings{
 				Separators: tw.Separators{
@@ -58,10 +62,18 @@ func RenderTable(w io.Writer, format string, header []string, data [][]string, r
 				},
 			},
 		}))
-		table.Render()
+
+		err = table.Render()
+		if err != nil {
+			return err
+		}
 
 	case TableFormatCompact:
-		table := getBaseTable(w, header, data)
+		table, err := getBaseTable(w, header, data)
+		if err != nil {
+			return err
+		}
+
 		table.Options(tablewriter.WithRendition(tw.Rendition{
 			Borders: tw.BorderNone,
 			Settings: tw.Settings{
@@ -69,12 +81,24 @@ func RenderTable(w io.Writer, format string, header []string, data [][]string, r
 				Separators: tw.SeparatorsNone,
 			},
 		}))
-		table.Render()
+
+		err = table.Render()
+		if err != nil {
+			return err
+		}
 
 	case TableFormatMarkdown:
-		table := getBaseTable(w, header, data)
+		table, err := getBaseTable(w, header, data)
+		if err != nil {
+			return err
+		}
+
 		table.Options(tablewriter.WithRenderer(renderer.NewMarkdown()))
-		table.Render()
+
+		err = table.Render()
+		if err != nil {
+			return err
+		}
 
 	case TableFormatCSV:
 		w := csv.NewWriter(w)
@@ -118,7 +142,7 @@ func RenderTable(w io.Writer, format string, header []string, data [][]string, r
 	return nil
 }
 
-func getBaseTable(w io.Writer, header []string, data [][]string) *tablewriter.Table {
+func getBaseTable(w io.Writer, header []string, data [][]string) (*tablewriter.Table, error) {
 	table := tablewriter.NewTable(
 		w,
 		tablewriter.WithRowAlignment(tw.AlignLeft),
@@ -129,8 +153,13 @@ func getBaseTable(w io.Writer, header []string, data [][]string) *tablewriter.Ta
 		}),
 	)
 	table.Header(header)
-	table.Bulk(data)
-	return table
+
+	err := table.Bulk(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return table, nil
 }
 
 // Column represents a single column in a table.
