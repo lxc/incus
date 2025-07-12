@@ -471,8 +471,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 			}
 
 			// Parse the volume name and path.
-			volFields := strings.SplitN(d.config["source"], "/", 2)
-			volName := volFields[0]
+			volName, _ := internalInstance.SplitVolumeSource(d.config["source"])
 
 			// GetStoragePoolVolume returns a volume with an empty Location field for remote drivers.
 			err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -542,11 +541,9 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 				}
 
 				// Parse the volume name and path.
-				volFields := strings.SplitN(d.config["source"], "/", 2)
+				volName, volPath := internalInstance.SplitVolumeSource(d.config["source"])
 
 				if dbVolume == nil {
-					volName := volFields[0]
-
 					// GetStoragePoolVolume returns a volume with an empty Location field for remote drivers.
 					err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 						dbVolume, err = tx.GetStoragePoolVolume(ctx, d.pool.ID(), storageProjectName, db.StoragePoolVolumeTypeCustom, volName, true)
@@ -582,7 +579,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 						return errors.New("Custom block volumes cannot have a path defined")
 					}
 
-					if len(volFields) > 1 {
+					if volPath != "" {
 						return errors.New("Custom block volume snapshots cannot be used directly")
 					}
 
@@ -771,8 +768,7 @@ func (d *disk) Register() error {
 		}
 
 		// Parse the volume name and path.
-		volFields := strings.SplitN(d.config["source"], "/", 2)
-		volName := volFields[0]
+		volName, _ := internalInstance.SplitVolumeSource(d.config["source"])
 
 		// Try to mount the volume that should already be mounted to reinitialize the ref counter.
 		_, err = pool.MountCustomVolume(storageProjectName, volName, nil)
@@ -901,8 +897,7 @@ func (d *disk) startContainer() (*deviceConfig.RunConfig, error) {
 			}
 
 			// Parse the volume name and path.
-			volFields := strings.SplitN(d.config["source"], "/", 2)
-			volName := volFields[0]
+			volName, _ := internalInstance.SplitVolumeSource(d.config["source"])
 
 			var dbVolume *db.StorageVolume
 			err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -1175,8 +1170,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 				}
 
 				// Parse the volume name and path.
-				volFields := strings.SplitN(d.config["source"], "/", 2)
-				volName := volFields[0]
+				volName, _ := internalInstance.SplitVolumeSource(d.config["source"])
 
 				// GetStoragePoolVolume returns a volume with an empty Location field for remote drivers.
 				var dbVolume *db.StorageVolume
@@ -1696,8 +1690,7 @@ func (d *disk) mountPoolVolume() (func(), string, *storagePools.MountInfo, error
 	}
 
 	// Parse the volume name and path.
-	volFields := strings.SplitN(d.config["source"], "/", 2)
-	volName := volFields[0]
+	volName, _ := internalInstance.SplitVolumeSource(d.config["source"])
 
 	// Only custom volumes can be attached currently.
 	storageProjectName, err := project.StorageVolumeProject(d.state.DB.Cluster, d.inst.Project().Name, db.StoragePoolVolumeTypeCustom)
@@ -1840,33 +1833,31 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 		}
 	} else if d.config["source"] != "" {
 		// Handle mounting a sub-path.
-		volFields := strings.SplitN(d.config["source"], "/", 2)
-		if len(volFields) == 2 {
-			subPath := volFields[1]
-
+		_, volPath := internalInstance.SplitVolumeSource(d.config["source"])
+		if volPath != "" {
 			// Open file handle to parent for use with openat2 later.
 			// Has to use unix.O_PATH to support directories and sockets.
-			volPath, err := os.OpenFile(srcPath, unix.O_PATH, 0)
+			srcVolPath, err := os.OpenFile(srcPath, unix.O_PATH, 0)
 			if err != nil {
 				return nil, "", false, fmt.Errorf("Failed opening volume path %q: %w", srcPath, err)
 			}
 
-			defer func() { _ = volPath.Close() }()
+			defer func() { _ = srcVolPath.Close() }()
 
 			// Use openat2 to prevent resolving to a mount path outside of the volume.
-			fd, err := unix.Openat2(int(volPath.Fd()), subPath, &unix.OpenHow{
+			fd, err := unix.Openat2(int(srcVolPath.Fd()), volPath, &unix.OpenHow{
 				Flags:   unix.O_PATH | unix.O_CLOEXEC,
 				Resolve: unix.RESOLVE_BENEATH | unix.RESOLVE_NO_MAGICLINKS,
 			})
 			if err != nil {
 				if errors.Is(err, unix.EXDEV) {
-					return nil, "", false, fmt.Errorf("Volume sub-path %q resolves outside of the volume", subPath)
+					return nil, "", false, fmt.Errorf("Volume sub-path %q resolves outside of the volume", volPath)
 				}
 
-				return nil, "", false, fmt.Errorf("Failed opening volume sub-path %q: %w", subPath, err)
+				return nil, "", false, fmt.Errorf("Failed opening volume sub-path %q: %w", volPath, err)
 			}
 
-			srcPathFd := os.NewFile(uintptr(fd), subPath)
+			srcPathFd := os.NewFile(uintptr(fd), volPath)
 			defer func() { _ = srcPathFd.Close() }()
 
 			srcPath = fmt.Sprintf("/proc/self/fd/%d", srcPathFd.Fd())
@@ -2193,8 +2184,7 @@ func (d *disk) postStop() error {
 		}
 
 		// Parse the volume name and path.
-		volFields := strings.SplitN(d.config["source"], "/", 2)
-		volName := volFields[0]
+		volName, _ := internalInstance.SplitVolumeSource(d.config["source"])
 
 		_, err = d.pool.UnmountCustomVolume(storageProjectName, volName, nil)
 		if err != nil && !errors.Is(err, storageDrivers.ErrInUse) {
