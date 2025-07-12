@@ -153,7 +153,7 @@ func getBaseTable(w io.Writer, header []string, data [][]string) (*tablewriter.T
 		}),
 	)
 	table.Header(header)
-	err := table.Append(data)
+	err := table.Bulk(data)
 	return table, err
 }
 
