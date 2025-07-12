@@ -2,6 +2,7 @@ package instance
 
 import (
 	"errors"
+	"strings"
 )
 
 // IsRootDiskDevice returns true if the given device representation is configured as root disk for
@@ -43,4 +44,14 @@ func GetRootDiskDevice(devices map[string]map[string]string) (string, map[string
 	}
 
 	return "", nil, ErrNoRootDisk
+}
+
+// SplitVolumeSource splits the volume name and any provided sub-path.
+func SplitVolumeSource(source string) (string, string) {
+	volFields := strings.SplitN(source, "/", 2)
+	if len(volFields) == 1 {
+		return volFields[0], ""
+	}
+
+	return volFields[0], volFields[1]
 }
