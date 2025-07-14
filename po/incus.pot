@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2025-07-14 10:53+0000\n"
+        "POT-Creation-Date: 2025-07-14 11:06-0400\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -5802,7 +5802,7 @@ msgstr  ""
 msgid   "Remote %s already exists"
 msgstr  ""
 
-#: cmd/incus/project.go:1060 cmd/incus/project.go:1232 cmd/incus/remote.go:1080 cmd/incus/remote.go:1161 cmd/incus/remote.go:1226 cmd/incus/remote.go:1274
+#: cmd/incus/project.go:1060 cmd/incus/remote.go:1080 cmd/incus/remote.go:1161 cmd/incus/remote.go:1226 cmd/incus/remote.go:1274
 #, c-format
 msgid   "Remote %s doesn't exist"
 msgstr  ""
