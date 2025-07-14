@@ -1226,17 +1226,26 @@ func (c *cmdProjectGetCurrent) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Show the current project
-	remote, ok := conf.Remotes[conf.DefaultRemote]
-	if !ok {
-		return fmt.Errorf(i18n.G("Remote %s doesn't exist"), conf.DefaultRemote)
+	// Parse remote
+	remote := conf.DefaultRemote
+	if len(args) > 0 {
+		remote = args[0]
 	}
 
-	if remote.Project == "" {
-		fmt.Println(api.ProjectDefaultName)
-	} else {
-		fmt.Println(remote.Project)
+	resources, err := c.global.parseServers(remote)
+	if err != nil {
+		return err
 	}
+
+	resource := resources[0]
+
+	serverInfo, _, err := resource.server.GetServer()
+	if err != nil {
+		return err
+	}
+
+	// Print the project name.
+	fmt.Println(serverInfo.Environment.Project)
 
 	return nil
 }
