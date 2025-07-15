@@ -5021,6 +5021,13 @@ This value is required by some providers.
 
 ```
 
+```{config:option} oidc.redirect_uri server-oidc
+:scope: "global"
+:shortdesc: "OpenID redirect URI, defaults to https://<host>/oidc/callback"
+:type: "string"
+
+```
+
 <!-- config group server-oidc end -->
 <!-- config group server-openfga start -->
 ```{config:option} openfga.api.token server-openfga

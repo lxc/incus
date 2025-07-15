@@ -956,6 +956,14 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: OpenID Connect claim to use as the username
 	"oidc.claim": {},
 
+	// gendoc:generate(entity=server, group=oidc, key=oidc.redirect_uri)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: OpenID redirect URI, defaults to https://<host>/oidc/callback
+	"oidc.redirect_uri": {},
+
 	// OVN networking global keys.
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=network.ovn.integration_bridge)

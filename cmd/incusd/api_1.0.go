@@ -231,7 +231,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 	// Get the authentication methods.
 	authMethods := []string{api.AuthenticationMethodTLS}
 
-	oidcIssuer, oidcClientID, _, _, _ := s.GlobalConfig.OIDCServer()
+	oidcIssuer, oidcClientID, _, _, _, _ := s.GlobalConfig.OIDCServer()
 	if oidcIssuer != "" && oidcClientID != "" {
 		authMethods = append(authMethods, api.AuthenticationMethodOIDC)
 	}
@@ -838,7 +838,7 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		case "network.ovn.northbound_connection", "network.ovn.ca_cert", "network.ovn.client_cert", "network.ovn.client_key":
 			ovnChanged = true
 
-		case "oidc.issuer", "oidc.client.id", "oidc.audience", "oidc.claim":
+		case "oidc.issuer", "oidc.client.id", "oidc.audience", "oidc.claim", "oidc.redirect_uri":
 			oidcChanged = true
 
 		case "openfga.api.url", "openfga.api.token", "openfga.store.id":
@@ -971,13 +971,13 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		}
 	}
 	if oidcChanged {
-		oidcIssuer, oidcClientID, oidcScope, oidcAudience, oidcClaim := clusterConfig.OIDCServer()
+		oidcIssuer, oidcClientID, oidcScope, oidcAudience, oidcClaim, oidcRedirectURI := clusterConfig.OIDCServer()
 
 		if oidcIssuer == "" || oidcClientID == "" {
 			d.oidcVerifier = nil
 		} else {
 			var err error
-			d.oidcVerifier, err = oidc.NewVerifier(oidcIssuer, oidcClientID, oidcScope, oidcAudience, oidcClaim)
+			d.oidcVerifier, err = oidc.NewVerifier(oidcIssuer, oidcClientID, oidcScope, oidcAudience, oidcClaim, oidcRedirectURI)
 			if err != nil {
 				return fmt.Errorf("Failed creating verifier: %w", err)
 			}

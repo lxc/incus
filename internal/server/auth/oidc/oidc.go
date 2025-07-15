@@ -23,12 +23,13 @@ import (
 type Verifier struct {
 	accessTokenVerifier *op.AccessTokenVerifier
 
-	clientID  string
-	issuer    string
-	scopes    []string
-	audience  string
-	claim     string
-	cookieKey []byte
+	clientID    string
+	issuer      string
+	scopes      []string
+	audience    string
+	claim       string
+	cookieKey   []byte
+	redirectURI string
 }
 
 // AuthError represents an authentication error.
@@ -331,7 +332,12 @@ func (o *Verifier) getProvider(r *http.Request) (rp.RelyingParty, error) {
 		rp.WithPKCE(cookieHandler),
 	}
 
-	provider, err := rp.NewRelyingPartyOIDC(context.TODO(), o.issuer, o.clientID, "", fmt.Sprintf("https://%s/oidc/callback", r.Host), o.scopes, options...)
+	redirectURI := o.redirectURI
+	if redirectURI == "" {
+		redirectURI = fmt.Sprintf("https://%s/oidc/callback", r.Host)
+	}
+
+	provider, err := rp.NewRelyingPartyOIDC(context.TODO(), o.issuer, o.clientID, "", redirectURI, r.Host, o.scopes, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -352,14 +358,19 @@ func getAccessTokenVerifier(issuer string) (*op.AccessTokenVerifier, error) {
 }
 
 // NewVerifier returns a Verifier.
-func NewVerifier(issuer string, clientid string, scope string, audience string, claim string) (*Verifier, error) {
+func NewVerifier(issuer string, clientid string, scope string, audience string, claim string, redirectURI ...string) (*Verifier, error) {
 	cookieKey, err := uuid.New().MarshalBinary()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create UUID: %w", err)
 	}
 
+	var redirectURIValue string
+	if len(redirectURI) > 0 {
+		redirectURIValue = redirectURI[0]
+	}
+
 	scopes := util.SplitNTrimSpace(scope, ",", -1, false)
-	verifier := &Verifier{issuer: issuer, clientID: clientid, scopes: scopes, audience: audience, cookieKey: cookieKey, claim: claim}
+	verifier := &Verifier{issuer: issuer, clientID: clientid, scopes: scopes, audience: audience, cookieKey: cookieKey, claim: claim, redirectURI: redirectURIValue}
 	verifier.accessTokenVerifier, _ = getAccessTokenVerifier(issuer)
 
 	return verifier, nil

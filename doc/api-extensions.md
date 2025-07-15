@@ -2838,3 +2838,7 @@ on schedule.
 This adds tracking of CPU address sizes in the resources API.
 The main use of this is within clusters to calculate a cluster-wide
 maximum memory amount for hotplugging into virtual machines.
+
+## `oidc_redirect_uri`
+
+This introduces a new `oidc.redirect_uri` server configuration key which can be used to specify the OpenID Connect redirect URI. If not set, it assumes https://<host>/oidc/callback.

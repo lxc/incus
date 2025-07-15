@@ -5685,6 +5685,14 @@
 							"shortdesc": "Comma separated list of OpenID Connect scopes",
 							"type": "string"
 						}
+					},
+					{
+						"oidc.redirect_uri": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OpenID redirect URI, defaults to https://<host>/oidc/callback",
+							"type": "string"
+						}
 					}
 				]
 			},
