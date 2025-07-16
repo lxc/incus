@@ -1250,22 +1250,6 @@ func (m *Monitor) BlockJobComplete(deviceNodeName string) error {
 	return nil
 }
 
-// Eject ejects a removable drive.
-func (m *Monitor) Eject(id string) error {
-	var args struct {
-		ID string `json:"id"`
-	}
-
-	args.ID = id
-
-	err := m.Run("eject", args, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // UpdateBlockSize updates the size of a disk.
 func (m *Monitor) UpdateBlockSize(id string) error {
 	var args struct {

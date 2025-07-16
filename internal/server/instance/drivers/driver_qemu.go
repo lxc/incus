@@ -359,7 +359,7 @@ type qemu struct {
 
 // qmpConnect connects to the QMP monitor.
 func (d *qemu) qmpConnect() (*qmp.Monitor, error) {
-	return qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	return qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath(), d.detachDisk)
 }
 
 // getAgentClient returns the current agent client handle.
@@ -5827,6 +5827,56 @@ func (d *qemu) Rename(newName string, applyTemplateTrigger bool) error {
 	return nil
 }
 
+// Detach a disk from the instance.
+func (d *qemu) detachDisk(name string) error {
+	diskName := strings.TrimPrefix(name, qemuDeviceIDPrefix)
+	var id int
+	var devices map[string]dbCluster.Device
+	err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		object, err := dbCluster.GetInstance(ctx, tx.Tx(), d.project.Name, d.name)
+		if err != nil {
+			return err
+		}
+
+		id = object.ID
+		devices, err = dbCluster.GetInstanceDevices(ctx, tx.Tx(), id)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	disk, ok := devices[diskName]
+	if !ok {
+		return fmt.Errorf("Device %s not found", diskName)
+	}
+
+	disk.Config["attached"] = "false"
+
+	config, ok := d.expandedDevices[diskName]
+	if !ok {
+		return fmt.Errorf("Couldn't find device %s", diskName)
+	}
+
+	dev, err := d.deviceLoad(d, diskName, config)
+	if err != nil {
+		return err
+	}
+
+	err = d.deviceStop(dev, true, "")
+	if err != nil {
+		return err
+	}
+
+	return d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return dbCluster.UpdateInstanceDevices(ctx, tx.Tx(), int64(id), devices)
+	})
+}
+
 // Update the instance config.
 func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 	// Setup a new operation.
@@ -9416,7 +9466,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 
 		// Try and connect to QMP socket until cancelled.
 		for {
-			monitor, err = qmp.Connect(monitorPath.Name(), qemuSerialChardevName, nil, "")
+			monitor, err = qmp.Connect(monitorPath.Name(), qemuSerialChardevName, nil, "", d.detachDisk)
 			// QMP successfully connected or we have been cancelled.
 			if err == nil || ctx.Err() != nil {
 				break
