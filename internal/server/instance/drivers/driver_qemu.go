@@ -8828,6 +8828,29 @@ func (d *qemu) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 	// Handle disk reconfiguration.
 	for _, mount := range runConf.Mounts {
 		if mount.Limits == nil && mount.Size == 0 {
+			// This special case allows handling live attach/detach logic.
+			config, ok := d.expandedDevices[mount.DevName]
+			if !ok {
+				return fmt.Errorf("Couldn't find device %q", mount.DevName)
+			}
+
+			dev, err := d.deviceLoad(d, mount.DevName, config)
+			if err != nil {
+				return err
+			}
+
+			if mount.Attached {
+				_, err = d.deviceStart(dev, true)
+				if err != nil {
+					return err
+				}
+			} else {
+				err = d.deviceStop(dev, true, "")
+				if err != nil {
+					return err
+				}
+			}
+
 			continue
 		}
 
