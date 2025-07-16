@@ -711,7 +711,11 @@ func (m *Monitor) AddObject(args map[string]any) error {
 }
 
 // AddBlockDevice adds a block device.
-func (m *Monitor) AddBlockDevice(blockDev map[string]any, device map[string]any) error {
+func (m *Monitor) AddBlockDevice(blockDev map[string]any, device map[string]any, attached bool) error {
+	if !attached {
+		return nil
+	}
+
 	reverter := revert.New()
 	defer reverter.Fail()
 
