@@ -337,7 +337,7 @@ func (o *Verifier) getProvider(r *http.Request) (rp.RelyingParty, error) {
 		redirectURI = fmt.Sprintf("https://%s/oidc/callback", r.Host)
 	}
 
-	provider, err := rp.NewRelyingPartyOIDC(context.TODO(), o.issuer, o.clientID, "", redirectURI, r.Host, o.scopes, options...)
+	provider, err := rp.NewRelyingPartyOIDC(context.TODO(), o.issuer, o.clientID, "", redirectURI, o.scopes, options...)
 	if err != nil {
 		return nil, err
 	}
