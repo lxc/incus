@@ -418,7 +418,12 @@ func findContainerForPid(pid int32, s *state.State) (instance.Container, error) 
 			return nil, err
 		}
 
-		if strings.HasPrefix(string(cmdline), "[lxc monitor]") {
+		status, err := os.ReadFile(fmt.Sprintf("/proc/%d/status", pid))
+		if err != nil {
+			return nil, err
+		}
+
+		if strings.HasPrefix(string(cmdline), "[lxc monitor]") && strings.Contains(string(status), fmt.Sprintf("NSpid:	%d\n", pid)) {
 			// container names can't have spaces
 			parts := strings.Split(string(cmdline), " ")
 			name := strings.TrimSuffix(parts[len(parts)-1], "\x00")
@@ -440,11 +445,6 @@ func findContainerForPid(pid int32, s *state.State) (instance.Container, error) 
 			}
 
 			return inst.(instance.Container), nil
-		}
-
-		status, err := os.ReadFile(fmt.Sprintf("/proc/%d/status", pid))
-		if err != nil {
-			return nil, err
 		}
 
 		re, err := regexp.Compile(`^PPid:\s+([0-9]+)$`)
