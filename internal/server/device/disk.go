@@ -1443,9 +1443,10 @@ func (d *disk) postStart() error {
 
 // Update applies configuration changes to a started device.
 func (d *disk) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
+	expandedDevices := d.inst.ExpandedDevices()
+
 	if internalInstance.IsRootDiskDevice(d.config) {
 		// Make sure we have a valid root disk device (and only one).
-		expandedDevices := d.inst.ExpandedDevices()
 		newRootDiskDeviceKey, _, err := internalInstance.GetRootDiskDevice(expandedDevices.CloneNative())
 		if err != nil {
 			return fmt.Errorf("Detect root disk device: %w", err)
@@ -1519,7 +1520,7 @@ func (d *disk) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		}
 	}
 
-	// Only apply IO limits if instance is running.
+	// Only apply IO limits and attach/detach logic if instance is running.
 	if isRunning {
 		runConf := deviceConfig.RunConfig{}
 
@@ -1550,6 +1551,20 @@ func (d *disk) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 					DevName: d.name,
 					Limits:  diskLimits,
 				},
+			}
+
+			oldAttached := util.IsTrueOrEmpty(oldDevices[d.name]["attached"])
+			newAttached := util.IsTrueOrEmpty(expandedDevices[d.name]["attached"])
+			if !oldAttached && newAttached {
+				runConf.Mounts = append(runConf.Mounts, deviceConfig.MountEntryItem{
+					DevName:  d.name,
+					Attached: true,
+				})
+			} else if oldAttached && !newAttached {
+				runConf.Mounts = append(runConf.Mounts, deviceConfig.MountEntryItem{
+					DevName:  d.name,
+					Attached: false,
+				})
 			}
 		}
 
