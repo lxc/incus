@@ -637,6 +637,11 @@ func instanceExecOutputDelete(d *Daemon, r *http.Request) response.Response {
 }
 
 func validLogFileName(fname string) bool {
+	// Make sure that there's nothing fishy about the provided file name.
+	if filepath.Base(fname) != fname {
+		return false
+	}
+
 	/* Let's just require that the paths be relative, so that we don't have
 	 * to deal with any escaping or whatever.
 	 */
