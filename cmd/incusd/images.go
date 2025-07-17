@@ -3170,6 +3170,12 @@ func imageGet(d *Daemon, r *http.Request) response.Response {
 		return nil
 	})
 	if err != nil {
+		// As this is a publicly available function, override any 404 to a standard reply.
+		// This avoids leaking information about the image or project existence.
+		if response.IsNotFoundError(err) {
+			return response.NotFound(fmt.Errorf("Image %q not found", fingerprint))
+		}
+
 		return response.SmartError(err)
 	}
 
@@ -3190,7 +3196,7 @@ func imageGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if !info.Public && public && op == nil {
-		return response.NotFound(fmt.Errorf("Image %q not found", info.Fingerprint))
+		return response.NotFound(fmt.Errorf("Image %q not found", fingerprint))
 	}
 
 	etag := []any{info.Public, info.AutoUpdate, info.Properties}
@@ -4186,6 +4192,12 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 		return err
 	})
 	if err != nil {
+		// As this is a publicly available function, override any 404 to a standard reply.
+		// This avoids leaking information about the image or project existence.
+		if response.IsNotFoundError(err) {
+			return response.NotFound(fmt.Errorf("Image %q not found", fingerprint))
+		}
+
 		return response.SmartError(err)
 	}
 
@@ -4217,7 +4229,7 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if !imgInfo.Public && public && op == nil {
-			return response.NotFound(fmt.Errorf("Image %q not found", imgInfo.Fingerprint))
+			return response.NotFound(fmt.Errorf("Image %q not found", fingerprint))
 		}
 	}
 
