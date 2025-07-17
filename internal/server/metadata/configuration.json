@@ -52,6 +52,15 @@
 			"disk": {
 				"keys": [
 					{
+						"attached": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Only for VMs: Whether the disk is attached or ejected",
+							"type": "bool"
+						}
+					},
+					{
 						"boot.priority": {
 							"longdesc": "",
 							"required": "no",
