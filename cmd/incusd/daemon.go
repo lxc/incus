@@ -766,6 +766,12 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 				return response.Forbidden(errors.New("You must be authenticated"))
 			}
 
+			// Protect against CSRF when using UI with browser that supports Fetch metadata.
+			// Deny Sec-Fetch-Site when set to cross-origin or same-site.
+			if slices.Contains([]string{"cross-site", "same-site"}, r.Header.Get("Sec-Fetch-Site")) {
+				return response.ErrorResponse(http.StatusForbidden, "Forbidden Sec-Fetch-Site header value")
+			}
+
 			// Call the access handler if there is one.
 			if action.AccessHandler != nil {
 				resp := action.AccessHandler(d, r)
