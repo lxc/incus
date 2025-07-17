@@ -1786,17 +1786,19 @@ func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectN
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func imagesGet(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	// Get the parameters.
 	projectName := request.ProjectParam(r)
 	allProjects := util.IsTrue(r.FormValue("all-projects"))
 	filterStr := r.FormValue("filter")
 
-	// ProjectParam returns default if not set
+	// Make sure that we're not dealing with conflicting parameters.
 	if allProjects && projectName != api.ProjectDefaultName {
 		return response.BadRequest(errors.New("Cannot specify a project when requesting all projects"))
 	}
 
-	s := d.State()
-
+	// Check if the user is authenticated and what kind of access they may have.
 	hasPermission, authorizationErr := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeImage)
 	if authorizationErr != nil && !api.StatusErrorCheck(authorizationErr, http.StatusForbidden) {
 		return response.SmartError(authorizationErr)
@@ -1804,11 +1806,18 @@ func imagesGet(d *Daemon, r *http.Request) response.Response {
 
 	public := d.checkTrustedClient(r) != nil || authorizationErr != nil
 
+	// For unauthenticated/public requests, only the default profile may be queried.
+	if public && (projectName != api.ProjectDefaultName || allProjects) {
+		return response.BadRequest(errors.New("Unauthenticated image queries are only possible against the default project"))
+	}
+
+	// Process the filters.
 	clauses, err := filter.Parse(filterStr, filter.QueryOperatorSet())
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Invalid filter: %w", err))
 	}
 
+	// Get the image list.
 	var result any
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		result, err = doImagesGet(ctx, tx, localUtil.IsRecursionRequest(r), projectName, public, clauses, hasPermission, allProjects)
