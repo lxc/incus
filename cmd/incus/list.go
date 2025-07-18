@@ -541,13 +541,6 @@ func (c *cmdList) parseColumns(clustered bool) ([]column, bool, error) {
 		columnsShorthandMap['L'] = column{
 			i18n.G("LOCATION"), c.locationColumnData, false, false,
 		}
-	} else {
-		if c.flagColumns != defaultColumns && c.flagColumns != defaultColumnsAllProjects {
-			if strings.ContainsAny(c.flagColumns, "L") {
-				return nil, false, errors.New(i18n.G("Can't specify column L when not clustered"))
-			}
-		}
-		c.flagColumns = strings.ReplaceAll(c.flagColumns, "L", "")
 	}
 
 	columnList := strings.Split(c.flagColumns, ",")
@@ -562,6 +555,15 @@ func (c *cmdList) parseColumns(clustered bool) ([]column, bool, error) {
 		// Config keys always contain a period, parse anything without a
 		// period as a series of shorthand runes.
 		if !strings.Contains(columnEntry, ".") {
+			if !clustered {
+				if columnEntry != defaultColumns && columnEntry != defaultColumnsAllProjects {
+					if strings.ContainsAny(columnEntry, "L") {
+						return nil, false, errors.New(i18n.G("Can't specify column L when not clustered"))
+					}
+				}
+				columnEntry = strings.ReplaceAll(columnEntry, "L", "")
+			}
+
 			for _, columnRune := range columnEntry {
 				column, ok := columnsShorthandMap[columnRune]
 				if !ok {
