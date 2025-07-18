@@ -359,7 +359,7 @@ type qemu struct {
 
 // qmpConnect connects to the QMP monitor.
 func (d *qemu) qmpConnect() (*qmp.Monitor, error) {
-	return qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath(), d.detachDisk)
+	return qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath(), qemuDetachDisk(d.state, d.id))
 }
 
 // getAgentClient returns the current agent client handle.
@@ -5825,6 +5825,23 @@ func (d *qemu) Rename(newName string, applyTemplateTrigger bool) error {
 	reverter.Success()
 
 	return nil
+}
+
+// Indirection to detachDisk.
+func qemuDetachDisk(s *state.State, id int) func(string) error {
+	return func(name string) error {
+		inst, err := instance.LoadByID(s, id)
+		if err != nil {
+			return err
+		}
+
+		qemuInst, ok := inst.(*qemu)
+		if !ok {
+			return fmt.Errorf("Couldn't assert QEMU object from interface")
+		}
+
+		return qemuInst.detachDisk(name)
+	}
 }
 
 // Detach a disk from the instance.
