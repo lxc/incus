@@ -70,8 +70,16 @@ func genericVFSRenameVolume(d Driver, vol Volume, newVolName string, op *operati
 	reverter := revert.New()
 	defer reverter.Fail()
 
+	volName := vol.name
+
+	// Add a .iso suffix to ISO volumes.
+	if vol.volType == VolumeTypeCustom && vol.contentType == ContentTypeISO {
+		volName = volName + genericISOVolumeSuffix
+		newVolName = newVolName + genericISOVolumeSuffix
+	}
+
 	// Rename the volume itself.
-	srcVolumePath := GetVolumeMountPath(d.Name(), vol.volType, vol.name)
+	srcVolumePath := GetVolumeMountPath(d.Name(), vol.volType, volName)
 	dstVolumePath := GetVolumeMountPath(d.Name(), vol.volType, newVolName)
 
 	if util.PathExists(srcVolumePath) {
