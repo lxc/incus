@@ -711,7 +711,11 @@ func (m *Monitor) AddObject(args map[string]any) error {
 }
 
 // AddBlockDevice adds a block device.
-func (m *Monitor) AddBlockDevice(blockDev map[string]any, device map[string]any) error {
+func (m *Monitor) AddBlockDevice(blockDev map[string]any, device map[string]any, attached bool) error {
+	if !attached {
+		return nil
+	}
+
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -1239,22 +1243,6 @@ func (m *Monitor) BlockJobComplete(deviceNodeName string) error {
 	args.Device = deviceNodeName
 
 	err := m.Run("block-job-complete", args, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Eject ejects a removable drive.
-func (m *Monitor) Eject(id string) error {
-	var args struct {
-		ID string `json:"id"`
-	}
-
-	args.ID = id
-
-	err := m.Run("eject", args, nil)
 	if err != nil {
 		return err
 	}

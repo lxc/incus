@@ -31,6 +31,7 @@ type MountEntryItem struct {
 	OwnerShift string      // Ownership shifting mode, use constants MountOwnerShiftNone, MountOwnerShiftStatic or MountOwnerShiftDynamic.
 	Limits     *DiskLimits // Disk limits.
 	Size       int64       // Expected disk size in bytes.
+	Attached   bool        // Whether the disk is attached
 }
 
 // RootFSEntryItem represents the root filesystem options for an Instance.

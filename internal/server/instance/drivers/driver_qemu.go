@@ -357,6 +357,11 @@ type qemu struct {
 	conf    []cfg.Section
 }
 
+// qmpConnect connects to the QMP monitor.
+func (d *qemu) qmpConnect() (*qmp.Monitor, error) {
+	return qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath(), qemuDetachDisk(d.state, d.id))
+}
+
 // getAgentClient returns the current agent client handle.
 // Callers should check that the instance is running (and therefore mounted) before calling this function,
 // otherwise the qmp.Connect call will fail to use the monitor socket file.
@@ -419,7 +424,7 @@ func (d *qemu) getAgentClient() (*http.Client, error) {
 	}
 
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return nil, err
 	}
@@ -611,7 +616,7 @@ func (d *qemu) generateAgentCert() (string, string, string, string, error) {
 // Freeze freezes the instance.
 func (d *qemu) Freeze() error {
 	// Connect to the monitor.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}
@@ -808,7 +813,7 @@ func (d *qemu) Shutdown(timeout time.Duration) error {
 	}
 
 	// Connect to the monitor.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		op.Done(err)
 		return err
@@ -1936,7 +1941,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	})
 
 	// Start QMP monitoring.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		op.Done(err)
 		return err
@@ -2535,7 +2540,7 @@ func (d *qemu) deviceAttachPath(deviceName string, configCopy map[string]string,
 	defer reverter.Fail()
 
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to QMP monitor: %w", err)
 	}
@@ -2613,7 +2618,7 @@ func (d *qemu) deviceAttachPath(deviceName string, configCopy map[string]string,
 
 func (d *qemu) deviceAttachBlockDevice(deviceName string, configCopy map[string]string, mount deviceConfig.MountEntryItem) error {
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to QMP monitor: %w", err)
 	}
@@ -2637,7 +2642,7 @@ func (d *qemu) deviceDetachPath(deviceName string, rawConfig deviceConfig.Device
 	mountTag := fmt.Sprintf("incus_%s", deviceName)
 
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}
@@ -2670,7 +2675,7 @@ func (d *qemu) deviceDetachPath(deviceName string, rawConfig deviceConfig.Device
 
 func (d *qemu) deviceDetachBlockDevice(deviceName string, rawConfig deviceConfig.Device) error {
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}
@@ -2730,7 +2735,7 @@ func (d *qemu) deviceAttachNIC(deviceName string, configCopy map[string]string, 
 	}
 
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}
@@ -2766,7 +2771,7 @@ func (d *qemu) deviceAttachNIC(deviceName string, configCopy map[string]string, 
 
 func (d *qemu) getPCIHotplug() (string, error) {
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return "", err
 	}
@@ -2801,7 +2806,7 @@ func (d *qemu) deviceAttachPCI(deviceName string, configCopy map[string]string, 
 	defer reverter.Fail()
 
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}
@@ -2944,7 +2949,7 @@ func (d *qemu) deviceStop(dev device.Device, instanceRunning bool, _ string) err
 // deviceDetachNIC detaches a NIC device from a running instance.
 func (d *qemu) deviceDetachNIC(deviceName string) error {
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}
@@ -2998,7 +3003,7 @@ func (d *qemu) deviceDetachNIC(deviceName string) error {
 // deviceDetachPCI detaches a generic PCI device from a running instance.
 func (d *qemu) deviceDetachPCI(deviceName string) error {
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}
@@ -4251,6 +4256,7 @@ func (d *qemu) addRootDriveConfig(qemuDev map[string]any, mountInfo *storagePool
 		Opts:       rootDriveConf.Opts,
 		TargetPath: rootDriveConf.TargetPath,
 		Limits:     rootDriveConf.Limits,
+		Attached:   true,
 	}
 
 	if d.storagePool.Driver().Info().Remote {
@@ -4666,7 +4672,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 			blockDev["filename"] = fmt.Sprintf("/dev/fdset/%d", info.ID)
 		}
 
-		err := m.AddBlockDevice(blockDev, qemuDev)
+		err := m.AddBlockDevice(blockDev, qemuDev, driveConf.Attached)
 		if err != nil {
 			return fmt.Errorf("Failed adding block device for disk device %q: %w", driveConf.DevName, err)
 		}
@@ -5331,7 +5337,7 @@ func (d *qemu) Stop(stateful bool) error {
 	}
 
 	// Connect to the monitor.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		d.logger.Warn("Failed connecting to monitor, forcing stop", logger.Ctx{"err": err})
 
@@ -5439,7 +5445,7 @@ func (d *qemu) Stop(stateful bool) error {
 // Unfreeze restores the instance to running.
 func (d *qemu) Unfreeze() error {
 	// Connect to the monitor.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}
@@ -5483,7 +5489,7 @@ func (d *qemu) snapshot(name string, expiry time.Time, stateful bool) error {
 		}
 
 		// Connect to the monitor.
-		monitor, err = qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+		monitor, err = d.qmpConnect()
 		if err != nil {
 			return err
 		}
@@ -5826,6 +5832,73 @@ func (d *qemu) Rename(newName string, applyTemplateTrigger bool) error {
 	reverter.Success()
 
 	return nil
+}
+
+// Indirection to detachDisk.
+func qemuDetachDisk(s *state.State, id int) func(string) error {
+	return func(name string) error {
+		inst, err := instance.LoadByID(s, id)
+		if err != nil {
+			return err
+		}
+
+		qemuInst, ok := inst.(*qemu)
+		if !ok {
+			return fmt.Errorf("Couldn't assert QEMU object from interface")
+		}
+
+		return qemuInst.detachDisk(name)
+	}
+}
+
+// Detach a disk from the instance.
+func (d *qemu) detachDisk(name string) error {
+	diskName := strings.TrimPrefix(name, qemuDeviceIDPrefix)
+	var id int
+	var devices map[string]dbCluster.Device
+	err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		object, err := dbCluster.GetInstance(ctx, tx.Tx(), d.project.Name, d.name)
+		if err != nil {
+			return err
+		}
+
+		id = object.ID
+		devices, err = dbCluster.GetInstanceDevices(ctx, tx.Tx(), id)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	disk, ok := devices[diskName]
+	if !ok {
+		return fmt.Errorf("Device %s not found", diskName)
+	}
+
+	disk.Config["attached"] = "false"
+
+	config, ok := d.expandedDevices[diskName]
+	if !ok {
+		return fmt.Errorf("Couldn't find device %s", diskName)
+	}
+
+	dev, err := d.deviceLoad(d, diskName, config)
+	if err != nil {
+		return err
+	}
+
+	err = d.deviceStop(dev, true, "")
+	if err != nil {
+		return err
+	}
+
+	return d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return dbCluster.UpdateInstanceDevices(ctx, tx.Tx(), int64(id), devices)
+	})
 }
 
 // Update the instance config.
@@ -6375,7 +6448,7 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 	newSizeMB := newSizeBytes / 1024 / 1024
 
 	// Connect to the monitor.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err // The VM isn't running as no monitor socket available.
 	}
@@ -7288,7 +7361,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 
 // migrateSendLive performs live migration send process.
 func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs) error {
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}
@@ -7388,7 +7461,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 				"driver":   "file",
 				"filename": fmt.Sprintf("/dev/fdset/%d", info.ID),
 			},
-		}, nil)
+		}, nil, true)
 		if err != nil {
 			return fmt.Errorf("Failed adding migration storage snapshot block device: %w", err)
 		}
@@ -7531,7 +7604,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 					"path":     strings.TrimPrefix(listener.Addr().String(), "@"),
 				},
 			},
-		}, nil)
+		}, nil, true)
 		if err != nil {
 			return fmt.Errorf("Failed adding NBD device: %w", err)
 		}
@@ -8779,11 +8852,34 @@ func (d *qemu) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 	// Handle disk reconfiguration.
 	for _, mount := range runConf.Mounts {
 		if mount.Limits == nil && mount.Size == 0 {
+			// This special case allows handling live attach/detach logic.
+			config, ok := d.expandedDevices[mount.DevName]
+			if !ok {
+				return fmt.Errorf("Couldn't find device %q", mount.DevName)
+			}
+
+			dev, err := d.deviceLoad(d, mount.DevName, config)
+			if err != nil {
+				return err
+			}
+
+			if mount.Attached {
+				_, err = d.deviceStart(dev, true)
+				if err != nil {
+					return err
+				}
+			} else {
+				err = d.deviceStop(dev, true, "")
+				if err != nil {
+					return err
+				}
+			}
+
 			continue
 		}
 
 		// Get the QMP monitor.
-		m, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+		m, err := d.qmpConnect()
 		if err != nil {
 			return err
 		}
@@ -8957,7 +9053,7 @@ func (d *qemu) statusCode() api.StatusCode {
 	}
 
 	// Connect to the monitor.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		// If cannot connect to monitor, but qemu process in pid file still exists, then likely qemu
 		// is unresponsive and this instance is in an error state.
@@ -9417,7 +9513,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 
 		// Try and connect to QMP socket until cancelled.
 		for {
-			monitor, err = qmp.Connect(monitorPath.Name(), qemuSerialChardevName, nil, "")
+			monitor, err = qmp.Connect(monitorPath.Name(), qemuSerialChardevName, nil, "", d.detachDisk)
 			// QMP successfully connected or we have been cancelled.
 			if err == nil || ctx.Err() != nil {
 				break
@@ -9464,7 +9560,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		"aio":       "io_uring",
 	}
 
-	err = monitor.AddBlockDevice(blockDev, nil)
+	err = monitor.AddBlockDevice(blockDev, nil, true)
 	if err != nil {
 		logger.Debug("Failed adding block device during VM feature check", logger.Ctx{"err": err})
 	} else {
@@ -9674,7 +9770,7 @@ func (d *qemu) agentMetricsEnabled() bool {
 
 func (d *qemu) deviceAttachUSB(usbConf deviceConfig.USBDeviceItem) error {
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}
@@ -9694,7 +9790,7 @@ func (d *qemu) deviceAttachUSB(usbConf deviceConfig.USBDeviceItem) error {
 
 func (d *qemu) deviceDetachUSB(usbDev deviceConfig.USBDeviceItem) error {
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}
@@ -9740,7 +9836,7 @@ func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {
 	if monitor == nil {
 		var err error
 
-		monitor, err = qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+		monitor, err = d.qmpConnect()
 		if err != nil {
 			return err
 		}
@@ -9953,7 +10049,7 @@ func (d *qemu) ConsoleLog() (string, error) {
 	}
 
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return "", err
 	}
@@ -10008,7 +10104,7 @@ func (d *qemu) consoleSwapRBWithSocket() error {
 	}
 
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}
@@ -10032,7 +10128,7 @@ func (d *qemu) consoleSwapRBWithSocket() error {
 // consoleSwapSocketWithRB swaps the qemu backend for the instance's console to a ring buffer.
 func (d *qemu) consoleSwapSocketWithRB() error {
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}
@@ -10054,7 +10150,7 @@ func (d *qemu) ConsoleScreenshot(screenshotFile *os.File) error {
 	}
 
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}
@@ -10090,7 +10186,7 @@ func (d *qemu) DumpGuestMemory(w *os.File, format string) error {
 	}
 
 	// Check if the agent is running.
-	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler(), d.QMPLogFilePath())
+	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}

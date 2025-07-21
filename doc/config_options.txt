@@ -42,6 +42,14 @@ User keys can be used in search.
 
 <!-- config group cluster_group-common end -->
 <!-- config group devices-disk start -->
+```{config:option} attached devices-disk
+:default: "`true`"
+:required: "no"
+:shortdesc: "Only for VMs: Whether the disk is attached or ejected"
+:type: "bool"
+
+```
+
 ```{config:option} boot.priority devices-disk
 :required: "no"
 :shortdesc: "Boot priority for VMs (higher value boots first)"
