@@ -90,6 +90,7 @@ func AllowInstanceCreation(tx *db.ClusterTx, projectName string, req api.Instanc
 		Name:        req.Name,
 		Project:     projectName,
 		InstancePut: req.InstancePut,
+		Type:        string(req.Type),
 	})
 
 	// Special case restriction checks on volatile.* keys.
@@ -1463,6 +1464,12 @@ func getInstanceLimits(inst api.Instance, keys []string, skipUnset bool) (map[st
 				limit += sizeStateLimit
 			}
 		} else {
+			// Skip processing for 'limits.processes' if the instance type is VM,
+			// as this limit is only applicable to containers.
+			if key == "limits.processes" && inst.Type == instancetype.VM.String() {
+				continue
+			}
+
 			value, ok := inst.Config[key]
 			if !ok || value == "" {
 				if skipUnset {
