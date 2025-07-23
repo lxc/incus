@@ -2179,6 +2179,17 @@ If the instance's memory limit is `hard`, the instance cannot exceed its limit.
 If it is `soft`, the instance can exceed its memory limit when extra host memory is available.
 ```
 
+```{config:option} limits.memory.hotplug instance-resource-limits
+:condition: "virtual machine"
+:defaultdesc: "`true`"
+:liveupdate: "yes"
+:shortdesc: "Control upper limit for hotplugged memory or disable memory hotplug."
+:type: "string"
+If this option is set to `false`, disable memory hotplug entirely.
+Alternatively, it can be set to a bytes value which will define an upper limit for hotplugged memory.
+The value must be greater than or equal to limits.memory.
+```
+
 ```{config:option} limits.memory.hugepages instance-resource-limits
 :condition: "virtual machine"
 :defaultdesc: "`false`"

@@ -2450,6 +2450,16 @@
 						}
 					},
 					{
+						"limits.memory.hotplug": {
+							"condition": "virtual machine",
+							"defaultdesc": "`true`",
+							"liveupdate": "yes",
+							"longdesc": "If this option is set to `false`, disable memory hotplug entirely.\nAlternatively, it can be set to a bytes value which will define an upper limit for hotplugged memory.\nThe value must be greater than or equal to limits.memory.",
+							"shortdesc": "Control upper limit for hotplugged memory or disable memory hotplug.",
+							"type": "string"
+						}
+					},
+					{
 						"limits.memory.hugepages": {
 							"condition": "virtual machine",
 							"defaultdesc": "`false`",
