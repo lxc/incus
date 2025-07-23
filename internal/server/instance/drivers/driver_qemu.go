@@ -4173,45 +4173,62 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuType string, cpuInfo *
 
 	var maxMemoryBytes int64
 	cpuPhysBits := uint64(39)
-	if cpuType == "host" || cpuType == "kvm64" {
-		// Attempt to get the CPU physical address space limits.
-		cpu, err := resources.GetCPU()
-		if err != nil {
-			return err
-		}
 
-		var lowestPhysBits uint64
+	limitsMemoryHotplug := d.expandedConfig["limits.memory.hotplug"]
+	memoryHotplugEnabled := !util.IsFalse(limitsMemoryHotplug)
 
-		for _, socket := range cpu.Sockets {
-			if socket.AddressSizes != nil && (socket.AddressSizes.PhysicalBits < lowestPhysBits || lowestPhysBits == 0) {
-				lowestPhysBits = socket.AddressSizes.PhysicalBits
-			}
-		}
-
-		// If a physical address size was detected, either align it with the VM (CPU passthrough) or use it as an upper bound.
-		if lowestPhysBits > 0 && (cpuType == "host" || lowestPhysBits < cpuPhysBits) {
-			cpuPhysBits = lowestPhysBits
-		}
-
-		// Reduce the maximum by one bit to allow QEMU some headroom.
-		cpuPhysBits--
-
-		// Calculate the max memory limit.
-		maxMemoryBytes = int64(math.Pow(2, float64(cpuPhysBits)))
-
-		// Cap to 1TB.
-		if maxMemoryBytes > 1024*1024*1024*1024 {
-			maxMemoryBytes = 1024 * 1024 * 1024 * 1024
-		}
-
-		// On standalone systems, further cap to the system's total memory.
-		if !d.state.ServerClustered {
-			totalMemory, err := linux.DeviceTotalMemory()
+	if (cpuType == "host" || cpuType == "kvm64") && memoryHotplugEnabled {
+		if !util.IsTrueOrEmpty(limitsMemoryHotplug) {
+			maxMemoryBytes, err = units.ParseByteSizeString(limitsMemoryHotplug)
 			if err != nil {
 				return err
 			}
 
-			maxMemoryBytes = totalMemory
+			if maxMemoryBytes < memSizeBytes {
+				return fmt.Errorf("'limits.memory.hotplug' value should be greater than or equal to 'limits.memory'")
+			}
+		}
+
+		if maxMemoryBytes == 0 {
+			// Attempt to get the CPU physical address space limits.
+			cpu, err := resources.GetCPU()
+			if err != nil {
+				return err
+			}
+
+			var lowestPhysBits uint64
+
+			for _, socket := range cpu.Sockets {
+				if socket.AddressSizes != nil && (socket.AddressSizes.PhysicalBits < lowestPhysBits || lowestPhysBits == 0) {
+					lowestPhysBits = socket.AddressSizes.PhysicalBits
+				}
+			}
+
+			// If a physical address size was detected, either align it with the VM (CPU passthrough) or use it as an upper bound.
+			if lowestPhysBits > 0 && (cpuType == "host" || lowestPhysBits < cpuPhysBits) {
+				cpuPhysBits = lowestPhysBits
+			}
+
+			// Reduce the maximum by one bit to allow QEMU some headroom.
+			cpuPhysBits--
+
+			// Calculate the max memory limit.
+			maxMemoryBytes = int64(math.Pow(2, float64(cpuPhysBits)))
+
+			// Cap to 1TB.
+			if maxMemoryBytes > 1024*1024*1024*1024 {
+				maxMemoryBytes = 1024 * 1024 * 1024 * 1024
+			}
+
+			// On standalone systems, further cap to the system's total memory.
+			if !d.state.ServerClustered {
+				totalMemory, err := linux.DeviceTotalMemory()
+				if err != nil {
+					return err
+				}
+
+				maxMemoryBytes = totalMemory
+			}
 		}
 
 		// Allow the user to go past any expected limit.
@@ -6470,6 +6487,10 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 	if curSizeMB == newSizeMB {
 		return nil
 	} else if baseSizeMB < newSizeMB {
+		if util.IsFalse(d.expandedConfig["limits.memory.hotplug"]) {
+			return fmt.Errorf("Memory hotplug feature is disabled")
+		}
+
 		return d.hotplugMemory(monitor, newSizeBytes-curSizeBytes)
 	}
 
