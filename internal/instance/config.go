@@ -973,6 +973,18 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 
 // InstanceConfigKeysVM is a map of config key to validator. (keys applying to VM only).
 var InstanceConfigKeysVM = map[string]func(value string) error{
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.memory.hotplug)
+	// If this option is set to `false`, disable memory hotplug entirely.
+	// Alternatively, it can be set to a bytes value which will define an upper limit for hotplugged memory.
+	// The value must be greater than or equal to limits.memory.
+	// ---
+	//  type: string
+	//  defaultdesc: `true`
+	//  liveupdate: yes
+	//  condition: virtual machine
+	//  shortdesc: Control upper limit for hotplugged memory or disable memory hotplug.
+	"limits.memory.hotplug": validate.Optional(validate.Or(validate.IsBool, validate.IsSize)),
+
 	// gendoc:generate(entity=instance, group=resource-limits, key=limits.memory.hugepages)
 	// If this option is set to `false`, regular system memory is used.
 	// ---
