@@ -490,6 +490,7 @@ var APIExtensions = []string{
 	"snapshot_manual_expiry",
 	"resources_cpu_address_sizes",
 	"disk_attached",
+	"limits_memory_hotplug",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
