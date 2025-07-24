@@ -2487,7 +2487,7 @@ func (d *qemu) deviceStart(dev device.Device, instanceRunning bool) (*deviceConf
 					if err != nil {
 						return nil, err
 					}
-				} else {
+				} else if mount.TargetPath != "/" {
 					err = d.deviceAttachBlockDevice(dev.Name(), configCopy, mount)
 					if err != nil {
 						return nil, err
