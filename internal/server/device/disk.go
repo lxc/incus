@@ -1526,25 +1526,27 @@ func (d *disk) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		}
 
 		if d.inst.Type() == instancetype.VM {
-			// Parse the limits into usable values.
-			readBps, readIops, writeBps, writeIops, err := d.parseLimit(d.config)
-			if err != nil {
-				return err
-			}
+			var diskLimits *deviceConfig.DiskLimits
+			runConf.Mounts = []deviceConfig.MountEntryItem{}
+			if d.config["limits.read"] != "" || d.config["limits.write"] != "" || d.config["limits.max"] != "" {
+				// Parse the limits into usable values.
+				readBps, readIops, writeBps, writeIops, err := d.parseLimit(d.config)
+				if err != nil {
+					return err
+				}
 
-			// Apply the limits to a minimal mount entry.
-			diskLimits := &deviceConfig.DiskLimits{
-				ReadBytes:  readBps,
-				ReadIOps:   readIops,
-				WriteBytes: writeBps,
-				WriteIOps:  writeIops,
-			}
+				// Apply the limits to a minimal mount entry.
+				diskLimits = &deviceConfig.DiskLimits{
+					ReadBytes:  readBps,
+					ReadIOps:   readIops,
+					WriteBytes: writeBps,
+					WriteIOps:  writeIops,
+				}
 
-			runConf.Mounts = []deviceConfig.MountEntryItem{
-				{
+				runConf.Mounts = append(runConf.Mounts, deviceConfig.MountEntryItem{
 					DevName: d.name,
 					Limits:  diskLimits,
-				},
+				})
 			}
 
 			oldAttached := util.IsTrueOrEmpty(oldDevices[d.name]["attached"])
