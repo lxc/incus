@@ -7,6 +7,7 @@ import (
 	"maps"
 	"net/url"
 	"os"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -681,7 +682,7 @@ type cmdStorageList struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdStorageList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("list", i18n.G("[<remote>:]"))
+	cmd.Use = usage("list", i18n.G("[<remote>:] [<filter>...]"))
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available storage pools")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -788,7 +789,7 @@ func (c *cmdStorageList) stateColumnData(storage api.StoragePool) string {
 // Run runs the actual command logic.
 func (c *cmdStorageList) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 0, 1)
+	exit, err := c.global.checkArgs(cmd, args, 0, -1)
 	if exit {
 		return err
 	}
@@ -806,8 +807,20 @@ func (c *cmdStorageList) Run(cmd *cobra.Command, args []string) error {
 
 	resource := resources[0]
 
+	// Process the filters
+	filters := []string{}
+	if resource.name != "" {
+		filters = append(filters, resource.name)
+	}
+
+	if len(args) > 1 {
+		filters = append(filters, args[1:]...)
+	}
+
+	filters = prepareStoragePoolsServerFilters(filters, api.StoragePool{})
+
 	// Get the storage pools
-	pools, err := resource.server.GetStoragePools()
+	pools, err := resource.server.GetStoragePoolsWithFilter(filters)
 	if err != nil {
 		return err
 	}
@@ -1085,4 +1098,37 @@ func (c *cmdStorageUnset) Run(cmd *cobra.Command, args []string) error {
 
 	args = append(args, "")
 	return c.storageSet.Run(cmd, args)
+}
+
+// prepareStoragePoolsServerFilters processes and formats filter criteria
+// for storage pools, ensuring they are in a format that the server can interpret.
+func prepareStoragePoolsServerFilters(filters []string, i any) []string {
+	formattedFilters := []string{}
+
+	for _, filter := range filters {
+		membs := strings.SplitN(filter, "=", 2)
+		key := membs[0]
+
+		if len(membs) == 1 {
+			regexpValue := key
+			if !strings.Contains(key, "^") && !strings.Contains(key, "$") {
+				regexpValue = "^" + regexpValue + "$"
+			}
+
+			filter = fmt.Sprintf("name=(%s|^%s.*)", regexpValue, key)
+		} else {
+			firstPart := key
+			if strings.Contains(key, ".") {
+				firstPart = strings.Split(key, ".")[0]
+			}
+
+			if !structHasField(reflect.TypeOf(i), firstPart) {
+				filter = fmt.Sprintf("config.%s", filter)
+			}
+		}
+
+		formattedFilters = append(formattedFilters, filter)
+	}
+
+	return formattedFilters
 }
