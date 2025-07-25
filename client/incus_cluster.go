@@ -3,6 +3,7 @@ package incus
 import (
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/lxc/incus/v6/shared/api"
 )
@@ -98,6 +99,26 @@ func (r *ProtocolIncus) GetClusterMemberNames() ([]string, error) {
 
 	// Parse it.
 	return urlsToResourceNames(baseURL, urls...)
+}
+
+// GetClusterMembersWithFilter returns a filtered list of cluster members as ClusterMember structs.
+func (r *ProtocolIncus) GetClusterMembersWithFilter(filters []string) ([]api.ClusterMember, error) {
+	if !r.HasExtension("clustering") {
+		return nil, errors.New("The server is missing the required \"clustering\" API extension")
+	}
+
+	members := []api.ClusterMember{}
+
+	v := url.Values{}
+	v.Set("recursion", "1")
+	v.Set("filter", parseFilters(filters))
+
+	_, err := r.queryStruct("GET", fmt.Sprintf("/cluster/members?%s", v.Encode()), nil, "", &members)
+	if err != nil {
+		return nil, err
+	}
+
+	return members, nil
 }
 
 // GetClusterMembers returns the current members of the cluster.
