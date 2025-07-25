@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-07-14 11:06-0400\n"
+"POT-Creation-Date: 2025-07-25 16:01-0400\n"
 "PO-Revision-Date: 2024-12-14 14:00+0000\n"
 "Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -52,7 +52,7 @@ msgstr ""
 "### config:\n"
 "###   size: \"61203283968\""
 
-#: cmd/incus/storage.go:306
+#: cmd/incus/storage.go:307
 msgid ""
 "### This is a YAML representation of a storage pool.\n"
 "### Any line starting with a '#' will be ignored.\n"
@@ -602,7 +602,7 @@ msgstr ""
 "###\n"
 "### Note that the name is shown but cannot be changed"
 
-#: cmd/incus/cluster.go:917
+#: cmd/incus/cluster.go:930
 msgid ""
 "### This is a yaml representation of the cluster member.\n"
 "### Any line starting with a '# will be ignored."
@@ -785,7 +785,7 @@ msgstr "クライアント証明書がサーバに格納されました:"
 msgid "A client name must be provided"
 msgstr "クラスターメンバー名が必要です"
 
-#: cmd/incus/cluster.go:1053
+#: cmd/incus/cluster.go:1066
 msgid "A cluster member name must be provided"
 msgstr "クラスターメンバー名が必要です"
 
@@ -806,11 +806,11 @@ msgstr "ALIAS"
 msgid "ALIASES"
 msgstr "ALIASES"
 
-#: cmd/incus/list.go:813
+#: cmd/incus/list.go:815
 msgid "APP"
 msgstr "APP"
 
-#: cmd/incus/cluster.go:182 cmd/incus/image.go:1142 cmd/incus/list.go:497
+#: cmd/incus/cluster.go:183 cmd/incus/image.go:1142 cmd/incus/list.go:497
 msgid "ARCHITECTURE"
 msgstr "ARCHITECTURE"
 
@@ -1056,7 +1056,7 @@ msgstr "アーキテクチャ: %v"
 msgid "Are you joining an existing cluster?"
 msgstr "既存のクラスターに join しますか?"
 
-#: cmd/incus/cluster.go:1556
+#: cmd/incus/cluster.go:1569
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
@@ -1207,7 +1207,7 @@ msgstr "不適切なキー/値のペア: %s"
 msgid "Bad key=value pair: %q"
 msgstr "不適切な キー=値 のペア: %q"
 
-#: cmd/incus/publish.go:196 cmd/incus/storage.go:185
+#: cmd/incus/publish.go:196 cmd/incus/storage.go:186
 #: cmd/incus/storage_volume.go:675
 #, c-format
 msgid "Bad key=value pair: %s"
@@ -1354,7 +1354,7 @@ msgstr "デフォルトのリモートは削除できません"
 msgid "Can't specify --fast with --columns"
 msgstr "--fast と --columns は同時に指定できません"
 
-#: cmd/incus/cluster.go:258 cmd/incus/list.go:409 cmd/incus/profile.go:845
+#: cmd/incus/cluster.go:259 cmd/incus/list.go:409 cmd/incus/profile.go:845
 msgid "Can't specify --project with --all-projects"
 msgstr "--project と --all-project は同時に指定できません"
 
@@ -1362,7 +1362,7 @@ msgstr "--project と --all-project は同時に指定できません"
 msgid "Can't specify a different remote for rename"
 msgstr "リネームの場合は異なるリモートを指定できません"
 
-#: cmd/incus/list.go:547 cmd/incus/storage_volume.go:1740
+#: cmd/incus/list.go:561 cmd/incus/storage_volume.go:1740
 #: cmd/incus/warning.go:234
 msgid "Can't specify column L when not clustered"
 msgstr "クラスターでない場合はカラムとして L は指定できません"
@@ -1522,7 +1522,7 @@ msgstr "クラスターグループ名 %s を %s に変更しました"
 msgid "Cluster group description"
 msgstr "クラスターグループ %s を作成しました"
 
-#: cmd/incus/cluster.go:1335
+#: cmd/incus/cluster.go:1348
 #, c-format
 msgid "Cluster join token for %s:%s deleted"
 msgstr "%s:%s のクラスターに join するためのトークンが削除されました"
@@ -1564,9 +1564,9 @@ msgstr "クラスターメンバー %s がグループ %s から削除されま�
 #: cmd/incus/network_load_balancer.go:927
 #: cmd/incus/network_load_balancer.go:1008
 #: cmd/incus/network_load_balancer.go:1126
-#: cmd/incus/network_load_balancer.go:1205 cmd/incus/storage.go:115
-#: cmd/incus/storage.go:423 cmd/incus/storage.go:508 cmd/incus/storage.go:860
-#: cmd/incus/storage.go:962 cmd/incus/storage.go:1057
+#: cmd/incus/network_load_balancer.go:1205 cmd/incus/storage.go:116
+#: cmd/incus/storage.go:424 cmd/incus/storage.go:509 cmd/incus/storage.go:873
+#: cmd/incus/storage.go:975 cmd/incus/storage.go:1070
 #: cmd/incus/storage_bucket.go:110 cmd/incus/storage_bucket.go:218
 #: cmd/incus/storage_bucket.go:283 cmd/incus/storage_bucket.go:416
 #: cmd/incus/storage_bucket.go:680 cmd/incus/storage_bucket.go:797
@@ -1586,11 +1586,11 @@ msgstr "クラスターメンバー %s がグループ %s から削除されま�
 msgid "Cluster member name"
 msgstr "クラスターメンバ名"
 
-#: cmd/incus/cluster.go:882
+#: cmd/incus/cluster.go:895
 msgid "Clustering enabled"
 msgstr "クラスタリングが有効になりました"
 
-#: cmd/incus/cluster.go:154 cmd/incus/cluster.go:1120
+#: cmd/incus/cluster.go:155 cmd/incus/cluster.go:1133
 #: cmd/incus/cluster_group.go:487 cmd/incus/config_trust.go:433
 #: cmd/incus/config_trust.go:636 cmd/incus/image.go:1114
 #: cmd/incus/image_alias.go:219 cmd/incus/list.go:136 cmd/incus/network.go:1138
@@ -1599,7 +1599,7 @@ msgstr "クラスタリングが有効になりました"
 #: cmd/incus/network_load_balancer.go:127 cmd/incus/network_peer.go:115
 #: cmd/incus/network_zone.go:120 cmd/incus/operation.go:144
 #: cmd/incus/profile.go:760 cmd/incus/project.go:551 cmd/incus/remote.go:900
-#: cmd/incus/snapshot.go:346 cmd/incus/storage.go:709
+#: cmd/incus/snapshot.go:346 cmd/incus/storage.go:710
 #: cmd/incus/storage_bucket.go:523 cmd/incus/storage_bucket.go:968
 #: cmd/incus/storage_volume.go:1598 cmd/incus/storage_volume.go:2799
 #: cmd/incus/top.go:64 cmd/incus/warning.go:97
@@ -1657,7 +1657,7 @@ msgstr "移動先のインスタンスに適用するキー/値の設定"
 msgid "Config option should be in the format KEY=VALUE"
 msgstr "設定は KEY=VALUE のフォーマットである必要があります"
 
-#: cmd/incus/cluster.go:987 cmd/incus/cluster_group.go:423
+#: cmd/incus/cluster.go:1000 cmd/incus/cluster_group.go:423
 #: cmd/incus/config.go:278 cmd/incus/config.go:353
 #: cmd/incus/config_metadata.go:158 cmd/incus/config_trust.go:364
 #: cmd/incus/image.go:474 cmd/incus/network.go:833 cmd/incus/network_acl.go:744
@@ -1665,7 +1665,7 @@ msgstr "設定は KEY=VALUE のフォーマットである必要があります"
 #: cmd/incus/network_integration.go:315 cmd/incus/network_load_balancer.go:797
 #: cmd/incus/network_peer.go:832 cmd/incus/network_zone.go:738
 #: cmd/incus/network_zone.go:1461 cmd/incus/profile.go:624
-#: cmd/incus/project.go:420 cmd/incus/storage.go:385
+#: cmd/incus/project.go:420 cmd/incus/storage.go:386
 #: cmd/incus/storage_bucket.go:379 cmd/incus/storage_bucket.go:1383
 #: cmd/incus/storage_volume.go:1147 cmd/incus/storage_volume.go:1179
 #, c-format
@@ -1818,27 +1818,27 @@ msgstr "サーバ証明書ファイル %q をクローズできません: %w"
 msgid "Could not create server cert dir"
 msgstr "サーバ証明書格納用のディレクトリを作成できません"
 
-#: cmd/incus/cluster.go:1418
+#: cmd/incus/cluster.go:1431
 #, c-format
 msgid "Could not find certificate file path: %s"
 msgstr "証明書のファイルパスが見つかりません: %s"
 
-#: cmd/incus/cluster.go:1422
+#: cmd/incus/cluster.go:1435
 #, c-format
 msgid "Could not find certificate key file path: %s"
 msgstr "証明書の鍵のパスが見つかりません: %s"
 
-#: cmd/incus/cluster.go:1427
+#: cmd/incus/cluster.go:1440
 #, c-format
 msgid "Could not read certificate file: %s with error: %v"
 msgstr "証明書ファイル %s をエラーで読み込めません: %v"
 
-#: cmd/incus/cluster.go:1432
+#: cmd/incus/cluster.go:1445
 #, c-format
 msgid "Could not read certificate key file: %s with error: %v"
 msgstr "秘密鍵ファイル %s をエラーで読み込めません: %v"
 
-#: cmd/incus/cluster.go:1449
+#: cmd/incus/cluster.go:1462
 #, c-format
 msgid "Could not write new remote certificate for remote '%s' with error: %v"
 msgstr "リモート '%s' に対する新しいリモート証明書がエラーで書き込めません: %v"
@@ -1978,7 +1978,7 @@ msgstr "プロファイルを作成します"
 msgid "Create projects"
 msgstr "プロジェクトを作成します"
 
-#: cmd/incus/storage.go:106 cmd/incus/storage.go:107
+#: cmd/incus/storage.go:107 cmd/incus/storage.go:108
 msgid "Create storage pools"
 msgstr "ストレージプールを作成します"
 
@@ -2015,7 +2015,7 @@ msgstr "現在の VF 数: %d"
 msgid "DEFAULT TARGET ADDRESS"
 msgstr "DEFAULT TARGET ADDRESS"
 
-#: cmd/incus/cluster.go:184 cmd/incus/cluster_group.go:513
+#: cmd/incus/cluster.go:185 cmd/incus/cluster_group.go:513
 #: cmd/incus/config_trust.go:451 cmd/incus/image.go:1143
 #: cmd/incus/image_alias.go:259 cmd/incus/list.go:500 cmd/incus/network.go:1169
 #: cmd/incus/network_acl.go:178 cmd/incus/network_address_set.go:166
@@ -2023,7 +2023,7 @@ msgstr "DEFAULT TARGET ADDRESS"
 #: cmd/incus/network_load_balancer.go:149 cmd/incus/network_peer.go:137
 #: cmd/incus/network_zone.go:143 cmd/incus/network_zone.go:954
 #: cmd/incus/operation.go:161 cmd/incus/profile.go:788 cmd/incus/project.go:583
-#: cmd/incus/storage.go:736 cmd/incus/storage_bucket.go:540
+#: cmd/incus/storage.go:737 cmd/incus/storage_bucket.go:540
 #: cmd/incus/storage_bucket.go:984 cmd/incus/storage_volume.go:1729
 msgid "DESCRIPTION"
 msgstr "DESCRIPTION"
@@ -2036,7 +2036,7 @@ msgstr "ディスク"
 msgid "DISK USAGE"
 msgstr "DISK USAGE"
 
-#: cmd/incus/storage.go:735
+#: cmd/incus/storage.go:736
 msgid "DRIVER"
 msgstr "DRIVER"
 
@@ -2179,7 +2179,7 @@ msgstr "プロジェクトを削除します"
 msgid "Delete storage buckets"
 msgstr "ストレージバケットを削除します"
 
-#: cmd/incus/storage.go:225 cmd/incus/storage.go:226
+#: cmd/incus/storage.go:226 cmd/incus/storage.go:227
 msgid "Delete storage pools"
 msgstr "ストレージプールを削除します"
 
@@ -2198,13 +2198,13 @@ msgstr "警告を削除します"
 #: cmd/incus/admin_shutdown.go:32 cmd/incus/admin_sql.go:32
 #: cmd/incus/admin_waitready.go:28 cmd/incus/alias.go:24 cmd/incus/alias.go:63
 #: cmd/incus/alias.go:113 cmd/incus/alias.go:174 cmd/incus/alias.go:229
-#: cmd/incus/cluster.go:38 cmd/incus/cluster.go:134 cmd/incus/cluster.go:328
-#: cmd/incus/cluster.go:387 cmd/incus/cluster.go:448 cmd/incus/cluster.go:523
-#: cmd/incus/cluster.go:603 cmd/incus/cluster.go:649 cmd/incus/cluster.go:709
-#: cmd/incus/cluster.go:802 cmd/incus/cluster.go:897 cmd/incus/cluster.go:1020
-#: cmd/incus/cluster.go:1100 cmd/incus/cluster.go:1267
-#: cmd/incus/cluster.go:1357 cmd/incus/cluster.go:1483
-#: cmd/incus/cluster.go:1513 cmd/incus/cluster_group.go:37
+#: cmd/incus/cluster.go:39 cmd/incus/cluster.go:135 cmd/incus/cluster.go:341
+#: cmd/incus/cluster.go:400 cmd/incus/cluster.go:461 cmd/incus/cluster.go:536
+#: cmd/incus/cluster.go:616 cmd/incus/cluster.go:662 cmd/incus/cluster.go:722
+#: cmd/incus/cluster.go:815 cmd/incus/cluster.go:910 cmd/incus/cluster.go:1033
+#: cmd/incus/cluster.go:1113 cmd/incus/cluster.go:1280
+#: cmd/incus/cluster.go:1370 cmd/incus/cluster.go:1496
+#: cmd/incus/cluster.go:1526 cmd/incus/cluster_group.go:37
 #: cmd/incus/cluster_group.go:103 cmd/incus/cluster_group.go:190
 #: cmd/incus/cluster_group.go:282 cmd/incus/cluster_group.go:342
 #: cmd/incus/cluster_group.go:467 cmd/incus/cluster_group.go:623
@@ -2321,10 +2321,10 @@ msgstr "警告を削除します"
 #: cmd/incus/remote_unix.go:38 cmd/incus/rename.go:23 cmd/incus/snapshot.go:33
 #: cmd/incus/snapshot.go:83 cmd/incus/snapshot.go:231 cmd/incus/snapshot.go:324
 #: cmd/incus/snapshot.go:485 cmd/incus/snapshot.go:548
-#: cmd/incus/snapshot.go:627 cmd/incus/storage.go:40 cmd/incus/storage.go:107
-#: cmd/incus/storage.go:226 cmd/incus/storage.go:286 cmd/incus/storage.go:420
-#: cmd/incus/storage.go:504 cmd/incus/storage.go:687 cmd/incus/storage.go:854
-#: cmd/incus/storage.go:958 cmd/incus/storage.go:1054
+#: cmd/incus/snapshot.go:627 cmd/incus/storage.go:41 cmd/incus/storage.go:108
+#: cmd/incus/storage.go:227 cmd/incus/storage.go:287 cmd/incus/storage.go:421
+#: cmd/incus/storage.go:505 cmd/incus/storage.go:688 cmd/incus/storage.go:867
+#: cmd/incus/storage.go:971 cmd/incus/storage.go:1067
 #: cmd/incus/storage_bucket.go:37 cmd/incus/storage_bucket.go:103
 #: cmd/incus/storage_bucket.go:216 cmd/incus/storage_bucket.go:279
 #: cmd/incus/storage_bucket.go:414 cmd/incus/storage_bucket.go:500
@@ -2486,7 +2486,7 @@ msgstr "ディスク:"
 msgid "Disks:"
 msgstr "ディスク:"
 
-#: cmd/incus/cluster.go:156
+#: cmd/incus/cluster.go:157
 #, fuzzy
 msgid "Display clusters from all projects"
 msgstr "すべてのプロジェクトのインスタンスを表示します"
@@ -2581,7 +2581,7 @@ msgstr "新しいストレージプールのの設定をしますか?"
 msgid "Do you want to continue without thin provisioning?"
 msgstr "Thin provisioning なしで続けますか?"
 
-#: cmd/incus/cluster.go:714
+#: cmd/incus/cluster.go:727
 msgid "Don't require user confirmation for using --force"
 msgstr "--force を使う際にユーザーの確認を必要としない"
 
@@ -2626,7 +2626,7 @@ msgstr ""
 msgid "ENTRIES"
 msgstr "ENTRIES"
 
-#: cmd/incus/list.go:817
+#: cmd/incus/list.go:819
 msgid "EPHEMERAL"
 msgstr "EPHEMERAL"
 
@@ -2635,7 +2635,7 @@ msgstr "EPHEMERAL"
 msgid "EXISTING: %q (backend=%q, source=%q)"
 msgstr "既存: %q (バックエンド=%q, ソース=%q)"
 
-#: cmd/incus/cluster.go:1141 cmd/incus/config_trust.go:653
+#: cmd/incus/cluster.go:1154 cmd/incus/config_trust.go:653
 #: cmd/incus/snapshot.go:371 cmd/incus/storage_volume.go:2906
 msgid "EXPIRES AT"
 msgstr "EXPIRES AT"
@@ -2648,7 +2648,7 @@ msgstr "EXPIRY DATE"
 msgid "Edit a cluster group"
 msgstr "クラスターグループを編集します"
 
-#: cmd/incus/cluster.go:896 cmd/incus/cluster.go:897
+#: cmd/incus/cluster.go:909 cmd/incus/cluster.go:910
 msgid "Edit cluster member configurations as YAML"
 msgstr "クラスターメンバーの設定をYAMLファイルで編集します"
 
@@ -2727,7 +2727,7 @@ msgstr "ストレージバケットの設定をYAMLで編集します"
 msgid "Edit storage bucket key as YAML"
 msgstr "ストレージバケットの設定をYAMLで編集します"
 
-#: cmd/incus/storage.go:285 cmd/incus/storage.go:286
+#: cmd/incus/storage.go:286 cmd/incus/storage.go:287
 msgid "Edit storage pool configurations as YAML"
 msgstr "ストレージプールの設定をYAMLで編集します"
 
@@ -2753,16 +2753,16 @@ msgstr ""
 msgid "Edit trust configurations as YAML"
 msgstr "信頼済みクライアント設定をYAMLで編集します"
 
-#: cmd/incus/cluster.go:195 cmd/incus/cluster.go:1149
+#: cmd/incus/cluster.go:196 cmd/incus/cluster.go:1162
 #: cmd/incus/cluster_group.go:521 cmd/incus/config_trust.go:463
 #: cmd/incus/config_trust.go:661 cmd/incus/image.go:1161
-#: cmd/incus/image_alias.go:268 cmd/incus/list.go:559 cmd/incus/network.go:1184
+#: cmd/incus/image_alias.go:268 cmd/incus/list.go:552 cmd/incus/network.go:1184
 #: cmd/incus/network.go:1391 cmd/incus/network_allocations.go:89
 #: cmd/incus/network_forward.go:155 cmd/incus/network_integration.go:467
 #: cmd/incus/network_load_balancer.go:162 cmd/incus/network_peer.go:148
 #: cmd/incus/network_zone.go:156 cmd/incus/operation.go:176
 #: cmd/incus/profile.go:804 cmd/incus/project.go:593 cmd/incus/remote.go:927
-#: cmd/incus/snapshot.go:380 cmd/incus/storage.go:748
+#: cmd/incus/snapshot.go:380 cmd/incus/storage.go:749
 #: cmd/incus/storage_bucket.go:557 cmd/incus/storage_bucket.go:993
 #: cmd/incus/storage_volume.go:1757 cmd/incus/storage_volume.go:2914
 #: cmd/incus/top.go:92 cmd/incus/warning.go:245
@@ -2771,11 +2771,11 @@ msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
 "'%s' 中のカラムエントリが空です (カラムの指定に空文字列が指定されています)"
 
-#: cmd/incus/cluster.go:801
+#: cmd/incus/cluster.go:814
 msgid "Enable clustering on a single non-clustered server"
 msgstr "クラスタリングで動作していないサーバ上でクラスタリングを有効にします"
 
-#: cmd/incus/cluster.go:802
+#: cmd/incus/cluster.go:815
 msgid ""
 "Enable clustering on a single non-clustered server\n"
 "\n"
@@ -2840,13 +2840,13 @@ msgstr "デコーディングデータのエラー: %v"
 msgid "Error retrieving aliases: %w"
 msgstr "エイリアスの取得に失敗しました: %w"
 
-#: cmd/incus/cluster.go:579 cmd/incus/cluster_group.go:1035
+#: cmd/incus/cluster.go:592 cmd/incus/cluster_group.go:1035
 #: cmd/incus/config.go:646 cmd/incus/config.go:678 cmd/incus/network.go:1628
 #: cmd/incus/network_acl.go:568 cmd/incus/network_address_set.go:406
 #: cmd/incus/network_forward.go:620 cmd/incus/network_integration.go:675
 #: cmd/incus/network_load_balancer.go:606 cmd/incus/network_peer.go:654
 #: cmd/incus/network_zone.go:574 cmd/incus/network_zone.go:1290
-#: cmd/incus/profile.go:1148 cmd/incus/project.go:892 cmd/incus/storage.go:925
+#: cmd/incus/profile.go:1148 cmd/incus/project.go:892 cmd/incus/storage.go:938
 #: cmd/incus/storage_bucket.go:766 cmd/incus/storage_volume.go:2125
 #: cmd/incus/storage_volume.go:2168
 #, c-format
@@ -2863,12 +2863,12 @@ msgstr "ターミナルサイズの設定でエラーが発生しました: %s"
 msgid "Error unsetting properties: %v"
 msgstr "プロパティの削除でエラーが発生しました: %v"
 
-#: cmd/incus/cluster.go:573 cmd/incus/cluster_group.go:1029
+#: cmd/incus/cluster.go:586 cmd/incus/cluster_group.go:1029
 #: cmd/incus/network.go:1622 cmd/incus/network_acl.go:562
 #: cmd/incus/network_forward.go:614 cmd/incus/network_integration.go:669
 #: cmd/incus/network_load_balancer.go:600 cmd/incus/network_peer.go:648
 #: cmd/incus/network_zone.go:568 cmd/incus/network_zone.go:1284
-#: cmd/incus/profile.go:1142 cmd/incus/project.go:886 cmd/incus/storage.go:919
+#: cmd/incus/profile.go:1142 cmd/incus/project.go:886 cmd/incus/storage.go:932
 #: cmd/incus/storage_bucket.go:760 cmd/incus/storage_volume.go:2119
 #: cmd/incus/storage_volume.go:2162
 #, c-format
@@ -2890,11 +2890,11 @@ msgstr "エイリアスの展開の実行中にエラー発生しました: %s\n
 msgid "Error: %v\n"
 msgstr "エラー: %v\n"
 
-#: cmd/incus/cluster.go:1482 cmd/incus/cluster.go:1483
+#: cmd/incus/cluster.go:1495 cmd/incus/cluster.go:1496
 msgid "Evacuate cluster member"
 msgstr "クラスターのメンバーを待避させます"
 
-#: cmd/incus/cluster.go:1581
+#: cmd/incus/cluster.go:1594
 #, c-format
 msgid "Evacuating cluster member: %s"
 msgstr "クラスターメンバーを待避させています: %s"
@@ -3084,7 +3084,7 @@ msgstr "バックアップのエクスポート中: %s"
 msgid "Exporting the image: %s"
 msgstr "イメージのエクスポート中: %s"
 
-#: cmd/incus/cluster.go:183
+#: cmd/incus/cluster.go:184
 msgid "FAILURE DOMAIN"
 msgstr "FAILURE DOMAIN"
 
@@ -3145,7 +3145,7 @@ msgstr "デーモンへの接続に失敗しました（試行回数 %d）: %v"
 msgid "Failed converting token operation to certificate add token: %w"
 msgstr "証明書追加トークンのトークン変換操作に失敗しました: %w"
 
-#: cmd/incus/cluster.go:1069
+#: cmd/incus/cluster.go:1082
 #, c-format
 msgid "Failed converting token operation to join token: %w"
 msgstr "join トークンのトークン変換操作に失敗しました: %w"
@@ -3249,7 +3249,7 @@ msgstr "エクスポートするファイルのクローズに失敗しました
 msgid "Failed to close server cert file %q: %w"
 msgstr "サーバー証明書ファイル %q のクローズに失敗しました: %w"
 
-#: cmd/incus/cluster.go:874 cmd/incus/cluster.go:879
+#: cmd/incus/cluster.go:887 cmd/incus/cluster.go:892
 #, c-format
 msgid "Failed to configure cluster: %w"
 msgstr "クラスターの設定に失敗しました: %w"
@@ -3344,7 +3344,7 @@ msgstr "設定のロードに失敗しました: %s"
 msgid "Failed to parse dump response: %w"
 msgstr "ダンプレスポンスの読み取りに失敗しました: %w"
 
-#: cmd/incus/cluster.go:1546
+#: cmd/incus/cluster.go:1559
 #, c-format
 msgid "Failed to parse servers: %w"
 msgstr "サーバーの読み取りに失敗しました: %w"
@@ -3394,12 +3394,12 @@ msgstr "%q の作成に失敗しました: %w"
 msgid "Failed to retrieve cluster information: %w"
 msgstr "証明書の作成に失敗しました: %w"
 
-#: cmd/incus/cluster.go:861
+#: cmd/incus/cluster.go:874
 #, fuzzy, c-format
 msgid "Failed to retrieve current cluster config: %w"
 msgstr "証明書の作成に失敗しました: %w"
 
-#: cmd/incus/cluster.go:851
+#: cmd/incus/cluster.go:864
 #, fuzzy, c-format
 msgid "Failed to retrieve current server config: %w"
 msgstr "サーバー証明書 %q の書き込みに失敗しました: %w"
@@ -3432,7 +3432,7 @@ msgstr "エイリアス %s の削除に失敗しました: %w"
 msgid "Failed to setup trust relationship with cluster: %w"
 msgstr "クラスタメンバへの接続に失敗しました: %w"
 
-#: cmd/incus/cluster.go:1573
+#: cmd/incus/cluster.go:1586
 #, fuzzy, c-format
 msgid "Failed to update cluster member state: %w"
 msgstr "クラスタメンバへの接続に失敗しました: %w"
@@ -3476,7 +3476,7 @@ msgstr "情報表示のフィルタリングはまだサポートされていま
 msgid "Fingerprint: %s"
 msgstr "証明書のフィンガープリント: %s"
 
-#: cmd/incus/cluster.go:1485
+#: cmd/incus/cluster.go:1498
 msgid "Force a particular evacuation action"
 msgstr "特定の待避アクションを強制します"
 
@@ -3493,7 +3493,7 @@ msgstr "プロジェクトとプロジェクトに含まれるすべてを強制
 msgid "Force deleting files, directories, and subdirectories"
 msgstr "強制的にファイルまたはディレクトリーを作成します"
 
-#: cmd/incus/cluster.go:1530
+#: cmd/incus/cluster.go:1543
 msgid "Force evacuation without user confirmation"
 msgstr "ユーザーの確認なしで強制的に待避させます"
 
@@ -3501,7 +3501,7 @@ msgstr "ユーザーの確認なしで強制的に待避させます"
 msgid "Force pseudo-terminal allocation"
 msgstr "強制的に擬似端末を割り当てます"
 
-#: cmd/incus/cluster.go:713
+#: cmd/incus/cluster.go:726
 msgid "Force removing a member, even if degraded"
 msgstr "degraded 状態であっても強制的にメンバを削除します"
 
@@ -3517,7 +3517,7 @@ msgstr "稼働中のインスタンスを強制的に削除します"
 msgid "Force using the local unix socket"
 msgstr "強制的にローカルのUNIXソケットを使います"
 
-#: cmd/incus/cluster.go:729
+#: cmd/incus/cluster.go:742
 #, fuzzy, c-format
 msgid ""
 "Forcefully removing a server from the cluster should only be done as a last\n"
@@ -3568,13 +3568,13 @@ msgstr ""
 msgid "Format (csv|json|table|yaml|compact|markdown)"
 msgstr "フォーマット (csv|json|table|yaml|compact|markdown)"
 
-#: cmd/incus/cluster.go:1119
+#: cmd/incus/cluster.go:1132
 msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
 "disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:115 cmd/incus/cluster.go:155
+#: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:115 cmd/incus/cluster.go:156
 #: cmd/incus/cluster_group.go:488 cmd/incus/config_template.go:300
 #: cmd/incus/config_trust.go:434 cmd/incus/config_trust.go:635
 #: cmd/incus/image.go:1115 cmd/incus/image_alias.go:218 cmd/incus/list.go:137
@@ -3585,7 +3585,7 @@ msgstr ""
 #: cmd/incus/network_zone.go:118 cmd/incus/network_zone.go:891
 #: cmd/incus/operation.go:142 cmd/incus/profile.go:761 cmd/incus/project.go:553
 #: cmd/incus/project.go:1098 cmd/incus/remote.go:899 cmd/incus/snapshot.go:345
-#: cmd/incus/storage.go:711 cmd/incus/storage_bucket.go:521
+#: cmd/incus/storage.go:712 cmd/incus/storage_bucket.go:521
 #: cmd/incus/storage_bucket.go:966 cmd/incus/storage_volume.go:1625
 #: cmd/incus/storage_volume.go:2812 cmd/incus/warning.go:98
 msgid ""
@@ -3703,7 +3703,7 @@ msgstr "ネットワークのランタイム情報を取得します"
 msgid "Get the key as a cluster group property"
 msgstr "クラスターグループを作成します"
 
-#: cmd/incus/cluster.go:450
+#: cmd/incus/cluster.go:463
 #, fuzzy
 msgid "Get the key as a cluster property"
 msgstr "クラスターグループを作成します"
@@ -3759,7 +3759,7 @@ msgstr "key をプロジェクトプロパティとして取得します"
 msgid "Get the key as a storage bucket property"
 msgstr "ストレージバケットに対する鍵を作成します"
 
-#: cmd/incus/storage.go:424
+#: cmd/incus/storage.go:425
 #, fuzzy
 msgid "Get the key as a storage property"
 msgstr "ストレージバケットに対する鍵を作成します"
@@ -3778,7 +3778,7 @@ msgstr "key をインスタンスプロパティとして取得します"
 msgid "Get values for cluster group configuration keys"
 msgstr "クラスターメンバーの設定値を取得します"
 
-#: cmd/incus/cluster.go:447
+#: cmd/incus/cluster.go:460
 msgid "Get values for cluster member configuration keys"
 msgstr "クラスターメンバーの設定値を取得します"
 
@@ -3836,7 +3836,7 @@ msgstr "プロジェクトの設定値を取得します"
 msgid "Get values for storage bucket configuration keys"
 msgstr "ストレージバケットの設定値を取得します"
 
-#: cmd/incus/storage.go:419 cmd/incus/storage.go:420
+#: cmd/incus/storage.go:420 cmd/incus/storage.go:421
 msgid "Get values for storage pool configuration keys"
 msgstr "ストレージプールの設定値を取得します"
 
@@ -4238,12 +4238,12 @@ msgstr "不正な証明書です"
 msgid "Invalid cluster join token: %w"
 msgstr "メンバ %s の join トークン:"
 
-#: cmd/incus/list.go:593
+#: cmd/incus/list.go:595
 #, c-format
 msgid "Invalid config key '%s' in '%s'"
 msgstr "'%s' は正しくない設定項目 (key) です (%s 中の)"
 
-#: cmd/incus/list.go:586
+#: cmd/incus/list.go:588
 #, c-format
 msgid "Invalid config key column format (too many fields): '%s'"
 msgstr ""
@@ -4293,26 +4293,26 @@ msgstr "メンバ %s の join トークン:"
 msgid "Invalid key=value configuration: %s"
 msgstr "不適切な キー=値 の設定: %s"
 
-#: cmd/incus/list.go:614
+#: cmd/incus/list.go:616
 #, c-format
 msgid "Invalid max width (must -1, 0 or a positive integer) '%s' in '%s'"
 msgstr ""
 "'%s' は最大幅の値として不正です (-1 もしくは 0 もしくは正の整数でなくてはなり"
 "ません) ('%s' 中の)"
 
-#: cmd/incus/list.go:610
+#: cmd/incus/list.go:612
 #, c-format
 msgid "Invalid max width (must be an integer) '%s' in '%s'"
 msgstr "'%s' は最大幅の値として不正です (整数でなくてはなりません) ('%s' 中の)"
 
-#: cmd/incus/list.go:600
+#: cmd/incus/list.go:602
 #, c-format
 msgid ""
 "Invalid name in '%s', empty string is only allowed when defining maxWidth"
 msgstr ""
 "'%s' は不正な名前です。空文字列は maxWidth を指定しているときのみ指定できます"
 
-#: cmd/incus/main.go:573 cmd/incus/storage.go:144
+#: cmd/incus/main.go:573 cmd/incus/storage.go:145
 msgid "Invalid number of arguments"
 msgstr "引数の数が不正です"
 
@@ -4554,11 +4554,11 @@ msgstr ""
 "    u - アップロード日\n"
 "    t - タイプ"
 
-#: cmd/incus/cluster.go:1099
+#: cmd/incus/cluster.go:1112
 msgid "List all active cluster member join tokens"
 msgstr "有効なクラスターへの join トークンをすべて一覧表示します"
 
-#: cmd/incus/cluster.go:1100
+#: cmd/incus/cluster.go:1113
 #, fuzzy
 msgid ""
 "List all active cluster member join tokens\n"
@@ -4656,11 +4656,11 @@ msgstr ""
 "    u - アップロード日\n"
 "    t - タイプ"
 
-#: cmd/incus/cluster.go:133
+#: cmd/incus/cluster.go:134
 msgid "List all the cluster members"
 msgstr "クラスターのメンバをすべて一覧表示します"
 
-#: cmd/incus/cluster.go:134
+#: cmd/incus/cluster.go:135
 #, fuzzy
 msgid ""
 "List all the cluster members\n"
@@ -4997,11 +4997,11 @@ msgstr ""
 "    u - アップロード日\n"
 "    t - タイプ"
 
-#: cmd/incus/storage.go:686
+#: cmd/incus/storage.go:687
 msgid "List available storage pools"
 msgstr "利用可能なストレージプールを一覧表示します"
 
-#: cmd/incus/storage.go:687
+#: cmd/incus/storage.go:688
 #, fuzzy
 msgid ""
 "List available storage pools\n"
@@ -6102,7 +6102,7 @@ msgstr "MEMORY USAGE"
 msgid "MEMORY USAGE%"
 msgstr "MEMORY USAGE%"
 
-#: cmd/incus/cluster.go:186
+#: cmd/incus/cluster.go:187
 msgid "MESSAGE"
 msgstr "MESSAGE"
 
@@ -6143,7 +6143,7 @@ msgstr "ネットワークを管理し、インスタンスをネットワーク
 msgid "Manage cluster groups"
 msgstr "クラスターグループを管理します"
 
-#: cmd/incus/cluster.go:37 cmd/incus/cluster.go:38
+#: cmd/incus/cluster.go:38 cmd/incus/cluster.go:39
 msgid "Manage cluster members"
 msgstr "クラスターのメンバを管理します"
 
@@ -6313,7 +6313,7 @@ msgstr "ストレージバケットを管理します"
 msgid "Manage storage buckets."
 msgstr "ストレージバケットを管理します。"
 
-#: cmd/incus/storage.go:39 cmd/incus/storage.go:40
+#: cmd/incus/storage.go:40 cmd/incus/storage.go:41
 msgid "Manage storage pools and volumes"
 msgstr "ストレージプール、ストレージボリュームを管理します"
 
@@ -6373,17 +6373,17 @@ msgstr "メンバー %q はすでにロール %q を持っています"
 msgid "Member %q does not have role %q"
 msgstr "メンバー %q はロール %q を持っていません"
 
-#: cmd/incus/cluster.go:1073
+#: cmd/incus/cluster.go:1086
 #, c-format
 msgid "Member %s join token:"
 msgstr "メンバ %s の join トークン:"
 
-#: cmd/incus/cluster.go:785
+#: cmd/incus/cluster.go:798
 #, c-format
 msgid "Member %s removed"
 msgstr "メンバ %s が削除されました"
 
-#: cmd/incus/cluster.go:688
+#: cmd/incus/cluster.go:701
 #, c-format
 msgid "Member %s renamed to %s"
 msgstr "メンバ名 %s を %s に変更しました"
@@ -6445,7 +6445,7 @@ msgstr "証明書のフィンガープリントがありません"
 msgid "Missing cluster group name"
 msgstr "クラスターグループ名がありません"
 
-#: cmd/incus/cluster.go:939 cmd/incus/cluster.go:1552
+#: cmd/incus/cluster.go:952 cmd/incus/cluster.go:1565
 #: cmd/incus/cluster_group.go:147 cmd/incus/cluster_group.go:660
 #: cmd/incus/cluster_group.go:864 cmd/incus/cluster_role.go:84
 #: cmd/incus/cluster_role.go:153
@@ -6561,8 +6561,8 @@ msgstr "ネットワークゾーンレコード名を指定する必要があり
 msgid "Missing peer name"
 msgstr "ピア名を指定する必要があります"
 
-#: cmd/incus/storage.go:259 cmd/incus/storage.go:339 cmd/incus/storage.go:459
-#: cmd/incus/storage.go:539 cmd/incus/storage.go:893 cmd/incus/storage.go:999
+#: cmd/incus/storage.go:260 cmd/incus/storage.go:340 cmd/incus/storage.go:460
+#: cmd/incus/storage.go:540 cmd/incus/storage.go:906 cmd/incus/storage.go:1012
 #: cmd/incus/storage_bucket.go:135 cmd/incus/storage_bucket.go:241
 #: cmd/incus/storage_bucket.go:319 cmd/incus/storage_bucket.go:440
 #: cmd/incus/storage_bucket.go:606 cmd/incus/storage_bucket.go:728
@@ -6739,7 +6739,7 @@ msgstr "ディレクトリからのインポートは root で実行する必要
 msgid "Must supply instance name for: "
 msgstr "インスタンス名を指定する必要があります: "
 
-#: cmd/incus/cluster.go:179 cmd/incus/cluster.go:1139
+#: cmd/incus/cluster.go:180 cmd/incus/cluster.go:1152
 #: cmd/incus/cluster_group.go:511 cmd/incus/config_trust.go:447
 #: cmd/incus/config_trust.go:651 cmd/incus/list.go:508
 #: cmd/incus/network.go:1164 cmd/incus/network_acl.go:177
@@ -6747,7 +6747,7 @@ msgstr "インスタンス名を指定する必要があります: "
 #: cmd/incus/network_peer.go:136 cmd/incus/network_zone.go:142
 #: cmd/incus/network_zone.go:953 cmd/incus/profile.go:786
 #: cmd/incus/project.go:576 cmd/incus/project.go:727 cmd/incus/remote.go:913
-#: cmd/incus/snapshot.go:369 cmd/incus/storage.go:734
+#: cmd/incus/snapshot.go:369 cmd/incus/storage.go:735
 #: cmd/incus/storage_bucket.go:539 cmd/incus/storage_bucket.go:983
 #: cmd/incus/storage_volume.go:1728 cmd/incus/storage_volume.go:2904
 msgid "NAME"
@@ -7062,7 +7062,7 @@ msgstr "利用可能なストレージバックエンド %s がありません"
 msgid "No certificate add token for member %s on remote: %s"
 msgstr "メンバー %s に対する証明書追加トークンがリモートにありません: %s"
 
-#: cmd/incus/cluster.go:1342
+#: cmd/incus/cluster.go:1355
 #, c-format
 msgid "No cluster join token for member %s on remote: %s"
 msgstr ""
@@ -7385,7 +7385,7 @@ msgstr "終了するには CTRL-C を押してください"
 msgid "Press ctrl+c to finish"
 msgstr "終了するには ctrl+c を押してください"
 
-#: cmd/incus/cluster.go:988 cmd/incus/cluster_group.go:424
+#: cmd/incus/cluster.go:1001 cmd/incus/cluster_group.go:424
 #: cmd/incus/config.go:279 cmd/incus/config.go:354
 #: cmd/incus/config_metadata.go:159 cmd/incus/config_template.go:263
 #: cmd/incus/config_trust.go:365 cmd/incus/image.go:475
@@ -7394,7 +7394,7 @@ msgstr "終了するには ctrl+c を押してください"
 #: cmd/incus/network_integration.go:316 cmd/incus/network_load_balancer.go:798
 #: cmd/incus/network_peer.go:833 cmd/incus/network_zone.go:739
 #: cmd/incus/network_zone.go:1462 cmd/incus/profile.go:625
-#: cmd/incus/project.go:421 cmd/incus/storage.go:386
+#: cmd/incus/project.go:421 cmd/incus/storage.go:387
 #: cmd/incus/storage_bucket.go:380 cmd/incus/storage_bucket.go:1384
 #: cmd/incus/storage_volume.go:1148 cmd/incus/storage_volume.go:1180
 msgid "Press enter to open the editor again or ctrl+c to abort change"
@@ -7615,7 +7615,7 @@ msgstr "RESTRICTED"
 msgid "ROLE"
 msgstr "ROLE"
 
-#: cmd/incus/cluster.go:181
+#: cmd/incus/cluster.go:182
 msgid "ROLES"
 msgstr "ROLES"
 
@@ -7745,7 +7745,7 @@ msgstr ""
 msgid "Remove a cluster member from a cluster group"
 msgstr "クラスターグループからメンバを削除します"
 
-#: cmd/incus/cluster.go:708 cmd/incus/cluster.go:709
+#: cmd/incus/cluster.go:721 cmd/incus/cluster.go:722
 msgid "Remove a member from the cluster"
 msgstr "クラスターからメンバを削除します"
 
@@ -7828,7 +7828,7 @@ msgstr "信頼済みクライアントを削除します"
 msgid "Rename a cluster group"
 msgstr "クラスターグループの名前を変更します"
 
-#: cmd/incus/cluster.go:648 cmd/incus/cluster.go:649
+#: cmd/incus/cluster.go:661 cmd/incus/cluster.go:662
 msgid "Rename a cluster member"
 msgstr "クラスターメンバの名前を変更します"
 
@@ -7902,7 +7902,7 @@ msgstr "ストレージボリューム名 \"%s\" を \"%s\" に変更しまし�
 msgid "Render: %s (%s)"
 msgstr "レンダー: %s (%s)"
 
-#: cmd/incus/cluster.go:1019 cmd/incus/cluster.go:1020
+#: cmd/incus/cluster.go:1032 cmd/incus/cluster.go:1033
 msgid "Request a join token for adding a cluster member"
 msgstr "クラスターメンバーに join するためのトークンを要求します"
 
@@ -7918,7 +7918,7 @@ msgstr "リソース:"
 msgid "Restart instances"
 msgstr "インスタンスを再起動します"
 
-#: cmd/incus/cluster.go:1512 cmd/incus/cluster.go:1513
+#: cmd/incus/cluster.go:1525 cmd/incus/cluster.go:1526
 msgid "Restore cluster member"
 msgstr "クラスターメンバーをリストアします"
 
@@ -7942,7 +7942,7 @@ msgstr "スナップショットからインスタンスをリストアします
 msgid "Restore storage volume snapshots"
 msgstr "スナップショットからストレージボリュームをリストアします"
 
-#: cmd/incus/cluster.go:1579
+#: cmd/incus/cluster.go:1592
 #, c-format
 msgid "Restoring cluster member: %s"
 msgstr "クラスターメンバーをリストアしています: %s"
@@ -7969,7 +7969,7 @@ msgstr "イメージの取得中: %s"
 msgid "Revoke certificate add token"
 msgstr "証明書追加トークンを失効（Revoke）させます"
 
-#: cmd/incus/cluster.go:1266
+#: cmd/incus/cluster.go:1279
 msgid "Revoke cluster member join token"
 msgstr "クラスターメンバーに join するためのトークンを失効（Revoke）させます"
 
@@ -8025,7 +8025,7 @@ msgstr "UUID: %v"
 msgid "SNAPSHOTS"
 msgstr "SNAPSHOTS"
 
-#: cmd/incus/storage.go:737
+#: cmd/incus/storage.go:738
 msgid "SOURCE"
 msgstr "SOURCE"
 
@@ -8055,7 +8055,7 @@ msgstr "CREATED AT"
 
 #: cmd/incus/list.go:513 cmd/incus/network.go:1171
 #: cmd/incus/network_peer.go:140 cmd/incus/operation.go:162
-#: cmd/incus/storage.go:739 cmd/incus/warning.go:224
+#: cmd/incus/storage.go:740 cmd/incus/warning.go:224
 msgid "STATE"
 msgstr "STATE"
 
@@ -8068,7 +8068,7 @@ msgstr "STATE"
 msgid "STATIC"
 msgstr "STATIC"
 
-#: cmd/incus/cluster.go:185
+#: cmd/incus/cluster.go:186
 msgid "STATUS"
 msgstr "STATUS"
 
@@ -8134,8 +8134,8 @@ msgstr "ユーザによりサーバ証明書が拒否されました"
 msgid "Server doesn't trust us after authentication"
 msgstr "認証後、サーバが我々を信用していません"
 
-#: cmd/incus/cluster.go:281 cmd/incus/cluster.go:1205 cmd/incus/cluster.go:1304
-#: cmd/incus/cluster.go:1414 cmd/incus/cluster_group.go:577
+#: cmd/incus/cluster.go:294 cmd/incus/cluster.go:1218 cmd/incus/cluster.go:1317
+#: cmd/incus/cluster.go:1427 cmd/incus/cluster_group.go:577
 #, fuzzy
 msgid "Server isn't part of a cluster"
 msgstr "LXD サーバはクラスタの一部ではありません"
@@ -8160,7 +8160,7 @@ msgstr "デバイス: %s"
 msgid "Set a cluster group's configuration keys"
 msgstr "クラスターメンバーの設定を行います"
 
-#: cmd/incus/cluster.go:522
+#: cmd/incus/cluster.go:535
 msgid "Set a cluster member's configuration keys"
 msgstr "クラスターメンバーの設定を行います"
 
@@ -8413,11 +8413,11 @@ msgstr ""
 "後方互換性のため、単一の設定を行う場合は次の形式でも設定できます:\n"
 "    lxc storage bucket set [<remote>:]<pool> <volume> <key> <value>"
 
-#: cmd/incus/storage.go:853
+#: cmd/incus/storage.go:866
 msgid "Set storage pool configuration keys"
 msgstr "ストレージプールの設定項目を設定します"
 
-#: cmd/incus/storage.go:854
+#: cmd/incus/storage.go:867
 #, fuzzy
 msgid ""
 "Set storage pool configuration keys\n"
@@ -8490,7 +8490,7 @@ msgstr "プッシュ時にファイルのuidを設定します"
 msgid "Set the key as a cluster group property"
 msgstr "クラスターグループを作成します"
 
-#: cmd/incus/cluster.go:525
+#: cmd/incus/cluster.go:538
 #, fuzzy
 msgid "Set the key as a cluster property"
 msgstr "クラスターグループを作成します"
@@ -8551,7 +8551,7 @@ msgstr "プロジェクトプロパティとして設定します"
 msgid "Set the key as a storage bucket property"
 msgstr "ストレージバケットに対する鍵を作成します"
 
-#: cmd/incus/storage.go:861
+#: cmd/incus/storage.go:874
 #, fuzzy
 msgid "Set the key as a storage property"
 msgstr "ストレージバケットに対する鍵を作成します"
@@ -8594,7 +8594,7 @@ msgstr "クラスターグループの設定を表示します"
 msgid "Show content of instance file templates"
 msgstr "インスタンスのファイルテンプレートの内容を表示します"
 
-#: cmd/incus/cluster.go:327 cmd/incus/cluster.go:328
+#: cmd/incus/cluster.go:340 cmd/incus/cluster.go:341
 msgid "Show details of a cluster member"
 msgstr "クラスターメンバの詳細を表示します"
 
@@ -8702,7 +8702,7 @@ msgstr "ストレージバケットの設定を表示する"
 msgid "Show storage bucket key configurations"
 msgstr "ストレージバケットの鍵の設定を表示する"
 
-#: cmd/incus/storage.go:957 cmd/incus/storage.go:958
+#: cmd/incus/storage.go:970 cmd/incus/storage.go:971
 msgid "Show storage pool configurations and resources"
 msgstr "ストレージプールの設定とリソースを表示します"
 
@@ -8780,11 +8780,11 @@ msgstr "インスタンスログの最後の 100 行を表示しますか?"
 msgid "Show the resources available to the server"
 msgstr "サーバで使用可能なリソースを表示します"
 
-#: cmd/incus/storage.go:961
+#: cmd/incus/storage.go:974
 msgid "Show the resources available to the storage pool"
 msgstr "ストレージプールで利用可能なリソースを表示します"
 
-#: cmd/incus/storage.go:507
+#: cmd/incus/storage.go:508
 msgid "Show the used and free space in bytes"
 msgstr "使用量と空き容量を byte で表示します"
 
@@ -8792,7 +8792,7 @@ msgstr "使用量と空き容量を byte で表示します"
 msgid "Show trust configurations"
 msgstr "信頼済みクライアントの設定を表示します"
 
-#: cmd/incus/cluster.go:386 cmd/incus/cluster.go:387
+#: cmd/incus/cluster.go:399 cmd/incus/cluster.go:400
 msgid "Show useful information about a cluster member"
 msgstr "クラスターメンバーについての情報を表示します"
 
@@ -8800,7 +8800,7 @@ msgstr "クラスターメンバーについての情報を表示します"
 msgid "Show useful information about images"
 msgstr "イメージについての情報を表示します"
 
-#: cmd/incus/storage.go:503 cmd/incus/storage.go:504
+#: cmd/incus/storage.go:504 cmd/incus/storage.go:505
 msgid "Show useful information about storage pools"
 msgstr "ストレージプールの情報を表示します"
 
@@ -8956,22 +8956,22 @@ msgstr "ストレージプール %s はメンバ %s 上でペンディング状�
 msgid "Storage pool %q of type %q"
 msgstr "ストレージプール %s を作成しました"
 
-#: cmd/incus/storage.go:207
+#: cmd/incus/storage.go:208
 #, c-format
 msgid "Storage pool %s created"
 msgstr "ストレージプール %s を作成しました"
 
-#: cmd/incus/storage.go:269
+#: cmd/incus/storage.go:270
 #, c-format
 msgid "Storage pool %s deleted"
 msgstr "ストレージプール %s を削除しました"
 
-#: cmd/incus/storage.go:205
+#: cmd/incus/storage.go:206
 #, c-format
 msgid "Storage pool %s pending on member %s"
 msgstr "ストレージプール %s はメンバ %s 上でペンディング状態です"
 
-#: cmd/incus/storage.go:116
+#: cmd/incus/storage.go:117
 #, fuzzy
 msgid "Storage pool description"
 msgstr "ストレージプール %s を作成しました"
@@ -9013,7 +9013,7 @@ msgstr "ストレージボリューム %s を削除しました"
 msgid "Store the instance state"
 msgstr "インスタンスの状態を保存します"
 
-#: cmd/incus/cluster.go:1454
+#: cmd/incus/cluster.go:1467
 #, fuzzy
 msgid "Successfully updated cluster certificates"
 msgstr "リモート %s に対するクラスター証明書の更新に成功しました"
@@ -9060,7 +9060,7 @@ msgstr "TAKEN AT"
 msgid "TARGET"
 msgstr "TARGET"
 
-#: cmd/incus/cluster.go:1140 cmd/incus/config_trust.go:652
+#: cmd/incus/cluster.go:1153 cmd/incus/config_trust.go:652
 msgid "TOKEN"
 msgstr "TOKEN"
 
@@ -9211,7 +9211,7 @@ msgstr "インスタンスのスナップショットに設定する設定キー
 msgid "The key %q does not exist on cluster group %q"
 msgstr "設定 %q はクラスターメンバー %q には存在しません"
 
-#: cmd/incus/cluster.go:503
+#: cmd/incus/cluster.go:516
 #, c-format
 msgid "The key %q does not exist on cluster member %q"
 msgstr "設定 %q はクラスターメンバー %q には存在しません"
@@ -9242,7 +9242,7 @@ msgstr "プロファイルのデバイスが存在しません"
 msgid "The property %q does not exist on the cluster group %q: %v"
 msgstr "設定 %q はクラスタメンバー %q には存在しません"
 
-#: cmd/incus/cluster.go:494
+#: cmd/incus/cluster.go:507
 #, fuzzy, c-format
 msgid "The property %q does not exist on the cluster member %q: %v"
 msgstr "設定 %q はクラスタメンバー %q には存在しません"
@@ -9312,7 +9312,7 @@ msgstr "設定 %q はクラスタメンバー %q には存在しません"
 msgid "The property %q does not exist on the storage bucket %q: %v"
 msgstr "設定 %q はクラスタメンバー %q には存在しません"
 
-#: cmd/incus/storage.go:477
+#: cmd/incus/storage.go:478
 #, fuzzy, c-format
 msgid "The property %q does not exist on the storage pool %q: %v"
 msgstr "設定 %q はクラスタメンバー %q には存在しません"
@@ -9431,12 +9431,12 @@ msgstr "入力したバックエンド '%s' は、この初期化ではサポー
 msgid "This server currently has the following storage pools:"
 msgstr "このサーバーは、次のストレージプールを持っています:"
 
-#: cmd/incus/cluster.go:865
+#: cmd/incus/cluster.go:878
 #, fuzzy
 msgid "This server is already clustered"
 msgstr "LXD サーバはすでにクラスターに属しています"
 
-#: cmd/incus/cluster.go:855
+#: cmd/incus/cluster.go:868
 #, fuzzy
 msgid "This server is not available on the network"
 msgstr "この LXD サーバはネットワークから利用できません"
@@ -9482,7 +9482,7 @@ msgstr ""
 
 #: cmd/incus/config.go:303 cmd/incus/config.go:496 cmd/incus/config.go:707
 #: cmd/incus/config.go:805 cmd/incus/copy.go:147 cmd/incus/info.go:389
-#: cmd/incus/network.go:992 cmd/incus/storage.go:545
+#: cmd/incus/network.go:992 cmd/incus/storage.go:546
 msgid "To use --target, the destination remote must be a cluster"
 msgstr ""
 "--target オプションは、コピー先のリモートサーバがクラスターに属していなければ"
@@ -9583,7 +9583,7 @@ msgstr "UNLIMITED"
 msgid "UPLOAD DATE"
 msgstr "UPLOAD DATE"
 
-#: cmd/incus/cluster.go:180 cmd/incus/remote.go:914
+#: cmd/incus/cluster.go:181 cmd/incus/remote.go:914
 msgid "URL"
 msgstr "URL"
 
@@ -9604,7 +9604,7 @@ msgstr "上位デバイス"
 #: cmd/incus/network.go:1170 cmd/incus/network_acl.go:179
 #: cmd/incus/network_address_set.go:168 cmd/incus/network_allocations.go:77
 #: cmd/incus/network_integration.go:459 cmd/incus/network_zone.go:144
-#: cmd/incus/profile.go:789 cmd/incus/project.go:584 cmd/incus/storage.go:738
+#: cmd/incus/profile.go:789 cmd/incus/project.go:584 cmd/incus/storage.go:739
 #: cmd/incus/storage_volume.go:1731
 msgid "USED BY"
 msgstr "USED BY"
@@ -9642,16 +9642,16 @@ msgstr "未知の証明書タイプ %q"
 msgid "Unknown channel type for client %q: %s"
 msgstr "クライアント %q の未知のチャンネルタイプ: %s"
 
-#: cmd/incus/cluster.go:201 cmd/incus/cluster.go:1155
+#: cmd/incus/cluster.go:202 cmd/incus/cluster.go:1168
 #: cmd/incus/cluster_group.go:527 cmd/incus/config_trust.go:469
 #: cmd/incus/config_trust.go:667 cmd/incus/image.go:1167
-#: cmd/incus/image_alias.go:274 cmd/incus/list.go:568 cmd/incus/network.go:1190
+#: cmd/incus/image_alias.go:274 cmd/incus/list.go:570 cmd/incus/network.go:1190
 #: cmd/incus/network.go:1397 cmd/incus/network_allocations.go:95
 #: cmd/incus/network_forward.go:161 cmd/incus/network_integration.go:473
 #: cmd/incus/network_load_balancer.go:168 cmd/incus/network_peer.go:154
 #: cmd/incus/network_zone.go:162 cmd/incus/operation.go:182
 #: cmd/incus/profile.go:810 cmd/incus/project.go:599 cmd/incus/remote.go:933
-#: cmd/incus/snapshot.go:386 cmd/incus/storage.go:754
+#: cmd/incus/snapshot.go:386 cmd/incus/storage.go:755
 #: cmd/incus/storage_bucket.go:563 cmd/incus/storage_bucket.go:999
 #: cmd/incus/storage_volume.go:1763 cmd/incus/storage_volume.go:2920
 #: cmd/incus/top.go:98 cmd/incus/warning.go:251
@@ -9684,7 +9684,7 @@ msgstr "未知の出力タイプ: %q"
 msgid "Unset a cluster group's configuration keys"
 msgstr "クラスターメンバーの設定を削除します"
 
-#: cmd/incus/cluster.go:602
+#: cmd/incus/cluster.go:615
 msgid "Unset a cluster member's configuration keys"
 msgstr "クラスターメンバーの設定を削除します"
 
@@ -9766,7 +9766,7 @@ msgstr "プロジェクトの設定を削除します"
 msgid "Unset storage bucket configuration keys"
 msgstr "ストレージバケットの設定を削除します"
 
-#: cmd/incus/storage.go:1053 cmd/incus/storage.go:1054
+#: cmd/incus/storage.go:1066 cmd/incus/storage.go:1067
 msgid "Unset storage pool configuration keys"
 msgstr "ストレージプールの設定を削除します"
 
@@ -9793,7 +9793,7 @@ msgstr ""
 msgid "Unset the key as a cluster group property"
 msgstr "クラスタープロパティの設定を削除します"
 
-#: cmd/incus/cluster.go:605
+#: cmd/incus/cluster.go:618
 msgid "Unset the key as a cluster property"
 msgstr "クラスタープロパティの設定を削除します"
 
@@ -9854,7 +9854,7 @@ msgstr "プロジェクトプロパティの設定を削除します"
 msgid "Unset the key as a storage bucket property"
 msgstr "ストレージバケットに対する鍵を作成します"
 
-#: cmd/incus/storage.go:1058
+#: cmd/incus/storage.go:1071
 #, fuzzy
 msgid "Unset the key as a storage property"
 msgstr "ストレージバケットに対する鍵を作成します"
@@ -9877,11 +9877,11 @@ msgstr "サポートされていないインスタンスタイプです: %s"
 msgid "Up delay"
 msgstr "Up delay"
 
-#: cmd/incus/cluster.go:1356
+#: cmd/incus/cluster.go:1369
 msgid "Update cluster certificate"
 msgstr "クラスター証明書を更新します"
 
-#: cmd/incus/cluster.go:1358
+#: cmd/incus/cluster.go:1371
 msgid ""
 "Update cluster certificate with PEM certificate and key read from input "
 "files."
@@ -9938,7 +9938,7 @@ msgstr "コマンドを実行する際のユーザ ID (UID) (デフォルト 0)"
 msgid "User aborted configuration"
 msgstr "ユーザが削除操作を中断しました"
 
-#: cmd/incus/cluster.go:748 cmd/incus/delete.go:55 cmd/incus/project.go:242
+#: cmd/incus/cluster.go:761 cmd/incus/delete.go:55 cmd/incus/project.go:242
 #: cmd/incus/snapshot.go:286
 msgid "User aborted delete operation"
 msgstr "ユーザが削除操作を中断しました"
@@ -10223,12 +10223,11 @@ msgstr "[<remote:>]<pool> <volume> <profile> [<device name>]"
 msgid "[<remote:>]<pool> <volume> <profile> [<device name>] [<path>]"
 msgstr "[<remote:>]<pool> <volume> <profile> [<device name>] [<path>]"
 
-#: cmd/incus/cluster.go:131 cmd/incus/cluster.go:1098
-#: cmd/incus/cluster_group.go:464 cmd/incus/config_trust.go:409
-#: cmd/incus/config_trust.go:614 cmd/incus/monitor.go:33
-#: cmd/incus/network_acl.go:95 cmd/incus/network_address_set.go:92
-#: cmd/incus/network_integration.go:416 cmd/incus/network_zone.go:93
-#: cmd/incus/operation.go:116 cmd/incus/storage.go:684 cmd/incus/top.go:41
+#: cmd/incus/cluster.go:1111 cmd/incus/cluster_group.go:464
+#: cmd/incus/config_trust.go:409 cmd/incus/config_trust.go:614
+#: cmd/incus/monitor.go:33 cmd/incus/network_acl.go:95
+#: cmd/incus/network_address_set.go:92 cmd/incus/network_integration.go:416
+#: cmd/incus/network_zone.go:93 cmd/incus/operation.go:116 cmd/incus/top.go:41
 #: cmd/incus/version.go:21 cmd/incus/warning.go:73 cmd/incus/webui.go:17
 msgid "[<remote>:]"
 msgstr "[<remote>:]"
@@ -10237,7 +10236,7 @@ msgstr "[<remote>:]"
 msgid "[<remote>:] <backup file> [<instance name>]"
 msgstr "[<remote>:] <backup file> [<instance name>]"
 
-#: cmd/incus/cluster.go:1354
+#: cmd/incus/cluster.go:1367
 msgid "[<remote>:] <cert.crt> <cert.key>"
 msgstr "[<remote>:] <cert.crt> <cert.key>"
 
@@ -10246,12 +10245,13 @@ msgstr "[<remote>:] <cert.crt> <cert.key>"
 msgid "[<remote>:] <cert>"
 msgstr "[<remote>:] [<cert>]"
 
-#: cmd/incus/cluster.go:800 cmd/incus/config_trust.go:821
+#: cmd/incus/cluster.go:813 cmd/incus/config_trust.go:821
 msgid "[<remote>:] <name>"
 msgstr "[<remote>:] <name>"
 
-#: cmd/incus/image.go:1085 cmd/incus/list.go:49 cmd/incus/network.go:1108
-#: cmd/incus/profile.go:734 cmd/incus/project.go:529
+#: cmd/incus/cluster.go:132 cmd/incus/image.go:1085 cmd/incus/list.go:49
+#: cmd/incus/network.go:1108 cmd/incus/profile.go:734 cmd/incus/project.go:529
+#: cmd/incus/storage.go:685
 msgid "[<remote>:] [<filter>...]"
 msgstr "[<remote>:] [<filter>...]"
 
@@ -10520,9 +10520,9 @@ msgstr "[<remote>:]<instance>[/<path>] [<target path>]"
 msgid "[<remote>:]<instance>[/<snapshot>] [<remote>:] [flags] [key=value...]"
 msgstr "[<remote>:]<instance>[/<snapshot>] [<remote>:] [flags] [key=value...]"
 
-#: cmd/incus/cluster.go:326 cmd/incus/cluster.go:385 cmd/incus/cluster.go:706
-#: cmd/incus/cluster.go:895 cmd/incus/cluster.go:1265 cmd/incus/cluster.go:1481
-#: cmd/incus/cluster.go:1511
+#: cmd/incus/cluster.go:339 cmd/incus/cluster.go:398 cmd/incus/cluster.go:719
+#: cmd/incus/cluster.go:908 cmd/incus/cluster.go:1278 cmd/incus/cluster.go:1494
+#: cmd/incus/cluster.go:1524
 msgid "[<remote>:]<member>"
 msgstr "[<remote>:]<member>"
 
@@ -10531,15 +10531,15 @@ msgstr "[<remote>:]<member>"
 msgid "[<remote>:]<member> <group>"
 msgstr "[<remote>:]<member> <group>"
 
-#: cmd/incus/cluster.go:446 cmd/incus/cluster.go:601
+#: cmd/incus/cluster.go:459 cmd/incus/cluster.go:614
 msgid "[<remote>:]<member> <key>"
 msgstr "[<remote>:]<member> <key>"
 
-#: cmd/incus/cluster.go:521
+#: cmd/incus/cluster.go:534
 msgid "[<remote>:]<member> <key>=<value>..."
 msgstr "[<remote>:]<member> <key>=<value>..."
 
-#: cmd/incus/cluster.go:646
+#: cmd/incus/cluster.go:659
 msgid "[<remote>:]<member> <new-name>"
 msgstr "[<remote>:]<member> <new-name>"
 
@@ -10700,8 +10700,8 @@ msgstr "[<remote>:]<network> [key=value...]"
 msgid "[<remote>:]<operation>"
 msgstr "[<remote>:]<operation>"
 
-#: cmd/incus/storage.go:223 cmd/incus/storage.go:284 cmd/incus/storage.go:502
-#: cmd/incus/storage.go:956 cmd/incus/storage_bucket.go:496
+#: cmd/incus/storage.go:224 cmd/incus/storage.go:285 cmd/incus/storage.go:503
+#: cmd/incus/storage.go:969 cmd/incus/storage_bucket.go:496
 msgid "[<remote>:]<pool>"
 msgstr "[<remote>:]<pool>"
 
@@ -10738,15 +10738,15 @@ msgstr "[<remote>:]<pool> <volume> [<path>]"
 msgid "[<remote>:]<pool> <bucket> [key=value...]"
 msgstr "[<remote>:]<pool> <bucket> [key=value...]"
 
-#: cmd/incus/storage.go:104
+#: cmd/incus/storage.go:105
 msgid "[<remote>:]<pool> <driver> [key=value...]"
 msgstr "[<remote>:]<pool> <driver> [key=value...]"
 
-#: cmd/incus/storage.go:418 cmd/incus/storage.go:1052
+#: cmd/incus/storage.go:419 cmd/incus/storage.go:1065
 msgid "[<remote>:]<pool> <key>"
 msgstr "[<remote>:]<pool> <key>"
 
-#: cmd/incus/storage.go:852
+#: cmd/incus/storage.go:865
 msgid "[<remote>:]<pool> <key> <value>"
 msgstr "[<remote>:]<pool> <key> <value>"
 
@@ -10940,7 +10940,7 @@ msgstr "[<remote>:][<instance>] <key>=<value>..."
 msgid "[<remote>] <IP|FQDN|URL|token>"
 msgstr "[<remote>] <IP|FQDN|URL|token>"
 
-#: cmd/incus/cluster.go:1018
+#: cmd/incus/cluster.go:1031
 msgid "[[<remote>:]<member>]"
 msgstr "[[<remote>:]<member>]"
 
@@ -10953,7 +10953,7 @@ msgstr "operation"
 msgid "current"
 msgstr "現在値"
 
-#: cmd/incus/storage.go:571
+#: cmd/incus/storage.go:572
 msgid "description"
 msgstr "説明"
 
@@ -10961,7 +10961,7 @@ msgstr "説明"
 msgid "disabled"
 msgstr "無効"
 
-#: cmd/incus/storage.go:570
+#: cmd/incus/storage.go:571
 msgid "driver"
 msgstr "ドライバ"
 
@@ -11006,7 +11006,7 @@ msgstr ""
 "lxc alias rename list my-list\n"
 "    エイリアス名 \"list\" を \"my-list\" に変更します。"
 
-#: cmd/incus/cluster.go:899
+#: cmd/incus/cluster.go:912
 #, fuzzy
 msgid ""
 "incus cluster edit <cluster member> < member.yaml\n"
@@ -11699,7 +11699,7 @@ msgstr ""
 "lxc storage bucket show default data\n"
 "    \"default\" プール内の \"data\" というバケットのプロパティを表示します。"
 
-#: cmd/incus/storage.go:109
+#: cmd/incus/storage.go:110
 #, fuzzy
 msgid ""
 "incus storage create s1 dir\n"
@@ -11711,7 +11711,7 @@ msgstr ""
 "lxc storage edit [<remote>:]<pool> < pool.yaml\n"
 "    pool.yaml の内容でストレージプールを更新します。"
 
-#: cmd/incus/storage.go:288
+#: cmd/incus/storage.go:289
 #, fuzzy
 msgid ""
 "incus storage edit [<remote>:]<pool> < pool.yaml\n"
@@ -11854,7 +11854,7 @@ msgstr ""
 "lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
 "    pool.yaml の内容でストレージボリュームを更新します。"
 
-#: cmd/incus/storage.go:568
+#: cmd/incus/storage.go:569
 msgid "info"
 msgstr "ストレージ情報"
 
@@ -11862,7 +11862,7 @@ msgstr "ストレージ情報"
 msgid "n"
 msgstr "n"
 
-#: cmd/incus/storage.go:569
+#: cmd/incus/storage.go:570
 msgid "name"
 msgstr "名前"
 
@@ -11880,7 +11880,7 @@ msgstr "ok (y/n/[fingerprint])?"
 msgid "please use `incus profile`"
 msgstr "`lxc profile` コマンドを使ってください"
 
-#: cmd/incus/storage.go:573
+#: cmd/incus/storage.go:574
 msgid "space used"
 msgstr "使用量"
 
@@ -11893,7 +11893,7 @@ msgstr "sshfs が停止しました"
 msgid "sshfs mounting %q on %q"
 msgstr "sshfs で %q を %q にマウントします"
 
-#: cmd/incus/storage.go:572
+#: cmd/incus/storage.go:573
 msgid "total space"
 msgstr "総容量"
 
@@ -11901,7 +11901,7 @@ msgstr "総容量"
 msgid "unreachable"
 msgstr "サーバに接続できません"
 
-#: cmd/incus/storage.go:567
+#: cmd/incus/storage.go:568
 msgid "used by"
 msgstr "ストレージを使用中の"
 
@@ -11909,7 +11909,7 @@ msgstr "ストレージを使用中の"
 msgid "y"
 msgstr "y"
 
-#: cmd/incus/cluster.go:747 cmd/incus/config_trust.go:509
+#: cmd/incus/cluster.go:760 cmd/incus/config_trust.go:509
 #: cmd/incus/delete.go:54 cmd/incus/image.go:993 cmd/incus/image.go:998
 #: cmd/incus/image.go:1206 cmd/incus/project.go:241 cmd/incus/snapshot.go:285
 msgid "yes"
