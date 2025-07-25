@@ -19,6 +19,7 @@ import (
 	"github.com/gorilla/mux"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/filter"
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/certificate"
@@ -1106,6 +1107,12 @@ func clusterAcceptMember(client incus.InstanceServer, name string, address strin
 //  ---
 //  produces:
 //    - application/json
+//  parameters:
+//    - in: query
+//      name: filter
+//      description: Collection filter
+//      type: string
+//      example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -1149,6 +1156,12 @@ func clusterAcceptMember(client incus.InstanceServer, name string, address strin
 //	---
 //	produces:
 //	  - application/json
+//	parameters:
+//	  - in: query
+//	    name: filter
+//	    description: Collection filter
+//	    type: string
+//	    example: default
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -1181,6 +1194,13 @@ func clusterNodesGet(d *Daemon, r *http.Request) response.Response {
 	recursion := localUtil.IsRecursionRequest(r)
 	s := d.State()
 
+	// Parse filter value.
+	filterStr := r.FormValue("filter")
+	clauses, err := filter.Parse(filterStr, filter.QueryOperatorSet())
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid filter: %w", err))
+	}
+
 	leaderAddress, err := s.Cluster.LeaderAddress()
 	if err != nil {
 		return response.InternalError(err)
@@ -1199,8 +1219,7 @@ func clusterNodesGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	var members []db.NodeInfo
-	var membersInfo []api.ClusterMember
+	var members []api.ClusterMember
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		failureDomains, err := tx.GetFailureDomainsNames(ctx)
 		if err != nil {
@@ -1212,7 +1231,7 @@ func clusterNodesGet(d *Daemon, r *http.Request) response.Response {
 			return fmt.Errorf("Failed loading member failure domains: %w", err)
 		}
 
-		members, err = tx.GetNodes(ctx)
+		nodes, err := tx.GetNodes(ctx)
 		if err != nil {
 			return fmt.Errorf("Failed getting cluster members: %w", err)
 		}
@@ -1231,16 +1250,14 @@ func clusterNodesGet(d *Daemon, r *http.Request) response.Response {
 			RaftNodes:            raftNodes,
 		}
 
-		if recursion {
-			membersInfo = make([]api.ClusterMember, 0, len(members))
-			for i := range members {
-				member, err := members[i].ToAPI(ctx, tx, args)
-				if err != nil {
-					return err
-				}
-
-				membersInfo = append(membersInfo, *member)
+		members = make([]api.ClusterMember, 0, len(nodes))
+		for i := range nodes {
+			member, err := nodes[i].ToAPI(ctx, tx, args)
+			if err != nil {
+				return err
 			}
+
+			members = append(members, *member)
 		}
 
 		return nil
@@ -1249,13 +1266,32 @@ func clusterNodesGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if recursion {
-		return response.SyncResponse(true, membersInfo)
+	// Apply filters.
+	filtered := make([]api.ClusterMember, 0)
+	for _, member := range members {
+		if clauses != nil && len(clauses.Clauses) > 0 {
+			match, err := filter.Match(member, *clauses)
+			if err != nil {
+				return response.SmartError(err)
+			}
+
+			if !match {
+				continue
+			}
+		}
+
+		filtered = append(filtered, member)
 	}
 
+	// Return full responses.
+	if recursion {
+		return response.SyncResponse(true, filtered)
+	}
+
+	// Return URLs only.
 	urls := make([]string, 0, len(members))
 	for _, member := range members {
-		u := api.NewURL().Path(version.APIVersion, "cluster", "members", member.Name)
+		u := api.NewURL().Path(version.APIVersion, "cluster", "members", member.ServerName)
 		urls = append(urls, u.String())
 	}
 
