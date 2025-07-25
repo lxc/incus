@@ -32,6 +32,8 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   /run/udev/data/*                          r,
   @{PROC}/sys/vm/max_map_count              r,
   @{PROC}/@{pid}/cpuset                     r,
+  @{PROC}/@{pid}/gid_map                    r,
+  @{PROC}/@{pid}/uid_map                    r,
   @{PROC}/@{pid}/task/*/comm                rw,
   /sys/bus/                                 r,
   /sys/bus/nd/devices/                      r,
