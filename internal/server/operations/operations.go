@@ -216,6 +216,22 @@ func (op *Operation) SetRequestor(r *http.Request) {
 	op.requestor = request.CreateRequestor(r)
 }
 
+// IsSameRequestor compares the current request requestor to that stored (if any).
+func (op *Operation) IsSameRequestor(r *http.Request) bool {
+	// If no requestor was previously recorded, it's not the same requestor.
+	if op.requestor == nil {
+		return false
+	}
+
+	// Compare with the recorded requestor.
+	curRequestor := request.CreateRequestor(r)
+	if op.requestor.Username != curRequestor.Username || op.requestor.Protocol != curRequestor.Protocol {
+		return false
+	}
+
+	return true
+}
+
 // CopyRequestor sets a requestor to match that of another operation.
 func (op *Operation) CopyRequestor(otherOp *Operation) {
 	op.requestor = otherOp.requestor
