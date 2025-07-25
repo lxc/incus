@@ -7748,6 +7748,12 @@ paths:
         get:
             description: Returns a list of cluster members (URLs).
             operationId: cluster_members_get
+            parameters:
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
@@ -8009,6 +8015,12 @@ paths:
         get:
             description: Returns a list of cluster members (structs).
             operationId: cluster_members_get_recursion1
+            parameters:
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
             produces:
                 - application/json
             responses:
