@@ -83,7 +83,12 @@ func (s *consoleWs) metadata() any {
 	return jmap.Map{"fds": fds}
 }
 
-func (s *consoleWs) connect(_ *operations.Operation, r *http.Request, w http.ResponseWriter) error {
+func (s *consoleWs) connect(op *operations.Operation, r *http.Request, w http.ResponseWriter) error {
+	// Check that the user connecting is the same who started the session.
+	if !op.IsSameRequestor(r) {
+		return api.StatusErrorf(http.StatusForbidden, "Requestor mismatch")
+	}
+
 	switch s.protocol {
 	case instance.ConsoleTypeConsole:
 		return s.connectConsole(r, w)
