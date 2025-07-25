@@ -168,16 +168,38 @@ The virtual machine images from the [images](https://images.linuxcontainers.org)
 For other virtual machines, you may want to manually install the agent.
 
 ```{note}
-The Incus Agent is currently available only on Linux virtual machines.
+The Incus Agent is currently available only on Linux and Windows virtual machines.
 ```
 
-Incus provides the agent through a remote `9p` file system with mount name `config`.
-To install the agent, you'll need to get access to the virtual machine and run the following commands:
+Incus provides the agent primarily through a remote `9p` file system with mount name `config`.
+Alternatively, it is possible to get the agent files through a virtual CD-ROM drive by adding a `disk` device to the instance and using `agent:config` as the `source` property.
+
+    incus config device add INSTANCE-NAME agent disk source=agent:config
+
+To install the agent on a Linux system with `9p`, you'll need to get access to the virtual machine and run the following commands:
 
     mount -t 9p config /mnt
     cd /mnt
     ./install.sh
 
+When using the virtual CD-ROM drive, you can use the following instead:
+
+    mount /dev/disk/by-label/incus-agent /mnt
+    cd /mnt
+    ./install.sh
+
+```{note}
+All installation commands showed above should be run from a `root` shell.
+They require a Linux system using `systemd` as its init system.
+
 The first line will mount the remote file system on the mount point `/mnt`.
 The subsequent commands will run the installation script `install.sh` to install and run the Incus Agent.
-You need to perform this task once.
+```
+
+For Windows systems, the virtual CD-ROM drive must be used.
+The agent can manually be started by opening a terminal and running (assuming `d:\` is the CD-ROM):
+
+    d:\
+    .\incus-agent.exe
+
+To have it persist and run automatically, a system service can be manually defined to start it up.
