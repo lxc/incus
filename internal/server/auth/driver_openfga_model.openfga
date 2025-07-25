@@ -95,8 +95,8 @@ type project
     define can_create_storage_buckets: [user, group#member] or operator
     define can_create_storage_volumes: [user, group#member] or operator
     define can_edit: admin
-    define can_view_events: [user, group#member] or viewer
-    define can_view_operations: [user, group#member] or viewer
+    define can_view_events: [user, group#member] or user
+    define can_view_operations: [user, group#member] or user
     define can_view: viewer
 
 type server
