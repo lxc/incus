@@ -319,6 +319,7 @@ type InstanceServer interface {
 	// Storage pool functions ("storage" API extension)
 	GetStoragePoolNames() (names []string, err error)
 	GetStoragePools() (pools []api.StoragePool, err error)
+	GetStoragePoolsWithFilter(filters []string) ([]api.StoragePool, error)
 	GetStoragePool(name string) (pool *api.StoragePool, ETag string, err error)
 	GetStoragePoolResources(name string) (resources *api.ResourcesStoragePool, err error)
 	CreateStoragePool(pool api.StoragePoolsPost) (err error)
