@@ -204,7 +204,7 @@ func routeFilterMask(route *netlink.Route) uint64 {
 	var filterMask uint64
 
 	// we always filter by interface because that is required to be set on our route type
-	filterMask |= netlink.RT_FILTER_IIF
+	filterMask |= netlink.RT_FILTER_OIF
 
 	if route.Dst != nil {
 		filterMask |= netlink.RT_FILTER_DST
