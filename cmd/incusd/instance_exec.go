@@ -79,7 +79,12 @@ func (s *execWs) metadata() any {
 	}
 }
 
-func (s *execWs) connect(_ *operations.Operation, r *http.Request, w http.ResponseWriter) error {
+func (s *execWs) connect(op *operations.Operation, r *http.Request, w http.ResponseWriter) error {
+	// Check that the user connecting is the same who started the session.
+	if !op.IsSameRequestor(r) {
+		return api.StatusErrorf(http.StatusForbidden, "Requestor mismatch")
+	}
+
 	secret := r.FormValue("secret")
 	if secret == "" {
 		return errors.New("missing secret")
