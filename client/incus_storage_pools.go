@@ -45,6 +45,26 @@ func (r *ProtocolIncus) GetStoragePools() ([]api.StoragePool, error) {
 	return pools, nil
 }
 
+// GetStoragePoolsWithFilter returns a filtered list of storage pools as StoragePool structs.
+func (r *ProtocolIncus) GetStoragePoolsWithFilter(filters []string) ([]api.StoragePool, error) {
+	if !r.HasExtension("storage") {
+		return nil, errors.New("The server is missing the required \"storage\" API extension")
+	}
+
+	pools := []api.StoragePool{}
+
+	v := url.Values{}
+	v.Set("recursion", "1")
+	v.Set("filter", parseFilters(filters))
+
+	_, err := r.queryStruct("GET", fmt.Sprintf("/storage-pools?%s", v.Encode()), nil, "", &pools)
+	if err != nil {
+		return nil, err
+	}
+
+	return pools, nil
+}
+
 // GetStoragePool returns a StoragePool entry for the provided pool name.
 func (r *ProtocolIncus) GetStoragePool(name string) (*api.StoragePool, string, error) {
 	if !r.HasExtension("storage") {
