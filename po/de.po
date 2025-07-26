@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-07-25 16:01-0400\n"
-"PO-Revision-Date: 2024-10-06 20:15+0000\n"
+"PO-Revision-Date: 2025-07-27 21:09+0000\n"
 "Last-Translator: Jan Mittelstädter <jan@mittelstaedter.de>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
 "Language: de\n"
@@ -16,14 +16,13 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.8-dev\n"
+"X-Generator: Weblate 5.13-dev\n"
 
 #: cmd/incus/info.go:441
 msgid "  Chassis:"
 msgstr "  Gehäuse:"
 
 #: cmd/incus/info.go:481
-#, fuzzy
 msgid "  Firmware:"
 msgstr "  Firmware:"
 
