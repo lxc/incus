@@ -130,7 +130,7 @@ func (n *NetworkPeer) ToAPI(ctx context.Context, tx *sql.Tx) (*api.NetworkPeer, 
 
 	// Get the target integration name if needed.
 	if n.Type == NetworkPeerTypeRemote {
-		idInt := int(n.ID)
+		idInt := int(n.TargetNetworkIntegrationID.Int64)
 		integrations, err := GetNetworkIntegrations(ctx, tx, NetworkIntegrationFilter{ID: &idInt})
 		if err != nil {
 			return nil, err
