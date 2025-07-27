@@ -4503,6 +4503,17 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 		break
 	}
 
+	// Check if the user has overridden the WWN.
+	var wwn string
+	for _, opt := range driveConf.Opts {
+		if !strings.HasPrefix(opt, "wwn=") {
+			continue
+		}
+
+		wwn = strings.TrimPrefix(opt, "wwn=")
+		break
+	}
+
 	// QMP uses two separate values for the cache.
 	directCache := true   // Bypass host cache, use O_DIRECT semantics by default.
 	noFlushCache := false // Don't ignore any flush requests for the device.
@@ -4609,6 +4620,15 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 	qemuDev["id"] = fmt.Sprintf("%s%s", qemuDeviceIDPrefix, escapedDeviceName)
 	qemuDev["drive"] = blockDev["node-name"].(string)
 	qemuDev["serial"] = fmt.Sprintf("%s%s", qemuBlockDevIDPrefix, escapedDeviceName)
+
+	if wwn != "" {
+		wwnID, err := strconv.ParseUint(strings.TrimPrefix(wwn, "0x"), 16, 64)
+		if err != nil {
+			return nil, err
+		}
+
+		qemuDev["wwn"] = wwnID
+	}
 
 	if bus == "virtio-scsi" {
 		qemuDev["device_id"] = d.blockNodeName(escapedDeviceName)
