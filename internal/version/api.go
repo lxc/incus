@@ -491,6 +491,7 @@ var APIExtensions = []string{
 	"resources_cpu_address_sizes",
 	"disk_attached",
 	"limits_memory_hotplug",
+	"disk_wwn",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

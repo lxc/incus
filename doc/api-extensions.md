@@ -2849,3 +2849,7 @@ The `limits.memory.hotplug` option controls how memory hotplug is handled for th
 It can be set to `false` to completely disable memory hotplugging.
 Alternatively, it can be set to a value that defines the maximum amount of memory the VM can reach through hotplug.
 This value must be greater than or equal to `limits.memory`.
+
+## `disk_wwn`
+
+Add support for setting the disk World Wide Name property through the new `wwn` disk configuration option.

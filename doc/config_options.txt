@@ -219,6 +219,14 @@ For file systems (shared directories or custom volumes), this is one of:
 
 ```
 
+```{config:option} wwn devices-disk
+:default: "``"
+:required: "no"
+:shortdesc: "Only for VMs: Set the disk World Wide Name (only supported on `virtio-scsi` bus)"
+:type: "bool"
+
+```
+
 <!-- config group devices-disk end -->
 <!-- config group devices-gpu_mdev start -->
 ```{config:option} id devices-gpu_mdev
