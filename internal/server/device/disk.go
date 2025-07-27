@@ -372,6 +372,15 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		//  required: no
 		//  shortdesc: Only for VMs: Whether the disk is attached or ejected
 		"attached": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=devices, group=disk, key=wwn)
+		//
+		// ---
+		//  type: bool
+		//  default: ``
+		//  required: no
+		//  shortdesc: Only for VMs: Set the disk World Wide Name (only supported on `virtio-scsi` bus)
+		"wwn": validate.Optional(validate.IsWWN),
 	}
 
 	err := d.config.Validate(rules)
@@ -385,6 +394,14 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 
 	if instConf.Type() == instancetype.Container && d.config["io.cache"] != "" {
 		return errors.New("IO cache configuration cannot be applied to containers")
+	}
+
+	if instConf.Type() == instancetype.Container && d.config["wwn"] != "" {
+		return errors.New("WWN cannot be applied to containers")
+	}
+
+	if d.config["wwn"] != "" && !slices.Contains([]string{"", "virtio-scsi"}, d.config["io.bus"]) {
+		return errors.New("WWN can only be set on virtio-scsi disks")
 	}
 
 	if d.config["required"] != "" && d.config["optional"] != "" {
@@ -1055,6 +1072,11 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 	// Allow the user to override the caching mode.
 	if d.config["io.cache"] != "" {
 		opts = append(opts, fmt.Sprintf("cache=%s", d.config["io.cache"]))
+	}
+
+	// Apply the WWN if provided.
+	if d.config["wwn"] != "" {
+		opts = append(opts, fmt.Sprintf("wwn=%s", d.config["wwn"]))
 	}
 
 	// Setup the attached status.
