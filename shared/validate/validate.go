@@ -98,6 +98,20 @@ func IsUint32(value string) error {
 	return nil
 }
 
+// IsWWN validates whether the string can be converted to a uint64 WWN.
+func IsWWN(value string) error {
+	if !strings.HasPrefix(value, "0x") {
+		return fmt.Errorf("Invalid value for a WWN %q: Missing expected 0x prefix", value)
+	}
+
+	_, err := strconv.ParseUint(strings.TrimPrefix(value, "0x"), 16, 64)
+	if err != nil {
+		return fmt.Errorf("Invalid value for a WWN %q: %w", value, err)
+	}
+
+	return nil
+}
+
 // IsUint32Range validates whether the string is a uint32 range in the form "number" or "start-end".
 func IsUint32Range(value string) error {
 	_, _, err := util.ParseUint32Range(value)
