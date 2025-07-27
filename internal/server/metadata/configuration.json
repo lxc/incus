@@ -227,6 +227,15 @@
 							"shortdesc": "Source of a file system or block device (see {ref}`devices-disk-types` for details)",
 							"type": "string"
 						}
+					},
+					{
+						"wwn": {
+							"default": "``",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Only for VMs: Set the disk World Wide Name (only supported on `virtio-scsi` bus)",
+							"type": "bool"
+						}
 					}
 				]
 			},
