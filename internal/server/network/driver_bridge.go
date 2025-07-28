@@ -81,6 +81,18 @@ func (n *bridge) checkClusterWideMACSafe(config map[string]string) error {
 		return errors.New(`Cannot use static "bridge.hwaddr" MAC address when bridge has no IP addresses and has external interfaces set`)
 	}
 
+	// We may have MAC conflicts if tunnels are in use.
+	for k := range config {
+		if strings.HasPrefix(k, "tunnel.") {
+			return errors.New(`Cannot use static "bridge.hwaddr" MAC address when bridge has tunnels connected`)
+		}
+	}
+
+	// If using a generated IPv6 address, we need a unique MAC.
+	if config["ipv6.address"] != "none" && validate.IsNetworkV6(config["ipv6.address"]) == nil {
+		return errors.New(`Cannot use static "bridge.hwaddr" MAC address when bridge uses a host-specific IPv6 address`)
+	}
+
 	return nil
 }
 
@@ -352,7 +364,7 @@ func (n *bridge) Validate(config map[string]string) error {
 				return nil
 			}
 
-			return validate.IsNetworkAddressCIDRV6(value)
+			return validate.Or(validate.IsNetworkAddressCIDRV6, validate.IsNetworkV6)(value)
 		}),
 
 		// gendoc:generate(entity=network_bridge, group=common, key=ipv6.firewall)
@@ -1517,6 +1529,18 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 
 		subnetSize, _ := subnet.Mask.Size()
+
+		// Check if we need to generate a host-specific address.
+		if ipAddress.String() == subnet.IP.String() {
+			if subnetSize != 64 {
+				return errors.New("Can't generate an EUI64 derived IPv6 address with a mask other than /64")
+			}
+
+			ipAddress, err = eui64.ParseMAC(subnet.IP, bridge.Address)
+			if err != nil {
+				return fmt.Errorf("Failed generating EUI64 value for ipv6.address: %w", err)
+			}
+		}
 
 		if subnetSize > 64 {
 			n.logger.Warn("IPv6 networks with a prefix larger than 64 aren't properly supported by dnsmasq")
