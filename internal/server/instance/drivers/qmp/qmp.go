@@ -242,13 +242,27 @@ func (qmp *qemuMachineProtocol) listen(r io.Reader, events chan<- qmpEvent, repl
 	}
 
 	err := scanner.Err()
-	if err != nil {
-		errReply := make(chan rawResponse, 1)
-		replies.Store(0, errReply)
-
-		r := rawResponse{err: err}
-		errReply <- r
+	if err == nil {
+		err = errors.New("Monitor has exited")
 	}
+
+	// Return the error to all existing requests.
+	replies.Range(func(k any, v any) bool {
+		reply, ok := v.(chan rawResponse)
+		if !ok {
+			// Skip bad messages.
+			logger.Error("Failed to cast QMP reply to chan rawResponse")
+
+			return true
+		}
+
+		reply <- rawResponse{err: err}
+
+		return true
+	})
+
+	// Clear the map.
+	replies.Clear()
 }
 
 // run executes the given QAPI command against a domain's QEMU instance.
