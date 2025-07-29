@@ -3,6 +3,7 @@ package incus
 import (
 	"compress/gzip"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -122,20 +123,6 @@ func (r *ProtocolOCI) GetImage(fingerprint string) (*api.Image, string, error) {
 func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*ImageFileResponse, error) {
 	ctx := context.Background()
 
-	// Get proxy details.
-	proxy, err := r.getProxyHost()
-	if err != nil {
-		return nil, err
-	}
-
-	var env []string
-	if proxy != nil {
-		env = []string{
-			fmt.Sprintf("HTTPS_PROXY=%s", proxy),
-			fmt.Sprintf("HTTP_PROXY=%s", proxy),
-		}
-	}
-
 	// Get the cached entry.
 	info, ok := r.cache[fingerprint]
 	if !ok {
@@ -181,15 +168,9 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 
 	imageTag := "latest"
 
-	stdout, _, err := subprocess.RunCommandSplit(
-		ctx,
-		env,
-		nil,
-		"skopeo",
-		"--insecure-policy",
-		"copy",
+	stdout, err := r.runSkopeo(
+		"copy", info.Alias,
 		"--remove-signatures",
-		fmt.Sprintf("%s/%s", strings.Replace(r.httpHost, "https://", "docker://", 1), info.Alias),
 		fmt.Sprintf("oci:%s:%s", filepath.Join(ociPath, "oci"), imageTag))
 	if err != nil {
 		logger.Debug("Error copying remote image to local", logger.Ctx{"image": info.Alias, "stdout": stdout, "stderr": err})
@@ -337,12 +318,17 @@ func (r *ProtocolOCI) GetImageAliasNames() ([]string, error) {
 	return nil, errors.New("Can't list image aliases from OCI registry")
 }
 
-// GetImageAlias returns an existing alias as an ImageAliasesEntry struct.
-func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string, error) {
+func (r *ProtocolOCI) runSkopeo(action string, image string, args ...string) (string, error) {
+	// Parse and mangle the server URL.
+	uri, err := url.Parse(r.httpHost)
+	if err != nil {
+		return "", err
+	}
+
 	// Get proxy details.
 	proxy, err := r.getProxyHost()
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 
 	var env []string
@@ -353,14 +339,64 @@ func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string
 		}
 	}
 
+	// Handle authentication.
+	if uri.User != nil {
+		creds, err := json.Marshal(map[string]any{
+			"auths": map[string]any{
+				uri.Scheme + "://" + uri.Host: map[string]string{
+					"auth": base64.StdEncoding.EncodeToString([]byte(uri.User.String())),
+				},
+			},
+		})
+		if err != nil {
+			return "", err
+		}
+
+		authFile, err := os.CreateTemp("", "incus_client_auth_")
+		if err != nil {
+			return "", err
+		}
+
+		defer authFile.Close()
+		defer os.Remove(authFile.Name())
+
+		err = authFile.Chmod(0o600)
+		if err != nil {
+			return "", err
+		}
+
+		_, err = fmt.Fprintf(authFile, "%s", creds)
+		if err != nil {
+			return "", err
+		}
+
+		uri.User = nil
+
+		args = append(args, fmt.Sprintf("--authfile=%s", authFile.Name()))
+	}
+
+	// Prepare the arguments.
+	uri.Scheme = "docker"
+	args = append([]string{"--insecure-policy", action, fmt.Sprintf("%s/%s", uri.String(), image)}, args...)
+
 	// Get the image information from skopeo.
 	stdout, _, err := subprocess.RunCommandSplit(
 		context.TODO(),
 		env,
 		nil,
 		"skopeo",
-		"inspect",
-		fmt.Sprintf("%s/%s", strings.Replace(r.httpHost, "https://", "docker://", 1), name))
+		args...)
+	if err != nil {
+		return "", err
+	}
+
+	return stdout, nil
+}
+
+// GetImageAlias returns an existing alias as an ImageAliasesEntry struct.
+func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string, error) {
+	// Get the image information from skopeo.
+	stdout, err := r.runSkopeo("inspect", name)
 	if err != nil {
 		logger.Debug("Error getting image alias", logger.Ctx{"name": name, "stdout": stdout, "stderr": err})
 		return nil, "", err
