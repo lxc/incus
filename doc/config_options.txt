@@ -4779,7 +4779,7 @@ Specify a comma-separated list of values that should be used as labels for a Lok
 
 ```{config:option} logging.NAME.target.type server-logging
 :scope: "global"
-:shortdesc: "The type of the logger, e.g., syslog"
+:shortdesc: "The type of the logger. One of `loki`, `syslog` or `webhook`."
 :type: "string"
 
 ```
