@@ -133,19 +133,12 @@ func TestListenScannerErr(t *testing.T) {
 	events := make(chan qmpEvent)
 	replies := &mon.replies
 
+	repCh := make(chan rawResponse, 1)
+	replies.Store(0, repCh)
+
 	mon.listen(r, events, replies)
 
-	val, ok := replies.LoadAndDelete(0)
-	if !ok {
-		t.Fatal("no error found")
-	}
-
-	errCh, ok := val.(chan rawResponse)
-	if !ok {
-		t.Fatal("no error found")
-	}
-
-	res := <-errCh
+	res := <-repCh
 	if errFoo != res.err {
 		t.Fatalf("unexpected error:\n- want: %v\n-  got: %v", errFoo, res.err)
 	}
