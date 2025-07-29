@@ -87,8 +87,8 @@ func GetLoggingRuleForKey(key string) (Key, error) {
 		// ---
 		//  type: string
 		//  scope: global
-		//  shortdesc: The type of the logger, e.g., syslog
-		return Key{Validator: validate.Optional(validate.IsListOf(validate.IsOneOf("syslog", "loki")))}, nil
+		//  shortdesc: The type of the logger. One of `loki`, `syslog` or `webhook`.
+		return Key{Validator: validate.Optional(validate.IsListOf(validate.IsOneOf("syslog", "loki", "webhook")))}, nil
 	case "target.retry":
 		// gendoc:generate(entity=server, group=logging, key=logging.NAME.target.retry)
 		//
