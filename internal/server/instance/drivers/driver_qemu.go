@@ -741,10 +741,12 @@ func (d *qemu) onStop(target string) error {
 	}
 
 	// Log and emit lifecycle if not user triggered.
-	if target != "reboot" && !autoRestart && op.GetInstanceInitiated() {
-		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceShutdown.Event(d, nil))
-	} else if !autoRestart && op.Action() != operationlock.ActionMigrate {
-		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceStopped.Event(d, nil))
+	if target != "reboot" && !autoRestart && op.Action() != operationlock.ActionMigrate {
+		if op.GetInstanceInitiated() {
+			d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceShutdown.Event(d, nil))
+		} else {
+			d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceStopped.Event(d, nil))
+		}
 	}
 
 	// Reboot the instance.
