@@ -1,6 +1,8 @@
 package cliconfig
 
 import (
+	"bytes"
+	"context"
 	"crypto/ecdsa"
 	"crypto/rsa"
 	"crypto/x509"
@@ -9,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"runtime"
 	"slices"
@@ -20,19 +23,21 @@ import (
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/subprocess"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
 // Remote holds details for communication with a remote daemon.
 type Remote struct {
-	Addr      string `yaml:"addr"`
-	AuthType  string `yaml:"auth_type,omitempty"`
-	KeepAlive int    `yaml:"keepalive,omitempty"`
-	Project   string `yaml:"project,omitempty"`
-	Protocol  string `yaml:"protocol,omitempty"`
-	Public    bool   `yaml:"public"`
-	Global    bool   `yaml:"-"`
-	Static    bool   `yaml:"-"`
+	Addr       string `yaml:"addr"`
+	AuthType   string `yaml:"auth_type,omitempty"`
+	KeepAlive  int    `yaml:"keepalive,omitempty"`
+	Project    string `yaml:"project,omitempty"`
+	Protocol   string `yaml:"protocol,omitempty"`
+	CredHelper string `yaml:"credentials_helper,omitempty"`
+	Public     bool   `yaml:"public"`
+	Global     bool   `yaml:"-"`
+	Static     bool   `yaml:"-"`
 }
 
 // ParseRemote splits remote and object.
@@ -202,6 +207,39 @@ func (c *Config) GetImageServer(name string) (incus.ImageServer, error) {
 
 	// HTTPs (OCI)
 	if remote.Protocol == "oci" {
+		// Handle credentials helper.
+		if remote.CredHelper != "" {
+			// Parse the URL.
+			u, err := url.Parse(remote.Addr)
+			if err != nil {
+				return nil, err
+			}
+
+			// Call the helper.
+			var stdout bytes.Buffer
+
+			err = subprocess.RunCommandWithFds(
+				context.TODO(),
+				strings.NewReader(fmt.Sprintf("%s://%s", u.Scheme, u.Host)),
+				&stdout,
+				remote.CredHelper,
+				"get")
+			if err != nil {
+				return nil, err
+			}
+
+			// Parse credential helper response.
+			var res map[string]string
+			err = json.Unmarshal(stdout.Bytes(), &res)
+			if err != nil {
+				return nil, err
+			}
+
+			// Update the URL to include the credentials.
+			u.User = url.UserPassword(res["Username"], res["Secret"])
+			remote.Addr = u.String()
+		}
+
 		d, err := incus.ConnectOCI(remote.Addr, args)
 		if err != nil {
 			return nil, err
