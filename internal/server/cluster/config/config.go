@@ -402,6 +402,18 @@ func (c *Config) LoggingConfigForLoki(loggerName string) (string, string, string
 	return c.m.GetString(addressKey), c.m.GetString(usernameKey), c.m.GetString(passwordKey), c.m.GetString(caCertKey), c.m.GetString(instanceKey), c.m.GetString(labelsKey), int(c.m.GetInt64(retryKey))
 }
 
+// LoggingConfigForWebhook returns the logging configuration for the webhook logger type.
+func (c *Config) LoggingConfigForWebhook(loggerName string) (string, string, string, string, int) {
+	prefix := fmt.Sprintf("logging.%s", loggerName)
+	addressKey := fmt.Sprintf("%s.%s", prefix, "target.address")
+	usernameKey := fmt.Sprintf("%s.%s", prefix, "target.username")
+	passwordKey := fmt.Sprintf("%s.%s", prefix, "target.password")
+	caCertKey := fmt.Sprintf("%s.%s", prefix, "target.ca_cert")
+	retryKey := fmt.Sprintf("%s.%s", prefix, "target.retry")
+
+	return c.m.GetString(addressKey), c.m.GetString(usernameKey), c.m.GetString(passwordKey), c.m.GetString(caCertKey), int(c.m.GetInt64(retryKey))
+}
+
 // Dump current configuration keys and their values. Keys with values matching
 // their defaults are omitted.
 func (c *Config) Dump() map[string]string {
