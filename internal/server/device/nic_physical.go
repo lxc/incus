@@ -1,6 +1,7 @@
 package device
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -8,13 +9,16 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/server/db"
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 	pcidev "github.com/lxc/incus/v6/internal/server/device/pci"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/ip"
 	"github.com/lxc/incus/v6/internal/server/network"
+	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/resources"
+	"github.com/lxc/incus/v6/internal/server/state"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/util"
@@ -136,6 +140,15 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 			return fmt.Errorf("Parent device is a bridge, use nictype=bridged instead")
 		}
 
+		// gendoc:generate(entity=devices, group=nic_physical, key=hwaddr)
+		//
+		// ---
+		//  type: string
+		//  default: randomly assigned
+		//  managed: no
+		//  shortdesc: The MAC address of the new interface
+		optionalFields = append(optionalFields, "hwaddr")
+
 		// Copy certain keys verbatim from the network's settings.
 		for _, field := range optionalFields {
 			_, found := netConfig[field]
@@ -247,14 +260,6 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 		}
 
 		// Set the MAC address.
-
-		// gendoc:generate(entity=devices, group=nic_physical, key=hwaddr)
-		//
-		// ---
-		//  type: string
-		//  default: randomly assigned
-		//  managed: no
-		//  shortdesc: The MAC address of the new interface
 		if d.config["hwaddr"] != "" {
 			hwaddr, err := net.ParseMAC(d.config["hwaddr"])
 			if err != nil {
@@ -486,4 +491,53 @@ func (d *nicPhysical) postStop() error {
 	}
 
 	return nil
+}
+
+// IsPhysicalNICWithBridge returns true if the given NIC is of type "physical"
+// and has a non-empty Parent field, indicating it's attached to a bridge.
+func IsPhysicalNICWithBridge(s *state.State, deviceProjectName string, d deviceConfig.Device) bool {
+	if d["network"] != "" {
+		// Translate device's project name into a network project name.
+		networkProjectName, _, err := project.NetworkProject(s.DB.Cluster, deviceProjectName)
+		if err != nil {
+			return false
+		}
+
+		var netInfo *api.Network
+
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			_, netInfo, _, err = tx.GetNetworkInAnyState(ctx, networkProjectName, d["network"])
+
+			return err
+		})
+		if err != nil {
+			return false
+		}
+
+		if netInfo.Type != "physical" {
+			return false
+		}
+
+		parent := netInfo.Config["parent"]
+		if parent == "" {
+			return false
+		}
+
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			_, netInfo, _, err = tx.GetNetworkInAnyState(ctx, networkProjectName, parent)
+
+			return err
+		})
+		if err != nil {
+			return false
+		}
+
+		if netInfo.Type != "bridge" {
+			return false
+		}
+
+		return true
+	}
+
+	return false
 }

@@ -9169,8 +9169,10 @@ func (d *qemu) FillNetworkDevice(name string, m deviceConfig.Device) (deviceConf
 		return nil, err
 	}
 
+	isPhysicalWithBridge := device.IsPhysicalNICWithBridge(d.state, d.Project().Name, m)
+
 	// Fill in the MAC address.
-	if !slices.Contains([]string{"physical", "ipvlan"}, nicType) && m["hwaddr"] == "" {
+	if (!slices.Contains([]string{"physical", "ipvlan"}, nicType) || isPhysicalWithBridge) && m["hwaddr"] == "" {
 		configKey := fmt.Sprintf("volatile.%s.hwaddr", name)
 		volatileHwaddr := d.localConfig[configKey]
 		if volatileHwaddr == "" {
