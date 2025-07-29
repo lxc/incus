@@ -68,6 +68,11 @@ type LokiLogger struct {
 func NewLokiLogger(s *state.State, name string) (*LokiLogger, error) {
 	urlStr, username, password, caCert, instance, labels, retry := s.GlobalConfig.LoggingConfigForLoki(name)
 
+	// Set defaults.
+	if retry == 0 {
+		retry = 3
+	}
+
 	// Validate the URL.
 	u, err := url.Parse(urlStr)
 	if err != nil {
