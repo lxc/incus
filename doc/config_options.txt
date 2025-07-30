@@ -142,7 +142,11 @@ For file systems (shared directories or custom volumes), this is one of:
 :required: "yes"
 :shortdesc: "Path inside the instance where the disk will be mounted (only for file system disk devices)"
 :type: "string"
+This controls which path inside the instance the disk should be mounted on.
 
+With containers, this option supports mounting file system disk devices, and paths and single files within them.
+
+With VMs, this option supports mounting file system disk devices and paths within them. Mounting single files is not supported.
 ```
 
 ```{config:option} pool devices-disk
