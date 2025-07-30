@@ -768,9 +768,18 @@ func (c *ClusterTx) UpdateImageLastUseDate(ctx context.Context, projectName stri
 
 // SetImageCachedAndLastUseDate sets the cached and last_use_date field of the image with the given fingerprint.
 func (c *ClusterTx) SetImageCachedAndLastUseDate(ctx context.Context, projectName string, fingerprint string, lastUsed time.Time) error {
+	enabled, err := cluster.ProjectHasImages(ctx, c.tx, projectName)
+	if err != nil {
+		return fmt.Errorf("Check if project has images: %w", err)
+	}
+
+	if !enabled {
+		projectName = api.ProjectDefaultName
+	}
+
 	stmt := `UPDATE images SET cached=1, last_use_date=? WHERE fingerprint=? AND project_id = (SELECT id FROM projects WHERE name = ? LIMIT 1)`
 
-	_, err := c.tx.ExecContext(ctx, stmt, lastUsed, fingerprint, projectName)
+	_, err = c.tx.ExecContext(ctx, stmt, lastUsed, fingerprint, projectName)
 
 	return err
 }
