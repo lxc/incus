@@ -1402,6 +1402,11 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					mount.Opts = append(mount.Opts, "bus=virtiofs")
 				}
 			} else {
+				// Forbid mounting files to FS paths.
+				if d.config["path"] != "" {
+					return nil, errors.New(`The "path" setting is not supported on VMs for non-directory sources`)
+				}
+
 				// Confirm we're dealing with block options.
 				err := validate.Optional(validate.IsOneOf("nvme", "virtio-blk", "virtio-scsi", "usb"))(d.config["io.bus"])
 				if err != nil {
