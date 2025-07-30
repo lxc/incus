@@ -1310,12 +1310,17 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 				// takes effect event if using virtio-fs (which doesn't support read only mode) by
 				// having the underlying mount setup as readonly.
 				var revertFunc func()
-				revertFunc, mount.DevPath, _, err = d.createDevice(mount.DevPath)
+				var isFile bool
+				revertFunc, mount.DevPath, isFile, err = d.createDevice(mount.DevPath)
 				if err != nil {
 					return nil, err
 				}
 
 				reverter.Add(revertFunc)
+
+				if isFile {
+					return nil, errors.New("Only directories can be mounted on VMs")
+				}
 
 				mount.TargetPath = d.config["path"]
 				mount.FSType = "9p"
@@ -1413,9 +1418,13 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					return nil, err
 				}
 
-				f, err := d.localSourceOpen(mount.DevPath)
+				f, isFile, err := d.localSourceOpen(mount.DevPath)
 				if err != nil {
 					return nil, err
+				}
+
+				if isFile {
+					return nil, errors.New("Only directories can be mounted on VMs")
 				}
 
 				reverter.Add(func() { _ = f.Close() })
@@ -1888,7 +1897,7 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 				isFile = true
 			}
 
-			f, err := d.localSourceOpen(srcPath)
+			f, _, err := d.localSourceOpen(srcPath)
 			if err != nil {
 				return nil, "", false, err
 			}
@@ -1979,10 +1988,10 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 	return cleanup, devPath, isFile, err
 }
 
-// localSourceOpen opens a local disk source path and returns a file handle to it.
+// localSourceOpen opens a local disk source path and returns a file handle to it and whether it is a file.
 // If d.restrictedParentSourcePath has been set during validation, then the openat2 syscall is used to ensure that
 // the srcPath opened doesn't resolve above the allowed parent source path.
-func (d *disk) localSourceOpen(srcPath string) (*os.File, error) {
+func (d *disk) localSourceOpen(srcPath string) (*os.File, bool, error) {
 	var err error
 	var f *os.File
 
@@ -1990,14 +1999,14 @@ func (d *disk) localSourceOpen(srcPath string) (*os.File, error) {
 		// Get relative srcPath in relation to allowed parent source path.
 		relSrcPath, err := filepath.Rel(d.restrictedParentSourcePath, srcPath)
 		if err != nil {
-			return nil, fmt.Errorf("Failed resolving source path %q relative to restricted parent source path %q: %w", srcPath, d.restrictedParentSourcePath, err)
+			return nil, false, fmt.Errorf("Failed resolving source path %q relative to restricted parent source path %q: %w", srcPath, d.restrictedParentSourcePath, err)
 		}
 
 		// Open file handle to parent for use with openat2 later.
 		// Has to use unix.O_PATH to support directories and sockets.
 		allowedParent, err := os.OpenFile(d.restrictedParentSourcePath, unix.O_PATH, 0)
 		if err != nil {
-			return nil, fmt.Errorf("Failed opening allowed parent source path %q: %w", d.restrictedParentSourcePath, err)
+			return nil, false, fmt.Errorf("Failed opening allowed parent source path %q: %w", d.restrictedParentSourcePath, err)
 		}
 
 		defer func() { _ = allowedParent.Close() }()
@@ -2010,10 +2019,10 @@ func (d *disk) localSourceOpen(srcPath string) (*os.File, error) {
 		})
 		if err != nil {
 			if errors.Is(err, unix.EXDEV) {
-				return nil, fmt.Errorf("Source path %q resolves outside of restricted parent source path %q", srcPath, d.restrictedParentSourcePath)
+				return nil, false, fmt.Errorf("Source path %q resolves outside of restricted parent source path %q", srcPath, d.restrictedParentSourcePath)
 			}
 
-			return nil, fmt.Errorf("Failed opening restricted source path %q: %w", srcPath, err)
+			return nil, false, fmt.Errorf("Failed opening restricted source path %q: %w", srcPath, err)
 		}
 
 		f = os.NewFile(uintptr(fd), srcPath)
@@ -2021,11 +2030,16 @@ func (d *disk) localSourceOpen(srcPath string) (*os.File, error) {
 		// Open file handle to local source. Has to use unix.O_PATH to support directories and sockets.
 		f, err = os.OpenFile(srcPath, unix.O_PATH|unix.O_CLOEXEC, 0)
 		if err != nil {
-			return nil, fmt.Errorf("Failed opening source path %q: %w", srcPath, err)
+			return nil, false, fmt.Errorf("Failed opening source path %q: %w", srcPath, err)
 		}
 	}
 
-	return f, nil
+	fileInfo, err := f.Stat()
+	if err != nil {
+		return nil, false, fmt.Errorf("Failed accessing source path %q: %w", f.Name(), err)
+	}
+
+	return f, !fileInfo.IsDir(), nil
 }
 
 func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName string, volumeType int, remapPath string) error {
