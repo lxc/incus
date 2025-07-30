@@ -354,6 +354,7 @@ VPS
 VRF
 vSwitch
 VXLAN
+webhook
 WebSocket
 WebSockets
 Winget

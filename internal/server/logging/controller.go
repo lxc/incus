@@ -107,6 +107,8 @@ func LoggerFromType(s *state.State, loggerName string, loggerType string) (Logge
 		loggerClient, err = NewSyslogLogger(s, loggerName)
 	case "loki":
 		loggerClient, err = NewLokiLogger(s, loggerName)
+	case "webhook":
+		loggerClient, err = NewWebhookLogger(s, loggerName)
 	default:
 		return nil, fmt.Errorf("%s is not supported logger type", loggerType)
 	}

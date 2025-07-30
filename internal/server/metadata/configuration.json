@@ -5421,7 +5421,7 @@
 						"logging.NAME.target.type": {
 							"longdesc": "",
 							"scope": "global",
-							"shortdesc": "The type of the logger, e.g., syslog",
+							"shortdesc": "The type of the logger. One of `loki`, `syslog` or `webhook`.",
 							"type": "string"
 						}
 					},
