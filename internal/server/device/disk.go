@@ -318,7 +318,11 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		"boot.priority": validate.Optional(validate.IsUint32),
 
 		// gendoc:generate(entity=devices, group=disk, key=path)
+		// This controls which path inside the instance the disk should be mounted on.
 		//
+		// With containers, this option supports mounting file system disk devices, and paths and single files within them.
+		//
+		// With VMs, this option supports mounting file system disk devices and paths within them. Mounting single files is not supported.
 		// ---
 		//  type: string
 		//  required: yes
@@ -1402,6 +1406,11 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					mount.Opts = append(mount.Opts, "bus=virtiofs")
 				}
 			} else {
+				// Forbid mounting files to FS paths.
+				if d.config["path"] != "" {
+					return nil, errors.New(`The "path" setting is not supported on VMs for non-directory sources`)
+				}
+
 				// Confirm we're dealing with block options.
 				err := validate.Optional(validate.IsOneOf("nvme", "virtio-blk", "virtio-scsi", "usb"))(d.config["io.bus"])
 				if err != nil {

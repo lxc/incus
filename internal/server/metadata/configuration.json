@@ -138,7 +138,7 @@
 					},
 					{
 						"path": {
-							"longdesc": "",
+							"longdesc": "This controls which path inside the instance the disk should be mounted on.\n\nWith containers, this option supports mounting file system disk devices, and paths and single files within them.\n\nWith VMs, this option supports mounting file system disk devices and paths within them. Mounting single files is not supported.",
 							"required": "yes",
 							"shortdesc": "Path inside the instance where the disk will be mounted (only for file system disk devices)",
 							"type": "string"
