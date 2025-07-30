@@ -318,7 +318,11 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		"boot.priority": validate.Optional(validate.IsUint32),
 
 		// gendoc:generate(entity=devices, group=disk, key=path)
+		// This controls which path inside the instance the disk should be mounted on.
 		//
+		// With containers, this option supports mounting file system disk devices, and paths and single files within them.
+		//
+		// With VMs, this option supports mounting file system disk devices and paths within them. Mounting single files is not supported.
 		// ---
 		//  type: string
 		//  required: yes
