@@ -87,6 +87,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			CacheExpiry:   time.Hour,
 			SkipGetEvents: true,
 			SkipGetServer: true,
+			TempPath:      internalUtil.VarPath("images"),
 		}
 
 		if slices.Contains([]string{"incus", "lxd"}, protocol) {
