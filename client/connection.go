@@ -59,6 +59,9 @@ type ConnectionArgs struct {
 	// OpenID Connect tokens
 	OIDCTokens *oidc.Tokens[*oidc.IDTokenClaims]
 
+	// Skip the event listener endpoint
+	SkipGetEvents bool
+
 	// Skip automatic GetServer request upon connection
 	SkipGetServer bool
 
@@ -125,6 +128,7 @@ func ConnectIncusHTTPWithContext(ctx context.Context, args *ConnectionArgs, clie
 		ctxConnectedCancel: ctxConnectedCancel,
 		eventConns:         make(map[string]*websocket.Conn),
 		eventListeners:     make(map[string][]*EventListener),
+		skipEvents:         args.SkipGetEvents,
 	}
 
 	// Setup the HTTP client
@@ -212,6 +216,7 @@ func ConnectIncusUnixWithContext(ctx context.Context, path string, args *Connect
 		ctxConnectedCancel: ctxConnectedCancel,
 		eventConns:         make(map[string]*websocket.Conn),
 		eventListeners:     make(map[string][]*EventListener),
+		skipEvents:         args.SkipGetEvents,
 		project:            projectName,
 	}
 
@@ -375,6 +380,7 @@ func httpsIncus(ctx context.Context, requestURL string, args *ConnectionArgs) (I
 		ctxConnectedCancel: ctxConnectedCancel,
 		eventConns:         make(map[string]*websocket.Conn),
 		eventListeners:     make(map[string][]*EventListener),
+		skipEvents:         args.SkipGetEvents,
 	}
 
 	if slices.Contains([]string{api.AuthenticationMethodOIDC}, args.AuthType) {
