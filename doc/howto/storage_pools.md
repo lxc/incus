@@ -162,36 +162,34 @@ host. ZFS features on the host are utilized for optimized image, copying and sna
 Property | Description
 -|-
 source | can be used to specify `truenas.dataset` and optionally `truenas.host`
-block.filesystem | Filesystem to use when formatting a filesystem block device
-block.mount_options | Mount options to use when mounting a filesystem block device
-truenas.allow-insecure | Allows specifying the `allow-insecure` flag when performing TrueNAS operations
-truenas.api_key | Allows specifying the `api-key` flag when performing TrueNAS operations
-truenas.blocksize | blocksize to use when creating remote block devices
-truenas.host | Allows specifying the `host` flag when performing TrueNAS operations
-truenas.config | Allows specifying the `config` flag when performing TrueNAS operations
-truenas.dataset | The remote dataset on the TrueNAS host
-truenas.initiator | Allows specifying the "initiator" flag when performing TrueNAS iSCSI operations
-truenas.portal  | Allows specifying the "initiator" flag when performing TrueNAS iSCSI operations
-truenas.remove_snapshots | Remove snapshots as needed
-truenas.use_refquota |  Use `refquota` instead of `quota` for space
+`block.filesystem` | File system to use when formatting a file system block device
+`block.mount_options` | Mount options to use when mounting a file system block device
+`truenas.allow-insecure` | Allows specifying the `allow-insecure` flag when performing TrueNAS operations
+`truenas.api_key` | Allows specifying the `api-key` flag when performing TrueNAS operations
+`truenas.blocksize` | block size to use when creating remote block devices
+`truenas.host` | Allows specifying the `host` flag when performing TrueNAS operations
+`truenas.config` | Allows specifying the `config` flag when performing TrueNAS operations
+`truenas.dataset` | The remote dataset on the TrueNAS host
+`truenas.initiator` | Allows specifying the "initiator" flag when performing TrueNAS iSCSI operations
+`truenas.portal`  | Allows specifying the "initiator" flag when performing TrueNAS iSCSI operations
+`truenas.remove_snapshots` | Remove snapshots as needed
+`truenas.use_refquota` |  Use `refquota` instead of `quota` for space
 
 `truenas.host` and `truenas.dataset` can be set by specifying a `source` using the format: `[<remote host>:]<remote pool>[[/<remote dataset>]...][/]`
 
 The remote dataset will be created if it does not exist. If there is a trailing `/` then the remote dataset will be named after the storage pool
 
-```
-
 Create or use a remote dataset on remote pool tank on host truenas.example.com named after the storage pool, ie tank/pool1 with the API_KEY specified to host the storage pool
 
-    incus storage create pool1 truenas source=truenas.example.com:tank/ truenas.api_key=$TN_APIKEY
+    `incus storage create pool1 truenas source=truenas.example.com:tank/ truenas.api_key=$TN_APIKEY`
 
 Create or use remote dataset on remote pool tank on host truenas.example.com with the API KEY specified to host the storage pool,
 
-    incus storage create pool1 truenas source=truenas.example.com:tank/remote-dataset truenas.api_key=$TN_APIKEY
+    `incus storage create pool1 truenas source=truenas.example.com:tank/remote-dataset truenas.api_key=$TN_APIKEY`
 
     alternative, the host can be specified separately:
 
-    incus storage create pool1 truenas source=tank/remote-dataset truenas.host=truenas.example.com truenas.api_key=$TN_APIKEY
+    `incus storage create pool1 truenas source=tank/remote-dataset truenas.host=truenas.example.com truenas.api_key=$TN_APIKEY`
 ````
 `````
 
