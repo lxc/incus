@@ -1744,12 +1744,9 @@ func (d *lxc) deviceHandleMounts(mounts []deviceConfig.MountEntryItem) error {
 					return fmt.Errorf("Error unmounting the device path inside container: %s", err)
 				}
 
-				err = files.Remove(relativeTargetPath)
-				if err != nil {
-					// Only warn here and don't fail as removing a directory
-					// mount may fail if there was already files inside
-					// directory before it was mouted over preventing delete.
-					d.logger.Warn("Could not remove the device path inside container", logger.Ctx{"err": err})
+				// Only remove mountpoints created in /dev.
+				if strings.HasPrefix(mount.TargetPath, "dev/") {
+					return files.Remove(relativeTargetPath)
 				}
 			}
 		}
