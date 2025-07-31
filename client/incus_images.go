@@ -832,14 +832,14 @@ func (r *ProtocolIncus) CopyImage(source ImageServer, image api.Image, args *Ima
 
 	// Relay mode
 	if args != nil && args.Mode == "relay" {
-		metaFile, err := os.CreateTemp("", "incus_image_")
+		metaFile, err := os.CreateTemp(r.tempPath, "incus_image_")
 		if err != nil {
 			return nil, err
 		}
 
 		defer func() { _ = os.Remove(metaFile.Name()) }()
 
-		rootfsFile, err := os.CreateTemp("", "incus_image_")
+		rootfsFile, err := os.CreateTemp(r.tempPath, "incus_image_")
 		if err != nil {
 			return nil, err
 		}

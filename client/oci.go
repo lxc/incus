@@ -14,6 +14,8 @@ type ProtocolOCI struct {
 
 	// Cache for images.
 	cache map[string]ociInfo
+
+	tempPath string
 }
 
 // Disconnect is a no-op for OCI.

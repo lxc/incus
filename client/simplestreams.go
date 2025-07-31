@@ -15,6 +15,8 @@ type ProtocolSimpleStreams struct {
 	httpHost        string
 	httpUserAgent   string
 	httpCertificate string
+
+	tempPath string
 }
 
 // Disconnect is a no-op for simplestreams.
