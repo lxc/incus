@@ -157,6 +157,11 @@ func osMountShared(src string, dst string, fstype string, opts []string) error {
 	return nil
 }
 
+func osUmount(src string) error {
+	_, err := subprocess.RunCommand("umount", src)
+	return err
+}
+
 func osGetCPUMetrics(d *Daemon) ([]metrics.CPUMetrics, error) {
 	stats, err := os.ReadFile("/proc/stat")
 	if err != nil {
