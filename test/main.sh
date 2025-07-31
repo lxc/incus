@@ -73,7 +73,7 @@ import_storage_backends
 
 if [ "${INCUS_BACKEND}" = "truenas" ] && [ "$#" -eq 0 ] || [ "$1" = "all" ] || [ "$1" = "cluster" ]; then
   # The cluster tests use net-ns which is incompatible with open-iscsi
-  echo "TrueNAS storage backend does not supprt the cluster tests. Please specify a list of test suites, or 'standalone'"
+  echo "TrueNAS storage backend does not support the cluster tests. Please specify a list of test suites, or 'standalone'"
   exit 1
 fi
 
