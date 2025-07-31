@@ -169,7 +169,6 @@ truenas.api_key | Allows specifying the `api-key` flag when performing TrueNAS o
 truenas.blocksize | blocksize to use when creating remote block devices
 truenas.host | Allows specifying the `host` flag when performing TrueNAS operations
 truenas.config | Allows specifying the `config` flag when performing TrueNAS operations
-truenas.config-file | Allows specifying the `config-file` flag when performing TrueNAS operations
 truenas.dataset | The remote dataset on the TrueNAS host
 truenas.initiator | Allows specifying the "initiator" flag when performing TrueNAS iSCSI operations
 truenas.portal  | Allows specifying the "initiator" flag when performing TrueNAS iSCSI operations
