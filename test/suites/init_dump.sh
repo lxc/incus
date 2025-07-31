@@ -1,18 +1,18 @@
 test_init_dump() {
-  # - incus admin init --dump
-  INCUS_INIT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
-  chmod +x "${INCUS_INIT_DIR}"
-  spawn_incus "${INCUS_INIT_DIR}" false
+    # - incus admin init --dump
+    INCUS_INIT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+    chmod +x "${INCUS_INIT_DIR}"
+    spawn_incus "${INCUS_INIT_DIR}" false
 
-  (
-    set -e
-    # shellcheck disable=SC2034
-    INCUS_DIR=${INCUS_INIT_DIR}
+    (
+        set -e
+        # shellcheck disable=SC2034
+        INCUS_DIR=${INCUS_INIT_DIR}
 
-    storage_pool="incustest-$(basename "${INCUS_DIR}")-data"
-    driver="dir"
+        storage_pool="incustest-$(basename "${INCUS_DIR}")-data"
+        driver="dir"
 
-    cat <<EOF | incus admin init --preseed
+        cat << EOF | incus admin init --preseed
 config:
   core.https_address: 127.0.0.1:9999
   images.auto_update_interval: 15
@@ -43,8 +43,8 @@ profiles:
       parent: inct$$
       type: nic
 EOF
-  incus admin init --dump > config.yaml
-cat <<EOF > expected.yaml
+        incus admin init --dump > config.yaml
+        cat << EOF > expected.yaml
 config:
   core.https_address: 127.0.0.1:9999
   images.auto_update_interval: "15"
@@ -88,8 +88,8 @@ profiles:
 
 EOF
 
-  diff -u config.yaml expected.yaml
-)
-  rm -f config.yaml expected.yaml
-  kill_incus "${INCUS_INIT_DIR}"
+        diff -u config.yaml expected.yaml
+    )
+    rm -f config.yaml expected.yaml
+    kill_incus "${INCUS_INIT_DIR}"
 }

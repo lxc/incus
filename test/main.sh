@@ -9,15 +9,15 @@ export TZ="UTC"
 
 export DEBUG=""
 if [ -n "${INCUS_VERBOSE:-}" ]; then
-  DEBUG="--verbose"
+    DEBUG="--verbose"
 fi
 
 if [ -n "${INCUS_DEBUG:-}" ]; then
-  DEBUG="--debug"
+    DEBUG="--debug"
 fi
 
 if [ -n "${DEBUG:-}" ]; then
-  set -x
+    set -x
 fi
 
 if [ -z "${INCUS_BACKEND:-}" ]; then
@@ -43,76 +43,76 @@ echo "==> Checking for dependencies"
 check_dependencies incusd incus curl dnsmasq jq git xgettext sqlite3 msgmerge msgfmt shuf setfacl socat dig
 
 if [ "${USER:-'root'}" != "root" ]; then
-  echo "The testsuite must be run as root." >&2
-  exit 1
+    echo "The testsuite must be run as root." >&2
+    exit 1
 fi
 
 if [ -n "${INCUS_LOGS:-}" ] && [ ! -d "${INCUS_LOGS}" ]; then
-  echo "Your INCUS_LOGS path doesn't exist: ${INCUS_LOGS}"
-  exit 1
+    echo "Your INCUS_LOGS path doesn't exist: ${INCUS_LOGS}"
+    exit 1
 fi
 
 echo "==> Available storage backends: $(available_storage_backends | sort)"
 if [ "$INCUS_BACKEND" != "random" ] && ! storage_backend_available "$INCUS_BACKEND"; then
-  if [ "${INCUS_BACKEND}" = "ceph" ] && [ -z "${INCUS_CEPH_CLUSTER:-}" ]; then
-    echo "Ceph storage backend requires that \"INCUS_CEPH_CLUSTER\" be set."
+    if [ "${INCUS_BACKEND}" = "ceph" ] && [ -z "${INCUS_CEPH_CLUSTER:-}" ]; then
+        echo "Ceph storage backend requires that \"INCUS_CEPH_CLUSTER\" be set."
+        exit 1
+    elif [ "${INCUS_BACKEND}" = "linstor" ] && [ -z "${INCUS_LINSTOR_CLUSTER:-}" ]; then
+        echo "LINSTOR storage backend requires that \"INCUS_LINSTOR_CLUSTER\" be set."
+        exit 1
+    fi
+    echo "Storage backend \"$INCUS_BACKEND\" is not available"
     exit 1
-  elif [ "${INCUS_BACKEND}" = "linstor" ] && [ -z "${INCUS_LINSTOR_CLUSTER:-}" ]; then
-    echo "LINSTOR storage backend requires that \"INCUS_LINSTOR_CLUSTER\" be set."
-    exit 1
-  fi
-  echo "Storage backend \"$INCUS_BACKEND\" is not available"
-  exit 1
 fi
 echo "==> Using storage backend ${INCUS_BACKEND}"
 
 import_storage_backends
 
 cleanup() {
-  # Allow for failures and stop tracing everything
-  set +ex
-  DEBUG=
+    # Allow for failures and stop tracing everything
+    set +ex
+    DEBUG=
 
-  # Allow for inspection
-  if [ -n "${INCUS_INSPECT:-}" ]; then
+    # Allow for inspection
+    if [ -n "${INCUS_INSPECT:-}" ]; then
+        if [ "${TEST_RESULT}" != "success" ]; then
+            echo "==> TEST DONE: ${TEST_CURRENT_DESCRIPTION}"
+        fi
+        echo "==> Test result: ${TEST_RESULT}"
+
+        # shellcheck disable=SC2086
+        printf "To poke around, use:\\n INCUS_DIR=%s INCUS_CONF=%s sudo -E %s/bin/incus COMMAND\\n" "${INCUS_DIR}" "${INCUS_CONF}" ${GOPATH:-}
+        echo "Tests Completed (${TEST_RESULT}): hit enter to continue"
+        read -r _
+    fi
+
+    echo ""
+    echo "df -h output:"
+    df -h
+
     if [ "${TEST_RESULT}" != "success" ]; then
-      echo "==> TEST DONE: ${TEST_CURRENT_DESCRIPTION}"
+        # dmesg may contain oops, IO errors, crashes, etc
+        echo "::group::dmesg logs"
+        journalctl --quiet --no-hostname --no-pager --boot=0 --lines=100 --dmesg
+        echo "::endgroup::"
+    fi
+
+    if [ -n "${GITHUB_ACTIONS:-}" ]; then
+        echo "==> Skipping cleanup (GitHub Action runner detected)"
+    else
+        echo "==> Cleaning up"
+
+        umount -l "${TEST_DIR}/dev"
+        shutdown_openfga
+        cleanup_incus "$TEST_DIR"
+    fi
+
+    echo ""
+    echo ""
+    if [ "${TEST_RESULT}" != "success" ]; then
+        echo "==> TEST DONE: ${TEST_CURRENT_DESCRIPTION}"
     fi
     echo "==> Test result: ${TEST_RESULT}"
-
-    # shellcheck disable=SC2086
-    printf "To poke around, use:\\n INCUS_DIR=%s INCUS_CONF=%s sudo -E %s/bin/incus COMMAND\\n" "${INCUS_DIR}" "${INCUS_CONF}" ${GOPATH:-}
-    echo "Tests Completed (${TEST_RESULT}): hit enter to continue"
-    read -r _
-  fi
-
-  echo ""
-  echo "df -h output:"
-  df -h
-
-  if [ "${TEST_RESULT}" != "success" ]; then
-    # dmesg may contain oops, IO errors, crashes, etc
-    echo "::group::dmesg logs"
-    journalctl --quiet --no-hostname --no-pager --boot=0 --lines=100 --dmesg
-    echo "::endgroup::"
-  fi
-
-  if [ -n "${GITHUB_ACTIONS:-}" ]; then
-    echo "==> Skipping cleanup (GitHub Action runner detected)"
-  else
-    echo "==> Cleaning up"
-
-    umount -l "${TEST_DIR}/dev"
-    shutdown_openfga
-    cleanup_incus "$TEST_DIR"
-  fi
-
-  echo ""
-  echo ""
-  if [ "${TEST_RESULT}" != "success" ]; then
-    echo "==> TEST DONE: ${TEST_CURRENT_DESCRIPTION}"
-  fi
-  echo "==> Test result: ${TEST_RESULT}"
 }
 
 # Must be set before cleanup()
@@ -131,7 +131,7 @@ TEST_DIR=$(mktemp -d -p "$(pwd)" tmp.XXX)
 chmod +x "${TEST_DIR}"
 
 if [ -n "${INCUS_TMPFS:-}" ]; then
-  mount -t tmpfs tmpfs "${TEST_DIR}" -o mode=0751 -o size=6G
+    mount -t tmpfs tmpfs "${TEST_DIR}" -o mode=0751 -o size=6G
 fi
 
 mkdir -p "${TEST_DIR}/dev"
@@ -149,59 +149,59 @@ INCUS_ADDR=$(cat "${INCUS_DIR}/incus.addr")
 export INCUS_ADDR
 
 run_test() {
-  TEST_CURRENT=${1}
-  TEST_CURRENT_DESCRIPTION=${2:-${1}}
-  TEST_UNMET_REQUIREMENT=""
+    TEST_CURRENT=${1}
+    TEST_CURRENT_DESCRIPTION=${2:-${1}}
+    TEST_UNMET_REQUIREMENT=""
 
-  echo "==> TEST BEGIN: ${TEST_CURRENT_DESCRIPTION}"
-  START_TIME=$(date +%s)
+    echo "==> TEST BEGIN: ${TEST_CURRENT_DESCRIPTION}"
+    START_TIME=$(date +%s)
 
-  # shellcheck disable=SC2039,3043
-  local skip=false
+    # shellcheck disable=SC2039,3043
+    local skip=false
 
-  # Skip test if requested.
-  if [ -n "${INCUS_SKIP_TESTS:-}" ]; then
-    for testName in ${INCUS_SKIP_TESTS}; do
-      if [ "test_${testName}" = "${TEST_CURRENT}" ]; then
-          echo "==> SKIP: ${TEST_CURRENT} as specified in INCUS_SKIP_TESTS"
-          skip=true
-          break
-      fi
-    done
-  fi
-
-  if [ "${skip}" = false ]; then
-    # Run test.
-    ${TEST_CURRENT}
-
-    # Check whether test was skipped due to unmet requirements, and if so check if the test is required and fail.
-    if [ -n "${TEST_UNMET_REQUIREMENT}" ]; then
-      if [ -n "${INCUS_REQUIRED_TESTS:-}" ]; then
-        for testName in ${INCUS_REQUIRED_TESTS}; do
-          if [ "test_${testName}" = "${TEST_CURRENT}" ]; then
-              echo "==> REQUIRED: ${TEST_CURRENT} ${TEST_UNMET_REQUIREMENT}"
-              false
-              return
-          fi
+    # Skip test if requested.
+    if [ -n "${INCUS_SKIP_TESTS:-}" ]; then
+        for testName in ${INCUS_SKIP_TESTS}; do
+            if [ "test_${testName}" = "${TEST_CURRENT}" ]; then
+                echo "==> SKIP: ${TEST_CURRENT} as specified in INCUS_SKIP_TESTS"
+                skip=true
+                break
+            fi
         done
-      else
-        # Skip test if its requirements are not met and is not specified in required tests.
-        echo "==> SKIP: ${TEST_CURRENT} ${TEST_UNMET_REQUIREMENT}"
-      fi
     fi
-  fi
 
-  END_TIME=$(date +%s)
+    if [ "${skip}" = false ]; then
+        # Run test.
+        ${TEST_CURRENT}
 
-  echo "==> TEST DONE: ${TEST_CURRENT_DESCRIPTION} ($((END_TIME-START_TIME))s)"
+        # Check whether test was skipped due to unmet requirements, and if so check if the test is required and fail.
+        if [ -n "${TEST_UNMET_REQUIREMENT}" ]; then
+            if [ -n "${INCUS_REQUIRED_TESTS:-}" ]; then
+                for testName in ${INCUS_REQUIRED_TESTS}; do
+                    if [ "test_${testName}" = "${TEST_CURRENT}" ]; then
+                        echo "==> REQUIRED: ${TEST_CURRENT} ${TEST_UNMET_REQUIREMENT}"
+                        false
+                        return
+                    fi
+                done
+            else
+                # Skip test if its requirements are not met and is not specified in required tests.
+                echo "==> SKIP: ${TEST_CURRENT} ${TEST_UNMET_REQUIREMENT}"
+            fi
+        fi
+    fi
+
+    END_TIME=$(date +%s)
+
+    echo "==> TEST DONE: ${TEST_CURRENT_DESCRIPTION} ($((END_TIME - START_TIME))s)"
 }
 
 # allow for running a specific set of tests
 if [ "$#" -gt 0 ] && [ "$1" != "all" ] && [ "$1" != "cluster" ] && [ "$1" != "standalone" ]; then
-  run_test "test_${1}"
-  # shellcheck disable=SC2034
-  TEST_RESULT=success
-  exit
+    run_test "test_${1}"
+    # shellcheck disable=SC2034
+    TEST_RESULT=success
+    exit
 fi
 
 if [ "${1:-"all"}" != "cluster" ]; then

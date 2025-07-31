@@ -50,7 +50,11 @@ spawn_incus() {
     echo "==> Spawned Incus (PID is ${INCUS_PID})"
 
     echo "==> Confirming incusd is responsive (PID is ${INCUS_PID})"
-    INCUS_DIR="${incusdir}" incus admin waitready --timeout=300 || (echo "Killing PID ${INCUS_PID}" ; kill -9 "${INCUS_PID}" ; false)
+    INCUS_DIR="${incusdir}" incus admin waitready --timeout=300 || (
+        echo "Killing PID ${INCUS_PID}"
+        kill -9 "${INCUS_PID}"
+        false
+    )
 
     if [ "${INCUS_NETNS}" = "" ]; then
         echo "==> Binding to network"
@@ -106,7 +110,11 @@ respawn_incus() {
 
     if [ "${wait}" = true ]; then
         echo "==> Confirming incusd is responsive (PID is ${INCUS_PID})"
-        INCUS_DIR="${incusdir}" incus admin waitready --timeout=300 || (echo "Killing PID ${INCUS_PID}" ; kill -9 "${INCUS_PID}" ; false)
+        INCUS_DIR="${incusdir}" incus admin waitready --timeout=300 || (
+            echo "Killing PID ${INCUS_PID}"
+            kill -9 "${INCUS_PID}"
+            false
+        )
     fi
 
     if [ -n "${DEBUG:-}" ]; then
@@ -126,7 +134,7 @@ kill_incus() {
 
     # Check if already killed
     if [ ! -f "${daemon_dir}/incus.pid" ]; then
-      return
+        return
     fi
 
     daemon_pid=$(cat "${daemon_dir}/incus.pid")
@@ -184,17 +192,17 @@ kill_incus() {
 
         echo "==> Checking for locked DB tables"
         for table in $(echo .tables | sqlite3 "${daemon_dir}/local.db"); do
-            echo "SELECT * FROM ${table};" | sqlite3 "${daemon_dir}/local.db" >/dev/null
+            echo "SELECT * FROM ${table};" | sqlite3 "${daemon_dir}/local.db" > /dev/null
         done
 
         # Kill the daemon
-        timeout -k 30 30 incus admin shutdown || kill -9 "${daemon_pid}" 2>/dev/null || true
+        timeout -k 30 30 incus admin shutdown || kill -9 "${daemon_pid}" 2> /dev/null || true
 
         sleep 2
 
         # Cleanup shmounts (needed due to the forceful kill)
-        find "${daemon_dir}" -name shmounts -exec "umount" "-l" "{}" \; >/dev/null 2>&1 || true
-        find "${daemon_dir}" -name dev_incus -exec "umount" "-l" "{}" \; >/dev/null 2>&1 || true
+        find "${daemon_dir}" -name shmounts -exec "umount" "-l" "{}" \; > /dev/null 2>&1 || true
+        find "${daemon_dir}" -name dev_incus -exec "umount" "-l" "{}" \; > /dev/null 2>&1 || true
 
         check_leftovers="true"
     fi
@@ -212,9 +220,9 @@ kill_incus() {
 
         # Support AppArmor policy cache directory
         if apparmor_parser --help | grep -q -- '--print-cache.dir'; then
-          apparmor_cache_dir="$(apparmor_parser -L "${daemon_dir}"/security/apparmor/cache --print-cache-dir)"
+            apparmor_cache_dir="$(apparmor_parser -L "${daemon_dir}"/security/apparmor/cache --print-cache-dir)"
         else
-          apparmor_cache_dir="${daemon_dir}/security/apparmor/cache"
+            apparmor_cache_dir="${daemon_dir}/security/apparmor/cache"
         fi
         rm -f "${apparmor_cache_dir}/.features"
         check_empty "${daemon_dir}/containers/"
@@ -276,7 +284,7 @@ shutdown_incus() {
     echo "==> Shutting down Incus at ${daemon_dir} (${daemon_pid})"
 
     # Shutting down the daemon
-    incus admin shutdown || kill -9 "${daemon_pid}" 2>/dev/null || true
+    incus admin shutdown || kill -9 "${daemon_pid}" 2> /dev/null || true
 
     # Wait for any cleanup activity that might be happening right
     # after the websocket is closed.
@@ -294,10 +302,10 @@ wait_for() {
 }
 
 wipe() {
-    if command -v btrfs >/dev/null 2>&1; then
-        rm -Rf "${1}" 2>/dev/null || true
+    if command -v btrfs > /dev/null 2>&1; then
+        rm -Rf "${1}" 2> /dev/null || true
         if [ -d "${1}" ]; then
-            find "${1}" | tac | xargs btrfs subvolume delete >/dev/null 2>&1 || true
+            find "${1}" | tac | xargs btrfs subvolume delete > /dev/null 2>&1 || true
         fi
     fi
 
