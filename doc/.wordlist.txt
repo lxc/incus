@@ -9,7 +9,6 @@ allocator
 AMD
 Ansible
 Ansible's
-api
 APIs
 AppArmor
 ARMv
@@ -248,7 +247,6 @@ RBD
 RDNSS
 README
 reconfiguring
-refquota
 requestor
 resolvers
 RESTful
@@ -318,7 +316,6 @@ tmpfs
 toolchain
 topologies
 TPM
-truenas
 TrueNAS
 TSIG
 TTL
