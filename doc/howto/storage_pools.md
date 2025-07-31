@@ -179,11 +179,11 @@ source | can be used to specify `truenas.dataset` and optionally `truenas.host`
 
 The remote dataset will be created if it does not exist. If there is a trailing `/` then the remote dataset will be named after the storage pool
 
-Create or use a remote dataset on remote pool tank on host truenas.example.com named after the storage pool, ie tank/pool1 with the API_KEY specified to host the storage pool
+Create or use a remote dataset on remote pool tank on host `truenas.example.com` named after the storage pool, i.e. tank/pool1 with the API key specified to host the storage pool
 
     `incus storage create pool1 truenas source=truenas.example.com:tank/ truenas.api_key=$TN_APIKEY`
 
-Create or use remote dataset on remote pool tank on host truenas.example.com with the API KEY specified to host the storage pool,
+Create or use remote dataset on remote pool tank on host truenas.example.com with the API key specified to host the storage pool,
 
     `incus storage create pool1 truenas source=truenas.example.com:tank/remote-dataset truenas.api_key=$TN_APIKEY`
 
