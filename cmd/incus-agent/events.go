@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -141,7 +140,7 @@ func eventsProcess(event api.Event) {
 		return
 	}
 
-	mntSource := fmt.Sprintf("incus_%s", e.Name)
+	mntSource := "incus_" + e.Name
 
 	if e.Action == "added" {
 		// Attempt to perform the mount.
