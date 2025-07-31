@@ -1,9 +1,16 @@
 package cliconfig
 
 import (
+	"crypto/ecdsa"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+
+	"golang.org/x/crypto/ssh"
 
 	localtls "github.com/lxc/incus/v6/shared/tls"
 	"github.com/lxc/incus/v6/shared/util"
@@ -29,6 +36,108 @@ func (c *Config) HasRemoteClientCertificate(name string) bool {
 	}
 
 	return true
+}
+
+// GetClientCertificate returns the client certificate, key and CA (with optional remote name).
+func (c *Config) GetClientCertificate(name string) (string, string, string, error) {
+	// Values.
+	var tlsClientCert string
+	var tlsClientKey string
+	var tlsClientCA string
+
+	// Certificate paths.
+	var pathClientCertificate string
+	var pathClientKey string
+	var pathClientCA string
+
+	if c.HasRemoteClientCertificate(name) {
+		pathClientCertificate = c.ConfigPath("clientcerts", fmt.Sprintf("%s.crt", name))
+		pathClientKey = c.ConfigPath("clientcerts", fmt.Sprintf("%s.key", name))
+		pathClientCA = c.ConfigPath("clientcerts", fmt.Sprintf("%s.ca", name))
+	} else {
+		pathClientCertificate = c.ConfigPath("client.crt")
+		pathClientKey = c.ConfigPath("client.key")
+		pathClientCA = c.ConfigPath("client.ca")
+	}
+
+	if util.PathExists(pathClientCertificate) {
+		content, err := os.ReadFile(pathClientCertificate)
+		if err != nil {
+			return "", "", "", err
+		}
+
+		tlsClientCert = string(content)
+	}
+
+	// Client CA
+	if util.PathExists(pathClientCA) {
+		content, err := os.ReadFile(pathClientCA)
+		if err != nil {
+			return "", "", "", err
+		}
+
+		tlsClientCA = string(content)
+	}
+
+	// Client key
+	if util.PathExists(pathClientKey) {
+		content, err := os.ReadFile(pathClientKey)
+		if err != nil {
+			return "", "", "", err
+		}
+
+		pemKey, _ := pem.Decode(content)
+
+		// Golang has deprecated all methods relating to PEM encryption due to a vulnerability.
+		// However, the weakness does not make PEM unsafe for our purposes as it pertains to password protection on the
+		// key file (client.key is only readable to the user in any case), so we'll ignore deprecation.
+		isEncrypted := x509.IsEncryptedPEMBlock(pemKey) //nolint:staticcheck
+		isSSH := pemKey.Type == "OPENSSH PRIVATE KEY"
+		if isEncrypted || isSSH {
+			if c.PromptPassword == nil {
+				return "", "", "", errors.New("Private key is password protected and no helper was configured")
+			}
+
+			password, err := c.PromptPassword(pathClientKey)
+			if err != nil {
+				return "", "", "", err
+			}
+
+			if isSSH {
+				sshKey, err := ssh.ParseRawPrivateKeyWithPassphrase(content, []byte(password))
+				if err != nil {
+					return "", "", "", err
+				}
+
+				ecdsaKey, okEcdsa := (sshKey).(*ecdsa.PrivateKey)
+				rsaKey, okRsa := (sshKey).(*rsa.PrivateKey)
+				if okEcdsa {
+					derKey, err := x509.MarshalECPrivateKey(ecdsaKey)
+					if err != nil {
+						return "", "", "", err
+					}
+
+					content = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: derKey})
+				} else if okRsa {
+					derKey := x509.MarshalPKCS1PrivateKey(rsaKey)
+					content = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: derKey})
+				} else {
+					return "", "", "", fmt.Errorf("Unsupported key type: %T", sshKey)
+				}
+			} else {
+				derKey, err := x509.DecryptPEMBlock(pemKey, []byte(password)) //nolint:staticcheck
+				if err != nil {
+					return "", "", "", err
+				}
+
+				content = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: derKey})
+			}
+		}
+
+		tlsClientKey = string(content)
+	}
+
+	return tlsClientCert, tlsClientKey, tlsClientCA, nil
 }
 
 // GenerateClientCertificate will generate the needed client.crt and client.key if needed.
