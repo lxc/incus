@@ -22,6 +22,9 @@ func (r *ProtocolIncus) getEvents(allProjects bool) (*EventListener, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	// Clear skipGetEvents once we've been directly called.
+	r.skipEvents = false
+
 	// Setup a new listener
 	listener := EventListener{
 		r:         r,
