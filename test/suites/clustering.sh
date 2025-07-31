@@ -680,13 +680,9 @@ test_clustering_storage() {
   driver_config=""
   if [ "${poolDriver}" = "btrfs" ] || [ "${poolDriver}" = "lvm" ] || [ "${poolDriver}" = "zfs" ]; then
       driver_config="size=1GiB"
-  fi
-
-  if [ "${poolDriver}" = "ceph" ]; then
+  elif [ "${poolDriver}" = "ceph" ]; then
       driver_config="source=incustest-$(basename "${TEST_DIR}")-pool1"
-  fi
-
-  if [ "${poolDriver}" = "linstor" ]; then
+  elif [ "${poolDriver}" = "linstor" ]; then
       driver_config="source=incustest-$(basename "${TEST_DIR}" | sed 's/\./__/g')-pool1"
   fi
 

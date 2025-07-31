@@ -138,19 +138,19 @@ kill_incus() {
         # Delete all containers
         echo "==> Deleting all containers"
         for container in $(timeout -k 2 2 incus list --force-local --format csv --columns n); do
-            timeout -k 10 10 incus delete "${container}" --force-local -f || true
+            timeout -k 20 20 incus delete "${container}" --force-local -f || true
         done
 
         # Delete all images
         echo "==> Deleting all images"
         for image in $(timeout -k 2 2 incus image list --force-local --format csv --columns f); do
-            timeout -k 10 10 incus image delete "${image}" --force-local || true
+            timeout -k 20 20 incus image delete "${image}" --force-local || true
         done
 
         # Delete all profiles
         echo "==> Deleting all profiles"
         for profile in $(timeout -k 2 2 incus profile list --force-local --format csv | cut -d, -f1); do
-            timeout -k 10 10 incus profile delete "${profile}" --force-local || true
+            timeout -k 30 30 incus profile delete "${profile}" --force-local || true
         done
 
         # Delete all networks
