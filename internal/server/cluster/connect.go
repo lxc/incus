@@ -49,6 +49,7 @@ func Connect(address string, networkCert *localtls.CertInfo, serverCert *localtl
 		TLSClientCert: string(serverCert.PublicKey()),
 		TLSClientKey:  string(serverCert.PrivateKey()),
 		SkipGetServer: true,
+		SkipGetEvents: true,
 		UserAgent:     version.UserAgent,
 	}
 
@@ -214,6 +215,8 @@ func SetupTrust(serverCert *localtls.CertInfo, serverName string, targetAddress 
 	args := &incus.ConnectionArgs{
 		TLSServerCert: targetCert,
 		UserAgent:     version.UserAgent,
+		SkipGetEvents: true,
+		SkipGetServer: true,
 	}
 
 	target, err := incus.ConnectIncus(fmt.Sprintf("https://%s", targetAddress), args)
@@ -251,6 +254,8 @@ func UpdateTrust(serverCert *localtls.CertInfo, serverName string, targetAddress
 		TLSClientKey:  string(serverCert.PrivateKey()),
 		TLSServerCert: targetCert,
 		UserAgent:     version.UserAgent,
+		SkipGetEvents: true,
+		SkipGetServer: true,
 	}
 
 	target, err := incus.ConnectIncus(fmt.Sprintf("https://%s", targetAddress), args)

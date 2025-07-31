@@ -761,6 +761,14 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 			}
 		}
 
+		// Connect the event handler.
+		_, err = target.GetEvents()
+		if err != nil {
+			return err
+		}
+
+		defer target.Disconnect()
+
 		// Create the target instance.
 		destOp, err := target.CreateInstance(api.InstancesPost{
 			Name:        targetInstName,
@@ -893,6 +901,14 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		for connName, conn := range sourceMigration.conns {
 			sourceSecrets[connName] = conn.Secret()
 		}
+
+		// Connect the event handler.
+		_, err = target.GetEvents()
+		if err != nil {
+			return err
+		}
+
+		defer target.Disconnect()
 
 		// Create the target instance.
 		destOp, err := target.CreateInstance(api.InstancesPost{

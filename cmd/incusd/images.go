@@ -4373,6 +4373,8 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 		Proxy:         s.Proxy,
 		CachePath:     s.OS.CacheDir,
 		CacheExpiry:   time.Hour,
+		SkipGetEvents: true,
+		SkipGetServer: true,
 	}
 
 	// Setup client

@@ -602,6 +602,8 @@ func SuitableArchitectures(ctx context.Context, s *state.State, tx *db.ClusterTx
 					Proxy:         s.Proxy,
 					CachePath:     s.OS.CacheDir,
 					CacheExpiry:   time.Hour,
+					SkipGetEvents: true,
+					SkipGetServer: true,
 				})
 				if err != nil {
 					return nil, err

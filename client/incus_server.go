@@ -118,6 +118,7 @@ func (r *ProtocolIncus) UseProject(name string) InstanceServer {
 		project:              name,
 		eventConns:           make(map[string]*websocket.Conn),  // New project specific listener conns.
 		eventListeners:       make(map[string][]*EventListener), // New project specific listeners.
+		skipEvents:           r.skipEvents,
 		oidcClient:           r.oidcClient,
 	}
 }
@@ -141,6 +142,7 @@ func (r *ProtocolIncus) UseTarget(name string) InstanceServer {
 		project:              r.project,
 		eventConns:           make(map[string]*websocket.Conn),  // New target specific listener conns.
 		eventListeners:       make(map[string][]*EventListener), // New target specific listeners.
+		skipEvents:           r.skipEvents,
 		oidcClient:           r.oidcClient,
 		clusterTarget:        name,
 	}

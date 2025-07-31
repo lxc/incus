@@ -38,6 +38,9 @@ type ProtocolIncus struct {
 	eventListeners     map[string][]*EventListener
 	eventListenersLock sync.Mutex
 
+	// skipEvents tracks whether we were configured not to connect to the events endpoint
+	skipEvents bool
+
 	http            *http.Client
 	httpCertificate string
 	httpBaseURL     neturl.URL
@@ -396,14 +399,20 @@ func (r *ProtocolIncus) queryStruct(method string, path string, data any, ETag s
 // It sets up an early event listener, performs the query, processes the response, and manages the lifecycle of the event listener.
 func (r *ProtocolIncus) queryOperation(method string, path string, data any, ETag string) (Operation, string, error) {
 	// Attempt to setup an early event listener
-	skipListener := false
-	listener, err := r.GetEvents()
-	if err != nil {
-		if api.StatusErrorCheck(err, http.StatusForbidden) {
-			skipListener = true
-		}
+	var listener *EventListener
 
-		listener = nil
+	skipListener := r.skipEvents
+	if !skipListener {
+		var err error
+
+		listener, err = r.GetEvents()
+		if err != nil {
+			if api.StatusErrorCheck(err, http.StatusForbidden) {
+				skipListener = true
+			}
+
+			listener = nil
+		}
 	}
 
 	// Send the query
