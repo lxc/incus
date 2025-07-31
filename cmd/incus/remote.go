@@ -767,12 +767,12 @@ func (c *cmdRemoteGetClientCertificate) Run(cmd *cobra.Command, args []string) e
 	}
 
 	// Read the certificate.
-	content, err := os.ReadFile(conf.ConfigPath("client.crt"))
+	tlsClientCert, _, _, err := conf.GetClientCertificate("")
 	if err != nil {
-		return fmt.Errorf("Failed to read certificate: %w", err)
+		return fmt.Errorf("Failed to get certificate: %w", err)
 	}
 
-	fmt.Print(string(content))
+	fmt.Print(tlsClientCert)
 	return nil
 }
 
@@ -822,18 +822,13 @@ func (c *cmdRemoteGetClientToken) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Read the key pair.
-	cert, err := os.ReadFile(conf.ConfigPath("client.crt"))
+	// Read the certificate.
+	tlsClientCert, tlsClientKey, _, err := conf.GetClientCertificate("")
 	if err != nil {
-		return fmt.Errorf("Failed to read certificate: %w", err)
+		return fmt.Errorf("Failed to get certificate: %w", err)
 	}
 
-	key, err := os.ReadFile(conf.ConfigPath("client.key"))
-	if err != nil {
-		return fmt.Errorf("Failed to read private key: %w", err)
-	}
-
-	keypair, err := tls.X509KeyPair(cert, key)
+	keypair, err := tls.X509KeyPair([]byte(tlsClientCert), []byte(tlsClientKey))
 	if err != nil {
 		return err
 	}
