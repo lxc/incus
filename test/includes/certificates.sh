@@ -1,5 +1,5 @@
 cert_fingerprint() {
-  openssl x509 -noout -fingerprint -sha256 -in "${1}" | sed 's/.*=//; s/://g; s/\(.*\)/\L\1/'
+    openssl x509 -noout -fingerprint -sha256 -in "${1}" | sed 's/.*=//; s/://g; s/\(.*\)/\L\1/'
 }
 
 # Generate a short lived ecdsa (self-signed) cert and key

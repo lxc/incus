@@ -12,7 +12,10 @@ incus_remote() {
 
     injected=0
     # find the path to incus binary, not the shell wrapper function
-    cmd=$(unset -f incus; command -v incus)
+    cmd=$(
+        unset -f incus
+        command -v incus
+    )
 
     # shellcheck disable=SC2048,SC2068
     for arg in "$@"; do

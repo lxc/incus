@@ -19,7 +19,7 @@ ensure_import_testimage() {
                 exit 1
             fi
 
-            if ldd /bin/busybox >/dev/null 2>&1; then
+            if ldd /bin/busybox > /dev/null 2>&1; then
                 echo "The testsuite requires /bin/busybox to be a static binary"
                 exit 1
             fi

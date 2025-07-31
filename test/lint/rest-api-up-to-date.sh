@@ -3,7 +3,7 @@
 f="doc/rest-api.yaml"
 
 rest_api_hash() {
-  md5sum "${f}" | cut -f1 -d" "
+    md5sum "${f}" | cut -f1 -d" "
 }
 
 echo "Checking that ${f} is up to date..."
@@ -15,6 +15,6 @@ make update-api -s
 hash2="$(rest_api_hash)"
 mv "${f}.bak" "${f}"
 if [ "${hash1}" != "${hash2}" ]; then
-  echo "==> Please update the ${f} file in your commit (make update-api)"
-  exit 1
+    echo "==> Please update the ${f} file in your commit (make update-api)"
+    exit 1
 fi

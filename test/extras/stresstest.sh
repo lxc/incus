@@ -23,12 +23,12 @@ echo "==> Running the Incus testsuite"
 
 BASEURL=https://127.0.0.1:18443
 my_curl() {
-  curl -k -s --cert "${INCUS_CONF}/client.crt" --key "${INCUS_CONF}/client.key" "${@}"
+    curl -k -s --cert "${INCUS_CONF}/client.crt" --key "${INCUS_CONF}/client.key" "${@}"
 }
 
 wait_for() {
-  op="$("${@}" | jq -r .operation)"
-  my_curl "$BASEURL$op/wait"
+    op="$("${@}" | jq -r .operation)"
+    my_curl "$BASEURL$op/wait"
 }
 
 incus() {
@@ -56,7 +56,7 @@ cleanup() {
     echo "==> Cleaning up"
 
     # Try to stop all the containers
-    my_curl "$BASEURL/1.0/instances" | jq -r .metadata[] 2>/dev/null | while read -r line; do
+    my_curl "$BASEURL/1.0/instances" | jq -r .metadata[] 2> /dev/null | while read -r line; do
         wait_for my_curl -X PUT "$BASEURL$line/state" -d "{\"action\":\"stop\",\"force\":true}"
     done
 
@@ -65,7 +65,7 @@ cleanup() {
     for p in $(pidof incus); do
         pgrp="$(awk '{ print $5 }' "/proc/$p/stat")"
         if [ "$pgrp" = "$mygrp" ]; then
-          do_kill_incus "$p"
+            do_kill_incus "$p"
         fi
     done
 
@@ -86,22 +86,22 @@ if ! command -v incus > /dev/null; then
 fi
 
 spawn_incus() {
-  # INCUS_DIR is local here because since `inc` is actually a function, it
-  # overwrites the environment and we would lose INCUS_DIR's value otherwise.
-  local INCUS_DIR
+    # INCUS_DIR is local here because since `inc` is actually a function, it
+    # overwrites the environment and we would lose INCUS_DIR's value otherwise.
+    local INCUS_DIR
 
-  addr=$1
-  incusdir=$2
-  shift
-  shift
-  echo "==> Spawning incusd on $addr in $incusdir"
-  INCUS_DIR="$incusdir" incusd "${debug}" "${@}" > "$incusdir/incus.log" 2>&1 &
+    addr=$1
+    incusdir=$2
+    shift
+    shift
+    echo "==> Spawning incusd on $addr in $incusdir"
+    INCUS_DIR="$incusdir" incusd "${debug}" "${@}" > "$incusdir/incus.log" 2>&1 &
 
-  echo "==> Confirming incusd on $addr is responsive"
-  INCUS_DIR="$incusdir" incus admin waitready
+    echo "==> Confirming incusd on $addr is responsive"
+    INCUS_DIR="$incusdir" incus admin waitready
 
-  echo "==> Binding to network"
-  INCUS_DIR="$incusdir" incus config set core.https_address "$addr"
+    echo "==> Binding to network"
+    INCUS_DIR="$incusdir" incus config set core.https_address "$addr"
 }
 
 spawn_incus 127.0.0.1:18443 "$INCUS_DIR"
@@ -128,7 +128,7 @@ createthread() {
         done
         for j in $(seq 20); do
             # ignore errors if the task has already exited
-            wait "${pids[j]}" 2>/dev/null || true
+            wait "${pids[j]}" 2> /dev/null || true
         done
         echo "createthread: deleting..."
         for j in $(seq 20); do
@@ -137,7 +137,7 @@ createthread() {
         done
         for j in $(seq 20); do
             # ignore errors if the task has already exited
-            wait "${pids[j]}" 2>/dev/null || true
+            wait "${pids[j]}" 2> /dev/null || true
         done
     done
     exit 0
