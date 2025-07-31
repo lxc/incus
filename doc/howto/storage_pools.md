@@ -183,7 +183,7 @@ Create or use a remote dataset on remote pool tank on host `truenas.example.com`
 
     `incus storage create pool1 truenas source=truenas.example.com:tank/ truenas.api_key=$TN_APIKEY`
 
-Create or use remote dataset on remote pool tank on host truenas.example.com with the API key specified to host the storage pool,
+Create or use remote dataset on remote pool tank on host `truenas.example.com` with the API key specified to host the storage pool,
 
     `incus storage create pool1 truenas source=truenas.example.com:tank/remote-dataset truenas.api_key=$TN_APIKEY`
 
