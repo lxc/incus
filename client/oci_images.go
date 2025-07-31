@@ -144,7 +144,7 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 	}
 
 	// Get some temporary storage.
-	ociPath, err := os.MkdirTemp("", "incus-oci-")
+	ociPath, err := os.MkdirTemp(r.tempPath, "incus-oci-")
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +352,7 @@ func (r *ProtocolOCI) runSkopeo(action string, image string, args ...string) (st
 			return "", err
 		}
 
-		authFile, err := os.CreateTemp("", "incus_client_auth_")
+		authFile, err := os.CreateTemp(r.tempPath, "incus_client_auth_")
 		if err != nil {
 			return "", err
 		}
