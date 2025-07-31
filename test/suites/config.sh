@@ -44,7 +44,7 @@ testunixdevs() {
 
 ensure_fs_unmounted() {
   bad=0
-  incus exec foo -- stat /mnt/hello && bad=1
+  incus exec foo -- mountpoint /mnt/hello && bad=1
   if [ "${bad}" -eq 1 ]; then
     echo "device should have been removed; $*"
     false
