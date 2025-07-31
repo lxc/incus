@@ -131,11 +131,6 @@ func eventsProcess(event api.Event) {
 		return
 	}
 
-	// Only care about device additions, we don't try to handle remove.
-	if e.Action != "added" {
-		return
-	}
-
 	// We only handle disk hotplug.
 	if e.Config["type"] != "disk" {
 		return
@@ -146,22 +141,27 @@ func eventsProcess(event api.Event) {
 		return
 	}
 
-	// Attempt to perform the mount.
 	mntSource := fmt.Sprintf("incus_%s", e.Name)
 
-	for range 20 {
-		time.Sleep(500 * time.Millisecond)
+	if e.Action == "added" {
+		// Attempt to perform the mount.
+		for range 20 {
+			time.Sleep(500 * time.Millisecond)
 
-		err = osMountShared(mntSource, e.Config["path"], "virtiofs", nil)
-		if err == nil {
-			break
+			err = osMountShared(mntSource, e.Config["path"], "virtiofs", nil)
+			if err == nil {
+				break
+			}
 		}
-	}
 
-	if err != nil {
-		logger.Infof("Failed to mount hotplug %q (Type: %q) to %q", mntSource, "virtiofs", e.Config["path"])
-		return
-	}
+		if err != nil {
+			logger.Infof("Failed to mount hotplug %q (Type: %q) to %q", mntSource, "virtiofs", e.Config["path"])
+			return
+		}
 
-	logger.Infof("Mounted hotplug %q (Type: %q) to %q", mntSource, "virtiofs", e.Config["path"])
+		logger.Infof("Mounted hotplug %q (Type: %q) to %q", mntSource, "virtiofs", e.Config["path"])
+	} else if e.Action == "removed" {
+		// Attempt to unmount the disk.
+		_ = osUmount(mntSource)
+	}
 }

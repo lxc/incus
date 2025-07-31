@@ -56,6 +56,10 @@ func osMountShared(src string, dst string, fstype string, opts []string) error {
 	return errors.New("Dynamic mounts aren't supported on Windows")
 }
 
+func osUmount(src string) error {
+	return errors.New("Dynamic mounts aren't supported on Windows")
+}
+
 func osGetCPUMetrics(d *Daemon) ([]metrics.CPUMetrics, error) {
 	return []metrics.CPUMetrics{}, errors.New("Metrics aren't supported on Windows")
 }
