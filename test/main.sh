@@ -71,6 +71,12 @@ echo "==> Using storage backend ${INCUS_BACKEND}"
 
 import_storage_backends
 
+if [ "${INCUS_BACKEND}" = "truenas" ] && [ "$#" -eq 0 ] || [ "$1" = "all" ] || [ "$1" = "cluster" ]; then
+  # The cluster tests use net-ns which is incompatible with open-iscsi
+  echo "TrueNAS storage backend does not supprt the cluster tests. Please specify a list of test suites, or 'standalone'"
+  exit 1
+fi
+
 cleanup() {
     # Allow for failures and stop tracing everything
     set +ex
@@ -223,7 +229,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_tls_jwt "JWT authentication"
 fi
 
-if [ "${1:-"all"}" != "standalone" ] && [ "${INCUS_BACKEND}" != "truenas" ]; then
+if [ "${1:-"all"}" != "standalone" ]; then
     run_test test_clustering_enable "clustering enable"
     run_test test_clustering_membership "clustering membership"
     run_test test_clustering_containers "clustering containers"
