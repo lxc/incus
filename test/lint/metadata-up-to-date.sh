@@ -3,7 +3,7 @@
 TEMPDIR=$(mktemp -d)
 
 cleanup() {
-  rm -Rf "${TEMPDIR}"
+    rm -Rf "${TEMPDIR}"
 }
 trap cleanup EXIT HUP INT TERM
 
@@ -13,12 +13,12 @@ json_metadata="internal/server/metadata/configuration.json"
 doc_config_options="doc/config_options.txt"
 
 metadata_hash() {
-  files_to_check="${json_metadata} ${doc_config_options}"
-  for f in $files_to_check; do
-    if [ -f "$f" ]; then
-      md5sum "$f"
-    fi
-  done | sort -k 2 > "$1"
+    files_to_check="${json_metadata} ${doc_config_options}"
+    for f in $files_to_check; do
+        if [ -f "$f" ]; then
+            md5sum "$f"
+        fi
+    done | sort -k 2 > "$1"
 }
 
 echo "Checking that the metadata is up to date..."

@@ -4,32 +4,32 @@
 
 # Any necessary backend-specific setup
 dir_setup() {
-  # shellcheck disable=2039,3043
-  local INCUS_DIR
+    # shellcheck disable=2039,3043
+    local INCUS_DIR
 
-  INCUS_DIR=$1
+    INCUS_DIR=$1
 
-  echo "==> Setting up directory backend in ${INCUS_DIR}"
+    echo "==> Setting up directory backend in ${INCUS_DIR}"
 }
 
 # Do the API voodoo necessary to configure Incus to use this backend
 dir_configure() {
-  # shellcheck disable=2039,3043
-  local INCUS_DIR
+    # shellcheck disable=2039,3043
+    local INCUS_DIR
 
-  INCUS_DIR=$1
+    INCUS_DIR=$1
 
-  echo "==> Configuring directory backend in ${INCUS_DIR}"
+    echo "==> Configuring directory backend in ${INCUS_DIR}"
 
-  incus storage create "incustest-$(basename "${INCUS_DIR}")" dir
-  incus profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
+    incus storage create "incustest-$(basename "${INCUS_DIR}")" dir
+    incus profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
 }
 
 dir_teardown() {
-  # shellcheck disable=2039,3043
-  local INCUS_DIR
+    # shellcheck disable=2039,3043
+    local INCUS_DIR
 
-  INCUS_DIR=$1
+    INCUS_DIR=$1
 
-  echo "==> Tearing down directory backend in ${INCUS_DIR}"
+    echo "==> Tearing down directory backend in ${INCUS_DIR}"
 }

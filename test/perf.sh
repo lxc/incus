@@ -11,7 +11,7 @@ PERF_LOG_CSV="perf.csv"
 INCUS_NETNS=""
 
 import_subdir_files() {
-    test  "$1"
+    test "$1"
     # shellcheck disable=SC2039,3043
     local file
     for file in "$1"/*.sh; do
@@ -42,7 +42,7 @@ cleanup() {
     if [ "$TEST_RESULT" != "success" ]; then
         rm -f "$PERF_LOG_CSV"
     fi
-    incus-benchmark delete  # ensure all test containers have been deleted
+    incus-benchmark delete # ensure all test containers have been deleted
     kill_incus "$INCUS_DIR"
     cleanup_incus "$TEST_DIR"
     log_message "Performance tests result: $TEST_RESULT"
@@ -54,7 +54,7 @@ trap cleanup EXIT HUP INT TERM
 TEST_DIR=$(mktemp -d -p "$(pwd)" tmp.XXX)
 
 if [ -n "${INCUS_TMPFS:-}" ]; then
-  mount -t tmpfs tmpfs "${TEST_DIR}" -o mode=0751 -o size=6G
+    mount -t tmpfs tmpfs "${TEST_DIR}" -o mode=0751 -o size=6G
 fi
 
 INCUS_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)

@@ -6,14 +6,14 @@ check_dependencies() {
     missing=""
 
     for dep in "$@"; do
-        if ! command -v "$dep" >/dev/null 2>&1; then
+        if ! command -v "$dep" > /dev/null 2>&1; then
             [ "$missing" ] && missing="$missing $dep" || missing="$dep"
         fi
     done
 
     if [ "$missing" ]; then
-       echo "Missing dependencies: $missing" >&2
-       exit 1
+        echo "Missing dependencies: $missing" >&2
+        exit 1
     fi
 }
 
@@ -30,9 +30,9 @@ check_empty_table() {
     # be deleted.
     if [ "$2" = 'profiles' ]; then
         if [ -n "$(sqlite3 "${1}" "SELECT * FROM ${2} WHERE name != 'default';")" ]; then
-          echo "DB table ${2} is not empty, content:"
-          sqlite3 "${1}" "SELECT * FROM ${2} WHERE name != 'default';"
-          return 1
+            echo "DB table ${2} is not empty, content:"
+            sqlite3 "${1}" "SELECT * FROM ${2} WHERE name != 'default';"
+            return 1
         fi
         return 0
     fi

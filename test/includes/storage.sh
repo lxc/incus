@@ -40,7 +40,7 @@ available_storage_backends() {
     fi
 
     for backend in $storage_backends; do
-        if command -v "$backend" >/dev/null 2>&1; then
+        if command -v "$backend" > /dev/null 2>&1; then
             backends="$backends $backend"
         fi
     done
@@ -132,4 +132,3 @@ umount_loops() {
         done < "${test_dir}/loops"
     fi
 }
-
