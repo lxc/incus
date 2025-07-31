@@ -334,7 +334,6 @@ func (d *truenas) Validate(config map[string]string) error {
 		"truenas.allow_insecure": validate.Optional(validate.IsBool),
 		"truenas.api_key":        validate.IsAny,
 		"truenas.config":         validate.IsAny,
-		"truenas.config_file":    validate.IsAny,
 		"truenas.host":           validate.IsAny,
 
 		// flags for the tool's iscsi commands
@@ -361,7 +360,6 @@ func (d *truenas) Update(changedConfig map[string]string) error {
 		"truenas.allow_insecure",
 		"truenas.api_key",
 		"truenas.config",
-		"truenas.config_file",
 		"truenas.host",
 		"truenas.initiator",
 		"truenas.portal",

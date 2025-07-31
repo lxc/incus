@@ -71,10 +71,6 @@ func (d *truenas) runTool(args ...string) (string, error) {
 		baseArgs = append(baseArgs, "--config", d.config["truenas.config"])
 	}
 
-	if d.config["truenas.config_file"] != "" {
-		baseArgs = append(baseArgs, "--config-file", d.config["truenas.config_file"])
-	}
-
 	if d.config["truenas.host"] != "" {
 		baseArgs = append(baseArgs, "--host", d.config["truenas.host"])
 	}
