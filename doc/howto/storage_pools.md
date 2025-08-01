@@ -248,7 +248,7 @@ creating and destroying instances.
 
 Creation can take circa 4s, and deletion can take circa 10-30s. If a high instance churn is expected, then TrueNAS may not be an appropriate storage driver for your work-load.
 
-See: https://github.com/truenas/middleware/pull/16614
+See: [`https://github.com/truenas/middleware/pull/16614`](https://github.com/truenas/middleware/pull/16614)
 ```
 ````
 `````
