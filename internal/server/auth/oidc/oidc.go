@@ -178,7 +178,7 @@ func (o *Verifier) Logout(w http.ResponseWriter, r *http.Request) {
 
 	// Attempt to end the OIDC session.
 	if provider != nil && token != "" {
-		_, _ = rp.EndSession(r.Context(), provider, token, fmt.Sprintf("https://%s", r.Host), "")
+		_, _ = rp.EndSession(r.Context(), provider, token, fmt.Sprintf("https://%s", r.Host), "", "", nil)
 	}
 
 	// Access token.
