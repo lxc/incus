@@ -294,6 +294,7 @@ type cmdConfigTemplateList struct {
 func (c *cmdConfigTemplateList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("list", i18n.G("[<remote>:]<instance>"))
+	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List instance file templates")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List instance file templates`))
