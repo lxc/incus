@@ -139,6 +139,7 @@ IPAM
 IPs
 IPv
 IPVLAN
+iSCSI
 JIT
 jq
 JSON
@@ -270,6 +271,7 @@ simplestreams
 SLAAC
 SMTP
 Snapcraft
+snapshotted
 SNAT
 Solaris
 SPAs
@@ -315,6 +317,7 @@ tmpfs
 toolchain
 topologies
 TPM
+TrueNAS
 TSIG
 TTL
 UDP
