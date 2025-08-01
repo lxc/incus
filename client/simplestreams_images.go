@@ -163,7 +163,7 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 		if err == nil && req.DeltaSourceRetriever != nil {
 			applyDelta := func(file simplestreams.DownloadableFile, srcPath string, target io.Writer) (int64, error) {
 				// Create temporary file for the delta
-				deltaFile, err := os.CreateTemp("", "incus_image_")
+				deltaFile, err := os.CreateTemp(r.tempPath, "incus_image_")
 				if err != nil {
 					return -1, err
 				}
@@ -179,7 +179,7 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 				}
 
 				// Create temporary file for the delta
-				patchedFile, err := os.CreateTemp("", "incus_image_")
+				patchedFile, err := os.CreateTemp(r.tempPath, "incus_image_")
 				if err != nil {
 					return -1, err
 				}

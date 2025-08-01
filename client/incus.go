@@ -54,6 +54,8 @@ type ProtocolIncus struct {
 	project       string
 
 	oidcClient *oidcClient
+
+	tempPath string
 }
 
 // Disconnect gets rid of any background goroutines.
