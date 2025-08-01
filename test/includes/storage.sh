@@ -48,6 +48,10 @@ available_storage_backends() {
         fi
     done
 
+    if [ -n "${INCUS_TRUENAS_DATASET:-}" ] && command -v "truenas_incus_ctl" > /dev/null 2>&1; then
+        backends="$backends truenas"
+    fi
+
     echo "$backends"
 }
 

@@ -60,6 +60,9 @@ if [ "$INCUS_BACKEND" != "random" ] && ! storage_backend_available "$INCUS_BACKE
     elif [ "${INCUS_BACKEND}" = "linstor" ] && [ -z "${INCUS_LINSTOR_CLUSTER:-}" ]; then
         echo "LINSTOR storage backend requires that \"INCUS_LINSTOR_CLUSTER\" be set."
         exit 1
+    elif [ "${INCUS_BACKEND}" = "truenas" ] && [ -z "${INCUS_TRUENAS_DATASET:-}" ]; then
+        echo "TrueNAS storage backend requires that \"INCUS_TRUENAS_DATASET\" be set."
+        exit 1
     fi
     echo "Storage backend \"$INCUS_BACKEND\" is not available"
     exit 1
@@ -67,6 +70,12 @@ fi
 echo "==> Using storage backend ${INCUS_BACKEND}"
 
 import_storage_backends
+
+if [ "${INCUS_BACKEND}" = "truenas" ] && { [ "$#" -eq 0 ] || [ "$1" = "all" ] || [ "$1" = "cluster" ]; }; then
+    # The cluster tests use net-ns which is incompatible with open-iscsi
+    echo "TrueNAS storage backend does not support the cluster tests. Please specify a list of test suites, or 'standalone'"
+    exit 1
+fi
 
 cleanup() {
     # Allow for failures and stop tracing everything
@@ -350,6 +359,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_storage_driver_ceph "ceph storage driver"
     run_test test_storage_driver_cephfs "cephfs storage driver"
     run_test test_storage_driver_linstor "linstor storage driver"
+    run_test test_storage_driver_truenas "truenas storage driver"
     run_test test_storage_driver_zfs "zfs storage driver"
     run_test test_storage_buckets "storage buckets"
     run_test test_storage_bucket_export "storage buckets export and import"
