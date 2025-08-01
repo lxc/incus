@@ -189,7 +189,6 @@ snap_restore() {
 
     ##########################################################
 
-
     # ZFS, LINSTOR and TrueNAS are limited to rollback only to the latest snapshots. Since
     # in this case we have a more recent snap1, we can't restore to snap0.
     if [ "$incus_backend" != "zfs" ] && [ "$incus_backend" != "linstor" ] && [ "$incus_backend" != "truenas" ]; then

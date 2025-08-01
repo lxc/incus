@@ -239,9 +239,9 @@ ceph.user.name=$(incus storage get "${poolName}" ceph.user.name)
 linstor.volume.prefix=$(incus storage get "${poolName}" linstor.volume.prefix)
 linstor.resource_group.name=$(incus storage get "${poolName}" linstor.resource_group.name)
 "
-      ;;
-      truenas)
-        poolExtraConfig="$(truenas_config)
+            ;;
+        truenas)
+            poolExtraConfig="$(truenas_config)
 $(truenas_api_key)
 "
             ;;

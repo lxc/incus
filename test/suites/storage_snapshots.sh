@@ -182,15 +182,15 @@ test_storage_volume_snapshots() {
     incus delete -f "c1"
     incus storage volume delete "${storage_pool}" "vol2"
 
-  # Check snapshot copy between pools.
-  incus storage create "${storage_pool2}" dir
-  incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool2}/vol2"
-  incus launch testimage "c1"
-  incus storage volume attach "${storage_pool2}" "vol2" "c1" /mnt
-  incus exec "c1" -- test -f /mnt/foo
-  incus delete -f "c1"
-  incus storage volume delete "${storage_pool2}" "vol2"
-  incus storage delete "${storage_pool2}"
+    # Check snapshot copy between pools.
+    incus storage create "${storage_pool2}" dir
+    incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool2}/vol2"
+    incus launch testimage "c1"
+    incus storage volume attach "${storage_pool2}" "vol2" "c1" /mnt
+    incus exec "c1" -- test -f /mnt/foo
+    incus delete -f "c1"
+    incus storage volume delete "${storage_pool2}" "vol2"
+    incus storage delete "${storage_pool2}"
 
     # Check snapshot copy between pools (remote).
     incus storage create "${storage_pool2}" dir
