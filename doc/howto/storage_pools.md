@@ -154,42 +154,34 @@ Use the existing Ceph Object Gateway `https://www.example.com/radosgw` to create
 
 The `truenas` storage driver enables an Incus node to use a remote TrueNAS storage server to host one or more Incus storage pools. When the node is part of a cluster, all cluster members can access the storage pool simultaneously, making it ideal for use cases such as live migrating virtual machines (VMs) between nodes.
 
-The driver operates in a block-based manner, meaning that all Incus volumes are created as ZFS volume datasets (zvols) on the remote TrueNAS server. These zvol block devices are accessed on the local Incus node via iSCSI.
+The driver operates in a block-based manner, meaning that all Incus volumes are created as ZFS Volume block devices on the remote TrueNAS server. These ZFS Volume block devices are accessed on the local Incus node via iSCSI.
 
-Modeled after the existing ZFS driver, the `truenas` driver supports most standard ZFS functionality, but operates on remote TrueNAS servers. For instance, a local VM can be snapshotted and cloned, with the snapshot and clone operations performed on the remote server after synchronizing the local filesystem. The clone is then activated through iSCSI as necessary.
+Modeled after the existing ZFS driver, the `truenas` driver supports most standard ZFS functionality, but operates on remote TrueNAS servers. For instance, a local VM can be snapshotted and cloned, with the snapshot and clone operations performed on the remote server after synchronizing the local file system. The clone is then activated through iSCSI as necessary.
 
-The driver relies on the [`truenas_incus_ctl`](https://github.com/truenas/truenas_incus_ctl) tool to interact with the TrueNAS API and perform actions on the remote server. This tool also manages the activation and deactivation of remote zvols via open-iscsi. If `truenas_incus_ctl` is not installed or available in the system's PATH, the driver will be disabled.
+The driver relies on the [`truenas_incus_ctl`](https://github.com/truenas/truenas_incus_ctl) tool to interact with the TrueNAS API and perform actions on the remote server. This tool also manages the activation and deactivation of remote ZFS Volumes via open-iscsi. If `truenas_incus_ctl` is not installed or available in the system's PATH, the driver will be disabled.
 
-To install the required tool, download the latest version (v0.7.2+ is required) from the [truenas\_incus\_ctl GitHub page](https://github.com/truenas/truenas_incus_ctl). Additionally, ensure that open-iscsi is installed on the system, which can be done using:
+To install the required tool, download the latest version (v0.7.2+ is required) from the [`truenas\_incus\_ctl` GitHub page](https://github.com/truenas/truenas_incus_ctl). Additionally, ensure that `open-iscsi` is installed on the system, which can be done using:
 
-```bash
-sudo apt install open-iscsi
-```
+    `sudo apt install open-iscsi`
 
 #### Logging in to the TrueNAS host
 
 As an alternative to manually creating an API Key and supplying using the `truenas.api_key` property, you can instead `login` to the remote server using the `truenas_incus_ctl` tool.
 
-```bash
-sudo truenas_incus_ctl config login
-```
+    `sudo truenas_incus_ctl config login`
 
 This will prompt you to provide connection details for the TrueNAS server, including authentication details, and will save the configuration to a local file. After logging in, you can verify the iSCSI setup with:
 
-```bash
-sudo truenas_incus_ctl share iscsi setup --test
-```
+    `sudo truenas_incus_ctl share iscsi setup --test`
 
 Once the tool is configured, you can use it to interact with remote datasets and create storage pools:
 
-```bash
-incus storage create <poolname> truenas source=[host:]<pool>[/<dataset>]/[remote-poolname]
-```
+    `incus storage create <poolname> truenas source=[host:]<pool>[/<dataset>]/[remote-poolname]`
 
 In this command:
 
 * `source` refers to the location on the remote TrueNAS host where the storage pool will be created.
-* `host` is optional, and can be specified using the `truenas.host` property, or by specifying a configyration with `truenas.config`
+* `host` is optional, and can be specified using the `truenas.host` property, or by specifying a configuration with `truenas.config`
 * If `remote-poolname` is not supplied, it will default to the name of the local pool.
 
 #### Configuration
@@ -204,11 +196,11 @@ If the path ends with a trailing `/`, the dataset name will be derived from the 
 | Key                        | Type    | Default | Description
 | -------------------------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------
 | `source`                   | string  | -       | ZFS dataset to use on the remote TrueNAS host. Format: `[<host>:]<pool>[/<dataset>][/]`. If `host` is omitted here, it must be set via `truenas.host`.
-| `block.filesystem`         | string  | ext4    | Filesystem to use when formatting block devices.
+| `block.filesystem`         | string  | ext4    | File system to use when formatting block devices.
 | `block.mount_options`      | string  | -       | Mount options to use when mounting block devices.
 | `truenas.allow-insecure`   | boolean | false   | If set to `true`, allows insecure (non-TLS) connections to the TrueNAS API. Passed as `--allow-insecure` to the helper tool.
 | `truenas.api_key`          | string  | -       | API key used to authenticate with the TrueNAS host. Passed as `--api-key`.
-| `truenas.blocksize`        | string  | -       | Block size to use for newly created ZVOLs. Passed as `--blocksize`.
+| `truenas.blocksize`        | string  | -       | Block size to use for newly created ZFS Volumes. Passed as `--blocksize`.
 | `truenas.host`             | string  | -       | Hostname or IP address of the remote TrueNAS system. Passed as `--host`. Optional if included in the `source`, or a `truenas.config` is supplied.
 | `truenas.dataset`          | string  | -       | Remote dataset name. Typically inferred from `source`, but can be overridden. Passed as `--dataset`.
 | `truenas.initiator`        | string  | -       | iSCSI initiator name used during block volume attachment. Passed as `--initiator`
@@ -220,27 +212,19 @@ If the path ends with a trailing `/`, the dataset name will be derived from the 
 
 To create a storage pool using dataset `tank/pool1` on `truenas.example.com` and authenticate using an API key in the environment variable `TN_APIKEY`:
 
-```bash
-    incus storage create pool1 truenas source=truenas.example.com:tank/ truenas.api_key=$TN_APIKEY
-```
+    `incus storage create pool1 truenas source=truenas.example.com:tank/ truenas.api_key=$TN_APIKEY`
 
 To use a specific dataset:
 
-```bash
-    incus storage create pool1 truenas source=truenas.example.com:tank/remote-dataset truenas.api_key=$TN_APIKEY
-```
+    `incus storage create pool1 truenas source=truenas.example.com:tank/remote-dataset truenas.api_key=$TN_APIKEY`
 
 Or, specify the host separately:
 
-```bash
-incus storage create pool1 truenas source=tank/remote-dataset truenas.host=truenas.example.com truenas.api_key=$TN_APIKEY
-```
+    `incus storage create pool1 truenas source=tank/remote-dataset truenas.host=truenas.example.com truenas.api_key=$TN_APIKEY`
 
 Or, use a pre-existing configuration, which specifies the host and API key using the `truenas_incus_ctl config` functionality:
 
-```bash
-incus storage create pool1 truenas source=tank/remote-dataset truenas.config=my-config
-```
+    `incus storage create pool1 truenas source=tank/remote-dataset truenas.config=my-config`
 
 ```{note}
 TrueNAS 25.10 - Goldeye, currently has a performance bottleneck which affects the performance of the TrueNAS Storage driver when

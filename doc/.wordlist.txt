@@ -106,6 +106,7 @@ GID
 GIDs
 Github
 Golang
+Goldeye
 goroutines
 GPUs
 Grafana
@@ -271,6 +272,7 @@ simplestreams
 SLAAC
 SMTP
 Snapcraft
+snapshotted
 SNAT
 Solaris
 SPAs
