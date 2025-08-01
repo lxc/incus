@@ -689,7 +689,7 @@ test_basic_usage() {
     for _ in $(seq 10); do
         PID=$(incus info c1 | awk '/^PID/ {print $2}')
         kill -9 "${PID}"
-        sleep 3
+        sleep 5
     done
 
     [ "$(incus list -cs -fcsv c1)" = "RUNNING" ] || false

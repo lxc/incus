@@ -103,7 +103,7 @@ migration() {
     # perform existence check for various files.
     incus_remote start l2:nonlive
     # FIXME: make this backend agnostic
-    if [ "$incus2_backend" != "lvm" ] && [ "$incus2_backend" != "zfs" ] && [ "$incus2_backend" != "ceph" ] && [ "$incus2_backend" != "linstor" ]; then
+    if [ "$incus2_backend" != "lvm" ] && [ "$incus2_backend" != "zfs" ] && [ "$incus2_backend" != "ceph" ] && [ "$incus2_backend" != "linstor" ] && [ "$incus2_backend" != "truenas" ]; then
         [ -d "${incus2_dir}/containers/nonlive/rootfs" ]
     fi
     incus_remote stop l2:nonlive --force
@@ -120,7 +120,7 @@ migration() {
     incus_remote start l2:nonlive
     [ -d "${INCUS_DIR}/containers/nonlive2" ]
     # FIXME: make this backend agnostic
-    if [ "$incus2_backend" != "lvm" ] && [ "$incus2_backend" != "zfs" ] && [ "$incus2_backend" != "ceph" ] && [ "$incus2_backend" != "linstor" ]; then
+    if [ "$incus2_backend" != "lvm" ] && [ "$incus2_backend" != "zfs" ] && [ "$incus2_backend" != "ceph" ] && [ "$incus2_backend" != "linstor" ] && [ "$incus2_backend" != "truenas" ]; then
         [ -d "${incus2_dir}/containers/nonlive/rootfs/bin" ]
     fi
 
@@ -131,7 +131,7 @@ migration() {
 
     incus_remote copy l1:nonlive2/snap0 l2:nonlive3 --mode=relay
     # FIXME: make this backend agnostic
-    if [ "$incus2_backend" != "lvm" ] && [ "$incus2_backend" != "zfs" ] && [ "$incus2_backend" != "ceph" ] && [ "$incus2_backend" != "linstor" ]; then
+    if [ "$incus2_backend" != "lvm" ] && [ "$incus2_backend" != "zfs" ] && [ "$incus2_backend" != "ceph" ] && [ "$incus2_backend" != "linstor" ] && [ "$incus2_backend" != "truenas" ]; then
         [ -d "${incus2_dir}/containers/nonlive3/rootfs/bin" ]
     fi
     incus_remote delete l2:nonlive3 --force
@@ -250,9 +250,9 @@ migration() {
     [ "$(incus info udssr | grep -c snap)" -eq 2 ]
     incus delete udssr
 
-    if [ "$incus_backend" = "zfs" ]; then
-        # Test container only copies when zfs.clone_copy is set to false.
-        incus storage set "incustest-$(basename "${INCUS_DIR}")" zfs.clone_copy false
+    if [ "$incus_backend" = "zfs" ] || [ "$incus_backend" = "truenas" ]; then
+        # Test container only copies when zfs|truenas.clone_copy is set to false.
+        incus storage set "incustest-$(basename "${INCUS_DIR}")" "${incus_backend}.clone_copy" false
         incus init testimage cccp
         incus snapshot create cccp
         incus snapshot create cccp
@@ -268,7 +268,7 @@ migration() {
         incus delete cccp
         incus delete udssr
 
-        incus storage unset "incustest-$(basename "${INCUS_DIR}")" zfs.clone_copy
+        incus storage unset "incustest-$(basename "${INCUS_DIR}")" "${incus_backend}.clone_copy"
     fi
 
     incus_remote init testimage l1:c1
