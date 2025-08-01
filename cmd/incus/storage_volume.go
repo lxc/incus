@@ -2791,6 +2791,7 @@ type cmdStorageVolumeSnapshotList struct {
 func (c *cmdStorageVolumeSnapshotList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("list", i18n.G("[<remote>:]<pool> <volume>"))
+	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List storage volume snapshots")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List storage volume snapshots`))
