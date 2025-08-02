@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-07-29 01:52-0400\n"
-"PO-Revision-Date: 2025-07-27 21:09+0000\n"
-"Last-Translator: Jan Mittelstädter <jan@mittelstaedter.de>\n"
+"PO-Revision-Date: 2025-08-02 15:02+0000\n"
+"Last-Translator: Stéphane Graber <stgraber@stgraber.org>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -11647,7 +11647,6 @@ msgid "no"
 msgstr "nein"
 
 #: cmd/incus/remote.go:501
-#, fuzzy
 msgid "ok (y/n/[fingerprint])?"
 msgstr "ok (j/n/[fingerprint])?"
 
