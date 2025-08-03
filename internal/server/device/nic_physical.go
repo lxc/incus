@@ -523,20 +523,7 @@ func IsPhysicalNICWithBridge(s *state.State, deviceProjectName string, d deviceC
 			return false
 		}
 
-		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			_, netInfo, _, err = tx.GetNetworkInAnyState(ctx, networkProjectName, parent)
-
-			return err
-		})
-		if err != nil {
-			return false
-		}
-
-		if netInfo.Type != "bridge" {
-			return false
-		}
-
-		return true
+		return util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", parent))
 	}
 
 	return false
