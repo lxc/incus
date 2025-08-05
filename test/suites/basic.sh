@@ -686,12 +686,31 @@ test_basic_usage() {
     # Test autorestart mechanism
     incus launch testimage c1 -c boot.autorestart=true
 
+    # 10 restarts in 1 minute should disable auto-restart.
+    # We minimize the sleep time to ensure that we manage the restarts inside the deadline
     for _ in $(seq 10); do
-        PID=$(incus info c1 | awk '/^PID/ {print $2}')
-        kill -9 "${PID}"
-        sleep 3
+        retries=0
+        PID=""
+        while [ -z "$PID" ] && [ "$retries" -lt 5 ]; do
+            PID=$(incus info c1 | awk '/^PID/ {print $2}')
+            if [ -z "$PID" ]; then
+                sleep 1
+                retries=$((retries + 1))
+            fi
+            echo "PID = $PID, retries = $retries"
+        done
+
+        if [ -n "$PID" ]; then
+            kill -9 "$PID"
+        else
+            echo "Failed to get PID after 5 retries"
+            break
+        fi
+        sleep 1
     done
 
+    # The 10th restart should've occurred. Wait for state to be reflected, and verified as running
+    sleep 2
     [ "$(incus list -cs -fcsv c1)" = "RUNNING" ] || false
 
     PID=$(incus info c1 | awk '/^PID/ {print $2}')
