@@ -65,6 +65,10 @@ func (n *Neigh) Show() ([]Neigh, error) {
 	neighbours := make([]Neigh, 0, len(netlinkNeighbours))
 
 	for _, neighbour := range netlinkNeighbours {
+		if neighbour.HardwareAddr.String() != n.MAC.String() {
+			continue
+		}
+
 		neighbours = append(neighbours, Neigh{
 			Addr:  neighbour.IP,
 			MAC:   neighbour.HardwareAddr,
