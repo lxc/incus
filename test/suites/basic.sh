@@ -686,7 +686,7 @@ test_basic_usage() {
     # Test autorestart mechanism
     incus launch testimage c1 -c boot.autorestart=true
 
-    # 10 restarts in 1 minute should disable auto-restart. 
+    # 10 restarts in 1 minute should disable auto-restart.
     # We minimize the sleep time to ensure that we manage the restarts inside the deadline
     for _ in $(seq 10); do
         retries=0
