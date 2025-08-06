@@ -23,7 +23,6 @@ import (
 	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/internal/server/state"
-	internalutil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 )
@@ -122,7 +121,7 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Add internal metrics.
-		metricSet.Merge(internalMetrics(ctx, s.StartTime, tx))
+		metricSet.Merge(internalMetrics(ctx, s, tx))
 
 		return nil
 	})
@@ -316,7 +315,7 @@ func getFilteredMetrics(s *state.State, r *http.Request, compress bool, metricSe
 	return response.SyncResponsePlain(true, compress, metricSet.String())
 }
 
-func internalMetrics(ctx context.Context, daemonStartTime time.Time, tx *db.ClusterTx) *metrics.MetricSet {
+func internalMetrics(ctx context.Context, s *state.State, tx *db.ClusterTx) *metrics.MetricSet {
 	out := metrics.NewMetricSet(nil)
 
 	warnings, err := dbCluster.GetWarnings(ctx, tx.Tx())
@@ -336,7 +335,7 @@ func internalMetrics(ctx context.Context, daemonStartTime time.Time, tx *db.Clus
 	}
 
 	// Daemon uptime
-	out.AddSamples(metrics.UptimeSeconds, metrics.Sample{Value: time.Since(daemonStartTime).Seconds()})
+	out.AddSamples(metrics.UptimeSeconds, metrics.Sample{Value: time.Since(s.StartTime).Seconds()})
 
 	// Number of goroutines
 	out.AddSamples(metrics.GoGoroutines, metrics.Sample{Value: float64(runtime.NumGoroutine())})
@@ -370,7 +369,7 @@ func internalMetrics(ctx context.Context, daemonStartTime time.Time, tx *db.Clus
 	out.AddSamples(metrics.GoSysBytes, metrics.Sample{Value: float64(ms.Sys)})
 
 	// If on Incus OS, include OS metrics.
-	if internalutil.IsIncusOS() {
+	if s.OS.IncusOS {
 		client := http.Client{}
 		client.Transport = &http.Transport{
 			DialContext: func(_ context.Context, network, addr string) (net.Conn, error) {
