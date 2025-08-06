@@ -35,7 +35,7 @@ func (d *dir) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 	}
 
 	// Create the volume itself.
-	err := vol.EnsureMountPath()
+	err := vol.EnsureMountPath(true)
 	if err != nil {
 		return err
 	}
@@ -379,7 +379,7 @@ func (d *dir) MountVolume(vol Volume, op *operations.Operation) error {
 	// Don't attempt to modify the permission of an existing custom volume root.
 	// A user inside the instance may have modified this and we don't want to reset it on restart.
 	if !util.PathExists(vol.MountPath()) || vol.volType != VolumeTypeCustom {
-		err := vol.EnsureMountPath()
+		err := vol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}
@@ -429,7 +429,7 @@ func (d *dir) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) err
 	parentName, _, _ := api.GetParentAndSnapshotName(snapVol.name)
 
 	// Create snapshot directory.
-	err := snapVol.EnsureMountPath()
+	err := snapVol.EnsureMountPath(false)
 	if err != nil {
 		return err
 	}
@@ -523,7 +523,7 @@ func (d *dir) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) erro
 	// Don't attempt to modify the permission of an existing custom volume root.
 	// A user inside the instance may have modified this and we don't want to reset it on restart.
 	if !util.PathExists(snapPath) || snapVol.volType != VolumeTypeCustom {
-		err := snapVol.EnsureMountPath()
+		err := snapVol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}

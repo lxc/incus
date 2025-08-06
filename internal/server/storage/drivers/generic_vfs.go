@@ -464,7 +464,7 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 
 		// Run EnsureMountPath after mounting and syncing to ensure the mounted directory has the
 		// correct permissions set.
-		err = vol.EnsureMountPath()
+		err = vol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}
@@ -953,7 +953,7 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 
 	// Run EnsureMountPath after mounting and unpacking to ensure the mounted directory has the
 	// correct permissions set.
-	err = vol.EnsureMountPath()
+	err = vol.EnsureMountPath(false)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1128,7 +1128,7 @@ func genericVFSCopyVolume(d Driver, initVolume func(vol Volume) (revert.Hook, er
 
 		// Run EnsureMountPath after mounting and copying to ensure the mounted directory has the
 		// correct permissions set.
-		err = vol.EnsureMountPath()
+		err = vol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}

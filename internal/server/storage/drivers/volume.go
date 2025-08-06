@@ -209,7 +209,8 @@ func (v Volume) MountInUse() bool {
 
 // EnsureMountPath creates the volume's mount path if missing, then sets the correct permission for the type.
 // If permission setting fails and the volume is a snapshot then the error is ignored as snapshots are read only.
-func (v Volume) EnsureMountPath() error {
+// The boolean flag indicates whether this is being called during volume creation.
+func (v Volume) EnsureMountPath(creation bool) error {
 	volPath := v.MountPath()
 
 	reverter := revert.New()
@@ -234,9 +235,10 @@ func (v Volume) EnsureMountPath() error {
 		reverter.Add(func() { _ = os.Remove(volPath) })
 	}
 
-	mode := os.FileMode(0o711)
-	if v.volType == VolumeTypeCustom && v.contentType == ContentTypeFS {
+	// If dealing with a custom volume and part of volume creation, apply initial mode and owner.
+	if v.volType == VolumeTypeCustom && v.contentType == ContentTypeFS && creation {
 		initialMode := v.ExpandedConfig("initial.mode")
+		mode := os.FileMode(0o711)
 		if initialMode != "" {
 			m, err := strconv.ParseInt(initialMode, 8, 0)
 			if err != nil {
@@ -246,8 +248,12 @@ func (v Volume) EnsureMountPath() error {
 			mode = os.FileMode(m)
 		}
 
+		err := os.Chmod(volPath, mode)
+		if err != nil {
+			return err
+		}
+
 		uid, gid := 0, 0
-		var err error
 		initialUID := v.ExpandedConfig("initial.uid")
 		if initialUID != "" {
 			uid, err = strconv.Atoi(initialUID)
@@ -275,26 +281,26 @@ func (v Volume) EnsureMountPath() error {
 
 	// Set very restrictive mode 0100 for non-custom, non-bucket and non-image volumes.
 	if v.volType != VolumeTypeCustom && v.volType != VolumeTypeImage && v.volType != VolumeTypeBucket {
-		mode = os.FileMode(0o100)
-	}
+		mode := os.FileMode(0o100)
 
-	fInfo, err := os.Lstat(volPath)
-	if err != nil {
-		return fmt.Errorf("Error getting mount directory info %q: %w", volPath, err)
-	}
+		fInfo, err := os.Lstat(volPath)
+		if err != nil {
+			return fmt.Errorf("Error getting mount directory info %q: %w", volPath, err)
+		}
 
-	// We expect the mount path to be a directory, so use this for comparison.
-	compareMode := os.ModeDir | mode
+		// We expect the mount path to be a directory, so use this for comparison.
+		compareMode := os.ModeDir | mode
 
-	// Set mode of actual volume's mount path if needed.
-	if fInfo.Mode() != compareMode {
-		err = os.Chmod(volPath, mode)
+		// Set mode of actual volume's mount path if needed.
+		if fInfo.Mode() != compareMode {
+			err = os.Chmod(volPath, mode)
 
-		// If the chmod failed, return the error as long as the volume is not a snapshot.
-		// If the volume is a snapshot, we must ignore the error as snapshots are readonly and cannot be
-		// modified after they are taken, such that any permission error is not fixable at mount time.
-		if err != nil && !v.IsSnapshot() {
-			return fmt.Errorf("Failed to chmod mount directory %q (%04o): %w", volPath, mode, err)
+			// If the chmod failed, return the error as long as the volume is not a snapshot.
+			// If the volume is a snapshot, we must ignore the error as snapshots are readonly and cannot be
+			// modified after they are taken, such that any permission error is not fixable at mount time.
+			if err != nil && !v.IsSnapshot() {
+				return fmt.Errorf("Failed to chmod mount directory %q (%04o): %w", volPath, mode, err)
+			}
 		}
 	}
 

@@ -135,7 +135,7 @@ func (d *btrfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Op
 	}
 
 	// Tweak any permissions that need tweaking after filling.
-	err = vol.EnsureMountPath()
+	err = vol.EnsureMountPath(true)
 	if err != nil {
 		return err
 	}
@@ -452,7 +452,7 @@ func (d *btrfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bo
 	}
 
 	// Fixup permissions after snapshot created.
-	err = vol.EnsureMountPath()
+	err = vol.EnsureMountPath(false)
 	if err != nil {
 		return err
 	}
@@ -1198,7 +1198,7 @@ func (d *btrfs) MountVolume(vol Volume, op *operations.Operation) error {
 	// Don't attempt to modify the permission of an existing custom volume root.
 	// A user inside the instance may have modified this and we don't want to reset it on restart.
 	if !util.PathExists(vol.MountPath()) || vol.volType != VolumeTypeCustom {
-		err := vol.EnsureMountPath()
+		err := vol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}
@@ -1865,7 +1865,7 @@ func (d *btrfs) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) er
 	// Don't attempt to modify the permission of an existing custom volume root.
 	// A user inside the instance may have modified this and we don't want to reset it on restart.
 	if !util.PathExists(snapPath) || snapVol.volType != VolumeTypeCustom {
-		err := snapVol.EnsureMountPath()
+		err := snapVol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}

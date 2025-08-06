@@ -33,7 +33,7 @@ func (d *lvm) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 	defer reverter.Fail()
 
 	volPath := vol.MountPath()
-	err := vol.EnsureMountPath()
+	err := vol.EnsureMountPath(true)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func (d *lvm) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 		if vol.contentType == ContentTypeFS {
 			// Run EnsureMountPath again after mounting and filling to ensure the mount directory has
 			// the correct permissions set.
-			err = vol.EnsureMountPath()
+			err = vol.EnsureMountPath(true)
 			if err != nil {
 				return err
 			}
@@ -163,7 +163,7 @@ func (d *lvm) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 // CreateVolumeFromMigration creates a volume being sent via a migration.
 func (d *lvm) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs migration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
 	if d.clustered && volTargetArgs.ClusterMoveSourceName != "" && volTargetArgs.StoragePool == "" {
-		err := vol.EnsureMountPath()
+		err := vol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}
@@ -772,7 +772,7 @@ func (d *lvm) MountVolume(vol Volume, op *operations.Operation) error {
 				}
 			}
 
-			err = vol.EnsureMountPath()
+			err = vol.EnsureMountPath(false)
 			if err != nil {
 				return err
 			}
@@ -1018,7 +1018,7 @@ func (d *lvm) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) err
 	defer reverter.Fail()
 
 	// Create snapshot directory.
-	err = snapVol.EnsureMountPath()
+	err = snapVol.EnsureMountPath(false)
 	if err != nil {
 		return err
 	}
@@ -1114,7 +1114,7 @@ func (d *lvm) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) erro
 
 	// Check if already mounted.
 	if snapVol.contentType == ContentTypeFS && !linux.IsMountPoint(mountPath) {
-		err = snapVol.EnsureMountPath()
+		err = snapVol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}
@@ -1501,7 +1501,7 @@ func (d *lvm) RestoreVolume(vol Volume, snapshotName string, op *operations.Oper
 
 		// Run EnsureMountPath after mounting and syncing to ensure the mounted directory has the
 		// correct permissions set.
-		err = vol.EnsureMountPath()
+		err = vol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}
