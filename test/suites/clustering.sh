@@ -1012,7 +1012,7 @@ test_clustering_storage_single_node() {
     elif [ "${poolDriver}" = "linstor" ]; then
         driver_config="source=incustest-$(basename "${TEST_DIR}" | sed 's/\./__/g')-pool1"
     elif [ "${poolDriver}" = "truenas" ]; then
-        driver_config="$(truenas_source)/incustest-$(basename "${TEST_DIR}")-pool1 $(truenas_config) $(truenas_api_key)"
+        driver_config="$(truenas_source)/incustest-$(basename "${TEST_DIR}")-pool1 $(truenas_config) $(truenas_allow_insecure) $(truenas_api_key)"
     fi
 
     driver_config_node="${driver_config}"

@@ -28,6 +28,7 @@ Name                             | Default                   | Description
 `INCUS_TRUENAS_API_KEY`          | ""                        | If set, will be applied as `truenas.api_key` on `truenas` pools.
 `INCUS_TRUENAS_CONFIG`           | ""                        | If set, will be applied as `truenas.config` on `truenas` pools.
 `INCUS_TRUENAS_HOST`             | ""                        | If set, will be applied as `truenas.host` on `truenas` pools.
+`INCUS_TRUENAS_ALLOW_INSECURE`   | ""                         | If set, will be applied as `truenas.allow_insecure` on `truenas` pools.
 `INCUS_NIC_SRIOV_PARENT`         | ""                        | Enables SR-IOV NIC tests using the specified parent device
 `INCUS_IB_PHYSICAL_PARENT`       | ""                        | Enables Infiniband physical tests using the specified parent device
 `INCUS_IB_SRIOV_PARENT`          | ""                        | Enables Infiniband SR-IOV tests using the specified parent device

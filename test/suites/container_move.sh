@@ -14,7 +14,7 @@ test_container_move() {
     if [ "${incus_backend}" = "linstor" ]; then
         incus storage create "${pool2}" "${incus_backend}" linstor.resource_group.place_count=1
     elif [ "$incus_backend" = "truenas" ]; then
-        incus storage create "${pool2}" "${incus_backend}" "$(truenas_source)/$(uuidgen)" "$(truenas_config)" "$(truenas_api_key)"
+        incus storage create "${pool2}" "${incus_backend}" "$(truenas_source)/$(uuidgen)" "$(truenas_config)" "$(truenas_allow_insecure)" "$(truenas_api_key)"
     else
         incus storage create "${pool2}" "${incus_backend}"
     fi
