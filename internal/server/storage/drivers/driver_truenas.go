@@ -192,39 +192,59 @@ func (d *truenas) FillConfig() error {
 
 func (d *truenas) parseSource() error {
 	// fill config may modify.
-	source := d.config["source"]
-	host, source, found := strings.Cut(source, ":")
-	if !found {
-		source = host
-		host = ""
+	sourceStr := d.config["source"]
+	var host, path string
+
+	if strings.HasPrefix(sourceStr, "[") {
+		// IPv6 with brackets
+		endBracket := strings.Index(sourceStr, "]")
+		if endBracket == -1 || endBracket+1 >= len(sourceStr) || sourceStr[endBracket+1] != ':' {
+			// Malformed, treat whole string as path
+			host = ""
+			path = sourceStr
+		} else {
+			host = sourceStr[:endBracket+1]
+			path = sourceStr[endBracket+2:] // skip over "]:"
+		}
+	} else {
+		// Try normal IPv4/hostname
+		h, p, ok := strings.Cut(sourceStr, ":")
+		if ok {
+			host = h
+			path = p
+		} else {
+			// No colon: whole thing is path
+			host = ""
+			path = sourceStr
+		}
 	}
 
-	if source == "" || filepath.IsAbs(source) {
+	if path == "" || filepath.IsAbs(path) {
 		return errors.New(`TrueNAS Driver requires "source" to be specified using the format: [<remote host>:]<remote pool>[[/<remote dataset>]...][/]`)
 	}
 
 	// a pool... means we create a dataset in the root
-	if !strings.Contains(source, "/") {
-		source += "/"
+	if !strings.Contains(path, "/") {
+		path += "/"
 	}
 
 	// a trailing slash means use the storage pool name as the dataset
-	if strings.HasSuffix(source, "/") {
-		source += d.name
+	if strings.HasSuffix(path, "/") {
+		path += d.name
 	}
 
-	d.config["truenas.dataset"] = source
-
+	d.config["truenas.dataset"] = path
 	if host != "" {
 		if d.config["truenas.host"] != "" {
 			host = d.config["truenas.host"]
 		}
 
-		source = fmt.Sprintf("%s:%s", host, source)
+		source := fmt.Sprintf("%s:%s", host, path)
 		d.config["truenas.host"] = host
+		d.config["source"] = source
+	} else {
+		d.config["source"] = path
 	}
-
-	d.config["source"] = source
 
 	return nil
 }
