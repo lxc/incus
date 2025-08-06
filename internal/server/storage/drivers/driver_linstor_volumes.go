@@ -110,7 +110,7 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 
 	if vol.contentType == ContentTypeFS {
 		// Create mountpoint.
-		err := vol.EnsureMountPath()
+		err := vol.EnsureMountPath(true)
 		if err != nil {
 			return err
 		}
@@ -241,7 +241,7 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		if vol.contentType == ContentTypeFS {
 			// Run EnsureMountPath again after mounting and filling to ensure the mount directory has
 			// the correct permissions set.
-			err = vol.EnsureMountPath()
+			err = vol.EnsureMountPath(true)
 			if err != nil {
 				return err
 			}
@@ -289,7 +289,7 @@ func (d *linstor) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 			// ISO volumes like filesystem volumes when performing the copy. This implies
 			// that the mount path for the volume must exist before the copying starts.
 			if srcVol.contentType == ContentTypeISO {
-				err := srcVol.EnsureMountPath()
+				err := srcVol.EnsureMountPath(false)
 				if err != nil {
 					return err
 				}
@@ -333,7 +333,7 @@ func (d *linstor) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 		}
 
 		// Create mountpoint.
-		err = vol.EnsureMountPath()
+		err = vol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}
@@ -549,7 +549,7 @@ func (d *linstor) MountVolume(vol Volume, op *operations.Operation) error {
 		mountPath := vol.MountPath()
 		l.Debug("Content type FS", logger.Ctx{"mountPath": mountPath})
 		if !linux.IsMountPoint(mountPath) {
-			err := vol.EnsureMountPath()
+			err := vol.EnsureMountPath(false)
 			if err != nil {
 				return err
 			}
@@ -697,7 +697,7 @@ func (d *linstor) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation)
 		return err
 	}
 
-	err = snapVol.EnsureMountPath()
+	err = snapVol.EnsureMountPath(false)
 	if err != nil {
 		return err
 	}
@@ -884,7 +884,7 @@ func (d *linstor) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 		mountPath := snapVol.MountPath()
 		l.Debug("Content type FS", logger.Ctx{"mountPath": mountPath})
 		if !linux.IsMountPoint(mountPath) {
-			err := snapVol.EnsureMountPath()
+			err := snapVol.EnsureMountPath(false)
 			if err != nil {
 				return err
 			}
@@ -1164,7 +1164,7 @@ func (d *linstor) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser,
 			return err
 		}
 
-		err = vol.EnsureMountPath()
+		err = vol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}
@@ -1175,7 +1175,7 @@ func (d *linstor) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser,
 		if vol.IsVMBlock() {
 			fsVol := vol.NewVMBlockFilesystemVolume()
 
-			err = fsVol.EnsureMountPath()
+			err = fsVol.EnsureMountPath(false)
 			if err != nil {
 				return err
 			}
