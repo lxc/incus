@@ -21,6 +21,7 @@ import (
 	"github.com/lxc/incus/v6/shared/idmap"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/osarch"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // InotifyTargetInfo records the inotify information associated with a given
@@ -100,6 +101,7 @@ type OS struct {
 	KernelVersion version.DottedVersion
 	Uname         *linux.Utsname
 	BootTime      time.Time
+	IncusOS       bool
 }
 
 // DefaultOS returns a fresh uninitialized OS instance with default values.
@@ -202,6 +204,8 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 	if err == nil {
 		s.KernelVersion = *kernelVersion
 	}
+
+	s.IncusOS = util.PathExists("/run/incus-os/unix.socket")
 
 	// Fill in the boot time.
 	out, err := os.ReadFile("/proc/stat")
