@@ -15,7 +15,7 @@ truenas_configure() {
 
     echo "==> Configuring TrueNAS backend in ${INCUS_DIR}"
 
-    incus storage create "incustest-$(basename "${INCUS_DIR}")" truenas "$(truenas_source)/$(uuidgen)" "$(truenas_config)" "$(truenas_api_key)"
+    incus storage create "incustest-$(basename "${INCUS_DIR}")" truenas "$(truenas_source)/$(uuidgen)" "$(truenas_config)" "$(truenas_allow_insecure)" "$(truenas_api_key)"
     incus profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
 }
 
@@ -50,7 +50,11 @@ truenas_config() {
     echo "truenas.config=${INCUS_TRUENAS_CONFIG:-}"
 }
 
+truenas_allow_insecure() {
+    echo "truenas.allow_insecure=${INCUS_TRUENAS_ALLOW_INSECURE:-}"
+}
+
 call_truenas_tool() {
     # usage: call_truenas_tool dataset list -r --no-headers "${truenas_dataset}"
-    truenas_incus_ctl "--config=${INCUS_TRUENAS_CONFIG:-}" "--host=${INCUS_TRUENAS_HOST:-}" "--api-key=${INCUS_TRUENAS_API_KEY:-}" "$@"
+    truenas_incus_ctl "--config=${INCUS_TRUENAS_CONFIG:-}" "--allow-insecure=${INCUS_TRUENAS_ALLOW_INSECURE:-0}" "--host=${INCUS_TRUENAS_HOST:-}" "--api-key=${INCUS_TRUENAS_API_KEY:-}" "$@"
 }

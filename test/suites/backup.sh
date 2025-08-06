@@ -242,6 +242,7 @@ linstor.resource_group.name=$(incus storage get "${poolName}" linstor.resource_g
             ;;
         truenas)
             poolExtraConfig="$(truenas_config)
+$(truenas_allow_insecure)
 $(truenas_api_key)
 "
             ;;
