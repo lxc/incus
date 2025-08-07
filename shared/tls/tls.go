@@ -91,6 +91,16 @@ func TLSConfigWithTrustedCert(tlsConfig *tls.Config, tlsRemoteCert *x509.Certifi
 		tlsRemoteCert.IsCA = true
 		tlsRemoteCert.KeyUsage = x509.KeyUsageCertSign
 
+		// Trust the certificate even if it's expired.
+		tlsConfig.Time = func() time.Time {
+			if tlsRemoteCert.NotBefore.IsZero() && !tlsRemoteCert.NotAfter.IsZero() {
+				// If the value is zero, it will be overwritten with time.Now, so use the epoch time instead.
+				return time.Unix(0, 0)
+			}
+
+			return tlsRemoteCert.NotBefore
+		}
+
 		// Setup the pool
 		tlsConfig.RootCAs.AddCert(tlsRemoteCert)
 
