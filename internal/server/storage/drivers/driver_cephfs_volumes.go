@@ -37,7 +37,7 @@ func (d *cephfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.O
 
 	// Create the main volume path.
 	volPath := vol.MountPath()
-	err := vol.EnsureMountPath()
+	err := vol.EnsureMountPath(true)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (d *cephfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots b
 
 	// Create the main volume path.
 	volPath := vol.MountPath()
-	err := vol.EnsureMountPath()
+	err := vol.EnsureMountPath(false)
 	if err != nil {
 		return err
 	}
@@ -148,7 +148,7 @@ func (d *cephfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots b
 
 		// Run EnsureMountPath after mounting and copying to ensure the mounted directory has the
 		// correct permissions set.
-		return vol.EnsureMountPath()
+		return vol.EnsureMountPath(false)
 	}, op)
 	if err != nil {
 		return err
@@ -166,7 +166,7 @@ func (d *cephfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, 
 
 	// Create the main volume path.
 	volPath := vol.MountPath()
-	err := vol.EnsureMountPath()
+	err := vol.EnsureMountPath(false)
 	if err != nil {
 		return err
 	}

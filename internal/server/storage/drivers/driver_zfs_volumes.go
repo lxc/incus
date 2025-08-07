@@ -48,7 +48,7 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 
 	if vol.contentType == ContentTypeFS {
 		// Create mountpoint.
-		err := vol.EnsureMountPath()
+		err := vol.EnsureMountPath(true)
 		if err != nil {
 			return err
 		}
@@ -317,7 +317,7 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 		if vol.contentType == ContentTypeFS {
 			// Run EnsureMountPath again after mounting and filling to ensure the mount directory has
 			// the correct permissions set.
-			err := vol.EnsureMountPath()
+			err := vol.EnsureMountPath(true)
 			if err != nil {
 				return err
 			}
@@ -579,7 +579,7 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 
 	if vol.contentType == ContentTypeFS {
 		// Create mountpoint.
-		err = vol.EnsureMountPath()
+		err = vol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}
@@ -882,7 +882,7 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 
 		// Mount the volume and ensure the permissions are set correctly inside the mounted volume.
 		err := vol.MountTask(func(_ string, _ *operations.Operation) error {
-			return vol.EnsureMountPath()
+			return vol.EnsureMountPath(false)
 		}, op)
 		if err != nil {
 			return err
@@ -1194,7 +1194,7 @@ func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCl
 
 	if vol.contentType == ContentTypeFS {
 		// Create mountpoint.
-		err := vol.EnsureMountPath()
+		err := vol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}
@@ -2263,7 +2263,7 @@ func (d *zfs) MountVolume(vol Volume, op *operations.Operation) error {
 				}
 			}
 
-			err = vol.EnsureMountPath()
+			err = vol.EnsureMountPath(false)
 			if err != nil {
 				return err
 			}
@@ -2305,7 +2305,7 @@ func (d *zfs) MountVolume(vol Volume, op *operations.Operation) error {
 				return err
 			}
 
-			err = vol.EnsureMountPath()
+			err = vol.EnsureMountPath(false)
 			if err != nil {
 				return err
 			}
@@ -2965,7 +2965,7 @@ func (d *zfs) CreateVolumeSnapshot(vol Volume, op *operations.Operation) error {
 	}
 
 	// Create snapshot directory.
-	err = vol.EnsureMountPath()
+	err = vol.EnsureMountPath(false)
 	if err != nil {
 		return err
 	}
@@ -3068,7 +3068,7 @@ func (d *zfs) mountVolumeSnapshot(snapVol Volume, snapshotDataset string, mountP
 	// Check if filesystem volume already mounted.
 	if snapVol.contentType == ContentTypeFS && !d.isBlockBacked(snapVol) {
 		if !linux.IsMountPoint(mountPath) {
-			err := snapVol.EnsureMountPath()
+			err := snapVol.EnsureMountPath(false)
 			if err != nil {
 				return nil, err
 			}
@@ -3127,7 +3127,7 @@ func (d *zfs) mountVolumeSnapshot(snapVol Volume, snapshotDataset string, mountP
 		}
 
 		if snapVol.contentType != ContentTypeBlock && d.isBlockBacked(snapVol) && !linux.IsMountPoint(mountPath) {
-			err = snapVol.EnsureMountPath()
+			err = snapVol.EnsureMountPath(false)
 			if err != nil {
 				return nil, err
 			}

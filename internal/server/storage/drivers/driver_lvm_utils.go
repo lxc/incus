@@ -661,7 +661,7 @@ func (d *lvm) copyThinpoolVolume(vol, srcVol Volume, srcSnapshots []Volume, refr
 			}
 
 			newSnapVolPath := newSnapVol.MountPath()
-			err = newSnapVol.EnsureMountPath()
+			err = newSnapVol.EnsureMountPath(false)
 			if err != nil {
 				return err
 			}
@@ -712,7 +712,7 @@ func (d *lvm) copyThinpoolVolume(vol, srcVol Volume, srcSnapshots []Volume, refr
 		}
 	} else {
 		volPath := vol.MountPath()
-		err := vol.EnsureMountPath()
+		err := vol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}
@@ -756,7 +756,7 @@ func (d *lvm) copyThinpoolVolume(vol, srcVol Volume, srcSnapshots []Volume, refr
 
 		// Mount the volume and ensure the permissions are set correctly inside the mounted volume.
 		err = vol.MountTask(func(_ string, _ *operations.Operation) error {
-			return vol.EnsureMountPath()
+			return vol.EnsureMountPath(false)
 		}, nil)
 		if err != nil {
 			return err

@@ -5925,7 +5925,7 @@ func (b *backend) ImportCustomVolume(projectName string, poolVol *backupConfig.C
 	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(poolVol.Volume.ContentType), volStorageName, volumeConfig)
 
 	// Create the mount path if needed.
-	err = vol.EnsureMountPath()
+	err = vol.EnsureMountPath(false)
 	if err != nil {
 		return nil, err
 	}
@@ -5939,7 +5939,7 @@ func (b *backend) ImportCustomVolume(projectName string, poolVol *backupConfig.C
 			return nil, err
 		}
 
-		err = snapVol.EnsureMountPath()
+		err = snapVol.EnsureMountPath(false)
 		if err != nil {
 			return nil, err
 		}
@@ -7021,7 +7021,7 @@ func (b *backend) ImportInstance(inst instance.Instance, poolVol *backupConfig.C
 		return nil, err
 	}
 
-	err = vol.EnsureMountPath()
+	err = vol.EnsureMountPath(false)
 	if err != nil {
 		return nil, err
 	}
@@ -7074,7 +7074,7 @@ func (b *backend) ImportInstance(inst instance.Instance, poolVol *backupConfig.C
 				return nil, err
 			}
 
-			err = snapVol.EnsureMountPath()
+			err = snapVol.EnsureMountPath(false)
 			if err != nil {
 				return nil, err
 			}

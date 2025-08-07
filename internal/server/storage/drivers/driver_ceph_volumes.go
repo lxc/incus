@@ -55,7 +55,7 @@ func (d *ceph) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Ope
 
 	if vol.contentType == ContentTypeFS {
 		// Create mountpoint.
-		err := vol.EnsureMountPath()
+		err := vol.EnsureMountPath(true)
 		if err != nil {
 			return err
 		}
@@ -225,7 +225,7 @@ func (d *ceph) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Ope
 		if vol.contentType == ContentTypeFS {
 			// Run EnsureMountPath again after mounting and filling to ensure the mount directory has
 			// the correct permissions set.
-			err = vol.EnsureMountPath()
+			err = vol.EnsureMountPath(true)
 			if err != nil {
 				return err
 			}
@@ -350,7 +350,7 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 
 			// Mount the volume and ensure the permissions are set correctly inside the mounted volume.
 			err = v.MountTask(func(_ string, _ *operations.Operation) error {
-				return v.EnsureMountPath()
+				return v.EnsureMountPath(false)
 			}, op)
 			if err != nil {
 				return err
@@ -500,7 +500,7 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 			return err
 		}
 
-		err = snapVol.EnsureMountPath()
+		err = snapVol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}
@@ -526,7 +526,7 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 // CreateVolumeFromMigration creates a volume being sent via a migration.
 func (d *ceph) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
 	if volTargetArgs.ClusterMoveSourceName != "" && volTargetArgs.StoragePool == "" {
-		err := vol.EnsureMountPath()
+		err := vol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}
@@ -571,7 +571,7 @@ func (d *ceph) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vo
 		}
 	}
 
-	err = vol.EnsureMountPath()
+	err = vol.EnsureMountPath(false)
 	if err != nil {
 		return err
 	}
@@ -599,7 +599,7 @@ func (d *ceph) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vo
 				return err
 			}
 
-			err = snapVol.EnsureMountPath()
+			err = snapVol.EnsureMountPath(false)
 			if err != nil {
 				return err
 			}
@@ -1206,7 +1206,7 @@ func (d *ceph) MountVolume(vol Volume, op *operations.Operation) error {
 	if vol.contentType == ContentTypeFS {
 		mountPath := vol.MountPath()
 		if !linux.IsMountPoint(mountPath) {
-			err := vol.EnsureMountPath()
+			err := vol.EnsureMountPath(false)
 			if err != nil {
 				return err
 			}
@@ -1501,7 +1501,7 @@ func (d *ceph) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) er
 		return err
 	}
 
-	err = snapVol.EnsureMountPath()
+	err = snapVol.EnsureMountPath(false)
 	if err != nil {
 		return err
 	}
@@ -1601,7 +1601,7 @@ func (d *ceph) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) err
 	mountPath := snapVol.MountPath()
 
 	if snapVol.contentType == ContentTypeFS && !linux.IsMountPoint(mountPath) {
-		err := snapVol.EnsureMountPath()
+		err := snapVol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}
