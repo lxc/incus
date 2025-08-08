@@ -89,9 +89,9 @@ func clusterGroupsPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Quick checks.
-	err = clusterGroupValidateName(req.Name)
+	err = validate.IsAPIName(req.Name, false)
 	if err != nil {
-		return response.BadRequest(err)
+		return response.BadRequest(fmt.Errorf("Invalid cluster group name: %w", err))
 	}
 
 	err = clusterGroupValidate(req.Config)
@@ -406,9 +406,9 @@ func clusterGroupPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Quick checks.
-	err = clusterGroupValidateName(name)
+	err = validate.IsAPIName(req.Name, false)
 	if err != nil {
-		return response.BadRequest(err)
+		return response.BadRequest(fmt.Errorf("Invalid cluster group name: %w", err))
 	}
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -852,38 +852,6 @@ func clusterGroupDelete(d *Daemon, r *http.Request) response.Response {
 	s.Events.SendLifecycle(name, lifecycle.ClusterGroupDeleted.Event(name, requestor, nil))
 
 	return response.EmptySyncResponse
-}
-
-func clusterGroupValidateName(name string) error {
-	if name == "" {
-		return errors.New("No name provided")
-	}
-
-	if strings.Contains(name, "/") {
-		return errors.New("Cluster group names may not contain slashes")
-	}
-
-	if strings.Contains(name, " ") {
-		return errors.New("Cluster group names may not contain spaces")
-	}
-
-	if strings.Contains(name, "_") {
-		return errors.New("Cluster group names may not contain underscores")
-	}
-
-	if strings.Contains(name, "'") || strings.Contains(name, `"`) {
-		return errors.New("Cluster group names may not contain quotes")
-	}
-
-	if name == "*" {
-		return errors.New("Reserved cluster group name")
-	}
-
-	if slices.Contains([]string{".", ".."}, name) {
-		return fmt.Errorf("Invalid cluster group name %q", name)
-	}
-
-	return nil
 }
 
 // clusterGroupValidate validates the configuration keys/values for cluster groups.

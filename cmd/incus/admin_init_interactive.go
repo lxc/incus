@@ -348,7 +348,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 		network.Project = api.ProjectDefaultName
 
 		// Network name
-		network.Name, err = c.global.asker.AskString(i18n.G("What should the new bridge be called?")+" [default=incusbr0]: ", "incusbr0", validate.IsNetworkName)
+		network.Name, err = c.global.asker.AskString(i18n.G("What should the new bridge be called?")+" [default=incusbr0]: ", "incusbr0", validate.IsInterfaceName)
 		if err != nil {
 			return err
 		}

@@ -32,6 +32,7 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 var storagePoolBucketsCmd = APIEndpoint{
@@ -456,6 +457,12 @@ func storagePoolBucketsPost(d *Daemon, r *http.Request) response.Response {
 	pool, err := storagePools.LoadByName(s, poolName)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed loading storage pool: %w", err))
+	}
+
+	// Quick checks.
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid storage bucket name: %w", err))
 	}
 
 	reverter := revert.New()

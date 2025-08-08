@@ -1,7 +1,6 @@
 package acl
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/lxc/incus/v6/shared/util"
@@ -10,8 +9,9 @@ import (
 
 // ValidName checks the ACL name is valid.
 func ValidName(name string) error {
-	if name == "" {
-		return errors.New("Name is required")
+	err := validate.IsAPIName(name, false)
+	if err != nil {
+		return err
 	}
 
 	// Don't allow ACL names to start with special port selector characters to allow Incus to define special port
@@ -21,7 +21,7 @@ func ValidName(name string) error {
 	}
 
 	// Ensures we can differentiate an ACL name from an IP in rules that reference this ACL.
-	err := validate.IsHostname(name)
+	err = validate.IsHostname(name)
 	if err != nil {
 		return err
 	}

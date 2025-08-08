@@ -15,8 +15,8 @@ test_basic_usage() {
 
     # Test an alias with slashes
     incus image show "${sum}"
-    incus image alias create a/b/ "${sum}"
-    incus image alias delete a/b/
+    incus image alias create a/b "${sum}"
+    incus image alias delete a/b
 
     # Test alias list filtering
     incus image alias create foo "${sum}"

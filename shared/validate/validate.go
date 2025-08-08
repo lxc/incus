@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/adhocore/gronx"
 	"github.com/google/uuid"
@@ -233,25 +234,6 @@ func IsInterfaceName(value string) error {
 	match, _ := regexp.MatchString(`^[-_a-zA-Z0-9.]+$`, value)
 	if !match {
 		return errors.New("Network interface contains invalid characters")
-	}
-
-	return nil
-}
-
-// IsNetworkName validates a name usable for a network.
-func IsNetworkName(value string) error {
-	err := IsInterfaceName(value)
-	if err != nil {
-		return err
-	}
-
-	err = IsURLSegmentSafe(value)
-	if err != nil {
-		return err
-	}
-
-	if strings.Contains(value, ":") {
-		return fmt.Errorf("Cannot contain %q", ":")
 	}
 
 	return nil
@@ -552,12 +534,40 @@ func IsDHCPRouteList(value string) error {
 	return nil
 }
 
-// IsURLSegmentSafe validates whether value can be used in a URL segment.
-func IsURLSegmentSafe(value string) error {
-	for _, char := range []string{"/", "?", "&", "+"} {
-		if strings.Contains(value, char) {
-			return fmt.Errorf("Cannot contain %q", char)
+// IsAPIName checks whether the provided value is a suitable name for an API object.
+func IsAPIName(value string, allowSlashes bool) error {
+	// Limit length to 64 characters.
+	if len(value) > 64 {
+		return errors.New("Maximum name length is 64 characters")
+	}
+
+	// Check for unicode characters.
+	for _, r := range value {
+		if unicode.IsSpace(r) {
+			return errors.New("Name cannot contain white space")
 		}
+	}
+
+	// Check for special URL characters.
+	reservedChars := []string{"?", "&", "+", "\"", "'", "`", "*"}
+	if !allowSlashes {
+		reservedChars = append(reservedChars, "/")
+	}
+
+	for _, char := range reservedChars {
+		if strings.Contains(value, char) {
+			return fmt.Errorf("Name contains invalid character %q", char)
+		}
+	}
+
+	// Check beginning and end.
+	match, err := regexp.MatchString(`^[a-zA-Z0-9]+.*[a-zA-Z0-9]+$`, value)
+	if err != nil {
+		return err
+	}
+
+	if !match {
+		return errors.New("Names must start and end with an alphanumeric character")
 	}
 
 	return nil

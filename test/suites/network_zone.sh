@@ -16,8 +16,6 @@ test_network_zone() {
 
     # Create the zones
     ! incus network zone create /incus.example.net || false
-    incus network zone create incus.example.net/withslash
-    incus network zone delete incus.example.net/withslash
     incus network zone create incus.example.net --description "Test network zone"
     incus network zone create 2.0.192.in-addr.arpa
     incus network zone create 0.1.0.1.2.4.2.4.2.4.2.4.2.4.d.f.ip6.arpa

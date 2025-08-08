@@ -1,7 +1,6 @@
 package addressset
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/lxc/incus/v6/shared/util"
@@ -10,8 +9,9 @@ import (
 
 // ValidName checks the address set name is valid.
 func ValidName(name string) error {
-	if name == "" {
-		return errors.New("Name is required")
+	err := validate.IsAPIName(name, false)
+	if err != nil {
+		return err
 	}
 
 	// Don't allow address set names to start with dollar or arobase.
@@ -19,7 +19,7 @@ func ValidName(name string) error {
 		return fmt.Errorf("Name cannot start with reserved character %q", name[0])
 	}
 
-	err := validate.IsHostname(name)
+	err = validate.IsHostname(name)
 	if err != nil {
 		return err
 	}
