@@ -1597,6 +1597,8 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			} else {
 				dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--dhcp-option-force=option6:dns-server,[%s]", strings.Join(dnsIPv6, ",")))
 			}
+		} else {
+			dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--dhcp-option-force=option6:dns-server,[%s]", ipAddress.String()))
 		}
 
 		// Allow forwarding.
