@@ -119,38 +119,13 @@ func osMountShared(src string, dst string, fstype string, opts []string) error {
 		return nil
 	}
 
-	// Prepare the arguments.
-	sharedArgs := []string{}
-	p9Args := []string{}
-
+	args := []string{"-t", fstype, src, dst}
 	for _, opt := range opts {
-		// transport and msize mount option are specific to 9p.
-		if strings.HasPrefix(opt, "trans=") || strings.HasPrefix(opt, "msize=") {
-			p9Args = append(p9Args, "-o", opt)
-			continue
-		}
-
-		sharedArgs = append(sharedArgs, "-o", opt)
+		args = append(args, "-o", opt)
 	}
-
-	// Always try virtiofs first.
-	args := []string{"-t", "virtiofs", src, dst}
-	args = append(args, sharedArgs...)
 
 	_, err := subprocess.RunCommand("mount", args...)
 	if err == nil {
-		return nil
-	} else if fstype == "virtiofs" {
-		return err
-	}
-
-	// Then fallback to 9p.
-	args = []string{"-t", "9p", src, dst}
-	args = append(args, sharedArgs...)
-	args = append(args, p9Args...)
-
-	_, err = subprocess.RunCommand("mount", args...)
-	if err != nil {
 		return err
 	}
 
