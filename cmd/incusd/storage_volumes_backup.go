@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -29,6 +28,7 @@ import (
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 var storagePoolVolumeTypeCustomBackupsCmd = APIEndpoint{
@@ -424,9 +424,10 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 		req.Name = fmt.Sprintf("backup%d", max)
 	}
 
-	// Validate the name.
-	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(errors.New("Backup names may not contain slashes"))
+	// Quick checks.
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid storage volume backup name: %w", err))
 	}
 
 	fullName := volumeName + internalInstance.SnapshotDelimiter + req.Name
@@ -691,9 +692,10 @@ func storagePoolVolumeTypeCustomBackupPost(d *Daemon, r *http.Request) response.
 		return response.BadRequest(err)
 	}
 
-	// Validate the name
-	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(errors.New("Backup names may not contain slashes"))
+	// Quick checks.
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid storage volume backup name: %w", err))
 	}
 
 	oldName := volumeName + internalInstance.SnapshotDelimiter + backupName

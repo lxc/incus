@@ -60,6 +60,7 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/osarch"
 	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 var imagesCmd = APIEndpoint{
@@ -3475,8 +3476,14 @@ func imageAliasesPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	// Validation.
 	if req.Name == "" || req.Target == "" {
-		return response.BadRequest(errors.New("name and target are required"))
+		return response.BadRequest(errors.New("Alias name and target are required"))
+	}
+
+	err = validate.IsAPIName(req.Name, true)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid image alias name: %w", err))
 	}
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -4083,6 +4090,12 @@ func imageAliasPost(d *Daemon, r *http.Request) response.Response {
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
+	}
+
+	// Validation.
+	err = validate.IsAPIName(req.Name, true)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid image alias name: %w", err))
 	}
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {

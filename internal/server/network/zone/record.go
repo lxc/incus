@@ -16,7 +16,12 @@ import (
 
 func (d *zone) AddRecord(req api.NetworkZoneRecordsPost) error {
 	// Validate.
-	err := d.validateRecordConfig(req.NetworkZoneRecordPut)
+	err := d.validateName(req.Name)
+	if err != nil {
+		return err
+	}
+
+	err = d.validateRecordConfig(req.NetworkZoneRecordPut)
 	if err != nil {
 		return err
 	}

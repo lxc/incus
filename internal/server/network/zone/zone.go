@@ -151,15 +151,7 @@ func (d *zone) Etag() []any {
 
 // validateName checks name is valid.
 func (d *zone) validateName(name string) error {
-	if name == "" {
-		return errors.New("Name is required")
-	}
-
-	if strings.HasPrefix(name, "/") {
-		return errors.New(`Name cannot start with "/"`)
-	}
-
-	return nil
+	return validate.IsAPIName(name, false)
 }
 
 // validateConfig checks the config and rules are valid.

@@ -363,6 +363,11 @@ func projectsPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Quick checks.
+	err = validate.IsAPIName(project.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid project name: %w", err))
+	}
+
 	err = projectValidateName(project.Name)
 	if err != nil {
 		return response.BadRequest(err)
@@ -888,9 +893,14 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 				return fmt.Errorf("Failed getting project ID for project %q: %w", name, err)
 			}
 
+			err = validate.IsAPIName(name, false)
+			if err != nil {
+				return fmt.Errorf("Invalid project name: %w", err)
+			}
+
 			err = projectValidateName(req.Name)
 			if err != nil {
-				return err
+				return fmt.Errorf("Invalid project name: %w", err)
 			}
 
 			return cluster.RenameProject(ctx, tx.Tx(), name, req.Name)
@@ -1846,18 +1856,6 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 }
 
 func projectValidateName(name string) error {
-	if name == "" {
-		return errors.New("No name provided")
-	}
-
-	if strings.Contains(name, "/") {
-		return errors.New("Project names may not contain slashes")
-	}
-
-	if strings.Contains(name, " ") {
-		return errors.New("Project names may not contain spaces")
-	}
-
 	if strings.Contains(name, "_") {
 		return errors.New("Project names may not contain underscores")
 	}
@@ -1985,6 +1983,11 @@ func projectAccess(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Quick checks.
+	err = validate.IsAPIName(name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid project name: %w", err))
+	}
+
 	err = projectValidateName(name)
 	if err != nil {
 		return response.BadRequest(err)
