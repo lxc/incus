@@ -238,7 +238,7 @@ There are two options currently available to Ubuntu users.
 
 1. Zabbly package repository
 
-    [Zabbly](https://zabbly.com) provides up to date and supported Incus packages for Ubuntu LTS releases (20.04 and 22.04).
+    [Zabbly](https://zabbly.com) provides up to date and supported Incus packages for Ubuntu LTS releases (22.04 and 24.04).
     Those packages contain everything needed to use all Incus features.
 
     Up to date installation instructions may be found here: [`https://github.com/zabbly/incus`](https://github.com/zabbly/incus)
