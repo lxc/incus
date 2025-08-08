@@ -95,8 +95,12 @@ For block devices (disks), this is one of:
 
 For file systems (shared directories or custom volumes), this is one of:
 - `9p`
-- `auto` (default) (`virtiofs` + `9p`, just `9p` if `virtiofsd` is missing)
+- `auto` (default) (`virtiofs` if possible, else `9p`)
 - `virtiofs`
+
+`9p` doesn't support hotplugging and `virtiofs` doesn't support live migration. `auto` tries
+to use `virtiofs` if possible (`migration.stateful` not set to `true` and host support for
+`virtiofsd`) and falls back to `9p` otherwise.
 ```
 
 ```{config:option} io.cache devices-disk
@@ -2587,6 +2591,12 @@ The disk quota is applied the next time the instance starts.
 :shortdesc: "Network device MAC address"
 :type: "string"
 The network device MAC address is used when no `hwaddr` property is set on the device itself.
+```
+
+```{config:option} volatile.<name>.io.bus instance-volatile
+:shortdesc: "IO bus in use"
+:type: "string"
+The IO bus stores the actual IO bus being used, checked in case `io.bus=auto`.
 ```
 
 ```{config:option} volatile.<name>.last_state.created instance-volatile
