@@ -4648,7 +4648,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 			qemuDev["driver"] = "scsi-cd"
 		}
 	} else if slices.Contains([]string{"nvme", "virtio-blk"}, bus) {
-		if qemuDev["bus"] == "" {
+		if qemuDev["bus"] == nil {
 			// Try to get a PCI address for hotplugging.
 			pciDeviceName, err := d.getPCIHotplug()
 			if err != nil {
