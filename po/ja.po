@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-07-29 01:52-0400\n"
-"PO-Revision-Date: 2024-12-14 14:00+0000\n"
-"Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
+"PO-Revision-Date: 2025-08-09 14:02+0000\n"
+"Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.9-rc\n"
+"X-Generator: Weblate 5.13-dev\n"
 
 #: cmd/incus/info.go:441
 msgid "  Chassis:"
@@ -1220,7 +1220,7 @@ msgstr "不正なイメージプロパティ形式: %s"
 
 #: cmd/incus/remote.go:141
 msgid "Binary helper for retrieving credentials"
-msgstr ""
+msgstr "クレデンシャルを取得するためのバイナリーのヘルパー"
 
 #: cmd/incus/network.go:1036
 msgid "Bond:"
@@ -1402,7 +1402,7 @@ msgstr "イメージに --empty は使えません"
 
 #: cmd/incus/snapshot.go:124 cmd/incus/storage_volume.go:2588
 msgid "Can't use both --no-expiry and --expiry"
-msgstr ""
+msgstr "--no-expiry と --expiry は同時に使えません"
 
 #: cmd/incus/create.go:357
 #, c-format
@@ -3020,7 +3020,7 @@ msgstr "失効日時: 失効しない"
 
 #: cmd/incus/snapshot.go:95 cmd/incus/storage_volume.go:2554
 msgid "Expiry date or time span for the new snapshot"
-msgstr ""
+msgstr "新たに取得するスナップショットの有効期限または期間"
 
 #: cmd/incus/debug.go:44
 #, fuzzy
@@ -3067,6 +3067,9 @@ msgid ""
 "file.\n"
 "\t\tThis can be useful for debugging or analysis purposes."
 msgstr ""
+"実行中の仮想マシンの現在のメモリー状態をダンプファイルにエクスポートします。"
+"\n"
+"\t\tデバッグや解析に役立ちます。"
 
 #: cmd/incus/storage_volume.go:3227
 msgid "Export the volume without its snapshots"
@@ -3577,6 +3580,9 @@ msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
 "disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr ""
+"フォーマット（csv|json|table|yaml|compact|markdown）。"
+"ヘッダーを無効にするにはサフィックス \",noheader\" を、"
+"必要に応じて有効にするには\",header\" を使用します（例: csv,header）。"
 
 #: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:115 cmd/incus/cluster.go:156
 #: cmd/incus/cluster_group.go:488 cmd/incus/config_template.go:300
@@ -3596,6 +3602,10 @@ msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
 "disable headers and \",header\" to enable it if missing, e.g. csv,header"
 msgstr ""
+"フォーマット（csv|json|table|yaml|compact|markdown）。"
+"ヘッダーを無効にするにはサフィックス \",noheader\" を、"
+"ヘッダーがない場合に有効にするにはサフィックス \",header\" を使用します（例: "
+"csv,header）。"
 
 #: cmd/incus/monitor.go:55
 msgid "Format (json|pretty|yaml)"
@@ -3613,7 +3623,8 @@ msgstr "フォーマット (csv|json|table|yaml|compact|markdown)"
 #: cmd/incus/debug.go:53
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
-msgstr ""
+msgstr "メモリーダンプのフォーマット（例: elf, win-dmp, kdump-zlib, kdump-raw-zlib, "
+"...）"
 
 #: cmd/incus/network.go:1052
 msgid "Forward delay"
@@ -3665,6 +3676,10 @@ msgid ""
 "This is useful for remote authentication workflows where a token is passed "
 "to another Incus server."
 msgstr ""
+"既存のクライアント証明書と秘密鍵からクライアントトラストトークンを生成します"
+"。\n"
+"\n"
+"これは、他の Incus サーバーに渡されるリモート認証ワークフローに役立ちます。"
 
 #: cmd/incus/manpage.go:24 cmd/incus/manpage.go:25
 msgid "Generate manpages for all commands"
@@ -6129,7 +6144,7 @@ msgstr "MTU: %d"
 
 #: cmd/incus/remote.go:140
 msgid "Maintain remote connection for faster commands"
-msgstr ""
+msgstr "より高速なコマンド実行のためにリモート接続を維持する"
 
 #: cmd/incus/image.go:159 cmd/incus/image.go:685
 msgid "Make image public"
@@ -7155,7 +7170,7 @@ msgstr "OVN:"
 
 #: cmd/incus/network_address_set.go:810
 msgid "One or more provided address isn't currently in the set"
-msgstr ""
+msgstr "指定したアドレスの 1 つ以上が、現在のアドレスセットに含まれていません"
 
 #: cmd/incus/storage_volume.go:234 cmd/incus/storage_volume.go:327
 msgid "Only \"custom\" volumes can be attached to instances"
@@ -7299,9 +7314,9 @@ msgid "Password for %s: "
 msgstr "%s のパスワード: "
 
 #: cmd/incus/utils.go:709
-#, fuzzy, c-format
+#, c-format
 msgid "Password rejected for %q"
-msgstr "%s のパスワード: "
+msgstr "%q のパスワードが拒否されました"
 
 #: cmd/incus/admin_init.go:148
 #, fuzzy, c-format
@@ -7334,9 +7349,8 @@ msgid "Please provide an alternate server address (empty to abort):"
 msgstr "別のサーバアドレスを指定してください（空の場合は中止）:"
 
 #: cmd/incus/admin_init_interactive.go:190
-#, fuzzy
 msgid "Please provide join token:"
-msgstr "クライアント名を入力してください: "
+msgstr "join トークンを入力してください:"
 
 #: cmd/incus/remote.go:512
 msgid "Please type 'y', 'n' or the fingerprint:"
@@ -11133,6 +11147,8 @@ msgid ""
 "incus debug dump-memory vm1 memory-dump.elf --format=elf\n"
 "    Creates an ELF format memory dump of the vm1 instance."
 msgstr ""
+"incus debug dump-memory vm1 memory-dump.elf --format=elf\n"
+"    インスタンス vm1 の ELF フォーマットのメモリーダンプを作成します。"
 
 #: cmd/incus/exec.go:53
 msgid ""
