@@ -18,7 +18,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"unicode"
 
 	"github.com/minio/minio-go/v7"
 	"golang.org/x/sync/errgroup"
@@ -101,21 +100,6 @@ func (b *backend) Description() string {
 	return b.db.Description
 }
 
-// ValidateName validates the provided name, and returns an error if it's not a valid storage name.
-func (b *backend) ValidateName(value string) error {
-	if strings.Contains(value, "/") {
-		return errors.New(`Storage name cannot contain "/"`)
-	}
-
-	for _, r := range value {
-		if unicode.IsSpace(r) {
-			return errors.New(`Storage name cannot contain white space`)
-		}
-	}
-
-	return nil
-}
-
 // Validate storage pool config.
 func (b *backend) Validate(config map[string]string) error {
 	return b.Driver().Validate(config)
@@ -181,14 +165,8 @@ func (b *backend) Create(clientType request.ClientType, op *operations.Operation
 	l.Debug("Create started")
 	defer l.Debug("Create finished")
 
-	// Validate name.
-	err := b.ValidateName(b.name)
-	if err != nil {
-		return err
-	}
-
 	// Validate config.
-	err = b.driver.Validate(b.db.Config)
+	err := b.driver.Validate(b.db.Config)
 	if err != nil {
 		return err
 	}

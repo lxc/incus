@@ -32,7 +32,6 @@ type MountInfo struct {
 
 // Type represents an Incus storage pool type.
 type Type interface {
-	ValidateName(name string) error
 	Validate(config map[string]string) error
 }
 

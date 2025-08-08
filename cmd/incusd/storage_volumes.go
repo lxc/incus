@@ -46,6 +46,7 @@ import (
 	"github.com/lxc/incus/v6/shared/revert"
 	localtls "github.com/lxc/incus/v6/shared/tls"
 	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 var storagePoolVolumesCmd = APIEndpoint{
@@ -666,12 +667,9 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Quick checks.
-	if req.Name == "" {
-		return response.BadRequest(errors.New("No name provided"))
-	}
-
-	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(errors.New("Storage volume names may not contain slashes"))
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid storage volume name: %w", err))
 	}
 
 	// Backward compatibility.
@@ -1070,8 +1068,9 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Quick checks.
-	if req.Name == "" {
-		return response.BadRequest(errors.New("No name provided"))
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid storage volume name: %w", err))
 	}
 
 	// Check requested new volume name is not a snapshot volume.

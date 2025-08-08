@@ -21,6 +21,7 @@ import (
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 var networkPeersCmd = APIEndpoint{
@@ -319,6 +320,12 @@ func networkPeersPost(d *Daemon, r *http.Request) response.Response {
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
+	}
+
+	// Quick checks.
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid network peer name: %w", err))
 	}
 
 	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])

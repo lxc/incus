@@ -301,6 +301,12 @@ func networkIntegrationsPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	// Quick checks.
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid network integration name: %w", err))
+	}
+
 	// Validate the config.
 	err = networkIntegrationValidate(req.Type, false, nil, req.Config)
 	if err != nil {
@@ -814,6 +820,12 @@ func networkIntegrationPost(d *Daemon, r *http.Request) response.Response {
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
+	}
+
+	// Quick checks.
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid network integration name: %w", err))
 	}
 
 	// Rename the DB record.

@@ -219,11 +219,6 @@ func (n *common) validateZoneNames(config map[string]string) error {
 
 // ValidateName validates network name.
 func (n *common) ValidateName(name string) error {
-	err := validate.IsURLSegmentSafe(name)
-	if err != nil {
-		return err
-	}
-
 	if strings.Contains(name, ":") {
 		return fmt.Errorf("Cannot contain %q", ":")
 	}

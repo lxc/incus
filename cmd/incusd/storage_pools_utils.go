@@ -11,6 +11,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 // storagePoolDBCreate creates a storage pool DB entry and returns the created Pool ID.
@@ -51,7 +52,7 @@ func storagePoolValidate(s *state.State, poolName string, driverName string, con
 	}
 
 	// Check if the storage pool name is valid.
-	err = poolType.ValidateName(poolName)
+	err = validate.IsAPIName(poolName, false)
 	if err != nil {
 		return err
 	}

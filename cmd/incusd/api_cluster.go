@@ -1338,6 +1338,12 @@ func clusterNodesPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	// Quick checks.
+	err = validate.IsAPIName(req.ServerName, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid cluster member name: %w", err))
+	}
+
 	if !s.ServerClustered {
 		return response.BadRequest(errors.New("This server is not clustered"))
 	}
@@ -1916,6 +1922,13 @@ func clusterNodePost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	// Quick checks.
+	err = validate.IsAPIName(req.ServerName, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid cluster member name: %w", err))
+	}
+
+	// Perform the rename.
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		return tx.RenameNode(ctx, memberName, req.ServerName)
 	})

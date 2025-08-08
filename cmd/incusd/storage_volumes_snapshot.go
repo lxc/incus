@@ -34,6 +34,7 @@ import (
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 var storagePoolVolumeSnapshotsTypeCmd = APIEndpoint{
@@ -240,10 +241,10 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 		}
 	}
 
-	// Validate the snapshot name using same rule as pool name.
-	err = pool.ValidateName(req.Name)
+	// Quick checks.
+	err = validate.IsAPIName(req.Name, false)
 	if err != nil {
-		return response.BadRequest(err)
+		return response.BadRequest(fmt.Errorf("Invalid storage volume snapshot name: %w", err))
 	}
 
 	// Fill in the expiry.
@@ -603,12 +604,9 @@ func storagePoolVolumeSnapshotTypePost(d *Daemon, r *http.Request) response.Resp
 	}
 
 	// Quick checks.
-	if req.Name == "" {
-		return response.BadRequest(errors.New("No name provided"))
-	}
-
-	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(errors.New("Storage volume names may not contain slashes"))
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid storage volume snapshot name: %w", err))
 	}
 
 	// This is a migration request so send back requested secrets.

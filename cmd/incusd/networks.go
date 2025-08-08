@@ -42,6 +42,7 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 // Lock to prevent concurrent networks creation.
@@ -412,7 +413,12 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if req.Name == "none" {
-		return response.BadRequest(errors.New("Network name 'none' is not valid"))
+		return response.BadRequest(errors.New("Invalid network name: 'none' is a reserved name"))
+	}
+
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid network name: %w", err))
 	}
 
 	// Check if project allows access to network.
@@ -437,9 +443,10 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	// Driver specific name validation.
 	err = netType.ValidateName(req.Name)
 	if err != nil {
-		return response.BadRequest(err)
+		return response.BadRequest(fmt.Errorf("Invalid network name: %w", err))
 	}
 
 	netTypeInfo := netType.Info()
@@ -1279,9 +1286,16 @@ func networkPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("New network name not provided"))
 	}
 
+	// Perform generic name validation.
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid network name: %w", err))
+	}
+
+	// Perform driver-specific name validation.
 	err = n.ValidateName(req.Name)
 	if err != nil {
-		return response.BadRequest(err)
+		return response.BadRequest(fmt.Errorf("Invalid network name: %w", err))
 	}
 
 	// Check network isn't in use.

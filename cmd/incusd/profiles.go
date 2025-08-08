@@ -9,8 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"slices"
-	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -33,6 +31,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 var profilesCmd = APIEndpoint{
@@ -345,12 +344,9 @@ func profilesPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("No name provided"))
 	}
 
-	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(errors.New("Profile names may not contain slashes"))
-	}
-
-	if slices.Contains([]string{".", ".."}, req.Name) {
-		return response.BadRequest(fmt.Errorf("Invalid profile name %q", req.Name))
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid profile name: %w", err))
 	}
 
 	err = instance.ValidConfig(d.os, req.Config, false, instancetype.Any)
@@ -812,12 +808,9 @@ func profilePost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("No name provided"))
 	}
 
-	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(errors.New("Profile names may not contain slashes"))
-	}
-
-	if slices.Contains([]string{".", ".."}, req.Name) {
-		return response.BadRequest(fmt.Errorf("Invalid profile name %q", req.Name))
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid profile name: %w", err))
 	}
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {

@@ -28,6 +28,7 @@ import (
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 var storagePoolBucketBackupsCmd = APIEndpoint{
@@ -276,6 +277,12 @@ func storagePoolBucketBackupsPost(d *Daemon, r *http.Request) response.Response 
 
 	targetMember := request.QueryParam(r, "target")
 	memberSpecific := targetMember != ""
+
+	// Quick checks.
+	err = validate.IsAPIName(bucketName, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid storage bucket backup name: %w", err))
+	}
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		err := project.AllowBackupCreation(tx, projectName)
@@ -564,9 +571,10 @@ func storagePoolBucketBackupPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	// Validate the name
-	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(errors.New("Backup names may not contain slashes"))
+	// Quick checks.
+	err = validate.IsAPIName(req.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid storage bucket backup name: %w", err))
 	}
 
 	oldName := bucketName + internalInstance.SnapshotDelimiter + backupName
