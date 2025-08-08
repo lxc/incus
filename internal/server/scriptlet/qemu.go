@@ -12,9 +12,9 @@ import (
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/qmp"
 	scriptletLoad "github.com/lxc/incus/v6/internal/server/scriptlet/load"
 	"github.com/lxc/incus/v6/internal/server/scriptlet/log"
-	"github.com/lxc/incus/v6/internal/server/scriptlet/marshal"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/scriptlet"
 )
 
 // marshalQEMUConf marshals a configuration into a []map[string]any.
@@ -87,7 +87,7 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 			return nil, err
 		}
 
-		value, err := marshal.StarlarkUnmarshal(command)
+		value, err := scriptlet.StarlarkUnmarshal(command)
 		if err != nil {
 			return nil, err
 		}
@@ -111,7 +111,7 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 			return nil, err
 		}
 
-		rv, err := marshal.StarlarkMarshal(resp)
+		rv, err := scriptlet.StarlarkMarshal(resp)
 		if err != nil {
 			return nil, fmt.Errorf("Marshalling QMP response failed: %w", err)
 		}
@@ -122,12 +122,12 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 	runCommandFromKwargs := func(funName string, kwargs []starlark.Tuple) (starlark.Value, error) {
 		qmpArgs := make(map[string]any)
 		for _, kwarg := range kwargs {
-			key, err := marshal.StarlarkUnmarshal(kwarg.Index(0))
+			key, err := scriptlet.StarlarkUnmarshal(kwarg.Index(0))
 			if err != nil {
 				return nil, err
 			}
 
-			value, err := marshal.StarlarkUnmarshal(kwarg.Index(1))
+			value, err := scriptlet.StarlarkUnmarshal(kwarg.Index(1))
 			if err != nil {
 				return nil, err
 			}
@@ -145,7 +145,7 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 		}
 
 		// Extract the return value
-		rv, err := marshal.StarlarkMarshal(resp.Return)
+		rv, err := scriptlet.StarlarkMarshal(resp.Return)
 		if err != nil {
 			return nil, fmt.Errorf("Marshalling QMP response failed: %w", err)
 		}
@@ -167,7 +167,7 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 			return nil, fmt.Errorf("%s Expected exactly one positional argument, got %d", errPrefix, argsLen)
 		}
 
-		arg, err := marshal.StarlarkUnmarshal(args.Index(0))
+		arg, err := scriptlet.StarlarkUnmarshal(args.Index(0))
 		if err != nil {
 			return nil, err
 		}
@@ -217,7 +217,7 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 			return nil, err
 		}
 
-		rv, err := marshal.StarlarkMarshal(cmdArgs)
+		rv, err := scriptlet.StarlarkMarshal(cmdArgs)
 		if err != nil {
 			return nil, fmt.Errorf("Marshalling QEMU command-line arguments failed: %w", err)
 		}
@@ -237,7 +237,7 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 			return nil, err
 		}
 
-		newCmdArgsAny, err := marshal.StarlarkUnmarshal(newCmdArgsv)
+		newCmdArgsAny, err := scriptlet.StarlarkUnmarshal(newCmdArgsv)
 		if err != nil {
 			return nil, err
 		}
@@ -294,7 +294,7 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 			return nil, err
 		}
 
-		rv, err := marshal.StarlarkMarshal(cfgSections)
+		rv, err := scriptlet.StarlarkMarshal(cfgSections)
 		if err != nil {
 			return nil, fmt.Errorf("Marshalling QEMU configuration failed: %w", err)
 		}
@@ -314,7 +314,7 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 			return nil, err
 		}
 
-		confAny, err := marshal.StarlarkUnmarshal(newConf)
+		confAny, err := scriptlet.StarlarkUnmarshal(newConf)
 		if err != nil {
 			return nil, err
 		}
@@ -393,7 +393,7 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 		return errors.New("Scriptlet missing qemu_hook function")
 	}
 
-	instancev, err := marshal.StarlarkMarshal(instance)
+	instancev, err := scriptlet.StarlarkMarshal(instance)
 	if err != nil {
 		return fmt.Errorf("Marshalling instance failed: %w", err)
 	}
