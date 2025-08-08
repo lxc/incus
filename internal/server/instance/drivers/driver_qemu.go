@@ -1117,7 +1117,7 @@ func (d *qemu) validateStartup(stateful bool, statusCode api.StatusCode) error {
 	}
 
 	// Cannot perform stateful start unless config is appropriately set.
-	if stateful && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+	if stateful && !d.CanLiveMigrate() {
 		return errors.New("Stateful start requires migration.stateful to be set to true")
 	}
 
@@ -1581,7 +1581,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	if d.architecture == osarch.ARCH_64BIT_INTEL_X86 {
 		// If using Linux 5.10 or later, use HyperV optimizations.
 		minVer, _ := version.NewDottedVersion("5.10.0")
-		if d.state.OS.KernelVersion.Compare(minVer) >= 0 && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+		if d.state.OS.KernelVersion.Compare(minVer) >= 0 && !d.CanLiveMigrate() {
 			// x86_64 can use hv_time to improve Windows guest performance.
 			cpuExtensions = append(cpuExtensions, "hv_passthrough")
 		}
@@ -1595,7 +1595,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	cpuType := "host"
 
 	// Get CPU flags if clustered and migration is enabled (x86_64 only for now).
-	if d.architecture == osarch.ARCH_64BIT_INTEL_X86 && d.state.ServerClustered && util.IsTrue(d.expandedConfig["migration.stateful"]) {
+	if d.architecture == osarch.ARCH_64BIT_INTEL_X86 && d.state.ServerClustered && d.CanLiveMigrate() {
 		cpuFlags, err := GetClusterCPUFlags(context.TODO(), d.state, nil, "x86_64")
 		if err != nil {
 			op.Done(err)
@@ -1611,7 +1611,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	_, nested := info.Features["nested"]
 
 	// Add +invtsc for fast TSC on x86 when not expected to be migratable and not nested.
-	if !nested && d.architecture == osarch.ARCH_64BIT_INTEL_X86 && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+	if !nested && d.architecture == osarch.ARCH_64BIT_INTEL_X86 && !d.CanLiveMigrate() {
 		cpuExtensions = append(cpuExtensions, "migratable=no", "+invtsc")
 	}
 
@@ -5296,7 +5296,7 @@ func (d *qemu) Stop(stateful bool) error {
 	// Check for stateful.
 	if stateful {
 		// Confirm the instance has stateful migration enabled.
-		if util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+		if !d.CanLiveMigrate() {
 			return errors.New("Stateful stop requires migration.stateful to be set to true")
 		}
 
@@ -5462,7 +5462,7 @@ func (d *qemu) snapshot(name string, expiry time.Time, stateful bool) error {
 	// Deal with state.
 	if stateful {
 		// Confirm the instance has stateful migration enabled.
-		if util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+		if !d.CanLiveMigrate() {
 			return errors.New("Stateful snapshot requires migration.stateful to be set to true")
 		}
 
@@ -7076,7 +7076,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	defer d.logger.Debug("Migration send stopped")
 
 	// Check for stateful support.
-	if args.Live && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+	if args.Live && !d.CanLiveMigrate() {
 		return errors.New("Live migration requires migration.stateful to be set to true")
 	}
 
@@ -10208,4 +10208,9 @@ func (d *qemu) DumpGuestMemory(w *os.File, format string) error {
 	}
 
 	return nil
+}
+
+// CanLiveMigrate returns whether the VM is live-migratable.
+func (d *qemu) CanLiveMigrate() bool {
+	return util.IsTrue(d.expandedConfig["migration.stateful"])
 }
