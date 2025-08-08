@@ -3892,10 +3892,15 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 				}
 
 				qemuDev := make(map[string]any)
-				if slices.Contains([]string{"nvme", "virtio-blk"}, busName) {
+				if slices.Contains([]string{"9p", "nvme", "virtio-blk", "virtiofs"}, busName) {
 					// Allocate a PCI(e) port and write it to the config file so QMP can "hotplug" the
 					// drive into it later.
-					devBus, devAddr, multi := bus.allocate(busFunctionGroupNone)
+					functionGroup := busFunctionGroupNone
+					if busName == "9p" {
+						functionGroup = busFunctionGroup9p
+					}
+
+					devBus, devAddr, multi := bus.allocate(functionGroup)
 
 					// Populate the qemu device with port info.
 					qemuDev["bus"] = devBus
