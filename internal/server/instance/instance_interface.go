@@ -97,6 +97,7 @@ type Instance interface {
 	Snapshots() ([]Instance, error)
 	Backups() ([]backup.InstanceBackup, error)
 	UpdateBackupFile() error
+	CanLiveMigrate() bool
 
 	// Config handling.
 	Rename(newName string, applyTemplateTrigger bool) error
