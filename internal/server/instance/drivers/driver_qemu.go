@@ -3905,10 +3905,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 					// Populate the qemu device with port info.
 					qemuDev["bus"] = devBus
 					qemuDev["addr"] = devAddr
-
-					if multi {
-						qemuDev["multifunction"] = true
-					}
+					qemuDev["multifunction"] = multi
 				}
 
 				if drive.TargetPath == "/" {
