@@ -4193,7 +4193,7 @@ func (d *qemu) driveDirConfig9p(qemuDev map[string]any, busName string, agentMou
 	agentMount := instancetype.VMAgentMount{
 		Source: mountTag,
 		Target: driveConf.TargetPath,
-		FSType: driveConf.FSType,
+		FSType: "9p",
 
 		// We need to specify to use the virtio transport to support more VM guest OSes.
 		// Also set the msize to 32MB to allow for reasonably fast 9p access.
@@ -4239,7 +4239,7 @@ func (d *qemu) addDriveDirConfigVirtiofs(qemuDev map[string]any, agentMounts *[]
 		agentMount := instancetype.VMAgentMount{
 			Source: mountTag,
 			Target: driveConf.TargetPath,
-			FSType: driveConf.FSType,
+			FSType: "virtiofs",
 		}
 
 		// Indicate to agent to mount this readonly. Note: This is purely to indicate to VM guest that this is
