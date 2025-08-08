@@ -238,25 +238,6 @@ func IsInterfaceName(value string) error {
 	return nil
 }
 
-// IsNetworkName validates a name usable for a network.
-func IsNetworkName(value string) error {
-	err := IsInterfaceName(value)
-	if err != nil {
-		return err
-	}
-
-	err = IsURLSegmentSafe(value)
-	if err != nil {
-		return err
-	}
-
-	if strings.Contains(value, ":") {
-		return fmt.Errorf("Cannot contain %q", ":")
-	}
-
-	return nil
-}
-
 // IsNetworkMAC validates an Ethernet MAC address. e.g. "00:00:5e:00:53:01".
 func IsNetworkMAC(value string) error {
 	_, err := net.ParseMAC(value)
