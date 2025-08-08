@@ -1,4 +1,4 @@
-package marshal
+package scriptlet
 
 import (
 	"fmt"
@@ -16,25 +16,31 @@ type starlarkObject struct {
 	typeName string
 }
 
+// Type is a starlark object type.
 func (s *starlarkObject) Type() string {
 	return s.typeName
 }
 
+// String is a starlark object string.
 func (s *starlarkObject) String() string {
 	return s.d.String()
 }
 
+// Freeze freezes the starlark object.
 func (s *starlarkObject) Freeze() {
 }
 
+// Hash returns a hash of the starlark object.
 func (s *starlarkObject) Hash() (uint32, error) {
 	return 0, fmt.Errorf("Unhashable type %s", s.Type())
 }
 
+// Truth returns whether the starlark object is true.
 func (s *starlarkObject) Truth() starlark.Bool {
 	return starlark.True
 }
 
+// AttrNames returns the attribute names of the starlark object.
 func (s *starlarkObject) AttrNames() []string {
 	keys := s.d.Keys()
 	keyNames := make([]string, 0, len(keys))
@@ -45,6 +51,7 @@ func (s *starlarkObject) AttrNames() []string {
 	return keyNames
 }
 
+// Attr gets an attribute of the starlark object.
 func (s *starlarkObject) Attr(name string) (starlark.Value, error) {
 	field, found, err := s.d.Get(starlark.String(name))
 	if err != nil {
