@@ -10,9 +10,11 @@ import (
 	"runtime"
 	"slices"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/kballard/go-shellquote"
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
@@ -46,7 +48,7 @@ as well as retrieve past log entries from it.`))
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Forces a connection to the console, even if there is already an active session"))
 	cmd.Flags().BoolVar(&c.flagShowLog, "show-log", false, i18n.G("Retrieve the instance's console log"))
-	cmd.Flags().StringVarP(&c.flagType, "type", "t", "console", i18n.G("Type of connection to establish: 'console' for serial console, 'vga' for SPICE graphical output")+"``")
+	cmd.Flags().StringVarP(&c.flagType, "type", "t", c.global.defaultConsoleType(), i18n.G("Type of connection to establish: 'console' for serial console, 'vga' for SPICE graphical output")+"``")
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpInstances(toComplete)
@@ -358,13 +360,25 @@ func (c *cmdConsole) vga(d incus.InstanceServer, name string) error {
 		}
 	}()
 
+	// Get the preferred SPICE command.
+	preferredSpiceCmd := c.global.defaultConsoleSpiceCommand()
+
 	// Use either spicy or remote-viewer if available.
 	remoteViewer := c.findCommand("remote-viewer")
 	spicy := c.findCommand("spicy")
 
-	if remoteViewer != "" || spicy != "" {
+	if preferredSpiceCmd != "" || remoteViewer != "" || spicy != "" {
 		var cmd *exec.Cmd
-		if remoteViewer != "" {
+
+		if preferredSpiceCmd != "" {
+			// preferredSpiceCmd takes a string where the SOCKET keyword is replaced with the path to the SPICE socket.
+			cmdSlice, err := shellquote.Split(strings.ReplaceAll(preferredSpiceCmd, "SOCKET", socket))
+			if err != nil {
+				return err
+			}
+
+			cmd = exec.Command(cmdSlice[0], cmdSlice[1:]...)
+		} else if remoteViewer != "" {
 			cmd = exec.Command(remoteViewer, socket)
 		} else {
 			cmd = exec.Command(spicy, fmt.Sprintf("--uri=%s", socket))
