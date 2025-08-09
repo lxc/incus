@@ -1241,6 +1241,15 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 			return validate.IsAny, nil
 		}
 
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.io.bus)
+		// The IO bus stores the actual IO bus being used, checked in case `io.bus=auto`.
+		// ---
+		//  type: string
+		//  shortdesc: IO bus in use
+		if strings.HasSuffix(key, ".io.bus") {
+			return validate.IsAny, nil
+		}
+
 		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.mig.uuid)
 		// The NVIDIA MIG instance UUID.
 		// ---

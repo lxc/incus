@@ -97,7 +97,7 @@
 					{
 						"io.bus": {
 							"default": "`virtio-scsi` for block, `auto` for file system",
-							"longdesc": "This controls what bus a disk device should be attached to.\n\nFor block devices (disks), this is one of:\n- `nvme`\n- `virtio-blk`\n- `virtio-scsi` (default)\n- `usb`\n\nFor file systems (shared directories or custom volumes), this is one of:\n- `9p`\n- `auto` (default) (`virtiofs` + `9p`, just `9p` if `virtiofsd` is missing)\n- `virtiofs`",
+							"longdesc": "This controls what bus a disk device should be attached to.\n\nFor block devices (disks), this is one of:\n- `nvme`\n- `virtio-blk`\n- `virtio-scsi` (default)\n- `usb`\n\nFor file systems (shared directories or custom volumes), this is one of:\n- `9p`\n- `auto` (default) (`virtiofs` if possible, else `9p`)\n- `virtiofs`\n\n`9p` doesn't support hotplugging and `virtiofs` doesn't support live migration. `auto` tries\nto use `virtiofs` if possible (`migration.stateful` not set to `true` and host support for\n`virtiofsd`) and falls back to `9p` otherwise.",
 							"required": "no",
 							"shortdesc": "Only for VMs: Override the bus for the device",
 							"type": "string"
@@ -2890,6 +2890,13 @@
 						"volatile.\u003cname\u003e.hwaddr": {
 							"longdesc": "The network device MAC address is used when no `hwaddr` property is set on the device itself.",
 							"shortdesc": "Network device MAC address",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.io.bus": {
+							"longdesc": "The IO bus stores the actual IO bus being used, checked in case `io.bus=auto`.",
+							"shortdesc": "IO bus in use",
 							"type": "string"
 						}
 					},

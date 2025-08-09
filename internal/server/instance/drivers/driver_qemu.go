@@ -1117,7 +1117,7 @@ func (d *qemu) validateStartup(stateful bool, statusCode api.StatusCode) error {
 	}
 
 	// Cannot perform stateful start unless config is appropriately set.
-	if stateful && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+	if stateful && !d.CanLiveMigrate() {
 		return errors.New("Stateful start requires migration.stateful to be set to true")
 	}
 
@@ -1581,7 +1581,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	if d.architecture == osarch.ARCH_64BIT_INTEL_X86 {
 		// If using Linux 5.10 or later, use HyperV optimizations.
 		minVer, _ := version.NewDottedVersion("5.10.0")
-		if d.state.OS.KernelVersion.Compare(minVer) >= 0 && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+		if d.state.OS.KernelVersion.Compare(minVer) >= 0 && !d.CanLiveMigrate() {
 			// x86_64 can use hv_time to improve Windows guest performance.
 			cpuExtensions = append(cpuExtensions, "hv_passthrough")
 		}
@@ -1595,7 +1595,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	cpuType := "host"
 
 	// Handle CPU flags.
-	if d.state.ServerClustered && util.IsTrue(d.expandedConfig["migration.stateful"]) {
+	if d.state.ServerClustered && d.CanLiveMigrate() {
 		// Get the cluster group config.
 		var groupConfig map[string]string
 		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -1665,7 +1665,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	_, nested := info.Features["nested"]
 
 	// Add +invtsc for fast TSC on x86 when not expected to be migratable and not nested.
-	if !nested && d.architecture == osarch.ARCH_64BIT_INTEL_X86 && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+	if !nested && d.architecture == osarch.ARCH_64BIT_INTEL_X86 && !d.CanLiveMigrate() {
 		cpuExtensions = append(cpuExtensions, "migratable=no", "+invtsc")
 	}
 
@@ -2532,93 +2532,22 @@ func (d *qemu) deviceStart(dev device.Device, instanceRunning bool) (*deviceConf
 }
 
 func (d *qemu) deviceAttachPath(deviceName string, configCopy map[string]string, mount deviceConfig.MountEntryItem) error {
-	escapedDeviceName := linux.PathNameEncode(deviceName)
-	deviceID := fmt.Sprintf("%s%s", qemuDeviceIDPrefix, escapedDeviceName)
-	mountTag := fmt.Sprintf("incus_%s", deviceName)
-
-	// Detect virtiofsd path.
-	virtiofsdSockPath := filepath.Join(d.DevicesPath(), fmt.Sprintf("virtio-fs.%s.sock", deviceName))
-	if !util.PathExists(virtiofsdSockPath) {
-		return errors.New("Virtiofsd isn't running")
-	}
-
-	reverter := revert.New()
-	defer reverter.Fail()
-
 	// Check if the agent is running.
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to QMP monitor: %w", err)
 	}
 
-	addr, err := net.ResolveUnixAddr("unix", virtiofsdSockPath)
+	monHook, err := d.addDriveDirConfigVirtiofs(nil, nil, mount)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to add drive config: %w", err)
 	}
 
-	virtiofsSock, err := net.DialUnix("unix", nil, addr)
+	err = monHook(monitor)
 	if err != nil {
-		return fmt.Errorf("Error connecting to virtiofs socket %q: %w", virtiofsdSockPath, err)
+		return fmt.Errorf("Failed to call monitor hook for block device: %w", err)
 	}
 
-	defer func() { _ = virtiofsSock.Close() }() // Close file after device has been added.
-
-	virtiofsFile, err := virtiofsSock.File()
-	if err != nil {
-		return fmt.Errorf("Error opening virtiofs socket %q: %w", virtiofsdSockPath, err)
-	}
-
-	err = monitor.SendFile(virtiofsdSockPath, virtiofsFile)
-	if err != nil {
-		return fmt.Errorf("Failed to send virtiofs file descriptor: %w", err)
-	}
-
-	reverter.Add(func() { _ = monitor.CloseFile(virtiofsdSockPath) })
-
-	err = monitor.AddCharDevice(map[string]any{
-		"id": mountTag,
-		"backend": map[string]any{
-			"type": "socket",
-			"data": map[string]any{
-				"addr": map[string]any{
-					"type": "fd",
-					"data": map[string]any{
-						"str": virtiofsdSockPath,
-					},
-				},
-				"server": false,
-			},
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("Failed to add the character device: %w", err)
-	}
-
-	reverter.Add(func() { _ = monitor.RemoveCharDevice(mountTag) })
-
-	// Try to get a PCI address for hotplugging.
-	pciDeviceName, err := d.getPCIHotplug()
-	if err != nil {
-		return err
-	}
-
-	d.logger.Debug("Using PCI bus device to hotplug virtiofs into", logger.Ctx{"device": deviceName, "port": pciDeviceName})
-
-	qemuDev := map[string]any{
-		"driver":  "vhost-user-fs-pci",
-		"bus":     pciDeviceName,
-		"addr":    "00.0",
-		"tag":     mountTag,
-		"chardev": mountTag,
-		"id":      deviceID,
-	}
-
-	err = monitor.AddDevice(qemuDev)
-	if err != nil {
-		return fmt.Errorf("Failed to add the virtiofs device: %w", err)
-	}
-
-	reverter.Success()
 	return nil
 }
 
@@ -3892,24 +3821,30 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 				}
 
 				qemuDev := make(map[string]any)
-				if slices.Contains([]string{"nvme", "virtio-blk"}, busName) {
+				if slices.Contains([]string{"9p", "nvme", "virtio-blk", "virtiofs"}, busName) {
 					// Allocate a PCI(e) port and write it to the config file so QMP can "hotplug" the
 					// drive into it later.
-					devBus, devAddr, multi := bus.allocate(busFunctionGroupNone)
+					functionGroup := busFunctionGroupNone
+					if busName == "9p" {
+						functionGroup = busFunctionGroup9p
+					}
+
+					devBus, devAddr, multi := bus.allocate(functionGroup)
 
 					// Populate the qemu device with port info.
 					qemuDev["bus"] = devBus
 					qemuDev["addr"] = devAddr
-
-					if multi {
-						qemuDev["multifunction"] = true
-					}
+					qemuDev["multifunction"] = multi
 				}
 
 				if drive.TargetPath == "/" {
 					monHook, err = d.addRootDriveConfig(qemuDev, mountInfo, bootIndexes, drive)
 				} else if drive.FSType == "9p" {
-					err = d.addDriveDirConfig(&conf, bus, fdFiles, &agentMounts, drive)
+					if busName == "9p" {
+						conf = append(conf, d.driveDirConfig9p(qemuDev, bus.name, &agentMounts, drive)...)
+					} else {
+						monHook, err = d.addDriveDirConfigVirtiofs(qemuDev, &agentMounts, drive)
+					}
 				} else {
 					monHook, err = d.addDriveConfig(qemuDev, bootIndexes, drive)
 				}
@@ -4305,20 +4240,18 @@ func (d *qemu) addRootDriveConfig(qemuDev map[string]any, mountInfo *storagePool
 	return d.addDriveConfig(qemuDev, bootIndexes, driveConf)
 }
 
-// addDriveDirConfig adds the qemu config required for adding a supplementary drive directory share.
-func (d *qemu) addDriveDirConfig(conf *[]cfg.Section, bus *qemuBus, fdFiles *[]*os.File, agentMounts *[]instancetype.VMAgentMount, driveConf deviceConfig.MountEntryItem) error {
-	mountTag := fmt.Sprintf("incus_%s", driveConf.DevName)
+// driveDirConfig9p generates the qemu config required for adding a supplementary drive directory share using 9p.
+func (d *qemu) driveDirConfig9p(qemuDev map[string]any, busName string, agentMounts *[]instancetype.VMAgentMount, driveConf deviceConfig.MountEntryItem) []cfg.Section {
+	mountTag := "incus_" + driveConf.DevName
 
 	agentMount := instancetype.VMAgentMount{
 		Source: mountTag,
 		Target: driveConf.TargetPath,
-		FSType: driveConf.FSType,
-	}
+		FSType: "9p",
 
-	// If mount type is 9p, we need to specify to use the virtio transport to support more VM guest OSes.
-	// Also set the msize to 32MB to allow for reasonably fast 9p access.
-	if agentMount.FSType == "9p" {
-		agentMount.Options = append(agentMount.Options, "trans=virtio,msize=33554432")
+		// We need to specify to use the virtio transport to support more VM guest OSes.
+		// Also set the msize to 32MB to allow for reasonably fast 9p access.
+		Options: []string{"trans=virtio,msize=33554432"},
 	}
 
 	readonly := slices.Contains(driveConf.Opts, "ro")
@@ -4329,63 +4262,137 @@ func (d *qemu) addDriveDirConfig(conf *[]cfg.Section, bus *qemuBus, fdFiles *[]*
 		agentMount.Options = append(agentMount.Options, "ro")
 	}
 
-	// Record the 9p mount for the agent.
+	// Record the mount for the agent.
 	*agentMounts = append(*agentMounts, agentMount)
 
-	// Check if the disk device has provided a virtiofsd socket path.
-	var virtiofsdSockPath string
-	for _, opt := range driveConf.Opts {
-		if strings.HasPrefix(opt, fmt.Sprintf("%s=", device.DiskVirtiofsdSockMountOpt)) {
-			parts := strings.SplitN(opt, "=", 2)
-			virtiofsdSockPath = parts[1]
-		}
-	}
-
-	// If there is a virtiofsd socket path setup the virtio-fs share.
-	if virtiofsdSockPath != "" {
-		if !util.PathExists(virtiofsdSockPath) {
-			return fmt.Errorf("virtiofsd socket path %q doesn't exist", virtiofsdSockPath)
-		}
-
-		devBus, devAddr, multi := bus.allocate(busFunctionGroup9p)
-
-		// Add virtio-fs device as this will be preferred over 9p.
-		driveDirVirtioOpts := qemuDriveDirOpts{
-			dev: qemuDevOpts{
-				busName:       bus.name,
-				devBus:        devBus,
-				devAddr:       devAddr,
-				multifunction: multi,
-			},
-			devName:  driveConf.DevName,
-			mountTag: mountTag,
-			path:     virtiofsdSockPath,
-			protocol: "virtio-fs",
-		}
-		*conf = append(*conf, qemuDriveDir(&driveDirVirtioOpts)...)
-	}
-
 	// Add 9p share config.
-	if !slices.Contains(driveConf.Opts, "bus=virtiofs") {
-		devBus, devAddr, multi := bus.allocate(busFunctionGroup9p)
-
-		driveDir9pOpts := qemuDriveDirOpts{
-			dev: qemuDevOpts{
-				busName:       bus.name,
-				devBus:        devBus,
-				devAddr:       devAddr,
-				multifunction: multi,
-			},
-			devName:  driveConf.DevName,
-			mountTag: mountTag,
-			readonly: readonly,
-			path:     driveConf.DevPath,
-			protocol: "9p",
-		}
-		*conf = append(*conf, qemuDriveDir(&driveDir9pOpts)...)
+	driveDir9pOpts := qemuDriveDirOpts{
+		dev: qemuDevOpts{
+			busName:       busName,
+			devBus:        qemuDev["bus"].(string),
+			devAddr:       qemuDev["addr"].(string),
+			multifunction: qemuDev["multifunction"].(bool),
+		},
+		devName:  driveConf.DevName,
+		mountTag: mountTag,
+		readonly: readonly,
+		path:     driveConf.DevPath,
+		protocol: "9p",
 	}
 
-	return nil
+	return qemuDriveDir(&driveDir9pOpts)
+}
+
+// addDriveDirConfigVirtiofs adds the qemu config required for adding a supplementary drive directory share using virtiofs.
+func (d *qemu) addDriveDirConfigVirtiofs(qemuDev map[string]any, agentMounts *[]instancetype.VMAgentMount, driveConf deviceConfig.MountEntryItem) (monitorHook, error) {
+	escapedDeviceName := linux.PathNameEncode(driveConf.DevName)
+	deviceID := qemuDeviceIDPrefix + escapedDeviceName
+	mountTag := "incus_" + driveConf.DevName
+
+	if agentMounts != nil {
+		agentMount := instancetype.VMAgentMount{
+			Source: mountTag,
+			Target: driveConf.TargetPath,
+			FSType: "virtiofs",
+		}
+
+		// Indicate to agent to mount this readonly. Note: This is purely to indicate to VM guest that this is
+		// readonly, it should *not* be used as a security measure, as the VM guest could remount it R/W.
+		if slices.Contains(driveConf.Opts, "ro") {
+			agentMount.Options = append(agentMount.Options, "ro")
+		}
+
+		// Record the mount for the agent.
+		*agentMounts = append(*agentMounts, agentMount)
+	}
+
+	if qemuDev == nil {
+		qemuDev = map[string]any{}
+	}
+
+	qemuDev["driver"] = "vhost-user-fs-pci"
+	qemuDev["tag"] = mountTag
+	qemuDev["chardev"] = mountTag
+	qemuDev["id"] = deviceID
+
+	monHook := func(m *qmp.Monitor) error {
+		reverter := revert.New()
+		defer reverter.Fail()
+
+		// Detect virtiofsd path.
+		virtiofsdSockPath := filepath.Join(d.DevicesPath(), fmt.Sprintf("virtio-fs.%s.sock", driveConf.DevName))
+		if !util.PathExists(virtiofsdSockPath) {
+			return errors.New("Virtiofsd isn't running")
+		}
+
+		addr, err := net.ResolveUnixAddr("unix", virtiofsdSockPath)
+		if err != nil {
+			return err
+		}
+
+		virtiofsSock, err := net.DialUnix("unix", nil, addr)
+		if err != nil {
+			return fmt.Errorf("Error connecting to virtiofs socket %q: %w", virtiofsdSockPath, err)
+		}
+
+		defer func() { _ = virtiofsSock.Close() }() // Close file after device has been added.
+
+		virtiofsFile, err := virtiofsSock.File()
+		if err != nil {
+			return fmt.Errorf("Error opening virtiofs socket %q: %w", virtiofsdSockPath, err)
+		}
+
+		err = m.SendFile(virtiofsdSockPath, virtiofsFile)
+		if err != nil {
+			return fmt.Errorf("Failed to send virtiofs file descriptor: %w", err)
+		}
+
+		reverter.Add(func() { _ = m.CloseFile(virtiofsdSockPath) })
+
+		err = m.AddCharDevice(map[string]any{
+			"id": mountTag,
+			"backend": map[string]any{
+				"type": "socket",
+				"data": map[string]any{
+					"addr": map[string]any{
+						"type": "fd",
+						"data": map[string]any{
+							"str": virtiofsdSockPath,
+						},
+					},
+					"server": false,
+				},
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("Failed to add the character device: %w", err)
+		}
+
+		reverter.Add(func() { _ = m.RemoveCharDevice(mountTag) })
+
+		_, ok := qemuDev["bus"]
+		if !ok {
+			// Try to get a PCI address for hotplugging.
+			pciDeviceName, err := d.getPCIHotplug()
+			if err != nil {
+				return err
+			}
+
+			d.logger.Debug("Using PCI bus device to hotplug virtiofs into", logger.Ctx{"device": driveConf.DevName, "port": pciDeviceName, "was": qemuDev["bus"]})
+			qemuDev["bus"] = pciDeviceName
+			qemuDev["addr"] = "00.0"
+		}
+
+		err = m.AddDevice(qemuDev)
+		if err != nil {
+			return fmt.Errorf("Failed to add the virtiofs device: %w", err)
+		}
+
+		reverter.Success()
+		return nil
+	}
+
+	return monHook, nil
 }
 
 // addDriveConfig adds the qemu config required for adding a supplementary drive.
@@ -4648,7 +4655,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 			qemuDev["driver"] = "scsi-cd"
 		}
 	} else if slices.Contains([]string{"nvme", "virtio-blk"}, bus) {
-		if qemuDev["bus"] == "" {
+		if qemuDev["bus"] == nil {
 			// Try to get a PCI address for hotplugging.
 			pciDeviceName, err := d.getPCIHotplug()
 			if err != nil {
@@ -5350,7 +5357,7 @@ func (d *qemu) Stop(stateful bool) error {
 	// Check for stateful.
 	if stateful {
 		// Confirm the instance has stateful migration enabled.
-		if util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+		if !d.CanLiveMigrate() {
 			return errors.New("Stateful stop requires migration.stateful to be set to true")
 		}
 
@@ -5516,7 +5523,7 @@ func (d *qemu) snapshot(name string, expiry time.Time, stateful bool) error {
 	// Deal with state.
 	if stateful {
 		// Confirm the instance has stateful migration enabled.
-		if util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+		if !d.CanLiveMigrate() {
 			return errors.New("Stateful snapshot requires migration.stateful to be set to true")
 		}
 
@@ -7130,7 +7137,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	defer d.logger.Debug("Migration send stopped")
 
 	// Check for stateful support.
-	if args.Live && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+	if args.Live && !d.CanLiveMigrate() {
 		return errors.New("Live migration requires migration.stateful to be set to true")
 	}
 
@@ -10262,4 +10269,9 @@ func (d *qemu) DumpGuestMemory(w *os.File, format string) error {
 	}
 
 	return nil
+}
+
+// CanLiveMigrate returns whether the VM is live-migratable.
+func (d *qemu) CanLiveMigrate() bool {
+	return util.IsTrue(d.expandedConfig["migration.stateful"])
 }

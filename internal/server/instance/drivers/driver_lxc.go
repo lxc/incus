@@ -2707,7 +2707,7 @@ func (d *lxc) detachInterfaceRename(netns string, ifName string, hostName string
 // Start starts the instance.
 func (d *lxc) Start(stateful bool) error {
 	// Check that migration.stateful is set for stateful actions.
-	if stateful && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+	if stateful && !d.CanLiveMigrate() {
 		return errors.New("Stateful start requires that the instance migration.stateful be set to true")
 	}
 
@@ -2999,7 +2999,7 @@ func (d *lxc) Stop(stateful bool) error {
 	defer d.logger.Debug("Stop finished", logger.Ctx{"stateful": stateful})
 
 	// Check that migration.stateful is set for stateful actions.
-	if stateful && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+	if stateful && !d.CanLiveMigrate() {
 		return errors.New("Stateful stop requires the instance to have migration.stateful be set to true")
 	}
 
@@ -3858,7 +3858,7 @@ func (d *lxc) RenderState(hostInterfaces []net.Interface) (*api.InstanceState, e
 // snapshot creates a snapshot of the instance.
 func (d *lxc) snapshot(name string, expiry time.Time, stateful bool) error {
 	// Check that migration.stateful is set for stateful actions.
-	if stateful && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+	if stateful && !d.CanLiveMigrate() {
 		return errors.New("Stateful snapshots require that the instance has migration.stateful be set to true")
 	}
 
@@ -9181,4 +9181,9 @@ func (d *lxc) ReloadDevice(devName string) error {
 	}
 
 	return dev.Update(d.expandedDevices, true)
+}
+
+// CanLiveMigrate returns whether the container is live-migratable.
+func (d *lxc) CanLiveMigrate() bool {
+	return util.IsTrue(d.expandedConfig["migration.stateful"])
 }
