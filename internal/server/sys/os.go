@@ -205,7 +205,7 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 		s.KernelVersion = *kernelVersion
 	}
 
-	s.IncusOS = util.PathExists("/run/incus-os/unix.socket")
+	s.IncusOS = util.PathExists("/var/lib/incus-os/")
 
 	// Fill in the boot time.
 	out, err := os.ReadFile("/proc/stat")
