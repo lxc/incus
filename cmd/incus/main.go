@@ -584,3 +584,22 @@ func (c *cmdGlobal) defaultListFormat() string {
 
 	return c.conf.Defaults.ListFormat
 }
+
+// Return "vga" if preferred console type is VGA, otherwise return "console".
+func (c *cmdGlobal) defaultConsoleType() string {
+	if c.conf == nil || c.conf.Defaults.ConsoleType == "" {
+		return "console"
+	}
+
+	return c.conf.Defaults.ConsoleType
+}
+
+// Return the default console type if the user configured it, otherwise just return "console".
+func (c *cmdGlobal) defaultConsoleSpiceCommand() string {
+	// Alternative SPICE command.
+	if c.conf == nil || c.conf.Defaults.ConsoleSpiceCommand == "" {
+		return ""
+	}
+
+	return c.conf.Defaults.ConsoleSpiceCommand
+}
