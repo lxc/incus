@@ -27,6 +27,10 @@ test_storage_local_volume_handling() {
             fi
         fi
 
+        if storage_backend_available "truenas"; then
+            incus storage create "${pool_base}-truenas" truenas "$(truenas_source)/$(uuidgen)" "$(truenas_config)" "$(truenas_allow_insecure)" "$(truenas_api_key)"
+        fi
+
         incus storage create "${pool_base}-dir" dir
 
         if storage_backend_available "lvm"; then
@@ -58,6 +62,10 @@ test_storage_local_volume_handling() {
 
         if [ "$driver" = "ceph" ]; then
             pool_opts="volume.size=25MiB ceph.osd.pg_num=16"
+        fi
+
+        if [ "$driver" = "truenas" ]; then
+            pool_opts="$(truenas_source)/$(uuidgen) $(truenas_config) $(truenas_allow_insecure) $(truenas_api_key)"
         fi
 
         if [ "$driver" = "lvm" ]; then
