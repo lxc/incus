@@ -10,8 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/mattn/go-sqlite3"
 )
 
 var networkZoneObjects = RegisterStmt(`
@@ -369,11 +367,8 @@ func CreateNetworkZone(ctx context.Context, db dbtx, object NetworkZone) (_ int6
 
 	// Execute the statement.
 	result, err := stmt.Exec(args...)
-	var sqliteErr sqlite3.Error
-	if errors.As(err, &sqliteErr) {
-		if sqliteErr.Code == sqlite3.ErrConstraint {
-			return -1, ErrConflict
-		}
+	if err != nil && strings.HasPrefix(err.Error(), "UNIQUE constraint failed:") {
+		return -1, ErrConflict
 	}
 
 	if err != nil {
