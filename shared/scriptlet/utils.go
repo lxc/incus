@@ -1,4 +1,4 @@
-package load
+package scriptlet
 
 import (
 	"errors"
@@ -6,10 +6,17 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"sync"
 
 	"go.starlark.net/starlark"
 	"go.starlark.net/syntax"
 )
+
+// Loader holds the programs for the scriptlet.
+type Loader struct {
+	programsMu sync.Mutex
+	programs   map[string]*starlark.Program
+}
 
 // argMismatch represents mismatching arguments in a function.
 type argMismatch struct {
@@ -23,11 +30,19 @@ type scriptletFunction struct {
 	optional bool
 }
 
-// declaration is a type alias to make scriptlet declaration easier.
-type declaration = map[scriptletFunction][]string
+// Declaration is a type alias to make scriptlet declaration easier.
+type Declaration = map[scriptletFunction][]string
 
-// compile compiles a scriptlet.
-func compile(programName string, src string, preDeclared []string) (*starlark.Program, error) {
+// NewLoader creates a new Loader.
+func NewLoader() *Loader {
+	return &Loader{
+		programsMu: sync.Mutex{},
+		programs:   map[string]*starlark.Program{},
+	}
+}
+
+// Compile compiles a scriptlet.
+func Compile(programName string, src string, preDeclared []string) (*starlark.Program, error) {
 	isPreDeclared := func(name string) bool {
 		return slices.Contains(preDeclared, name)
 	}
@@ -45,13 +60,13 @@ func compile(programName string, src string, preDeclared []string) (*starlark.Pr
 	return mod, nil
 }
 
-// required is a convenience wrapper declaring a required function.
-func required(name string) scriptletFunction {
+// Required is a convenience wrapper declaring a required function.
+func Required(name string) scriptletFunction {
 	return scriptletFunction{name: name, optional: false}
 }
 
-// required is a convenience wrapper declaring an optional function.
-func optional(name string) scriptletFunction {
+// Optional is a convenience wrapper declaring an optional function.
+func Optional(name string) scriptletFunction {
 	return scriptletFunction{name: name, optional: true}
 }
 
@@ -105,8 +120,8 @@ func validateFunction(funv starlark.Value, requiredArgs []string) (bool, bool, *
 	return false, false, nil
 }
 
-// validate validates a scriptlet by compiling it and checking the presence of required and optional functions.
-func validate(compiler func(string, string) (*starlark.Program, error), programName string, src string, scriptletFunctions declaration) error {
+// Validate validates a scriptlet by compiling it and checking the presence of required and optional functions.
+func Validate(compiler func(string, string) (*starlark.Program, error), programName string, src string, scriptletFunctions Declaration) error {
 	// Try to compile the program.
 	prog, err := compiler(programName, src)
 	if err != nil {
@@ -152,11 +167,13 @@ func validate(compiler func(string, string) (*starlark.Program, error), programN
 	// String builder to format pretty error messages.
 	appendToError := func(text string) {
 		var link string
-		if sentences == 0 {
+
+		switch sentences {
+		case 0:
 			link = ""
-		} else if sentences == 1 {
+		case 1:
 			link = "; additionally, "
-		} else {
+		default:
 			link = "; finally, "
 		}
 
@@ -194,31 +211,31 @@ func validate(compiler func(string, string) (*starlark.Program, error), programN
 	return errors.New(errorText)
 }
 
-// set compiles a scriptlet into memory. If empty src is provided the current program is deleted.
-func set(compiler func(string, string) (*starlark.Program, error), programName string, src string) error {
+// Set compiles a scriptlet into memory. If empty src is provided the current program is deleted.
+func (l *Loader) Set(compiler func(string, string) (*starlark.Program, error), programName string, src string) error {
 	if src == "" {
-		programsMu.Lock()
-		delete(programs, programName)
-		programsMu.Unlock()
+		l.programsMu.Lock()
+		delete(l.programs, programName)
+		l.programsMu.Unlock()
 	} else {
 		prog, err := compiler(programName, src)
 		if err != nil {
 			return err
 		}
 
-		programsMu.Lock()
-		programs[programName] = prog
-		programsMu.Unlock()
+		l.programsMu.Lock()
+		l.programs[programName] = prog
+		l.programsMu.Unlock()
 	}
 
 	return nil
 }
 
-// program returns a precompiled scriptlet program.
-func program(name string, programName string) (*starlark.Program, *starlark.Thread, error) {
-	programsMu.Lock()
-	prog, found := programs[programName]
-	programsMu.Unlock()
+// Program returns a precompiled scriptlet program.
+func (l *Loader) Program(name string, programName string) (*starlark.Program, *starlark.Thread, error) {
+	l.programsMu.Lock()
+	prog, found := l.programs[programName]
+	l.programsMu.Unlock()
 	if !found {
 		return nil, nil, fmt.Errorf("%s scriptlet not loaded", name)
 	}
