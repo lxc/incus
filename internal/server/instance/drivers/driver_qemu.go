@@ -5274,9 +5274,15 @@ func (d *qemu) addTPMDeviceConfig(conf *[]cfg.Section, tpmConfig []deviceConfig.
 
 	tpmFD := d.addFileDescriptor(fdFiles, os.NewFile(uintptr(fd), socketPath))
 
+	tpmDriver := "tpm-tis-device"
+	if d.architecture == osarch.ARCH_64BIT_INTEL_X86 {
+		tpmDriver = "tpm-crb"
+	}
+
 	tpmOpts := qemuTPMOpts{
 		devName: devName,
 		path:    fmt.Sprintf("/proc/self/fd/%d", tpmFD),
+		driver:  tpmDriver,
 	}
 	*conf = append(*conf, qemuTPM(&tpmOpts)...)
 
