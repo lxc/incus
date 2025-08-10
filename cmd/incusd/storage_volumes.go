@@ -1514,7 +1514,7 @@ func storageVolumePostClusteringMigrate(s *state.State, r *http.Request, srcPool
 			},
 		})
 		if err != nil {
-			return fmt.Errorf("Failed requesting instance create on destination: %w", err)
+			return fmt.Errorf("Failed requesting volume create on destination: %w", err)
 		}
 
 		return nil

@@ -1135,6 +1135,12 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 			}
 
 			logger.Debug("No name provided for new instance, using auto-generated name", logger.Ctx{"project": targetProjectName, "instance": req.Name})
+		} else if req.Source.Type != "migration" && !req.Source.Refresh {
+			// Check if the instance name is already in use.
+			id, err := tx.GetInstanceID(ctx, targetProjectName, req.Name)
+			if err == nil && id > 0 {
+				return fmt.Errorf("Instance %q already exists", req.Name)
+			}
 		}
 
 		if s.ServerClustered && !clusterNotification && targetMemberInfo == nil {
