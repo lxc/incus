@@ -1069,6 +1069,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			qemuTPMOpts{
 				devName: "myTpm",
 				path:    "/dev/my/tpm",
+				driver:  "tpm-crb",
 			},
 			`[chardev "qemu_tpm-chardev_myTpm"]
 			backend = "socket"
