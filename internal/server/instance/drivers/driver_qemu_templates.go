@@ -931,6 +931,7 @@ func qemuUSB(opts *qemuUSBOpts) []cfg.Section {
 type qemuTPMOpts struct {
 	devName string
 	path    string
+	driver  string
 }
 
 func qemuTPM(opts *qemuTPMOpts) []cfg.Section {
@@ -952,7 +953,7 @@ func qemuTPM(opts *qemuTPMOpts) []cfg.Section {
 	}, {
 		Name: fmt.Sprintf(`device "%s%s"`, qemuDeviceIDPrefix, opts.devName),
 		Entries: map[string]string{
-			"driver": "tpm-crb",
+			"driver": opts.driver,
 			"tpmdev": tpmdev,
 		},
 	}}
