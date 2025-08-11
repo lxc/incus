@@ -22,7 +22,7 @@ func (n *sriov) DBType() db.NetworkType {
 }
 
 // Validate network config.
-func (n *sriov) Validate(config map[string]string) error {
+func (n *sriov) Validate(config map[string]string, clientType request.ClientType) error {
 	rules := map[string]func(value string) error{
 		// gendoc:generate(entity=network_sriov, group=common, key=parent)
 		//
