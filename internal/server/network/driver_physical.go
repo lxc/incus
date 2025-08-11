@@ -31,7 +31,7 @@ func (n *physical) DBType() db.NetworkType {
 }
 
 // Validate network config.
-func (n *physical) Validate(config map[string]string) error {
+func (n *physical) Validate(config map[string]string, clientType request.ClientType) error {
 	rules := map[string]func(value string) error{
 		// gendoc:generate(entity=network_physical, group=common, key=parent)
 		//

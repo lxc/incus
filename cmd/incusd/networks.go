@@ -865,7 +865,7 @@ func doNetworksCreate(ctx context.Context, s *state.State, n network.Network, cl
 	}
 
 	// Validate so that when run on a cluster node the full config (including node specific config) is checked.
-	err := n.Validate(validateConfig)
+	err := n.Validate(validateConfig, clientType)
 	if err != nil {
 		return err
 	}
@@ -1595,7 +1595,7 @@ func doNetworkUpdate(n network.Network, req api.NetworkPut, targetNode string, c
 	}
 
 	// Validate the merged configuration.
-	err := n.Validate(req.Config)
+	err := n.Validate(req.Config, clientType)
 	if err != nil {
 		return response.BadRequest(err)
 	}
@@ -1790,7 +1790,7 @@ func networkStartup(s *state.State) error {
 		}
 
 		netConfig := n.Config()
-		err = n.Validate(netConfig)
+		err = n.Validate(netConfig, clusterRequest.ClientTypeNormal)
 		if err != nil {
 			return fmt.Errorf("Failed validating: %w", err)
 		}
