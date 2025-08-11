@@ -2830,7 +2830,7 @@ func (d *zfs) BackupVolume(vol Volume, tarWriter *instancewriter.InstanceTarWrit
 	// Handle the optimized tarballs.
 	sendToFile := func(path string, parent string, fileName string) error {
 		// Prepare zfs send arguments.
-		args := []string{"send"}
+		args := []string{"send", "-c", "-L"}
 
 		// Check if nesting is required.
 		if d.needsRecursion(path) {
