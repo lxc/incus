@@ -2958,6 +2958,124 @@ definitions:
         title: NetworkACLsPost used for creating an ACL.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
+    NetworkAddressSet:
+        description: Refer to doc/howto/network_address_sets.md for details.
+        properties:
+            addresses:
+                description: List of addresses in the set
+                example:
+                    - 192.0.0.1
+                    - 2001:0db8:1234::1
+                items:
+                    type: string
+                type: array
+                x-go-name: Addresses
+            config:
+                additionalProperties:
+                    type: string
+                description: Address set configuration map (refer to doc/network-address-sets.md)
+                example:
+                    user.mykey: foo
+                type: object
+                x-go-name: Config
+            description:
+                description: Description of the address set
+                example: Web servers
+                type: string
+                x-go-name: Description
+            name:
+                description: The new name of the address set
+                example: '"bar"'
+                type: string
+                x-go-name: Name
+            project:
+                description: Project name
+                example: project1
+                type: string
+                x-go-name: Project
+            used_by:
+                description: List of URLs of objects using this profile
+                example:
+                    - /1.0/network-acls/foo
+                    - /1.0/network-acls/bar
+                    - /1.0/network-acls/baz
+                items:
+                    type: string
+                readOnly: true
+                type: array
+                x-go-name: UsedBy
+        title: NetworkAddressSet represents an address set.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    NetworkAddressSetPost:
+        properties:
+            name:
+                description: The new name of the address set
+                example: '"bar"'
+                type: string
+                x-go-name: Name
+        title: NetworkAddressSetPost used for renaming an address set.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    NetworkAddressSetPut:
+        properties:
+            addresses:
+                description: List of addresses in the set
+                example:
+                    - 192.0.0.1
+                    - 2001:0db8:1234::1
+                items:
+                    type: string
+                type: array
+                x-go-name: Addresses
+            config:
+                additionalProperties:
+                    type: string
+                description: Address set configuration map (refer to doc/network-address-sets.md)
+                example:
+                    user.mykey: foo
+                type: object
+                x-go-name: Config
+            description:
+                description: Description of the address set
+                example: Web servers
+                type: string
+                x-go-name: Description
+        title: NetworkAddressSetPut used for updating an address set.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    NetworkAddressSetsPost:
+        properties:
+            addresses:
+                description: List of addresses in the set
+                example:
+                    - 192.0.0.1
+                    - 2001:0db8:1234::1
+                items:
+                    type: string
+                type: array
+                x-go-name: Addresses
+            config:
+                additionalProperties:
+                    type: string
+                description: Address set configuration map (refer to doc/network-address-sets.md)
+                example:
+                    user.mykey: foo
+                type: object
+                x-go-name: Config
+            description:
+                description: Description of the address set
+                example: Web servers
+                type: string
+                x-go-name: Description
+            name:
+                description: The new name of the address set
+                example: '"bar"'
+                type: string
+                x-go-name: Name
+        title: NetworkAddressSetsPost used for creating a new address set.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
     NetworkAllocations:
         description: |-
             NetworkAllocations used for displaying network addresses used by a consuming entity
