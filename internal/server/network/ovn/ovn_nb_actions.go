@@ -2688,7 +2688,7 @@ func (o *NB) GetPortGroupInfo(ctx context.Context, portGroupName OVNPortGroup) (
 }
 
 // CreatePortGroup creates a new port group and optionally adds logical switch ports to the group.
-func (o *NB) CreatePortGroup(ctx context.Context, projectID int64, portGroupName OVNPortGroup, associatedPortGroup OVNPortGroup, associatedSwitch OVNSwitch, initialPortMembers ...OVNSwitchPort) error {
+func (o *NB) CreatePortGroup(ctx context.Context, projectID int64, portGroupName OVNPortGroup, associatedPortGroups []OVNPortGroup, associatedSwitch OVNSwitch, initialPortMembers ...OVNSwitchPort) error {
 	// Resolve the initial members.
 	members := []string{}
 	for _, portName := range initialPortMembers {
@@ -2713,9 +2713,14 @@ func (o *NB) CreatePortGroup(ctx context.Context, projectID int64, portGroupName
 		},
 	}
 
-	if associatedPortGroup != "" || associatedSwitch != "" {
-		if associatedPortGroup != "" {
-			pg.ExternalIDs[ovnExtIDIncusPortGroup] = string(associatedPortGroup)
+	if len(associatedPortGroups) > 0 || associatedSwitch != "" {
+		if len(associatedPortGroups) > 0 {
+			var parts []string
+			for _, v := range associatedPortGroups {
+				parts = append(parts, string(v))
+			}
+
+			pg.ExternalIDs[ovnExtIDIncusPortGroup] = string(strings.Join(parts, ","))
 		}
 
 		if associatedSwitch != "" {
