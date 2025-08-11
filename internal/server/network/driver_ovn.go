@@ -722,7 +722,7 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 	var uplink *api.Network
 	projectRestrictedSubnets := []*net.IPNet{}
 
-	if n.config["network"] != "none" {
+	if n.config["network"] != "none" && clientType != request.ClientTypeNotifier {
 		uplinkNetworkName, err := n.validateUplinkNetwork(p, config["network"])
 		if err != nil {
 			return err
