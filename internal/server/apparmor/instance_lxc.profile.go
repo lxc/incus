@@ -4,7 +4,10 @@ import (
 	"text/template"
 )
 
-var lxcProfileTpl = template.Must(template.New("lxcProfile").Parse(`#include <tunables/global>
+var lxcProfileTpl = template.Must(template.New("lxcProfile").Parse(`{{- if .feature_abi40 -}}
+abi <abi/4.0>,
+{{ end -}}
+#include <tunables/global>
 profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   ### Base profile
   capability,
@@ -12,6 +15,9 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   file,
   network,
   umount,
+{{- if .feature_abi40 }}
+  userns,
+{{- end }}
 
   # Extra binaries
 {{- range $index, $element := .extra_binaries }}
