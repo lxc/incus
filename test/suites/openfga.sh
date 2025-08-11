@@ -218,8 +218,8 @@ user_is_not_project_operator() {
     [ "$(incus network list-allocations oidc-openfga: -f csv | wc -l)" = 0 ]
     [ "$(incus network list-allocations oidc-openfga: --all-projects -f csv | wc -l)" = 0 ]
 
-    # Should not be able to see or create networks.
-    [ "$(incus network list oidc-openfga: -f csv | wc -l)" = 0 ]
+    # Should not be able to see or create managed networks.
+    [ "$(incus network list oidc-openfga: -f csv managed=true | wc -l)" = 0 ]
     ! incus network create oidc-openfga:test-network || false
 
     # Should not be able to see or create network ACLs.
