@@ -281,7 +281,12 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 			}
 
 			// Get the interfaces.
-			networkNames[projectName] = append(networkNames[projectName], ns.State.GetInterfaceNamesByRole("instances")...)
+			for _, iface := range ns.State.GetInterfaceNamesByRole("instances") {
+				// Append to the list of networks if a managed network of same name doesn't exist.
+				if !slices.Contains(networkNames[projectName], iface) {
+					networkNames[projectName] = append(networkNames[projectName], iface)
+				}
+			}
 		} else {
 			ifaces, err := net.Interfaces()
 			if err != nil {
