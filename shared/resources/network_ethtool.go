@@ -1,3 +1,5 @@
+//go:build linux
+
 package resources
 
 import (
@@ -199,9 +201,10 @@ func ethtoolGset(ethtoolFd int, req *ethtoolReq, info *api.ResourcesNetworkCardP
 
 	if info.LinkDetected {
 		// Link duplex
-		if ethCmd.duplex == 0x00 {
+		switch ethCmd.duplex {
+		case 0x00:
 			info.LinkDuplex = "half"
-		} else if ethCmd.duplex == 0x01 {
+		case 0x01:
 			info.LinkDuplex = "full"
 		}
 
@@ -213,28 +216,30 @@ func ethtoolGset(ethtoolFd int, req *ethtoolReq, info *api.ResourcesNetworkCardP
 	}
 
 	// Transceiver
-	if ethCmd.transceiver == 0x00 {
+	switch ethCmd.transceiver {
+	case 0x00:
 		info.TransceiverType = "internal"
-	} else if ethCmd.transceiver == 0x01 {
+	case 0x01:
 		info.TransceiverType = "external"
 	}
 
 	// Port
-	if ethCmd.port == 0x00 {
+	switch ethCmd.port {
+	case 0x00:
 		info.PortType = "twisted pair"
-	} else if ethCmd.port == 0x01 {
+	case 0x01:
 		info.PortType = "AUI"
-	} else if ethCmd.port == 0x02 {
+	case 0x02:
 		info.PortType = "media-independent"
-	} else if ethCmd.port == 0x03 {
+	case 0x03:
 		info.PortType = "fibre"
-	} else if ethCmd.port == 0x04 {
+	case 0x04:
 		info.PortType = "BNC"
-	} else if ethCmd.port == 0x05 {
+	case 0x05:
 		info.PortType = "direct attach"
-	} else if ethCmd.port == 0xef {
+	case 0xef:
 		info.PortType = "none"
-	} else if ethCmd.port == 0xff {
+	case 0xff:
 		info.PortType = "other"
 	}
 
@@ -304,9 +309,10 @@ func ethtoolLink(ethtoolFd int, req *ethtoolReq, info *api.ResourcesNetworkCardP
 
 	if info.LinkDetected {
 		// Link duplex
-		if ethLinkSettings.duplex == 0x00 {
+		switch ethLinkSettings.duplex {
+		case 0x00:
 			info.LinkDuplex = "half"
-		} else if ethLinkSettings.duplex == 0x01 {
+		case 0x01:
 			info.LinkDuplex = "full"
 		}
 
@@ -318,28 +324,30 @@ func ethtoolLink(ethtoolFd int, req *ethtoolReq, info *api.ResourcesNetworkCardP
 	}
 
 	// Transceiver
-	if ethLinkSettings.transceiver == 0x00 {
+	switch ethLinkSettings.transceiver {
+	case 0x00:
 		info.TransceiverType = "internal"
-	} else if ethLinkSettings.transceiver == 0x01 {
+	case 0x01:
 		info.TransceiverType = "external"
 	}
 
 	// Port
-	if ethLinkSettings.port == 0x00 {
+	switch ethLinkSettings.port {
+	case 0x00:
 		info.PortType = "twisted pair"
-	} else if ethLinkSettings.port == 0x01 {
+	case 0x01:
 		info.PortType = "AUI"
-	} else if ethLinkSettings.port == 0x02 {
+	case 0x02:
 		info.PortType = "media-independent"
-	} else if ethLinkSettings.port == 0x03 {
+	case 0x03:
 		info.PortType = "fibre"
-	} else if ethLinkSettings.port == 0x04 {
+	case 0x04:
 		info.PortType = "BNC"
-	} else if ethLinkSettings.port == 0x05 {
+	case 0x05:
 		info.PortType = "direct attach"
-	} else if ethLinkSettings.port == 0xef {
+	case 0xef:
 		info.PortType = "none"
-	} else if ethLinkSettings.port == 0xff {
+	case 0xff:
 		info.PortType = "other"
 	}
 

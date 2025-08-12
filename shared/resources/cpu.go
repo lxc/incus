@@ -1,3 +1,5 @@
+//go:build linux
+
 package resources
 
 import (
@@ -354,7 +356,7 @@ func GetCPU() (*api.ResourcesCPU, error) {
 					}
 
 					if key == "flags" {
-						flagList = strings.SplitN(value, " ", -1)
+						flagList = strings.Split(value, " ")
 						continue
 					}
 

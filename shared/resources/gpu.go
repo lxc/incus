@@ -1,3 +1,5 @@
+//go:build linux
+
 package resources
 
 import (
@@ -52,8 +54,6 @@ func loadNvidiaProc() (map[string]*api.ResourcesGPUCardNvidia, error) {
 			return nil, fmt.Errorf("Failed to open %q: %w", filepath.Join(entryPath, "information"), err)
 		}
 
-		defer func() { _ = f.Close() }()
-
 		gpuInfo := bufio.NewScanner(f)
 		nvidiaCard := &api.ResourcesGPUCardNvidia{}
 		for gpuInfo.Scan() {
@@ -76,6 +76,11 @@ func loadNvidiaProc() (map[string]*api.ResourcesGPUCardNvidia, error) {
 				nvidiaCard.CardName = fmt.Sprintf("nvidia%s", value)
 				nvidiaCard.CardDevice = fmt.Sprintf("195:%s", value)
 			}
+		}
+
+		err = f.Close()
+		if err != nil {
+			return nil, fmt.Errorf("Failed to close %q: %w", filepath.Join(entryPath, "information"), err)
 		}
 
 		nvidiaCards[entryName] = nvidiaCard
@@ -353,12 +358,12 @@ func gpuAddDeviceInfo(devicePath string, nvidiaCards map[string]*api.ResourcesGP
 			// API
 			apiPath := filepath.Join(entryPath, "device_api")
 			if sysfsExists(apiPath) {
-				api, err := os.ReadFile(apiPath)
+				deviceAPI, err := os.ReadFile(apiPath)
 				if err != nil {
 					return fmt.Errorf("Failed to read %q: %w", apiPath, err)
 				}
 
-				mdev.API = strings.TrimSpace(string(api))
+				mdev.API = strings.TrimSpace(string(deviceAPI))
 			}
 
 			// Available
