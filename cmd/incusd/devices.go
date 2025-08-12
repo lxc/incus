@@ -18,9 +18,9 @@ import (
 	"github.com/lxc/incus/v6/internal/server/device"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
-	"github.com/lxc/incus/v6/internal/server/resources"
 	"github.com/lxc/incus/v6/internal/server/state"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/resources"
 	"github.com/lxc/incus/v6/shared/util"
 )
 

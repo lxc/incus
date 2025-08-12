@@ -11,13 +11,13 @@ import (
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	internalInstance "github.com/lxc/incus/v6/internal/server/instance"
-	"github.com/lxc/incus/v6/internal/server/resources"
 	scriptletLoad "github.com/lxc/incus/v6/internal/server/scriptlet/load"
 	"github.com/lxc/incus/v6/internal/server/scriptlet/log"
 	"github.com/lxc/incus/v6/internal/server/state"
 	"github.com/lxc/incus/v6/shared/api"
 	apiScriptlet "github.com/lxc/incus/v6/shared/api/scriptlet"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/resources"
 	"github.com/lxc/incus/v6/shared/scriptlet"
 )
 

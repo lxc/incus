@@ -9,8 +9,8 @@ import (
 	pcidev "github.com/lxc/incus/v6/internal/server/device/pci"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
-	"github.com/lxc/incus/v6/internal/server/resources"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/resources"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
