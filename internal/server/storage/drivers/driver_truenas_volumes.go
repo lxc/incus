@@ -36,7 +36,7 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 
 	if vol.contentType == ContentTypeFS {
 		// Create mountpoint.
-		err := vol.EnsureMountPath()
+		err := vol.EnsureMountPath(true)
 		if err != nil {
 			return err
 		}
@@ -268,7 +268,7 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		if vol.contentType == ContentTypeFS {
 			// Run EnsureMountPath again after mounting and filling to ensure the mount directory has
 			// the correct permissions set.
-			err := vol.EnsureMountPath()
+			err := vol.EnsureMountPath(true)
 			if err != nil {
 				return err
 			}
@@ -330,7 +330,7 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 
 	if vol.contentType == ContentTypeFS {
 		// Create mountpoint.
-		err = vol.EnsureMountPath()
+		err = vol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}
@@ -506,7 +506,7 @@ func (d *truenas) createOrRefeshVolumeFromCopy(vol Volume, srcVol Volume, refres
 
 		// Mount the volume and ensure the permissions are set correctly inside the mounted volume.
 		err := vol.MountTask(func(_ string, _ *operations.Operation) error {
-			return vol.EnsureMountPath()
+			return vol.EnsureMountPath(false)
 		}, op)
 		if err != nil {
 			return err
@@ -543,7 +543,7 @@ func (d *truenas) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 func (d *truenas) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
 	if volTargetArgs.ClusterMoveSourceName != "" && volTargetArgs.StoragePool == "" {
 		d.logger.Debug("Detected migration between cluster members on the same storage pool")
-		err := vol.EnsureMountPath()
+		err := vol.EnsureMountPath(false)
 		if err != nil {
 			return err
 		}
@@ -1284,7 +1284,7 @@ func (d *truenas) MountVolume(vol Volume, op *operations.Operation) error {
 	case ContentTypeFS:
 		mountPath := vol.MountPath()
 		if !linux.IsMountPoint(mountPath) {
-			err := vol.EnsureMountPath()
+			err := vol.EnsureMountPath(false)
 			if err != nil {
 				return err
 			}
@@ -1476,7 +1476,7 @@ func (d *truenas) CreateVolumeSnapshot(vol Volume, op *operations.Operation) err
 	}
 
 	// Create snapshot directory.
-	err = vol.EnsureMountPath()
+	err = vol.EnsureMountPath(false)
 	if err != nil {
 		return err
 	}
@@ -1649,7 +1649,7 @@ func (d *truenas) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 		mountPath := snapVol.MountPath()
 		l.Debug("Content type FS", logger.Ctx{"mountPath": mountPath})
 		if !linux.IsMountPoint(mountPath) {
-			err := snapVol.EnsureMountPath()
+			err := snapVol.EnsureMountPath(false)
 			if err != nil {
 				return err
 			}
