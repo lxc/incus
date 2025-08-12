@@ -3430,7 +3430,15 @@ func (n *bridge) UsesDNSMasq() bool {
 
 	// Start dnsmassq if IPv6 is used (needed for SLAAC or DHCPv6).
 	if !util.IsNoneOrEmpty(n.config["ipv6.address"]) {
-		return true
+		ipAddress, _, err := net.ParseCIDR(n.config["ipv6.address"])
+		if err != nil {
+			return true
+		}
+
+		// Only require dnsmasq if using a global address.
+		if !ipAddress.IsLinkLocalUnicast() {
+			return true
+		}
 	}
 
 	// Start dnsmasq if IPv4 DHCP is used.
