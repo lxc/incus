@@ -78,15 +78,18 @@ func ParseIDs(r io.Reader) (map[ID]*Vendor, map[ClassCode]*Class, error) {
 	vendors := make(map[ID]*Vendor, 2800)
 	classes := make(map[ClassCode]*Class) // TODO(kevlar): count
 
-	split := func(s string) (kind string, level int, id uint64, name string, err error) {
+	split := func(s string) (string, int, uint64, string, error) {
+		var level int
+		var kind string
+		var id uint64
+
 		pieces := strings.SplitN(s, "  ", 2)
 		if len(pieces) != 2 {
-			err = fmt.Errorf("malformatted line %q", s)
-			return
+			return "", 0, 0, "", fmt.Errorf("malformatted line %q", s)
 		}
 
 		// Save the name
-		name = pieces[1]
+		name := pieces[1]
 
 		// Parse out the level
 		for len(pieces[0]) > 0 && pieces[0][0] == '\t' {
@@ -102,13 +105,12 @@ func ParseIDs(r io.Reader) (map[ID]*Vendor, map[ClassCode]*Class, error) {
 		// Parse the ID
 		i, err := strconv.ParseUint(pieces[0], 16, 16)
 		if err != nil {
-			err = fmt.Errorf("malformatted id %q: %w", pieces[0], err)
-			return
+			return "", 0, 0, "", fmt.Errorf("malformatted line %q", s)
 		}
 
 		id = i
 
-		return
+		return kind, level, id, name, nil
 	}
 
 	// Hold the interim values
