@@ -154,7 +154,7 @@ func (n *bridge) populateAutoConfig(config map[string]string) error {
 
 	// Re-validate config if changed.
 	if changedConfig && n.state != nil {
-		return n.Validate(config)
+		return n.Validate(config, request.ClientTypeNormal)
 	}
 
 	return nil
@@ -172,7 +172,7 @@ func (n *bridge) ValidateName(name string) error {
 }
 
 // Validate network config.
-func (n *bridge) Validate(config map[string]string) error {
+func (n *bridge) Validate(config map[string]string, clientType request.ClientType) error {
 	// Build driver specific rules dynamically.
 	rules := map[string]func(value string) error{
 		// gendoc:generate(entity=network_bridge, group=common, key=bgp.ipv4.nexthop)

@@ -393,7 +393,7 @@ func (n *ovn) getExternalSubnetInUse(uplinkNetworkName string) ([]externalSubnet
 }
 
 // Validate network config.
-func (n *ovn) Validate(config map[string]string) error {
+func (n *ovn) Validate(config map[string]string, clientType request.ClientType) error {
 	rules := map[string]func(value string) error{
 		// gendoc:generate(entity=network_ovn, group=common, key=network)
 		//
@@ -722,7 +722,7 @@ func (n *ovn) Validate(config map[string]string) error {
 	var uplink *api.Network
 	projectRestrictedSubnets := []*net.IPNet{}
 
-	if n.config["network"] != "none" {
+	if n.config["network"] != "none" && clientType != request.ClientTypeNotifier {
 		uplinkNetworkName, err := n.validateUplinkNetwork(p, config["network"])
 		if err != nil {
 			return err
@@ -2152,7 +2152,7 @@ func (n *ovn) populateAutoConfig(config map[string]string) error {
 
 	// Re-validate config if changed.
 	if changedConfig && n.state != nil {
-		return n.Validate(config)
+		return n.Validate(config, request.ClientTypeNormal)
 	}
 
 	return nil

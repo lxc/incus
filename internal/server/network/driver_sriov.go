@@ -22,7 +22,7 @@ func (n *sriov) DBType() db.NetworkType {
 }
 
 // Validate network config.
-func (n *sriov) Validate(config map[string]string) error {
+func (n *sriov) Validate(config map[string]string, clientType request.ClientType) error {
 	rules := map[string]func(value string) error{
 		// gendoc:generate(entity=network_sriov, group=common, key=parent)
 		//
@@ -31,6 +31,7 @@ func (n *sriov) Validate(config map[string]string) error {
 		// condition: -
 		// shortdesc: Parent interface to create `sriov` NICs on
 		"parent": validate.Required(validate.IsNotEmpty, validate.IsInterfaceName),
+
 		// gendoc:generate(entity=network_sriov, group=common, key=mtu)
 		//
 		// ---
@@ -38,6 +39,7 @@ func (n *sriov) Validate(config map[string]string) error {
 		// condition: -
 		// shortdesc: The MTU of the new interface
 		"mtu": validate.Optional(validate.IsNetworkMTU),
+
 		// gendoc:generate(entity=network_sriov, group=common, key=vlan)
 		//
 		// ---
@@ -45,6 +47,7 @@ func (n *sriov) Validate(config map[string]string) error {
 		// condition: -
 		// shortdesc: The VLAN ID to attach to
 		"vlan": validate.Optional(validate.IsNetworkVLAN),
+
 		// gendoc:generate(entity=network_sriov, group=common, key=user.*)
 		//
 		// ---

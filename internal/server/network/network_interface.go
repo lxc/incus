@@ -28,7 +28,7 @@ type Network interface {
 	init(s *state.State, id int64, projectName string, netInfo *api.Network, netNodes map[int64]db.NetworkNode) error
 
 	// Config.
-	Validate(config map[string]string) error
+	Validate(config map[string]string, clientType request.ClientType) error
 	ID() int64
 	Name() string
 	Project() string
