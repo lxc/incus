@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/v6/internal/usbid"
+	"github.com/lxc/incus/v6/internal/server/resources/usbid"
 	"github.com/lxc/incus/v6/shared/api"
 )
 
