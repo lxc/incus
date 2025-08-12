@@ -464,10 +464,12 @@ func (d *truenas) locateOrActivateIscsiDataset(dataset string) (bool, string, er
 	reverter.Add(func() { _ = d.deactivateIscsiDataset(dataset) })
 
 	status, volDiskPath, _ := strings.Cut(statusPath, "\t")
+	didCreate := false
 
 	// when `locate --create` has to create a share, it outputs two lines, one for the creation, a second for the activation, we need to discard the first.
 	if status == "created" {
 		d.logger.Debug(fmt.Sprintf("Created iscsi share for TrueNAS volume: %s", volDiskPath))
+		didCreate = true
 		_, statusPath, _ := strings.Cut(statusPath, "\n")
 		status, volDiskPath, _ = strings.Cut(statusPath, "\t")
 	}
@@ -480,7 +482,11 @@ func (d *truenas) locateOrActivateIscsiDataset(dataset string) (bool, string, er
 		return didActivate, volDiskPath, nil
 	}
 
-	return false, "", fmt.Errorf("No path for locate-activated TrueNAS volume: %v", dataset)
+	if didCreate {
+		return false, "", fmt.Errorf("Successfully created, but was unable to activate TrueNAS volume: %v, perhaps there is an iSCSI communication issue?", dataset)
+	}
+
+	return false, "", fmt.Errorf("Unable to create, activate or locate TrueNAS volume: %v, ", dataset)
 }
 
 // activateVolume activates a ZFS volume if not already active. Returns devpath if activated, "" if not.
