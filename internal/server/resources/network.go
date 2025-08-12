@@ -48,12 +48,12 @@ func networkAddDeviceInfo(devicePath string, pciDB *pcidb.PCIDB, uname unix.Utsn
 			return fmt.Errorf("Malformed VDPA device name search pattern: %w", err)
 		}
 
-		if len(vDPADevMatches) > 0 {
-			splittedPath = strings.Split(vDPADevMatches[0], "/")
-			vdpa.Device = splittedPath[len(splittedPath)-1]
-		} else {
+		if len(vDPADevMatches) == 0 {
 			return fmt.Errorf("Failed to find VDPA device at device path %q", vDPAMatches[0])
 		}
+
+		splittedPath = strings.Split(vDPADevMatches[0], "/")
+		vdpa.Device = splittedPath[len(splittedPath)-1]
 
 		// Add the VDPA data to the card
 		card.VDPA = &vdpa
