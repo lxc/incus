@@ -24,6 +24,11 @@ Name                             | Default                   | Description
 `INCUS_SKIP_TESTS`               | ""                        | Space-delimited list of test names to skip
 `INCUS_TEST_IMAGE`               | "" (busybox test image)   | Path to an image tarball to use instead of the default busybox image
 `INCUS_TMPFS`                    | 0                         | Sets up a tmpfs for the whole testsuite to run on (fast but needs memory)
+`INCUS_TRUENAS_DATASET`          | ""                        | The remote TrueNAS dataset that will contain all the `truenas` pools created whilst running tests and is required, and must exist, when using the `truenas` backend.
+`INCUS_TRUENAS_API_KEY`          | ""                        | If set, will be applied as `truenas.api_key` on `truenas` pools.
+`INCUS_TRUENAS_CONFIG`           | ""                        | If set, will be applied as `truenas.config` on `truenas` pools.
+`INCUS_TRUENAS_HOST`             | ""                        | If set, will be applied as `truenas.host` on `truenas` pools.
+`INCUS_TRUENAS_ALLOW_INSECURE`   | ""                         | If set, will be applied as `truenas.allow_insecure` on `truenas` pools.
 `INCUS_NIC_SRIOV_PARENT`         | ""                        | Enables SR-IOV NIC tests using the specified parent device
 `INCUS_IB_PHYSICAL_PARENT`       | ""                        | Enables Infiniband physical tests using the specified parent device
 `INCUS_IB_SRIOV_PARENT`          | ""                        | Enables Infiniband SR-IOV tests using the specified parent device

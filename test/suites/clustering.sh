@@ -1005,16 +1005,16 @@ test_clustering_storage_single_node() {
     driver_config=""
     if [ "${poolDriver}" = "btrfs" ]; then
         driver_config="size=1GiB"
-    fi
-    if [ "${poolDriver}" = "zfs" ]; then
+    elif [ "${poolDriver}" = "zfs" ]; then
         driver_config="size=1GiB"
-    fi
-    if [ "${poolDriver}" = "ceph" ]; then
+    elif [ "${poolDriver}" = "ceph" ]; then
         driver_config="source=incustest-$(basename "${TEST_DIR}")-pool1"
-    fi
-    if [ "${poolDriver}" = "linstor" ]; then
+    elif [ "${poolDriver}" = "linstor" ]; then
         driver_config="source=incustest-$(basename "${TEST_DIR}" | sed 's/\./__/g')-pool1"
+    elif [ "${poolDriver}" = "truenas" ]; then
+        driver_config="$(truenas_source)/incustest-$(basename "${TEST_DIR}")-pool1 $(truenas_config) $(truenas_allow_insecure) $(truenas_api_key)"
     fi
+
     driver_config_node="${driver_config}"
     if [ "${poolDriver}" = "zfs" ]; then
         driver_config_node="${driver_config_node} zfs.pool_name=pool1-$(basename "${TEST_DIR}")-${ns1}"
