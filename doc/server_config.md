@@ -137,4 +137,5 @@ The following server options configure server-specific settings for {ref}`instan
 ## User options
 
 Additional user defined configuration keys are available within the `user.` namespace.
+User defined configuration keys are always of type `string` and have `global` scope.
 Note that keys starting with `user.ui.` are used for web UI configuration options and are visible even to unauthenticated users.
