@@ -59,7 +59,7 @@ var networkCmd = APIEndpoint{
 	Path: "networks/{networkName}",
 
 	Delete: APIEndpointAction{Handler: networkDelete, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
-	Get:    APIEndpointAction{Handler: networkGet, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanView, "networkName")},
+	Get:    APIEndpointAction{Handler: networkGet, AccessHandler: allowAuthenticated},
 	Patch:  APIEndpointAction{Handler: networkPatch, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
 	Post:   APIEndpointAction{Handler: networkPost, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
 	Put:    APIEndpointAction{Handler: networkPut, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
@@ -212,6 +212,7 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 	mustLoadObjects := recursion || (clauses != nil && len(clauses.Clauses) > 0)
 
 	allProjects := util.IsTrue(r.FormValue("all-projects"))
+	unmanagedNetworkNames := []string{}
 
 	var networkNames map[string][]string
 
@@ -281,7 +282,13 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 			}
 
 			// Get the interfaces.
-			networkNames[projectName] = append(networkNames[projectName], ns.State.GetInterfaceNamesByRole("instances")...)
+			for _, iface := range ns.State.GetInterfaceNamesByRole("instances") {
+				// Append to the list of networks if a managed network of same name doesn't exist.
+				if !slices.Contains(networkNames[projectName], iface) {
+					networkNames[projectName] = append(networkNames[projectName], iface)
+					unmanagedNetworkNames = append(unmanagedNetworkNames, iface)
+				}
+			}
 		} else {
 			ifaces, err := net.Interfaces()
 			if err != nil {
@@ -297,24 +304,16 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 				// Append to the list of networks if a managed network of same name doesn't exist.
 				if !slices.Contains(networkNames[projectName], iface.Name) {
 					networkNames[projectName] = append(networkNames[projectName], iface.Name)
+					unmanagedNetworkNames = append(unmanagedNetworkNames, iface.Name)
 				}
 			}
 		}
-	}
-
-	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeNetwork)
-	if err != nil {
-		return response.InternalError(err)
 	}
 
 	linkResults := make([]string, 0)
 	fullResults := make([]api.Network, 0)
 	for projectName, networks := range networkNames {
 		for _, networkName := range networks {
-			if !userHasPermission(auth.ObjectNetwork(projectName, networkName)) {
-				continue
-			}
-
 			if mustLoadObjects {
 				netInfo, err := doNetworkGet(s, r, s.ServerClustered, projectName, reqProject.Config, networkName)
 				if err != nil {
@@ -334,7 +333,12 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 
 				fullResults = append(fullResults, netInfo)
 			} else {
-				if !project.NetworkAllowed(reqProject.Config, networkName, true) {
+				ok, err := canAccessNetwork(s, r, projectName, reqProject.Config, networkName, !slices.Contains(unmanagedNetworkNames, networkName))
+				if err != nil {
+					return response.SmartError(err)
+				}
+
+				if !ok {
 					continue
 				}
 			}
@@ -981,6 +985,42 @@ func networkGet(d *Daemon, r *http.Request) response.Response {
 	return response.SyncResponseETag(true, &n, etag)
 }
 
+// canAccessNetwork checks if the network can be viewed/accessed by the user.
+func canAccessNetwork(s *state.State, r *http.Request, projectName string, projectConfig map[string]string, networkName string, managed bool) (bool, error) {
+	// Don't allow retrieving info about the local server interfaces when not using default project.
+	if projectName != api.ProjectDefaultName && !managed {
+		return false, nil
+	}
+
+	// Check for basic access.
+	if managed {
+		userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeNetwork)
+		if err != nil {
+			return false, err
+		}
+
+		if !userHasPermission(auth.ObjectNetwork(projectName, networkName)) {
+			return false, nil
+		}
+	} else {
+		userHasResourcesPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanViewResources, auth.ObjectTypeServer)
+		if err != nil {
+			return false, err
+		}
+
+		if !userHasResourcesPermission(auth.ObjectServer()) {
+			return false, nil
+		}
+	}
+
+	// Check if project allows access to network.
+	if !project.NetworkAllowed(projectConfig, networkName, managed) {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 // doNetworkGet returns information about the specified network.
 // If the network being requested is a managed network and allNodes is true then node specific config is removed.
 // Otherwise if allNodes is false then the network's local status is returned.
@@ -996,16 +1036,17 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 		return api.Network{}, fmt.Errorf("Failed loading network: %w", err)
 	}
 
-	// Don't allow retrieving info about the local server interfaces when not using default project.
-	if projectName != api.ProjectDefaultName && n == nil {
+	// Validate access.
+	ok, err := canAccessNetwork(s, r, projectName, reqProjectConfig, networkName, n != nil)
+	if err != nil {
+		return api.Network{}, err
+	}
+
+	if !ok {
 		return api.Network{}, api.StatusErrorf(http.StatusNotFound, "Network not found")
 	}
 
-	// Check if project allows access to network.
-	if !project.NetworkAllowed(reqProjectConfig, networkName, n != nil && n.IsManaged()) {
-		return api.Network{}, api.StatusErrorf(http.StatusNotFound, "Network not found")
-	}
-
+	// Get OS network details.
 	osInfo, _ := net.InterfaceByName(networkName)
 
 	// Quick check.
