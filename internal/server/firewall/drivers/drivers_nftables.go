@@ -1090,30 +1090,11 @@ func (d Nftables) aclRuleSubjectToACLMatch(direction string, ipVersion uint, sub
 	for _, subjectCriterion := range subjectCriteria {
 		if validate.IsNetworkRange(subjectCriterion) == nil {
 			criterionParts := strings.SplitN(subjectCriterion, "-", 2)
-			if len(criterionParts) > 1 {
-				ip := net.ParseIP(criterionParts[0])
-				if ip != nil {
-					var subjectIPVersion uint = 4
-					if ip.To4() == nil {
-						subjectIPVersion = 6
-					}
-
-					if ipVersion != subjectIPVersion {
-						partial = true
-						continue // Skip subjects that are not for the ipVersion we are looking for.
-					}
-
-					fieldParts = append(fieldParts, fmt.Sprintf("%s-%s", criterionParts[0], criterionParts[1]))
-				}
-			} else {
+			if len(criterionParts) < 2 {
 				return nil, false, fmt.Errorf("Invalid IP range %q", subjectCriterion)
 			}
-		} else {
-			ip := net.ParseIP(subjectCriterion)
-			if ip == nil {
-				ip, _, _ = net.ParseCIDR(subjectCriterion)
-			}
 
+			ip := net.ParseIP(criterionParts[0])
 			if ip != nil {
 				var subjectIPVersion uint = 4
 				if ip.To4() == nil {
@@ -1125,10 +1106,29 @@ func (d Nftables) aclRuleSubjectToACLMatch(direction string, ipVersion uint, sub
 					continue // Skip subjects that are not for the ipVersion we are looking for.
 				}
 
-				fieldParts = append(fieldParts, subjectCriterion)
-			} else {
+				fieldParts = append(fieldParts, fmt.Sprintf("%s-%s", criterionParts[0], criterionParts[1]))
+			}
+		} else {
+			ip := net.ParseIP(subjectCriterion)
+			if ip == nil {
+				ip, _, _ = net.ParseCIDR(subjectCriterion)
+			}
+
+			if ip == nil {
 				return nil, false, fmt.Errorf("Unsupported nftables subject %q", subjectCriterion)
 			}
+
+			var subjectIPVersion uint = 4
+			if ip.To4() == nil {
+				subjectIPVersion = 6
+			}
+
+			if ipVersion != subjectIPVersion {
+				partial = true
+				continue // Skip subjects that are not for the ipVersion we are looking for.
+			}
+
+			fieldParts = append(fieldParts, subjectCriterion)
 		}
 	}
 
