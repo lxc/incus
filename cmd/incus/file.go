@@ -101,9 +101,10 @@ func (c *cmdFileCreate) Command() *cobra.Command {
 		`Create files and directories in instances`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus file create foo/bar
-	   To create a file /bar in the foo instance.
+   To create a file /bar in the foo instance.
+
 incus file create --type=symlink foo/bar baz
-	   To create a symlink /bar in instance foo whose target is baz.`))
+   To create a symlink /bar in instance foo whose target is baz.`))
 
 	cmd.Flags().BoolVarP(&c.file.flagMkdir, "create-dirs", "p", false, i18n.G("Create any directories necessary")+"``")
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Force creating files or directories")+"``")
@@ -459,7 +460,10 @@ func (c *cmdFilePull) Command() *cobra.Command {
 		`Pull files from instances`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus file pull foo/etc/hosts .
-   To pull /etc/hosts from the instance and write it to the current directory.`))
+   To pull /etc/hosts from the instance and write it to the current directory.
+
+incus file pull foo/etc/hosts -
+   To pull /etc/hosts from the instance and write its output to standard output.`))
 
 	cmd.Flags().BoolVarP(&c.file.flagMkdir, "create-dirs", "p", false, i18n.G("Create any directories necessary"))
 	cmd.Flags().BoolVarP(&c.file.flagRecursive, "recursive", "r", false, i18n.G("Recursively transfer files"))
@@ -693,7 +697,10 @@ func (c *cmdFilePush) Command() *cobra.Command {
 		`Push files into instances`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus file push /etc/hosts foo/etc/hosts
-   To push /etc/hosts into the instance "foo".`))
+   To push /etc/hosts into the instance "foo".
+
+echo "Hello world" | incus file push - foo/root/test
+   To read "Hello world" from standard input and write it into /roo/test in instance "foo".`))
 
 	cmd.Flags().BoolVarP(&c.file.flagRecursive, "recursive", "r", false, i18n.G("Recursively transfer files"))
 	cmd.Flags().BoolVarP(&c.file.flagMkdir, "create-dirs", "p", false, i18n.G("Create any directories necessary"))
