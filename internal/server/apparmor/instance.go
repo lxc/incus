@@ -161,7 +161,7 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 		return "", err
 	}
 
-	abi40Supported, err := parserSupports(sysOS, "abi40")
+	usernsSupported, err := parserSupports(sysOS, "userns")
 	if err != nil {
 		return "", err
 	}
@@ -185,7 +185,7 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			"feature_cgroup2":  sysOS.CGInfo.Layout == cgroup.CgroupsUnified || sysOS.CGInfo.Layout == cgroup.CgroupsHybrid,
 			"feature_stacking": sysOS.AppArmorStacking && !sysOS.AppArmorStacked,
 			"feature_unix":     unixSupported,
-			"feature_abi40":    abi40Supported,
+			"feature_userns":   usernsSupported,
 			"kernel_binfmt":    util.IsFalseOrEmpty(inst.ExpandedConfig()["security.privileged"]) && sysOS.UnprivBinfmt,
 			"name":             InstanceProfileName(inst),
 			"namespace":        InstanceNamespaceName(inst),
