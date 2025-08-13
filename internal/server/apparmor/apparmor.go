@@ -229,7 +229,7 @@ func parserSupports(sysOS *sys.OS, feature string) (bool, error) {
 		return aaVersion.Compare(minVer) >= 0, nil
 	}
 
-	if feature == "abi40" {
+	if feature == "userns" {
 		minVer, err := version.NewDottedVersion("4.0.0")
 		if err != nil {
 			return false, err
