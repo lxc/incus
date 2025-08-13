@@ -216,6 +216,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net"
 	"os"
 	"path/filepath"
@@ -379,7 +380,19 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 
 	defer func() { _ = client.Close() }()
 
-	lease, err := client.Request(context.Background(), dhcpv4.WithOption(dhcpv4.OptHostName(hostname)))
+	lease, err := client.Request(context.Background(),
+		dhcpv4.WithoutOption(dhcpv4.OptionIPAddressLeaseTime),
+		dhcpv4.WithRequestedOptions(
+			dhcpv4.OptionSubnetMask,           // 1
+			dhcpv4.OptionRouter,               // 3
+			dhcpv4.OptionDomainNameServer,     // 6
+			dhcpv4.OptionDomainName,           // 15
+			dhcpv4.OptionClasslessStaticRoute, // 121 (if present)
+			dhcpv4.OptionIPAddressLeaseTime,   // 51
+			dhcpv4.OptionRenewTimeValue,       // 58 (T1)
+			dhcpv4.OptionRebindingTimeValue,   // 59 (T2)
+		),
+		dhcpv4.WithOption(dhcpv4.OptHostName(hostname)))
 	if err != nil {
 		logger.WithError(err).WithField("hostname", hostname).
 			Error("Giving up on DHCPv4, couldn't get a lease")
@@ -466,11 +479,45 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 
 	// Handle DHCP renewal.
 	for {
+
+		// Caslculate the renewal time.
+		var t1 time.Duration
+
+		if lease.ACK != nil {
+			t1 = lease.ACK.IPAddressRenewalTime(0)
+		}
+
+		if t1 == 0 && lease.Offer != nil {
+			t1 = lease.Offer.IPAddressRenewalTime(0)
+		}
+
+		if t1 == 0 && lease.Offer != nil {
+			lt := lease.Offer.IPAddressLeaseTime(0)
+			if lt > 0 {
+				t1 = lt / 2
+			}
+		}
+
+		if t1 == 0 {
+			t1 = time.Minute
+		}
+
+		j := time.Duration(int64(t1) / 20) // 5%
+		if j > 0 {
+			t1 += time.Duration(rand.Int63n(int64(2*j))) - j
+		}
+
 		// Wait until it's renewal time.
-		time.Sleep(lease.Offer.IPAddressRenewalTime(time.Minute))
+		time.Sleep(t1)
 
 		// Renew the lease.
-		newLease, err := client.Renew(context.Background(), lease, dhcpv4.WithOption(dhcpv4.OptHostName(hostname)))
+		newLease, err := client.Renew(context.Background(), lease,
+			dhcpv4.WithRequestedOptions(
+				dhcpv4.OptionIPAddressLeaseTime, // 51
+				dhcpv4.OptionRenewTimeValue,     // 58
+				dhcpv4.OptionRebindingTimeValue, // 59
+			),
+			dhcpv4.WithOption(dhcpv4.OptHostName(hostname)))
 		if err != nil {
 			logger.WithError(err).Error("Giving up on DHCPv4, couldn't renew the lease")
 			errorChannel <- err
