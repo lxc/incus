@@ -44,20 +44,20 @@ func Load(schema Schema, values map[string]string) (Map, error) {
 func (m *Map) Change(changes map[string]string) (map[string]string, error) {
 	values := make(map[string]string, len(m.schema))
 
-	errors := &ErrorList{}
+	errList := &ErrorList{}
 	for name, change := range changes {
 		// Ensure that we were actually passed a string.
 		s := reflect.ValueOf(change)
 		if s.Kind() != reflect.String {
-			errors.add(name, nil, fmt.Sprintf("invalid type %s", s.Kind()))
+			errList.add(name, nil, fmt.Sprintf("invalid type %s", s.Kind()))
 			continue
 		}
 
 		values[name] = change
 	}
 
-	if errors.Len() > 0 {
-		return nil, errors
+	if errList.Len() > 0 {
+		return nil, errList
 	}
 
 	// Any key not explicitly set, is considered unset.
@@ -174,12 +174,12 @@ func (m *Map) update(values map[string]string) ([]string, error) {
 
 	// Update our keys with the values from the given map, and keep track
 	// of which keys actually changed their value.
-	errors := &ErrorList{}
+	errList := &ErrorList{}
 	names := []string{}
 	for name, value := range values {
 		changed, err := m.set(name, value, initial)
 		if err != nil {
-			errors.add(name, value, err.Error())
+			errList.add(name, value, err.Error())
 			continue
 		}
 
@@ -190,9 +190,9 @@ func (m *Map) update(values map[string]string) ([]string, error) {
 	sort.Strings(names)
 
 	var err error
-	if errors.Len() > 0 {
-		errors.sort()
-		err = errors
+	if errList.Len() > 0 {
+		errList.sort()
+		err = errList
 	}
 
 	return names, err
