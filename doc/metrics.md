@@ -183,8 +183,8 @@ scrape_configs:
   # to the `/var/lib/incus/cluster.crt` file found on every member of
   # the Incus cluster.
   #
-  # Note: the `project` param is are provided when not using the `default` project
-  #       or when multiple projects are used.
+  # Note: When the `project` param is provided, it overrides the `default` project
+  #       and if not specified will pull all projects.
   #
   # Note: each member of the cluster only provide metrics for instances it runs locally
   #       this is why the `incus-hdc` cluster lists 3 targets
