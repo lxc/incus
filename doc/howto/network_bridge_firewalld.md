@@ -115,6 +115,170 @@ See [Docker on a router](https://docs.docker.com/engine/network/packet-filtering
 
 There are different ways of working around this problem:
 
+Disable the tables
+: Docker and incus use nftables to add their own firewall rules so that ensure full functionality, but Docker and incus firewall rules can interference each other so that you can not `ping`, `apt update` and other network issues.
+
+  Your rulesets are like these:
+
+  ```shell
+  $ nft list ruleset
+  # Warning: table ip nat is managed by iptables-nft, do not touch!
+  table ip nat {
+          chain DOCKER {
+                  iifname "docker0" counter packets 0 bytes 0 return
+          }
+  
+          chain PREROUTING {
+                  type nat hook prerouting priority dstnat; policy accept;
+                  fib daddr type local counter packets 1 bytes 52 jump DOCKER
+          }
+  
+          chain OUTPUT {
+                  type nat hook output priority dstnat; policy accept;
+                  ip daddr != 127.0.0.0/8 fib daddr type local counter packets 0 bytes 0 jump DOCKER
+          }
+  
+          chain POSTROUTING {
+                  type nat hook postrouting priority srcnat; policy accept;
+                  ip saddr 172.17.0.0/16 oifname != "docker0" counter packets 0 bytes 0 masquerade
+          }
+  }
+  # Warning: table ip filter is managed by iptables-nft, do not touch!
+  table ip filter {
+          chain DOCKER {
+                  iifname != "docker0" oifname "docker0" counter packets 0 bytes 0 drop
+          }
+  
+          chain DOCKER-FORWARD {
+                  counter packets 33 bytes 3264 jump DOCKER-CT
+                  counter packets 33 bytes 3264 jump DOCKER-ISOLATION-STAGE-1
+                  counter packets 33 bytes 3264 jump DOCKER-BRIDGE
+                  iifname "docker0" counter packets 0 bytes 0 accept
+          }
+  
+          chain DOCKER-BRIDGE {
+                  oifname "docker0" counter packets 0 bytes 0 jump DOCKER
+          }
+  
+          chain DOCKER-CT {
+                  oifname "docker0" ct state related,established counter packets 0 bytes 0 accept
+          }
+  
+          chain DOCKER-ISOLATION-STAGE-1 {
+                  iifname "docker0" oifname != "docker0" counter packets 0 bytes 0 jump DOCKER-ISOLATION-STAGE-2
+          }
+  
+          chain DOCKER-ISOLATION-STAGE-2 {
+                  oifname "docker0" counter packets 0 bytes 0 drop
+          }
+  
+          chain FORWARD {
+                  type filter hook forward priority filter; policy drop;
+                  counter packets 33 bytes 3264 jump DOCKER-USER
+                  counter packets 33 bytes 3264 jump DOCKER-FORWARD
+          }
+  
+          chain DOCKER-USER {
+          }
+  }
+  # Warning: table ip6 nat is managed by iptables-nft, do not touch!
+  table ip6 nat {
+          chain DOCKER {
+          }
+  
+          chain PREROUTING {
+                  type nat hook prerouting priority dstnat; policy accept;
+                  fib daddr type local counter packets 0 bytes 0 jump DOCKER
+          }
+  
+          chain OUTPUT {
+                  type nat hook output priority dstnat; policy accept;
+                  ip6 daddr != ::1 fib daddr type local counter packets 0 bytes 0 jump DOCKER
+          }
+  }
+  table ip6 filter {
+          chain DOCKER {
+          }
+  
+          chain DOCKER-FORWARD {
+                  counter packets 66 bytes 4863 jump DOCKER-CT
+                  counter packets 66 bytes 4863 jump DOCKER-ISOLATION-STAGE-1
+                  counter packets 66 bytes 4863 jump DOCKER-BRIDGE
+          }
+  
+          chain DOCKER-BRIDGE {
+          }
+  
+          chain DOCKER-CT {
+          }
+  
+          chain DOCKER-ISOLATION-STAGE-1 {
+          }
+  
+          chain DOCKER-ISOLATION-STAGE-2 {
+          }
+  
+          chain FORWARD {
+                  type filter hook forward priority filter; policy accept;
+                  counter packets 66 bytes 4863 jump DOCKER-USER
+                  counter packets 66 bytes 4863 jump DOCKER-FORWARD
+          }
+  
+          chain DOCKER-USER {
+          }
+  }
+  table inet incus {
+          chain pstrt.k8s-net {
+                  type nat hook postrouting priority srcnat; policy accept;
+                  ip saddr 10.0.0.0/8 ip daddr != 10.0.0.0/8 masquerade
+          }
+  
+          chain fwd.k8s-net {
+                  type filter hook forward priority filter; policy accept;
+                  ip version 4 oifname "k8s-net" accept
+                  ip version 4 iifname "k8s-net" accept
+          }
+  
+          chain in.k8s-net {
+                  type filter hook input priority filter; policy accept;
+                  iifname "k8s-net" tcp dport 53 accept
+                  iifname "k8s-net" udp dport 53 accept
+                  iifname "k8s-net" icmp type { destination-unreachable, time-exceeded, parameter-problem } accept
+                  iifname "k8s-net" udp dport 67 accept
+                  iifname "k8s-net" ip protocol udp udp checksum set 0
+          }
+  
+          chain out.k8s-net {
+                  type filter hook output priority filter; policy accept;
+                  oifname "k8s-net" tcp sport 53 accept
+                  oifname "k8s-net" udp sport 53 accept
+                  oifname "k8s-net" icmp type { destination-unreachable, time-exceeded, parameter-problem } accept
+                  oifname "k8s-net" udp sport 67 accept
+                  oifname "k8s-net" ip protocol udp udp checksum set 0
+          }
+  }
+  ```
+
+  When you use incus, you should disable Docker tables, enable incus table:
+
+  ```shell
+  nft add table ip nat { flags dormant\; }
+  nft add table ip filter { flags dormant\; }
+  nft add table ip6 nat { flags dormant\; }
+  nft add table ip6 filter { flags dormant\; }
+  nft add table inet incus
+  ```
+
+  When you use Docker, you should enable Docker tables, disable incus table:
+
+  ```shell
+  nft add table ip nat
+  nft add table ip filter
+  nft add table ip6 nat
+  nft add table ip6 filter
+  nft add table inet incus { flags dormant\; }
+  ```
+
 Uninstall Docker
 : The easiest way to prevent such issues is to uninstall Docker from the system that runs Incus and restart the system.
   You can run Docker inside an Incus container or virtual machine instead.
@@ -156,6 +320,11 @@ Allow egress network traffic flows
 
       iptables -I DOCKER-USER -i incusbr0 -j ACCEPT
       iptables -I DOCKER-USER -o incusbr0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+  Or the equivalent `nft` commands:
+
+      nft insert rule ip filter DOCKER-USER iifname incusbr0 counter accept
+      nft insert rule ip filter DOCKER-USER oifname incusbr0 ct state related,established counter accept
 
   ```{important}
   You  must make these firewall rules persistent across host reboots.
