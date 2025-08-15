@@ -2329,7 +2329,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 
 		// Allow unprivileged users to use ping (requires a 6.6 kernel at least).
 		minVer, _ := version.NewDottedVersion("6.6.0")
-		if d.state.OS.KernelVersion.Compare(minVer) >= 0 {
+		if !d.state.OS.RunningInUserNS && d.state.OS.KernelVersion.Compare(minVer) >= 0 {
 			maxGid := int64(4294967294)
 
 			if !d.IsPrivileged() {
