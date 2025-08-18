@@ -711,13 +711,42 @@ func (m *Monitor) AddObject(args map[string]any) error {
 }
 
 // AddBlockDevice adds a block device.
-func (m *Monitor) AddBlockDevice(blockDev map[string]any, device map[string]any, attached bool) error {
+func (m *Monitor) AddBlockDevice(blockDev map[string]any, device map[string]any, attached bool, usb bool) error {
 	if !attached {
 		return nil
 	}
 
 	reverter := revert.New()
 	defer reverter.Fail()
+
+	// If USB, start with a USB block only controller.
+	var usbID string
+
+	if usb {
+		id, ok := device["id"].(string)
+		if !ok {
+			return errors.New("Parent device must have an id")
+		}
+
+		usbID = "usb_" + id
+
+		usbDev := map[string]any{
+			"driver": "usb-bot",
+			"bus":    "qemu_usb.0",
+			"id":     usbID,
+		}
+
+		err := m.AddDevice(usbDev)
+		if err != nil {
+			return fmt.Errorf("Failed adding USB device: %w", err)
+		}
+
+		reverter.Add(func() {
+			_ = m.RemoveDevice(usbID)
+		})
+
+		device["bus"] = usbID + ".0"
+	}
 
 	nodeName, ok := blockDev["node-name"].(string)
 	if !ok {
@@ -738,6 +767,14 @@ func (m *Monitor) AddBlockDevice(blockDev map[string]any, device map[string]any,
 	err := m.AddDevice(device)
 	if err != nil {
 		return fmt.Errorf("Failed adding device: %w", err)
+	}
+
+	// If USB, bring the device up now.
+	if usb {
+		err = m.Run("qom-set", map[string]any{"path": usbID, "property": "attached", "value": true}, nil)
+		if err != nil {
+			return fmt.Errorf("Failed to bring up USB device: %w", err)
+		}
 	}
 
 	reverter.Success()
