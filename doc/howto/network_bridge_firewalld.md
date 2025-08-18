@@ -119,8 +119,13 @@ Uninstall Docker
 : The easiest way to prevent such issues is to uninstall Docker from the system that runs Incus and restart the system.
   You can run Docker inside an Incus container or virtual machine instead.
 
+Preventing Docker from dropping traffic
+: Most issues with Docker networking come from it dropping all traffic that it doesn't directly manage.
+  This behavior can be changed through the `ip-forward-no-drop` Docker configuration option in `daemon.json`.
+  Setting the option to `true` may be sufficient to allow both Incus and Docker to operate on the same system.
+
 Enable IPv4 forwarding
-: If uninstalling Docker is not an option, enabling IPv4 forwarding before the Docker service starts will prevent Docker from modifying the global FORWARD policy.
+: If uninstalling or reconfiguring Docker is not an option, enabling IPv4 forwarding before the Docker service starts will prevent Docker from modifying the global FORWARD policy.
   Incus bridge networks enable this setting normally.
   However, if Incus starts after Docker, then Docker will already have modified the global FORWARD policy.
 
@@ -156,6 +161,11 @@ Allow egress network traffic flows
 
       iptables -I DOCKER-USER -i incusbr0 -j ACCEPT
       iptables -I DOCKER-USER -o incusbr0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+  Or the equivalent `nft` commands:
+
+      nft insert rule ip filter DOCKER-USER iifname incusbr0 counter accept
+      nft insert rule ip filter DOCKER-USER oifname incusbr0 ct state related,established counter accept
 
   ```{important}
   You  must make these firewall rules persistent across host reboots.
