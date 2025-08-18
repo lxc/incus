@@ -4616,7 +4616,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 		delete(blockDev, "aio")
 	}
 
-	readonly := slices.Contains(driveConf.Opts, "ro")
+	readonly := slices.Contains(driveConf.Opts, "ro") || media == "cdrom"
 
 	if readonly {
 		blockDev["read-only"] = true
