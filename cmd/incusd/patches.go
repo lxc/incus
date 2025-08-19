@@ -17,9 +17,12 @@ import (
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/internal/server/db/query"
+	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/network"
+	"github.com/lxc/incus/v6/internal/server/network/acl"
+	"github.com/lxc/incus/v6/internal/server/network/ovn"
 	"github.com/lxc/incus/v6/internal/server/node"
 	"github.com/lxc/incus/v6/internal/server/project"
 	storagePools "github.com/lxc/incus/v6/internal/server/storage"
@@ -88,6 +91,7 @@ var patches = []patch{
 	{name: "auth_openfga_viewer", stage: patchPostNetworks, run: patchGenericAuthorization},
 	{name: "auth_openfga_network_address_set", stage: patchPostNetworks, run: patchGenericAuthorization},
 	{name: "db_json_columns", stage: patchPreDaemonStorage, run: patchConvertJSONColumn},
+	{name: "network_ovn_directional_port_groups", stage: patchPostDaemonStorage, run: patchGenericNetwork(patchNetworkOVNPortGroups)},
 }
 
 type patchRun func(name string, d *Daemon) error
@@ -1340,6 +1344,267 @@ UPDATE networks_load_balancers SET ports="null" WHERE ports="";
 		return fmt.Errorf("Failed to fix JSON columns: %w", err)
 	}
 
+	return nil
+}
+
+func patchNetworkOVNPortGroups(_ string, d *Daemon) error {
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	s := d.State()
+
+	// Only apply patch on leader.
+	var err error
+	var localConfig *node.Config
+	isLeader := false
+
+	err = d.db.Node.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.NodeTx) error {
+		localConfig, err = node.ConfigLoad(ctx, tx)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	leaderAddress, err := s.Cluster.LeaderAddress()
+	if err != nil {
+		// If we're not clustered, we're the leader.
+		if !errors.Is(err, cluster.ErrNodeIsNotClustered) {
+			return err
+		}
+
+		isLeader = true
+	} else if localConfig.ClusterAddress() == leaderAddress {
+		isLeader = true
+	}
+
+	if !isLeader {
+		return nil
+	}
+
+	projectACLs := make(map[string][]dbCluster.NetworkACL)
+	err = d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Get all project names.
+		projects, err := dbCluster.GetProjects(ctx, tx.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed loading projects: %w", err)
+		}
+
+		for _, project := range projects {
+			networkACLs, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &project.Name})
+			if err != nil {
+				return err
+			}
+
+			projectACLs[project.Name] = networkACLs
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	instanceDeviceACLDefaults := func(networkConfig map[string]string, deviceCfg deviceConfig.Device, direction string) string {
+		defaults := map[string]string{
+			fmt.Sprintf("security.acls.default.%s.action", direction): "reject",
+		}
+
+		for k := range defaults {
+			if deviceCfg[k] != "" {
+				defaults[k] = deviceCfg[k]
+			} else if networkConfig[k] != "" {
+				defaults[k] = networkConfig[k]
+			}
+		}
+
+		return defaults[fmt.Sprintf("security.acls.default.%s.action", direction)]
+	}
+
+	for projectName, networkACLs := range projectACLs {
+		var projectID int64
+		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+
+			// Get project ID.
+			projectID, err = dbCluster.GetProjectID(ctx, tx.Tx(), projectName)
+			if err != nil {
+				return fmt.Errorf("Failed getting project ID for project %q: %w", projectName, err)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		aclNameIDs := make(map[string]int64, len(networkACLs))
+		for _, networkACL := range networkACLs {
+			aclNameIDs[networkACL.Name] = int64(networkACL.ID)
+		}
+
+		allNetworks := []string{}
+		for _, networkACL := range networkACLs {
+			// Get a list of networks that are using this ACL (either directly or indirectly via a NIC).
+			aclNets := map[string]acl.NetworkACLUsage{}
+			err = acl.NetworkUsage(s, projectName, []string{networkACL.Name}, aclNets)
+			if err != nil {
+				return fmt.Errorf("Failed getting ACL network usage: %w", err)
+			}
+
+			aclOVNNets := map[string]acl.NetworkACLUsage{}
+			for k, v := range aclNets {
+				if v.Type != "ovn" {
+					continue
+				}
+
+				aclOVNNets[k] = v
+
+				if slices.Contains(allNetworks, k) {
+					continue
+				}
+
+				allNetworks = append(allNetworks, k)
+			}
+
+			if len(aclOVNNets) < 1 {
+				continue
+			}
+
+			// Check that OVN is available.
+			ovnnb, _, err := s.OVN()
+			if err != nil {
+				return err
+			}
+
+			// Get list of OVN port groups associated to this project.
+			portGroups, err := ovnnb.GetPortGroupsByProject(context.TODO(), projectID)
+			if err != nil {
+				return fmt.Errorf("Failed getting port groups for project %q: %w", projectName, err)
+			}
+
+			// Prepare a slice `removePortGroup` containing port groups to be removed with the prefix "incus_acl".
+			removePortGroups := []ovn.OVNPortGroup{}
+			for _, portGroup := range portGroups {
+				if !strings.HasPrefix(string(portGroup), acl.OVNACLPortGroupNamePrefix(int64(networkACL.ID))) {
+					continue
+				}
+
+				removePortGroups = append(removePortGroups, portGroup)
+			}
+
+			// Delete 'old' port groups
+			err = ovnnb.DeletePortGroup(context.TODO(), removePortGroups...)
+			if err != nil {
+				return fmt.Errorf("Failed to delete unused OVN port groups: %w", err)
+			}
+
+			cleanup, err := acl.OVNEnsureACLs(s, logger.AddContext(logger.Ctx{}), ovnnb, projectName, aclNameIDs, aclOVNNets, []string{networkACL.Name}, true)
+			if err != nil {
+				return fmt.Errorf("Failed ensuring ACL is configured in OVN: %w", err)
+			}
+
+			reverter.Add(cleanup)
+		}
+
+		if len(allNetworks) < 1 {
+			continue
+		}
+
+		// Check that OVN is available.
+		ovnnb, _, err := s.OVN()
+		if err != nil {
+			return err
+		}
+
+		for _, networkName := range allNetworks {
+			n, err := network.LoadByName(s, projectName, networkName)
+			if err != nil {
+				return err
+			}
+
+			// Get list of active switch ports.
+			switchName := acl.OVNIntSwitchName(n.ID())
+			activePorts, err := ovnnb.GetLogicalSwitchPorts(context.TODO(), switchName)
+			if err != nil {
+				return fmt.Errorf("Failed getting active ports: %w", err)
+			}
+
+			addedACLs := util.SplitNTrimSpace(n.Config()["security.acls"], ",", -1, true)
+			addChangeSet := map[ovn.OVNPortGroup][]ovn.OVNSwitchPortUUID{}
+
+			err = network.UsedByInstanceDevices(s, n.Project(), n.Name(), n.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
+				// Combine NIC ACLs (including ACLs from the profile) with network ACLs.
+				nicACLs := util.SplitNTrimSpace(nicConfig["security.acls"], ",", -1, true)
+				for _, addedACL := range addedACLs {
+					if slices.Contains(nicACLs, addedACL) {
+						continue
+					}
+
+					nicACLs = append(nicACLs, addedACL)
+				}
+
+				// Get logical port UUID and name.
+				networkPrefix := acl.OVNNetworkPrefix(n.ID())
+				intSwitchInstancePortPrefix := fmt.Sprintf("%s-instance", networkPrefix)
+				instancePortName := ovn.OVNSwitchPort(fmt.Sprintf("%s-%s-%s", intSwitchInstancePortPrefix, inst.Config["volatile.uuid"], nicName))
+
+				portUUID, found := activePorts[instancePortName]
+				if !found {
+					return nil // No need to update a port that isn't started yet.
+				}
+
+				ingressAction := instanceDeviceACLDefaults(n.Config(), nicConfig, "ingress")
+				egressAction := instanceDeviceACLDefaults(n.Config(), nicConfig, "egress")
+
+				// Add NIC port to ACL port group.
+				for _, nicACL := range nicACLs {
+					aclID, found := aclNameIDs[nicACL]
+					if !found {
+						return fmt.Errorf("Cannot find security ACL ID for %q", nicACL)
+					}
+
+					directionalPortGroups := acl.OVNACLDirectionalPortGroups(aclID)
+					var ingressPortGroupName ovn.OVNPortGroup
+					if ingressAction == "allow" {
+						ingressPortGroupName = directionalPortGroups.IngressReversed
+					} else {
+						ingressPortGroupName = directionalPortGroups.Ingress
+					}
+
+					acl.OVNPortGroupInstanceNICSchedule(portUUID, addChangeSet, ingressPortGroupName)
+					logger.Debug("Scheduled logical port for ACL port group addition", logger.Ctx{"networkACL": nicACL, "portGroup": ingressPortGroupName, "port": instancePortName})
+
+					var egressPortGroupName ovn.OVNPortGroup
+					if egressAction == "allow" {
+						egressPortGroupName = directionalPortGroups.EgressReversed
+					} else {
+						egressPortGroupName = directionalPortGroups.Egress
+					}
+
+					acl.OVNPortGroupInstanceNICSchedule(portUUID, addChangeSet, egressPortGroupName)
+					logger.Debug("Scheduled logical port for ACL port group addition", logger.Ctx{"networkACL": nicACL, "portGroup": egressPortGroupName, "port": instancePortName})
+				}
+
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			// Apply add changesets.
+			if len(addChangeSet) > 0 {
+				logger.Debug("Applying ACL port group member change sets")
+				removeChangeSet := map[ovn.OVNPortGroup][]ovn.OVNSwitchPortUUID{}
+				err = ovnnb.UpdatePortGroupMembers(context.TODO(), addChangeSet, removeChangeSet)
+				if err != nil {
+					return fmt.Errorf("Failed applying OVN port group member change sets for instance NIC: %w", err)
+				}
+			}
+		}
+	}
+
+	reverter.Success()
 	return nil
 }
 
