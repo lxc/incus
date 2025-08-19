@@ -2629,6 +2629,14 @@ func (d *qemu) deviceDetachBlockDevice(deviceName string, rawConfig deviceConfig
 		return err
 	}
 
+	if rawConfig["io.bus"] == "usb" {
+		// When dealing with USB, remove the intermediate USB device too.
+		err = monitor.RemoveDevice("usb_" + deviceID)
+		if err != nil {
+			return err
+		}
+	}
+
 	waitDuration := time.Duration(time.Second * time.Duration(10))
 	waitUntil := time.Now().Add(waitDuration)
 	for {
@@ -4616,7 +4624,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 		delete(blockDev, "aio")
 	}
 
-	readonly := slices.Contains(driveConf.Opts, "ro")
+	readonly := slices.Contains(driveConf.Opts, "ro") || media == "cdrom"
 
 	if readonly {
 		blockDev["read-only"] = true
@@ -4669,8 +4677,14 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 
 		qemuDev["driver"] = bus
 	} else if bus == "usb" {
-		qemuDev["driver"] = "usb-storage"
-		qemuDev["bus"] = "qemu_usb.0"
+		qemuDev["lun"] = 0
+
+		switch media {
+		case "disk":
+			qemuDev["driver"] = "scsi-hd"
+		case "cdrom":
+			qemuDev["driver"] = "scsi-cd"
+		}
 	}
 
 	if bootIndexes != nil {
@@ -4722,7 +4736,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 			blockDev["filename"] = fmt.Sprintf("/dev/fdset/%d", info.ID)
 		}
 
-		err := m.AddBlockDevice(blockDev, qemuDev, driveConf.Attached)
+		err := m.AddBlockDevice(blockDev, qemuDev, driveConf.Attached, bus == "usb")
 		if err != nil {
 			return fmt.Errorf("Failed adding block device for disk device %q: %w", driveConf.DevName, err)
 		}
@@ -7515,7 +7529,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 				"driver":   "file",
 				"filename": fmt.Sprintf("/dev/fdset/%d", info.ID),
 			},
-		}, nil, true)
+		}, nil, true, false)
 		if err != nil {
 			return fmt.Errorf("Failed adding migration storage snapshot block device: %w", err)
 		}
@@ -7658,7 +7672,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 					"path":     strings.TrimPrefix(listener.Addr().String(), "@"),
 				},
 			},
-		}, nil, true)
+		}, nil, true, false)
 		if err != nil {
 			return fmt.Errorf("Failed adding NBD device: %w", err)
 		}
@@ -9620,7 +9634,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		"aio":       "io_uring",
 	}
 
-	err = monitor.AddBlockDevice(blockDev, nil, true)
+	err = monitor.AddBlockDevice(blockDev, nil, true, false)
 	if err != nil {
 		logger.Debug("Failed adding block device during VM feature check", logger.Ctx{"err": err})
 	} else {
