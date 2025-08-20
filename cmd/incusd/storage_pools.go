@@ -382,6 +382,11 @@ func storagePoolsPost(d *Daemon, r *http.Request) response.Response {
 			}
 		}
 
+		// Make sure that no description is set through the member-specific path.
+		if req.Description != "" {
+			return response.BadRequest(errors.New("The storage pool description cannot be set for a specific member"))
+		}
+
 		err = storagePoolValidate(s, req.Name, req.Driver, req.Config)
 		if err != nil {
 			return response.BadRequest(err)
