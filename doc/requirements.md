@@ -47,6 +47,13 @@ For virtual machines, QEMU 6.0 or higher is required.
 
 When using `virtiofsd`, only the [Rust rewrite](https://gitlab.com/virtio-fs/virtiofsd) of `virtiofsd` is supported.
 
+## OVS/OVN
+
+When using Incus with OVN networks, the minimum versions of OVS and OVN are:
+
+* OVS: 2.15.0
+* OVN: 23.03.0
+
 ## Additional libraries (and development headers)
 
 Incus uses `cowsql` for its database, to build and set it up, you can
