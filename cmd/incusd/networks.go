@@ -593,7 +593,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 				for _, member := range members {
 					// Don't pass in any config, as these nodes don't have any node-specific
 					// config and we don't want to create duplicate global config.
-					err = tx.CreatePendingNetwork(ctx, member.Name, projectName, req.Name, req.Description, netType.DBType(), nil)
+					err = tx.CreatePendingNetwork(ctx, member.Name, projectName, req.Name, "", netType.DBType(), nil)
 					if err != nil && !errors.Is(err, db.ErrAlreadyDefined) {
 						return fmt.Errorf("Failed creating pending network for member %q: %w", member.Name, err)
 					}
@@ -759,6 +759,12 @@ func networksPostCluster(ctx context.Context, s *state.State, projectName string
 
 		// Insert the global config keys.
 		err = tx.CreateNetworkConfig(networkID, 0, req.Config)
+		if err != nil {
+			return err
+		}
+
+		// Set the network description if provided
+		err = tx.UpdateNetworkDescription(networkID, req.Description)
 		if err != nil {
 			return err
 		}
