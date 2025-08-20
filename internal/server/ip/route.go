@@ -285,7 +285,34 @@ func (r *Route) List() ([]Route, error) {
 		return nil, fmt.Errorf("Failed to list routes matching %+v: %w", route, err)
 	}
 
-	routes := r.convertNetlinkRoutes(netlinkRoutes)
+	routes := make([]Route, 0, len(netlinkRoutes))
+
+	for _, netlinkRoute := range netlinkRoutes {
+		var table string
+
+		switch netlinkRoute.Table {
+		case unix.RT_TABLE_MAIN:
+			table = "main"
+		case unix.RT_TABLE_LOCAL:
+			table = "local"
+		case unix.RT_TABLE_DEFAULT:
+			table = "default"
+		default:
+			table = strconv.Itoa(netlinkRoute.Table)
+		}
+
+		routes = append(routes, Route{
+			DevName: r.DevName, // routes are always filtered by device so we can use the device name that was passed in
+			Route:   netlinkRoute.Dst,
+			Src:     netlinkRoute.Src,
+			Via:     netlinkRoute.Gw,
+			Scope:   netlinkRoute.Scope.String(),
+			Table:   table,
+			VRF:     "", // adding a route to a VRF just adds it to the table associated with the VRF, so when retrieving routes that information is not available anymore and we just set the table
+			Proto:   netlinkRoute.Protocol.String(),
+			Family:  Family(netlinkRoute.Family),
+		})
+	}
 
 	return routes, nil
 }
@@ -307,11 +334,23 @@ func (r *Route) ListFiltered() ([]Route, error) {
 		return nil, err
 	}
 
-	filterMask := routeFilterMask(filter)
+	// Build filter mask from fields set on the filter route.
+	var filterMask uint64
 
-	// If no device filter is desired, clear the OIF bit.
-	if r.DevName == "" || filter.LinkIndex == 0 {
-		filterMask &^= netlink.RT_FILTER_OIF
+	if filter.LinkIndex != 0 {
+		filterMask |= netlink.RT_FILTER_OIF
+	}
+	if filter.Dst != nil {
+		filterMask |= netlink.RT_FILTER_DST
+	}
+	if filter.Gw != nil {
+		filterMask |= netlink.RT_FILTER_GW
+	}
+	if filter.Protocol != 0 {
+		filterMask |= netlink.RT_FILTER_PROTOCOL
+	}
+	if filter.Table != 0 {
+		filterMask |= netlink.RT_FILTER_TABLE
 	}
 
 	netlinkRoutes, err := netlink.RouteListFiltered(filter.Family, filter, filterMask)
@@ -319,18 +358,12 @@ func (r *Route) ListFiltered() ([]Route, error) {
 		return nil, fmt.Errorf("Failed to list routes matching %+v: %w", filter, err)
 	}
 
-	return r.convertNetlinkRoutes(netlinkRoutes), nil
-}
-
-// convertNetlinkRoutes maps kernel routes to the ip.Route representation.
-// - Resolves DevName from LinkIndex when the caller didn't set one.
-func (r *Route) convertNetlinkRoutes(netlinkRoutes []netlink.Route) []Route {
 	routes := make([]Route, 0, len(netlinkRoutes))
 
-	for _, netlinkRoute := range netlinkRoutes {
-		// Map table ID to name.
+	for _, nlRoute := range netlinkRoutes {
 		var table string
-		switch netlinkRoute.Table {
+
+		switch nlRoute.Table {
 		case unix.RT_TABLE_MAIN:
 			table = "main"
 		case unix.RT_TABLE_LOCAL:
@@ -338,31 +371,31 @@ func (r *Route) convertNetlinkRoutes(netlinkRoutes []netlink.Route) []Route {
 		case unix.RT_TABLE_DEFAULT:
 			table = "default"
 		default:
-			table = strconv.Itoa(netlinkRoute.Table)
+			table = strconv.Itoa(nlRoute.Table)
 		}
 
-		// Resolve device name if the caller didn't specify one.
+		// Resolve device name if not provided.
 		devName := r.DevName
-		if devName == "" && netlinkRoute.LinkIndex != 0 {
-			if lnk, err := netlink.LinkByIndex(netlinkRoute.LinkIndex); err == nil {
+		if devName == "" {
+			if lnk, lerr := netlink.LinkByIndex(nlRoute.LinkIndex); lerr == nil {
 				devName = lnk.Attrs().Name
 			}
 		}
 
 		routes = append(routes, Route{
-			DevName: devName,
-			Route:   netlinkRoute.Dst,
-			Src:     netlinkRoute.Src,
-			Via:     netlinkRoute.Gw,
-			Scope:   netlinkRoute.Scope.String(),
+			DevName: devName, // if empty, couldn't resolve; caller can handle
+			Route:   nlRoute.Dst,
+			Src:     nlRoute.Src,
+			Via:     nlRoute.Gw,
+			Scope:   nlRoute.Scope.String(),
 			Table:   table,
-			VRF:     "", // adding a route to a VRF just adds it to the table associated with the VRF, so when retrieving routes that information is not available anymore and we just set the table
-			Proto:   netlinkRoute.Protocol.String(),
-			Family:  Family(netlinkRoute.Family),
+			VRF:     "", // not available from kernel route; table already conveys it
+			Proto:   nlRoute.Protocol.String(),
+			Family:  Family(nlRoute.Family),
 		})
 	}
 
-	return routes
+	return routes, nil
 }
 
 // netlinkRouteFilter builds a netlink.Route suitable for filtering.
@@ -408,6 +441,7 @@ func (r *Route) netlinkRouteFilter() (*netlink.Route, error) {
 		route.Table = int(vrf.Table)
 	}
 
+	// Optional protocol filter.
 	if r.Proto != "" {
 		proto, err := r.netlinkProto()
 		if err != nil {
