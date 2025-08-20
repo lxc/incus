@@ -490,18 +490,17 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 			}
 		}
 	} else {
-		route := &ip.Route{
-			DevName: iface,
-			Route:   nil,
-			Via:     lease.Offer.Router()[0],
-			Family:  ip.FamilyV4,
-		}
+		gws := lease.Offer.Router()
 
-		err = route.Add()
-		if err != nil {
-			logger.WithError(err).Error("Giving up on DHCPv4, couldn't add default route")
-			errorChannel <- err
-			return
+		if len(gws) == 0 || gws[0] == nil || gws[0].IsUnspecified() {
+			logger.WithField("interface", iface).Info("No default gateway provided by DHCPv4; skipping default route")
+		} else {
+			err := c.installDefaultRouteV4(iface, gws[0])
+			if err != nil {
+				logger.WithError(err).Error("Giving up on DHCPv4, couldn't add default route")
+				errorChannel <- err
+				return
+			}
 		}
 	}
 
@@ -806,6 +805,68 @@ func (c *cmdForknet) dhcpApplyDNS(logger *logrus.Logger) error {
 			logger.WithError(err).Error("Giving up on DHCP, couldn't write resolv.conf")
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (c *cmdForknet) installDefaultRouteV4(iface string, gw net.IP) error {
+	// List all IPv4 routes in the main table; we'll filter default routes (Dst == nil) locally.
+	routes, err := (&ip.Route{
+		Family: ip.FamilyV4,
+		Table:  "main",
+	}).ListFiltered()
+	if err != nil {
+		return err
+	}
+
+	var currentOwnerIf string
+	var currentOwnerGw net.IP
+
+	for _, r := range routes {
+		// Only consider default routes (no destination)
+		if r.Route != nil {
+			continue
+		}
+
+		// r.DevName may be empty if not resolvable; skip such entries
+		if r.DevName == "" {
+			continue
+		}
+
+		if currentOwnerIf == "" || r.DevName < currentOwnerIf {
+			currentOwnerIf = r.DevName
+			currentOwnerGw = r.Via
+		}
+	}
+
+	// Decide based on lexical order.
+	switch {
+	case currentOwnerIf == "":
+		// No default route yet; we can install ours.
+	case currentOwnerIf == iface:
+		// We already own the default; if gateway unchanged, nothing to do.
+		if currentOwnerGw != nil && gw != nil && currentOwnerGw.Equal(gw) {
+			return nil
+		}
+	case iface < currentOwnerIf:
+		// We win; replace the current default with ours.
+	default:
+		// We lose; keep existing default route.
+		return nil
+	}
+
+	defRoute := &ip.Route{
+		DevName: iface,
+		Route:   nil,
+		Via:     gw,
+		Family:  ip.FamilyV4,
+		Proto:   "dhcp",
+	}
+
+	err = defRoute.Replace()
+	if err != nil {
+		return err
 	}
 
 	return nil

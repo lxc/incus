@@ -316,3 +316,140 @@ func (r *Route) List() ([]Route, error) {
 
 	return routes, nil
 }
+
+// ListFiltered lists routes matching the fields set on r, without requiring a device filter.
+// If r.DevName is empty, no interface (OIF) filter is applied and routes from all devices are returned.
+// If r.DevName is set, it behaves like List() and filters by that device.
+//
+// Filters honored (when set on r):
+// - DevName (optional): limits to a specific interface when provided.
+// - Route (Dst): network destination to match.
+// - Via (Gw): next hop to match.
+// - Proto: route protocol to match (e.g. "dhcp", "kernel", etc.).
+// - Table or VRF: routing table to match (defaults to main if neither provided).
+// - Family: address family (required for reliable results; ip.FamilyV4 or ip.FamilyV6).
+func (r *Route) ListFiltered() ([]Route, error) {
+	filter, err := r.netlinkRouteFilter()
+	if err != nil {
+		return nil, err
+	}
+
+	// Build filter mask from fields set on the filter route.
+	var filterMask uint64
+
+	if filter.LinkIndex != 0 {
+		filterMask |= netlink.RT_FILTER_OIF
+	}
+	if filter.Dst != nil {
+		filterMask |= netlink.RT_FILTER_DST
+	}
+	if filter.Gw != nil {
+		filterMask |= netlink.RT_FILTER_GW
+	}
+	if filter.Protocol != 0 {
+		filterMask |= netlink.RT_FILTER_PROTOCOL
+	}
+	if filter.Table != 0 {
+		filterMask |= netlink.RT_FILTER_TABLE
+	}
+
+	netlinkRoutes, err := netlink.RouteListFiltered(filter.Family, filter, filterMask)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to list routes matching %+v: %w", filter, err)
+	}
+
+	routes := make([]Route, 0, len(netlinkRoutes))
+
+	for _, nlRoute := range netlinkRoutes {
+		var table string
+
+		switch nlRoute.Table {
+		case unix.RT_TABLE_MAIN:
+			table = "main"
+		case unix.RT_TABLE_LOCAL:
+			table = "local"
+		case unix.RT_TABLE_DEFAULT:
+			table = "default"
+		default:
+			table = strconv.Itoa(nlRoute.Table)
+		}
+
+		// Resolve device name if not provided.
+		devName := r.DevName
+		if devName == "" {
+			if lnk, lerr := netlink.LinkByIndex(nlRoute.LinkIndex); lerr == nil {
+				devName = lnk.Attrs().Name
+			}
+		}
+
+		routes = append(routes, Route{
+			DevName: devName, // if empty, couldn't resolve; caller can handle
+			Route:   nlRoute.Dst,
+			Src:     nlRoute.Src,
+			Via:     nlRoute.Gw,
+			Scope:   nlRoute.Scope.String(),
+			Table:   table,
+			VRF:     "", // not available from kernel route; table already conveys it
+			Proto:   nlRoute.Protocol.String(),
+			Family:  Family(nlRoute.Family),
+		})
+	}
+
+	return routes, nil
+}
+
+// netlinkRouteFilter builds a netlink.Route suitable for filtering.
+// Unlike netlinkRoute(), DevName is optional here; if DevName is empty,
+// the returned route has LinkIndex = 0 so no OIF filter is applied.
+func (r *Route) netlinkRouteFilter() (*netlink.Route, error) {
+	route := &netlink.Route{
+		Family: int(r.Family),
+		Dst:    r.Route,
+		Src:    r.Src,
+		Gw:     r.Via,
+	}
+
+	// Optional device filter.
+	if r.DevName != "" {
+		link, err := linkByName(r.DevName)
+		if err != nil {
+			return nil, err
+		}
+
+		route.LinkIndex = link.Attrs().Index
+	}
+
+	// Optional table selection (or VRF).
+	if r.Table != "" {
+		tableID, err := r.tableID()
+		if err != nil {
+			return nil, fmt.Errorf("Invalid table %q: %w", r.Table, err)
+		}
+
+		route.Table = tableID
+	} else if r.VRF != "" {
+		vrfDev, err := linkByName(r.VRF)
+		if err != nil {
+			return nil, err
+		}
+
+		vrf, ok := vrfDev.(*netlink.Vrf)
+		if !ok {
+			return nil, fmt.Errorf("%q is not a vrf", r.VRF)
+		}
+
+		route.Table = int(vrf.Table)
+	}
+
+	// Optional protocol filter.
+	if r.Proto != "" {
+		proto, err := r.netlinkProto()
+		if err != nil {
+			return nil, err
+		}
+
+		route.Protocol = proto
+	}
+
+	return route, nil
+}
