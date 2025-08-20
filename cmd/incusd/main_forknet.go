@@ -794,7 +794,7 @@ func (c *cmdForknet) dhcpApplyDNS(logger *logrus.Logger) error {
 
 		if len(out) > 0 {
 			_, err = fmt.Fprintf(f, "search %s\n", strings.Join(out, ", "))
-				if err != nil {
+			if err != nil {
 				logger.WithError(err).Error("Giving up on DHCP, couldn't write resolv.conf")
 				return err
 			}
@@ -815,7 +815,7 @@ func (c *cmdForknet) installDefaultRouteV4(iface string, gw net.IP) error {
 	routes, err := (&ip.Route{
 		Family: ip.FamilyV4,
 		Table:  "main",
-	}).ListFiltered()
+	}).List()
 	if err != nil {
 		return err
 	}
