@@ -408,9 +408,9 @@ jobs:
           # Install everything required to compile DRBD and run LINSTOR tools.
           sudo apt-get install --no-install-recommends -y \
             drbd-dkms \
-            linstor-client \
-            linstor-controller \
-            linstor-satellite \
+            linstor-client=1.25.4-1ppa1~noble1 \
+            linstor-controller=1.31.3-1ppa1~noble1 \
+            linstor-satellite=1.31.3-1ppa1~noble1 \
             linux-headers-generic \
             python3-setuptools
 
