@@ -520,6 +520,11 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 			}
 		}
 
+		// Make sure that no description is set through the member-specific path.
+		if req.Description != "" {
+			return response.BadRequest(errors.New("The network description cannot be set for a specific member"))
+		}
+
 		exists := false
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 			_, err := tx.GetNetworkID(ctx, projectName, req.Name)
