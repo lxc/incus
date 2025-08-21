@@ -967,6 +967,7 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	var id int64
+	var projectConfig map[string]string
 	var usedBy []string
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		project, err := cluster.GetProject(ctx, tx.Tx(), name)
@@ -993,6 +994,11 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 		id, err = cluster.GetProjectID(ctx, tx.Tx(), name)
 		if err != nil {
 			return fmt.Errorf("Fetch project id %q: %w", name, err)
+		}
+
+		projectConfig, err = cluster.GetProjectConfig(ctx, tx.Tx(), int(id))
+		if err != nil {
+			return fmt.Errorf("Fetch project config %q: %w", name, err)
 		}
 
 		return nil
@@ -1143,10 +1149,12 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 			count--
 		}
 
-		// Empty the default profile.
-		err = target.UpdateProfile("default", api.ProfilePut{}, "")
-		if err != nil {
-			return response.InternalError(err)
+		// Empty the default profile, if the project owns one.
+		if util.IsTrue(projectConfig["features.profiles"]) {
+			err = target.UpdateProfile("default", api.ProfilePut{}, "")
+			if err != nil {
+				return response.InternalError(err)
+			}
 		}
 
 		// Delete images.
