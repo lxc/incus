@@ -24,18 +24,32 @@ type Route struct {
 	Scope   string
 }
 
-func (r *Route) netlinkRoute() (*netlink.Route, error) {
-	link, err := linkByName(r.DevName)
-	if err != nil {
-		return nil, err
+type routeBuildMode int
+
+const (
+	routeApply routeBuildMode = iota
+	routeQuery
+)
+
+func (r *Route) netlinkRoute(mode routeBuildMode) (*netlink.Route, error) {
+	route := &netlink.Route{
+		Family: int(r.Family),
+		Dst:    r.Route,
+		Src:    r.Src,
+		Gw:     r.Via,
 	}
 
-	route := &netlink.Route{
-		LinkIndex: link.Attrs().Index,
-		Family:    int(r.Family),
-		Dst:       r.Route,
-		Src:       r.Src,
-		Gw:        r.Via,
+	// Device handling.
+	if r.DevName != "" {
+		link, err := linkByName(r.DevName)
+		if err != nil {
+			return nil, err
+		}
+
+		route.LinkIndex = link.Attrs().Index
+	} else if mode == routeApply {
+		// Mutating routes require a device (for our usage and consistency).
+		return nil, fmt.Errorf("device name must be set")
 	}
 
 	if r.Table != "" {
@@ -59,6 +73,7 @@ func (r *Route) netlinkRoute() (*netlink.Route, error) {
 		route.Table = int(vrf.Table)
 	}
 
+	var err error
 	route.Scope, err = r.netlinkScope()
 	if err != nil {
 		return nil, err
@@ -172,7 +187,7 @@ func (r *Route) netlinkProto() (netlink.RouteProtocol, error) {
 
 // Add adds new route.
 func (r *Route) Add() error {
-	route, err := r.netlinkRoute()
+	route, err := r.netlinkRoute(routeApply)
 	if err != nil {
 		return err
 	}
@@ -187,7 +202,7 @@ func (r *Route) Add() error {
 
 // Delete deletes routing table.
 func (r *Route) Delete() error {
-	route, err := r.netlinkRoute()
+	route, err := r.netlinkRoute(routeApply)
 	if err != nil {
 		return err
 	}
@@ -203,7 +218,8 @@ func (r *Route) Delete() error {
 func routeFilterMask(route *netlink.Route) uint64 {
 	var filterMask uint64
 
-	// we always filter by interface because that is required to be set on our route type
+	// By default include OIF to filter by interface;
+	// callers (e.g. List) may clear this bit when no device filter is desired.
 	filterMask |= netlink.RT_FILTER_OIF
 
 	if route.Dst != nil {
@@ -227,7 +243,7 @@ func routeFilterMask(route *netlink.Route) uint64 {
 
 // Flush flushes routing tables.
 func (r *Route) Flush() error {
-	route, err := r.netlinkRoute()
+	route, err := r.netlinkRoute(routeApply)
 	if err != nil {
 		return err
 	}
@@ -260,7 +276,7 @@ func (r *Route) Flush() error {
 // If there is already a route with the same destination, metric, tos and table then that route is updated,
 // otherwise a new route is added.
 func (r *Route) Replace() error {
-	route, err := r.netlinkRoute()
+	route, err := r.netlinkRoute(routeApply)
 	if err != nil {
 		return err
 	}
@@ -275,12 +291,19 @@ func (r *Route) Replace() error {
 
 // List lists matching routes.
 func (r *Route) List() ([]Route, error) {
-	route, err := r.netlinkRoute()
+	route, err := r.netlinkRoute(routeQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	netlinkRoutes, err := netlink.RouteListFiltered(route.Family, route, routeFilterMask(route))
+	filterMask := routeFilterMask(route)
+
+	// If no device filter is desired, clear the OIF bit.
+	if r.DevName == "" || route.LinkIndex == 0 {
+		filterMask &^= netlink.RT_FILTER_OIF
+	}
+
+	netlinkRoutes, err := netlink.RouteListFiltered(route.Family, route, filterMask)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to list routes matching %+v: %w", route, err)
 	}
@@ -301,8 +324,17 @@ func (r *Route) List() ([]Route, error) {
 			table = strconv.Itoa(netlinkRoute.Table)
 		}
 
+		devName := r.DevName
+
+		if devName == "" && netlinkRoute.LinkIndex != 0 {
+			lnk, err := netlink.LinkByIndex(netlinkRoute.LinkIndex)
+			if err == nil {
+				devName = lnk.Attrs().Name
+			}
+		}
+
 		routes = append(routes, Route{
-			DevName: r.DevName, // routes are always filtered by device so we can use the device name that was passed in
+			DevName: devName,
 			Route:   netlinkRoute.Dst,
 			Src:     netlinkRoute.Src,
 			Via:     netlinkRoute.Gw,
