@@ -765,7 +765,7 @@ func (c *ClusterTx) UpdateNetwork(ctx context.Context, project string, name, des
 		return err
 	}
 
-	err = updateNetworkDescription(c.tx, id, description)
+	err = c.UpdateNetworkDescription(id, description)
 	if err != nil {
 		return err
 	}
@@ -783,9 +783,9 @@ func (c *ClusterTx) UpdateNetwork(ctx context.Context, project string, name, des
 	return nil
 }
 
-// Update the description of the network with the given ID.
-func updateNetworkDescription(tx *sql.Tx, id int64, description string) error {
-	_, err := tx.Exec("UPDATE networks SET description=? WHERE id=?", description, id)
+// UpdateNetworkDescription updates the description of the network with the given ID.
+func (c *ClusterTx) UpdateNetworkDescription(id int64, description string) error {
+	_, err := c.tx.Exec("UPDATE networks SET description=? WHERE id=?", description, id)
 	return err
 }
 
