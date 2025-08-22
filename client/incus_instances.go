@@ -1272,18 +1272,38 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 	}
 
 	if fds[api.SecretNameControl] != "" {
-		conn, err := r.GetOperationWebsocket(opAPI.ID, fds[api.SecretNameControl])
-		if err != nil {
-			return nil, err
-		}
+		if exec.Interactive {
+			// Synchronous: Block and surface errors.
+			conn, err := r.GetOperationWebsocket(opAPI.ID, fds[api.SecretNameControl])
+			if err != nil {
+				return nil, err
+			}
 
-		go func() {
-			_, _, _ = conn.ReadMessage() // Consume pings from server.
-		}()
+			go func() {
+				_, _, _ = conn.ReadMessage() // Consume pings from server.
+			}()
 
-		if args.Control != nil {
-			// Call the control handler with a connection to the control socket
-			go args.Control(conn)
+			if args.Control != nil {
+				// Call the control handler with a connection to the control socket
+				go args.Control(conn)
+			}
+		} else {
+			// Connect control asynchronously so it cannot delay data channels.
+			go func() {
+				conn, err := r.GetOperationWebsocket(opAPI.ID, fds[api.SecretNameControl])
+				if err != nil {
+					// Optional in non-interactive; ignore failure.
+					return
+				}
+
+				go func() {
+					_, _, _ = conn.ReadMessage() // Consume pings from server.
+				}()
+
+				if args.Control != nil {
+					go args.Control(conn)
+				}
+			}()
 		}
 	}
 
@@ -1312,58 +1332,98 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 			}
 		}
 	} else {
-		// Handle non-interactive sessions
+		// Non‑interactive: attach data websockets without delay and start mirrors after attach.
 		dones := make(map[int]chan error)
 		conns := []*websocket.Conn{}
 
-		// Handle stdin
+		// Default output writers if none provided.
+		if fds["1"] != "" && args.Stdout == nil {
+			args.Stdout = io.Discard
+		}
+		if fds["2"] != "" && args.Stderr == nil {
+			args.Stderr = io.Discard
+		}
+
+		// Attach 0/1/2 concurrently to eliminate attach gap.
+		type wsAttachResult struct {
+			name string
+			conn *websocket.Conn
+			err  error
+		}
+
+		attachNames := []string{}
 		if fds["0"] != "" {
-			conn, err := r.GetOperationWebsocket(opAPI.ID, fds["0"])
-			if err != nil {
-				return nil, err
+			attachNames = append(attachNames, "0")
+		}
+		if fds["1"] != "" {
+			attachNames = append(attachNames, "1")
+		}
+		if fds["2"] != "" {
+			attachNames = append(attachNames, "2")
+		}
+
+		var stdinConn *websocket.Conn
+		var stdoutConn *websocket.Conn
+		var stderrConn *websocket.Conn
+
+		if len(attachNames) > 0 {
+			resCh := make(chan wsAttachResult, len(attachNames))
+			for _, name := range attachNames {
+				secret := fds[name]
+				go func(n string, s string) {
+					conn, err := r.GetOperationWebsocket(opAPI.ID, s)
+					resCh <- wsAttachResult{name: n, conn: conn, err: err}
+				}(name, secret)
 			}
 
-			go func() {
-				_, _, _ = conn.ReadMessage() // Consume pings from server.
-			}()
+			for i := 0; i < len(attachNames); i++ {
+				res := <-resCh
+				if res.err != nil {
+					// Close any successful sockets.
+					if stdinConn != nil {
+						_ = stdinConn.Close()
+					}
+					if stdoutConn != nil {
+						_ = stdoutConn.Close()
+					}
+					if stderrConn != nil {
+						_ = stderrConn.Close()
+					}
+					return nil, res.err
+				}
 
-			conns = append(conns, conn)
-			dones[0] = ws.MirrorRead(conn, args.Stdin)
+				switch res.name {
+				case "0":
+					stdinConn = res.conn
+				case "1":
+					stdoutConn = res.conn
+				case "2":
+					stderrConn = res.conn
+				}
+			}
+		}
+
+		// Consume pings on stdin and build conns in fixed order for existing indexing.
+		if stdinConn != nil {
+			go func() {
+				_, _, _ = stdinConn.ReadMessage() // Consume pings from server.
+			}()
+			conns = append(conns, stdinConn)
+			dones[0] = ws.MirrorRead(stdinConn, args.Stdin)
 		}
 
 		waitConns := 0 // Used for keeping track of when stdout and stderr have finished.
 
-		// Handle stdout
-		if fds["1"] != "" {
-			conn, err := r.GetOperationWebsocket(opAPI.ID, fds["1"])
-			if err != nil {
-				return nil, err
-			}
-
-			// Discard Stdout from remote command if output writer not supplied.
-			if args.Stdout == nil {
-				args.Stdout = io.Discard
-			}
-
-			conns = append(conns, conn)
-			dones[1] = ws.MirrorWrite(conn, args.Stdout)
+		// Start output mirrors only after both sockets are attached.
+		// Append stdout and stderr into conns in deterministic order and start mirrors.
+		if stdoutConn != nil {
+			conns = append(conns, stdoutConn)
+			dones[1] = ws.MirrorWrite(stdoutConn, args.Stdout)
 			waitConns++
 		}
-
-		// Handle stderr
-		if fds["2"] != "" {
-			conn, err := r.GetOperationWebsocket(opAPI.ID, fds["2"])
-			if err != nil {
-				return nil, err
-			}
-
-			// Discard Stderr from remote command if output writer not supplied.
-			if args.Stderr == nil {
-				args.Stderr = io.Discard
-			}
-
-			conns = append(conns, conn)
-			dones[2] = ws.MirrorWrite(conn, args.Stderr)
+		if stderrConn != nil {
+			conns = append(conns, stderrConn)
+			dones[2] = ws.MirrorWrite(stderrConn, args.Stderr)
 			waitConns++
 		}
 
