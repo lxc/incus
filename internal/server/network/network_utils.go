@@ -108,7 +108,7 @@ func UsedByInstanceDevices(s *state.State, networkProjectName string, networkNam
 
 		// Skip instances who's effective network project doesn't match this Network's project.
 		if instNetworkProject != networkProjectName {
-			return nil
+			continue
 		}
 
 		// Look for NIC devices using this network.
