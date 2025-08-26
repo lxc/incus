@@ -145,7 +145,6 @@ jobs:
           - lvm
           - zfs
           - ceph
-          - linstor
           - random
         os:
           - ubuntu-24.04
