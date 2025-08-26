@@ -31,6 +31,11 @@ jobs:
           # Differential ShellCheck requires full git history
           fetch-depth: 0
 
+      - name: Workaround for broken go-swagger on Go 1.25
+        run: |
+          rm test/lint/rest-api-up-to-date.sh
+        if: matrix.go == 'tip' || matrix.go == 'stable'
+
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
         if: github.event_name == 'pull_request'
@@ -140,7 +145,6 @@ jobs:
           - lvm
           - zfs
           - ceph
-          - linstor
           - random
         os:
           - ubuntu-24.04

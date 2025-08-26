@@ -96,7 +96,7 @@ endif
 	$(GO) get -t -v -u ./...
 	$(GO) get github.com/go-jose/go-jose/v4@v4.0.5
 	$(GO) get github.com/olekukonko/tablewriter@v0.0.5
-	$(GO) mod tidy --go=1.23.7
+	$(GO) mod tidy --go=1.24.0
 	$(GO) get toolchain@none
 
 	@echo "Dependencies updated"
