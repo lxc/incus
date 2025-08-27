@@ -79,6 +79,23 @@ VM `agent`
 
       incus config device add <instance_name> <device_name> disk source=agent:config
 
+Tmpfs
+: You can back a disk device with an in-memory file system by using the `tmpfs:` source.
+
+      incus config device add <instance_name> <device_name> disk source=tmpfs: path=<path_in_instance> [size=<size>] [initial.uid=<uid>] [initial.gid=<gid>] [initial.mode=<mode>]
+
+  Both `source` and `path` are required.
+  This creates a `tmpfs` mount inside the instance and supports optional properties for size, ownership, and permissions.
+
+Tmpfs with overlayfs behavior
+: If you want the same tmpfs behavior but combined with overlayfs semantics, use `tmpfs-overlay:` as the source.
+
+      incus config device add <instance_name> <device_name> disk source=tmpfs-overlay: path=<path_in_instance> [size=<size>] [initial.uid=<uid>] [initial.gid=<gid>] [initial.mode=<mode>]
+
+  Both `source` and `path` are required.
+  Additionally, the target `path` must already exist inside the container.
+  This provides an ephemeral in-memory file system with overlayfs handling.
+
 (devices-disk-initial-config)=
 ## Initial volume configuration for instance root disk devices
 
