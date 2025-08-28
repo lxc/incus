@@ -89,32 +89,23 @@ Please report packaging issues [here](https://github.com/chimera-linux/cports/is
 ```
 
 ```{group-tab} Debian
-There are three options currently available to Debian users.
+There are two options currently available to Debian users.
 
 1. Native `incus` and `incus-base` packages
 
-    Native `incus` and `incus-base` packages are currently available in the Debian testing and unstable repositories.
-    These packages will be featured in the upcoming Debian 13 (`trixie`) release.
+    Native `incus` and `incus-base` packages are available beginning with the Debian 13 (`trixie`) release.
 
     Debian's packaging will track the Incus LTS releases, as these better align with Debian's release cycle and support policies.
 
-    On such systems, running `apt install incus` will get Incus installed with all dependencies required for running containers and virtual machines.
+    Monthly Incus feature releases are uploaded to experimental on a best-effort basis, and are intended for use by experienced users.
+
+    On Debian systems, running `apt install incus` will get Incus installed with all dependencies required for running containers and virtual machines.
     If you only wish to run containers in Incus, you can run just `apt install incus-base`.
     If migrating from LXD, also run `apt install incus-extra` to get the `lxd-to-incus` command.
 
-1. Native `incus` and `incus-base` backported packages
-
-   Native `incus` and `incus-base` backported packages are currently available for Debian 12 (`bookworm`) users.
-
-   On such systems, running `apt install incus/bookworm-backports` will get Incus installed with all dependencies required for running containers and virtual machines.
-   If you only wish to run containers in Incus, you can run just `apt install incus-base/bookworm-backports`.
-   If migrating from LXD, also run `apt install incus-extra/bookworm-backports` to get the `lxd-to-incus` command.
-
-   ****NOTE:**** Users of backported packages should not file bugs in the Debian Bug Tracker, instead please reach out [through our forum](https://discuss.linuxcontainers.org) or directly to the Debian packager.
-
 1. Zabbly package repository
 
-    [Zabbly](https://zabbly.com) provides up to date and supported Incus packages for Debian stable releases (11 and 12) and the upcoming Debian 13 (`trixie`) release.
+    [Zabbly](https://zabbly.com) provides up to date and supported Incus packages for Debian 13 (`trixie`), 12 (`bookworm`) and 11 (`bullseye`).
     Those packages contain everything needed to use all Incus features.
 
     Up to date installation instructions may be found here: [`https://github.com/zabbly/incus`](https://github.com/zabbly/incus)
