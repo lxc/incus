@@ -200,14 +200,19 @@ func (d *fanotify) getEvents(ctx context.Context, mountFd int) {
 			}
 
 			for identifier, f := range d.watches[path] {
-				ret := f(path, action.String())
-				if !ret {
-					delete(d.watches[path], identifier)
+				go func(path string, action Event) {
+					ret := f(path, action.String())
+					if !ret {
+						d.mu.Lock()
+						defer d.mu.Unlock()
 
-					if len(d.watches[path]) == 0 {
-						delete(d.watches, path)
+						delete(d.watches[path], identifier)
+
+						if len(d.watches[path]) == 0 {
+							delete(d.watches, path)
+						}
 					}
-				}
+				}(path, action)
 			}
 
 			break
