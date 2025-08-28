@@ -47,6 +47,12 @@ const diskSourceCloudInit = "cloud-init:config"
 // Special disk "source" value used for generating a VM agent ISO.
 const diskSourceAgent = "agent:config"
 
+// Special disk "source" identifier used for tmpfs mounts.
+const diskSourceTmpfs = "tmpfs:"
+
+// Special disk "source" identifier for tmpfs in overlayfs mounts.
+const diskSourceTmpfsOverlay = "tmpfs-overlay:"
+
 // DiskVirtiofsdSockMountOpt indicates the mount option prefix used to provide the virtiofsd socket path to
 // the QEMU driver.
 const DiskVirtiofsdSockMountOpt = "virtiofsdSock"
@@ -111,7 +117,7 @@ func (d *disk) CanMigrate() bool {
 	}
 
 	// Virtual disks are migratable.
-	if slices.Contains([]string{diskSourceCloudInit, diskSourceAgent}, d.config["source"]) {
+	if slices.Contains([]string{diskSourceCloudInit, diskSourceAgent, diskSourceTmpfs, diskSourceTmpfsOverlay}, d.config["source"]) {
 		return true
 	}
 
@@ -130,6 +136,10 @@ func (d *disk) sourceIsCeph() bool {
 
 // CanHotPlug returns whether the device can be managed whilst the instance is running.
 func (d *disk) CanHotPlug() bool {
+	if d.config["source"] == diskSourceTmpfs || d.config["source"] == diskSourceTmpfsOverlay {
+		return false
+	}
+
 	// 9p mounts cannot be hotplugged. However, with io.bus=auto, we can't know at startup time
 	// if we are dealing with a 9p mount. Still, it's better to fail early. At stop time, we can
 	// extract the info from the volatile key. All other disks can be hotplugged.
@@ -162,6 +172,10 @@ func (d *disk) sourceIsLocalPath(source string) bool {
 	}
 
 	if source == diskSourceAgent {
+		return false
+	}
+
+	if source == diskSourceTmpfs || source == diskSourceTmpfsOverlay {
 		return false
 	}
 
@@ -437,8 +451,8 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		return errors.New(`Root disk entry must have a "pool" property set`)
 	}
 
-	if d.config["size"] != "" && d.config["path"] != "/" {
-		return errors.New("Only the root disk may have a size quota")
+	if d.config["size"] != "" && d.config["path"] != "/" && d.config["source"] != diskSourceTmpfs && d.config["source"] != diskSourceTmpfsOverlay {
+		return errors.New("Only root or tmpfs disks can have a size quota")
 	}
 
 	if d.config["size.state"] != "" && d.config["path"] != "/" {
@@ -456,6 +470,10 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 	// Check ceph options are only used when ceph or cephfs type source is specified.
 	if !(d.sourceIsCeph() || d.sourceIsCephFs()) && (d.config["ceph.cluster_name"] != "" || d.config["ceph.user_name"] != "") {
 		return fmt.Errorf("Invalid options ceph.cluster_name/ceph.user_name for source %q", d.config["source"])
+	}
+
+	if (d.config["source"] == diskSourceTmpfs || d.config["source"] == diskSourceTmpfsOverlay) && d.config["path"] == "" {
+		return errors.New(`Missing mount "path" setting`)
 	}
 
 	// Check no other devices also have the same path as us. Use LocalDevices for this check so
@@ -771,6 +789,10 @@ func (d *disk) validateEnvironment() error {
 		return fmt.Errorf("disks with source=%s are only supported by virtual machines", d.config["source"])
 	}
 
+	if d.inst.Type() != instancetype.Container && slices.Contains([]string{diskSourceTmpfs, diskSourceTmpfsOverlay}, d.config["source"]) {
+		return fmt.Errorf("disks with source=%s are only supported by containers", d.config["source"])
+	}
+
 	err := d.validateEnvironmentSourcePath()
 	if err != nil {
 		return err
@@ -929,6 +951,118 @@ func (d *disk) startContainer() (*deviceConfig.RunConfig, error) {
 		}
 
 		runConf.RootFS = rootfs
+	} else if d.config["source"] == diskSourceTmpfs || d.config["source"] == diskSourceTmpfsOverlay {
+		srcPath := d.config["source"]
+
+		destPath := d.config["path"]
+		relativeDestPath := strings.TrimPrefix(destPath, "/")
+
+		options := []string{}
+		if d.config["size"] != "" {
+			size, err := units.ParseByteSizeString(d.config["size"])
+			if err != nil {
+				return nil, err
+			}
+
+			options = append(options, fmt.Sprintf("size=%d", size))
+		}
+
+		if d.config["initial.mode"] != "" {
+			options = append(options, fmt.Sprintf("mode=%s", d.config["initial.mode"]))
+		}
+
+		if d.config["initial.uid"] != "" {
+			options = append(options, fmt.Sprintf("uid=%s", d.config["initial.uid"]))
+		}
+
+		if d.config["initial.gid"] != "" {
+			options = append(options, fmt.Sprintf("gid=%s", d.config["initial.gid"]))
+		}
+
+		if srcPath == diskSourceTmpfsOverlay {
+			procUpperPath := "proc/upper"
+			procWorkPath := "proc/work"
+			overlayPath := relativeDestPath
+
+			rootFsPaths := []string{
+				"/opt/incus/lib/lxc/rootfs/",
+				"/usr/lib/x86_64-linux-gnu/lxc/rootfs/",
+				"/usr/lib/aarch64-linux-gnu/lxc/rootfs/",
+			}
+
+			rootFsPath := ""
+			for _, path := range rootFsPaths {
+				if util.PathExists(path) {
+					rootFsPath = path
+					break
+				}
+			}
+
+			if rootFsPath == "" {
+				return nil, fmt.Errorf("Cannot find rootfs path for container")
+			}
+
+			lowerDirOpt := fmt.Sprintf("lowerdir=%s", filepath.Join(rootFsPath, overlayPath))
+			upperDirOpt := fmt.Sprintf("upperdir=%s", filepath.Join(rootFsPath, procUpperPath))
+			workDirOpt := fmt.Sprintf("workdir=%s", filepath.Join(rootFsPath, procWorkPath))
+
+			mounts := []deviceConfig.MountEntryItem{
+				{
+					DevName:    d.name,
+					DevPath:    "none",
+					TargetPath: "proc",
+					FSType:     "tmpfs",
+					Opts:       append(options, "defaults"),
+				},
+				{
+					DevName:    d.name,
+					DevPath:    "none",
+					TargetPath: procUpperPath,
+					FSType:     "invalid",
+					Opts:       []string{"defaults", "create=dir", "optional"},
+				},
+				{
+					DevName:    d.name,
+					DevPath:    "none",
+					TargetPath: procWorkPath,
+					FSType:     "invalid",
+					Opts:       []string{"defaults", "create=dir", "optional"},
+				},
+				{
+					DevName:    d.name,
+					DevPath:    "none",
+					TargetPath: "sys",
+					FSType:     "overlay",
+					Opts:       []string{"userxattr", lowerDirOpt, upperDirOpt, workDirOpt},
+				},
+				{
+					DevName:    d.name,
+					DevPath:    filepath.Join(rootFsPath, "proc"),
+					TargetPath: overlayPath,
+					FSType:     "none",
+					Opts:       []string{"move"},
+				},
+				{
+					DevName:    d.name,
+					DevPath:    filepath.Join(rootFsPath, "sys"),
+					TargetPath: overlayPath,
+					FSType:     "none",
+					Opts:       []string{"move"},
+				},
+			}
+
+			runConf.Mounts = append(runConf.Mounts, mounts...)
+		} else {
+			options := append(options, "create=dir")
+
+			runConf.Mounts = append(runConf.Mounts, deviceConfig.MountEntryItem{
+				DevName:    d.name,
+				DevPath:    "tmpfs",
+				TargetPath: relativeDestPath,
+				FSType:     "tmpfs",
+				Opts:       options,
+			})
+		}
 	} else {
 		// Source path.
 		srcPath := d.config["source"]
