@@ -3971,6 +3971,8 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 
 					acl.OVNPortGroupInstanceNICSchedule(portUUID, addChangeSet, egressPortGroupName)
 					n.logger.Debug("Scheduled logical port for ACL port group addition", logger.Ctx{"networkACL": addedACL, "portGroup": egressPortGroupName, "port": instancePortName})
+					acl.OVNPortGroupInstanceNICSchedule(portUUID, addChangeSet, directionalPortGroups.All)
+					n.logger.Debug("Scheduled logical port for ACL port group addition", logger.Ctx{"networkACL": addedACL, "portGroup": directionalPortGroups.All, "port": instancePortName})
 				}
 
 				// Check whether we need to remove any of the removed ACLs from the NIC.
@@ -4892,6 +4894,9 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 
 				acl.OVNPortGroupInstanceNICSchedule(portUUID, addChangeSet, egressPortGroupName)
 				n.logger.Debug("Scheduled logical port for ACL port group addition", logger.Ctx{"networkACL": aclName, "portGroup": egressPortGroupName, "port": instancePortName})
+
+				acl.OVNPortGroupInstanceNICSchedule(portUUID, addChangeSet, directionalPortGroups.All)
+				n.logger.Debug("Scheduled logical port for ACL port group addition", logger.Ctx{"networkACL": aclName, "portGroup": directionalPortGroups.All, "port": instancePortName})
 			}
 		}
 
