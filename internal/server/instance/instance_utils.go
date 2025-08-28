@@ -1212,6 +1212,7 @@ func SnapshotProtobufToInstanceArgs(s *state.State, inst Instance, snap *migrati
 	args := db.InstanceArgs{
 		Architecture: int(snap.GetArchitecture()),
 		Config:       config,
+		Description:  inst.Description(),
 		Type:         inst.Type(),
 		Snapshot:     true,
 		Devices:      devices,

@@ -3455,6 +3455,7 @@ func (d *lxc) Render() (any, any, error) {
 		// Prepare the response.
 		snapState := api.InstanceSnapshot{
 			CreatedAt:       d.creationDate,
+			Description:     d.description,
 			ExpandedConfig:  d.expandedConfig,
 			ExpandedDevices: d.expandedDevices.CloneNative(),
 			LastUsedAt:      d.lastUsedDate,
@@ -6298,6 +6299,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 				CreatedAt:    d.CreationDate(),
 				LastUsedAt:   d.LastUsedDate(),
 				Config:       d.LocalConfig(),
+				Description:  d.Description(),
 				Devices:      d.LocalDevices().CloneNative(),
 				Ephemeral:    d.IsEphemeral(),
 				Stateful:     d.IsStateful(),

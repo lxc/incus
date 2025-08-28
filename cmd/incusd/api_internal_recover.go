@@ -579,6 +579,7 @@ func internalRecoverImportInstanceSnapshot(s *state.State, pool storagePools.Poo
 		Architecture: arch,
 		BaseImage:    snap.Config["volatile.base_image"],
 		Config:       snap.Config,
+		Description:  snap.Description,
 		CreationDate: snap.CreatedAt,
 		Type:         instanceType,
 		Snapshot:     true,
