@@ -2062,6 +2062,11 @@ definitions:
                 format: date-time
                 type: string
                 x-go-name: CreatedAt
+            description:
+                description: Instance description
+                example: My description
+                type: string
+                x-go-name: Description
             devices:
                 additionalProperties:
                     additionalProperties:
