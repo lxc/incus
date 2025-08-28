@@ -11,6 +11,7 @@ test_container_devices_disk() {
     test_container_devices_disk_cephfs
     test_container_devices_disk_socket
     test_container_devices_disk_char
+    test_container_devices_disk_tmpfs
 
     incus delete -f foo
 }
@@ -182,6 +183,14 @@ test_container_devices_disk_char() {
     [ "$(incus exec foo -- stat /root/zero -c '%F')" = "character special file" ] || false
     incus config device remove foo char
     incus stop foo -f
+}
+
+test_container_devices_disk_tmpfs() {
+    incus config device add foo tmp disk source=tmpfs: path=/mnt/tmp
+    incus start foo
+    [ "$(incus exec foo -- stat -f -c '%T' /mnt/tmp)" = "tmpfs" ] || false
+    incus stop -f foo
+    incus config device remove foo tmp
 }
 
 test_container_devices_disk_subpath() {
