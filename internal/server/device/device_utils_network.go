@@ -356,9 +356,11 @@ func networkCreateTap(hostName string, m deviceConfig.Device) (uint32, error) {
 
 	mtu = max(instanceMTU, parentMTU)
 
-	err = NetworkSetDevMTU(hostName, mtu)
-	if err != nil {
-		return 0, fmt.Errorf("Failed to set the MTU %d: %w", mtu, err)
+	if mtu > 0 {
+		err = NetworkSetDevMTU(hostName, mtu)
+		if err != nil {
+			return 0, fmt.Errorf("Failed to set the MTU %d: %w", mtu, err)
+		}
 	}
 
 	// Set TX queue length on both ends.
