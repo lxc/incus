@@ -43,6 +43,15 @@ func (t *Tuntap) Add() error {
 		Flags: flags,
 	}
 
+	if t.Master != "" {
+		masterLink, err := linkByName(t.Master)
+		if err != nil {
+			return err
+		}
+
+		tuntap.MasterIndex = masterLink.Attrs().Index
+	}
+
 	err := netlink.LinkAdd(tuntap)
 	if err != nil {
 		return fmt.Errorf("Failed to create tuntap %q: %w", t.Name, err)
