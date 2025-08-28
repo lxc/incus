@@ -794,6 +794,7 @@ func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time
 		Project:      inst.Project().Name,
 		Architecture: inst.Architecture(),
 		Config:       inst.LocalConfig(),
+		Description:  inst.Description(),
 		Type:         inst.Type(),
 		Snapshot:     true,
 		Devices:      inst.LocalDevices(),

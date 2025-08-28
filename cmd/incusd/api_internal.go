@@ -945,6 +945,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 			Architecture: arch,
 			BaseImage:    baseImage,
 			Config:       snap.Config,
+			Description:  snap.Description,
 			CreationDate: snap.CreatedAt,
 			Type:         instanceType,
 			Snapshot:     true,
