@@ -78,6 +78,10 @@ type InstanceSnapshot struct {
 	// Example: 2021-03-23T20:00:00-04:00
 	CreatedAt time.Time `json:"created_at" yaml:"created_at"`
 
+	// Instance description
+	// Example: My description
+	Description string `json:"description" yaml:"description"`
+
 	// Instance devices (see doc/instances.md)
 	// Example: {"root": {"type": "disk", "pool": "default", "path": "/"}}
 	Devices map[string]map[string]string `json:"devices" yaml:"devices"`
