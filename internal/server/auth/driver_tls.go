@@ -9,7 +9,6 @@ import (
 	"github.com/lxc/incus/v6/internal/server/certificate"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
-	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -41,7 +40,6 @@ func (t *TLS) CheckPermission(ctx context.Context, r *http.Request, object Objec
 
 	authenticationProtocol := details.authenticationProtocol()
 	if authenticationProtocol != api.AuthenticationMethodTLS {
-		t.logger.Warn("Authentication protocol is not compatible with authorization driver", logger.Ctx{"protocol": authenticationProtocol})
 		// Return nil. If the server has been configured with an authentication method but no associated authorization driver,
 		// the default is to give these authenticated users admin privileges.
 		return nil
@@ -115,7 +113,6 @@ func (t *TLS) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 
 	authenticationProtocol := details.authenticationProtocol()
 	if authenticationProtocol != api.AuthenticationMethodTLS {
-		t.logger.Warn("Authentication protocol is not compatible with authorization driver", logger.Ctx{"protocol": authenticationProtocol})
 		// Allow all. If the server has been configured with an authentication method but no associated authorization driver,
 		// the default is to give these authenticated users admin privileges.
 		return allowFunc(true), nil
