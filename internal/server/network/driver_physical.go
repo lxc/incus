@@ -324,7 +324,7 @@ func (n *physical) setup(oldConfig map[string]string) error {
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	if !InterfaceExists(n.config["parent"]) {
+	if !InterfaceExists(n.config["parent"]) && n.config["parent"] != "none" {
 		return fmt.Errorf("Parent interface %q not found", n.config["parent"])
 	}
 
