@@ -18,7 +18,6 @@ import (
 	storagePools "github.com/lxc/incus/v6/internal/server/storage"
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
-	"github.com/lxc/incus/v6/shared/proxy"
 	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
@@ -57,8 +56,10 @@ func Connect(address string, networkCert *localtls.CertInfo, serverCert *localtl
 		args.UserAgent = clusterRequest.UserAgentNotifier
 	}
 
-	if r != nil {
-		proxy := func(req *http.Request) (*url.URL, error) {
+	// Always set a proxy function to have cluster traffic bypass any configured HTTP proxy.
+	proxy := func(req *http.Request) (*url.URL, error) {
+		// If dealing with a user request, proxy through the requestor.
+		if r != nil {
 			ctx := r.Context()
 
 			val, ok := ctx.Value(request.CtxUsername).(string)
@@ -72,13 +73,14 @@ func Connect(address string, networkCert *localtls.CertInfo, serverCert *localtl
 			}
 
 			req.Header.Add(request.HeaderForwardedAddress, r.RemoteAddr)
-
-			return proxy.FromEnvironment(req)
 		}
 
-		args.Proxy = proxy
+		return nil, nil
 	}
 
+	args.Proxy = proxy
+
+	// Connect to the target server.
 	url := fmt.Sprintf("https://%s", address)
 	return incus.ConnectIncus(url, args)
 }
