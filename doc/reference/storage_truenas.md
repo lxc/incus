@@ -47,21 +47,21 @@ page](https://github.com/truenas/truenas_incus_ctl). Additionally,
 ensure that `open-iscsi` is installed on the system, which can be done
 using:
 
-    `sudo apt install open-iscsi`
+    sudo apt install open-iscsi
 
 ## Logging in to the TrueNAS host
 
 As an alternative to manually creating an API Key and supplying using the `truenas.api_key` property, you can instead `login` to the remote server using the `truenas_incus_ctl` tool.
 
-    `sudo truenas_incus_ctl config login`
+    sudo truenas_incus_ctl config login
 
 This will prompt you to provide connection details for the TrueNAS server, including authentication details, and will save the configuration to a local file. After logging in, you can verify the iSCSI setup with:
 
-    `sudo truenas_incus_ctl share iscsi setup --test`
+    sudo truenas_incus_ctl share iscsi setup --test
 
 Once the tool is configured, you can use it to interact with remote datasets and create storage pools:
 
-    `incus storage create <poolname> truenas source=[host:]<pool>[/<dataset>]/[remote-poolname]`
+    incus storage create <poolname> truenas source=[host:]<pool>[/<dataset>]/[remote-poolname]
 
 In this command:
 
