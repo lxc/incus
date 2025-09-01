@@ -202,11 +202,12 @@ test_container_devices_disk_subpath() {
     incus config device add foo-main foo disk pool="${POOL}" source=foo path=/foo
 
     # Create some entries
-    incus exec foo-main -- mkdir /foo/path1 /foo/path2
-    incus exec foo-main -- ln -s /etc /foo/path3
-    incus exec foo-main -- ln -s path1 /foo/path4
+    incus exec foo-main -- mkdir /foo/path1 /foo/path2 /foo/path3
+    incus exec foo-main -- ln -s /etc /foo/path4
+    incus exec foo-main -- ln -s path1 /foo/path5
     echo path1 | incus file push - foo-main/foo/path1/hello
     echo path2 | incus file push - foo-main/foo/path2/hello
+    echo path3 | incus file push - foo-main/foo/path3/hello
 
     # Create some test containers
     incus create testimage foo-path1
@@ -216,22 +217,27 @@ test_container_devices_disk_subpath() {
     incus config device add foo-path2 foo disk pool="${POOL}" source=foo/path2 path=/foo
 
     incus create testimage foo-path3
-    incus config device add foo-path3 foo disk pool="${POOL}" source=foo/path3 path=/foo
+    incus config device add foo-path3 foo disk pool="${POOL}" source=foo/path3/hello path=/foo/hello
 
     incus create testimage foo-path4
     incus config device add foo-path4 foo disk pool="${POOL}" source=foo/path4 path=/foo
 
+    incus create testimage foo-path5
+    incus config device add foo-path5 foo disk pool="${POOL}" source=foo/path5 path=/foo
+
     # Validation
     incus start foo-path1
     incus start foo-path2
-    ! incus start foo-path3 || false
-    incus start foo-path4
+    incus start foo-path3
+    ! incus start foo-path4 || false
+    incus start foo-path5
 
     [ "$(incus file pull foo-path1/foo/hello -)" = "path1" ]
     [ "$(incus file pull foo-path2/foo/hello -)" = "path2" ]
-    [ "$(incus file pull foo-path4/foo/hello -)" = "path1" ]
+    [ "$(incus file pull foo-path3/foo/hello -)" = "path3" ]
+    [ "$(incus file pull foo-path5/foo/hello -)" = "path1" ]
 
     # Cleanup
-    incus delete -f foo-main foo-path1 foo-path2 foo-path3 foo-path4
+    incus delete -f foo-main foo-path1 foo-path2 foo-path3 foo-path4 foo-path5
     incus storage volume delete "${POOL}" foo
 }
