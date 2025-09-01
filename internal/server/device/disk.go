@@ -2129,6 +2129,17 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 			srcPathFd := os.NewFile(uintptr(fd), volPath)
 			defer func() { _ = srcPathFd.Close() }()
 
+			// Check if the sub-path is a file or a directory.
+			fullSubPath := filepath.Join(srcPath, volPath)
+			volSubPathInfo, err := os.Stat(fullSubPath)
+			if err != nil {
+				return nil, "", false, fmt.Errorf("Failed accessing volume sub-path %q: %w", fullSubPath, err)
+			}
+
+			if !volSubPathInfo.IsDir() {
+				isFile = true
+			}
+
 			srcPath = fmt.Sprintf("/proc/self/fd/%d", srcPathFd.Fd())
 		}
 	}
