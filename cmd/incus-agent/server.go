@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -100,14 +101,45 @@ func createCmd(restAPI *http.ServeMux, version string, c APIEndpoint, cert *x509
 }
 
 func authenticate(r *http.Request, cert *x509.Certificate) bool {
-	clientCerts := map[string]x509.Certificate{"0": *cert}
+	logger.Info("=== Authentication attempt ===")
+	logger.Infof("Expected client cert Subject: %s", cert.Subject)
+	logger.Infof("Expected client cert fingerprint SHA256: %x", sha256.Sum256(cert.Raw))
+	
+	fingerprint := fmt.Sprintf("%x", sha256.Sum256(cert.Raw))
+	clientCerts := map[string]x509.Certificate{fingerprint: *cert}
+	logger.Infof("Added expected cert to trust store with fingerprint: %s", fingerprint)
 
-	for _, cert := range r.TLS.PeerCertificates {
-		trusted, _ := localUtil.CheckTrustState(*cert, clientCerts, nil, false)
+	if r.TLS == nil {
+		logger.Error("No TLS connection information available")
+		return false
+	}
+	
+	logger.Infof("Number of peer certificates received: %d", len(r.TLS.PeerCertificates))
+	
+	for i, peerCert := range r.TLS.PeerCertificates {
+		logger.Infof("Peer cert %d Subject: %s", i, peerCert.Subject)
+		peerFingerprint := fmt.Sprintf("%x", sha256.Sum256(peerCert.Raw))
+		logger.Infof("Peer cert %d fingerprint SHA256: %s", i, peerFingerprint)
+		logger.Infof("Comparing peer fingerprint %s with expected %s", peerFingerprint, fingerprint)
+		logger.Infof("Raw bytes equal: %v", bytes.Equal(peerCert.Raw, cert.Raw))
+		logger.Infof("Trust store size: %d", len(clientCerts))
+		for k, v := range clientCerts {
+			logger.Infof("Trust store entry: key=%s, cert subject=%s", k, v.Subject)
+		}
+		
+		trusted, returnedFingerprint := localUtil.CheckTrustState(*peerCert, clientCerts, nil, false)
+		if returnedFingerprint != "" {
+			logger.Infof("Trust check returned fingerprint: %s", returnedFingerprint)
+		}
+		
 		if trusted {
+			logger.Info("=== Authentication SUCCESSFUL ===")
 			return true
+		} else {
+			logger.Infof("Peer cert %d NOT trusted", i)
 		}
 	}
 
+	logger.Error("=== Authentication FAILED - no trusted certificates ===")
 	return false
 }

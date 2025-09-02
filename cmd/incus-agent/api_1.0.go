@@ -1,12 +1,15 @@
 package main
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"runtime"
+	"time"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/ports"
@@ -15,6 +18,7 @@ import (
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 	agentAPI "github.com/lxc/incus/v6/shared/api/agent"
+	"github.com/lxc/incus/v6/shared/logger"
 	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
@@ -168,12 +172,19 @@ func stopDevIncusServer(d *Daemon) error {
 }
 
 func getClient(CID uint32, port int, serverCertificate string) (*http.Client, error) {
-	agentCert, err := os.ReadFile("agent.crt")
+	agentCertPath := "agent.crt"
+	agentKeyPath := "agent.key"
+	if runtime.GOOS == "windows" {
+		agentCertPath = "C:\\Incus\\agent.crt"
+		agentKeyPath = "C:\\Incus\\agent.key"
+	}
+
+	agentCert, err := os.ReadFile(agentCertPath)
 	if err != nil {
 		return nil, err
 	}
 
-	agentKey, err := os.ReadFile("agent.key")
+	agentKey, err := os.ReadFile(agentKeyPath)
 	if err != nil {
 		return nil, err
 	}
@@ -187,21 +198,59 @@ func getClient(CID uint32, port int, serverCertificate string) (*http.Client, er
 }
 
 func startHTTPServer(d *Daemon, debug bool) error {
+	logger.Info("Starting HTTP server for incus-agent")
+	
 	l, err := osGetListener(ports.HTTPSDefaultPort)
 	if err != nil {
 		return fmt.Errorf("Failed to get listener: %w", err)
 	}
+	logger.Infof("Listener created on port %d", ports.HTTPSDefaultPort)
 
 	// Load the expected server certificate.
-	cert, err := localtls.ReadCert("server.crt")
+	logger.Info("Loading server.crt (expected client certificate for validation)")
+	certPath := "server.crt"
+	if runtime.GOOS == "windows" {
+		certPath = "C:\\Incus\\server.crt"
+	}
+	cert, err := localtls.ReadCert(certPath)
 	if err != nil {
+		logger.Errorf("Failed to read server.crt: %v", err)
 		return fmt.Errorf("Failed to read client certificate: %w", err)
 	}
+	logger.Infof("Loaded server.crt successfully, Subject: %s, Issuer: %s", cert.Subject, cert.Issuer)
+	logger.Infof("server.crt fingerprint SHA256: %x", sha256.Sum256(cert.Raw))
+
+	// Validate system time is within certificate validity window
+	currentTime := time.Now()
+	logger.Infof("Current system time: %s", currentTime.Format(time.RFC3339))
+	logger.Infof("Certificate valid from: %s", cert.NotBefore.Format(time.RFC3339))
+	logger.Infof("Certificate valid until: %s", cert.NotAfter.Format(time.RFC3339))
+	
+	if currentTime.Before(cert.NotBefore) {
+		timeDiff := cert.NotBefore.Sub(currentTime)
+		logger.Errorf("System time is %.0f minutes before certificate validity period", timeDiff.Minutes())
+		logger.Error("CRITICAL: System clock appears to be behind. Certificate is not yet valid.")
+		logger.Error("Please sync system time or wait for certificate to become valid.")
+		return fmt.Errorf("System time (%s) is before certificate validity (%s). Time sync required", 
+			currentTime.Format(time.RFC3339), cert.NotBefore.Format(time.RFC3339))
+	}
+	
+	if currentTime.After(cert.NotAfter) {
+		timeDiff := currentTime.Sub(cert.NotAfter)
+		logger.Errorf("System time is %.0f minutes after certificate expiry", timeDiff.Minutes())
+		logger.Error("CRITICAL: Certificate has expired.")
+		return fmt.Errorf("Certificate expired on %s (current time: %s)", 
+			cert.NotAfter.Format(time.RFC3339), currentTime.Format(time.RFC3339))
+	}
+	
+	logger.Info("Certificate time validation passed")
 
 	tlsConfig, err := serverTLSConfig()
 	if err != nil {
+		logger.Errorf("Failed to get TLS config: %v", err)
 		return fmt.Errorf("Failed to get TLS config: %w", err)
 	}
+	logger.Info("TLS configuration created successfully")
 
 	// Prepare the HTTP server.
 	servers["http"] = restServer(tlsConfig, cert, debug, d)
