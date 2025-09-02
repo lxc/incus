@@ -11,8 +11,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/gorilla/mux"
-
 	incus "github.com/lxc/incus/v6/client"
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/auth"
@@ -84,7 +82,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	projectName := request.ProjectParam(r)
 	target := request.QueryParam(r, "target")
 
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}

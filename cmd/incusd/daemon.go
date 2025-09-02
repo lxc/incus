@@ -22,7 +22,6 @@ import (
 
 	dqliteClient "github.com/cowsql/go-cowsql/client"
 	"github.com/cowsql/go-cowsql/driver"
-	"github.com/gorilla/mux"
 	liblxc "github.com/lxc/go-lxc"
 	"golang.org/x/sys/unix"
 
@@ -619,7 +618,7 @@ func (d *Daemon) State() *state.State {
 	}
 }
 
-func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
+func (d *Daemon) createCmd(restAPI *http.ServeMux, version string, c APIEndpoint) {
 	var uri string
 	if c.Path == "" {
 		uri = fmt.Sprintf("/%s", version)
@@ -629,7 +628,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		uri = fmt.Sprintf("/%s", c.Path)
 	}
 
-	route := restAPI.HandleFunc(uri, func(w http.ResponseWriter, r *http.Request) {
+	restAPI.HandleFunc(uri, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		if !(r.RemoteAddr == "@" && version == "internal") {
@@ -814,12 +813,6 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 			}
 		}
 	})
-
-	// If the endpoint has a canonical name then record it so it can be used to build URLS
-	// and accessed in the context of the request by the handler function.
-	if c.Name != "" {
-		route.Name(c.Name)
-	}
 }
 
 // have we setup shared mounts?

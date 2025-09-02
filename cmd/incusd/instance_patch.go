@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/gorilla/mux"
-
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/jmap"
 	"github.com/lxc/incus/v6/internal/server/db"
@@ -65,7 +63,7 @@ func instancePatch(d *Daemon, r *http.Request) response.Response {
 	projectName := request.ProjectParam(r)
 
 	// Get the container
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}

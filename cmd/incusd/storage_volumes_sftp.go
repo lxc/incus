@@ -7,8 +7,6 @@ import (
 	"net/url"
 	"slices"
 
-	"github.com/gorilla/mux"
-
 	"github.com/lxc/incus/v6/internal/server/cluster"
 	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/request"
@@ -49,17 +47,17 @@ func storagePoolVolumeTypeSFTPHandler(d *Daemon, r *http.Request) response.Respo
 	}
 
 	// Get the volume details.
-	volumeTypeName, err := url.PathUnescape(mux.Vars(r)["type"])
+	volumeTypeName, err := url.PathUnescape(r.PathValue("type"))
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	volumeName, err := url.PathUnescape(mux.Vars(r)["volumeName"])
+	volumeName, err := url.PathUnescape(r.PathValue("volumeName"))
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := url.PathUnescape(r.PathValue("poolName"))
 	if err != nil {
 		return response.SmartError(err)
 	}

@@ -10,8 +10,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/gorilla/mux"
-
 	"github.com/lxc/incus/v6/internal/filter"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/v6/internal/server/cluster/request"
@@ -372,7 +370,7 @@ func networkACLDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	aclName, err := url.PathUnescape(mux.Vars(r)["name"])
+	aclName, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -445,7 +443,7 @@ func networkACLGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	aclName, err := url.PathUnescape(mux.Vars(r)["name"])
+	aclName, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -541,7 +539,7 @@ func networkACLPut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	aclName, err := url.PathUnescape(mux.Vars(r)["name"])
+	aclName, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -624,7 +622,7 @@ func networkACLPut(d *Daemon, r *http.Request) response.Response {
 func networkACLPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	aclName, err := url.PathUnescape(mux.Vars(r)["name"])
+	aclName, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -699,7 +697,7 @@ func networkACLLogGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	aclName, err := url.PathUnescape(mux.Vars(r)["name"])
+	aclName, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}

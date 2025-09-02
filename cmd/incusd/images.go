@@ -26,7 +26,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/kballard/go-shellquote"
 	"gopkg.in/yaml.v2"
 
@@ -106,7 +105,7 @@ var imageAliasesCmd = APIEndpoint{
 }
 
 var imageAliasCmd = APIEndpoint{
-	Path: "images/aliases/{name:.*}",
+	Path: "images/aliases/{name...}",
 
 	Delete: APIEndpointAction{Handler: imageAliasDelete, AccessHandler: allowPermission(auth.ObjectTypeImageAlias, auth.EntitlementCanEdit, "name")},
 	Get:    APIEndpointAction{Handler: imageAliasGet, AllowUntrusted: true},
@@ -2806,7 +2805,7 @@ func imageDelete(d *Daemon, r *http.Request) response.Response {
 
 	projectName := request.ProjectParam(r)
 
-	fingerprint, err := url.PathUnescape(mux.Vars(r)["fingerprint"])
+	fingerprint, err := url.PathUnescape(r.PathValue("fingerprint"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -3157,7 +3156,7 @@ func imageGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	fingerprint, err := url.PathUnescape(mux.Vars(r)["fingerprint"])
+	fingerprint, err := url.PathUnescape(r.PathValue("fingerprint"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -3245,7 +3244,7 @@ func imagePut(d *Daemon, r *http.Request) response.Response {
 
 	// Get current value
 	projectName := request.ProjectParam(r)
-	fingerprint, err := url.PathUnescape(mux.Vars(r)["fingerprint"])
+	fingerprint, err := url.PathUnescape(r.PathValue("fingerprint"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -3354,7 +3353,7 @@ func imagePatch(d *Daemon, r *http.Request) response.Response {
 
 	// Get current value
 	projectName := request.ProjectParam(r)
-	fingerprint, err := url.PathUnescape(mux.Vars(r)["fingerprint"])
+	fingerprint, err := url.PathUnescape(r.PathValue("fingerprint"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -3758,7 +3757,7 @@ func imageAliasesGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/InternalServerError"
 func imageAliasGet(d *Daemon, r *http.Request) response.Response {
 	projectName := request.ProjectParam(r)
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -3816,7 +3815,7 @@ func imageAliasDelete(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -3889,7 +3888,7 @@ func imageAliasPut(d *Daemon, r *http.Request) response.Response {
 
 	// Get current value
 	projectName := request.ProjectParam(r)
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -3980,7 +3979,7 @@ func imageAliasPatch(d *Daemon, r *http.Request) response.Response {
 
 	// Get current value
 	projectName := request.ProjectParam(r)
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -4083,7 +4082,7 @@ func imageAliasPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -4193,7 +4192,7 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	fingerprint, err := url.PathUnescape(mux.Vars(r)["fingerprint"])
+	fingerprint, err := url.PathUnescape(r.PathValue("fingerprint"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -4359,7 +4358,7 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	fingerprint, err := url.PathUnescape(mux.Vars(r)["fingerprint"])
+	fingerprint, err := url.PathUnescape(r.PathValue("fingerprint"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -4507,7 +4506,7 @@ func imageSecret(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	fingerprint, err := url.PathUnescape(mux.Vars(r)["fingerprint"])
+	fingerprint, err := url.PathUnescape(r.PathValue("fingerprint"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -4626,7 +4625,7 @@ func imageRefresh(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	fingerprint, err := url.PathUnescape(mux.Vars(r)["fingerprint"])
+	fingerprint, err := url.PathUnescape(r.PathValue("fingerprint"))
 	if err != nil {
 		return response.SmartError(err)
 	}

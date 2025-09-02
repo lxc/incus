@@ -7,8 +7,6 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/gorilla/mux"
-
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
@@ -57,7 +55,7 @@ func instanceDebugMemoryGet(d *Daemon, r *http.Request) response.Response {
 	format := request.QueryParam(r, "format")
 
 	projectName := request.ProjectParam(r)
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}

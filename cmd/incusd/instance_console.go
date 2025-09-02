@@ -15,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	liblxc "github.com/lxc/go-lxc"
 	"golang.org/x/sys/unix"
@@ -453,7 +452,7 @@ func instanceConsolePost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -634,7 +633,7 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -795,7 +794,7 @@ func instanceConsoleLogDelete(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("Clearing the console buffer requires liblxc >= 3.0"))
 	}
 
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}

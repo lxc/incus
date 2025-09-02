@@ -9,7 +9,6 @@ import (
 	"net/url"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/db"
@@ -69,7 +68,7 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 	projectName := request.ProjectParam(r)
 
 	// Get the container
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}

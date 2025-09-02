@@ -18,7 +18,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"golang.org/x/sys/unix"
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
@@ -338,7 +337,7 @@ func internalShutdown(d *Daemon, r *http.Request) response.Response {
 // It detects whether the instance reference is an instance ID or instance name and loads instance accordingly.
 func internalContainerHookLoadFromReference(s *state.State, r *http.Request) (instance.Instance, error) {
 	var inst instance.Instance
-	instanceRef, err := url.PathUnescape(mux.Vars(r)["instanceRef"])
+	instanceRef, err := url.PathUnescape(r.PathValue("instanceRef"))
 	if err != nil {
 		return nil, err
 	}
@@ -455,7 +454,7 @@ func internalVirtualMachineOnResize(d *Daemon, r *http.Request) response.Respons
 	s := d.State()
 
 	// Get the instance ID.
-	instanceID, err := strconv.Atoi(mux.Vars(r)["instanceRef"])
+	instanceID, err := strconv.Atoi(r.PathValue("instanceRef"))
 	if err != nil {
 		return response.BadRequest(err)
 	}
