@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/gorilla/mux"
-
 	"github.com/lxc/incus/v6/internal/filter"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/v6/internal/server/cluster/request"
@@ -159,7 +157,7 @@ func networkLoadBalancersGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := url.PathUnescape(r.PathValue("networkName"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -329,7 +327,7 @@ func networkLoadBalancersPost(d *Daemon, r *http.Request) response.Response {
 
 	req.Normalise() // So we handle the request in normalised/canonical form.
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := url.PathUnescape(r.PathValue("networkName"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -398,7 +396,7 @@ func networkLoadBalancerDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := url.PathUnescape(r.PathValue("networkName"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -417,7 +415,7 @@ func networkLoadBalancerDelete(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Network driver %q does not support load balancers", n.Type()))
 	}
 
-	listenAddress, err := url.PathUnescape(mux.Vars(r)["listenAddress"])
+	listenAddress, err := url.PathUnescape(r.PathValue("listenAddress"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -487,7 +485,7 @@ func networkLoadBalancerGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := url.PathUnescape(r.PathValue("networkName"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -506,7 +504,7 @@ func networkLoadBalancerGet(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Network driver %q does not support load balancers", n.Type()))
 	}
 
-	listenAddress, err := url.PathUnescape(mux.Vars(r)["listenAddress"])
+	listenAddress, err := url.PathUnescape(r.PathValue("listenAddress"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -625,7 +623,7 @@ func networkLoadBalancerPut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := url.PathUnescape(r.PathValue("networkName"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -644,7 +642,7 @@ func networkLoadBalancerPut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Network driver %q does not support load balancers", n.Type()))
 	}
 
-	listenAddress, err := url.PathUnescape(mux.Vars(r)["listenAddress"])
+	listenAddress, err := url.PathUnescape(r.PathValue("listenAddress"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -776,7 +774,7 @@ func networkLoadBalancerStateGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := url.PathUnescape(r.PathValue("networkName"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -795,7 +793,7 @@ func networkLoadBalancerStateGet(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Network driver %q does not support load balancers", n.Type()))
 	}
 
-	listenAddress, err := url.PathUnescape(mux.Vars(r)["listenAddress"])
+	listenAddress, err := url.PathUnescape(r.PathValue("listenAddress"))
 	if err != nil {
 		return response.SmartError(err)
 	}

@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/gorilla/mux"
-
 	"github.com/lxc/incus/v6/internal/filter"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/v6/internal/server/cluster/request"
@@ -364,7 +362,7 @@ func networkZoneDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	zoneName, err := url.PathUnescape(mux.Vars(r)["zone"])
+	zoneName, err := url.PathUnescape(r.PathValue("zone"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -437,7 +435,7 @@ func networkZoneGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	zoneName, err := url.PathUnescape(mux.Vars(r)["zone"])
+	zoneName, err := url.PathUnescape(r.PathValue("zone"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -533,7 +531,7 @@ func networkZonePut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	zoneName, err := url.PathUnescape(mux.Vars(r)["zone"])
+	zoneName, err := url.PathUnescape(r.PathValue("zone"))
 	if err != nil {
 		return response.SmartError(err)
 	}
