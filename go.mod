@@ -20,7 +20,6 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.6.0
-	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.3
 	github.com/gosexy/gettext v0.0.0-20160830220431-74466a0a0c4a
 	github.com/insomniacslk/dhcp v0.0.0-20251007151141-da879a2c3546
