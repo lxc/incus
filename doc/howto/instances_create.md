@@ -160,6 +160,11 @@ Now the VM can be rebooted, and it will boot from disk.
 
 ### Install the Incus Agent into virtual machine instances
 
+```{warning}
+The Incus agent relies on TLS certificates for communication between the host and guest.
+For this to work correctly, the guest clock needs to be reasonably in sync with the host.
+```
+
 In order for features like direct command execution (`incus exec`), file transfers (`incus file`) and detailed usage metrics (`incus info`)
 to work properly with virtual machines, an agent software is provided by Incus.
 
