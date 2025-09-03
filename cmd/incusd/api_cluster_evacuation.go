@@ -619,7 +619,7 @@ func evacuateClusterSelectTarget(ctx context.Context, s *state.State, inst insta
 	}
 
 	if targetMemberInfo == nil {
-		return nil, nil, errors.New("Couldn't find a cluster member for the instance")
+		return nil, nil, fmt.Errorf("Couldn't find a cluster member for instance %q in project %q", inst.Name(), inst.Project().Name)
 	}
 
 	return sourceMemberInfo, targetMemberInfo, nil
