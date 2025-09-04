@@ -7,14 +7,14 @@ Incus uses features of the Linux kernel (such as `namespaces` and `cgroups`) in 
 
 When running a virtual machine, Incus uses hardware features of the the host system as a way to isolate and restrict a running virtual machine. Therefore, virtual machines can be used to run, for example, different operating systems than the host system.
 
-| Virtual Machines                  | Application Containers      | System Containers                 |
-| :--:                              | :--:                        | :--:                              |
-| Uses a dedicated kernel           | Uses the kernel of the host | Uses the kernel of the host       |
-| Can host different types of OS    | Can only host Linux         | Can only host Linux               |
-| Uses more resources               | Uses less resources         | Uses less resources               |
-| Requires hardware virtualization  | Software-only               | Software-only                     |
-| Can host multiple applications    | Can host a single app       | Can host multiple applications    |
-| Supported by Incus                | Supported by Docker         | Supported by Incus                |
+| Virtual Machines                 | Application Containers      | System Containers              |
+| :---                             | :---                        | :---                           |
+| Uses a dedicated kernel          | Uses the kernel of the host | Uses the kernel of the host    |
+| Can host different types of OS   | Can only host Linux         | Can only host Linux            |
+| Uses more resources              | Uses less resources         | Uses less resources            |
+| Requires hardware virtualization | Software-only               | Software-only                  |
+| Can host multiple applications   | Can host a single app       | Can host multiple applications |
+| Supported by Incus               | Supported by Docker         | Supported by Incus             |
 
 ## Application containers vs. system containers
 

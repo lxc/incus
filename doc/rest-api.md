@@ -132,25 +132,25 @@ The codes are always 3 digits, with the following ranges:
 
 ### List of current status codes
 
-Code  | Meaning
-:---  | :------
-100   | Operation created
-101   | Started
-102   | Stopped
-103   | Running
-104   | Canceling
-105   | Pending
-106   | Starting
-107   | Stopping
-108   | Aborting
-109   | Freezing
-110   | Frozen
-111   | Thawed
-112   | Error
-113   | Ready
-200   | Success
-400   | Failure
-401   | Canceled
+| Code  | Meaning           |
+| :---  | :---              |
+| 100   | Operation created |
+| 101   | Started           |
+| 102   | Stopped           |
+| 103   | Running           |
+| 104   | Canceling         |
+| 105   | Pending           |
+| 106   | Starting          |
+| 107   | Stopping          |
+| 108   | Aborting          |
+| 109   | Freezing          |
+| 110   | Frozen            |
+| 111   | Thawed            |
+| 112   | Error             |
+| 113   | Ready             |
+| 200   | Success           |
+| 400   | Failure           |
+| 401   | Canceled          |
 
 (rest-api-recursion)=
 ## Recursion

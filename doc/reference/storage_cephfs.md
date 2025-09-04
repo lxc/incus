@@ -58,35 +58,35 @@ The following configuration options are available for storage pools that use the
 (storage-cephfs-pool-config)=
 ### Storage pool configuration
 
-Key                           | Type                          | Default                                 | Description
-:--                           | :---                          | :------                                 | :----------
-`cephfs.cluster_name`         | string                        | `ceph`                                  | Name of the Ceph cluster that contains the CephFS file system
-`cephfs.create_missing`       | bool                          | `false`                                 | Create the file system and the missing data and metadata OSD pools
-`cephfs.data_pool`            | string                        | -                                       | Data OSD pool name to create for the file system
-`cephfs.fscache`              | bool                          | `false`                                 | Enable use of kernel `fscache` and `cachefilesd`
-`cephfs.meta_pool`            | string                        | -                                       | Metadata OSD pool name to create for the file system
-`cephfs.osd_pg_num`           | string                        | -                                       | OSD pool `pg_num` to use when creating missing OSD pools
-`cephfs.path`                 | string                        | `/`                                     | The base path for the CephFS mount
-`cephfs.user.name`            | string                        | `admin`                                 | The Ceph user to use
-`source`                      | string                        | -                                       | Existing CephFS file system or file system path to use
-`volatile.pool.pristine`      | string                        | `true`                                  | Whether the CephFS file system was empty on creation time
+| Key                      | Type   | Default | Description                                                        |
+| :---                     | :---   | :---    | :---                                                               |
+| `cephfs.cluster_name`    | string | `ceph`  | Name of the Ceph cluster that contains the CephFS file system      |
+| `cephfs.create_missing`  | bool   | `false` | Create the file system and the missing data and metadata OSD pools |
+| `cephfs.data_pool`       | string | -       | Data OSD pool name to create for the file system                   |
+| `cephfs.fscache`         | bool   | `false` | Enable use of kernel `fscache` and `cachefilesd`                   |
+| `cephfs.meta_pool`       | string | -       | Metadata OSD pool name to create for the file system               |
+| `cephfs.osd_pg_num`      | string | -       | OSD pool `pg_num` to use when creating missing OSD pools           |
+| `cephfs.path`            | string | `/`     | The base path for the CephFS mount                                 |
+| `cephfs.user.name`       | string | `admin` | The Ceph user to use                                               |
+| `source`                 | string | -       | Existing CephFS file system or file system path to use             |
+| `volatile.pool.pristine` | string | `true`  | Whether the CephFS file system was empty on creation time          |
 
 {{volume_configuration}}
 
 ### Storage volume configuration
 
-Key                         | Type      | Condition                 | Default                                        | Description
-:--                         | :---      | :--------                 | :------                                        | :----------
-`initial.gid`               | int       | custom volume with content type `filesystem`  | same as `volume.initial.uid` or `0`           | GID of the volume owner in the instance
-`initial.mode`              | int       | custom volume with content type `filesystem`  | same as `volume.initial.mode` or `711`        | Mode  of the volume in the instance
-`initial.uid`               | int       | custom volume with content type `filesystem`  | same as `volume.initial.gid` or `0`           | UID of the volume owner in the instance
-`security.shared`           | bool      | custom block volume       | same as `volume.security.shared` or `false`    | Enable sharing the volume across multiple instances
-`security.shifted`          | bool      | custom volume             | same as `volume.security.shifted` or `false`   | {{enable_ID_shifting}}
-`security.unmapped`         | bool      | custom volume             | same as `volume.security.unmapped` or `false`  | Disable ID mapping for the volume
-`size`                      | string    | appropriate driver        | same as `volume.size`                          | Size/quota of the storage volume
-`snapshots.expiry`          | string    | custom volume             | same as `volume.snapshots.expiry`              | {{snapshot_expiry_format}}
-`snapshots.expiry.manual`   | string    | custom volume             | same as `volume.snapshots.expiry.manual`       | {{snapshot_expiry_format}}
-`snapshots.pattern`         | string    | custom volume             | same as `volume.snapshots.pattern` or `snap%d` | {{snapshot_pattern_format}} [^*]
-`snapshots.schedule`        | string    | custom volume             | same as `volume.snapshots.schedule`            | {{snapshot_schedule_format}}
+| Key                       | Type   | Condition                                    | Default                                        | Description                                         |
+| :---                      | :---   | :---                                         | :---                                           | :---                                                |
+| `initial.gid`             | int    | custom volume with content type `filesystem` | same as `volume.initial.uid` or `0`            | GID of the volume owner in the instance             |
+| `initial.mode`            | int    | custom volume with content type `filesystem` | same as `volume.initial.mode` or `711`         | Mode  of the volume in the instance                 |
+| `initial.uid`             | int    | custom volume with content type `filesystem` | same as `volume.initial.gid` or `0`            | UID of the volume owner in the instance             |
+| `security.shared`         | bool   | custom block volume                          | same as `volume.security.shared` or `false`    | Enable sharing the volume across multiple instances |
+| `security.shifted`        | bool   | custom volume                                | same as `volume.security.shifted` or `false`   | {{enable_ID_shifting}}                              |
+| `security.unmapped`       | bool   | custom volume                                | same as `volume.security.unmapped` or `false`  | Disable ID mapping for the volume                   |
+| `size`                    | string | appropriate driver                           | same as `volume.size`                          | Size/quota of the storage volume                    |
+| `snapshots.expiry`        | string | custom volume                                | same as `volume.snapshots.expiry`              | {{snapshot_expiry_format}}                          |
+| `snapshots.expiry.manual` | string | custom volume                                | same as `volume.snapshots.expiry.manual`       | {{snapshot_expiry_format}}                          |
+| `snapshots.pattern`       | string | custom volume                                | same as `volume.snapshots.pattern` or `snap%d` | {{snapshot_pattern_format}} [^*]                    |
+| `snapshots.schedule`      | string | custom volume                                | same as `volume.snapshots.schedule`            | {{snapshot_schedule_format}}                        |
 
 [^*]: {{snapshot_pattern_detail}}
