@@ -11,11 +11,11 @@ Network address sets are a list of either IPv4, IPv6 addresses with or without C
 
 Address sets have the following properties:
 
-Property         | Type         | Required | Description
-:--              | :--          | :--      | :--
-`name`           | string       | yes      | Name of the network address set
-`description`    | string       | no       | Description of the network address set
-`addresses`      | string list  | no       | Ingress traffic rules
+| Property      | Type        | Required | Description                            |
+| :---          | :---        | :---     | :---                                   |
+| `name`        | string      | yes      | Name of the network address set        |
+| `description` | string      | no       | Description of the network address set |
+| `addresses`   | string list | no       | Ingress traffic rules                  |
 
 ## Address set configuration options
 

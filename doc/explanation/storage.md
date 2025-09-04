@@ -38,12 +38,12 @@ See the following how-to guides for additional information:
 Where the Incus data is stored depends on the configuration and the selected storage driver.
 Depending on the storage driver that is used, Incus can either share the file system with its host or keep its data separate.
 
-Storage location         | Directory | Btrfs    | LVM (all) | ZFS      | Ceph (all) | LINSTOR  |
-:---                     | :-:       | :-:      | :-:       | :-:      | :-:        | :-:      |
-Shared with the host     | &#x2713;  | &#x2713; | -         | &#x2713; | -          | -        |
-Dedicated disk/partition | -         | &#x2713; | &#x2713;  | &#x2713; | -          | &#x2713; |
-Loop disk                | -         | &#x2713; | &#x2713;  | &#x2713; | -          | &#x2713; |
-Remote storage           | -         | -        | &#x2713;  | -        | &#x2713;   | &#x2713; |
+| Storage location         | Directory | Btrfs    | LVM (all) | ZFS      | Ceph (all) | LINSTOR  |
+| :---                     | :---      | :---     | :---      | :---     | :---       | :---     |
+| Shared with the host     | &#x2713;  | &#x2713; | -         | &#x2713; | -          | -        |
+| Dedicated disk/partition | -         | &#x2713; | &#x2713;  | &#x2713; | -          | &#x2713; |
+| Loop disk                | -         | &#x2713; | &#x2713;  | &#x2713; | -          | &#x2713; |
+| Remote storage           | -         | -        | &#x2713;  | -        | &#x2713;   | &#x2713; |
 
 #### Shared with the host
 
