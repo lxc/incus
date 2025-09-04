@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-08-13 14:52-0400\n"
+"POT-Creation-Date: 2025-09-04 17:20-0400\n"
 "PO-Revision-Date: 2024-11-11 22:00+0000\n"
 "Last-Translator: \"Laterria.Severino\" <Laterria.Severino@openmail.pro>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -1579,11 +1579,13 @@ msgstr "Le membre du cluster %s est déjà dans le groupe %s"
 msgid "Cluster member %s removed from group %s"
 msgstr "Le membre du cluster %s est supprimé du groupe %s"
 
-#: cmd/incus/config.go:103 cmd/incus/config.go:395 cmd/incus/config.go:542
-#: cmd/incus/config.go:758 cmd/incus/config.go:889 cmd/incus/copy.go:64
-#: cmd/incus/create.go:66 cmd/incus/info.go:50 cmd/incus/move.go:67
-#: cmd/incus/network.go:364 cmd/incus/network.go:871 cmd/incus/network.go:954
-#: cmd/incus/network.go:1559 cmd/incus/network.go:1652
+#: cmd/incus/admin_os.go:185 cmd/incus/admin_os.go:383
+#: cmd/incus/admin_os.go:571 cmd/incus/admin_os.go:674
+#: cmd/incus/admin_os.go:781 cmd/incus/config.go:103 cmd/incus/config.go:395
+#: cmd/incus/config.go:542 cmd/incus/config.go:758 cmd/incus/config.go:889
+#: cmd/incus/copy.go:64 cmd/incus/create.go:66 cmd/incus/info.go:50
+#: cmd/incus/move.go:67 cmd/incus/network.go:364 cmd/incus/network.go:871
+#: cmd/incus/network.go:954 cmd/incus/network.go:1559 cmd/incus/network.go:1652
 #: cmd/incus/network.go:1726 cmd/incus/network_forward.go:261
 #: cmd/incus/network_forward.go:347 cmd/incus/network_forward.go:544
 #: cmd/incus/network_forward.go:698 cmd/incus/network_forward.go:854
@@ -1691,6 +1693,7 @@ msgstr "Configuration clef/valeur à associer pour l'instance cible"
 msgid "Config option should be in the format KEY=VALUE"
 msgstr "L'option de configuration doit être dans le format CLÉ=VALEUR"
 
+#: cmd/incus/admin_os.go:454 cmd/incus/admin_os.go:745
 #: cmd/incus/cluster.go:1000 cmd/incus/cluster_group.go:423
 #: cmd/incus/config.go:278 cmd/incus/config.go:353
 #: cmd/incus/config_metadata.go:158 cmd/incus/config_trust.go:364
@@ -2130,6 +2133,11 @@ msgstr "Le démon continue de fonctionner après %ds d'attente"
 msgid "Date: %s"
 msgstr "État : %s"
 
+#: cmd/incus/admin_os.go:253 cmd/incus/admin_os.go:254
+#, fuzzy
+msgid "Debug IncusOS systems"
+msgstr "Rendre l'image publique"
+
 #: cmd/incus/debug.go:23
 #, fuzzy
 msgid "Debug commands"
@@ -2280,6 +2288,12 @@ msgstr "Récupération de l'image : %s"
 #: cmd/incus/action.go:32 cmd/incus/action.go:56 cmd/incus/action.go:81
 #: cmd/incus/action.go:106 cmd/incus/action.go:130 cmd/incus/admin.go:21
 #: cmd/incus/admin_cluster.go:26 cmd/incus/admin_init.go:47
+#: cmd/incus/admin_os.go:32 cmd/incus/admin_os.go:73 cmd/incus/admin_os.go:104
+#: cmd/incus/admin_os.go:182 cmd/incus/admin_os.go:254
+#: cmd/incus/admin_os.go:278 cmd/incus/admin_os.go:345
+#: cmd/incus/admin_os.go:377 cmd/incus/admin_os.go:490
+#: cmd/incus/admin_os.go:568 cmd/incus/admin_os.go:640
+#: cmd/incus/admin_os.go:668 cmd/incus/admin_os.go:778
 #: cmd/incus/admin_other.go:21 cmd/incus/admin_recover.go:31
 #: cmd/incus/admin_shutdown.go:32 cmd/incus/admin_sql.go:32
 #: cmd/incus/admin_waitready.go:28 cmd/incus/alias.go:24 cmd/incus/alias.go:63
@@ -2706,6 +2720,16 @@ msgstr "DATE D'EXPIRATION"
 #: cmd/incus/config_trust.go:453
 msgid "EXPIRY DATE"
 msgstr "DATE D'EXPIRATION"
+
+#: cmd/incus/admin_os.go:376 cmd/incus/admin_os.go:377
+#, fuzzy
+msgid "Edit IncusOS service configuration"
+msgstr "Clé de configuration invalide"
+
+#: cmd/incus/admin_os.go:667 cmd/incus/admin_os.go:668
+#, fuzzy
+msgid "Edit IncusOS system configuration section"
+msgstr "Clé de configuration invalide"
 
 #: cmd/incus/cluster_group.go:341 cmd/incus/cluster_group.go:342
 msgid "Edit a cluster group"
@@ -3702,6 +3726,7 @@ msgid ""
 "disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr ""
 
+#: cmd/incus/admin_os.go:106 cmd/incus/admin_os.go:492
 #: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:115 cmd/incus/cluster.go:156
 #: cmd/incus/cluster_group.go:488 cmd/incus/config_template.go:301
 #: cmd/incus/config_trust.go:434 cmd/incus/config_trust.go:635
@@ -3820,6 +3845,11 @@ msgstr "Nom du réseau"
 #, fuzzy
 msgid "Get current load-balacner status"
 msgstr "Nom du réseau"
+
+#: cmd/incus/admin_os.go:277 cmd/incus/admin_os.go:278
+#, fuzzy
+msgid "Get debug log"
+msgstr "Activer le mode de débogage"
 
 #: cmd/incus/image.go:1598 cmd/incus/image.go:1599
 msgid "Get image properties"
@@ -4641,7 +4671,8 @@ msgstr ""
 msgid "List address sets across all projects"
 msgstr "Forcer le conteneur à s'arrêter"
 
-#: cmd/incus/alias.go:112 cmd/incus/alias.go:113
+#: cmd/incus/admin_os.go:104 cmd/incus/admin_os.go:490 cmd/incus/alias.go:112
+#: cmd/incus/alias.go:113
 #, fuzzy
 msgid "List aliases"
 msgstr "Alias :"
@@ -4757,6 +4788,11 @@ msgstr ""
 #, fuzzy
 msgid "List all warnings"
 msgstr "Alias :"
+
+#: cmd/incus/admin_os.go:103
+#, fuzzy
+msgid "List applications"
+msgstr "Propriétés :"
 
 #: cmd/incus/network_acl.go:98
 msgid "List available network ACL"
@@ -5355,6 +5391,11 @@ msgid ""
 "u - Used By"
 msgstr ""
 
+#: cmd/incus/admin_os.go:489
+#, fuzzy
+msgid "List services"
+msgstr "Création du conteneur"
+
 #: cmd/incus/storage_bucket.go:945
 #, fuzzy
 msgid "List storage bucket keys"
@@ -5684,6 +5725,26 @@ msgstr "Rendre l'image publique"
 msgid "Make the image public"
 msgstr "Rendre l'image publique"
 
+#: cmd/incus/admin_os.go:72 cmd/incus/admin_os.go:73
+#, fuzzy
+msgid "Manage IncusOS applications"
+msgstr "Rendre l'image publique"
+
+#: cmd/incus/admin_os.go:344 cmd/incus/admin_os.go:345
+#, fuzzy
+msgid "Manage IncusOS services"
+msgstr "Rendre l'image publique"
+
+#: cmd/incus/admin_os.go:639 cmd/incus/admin_os.go:640
+#, fuzzy
+msgid "Manage IncusOS system details"
+msgstr "Copie de l'image : %s"
+
+#: cmd/incus/admin_os.go:31 cmd/incus/admin_os.go:32
+#, fuzzy
+msgid "Manage IncusOS systems"
+msgstr "Rendre l'image publique"
+
 #: cmd/incus/network.go:40 cmd/incus/network.go:41
 msgid "Manage and attach instances to networks"
 msgstr ""
@@ -5987,6 +6048,11 @@ msgstr ""
 msgid "Minimum size is 1GiB"
 msgstr ""
 
+#: cmd/incus/admin_os.go:213
+#, fuzzy
+msgid "Missing application name"
+msgstr "Nom de l'ensemble de stockage"
+
 #: cmd/incus/storage_bucket.go:139 cmd/incus/storage_bucket.go:245
 #: cmd/incus/storage_bucket.go:323 cmd/incus/storage_bucket.go:444
 #: cmd/incus/storage_bucket.go:732 cmd/incus/storage_bucket.go:824
@@ -6015,6 +6081,11 @@ msgstr "Vous devez fournir le nom d'un conteneur pour : "
 #, fuzzy
 msgid "Missing cluster member name"
 msgstr "Vous devez fournir le nom d'un conteneur pour : "
+
+#: cmd/incus/admin_os.go:809
+#, fuzzy
+msgid "Missing configuration section name"
+msgstr "Nom du réseau"
 
 #: cmd/incus/config_metadata.go:114 cmd/incus/config_metadata.go:225
 #: cmd/incus/config_template.go:120 cmd/incus/config_template.go:177
@@ -6174,6 +6245,11 @@ msgstr "Nom de l'ensemble de stockage"
 msgid "Missing required arguments"
 msgstr "Résumé manquant."
 
+#: cmd/incus/admin_os.go:406 cmd/incus/admin_os.go:599
+#, fuzzy
+msgid "Missing service name"
+msgstr "Résumé manquant."
+
 #: cmd/incus/profile.go:324
 msgid "Missing source profile name"
 msgstr ""
@@ -6187,6 +6263,11 @@ msgstr "Copie de l'image : %s"
 #, fuzzy
 msgid "Missing storage pool name"
 msgstr "Nom de l'ensemble de stockage"
+
+#: cmd/incus/admin_os.go:697
+#, fuzzy
+msgid "Missing system section name"
+msgstr "Nom du réseau"
 
 #: cmd/incus/file.go:834
 #, fuzzy
@@ -6303,10 +6384,10 @@ msgstr ""
 msgid "Must supply instance name for: "
 msgstr "Vous devez fournir le nom d'un conteneur pour : "
 
-#: cmd/incus/cluster.go:180 cmd/incus/cluster.go:1152
-#: cmd/incus/cluster_group.go:511 cmd/incus/config_trust.go:447
-#: cmd/incus/config_trust.go:651 cmd/incus/list.go:508
-#: cmd/incus/network.go:1164 cmd/incus/network_acl.go:177
+#: cmd/incus/admin_os.go:165 cmd/incus/admin_os.go:551 cmd/incus/cluster.go:180
+#: cmd/incus/cluster.go:1152 cmd/incus/cluster_group.go:511
+#: cmd/incus/config_trust.go:447 cmd/incus/config_trust.go:651
+#: cmd/incus/list.go:508 cmd/incus/network.go:1164 cmd/incus/network_acl.go:177
 #: cmd/incus/network_address_set.go:165 cmd/incus/network_integration.go:456
 #: cmd/incus/network_peer.go:136 cmd/incus/network_zone.go:142
 #: cmd/incus/network_zone.go:953 cmd/incus/profile.go:786
@@ -6957,6 +7038,7 @@ msgstr ""
 msgid "Press ctrl+c to finish"
 msgstr ""
 
+#: cmd/incus/admin_os.go:455 cmd/incus/admin_os.go:746
 #: cmd/incus/cluster.go:1001 cmd/incus/cluster_group.go:424
 #: cmd/incus/config.go:279 cmd/incus/config.go:354
 #: cmd/incus/config_metadata.go:159 cmd/incus/config_template.go:263
@@ -8122,6 +8204,21 @@ msgstr ""
 #: cmd/incus/admin_init.go:65
 msgid "Setup loop based storage with SIZE in GiB"
 msgstr ""
+
+#: cmd/incus/admin_os.go:181 cmd/incus/admin_os.go:182
+#, fuzzy
+msgid "Show IncusOS application details"
+msgstr "Afficher la configuration étendue"
+
+#: cmd/incus/admin_os.go:567 cmd/incus/admin_os.go:568
+#, fuzzy
+msgid "Show IncusOS service configuration"
+msgstr "Afficher la configuration étendue"
+
+#: cmd/incus/admin_os.go:777 cmd/incus/admin_os.go:778
+#, fuzzy
+msgid "Show IncusOS system configuration section"
+msgstr "Afficher la configuration étendue"
 
 #: cmd/incus/main.go:129
 msgid "Show all debug messages"
@@ -9541,6 +9638,10 @@ msgstr ""
 msgid "Volume description"
 msgstr "Description"
 
+#: cmd/incus/admin_os.go:53
+msgid "WARNING: The IncusOS API and configuration is subject to change"
+msgstr ""
+
 #: cmd/incus/info.go:309
 #, fuzzy, c-format
 msgid "WWN: %s"
@@ -9951,6 +10052,14 @@ msgstr ""
 #: cmd/incus/image_alias.go:384
 #, fuzzy
 msgid "[<remote>:]<alias> <new-name>"
+msgstr ""
+"Change l'état d'un ou plusieurs conteneurs à %s.\n"
+"\n"
+"lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
+
+#: cmd/incus/admin_os.go:180
+#, fuzzy
+msgid "[<remote>:]<application>"
 msgstr ""
 "Change l'état d'un ou plusieurs conteneurs à %s.\n"
 "\n"
@@ -11038,6 +11147,22 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
+#: cmd/incus/admin_os.go:666 cmd/incus/admin_os.go:776
+#, fuzzy
+msgid "[<remote>:]<section>"
+msgstr ""
+"Change l'état d'un ou plusieurs conteneurs à %s.\n"
+"\n"
+"lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
+
+#: cmd/incus/admin_os.go:375 cmd/incus/admin_os.go:566
+#, fuzzy
+msgid "[<remote>:]<service>"
+msgstr ""
+"Change l'état d'un ou plusieurs conteneurs à %s.\n"
+"\n"
+"lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
+
 #: cmd/incus/copy.go:41
 #, fuzzy
 msgid "[<remote>:]<source>[/<snapshot>] [[<remote>:]<destination>]"
@@ -11206,6 +11331,20 @@ msgstr "Type : éphémère"
 #, c-format
 msgid "error: %v"
 msgstr "erreur : %v"
+
+#: cmd/incus/admin_os.go:379
+msgid ""
+"incus admin os service edit [<remote>:]<service> < service.yaml\n"
+"    Update an IncusOS service configuration using the content of "
+"service.yaml."
+msgstr ""
+
+#: cmd/incus/admin_os.go:670
+msgid ""
+"incus admin os system edit [<remote>:]<section> < section.yaml\n"
+"    Update an IncusOS system configuration section using the content of "
+"section.yaml."
+msgstr ""
 
 #: cmd/incus/alias.go:65
 msgid ""
@@ -12426,9 +12565,6 @@ msgstr "oui"
 
 #~ msgid "Connection refused; is LXD running?"
 #~ msgstr "Connexion refusée ; LXD est-il actif ?"
-
-#~ msgid "Enable debug mode"
-#~ msgstr "Activer le mode de débogage"
 
 #~ msgid "Enable verbose mode"
 #~ msgstr "Activer le mode verbeux"
