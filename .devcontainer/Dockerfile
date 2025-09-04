@@ -1,5 +1,5 @@
-ARG GO_VERSION=1.23
-ARG DEBIAN_VERSION=bookworm
+ARG GO_VERSION=1.24
+ARG DEBIAN_VERSION=trixie
 
 # Go development container
 FROM golang:${GO_VERSION}-${DEBIAN_VERSION}
@@ -54,7 +54,7 @@ RUN sed -r -i 's/^Components: main$/Components: main contrib/g' /etc/apt/sources
       pkg-config \
       protoc-gen-go \
       python3-matplotlib \
-      python3.11-venv \
+      python3.13-venv \
       rsync \
       ruby-mdl \
       shellcheck \
