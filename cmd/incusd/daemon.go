@@ -2539,7 +2539,7 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 		// If there are offline members that have voter or stand-by database roles, let's see if we can
 		// replace them with spare ones. Also, if we don't have enough voters or standbys, let's see if we
 		// can upgrade some member.
-		if isDegraded || onlineVoters < int(maxVoters) || onlineStandbys < int(maxStandBy) || hasDbClientToProcess {
+		if isDegraded || onlineVoters != int(maxVoters) || onlineStandbys != int(maxStandBy) || hasDbClientToProcess {
 			d.clusterMembershipMutex.Lock()
 			logger.Debug("Rebalancing member roles in heartbeat", logger.Ctx{"local": localClusterAddress})
 			err := rebalanceMemberRoles(d.State(), d.gateway, nil, unavailableMembers)
