@@ -684,6 +684,47 @@ func Rebalance(state *state.State, gateway *Gateway, unavailableMembers []string
 		return "", nil, fmt.Errorf("Get current raft nodes: %w", err)
 	}
 
+	var members []db.NodeInfo
+	err = state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		members, err = tx.GetNodes(ctx)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return "", nil, fmt.Errorf("Get current members: %w", err)
+	}
+
+	// Prepare a map that stores node information by address.
+	membersInfo := map[string]db.NodeInfo{}
+	for _, member := range members {
+		membersInfo[member.Address] = member
+	}
+
+	for i, n := range nodes {
+		// If no member has this address, continue searching. This should not happen.
+		member, ok := membersInfo[n.Address]
+		if !ok {
+			continue
+		}
+
+		// Check if the node has the 'database-client' role.
+		if !slices.Contains(member.Roles, db.ClusterRoleDatabaseClient) {
+			continue
+		}
+
+		// If the node already has the 'spare' role, do nothing.
+		if n.Role == db.RaftSpare {
+			continue
+		}
+
+		nodes[i].Role = db.RaftSpare
+
+		return n.Address, nodes, nil
+	}
+
 	roles, err := newRolesChanges(state, gateway, nodes, unavailableMembers)
 	if err != nil {
 		return "", nil, err
@@ -692,12 +733,26 @@ func Rebalance(state *state.State, gateway *Gateway, unavailableMembers []string
 	role, candidates := roles.Adjust(gateway.info.ID)
 
 	if role == -1 {
-		// No node to promote
+		// No node to process.
 		return "", nodes, nil
 	}
 
 	// Check if we have a spare node that we can promote to the missing role.
-	candidateAddress := candidates[0].Address
+	candidateAddress := ""
+	for _, candidate := range candidates {
+		// If no member has this address, continue searching. This should not happen.
+		member, ok := membersInfo[candidate.Address]
+		if !ok {
+			continue
+		}
+
+		// Exclude nodes with the "database-client" role from candidates.
+		if slices.Contains(member.Roles, db.ClusterRoleDatabaseClient) {
+			continue
+		}
+
+		candidateAddress = candidate.Address
+	}
 
 	for i, node := range nodes {
 		if node.Address == candidateAddress {
