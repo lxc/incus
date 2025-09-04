@@ -112,11 +112,11 @@ These NIC settings should be added to the profile that the instance is using, or
 
 The following security features are available for bridged NICs:
 
-Key                      | Type      | Default           | Required  | Description
-:--                      | :--       | :--               | :--       | :--
-`security.mac_filtering` | bool      | `false`           | no        | Prevent the instance from spoofing another instance's MAC address
-`security.ipv4_filtering`| bool      | `false`           | no        | Prevent the instance from spoofing another instance's IPv4 address (enables `mac_filtering`)
-`security.ipv6_filtering`| bool      | `false`           | no        | Prevent the instance from spoofing another instance's IPv6 address (enables `mac_filtering`)
+| Key                       | Type | Default | Required  | Description                                                                                  |
+| :---                      | :--- | :---    | :---      | :---                                                                                         |
+| `security.mac_filtering`  | bool | `false` | no        | Prevent the instance from spoofing another instance's MAC address                            |
+| `security.ipv4_filtering` | bool | `false` | no        | Prevent the instance from spoofing another instance's IPv4 address (enables `mac_filtering`) |
+| `security.ipv6_filtering` | bool | `false` | no        | Prevent the instance from spoofing another instance's IPv6 address (enables `mac_filtering`) |
 
 One can override the default bridged NIC settings from the profile on a per-instance basis using:
 

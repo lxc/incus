@@ -198,12 +198,12 @@ This command creates an empty record without entries and adds it to a network zo
 
 Records have the following properties:
 
-Property          | Type       | Required | Description
-:--               | :--        | :--      | :--
-`name`            | string     | yes      | Unique name of the record
-`description`     | string     | no       | Description of the record
-`entries`         | entry list | no       | A list of DNS entries
-`config`          | string set | no       | Configuration options as key/value pairs (only `user.*` custom keys supported)
+| Property      | Type       | Required | Description                                                                    |
+| :---          | :---       | :---     | :---                                                                           |
+| `name`        | string     | yes      | Unique name of the record                                                      |
+| `description` | string     | no       | Description of the record                                                      |
+| `entries`     | entry list | no       | A list of DNS entries                                                          |
+| `config`      | string set | no       | Configuration options as key/value pairs (only `user.*` custom keys supported) |
 
 ### Add or remove entries
 
