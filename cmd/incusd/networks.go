@@ -15,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gorilla/mux"
 	osapi "github.com/lxc/incus-os/incus-osd/api"
 
 	incus "github.com/lxc/incus/v6/client"
@@ -976,7 +975,7 @@ func networkGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := url.PathUnescape(r.PathValue("networkName"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1174,7 +1173,7 @@ func networkDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := url.PathUnescape(r.PathValue("networkName"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1305,7 +1304,7 @@ func networkPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := url.PathUnescape(r.PathValue("networkName"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1447,7 +1446,7 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := url.PathUnescape(r.PathValue("networkName"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1676,7 +1675,7 @@ func networkLeasesGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := url.PathUnescape(r.PathValue("networkName"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -2068,7 +2067,7 @@ func networkStateGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := url.PathUnescape(r.PathValue("networkName"))
 	if err != nil {
 		return response.SmartError(err)
 	}
