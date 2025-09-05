@@ -34,6 +34,9 @@ const ClusterRoleDatabaseStandBy = ClusterRole("database-standby")
 // ClusterRoleDatabaseLeader represents the database leader role in a cluster.
 const ClusterRoleDatabaseLeader = ClusterRole("database-leader")
 
+// ClusterRoleDatabaseClient represents a cluster member that prevents the affected member from being elected as a voter or stand-by in the cowsql cluster.
+const ClusterRoleDatabaseClient = ClusterRole("database-client")
+
 // ClusterRoleEventHub represents a cluster member who operates as an event hub.
 const ClusterRoleEventHub = ClusterRole("event-hub")
 
@@ -48,6 +51,7 @@ const ClusterRoleOVNChassis = ClusterRole("ovn-chassis")
 var ClusterRoles = map[int]ClusterRole{
 	1: ClusterRoleEventHub,
 	2: ClusterRoleOVNChassis,
+	3: ClusterRoleDatabaseClient,
 }
 
 // Numeric type codes identifying different cluster member states.
