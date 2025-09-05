@@ -86,7 +86,7 @@ func (c *cmdCluster) command() *cobra.Command {
 	return cmd
 }
 
-const SegmentComment = "# Latest dqlite segment ID: %s"
+const SegmentComment = "# Latest cowsql segment ID: %s"
 
 // ClusterMember is a more human-readable representation of the db.RaftNode struct.
 type ClusterMember struct {
