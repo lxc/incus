@@ -395,6 +395,13 @@ func (r *ProtocolOCI) runSkopeo(action string, image string, args ...string) (st
 
 // GetImageAlias returns an existing alias as an ImageAliasesEntry struct.
 func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string, error) {
+	// If image name is "IMAGE:TAG@HASH", drop ":TAG" so that skopeo uses the pinned hash instead.
+	imageWithoutHash, hash, hasHash := strings.Cut(name, "@")
+	if hasHash {
+		imageWithoutTag, _, _ := strings.Cut(imageWithoutHash, ":")
+		name = fmt.Sprintf("%s@%s", imageWithoutTag, hash)
+	}
+
 	// Get the image information from skopeo.
 	stdout, err := r.runSkopeo("inspect", name)
 	if err != nil {
