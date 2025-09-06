@@ -198,9 +198,9 @@ Make sure to mark the bug as being in the "Containers" component, to make sure t
 ```
 
 ```{group-tab} Rocky Linux
-RPM packages and their dependencies are not yet available from the Extra Packages for Enterprise Linux (EPEL) repository, but via the [`neil/incus`](https://copr.fedorainfracloud.org/coprs/neil/incus/) Community Project (COPR) repository for Rocky Linux 9.
+RPM packages and their dependencies are not yet available from the Extra Packages for Enterprise Linux (EPEL) repository, but via the [`neil/incus`](https://copr.fedorainfracloud.org/coprs/neil/incus/) Community Project (COPR) repository for Rocky Linux 9 and the [`neelc/incus`](https://copr.fedorainfracloud.org/coprs/neelc/incus/) repository for Rocky Linux 10.
 
-Ensure that the EPEL repository is installed for package dependencies and then install the COPR repository:
+On Rocky Linux 9, ensure that the EPEL repository is installed for package dependencies and then install the COPR repository:
 
     dnf -y install epel-release
     dnf copr enable neil/incus
@@ -208,6 +208,14 @@ Ensure that the EPEL repository is installed for package dependencies and then i
 Ensure that the `CodeReady Builder` (`CRB`) is available for other package dependencies:
 
     dnf config-manager --enable crb
+
+On Rocky Linux 10, ensure that the EPEL repository is installed for package dependencies and then install the COPR repository:
+
+    dnf config-manager --enable crb
+    cd /etc/yum.repos.d
+    wget https://copr.fedorainfracloud.org/coprs/neelc/incus/repo/rhel+epel-10/neelc-incus-rhel+epel-10.repo
+
+`CRB` is not required on Rocky Linux 10.
 
 Then install Incus and optionally, Incus tools:
 
