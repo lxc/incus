@@ -839,3 +839,21 @@ func sshSFTPServer(ctx context.Context, sftpConn func() (net.Conn, error), entit
 		}()
 	}
 }
+
+func makeJsonable(data any) any {
+	switch x := data.(type) {
+	case map[any]any:
+		newData := map[string]any{}
+		for k, v := range x {
+			newData[k.(string)] = makeJsonable(v)
+		}
+
+		return newData
+	case []any:
+		for i, v := range x {
+			x[i] = makeJsonable(v)
+		}
+	}
+
+	return data
+}
