@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-09-04 17:20-0400\n"
-"PO-Revision-Date: 2025-08-15 00:02+0000\n"
+"PO-Revision-Date: 2025-09-07 08:02+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.13-dev\n"
+"X-Generator: Weblate 5.14-dev\n"
 
 #: cmd/incus/info.go:441
 msgid "  Chassis:"
@@ -2080,9 +2080,8 @@ msgid "Date: %s"
 msgstr "Data: %s"
 
 #: cmd/incus/admin_os.go:253 cmd/incus/admin_os.go:254
-#, fuzzy
 msgid "Debug IncusOS systems"
-msgstr "Gerir daemon do incus"
+msgstr "Depurar sistemas IncusOS"
 
 #: cmd/incus/debug.go:23
 msgid "Debug commands"
@@ -2656,14 +2655,12 @@ msgid "EXPIRY DATE"
 msgstr "DATA DE EXPIRAÇÃO"
 
 #: cmd/incus/admin_os.go:376 cmd/incus/admin_os.go:377
-#, fuzzy
 msgid "Edit IncusOS service configuration"
-msgstr "Edita configurações de membros de agrupamento como YAML"
+msgstr "Edita configuração do serviço IncusOS"
 
 #: cmd/incus/admin_os.go:667 cmd/incus/admin_os.go:668
-#, fuzzy
 msgid "Edit IncusOS system configuration section"
-msgstr "Edita configurações de membros de agrupamento como YAML"
+msgstr "Edita secção de configuração do sistema IncusOS"
 
 #: cmd/incus/cluster_group.go:341 cmd/incus/cluster_group.go:342
 msgid "Edit a cluster group"
@@ -3737,7 +3734,7 @@ msgstr "Obtém estado do balanceador de carga atual"
 
 #: cmd/incus/admin_os.go:277 cmd/incus/admin_os.go:278
 msgid "Get debug log"
-msgstr ""
+msgstr "Obtém relatório de depuração"
 
 #: cmd/incus/image.go:1598 cmd/incus/image.go:1599
 msgid "Get image properties"
@@ -4707,9 +4704,8 @@ msgid "List all warnings"
 msgstr "Lista todos os avisos"
 
 #: cmd/incus/admin_os.go:103
-#, fuzzy
 msgid "List applications"
-msgstr "aplicação"
+msgstr "Lista aplicações"
 
 #: cmd/incus/network_acl.go:98
 msgid "List available network ACL"
@@ -5645,9 +5641,8 @@ msgstr ""
 "u - Usado por"
 
 #: cmd/incus/admin_os.go:489
-#, fuzzy
 msgid "List services"
-msgstr "Lista dispositivos de instância"
+msgstr "Lista serviços"
 
 #: cmd/incus/storage_bucket.go:945
 msgid "List storage bucket keys"
@@ -6126,24 +6121,20 @@ msgid "Make the image public"
 msgstr "Torna a imagem pública"
 
 #: cmd/incus/admin_os.go:72 cmd/incus/admin_os.go:73
-#, fuzzy
 msgid "Manage IncusOS applications"
-msgstr "Gerir daemon do incus"
+msgstr "Gerir aplicações do IncusOS"
 
 #: cmd/incus/admin_os.go:344 cmd/incus/admin_os.go:345
-#, fuzzy
 msgid "Manage IncusOS services"
-msgstr "Gerir daemon do incus"
+msgstr "Gerir serviços do IncusOS"
 
 #: cmd/incus/admin_os.go:639 cmd/incus/admin_os.go:640
-#, fuzzy
 msgid "Manage IncusOS system details"
-msgstr "Gerir funções de agrupamento"
+msgstr "Gerir detalhes de sistema do IncusOS"
 
 #: cmd/incus/admin_os.go:31 cmd/incus/admin_os.go:32
-#, fuzzy
 msgid "Manage IncusOS systems"
-msgstr "Gerir daemon do incus"
+msgstr "Gerir sistemas IncusOS"
 
 #: cmd/incus/network.go:40 cmd/incus/network.go:41
 msgid "Manage and attach instances to networks"
@@ -6439,9 +6430,8 @@ msgid "Minimum size is 1GiB"
 msgstr "Tamanho mínimo é 1GiB"
 
 #: cmd/incus/admin_os.go:213
-#, fuzzy
 msgid "Missing application name"
-msgstr "Nome de pool em falta"
+msgstr "Nome de aplicação em falta"
 
 #: cmd/incus/storage_bucket.go:139 cmd/incus/storage_bucket.go:245
 #: cmd/incus/storage_bucket.go:323 cmd/incus/storage_bucket.go:444
@@ -6469,9 +6459,8 @@ msgid "Missing cluster member name"
 msgstr "Nome de membro de agrupamento em falta"
 
 #: cmd/incus/admin_os.go:809
-#, fuzzy
 msgid "Missing configuration section name"
-msgstr "Nome de integração de rede em falta"
+msgstr "Nome de secção de configuração em falta"
 
 #: cmd/incus/config_metadata.go:114 cmd/incus/config_metadata.go:225
 #: cmd/incus/config_template.go:120 cmd/incus/config_template.go:177
@@ -6618,9 +6607,8 @@ msgid "Missing required arguments"
 msgstr "Argumentos requeridos em falta"
 
 #: cmd/incus/admin_os.go:406 cmd/incus/admin_os.go:599
-#, fuzzy
 msgid "Missing service name"
-msgstr "Nome de peer em falta"
+msgstr "Nome de serviço em falta"
 
 #: cmd/incus/profile.go:324
 msgid "Missing source profile name"
@@ -6635,9 +6623,8 @@ msgid "Missing storage pool name"
 msgstr "Nome de pool de armazenamento em falta"
 
 #: cmd/incus/admin_os.go:697
-#, fuzzy
 msgid "Missing system section name"
-msgstr "Nome de integração de rede em falta"
+msgstr "Nome de secção de sistema em falta"
 
 #: cmd/incus/file.go:834
 msgid "Missing target directory"
@@ -8550,19 +8537,16 @@ msgid "Setup loop based storage with SIZE in GiB"
 msgstr "Configura armazenamento baseado em loop com TAMANHO em GiB"
 
 #: cmd/incus/admin_os.go:181 cmd/incus/admin_os.go:182
-#, fuzzy
 msgid "Show IncusOS application details"
-msgstr "Mostra configurações de confiança"
+msgstr "Mostra detalhes de aplicação do IncusOS"
 
 #: cmd/incus/admin_os.go:567 cmd/incus/admin_os.go:568
-#, fuzzy
 msgid "Show IncusOS service configuration"
-msgstr "Mostra configuração completa do dispositivo"
+msgstr "Mostra configuração de serviço do IncusOS"
 
 #: cmd/incus/admin_os.go:777 cmd/incus/admin_os.go:778
-#, fuzzy
 msgid "Show IncusOS system configuration section"
-msgstr "Mostra configurações de confiança"
+msgstr "Mostra secção de configuração de sistema IncusOS"
 
 #: cmd/incus/main.go:129
 msgid "Show all debug messages"
@@ -9961,7 +9945,7 @@ msgstr "Descrição do volume"
 
 #: cmd/incus/admin_os.go:53
 msgid "WARNING: The IncusOS API and configuration is subject to change"
-msgstr ""
+msgstr "AVISO: A API IncusOS e a configuração estão sujeitas a alterações"
 
 #: cmd/incus/info.go:309
 #, c-format
@@ -10301,9 +10285,8 @@ msgid "[<remote>:]<alias> <new-name>"
 msgstr "[<remoto>:]<alias> <novo-nome>"
 
 #: cmd/incus/admin_os.go:180
-#, fuzzy
 msgid "[<remote>:]<application>"
-msgstr "[<remoto>:]<operação>"
+msgstr "[<remoto>:]<aplicação>"
 
 #: cmd/incus/config_trust.go:283 cmd/incus/config_trust.go:772
 #: cmd/incus/config_trust.go:894
@@ -10823,14 +10806,12 @@ msgid "[<remote>:]<project> <new-name>"
 msgstr "[<remoto>:]<projeto> <novo-nome>"
 
 #: cmd/incus/admin_os.go:666 cmd/incus/admin_os.go:776
-#, fuzzy
 msgid "[<remote>:]<section>"
-msgstr "[<remoto>:]<operação>"
+msgstr "[<remoto>:]<secção>"
 
 #: cmd/incus/admin_os.go:375 cmd/incus/admin_os.go:566
-#, fuzzy
 msgid "[<remote>:]<service>"
-msgstr "[<remoto>:]<operação>"
+msgstr "[<remoto>:]<serviço>"
 
 #: cmd/incus/copy.go:41
 msgid "[<remote>:]<source>[/<snapshot>] [[<remote>:]<destination>]"
@@ -10923,24 +10904,24 @@ msgid "error: %v"
 msgstr "erro: %v"
 
 #: cmd/incus/admin_os.go:379
-#, fuzzy
 msgid ""
 "incus admin os service edit [<remote>:]<service> < service.yaml\n"
 "    Update an IncusOS service configuration using the content of "
 "service.yaml."
 msgstr ""
-"incus storage edit [<remoto>:]<pool> < pool.yaml\n"
-"    Atualiza uma pool de armazenamento usando o conteúdo de pool.yaml."
+"incus admin os service edit [<remoto>:]<serviço> < service.yaml\n"
+"    Atualiza uma configuração de serviço IncusOS usando o conteúdo de "
+"service.yaml."
 
 #: cmd/incus/admin_os.go:670
-#, fuzzy
 msgid ""
 "incus admin os system edit [<remote>:]<section> < section.yaml\n"
 "    Update an IncusOS system configuration section using the content of "
 "section.yaml."
 msgstr ""
-"incus storage edit [<remoto>:]<pool> < pool.yaml\n"
-"    Atualiza uma pool de armazenamento usando o conteúdo de pool.yaml."
+"incus admin os system edit [<remoto>:]<secção> < section.yaml\n"
+"    Atualiza uma secção de configuração de serviço IncusOS usando o conteúdo "
+"de section.yaml."
 
 #: cmd/incus/alias.go:65
 msgid ""
