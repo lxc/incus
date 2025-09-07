@@ -149,6 +149,20 @@ func IsPriority(value string) error {
 	return nil
 }
 
+// IsOOMPriority validates priority number.
+func IsOOMPriority(value string) error {
+	valueInt, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		return fmt.Errorf("Invalid value for an integer %q", value)
+	}
+
+	if valueInt < -1000 || valueInt > 1000 {
+		return fmt.Errorf("Invalid value for a limit %q. Must be between -1000 and 1000", value)
+	}
+
+	return nil
+}
+
 // IsBool validates if string can be understood as a bool.
 func IsBool(value string) error {
 	if !slices.Contains([]string{"true", "false", "yes", "no", "1", "0", "on", "off"}, strings.ToLower(value)) {
