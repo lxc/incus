@@ -2479,6 +2479,15 @@
 						}
 					},
 					{
+						"limits.memory.oom_priority": {
+							"defaultdesc": "`0`",
+							"liveupdate": "yes",
+							"longdesc": "Specify an integer between -1000 and 1000.\nA negative value makes the instance less likely to be killed by the Out Of Memory killer,\nwhile a positive value makes it more likely to be killed.\nThe default value of 0 means no adjustment to the Out Of Memory score.",
+							"shortdesc": "Out Of Memory killer priority adjustment for the instance",
+							"type": "integer"
+						}
+					},
+					{
 						"limits.memory.swap": {
 							"condition": "container",
 							"defaultdesc": "`true`",
