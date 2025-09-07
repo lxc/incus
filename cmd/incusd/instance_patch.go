@@ -138,6 +138,12 @@ func instancePatch(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
+	// Check if description was passed
+	_, err = reqRaw.GetString("description")
+	if err != nil {
+		req.Description = c.Description()
+	}
+
 	// Check if ephemeral was passed
 	_, err = reqRaw.GetBool("ephemeral")
 	if err != nil {
