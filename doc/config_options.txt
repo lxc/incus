@@ -2215,6 +2215,17 @@ The value must be greater than or equal to limits.memory.
 If this option is set to `false`, regular system memory is used.
 ```
 
+```{config:option} limits.memory.oom_priority instance-resource-limits
+:defaultdesc: "`0`"
+:liveupdate: "yes"
+:shortdesc: "Out Of Memory killer priority adjustment for the instance"
+:type: "integer"
+Specify an integer between -1000 and 1000.
+A negative value makes the instance less likely to be killed by the Out Of Memory killer,
+while a positive value makes it more likely to be killed.
+The default value of 0 means no adjustment to the Out Of Memory score.
+```
+
 ```{config:option} limits.memory.swap instance-resource-limits
 :condition: "container"
 :defaultdesc: "`true`"
