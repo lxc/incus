@@ -250,6 +250,18 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 		return nil
 	},
 
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.memory.oom_priority)
+	// Specify an integer between -1000 and 1000.
+	// A negative value makes the instance less likely to be killed by the Out Of Memory killer,
+	// while a positive value makes it more likely to be killed.
+	// The default value of 0 means no adjustment to the Out Of Memory score.
+	// ---
+	//	type: integer
+	//	defaultdesc: `0`
+	//	liveupdate: yes
+	//	shortdesc: Out Of Memory killer priority adjustment for the instance
+	"limits.memory.oom_priority": validate.Optional(validate.IsOOMPriority),
+
 	// gendoc:generate(entity=instance, group=migration, key=migration.stateful)
 	// Enabling this option prevents the use of some features that are incompatible with it.
 	// ---
