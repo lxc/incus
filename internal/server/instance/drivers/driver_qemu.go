@@ -2129,6 +2129,16 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return err
 	}
 
+	// Apply OOM priority after container is started and hooks completed.
+	err = d.setOOMPriority(d.InitPID())
+	if err != nil {
+		d.logger.Warn("Failed to set OOM priority", logger.Ctx{
+			"err":      err,
+			"instance": d.Name(),
+			"project":  d.Project().Name,
+		})
+	}
+
 	if op.Action() == "start" {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceStarted.Event(d, nil))
 	}
@@ -6329,6 +6339,16 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 				err = d.advertiseVsockAddress()
 				if err != nil {
 					return err
+				}
+			} else if key == "limits.memory.oom_priority" {
+				// Configure the OOM priority.
+				err = d.setOOMPriority(d.InitPID())
+				if err != nil {
+					d.logger.Warn("Failed to set OOM priority", logger.Ctx{
+						"err":      err,
+						"instance": d.Name(),
+						"project":  d.Project().Name,
+					})
 				}
 			}
 		}
