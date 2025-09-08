@@ -57,13 +57,13 @@ jobs:
         if: github.event_name == 'pull_request' && matrix.go == 'stable'
 
       - name: Install Go (${{ matrix.go }})
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
         if: matrix.go != 'tip'
 
       - name: Install Go (stable)
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: stable
         if: matrix.go == 'tip'
@@ -236,13 +236,13 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install Go (${{ matrix.go }})
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
         if: matrix.go != 'tip'
 
       - name: Install Go (stable)
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: stable
         if: matrix.go == 'tip'
@@ -482,7 +482,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
 
@@ -567,7 +567,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: stable
 
