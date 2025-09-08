@@ -373,19 +373,21 @@ func (d *lvm) Create() error {
 			}
 		}
 	} else {
+		// Calculate the metadata size (if provided).
+		metadataSizeBytes, err := d.roundedSizeBytesString(d.config["lvm.metadata_size"])
+		if err != nil {
+			return fmt.Errorf("Invalid lvm.metadata_size: %w", err)
+		}
+
 		// Create physical volume if doesn't exist.
-		if !pvExists {
+		// This is done to provide better errors and revert when possible.
+		if !pvExists && !d.clustered {
 			// This is an internal error condition which should never be hit.
 			if pvName == "" {
 				return errors.New("No name for physical volume detected")
 			}
 
 			args := []string{}
-
-			metadataSizeBytes, err := d.roundedSizeBytesString(d.config["lvm.metadata_size"])
-			if err != nil {
-				return fmt.Errorf("Invalid lvm.metadata_size: %w", err)
-			}
 
 			if metadataSizeBytes > 0 {
 				args = append(args, "--metadatasize", fmt.Sprintf("%db", metadataSizeBytes))
@@ -406,9 +408,13 @@ func (d *lvm) Create() error {
 
 		if d.clustered {
 			args = append(args, "--shared")
+
+			if metadataSizeBytes > 0 {
+				args = append(args, "--metadatasize", fmt.Sprintf("%db", metadataSizeBytes))
+			}
 		}
 
-		_, err := subprocess.TryRunCommand("vgcreate", args...)
+		_, err = subprocess.TryRunCommand("vgcreate", args...)
 		if err != nil {
 			return err
 		}
