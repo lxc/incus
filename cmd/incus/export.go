@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/archive"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdExport struct {
@@ -34,7 +35,7 @@ func (c *cmdExport) Command() *cobra.Command {
 		`Export instances as backup tarballs.`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus export u1 backup0.tar.gz
-    Download a backup tarball of the u1 instance.`))
+	Download a backup tarball of the u1 instance.`))
 
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVar(&c.flagInstanceOnly, "instance-only", false,
@@ -65,6 +66,18 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 	d, err := conf.GetInstanceServer(remote)
 	if err != nil {
 		return err
+	}
+
+	var targetName string
+	if len(args) > 1 {
+		targetName = args[1]
+	} else {
+		targetName = name + ".backup"
+	}
+
+	// Check if the target path already exists.
+	if util.PathExists(targetName) {
+		return fmt.Errorf(i18n.G("Target path %q already exists"), targetName)
 	}
 
 	instanceOnly := c.flagInstanceOnly
@@ -127,13 +140,6 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 			_ = op.Wait()
 		}
 	}()
-
-	var targetName string
-	if len(args) > 1 {
-		targetName = args[1]
-	} else {
-		targetName = name + ".backup"
-	}
 
 	var target *os.File
 	if targetName == "-" {
