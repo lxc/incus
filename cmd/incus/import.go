@@ -18,6 +18,8 @@ type cmdImport struct {
 	global *cmdGlobal
 
 	flagStorage string
+	flagConfig  []string
+	flagDevice  []string
 }
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
@@ -33,6 +35,8 @@ func (c *cmdImport) Command() *cobra.Command {
 
 	cmd.RunE = c.Run
 	cmd.Flags().StringVarP(&c.flagStorage, "storage", "s", "", i18n.G("Storage pool name")+"``")
+	cmd.Flags().StringArrayVarP(&c.flagConfig, "config", "c", nil, i18n.G("Config key/value to apply to the new instance")+"``")
+	cmd.Flags().StringArrayVarP(&c.flagDevice, "device", "d", nil, i18n.G("New key/value to apply to a specific device")+"``")
 
 	return cmd
 }
@@ -108,6 +112,8 @@ func (c *cmdImport) Run(cmd *cobra.Command, args []string) error {
 		},
 		PoolName: c.flagStorage,
 		Name:     instanceName,
+		Config:   c.flagConfig,
+		Devices:  c.flagDevice,
 	}
 
 	op, err := resource.server.CreateInstanceFromBackup(createArgs)
