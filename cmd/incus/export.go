@@ -67,6 +67,18 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	var targetName string
+	if len(args) > 1 {
+		targetName = args[1]
+	} else {
+		targetName = name + ".backup"
+	}
+
+	// Test if target is a directory and fail if so
+	if fi, err := os.Stat(targetName); err == nil && fi.IsDir() {
+		return fmt.Errorf("Target path %q is a directory; please provide a file name", targetName)
+	}
+
 	instanceOnly := c.flagInstanceOnly
 
 	req := api.InstanceBackupsPost{
@@ -127,13 +139,6 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 			_ = op.Wait()
 		}
 	}()
-
-	var targetName string
-	if len(args) > 1 {
-		targetName = args[1]
-	} else {
-		targetName = name + ".backup"
-	}
 
 	var target *os.File
 	if targetName == "-" {
