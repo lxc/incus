@@ -34,7 +34,7 @@ func (c *cmdExport) Command() *cobra.Command {
 		`Export instances as backup tarballs.`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus export u1 backup0.tar.gz
-    Download a backup tarball of the u1 instance.`))
+	Download a backup tarball of the u1 instance.`))
 
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVar(&c.flagInstanceOnly, "instance-only", false,
@@ -75,9 +75,17 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Test if target is a directory and fail if so
-	if fi, err := os.Stat(targetName); err == nil && fi.IsDir() {
-		return fmt.Errorf("Target path %q is a directory; please provide a file name", targetName)
+	info, statErr := os.Stat(targetName)
+	if statErr == nil {
+		if info.IsDir() {
+			return fmt.Errorf(
+			    "Target path %q is a directory; please provide a file name",
+			    targetName,
+			)
+		}
 	}
+	// If statErr != nil, we assume the path does not exist or isn't accessible yet;
+	// os.Create below will handle actual creation errors.
 
 	instanceOnly := c.flagInstanceOnly
 
