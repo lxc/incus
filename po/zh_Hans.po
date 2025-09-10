@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-09-04 17:20-0400\n"
+"POT-Creation-Date: 2025-09-15 15:55-0400\n"
 "PO-Revision-Date: 2025-03-01 08:01+0000\n"
 "Last-Translator: Loge X <wazolm5643@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -1160,7 +1160,7 @@ msgstr "后端描述"
 msgid "Backend health:"
 msgstr "后端健康："
 
-#: cmd/incus/export.go:87
+#: cmd/incus/export.go:100
 #, c-format
 msgid "Backing up instance: %s"
 msgstr "正在备份实例：%s"
@@ -1175,7 +1175,7 @@ msgstr "备份存储桶：%s"
 msgid "Backing up storage volume: %s"
 msgstr "备份存储卷：%s"
 
-#: cmd/incus/export.go:193 cmd/incus/storage_bucket.go:1624
+#: cmd/incus/export.go:199 cmd/incus/storage_bucket.go:1624
 #: cmd/incus/storage_volume.go:3375
 msgid "Backup exported successfully!"
 msgstr "备份导出成功！"
@@ -1620,7 +1620,7 @@ msgstr ""
 msgid "Compression algorithm to use (`none` for uncompressed)"
 msgstr "要使用的压缩算法（“none”表示不压缩）"
 
-#: cmd/incus/export.go:44
+#: cmd/incus/export.go:45
 msgid "Compression algorithm to use (none for uncompressed)"
 msgstr "要使用的压缩算法（留空表示不压缩）"
 
@@ -1874,7 +1874,7 @@ msgstr "创建任何必要的目录"
 msgid "Create files and directories in instances"
 msgstr "在实例中创建文件和目录"
 
-#: cmd/incus/export.go:82
+#: cmd/incus/export.go:95
 #, c-format
 msgid "Create instance backup: %w"
 msgstr "创建实例备份：%w"
@@ -2216,7 +2216,7 @@ msgstr "删除警告"
 #: cmd/incus/config_trust.go:775 cmd/incus/config_trust.go:823
 #: cmd/incus/config_trust.go:896 cmd/incus/console.go:42 cmd/incus/copy.go:44
 #: cmd/incus/create.go:47 cmd/incus/debug.go:24 cmd/incus/debug.go:45
-#: cmd/incus/delete.go:34 cmd/incus/exec.go:42 cmd/incus/export.go:33
+#: cmd/incus/delete.go:34 cmd/incus/exec.go:42 cmd/incus/export.go:34
 #: cmd/incus/file.go:53 cmd/incus/file.go:100 cmd/incus/file.go:295
 #: cmd/incus/file.go:379 cmd/incus/file.go:459 cmd/incus/file.go:696
 #: cmd/incus/file.go:1365 cmd/incus/image.go:44 cmd/incus/image.go:153
@@ -2995,11 +2995,11 @@ msgstr ""
 msgid "Export custom storage volume"
 msgstr "导出自定义存储卷"
 
-#: cmd/incus/export.go:32
+#: cmd/incus/export.go:33
 msgid "Export instance backups"
 msgstr "导出实例备份"
 
-#: cmd/incus/export.go:33
+#: cmd/incus/export.go:34
 msgid "Export instances as backup tarballs."
 msgstr "将实例导出为备份 tar 包。"
 
@@ -3029,7 +3029,7 @@ msgstr "导出不带快照的卷"
 msgid "Exporting backup of storage bucket: %s"
 msgstr "正在导出存储桶备份：%s"
 
-#: cmd/incus/export.go:153 cmd/incus/storage_volume.go:3358
+#: cmd/incus/export.go:159 cmd/incus/storage_volume.go:3358
 #, c-format
 msgid "Exporting the backup: %s"
 msgstr "导出备份：%s"
@@ -3194,7 +3194,7 @@ msgstr "无法将服务器证书添加到集群：%w"
 msgid "Failed to check if the daemon is ready (attempt %d): %v"
 msgstr "无法检查守护进程是否已就绪（第 %d 次尝试）：%v"
 
-#: cmd/incus/export.go:190
+#: cmd/incus/export.go:196
 #, c-format
 msgid "Failed to close export file: %w"
 msgstr "关闭导出文件失败：%w"
@@ -3329,7 +3329,7 @@ msgstr "刷新目标实例“%s”失败：%v"
 msgid "Failed to remove alias %s: %w"
 msgstr "删除别名 %s 失败：%w"
 
-#: cmd/incus/export.go:184
+#: cmd/incus/export.go:190
 #, c-format
 msgid "Failed to rename export file: %w"
 msgstr "重命名导出文件失败：%w"
@@ -3416,7 +3416,7 @@ msgstr ""
 msgid "Fast mode (same as --columns=nsacPt)"
 msgstr "快速模式（等价于 --columns=nsacPt）"
 
-#: cmd/incus/export.go:167
+#: cmd/incus/export.go:173
 #, c-format
 msgid "Fetch instance backup file: %w"
 msgstr "获取实例备份文件：%w"
@@ -4119,7 +4119,7 @@ msgstr ""
 msgid "Invalid IP address or DNS name"
 msgstr ""
 
-#: cmd/incus/export.go:115 cmd/incus/storage_bucket.go:1575
+#: cmd/incus/export.go:128 cmd/incus/storage_bucket.go:1575
 #: cmd/incus/storage_volume.go:3326
 #, c-format
 msgid "Invalid URL %q: %w"
@@ -4139,7 +4139,7 @@ msgstr ""
 msgid "Invalid arguments"
 msgstr ""
 
-#: cmd/incus/export.go:120 cmd/incus/storage_bucket.go:1580
+#: cmd/incus/export.go:133 cmd/incus/storage_bucket.go:1580
 #: cmd/incus/storage_volume.go:3331
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
@@ -8145,6 +8145,11 @@ msgstr ""
 msgid "Taken at"
 msgstr ""
 
+#: cmd/incus/export.go:80
+#, fuzzy, c-format
+msgid "Target path %q already exists"
+msgstr "远程 %s 已存在"
+
 #: cmd/incus/file.go:1425 cmd/incus/storage_volume.go:2458
 #, fuzzy
 msgid "Target path and --listen flag cannot be used together"
@@ -8888,7 +8893,7 @@ msgstr ""
 msgid "Usage: %s"
 msgstr ""
 
-#: cmd/incus/export.go:43 cmd/incus/storage_volume.go:3230
+#: cmd/incus/export.go:44 cmd/incus/storage_volume.go:3230
 msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool)"
 msgstr ""
@@ -9045,7 +9050,7 @@ msgstr ""
 msgid "Where should this storage pool store its data?"
 msgstr ""
 
-#: cmd/incus/export.go:41
+#: cmd/incus/export.go:42
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr ""
 
@@ -9427,7 +9432,7 @@ msgstr ""
 msgid "[<remote>:]<instance> [target] [--format]"
 msgstr ""
 
-#: cmd/incus/export.go:31
+#: cmd/incus/export.go:32
 msgid "[<remote>:]<instance> [target] [--instance-only] [--optimized-storage]"
 msgstr ""
 
@@ -10017,10 +10022,10 @@ msgid ""
 "\tRun the \"ls -lh /\" command in instance \"c1\""
 msgstr ""
 
-#: cmd/incus/export.go:35
+#: cmd/incus/export.go:36
 msgid ""
 "incus export u1 backup0.tar.gz\n"
-"    Download a backup tarball of the u1 instance."
+"\tDownload a backup tarball of the u1 instance."
 msgstr ""
 
 #: cmd/incus/file.go:102

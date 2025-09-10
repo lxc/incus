@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-09-04 17:20-0400\n"
+"POT-Creation-Date: 2025-09-15 15:55-0400\n"
 "PO-Revision-Date: 2025-05-18 17:02+0000\n"
 "Last-Translator: Jorge Teixeira <hey@teixe.es>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/incus/cli/es/>\n"
@@ -1159,7 +1159,7 @@ msgstr "Descripción"
 msgid "Backend health:"
 msgstr ""
 
-#: cmd/incus/export.go:87
+#: cmd/incus/export.go:100
 #, fuzzy, c-format
 msgid "Backing up instance: %s"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -1174,7 +1174,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "Backing up storage volume: %s"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/export.go:193 cmd/incus/storage_bucket.go:1624
+#: cmd/incus/export.go:199 cmd/incus/storage_bucket.go:1624
 #: cmd/incus/storage_volume.go:3375
 msgid "Backup exported successfully!"
 msgstr ""
@@ -1624,7 +1624,7 @@ msgstr ""
 msgid "Compression algorithm to use (`none` for uncompressed)"
 msgstr ""
 
-#: cmd/incus/export.go:44
+#: cmd/incus/export.go:45
 msgid "Compression algorithm to use (none for uncompressed)"
 msgstr ""
 
@@ -1873,7 +1873,7 @@ msgstr ""
 msgid "Create files and directories in instances"
 msgstr "Creando el contenedor"
 
-#: cmd/incus/export.go:82
+#: cmd/incus/export.go:95
 #, fuzzy, c-format
 msgid "Create instance backup: %w"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -2230,7 +2230,7 @@ msgstr ""
 #: cmd/incus/config_trust.go:775 cmd/incus/config_trust.go:823
 #: cmd/incus/config_trust.go:896 cmd/incus/console.go:42 cmd/incus/copy.go:44
 #: cmd/incus/create.go:47 cmd/incus/debug.go:24 cmd/incus/debug.go:45
-#: cmd/incus/delete.go:34 cmd/incus/exec.go:42 cmd/incus/export.go:33
+#: cmd/incus/delete.go:34 cmd/incus/exec.go:42 cmd/incus/export.go:34
 #: cmd/incus/file.go:53 cmd/incus/file.go:100 cmd/incus/file.go:295
 #: cmd/incus/file.go:379 cmd/incus/file.go:459 cmd/incus/file.go:696
 #: cmd/incus/file.go:1365 cmd/incus/image.go:44 cmd/incus/image.go:153
@@ -2969,12 +2969,12 @@ msgstr ""
 msgid "Export custom storage volume"
 msgstr ""
 
-#: cmd/incus/export.go:32
+#: cmd/incus/export.go:33
 #, fuzzy
 msgid "Export instance backups"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/export.go:33
+#: cmd/incus/export.go:34
 #, fuzzy
 msgid "Export instances as backup tarballs."
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -3005,7 +3005,7 @@ msgstr ""
 msgid "Exporting backup of storage bucket: %s"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/export.go:153 cmd/incus/storage_volume.go:3358
+#: cmd/incus/export.go:159 cmd/incus/storage_volume.go:3358
 #, fuzzy, c-format
 msgid "Exporting the backup: %s"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -3170,7 +3170,7 @@ msgstr "Acepta certificado"
 msgid "Failed to check if the daemon is ready (attempt %d): %v"
 msgstr ""
 
-#: cmd/incus/export.go:190
+#: cmd/incus/export.go:196
 #, fuzzy, c-format
 msgid "Failed to close export file: %w"
 msgstr "Acepta certificado"
@@ -3305,7 +3305,7 @@ msgstr "Perfil para aplicar al nuevo contenedor"
 msgid "Failed to remove alias %s: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/export.go:184
+#: cmd/incus/export.go:190
 #, fuzzy, c-format
 msgid "Failed to rename export file: %w"
 msgstr "Acepta certificado"
@@ -3392,7 +3392,7 @@ msgstr ""
 msgid "Fast mode (same as --columns=nsacPt)"
 msgstr ""
 
-#: cmd/incus/export.go:167
+#: cmd/incus/export.go:173
 #, fuzzy, c-format
 msgid "Fetch instance backup file: %w"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -4108,7 +4108,7 @@ msgstr ""
 msgid "Invalid IP address or DNS name"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/export.go:115 cmd/incus/storage_bucket.go:1575
+#: cmd/incus/export.go:128 cmd/incus/storage_bucket.go:1575
 #: cmd/incus/storage_volume.go:3326
 #, fuzzy, c-format
 msgid "Invalid URL %q: %w"
@@ -4129,7 +4129,7 @@ msgstr "Nombre del contenedor es: %s"
 msgid "Invalid arguments"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/export.go:120 cmd/incus/storage_bucket.go:1580
+#: cmd/incus/export.go:133 cmd/incus/storage_bucket.go:1580
 #: cmd/incus/storage_volume.go:3331
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
@@ -8250,6 +8250,11 @@ msgstr ""
 msgid "Taken at"
 msgstr ""
 
+#: cmd/incus/export.go:80
+#, fuzzy, c-format
+msgid "Target path %q already exists"
+msgstr "El dispostivo ya existe: %s"
+
 #: cmd/incus/file.go:1425 cmd/incus/storage_volume.go:2458
 msgid "Target path and --listen flag cannot be used together"
 msgstr ""
@@ -9018,7 +9023,7 @@ msgstr ""
 msgid "Usage: %s"
 msgstr "Auto actualización: %s"
 
-#: cmd/incus/export.go:43 cmd/incus/storage_volume.go:3230
+#: cmd/incus/export.go:44 cmd/incus/storage_volume.go:3230
 msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool)"
 msgstr ""
@@ -9177,7 +9182,7 @@ msgstr ""
 msgid "Where should this storage pool store its data?"
 msgstr ""
 
-#: cmd/incus/export.go:41
+#: cmd/incus/export.go:42
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr ""
 
@@ -9619,7 +9624,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "[<remote>:]<instance> [target] [--format]"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/export.go:31
+#: cmd/incus/export.go:32
 msgid "[<remote>:]<instance> [target] [--instance-only] [--optimized-storage]"
 msgstr ""
 
@@ -10306,10 +10311,10 @@ msgid ""
 "\tRun the \"ls -lh /\" command in instance \"c1\""
 msgstr ""
 
-#: cmd/incus/export.go:35
+#: cmd/incus/export.go:36
 msgid ""
 "incus export u1 backup0.tar.gz\n"
-"    Download a backup tarball of the u1 instance."
+"\tDownload a backup tarball of the u1 instance."
 msgstr ""
 
 #: cmd/incus/file.go:102
