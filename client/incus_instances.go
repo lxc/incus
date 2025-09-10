@@ -562,12 +562,12 @@ func (r *ProtocolIncus) CreateInstanceFromBackup(args InstanceBackupArgs) (Opera
 	}
 
 	if args.Config != nil {
-		configOverride := strings.Join(args.Config, ",")
+		configOverride := strings.Join(args.Config, " ")
 		req.Header.Set("X-Incus-config", configOverride)
 	}
 
 	if args.Device != nil {
-		deviceOverride := strings.Join(args.Device, ",")
+		deviceOverride := strings.Join(args.Device, " ")
 		req.Header.Set("X-Incus-device", deviceOverride)
 	}
 
