@@ -8,13 +8,12 @@ import (
 	"path"
 	"time"
 
-	"github.com/spf13/cobra"
-
 	incus "github.com/lxc/incus/v6/client"
 	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/archive"
+	"github.com/spf13/cobra"
 )
 
 type cmdExport struct {
@@ -79,8 +78,8 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 	if statErr == nil {
 		if info.IsDir() {
 			return fmt.Errorf(
-			    "Target path %q is a directory; please provide a file name",
-			    targetName,
+				"Target path %q is a directory; please provide a file name",
+				targetName,
 			)
 		}
 	}
