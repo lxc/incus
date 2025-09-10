@@ -671,7 +671,7 @@ func internalSQLExec(tx *sql.Tx, query string, result *internalSQL.SQLResult) er
 
 // internalImportFromBackup creates instance, storage pool and volume DB records from an instance's backup file.
 // It expects the instance volume to be mounted so that the backup.yaml file is readable.
-func internalImportFromBackup(ctx context.Context, s *state.State, projectName string, instName string, allowNameOverride bool) error {
+func internalImportFromBackup(ctx context.Context, s *state.State, projectName string, instName string, allowNameOverride bool, deviceMap map[string]map[string]string, configMap map[string]string) error {
 	if instName == "" {
 		return errors.New("The name of the instance is required")
 	}
@@ -835,7 +835,11 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 		return fmt.Errorf("Failed loading profiles (%v) for instance: %w", strings.Join(backupConf.Container.Profiles, ", "), err)
 	}
 
-	// Add root device if needed.
+	// Initialize configuration if missing.
+	if backupConf.Container.Config == nil {
+		backupConf.Container.Config = map[string]string{}
+	}
+
 	if backupConf.Container.Devices == nil {
 		backupConf.Container.Devices = make(map[string]map[string]string)
 	}
@@ -844,7 +848,30 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 		backupConf.Container.ExpandedDevices = make(map[string]map[string]string)
 	}
 
+	// Add root device if needed.
 	internalImportRootDevicePopulate(instancePoolName, backupConf.Container.Devices, backupConf.Container.ExpandedDevices, profiles)
+
+	// Override device.
+	for k, m := range deviceMap {
+		for key, value := range m {
+			if backupConf.Container.Devices[k] == nil {
+				backupConf.Container.Devices[k] = map[string]string{}
+			}
+
+			if backupConf.Container.ExpandedDevices[k] == nil {
+				backupConf.Container.ExpandedDevices[k] = map[string]string{}
+			}
+
+			backupConf.Container.Devices[k][key] = value
+			backupConf.Container.ExpandedDevices[k][key] = value
+		}
+	}
+
+	// Override config.
+	for key, value := range configMap {
+		backupConf.Container.Config[key] = value
+		backupConf.Container.ExpandedConfig[key] = value
+	}
 
 	reverter := revert.New()
 	defer reverter.Fail()
