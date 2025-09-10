@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-09-04 17:20-0400\n"
+"POT-Creation-Date: 2025-09-10 07:41-0500\n"
 "PO-Revision-Date: 2022-03-10 15:06+0000\n"
 "Last-Translator: Александр Киль <shorrey@gmail.com>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/linux-containers/"
@@ -1182,7 +1182,7 @@ msgstr ""
 msgid "Backend health:"
 msgstr ""
 
-#: cmd/incus/export.go:87
+#: cmd/incus/export.go:107
 #, fuzzy, c-format
 msgid "Backing up instance: %s"
 msgstr "Невозможно добавить имя контейнера в список"
@@ -1197,7 +1197,7 @@ msgstr "Копирование образа: %s"
 msgid "Backing up storage volume: %s"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/export.go:193 cmd/incus/storage_bucket.go:1624
+#: cmd/incus/export.go:206 cmd/incus/storage_bucket.go:1624
 #: cmd/incus/storage_volume.go:3375
 msgid "Backup exported successfully!"
 msgstr ""
@@ -1886,7 +1886,7 @@ msgstr ""
 msgid "Create files and directories in instances"
 msgstr "Невозможно добавить имя контейнера в список"
 
-#: cmd/incus/export.go:82
+#: cmd/incus/export.go:102
 #, fuzzy, c-format
 msgid "Create instance backup: %w"
 msgstr "Невозможно добавить имя контейнера в список"
@@ -3036,7 +3036,7 @@ msgstr "Копирование образа: %s"
 msgid "Exporting backup of storage bucket: %s"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/export.go:153 cmd/incus/storage_volume.go:3358
+#: cmd/incus/export.go:166 cmd/incus/storage_volume.go:3358
 #, fuzzy, c-format
 msgid "Exporting the backup: %s"
 msgstr "Копирование образа: %s"
@@ -3201,7 +3201,7 @@ msgstr "Принять сертификат"
 msgid "Failed to check if the daemon is ready (attempt %d): %v"
 msgstr ""
 
-#: cmd/incus/export.go:190
+#: cmd/incus/export.go:203
 #, fuzzy, c-format
 msgid "Failed to close export file: %w"
 msgstr "Принять сертификат"
@@ -3336,7 +3336,7 @@ msgstr ""
 msgid "Failed to remove alias %s: %w"
 msgstr "Принять сертификат"
 
-#: cmd/incus/export.go:184
+#: cmd/incus/export.go:197
 #, fuzzy, c-format
 msgid "Failed to rename export file: %w"
 msgstr "Принять сертификат"
@@ -3423,7 +3423,7 @@ msgstr ""
 msgid "Fast mode (same as --columns=nsacPt)"
 msgstr ""
 
-#: cmd/incus/export.go:167
+#: cmd/incus/export.go:180
 #, fuzzy, c-format
 msgid "Fetch instance backup file: %w"
 msgstr "Невозможно добавить имя контейнера в список"
@@ -4139,7 +4139,7 @@ msgstr ""
 msgid "Invalid IP address or DNS name"
 msgstr "Имя контейнера: %s"
 
-#: cmd/incus/export.go:115 cmd/incus/storage_bucket.go:1575
+#: cmd/incus/export.go:135 cmd/incus/storage_bucket.go:1575
 #: cmd/incus/storage_volume.go:3326
 #, fuzzy, c-format
 msgid "Invalid URL %q: %w"
@@ -4160,7 +4160,7 @@ msgstr "Имя контейнера: %s"
 msgid "Invalid arguments"
 msgstr "Имя контейнера: %s"
 
-#: cmd/incus/export.go:120 cmd/incus/storage_bucket.go:1580
+#: cmd/incus/export.go:140 cmd/incus/storage_bucket.go:1580
 #: cmd/incus/storage_volume.go:3331
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
@@ -10856,7 +10856,7 @@ msgstr ""
 #: cmd/incus/export.go:35
 msgid ""
 "incus export u1 backup0.tar.gz\n"
-"    Download a backup tarball of the u1 instance."
+"\tDownload a backup tarball of the u1 instance."
 msgstr ""
 
 #: cmd/incus/file.go:102

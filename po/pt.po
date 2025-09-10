@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-09-04 17:20-0400\n"
+"POT-Creation-Date: 2025-09-10 07:41-0500\n"
 "PO-Revision-Date: 2025-09-07 08:02+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
-"\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
+">\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1179,7 +1179,7 @@ msgstr "Descrição do backend"
 msgid "Backend health:"
 msgstr "Saúde de backend:"
 
-#: cmd/incus/export.go:87
+#: cmd/incus/export.go:107
 #, c-format
 msgid "Backing up instance: %s"
 msgstr "A salvaguardar instância: %s"
@@ -1194,7 +1194,7 @@ msgstr "A salvaguardar bucket de armazenamento: %s"
 msgid "Backing up storage volume: %s"
 msgstr "A salvaguardar volume de armazenamento: %s"
 
-#: cmd/incus/export.go:193 cmd/incus/storage_bucket.go:1624
+#: cmd/incus/export.go:206 cmd/incus/storage_bucket.go:1624
 #: cmd/incus/storage_volume.go:3375
 msgid "Backup exported successfully!"
 msgstr "Salvaguarda exportada com sucesso!"
@@ -1911,7 +1911,7 @@ msgstr "Cria quaisquer directórios necessários"
 msgid "Create files and directories in instances"
 msgstr "Cria ficheiros e directórios em instâncias"
 
-#: cmd/incus/export.go:82
+#: cmd/incus/export.go:102
 #, c-format
 msgid "Create instance backup: %w"
 msgstr "Cria salvaguarda da instância: %w"
@@ -3101,7 +3101,7 @@ msgstr "Exporta o volume sem seus instantâneos"
 msgid "Exporting backup of storage bucket: %s"
 msgstr "A exportar salvaguarda do bucket de armazenamento: %s"
 
-#: cmd/incus/export.go:153 cmd/incus/storage_volume.go:3358
+#: cmd/incus/export.go:166 cmd/incus/storage_volume.go:3358
 #, c-format
 msgid "Exporting the backup: %s"
 msgstr "A exportar a salvaguarda: %s"
@@ -3269,7 +3269,7 @@ msgstr "Falhou a adicionar certificado de servidor ao agrupamento: %w"
 msgid "Failed to check if the daemon is ready (attempt %d): %v"
 msgstr "Falhou ao verificar se o daemon está pronto (tentativa %d): %v"
 
-#: cmd/incus/export.go:190
+#: cmd/incus/export.go:203
 #, c-format
 msgid "Failed to close export file: %w"
 msgstr "Falhou ao fechar ficheiro de exportação: %w"
@@ -3405,7 +3405,7 @@ msgstr "Falhou ao refrescar instância alvo: '%s': %v"
 msgid "Failed to remove alias %s: %w"
 msgstr "Falhou ao remover alias %s: %w"
 
-#: cmd/incus/export.go:184
+#: cmd/incus/export.go:197
 #, c-format
 msgid "Failed to rename export file: %w"
 msgstr "Falhou ao renomear ficheiro de exportação: %w"
@@ -3493,7 +3493,7 @@ msgstr "Família: %v"
 msgid "Fast mode (same as --columns=nsacPt)"
 msgstr "Modo rápido (mesmo que --columns=nsacPt)"
 
-#: cmd/incus/export.go:167
+#: cmd/incus/export.go:180
 #, c-format
 msgid "Fetch instance backup file: %w"
 msgstr "Procura ficheiro de salvaguarda de instância: %w"
@@ -4219,7 +4219,7 @@ msgstr "Tipo de instância"
 msgid "Invalid IP address or DNS name"
 msgstr "Endereço IP ou nome DNS inválido"
 
-#: cmd/incus/export.go:115 cmd/incus/storage_bucket.go:1575
+#: cmd/incus/export.go:135 cmd/incus/storage_bucket.go:1575
 #: cmd/incus/storage_volume.go:3326
 #, c-format
 msgid "Invalid URL %q: %w"
@@ -4239,7 +4239,7 @@ msgstr "Argumento inválido %q"
 msgid "Invalid arguments"
 msgstr "Argumentos inválidos"
 
-#: cmd/incus/export.go:120 cmd/incus/storage_bucket.go:1580
+#: cmd/incus/export.go:140 cmd/incus/storage_bucket.go:1580
 #: cmd/incus/storage_volume.go:3331
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
@@ -11085,9 +11085,10 @@ msgstr ""
 "\tCorre o comando \"ls -lh /\" na instância \"c1\""
 
 #: cmd/incus/export.go:35
+#, fuzzy
 msgid ""
 "incus export u1 backup0.tar.gz\n"
-"    Download a backup tarball of the u1 instance."
+"\tDownload a backup tarball of the u1 instance."
 msgstr ""
 "incus export u1 backup0.tar.gz\n"
 "    Descarrega o tarball de salvaguarda da instância u1."

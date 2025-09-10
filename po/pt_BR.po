@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-09-04 17:20-0400\n"
+"POT-Creation-Date: 2025-09-10 07:41-0500\n"
 "PO-Revision-Date: 2024-01-30 13:01+0000\n"
 "Last-Translator: Paulo Coghi <paulo@coghi.com.br>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
@@ -1168,7 +1168,7 @@ msgstr "Descrição"
 msgid "Backend health:"
 msgstr ""
 
-#: cmd/incus/export.go:87
+#: cmd/incus/export.go:107
 #, fuzzy, c-format
 msgid "Backing up instance: %s"
 msgstr "Editar arquivos no container"
@@ -1183,7 +1183,7 @@ msgstr "Editar arquivos no container"
 msgid "Backing up storage volume: %s"
 msgstr "Editar arquivos no container"
 
-#: cmd/incus/export.go:193 cmd/incus/storage_bucket.go:1624
+#: cmd/incus/export.go:206 cmd/incus/storage_bucket.go:1624
 #: cmd/incus/storage_volume.go:3375
 msgid "Backup exported successfully!"
 msgstr "Backup exportado com sucesso!"
@@ -1887,7 +1887,7 @@ msgstr ""
 msgid "Create files and directories in instances"
 msgstr "Editar arquivos no container"
 
-#: cmd/incus/export.go:82
+#: cmd/incus/export.go:102
 #, fuzzy, c-format
 msgid "Create instance backup: %w"
 msgstr "Apagar nomes alternativos da imagem"
@@ -3043,7 +3043,7 @@ msgstr ""
 msgid "Exporting backup of storage bucket: %s"
 msgstr "Criar novas redes"
 
-#: cmd/incus/export.go:153 cmd/incus/storage_volume.go:3358
+#: cmd/incus/export.go:166 cmd/incus/storage_volume.go:3358
 #, c-format
 msgid "Exporting the backup: %s"
 msgstr ""
@@ -3208,7 +3208,7 @@ msgstr "Aceitar certificado"
 msgid "Failed to check if the daemon is ready (attempt %d): %v"
 msgstr ""
 
-#: cmd/incus/export.go:190
+#: cmd/incus/export.go:203
 #, fuzzy, c-format
 msgid "Failed to close export file: %w"
 msgstr "Aceitar certificado"
@@ -3343,7 +3343,7 @@ msgstr ""
 msgid "Failed to remove alias %s: %w"
 msgstr "Aceitar certificado"
 
-#: cmd/incus/export.go:184
+#: cmd/incus/export.go:197
 #, fuzzy, c-format
 msgid "Failed to rename export file: %w"
 msgstr "Aceitar certificado"
@@ -3430,7 +3430,7 @@ msgstr ""
 msgid "Fast mode (same as --columns=nsacPt)"
 msgstr ""
 
-#: cmd/incus/export.go:167
+#: cmd/incus/export.go:180
 #, fuzzy, c-format
 msgid "Fetch instance backup file: %w"
 msgstr "Copiar a imagem: %s"
@@ -4145,7 +4145,7 @@ msgstr ""
 msgid "Invalid IP address or DNS name"
 msgstr "Editar arquivos no container"
 
-#: cmd/incus/export.go:115 cmd/incus/storage_bucket.go:1575
+#: cmd/incus/export.go:135 cmd/incus/storage_bucket.go:1575
 #: cmd/incus/storage_volume.go:3326
 #, fuzzy, c-format
 msgid "Invalid URL %q: %w"
@@ -4166,7 +4166,7 @@ msgstr "Editar arquivos no container"
 msgid "Invalid arguments"
 msgstr "Editar arquivos no container"
 
-#: cmd/incus/export.go:120 cmd/incus/storage_bucket.go:1580
+#: cmd/incus/export.go:140 cmd/incus/storage_bucket.go:1580
 #: cmd/incus/storage_volume.go:3331
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
@@ -10330,7 +10330,7 @@ msgstr ""
 #: cmd/incus/export.go:35
 msgid ""
 "incus export u1 backup0.tar.gz\n"
-"    Download a backup tarball of the u1 instance."
+"\tDownload a backup tarball of the u1 instance."
 msgstr ""
 
 #: cmd/incus/file.go:102
