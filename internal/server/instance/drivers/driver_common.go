@@ -1692,3 +1692,28 @@ func (d *common) ClearLimitsCPUNodes(changedConfig []string) {
 
 	d.localConfig["volatile.cpu.nodes"] = ""
 }
+
+// setOOMPriority applies the OOM score adjustment to the instance.
+func (d *common) setOOMPriority(pid int) error {
+	oomPriority := d.expandedConfig["limits.memory.oom_priority"]
+
+	score := int64(0)
+	var err error
+	if oomPriority != "" {
+		score, err = strconv.ParseInt(oomPriority, 10, 64)
+		if err != nil {
+			return fmt.Errorf("Invalid OOM priority value %q: %w", oomPriority, err)
+		}
+	}
+
+	if pid <= 0 {
+		return fmt.Errorf("Failed to set OOM priority: instance not running or PID not found")
+	}
+
+	err = os.WriteFile(fmt.Sprintf("/proc/%d/oom_score_adj", pid), []byte(fmt.Sprintf("%d", score)), 0o644)
+	if err != nil {
+		return fmt.Errorf("Failed to set OOM priority: %w", err)
+	}
+
+	return nil
+}
