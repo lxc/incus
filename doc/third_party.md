@@ -2,7 +2,7 @@
 Below are a list of common operations tools which feature Incus support, either natively or through a plugin.
 
 ## Terraform / OpenTofu
-[Terraform](https://www.terraform.io) and [OpenTofu](https://opentofu.org) are infrastructure as code tools which focus on creating the infrastructure itself.
+[Terraform](https://developer.hashicorp.com/terraform) and [OpenTofu](https://opentofu.org) are infrastructure as code tools which focus on creating the infrastructure itself.
 For Incus, this means the ability to create projects, profiles, networks, storage volumes and of course instances.
 
 In most cases, one will then use Ansible to deploy the workloads
@@ -19,7 +19,7 @@ To do that, it can connect over SSH and a variety of other protocols, one of whi
 That allows for easily deploying software inside of Incus instances without needing to first setup SSH.
 
 ## Packer
-[Packer](https://www.packer.io) is a tool to generate custom OS images across a wide variety of platforms.
+[Packer](https://developer.hashicorp.com/packer) is a tool to generate custom OS images across a wide variety of platforms.
 
 A [plugin](https://developer.hashicorp.com/packer/integrations/bketelsen/incus) exists that allows Packer to generate Incus images directly.
 
