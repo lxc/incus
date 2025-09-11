@@ -119,7 +119,7 @@ func (c *cmdAdminOSApplicationsList) Run(cmd *cobra.Command, args []string) erro
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
+	exit, err := c.global.checkArgs(cmd, args, 0, 1)
 	if exit {
 		return err
 	}
@@ -138,7 +138,7 @@ func (c *cmdAdminOSApplicationsList) Run(cmd *cobra.Command, args []string) erro
 	resource := resources[0]
 
 	// Use cluster target if specified.
-	apiURL := "/os/1.0/applications/" + resource.name
+	apiURL := "/os/1.0/applications"
 	if c.os.flagTarget != "" {
 		apiURL += "?target=" + c.os.flagTarget
 	}
@@ -505,7 +505,7 @@ func (c *cmdAdminOSServicesList) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
+	exit, err := c.global.checkArgs(cmd, args, 0, 1)
 	if exit {
 		return err
 	}
@@ -524,7 +524,7 @@ func (c *cmdAdminOSServicesList) Run(cmd *cobra.Command, args []string) error {
 	resource := resources[0]
 
 	// Use cluster target if specified.
-	apiURL := "/os/1.0/services/" + resource.name
+	apiURL := "/os/1.0/services"
 	if c.os.flagTarget != "" {
 		apiURL += "?target=" + c.os.flagTarget
 	}
