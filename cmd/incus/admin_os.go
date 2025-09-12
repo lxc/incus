@@ -33,16 +33,16 @@ func (c *cmdAdminOS) Command() *cobra.Command {
 		`Manage IncusOS systems`))
 
 	// Applications
-	adminOSApplicationsCmd := cmdAdminOSApplications{global: c.global, os: c}
-	cmd.AddCommand(adminOSApplicationsCmd.Command())
+	adminOSApplicationCmd := cmdAdminOSApplication{global: c.global, os: c}
+	cmd.AddCommand(adminOSApplicationCmd.Command())
 
 	// Debug
 	adminOSDebugCmd := cmdAdminOSDebug{global: c.global, os: c}
 	cmd.AddCommand(adminOSDebugCmd.Command())
 
 	// Services
-	adminOSServicesCmd := cmdAdminOSServices{global: c.global, os: c}
-	cmd.AddCommand(adminOSServicesCmd.Command())
+	adminOSServiceCmd := cmdAdminOSService{global: c.global, os: c}
+	cmd.AddCommand(adminOSServiceCmd.Command())
 
 	// System
 	adminOSSystemCmd := cmdAdminOSSystem{global: c.global, os: c}
@@ -59,27 +59,27 @@ func (c *cmdAdminOS) Command() *cobra.Command {
 	return cmd
 }
 
-// IncusOS applications command.
-type cmdAdminOSApplications struct {
+// IncusOS application command.
+type cmdAdminOSApplication struct {
 	global *cmdGlobal
 	os     *cmdAdminOS
 }
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdAdminOSApplications) Command() *cobra.Command {
+func (c *cmdAdminOSApplication) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("applications")
+	cmd.Use = usage("application")
 	cmd.Short = i18n.G("Manage IncusOS applications")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage IncusOS applications`))
 
 	// List
-	adminOSApplicationsListCmd := cmdAdminOSApplicationsList{global: c.global, os: c.os}
-	cmd.AddCommand(adminOSApplicationsListCmd.Command())
+	adminOSApplicationListCmd := cmdAdminOSApplicationList{global: c.global, os: c.os}
+	cmd.AddCommand(adminOSApplicationListCmd.Command())
 
 	// Show
-	adminOSApplicationsShowCmd := cmdAdminOSApplicationsShow{global: c.global, os: c.os}
-	cmd.AddCommand(adminOSApplicationsShowCmd.Command())
+	adminOSApplicationShowCmd := cmdAdminOSApplicationShow{global: c.global, os: c.os}
+	cmd.AddCommand(adminOSApplicationShowCmd.Command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -88,7 +88,7 @@ func (c *cmdAdminOSApplications) Command() *cobra.Command {
 }
 
 // List.
-type cmdAdminOSApplicationsList struct {
+type cmdAdminOSApplicationList struct {
 	global *cmdGlobal
 	os     *cmdAdminOS
 
@@ -96,7 +96,7 @@ type cmdAdminOSApplicationsList struct {
 }
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdAdminOSApplicationsList) Command() *cobra.Command {
+func (c *cmdAdminOSApplicationList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("list")
 	cmd.Aliases = []string{"ls"}
@@ -115,11 +115,11 @@ func (c *cmdAdminOSApplicationsList) Command() *cobra.Command {
 }
 
 // Run runs the actual command logic.
-func (c *cmdAdminOSApplicationsList) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminOSApplicationList) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
+	exit, err := c.global.checkArgs(cmd, args, 0, 1)
 	if exit {
 		return err
 	}
@@ -138,7 +138,7 @@ func (c *cmdAdminOSApplicationsList) Run(cmd *cobra.Command, args []string) erro
 	resource := resources[0]
 
 	// Use cluster target if specified.
-	apiURL := "/os/1.0/applications/" + resource.name
+	apiURL := "/os/1.0/applications"
 	if c.os.flagTarget != "" {
 		apiURL += "?target=" + c.os.flagTarget
 	}
@@ -169,13 +169,13 @@ func (c *cmdAdminOSApplicationsList) Run(cmd *cobra.Command, args []string) erro
 }
 
 // Show.
-type cmdAdminOSApplicationsShow struct {
+type cmdAdminOSApplicationShow struct {
 	global *cmdGlobal
 	os     *cmdAdminOS
 }
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdAdminOSApplicationsShow) Command() *cobra.Command {
+func (c *cmdAdminOSApplicationShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("show", i18n.G("[<remote>:]<application>"))
 	cmd.Short = i18n.G("Show IncusOS application details")
@@ -189,7 +189,7 @@ func (c *cmdAdminOSApplicationsShow) Command() *cobra.Command {
 }
 
 // Run runs the actual command logic.
-func (c *cmdAdminOSApplicationsShow) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminOSApplicationShow) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	exit, err := c.global.checkArgs(cmd, args, 1, 1)
 	if exit {
@@ -286,7 +286,7 @@ func (c *cmdAdminOSDebugLog) Command() *cobra.Command {
 // Run runs the actual command logic.
 func (c *cmdAdminOSDebugLog) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
+	exit, err := c.global.checkArgs(cmd, args, 0, 1)
 	if exit {
 		return err
 	}
@@ -331,31 +331,31 @@ func (c *cmdAdminOSDebugLog) Run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// IncusOS services command.
-type cmdAdminOSServices struct {
+// IncusOS service command.
+type cmdAdminOSService struct {
 	global *cmdGlobal
 	os     *cmdAdminOS
 }
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdAdminOSServices) Command() *cobra.Command {
+func (c *cmdAdminOSService) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("services")
+	cmd.Use = usage("service")
 	cmd.Short = i18n.G("Manage IncusOS services")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage IncusOS services`))
 
 	// Edit
-	adminOSServicesEditCmd := cmdAdminOSServicesEdit{global: c.global, os: c.os}
-	cmd.AddCommand(adminOSServicesEditCmd.Command())
+	adminOSServiceEditCmd := cmdAdminOSServiceEdit{global: c.global, os: c.os}
+	cmd.AddCommand(adminOSServiceEditCmd.Command())
 
 	// List
-	adminOSApplicationsListCmd := cmdAdminOSServicesList{global: c.global, os: c.os}
-	cmd.AddCommand(adminOSApplicationsListCmd.Command())
+	adminOSApplicationListCmd := cmdAdminOSServiceList{global: c.global, os: c.os}
+	cmd.AddCommand(adminOSApplicationListCmd.Command())
 
 	// Show
-	adminOSServicesShowCmd := cmdAdminOSServicesShow{global: c.global, os: c.os}
-	cmd.AddCommand(adminOSServicesShowCmd.Command())
+	adminOSServiceShowCmd := cmdAdminOSServiceShow{global: c.global, os: c.os}
+	cmd.AddCommand(adminOSServiceShowCmd.Command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -364,13 +364,13 @@ func (c *cmdAdminOSServices) Command() *cobra.Command {
 }
 
 // Edit.
-type cmdAdminOSServicesEdit struct {
+type cmdAdminOSServiceEdit struct {
 	global *cmdGlobal
 	os     *cmdAdminOS
 }
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdAdminOSServicesEdit) Command() *cobra.Command {
+func (c *cmdAdminOSServiceEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("edit", i18n.G("[<remote>:]<service>"))
 	cmd.Short = i18n.G("Edit IncusOS service configuration")
@@ -387,7 +387,7 @@ func (c *cmdAdminOSServicesEdit) Command() *cobra.Command {
 }
 
 // Run runs the actual command logic.
-func (c *cmdAdminOSServicesEdit) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminOSServiceEdit) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	exit, err := c.global.checkArgs(cmd, args, 1, 1)
 	if exit {
@@ -474,7 +474,7 @@ func (c *cmdAdminOSServicesEdit) Run(cmd *cobra.Command, args []string) error {
 }
 
 // List.
-type cmdAdminOSServicesList struct {
+type cmdAdminOSServiceList struct {
 	global *cmdGlobal
 	os     *cmdAdminOS
 
@@ -482,7 +482,7 @@ type cmdAdminOSServicesList struct {
 }
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdAdminOSServicesList) Command() *cobra.Command {
+func (c *cmdAdminOSServiceList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("list")
 	cmd.Aliases = []string{"ls"}
@@ -501,11 +501,11 @@ func (c *cmdAdminOSServicesList) Command() *cobra.Command {
 }
 
 // Run runs the actual command logic.
-func (c *cmdAdminOSServicesList) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminOSServiceList) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
+	exit, err := c.global.checkArgs(cmd, args, 0, 1)
 	if exit {
 		return err
 	}
@@ -524,7 +524,7 @@ func (c *cmdAdminOSServicesList) Run(cmd *cobra.Command, args []string) error {
 	resource := resources[0]
 
 	// Use cluster target if specified.
-	apiURL := "/os/1.0/services/" + resource.name
+	apiURL := "/os/1.0/services"
 	if c.os.flagTarget != "" {
 		apiURL += "?target=" + c.os.flagTarget
 	}
@@ -555,13 +555,13 @@ func (c *cmdAdminOSServicesList) Run(cmd *cobra.Command, args []string) error {
 }
 
 // Show.
-type cmdAdminOSServicesShow struct {
+type cmdAdminOSServiceShow struct {
 	global *cmdGlobal
 	os     *cmdAdminOS
 }
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdAdminOSServicesShow) Command() *cobra.Command {
+func (c *cmdAdminOSServiceShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("show", i18n.G("[<remote>:]<service>"))
 	cmd.Short = i18n.G("Show IncusOS service configuration")
@@ -575,7 +575,7 @@ func (c *cmdAdminOSServicesShow) Command() *cobra.Command {
 }
 
 // Run runs the actual command logic.
-func (c *cmdAdminOSServicesShow) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminOSServiceShow) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	exit, err := c.global.checkArgs(cmd, args, 1, 1)
 	if exit {
