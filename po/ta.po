@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-09-04 17:20-0400\n"
+"POT-Creation-Date: 2025-09-10 07:41-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -884,7 +884,7 @@ msgstr ""
 msgid "Backend health:"
 msgstr ""
 
-#: cmd/incus/export.go:87
+#: cmd/incus/export.go:107
 #, c-format
 msgid "Backing up instance: %s"
 msgstr ""
@@ -899,7 +899,7 @@ msgstr ""
 msgid "Backing up storage volume: %s"
 msgstr ""
 
-#: cmd/incus/export.go:193 cmd/incus/storage_bucket.go:1624
+#: cmd/incus/export.go:206 cmd/incus/storage_bucket.go:1624
 #: cmd/incus/storage_volume.go:3375
 msgid "Backup exported successfully!"
 msgstr ""
@@ -1578,7 +1578,7 @@ msgstr ""
 msgid "Create files and directories in instances"
 msgstr ""
 
-#: cmd/incus/export.go:82
+#: cmd/incus/export.go:102
 #, c-format
 msgid "Create instance backup: %w"
 msgstr ""
@@ -2663,7 +2663,7 @@ msgstr ""
 msgid "Exporting backup of storage bucket: %s"
 msgstr ""
 
-#: cmd/incus/export.go:153 cmd/incus/storage_volume.go:3358
+#: cmd/incus/export.go:166 cmd/incus/storage_volume.go:3358
 #, c-format
 msgid "Exporting the backup: %s"
 msgstr ""
@@ -2828,7 +2828,7 @@ msgstr ""
 msgid "Failed to check if the daemon is ready (attempt %d): %v"
 msgstr ""
 
-#: cmd/incus/export.go:190
+#: cmd/incus/export.go:203
 #, c-format
 msgid "Failed to close export file: %w"
 msgstr ""
@@ -2963,7 +2963,7 @@ msgstr ""
 msgid "Failed to remove alias %s: %w"
 msgstr ""
 
-#: cmd/incus/export.go:184
+#: cmd/incus/export.go:197
 #, c-format
 msgid "Failed to rename export file: %w"
 msgstr ""
@@ -3050,7 +3050,7 @@ msgstr ""
 msgid "Fast mode (same as --columns=nsacPt)"
 msgstr ""
 
-#: cmd/incus/export.go:167
+#: cmd/incus/export.go:180
 #, c-format
 msgid "Fetch instance backup file: %w"
 msgstr ""
@@ -3728,7 +3728,7 @@ msgstr ""
 msgid "Invalid IP address or DNS name"
 msgstr ""
 
-#: cmd/incus/export.go:115 cmd/incus/storage_bucket.go:1575
+#: cmd/incus/export.go:135 cmd/incus/storage_bucket.go:1575
 #: cmd/incus/storage_volume.go:3326
 #, c-format
 msgid "Invalid URL %q: %w"
@@ -3748,7 +3748,7 @@ msgstr ""
 msgid "Invalid arguments"
 msgstr ""
 
-#: cmd/incus/export.go:120 cmd/incus/storage_bucket.go:1580
+#: cmd/incus/export.go:140 cmd/incus/storage_bucket.go:1580
 #: cmd/incus/storage_volume.go:3331
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
@@ -9579,7 +9579,7 @@ msgstr ""
 #: cmd/incus/export.go:35
 msgid ""
 "incus export u1 backup0.tar.gz\n"
-"    Download a backup tarball of the u1 instance."
+"\tDownload a backup tarball of the u1 instance."
 msgstr ""
 
 #: cmd/incus/file.go:102
