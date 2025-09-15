@@ -397,12 +397,14 @@ test_backup_import_with_project() {
     incus info c1
     incus start c1
     incus delete --force c1
+    rm "${INCUS_DIR}/c1.tar.gz"
 
     if [ "$incus_backend" = "btrfs" ] || [ "$incus_backend" = "zfs" ]; then
         incus import "${INCUS_DIR}/c1-optimized.tar.gz"
         incus info c1
         incus start c1
         incus delete --force c1
+        rm "${INCUS_DIR}/c1-optimized.tar.gz"
     fi
 
     # with snapshots
@@ -445,6 +447,7 @@ test_backup_import_with_project() {
     incus start c3
     incus delete --force c2
     incus delete --force c3
+    rm "${INCUS_DIR}/c2.tar.gz"
 
     if [ "$incus_backend" = "btrfs" ] || [ "$incus_backend" = "zfs" ]; then
         incus import "${INCUS_DIR}/c2-optimized.tar.gz"
@@ -461,6 +464,7 @@ test_backup_import_with_project() {
         incus start c3
         incus delete --force c2
         incus delete --force c3
+        rm "${INCUS_DIR}/c2-optimized.tar.gz"
     fi
 
     # Test exporting container and snapshot names that container hyphens.
@@ -483,6 +487,7 @@ test_backup_import_with_project() {
     incus storage volume get "${default_pool}" container/c1-foo/c1-foo-snap0 user.foo | grep -Fx "c1-foo-snap0"
     incus storage volume get "${default_pool}" container/c1-foo/c1-foo-snap1 user.foo | grep -Fx "c1-foo-snap1"
     incus delete --force c1-foo
+    rm "${INCUS_DIR}/c1-foo.tar.gz"
 
     # Create new storage pools
     incus storage create pool_1 dir
@@ -514,6 +519,7 @@ test_backup_import_with_project() {
     incus import "${INCUS_DIR}/c3.tar.gz" -s pool_2
 
     incus rm -f c3
+    rm "${INCUS_DIR}/c3.tar.gz"
 
     # Reset default storage pool
     incus profile device add default root disk path=/ pool="${default_pool}"
@@ -568,6 +574,7 @@ test_backup_export_with_project() {
         [ -f "${INCUS_DIR}/optimized/backup/index.yaml" ]
         [ -f "${INCUS_DIR}/optimized/backup/container.bin" ]
         [ ! -d "${INCUS_DIR}/optimized/backup/snapshots" ]
+        rm "${INCUS_DIR}/c1-optimized.tar.gz"
     fi
 
     incus export c1 "${INCUS_DIR}/c1.tar.gz" --instance-only
@@ -579,6 +586,7 @@ test_backup_export_with_project() {
     [ ! -d "${INCUS_DIR}/non-optimized/backup/snapshots" ]
 
     rm -rf "${INCUS_DIR}/non-optimized/"* "${INCUS_DIR}/optimized/"*
+    rm "${INCUS_DIR}/c1.tar.gz"
 
     # with snapshots
 
@@ -589,6 +597,7 @@ test_backup_export_with_project() {
         [ -f "${INCUS_DIR}/optimized/backup/index.yaml" ]
         [ -f "${INCUS_DIR}/optimized/backup/container.bin" ]
         [ -f "${INCUS_DIR}/optimized/backup/snapshots/snap0.bin" ]
+        rm "${INCUS_DIR}/c1-optimized.tar.gz"
     fi
 
     incus export c1 "${INCUS_DIR}/c1.tar.gz"
@@ -601,6 +610,7 @@ test_backup_export_with_project() {
 
     incus delete --force c1
     rm -rf "${INCUS_DIR}/optimized" "${INCUS_DIR}/non-optimized"
+    rm "${INCUS_DIR}/c1.tar.gz"
 
     # Check if hyphens cause issues when creating backups
     incus launch testimage c1-foo
@@ -609,6 +619,7 @@ test_backup_export_with_project() {
     incus export c1-foo "${INCUS_DIR}/c1-foo.tar.gz"
 
     incus delete --force c1-foo
+    rm "${INCUS_DIR}/c1-foo.tar.gz"
 
     if [ "$#" -ne 0 ]; then
         incus image rm testimage
@@ -732,6 +743,7 @@ test_backup_volume_export_with_project() {
         [ -f "${INCUS_DIR}/optimized/backup/index.yaml" ]
         [ -f "${INCUS_DIR}/optimized/backup/volume.bin" ]
         [ ! -d "${INCUS_DIR}/optimized/backup/volume-snapshots" ]
+        rm "${INCUS_DIR}/testvol-optimized.tar.gz"
     fi
 
     # Create non-optimized backup without snapshots.
@@ -840,6 +852,8 @@ test_backup_volume_export_with_project() {
             incus storage volume delete "${custom_vol_pool}" testvol --project "$project-b"
             incus storage volume delete "${custom_vol_pool}" testvol2 --project "$project-b"
         fi
+
+        rm "${INCUS_DIR}/testvol-optimized.tar.gz"
     fi
 
     # Clean up.
@@ -851,6 +865,7 @@ test_backup_volume_export_with_project() {
     incus rm -f c1
     rmdir "${INCUS_DIR}/optimized"
     rmdir "${INCUS_DIR}/non-optimized"
+    rm "${INCUS_DIR}/testvol.tar.gz"
 
     if [ "${project}" != "default" ]; then
         incus project switch default
@@ -933,6 +948,7 @@ test_backup_different_instance_uuid() {
     incus export c1 "${INCUS_DIR}/c1.tar.gz"
     incus delete -f c1
     incus import "${INCUS_DIR}/c1.tar.gz"
+    rm "${INCUS_DIR}/c1.tar.gz"
 
     newUUID=$(incus config get c1 volatile.uuid)
     newGenerationID=$(incus config get c1 volatile.uuid.generation)

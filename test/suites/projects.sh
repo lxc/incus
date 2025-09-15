@@ -273,6 +273,7 @@ test_projects_backups() {
     incus import "${INCUS_DIR}/c1.tar.gz"
     incus info c1
     incus delete c1
+    rm "${INCUS_DIR}/c1.tar.gz"
 
     # Delete the project
     rm -rf "${INCUS_DIR}/non-optimized/"

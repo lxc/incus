@@ -146,6 +146,7 @@ test_storage_driver_btrfs() {
         incus exec c1pool1 -- stat /a/a1.txt
         incus exec c1pool1 -- stat /a/b/b1.txt
         incus exec c1pool1 -- stat /a/b/c/c1.txt
+        rm "${INCUS_DIR}/c1pool1.tar.gz"
 
         # Test readonly property has been propagated.
         incus exec c1pool1 -- touch /a/w.txt

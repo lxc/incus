@@ -162,6 +162,7 @@ do_storage_driver_truenas() {
 
     incus start c4
     incus exec c4 -- test -f /root/foo
+    rm "${INCUS_DIR}/c4.tar.gz"
 
     # Snapshot and restore
     incus snapshot create c4 snap1
