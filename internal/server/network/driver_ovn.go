@@ -1554,6 +1554,11 @@ func (n *ovn) startUplinkPort() error {
 		return fmt.Errorf("Failed loading uplink network %q: %w", n.config["network"], err)
 	}
 
+	// Skip if uplink is physical network with parent set to "none".
+	if uplinkNet.Type() == "physical" && uplinkNet.Config()["parent"] == "none" {
+		return nil
+	}
+
 	// Lock uplink network so that if multiple OVN networks are trying to connect to the same uplink we don't
 	// race each other setting up the connection.
 	unlock, err := locking.Lock(context.TODO(), n.uplinkOperationLockName(uplinkNet))
@@ -3500,6 +3505,21 @@ func (n *ovn) Rename(newName string) error {
 // chassisEnabled checks the cluster config to see if this particular
 // member should act as an OVN chassis.
 func (n *ovn) chassisEnabled(ctx context.Context, tx *db.ClusterTx) (bool, error) {
+	// Check that we have an uplink network, that it's physical, and that parent is not "none".
+	if n.config["network"] == "none" {
+		return false, nil
+	}
+
+	// Get uplink network to check its configuration.
+	_, uplinkNet, _, err := tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, n.config["network"])
+	if err != nil {
+		return false, fmt.Errorf("Failed to load uplink network %q: %w", n.config["network"], err)
+	}
+
+	if uplinkNet.Type == "physical" && uplinkNet.Config["parent"] == "none" {
+		return false, nil
+	}
+
 	// Get the member info.
 	memberID := tx.GetNodeID()
 	members, err := tx.GetNodes(ctx)
