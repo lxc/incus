@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-09-15 15:55-0400\n"
+"POT-Creation-Date: 2025-09-16 15:58-0400\n"
 "PO-Revision-Date: 2024-11-11 22:00+0000\n"
 "Last-Translator: \"Laterria.Severino\" <Laterria.Severino@openmail.pro>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -1672,7 +1672,7 @@ msgstr "Algorithme de compression à utiliser (`none` pour ne pas compresser)"
 msgid "Compression algorithm to use (none for uncompressed)"
 msgstr "Algorithme de compression à utiliser (`none` pour ne pas compresser)"
 
-#: cmd/incus/copy.go:56 cmd/incus/create.go:58
+#: cmd/incus/copy.go:56 cmd/incus/create.go:58 cmd/incus/import.go:38
 msgid "Config key/value to apply to the new instance"
 msgstr "Configuration clé/valeur à associer à la nouvelle instance"
 
@@ -2340,7 +2340,7 @@ msgstr "Récupération de l'image : %s"
 #: cmd/incus/image.go:1666 cmd/incus/image.go:1732 cmd/incus/image_alias.go:32
 #: cmd/incus/image_alias.go:72 cmd/incus/image_alias.go:141
 #: cmd/incus/image_alias.go:197 cmd/incus/image_alias.go:387
-#: cmd/incus/import.go:28 cmd/incus/info.go:37 cmd/incus/launch.go:25
+#: cmd/incus/import.go:30 cmd/incus/info.go:37 cmd/incus/launch.go:25
 #: cmd/incus/list.go:52 cmd/incus/main.go:102 cmd/incus/manpage.go:25
 #: cmd/incus/monitor.go:35 cmd/incus/move.go:38 cmd/incus/network.go:41
 #: cmd/incus/network.go:153 cmd/incus/network.go:252 cmd/incus/network.go:354
@@ -4238,7 +4238,7 @@ msgstr "Image copiée avec succès !"
 msgid "Immediately attach to the console"
 msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
 
-#: cmd/incus/import.go:28
+#: cmd/incus/import.go:30
 msgid "Import backups of instances including their snapshots."
 msgstr "Importer des sauvegardes d'instances, y compris leurs instantanés."
 
@@ -4273,7 +4273,7 @@ msgstr ""
 msgid "Import images into the image store"
 msgstr "Import de l'image : %s"
 
-#: cmd/incus/import.go:27
+#: cmd/incus/import.go:29
 #, fuzzy
 msgid "Import instance backups"
 msgstr "Ignorer l'état du conteneur (seulement pour start)"
@@ -4306,7 +4306,7 @@ msgstr "Ignorer l'état du conteneur (seulement pour start)"
 msgid "Importing custom volume: %s"
 msgstr "Ignorer l'état du conteneur (seulement pour start)"
 
-#: cmd/incus/import.go:95
+#: cmd/incus/import.go:99
 #, fuzzy, c-format
 msgid "Importing instance: %s"
 msgstr "Ignorer l'état du conteneur (seulement pour start)"
@@ -6694,7 +6694,8 @@ msgstr "Nouvel alias à définir sur la cible"
 msgid "New aliases to add to the image"
 msgstr "Nouvel alias à définir sur la cible"
 
-#: cmd/incus/copy.go:57 cmd/incus/create.go:60 cmd/incus/move.go:60
+#: cmd/incus/copy.go:57 cmd/incus/create.go:60 cmd/incus/import.go:39
+#: cmd/incus/move.go:60
 #, fuzzy
 msgid "New key/value to apply to a specific device"
 msgstr "Clé/valeur de configuration à appliquer au nouveau conteneur"
@@ -8640,7 +8641,7 @@ msgstr "Le réseau %s a été créé"
 msgid "Storage pool description"
 msgstr "Le réseau %s a été créé"
 
-#: cmd/incus/copy.go:63 cmd/incus/create.go:64 cmd/incus/import.go:35
+#: cmd/incus/copy.go:63 cmd/incus/create.go:64 cmd/incus/import.go:37
 #: cmd/incus/move.go:66
 msgid "Storage pool name"
 msgstr "Nom de l'ensemble de stockage"
@@ -9865,7 +9866,7 @@ msgstr ""
 msgid "[<remote>:]"
 msgstr "[<serveur distant>:]"
 
-#: cmd/incus/import.go:26
+#: cmd/incus/import.go:28
 #, fuzzy
 msgid "[<remote>:] <backup file> [<instance name>]"
 msgstr ""
@@ -11508,7 +11509,7 @@ msgid ""
 "    Load the image properties from a YAML file"
 msgstr ""
 
-#: cmd/incus/import.go:30
+#: cmd/incus/import.go:32
 msgid ""
 "incus import backup0.tar.gz\n"
 "    Create a new instance using backup0.tar.gz as the source."

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-09-15 15:55-0400\n"
+"POT-Creation-Date: 2025-09-16 15:58-0400\n"
 "PO-Revision-Date: 2024-01-30 13:01+0000\n"
 "Last-Translator: Paulo Coghi <paulo@coghi.com.br>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
@@ -1643,7 +1643,7 @@ msgstr "Definir um algoritmo de compressão: para imagem ou nenhum"
 msgid "Compression algorithm to use (none for uncompressed)"
 msgstr "Definir um algoritmo de compressão: para imagem ou nenhum"
 
-#: cmd/incus/copy.go:56 cmd/incus/create.go:58
+#: cmd/incus/copy.go:56 cmd/incus/create.go:58 cmd/incus/import.go:38
 #, fuzzy
 msgid "Config key/value to apply to the new instance"
 msgstr "Configuração chave/valor para aplicar ao novo contêiner"
@@ -2270,7 +2270,7 @@ msgstr ""
 #: cmd/incus/image.go:1666 cmd/incus/image.go:1732 cmd/incus/image_alias.go:32
 #: cmd/incus/image_alias.go:72 cmd/incus/image_alias.go:141
 #: cmd/incus/image_alias.go:197 cmd/incus/image_alias.go:387
-#: cmd/incus/import.go:28 cmd/incus/info.go:37 cmd/incus/launch.go:25
+#: cmd/incus/import.go:30 cmd/incus/info.go:37 cmd/incus/launch.go:25
 #: cmd/incus/list.go:52 cmd/incus/main.go:102 cmd/incus/manpage.go:25
 #: cmd/incus/monitor.go:35 cmd/incus/move.go:38 cmd/incus/network.go:41
 #: cmd/incus/network.go:153 cmd/incus/network.go:252 cmd/incus/network.go:354
@@ -4009,7 +4009,7 @@ msgstr ""
 msgid "Immediately attach to the console"
 msgstr "Anexar interfaces de rede aos perfis"
 
-#: cmd/incus/import.go:28
+#: cmd/incus/import.go:30
 msgid "Import backups of instances including their snapshots."
 msgstr ""
 
@@ -4038,7 +4038,7 @@ msgstr ""
 msgid "Import images into the image store"
 msgstr ""
 
-#: cmd/incus/import.go:27
+#: cmd/incus/import.go:29
 msgid "Import instance backups"
 msgstr ""
 
@@ -4069,7 +4069,7 @@ msgstr "Editar arquivos no container"
 msgid "Importing custom volume: %s"
 msgstr "Editar arquivos no container"
 
-#: cmd/incus/import.go:95
+#: cmd/incus/import.go:99
 #, fuzzy, c-format
 msgid "Importing instance: %s"
 msgstr "Editar arquivos no container"
@@ -6345,7 +6345,8 @@ msgstr ""
 msgid "New aliases to add to the image"
 msgstr ""
 
-#: cmd/incus/copy.go:57 cmd/incus/create.go:60 cmd/incus/move.go:60
+#: cmd/incus/copy.go:57 cmd/incus/create.go:60 cmd/incus/import.go:39
+#: cmd/incus/move.go:60
 msgid "New key/value to apply to a specific device"
 msgstr ""
 
@@ -8224,7 +8225,7 @@ msgstr ""
 msgid "Storage pool description"
 msgstr "Clustering ativado"
 
-#: cmd/incus/copy.go:63 cmd/incus/create.go:64 cmd/incus/import.go:35
+#: cmd/incus/copy.go:63 cmd/incus/create.go:64 cmd/incus/import.go:37
 #: cmd/incus/move.go:66
 msgid "Storage pool name"
 msgstr ""
@@ -9407,7 +9408,7 @@ msgstr "Criar perfis"
 msgid "[<remote>:]"
 msgstr ""
 
-#: cmd/incus/import.go:26
+#: cmd/incus/import.go:28
 #, fuzzy
 msgid "[<remote>:] <backup file> [<instance name>]"
 msgstr "Criar perfis"
@@ -10383,7 +10384,7 @@ msgid ""
 "    Load the image properties from a YAML file"
 msgstr ""
 
-#: cmd/incus/import.go:30
+#: cmd/incus/import.go:32
 msgid ""
 "incus import backup0.tar.gz\n"
 "    Create a new instance using backup0.tar.gz as the source."

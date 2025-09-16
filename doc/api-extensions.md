@@ -2885,3 +2885,9 @@ This adds tmpfs support for disk devices.
 
 This adds a new `limits.memory.oom_priority` configuration option to
 configure the Out Of Memory score for the container or virtual-machine.
+
+## `backup_override_config`
+
+This adds support for overriding both configuration and devices during
+backup import by using the `X-Incus-config` and `X-Incus-devices` HTTP
+headers.

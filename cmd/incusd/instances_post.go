@@ -641,7 +641,7 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 	return operations.OperationResponse(op)
 }
 
-func createFromBackup(s *state.State, r *http.Request, projectName string, data io.Reader, pool string, instanceName string) response.Response {
+func createFromBackup(s *state.State, r *http.Request, projectName string, data io.Reader, pool string, instanceName string, config string, device string) response.Response {
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -741,6 +741,40 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		bInfo.Name = instanceName
 	}
 
+	// Override config.
+	configMap := map[string]string{}
+	if config != "" {
+		configOverride := strings.Split(config, " ")
+		for _, entry := range configOverride {
+			key, value, found := strings.Cut(entry, "=")
+			if !found {
+				return response.BadRequest(fmt.Errorf("Failed to parse config <key>=<value>: %q", entry))
+			}
+
+			configMap[key] = value
+		}
+	}
+
+	// Override device.
+	deviceMap := map[string]map[string]string{}
+	if device != "" {
+		deviceOverride := strings.Split(device, " ")
+		for _, entry := range deviceOverride {
+			if !strings.Contains(entry, "=") || !strings.Contains(entry, ",") {
+				return response.BadRequest(fmt.Errorf("Failed to parse device <device>,<key>=<value>: %q", entry))
+			}
+
+			deviceFields := strings.SplitN(entry, ",", 2)
+			keyFields := strings.SplitN(deviceFields[1], "=", 2)
+
+			if deviceMap[deviceFields[0]] == nil {
+				deviceMap[deviceFields[0]] = map[string]string{}
+			}
+
+			deviceMap[deviceFields[0]][keyFields[0]] = keyFields[1]
+		}
+	}
+
 	logger.Debug("Backup file info loaded", logger.Ctx{
 		"type":      bInfo.Type,
 		"name":      bInfo.Name,
@@ -817,7 +851,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 
 		runReverter.Add(revertHook)
 
-		err = internalImportFromBackup(context.TODO(), s, bInfo.Project, bInfo.Name, instanceName != "")
+		err = internalImportFromBackup(context.TODO(), s, bInfo.Project, bInfo.Name, instanceName != "", deviceMap, configMap)
 		if err != nil {
 			return fmt.Errorf("Failed importing backup: %w", err)
 		}
@@ -911,7 +945,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 
 	// If we're getting binary content, process separately
 	if r.Header.Get("Content-Type") == "application/octet-stream" {
-		return createFromBackup(s, r, targetProjectName, r.Body, r.Header.Get("X-Incus-pool"), r.Header.Get("X-Incus-name"))
+		return createFromBackup(s, r, targetProjectName, r.Body, r.Header.Get("X-Incus-pool"), r.Header.Get("X-Incus-name"), r.Header.Get("X-Incus-config"), r.Header.Get("X-Incus-devices"))
 	}
 
 	// Parse the request
