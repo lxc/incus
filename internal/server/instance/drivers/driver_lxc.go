@@ -2901,6 +2901,16 @@ func (d *lxc) Start(stateful bool) error {
 		return err
 	}
 
+	// Apply OOM priority after container is started and hooks completed.
+	err = d.setOOMPriority(d.InitPID())
+	if err != nil {
+		d.logger.Warn("Failed to set OOM priority", logger.Ctx{
+			"err":      err,
+			"instance": d.Name(),
+			"project":  d.Project().Name,
+		})
+	}
+
 	if op.Action() == "start" {
 		d.logger.Info("Started instance", ctxMap)
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceStarted.Event(d, nil))
@@ -4946,6 +4956,16 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 				err = cg.SetBlkioWeight(priority)
 				if err != nil {
 					return err
+				}
+			} else if key == "limits.memory.oom_priority" {
+				// Configure the OOM priority.
+				err = d.setOOMPriority(cc.InitPid())
+				if err != nil {
+					d.logger.Warn("Failed to set OOM priority", logger.Ctx{
+						"err":      err,
+						"instance": d.Name(),
+						"project":  d.Project().Name,
+					})
 				}
 			} else if key == "limits.memory" || strings.HasPrefix(key, "limits.memory.") {
 				// Skip if no memory CGroup
