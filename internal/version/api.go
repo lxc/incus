@@ -496,6 +496,7 @@ var APIExtensions = []string{
 	"storage_driver_truenas",
 	"container_disk_tmpfs",
 	"instance_limits_oom",
+	"backup_override_config",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
