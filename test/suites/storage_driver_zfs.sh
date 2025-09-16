@@ -342,6 +342,7 @@ do_storage_driver_zfs() {
     [ "$(zfs get -H -o value type incustest-"$(basename "${INCUS_DIR}")/containers/c4@snapshot-snap0")" = "snapshot" ]
     incus start c4
     incus exec c4 -- test -f /root/foo
+    rm "${INCUS_DIR}/c4.tar.gz"
 
     # Snapshot and restore
     incus snapshot create c4 snap1

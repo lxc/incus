@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-09-04 17:20-0400\n"
+"POT-Creation-Date: 2025-09-15 15:55-0400\n"
 "PO-Revision-Date: 2024-11-11 22:00+0000\n"
 "Last-Translator: \"Laterria.Severino\" <Laterria.Severino@openmail.pro>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -1185,7 +1185,7 @@ msgstr "Description"
 msgid "Backend health:"
 msgstr "État du backend :"
 
-#: cmd/incus/export.go:87
+#: cmd/incus/export.go:100
 #, c-format
 msgid "Backing up instance: %s"
 msgstr "Sauvegarder l'instance : %s"
@@ -1200,7 +1200,7 @@ msgstr "Sauvegarder le bucket de stockage : %s"
 msgid "Backing up storage volume: %s"
 msgstr "Sauvegarder le volume de stockage : %s"
 
-#: cmd/incus/export.go:193 cmd/incus/storage_bucket.go:1624
+#: cmd/incus/export.go:199 cmd/incus/storage_bucket.go:1624
 #: cmd/incus/storage_volume.go:3375
 msgid "Backup exported successfully!"
 msgstr "Export de la sauvegarde réussie !"
@@ -1668,7 +1668,7 @@ msgstr ""
 msgid "Compression algorithm to use (`none` for uncompressed)"
 msgstr "Algorithme de compression à utiliser (`none` pour ne pas compresser)"
 
-#: cmd/incus/export.go:44
+#: cmd/incus/export.go:45
 msgid "Compression algorithm to use (none for uncompressed)"
 msgstr "Algorithme de compression à utiliser (`none` pour ne pas compresser)"
 
@@ -1932,7 +1932,7 @@ msgstr "Créer tous les répertoires nécessaires"
 msgid "Create files and directories in instances"
 msgstr "Créer des fichiers et répertoires dans les instances"
 
-#: cmd/incus/export.go:82
+#: cmd/incus/export.go:95
 #, c-format
 msgid "Create instance backup: %w"
 msgstr "Créer une sauvegarde de l'instance : %w"
@@ -2330,7 +2330,7 @@ msgstr "Récupération de l'image : %s"
 #: cmd/incus/config_trust.go:775 cmd/incus/config_trust.go:823
 #: cmd/incus/config_trust.go:896 cmd/incus/console.go:42 cmd/incus/copy.go:44
 #: cmd/incus/create.go:47 cmd/incus/debug.go:24 cmd/incus/debug.go:45
-#: cmd/incus/delete.go:34 cmd/incus/exec.go:42 cmd/incus/export.go:33
+#: cmd/incus/delete.go:34 cmd/incus/exec.go:42 cmd/incus/export.go:34
 #: cmd/incus/file.go:53 cmd/incus/file.go:100 cmd/incus/file.go:295
 #: cmd/incus/file.go:379 cmd/incus/file.go:459 cmd/incus/file.go:696
 #: cmd/incus/file.go:1365 cmd/incus/image.go:44 cmd/incus/image.go:153
@@ -3165,12 +3165,12 @@ msgstr ""
 msgid "Export custom storage volume"
 msgstr "Copie de l'image : %s"
 
-#: cmd/incus/export.go:32
+#: cmd/incus/export.go:33
 #, fuzzy
 msgid "Export instance backups"
 msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
 
-#: cmd/incus/export.go:33
+#: cmd/incus/export.go:34
 #, fuzzy
 msgid "Export instances as backup tarballs."
 msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
@@ -3202,7 +3202,7 @@ msgstr "Copiez le conteneur sans ses instantanés"
 msgid "Exporting backup of storage bucket: %s"
 msgstr "Copie de l'image : %s"
 
-#: cmd/incus/export.go:153 cmd/incus/storage_volume.go:3358
+#: cmd/incus/export.go:159 cmd/incus/storage_volume.go:3358
 #, fuzzy, c-format
 msgid "Exporting the backup: %s"
 msgstr "Import de l'image : %s"
@@ -3375,7 +3375,7 @@ msgstr "Échec de l'ajout d'un certificat de serveur au cluster : %w"
 msgid "Failed to check if the daemon is ready (attempt %d): %v"
 msgstr "Impossible de vérifier que le démon est prêt (tentative %d): %v"
 
-#: cmd/incus/export.go:190
+#: cmd/incus/export.go:196
 #, c-format
 msgid "Failed to close export file: %w"
 msgstr "Échec de la fermeture du fichier d'exportation : %w"
@@ -3513,7 +3513,7 @@ msgstr "Échec du rafraîchissement de l'instance cible '%s' : %v"
 msgid "Failed to remove alias %s: %w"
 msgstr "Échec de la suppression de l'alias %s : %w"
 
-#: cmd/incus/export.go:184
+#: cmd/incus/export.go:190
 #, c-format
 msgid "Failed to rename export file: %w"
 msgstr "Échec du renommage du fichier d'exportation : %w"
@@ -3604,7 +3604,7 @@ msgstr "Nom : %s"
 msgid "Fast mode (same as --columns=nsacPt)"
 msgstr "Mode rapide (identique à --columns=nsacPt"
 
-#: cmd/incus/export.go:167
+#: cmd/incus/export.go:173
 #, fuzzy, c-format
 msgid "Fetch instance backup file: %w"
 msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
@@ -4389,7 +4389,7 @@ msgstr "Type d'instance"
 msgid "Invalid IP address or DNS name"
 msgstr "Le nom du conteneur est : %s"
 
-#: cmd/incus/export.go:115 cmd/incus/storage_bucket.go:1575
+#: cmd/incus/export.go:128 cmd/incus/storage_bucket.go:1575
 #: cmd/incus/storage_volume.go:3326
 #, fuzzy, c-format
 msgid "Invalid URL %q: %w"
@@ -4410,7 +4410,7 @@ msgstr "Cible invalide %s"
 msgid "Invalid arguments"
 msgstr "Cible invalide %s"
 
-#: cmd/incus/export.go:120 cmd/incus/storage_bucket.go:1580
+#: cmd/incus/export.go:133 cmd/incus/storage_bucket.go:1580
 #: cmd/incus/storage_volume.go:3331
 #, fuzzy, c-format
 msgid "Invalid backup name segment in path %q: %w"
@@ -8747,6 +8747,11 @@ msgstr "TYPE"
 msgid "Taken at"
 msgstr "pris à %s"
 
+#: cmd/incus/export.go:80
+#, fuzzy, c-format
+msgid "Target path %q already exists"
+msgstr "le serveur distant %s existe déjà"
+
 #: cmd/incus/file.go:1425 cmd/incus/storage_volume.go:2458
 msgid "Target path and --listen flag cannot be used together"
 msgstr ""
@@ -9546,7 +9551,7 @@ msgstr "Création du conteneur"
 msgid "Usage: %s"
 msgstr "Utilisation : %s"
 
-#: cmd/incus/export.go:43 cmd/incus/storage_volume.go:3230
+#: cmd/incus/export.go:44 cmd/incus/storage_volume.go:3230
 msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool)"
 msgstr ""
@@ -9707,7 +9712,7 @@ msgstr ""
 msgid "Where should this storage pool store its data?"
 msgstr "Le périphérique n'existe pas"
 
-#: cmd/incus/export.go:41
+#: cmd/incus/export.go:42
 #, fuzzy
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr "Réaliser ou pas l'instantané de l'état de fonctionnement du conteneur"
@@ -10372,7 +10377,7 @@ msgstr ""
 "Détruit les conteneurs ou les instantanés ainsi que toute donnée associée "
 "(configuration, instantanés, …)."
 
-#: cmd/incus/export.go:31
+#: cmd/incus/export.go:32
 #, fuzzy
 msgid "[<remote>:]<instance> [target] [--instance-only] [--optimized-storage]"
 msgstr ""
@@ -11452,10 +11457,10 @@ msgid ""
 "\tRun the \"ls -lh /\" command in instance \"c1\""
 msgstr ""
 
-#: cmd/incus/export.go:35
+#: cmd/incus/export.go:36
 msgid ""
 "incus export u1 backup0.tar.gz\n"
-"    Download a backup tarball of the u1 instance."
+"\tDownload a backup tarball of the u1 instance."
 msgstr ""
 
 #: cmd/incus/file.go:102
