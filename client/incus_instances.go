@@ -522,7 +522,7 @@ func (r *ProtocolIncus) CreateInstanceFromBackup(args InstanceBackupArgs) (Opera
 		return nil, err
 	}
 
-	if args.PoolName == "" && args.Name == "" {
+	if args.PoolName == "" && args.Name == "" && args.Config == nil && args.Devices == nil {
 		// Send the request
 		op, _, err := r.queryOperation("POST", path, args.BackupFile, "")
 		if err != nil {
@@ -538,6 +538,10 @@ func (r *ProtocolIncus) CreateInstanceFromBackup(args InstanceBackupArgs) (Opera
 
 	if args.Name != "" && !r.HasExtension("backup_override_name") {
 		return nil, errors.New(`The server is missing the required "backup_override_name" API extension`)
+	}
+
+	if (args.Config != nil || args.Devices != nil) && !r.HasExtension("backup_override_config") {
+		return nil, errors.New(`The server is missing the required "backup_override_config" API extension`)
 	}
 
 	// Prepare the HTTP request
@@ -559,6 +563,16 @@ func (r *ProtocolIncus) CreateInstanceFromBackup(args InstanceBackupArgs) (Opera
 
 	if args.Name != "" {
 		req.Header.Set("X-Incus-name", args.Name)
+	}
+
+	if args.Config != nil {
+		configOverride := strings.Join(args.Config, " ")
+		req.Header.Set("X-Incus-config", configOverride)
+	}
+
+	if args.Devices != nil {
+		devicesOverride := strings.Join(args.Devices, " ")
+		req.Header.Set("X-Incus-devices", devicesOverride)
 	}
 
 	// Send the request
