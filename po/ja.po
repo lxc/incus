@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-09-15 15:55-0400\n"
+"POT-Creation-Date: 2025-09-16 15:58-0400\n"
 "PO-Revision-Date: 2025-08-09 14:02+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -1642,7 +1642,7 @@ msgstr "圧縮アルゴリズムを指定します: (圧縮しない場合は `n
 msgid "Compression algorithm to use (none for uncompressed)"
 msgstr "使用する圧縮アルゴリズムを指定します (圧縮しない場合は none)"
 
-#: cmd/incus/copy.go:56 cmd/incus/create.go:58
+#: cmd/incus/copy.go:56 cmd/incus/create.go:58 cmd/incus/import.go:38
 msgid "Config key/value to apply to the new instance"
 msgstr "新しいインスタンスに適用するキー/値の設定"
 
@@ -2258,7 +2258,7 @@ msgstr "警告を削除します"
 #: cmd/incus/image.go:1666 cmd/incus/image.go:1732 cmd/incus/image_alias.go:32
 #: cmd/incus/image_alias.go:72 cmd/incus/image_alias.go:141
 #: cmd/incus/image_alias.go:197 cmd/incus/image_alias.go:387
-#: cmd/incus/import.go:28 cmd/incus/info.go:37 cmd/incus/launch.go:25
+#: cmd/incus/import.go:30 cmd/incus/info.go:37 cmd/incus/launch.go:25
 #: cmd/incus/list.go:52 cmd/incus/main.go:102 cmd/incus/manpage.go:25
 #: cmd/incus/monitor.go:35 cmd/incus/move.go:38 cmd/incus/network.go:41
 #: cmd/incus/network.go:153 cmd/incus/network.go:252 cmd/incus/network.go:354
@@ -4103,7 +4103,7 @@ msgstr "イメージの更新が成功しました!"
 msgid "Immediately attach to the console"
 msgstr "起動直後にインスタンスのコンソールに接続します"
 
-#: cmd/incus/import.go:28
+#: cmd/incus/import.go:30
 msgid "Import backups of instances including their snapshots."
 msgstr ""
 "インスタンスのバックアップをスナップショットを含んだ状態でインポートします。"
@@ -4137,7 +4137,7 @@ msgstr ""
 msgid "Import images into the image store"
 msgstr "イメージをイメージストアにインポートします"
 
-#: cmd/incus/import.go:27
+#: cmd/incus/import.go:29
 msgid "Import instance backups"
 msgstr "インスタンスのバックアップをインポートします"
 
@@ -4169,7 +4169,7 @@ msgstr "インスタンスのインポート中: %s"
 msgid "Importing custom volume: %s"
 msgstr "カスタムボリュームのインポート中: %s"
 
-#: cmd/incus/import.go:95
+#: cmd/incus/import.go:99
 #, c-format
 msgid "Importing instance: %s"
 msgstr "インスタンスのインポート中: %s"
@@ -7148,7 +7148,8 @@ msgstr "新しいエイリアスを定義する"
 msgid "New aliases to add to the image"
 msgstr "イメージに新しいエイリアスを追加します"
 
-#: cmd/incus/copy.go:57 cmd/incus/create.go:60 cmd/incus/move.go:60
+#: cmd/incus/copy.go:57 cmd/incus/create.go:60 cmd/incus/import.go:39
+#: cmd/incus/move.go:60
 msgid "New key/value to apply to a specific device"
 msgstr "指定するデバイスに適用する新しいキー/値"
 
@@ -9091,7 +9092,7 @@ msgstr "ストレージプール %s はメンバ %s 上でペンディング状�
 msgid "Storage pool description"
 msgstr "ストレージプール %s を作成しました"
 
-#: cmd/incus/copy.go:63 cmd/incus/create.go:64 cmd/incus/import.go:35
+#: cmd/incus/copy.go:63 cmd/incus/create.go:64 cmd/incus/import.go:37
 #: cmd/incus/move.go:66
 msgid "Storage pool name"
 msgstr "ストレージプール名"
@@ -10356,7 +10357,7 @@ msgstr "[<remote:>]<pool> <volume> <profile> [<device name>] [<path>]"
 msgid "[<remote>:]"
 msgstr "[<remote>:]"
 
-#: cmd/incus/import.go:26
+#: cmd/incus/import.go:28
 msgid "[<remote>:] <backup file> [<instance name>]"
 msgstr "[<remote>:] <backup file> [<instance name>]"
 
@@ -11383,7 +11384,7 @@ msgstr ""
 "lxc image edit <image> < image.yaml\n"
 "    YAML ファイルからイメージプロパティをロードします"
 
-#: cmd/incus/import.go:30
+#: cmd/incus/import.go:32
 #, fuzzy
 msgid ""
 "incus import backup0.tar.gz\n"

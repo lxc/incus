@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-09-15 15:55-0400\n"
+"POT-Creation-Date: 2025-09-16 15:58-0400\n"
 "PO-Revision-Date: 2025-03-01 08:01+0000\n"
 "Last-Translator: Loge X <wazolm5643@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -1624,7 +1624,7 @@ msgstr "要使用的压缩算法（“none”表示不压缩）"
 msgid "Compression algorithm to use (none for uncompressed)"
 msgstr "要使用的压缩算法（留空表示不压缩）"
 
-#: cmd/incus/copy.go:56 cmd/incus/create.go:58
+#: cmd/incus/copy.go:56 cmd/incus/create.go:58 cmd/incus/import.go:38
 msgid "Config key/value to apply to the new instance"
 msgstr "要应用于新实例的配置键/值"
 
@@ -2226,7 +2226,7 @@ msgstr "删除警告"
 #: cmd/incus/image.go:1666 cmd/incus/image.go:1732 cmd/incus/image_alias.go:32
 #: cmd/incus/image_alias.go:72 cmd/incus/image_alias.go:141
 #: cmd/incus/image_alias.go:197 cmd/incus/image_alias.go:387
-#: cmd/incus/import.go:28 cmd/incus/info.go:37 cmd/incus/launch.go:25
+#: cmd/incus/import.go:30 cmd/incus/info.go:37 cmd/incus/launch.go:25
 #: cmd/incus/list.go:52 cmd/incus/main.go:102 cmd/incus/manpage.go:25
 #: cmd/incus/monitor.go:35 cmd/incus/move.go:38 cmd/incus/network.go:41
 #: cmd/incus/network.go:153 cmd/incus/network.go:252 cmd/incus/network.go:354
@@ -3989,7 +3989,7 @@ msgstr ""
 msgid "Immediately attach to the console"
 msgstr ""
 
-#: cmd/incus/import.go:28
+#: cmd/incus/import.go:30
 msgid "Import backups of instances including their snapshots."
 msgstr ""
 
@@ -4016,7 +4016,7 @@ msgstr ""
 msgid "Import images into the image store"
 msgstr ""
 
-#: cmd/incus/import.go:27
+#: cmd/incus/import.go:29
 msgid "Import instance backups"
 msgstr ""
 
@@ -4046,7 +4046,7 @@ msgstr ""
 msgid "Importing custom volume: %s"
 msgstr ""
 
-#: cmd/incus/import.go:95
+#: cmd/incus/import.go:99
 #, c-format
 msgid "Importing instance: %s"
 msgstr ""
@@ -6259,7 +6259,8 @@ msgstr ""
 msgid "New aliases to add to the image"
 msgstr ""
 
-#: cmd/incus/copy.go:57 cmd/incus/create.go:60 cmd/incus/move.go:60
+#: cmd/incus/copy.go:57 cmd/incus/create.go:60 cmd/incus/import.go:39
+#: cmd/incus/move.go:60
 msgid "New key/value to apply to a specific device"
 msgstr ""
 
@@ -8046,7 +8047,7 @@ msgstr ""
 msgid "Storage pool description"
 msgstr ""
 
-#: cmd/incus/copy.go:63 cmd/incus/create.go:64 cmd/incus/import.go:35
+#: cmd/incus/copy.go:63 cmd/incus/create.go:64 cmd/incus/import.go:37
 #: cmd/incus/move.go:66
 msgid "Storage pool name"
 msgstr ""
@@ -9185,7 +9186,7 @@ msgstr ""
 msgid "[<remote>:]"
 msgstr ""
 
-#: cmd/incus/import.go:26
+#: cmd/incus/import.go:28
 msgid "[<remote>:] <backup file> [<instance name>]"
 msgstr ""
 
@@ -10073,7 +10074,7 @@ msgid ""
 "    Load the image properties from a YAML file"
 msgstr ""
 
-#: cmd/incus/import.go:30
+#: cmd/incus/import.go:32
 msgid ""
 "incus import backup0.tar.gz\n"
 "    Create a new instance using backup0.tar.gz as the source."
