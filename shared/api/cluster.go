@@ -215,7 +215,7 @@ type ClusterMemberPut struct {
 	// Example: {"scheduler.instance": "all"}
 	//
 	// API extension: clustering_config
-	Config map[string]string `json:"config" yaml:"config"`
+	Config ConfigMap `json:"config" yaml:"config"`
 
 	// List of cluster groups this member belongs to
 	// Example: ["group1", "group2"]

@@ -162,7 +162,7 @@ func (v *StorageVolume) URL(apiVersion string, poolName string) *URL {
 type StorageVolumePut struct {
 	// Storage volume configuration map (refer to doc/storage.md)
 	// Example: {"zfs.remove_snapshots": "true", "size": "50GiB"}
-	Config map[string]string `json:"config" yaml:"config"`
+	Config ConfigMap `json:"config" yaml:"config"`
 
 	// Description of the storage volume
 	// Example: My custom volume

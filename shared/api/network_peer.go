@@ -45,7 +45,7 @@ type NetworkPeerPut struct {
 
 	// Peer configuration map (refer to doc/network-peers.md)
 	// Example: {"user.mykey": "foo"}
-	Config map[string]string `json:"config" yaml:"config"`
+	Config ConfigMap `json:"config" yaml:"config"`
 }
 
 // NetworkPeer used for displaying a network peering.

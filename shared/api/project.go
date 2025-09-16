@@ -35,7 +35,7 @@ type ProjectPost struct {
 type ProjectPut struct {
 	// Project configuration map (refer to doc/projects.md)
 	// Example: {"features.profiles": "true", "features.networks": "false"}
-	Config map[string]string `json:"config" yaml:"config"`
+	Config ConfigMap `json:"config" yaml:"config"`
 
 	// Description of the project
 	// Example: My new project

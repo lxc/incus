@@ -72,7 +72,7 @@ type InstanceSnapshot struct {
 
 	// Instance configuration (see doc/instances.md)
 	// Example: {"security.nesting": "true"}
-	Config map[string]string `json:"config" yaml:"config"`
+	Config ConfigMap `json:"config" yaml:"config"`
 
 	// Instance creation timestamp
 	// Example: 2021-03-23T20:00:00-04:00
@@ -92,7 +92,7 @@ type InstanceSnapshot struct {
 
 	// Expanded configuration (all profiles and local config merged)
 	// Example: {"security.nesting": "true"}
-	ExpandedConfig map[string]string `json:"expanded_config,omitempty" yaml:"expanded_config,omitempty"`
+	ExpandedConfig ConfigMap `json:"expanded_config,omitempty" yaml:"expanded_config,omitempty"`
 
 	// Expanded devices (all profiles and local devices merged)
 	// Example: {"root": {"type": "disk", "pool": "default", "path": "/"}}

@@ -75,7 +75,7 @@ type StoragePool struct {
 type StoragePoolPut struct {
 	// Storage pool configuration map (refer to doc/storage.md)
 	// Example: {"volume.block.filesystem": "ext4", "volume.size": "50GiB"}
-	Config map[string]string `json:"config" yaml:"config"`
+	Config ConfigMap `json:"config" yaml:"config"`
 
 	// Description of the storage pool
 	// Example: Local SSD pool

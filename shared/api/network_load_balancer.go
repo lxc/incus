@@ -109,7 +109,7 @@ type NetworkLoadBalancerPut struct {
 
 	// Load balancer configuration map (refer to doc/network-load-balancers.md)
 	// Example: {"user.mykey": "foo"}
-	Config map[string]string `json:"config" yaml:"config"`
+	Config ConfigMap `json:"config" yaml:"config"`
 
 	// Backends (optional)
 	Backends []NetworkLoadBalancerBackend `json:"backends" yaml:"backends"`

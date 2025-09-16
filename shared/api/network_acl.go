@@ -123,7 +123,7 @@ type NetworkACLPut struct {
 
 	// ACL configuration map (refer to doc/network-acls.md)
 	// Example: {"user.mykey": "foo"}
-	Config map[string]string `json:"config" yaml:"config"`
+	Config ConfigMap `json:"config" yaml:"config"`
 }
 
 // NetworkACL used for displaying an ACL.

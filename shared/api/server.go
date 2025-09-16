@@ -148,7 +148,7 @@ type ServerStorageDriverInfo struct {
 type ServerPut struct {
 	// Server configuration map (refer to doc/server.md)
 	// Example: {"core.https_address": ":8443"}
-	Config map[string]string `json:"config" yaml:"config"`
+	Config ConfigMap `json:"config" yaml:"config"`
 }
 
 // ServerUntrusted represents a server configuration for an untrusted client

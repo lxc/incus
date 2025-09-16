@@ -27,7 +27,7 @@ type NetworkAddressSetPut struct {
 
 	// Address set configuration map (refer to doc/network-address-sets.md)
 	// Example: {"user.mykey": "foo"}
-	Config map[string]string `json:"config,omitempty" yaml:"config,omitempty"`
+	Config ConfigMap `json:"config,omitempty" yaml:"config,omitempty"`
 
 	// Description of the address set
 	// Example: Web servers
