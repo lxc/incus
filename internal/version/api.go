@@ -488,6 +488,7 @@ var APIExtensions = []string{
 	"disk_wwn",
 	"server_logging_webhook",
 	"container_disk_tmpfs",
+	"instance_limits_oom",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
