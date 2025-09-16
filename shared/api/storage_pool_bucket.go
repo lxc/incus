@@ -25,7 +25,7 @@ type StorageBucketPut struct {
 	// Example: {"size": "50GiB"}
 	//
 	// API extension: storage_buckets
-	Config map[string]string `json:"config" yaml:"config"`
+	Config ConfigMap `json:"config" yaml:"config"`
 
 	// Description of the storage bucket
 	// Example: My custom bucket

@@ -101,7 +101,7 @@ type NetworkForwardPut struct {
 
 	// Forward configuration map (refer to doc/network-forwards.md)
 	// Example: {"user.mykey": "foo"}
-	Config map[string]string `json:"config" yaml:"config"`
+	Config ConfigMap `json:"config" yaml:"config"`
 
 	// Port forwards (optional)
 	Ports []NetworkForwardPort `json:"ports" yaml:"ports"`
