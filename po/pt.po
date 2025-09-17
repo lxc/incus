@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-09-16 15:58-0400\n"
-"PO-Revision-Date: 2025-09-07 08:02+0000\n"
+"POT-Creation-Date: 2025-09-16 21:42-0400\n"
+"PO-Revision-Date: 2025-09-16 23:58+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
 ">\n"
@@ -9045,9 +9045,9 @@ msgid "Taken at"
 msgstr "Tomado em"
 
 #: cmd/incus/export.go:80
-#, fuzzy, c-format
+#, c-format
 msgid "Target path %q already exists"
-msgstr "Remoto %s já existe"
+msgstr "Caminho alvo %q já existe"
 
 #: cmd/incus/file.go:1425 cmd/incus/storage_volume.go:2458
 msgid "Target path and --listen flag cannot be used together"
@@ -11091,13 +11091,12 @@ msgstr ""
 "\tCorre o comando \"ls -lh /\" na instância \"c1\""
 
 #: cmd/incus/export.go:36
-#, fuzzy
 msgid ""
 "incus export u1 backup0.tar.gz\n"
 "\tDownload a backup tarball of the u1 instance."
 msgstr ""
 "incus export u1 backup0.tar.gz\n"
-"    Descarrega o tarball de salvaguarda da instância u1."
+"\tDescarrega um tarball de salvaguarda da instância u1."
 
 #: cmd/incus/file.go:102
 msgid ""
