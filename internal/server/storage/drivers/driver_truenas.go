@@ -94,6 +94,18 @@ func (d *truenas) load() error {
 		return nil
 	}
 
+	// Handle IncusOS services.
+	if d.state.OS.IncusOS != nil {
+		ok, err := d.state.OS.IncusOS.IsServiceEnabled("iscsi")
+		if err != nil {
+			return err
+		}
+
+		if !ok {
+			return errors.New("IncusOS service \"iscsi\" isn't currently enabled")
+		}
+	}
+
 	// Validate the needed tools are present.
 	for _, tool := range []string{tnToolName} {
 		_, err := exec.LookPath(tool)
