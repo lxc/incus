@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	osapi "github.com/lxc/incus-os/incus-osd/api"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/filter"
@@ -243,40 +242,7 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 	// Get list of actual network interfaces on the host as well if the effective project is Default.
 	if projectName == api.ProjectDefaultName {
 		if s.OS.IncusOS != nil {
-			// When running on Incus OS, limit the list to those with the "instances" role.
-			client := &http.Client{
-				Transport: &http.Transport{
-					DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-						return net.Dial("unix", "/run/incus-os/unix.socket")
-					},
-				},
-			}
-
-			// Query the OS network state.
-			resp, err := client.Get("http://incus-os/1.0/system/network")
-			if err != nil {
-				return response.InternalError(err)
-			}
-
-			defer resp.Body.Close()
-
-			// Convert to an Incus response struct.
-			apiResp := &api.Response{}
-
-			err = json.NewDecoder(resp.Body).Decode(apiResp)
-			if err != nil {
-				return response.InternalError(err)
-			}
-
-			// Quick validation.
-			if apiResp.Type != "sync" || apiResp.StatusCode != http.StatusOK {
-				return response.InternalError(errors.New("Bad network state from Incus OS"))
-			}
-
-			// Parse the response.
-			ns := &osapi.SystemNetwork{}
-
-			err = apiResp.MetadataAsStruct(ns)
+			ns, err := s.OS.IncusOS.GetSystemNetwork()
 			if err != nil {
 				return response.InternalError(err)
 			}
