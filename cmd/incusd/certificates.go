@@ -1239,6 +1239,18 @@ func certificateDelete(d *Daemon, r *http.Request) response.Response {
 			}
 		}
 
+		// On IncusOS, confirm at least one client certificate is left.
+		if s.OS.IncusOS != nil && certInfo.Type == certificate.TypeClient {
+			certs, err := d.getTrustedCertificates()
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			if len(certs[certificate.TypeClient]) < 2 {
+				return response.BadRequest(errors.New("Cannot remove last client certificate while running on IncusOS"))
+			}
+		}
+
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 			// Perform the delete with the expanded fingerprint.
 			return dbCluster.DeleteCertificate(ctx, tx.Tx(), certInfo.Fingerprint)
