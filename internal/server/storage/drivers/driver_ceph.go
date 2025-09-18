@@ -47,6 +47,18 @@ func (d *ceph) load() error {
 		return nil
 	}
 
+	// Handle IncusOS services.
+	if d.state.OS.IncusOS != nil {
+		ok, err := d.state.OS.IncusOS.IsServiceEnabled("ceph")
+		if err != nil {
+			return err
+		}
+
+		if !ok {
+			return errors.New("IncusOS service \"ceph\" isn't currently enabled")
+		}
+	}
+
 	// Validate the required binaries.
 	for _, tool := range []string{"ceph", "rbd"} {
 		_, err := exec.LookPath(tool)
