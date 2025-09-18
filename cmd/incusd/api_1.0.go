@@ -878,6 +878,10 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 	// cluster.https_address).
 	value, ok := nodeChanged["core.https_address"]
 	if ok {
+		if value == "" && s.OS.IncusOS != nil {
+			return errors.New("Cannot unset HTTPS address on an IncusOS system")
+		}
+
 		err := s.Endpoints.NetworkUpdateAddress(value)
 		if err != nil {
 			return err
