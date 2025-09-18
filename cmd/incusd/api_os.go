@@ -31,7 +31,7 @@ func apiOSProxy(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Check if this is an Incus OS system.
-	if !s.OS.IncusOS {
+	if s.OS.IncusOS == nil {
 		return response.BadRequest(errors.New("System isn't running Incus OS"))
 	}
 
