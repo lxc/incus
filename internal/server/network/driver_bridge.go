@@ -1049,6 +1049,19 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	// Create the bridge interface if doesn't exist.
 	if !n.isRunning() {
 		if n.config["bridge.driver"] == "openvswitch" {
+			// Handle IncusOS services.
+			if n.state.OS.IncusOS != nil {
+				ok, err := n.state.OS.IncusOS.IsServiceEnabled("ovn")
+				if err != nil {
+					return err
+				}
+
+				if !ok {
+					return errors.New("IncusOS service \"ovn\" isn't currently enabled")
+				}
+			}
+
+			// Try to connect to OVS.
 			vswitch, err := n.state.OVS()
 			if err != nil {
 				return fmt.Errorf("Couldn't connect to OpenVSwitch: %v", err)
