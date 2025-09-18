@@ -242,7 +242,7 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 
 	// Get list of actual network interfaces on the host as well if the effective project is Default.
 	if projectName == api.ProjectDefaultName {
-		if s.OS.IncusOS {
+		if s.OS.IncusOS != nil {
 			// When running on Incus OS, limit the list to those with the "instances" role.
 			client := &http.Client{
 				Transport: &http.Transport{

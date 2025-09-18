@@ -369,7 +369,7 @@ func internalMetrics(ctx context.Context, s *state.State, tx *db.ClusterTx) *met
 	out.AddSamples(metrics.GoSysBytes, metrics.Sample{Value: float64(ms.Sys)})
 
 	// If on Incus OS, include OS metrics.
-	if s.OS.IncusOS {
+	if s.OS.IncusOS != nil {
 		client := http.Client{}
 		client.Transport = &http.Transport{
 			DialContext: func(_ context.Context, network, addr string) (net.Conn, error) {
