@@ -831,17 +831,17 @@ func (c *ClusterTx) UpdateStoragePool(ctx context.Context, poolName, description
 		return err
 	}
 
-	err = clearStoragePoolConfig(c.tx, poolID, c.nodeID)
+	return c.UpdateStoragePoolConfig(poolID, c.nodeID, poolConfig)
+}
+
+// UpdateStoragePoolConfig updates a storage pool config.
+func (c *ClusterTx) UpdateStoragePoolConfig(poolID, nodeID int64, config map[string]string) error {
+	err := clearStoragePoolConfig(c.tx, poolID, nodeID)
 	if err != nil {
 		return err
 	}
 
-	err = storagePoolConfigAdd(c.tx, poolID, c.nodeID, poolConfig)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return storagePoolConfigAdd(c.tx, poolID, nodeID, config)
 }
 
 // Uupdate the storage pool description.
