@@ -575,7 +575,8 @@ func storagePoolsPostCluster(ctx context.Context, s *state.State, pool *api.Stor
 		return err
 	}
 
-	req.Config = updatedConfig
+	// Clone the config so that updatedConfig retains the node-specific key for later use.
+	req.Config = util.CloneMap(updatedConfig)
 	logger.Debug("Created storage pool on local cluster member", logger.Ctx{"pool": req.Name})
 
 	// Strip node specific config keys from config. Very important so we don't forward node-specific config.
@@ -610,6 +611,37 @@ func storagePoolsPostCluster(ctx context.Context, s *state.State, pool *api.Stor
 	})
 	if err != nil {
 		return err
+	}
+
+	// Get the existing storage pool.
+	p, err := storagePools.LoadByName(s, pool.Name)
+	if err != nil {
+		return err
+	}
+
+	if p.Driver().Info().SameSource {
+		err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			nodes, err := tx.GetNodes(ctx)
+			if err != nil {
+				return err
+			}
+
+			for _, node := range nodes {
+				if node.Name == s.ServerName {
+					continue
+				}
+
+				err := tx.UpdateStoragePoolConfig(poolID, node.ID, updatedConfig)
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	// Finally update the storage pool state.
