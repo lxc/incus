@@ -156,6 +156,7 @@ func (d *lvm) Info() Info {
 		VolumeMultiNode:              d.isRemote(),
 		BlockBacking:                 true,
 		RunningCopyFreeze:            true,
+		SameSource:                   d.isRemote(),
 		DirectIO:                     true,
 		IOUring:                      true,
 		MountedRoot:                  false,

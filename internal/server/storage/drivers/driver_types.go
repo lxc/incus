@@ -15,6 +15,7 @@ type Info struct {
 	PreservesInodes              bool         // Whether driver preserves inodes when volumes are moved hosts.
 	BlockBacking                 bool         // Whether driver uses block devices as backing store.
 	RunningCopyFreeze            bool         // Whether instance should be frozen during snapshot if running.
+	SameSource                   bool         // Whether the storage pool config from the node that created the pool should be copied to all other cluster nodes.
 	DirectIO                     bool         // Whether the driver supports direct I/O.
 	IOUring                      bool         // Whether the driver supports io_uring.
 	MountedRoot                  bool         // Whether the pool directory itself is a mount.
