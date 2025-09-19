@@ -16,8 +16,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gorilla/mux"
-
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/filter"
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
@@ -1496,7 +1494,7 @@ func clusterNodesPost(d *Daemon, r *http.Request) response.Response {
 func clusterNodeGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1632,7 +1630,7 @@ func clusterNodePut(d *Daemon, r *http.Request) response.Response {
 
 // updateClusterNode is shared between clusterNodePut and clusterNodePatch.
 func updateClusterNode(s *state.State, gateway *cluster.Gateway, r *http.Request, isPatch bool) response.Response {
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1938,7 +1936,7 @@ func clusterValidateConfig(config map[string]string) error {
 func clusterNodePost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	memberName, err := url.PathUnescape(mux.Vars(r)["name"])
+	memberName, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -2015,7 +2013,7 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 		pending = 0
 	}
 
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -2794,7 +2792,7 @@ func clusterCheckNetworksMatch(ctx context.Context, clusterDB *db.Cluster, reqNe
 func internalClusterRaftNodeDelete(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	address, err := url.PathUnescape(mux.Vars(r)["address"])
+	address, err := url.PathUnescape(r.PathValue("address"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -2847,7 +2845,7 @@ func internalClusterRaftNodeDelete(d *Daemon, r *http.Request) response.Response
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func clusterNodeStateGet(d *Daemon, r *http.Request) response.Response {
-	memberName, err := url.PathUnescape(mux.Vars(r)["name"])
+	memberName, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -2896,7 +2894,7 @@ func clusterNodeStateGet(d *Daemon, r *http.Request) response.Response {
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func clusterNodeStatePost(d *Daemon, r *http.Request) response.Response {
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
