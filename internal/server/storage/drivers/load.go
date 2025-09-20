@@ -16,6 +16,7 @@ var drivers = map[string]func() driver{
 	"truenas":    func() driver { return &truenas{} },
 	"zfs":        func() driver { return &zfs{} },
 	"linstor":    func() driver { return &linstor{} },
+	"nfs":        func() driver { return &nfs{} },
 }
 
 // Validators contains functions used for validating a drivers's config.
