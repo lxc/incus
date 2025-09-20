@@ -110,8 +110,20 @@ type ovn struct {
 }
 
 func (n *ovn) init(s *state.State, id int64, projectName string, netInfo *api.Network, netNodes map[int64]db.NetworkNode) error {
-	// Check that OVN is available.
 	if s != nil {
+		// Handle IncusOS services.
+		if s.OS.IncusOS != nil {
+			ok, err := s.OS.IncusOS.IsServiceEnabled("ovn")
+			if err != nil {
+				return err
+			}
+
+			if !ok {
+				return errors.New("IncusOS service \"ovn\" isn't currently enabled")
+			}
+		}
+
+		// Check that OVN is available.
 		ovnnb, ovnsb, err := s.OVN()
 		if err != nil {
 			return err

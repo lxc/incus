@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lxc/incus/v6/internal/incusos"
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/cgroup"
 	"github.com/lxc/incus/v6/internal/server/db/cluster"
@@ -101,7 +102,7 @@ type OS struct {
 	KernelVersion version.DottedVersion
 	Uname         *linux.Utsname
 	BootTime      time.Time
-	IncusOS       bool
+	IncusOS       *incusos.Client
 }
 
 // DefaultOS returns a fresh uninitialized OS instance with default values.
@@ -205,7 +206,14 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 		s.KernelVersion = *kernelVersion
 	}
 
-	s.IncusOS = util.PathExists("/var/lib/incus-os/")
+	if util.PathExists("/var/lib/incus-os/") {
+		c, err := incusos.NewClient()
+		if err != nil {
+			return nil, err
+		}
+
+		s.IncusOS = c
+	}
 
 	// Fill in the boot time.
 	out, err := os.ReadFile("/proc/stat")
