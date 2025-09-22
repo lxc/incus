@@ -47,11 +47,14 @@ func (m *ConfigMap) UnmarshalYAML(unmarshal func(any) error) error {
 
 func (m *ConfigMap) fromMapStringAny(raw map[string]any) error {
 	if raw == nil {
-		*m = nil
 		return nil
 	}
 
-	result := make(ConfigMap, len(raw))
+	result := *m
+	if result == nil {
+		result = make(ConfigMap, len(raw))
+	}
+
 	for k, v := range raw {
 		switch val := v.(type) {
 		case string:
