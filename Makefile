@@ -136,7 +136,7 @@ update-schema:
 .PHONY: update-api
 update-api:
 ifeq "$(INCUS_OFFLINE)" ""
-	(cd / ; $(GO) install -v -x github.com/go-swagger/go-swagger/cmd/swagger@latest)
+	(cd / ; $(GO) install -v -x github.com/go-swagger/go-swagger/cmd/swagger@master)
 endif
 	swagger generate spec -o doc/rest-api.yaml -w ./cmd/incusd -m
 
