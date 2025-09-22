@@ -12,6 +12,7 @@ import (
 
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/response"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 func init() {
@@ -186,7 +187,7 @@ func TestStoragePoolVolume_Ceph(t *testing.T) {
 		return nil
 	})
 
-	config := map[string]string{"k": "v"}
+	config := api.ConfigMap{"k": "v"}
 	var volumeID int64
 
 	_ = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
