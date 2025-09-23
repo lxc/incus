@@ -2386,7 +2386,7 @@ func (d *zfs) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operat
 		}
 
 		ourUnmount = true
-	} else if vol.contentType == ContentTypeBlock {
+	} else if IsContentBlock(vol.contentType) {
 		// For VMs, also unmount the filesystem dataset.
 		if vol.IsVMBlock() {
 			fsVol := vol.NewVMBlockFilesystemVolume()

@@ -1282,7 +1282,7 @@ func (d *ceph) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Opera
 		}
 
 		ourUnmount = true
-	} else if vol.contentType == ContentTypeBlock {
+	} else if IsContentBlock(vol.contentType) {
 		// For VMs, unmount the filesystem volume.
 		if vol.IsVMBlock() {
 			fsVol := vol.NewVMBlockFilesystemVolume()
