@@ -840,7 +840,7 @@ func (d *lvm) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operat
 		}
 
 		ourUnmount = true
-	} else if vol.contentType == ContentTypeBlock || vol.contentType == ContentTypeISO {
+	} else if IsContentBlock(vol.contentType) {
 		// For VMs and ISOs, unmount the filesystem volume.
 		if vol.IsVMBlock() {
 			fsVol := vol.NewVMBlockFilesystemVolume()
