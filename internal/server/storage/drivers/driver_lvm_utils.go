@@ -502,19 +502,12 @@ func (d *lvm) acquireExclusive(vol Volume) (func(), error) {
 		return func() {}, nil
 	}
 
-	volDevPath, err := d.lvmDevPath(d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name))
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return func() {}, nil
-		}
-
-		return nil, err
-	}
+	volDevPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
 
 	lvmActivation.Lock()
 	defer lvmActivation.Unlock()
 
-	_, err = subprocess.TryRunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volDevPath)
+	_, err := subprocess.TryRunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volDevPath)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to acquire exclusive lock on LVM logical volume %q: %w", volDevPath, err)
 	}
