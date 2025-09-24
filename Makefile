@@ -94,9 +94,7 @@ ifneq "$(INCUS_OFFLINE)" ""
 	exit 1
 endif
 	$(GO) get -t -v -u ./...
-	$(GO) get github.com/go-jose/go-jose/v4@v4.0.5
-	$(GO) get github.com/olekukonko/tablewriter@v0.0.5
-	$(GO) mod tidy --go=1.24.0
+	$(GO) mod tidy --go=1.24.7
 	$(GO) get toolchain@none
 
 	@echo "Dependencies updated"
@@ -138,7 +136,7 @@ update-schema:
 .PHONY: update-api
 update-api:
 ifeq "$(INCUS_OFFLINE)" ""
-	(cd / ; $(GO) install -v -x github.com/go-swagger/go-swagger/cmd/swagger@latest)
+	(cd / ; $(GO) install -v -x github.com/go-swagger/go-swagger/cmd/swagger@master)
 endif
 	swagger generate spec -o doc/rest-api.yaml -w ./cmd/incusd -m
 
