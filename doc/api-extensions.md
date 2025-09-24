@@ -2891,3 +2891,7 @@ configure the Out Of Memory score for the container or virtual-machine.
 This adds support for overriding both configuration and devices during
 backup import by using the `X-Incus-config` and `X-Incus-devices` HTTP
 headers.
+
+## `network_ovn_tunnels`
+
+This adds support for network tunnels to OVN networks.

@@ -497,6 +497,7 @@ var APIExtensions = []string{
 	"container_disk_tmpfs",
 	"instance_limits_oom",
 	"backup_override_config",
+	"network_ovn_tunnels",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
