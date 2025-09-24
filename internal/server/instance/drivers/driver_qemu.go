@@ -3655,28 +3655,25 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 
 	conf = append(conf, qemuTablet(&tabletOpts)...)
 
-	// Windows doesn't support virtio-vsock.
-	if !isWindows {
-		// Existing vsock ID from volatile.
-		vsockID, err := d.getVsockID()
-		if err != nil {
-			return nil, err
-		}
-
-		devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
-		vsockOpts := qemuVsockOpts{
-			dev: qemuDevOpts{
-				busName:       bus.name,
-				devBus:        devBus,
-				devAddr:       devAddr,
-				multifunction: multi,
-			},
-			vsockFD: vsockFD,
-			vsockID: vsockID,
-		}
-
-		conf = append(conf, qemuVsock(&vsockOpts)...)
+	// Existing vsock ID from volatile.
+	vsockID, err := d.getVsockID()
+	if err != nil {
+		return nil, err
 	}
+
+	devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
+	vsockOpts := qemuVsockOpts{
+		dev: qemuDevOpts{
+			busName:       bus.name,
+			devBus:        devBus,
+			devAddr:       devAddr,
+			multifunction: multi,
+		},
+		vsockFD: vsockFD,
+		vsockID: vsockID,
+	}
+
+	conf = append(conf, qemuVsock(&vsockOpts)...)
 
 	devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
 	serialOpts := qemuSerialOpts{
