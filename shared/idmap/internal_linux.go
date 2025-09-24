@@ -9,6 +9,8 @@ import (
 
 	"github.com/pkg/xattr"
 	"golang.org/x/sys/unix"
+
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // The functions below are verbatim copies of the functions found in the internal package.
@@ -33,6 +35,11 @@ func getAllXattr(path string) (map[string]string, error) {
 	for _, xattrName := range xattrNames {
 		value, err := xattr.LGet(path, xattrName)
 		if err != nil {
+			if errors.Is(err, unix.EINVAL) {
+				logger.Warn("Skipping unreadable xattr during shift", logger.Ctx{"path": path, "xattr": xattrName})
+				continue
+			}
+
 			return nil, fmt.Errorf("Failed getting %q extended attribute from %q: %w", xattrName, path, err)
 		}
 
