@@ -4251,6 +4251,78 @@
 						}
 					},
 					{
+						"tunnel.NAME.group": {
+							"condition": "`vxlan`",
+							"default": "`239.0.0.1`",
+							"longdesc": "",
+							"shortdesc": "Multicast address for `vxlan`",
+							"type": "string"
+						}
+					},
+					{
+						"tunnel.NAME.id": {
+							"condition": "`vxlan`",
+							"default": "`0`",
+							"longdesc": "",
+							"shortdesc": "Specific tunnel ID to use for the `vxlan` tunnel",
+							"type": "integer"
+						}
+					},
+					{
+						"tunnel.NAME.interface": {
+							"condition": "`vxlan`",
+							"default": "-",
+							"longdesc": "",
+							"shortdesc": "Specific host interface to use for the tunnel",
+							"type": "string"
+						}
+					},
+					{
+						"tunnel.NAME.local": {
+							"condition": "`gre`",
+							"default": "-",
+							"longdesc": "",
+							"shortdesc": "Local address for the tunnel",
+							"type": "string"
+						}
+					},
+					{
+						"tunnel.NAME.port": {
+							"condition": "`vxlan`",
+							"default": "`0`",
+							"longdesc": "",
+							"shortdesc": "Specific port to use for the `vxlan` tunnel",
+							"type": "integer"
+						}
+					},
+					{
+						"tunnel.NAME.protocol": {
+							"condition": "standard mode",
+							"default": "-",
+							"longdesc": "",
+							"shortdesc": "Tunneling protocol: `vxlan` or `gre`",
+							"type": "string"
+						}
+					},
+					{
+						"tunnel.NAME.remote": {
+							"condition": "`gre`",
+							"default": "-",
+							"longdesc": "",
+							"shortdesc": "Remote address for the tunnel",
+							"type": "string"
+						}
+					},
+					{
+						"tunnel.NAME.ttl": {
+							"condition": "`vxlan`",
+							"default": "`1`",
+							"longdesc": "",
+							"shortdesc": "Specific TTL to use for multicast routing topologies",
+							"type": "integer"
+						}
+					},
+					{
 						"user.*": {
 							"longdesc": "",
 							"shortdesc": "User-provided free-form key/value pairs",
