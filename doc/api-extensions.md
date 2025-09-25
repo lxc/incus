@@ -2853,3 +2853,7 @@ headers.
 ## `network_ovn_tunnels`
 
 This adds support for network tunnels to OVN networks.
+
+## `init_preseed_cluster_groups`
+
+This API extension provides the ability to configure cluster groups in preseed init.
