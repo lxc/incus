@@ -14,6 +14,14 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
+func init() {
+	// apex/log is only used by umoci within Incus.
+	// So configure its logger to forward to our logger with the relevant prefix.
+
+	// Set the custom handler.
+	log.SetHandler(&umociLogHandler{Message: "Unpacking OCI image"})
+}
+
 // Custom handler to intercept logs.
 type umociLogHandler struct {
 	Message string
@@ -40,10 +48,6 @@ func (h *umociLogHandler) HandleLog(e *log.Entry) error {
 }
 
 func unpackOCIImage(imagePath string, imageTag string, bundlePath string) error {
-	// Set the custom handler
-	log.SetHandler(&umociLogHandler{Message: "Unpacking OCI image"})
-	defer log.SetHandler(nil)
-
 	var unpackOptions layer.UnpackOptions
 	unpackOptions.KeepDirlinks = true
 
