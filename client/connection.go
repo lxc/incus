@@ -53,6 +53,9 @@ type ConnectionArgs struct {
 	// Controls whether a client verifies the server's certificate chain and host name.
 	InsecureSkipVerify bool
 
+	// Controls whether to perform an exact certificate match (will ignore expiry).
+	IdenticalCertificate bool
+
 	// Cookie jar
 	CookieJar http.CookieJar
 
@@ -289,7 +292,7 @@ func ConnectSimpleStreams(uri string, args *ConnectionArgs) (ImageServer, error)
 	}
 
 	// Setup the HTTP client
-	httpClient, err := tlsHTTPClient(args.HTTPClient, args.TLSClientCert, args.TLSClientKey, args.TLSCA, args.TLSServerCert, args.InsecureSkipVerify, args.Proxy, args.TransportWrapper)
+	httpClient, err := tlsHTTPClient(args.HTTPClient, args.TLSClientCert, args.TLSClientKey, args.TLSCA, args.TLSServerCert, args.InsecureSkipVerify, args.IdenticalCertificate, args.Proxy, args.TransportWrapper)
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +355,7 @@ func ConnectOCI(uri string, args *ConnectionArgs) (ImageServer, error) {
 	}
 
 	// Setup the HTTP client
-	httpClient, err := tlsHTTPClient(args.HTTPClient, args.TLSClientCert, args.TLSClientKey, args.TLSCA, args.TLSServerCert, args.InsecureSkipVerify, args.Proxy, args.TransportWrapper)
+	httpClient, err := tlsHTTPClient(args.HTTPClient, args.TLSClientCert, args.TLSClientKey, args.TLSCA, args.TLSServerCert, args.InsecureSkipVerify, args.IdenticalCertificate, args.Proxy, args.TransportWrapper)
 	if err != nil {
 		return nil, err
 	}
@@ -396,7 +399,7 @@ func httpsIncus(ctx context.Context, requestURL string, args *ConnectionArgs) (I
 	}
 
 	// Setup the HTTP client
-	httpClient, err := tlsHTTPClient(args.HTTPClient, args.TLSClientCert, args.TLSClientKey, args.TLSCA, args.TLSServerCert, args.InsecureSkipVerify, args.Proxy, args.TransportWrapper)
+	httpClient, err := tlsHTTPClient(args.HTTPClient, args.TLSClientCert, args.TLSClientKey, args.TLSCA, args.TLSServerCert, args.InsecureSkipVerify, args.IdenticalCertificate, args.Proxy, args.TransportWrapper)
 	if err != nil {
 		return nil, err
 	}
