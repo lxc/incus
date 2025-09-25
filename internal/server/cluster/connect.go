@@ -44,12 +44,13 @@ func Connect(address string, networkCert *localtls.CertInfo, serverCert *localtl
 	}
 
 	args := &incus.ConnectionArgs{
-		TLSServerCert: string(networkCert.PublicKey()),
-		TLSClientCert: string(serverCert.PublicKey()),
-		TLSClientKey:  string(serverCert.PrivateKey()),
-		SkipGetServer: true,
-		SkipGetEvents: true,
-		UserAgent:     version.UserAgent,
+		IdenticalCertificate: true,
+		TLSServerCert:        string(networkCert.PublicKey()),
+		TLSClientCert:        string(serverCert.PublicKey()),
+		TLSClientKey:         string(serverCert.PrivateKey()),
+		SkipGetServer:        true,
+		SkipGetEvents:        true,
+		UserAgent:            version.UserAgent,
 	}
 
 	if notify {
