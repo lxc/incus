@@ -573,5 +573,33 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 		}
 	}
 
+	// Apply cluster group configurations.
+	if len(config.Server.ClusterGroups) > 0 {
+		for _, clusterGroup := range config.Server.ClusterGroups {
+			// Check if it already exists.
+			existing, etag, err := r.GetClusterGroup(clusterGroup.Name)
+			if err == nil && existing != nil {
+				// Keep existing members if none specified (set of empty slice to empty).
+				if clusterGroup.Members == nil {
+					clusterGroup.Members = existing.Members
+				}
+
+				// Update the existing group.
+				err = r.UpdateClusterGroup(clusterGroup.Name, clusterGroup.ClusterGroupPut, etag)
+				if err != nil {
+					return fmt.Errorf("Failed to update cluster group")
+				}
+
+				continue
+			}
+
+			// Create the new group.
+			err = r.CreateClusterGroup(clusterGroup)
+			if err != nil {
+				return fmt.Errorf("Failed to create cluster group")
+			}
+		}
+	}
+
 	return nil
 }
