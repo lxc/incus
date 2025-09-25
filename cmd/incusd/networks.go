@@ -1459,9 +1459,11 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
+
 	// In clustered mode, we differentiate between node specific and non-node specific config keys based on
 	// whether the user has specified a target to apply the config to.
-	if s.ServerClustered {
+	if s.ServerClustered && clientType == clusterRequest.ClientTypeNormal {
 		curConfig := n.Config()
 		changedConfig := make(map[string]string, len(req.Config))
 		for key, value := range req.Config {
@@ -1488,8 +1490,6 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 			}
 		}
 	}
-
-	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
 
 	resp = doNetworkUpdate(n, req, targetNode, clientType, r.Method, s.ServerClustered)
 
