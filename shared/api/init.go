@@ -45,6 +45,11 @@ type InitLocalPreseed struct {
 	//
 	// API extension: init_preseed_certificates.
 	Certificates []CertificatesPost `json:"certificates" yaml:"certificates"`
+
+	// Cluster groups to add
+	//
+	// API extension: init_preseed_cluster_groups.
+	ClusterGroups []ClusterGroupsPost `json:"cluster_groups" yaml:"cluster_groups"`
 }
 
 // InitNetworksProjectPost represents the fields of a new network along with its associated project.
