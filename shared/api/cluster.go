@@ -262,7 +262,7 @@ type ClusterMemberStatePost struct {
 //
 // API extension: clustering_groups.
 type ClusterGroupsPost struct {
-	ClusterGroupPut
+	ClusterGroupPut `yaml:",inline"`
 
 	// The new name of the cluster group
 	// Example: group1
