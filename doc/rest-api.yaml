@@ -1282,6 +1282,15 @@ definitions:
                     $ref: '#/definitions/CertificatesPost'
                 type: array
                 x-go-name: Certificates
+            cluster_groups:
+                description: |-
+                    Cluster groups to add
+
+                    API extension: init_preseed_cluster_groups.
+                items:
+                    $ref: '#/definitions/ClusterGroupsPost'
+                type: array
+                x-go-name: ClusterGroups
             config:
                 additionalProperties:
                     type: string
