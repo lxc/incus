@@ -204,6 +204,7 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, img *api.Image
 	if args.Type == instancetype.Container && inst.LocalConfig()["image.type"] == "oci" {
 		// Reset the config to the post-generation one.
 		args.Config = inst.LocalConfig()
+		expandedConfig := inst.ExpandedConfig()
 
 		// Mount the instance.
 		_, err = pool.MountInstance(inst, nil)
@@ -240,26 +241,26 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, img *api.Image
 			key := fmt.Sprintf("environment.%s", fields[0])
 			value := fields[1]
 
-			_, ok := args.Config[key]
+			_, ok := expandedConfig[key]
 			if !ok {
 				args.Config[key] = value
 			}
 		}
 
 		// Set the entrypoint configuration options.
-		if len(config.Process.Args) > 0 && args.Config["oci.entrypoint"] == "" {
+		if len(config.Process.Args) > 0 && expandedConfig["oci.entrypoint"] == "" {
 			args.Config["oci.entrypoint"] = shellquote.Join(config.Process.Args...)
 		}
 
-		if config.Process.Cwd != "" && args.Config["oci.cwd"] == "" {
+		if config.Process.Cwd != "" && expandedConfig["oci.cwd"] == "" {
 			args.Config["oci.cwd"] = config.Process.Cwd
 		}
 
-		if args.Config["oci.uid"] == "" {
+		if expandedConfig["oci.uid"] == "" {
 			args.Config["oci.uid"] = fmt.Sprintf("%d", config.Process.User.UID)
 		}
 
-		if args.Config["oci.gid"] == "" {
+		if expandedConfig["oci.gid"] == "" {
 			args.Config["oci.gid"] = fmt.Sprintf("%d", config.Process.User.GID)
 		}
 
