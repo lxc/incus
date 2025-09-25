@@ -189,7 +189,7 @@ func (n *ovn) State() (*api.NetworkState, error) {
 	// Check if an uplink network is present.
 	if n.config["network"] != "none" {
 		// Get the current active chassis.
-		chassis, err = n.ovnsb.GetLogicalRouterPortActiveChassisHostname(context.TODO(), n.getRouterExtPortName())
+		chassis, err = n.getActiveChassisName()
 		if err != nil {
 			return nil, err
 		}
@@ -670,6 +670,101 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 		// Volatile keys populated automatically as needed.
 		ovnVolatileUplinkIPv4: validate.Optional(validate.IsNetworkAddressV4),
 		ovnVolatileUplinkIPv6: validate.Optional(validate.IsNetworkAddressV6),
+	}
+
+	// Add dynamic validation rules.
+	for k := range config {
+		// Tunnel keys have the remote name in their name, extract the suffix.
+		if strings.HasPrefix(k, "tunnel.") {
+			// Validate remote name in key.
+			fields := strings.Split(k, ".")
+			if len(fields) != 3 {
+				return fmt.Errorf("Invalid network configuration key: %s", k)
+			}
+
+			// Full tunnel name: network_name + tunnel_name + interface_idx
+			if len(n.name)+len(fields[1])+2 > 14 {
+				return fmt.Errorf("Network name too long for tunnel interface: %s-%s-xx", n.name, fields[1])
+			}
+
+			tunnelKey := fields[2]
+
+			// Add the correct validation rule for the dynamic field based on last part of key.
+			switch tunnelKey {
+			case "protocol":
+				// gendoc:generate(entity=network_ovn, group=common, key=tunnel.NAME.protocol)
+				//
+				// ---
+				//  type: string
+				//  condition: standard mode
+				//  default: -
+				//  shortdesc: Tunneling protocol: `vxlan` or `gre`
+				rules[k] = validate.Optional(validate.IsOneOf("gre", "vxlan"))
+			case "local":
+				// gendoc:generate(entity=network_ovn, group=common, key=tunnel.NAME.local)
+				//
+				// ---
+				//  type: string
+				//  condition: `gre`
+				//  default: -
+				//  shortdesc: Local address for the tunnel
+				rules[k] = validate.Optional(validate.IsNetworkAddress)
+			case "remote":
+				// gendoc:generate(entity=network_ovn, group=common, key=tunnel.NAME.remote)
+				//
+				// ---
+				//  type: string
+				//  condition: `gre`
+				//  default: -
+				//  shortdesc: Remote address for the tunnel
+				rules[k] = validate.Optional(validate.IsListOf(validate.IsNetworkAddress))
+			case "port":
+				// gendoc:generate(entity=network_ovn, group=common, key=tunnel.NAME.port)
+				//
+				// ---
+				//  type: integer
+				//  condition: `vxlan`
+				//  default: `0`
+				//  shortdesc: Specific port to use for the `vxlan` tunnel
+				rules[k] = networkValidPort
+			case "id":
+				// gendoc:generate(entity=network_ovn, group=common, key=tunnel.NAME.id)
+				//
+				// ---
+				//  type: integer
+				//  condition: `vxlan`
+				//  default: `0`
+				//  shortdesc: Specific tunnel ID to use for the `vxlan` tunnel
+				rules[k] = validate.Optional(validate.IsInt64)
+			case "group":
+				// gendoc:generate(entity=network_ovn, group=common, key=tunnel.NAME.group)
+				//
+				// ---
+				//  type: string
+				//  condition: `vxlan`
+				//  default: `239.0.0.1`
+				//  shortdesc: Multicast address for `vxlan`
+				rules[k] = validate.Optional(validate.IsNetworkAddress)
+			case "interface":
+				// gendoc:generate(entity=network_ovn, group=common, key=tunnel.NAME.interface)
+				//
+				// ---
+				//  type: string
+				//  condition: `vxlan`
+				//  default: -
+				//  shortdesc: Specific host interface to use for the tunnel
+				rules[k] = validate.IsInterfaceName
+			case "ttl":
+				// gendoc:generate(entity=network_ovn, group=common, key=tunnel.NAME.ttl)
+				//
+				// ---
+				//  type: integer
+				//  condition: `vxlan`
+				//  default: `1`
+				//  shortdesc: Specific TTL to use for multicast routing topologies
+				rules[k] = validate.Optional(validate.IsUint8)
+			}
+		}
 	}
 
 	err := n.validate(config, rules)
@@ -3638,7 +3733,7 @@ func (n *ovn) Start() error {
 
 	// Setup event handler for monitored services.
 	handler := networkOVN.EventHandler{
-		Tables: []string{"Service_Monitor"},
+		Tables: []string{"Service_Monitor", "Port_Binding"},
 		Hook: func(action string, table string, oldObject ovsdbModel.Model, newObject ovsdbModel.Model) {
 			// Skip invalid notifications.
 			if oldObject == nil && newObject == nil {
@@ -3651,81 +3746,89 @@ func (n *ovn) Start() error {
 				dbObject = oldObject
 			}
 
-			srvStatus, ok := dbObject.(*ovnSB.ServiceMonitor)
-			if !ok {
-				return
-			}
+			switch ovnSBObject := dbObject.(type) {
+			case *ovnSB.ServiceMonitor:
+				// Check if this is our network.
+				if !strings.HasPrefix(ovnSBObject.LogicalPort, fmt.Sprintf("incus-net%d-instance-", n.id)) {
+					return
+				}
 
-			// Check if this is our network.
-			if !strings.HasPrefix(srvStatus.LogicalPort, fmt.Sprintf("incus-net%d-instance-", n.id)) {
-				return
-			}
-
-			// Locate affected load-balancers.
-			lbs, err := n.ovnnb.GetLoadBalancersByStatusUpdate(context.TODO(), *srvStatus)
-			if err != nil {
-				return
-			}
-
-			for _, lb := range lbs {
-				// Check for status of all backends on this load-balancer.
-				online, err := n.ovnsb.CheckLoadBalancerOnline(context.TODO(), lb)
+				// Locate affected load-balancers.
+				lbs, err := n.ovnnb.GetLoadBalancersByStatusUpdate(context.TODO(), *ovnSBObject)
 				if err != nil {
 					return
 				}
 
-				// Parse the name.
-				fields := strings.Split(lb.Name, "-")
-				listenAddr := net.ParseIP(fields[3])
-				if listenAddr == nil {
+				for _, lb := range lbs {
+					// Check for status of all backends on this load-balancer.
+					online, err := n.ovnsb.CheckLoadBalancerOnline(context.TODO(), lb)
+					if err != nil {
+						return
+					}
+
+					// Parse the name.
+					fields := strings.Split(lb.Name, "-")
+					listenAddr := net.ParseIP(fields[3])
+					if listenAddr == nil {
+						return
+					}
+
+					// Check if we have a matching UDP load-balancer.
+					fields[4] = "udp"
+					lbUDP, _ := n.ovnnb.GetLoadBalancer(context.TODO(), networkOVN.OVNLoadBalancer(strings.Join(fields, "-")))
+					if lbUDP != nil {
+						// UDP backends can't be checked, so have to assume online.
+						online = true
+					}
+
+					// Prepare advertisement.
+					ipVersion := uint(4)
+					if listenAddr.To4() == nil {
+						ipVersion = 6
+					}
+
+					bgpOwner := fmt.Sprintf("network_%d_load_balancer", n.id)
+					nextHopAddr := n.bgpNextHopAddress(ipVersion)
+					natEnabled := util.IsTrue(n.config[fmt.Sprintf("ipv%d.nat", ipVersion)])
+					_, netSubnet, _ := net.ParseCIDR(n.config[fmt.Sprintf("ipv%d.address", ipVersion)])
+
+					routeSubnetSize := 128
+					if ipVersion == 4 {
+						routeSubnetSize = 32
+					}
+
+					// Don't export internal address forwards (those inside the NAT enabled network's subnet).
+					if natEnabled && netSubnet != nil && netSubnet.Contains(listenAddr) {
+						return
+					}
+
+					_, ipRouteSubnet, err := net.ParseCIDR(fmt.Sprintf("%s/%d", listenAddr.String(), routeSubnetSize))
+					if err != nil {
+						return
+					}
+
+					// Update the BGP state.
+					if online {
+						err = n.state.BGP.AddPrefix(*ipRouteSubnet, nextHopAddr, bgpOwner)
+						if err != nil {
+							return
+						}
+					} else {
+						err = n.state.BGP.RemovePrefix(*ipRouteSubnet, nextHopAddr)
+						if err != nil {
+							return
+						}
+					}
+				}
+
+			case *ovnSB.PortBinding:
+				if ovnSBObject.Type != "chassisredirect" || ovnSBObject.LogicalPort != fmt.Sprintf("cr-incus-net%d-lr-lrp-ext", n.id) {
 					return
 				}
 
-				// Check if we have a matching UDP load-balancer.
-				fields[4] = "udp"
-				lbUDP, _ := n.ovnnb.GetLoadBalancer(context.TODO(), networkOVN.OVNLoadBalancer(strings.Join(fields, "-")))
-				if lbUDP != nil {
-					// UDP backends can't be checked, so have to assume online.
-					online = true
-				}
-
-				// Prepare advertisement.
-				ipVersion := uint(4)
-				if listenAddr.To4() == nil {
-					ipVersion = 6
-				}
-
-				bgpOwner := fmt.Sprintf("network_%d_load_balancer", n.id)
-				nextHopAddr := n.bgpNextHopAddress(ipVersion)
-				natEnabled := util.IsTrue(n.config[fmt.Sprintf("ipv%d.nat", ipVersion)])
-				_, netSubnet, _ := net.ParseCIDR(n.config[fmt.Sprintf("ipv%d.address", ipVersion)])
-
-				routeSubnetSize := 128
-				if ipVersion == 4 {
-					routeSubnetSize = 32
-				}
-
-				// Don't export internal address forwards (those inside the NAT enabled network's subnet).
-				if natEnabled && netSubnet != nil && netSubnet.Contains(listenAddr) {
-					return
-				}
-
-				_, ipRouteSubnet, err := net.ParseCIDR(fmt.Sprintf("%s/%d", listenAddr.String(), routeSubnetSize))
+				err := n.updateTunnels(n.config, []string{}, true)
 				if err != nil {
 					return
-				}
-
-				// Update the BGP state.
-				if online {
-					err = n.state.BGP.AddPrefix(*ipRouteSubnet, nextHopAddr, bgpOwner)
-					if err != nil {
-						return
-					}
-				} else {
-					err = n.state.BGP.RemovePrefix(*ipRouteSubnet, nextHopAddr)
-					if err != nil {
-						return
-					}
 				}
 			}
 		},
@@ -3806,6 +3909,11 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		return fmt.Errorf("Failed generating auto config: %w", err)
 	}
 
+	dbUpdateNeeded, changedKeys, oldNetwork, err := n.configChanged(newNetwork)
+	if err != nil {
+		return err
+	}
+
 	if clientType == request.ClientTypeNotifier {
 		// Reload BGP on notifications.
 		err = n.bgpSetup(nil)
@@ -3818,12 +3926,14 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 			return fmt.Errorf("Failed applying BGP prefixes for load balancers: %w", err)
 		}
 
-		return nil
-	}
+		if len(n.getTunnelsFromChangedKeys(changedKeys)) > 0 {
+			err = n.updateTunnels(newNetwork.Config, changedKeys, false)
+			if err != nil {
+				return err
+			}
+		}
 
-	dbUpdateNeeded, changedKeys, oldNetwork, err := n.common.configChanged(newNetwork)
-	if err != nil {
-		return err
+		return nil
 	}
 
 	if !dbUpdateNeeded {
@@ -4162,6 +4272,26 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 	err = n.loadBalancerBGPSetupPrefixes()
 	if err != nil {
 		return fmt.Errorf("Failed applying BGP prefixes for load balancers: %w", err)
+	}
+
+	err = n.updateTunnels(newNetwork.Config, changedKeys, false)
+	if err != nil {
+		return err
+	}
+
+	if len(n.getTunnelsFromChangedKeys(changedKeys)) > 0 {
+		// Notify all other members about tunnels configuration change.
+		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		if err != nil {
+			return err
+		}
+
+		err = notifier(func(client incus.InstanceServer) error {
+			return client.UseProject(n.project).UpdateNetwork(n.name, newNetwork, "")
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	// Delete any address set that is unused
@@ -7696,4 +7826,337 @@ func (n *ovn) loadBalancerBGPSetupPrefixes() error {
 	}
 
 	return nil
+}
+
+// getTunnels fetches tunnels from a network configuration.
+func (n *ovn) getTunnels(config map[string]string) []string {
+	tunnels := []string{}
+
+	for k := range config {
+		if !strings.HasPrefix(k, "tunnel.") {
+			continue
+		}
+
+		fields := strings.Split(k, ".")
+		if !slices.Contains(tunnels, fields[1]) {
+			tunnels = append(tunnels, fields[1])
+		}
+	}
+
+	return tunnels
+}
+
+// getTunnelsFromChangedKeys fetches tunnels from a string slice.
+func (n *ovn) getTunnelsFromChangedKeys(keys []string) []string {
+	tunnels := make(map[string]string)
+	for _, v := range keys {
+		tunnels[v] = ""
+	}
+
+	return n.getTunnels(tunnels)
+}
+
+// getTunnelFullName returns a full name of a tunnel.
+func (n *ovn) getTunnelFullName(tunnel string, idx int) string {
+	return fmt.Sprintf("%s-%s-%d", n.name, tunnel, idx)
+}
+
+// getTunnelLspName returns a name of a lsp for a tunnel.
+func (n *ovn) getTunnelLspName(tunnel string) string {
+	return fmt.Sprintf("tunnel-%s", tunnel)
+}
+
+// updateTunnels updates the tunnel configuration by removing and recreating all necessary objects.
+// When the 'reinitialize' flag is set, it removes and recreates all tunnels from the configuration,
+// not just those referenced in changedKeys.
+func (n *ovn) updateTunnels(newConfig map[string]string, changedKeys []string, reinitialize bool) error {
+	err := n.deleteTunnels(changedKeys, false, reinitialize)
+	if err != nil {
+		return err
+	}
+
+	chassisName, err := n.getActiveChassisName()
+	if err != nil {
+		return err
+	}
+
+	if chassisName == n.state.ServerName || chassisName == n.state.OS.Hostname {
+		err := n.deleteTunnels(changedKeys, true, reinitialize)
+		if err != nil {
+			return err
+		}
+
+		err = n.createTunnels(newConfig)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// createTunnels creates tunnels specified in the config.
+func (n *ovn) createTunnels(newConfig map[string]string) error {
+	var err error
+
+	tunnels := n.getTunnels(newConfig)
+	// Configure tunnels.
+	for _, tunnel := range tunnels {
+		getConfig := func(key string) string {
+			return newConfig[fmt.Sprintf("tunnel.%s.%s", tunnel, key)]
+		}
+
+		tunProtocol := getConfig("protocol")
+
+		// Configure the tunnel.
+		switch tunProtocol {
+		case "gre":
+			remotes := getConfig("remote")
+			tunLocal := net.ParseIP(getConfig("local"))
+
+			for idx, remote := range strings.Split(remotes, ",") {
+				tunRemote := net.ParseIP(strings.TrimSpace(remote))
+				tunName := n.getTunnelFullName(tunnel, idx)
+				// Skip partial configs.
+				if tunLocal == nil || tunRemote == nil {
+					return nil
+				}
+
+				gretap := &ip.Gretap{
+					Link:   ip.Link{Name: tunName},
+					Local:  tunLocal,
+					Remote: tunRemote,
+				}
+
+				err := gretap.Add()
+				if err != nil {
+					return err
+				}
+
+				err = gretap.SetUp()
+				if err != nil {
+					return err
+				}
+
+				err = n.createOVNTunnel(tunName)
+				if err != nil {
+					return err
+				}
+			}
+		case "vxlan":
+			tunName := n.getTunnelFullName(tunnel, 0)
+			tunGroup := net.ParseIP(getConfig("group"))
+			tunInterface := getConfig("interface")
+
+			vxlan := &ip.Vxlan{
+				Link: ip.Link{Name: tunName},
+			}
+
+			if tunGroup == nil {
+				tunGroup = net.IPv4(239, 0, 0, 1) // 239.0.0.1
+			}
+
+			devName := tunInterface
+			if devName == "" {
+				_, devName, err = DefaultGatewaySubnetV4()
+				if err != nil {
+					return err
+				}
+			}
+
+			vxlan.Group = tunGroup
+			vxlan.DevName = devName
+
+			tunPort := getConfig("port")
+			if tunPort != "" {
+				vxlan.DstPort, err = strconv.Atoi(tunPort)
+				if err != nil {
+					return err
+				}
+			}
+
+			tunID := getConfig("id")
+			if tunID == "" {
+				vxlan.VxlanID = 1
+			} else {
+				vxlan.VxlanID, err = strconv.Atoi(tunID)
+				if err != nil {
+					return err
+				}
+			}
+
+			tunTTL := getConfig("ttl")
+			if tunTTL == "" {
+				vxlan.TTL = 1
+			} else {
+				vxlan.TTL, err = strconv.Atoi(tunTTL)
+				if err != nil {
+					return err
+				}
+			}
+
+			err := vxlan.Add()
+			if err != nil {
+				return err
+			}
+
+			err = vxlan.SetUp()
+			if err != nil {
+				return err
+			}
+
+			err = n.createOVNTunnel(tunName)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// createOVNTunnel creates OVN objects needed for a tunnel.
+func (n *ovn) createOVNTunnel(tunName string) error {
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	lspName := networkOVN.OVNSwitchPort(n.getTunnelLspName(tunName))
+	err := n.ovnnb.CreateLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), lspName, &networkOVN.OVNSwitchPortOpts{
+		IPV4:        "none",
+		IPV6:        "none",
+		Promiscuous: true,
+	}, true)
+	if err != nil {
+		return fmt.Errorf("Failed to create logical switch port for %s: %w", tunName, err)
+	}
+
+	reverter.Add(func() {
+		_ = n.ovnnb.DeleteLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), lspName)
+	})
+
+	integrationBridge := n.state.GlobalConfig.NetworkOVNIntegrationBridge()
+
+	vswitch, err := n.state.OVS()
+	if err != nil {
+		return fmt.Errorf("Failed to connect to OVS: %w", err)
+	}
+
+	err = vswitch.CreateBridgePort(context.TODO(), integrationBridge, tunName, true)
+	if err != nil {
+		return err
+	}
+
+	reverter.Add(func() { _ = vswitch.DeleteBridgePort(context.TODO(), integrationBridge, tunName) })
+
+	// Link OVS port to OVN logical port.
+	err = vswitch.AssociateInterfaceOVNSwitchPort(context.TODO(), tunName, string(lspName))
+	if err != nil {
+		return err
+	}
+
+	reverter.Success()
+	return nil
+}
+
+// deleteTunnels removes tunnels from the system and OVN (if needed).
+// When the 'deleteAll' flag is set, it removes all tunnels specified in the
+// configuration, not just those listed in changedKeys.
+func (n *ovn) deleteTunnels(config []string, withOVN bool, deleteAll bool) error {
+	var tunnels []string
+
+	if deleteAll {
+		tunnels = n.getTunnels(n.config)
+	} else {
+		tunnels = n.getTunnelsFromChangedKeys(config)
+	}
+
+	for _, tunnel := range tunnels {
+		err := n.deleteLinkTunnel(tunnel)
+		if err != nil {
+			return err
+		}
+
+		if withOVN {
+			err = n.deleteOVNTunnel(tunnel)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// deleteLinkTunnel removes tunnel-related interfaces from the system.
+func (n *ovn) deleteLinkTunnel(tunnel string) error {
+	idx := 0
+	for {
+		tunName := n.getTunnelFullName(tunnel, idx)
+
+		l, err := ip.LinkByName(tunName)
+		if err != nil {
+			// If interface doesn't exist assume there is no more valid tunnels.
+			return nil
+		}
+
+		err = l.Delete()
+		if err != nil {
+			return err
+		}
+
+		idx += 1
+	}
+}
+
+// deleteOVNTunnel removes tunnel-related objects from OVN.
+func (n *ovn) deleteOVNTunnel(tunnel string) error {
+	idx := 0
+	for {
+		tunName := n.getTunnelFullName(tunnel, idx)
+
+		integrationBridge := n.state.GlobalConfig.NetworkOVNIntegrationBridge()
+
+		vswitch, err := n.state.OVS()
+		if err != nil {
+			return fmt.Errorf("Failed to connect to OVS: %w", err)
+		}
+
+		ports, err := vswitch.GetBridgePorts(context.TODO(), integrationBridge)
+		if err != nil {
+			return err
+		}
+
+		if !slices.Contains(ports, tunName) {
+			// If logical port doesn't exist assume there is no more valid ports.
+			return nil
+		}
+
+		err = vswitch.DeleteBridgePort(context.TODO(), integrationBridge, tunName)
+		if err != nil {
+			return err
+		}
+
+		lspName := networkOVN.OVNSwitchPort(n.getTunnelLspName(tunName))
+		err = n.ovnnb.DeleteLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), lspName)
+		if err != nil {
+			return err
+		}
+
+		idx += 1
+	}
+}
+
+// getActiveChassisName retrieves the active chassis name.
+func (n *ovn) getActiveChassisName() (string, error) {
+	if n.config["network"] == "none" {
+		return "", nil
+	}
+
+	// Get the current active chassis.
+	chassis, err := n.ovnsb.GetLogicalRouterPortActiveChassisHostname(context.TODO(), n.getRouterExtPortName())
+	if err != nil {
+		return "", err
+	}
+
+	return chassis, nil
 }

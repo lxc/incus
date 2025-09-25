@@ -3763,6 +3763,70 @@ User keys can be used in search.
 
 ```
 
+```{config:option} tunnel.NAME.group network_ovn-common
+:condition: "`vxlan`"
+:default: "`239.0.0.1`"
+:shortdesc: "Multicast address for `vxlan`"
+:type: "string"
+
+```
+
+```{config:option} tunnel.NAME.id network_ovn-common
+:condition: "`vxlan`"
+:default: "`0`"
+:shortdesc: "Specific tunnel ID to use for the `vxlan` tunnel"
+:type: "integer"
+
+```
+
+```{config:option} tunnel.NAME.interface network_ovn-common
+:condition: "`vxlan`"
+:default: "-"
+:shortdesc: "Specific host interface to use for the tunnel"
+:type: "string"
+
+```
+
+```{config:option} tunnel.NAME.local network_ovn-common
+:condition: "`gre`"
+:default: "-"
+:shortdesc: "Local address for the tunnel"
+:type: "string"
+
+```
+
+```{config:option} tunnel.NAME.port network_ovn-common
+:condition: "`vxlan`"
+:default: "`0`"
+:shortdesc: "Specific port to use for the `vxlan` tunnel"
+:type: "integer"
+
+```
+
+```{config:option} tunnel.NAME.protocol network_ovn-common
+:condition: "standard mode"
+:default: "-"
+:shortdesc: "Tunneling protocol: `vxlan` or `gre`"
+:type: "string"
+
+```
+
+```{config:option} tunnel.NAME.remote network_ovn-common
+:condition: "`gre`"
+:default: "-"
+:shortdesc: "Remote address for the tunnel"
+:type: "string"
+
+```
+
+```{config:option} tunnel.NAME.ttl network_ovn-common
+:condition: "`vxlan`"
+:default: "`1`"
+:shortdesc: "Specific TTL to use for multicast routing topologies"
+:type: "integer"
+
+```
+
 ```{config:option} user.* network_ovn-common
 :shortdesc: "User-provided free-form key/value pairs"
 :type: "string"
