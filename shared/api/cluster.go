@@ -215,7 +215,7 @@ type ClusterMemberPut struct {
 	// Example: {"scheduler.instance": "all"}
 	//
 	// API extension: clustering_config
-	Config map[string]string `json:"config" yaml:"config"`
+	Config ConfigMap `json:"config" yaml:"config"`
 
 	// List of cluster groups this member belongs to
 	// Example: ["group1", "group2"]
@@ -308,7 +308,7 @@ type ClusterGroupPut struct {
 	// Example: {"user.mykey": "foo"}
 	//
 	// API extension: clustering_groups_config.
-	Config map[string]string `json:"config" yaml:"config"`
+	Config ConfigMap `json:"config" yaml:"config"`
 }
 
 // Writable converts a full ClusterGroup struct into a ClusterGroupPut struct (filters read-only fields).

@@ -25,7 +25,7 @@ type NetworkZonePut struct {
 
 	// Zone configuration map (refer to doc/network-zones.md)
 	// Example: {"user.mykey": "foo"}
-	Config map[string]string `json:"config" yaml:"config"`
+	Config ConfigMap `json:"config" yaml:"config"`
 }
 
 // NetworkZone represents a network zone (DNS).
@@ -85,7 +85,7 @@ type NetworkZoneRecordPut struct {
 
 	// Advanced configuration for the record
 	// Example: {"user.mykey": "foo"}
-	Config map[string]string `json:"config" yaml:"config"`
+	Config ConfigMap `json:"config" yaml:"config"`
 }
 
 // NetworkZoneRecordEntry represents the fields in a record entry

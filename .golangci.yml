@@ -61,6 +61,10 @@ linters:
       - linters:
           - staticcheck
         text: "ST1005:"
+      - linters:
+          - godot
+        text: "Comment should end in a period"
+        source: '^// Example:'
     paths:
       - third_party$
       - builtin$

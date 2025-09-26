@@ -3,6 +3,8 @@ package filter
 import (
 	"reflect"
 	"strings"
+
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // DotPrefixMatch finds the shortest unambiguous identifier for a given namespace.
@@ -35,7 +37,14 @@ func ValueOf(obj any, field string) any {
 	if value.Kind() == reflect.Map {
 		switch reflect.TypeOf(obj).Elem().Kind() {
 		case reflect.String:
-			m := value.Interface().(map[string]string)
+			m := map[string]string{}
+			switch mm := value.Interface().(type) {
+			case map[string]string:
+				m = mm
+			case api.ConfigMap:
+				m = mm
+			}
+
 			for k, v := range m {
 				if DotPrefixMatch(field, k) {
 					return v
