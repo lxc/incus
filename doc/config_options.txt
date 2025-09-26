@@ -3579,6 +3579,14 @@ User keys can be used in search.
 
 ```
 
+```{config:option} dns.mode network_ovn-common
+:condition: "-"
+:default: "`managed`"
+:shortdesc: "DNS registration mode: none for no DNS record, managed for OVN managed records"
+:type: "string"
+
+```
+
 ```{config:option} dns.nameservers network_ovn-common
 :default: "Uplink DNS servers (IPv4 and IPv6 address if no uplink is configured)"
 :shortdesc: "DNS server IPs to advertise to DHCP clients and via Router Advertisements. Both IPv4 and IPv6 addresses get pushed via DHCP, and the first IPv6 address is also advertised as RDNSS via RA."
