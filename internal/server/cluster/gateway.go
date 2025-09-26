@@ -3,7 +3,6 @@ package cluster
 import (
 	"bufio"
 	"context"
-	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"errors"
@@ -661,15 +660,8 @@ func (g *Gateway) LeaderAddress() (string, error) {
 		}
 	}
 
-	// If this isn't a raft node, contact a raft node and ask for the
-	// address of the current leader.
-	config, err := tlsClientConfig(g.networkCert, g.state().ServerCert())
-	if err != nil {
-		return "", err
-	}
-
 	addresses := []string{}
-	err = g.db.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
+	err := g.db.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
 		nodes, err := tx.GetRaftNodes(ctx)
 		if err != nil {
 			return err
@@ -696,7 +688,11 @@ func (g *Gateway) LeaderAddress() (string, error) {
 		return "", errors.New("No raft node known")
 	}
 
-	transport, cleanup := tlsTransport(config)
+	transport, cleanup, err := tlsTransport(g.networkCert, g.state().ServerCert())
+	if err != nil {
+		return "", err
+	}
+
 	defer cleanup()
 
 	for _, address := range addresses {
@@ -1019,10 +1015,12 @@ func (g *Gateway) nodeAddress(raftAddress string) (string, error) {
 }
 
 func dqliteNetworkDial(ctx context.Context, name string, addr string, g *Gateway) (net.Conn, error) {
-	config, err := tlsClientConfig(g.networkCert, g.state().ServerCert())
+	transport, cleanup, err := tlsTransport(g.networkCert, g.state().ServerCert())
 	if err != nil {
 		return nil, err
 	}
+
+	defer cleanup()
 
 	path := fmt.Sprintf("https://%s%s", addr, databaseEndpoint)
 
@@ -1045,15 +1043,12 @@ func dqliteNetworkDial(ctx context.Context, name string, addr string, g *Gateway
 	setDqliteVersionHeader(request)
 	request = request.WithContext(ctx)
 
-	deadline, _ := ctx.Deadline()
-	dialer := &net.Dialer{Timeout: time.Until(deadline)}
-
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	conn, err := tls.DialWithDialer(dialer, "tcp", addr, config)
+	conn, err := transport.DialTLSContext(ctx, "tcp", addr)
 	if err != nil {
-		return nil, fmt.Errorf("Failed connecting to HTTP endpoint %q: %w", addr, err)
+		return nil, err
 	}
 
 	reverter.Add(func() { _ = conn.Close() })

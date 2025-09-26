@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
@@ -44,12 +43,13 @@ func Connect(address string, networkCert *localtls.CertInfo, serverCert *localtl
 	}
 
 	args := &incus.ConnectionArgs{
-		TLSServerCert: string(networkCert.PublicKey()),
-		TLSClientCert: string(serverCert.PublicKey()),
-		TLSClientKey:  string(serverCert.PrivateKey()),
-		SkipGetServer: true,
-		SkipGetEvents: true,
-		UserAgent:     version.UserAgent,
+		IdenticalCertificate: true,
+		TLSServerCert:        string(networkCert.PublicKey()),
+		TLSClientCert:        string(serverCert.PublicKey()),
+		TLSClientKey:         string(serverCert.PrivateKey()),
+		SkipGetServer:        true,
+		SkipGetEvents:        true,
+		UserAgent:            version.UserAgent,
 	}
 
 	if notify {
@@ -294,6 +294,7 @@ func UpdateTrust(serverCert *localtls.CertInfo, serverName string, targetAddress
 
 // HasConnectivity probes the member with the given address for connectivity.
 func HasConnectivity(networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, address string, apiCheck bool) bool {
+	// Check if the main server endpoint is functional.
 	if apiCheck {
 		c, err := Connect(address, networkCert, serverCert, nil, true)
 		if err != nil {
@@ -304,14 +305,19 @@ func HasConnectivity(networkCert *localtls.CertInfo, serverCert *localtls.CertIn
 		return err == nil
 	}
 
-	config, err := tlsClientConfig(networkCert, serverCert)
+	// Get the transport.
+	transport, cleanup, err := tlsTransport(networkCert, serverCert)
 	if err != nil {
 		return false
 	}
 
+	defer cleanup()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
 	var conn net.Conn
-	dialer := &net.Dialer{Timeout: time.Second}
-	conn, err = tls.DialWithDialer(dialer, "tcp", address, config)
+	conn, err = transport.DialTLSContext(ctx, "tcp", address)
 	if err == nil {
 		_ = conn.Close()
 		return true

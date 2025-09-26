@@ -3,6 +3,9 @@ package incus
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -18,11 +21,16 @@ import (
 // It takes in parameters for client certificates, keys, Certificate Authority, server certificates,
 // a boolean for skipping verification, a proxy function, and a transport wrapper function.
 // It returns the HTTP client with the provided configurations and handles any errors that might occur during the setup process.
-func tlsHTTPClient(client *http.Client, tlsClientCert string, tlsClientKey string, tlsCA string, tlsServerCert string, insecureSkipVerify bool, proxyFunc func(req *http.Request) (*url.URL, error), transportWrapper func(t *http.Transport) HTTPTransporter) (*http.Client, error) {
+func tlsHTTPClient(client *http.Client, tlsClientCert string, tlsClientKey string, tlsCA string, tlsServerCert string, insecureSkipVerify bool, identicalCertificate bool, proxyFunc func(req *http.Request) (*url.URL, error), transportWrapper func(t *http.Transport) HTTPTransporter) (*http.Client, error) {
 	// Get the TLS configuration
 	tlsConfig, err := localtls.GetTLSConfigMem(tlsClientCert, tlsClientKey, tlsCA, tlsServerCert, insecureSkipVerify)
 	if err != nil {
 		return nil, err
+	}
+
+	// If asked for an exact match, skip normal validation.
+	if identicalCertificate {
+		tlsConfig.InsecureSkipVerify = true
 	}
 
 	// Define the http transport
@@ -68,7 +76,36 @@ func tlsHTTPClient(client *http.Client, tlsClientCert string, tlsClientKey strin
 				return nil, err
 			}
 
+			if identicalCertificate {
+				// Look for an exact match with the certificate provided.
+				// But ignore any other issue (validity, scope, ...).
+				cs := tlsConn.ConnectionState()
+
+				if len(cs.PeerCertificates) < 1 {
+					return nil, errors.New("Couldn't validate peer certificate")
+				}
+
+				if tlsServerCert == "" {
+					return nil, errors.New("Peer certificate wasn't provided")
+				}
+
+				certBlock, _ := pem.Decode([]byte(tlsServerCert))
+				if certBlock == nil {
+					return nil, errors.New("Invalid remote certificate")
+				}
+
+				expectedRemoteCert, err := x509.ParseCertificate(certBlock.Bytes)
+				if err != nil {
+					return nil, err
+				}
+
+				if !cs.PeerCertificates[0].Equal(expectedRemoteCert) {
+					return nil, errors.New("Remote certificate differs from expected")
+				}
+			}
+
 			if !config.InsecureSkipVerify {
+				// Check certificate validity.
 				err := tlsConn.VerifyHostname(config.ServerName)
 				if err != nil {
 					_ = conn.Close()
