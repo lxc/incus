@@ -590,6 +590,15 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 		//  shortdesc: Domain to advertise to DHCP clients and use for DNS resolution
 		"dns.domain": validate.IsAny,
 
+		// gendoc:generate(entity=network_ovn, group=common, key=dns.mode)
+		//
+		// ---
+		//  type: string
+		//  condition: -
+		//  default: `managed`
+		//  shortdesc: DNS registration mode: none for no DNS record, managed for OVN managed records
+		"dns.mode": validate.Optional(validate.IsOneOf("managed", "none")),
+
 		// gendoc:generate(entity=network_ovn, group=common, key=dns.search)
 		//
 		// ---
@@ -4763,15 +4772,17 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		}
 	}
 
-	dnsName := fmt.Sprintf("%s.%s", opts.DNSName, n.getDomainName())
-	dnsUUID, err := n.ovnnb.UpdateLogicalSwitchPortDNS(context.TODO(), n.getIntSwitchName(), instancePortName, dnsName, dnsIPs)
-	if err != nil {
-		return "", nil, fmt.Errorf("Failed setting DNS for %q: %w", dnsName, err)
-	}
+	if n.config["dns.mode"] == "managed" || n.config["dns.mode"] == "" {
+		dnsName := fmt.Sprintf("%s.%s", opts.DNSName, n.getDomainName())
+		dnsUUID, err := n.ovnnb.UpdateLogicalSwitchPortDNS(context.TODO(), n.getIntSwitchName(), instancePortName, dnsName, dnsIPs)
+		if err != nil {
+			return "", nil, fmt.Errorf("Failed setting DNS for %q: %w", dnsName, err)
+		}
 
-	reverter.Add(func() {
-		_ = n.ovnnb.DeleteLogicalSwitchPortDNS(context.TODO(), n.getIntSwitchName(), dnsUUID, false)
-	})
+		reverter.Add(func() {
+			_ = n.ovnnb.DeleteLogicalSwitchPortDNS(context.TODO(), n.getIntSwitchName(), dnsUUID, false)
+		})
+	}
 
 	// If NIC has static IPv4 address then ensure a DHCPv4 reservation exists.
 	// Do this at start time as well as add time in case an instance was copied (causing a duplicate address
