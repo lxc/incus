@@ -527,15 +527,16 @@ func (g *Gateway) heartbeat(ctx context.Context, mode heartbeatMode) {
 func HeartbeatNode(taskCtx context.Context, address string, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, heartbeatData *APIHeartbeat) error {
 	logger.Debug("Sending heartbeat request", logger.Ctx{"address": address})
 
-	config, err := tlsClientConfig(networkCert, serverCert)
+	timeout := 2 * time.Second
+	url := fmt.Sprintf("https://%s%s", address, databaseEndpoint)
+
+	transport, cleanup, err := tlsTransport(networkCert, serverCert)
 	if err != nil {
 		return err
 	}
 
-	timeout := 2 * time.Second
-	url := fmt.Sprintf("https://%s%s", address, databaseEndpoint)
-	transport, cleanup := tlsTransport(config)
 	defer cleanup()
+
 	client := &http.Client{
 		Transport: transport,
 		Timeout:   timeout,
