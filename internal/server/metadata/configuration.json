@@ -4042,6 +4042,15 @@
 						}
 					},
 					{
+						"dns.mode": {
+							"condition": "-",
+							"default": "`managed`",
+							"longdesc": "",
+							"shortdesc": "DNS registration mode: none for no DNS record, managed for OVN managed records",
+							"type": "string"
+						}
+					},
+					{
 						"dns.nameservers": {
 							"default": "Uplink DNS servers (IPv4 and IPv6 address if no uplink is configured)",
 							"longdesc": "",

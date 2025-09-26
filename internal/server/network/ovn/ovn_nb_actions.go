@@ -2379,7 +2379,7 @@ func (o *NB) CleanupLogicalSwitchPort(ctx context.Context, portName OVNSwitchPor
 
 	// Remove DNS records.
 	if dnsUUID != "" {
-		deleteOps, err := o.logicalSwitchPortDeleteDNSOperations(ctx, switchName, dnsUUID, false)
+		deleteOps, err := o.logicalSwitchPortDeleteDNSOperations(ctx, switchName, dnsUUID, true)
 		if err != nil {
 			return err
 		}
