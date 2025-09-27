@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2025-09-16 21:42-0400\n"
+        "POT-Creation-Date: 2025-09-27 14:22+0000\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -495,7 +495,7 @@ msgstr  ""
 msgid   "<target>"
 msgstr  ""
 
-#: cmd/incus/admin_sql.go:146
+#: cmd/incus/admin_sql.go:152
 #, c-format
 msgid   "=> Query %d:"
 msgstr  ""
@@ -2220,6 +2220,9 @@ msgid   "Execute a SQL query against the local or global database\n"
         "  If <query> is the special value \".schema\", the command returns the SQL\n"
         "  text schema of the given database.\n"
         "\n"
+        "  If <query> is the special value \".tables\", the command returns the SQL\n"
+        "  text tables of the given database.\n"
+        "\n"
         "  This internal command is mostly useful for debugging and disaster\n"
         "  recovery. The development team will occasionally provide hotfixes to users as a\n"
         "  set of database queries to fix some data inconsistency."
@@ -2576,7 +2579,7 @@ msgstr  ""
 msgid   "Failed to load configuration: %s"
 msgstr  ""
 
-#: cmd/incus/admin_sql.go:121
+#: cmd/incus/admin_sql.go:127
 #, c-format
 msgid   "Failed to parse dump response: %w"
 msgstr  ""
@@ -2596,7 +2599,7 @@ msgstr  ""
 msgid   "Failed to read from file: %w"
 msgstr  ""
 
-#: cmd/incus/admin_init_preseed.go:31 cmd/incus/admin_sql.go:91
+#: cmd/incus/admin_init_preseed.go:31 cmd/incus/admin_sql.go:94
 #, c-format
 msgid   "Failed to read from stdin: %w"
 msgstr  ""
@@ -2621,7 +2624,7 @@ msgstr  ""
 msgid   "Failed to render the config: %w"
 msgstr  ""
 
-#: cmd/incus/admin_sql.go:115
+#: cmd/incus/admin_sql.go:121
 #, c-format
 msgid   "Failed to request dump: %w"
 msgstr  ""
@@ -2780,7 +2783,7 @@ msgstr  ""
 msgid   "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr  ""
 
-#: cmd/incus/admin_os.go:106 cmd/incus/admin_os.go:492 cmd/incus/admin_sql.go:57 cmd/incus/alias.go:115 cmd/incus/cluster.go:156 cmd/incus/cluster_group.go:488 cmd/incus/config_template.go:301 cmd/incus/config_trust.go:434 cmd/incus/config_trust.go:635 cmd/incus/image.go:1115 cmd/incus/image_alias.go:218 cmd/incus/list.go:137 cmd/incus/network.go:1139 cmd/incus/network.go:1352 cmd/incus/network_acl.go:101 cmd/incus/network_allocations.go:61 cmd/incus/network_forward.go:118 cmd/incus/network_integration.go:440 cmd/incus/network_load_balancer.go:126 cmd/incus/network_peer.go:114 cmd/incus/network_zone.go:118 cmd/incus/network_zone.go:891 cmd/incus/operation.go:142 cmd/incus/profile.go:761 cmd/incus/project.go:553 cmd/incus/project.go:1098 cmd/incus/remote.go:918 cmd/incus/snapshot.go:346 cmd/incus/storage.go:712 cmd/incus/storage_bucket.go:521 cmd/incus/storage_bucket.go:966 cmd/incus/storage_volume.go:1625 cmd/incus/storage_volume.go:2813 cmd/incus/warning.go:98
+#: cmd/incus/admin_os.go:106 cmd/incus/admin_os.go:492 cmd/incus/admin_sql.go:60 cmd/incus/alias.go:115 cmd/incus/cluster.go:156 cmd/incus/cluster_group.go:488 cmd/incus/config_template.go:301 cmd/incus/config_trust.go:434 cmd/incus/config_trust.go:635 cmd/incus/image.go:1115 cmd/incus/image_alias.go:218 cmd/incus/list.go:137 cmd/incus/network.go:1139 cmd/incus/network.go:1352 cmd/incus/network_acl.go:101 cmd/incus/network_allocations.go:61 cmd/incus/network_forward.go:118 cmd/incus/network_integration.go:440 cmd/incus/network_load_balancer.go:126 cmd/incus/network_peer.go:114 cmd/incus/network_zone.go:118 cmd/incus/network_zone.go:891 cmd/incus/operation.go:142 cmd/incus/profile.go:761 cmd/incus/project.go:553 cmd/incus/project.go:1098 cmd/incus/remote.go:918 cmd/incus/snapshot.go:346 cmd/incus/storage.go:712 cmd/incus/storage_bucket.go:521 cmd/incus/storage_bucket.go:966 cmd/incus/storage_volume.go:1625 cmd/incus/storage_volume.go:2813 cmd/incus/warning.go:98
 msgid   "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to disable headers and \",header\" to enable it if missing, e.g. csv,header"
 msgstr  ""
 
@@ -3382,7 +3385,7 @@ msgstr  ""
 msgid   "Invalid config key column format (too many fields): '%s'"
 msgstr  ""
 
-#: cmd/incus/admin_sql.go:84
+#: cmd/incus/admin_sql.go:87
 msgid   "Invalid database type"
 msgstr  ""
 
@@ -4874,7 +4877,7 @@ msgstr  ""
 msgid   "Missing project name"
 msgstr  ""
 
-#: cmd/incus/admin_sql.go:75
+#: cmd/incus/admin_sql.go:78
 msgid   "Missing required arguments"
 msgstr  ""
 
@@ -6125,7 +6128,7 @@ msgstr  ""
 msgid   "Role (admin or read-only)"
 msgstr  ""
 
-#: cmd/incus/admin_sql.go:155
+#: cmd/incus/admin_sql.go:161
 #, c-format
 msgid   "Rows affected: %d"
 msgstr  ""
