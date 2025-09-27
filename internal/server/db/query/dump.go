@@ -29,6 +29,7 @@ func Dump(ctx context.Context, tx *sql.Tx, dumpOption DumpOptions) (string, erro
 	case Tables:
 		return dumpTables(ctx, tx)
 	}
+
 	return "", fmt.Errorf("Failed to perform dump due to missing dump option")
 }
 
@@ -44,6 +45,7 @@ func dumpTables(ctx context.Context, tx *sql.Tx) (string, error) {
 	for _, tableName := range entityNames {
 		builder.WriteString(tableName + "\n")
 	}
+
 	return builder.String(), nil
 }
 
