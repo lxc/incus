@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-09-16 21:42-0400\n"
+"POT-Creation-Date: 2025-09-27 14:22+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -521,7 +521,7 @@ msgstr ""
 msgid "<target>"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:146
+#: cmd/incus/admin_sql.go:152
 #, c-format
 msgid "=> Query %d:"
 msgstr ""
@@ -2564,6 +2564,9 @@ msgid ""
 "  If <query> is the special value \".schema\", the command returns the SQL\n"
 "  text schema of the given database.\n"
 "\n"
+"  If <query> is the special value \".tables\", the command returns the SQL\n"
+"  text tables of the given database.\n"
+"\n"
 "  This internal command is mostly useful for debugging and disaster\n"
 "  recovery. The development team will occasionally provide hotfixes to users "
 "as a\n"
@@ -2928,7 +2931,7 @@ msgstr ""
 msgid "Failed to load configuration: %s"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:121
+#: cmd/incus/admin_sql.go:127
 #, c-format
 msgid "Failed to parse dump response: %w"
 msgstr ""
@@ -2948,7 +2951,7 @@ msgstr ""
 msgid "Failed to read from file: %w"
 msgstr ""
 
-#: cmd/incus/admin_init_preseed.go:31 cmd/incus/admin_sql.go:91
+#: cmd/incus/admin_init_preseed.go:31 cmd/incus/admin_sql.go:94
 #, c-format
 msgid "Failed to read from stdin: %w"
 msgstr ""
@@ -2973,7 +2976,7 @@ msgstr ""
 msgid "Failed to render the config: %w"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:115
+#: cmd/incus/admin_sql.go:121
 #, c-format
 msgid "Failed to request dump: %w"
 msgstr ""
@@ -3146,7 +3149,7 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/admin_os.go:106 cmd/incus/admin_os.go:492
-#: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:115 cmd/incus/cluster.go:156
+#: cmd/incus/admin_sql.go:60 cmd/incus/alias.go:115 cmd/incus/cluster.go:156
 #: cmd/incus/cluster_group.go:488 cmd/incus/config_template.go:301
 #: cmd/incus/config_trust.go:434 cmd/incus/config_trust.go:635
 #: cmd/incus/image.go:1115 cmd/incus/image_alias.go:218 cmd/incus/list.go:137
@@ -3778,7 +3781,7 @@ msgstr ""
 msgid "Invalid config key column format (too many fields): '%s'"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:84
+#: cmd/incus/admin_sql.go:87
 msgid "Invalid database type"
 msgstr ""
 
@@ -4500,8 +4503,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
-"\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:"
+"maxWidth]\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -5151,8 +5154,8 @@ msgstr ""
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect \"custom\" "
-"(user created) volumes."
+"Unless specified through a prefix, all volume operations affect "
+"\"custom\" (user created) volumes."
 msgstr ""
 
 #: cmd/incus/remote.go:48 cmd/incus/remote.go:49
@@ -5417,7 +5420,7 @@ msgstr ""
 msgid "Missing project name"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:75
+#: cmd/incus/admin_sql.go:78
 msgid "Missing required arguments"
 msgstr ""
 
@@ -6725,7 +6728,7 @@ msgstr ""
 msgid "Role (admin or read-only)"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:155
+#: cmd/incus/admin_sql.go:161
 #, c-format
 msgid "Rows affected: %d"
 msgstr ""
@@ -9465,8 +9468,8 @@ msgstr ""
 #: cmd/incus/admin_os.go:379
 msgid ""
 "incus admin os service edit [<remote>:]<service> < service.yaml\n"
-"    Update an IncusOS service configuration using the content of "
-"service.yaml."
+"    Update an IncusOS service configuration using the content of service."
+"yaml."
 msgstr ""
 
 #: cmd/incus/admin_os.go:670
@@ -9562,8 +9565,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
@@ -9662,15 +9665,15 @@ msgid ""
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine with 4 vCPUs and 4GiB of RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
 #: cmd/incus/list.go:126
 msgid ""
-"incus list -c "
-"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
+"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
+"parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -9748,16 +9751,16 @@ msgid ""
 "incus network integration create o1 ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from "
-"config.yaml"
+"    Create network integration o1 of type ovn with configuration from config."
+"yaml"
 msgstr ""
 
 #: cmd/incus/network_integration.go:235
 msgid ""
-"incus network integration edit <network integration> < network-"
-"integration.yaml\n"
-"    Update a network integration using the content of network-"
-"integration.yaml"
+"incus network integration edit <network integration> < network-integration."
+"yaml\n"
+"    Update a network integration using the content of network-integration."
+"yaml"
 msgstr ""
 
 #: cmd/incus/network_load_balancer.go:343
