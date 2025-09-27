@@ -11,9 +11,58 @@ import (
 	"github.com/lxc/incus/v6/internal/server/db/query"
 )
 
+func TestDumpTables(t *testing.T) {
+	tx := newTxForDump(t, "local")
+	dumpOption := query.DumpOptions(2)
+	dump, err := query.Dump(context.Background(), tx, dumpOption)
+	require.NoError(t, err)
+	assert.Equal(t, `schema
+config
+patches
+raft_nodes
+config_key_idx
+`, dump)
+}
+
+func TestDumpSchema(t *testing.T) {
+	tx := newTxForDump(t, "local")
+	dumpOption := query.DumpOptions(1)
+	dump, err := query.Dump(context.Background(), tx, dumpOption)
+	require.NoError(t, err)
+	assert.Equal(t, `PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE schema (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    version    INTEGER NOT NULL,
+    updated_at DATETIME NOT NULL,
+    UNIQUE (version)
+);
+CREATE TABLE config (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    key VARCHAR(255) NOT NULL,
+    value TEXT,
+    UNIQUE (key)
+);
+CREATE TABLE patches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    applied_at DATETIME NOT NULL,
+    UNIQUE (name)
+);
+CREATE TABLE raft_nodes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    address TEXT NOT NULL,
+    UNIQUE (address)
+);
+CREATE INDEX config_key_idx ON config (key);
+COMMIT;
+`, dump)
+}
+
 func TestDump(t *testing.T) {
 	tx := newTxForDump(t, "local")
-	dump, err := query.Dump(context.Background(), tx, false)
+	dumpOption := query.DumpOptions(0)
+	dump, err := query.Dump(context.Background(), tx, dumpOption)
 	require.NoError(t, err)
 	assert.Equal(t, `PRAGMA foreign_keys=OFF;
 BEGIN TRANSACTION;
