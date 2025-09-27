@@ -9,11 +9,10 @@ import (
 	"time"
 )
 
-// DumpOptions represents different types of dump
+// DumpOptions represents different types of dump.
 type DumpOptions int
 
-
-// Dump response options
+// Dump response options.
 const (
 	DumpDefault DumpOptions = iota
 	Schema
