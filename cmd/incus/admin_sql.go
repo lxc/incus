@@ -50,6 +50,9 @@ func (c *cmdAdminSQL) Command() *cobra.Command {
   If <query> is the special value ".schema", the command returns the SQL
   text schema of the given database.
 
+  If <query> is the special value ".tables", the command returns the SQL
+  text tables of the given database.
+
   This internal command is mostly useful for debugging and disaster
   recovery. The development team will occasionally provide hotfixes to users as a
   set of database queries to fix some data inconsistency.`))
@@ -104,10 +107,13 @@ func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if query == ".dump" || query == ".schema" {
+	if query == ".dump" || query == ".schema" || query == ".tables" {
 		url := fmt.Sprintf("/internal/sql?database=%s", database)
-		if query == ".schema" {
-			url += "&schema=1"
+		switch query {
+		case ".schema":
+			url += "&dump=1"
+		case ".tables":
+			url += "&dump=2"
 		}
 
 		response, _, err := d.RawQuery("GET", url, nil, "")
