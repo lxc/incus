@@ -516,6 +516,7 @@ func internalSQLGet(d *Daemon, r *http.Request) response.Response {
 	if err != nil {
 		dumpInt = 0
 	}
+
 	dumpOption := query.DumpOptions(dumpInt)
 
 	var db *sql.DB
