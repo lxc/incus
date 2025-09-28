@@ -73,7 +73,7 @@ To edit a snapshot (for example, to add a description or change the expiry date)
 
 To delete a snapshot, use the following command:
 
-    incus storage volume delete <pool_name> <volume_name>/<snapshot_name>
+    incus storage volume snapshot delete <pool_name> <volume_name> <snapshot_name>
 
 ### Schedule snapshots of a custom storage volume
 
