@@ -671,7 +671,12 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 				return fmt.Errorf("Failed to load node config: %w", err)
 			}
 
-			_, err = newNodeConfig.Replace(nodeValues)
+			if patch {
+				_, err = newNodeConfig.Patch(nodeValues)
+			} else {
+				_, err = newNodeConfig.Replace(nodeValues)
+			}
+
 			if err != nil {
 				return fmt.Errorf("Failed updating node config: %w", err)
 			}
@@ -732,7 +737,12 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 				return fmt.Errorf("Failed to load cluster config: %w", err)
 			}
 
-			_, err = newClusterConfig.Replace(req.Config)
+			if patch {
+				_, err = newClusterConfig.Patch(req.Config)
+			} else {
+				_, err = newClusterConfig.Replace(req.Config)
+			}
+
 			if err != nil {
 				return fmt.Errorf("Failed updating cluster config: %w", err)
 			}
