@@ -511,11 +511,13 @@ func internalSQLGet(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("Invalid database"))
 	}
 
-	schemaFormValue := r.FormValue("schema")
-	schemaOnly, err := strconv.Atoi(schemaFormValue)
+	dumpFormValue := r.FormValue("dump")
+	dumpInt, err := strconv.Atoi(dumpFormValue)
 	if err != nil {
-		schemaOnly = 0
+		dumpInt = 0
 	}
+
+	dumpOption := query.DumpOptions(dumpInt)
 
 	var db *sql.DB
 	if database == "global" {
@@ -531,7 +533,7 @@ func internalSQLGet(d *Daemon, r *http.Request) response.Response {
 
 	defer func() { _ = tx.Rollback() }()
 
-	dump, err := query.Dump(r.Context(), tx, schemaOnly == 1)
+	dump, err := query.Dump(r.Context(), tx, dumpOption)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed dump database %s: %w", database, err))
 	}

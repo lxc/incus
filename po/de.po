@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-09-16 21:42-0400\n"
+"POT-Creation-Date: 2025-09-27 14:22+0000\n"
 "PO-Revision-Date: 2025-08-02 15:02+0000\n"
 "Last-Translator: Stéphane Graber <stgraber@stgraber.org>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
@@ -795,7 +795,7 @@ msgstr ""
 msgid "<target>"
 msgstr "<Ziel>"
 
-#: cmd/incus/admin_sql.go:146
+#: cmd/incus/admin_sql.go:152
 #, c-format
 msgid "=> Query %d:"
 msgstr ""
@@ -3017,6 +3017,9 @@ msgid ""
 "  If <query> is the special value \".schema\", the command returns the SQL\n"
 "  text schema of the given database.\n"
 "\n"
+"  If <query> is the special value \".tables\", the command returns the SQL\n"
+"  text tables of the given database.\n"
+"\n"
 "  This internal command is mostly useful for debugging and disaster\n"
 "  recovery. The development team will occasionally provide hotfixes to users "
 "as a\n"
@@ -3442,7 +3445,7 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed to load configuration: %s"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:121
+#: cmd/incus/admin_sql.go:127
 #, fuzzy, c-format
 msgid "Failed to parse dump response: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -3462,7 +3465,7 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed to read from file: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/admin_init_preseed.go:31 cmd/incus/admin_sql.go:91
+#: cmd/incus/admin_init_preseed.go:31 cmd/incus/admin_sql.go:94
 #, fuzzy, c-format
 msgid "Failed to read from stdin: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -3487,7 +3490,7 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed to render the config: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/admin_sql.go:115
+#: cmd/incus/admin_sql.go:121
 #, fuzzy, c-format
 msgid "Failed to request dump: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -3664,7 +3667,7 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/admin_os.go:106 cmd/incus/admin_os.go:492
-#: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:115 cmd/incus/cluster.go:156
+#: cmd/incus/admin_sql.go:60 cmd/incus/alias.go:115 cmd/incus/cluster.go:156
 #: cmd/incus/cluster_group.go:488 cmd/incus/config_template.go:301
 #: cmd/incus/config_trust.go:434 cmd/incus/config_trust.go:635
 #: cmd/incus/image.go:1115 cmd/incus/image_alias.go:218 cmd/incus/list.go:137
@@ -4345,7 +4348,7 @@ msgstr ""
 msgid "Invalid config key column format (too many fields): '%s'"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:84
+#: cmd/incus/admin_sql.go:87
 #, fuzzy
 msgid "Invalid database type"
 msgstr "Ungültiges Ziel %s"
@@ -5094,8 +5097,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
-"\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:"
+"maxWidth]\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -5801,8 +5804,8 @@ msgstr "Kein Zertifikat für diese Verbindung"
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect \"custom\" "
-"(user created) volumes."
+"Unless specified through a prefix, all volume operations affect "
+"\"custom\" (user created) volumes."
 msgstr ""
 
 #: cmd/incus/remote.go:48 cmd/incus/remote.go:49
@@ -6087,7 +6090,7 @@ msgstr ""
 msgid "Missing project name"
 msgstr "Profilname kann nicht geändert werden"
 
-#: cmd/incus/admin_sql.go:75
+#: cmd/incus/admin_sql.go:78
 #, fuzzy
 msgid "Missing required arguments"
 msgstr "Fehlende Zusammenfassung."
@@ -7477,7 +7480,7 @@ msgstr "der Name des Ursprung Containers muss angegeben werden"
 msgid "Role (admin or read-only)"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:155
+#: cmd/incus/admin_sql.go:161
 #, c-format
 msgid "Rows affected: %d"
 msgstr ""
@@ -11059,8 +11062,8 @@ msgstr "Fehler: %v\n"
 #, fuzzy
 msgid ""
 "incus admin os service edit [<remote>:]<service> < service.yaml\n"
-"    Update an IncusOS service configuration using the content of "
-"service.yaml."
+"    Update an IncusOS service configuration using the content of service."
+"yaml."
 msgstr ""
 "incus storage edit [<remote>:]<pool> < pool.yaml\n"
 "    Automatisches Editieren der Konfiguration des storage pool mit den "
@@ -11170,8 +11173,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
@@ -11274,15 +11277,15 @@ msgid ""
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine with 4 vCPUs and 4GiB of RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
 #: cmd/incus/list.go:126
 msgid ""
-"incus list -c "
-"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
+"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
+"parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -11370,16 +11373,16 @@ msgid ""
 "incus network integration create o1 ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from "
-"config.yaml"
+"    Create network integration o1 of type ovn with configuration from config."
+"yaml"
 msgstr ""
 
 #: cmd/incus/network_integration.go:235
 msgid ""
-"incus network integration edit <network integration> < network-"
-"integration.yaml\n"
-"    Update a network integration using the content of network-"
-"integration.yaml"
+"incus network integration edit <network integration> < network-integration."
+"yaml\n"
+"    Update a network integration using the content of network-integration."
+"yaml"
 msgstr ""
 
 #: cmd/incus/network_load_balancer.go:343
@@ -11510,8 +11513,8 @@ msgstr ""
 "   Erstellt ein Projekt namens \"p1\"\n"
 "\n"
 "incus project create p1 < config.yaml\n"
-"    Erstellt ein Projekt namens \"p1\" mit der Konfigurationsdatei "
-"\"config.yaml\""
+"    Erstellt ein Projekt namens \"p1\" mit der Konfigurationsdatei \"config."
+"yaml\""
 
 #: cmd/incus/project.go:319
 msgid ""
@@ -11627,8 +11630,8 @@ msgstr ""
 "\n"
 "incus storage bucket key create p1 b01 k1 < config.yaml\n"
 "\tErzeugt einen Schlüssel genannt \"k1\" für einen storage bucket \"b01\" im "
-"pool \"p1\" unter Nutzung der Konfigurationsdetails aus der Datei "
-"\"config.yaml\"."
+"pool \"p1\" unter Nutzung der Konfigurationsdetails aus der Datei \"config."
+"yaml\"."
 
 #: cmd/incus/storage_bucket.go:1417
 msgid ""
@@ -11690,8 +11693,8 @@ msgstr ""
 "\n"
 "incus storage volume snapshot create default v1 snap0 < config.yaml\n"
 "       Erstellt einen Snapshot von \"v1\" im pool \"default\" mit dem Namen "
-"\"snap0\" mit den Konfigurationsdetails aus der angegebenen Datei "
-"\"config.yaml\"."
+"\"snap0\" mit den Konfigurationsdetails aus der angegebenen Datei \"config."
+"yaml\"."
 
 #: cmd/incus/storage_volume.go:994
 #, fuzzy
@@ -11709,8 +11712,8 @@ msgstr ""
 "\n"
 "incus storage volume snapshot create default v1 snap0 < config.yaml\n"
 "       Erstellt einen Snapshot von \"v1\" im pool \"default\" mit dem Namen "
-"\"snap0\" mit den Konfigurationsdetails aus der angegebenen Datei "
-"\"config.yaml\"."
+"\"snap0\" mit den Konfigurationsdetails aus der angegebenen Datei \"config."
+"yaml\"."
 
 #: cmd/incus/storage_volume.go:1222
 msgid ""
@@ -11782,8 +11785,8 @@ msgstr ""
 "\n"
 "incus storage volume snapshot create default v1 snap0 < config.yaml\n"
 "       Erstellt einen Snapshot von \"v1\" im pool \"default\" mit dem Namen "
-"\"snap0\" mit den Konfigurationsdetails aus der angegebenen Datei "
-"\"config.yaml\"."
+"\"snap0\" mit den Konfigurationsdetails aus der angegebenen Datei \"config."
+"yaml\"."
 
 #: cmd/incus/storage_volume.go:2308
 msgid ""
@@ -11916,8 +11919,8 @@ msgstr "ja"
 
 #, fuzzy
 #~ msgid ""
-#~ "incus storage volume edit [<remote>:]<pool> [<type>/]<volume> < "
-#~ "volume.yaml\n"
+#~ "incus storage volume edit [<remote>:]<pool> [<type>/]<volume> < volume."
+#~ "yaml\n"
 #~ "    Update a storage volume using the content of pool.yaml."
 #~ msgstr ""
 #~ "incus storage edit [<remote>:]<pool> < pool.yaml\n"
@@ -11929,8 +11932,8 @@ msgstr "ja"
 #~ "\t\tCreate a new custom volume using backup0.tar.gz as the source."
 #~ msgstr ""
 #~ "incus storage volume import default backup0.tar.gz\n"
-#~ "\t\tErstellt ein neues benutzerdefiniertes Volume aus der Datei "
-#~ "\"backup0.tar.gz\"."
+#~ "\t\tErstellt ein neues benutzerdefiniertes Volume aus der Datei \"backup0."
+#~ "tar.gz\"."
 
 #, fuzzy
 #~ msgid "The --mode flag can't be used with --storage or --target-project"
@@ -12858,8 +12861,8 @@ msgstr "ja"
 #~ "lxc image edit [remote:]<image>\n"
 #~ "    Edit image, either by launching external editor or reading STDIN.\n"
 #~ "    Example: lxc image edit <image> # launch editor\n"
-#~ "             cat image.yaml | lxc image edit <image> # read from "
-#~ "image.yml\n"
+#~ "             cat image.yaml | lxc image edit <image> # read from image."
+#~ "yml\n"
 #~ "\n"
 #~ "Lists the images at specified remote, or local images.\n"
 #~ "Filters are not yet supported.\n"

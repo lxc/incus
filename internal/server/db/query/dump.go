@@ -9,9 +9,49 @@ import (
 	"time"
 )
 
-// Dump returns a SQL text dump of all rows across all tables, similar to
+// DumpOptions represents different types of dump.
+type DumpOptions int
+
+// Dump response options.
+const (
+	DumpDefault DumpOptions = iota
+	Schema
+	Tables
+)
+
+// Dump returns specific database information depending on the dump type.
+func Dump(ctx context.Context, tx *sql.Tx, dumpOption DumpOptions) (string, error) {
+	switch dumpOption {
+	case DumpDefault:
+		return dumpSchema(ctx, tx, false)
+	case Schema:
+		return dumpSchema(ctx, tx, true)
+	case Tables:
+		return dumpTables(ctx, tx)
+	}
+
+	return "", fmt.Errorf("Failed to perform dump due to missing dump option")
+}
+
+// dumpTables returns a SQL text dump of all table's name, similar to
 // sqlite3's dump feature.
-func Dump(ctx context.Context, tx *sql.Tx, schemaOnly bool) (string, error) {
+func dumpTables(ctx context.Context, tx *sql.Tx) (string, error) {
+	_, entityNames, err := getEntitiesSchemas(ctx, tx)
+	if err != nil {
+		return "", err
+	}
+
+	var builder strings.Builder
+	for _, tableName := range entityNames {
+		builder.WriteString(tableName + "\n")
+	}
+
+	return builder.String(), nil
+}
+
+// dumpSchema returns a SQL text dump of all rows across all tables, similar to
+// sqlite3's dump feature.
+func dumpSchema(ctx context.Context, tx *sql.Tx, schemaOnly bool) (string, error) {
 	entitiesSchemas, entityNames, err := getEntitiesSchemas(ctx, tx)
 	if err != nil {
 		return "", err
