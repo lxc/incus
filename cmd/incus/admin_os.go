@@ -156,7 +156,7 @@ func (c *cmdAdminOSApplicationList) Run(cmd *cobra.Command, args []string) error
 
 	data := [][]string{}
 	for _, v := range entries {
-		data = append(data, []string{strings.TrimPrefix(v, "/1.0/applications/")})
+		data = append(data, []string{strings.TrimPrefix(v, "/os/1.0/applications/")})
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))
@@ -542,7 +542,7 @@ func (c *cmdAdminOSServiceList) Run(cmd *cobra.Command, args []string) error {
 
 	data := [][]string{}
 	for _, v := range entries {
-		data = append(data, []string{strings.TrimPrefix(v, "/1.0/services/")})
+		data = append(data, []string{strings.TrimPrefix(v, "/os/1.0/services/")})
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))
