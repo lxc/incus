@@ -78,7 +78,7 @@ You can file bug reports and feature requests at: [`https://github.com/lxc/incus
 
 ### Community support
 
-Community support is handling at: [`https://discuss.linuxcontainers.org`](https://discuss.linuxcontainers.org)
+Community support is handled at: [`https://discuss.linuxcontainers.org`](https://discuss.linuxcontainers.org)
 
 ### Commercial support
 
