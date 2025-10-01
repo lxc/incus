@@ -28,7 +28,10 @@ import (
 )
 
 // Date layout to be used throughout the client.
-const dateLayout = "2006/01/02 15:04 MST"
+const (
+	dateLayout       = "2006/01/02 15:04 MST"
+	dateLayoutSecond = "2006/01/02 15:04:05 MST"
+)
 
 // Batch operations.
 type batchResult struct {
