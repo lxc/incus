@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"sort"
 	"strconv"
@@ -268,6 +269,10 @@ func (c *cmdAdminOSDebug) Command() *cobra.Command {
 type cmdAdminOSDebugLog struct {
 	global *cmdGlobal
 	os     *cmdAdminOS
+
+	flagUnit    string
+	flagBoot    string
+	flagEntries string
 }
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
@@ -277,6 +282,10 @@ func (c *cmdAdminOSDebugLog) Command() *cobra.Command {
 	cmd.Short = i18n.G("Get debug log")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Get debug log`))
+	cmd.Flags().StringVar(&c.os.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
+	cmd.Flags().StringVarP(&c.flagUnit, "unit", "u", "", i18n.G("Unit name")+"``")
+	cmd.Flags().StringVarP(&c.flagBoot, "boot", "b", "", i18n.G("Boot number")+"``")
+	cmd.Flags().StringVarP(&c.flagEntries, "entries", "n", "", i18n.G("Number of entries")+"``")
 
 	cmd.RunE = c.Run
 
@@ -291,7 +300,7 @@ func (c *cmdAdminOSDebugLog) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Parse remote
+	// Parse the remote.
 	remote := ""
 	if len(args) > 0 {
 		remote = args[0]
@@ -304,20 +313,50 @@ func (c *cmdAdminOSDebugLog) Run(cmd *cobra.Command, args []string) error {
 
 	resource := resources[0]
 
-	// Get the log.
-	resp, _, err := resource.server.RawQuery("GET", "/os/1.0/debug/log", nil, "")
+	// Prepare the URL.
+	u, err := url.Parse("/os/1.0/debug/log")
 	if err != nil {
 		return err
 	}
 
-	var data []map[string]string
+	values := u.Query()
+	if c.os.flagTarget != "" {
+		values.Set("target", c.os.flagTarget)
+	}
+
+	if c.flagUnit != "" {
+		values.Set("unit", c.flagUnit)
+	}
+
+	if c.flagBoot != "" {
+		values.Set("boot", c.flagBoot)
+	}
+
+	if c.flagEntries != "" {
+		values.Set("entries", c.flagEntries)
+	}
+
+	u.RawQuery = values.Encode()
+
+	// Get the log.
+	resp, _, err := resource.server.RawQuery("GET", u.String(), nil, "")
+	if err != nil {
+		return err
+	}
+
+	var data []map[string]any
 	err = resp.MetadataAsStruct(&data)
 	if err != nil {
 		return err
 	}
 
 	for _, line := range data {
-		timeStr := line["__REALTIME_TIMESTAMP"]
+		// Get and parse the timestamp.
+		timeStr, ok := line["__REALTIME_TIMESTAMP"].(string)
+		if !ok {
+			continue
+		}
+
 		timeInt, err := strconv.ParseInt(timeStr, 10, 64)
 		if err != nil {
 			continue
@@ -325,7 +364,19 @@ func (c *cmdAdminOSDebugLog) Run(cmd *cobra.Command, args []string) error {
 
 		ts := time.UnixMicro(timeInt)
 
-		fmt.Printf("[%s] %s: %s\n", ts.Format(dateLayout), line["SYSLOG_IDENTIFIER"], line["MESSAGE"])
+		// Get the section identifier.
+		section, ok := line["SYSLOG_IDENTIFIER"].(string)
+		if !ok {
+			continue
+		}
+
+		// Get the message itself.
+		message, ok := line["MESSAGE"].(string)
+		if !ok {
+			continue
+		}
+
+		fmt.Printf("[%s] %s: %s\n", ts.Format(dateLayoutSecond), section, message)
 	}
 
 	return nil
