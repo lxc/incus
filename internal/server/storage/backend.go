@@ -7069,6 +7069,7 @@ func (b *backend) ImportInstance(inst instance.Instance, poolVol *backupConfig.C
 	return cleanup, err
 }
 
+// BackupCustomVolume creates a custom volume backup.
 func (b *backend) BackupCustomVolume(projectName string, volName string, writer instancewriter.InstanceWriter, optimized bool, snapshots bool, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volume": volName, "optimized": optimized, "snapshots": snapshots})
 	l.Debug("BackupCustomVolume started")
@@ -7092,7 +7093,7 @@ func (b *backend) BackupCustomVolume(projectName string, volName string, writer 
 		return err
 	}
 
-	if contentType != drivers.ContentTypeFS && contentType != drivers.ContentTypeBlock {
+	if contentType != drivers.ContentTypeFS && contentType != drivers.ContentTypeBlock && contentType != drivers.ContentTypeISO {
 		return fmt.Errorf("Volume of content type %q cannot be backed up", contentType)
 	}
 
