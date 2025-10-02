@@ -26,8 +26,9 @@ test_storage_volume_import() {
     # snapshots are disabled for ISO storage volumes
     ! incus storage volume snapshot create "incustest-$(basename "${INCUS_DIR}")" foo || false
 
-    # backups are disabled for ISO storage volumes
-    ! incus storage volume export "incustest-$(basename "${INCUS_DIR}")" foo || false
+    # exporting an ISO storage volume returns the ISO file unchanged
+    incus storage volume export "incustest-$(basename "${INCUS_DIR}")" foo foo.new.iso
+    cmp -s foo.iso foo.new.iso || false
 
     # cannot attach ISO storage volumes to containers
     incus init testimage c1
