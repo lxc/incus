@@ -536,7 +536,7 @@ func genericVFSBackupVolume(d Driver, vol Volume, writer instancewriter.Instance
 			// Reset hard link cache as we are copying a new volume (instance or snapshot).
 			writer.ResetHardLinkMap()
 
-			if v.contentType == ContentTypeBlock {
+			if v.contentType == ContentTypeBlock || v.contentType == ContentTypeISO {
 				blockPath, err := d.GetVolumeDiskPath(v)
 				if err != nil {
 					errMsg := "Error getting VM block volume disk path"
@@ -618,50 +618,50 @@ func genericVFSBackupVolume(d Driver, vol Volume, writer instancewriter.Instance
 				if err != nil {
 					return fmt.Errorf("Failed to close file %q: %w", blockPath, err)
 				}
-			} else {
-				logMsg := "Copying container filesystem volume"
-				if vol.volType == VolumeTypeCustom {
-					logMsg = "Copying custom filesystem volume"
-				}
 
-				d.Logger().Debug(logMsg, logger.Ctx{"sourcePath": mountPath, "prefix": prefix})
-
-				// Follow the target if mountPath is a symlink.
-				// Functions like filepath.Walk() won't list any directory content otherwise.
-				target, err := os.Readlink(mountPath)
-				if err == nil {
-					// Make sure the target is valid before return it.
-					_, err = os.Stat(target)
-					if err == nil {
-						mountPath = target
-					}
-				}
-
-				return filepath.Walk(mountPath, func(srcPath string, fi os.FileInfo, err error) error {
-					if err != nil {
-						if errors.Is(err, fs.ErrNotExist) {
-							logger.Warnf("File vanished during export: %q, skipping", srcPath)
-							return nil
-						}
-
-						return fmt.Errorf("Error walking file during export: %q: %w", srcPath, err)
-					}
-
-					name := filepath.Join(prefix, strings.TrimPrefix(srcPath, mountPath))
-
-					// Write the file to the tarball with ignoreGrowth enabled so that if the
-					// source file grows during copy we only copy up to the original size.
-					// This means that the file in the tarball may be inconsistent.
-					err = writer.WriteFile(name, srcPath, fi, true)
-					if err != nil {
-						return fmt.Errorf("Error adding %q as %q to tarball: %w", srcPath, name, err)
-					}
-
-					return nil
-				})
+				return nil
 			}
 
-			return nil
+			logMsg := "Copying container filesystem volume"
+			if vol.volType == VolumeTypeCustom {
+				logMsg = "Copying custom filesystem volume"
+			}
+
+			d.Logger().Debug(logMsg, logger.Ctx{"sourcePath": mountPath, "prefix": prefix})
+
+			// Follow the target if mountPath is a symlink.
+			// Functions like filepath.Walk() won't list any directory content otherwise.
+			target, err := os.Readlink(mountPath)
+			if err == nil {
+				// Make sure the target is valid before return it.
+				_, err = os.Stat(target)
+				if err == nil {
+					mountPath = target
+				}
+			}
+
+			return filepath.Walk(mountPath, func(srcPath string, fi os.FileInfo, err error) error {
+				if err != nil {
+					if errors.Is(err, fs.ErrNotExist) {
+						logger.Warnf("File vanished during export: %q, skipping", srcPath)
+						return nil
+					}
+
+					return fmt.Errorf("Error walking file during export: %q: %w", srcPath, err)
+				}
+
+				name := filepath.Join(prefix, strings.TrimPrefix(srcPath, mountPath))
+
+				// Write the file to the tarball with ignoreGrowth enabled so that if the
+				// source file grows during copy we only copy up to the original size.
+				// This means that the file in the tarball may be inconsistent.
+				err = writer.WriteFile(name, srcPath, fi, true)
+				if err != nil {
+					return fmt.Errorf("Error adding %q as %q to tarball: %w", srcPath, name, err)
+				}
+
+				return nil
+			})
 		}, op)
 	}
 

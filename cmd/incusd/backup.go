@@ -23,6 +23,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/state"
 	storagePools "github.com/lxc/incus/v6/internal/server/storage"
+	"github.com/lxc/incus/v6/internal/server/storage/drivers"
 	"github.com/lxc/incus/v6/internal/server/task"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
@@ -403,8 +404,24 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 		return fmt.Errorf("Failed loading storage pool %q: %w", poolName, err)
 	}
 
-	// Ignore requests for optimized backups when pool driver doesn't support it.
-	if args.OptimizedStorage && !pool.Driver().Info().OptimizedBackups {
+	// Get the DB volume.
+	volume, err := storagePools.VolumeDBGet(pool, projectName, volumeName, drivers.VolumeTypeCustom)
+	if err != nil {
+		return fmt.Errorf("Failed getting volume record: %w", err)
+	}
+
+	contentDBType, err := storagePools.VolumeContentTypeNameToContentType(volume.ContentType)
+	if err != nil {
+		return err
+	}
+
+	contentType, err := storagePools.VolumeDBContentTypeToContentType(contentDBType)
+	if err != nil {
+		return err
+	}
+
+	// Ignore requests for optimized backups when pool driver doesn't support it, or when backing up ISO volumes.
+	if args.OptimizedStorage && (!pool.Driver().Info().OptimizedBackups || contentType == drivers.ContentTypeISO) {
 		args.OptimizedStorage = false
 	}
 
@@ -460,81 +477,90 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 
 	target := internalUtil.VarPath("backups", "custom", pool.Name(), project.StorageVolume(projectName, backupRow.Name))
 
-	// Setup the tarball writer.
-	l.Debug("Opening backup tarball for writing", logger.Ctx{"path": target})
-	tarFileWriter, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0o600)
+	// Setup the writer.
+	l.Debug("Opening backup file for writing", logger.Ctx{"path": target})
+	fileWriter, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
-		return fmt.Errorf("Error opening backup tarball for writing %q: %w", target, err)
+		return fmt.Errorf("Error opening backup file for writing %q: %w", target, err)
 	}
 
-	defer func() { _ = tarFileWriter.Close() }()
+	defer func() { _ = fileWriter.Close() }()
 	reverter.Add(func() { _ = os.Remove(target) })
 
-	// Create the tarball.
-	tarPipeReader, tarPipeWriter := io.Pipe()
-	defer func() { _ = tarPipeWriter.Close() }() // Ensure that go routine below always ends.
-	tarWriter := instancewriter.NewInstanceTarWriter(tarPipeWriter, nil)
+	// If dealing with an ISO volume, we want to return it unaltered.
+	if contentType == drivers.ContentTypeISO {
+		err = pool.BackupCustomVolume(projectName, volumeName, instancewriter.NewInstanceRawWriter(fileWriter), backupRow.OptimizedStorage, !backupRow.VolumeOnly, nil)
+		if err != nil {
+			return fmt.Errorf("Backup create: %w", err)
+		}
+	} else {
+		// Create the tarball.
+		tarPipeReader, tarPipeWriter := io.Pipe()
+		defer func() { _ = tarPipeWriter.Close() }() // Ensure that go routine below always ends.
 
-	// Setup tar writer go routine, with optional compression.
-	tarWriterRes := make(chan error)
-	var compressErr error
+		tarWriter := instancewriter.NewInstanceTarWriter(tarPipeWriter, nil)
 
-	go func(resCh chan<- error) {
-		l.Debug("Started backup tarball writer")
-		defer l.Debug("Finished backup tarball writer")
-		if compress != "none" {
-			compressErr = compressFile(compress, tarPipeReader, tarFileWriter)
+		// Setup tar writer go routine, with optional compression.
+		tarWriterRes := make(chan error)
+		var compressErr error
 
-			// If a compression error occurred, close the tarPipeWriter to end the export.
-			if compressErr != nil {
-				_ = tarPipeWriter.Close()
+		go func(resCh chan<- error) {
+			l.Debug("Started backup tarball writer")
+			defer l.Debug("Finished backup tarball writer")
+			if compress != "none" {
+				compressErr = compressFile(compress, tarPipeReader, fileWriter)
+
+				// If a compression error occurred, close the tarPipeWriter to end the export.
+				if compressErr != nil {
+					_ = tarPipeWriter.Close()
+				}
+			} else {
+				_, err = io.Copy(fileWriter, tarPipeReader)
 			}
-		} else {
-			_, err = io.Copy(tarFileWriter, tarPipeReader)
+
+			resCh <- err
+		}(tarWriterRes)
+
+		// Write index file.
+		l.Debug("Adding backup index file")
+		err = volumeBackupWriteIndex(projectName, volumeName, pool, backupRow.OptimizedStorage, !backupRow.VolumeOnly, tarWriter)
+
+		// Check compression errors.
+		if compressErr != nil {
+			return compressErr
 		}
 
-		resCh <- err
-	}(tarWriterRes)
+		// Check backupWriteIndex for errors.
+		if err != nil {
+			return fmt.Errorf("Error writing backup index file: %w", err)
+		}
 
-	// Write index file.
-	l.Debug("Adding backup index file")
-	err = volumeBackupWriteIndex(projectName, volumeName, pool, backupRow.OptimizedStorage, !backupRow.VolumeOnly, tarWriter)
+		err = pool.BackupCustomVolume(projectName, volumeName, tarWriter, backupRow.OptimizedStorage, !backupRow.VolumeOnly, nil)
+		if err != nil {
+			return fmt.Errorf("Backup create: %w", err)
+		}
 
-	// Check compression errors.
-	if compressErr != nil {
-		return compressErr
+		// Close off the tarball file.
+		err = tarWriter.Close()
+		if err != nil {
+			return fmt.Errorf("Error closing tarball writer: %w", err)
+		}
+
+		// Close off the pipe writer (this will end the go routine above).
+		err = tarPipeWriter.Close()
+		if err != nil {
+			return fmt.Errorf("Error closing tarball pipe writer: %w", err)
+		}
+
+		err = <-tarWriterRes
+		if err != nil {
+			return fmt.Errorf("Error writing tarball: %w", err)
+		}
 	}
 
-	// Check backupWriteIndex for errors.
+	err = fileWriter.Close()
 	if err != nil {
-		return fmt.Errorf("Error writing backup index file: %w", err)
-	}
-
-	err = pool.BackupCustomVolume(projectName, volumeName, tarWriter, backupRow.OptimizedStorage, !backupRow.VolumeOnly, nil)
-	if err != nil {
-		return fmt.Errorf("Backup create: %w", err)
-	}
-
-	// Close off the tarball file.
-	err = tarWriter.Close()
-	if err != nil {
-		return fmt.Errorf("Error closing tarball writer: %w", err)
-	}
-
-	// Close off the tarball pipe writer (this will end the go routine above).
-	err = tarPipeWriter.Close()
-	if err != nil {
-		return fmt.Errorf("Error closing tarball pipe writer: %w", err)
-	}
-
-	err = <-tarWriterRes
-	if err != nil {
-		return fmt.Errorf("Error writing tarball: %w", err)
-	}
-
-	err = tarFileWriter.Close()
-	if err != nil {
-		return fmt.Errorf("Error closing tar file: %w", err)
+		return fmt.Errorf("Error closing backup file: %w", err)
 	}
 
 	reverter.Success()
