@@ -25,6 +25,6 @@ func (crw *InstanceRawWriter) WriteFile(name string, srcPath string, fi os.FileI
 
 // WriteFileFromReader streams a file into the target file.
 func (crw *InstanceRawWriter) WriteFileFromReader(src io.Reader, fi os.FileInfo) error {
-	_, err := io.Copy(crw.rawWriter, src)
+	_, err := io.CopyN(crw.rawWriter, src, fi.Size())
 	return err
 }
