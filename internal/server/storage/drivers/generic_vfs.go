@@ -521,7 +521,7 @@ func genericVFSGetVolumeDiskPath(vol Volume) (string, error) {
 }
 
 // genericVFSBackupVolume is a generic BackupVolume implementation for VFS-only drivers.
-func genericVFSBackupVolume(d Driver, vol Volume, tarWriter *instancewriter.InstanceTarWriter, snapshots []string, op *operations.Operation) error {
+func genericVFSBackupVolume(d Driver, vol Volume, writer instancewriter.InstanceWriter, snapshots []string, op *operations.Operation) error {
 	if len(snapshots) > 0 {
 		// Check requested snapshot match those in storage.
 		err := vol.SnapshotsMatch(snapshots, op)
@@ -534,7 +534,7 @@ func genericVFSBackupVolume(d Driver, vol Volume, tarWriter *instancewriter.Inst
 	backupVolume := func(v Volume, prefix string) error {
 		return v.MountTask(func(mountPath string, op *operations.Operation) error {
 			// Reset hard link cache as we are copying a new volume (instance or snapshot).
-			tarWriter.ResetHardLinkMap()
+			writer.ResetHardLinkMap()
 
 			if v.contentType == ContentTypeBlock {
 				blockPath, err := d.GetVolumeDiskPath(v)
@@ -575,7 +575,7 @@ func genericVFSBackupVolume(d Driver, vol Volume, tarWriter *instancewriter.Inst
 						}
 
 						name := filepath.Join(prefix, strings.TrimPrefix(srcPath, mountPath))
-						err = tarWriter.WriteFile(name, srcPath, fi, false)
+						err = writer.WriteFile(name, srcPath, fi, false)
 						if err != nil {
 							return fmt.Errorf("Error adding %q as %q to tarball: %w", srcPath, name, err)
 						}
@@ -609,7 +609,7 @@ func genericVFSBackupVolume(d Driver, vol Volume, tarWriter *instancewriter.Inst
 					FileModTime: time.Now(),
 				}
 
-				err = tarWriter.WriteFileFromReader(from, &fi)
+				err = writer.WriteFileFromReader(from, &fi)
 				if err != nil {
 					return fmt.Errorf("Error copying %q as %q to tarball: %w", blockPath, name, err)
 				}
@@ -652,7 +652,7 @@ func genericVFSBackupVolume(d Driver, vol Volume, tarWriter *instancewriter.Inst
 					// Write the file to the tarball with ignoreGrowth enabled so that if the
 					// source file grows during copy we only copy up to the original size.
 					// This means that the file in the tarball may be inconsistent.
-					err = tarWriter.WriteFile(name, srcPath, fi, true)
+					err = writer.WriteFile(name, srcPath, fi, true)
 					if err != nil {
 						return fmt.Errorf("Error adding %q as %q to tarball: %w", srcPath, name, err)
 					}

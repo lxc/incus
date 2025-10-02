@@ -7069,7 +7069,7 @@ func (b *backend) ImportInstance(inst instance.Instance, poolVol *backupConfig.C
 	return cleanup, err
 }
 
-func (b *backend) BackupCustomVolume(projectName string, volName string, tarWriter *instancewriter.InstanceTarWriter, optimized bool, snapshots bool, op *operations.Operation) error {
+func (b *backend) BackupCustomVolume(projectName string, volName string, writer instancewriter.InstanceWriter, optimized bool, snapshots bool, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volume": volName, "optimized": optimized, "snapshots": snapshots})
 	l.Debug("BackupCustomVolume started")
 	defer l.Debug("BackupCustomVolume finished")
@@ -7113,7 +7113,7 @@ func (b *backend) BackupCustomVolume(projectName string, volName string, tarWrit
 
 	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), volStorageName, volume.Config)
 
-	err = b.driver.BackupVolume(vol, tarWriter, optimized, snapNames, op)
+	err = b.driver.BackupVolume(vol, writer, optimized, snapNames, op)
 	if err != nil {
 		return err
 	}

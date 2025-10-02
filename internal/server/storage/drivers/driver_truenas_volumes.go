@@ -1456,9 +1456,9 @@ func (d *truenas) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs 
 }
 
 // BackupVolume creates an exported version of a volume.
-func (d *truenas) BackupVolume(vol Volume, tarWriter *instancewriter.InstanceTarWriter, optimized bool, snapshots []string, op *operations.Operation) error {
+func (d *truenas) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, optimized bool, snapshots []string, op *operations.Operation) error {
 	// TODO: we should take a snapshot, and backup from the snapshot for consistency.
-	return genericVFSBackupVolume(d, vol, tarWriter, snapshots, op)
+	return genericVFSBackupVolume(d, vol, writer, snapshots, op)
 }
 
 // CreateVolumeSnapshot creates a snapshot of a volume.
