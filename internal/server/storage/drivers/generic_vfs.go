@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -602,9 +603,15 @@ func genericVFSBackupVolume(d Driver, vol Volume, writer instancewriter.Instance
 
 				defer func() { _ = from.Close() }()
 
+				var fileSize int64
+				fileSize, err = strconv.ParseInt(vol.config["size"], 10, 64)
+				if err != nil {
+					fileSize = blockDiskSize
+				}
+
 				fi := instancewriter.FileInfo{
 					FileName:    name,
-					FileSize:    blockDiskSize,
+					FileSize:    fileSize,
 					FileMode:    0o600,
 					FileModTime: time.Now(),
 				}
