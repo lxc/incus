@@ -347,7 +347,8 @@ func (b *mockBackend) RestoreCustomVolume(projectName string, volName string, sn
 	return nil
 }
 
-func (b *mockBackend) BackupCustomVolume(projectName string, volName string, tarWriter *instancewriter.InstanceTarWriter, optimized bool, snapshots bool, op *operations.Operation) error {
+// BackupCustomVolume creates a custom volume backup.
+func (b *mockBackend) BackupCustomVolume(projectName string, volName string, writer instancewriter.InstanceWriter, optimized bool, snapshots bool, op *operations.Operation) error {
 	return nil
 }
 

@@ -2786,7 +2786,7 @@ func (d *zfs) readonlySnapshot(vol Volume) (string, revert.Hook, error) {
 }
 
 // BackupVolume creates an exported version of a volume.
-func (d *zfs) BackupVolume(vol Volume, tarWriter *instancewriter.InstanceTarWriter, optimized bool, snapshots []string, op *operations.Operation) error {
+func (d *zfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, optimized bool, snapshots []string, op *operations.Operation) error {
 	// Handle the non-optimized tarballs through the generic packer.
 	if !optimized {
 		// Because the generic backup method will not take a consistent backup if files are being modified
@@ -2805,7 +2805,7 @@ func (d *zfs) BackupVolume(vol Volume, tarWriter *instancewriter.InstanceTarWrit
 			vol.mountCustomPath = snapshotPath
 		}
 
-		return genericVFSBackupVolume(d, vol, tarWriter, snapshots, op)
+		return genericVFSBackupVolume(d, vol, writer, snapshots, op)
 	}
 
 	// Optimized backup.
@@ -2821,7 +2821,7 @@ func (d *zfs) BackupVolume(vol Volume, tarWriter *instancewriter.InstanceTarWrit
 	// Backup VM config volumes first.
 	if vol.IsVMBlock() {
 		fsVol := vol.NewVMBlockFilesystemVolume()
-		err := d.BackupVolume(fsVol, tarWriter, optimized, snapshots, op)
+		err := d.BackupVolume(fsVol, writer, optimized, snapshots, op)
 		if err != nil {
 			return err
 		}
@@ -2872,7 +2872,7 @@ func (d *zfs) BackupVolume(vol Volume, tarWriter *instancewriter.InstanceTarWrit
 			return err
 		}
 
-		err = tarWriter.WriteFile(fileName, tmpFile.Name(), tmpFileInfo, false)
+		err = writer.WriteFile(fileName, tmpFile.Name(), tmpFileInfo, false)
 		if err != nil {
 			return err
 		}
