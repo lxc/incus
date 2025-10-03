@@ -16,14 +16,14 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
-// InstanceTarWriter provides a TarWriter implementation that handles ID shifting and hardlink tracking.
+// InstanceTarWriter provides an InstanceWriter implementation that handles ID shifting and hardlink tracking.
 type InstanceTarWriter struct {
 	tarWriter *tar.Writer
 	idmapSet  *idmap.Set
 	linkMap   map[uint64]string
 }
 
-// NewInstanceTarWriter returns a ContainerTarWriter for the provided target Writer and id map.
+// NewInstanceTarWriter returns an InstanceTarWriter for the provided target Writer and id map.
 func NewInstanceTarWriter(writer io.Writer, idmapSet *idmap.Set) *InstanceTarWriter {
 	ctw := &InstanceTarWriter{}
 	ctw.tarWriter = tar.NewWriter(writer)

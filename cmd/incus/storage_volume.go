@@ -3221,14 +3221,14 @@ type cmdStorageVolumeExport struct {
 func (c *cmdStorageVolumeExport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("export", i18n.G("[<remote>:]<pool> <volume> [<path>]"))
-	cmd.Short = i18n.G("Export custom storage volume")
+	cmd.Short = i18n.G("Export custom storage volumes")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Export custom storage volume`))
+		`Export custom storage volumes.`))
 
-	cmd.Flags().BoolVar(&c.flagVolumeOnly, "volume-only", false, i18n.G("Export the volume without its snapshots"))
+	cmd.Flags().BoolVar(&c.flagVolumeOnly, "volume-only", false, i18n.G("Export the volume without its snapshots (ignored for ISO storage volumes)"))
 	cmd.Flags().BoolVar(&c.flagOptimizedStorage, "optimized-storage", false,
-		i18n.G("Use storage driver optimized format (can only be restored on a similar pool)"))
-	cmd.Flags().StringVar(&c.flagCompressionAlgorithm, "compression", "", i18n.G("Define a compression algorithm: for backup or none")+"``")
+		i18n.G("Use storage driver optimized format (can only be restored on a similar pool, ignored for ISO storage volumes)"))
+	cmd.Flags().StringVar(&c.flagCompressionAlgorithm, "compression", "", i18n.G("Compression algorithm to use (none for uncompressed, ignored for ISO storage volumes)")+"``")
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.RunE = c.Run
 
@@ -3278,6 +3278,12 @@ func (c *cmdStorageVolumeExport) Run(cmd *cobra.Command, args []string) error {
 	volName, volType := parseVolume("custom", args[1])
 	if volType != "custom" {
 		return errors.New(i18n.G("Only \"custom\" volumes can be exported"))
+	}
+
+	// Get the storage volume entry
+	vol, _, err := d.GetStoragePoolVolume(name, volType, volName)
+	if err != nil {
+		return fmt.Errorf("Storage pool volume \"%s/%s\" not found", volType, volName)
 	}
 
 	req := api.StorageVolumeBackupsPost{
@@ -3342,6 +3348,8 @@ func (c *cmdStorageVolumeExport) Run(cmd *cobra.Command, args []string) error {
 	var targetName string
 	if len(args) > 2 {
 		targetName = args[2]
+	} else if vol.ContentType == "iso" {
+		targetName = volName + ".iso"
 	} else {
 		targetName = "backup.tar.gz"
 	}

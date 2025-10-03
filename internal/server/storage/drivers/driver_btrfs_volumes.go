@@ -1527,7 +1527,7 @@ func (d *btrfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volS
 
 // BackupVolume copies a volume (and optionally its snapshots) to a specified target path.
 // This driver does not support optimized backups.
-func (d *btrfs) BackupVolume(vol Volume, tarWriter *instancewriter.InstanceTarWriter, optimized bool, snapshots []string, op *operations.Operation) error {
+func (d *btrfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, optimized bool, snapshots []string, op *operations.Operation) error {
 	// Handle the non-optimized tarballs through the generic packer.
 	if !optimized {
 		// Because the generic backup method will not take a consistent backup if files are being modified
@@ -1546,7 +1546,7 @@ func (d *btrfs) BackupVolume(vol Volume, tarWriter *instancewriter.InstanceTarWr
 			vol.mountCustomPath = snapshotPath
 		}
 
-		return genericVFSBackupVolume(d, vol, tarWriter, snapshots, op)
+		return genericVFSBackupVolume(d, vol, writer, snapshots, op)
 	}
 
 	// Optimized backup.
@@ -1581,7 +1581,7 @@ func (d *btrfs) BackupVolume(vol Volume, tarWriter *instancewriter.InstanceTarWr
 	}
 
 	// Write to tarball.
-	err = tarWriter.WriteFileFromReader(r, &indexFileInfo)
+	err = writer.WriteFileFromReader(r, &indexFileInfo)
 	if err != nil {
 		return err
 	}
@@ -1619,7 +1619,7 @@ func (d *btrfs) BackupVolume(vol Volume, tarWriter *instancewriter.InstanceTarWr
 			return err
 		}
 
-		err = tarWriter.WriteFile(fileName, tmpFile.Name(), tmpFileInfo, false)
+		err = writer.WriteFile(fileName, tmpFile.Name(), tmpFileInfo, false)
 		if err != nil {
 			return err
 		}

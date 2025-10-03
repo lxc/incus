@@ -2903,3 +2903,7 @@ This API extension provides the ability to configure cluster groups in preseed i
 ## `usb_attached`
 
 This introduces a new `attached` property to USB devices describing whether they are plugged in or not.
+
+## `backup_iso`
+
+This allows to backup ISO custom volumes by simply copying them. It enables exporting ISO volumes with `incus storage volume export` and get an ISO back.
