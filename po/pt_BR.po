@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-10-01 16:07-0400\n"
+"POT-Creation-Date: 2025-10-03 09:59+0000\n"
 "PO-Revision-Date: 2024-01-30 13:01+0000\n"
 "Last-Translator: Paulo Coghi <paulo@coghi.com.br>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
@@ -1178,13 +1178,13 @@ msgstr "Editar arquivos no container"
 msgid "Backing up storage bucket: %s"
 msgstr "Editar arquivos no container"
 
-#: cmd/incus/storage_volume.go:3298
+#: cmd/incus/storage_volume.go:3304
 #, fuzzy, c-format
 msgid "Backing up storage volume: %s"
 msgstr "Editar arquivos no container"
 
 #: cmd/incus/export.go:199 cmd/incus/storage_bucket.go:1624
-#: cmd/incus/storage_volume.go:3375
+#: cmd/incus/storage_volume.go:3383
 msgid "Backup exported successfully!"
 msgstr "Backup exportado com sucesso!"
 
@@ -1591,7 +1591,7 @@ msgstr "Dispositivo %s removido de %s"
 #: cmd/incus/storage_volume.go:2314 cmd/incus/storage_volume.go:2557
 #: cmd/incus/storage_volume.go:2707 cmd/incus/storage_volume.go:2968
 #: cmd/incus/storage_volume.go:3056 cmd/incus/storage_volume.go:3138
-#: cmd/incus/storage_volume.go:3232 cmd/incus/storage_volume.go:3400
+#: cmd/incus/storage_volume.go:3232 cmd/incus/storage_volume.go:3408
 msgid "Cluster member name"
 msgstr "Nome de membro do cluster"
 
@@ -1645,6 +1645,13 @@ msgstr "Definir um algoritmo de compressão: para imagem ou nenhum"
 #: cmd/incus/export.go:45
 #, fuzzy
 msgid "Compression algorithm to use (none for uncompressed)"
+msgstr "Definir um algoritmo de compressão: para imagem ou nenhum"
+
+#: cmd/incus/storage_volume.go:3231
+#, fuzzy
+msgid ""
+"Compression algorithm to use (none for uncompressed, ignored for ISO storage "
+"volumes)"
 msgstr "Definir um algoritmo de compressão: para imagem ou nenhum"
 
 #: cmd/incus/copy.go:56 cmd/incus/create.go:58 cmd/incus/import.go:38
@@ -2089,7 +2096,7 @@ msgstr "Editar arquivos no container"
 msgid "Default VLAN ID"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:1495 cmd/incus/storage_volume.go:3231
+#: cmd/incus/storage_bucket.go:1495
 #, fuzzy
 msgid "Define a compression algorithm: for backup or none"
 msgstr "Definir um algoritmo de compressão: para imagem ou nenhum"
@@ -2382,7 +2389,7 @@ msgstr ""
 #: cmd/incus/storage_volume.go:2796 cmd/incus/storage_volume.go:2802
 #: cmd/incus/storage_volume.go:2965 cmd/incus/storage_volume.go:3054
 #: cmd/incus/storage_volume.go:3136 cmd/incus/storage_volume.go:3225
-#: cmd/incus/storage_volume.go:3393 cmd/incus/top.go:43 cmd/incus/version.go:23
+#: cmd/incus/storage_volume.go:3401 cmd/incus/top.go:43 cmd/incus/version.go:23
 #: cmd/incus/warning.go:32 cmd/incus/warning.go:76 cmd/incus/warning.go:273
 #: cmd/incus/warning.go:316 cmd/incus/warning.go:372 cmd/incus/webui.go:19
 msgid "Description"
@@ -3012,9 +3019,15 @@ msgid ""
 "The output target is optional and defaults to the working directory."
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3224 cmd/incus/storage_volume.go:3225
-msgid "Export custom storage volume"
-msgstr ""
+#: cmd/incus/storage_volume.go:3224
+#, fuzzy
+msgid "Export custom storage volumes"
+msgstr "Criar novas redes"
+
+#: cmd/incus/storage_volume.go:3225
+#, fuzzy
+msgid "Export custom storage volumes."
+msgstr "Criar novas redes"
 
 #: cmd/incus/export.go:33
 msgid "Export instance backups"
@@ -3042,7 +3055,8 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/storage_volume.go:3228
-msgid "Export the volume without its snapshots"
+msgid ""
+"Export the volume without its snapshots (ignored for ISO storage volumes)"
 msgstr ""
 
 #: cmd/incus/storage_bucket.go:1607
@@ -3050,7 +3064,7 @@ msgstr ""
 msgid "Exporting backup of storage bucket: %s"
 msgstr "Criar novas redes"
 
-#: cmd/incus/export.go:159 cmd/incus/storage_volume.go:3358
+#: cmd/incus/export.go:159 cmd/incus/storage_volume.go:3366
 #, c-format
 msgid "Exporting the backup: %s"
 msgstr ""
@@ -3270,7 +3284,7 @@ msgstr "Aceitar certificado"
 msgid "Failed to create certificate: %w"
 msgstr "Aceitar certificado"
 
-#: cmd/incus/storage_volume.go:3293
+#: cmd/incus/storage_volume.go:3299
 #, fuzzy, c-format
 msgid "Failed to create storage volume backup: %w"
 msgstr "Aceitar certificado"
@@ -3290,7 +3304,7 @@ msgstr "Nome de membro do cluster"
 msgid "Failed to fetch storage bucket backup: %w"
 msgstr "Aceitar certificado"
 
-#: cmd/incus/storage_volume.go:3372
+#: cmd/incus/storage_volume.go:3380
 #, fuzzy, c-format
 msgid "Failed to fetch storage volume backup file: %w"
 msgstr "Aceitar certificado"
@@ -4025,11 +4039,11 @@ msgstr ""
 msgid "Import backups of storage buckets."
 msgstr "Criar novas redes"
 
-#: cmd/incus/storage_volume.go:3392
+#: cmd/incus/storage_volume.go:3400
 msgid "Import custom storage volumes"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3393
+#: cmd/incus/storage_volume.go:3401
 #, fuzzy
 msgid "Import custom storage volumes."
 msgstr "Criar novas redes"
@@ -4054,15 +4068,15 @@ msgstr ""
 msgid "Import storage bucket"
 msgstr "Apagar projetos"
 
-#: cmd/incus/storage_volume.go:3468
+#: cmd/incus/storage_volume.go:3476
 msgid "Import type needs to be \"backup\" or \"iso\""
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3402
+#: cmd/incus/storage_volume.go:3410
 msgid "Import type, backup or iso (default \"backup\")"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3473
+#: cmd/incus/storage_volume.go:3481
 msgid "Importing ISO images requires a volume name to be set"
 msgstr ""
 
@@ -4071,7 +4085,7 @@ msgstr ""
 msgid "Importing bucket: %s"
 msgstr "Editar arquivos no container"
 
-#: cmd/incus/storage_volume.go:3477
+#: cmd/incus/storage_volume.go:3485
 #, fuzzy, c-format
 msgid "Importing custom volume: %s"
 msgstr "Editar arquivos no container"
@@ -4153,7 +4167,7 @@ msgid "Invalid IP address or DNS name"
 msgstr "Editar arquivos no container"
 
 #: cmd/incus/export.go:128 cmd/incus/storage_bucket.go:1575
-#: cmd/incus/storage_volume.go:3326
+#: cmd/incus/storage_volume.go:3332
 #, fuzzy, c-format
 msgid "Invalid URL %q: %w"
 msgstr "Editar arquivos no container"
@@ -4174,7 +4188,7 @@ msgid "Invalid arguments"
 msgstr "Editar arquivos no container"
 
 #: cmd/incus/export.go:133 cmd/incus/storage_bucket.go:1580
-#: cmd/incus/storage_volume.go:3331
+#: cmd/incus/storage_volume.go:3337
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
 msgstr ""
@@ -9125,9 +9139,15 @@ msgstr "Editar arquivos no container"
 msgid "Usage: %s"
 msgstr "Criado: %s"
 
-#: cmd/incus/export.go:44 cmd/incus/storage_volume.go:3230
+#: cmd/incus/export.go:44
 msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool)"
+msgstr ""
+
+#: cmd/incus/storage_volume.go:3230
+msgid ""
+"Use storage driver optimized format (can only be restored on a similar pool, "
+"ignored for ISO storage volumes)"
 msgstr ""
 
 #: cmd/incus/main.go:132
@@ -9930,7 +9950,7 @@ msgstr ""
 msgid "[<remote>:]<pool> <backup file> [<bucket>]"
 msgstr "Criar perfis"
 
-#: cmd/incus/storage_volume.go:3391
+#: cmd/incus/storage_volume.go:3399
 #, fuzzy
 msgid "[<remote>:]<pool> <backup file> [<volume name>]"
 msgstr "Criar perfis"
@@ -10751,7 +10771,7 @@ msgid ""
 "pool \"default\""
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3395
+#: cmd/incus/storage_volume.go:3403
 msgid ""
 "incus storage volume import default backup0.tar.gz\n"
 "    Create a new custom volume using backup0.tar.gz as the source\n"

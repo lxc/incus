@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-10-01 16:07-0400\n"
+"POT-Creation-Date: 2025-10-03 09:59+0000\n"
 "PO-Revision-Date: 2025-08-09 14:02+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -1171,13 +1171,13 @@ msgstr "インスタンスのバックアップ中: %s"
 msgid "Backing up storage bucket: %s"
 msgstr "ストレージバケット %s のバックアップを行います"
 
-#: cmd/incus/storage_volume.go:3298
+#: cmd/incus/storage_volume.go:3304
 #, c-format
 msgid "Backing up storage volume: %s"
 msgstr "ストレージボリュームのバックアップ中: %s"
 
 #: cmd/incus/export.go:199 cmd/incus/storage_bucket.go:1624
-#: cmd/incus/storage_volume.go:3375
+#: cmd/incus/storage_volume.go:3383
 msgid "Backup exported successfully!"
 msgstr "バックアップのエクスポートが成功しました!"
 
@@ -1592,7 +1592,7 @@ msgstr "クラスターメンバー %s がグループ %s から削除されま�
 #: cmd/incus/storage_volume.go:2314 cmd/incus/storage_volume.go:2557
 #: cmd/incus/storage_volume.go:2707 cmd/incus/storage_volume.go:2968
 #: cmd/incus/storage_volume.go:3056 cmd/incus/storage_volume.go:3138
-#: cmd/incus/storage_volume.go:3232 cmd/incus/storage_volume.go:3400
+#: cmd/incus/storage_volume.go:3232 cmd/incus/storage_volume.go:3408
 msgid "Cluster member name"
 msgstr "クラスターメンバ名"
 
@@ -1644,6 +1644,13 @@ msgstr "圧縮アルゴリズムを指定します: (圧縮しない場合は `n
 
 #: cmd/incus/export.go:45
 msgid "Compression algorithm to use (none for uncompressed)"
+msgstr "使用する圧縮アルゴリズムを指定します (圧縮しない場合は none)"
+
+#: cmd/incus/storage_volume.go:3231
+#, fuzzy
+msgid ""
+"Compression algorithm to use (none for uncompressed, ignored for ISO storage "
+"volumes)"
 msgstr "使用する圧縮アルゴリズムを指定します (圧縮しない場合は none)"
 
 #: cmd/incus/copy.go:56 cmd/incus/create.go:58 cmd/incus/import.go:38
@@ -2090,7 +2097,7 @@ msgstr "インスタンス内でコマンドを実行します"
 msgid "Default VLAN ID"
 msgstr "デフォルト VLAN ID"
 
-#: cmd/incus/storage_bucket.go:1495 cmd/incus/storage_volume.go:3231
+#: cmd/incus/storage_bucket.go:1495
 msgid "Define a compression algorithm: for backup or none"
 msgstr "圧縮アルゴリズムを指定します: backup or none"
 
@@ -2370,7 +2377,7 @@ msgstr "警告を削除します"
 #: cmd/incus/storage_volume.go:2796 cmd/incus/storage_volume.go:2802
 #: cmd/incus/storage_volume.go:2965 cmd/incus/storage_volume.go:3054
 #: cmd/incus/storage_volume.go:3136 cmd/incus/storage_volume.go:3225
-#: cmd/incus/storage_volume.go:3393 cmd/incus/top.go:43 cmd/incus/version.go:23
+#: cmd/incus/storage_volume.go:3401 cmd/incus/top.go:43 cmd/incus/version.go:23
 #: cmd/incus/warning.go:32 cmd/incus/warning.go:76 cmd/incus/warning.go:273
 #: cmd/incus/warning.go:316 cmd/incus/warning.go:372 cmd/incus/webui.go:19
 msgid "Description"
@@ -3072,8 +3079,14 @@ msgstr ""
 "\n"
 "出力先はオプショナルで、デフォルトは現在のディレクトリです。"
 
-#: cmd/incus/storage_volume.go:3224 cmd/incus/storage_volume.go:3225
-msgid "Export custom storage volume"
+#: cmd/incus/storage_volume.go:3224
+#, fuzzy
+msgid "Export custom storage volumes"
+msgstr "カスタムストレージボリュームをエクスポートします"
+
+#: cmd/incus/storage_volume.go:3225
+#, fuzzy
+msgid "Export custom storage volumes."
 msgstr "カスタムストレージボリュームをエクスポートします"
 
 #: cmd/incus/export.go:33
@@ -3103,7 +3116,9 @@ msgstr ""
 "\t\tデバッグや解析に役立ちます。"
 
 #: cmd/incus/storage_volume.go:3228
-msgid "Export the volume without its snapshots"
+#, fuzzy
+msgid ""
+"Export the volume without its snapshots (ignored for ISO storage volumes)"
 msgstr ""
 "ボリュームをエクスポートします (スナップショットはエクスポートしません)"
 
@@ -3112,7 +3127,7 @@ msgstr ""
 msgid "Exporting backup of storage bucket: %s"
 msgstr "ストレージバケット %s のバックアップをエクスポートします"
 
-#: cmd/incus/export.go:159 cmd/incus/storage_volume.go:3358
+#: cmd/incus/export.go:159 cmd/incus/storage_volume.go:3366
 #, c-format
 msgid "Exporting the backup: %s"
 msgstr "バックアップのエクスポート中: %s"
@@ -3332,7 +3347,7 @@ msgstr "%q の作成に失敗しました: %w"
 msgid "Failed to create certificate: %w"
 msgstr "証明書の作成に失敗しました: %w"
 
-#: cmd/incus/storage_volume.go:3293
+#: cmd/incus/storage_volume.go:3299
 #, c-format
 msgid "Failed to create storage volume backup: %w"
 msgstr "ストレージボリュームのバックアップ作成に失敗しました: %w"
@@ -3352,7 +3367,7 @@ msgstr "クラスタメンバへの接続に失敗しました: %w"
 msgid "Failed to fetch storage bucket backup: %w"
 msgstr "サーバー証明書ファイル %q のクローズに失敗しました: %w"
 
-#: cmd/incus/storage_volume.go:3372
+#: cmd/incus/storage_volume.go:3380
 #, c-format
 msgid "Failed to fetch storage volume backup file: %w"
 msgstr "ストレージボリュームのバックアップファイルの取得に失敗しました: %w"
@@ -4120,11 +4135,11 @@ msgstr ""
 msgid "Import backups of storage buckets."
 msgstr "新たにカスタムストレージボリュームをインポートします"
 
-#: cmd/incus/storage_volume.go:3392
+#: cmd/incus/storage_volume.go:3400
 msgid "Import custom storage volumes"
 msgstr "新たにカスタムストレージボリュームをインポートします"
 
-#: cmd/incus/storage_volume.go:3393
+#: cmd/incus/storage_volume.go:3401
 #, fuzzy
 msgid "Import custom storage volumes."
 msgstr "新たにカスタムストレージボリュームをインポートします"
@@ -4153,16 +4168,16 @@ msgstr "インスタンスのバックアップをインポートします"
 msgid "Import storage bucket"
 msgstr "ストレージバケットを一覧表示します"
 
-#: cmd/incus/storage_volume.go:3468
+#: cmd/incus/storage_volume.go:3476
 msgid "Import type needs to be \"backup\" or \"iso\""
 msgstr ""
 "インポートするタイプは \"backup\" もしくは \"iso\" である必要があります"
 
-#: cmd/incus/storage_volume.go:3402
+#: cmd/incus/storage_volume.go:3410
 msgid "Import type, backup or iso (default \"backup\")"
 msgstr "インポートするタイプ。backup もしくは iso (デフォルト \\\"backup\\\")"
 
-#: cmd/incus/storage_volume.go:3473
+#: cmd/incus/storage_volume.go:3481
 msgid "Importing ISO images requires a volume name to be set"
 msgstr "ISO イメージをインポートするには、ボリューム名を設定する必要があります"
 
@@ -4171,7 +4186,7 @@ msgstr "ISO イメージをインポートするには、ボリューム名を�
 msgid "Importing bucket: %s"
 msgstr "インスタンスのインポート中: %s"
 
-#: cmd/incus/storage_volume.go:3477
+#: cmd/incus/storage_volume.go:3485
 #, c-format
 msgid "Importing custom volume: %s"
 msgstr "カスタムボリュームのインポート中: %s"
@@ -4254,7 +4269,7 @@ msgid "Invalid IP address or DNS name"
 msgstr "不正なスナップショット名"
 
 #: cmd/incus/export.go:128 cmd/incus/storage_bucket.go:1575
-#: cmd/incus/storage_volume.go:3326
+#: cmd/incus/storage_volume.go:3332
 #, fuzzy, c-format
 msgid "Invalid URL %q: %w"
 msgstr "不正なフォーマット %q"
@@ -4275,7 +4290,7 @@ msgid "Invalid arguments"
 msgstr "不正な引数 %q"
 
 #: cmd/incus/export.go:133 cmd/incus/storage_bucket.go:1580
-#: cmd/incus/storage_volume.go:3331
+#: cmd/incus/storage_volume.go:3337
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
 msgstr "パス %q に不正なバックアップ名のセグメントがあります: %w"
@@ -10050,9 +10065,18 @@ msgstr "上位デバイス"
 msgid "Usage: %s"
 msgstr "使い方: %s"
 
-#: cmd/incus/export.go:44 cmd/incus/storage_volume.go:3230
+#: cmd/incus/export.go:44
 msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool)"
+msgstr ""
+"最適化された形でストレージドライバを使います (同様のプール上にのみリストアで"
+"きます)"
+
+#: cmd/incus/storage_volume.go:3230
+#, fuzzy
+msgid ""
+"Use storage driver optimized format (can only be restored on a similar pool, "
+"ignored for ISO storage volumes)"
 msgstr ""
 "最適化された形でストレージドライバを使います (同様のプール上にのみリストアで"
 "きます)"
@@ -10857,7 +10881,7 @@ msgstr "[<remote>:]<pool>"
 msgid "[<remote>:]<pool> <backup file> [<bucket>]"
 msgstr "[<remote>:]<pool> <backup file> [<volume name>]"
 
-#: cmd/incus/storage_volume.go:3391
+#: cmd/incus/storage_volume.go:3399
 msgid "[<remote>:]<pool> <backup file> [<volume name>]"
 msgstr "[<remote>:]<pool> <backup file> [<volume name>]"
 
@@ -11950,7 +11974,7 @@ msgstr ""
 "lxc storage volume edit [<remote>:]<pool> <volume> < volume.yaml\n"
 "    pool.yaml の内容でストレージボリュームを更新します。"
 
-#: cmd/incus/storage_volume.go:3395
+#: cmd/incus/storage_volume.go:3403
 msgid ""
 "incus storage volume import default backup0.tar.gz\n"
 "    Create a new custom volume using backup0.tar.gz as the source\n"

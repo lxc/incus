@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-10-01 16:07-0400\n"
+"POT-Creation-Date: 2025-10-03 09:59+0000\n"
 "PO-Revision-Date: 2025-09-30 19:02+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
@@ -1189,13 +1189,13 @@ msgstr "A salvaguardar instância: %s"
 msgid "Backing up storage bucket: %s"
 msgstr "A salvaguardar bucket de armazenamento: %s"
 
-#: cmd/incus/storage_volume.go:3298
+#: cmd/incus/storage_volume.go:3304
 #, c-format
 msgid "Backing up storage volume: %s"
 msgstr "A salvaguardar volume de armazenamento: %s"
 
 #: cmd/incus/export.go:199 cmd/incus/storage_bucket.go:1624
-#: cmd/incus/storage_volume.go:3375
+#: cmd/incus/storage_volume.go:3383
 msgid "Backup exported successfully!"
 msgstr "Salvaguarda exportada com sucesso!"
 
@@ -1605,7 +1605,7 @@ msgstr "Membro do agrupamento %s removido do grupo %s"
 #: cmd/incus/storage_volume.go:2314 cmd/incus/storage_volume.go:2557
 #: cmd/incus/storage_volume.go:2707 cmd/incus/storage_volume.go:2968
 #: cmd/incus/storage_volume.go:3056 cmd/incus/storage_volume.go:3138
-#: cmd/incus/storage_volume.go:3232 cmd/incus/storage_volume.go:3400
+#: cmd/incus/storage_volume.go:3232 cmd/incus/storage_volume.go:3408
 msgid "Cluster member name"
 msgstr "Nome de membro do agrupamento"
 
@@ -1658,6 +1658,13 @@ msgstr "Algoritmo de compressão a usar (`none` para não comprimido)"
 
 #: cmd/incus/export.go:45
 msgid "Compression algorithm to use (none for uncompressed)"
+msgstr "Algoritmo de compressão a usar (nenhum para não comprimido)"
+
+#: cmd/incus/storage_volume.go:3231
+#, fuzzy
+msgid ""
+"Compression algorithm to use (none for uncompressed, ignored for ISO storage "
+"volumes)"
 msgstr "Algoritmo de compressão a usar (nenhum para não comprimido)"
 
 #: cmd/incus/copy.go:56 cmd/incus/create.go:58 cmd/incus/import.go:38
@@ -2099,7 +2106,7 @@ msgstr "Comandos de depuração para instâncias"
 msgid "Default VLAN ID"
 msgstr "ID VLAN predefinido"
 
-#: cmd/incus/storage_bucket.go:1495 cmd/incus/storage_volume.go:3231
+#: cmd/incus/storage_bucket.go:1495
 msgid "Define a compression algorithm: for backup or none"
 msgstr "Defina um algoritmo de compressão: para backup ou nenhum"
 
@@ -2375,7 +2382,7 @@ msgstr "Apaga aviso"
 #: cmd/incus/storage_volume.go:2796 cmd/incus/storage_volume.go:2802
 #: cmd/incus/storage_volume.go:2965 cmd/incus/storage_volume.go:3054
 #: cmd/incus/storage_volume.go:3136 cmd/incus/storage_volume.go:3225
-#: cmd/incus/storage_volume.go:3393 cmd/incus/top.go:43 cmd/incus/version.go:23
+#: cmd/incus/storage_volume.go:3401 cmd/incus/top.go:43 cmd/incus/version.go:23
 #: cmd/incus/warning.go:32 cmd/incus/warning.go:76 cmd/incus/warning.go:273
 #: cmd/incus/warning.go:316 cmd/incus/warning.go:372 cmd/incus/webui.go:19
 msgid "Description"
@@ -3073,8 +3080,14 @@ msgstr ""
 "\n"
 "O alvo de saída é opcional e predefinido para o directório de trabalho."
 
-#: cmd/incus/storage_volume.go:3224 cmd/incus/storage_volume.go:3225
-msgid "Export custom storage volume"
+#: cmd/incus/storage_volume.go:3224
+#, fuzzy
+msgid "Export custom storage volumes"
+msgstr "Exporta volume de armazenamento personalizado"
+
+#: cmd/incus/storage_volume.go:3225
+#, fuzzy
+msgid "Export custom storage volumes."
 msgstr "Exporta volume de armazenamento personalizado"
 
 #: cmd/incus/export.go:33
@@ -3104,7 +3117,9 @@ msgstr ""
 "\t\tIsso pode ser útil para fins de depuração ou análise."
 
 #: cmd/incus/storage_volume.go:3228
-msgid "Export the volume without its snapshots"
+#, fuzzy
+msgid ""
+"Export the volume without its snapshots (ignored for ISO storage volumes)"
 msgstr "Exporta o volume sem seus instantâneos"
 
 #: cmd/incus/storage_bucket.go:1607
@@ -3112,7 +3127,7 @@ msgstr "Exporta o volume sem seus instantâneos"
 msgid "Exporting backup of storage bucket: %s"
 msgstr "A exportar salvaguarda do bucket de armazenamento: %s"
 
-#: cmd/incus/export.go:159 cmd/incus/storage_volume.go:3358
+#: cmd/incus/export.go:159 cmd/incus/storage_volume.go:3366
 #, c-format
 msgid "Exporting the backup: %s"
 msgstr "A exportar a salvaguarda: %s"
@@ -3335,7 +3350,7 @@ msgstr "Falhou ao criar salvaguarda: %v"
 msgid "Failed to create certificate: %w"
 msgstr "Falhou ao criar certificado: %w"
 
-#: cmd/incus/storage_volume.go:3293
+#: cmd/incus/storage_volume.go:3299
 #, c-format
 msgid "Failed to create storage volume backup: %w"
 msgstr "Falhou ao criar salvaguarda de volume de armazenamento: %w"
@@ -3355,7 +3370,7 @@ msgstr "Falhou ao despejar memória de instância: %w"
 msgid "Failed to fetch storage bucket backup: %w"
 msgstr "Falhou ao procurar salvaguarda de bucket de armazenamento: %w"
 
-#: cmd/incus/storage_volume.go:3372
+#: cmd/incus/storage_volume.go:3380
 #, c-format
 msgid "Failed to fetch storage volume backup file: %w"
 msgstr ""
@@ -4104,11 +4119,11 @@ msgstr "Importa backups de instâncias incluindo seus instantâneos."
 msgid "Import backups of storage buckets."
 msgstr "Importa salvaguardas de buckets de armazenamento."
 
-#: cmd/incus/storage_volume.go:3392
+#: cmd/incus/storage_volume.go:3400
 msgid "Import custom storage volumes"
 msgstr "Importa volumes de armazenamento personalizados"
 
-#: cmd/incus/storage_volume.go:3393
+#: cmd/incus/storage_volume.go:3401
 msgid "Import custom storage volumes."
 msgstr "Importa volumes de armazenamento personalizados."
 
@@ -4135,15 +4150,15 @@ msgstr "Importa salvaguardas da instância"
 msgid "Import storage bucket"
 msgstr "Importa bucket de armazenamento"
 
-#: cmd/incus/storage_volume.go:3468
+#: cmd/incus/storage_volume.go:3476
 msgid "Import type needs to be \"backup\" or \"iso\""
 msgstr "Tipo de importação precisa ser \"backup\" ou \"iso\""
 
-#: cmd/incus/storage_volume.go:3402
+#: cmd/incus/storage_volume.go:3410
 msgid "Import type, backup or iso (default \"backup\")"
 msgstr "Tipo de importação, backup ou iso (predefinição \"backup\")"
 
-#: cmd/incus/storage_volume.go:3473
+#: cmd/incus/storage_volume.go:3481
 msgid "Importing ISO images requires a volume name to be set"
 msgstr "Importar imagens ISO requer que um nome de volume seja definido"
 
@@ -4152,7 +4167,7 @@ msgstr "Importar imagens ISO requer que um nome de volume seja definido"
 msgid "Importing bucket: %s"
 msgstr "A importar bucket: %s"
 
-#: cmd/incus/storage_volume.go:3477
+#: cmd/incus/storage_volume.go:3485
 #, c-format
 msgid "Importing custom volume: %s"
 msgstr "A importar volume personalizado: %s"
@@ -4231,7 +4246,7 @@ msgid "Invalid IP address or DNS name"
 msgstr "Endereço IP ou nome DNS inválido"
 
 #: cmd/incus/export.go:128 cmd/incus/storage_bucket.go:1575
-#: cmd/incus/storage_volume.go:3326
+#: cmd/incus/storage_volume.go:3332
 #, c-format
 msgid "Invalid URL %q: %w"
 msgstr "URL inválido %q: %w"
@@ -4251,7 +4266,7 @@ msgid "Invalid arguments"
 msgstr "Argumentos inválidos"
 
 #: cmd/incus/export.go:133 cmd/incus/storage_bucket.go:1580
-#: cmd/incus/storage_volume.go:3331
+#: cmd/incus/storage_volume.go:3337
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
 msgstr "Segmento de nome de salvaguarda inválido no caminho %q: %w"
@@ -9879,9 +9894,18 @@ msgstr "Dispositivos de cima"
 msgid "Usage: %s"
 msgstr "Utilização: %s"
 
-#: cmd/incus/export.go:44 cmd/incus/storage_volume.go:3230
+#: cmd/incus/export.go:44
 msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool)"
+msgstr ""
+"Usa o formato optimizado do driver de armazenamento (só pode ser restaurado "
+"num pool semelhante)"
+
+#: cmd/incus/storage_volume.go:3230
+#, fuzzy
+msgid ""
+"Use storage driver optimized format (can only be restored on a similar pool, "
+"ignored for ISO storage volumes)"
 msgstr ""
 "Usa o formato optimizado do driver de armazenamento (só pode ser restaurado "
 "num pool semelhante)"
@@ -10664,7 +10688,7 @@ msgstr "[<remoto>:]<pool>"
 msgid "[<remote>:]<pool> <backup file> [<bucket>]"
 msgstr "[<remoto>:]<pool> <ficheiro salvaguarda> [<bucket>]"
 
-#: cmd/incus/storage_volume.go:3391
+#: cmd/incus/storage_volume.go:3399
 msgid "[<remote>:]<pool> <backup file> [<volume name>]"
 msgstr "[<remoto>:]<pool> <ficheiro salvaguarda> [<nome volume>]"
 
@@ -11741,7 +11765,7 @@ msgstr ""
 "    Retorna o período de validade de instantâneo para uma máquina virtual "
 "\"data\" na pool \"default\""
 
-#: cmd/incus/storage_volume.go:3395
+#: cmd/incus/storage_volume.go:3403
 msgid ""
 "incus storage volume import default backup0.tar.gz\n"
 "    Create a new custom volume using backup0.tar.gz as the source\n"
