@@ -928,6 +928,25 @@ func qemuUSB(opts *qemuUSBOpts) []cfg.Section {
 	return sections
 }
 
+func qemuAudio(opts *qemuDevOpts) []cfg.Section {
+	entries := qemuDeviceEntries(&qemuDevEntriesOpts{
+		dev:     *opts,
+		pciName: "virtio-sound-pci",
+	})
+
+	entries["audiodev"] = "qemu_spice-audiodev"
+	return []cfg.Section{{
+		Name:    `audiodev "qemu_spice-audiodev"`,
+		Comment: "Sound device",
+		Entries: map[string]string{
+			"driver": "spice",
+		},
+	}, {
+		Name:    `device "qemu_spice-audio"`,
+		Entries: entries,
+	}}
+}
+
 type qemuTPMOpts struct {
 	devName string
 	path    string
