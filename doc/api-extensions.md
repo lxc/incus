@@ -2899,3 +2899,7 @@ This adds support for network tunnels to OVN networks.
 ## `init_preseed_cluster_groups`
 
 This API extension provides the ability to configure cluster groups in preseed init.
+
+## `usb_attached`
+
+This introduces a new `attached` property to USB devices describing whether they are plugged in or not.
