@@ -120,10 +120,6 @@ Use the following command to export an instance to a compressed file (for exampl
 
 If you do not specify a file path, the export file is saved as `<instance_name>.<extension>` in the working directory (for example, `my-container.tar.gz`).
 
-```{warning}
-If the output file (`<instance_name>.<extension>` or the specified file path) already exists, the command overwrites the existing file without warning.
-```
-
 % Include content from [storage_backup_volume.md](storage_backup_volume.md)
 ```{include} storage_backup_volume.md
     :start-after: <!-- Include start export info -->
