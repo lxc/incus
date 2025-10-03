@@ -102,6 +102,7 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 	metricSet := metrics.NewMetricSet(nil)
 
 	var projectNames []string
+	var intMetrics *metrics.MetricSet
 
 	err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Figure out the projects to retrieve.
@@ -121,7 +122,7 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Add internal metrics.
-		metricSet.Merge(internalMetrics(ctx, s, tx))
+		intMetrics = internalMetrics(ctx, s, tx)
 
 		return nil
 	})
@@ -161,6 +162,9 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 
 	// If all valid, return immediately.
 	if len(projectsToFetch) == 0 {
+		// Merge in the internal metrics.
+		metricSet.Merge(intMetrics)
+
 		return getFilteredMetrics(s, r, compress, metricSet)
 	}
 
@@ -179,6 +183,9 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 
 	// Setup a new response.
 	metricSet = metrics.NewMetricSet(nil)
+
+	// Merge in the internal metrics.
+	metricSet.Merge(intMetrics)
 
 	// Check if any of the missing data has been filled in since acquiring the lock.
 	// As its possible another request was already populating the cache when we tried to take the lock.
