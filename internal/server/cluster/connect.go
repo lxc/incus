@@ -221,6 +221,13 @@ func SetupTrust(serverCert *localtls.CertInfo, serverName string, targetAddress 
 		SkipGetServer: true,
 	}
 
+	// Always set a proxy function to have cluster traffic bypass any configured HTTP proxy.
+	proxy := func(req *http.Request) (*url.URL, error) {
+		return nil, nil
+	}
+
+	args.Proxy = proxy
+
 	target, err := incus.ConnectIncus(fmt.Sprintf("https://%s", targetAddress), args)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to target cluster node %q: %w", targetAddress, err)
@@ -259,6 +266,13 @@ func UpdateTrust(serverCert *localtls.CertInfo, serverName string, targetAddress
 		SkipGetEvents: true,
 		SkipGetServer: true,
 	}
+
+	// Always set a proxy function to have cluster traffic bypass any configured HTTP proxy.
+	proxy := func(req *http.Request) (*url.URL, error) {
+		return nil, nil
+	}
+
+	args.Proxy = proxy
 
 	target, err := incus.ConnectIncus(fmt.Sprintf("https://%s", targetAddress), args)
 	if err != nil {
