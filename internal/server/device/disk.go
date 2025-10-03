@@ -1773,20 +1773,6 @@ func (d *disk) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 					Limits:  diskLimits,
 				})
 			}
-
-			oldAttached := util.IsTrueOrEmpty(oldDevices[d.name]["attached"])
-			newAttached := util.IsTrueOrEmpty(expandedDevices[d.name]["attached"])
-			if !oldAttached && newAttached {
-				runConf.Mounts = append(runConf.Mounts, deviceConfig.MountEntryItem{
-					DevName:  d.name,
-					Attached: true,
-				})
-			} else if oldAttached && !newAttached {
-				runConf.Mounts = append(runConf.Mounts, deviceConfig.MountEntryItem{
-					DevName:  d.name,
-					Attached: false,
-				})
-			}
 		}
 
 		err := d.inst.DeviceEventHandler(&runConf)
