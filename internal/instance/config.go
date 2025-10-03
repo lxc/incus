@@ -1590,6 +1590,26 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 		return validate.IsAny, nil
 	}
 
+	// gendoc:generate(entity=instance, group=miscellaneous, key=systemd.credential.*)
+	// Systemd credential key/value pair passed as a read-only bind mount in containers and as `SMBIOS Type 11` data in virtual machines.
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  shortdesc: Systemd credential key/value
+	if strings.HasPrefix(key, "systemd.credential.") {
+		return validate.IsAny, nil
+	}
+
+	// gendoc:generate(entity=instance, group=miscellaneous, key=systemd.credential-binary.*)
+	// Systemd credential key/value pair passed as a read-only bind mount in containers and as `SMBIOS Type 11` data in virtual machines. The value is Base64 encoded.
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  shortdesc: Systemd credential key/value, where value is Base64 encoded
+	if strings.HasPrefix(key, "systemd.credential-binary.") {
+		return validate.IsBase64, nil
+	}
+
 	return nil, fmt.Errorf("Unknown configuration key: %s", key)
 }
 

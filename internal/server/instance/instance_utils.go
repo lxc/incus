@@ -95,6 +95,11 @@ func ValidConfig(sysOS *sys.OS, config map[string]string, expanded bool, instanc
 		if err != nil {
 			return err
 		}
+
+		after, ok := strings.CutPrefix(k, "systemd.credential.")
+		if ok && config["systemd.credential-binary."+after] != "" {
+			return fmt.Errorf("Mutually exclusive keys %s and systemd.credential-binary.%s are set", k, after)
+		}
 	}
 
 	_, rawSeccomp := config["raw.seccomp"]
