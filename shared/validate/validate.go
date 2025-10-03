@@ -2,6 +2,7 @@ package validate
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net"
@@ -941,4 +942,14 @@ func IsMinimumDuration(minimum time.Duration) func(value string) error {
 
 		return nil
 	}
+}
+
+// IsBase64 validates whether the string is Base64 encoded.
+func IsBase64(value string) error {
+	_, err := base64.RawStdEncoding.DecodeString(strings.TrimRight(value, "="))
+	if err != nil {
+		return fmt.Errorf("Invalid value for a base64 string %q: %w", value, err)
+	}
+
+	return nil
 }
