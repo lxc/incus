@@ -122,6 +122,15 @@ func (d *usb) validateConfig(instConf instance.ConfigReader) error {
 		//  type: int
 		//  shortdesc: The device number of the USB device
 		"devnum": validate.Optional(validate.IsUint32),
+
+		// gendoc:generate(entity=devices, group=usb, key=attached)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the USB device is plugged in or not
+		"attached": validate.Optional(validate.IsBool),
 	}
 
 	err := d.config.Validate(rules)
@@ -143,7 +152,7 @@ func (d *usb) Register() error {
 
 	// Handler for when a USB event occurs.
 	f := func(e USBEvent) (*deviceConfig.RunConfig, error) {
-		if !usbIsOurDevice(devConfig, &e) {
+		if !usbIsOurDevice(devConfig, &e) || !util.IsTrueOrEmpty(devConfig["attached"]) {
 			return nil, nil
 		}
 
@@ -190,14 +199,16 @@ func (d *usb) Register() error {
 
 // Start is run when the device is added to the instance.
 func (d *usb) Start() (*deviceConfig.RunConfig, error) {
+	attached := util.IsTrueOrEmpty(d.config["attached"])
+
 	if d.inst.Type() == instancetype.VM {
-		return d.startVM()
+		return d.startVM(attached)
 	}
 
-	return d.startContainer()
+	return d.startContainer(attached)
 }
 
-func (d *usb) startContainer() (*deviceConfig.RunConfig, error) {
+func (d *usb) startContainer(attached bool) (*deviceConfig.RunConfig, error) {
 	usbs, err := d.loadUsb()
 	if err != nil {
 		return nil, err
@@ -205,26 +216,28 @@ func (d *usb) startContainer() (*deviceConfig.RunConfig, error) {
 
 	runConf := deviceConfig.RunConfig{}
 	runConf.PostHooks = []func() error{d.Register}
+	found := 0
 
 	for _, usb := range usbs {
-		if !usbIsOurDevice(d.config, &usb) {
-			continue
-		}
-
-		err := unixDeviceSetupCharNum(d.state, d.inst.DevicesPath(), "unix", d.name, d.config, usb.Major, usb.Minor, usb.Path, false, &runConf)
-		if err != nil {
-			return nil, err
+		if usbIsOurDevice(d.config, &usb) {
+			found++
+			if attached {
+				err := unixDeviceSetupCharNum(d.state, d.inst.DevicesPath(), "unix", d.name, d.config, usb.Major, usb.Minor, usb.Path, false, &runConf)
+				if err != nil {
+					return nil, err
+				}
+			}
 		}
 	}
 
-	if d.isRequired() && len(runConf.Mounts) <= 0 {
+	if d.isRequired() && found <= 0 {
 		return nil, errors.New("Required USB device not found")
 	}
 
 	return &runConf, nil
 }
 
-func (d *usb) startVM() (*deviceConfig.RunConfig, error) {
+func (d *usb) startVM(attached bool) (*deviceConfig.RunConfig, error) {
 	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
 		return nil, errors.New("USB devices cannot be used when migration.stateful is enabled")
 	}
@@ -236,17 +249,21 @@ func (d *usb) startVM() (*deviceConfig.RunConfig, error) {
 
 	runConf := deviceConfig.RunConfig{}
 	runConf.PostHooks = []func() error{d.Register}
+	found := 0
 
 	for _, usb := range usbs {
 		if usbIsOurDevice(d.config, &usb) {
-			runConf.USBDevice = append(runConf.USBDevice, deviceConfig.USBDeviceItem{
-				DeviceName:     d.getUniqueDeviceNameFromUSBEvent(usb),
-				HostDevicePath: fmt.Sprintf("/dev/bus/usb/%03d/%03d", usb.BusNum, usb.DevNum),
-			})
+			found++
+			if attached {
+				runConf.USBDevice = append(runConf.USBDevice, deviceConfig.USBDeviceItem{
+					DeviceName:     d.getUniqueDeviceNameFromUSBEvent(usb),
+					HostDevicePath: fmt.Sprintf("/dev/bus/usb/%03d/%03d", usb.BusNum, usb.DevNum),
+				})
+			}
 		}
 	}
 
-	if d.isRequired() && len(runConf.USBDevice) <= 0 {
+	if d.isRequired() && found <= 0 {
 		return nil, errors.New("Required USB device not found")
 	}
 

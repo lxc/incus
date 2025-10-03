@@ -499,6 +499,7 @@ var APIExtensions = []string{
 	"backup_override_config",
 	"network_ovn_tunnels",
 	"init_preseed_cluster_groups",
+	"usb_attached",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
