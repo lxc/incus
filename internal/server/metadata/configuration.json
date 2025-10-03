@@ -1832,6 +1832,15 @@
 			"usb": {
 				"keys": [
 					{
+						"attached": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether the USB device is plugged in or not",
+							"type": "bool"
+						}
+					},
+					{
 						"busnum": {
 							"longdesc": "",
 							"shortdesc": "The bus number of which the USB device is attached",

@@ -1606,6 +1606,14 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 
 <!-- config group devices-unix-hotplug end -->
 <!-- config group devices-usb start -->
+```{config:option} attached devices-usb
+:default: "`true`"
+:required: "no"
+:shortdesc: "Whether the USB device is plugged in or not"
+:type: "bool"
+
+```
+
 ```{config:option} busnum devices-usb
 :shortdesc: "The bus number of which the USB device is attached"
 :type: "int"
