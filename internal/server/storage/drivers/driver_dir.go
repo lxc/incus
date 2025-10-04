@@ -115,6 +115,27 @@ func (d *dir) Delete(op *operations.Operation) error {
 
 // Validate checks that all provide keys are supported and that no conflicting or missing configuration is present.
 func (d *dir) Validate(config map[string]string) error {
+	// gendoc:generate(entity=storage_dir, group=common, key=rsync.bwlimit)
+	//
+	// ---
+	//  type: string
+	//  default: `0` (no limit)
+	//  shortdesc: The upper limit to be placed on the socket I/O when `rsync` must be used to transfer storage entities
+
+	// gendoc:generate(entity=storage_dir, group=common, key=rsync.compression)
+	//
+	// ---
+	//  type: bool
+	//  default: `true`
+	//  shortdesc: Whether to use compression while migrating storage pools
+
+	// gendoc:generate(entity=storage_dir, group=common, key=source)
+	//
+	// ---
+	//  type: string
+	//  default: -
+	//  shortdesc: Path to an existing directory
+
 	return d.validatePool(config, nil, nil)
 }
 
