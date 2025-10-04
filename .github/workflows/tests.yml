@@ -270,6 +270,7 @@ jobs:
             libcap-dev \
             libdbus-1-dev \
             libcowsql-dev \
+            libelf-dev \
             liblxc-dev \
             libseccomp-dev \
             libselinux-dev \
@@ -277,6 +278,7 @@ jobs:
             libtool \
             libudev-dev \
             linux-modules-extra-$(uname -r) \
+            llvm \
             make \
             pkg-config\
             acl \
