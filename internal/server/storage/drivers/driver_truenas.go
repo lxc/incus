@@ -359,21 +359,101 @@ func (d *truenas) Delete(op *operations.Operation) error {
 func (d *truenas) Validate(config map[string]string) error {
 	rules := map[string]func(value string) error{
 		// only truenas.dataset is required. the tool has default behaviour/connections defined.
-		"source":          validate.IsAny, // can be used as a shortcut to specify dataset and optionally host.
+
+		// gendoc:generate(entity=storage_truenas, group=common, key=source)
+		//
+		// ---
+		//  type: string
+		//  scope: local
+		//  default: -
+		//  shortdesc: ZFS dataset to use on the remote TrueNAS host. Format: `[<host>:]<pool>[/<dataset>][/]`. If `host` is omitted here, it must be set via `truenas.host`.
+		"source": validate.IsAny, // can be used as a shortcut to specify dataset and optionally host.
+
+		// gendoc:generate(entity=storage_truenas, group=common, key=truenas.dataset)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: Remote dataset name. Typically inferred from `source`, but can be overridden.
 		"truenas.dataset": validate.IsAny,
 
 		// global flags for the tool
+
+		// gendoc:generate(entity=storage_truenas, group=common, key=truenas.allow_insecure)
+		//
+		// ---
+		//  type: bool
+		//  scope: global
+		//  default: `false`
+		//  shortdesc: If set to `true`, allows insecure (non-TLS) connections to the TrueNAS API.
 		"truenas.allow_insecure": validate.Optional(validate.IsBool),
-		"truenas.api_key":        validate.IsAny,
-		"truenas.config":         validate.IsAny,
-		"truenas.host":           validate.IsAny,
+
+		// gendoc:generate(entity=storage_truenas, group=common, key=truenas.api_key)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: API key used to authenticate with the TrueNAS host.
+		"truenas.api_key": validate.IsAny,
+
+		// gendoc:generate(entity=storage_truenas, group=common, key=truenas.config)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: Path to a configuration file for the TrueNAS client tool.
+		"truenas.config": validate.IsAny,
+
+		// gendoc:generate(entity=storage_truenas, group=common, key=truenas.host)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: Hostname or IP address of the remote TrueNAS system. Optional if included in the `source`, or a configuration is used.
+		"truenas.host": validate.IsAny,
 
 		// flags for the tool's iscsi commands
+
+		// gendoc:generate(entity=storage_truenas, group=common, key=truenas.initiator)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: iSCSI initiator name used during block volume attachment.
 		"truenas.initiator": validate.IsAny,
-		"truenas.portal":    validate.IsAny,
+
+		// gendoc:generate(entity=storage_truenas, group=common, key=truenas.portal)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: iSCSI portal address to use for block volume connections.
+		"truenas.portal": validate.IsAny,
 
 		// controls behaviour of the driver
-		"truenas.clone_copy":  validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=storage_truenas, group=common, key=truenas.clone_copy)
+		//
+		// ---
+		//  type: bool
+		//  scope: global
+		//  default: `true`
+		//  shortdesc: Whether to use lightweight clones rather than full {spellexception}`dataset` copies.
+		"truenas.clone_copy": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=storage_truenas, group=common, key=truenas.force_reuse)
+		//
+		// ---
+		//  type: bool
+		//  scope: global
+		//  default: `false`
+		//  shortdesc: Allow to use an existing non-empty pool.
 		"truenas.force_reuse": validate.Optional(validate.IsBool),
 	}
 

@@ -312,15 +312,142 @@ func (d *lvm) FillVolumeConfig(vol Volume) error {
 // commonVolumeRules returns validation rules which are common for pool and volume.
 func (d *lvm) commonVolumeRules() map[string]func(value string) error {
 	return map[string]func(value string) error{
+		// gendoc:generate(entity=storage_volume_lvm, group=common, key=block.mount_options)
+		//
+		// ---
+		//  type: string
+		//  condition: block-based volume with content type `filesystem`
+		//  default: same as `volume.block.mount_options`
+		//  shortdesc: Mount options for block-backed file system volumes
 		"block.mount_options": validate.IsAny,
-		"block.filesystem":    validate.Optional(validate.IsOneOf(blockBackedAllowedFilesystems...)),
-		"lvm.stripes":         validate.Optional(validate.IsUint32),
-		"lvm.stripes.size":    validate.Optional(validate.IsSize),
+
+		// gendoc:generate(entity=storage_volume_lvm, group=common, key=block.filesystem)
+		//
+		// ---
+		//  type: string
+		//  condition: block-based volume with content type `filesystem`
+		//  default: same as `volume.block.filesystem`
+		//  shortdesc: {{block_filesystem}}
+		"block.filesystem": validate.Optional(validate.IsOneOf(blockBackedAllowedFilesystems...)),
+
+		// gendoc:generate(entity=storage_volume_lvm, group=common, key=lvm.stripes)
+		//
+		// ---
+		//  type: string
+		//  condition: -
+		//  default: same as `volume.lvm.stripes`
+		//  shortdesc: Number of stripes to use for new volumes (or thin pool volume)
+		"lvm.stripes": validate.Optional(validate.IsUint32),
+
+		// gendoc:generate(entity=storage_volume_lvm, group=common, key=lvm.stripes.size)
+		//
+		// ---
+		//  type: string
+		//  condition: -
+		//  default: same as `volume.lvm.stripes.size`
+		//  shortdesc: Size of stripes to use (at least 4096 bytes and multiple of 512 bytes)
+		"lvm.stripes.size": validate.Optional(validate.IsSize),
 	}
 }
 
 // ValidateVolume validates the supplied volume config.
 func (d *lvm) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
+	// gendoc:generate(entity=storage_volume_lvm, group=common, key=initial.gid)
+	//
+	// ---
+	//  type: int
+	//  condition: custom volume with content type `filesystem`
+	//  default: same as `volume.initial.gid` or `0`
+	//  shortdesc: GID of the volume owner in the instance
+
+	// gendoc:generate(entity=storage_volume_lvm, group=common, key=initial.mode)
+	//
+	// ---
+	//  type: int
+	//  condition: custom volume with content type `filesystem`
+	//  default: same as `volume.initial.mode` or `711`
+	//  shortdesc: Mode of the volume in the instance
+
+	// gendoc:generate(entity=storage_volume_lvm, group=common, key=initial.uid)
+	//
+	// ---
+	//  type: int
+	//  condition: custom volume with content type `filesystem`
+	//  default: same as `volume.initial.uid` or `0`
+	//  shortdesc: UID of the volume owner in the instance
+
+	// gendoc:generate(entity=storage_volume_lvm, group=common, key=security.shared)
+	//
+	// ---
+	//  type: bool
+	//  condition: custom block volume
+	//  default: same as `volume.security.shared` or `false`
+	//  shortdesc: Enable sharing the volume across multiple instances
+
+	// gendoc:generate(entity=storage_volume_lvm, group=common, key=security.shifted)
+	//
+	// ---
+	//  type: bool
+	//  condition: custom volume
+	//  default: same as `volume.security.shifted` or `false`
+	//  shortdesc: {{enable_ID_shifting}}
+
+	// gendoc:generate(entity=storage_volume_lvm, group=common, key=security.unmapped)
+	//
+	// ---
+	//  type: bool
+	//  condition: custom volume
+	//  default: same as `volume.security.unmapped` or `false`
+	//  shortdesc: Disable ID mapping for the volume
+
+	// gendoc:generate(entity=storage_volume_lvm, group=common, key=size)
+	//
+	// ---
+	//  type: string
+	//  condition:
+	//  default: same as `volume.size`
+	//  shortdesc: Size/quota of the storage volume
+
+	// gendoc:generate(entity=storage_volume_lvm, group=common, key=snapshots.expiry)
+	//
+	// ---
+	//  type: string
+	//  condition: custom volume
+	//  default: same as `volume.snapshot.expiry`
+	//  shortdesc: {{snapshot_expiry_format}}
+
+	// gendoc:generate(entity=storage_volume_lvm, group=common, key=snapshots.expiry.manual)
+	//
+	// ---
+	//  type: string
+	//  condition: custom volume
+	//  default: same as `volume.snapshot.expiry.manual`
+	//  shortdesc: {{snapshot_expiry_format}}
+
+	// gendoc:generate(entity=storage_volume_lvm, group=common, key=snapshots.pattern)
+	//
+	// ---
+	//  type: string
+	//  condition: custom volume
+	//  default: same as `volume.snapshot.pattern` or `snap%d`
+	//  shortdesc: {{snapshot_pattern_format}}  [^*]
+
+	// gendoc:generate(entity=storage_volume_lvm, group=common, key=snapshots.schedule)
+	//
+	// ---
+	//  type: string
+	//  condition: custom volume
+	//  default: same as `volume.snapshot.schedule`
+	//  shortdesc: {{snapshot_schedule_format}}
+
+	// gendoc:generate(entity=storage_bucket_lvm, group=common, key=size)
+	//
+	// ---
+	//  type: string
+	//  condition: appropriate driver
+	//  default: same as `volume.size`
+	//  shortdesc: Size/quota of the storage bucket
+
 	commonRules := d.commonVolumeRules()
 
 	// Disallow block.* settings for regular custom block volumes. These settings only make sense

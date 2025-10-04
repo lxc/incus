@@ -778,16 +778,143 @@ func ValidateTrueNasVolBlocksize(value string) error {
 // commonVolumeRules returns validation rules which are common for pool and volume.
 func (d *truenas) commonVolumeRules() map[string]func(value string) error {
 	return map[string]func(value string) error{
-		"block.filesystem":         validate.Optional(validate.IsOneOf(blockBackedAllowedFilesystems...)),
-		"block.mount_options":      validate.IsAny,
-		"truenas.blocksize":        validate.Optional(ValidateTrueNasVolBlocksize), // used for volblocksize only. NOTE: zfs.blocksize is hard-coded in backend.shouldUseOptimizedImage...
+		// gendoc:generate(entity=storage_volume_truenas, group=common, key=block.filesystem)
+		//
+		// ---
+		//  type: string
+		//  condition: -
+		//  default: same as `volume.block.filesystem`
+		//  shortdesc: {{block_filesystem}}
+		"block.filesystem": validate.Optional(validate.IsOneOf(blockBackedAllowedFilesystems...)),
+
+		// gendoc:generate(entity=storage_volume_truenas, group=common, key=block.mount_options)
+		//
+		// ---
+		//  type: string
+		//  condition: -
+		//  default: same as `volume.block.mount_options`
+		//  shortdesc: Mount options for block-backed file system volumes
+		"block.mount_options": validate.IsAny,
+
+		// gendoc:generate(entity=storage_volume_truenas, group=common, key=truenas.blocksize)
+		//
+		// ---
+		//  type: string
+		//  condition: -
+		//  default: same as `volume.truenas.blocksize`
+		//  shortdesc: Size of the ZFS block in range from 512 bytes to 16 MiB (must be power of 2) - for block volume, a maximum value of 128 KiB will be used even if a higher value is set
+		"truenas.blocksize": validate.Optional(ValidateTrueNasVolBlocksize), // used for volblocksize only. NOTE: zfs.blocksize is hard-coded in backend.shouldUseOptimizedImage...
+
+		// gendoc:generate(entity=storage_volume_truenas, group=common, key=truenas.remove_snapshots)
+		//
+		// ---
+		//  type: bool
+		//  condition: -
+		//  default: same as `volume.truenas.remove_snapshots` or `false`
+		//  shortdesc: Remove snapshots as needed
 		"truenas.remove_snapshots": validate.Optional(validate.IsBool),
-		"truenas.use_refquota":     validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=storage_volume_truenas, group=common, key=truenas.use_refquota)
+		//
+		// ---
+		//  type: bool
+		//  condition: -
+		//  default: same as `volume.truenas.use_refquota` or `false`
+		//  shortdesc: Use `refquota` instead of `quota` for space
+		"truenas.use_refquota": validate.Optional(validate.IsBool),
 	}
 }
 
 // ValidateVolume validates the supplied volume config.
 func (d *truenas) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
+	// gendoc:generate(entity=storage_volume_truenas, group=common, key=initial.gid)
+	//
+	// ---
+	//  type: int
+	//  condition: custom volume with content type `filesystem`
+	//  default: same as `volume.initial.gid` or `0`
+	//  shortdesc: GID of the volume owner in the instance
+
+	// gendoc:generate(entity=storage_volume_truenas, group=common, key=initial.mode)
+	//
+	// ---
+	//  type: int
+	//  condition: custom volume with content type `filesystem`
+	//  default: same as `volume.initial.mode` or `711`
+	//  shortdesc: Mode of the volume in the instance
+
+	// gendoc:generate(entity=storage_volume_truenas, group=common, key=initial.uid)
+	//
+	// ---
+	//  type: int
+	//  condition: custom volume with content type `filesystem`
+	//  default: same as `volume.initial.uid` or `0`
+	//  shortdesc: UID of the volume owner in the instance
+
+	// gendoc:generate(entity=storage_volume_truenas, group=common, key=security.shared)
+	//
+	// ---
+	//  type: bool
+	//  condition: custom block volume
+	//  default: same as `volume.security.shared` or `false`
+	//  shortdesc: Enable sharing the volume across multiple instances
+
+	// gendoc:generate(entity=storage_volume_truenas, group=common, key=security.shifted)
+	//
+	// ---
+	//  type: bool
+	//  condition: custom volume
+	//  default: same as `volume.security.shifted` or `false`
+	//  shortdesc: {{enable_ID_shifting}}
+
+	// gendoc:generate(entity=storage_volume_truenas, group=common, key=security.unmapped)
+	//
+	// ---
+	//  type: bool
+	//  condition: custom volume
+	//  default: same as `volume.security.unmapped` or `false`
+	//  shortdesc: Disable ID mapping for the volume
+
+	// gendoc:generate(entity=storage_volume_truenas, group=common, key=size)
+	//
+	// ---
+	//  type: string
+	//  condition: appropriate driver
+	//  default: same as `volume.size`
+	//  shortdesc: Size/quota of the storage volume
+
+	// gendoc:generate(entity=storage_volume_truenas, group=common, key=snapshots.expiry)
+	//
+	// ---
+	//  type: string
+	//  condition: custom volume
+	//  default: same as `volume.snapshot.expiry`
+	//  shortdesc: {{snapshot_expiry_format}}
+
+	// gendoc:generate(entity=storage_volume_truenas, group=common, key=snapshots.expiry.manual)
+	//
+	// ---
+	//  type: string
+	//  condition: custom volume
+	//  default: same as `volume.snapshot.expiry.manual`
+	//  shortdesc: {{snapshot_expiry_format}}
+
+	// gendoc:generate(entity=storage_volume_truenas, group=common, key=snapshots.pattern)
+	//
+	// ---
+	//  type: string
+	//  condition: custom volume
+	//  default: same as `volume.snapshot.pattern` or `snap%d`
+	//  shortdesc: {{snapshot_pattern_format}}
+
+	// gendoc:generate(entity=storage_volume_truenas, group=common, key=snapshots.schedule)
+	//
+	// ---
+	//  type: string
+	//  condition: custom volume
+	//  default: same as `volume.snapshot.schedule`
+	//  shortdesc: {{snapshot_schedule_format}}
+
 	commonRules := d.commonVolumeRules()
 
 	// Disallow block.* settings for regular custom block volumes. These settings only make sense

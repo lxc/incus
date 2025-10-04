@@ -24,6 +24,13 @@ import (
 
 // ValidateVolume validates the supplied volume config.
 func (d *cephobject) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
+	// gendoc:generate(entity=storage_bucket_cephobject, group=common, key=size)
+	//
+	// ---
+	//  type: string
+	//  default: -
+	//  shortdesc: Quota of the storage bucket
+
 	return d.validateVolume(vol, nil, removeUnknownKeys)
 }
 
