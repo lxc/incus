@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2025-10-03 09:59+0000\n"
+        "POT-Creation-Date: 2025-10-04 11:59-0400\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -8856,7 +8856,7 @@ msgid   "incus file push /etc/hosts foo/etc/hosts\n"
         "   To push /etc/hosts into the instance \"foo\".\n"
         "\n"
         "echo \"Hello world\" | incus file push - foo/root/test\n"
-        "   To read \"Hello world\" from standard input and write it into /roo/test in instance \"foo\"."
+        "   To read \"Hello world\" from standard input and write it into /root/test in instance \"foo\"."
 msgstr  ""
 
 #: cmd/incus/image.go:374
