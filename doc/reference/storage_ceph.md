@@ -78,38 +78,21 @@ The following configuration options are available for storage pools that use the
 (storage-ceph-pool-config)=
 ### Storage pool configuration
 
-| Key                       | Type   | Default          | Description                                                             |
-| :---                      | :---   | :---             | :---                                                                    |
-| `ceph.cluster_name`       | string | `ceph`           | Name of the Ceph cluster in which to create new storage pools           |
-| `ceph.osd.data_pool_name` | string | -                | Name of the OSD data pool                                               |
-| `ceph.osd.pg_num`         | string | `32`             | Number of placement groups for the OSD storage pool                     |
-| `ceph.osd.pool_name`      | string | name of the pool | Name of the OSD storage pool                                            |
-| `ceph.rbd.clone_copy`     | bool   | `true`           | Whether to use RBD lightweight clones rather than full dataset copies   |
-| `ceph.rbd.du`             | bool   | `true`           | Whether to use RBD `du` to obtain disk usage data for stopped instances |
-| `ceph.rbd.features`       | string | `layering`       | Comma-separated list of RBD features to enable on the volumes           |
-| `ceph.user.name`          | string | `admin`          | The Ceph user to use when creating storage pools and volumes            |
-| `source`                  | string | -                | Existing OSD storage pool to use                                        |
-| `volatile.pool.pristine`  | string | `true`           | Whether the pool was empty on creation time                             |
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group storage_ceph-common start -->
+    :end-before: <!-- config group storage_ceph-common end -->
+```
 
 {{volume_configuration}}
 
 (storage-ceph-vol-config)=
 ### Storage volume configuration
 
-| Key                       | Type   | Condition                                         | Default                                        | Description                                         |
-| :---                      | :---   | :---                                              | :---                                           | :---                                                |
-| `block.filesystem`        | string | block-based volume with content type `filesystem` | same as `volume.block.filesystem`              | {{block_filesystem}}                                |
-| `block.mount_options`     | string | block-based volume with content type `filesystem` | same as `volume.block.mount_options`           | Mount options for block-backed file system volumes  |
-| `initial.gid`             | int    | custom volume with content type `filesystem`      | same as `volume.initial.uid` or `0`            | GID of the volume owner in the instance             |
-| `initial.mode`            | int    | custom volume with content type `filesystem`      | same as `volume.initial.mode` or `711`         | Mode of the volume in the instance                  |
-| `initial.uid`             | int    | custom volume with content type `filesystem`      | same as `volume.initial.gid` or `0`            | UID of the volume owner in the instance             |
-| `security.shared`         | bool   | custom block volume                               | same as `volume.security.shared` or `false`    | Enable sharing the volume across multiple instances |
-| `security.shifted`        | bool   | custom volume                                     | same as `volume.security.shifted` or `false`   | {{enable_ID_shifting}}                              |
-| `security.unmapped`       | bool   | custom volume                                     | same as `volume.security.unmapped` or `false`  | Disable ID mapping for the volume                   |
-| `size`                    | string |                                                   | same as `volume.size`                          | Size/quota of the storage volume                    |
-| `snapshots.expiry`        | string | custom volume                                     | same as `volume.snapshots.expiry`              | {{snapshot_expiry_format}}                          |
-| `snapshots.expiry.manual` | string | custom volume                                     | same as `volume.snapshots.expiry.manual`       | {{snapshot_expiry_format}}                          |
-| `snapshots.pattern`       | string | custom volume                                     | same as `volume.snapshots.pattern` or `snap%d` | {{snapshot_pattern_format}} [^*]                    |
-| `snapshots.schedule`      | string | custom volume                                     | same as `volume.snapshots.schedule`            | {{snapshot_schedule_format}}                        |
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group storage_volume_ceph-common start -->
+    :end-before: <!-- config group storage_volume_ceph-common end -->
+```
 
 [^*]: {{snapshot_pattern_detail}}
