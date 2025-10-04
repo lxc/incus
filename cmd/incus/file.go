@@ -700,7 +700,7 @@ func (c *cmdFilePush) Command() *cobra.Command {
    To push /etc/hosts into the instance "foo".
 
 echo "Hello world" | incus file push - foo/root/test
-   To read "Hello world" from standard input and write it into /roo/test in instance "foo".`))
+   To read "Hello world" from standard input and write it into /root/test in instance "foo".`))
 
 	cmd.Flags().BoolVarP(&c.file.flagRecursive, "recursive", "r", false, i18n.G("Recursively transfer files"))
 	cmd.Flags().BoolVarP(&c.file.flagMkdir, "create-dirs", "p", false, i18n.G("Create any directories necessary"))
