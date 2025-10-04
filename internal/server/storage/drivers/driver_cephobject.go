@@ -112,12 +112,59 @@ func (d *cephobject) Info() Info {
 // Validate checks that all provide keys are supported and that no conflicting or missing configuration is present.
 func (d *cephobject) Validate(config map[string]string) error {
 	rules := map[string]func(value string) error{
-		"cephobject.cluster_name":               validate.IsAny,
-		"cephobject.user.name":                  validate.IsAny,
-		"cephobject.radosgw.endpoint":           validate.Optional(validate.IsRequestURL),
+		// gendoc:generate(entity=storage_cephobject, group=common, key=cephobject.cluster_name)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `ceph`
+		//  shortdesc: The Ceph cluster to use
+		"cephobject.cluster_name": validate.IsAny,
+
+		// gendoc:generate(entity=storage_cephobject, group=common, key=cephobject.user.name)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `admin`
+		//  shortdesc: The Ceph user to use
+		"cephobject.user.name": validate.IsAny,
+
+		// gendoc:generate(entity=storage_cephobject, group=common, key=cephobject.radosgw.endpoint)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: URL of the `radosgw` gateway process
+		"cephobject.radosgw.endpoint": validate.Optional(validate.IsRequestURL),
+
+		// gendoc:generate(entity=storage_cephobject, group=common, key=cephobject.radosgw.endpoint_cert_file)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: Path to the file containing the TLS client certificate to use for endpoint communication
 		"cephobject.radosgw.endpoint_cert_file": validate.Optional(validate.IsAbsFilePath),
-		"cephobject.bucket.name_prefix":         validate.Optional(validate.IsAny),
-		"volatile.pool.pristine":                validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=storage_cephobject, group=common, key=cephobject.bucket_name_prefix)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: Prefix to add to bucket names in Ceph
+		"cephobject.bucket.name_prefix": validate.Optional(validate.IsAny),
+
+		// gendoc:generate(entity=storage_cephobject, group=common, key=volatile.pool.pristine)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `true`
+		//  shortdesc: Whether the `radosgw` `incus-admin` user existed at creation time
+		"volatile.pool.pristine": validate.Optional(validate.IsBool),
 	}
 
 	return d.validatePool(config, rules, nil)

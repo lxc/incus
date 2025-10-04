@@ -1580,19 +1580,178 @@ func (d *zfs) HasVolume(vol Volume) (bool, error) {
 // commonVolumeRules returns validation rules which are common for pool and volume.
 func (d *zfs) commonVolumeRules() map[string]func(value string) error {
 	return map[string]func(value string) error{
-		"block.filesystem":     validate.Optional(validate.IsOneOf(blockBackedAllowedFilesystems...)),
-		"block.mount_options":  validate.IsAny,
-		"zfs.block_mode":       validate.Optional(validate.IsBool),
-		"zfs.blocksize":        validate.Optional(ValidateZfsBlocksize),
+		// gendoc:generate(entity=storage_volume_zfs, group=common, key=block.filesystem)
+		//
+		// ---
+		//  type: string
+		//  condition: block-based volume with content type `filesystem` (`zfs.block_mode` enabled)
+		//  default: same as `volume.block.filesystem`
+		//  shortdesc: {{block_filesystem}}
+		"block.filesystem": validate.Optional(validate.IsOneOf(blockBackedAllowedFilesystems...)),
+
+		// gendoc:generate(entity=storage_volume_zfs, group=common, key=block.mount_options)
+		//
+		// ---
+		//  type: string
+		//  condition: block-based volume with content type `filesystem` (`zfs.block_mode` enabled)
+		//  default: same as `volume.block.mount_options`
+		//  shortdesc: Mount options for block-backed file system volumes
+		"block.mount_options": validate.IsAny,
+
+		// gendoc:generate(entity=storage_volume_zfs, group=common, key=zfs.blocksize)
+		//
+		// ---
+		//  type: string
+		//  condition: -
+		//  default: same as `volume.zfs.blocksize`
+		//  shortdesc: Size of the ZFS block in range from 512 bytes to 16 MiB (must be power of 2) - for block volume, a maximum value of 128 KiB will be used even if a higher value is set
+		"zfs.blocksize": validate.Optional(ValidateZfsBlocksize),
+
+		// gendoc:generate(entity=storage_volume_zfs, group=common, key=zfs.block_mode)
+		//
+		// ---
+		//  type: bool
+		//  condition: -
+		//  default: same as `volume.zfs.block_mode`
+		//  shortdesc: Whether to use a formatted `zvol` rather than a {spellexception}`dataset` (`zfs.block_mode` can be set only for custom storage volumes; use `volume.zfs.block_mode` to enable ZFS block mode for all storage volumes in the pool, including instance volumes)
+		"zfs.block_mode": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=storage_volume_zfs, group=common, key=zfs.remove_snapshots)
+		//
+		// ---
+		//  type: bool
+		//  condition: -
+		//  default: same as `volume.zfs.remove_snapshots` or `false`
+		//  shortdesc: Remove snapshots as needed
 		"zfs.remove_snapshots": validate.Optional(validate.IsBool),
-		"zfs.reserve_space":    validate.Optional(validate.IsBool),
-		"zfs.use_refquota":     validate.Optional(validate.IsBool),
-		"zfs.delegate":         validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=storage_volume_zfs, group=common, key=zfs.reserve_space)
+		//
+		// ---
+		//  type: bool
+		//  condition: -
+		//  default: same as `volume.zfs.reserve_space` or `false`
+		//  shortdesc: Use `reservation`/`refreservation` along with `quota`/`refquota`
+		"zfs.reserve_space": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=storage_volume_zfs, group=common, key=zfs.use_refquota)
+		//
+		// ---
+		//  type: bool
+		//  condition: -
+		//  default: same as `volume.zfsuse_refquota` or `false`
+		//  shortdesc: Use `refquota` instead of `quota` for space
+		"zfs.use_refquota": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=storage_volume_zfs, group=common, key=zfs.delegate)
+		//
+		// ---
+		//  type: bool
+		//  condition: ZFS 2.2 or higher
+		//  default: same as `volume.zfs.delegate`
+		//  shortdesc: Controls whether to delegate the ZFS dataset and anything underneath it to the container(s) using it. Allows the use of the `zfs` command in the container
+		"zfs.delegate": validate.Optional(validate.IsBool),
 	}
 }
 
 // ValidateVolume validates the supplied volume config.
 func (d *zfs) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
+	// gendoc:generate(entity=storage_volume_zfs, group=common, key=initial.gid)
+	//
+	// ---
+	//  type: int
+	//  condition: custom volume with content type `filesystem`
+	//  default: same as `volume.initial.gid` or `0`
+	//  shortdesc: GID of the volume owner in the instance
+
+	// gendoc:generate(entity=storage_volume_zfs, group=common, key=initial.mode)
+	//
+	// ---
+	//  type: int
+	//  condition: custom volume with content type `filesystem`
+	//  default: same as `volume.initial.mode` or `711`
+	//  shortdesc: Mode of the volume in the instance
+
+	// gendoc:generate(entity=storage_volume_zfs, group=common, key=initial.uid)
+	//
+	// ---
+	//  type: int
+	//  condition: custom volume with content type `filesystem`
+	//  default: same as `volume.initial.uid` or `0`
+	//  shortdesc: UID of the volume owner in the instance
+
+	// gendoc:generate(entity=storage_volume_zfs, group=common, key=security.shared)
+	//
+	// ---
+	//  type: bool
+	//  condition: custom block volume
+	//  default: same as `volume.security.shared` or `false`
+	//  shortdesc: Enable sharing the volume across multiple instances
+
+	// gendoc:generate(entity=storage_volume_zfs, group=common, key=security.shifted)
+	//
+	// ---
+	//  type: bool
+	//  condition: custom volume
+	//  default: same as `volume.security.shifted` or `false`
+	//  shortdesc: {{enable_ID_shifting}}
+
+	// gendoc:generate(entity=storage_volume_zfs, group=common, key=security.unmapped)
+	//
+	// ---
+	//  type: bool
+	//  condition: custom volume
+	//  default: same as `volume.security.unmapped` or `false`
+	//  shortdesc: Disable ID mapping for the volume
+
+	// gendoc:generate(entity=storage_volume_zfs, group=common, key=size)
+	//
+	// ---
+	//  type: string
+	//  condition: -
+	//  default: same as `volume.size`
+	//  shortdesc: Size/quota of the storage volume
+
+	// gendoc:generate(entity=storage_volume_zfs, group=common, key=snapshots.expiry)
+	//
+	// ---
+	//  type: string
+	//  condition: custom volume
+	//  default: same as `volume.snapshot.expiry`
+	//  shortdesc: {{snapshot_expiry_format}}
+
+	// gendoc:generate(entity=storage_volume_zfs, group=common, key=snapshots.expiry.manual)
+	//
+	// ---
+	//  type: string
+	//  condition: custom volume
+	//  default: same as `volume.snapshot.expiry.manual`
+	//  shortdesc: {{snapshot_expiry_format}}
+
+	// gendoc:generate(entity=storage_volume_zfs, group=common, key=snapshots.pattern)
+	//
+	// ---
+	//  type: string
+	//  condition: custom volume
+	//  default: same as `volume.snapshot.pattern` or `snap%d`
+	//  shortdesc: {{snapshot_pattern_format}} [^*]
+
+	// gendoc:generate(entity=storage_volume_zfs, group=common, key=snapshots.schedule)
+	//
+	// ---
+	//  type: string
+	//  condition: custom volume
+	//  default: same as `volume.snapshot.schedule`
+	//  shortdesc: {{snapshot_schedule_format}}
+
+	// gendoc:generate(entity=storage_bucket_zfs, group=common, key=size)
+	//
+	// ---
+	//  type: string
+	//  condition: appropriate driver
+	//  default: same as `volume.size`
+	//  shortdesc: Size/quota of the storage bucket
+
 	commonRules := d.commonVolumeRules()
 
 	// Disallow block.* settings for regular custom block volumes. These settings only make sense

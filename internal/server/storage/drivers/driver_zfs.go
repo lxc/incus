@@ -532,9 +532,48 @@ func (d *zfs) Delete(op *operations.Operation) error {
 
 // Validate checks that all provide keys are supported and that no conflicting or missing configuration is present.
 func (d *zfs) Validate(config map[string]string) error {
+	// gendoc:generate(entity=storage_zfs, group=common, key=source)
+	//
+	// ---
+	//  type: string
+	//  scope: local
+	//  default: -
+	//  shortdesc: Path to existing block device(s), loop file or ZFS dataset/pool. Multiple block devices should be separated by `,`. When listing block devices, you can also prefix them with `vdev` type. To specify a `vdev` type, use an `=` sign between the `vdev` type and the block devices (e.g., `mirror=/dev/sda,/dev/sdb`). Only `stripe`, `mirror`, `raidz1` and `raidz2` `vdev` types are supported.
+
+	// gendoc:generate(entity=storage_zfs, group=common, key=source.wipe)
+	//
+	// ---
+	//  type: bool
+	//  scope: local
+	//  default: `false`
+	//  shortdesc: Wipe the block device specified in `source` prior to creating the storage pool
+
 	rules := map[string]func(value string) error{
-		"size":          validate.Optional(validate.IsSize),
+		// gendoc:generate(entity=storage_zfs, group=common, key=size)
+		//
+		// ---
+		//  type: string
+		//  scope: local
+		//  default: auto (20% of free disk space, >= 5 GiB and <= 30 GiB)
+		//  shortdesc: Size of the storage pool when creating loop-based pools (in bytes, suffixes supported, can be increased to grow storage pool)
+		"size": validate.Optional(validate.IsSize),
+
+		// gendoc:generate(entity=storage_zfs, group=common, key=zfs.pool_name)
+		//
+		// ---
+		//  type: string
+		//  scope: local
+		//  default: name of the pool
+		//  shortdesc: Name of the zpool
 		"zfs.pool_name": validate.IsAny,
+
+		// gendoc:generate(entity=storage_zfs, group=common, key=zfs.clone_copy)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `true`
+		//  shortdesc: Whether to use ZFS lightweight clones rather than full {spellexception}`dataset` copies (Boolean), or `rebase` to copy based on the initial image
 		"zfs.clone_copy": validate.Optional(func(value string) error {
 			if value == "rebase" {
 				return nil
@@ -542,6 +581,14 @@ func (d *zfs) Validate(config map[string]string) error {
 
 			return validate.IsBool(value)
 		}),
+
+		// gendoc:generate(entity=storage_zfs, group=common, key=zfs.export)
+		//
+		// ---
+		//  type: bool
+		//  scope: global
+		//  default: `true`
+		//  shortdesc: Disable zpool export while unmount performed
 		"zfs.export": validate.Optional(validate.IsBool),
 	}
 
