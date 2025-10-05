@@ -1751,11 +1751,27 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		qemuArgs = append(qemuArgs, "-smbios", "type=2,manufacturer=LinuxContainers,product=Incus")
 
 		for k, v := range d.expandedConfig {
-			if !strings.HasPrefix(k, "smbios11.") {
+			var configPrefix, smbiosPrefix string
+			if strings.HasPrefix(k, "smbios11.") {
+				configPrefix = "smbios11."
+				smbiosPrefix = ""
+			} else if strings.HasPrefix(k, "systemd.credential.") {
+				configPrefix = "systemd.credential."
+				smbiosPrefix = "io.systemd.credential:"
+			} else if strings.HasPrefix(k, "systemd.credential-binary.") {
+				configPrefix = "systemd.credential-binary."
+				smbiosPrefix = "io.systemd.credential.binary:"
+				data, err := base64.RawStdEncoding.DecodeString(strings.TrimRight(v, "="))
+				if err != nil {
+					return fmt.Errorf("Invalid base64 value for %q: %q", k, v)
+				}
+
+				v = base64.StdEncoding.EncodeToString(data)
+			} else {
 				continue
 			}
 
-			qemuArgs = append(qemuArgs, "-smbios", fmt.Sprintf("type=11,value=%s=%s", strings.TrimPrefix(k, "smbios11."), qemuEscapeCmdline(v)))
+			qemuArgs = append(qemuArgs, "-smbios", fmt.Sprintf("type=11,value=%s%s=%s", smbiosPrefix, strings.TrimPrefix(k, configPrefix), qemuEscapeCmdline(v)))
 		}
 	}
 
