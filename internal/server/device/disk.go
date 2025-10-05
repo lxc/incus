@@ -1222,6 +1222,11 @@ func (d *disk) setBus(entry *deviceConfig.MountEntryItem) error {
 
 // startVM starts the disk device for a virtual machine instance.
 func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
+	// Ignore detached disks.
+	if !util.IsTrueOrEmpty(d.config["attached"]) {
+		return nil, nil
+	}
+
 	runConf := deviceConfig.RunConfig{}
 
 	reverter := revert.New()
@@ -1239,9 +1244,6 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 	if d.config["wwn"] != "" {
 		opts = append(opts, fmt.Sprintf("wwn=%s", d.config["wwn"]))
 	}
-
-	// Setup the attached status.
-	attached := util.IsTrueOrEmpty(d.config["attached"])
 
 	// Add I/O limits if set.
 	var diskLimits *deviceConfig.DiskLimits
@@ -1306,7 +1308,6 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 			DevName:  d.name,
 			FSType:   "iso9660",
 			Opts:     opts,
-			Attached: attached,
 		}
 
 		err = d.setBus(&mount)
@@ -1341,7 +1342,6 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 			DevName:  d.name,
 			FSType:   "iso9660",
 			Opts:     opts,
-			Attached: attached,
 		}
 
 		err = d.setBus(&mount)
@@ -1364,7 +1364,6 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 				DevName:  d.name,
 				Opts:     opts,
 				Limits:   diskLimits,
-				Attached: attached,
 			}
 
 			err := d.setBus(&mount)
@@ -1380,7 +1379,6 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 				DevName:  d.name,
 				Opts:     opts,
 				Limits:   diskLimits,
-				Attached: attached,
 			}
 
 			err := d.setBus(&mount)
@@ -1443,7 +1441,6 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 						DevName:  d.name,
 						Opts:     opts,
 						Limits:   diskLimits,
-						Attached: attached,
 					}
 
 					err = d.setBus(&mount)
