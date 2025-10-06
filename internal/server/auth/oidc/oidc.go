@@ -16,6 +16,7 @@ import (
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
 
+	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -159,6 +160,8 @@ func (o *Verifier) Login(w http.ResponseWriter, r *http.Request) {
 	// Get the provider.
 	provider, err := o.getProvider(r)
 	if err != nil {
+		logger.Error("Failed to get OIDC provider", logger.Ctx{"err": err})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -223,6 +226,8 @@ func (o *Verifier) Callback(w http.ResponseWriter, r *http.Request) {
 	// Get the provider.
 	provider, err := o.getProvider(r)
 	if err != nil {
+		logger.Error("Failed to get OIDC provider", logger.Ctx{"err": err})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
