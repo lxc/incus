@@ -1189,3 +1189,20 @@ func genericVFSListVolumes(d Driver) ([]Volume, error) {
 
 	return vols, nil
 }
+
+// genericRunFiller runs the supplied filler, and setting the returned volume size back into filler.
+func genericRunFiller(d Driver, vol Volume, devPath string, filler *VolumeFiller, allowUnsafeResize bool) error {
+	if filler == nil || filler.Fill == nil {
+		return nil
+	}
+
+	vol.driver.Logger().Debug("Running filler function", logger.Ctx{"dev": devPath, "path": vol.MountPath()})
+	volSize, err := filler.Fill(vol, devPath, allowUnsafeResize, !d.Info().ZeroUnpack)
+	if err != nil {
+		return err
+	}
+
+	filler.Size = volSize
+
+	return nil
+}
