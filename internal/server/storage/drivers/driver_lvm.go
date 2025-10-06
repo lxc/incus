@@ -603,7 +603,7 @@ func (d *lvm) Validate(config map[string]string) error {
 	//  type: string
 	//  scope: local
 	//  default: -
-	//  shortdesc: Path to an existing block device, loop file or LVM volume group. Driver: all.
+	//  shortdesc: Path to an existing block device, loop file or LVM volume group.
 
 	// gendoc:generate(entity=storage_lvm, group=common, key=source.wipe)
 	//
@@ -611,7 +611,7 @@ func (d *lvm) Validate(config map[string]string) error {
 	//  type: bool
 	//  scope: local
 	//  default: `false`
-	//  shortdesc: Wipe the block device specified in `source` prior to creating the storage pool. Driver: `lvm`.
+	//  shortdesc: Wipe the block device specified in `source` prior to creating the storage pool.
 
 	rules := map[string]func(value string) error{
 		// gendoc:generate(entity=storage_lvm, group=common, key=lvm.vg_name)
@@ -620,7 +620,7 @@ func (d *lvm) Validate(config map[string]string) error {
 		//  type: string
 		//  scope: local
 		//  default: name of the pool
-		//  shortdesc: Name of the volume group to create. Driver: all.
+		//  shortdesc: Name of the volume group to create.
 		"lvm.vg_name": validate.IsAny,
 
 		// gendoc:generate(entity=storage_lvm, group=common, key=lvm.metadata_size)
@@ -629,7 +629,7 @@ func (d *lvm) Validate(config map[string]string) error {
 		//  type: string
 		//  scope: global
 		//  default: `0` (auto)
-		//  shortdesc: The size of the metadata space for the physical volume. Driver: `lvm`.
+		//  shortdesc: The size of the metadata space for the physical volume.
 		"lvm.metadata_size": validate.Optional(validate.IsSize),
 	}
 
@@ -640,7 +640,7 @@ func (d *lvm) Validate(config map[string]string) error {
 		//  type: string
 		//  scope: local
 		//  default: auto (20% of free disk space, >= 5 GiB and <= 30 GiB)
-		//  shortdesc: Size of the storage pool when creating loop-based pools (in bytes, suffixes supported, can be increased to grow storage pool). Driver: `lvm`.
+		//  shortdesc: Size of the storage pool when creating loop-based pools (in bytes, suffixes supported, can be increased to grow storage pool). Not usable with `lvmcluster`.
 		rules["size"] = validate.Optional(validate.IsSize)
 
 		// gendoc:generate(entity=storage_lvm, group=common, key=lvm.thinpool_name)
@@ -649,7 +649,7 @@ func (d *lvm) Validate(config map[string]string) error {
 		//  type: string
 		//  scope: local
 		//  default: `IncusThinPool`
-		//  shortdesc: Thin pool where volumes are created. Driver: `lvm`
+		//  shortdesc: Thin pool where volumes are created. Not usable with `lvmcluster`.
 		rules["lvm.thinpool_name"] = validate.IsAny
 
 		// gendoc:generate(entity=storage_lvm, group=common, key=lvm.thinpool_metadata_size)
@@ -658,7 +658,7 @@ func (d *lvm) Validate(config map[string]string) error {
 		//  type: string
 		//  scope: global
 		//  default: `0` (auto)
-		//  shortdesc: The size of the thin pool metadata volume (the default is to let LVM calculate an appropriate size). Driver: `lvm`.
+		//  shortdesc: The size of the thin pool metadata volume (the default is to let LVM calculate an appropriate size). Not usable with `lvmcluster`.
 		rules["lvm.thinpool_metadata_size"] = validate.Optional(validate.IsSize)
 
 		// gendoc:generate(entity=storage_lvm, group=common, key=lvm.use_thinpool)
@@ -667,7 +667,7 @@ func (d *lvm) Validate(config map[string]string) error {
 		//  type: bool
 		//  scope: global
 		//  default: `true`
-		//  shortdesc: Whether the storage pool uses a thin pool for logical volumes. Driver: `lvm`.
+		//  shortdesc: Whether the storage pool uses a thin pool for logical volumes. Not usable with `lvmcluster`.
 		rules["lvm.use_thinpool"] = validate.Optional(validate.IsBool)
 
 		// gendoc:generate(entity=storage_lvm, group=common, key=lvm.vg.force_reuse)
@@ -676,7 +676,7 @@ func (d *lvm) Validate(config map[string]string) error {
 		//  type: bool
 		//  scope: local
 		//  default: `false`
-		//  shortdesc: Force using an existing non-empty volume group. Driver: `lvm`.
+		//  shortdesc: Force using an existing non-empty volume group. Not usable with `lvmcluster`.
 		rules["lvm.vg.force_reuse"] = validate.Optional(validate.IsBool)
 	}
 
