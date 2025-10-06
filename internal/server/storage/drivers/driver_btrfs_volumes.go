@@ -90,7 +90,7 @@ func (d *btrfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Op
 		}
 	}
 
-	err = d.runFiller(vol, rootBlockPath, filler, false)
+	err = genericRunFiller(d, vol, rootBlockPath, filler, false)
 	if err != nil {
 		return err
 	}

@@ -310,23 +310,6 @@ func (d *common) moveGPTAltHeader(devPath string) error {
 	return err
 }
 
-// runFiller runs the supplied filler, and setting the returned volume size back into filler.
-func (d *common) runFiller(vol Volume, devPath string, filler *VolumeFiller, allowUnsafeResize bool) error {
-	if filler == nil || filler.Fill == nil {
-		return nil
-	}
-
-	vol.driver.Logger().Debug("Running filler function", logger.Ctx{"dev": devPath, "path": vol.MountPath()})
-	volSize, err := filler.Fill(vol, devPath, allowUnsafeResize)
-	if err != nil {
-		return err
-	}
-
-	filler.Size = volSize
-
-	return nil
-}
-
 // CreateVolume creates a new storage volume on disk.
 func (d *common) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Operation) error {
 	return ErrNotSupported

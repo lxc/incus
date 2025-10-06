@@ -57,7 +57,7 @@ func (d *cephfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.O
 	}
 
 	// Fill the volume.
-	err = d.runFiller(vol, "", filler, false)
+	err = genericRunFiller(d, vol, "", filler, false)
 	if err != nil {
 		return err
 	}

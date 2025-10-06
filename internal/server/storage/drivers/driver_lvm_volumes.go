@@ -88,7 +88,7 @@ func (d *lvm) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 			}
 
 			// Run the filler.
-			err = d.runFiller(vol, devPath, filler, allowUnsafeResize)
+			err = genericRunFiller(d, vol, devPath, filler, allowUnsafeResize)
 			if err != nil {
 				return err
 			}

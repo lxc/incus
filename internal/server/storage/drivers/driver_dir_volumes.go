@@ -63,7 +63,7 @@ func (d *dir) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 	}
 
 	// Run the volume filler function if supplied.
-	err = d.runFiller(vol, rootBlockPath, filler, false)
+	err = genericRunFiller(d, vol, rootBlockPath, filler, false)
 	if err != nil {
 		return err
 	}
