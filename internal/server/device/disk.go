@@ -1304,10 +1304,10 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 
 		// Encode the file descriptor and original isoPath into the DevPath field.
 		mount := deviceConfig.MountEntryItem{
-			DevPath:  fmt.Sprintf("%s:%d:%s", DiskFileDescriptorMountPrefix, f.Fd(), isoPath),
-			DevName:  d.name,
-			FSType:   "iso9660",
-			Opts:     opts,
+			DevPath: fmt.Sprintf("%s:%d:%s", DiskFileDescriptorMountPrefix, f.Fd(), isoPath),
+			DevName: d.name,
+			FSType:  "iso9660",
+			Opts:    opts,
 		}
 
 		err = d.setBus(&mount)
@@ -1338,10 +1338,10 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 
 		// Encode the file descriptor and original isoPath into the DevPath field.
 		mount := deviceConfig.MountEntryItem{
-			DevPath:  fmt.Sprintf("%s:%d:%s", DiskFileDescriptorMountPrefix, f.Fd(), isoPath),
-			DevName:  d.name,
-			FSType:   "iso9660",
-			Opts:     opts,
+			DevPath: fmt.Sprintf("%s:%d:%s", DiskFileDescriptorMountPrefix, f.Fd(), isoPath),
+			DevName: d.name,
+			FSType:  "iso9660",
+			Opts:    opts,
 		}
 
 		err = d.setBus(&mount)
@@ -1360,10 +1360,10 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 			fields = strings.SplitN(fields[1], "/", 2)
 			clusterName, userName := d.cephCreds()
 			mount := deviceConfig.MountEntryItem{
-				DevPath:  DiskGetRBDFormat(clusterName, userName, fields[0], fields[1]),
-				DevName:  d.name,
-				Opts:     opts,
-				Limits:   diskLimits,
+				DevPath: DiskGetRBDFormat(clusterName, userName, fields[0], fields[1]),
+				DevName: d.name,
+				Opts:    opts,
+				Limits:  diskLimits,
 			}
 
 			err := d.setBus(&mount)
@@ -1375,10 +1375,10 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 		} else {
 			// Default to block device or image file passthrough first.
 			mount := deviceConfig.MountEntryItem{
-				DevPath:  d.config["source"],
-				DevName:  d.name,
-				Opts:     opts,
-				Limits:   diskLimits,
+				DevPath: d.config["source"],
+				DevName: d.name,
+				Opts:    opts,
+				Limits:  diskLimits,
 			}
 
 			err := d.setBus(&mount)
@@ -1437,10 +1437,10 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					}
 
 					mount := deviceConfig.MountEntryItem{
-						DevPath:  DiskGetRBDFormat(clusterName, userName, poolName, d.config["source"]),
-						DevName:  d.name,
-						Opts:     opts,
-						Limits:   diskLimits,
+						DevPath: DiskGetRBDFormat(clusterName, userName, poolName, d.config["source"]),
+						DevName: d.name,
+						Opts:    opts,
+						Limits:  diskLimits,
 					}
 
 					err = d.setBus(&mount)
