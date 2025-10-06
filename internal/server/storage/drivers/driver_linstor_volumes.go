@@ -70,17 +70,152 @@ func (d *linstor) FillVolumeConfig(vol Volume) error {
 // commonVolumeRules returns validation rules which are common for pool and volume.
 func (d *linstor) commonVolumeRules() map[string]func(value string) error {
 	return map[string]func(value string) error{
-		"block.filesystem":                   validate.Optional(validate.IsOneOf(blockBackedAllowedFilesystems...)),
-		"block.mount_options":                validate.IsAny,
-		DrbdOnNoQuorumConfigKey:              validate.Optional(validate.IsOneOf("io-error", "suspend-io")),
-		DrbdAutoDiskfulConfigKey:             validate.Optional(validate.IsMinimumDuration(time.Minute)),
+		// gendoc:generate(entity=storage_volume_linstor, group=common, key=block.filesystem)
+		//
+		// ---
+		//  type: string
+		//  condition: block-based volume with content type `filesystem`
+		//  default: same as `volume.block.filesystem`
+		//  shortdesc: {{block_filesystem}}
+		"block.filesystem": validate.Optional(validate.IsOneOf(blockBackedAllowedFilesystems...)),
+
+		// gendoc:generate(entity=storage_volume_linstor, group=common, key=block.mount_options)
+		//
+		// ---
+		//  type: string
+		//  condition: block-based volume with content type `filesystem`
+		//  default: same as `volume.block.mount_options`
+		//  shortdesc: Mount options for block-backed file system volumes
+		"block.mount_options": validate.IsAny,
+
+		// gendoc:generate(entity=storage_volume_linstor, group=common, key=drbd.on_no_quorum)
+		//
+		// ---
+		//  type: string
+		//  condition: -
+		//  default: -
+		//  shortdesc: The DRBD policy to use on resources when quorum is lost (applied to the resource definition)
+		DrbdOnNoQuorumConfigKey: validate.Optional(validate.IsOneOf("io-error", "suspend-io")),
+
+		// gendoc:generate(entity=storage_volume_linstor, group=common, key=drbd.auto_diskful)
+		//
+		// ---
+		//  type: string
+		//  condition: -
+		//  default: -
+		//  shortdesc: A duration string describing the time after which a primary diskless resource can be converted to diskful if storage is available on the node (applied to the resource definition)
+		DrbdAutoDiskfulConfigKey: validate.Optional(validate.IsMinimumDuration(time.Minute)),
+
+		// gendoc:generate(entity=storage_volume_linstor, group=common, key=drbd.auto_add_quorum_tiebreaker)
+		//
+		// ---
+		//  type: bool
+		//  condition: -
+		//  default: `true`
+		//  shortdesc: Whether to allow LINSTOR to automatically create diskless resources to act as quorum tiebreakers if needed (applied to the resource definition)
 		DrbdAutoAddQuorumTiebreakerConfigKey: validate.Optional(validate.IsBool),
-		LinstorRemoveSnapshotsConfigKey:      validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=storage_volume_linstor, group=common, key=linstor.remove_snapshots)
+		//
+		// ---
+		//  type: bool
+		//  condition: -
+		//  default: same as `volume.linstor.remove_snapshots` or `false`
+		//  shortdesc: Remove snapshots as needed
+		LinstorRemoveSnapshotsConfigKey: validate.Optional(validate.IsBool),
 	}
 }
 
 // ValidateVolume validates the supplied volume config.
 func (d *linstor) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
+	// gendoc:generate(entity=storage_volume_linstor, group=common, key=initial.gid)
+	//
+	// ---
+	//  type: int
+	//  condition: custom volume with content type `filesystem`
+	//  default: same as `volume.initial.gid` or `0`
+	//  shortdesc: GID of the volume owner in the instance
+
+	// gendoc:generate(entity=storage_volume_linstor, group=common, key=initial.mode)
+	//
+	// ---
+	//  type: int
+	//  condition: custom volume with content type `filesystem`
+	//  default: same as `volume.initial.mode` or `711`
+	//  shortdesc: Mode of the volume in the instance
+
+	// gendoc:generate(entity=storage_volume_linstor, group=common, key=initial.uid)
+	//
+	// ---
+	//  type: int
+	//  condition: custom volume with content type `filesystem`
+	//  default: same as `volume.initial.uid` or `0`
+	//  shortdesc: UID of the volume owner in the instance
+
+	// gendoc:generate(entity=storage_volume_linstor, group=common, key=security.shared)
+	//
+	// ---
+	//  type: bool
+	//  condition: custom block volume
+	//  default: same as `volume.security.shared` or `false`
+	//  shortdesc: Enable sharing the volume across multiple instances
+
+	// gendoc:generate(entity=storage_volume_linstor, group=common, key=security.shifted)
+	//
+	// ---
+	//  type: bool
+	//  condition: custom volume
+	//  default: same as `volume.security.shifted` or `false`
+	//  shortdesc: {{enable_ID_shifting}}
+
+	// gendoc:generate(entity=storage_volume_linstor, group=common, key=security.unmapped)
+	//
+	// ---
+	//  type: bool
+	//  condition: custom volume
+	//  default: same as `volume.security.unmapped` or `false`
+	//  shortdesc: Disable ID mapping for the volume
+
+	// gendoc:generate(entity=storage_volume_linstor, group=common, key=size)
+	//
+	// ---
+	//  type: string
+	//  condition: -
+	//  default: same as `volume.size`
+	//  shortdesc: Size/quota of the storage volume
+
+	// gendoc:generate(entity=storage_volume_linstor, group=common, key=snapshots.expiry)
+	//
+	// ---
+	//  type: string
+	//  condition: custom volume
+	//  default: same as `volume.snapshot.expiry`
+	//  shortdesc: {{snapshot_expiry_format}}
+
+	// gendoc:generate(entity=storage_volume_linstor, group=common, key=snapshots.expiry.manual)
+	//
+	// ---
+	//  type: string
+	//  condition: custom volume
+	//  default: same as `volume.snapshot.expiry.manual`
+	//  shortdesc: {{snapshot_expiry_format}}
+
+	// gendoc:generate(entity=storage_volume_linstor, group=common, key=snapshots.pattern)
+	//
+	// ---
+	//  type: string
+	//  condition: custom volume
+	//  default: same as `volume.snapshot.pattern` or `snap%d`
+	//  shortdesc: {{snapshot_pattern_format}} [^*]
+
+	// gendoc:generate(entity=storage_volume_linstor, group=common, key=snapshots.schedule)
+	//
+	// ---
+	//  type: string
+	//  condition: custom volume
+	//  default: same as `volume.snapshot.schedule`
+	//  shortdesc: {{snapshot_schedule_format}}
+
 	commonRules := d.commonVolumeRules()
 
 	// Disallow block.* settings for regular custom block volumes. These settings only make sense

@@ -91,41 +91,22 @@ The following configuration options are available for storage pools that use the
 (storage-zfs-pool-config)=
 ### Storage pool configuration
 
-| Key              | Type   | Default                                               | Description                                                                                                                   |
-| :---             | :---   | :---                                                  | :---                                                                                                                          |
-| `size`           | string | auto (20% of free disk space, >= 5 GiB and <= 30 GiB) | Size of the storage pool when creating loop-based pools (in bytes, suffixes supported, can be increased to grow storage pool) |
-| `source`         | string | -                                                     | Path to existing block device(s), loop file or ZFS dataset/pool. Multiple block devices should be separated by `,`. When listing block devices, you can also prefix them with `vdev` type. To specify a `vdev` type, use an `=` sign between the `vdev` type and the block devices (e.g., `mirror=/dev/sda,/dev/sdb`). Only `stripe`, `mirror`, `raidz1` and `raidz2` `vdev` types are supported. |
-| `source.wipe`    | bool   | `false`                                               | Wipe the block device specified in `source` prior to creating the storage pool                                                |
-| `zfs.clone_copy` | string | `true`                                                | Whether to use ZFS lightweight clones rather than full {spellexception}`dataset` copies (Boolean), or `rebase` to copy based on the initial image |
-| `zfs.export`     | bool   | `true`                                                | Disable zpool export while unmount performed                                                                                  |
-| `zfs.pool_name`  | string | name of the pool                                      | Name of the zpool                                                                                                             |
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group storage_zfs-common start -->
+    :end-before: <!-- config group storage_zfs-common end -->
+```
 
 {{volume_configuration}}
 
 (storage-zfs-vol-config)=
 ### Storage volume configuration
 
-| Key                       | Type   | Condition                                                                    | Default                                          | Description                                                      |
-| :---                      | :---   | :---                                                                         | :---                                             | :---                                                             |
-| `block.filesystem`        | string | block-based volume with content type `filesystem` (`zfs.block_mode` enabled) | same as `volume.block.filesystem`                | {{block_filesystem}}                                             |
-| `block.mount_options`     | string | block-based volume with content type `filesystem` (`zfs.block_mode` enabled) | same as `volume.block.mount_options`             | Mount options for block-backed file system volumes               |
-| `initial.gid`             | int    | custom volume with content type `filesystem`                                 | same as `volume.initial.uid` or `0`              | GID of the volume owner in the instance                          |
-| `initial.mode`            | int    | custom volume with content type `filesystem`                                 | same as `volume.initial.mode` or `711`           | Mode  of the volume in the instance                              |
-| `initial.uid`             | int    | custom volume with content type `filesystem`                                 | same as `volume.initial.gid` or `0`              | UID of the volume owner in the instance                          |
-| `security.shared`         | bool   | custom block volume                                                          | same as `volume.security.shared` or `false`      | Enable sharing the volume across multiple instances              |
-| `security.shifted`        | bool   | custom volume                                                                | same as `volume.security.shifted` or `false`     | {{enable_ID_shifting}}                                           |
-| `security.unmapped`       | bool   | custom volume                                                                | same as `volume.security.unmapped` or `false`    | Disable ID mapping for the volume                                |
-| `size`                    | string |                                                                              | same as `volume.size`                            | Size/quota of the storage volume                                 |
-| `snapshots.expiry`        | string | custom volume                                                                | same as `volume.snapshots.expiry`                | {{snapshot_expiry_format}}                                       |
-| `snapshots.expiry.manual` | string | custom volume                                                                | same as `volume.snapshots.expiry.manual`         | {{snapshot_expiry_format}}                                       |
-| `snapshots.pattern`       | string | custom volume                                                                | same as `volume.snapshots.pattern` or `snap%d`   | {{snapshot_pattern_format}} [^*]                                 |
-| `snapshots.schedule`      | string | custom volume                                                                | same as `snapshots.schedule`                     | {{snapshot_schedule_format}}                                     |
-| `zfs.blocksize`           | string |                                                                              | same as `volume.zfs.blocksize`                   | Size of the ZFS block in range from 512 bytes to 16 MiB (must be power of 2) - for block volume, a maximum value of 128 KiB will be used even if a higher value is set |
-| `zfs.block_mode`          | bool   |                                                                              | same as `volume.zfs.block_mode`                  | Whether to use a formatted `zvol` rather than a {spellexception}`dataset` (`zfs.block_mode` can be set only for custom storage volumes; use `volume.zfs.block_mode` to enable ZFS block mode for all storage volumes in the pool, including instance volumes) |
-| `zfs.delegate`            | bool   | ZFS 2.2 or higher                                                            | same as `volume.zfs.delegate`                    | Controls whether to delegate the ZFS dataset and anything underneath it to the container(s) using it. Allows the use of the `zfs` command in the container. |
-| `zfs.remove_snapshots`    | bool   |                                                                              | same as `volume.zfs.remove_snapshots` or `false` | Remove snapshots as needed                                       |
-| `zfs.use_refquota`        | bool   |                                                                              | same as `volume.zfs.use_refquota` or `false`     | Use `refquota` instead of `quota` for space                      |
-| `zfs.reserve_space`       | bool   |                                                                              | same as `volume.zfs.reserve_space` or `false`    | Use `reservation`/`refreservation` along with `quota`/`refquota` |
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group storage_volume_zfs-common start -->
+    :end-before: <!-- config group storage_volume_zfs-common end -->
+```
 
 [^*]: {{snapshot_pattern_detail}}
 
@@ -133,6 +114,8 @@ The following configuration options are available for storage pools that use the
 
 To enable storage buckets for local storage pool drivers and allow applications to access the buckets via the S3 protocol, you must configure the {config:option}`server-core:core.storage_buckets_address` server setting.
 
-| Key    | Type   | Condition          | Default               | Description                      |
-| :---   | :---   | :---               | :---                  | :---                             |
-| `size` | string | appropriate driver | same as `volume.size` | Size/quota of the storage bucket |
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group storage_bucket_zfs-common start -->
+    :end-before: <!-- config group storage_bucket_zfs-common end -->
+```

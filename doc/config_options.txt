@@ -5177,3 +5177,1515 @@ This value is required by some providers.
 ```
 
 <!-- config group server-openfga end -->
+<!-- config group storage_btrfs-common start -->
+```{config:option} btrfs.mount_options storage_btrfs-common
+:default: "`user_subvol_rm_allowed`"
+:scope: "global"
+:shortdesc: "Mount options for block devices"
+:type: "string"
+
+```
+
+```{config:option} size storage_btrfs-common
+:default: "auto (20% of free disk space, >= 5 GiB and <= 30 GiB)"
+:scope: "local"
+:shortdesc: "Size of the storage pool when creating loop-based pools (in bytes, suffixes supported, can be increased to grow storage pool)"
+:type: "string"
+
+```
+
+```{config:option} source storage_btrfs-common
+:default: "-"
+:scope: "local"
+:shortdesc: "Path to an existing block device, loop file or Btrfs subvolume"
+:type: "string"
+
+```
+
+```{config:option} source.wipe storage_btrfs-common
+:default: "`false`"
+:scope: "local"
+:shortdesc: "Wipe the block device specified in `source` prior to creating the storage pool"
+:type: "bool"
+
+```
+
+<!-- config group storage_btrfs-common end -->
+<!-- config group storage_bucket_btrfs-common start -->
+```{config:option} size storage_bucket_btrfs-common
+:condition: "appropriate driver"
+:default: "same as `volume.size`"
+:shortdesc: "Size/quota of the storage bucket"
+:type: "string"
+
+```
+
+<!-- config group storage_bucket_btrfs-common end -->
+<!-- config group storage_bucket_cephobject-common start -->
+```{config:option} size storage_bucket_cephobject-common
+:default: "-"
+:shortdesc: "Quota of the storage bucket"
+:type: "string"
+
+```
+
+<!-- config group storage_bucket_cephobject-common end -->
+<!-- config group storage_bucket_lvm-common start -->
+```{config:option} size storage_bucket_lvm-common
+:condition: "appropriate driver"
+:default: "same as `volume.size`"
+:shortdesc: "Size/quota of the storage bucket"
+:type: "string"
+
+```
+
+<!-- config group storage_bucket_lvm-common end -->
+<!-- config group storage_bucket_zfs-common start -->
+```{config:option} size storage_bucket_zfs-common
+:condition: "appropriate driver"
+:default: "same as `volume.size`"
+:shortdesc: "Size/quota of the storage bucket"
+:type: "string"
+
+```
+
+<!-- config group storage_bucket_zfs-common end -->
+<!-- config group storage_ceph-common start -->
+```{config:option} ceph.cluster_name storage_ceph-common
+:default: "`ceph`"
+:scope: "global"
+:shortdesc: "Name of the Ceph cluster in which to create new storage pools"
+:type: "string"
+
+```
+
+```{config:option} ceph.osd.data_pool_name storage_ceph-common
+:default: "-"
+:scope: "global"
+:shortdesc: "Name of the OSD data pool"
+:type: "string"
+
+```
+
+```{config:option} ceph.osd.force_reuse storage_ceph-common
+:default: "-"
+:scope: "global"
+:shortdesc: "Deprecated, should not be used."
+:type: "bool"
+
+```
+
+```{config:option} ceph.osd.pg_name storage_ceph-common
+:default: "`32`"
+:scope: "global"
+:shortdesc: "Number of placement groups for the OSD storage pool"
+:type: "string"
+
+```
+
+```{config:option} ceph.osd.pool_name storage_ceph-common
+:default: "name of the pool"
+:scope: "global"
+:shortdesc: "Name of the OSD storage pool"
+:type: "string"
+
+```
+
+```{config:option} ceph.rbd.clone_copy storage_ceph-common
+:default: "`true`"
+:scope: "global"
+:shortdesc: "Whether to use RBD lightweight clones rather than full dataset copies"
+:type: "bool"
+
+```
+
+```{config:option} ceph.rbd.du storage_ceph-common
+:default: "`true`"
+:scope: "global"
+:shortdesc: "Whether to use RBD `du` to obtain disk usage data for stopped instances"
+:type: "bool"
+
+```
+
+```{config:option} ceph.rbd.features storage_ceph-common
+:default: "`layering`"
+:scope: "global"
+:shortdesc: "Comma-separated list of RBD features to enable on the volumes"
+:type: "string"
+
+```
+
+```{config:option} ceph.user.name storage_ceph-common
+:default: "`admin`"
+:scope: "global"
+:shortdesc: "The Ceph user to use when creating storage pools and volumes"
+:type: "string"
+
+```
+
+```{config:option} source storage_ceph-common
+:default: "-"
+:scope: "local"
+:shortdesc: "Existing OSD storage pool to use"
+:type: "string"
+
+```
+
+```{config:option} volatile.pool.pristine storage_ceph-common
+:default: "`true`"
+:scope: "global"
+:shortdesc: "Whether the pool was empty on creation time"
+:type: "string"
+
+```
+
+<!-- config group storage_ceph-common end -->
+<!-- config group storage_cephfs-common start -->
+```{config:option} cephfs.cluster_name storage_cephfs-common
+:default: "`ceph`"
+:scope: "global"
+:shortdesc: "Name of the Ceph cluster that contains the CephFS file system"
+:type: "string"
+
+```
+
+```{config:option} cephfs.create_missing storage_cephfs-common
+:default: "`false`"
+:scope: "global"
+:shortdesc: "Create the file system and the missing data and metadata OSD pools"
+:type: "bool"
+
+```
+
+```{config:option} cephfs.data_pool storage_cephfs-common
+:default: "-"
+:scope: "global"
+:shortdesc: "Data OSD pool name to create for the file system"
+:type: "string"
+
+```
+
+```{config:option} cephfs.fscache storage_cephfs-common
+:default: "`false`"
+:scope: "global"
+:shortdesc: "Enable use of kernel `fscache` and `cachefilesd`"
+:type: "bool"
+
+```
+
+```{config:option} cephfs.meta_pool storage_cephfs-common
+:default: "-"
+:scope: "global"
+:shortdesc: "Metadata OSD pool name to create for the file system"
+:type: "string"
+
+```
+
+```{config:option} cephfs.osd_pg_num storage_cephfs-common
+:default: "-"
+:scope: "global"
+:shortdesc: "OSD pool `pg_num` to use when creating missing OSD pools"
+:type: "string"
+
+```
+
+```{config:option} cephfs.path storage_cephfs-common
+:default: "`/`"
+:scope: "global"
+:shortdesc: "The base path for the CephFS mount"
+:type: "string"
+
+```
+
+```{config:option} cephfs.user.name storage_cephfs-common
+:default: "`admin`"
+:scope: "global"
+:shortdesc: "The Ceph user to use"
+:type: "string"
+
+```
+
+```{config:option} source storage_cephfs-common
+:default: "-"
+:scope: "local"
+:shortdesc: "Existing CephFS file system or file system path to use"
+:type: "string"
+
+```
+
+```{config:option} volatile.pool.pristine storage_cephfs-common
+:default: "`true`"
+:scope: "global"
+:shortdesc: "Whether the CephFS file system was empty on creation time"
+:type: "string"
+
+```
+
+<!-- config group storage_cephfs-common end -->
+<!-- config group storage_cephobject-common start -->
+```{config:option} cephobject.bucket_name_prefix storage_cephobject-common
+:default: "-"
+:scope: "global"
+:shortdesc: "Prefix to add to bucket names in Ceph"
+:type: "string"
+
+```
+
+```{config:option} cephobject.cluster_name storage_cephobject-common
+:default: "`ceph`"
+:scope: "global"
+:shortdesc: "The Ceph cluster to use"
+:type: "string"
+
+```
+
+```{config:option} cephobject.radosgw.endpoint storage_cephobject-common
+:default: "-"
+:scope: "global"
+:shortdesc: "URL of the `radosgw` gateway process"
+:type: "string"
+
+```
+
+```{config:option} cephobject.radosgw.endpoint_cert_file storage_cephobject-common
+:default: "-"
+:scope: "global"
+:shortdesc: "Path to the file containing the TLS client certificate to use for endpoint communication"
+:type: "string"
+
+```
+
+```{config:option} cephobject.user.name storage_cephobject-common
+:default: "`admin`"
+:scope: "global"
+:shortdesc: "The Ceph user to use"
+:type: "string"
+
+```
+
+```{config:option} volatile.pool.pristine storage_cephobject-common
+:default: "`true`"
+:scope: "global"
+:shortdesc: "Whether the `radosgw` `incus-admin` user existed at creation time"
+:type: "string"
+
+```
+
+<!-- config group storage_cephobject-common end -->
+<!-- config group storage_dir-common start -->
+```{config:option} rsync.bwlimit storage_dir-common
+:default: "`0` (no limit)"
+:scope: "global"
+:shortdesc: "The upper limit to be placed on the socket I/O when `rsync` must be used to transfer storage entities"
+:type: "string"
+
+```
+
+```{config:option} rsync.compression storage_dir-common
+:default: "`true`"
+:scope: "global"
+:shortdesc: "Whether to use compression while migrating storage pools"
+:type: "bool"
+
+```
+
+```{config:option} source storage_dir-common
+:default: "-"
+:scope: "local"
+:shortdesc: "Path to an existing directory"
+:type: "string"
+
+```
+
+<!-- config group storage_dir-common end -->
+<!-- config group storage_linstor-common start -->
+```{config:option} drbd.auto_add_quorum_tiebreaker storage_linstor-common
+:default: "`true`"
+:scope: "global"
+:shortdesc: "Whether to allow LINSTOR to automatically create diskless resources to act as quorum tiebreakers if needed (applied to the resource group)"
+:type: "bool"
+
+```
+
+```{config:option} drbd.auto_diskful storage_linstor-common
+:default: "-"
+:scope: "global"
+:shortdesc: "A duration string describing the time after which a primary diskless resource can be converted to diskful if storage is available on the node (applied to the resource group)"
+:type: "string"
+
+```
+
+```{config:option} drbd.on_no_quorum storage_linstor-common
+:default: "-"
+:scope: "global"
+:shortdesc: "The DRBD policy to use on resources when quorum is lost (applied to the resource group)"
+:type: "string"
+
+```
+
+```{config:option} linstor.resource_group.name storage_linstor-common
+:default: "`incus`"
+:scope: "global"
+:shortdesc: "Name of the LINSTOR resource group that will be used for the storage pool"
+:type: "string"
+
+```
+
+```{config:option} linstor.resource_group.place_count storage_linstor-common
+:default: "`2`"
+:scope: "global"
+:shortdesc: "Number of diskful replicas that should be created for resources in the resource group. Increasing the value of this option on a pool that already has volumes will result in LINSTOR creating new diskful replicas for all existing resources to match the new value"
+:type: "int"
+
+```
+
+```{config:option} linstor.resource_group.storage_pool storage_linstor-common
+:default: "-"
+:scope: "global"
+:shortdesc: "The storage pool name in which resources should be placed on satellite nodes"
+:type: "string"
+
+```
+
+```{config:option} linstor.volume.prefix storage_linstor-common
+:default: "`incus-volume-`"
+:scope: "global"
+:shortdesc: "The prefix to use for the internal names of LINSTOR-managed volumes. Cannot be updated after the storage pool is created"
+:type: "string"
+
+```
+
+```{config:option} volatile.pool.pristine storage_linstor-common
+:default: "`true`"
+:scope: "global"
+:shortdesc: "Whether the pool was empty on creation time"
+:type: "string"
+
+```
+
+<!-- config group storage_linstor-common end -->
+<!-- config group storage_lvm-common start -->
+```{config:option} lvm.metadata_size storage_lvm-common
+:default: "`0` (auto)"
+:scope: "global"
+:shortdesc: "The size of the metadata space for the physical volume. Driver: `lvm`."
+:type: "string"
+
+```
+
+```{config:option} lvm.thinpool_metadata_size storage_lvm-common
+:default: "`0` (auto)"
+:scope: "global"
+:shortdesc: "The size of the thin pool metadata volume (the default is to let LVM calculate an appropriate size). Driver: `lvm`."
+:type: "string"
+
+```
+
+```{config:option} lvm.thinpool_name storage_lvm-common
+:default: "`IncusThinPool`"
+:scope: "local"
+:shortdesc: "Thin pool where volumes are created. Driver: `lvm`"
+:type: "string"
+
+```
+
+```{config:option} lvm.use_thinpool storage_lvm-common
+:default: "`true`"
+:scope: "global"
+:shortdesc: "Whether the storage pool uses a thin pool for logical volumes. Driver: `lvm`."
+:type: "bool"
+
+```
+
+```{config:option} lvm.vg.force_reuse storage_lvm-common
+:default: "`false`"
+:scope: "local"
+:shortdesc: "Force using an existing non-empty volume group. Driver: `lvm`."
+:type: "bool"
+
+```
+
+```{config:option} lvm.vg_name storage_lvm-common
+:default: "name of the pool"
+:scope: "local"
+:shortdesc: "Name of the volume group to create. Driver: all."
+:type: "string"
+
+```
+
+```{config:option} size storage_lvm-common
+:default: "auto (20% of free disk space, >= 5 GiB and <= 30 GiB)"
+:scope: "local"
+:shortdesc: "Size of the storage pool when creating loop-based pools (in bytes, suffixes supported, can be increased to grow storage pool). Driver: `lvm`."
+:type: "string"
+
+```
+
+```{config:option} source storage_lvm-common
+:default: "-"
+:scope: "local"
+:shortdesc: "Path to an existing block device, loop file or LVM volume group. Driver: all."
+:type: "string"
+
+```
+
+```{config:option} source.wipe storage_lvm-common
+:default: "`false`"
+:scope: "local"
+:shortdesc: "Wipe the block device specified in `source` prior to creating the storage pool. Driver: `lvm`."
+:type: "bool"
+
+```
+
+<!-- config group storage_lvm-common end -->
+<!-- config group storage_truenas-common start -->
+```{config:option} source storage_truenas-common
+:default: "-"
+:scope: "local"
+:shortdesc: "ZFS dataset to use on the remote TrueNAS host. Format: `[<host>:]<pool>[/<dataset>][/]`. If `host` is omitted here, it must be set via `truenas.host`."
+:type: "string"
+
+```
+
+```{config:option} truenas.allow_insecure storage_truenas-common
+:default: "`false`"
+:scope: "global"
+:shortdesc: "If set to `true`, allows insecure (non-TLS) connections to the TrueNAS API."
+:type: "bool"
+
+```
+
+```{config:option} truenas.api_key storage_truenas-common
+:default: "-"
+:scope: "global"
+:shortdesc: "API key used to authenticate with the TrueNAS host."
+:type: "string"
+
+```
+
+```{config:option} truenas.clone_copy storage_truenas-common
+:default: "`true`"
+:scope: "global"
+:shortdesc: "Whether to use lightweight clones rather than full {spellexception}`dataset` copies."
+:type: "bool"
+
+```
+
+```{config:option} truenas.config storage_truenas-common
+:default: "-"
+:scope: "global"
+:shortdesc: "Path to a configuration file for the TrueNAS client tool."
+:type: "string"
+
+```
+
+```{config:option} truenas.dataset storage_truenas-common
+:default: "-"
+:scope: "global"
+:shortdesc: "Remote dataset name. Typically inferred from `source`, but can be overridden."
+:type: "string"
+
+```
+
+```{config:option} truenas.force_reuse storage_truenas-common
+:default: "`false`"
+:scope: "global"
+:shortdesc: "Allow to use an existing non-empty pool."
+:type: "bool"
+
+```
+
+```{config:option} truenas.host storage_truenas-common
+:default: "-"
+:scope: "global"
+:shortdesc: "Hostname or IP address of the remote TrueNAS system. Optional if included in the `source`, or a configuration is used."
+:type: "string"
+
+```
+
+```{config:option} truenas.initiator storage_truenas-common
+:default: "-"
+:scope: "global"
+:shortdesc: "iSCSI initiator name used during block volume attachment."
+:type: "string"
+
+```
+
+```{config:option} truenas.portal storage_truenas-common
+:default: "-"
+:scope: "global"
+:shortdesc: "iSCSI portal address to use for block volume connections."
+:type: "string"
+
+```
+
+<!-- config group storage_truenas-common end -->
+<!-- config group storage_volume_btrfs-common start -->
+```{config:option} initial.gid storage_volume_btrfs-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.gid` or `0`"
+:shortdesc: "GID of the volume owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} initial.mode storage_volume_btrfs-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.mode` or `711`"
+:shortdesc: "Mode of the volume in the instance"
+:type: "int"
+
+```
+
+```{config:option} initial.uid storage_volume_btrfs-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.uid` or `0`"
+:shortdesc: "UID of the volume owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} security.shared storage_volume_btrfs-common
+:condition: "custom block volume"
+:default: "same as `volume.security.shared` or `false`"
+:shortdesc: "Enable sharing the volume across multiple instances"
+:type: "bool"
+
+```
+
+```{config:option} security.shifted storage_volume_btrfs-common
+:condition: "custom volume"
+:default: "same as `volume.security.shifted` or `false`"
+:shortdesc: "{{enable_ID_shifting}}"
+:type: "bool"
+
+```
+
+```{config:option} security.unmapped storage_volume_btrfs-common
+:condition: "custom volume"
+:default: "same as `volume.security.unmapped` or `false`"
+:shortdesc: "Disable ID mapping for the volume"
+:type: "bool"
+
+```
+
+```{config:option} size storage_volume_btrfs-common
+:condition: "appropriate driver"
+:default: "same as `volume.size`"
+:shortdesc: "Size/quota of the storage volume"
+:type: "string"
+
+```
+
+```{config:option} snapshots.expiry storage_volume_btrfs-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.expiry`"
+:shortdesc: "{{snapshot_expiry_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.expiry.manual storage_volume_btrfs-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.expiry.manual`"
+:shortdesc: "{{snapshot_expiry_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.pattern storage_volume_btrfs-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.pattern` or `snap%d`"
+:shortdesc: "{{snapshot_pattern_format}} [^*]"
+:type: "string"
+
+```
+
+```{config:option} snapshots.schedule storage_volume_btrfs-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.schedule`"
+:shortdesc: "{{snapshot_schedule_format}}"
+:type: "string"
+
+```
+
+<!-- config group storage_volume_btrfs-common end -->
+<!-- config group storage_volume_ceph-common start -->
+```{config:option} block.filesystem storage_volume_ceph-common
+:condition: "block-based volume with content type `filesystem`"
+:default: "same as `volume.block.filesystem`"
+:shortdesc: "{{block_filesystem}}"
+:type: "string"
+
+```
+
+```{config:option} block.mount_options storage_volume_ceph-common
+:condition: "block-based volume with content type `filesystem`"
+:default: "same as `volume.block.mount_options`"
+:shortdesc: "Mount options for block-backed file system volumes"
+:type: "string"
+
+```
+
+```{config:option} initial.gid storage_volume_ceph-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.gid` or `0`"
+:shortdesc: "GID of the volume owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} initial.mode storage_volume_ceph-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.mode` or `711`"
+:shortdesc: "Mode of the volume in the instance"
+:type: "int"
+
+```
+
+```{config:option} initial.uid storage_volume_ceph-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.uid` or `0`"
+:shortdesc: "UID of the volume owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} security.shared storage_volume_ceph-common
+:condition: "custom block volume"
+:default: "same as `volume.security.shared` or `false`"
+:shortdesc: "Enable sharing the volume across multiple instances"
+:type: "bool"
+
+```
+
+```{config:option} security.shifted storage_volume_ceph-common
+:condition: "custom volume"
+:default: "same as `volume.security.shifted` or `false`"
+:shortdesc: "{{enable_ID_shifting}}"
+:type: "bool"
+
+```
+
+```{config:option} security.unmapped storage_volume_ceph-common
+:condition: "custom volume"
+:default: "same as `volume.security.unmapped` or `false`"
+:shortdesc: "Disable ID mapping for the volume"
+:type: "bool"
+
+```
+
+```{config:option} size storage_volume_ceph-common
+:condition: "-"
+:default: "same as `volume.size`"
+:shortdesc: "Size/quota of the storage volume"
+:type: "string"
+
+```
+
+```{config:option} snapshots.expiry storage_volume_ceph-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.expiry`"
+:shortdesc: "{{snapshot_expiry_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.expiry.manual storage_volume_ceph-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.expiry.manual`"
+:shortdesc: "{{snapshot_expiry_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.pattern storage_volume_ceph-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.pattern` or `snap%d`"
+:shortdesc: "{{snapshot_pattern_format}} [^*]"
+:type: "string"
+
+```
+
+```{config:option} snapshots.schedule storage_volume_ceph-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.schedule`"
+:shortdesc: "{{snapshot_schedule_format}}"
+:type: "string"
+
+```
+
+<!-- config group storage_volume_ceph-common end -->
+<!-- config group storage_volume_cephfs-common start -->
+```{config:option} initial.gid storage_volume_cephfs-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.gid` or `0`"
+:shortdesc: "GID of the volume owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} initial.mode storage_volume_cephfs-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.mode` or `711`"
+:shortdesc: "Mode of the volume in the instance"
+:type: "int"
+
+```
+
+```{config:option} initial.uid storage_volume_cephfs-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.uid` or `0`"
+:shortdesc: "UID of the volume owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} security.shared storage_volume_cephfs-common
+:condition: "custom block volume"
+:default: "same as `volume.security.shared` or `false`"
+:shortdesc: "Enable sharing the volume across multiple instances"
+:type: "bool"
+
+```
+
+```{config:option} security.shifted storage_volume_cephfs-common
+:condition: "custom volume"
+:default: "same as `volume.security.shifted` or `false`"
+:shortdesc: "{{enable_ID_shifting}}"
+:type: "bool"
+
+```
+
+```{config:option} security.unmapped storage_volume_cephfs-common
+:condition: "custom volume"
+:default: "same as `volume.security.unmapped` or `false`"
+:shortdesc: "Disable ID mapping for the volume"
+:type: "bool"
+
+```
+
+```{config:option} size storage_volume_cephfs-common
+:condition: "appropriate driver"
+:default: "same as `volume.size`"
+:shortdesc: "Size/quota of the storage volume"
+:type: "string"
+
+```
+
+```{config:option} snapshots.expiry storage_volume_cephfs-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.expiry`"
+:shortdesc: "{{snapshot_expiry_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.expiry.manual storage_volume_cephfs-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.expiry.manual`"
+:shortdesc: "{{snapshot_expiry_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.pattern storage_volume_cephfs-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.pattern` or `snap%d`"
+:shortdesc: "{{snapshot_pattern_format}} [^*]"
+:type: "string"
+
+```
+
+```{config:option} snapshots.schedule storage_volume_cephfs-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.schedule`"
+:shortdesc: "{{snapshot_schedule_format}}"
+:type: "string"
+
+```
+
+<!-- config group storage_volume_cephfs-common end -->
+<!-- config group storage_volume_dir-common start -->
+```{config:option} initial.gid storage_volume_dir-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.gid` or `0`"
+:shortdesc: "GID of the volume owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} initial.mode storage_volume_dir-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.mode` or `711`"
+:shortdesc: "Mode of the volume in the instance"
+:type: "int"
+
+```
+
+```{config:option} initial.uid storage_volume_dir-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.uid` or `0`"
+:shortdesc: "UID of the volume owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} security.shared storage_volume_dir-common
+:condition: "custom block volume"
+:default: "same as `volume.security.shared` or `false`"
+:shortdesc: "Enable sharing the volume across multiple instances"
+:type: "bool"
+
+```
+
+```{config:option} security.shifted storage_volume_dir-common
+:condition: "custom volume"
+:default: "same as `volume.security.shifted` or `false`"
+:shortdesc: "{{enable_ID_shifting}}"
+:type: "bool"
+
+```
+
+```{config:option} security.size storage_volume_dir-common
+:condition: "appropriate driver"
+:default: "same as `volume.size`"
+:shortdesc: "Size/quota of the storage volume"
+:type: "string"
+
+```
+
+```{config:option} security.unmapped storage_volume_dir-common
+:condition: "custom volume"
+:default: "same as `volume.security.unmapped` or `false`"
+:shortdesc: "Disable ID mapping for the volume"
+:type: "bool"
+
+```
+
+```{config:option} snapshots.expiry storage_volume_dir-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.expiry`"
+:shortdesc: "{{snapshot_expiry_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.expiry.manual storage_volume_dir-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.expiry.manual`"
+:shortdesc: "{{snapshot_expiry_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.pattern storage_volume_dir-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.pattern` or `snap%d`"
+:shortdesc: "{{snapshot_pattern_format}}  [^*]"
+:type: "string"
+
+```
+
+```{config:option} snapshots.schedule storage_volume_dir-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.schedule`"
+:shortdesc: "{{snapshot_schedule_format}}"
+:type: "string"
+
+```
+
+<!-- config group storage_volume_dir-common end -->
+<!-- config group storage_volume_linstor-common start -->
+```{config:option} block.filesystem storage_volume_linstor-common
+:condition: "block-based volume with content type `filesystem`"
+:default: "same as `volume.block.filesystem`"
+:shortdesc: "{{block_filesystem}}"
+:type: "string"
+
+```
+
+```{config:option} block.mount_options storage_volume_linstor-common
+:condition: "block-based volume with content type `filesystem`"
+:default: "same as `volume.block.mount_options`"
+:shortdesc: "Mount options for block-backed file system volumes"
+:type: "string"
+
+```
+
+```{config:option} drbd.auto_add_quorum_tiebreaker storage_volume_linstor-common
+:condition: "-"
+:default: "`true`"
+:shortdesc: "Whether to allow LINSTOR to automatically create diskless resources to act as quorum tiebreakers if needed (applied to the resource definition)"
+:type: "bool"
+
+```
+
+```{config:option} drbd.auto_diskful storage_volume_linstor-common
+:condition: "-"
+:default: "-"
+:shortdesc: "A duration string describing the time after which a primary diskless resource can be converted to diskful if storage is available on the node (applied to the resource definition)"
+:type: "string"
+
+```
+
+```{config:option} drbd.on_no_quorum storage_volume_linstor-common
+:condition: "-"
+:default: "-"
+:shortdesc: "The DRBD policy to use on resources when quorum is lost (applied to the resource definition)"
+:type: "string"
+
+```
+
+```{config:option} initial.gid storage_volume_linstor-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.gid` or `0`"
+:shortdesc: "GID of the volume owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} initial.mode storage_volume_linstor-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.mode` or `711`"
+:shortdesc: "Mode of the volume in the instance"
+:type: "int"
+
+```
+
+```{config:option} initial.uid storage_volume_linstor-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.uid` or `0`"
+:shortdesc: "UID of the volume owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} linstor.remove_snapshots storage_volume_linstor-common
+:condition: "-"
+:default: "same as `volume.linstor.remove_snapshots` or `false`"
+:shortdesc: "Remove snapshots as needed"
+:type: "bool"
+
+```
+
+```{config:option} security.shared storage_volume_linstor-common
+:condition: "custom block volume"
+:default: "same as `volume.security.shared` or `false`"
+:shortdesc: "Enable sharing the volume across multiple instances"
+:type: "bool"
+
+```
+
+```{config:option} security.shifted storage_volume_linstor-common
+:condition: "custom volume"
+:default: "same as `volume.security.shifted` or `false`"
+:shortdesc: "{{enable_ID_shifting}}"
+:type: "bool"
+
+```
+
+```{config:option} security.unmapped storage_volume_linstor-common
+:condition: "custom volume"
+:default: "same as `volume.security.unmapped` or `false`"
+:shortdesc: "Disable ID mapping for the volume"
+:type: "bool"
+
+```
+
+```{config:option} size storage_volume_linstor-common
+:condition: "-"
+:default: "same as `volume.size`"
+:shortdesc: "Size/quota of the storage volume"
+:type: "string"
+
+```
+
+```{config:option} snapshots.expiry storage_volume_linstor-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.expiry`"
+:shortdesc: "{{snapshot_expiry_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.expiry.manual storage_volume_linstor-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.expiry.manual`"
+:shortdesc: "{{snapshot_expiry_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.pattern storage_volume_linstor-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.pattern` or `snap%d`"
+:shortdesc: "{{snapshot_pattern_format}} [^*]"
+:type: "string"
+
+```
+
+```{config:option} snapshots.schedule storage_volume_linstor-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.schedule`"
+:shortdesc: "{{snapshot_schedule_format}}"
+:type: "string"
+
+```
+
+<!-- config group storage_volume_linstor-common end -->
+<!-- config group storage_volume_lvm-common start -->
+```{config:option} block.filesystem storage_volume_lvm-common
+:condition: "block-based volume with content type `filesystem`"
+:default: "same as `volume.block.filesystem`"
+:shortdesc: "{{block_filesystem}}"
+:type: "string"
+
+```
+
+```{config:option} block.mount_options storage_volume_lvm-common
+:condition: "block-based volume with content type `filesystem`"
+:default: "same as `volume.block.mount_options`"
+:shortdesc: "Mount options for block-backed file system volumes"
+:type: "string"
+
+```
+
+```{config:option} initial.gid storage_volume_lvm-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.gid` or `0`"
+:shortdesc: "GID of the volume owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} initial.mode storage_volume_lvm-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.mode` or `711`"
+:shortdesc: "Mode of the volume in the instance"
+:type: "int"
+
+```
+
+```{config:option} initial.uid storage_volume_lvm-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.uid` or `0`"
+:shortdesc: "UID of the volume owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} lvm.stripes storage_volume_lvm-common
+:condition: "-"
+:default: "same as `volume.lvm.stripes`"
+:shortdesc: "Number of stripes to use for new volumes (or thin pool volume)"
+:type: "string"
+
+```
+
+```{config:option} lvm.stripes.size storage_volume_lvm-common
+:condition: "-"
+:default: "same as `volume.lvm.stripes.size`"
+:shortdesc: "Size of stripes to use (at least 4096 bytes and multiple of 512 bytes)"
+:type: "string"
+
+```
+
+```{config:option} security.shared storage_volume_lvm-common
+:condition: "custom block volume"
+:default: "same as `volume.security.shared` or `false`"
+:shortdesc: "Enable sharing the volume across multiple instances"
+:type: "bool"
+
+```
+
+```{config:option} security.shifted storage_volume_lvm-common
+:condition: "custom volume"
+:default: "same as `volume.security.shifted` or `false`"
+:shortdesc: "{{enable_ID_shifting}}"
+:type: "bool"
+
+```
+
+```{config:option} security.unmapped storage_volume_lvm-common
+:condition: "custom volume"
+:default: "same as `volume.security.unmapped` or `false`"
+:shortdesc: "Disable ID mapping for the volume"
+:type: "bool"
+
+```
+
+```{config:option} size storage_volume_lvm-common
+:condition: "default: same as `volume.size`"
+:shortdesc: "Size/quota of the storage volume"
+:type: "string"
+
+```
+
+```{config:option} snapshots.expiry storage_volume_lvm-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.expiry`"
+:shortdesc: "{{snapshot_expiry_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.expiry.manual storage_volume_lvm-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.expiry.manual`"
+:shortdesc: "{{snapshot_expiry_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.pattern storage_volume_lvm-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.pattern` or `snap%d`"
+:shortdesc: "{{snapshot_pattern_format}}  [^*]"
+:type: "string"
+
+```
+
+```{config:option} snapshots.schedule storage_volume_lvm-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.schedule`"
+:shortdesc: "{{snapshot_schedule_format}}"
+:type: "string"
+
+```
+
+<!-- config group storage_volume_lvm-common end -->
+<!-- config group storage_volume_truenas-common start -->
+```{config:option} block.filesystem storage_volume_truenas-common
+:condition: "-"
+:default: "same as `volume.block.filesystem`"
+:shortdesc: "{{block_filesystem}}"
+:type: "string"
+
+```
+
+```{config:option} block.mount_options storage_volume_truenas-common
+:condition: "-"
+:default: "same as `volume.block.mount_options`"
+:shortdesc: "Mount options for block-backed file system volumes"
+:type: "string"
+
+```
+
+```{config:option} initial.gid storage_volume_truenas-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.gid` or `0`"
+:shortdesc: "GID of the volume owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} initial.mode storage_volume_truenas-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.mode` or `711`"
+:shortdesc: "Mode of the volume in the instance"
+:type: "int"
+
+```
+
+```{config:option} initial.uid storage_volume_truenas-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.uid` or `0`"
+:shortdesc: "UID of the volume owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} security.shared storage_volume_truenas-common
+:condition: "custom block volume"
+:default: "same as `volume.security.shared` or `false`"
+:shortdesc: "Enable sharing the volume across multiple instances"
+:type: "bool"
+
+```
+
+```{config:option} security.shifted storage_volume_truenas-common
+:condition: "custom volume"
+:default: "same as `volume.security.shifted` or `false`"
+:shortdesc: "{{enable_ID_shifting}}"
+:type: "bool"
+
+```
+
+```{config:option} security.unmapped storage_volume_truenas-common
+:condition: "custom volume"
+:default: "same as `volume.security.unmapped` or `false`"
+:shortdesc: "Disable ID mapping for the volume"
+:type: "bool"
+
+```
+
+```{config:option} size storage_volume_truenas-common
+:condition: "appropriate driver"
+:default: "same as `volume.size`"
+:shortdesc: "Size/quota of the storage volume"
+:type: "string"
+
+```
+
+```{config:option} snapshots.expiry storage_volume_truenas-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.expiry`"
+:shortdesc: "{{snapshot_expiry_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.expiry.manual storage_volume_truenas-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.expiry.manual`"
+:shortdesc: "{{snapshot_expiry_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.pattern storage_volume_truenas-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.pattern` or `snap%d`"
+:shortdesc: "{{snapshot_pattern_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.schedule storage_volume_truenas-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.schedule`"
+:shortdesc: "{{snapshot_schedule_format}}"
+:type: "string"
+
+```
+
+```{config:option} truenas.blocksize storage_volume_truenas-common
+:condition: "-"
+:default: "same as `volume.truenas.blocksize`"
+:shortdesc: "Size of the ZFS block in range from 512 bytes to 16 MiB (must be power of 2) - for block volume, a maximum value of 128 KiB will be used even if a higher value is set"
+:type: "string"
+
+```
+
+```{config:option} truenas.remove_snapshots storage_volume_truenas-common
+:condition: "-"
+:default: "same as `volume.truenas.remove_snapshots` or `false`"
+:shortdesc: "Remove snapshots as needed"
+:type: "bool"
+
+```
+
+```{config:option} truenas.use_refquota storage_volume_truenas-common
+:condition: "-"
+:default: "same as `volume.truenas.use_refquota` or `false`"
+:shortdesc: "Use `refquota` instead of `quota` for space"
+:type: "bool"
+
+```
+
+<!-- config group storage_volume_truenas-common end -->
+<!-- config group storage_volume_zfs-common start -->
+```{config:option} block.filesystem storage_volume_zfs-common
+:condition: "block-based volume with content type `filesystem` (`zfs.block_mode` enabled)"
+:default: "same as `volume.block.filesystem`"
+:shortdesc: "{{block_filesystem}}"
+:type: "string"
+
+```
+
+```{config:option} block.mount_options storage_volume_zfs-common
+:condition: "block-based volume with content type `filesystem` (`zfs.block_mode` enabled)"
+:default: "same as `volume.block.mount_options`"
+:shortdesc: "Mount options for block-backed file system volumes"
+:type: "string"
+
+```
+
+```{config:option} initial.gid storage_volume_zfs-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.gid` or `0`"
+:shortdesc: "GID of the volume owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} initial.mode storage_volume_zfs-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.mode` or `711`"
+:shortdesc: "Mode of the volume in the instance"
+:type: "int"
+
+```
+
+```{config:option} initial.uid storage_volume_zfs-common
+:condition: "custom volume with content type `filesystem`"
+:default: "same as `volume.initial.uid` or `0`"
+:shortdesc: "UID of the volume owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} security.shared storage_volume_zfs-common
+:condition: "custom block volume"
+:default: "same as `volume.security.shared` or `false`"
+:shortdesc: "Enable sharing the volume across multiple instances"
+:type: "bool"
+
+```
+
+```{config:option} security.shifted storage_volume_zfs-common
+:condition: "custom volume"
+:default: "same as `volume.security.shifted` or `false`"
+:shortdesc: "{{enable_ID_shifting}}"
+:type: "bool"
+
+```
+
+```{config:option} security.unmapped storage_volume_zfs-common
+:condition: "custom volume"
+:default: "same as `volume.security.unmapped` or `false`"
+:shortdesc: "Disable ID mapping for the volume"
+:type: "bool"
+
+```
+
+```{config:option} size storage_volume_zfs-common
+:condition: "-"
+:default: "same as `volume.size`"
+:shortdesc: "Size/quota of the storage volume"
+:type: "string"
+
+```
+
+```{config:option} snapshots.expiry storage_volume_zfs-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.expiry`"
+:shortdesc: "{{snapshot_expiry_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.expiry.manual storage_volume_zfs-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.expiry.manual`"
+:shortdesc: "{{snapshot_expiry_format}}"
+:type: "string"
+
+```
+
+```{config:option} snapshots.pattern storage_volume_zfs-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.pattern` or `snap%d`"
+:shortdesc: "{{snapshot_pattern_format}} [^*]"
+:type: "string"
+
+```
+
+```{config:option} snapshots.schedule storage_volume_zfs-common
+:condition: "custom volume"
+:default: "same as `volume.snapshot.schedule`"
+:shortdesc: "{{snapshot_schedule_format}}"
+:type: "string"
+
+```
+
+```{config:option} zfs.block_mode storage_volume_zfs-common
+:condition: "-"
+:default: "same as `volume.zfs.block_mode`"
+:shortdesc: "Whether to use a formatted `zvol` rather than a {spellexception}`dataset` (`zfs.block_mode` can be set only for custom storage volumes; use `volume.zfs.block_mode` to enable ZFS block mode for all storage volumes in the pool, including instance volumes)"
+:type: "bool"
+
+```
+
+```{config:option} zfs.blocksize storage_volume_zfs-common
+:condition: "-"
+:default: "same as `volume.zfs.blocksize`"
+:shortdesc: "Size of the ZFS block in range from 512 bytes to 16 MiB (must be power of 2) - for block volume, a maximum value of 128 KiB will be used even if a higher value is set"
+:type: "string"
+
+```
+
+```{config:option} zfs.delegate storage_volume_zfs-common
+:condition: "ZFS 2.2 or higher"
+:default: "same as `volume.zfs.delegate`"
+:shortdesc: "Controls whether to delegate the ZFS dataset and anything underneath it to the container(s) using it. Allows the use of the `zfs` command in the container"
+:type: "bool"
+
+```
+
+```{config:option} zfs.remove_snapshots storage_volume_zfs-common
+:condition: "-"
+:default: "same as `volume.zfs.remove_snapshots` or `false`"
+:shortdesc: "Remove snapshots as needed"
+:type: "bool"
+
+```
+
+```{config:option} zfs.reserve_space storage_volume_zfs-common
+:condition: "-"
+:default: "same as `volume.zfs.reserve_space` or `false`"
+:shortdesc: "Use `reservation`/`refreservation` along with `quota`/`refquota`"
+:type: "bool"
+
+```
+
+```{config:option} zfs.use_refquota storage_volume_zfs-common
+:condition: "-"
+:default: "same as `volume.zfsuse_refquota` or `false`"
+:shortdesc: "Use `refquota` instead of `quota` for space"
+:type: "bool"
+
+```
+
+<!-- config group storage_volume_zfs-common end -->
+<!-- config group storage_zfs-common start -->
+```{config:option} size storage_zfs-common
+:default: "auto (20% of free disk space, >= 5 GiB and <= 30 GiB)"
+:scope: "local"
+:shortdesc: "Size of the storage pool when creating loop-based pools (in bytes, suffixes supported, can be increased to grow storage pool)"
+:type: "string"
+
+```
+
+```{config:option} source storage_zfs-common
+:default: "-"
+:scope: "local"
+:shortdesc: "Path to existing block device(s), loop file or ZFS dataset/pool. Multiple block devices should be separated by `,`. When listing block devices, you can also prefix them with `vdev` type. To specify a `vdev` type, use an `=` sign between the `vdev` type and the block devices (e.g., `mirror=/dev/sda,/dev/sdb`). Only `stripe`, `mirror`, `raidz1` and `raidz2` `vdev` types are supported."
+:type: "string"
+
+```
+
+```{config:option} source.wipe storage_zfs-common
+:default: "`false`"
+:scope: "local"
+:shortdesc: "Wipe the block device specified in `source` prior to creating the storage pool"
+:type: "bool"
+
+```
+
+```{config:option} zfs.clone_copy storage_zfs-common
+:default: "`true`"
+:scope: "global"
+:shortdesc: "Whether to use ZFS lightweight clones rather than full {spellexception}`dataset` copies (Boolean), or `rebase` to copy based on the initial image"
+:type: "string"
+
+```
+
+```{config:option} zfs.export storage_zfs-common
+:default: "`true`"
+:scope: "global"
+:shortdesc: "Disable zpool export while unmount performed"
+:type: "bool"
+
+```
+
+```{config:option} zfs.pool_name storage_zfs-common
+:default: "name of the pool"
+:scope: "local"
+:shortdesc: "Name of the zpool"
+:type: "string"
+
+```
+
+<!-- config group storage_zfs-common end -->

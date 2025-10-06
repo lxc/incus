@@ -78,14 +78,77 @@ func (d *linstor) isRemote() bool {
 // Validate checks that all provide keys are supported and that no conflicting or missing configuration is present.
 func (d *linstor) Validate(config map[string]string) error {
 	rules := map[string]func(value string) error{
-		LinstorResourceGroupNameConfigKey:        validate.IsAny,
-		LinstorResourceGroupPlaceCountConfigKey:  validate.Optional(validate.IsUint32),
+		// gendoc:generate(entity=storage_linstor, group=common, key=linstor.resource_group.name)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `incus`
+		//  shortdesc: Name of the LINSTOR resource group that will be used for the storage pool
+		LinstorResourceGroupNameConfigKey: validate.IsAny,
+
+		// gendoc:generate(entity=storage_linstor, group=common, key=linstor.resource_group.place_count)
+		//
+		// ---
+		//  type: int
+		//  scope: global
+		//  default: `2`
+		//  shortdesc: Number of diskful replicas that should be created for resources in the resource group. Increasing the value of this option on a pool that already has volumes will result in LINSTOR creating new diskful replicas for all existing resources to match the new value
+		LinstorResourceGroupPlaceCountConfigKey: validate.Optional(validate.IsUint32),
+
+		// gendoc:generate(entity=storage_linstor, group=common, key=linstor.resource_group.storage_pool)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: The storage pool name in which resources should be placed on satellite nodes
 		LinstorResourceGroupStoragePoolConfigKey: validate.IsAny,
-		LinstorVolumePrefixConfigKey:             validate.IsShorterThan(24),
-		"volatile.pool.pristine":                 validate.IsAny,
-		DrbdOnNoQuorumConfigKey:                  validate.Optional(validate.IsOneOf("io-error", "suspend-io")),
-		DrbdAutoDiskfulConfigKey:                 validate.Optional(validate.IsMinimumDuration(time.Minute)),
-		DrbdAutoAddQuorumTiebreakerConfigKey:     validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=storage_linstor, group=common, key=linstor.volume.prefix)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `incus-volume-`
+		//  shortdesc: The prefix to use for the internal names of LINSTOR-managed volumes. Cannot be updated after the storage pool is created
+		LinstorVolumePrefixConfigKey: validate.IsShorterThan(24),
+
+		// gendoc:generate(entity=storage_linstor, group=common, key=volatile.pool.pristine)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `true`
+		//  shortdesc: Whether the pool was empty on creation time
+		"volatile.pool.pristine": validate.IsAny,
+
+		// gendoc:generate(entity=storage_linstor, group=common, key=drbd.on_no_quorum)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: The DRBD policy to use on resources when quorum is lost (applied to the resource group)
+		DrbdOnNoQuorumConfigKey: validate.Optional(validate.IsOneOf("io-error", "suspend-io")),
+
+		// gendoc:generate(entity=storage_linstor, group=common, key=drbd.auto_diskful)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: A duration string describing the time after which a primary diskless resource can be converted to diskful if storage is available on the node (applied to the resource group)
+		DrbdAutoDiskfulConfigKey: validate.Optional(validate.IsMinimumDuration(time.Minute)),
+
+		// gendoc:generate(entity=storage_linstor, group=common, key=drbd.auto_add_quorum_tiebreaker)
+		//
+		// ---
+		//  type: bool
+		//  scope: global
+		//  default: `true`
+		//  shortdesc: Whether to allow LINSTOR to automatically create diskless resources to act as quorum tiebreakers if needed (applied to the resource group)
+		DrbdAutoAddQuorumTiebreakerConfigKey: validate.Optional(validate.IsBool),
 	}
 
 	return d.validatePool(config, rules, d.commonVolumeRules())

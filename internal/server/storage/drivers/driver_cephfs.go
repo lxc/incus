@@ -415,15 +415,94 @@ func (d *cephfs) Delete(op *operations.Operation) error {
 
 // Validate checks that all provide keys are supported and that no conflicting or missing configuration is present.
 func (d *cephfs) Validate(config map[string]string) error {
+	// gendoc:generate(entity=storage_cephfs, group=common, key=source)
+	//
+	// ---
+	//  type: string
+	//  scope: local
+	//  default: -
+	//  shortdesc: Existing CephFS file system or file system path to use
+
 	rules := map[string]func(value string) error{
-		"cephfs.cluster_name":    validate.IsAny,
-		"cephfs.fscache":         validate.Optional(validate.IsBool),
-		"cephfs.path":            validate.IsAny,
-		"cephfs.user.name":       validate.IsAny,
-		"cephfs.create_missing":  validate.Optional(validate.IsBool),
-		"cephfs.osd_pg_num":      validate.Optional(validate.IsInt64),
-		"cephfs.meta_pool":       validate.IsAny,
-		"cephfs.data_pool":       validate.IsAny,
+		// gendoc:generate(entity=storage_cephfs, group=common, key=cephfs.cluster_name)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `ceph`
+		//  shortdesc: Name of the Ceph cluster that contains the CephFS file system
+		"cephfs.cluster_name": validate.IsAny,
+
+		// gendoc:generate(entity=storage_cephfs, group=common, key=cephfs.fscache)
+		//
+		// ---
+		//  type: bool
+		//  scope: global
+		//  default: `false`
+		//  shortdesc: Enable use of kernel `fscache` and `cachefilesd`
+		"cephfs.fscache": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=storage_cephfs, group=common, key=cephfs.path)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `/`
+		//  shortdesc: The base path for the CephFS mount
+		"cephfs.path": validate.IsAny,
+
+		// gendoc:generate(entity=storage_cephfs, group=common, key=cephfs.user.name)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `admin`
+		//  shortdesc: The Ceph user to use
+		"cephfs.user.name": validate.IsAny,
+
+		// gendoc:generate(entity=storage_cephfs, group=common, key=cephfs.create_missing)
+		//
+		// ---
+		//  type: bool
+		//  scope: global
+		//  default: `false`
+		//  shortdesc: Create the file system and the missing data and metadata OSD pools
+		"cephfs.create_missing": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=storage_cephfs, group=common, key=cephfs.osd_pg_num)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: OSD pool `pg_num` to use when creating missing OSD pools
+		"cephfs.osd_pg_num": validate.Optional(validate.IsInt64),
+
+		// gendoc:generate(entity=storage_cephfs, group=common, key=cephfs.meta_pool)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: Metadata OSD pool name to create for the file system
+		"cephfs.meta_pool": validate.IsAny,
+
+		// gendoc:generate(entity=storage_cephfs, group=common, key=cephfs.data_pool)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: Data OSD pool name to create for the file system
+		"cephfs.data_pool": validate.IsAny,
+
+		// gendoc:generate(entity=storage_cephfs, group=common, key=volatile.pool.pristine)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `true`
+		//  shortdesc: Whether the CephFS file system was empty on creation time
 		"volatile.pool.pristine": validate.IsAny,
 	}
 

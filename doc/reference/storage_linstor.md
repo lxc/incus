@@ -67,40 +67,22 @@ The following configuration options are available for storage pools that use the
 (storage-linstor-pool-config)=
 ### Storage pool configuration
 
-| Key                                   | Type   | Default         | Description                                                                                                                                                                    |
-| :---                                  | :---   | :------         | :----------                                                                                                                                                                    |
-| `linstor.resource_group.name`         | string | `incus`         | Name of the LINSTOR resource group that will be used for the storage pool                                                                                                      |
-| `linstor.resource_group.place_count`  | int    | 2               | Number of diskful replicas that should be created for resources in the resource group. Increasing the value of this option on a pool that already has volumes will result in LINSTOR creating new diskful replicas for all existing resources to match the new value |
-| `linstor.resource_group.storage_pool` | string | -               | The storage pool name in which resources should be placed on satellite nodes                                                                                                   |
-| `linstor.volume.prefix`               | string | `incus-volume-` | The prefix to use for the internal names of LINSTOR-managed volumes. Cannot be updated after the storage pool is created                                                       |
-| `drbd.on_no_quorum`                   | string | -               | The DRBD policy to use on resources when quorum is lost (applied to the resource group)                                                                                        |
-| `drbd.auto_diskful`                   | string | -               | A duration string describing the time after which a primary diskless resource can be converted to diskful if storage is available on the node (applied to the resource group)  |
-| `drbd.auto_add_quorum_tiebreaker`     | bool   | `true`          | Whether to allow LINSTOR to automatically create diskless resources to act as quorum tiebreakers if needed (applied to the resource group)                                     |
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group storage_linstor-common start -->
+    :end-before: <!-- config group storage_linstor-common end -->
+```
 
 {{volume_configuration}}
 
 (storage-linstor-vol-config)=
 ### Storage volume configuration
 
-| Key                               | Type   | Condition                                         | Default                                              | Description                                                                                  |
-| :---                              | :---   | :---                                              | :---                                                 | :---                                                                                         |
-| `block.filesystem`                | string | block-based volume with content type `filesystem` | same as `volume.block.filesystem`                    | {{block_filesystem}}                                                                         |
-| `block.mount_options`             | string | block-based volume with content type `filesystem` | same as `volume.block.mount_options`                 | Mount options for block-backed file system volumes                                           |
-| `initial.gid`                     | int    | custom volume with content type `filesystem`      | same as `volume.initial.uid` or `0`                  | GID of the volume owner in the instance                                                      |
-| `initial.mode`                    | int    | custom volume with content type `filesystem`      | same as `volume.initial.mode` or `711`               | Mode of the volume in the instance                                                           |
-| `initial.uid`                     | int    | custom volume with content type `filesystem`      | same as `volume.initial.gid` or `0`                  | UID of the volume owner in the instance                                                      |
-| `security.shared`                 | bool   | custom block volume                               | same as `volume.security.shared` or `false`          | Enable sharing the volume across multiple instances                                          |
-| `security.shifted`                | bool   | custom volume                                     | same as `volume.security.shifted` or `false`         | {{enable_ID_shifting}}                                                                       |
-| `security.unmapped`               | bool   | custom volume                                     | same as `volume.security.unmapped` or `false`        | Disable ID mapping for the volume                                                            |
-| `size`                            | string |                                                   | same as `volume.size`                                | Size/quota of the storage volume                                                             |
-| `snapshots.expiry`                | string | custom volume                                     | same as `volume.snapshots.expiry`                    | {{snapshot_expiry_format}}                                                                   |
-| `snapshots.expiry.manual`         | string | custom volume                                     | same as `volume.snapshots.expiry.manual`             | {{snapshot_expiry_format}}                                                                   |
-| `snapshots.pattern`               | string | custom volume                                     | same as `volume.snapshots.pattern` or `snap%d`       | {{snapshot_pattern_format}} [^*]                                                             |
-| `snapshots.schedule`              | string | custom volume                                     | same as `volume.snapshots.schedule`                  | {{snapshot_schedule_format}}                                                                 |
-| `drbd.on_no_quorum`               | string |                                                   | -                                                    | The DRBD policy to use on resources when quorum is lost (applied to the resource definition) |
-| `drbd.auto_diskful`               | string |                                                   | -                                                    | A duration string describing the time after which a primary diskless resource can be converted to diskful if storage is available on the node (applied to the resource definition) |
-| `drbd.auto_add_quorum_tiebreaker` | bool   |                                                   | `true`                                               | Whether to allow LINSTOR to automatically create diskless resources to act as quorum tiebreakers if needed (applied to the resource definition) |
-| `linstor.remove_snapshots`        | bool   |                                                   | same as `volume.linstor.remove_snapshots` or `false` | Remove snapshots as needed                                                                   |
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group storage_volume_linstor-common start -->
+    :end-before: <!-- config group storage_volume_linstor-common end -->
+```
 
 [^*]: {{snapshot_pattern_detail}}
 

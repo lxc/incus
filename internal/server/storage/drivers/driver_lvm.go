@@ -597,16 +597,86 @@ func (d *lvm) Delete(op *operations.Operation) error {
 }
 
 func (d *lvm) Validate(config map[string]string) error {
+	// gendoc:generate(entity=storage_lvm, group=common, key=source)
+	//
+	// ---
+	//  type: string
+	//  scope: local
+	//  default: -
+	//  shortdesc: Path to an existing block device, loop file or LVM volume group. Driver: all.
+
+	// gendoc:generate(entity=storage_lvm, group=common, key=source.wipe)
+	//
+	// ---
+	//  type: bool
+	//  scope: local
+	//  default: `false`
+	//  shortdesc: Wipe the block device specified in `source` prior to creating the storage pool. Driver: `lvm`.
+
 	rules := map[string]func(value string) error{
-		"lvm.vg_name":       validate.IsAny,
+		// gendoc:generate(entity=storage_lvm, group=common, key=lvm.vg_name)
+		//
+		// ---
+		//  type: string
+		//  scope: local
+		//  default: name of the pool
+		//  shortdesc: Name of the volume group to create. Driver: all.
+		"lvm.vg_name": validate.IsAny,
+
+		// gendoc:generate(entity=storage_lvm, group=common, key=lvm.metadata_size)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `0` (auto)
+		//  shortdesc: The size of the metadata space for the physical volume. Driver: `lvm`.
 		"lvm.metadata_size": validate.Optional(validate.IsSize),
 	}
 
 	if !d.clustered {
+		// gendoc:generate(entity=storage_lvm, group=common, key=size)
+		//
+		// ---
+		//  type: string
+		//  scope: local
+		//  default: auto (20% of free disk space, >= 5 GiB and <= 30 GiB)
+		//  shortdesc: Size of the storage pool when creating loop-based pools (in bytes, suffixes supported, can be increased to grow storage pool). Driver: `lvm`.
 		rules["size"] = validate.Optional(validate.IsSize)
+
+		// gendoc:generate(entity=storage_lvm, group=common, key=lvm.thinpool_name)
+		//
+		// ---
+		//  type: string
+		//  scope: local
+		//  default: `IncusThinPool`
+		//  shortdesc: Thin pool where volumes are created. Driver: `lvm`
 		rules["lvm.thinpool_name"] = validate.IsAny
+
+		// gendoc:generate(entity=storage_lvm, group=common, key=lvm.thinpool_metadata_size)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `0` (auto)
+		//  shortdesc: The size of the thin pool metadata volume (the default is to let LVM calculate an appropriate size). Driver: `lvm`.
 		rules["lvm.thinpool_metadata_size"] = validate.Optional(validate.IsSize)
+
+		// gendoc:generate(entity=storage_lvm, group=common, key=lvm.use_thinpool)
+		//
+		// ---
+		//  type: bool
+		//  scope: global
+		//  default: `true`
+		//  shortdesc: Whether the storage pool uses a thin pool for logical volumes. Driver: `lvm`.
 		rules["lvm.use_thinpool"] = validate.Optional(validate.IsBool)
+
+		// gendoc:generate(entity=storage_lvm, group=common, key=lvm.vg.force_reuse)
+		//
+		// ---
+		//  type: bool
+		//  scope: local
+		//  default: `false`
+		//  shortdesc: Force using an existing non-empty volume group. Driver: `lvm`.
 		rules["lvm.vg.force_reuse"] = validate.Optional(validate.IsBool)
 	}
 

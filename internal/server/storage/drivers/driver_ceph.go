@@ -306,17 +306,104 @@ func (d *ceph) Delete(op *operations.Operation) error {
 
 // Validate checks that all provide keys are supported and that no conflicting or missing configuration is present.
 func (d *ceph) Validate(config map[string]string) error {
+	// gendoc:generate(entity=storage_ceph, group=common, key=source)
+	//
+	// ---
+	//  type: string
+	//  scope: local
+	//  default: -
+	//  shortdesc: Existing OSD storage pool to use
+
 	rules := map[string]func(value string) error{
-		"ceph.cluster_name":       validate.IsAny,
-		"ceph.osd.force_reuse":    validate.Optional(validate.IsBool), // Deprecated, should not be used.
-		"ceph.osd.pg_num":         validate.IsAny,
-		"ceph.osd.pool_name":      validate.IsAny,
+		// gendoc:generate(entity=storage_ceph, group=common, key=ceph.cluster_name)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `ceph`
+		//  shortdesc: Name of the Ceph cluster in which to create new storage pools
+		"ceph.cluster_name": validate.IsAny,
+
+		// gendoc:generate(entity=storage_ceph, group=common, key=ceph.osd.force_reuse)
+		//
+		// ---
+		//  type: bool
+		//  scope: global
+		//  default: -
+		//  shortdesc: Deprecated, should not be used.
+		"ceph.osd.force_reuse": validate.Optional(validate.IsBool), // Deprecated, should not be used.
+
+		// gendoc:generate(entity=storage_ceph, group=common, key=ceph.osd.pg_name)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `32`
+		//  shortdesc: Number of placement groups for the OSD storage pool
+		"ceph.osd.pg_num": validate.IsAny,
+
+		// gendoc:generate(entity=storage_ceph, group=common, key=ceph.osd.pool_name)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: name of the pool
+		//  shortdesc: Name of the OSD storage pool
+		"ceph.osd.pool_name": validate.IsAny,
+
+		// gendoc:generate(entity=storage_ceph, group=common, key=ceph.osd.data_pool_name)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: Name of the OSD data pool
 		"ceph.osd.data_pool_name": validate.IsAny,
-		"ceph.rbd.clone_copy":     validate.Optional(validate.IsBool),
-		"ceph.rbd.du":             validate.Optional(validate.IsBool),
-		"ceph.rbd.features":       validate.IsAny,
-		"ceph.user.name":          validate.IsAny,
-		"volatile.pool.pristine":  validate.IsAny,
+
+		// gendoc:generate(entity=storage_ceph, group=common, key=ceph.rbd.clone_copy)
+		//
+		// ---
+		//  type: bool
+		//  scope: global
+		//  default: `true`
+		//  shortdesc: Whether to use RBD lightweight clones rather than full dataset copies
+		"ceph.rbd.clone_copy": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=storage_ceph, group=common, key=ceph.rbd.du)
+		//
+		// ---
+		//  type: bool
+		//  scope: global
+		//  default: `true`
+		//  shortdesc: Whether to use RBD `du` to obtain disk usage data for stopped instances
+		"ceph.rbd.du": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=storage_ceph, group=common, key=ceph.rbd.features)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `layering`
+		//  shortdesc: Comma-separated list of RBD features to enable on the volumes
+		"ceph.rbd.features": validate.IsAny,
+
+		// gendoc:generate(entity=storage_ceph, group=common, key=ceph.user.name)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `admin`
+		//  shortdesc: The Ceph user to use when creating storage pools and volumes
+		"ceph.user.name": validate.IsAny,
+
+		// gendoc:generate(entity=storage_ceph, group=common, key=volatile.pool.pristine)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `true`
+		//  shortdesc: Whether the pool was empty on creation time
+		"volatile.pool.pristine": validate.IsAny,
 	}
 
 	return d.validatePool(config, rules, d.commonVolumeRules())
