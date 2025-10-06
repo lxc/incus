@@ -6332,7 +6332,7 @@
 							"default": "`0` (auto)",
 							"longdesc": "",
 							"scope": "global",
-							"shortdesc": "The size of the metadata space for the physical volume. Driver: `lvm`.",
+							"shortdesc": "The size of the metadata space for the physical volume.",
 							"type": "string"
 						}
 					},
@@ -6341,7 +6341,7 @@
 							"default": "`0` (auto)",
 							"longdesc": "",
 							"scope": "global",
-							"shortdesc": "The size of the thin pool metadata volume (the default is to let LVM calculate an appropriate size). Driver: `lvm`.",
+							"shortdesc": "The size of the thin pool metadata volume (the default is to let LVM calculate an appropriate size). Not usable with `lvmcluster`.",
 							"type": "string"
 						}
 					},
@@ -6350,7 +6350,7 @@
 							"default": "`IncusThinPool`",
 							"longdesc": "",
 							"scope": "local",
-							"shortdesc": "Thin pool where volumes are created. Driver: `lvm`",
+							"shortdesc": "Thin pool where volumes are created. Not usable with `lvmcluster`.",
 							"type": "string"
 						}
 					},
@@ -6359,7 +6359,7 @@
 							"default": "`true`",
 							"longdesc": "",
 							"scope": "global",
-							"shortdesc": "Whether the storage pool uses a thin pool for logical volumes. Driver: `lvm`.",
+							"shortdesc": "Whether the storage pool uses a thin pool for logical volumes. Not usable with `lvmcluster`.",
 							"type": "bool"
 						}
 					},
@@ -6368,7 +6368,7 @@
 							"default": "`false`",
 							"longdesc": "",
 							"scope": "local",
-							"shortdesc": "Force using an existing non-empty volume group. Driver: `lvm`.",
+							"shortdesc": "Force using an existing non-empty volume group. Not usable with `lvmcluster`.",
 							"type": "bool"
 						}
 					},
@@ -6377,7 +6377,7 @@
 							"default": "name of the pool",
 							"longdesc": "",
 							"scope": "local",
-							"shortdesc": "Name of the volume group to create. Driver: all.",
+							"shortdesc": "Name of the volume group to create.",
 							"type": "string"
 						}
 					},
@@ -6386,7 +6386,7 @@
 							"default": "auto (20% of free disk space, \u003e= 5 GiB and \u003c= 30 GiB)",
 							"longdesc": "",
 							"scope": "local",
-							"shortdesc": "Size of the storage pool when creating loop-based pools (in bytes, suffixes supported, can be increased to grow storage pool). Driver: `lvm`.",
+							"shortdesc": "Size of the storage pool when creating loop-based pools (in bytes, suffixes supported, can be increased to grow storage pool). Not usable with `lvmcluster`.",
 							"type": "string"
 						}
 					},
@@ -6395,7 +6395,7 @@
 							"default": "-",
 							"longdesc": "",
 							"scope": "local",
-							"shortdesc": "Path to an existing block device, loop file or LVM volume group. Driver: all.",
+							"shortdesc": "Path to an existing block device, loop file or LVM volume group.",
 							"type": "string"
 						}
 					},
@@ -6404,7 +6404,7 @@
 							"default": "`false`",
 							"longdesc": "",
 							"scope": "local",
-							"shortdesc": "Wipe the block device specified in `source` prior to creating the storage pool. Driver: `lvm`.",
+							"shortdesc": "Wipe the block device specified in `source` prior to creating the storage pool.",
 							"type": "bool"
 						}
 					}
