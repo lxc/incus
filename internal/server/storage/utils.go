@@ -572,7 +572,7 @@ func validateVolumeCommonRules(vol drivers.Volume) map[string]func(string) error
 // VM Format A: Separate metadata tarball and root qcow2 file.
 //   - Unpack metadata tarball into mountPath.
 //   - Check rootBlockPath is a file and convert qcow2 file into raw format in rootBlockPath.
-func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sysOS *sys.OS, allowUnsafeResize bool, tracker *ioprogress.ProgressTracker) (int64, error) {
+func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sysOS *sys.OS, allowUnsafeResize bool, targetIsZero bool, tracker *ioprogress.ProgressTracker) (int64, error) {
 	l := logger.Log.AddContext(logger.Ctx{"imageFile": imageFile, "volName": vol.Name()})
 	l.Info("Image unpack started")
 	defer l.Info("Image unpack stopped")
@@ -721,8 +721,10 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 			// Parallel unpacking.
 			cmd = append(cmd, "-W")
 
-			// Our block devices are clean, so skip zeroes.
-			cmd = append(cmd, "-n", "--target-is-zero")
+			if targetIsZero {
+				// Our block devices are clean, so skip zeroes.
+				cmd = append(cmd, "-n", "--target-is-zero")
+			}
 		}
 
 		cmd = append(cmd, imgPath, dstPath)
