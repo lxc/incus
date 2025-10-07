@@ -306,6 +306,7 @@ syscall
 syscalls
 sysfs
 syslog
+systemd
 Tbit
 TCP
 Telegraf
