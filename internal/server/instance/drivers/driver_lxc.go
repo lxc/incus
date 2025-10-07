@@ -2316,7 +2316,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	}
 
 	// Initialize the credentials directory.
-	err = d.setupCredentials()
+	err = d.setupCredentials(false)
 	if err != nil {
 		return "", nil, err
 	}
@@ -4447,6 +4447,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 			d.release()
 			d.cConfig = false
 			_, _ = d.initLXC(true)
+			_ = d.setupCredentials(true)
 			cgroup.TaskSchedulerTrigger("container", d.name, "changed")
 		}
 	}()
@@ -4965,6 +4966,12 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 					return err
 				}
 			}
+		}
+
+		// Update the credentials directory.
+		err = d.setupCredentials(true)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -9035,9 +9042,10 @@ func (d *lxc) CanLiveMigrate() bool {
 }
 
 // setupCredentials sets up the systemd credentials directory.
-func (d *lxc) setupCredentials() error {
+func (d *lxc) setupCredentials(update bool) error {
 	credentialsDir := filepath.Join(d.Path(), "credentials")
 	credentials := map[string][]byte{}
+	oldCredentials := map[string]bool{}
 
 	var rootUID, rootGID int64
 	idmapset, err := d.NextIdmap()
@@ -9068,11 +9076,22 @@ func (d *lxc) setupCredentials() error {
 	}
 
 	// Cleanup the credentials directory.
-	_ = os.RemoveAll(credentialsDir)
+	if update {
+		credEntries, err := os.ReadDir(credentialsDir)
+		if err != nil {
+			return fmt.Errorf("Failed to list credentials directory: %w", err)
+		}
 
-	err = internalUtil.MkdirAllOwner(credentialsDir, 0o100, int(rootUID), int(rootGID))
-	if err != nil {
-		return fmt.Errorf("Failed to create credentials directory: %w", err)
+		for _, entry := range credEntries {
+			oldCredentials[entry.Name()] = true
+		}
+	} else {
+		_ = os.RemoveAll(credentialsDir)
+
+		err = internalUtil.MkdirAllOwner(credentialsDir, 0o100, int(rootUID), int(rootGID))
+		if err != nil {
+			return fmt.Errorf("Failed to create credentials directory: %w", err)
+		}
 	}
 
 	for k, v := range credentials {
@@ -9085,6 +9104,15 @@ func (d *lxc) setupCredentials() error {
 		err = os.Chown(credentialPath, int(rootUID), int(rootGID))
 		if err != nil {
 			return fmt.Errorf("Failed setting permissions for file %q: %w", credentialPath, err)
+		}
+
+		delete(oldCredentials, k)
+	}
+
+	for oldCredential := range oldCredentials {
+		err = os.Remove(filepath.Join(credentialsDir, oldCredential))
+		if err != nil {
+			return fmt.Errorf("Failed to remove credential %q: %w", oldCredential, err)
 		}
 	}
 
