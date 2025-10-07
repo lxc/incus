@@ -2907,3 +2907,7 @@ This introduces a new `attached` property to USB devices describing whether they
 ## `backup_iso`
 
 This allows to backup ISO custom volumes by simply copying them. It enables exporting ISO volumes with `incus storage volume export` and get an ISO back.
+
+## `instance_systemd_credentials`
+
+This adds two categories of configuration options, `systemd.credential.*` and `systemd.credential-binary.*`, which allow passing systemd credentials through a bind-mounted directory for containers and `SMBIOS Type 11` for virtual machines.
