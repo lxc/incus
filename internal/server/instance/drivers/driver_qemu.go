@@ -3702,6 +3702,19 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 		conf = append(conf, qemuUSB(&usbOpts)...)
 	}
 
+	// virtio-sound-pci devices can't be migrated and don't have a CCW equivalent.
+	if !d.CanLiveMigrate() && d.architecture != osarch.ARCH_64BIT_S390_BIG_ENDIAN {
+		devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
+		audioOpts := qemuDevOpts{
+			busName:       bus.name,
+			devBus:        devBus,
+			devAddr:       devAddr,
+			multifunction: multi,
+		}
+
+		conf = append(conf, qemuAudio(&audioOpts)...)
+	}
+
 	if util.IsTrue(d.expandedConfig["security.csm"]) {
 		// Allocate a regular entry to keep things aligned normally (avoid NICs getting a different name).
 		_, _, _ = bus.allocate(busFunctionGroupNone)
