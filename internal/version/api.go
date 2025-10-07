@@ -494,6 +494,7 @@ var APIExtensions = []string{
 	"init_preseed_cluster_groups",
 	"usb_attached",
 	"backup_iso",
+	"instance_systemd_credentials",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
