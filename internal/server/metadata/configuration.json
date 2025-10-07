@@ -2180,6 +2180,22 @@
 						}
 					},
 					{
+						"systemd.credential-binary.*": {
+							"liveupdate": "yes",
+							"longdesc": "Systemd credential key/value pair passed as a read-only bind mount in containers and as `SMBIOS Type 11` data in virtual machines. The value is Base64 encoded.",
+							"shortdesc": "Systemd credential key/value, where value is Base64 encoded",
+							"type": "string"
+						}
+					},
+					{
+						"systemd.credential.*": {
+							"liveupdate": "yes",
+							"longdesc": "Systemd credential key/value pair passed as a read-only bind mount in containers and as `SMBIOS Type 11` data in virtual machines.",
+							"shortdesc": "Systemd credential key/value",
+							"type": "string"
+						}
+					},
+					{
 						"user.*": {
 							"liveupdate": "yes",
 							"longdesc": "User keys can be used in search.",

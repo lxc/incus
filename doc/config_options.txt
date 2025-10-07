@@ -1924,6 +1924,20 @@ Specify the kernel modules as a comma-separated list.
 `SMBIOS Type 11` configuration keys.
 ```
 
+```{config:option} systemd.credential-binary.* instance-miscellaneous
+:liveupdate: "yes"
+:shortdesc: "Systemd credential key/value, where value is Base64 encoded"
+:type: "string"
+Systemd credential key/value pair passed as a read-only bind mount in containers and as `SMBIOS Type 11` data in virtual machines. The value is Base64 encoded.
+```
+
+```{config:option} systemd.credential.* instance-miscellaneous
+:liveupdate: "yes"
+:shortdesc: "Systemd credential key/value"
+:type: "string"
+Systemd credential key/value pair passed as a read-only bind mount in containers and as `SMBIOS Type 11` data in virtual machines.
+```
+
 ```{config:option} user.* instance-miscellaneous
 :liveupdate: "yes"
 :shortdesc: "Free-form user key/value storage"
