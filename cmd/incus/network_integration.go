@@ -297,7 +297,7 @@ func (c *cmdNetworkIntegrationEdit) Run(cmd *cobra.Command, args []string) error
 	}
 
 	// Spawn the editor
-	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)), "yaml")
 	if err != nil {
 		return err
 	}
@@ -320,7 +320,7 @@ func (c *cmdNetworkIntegrationEdit) Run(cmd *cobra.Command, args []string) error
 				return err
 			}
 
-			content, err = textEditor("", content)
+			content, err = textEditor("", content, "yaml")
 			if err != nil {
 				return err
 			}
