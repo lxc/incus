@@ -186,6 +186,7 @@ func (s *consoleWs) connectVGA(r *http.Request, w http.ResponseWriter) error {
 
 			<-readDone
 			l.Debug("Finished mirroring console to websocket")
+			_ = conn.Close()
 			<-writeDone
 		}()
 
@@ -309,6 +310,7 @@ func (s *consoleWs) doConsole() error {
 
 		<-readDone
 		l.Debug("Finished mirroring console to websocket")
+		_ = conn.Close()
 		<-writeDone
 		close(mirrorDoneCh)
 	}()
