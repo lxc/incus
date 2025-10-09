@@ -1,5 +1,5 @@
 name: Bug report
-description: File a bug report.
+description: File a bug report. You can also use the command incus bug report.
 type: bug
 body:
 - type: checkboxes
@@ -21,7 +21,7 @@ body:
 - type: textarea
   attributes:
     label: Incus system details
-    description: Output of `incus info`.
+    description: Output of `incus bug info`.
     render: yaml
   validations:
     required: true
