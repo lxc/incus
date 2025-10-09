@@ -391,6 +391,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_storage_volume_recover "Recover storage volumes"
     run_test test_syslog_socket "Syslog socket"
     run_test test_incus_user "incus-user"
+    run_test test_systemd "systemd"
 fi
 
 # shellcheck disable=SC2034

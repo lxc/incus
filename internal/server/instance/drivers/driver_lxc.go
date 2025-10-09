@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1069,6 +1070,16 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 				return nil, err
 			}
 		}
+	}
+
+	err = lxcSetConfigItem(cc, "lxc.environment", "CREDENTIALS_DIRECTORY=/dev/.incus-systemd-credentials")
+	if err != nil {
+		return nil, err
+	}
+
+	err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s dev/.incus-systemd-credentials none bind,ro,create=dir 0 0", filepath.Join(d.Path(), "credentials")))
+	if err != nil {
+		return nil, err
 	}
 
 	// Setup NVIDIA runtime
@@ -2298,6 +2309,12 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 				}
 			}
 		}
+	}
+
+	// Initialize the credentials directory.
+	err = d.setupCredentials(false)
+	if err != nil {
+		return "", nil, err
 	}
 
 	// Override NVIDIA_VISIBLE_DEVICES if we have devices that need it.
@@ -4679,6 +4696,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 			d.release()
 			d.cConfig = false
 			_, _ = d.initLXC(true)
+			_ = d.setupCredentials(true)
 			cgroup.TaskSchedulerTrigger("container", d.name, "changed")
 		}
 	}()
@@ -5197,6 +5215,12 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 					return err
 				}
 			}
+		}
+
+		// Update the credentials directory.
+		err = d.setupCredentials(true)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -9208,4 +9232,82 @@ func (d *lxc) ReloadDevice(devName string) error {
 // CanLiveMigrate returns whether the container is live-migratable.
 func (d *lxc) CanLiveMigrate() bool {
 	return util.IsTrue(d.expandedConfig["migration.stateful"])
+}
+
+// setupCredentials sets up the systemd credentials directory.
+func (d *lxc) setupCredentials(update bool) error {
+	credentialsDir := filepath.Join(d.Path(), "credentials")
+	credentials := map[string][]byte{}
+	oldCredentials := map[string]bool{}
+
+	var rootUID, rootGID int64
+	idmapset, err := d.NextIdmap()
+	if err != nil {
+		return err
+	}
+
+	if idmapset != nil {
+		rootUID, rootGID = idmapset.ShiftIntoNS(0, 0)
+	}
+
+	for k, v := range d.expandedConfig {
+		after, ok := strings.CutPrefix(k, "systemd.credential.")
+		if ok {
+			credentials[after] = []byte(v)
+			continue
+		}
+
+		after, ok = strings.CutPrefix(k, "systemd.credential-binary.")
+		if ok {
+			data, err := base64.RawStdEncoding.DecodeString(strings.TrimRight(v, "="))
+			if err != nil {
+				return fmt.Errorf("Invalid base64 value for %q: %q", k, v)
+			}
+
+			credentials[after] = data
+		}
+	}
+
+	// Cleanup the credentials directory.
+	if update {
+		credEntries, err := os.ReadDir(credentialsDir)
+		if err != nil {
+			return fmt.Errorf("Failed to list credentials directory: %w", err)
+		}
+
+		for _, entry := range credEntries {
+			oldCredentials[entry.Name()] = true
+		}
+	} else {
+		_ = os.RemoveAll(credentialsDir)
+
+		err = internalUtil.MkdirAllOwner(credentialsDir, 0o100, int(rootUID), int(rootGID))
+		if err != nil {
+			return fmt.Errorf("Failed to create credentials directory: %w", err)
+		}
+	}
+
+	for k, v := range credentials {
+		credentialPath := filepath.Join(credentialsDir, k)
+		err := os.WriteFile(credentialPath, v, 0o400)
+		if err != nil {
+			return fmt.Errorf("Failed to write credential %q: %w", k, err)
+		}
+
+		err = os.Chown(credentialPath, int(rootUID), int(rootGID))
+		if err != nil {
+			return fmt.Errorf("Failed setting permissions for file %q: %w", credentialPath, err)
+		}
+
+		delete(oldCredentials, k)
+	}
+
+	for oldCredential := range oldCredentials {
+		err = os.Remove(filepath.Join(credentialsDir, oldCredential))
+		if err != nil {
+			return fmt.Errorf("Failed to remove credential %q: %w", oldCredential, err)
+		}
+	}
+
+	return nil
 }
