@@ -132,7 +132,7 @@ func osMountShared(src string, dst string, fstype string, opts []string) error {
 	return nil
 }
 
-func osUmount(src string) error {
+func osUmount(src string, dst string, fstype string) error {
 	_, err := subprocess.RunCommand("umount", src)
 	return err
 }

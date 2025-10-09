@@ -56,7 +56,7 @@ func osMountShared(src string, dst string, fstype string, opts []string) error {
 	return errors.New("Dynamic mounts aren't supported on Windows")
 }
 
-func osUmount(src string) error {
+func osUmount(src string, dst string, fstype string) error {
 	return errors.New("Dynamic mounts aren't supported on Windows")
 }
 
