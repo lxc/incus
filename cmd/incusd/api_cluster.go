@@ -511,6 +511,13 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		UserAgent:     version.UserAgent,
 	}
 
+	// Always set a proxy function to have cluster traffic bypass any configured HTTP proxy.
+	proxy := func(req *http.Request) (*url.URL, error) {
+		return nil, nil
+	}
+
+	args.Proxy = proxy
+
 	// Asynchronously join the cluster.
 	run := func(op *operations.Operation) error {
 		logger.Debug("Running cluster join operation")
