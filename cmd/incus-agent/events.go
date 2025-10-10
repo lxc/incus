@@ -161,6 +161,6 @@ func eventsProcess(event api.Event) {
 		logger.Infof("Mounted hotplug %q (Type: %q) to %q", mntSource, "virtiofs", e.Config["path"])
 	} else if e.Action == "removed" {
 		// Attempt to unmount the disk.
-		_ = osUmount(mntSource)
+		_ = osUmount(mntSource, e.Config["path"], "virtiofs")
 	}
 }
