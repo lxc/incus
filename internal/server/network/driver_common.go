@@ -931,6 +931,10 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 		if defaultTargetIsIP4 && IPisBroadcast(netSubnet, defaultTargetAddress) {
 			return nil, errors.New("Default target address cannot be a broadcast address")
 		}
+
+		if IPisNetworkID(netSubnet, defaultTargetAddress) {
+			return nil, errors.New("Default target address cannot be a network ID address")
+		}
 	}
 
 	// Validate port rules.
@@ -970,6 +974,10 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 
 		if targetIsIP4 && IPisBroadcast(netSubnet, targetAddress) {
 			return nil, errors.New("Default target address cannot be a broadcast address")
+		}
+
+		if IPisNetworkID(netSubnet, defaultTargetAddress) {
+			return nil, errors.New("Default target address cannot be a network ID address")
 		}
 
 		// Check valid listen port(s) supplied.

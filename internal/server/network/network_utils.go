@@ -1173,6 +1173,13 @@ func IPisBroadcast(subnet *net.IPNet, ip net.IP) bool {
 	return ipv4.Equal(broadcast)
 }
 
+func IPisNetworkID(subnet *net.IPNet, ip net.IP) bool {
+	if ip == nil || subnet == nil {
+		return false
+	}
+	return ip.Equal(subnet.IP)
+}
+
 // SubnetContains returns true if outerSubnet contains innerSubnet.
 func SubnetContains(outerSubnet *net.IPNet, innerSubnet *net.IPNet) bool {
 	if outerSubnet == nil || innerSubnet == nil {
