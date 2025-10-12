@@ -772,7 +772,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 		mounts = append(mounts, "sys:mixed")
 	} else {
 		mounts = append(mounts, "proc:rw")
-		mounts = append(mounts, "sys:rw")
+		mounts = append(mounts, "sys:ro")
 	}
 
 	cgInfo := cgroup.GetInfo()

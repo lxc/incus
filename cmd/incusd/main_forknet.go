@@ -64,7 +64,7 @@ static void forkdonetdetach(char *file) {
 		_exit(1);
 	}
 
-	if (mount("sysfs", "/sys", "sysfs", 0, NULL) < 0) {
+	if (mount("sysfs", "/sys", "sysfs", MS_RDONLY, NULL) < 0) {
 		fprintf(stderr, "Failed mounting new sysfs: %s\n", strerror(errno));
 		_exit(1);
 	}

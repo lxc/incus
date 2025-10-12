@@ -88,7 +88,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
 
   # Handle sysfs (access handled below)
   mount fstype=sysfs -> /sys/,
-  mount options=(rw,nosuid,nodev,noexec,remount) -> /sys/,
+  mount options=(ro,nosuid,nodev,noexec,remount) -> /sys/,
 
   # Handle /run remounts.
   mount options=(rw,nosuid,nodev,remount) -> /run/,
