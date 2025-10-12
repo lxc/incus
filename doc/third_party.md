@@ -33,3 +33,10 @@ The focus of Distrobuilder is in producing clean images from scratch, as opposed
 [GARM](https://github.com/cloudbase/garm) is the Github Actions Runner Manager which allows for running self-hosted Github runners.
 
 It supports a variety of providers for those runners, including [Incus](https://github.com/cloudbase/garm-provider-incus).
+
+## Kubernetes
+[Kubernetes](https://kubernetes.io), also known as K8s, is an open source system for automating deployment, scaling, and management of containerized applications.
+[Cluster API](https://cluster-api.sigs.k8s.io) is a Kubernetes sub-project focused on providing declarative APIs and tooling to simplify provisioning, upgrading, and operating multiple Kubernetes clusters.
+
+[The Cluster API provider for Incus](https://capn.linuxcontainers.org) is an Infrastructure Provider for Cluster API, which enables deploying Kubernetes clusters on infrastructure operated by Incus.
+The provider can be used in single-node development environments for evaluation and testing, but also work with multi-node Incus clusters to deploy and manage production Kubernetes clusters.
