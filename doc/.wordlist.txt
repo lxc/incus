@@ -9,6 +9,7 @@ allocator
 AMD
 Ansible
 Ansible's
+API
 APIs
 AppArmor
 ARMv
