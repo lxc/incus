@@ -1157,6 +1157,22 @@ func IPInSlice(key net.IP, list []net.IP) bool {
 	return false
 }
 
+// IPisBroadcast returns true if the IP address is a broadcast address.
+func IPisBroadcast(subnet *net.IPNet, ip net.IP) bool {
+	if ip == nil || subnet == nil {
+		return false
+	}
+	ipv4 := ip.To4()
+	if ipv4 == nil {
+		return false
+	}
+	broadcast := make(net.IP, 4)
+	for i := 0; i < 4; i++ {
+		broadcast[i] = subnet.IP[i] | ^subnet.Mask[i]
+	}
+	return ipv4.Equal(broadcast)
+}
+
 // SubnetContains returns true if outerSubnet contains innerSubnet.
 func SubnetContains(outerSubnet *net.IPNet, innerSubnet *net.IPNet) bool {
 	if outerSubnet == nil || innerSubnet == nil {
