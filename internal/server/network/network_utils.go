@@ -1158,11 +1158,11 @@ func IPInSlice(key net.IP, list []net.IP) bool {
 }
 
 // IPisBroadcast returns true if the IP address is a broadcast address.
-func IPisBroadcast(subnet *net.IPNet, ip net.IP) bool {
-	if ip == nil || subnet == nil {
+func IPisBroadcast(subnet *net.IPNet, ipAddress net.IP) bool {
+	if ipAddress == nil || subnet == nil {
 		return false
 	}
-	ipv4 := ip.To4()
+	ipv4 := ipAddress.To4()
 	if ipv4 == nil {
 		return false
 	}
@@ -1173,11 +1173,12 @@ func IPisBroadcast(subnet *net.IPNet, ip net.IP) bool {
 	return ipv4.Equal(broadcast)
 }
 
-func IPisNetworkID(subnet *net.IPNet, ip net.IP) bool {
-	if ip == nil || subnet == nil {
+// IPisNetworkID returns true if the IP address is a network ID.
+func IPisNetworkID(subnet *net.IPNet, ipAddress net.IP) bool {
+	if ipAddress == nil || subnet == nil {
 		return false
 	}
-	return ip.Equal(subnet.IP)
+	return ipAddress.Equal(subnet.IP)
 }
 
 // SubnetContains returns true if outerSubnet contains innerSubnet.
