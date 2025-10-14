@@ -17,7 +17,7 @@ var (
 // Meter defines an object in Meter table
 type Meter struct {
 	UUID  string    `ovsdb:"_uuid"`
-	Bands []string  `ovsdb:"bands"`
+	Bands []string  `ovsdb:"bands" validate:"min=1"`
 	Name  string    `ovsdb:"name"`
-	Unit  MeterUnit `ovsdb:"unit"`
+	Unit  MeterUnit `ovsdb:"unit" validate:"oneof='kbps' 'pktps'"`
 }

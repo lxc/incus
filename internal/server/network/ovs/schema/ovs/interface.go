@@ -26,34 +26,34 @@ var (
 // Interface defines an object in Interface table
 type Interface struct {
 	UUID                 string                     `ovsdb:"_uuid"`
-	AdminState           *InterfaceAdminState       `ovsdb:"admin_state"`
+	AdminState           *InterfaceAdminState       `ovsdb:"admin_state" validate:"omitempty,oneof='up' 'down'"`
 	BFD                  map[string]string          `ovsdb:"bfd"`
 	BFDStatus            map[string]string          `ovsdb:"bfd_status"`
 	CFMFault             *bool                      `ovsdb:"cfm_fault"`
 	CFMFaultStatus       []string                   `ovsdb:"cfm_fault_status"`
 	CFMFlapCount         *int                       `ovsdb:"cfm_flap_count"`
-	CFMHealth            *int                       `ovsdb:"cfm_health"`
+	CFMHealth            *int                       `ovsdb:"cfm_health" validate:"omitempty,min=0,max=100"`
 	CFMMpid              *int                       `ovsdb:"cfm_mpid"`
 	CFMRemoteMpids       []int                      `ovsdb:"cfm_remote_mpids"`
-	CFMRemoteOpstate     *InterfaceCFMRemoteOpstate `ovsdb:"cfm_remote_opstate"`
-	Duplex               *InterfaceDuplex           `ovsdb:"duplex"`
+	CFMRemoteOpstate     *InterfaceCFMRemoteOpstate `ovsdb:"cfm_remote_opstate" validate:"omitempty,oneof='up' 'down'"`
+	Duplex               *InterfaceDuplex           `ovsdb:"duplex" validate:"omitempty,oneof='half' 'full'"`
 	Error                *string                    `ovsdb:"error"`
 	ExternalIDs          map[string]string          `ovsdb:"external_ids"`
-	Ifindex              *int                       `ovsdb:"ifindex"`
-	IngressPolicingBurst int                        `ovsdb:"ingress_policing_burst"`
-	IngressPolicingRate  int                        `ovsdb:"ingress_policing_rate"`
+	Ifindex              *int                       `ovsdb:"ifindex" validate:"omitempty,min=0,max=4294967295"`
+	IngressPolicingBurst int                        `ovsdb:"ingress_policing_burst" validate:"min=0"`
+	IngressPolicingRate  int                        `ovsdb:"ingress_policing_rate" validate:"min=0"`
 	LACPCurrent          *bool                      `ovsdb:"lacp_current"`
 	LinkResets           *int                       `ovsdb:"link_resets"`
 	LinkSpeed            *int                       `ovsdb:"link_speed"`
-	LinkState            *InterfaceLinkState        `ovsdb:"link_state"`
+	LinkState            *InterfaceLinkState        `ovsdb:"link_state" validate:"omitempty,oneof='up' 'down'"`
 	LLDP                 map[string]string          `ovsdb:"lldp"`
 	MAC                  *string                    `ovsdb:"mac"`
 	MACInUse             *string                    `ovsdb:"mac_in_use"`
 	MTU                  *int                       `ovsdb:"mtu"`
-	MTURequest           *int                       `ovsdb:"mtu_request"`
+	MTURequest           *int                       `ovsdb:"mtu_request" validate:"omitempty,min=1"`
 	Name                 string                     `ovsdb:"name"`
 	Ofport               *int                       `ovsdb:"ofport"`
-	OfportRequest        *int                       `ovsdb:"ofport_request"`
+	OfportRequest        *int                       `ovsdb:"ofport_request" validate:"omitempty,min=1,max=65279"`
 	Options              map[string]string          `ovsdb:"options"`
 	OtherConfig          map[string]string          `ovsdb:"other_config"`
 	Statistics           map[string]int             `ovsdb:"statistics"`

@@ -9,7 +9,7 @@ const DatapathTable = "Datapath"
 type Datapath struct {
 	UUID            string            `ovsdb:"_uuid"`
 	Capabilities    map[string]string `ovsdb:"capabilities"`
-	CTZones         map[int]string    `ovsdb:"ct_zones"`
+	CTZones         map[int]string    `ovsdb:"ct_zones" validate:"dive,keys,min=0,max=65535"`
 	DatapathVersion string            `ovsdb:"datapath_version"`
 	ExternalIDs     map[string]string `ovsdb:"external_ids"`
 }

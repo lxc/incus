@@ -13,5 +13,5 @@ type SFlow struct {
 	Header      *int              `ovsdb:"header"`
 	Polling     *int              `ovsdb:"polling"`
 	Sampling    *int              `ovsdb:"sampling"`
-	Targets     []string          `ovsdb:"targets"`
+	Targets     []string          `ovsdb:"targets" validate:"min=1"`
 }

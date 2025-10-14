@@ -9,7 +9,7 @@ const GatewayTable = "Gateway"
 type Gateway struct {
 	UUID             string            `ovsdb:"_uuid"`
 	AvailabilityZone string            `ovsdb:"availability_zone"`
-	Encaps           []string          `ovsdb:"encaps"`
+	Encaps           []string          `ovsdb:"encaps" validate:"min=1"`
 	ExternalIDs      map[string]string `ovsdb:"external_ids"`
 	Hostname         string            `ovsdb:"hostname"`
 	Name             string            `ovsdb:"name"`

@@ -28,5 +28,5 @@ type NAT struct {
 	LogicalIP         string            `ovsdb:"logical_ip"`
 	LogicalPort       *string           `ovsdb:"logical_port"`
 	Options           map[string]string `ovsdb:"options"`
-	Type              NATType           `ovsdb:"type"`
+	Type              NATType           `ovsdb:"type" validate:"oneof='dnat' 'snat' 'dnat_and_snat'"`
 }

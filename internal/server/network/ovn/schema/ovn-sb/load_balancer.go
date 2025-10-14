@@ -23,6 +23,6 @@ type LoadBalancer struct {
 	ExternalIDs   map[string]string     `ovsdb:"external_ids"`
 	Name          string                `ovsdb:"name"`
 	Options       map[string]string     `ovsdb:"options"`
-	Protocol      *LoadBalancerProtocol `ovsdb:"protocol"`
+	Protocol      *LoadBalancerProtocol `ovsdb:"protocol" validate:"omitempty,oneof='tcp' 'udp' 'sctp'"`
 	Vips          map[string]string     `ovsdb:"vips"`
 }

@@ -20,8 +20,8 @@ type LogicalSwitchPort struct {
 	Options          map[string]string `ovsdb:"options"`
 	ParentName       *string           `ovsdb:"parent_name"`
 	PortSecurity     []string          `ovsdb:"port_security"`
-	Tag              *int              `ovsdb:"tag"`
-	TagRequest       *int              `ovsdb:"tag_request"`
+	Tag              *int              `ovsdb:"tag" validate:"omitempty,min=1,max=4095"`
+	TagRequest       *int              `ovsdb:"tag_request" validate:"omitempty,min=0,max=4095"`
 	Type             string            `ovsdb:"type"`
 	Up               *bool             `ovsdb:"up"`
 }

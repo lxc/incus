@@ -29,15 +29,15 @@ var (
 // ACL defines an object in ACL table
 type ACL struct {
 	UUID        string            `ovsdb:"_uuid"`
-	Action      ACLAction         `ovsdb:"action"`
-	Direction   ACLDirection      `ovsdb:"direction"`
+	Action      ACLAction         `ovsdb:"action" validate:"oneof='allow' 'allow-related' 'allow-stateless' 'drop' 'reject'"`
+	Direction   ACLDirection      `ovsdb:"direction" validate:"oneof='from-lport' 'to-lport'"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`
-	Label       int               `ovsdb:"label"`
+	Label       int               `ovsdb:"label" validate:"min=0,max=4294967295"`
 	Log         bool              `ovsdb:"log"`
 	Match       string            `ovsdb:"match"`
 	Meter       *string           `ovsdb:"meter"`
-	Name        *string           `ovsdb:"name"`
+	Name        *string           `ovsdb:"name" validate:"omitempty,max=63"`
 	Options     map[string]string `ovsdb:"options"`
-	Priority    int               `ovsdb:"priority"`
-	Severity    *ACLSeverity      `ovsdb:"severity"`
+	Priority    int               `ovsdb:"priority" validate:"min=0,max=32767"`
+	Severity    *ACLSeverity      `ovsdb:"severity" validate:"omitempty,oneof='alert' 'warning' 'notice' 'info' 'debug'"`
 }
