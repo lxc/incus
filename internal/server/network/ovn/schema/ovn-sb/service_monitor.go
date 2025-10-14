@@ -25,9 +25,9 @@ type ServiceMonitor struct {
 	IP          string                  `ovsdb:"ip"`
 	LogicalPort string                  `ovsdb:"logical_port"`
 	Options     map[string]string       `ovsdb:"options"`
-	Port        int                     `ovsdb:"port"`
-	Protocol    *ServiceMonitorProtocol `ovsdb:"protocol"`
+	Port        int                     `ovsdb:"port" validate:"min=0,max=65535"`
+	Protocol    *ServiceMonitorProtocol `ovsdb:"protocol" validate:"omitempty,oneof='tcp' 'udp'"`
 	SrcIP       string                  `ovsdb:"src_ip"`
 	SrcMAC      string                  `ovsdb:"src_mac"`
-	Status      *ServiceMonitorStatus   `ovsdb:"status"`
+	Status      *ServiceMonitorStatus   `ovsdb:"status" validate:"omitempty,oneof='online' 'offline' 'error'"`
 }

@@ -8,7 +8,7 @@ const DNSTable = "DNS"
 // DNS defines an object in DNS table
 type DNS struct {
 	UUID        string            `ovsdb:"_uuid"`
-	Datapaths   []string          `ovsdb:"datapaths"`
+	Datapaths   []string          `ovsdb:"datapaths" validate:"min=1"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`
 	Records     map[string]string `ovsdb:"records"`
 }

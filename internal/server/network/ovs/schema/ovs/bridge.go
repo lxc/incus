@@ -30,9 +30,9 @@ type Bridge struct {
 	DatapathType        string            `ovsdb:"datapath_type"`
 	DatapathVersion     string            `ovsdb:"datapath_version"`
 	ExternalIDs         map[string]string `ovsdb:"external_ids"`
-	FailMode            *BridgeFailMode   `ovsdb:"fail_mode"`
-	FloodVLANs          []int             `ovsdb:"flood_vlans"`
-	FlowTables          map[int]string    `ovsdb:"flow_tables"`
+	FailMode            *BridgeFailMode   `ovsdb:"fail_mode" validate:"omitempty,oneof='standalone' 'secure'"`
+	FloodVLANs          []int             `ovsdb:"flood_vlans" validate:"max=4096,dive,min=0,max=4095"`
+	FlowTables          map[int]string    `ovsdb:"flow_tables" validate:"dive,keys,min=0,max=254"`
 	IPFIX               *string           `ovsdb:"ipfix"`
 	McastSnoopingEnable bool              `ovsdb:"mcast_snooping_enable"`
 	Mirrors             []string          `ovsdb:"mirrors"`
@@ -40,7 +40,7 @@ type Bridge struct {
 	Netflow             *string           `ovsdb:"netflow"`
 	OtherConfig         map[string]string `ovsdb:"other_config"`
 	Ports               []string          `ovsdb:"ports"`
-	Protocols           []BridgeProtocols `ovsdb:"protocols"`
+	Protocols           []BridgeProtocols `ovsdb:"protocols" validate:"dive,oneof='OpenFlow10' 'OpenFlow11' 'OpenFlow12' 'OpenFlow13' 'OpenFlow14' 'OpenFlow15'"`
 	RSTPEnable          bool              `ovsdb:"rstp_enable"`
 	RSTPStatus          map[string]string `ovsdb:"rstp_status"`
 	Sflow               *string           `ovsdb:"sflow"`

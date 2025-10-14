@@ -18,9 +18,9 @@ var (
 type FlowTable struct {
 	UUID           string                   `ovsdb:"_uuid"`
 	ExternalIDs    map[string]string        `ovsdb:"external_ids"`
-	FlowLimit      *int                     `ovsdb:"flow_limit"`
+	FlowLimit      *int                     `ovsdb:"flow_limit" validate:"omitempty,min=0"`
 	Groups         []string                 `ovsdb:"groups"`
 	Name           *string                  `ovsdb:"name"`
-	OverflowPolicy *FlowTableOverflowPolicy `ovsdb:"overflow_policy"`
-	Prefixes       []string                 `ovsdb:"prefixes"`
+	OverflowPolicy *FlowTableOverflowPolicy `ovsdb:"overflow_policy" validate:"omitempty,oneof='refuse' 'evict'"`
+	Prefixes       []string                 `ovsdb:"prefixes" validate:"max=3"`
 }

@@ -8,12 +8,12 @@ const IPFIXTable = "IPFIX"
 // IPFIX defines an object in IPFIX table
 type IPFIX struct {
 	UUID               string            `ovsdb:"_uuid"`
-	CacheActiveTimeout *int              `ovsdb:"cache_active_timeout"`
-	CacheMaxFlows      *int              `ovsdb:"cache_max_flows"`
+	CacheActiveTimeout *int              `ovsdb:"cache_active_timeout" validate:"omitempty,min=0,max=4200"`
+	CacheMaxFlows      *int              `ovsdb:"cache_max_flows" validate:"omitempty,min=0,max=4294967295"`
 	ExternalIDs        map[string]string `ovsdb:"external_ids"`
-	ObsDomainID        *int              `ovsdb:"obs_domain_id"`
-	ObsPointID         *int              `ovsdb:"obs_point_id"`
+	ObsDomainID        *int              `ovsdb:"obs_domain_id" validate:"omitempty,min=0,max=4294967295"`
+	ObsPointID         *int              `ovsdb:"obs_point_id" validate:"omitempty,min=0,max=4294967295"`
 	OtherConfig        map[string]string `ovsdb:"other_config"`
-	Sampling           *int              `ovsdb:"sampling"`
+	Sampling           *int              `ovsdb:"sampling" validate:"omitempty,min=1,max=4294967295"`
 	Targets            []string          `ovsdb:"targets"`
 }

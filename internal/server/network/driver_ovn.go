@@ -20,8 +20,8 @@ import (
 
 	"github.com/flosch/pongo2/v6"
 	"github.com/mdlayher/netx/eui64"
-	ovsClient "github.com/ovn-org/libovsdb/client"
-	ovsdbModel "github.com/ovn-org/libovsdb/model"
+	ovsClient "github.com/ovn-kubernetes/libovsdb/client"
+	ovsdbModel "github.com/ovn-kubernetes/libovsdb/model"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/iprange"

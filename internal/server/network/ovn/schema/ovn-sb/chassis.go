@@ -8,7 +8,7 @@ const ChassisTable = "Chassis"
 // Chassis defines an object in Chassis table
 type Chassis struct {
 	UUID                string            `ovsdb:"_uuid"`
-	Encaps              []string          `ovsdb:"encaps"`
+	Encaps              []string          `ovsdb:"encaps" validate:"min=1"`
 	ExternalIDs         map[string]string `ovsdb:"external_ids"`
 	Hostname            string            `ovsdb:"hostname"`
 	Name                string            `ovsdb:"name"`

@@ -15,5 +15,5 @@ type PortBinding struct {
 	Gateway          string            `ovsdb:"gateway"`
 	LogicalPort      string            `ovsdb:"logical_port"`
 	TransitSwitch    string            `ovsdb:"transit_switch"`
-	TunnelKey        int               `ovsdb:"tunnel_key"`
+	TunnelKey        int               `ovsdb:"tunnel_key" validate:"min=1,max=32767"`
 }

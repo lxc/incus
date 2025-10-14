@@ -21,9 +21,9 @@ var (
 type Mirror struct {
 	UUID        string            `ovsdb:"_uuid"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`
-	Filter      MirrorFilter      `ovsdb:"filter"`
+	Filter      MirrorFilter      `ovsdb:"filter" validate:"oneof='from-lport' 'to-lport'"`
 	Index       int               `ovsdb:"index"`
 	Name        string            `ovsdb:"name"`
 	Sink        string            `ovsdb:"sink"`
-	Type        MirrorType        `ovsdb:"type"`
+	Type        MirrorType        `ovsdb:"type" validate:"oneof='gre' 'erspan'"`
 }

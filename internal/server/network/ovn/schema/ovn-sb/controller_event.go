@@ -9,13 +9,15 @@ type (
 	ControllerEventEventType = string
 )
 
-var ControllerEventEventTypeEmptyLbBackends ControllerEventEventType = "empty_lb_backends"
+var (
+	ControllerEventEventTypeEmptyLbBackends ControllerEventEventType = "empty_lb_backends"
+)
 
 // ControllerEvent defines an object in Controller_Event table
 type ControllerEvent struct {
 	UUID      string                   `ovsdb:"_uuid"`
 	Chassis   *string                  `ovsdb:"chassis"`
 	EventInfo map[string]string        `ovsdb:"event_info"`
-	EventType ControllerEventEventType `ovsdb:"event_type"`
+	EventType ControllerEventEventType `ovsdb:"event_type" validate:"oneof='empty_lb_backends'"`
 	SeqNum    int                      `ovsdb:"seq_num"`
 }

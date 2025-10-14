@@ -30,7 +30,7 @@ type LoadBalancer struct {
 	IPPortMappings  map[string]string             `ovsdb:"ip_port_mappings"`
 	Name            string                        `ovsdb:"name"`
 	Options         map[string]string             `ovsdb:"options"`
-	Protocol        *LoadBalancerProtocol         `ovsdb:"protocol"`
-	SelectionFields []LoadBalancerSelectionFields `ovsdb:"selection_fields"`
+	Protocol        *LoadBalancerProtocol         `ovsdb:"protocol" validate:"omitempty,oneof='tcp' 'udp' 'sctp'"`
+	SelectionFields []LoadBalancerSelectionFields `ovsdb:"selection_fields" validate:"dive,oneof='eth_src' 'eth_dst' 'ip_src' 'ip_dst' 'tp_src' 'tp_dst'"`
 	Vips            map[string]string             `ovsdb:"vips"`
 }

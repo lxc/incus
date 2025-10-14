@@ -16,7 +16,7 @@ type LogicalRouterPort struct {
 	Ipv6RaConfigs  map[string]string `ovsdb:"ipv6_ra_configs"`
 	MAC            string            `ovsdb:"mac"`
 	Name           string            `ovsdb:"name"`
-	Networks       []string          `ovsdb:"networks"`
+	Networks       []string          `ovsdb:"networks" validate:"min=1"`
 	Options        map[string]string `ovsdb:"options"`
 	Peer           *string           `ovsdb:"peer"`
 }

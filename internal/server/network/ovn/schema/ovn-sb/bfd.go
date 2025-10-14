@@ -27,6 +27,6 @@ type BFD struct {
 	MinRx       int               `ovsdb:"min_rx"`
 	MinTx       int               `ovsdb:"min_tx"`
 	Options     map[string]string `ovsdb:"options"`
-	SrcPort     int               `ovsdb:"src_port"`
-	Status      BFDStatus         `ovsdb:"status"`
+	SrcPort     int               `ovsdb:"src_port" validate:"min=49152,max=65535"`
+	Status      BFDStatus         `ovsdb:"status" validate:"oneof='down' 'init' 'up' 'admin_down'"`
 }

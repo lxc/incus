@@ -8,7 +8,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/go-logr/logr"
-	ovsdbClient "github.com/ovn-org/libovsdb/client"
+	ovsdbClient "github.com/ovn-kubernetes/libovsdb/client"
 
 	ovsSwitch "github.com/lxc/incus/v6/internal/server/network/ovs/schema/ovs"
 )

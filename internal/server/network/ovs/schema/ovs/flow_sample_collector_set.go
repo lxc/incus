@@ -10,6 +10,6 @@ type FlowSampleCollectorSet struct {
 	UUID        string            `ovsdb:"_uuid"`
 	Bridge      string            `ovsdb:"bridge"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`
-	ID          int               `ovsdb:"id"`
+	ID          int               `ovsdb:"id" validate:"min=0,max=4294967295"`
 	IPFIX       *string           `ovsdb:"ipfix"`
 }

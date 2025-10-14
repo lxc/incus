@@ -24,7 +24,7 @@ var (
 // DHCPOptions defines an object in DHCP_Options table
 type DHCPOptions struct {
 	UUID string          `ovsdb:"_uuid"`
-	Code int             `ovsdb:"code"`
+	Code int             `ovsdb:"code" validate:"min=0,max=254"`
 	Name string          `ovsdb:"name"`
-	Type DHCPOptionsType `ovsdb:"type"`
+	Type DHCPOptionsType `ovsdb:"type" validate:"oneof='bool' 'uint8' 'uint16' 'uint32' 'ipv4' 'static_routes' 'str' 'host_id' 'domains'"`
 }

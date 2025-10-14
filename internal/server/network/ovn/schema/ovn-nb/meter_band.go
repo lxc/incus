@@ -9,13 +9,15 @@ type (
 	MeterBandAction = string
 )
 
-var MeterBandActionDrop MeterBandAction = "drop"
+var (
+	MeterBandActionDrop MeterBandAction = "drop"
+)
 
 // MeterBand defines an object in Meter_Band table
 type MeterBand struct {
 	UUID        string            `ovsdb:"_uuid"`
-	Action      MeterBandAction   `ovsdb:"action"`
-	BurstSize   int               `ovsdb:"burst_size"`
+	Action      MeterBandAction   `ovsdb:"action" validate:"oneof='drop'"`
+	BurstSize   int               `ovsdb:"burst_size" validate:"min=0,max=4294967295"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`
-	Rate        int               `ovsdb:"rate"`
+	Rate        int               `ovsdb:"rate" validate:"min=1,max=4294967295"`
 }
