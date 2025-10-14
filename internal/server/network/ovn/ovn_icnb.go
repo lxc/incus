@@ -12,7 +12,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/go-logr/logr"
-	ovsdbClient "github.com/ovn-org/libovsdb/client"
+	ovsdbClient "github.com/ovn-kubernetes/libovsdb/client"
 
 	ovnICNB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-ic-nb"
 )
