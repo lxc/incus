@@ -8,7 +8,7 @@ const ForwardingGroupTable = "Forwarding_Group"
 // ForwardingGroup defines an object in Forwarding_Group table
 type ForwardingGroup struct {
 	UUID        string            `ovsdb:"_uuid"`
-	ChildPort   []string          `ovsdb:"child_port"`
+	ChildPort   []string          `ovsdb:"child_port" validate:"min=1"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`
 	Liveness    bool              `ovsdb:"liveness"`
 	Name        string            `ovsdb:"name"`

@@ -10,5 +10,5 @@ type HAChassis struct {
 	UUID        string            `ovsdb:"_uuid"`
 	ChassisName string            `ovsdb:"chassis_name"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`
-	Priority    int               `ovsdb:"priority"`
+	Priority    int               `ovsdb:"priority" validate:"min=0,max=32767"`
 }

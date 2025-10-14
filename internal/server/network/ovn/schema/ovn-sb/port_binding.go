@@ -25,8 +25,8 @@ type PortBinding struct {
 	PortSecurity               []string          `ovsdb:"port_security"`
 	RequestedAdditionalChassis []string          `ovsdb:"requested_additional_chassis"`
 	RequestedChassis           *string           `ovsdb:"requested_chassis"`
-	Tag                        *int              `ovsdb:"tag"`
-	TunnelKey                  int               `ovsdb:"tunnel_key"`
+	Tag                        *int              `ovsdb:"tag" validate:"omitempty,min=1,max=4095"`
+	TunnelKey                  int               `ovsdb:"tunnel_key" validate:"min=1,max=32767"`
 	Type                       string            `ovsdb:"type"`
 	Up                         *bool             `ovsdb:"up"`
 	VirtualParent              *string           `ovsdb:"virtual_parent"`

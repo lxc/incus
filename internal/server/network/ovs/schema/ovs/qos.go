@@ -10,6 +10,6 @@ type QoS struct {
 	UUID        string            `ovsdb:"_uuid"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`
 	OtherConfig map[string]string `ovsdb:"other_config"`
-	Queues      map[int]string    `ovsdb:"queues"`
+	Queues      map[int]string    `ovsdb:"queues" validate:"dive,keys,min=0,max=4294967295"`
 	Type        string            `ovsdb:"type"`
 }

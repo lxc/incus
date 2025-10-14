@@ -19,12 +19,12 @@ var (
 // BFD defines an object in BFD table
 type BFD struct {
 	UUID        string            `ovsdb:"_uuid"`
-	DetectMult  *int              `ovsdb:"detect_mult"`
+	DetectMult  *int              `ovsdb:"detect_mult" validate:"omitempty,min=1"`
 	DstIP       string            `ovsdb:"dst_ip"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`
 	LogicalPort string            `ovsdb:"logical_port"`
 	MinRx       *int              `ovsdb:"min_rx"`
-	MinTx       *int              `ovsdb:"min_tx"`
+	MinTx       *int              `ovsdb:"min_tx" validate:"omitempty,min=1"`
 	Options     map[string]string `ovsdb:"options"`
-	Status      *BFDStatus        `ovsdb:"status"`
+	Status      *BFDStatus        `ovsdb:"status" validate:"omitempty,oneof='down' 'init' 'up' 'admin_down'"`
 }

@@ -23,6 +23,6 @@ type LogicalRouterStaticRoute struct {
 	Nexthop     string                          `ovsdb:"nexthop"`
 	Options     map[string]string               `ovsdb:"options"`
 	OutputPort  *string                         `ovsdb:"output_port"`
-	Policy      *LogicalRouterStaticRoutePolicy `ovsdb:"policy"`
+	Policy      *LogicalRouterStaticRoutePolicy `ovsdb:"policy" validate:"omitempty,oneof='src-ip' 'dst-ip'"`
 	RouteTable  string                          `ovsdb:"route_table"`
 }

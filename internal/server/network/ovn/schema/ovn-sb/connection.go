@@ -11,7 +11,7 @@ type Connection struct {
 	ExternalIDs     map[string]string `ovsdb:"external_ids"`
 	InactivityProbe *int              `ovsdb:"inactivity_probe"`
 	IsConnected     bool              `ovsdb:"is_connected"`
-	MaxBackoff      *int              `ovsdb:"max_backoff"`
+	MaxBackoff      *int              `ovsdb:"max_backoff" validate:"omitempty,min=1000"`
 	OtherConfig     map[string]string `ovsdb:"other_config"`
 	ReadOnly        bool              `ovsdb:"read_only"`
 	Role            string            `ovsdb:"role"`

@@ -24,10 +24,10 @@ var (
 // Controller defines an object in Controller table
 type Controller struct {
 	UUID                 string                    `ovsdb:"_uuid"`
-	ConnectionMode       *ControllerConnectionMode `ovsdb:"connection_mode"`
-	ControllerBurstLimit *int                      `ovsdb:"controller_burst_limit"`
-	ControllerQueueSize  *int                      `ovsdb:"controller_queue_size"`
-	ControllerRateLimit  *int                      `ovsdb:"controller_rate_limit"`
+	ConnectionMode       *ControllerConnectionMode `ovsdb:"connection_mode" validate:"omitempty,oneof='in-band' 'out-of-band'"`
+	ControllerBurstLimit *int                      `ovsdb:"controller_burst_limit" validate:"omitempty,min=25"`
+	ControllerQueueSize  *int                      `ovsdb:"controller_queue_size" validate:"omitempty,min=1,max=512"`
+	ControllerRateLimit  *int                      `ovsdb:"controller_rate_limit" validate:"omitempty,min=100"`
 	EnableAsyncMessages  *bool                     `ovsdb:"enable_async_messages"`
 	ExternalIDs          map[string]string         `ovsdb:"external_ids"`
 	InactivityProbe      *int                      `ovsdb:"inactivity_probe"`
@@ -35,10 +35,10 @@ type Controller struct {
 	LocalGateway         *string                   `ovsdb:"local_gateway"`
 	LocalIP              *string                   `ovsdb:"local_ip"`
 	LocalNetmask         *string                   `ovsdb:"local_netmask"`
-	MaxBackoff           *int                      `ovsdb:"max_backoff"`
+	MaxBackoff           *int                      `ovsdb:"max_backoff" validate:"omitempty,min=1000"`
 	OtherConfig          map[string]string         `ovsdb:"other_config"`
-	Role                 *ControllerRole           `ovsdb:"role"`
+	Role                 *ControllerRole           `ovsdb:"role" validate:"omitempty,oneof='other' 'master' 'slave'"`
 	Status               map[string]string         `ovsdb:"status"`
 	Target               string                    `ovsdb:"target"`
-	Type                 *ControllerType           `ovsdb:"type"`
+	Type                 *ControllerType           `ovsdb:"type" validate:"omitempty,oneof='primary' 'service'"`
 }

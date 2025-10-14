@@ -10,5 +10,5 @@ type DatapathBinding struct {
 	UUID          string            `ovsdb:"_uuid"`
 	ExternalIDs   map[string]string `ovsdb:"external_ids"`
 	TransitSwitch string            `ovsdb:"transit_switch"`
-	TunnelKey     int               `ovsdb:"tunnel_key"`
+	TunnelKey     int               `ovsdb:"tunnel_key" validate:"min=1,max=16777215"`
 }

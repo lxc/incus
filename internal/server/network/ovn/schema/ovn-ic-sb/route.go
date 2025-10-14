@@ -21,7 +21,7 @@ type Route struct {
 	ExternalIDs      map[string]string `ovsdb:"external_ids"`
 	IPPrefix         string            `ovsdb:"ip_prefix"`
 	Nexthop          string            `ovsdb:"nexthop"`
-	Origin           RouteOrigin       `ovsdb:"origin"`
+	Origin           RouteOrigin       `ovsdb:"origin" validate:"oneof='connected' 'static'"`
 	RouteTable       string            `ovsdb:"route_table"`
 	TransitSwitch    string            `ovsdb:"transit_switch"`
 }

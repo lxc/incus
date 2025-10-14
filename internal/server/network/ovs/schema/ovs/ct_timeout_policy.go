@@ -32,5 +32,5 @@ var (
 type CTTimeoutPolicy struct {
 	UUID        string            `ovsdb:"_uuid"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`
-	Timeouts    map[string]int    `ovsdb:"timeouts"`
+	Timeouts    map[string]int    `ovsdb:"timeouts" validate:"dive,keys,oneof='tcp_syn_sent' 'tcp_syn_recv' 'tcp_established' 'tcp_fin_wait' 'tcp_close_wait' 'tcp_last_ack' 'tcp_time_wait' 'tcp_close' 'tcp_syn_sent2' 'tcp_retransmit' 'tcp_unack' 'udp_first' 'udp_single' 'udp_multiple' 'icmp_first' 'icmp_reply',endkeys,min=0,max=4294967295"`
 }

@@ -11,11 +11,11 @@ type Mirror struct {
 	ExternalIDs   map[string]string `ovsdb:"external_ids"`
 	Name          string            `ovsdb:"name"`
 	OutputPort    *string           `ovsdb:"output_port"`
-	OutputVLAN    *int              `ovsdb:"output_vlan"`
+	OutputVLAN    *int              `ovsdb:"output_vlan" validate:"omitempty,min=1,max=4095"`
 	SelectAll     bool              `ovsdb:"select_all"`
 	SelectDstPort []string          `ovsdb:"select_dst_port"`
 	SelectSrcPort []string          `ovsdb:"select_src_port"`
-	SelectVLAN    []int             `ovsdb:"select_vlan"`
-	Snaplen       *int              `ovsdb:"snaplen"`
+	SelectVLAN    []int             `ovsdb:"select_vlan" validate:"max=4096,dive,min=0,max=4095"`
+	Snaplen       *int              `ovsdb:"snaplen" validate:"omitempty,min=14,max=65535"`
 	Statistics    map[string]int    `ovsdb:"statistics"`
 }

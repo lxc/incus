@@ -22,10 +22,10 @@ var (
 // QoS defines an object in QoS table
 type QoS struct {
 	UUID        string            `ovsdb:"_uuid"`
-	Action      map[string]int    `ovsdb:"action"`
-	Bandwidth   map[string]int    `ovsdb:"bandwidth"`
-	Direction   QoSDirection      `ovsdb:"direction"`
+	Action      map[string]int    `ovsdb:"action" validate:"dive,keys,oneof='dscp',endkeys,min=0,max=63"`
+	Bandwidth   map[string]int    `ovsdb:"bandwidth" validate:"dive,keys,oneof='rate' 'burst',endkeys,min=1,max=4294967295"`
+	Direction   QoSDirection      `ovsdb:"direction" validate:"oneof='from-lport' 'to-lport'"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`
 	Match       string            `ovsdb:"match"`
-	Priority    int               `ovsdb:"priority"`
+	Priority    int               `ovsdb:"priority" validate:"min=0,max=32767"`
 }

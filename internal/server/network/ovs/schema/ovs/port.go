@@ -31,13 +31,13 @@ type Port struct {
 	BondActiveSlave *string           `ovsdb:"bond_active_slave"`
 	BondDowndelay   int               `ovsdb:"bond_downdelay"`
 	BondFakeIface   bool              `ovsdb:"bond_fake_iface"`
-	BondMode        *PortBondMode     `ovsdb:"bond_mode"`
+	BondMode        *PortBondMode     `ovsdb:"bond_mode" validate:"omitempty,oneof='balance-tcp' 'balance-slb' 'active-backup'"`
 	BondUpdelay     int               `ovsdb:"bond_updelay"`
-	CVLANs          []int             `ovsdb:"cvlans"`
+	CVLANs          []int             `ovsdb:"cvlans" validate:"max=4096,dive,min=0,max=4095"`
 	ExternalIDs     map[string]string `ovsdb:"external_ids"`
 	FakeBridge      bool              `ovsdb:"fake_bridge"`
-	Interfaces      []string          `ovsdb:"interfaces"`
-	LACP            *PortLACP         `ovsdb:"lacp"`
+	Interfaces      []string          `ovsdb:"interfaces" validate:"min=1"`
+	LACP            *PortLACP         `ovsdb:"lacp" validate:"omitempty,oneof='active' 'passive' 'off'"`
 	MAC             *string           `ovsdb:"mac"`
 	Name            string            `ovsdb:"name"`
 	OtherConfig     map[string]string `ovsdb:"other_config"`
@@ -47,7 +47,7 @@ type Port struct {
 	RSTPStatus      map[string]string `ovsdb:"rstp_status"`
 	Statistics      map[string]int    `ovsdb:"statistics"`
 	Status          map[string]string `ovsdb:"status"`
-	Tag             *int              `ovsdb:"tag"`
-	Trunks          []int             `ovsdb:"trunks"`
-	VLANMode        *PortVLANMode     `ovsdb:"vlan_mode"`
+	Tag             *int              `ovsdb:"tag" validate:"omitempty,min=0,max=4095"`
+	Trunks          []int             `ovsdb:"trunks" validate:"max=4096,dive,min=0,max=4095"`
+	VLANMode        *PortVLANMode     `ovsdb:"vlan_mode" validate:"omitempty,oneof='trunk' 'access' 'native-tagged' 'native-untagged' 'dot1q-tunnel'"`
 }

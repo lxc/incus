@@ -8,7 +8,7 @@ const QueueTable = "Queue"
 // Queue defines an object in Queue table
 type Queue struct {
 	UUID        string            `ovsdb:"_uuid"`
-	DSCP        *int              `ovsdb:"dscp"`
+	DSCP        *int              `ovsdb:"dscp" validate:"omitempty,min=0,max=63"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`
 	OtherConfig map[string]string `ovsdb:"other_config"`
 }
