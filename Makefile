@@ -101,7 +101,7 @@ endif
 
 .PHONY: update-ovsdb
 update-ovsdb:
-	go install github.com/ovn-org/libovsdb/cmd/modelgen@main
+	go install github.com/ovn-kubernetes/libovsdb/cmd/modelgen@main
 
 	rm -Rf internal/server/network/ovs/schema
 	mkdir internal/server/network/ovs/schema
