@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	ovsdbClient "github.com/ovn-org/libovsdb/client"
-	ovsdbModel "github.com/ovn-org/libovsdb/model"
-	"github.com/ovn-org/libovsdb/ovsdb"
+	ovsdbClient "github.com/ovn-kubernetes/libovsdb/client"
+	ovsdbModel "github.com/ovn-kubernetes/libovsdb/model"
+	"github.com/ovn-kubernetes/libovsdb/ovsdb"
 
 	"github.com/lxc/incus/v6/internal/server/ip"
 	ovsSwitch "github.com/lxc/incus/v6/internal/server/network/ovs/schema/ovs"

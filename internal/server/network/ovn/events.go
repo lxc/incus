@@ -1,7 +1,7 @@
 package ovn
 
 import (
-	ovsdbModel "github.com/ovn-org/libovsdb/model"
+	ovsdbModel "github.com/ovn-kubernetes/libovsdb/model"
 )
 
 // EventHandler represents an OVN database event handler.

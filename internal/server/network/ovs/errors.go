@@ -3,7 +3,7 @@ package ovs
 import (
 	"errors"
 
-	ovsdbClient "github.com/ovn-org/libovsdb/client"
+	ovsdbClient "github.com/ovn-kubernetes/libovsdb/client"
 )
 
 // ErrExists indicates that a DB record already exists.

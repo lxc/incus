@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	ovsClient "github.com/ovn-org/libovsdb/client"
-	ovsModel "github.com/ovn-org/libovsdb/model"
-	"github.com/ovn-org/libovsdb/ovsdb"
+	ovsClient "github.com/ovn-kubernetes/libovsdb/client"
+	ovsModel "github.com/ovn-kubernetes/libovsdb/model"
+	"github.com/ovn-kubernetes/libovsdb/ovsdb"
 
 	"github.com/lxc/incus/v6/internal/iprange"
 	ovnNB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-nb"
