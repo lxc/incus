@@ -1162,14 +1162,17 @@ func IPisBroadcast(subnet *net.IPNet, ipAddress net.IP) bool {
 	if ipAddress == nil || subnet == nil {
 		return false
 	}
+
 	ipv4 := ipAddress.To4()
 	if ipv4 == nil {
 		return false
 	}
+
 	broadcast := make(net.IP, 4)
 	for i := 0; i < 4; i++ {
 		broadcast[i] = subnet.IP[i] | ^subnet.Mask[i]
 	}
+
 	return ipv4.Equal(broadcast)
 }
 
@@ -1178,6 +1181,7 @@ func IPisNetworkID(subnet *net.IPNet, ipAddress net.IP) bool {
 	if ipAddress == nil || subnet == nil {
 		return false
 	}
+
 	return ipAddress.Equal(subnet.IP)
 }
 
