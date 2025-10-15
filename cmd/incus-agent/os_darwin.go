@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"unsafe"
 
 	"github.com/shirou/gopsutil/v4/disk"
 	"golang.org/x/sys/unix"
@@ -22,6 +23,7 @@ import (
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/subprocess"
 )
 
@@ -287,21 +289,167 @@ func osGetOSState() *api.InstanceStateOSInfo {
 	return osInfo
 }
 
-func osGetInteractiveConsole(s *execWs) (io.ReadWriteCloser, io.ReadWriteCloser, error) {
-	return nil, nil, errors.New("Only non-interactive exec sessions are currently supported on Darwin")
+// openPty is is the same as linux.OpenPty for Darwin.
+func openPty(uid, gid int64) (*os.File, *os.File, error) {
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	fd, err := unix.Open("/dev/ptmx", unix.O_RDWR|unix.O_CLOEXEC|unix.O_NOCTTY, 0)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	ptx := os.NewFile(uintptr(fd), "")
+	reverter.Add(func() { _ = ptx.Close() })
+
+	// Unlock the ptx and pty.
+	_, _, errno := unix.Syscall(unix.SYS_IOCTL, uintptr(ptx.Fd()), unix.TIOCPTYUNLK, 0)
+	if errno != 0 {
+		return nil, nil, unix.Errno(errno)
+	}
+
+	var ptyName [256]byte
+	_, _, errno = unix.Syscall(unix.SYS_IOCTL, uintptr(ptx.Fd()), unix.TIOCPTYGNAME, uintptr(unsafe.Pointer(&ptyName)))
+	if errno != 0 {
+		return nil, nil, unix.Errno(errno)
+	}
+
+	pty, err := os.OpenFile(parseBytes(ptyName[:]), unix.O_RDWR|unix.O_CLOEXEC|unix.O_NOCTTY, 0)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	reverter.Add(func() { _ = pty.Close() })
+
+	// Configure both sides
+	for _, entry := range []*os.File{ptx, pty} {
+		// Get termios.
+		t, err := unix.IoctlGetTermios(int(entry.Fd()), unix.TIOCGETA)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Set flags.
+		t.Cflag |= unix.IMAXBEL
+		t.Cflag |= unix.IUTF8
+		t.Cflag |= unix.BRKINT
+		t.Cflag |= unix.IXANY
+		t.Cflag |= unix.HUPCL
+
+		// Set termios.
+		err = unix.IoctlSetTermios(int(entry.Fd()), unix.TIOCSETA, t)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Set the default window size.
+		sz := &unix.Winsize{
+			Col: 80,
+			Row: 25,
+		}
+
+		err = unix.IoctlSetWinsize(int(entry.Fd()), unix.TIOCSWINSZ, sz)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Set CLOEXEC.
+		_, _, errno = unix.Syscall(unix.SYS_FCNTL, uintptr(entry.Fd()), unix.F_SETFD, unix.FD_CLOEXEC)
+		if errno != 0 {
+			return nil, nil, unix.Errno(errno)
+		}
+	}
+
+	// Fix the ownership of the pty side.
+	err = unix.Fchown(int(pty.Fd()), int(uid), int(gid))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	reverter.Success()
+
+	return ptx, pty, nil
+}
+
+// setPtySize is the same as linux.SetPtySize for Darwin.
+func setPtySize(fd int, width int, height int) (err error) {
+	var dimensions [4]uint16
+	dimensions[0] = uint16(height)
+	dimensions[1] = uint16(width)
+
+	_, _, errno := unix.Syscall6(unix.SYS_IOCTL, uintptr(fd), uintptr(unix.TIOCSWINSZ), uintptr(unsafe.Pointer(&dimensions)), 0, 0, 0)
+	if errno != 0 {
+		return errno
+	}
+
+	return nil
+}
+
+func osGetInteractiveConsole(s *execWs) (*os.File, *os.File, error) {
+	pty, tty, err := openPty(int64(s.uid), int64(s.gid))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if s.width > 0 && s.height > 0 {
+		_ = setPtySize(int(pty.Fd()), s.width, s.height)
+	}
+
+	return pty, tty, nil
 }
 
 func osPrepareExecCommand(s *execWs, cmd *exec.Cmd) {
-	if s.cwd == "" {
-		cmd.Dir = osBaseWorkingDirectory
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Credential: &syscall.Credential{
+			Uid: s.uid,
+			Gid: s.gid,
+		},
+		// Creates a new session if the calling process is not a process group leader.
+		// The calling process is the leader of the new session, the process group leader of
+		// the new process group, and has no controlling terminal.
+		// This is important to allow remote shells to handle ctrl+c.
+		Setsid: true,
 	}
 
-	return
+	// Make the given terminal the controlling terminal of the calling process.
+	// The calling process must be a session leader and not have a controlling terminal already.
+	// This is important as allows ctrl+c to work as expected for non-shell programs.
+	if s.interactive {
+		cmd.SysProcAttr.Setctty = true
+	}
 }
 
 func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty io.ReadWriteCloser, cmd *exec.Cmd, l logger.Logger) {
-	// Ignore control messages.
-	return
+	if control.Command == "window-resize" && s.interactive {
+		winchWidth, err := strconv.Atoi(control.Args["width"])
+		if err != nil {
+			l.Debug("Unable to extract window width", logger.Ctx{"err": err})
+			return
+		}
+
+		winchHeight, err := strconv.Atoi(control.Args["height"])
+		if err != nil {
+			l.Debug("Unable to extract window height", logger.Ctx{"err": err})
+			return
+		}
+
+		osFile, ok := pty.(*os.File)
+		if ok {
+			err = setPtySize(int(osFile.Fd()), winchWidth, winchHeight)
+			if err != nil {
+				l.Debug("Failed to set window size", logger.Ctx{"err": err, "width": winchWidth, "height": winchHeight})
+				return
+			}
+		}
+	} else if control.Command == "signal" {
+		err := unix.Kill(cmd.Process.Pid, unix.Signal(control.Signal))
+		if err != nil {
+			l.Debug("Failed forwarding signal", logger.Ctx{"err": err, "signal": control.Signal})
+			return
+		}
+
+		l.Info("Forwarded signal", logger.Ctx{"signal": control.Signal})
+	}
 }
 
 // osExitStatus is is the same as linux.ExitStatus for Darwin.
@@ -329,4 +477,33 @@ func osExitStatus(err error) (int, error) {
 
 func osSetEnv(post *api.InstanceExecPost, env map[string]string) {
 	env["PATH"] = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+	// If running as root, set some env variables.
+	if post.User == 0 {
+		// Set default value for HOME. Fix /root.
+		home, ok := env["HOME"]
+		if !ok || home == "/root" {
+			env["HOME"] = "/var/root"
+		}
+
+		// Set default value for USER.
+		_, ok = env["USER"]
+		if !ok {
+			env["USER"] = "root"
+		}
+	}
+
+	// Set default value for LANG.
+	_, ok := env["LANG"]
+	if !ok {
+		env["LANG"] = "C.UTF-8"
+	}
+
+	// Set the default working directory.
+	if post.Cwd == "" {
+		post.Cwd = env["HOME"]
+		if post.Cwd == "" {
+			post.Cwd = osBaseWorkingDirectory
+		}
+	}
 }
