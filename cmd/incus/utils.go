@@ -340,14 +340,6 @@ func readEnvironmentFile(path string) (map[string]string, error) {
 	return envMap, nil
 }
 
-func usage(name string, args ...string) string {
-	if len(args) == 0 {
-		return name
-	}
-
-	return name + " " + args[0]
-}
-
 // instancesExist iterates over a list of instances (or snapshots) and checks that they exist.
 func instancesExist(resources []remoteResource) error {
 	for _, resource := range resources {

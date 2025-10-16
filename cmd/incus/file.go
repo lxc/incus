@@ -48,7 +48,7 @@ type cmdFile struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdFile) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("file")
+	cmd.Use = cli.Usage("file")
 	cmd.Short = i18n.G("Manage files in instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage files in instances`))
@@ -95,7 +95,7 @@ type cmdFileCreate struct {
 // Command returns the cobra command for `file create`.
 func (c *cmdFileCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("create", i18n.G("[<remote>:]<instance>/<path> [<symlink target path>]"))
+	cmd.Use = cli.Usage("create", i18n.G("[<remote>:]<instance>/<path> [<symlink target path>]"))
 	cmd.Short = i18n.G("Create files and directories in instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create files and directories in instances`))
@@ -289,7 +289,7 @@ type cmdFileDelete struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdFileDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("delete", i18n.G("[<remote>:]<instance>/<path> [[<remote>:]<instance>/<path>...]"))
+	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<instance>/<path> [[<remote>:]<instance>/<path>...]"))
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete files in instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -374,7 +374,7 @@ type cmdFileEdit struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdFileEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("edit", i18n.G("[<remote>:]<instance>/<path>"))
+	cmd.Use = cli.Usage("edit", i18n.G("[<remote>:]<instance>/<path>"))
 	cmd.Short = i18n.G("Edit files in instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit files in instances`))
@@ -454,7 +454,7 @@ type cmdFilePull struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdFilePull) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("pull", i18n.G("[<remote>:]<instance>/<path> [[<remote>:]<instance>/<path>...] <target path>"))
+	cmd.Use = cli.Usage("pull", i18n.G("[<remote>:]<instance>/<path> [[<remote>:]<instance>/<path>...] <target path>"))
 	cmd.Short = i18n.G("Pull files from instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Pull files from instances`))
@@ -691,7 +691,7 @@ type cmdFilePush struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdFilePush) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("push", i18n.G("<source path>... [<remote>:]<instance>/<path>"))
+	cmd.Use = cli.Usage("push", i18n.G("<source path>... [<remote>:]<instance>/<path>"))
 	cmd.Short = i18n.G("Push files into instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Push files into instances`))
@@ -1360,7 +1360,7 @@ type cmdFileMount struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdFileMount) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("mount", i18n.G("[<remote>:]<instance>[/<path>] [<target path>]"))
+	cmd.Use = cli.Usage("mount", i18n.G("[<remote>:]<instance>[/<path>] [<target path>]"))
 	cmd.Short = i18n.G("Mount files from instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Mount files from instances`))

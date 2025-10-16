@@ -42,7 +42,7 @@ type cmdAdminInit struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminInit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("init")
+	cmd.Use = cli.Usage("init")
 	cmd.Short = i18n.G("Configure the daemon")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Configure the daemon`))
 	cmd.Example = `  init --minimal

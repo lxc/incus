@@ -33,7 +33,7 @@ type cmdRemoteProxy struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRemoteProxy) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("proxy", i18n.G("<remote>: <path>"))
+	cmd.Use = cli.Usage("proxy", i18n.G("<remote>: <path>"))
 	cmd.Short = i18n.G("Run a local API proxy")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Run a local API proxy for the remote`))

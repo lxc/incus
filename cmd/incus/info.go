@@ -32,7 +32,7 @@ type cmdInfo struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdInfo) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("info", i18n.G("[<remote>:][<instance>]"))
+	cmd.Use = cli.Usage("info", i18n.G("[<remote>:][<instance>]"))
 	cmd.Short = i18n.G("Show instance or server information")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show instance or server information`))

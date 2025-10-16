@@ -23,7 +23,7 @@ type cmdConfigTemplate struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTemplate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("template")
+	cmd.Use = cli.Usage("template")
 	cmd.Short = i18n.G("Manage instance file templates")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage instance file templates`))
@@ -64,7 +64,7 @@ type cmdConfigTemplateCreate struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTemplateCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("create", i18n.G("[<remote>:]<instance> <template>"))
+	cmd.Use = cli.Usage("create", i18n.G("[<remote>:]<instance> <template>"))
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new instance file templates")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -134,7 +134,7 @@ type cmdConfigTemplateDelete struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTemplateDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("delete", i18n.G("[<remote>:]<instance> <template>"))
+	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<instance> <template>"))
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete instance file templates")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -191,7 +191,7 @@ type cmdConfigTemplateEdit struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTemplateEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("edit", i18n.G("[<remote>:]<instance> <template>"))
+	cmd.Use = cli.Usage("edit", i18n.G("[<remote>:]<instance> <template>"))
 	cmd.Short = i18n.G("Edit instance file templates")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit instance file templates`))
@@ -293,7 +293,7 @@ type cmdConfigTemplateList struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTemplateList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("list", i18n.G("[<remote>:]<instance>"))
+	cmd.Use = cli.Usage("list", i18n.G("[<remote>:]<instance>"))
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List instance file templates")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -368,7 +368,7 @@ type cmdConfigTemplateShow struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTemplateShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("show", i18n.G("[<remote>:]<instance> <template>"))
+	cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<instance> <template>"))
 	cmd.Short = i18n.G("Show content of instance file templates")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show content of instance file templates`))
