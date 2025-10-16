@@ -88,7 +88,7 @@ func osMountShared(src string, dst string, fstype string, opts []string) error {
 				return errors.New("Unable to mount shares on non-empty directories")
 			}
 		} else if stat.Mode()&fs.ModeSymlink != 0 {
-			// Handle symbolic links, failinks if not broken.
+			// Handle symbolic links, fail if not broken.
 			// Try to follow the link.
 			_, err := os.Stat(dst)
 			if err == nil {
