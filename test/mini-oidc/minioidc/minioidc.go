@@ -41,7 +41,7 @@ func WithDeviceAuthorizationPollInterval(interval time.Duration) Option {
 // Run starts minioidc on the given port.
 // This starts ListenAndServe and will therefore block.
 func Run(port string) error {
-	server, err := setup(port)
+	server, err := setup(port, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func Run(port string) error {
 // RunTest runs minioidc for use in tests.
 // It picks a random port and returns its address. The address
 // is also the issuer URL.
-func RunTest(t *testing.T, opts ...Option) string {
+func RunTest(t *testing.T, storageOpts []storage.Option, configOpts []Option) string {
 	t.Helper()
 
 	iport, err := getFreePort()
@@ -67,7 +67,7 @@ func RunTest(t *testing.T, opts ...Option) string {
 
 	port := strconv.Itoa(iport)
 
-	server, err := setup(port, opts...)
+	server, err := setup(port, storageOpts, configOpts)
 	if err != nil {
 		t.Fatalf("minioidc setup: %v", err)
 	}
@@ -89,14 +89,14 @@ func RunTest(t *testing.T, opts ...Option) string {
 	return fmt.Sprintf("http://%s/", server.Addr)
 }
 
-func setup(port string, opts ...Option) (*http.Server, error) {
+func setup(port string, storageOpts []storage.Option, configOpts []Option) (*http.Server, error) {
 	issuer := fmt.Sprintf("http://127.0.0.1:%s/", port)
 
 	// Setup the OIDC provider.
 	key := sha256.Sum256([]byte("test"))
 	router := chi.NewRouter()
 	users := &userStore{}
-	storageBackend := storage.NewStorage(users)
+	storageBackend := storage.NewStorage(users, storageOpts...)
 
 	// Create the provider.
 	config := &op.Config{
@@ -114,7 +114,7 @@ func setup(port string, opts ...Option) (*http.Server, error) {
 		},
 	}
 
-	for _, opt := range opts {
+	for _, opt := range configOpts {
 		opt(config)
 	}
 

@@ -36,18 +36,20 @@ var (
 // typically you would implement this as a layer on top of your database
 // for simplicity this example keeps everything in-memory
 type Storage struct {
-	lock          sync.Mutex
-	authRequests  map[string]*AuthRequest
-	codes         map[string]string
-	tokens        map[string]*Token
-	clients       map[string]*Client
-	userStore     UserStore
-	services      map[string]Service
-	refreshTokens map[string]*RefreshToken
-	signingKey    signingKey
-	deviceCodes   map[string]deviceAuthorizationEntry
-	userCodes     map[string]string
-	serviceUsers  map[string]*Client
+	lock                   sync.Mutex
+	authRequests           map[string]*AuthRequest
+	codes                  map[string]string
+	tokens                 map[string]*Token
+	clients                map[string]*Client
+	userStore              UserStore
+	services               map[string]Service
+	refreshTokens          map[string]*RefreshToken
+	signingKey             signingKey
+	deviceCodes            map[string]deviceAuthorizationEntry
+	userCodes              map[string]string
+	serviceUsers           map[string]*Client
+	accessTokenExpiration  time.Duration
+	refreshTokenExpiration time.Duration
 }
 
 type signingKey struct {
@@ -88,9 +90,23 @@ func (s *publicKey) Key() any {
 	return &s.key.PublicKey
 }
 
-func NewStorage(userStore UserStore) *Storage {
+type Option func(storage *Storage)
+
+func WithAccessTokenExpiration(expiration time.Duration) Option {
+	return func(storage *Storage) {
+		storage.accessTokenExpiration = expiration
+	}
+}
+
+func WithRefreshTokenExpiration(expiration time.Duration) Option {
+	return func(storage *Storage) {
+		storage.refreshTokenExpiration = expiration
+	}
+}
+
+func NewStorage(userStore UserStore, opts ...Option) *Storage {
 	key, _ := rsa.GenerateKey(rand.Reader, 2048)
-	return &Storage{
+	storage := &Storage{
 		authRequests:  make(map[string]*AuthRequest),
 		codes:         make(map[string]string),
 		tokens:        make(map[string]*Token),
@@ -121,7 +137,15 @@ func NewStorage(userStore UserStore) *Storage {
 				accessTokenType: op.AccessTokenTypeBearer,
 			},
 		},
+		accessTokenExpiration:  5 * time.Minute,
+		refreshTokenExpiration: 5 * time.Hour,
 	}
+
+	for _, opt := range opts {
+		opt(storage)
+	}
+
+	return storage
 }
 
 // CheckUsernamePassword implements the `authenticate` interface of the login
@@ -587,7 +611,7 @@ func (s *Storage) createRefreshToken(accessToken *Token, amr []string, authTime 
 		ApplicationID: accessToken.ApplicationID,
 		UserID:        accessToken.Subject,
 		Audience:      accessToken.Audience,
-		Expiration:    time.Now().Add(5 * time.Hour),
+		Expiration:    time.Now().Add(s.refreshTokenExpiration),
 		Scopes:        accessToken.Scopes,
 	}
 	s.refreshTokens[token.ID] = token
@@ -628,7 +652,7 @@ func (s *Storage) accessToken(applicationID, refreshTokenID, subject string, aud
 		RefreshTokenID: refreshTokenID,
 		Subject:        subject,
 		Audience:       audience,
-		Expiration:     time.Now().Add(5 * time.Minute),
+		Expiration:     time.Now().Add(s.accessTokenExpiration),
 		Scopes:         scopes,
 	}
 	s.tokens[token.ID] = token
