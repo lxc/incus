@@ -778,7 +778,7 @@ func (c *cmdNetworkLoadBalancerEdit) Run(cmd *cobra.Command, args []string) erro
 	}
 
 	// Spawn the editor.
-	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+	content, err := cli.TextEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
 	if err != nil {
 		return err
 	}
@@ -802,7 +802,7 @@ func (c *cmdNetworkLoadBalancerEdit) Run(cmd *cobra.Command, args []string) erro
 				return err
 			}
 
-			content, err = textEditor("", content)
+			content, err = cli.TextEditor("", content)
 			if err != nil {
 				return err
 			}

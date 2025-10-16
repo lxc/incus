@@ -429,7 +429,7 @@ func (c *cmdFileEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	_, err = textEditor(fname, []byte{})
+	_, err = cli.TextEditor(fname, []byte{})
 	if err != nil {
 		return err
 	}
