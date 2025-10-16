@@ -25,6 +25,8 @@ func init() {
 	)
 }
 
+var UserFile string
+
 func Run(port string) error {
 	server, err := setup(port)
 	if err != nil {
@@ -158,9 +160,11 @@ func userCodeHandler(storage *storage.Storage, w http.ResponseWriter, r *http.Re
 func username() string {
 	userName := "unknown"
 
-	content, err := os.ReadFile(os.Args[2])
-	if err == nil {
-		userName = strings.TrimSpace(string(content))
+	if UserFile != "" {
+		content, err := os.ReadFile(UserFile)
+		if err == nil {
+			userName = strings.TrimSpace(string(content))
+		}
 	}
 
 	return userName
