@@ -788,14 +788,17 @@ func (s *Storage) getTokenExchangeClaims(ctx context.Context, request op.TokenEx
 
 // getInfoFromRequest returns the clientID, authTime and amr depending on the op.TokenRequest type / implementation
 func getInfoFromRequest(req op.TokenRequest) (clientID string, authTime time.Time, amr []string) {
-	authReq, ok := req.(*AuthRequest) // Code Flow (with scope offline_access)
-	if ok {
-		return authReq.ApplicationID, authReq.authTime, authReq.GetAMR()
+	switch r := req.(type) {
+	case *AuthRequest: // Code Flow (with scope offline_access)
+		return r.ApplicationID, r.authTime, r.GetAMR()
+
+	case *RefreshTokenRequest: // Refresh Token Request
+		return r.ApplicationID, r.AuthTime, r.AMR
+
+	case *op.DeviceAuthorizationState: // Device Code Flow
+		return r.ClientID, r.AuthTime, r.GetAMR()
 	}
-	refreshReq, ok := req.(*RefreshTokenRequest) // Refresh Token Request
-	if ok {
-		return refreshReq.ApplicationID, refreshReq.AuthTime, refreshReq.AMR
-	}
+
 	return "", time.Time{}, nil
 }
 
