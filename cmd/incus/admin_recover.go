@@ -26,7 +26,7 @@ type cmdAdminRecover struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminRecover) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("recover")
+	cmd.Use = cli.Usage("recover")
 	cmd.Short = i18n.G("Recover missing instances and volumes from existing and unknown storage pools")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Recover missing instances and volumes from existing and unknown storage pools
 

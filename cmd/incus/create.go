@@ -42,7 +42,7 @@ type cmdCreate struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("create", i18n.G("[<remote>:]<image> [<remote>:][<name>]"))
+	cmd.Use = cli.Usage("create", i18n.G("[<remote>:]<image> [<remote>:][<name>]"))
 	cmd.Short = i18n.G("Create instances from images")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Create instances from images`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus create images:debian/12 u1

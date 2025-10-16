@@ -24,7 +24,7 @@ type cmdRebuild struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRebuild) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("rebuild", i18n.G("[<remote>:]<image> [<remote>:]<instance>"))
+	cmd.Use = cli.Usage("rebuild", i18n.G("[<remote>:]<image> [<remote>:]<instance>"))
 	cmd.Short = i18n.G("Rebuild instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Wipe the instance root disk and re-initialize with a new image (or empty volume).`))

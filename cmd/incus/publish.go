@@ -30,7 +30,7 @@ type cmdPublish struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdPublish) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("publish", i18n.G("[<remote>:]<instance>[/<snapshot>] [<remote>:] [flags] [key=value...]"))
+	cmd.Use = cli.Usage("publish", i18n.G("[<remote>:]<instance>[/<snapshot>] [<remote>:] [flags] [key=value...]"))
 	cmd.Short = i18n.G("Publish instances as images")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Publish instances as images`))

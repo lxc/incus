@@ -25,7 +25,7 @@ type cmdImport struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("import", i18n.G("[<remote>:] <backup file> [<instance name>]"))
+	cmd.Use = cli.Usage("import", i18n.G("[<remote>:] <backup file> [<instance name>]"))
 	cmd.Short = i18n.G("Import instance backups")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Import backups of instances including their snapshots.`))
