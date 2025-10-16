@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-
 	"github.com/zitadel/oidc/v3/pkg/op"
 
 	"github.com/lxc/incus/v6/test/mini-oidc/storage"
@@ -25,8 +24,12 @@ func init() {
 	)
 }
 
+// UserFile is the path to a file, which contains the username to be returned
+// by minioidc.
 var UserFile string
 
+// Run starts minioidc on the given port.
+// This starts ListenAndServe and will therefore block.
 func Run(port string) error {
 	server, err := setup(port)
 	if err != nil {
@@ -41,6 +44,9 @@ func Run(port string) error {
 	return nil
 }
 
+// RunTest runs minioidc for use in tests.
+// It picks a random port and returns its address. The address
+// is also the issuer URL.
 func RunTest(t *testing.T) string {
 	t.Helper()
 
@@ -80,7 +86,7 @@ func setup(port string) (*http.Server, error) {
 	key := sha256.Sum256([]byte("test"))
 	router := chi.NewRouter()
 	users := &userStore{}
-	storage := storage.NewStorage(users)
+	storageBackend := storage.NewStorage(users)
 
 	// Create the provider.
 	config := &op.Config{
@@ -98,14 +104,14 @@ func setup(port string) (*http.Server, error) {
 		},
 	}
 
-	provider, err := op.NewOpenIDProvider(issuer, config, storage, op.WithAllowInsecure())
+	provider, err := op.NewProvider(config, storageBackend, op.StaticIssuer(issuer), op.WithAllowInsecure())
 	if err != nil {
 		return nil, err
 	}
 
 	// Only configure device code authentication.
 	router.HandleFunc("/device", func(w http.ResponseWriter, r *http.Request) {
-		userCodeHandler(storage, w, r)
+		userCodeHandler(storageBackend, w, r)
 	})
 
 	// Register the root to handle discovery.
@@ -125,16 +131,16 @@ func getFreePort() (port int, err error) {
 	if a, err = net.ResolveTCPAddr("tcp", "localhost:0"); err == nil {
 		var l *net.TCPListener
 		if l, err = net.ListenTCP("tcp", a); err == nil {
-			defer l.Close()
+			defer l.Close() // nolint: errcheck
 
 			return l.Addr().(*net.TCPAddr).Port, nil
 		}
 	}
 
-	return
+	return port, err
 }
 
-func userCodeHandler(storage *storage.Storage, w http.ResponseWriter, r *http.Request) {
+func userCodeHandler(storageBackend *storage.Storage, w http.ResponseWriter, r *http.Request) {
 	name := username()
 
 	err := r.ParseForm()
@@ -147,14 +153,12 @@ func userCodeHandler(storage *storage.Storage, w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	err = storage.CompleteDeviceAuthorization(r.Context(), userCode, name)
+	err = storageBackend.CompleteDeviceAuthorization(r.Context(), userCode, name)
 	if err != nil {
 		return
 	}
 
 	fmt.Printf("%s => %s\n", userCode, name)
-
-	return
 }
 
 func username() string {
@@ -172,10 +176,12 @@ func username() string {
 
 type userStore struct{}
 
+// ExampleClientID returns an example clientID.
 func (u userStore) ExampleClientID() string {
 	return "service"
 }
 
+// GetUserByID returns the user by ID.
 func (u userStore) GetUserByID(string) *storage.User {
 	name := username()
 
@@ -185,6 +191,7 @@ func (u userStore) GetUserByID(string) *storage.User {
 	}
 }
 
+// GetUserByUsername returns the user by username.
 func (u userStore) GetUserByUsername(string) *storage.User {
 	name := username()
 
