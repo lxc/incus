@@ -695,6 +695,10 @@ func (c *cmdAdminOSSystem) Command() *cobra.Command {
 	adminOSSystemEditCmd := cmdAdminOSSystemEdit{global: c.global, os: c.os}
 	cmd.AddCommand(adminOSSystemEditCmd.Command())
 
+	// List
+	adminOSSystemListCmd := cmdAdminOSSystemList{global: c.global, os: c.os}
+	cmd.AddCommand(adminOSSystemListCmd.Command())
+
 	// Show
 	adminOSSystemShowCmd := cmdAdminOSSystemShow{global: c.global, os: c.os}
 	cmd.AddCommand(adminOSSystemShowCmd.Command())
@@ -813,6 +817,87 @@ func (c *cmdAdminOSSystemEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// List.
+type cmdAdminOSSystemList struct {
+	global *cmdGlobal
+	os     *cmdAdminOS
+
+	flagFormat string
+}
+
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
+func (c *cmdAdminOSSystemList) Command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = usage("list")
+	cmd.Aliases = []string{"ls"}
+	cmd.Short = i18n.G("List system configuration sections")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+		`List aliases`))
+	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", c.global.defaultListFormat(), i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)+"``")
+
+	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
+		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
+	}
+
+	cmd.RunE = c.Run
+
+	return cmd
+}
+
+// Run runs the actual command logic.
+func (c *cmdAdminOSSystemList) Run(cmd *cobra.Command, args []string) error {
+	conf := c.global.conf
+
+	// Quick checks.
+	exit, err := c.global.checkArgs(cmd, args, 0, 1)
+	if exit {
+		return err
+	}
+
+	// Parse remote
+	remote := ""
+	if len(args) > 0 {
+		remote = args[0]
+	}
+
+	resources, err := c.global.parseServers(remote)
+	if err != nil {
+		return err
+	}
+
+	resource := resources[0]
+
+	// Use cluster target if specified.
+	apiURL := "/os/1.0/system"
+	if c.os.flagTarget != "" {
+		apiURL += "?target=" + c.os.flagTarget
+	}
+
+	// Get the list.
+	resp, _, err := resource.server.RawQuery("GET", apiURL, nil, "")
+	if err != nil {
+		return err
+	}
+
+	entries, err := resp.MetadataAsStringSlice()
+	if err != nil {
+		return err
+	}
+
+	data := [][]string{}
+	for _, v := range entries {
+		data = append(data, []string{strings.TrimPrefix(v, "/os/1.0/system/")})
+	}
+
+	sort.Sort(cli.SortColumnsNaturally(data))
+
+	header := []string{
+		i18n.G("NAME"),
+	}
+
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, conf.Aliases)
 }
 
 // Show.
