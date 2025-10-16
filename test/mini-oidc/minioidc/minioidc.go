@@ -1,11 +1,15 @@
 package minioidc
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -22,6 +26,52 @@ func init() {
 }
 
 func Run(port string) error {
+	server, err := setup(port)
+	if err != nil {
+		return err
+	}
+
+	err = server.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
+		return err
+	}
+
+	return nil
+}
+
+func RunTest(t *testing.T) string {
+	t.Helper()
+
+	iport, err := getFreePort()
+	if err != nil {
+		t.Fatalf("minioidc get free port: %v", err)
+	}
+
+	port := strconv.Itoa(iport)
+
+	server, err := setup(port)
+	if err != nil {
+		t.Fatalf("minioidc setup: %v", err)
+	}
+
+	go func() {
+		err = server.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			t.Errorf("minioidc listen and serve: %v", err)
+		}
+	}()
+
+	t.Cleanup(func() {
+		err := server.Shutdown(context.Background())
+		if err != nil {
+			t.Errorf("minioidc shutdown: %v", err)
+		}
+	})
+
+	return fmt.Sprintf("http://%s/", server.Addr)
+}
+
+func setup(port string) (*http.Server, error) {
 	issuer := fmt.Sprintf("http://127.0.0.1:%s/", port)
 
 	// Setup the OIDC provider.
@@ -48,7 +98,7 @@ func Run(port string) error {
 
 	provider, err := op.NewOpenIDProvider(issuer, config, storage, op.WithAllowInsecure())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Only configure device code authentication.
@@ -65,12 +115,21 @@ func Run(port string) error {
 		Handler: router,
 	}
 
-	err = server.ListenAndServe()
-	if err != nil && err != http.ErrServerClosed {
-		return err
+	return server, nil
+}
+
+func getFreePort() (port int, err error) {
+	var a *net.TCPAddr
+	if a, err = net.ResolveTCPAddr("tcp", "localhost:0"); err == nil {
+		var l *net.TCPListener
+		if l, err = net.ListenTCP("tcp", a); err == nil {
+			defer l.Close()
+
+			return l.Addr().(*net.TCPAddr).Port, nil
+		}
 	}
 
-	return nil
+	return
 }
 
 func userCodeHandler(storage *storage.Storage, w http.ResponseWriter, r *http.Request) {
