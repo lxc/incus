@@ -563,17 +563,13 @@ func (c *cmdGlobal) parseServers(remotes ...string) ([]remoteResource, error) {
 }
 
 func (c *cmdGlobal) checkArgs(cmd *cobra.Command, args []string, minArgs int, maxArgs int) (bool, error) {
-	if len(args) < minArgs || (maxArgs != -1 && len(args) > maxArgs) {
-		_ = cmd.Help()
-
-		if len(args) == 0 {
-			return true, nil
-		}
-
-		return true, errors.New(i18n.G("Invalid number of arguments"))
+	exit, err := cli.CheckArgs(cmd, args, minArgs, maxArgs)
+	if err == cli.ErrBadArgs {
+		// Use translated error message.
+		return exit, errors.New(i18n.G("Invalid number of arguments"))
 	}
 
-	return false, nil
+	return exit, err
 }
 
 // Return the default list format if the user configured it, otherwise just return "table".
