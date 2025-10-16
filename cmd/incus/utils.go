@@ -26,10 +26,7 @@ import (
 )
 
 // Date layout to be used throughout the client.
-const (
-	dateLayout       = "2006/01/02 15:04 MST"
-	dateLayoutSecond = "2006/01/02 15:04:05 MST"
-)
+const dateLayout = "2006/01/02 15:04 MST"
 
 // Batch operations.
 type batchResult struct {
@@ -747,22 +744,4 @@ func sshSFTPServer(ctx context.Context, sftpConn func() (net.Conn, error), entit
 			}
 		}()
 	}
-}
-
-func makeJsonable(data any) any {
-	switch x := data.(type) {
-	case map[any]any:
-		newData := map[string]any{}
-		for k, v := range x {
-			newData[k.(string)] = makeJsonable(v)
-		}
-
-		return newData
-	case []any:
-		for i, v := range x {
-			x[i] = makeJsonable(v)
-		}
-	}
-
-	return data
 }
