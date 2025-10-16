@@ -59,6 +59,10 @@ linters:
           - revive
         source: '^//generate-database:mapper '
       - linters:
+          - revive
+          - godot
+        path: "^test/mini-oidc/storage/"
+      - linters:
           - staticcheck
         text: "ST1005:"
       - linters:
