@@ -429,7 +429,7 @@ func (c *cmdFileEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	_, err = textEditor(fname, []byte{})
+	_, err = textEditor(fname, []byte{}, "yaml")
 	if err != nil {
 		return err
 	}

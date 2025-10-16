@@ -243,7 +243,7 @@ func (c *cmdConfigEdit) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		// Spawn the editor
-		content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+		content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)), "yaml")
 		if err != nil {
 			return err
 		}
@@ -283,7 +283,7 @@ func (c *cmdConfigEdit) Run(cmd *cobra.Command, args []string) error {
 					return err
 				}
 
-				content, err = textEditor("", content)
+				content, err = textEditor("", content, "yaml")
 				if err != nil {
 					return err
 				}
@@ -335,7 +335,7 @@ func (c *cmdConfigEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	content, err := textEditor("", data)
+	content, err := textEditor("", data, "yaml")
 	if err != nil {
 		return err
 	}
@@ -358,7 +358,7 @@ func (c *cmdConfigEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = textEditor("", content)
+			content, err = textEditor("", content, "yaml")
 			if err != nil {
 				return err
 			}
@@ -791,7 +791,7 @@ func (c *cmdConfigShow) Run(cmd *cobra.Command, args []string) error {
 	resource := resources[0]
 
 	// Show configuration
-	var data []byte
+	var data string
 
 	if resource.name == "" {
 		// Quick check.
@@ -815,58 +815,69 @@ func (c *cmdConfigShow) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		brief := server.Writable()
-		data, err = yaml.Marshal(&brief)
+		dataBytes, err := yaml.Marshal(&brief)
 		if err != nil {
 			return err
 		}
+
+		data = string(dataBytes)
 	} else {
 		// Quick checks.
 		if c.config.flagTarget != "" {
 			return errors.New(i18n.G("--target cannot be used with instances"))
 		}
 
-		// Instance or snapshot config
-		var brief any
-
-		if instance.IsSnapshot(resource.name) {
-			// Snapshot
-			fields := strings.Split(resource.name, instance.SnapshotDelimiter)
-
-			snap, _, err := resource.server.GetInstanceSnapshot(fields[0], fields[1])
-			if err != nil {
-				return err
-			}
-
-			brief = snap
-			if c.flagExpanded {
-				brief.(*api.InstanceSnapshot).Config = snap.ExpandedConfig
-				brief.(*api.InstanceSnapshot).Devices = snap.ExpandedDevices
-			}
-		} else {
-			// Instance
-			inst, _, err := resource.server.GetInstance(resource.name)
-			if err != nil {
-				return err
-			}
-
-			writable := inst.Writable()
-			brief = &writable
-
-			if c.flagExpanded {
-				brief.(*api.InstancePut).Config = inst.ExpandedConfig
-				brief.(*api.InstancePut).Devices = inst.ExpandedDevices
-			}
-		}
-
-		data, err = yaml.Marshal(&brief)
+		data, err = cmdConfigShowInstance(resource.server, resource.name, c.flagExpanded)
 		if err != nil {
 			return err
 		}
 	}
 
-	fmt.Printf("%s", data)
+	fmt.Print(data)
 
 	return nil
+}
+
+// cmdConfigShowInstance returns the given instance or snapshot configuration.
+func cmdConfigShowInstance(d incus.InstanceServer, name string, expanded bool) (string, error) {
+	var brief any
+
+	if instance.IsSnapshot(name) {
+		// Snapshot
+		fields := strings.Split(name, instance.SnapshotDelimiter)
+
+		snap, _, err := d.GetInstanceSnapshot(fields[0], fields[1])
+		if err != nil {
+			return "", err
+		}
+
+		brief = snap
+		if expanded {
+			brief.(*api.InstanceSnapshot).Config = snap.ExpandedConfig
+			brief.(*api.InstanceSnapshot).Devices = snap.ExpandedDevices
+		}
+	} else {
+		// Instance
+		inst, _, err := d.GetInstance(name)
+		if err != nil {
+			return "", err
+		}
+
+		writable := inst.Writable()
+		brief = &writable
+
+		if expanded {
+			brief.(*api.InstancePut).Config = inst.ExpandedConfig
+			brief.(*api.InstancePut).Devices = inst.ExpandedDevices
+		}
+	}
+
+	data, err := yaml.Marshal(&brief)
+	if err != nil {
+		return "", err
+	}
+
+	return string(data), nil
 }
 
 // Unset.

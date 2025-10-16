@@ -500,8 +500,8 @@ func getImgInfo(d incus.InstanceServer, conf *config.Config, imgRemote string, i
 	return imgRemoteServer, imgInfo, nil
 }
 
-// Spawn the editor with a temporary YAML file for editing configs.
-func textEditor(inPath string, inContent []byte) ([]byte, error) {
+// Spawn the editor with a temporary file for editing configs.
+func textEditor(inPath string, inContent []byte, format string) ([]byte, error) {
 	var f *os.File
 	var err error
 	var path string
@@ -554,7 +554,7 @@ func textEditor(inPath string, inContent []byte) ([]byte, error) {
 			return []byte{}, err
 		}
 
-		path = fmt.Sprintf("%s.yaml", f.Name())
+		path = fmt.Sprintf("%s.%s", f.Name(), format)
 		err = os.Rename(f.Name(), path)
 		if err != nil {
 			return []byte{}, err

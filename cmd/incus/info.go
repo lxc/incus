@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"sort"
 	"strings"
 
@@ -109,7 +108,17 @@ func (c *cmdInfo) Run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	return c.instanceInfo(d, cName, c.flagShowLog)
+	if c.flagTarget != "" {
+		return errors.New(i18n.G("--target cannot be used with instances"))
+	}
+
+	info, err := cmdInfoInstance(d, cName, c.flagShowLog)
+	if err != nil {
+		return err
+	}
+
+	fmt.Print(info)
+	return nil
 }
 
 func (c *cmdInfo) renderGPU(gpu api.ResourcesGPUCard, prefix string, initial bool) {
@@ -621,21 +630,12 @@ func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 	return nil
 }
 
-func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog bool) error {
-	// Quick checks.
-	if c.flagTarget != "" {
-		return errors.New(i18n.G("--target cannot be used with instances"))
-	}
-
+func cmdInfoInstance(d incus.InstanceServer, name string, showLog bool) (string, error) {
 	// Get the full instance data.
 	inst, _, err := d.GetInstanceFull(name)
 	if err != nil {
-		return err
+		return "", err
 	}
-
-	fmt.Printf(i18n.G("Name: %s")+"\n", inst.Name)
-	fmt.Printf(i18n.G("Description: %s")+"\n", inst.Description)
-	fmt.Printf(i18n.G("Status: %s")+"\n", strings.ToUpper(inst.Status))
 
 	instType := inst.Type
 	if instType == "" {
@@ -650,45 +650,49 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog bool
 		instType = fmt.Sprintf("%s (%s)", instType, i18n.G("ephemeral"))
 	}
 
-	fmt.Printf(i18n.G("Type: %s")+"\n", instType)
+	var sb strings.Builder
 
-	fmt.Printf(i18n.G("Architecture: %s")+"\n", inst.Architecture)
+	sb.WriteString(fmt.Sprintf(i18n.G("Name: %s")+"\n", inst.Name))
+	sb.WriteString(fmt.Sprintf(i18n.G("Description: %s")+"\n", inst.Description))
+	sb.WriteString(fmt.Sprintf(i18n.G("Status: %s")+"\n", strings.ToUpper(inst.Status)))
+	sb.WriteString(fmt.Sprintf(i18n.G("Type: %s")+"\n", instType))
+	sb.WriteString(fmt.Sprintf(i18n.G("Architecture: %s")+"\n", inst.Architecture))
 
 	if inst.Location != "" && d.IsClustered() {
-		fmt.Printf(i18n.G("Location: %s")+"\n", inst.Location)
+		sb.WriteString(fmt.Sprintf(i18n.G("Location: %s")+"\n", inst.Location))
 	}
 
 	if inst.State.Pid != 0 {
-		fmt.Printf(i18n.G("PID: %d")+"\n", inst.State.Pid)
+		sb.WriteString(fmt.Sprintf(i18n.G("PID: %d")+"\n", inst.State.Pid))
 	}
 
 	if !inst.CreatedAt.IsZero() {
-		fmt.Printf(i18n.G("Created: %s")+"\n", inst.CreatedAt.Local().Format(dateLayout))
+		sb.WriteString(fmt.Sprintf(i18n.G("Created: %s")+"\n", inst.CreatedAt.Local().Format(dateLayout)))
 	}
 
 	if !inst.LastUsedAt.IsZero() {
-		fmt.Printf(i18n.G("Last Used: %s")+"\n", inst.LastUsedAt.Local().Format(dateLayout))
+		sb.WriteString(fmt.Sprintf(i18n.G("Last Used: %s")+"\n", inst.LastUsedAt.Local().Format(dateLayout)))
 	}
 
 	if inst.State.Pid != 0 {
 		if !inst.State.StartedAt.IsZero() {
-			fmt.Printf(i18n.G("Started: %s")+"\n", inst.State.StartedAt.Local().Format(dateLayout))
+			sb.WriteString(fmt.Sprintf(i18n.G("Started: %s")+"\n", inst.State.StartedAt.Local().Format(dateLayout)))
 		}
 
 		// Operating System info
 		if inst.State.OSInfo != nil {
-			fmt.Println("\n" + i18n.G("Operating System:"))
+			sb.WriteString("\n" + i18n.G("Operating System:") + "\n")
 			osInfo := fmt.Sprintf("  %s: %s\n", i18n.G("OS"), inst.State.OSInfo.OS)
 			osInfo += fmt.Sprintf("  %s: %s\n", i18n.G("OS Version"), inst.State.OSInfo.OSVersion)
 			osInfo += fmt.Sprintf("  %s: %s\n", i18n.G("Kernel Version"), inst.State.OSInfo.KernelVersion)
 			osInfo += fmt.Sprintf("  %s: %s\n", i18n.G("Hostname"), inst.State.OSInfo.Hostname)
 			osInfo += fmt.Sprintf("  %s: %s\n", i18n.G("FQDN"), inst.State.OSInfo.FQDN)
-			fmt.Print(osInfo)
+			sb.WriteString(osInfo)
 		}
 
-		fmt.Println("\n" + i18n.G("Resources:"))
+		sb.WriteString("\n" + i18n.G("Resources:") + "\n")
 		// Processes
-		fmt.Printf("  "+i18n.G("Processes: %d")+"\n", inst.State.Processes)
+		sb.WriteString(fmt.Sprintf("  "+i18n.G("Processes: %d")+"\n", inst.State.Processes))
 
 		// Disk usage
 		diskInfo := ""
@@ -701,8 +705,8 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog bool
 		}
 
 		if diskInfo != "" {
-			fmt.Printf("  %s\n", i18n.G("Disk usage:"))
-			fmt.Print(diskInfo)
+			sb.WriteString(fmt.Sprintf("  %s\n", i18n.G("Disk usage:")))
+			sb.WriteString(diskInfo)
 		}
 
 		// CPU usage
@@ -712,8 +716,8 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog bool
 		}
 
 		if cpuInfo != "" {
-			fmt.Printf("  %s\n", i18n.G("CPU usage:"))
-			fmt.Print(cpuInfo)
+			sb.WriteString(fmt.Sprintf("  %s\n", i18n.G("CPU usage:")))
+			sb.WriteString(cpuInfo)
 		}
 
 		// Memory usage
@@ -735,8 +739,8 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog bool
 		}
 
 		if memoryInfo != "" {
-			fmt.Printf("  %s\n", i18n.G("Memory usage:"))
-			fmt.Print(memoryInfo)
+			sb.WriteString(fmt.Sprintf("  %s\n", i18n.G("Memory usage:")))
+			sb.WriteString(memoryInfo)
 		}
 
 		// Network usage and IP info
@@ -785,8 +789,8 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog bool
 		}
 
 		if networkInfo != "" {
-			fmt.Printf("  %s\n", i18n.G("Network usage:"))
-			fmt.Print(networkInfo)
+			sb.WriteString(fmt.Sprintf("  %s\n", i18n.G("Network usage:")))
+			sb.WriteString(networkInfo)
 		}
 	}
 
@@ -797,7 +801,7 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog bool
 
 		for _, snap := range inst.Snapshots {
 			if firstSnapshot {
-				fmt.Println("\n" + i18n.G("Snapshots:"))
+				sb.WriteString("\n" + i18n.G("Snapshots:") + "\n")
 			}
 
 			var row []string
@@ -834,7 +838,7 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog bool
 			i18n.G("Stateful"),
 		}
 
-		_ = cli.RenderTable(os.Stdout, cli.TableFormatTable, snapHeader, snapData, inst.Snapshots)
+		_ = cli.RenderTable(&sb, cli.TableFormatTable, snapHeader, snapData, inst.Snapshots)
 	}
 
 	// List backups
@@ -844,7 +848,7 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog bool
 
 		for _, backup := range inst.Backups {
 			if firstBackup {
-				fmt.Println("\n" + i18n.G("Backups:"))
+				sb.WriteString("\n" + i18n.G("Backups:") + "\n")
 			}
 
 			var row []string
@@ -886,7 +890,7 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog bool
 			i18n.G("Optimized Storage"),
 		}
 
-		_ = cli.RenderTable(os.Stdout, cli.TableFormatTable, backupHeader, backupData, inst.Backups)
+		_ = cli.RenderTable(&sb, cli.TableFormatTable, backupHeader, backupData, inst.Backups)
 	}
 
 	if showLog {
@@ -895,26 +899,26 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog bool
 		case "container":
 			log, err = d.GetInstanceLogfile(name, "lxc.log")
 			if err != nil {
-				return err
+				return "", err
 			}
 
 		case "virtual-machine":
 			log, err = d.GetInstanceLogfile(name, "qemu.log")
 			if err != nil {
-				return err
+				return "", err
 			}
 
 		default:
-			return fmt.Errorf(i18n.G("Unsupported instance type: %s"), inst.Type)
+			return "", fmt.Errorf(i18n.G("Unsupported instance type: %s"), inst.Type)
 		}
 
 		stuff, err := io.ReadAll(log)
 		if err != nil {
-			return err
+			return "", err
 		}
 
-		fmt.Printf("\n"+i18n.G("Log:")+"\n\n%s\n", string(stuff))
+		sb.WriteString(fmt.Sprintf("\n"+i18n.G("Log:")+"\n\n%s\n", string(stuff)))
 	}
 
-	return nil
+	return sb.String(), nil
 }

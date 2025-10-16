@@ -147,6 +147,10 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	adminCmd := cmdAdmin{global: &globalCmd}
 	app.AddCommand(adminCmd.Command())
 
+	// bug sub-command
+	bugCmd := cmdBug{global: &globalCmd}
+	app.AddCommand(bugCmd.Command())
+
 	// cluster sub-command
 	clusterCmd := cmdCluster{global: &globalCmd}
 	app.AddCommand(clusterCmd.Command())

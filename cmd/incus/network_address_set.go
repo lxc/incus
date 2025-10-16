@@ -544,7 +544,7 @@ func (c *cmdNetworkAddressSetEdit) Run(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)), "yaml")
 	if err != nil {
 		return err
 	}
@@ -565,7 +565,7 @@ func (c *cmdNetworkAddressSetEdit) Run(cmd *cobra.Command, args []string) error 
 				return err2
 			}
 
-			content, err2 = textEditor("", content)
+			content, err2 = textEditor("", content, "yaml")
 			if err2 != nil {
 				return err2
 			}
