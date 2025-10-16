@@ -52,7 +52,7 @@ func (c *cmdRemove) remove(path string) error {
 // Run runs the actual command logic.
 func (c *cmdRemove) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 1, 1)
+	exit, err := cli.CheckArgs(cmd, args, 1, 1)
 	if exit {
 		return err
 	}

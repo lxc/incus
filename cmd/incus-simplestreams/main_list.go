@@ -39,7 +39,7 @@ This renders a table with all images currently published on the server.
 // Run runs the actual command logic.
 func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 0, 0)
+	exit, err := cli.CheckArgs(cmd, args, 0, 0)
 	if exit {
 		return err
 	}
