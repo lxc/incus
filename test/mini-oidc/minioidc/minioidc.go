@@ -28,6 +28,16 @@ func init() {
 // by minioidc.
 var UserFile string
 
+// Option to configure minioidc.
+type Option func(cfg *op.Config)
+
+// WithDeviceAuthorizationPollInterval sets the device authorization poll interval.
+func WithDeviceAuthorizationPollInterval(interval time.Duration) Option {
+	return func(cfg *op.Config) {
+		cfg.DeviceAuthorization.PollInterval = interval
+	}
+}
+
 // Run starts minioidc on the given port.
 // This starts ListenAndServe and will therefore block.
 func Run(port string) error {
@@ -47,7 +57,7 @@ func Run(port string) error {
 // RunTest runs minioidc for use in tests.
 // It picks a random port and returns its address. The address
 // is also the issuer URL.
-func RunTest(t *testing.T) string {
+func RunTest(t *testing.T, opts ...Option) string {
 	t.Helper()
 
 	iport, err := getFreePort()
@@ -57,7 +67,7 @@ func RunTest(t *testing.T) string {
 
 	port := strconv.Itoa(iport)
 
-	server, err := setup(port)
+	server, err := setup(port, opts...)
 	if err != nil {
 		t.Fatalf("minioidc setup: %v", err)
 	}
@@ -79,7 +89,7 @@ func RunTest(t *testing.T) string {
 	return fmt.Sprintf("http://%s/", server.Addr)
 }
 
-func setup(port string) (*http.Server, error) {
+func setup(port string, opts ...Option) (*http.Server, error) {
 	issuer := fmt.Sprintf("http://127.0.0.1:%s/", port)
 
 	// Setup the OIDC provider.
@@ -102,6 +112,10 @@ func setup(port string) (*http.Server, error) {
 			UserFormPath: "/device",
 			UserCode:     op.UserCodeBase20,
 		},
+	}
+
+	for _, opt := range opts {
+		opt(config)
 	}
 
 	provider, err := op.NewProvider(config, storageBackend, op.StaticIssuer(issuer), op.WithAllowInsecure())
