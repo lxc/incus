@@ -16,10 +16,10 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/archive"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/osarch"
 	"github.com/lxc/incus/v6/shared/simplestreams"
 )
@@ -152,7 +152,7 @@ func (c *cmdAdd) parseImage(metaFile *os.File, dataFile *os.File) (*dataItem, er
 // Run runs the actual command logic.
 func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 1, 2)
+	exit, err := cli.CheckArgs(cmd, args, 1, 2)
 	if exit {
 		return err
 	}

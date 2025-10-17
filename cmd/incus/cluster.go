@@ -15,9 +15,9 @@ import (
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/termios"
 	"github.com/lxc/incus/v6/shared/util"
 )
@@ -34,7 +34,7 @@ type cmdCluster struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdCluster) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("cluster")
+	cmd.Use = cli.Usage("cluster")
 	cmd.Short = i18n.G("Manage cluster members")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage cluster members`))
@@ -129,7 +129,7 @@ type cmdClusterList struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("list", i18n.G("[<remote>:] [<filter>...]"))
+	cmd.Use = cli.Usage("list", i18n.G("[<remote>:] [<filter>...]"))
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List all the cluster members")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -336,7 +336,7 @@ type cmdClusterShow struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("show", i18n.G("[<remote>:]<member>"))
+	cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<member>"))
 	cmd.Short = i18n.G("Show details of a cluster member")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show details of a cluster member`))
@@ -395,7 +395,7 @@ type cmdClusterInfo struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterInfo) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("info", i18n.G("[<remote>:]<member>"))
+	cmd.Use = cli.Usage("info", i18n.G("[<remote>:]<member>"))
 	cmd.Short = i18n.G("Show useful information about a cluster member")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show useful information about a cluster member`))
@@ -456,7 +456,7 @@ type cmdClusterGet struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("get", i18n.G("[<remote>:]<member> <key>"))
+	cmd.Use = cli.Usage("get", i18n.G("[<remote>:]<member> <key>"))
 	cmd.Short = i18n.G("Get values for cluster member configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), cmd.Short)
 
@@ -531,7 +531,7 @@ type cmdClusterSet struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("set", i18n.G("[<remote>:]<member> <key>=<value>..."))
+	cmd.Use = cli.Usage("set", i18n.G("[<remote>:]<member> <key>=<value>..."))
 	cmd.Short = i18n.G("Set a cluster member's configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), cmd.Short)
 
@@ -611,7 +611,7 @@ type cmdClusterUnset struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("unset", i18n.G("[<remote>:]<member> <key>"))
+	cmd.Use = cli.Usage("unset", i18n.G("[<remote>:]<member> <key>"))
 	cmd.Short = i18n.G("Unset a cluster member's configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), cmd.Short)
 
@@ -656,7 +656,7 @@ type cmdClusterRename struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterRename) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("rename", i18n.G("[<remote>:]<member> <new-name>"))
+	cmd.Use = cli.Usage("rename", i18n.G("[<remote>:]<member> <new-name>"))
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename a cluster member")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -716,7 +716,7 @@ type cmdClusterRemove struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("remove", i18n.G("[<remote>:]<member>"))
+	cmd.Use = cli.Usage("remove", i18n.G("[<remote>:]<member>"))
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove a member from the cluster")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -810,7 +810,7 @@ type cmdClusterEnable struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterEnable) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("enable", i18n.G("[<remote>:] <name>"))
+	cmd.Use = cli.Usage("enable", i18n.G("[<remote>:] <name>"))
 	cmd.Short = i18n.G("Enable clustering on a single non-clustered server")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Enable clustering on a single non-clustered server
@@ -905,7 +905,7 @@ type cmdClusterEdit struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("edit", i18n.G("[<remote>:]<member>"))
+	cmd.Use = cli.Usage("edit", i18n.G("[<remote>:]<member>"))
 	cmd.Short = i18n.G("Edit cluster member configurations as YAML")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit cluster member configurations as YAML`))
@@ -982,7 +982,7 @@ func (c *cmdClusterEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+	content, err := cli.TextEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
 	if err != nil {
 		return err
 	}
@@ -1005,7 +1005,7 @@ func (c *cmdClusterEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = textEditor("", content)
+			content, err = cli.TextEditor("", content)
 			if err != nil {
 				return err
 			}
@@ -1028,7 +1028,7 @@ type cmdClusterAdd struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("add", i18n.G("[[<remote>:]<member>]"))
+	cmd.Use = cli.Usage("add", i18n.G("[[<remote>:]<member>]"))
 	cmd.Short = i18n.G("Request a join token for adding a cluster member")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Request a join token for adding a cluster member`))
 
@@ -1108,7 +1108,7 @@ type clusterListTokenColumn struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterListTokens) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("list-tokens", i18n.G("[<remote>:]"))
+	cmd.Use = cli.Usage("list-tokens", i18n.G("[<remote>:]"))
 	cmd.Short = i18n.G("List all active cluster member join tokens")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List all active cluster member join tokens
@@ -1275,7 +1275,7 @@ type cmdClusterRevokeToken struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterRevokeToken) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("revoke-token", i18n.G("[<remote>:]<member>"))
+	cmd.Use = cli.Usage("revoke-token", i18n.G("[<remote>:]<member>"))
 	cmd.Short = i18n.G("Revoke cluster member join token")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), cmd.Short)
 
@@ -1364,7 +1364,7 @@ type cmdClusterUpdateCertificate struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterUpdateCertificate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("update-certificate", i18n.G("[<remote>:] <cert.crt> <cert.key>"))
+	cmd.Use = cli.Usage("update-certificate", i18n.G("[<remote>:] <cert.crt> <cert.key>"))
 	cmd.Aliases = []string{"update-cert"}
 	cmd.Short = i18n.G("Update cluster certificate")
 	cmd.Long = cli.FormatSection(i18n.G("Description"),
@@ -1491,7 +1491,7 @@ func (c *cmdClusterEvacuate) Command() *cobra.Command {
 
 	cmd := c.action.Command()
 	cmd.Aliases = []string{"evac"}
-	cmd.Use = usage("evacuate", i18n.G("[<remote>:]<member>"))
+	cmd.Use = cli.Usage("evacuate", i18n.G("[<remote>:]<member>"))
 	cmd.Short = i18n.G("Evacuate cluster member")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Evacuate cluster member`))
 
@@ -1521,7 +1521,7 @@ func (c *cmdClusterRestore) Command() *cobra.Command {
 	c.action = &cmdAction
 
 	cmd := c.action.Command()
-	cmd.Use = usage("restore", i18n.G("[<remote>:]<member>"))
+	cmd.Use = cli.Usage("restore", i18n.G("[<remote>:]<member>"))
 	cmd.Short = i18n.G("Restore cluster member")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Restore cluster member`))
 

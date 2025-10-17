@@ -13,9 +13,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 )
 
 type cmdQuery struct {
@@ -30,7 +30,7 @@ type cmdQuery struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdQuery) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("query", i18n.G("[<remote>:]<API path>"))
+	cmd.Use = cli.Usage("query", i18n.G("[<remote>:]<API path>"))
 	cmd.Short = i18n.G("Send a raw query to the server")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Send a raw query to the server`))

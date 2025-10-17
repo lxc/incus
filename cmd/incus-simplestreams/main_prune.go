@@ -12,7 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cli "github.com/lxc/incus/v6/internal/cmd"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/simplestreams"
 )
 
@@ -48,7 +48,7 @@ Additionally this command will delete older images, keeping a configurable numbe
 // Run runs the actual command logic.
 func (c *cmdPrune) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 0, 0)
+	exit, err := cli.CheckArgs(cmd, args, 0, 0)
 	if exit {
 		return err
 	}

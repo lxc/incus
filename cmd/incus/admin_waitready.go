@@ -9,8 +9,8 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
@@ -23,7 +23,7 @@ type cmdAdminWaitready struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminWaitready) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("waitready")
+	cmd.Use = cli.Usage("waitready")
 	cmd.Short = i18n.G("Wait for the daemon to be ready to process requests")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Wait for the daemon to be ready to process requests
 

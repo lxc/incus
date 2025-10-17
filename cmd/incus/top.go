@@ -15,8 +15,8 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/units"
 )
 
@@ -38,7 +38,7 @@ type cmdTop struct {
 // Command is a method of the cmdTop structure that returns a new cobra Command for displaying resource usage per instance.
 func (c *cmdTop) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("top", i18n.G("[<remote>:]"))
+	cmd.Use = cli.Usage("top", i18n.G("[<remote>:]"))
 	cmd.Short = i18n.G("Display resource usage info per instance")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Displays CPU usage, memory usage, and disk usage per instance

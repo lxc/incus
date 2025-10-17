@@ -13,8 +13,8 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/termios"
 )
 
@@ -28,7 +28,7 @@ type cmdAdminOS struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminOS) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("os")
+	cmd.Use = cli.Usage("os")
 	cmd.Short = i18n.G("Manage IncusOS systems")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage IncusOS systems`))
@@ -69,7 +69,7 @@ type cmdAdminOSApplication struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminOSApplication) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("application")
+	cmd.Use = cli.Usage("application")
 	cmd.Short = i18n.G("Manage IncusOS applications")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage IncusOS applications`))
@@ -99,7 +99,7 @@ type cmdAdminOSApplicationList struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminOSApplicationList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("list")
+	cmd.Use = cli.Usage("list")
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List applications")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -178,7 +178,7 @@ type cmdAdminOSApplicationShow struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminOSApplicationShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("show", i18n.G("[<remote>:]<application>"))
+	cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<application>"))
 	cmd.Short = i18n.G("Show IncusOS application details")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show IncusOS application details`))
@@ -250,7 +250,7 @@ type cmdAdminOSDebug struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminOSDebug) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("debug")
+	cmd.Use = cli.Usage("debug")
 	cmd.Short = i18n.G("Debug IncusOS systems")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Debug IncusOS systems`))
@@ -278,7 +278,7 @@ type cmdAdminOSDebugLog struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminOSDebugLog) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("log")
+	cmd.Use = cli.Usage("log")
 	cmd.Short = i18n.G("Get debug log")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Get debug log`))
@@ -391,7 +391,7 @@ type cmdAdminOSService struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminOSService) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("service")
+	cmd.Use = cli.Usage("service")
 	cmd.Short = i18n.G("Manage IncusOS services")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage IncusOS services`))
@@ -423,7 +423,7 @@ type cmdAdminOSServiceEdit struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminOSServiceEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("edit", i18n.G("[<remote>:]<service>"))
+	cmd.Use = cli.Usage("edit", i18n.G("[<remote>:]<service>"))
 	cmd.Short = i18n.G("Edit IncusOS service configuration")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit IncusOS service configuration`))
@@ -487,7 +487,7 @@ func (c *cmdAdminOSServiceEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	content, err := textEditor("", []byte(string(data)))
+	content, err := cli.TextEditor("", []byte(string(data)))
 	if err != nil {
 		return err
 	}
@@ -510,7 +510,7 @@ func (c *cmdAdminOSServiceEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = textEditor("", content)
+			content, err = cli.TextEditor("", content)
 			if err != nil {
 				return err
 			}
@@ -535,7 +535,7 @@ type cmdAdminOSServiceList struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminOSServiceList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("list")
+	cmd.Use = cli.Usage("list")
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List services")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -614,7 +614,7 @@ type cmdAdminOSServiceShow struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminOSServiceShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("show", i18n.G("[<remote>:]<service>"))
+	cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<service>"))
 	cmd.Short = i18n.G("Show IncusOS service configuration")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show IncusOS service configuration`))
@@ -686,7 +686,7 @@ type cmdAdminOSSystem struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminOSSystem) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("system")
+	cmd.Use = cli.Usage("system")
 	cmd.Short = i18n.G("Manage IncusOS system details")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage IncusOS system details`))
@@ -694,6 +694,10 @@ func (c *cmdAdminOSSystem) Command() *cobra.Command {
 	// Edit
 	adminOSSystemEditCmd := cmdAdminOSSystemEdit{global: c.global, os: c.os}
 	cmd.AddCommand(adminOSSystemEditCmd.Command())
+
+	// List
+	adminOSSystemListCmd := cmdAdminOSSystemList{global: c.global, os: c.os}
+	cmd.AddCommand(adminOSSystemListCmd.Command())
 
 	// Show
 	adminOSSystemShowCmd := cmdAdminOSSystemShow{global: c.global, os: c.os}
@@ -714,7 +718,7 @@ type cmdAdminOSSystemEdit struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminOSSystemEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("edit", i18n.G("[<remote>:]<section>"))
+	cmd.Use = cli.Usage("edit", i18n.G("[<remote>:]<section>"))
 	cmd.Short = i18n.G("Edit IncusOS system configuration section")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit IncusOS system configuration section`))
@@ -778,7 +782,7 @@ func (c *cmdAdminOSSystemEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	content, err := textEditor("", []byte(string(data)))
+	content, err := cli.TextEditor("", []byte(string(data)))
 	if err != nil {
 		return err
 	}
@@ -801,7 +805,7 @@ func (c *cmdAdminOSSystemEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = textEditor("", content)
+			content, err = cli.TextEditor("", content)
 			if err != nil {
 				return err
 			}
@@ -815,6 +819,87 @@ func (c *cmdAdminOSSystemEdit) Run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// List.
+type cmdAdminOSSystemList struct {
+	global *cmdGlobal
+	os     *cmdAdminOS
+
+	flagFormat string
+}
+
+// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
+func (c *cmdAdminOSSystemList) Command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.Usage("list")
+	cmd.Aliases = []string{"ls"}
+	cmd.Short = i18n.G("List system configuration sections")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+		`List aliases`))
+	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", c.global.defaultListFormat(), i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)+"``")
+
+	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
+		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
+	}
+
+	cmd.RunE = c.Run
+
+	return cmd
+}
+
+// Run runs the actual command logic.
+func (c *cmdAdminOSSystemList) Run(cmd *cobra.Command, args []string) error {
+	conf := c.global.conf
+
+	// Quick checks.
+	exit, err := c.global.checkArgs(cmd, args, 0, 1)
+	if exit {
+		return err
+	}
+
+	// Parse remote
+	remote := ""
+	if len(args) > 0 {
+		remote = args[0]
+	}
+
+	resources, err := c.global.parseServers(remote)
+	if err != nil {
+		return err
+	}
+
+	resource := resources[0]
+
+	// Use cluster target if specified.
+	apiURL := "/os/1.0/system"
+	if c.os.flagTarget != "" {
+		apiURL += "?target=" + c.os.flagTarget
+	}
+
+	// Get the list.
+	resp, _, err := resource.server.RawQuery("GET", apiURL, nil, "")
+	if err != nil {
+		return err
+	}
+
+	entries, err := resp.MetadataAsStringSlice()
+	if err != nil {
+		return err
+	}
+
+	data := [][]string{}
+	for _, v := range entries {
+		data = append(data, []string{strings.TrimPrefix(v, "/os/1.0/system/")})
+	}
+
+	sort.Sort(cli.SortColumnsNaturally(data))
+
+	header := []string{
+		i18n.G("NAME"),
+	}
+
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, conf.Aliases)
+}
+
 // Show.
 type cmdAdminOSSystemShow struct {
 	global *cmdGlobal
@@ -824,7 +909,7 @@ type cmdAdminOSSystemShow struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminOSSystemShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("show", i18n.G("[<remote>:]<section>"))
+	cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<section>"))
 	cmd.Short = i18n.G("Show IncusOS system configuration section")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show IncusOS system configuration section`))

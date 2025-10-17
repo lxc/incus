@@ -12,9 +12,9 @@ import (
 	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 )
 
 type cmdMonitor struct {
@@ -30,7 +30,7 @@ type cmdMonitor struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdMonitor) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("monitor", i18n.G("[<remote>:]"))
+	cmd.Use = cli.Usage("monitor", i18n.G("[<remote>:]"))
 	cmd.Short = i18n.G("Monitor a local or remote server")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Monitor a local or remote server

@@ -16,12 +16,12 @@ import (
 	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	internalFilter "github.com/lxc/incus/v6/internal/filter"
 	"github.com/lxc/incus/v6/internal/i18n"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/archive"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/subprocess"
 	"github.com/lxc/incus/v6/shared/termios"
 	"github.com/lxc/incus/v6/shared/util"
@@ -39,7 +39,7 @@ type cmdImage struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImage) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("image")
+	cmd.Use = cli.Usage("image")
 	cmd.Short = i18n.G("Manage images")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage images
@@ -147,7 +147,7 @@ type cmdImageCopy struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImageCopy) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("copy", i18n.G("[<remote>:]<image> <remote>:"))
+	cmd.Use = cli.Usage("copy", i18n.G("[<remote>:]<image> <remote>:"))
 	cmd.Aliases = []string{"cp"}
 	cmd.Short = i18n.G("Copy images between servers")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -309,7 +309,7 @@ type cmdImageDelete struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImageDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("delete", i18n.G("[<remote>:]<image> [[<remote>:]<image>...]"))
+	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<image> [[<remote>:]<image>...]"))
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete images")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -367,7 +367,7 @@ type cmdImageEdit struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImageEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("edit", i18n.G("[<remote>:]<image>"))
+	cmd.Use = cli.Usage("edit", i18n.G("[<remote>:]<image>"))
 	cmd.Short = i18n.G("Edit image properties")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit image properties`))
@@ -456,7 +456,7 @@ func (c *cmdImageEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+	content, err := cli.TextEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
 	if err != nil {
 		return err
 	}
@@ -479,7 +479,7 @@ func (c *cmdImageEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = textEditor("", content)
+			content, err = cli.TextEditor("", content)
 			if err != nil {
 				return err
 			}
@@ -504,7 +504,7 @@ type cmdImageExport struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImageExport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("export", i18n.G("[<remote>:]<image> [<target>]"))
+	cmd.Use = cli.Usage("export", i18n.G("[<remote>:]<image> [<target>]"))
 	cmd.Short = i18n.G("Export and download images")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Export and download images
@@ -675,7 +675,7 @@ type cmdImageImport struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImageImport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("import", i18n.G("<tarball>|<directory>|<URL> [<rootfs tarball>] [<remote>:] [key=value...]"))
+	cmd.Use = cli.Usage("import", i18n.G("<tarball>|<directory>|<URL> [<rootfs tarball>] [<remote>:] [key=value...]"))
 	cmd.Short = i18n.G("Import images into the image store")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Import image into the image store
@@ -938,7 +938,7 @@ type cmdImageInfo struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImageInfo) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("info", i18n.G("[<remote>:]<image>"))
+	cmd.Use = cli.Usage("info", i18n.G("[<remote>:]<image>"))
 	cmd.Short = i18n.G("Show useful information about images")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show useful information about images`))
@@ -1082,7 +1082,7 @@ type cmdImageList struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImageList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("list", i18n.G("[<remote>:] [<filter>...]"))
+	cmd.Use = cli.Usage("list", i18n.G("[<remote>:] [<filter>...]"))
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List images")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -1439,7 +1439,7 @@ type cmdImageRefresh struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImageRefresh) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("refresh", i18n.G("[<remote>:]<image> [[<remote>:]<image>...]"))
+	cmd.Use = cli.Usage("refresh", i18n.G("[<remote>:]<image> [[<remote>:]<image>...]"))
 	cmd.Short = i18n.G("Refresh images")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Refresh images`))
@@ -1525,7 +1525,7 @@ type cmdImageShow struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImageShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("show", i18n.G("[<remote>:]<image>"))
+	cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<image>"))
 	cmd.Short = i18n.G("Show image properties")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show image properties`))
@@ -1594,7 +1594,7 @@ type cmdImageGetProp struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImageGetProp) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("get-property", i18n.G("[<remote>:]<image> <key>"))
+	cmd.Use = cli.Usage("get-property", i18n.G("[<remote>:]<image> <key>"))
 	cmd.Short = i18n.G("Get image properties")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Get image properties`))
@@ -1661,7 +1661,7 @@ type cmdImageSetProp struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImageSetProp) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("set-property", i18n.G("[<remote>:]<image> <key> <value>"))
+	cmd.Use = cli.Usage("set-property", i18n.G("[<remote>:]<image> <key> <value>"))
 	cmd.Short = i18n.G("Set image properties")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Set image properties`))
@@ -1727,7 +1727,7 @@ type cmdImageUnsetProp struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImageUnsetProp) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("unset-property", i18n.G("[<remote>:]<image> <key>"))
+	cmd.Use = cli.Usage("unset-property", i18n.G("[<remote>:]<image> <key>"))
 	cmd.Short = i18n.G("Unset image properties")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Unset image properties`))

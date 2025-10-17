@@ -9,8 +9,8 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 )
 
 type cmdConfigDevice struct {
@@ -22,7 +22,7 @@ type cmdConfigDevice struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigDevice) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("device")
+	cmd.Use = cli.Usage("device")
 	cmd.Short = i18n.G("Manage devices")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage devices`))
@@ -83,7 +83,7 @@ func (c *cmdConfigDeviceAdd) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Add instance devices`))
 	if c.config != nil {
-		cmd.Use = usage("add", i18n.G("[<remote>:]<instance> <device> <type> [key=value...]"))
+		cmd.Use = cli.Usage("add", i18n.G("[<remote>:]<instance> <device> <type> [key=value...]"))
 		cmd.Example = cli.FormatSection("", i18n.G(
 			`incus config device add [<remote>:]instance1 <device-name> disk source=/share/c1 path=/opt
     Will mount the host's /share/c1 onto /opt in the instance.
@@ -91,7 +91,7 @@ func (c *cmdConfigDeviceAdd) Command() *cobra.Command {
 incus config device add [<remote>:]instance1 <device-name> disk pool=some-pool source=some-volume path=/opt
     Will mount the some-volume volume on some-pool onto /opt in the instance.`))
 	} else if c.profile != nil {
-		cmd.Use = usage("add", i18n.G("[<remote>:]<profile> <device> <type> [key=value...]"))
+		cmd.Use = cli.Usage("add", i18n.G("[<remote>:]<profile> <device> <type> [key=value...]"))
 		cmd.Example = cli.FormatSection("", i18n.G(
 			`incus profile device add [<remote>:]profile1 <device-name> disk source=/share/c1 path=/opt
     Will mount the host's /share/c1 onto /opt in the instance.
@@ -218,9 +218,9 @@ type cmdConfigDeviceGet struct {
 func (c *cmdConfigDeviceGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	if c.config != nil {
-		cmd.Use = usage("get", i18n.G("[<remote>:]<instance> <device> <key>"))
+		cmd.Use = cli.Usage("get", i18n.G("[<remote>:]<instance> <device> <key>"))
 	} else if c.profile != nil {
-		cmd.Use = usage("get", i18n.G("[<remote>:]<profile> <device> <key>"))
+		cmd.Use = cli.Usage("get", i18n.G("[<remote>:]<profile> <device> <key>"))
 	}
 
 	cmd.Short = i18n.G("Get values for device configuration keys")
@@ -326,9 +326,9 @@ func (c *cmdConfigDeviceList) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List instance devices`))
 	if c.config != nil {
-		cmd.Use = usage("list", i18n.G("[<remote>:]<instance>"))
+		cmd.Use = cli.Usage("list", i18n.G("[<remote>:]<instance>"))
 	} else if c.profile != nil {
-		cmd.Use = usage("list", i18n.G("[<remote>:]<profile>"))
+		cmd.Use = cli.Usage("list", i18n.G("[<remote>:]<profile>"))
 	}
 
 	cmd.RunE = c.Run
@@ -406,7 +406,7 @@ type cmdConfigDeviceOverride struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigDeviceOverride) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("override", i18n.G("[<remote>:]<instance> <device> [key=value...]"))
+	cmd.Use = cli.Usage("override", i18n.G("[<remote>:]<instance> <device> [key=value...]"))
 	cmd.Short = i18n.G("Copy profile inherited devices and override configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Copy profile inherited devices and override configuration keys`))
@@ -505,9 +505,9 @@ type cmdConfigDeviceRemove struct {
 func (c *cmdConfigDeviceRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	if c.config != nil {
-		cmd.Use = usage("remove", i18n.G("[<remote>:]<instance> <name>..."))
+		cmd.Use = cli.Usage("remove", i18n.G("[<remote>:]<instance> <name>..."))
 	} else if c.profile != nil {
-		cmd.Use = usage("remove", i18n.G("[<remote>:]<profile> <name>..."))
+		cmd.Use = cli.Usage("remove", i18n.G("[<remote>:]<profile> <name>..."))
 	}
 
 	cmd.Aliases = []string{"delete", "rm"}
@@ -629,14 +629,14 @@ func (c *cmdConfigDeviceSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Short = i18n.G("Set device configuration keys")
 	if c.config != nil {
-		cmd.Use = usage("set", i18n.G("[<remote>:]<instance> <device> <key>=<value>..."))
+		cmd.Use = cli.Usage("set", i18n.G("[<remote>:]<instance> <device> <key>=<value>..."))
 		cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 			`Set device configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
     incus config device set [<remote>:]<instance> <device> <key> <value>`))
 	} else if c.profile != nil {
-		cmd.Use = usage("set", i18n.G("[<remote>:]<profile> <device> <key>=<value>..."))
+		cmd.Use = cli.Usage("set", i18n.G("[<remote>:]<profile> <device> <key>=<value>..."))
 		cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 			`Set device configuration keys
 
@@ -762,9 +762,9 @@ type cmdConfigDeviceShow struct {
 func (c *cmdConfigDeviceShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	if c.config != nil {
-		cmd.Use = usage("show", i18n.G("[<remote>:]<instance>"))
+		cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<instance>"))
 	} else if c.profile != nil {
-		cmd.Use = usage("show", i18n.G("[<remote>:]<profile>"))
+		cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<profile>"))
 	}
 
 	cmd.Short = i18n.G("Show full device configuration")
@@ -849,9 +849,9 @@ type cmdConfigDeviceUnset struct {
 func (c *cmdConfigDeviceUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	if c.config != nil {
-		cmd.Use = usage("unset", i18n.G("[<remote>:]<instance> <device> <key>"))
+		cmd.Use = cli.Usage("unset", i18n.G("[<remote>:]<instance> <device> <key>"))
 	} else if c.profile != nil {
-		cmd.Use = usage("unset", i18n.G("[<remote>:]<profile> <device> <key>"))
+		cmd.Use = cli.Usage("unset", i18n.G("[<remote>:]<profile> <device> <key>"))
 	}
 
 	cmd.Short = i18n.G("Unset device configuration keys")

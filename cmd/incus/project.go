@@ -15,9 +15,9 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/termios"
 	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
@@ -35,7 +35,7 @@ type cmdProject struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProject) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("project")
+	cmd.Use = cli.Usage("project")
 	cmd.Short = i18n.G("Manage projects")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage projects`))
@@ -105,7 +105,7 @@ type cmdProjectCreate struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProjectCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("create", i18n.G("[<remote>:]<project>"))
+	cmd.Use = cli.Usage("create", i18n.G("[<remote>:]<project>"))
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create projects")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -211,7 +211,7 @@ type cmdProjectDelete struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProjectDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("delete", i18n.G("[<remote>:]<project>"))
+	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<project>"))
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete projects")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -312,7 +312,7 @@ type cmdProjectEdit struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProjectEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("edit", i18n.G("[<remote>:]<project>"))
+	cmd.Use = cli.Usage("edit", i18n.G("[<remote>:]<project>"))
 	cmd.Short = i18n.G("Edit project configurations as YAML")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit project configurations as YAML`))
@@ -402,7 +402,7 @@ func (c *cmdProjectEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+	content, err := cli.TextEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
 	if err != nil {
 		return err
 	}
@@ -425,7 +425,7 @@ func (c *cmdProjectEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = textEditor("", content)
+			content, err = cli.TextEditor("", content)
 			if err != nil {
 				return err
 			}
@@ -450,7 +450,7 @@ type cmdProjectGet struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProjectGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("get", i18n.G("[<remote>:]<project> <key>"))
+	cmd.Use = cli.Usage("get", i18n.G("[<remote>:]<project> <key>"))
 	cmd.Short = i18n.G("Get values for project configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Get values for project configuration keys`))
@@ -526,7 +526,7 @@ type cmdProjectList struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProjectList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("list", i18n.G("[<remote>:] [<filter>...]"))
+	cmd.Use = cli.Usage("list", i18n.G("[<remote>:] [<filter>...]"))
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List projects")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -755,7 +755,7 @@ type cmdProjectRename struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProjectRename) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("rename", i18n.G("[<remote>:]<project> <new-name>"))
+	cmd.Use = cli.Usage("rename", i18n.G("[<remote>:]<project> <new-name>"))
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename projects")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -823,7 +823,7 @@ type cmdProjectSet struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProjectSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("set", i18n.G("[<remote>:]<project> <key>=<value>..."))
+	cmd.Use = cli.Usage("set", i18n.G("[<remote>:]<project> <key>=<value>..."))
 	cmd.Short = i18n.G("Set project configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Set project configuration keys
@@ -911,7 +911,7 @@ type cmdProjectUnset struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProjectUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("unset", i18n.G("[<remote>:]<project> <key>"))
+	cmd.Use = cli.Usage("unset", i18n.G("[<remote>:]<project> <key>"))
 	cmd.Short = i18n.G("Unset project configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Unset project configuration keys`))
@@ -957,7 +957,7 @@ type cmdProjectShow struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProjectShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("show", i18n.G("[<remote>:]<project>"))
+	cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<project>"))
 	cmd.Short = i18n.G("Show project options")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show project options`))
@@ -1020,7 +1020,7 @@ type cmdProjectSwitch struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProjectSwitch) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("switch", i18n.G("[<remote>:]<project>"))
+	cmd.Use = cli.Usage("switch", i18n.G("[<remote>:]<project>"))
 	cmd.Short = i18n.G("Switch the current project")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Switch the current project`))
@@ -1090,7 +1090,7 @@ type cmdProjectInfo struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProjectInfo) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("info", i18n.G("[<remote>:]<project>"))
+	cmd.Use = cli.Usage("info", i18n.G("[<remote>:]<project>"))
 	cmd.Short = i18n.G("Get a summary of resource allocations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Get a summary of resource allocations`))
@@ -1206,7 +1206,7 @@ type cmdProjectGetCurrent struct {
 // Command generates the command definition.
 func (c *cmdProjectGetCurrent) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("get-current")
+	cmd.Use = cli.Usage("get-current")
 	cmd.Short = i18n.G("Show the current project")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show the current project`))

@@ -9,10 +9,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	config "github.com/lxc/incus/v6/shared/cliconfig"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 )
 
 // Start.
@@ -27,7 +27,7 @@ func (c *cmdStart) Command() *cobra.Command {
 	c.action = &cmdAction
 
 	cmd := c.action.Command("start")
-	cmd.Use = usage("start", i18n.G("[<remote>:]<instance> [[<remote>:]<instance>...]"))
+	cmd.Use = cli.Usage("start", i18n.G("[<remote>:]<instance> [[<remote>:]<instance>...]"))
 	cmd.Short = i18n.G("Start instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Start instances`))
@@ -51,7 +51,7 @@ func (c *cmdPause) Command() *cobra.Command {
 	c.action = &cmdAction
 
 	cmd := c.action.Command("pause")
-	cmd.Use = usage("pause", i18n.G("[<remote>:]<instance> [[<remote>:]<instance>...]"))
+	cmd.Use = cli.Usage("pause", i18n.G("[<remote>:]<instance> [[<remote>:]<instance>...]"))
 	cmd.Short = i18n.G("Pause instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Pause instances`))
@@ -76,7 +76,7 @@ func (c *cmdResume) Command() *cobra.Command {
 	c.action = &cmdAction
 
 	cmd := c.action.Command("resume")
-	cmd.Use = usage("resume", i18n.G("[<remote>:]<instance> [[<remote>:]<instance>...]"))
+	cmd.Use = cli.Usage("resume", i18n.G("[<remote>:]<instance> [[<remote>:]<instance>...]"))
 	cmd.Short = i18n.G("Resume instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Resume instances`))
@@ -101,7 +101,7 @@ func (c *cmdRestart) Command() *cobra.Command {
 	c.action = &cmdAction
 
 	cmd := c.action.Command("restart")
-	cmd.Use = usage("restart", i18n.G("[<remote>:]<instance> [[<remote>:]<instance>...]"))
+	cmd.Use = cli.Usage("restart", i18n.G("[<remote>:]<instance> [[<remote>:]<instance>...]"))
 	cmd.Short = i18n.G("Restart instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Restart instances`))
@@ -125,7 +125,7 @@ func (c *cmdStop) Command() *cobra.Command {
 	c.action = &cmdAction
 
 	cmd := c.action.Command("stop")
-	cmd.Use = usage("stop", i18n.G("[<remote>:]<instance> [[<remote>:]<instance>...]"))
+	cmd.Use = cli.Usage("stop", i18n.G("[<remote>:]<instance> [[<remote>:]<instance>...]"))
 	cmd.Short = i18n.G("Stop instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Stop instances`))

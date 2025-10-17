@@ -11,12 +11,12 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/ports"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 	localtls "github.com/lxc/incus/v6/shared/tls"
 	"github.com/lxc/incus/v6/shared/util"
 )
@@ -42,7 +42,7 @@ type cmdAdminInit struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminInit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("init")
+	cmd.Use = cli.Usage("init")
 	cmd.Short = i18n.G("Configure the daemon")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Configure the daemon`))
 	cmd.Example = `  init --minimal

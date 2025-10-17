@@ -8,9 +8,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 )
 
 type cmdMove struct {
@@ -32,7 +32,7 @@ type cmdMove struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdMove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("move", i18n.G("[<remote>:]<instance> [<remote>:][<instance>]"))
+	cmd.Use = cli.Usage("move", i18n.G("[<remote>:]<instance> [<remote>:][<instance>]"))
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Move instances within or in between servers")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(

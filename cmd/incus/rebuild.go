@@ -7,11 +7,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/shared/api"
 	config "github.com/lxc/incus/v6/shared/cliconfig"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 )
 
 // Rebuild.
@@ -24,7 +24,7 @@ type cmdRebuild struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRebuild) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("rebuild", i18n.G("[<remote>:]<image> [<remote>:]<instance>"))
+	cmd.Use = cli.Usage("rebuild", i18n.G("[<remote>:]<image> [<remote>:]<instance>"))
 	cmd.Short = i18n.G("Rebuild instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Wipe the instance root disk and re-initialize with a new image (or empty volume).`))

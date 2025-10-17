@@ -18,9 +18,9 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 )
 
 type cmdRemoteProxy struct {
@@ -33,7 +33,7 @@ type cmdRemoteProxy struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRemoteProxy) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("proxy", i18n.G("<remote>: <path>"))
+	cmd.Use = cli.Usage("proxy", i18n.G("<remote>: <path>"))
 	cmd.Short = i18n.G("Run a local API proxy")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Run a local API proxy for the remote`))

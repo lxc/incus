@@ -13,9 +13,9 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/termios"
 )
 
@@ -26,7 +26,7 @@ type cmdNetworkPeer struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkPeer) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("peer")
+	cmd.Use = cli.Usage("peer")
 	cmd.Short = i18n.G("Manage network peerings")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Manage network peerings"))
 
@@ -85,7 +85,7 @@ type networkPeerColumn struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkPeerList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("list", i18n.G("[<remote>:]<network>"))
+	cmd.Use = cli.Usage("list", i18n.G("[<remote>:]<network>"))
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available network peers")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -254,7 +254,7 @@ type cmdNetworkPeerShow struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkPeerShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("show", i18n.G("[<remote>:]<network> <peer name>"))
+	cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<network> <peer name>"))
 	cmd.Short = i18n.G("Show network peer configurations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Show network peer configurations"))
 	cmd.RunE = c.Run
@@ -328,7 +328,7 @@ type cmdNetworkPeerCreate struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkPeerCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("create", i18n.G("[<remote>:]<network> <peer_name> <[target project/]<target network or integration> [key=value...]"))
+	cmd.Use = cli.Usage("create", i18n.G("[<remote>:]<network> <peer_name> <[target project/]<target network or integration> [key=value...]"))
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new network peering")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network peering"))
@@ -484,7 +484,7 @@ type cmdNetworkPeerGet struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkPeerGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("get", i18n.G("[<remote>:]<network> <peer_name> <key>"))
+	cmd.Use = cli.Usage("get", i18n.G("[<remote>:]<network> <peer_name> <key>"))
 	cmd.Short = i18n.G("Get values for network peer configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Get values for network peer configuration keys"))
 	cmd.RunE = c.Run
@@ -571,7 +571,7 @@ type cmdNetworkPeerSet struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkPeerSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("set", i18n.G("[<remote>:]<network> <peer_name> <key>=<value>..."))
+	cmd.Use = cli.Usage("set", i18n.G("[<remote>:]<network> <peer_name> <key>=<value>..."))
 	cmd.Short = i18n.G("Set network peer keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Set network peer keys
@@ -673,7 +673,7 @@ type cmdNetworkPeerUnset struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkPeerUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("unset", i18n.G("[<remote>:]<network> <peer_name> <key>"))
+	cmd.Use = cli.Usage("unset", i18n.G("[<remote>:]<network> <peer_name> <key>"))
 	cmd.Short = i18n.G("Unset network peer configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Unset network peer keys"))
 	cmd.RunE = c.Run
@@ -722,7 +722,7 @@ type cmdNetworkPeerEdit struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkPeerEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("edit", i18n.G("[<remote>:]<network> <peer_name>"))
+	cmd.Use = cli.Usage("edit", i18n.G("[<remote>:]<network> <peer_name>"))
 	cmd.Short = i18n.G("Edit network peer configurations as YAML")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Edit network peer configurations as YAML"))
 	cmd.RunE = c.Run
@@ -814,7 +814,7 @@ func (c *cmdNetworkPeerEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor.
-	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+	content, err := cli.TextEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
 	if err != nil {
 		return err
 	}
@@ -837,7 +837,7 @@ func (c *cmdNetworkPeerEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = textEditor("", content)
+			content, err = cli.TextEditor("", content)
 			if err != nil {
 				return err
 			}
@@ -860,7 +860,7 @@ type cmdNetworkPeerDelete struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkPeerDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("delete", i18n.G("[<remote>:]<network> <peer_name>"))
+	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<network> <peer_name>"))
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network peerings")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete network peerings"))

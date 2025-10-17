@@ -12,10 +12,10 @@ import (
 	"golang.org/x/text/language"
 
 	incus "github.com/lxc/incus/v6/client"
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/recover"
 	"github.com/lxc/incus/v6/shared/api"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/validate"
 )
 
@@ -26,7 +26,7 @@ type cmdAdminRecover struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminRecover) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("recover")
+	cmd.Use = cli.Usage("recover")
 	cmd.Short = i18n.G("Recover missing instances and volumes from existing and unknown storage pools")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Recover missing instances and volumes from existing and unknown storage pools
 

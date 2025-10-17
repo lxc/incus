@@ -9,9 +9,7 @@ type (
 	ControllerEventEventType = string
 )
 
-var (
-	ControllerEventEventTypeEmptyLbBackends ControllerEventEventType = "empty_lb_backends"
-)
+var ControllerEventEventTypeEmptyLbBackends ControllerEventEventType = "empty_lb_backends"
 
 // ControllerEvent defines an object in Controller_Event table
 type ControllerEvent struct {

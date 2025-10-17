@@ -12,9 +12,9 @@ import (
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/ask"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/osarch"
 )
 
@@ -47,7 +47,7 @@ This command will prompt for all of the metadata tarball fields:
 // Run runs the actual command logic.
 func (c *cmdGenerateMetadata) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 1, 1)
+	exit, err := cli.CheckArgs(cmd, args, 1, 1)
 	if exit {
 		return err
 	}

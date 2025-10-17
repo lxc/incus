@@ -18,9 +18,9 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/termios"
 	"github.com/lxc/incus/v6/shared/util"
@@ -37,7 +37,7 @@ type cmdConsole struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConsole) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("console", i18n.G("[<remote>:]<instance>"))
+	cmd.Use = cli.Usage("console", i18n.G("[<remote>:]<instance>"))
 	cmd.Short = i18n.G("Attach to instance consoles")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Attach to instance consoles

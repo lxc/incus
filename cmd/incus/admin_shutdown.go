@@ -13,8 +13,8 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 )
 
 type cmdAdminShutdown struct {
@@ -27,7 +27,7 @@ type cmdAdminShutdown struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminShutdown) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("shutdown")
+	cmd.Use = cli.Usage("shutdown")
 	cmd.Short = i18n.G("Tell the daemon to shutdown all instances and exit")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Tell the daemon to shutdown all instances and exit
 

@@ -8,9 +8,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 )
 
 type cmdNetworkListAllocations struct {
@@ -31,7 +31,7 @@ type networkAllocationColumn struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkListAllocations) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("list-allocations")
+	cmd.Use = cli.Usage("list-allocations")
 	cmd.Short = i18n.G("List network allocations in use")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List network allocations in use

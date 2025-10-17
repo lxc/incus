@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cli "github.com/lxc/incus/v6/internal/cmd"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/simplestreams"
 )
 
@@ -39,7 +39,7 @@ correct size and content.
 // Run runs the actual command logic.
 func (c *cmdVerify) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 0, 0)
+	exit, err := cli.CheckArgs(cmd, args, 0, 0)
 	if exit {
 		return err
 	}

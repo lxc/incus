@@ -9,9 +9,9 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/termios"
 )
 
@@ -23,7 +23,7 @@ type cmdConfigMetadata struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigMetadata) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("metadata")
+	cmd.Use = cli.Usage("metadata")
 	cmd.Short = i18n.G("Manage instance metadata files")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage instance metadata files`))
@@ -52,7 +52,7 @@ type cmdConfigMetadataEdit struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigMetadataEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("edit", i18n.G("[<remote>:]<instance>"))
+	cmd.Use = cli.Usage("edit", i18n.G("[<remote>:]<instance>"))
 	cmd.Short = i18n.G("Edit instance metadata files")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit instance metadata files`))
@@ -141,7 +141,7 @@ func (c *cmdConfigMetadataEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(origContent)))
+	content, err := cli.TextEditor("", []byte(c.helpTemplate()+"\n\n"+string(origContent)))
 	if err != nil {
 		return err
 	}
@@ -163,7 +163,7 @@ func (c *cmdConfigMetadataEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = textEditor("", content)
+			content, err = cli.TextEditor("", content)
 			if err != nil {
 				return err
 			}
@@ -187,7 +187,7 @@ type cmdConfigMetadataShow struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigMetadataShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("show", i18n.G("[<remote>:]<instance>"))
+	cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<instance>"))
 	cmd.Short = i18n.G("Show instance metadata files")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show instance metadata files`))

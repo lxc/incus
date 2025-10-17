@@ -12,10 +12,10 @@ import (
 	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
-	cli "github.com/lxc/incus/v6/internal/cmd"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/shared/api"
+	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 )
@@ -32,7 +32,7 @@ type cmdInfo struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdInfo) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("info", i18n.G("[<remote>:][<instance>]"))
+	cmd.Use = cli.Usage("info", i18n.G("[<remote>:][<instance>]"))
 	cmd.Short = i18n.G("Show instance or server information")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show instance or server information`))
