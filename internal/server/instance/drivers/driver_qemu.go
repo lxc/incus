@@ -366,7 +366,7 @@ func (d *qemu) qmpConnect() (*qmp.Monitor, error) {
 // Callers should check that the instance is running (and therefore mounted) before calling this function,
 // otherwise the qmp.Connect call will fail to use the monitor socket file.
 func (d *qemu) getAgentClient() (*http.Client, error) {
-	if d.isWindows() {
+	if !d.supportsVirtioVsock() {
 		// Get known network details.
 		networks, err := d.getNetworkState()
 		if err != nil {
@@ -3042,7 +3042,6 @@ func (d *qemu) spiceCmdlineConfig() string {
 // inside the VM's config volume so that it can be restricted by quota.
 // Requires the instance be mounted before calling this function.
 func (d *qemu) generateConfigShare() error {
-	isWindows := d.isWindows()
 	configDrivePath := filepath.Join(d.Path(), "config")
 
 	// Create config drive dir if doesn't exist, if it does exist, leave it around so we don't regenerate all
@@ -3052,7 +3051,8 @@ func (d *qemu) generateConfigShare() error {
 		return err
 	}
 
-	if !isWindows {
+	// Windows doesn't handle shares.
+	if !d.isWindows() {
 		// Add the VM agent loader.
 		agentSrcPath, _ := exec.LookPath("incus-agent")
 		if util.PathExists(os.Getenv("INCUS_AGENT_PATH")) {
@@ -3067,13 +3067,11 @@ func (d *qemu) generateConfigShare() error {
 				return err
 			}
 
-			if !isWindows {
-				// Legacy support.
-				_ = os.Remove(filepath.Join(configDrivePath, "lxd-agent"))
-				err = os.Symlink("incus-agent", filepath.Join(configDrivePath, "lxd-agent"))
-				if err != nil {
-					return err
-				}
+			// Legacy support.
+			_ = os.Remove(filepath.Join(configDrivePath, "lxd-agent"))
+			err = os.Symlink("incus-agent", filepath.Join(configDrivePath, "lxd-agent"))
+			if err != nil {
+				return err
 			}
 		} else if agentSrcPath != "" {
 			// Install agent into config drive dir if found.
@@ -3160,7 +3158,8 @@ func (d *qemu) generateConfigShare() error {
 		return err
 	}
 
-	if !isWindows {
+	// OS-specific configuration.
+	if d.isLinux() {
 		// Systemd units.
 		err = os.MkdirAll(filepath.Join(configDrivePath, "systemd"), 0o500)
 		if err != nil {
@@ -3183,7 +3182,7 @@ func (d *qemu) generateConfigShare() error {
 		// Setup script for incus-agent that is executed by the incus-agent systemd unit before incus-agent is started.
 		// The script sets up a temporary mount point, copies data from the mount (including incus-agent binary),
 		// and then unmounts it. It also ensures appropriate permissions for the Incus agent's runtime directory.
-		agentFile, err = incusAgentLoader.ReadFile("agent-loader/incus-agent-setup")
+		agentFile, err = incusAgentLoader.ReadFile("agent-loader/incus-agent-setup-linux")
 		if err != nil {
 			return err
 		}
@@ -3210,7 +3209,48 @@ func (d *qemu) generateConfigShare() error {
 		}
 
 		// Install script for manual installs.
-		agentFile, err = incusAgentLoader.ReadFile("agent-loader/install.sh")
+		agentFile, err = incusAgentLoader.ReadFile("agent-loader/install-linux.sh")
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(filepath.Join(configDrivePath, "install.sh"), agentFile, 0o700)
+		if err != nil {
+			return err
+		}
+	} else if d.isDarwin() {
+		// Launchd daemons.
+		err = os.MkdirAll(filepath.Join(configDrivePath, "launchd"), 0o500)
+		if err != nil {
+			return err
+		}
+
+		// Launchd daemon for incus-agent.
+		agentFile, err := incusAgentLoader.ReadFile("agent-loader/launchd/org.linuxcontainers.incus.darwin-agent.plist")
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(filepath.Join(configDrivePath, "launchd", "org.linuxcontainers.incus.darwin-agent.plist"), agentFile, 0o644)
+		if err != nil {
+			return err
+		}
+
+		// Setup script for incus-agent that is executed by launchd. For convenience, this script also
+		// launches the agent. Because of Apple TCC, sh must be given full disk access in the relevant
+		// system settings page. Other than that, this agent behaves roughly the same as the Linux one.
+		agentFile, err = incusAgentLoader.ReadFile("agent-loader/incus-agent-setup-darwin")
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(filepath.Join(configDrivePath, "incus-agent-setup"), agentFile, 0o500)
+		if err != nil {
+			return err
+		}
+
+		// Install script for manual installs.
+		agentFile, err = incusAgentLoader.ReadFile("agent-loader/install-darwin.sh")
 		if err != nil {
 			return err
 		}
@@ -3263,7 +3303,8 @@ func (d *qemu) generateConfigShare() error {
 		}
 	}
 
-	if !isWindows {
+	// Only Linux guests support dynamic NIC configuration.
+	if d.isLinux() {
 		// Clear NICConfigDir to ensure that no leftover configuration is erroneously applied by the agent.
 		nicConfigPath := filepath.Join(configDrivePath, deviceConfig.NICConfigDir)
 		_ = os.RemoveAll(nicConfigPath)
@@ -3471,6 +3512,30 @@ func (d *qemu) deviceBootPriorities(base int) (map[string]int, error) {
 // isWindows returns whether the VM is Windows.
 func (d *qemu) isWindows() bool {
 	return strings.Contains(strings.ToLower(d.expandedConfig["image.os"]), "windows")
+}
+
+// isDarwin returns whether the VM is Darwin.
+func (d *qemu) isDarwin() bool {
+	imageOS := strings.ToLower(d.expandedConfig["image.os"])
+	keywords := []string{"darwin", "mac os", "macos"}
+	for _, keyword := range keywords {
+		if strings.Contains(imageOS, keyword) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// isLinux returns whether the VM is Linux. This is the default if no `image.os` is provided.
+func (d *qemu) isLinux() bool {
+	return !d.isWindows() && !d.isDarwin()
+}
+
+// supportsVirtioVsock returns whether the agent supports talking through VirtIO vsock.
+// For now, we only support it on Linux.
+func (d *qemu) supportsVirtioVsock() bool {
+	return d.isLinux()
 }
 
 func (d *qemu) getStartupRTCAdjustment() time.Duration {
@@ -3980,7 +4045,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 		bus.allocate(busFunctionGroupNone)
 	}
 
-	if !d.isWindows() {
+	if !isWindows {
 		// Write the agent mount config.
 		agentMountJSON, err := json.Marshal(agentMounts)
 		if err != nil {

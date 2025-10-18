@@ -3,16 +3,15 @@
 package main
 
 import (
-	"context"
 	"errors"
-	"fmt"
 	"io"
-	"net"
 	"os"
 	"os/exec"
 	"runtime"
+	"sort"
 	"strings"
 
+	"github.com/shirou/gopsutil/v4/disk"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 
@@ -22,12 +21,7 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
-var (
-	osShutdownSignal       = os.Interrupt
-	osBaseWorkingDirectory = "C:\\"
-	osMetricsSupported     = false
-	osGuestAPISupport      = false
-)
+var osBaseWorkingDirectory = "C:\\"
 
 func osGetEnvironment() (*api.ServerEnvironment, error) {
 	serverName, err := os.Hostname()
@@ -47,11 +41,6 @@ func osGetEnvironment() (*api.ServerEnvironment, error) {
 	return env, nil
 }
 
-func osLoadModules() error {
-	// No OS drivers to load on Windows.
-	return nil
-}
-
 func osMountShared(src string, dst string, fstype string, opts []string) error {
 	return errors.New("Dynamic mounts aren't supported on Windows")
 }
@@ -60,44 +49,34 @@ func osUmount(src string, dst string, fstype string) error {
 	return errors.New("Dynamic mounts aren't supported on Windows")
 }
 
-func osGetCPUMetrics(d *Daemon) ([]metrics.CPUMetrics, error) {
-	return []metrics.CPUMetrics{}, errors.New("Metrics aren't supported on Windows")
-}
-
-func osGetDiskMetrics(d *Daemon) ([]metrics.DiskMetrics, error) {
-	return []metrics.DiskMetrics{}, errors.New("Metrics aren't supported on Windows")
-}
-
 func osGetFilesystemMetrics(d *Daemon) ([]metrics.FilesystemMetrics, error) {
-	return []metrics.FilesystemMetrics{}, errors.New("Metrics aren't supported on Windows")
-}
-
-func osGetMemoryMetrics(d *Daemon) (metrics.MemoryMetrics, error) {
-	return metrics.MemoryMetrics{}, errors.New("Metrics aren't supported on Windows")
-}
-
-func osGetCPUState() api.InstanceStateCPU {
-	return api.InstanceStateCPU{}
-}
-
-func osGetMemoryState() api.InstanceStateMemory {
-	return api.InstanceStateMemory{}
-}
-
-func osGetNetworkState() map[string]api.InstanceStateNetwork {
-	return map[string]api.InstanceStateNetwork{}
-}
-
-func osGetProcessesState() int64 {
-	pids := make([]uint32, 65536)
-	pidBytes := uint32(0)
-
-	err := windows.EnumProcesses(pids, &pidBytes)
+	partitions, err := disk.Partitions(true)
 	if err != nil {
-		return -1
+		return nil, err
 	}
 
-	return int64(pidBytes / 4)
+	sort.Slice(partitions, func(i, j int) bool {
+		return partitions[i].Mountpoint < partitions[j].Mountpoint
+	})
+
+	fsMetrics := make([]metrics.FilesystemMetrics, 0, len(partitions))
+	for _, partition := range partitions {
+		usage, err := disk.Usage(partition.Mountpoint)
+		if err != nil {
+			continue
+		}
+
+		fsMetrics = append(fsMetrics, metrics.FilesystemMetrics{
+			Device:         partition.Device,
+			Mountpoint:     partition.Mountpoint,
+			FSType:         partition.Fstype,
+			AvailableBytes: usage.Free,
+			FreeBytes:      usage.Free,
+			SizeBytes:      usage.Total,
+		})
+	}
+
+	return fsMetrics, nil
 }
 
 func osGetOSState() *api.InstanceStateOSInfo {
@@ -151,11 +130,6 @@ func osGetOSState() *api.InstanceStateOSInfo {
 	return osInfo
 }
 
-func osReconfigureNetworkInterfaces() {
-	// Agent assisted network reconfiguration isn't currently supported.
-	return
-}
-
 func osGetInteractiveConsole(s *execWs) (io.ReadWriteCloser, io.ReadWriteCloser, error) {
 	return nil, nil, errors.New("Only non-interactive exec sessions are currently supported on Windows")
 }
@@ -175,21 +149,6 @@ func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty io.Read
 
 func osExitStatus(err error) (int, error) {
 	return 0, err
-}
-
-func osExecWrapper(ctx context.Context, pty io.ReadWriteCloser) io.ReadWriteCloser {
-	return pty
-}
-
-func osGetListener(port int64) (net.Listener, error) {
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	if err != nil {
-		return nil, fmt.Errorf("Failed to listen on TCP: %w", err)
-	}
-
-	logger.Info("Started TCP listener")
-
-	return l, nil
 }
 
 func osSetEnv(post *api.InstanceExecPost, env map[string]string) {
