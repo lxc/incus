@@ -86,6 +86,8 @@ EDK
 EiB
 Eibit
 endian
+enum
+enums
 EPEL
 ES
 ESA
