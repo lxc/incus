@@ -17,10 +17,12 @@ import (
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	instanceDrivers "github.com/lxc/incus/v6/internal/server/instance/drivers"
 	"github.com/lxc/incus/v6/internal/server/lifecycle"
+	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/internal/server/state"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
+	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/osarch"
@@ -347,6 +349,11 @@ func clusterGroupGet(d *Daemon, r *http.Request) response.Response {
 			return err
 		}
 
+		apiGroup.UsedBy, err = clusterGroupUsedBy(ctx, tx, group)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -416,6 +423,20 @@ func clusterGroupPost(d *Daemon, r *http.Request) response.Response {
 		_, err = dbCluster.GetClusterGroup(ctx, tx.Tx(), req.Name)
 		if err == nil {
 			return fmt.Errorf("Name %q already in use", req.Name)
+		}
+
+		currentGroup, err := dbCluster.GetClusterGroup(ctx, tx.Tx(), name)
+		if err != nil {
+			return err
+		}
+
+		usedBy, err := clusterGroupUsedBy(ctx, tx, currentGroup)
+		if err != nil {
+			return err
+		}
+
+		if len(usedBy) > 0 {
+			return errors.New("Cluster group is currently in use")
 		}
 
 		// Rename the cluster group.
@@ -563,6 +584,15 @@ func clusterGroupPut(d *Daemon, r *http.Request) response.Response {
 				// Note that members who only belong to this group will not be removed from it.
 				// That is because each member needs to belong to at least one group.
 				if len(groups) > 1 {
+					memberInstances, err := tx.GetClusterGroupMemberInstances(ctx, group, oldMember)
+					if err != nil {
+						return err
+					}
+
+					if len(memberInstances) > 0 {
+						return errors.New("Cluster group member is currently in use")
+					}
+
 					// Remove member from this group as it belongs to at least one other group.
 					err = tx.RemoveNodeFromClusterGroup(ctx, name, oldMember)
 					if err != nil {
@@ -766,6 +796,15 @@ func clusterGroupPatch(d *Daemon, r *http.Request) response.Response {
 					return fmt.Errorf("Cannot remove %s from group as member needs to belong to at least one group", oldMember)
 				}
 
+				memberInstances, err := tx.GetClusterGroupMemberInstances(ctx, dbClusterGroup, oldMember)
+				if err != nil {
+					return err
+				}
+
+				if len(memberInstances) > 0 {
+					return errors.New("Cluster group member is currently in use")
+				}
+
 				// Remove member from this group as it belongs to at least one other group.
 				err = tx.RemoveNodeFromClusterGroup(ctx, name, oldMember)
 				if err != nil {
@@ -840,6 +879,21 @@ func clusterGroupDelete(d *Daemon, r *http.Request) response.Response {
 
 		if len(members) > 0 {
 			return errors.New("Only empty cluster groups can be removed")
+		}
+
+		// Get the cluster group.
+		group, err := dbCluster.GetClusterGroup(ctx, tx.Tx(), name)
+		if err != nil {
+			return err
+		}
+
+		usedBy, err := clusterGroupUsedBy(ctx, tx, group)
+		if err != nil {
+			return err
+		}
+
+		if len(usedBy) > 0 {
+			return errors.New("Cluster group is currently in use")
 		}
 
 		return dbCluster.DeleteClusterGroup(ctx, tx.Tx(), name)
@@ -940,4 +994,50 @@ func clusterGroupFill(ctx context.Context, s *state.State, servers []string, req
 	}
 
 	return nil
+}
+
+// clusterGroupUsedBy returns URLs of all instances and projects using the specified cluster group.
+func clusterGroupUsedBy(ctx context.Context, tx *db.ClusterTx, clusterGroup *dbCluster.ClusterGroup) ([]string, error) {
+	usedBy := []string{}
+
+	instances, err := dbCluster.GetInstances(ctx, tx.Tx())
+	if err != nil {
+		return nil, err
+	}
+
+	// Check which instances are assigned to the specified cluster group.
+	for _, instance := range instances {
+		config, err := dbCluster.GetInstanceConfig(ctx, tx.Tx(), instance.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		group := config["volatile.cluster.group"]
+		if group != clusterGroup.Name {
+			continue
+		}
+
+		apiInstance := api.Instance{Name: instance.Name}
+		usedBy = append(usedBy, apiInstance.URL(version.APIVersion, instance.Project).String())
+	}
+
+	// Check which projects are using the specified cluster group.
+	projects, err := dbCluster.GetProjects(ctx, tx.Tx())
+	if err != nil {
+		return nil, fmt.Errorf("Failed loading projects: %w", err)
+	}
+
+	for _, dbProject := range projects {
+		apiProject, err := dbProject.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return nil, err
+		}
+
+		projectClusterGroups := project.GetRestrictedClusterGroups(apiProject)
+		if slices.Contains(projectClusterGroups, clusterGroup.Name) {
+			usedBy = append(usedBy, apiProject.URL(version.APIVersion).String())
+		}
+	}
+
+	return usedBy, nil
 }
