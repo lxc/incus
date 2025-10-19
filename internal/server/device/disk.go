@@ -34,6 +34,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/idmap"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/osarch"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/subprocess"
 	"github.com/lxc/incus/v6/shared/units"
@@ -2885,16 +2886,22 @@ func (d *disk) generateVMAgentDrive() (string, error) {
 
 	// Include the most likely agent.
 	if util.PathExists(os.Getenv("INCUS_AGENT_PATH")) {
-		var srcFilename string
-		var dstFilename string
+		dstFilename := "incus-agent"
+		guestOS := d.inst.GuestOS()
 
-		if strings.Contains(strings.ToLower(d.inst.ExpandedConfig()["image.os"]), "windows") {
-			srcFilename = fmt.Sprintf("incus-agent.windows.%s", d.state.OS.Uname.Machine)
+		switch guestOS {
+		case "unknown":
+			guestOS = "linux"
+		case "windows":
 			dstFilename = "incus-agent.exe"
-		} else {
-			srcFilename = fmt.Sprintf("incus-agent.linux.%s", d.state.OS.Uname.Machine)
-			dstFilename = "incus-agent"
 		}
+
+		archName, err := osarch.ArchitectureName(d.inst.Architecture())
+		if err != nil {
+			return "", err
+		}
+
+		srcFilename := fmt.Sprintf("incus-agent.%s.%s", guestOS, archName)
 
 		agentInstallPath := filepath.Join(scratchDir, dstFilename)
 		os.Remove(agentInstallPath)
