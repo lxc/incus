@@ -5652,6 +5652,40 @@ This value is required by some providers.
 ```
 
 <!-- config group storage_lvm-common end -->
+<!-- config group storage_nfs-common start -->
+```{config:option} nfs.host storage_nfs-common
+:default: "-"
+:scope: "global"
+:shortdesc: "Hostname or IP address of the remote NFS server. Optional if included in `source`, or a configuration is used."
+:type: "string"
+
+```
+
+```{config:option} nfs.mount_options storage_nfs-common
+:default: "-"
+:scope: "local"
+:shortdesc: "Additional mount options for the NFS mount."
+:type: "string"
+
+```
+
+```{config:option} nfs.path storage_nfs-common
+:default: "-"
+:scope: "local"
+:shortdesc: "Remote NFS path. Typically inferred from `source`, but can be overridden."
+:type: "string"
+
+```
+
+```{config:option} source storage_nfs-common
+:default: "-"
+:scope: "local"
+:shortdesc: "NFS remote storage path. Format: `[<host>:]<remote path>`. If `host` is omitted here, it must be set via `nfs.host`."
+:type: "string"
+
+```
+
+<!-- config group storage_nfs-common end -->
 <!-- config group storage_truenas-common start -->
 ```{config:option} source storage_truenas-common
 :default: "-"
