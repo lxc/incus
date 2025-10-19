@@ -6473,6 +6473,48 @@
 				]
 			}
 		},
+		"storage_nfs": {
+			"common": {
+				"keys": [
+					{
+						"nfs.host": {
+							"default": "-",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Hostname or IP address of the remote NFS server. Optional if included in `source`, or a configuration is used.",
+							"type": "string"
+						}
+					},
+					{
+						"nfs.mount_options": {
+							"default": "-",
+							"longdesc": "",
+							"scope": "local",
+							"shortdesc": "Additional mount options for the NFS mount.",
+							"type": "string"
+						}
+					},
+					{
+						"nfs.path": {
+							"default": "-",
+							"longdesc": "",
+							"scope": "local",
+							"shortdesc": "Remote NFS path. Typically inferred from `source`, but can be overridden.",
+							"type": "string"
+						}
+					},
+					{
+						"source": {
+							"default": "-",
+							"longdesc": "",
+							"scope": "local",
+							"shortdesc": "NFS remote storage path. Format: `[\u003chost\u003e:]\u003cremote path\u003e`. If `host` is omitted here, it must be set via `nfs.host`.",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"storage_truenas": {
 			"common": {
 				"keys": [
