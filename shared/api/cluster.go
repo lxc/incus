@@ -281,6 +281,8 @@ type ClusterGroup struct {
 	// List of URLs of objects using this cluster group
 	// Read only: true
 	// Example: ["/1.0/cluster/members/server01", "/1.0/project/default"]
+	//
+	// API extension: cluster_group_usedby.
 	UsedBy []string `json:"used_by" yaml:"used_by"`
 }
 

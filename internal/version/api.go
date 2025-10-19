@@ -502,6 +502,7 @@ var APIExtensions = []string{
 	"usb_attached",
 	"backup_iso",
 	"instance_systemd_credentials",
+	"cluster_group_usedby",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
