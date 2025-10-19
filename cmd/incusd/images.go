@@ -278,7 +278,6 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 	}
 
 	// Track progress creating image.
-	metadata := make(map[string]any)
 	metaProgressWriter := &ioprogress.ProgressWriter{
 		Tracker: &ioprogress.ProgressTracker{
 			Handler: func(value, speed int64) {
@@ -292,6 +291,7 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 					processed = value
 				}
 
+				metadata := make(map[string]any)
 				operations.SetProgressMetadata(metadata, "create_image_from_container_pack", "Image pack", percent, processed, speed)
 				_ = op.UpdateMetadata(metadata)
 			},
@@ -312,6 +312,7 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 					processed = value
 				}
 
+				metadata := make(map[string]any)
 				operations.SetProgressMetadata(metadata, "create_image_from_container_pack", "Image pack", percent, processed, speed)
 				_ = op.UpdateMetadata(metadata)
 			},
@@ -406,6 +407,7 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 	// Tracker instance for the export phase.
 	tracker := &ioprogress.ProgressTracker{
 		Handler: func(value, speed int64) {
+			metadata := make(map[string]any)
 			operations.SetProgressMetadata(metadata, "create_image_from_container_pack", "Exporting", value, 0, 0)
 			_ = op.UpdateMetadata(metadata)
 		},

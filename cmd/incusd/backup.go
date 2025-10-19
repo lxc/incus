@@ -152,14 +152,7 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 	backupProgressWriter := &ioprogress.ProgressWriter{
 		Tracker: &ioprogress.ProgressTracker{
 			Handler: func(value, speed int64) {
-				meta := op.Metadata()
-				if meta == nil {
-					meta = make(map[string]any)
-				}
-
-				progressText := fmt.Sprintf("%s (%s/s)", units.GetByteSizeString(value, 2), units.GetByteSizeString(speed, 2))
-				meta["create_backup_progress"] = progressText
-				_ = op.UpdateMetadata(meta)
+				_ = op.ExtendMetadata(map[string]any{"create_backup_progress": fmt.Sprintf("%s (%s/s)", units.GetByteSizeString(value, 2), units.GetByteSizeString(speed, 2))})
 			},
 		},
 	}

@@ -47,6 +47,10 @@ func (ql *qmpLog) open() error {
 
 // Write writes len(b) bytes from b to the channel.
 func (ql *qmpLog) Write(p []byte) (n int, err error) {
+	if ql == nil || ql.log == nil {
+		return 0, nil
+	}
+
 	ql.mu.Lock()
 	defer ql.mu.Unlock()
 
@@ -60,14 +64,14 @@ func (ql *qmpLog) Write(p []byte) (n int, err error) {
 
 // Close closes the log and wait the channel clean.
 func (ql *qmpLog) Close() error {
-	if ql.log != nil {
-		ql.mu.Lock()
-		defer ql.mu.Unlock()
-
-		err := ql.log.Close()
-		ql.log = nil
-		return err
+	if ql == nil || ql.log == nil {
+		return nil
 	}
 
-	return nil
+	ql.mu.Lock()
+	defer ql.mu.Unlock()
+
+	err := ql.log.Close()
+	ql.log = nil
+	return err
 }
