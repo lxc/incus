@@ -294,6 +294,16 @@ definitions:
                 example: group1
                 type: string
                 x-go-name: Name
+            used_by:
+                description: List of URLs of objects using this cluster group
+                example:
+                    - /1.0/cluster/members/server01
+                    - /1.0/project/default
+                items:
+                    type: string
+                readOnly: true
+                type: array
+                x-go-name: UsedBy
         title: ClusterGroup represents a cluster group.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
