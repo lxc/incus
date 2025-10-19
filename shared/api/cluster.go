@@ -277,6 +277,11 @@ type ClusterGroupsPost struct {
 type ClusterGroup struct {
 	ClusterGroupPut  `yaml:",inline"`
 	ClusterGroupPost `yaml:",inline"`
+
+	// List of URLs of objects using this cluster group
+	// Read only: true
+	// Example: ["/1.0/cluster/members/server01", "/1.0/project/default"]
+	UsedBy []string `json:"used_by" yaml:"used_by"`
 }
 
 // ClusterGroupPost represents the fields required to rename a cluster group.
