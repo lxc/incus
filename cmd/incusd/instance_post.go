@@ -8,6 +8,7 @@ import (
 	"maps"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -973,6 +974,27 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 				err = tx.CreateInstanceConfig(ctx, int(id), map[string]string{"volatile.cluster.group": targetGroupName})
 				if err != nil {
 					return fmt.Errorf("Failed to set volatile.apply_template config key: %w", err)
+				}
+			} else if targetMemberInfo != nil {
+				config, err := dbCluster.GetInstanceConfig(ctx, tx.Tx(), inst.ID())
+				if err != nil {
+					return err
+				}
+
+				// Remove 'volatile.cluster.group' if the instance is on a node outside the specified cluster group.
+				group := config["volatile.cluster.group"]
+				if group != "" {
+					groupMembers, err := tx.GetClusterGroupNodes(ctx, group)
+					if err != nil {
+						return err
+					}
+
+					if !slices.Contains(groupMembers, targetMemberInfo.Name) {
+						err = tx.DeleteInstanceConfigKey(ctx, id, "volatile.cluster.group")
+						if err != nil {
+							return fmt.Errorf("Failed to remove volatile.cluster.group config key: %w", err)
+						}
+					}
 				}
 			}
 
