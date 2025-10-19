@@ -2684,9 +2684,8 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     MetadataConfigEntityName:
-        description: |-
-            MetadataConfigEntityName represents a main API object type
-            Example: instance
+        description: MetadataConfigEntityName represents a main API object type
+        example: instance
         type: string
         x-go-package: github.com/lxc/incus/v6/shared/api
     MetadataConfigGroup:
@@ -2702,9 +2701,8 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     MetadataConfigGroupName:
-        description: |-
-            MetadataConfigGroupName represents the name of a group of config keys
-            Example: volatile
+        description: MetadataConfigGroupName represents the name of a group of config keys
+        example: volatile
         type: string
         x-go-package: github.com/lxc/incus/v6/shared/api
     MetadataConfigKey:
