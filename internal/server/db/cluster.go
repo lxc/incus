@@ -120,3 +120,30 @@ WHERE nodes.name = ?`
 
 	return query.SelectStrings(ctx, c.tx, q, nodeName)
 }
+
+// GetClusterGroupMemberInstances retrieves instances hosted on this member that are part of the specified cluster group.
+func (c *ClusterTx) GetClusterGroupMemberInstances(ctx context.Context, clusterGroup *cluster.ClusterGroup, clusterGroupMember string) ([]cluster.Instance, error) {
+	filteredInstances := []cluster.Instance{}
+
+	instances, err := cluster.GetInstances(ctx, c.Tx(), cluster.InstanceFilter{Node: &clusterGroupMember})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, instance := range instances {
+		config, err := cluster.GetInstanceConfig(ctx, c.Tx(), instance.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		// Check if the instance is assigned to the specified cluster group.
+		group := config["volatile.cluster.group"]
+		if group != clusterGroup.Name {
+			continue
+		}
+
+		filteredInstances = append(filteredInstances, instance)
+	}
+
+	return filteredInstances, nil
+}
