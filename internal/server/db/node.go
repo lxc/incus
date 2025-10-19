@@ -726,6 +726,21 @@ func (c *ClusterTx) UpdateNodeClusterGroups(ctx context.Context, id int64, group
 			continue
 		}
 
+		// Get the cluster group.
+		clusterGroup, err := cluster.GetClusterGroup(ctx, c.Tx(), oldGroup)
+		if err != nil {
+			return err
+		}
+
+		memberInstances, err := c.GetClusterGroupMemberInstances(ctx, clusterGroup, nodeInfo.Name)
+		if err != nil {
+			return err
+		}
+
+		if len(memberInstances) > 0 {
+			return fmt.Errorf("Cluster group member is currently in use")
+		}
+
 		// Remove node from group.
 		err = c.RemoveNodeFromClusterGroup(ctx, oldGroup, nodeInfo.Name)
 		if err != nil {
