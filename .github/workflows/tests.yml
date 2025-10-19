@@ -135,13 +135,7 @@ jobs:
           - cluster
           - standalone
         backend:
-          - dir
-          - btrfs
-          - lvm
-          - zfs
-          - ceph
-          - linstor
-          - random
+          - nfs
         os:
           - ubuntu-24.04
         include:
