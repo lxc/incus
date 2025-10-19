@@ -140,6 +140,7 @@ type Instance interface {
 	Description() string
 	CreationDate() time.Time
 	LastUsedDate() time.Time
+	GuestOS() string
 
 	Profiles() []api.Profile
 	InitPID() int
