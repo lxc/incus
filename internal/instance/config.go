@@ -732,6 +732,59 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: Raw Seccomp configuration
 	"raw.seccomp": validate.IsAny,
 
+	// gendoc:generate(entity=instance, group=security, key=security.bpffs.delegate_cmds)
+	// See {ref}`bpf-tokens` for more information.
+	//
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  condition: unprivileged container
+	//  shortdesc: What BPF command types to delegate
+	"security.bpffs.delegate_cmds": validate.Optional(validate.IsListOf(validate.IsAny)),
+
+	// gendoc:generate(entity=instance, group=security, key=security.bpffs.delegate_maps)
+	// See {ref}`bpf-tokens` for more information.
+	//
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  condition: unprivileged container
+	//  shortdesc: What BPF map types to delegate
+	"security.bpffs.delegate_maps": validate.Optional(validate.IsListOf(validate.IsAny)),
+
+	// gendoc:generate(entity=instance, group=security, key=security.bpffs.delegate_progs)
+	// See {ref}`bpf-tokens` for more information.
+	//
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  condition: unprivileged container
+	//  shortdesc: What BPF program types to delegate
+	"security.bpffs.delegate_progs": validate.Optional(validate.IsListOf(validate.IsAny)),
+
+	// gendoc:generate(entity=instance, group=security, key=security.bpffs.delegate_attachs)
+	// See {ref}`bpf-tokens` for more information.
+	//
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  condition: unprivileged container
+	//  shortdesc: What BPF attach types to delegate
+	"security.bpffs.delegate_attachs": validate.Optional(validate.IsListOf(validate.IsAny)),
+
+	// gendoc:generate(entity=instance, group=security, key=security.bpffs.path)
+	// The specified path must exist in the container.
+	// The BPF file system is only mounted if any of the `security.bpffs.delegate_*` options are set.
+	// See {ref}`bpf-tokens` for more information.
+	//
+	// ---
+	//  type: string
+	//  defaultdesc: `/sys/fs/bpf`
+	//  liveupdate: no
+	//  condition: unprivileged container
+	//  shortdesc: The path to mount the BPF file system at
+	"security.bpffs.path": validate.Optional(validate.IsAbsFilePath),
+
 	// gendoc:generate(entity=instance, group=security, key=security.guestapi.images)
 	//
 	// ---

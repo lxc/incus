@@ -332,12 +332,14 @@ __attribute__((constructor)) void init(void) {
 	// Intercepts some subcommands
 	if (strcmp(cmdline_cur, "forkexec") == 0)
 		forkexec();
-	if (strcmp(cmdline_cur, "forkfile") == 0)
+	else if (strcmp(cmdline_cur, "forkfile") == 0)
 		forkfile();
 	else if (strcmp(cmdline_cur, "forksyscall") == 0)
 		forksyscall();
 	else if (strcmp(cmdline_cur, "forkmount") == 0)
 		forkmount();
+	else if (strcmp(cmdline_cur, "forkbpf") == 0)
+		forkbpf();
 	else if (strcmp(cmdline_cur, "forknet") == 0)
 		forknet();
 	else if (strcmp(cmdline_cur, "forkproxy") == 0)

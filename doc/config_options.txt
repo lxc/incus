@@ -2289,6 +2289,54 @@ If left empty, no limit is set.
 
 ```
 
+```{config:option} security.bpffs.delegate_attachs instance-security
+:condition: "unprivileged container"
+:liveupdate: "no"
+:shortdesc: "What BPF attach types to delegate"
+:type: "string"
+See {ref}`bpf-tokens` for more information.
+
+```
+
+```{config:option} security.bpffs.delegate_cmds instance-security
+:condition: "unprivileged container"
+:liveupdate: "no"
+:shortdesc: "What BPF command types to delegate"
+:type: "string"
+See {ref}`bpf-tokens` for more information.
+
+```
+
+```{config:option} security.bpffs.delegate_maps instance-security
+:condition: "unprivileged container"
+:liveupdate: "no"
+:shortdesc: "What BPF map types to delegate"
+:type: "string"
+See {ref}`bpf-tokens` for more information.
+
+```
+
+```{config:option} security.bpffs.delegate_progs instance-security
+:condition: "unprivileged container"
+:liveupdate: "no"
+:shortdesc: "What BPF program types to delegate"
+:type: "string"
+See {ref}`bpf-tokens` for more information.
+
+```
+
+```{config:option} security.bpffs.path instance-security
+:condition: "unprivileged container"
+:defaultdesc: "`/sys/fs/bpf`"
+:liveupdate: "no"
+:shortdesc: "The path to mount the BPF file system at"
+:type: "string"
+The specified path must exist in the container.
+The BPF file system is only mounted if any of the `security.bpffs.delegate_*` options are set.
+See {ref}`bpf-tokens` for more information.
+
+```
+
 ```{config:option} security.csm instance-security
 :condition: "virtual machine"
 :defaultdesc: "`false`"

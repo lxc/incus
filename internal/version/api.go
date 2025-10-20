@@ -503,6 +503,7 @@ var APIExtensions = []string{
 	"backup_iso",
 	"instance_systemd_credentials",
 	"cluster_group_usedby",
+	"bpf_token_delegation",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

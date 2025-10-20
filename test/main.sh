@@ -392,6 +392,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_syslog_socket "Syslog socket"
     run_test test_incus_user "incus-user"
     run_test test_systemd "systemd"
+    run_test test_container_bpf_token "BPF token delegation"
 fi
 
 # shellcheck disable=SC2034

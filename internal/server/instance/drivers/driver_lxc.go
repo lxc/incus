@@ -2624,6 +2624,23 @@ ff02::2 ip6-allrouters
 		}
 	}
 
+	// Setup BPF token delegation if enabled
+	bpfConfig := d.bpfTokenConfig()
+	if bpfConfig.enable {
+		err = lxcSetConfigItem(cc, "lxc.hook.start-host", shellquote.Join(
+			fmt.Sprintf("/proc/%d/exe", os.Getpid()),
+			"forkbpf",
+			bpfConfig.mountPath,
+			bpfConfig.cmdTypes,
+			bpfConfig.mapTypes,
+			bpfConfig.progTypes,
+			bpfConfig.attachTypes,
+		))
+		if err != nil {
+			return "", nil, err
+		}
+	}
+
 	// Load the LXC raw config.
 	err = d.loadRawLXCConfig(cc)
 	if err != nil {
@@ -2695,6 +2712,39 @@ ff02::2 ip6-allrouters
 	reverter.Success()
 
 	return configPath, postStartHooks, nil
+}
+
+type bpfTokenConfig struct {
+	enable      bool
+	mountPath   string
+	cmdTypes    string
+	mapTypes    string
+	progTypes   string
+	attachTypes string
+}
+
+func (d *lxc) bpfTokenConfig() bpfTokenConfig {
+	if util.IsTrue(d.expandedConfig["security.privileged"]) {
+		return bpfTokenConfig{}
+	}
+
+	cfg := bpfTokenConfig{
+		mountPath:   d.expandedConfig["security.bpffs.path"],
+		cmdTypes:    d.expandedConfig["security.bpffs.delegate_cmds"],
+		mapTypes:    d.expandedConfig["security.bpffs.delegate_maps"],
+		progTypes:   d.expandedConfig["security.bpffs.delegate_progs"],
+		attachTypes: d.expandedConfig["security.bpffs.delegate_attachs"],
+	}
+
+	if cfg.cmdTypes != "" || cfg.mapTypes != "" || cfg.progTypes != "" || cfg.attachTypes != "" {
+		cfg.enable = true
+	}
+
+	if cfg.mountPath == "" {
+		cfg.mountPath = "/sys/fs/bpf"
+	}
+
+	return cfg
 }
 
 // detachInterfaceRename enters the container's network namespace and moves the named interface
