@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>org.linuxcontainers.incus.macos-agent</string>
+	<key>Program</key>
+	<string>/usr/local/bin/incus-agent-setup</string>
+	<key>ProcessType</key>
+	<string>Adaptive</string>
+	<key>KeepAlive</key>
+	<true/>
+	<key>ThrottleInterval</key>
+	<integer>5</integer>
+</dict>
+</plist>

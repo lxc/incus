@@ -9361,3 +9361,8 @@ func (d *lxc) setupCredentials(update bool) error {
 
 	return nil
 }
+
+// GuestOS returns the guest OS. For containers, we can safely assume Linux.
+func (d *lxc) GuestOS() string {
+	return "linux"
+}

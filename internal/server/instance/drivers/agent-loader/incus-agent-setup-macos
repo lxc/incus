@@ -1,0 +1,46 @@
+#!/bin/sh
+set -eu
+SHARE=config
+VOLUME="/Volumes/$SHARE"
+PREFIX=/var/run/incus_agent
+
+# Functions.
+fail() {
+    # Check if we already have an agent in place.
+    if [ -x "$PREFIX/incus-agent" ]; then
+        echo "$1, reusing existing agent"
+        cd "$PREFIX"
+        ./incus-agent || true
+        exit 0
+    fi
+
+    # Cleanup and fail.
+    umount "$PREFIX" >/dev/null 2>&1 || true
+    rmdir "${PREFIX}" >/dev/null 2>&1 || true
+    echo "${1}, failing"
+
+    exit 1
+}
+
+# Try getting an agent drive.
+if [ ! -e "$VOLUME" ]; then
+    mount_9p "$SHARE" || fail "Couldn't mount 9p"
+fi
+
+# Setup the mount target.
+umount "$PREFIX" >/dev/null 2>&1 || true
+mkdir -p "$PREFIX"
+mount_tmpfs -s 50M "$PREFIX"
+chmod 0700 "$PREFIX"
+
+# Copy the data.
+cp -Ra "$VOLUME/"* "$PREFIX"
+
+# Unmount the temporary mount.
+umount "$VOLUME"
+
+# Fix up permissions.
+chown -R root:wheel "$PREFIX"
+
+cd "$PREFIX"
+exec ./incus-agent

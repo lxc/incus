@@ -112,10 +112,10 @@ The list of supported clouds and instance types can be found at [`https://github
 ### Launch a VM that boots from an ISO
 
 ```{note}
-When creating a Windows virtual machine, make sure to set the `image.os` property to something starting with `Windows`.
-Doing so will tell Incus to expect Windows to be running inside of the virtual machine and to tweak behavior accordingly.
+When creating a Windows or a macOS virtual machine, make sure to set the `image.os` property to something starting with `Windows` or `macOS` respectively.
+Doing so will tell Incus to expect the correct OS to be running inside of the virtual machine and to tweak behavior accordingly.
 
-This notably will cause:
+This notably will cause on Windows:
  - Some unsupported virtual devices to be disabled
  - The {abbr}`RTC (Real Time Clock)` clock to be based on system local time rather than UTC
  - IOMMU handling to switch to an Intel IOMMU controller
@@ -173,13 +173,15 @@ The virtual machine images from the [images](https://images.linuxcontainers.org)
 For other virtual machines, you may want to manually install the agent.
 
 ```{note}
-The Incus Agent is currently available only on Linux and Windows virtual machines.
+The Incus Agent is currently available only on Linux, Windows and macOS virtual machines.
 ```
 
 Incus provides the agent primarily through a remote `9p` file system with mount name `config`.
 Alternatively, it is possible to get the agent files through a virtual CD-ROM drive by adding a `disk` device to the instance and using `agent:config` as the `source` property.
 
     incus config device add INSTANCE-NAME agent disk source=agent:config
+
+#### On Linux
 
 To install the agent on a Linux system with `9p`, you'll need to get access to the virtual machine and run the following commands:
 
@@ -201,6 +203,8 @@ The first line will mount the remote file system on the mount point `/mnt`.
 The subsequent commands will run the installation script `install.sh` to install and run the Incus Agent.
 ```
 
+#### On Windows
+
 For Windows systems, the virtual CD-ROM drive must be used.
 The agent can manually be started by opening a terminal and running (assuming `d:\` is the CD-ROM):
 
@@ -208,3 +212,17 @@ The agent can manually be started by opening a terminal and running (assuming `d
     .\incus-agent.exe
 
 To have it persist and run automatically, a system service can be manually defined to start it up.
+
+#### On macOS
+
+For macOS systems, the agent can manually be installed using a `9p` mount by opening a terminal **as root** and running the following commands:
+
+    mount_9p config
+    cd /Volumes/config
+    ./install.sh
+
+```{warning}
+Apple's Transparency, Consent, Control daemon requires you to allow full disk access to `sh` for the agent to be automatically started.
+This reduces the overall security of the system, by relaxing some of Apple's additional security restrictions.
+This does not in any way bypass UNIX permissions, however, if you are not comfortable with that, you will need to manually run `incus-agent` each time.
+```
