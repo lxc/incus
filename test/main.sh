@@ -63,6 +63,9 @@ if [ "$INCUS_BACKEND" != "random" ] && ! storage_backend_available "$INCUS_BACKE
     elif [ "${INCUS_BACKEND}" = "truenas" ] && [ -z "${INCUS_TRUENAS_DATASET:-}" ]; then
         echo "TrueNAS storage backend requires that \"INCUS_TRUENAS_DATASET\" be set."
         exit 1
+    elif [ "${INCUS_BACKEND}" = "nfs" ] && [ -z "${INCUS_NFS_SHARE:-}" ]; then
+        echo "LINSTOR storage backend requires that \"INCUS_NFS_SHARE\" be set."
+        exit 1
     fi
     echo "Storage backend \"$INCUS_BACKEND\" is not available"
     exit 1
@@ -138,6 +141,14 @@ import_subdir_files suites
 # Setup test directory
 TEST_DIR=$(mktemp -d -p "$(pwd)" tmp.XXX)
 chmod +x "${TEST_DIR}"
+
+if [ -n "${INCUS_NFS_SHARE:-}" ]; then
+    tmp_mount="$(mktemp -d)"
+    mount -t nfs "$INCUS_NFS_SHARE" "$tmp_mount"
+    mkdir "$tmp_mount/$(basename "$TEST_DIR")"
+    umount "$tmp_mount"
+    rmdir "$tmp_mount"
+fi
 
 if [ -n "${INCUS_TMPFS:-}" ]; then
     mount -t tmpfs tmpfs "${TEST_DIR}" -o mode=0751 -o size=6G
