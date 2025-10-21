@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-10-19 02:01-0400\n"
-"PO-Revision-Date: 2025-10-21 03:43+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2025-10-21 03:44+0000\n"
+"Last-Translator: Jan Mittelstädter <jan@mittelstaedter.de>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -1237,8 +1237,8 @@ msgstr "Sicherungen:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Ungültige Gerätüberschreibungs-Syntax, erwartet wird <Gerät>,"
-"<Schlüssel>=<Wert>: %s"
+"Ungültige Gerätüberschreibungs-Syntax, erwartet wird "
+"<Gerät>,<Schlüssel>=<Wert>: %s"
 
 #: cmd/incus/network.go:432 cmd/incus/network_acl.go:473
 #: cmd/incus/network_address_set.go:316 cmd/incus/network_forward.go:399
@@ -1426,8 +1426,7 @@ msgstr "Kann uid/gid/mode im rekursiven Modus nicht bereitstellen"
 #: cmd/incus/config.go:686
 #, c-format
 msgid "Can't unset key '%s', it's not currently set"
-msgstr ""
-"Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
+msgstr "Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
 
 #: cmd/incus/admin_init.go:75
 msgid "Can't use --auto and --preseed together"
@@ -1445,8 +1444,7 @@ msgstr "Die Option --minimal und --auto können nicht zusammen genutzt werden"
 
 #: cmd/incus/admin_init.go:79
 msgid "Can't use --minimal and --preseed together"
-msgstr ""
-"Die Option --minimal und --preseed können nicht zusammen genutzt werden"
+msgstr "Die Option --minimal und --preseed können nicht zusammen genutzt werden"
 
 #: cmd/incus/rebuild.go:163
 msgid "Can't use an image with --empty"
@@ -1473,8 +1471,7 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:428
 msgid "Cannot set --target when source server is not clustered"
-msgstr ""
-"\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
+msgstr "\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
 
 #: cmd/incus/storage_volume.go:449
 msgid "Cannot set --volume-only when copying a snapshot"
@@ -1683,8 +1680,8 @@ msgstr ""
 "gesteuert werden.\n"
 "Für Hilfe zu einem der Befehle, einfach mit --help aufrufen.\n"
 "\n"
-"Eigene Befehle können über Aliase definiert werden. Verwenden Sie \"incus "
-"alias\", um diese zu verwalten."
+"Eigene Befehle können über Aliase definiert werden. Verwenden Sie "
+"\"incus alias\", um diese zu verwalten."
 
 #: cmd/incus/publish.go:42
 msgid "Compression algorithm to use (`none` for uncompressed)"
