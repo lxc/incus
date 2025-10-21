@@ -230,7 +230,9 @@ func storagePoolsGet(d *Daemon, r *http.Request) response.Response {
 			// If no member is specified and the daemon is clustered, we omit the node-specific fields.
 			if s.ServerClustered {
 				for _, key := range db.NodeSpecificStorageConfig {
-					delete(poolAPI.Config, key)
+					if key != "source" || !pool.Driver().Info().SameSource {
+						delete(poolAPI.Config, key)
+					}
 				}
 			} else {
 				// Use local status if not clustered. To allow seeing unavailable pools.
