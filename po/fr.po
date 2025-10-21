@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-10-19 02:01-0400\n"
-"PO-Revision-Date: 2024-11-11 22:00+0000\n"
-"Last-Translator: \"Laterria.Severino\" <Laterria.Severino@openmail.pro>\n"
+"PO-Revision-Date: 2025-10-21 04:06+0000\n"
+"Last-Translator: montag451 <montag451@laposte.net>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.8.2\n"
+"X-Generator: Weblate 5.14-dev\n"
 
 #: cmd/incus/info.go:441
 msgid "  Chassis:"
@@ -923,9 +923,9 @@ msgstr ""
 "\n"
 "L'authentification HTTP Basic (RFC 26176) peut être utilisée si elle est "
 "combinée avec le protocole « simplestreams » :\n"
-"  incus remote add ressource_distante_identifiant https://"
-"UTILISATEUR:MOTDEPASSE@exemple.com/complement/de/chemin --"
-"protocol=simplestreams\n"
+"  incus remote add ressource_distante_identifiant "
+"https://UTILISATEUR:MOTDEPASSE@exemple.com/complement/de/chemin --protocol="
+"simplestreams\n"
 
 #: cmd/incus/config_trust.go:92
 msgid "Add new trusted client"
@@ -3246,8 +3246,8 @@ msgstr "Échec de la vérification de l'existence de l'instance \"%s:%s\" : %w
 #, c-format
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr ""
-"Échec de la vérification de l'existence de l'instantané d'instance \"%s:"
-"%s\" : %w"
+"Échec de la vérification de l'existence de l'instantané d'instance \"%s:%s\" "
+": %w"
 
 #: cmd/incus/utils.go:715
 #, c-format
@@ -3390,8 +3390,7 @@ msgstr "Échec de la connexion au membre du cluster : %w"
 #: cmd/incus/admin_init.go:108
 #, c-format
 msgid "Failed to connect to get server info: %w"
-msgstr ""
-"Échec de la connexion pour obtenir des informations sur le serveur : %w"
+msgstr "Échec de la connexion pour obtenir des informations sur le serveur : %w"
 
 #: cmd/incus/admin_init.go:103
 #, c-format
@@ -4025,8 +4024,8 @@ msgstr ""
 #: cmd/incus/exec.go:66
 msgid "Group ID to run the command as (default 0)"
 msgstr ""
-"ID du groupe avec lequel la commande doit être exécutée (valeur par défaut : "
-"0)"
+"ID du groupe avec lequel la commande doit être exécutée "
+"(valeur par défaut : 0)"
 
 #: cmd/incus/network.go:1376
 #, fuzzy
@@ -4139,8 +4138,7 @@ msgstr ""
 
 #: cmd/incus/image.go:686 cmd/incus/publish.go:44
 msgid "If the image alias already exists, delete and create a new one"
-msgstr ""
-"Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
+msgstr "Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
 
 #: cmd/incus/snapshot.go:97 cmd/incus/storage_volume.go:2556
 msgid "If the snapshot name already exists, delete and create a new one"
