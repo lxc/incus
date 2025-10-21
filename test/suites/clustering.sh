@@ -684,6 +684,8 @@ test_clustering_storage() {
         driver_config="source=incustest-$(basename "${TEST_DIR}")-pool1"
     elif [ "${poolDriver}" = "linstor" ]; then
         driver_config="source=incustest-$(basename "${TEST_DIR}" | sed 's/\./__/g')-pool1"
+    elif [ "${poolDriver}" = "nfs" ]; then
+        driver_config="source=$INCUS_NFS_SHARE/$(basename "${TEST_DIR}")"
     fi
 
     # Define storage pools on the two nodes
@@ -749,10 +751,13 @@ test_clustering_storage() {
         # For ceph volume the source field is the name of the underlying ceph pool
         source1="incustest-$(basename "${TEST_DIR}")"
         source2="${source1}"
-    fi
-    if [ "${poolDriver}" = "linstor" ]; then
+    elif [ "${poolDriver}" = "linstor" ]; then
         # For linstor the source field is the name of the underlying linstor resource group
         source1="incustest-$(basename "${TEST_DIR}" | sed 's/\./__/g')"
+        source2="${source1}"
+    elif [ "${poolDriver}" = "nfs" ]; then
+        # For nfs the source field is the name of the underlying nfs share
+        source1="$INCUS_NFS_SHARE/$(basename "${TEST_DIR}")"
         source2="${source1}"
     fi
     INCUS_DIR="${INCUS_ONE_DIR}" incus storage show pool1 --target node1 | grep source | grep -q "${source1}"
@@ -766,8 +771,8 @@ test_clustering_storage() {
         ! INCUS_DIR="${INCUS_ONE_DIR}" incus storage show pool1 | grep -q rsync.bwlimit || false
     fi
 
-    if [ "${poolDriver}" = "ceph" ] || [ "${poolDriver}" = "linstor" ]; then
-        # Test migration of ceph- and linstor-based containers
+    if [ "${poolDriver}" = "ceph" ] || [ "${poolDriver}" = "linstor" ] || [ "${poolDriver}" = "nfs" ]; then
+        # Test migration of ceph-, linstor-, and nfs-based containers
         INCUS_DIR="${INCUS_TWO_DIR}" ensure_import_testimage
         INCUS_DIR="${INCUS_ONE_DIR}" incus launch --target node2 -s pool1 testimage foo
 
@@ -796,7 +801,7 @@ test_clustering_storage() {
 
     # If the driver has the same per-node storage pool config (e.g. size), make sure it's included in the
     # member_config, and actually added to a joining node so we can validate it.
-    if [ "${poolDriver}" = "zfs" ] || [ "${poolDriver}" = "btrfs" ] || [ "${poolDriver}" = "ceph" ] || [ "${poolDriver}" = "lvm" ] || [ "${poolDriver}" = "linstor" ]; then
+    if [ "${poolDriver}" = "zfs" ] || [ "${poolDriver}" = "btrfs" ] || [ "${poolDriver}" = "ceph" ] || [ "${poolDriver}" = "lvm" ] || [ "${poolDriver}" = "linstor" ] || [ "${poolDriver}" = "nfs" ]; then
         # Spawn a third node
         setup_clustering_netns 3
         INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
@@ -830,12 +835,12 @@ test_clustering_storage() {
         done
 
         # Other storage backends will be finished with the third node, so we can remove it.
-        if [ "${poolDriver}" != "ceph" ] && [ "${poolDriver}" != "linstor" ]; then
+        if [ "${poolDriver}" != "ceph" ] && [ "${poolDriver}" != "linstor" ] && [ "${poolDriver}" != "nfs" ]; then
             INCUS_DIR="${INCUS_ONE_DIR}" incus cluster remove node3 --yes
         fi
     fi
 
-    if [ "${poolDriver}" = "ceph" ] || [ "${poolDriver}" = "linstor" ]; then
+    if [ "${poolDriver}" = "ceph" ] || [ "${poolDriver}" = "linstor" ] || [ "${poolDriver}" = "nfs" ]; then
         # Move the container to node3, renaming it
         INCUS_DIR="${INCUS_TWO_DIR}" incus move foo bar --target node3
         INCUS_DIR="${INCUS_TWO_DIR}" incus info bar | grep -q "Location: node3"
@@ -864,9 +869,12 @@ test_clustering_storage() {
         INCUS_DIR="${INCUS_ONE_DIR}" incus init --target node1 -s pool1 testimage baz
         INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume attach pool1 custom/v1 baz testDevice /opt
 
-        # Trying to attach a custom volume to a container on another node fails
-        INCUS_DIR="${INCUS_TWO_DIR}" incus init --target node2 -s pool1 testimage buz
-        ! INCUS_DIR="${INCUS_TWO_DIR}" incus storage volume attach pool1 custom/v1 buz testDevice /opt || false
+        if [ "${poolDriver}" != "nfs" ]; then
+            # Trying to attach a custom volume to a container on another node fails
+            INCUS_DIR="${INCUS_TWO_DIR}" incus init --target node2 -s pool1 testimage buz
+            ! INCUS_DIR="${INCUS_TWO_DIR}" incus storage volume attach pool1 custom/v1 buz testDevice /opt || false
+            INCUS_DIR="${INCUS_ONE_DIR}" incus delete buz
+        fi
 
         # Create an unrelated volume and rename it on a node which differs from the
         # one running the container (issue #6435).
@@ -878,7 +886,6 @@ test_clustering_storage() {
 
         INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume delete pool1 v1
         INCUS_DIR="${INCUS_ONE_DIR}" incus delete baz
-        INCUS_DIR="${INCUS_ONE_DIR}" incus delete buz
 
         INCUS_DIR="${INCUS_ONE_DIR}" incus image delete testimage
     fi
@@ -925,7 +932,7 @@ test_clustering_storage() {
     INCUS_DIR="${INCUS_ONE_DIR}" incus storage delete pool1
     ! INCUS_DIR="${INCUS_ONE_DIR}" incus storage list | grep -q pool1 || false
 
-    if [ "${poolDriver}" != "ceph" ] && [ "${poolDriver}" != "linstor" ]; then
+    if [ "${poolDriver}" != "ceph" ] && [ "${poolDriver}" != "linstor" ] && [ "${poolDriver}" != "nfs" ]; then
         # Create a volume on node1
         INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume create data web
         INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume list data | grep web | grep -q node1
@@ -1013,6 +1020,8 @@ test_clustering_storage_single_node() {
         driver_config="source=incustest-$(basename "${TEST_DIR}" | sed 's/\./__/g')-pool1"
     elif [ "${poolDriver}" = "truenas" ]; then
         driver_config="$(truenas_source)/incustest-$(basename "${TEST_DIR}")-pool1 $(truenas_config) $(truenas_allow_insecure) $(truenas_api_key)"
+    elif [ "${poolDriver}" = "nfs" ]; then
+        driver_config="source=$INCUS_NFS_SHARE/$(basename "${TEST_DIR}")"
     fi
 
     driver_config_node="${driver_config}"
@@ -2784,7 +2793,8 @@ test_clustering_image_refresh() {
 
     pids=""
 
-    if [ "${poolDriver}" != "dir" ]; then
+    # Ignore storage drivers that don't support optimized image storage
+    if [ "${poolDriver}" != "dir" ] && [ "${poolDriver}" != "nfs" ]; then
         # Check image storage volume records exist.
         incus admin sql global 'select name from storage_volumes'
         if [ "${poolDriver}" = "ceph" ] || [ "${poolDriver}" = "linstor" ]; then
@@ -2806,7 +2816,7 @@ test_clustering_image_refresh() {
         wait "${pid}" || true
     done
 
-    if [ "${poolDriver}" != "dir" ]; then
+    if [ "${poolDriver}" != "dir" ] && [ "${poolDriver}" != "nfs" ]; then
         incus admin sql global 'select name from storage_volumes'
         # Check image storage volume records actually removed from relevant members and replaced with new fingerprint.
         if [ "${poolDriver}" = "ceph" ] || [ "${poolDriver}" = "linstor" ]; then
