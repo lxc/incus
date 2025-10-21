@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-10-19 02:01-0400\n"
 "PO-Revision-Date: 2025-10-21 04:27+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -628,8 +628,7 @@ msgstr "%q は IP アドレスではありません"
 #: cmd/incus/admin_recover.go:212
 #, c-format
 msgid "%s %q on pool %q in project %q (includes %d snapshots)"
-msgstr ""
-"%s %q（プール %q 上, プロジェクト %q 内, スナップショット %d 個を含む）"
+msgstr "%s %q（プール %q 上, プロジェクト %q 内, スナップショット %d 個を含む）"
 
 #: cmd/incus/image.go:1180
 #, c-format
@@ -905,8 +904,8 @@ msgstr ""
 "リモートのリソースに対する URL は HTTPS (https://) でなければなりません。\n"
 "\n"
 "Basic 認証は \"simplestreams\" プロトコルと組み合わせて使えます:\n"
-"  incus remote add some-name https://LOGIN:PASSWORD@example.com/some/path --"
-"protocol=simplestreams\n"
+"  incus remote add some-name https://LOGIN:PASSWORD@example.com/some/path "
+"--protocol=simplestreams\n"
 
 #: cmd/incus/config_trust.go:92
 msgid "Add new trusted client"
@@ -1457,8 +1456,7 @@ msgstr "証明書のフィンガープリントが証明書トークンとサー
 #, c-format
 msgid ""
 "Certificate fingerprint mismatch between join token and cluster member %q"
-msgstr ""
-"証明書のフィンガープリントが join するためのトークンとクラスターメンバーの間"
+msgstr "証明書のフィンガープリントが join するためのトークンとクラスターメンバーの間"
 "で一致しません %q"
 
 #: cmd/incus/remote.go:500
@@ -1622,8 +1620,8 @@ msgstr ""
 "incus の機能のすべてが、以下の色々なコマンドから操作できます。\n"
 "コマンドのヘルプは、--help をコマンドに付けて実行するだけです。\n"
 "\n"
-"カスタムコマンドをエイリアスを使って定義でき、それらを制御するには \"incus "
-"alias\" を使います。"
+"カスタムコマンドをエイリアスを使って定義でき、それらを制御するには "
+"\"incus alias\" を使います。"
 
 #: cmd/incus/publish.go:42
 msgid "Compression algorithm to use (`none` for uncompressed)"
@@ -1759,15 +1757,15 @@ msgstr ""
 "サーバー内、またはサーバー間でインスタンスをコピーする\n"
 "\n"
 "転送モード（--mode）:\n"
-" - pull: コピー先サーバーがコピー元サーバーからデータを取得する（コピー元は"
-"ネットワークをリッスンしている必要がある）\n"
+" - pull: コピー先サーバーがコピー元サーバーからデータを取得する（コピー元はネ"
+"ットワークをリッスンしている必要がある）\n"
 " - push: コピー元サーバーがコピー先サーバーにデータをプッシュする（コピー先は"
 "ネットワークをリッスンしている必要がある）\n"
 " - relay: CLI がコピー元と先のサーバーに接続し、データを中継する（コピー元と"
 "先両方がネットワークをリッスンしている必要がある）\n"
 "\n"
-"すべてのサーバーバージョンとの互換性のため、pull 転送モードがデフォルトで"
-"す。\n"
+"すべてのサーバーバージョンとの互換性のため、pull 転送モードがデフォルトです。"
+"\n"
 
 #: cmd/incus/config_device.go:410 cmd/incus/config_device.go:411
 msgid "Copy profile inherited devices and override configuration keys"
@@ -2051,8 +2049,7 @@ msgstr "DRM:"
 #: cmd/incus/admin_waitready.go:94
 #, c-format
 msgid "Daemon still not running after %ds timeout (%v)"
-msgstr ""
-"%d 秒のタイムアウトが経過しましたが、デーモンがまだ実行中ではありません (%v)"
+msgstr "%d 秒のタイムアウトが経過しましたが、デーモンがまだ実行中ではありません (%v)"
 
 #: cmd/incus/admin_shutdown.go:91
 #, c-format
@@ -2612,15 +2609,13 @@ msgstr "YAML 形式で設定を stdout に出力します"
 msgid ""
 "During incremental copy, exclude source snapshots earlier than latest target "
 "snapshot"
-msgstr ""
-"インクリメンタルコピーの際、最新のターゲットスナップショットより前のソースス"
+msgstr "インクリメンタルコピーの際、最新のターゲットスナップショットより前のソースス"
 "ナップショットを除外する"
 
 #: cmd/incus/storage_volume.go:385
 msgid ""
 "During refresh, exclude source snapshots earlier than latest target snapshot"
-msgstr ""
-"更新時、最新のターゲットスナップショットより前のソーススナップショットを除外"
+msgstr "更新時、最新のターゲットスナップショットより前のソーススナップショットを除外"
 "する"
 
 #: cmd/incus/network_zone.go:955
@@ -2747,8 +2742,8 @@ msgstr ""
 "ストレージボリュームの設定を YAML で編集する\n"
 "\n"
 "タイプが指定されていない場合、incus はタイプを \"custom\" として扱います。\n"
-"サポートされているタイプの値は \"custom\", \"container\", \"virtual-"
-"machine\" です。"
+"サポートされているタイプの値は \"custom\", \"container\", \"virtual-machine\""
+" です。"
 
 #: cmd/incus/config_trust.go:284 cmd/incus/config_trust.go:285
 msgid "Edit trust configurations as YAML"
@@ -2905,8 +2900,7 @@ msgstr "Listenするイベントタイプ"
 
 #: cmd/incus/admin_sql.go:31
 msgid "Execute a SQL query against the local or global database"
-msgstr ""
-"ローカルまたはグローバルのデータベースに対して SQL クエリーを実行します"
+msgstr "ローカルまたはグローバルのデータベースに対して SQL クエリーを実行します"
 
 #: cmd/incus/admin_sql.go:32
 #, fuzzy
@@ -3072,8 +3066,8 @@ msgid ""
 "file.\n"
 "\t\tThis can be useful for debugging or analysis purposes."
 msgstr ""
-"実行中の仮想マシンの現在のメモリー状態をダンプファイルにエクスポートしま"
-"す。\n"
+"実行中の仮想マシンの現在のメモリー状態をダンプファイルにエクスポートします。"
+"\n"
 "\t\tデバッグや解析に役立ちます。"
 
 #: cmd/incus/storage_volume.go:3228
@@ -3573,8 +3567,7 @@ msgstr ""
 msgid ""
 "Forces a connection to the console, even if there is already an active "
 "session"
-msgstr ""
-"すでにアクティブなセッションがある場合でも、コンソールへの接続を強制します"
+msgstr "すでにアクティブなセッションがある場合でも、コンソールへの接続を強制します"
 
 #: cmd/incus/network_address_set.go:98
 #, fuzzy
@@ -3628,9 +3621,8 @@ msgstr "フォーマット (csv|json|table|yaml|compact|markdown)"
 #: cmd/incus/debug.go:53
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
-msgstr ""
-"メモリーダンプのフォーマット（例: elf, win-dmp, kdump-zlib, kdump-raw-"
-"zlib, ...）"
+msgstr "メモリーダンプのフォーマット（例: elf, win-dmp, kdump-zlib, kdump-raw-zlib, ."
+"..）"
 
 #: cmd/incus/network.go:1052
 msgid "Forward delay"
@@ -3682,8 +3674,8 @@ msgid ""
 "This is useful for remote authentication workflows where a token is passed "
 "to another Incus server."
 msgstr ""
-"既存のクライアント証明書と秘密鍵からクライアントトラストトークンを生成しま"
-"す。\n"
+"既存のクライアント証明書と秘密鍵からクライアントトラストトークンを生成します"
+"。\n"
 "\n"
 "これは、他の Incus サーバーに渡されるリモート認証ワークフローに役立ちます。"
 
@@ -4121,8 +4113,7 @@ msgstr "ストレージバケットを一覧表示します"
 
 #: cmd/incus/storage_volume.go:3476
 msgid "Import type needs to be \"backup\" or \"iso\""
-msgstr ""
-"インポートするタイプは \"backup\" もしくは \"iso\" である必要があります"
+msgstr "インポートするタイプは \"backup\" もしくは \"iso\" である必要があります"
 
 #: cmd/incus/storage_volume.go:3410
 msgid "Import type, backup or iso (default \"backup\")"
@@ -7121,9 +7112,8 @@ msgstr "コピー先のボリュームに対するストレージプールが指
 
 #: cmd/incus/admin_recover.go:218
 msgid "No unknown storage pools or volumes found. Nothing to do."
-msgstr ""
-"未知のストレージプールやボリュームが見つかりません。実行することがありませ"
-"ん。"
+msgstr "未知のストレージプールやボリュームが見つかりません。実行することがありません"
+"。"
 
 #: cmd/incus/config_device.go:148 cmd/incus/config_device.go:468
 #, c-format
@@ -7140,8 +7130,8 @@ msgid ""
 "None of --storage-pool, --storage-create-device or --storage-create-loop may "
 "be used with the 'dir' backend"
 msgstr ""
-"--storage-pool, --storage-create-device, --storage-create-loop のいずれ"
-"も、'dir' バックエンドでは使えません"
+"--storage-pool, --storage-create-device, --storage-create-loop のいずれも、"
+"'dir' バックエンドでは使えません"
 
 #: cmd/incus/admin_init_interactive.go:635
 msgid "Number of placement groups"
@@ -7196,8 +7186,7 @@ msgstr "管理対象のネットワークのみ変更できます"
 #: cmd/incus/admin_init_auto.go:36
 msgid ""
 "Only one of --storage-create-device or --storage-create-loop can be specified"
-msgstr ""
-"指定できるのは、--storage-create-device もしくは --storage-create-loop のいず"
+msgstr "指定できるのは、--storage-create-device もしくは --storage-create-loop のいず"
 "れか一方のみです"
 
 #: cmd/incus/webui.go:18 cmd/incus/webui.go:19
@@ -7668,8 +7657,8 @@ msgstr ""
 "既存または未知のストレージプールから失われたインスタンスを復旧させます\n"
 "\n"
 "  このコマンドは主に障害からの復旧に使われます。未知のストレージについて質問"
-"し、既存のストレージプールを参照しながら、ストレージへのアクセスを試みま"
-"す。\n"
+"し、既存のストレージプールを参照しながら、ストレージへのアクセスを試みます。"
+"\n"
 "  そして、プール上に存在しているがデータベースには存在しないインスタンスやボ"
 "リュームを特定します。\n"
 "  そして、データベースレコードの再作成を提案します。"
@@ -7746,9 +7735,8 @@ msgstr "%s を消去しますか (yes/no): "
 msgid ""
 "Remove %s and everything it contains (instances, images, volumes, "
 "networks, ...) (yes/no): "
-msgstr ""
-"%s とそれに含まれるすべて（インスタンス、イメージ、ボリューム、ネットワー"
-"ク、…）を削除します (yes/no): "
+msgstr "%s とそれに含まれるすべて（インスタンス、イメージ、ボリューム、ネットワーク、"
+"…）を削除します (yes/no): "
 
 #: cmd/incus/cluster_group.go:623
 msgid "Remove a cluster member from a cluster group"
@@ -8758,8 +8746,8 @@ msgstr ""
 "ストレージボリュームの状態を表示します\n"
 "\n"
 "タイプが指定されていない場合、incus はタイプを \"custom\" として扱います。\n"
-"サポートされているタイプの値は \"custom\", \"container\", \"virtual-"
-"machine\" です。"
+"サポートされているタイプの値は \"custom\", \"container\", \"virtual-machine\""
+" です。"
 
 #: cmd/incus/project.go:1210 cmd/incus/project.go:1211
 #, fuzzy
@@ -8865,9 +8853,8 @@ msgstr "ソート方法:"
 msgid ""
 "Source of the storage pool (block device, volume group, dataset, path, ... "
 "as applicable):"
-msgstr ""
-"ストレージプールのソース (適用できるブロックデバイス、ボリュームグループ、"
-"データセット、パス...)"
+msgstr "ストレージプールのソース (適用できるブロックデバイス、ボリュームグループ、デ"
+"ータセット、パス...)"
 
 #: cmd/incus/image.go:1054
 msgid "Source:"
@@ -9100,8 +9087,7 @@ msgstr "ターゲットのパスはディレクトリでなければなりませ
 
 #: cmd/incus/admin_shutdown.go:31
 msgid "Tell the daemon to shutdown all instances and exit"
-msgstr ""
-"すべてのインスタンスをシャットダウンして終了するようにデーモンに指示します"
+msgstr "すべてのインスタンスをシャットダウンして終了するようにデーモンに指示します"
 
 #: cmd/incus/admin_shutdown.go:32
 msgid ""
@@ -9149,13 +9135,13 @@ msgid ""
 "before running \"init\" again."
 msgstr ""
 "LVM のシンプロビジョニング用のツールが見つかりません。\n"
-"シンプロビジョニングを使わないで LVM を使うことはできますが、オーバープロビ"
-"ジョニングが無効になります。\n"
+"シンプロビジョニングを使わないで LVM を使うことはできますが、オーバープロビジ"
+"ョニングが無効になります。\n"
 "そして、スペースに対する要件が増加し、イメージ、インスタンス、スナップショッ"
 "トの作成時間が増加します。\n"
 "\n"
-"シンプロビジョニングを使いたい場合は、すぐに中止して、Linuxディストリビュー"
-"ションからツールをインストールし、\n"
+"シンプロビジョニングを使いたい場合は、すぐに中止して、Linuxディストリビューシ"
+"ョンからツールをインストールし、\n"
 "再度 \"init\" を実行する前に、\"thin_check\" コマンドが実行できることを確認し"
 "てください。"
 
@@ -9167,8 +9153,8 @@ msgid ""
 "\n"
 "You can invoke it through \"incusd cluster\"."
 msgstr ""
-"\"cluster\" サブコマンドは、サーバーの内部データにアクセスする必要がありま"
-"す。\n"
+"\"cluster\" サブコマンドは、サーバーの内部データにアクセスする必要があります"
+"。\n"
 "そのため、\"incus\" コマンドではなく、実際には \"incusd\" バイナリーの一部で"
 "す。\n"
 "\n"
@@ -9335,8 +9321,7 @@ msgstr "設定 %q はクラスタメンバー %q には存在しません"
 #, c-format
 msgid ""
 "The property %q does not exist on the storage pool volume snapshot %s/%s: %v"
-msgstr ""
-"プロパティ %q が、ストレージプールボリュームのスナップショット %s/%s に存在し"
+msgstr "プロパティ %q が、ストレージプールボリュームのスナップショット %s/%s に存在し"
 "ません: %v"
 
 #: cmd/incus/utils_properties.go:117
@@ -9352,9 +9337,8 @@ msgstr "リカバリープロセスは次のストレージプールをスキャ
 #, c-format
 msgid ""
 "The requested backend '%s' isn't available on your system (missing tools)"
-msgstr ""
-"入力したバックエンド '%s' がシステム上で使えません（必要なツールがありませ"
-"ん）"
+msgstr "入力したバックエンド '%s' がシステム上で使えません（必要なツールがありません"
+"）"
 
 #: cmd/incus/admin_init_auto.go:23
 #, c-format
@@ -9363,8 +9347,7 @@ msgstr "入力したバックエンド '%s' は、この初期化ではサポー
 
 #: cmd/incus/admin_init_interactive.go:321
 msgid "The requested interface doesn't exist. Please choose another one."
-msgstr ""
-"入力したインターフェースが存在しません。他のインターフェースを選択してくださ"
+msgstr "入力したインターフェースが存在しません。他のインターフェースを選択してくださ"
 "い。"
 
 #: cmd/incus/admin_init_interactive.go:358
@@ -9372,16 +9355,14 @@ msgstr ""
 msgid ""
 "The requested network bridge \"%s\" already exists. Please choose another "
 "name."
-msgstr ""
-"入力したネットワークブリッジ \"%s\" がすでに存在しています。他の名前を入力し"
+msgstr "入力したネットワークブリッジ \"%s\" がすでに存在しています。他の名前を入力し"
 "てください。"
 
 #: cmd/incus/admin_init_interactive.go:533
 #, c-format
 msgid ""
 "The requested storage pool \"%s\" already exists. Please choose another name."
-msgstr ""
-"入力したストレージプール \"%s\" はすでに存在しています。他の名前を入力してく"
+msgstr "入力したストレージプール \"%s\" はすでに存在しています。他の名前を入力してく"
 "ださい。"
 
 #: cmd/incus/webui_unix.go:73
@@ -9490,8 +9471,7 @@ msgstr ""
 #: cmd/incus/config.go:805 cmd/incus/copy.go:147 cmd/incus/info.go:389
 #: cmd/incus/network.go:992 cmd/incus/storage.go:546
 msgid "To use --target, the destination remote must be a cluster"
-msgstr ""
-"--target オプションは、コピー先のリモートサーバがクラスターに属していなければ"
+msgstr "--target オプションは、コピー先のリモートサーバがクラスターに属していなければ"
 "なりません"
 
 #: cmd/incus/storage_volume.go:1478
@@ -9790,8 +9770,8 @@ msgstr ""
 "ストレージボリュームの設定キーの設定を解除する\n"
 "\n"
 "タイプが指定されていない場合、incus はタイプを \"custom\" として扱います。\n"
-"サポートされているタイプの値は \"custom\", \"container\", \"virtual-"
-"machine\" です。"
+"サポートされているタイプの値は \"custom\", \"container\", \"virtual-machine\""
+" です。"
 
 #: cmd/incus/cluster_group.go:1061
 #, fuzzy
@@ -10071,8 +10051,7 @@ msgstr "Web サーバーの実行 URL: %s"
 
 #: cmd/incus/admin_init_interactive.go:156
 msgid "What IP address or DNS name should be used to reach this server?"
-msgstr ""
-"このサーバーにアクセスするためには、どの IP アドレス、または DNS 名を使用する"
+msgstr "このサーバーにアクセスするためには、どの IP アドレス、または DNS 名を使用する"
 "必要がありますか?"
 
 #: cmd/incus/admin_init_interactive.go:370
@@ -10179,8 +10158,7 @@ msgstr "既存のブリッジかホストのインターフェースを使用し
 msgid ""
 "Would you like to use an existing empty block device (e.g. a disk or "
 "partition)?"
-msgstr ""
-"既存の空のブロックデバイス（ディスクやパーティションなど）を使用しますか?"
+msgstr "既存の空のブロックデバイス（ディスクやパーティションなど）を使用しますか?"
 
 #: cmd/incus/admin_init_interactive.go:112
 msgid "Would you like to use clustering?"
