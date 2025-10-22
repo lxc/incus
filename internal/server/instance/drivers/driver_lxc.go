@@ -9319,7 +9319,7 @@ func (d *lxc) setupCredentials(update bool) error {
 	}
 
 	// Cleanup the credentials directory.
-	if update {
+	if update && util.PathExists(credentialsDir) {
 		credEntries, err := os.ReadDir(credentialsDir)
 		if err != nil {
 			return fmt.Errorf("Failed to list credentials directory: %w", err)
