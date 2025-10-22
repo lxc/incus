@@ -21,6 +21,7 @@ type Info struct {
 	MountedRoot                  bool         // Whether the pool directory itself is a mount.
 	Deactivate                   bool         // Whether an unmount action is required prior to removing the pool.
 	ZeroUnpack                   bool         // Whether to write zeroes (no discard) during unpacking.
+	IgnoreCleanup                bool         // Whether to ignore instance cleanup, in case the pool is a big mounted tree.
 }
 
 // VolumeFiller provides a struct for filling a volume.
