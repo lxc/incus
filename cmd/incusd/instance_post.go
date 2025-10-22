@@ -1023,10 +1023,13 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 
 		// Cleanup instance paths on source member if using remote shared storage
 		// and there was no storage pool change.
-		if sourcePool.Driver().Info().Remote && req.Pool == "" {
-			err = sourcePool.CleanupInstancePaths(inst, nil)
-			if err != nil {
-				return fmt.Errorf("Failed cleaning up instance paths on source member: %w", err)
+		driverInfo := sourcePool.Driver().Info()
+		if driverInfo.Remote && req.Pool == "" {
+			if !driverInfo.IgnoreCleanup {
+				err = sourcePool.CleanupInstancePaths(inst, nil)
+				if err != nil {
+					return fmt.Errorf("Failed cleaning up instance paths on source member: %w", err)
+				}
 			}
 		} else {
 			// Delete the instance on source member if pool isn't remote shared storage.
