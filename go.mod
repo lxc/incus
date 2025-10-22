@@ -28,7 +28,7 @@ require (
 	github.com/jochenvg/go-udev v0.0.0-20240801134859-b65ed646224b
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/lxc/go-lxc v0.0.0-20240606200241-27b3d116511f
-	github.com/lxc/incus-os/incus-osd v0.0.0-20251017051102-ca5170345603
+	github.com/lxc/incus-os/incus-osd v0.0.0-20251020234331-debf9dc30a71
 	github.com/mattn/go-colorable v0.1.14
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/mdlayher/arp v0.0.0-20220512170110-6706a2966875
