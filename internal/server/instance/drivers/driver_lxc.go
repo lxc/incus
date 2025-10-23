@@ -9286,6 +9286,11 @@ func (d *lxc) CanLiveMigrate() bool {
 
 // setupCredentials sets up the systemd credentials directory.
 func (d *lxc) setupCredentials(update bool) error {
+	// Skip updating if the container isn't running.
+	if update && !d.IsRunning() {
+		return nil
+	}
+
 	credentialsDir := filepath.Join(d.Path(), "credentials")
 	credentials := map[string][]byte{}
 	oldCredentials := map[string]bool{}
