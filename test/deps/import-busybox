@@ -236,6 +236,7 @@ class BusyBox(object):
         for path in ("dev", "mnt", "proc", "root", "sys", "tmp"):
             directory_file = tarfile.TarInfo()
             directory_file.type = tarfile.DIRTYPE
+            directory_file.mode = 0o755
             if split:
                 directory_file.name = "%s" % path
                 target_tarball_rootfs.addfile(directory_file)

@@ -142,6 +142,7 @@ jobs:
           - ceph
           - linstor
           - random
+          - nfs
         os:
           - ubuntu-24.04
         include:
@@ -436,6 +437,16 @@ jobs:
           # Update the runner env.
           echo "INCUS_LINSTOR_CLUSTER=${runner_ip}" >> "$GITHUB_ENV"
 
+      - name: Setup NFS
+        if: ${{ matrix.backend == 'nfs' }}
+        run: |
+          set -x
+          sudo apt-get install --no-install-recommends -y nfs-kernel-server
+          echo "/media 10.0.0.0/8(rw,sync,no_subtree_check,no_root_squash,no_all_squash) 100.64.0.0/8(rw,sync,no_subtree_check,no_root_squash,no_all_squash)" | sudo tee /etc/exports
+          sudo exportfs -a
+          sudo systemctl restart nfs-server.service
+          echo "INCUS_NFS_SHARE=$(hostname -I | cut -d' ' -f1):/media" >> "$GITHUB_ENV"
+
       - name: "Ensure offline mode (block image server)"
         run: |
           sudo nft add table inet filter
@@ -459,7 +470,7 @@ jobs:
           chmod +x ~
           echo "root:1000000:1000000000" | sudo tee /etc/subuid /etc/subgid
           cd test
-          sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_LINSTOR_LOCAL_SATELLITE,INCUS_LINSTOR_CLUSTER,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS, INCUS_BACKEND=${{ matrix.backend }} ./main.sh ${{ matrix.suite }}
+          sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_LINSTOR_LOCAL_SATELLITE,INCUS_LINSTOR_CLUSTER,INCUS_NFS_SHARE,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS, INCUS_BACKEND=${{ matrix.backend }} ./main.sh ${{ matrix.suite }}
 
   client:
     name: Client

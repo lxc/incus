@@ -27,6 +27,9 @@ spawn_incus() {
     elif [ "${INCUS_BACKEND}" = "linstor" ] && [ -z "${INCUS_LINSTOR_CLUSTER:-}" ]; then
         echo "A cluster name must be specified when using the LINSTOR driver." >&2
         exit 1
+    elif [ "${INCUS_BACKEND}" = "nfs" ] && [ -z "${INCUS_NFS_SHARE:-}" ]; then
+        echo "An NFS share must be specified when using the NFS driver." >&2
+        exit 1
     fi
 
     # setup storage

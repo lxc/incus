@@ -2920,3 +2920,7 @@ A `used_by` field was added to the `GET /1.0/cluster/groups/{name}` endpoint.
 ## `bpf_token_delegation`
 
 This adds support for [eBPF token delegation](https://docs.ebpf.io/linux/concepts/token/).
+
+## `storage_driver_nfs`
+
+This adds an NFS storage driver.

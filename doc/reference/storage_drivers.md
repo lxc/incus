@@ -15,6 +15,7 @@ storage_cephfs
 storage_cephobject
 storage_linstor
 storage_truenas
+storage_nfs
 ```
 
 See the corresponding pages for driver-specific information and configuration options.
@@ -24,21 +25,21 @@ See the corresponding pages for driver-specific information and configuration op
 
 Where possible, Incus uses the advanced features of each storage system to optimize operations.
 
-| Feature                                   | Directory | Btrfs | LVM   | ZFS     | Ceph RBD | CephFS | Ceph Object | LINSTOR | TRUENAS |
-| :---                                      | :---      | :---  | :---  | :---    | :---     | :---   | :---        | :---    | :---    |
-| {ref}`storage-optimized-image-storage`    | no        | yes   | yes   | yes     | yes      | n/a    | n/a         | yes     | yes     |
-| Optimized instance creation               | no        | yes   | yes   | yes     | yes      | n/a    | n/a         | yes     | yes     |
-| Optimized snapshot creation               | no        | yes   | yes   | yes     | yes      | yes    | n/a         | yes     | yes     |
-| Optimized image transfer                  | no        | yes   | no    | yes     | yes      | n/a    | n/a         | no      | no      |
-| {ref}`storage-optimized-volume-transfer`  | no        | yes   | no    | yes     | yes      | n/a    | n/a         | no      | no      |
-| Copy on write                             | no        | yes   | yes   | yes     | yes      | yes    | n/a         | yes     | yes     |
-| Block based                               | no        | no    | yes   | no      | yes      | no     | n/a         | yes     | yes     |
-| Instant cloning                           | no        | yes   | yes   | yes     | yes      | yes    | n/a         | yes     | yes     |
-| Storage driver usable inside a container  | yes       | yes   | no    | yes[^1] | no       | n/a    | n/a         | no      | no      |
-| Restore from older snapshots (not latest) | yes       | yes   | yes   | no      | yes      | yes    | n/a         | no      | no      |
-| Storage quotas                            | yes[^2]   | yes   | yes   | yes     | yes      | yes    | yes         | yes     | yes     |
-| Available on `incus admin init`           | yes       | yes   | yes   | yes     | yes      | no     | no          | no      | no      |
-| Object storage                            | yes       | yes   | yes   | yes     | no       | no     | yes         | no      | no      |
+| Feature                                   | Directory | Btrfs | LVM   | ZFS     | Ceph RBD | CephFS | Ceph Object | LINSTOR | TRUENAS | NFS  |
+| :---                                      | :---      | :---  | :---  | :---    | :---     | :---   | :---        | :---    | :---    | :--- |
+| {ref}`storage-optimized-image-storage`    | no        | yes   | yes   | yes     | yes      | n/a    | n/a         | yes     | yes     | no   |
+| Optimized instance creation               | no        | yes   | yes   | yes     | yes      | n/a    | n/a         | yes     | yes     | no   |
+| Optimized snapshot creation               | no        | yes   | yes   | yes     | yes      | yes    | n/a         | yes     | yes     | no   |
+| Optimized image transfer                  | no        | yes   | no    | yes     | yes      | n/a    | n/a         | no      | no      | no   |
+| {ref}`storage-optimized-volume-transfer`  | no        | yes   | no    | yes     | yes      | n/a    | n/a         | no      | no      | no   |
+| Copy on write                             | no        | yes   | yes   | yes     | yes      | yes    | n/a         | yes     | yes     | no   |
+| Block based                               | no        | no    | yes   | no      | yes      | no     | n/a         | yes     | yes     | n/a  |
+| Instant cloning                           | no        | yes   | yes   | yes     | yes      | yes    | n/a         | yes     | yes     | no   |
+| Storage driver usable inside a container  | yes       | yes   | no    | yes[^1] | no       | n/a    | n/a         | no      | no      | yes  |
+| Restore from older snapshots (not latest) | yes       | yes   | yes   | no      | yes      | yes    | n/a         | no      | no      | yes  |
+| Storage quotas                            | yes[^2]   | yes   | yes   | yes     | yes      | yes    | yes         | yes     | yes     | no   |
+| Available on `incus admin init`           | yes       | yes   | yes   | yes     | yes      | no     | no          | no      | no      | yes  |
+| Object storage                            | yes       | yes   | yes   | yes     | no       | no     | yes         | no      | no      | no   |
 
 [^1]: Requires [`zfs.delegate`](storage-zfs-vol-config) to be enabled.
 [^2]: % Include content from [storage_dir.md](storage_dir.md)

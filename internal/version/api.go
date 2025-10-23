@@ -504,6 +504,7 @@ var APIExtensions = []string{
 	"instance_systemd_credentials",
 	"cluster_group_usedby",
 	"bpf_token_delegation",
+	"storage_driver_nfs",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

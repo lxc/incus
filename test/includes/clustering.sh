@@ -199,6 +199,12 @@ EOF
     linstor.resource_group.place_count: 1
 EOF
         fi
+        if [ "${driver}" = "nfs" ]; then
+            cat >> "${INCUS_DIR}/preseed.yaml" << EOF
+  config:
+    source: $INCUS_NFS_SHARE/$(basename "${TEST_DIR}")
+EOF
+        fi
         cat >> "${INCUS_DIR}/preseed.yaml" << EOF
 networks:
 - name: $bridge
@@ -276,10 +282,10 @@ cluster:
   cluster_token: ${token}
   member_config:
 EOF
-        # Declare the pool only if the driver is not ceph or linstor, because
+        # Declare the pool only if the driver doesn't manage remote storage, because
         # the pool doesn't need to be created on the joining
         # node (it's shared with the bootstrap one).
-        if [ "${driver}" != "ceph" ] && [ "${driver}" != "linstor" ]; then
+        if [ "${driver}" != "ceph" ] && [ "${driver}" != "linstor" ] && [ "${driver}" != "nfs" ]; then
             cat >> "${INCUS_DIR}/preseed.yaml" << EOF
   - entity: storage-pool
     name: data
