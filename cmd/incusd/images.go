@@ -69,34 +69,6 @@ var imagesCmd = APIEndpoint{
 	Post: APIEndpointAction{Handler: imagesPost, AllowUntrusted: true},
 }
 
-var imageCmd = APIEndpoint{
-	Path: "images/{fingerprint}",
-
-	Delete: APIEndpointAction{Handler: imageDelete, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
-	Get:    APIEndpointAction{Handler: imageGet, AllowUntrusted: true},
-	Patch:  APIEndpointAction{Handler: imagePatch, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
-	Put:    APIEndpointAction{Handler: imagePut, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
-}
-
-var imageExportCmd = APIEndpoint{
-	Path: "images/{fingerprint}/export",
-
-	Get:  APIEndpointAction{Handler: imageExport, AllowUntrusted: true},
-	Post: APIEndpointAction{Handler: imageExportPost, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
-}
-
-var imageSecretCmd = APIEndpoint{
-	Path: "images/{fingerprint}/secret",
-
-	Post: APIEndpointAction{Handler: imageSecret, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
-}
-
-var imageRefreshCmd = APIEndpoint{
-	Path: "images/{fingerprint}/refresh",
-
-	Post: APIEndpointAction{Handler: imageRefresh, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
-}
-
 var imageAliasesCmd = APIEndpoint{
 	Path: "images/aliases",
 
@@ -112,6 +84,31 @@ var imageAliasCmd = APIEndpoint{
 	Patch:  APIEndpointAction{Handler: imageAliasPatch, AccessHandler: allowPermission(auth.ObjectTypeImageAlias, auth.EntitlementCanEdit, "name")},
 	Post:   APIEndpointAction{Handler: imageAliasPost, AccessHandler: allowPermission(auth.ObjectTypeImageAlias, auth.EntitlementCanEdit, "name")},
 	Put:    APIEndpointAction{Handler: imageAliasPut, AccessHandler: allowPermission(auth.ObjectTypeImageAlias, auth.EntitlementCanEdit, "name")},
+}
+
+var imageCmd = APIEndpoint{
+	Path: "images/{fingerprint}/",
+
+	Delete: APIEndpointAction{Handler: imageDelete, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
+	Get:    APIEndpointAction{Handler: imageGet, AllowUntrusted: true},
+	Patch:  APIEndpointAction{Handler: imagePatch, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
+	Put:    APIEndpointAction{Handler: imagePut, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
+
+	SuffixActions: []APIEndpointSuffixAction{
+		APIEndpointSuffixAction{
+			Name: "/export",
+			Get:  APIEndpointAction{Handler: imageExport, AllowUntrusted: true},
+			Post: APIEndpointAction{Handler: imageExportPost, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
+		},
+		APIEndpointSuffixAction{
+			Name: "/secret",
+			Post: APIEndpointAction{Handler: imageSecret, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
+		},
+		APIEndpointSuffixAction{
+			Name: "/refresh",
+			Post: APIEndpointAction{Handler: imageRefresh, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
+		},
+	},
 }
 
 /*

@@ -228,15 +228,27 @@ func defaultDaemon() *Daemon {
 
 // APIEndpoint represents a URL in our API.
 type APIEndpoint struct {
-	Name    string             // Name for this endpoint.
-	Path    string             // Path pattern for this endpoint.
-	Aliases []APIEndpointAlias // Any aliases for this endpoint.
-	Get     APIEndpointAction
-	Head    APIEndpointAction
-	Put     APIEndpointAction
-	Post    APIEndpointAction
-	Delete  APIEndpointAction
-	Patch   APIEndpointAction
+	Name          string             // Name for this endpoint.
+	Path          string             // Path pattern for this endpoint.
+	Aliases       []APIEndpointAlias // Any aliases for this endpoint.
+	SuffixActions []APIEndpointSuffixAction
+	Get           APIEndpointAction
+	Head          APIEndpointAction
+	Put           APIEndpointAction
+	Post          APIEndpointAction
+	Delete        APIEndpointAction
+	Patch         APIEndpointAction
+}
+
+// APIEndpointSuffixAction represents actions appended to the end of the path like `/1.0/endpoint/action`
+type APIEndpointSuffixAction struct {
+	Name   string
+	Get    APIEndpointAction
+	Head   APIEndpointAction
+	Put    APIEndpointAction
+	Post   APIEndpointAction
+	Delete APIEndpointAction
+	Patch  APIEndpointAction
 }
 
 // APIEndpointAlias represents an alias URL of and APIEndpoint in our API.
@@ -618,12 +630,12 @@ func (d *Daemon) State() *state.State {
 	}
 }
 
-func (d *Daemon) createCmd(restAPI *http.ServeMux, version string, c APIEndpoint) {
+func (d *Daemon) createCmd(restAPI *http.ServeMux, apiVersion string, c APIEndpoint) {
 	var uri string
 	if c.Path == "" {
-		uri = fmt.Sprintf("/%s", version)
-	} else if version != "" {
-		uri = fmt.Sprintf("/%s/%s", version, c.Path)
+		uri = fmt.Sprintf("/%s", apiVersion)
+	} else if apiVersion != "" {
+		uri = fmt.Sprintf("/%s/%s", apiVersion, c.Path)
 	} else {
 		uri = fmt.Sprintf("/%s", c.Path)
 	}
@@ -631,7 +643,19 @@ func (d *Daemon) createCmd(restAPI *http.ServeMux, version string, c APIEndpoint
 	restAPI.HandleFunc(uri, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		if !(r.RemoteAddr == "@" && version == "internal") {
+		for _, action := range c.SuffixActions {
+			if strings.HasSuffix(r.URL.Path, action.Name) {
+				c.Get = action.Get
+				c.Post = action.Post
+				c.Put = action.Put
+				c.Patch = action.Patch
+				c.Delete = action.Delete
+				c.Head = action.Head
+				break
+			}
+		}
+
+		if !(r.RemoteAddr == "@" && apiVersion == "internal") {
 			// Block public API requests until we're done with basic
 			// initialization tasks, such setting up the cluster database.
 			select {
@@ -659,7 +683,7 @@ func (d *Daemon) createCmd(restAPI *http.ServeMux, version string, c APIEndpoint
 		}
 
 		// Reject internal queries to remote, non-cluster, clients
-		if version == "internal" && !slices.Contains([]string{"unix", "cluster"}, protocol) {
+		if apiVersion == "internal" && !slices.Contains([]string{"unix", "cluster"}, protocol) {
 			// Except for the initial cluster accept request (done over trusted TLS)
 			if !trusted || c.Path != "cluster/accept" || protocol != api.AuthenticationMethodTLS {
 				logger.Warn("Rejecting remote internal API request", logger.Ctx{"ip": r.RemoteAddr})
@@ -730,7 +754,7 @@ func (d *Daemon) createCmd(restAPI *http.ServeMux, version string, c APIEndpoint
 		// - /1.0/operations endpoints
 		// - GET queries
 		allowedDuringShutdown := func() bool {
-			if version == "internal" {
+			if apiVersion == "internal" {
 				return true
 			}
 
