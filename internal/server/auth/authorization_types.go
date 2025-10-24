@@ -35,12 +35,12 @@ const (
 
 	// Instance entitlements.
 	EntitlementCanAccessConsole Entitlement = "can_access_console"
-	EntitlementCanAccessFiles   Entitlement = "can_access_files"
-	EntitlementCanConnectSFTP   Entitlement = "can_connect_sftp"
 	EntitlementCanExec          Entitlement = "can_exec"
 	EntitlementCanUpdateState   Entitlement = "can_update_state"
 
 	// Instance and storage volume entitlements.
+	EntitlementCanAccessFiles     Entitlement = "can_access_files"
+	EntitlementCanConnectSFTP     Entitlement = "can_connect_sftp"
 	EntitlementCanManageBackups   Entitlement = "can_manage_backups"
 	EntitlementCanManageSnapshots Entitlement = "can_manage_snapshots"
 )
