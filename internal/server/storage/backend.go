@@ -5689,6 +5689,9 @@ func (b *backend) DeleteCustomVolume(projectName string, volName string, op *ope
 	// There's no need to pass config as it's not needed when deleting a volume.
 	vol := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageName, nil)
 
+	// Forcefully stop any forkfile process if running.
+	vol.StopForkfile()
+
 	// Delete the volume from the storage device. Must come after snapshots are removed.
 	volExists, err := b.driver.HasVolume(vol)
 	if err != nil {
