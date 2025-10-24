@@ -161,105 +161,9 @@ func instanceFileGet(s *state.State, inst instance.Instance, path string, r *htt
 
 	reverter.Add(func() { _ = client.Close() })
 
-	// Get the file stats.
-	stat, err := client.Lstat(path)
-	if err != nil {
-		return response.SmartError(err)
-	}
-
-	fileType := "file"
-	if stat.Mode().IsDir() {
-		fileType = "directory"
-	} else if stat.Mode()&os.ModeSymlink == os.ModeSymlink {
-		fileType = "symlink"
-	}
-
-	fs := stat.Sys().(*sftp.FileStat)
-
-	// Prepare the response.
-	headers := map[string]string{
-		"X-Incus-uid":      fmt.Sprintf("%d", fs.UID),
-		"X-Incus-gid":      fmt.Sprintf("%d", fs.GID),
-		"X-Incus-mode":     fmt.Sprintf("%04o", stat.Mode().Perm()),
-		"X-Incus-modified": stat.ModTime().UTC().String(),
-		"X-Incus-type":     fileType,
-	}
-
-	if fileType == "file" {
-		// Open the file.
-		file, err := client.Open(path)
-		if err != nil {
-			return response.SmartError(err)
-		}
-
-		reverter.Add(func() { _ = file.Close() })
-
-		// Setup cleanup logic.
-		cleanup := reverter.Clone()
-		reverter.Success()
-
-		// Make a file response struct.
-		files := make([]response.FileResponseEntry, 1)
-		files[0].Identifier = filepath.Base(path)
-		files[0].Filename = filepath.Base(path)
-		files[0].File = file
-		files[0].FileSize = stat.Size()
-		files[0].FileModified = stat.ModTime()
-		files[0].Cleanup = func() {
-			cleanup.Fail()
-		}
-
+	return fileSFTPGet(client, path, r, reverter, func() {
 		s.Events.SendLifecycle(inst.Project().Name, lifecycle.InstanceFileRetrieved.Event(inst, logger.Ctx{"path": path}))
-		return response.FileResponse(r, files, headers)
-	} else if fileType == "symlink" {
-		// Find symlink target.
-		target, err := client.ReadLink(path)
-		if err != nil {
-			return response.SmartError(err)
-		}
-
-		// If not an absolute symlink, need to mangle to something
-		// relative to the source path. This is required because there
-		// is no sftp function to get the final target path and RealPath doesn't
-		// allow specifying the path to resolve from.
-		if !strings.HasPrefix(target, "/") {
-			target = filepath.Join(filepath.Dir(path), target)
-		}
-
-		// Convert to absolute path.
-		target, err = client.RealPath(target)
-		if err != nil {
-			return response.SmartError(err)
-		}
-
-		// Make a file response struct.
-		files := make([]response.FileResponseEntry, 1)
-		files[0].Identifier = filepath.Base(path)
-		files[0].Filename = filepath.Base(path)
-		files[0].File = bytes.NewReader([]byte(target))
-		files[0].FileModified = time.Now()
-		files[0].FileSize = int64(len(target))
-
-		s.Events.SendLifecycle(inst.Project().Name, lifecycle.InstanceFileRetrieved.Event(inst, logger.Ctx{"path": path}))
-		return response.FileResponse(r, files, headers)
-	} else if fileType == "directory" {
-		dirEnts := []string{}
-
-		// List the directory.
-		entries, err := client.ReadDir(path)
-		if err != nil {
-			return response.SmartError(err)
-		}
-
-		for _, entry := range entries {
-			dirEnts = append(dirEnts, entry.Name())
-		}
-
-		s.Events.SendLifecycle(inst.Project().Name, lifecycle.InstanceFileRetrieved.Event(inst, logger.Ctx{"path": path}))
-		return response.SyncResponseHeaders(true, dirEnts, headers)
-	} else {
-		return response.InternalError(fmt.Errorf("Bad file type: %s", fileType))
-	}
+	})
 }
 
 // swagger:operation HEAD /1.0/instances/{name}/files instances instance_files_head
@@ -324,46 +228,7 @@ func instanceFileHead(_ *state.State, inst instance.Instance, path string, _ *ht
 
 	reverter.Add(func() { _ = client.Close() })
 
-	// Get the file stats.
-	stat, err := client.Lstat(path)
-	if err != nil {
-		return response.SmartError(err)
-	}
-
-	fileType := "file"
-	if stat.Mode().IsDir() {
-		fileType = "directory"
-	} else if stat.Mode()&os.ModeSymlink == os.ModeSymlink {
-		fileType = "symlink"
-	}
-
-	fs := stat.Sys().(*sftp.FileStat)
-
-	// Prepare the response.
-	headers := map[string]string{
-		"X-Incus-uid":      fmt.Sprintf("%d", fs.UID),
-		"X-Incus-gid":      fmt.Sprintf("%d", fs.GID),
-		"X-Incus-mode":     fmt.Sprintf("%04o", stat.Mode().Perm()),
-		"X-Incus-modified": stat.ModTime().UTC().String(),
-		"X-Incus-type":     fileType,
-	}
-
-	if fileType == "file" {
-		headers["Content-Type"] = "application/octet-stream"
-		headers["Content-Length"] = fmt.Sprintf("%d", stat.Size())
-	}
-
-	// Return an empty body (per RFC for HEAD).
-	return response.ManualResponse(func(w http.ResponseWriter) error {
-		// Set the headers.
-		for k, v := range headers {
-			w.Header().Set(k, v)
-		}
-
-		// Flush the connection.
-		w.WriteHeader(http.StatusOK)
-		return nil
-	})
+	return fileSFTPHead(client, path)
 }
 
 // swagger:operation POST /1.0/instances/{name}/files instances instance_files_post
@@ -441,6 +306,209 @@ func instanceFilePost(s *state.State, inst instance.Instance, path string, r *ht
 
 	defer func() { _ = client.Close() }()
 
+	return fileSFTPPost(client, path, r, func() {
+		s.Events.SendLifecycle(inst.Project().Name, lifecycle.InstanceFilePushed.Event(inst, logger.Ctx{"path": path}))
+	})
+}
+
+// swagger:operation DELETE /1.0/instances/{name}/files instances instance_files_delete
+//
+//	Delete a file
+//
+//	Removes the file.
+//
+//	---
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: query
+//	    name: path
+//	    description: Path to the file
+//	    type: string
+//	    example: default
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    example: default
+//	responses:
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func instanceFileDelete(s *state.State, inst instance.Instance, path string, _ *http.Request) response.Response {
+	// Get a SFTP client.
+	client, err := inst.FileSFTP()
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	defer func() { _ = client.Close() }()
+
+	return fileSFTPDelete(client, path, func() {
+		s.Events.SendLifecycle(inst.Project().Name, lifecycle.InstanceFileDeleted.Event(inst, logger.Ctx{"path": path}))
+	})
+}
+
+func fileSFTPGet(client *sftp.Client, path string, r *http.Request, reverter *revert.Reverter, onSuccess func()) response.Response {
+	// Get the file stats.
+	stat, err := client.Lstat(path)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	fileType := "file"
+	if stat.Mode().IsDir() {
+		fileType = "directory"
+	} else if stat.Mode()&os.ModeSymlink == os.ModeSymlink {
+		fileType = "symlink"
+	}
+
+	fileStat, ok := stat.Sys().(*sftp.FileStat)
+	if !ok {
+		return response.InternalError(fmt.Errorf("Unexpected stat type %T", stat.Sys()))
+	}
+
+	// Prepare the response.
+	headers := map[string]string{
+		"X-Incus-uid":      fmt.Sprintf("%d", fileStat.UID),
+		"X-Incus-gid":      fmt.Sprintf("%d", fileStat.GID),
+		"X-Incus-mode":     fmt.Sprintf("%04o", stat.Mode().Perm()),
+		"X-Incus-modified": stat.ModTime().UTC().String(),
+		"X-Incus-type":     fileType,
+	}
+
+	switch fileType {
+	case "file":
+		// Open the file.
+		file, err := client.Open(path)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		reverter.Add(func() { _ = file.Close() })
+
+		// Setup cleanup logic.
+		cleanup := reverter.Clone()
+		reverter.Success()
+
+		// Make a file response struct.
+		files := make([]response.FileResponseEntry, 1)
+		files[0].Identifier = filepath.Base(path)
+		files[0].Filename = filepath.Base(path)
+		files[0].File = file
+		files[0].FileSize = stat.Size()
+		files[0].FileModified = stat.ModTime()
+		files[0].Cleanup = func() {
+			cleanup.Fail()
+		}
+
+		onSuccess()
+		return response.FileResponse(r, files, headers)
+	case "symlink":
+		// Find symlink target.
+		target, err := client.ReadLink(path)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		// If not an absolute symlink, need to mangle to something
+		// relative to the source path. This is required because there
+		// is no sftp function to get the final target path and RealPath doesn't
+		// allow specifying the path to resolve from.
+		if !strings.HasPrefix(target, "/") {
+			target = filepath.Join(filepath.Dir(path), target)
+		}
+
+		// Convert to absolute path.
+		target, err = client.RealPath(target)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		// Make a file response struct.
+		files := make([]response.FileResponseEntry, 1)
+		files[0].Identifier = filepath.Base(path)
+		files[0].Filename = filepath.Base(path)
+		files[0].File = bytes.NewReader([]byte(target))
+		files[0].FileModified = time.Now()
+		files[0].FileSize = int64(len(target))
+
+		onSuccess()
+		return response.FileResponse(r, files, headers)
+	case "directory":
+		dirEnts := []string{}
+
+		// List the directory.
+		entries, err := client.ReadDir(path)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		for _, entry := range entries {
+			dirEnts = append(dirEnts, entry.Name())
+		}
+
+		onSuccess()
+		return response.SyncResponseHeaders(true, dirEnts, headers)
+	}
+
+	return response.InternalError(fmt.Errorf("Bad file type: %s", fileType))
+}
+
+func fileSFTPHead(client *sftp.Client, path string) response.Response {
+	// Get the file stats.
+	stat, err := client.Lstat(path)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	fileType := "file"
+	if stat.Mode().IsDir() {
+		fileType = "directory"
+	} else if stat.Mode()&os.ModeSymlink == os.ModeSymlink {
+		fileType = "symlink"
+	}
+
+	fileStat, ok := stat.Sys().(*sftp.FileStat)
+	if !ok {
+		return response.InternalError(fmt.Errorf("Unexpected stat type %T", stat.Sys()))
+	}
+
+	// Prepare the response.
+	headers := map[string]string{
+		"X-Incus-uid":      fmt.Sprintf("%d", fileStat.UID),
+		"X-Incus-gid":      fmt.Sprintf("%d", fileStat.GID),
+		"X-Incus-mode":     fmt.Sprintf("%04o", stat.Mode().Perm()),
+		"X-Incus-modified": stat.ModTime().UTC().String(),
+		"X-Incus-type":     fileType,
+	}
+
+	if fileType == "file" {
+		headers["Content-Type"] = "application/octet-stream"
+		headers["Content-Length"] = fmt.Sprintf("%d", stat.Size())
+	}
+
+	// Return an empty body (per RFC for HEAD).
+	return response.ManualResponse(func(w http.ResponseWriter) error {
+		// Set the headers.
+		for k, v := range headers {
+			w.Header().Set(k, v)
+		}
+
+		// Flush the connection.
+		w.WriteHeader(http.StatusOK)
+		return nil
+	})
+}
+
+func fileSFTPPost(client *sftp.Client, path string, r *http.Request, onSuccess func()) response.Response {
 	// Extract file ownership and mode from headers
 	uid, gid, mode, type_, write := api.ParseFileHeaders(r.Header)
 
@@ -449,7 +517,7 @@ func instanceFilePost(s *state.State, inst instance.Instance, path string, r *ht
 	}
 
 	// Check if the file already exists.
-	_, err = client.Stat(path)
+	_, err := client.Stat(path)
 	exists := err == nil
 
 	if type_ == "file" {
@@ -497,7 +565,7 @@ func instanceFilePost(s *state.State, inst instance.Instance, path string, r *ht
 			}
 		}
 
-		s.Events.SendLifecycle(inst.Project().Name, lifecycle.InstanceFilePushed.Event(inst, logger.Ctx{"path": path}))
+		onSuccess()
 		return response.EmptySyncResponse
 	} else if type_ == "symlink" {
 		// Figure out target.
@@ -518,7 +586,7 @@ func instanceFilePost(s *state.State, inst instance.Instance, path string, r *ht
 			return response.SmartError(err)
 		}
 
-		s.Events.SendLifecycle(inst.Project().Name, lifecycle.InstanceFilePushed.Event(inst, logger.Ctx{"path": path}))
+		onSuccess()
 		return response.EmptySyncResponse
 	} else if type_ == "directory" {
 		// Check if it already exists.
@@ -551,59 +619,20 @@ func instanceFilePost(s *state.State, inst instance.Instance, path string, r *ht
 			}
 		}
 
-		s.Events.SendLifecycle(inst.Project().Name, lifecycle.InstanceFilePushed.Event(inst, logger.Ctx{"path": path}))
+		onSuccess()
 		return response.EmptySyncResponse
 	} else {
 		return response.BadRequest(fmt.Errorf("Bad file type: %s", type_))
 	}
 }
 
-// swagger:operation DELETE /1.0/instances/{name}/files instances instance_files_delete
-//
-//	Delete a file
-//
-//	Removes the file.
-//
-//	---
-//	produces:
-//	  - application/json
-//	parameters:
-//	  - in: query
-//	    name: path
-//	    description: Path to the file
-//	    type: string
-//	    example: default
-//	  - in: query
-//	    name: project
-//	    description: Project name
-//	    type: string
-//	    example: default
-//	responses:
-//	  "200":
-//	    $ref: "#/responses/EmptySyncResponse"
-//	  "400":
-//	    $ref: "#/responses/BadRequest"
-//	  "403":
-//	    $ref: "#/responses/Forbidden"
-//	  "404":
-//	    $ref: "#/responses/NotFound"
-//	  "500":
-//	    $ref: "#/responses/InternalServerError"
-func instanceFileDelete(s *state.State, inst instance.Instance, path string, _ *http.Request) response.Response {
-	// Get a SFTP client.
-	client, err := inst.FileSFTP()
-	if err != nil {
-		return response.InternalError(err)
-	}
-
-	defer func() { _ = client.Close() }()
-
+func fileSFTPDelete(client *sftp.Client, path string, onSuccess func()) response.Response {
 	// Delete the file.
-	err = client.Remove(path)
+	err := client.Remove(path)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	s.Events.SendLifecycle(inst.Project().Name, lifecycle.InstanceFileDeleted.Event(inst, logger.Ctx{"path": path}))
+	onSuccess()
 	return response.EmptySyncResponse
 }
