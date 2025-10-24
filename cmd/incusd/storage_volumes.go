@@ -79,6 +79,15 @@ var storagePoolVolumeTypeSFTPCmd = APIEndpoint{
 	Get: APIEndpointAction{Handler: storagePoolVolumeTypeSFTPHandler, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanConnectSFTP, "poolName", "type", "volumeName", "location")},
 }
 
+var storagePoolVolumeTypeFileCmd = APIEndpoint{
+	Path: "storage-pools/{poolName}/volumes/{type}/{volumeName}/files",
+
+	Delete: APIEndpointAction{Handler: storagePoolVolumeTypeFileHandler, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanAccessFiles, "poolName", "type", "volumeName", "location")},
+	Get:    APIEndpointAction{Handler: storagePoolVolumeTypeFileHandler, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanAccessFiles, "poolName", "type", "volumeName", "location")},
+	Head:   APIEndpointAction{Handler: storagePoolVolumeTypeFileHandler, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanAccessFiles, "poolName", "type", "volumeName", "location")},
+	Post:   APIEndpointAction{Handler: storagePoolVolumeTypeFileHandler, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanAccessFiles, "poolName", "type", "volumeName", "location")},
+}
+
 // swagger:operation GET /1.0/storage-pools/{poolName}/volumes storage storage_pool_volumes_get
 //
 //  Get the storage volumes
