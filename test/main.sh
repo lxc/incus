@@ -365,6 +365,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_storage_bucket_export "storage buckets export and import"
     run_test test_storage_volume_import "storage volume import"
     run_test test_storage_volume_initial_config "storage volume initial configuration"
+    run_test test_storage_volume_filemanip "storage volume file manipulations"
     run_test test_resources "resources"
     run_test test_kernel_limits "kernel limits"
     run_test test_console "console"

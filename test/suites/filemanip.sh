@@ -156,7 +156,7 @@ test_filemanip() {
     incus delete filemanip -f
     [ "$output" = "foo" ]
 
-    rm "${TEST_DIR}"/source/baz
+    rm -rf "${TEST_DIR}"/source
     rm -rf "${TEST_DIR}/dest"
     incus project switch default
     incus project delete test
