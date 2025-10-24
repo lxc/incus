@@ -16285,6 +16285,183 @@ paths:
             summary: Get the storage volume backups
             tags:
                 - storage
+    /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/files:
+        delete:
+            description: Removes the file.
+            operationId: storage_pool_volume_type_files_delete
+            parameters:
+                - description: Path to the file
+                  example: default
+                  in: query
+                  name: path
+                  type: string
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    $ref: '#/responses/EmptySyncResponse'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Delete a file
+            tags:
+                - storage
+        get:
+            description: Gets the file content. If it's a directory, a json list of files will be returned instead.
+            operationId: storage_pool_volume_type_files_get
+            parameters:
+                - description: Path to the file
+                  example: default
+                  in: query
+                  name: path
+                  type: string
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+            produces:
+                - application/json
+                - application/octet-stream
+            responses:
+                "200":
+                    description: Raw file or directory listing
+                    headers:
+                        X-Incus-gid:
+                            description: File owner GID
+                        X-Incus-mode:
+                            description: Mode mask
+                        X-Incus-modified:
+                            description: Last modified date
+                        X-Incus-type:
+                            description: Type of file (file, symlink or directory)
+                        X-Incus-uid:
+                            description: File owner UID
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get a file
+            tags:
+                - storage
+        head:
+            description: Gets the file or directory metadata.
+            operationId: storage_pool_volume_type_files_head
+            parameters:
+                - description: Path to the file
+                  example: default
+                  in: query
+                  name: path
+                  type: string
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+            responses:
+                "200":
+                    description: Raw file or directory listing
+                    headers:
+                        X-Incus-gid:
+                            description: File owner GID
+                        X-Incus-mode:
+                            description: Mode mask
+                        X-Incus-modified:
+                            description: Last modified date
+                        X-Incus-type:
+                            description: Type of file (file, symlink or directory)
+                        X-Incus-uid:
+                            description: File owner UID
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get metadata for a file
+            tags:
+                - storage
+        post:
+            consumes:
+                - application/octet-stream
+            description: Creates a new file in the storage volume.
+            operationId: storage_pool_volume_type_files_post
+            parameters:
+                - description: Path to the file
+                  example: default
+                  in: query
+                  name: path
+                  type: string
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Raw file content
+                  in: body
+                  name: raw_file
+                - description: File owner UID
+                  example: 1000
+                  in: header
+                  name: X-Incus-uid
+                  schema:
+                    type: integer
+                - description: File owner GID
+                  example: 1000
+                  in: header
+                  name: X-Incus-gid
+                  schema:
+                    type: integer
+                - description: File mode
+                  example: 420
+                  in: header
+                  name: X-Incus-mode
+                  schema:
+                    type: integer
+                - description: Type of file (file, symlink or directory)
+                  example: file
+                  in: header
+                  name: X-Incus-type
+                  schema:
+                    type: string
+                - description: Write mode (overwrite or append)
+                  example: overwrite
+                  in: header
+                  name: X-Incus-write
+                  schema:
+                    type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    $ref: '#/responses/EmptySyncResponse'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Create or replace a file
+            tags:
+                - storage
     /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/sftp:
         get:
             description: Upgrades the request to an SFTP connection of the storage volume's filesystem.

@@ -1,27 +1,21 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"slices"
 
 	"github.com/gorilla/mux"
-	"github.com/pkg/sftp"
 
 	"github.com/lxc/incus/v6/internal/server/cluster"
-	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/internal/server/response"
 	storagePools "github.com/lxc/incus/v6/internal/server/storage"
 	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
 	"github.com/lxc/incus/v6/shared/api"
-	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // swagger:operation GET /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/sftp storage storage_pool_volume_type_sftp_get
@@ -106,46 +100,19 @@ func storagePoolVolumeTypeSFTPHandler(d *Daemon, r *http.Request) response.Respo
 			return response.SmartError(err)
 		}
 
+		volumeDB, err := storagePools.VolumeDBGet(pool, volumeProjectName, volumeName, storageDrivers.VolumeTypeCustom)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
 		diskVolName := project.StorageVolume(volumeProjectName, volumeName)
-		vol := pool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentTypeFS, diskVolName, nil)
+		vol := pool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentTypeFS, diskVolName, volumeDB.Config)
 
-		serverConn, clientConn := net.Pipe()
-		conn = clientConn
-
-		go func() {
-			err := serveVolumeSFTP(context.Background(), vol, serverConn, nil)
-			if err != nil {
-				logger.Warn("volume‑SFTP server exited", logger.Ctx{
-					"pool": poolName,
-					"vol":  volumeName,
-					"err":  err,
-				})
-			}
-
-			_ = serverConn.Close()
-		}()
+		conn, err = vol.FileSFTPConn(d.State())
+		if err != nil {
+			return response.SmartError(api.StatusErrorf(http.StatusInternalServerError, "Failed getting storage volume SFTP connection: %v", err))
+		}
 	}
 
 	return response.SFTPResponse(r, conn)
-}
-
-// Serve the mounted volume over the pkg/sftp built‑in server.
-func serveVolumeSFTP(ctx context.Context, vol storageDrivers.Volume, conn net.Conn, op *operations.Operation) error {
-	return vol.MountTask(func(mountPath string, _ *operations.Operation) error {
-		srv, err := sftp.NewServer(
-			conn,
-			sftp.WithServerWorkingDirectory(mountPath),
-			sftp.WithDebug(os.Stderr),
-		)
-		if err != nil {
-			return err
-		}
-
-		err = srv.Serve()
-		if err != nil && err != io.EOF {
-			return err
-		}
-
-		return nil
-	}, nil)
 }

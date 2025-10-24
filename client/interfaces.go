@@ -389,6 +389,11 @@ type InstanceServer interface {
 	CreateStoragePoolVolumeFromISO(pool string, args StorageVolumeBackupArgs) (op Operation, err error)
 	CreateStoragePoolVolumeFromMigration(pool string, volume api.StorageVolumesPost) (op Operation, err error)
 
+	// Storage volume file manipulations functions ("file_storage_volume" API extension)
+	GetStorageVolumeFile(pool string, volumeType string, volumeName string, filePath string) (content io.ReadCloser, resp *InstanceFileResponse, err error)
+	CreateStorageVolumeFile(pool string, volumeType string, volumeName string, filePath string, args InstanceFileArgs) (err error)
+	DeleteStorageVolumeFile(pool string, volumeType string, volumeName string, filePath string) (err error)
+
 	// Storage volume SFTP functions ("custom_volume_sftp" API extension)
 	GetStoragePoolVolumeFileSFTPConn(pool string, volType string, volName string) (net.Conn, error)
 	GetStoragePoolVolumeFileSFTP(pool string, volType string, volName string) (*sftp.Client, error)

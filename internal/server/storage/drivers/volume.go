@@ -1,19 +1,31 @@
 package drivers
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
+	"syscall"
+
+	"github.com/pkg/sftp"
+	"golang.org/x/sys/unix"
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/locking"
 	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/internal/server/refcount"
+	"github.com/lxc/incus/v6/internal/server/state"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/idmap"
+	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
@@ -628,4 +640,263 @@ func (v Volume) Clone() Volume {
 	newPoolConfig := util.CloneMap(v.poolConfig)
 
 	return NewVolume(v.driver, v.pool, v.volType, v.contentType, v.name, newConfig, newPoolConfig)
+}
+
+// forkfileLockName returns the forkfile lock name.
+func (v Volume) forkfileLockName() string {
+	return fmt.Sprintf("forkfile_%s_%s_%s", v.Pool(), v.Type(), v.Name())
+}
+
+// forkfileRunningLockName returns the forkfile-running lock name.
+func (v Volume) forkfileRunningLockName() string {
+	return fmt.Sprintf("forkfile-running_%s_%s_%s", v.Pool(), v.Type(), v.Name())
+}
+
+// forkfileRunPath returns the forkfile running path.
+func (v Volume) forkfileRunPath() string {
+	name := fmt.Sprintf("%s.%s.%s", v.Pool(), v.Type(), v.Name())
+	return internalUtil.RunPath(name)
+}
+
+// StopForkfile attempts to send SIGKILL to forkfile then waits for it to exit.
+func (v Volume) StopForkfile() {
+	// Make sure that when the function exits, no forkfile is running by acquiring the lock (which indicates
+	// that forkfile isn't running and holding the lock) and then releasing it.
+	defer func() {
+		unlock, err := locking.Lock(context.TODO(), v.forkfileRunningLockName())
+		if err != nil {
+			return
+		}
+
+		unlock()
+	}()
+
+	content, err := os.ReadFile(filepath.Join(v.forkfileRunPath(), "forkfile.pid"))
+	if err != nil {
+		return
+	}
+
+	pid, err := strconv.ParseInt(strings.TrimSpace(string(content)), 10, 64)
+	if err != nil {
+		return
+	}
+
+	// Forcefully kill the running process.
+	_ = unix.Kill(int(pid), unix.SIGKILL)
+}
+
+// FileSFTPConn returns a connection to the forkfile handler.
+func (v Volume) FileSFTPConn(s *state.State) (net.Conn, error) {
+	// Lock to avoid concurrent spawning.
+	spawnUnlock, err := locking.Lock(context.TODO(), v.forkfileLockName())
+	if err != nil {
+		return nil, err
+	}
+
+	defer spawnUnlock()
+
+	// Create any missing directories in case the instance has never been started before.
+	err = os.MkdirAll(v.forkfileRunPath(), 0o700)
+	if err != nil {
+		return nil, err
+	}
+
+	// Trickery to handle paths > 108 chars.
+	dirFile, err := os.Open(v.forkfileRunPath())
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = dirFile.Close() }()
+
+	forkfileAddr, err := net.ResolveUnixAddr("unix", fmt.Sprintf("/proc/self/fd/%d/forkfile.sock", dirFile.Fd()))
+	if err != nil {
+		return nil, err
+	}
+
+	// Attempt to connect on existing socket.
+	forkfilePath := filepath.Join(v.forkfileRunPath(), "forkfile.sock")
+	forkfileConn, err := net.DialUnix("unix", nil, forkfileAddr)
+	if err == nil {
+		// Found an existing server.
+		return forkfileConn, nil
+	}
+
+	// Setup reverter.
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Create the listener.
+	_ = os.Remove(forkfilePath)
+	forkfileListener, err := net.ListenUnix("unix", forkfileAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	reverter.Add(func() {
+		_ = forkfileListener.Close()
+		_ = os.Remove(forkfilePath)
+	})
+
+	// Spawn forkfile in a Go routine.
+	chReady := make(chan error)
+	go func() {
+		// Lock to avoid concurrent running forkfile.
+		runUnlock, err := locking.Lock(context.TODO(), v.forkfileRunningLockName())
+		if err != nil {
+			chReady <- err
+			return
+		}
+
+		defer runUnlock()
+
+		err = v.MountTask(func(mountPath string, _ *operations.Operation) error {
+			// Start building the command.
+			args := []string{
+				s.OS.ExecPath,
+				"forkfile",
+				"--",
+			}
+
+			extraFiles := []*os.File{}
+
+			// Get the listener file.
+			forkfileFile, err := forkfileListener.File()
+			if err != nil {
+				return err
+			}
+
+			defer func() { _ = forkfileFile.Close() }()
+
+			args = append(args, "3")
+			extraFiles = append(extraFiles, forkfileFile)
+
+			// Get the rootfs.
+			rootfsFile, err := os.Open(v.MountPath())
+			if err != nil {
+				return err
+			}
+
+			defer func() { _ = rootfsFile.Close() }()
+
+			args = append(args, "4")
+			extraFiles = append(extraFiles, rootfsFile)
+
+			// Get the pidfd, omitting it in case of a storage volume.
+			args = append(args, "-1")
+
+			// Finalize the args.
+			args = append(args, "0")
+
+			// Prepare sftp server.
+			forkfile := exec.Cmd{
+				Path:       s.OS.ExecPath,
+				Args:       args,
+				ExtraFiles: extraFiles,
+			}
+
+			var stderr bytes.Buffer
+			forkfile.Stderr = &stderr
+
+			// Get the disk idmap.
+			var idmapset *idmap.Set
+			jsonIdmap, ok := v.config["volatile.idmap.last"]
+			if ok {
+				idmapset, err = idmap.NewSetFromJSON(jsonIdmap)
+				if err != nil {
+					return err
+				}
+			}
+
+			if idmapset != nil {
+				forkfile.SysProcAttr = &syscall.SysProcAttr{
+					Cloneflags: syscall.CLONE_NEWUSER,
+					Credential: &syscall.Credential{
+						Uid: uint32(0),
+						Gid: uint32(0),
+					},
+					UidMappings: idmapset.ToUIDMappings(),
+					GidMappings: idmapset.ToGIDMappings(),
+				}
+			}
+
+			// Start the server.
+			err = forkfile.Start()
+			if err != nil {
+				return fmt.Errorf("Failed to run forkfile: %w: %s", err, strings.TrimSpace(stderr.String()))
+			}
+
+			// Write PID file.
+			pidFile := filepath.Join(v.forkfileRunPath(), "forkfile.pid")
+			err = os.WriteFile(pidFile, fmt.Appendf(nil, "%d\n", forkfile.Process.Pid), 0o600)
+			if err != nil {
+				return fmt.Errorf("Failed to write forkfile PID: %w", err)
+			}
+
+			// Close the listener and delete the socket immediately after forkfile exits to avoid clients
+			// thinking a listener is available while other deferred calls are being processed.
+			defer func() {
+				_ = forkfileListener.Close()
+				_ = os.Remove(forkfilePath)
+				_ = os.Remove(pidFile)
+			}()
+
+			// Indicate the process was spawned without error.
+			close(chReady)
+
+			// Wait for completion.
+			err = forkfile.Wait()
+			if err != nil {
+				logger.Error("SFTP server stopped with error", logger.Ctx{"err": err, "stderr": strings.TrimSpace(stderr.String())})
+				// Don't return an error as channel is already closed.
+				return nil
+			}
+
+			return nil
+		}, nil)
+		if err != nil {
+			chReady <- err
+		}
+	}()
+
+	// Wait for forkfile to have been spawned.
+	err = <-chReady
+	if err != nil {
+		return nil, err
+	}
+
+	// Connect to the new server.
+	forkfileConn, err = net.DialUnix("unix", nil, forkfileAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	// All done.
+	reverter.Success()
+
+	return forkfileConn, nil
+}
+
+// FileSFTP returns an SFTP connection to the forkfile handler.
+func (v Volume) FileSFTP(s *state.State) (*sftp.Client, error) {
+	// Connect to the forkfile daemon.
+	conn, err := v.FileSFTPConn(s)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get a SFTP client.
+	client, err := sftp.NewClientPipe(conn, conn)
+	if err != nil {
+		_ = conn.Close()
+		return nil, err
+	}
+
+	go func() {
+		// Wait for the client to be done before closing the connection.
+		_ = client.Wait()
+		_ = conn.Close()
+	}()
+
+	return client, nil
 }
