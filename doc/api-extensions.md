@@ -2920,3 +2920,8 @@ A `used_by` field was added to the `GET /1.0/cluster/groups/{name}` endpoint.
 ## `bpf_token_delegation`
 
 This adds support for [eBPF token delegation](https://docs.ebpf.io/linux/concepts/token/).
+
+## `file_storage_volume`
+
+This adds file transfer API on the custom volumes.
+Implements `DELETE`, `GET`, `HEAD`, `POST` operations on the `/1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/files` endpoint.
