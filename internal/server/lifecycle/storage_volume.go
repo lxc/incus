@@ -17,11 +17,14 @@ type StorageVolumeAction string
 
 // All supported lifecycle events for storage volumes.
 const (
-	StorageVolumeCreated  = StorageVolumeAction(api.EventLifecycleStorageVolumeCreated)
-	StorageVolumeDeleted  = StorageVolumeAction(api.EventLifecycleStorageVolumeDeleted)
-	StorageVolumeUpdated  = StorageVolumeAction(api.EventLifecycleStorageVolumeUpdated)
-	StorageVolumeRenamed  = StorageVolumeAction(api.EventLifecycleStorageVolumeRenamed)
-	StorageVolumeRestored = StorageVolumeAction(api.EventLifecycleStorageVolumeRestored)
+	StorageVolumeCreated       = StorageVolumeAction(api.EventLifecycleStorageVolumeCreated)
+	StorageVolumeDeleted       = StorageVolumeAction(api.EventLifecycleStorageVolumeDeleted)
+	StorageVolumeFileDeleted   = StorageVolumeAction(api.EventLifecycleStorageVolumeFileDeleted)
+	StorageVolumeFilePushed    = StorageVolumeAction(api.EventLifecycleStorageVolumeFilePushed)
+	StorageVolumeFileRetrieved = StorageVolumeAction(api.EventLifecycleStorageVolumeFileRetrieved)
+	StorageVolumeUpdated       = StorageVolumeAction(api.EventLifecycleStorageVolumeUpdated)
+	StorageVolumeRenamed       = StorageVolumeAction(api.EventLifecycleStorageVolumeRenamed)
+	StorageVolumeRestored      = StorageVolumeAction(api.EventLifecycleStorageVolumeRestored)
 )
 
 // Event creates the lifecycle event for an action on a storage volume.
