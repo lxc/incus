@@ -1,6 +1,7 @@
 package incus
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -1163,4 +1164,155 @@ func (r *ProtocolIncus) GetStoragePoolVolumeFileSFTP(pool string, volType string
 	}()
 
 	return client, nil
+}
+
+// GetStorageVolumeFile retrieves the provided path from the storage volume.
+func (r *ProtocolIncus) GetStorageVolumeFile(pool string, volumeType string, volumeName string, filePath string) (io.ReadCloser, *InstanceFileResponse, error) {
+	// Send the request
+	path := fmt.Sprintf(
+		"/storage-pools/%s/volumes/%s/%s/files?path=%s",
+		url.PathEscape(pool), url.PathEscape(volumeType), url.PathEscape(volumeName), url.QueryEscape(filePath),
+	)
+
+	requestURL, err := r.setQueryAttributes(fmt.Sprintf("%s/1.0%s", r.httpBaseURL.String(), path))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	req, err := http.NewRequest("GET", requestURL, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Send the request
+	resp, err := r.DoHTTP(req)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Check the return value for a cleaner error
+	if resp.StatusCode != http.StatusOK {
+		_, _, err := incusParseResponse(resp)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	// Parse the headers
+	uid, gid, mode, fileType, _ := api.ParseFileHeaders(resp.Header)
+	fileResp := InstanceFileResponse{
+		UID:  uid,
+		GID:  gid,
+		Mode: mode,
+		Type: fileType,
+	}
+
+	if fileResp.Type == "directory" {
+		// Decode the response
+		response := api.Response{}
+		decoder := json.NewDecoder(resp.Body)
+
+		err = decoder.Decode(&response)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Get the file list
+		entries := []string{}
+		err = response.MetadataAsStruct(&entries)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		fileResp.Entries = entries
+
+		return nil, &fileResp, err
+	}
+
+	return resp.Body, &fileResp, err
+}
+
+// CreateStorageVolumeFile tells Incus to create a file in the storage volume.
+func (r *ProtocolIncus) CreateStorageVolumeFile(pool string, volumeType string, volumeName string, filePath string, args InstanceFileArgs) error {
+	// Send the request
+	path := fmt.Sprintf(
+		"/storage-pools/%s/volumes/%s/%s/files?path=%s",
+		url.PathEscape(pool), url.PathEscape(volumeType), url.PathEscape(volumeName), url.QueryEscape(filePath),
+	)
+
+	requestURL, err := r.setQueryAttributes(fmt.Sprintf("%s/1.0%s", r.httpBaseURL.String(), path))
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("POST", requestURL, args.Content)
+	if err != nil {
+		return err
+	}
+
+	req.GetBody = func() (io.ReadCloser, error) {
+		_, err := args.Content.Seek(0, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		return io.NopCloser(args.Content), nil
+	}
+
+	// Set the various headers
+	if args.UID > -1 {
+		req.Header.Set("X-Incus-uid", fmt.Sprintf("%d", args.UID))
+	}
+
+	if args.GID > -1 {
+		req.Header.Set("X-Incus-gid", fmt.Sprintf("%d", args.GID))
+	}
+
+	if args.Mode > -1 {
+		req.Header.Set("X-Incus-mode", fmt.Sprintf("%04o", args.Mode))
+	}
+
+	if args.Type != "" {
+		req.Header.Set("X-Incus-type", args.Type)
+	}
+
+	if args.WriteMode != "" {
+		req.Header.Set("X-Incus-write", args.WriteMode)
+	}
+
+	// Send the request
+	resp, err := r.DoHTTP(req)
+	if err != nil {
+		return err
+	}
+
+	// Check the return value for a cleaner error
+	_, _, err = incusParseResponse(resp)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteStorageVolumeFile deletes a file in the storage volume.
+func (r *ProtocolIncus) DeleteStorageVolumeFile(pool string, volumeType string, volumeName string, filePath string) error {
+	// Send the request
+	path := fmt.Sprintf(
+		"/storage-pools/%s/volumes/%s/%s/files?path=%s",
+		url.PathEscape(pool), url.PathEscape(volumeType), url.PathEscape(volumeName), url.QueryEscape(filePath),
+	)
+
+	requestURL, err := r.setQueryAttributes(path)
+	if err != nil {
+		return err
+	}
+
+	// Send the request
+	_, _, err = r.query("DELETE", requestURL, nil, "")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
