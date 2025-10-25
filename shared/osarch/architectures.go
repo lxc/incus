@@ -45,7 +45,7 @@ var architectureNames = map[int]string{
 
 var architectureAliases = map[int][]string{
 	ARCH_32BIT_INTEL_X86:             {"i386", "i586", "386", "x86", "generic_32"},
-	ARCH_64BIT_INTEL_X86:             {"amd64", "generic_64"},
+	ARCH_64BIT_INTEL_X86:             {"amd64", "generic_64", "x86_64_v1", "x86_64_v2", "x86_64_v3", "x86_64_v4"},
 	ARCH_32BIT_ARMV6_LITTLE_ENDIAN:   {"armel", "arm"},
 	ARCH_32BIT_ARMV7_LITTLE_ENDIAN:   {"armhf", "armhfp", "armv7a_hardfp", "armv7", "armv7a_vfpv3_hardfp"},
 	ARCH_32BIT_ARMV8_LITTLE_ENDIAN:   {},
