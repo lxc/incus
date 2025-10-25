@@ -7,8 +7,6 @@ import (
 	"net/url"
 	"slices"
 
-	"github.com/gorilla/mux"
-
 	"github.com/lxc/incus/v6/internal/server/lifecycle"
 	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/request"
@@ -23,19 +21,19 @@ import (
 func storagePoolVolumeTypeFileHandler(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	volumeTypeName, err := url.PathUnescape(mux.Vars(r)["type"])
+	volumeTypeName, err := url.PathUnescape(r.PathValue("type"))
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	// Get the name of the storage volume.
-	volumeName, err := url.PathUnescape(mux.Vars(r)["volumeName"])
+	volumeName, err := url.PathUnescape(r.PathValue("volumeName"))
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	// Get the name of the storage pool the volume is supposed to be attached to.
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := url.PathUnescape(r.PathValue("poolName"))
 	if err != nil {
 		return response.SmartError(err)
 	}

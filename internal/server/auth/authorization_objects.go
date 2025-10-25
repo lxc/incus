@@ -7,8 +7,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/gorilla/mux"
-
 	"github.com/lxc/incus/v6/internal/version"
 )
 
@@ -191,7 +189,6 @@ func ObjectFromRequest(r *http.Request, objectType ObjectType, expandProject fun
 	location := values.Get("target")
 
 	muxValues := make([]string, 0, len(muxVars))
-	vars := mux.Vars(r)
 	for _, muxVar := range muxVars {
 		var err error
 		var muxValue string
@@ -201,14 +198,14 @@ func ObjectFromRequest(r *http.Request, objectType ObjectType, expandProject fun
 			if location != "" {
 				muxValue = location
 			} else if objectType == ObjectTypeStorageVolume {
-				muxValue = expandVolumeLocation(projectName, vars["poolName"], vars["type"], vars["volumeName"])
+				muxValue = expandVolumeLocation(projectName, r.PathValue("poolName"), r.PathValue("type"), r.PathValue("volumeName"))
 			}
 
 			if muxValue == "" {
 				continue
 			}
 		} else {
-			muxValue, err = url.PathUnescape(vars[muxVar])
+			muxValue, err = url.PathUnescape(r.PathValue(muxVar))
 			if err != nil {
 				return "", fmt.Errorf("Failed to unescape mux var %q for object type %q: %w", muxVar, objectType, err)
 			}

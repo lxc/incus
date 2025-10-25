@@ -13,8 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
-
 	"golang.org/x/sync/errgroup"
 
 	incus "github.com/lxc/incus/v6/client"
@@ -261,7 +259,7 @@ func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts eva
 func restoreClusterMember(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	originName, err := url.PathUnescape(mux.Vars(r)["name"])
+	originName, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
