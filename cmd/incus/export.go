@@ -35,7 +35,10 @@ func (c *cmdExport) Command() *cobra.Command {
 		`Export instances as backup tarballs.`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus export u1 backup0.tar.gz
-	Download a backup tarball of the u1 instance.`))
+	Download a backup tarball of the u1 instance.
+
+incus export u1 -
+	Download a backup tarball with it written to the standard output.`))
 
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVar(&c.flagInstanceOnly, "instance-only", false,
@@ -78,6 +81,11 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 	// Check if the target path already exists.
 	if util.PathExists(targetName) {
 		return fmt.Errorf(i18n.G("Target path %q already exists"), targetName)
+	}
+
+	// If outputting to stdout, quiesce the output.
+	if targetName == "-" {
+		c.global.flagQuiet = true
 	}
 
 	instanceOnly := c.flagInstanceOnly
@@ -144,7 +152,6 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 	var target *os.File
 	if targetName == "-" {
 		target = os.Stdout
-		c.global.flagQuiet = true
 	} else {
 		target, err = os.Create(targetName)
 		if err != nil {
