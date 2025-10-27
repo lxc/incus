@@ -1521,6 +1521,16 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  shortdesc: Maximum number of networks that the project can have
 		"limits.networks": validate.Optional(validate.IsUint32),
 
+		// gendoc:generate(entity=project, group=specific, key=network.hwaddr_pattern)
+		// Specify a MAC address template, e.g. `10:66:6a:xx:xx:xx`, to use within the cluster.
+		// Every `x` in the template will be replaced by a random character in `0`–`f`.
+		// Beware of the birthday paradox! A single `xx` block leads to a 10% collision probability with only 8 addresses; for a double `xx:xx` block, 118 addresses; for a triple `xx:xx:xx` block, 1881; for a quadruple `xx:xx:xx:xx` block, 30084. We provide absolutely no guardrail against that.
+		// ---
+		// type: string
+		// scope: global
+		// shortdesc: MAC address template
+		"network.hwaddr_pattern": validate.Optional(validate.IsMACPattern),
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted)
 		// This option must be enabled to allow the `restricted.*` keys to take effect.
 		// To temporarily remove the restrictions, you can disable this option instead of clearing the related keys.
