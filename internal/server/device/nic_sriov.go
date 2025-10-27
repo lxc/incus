@@ -227,7 +227,7 @@ func (d *nicSRIOV) Start() (*deviceConfig.RunConfig, error) {
 	network.SRIOVVirtualFunctionMutex.Unlock()
 
 	if d.inst.Type() == instancetype.Container {
-		err := networkSRIOVSetupContainerVFNIC(saveData["host_name"], d.config)
+		err := networkSRIOVSetupContainerVFNIC(saveData["host_name"], d.inst.MACPattern(), d.config)
 		if err != nil {
 			return nil, err
 		}
