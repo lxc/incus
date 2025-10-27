@@ -8375,7 +8375,7 @@ func (d *lxc) FillNetworkDevice(name string, m deviceConfig.Device) (deviceConfi
 		volatileHwaddr := d.localConfig[configKey]
 		if volatileHwaddr == "" {
 			// Generate a new MAC address.
-			volatileHwaddr, err = instance.DeviceNextInterfaceHWAddr()
+			volatileHwaddr, err = instance.DeviceNextInterfaceHWAddr(d.MACPattern())
 			if err != nil || volatileHwaddr == "" {
 				return nil, fmt.Errorf("Failed generating %q: %w", configKey, err)
 			}
