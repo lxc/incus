@@ -694,7 +694,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 			// Setup the guest network interface.
 			if d.inst.Type() == instancetype.Container {
-				err := networkSRIOVSetupContainerVFNIC(saveData["host_name"], d.config)
+				err := networkSRIOVSetupContainerVFNIC(saveData["host_name"], d.inst.MACPattern(), d.config)
 				if err != nil {
 					return nil, fmt.Errorf("Failed setting up container VF NIC: %w", err)
 				}

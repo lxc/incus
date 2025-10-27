@@ -980,7 +980,7 @@ func networkPCIBindWaitInterface(pciDev pcidev.Device, ifName string) error {
 
 // networkSRIOVSetupContainerVFNIC configures the VF NIC interface ready for moving into container.
 // It configures the MAC address and MTU, then brings the interface up.
-func networkSRIOVSetupContainerVFNIC(hostName string, config map[string]string) error {
+func networkSRIOVSetupContainerVFNIC(hostName string, macPattern string, config map[string]string) error {
 	// Set the MAC address.
 	if config["hwaddr"] != "" {
 		hwaddr, err := net.ParseMAC(config["hwaddr"])
@@ -1033,7 +1033,7 @@ func networkSRIOVSetupContainerVFNIC(hostName string, config map[string]string) 
 		}
 
 		// Try using a random MAC address and bringing interface up.
-		randMAC, err := instance.DeviceNextInterfaceHWAddr()
+		randMAC, err := instance.DeviceNextInterfaceHWAddr(macPattern)
 		if err != nil {
 			return fmt.Errorf("Failed generating random MAC for VF %q: %w", hostName, err)
 		}
