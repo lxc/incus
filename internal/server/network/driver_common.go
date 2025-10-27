@@ -1,10 +1,12 @@
 package network
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"maps"
+	"math/rand"
 	"net"
 	"os"
 	"slices"
@@ -1680,4 +1682,39 @@ func (n *common) setAvailable() {
 	unavailableNetworksMu.Lock()
 	delete(unavailableNetworks, pn)
 	unavailableNetworksMu.Unlock()
+}
+
+// RandomHwaddr generates a random MAC address from the provided random source.
+func (n *common) randomHwaddr(r *rand.Rand) string {
+	var pattern string
+	_ = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), n.project)
+		if err != nil {
+			return err
+		}
+
+		projectConfig, err := dbCluster.GetProjectConfig(ctx, tx.Tx(), dbProject.ID)
+		if err != nil {
+			return err
+		}
+
+		pattern = projectConfig["network.hwaddr_pattern"]
+		return nil
+	})
+
+	if pattern == "" {
+		pattern = n.state.GlobalConfig.NetworkHWAddrPattern()
+	}
+
+	// Generate a new random MAC address using the given pattern.
+	ret := bytes.Buffer{}
+	for _, c := range pattern {
+		if c == 'x' || c == 'X' {
+			ret.WriteString(fmt.Sprintf("%x", r.Int31n(16)))
+		} else {
+			ret.WriteString(string(c))
+		}
+	}
+
+	return ret.String()
 }

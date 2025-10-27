@@ -1037,7 +1037,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			return fmt.Errorf("Failed generating stable random bridge MAC: %w", err)
 		}
 
-		randomHwaddr := randomHwaddr(r)
+		randomHwaddr := n.randomHwaddr(r)
 		bridge.Address, err = net.ParseMAC(randomHwaddr)
 		if err != nil {
 			return fmt.Errorf("Failed parsing MAC address %q: %w", randomHwaddr, err)
