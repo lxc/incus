@@ -149,6 +149,7 @@ type Instance interface {
 	FillNetworkDevice(name string, m deviceConfig.Device) (deviceConfig.Device, error)
 
 	ETag() []any
+	MACPattern() string
 
 	// Paths.
 	Path() string
