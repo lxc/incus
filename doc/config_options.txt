@@ -4501,6 +4501,15 @@ Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.
 Specify the number of days after which the unused cached image expires.
 ```
 
+```{config:option} network.hwaddr_pattern project-specific
+:scope: "global"
+:shortdesc: "MAC address template"
+:type: "string"
+Specify a MAC address template, e.g. `10:66:6a:xx:xx:xx`, to use within the cluster.
+Every `x` in the template will be replaced by a random character in `0`–`f`.
+Beware of the birthday paradox! A single `xx` block leads to a 10% collision probability with only 8 addresses; for a double `xx:xx` block, 118 addresses; for a triple `xx:xx:xx` block, 1881; for a quadruple `xx:xx:xx:xx` block, 30084. We provide absolutely no guardrail against that.
+```
+
 ```{config:option} user.* project-specific
 :shortdesc: "User-provided free-form key/value pairs"
 :type: "string"
@@ -5179,6 +5188,18 @@ Set this option to the name of the local LINSTOR satellite node, should it be di
 ```
 
 <!-- config group server-miscellaneous end -->
+<!-- config group server-network start -->
+```{config:option} network.hwaddr_pattern server-network
+:defaultdesc: "`10:66:6a:xx:xx:xx`"
+:scope: "global"
+:shortdesc: "MAC address template"
+:type: "string"
+Specify a MAC address template, e.g. `10:66:6a:xx:xx:xx`, to use within the cluster.
+Every `x` in the template will be replaced by a random character in `0`–`f`.
+Beware of the birthday paradox! A single `xx` block leads to a 10% collision probability with only 8 addresses; for a double `xx:xx` block, 118 addresses; for a triple `xx:xx:xx` block, 1881; for a quadruple `xx:xx:xx:xx` block, 30084. We provide absolutely no guardrail against that.
+```
+
+<!-- config group server-network end -->
 <!-- config group server-oidc start -->
 ```{config:option} oidc.audience server-oidc
 :scope: "global"
