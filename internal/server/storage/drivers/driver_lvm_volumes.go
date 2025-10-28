@@ -1131,6 +1131,11 @@ func (d *lvm) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, _ b
 
 // CreateVolumeSnapshot creates a snapshot of a volume.
 func (d *lvm) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) error {
+	// Perform validation
+	if d.isRemote() && snapVol.ContentType() == ContentTypeBlock {
+		return fmt.Errorf("lvmcluster doesn't currently support snapshot creation")
+	}
+
 	parentName, _, _ := api.GetParentAndSnapshotName(snapVol.name)
 	parentVol := NewVolume(d, d.name, snapVol.volType, snapVol.contentType, parentName, snapVol.config, snapVol.poolConfig)
 	snapPath := snapVol.MountPath()
