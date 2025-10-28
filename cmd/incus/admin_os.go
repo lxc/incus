@@ -19,6 +19,7 @@ type cmdAdminOS struct {
 func (c *cmdAdminOS) Command() *cobra.Command {
 	args := &cli.Args{
 		SupportsTarget:    true,
+		SupportsRemote:    true,
 		DefaultListFormat: c.global.defaultListFormat(),
 		DoHTTP: func(remoteName string, req *http.Request) (*http.Response, error) {
 			if remoteName != "" && !strings.HasSuffix(remoteName, ":") {
