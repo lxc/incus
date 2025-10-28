@@ -141,8 +141,10 @@ func (d *lvm) isRemote() bool {
 // Info returns info about the driver and its environment.
 func (d *lvm) Info() Info {
 	name := "lvm"
+	targetFormat := BlockVolumeTypeRaw
 	if d.clustered {
 		name = "lvmcluster"
+		targetFormat = BlockVolumeTypeQcow2
 	}
 
 	return Info{
@@ -163,6 +165,7 @@ func (d *lvm) Info() Info {
 		Buckets:                      !d.isRemote(),
 		Deactivate:                   d.isRemote(),
 		ZeroUnpack:                   !d.usesThinpool(),
+		TargetFormat:                 targetFormat,
 	}
 }
 

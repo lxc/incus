@@ -685,7 +685,7 @@ func (b *backend) CreateInstance(inst instance.Instance, op *operations.Operatio
 	var filler *drivers.VolumeFiller
 	if inst.Type() == instancetype.Container {
 		filler = &drivers.VolumeFiller{
-			Fill: func(vol drivers.Volume, rootBlockPath string, allowUnsafeResize bool, targetIsZero bool) (int64, error) {
+			Fill: func(vol drivers.Volume, rootBlockPath string, allowUnsafeResize bool, targetIsZero bool, targetFormat string) (int64, error) {
 				// Create an empty rootfs.
 				err := os.Mkdir(filepath.Join(vol.MountPath(), "rootfs"), 0o755)
 				if err != nil && !os.IsExist(err) {
@@ -1707,8 +1707,8 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 // imageFiller returns a function that can be used as a filler function with CreateVolume().
 // The function returned will unpack the specified image archive into the specified mount path
 // provided, and for VM images, a raw root block path is required to unpack the qcow2 image into.
-func (b *backend) imageFiller(fingerprint string, op *operations.Operation) func(vol drivers.Volume, rootBlockPath string, allowUnsafeResize bool, targetIsZero bool) (int64, error) {
-	return func(vol drivers.Volume, rootBlockPath string, allowUnsafeResize bool, targetIsZero bool) (int64, error) {
+func (b *backend) imageFiller(fingerprint string, op *operations.Operation) func(vol drivers.Volume, rootBlockPath string, allowUnsafeResize bool, targetIsZero bool, targetFormat string) (int64, error) {
+	return func(vol drivers.Volume, rootBlockPath string, allowUnsafeResize bool, targetIsZero bool, targetFormat string) (int64, error) {
 		var tracker *ioprogress.ProgressTracker
 		if op != nil { // Not passed when being done as part of pre-migration setup.
 			metadata := make(map[string]any)
@@ -1721,15 +1721,15 @@ func (b *backend) imageFiller(fingerprint string, op *operations.Operation) func
 		}
 
 		imageFile := internalUtil.VarPath("images", fingerprint)
-		return ImageUnpack(imageFile, vol, rootBlockPath, b.state.OS, allowUnsafeResize, targetIsZero, tracker)
+		return ImageUnpack(imageFile, vol, rootBlockPath, b.state.OS, allowUnsafeResize, targetIsZero, tracker, targetFormat)
 	}
 }
 
 // isoFiller returns a function that can be used as a filler function with CreateVolume().
 // The function returned will copy the ISO content into the specified mount path
 // provided.
-func (b *backend) isoFiller(data io.Reader) func(vol drivers.Volume, rootBlockPath string, allowUnsafeResize bool, targetIsZero bool) (int64, error) {
-	return func(vol drivers.Volume, rootBlockPath string, allowUnsafeResize bool, targetIsZero bool) (int64, error) {
+func (b *backend) isoFiller(data io.Reader) func(vol drivers.Volume, rootBlockPath string, allowUnsafeResize bool, targetIsZero bool, targetFormat string) (int64, error) {
+	return func(vol drivers.Volume, rootBlockPath string, allowUnsafeResize bool, targetIsZero bool, targetFormat string) (int64, error) {
 		f, err := os.OpenFile(rootBlockPath, os.O_CREATE|os.O_WRONLY, 0o600)
 		if err != nil {
 			return -1, err
