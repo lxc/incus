@@ -85,9 +85,6 @@ func ForwardedOperationResponse(project string, op *api.Operation) response.Resp
 
 func (r *forwardedOperationResponse) Render(w http.ResponseWriter) error {
 	url := fmt.Sprintf("/%s/operations/%s", version.APIVersion, r.op.ID)
-	if r.project != "" {
-		url += fmt.Sprintf("?project=%s", r.project)
-	}
 
 	body := api.ResponseRaw{
 		Type:       api.AsyncResponse,
