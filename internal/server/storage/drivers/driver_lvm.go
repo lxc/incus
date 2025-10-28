@@ -725,6 +725,11 @@ func (d *lvm) Update(changedConfig map[string]string) error {
 		return errors.New("volume.lvm.stripes.size cannot be changed when using thin pool")
 	}
 
+	_, changed = changedConfig["volume.block.type"]
+	if changed {
+		return errors.New("volume.block.type cannot be changed after creation")
+	}
+
 	if changedConfig["lvm.vg_name"] != "" {
 		_, err := subprocess.TryRunCommand("vgrename", d.config["lvm.vg_name"], changedConfig["lvm.vg_name"])
 		if err != nil {
