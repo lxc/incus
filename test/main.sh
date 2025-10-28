@@ -323,6 +323,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_network_acl "network ACL management"
     run_test test_network_forward "network address forwards"
     run_test test_network_zone "network DNS zones"
+    run_test test_network_hwaddr_pattern "network MAC address pattern"
     run_test test_idmap "id mapping"
     run_test test_template "file templating"
     run_test test_pki "PKI mode"
