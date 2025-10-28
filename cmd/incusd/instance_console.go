@@ -491,7 +491,7 @@ func instanceConsolePost(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(err)
 		}
 
-		return operations.ForwardedOperationResponse(projectName, opAPI)
+		return operations.ForwardedOperationResponse(opAPI)
 	}
 
 	if post.Type == "" {

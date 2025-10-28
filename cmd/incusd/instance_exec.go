@@ -601,7 +601,7 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(err)
 		}
 
-		return operations.ForwardedOperationResponse(projectName, opAPI)
+		return operations.ForwardedOperationResponse(opAPI)
 	}
 
 	inst, err := instance.LoadByProjectAndName(s, projectName, name)
