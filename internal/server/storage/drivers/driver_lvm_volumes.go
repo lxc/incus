@@ -58,6 +58,30 @@ func (d *lvm) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 		reverter.Add(func() { _ = d.DeleteVolume(fsVol, op) })
 	}
 
+	// Format LV as qcow2 (lvmcluster).
+	if vol.ContentType() == ContentTypeBlock && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
+		// Get the device path.
+		devPath, err := d.GetVolumeDiskPath(vol)
+		if err != nil {
+			return err
+		}
+
+		qcow2SizeBytes, err := d.roundedSizeBytesString(vol.ConfigSize())
+		if err != nil {
+			return err
+		}
+
+		err = Qcow2Create(devPath, "", qcow2SizeBytes)
+		if err != nil {
+			return err
+		}
+	} else if vol.ContentType() == ContentTypeFS && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
+		err = Qcow2CreateConfig(vol, op)
+		if err != nil {
+			return err
+		}
+	}
+
 	err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
 		// Run the volume filler function if supplied.
 		if filler != nil && filler.Fill != nil {
