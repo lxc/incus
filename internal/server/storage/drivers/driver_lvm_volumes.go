@@ -295,6 +295,13 @@ func (d *lvm) FillVolumeConfig(vol Volume) error {
 		}
 	}
 
+	if d.clustered && vol.ContentType() == ContentTypeBlock && vol.Type() == VolumeTypeVM {
+		if vol.config["block.type"] == "" {
+			// Unchangeable volume property: Set unconditionally.
+			vol.config["block.type"] = BlockVolumeTypeQcow2
+		}
+	}
+
 	// Inherit stripe settings from pool if not set and not using thin pool.
 	if !d.usesThinpool() {
 		if vol.config["lvm.stripes"] == "" {
@@ -311,7 +318,7 @@ func (d *lvm) FillVolumeConfig(vol Volume) error {
 
 // commonVolumeRules returns validation rules which are common for pool and volume.
 func (d *lvm) commonVolumeRules() map[string]func(value string) error {
-	return map[string]func(value string) error{
+	rules := map[string]func(value string) error{
 		// gendoc:generate(entity=storage_volume_lvm, group=common, key=block.mount_options)
 		//
 		// ---
@@ -348,6 +355,19 @@ func (d *lvm) commonVolumeRules() map[string]func(value string) error {
 		//  shortdesc: Size of stripes to use (at least 4096 bytes and multiple of 512 bytes)
 		"lvm.stripes.size": validate.Optional(validate.IsSize),
 	}
+
+	if d.clustered {
+		// gendoc:generate(entity=storage_lvm, group=common, key=block.type)
+		//
+		// ---
+		//  type:string
+		//  condition: block-based volume
+		//  default: same as `volume.block.type`
+		//  shortdesc: Type of the block volume
+		rules["block.type"] = validate.Optional(validate.IsOneOf(BlockVolumeTypeRaw, BlockVolumeTypeQcow2))
+	}
+
+	return rules
 }
 
 // ValidateVolume validates the supplied volume config.
@@ -493,6 +513,11 @@ func (d *lvm) UpdateVolume(vol Volume, changedConfig map[string]string) error {
 	_, changed = changedConfig["lvm.stripes.size"]
 	if changed {
 		return errors.New("lvm.stripes.size cannot be changed")
+	}
+
+	_, changed = changedConfig["block.type"]
+	if changed {
+		return errors.New("block.type cannot be changed after creation")
 	}
 
 	return nil
@@ -1133,7 +1158,13 @@ func (d *lvm) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, _ b
 func (d *lvm) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) error {
 	// Perform validation
 	if d.isRemote() && snapVol.ContentType() == ContentTypeBlock {
-		return fmt.Errorf("lvmcluster doesn't currently support snapshot creation")
+		if util.IsTrue(snapVol.ExpandedConfig("security.shared")) {
+			return fmt.Errorf(`Snapshots of shared custom storage volumes aren't supported on "lvmcluster"`)
+		}
+
+		if snapVol.ExpandedConfig("block.type") != BlockVolumeTypeQcow2 {
+			return fmt.Errorf(`Snapshots of raw block volumes aren't supported on "lvmcluster"`)
+		}
 	}
 
 	parentName, _, _ := api.GetParentAndSnapshotName(snapVol.name)
