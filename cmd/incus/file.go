@@ -885,15 +885,19 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		// Transfer the files
+		// Transfer the files.
 		args := incus.InstanceFileArgs{
 			UID:  -1,
 			GID:  -1,
 			Mode: -1,
 		}
 
+		// Check if the path already exists.
+		_, err := sftpConn.Stat(fpath)
+		fileExists := err == nil
+
 		if !c.noModeChange {
-			if c.file.flagMode == "" || c.file.flagUID == -1 || c.file.flagGID == -1 {
+			if !fileExists && (c.file.flagMode == "" || c.file.flagUID == -1 || c.file.flagGID == -1) {
 				finfo, err := f.Stat()
 				if err != nil {
 					return err
@@ -914,9 +918,17 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 				}
 			}
 
-			args.UID = int64(uid)
-			args.GID = int64(gid)
-			args.Mode = int(mode.Perm())
+			if !fileExists || c.file.flagUID != -1 {
+				args.UID = int64(uid)
+			}
+
+			if !fileExists || c.file.flagGID != -1 {
+				args.GID = int64(gid)
+			}
+
+			if !fileExists || c.file.flagMode != "" {
+				args.Mode = int(mode.Perm())
+			}
 		}
 
 		args.Type = "file"
