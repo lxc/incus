@@ -571,11 +571,7 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		if srcInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
-			targetIsLink = true
-		}
-
-		// Deal with recursion
+		// Deal with recursion.
 		if srcInfo.IsDir() {
 			if c.file.flagRecursive {
 				if !util.PathExists(target) {
@@ -598,6 +594,7 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 			return errors.New(i18n.G("Can't pull a directory without --recursive"))
 		}
 
+		// Determine the target path.
 		var targetPath string
 		if targetIsDir {
 			targetPath = filepath.Join(target, filepath.Base(pathSpec[1]))
@@ -605,6 +602,12 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 			targetPath = target
 		}
 
+		// Unless we're writing to stdout, symlinks get re-created as symlinks.
+		if srcInfo.Mode()&os.ModeSymlink == os.ModeSymlink && targetPath != "-" {
+			targetIsLink = true
+		}
+
+		// Prepare target.
 		var f *os.File
 		var linkName string
 
@@ -652,7 +655,7 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		if targetIsLink {
-			err = os.Symlink(linkName, srcInfo.Name())
+			err = os.Symlink(linkName, targetPath)
 			if err != nil {
 				progress.Done("")
 				return err
@@ -882,15 +885,19 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		// Transfer the files
+		// Transfer the files.
 		args := incus.InstanceFileArgs{
 			UID:  -1,
 			GID:  -1,
 			Mode: -1,
 		}
 
+		// Check if the path already exists.
+		_, err := sftpConn.Stat(fpath)
+		fileExists := err == nil
+
 		if !c.noModeChange {
-			if c.file.flagMode == "" || c.file.flagUID == -1 || c.file.flagGID == -1 {
+			if !fileExists && (c.file.flagMode == "" || c.file.flagUID == -1 || c.file.flagGID == -1) {
 				finfo, err := f.Stat()
 				if err != nil {
 					return err
@@ -911,9 +918,17 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 				}
 			}
 
-			args.UID = int64(uid)
-			args.GID = int64(gid)
-			args.Mode = int(mode.Perm())
+			if !fileExists || c.file.flagUID != -1 {
+				args.UID = int64(uid)
+			}
+
+			if !fileExists || c.file.flagGID != -1 {
+				args.GID = int64(gid)
+			}
+
+			if !fileExists || c.file.flagMode != "" {
+				args.Mode = int(mode.Perm())
+			}
 		}
 
 		args.Type = "file"
