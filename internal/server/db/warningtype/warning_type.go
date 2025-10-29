@@ -56,6 +56,8 @@ const (
 	StoragePoolUnvailable
 	// UnableToUpdateClusterCertificate represents the unable to update cluster certificate warning.
 	UnableToUpdateClusterCertificate
+	// SELinuxNotAvailable represents the SELinux not available warning.
+	SELinuxNotAvailable
 )
 
 // TypeNames associates a warning code to its name.
@@ -84,6 +86,7 @@ var TypeNames = map[Type]string{
 	InstanceTypeNotOperational:        "Instance type not operational",
 	StoragePoolUnvailable:             "Storage pool unavailable",
 	UnableToUpdateClusterCertificate:  "Unable to update cluster certificate",
+	SELinuxNotAvailable:               "SELinux support has been disabled",
 }
 
 // Severity returns the severity of the warning type.
@@ -136,6 +139,8 @@ func (t Type) Severity() Severity {
 	case StoragePoolUnvailable:
 		return SeverityHigh
 	case UnableToUpdateClusterCertificate:
+		return SeverityLow
+	case SELinuxNotAvailable:
 		return SeverityLow
 	}
 
