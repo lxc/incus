@@ -652,7 +652,7 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		if targetIsLink {
-			err = os.Symlink(linkName, srcInfo.Name())
+			err = os.Symlink(linkName, targetPath)
 			if err != nil {
 				progress.Done("")
 				return err
