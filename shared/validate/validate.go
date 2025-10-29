@@ -266,6 +266,16 @@ func IsNetworkMAC(value string) error {
 	return nil
 }
 
+// IsMACPattern validates whether the string is a MAC address pattern.
+func IsMACPattern(value string) error {
+	match, _ := regexp.MatchString(`^(?:[0-9a-fA-FxX]{2}:){5}[0-9a-fA-FxX]{2}$`, value)
+	if !match {
+		return errors.New("Invalid MAC address pattern, must be 6 bytes (hex characters or `x` to denote a wildcard) separated by colons")
+	}
+
+	return nil
+}
+
 // IsNetworkAddress validates an IP (v4 or v6) address string.
 func IsNetworkAddress(value string) error {
 	ip := net.ParseIP(value)

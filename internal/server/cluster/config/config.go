@@ -324,6 +324,11 @@ func (c *Config) OpenFGA() (apiURL string, apiToken string, storeID string) {
 	return c.m.GetString("openfga.api.url"), c.m.GetString("openfga.api.token"), c.m.GetString("openfga.store.id")
 }
 
+// NetworkHWAddrPattern returns the MAC address pattern used in the cluster.
+func (c *Config) NetworkHWAddrPattern() string {
+	return c.m.GetString("network.hwaddr_pattern")
+}
+
 // Loggers returns a map where the key is the logger name and the value is its type.
 func (c *Config) Loggers() (map[string]string, error) {
 	result := make(map[string]string)
@@ -903,6 +908,17 @@ var ConfigSchema = config.Schema{
 	//  defaultdesc: `lifecycle,logging`
 	//  shortdesc: Events to send to the Loki server
 	"loki.types": {Validator: validate.Optional(validate.IsListOf(validate.IsOneOf("lifecycle", "logging", "network-acl"))), Default: "lifecycle,logging", Deprecated: "Use 'logging.*.types' instead"},
+
+	// gendoc:generate(entity=server, group=network, key=network.hwaddr_pattern)
+	// Specify a MAC address template, e.g. `10:66:6a:xx:xx:xx`, to use within the cluster.
+	// Every `x` in the template will be replaced by a random character in `0`–`f`.
+	// Beware of the birthday paradox! A single `xx` block leads to a 10% collision probability with only 8 addresses; for a double `xx:xx` block, 118 addresses; for a triple `xx:xx:xx` block, 1881; for a quadruple `xx:xx:xx:xx` block, 30084. We provide absolutely no guardrail against that.
+	// ---
+	// type: string
+	// scope: global
+	// defaultdesc: `10:66:6a:xx:xx:xx`
+	// shortdesc: MAC address template
+	"network.hwaddr_pattern": {Default: "10:66:6a:xx:xx:xx", Validator: validate.Optional(validate.IsMACPattern)},
 
 	// gendoc:generate(entity=server, group=openfga, key=openfga.api.token)
 	//

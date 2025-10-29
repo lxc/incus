@@ -505,6 +505,7 @@ var APIExtensions = []string{
 	"cluster_group_usedby",
 	"bpf_token_delegation",
 	"file_storage_volume",
+	"network_hwaddr_pattern",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

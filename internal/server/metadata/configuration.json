@@ -5081,6 +5081,14 @@
 						}
 					},
 					{
+						"network.hwaddr_pattern": {
+							"longdesc": "Specify a MAC address template, e.g. `10:66:6a:xx:xx:xx`, to use within the cluster.\nEvery `x` in the template will be replaced by a random character in `0`–`f`.\nBeware of the birthday paradox! A single `xx` block leads to a 10% collision probability with only 8 addresses; for a double `xx:xx` block, 118 addresses; for a triple `xx:xx:xx` block, 1881; for a quadruple `xx:xx:xx:xx` block, 30084. We provide absolutely no guardrail against that.",
+							"scope": "global",
+							"shortdesc": "MAC address template",
+							"type": "string"
+						}
+					},
+					{
 						"user.*": {
 							"longdesc": "",
 							"shortdesc": "User-provided free-form key/value pairs",
@@ -5835,6 +5843,19 @@
 							"longdesc": "Set this option to the name of the local LINSTOR satellite node, should it be different from the Incus server name.",
 							"scope": "global",
 							"shortdesc": "LINSTOR satellite node name override",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"network": {
+				"keys": [
+					{
+						"network.hwaddr_pattern": {
+							"defaultdesc": "`10:66:6a:xx:xx:xx`",
+							"longdesc": "Specify a MAC address template, e.g. `10:66:6a:xx:xx:xx`, to use within the cluster.\nEvery `x` in the template will be replaced by a random character in `0`–`f`.\nBeware of the birthday paradox! A single `xx` block leads to a 10% collision probability with only 8 addresses; for a double `xx:xx` block, 118 addresses; for a triple `xx:xx:xx` block, 1881; for a quadruple `xx:xx:xx:xx` block, 30084. We provide absolutely no guardrail against that.",
+							"scope": "global",
+							"shortdesc": "MAC address template",
 							"type": "string"
 						}
 					}

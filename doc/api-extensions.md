@@ -2925,3 +2925,7 @@ This adds support for [eBPF token delegation](https://docs.ebpf.io/linux/concept
 
 This adds file transfer API on the custom volumes.
 Implements `DELETE`, `GET`, `HEAD`, `POST` operations on the `/1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/files` endpoint.
+
+## `network_hwaddr_pattern`
+
+This adds `network.hwaddr_pattern` global and per-project configuration keys to customize MAC address allocation.

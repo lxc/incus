@@ -1244,7 +1244,7 @@ func (n *ovn) getRouterMAC() (net.HardwareAddr, error) {
 			return nil, fmt.Errorf("Failed generating stable random router MAC: %w", err)
 		}
 
-		hwAddr = randomHwaddr(r)
+		hwAddr = n.randomHwaddr(r)
 		n.logger.Debug("Stable MAC generated", logger.Ctx{"seed": seed, "hwAddr": hwAddr})
 	}
 
