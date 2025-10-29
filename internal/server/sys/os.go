@@ -74,6 +74,11 @@ type OS struct {
 	AppArmorStacked   bool
 	AppArmorStacking  bool
 
+	// SELinux features
+	SELinuxAvailable          bool
+	SELinuxContextDaemon      string
+	SELinuxContextInstanceLXC string
+
 	// Cgroup features
 	CGInfo cgroup.Info
 
@@ -122,7 +127,7 @@ func DefaultOS() *OS {
 
 // Init our internal data structures.
 func (s *OS) Init() ([]cluster.Warning, error) {
-	var dbWarnings []cluster.Warning
+	dbWarnings := []cluster.Warning{}
 
 	err := s.initDirs()
 	if err != nil {
@@ -182,7 +187,8 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 		return nil, err
 	}
 
-	dbWarnings = s.initAppArmor()
+	dbWarnings = append(dbWarnings, s.initAppArmor()...)
+	dbWarnings = append(dbWarnings, s.initSELinux()...)
 	cgroup.Init()
 	s.CGInfo = cgroup.GetInfo()
 
