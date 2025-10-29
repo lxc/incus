@@ -571,11 +571,7 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		if srcInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
-			targetIsLink = true
-		}
-
-		// Deal with recursion
+		// Deal with recursion.
 		if srcInfo.IsDir() {
 			if c.file.flagRecursive {
 				if !util.PathExists(target) {
@@ -598,6 +594,7 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 			return errors.New(i18n.G("Can't pull a directory without --recursive"))
 		}
 
+		// Determine the target path.
 		var targetPath string
 		if targetIsDir {
 			targetPath = filepath.Join(target, filepath.Base(pathSpec[1]))
@@ -605,6 +602,12 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 			targetPath = target
 		}
 
+		// Unless we're writing to stdout, symlinks get re-created as symlinks.
+		if srcInfo.Mode()&os.ModeSymlink == os.ModeSymlink && targetPath != "-" {
+			targetIsLink = true
+		}
+
+		// Prepare target.
 		var f *os.File
 		var linkName string
 
