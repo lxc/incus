@@ -121,6 +121,23 @@ By default, all cluster members belong to the `default` group.
 
 See {ref}`howto-cluster-groups` and {ref}`cluster-target-instance` for more information.
 
+(cluster-cpu)=
+## Cluster CPU baseline
+
+For live-migration of virtual machines to be possible, the CPU of the target server must have at least the same capabilities as the source CPU.
+To achieve that, Incus automatically scans CPU features of all servers within a cluster and tries to calculate a baseline set of CPU capabilities.
+
+The guest then gets exposed a virtual QEMU CPU with those capabilities exposed.
+
+Homogeneous clusters can significantly benefit from turning this behavior off and instead directly exposing the host CPU to the guest with:
+
+    incus cluster group set default instances.vm.cpu.x86_64.baseline=host
+
+```{note}
+The automated baseline may not work in all environments, especially when mixing CPU generations or CPU vendors.
+For mixed environment, creating a cluster group per platform is recommended.
+```
+
 (clustering-instance-placement)=
 ## Automatic placement of instances
 
