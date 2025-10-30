@@ -5197,14 +5197,16 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 
 	var uplink *api.Network
 
-	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Load uplink network config.
-		_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, n.config["network"])
+	if n.config["network"] != "none" {
+		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Load uplink network config.
+			_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, n.config["network"])
 
-		return err
-	})
-	if err != nil {
-		return fmt.Errorf("Failed to load uplink network %q: %w", n.config["network"], err)
+			return err
+		})
+		if err != nil {
+			return fmt.Errorf("Failed to load uplink network %q: %w", n.config["network"], err)
+		}
 	}
 
 	// Get DNS records.
@@ -5245,7 +5247,7 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 		removeRoutes = append(removeRoutes, *externalRoute)
 
 		// Remove the DNAT rules when using l2proxy ingress mode on uplink.
-		if slices.Contains([]string{"l2proxy", ""}, uplink.Config["ovn.ingress_mode"]) {
+		if uplink != nil && slices.Contains([]string{"l2proxy", ""}, uplink.Config["ovn.ingress_mode"]) {
 			err = SubnetIterate(externalRoute, func(ip net.IP) error {
 				removeNATIPs = append(removeNATIPs, ip)
 
