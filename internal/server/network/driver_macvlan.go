@@ -2,9 +2,11 @@ package network
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/lxc/incus/v6/internal/server/cluster/request"
 	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/ip"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
@@ -92,7 +94,7 @@ func (n *macvlan) Rename(newName string) error {
 	return nil
 }
 
-// Start starts is a no-op.
+// Start starts the network.
 func (n *macvlan) Start() error {
 	n.logger.Debug("Start")
 
@@ -101,14 +103,33 @@ func (n *macvlan) Start() error {
 
 	reverter.Add(func() { n.setUnavailable() })
 
-	if !InterfaceExists(n.config["parent"]) {
-		return fmt.Errorf("Parent interface %q not found", n.config["parent"])
+	err := n.setup(n.config["parent"])
+	if err != nil {
+		return err
 	}
 
 	reverter.Success()
 
 	// Ensure network is marked as available now its started.
 	n.setAvailable()
+
+	return nil
+}
+
+// setup restarts the network.
+func (n *macvlan) setup(parent string) error {
+	n.logger.Debug("Setting up network")
+
+	if !InterfaceExists(parent) {
+		return fmt.Errorf("Parent interface %q not found", parent)
+	}
+
+	// Make sure the port is up.
+	link := &ip.Link{Name: parent}
+	err := link.SetUp()
+	if err != nil {
+		return fmt.Errorf("Failed to bring up the host interface %s: %w", parent, err)
+	}
 
 	return nil
 }
@@ -125,7 +146,7 @@ func (n *macvlan) Stop() error {
 func (n *macvlan) Update(newNetwork api.NetworkPut, targetNode string, clientType request.ClientType) error {
 	n.logger.Debug("Update", logger.Ctx{"clientType": clientType, "newNetwork": newNetwork})
 
-	dbUpdateNeeded, _, oldNetwork, err := n.common.configChanged(newNetwork)
+	dbUpdateNeeded, changedKeys, oldNetwork, err := n.common.configChanged(newNetwork)
 	if err != nil {
 		return err
 	}
@@ -149,6 +170,13 @@ func (n *macvlan) Update(newNetwork api.NetworkPut, targetNode string, clientTyp
 		// Reset changes to all nodes and database.
 		_ = n.common.update(oldNetwork, targetNode, clientType)
 	})
+
+	if slices.Contains(changedKeys, "parent") {
+		err = n.setup(newNetwork.Config["parent"])
+		if err != nil {
+			return err
+		}
+	}
 
 	// Apply changes to all nodes and database.
 	err = n.common.update(newNetwork, targetNode, clientType)
