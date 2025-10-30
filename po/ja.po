@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-10-24 18:51-0400\n"
+"POT-Creation-Date: 2025-10-30 12:08-0400\n"
 "PO-Revision-Date: 2025-10-21 04:27+0000\n"
 "Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -762,7 +762,7 @@ msgstr "<remote>: <path>"
 msgid "<source path> [<remote>:]<pool> <volume>/<target path>"
 msgstr "[<remote>:]<pool> <volume> [<path>]"
 
-#: cmd/incus/file.go:693
+#: cmd/incus/file.go:696
 msgid "<source path>... [<remote>:]<instance>/<path>"
 msgstr "<source path>... [<remote>:]<instance>/<path>"
 
@@ -1340,7 +1340,7 @@ msgstr "ローカル上のリネームでは、設定やプロファイルの上
 msgid "Can't provide a name for the target image"
 msgstr "ターゲットイメージの名前を取得できません"
 
-#: cmd/incus/file.go:598 cmd/incus/storage_volume.go:3003
+#: cmd/incus/file.go:594 cmd/incus/storage_volume.go:3003
 msgid "Can't pull a directory without --recursive"
 msgstr ""
 "ディレクトリを pull する場合は --recursive オプションを使用してください"
@@ -1376,7 +1376,7 @@ msgstr "リネームの場合は異なるリモートを指定できません"
 msgid "Can't specify column L when not clustered"
 msgstr "クラスターでない場合はカラムとして L は指定できません"
 
-#: cmd/incus/file.go:791 cmd/incus/storage_volume.go:3196
+#: cmd/incus/file.go:794 cmd/incus/storage_volume.go:3196
 msgid "Can't supply uid/gid/mode in recursive mode"
 msgstr "再帰 (recursive) モードでは uid/gid/mode を指定できません"
 
@@ -1898,7 +1898,7 @@ msgstr "空のインスタンスを作成"
 msgid "Create and start instances from images"
 msgstr "イメージからインスタンスを作成し、起動します"
 
-#: cmd/incus/file.go:108 cmd/incus/file.go:467 cmd/incus/file.go:705
+#: cmd/incus/file.go:108 cmd/incus/file.go:467 cmd/incus/file.go:708
 #: cmd/incus/storage_volume.go:2431 cmd/incus/storage_volume.go:2891
 #: cmd/incus/storage_volume.go:3111
 msgid "Create any directories necessary"
@@ -2265,8 +2265,8 @@ msgstr "警告を削除します"
 #: cmd/incus/create.go:47 cmd/incus/debug.go:24 cmd/incus/debug.go:45
 #: cmd/incus/delete.go:34 cmd/incus/exec.go:42 cmd/incus/export.go:34
 #: cmd/incus/file.go:52 cmd/incus/file.go:99 cmd/incus/file.go:294
-#: cmd/incus/file.go:378 cmd/incus/file.go:458 cmd/incus/file.go:695
-#: cmd/incus/file.go:971 cmd/incus/image.go:44 cmd/incus/image.go:153
+#: cmd/incus/file.go:378 cmd/incus/file.go:458 cmd/incus/file.go:698
+#: cmd/incus/file.go:986 cmd/incus/image.go:44 cmd/incus/image.go:153
 #: cmd/incus/image.go:315 cmd/incus/image.go:372 cmd/incus/image.go:509
 #: cmd/incus/image.go:680 cmd/incus/image.go:943 cmd/incus/image.go:1088
 #: cmd/incus/image.go:1444 cmd/incus/image.go:1530 cmd/incus/image.go:1599
@@ -2493,7 +2493,7 @@ msgstr "このプラットフォーム上ではディレクトリのインポー
 msgid "Directory to run the command in (default /root)"
 msgstr "コマンドを実行するディレクトリ (デフォルト /root)"
 
-#: cmd/incus/file.go:978 cmd/incus/storage_volume.go:2704
+#: cmd/incus/file.go:993 cmd/incus/storage_volume.go:2704
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr "SSH SFTP リスナーを使う際に認証を無効化します"
 
@@ -3190,7 +3190,7 @@ msgstr "インスタンスの SFTP への接続に失敗しました: %w"
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr "クライアント %q に対する SFTP インスタンスの接続に失敗しました: %v"
 
-#: cmd/incus/file.go:1059 cmd/incus/storage_volume.go:2775
+#: cmd/incus/file.go:1074 cmd/incus/storage_volume.go:2775
 #: cmd/incus/storage_volume.go:2966 cmd/incus/storage_volume.go:3170
 #, c-format
 msgid "Failed connecting to instance SFTP: %w"
@@ -4247,7 +4247,7 @@ msgstr "インスタンス名を指定する必要があります"
 msgid "Instance name is: %s"
 msgstr "インスタンス名: %s"
 
-#: cmd/incus/file.go:1043
+#: cmd/incus/file.go:1058
 msgid "Instance path cannot be used in SSH SFTP listener mode"
 msgstr "SSH SFTP リスナーモードではインスタンスのパスを使用できません"
 
@@ -4351,7 +4351,7 @@ msgstr "入力が無効です。正の値を入力してください"
 msgid "Invalid instance name: %s"
 msgstr "不正なインスタンス名: %s"
 
-#: cmd/incus/file.go:1038
+#: cmd/incus/file.go:1053
 #, c-format
 msgid "Invalid instance path: %q"
 msgstr "不正なインスタンスのパス: %q"
@@ -4425,7 +4425,7 @@ msgstr "不正な送り先 %s"
 msgid "Invalid source %s"
 msgstr "不正なソース %s"
 
-#: cmd/incus/file.go:151 cmd/incus/file.go:736 cmd/incus/storage_volume.go:2474
+#: cmd/incus/file.go:151 cmd/incus/file.go:739 cmd/incus/storage_volume.go:2474
 #: cmd/incus/storage_volume.go:3142
 #, c-format
 msgid "Invalid target %s"
@@ -6690,7 +6690,7 @@ msgstr "コピー元のボリューム名を指定する必要があります"
 msgid "Missing storage pool name"
 msgstr "ストレージプール名を指定する必要があります"
 
-#: cmd/incus/file.go:833
+#: cmd/incus/file.go:836
 msgid "Missing target directory"
 msgstr "コピー先のディレクトリを指定する必要があります"
 
@@ -6745,7 +6745,7 @@ msgstr ""
 msgid "Mount files from custom storage volumes"
 msgstr "新たにカスタムストレージボリュームをインポートします"
 
-#: cmd/incus/file.go:970 cmd/incus/file.go:971
+#: cmd/incus/file.go:985 cmd/incus/file.go:986
 msgid "Mount files from instances"
 msgstr "インスタンスからファイルをマウントします"
 
@@ -7661,7 +7661,7 @@ msgstr "新たにカスタムストレージボリュームをインポートし
 msgid "Pull files from instances"
 msgstr "インスタンスからファイルを取得します"
 
-#: cmd/incus/file.go:633 cmd/incus/storage_volume.go:3038
+#: cmd/incus/file.go:636 cmd/incus/storage_volume.go:3038
 #: cmd/incus/utils_sftp.go:190
 #, c-format
 msgid "Pulling %s from %s: %%s"
@@ -7672,11 +7672,11 @@ msgstr "ファイル %s を %s から取得します: %%s"
 msgid "Push files into custom volumes"
 msgstr "インスタンス内のファイルを管理します"
 
-#: cmd/incus/file.go:694 cmd/incus/file.go:695
+#: cmd/incus/file.go:697 cmd/incus/file.go:698
 msgid "Push files into instances"
 msgstr "インスタンス内にファイルをコピーします"
 
-#: cmd/incus/file.go:927 cmd/incus/storage_volume.go:3321
+#: cmd/incus/file.go:942 cmd/incus/storage_volume.go:3321
 #: cmd/incus/utils_sftp.go:310
 #, c-format
 msgid "Pushing %s to %s: %%s"
@@ -7752,7 +7752,7 @@ msgstr ""
 "リュームを特定します。\n"
 "  そして、データベースレコードの再作成を提案します。"
 
-#: cmd/incus/file.go:468 cmd/incus/file.go:704 cmd/incus/storage_volume.go:2892
+#: cmd/incus/file.go:468 cmd/incus/file.go:707 cmd/incus/storage_volume.go:2892
 #: cmd/incus/storage_volume.go:3110
 msgid "Recursively transfer files"
 msgstr "再帰的にファイルを転送します"
@@ -8252,7 +8252,7 @@ msgstr "クラスターメンバーの設定を行います"
 msgid "Set a cluster member's configuration keys"
 msgstr "クラスターメンバーの設定を行います"
 
-#: cmd/incus/file.go:979 cmd/incus/storage_volume.go:2705
+#: cmd/incus/file.go:994 cmd/incus/storage_volume.go:2705
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr "SSH SFTP リスナーを使う際の認証ユーザーを設定する"
 
@@ -8551,7 +8551,7 @@ msgstr "リモートの URL を設定します"
 msgid "Set the file's gid on create"
 msgstr "プッシュ時にファイルのgidを設定します"
 
-#: cmd/incus/file.go:707 cmd/incus/storage_volume.go:3113
+#: cmd/incus/file.go:710 cmd/incus/storage_volume.go:3113
 msgid "Set the file's gid on push"
 msgstr "プッシュ時にファイルのgidを設定します"
 
@@ -8560,7 +8560,7 @@ msgstr "プッシュ時にファイルのgidを設定します"
 msgid "Set the file's perms on create"
 msgstr "プッシュ時にファイルのパーミションを設定します"
 
-#: cmd/incus/file.go:708 cmd/incus/storage_volume.go:3114
+#: cmd/incus/file.go:711 cmd/incus/storage_volume.go:3114
 msgid "Set the file's perms on push"
 msgstr "プッシュ時にファイルのパーミションを設定します"
 
@@ -8569,7 +8569,7 @@ msgstr "プッシュ時にファイルのパーミションを設定します"
 msgid "Set the file's uid on create"
 msgstr "プッシュ時にファイルのuidを設定します"
 
-#: cmd/incus/file.go:706 cmd/incus/storage_volume.go:3112
+#: cmd/incus/file.go:709 cmd/incus/storage_volume.go:3112
 msgid "Set the file's uid on push"
 msgstr "プッシュ時にファイルのuidを設定します"
 
@@ -8653,7 +8653,7 @@ msgstr "新しいストレージボリュームをプロファイルに追加し
 msgid "Set the key as an instance property"
 msgstr "インスタンスプロパティとして設定します"
 
-#: cmd/incus/file.go:977 cmd/incus/storage_volume.go:2703
+#: cmd/incus/file.go:992 cmd/incus/storage_volume.go:2703
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr ""
 "マウントの代わりに address:port で SSH SFTP リスナーをセットアップします"
@@ -9170,11 +9170,11 @@ msgstr "取得日時"
 msgid "Target path %q already exists"
 msgstr "リモート %s は既に存在します"
 
-#: cmd/incus/file.go:1031 cmd/incus/storage_volume.go:2765
+#: cmd/incus/file.go:1046 cmd/incus/storage_volume.go:2765
 msgid "Target path and --listen flag cannot be used together"
 msgstr "ターゲットのパスと --listen オプションは同時に指定できません"
 
-#: cmd/incus/file.go:1025 cmd/incus/storage_volume.go:2759
+#: cmd/incus/file.go:1040 cmd/incus/storage_volume.go:2759
 msgid "Target path must be a directory"
 msgstr "ターゲットのパスはディレクトリでなければなりません"
 
@@ -10614,7 +10614,7 @@ msgid ""
 msgstr ""
 "[<remote>:]<instance>/<path> [[<remote>:]<instance>/<path>...] <target path>"
 
-#: cmd/incus/file.go:969
+#: cmd/incus/file.go:984
 msgid "[<remote>:]<instance>[/<path>] [<target path>]"
 msgstr "[<remote>:]<instance>[/<path>] [<target path>]"
 
@@ -11305,7 +11305,7 @@ msgstr ""
 "\t   インスタンス foo 内に、ターゲットが baz であるシンボリックリンク /bar を"
 "作成します。"
 
-#: cmd/incus/file.go:973
+#: cmd/incus/file.go:988
 #, fuzzy
 msgid ""
 "incus file mount foo/root fooroot\n"
@@ -11330,7 +11330,7 @@ msgstr ""
 "   インスタンスの /etc/hosts ファイルを取得し、カレントディレクトリにコピーし"
 "ます。"
 
-#: cmd/incus/file.go:697
+#: cmd/incus/file.go:700
 #, fuzzy
 msgid ""
 "incus file push /etc/hosts foo/etc/hosts\n"

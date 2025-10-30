@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-10-24 18:51-0400\n"
+"POT-Creation-Date: 2025-10-30 12:08-0400\n"
 "PO-Revision-Date: 2025-10-21 05:20+0000\n"
 "Last-Translator: pesder <j_h_liau@yahoo.com.tw>\n"
 "Language-Team: Chinese (Traditional Han script) <https://hosted.weblate.org/"
@@ -515,7 +515,7 @@ msgstr ""
 msgid "<source path> [<remote>:]<pool> <volume>/<target path>"
 msgstr ""
 
-#: cmd/incus/file.go:693
+#: cmd/incus/file.go:696
 msgid "<source path>... [<remote>:]<instance>/<path>"
 msgstr ""
 
@@ -1060,7 +1060,7 @@ msgstr ""
 msgid "Can't provide a name for the target image"
 msgstr ""
 
-#: cmd/incus/file.go:598 cmd/incus/storage_volume.go:3003
+#: cmd/incus/file.go:594 cmd/incus/storage_volume.go:3003
 msgid "Can't pull a directory without --recursive"
 msgstr ""
 
@@ -1095,7 +1095,7 @@ msgstr ""
 msgid "Can't specify column L when not clustered"
 msgstr ""
 
-#: cmd/incus/file.go:791 cmd/incus/storage_volume.go:3196
+#: cmd/incus/file.go:794 cmd/incus/storage_volume.go:3196
 msgid "Can't supply uid/gid/mode in recursive mode"
 msgstr ""
 
@@ -1580,7 +1580,7 @@ msgstr ""
 msgid "Create and start instances from images"
 msgstr ""
 
-#: cmd/incus/file.go:108 cmd/incus/file.go:467 cmd/incus/file.go:705
+#: cmd/incus/file.go:108 cmd/incus/file.go:467 cmd/incus/file.go:708
 #: cmd/incus/storage_volume.go:2431 cmd/incus/storage_volume.go:2891
 #: cmd/incus/storage_volume.go:3111
 msgid "Create any directories necessary"
@@ -1931,8 +1931,8 @@ msgstr ""
 #: cmd/incus/create.go:47 cmd/incus/debug.go:24 cmd/incus/debug.go:45
 #: cmd/incus/delete.go:34 cmd/incus/exec.go:42 cmd/incus/export.go:34
 #: cmd/incus/file.go:52 cmd/incus/file.go:99 cmd/incus/file.go:294
-#: cmd/incus/file.go:378 cmd/incus/file.go:458 cmd/incus/file.go:695
-#: cmd/incus/file.go:971 cmd/incus/image.go:44 cmd/incus/image.go:153
+#: cmd/incus/file.go:378 cmd/incus/file.go:458 cmd/incus/file.go:698
+#: cmd/incus/file.go:986 cmd/incus/image.go:44 cmd/incus/image.go:153
 #: cmd/incus/image.go:315 cmd/incus/image.go:372 cmd/incus/image.go:509
 #: cmd/incus/image.go:680 cmd/incus/image.go:943 cmd/incus/image.go:1088
 #: cmd/incus/image.go:1444 cmd/incus/image.go:1530 cmd/incus/image.go:1599
@@ -2150,7 +2150,7 @@ msgstr ""
 msgid "Directory to run the command in (default /root)"
 msgstr ""
 
-#: cmd/incus/file.go:978 cmd/incus/storage_volume.go:2704
+#: cmd/incus/file.go:993 cmd/incus/storage_volume.go:2704
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr ""
 
@@ -2745,7 +2745,7 @@ msgstr ""
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr ""
 
-#: cmd/incus/file.go:1059 cmd/incus/storage_volume.go:2775
+#: cmd/incus/file.go:1074 cmd/incus/storage_volume.go:2775
 #: cmd/incus/storage_volume.go:2966 cmd/incus/storage_volume.go:3170
 #, c-format
 msgid "Failed connecting to instance SFTP: %w"
@@ -3728,7 +3728,7 @@ msgstr ""
 msgid "Instance name is: %s"
 msgstr ""
 
-#: cmd/incus/file.go:1043
+#: cmd/incus/file.go:1058
 msgid "Instance path cannot be used in SSH SFTP listener mode"
 msgstr ""
 
@@ -3828,7 +3828,7 @@ msgstr ""
 msgid "Invalid instance name: %s"
 msgstr ""
 
-#: cmd/incus/file.go:1038
+#: cmd/incus/file.go:1053
 #, c-format
 msgid "Invalid instance path: %q"
 msgstr ""
@@ -3896,7 +3896,7 @@ msgstr ""
 msgid "Invalid source %s"
 msgstr ""
 
-#: cmd/incus/file.go:151 cmd/incus/file.go:736 cmd/incus/storage_volume.go:2474
+#: cmd/incus/file.go:151 cmd/incus/file.go:739 cmd/incus/storage_volume.go:2474
 #: cmd/incus/storage_volume.go:3142
 #, c-format
 msgid "Invalid target %s"
@@ -5428,7 +5428,7 @@ msgstr ""
 msgid "Missing storage pool name"
 msgstr ""
 
-#: cmd/incus/file.go:833
+#: cmd/incus/file.go:836
 msgid "Missing target directory"
 msgstr ""
 
@@ -5474,7 +5474,7 @@ msgstr ""
 msgid "Mount files from custom storage volumes"
 msgstr ""
 
-#: cmd/incus/file.go:970 cmd/incus/file.go:971
+#: cmd/incus/file.go:985 cmd/incus/file.go:986
 msgid "Mount files from instances"
 msgstr ""
 
@@ -6342,7 +6342,7 @@ msgstr ""
 msgid "Pull files from instances"
 msgstr ""
 
-#: cmd/incus/file.go:633 cmd/incus/storage_volume.go:3038
+#: cmd/incus/file.go:636 cmd/incus/storage_volume.go:3038
 #: cmd/incus/utils_sftp.go:190
 #, c-format
 msgid "Pulling %s from %s: %%s"
@@ -6352,11 +6352,11 @@ msgstr ""
 msgid "Push files into custom volumes"
 msgstr ""
 
-#: cmd/incus/file.go:694 cmd/incus/file.go:695
+#: cmd/incus/file.go:697 cmd/incus/file.go:698
 msgid "Push files into instances"
 msgstr ""
 
-#: cmd/incus/file.go:927 cmd/incus/storage_volume.go:3321
+#: cmd/incus/file.go:942 cmd/incus/storage_volume.go:3321
 #: cmd/incus/utils_sftp.go:310
 #, c-format
 msgid "Pushing %s to %s: %%s"
@@ -6421,7 +6421,7 @@ msgid ""
 "database records."
 msgstr ""
 
-#: cmd/incus/file.go:468 cmd/incus/file.go:704 cmd/incus/storage_volume.go:2892
+#: cmd/incus/file.go:468 cmd/incus/file.go:707 cmd/incus/storage_volume.go:2892
 #: cmd/incus/storage_volume.go:3110
 msgid "Recursively transfer files"
 msgstr ""
@@ -6896,7 +6896,7 @@ msgstr ""
 msgid "Set a cluster member's configuration keys"
 msgstr ""
 
-#: cmd/incus/file.go:979 cmd/incus/storage_volume.go:2705
+#: cmd/incus/file.go:994 cmd/incus/storage_volume.go:2705
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr ""
 
@@ -7117,7 +7117,7 @@ msgstr ""
 msgid "Set the file's gid on create"
 msgstr ""
 
-#: cmd/incus/file.go:707 cmd/incus/storage_volume.go:3113
+#: cmd/incus/file.go:710 cmd/incus/storage_volume.go:3113
 msgid "Set the file's gid on push"
 msgstr ""
 
@@ -7125,7 +7125,7 @@ msgstr ""
 msgid "Set the file's perms on create"
 msgstr ""
 
-#: cmd/incus/file.go:708 cmd/incus/storage_volume.go:3114
+#: cmd/incus/file.go:711 cmd/incus/storage_volume.go:3114
 msgid "Set the file's perms on push"
 msgstr ""
 
@@ -7133,7 +7133,7 @@ msgstr ""
 msgid "Set the file's uid on create"
 msgstr ""
 
-#: cmd/incus/file.go:706 cmd/incus/storage_volume.go:3112
+#: cmd/incus/file.go:709 cmd/incus/storage_volume.go:3112
 msgid "Set the file's uid on push"
 msgstr ""
 
@@ -7205,7 +7205,7 @@ msgstr ""
 msgid "Set the key as an instance property"
 msgstr ""
 
-#: cmd/incus/file.go:977 cmd/incus/storage_volume.go:2703
+#: cmd/incus/file.go:992 cmd/incus/storage_volume.go:2703
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr ""
 
@@ -7699,11 +7699,11 @@ msgstr ""
 msgid "Target path %q already exists"
 msgstr ""
 
-#: cmd/incus/file.go:1031 cmd/incus/storage_volume.go:2765
+#: cmd/incus/file.go:1046 cmd/incus/storage_volume.go:2765
 msgid "Target path and --listen flag cannot be used together"
 msgstr ""
 
-#: cmd/incus/file.go:1025 cmd/incus/storage_volume.go:2759
+#: cmd/incus/file.go:1040 cmd/incus/storage_volume.go:2759
 msgid "Target path must be a directory"
 msgstr ""
 
@@ -8994,7 +8994,7 @@ msgid ""
 "[<remote>:]<instance>/<path> [[<remote>:]<instance>/<path>...] <target path>"
 msgstr ""
 
-#: cmd/incus/file.go:969
+#: cmd/incus/file.go:984
 msgid "[<remote>:]<instance>[/<path>] [<target path>]"
 msgstr ""
 
@@ -9580,7 +9580,7 @@ msgid ""
 "   To create a symlink /bar in instance foo whose target is baz."
 msgstr ""
 
-#: cmd/incus/file.go:973
+#: cmd/incus/file.go:988
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory."
@@ -9597,7 +9597,7 @@ msgid ""
 "output."
 msgstr ""
 
-#: cmd/incus/file.go:697
+#: cmd/incus/file.go:700
 msgid ""
 "incus file push /etc/hosts foo/etc/hosts\n"
 "   To push /etc/hosts into the instance \"foo\".\n"

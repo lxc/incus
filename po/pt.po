@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-10-24 18:51-0400\n"
-"PO-Revision-Date: 2025-10-21 05:17+0000\n"
+"POT-Creation-Date: 2025-10-30 12:08-0400\n"
+"PO-Revision-Date: 2025-10-25 18:50+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
 ">\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.14-dev\n"
+"X-Generator: Weblate 5.14.1-dev\n"
 
 #: cmd/incus/info.go:441
 msgid "  Chassis:"
@@ -774,11 +774,10 @@ msgid "<remote>: <path>"
 msgstr "<remoto>: <caminho>"
 
 #: cmd/incus/storage_volume.go:3099
-#, fuzzy
 msgid "<source path> [<remote>:]<pool> <volume>/<target path>"
-msgstr "[<remoto>:]<pool> <volume> [<caminho alvo>]"
+msgstr "<caminho fonte> [<remoto>:]<pool> <volume>/<caminho alvo>"
 
-#: cmd/incus/file.go:693
+#: cmd/incus/file.go:696
 msgid "<source path>... [<remote>:]<instance>/<path>"
 msgstr "<caminho da fonte>... [<remoto>:]<instância>/<caminho>"
 
@@ -1355,7 +1354,7 @@ msgstr "Incapaz de sobrepor configuração ou perfis em renomeação local"
 msgid "Can't provide a name for the target image"
 msgstr "Não pode fornecer um nome para a imagem alvo"
 
-#: cmd/incus/file.go:598 cmd/incus/storage_volume.go:3003
+#: cmd/incus/file.go:594 cmd/incus/storage_volume.go:3003
 msgid "Can't pull a directory without --recursive"
 msgstr "Não pode puxar um diretório sem --recursive"
 
@@ -1390,7 +1389,7 @@ msgstr "Não pode especificar um remoto diferente para renomear"
 msgid "Can't specify column L when not clustered"
 msgstr "Não pode especificar column L quando não em agrupamento"
 
-#: cmd/incus/file.go:791 cmd/incus/storage_volume.go:3196
+#: cmd/incus/file.go:794 cmd/incus/storage_volume.go:3196
 msgid "Can't supply uid/gid/mode in recursive mode"
 msgstr "Não pode fornecer modo uid/gid em modo recursivo"
 
@@ -1913,21 +1912,19 @@ msgstr "Cria uma instância vazia"
 msgid "Create and start instances from images"
 msgstr "Cria e inicia instâncias a partir de imagens"
 
-#: cmd/incus/file.go:108 cmd/incus/file.go:467 cmd/incus/file.go:705
+#: cmd/incus/file.go:108 cmd/incus/file.go:467 cmd/incus/file.go:708
 #: cmd/incus/storage_volume.go:2431 cmd/incus/storage_volume.go:2891
 #: cmd/incus/storage_volume.go:3111
 msgid "Create any directories necessary"
 msgstr "Cria quaisquer directórios necessários"
 
 #: cmd/incus/storage_volume.go:2421
-#, fuzzy
 msgid "Create files and directories in custom vollume"
-msgstr "Cria ficheiros e directórios em instâncias"
+msgstr "Cria ficheiros e directórios em volume personalizado"
 
 #: cmd/incus/storage_volume.go:2422
-#, fuzzy
 msgid "Create files and directories in custom volume"
-msgstr "Cria ficheiros e directórios em instâncias"
+msgstr "Cria ficheiros e directórios volume personalizado"
 
 #: cmd/incus/file.go:98 cmd/incus/file.go:99
 msgid "Create files and directories in instances"
@@ -2138,9 +2135,8 @@ msgid "Delete custom storage volumes"
 msgstr "Apaga volumes de armazenamento personalizados"
 
 #: cmd/incus/storage_volume.go:2620 cmd/incus/storage_volume.go:2621
-#, fuzzy
 msgid "Delete files in custom volume"
-msgstr "Gerir ficheiros em volumes personalizados"
+msgstr "Apaga ficheiros em volume personalizado"
 
 #: cmd/incus/file.go:293 cmd/incus/file.go:294
 msgid "Delete files in instances"
@@ -2272,8 +2268,8 @@ msgstr "Apaga aviso"
 #: cmd/incus/create.go:47 cmd/incus/debug.go:24 cmd/incus/debug.go:45
 #: cmd/incus/delete.go:34 cmd/incus/exec.go:42 cmd/incus/export.go:34
 #: cmd/incus/file.go:52 cmd/incus/file.go:99 cmd/incus/file.go:294
-#: cmd/incus/file.go:378 cmd/incus/file.go:458 cmd/incus/file.go:695
-#: cmd/incus/file.go:971 cmd/incus/image.go:44 cmd/incus/image.go:153
+#: cmd/incus/file.go:378 cmd/incus/file.go:458 cmd/incus/file.go:698
+#: cmd/incus/file.go:986 cmd/incus/image.go:44 cmd/incus/image.go:153
 #: cmd/incus/image.go:315 cmd/incus/image.go:372 cmd/incus/image.go:509
 #: cmd/incus/image.go:680 cmd/incus/image.go:943 cmd/incus/image.go:1088
 #: cmd/incus/image.go:1444 cmd/incus/image.go:1530 cmd/incus/image.go:1599
@@ -2496,7 +2492,7 @@ msgstr "Importação de diretório não está disponível nesta plataforma"
 msgid "Directory to run the command in (default /root)"
 msgstr "Diretório para correr o comando em (predefinição /root)"
 
-#: cmd/incus/file.go:978 cmd/incus/storage_volume.go:2704
+#: cmd/incus/file.go:993 cmd/incus/storage_volume.go:2704
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr "Desativa a autenticação quando se usa escuta SSH SFTP"
 
@@ -2687,9 +2683,8 @@ msgid "Edit files in instances"
 msgstr "Edita ficheiros em instâncias"
 
 #: cmd/incus/storage_volume.go:2799 cmd/incus/storage_volume.go:2800
-#, fuzzy
 msgid "Edit files in storage volumes"
-msgstr "Lista volumes de armazenamento"
+msgstr "Edita ficheiros em volumes de armazenamento"
 
 #: cmd/incus/image.go:371 cmd/incus/image.go:372
 msgid "Edit image properties"
@@ -3184,16 +3179,16 @@ msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr "Falha ao verificar se instantâneos de instância existem \"%s:%s\": %w"
 
 #: cmd/incus/storage_volume.go:3242
-#, fuzzy, c-format
+#, c-format
 msgid "Failed connecting to instance SFTP brrr: %s %w"
-msgstr "Falhada ligação a instância SFTP: %w"
+msgstr "Falhou ligação a instância SFTP brrr: %s %w"
 
 #: cmd/incus/utils.go:715
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr "Falha ao ligar a instância SFTP para cliente %q: %v"
 
-#: cmd/incus/file.go:1059 cmd/incus/storage_volume.go:2775
+#: cmd/incus/file.go:1074 cmd/incus/storage_volume.go:2775
 #: cmd/incus/storage_volume.go:2966 cmd/incus/storage_volume.go:3170
 #, c-format
 msgid "Failed connecting to instance SFTP: %w"
@@ -4229,7 +4224,7 @@ msgstr "Nome de instância é obrigatório"
 msgid "Instance name is: %s"
 msgstr "Nome da instância é: %s"
 
-#: cmd/incus/file.go:1043
+#: cmd/incus/file.go:1058
 msgid "Instance path cannot be used in SSH SFTP listener mode"
 msgstr "O caminho da instância não pode ser usado no modo de escuta SSH SFTP"
 
@@ -4330,7 +4325,7 @@ msgstr "Entrada inválida, por favor insira um número positivo"
 msgid "Invalid instance name: %s"
 msgstr "Nome de instância inválido: %s"
 
-#: cmd/incus/file.go:1038
+#: cmd/incus/file.go:1053
 #, c-format
 msgid "Invalid instance path: %q"
 msgstr "Caminho de instância inválido: %q"
@@ -4401,7 +4396,7 @@ msgstr "Tipo de ordenação inválido fornecido"
 msgid "Invalid source %s"
 msgstr "Fonte inválida %s"
 
-#: cmd/incus/file.go:151 cmd/incus/file.go:736 cmd/incus/storage_volume.go:2474
+#: cmd/incus/file.go:151 cmd/incus/file.go:739 cmd/incus/storage_volume.go:2474
 #: cmd/incus/storage_volume.go:3142
 #, c-format
 msgid "Invalid target %s"
@@ -4413,9 +4408,9 @@ msgid "Invalid type %q"
 msgstr "Tipo inválido %q"
 
 #: cmd/incus/storage_volume.go:2952
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid volume %s"
-msgstr "Fonte inválida %s"
+msgstr "Volume inválido %s"
 
 #: cmd/incus/info.go:260
 #, c-format
@@ -6623,7 +6618,7 @@ msgstr "Nome de volume da fonte em falta"
 msgid "Missing storage pool name"
 msgstr "Nome de pool de armazenamento em falta"
 
-#: cmd/incus/file.go:833
+#: cmd/incus/file.go:836
 msgid "Missing target directory"
 msgstr "Directório alvo em falta"
 
@@ -6673,7 +6668,7 @@ msgstr "Mais de um ficheiro para descarregar, mas o alvo não é um diretório"
 msgid "Mount files from custom storage volumes"
 msgstr "Montar ficheiros de volumes de armazenamento personalizados"
 
-#: cmd/incus/file.go:970 cmd/incus/file.go:971
+#: cmd/incus/file.go:985 cmd/incus/file.go:986
 msgid "Mount files from instances"
 msgstr "Monta ficheiros de instâncias"
 
@@ -7557,30 +7552,28 @@ msgid "Publishing instance: %s"
 msgstr "A publicar instância: %s"
 
 #: cmd/incus/storage_volume.go:2881 cmd/incus/storage_volume.go:2882
-#, fuzzy
 msgid "Pull files from custom volumes"
-msgstr "Montar ficheiros de volumes de armazenamento personalizados"
+msgstr "Puxa ficheiros a partir de volumes personalizados"
 
 #: cmd/incus/file.go:457 cmd/incus/file.go:458
 msgid "Pull files from instances"
 msgstr "Puxa ficheiros de instâncias"
 
-#: cmd/incus/file.go:633 cmd/incus/storage_volume.go:3038
+#: cmd/incus/file.go:636 cmd/incus/storage_volume.go:3038
 #: cmd/incus/utils_sftp.go:190
 #, c-format
 msgid "Pulling %s from %s: %%s"
 msgstr "A puxar %s de %s: %%s"
 
 #: cmd/incus/storage_volume.go:3100 cmd/incus/storage_volume.go:3101
-#, fuzzy
 msgid "Push files into custom volumes"
-msgstr "Gerir ficheiros em volumes personalizados"
+msgstr "Empurra ficheiros para volumes personalizados"
 
-#: cmd/incus/file.go:694 cmd/incus/file.go:695
+#: cmd/incus/file.go:697 cmd/incus/file.go:698
 msgid "Push files into instances"
 msgstr "Envia ficheiros para instâncias"
 
-#: cmd/incus/file.go:927 cmd/incus/storage_volume.go:3321
+#: cmd/incus/file.go:942 cmd/incus/storage_volume.go:3321
 #: cmd/incus/utils_sftp.go:310
 #, c-format
 msgid "Pushing %s to %s: %%s"
@@ -7656,7 +7649,7 @@ msgstr ""
 "  pools mas não na base de dados. Depois irá oferecer o recriar destes "
 "registos da base de dados."
 
-#: cmd/incus/file.go:468 cmd/incus/file.go:704 cmd/incus/storage_volume.go:2892
+#: cmd/incus/file.go:468 cmd/incus/file.go:707 cmd/incus/storage_volume.go:2892
 #: cmd/incus/storage_volume.go:3110
 msgid "Recursively transfer files"
 msgstr "Transfere ficheiros recursivamente"
@@ -8137,7 +8130,7 @@ msgstr "Define as chaves de configuração de um grupo dum agrupamento"
 msgid "Set a cluster member's configuration keys"
 msgstr "Define as chaves de configuração de um membro do agrupamento"
 
-#: cmd/incus/file.go:979 cmd/incus/storage_volume.go:2705
+#: cmd/incus/file.go:994 cmd/incus/storage_volume.go:2705
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr "Define a autenticação do utilizador quando se usa escuta SSH SFTP"
 
@@ -8440,7 +8433,7 @@ msgstr "Define a URL para o remoto"
 msgid "Set the file's gid on create"
 msgstr "Define o gid do ficheiro ao ser criado"
 
-#: cmd/incus/file.go:707 cmd/incus/storage_volume.go:3113
+#: cmd/incus/file.go:710 cmd/incus/storage_volume.go:3113
 msgid "Set the file's gid on push"
 msgstr "Define o gid do ficheiro ao ser enviado"
 
@@ -8448,7 +8441,7 @@ msgstr "Define o gid do ficheiro ao ser enviado"
 msgid "Set the file's perms on create"
 msgstr "Define as permissões do ficheiro ao ser criado"
 
-#: cmd/incus/file.go:708 cmd/incus/storage_volume.go:3114
+#: cmd/incus/file.go:711 cmd/incus/storage_volume.go:3114
 msgid "Set the file's perms on push"
 msgstr "Define as permissões do ficheiro ao ser enviado"
 
@@ -8456,7 +8449,7 @@ msgstr "Define as permissões do ficheiro ao ser enviado"
 msgid "Set the file's uid on create"
 msgstr "Define o uid do ficheiro ao ser criado"
 
-#: cmd/incus/file.go:706 cmd/incus/storage_volume.go:3112
+#: cmd/incus/file.go:709 cmd/incus/storage_volume.go:3112
 msgid "Set the file's uid on push"
 msgstr "Define o uid do ficheiro ao ser enviado"
 
@@ -8528,7 +8521,7 @@ msgstr "Define a chave como uma propriedade de volume de armazenamento"
 msgid "Set the key as an instance property"
 msgstr "Define a chave como uma propriedade de instância"
 
-#: cmd/incus/file.go:977 cmd/incus/storage_volume.go:2703
+#: cmd/incus/file.go:992 cmd/incus/storage_volume.go:2703
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr "Configura escuta SSH SFTP no endereço:porto em vez de montar"
 
@@ -9040,11 +9033,11 @@ msgstr "Tomado em"
 msgid "Target path %q already exists"
 msgstr "Caminho alvo %q já existe"
 
-#: cmd/incus/file.go:1031 cmd/incus/storage_volume.go:2765
+#: cmd/incus/file.go:1046 cmd/incus/storage_volume.go:2765
 msgid "Target path and --listen flag cannot be used together"
 msgstr "O caminho do alvo e bandeira --listen não podem ser usados juntamente"
 
-#: cmd/incus/file.go:1025 cmd/incus/storage_volume.go:2759
+#: cmd/incus/file.go:1040 cmd/incus/storage_volume.go:2759
 msgid "Target path must be a directory"
 msgstr "O caminho alvo tem de ser um diretório"
 
@@ -10440,7 +10433,7 @@ msgstr ""
 "[<remoto>:]<instância>/<caminho> [[<remoto>:]<instância>/<caminho>...] "
 "<caminho do alvo>"
 
-#: cmd/incus/file.go:969
+#: cmd/incus/file.go:984
 msgid "[<remote>:]<instance>[/<path>] [<target path>]"
 msgstr "[<remoto>:]<instância>[/<caminho>] [<caminho do alvo>]"
 
@@ -10715,19 +10708,17 @@ msgid "[<remote>:]<pool> <volume> [key=value...]"
 msgstr "[<remoto>:]<pool> <volume> [chave=valor...]"
 
 #: cmd/incus/storage_volume.go:2618 cmd/incus/storage_volume.go:2798
-#, fuzzy
 msgid "[<remote>:]<pool> <volume>/<path>"
-msgstr "[<remoto>:]<pool> <volume> [<caminho>]"
+msgstr "[<remoto>:]<pool> <volume>/<caminho>"
 
 #: cmd/incus/storage_volume.go:2880
-#, fuzzy
 msgid "[<remote>:]<pool> <volume>/<path> <target path>"
-msgstr "[<remoto>:]<pool> <volume> [<caminho alvo>]"
+msgstr "[<remoto>:]<pool> <volume>/<caminho> <caminho alvo>"
 
 #: cmd/incus/storage_volume.go:2420
-#, fuzzy
 msgid "[<remote>:]<pool> <volume>/<path> [<symlink target path>]"
-msgstr "[<remoto>:]<pool> <volume> [<caminho alvo>]"
+msgstr ""
+"[<remoto>:]<pool> <volume>/<caminho> [<caminho alvo de link simbólico>]"
 
 #: cmd/incus/storage_volume.go:4002
 msgid "[<remote>:]<pool> <volume>/<snapshot>"
@@ -11047,7 +11038,6 @@ msgstr ""
 "barramento"
 
 #: cmd/incus/storage_volume.go:2884
-#, fuzzy
 msgid ""
 "incus custom volume file pull local v1/foo/etc/hosts .\n"
 "   To pull /etc/hosts from the custom volume and write it to the current "
@@ -11057,11 +11047,13 @@ msgid ""
 "   To pull /etc/hosts from the custom volume and write its output to "
 "standard output."
 msgstr ""
-"incus file pull foo/etc/hosts .\n"
-"   Para puxar /etc/hosts da instância e escrevê-lo no directório atual.\n"
+"incus custom volume file pull local v1/foo/etc/hosts .\n"
+"   Para puxar /etc/hosts a partir do volume personalizado e escrevê-lo no "
+"directório atual.\n"
 "\n"
-"incus file pull foo/etc/hosts -\n"
-"   Para puxar /etc/hosts da instância e escrevê-lo na saída standard."
+"incus file pull local v1 foo/etc/hosts -\n"
+"   Para puxar /etc/hosts a partir do volume personalizado e escrever o seu "
+"resultado na saída standard."
 
 #: cmd/incus/debug.go:48
 msgid ""
@@ -11111,7 +11103,7 @@ msgstr ""
 "incus file create --type=symlink foo/bar baz\n"
 "\t   Para criar um link simbólico /bar na instância foo cujo alvo é baz."
 
-#: cmd/incus/file.go:973
+#: cmd/incus/file.go:988
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory."
@@ -11135,7 +11127,7 @@ msgstr ""
 "incus file pull foo/etc/hosts -\n"
 "   Para puxar /etc/hosts da instância e escrevê-lo na saída standard."
 
-#: cmd/incus/file.go:697
+#: cmd/incus/file.go:700
 msgid ""
 "incus file push /etc/hosts foo/etc/hosts\n"
 "   To push /etc/hosts into the instance \"foo\".\n"
@@ -11704,7 +11696,6 @@ msgstr ""
 "usando o conteúdo de volume.yaml"
 
 #: cmd/incus/storage_volume.go:2424
-#, fuzzy
 msgid ""
 "incus storage volume file create foo bar/baz\n"
 "   To create a file baz in the bar volume on the foo pool.\n"
@@ -11713,14 +11704,14 @@ msgid ""
 "   To create a symlink qux in bar storage volume on the foo pool whose "
 "target is baz."
 msgstr ""
-"incus file create foo/bar\n"
-"\t   Para criar um ficheiro /bar na instância foo.\n"
+"incus storage volume file create foo bar/baz\n"
+"   Para criar um ficheiro baz no volume bar no pool foo.\n"
 "\n"
-"incus file create --type=symlink foo/bar baz\n"
-"\t   Para criar um link simbólico /bar na instância foo cujo alvo é baz."
+"incus file create --type=symlink foo bar/baz qux\n"
+"   Para criar um link simbólico qux no volume de armazenamento bar no pool "
+"foo cujo alvo é baz."
 
 #: cmd/incus/storage_volume.go:3103
-#, fuzzy
 msgid ""
 "incus storage volume file push /etc/hosts local v1/etc/hosts\n"
 "   To push /etc/hosts into the custom volume \"v1\".\n"
@@ -11729,12 +11720,12 @@ msgid ""
 "   To read \"Hello world\" from standard input and write it into test in "
 "volume \"v1\"."
 msgstr ""
-"incus file push /etc/hosts foo/etc/hosts\n"
-"   Para empurrar /etc/hosts para a instância \"foo\".\n"
+"incus storage volume file push /etc/hosts local v1/etc/hosts\n"
+"   Para empurrar /etc/hosts para o volume personalizado \"v1\".\n"
 "\n"
-"echo \"Hello world\" | incus file push - foo/root/test\n"
-"   Para ler \"Hello world\" a partir da entrada standard e escrevê-lo em /"
-"root/test na instância \"foo\"."
+"echo \"Hello world\" | incus storage volume file push - local v1 test\n"
+"   Para ler \"Hello world\" a partir da entrada standard e escrevê-lo em "
+"test no volume \"v1\"."
 
 #: cmd/incus/storage_volume.go:1225
 msgid ""
