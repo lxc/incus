@@ -4,7 +4,7 @@
 Incus supports the following types of instances:
 
 Systems Containers
-: System containers run full Linux distributions using a shared kernel
+: System containers run full Linux distributions using a shared kernel.
   Those containers run a full Linux distribution, very similar to a virtual machine but sharing kernel with the host system.
 
   They have an extremely low overhead, can be packed very densely and
@@ -14,7 +14,7 @@ Systems Containers
   System containers are implemented through the use of `liblxc` (LXC).
 
 Application containers
-: Application containers run a single application through a pre-built image
+: Application containers run a single application through a pre-built image.
   Those kind of containers got popularized by the likes of Docker and Kubernetes.
 
   Rather than provide a pristine Linux environment on top of which software needs to be installed,
@@ -25,7 +25,7 @@ Application containers
   Application containers are implemented through the use of `liblxc` (LXC) with help from `umoci` and `skopeo`.
 
 Virtual machines
-: {abbr}`Virtual machines (VMs)` are a full virtualized system
+: {abbr}`VMs (Virtual machines)` are a full virtualized system.
   Virtual machines are also natively supported by Incus and provide an alternative to system containers.
 
   Not everything can run properly in containers. Anything that requires
