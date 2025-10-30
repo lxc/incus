@@ -3,15 +3,19 @@
 
 Incus supports the following types of instances:
 
-Containers
-: Containers are the default type for instances.
-  They are currently the most complete implementation of Incus instances and support more features than virtual machines.
+Systems Containers
+: System containers run full Linux distributions using a shared kernel.
+  Those containers run a full Linux distribution, very similar to a virtual machine but sharing kernel with the host system.
 
-  Containers are implemented through the use of `liblxc` (LXC).
+  They have an extremely low overhead, can be packed very densely and
+  generally provide a near identical experience to virtual machines
+  without the required hardware support and overhead.
+
+  System containers are implemented through the use of `liblxc` (LXC).
 
 Virtual machines
-: {abbr}`Virtual machines (VMs)` are natively supported since version 4.0 of Incus.
-  Thanks to a built-in agent, they can be used almost like containers.
+: {abbr}`VMs (Virtual machines)` are a full virtualized system.
+  Virtual machines are also natively supported by Incus and provide an alternative to system containers.
 
   Incus uses `qemu` to provide the VM functionality.
 
