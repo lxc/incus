@@ -1659,6 +1659,10 @@ func (n *common) peerUsedBy(peerName string, firstOnly bool) ([]string, error) {
 }
 
 func (n *common) State() (*api.NetworkState, error) {
+	if n.config["parent"] != "" {
+		return resources.GetNetworkState(n.config["parent"])
+	}
+
 	return resources.GetNetworkState(n.name)
 }
 
