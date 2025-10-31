@@ -113,6 +113,165 @@ var updates = map[int]schema.Update{
 	74: updateFromV73,
 	75: updateFromV74,
 	76: updateFromV75,
+	77: updateFromV76,
+}
+
+// updateFromV76 makes the following changes to reorganize the snapshot source properties
+// Create two new tables to store snapshot source properties;
+// Migrate outdated columns to the new table;
+// Drop outdated columns from instances and instances_snapshots;
+func updateFromV76(ctx context.Context, tx *sql.Tx) error {
+	_, err := tx.Exec(`
+CREATE TABLE "instances_snapshots_properties" (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    instance_snapshot_id INTEGER NOT NULL,
+    description TEXT,
+    ephemeral INTEGER NOT NULL DEFAULT 0,
+    stateful INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (instance_snapshot_id) REFERENCES instances_snapshots (id) ON DELETE CASCADE
+);
+CREATE TABLE "storage_volumes_snapshots_properties" (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    storage_volume_snapshot_id INTEGER NOT NULL,
+    description TEXT,
+    FOREIGN KEY (storage_volume_snapshot_id) REFERENCES storage_volumes_snapshots (id) ON DELETE CASCADE
+)
+`)
+	if err != nil {
+		return fmt.Errorf("Failed creating instances_snapshots_properties and storage_volumes_snapshots_properties: %w", err)
+	}
+
+	type instanceProperties struct {
+		snapshot_id int64
+		description string
+		stateful    int64
+		ephemeral   int64
+	}
+
+	var instancesProperties []instanceProperties
+	rowsI, err := tx.QueryContext(ctx, `
+SELECT a.id, a.description, a.stateful, b.ephemeral FROM instances_snapshots a JOIN instances b ON b.id = a.instance_id
+`)
+	if err != nil {
+		return fmt.Errorf("Failed running query: %w", err)
+	}
+
+	defer func() { _ = rowsI.Close() }()
+	for rowsI.Next() {
+		i := instanceProperties{}
+		err := rowsI.Scan(&i.snapshot_id, &i.description, &i.stateful, &i.ephemeral)
+		if err != nil {
+			return fmt.Errorf("Failed scanning instances_snapshots row: %w", err)
+		}
+
+		instancesProperties = append(instancesProperties, i)
+	}
+
+	for _, i := range instancesProperties {
+		_, err = tx.Exec(`
+INSERT INTO instances_snapshots_properties (instance_snapshot_id, description, ephemeral, stateful) VALUES(?,?,?,?);
+`, i.snapshot_id, i.description, i.stateful, i.ephemeral)
+		if err != nil {
+			return fmt.Errorf("Failed to migrate properties to instances_snapshots_properties: %w", err)
+		}
+
+	}
+
+	type volumeProperties struct {
+		snapshot_id int64
+		description string
+	}
+
+	var volumesProperties []volumeProperties
+	rowsS, err := tx.QueryContext(ctx, `
+SELECT id, description FROM storage_volumes_snapshots
+`)
+	if err != nil {
+		return fmt.Errorf("Failed running query: %w", err)
+	}
+
+	defer func() { _ = rowsS.Close() }()
+	for rowsS.Next() {
+		v := volumeProperties{}
+		err := rowsS.Scan(&v.snapshot_id, &v.description)
+		if err != nil {
+			return fmt.Errorf("Failed scanning instances_snapshots row: %w", err)
+		}
+
+		volumesProperties = append(volumesProperties, v)
+	}
+
+	for _, v := range volumesProperties {
+		_, err = tx.Exec(`
+INSERT INTO storage_volumes_snapshots_properties (storage_volume_snapshot_id, description) VALUES(?,?);
+`, v.snapshot_id, v.description)
+		if err != nil {
+			return fmt.Errorf("Failed to migrate properties to storage_volumes_snapshots_properties: %w", err)
+		}
+
+	}
+
+	_, err = tx.Exec(`
+CREATE TABLE instances_new (
+    id INTEGER primary key AUTOINCREMENT NOT NULL,
+    node_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    architecture INTEGER NOT NULL,
+    type INTEGER NOT NULL,
+    ephemeral INTEGER NOT NULL DEFAULT 0,
+    creation_date DATETIME NOT NULL DEFAULT 0,
+    stateful INTEGER NOT NULL DEFAULT 0,
+    last_use_date DATETIME,
+    description TEXT NOT NULL,
+    project_id INTEGER NOT NULL,
+    UNIQUE (project_id, name),
+    FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE,
+    FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE
+);
+
+INSERT INTO instances_new (id, node_id, name, architecture, type, ephemeral, creation_date, stateful, last_use_date, description, project_id)
+    SELECT id, node_id, name, architecture, type, ephemeral, creation_date, stateful, last_use_date, IFNULL(description, ''), project_id FROM instances;
+
+DROP TABLE instances;
+
+ALTER TABLE instances_new RENAME TO instances;
+
+CREATE INDEX instances_project_id_and_name_idx ON instances (project_id, name);
+CREATE INDEX instances_project_id_and_node_id_and_name_idx ON instances (project_id, node_id, name);
+CREATE INDEX instances_project_id_and_node_id_idx ON instances (project_id, node_id);
+CREATE INDEX instances_project_id_idx ON instances (project_id);
+CREATE INDEX instances_node_id_idx ON instances (node_id);
+`)
+	if err != nil {
+		return fmt.Errorf("Failed to drop expiry_date column from instances: %w", err)
+	}
+
+	return nil
+
+	_, err = tx.Exec(`
+CREATE TABLE instances_snapshots_new (
+    id INTEGER primary key AUTOINCREMENT NOT NULL,
+    instance_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    creation_date DATETIME NOT NULL DEFAULT 0,
+    description TEXT NOT NULL,
+    expiry_date DATETIME,
+    UNIQUE (instance_id, name),
+    FOREIGN KEY (instance_id) REFERENCES instances (id) ON DELETE CASCADE
+);
+
+INSERT INTO instances_snapshots_new (id, instance_id, name, creation_date, description, expiry_date)
+    SELECT id, instance_id, name, creation_date, IFNULL(description, ''), expiry_date FROM instances_snapshots;
+
+DROP TABLE instances_snapshots;
+
+ALTER TABLE instances_snapshots_new RENAME TO instances_snapshots;
+`)
+	if err != nil {
+		return fmt.Errorf("Failed to drop stateful column from instances_snapshots: %w", err)
+	}
+
+	return nil
 }
 
 func updateFromV75(ctx context.Context, tx *sql.Tx) error {
