@@ -46,7 +46,7 @@ type ovnNet interface {
 	InstanceDevicePortAdd(instanceUUID string, deviceName string, deviceConfig deviceConfig.Device) error
 	InstanceDevicePortStart(opts *network.OVNInstanceNICSetupOpts, securityACLsRemove []string) (ovn.OVNSwitchPort, []net.IP, error)
 	InstanceDevicePortStop(ovsExternalOVNPort ovn.OVNSwitchPort, opts *network.OVNInstanceNICStopOpts) error
-	InstanceDevicePortRemove(instanceUUID string, deviceName string, deviceConfig deviceConfig.Device) error
+	InstanceDevicePortRemove(instanceUUID string, devName string, devConfig deviceConfig.Device, hasDuplicate bool) error
 	InstanceDevicePortIPs(instanceUUID string, deviceName string) ([]net.IP, error)
 }
 
@@ -1235,7 +1235,7 @@ func (d *nicOVN) Remove() error {
 		}
 	}
 
-	return d.network.InstanceDevicePortRemove(d.inst.LocalConfig()["volatile.uuid"], d.name, d.config)
+	return d.network.InstanceDevicePortRemove(d.inst.LocalConfig()["volatile.uuid"], d.name, d.config, d.checkAddressConflict() != nil)
 }
 
 // State gets the state of an OVN NIC by querying the OVN Northbound logical switch port record.
