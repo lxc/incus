@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/gorilla/mux"
-
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/cluster"
 	"github.com/lxc/incus/v6/internal/server/instance"
@@ -41,7 +39,7 @@ func instanceSFTPHandler(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	instName, err := url.PathUnescape(mux.Vars(r)["name"])
+	instName, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}

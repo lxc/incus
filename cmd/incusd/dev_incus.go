@@ -13,7 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/gorilla/mux"
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v6/internal/linux"
@@ -77,7 +76,7 @@ var devIncusConfigKeyGet = devIncusHandler{"/1.0/config/{key}", func(d *Daemon, 
 		return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 	}
 
-	key, err := url.PathUnescape(mux.Vars(r)["key"])
+	key, err := url.PathUnescape(r.PathValue("key"))
 	if err != nil {
 		return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusBadRequest, "bad request"), c.Type() == instancetype.VM)
 	}
@@ -310,8 +309,7 @@ func hoistReq(f func(*Daemon, instance.Instance, http.ResponseWriter, *http.Requ
 }
 
 func devIncusAPI(d *Daemon, f hoistFunc) http.Handler {
-	router := mux.NewRouter()
-	router.UseEncodedPath() // Allow encoded values in path segments.
+	router := http.NewServeMux()
 
 	for _, handler := range handlers {
 		router.HandleFunc(handler.path, f(handler.f, d))

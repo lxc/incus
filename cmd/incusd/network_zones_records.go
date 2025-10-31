@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/gorilla/mux"
-
 	"github.com/lxc/incus/v6/internal/filter"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/v6/internal/server/cluster/request"
@@ -161,7 +159,7 @@ func networkZoneRecordsGet(d *Daemon, r *http.Request) response.Response {
 
 	mustLoadObjects := recursion || (clauses != nil && len(clauses.Clauses) > 0)
 
-	zoneName, err := url.PathUnescape(mux.Vars(r)["zone"])
+	zoneName, err := url.PathUnescape(r.PathValue("zone"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -246,7 +244,7 @@ func networkZoneRecordsPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	zoneName, err := url.PathUnescape(mux.Vars(r)["zone"])
+	zoneName, err := url.PathUnescape(r.PathValue("zone"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -308,12 +306,12 @@ func networkZoneRecordDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	zoneName, err := url.PathUnescape(mux.Vars(r)["zone"])
+	zoneName, err := url.PathUnescape(r.PathValue("zone"))
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	recordName, err := url.PathUnescape(mux.Vars(r)["name"])
+	recordName, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -383,12 +381,12 @@ func networkZoneRecordGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	zoneName, err := url.PathUnescape(mux.Vars(r)["zone"])
+	zoneName, err := url.PathUnescape(r.PathValue("zone"))
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	recordName, err := url.PathUnescape(mux.Vars(r)["name"])
+	recordName, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -485,12 +483,12 @@ func networkZoneRecordPut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	zoneName, err := url.PathUnescape(mux.Vars(r)["zone"])
+	zoneName, err := url.PathUnescape(r.PathValue("zone"))
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	recordName, err := url.PathUnescape(mux.Vars(r)["name"])
+	recordName, err := url.PathUnescape(r.PathValue("name"))
 	if err != nil {
 		return response.SmartError(err)
 	}
