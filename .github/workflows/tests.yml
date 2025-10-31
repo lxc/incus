@@ -503,7 +503,6 @@ jobs:
           go build -o bin/incus.aarch64 ./cmd/incus
 
       - name: Build static incus-agent (x86_64)
-        if: runner.os == 'Linux' || runner.os == 'Windows'
         env:
           CGO_ENABLED: 0
           GOARCH: amd64
@@ -511,7 +510,6 @@ jobs:
           go build -o bin/incus-agent.x86_64 ./cmd/incus-agent
 
       - name: Build static incus-agent (aarch64)
-        if: runner.os == 'Linux' || runner.os == 'Windows'
         env:
           CGO_ENABLED: 0
           GOARCH: arm64
