@@ -38,6 +38,7 @@ the user's environment and to turn some advanced features on and off.
 | `INCUS_IDMAPPED_MOUNTS_DISABLE` | Disable idmapped mounts support (useful when testing traditional UID shifting) |
 | `INCUS_LXC_TEMPLATE_CONFIG`     | Path to the LXC template configuration directory                               |
 | `INCUS_SECURITY_APPARMOR`       | If set to `false`, forces AppArmor off                                         |
+| `INCUS_SECURITY_SELINUX`        | If set to `true`, turns on SELinux integration                                 |
 | `INCUS_SKIP_INSTANCE_TYPES`     | If set to `true`, skip downloading instance type definitions                   |
 | `INCUS_UI`                      | Path to the web UI to serve through the web server                             |
 | `INCUS_USBIDS_PATH`             | Path to the hwdata `usb.ids` file                                              |

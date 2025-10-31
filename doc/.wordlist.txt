@@ -262,6 +262,7 @@ scalable
 scriptlet
 SDN
 Seccomp
+SELinux
 SEV
 SFTP
 SHA
