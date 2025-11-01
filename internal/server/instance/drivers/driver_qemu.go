@@ -3763,7 +3763,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 	}
 
 	// virtio-sound-pci devices can't be migrated and don't have a CCW equivalent.
-	if !d.CanLiveMigrate() && d.architecture != osarch.ARCH_64BIT_S390_BIG_ENDIAN {
+	if !isWindows && !d.CanLiveMigrate() && d.architecture != osarch.ARCH_64BIT_S390_BIG_ENDIAN {
 		devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
 		audioOpts := qemuDevOpts{
 			busName:       bus.name,
