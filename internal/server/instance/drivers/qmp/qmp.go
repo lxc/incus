@@ -227,7 +227,7 @@ func (qmp *qemuMachineProtocol) listen(r io.Reader, events chan<- qmpEvent, repl
 		}
 
 		if qmp.log != nil {
-			_, err := fmt.Fprintf(qmp.log, "[%s] Event: %s\n\n", time.Now().Format(time.RFC3339), b)
+			_, err := fmt.Fprintf(qmp.log, "[%s] Event: %s\n", time.Now().Format(time.RFC3339), b)
 			if err != nil {
 				logger.Debugf("Failed to log event: %v", err)
 			}
