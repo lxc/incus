@@ -402,7 +402,7 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 		if lastGID < 4294967295 {
 			args = append(args, fmt.Sprintf("--translate-gid=forbid-guest:%d:%d", lastGID, 4294967295-lastGID))
 		}
-	} else {
+	} else if inst.GuestOS() != "windows" {
 		args = append(args, "--posix-acl")
 	}
 
