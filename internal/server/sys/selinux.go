@@ -61,6 +61,9 @@ func (s *OS) initSELinux() []cluster.Warning {
 	if s.SELinuxContextDaemon == "system_u:system_r:container_runtime_t:s0" {
 		logger.Debugf("Detected Fedora-style SELinux setup")
 		s.SELinuxContextInstanceLXC = "system_u:system_r:spc_t:s0"
+	} else if s.SELinuxContextDaemon == "system_u:system_r:incusd_t:s0" {
+		logger.Debugf("Detected SELinux refpolicy setup")
+		s.SELinuxContextInstanceLXC = "system_u:system_r:container_init_t:s0"
 	}
 
 	return dbWarnings
