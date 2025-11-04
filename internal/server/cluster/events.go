@@ -9,8 +9,8 @@ import (
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/server/db"
-	"github.com/lxc/incus/v6/internal/server/endpoints"
 	"github.com/lxc/incus/v6/internal/server/events"
+	"github.com/lxc/incus/v6/internal/server/state"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
@@ -223,7 +223,7 @@ func hubAddresses(localAddress string, members map[int64]APIHeartbeatMember) ([]
 }
 
 // EventsUpdateListeners refreshes the cluster event listener connections.
-func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, serverCert func() *localtls.CertInfo, hbMembers map[int64]APIHeartbeatMember, inject events.InjectFunc) {
+func EventsUpdateListeners(s *state.State, hbMembers map[int64]APIHeartbeatMember, inject events.InjectFunc) {
 	listenersUpdateLock.Lock()
 	defer listenersUpdateLock.Unlock()
 
@@ -233,7 +233,7 @@ func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, 
 		var members []db.NodeInfo
 		var offlineThreshold time.Duration
 
-		err = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			members, err = tx.GetNodes(ctx)
 			if err != nil {
 				return err
@@ -264,14 +264,14 @@ func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, 
 		}
 	}
 
-	localAddress := endpoints.NetworkAddress()
+	localAddress := s.Endpoints.NetworkAddress()
 	hubAddresses, localEventMode := hubAddresses(localAddress, hbMembers)
 
 	keepListeners := make(map[string]struct{})
 	wg := sync.WaitGroup{}
 	for _, hbMember := range hbMembers {
 		// Don't bother trying to connect to ourselves or offline members.
-		if hbMember.Address == localAddress || !hbMember.Online {
+		if hbMember.Name == s.ServerName || !hbMember.Online {
 			continue
 		}
 
@@ -312,14 +312,14 @@ func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, 
 			defer wg.Done()
 			l := logger.AddContext(logger.Ctx{"local": localAddress, "remote": m.Address})
 
-			if !HasConnectivity(endpoints.NetworkCert(), serverCert(), m.Address, true) {
+			if !HasConnectivity(s.Endpoints.NetworkCert(), s.ServerCert(), m.Address, true) {
 				listenersLock.Lock()
 				listenersUnavailable[m.Address] = true
 				listenersLock.Unlock()
 				return
 			}
 
-			listener, err := eventsConnect(m.Address, endpoints.NetworkCert(), serverCert())
+			listener, err := eventsConnect(m.Address, s.Endpoints.NetworkCert(), s.ServerCert())
 			if err != nil {
 				l.Warn("Failed adding member event listener client", logger.Ctx{"err": err})
 				return
