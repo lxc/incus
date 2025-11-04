@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/url"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -15,7 +17,7 @@ import (
 // Event handling functions
 
 // getEvents connects to the Incus monitoring interface.
-func (r *ProtocolIncus) getEvents(allProjects bool) (*EventListener, error) {
+func (r *ProtocolIncus) getEvents(allProjects bool, eventTypes []string) (*EventListener, error) {
 	// Prevent anything else from interacting with the listeners
 	r.eventListenersLock.Lock()
 	defer r.eventListenersLock.Unlock()
@@ -48,20 +50,27 @@ func (r *ProtocolIncus) getEvents(allProjects bool) (*EventListener, error) {
 	}
 
 	// Setup a new connection with Incus
-	var url string
-	var err error
+	var queryParams []string
+
 	if allProjects {
-		url, err = r.setQueryAttributes("/events?all-projects=true")
-	} else {
-		url, err = r.setQueryAttributes("/events")
+		queryParams = append(queryParams, "all-projects=true")
 	}
 
+	if len(eventTypes) > 0 {
+		for i := range len(eventTypes) {
+			eventTypes[i] = url.QueryEscape(eventTypes[i])
+		}
+
+		queryParams = append(queryParams, "type="+strings.Join(eventTypes, ","))
+	}
+
+	eventsURL, err := r.setQueryAttributes("/events?" + strings.Join(queryParams, "&"))
 	if err != nil {
 		return nil, err
 	}
 
 	// Connect websocket and save.
-	wsConn, err := r.websocket(url)
+	wsConn, err := r.websocket(eventsURL)
 	if err != nil {
 		return nil, err
 	}
@@ -165,12 +174,24 @@ func (r *ProtocolIncus) getEvents(allProjects bool) (*EventListener, error) {
 
 // GetEvents gets the events for the project defined on the client.
 func (r *ProtocolIncus) GetEvents() (*EventListener, error) {
-	return r.getEvents(false)
+	return r.getEvents(false, nil)
+}
+
+// GetEventsByType gets the events filtered by the provided list of types
+// for the project defined on the client.
+func (r *ProtocolIncus) GetEventsByType(eventTypes []string) (listener *EventListener, err error) {
+	return r.getEvents(false, eventTypes)
 }
 
 // GetEventsAllProjects gets events for all projects.
 func (r *ProtocolIncus) GetEventsAllProjects() (*EventListener, error) {
-	return r.getEvents(true)
+	return r.getEvents(true, nil)
+}
+
+// GetEventsAllProjectsByType gets the events filtered by the provided list of
+// types for all projects.
+func (r *ProtocolIncus) GetEventsAllProjectsByType(eventTypes []string) (listener *EventListener, err error) {
+	return r.getEvents(true, eventTypes)
 }
 
 // SendEvent send an event to the server via the client's event listener connection.

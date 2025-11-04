@@ -174,7 +174,9 @@ type InstanceServer interface {
 
 	// Event handling functions
 	GetEvents() (listener *EventListener, err error)
+	GetEventsByType(eventTypes []string) (listener *EventListener, err error)
 	GetEventsAllProjects() (listener *EventListener, err error)
+	GetEventsAllProjectsByType(eventTypes []string) (listener *EventListener, err error)
 	SendEvent(event api.Event) error
 
 	// Image functions
