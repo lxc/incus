@@ -645,7 +645,7 @@ func NotifyHeartbeat(state *state.State, gateway *Gateway) {
 	// Refresh local event listeners.
 	wg.Add(1)
 	go func() {
-		EventsUpdateListeners(state.Endpoints, state.DB.Cluster, state.ServerCert, hbState.Members, state.Events.Inject)
+		EventsUpdateListeners(state, hbState.Members, state.Events.Inject)
 		wg.Done()
 	}()
 
