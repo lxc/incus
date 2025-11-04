@@ -456,7 +456,7 @@ func (f *Field) JoinClause(mapping *Mapping, table string) (string, error) {
 // to select the ID to insert into this table.
 // - If a 'joinon' tag is present, but this table is not among the conditions, then the join will be considered indirect,
 // and an empty string will be returned.
-func (f *Field) InsertColumn(mapping *Mapping, primaryTable string, defs map[*ast.Ident]types.Object, registeredSQLStmts map[string]string) (string, string, error) {
+func (f *Field) InsertColumn(mapping *Mapping, primaryTable string, defs map[*ast.Ident]types.Object, registeredSQLStmts map[string]string, allFields []*Field) (string, string, error) {
 	var column string
 	var value string
 	var err error
@@ -499,6 +499,37 @@ func (f *Field) InsertColumn(mapping *Mapping, primaryTable string, defs map[*as
 		joinStmt, err := ParseStmt(varName, defs, registeredSQLStmts)
 		if err != nil {
 			return "", "", fmt.Errorf("Failed to find registered statement %q for field %q of struct %q: %w", varName, f.Name, mapping.Name, err)
+		}
+
+		// Keep track of the join config of other fields that have a corresponding table column.
+		otherJoins := map[string]string{}
+		for _, otherField := range allFields {
+			if f.Name == otherField.Name {
+				continue
+			}
+
+			joinCfg := otherField.joinConfig()
+			table, _, ok := strings.Cut(joinCfg, ".")
+			if !ok {
+				continue
+			}
+
+			// If 'joinon' points to a different table, then there is no column on the table for this field.
+			joinOn := otherField.Config.Get("joinon")
+			if joinOn == "" || strings.HasPrefix(joinOn, tableName+".") {
+				otherJoins[table] = joinCfg
+			}
+		}
+
+		// If the field maps to a column with a foreign key to table A, but table A has a composite key with table B,
+		// then if we already have a field mapping to table B, just reuse its ID.
+		if strings.Contains(joinStmt, "JOIN ") && strings.Contains(joinStmt, "WHERE ") {
+			wheres := strings.Split(joinStmt, "WHERE ")
+			for table, joinCfg := range otherJoins {
+				wheres[1] = strings.ReplaceAll(wheres[1], joinCfg+" = ?", table+".id = "+lex.Singular(table)+"_id")
+			}
+
+			joinStmt = strings.Join(wheres, "WHERE ")
 		}
 
 		value = fmt.Sprintf("(%s)", strings.ReplaceAll(strings.ReplaceAll(joinStmt, "`", ""), "\n", ""))
