@@ -181,7 +181,7 @@ func ValidateFlagFormatForListOutput(value string) error {
 		options = strings.Split(fields[1], ",")
 		for _, option := range options {
 			switch option {
-			case "noheader", "header", "":
+			case "noheader", "header", "raw", "":
 			default:
 				return fmt.Errorf(`Invalid modifier %q on flag "--format" (%q)`, option, value)
 			}
