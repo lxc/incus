@@ -64,7 +64,12 @@ func (r *ProtocolIncus) getEvents(allProjects bool, eventTypes []string) (*Event
 		queryParams = append(queryParams, "type="+strings.Join(eventTypes, ","))
 	}
 
-	eventsURL, err := r.setQueryAttributes("/events?" + strings.Join(queryParams, "&"))
+	eventsURL := "/events"
+	if len(queryParams) > 0 {
+		eventsURL += "?" + strings.Join(queryParams, "&")
+	}
+
+	eventsURL, err := r.setQueryAttributes(eventsURL)
 	if err != nil {
 		return nil, err
 	}
