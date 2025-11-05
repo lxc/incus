@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - stable-*
+      - refactor-test-plans
   pull_request:
 
 permissions:
@@ -131,61 +132,83 @@ jobs:
       matrix:
         go:
           - stable
+          - oldstable
+          - tip
         suite:
           - cluster
           - standalone
+        test-category:
+          - all
         backend:
           - dir
-          - btrfs
-          - lvm
-          - zfs
-          - ceph
-          - linstor
-          - random
         os:
           - ubuntu-24.04
+          - ubuntu-24.04-arm
         include:
-          - go: oldstable
+          # cluster full test with various backends
+          - go: stable
             suite: cluster
-            backend: dir
+            test-category: all
+            backend: btrfs
             os: ubuntu-24.04
-          - go: oldstable
-            suite: standalone
-            backend: dir
-            os: ubuntu-24.04
-          - go: tip
+          - go: stable
             suite: cluster
-            backend: dir
+            test-category: all
+            backend: lvm
             os: ubuntu-24.04
-          - go: tip
-            suite: standalone
-            backend: dir
+          - go: stable
+            suite: cluster
+            test-category: all
+            backend: zfs
+            os: ubuntu-24.04
+          - go: stable
+            suite: cluster
+            test-category: all
+            backend: ceph
+            os: ubuntu-24.04
+          - go: stable
+            suite: cluster
+            test-category: all
+            backend: linstor
+            os: ubuntu-24.04
+          - go: stable
+            suite: cluster
+            test-category: all
+            backend: random
             os: ubuntu-24.04
 
-          - go: oldstable
-            suite: cluster
-            backend: dir
-            os: ubuntu-24.04-arm
-          - go: oldstable
-            suite: standalone
-            backend: dir
-            os: ubuntu-24.04-arm
-          - go: stable
-            suite: cluster
-            backend: dir
-            os: ubuntu-24.04-arm
+          # standalone storage test with various backends
           - go: stable
             suite: standalone
-            backend: dir
-            os: ubuntu-24.04-arm
-          - go: tip
-            suite: cluster
-            backend: dir
-            os: ubuntu-24.04-arm
-          - go: tip
+            test-category: storage
+            backend: btrfs
+            os: ubuntu-24.04
+          - go: stable
             suite: standalone
-            backend: dir
-            os: ubuntu-24.04-arm
+            test-category: storage
+            backend: lvm
+            os: ubuntu-24.04
+          - go: stable
+            suite: standalone
+            test-category: storage
+            backend: zfs
+            os: ubuntu-24.04
+          - go: stable
+            suite: standalone
+            test-category: storage
+            backend: ceph
+            os: ubuntu-24.04
+          - go: stable
+            suite: standalone
+            test-category: storage
+            backend: linstor
+            os: ubuntu-24.04
+          - go: stable
+            suite: standalone
+            test-category: storage
+            backend: random
+            os: ubuntu-24.04
+
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -443,7 +466,7 @@ jobs:
           sudo nft add rule inet filter output ip daddr 45.45.148.8 reject
           sudo nft add rule inet filter output ip6 daddr 2602:fc62:a:1::8 reject
 
-      - name: "Run system tests (${{ matrix.go }}, ${{ matrix.suite }}, ${{ matrix.backend }})"
+      - name: "Run system tests (${{ matrix.go }}, ${{ matrix.suite }}, ${{matrix.test-category}}, ${{ matrix.backend }})"
         env:
           CGO_LDFLAGS_ALLOW: "(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
           INCUS_CEPH_CLUSTER: "ceph"
@@ -459,7 +482,7 @@ jobs:
           chmod +x ~
           echo "root:1000000:1000000000" | sudo tee /etc/subuid /etc/subgid
           cd test
-          sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_LINSTOR_LOCAL_SATELLITE,INCUS_LINSTOR_CLUSTER,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS, INCUS_BACKEND=${{ matrix.backend }} ./main.sh ${{ matrix.suite }}
+          sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_LINSTOR_LOCAL_SATELLITE,INCUS_LINSTOR_CLUSTER,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS, INCUS_BACKEND=${{ matrix.backend }} ./main.sh ${{ matrix.suite }} ${{ matrix.test-category }}
 
   client:
     name: Client
@@ -486,7 +509,7 @@ jobs:
 
       - name: Create build directory
         run: |
-            mkdir bin
+          mkdir bin
 
       - name: Build static incus (x86_64)
         env:
