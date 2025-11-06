@@ -332,6 +332,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   mount options=(rw,move) /sy[^s]*{,/**},
   mount options=(rw,move) /sys?*{,/**},
 
+{{- if not .nesting }}
   # Block dangerous paths under /proc/sys
   deny /proc/sys/[^fknu]*{,/**} wklx,
   deny /proc/sys/f[^s]*{,/**} wklx,
@@ -431,6 +432,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   deny /sys/fs/cgrou[^p]*{,/**} wklx,
   deny /sys/fs/cgroup?*{,/**} wklx,
   deny /sys/fs?*{,/**} wklx,
+{{- end }}
 
 {{- if .feature_unix }}
 
@@ -453,6 +455,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
 
 {{- if .feature_stacking }}
 
+{{- if not .nesting }}
   ### Feature: apparmor stacking
   deny /sys/k[^e]*{,/**} wklx,
   deny /sys/ke[^r]*{,/**} wklx,
@@ -478,13 +481,16 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   deny /sys/kernel/security/apparmor?*{,/**} wklx,
   deny /sys/kernel/security?*{,/**} wklx,
   deny /sys/kernel?*{,/**} wklx,
+{{- end }}
 
   change_profile -> ":{{ .namespace }}:*",
   change_profile -> ":{{ .namespace }}://*",
 {{- else }}
 
   ### Feature: apparmor stacking (not present)
+{{- if not .nesting }}
   deny /sys/k*{,/**} wklx,
+{{- end }}
 {{- end }}
 
 {{- if .nesting }}
