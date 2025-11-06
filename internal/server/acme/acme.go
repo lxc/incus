@@ -148,6 +148,11 @@ func UpdateCertificate(s *state.State, challengeType string, clustered bool, dom
 
 	args = append(args, "run")
 
+	proxy := s.GlobalConfig.ProxyHTTPS()
+	if proxy != "" {
+		env = append(env, "https_proxy="+proxy)
+	}
+
 	_, _, err = subprocess.RunCommandSplit(context.TODO(), env, nil, "lego", args...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to run lego command: %w", err)
