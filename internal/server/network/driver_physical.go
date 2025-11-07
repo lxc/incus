@@ -502,12 +502,15 @@ func (n *physical) Update(newNetwork api.NetworkPut, targetNode string, clientTy
 		if err == nil {
 			ovsBridge := fmt.Sprintf("incusovn%d", n.id)
 
-			err := vswitch.DeleteBridgePort(context.TODO(), ovsBridge, oldNetwork.Config["parent"])
+			oldHostName := GetHostDevice(oldNetwork.Config["parent"], oldNetwork.Config["vlan"])
+			newHostName := GetHostDevice(newNetwork.Config["parent"], newNetwork.Config["vlan"])
+
+			err := vswitch.DeleteBridgePort(context.TODO(), ovsBridge, oldHostName)
 			if err != nil && !errors.Is(err, ovs.ErrNotFound) {
 				return err
 			}
 
-			err = vswitch.CreateBridgePort(context.TODO(), ovsBridge, newNetwork.Config["parent"], true)
+			err = vswitch.CreateBridgePort(context.TODO(), ovsBridge, newHostName, true)
 			if err != nil && !errors.Is(err, ovs.ErrNotFound) {
 				return err
 			}
