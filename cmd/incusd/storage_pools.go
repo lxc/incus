@@ -415,9 +415,6 @@ func storagePoolsPost(d *Daemon, r *http.Request) response.Response {
 			if err != nil {
 				logger.Error("Failed to add storage pool to authorizer", logger.Ctx{"name": req.Name, "error": err})
 			}
-
-			// Send out the lifecycle event.
-			s.Events.SendLifecycle(api.ProjectDefaultName, lc)
 		}
 
 		return resp
@@ -450,6 +447,9 @@ func storagePoolsPost(d *Daemon, r *http.Request) response.Response {
 		if err != nil {
 			return response.InternalError(err)
 		}
+
+		// Send out the lifecycle event.
+		s.Events.SendLifecycle(api.ProjectDefaultName, lc)
 	} else {
 		// Create new single node storage pool.
 		err = storagePoolCreateGlobal(r.Context(), s, req, clientType)
@@ -905,7 +905,10 @@ func storagePoolPut(d *Daemon, r *http.Request) response.Response {
 		ctx["target"] = targetNode
 	}
 
-	s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.StoragePoolUpdated.Event(pool.Name(), requestor, ctx))
+	// Send a single update event when the server is clustered.
+	if !s.ServerClustered || (s.ServerClustered && clientType == clusterRequest.ClientTypeNormal) {
+		s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.StoragePoolUpdated.Event(pool.Name(), requestor, ctx))
+	}
 
 	return response
 }

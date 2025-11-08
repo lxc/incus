@@ -513,14 +513,6 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 			if err != nil {
 				logger.Error("Failed to add network to authorizer", logger.Ctx{"name": req.Name, "project": projectName, "error": err})
 			}
-
-			n, err := network.LoadByName(s, projectName, req.Name)
-			if err != nil {
-				return response.SmartError(fmt.Errorf("Failed loading network: %w", err))
-			}
-
-			requestor := request.CreateRequestor(r)
-			s.Events.SendLifecycle(projectName, lifecycle.NetworkCreated.Event(n, requestor, nil))
 		}
 
 		return resp
@@ -576,20 +568,20 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 			if err != nil {
 				logger.Error("Failed to add network to authorizer", logger.Ctx{"name": req.Name, "project": projectName, "error": err})
 			}
-
-			n, err := network.LoadByName(s, projectName, req.Name)
-			if err != nil {
-				return response.SmartError(fmt.Errorf("Failed loading network: %w", err))
-			}
-
-			requestor := request.CreateRequestor(r)
-			s.Events.SendLifecycle(projectName, lifecycle.NetworkCreated.Event(n, requestor, nil))
 		}
 
 		err = networksPostCluster(r.Context(), s, projectName, netInfo, req, clientType, netType)
 		if err != nil {
 			return response.SmartError(err)
 		}
+
+		n, err := network.LoadByName(s, projectName, req.Name)
+		if err != nil {
+			return response.SmartError(fmt.Errorf("Failed loading network: %w", err))
+		}
+
+		requestor := request.CreateRequestor(r)
+		s.Events.SendLifecycle(projectName, lifecycle.NetworkCreated.Event(n, requestor, nil))
 
 		return resp
 	}
@@ -1493,8 +1485,11 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 
 	resp = doNetworkUpdate(n, req, targetNode, clientType, r.Method, s.ServerClustered)
 
-	requestor := request.CreateRequestor(r)
-	s.Events.SendLifecycle(projectName, lifecycle.NetworkUpdated.Event(n, requestor, nil))
+	// Send a single update event when the server is clustered.
+	if !s.ServerClustered || (s.ServerClustered && clientType == clusterRequest.ClientTypeNormal) {
+		requestor := request.CreateRequestor(r)
+		s.Events.SendLifecycle(projectName, lifecycle.NetworkUpdated.Event(n, requestor, nil))
+	}
 
 	return resp
 }
