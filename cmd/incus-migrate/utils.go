@@ -136,9 +136,15 @@ func transferRootfs(ctx context.Context, op incus.Operation, rootfs string, rsyn
 			_ = f.Close()
 		}()
 
-		_, err = io.Copy(conn, f)
-		if err != nil {
-			return abort(fmt.Errorf("Failed sending block volume: %w", err))
+		for {
+			_, err = io.CopyN(conn, f, 4*1024*1024)
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					break
+				}
+
+				return abort(err)
+			}
 		}
 
 		err = conn.Close()
