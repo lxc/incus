@@ -311,11 +311,17 @@ func (m *OVAMigration) unpackOVA(outPath string) error {
 			continue
 		}
 
-		_, err = io.Copy(outFile, tarReader)
-		if err != nil {
-			fmt.Println("Error extracting file:", err)
-			outFile.Close()
-			continue
+		for {
+			_, err = io.CopyN(outFile, tarReader, 4*1024*1024)
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					break
+				}
+
+				fmt.Println("Error extracting file:", err)
+				outFile.Close()
+				continue
+			}
 		}
 
 		outFile.Close()
