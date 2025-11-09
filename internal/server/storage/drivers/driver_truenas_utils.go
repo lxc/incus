@@ -218,8 +218,8 @@ func (d *truenas) initialDatasets() []string {
 
 	// Iterate over the listed supported volume types.
 	for _, volType := range d.Info().VolumeTypes {
-		entries = append(entries, BaseDirectories[volType][0])
-		entries = append(entries, filepath.Join("deleted", BaseDirectories[volType][0]))
+		entries = append(entries, BaseDirectories[volType].Paths[0])
+		entries = append(entries, filepath.Join("deleted", BaseDirectories[volType].Paths[0]))
 	}
 
 	return entries

@@ -268,7 +268,7 @@ func (d *btrfs) Delete(op *operations.Operation) error {
 
 	// Delete potential intermediate btrfs subvolumes.
 	for _, volType := range d.Info().VolumeTypes {
-		for _, dir := range BaseDirectories[volType] {
+		for _, dir := range BaseDirectories[volType].Paths {
 			path := filepath.Join(GetPoolMountPath(d.name), dir)
 			if !util.PathExists(path) {
 				continue
