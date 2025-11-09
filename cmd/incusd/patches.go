@@ -87,6 +87,7 @@ var patches = []patch{
 	{name: "lvm_node_force_reuse", stage: patchPostDaemonStorage, run: patchLvmForceReuseKey},
 	{name: "auth_openfga_viewer", stage: patchPostNetworks, run: patchGenericAuthorization},
 	{name: "db_json_columns", stage: patchPreDaemonStorage, run: patchConvertJSONColumn},
+	{name: "pool_fix_default_permissions", stage: patchPostDaemonStorage, run: patchDefaultStoragePermissions},
 }
 
 type patchRun func(name string, d *Daemon) error
@@ -1337,6 +1338,45 @@ UPDATE networks_load_balancers SET ports="null" WHERE ports="";
 `)
 	if err != nil {
 		return fmt.Errorf("Failed to fix JSON columns: %w", err)
+	}
+
+	return nil
+}
+
+// patchDefaultStoragePermissions re-applies the default modes to all storage pools.
+func patchDefaultStoragePermissions(_ string, d *Daemon) error {
+	s := d.State()
+
+	var pools []string
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Get all storage pool names.
+		pools, err = tx.GetStoragePoolNames(ctx)
+
+		return err
+	})
+	if err != nil {
+		// Skip the rest of the patch if no storage pools were found.
+		if api.StatusErrorCheck(err, http.StatusNotFound) {
+			return nil
+		}
+
+		return fmt.Errorf("Failed getting storage pool names: %w", err)
+	}
+
+	for _, pool := range pools {
+		for _, volEntry := range storageDrivers.BaseDirectories {
+			for _, volDir := range volEntry.Paths {
+				path := filepath.Join(storagePools.GetStoragePoolMountPoint(pool), volDir)
+
+				err := os.Chmod(path, volEntry.Mode)
+				if err != nil && !os.IsExist(err) {
+					return fmt.Errorf("Failed to set directory mode %q: %w", path, err)
+				}
+			}
+		}
 	}
 
 	return nil
