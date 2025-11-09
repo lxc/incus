@@ -365,9 +365,15 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 			toPipe = NewSparseFileWrapper(to)
 		}
 
-		_, err = io.Copy(toPipe, fromPipe)
-		if err != nil {
-			return fmt.Errorf("Error copying from migration connection to %q: %w", path, err)
+		for {
+			_, err = io.CopyN(toPipe, fromPipe, 4*1024*1024)
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					break
+				}
+
+				return fmt.Errorf("Error copying from migration connection to %q: %w", path, err)
+			}
 		}
 
 		return to.Close()
@@ -853,9 +859,16 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 					}
 
 					d.Logger().Debug(logMsg, logger.Ctx{"source": srcFile, "target": targetPath})
-					_, err = io.Copy(toPipe, tr)
-					if err != nil {
-						return err
+
+					for {
+						_, err = io.CopyN(toPipe, tr, 4*1024*1024)
+						if err != nil {
+							if errors.Is(err, io.EOF) {
+								break
+							}
+
+							return err
+						}
 					}
 
 					cancelFunc()
