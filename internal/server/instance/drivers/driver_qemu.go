@@ -1732,21 +1732,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 	}
 
-	// APply the RTC configuration.
-	adjustment := d.getStartupRTCAdjustment()
-
-	base := time.Now().Add(adjustment)
-	if d.GuestOS() == "windows" {
-		// Set base to localtime on windows.
-		base = base.Local()
-	} else {
-		// set base to UTC on !windows.
-		base = base.UTC()
-	}
-
-	datetime := base.Format("2006-01-02T15:04:05")
-	qemuArgs = append(qemuArgs, "-rtc", fmt.Sprintf("base=%s", datetime))
-
 	// SMBIOS only on x86_64 and aarch64.
 	if d.architectureSupportsUEFI(d.architecture) {
 		qemuArgs = append(qemuArgs, "-smbios", "type=2,manufacturer=LinuxContainers,product=Incus")
@@ -1858,6 +1843,26 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 
 		qemuArgs = append(qemuArgs, fields...)
+	}
+
+	// Apply the RTC configuration.
+	// This needs to happen close to creating the full qemu cmd or the time might drift in between.
+	adjustment := d.getStartupRTCAdjustment()
+
+	// only apply the rtc adjustment if the adjustment is not zero
+	// this way qemu can take care of using the correct time
+	if adjustment != 0 {
+		base := time.Now().Add(adjustment)
+		if d.GuestOS() == "windows" {
+			// set base to localtime on windows.
+			base = base.Local()
+		} else {
+			// set base to UTC on !windows.
+			base = base.UTC()
+		}
+
+		datetime := base.Format("2006-01-02T15:04:05")
+		qemuArgs = append(qemuArgs, "-rtc", fmt.Sprintf("base=%s", datetime))
 	}
 
 	d.cmdArgs = qemuArgs
