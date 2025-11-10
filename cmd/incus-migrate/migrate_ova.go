@@ -307,8 +307,7 @@ func (m *OVAMigration) unpackOVA(outPath string) error {
 
 		outFile, err := os.Create(filepath.Join(outPath, header.Name))
 		if err != nil {
-			fmt.Println("Error creating file:", err)
-			continue
+			return fmt.Errorf("Error creating file: %v", err)
 		}
 
 		for {
@@ -318,9 +317,8 @@ func (m *OVAMigration) unpackOVA(outPath string) error {
 					break
 				}
 
-				fmt.Println("Error extracting file:", err)
 				outFile.Close()
-				continue
+				return fmt.Errorf("Error unpacking file: %v", err)
 			}
 		}
 
