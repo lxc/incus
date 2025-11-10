@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -1638,7 +1639,7 @@ func patchDefaultStoragePermissions(_ string, d *Daemon) error {
 				path := filepath.Join(storagePools.GetStoragePoolMountPoint(pool), volDir)
 
 				err := os.Chmod(path, volEntry.Mode)
-				if err != nil && !os.IsExist(err) {
+				if err != nil && !errors.Is(err, fs.ErrNotExist) {
 					return fmt.Errorf("Failed to set directory mode %q: %w", path, err)
 				}
 			}
