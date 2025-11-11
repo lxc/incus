@@ -19,6 +19,7 @@ fi
 # Install the daemon.
 cp "launchd/$AGENT.plist" /Library/LaunchDaemons/
 chown root:wheel "/Library/LaunchDaemons/$AGENT.plist"
+mkdir -p /usr/local/bin
 cp incus-agent-setup /usr/local/bin/
 chown root:wheel /usr/local/bin/incus-agent-setup
 
