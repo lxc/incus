@@ -849,7 +849,7 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		case "network.ovn.northbound_connection", "network.ovn.ca_cert", "network.ovn.client_cert", "network.ovn.client_key":
 			ovnChanged = true
 
-		case "oidc.issuer", "oidc.client.id", "oidc.audience", "oidc.claim":
+		case "oidc.issuer", "oidc.client.id", "oidc.audience", "oidc.claim", "oidc.scopes":
 			oidcChanged = true
 
 		case "openfga.api.url", "openfga.api.token", "openfga.store.id":
