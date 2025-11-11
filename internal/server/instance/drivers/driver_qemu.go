@@ -6002,7 +6002,7 @@ func qemuDetachDisk(s *state.State, id int) func(string) error {
 
 // Detach a disk from the instance.
 func (d *qemu) detachDisk(name string) error {
-	diskName := strings.TrimPrefix(name, qemuDeviceIDPrefix)
+	diskName := linux.PathNameDecode(strings.TrimPrefix(name, qemuDeviceIDPrefix))
 
 	// Load and detach the disk.
 	config, ok := d.expandedDevices[diskName]
