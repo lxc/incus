@@ -34,7 +34,7 @@ mount_tmpfs -s 50M "$PREFIX"
 chmod 0700 "$PREFIX"
 
 # Copy the data.
-cp -Ra "$VOLUME/"* "$PREFIX"
+cp -RaX "$VOLUME/"* "$PREFIX"
 
 # Unmount the temporary mount.
 umount "$VOLUME"
