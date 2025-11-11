@@ -11,8 +11,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gorilla/mux"
-
 	"github.com/lxc/incus/v6/internal/filter"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/db"
@@ -264,7 +262,7 @@ func warningsGet(d *Daemon, r *http.Request) response.Response {
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func warningGet(d *Daemon, r *http.Request) response.Response {
-	id, err := url.PathUnescape(mux.Vars(r)["id"])
+	id, err := url.PathUnescape(r.PathValue("id"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -353,7 +351,7 @@ func warningPatch(d *Daemon, r *http.Request) response.Response {
 func warningPut(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	id, err := url.PathUnescape(mux.Vars(r)["id"])
+	id, err := url.PathUnescape(r.PathValue("id"))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -414,7 +412,7 @@ func warningPut(d *Daemon, r *http.Request) response.Response {
 func warningDelete(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	id, err := url.PathUnescape(mux.Vars(r)["id"])
+	id, err := url.PathUnescape(r.PathValue("id"))
 	if err != nil {
 		return response.SmartError(err)
 	}

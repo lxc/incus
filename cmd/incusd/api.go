@@ -12,8 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
-
 	clusterConfig "github.com/lxc/incus/v6/internal/server/cluster/config"
 	clusterRequest "github.com/lxc/incus/v6/internal/server/cluster/request"
 	"github.com/lxc/incus/v6/internal/server/db"
@@ -66,17 +64,14 @@ import (
 //	          example: ["/1.0"]
 func restServer(d *Daemon) *http.Server {
 	/* Setup the web server */
-	router := mux.NewRouter()
-	router.StrictSlash(false) // Don't redirect to URL with trailing slash.
-	router.SkipClean(true)
-	router.UseEncodedPath() // Allow encoded values in path segments.
+	router := http.NewServeMux()
 
 	// Serving the UI.
 	uiPath := os.Getenv("INCUS_UI")
 	uiEnabled := uiPath != "" && util.PathExists(fmt.Sprintf("%s/index.html", uiPath))
 	if uiEnabled {
 		uiHttpDir := uiHttpDir{http.Dir(uiPath)}
-		router.PathPrefix("/ui/").Handler(http.StripPrefix("/ui/", http.FileServer(uiHttpDir)))
+		router.Handle("/ui/", http.FileServer(uiHttpDir))
 		router.HandleFunc("/ui", func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/ui/", http.StatusMovedPermanently)
 		})
@@ -87,7 +82,7 @@ func restServer(d *Daemon) *http.Server {
 	docEnabled := documentationPath != "" && util.PathExists(documentationPath)
 	if docEnabled {
 		documentationHttpDir := documentationHttpDir{http.Dir(documentationPath)}
-		router.PathPrefix("/documentation/").Handler(http.StripPrefix("/documentation/", http.FileServer(documentationHttpDir)))
+		router.Handle("/documentation/", http.FileServer(documentationHttpDir))
 		router.HandleFunc("/documentation", func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/documentation/", http.StatusMovedPermanently)
 		})
@@ -166,14 +161,14 @@ func restServer(d *Daemon) *http.Server {
 		d.createCmd(router, "", c)
 	}
 
-	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	notFoundHandler := func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("Sending top level 404", logger.Ctx{"url": r.URL, "method": r.Method, "remote": r.RemoteAddr})
 		w.Header().Set("Content-Type", "application/json")
 		_ = response.NotFound(nil).Render(w)
-	})
+	}
 
 	return &http.Server{
-		Handler:     &httpServer{r: router, d: d},
+		Handler:     &httpServer{r: router, d: d, n: notFoundHandler},
 		ConnContext: request.SaveConnectionInContext,
 		IdleTimeout: 30 * time.Second,
 	}
@@ -203,9 +198,7 @@ func vSockServer(d *Daemon) *http.Server {
 
 func metricsServer(d *Daemon) *http.Server {
 	/* Setup the web server */
-	router := mux.NewRouter()
-	router.StrictSlash(false)
-	router.SkipClean(true)
+	router := http.NewServeMux()
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -219,20 +212,18 @@ func metricsServer(d *Daemon) *http.Server {
 	d.createCmd(router, "1.0", api10Cmd)
 	d.createCmd(router, "1.0", metricsCmd)
 
-	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	notFoundHandler := func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("Sending top level 404", logger.Ctx{"url": r.URL, "method": r.Method, "remote": r.RemoteAddr})
 		w.Header().Set("Content-Type", "application/json")
 		_ = response.NotFound(nil).Render(w)
-	})
+	}
 
-	return &http.Server{Handler: &httpServer{r: router, d: d}}
+	return &http.Server{Handler: &httpServer{r: router, d: d, n: notFoundHandler}}
 }
 
 func storageBucketsServer(d *Daemon) *http.Server {
 	/* Setup the web server */
-	router := mux.NewRouter()
-	router.StrictSlash(false)
-	router.SkipClean(true)
+	router := http.NewServeMux()
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Wait until daemon is fully started.
@@ -294,7 +285,7 @@ func storageBucketsServer(d *Daemon) *http.Server {
 	})
 
 	// We use the NotFoundHandler to reverse proxy requests to dynamically started local MinIO processes.
-	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	notFoundHandler := func(w http.ResponseWriter, r *http.Request) {
 		// Wait until daemon is fully started.
 		<-d.waitReady.Done()
 
@@ -364,14 +355,15 @@ func storageBucketsServer(d *Daemon) *http.Server {
 
 		rproxy := httputil.NewSingleHostReverseProxy(&u)
 		rproxy.ServeHTTP(w, r)
-	})
+	}
 
-	return &http.Server{Handler: &httpServer{r: router, d: d}}
+	return &http.Server{Handler: &httpServer{r: router, d: d, n: notFoundHandler}}
 }
 
 type httpServer struct {
-	r *mux.Router
+	r *http.ServeMux
 	d *Daemon
+	n func(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *httpServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -388,6 +380,16 @@ func (s *httpServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// OPTIONS request don't need any further processing
 	if req.Method == "OPTIONS" {
 		return
+	}
+
+	// Execute NotFound function if defined
+	if s.n != nil {
+		_, pattern := s.r.Handler(req)
+		// Empty pattern = no Handler for this request
+		if pattern == "" {
+			s.n(rw, req)
+			return
+		}
 	}
 
 	// Call the original server
