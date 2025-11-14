@@ -60,11 +60,11 @@ type cmdOperationDelete struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdOperationDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<operation>"))
+	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<operation> [[<remote>:]<operation>...]"))
 	cmd.Aliases = []string{"cancel", "rm", "remove"}
-	cmd.Short = i18n.G("Delete a background operation (will attempt to cancel)")
+	cmd.Short = i18n.G("Delete background operations (will attempt to cancel)")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete a background operation (will attempt to cancel)`))
+		`Delete background operations (will attempt to cancel)`))
 
 	cmd.RunE = c.Run
 
@@ -74,27 +74,31 @@ func (c *cmdOperationDelete) Command() *cobra.Command {
 // Run runs the actual command logic.
 func (c *cmdOperationDelete) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
+	exit, err := c.global.checkArgs(cmd, args, 1, -1)
 	if exit {
 		return err
 	}
 
 	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	resources, err := c.global.parseServers(args...)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
+	for _, resource := range resources {
+		if resource.name == "" {
+			return errors.New(i18n.G("Missing operation name"))
+		}
 
-	// Delete the operation
-	err = resource.server.DeleteOperation(resource.name)
-	if err != nil {
-		return err
-	}
+		// Delete the operation
+		err = resource.server.DeleteOperation(resource.name)
+		if err != nil {
+			return err
+		}
 
-	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Operation %s deleted")+"\n", resource.name)
+		if !c.global.flagQuiet {
+			fmt.Printf(i18n.G("Operation %s deleted")+"\n", resource.name)
+		}
 	}
 
 	return nil

@@ -211,7 +211,7 @@ type cmdProjectDelete struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProjectDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<project>"))
+	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<project> [[<remote>:]<project>...]"))
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete projects")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -221,11 +221,7 @@ func (c *cmdProjectDelete) Command() *cobra.Command {
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		if len(args) == 0 {
-			return c.global.cmpProjects(toComplete)
-		}
-
-		return nil, cobra.ShellCompDirectiveNoFileComp
+		return c.global.cmpProjects(toComplete)
 	}
 
 	return cmd
@@ -248,7 +244,7 @@ func (c *cmdProjectDelete) promptConfirmation(name string) error {
 // Run runs the actual command logic.
 func (c *cmdProjectDelete) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
+	exit, err := c.global.checkArgs(cmd, args, 1, -1)
 	if exit {
 		return err
 	}
@@ -259,45 +255,45 @@ func (c *cmdProjectDelete) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resources, err := c.global.parseServers(args[0])
+	resources, err := c.global.parseServers(args...)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing project name"))
-	}
-
-	// Delete the project, server is unable to find the project here.
-	if c.flagForce {
-		err := c.promptConfirmation(resource.name)
-		if err != nil {
-			return err
+	for _, resource := range resources {
+		if resource.name == "" {
+			return errors.New(i18n.G("Missing project name"))
 		}
 
-		err = resource.server.DeleteProjectForce(resource.name)
-		if err != nil {
-			return err
-		}
-	} else {
-		err = resource.server.DeleteProject(resource.name)
-		if err != nil {
-			return err
-		}
-	}
+		// Delete the project, server is unable to find the project here.
+		if c.flagForce {
+			err := c.promptConfirmation(resource.name)
+			if err != nil {
+				return err
+			}
 
-	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Project %s deleted")+"\n", resource.name)
-	}
+			err = resource.server.DeleteProjectForce(resource.name)
+			if err != nil {
+				return err
+			}
+		} else {
+			err = resource.server.DeleteProject(resource.name)
+			if err != nil {
+				return err
+			}
+		}
 
-	// Switch back to default project
-	if resource.name == c.global.conf.Remotes[remoteName].Project {
-		rc := c.global.conf.Remotes[remoteName]
-		rc.Project = ""
-		c.global.conf.Remotes[remoteName] = rc
-		return c.global.conf.SaveConfig(c.global.confPath)
+		if !c.global.flagQuiet {
+			fmt.Printf(i18n.G("Project %s deleted")+"\n", resource.name)
+		}
+
+		// Switch back to default project
+		if resource.name == c.global.conf.Remotes[remoteName].Project {
+			rc := c.global.conf.Remotes[remoteName]
+			rc.Project = ""
+			c.global.conf.Remotes[remoteName] = rc
+			return c.global.conf.SaveConfig(c.global.confPath)
+		}
 	}
 
 	return nil

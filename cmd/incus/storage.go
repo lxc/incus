@@ -221,7 +221,7 @@ type cmdStorageDelete struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdStorageDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<pool>"))
+	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<pool> [[<remote>:]<pool>...]"))
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete storage pools")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -230,11 +230,7 @@ func (c *cmdStorageDelete) Command() *cobra.Command {
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		if len(args) == 0 {
-			return c.global.cmpStoragePools(toComplete)
-		}
-
-		return nil, cobra.ShellCompDirectiveNoFileComp
+		return c.global.cmpStoragePools(toComplete)
 	}
 
 	return cmd
@@ -243,31 +239,31 @@ func (c *cmdStorageDelete) Command() *cobra.Command {
 // Run runs the actual command logic.
 func (c *cmdStorageDelete) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
+	exit, err := c.global.checkArgs(cmd, args, 1, -1)
 	if exit {
 		return err
 	}
 
 	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	resources, err := c.global.parseServers(args...)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
+	for _, resource := range resources {
+		if resource.name == "" {
+			return errors.New(i18n.G("Missing pool name"))
+		}
 
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing pool name"))
-	}
+		// Delete the pool
+		err = resource.server.DeleteStoragePool(resource.name)
+		if err != nil {
+			return err
+		}
 
-	// Delete the pool
-	err = resource.server.DeleteStoragePool(resource.name)
-	if err != nil {
-		return err
-	}
-
-	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Storage pool %s deleted")+"\n", resource.name)
+		if !c.global.flagQuiet {
+			fmt.Printf(i18n.G("Storage pool %s deleted")+"\n", resource.name)
+		}
 	}
 
 	return nil

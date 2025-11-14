@@ -175,7 +175,7 @@ type cmdNetworkIntegrationDelete struct {
 // Command returns a cobra command for inclusion.
 func (c *cmdNetworkIntegrationDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<network integration>"))
+	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<network integration> [[<remote>:]<network integration>...]"))
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network integrations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -189,31 +189,31 @@ func (c *cmdNetworkIntegrationDelete) Command() *cobra.Command {
 // Run actually performs the action.
 func (c *cmdNetworkIntegrationDelete) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
+	exit, err := c.global.checkArgs(cmd, args, 1, -1)
 	if exit {
 		return err
 	}
 
 	// Get the network integration.
-	resources, err := c.global.parseServers(args[0])
+	resources, err := c.global.parseServers(args...)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
+	for _, resource := range resources {
+		if resource.name == "" {
+			return errors.New(i18n.G("Missing network integration name"))
+		}
 
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing network integration name"))
-	}
+		// Delete the network integration
+		err = resource.server.DeleteNetworkIntegration(resource.name)
+		if err != nil {
+			return err
+		}
 
-	// Delete the network integration
-	err = resource.server.DeleteNetworkIntegration(resource.name)
-	if err != nil {
-		return err
-	}
-
-	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Network integration %s deleted")+"\n", resource.name)
+		if !c.global.flagQuiet {
+			fmt.Printf(i18n.G("Network integration %s deleted")+"\n", resource.name)
+		}
 	}
 
 	return nil
