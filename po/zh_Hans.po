@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-10-30 12:08-0400\n"
+"POT-Creation-Date: 2025-11-15 10:36-0500\n"
 "PO-Revision-Date: 2025-11-15 12:51+0000\n"
 "Last-Translator: IO01 <pf.man@live.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -634,7 +634,7 @@ msgstr "%q 不是块设备"
 msgid "%q is not an IP address"
 msgstr "%q 不是 IP 地址"
 
-#: cmd/incus/admin_recover.go:212
+#: cmd/incus/admin_recover.go:223
 #, c-format
 msgid "%s %q on pool %q in project %q (includes %d snapshots)"
 msgstr "项目 %q 中 %q 池的 %s %q（包括 %d 个快照）"
@@ -649,7 +649,7 @@ msgstr "%s（还有%d个）"
 msgid "%s (%s) (%d available)"
 msgstr "%s（%s）（%d个可用）"
 
-#: cmd/incus/admin_recover.go:68
+#: cmd/incus/admin_recover.go:79
 #, c-format
 msgid "%s (backend=%q, source=%q)"
 msgstr "%s（后端=%q，来源=%q）"
@@ -740,10 +740,6 @@ msgstr "<别名>"
 msgid "<alias> <target>"
 msgstr "<别名> <目标>"
 
-#: cmd/incus/admin_sql.go:30
-msgid "<local|global> <query>"
-msgstr "<本地|全局> <查询>"
-
 #: cmd/incus/alias.go:171
 msgid "<old alias> <new alias>"
 msgstr "<旧别名> <新别名>"
@@ -782,7 +778,7 @@ msgstr "<tarball>|<目录>|<URL> [<rootfs tarball>] [<远程>:] [键=值…]"
 msgid "<target>"
 msgstr "<目标>"
 
-#: cmd/incus/admin_sql.go:152
+#: cmd/incus/admin_sql.go:153
 #, c-format
 msgid "=> Query %d:"
 msgstr "=> 查询 %d："
@@ -816,11 +812,11 @@ msgstr "别名"
 msgid "ALIASES"
 msgstr "别名"
 
-#: cmd/incus/list.go:815
+#: cmd/incus/list.go:833
 msgid "APP"
 msgstr "应用"
 
-#: cmd/incus/cluster.go:183 cmd/incus/image.go:1142 cmd/incus/list.go:497
+#: cmd/incus/cluster.go:183 cmd/incus/image.go:1142 cmd/incus/list.go:507
 msgid "ARCHITECTURE"
 msgstr "架构"
 
@@ -971,7 +967,7 @@ msgstr "向集群成员添加角色"
 msgid "Add rules to an ACL"
 msgstr "向 ACL 添加规则"
 
-#: cmd/incus/admin_recover.go:131
+#: cmd/incus/admin_recover.go:142
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr "附加存储池配置属性（键=值，完成后为空）："
@@ -1152,7 +1148,7 @@ msgstr "可用项目："
 msgid "Average: %.2f %.2f %.2f"
 msgstr "平均值：%.2f %.2f %.2f"
 
-#: cmd/incus/list.go:503 cmd/incus/list.go:504
+#: cmd/incus/list.go:513 cmd/incus/list.go:514
 msgid "BASE IMAGE"
 msgstr "基础镜像"
 
@@ -1277,7 +1273,7 @@ msgstr "数量"
 msgid "CPU TIME(s)"
 msgstr "CPU 时间（秒）"
 
-#: cmd/incus/list.go:515
+#: cmd/incus/list.go:525
 msgid "CPU USAGE"
 msgstr "CPU 占用"
 
@@ -1301,7 +1297,7 @@ msgstr "CPU："
 msgid "CREATED"
 msgstr "创建"
 
-#: cmd/incus/list.go:499
+#: cmd/incus/list.go:509
 msgid "CREATED AT"
 msgstr "创建于"
 
@@ -1351,11 +1347,11 @@ msgstr "无法从标准输入读取：%w"
 msgid "Can't remove the default remote"
 msgstr "无法移除默认远程服务器"
 
-#: cmd/incus/list.go:530
+#: cmd/incus/list.go:540
 msgid "Can't specify --fast with --columns"
 msgstr "不能用 --columns 指定 --fast"
 
-#: cmd/incus/cluster.go:259 cmd/incus/list.go:409 cmd/incus/profile.go:845
+#: cmd/incus/cluster.go:259 cmd/incus/list.go:410 cmd/incus/profile.go:845
 msgid "Can't specify --project with --all-projects"
 msgstr "不能用 --all-projects 指定 --project"
 
@@ -1363,7 +1359,7 @@ msgstr "不能用 --all-projects 指定 --project"
 msgid "Can't specify a different remote for rename"
 msgstr "无法指定其他远程服务器进行重命名"
 
-#: cmd/incus/list.go:561 cmd/incus/storage_volume.go:1743
+#: cmd/incus/list.go:571 cmd/incus/storage_volume.go:1743
 #: cmd/incus/warning.go:234
 msgid "Can't specify column L when not clustered"
 msgstr "未集群时无法指定列 L"
@@ -1584,7 +1580,7 @@ msgstr "已启用集群"
 #: cmd/incus/cluster.go:155 cmd/incus/cluster.go:1133
 #: cmd/incus/cluster_group.go:487 cmd/incus/config_trust.go:433
 #: cmd/incus/config_trust.go:636 cmd/incus/image.go:1114
-#: cmd/incus/image_alias.go:219 cmd/incus/list.go:136 cmd/incus/network.go:1138
+#: cmd/incus/image_alias.go:219 cmd/incus/list.go:137 cmd/incus/network.go:1138
 #: cmd/incus/network.go:1353 cmd/incus/network_allocations.go:64
 #: cmd/incus/network_forward.go:119 cmd/incus/network_integration.go:441
 #: cmd/incus/network_load_balancer.go:127 cmd/incus/network_peer.go:115
@@ -1649,7 +1645,7 @@ msgstr "要应用于新项目的配置键/值"
 msgid "Config key/value to apply to the target instance"
 msgstr "要应用于目标实例的配置键/值"
 
-#: cmd/incus/admin_recover.go:134
+#: cmd/incus/admin_recover.go:145
 msgid "Config option should be in the format KEY=VALUE"
 msgstr "配置选项的格式应为 KEY=VALUE"
 
@@ -2019,7 +2015,7 @@ msgstr "默认目标地址"
 
 #: cmd/incus/cluster.go:185 cmd/incus/cluster_group.go:513
 #: cmd/incus/config_trust.go:451 cmd/incus/image.go:1143
-#: cmd/incus/image_alias.go:259 cmd/incus/list.go:500 cmd/incus/network.go:1169
+#: cmd/incus/image_alias.go:259 cmd/incus/list.go:510 cmd/incus/network.go:1169
 #: cmd/incus/network_acl.go:178 cmd/incus/network_address_set.go:166
 #: cmd/incus/network_forward.go:141 cmd/incus/network_integration.go:457
 #: cmd/incus/network_load_balancer.go:149 cmd/incus/network_peer.go:137
@@ -2034,7 +2030,7 @@ msgstr "描述"
 msgid "DISK"
 msgstr "磁盘"
 
-#: cmd/incus/list.go:501
+#: cmd/incus/list.go:511
 msgid "DISK USAGE"
 msgstr "磁盘利用率"
 
@@ -2194,8 +2190,8 @@ msgstr "删除警告"
 #: cmd/incus/action.go:32 cmd/incus/action.go:56 cmd/incus/action.go:81
 #: cmd/incus/action.go:106 cmd/incus/action.go:130 cmd/incus/admin.go:21
 #: cmd/incus/admin_cluster.go:26 cmd/incus/admin_init.go:47
-#: cmd/incus/admin_other.go:21 cmd/incus/admin_recover.go:31
-#: cmd/incus/admin_shutdown.go:32 cmd/incus/admin_sql.go:32
+#: cmd/incus/admin_other.go:21 cmd/incus/admin_recover.go:30
+#: cmd/incus/admin_shutdown.go:32 cmd/incus/admin_sql.go:31
 #: cmd/incus/admin_waitready.go:28 cmd/incus/alias.go:24 cmd/incus/alias.go:63
 #: cmd/incus/alias.go:113 cmd/incus/alias.go:174 cmd/incus/alias.go:229
 #: cmd/incus/cluster.go:39 cmd/incus/cluster.go:135 cmd/incus/cluster.go:341
@@ -2241,7 +2237,7 @@ msgstr "删除警告"
 #: cmd/incus/image_alias.go:72 cmd/incus/image_alias.go:141
 #: cmd/incus/image_alias.go:197 cmd/incus/image_alias.go:387
 #: cmd/incus/import.go:30 cmd/incus/info.go:37 cmd/incus/launch.go:25
-#: cmd/incus/list.go:52 cmd/incus/main.go:102 cmd/incus/manpage.go:25
+#: cmd/incus/list.go:53 cmd/incus/main.go:102 cmd/incus/manpage.go:25
 #: cmd/incus/monitor.go:35 cmd/incus/move.go:38 cmd/incus/network.go:41
 #: cmd/incus/network.go:153 cmd/incus/network.go:252 cmd/incus/network.go:354
 #: cmd/incus/network.go:472 cmd/incus/network.go:532 cmd/incus/network.go:631
@@ -2488,7 +2484,7 @@ msgstr "显示所有项目的集群"
 msgid "Display images from all projects"
 msgstr "显示所有项目的镜像"
 
-#: cmd/incus/list.go:139 cmd/incus/top.go:63
+#: cmd/incus/list.go:140 cmd/incus/top.go:63
 msgid "Display instances from all projects"
 msgstr "显示所有项目的实例"
 
@@ -2604,11 +2600,11 @@ msgstr "在刷新期间，排除早于最新目标快照的源快照"
 msgid "ENTRIES"
 msgstr "条目"
 
-#: cmd/incus/list.go:819
+#: cmd/incus/list.go:837
 msgid "EPHEMERAL"
 msgstr "临时"
 
-#: cmd/incus/admin_recover.go:156
+#: cmd/incus/admin_recover.go:167
 #, c-format
 msgid "EXISTING: %q (backend=%q, source=%q)"
 msgstr ""
@@ -2736,7 +2732,7 @@ msgstr "将信任配置编辑为 YAML"
 #: cmd/incus/cluster.go:196 cmd/incus/cluster.go:1162
 #: cmd/incus/cluster_group.go:521 cmd/incus/config_trust.go:463
 #: cmd/incus/config_trust.go:661 cmd/incus/image.go:1161
-#: cmd/incus/image_alias.go:268 cmd/incus/list.go:552 cmd/incus/network.go:1184
+#: cmd/incus/image_alias.go:268 cmd/incus/list.go:562 cmd/incus/network.go:1184
 #: cmd/incus/network.go:1391 cmd/incus/network_allocations.go:89
 #: cmd/incus/network_forward.go:155 cmd/incus/network_integration.go:467
 #: cmd/incus/network_load_balancer.go:162 cmd/incus/network_peer.go:148
@@ -2881,11 +2877,11 @@ msgstr "正在解散集群成员：%s"
 msgid "Event type to listen for"
 msgstr "要监听的事件类型"
 
-#: cmd/incus/admin_sql.go:31
+#: cmd/incus/admin_sql.go:30
 msgid "Execute a SQL query against the local or global database"
 msgstr "对本地或全局数据库执行 SQL 查询"
 
-#: cmd/incus/admin_sql.go:32
+#: cmd/incus/admin_sql.go:31
 #, fuzzy
 msgid ""
 "Execute a SQL query against the local or global database\n"
@@ -3153,7 +3149,7 @@ msgstr "生成 SSH 主机密钥失败：%w"
 msgid "Failed generating trust certificate: %w"
 msgstr "生成信任证书失败：%w"
 
-#: cmd/incus/admin_recover.go:63
+#: cmd/incus/admin_recover.go:74
 #, c-format
 msgid "Failed getting existing storage pools: %w"
 msgstr "获取现有存储池失败：%w"
@@ -3163,7 +3159,7 @@ msgstr "获取现有存储池失败：%w"
 msgid "Failed getting peer's status: %w"
 msgstr "获取对等体状态失败：%w"
 
-#: cmd/incus/admin_recover.go:253
+#: cmd/incus/admin_recover.go:264
 #, c-format
 msgid "Failed import request: %w"
 msgstr "导入请求失败：%w"
@@ -3188,7 +3184,7 @@ msgstr "加载存储池 %q 失败：%w"
 msgid "Failed parsing SSH host key: %w"
 msgstr "解析 SSH 主机密钥失败：%w"
 
-#: cmd/incus/admin_recover.go:199
+#: cmd/incus/admin_recover.go:210
 #, c-format
 msgid "Failed parsing validation response: %w"
 msgstr "解析验证响应失败：%w"
@@ -3322,7 +3318,7 @@ msgstr "监听连接失败：%w"
 msgid "Failed to load configuration: %s"
 msgstr "加载配置失败：%s"
 
-#: cmd/incus/admin_sql.go:127
+#: cmd/incus/admin_sql.go:128
 #, c-format
 msgid "Failed to parse dump response: %w"
 msgstr "解析转储响应失败：%w"
@@ -3342,7 +3338,7 @@ msgstr "解析 preseed 失败：%w"
 msgid "Failed to read from file: %w"
 msgstr "无法从标准输入读取：%w"
 
-#: cmd/incus/admin_init_preseed.go:31 cmd/incus/admin_sql.go:94
+#: cmd/incus/admin_init_preseed.go:31 cmd/incus/admin_sql.go:99
 #, c-format
 msgid "Failed to read from stdin: %w"
 msgstr "无法从标准输入读取：%w"
@@ -3367,7 +3363,7 @@ msgstr "重命名导出文件失败：%w"
 msgid "Failed to render the config: %w"
 msgstr "呈现配置失败：%w"
 
-#: cmd/incus/admin_sql.go:121
+#: cmd/incus/admin_sql.go:122
 #, c-format
 msgid "Failed to request dump: %w"
 msgstr "请求转储失败：%w"
@@ -3430,7 +3426,7 @@ msgstr "为 %s 遍历路径失败：%s"
 msgid "Failed to write server cert file %q: %w"
 msgstr "无法写入服务器证书文件 %q：%w"
 
-#: cmd/incus/admin_recover.go:192
+#: cmd/incus/admin_recover.go:203
 #, c-format
 msgid "Failed validation request: %w"
 msgstr "验证请求失败：%w"
@@ -3440,7 +3436,7 @@ msgstr "验证请求失败：%w"
 msgid "Family: %v"
 msgstr ""
 
-#: cmd/incus/list.go:138
+#: cmd/incus/list.go:139
 msgid "Fast mode (same as --columns=nsacPt)"
 msgstr "快速模式（等价于 --columns=nsacPt）"
 
@@ -3554,10 +3550,10 @@ msgstr ""
 "格式化（csv|json|table|yaml|compact），使用后缀“,noheader”可禁用表头，需要时"
 "可使用“,header”启用表头，例如 csv,header"
 
-#: cmd/incus/admin_sql.go:60 cmd/incus/alias.go:115 cmd/incus/cluster.go:156
+#: cmd/incus/admin_sql.go:59 cmd/incus/alias.go:115 cmd/incus/cluster.go:156
 #: cmd/incus/cluster_group.go:488 cmd/incus/config_template.go:301
 #: cmd/incus/config_trust.go:434 cmd/incus/config_trust.go:635
-#: cmd/incus/image.go:1115 cmd/incus/image_alias.go:218 cmd/incus/list.go:137
+#: cmd/incus/image.go:1115 cmd/incus/image_alias.go:218 cmd/incus/list.go:138
 #: cmd/incus/network.go:1139 cmd/incus/network.go:1352
 #: cmd/incus/network_acl.go:101 cmd/incus/network_allocations.go:61
 #: cmd/incus/network_forward.go:118 cmd/incus/network_integration.go:440
@@ -3915,11 +3911,11 @@ msgstr ""
 msgid "IP addresses:"
 msgstr ""
 
-#: cmd/incus/list.go:495 cmd/incus/network.go:1167
+#: cmd/incus/list.go:505 cmd/incus/network.go:1167
 msgid "IPV4"
 msgstr "IPV4"
 
-#: cmd/incus/list.go:496 cmd/incus/network.go:1168
+#: cmd/incus/list.go:506 cmd/incus/network.go:1168
 msgid "IPV6"
 msgstr "IPV6"
 
@@ -4164,10 +4160,6 @@ msgstr ""
 msgid "Invalid argument %q"
 msgstr "无效的参数 %q"
 
-#: cmd/incus/admin_recover.go:45
-msgid "Invalid arguments"
-msgstr "无效的参数"
-
 #: cmd/incus/export.go:141 cmd/incus/storage_bucket.go:1580
 #: cmd/incus/storage_volume.go:4205
 #, c-format
@@ -4188,17 +4180,17 @@ msgstr "无效的证书"
 msgid "Invalid cluster join token: %w"
 msgstr "无效的集群加入令牌：%w"
 
-#: cmd/incus/list.go:595
+#: cmd/incus/list.go:605
 #, c-format
 msgid "Invalid config key '%s' in '%s'"
 msgstr "'%s' 中的配置键 '%s' 无效"
 
-#: cmd/incus/list.go:588
+#: cmd/incus/list.go:598
 #, c-format
 msgid "Invalid config key column format (too many fields): '%s'"
 msgstr "无效的配置键列格式（字段过多）：'%s'"
 
-#: cmd/incus/admin_sql.go:87
+#: cmd/incus/admin_sql.go:91
 msgid "Invalid database type"
 msgstr "无效的数据库类型"
 
@@ -4241,17 +4233,17 @@ msgstr "无效的加入令牌：%w"
 msgid "Invalid key=value configuration: %s"
 msgstr "无效的 key=value 配置：%s"
 
-#: cmd/incus/list.go:616
+#: cmd/incus/list.go:626
 #, c-format
 msgid "Invalid max width (must -1, 0 or a positive integer) '%s' in '%s'"
 msgstr "无效的最大宽度（必须为-1、0或正整数）'%s'位于'%s'中"
 
-#: cmd/incus/list.go:612
+#: cmd/incus/list.go:622
 #, c-format
 msgid "Invalid max width (must be an integer) '%s' in '%s'"
 msgstr "无效的最大宽度（必须为整数）'%s'位于'%s'中"
 
-#: cmd/incus/list.go:602
+#: cmd/incus/list.go:612
 #, c-format
 msgid ""
 "Invalid name in '%s', empty string is only allowed when defining maxWidth"
@@ -4335,7 +4327,7 @@ msgstr ""
 msgid "LAST SEEN"
 msgstr ""
 
-#: cmd/incus/list.go:505
+#: cmd/incus/list.go:515
 msgid "LAST USED AT"
 msgstr ""
 
@@ -4347,7 +4339,7 @@ msgstr ""
 msgid "LISTEN ADDRESS"
 msgstr ""
 
-#: cmd/incus/list.go:542 cmd/incus/network.go:1380
+#: cmd/incus/list.go:552 cmd/incus/network.go:1380
 #: cmd/incus/network_forward.go:144 cmd/incus/network_load_balancer.go:151
 #: cmd/incus/operation.go:165 cmd/incus/storage_bucket.go:541
 #: cmd/incus/storage_volume.go:1739 cmd/incus/warning.go:230
@@ -4881,11 +4873,11 @@ msgid ""
 "  s - Stateful"
 msgstr ""
 
-#: cmd/incus/list.go:51
+#: cmd/incus/list.go:52
 msgid "List instances"
 msgstr ""
 
-#: cmd/incus/list.go:52
+#: cmd/incus/list.go:53
 #, c-format
 msgid ""
 "List instances\n"
@@ -5372,11 +5364,11 @@ msgstr ""
 msgid "MEMORY"
 msgstr ""
 
-#: cmd/incus/list.go:506
+#: cmd/incus/list.go:516
 msgid "MEMORY USAGE"
 msgstr ""
 
-#: cmd/incus/list.go:507
+#: cmd/incus/list.go:517
 #, c-format
 msgid "MEMORY USAGE%"
 msgstr ""
@@ -5848,10 +5840,6 @@ msgstr ""
 msgid "Missing project name"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:78
-msgid "Missing required arguments"
-msgstr ""
-
 #: cmd/incus/profile.go:324
 msgid "Missing source profile name"
 msgstr ""
@@ -5971,7 +5959,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:180 cmd/incus/cluster.go:1152
 #: cmd/incus/cluster_group.go:511 cmd/incus/config_trust.go:447
-#: cmd/incus/config_trust.go:651 cmd/incus/list.go:508
+#: cmd/incus/config_trust.go:651 cmd/incus/list.go:518
 #: cmd/incus/network.go:1164 cmd/incus/network_acl.go:177
 #: cmd/incus/network_address_set.go:165 cmd/incus/network_integration.go:456
 #: cmd/incus/network_peer.go:136 cmd/incus/network_zone.go:142
@@ -5995,7 +5983,7 @@ msgstr ""
 msgid "NETWORKS"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:160
+#: cmd/incus/admin_recover.go:171
 #, c-format
 msgid "NEW: %q (backend=%q, source=%q)"
 msgstr ""
@@ -6081,7 +6069,7 @@ msgstr ""
 msgid "Name of the shared LVM volume group:"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:119
+#: cmd/incus/admin_recover.go:130
 #, c-format
 msgid "Name of the storage backend (%s):"
 msgstr ""
@@ -6091,7 +6079,7 @@ msgstr ""
 msgid "Name of the storage backend to use (%s)"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:102
+#: cmd/incus/admin_recover.go:113
 msgid "Name of the storage pool:"
 msgstr ""
 
@@ -6325,7 +6313,7 @@ msgstr ""
 msgid "No storage pool for target volume specified"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:218
+#: cmd/incus/admin_recover.go:229
 msgid "No unknown storage pools or volumes found. Nothing to do."
 msgstr ""
 
@@ -6440,7 +6428,7 @@ msgstr ""
 msgid "PEER"
 msgstr ""
 
-#: cmd/incus/list.go:510
+#: cmd/incus/list.go:520
 msgid "PID"
 msgstr ""
 
@@ -6453,15 +6441,15 @@ msgstr ""
 msgid "PORTS"
 msgstr ""
 
-#: cmd/incus/list.go:509
+#: cmd/incus/list.go:519
 msgid "PROCESSES"
 msgstr ""
 
-#: cmd/incus/list.go:511 cmd/incus/project.go:578
+#: cmd/incus/list.go:521 cmd/incus/project.go:578
 msgid "PROFILES"
 msgstr ""
 
-#: cmd/incus/image.go:1144 cmd/incus/list.go:502 cmd/incus/network.go:1163
+#: cmd/incus/image.go:1144 cmd/incus/list.go:512 cmd/incus/network.go:1163
 #: cmd/incus/network_acl.go:183 cmd/incus/network_address_set.go:172
 #: cmd/incus/network_zone.go:141 cmd/incus/profile.go:787
 #: cmd/incus/storage_bucket.go:538 cmd/incus/storage_volume.go:1750
@@ -6524,7 +6512,7 @@ msgstr ""
 msgid "Perform an incremental copy"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:230
+#: cmd/incus/admin_recover.go:241
 msgid "Please create those missing entries and then hit ENTER:"
 msgstr ""
 
@@ -6540,7 +6528,7 @@ msgstr ""
 msgid "Please type 'y', 'n' or the fingerprint:"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:104
+#: cmd/incus/admin_recover.go:115
 msgid "Pool name cannot be empty"
 msgstr ""
 
@@ -6846,13 +6834,13 @@ msgstr "重新初始化实例"
 msgid "Record description"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:30
+#: cmd/incus/admin_recover.go:29
 #, fuzzy
 msgid ""
 "Recover missing instances and volumes from existing and unknown storage pools"
 msgstr "从现有和未知存储池中恢复丢失的实例和存储卷"
 
-#: cmd/incus/admin_recover.go:31
+#: cmd/incus/admin_recover.go:30
 msgid ""
 "Recover missing instances and volumes from existing and unknown storage "
 "pools\n"
@@ -7170,7 +7158,7 @@ msgstr ""
 msgid "Role (admin or read-only)"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:161
+#: cmd/incus/admin_sql.go:162
 #, c-format
 msgid "Rows affected: %d"
 msgstr ""
@@ -7212,7 +7200,7 @@ msgstr ""
 msgid "SKU: %v"
 msgstr ""
 
-#: cmd/incus/list.go:512
+#: cmd/incus/list.go:522
 msgid "SNAPSHOTS"
 msgstr ""
 
@@ -7239,11 +7227,11 @@ msgstr ""
 msgid "SSH client disconnected %q"
 msgstr ""
 
-#: cmd/incus/list.go:516
+#: cmd/incus/list.go:526
 msgid "STARTED AT"
 msgstr ""
 
-#: cmd/incus/list.go:513 cmd/incus/network.go:1171
+#: cmd/incus/list.go:523 cmd/incus/network.go:1171
 #: cmd/incus/network_peer.go:140 cmd/incus/operation.go:162
 #: cmd/incus/storage.go:740 cmd/incus/warning.go:224
 msgid "STATE"
@@ -7265,7 +7253,7 @@ msgstr ""
 msgid "STORAGE BUCKETS"
 msgstr ""
 
-#: cmd/incus/list.go:498
+#: cmd/incus/list.go:508
 msgid "STORAGE POOL"
 msgstr ""
 
@@ -7277,7 +7265,7 @@ msgstr ""
 msgid "STP"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:172
+#: cmd/incus/admin_recover.go:183
 msgid "Scanning for unknown volumes..."
 msgstr ""
 
@@ -7930,7 +7918,7 @@ msgstr ""
 msgid "Sorting Method:"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:124
+#: cmd/incus/admin_recover.go:135
 msgid ""
 "Source of the storage pool (block device, volume group, dataset, path, ... "
 "as applicable):"
@@ -7954,7 +7942,7 @@ msgstr ""
 msgid "Starting %s"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:242
+#: cmd/incus/admin_recover.go:253
 msgid "Starting recovery..."
 msgstr ""
 
@@ -8021,12 +8009,12 @@ msgstr ""
 msgid "Storage has already been configured"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:109
+#: cmd/incus/admin_recover.go:120
 #, c-format
 msgid "Storage pool %q is already on recover list"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:205
+#: cmd/incus/admin_recover.go:216
 #, c-format
 msgid "Storage pool %q of type %q"
 msgstr ""
@@ -8137,7 +8125,7 @@ msgid "TOKEN"
 msgstr ""
 
 #: cmd/incus/config_trust.go:448 cmd/incus/image.go:1151
-#: cmd/incus/image_alias.go:258 cmd/incus/list.go:514 cmd/incus/network.go:1165
+#: cmd/incus/image_alias.go:258 cmd/incus/list.go:524 cmd/incus/network.go:1165
 #: cmd/incus/network.go:1379 cmd/incus/network_allocations.go:79
 #: cmd/incus/network_integration.go:458 cmd/incus/network_peer.go:139
 #: cmd/incus/operation.go:160 cmd/incus/storage_volume.go:1730
@@ -8228,11 +8216,11 @@ msgstr ""
 msgid "The direction argument must be one of: ingress, egress"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:203
+#: cmd/incus/admin_recover.go:214
 msgid "The following unknown storage pools have been found:"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:210
+#: cmd/incus/admin_recover.go:221
 msgid "The following unknown volumes have been found:"
 msgstr ""
 
@@ -8378,7 +8366,7 @@ msgstr ""
 msgid "The property with tag %q does not exist"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:154
+#: cmd/incus/admin_recover.go:165
 msgid "The recovery process will be scanning the following storage pools:"
 msgstr ""
 
@@ -8449,7 +8437,7 @@ msgstr ""
 msgid "This command isn't supported on Windows"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:66
+#: cmd/incus/admin_recover.go:77
 msgid "This server currently has the following storage pools:"
 msgstr ""
 
@@ -8650,7 +8638,7 @@ msgstr ""
 #: cmd/incus/cluster.go:202 cmd/incus/cluster.go:1168
 #: cmd/incus/cluster_group.go:527 cmd/incus/config_trust.go:469
 #: cmd/incus/config_trust.go:667 cmd/incus/image.go:1167
-#: cmd/incus/image_alias.go:274 cmd/incus/list.go:570 cmd/incus/network.go:1190
+#: cmd/incus/image_alias.go:274 cmd/incus/list.go:580 cmd/incus/network.go:1190
 #: cmd/incus/network.go:1397 cmd/incus/network_allocations.go:95
 #: cmd/incus/network_forward.go:161 cmd/incus/network_integration.go:473
 #: cmd/incus/network_load_balancer.go:168 cmd/incus/network_peer.go:154
@@ -9088,7 +9076,7 @@ msgstr ""
 msgid "Would you like the server to be available over the network?"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:233
+#: cmd/incus/admin_recover.go:244
 msgid "Would you like those to be recovered?"
 msgstr ""
 
@@ -9100,7 +9088,7 @@ msgstr ""
 msgid "Would you like to NAT IPv6 traffic on your bridge?"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:163
+#: cmd/incus/admin_recover.go:174
 msgid "Would you like to continue with scanning for lost volumes?"
 msgstr ""
 
@@ -9121,7 +9109,7 @@ msgstr ""
 msgid "Would you like to have your containers share their parent's allocation?"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:80
+#: cmd/incus/admin_recover.go:91
 msgid "Would you like to recover another storage pool?"
 msgstr ""
 
@@ -9146,7 +9134,7 @@ msgstr ""
 msgid "YES"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:225
+#: cmd/incus/admin_recover.go:236
 msgid "You are currently missing the following:"
 msgstr ""
 
@@ -9207,7 +9195,7 @@ msgstr ""
 msgid "[<remote>:] <name>"
 msgstr ""
 
-#: cmd/incus/cluster.go:132 cmd/incus/image.go:1085 cmd/incus/list.go:49
+#: cmd/incus/cluster.go:132 cmd/incus/image.go:1085 cmd/incus/list.go:50
 #: cmd/incus/network.go:1108 cmd/incus/profile.go:734 cmd/incus/project.go:529
 #: cmd/incus/storage.go:685
 msgid "[<remote>:] [<filter>...]"
@@ -9869,6 +9857,16 @@ msgstr ""
 msgid "[<remote>] <IP|FQDN|URL|token>"
 msgstr ""
 
+#: cmd/incus/admin_recover.go:28
+#, fuzzy
+msgid "[<remote>]:"
+msgstr "<远程>"
+
+#: cmd/incus/admin_sql.go:29
+#, fuzzy
+msgid "[<remote>]:<local|global> <query>"
+msgstr "<本地|全局> <查询>"
+
 #: cmd/incus/cluster.go:1031
 msgid "[[<remote>:]<member>]"
 msgstr ""
@@ -10111,7 +10109,7 @@ msgid ""
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
-#: cmd/incus/list.go:126
+#: cmd/incus/list.go:127
 msgid ""
 "incus list -c "
 "nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
@@ -10572,6 +10570,9 @@ msgstr ""
 #: cmd/incus/image.go:1206 cmd/incus/project.go:241 cmd/incus/snapshot.go:285
 msgid "yes"
 msgstr ""
+
+#~ msgid "Invalid arguments"
+#~ msgstr "无效的参数"
 
 #, fuzzy
 #~ msgid "Edit IncusOS service configuration"
