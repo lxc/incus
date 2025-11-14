@@ -182,6 +182,8 @@ func PathIsEmpty(path string) (bool, error) {
 	return false, err
 }
 
+// MkdirAllOwner ensures that directories path exists.
+// If directories in the path are missing - they will be created with specified permissions and owner.
 func MkdirAllOwner(path string, perm os.FileMode, uid int, gid int) error {
 	// This function is a slightly modified version of MkdirAll from the Go standard library.
 	// https://golang.org/src/os/path.go?s=488:535#L9
@@ -218,9 +220,9 @@ func MkdirAllOwner(path string, perm os.FileMode, uid int, gid int) error {
 	// Parent now exists; invoke Mkdir and use its result.
 	err = os.Mkdir(path, perm)
 
-	err_chown := os.Chown(path, uid, gid)
-	if err_chown != nil {
-		return err_chown
+	errChown := os.Chown(path, uid, gid)
+	if errChown != nil {
+		return errChown
 	}
 
 	if err != nil {
