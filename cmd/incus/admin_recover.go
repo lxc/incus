@@ -11,7 +11,6 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
-	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/recover"
 	"github.com/lxc/incus/v6/shared/api"
@@ -26,7 +25,7 @@ type cmdAdminRecover struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminRecover) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("recover")
+	cmd.Use = cli.Usage("recover", i18n.G("[<remote>]:"))
 	cmd.Short = i18n.G("Recover missing instances and volumes from existing and unknown storage pools")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Recover missing instances and volumes from existing and unknown storage pools
 
@@ -39,13 +38,25 @@ func (c *cmdAdminRecover) Command() *cobra.Command {
 }
 
 // Run runs the actual command logic.
-func (c *cmdAdminRecover) Run(_ *cobra.Command, args []string) error {
+func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	if len(args) > 0 {
-		return errors.New(i18n.G("Invalid arguments"))
+	exit, err := c.global.checkArgs(cmd, args, 0, 1)
+	if exit {
+		return err
 	}
 
-	d, err := incus.ConnectIncusUnix("", nil)
+	// Parse remote
+	remote := ""
+	if len(args) > 0 {
+		remote = args[0]
+	}
+
+	remoteName, _, err := c.global.conf.ParseRemote(remote)
+	if err != nil {
+		return err
+	}
+
+	d, err := c.global.conf.GetInstanceServer(remoteName)
 	if err != nil {
 		return err
 	}
