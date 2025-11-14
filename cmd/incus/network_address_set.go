@@ -643,18 +643,14 @@ type cmdNetworkAddressSetDelete struct {
 // Command initializes the delete subcommand.
 func (c *cmdNetworkAddressSetDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<address-set>"))
+	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<address-set> [[<remote>:]<address-set>...]"))
 	cmd.Aliases = []string{"rm"}
 	cmd.Short = i18n.G("Delete network address sets")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete network address sets"))
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		if len(args) == 0 {
-			return c.global.cmpNetworkAddressSets(toComplete)
-		}
-
-		return nil, cobra.ShellCompDirectiveNoFileComp
+		return c.global.cmpNetworkAddressSets(toComplete)
 	}
 
 	return cmd
@@ -662,28 +658,31 @@ func (c *cmdNetworkAddressSetDelete) Command() *cobra.Command {
 
 // Run executes the delete command logic.
 func (c *cmdNetworkAddressSetDelete) Run(cmd *cobra.Command, args []string) error {
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
+	// Quick checks.
+	exit, err := c.global.checkArgs(cmd, args, 1, -1)
 	if exit {
 		return err
 	}
 
-	resources, err := c.global.parseServers(args[0])
+	// Parse remote.
+	resources, err := c.global.parseServers(args...)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing network address set name"))
-	}
+	for _, resource := range resources {
+		if resource.name == "" {
+			return errors.New(i18n.G("Missing network address set name"))
+		}
+		// Delete the address set.
+		err = resource.server.DeleteNetworkAddressSet(resource.name)
+		if err != nil {
+			return err
+		}
 
-	err = resource.server.DeleteNetworkAddressSet(resource.name)
-	if err != nil {
-		return err
-	}
-
-	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Network address set %s deleted")+"\n", resource.name)
+		if !c.global.flagQuiet {
+			fmt.Printf(i18n.G("Network address set %s deleted")+"\n", resource.name)
+		}
 	}
 
 	return nil

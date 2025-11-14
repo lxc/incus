@@ -135,7 +135,7 @@ type cmdImageAliasDelete struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImageAliasDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<alias>"))
+	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<alias> [[<remote>:]<alias>...]"))
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete image aliases")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -143,11 +143,7 @@ func (c *cmdImageAliasDelete) Command() *cobra.Command {
 
 	cmd.RunE = c.Run
 
-	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		if len(args) > 0 {
-			return nil, cobra.ShellCompDirectiveNoFileComp
-		}
-
+	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpImages(toComplete)
 	}
 
@@ -157,25 +153,29 @@ func (c *cmdImageAliasDelete) Command() *cobra.Command {
 // Run runs the actual command logic.
 func (c *cmdImageAliasDelete) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
+	exit, err := c.global.checkArgs(cmd, args, 1, -1)
 	if exit {
 		return err
 	}
 
 	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	resources, err := c.global.parseServers(args...)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
+	for _, resource := range resources {
+		if resource.name == "" {
+			return errors.New(i18n.G("Alias name missing"))
+		}
 
-	if resource.name == "" {
-		return errors.New(i18n.G("Alias name missing"))
+		// Delete the alias
+		err = resource.server.DeleteImageAlias(resource.name)
+		if err != nil {
+			return err
+		}
 	}
-
-	// Delete the alias
-	return resource.server.DeleteImageAlias(resource.name)
+	return nil
 }
 
 // List.
