@@ -12,7 +12,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/i18n"
 	internalSQL "github.com/lxc/incus/v6/internal/sql"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -27,7 +26,7 @@ type cmdAdminSQL struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminSQL) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("sql", i18n.G("<local|global> <query>"))
+	cmd.Use = cli.Usage("sql", i18n.G("[<remote>]:<local|global> <query>"))
 	cmd.Short = i18n.G("Execute a SQL query against the local or global database")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Execute a SQL query against the local or global database
 
@@ -68,25 +67,31 @@ func (c *cmdAdminSQL) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
-	if len(args) != 2 {
-		_ = cmd.Help()
-
-		if len(args) == 0 {
-			return nil
-		}
-
-		return errors.New(i18n.G("Missing required arguments"))
+	// Quick checks.
+	exit, err := c.global.checkArgs(cmd, args, 2, 2)
+	if exit {
+		return err
 	}
 
-	database := args[0]
-	query := args[1]
+	// Parse remote.
+	remote := ""
+	if len(args) > 0 {
+		remote = args[0]
+	}
 
+	remoteName, database, err := c.global.conf.ParseRemote(remote)
+	if err != nil {
+		return err
+	}
+
+	// Parse request.
 	if !slices.Contains([]string{"local", "global"}, database) {
 		_ = cmd.Help()
 
 		return errors.New(i18n.G("Invalid database type"))
 	}
 
+	query := args[1]
 	if query == "-" {
 		// Read from stdin
 		bytes, err := io.ReadAll(os.Stdin)
@@ -98,11 +103,7 @@ func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Connect to daemon
-	clientArgs := incus.ConnectionArgs{
-		SkipGetServer: true,
-	}
-
-	d, err := incus.ConnectIncusUnix("", &clientArgs)
+	d, err := c.global.conf.GetInstanceServer(remoteName)
 	if err != nil {
 		return err
 	}
