@@ -1,3 +1,4 @@
+//revive:disable-next-line:var-naming
 package util
 
 // PoolType represents a type of storage pool (local, remote or any).

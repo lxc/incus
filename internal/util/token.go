@@ -1,3 +1,4 @@
+//revive:disable-next-line:var-naming
 package util
 
 import (
