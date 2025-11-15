@@ -1726,3 +1726,21 @@ func (d *common) setOOMPriority(pid int) error {
 
 	return nil
 }
+
+// selinuxCategory returns the SELinux category suffix.
+func (d *common) selinuxCategory() string {
+	idStr := strconv.Itoa(d.id)
+	remaining := len(idStr)
+
+	seContext := ""
+	current := 0
+	for current != len(idStr) {
+		length := min(remaining, 3)
+		seContext += ":c" + idStr[current:current+length]
+
+		current += length
+		remaining -= length
+	}
+
+	return seContext
+}
