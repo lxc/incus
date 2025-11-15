@@ -23,7 +23,7 @@ var (
 	genDocDataRegex     = regexp.MustCompile(`(?m)([\S]+):[\s]+([\S \"\']+)`)
 )
 
-var mdKeys []string = []string{"entity", "group", "key"}
+var mdKeys = []string{"entity", "group", "key"}
 
 // IterableAny is a generic type that represents a type or an iterable container.
 type IterableAny interface {
@@ -38,8 +38,17 @@ type doc struct {
 // sortConfigKeys alphabetically sorts the entries by key (config option key) within each config group in an entity.
 func sortConfigKeys(projectEntries map[string]any) {
 	for _, entityValue := range projectEntries {
-		for _, groupValue := range entityValue.(map[string]any) {
-			configEntries := groupValue.(map[string]any)["keys"].([]any)
+		groupValues, ok := entityValue.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		for _, groupValue := range groupValues {
+			configEntries, ok := groupValue.(map[string]any)["keys"].([]any)
+			if !ok {
+				continue
+			}
+
 			sort.Slice(configEntries, func(i, j int) bool {
 				// Get the only key for each map element in the slice
 				var keyI, keyJ string
@@ -211,13 +220,22 @@ func parse(path string, outputJSONPath string, excludedPaths []string) (*doc, er
 				if !ok {
 					projectEntries[entityKey] = entityValue
 				} else {
-					for groupKey, groupValue := range entityValue.(map[string]any) {
+					groupValues, ok := entityValue.(map[string]any)
+					if !ok {
+						continue
+					}
+
+					for groupKey, groupValue := range groupValues {
 						_, ok := projectEntries[entityKey].(map[string]any)[groupKey]
 						if !ok {
 							projectEntries[entityKey].(map[string]any)[groupKey] = groupValue
 						} else {
 							// merge the config keys
-							configKeys := groupValue.(map[string]any)["keys"].([]any)
+							configKeys, ok := groupValue.(map[string]any)["keys"].([]any)
+							if !ok {
+								continue
+							}
+
 							projectEntries[entityKey].(map[string]any)[groupKey].(map[string]any)["keys"] = append(
 								projectEntries[entityKey].(map[string]any)[groupKey].(map[string]any)["keys"].([]any),
 								configKeys...,
@@ -260,19 +278,19 @@ func parse(path string, outputJSONPath string, excludedPaths []string) (*doc, er
 
 func writeDocFile(inputJSONPath, outputTxtPath string) error {
 	countMaxBackTicks := func(s string) int {
-		count, curr_count := 0, 0
+		count, currCount := 0, 0
 		n := len(s)
 		for i := range n {
 			if s[i] == '`' {
-				curr_count++
+				currCount++
 				continue
 			}
 
-			if curr_count > count {
-				count = curr_count
+			if currCount > count {
+				count = currCount
 			}
 
-			curr_count = 0
+			currCount = 0
 		}
 
 		return count
@@ -301,9 +319,20 @@ func writeDocFile(inputJSONPath, outputTxtPath string) error {
 		sortedGroupKeys := getSortedKeysFromMap(entityEntries.(map[string]any))
 		for _, groupKey := range sortedGroupKeys {
 			groupEntries := entityEntries.(map[string]any)[groupKey]
-			buffer.WriteString(fmt.Sprintf("<!-- config group %s-%s start -->\n", entityKey, groupKey))
-			for _, configEntry := range groupEntries.(map[string]any)["keys"].([]any) {
-				for configKey, configContent := range configEntry.(map[string]any) {
+			fmt.Fprintf(buffer, "<!-- config group %s-%s start -->\n", entityKey, groupKey)
+
+			groupKeys, ok := groupEntries.(map[string]any)["keys"].([]any)
+			if !ok {
+				continue
+			}
+
+			for _, configEntry := range groupKeys {
+				configEntry, ok := configEntry.(map[string]any)
+				if !ok {
+					continue
+				}
+
+				for configKey, configContent := range configEntry {
 					// There is only one key-value pair in each map
 					kvBuffer := bytes.NewBufferString("")
 					var backticksCount int
@@ -313,7 +342,11 @@ func writeDocFile(inputJSONPath, outputTxtPath string) error {
 						configContentValue := configContent.(map[string]any)[configEntryContentKey]
 						if configEntryContentKey == "longdesc" {
 							backticksCount = countMaxBackTicks(configContentValue.(string))
-							longDescContent = configContentValue.(string)
+							c, ok := configContentValue.(string)
+							if ok {
+								longDescContent = c
+							}
+
 							continue
 						}
 
@@ -347,41 +380,37 @@ func writeDocFile(inputJSONPath, outputTxtPath string) error {
 							quoteFormattedValue = fmt.Sprintf("\"%s\"", configContentValueStr)
 						}
 
-						kvBuffer.WriteString(
-							fmt.Sprintf(
-								":%s: %s\n",
-								configEntryContentKey,
-								quoteFormattedValue,
-							),
-						)
+						fmt.Fprintf(kvBuffer,
+
+							":%s: %s\n",
+							configEntryContentKey,
+							quoteFormattedValue)
 					}
 
 					if backticksCount < 3 {
-						buffer.WriteString(
-							fmt.Sprintf("```{config:option} %s %s-%s\n%s%s\n```\n\n",
-								configKey,
-								entityKey,
-								groupKey,
-								kvBuffer.String(),
-								strings.TrimLeft(longDescContent, "\n"),
-							))
+						fmt.Fprintf(buffer,
+							"```{config:option} %s %s-%s\n%s%s\n```\n\n",
+							configKey,
+							entityKey,
+							groupKey,
+							kvBuffer.String(),
+							strings.TrimLeft(longDescContent, "\n"))
 					} else {
 						configQuotes := strings.Repeat("`", backticksCount+1)
-						buffer.WriteString(
-							fmt.Sprintf("%s{config:option} %s %s-%s\n%s%s\n%s\n\n",
-								configQuotes,
-								configKey,
-								entityKey,
-								groupKey,
-								kvBuffer.String(),
-								strings.TrimLeft(longDescContent, "\n"),
-								configQuotes,
-							))
+						fmt.Fprintf(buffer,
+							"%s{config:option} %s %s-%s\n%s%s\n%s\n\n",
+							configQuotes,
+							configKey,
+							entityKey,
+							groupKey,
+							kvBuffer.String(),
+							strings.TrimLeft(longDescContent, "\n"),
+							configQuotes)
 					}
 				}
 			}
 
-			buffer.WriteString(fmt.Sprintf("<!-- config group %s-%s end -->\n", entityKey, groupKey))
+			fmt.Fprintf(buffer, "<!-- config group %s-%s end -->\n", entityKey, groupKey)
 		}
 	}
 
