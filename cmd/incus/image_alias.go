@@ -144,7 +144,6 @@ func (c *cmdImageAliasDelete) Command() *cobra.Command {
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-
 		return c.global.cmpImages(toComplete)
 	}
 
