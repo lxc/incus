@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-10-30 12:08-0400\n"
+"POT-Creation-Date: 2025-11-15 10:36-0500\n"
 "PO-Revision-Date: 2025-10-21 05:19+0000\n"
 "Last-Translator: Andika Triwidada <andika@gmail.com>\n"
 "Language-Team: Indonesian <https://hosted.weblate.org/projects/incus/cli/id/"
@@ -381,7 +381,7 @@ msgstr "%q bukan suatu peranti blok"
 msgid "%q is not an IP address"
 msgstr "%q bukan suatu alamat IP"
 
-#: cmd/incus/admin_recover.go:212
+#: cmd/incus/admin_recover.go:223
 #, c-format
 msgid "%s %q on pool %q in project %q (includes %d snapshots)"
 msgstr "%s %q pada pool %q dalam proyek %q (termasuk %d snapshot)"
@@ -396,7 +396,7 @@ msgstr "%s (%d lagi)"
 msgid "%s (%s) (%d available)"
 msgstr "%s (%s) (%d tersedia)"
 
-#: cmd/incus/admin_recover.go:68
+#: cmd/incus/admin_recover.go:79
 #, c-format
 msgid "%s (backend=%q, source=%q)"
 msgstr "%s (backend=%q, sumber=%q)"
@@ -487,10 +487,6 @@ msgstr "<alias>"
 msgid "<alias> <target>"
 msgstr "<alias> <target>"
 
-#: cmd/incus/admin_sql.go:30
-msgid "<local|global> <query>"
-msgstr "<lokal|global> <query>"
-
 #: cmd/incus/alias.go:171
 msgid "<old alias> <new alias>"
 msgstr "<alias lama> <alias baru>"
@@ -530,7 +526,7 @@ msgstr ""
 msgid "<target>"
 msgstr "<target>"
 
-#: cmd/incus/admin_sql.go:152
+#: cmd/incus/admin_sql.go:153
 #, c-format
 msgid "=> Query %d:"
 msgstr "=> Query %d:"
@@ -564,11 +560,11 @@ msgstr "ALIAS"
 msgid "ALIASES"
 msgstr "ALIAS"
 
-#: cmd/incus/list.go:815
+#: cmd/incus/list.go:833
 msgid "APP"
 msgstr "APP"
 
-#: cmd/incus/cluster.go:183 cmd/incus/image.go:1142 cmd/incus/list.go:497
+#: cmd/incus/cluster.go:183 cmd/incus/image.go:1142 cmd/incus/list.go:507
 msgid "ARCHITECTURE"
 msgstr "ARSITEKTUR"
 
@@ -704,7 +700,7 @@ msgstr ""
 msgid "Add rules to an ACL"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:131
+#: cmd/incus/admin_recover.go:142
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
@@ -882,7 +878,7 @@ msgstr ""
 msgid "Average: %.2f %.2f %.2f"
 msgstr ""
 
-#: cmd/incus/list.go:503 cmd/incus/list.go:504
+#: cmd/incus/list.go:513 cmd/incus/list.go:514
 msgid "BASE IMAGE"
 msgstr ""
 
@@ -1009,7 +1005,7 @@ msgstr "CACAH"
 msgid "CPU TIME(s)"
 msgstr ""
 
-#: cmd/incus/list.go:515
+#: cmd/incus/list.go:525
 msgid "CPU USAGE"
 msgstr "PENGGUNAAN CPU"
 
@@ -1033,7 +1029,7 @@ msgstr "CPU:"
 msgid "CREATED"
 msgstr "DIBUAT"
 
-#: cmd/incus/list.go:499
+#: cmd/incus/list.go:509
 msgid "CREATED AT"
 msgstr "DIBUAT PADA"
 
@@ -1083,11 +1079,11 @@ msgstr ""
 msgid "Can't remove the default remote"
 msgstr ""
 
-#: cmd/incus/list.go:530
+#: cmd/incus/list.go:540
 msgid "Can't specify --fast with --columns"
 msgstr ""
 
-#: cmd/incus/cluster.go:259 cmd/incus/list.go:409 cmd/incus/profile.go:845
+#: cmd/incus/cluster.go:259 cmd/incus/list.go:410 cmd/incus/profile.go:845
 msgid "Can't specify --project with --all-projects"
 msgstr ""
 
@@ -1095,7 +1091,7 @@ msgstr ""
 msgid "Can't specify a different remote for rename"
 msgstr ""
 
-#: cmd/incus/list.go:561 cmd/incus/storage_volume.go:1743
+#: cmd/incus/list.go:571 cmd/incus/storage_volume.go:1743
 #: cmd/incus/warning.go:234
 msgid "Can't specify column L when not clustered"
 msgstr ""
@@ -1318,7 +1314,7 @@ msgstr ""
 #: cmd/incus/cluster.go:155 cmd/incus/cluster.go:1133
 #: cmd/incus/cluster_group.go:487 cmd/incus/config_trust.go:433
 #: cmd/incus/config_trust.go:636 cmd/incus/image.go:1114
-#: cmd/incus/image_alias.go:219 cmd/incus/list.go:136 cmd/incus/network.go:1138
+#: cmd/incus/image_alias.go:219 cmd/incus/list.go:137 cmd/incus/network.go:1138
 #: cmd/incus/network.go:1353 cmd/incus/network_allocations.go:64
 #: cmd/incus/network_forward.go:119 cmd/incus/network_integration.go:441
 #: cmd/incus/network_load_balancer.go:127 cmd/incus/network_peer.go:115
@@ -1376,7 +1372,7 @@ msgstr ""
 msgid "Config key/value to apply to the target instance"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:134
+#: cmd/incus/admin_recover.go:145
 msgid "Config option should be in the format KEY=VALUE"
 msgstr ""
 
@@ -1726,7 +1722,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:185 cmd/incus/cluster_group.go:513
 #: cmd/incus/config_trust.go:451 cmd/incus/image.go:1143
-#: cmd/incus/image_alias.go:259 cmd/incus/list.go:500 cmd/incus/network.go:1169
+#: cmd/incus/image_alias.go:259 cmd/incus/list.go:510 cmd/incus/network.go:1169
 #: cmd/incus/network_acl.go:178 cmd/incus/network_address_set.go:166
 #: cmd/incus/network_forward.go:141 cmd/incus/network_integration.go:457
 #: cmd/incus/network_load_balancer.go:149 cmd/incus/network_peer.go:137
@@ -1741,7 +1737,7 @@ msgstr "DESKRIPSI"
 msgid "DISK"
 msgstr "DISK"
 
-#: cmd/incus/list.go:501
+#: cmd/incus/list.go:511
 msgid "DISK USAGE"
 msgstr "PENGGUNAAN DISK"
 
@@ -1902,8 +1898,8 @@ msgstr "Hapus peringatan"
 #: cmd/incus/action.go:32 cmd/incus/action.go:56 cmd/incus/action.go:81
 #: cmd/incus/action.go:106 cmd/incus/action.go:130 cmd/incus/admin.go:21
 #: cmd/incus/admin_cluster.go:26 cmd/incus/admin_init.go:47
-#: cmd/incus/admin_other.go:21 cmd/incus/admin_recover.go:31
-#: cmd/incus/admin_shutdown.go:32 cmd/incus/admin_sql.go:32
+#: cmd/incus/admin_other.go:21 cmd/incus/admin_recover.go:30
+#: cmd/incus/admin_shutdown.go:32 cmd/incus/admin_sql.go:31
 #: cmd/incus/admin_waitready.go:28 cmd/incus/alias.go:24 cmd/incus/alias.go:63
 #: cmd/incus/alias.go:113 cmd/incus/alias.go:174 cmd/incus/alias.go:229
 #: cmd/incus/cluster.go:39 cmd/incus/cluster.go:135 cmd/incus/cluster.go:341
@@ -1949,7 +1945,7 @@ msgstr "Hapus peringatan"
 #: cmd/incus/image_alias.go:72 cmd/incus/image_alias.go:141
 #: cmd/incus/image_alias.go:197 cmd/incus/image_alias.go:387
 #: cmd/incus/import.go:30 cmd/incus/info.go:37 cmd/incus/launch.go:25
-#: cmd/incus/list.go:52 cmd/incus/main.go:102 cmd/incus/manpage.go:25
+#: cmd/incus/list.go:53 cmd/incus/main.go:102 cmd/incus/manpage.go:25
 #: cmd/incus/monitor.go:35 cmd/incus/move.go:38 cmd/incus/network.go:41
 #: cmd/incus/network.go:153 cmd/incus/network.go:252 cmd/incus/network.go:354
 #: cmd/incus/network.go:472 cmd/incus/network.go:532 cmd/incus/network.go:631
@@ -2196,7 +2192,7 @@ msgstr ""
 msgid "Display images from all projects"
 msgstr ""
 
-#: cmd/incus/list.go:139 cmd/incus/top.go:63
+#: cmd/incus/list.go:140 cmd/incus/top.go:63
 msgid "Display instances from all projects"
 msgstr ""
 
@@ -2295,11 +2291,11 @@ msgstr ""
 msgid "ENTRIES"
 msgstr "ENTRI"
 
-#: cmd/incus/list.go:819
+#: cmd/incus/list.go:837
 msgid "EPHEMERAL"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:156
+#: cmd/incus/admin_recover.go:167
 #, c-format
 msgid "EXISTING: %q (backend=%q, source=%q)"
 msgstr ""
@@ -2423,7 +2419,7 @@ msgstr ""
 #: cmd/incus/cluster.go:196 cmd/incus/cluster.go:1162
 #: cmd/incus/cluster_group.go:521 cmd/incus/config_trust.go:463
 #: cmd/incus/config_trust.go:661 cmd/incus/image.go:1161
-#: cmd/incus/image_alias.go:268 cmd/incus/list.go:552 cmd/incus/network.go:1184
+#: cmd/incus/image_alias.go:268 cmd/incus/list.go:562 cmd/incus/network.go:1184
 #: cmd/incus/network.go:1391 cmd/incus/network_allocations.go:89
 #: cmd/incus/network_forward.go:155 cmd/incus/network_integration.go:467
 #: cmd/incus/network_load_balancer.go:162 cmd/incus/network_peer.go:148
@@ -2560,11 +2556,11 @@ msgstr ""
 msgid "Event type to listen for"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:31
+#: cmd/incus/admin_sql.go:30
 msgid "Execute a SQL query against the local or global database"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:32
+#: cmd/incus/admin_sql.go:31
 msgid ""
 "Execute a SQL query against the local or global database\n"
 "\n"
@@ -2798,7 +2794,7 @@ msgstr ""
 msgid "Failed generating trust certificate: %w"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:63
+#: cmd/incus/admin_recover.go:74
 #, c-format
 msgid "Failed getting existing storage pools: %w"
 msgstr ""
@@ -2808,7 +2804,7 @@ msgstr ""
 msgid "Failed getting peer's status: %w"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:253
+#: cmd/incus/admin_recover.go:264
 #, c-format
 msgid "Failed import request: %w"
 msgstr ""
@@ -2833,7 +2829,7 @@ msgstr ""
 msgid "Failed parsing SSH host key: %w"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:199
+#: cmd/incus/admin_recover.go:210
 #, c-format
 msgid "Failed parsing validation response: %w"
 msgstr ""
@@ -2967,7 +2963,7 @@ msgstr ""
 msgid "Failed to load configuration: %s"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:127
+#: cmd/incus/admin_sql.go:128
 #, c-format
 msgid "Failed to parse dump response: %w"
 msgstr ""
@@ -2987,7 +2983,7 @@ msgstr ""
 msgid "Failed to read from file: %w"
 msgstr ""
 
-#: cmd/incus/admin_init_preseed.go:31 cmd/incus/admin_sql.go:94
+#: cmd/incus/admin_init_preseed.go:31 cmd/incus/admin_sql.go:99
 #, c-format
 msgid "Failed to read from stdin: %w"
 msgstr ""
@@ -3012,7 +3008,7 @@ msgstr ""
 msgid "Failed to render the config: %w"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:121
+#: cmd/incus/admin_sql.go:122
 #, c-format
 msgid "Failed to request dump: %w"
 msgstr ""
@@ -3075,7 +3071,7 @@ msgstr ""
 msgid "Failed to write server cert file %q: %w"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:192
+#: cmd/incus/admin_recover.go:203
 #, c-format
 msgid "Failed validation request: %w"
 msgstr ""
@@ -3085,7 +3081,7 @@ msgstr ""
 msgid "Family: %v"
 msgstr ""
 
-#: cmd/incus/list.go:138
+#: cmd/incus/list.go:139
 msgid "Fast mode (same as --columns=nsacPt)"
 msgstr ""
 
@@ -3184,10 +3180,10 @@ msgid ""
 "disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:60 cmd/incus/alias.go:115 cmd/incus/cluster.go:156
+#: cmd/incus/admin_sql.go:59 cmd/incus/alias.go:115 cmd/incus/cluster.go:156
 #: cmd/incus/cluster_group.go:488 cmd/incus/config_template.go:301
 #: cmd/incus/config_trust.go:434 cmd/incus/config_trust.go:635
-#: cmd/incus/image.go:1115 cmd/incus/image_alias.go:218 cmd/incus/list.go:137
+#: cmd/incus/image.go:1115 cmd/incus/image_alias.go:218 cmd/incus/list.go:138
 #: cmd/incus/network.go:1139 cmd/incus/network.go:1352
 #: cmd/incus/network_acl.go:101 cmd/incus/network_allocations.go:61
 #: cmd/incus/network_forward.go:118 cmd/incus/network_integration.go:440
@@ -3532,11 +3528,11 @@ msgstr ""
 msgid "IP addresses:"
 msgstr ""
 
-#: cmd/incus/list.go:495 cmd/incus/network.go:1167
+#: cmd/incus/list.go:505 cmd/incus/network.go:1167
 msgid "IPV4"
 msgstr ""
 
-#: cmd/incus/list.go:496 cmd/incus/network.go:1168
+#: cmd/incus/list.go:506 cmd/incus/network.go:1168
 msgid "IPV6"
 msgstr ""
 
@@ -3780,10 +3776,6 @@ msgstr ""
 msgid "Invalid argument %q"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:45
-msgid "Invalid arguments"
-msgstr ""
-
 #: cmd/incus/export.go:141 cmd/incus/storage_bucket.go:1580
 #: cmd/incus/storage_volume.go:4205
 #, c-format
@@ -3804,17 +3796,17 @@ msgstr ""
 msgid "Invalid cluster join token: %w"
 msgstr ""
 
-#: cmd/incus/list.go:595
+#: cmd/incus/list.go:605
 #, c-format
 msgid "Invalid config key '%s' in '%s'"
 msgstr ""
 
-#: cmd/incus/list.go:588
+#: cmd/incus/list.go:598
 #, c-format
 msgid "Invalid config key column format (too many fields): '%s'"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:87
+#: cmd/incus/admin_sql.go:91
 msgid "Invalid database type"
 msgstr ""
 
@@ -3857,17 +3849,17 @@ msgstr ""
 msgid "Invalid key=value configuration: %s"
 msgstr ""
 
-#: cmd/incus/list.go:616
+#: cmd/incus/list.go:626
 #, c-format
 msgid "Invalid max width (must -1, 0 or a positive integer) '%s' in '%s'"
 msgstr ""
 
-#: cmd/incus/list.go:612
+#: cmd/incus/list.go:622
 #, c-format
 msgid "Invalid max width (must be an integer) '%s' in '%s'"
 msgstr ""
 
-#: cmd/incus/list.go:602
+#: cmd/incus/list.go:612
 #, c-format
 msgid ""
 "Invalid name in '%s', empty string is only allowed when defining maxWidth"
@@ -3952,7 +3944,7 @@ msgstr "deskripsi"
 msgid "LAST SEEN"
 msgstr ""
 
-#: cmd/incus/list.go:505
+#: cmd/incus/list.go:515
 msgid "LAST USED AT"
 msgstr ""
 
@@ -3964,7 +3956,7 @@ msgstr ""
 msgid "LISTEN ADDRESS"
 msgstr ""
 
-#: cmd/incus/list.go:542 cmd/incus/network.go:1380
+#: cmd/incus/list.go:552 cmd/incus/network.go:1380
 #: cmd/incus/network_forward.go:144 cmd/incus/network_load_balancer.go:151
 #: cmd/incus/operation.go:165 cmd/incus/storage_bucket.go:541
 #: cmd/incus/storage_volume.go:1739 cmd/incus/warning.go:230
@@ -4462,11 +4454,11 @@ msgid ""
 "  s - Stateful"
 msgstr ""
 
-#: cmd/incus/list.go:51
+#: cmd/incus/list.go:52
 msgid "List instances"
 msgstr ""
 
-#: cmd/incus/list.go:52
+#: cmd/incus/list.go:53
 #, c-format
 msgid ""
 "List instances\n"
@@ -4954,11 +4946,11 @@ msgstr ""
 msgid "MEMORY"
 msgstr ""
 
-#: cmd/incus/list.go:506
+#: cmd/incus/list.go:516
 msgid "MEMORY USAGE"
 msgstr ""
 
-#: cmd/incus/list.go:507
+#: cmd/incus/list.go:517
 #, c-format
 msgid "MEMORY USAGE%"
 msgstr ""
@@ -5429,10 +5421,6 @@ msgstr ""
 msgid "Missing project name"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:78
-msgid "Missing required arguments"
-msgstr ""
-
 #: cmd/incus/profile.go:324
 msgid "Missing source profile name"
 msgstr ""
@@ -5551,7 +5539,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:180 cmd/incus/cluster.go:1152
 #: cmd/incus/cluster_group.go:511 cmd/incus/config_trust.go:447
-#: cmd/incus/config_trust.go:651 cmd/incus/list.go:508
+#: cmd/incus/config_trust.go:651 cmd/incus/list.go:518
 #: cmd/incus/network.go:1164 cmd/incus/network_acl.go:177
 #: cmd/incus/network_address_set.go:165 cmd/incus/network_integration.go:456
 #: cmd/incus/network_peer.go:136 cmd/incus/network_zone.go:142
@@ -5575,7 +5563,7 @@ msgstr ""
 msgid "NETWORKS"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:160
+#: cmd/incus/admin_recover.go:171
 #, c-format
 msgid "NEW: %q (backend=%q, source=%q)"
 msgstr ""
@@ -5661,7 +5649,7 @@ msgstr ""
 msgid "Name of the shared LVM volume group:"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:119
+#: cmd/incus/admin_recover.go:130
 #, c-format
 msgid "Name of the storage backend (%s):"
 msgstr ""
@@ -5671,7 +5659,7 @@ msgstr ""
 msgid "Name of the storage backend to use (%s)"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:102
+#: cmd/incus/admin_recover.go:113
 msgid "Name of the storage pool:"
 msgstr ""
 
@@ -5908,7 +5896,7 @@ msgstr ""
 msgid "No storage pool for target volume specified"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:218
+#: cmd/incus/admin_recover.go:229
 msgid "No unknown storage pools or volumes found. Nothing to do."
 msgstr ""
 
@@ -6023,7 +6011,7 @@ msgstr ""
 msgid "PEER"
 msgstr ""
 
-#: cmd/incus/list.go:510
+#: cmd/incus/list.go:520
 msgid "PID"
 msgstr ""
 
@@ -6036,15 +6024,15 @@ msgstr ""
 msgid "PORTS"
 msgstr ""
 
-#: cmd/incus/list.go:509
+#: cmd/incus/list.go:519
 msgid "PROCESSES"
 msgstr ""
 
-#: cmd/incus/list.go:511 cmd/incus/project.go:578
+#: cmd/incus/list.go:521 cmd/incus/project.go:578
 msgid "PROFILES"
 msgstr ""
 
-#: cmd/incus/image.go:1144 cmd/incus/list.go:502 cmd/incus/network.go:1163
+#: cmd/incus/image.go:1144 cmd/incus/list.go:512 cmd/incus/network.go:1163
 #: cmd/incus/network_acl.go:183 cmd/incus/network_address_set.go:172
 #: cmd/incus/network_zone.go:141 cmd/incus/profile.go:787
 #: cmd/incus/storage_bucket.go:538 cmd/incus/storage_volume.go:1750
@@ -6108,7 +6096,7 @@ msgstr "deskripsi"
 msgid "Perform an incremental copy"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:230
+#: cmd/incus/admin_recover.go:241
 msgid "Please create those missing entries and then hit ENTER:"
 msgstr ""
 
@@ -6124,7 +6112,7 @@ msgstr ""
 msgid "Please type 'y', 'n' or the fingerprint:"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:104
+#: cmd/incus/admin_recover.go:115
 msgid "Pool name cannot be empty"
 msgstr ""
 
@@ -6432,12 +6420,12 @@ msgstr ""
 msgid "Record description"
 msgstr "deskripsi"
 
-#: cmd/incus/admin_recover.go:30
+#: cmd/incus/admin_recover.go:29
 msgid ""
 "Recover missing instances and volumes from existing and unknown storage pools"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:31
+#: cmd/incus/admin_recover.go:30
 msgid ""
 "Recover missing instances and volumes from existing and unknown storage "
 "pools\n"
@@ -6747,7 +6735,7 @@ msgstr ""
 msgid "Role (admin or read-only)"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:161
+#: cmd/incus/admin_sql.go:162
 #, c-format
 msgid "Rows affected: %d"
 msgstr ""
@@ -6790,7 +6778,7 @@ msgstr ""
 msgid "SKU: %v"
 msgstr ""
 
-#: cmd/incus/list.go:512
+#: cmd/incus/list.go:522
 msgid "SNAPSHOTS"
 msgstr ""
 
@@ -6817,11 +6805,11 @@ msgstr ""
 msgid "SSH client disconnected %q"
 msgstr ""
 
-#: cmd/incus/list.go:516
+#: cmd/incus/list.go:526
 msgid "STARTED AT"
 msgstr ""
 
-#: cmd/incus/list.go:513 cmd/incus/network.go:1171
+#: cmd/incus/list.go:523 cmd/incus/network.go:1171
 #: cmd/incus/network_peer.go:140 cmd/incus/operation.go:162
 #: cmd/incus/storage.go:740 cmd/incus/warning.go:224
 msgid "STATE"
@@ -6843,7 +6831,7 @@ msgstr ""
 msgid "STORAGE BUCKETS"
 msgstr ""
 
-#: cmd/incus/list.go:498
+#: cmd/incus/list.go:508
 msgid "STORAGE POOL"
 msgstr ""
 
@@ -6855,7 +6843,7 @@ msgstr ""
 msgid "STP"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:172
+#: cmd/incus/admin_recover.go:183
 msgid "Scanning for unknown volumes..."
 msgstr ""
 
@@ -7508,7 +7496,7 @@ msgstr "Beberapa instansi gagal %s"
 msgid "Sorting Method:"
 msgstr "Metode Pengurutan:"
 
-#: cmd/incus/admin_recover.go:124
+#: cmd/incus/admin_recover.go:135
 msgid ""
 "Source of the storage pool (block device, volume group, dataset, path, ... "
 "as applicable):"
@@ -7532,7 +7520,7 @@ msgstr ""
 msgid "Starting %s"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:242
+#: cmd/incus/admin_recover.go:253
 msgid "Starting recovery..."
 msgstr ""
 
@@ -7599,12 +7587,12 @@ msgstr ""
 msgid "Storage has already been configured"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:109
+#: cmd/incus/admin_recover.go:120
 #, c-format
 msgid "Storage pool %q is already on recover list"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:205
+#: cmd/incus/admin_recover.go:216
 #, c-format
 msgid "Storage pool %q of type %q"
 msgstr ""
@@ -7716,7 +7704,7 @@ msgid "TOKEN"
 msgstr ""
 
 #: cmd/incus/config_trust.go:448 cmd/incus/image.go:1151
-#: cmd/incus/image_alias.go:258 cmd/incus/list.go:514 cmd/incus/network.go:1165
+#: cmd/incus/image_alias.go:258 cmd/incus/list.go:524 cmd/incus/network.go:1165
 #: cmd/incus/network.go:1379 cmd/incus/network_allocations.go:79
 #: cmd/incus/network_integration.go:458 cmd/incus/network_peer.go:139
 #: cmd/incus/operation.go:160 cmd/incus/storage_volume.go:1730
@@ -7806,11 +7794,11 @@ msgstr ""
 msgid "The direction argument must be one of: ingress, egress"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:203
+#: cmd/incus/admin_recover.go:214
 msgid "The following unknown storage pools have been found:"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:210
+#: cmd/incus/admin_recover.go:221
 msgid "The following unknown volumes have been found:"
 msgstr ""
 
@@ -7956,7 +7944,7 @@ msgstr ""
 msgid "The property with tag %q does not exist"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:154
+#: cmd/incus/admin_recover.go:165
 msgid "The recovery process will be scanning the following storage pools:"
 msgstr ""
 
@@ -8027,7 +8015,7 @@ msgstr ""
 msgid "This command isn't supported on Windows"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:66
+#: cmd/incus/admin_recover.go:77
 msgid "This server currently has the following storage pools:"
 msgstr ""
 
@@ -8228,7 +8216,7 @@ msgstr ""
 #: cmd/incus/cluster.go:202 cmd/incus/cluster.go:1168
 #: cmd/incus/cluster_group.go:527 cmd/incus/config_trust.go:469
 #: cmd/incus/config_trust.go:667 cmd/incus/image.go:1167
-#: cmd/incus/image_alias.go:274 cmd/incus/list.go:570 cmd/incus/network.go:1190
+#: cmd/incus/image_alias.go:274 cmd/incus/list.go:580 cmd/incus/network.go:1190
 #: cmd/incus/network.go:1397 cmd/incus/network_allocations.go:95
 #: cmd/incus/network_forward.go:161 cmd/incus/network_integration.go:473
 #: cmd/incus/network_load_balancer.go:168 cmd/incus/network_peer.go:154
@@ -8665,7 +8653,7 @@ msgstr ""
 msgid "Would you like the server to be available over the network?"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:233
+#: cmd/incus/admin_recover.go:244
 msgid "Would you like those to be recovered?"
 msgstr ""
 
@@ -8677,7 +8665,7 @@ msgstr ""
 msgid "Would you like to NAT IPv6 traffic on your bridge?"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:163
+#: cmd/incus/admin_recover.go:174
 msgid "Would you like to continue with scanning for lost volumes?"
 msgstr ""
 
@@ -8698,7 +8686,7 @@ msgstr ""
 msgid "Would you like to have your containers share their parent's allocation?"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:80
+#: cmd/incus/admin_recover.go:91
 msgid "Would you like to recover another storage pool?"
 msgstr ""
 
@@ -8723,7 +8711,7 @@ msgstr ""
 msgid "YES"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:225
+#: cmd/incus/admin_recover.go:236
 msgid "You are currently missing the following:"
 msgstr ""
 
@@ -8785,7 +8773,7 @@ msgstr "[<remote>:] <cert>"
 msgid "[<remote>:] <name>"
 msgstr "[<remote>:] <nama>"
 
-#: cmd/incus/cluster.go:132 cmd/incus/image.go:1085 cmd/incus/list.go:49
+#: cmd/incus/cluster.go:132 cmd/incus/image.go:1085 cmd/incus/list.go:50
 #: cmd/incus/network.go:1108 cmd/incus/profile.go:734 cmd/incus/project.go:529
 #: cmd/incus/storage.go:685
 msgid "[<remote>:] [<filter>...]"
@@ -9455,6 +9443,16 @@ msgstr ""
 msgid "[<remote>] <IP|FQDN|URL|token>"
 msgstr ""
 
+#: cmd/incus/admin_recover.go:28
+#, fuzzy
+msgid "[<remote>]:"
+msgstr "[<remote>:]"
+
+#: cmd/incus/admin_sql.go:29
+#, fuzzy
+msgid "[<remote>]:<local|global> <query>"
+msgstr "<lokal|global> <query>"
+
 #: cmd/incus/cluster.go:1031
 msgid "[[<remote>:]<member>]"
 msgstr ""
@@ -9697,7 +9695,7 @@ msgid ""
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
-#: cmd/incus/list.go:126
+#: cmd/incus/list.go:127
 msgid ""
 "incus list -c "
 "nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
