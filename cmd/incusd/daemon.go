@@ -1163,22 +1163,6 @@ func (d *Daemon) init() error {
 		}
 	}
 
-	// Validate the devices storage.
-	testDev := internalUtil.VarPath("devices", ".test")
-	testDevNum := int(unix.Mkdev(0, 0))
-	_ = os.Remove(testDev)
-	err = unix.Mknod(testDev, 0o600|unix.S_IFCHR, testDevNum)
-	if err == nil {
-		fd, err := os.Open(testDev)
-		if err != nil && os.IsPermission(err) {
-			logger.Warn("Unable to access device nodes, likely running on a nodev mount")
-			d.os.Nodev = true
-		}
-
-		_ = fd.Close()
-		_ = os.Remove(testDev)
-	}
-
 	/* Initialize the database */
 	err = initializeDbObject(d)
 	if err != nil {
