@@ -52,6 +52,10 @@ var (
 	osGuestAPISupport      = true
 )
 
+func runService(name string, agentCmd *cmdAgent) error {
+	return errors.New("Not implemented.")
+}
+
 func osGetEnvironment() (*api.ServerEnvironment, error) {
 	uname, err := linux.Uname()
 	if err != nil {
