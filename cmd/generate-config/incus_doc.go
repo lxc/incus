@@ -42,11 +42,13 @@ func sortConfigKeys(projectEntries map[string]any) {
 		if !ok {
 			continue
 		}
+
 		for _, groupValue := range groupValues {
 			configEntries, gok := groupValue.(map[string]any)["keys"].([]any)
 			if !gok {
 				continue
 			}
+
 			sort.Slice(configEntries, func(i, j int) bool {
 				// Get the only key for each map element in the slice
 				var keyI, keyJ string
@@ -222,6 +224,7 @@ func parse(path string, outputJSONPath string, excludedPaths []string) (*doc, er
 					if !ok {
 						continue
 					}
+
 					for groupKey, groupValue := range groupValues {
 						_, ok := projectEntries[entityKey].(map[string]any)[groupKey]
 						if !ok {
@@ -232,6 +235,7 @@ func parse(path string, outputJSONPath string, excludedPaths []string) (*doc, er
 							if !ok {
 								continue
 							}
+
 							projectEntries[entityKey].(map[string]any)[groupKey].(map[string]any)["keys"] = append(
 								projectEntries[entityKey].(map[string]any)[groupKey].(map[string]any)["keys"].([]any),
 								configKeys...,
@@ -320,11 +324,13 @@ func writeDocFile(inputJSONPath, outputTxtPath string) error {
 			if !ok {
 				continue
 			}
+
 			for _, configEntry := range configEntries {
 				configValues, ok := configEntry.(map[string]any)
 				if !ok {
 					continue
 				}
+
 				for configKey, configContent := range configValues {
 					// There is only one key-value pair in each map
 					kvBuffer := bytes.NewBufferString("")
@@ -338,6 +344,7 @@ func writeDocFile(inputJSONPath, outputTxtPath string) error {
 							if c, ok := configContentValue.(string); ok {
 								longDescContent = c
 							}
+
 							continue
 						}
 
