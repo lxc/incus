@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"runtime"
 
 	"github.com/spf13/cobra"
 
@@ -11,6 +12,7 @@ import (
 type cmdGlobal struct {
 	flagVersion bool
 	flagHelp    bool
+	flagService bool
 
 	flagLogVerbose bool
 	flagLogDebug   bool
@@ -33,6 +35,9 @@ func main() {
 	app.PersistentFlags().BoolVarP(&globalCmd.flagHelp, "help", "h", false, "Print help")
 	app.PersistentFlags().BoolVarP(&globalCmd.flagLogVerbose, "verbose", "v", false, "Show all information messages")
 	app.PersistentFlags().BoolVarP(&globalCmd.flagLogDebug, "debug", "d", false, "Show all debug messages")
+	if runtime.GOOS == "windows" {
+		app.PersistentFlags().BoolVar(&globalCmd.flagService, "service", false, "Start as a system service")
+	}
 
 	// Version handling
 	app.SetVersionTemplate("{{.Version}}\n")
