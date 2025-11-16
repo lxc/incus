@@ -158,7 +158,7 @@ func (s *execWs) Connect(op *operations.Operation, r *http.Request, w http.Respo
 			}
 
 			s.connsLock.Lock()
-			defer s.connsLock.Unlock()
+			defer s.connsLock.Unlock() //nolint:revive
 
 			val, found := s.conns[fd]
 			if found && val == nil {
