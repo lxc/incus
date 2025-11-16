@@ -174,9 +174,9 @@ func (s *execWs) Connect(op *operations.Operation, r *http.Request, w http.Respo
 				return nil
 			} else if !found {
 				return errors.New("Unknown websocket number")
-			} else {
-				return errors.New("Websocket number already connected")
 			}
+
+			return errors.New("Websocket number already connected")
 		}
 	}
 
