@@ -1132,6 +1132,37 @@ func (d *Daemon) init() error {
 		}
 	}
 
+	// Detect and setup missing temporary mounts.
+	if !d.os.MockMode {
+		devicesPath := filepath.Join(d.os.VarDir, "devices")
+		devIncusPath := filepath.Join(d.os.VarDir, "guestapi")
+
+		// Attempt to mount the devices tmpfs.
+		// NOTE: The check for devIncusPath is to handle initial rollout
+		// of the tmpfs on systems that have running instances. It can go away
+		// after a little while.
+		if !linux.IsMountPoint(devIncusPath) && !linux.IsMountPoint(devicesPath) {
+			err = unix.Mount("tmpfs", devicesPath, "tmpfs", 0, "size=50M,mode=0711")
+			if err != nil {
+				logger.Warn("Failed to set up devices tmpfs", logger.Ctx{"err": err})
+			}
+		}
+
+		// Attempt to mount the shmounts tmpfs.
+		err := setupSharedMounts()
+		if err != nil {
+			logger.Warn("Failed to set up shmounts tmpfs", logger.Ctx{"err": err})
+		}
+
+		// Attempt to mount the guestapi tmpfs
+		if !linux.IsMountPoint(devIncusPath) {
+			err = unix.Mount("tmpfs", devIncusPath, "tmpfs", 0, "size=100k,mode=0755")
+			if err != nil {
+				logger.Warn("Failed to set up guestapi tmpfs", logger.Ctx{"err": err})
+			}
+		}
+	}
+
 	// Validate the devices storage.
 	testDev := internalUtil.VarPath("devices", ".test")
 	testDevNum := int(unix.Mkdev(0, 0))
@@ -1212,24 +1243,6 @@ func (d *Daemon) init() error {
 	}
 
 	d.gateway.HeartbeatNodeHook = d.nodeRefreshTask
-
-	/* Setup some mounts (nice to have) */
-	if !d.os.MockMode {
-		// Attempt to mount the shmounts tmpfs
-		err := setupSharedMounts()
-		if err != nil {
-			logger.Warn("Failed setting up shared mounts", logger.Ctx{"err": err})
-		}
-
-		// Attempt to Mount the devIncus tmpfs
-		devIncus := filepath.Join(d.os.VarDir, "guestapi")
-		if !linux.IsMountPoint(devIncus) {
-			err = unix.Mount("tmpfs", devIncus, "tmpfs", 0, "size=100k,mode=0755")
-			if err != nil {
-				logger.Warn("Failed to mount devIncus", logger.Ctx{"err": err})
-			}
-		}
-	}
 
 	logger.Info("Loading daemon configuration")
 	err = d.db.Node.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
@@ -1931,6 +1944,7 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 	if shouldUnmount {
 		logger.Info("Unmounting temporary filesystems")
 
+		_ = unix.Unmount(internalUtil.VarPath("devices"), unix.MNT_DETACH)
 		_ = unix.Unmount(internalUtil.VarPath("guestapi"), unix.MNT_DETACH)
 		_ = unix.Unmount(internalUtil.VarPath("shmounts"), unix.MNT_DETACH)
 
