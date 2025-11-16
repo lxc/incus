@@ -49,6 +49,7 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 	// Setup logger.
 	err := logger.InitLogger("", "", c.global.flagLogVerbose, c.global.flagLogDebug, nil)
 	if err != nil {
+		//nolint:revive //whyNoLint: this is equivalent to main
 		os.Exit(1)
 	}
 
@@ -186,6 +187,7 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 	cancelStatusNotifier() // Ensure STOPPED status is written to QEMU status ringbuffer.
 	cancelFunc()
 
+	//nolint:revive //whyNoLint: this is equivalent to main
 	os.Exit(exitStatus)
 
 	return nil
