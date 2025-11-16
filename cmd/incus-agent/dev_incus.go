@@ -66,6 +66,7 @@ var DevIncusConfigGet = devIncusHandler{"/1.0/config", func(d *Daemon, w http.Re
 		return smartResponse(err)
 	}
 
+	//nolint:revive //whyNoLint: the function is short and the shadowing is fine
 	var config []string
 
 	err = resp.MetadataAsStruct(&config)
