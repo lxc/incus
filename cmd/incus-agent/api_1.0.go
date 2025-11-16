@@ -213,7 +213,7 @@ func startHTTPServer(d *Daemon, debug bool) error {
 			errChan <- err
 		}
 
-		l.Close()
+		_ = l.Close()
 	}()
 
 	return nil
