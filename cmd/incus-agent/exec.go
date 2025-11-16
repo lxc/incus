@@ -158,8 +158,7 @@ func (s *execWs) Connect(op *operations.Operation, r *http.Request, w http.Respo
 			}
 
 			s.connsLock.Lock()
-			//nolint:revive
-			defer s.connsLock.Unlock()
+			defer s.connsLock.Unlock() //nolint:revive
 
 			val, found := s.conns[fd]
 			if found && val == nil {
@@ -204,6 +203,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 	case <-s.requiredConnectedCtx.Done():
 		//nolint:revive //whyNoLint: this is intentional, the flow should continue if all websockets are connected
 		break
+
 	case <-time.After(time.Second * 5):
 		return errors.New("Timed out waiting for websockets to connect")
 	}
