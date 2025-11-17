@@ -66,40 +66,40 @@ func execPost(d *Daemon, r *http.Request) response.Response {
 
 	osSetEnv(&post, env)
 
-	ws := &execWs{}
-	ws.fds = map[int]string{}
+	webSocket := &execWs{}
+	webSocket.fds = map[int]string{}
 
-	ws.conns = map[int]*websocket.Conn{}
-	ws.conns[execWSControl] = nil
-	ws.conns[0] = nil // This is used for either TTY or Stdin.
+	webSocket.conns = map[int]*websocket.Conn{}
+	webSocket.conns[execWSControl] = nil
+	webSocket.conns[0] = nil // This is used for either TTY or Stdin.
 	if !post.Interactive {
-		ws.conns[execWSStdout] = nil
-		ws.conns[execWSStderr] = nil
+		webSocket.conns[execWSStdout] = nil
+		webSocket.conns[execWSStderr] = nil
 	}
 
-	ws.requiredConnectedCtx, ws.requiredConnectedDone = context.WithCancel(context.Background())
-	ws.interactive = post.Interactive
+	webSocket.requiredConnectedCtx, webSocket.requiredConnectedDone = context.WithCancel(context.Background())
+	webSocket.interactive = post.Interactive
 
-	for i := range ws.conns {
-		ws.fds[i], err = internalUtil.RandomHexString(32)
+	for i := range webSocket.conns {
+		webSocket.fds[i], err = internalUtil.RandomHexString(32)
 		if err != nil {
 			return response.InternalError(err)
 		}
 	}
 
-	ws.command = post.Command
-	ws.env = env
+	webSocket.command = post.Command
+	webSocket.env = env
 
-	ws.width = post.Width
-	ws.height = post.Height
+	webSocket.width = post.Width
+	webSocket.height = post.Height
 
-	ws.cwd = post.Cwd
-	ws.uid = post.User
-	ws.gid = post.Group
+	webSocket.cwd = post.Cwd
+	webSocket.uid = post.User
+	webSocket.gid = post.Group
 
 	resources := map[string][]api.URL{}
 
-	op, err := operations.OperationCreate(nil, "", operations.OperationClassWebsocket, operationtype.CommandExec, resources, ws.Metadata(), ws.Do, nil, ws.Connect, r)
+	op, err := operations.OperationCreate(nil, "", operations.OperationClassWebsocket, operationtype.CommandExec, resources, webSocket.Metadata(), webSocket.Do, nil, webSocket.Connect, r)
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -158,7 +158,7 @@ func (s *execWs) Connect(op *operations.Operation, r *http.Request, w http.Respo
 			}
 
 			s.connsLock.Lock()
-			defer s.connsLock.Unlock()
+			defer s.connsLock.Unlock() //nolint:revive
 
 			val, found := s.conns[fd]
 			if found && val == nil {
@@ -174,9 +174,9 @@ func (s *execWs) Connect(op *operations.Operation, r *http.Request, w http.Respo
 				return nil
 			} else if !found {
 				return errors.New("Unknown websocket number")
-			} else {
-				return errors.New("Websocket number already connected")
 			}
+
+			return errors.New("Websocket number already connected")
 		}
 	}
 
@@ -202,6 +202,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 	logger.Debug("Waiting for exec websockets to connect")
 	select {
 	case <-s.requiredConnectedCtx.Done():
+		//nolint:revive //whyNoLint: this is intentional, the flow should continue if all websockets are connected
 		break
 	case <-time.After(time.Second * 5):
 		return errors.New("Timed out waiting for websockets to connect")

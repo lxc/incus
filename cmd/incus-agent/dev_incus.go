@@ -66,15 +66,15 @@ var DevIncusConfigGet = devIncusHandler{"/1.0/config", func(d *Daemon, w http.Re
 		return smartResponse(err)
 	}
 
-	var config []string
+	var conf []string
 
-	err = resp.MetadataAsStruct(&config)
+	err = resp.MetadataAsStruct(&conf)
 	if err != nil {
 		return smartResponse(fmt.Errorf("Failed parsing response from host: %w", err))
 	}
 
 	filtered := []string{}
-	for _, k := range config {
+	for _, k := range conf {
 		if strings.HasPrefix(k, "/1.0/config/user.") || strings.HasPrefix(k, "/1.0/config/cloud-init.") {
 			filtered = append(filtered, k)
 		}
@@ -165,7 +165,8 @@ var DevIncusAPIGet = devIncusHandler{"/1.0", func(d *Daemon, w http.ResponseWrit
 
 	defer client.Disconnect()
 
-	if r.Method == "GET" {
+	switch r.Method {
+	case "GET":
 		resp, _, err := client.RawQuery(r.Method, "/1.0", nil, "")
 		if err != nil {
 			return smartResponse(err)
@@ -179,16 +180,16 @@ var DevIncusAPIGet = devIncusHandler{"/1.0", func(d *Daemon, w http.ResponseWrit
 		}
 
 		return okResponse(instanceData, "json")
-	} else if r.Method == "PATCH" {
+	case "PATCH":
 		_, _, err := client.RawQuery(r.Method, "/1.0", r.Body, "")
 		if err != nil {
 			return smartResponse(err)
 		}
 
 		return okResponse("", "raw")
+	default:
+		return &devIncusResponse{fmt.Sprintf("method %q not allowed", r.Method), http.StatusBadRequest, "raw"}
 	}
-
-	return &devIncusResponse{fmt.Sprintf("method %q not allowed", r.Method), http.StatusBadRequest, "raw"}
 }}
 
 var DevIncusDevicesGet = devIncusHandler{"/1.0/devices", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devIncusResponse {
