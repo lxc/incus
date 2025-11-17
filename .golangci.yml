@@ -69,6 +69,8 @@ linters:
           - godot
         text: "Comment should end in a period"
         source: '^// Example:'
+      - path: internal/util/
+        text: "avoid meaningless package names"
     paths:
       - third_party$
       - builtin$
