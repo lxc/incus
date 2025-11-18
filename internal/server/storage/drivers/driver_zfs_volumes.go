@@ -12,11 +12,12 @@ import (
 	"maps"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
+	"unsafe"
 
 	"github.com/google/uuid"
 	"golang.org/x/sys/unix"
@@ -2111,49 +2112,90 @@ func (d *zfs) tryGetVolumeDiskPathFromDataset(ctx context.Context, dataset strin
 }
 
 func (d *zfs) getVolumeDiskPathFromDataset(dataset string) (string, error) {
-	// Shortcut for udev.
-	if util.PathExists(filepath.Join("/dev/zvol", dataset)) && linux.IsBlockdevPath(filepath.Join("/dev/zvol", dataset)) {
-		return filepath.Join("/dev/zvol", dataset), nil
-	}
-
-	// Locate zvol_id.
-	zvolid := "/lib/udev/zvol_id"
-	if !util.PathExists(zvolid) {
-		var err error
-
-		zvolid, err = exec.LookPath("zvol_id")
-		if err != nil {
-			return "", err
-		}
-	}
-
-	// List all the device nodes.
-	entries, err := os.ReadDir("/dev")
+	// Read all the top-level /dev entries.
+	entries, err := os.ReadDir("/dev/")
 	if err != nil {
-		return "", fmt.Errorf("Failed to read /dev: %w", err)
+		return "", err
 	}
 
+	// Filter only the relevant ZFS entries.
+	zfsEntries := make([]os.DirEntry, 0, len(entries))
 	for _, entry := range entries {
-		entryName := entry.Name()
-
-		// Ignore non-zvol devices.
-		if !strings.HasPrefix(entryName, "zd") {
+		// Skip non-ZFS entries.
+		if !strings.HasPrefix(entry.Name(), "zd") {
 			continue
 		}
 
-		if strings.Contains(entryName, "p") {
+		// Skip partitions.
+		if strings.Contains(entry.Name(), "p") {
 			continue
 		}
 
-		// Resolve the dataset path.
-		entryPath := filepath.Join("/dev", entryName)
-		output, err := subprocess.RunCommand(zvolid, entryPath)
+		zfsEntries = append(zfsEntries, entry)
+	}
+
+	// Sort by reverse creation date.
+	slices.SortFunc(zfsEntries, func(a os.DirEntry, b os.DirEntry) int {
+		var (
+			aCreate time.Time
+			bCreate time.Time
+		)
+
+		aInfo, _ := a.Info()
+		if aInfo != nil {
+			stat, ok := aInfo.Sys().(*syscall.Stat_t)
+
+			if ok {
+				aCreate = time.Unix(int64(stat.Ctim.Sec), int64(stat.Ctim.Nsec))
+			}
+		}
+
+		bInfo, _ := b.Info()
+		if bInfo != nil {
+			stat, ok := bInfo.Sys().(*syscall.Stat_t)
+
+			if ok {
+				bCreate = time.Unix(int64(stat.Ctim.Sec), int64(stat.Ctim.Nsec))
+			}
+		}
+
+		if aCreate.Equal(bCreate) {
+			return 0
+		}
+
+		if aCreate.Before(bCreate) {
+			return 1
+		}
+
+		return -1
+	})
+
+	zfsDataset := func(devPath string) string {
+		// Open the device.
+		r, err := os.OpenFile(devPath, unix.O_RDONLY|unix.O_CLOEXEC, 0)
 		if err != nil {
-			continue
+			return ""
 		}
 
-		if strings.TrimSpace(output) == dataset && linux.IsBlockdevPath(entryPath) {
-			return entryPath, nil
+		defer func() { _ = r.Close() }()
+
+		// Perform the BLKZNAME ioctl.
+		buf := [256]byte{}
+		_, _, errno := unix.Syscall(unix.SYS_IOCTL, uintptr(r.Fd()), linux.IoctlBlkZname, uintptr(unsafe.Pointer(&buf)))
+		if errno != 0 {
+			return ""
+		}
+
+		return string(bytes.Trim(buf[:], "\x00"))
+	}
+
+	// Check each entry for a dataset match.
+	for _, entry := range zfsEntries {
+		// Check if it's our dataset.
+		zfsDev := "/dev/" + entry.Name()
+
+		if zfsDataset(zfsDev) == dataset {
+			return zfsDev, nil
 		}
 	}
 
