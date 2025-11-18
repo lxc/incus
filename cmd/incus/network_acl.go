@@ -872,7 +872,6 @@ func (c *cmdNetworkACLDelete) Run(cmd *cobra.Command, args []string) error {
 		if !c.global.flagQuiet {
 			fmt.Printf(i18n.G("Network ACL %s deleted")+"\n", resource.name)
 		}
-
 	}
 
 	return nil

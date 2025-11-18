@@ -306,7 +306,6 @@ func (c *cmdClusterGroupDelete) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, resource := range resources {
-
 		if resource.name == "" {
 			return errors.New(i18n.G("Missing cluster group name"))
 		}
