@@ -198,11 +198,6 @@ do_storage_driver_zfs() {
         return
     fi
 
-    if [ "${filesystem}" = "xfs" ] && grep -q noble /etc/os-release; then
-        echo "==> SKIP: Skipping block mode test on ${filesystem} due to broken OS tools."
-        return
-    fi
-
     # shellcheck disable=2039,3043
     local INCUS_STORAGE_DIR incus_backend
 
