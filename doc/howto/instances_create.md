@@ -206,12 +206,19 @@ The subsequent commands will run the installation script `install.sh` to install
 #### On Windows
 
 For Windows systems, the virtual CD-ROM drive must be used.
-The agent can manually be started by opening a terminal and running (assuming `d:\` is the CD-ROM):
+The agent can be installed as a service by running the `install.ps1` file from the CD-ROM drive (by either executing the file from the explorer or terminal).
+To automatically let the agent update itself, leave the CD-ROM available to the virtual machine
+
+```{note}
+To install: The agent as a service, local administrator privileges are required.
+
+To update: When rebooting the virtual machine, the CD-ROM will be mounted again with the newest version and the service will automatically update itself using the files in the CD-ROM drive.
+```
+
+Otherwise, the agent can manually be started by opening a terminal and running (assuming `d:\` is the CD-ROM):
 
     d:\
     .\incus-agent.exe
-
-To have it persist and run automatically, a system service can be manually defined to start it up.
 
 #### On macOS
 
