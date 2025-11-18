@@ -57,11 +57,6 @@ test_migration() {
                 continue
             fi
 
-            if [ "${fs}" = "xfs" ] && grep -q noble /etc/os-release; then
-                echo "==> SKIP: Skipping block mode test on ${fs} due to broken OS tools."
-                continue
-            fi
-
             # shellcheck disable=2039,3043
             local storage_pool1 storage_pool2
             # shellcheck disable=2153
