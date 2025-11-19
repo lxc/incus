@@ -28,7 +28,7 @@ require (
 	github.com/jochenvg/go-udev v0.0.0-20240801134859-b65ed646224b
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/lxc/go-lxc v0.0.0-20240606200241-27b3d116511f
-	github.com/lxc/incus-os/incus-osd v0.0.0-20251115200223-b851138c3118
+	github.com/lxc/incus-os/incus-osd v0.0.0-20251119202041-c236b7154b01
 	github.com/mattn/go-colorable v0.1.14
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/mdlayher/arp v0.0.0-20220512170110-6706a2966875
@@ -55,7 +55,7 @@ require (
 	github.com/vishvananda/netlink v1.3.1
 	github.com/zitadel/oidc/v3 v3.45.0
 	go.starlark.net v0.0.0-20251109183026-be02852a5e1f
-	golang.org/x/crypto v0.44.0
+	golang.org/x/crypto v0.45.0
 	golang.org/x/exp v0.0.0-20251113190631-e25ba8c21ef6
 	golang.org/x/oauth2 v0.33.0
 	golang.org/x/sync v0.18.0
@@ -82,7 +82,7 @@ require (
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
-	github.com/cyphar/filepath-securejoin v0.6.0 // indirect
+	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dgryski/go-farm v0.0.0-20240924180020-3414d57e47da // indirect
 	github.com/docker/go-units v0.5.0 // indirect
@@ -139,7 +139,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.67.2 // indirect
+	github.com/prometheus/common v0.67.3 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rootless-containers/proto/go-proto v0.0.0-20230421021042-4cd87ebadd67 // indirect
@@ -172,7 +172,7 @@ require (
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251111163417-95abcf5c77ba // indirect
-	google.golang.org/grpc v1.76.0 // indirect
+	google.golang.org/grpc v1.77.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
 )
