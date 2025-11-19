@@ -53,8 +53,7 @@ See {ref}`image_format_templates` for information on how to configure templates.
 
 For containers, the `rootfs/` directory contains a full file system tree of the root directory (`/`) in the container.
 
-Virtual machines use a `rootfs.img` `qcow2` file instead of a `rootfs/` directory.
-This file becomes the main disk device.
+Virtual machines use a single `rootfs.img` file instead of a `rootfs/` directory, that file is expected to be `qcow2` formatted.
 
 (image_format_templates)=
 ### Templates (optional)
@@ -153,7 +152,7 @@ The image identifier for such images is the SHA-256 of the tarball.
 
 A split image consists of two files.
 The first is a tarball containing the metadata and optionally the template files (usually `*.tar.xz`).
-The second can be a tarball, `squashfs` or `qcow2` image containing the actual instance data.
+The second is the root file system (container) or root disk (virtual machine).
 
 For containers, the second file is most commonly a SquashFS-formatted file system tree, though it can also be a tarball of the same tree.
 For virtual machines, the second file is always a `qcow2` formatted disk image.
