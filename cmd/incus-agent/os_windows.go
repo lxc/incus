@@ -101,7 +101,7 @@ func runService(name string, agentCmd *cmdAgent) error {
 		elog.Error(1, fmt.Sprintf("%s service failed: %v", name, err))
 		return err
 	}
-	
+
 	elog.Info(1, fmt.Sprintf("%s service stopped", name))
 	return nil
 }
