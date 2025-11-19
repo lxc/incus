@@ -38,6 +38,10 @@ func parseBytes(b []byte) string {
 	return string(b[:n])
 }
 
+func runService(name string, agentCmd *cmdAgent) error {
+	return errors.New("Not implemented.")
+}
+
 func osGetEnvironment() (*api.ServerEnvironment, error) {
 	uname := unix.Utsname{}
 	err := unix.Uname(&uname)
