@@ -46,6 +46,11 @@ type Resources struct {
 	//
 	// API extension: resources_load
 	Load ResourcesLoad `json:"load" yaml:"load"`
+
+	// Serial devices
+	//
+	// API extension: resources_serial
+	Serial ResourcesSerial `json:"serial" yaml:"serial"`
 }
 
 // ResourcesCPU represents the cpu resources available on the system
@@ -1140,4 +1145,61 @@ type ResourcesLoad struct {
 	// The number of active processes
 	// Example: 1234
 	Processes int
+}
+
+// ResourcesSerial represents the serial devices available on the system
+//
+// swagger:model
+//
+// API extension: resources_serial.
+type ResourcesSerial struct {
+	// List of serial devices
+	Devices []ResourcesSerialDevice `json:"devices" yaml:"devices"`
+
+	// Total number of serial devices
+	// Example: 1
+	Total uint64 `json:"total" yaml:"total"`
+}
+
+// ResourcesSerialDevice represents a serial device
+//
+// swagger:model
+//
+// API extension: resources_serial.
+type ResourcesSerialDevice struct {
+	// Kernel device name (e.g. ttyUSB0, ttyACM0)
+	// Example: ttyUSB0
+	ID string `json:"id" yaml:"id"`
+
+	// Device number (major:minor)
+	// Example: 188:0
+	Device string `json:"device" yaml:"device"`
+
+	// Path to /dev/serial/by-id entry
+	// Example: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AB0J1234-if00-port0
+	DeviceID string `json:"device_id" yaml:"device_id"`
+
+	// Path to /dev/serial/by-path entry
+	// Example: /dev/serial/by-path/pci-0000:00:14.0-usb-0:2:1.0-port0
+	DevicePath string `json:"device_path" yaml:"device_path"`
+
+	// kernel driver name (cdc_acm, ftdi_sio, pl2303, cp210x...)
+	// Example: cdc_acm
+	Driver string `json:"driver" yaml:"driver"`
+
+	// USB vendor name
+	// Example: Arduino LLC
+	Vendor string `json:"vendor" yaml:"vendor"`
+
+	// USB vendor ID
+	// Example: 2341
+	VendorID string `json:"vendor_id" yaml:"vendor_id"`
+
+	// USB product name
+	// Example: Arduino Uno
+	Product string `json:"product" yaml:"product"`
+
+	// USB product ID
+	// Example: 0043
+	ProductID string `json:"product_id" yaml:"product_id"`
 }
