@@ -6,12 +6,14 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"net"
 	"net/http"
-	"strings"
+	"net/url"
 
 	linstorClient "github.com/LINBIT/golinstor/client"
 
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // Client represents an HTTP Linstor client.
@@ -79,8 +81,51 @@ func NewClient(controllerConnection, sslCACert, sslClientCert, sslClientKey stri
 
 	// Setup the Linstor client.
 	httpClient := &http.Client{Transport: httpTransport}
-	controllerUrls := strings.Split(controllerConnection, ",")
-	c, err := linstorClient.NewClient(linstorClient.Controllers(controllerUrls), linstorClient.HTTPClient(httpClient), linstorClient.Log(linstorLogger{}))
+
+	parseConnection := func(connection string) (*url.URL, error) {
+		u, err := url.Parse(connection)
+		if err != nil {
+			_, _, err := net.SplitHostPort(connection)
+			if err != nil {
+				// Assume we only got an IP address or hostname.
+				return url.Parse("http://" + net.JoinHostPort(connection, "3370"))
+			}
+
+			// Assume we got an IP address and port combination.
+			return url.Parse("http://" + connection)
+		}
+
+		// Handle missing scheme.
+		if u.Scheme == "" {
+			u.Scheme = "http"
+		}
+
+		// Handle missing path.
+		if u.Host == "" {
+			u.Host = u.Path
+			u.Path = ""
+		}
+
+		// Add in the port if missing.
+		_, _, err = net.SplitHostPort(u.Host)
+		if err != nil {
+			u.Host = net.JoinHostPort(u.Host, "3370")
+		}
+
+		return u, nil
+	}
+
+	controllerURLs := []*url.URL{}
+	for _, connection := range util.SplitNTrimSpace(controllerConnection, ",", -1, true) {
+		u, err := parseConnection(connection)
+		if err != nil {
+			return nil, fmt.Errorf("Bad URL: %w", err)
+		}
+
+		controllerURLs = append(controllerURLs, u)
+	}
+
+	c, err := linstorClient.NewClient(linstorClient.BaseURL(controllerURLs...), linstorClient.HTTPClient(httpClient), linstorClient.Log(linstorLogger{}))
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create Linstor client: %w", err)
 	}
