@@ -140,6 +140,10 @@ func (d *unixHotplug) Register() error {
 			if err != nil {
 				return nil, err
 			}
+			// Return early to prevent injecting duplicate uevents.
+			if len(runConf.Mounts) == 0 {
+				return nil, nil
+			}
 
 			// Add a post hook function to remove the specific unix hotplug device file after unmount.
 			runConf.PostHooks = []func() error{func() error {
