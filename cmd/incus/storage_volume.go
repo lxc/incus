@@ -2748,7 +2748,7 @@ func (c *cmdStorageVolumeFileMount) Run(cmd *cobra.Command, args []string) error
 	var targetPath string
 
 	// Determine the target if specified.
-	if len(args) >= 2 {
+	if len(args) >= 3 {
 		targetPath = filepath.Clean(args[len(args)-1])
 		sb, err := os.Stat(targetPath)
 		if err != nil {
