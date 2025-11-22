@@ -44,8 +44,8 @@ func sortConfigKeys(projectEntries map[string]any) {
 		}
 
 		for _, groupValue := range groupValues {
-			configEntries, gok := groupValue.(map[string]any)["keys"].([]any)
-			if !gok {
+			configEntries, ok := groupValue.(map[string]any)["keys"].([]any)
+			if !ok {
 				continue
 			}
 
@@ -320,18 +320,19 @@ func writeDocFile(inputJSONPath, outputTxtPath string) error {
 		for _, groupKey := range sortedGroupKeys {
 			groupEntries := entityEntries.(map[string]any)[groupKey]
 			fmt.Fprintf(buffer, "<!-- config group %s-%s start -->\n", entityKey, groupKey)
-			configEntries, ok := groupEntries.(map[string]any)["keys"].([]any)
+
+			groupKeys, ok := groupEntries.(map[string]any)["keys"].([]any)
 			if !ok {
 				continue
 			}
 
-			for _, configEntry := range configEntries {
-				configValues, ok := configEntry.(map[string]any)
+			for _, configEntry := range groupKeys {
+				configEntry, ok := configEntry.(map[string]any)
 				if !ok {
 					continue
 				}
 
-				for configKey, configContent := range configValues {
+				for configKey, configContent := range configEntry {
 					// There is only one key-value pair in each map
 					kvBuffer := bytes.NewBufferString("")
 					var backticksCount int
@@ -341,7 +342,8 @@ func writeDocFile(inputJSONPath, outputTxtPath string) error {
 						configContentValue := configContent.(map[string]any)[configEntryContentKey]
 						if configEntryContentKey == "longdesc" {
 							backticksCount = countMaxBackTicks(configContentValue.(string))
-							if c, ok := configContentValue.(string); ok {
+							c, ok := configContentValue.(string)
+							if ok {
 								longDescContent = c
 							}
 
@@ -378,28 +380,24 @@ func writeDocFile(inputJSONPath, outputTxtPath string) error {
 							quoteFormattedValue = fmt.Sprintf("\"%s\"", configContentValueStr)
 						}
 
-						fmt.Fprintf(
-							buffer,
+						fmt.Fprintf(kvBuffer,
+
 							":%s: %s\n",
 							configEntryContentKey,
-							quoteFormattedValue,
-						)
+							quoteFormattedValue)
 					}
 
 					if backticksCount < 3 {
-						fmt.Fprintf(
-							buffer,
+						fmt.Fprintf(buffer,
 							"```{config:option} %s %s-%s\n%s%s\n```\n\n",
 							configKey,
 							entityKey,
 							groupKey,
 							kvBuffer.String(),
-							strings.TrimLeft(longDescContent, "\n"),
-						)
+							strings.TrimLeft(longDescContent, "\n"))
 					} else {
 						configQuotes := strings.Repeat("`", backticksCount+1)
-						fmt.Fprintf(
-							buffer,
+						fmt.Fprintf(buffer,
 							"%s{config:option} %s %s-%s\n%s%s\n%s\n\n",
 							configQuotes,
 							configKey,
@@ -407,8 +405,7 @@ func writeDocFile(inputJSONPath, outputTxtPath string) error {
 							groupKey,
 							kvBuffer.String(),
 							strings.TrimLeft(longDescContent, "\n"),
-							configQuotes,
-						)
+							configQuotes)
 					}
 				}
 			}
