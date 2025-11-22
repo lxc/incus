@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -7721,7 +7722,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 			}
 
 			// Try and merge snapshot back to the source disk on failure so we don't lose writes.
-			err = monitor.BlockCommit(rootSnapshotDiskName)
+			err = monitor.BlockCommit(rootSnapshotDiskName, "", "")
 			if err != nil {
 				d.logger.Error("Failed merging migration storage snapshot", logger.Ctx{"err": err})
 			}
@@ -7998,7 +7999,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 
 		// Merge snapshot back to the source disk so we don't lose the writes.
 		d.logger.Debug("Merge migration storage snapshot on source started")
-		err = monitor.BlockCommit(rootSnapshotDiskName)
+		err = monitor.BlockCommit(rootSnapshotDiskName, "", "")
 		if err != nil {
 			return fmt.Errorf("Failed merging migration storage snapshot: %w", err)
 		}
@@ -10478,6 +10479,173 @@ func (d *qemu) GuestOS() string {
 	return "unknown"
 }
 
+// CreateQcow2Snapshot creates a qcow2 snapshot for a running instance.
+func (d *qemu) CreateQcow2Snapshot(snapshotName string, backingFilename string) error {
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		return err
+	}
+
+	snap, err := instance.LoadByProjectAndName(d.state, d.project.Name, fmt.Sprintf("%s/%s", d.name, snapshotName))
+	if err != nil {
+		return fmt.Errorf("Load by project and name: %w", err)
+	}
+
+	pool, err := storagePools.LoadByInstance(d.state, snap)
+	if err != nil {
+		return fmt.Errorf("Load by instance: %w", err)
+	}
+
+	mountInfoRoot, err := pool.MountInstance(d, d.op)
+	if err != nil {
+		return fmt.Errorf("Mount instance: %w", err)
+	}
+
+	defer func() { _ = pool.UnmountInstance(d, d.op) }()
+
+	f, err := os.OpenFile(mountInfoRoot.DiskPath, unix.O_RDWR, 0)
+	if err != nil {
+		return fmt.Errorf("Failed opening file descriptor for disk device %s: %w", mountInfoRoot.DiskPath, err)
+	}
+
+	defer func() { _ = f.Close() }()
+
+	// Fetch information about block devices.
+	blockdevNames, err := monitor.QueryNamedBlockNodes()
+	if err != nil {
+		return fmt.Errorf("Failed fetching block nodes names: %w", err)
+	}
+
+	rootDevName, _, err := internalInstance.GetRootDiskDevice(d.expandedDevices.CloneNative())
+	if err != nil {
+		return fmt.Errorf("Failed getting instance root disk: %w", err)
+	}
+
+	escapedDeviceName := linux.PathNameEncode(rootDevName)
+	rootNodeName := d.blockNodeName(escapedDeviceName)
+
+	// Fetch the current maximum overlay index.
+	overlayNodeIndex := currentQcow2OverlayIndex(blockdevNames, rootNodeName)
+	nextOverlayName := fmt.Sprintf("%s_overlay%d", rootNodeName, overlayNodeIndex+1)
+
+	currentOverlayName := rootNodeName
+	if overlayNodeIndex >= 0 {
+		currentOverlayName = fmt.Sprintf("%s_overlay%d", rootNodeName, overlayNodeIndex)
+	}
+
+	info, err := monitor.SendFileWithFDSet(nextOverlayName, f, false)
+	if err != nil {
+		return fmt.Errorf("Failed sending file descriptor of %q for disk device: %w", f.Name(), err)
+	}
+
+	blockDev := map[string]any{
+		"driver":    "qcow2",
+		"discard":   "unmap", // Forward as an unmap request. This is the same as `discard=on` in the qemu config file.
+		"node-name": nextOverlayName,
+		"read-only": false,
+		"file": map[string]any{
+			"driver":   "host_device",
+			"filename": fmt.Sprintf("/dev/fdset/%d", info.ID),
+		},
+	}
+
+	// Add overlay block dev.
+	err = monitor.AddBlockDevice(blockDev, nil, false)
+	if err != nil {
+		return fmt.Errorf("Fail to add block device: %w", err)
+	}
+
+	// Take a snapshot of the root disk and redirect writes to the snapshot disk.
+	err = monitor.BlockDevSnapshot(currentOverlayName, nextOverlayName)
+	if err != nil {
+		return fmt.Errorf("Failed taking storage snapshot: %w", err)
+	}
+
+	// Update metadata of the backing file.
+	err = monitor.ChangeBackingFile(nextOverlayName, nextOverlayName, backingFilename)
+	if err != nil {
+		return fmt.Errorf("Failed changing backing file: %w", err)
+	}
+
+	return nil
+}
+
+// fetchQcow2Blockdevs selects block devices related to a qcow2 backing chain.
+func (d *qemu) fetchQcow2Blockdevs(m *qmp.Monitor) ([]string, error) {
+	// Fetch information about block devices.
+	blockdevNames, err := m.QueryNamedBlockNodes()
+	if err != nil {
+		return nil, fmt.Errorf("Failed fetching block nodes names: %w", err)
+	}
+
+	rootDevName, _, err := internalInstance.GetRootDiskDevice(d.expandedDevices.CloneNative())
+	if err != nil {
+		return nil, fmt.Errorf("Failed getting instance root disk: %w", err)
+	}
+
+	escapedDeviceName := linux.PathNameEncode(rootDevName)
+	rootNodeName := d.blockNodeName(escapedDeviceName)
+
+	return filterAndSortQcow2Blockdevs(blockdevNames, rootNodeName), nil
+}
+
+// DeleteQcow2Snapshot deletes a qcow2 snapshot for a running instance.
+func (d *qemu) DeleteQcow2Snapshot(snapshotIndex int, backingFilename string) error {
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		return err
+	}
+
+	// Select all block devices related to a qcow2 backing chain.
+	blockDevs, err := d.fetchQcow2Blockdevs(monitor)
+	if err != nil {
+		return err
+	}
+
+	d.logger.Debug("QCOW2 blockdev chain:", logger.Ctx{"blockdev": blockDevs, "snapshotIndex": snapshotIndex})
+
+	if snapshotIndex < 0 || (snapshotIndex+1) >= len(blockDevs) {
+		return fmt.Errorf("Incorrect snapshot index: %d", snapshotIndex)
+	}
+
+	rootDevName := blockDevs[len(blockDevs)-1]
+	snapChildDevName := blockDevs[snapshotIndex+1]
+	snapDevName := blockDevs[snapshotIndex]
+
+	err = monitor.BlockCommit(rootDevName, snapChildDevName, snapDevName)
+	if err != nil {
+		return err
+	}
+
+	err = monitor.RemoveBlockDevice(snapChildDevName)
+	if err != nil {
+		d.logger.Error("Remove block deevice error", logger.Ctx{"err": err})
+		return err
+	}
+
+	err = monitor.RemoveFDFromFDSet(snapChildDevName)
+	if err != nil {
+		d.logger.Error("Remove fd from fd set", logger.Ctx{"err": err})
+		return err
+	}
+
+	if backingFilename == "" {
+		return nil
+	}
+
+	if snapshotIndex+2 >= len(blockDevs) {
+		return fmt.Errorf("Incorrect snapshot index for backing file update: %d", snapshotIndex)
+	}
+
+	// Update metadata of the backing file.
+	err = monitor.ChangeBackingFile(rootDevName, blockDevs[snapshotIndex+2], backingFilename)
+	if err != nil {
+		return fmt.Errorf("Failed changing backing file: %w", err)
+	}
+
+	return nil
+}
+
 func (d *qemu) isQCOW2(devPath string) (bool, error) {
 	imgInfo, err := storageDrivers.Qcow2Info(devPath)
 	if err != nil {
@@ -10487,20 +10655,20 @@ func (d *qemu) isQCOW2(devPath string) (bool, error) {
 	return imgInfo.Format == storageDrivers.BlockVolumeTypeQcow2, nil
 }
 
-func (d *qemu) qcow2BlockDev(m *qmp.Monitor, nodeName string, aioMode string, directCache bool, noFlushCache bool, permissions int, readonly bool, backingPaths []string, iter int) (map[string]any, error) {
+func (d *qemu) qcow2BlockDev(m *qmp.Monitor, nodeName string, aioMode string, directCache bool, noFlushCache bool, permissions int, readonly bool, backingPaths []string, iter int) (string, error) {
 	devName := backingPaths[0]
 	backingNodeName := fmt.Sprintf("%s_backing%d", nodeName, iter)
 
 	f, err := os.OpenFile(devName, permissions, 0)
 	if err != nil {
-		return nil, fmt.Errorf("Failed opening file descriptor for disk device %q: %w", devName, err)
+		return "", fmt.Errorf("Failed opening file descriptor for disk device %q: %w", devName, err)
 	}
 
 	defer func() { _ = f.Close() }()
 
 	info, err := m.SendFileWithFDSet(backingNodeName, f, readonly)
 	if err != nil {
-		return nil, fmt.Errorf("Failed sending file descriptor of %q for disk device %q: %w", f.Name(), devName, err)
+		return "", fmt.Errorf("Failed sending file descriptor of %q for disk device %q: %w", f.Name(), devName, err)
 	}
 
 	blockDev := map[string]any{
@@ -10521,13 +10689,37 @@ func (d *qemu) qcow2BlockDev(m *qmp.Monitor, nodeName string, aioMode string, di
 
 	// If there are any children, load block information about them.
 	if len(backingPaths) > 1 {
-		backingBlockDev, err := d.qcow2BlockDev(m, nodeName, aioMode, directCache, noFlushCache, permissions, readonly, backingPaths[1:], iter+1)
+		parentNodeName, err := d.qcow2BlockDev(m, nodeName, aioMode, directCache, noFlushCache, permissions, readonly, backingPaths[1:], iter+1)
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 
-		blockDev["backing"] = backingBlockDev
+		blockDev["backing"] = parentNodeName
 	}
 
-	return blockDev, nil
+	err = m.AddBlockDevice(blockDev, nil, false)
+	if err != nil {
+		return "", err
+	}
+
+	return backingNodeName, nil
+}
+
+// currentQcow2OverlayIndex returns the current maximum overlay index.
+func currentQcow2OverlayIndex(names []string, prefix string) int {
+	re := regexp.MustCompile(fmt.Sprintf(`^%s_overlay(\d+)$`, prefix))
+
+	maxIndex := -1
+
+	for _, name := range names {
+		m := re.FindStringSubmatch(name)
+		if len(m) == 2 {
+			n, err := strconv.Atoi(m[1])
+			if err == nil && n > maxIndex {
+				maxIndex = n
+			}
+		}
+	}
+
+	return maxIndex
 }
