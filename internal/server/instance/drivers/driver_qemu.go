@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -10460,6 +10461,97 @@ func (d *qemu) GuestOS() string {
 	return "unknown"
 }
 
+// CreateQcow2Snapshot creates a qcow2 snapshot for a running instance.
+func (d *qemu) CreateQcow2Snapshot(snapshotName string, backingFilename string) error {
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		return err
+	}
+
+	snap, err := instance.LoadByProjectAndName(d.state, d.project.Name, fmt.Sprintf("%s/%s", d.name, snapshotName))
+	if err != nil {
+		return fmt.Errorf("Load by project and name: %w", err)
+	}
+
+	pool, err := storagePools.LoadByInstance(d.state, snap)
+	if err != nil {
+		return fmt.Errorf("Load by instance: %w", err)
+	}
+
+	mountInfoRoot, err := pool.MountInstance(d, d.op)
+	if err != nil {
+		return fmt.Errorf("Mount instance: %w", err)
+	}
+
+	defer func() { _ = pool.UnmountInstance(d, d.op) }()
+
+	f, err := os.OpenFile(mountInfoRoot.DiskPath, unix.O_RDWR, 0)
+	if err != nil {
+		return fmt.Errorf("Failed opening file descriptor for disk device %s: %w", mountInfoRoot.DiskPath, err)
+	}
+
+	defer func() { _ = f.Close() }()
+
+	// Fetch information about block devices.
+	blockdevNames, err := monitor.QueryNamedBlockNodes()
+	if err != nil {
+		return fmt.Errorf("Failed fetching block nodes names: %w", err)
+	}
+
+	rootDevName, _, err := internalInstance.GetRootDiskDevice(d.expandedDevices.CloneNative())
+	if err != nil {
+		return fmt.Errorf("Failed getting instance root disk: %w", err)
+	}
+
+	escapedDeviceName := linux.PathNameEncode(rootDevName)
+	rootNodeName := d.blockNodeName(escapedDeviceName)
+
+	// Fetch the current maximum overlay index.
+	overlayNodeIndex := currentQcow2OverlayIndex(blockdevNames, rootNodeName)
+	nextOverlayName := fmt.Sprintf("%s_overlay%d", rootNodeName, overlayNodeIndex+1)
+
+	currentOverlayName := rootNodeName
+	if overlayNodeIndex >= 0 {
+		currentOverlayName = fmt.Sprintf("%s_overlay%d", rootNodeName, overlayNodeIndex)
+	}
+
+	info, err := monitor.SendFileWithFDSet(nextOverlayName, f, false)
+	if err != nil {
+		return fmt.Errorf("Failed sending file descriptor of %q for disk device: %w", f.Name(), err)
+	}
+
+	blockDev := map[string]any{
+		"driver":    "qcow2",
+		"discard":   "unmap", // Forward as an unmap request. This is the same as `discard=on` in the qemu config file.
+		"node-name": nextOverlayName,
+		"read-only": false,
+		"file": map[string]any{
+			"driver":   "host_device",
+			"filename": fmt.Sprintf("/dev/fdset/%d", info.ID),
+		},
+	}
+
+	// Add overlay block dev.
+	err = monitor.AddBlockDevice(blockDev, nil, false)
+	if err != nil {
+		return fmt.Errorf("Fail to add block device: %w", err)
+	}
+
+	// Take a snapshot of the root disk and redirect writes to the snapshot disk.
+	err = monitor.BlockDevSnapshot(currentOverlayName, nextOverlayName)
+	if err != nil {
+		return fmt.Errorf("Failed taking storage snapshot: %w", err)
+	}
+
+	// Update metadata of the backing file.
+	err = monitor.ChangeBackingFile(nextOverlayName, backingFilename)
+	if err != nil {
+		return fmt.Errorf("Failed changing backing file: %w", err)
+	}
+
+	return nil
+}
+
 func (d *qemu) isQCOW2(devPath string) (bool, error) {
 	imgInfo, err := storageDrivers.Qcow2Info(devPath)
 	if err != nil {
@@ -10512,4 +10604,23 @@ func (d *qemu) qcow2BlockDev(m *qmp.Monitor, nodeName string, aioMode string, di
 	}
 
 	return blockDev, nil
+}
+
+// currentQcow2OverlayIndex returns the current maximum overlay index.
+func currentQcow2OverlayIndex(names []string, prefix string) int {
+	re := regexp.MustCompile(fmt.Sprintf(`^%s_overlay(\d+)$`, prefix))
+
+	maxIndex := -1
+
+	for _, name := range names {
+		m := re.FindStringSubmatch(name)
+		if len(m) == 2 {
+			n, err := strconv.Atoi(m[1])
+			if err == nil && n > maxIndex {
+				maxIndex = n
+			}
+		}
+	}
+
+	return maxIndex
 }
