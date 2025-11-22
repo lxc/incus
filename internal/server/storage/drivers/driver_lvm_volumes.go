@@ -1806,3 +1806,48 @@ func (d *lvm) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *o
 
 	return nil
 }
+
+// GetQcow2BackingFilePath generates the backing file path for the specified volume.
+func (d *lvm) GetQcow2BackingFilePath(vol Volume) (string, error) {
+	pathName := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
+	return filepath.Join("/dev", pathName), nil
+}
+
+// Qcow2DeletionCleanup performs post block-commit cleanup of qcow2 snapshot artifacts.
+func (d *lvm) Qcow2DeletionCleanup(snapVol Volume, childName string) error {
+	childVolPath := d.lvmPath(d.config["lvm.vg_name"], snapVol.volType, snapVol.contentType, childName)
+	snapVolPath := d.lvmPath(d.config["lvm.vg_name"], snapVol.volType, snapVol.contentType, snapVol.name)
+	childVol := NewVolume(d, d.name, snapVol.volType, snapVol.contentType, childName, snapVol.config, snapVol.poolConfig)
+
+	// Activate volume if needed.
+	activated, err := d.activateVolume(childVol)
+	if err != nil {
+		return err
+	}
+
+	_ = d.removeLogicalVolume(childVolPath)
+
+	_, err = d.acquireExclusive(snapVol)
+	if err != nil {
+		return err
+	}
+
+	err = d.renameLogicalVolume(snapVolPath, childVolPath)
+	if err != nil {
+		return fmt.Errorf("Error temporarily renaming original LVM logical volume: %w", err)
+	}
+
+	releaseParent, err := d.acquireExclusive(childVol)
+	if err != nil {
+		return err
+	}
+
+	releaseParent()
+
+	// Deactivate volume if was not active before operation.
+	if activated {
+		_, _ = d.deactivateVolume(childVol)
+	}
+
+	return nil
+}
