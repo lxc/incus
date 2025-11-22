@@ -99,10 +99,12 @@ type Driver interface {
 	CacheVolumeSnapshots(vol Volume) error
 
 	CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) error
+	GetQcow2BackingFilePath(vol Volume) (string, error)
 	DeleteVolumeSnapshot(snapVol Volume, op *operations.Operation) error
 	RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *operations.Operation) error
 	VolumeSnapshots(vol Volume, op *operations.Operation) ([]string, error)
 	RestoreVolume(vol Volume, snapshotName string, op *operations.Operation) error
+	Qcow2DeletionCleanup(vol Volume, childName string) error
 
 	// Migration.
 	MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []migration.Type
