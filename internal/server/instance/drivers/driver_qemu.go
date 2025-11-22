@@ -4333,11 +4333,12 @@ func (d *qemu) addRootDriveConfig(qemuDev map[string]any, mountInfo *storagePool
 
 	// Generate a new device config with the root device path expanded.
 	driveConf := deviceConfig.MountEntryItem{
-		DevName:    rootDriveConf.DevName,
-		DevPath:    mountInfo.DiskPath,
-		Opts:       rootDriveConf.Opts,
-		TargetPath: rootDriveConf.TargetPath,
-		Limits:     rootDriveConf.Limits,
+		DevName:     rootDriveConf.DevName,
+		DevPath:     mountInfo.DiskPath,
+		BackingPath: mountInfo.BackingPath,
+		Opts:        rootDriveConf.Opts,
+		TargetPath:  rootDriveConf.TargetPath,
+		Limits:      rootDriveConf.Limits,
 	}
 
 	if d.storagePool.Driver().Info().Remote {
@@ -4536,13 +4537,14 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 	}
 
 	var isBlockDev bool
+	var srcDevPath string
 
 	// Detect device caches and I/O modes.
 	if isRBDImage {
 		// For RBD, we want writeback to allow for the system-configured "rbd cache" to take effect if present.
 		cacheMode = "writeback"
 	} else {
-		srcDevPath := driveConf.DevPath // This should not be used for passing to QEMU, only for probing.
+		srcDevPath = driveConf.DevPath // This should not be used for passing to QEMU, only for probing.
 
 		// Detect if existing file descriptor format is being supplied.
 		if strings.HasPrefix(driveConf.DevPath, fmt.Sprintf("%s:", device.DiskFileDescriptorMountPrefix)) {
@@ -4848,7 +4850,40 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 				_ = m.RemoveFDFromFDSet(nodeName)
 			})
 
-			blockDev["filename"] = fmt.Sprintf("/dev/fdset/%d", info.ID)
+			isQcow2, err := d.isQCOW2(srcDevPath)
+			if err != nil {
+				return fmt.Errorf("Failed checking disk format: %w", err)
+			}
+
+			if isQcow2 {
+				blockDev = map[string]any{
+					"driver":    "qcow2",
+					"discard":   "unmap", // Forward as an unmap request. This is the same as `discard=on` in the qemu config file.
+					"node-name": d.blockNodeName(escapedDeviceName),
+					"read-only": false,
+					"file": map[string]any{
+						"driver":   "host_device",
+						"filename": fmt.Sprintf("/dev/fdset/%d", info.ID),
+						"aio":      aioMode,
+						"cache": map[string]any{
+							"direct":   directCache,
+							"no-flush": noFlushCache,
+						},
+					},
+				}
+
+				// If there are any children, load block information about them.
+				if len(driveConf.BackingPath) > 0 {
+					backingBlockDev, err := d.qcow2BlockDev(m, nodeName, aioMode, directCache, noFlushCache, permissions, readonly, driveConf.BackingPath, 0)
+					if err != nil {
+						return nil
+					}
+
+					blockDev["backing"] = backingBlockDev
+				}
+			} else {
+				blockDev["filename"] = fmt.Sprintf("/dev/fdset/%d", info.ID)
+			}
 		}
 
 		err := m.AddBlockDevice(blockDev, qemuDev, bus == "usb")
@@ -10441,4 +10476,58 @@ func (d *qemu) GuestOS() string {
 	}
 
 	return "unknown"
+}
+
+func (d *qemu) isQCOW2(devPath string) (bool, error) {
+	imgInfo, err := storageDrivers.Qcow2Info(devPath)
+	if err != nil {
+		return false, err
+	}
+
+	return imgInfo.Format == storageDrivers.BlockVolumeTypeQcow2, nil
+}
+
+func (d *qemu) qcow2BlockDev(m *qmp.Monitor, nodeName string, aioMode string, directCache bool, noFlushCache bool, permissions int, readonly bool, backingPaths []string, iter int) (map[string]any, error) {
+	devName := backingPaths[0]
+	backingNodeName := fmt.Sprintf("%s_backing%d", nodeName, iter)
+
+	f, err := os.OpenFile(devName, permissions, 0)
+	if err != nil {
+		return nil, fmt.Errorf("Failed opening file descriptor for disk device %q: %w", devName, err)
+	}
+
+	defer func() { _ = f.Close() }()
+
+	info, err := m.SendFileWithFDSet(backingNodeName, f, readonly)
+	if err != nil {
+		return nil, fmt.Errorf("Failed sending file descriptor of %q for disk device %q: %w", f.Name(), devName, err)
+	}
+
+	blockDev := map[string]any{
+		"driver":    "qcow2",
+		"discard":   "unmap", // Forward as an unmap request. This is the same as `discard=on` in the qemu config file.
+		"node-name": backingNodeName,
+		"read-only": false,
+		"file": map[string]any{
+			"driver":   "host_device",
+			"filename": fmt.Sprintf("/dev/fdset/%d", info.ID),
+			"aio":      aioMode,
+			"cache": map[string]any{
+				"direct":   directCache,
+				"no-flush": noFlushCache,
+			},
+		},
+	}
+
+	// If there are any children, load block information about them.
+	if len(backingPaths) > 1 {
+		backingBlockDev, err := d.qcow2BlockDev(m, nodeName, aioMode, directCache, noFlushCache, permissions, readonly, backingPaths[1:], iter+1)
+		if err != nil {
+			return nil, err
+		}
+
+		blockDev["backing"] = backingBlockDev
+	}
+
+	return blockDev, nil
 }
