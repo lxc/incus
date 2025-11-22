@@ -1789,3 +1789,9 @@ func (d *lvm) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *o
 
 	return nil
 }
+
+// GetQcow2BackingFilePath generates the backing file path for the specified volume.
+func (d *lvm) GetQcow2BackingFilePath(vol Volume) (string, error) {
+	pathName := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
+	return filepath.Join("/dev", pathName), nil
+}
