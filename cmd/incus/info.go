@@ -382,6 +382,18 @@ func (c *cmdInfo) renderPCI(pci api.ResourcesPCIDevice, prefix string) {
 	fmt.Printf(prefix+i18n.G("Driver: %v")+"\n", pci.Driver)
 }
 
+func (c *cmdInfo) renderSerial(serial api.ResourcesSerialDevice, prefix string) {
+	fmt.Printf(prefix+i18n.G("Id: %v")+"\n", serial.ID)
+	fmt.Printf(prefix+i18n.G("Device: %v")+"\n", serial.Device)
+	fmt.Printf(prefix+i18n.G("DeviceID: %v")+"\n", serial.DeviceID)
+	fmt.Printf(prefix+i18n.G("DevicePath: %v")+"\n", serial.DevicePath)
+	fmt.Printf(prefix+i18n.G("Vendor: %v")+"\n", serial.Vendor)
+	fmt.Printf(prefix+i18n.G("Vendor ID: %v")+"\n", serial.VendorID)
+	fmt.Printf(prefix+i18n.G("Product: %v")+"\n", serial.Product)
+	fmt.Printf(prefix+i18n.G("Product ID: %v")+"\n", serial.ProductID)
+	fmt.Printf(prefix+i18n.G("Driver: %v")+"\n", serial.Driver)
+}
+
 func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 	// Targeting
 	if c.flagTarget != "" {
@@ -600,6 +612,18 @@ func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 			for id, pci := range resources.PCI.Devices {
 				fmt.Printf("  "+i18n.G("Device %d:")+"\n", id)
 				c.renderPCI(pci, "    ")
+			}
+		}
+
+		// Serial
+		if len(resources.Serial.Devices) == 1 {
+			fmt.Print("\n" + i18n.G("Serial device:") + "\n")
+			c.renderSerial(resources.Serial.Devices[0], "  ")
+		} else if len(resources.Serial.Devices) > 1 {
+			fmt.Print("\n" + i18n.G("Serial devices:") + "\n")
+			for id, serial := range resources.Serial.Devices {
+				fmt.Printf("  "+i18n.G("Device %d:")+"\n", id)
+				c.renderSerial(serial, "    ")
 			}
 		}
 
