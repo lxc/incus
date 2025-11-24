@@ -92,11 +92,12 @@ func (c *cmdAdd) parseImage(metaFile *os.File, dataFile *os.File) (*dataItem, er
 
 	item.Extension = extension
 
-	if item.Extension == ".squashfs" {
+	switch item.Extension {
+	case ".squashfs":
 		item.FileType = "squashfs"
-	} else if item.Extension == ".qcow2" {
+	case ".qcow2":
 		item.FileType = "disk-kvm.img"
-	} else {
+	default:
 		return nil, fmt.Errorf("Unsupported data type %q", item.Extension)
 	}
 
@@ -406,9 +407,10 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 
 		// Add the combined hash.
 		metaItem := version.Items["incus.tar.xz"]
-		if data.FileType == "squashfs" {
+		switch data.FileType {
+		case "squashfs":
 			metaItem.CombinedSha256SquashFs = data.combinedSha256
-		} else if data.FileType == "disk-kvm.img" {
+		case "disk-kvm.img":
 			metaItem.CombinedSha256DiskKvmImg = data.combinedSha256
 		}
 
