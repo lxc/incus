@@ -588,6 +588,7 @@ func convertStorageConfig(conf []string, devices map[string]map[string]string) e
 			if !strings.HasPrefix(parts[0], "/") {
 				continue
 			}
+
 			if !util.PathExists(parts[0]) {
 				return fmt.Errorf("Invalid path: %s", parts[0])
 			}
