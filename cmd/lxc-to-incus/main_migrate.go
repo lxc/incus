@@ -63,8 +63,7 @@ func (c *cmdMigrate) Command() *cobra.Command {
 
 func (c *cmdMigrate) RunE(cmd *cobra.Command, args []string) error {
 	if (len(c.flagContainers) == 0 && !c.flagAll) || (len(c.flagContainers) > 0 && c.flagAll) {
-		fmt.Fprintln(os.Stderr, "You must either pass container names or --all")
-		os.Exit(1)
+		return errors.New("You must either pass container names or --all")
 	}
 
 	// Connect to the daemon
