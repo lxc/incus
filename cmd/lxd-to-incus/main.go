@@ -490,7 +490,7 @@ Instances will come back online once the migration is complete.`)
 
 			if !ok {
 				_, _ = logFile.WriteString("User aborted migration\n")
-				os.Exit(1)
+				return errors.New("User aborted migration")
 			}
 		} else {
 			fmt.Println(`
@@ -516,7 +516,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 			}
 
 			if !ok {
-				os.Exit(1)
+				return errors.New("User aborted migration")
 			}
 		}
 	}
@@ -935,7 +935,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 		if !ok {
 			_, _ = logFile.WriteString("User decided not ro remove the package\n")
-			os.Exit(0)
+			return nil
 		}
 	}
 
