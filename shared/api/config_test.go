@@ -40,7 +40,7 @@ func TestConfigMap_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
-			name:  "empty",
+			name:  "empty with defaults",
 			input: map[string]any{},
 			target: api.ConfigMap{
 				"default_string": "string",
