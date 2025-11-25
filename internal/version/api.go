@@ -508,6 +508,7 @@ var APIExtensions = []string{
 	"network_hwaddr_pattern",
 	"storage_volume_full",
 	"storage_bucket_full",
+	"device_pci_firmware",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

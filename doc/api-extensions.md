@@ -2941,3 +2941,8 @@ As well as a matching `StorageVolumeFull` struct.
 This adds `?recursion=1` support to `/1.0/storage-pools/POOL/buckets/VOLUME` and `?recursion=2` support to `/1.0/storage-pools/POOL/buckets`.
 
 As well as a matching `StorageBucketFull` struct.
+
+## `device_pci_firmware`
+
+This extension introduces a new boolean `firmware` option for PCI devices.
+When set to `false`, Incus tells QEMU to disable the ROM-BAR (`rombar=0`) for the device.
