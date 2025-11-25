@@ -106,7 +106,7 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 		listener = unixListener
 
 		// Automatically shutdown after inactivity.
-		go func() {
+		go func(unixListener *net.UnixListener) {
 			for {
 				time.Sleep(30 * time.Second)
 
@@ -128,12 +128,18 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 					mu.RUnlock()
 
 					// Daemon has been inactive for 10s, exit.
-					os.Exit(0)
+					logger.Info("Daemon has been inactive, shutting down")
+					err := unixListener.Close()
+					if err != nil {
+						logger.Errorf("Failed to close Unix listener: %v", err)
+					}
+
+					return
 				}
 
 				mu.RUnlock()
 			}
-		}()
+		}(listener)
 	} else {
 		// Create our own socket.
 		unixPath := internalUtil.VarPath("unix.socket.user")
@@ -186,6 +192,10 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 		// Accept new connection.
 		conn, err := listener.AcceptUnix()
 		if err != nil {
+			if errors.Is(err, net.ErrClosed) {
+				return nil
+			}
+
 			logger.Errorf("Failed to accept new connection: %v", err)
 			continue
 		}
