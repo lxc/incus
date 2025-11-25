@@ -5162,11 +5162,15 @@ func (d *qemu) writeNICDevConfig(mtuStr string, devName string, nicName string, 
 // addPCIDevConfig adds the qemu config required for adding a raw PCI device.
 func (d *qemu) addPCIDevConfig(conf *[]cfg.Section, bus *qemuBus, pciConfig []deviceConfig.RunConfigItem) error {
 	var devName, pciSlotName string
+
+	firmware := true
 	for _, pciItem := range pciConfig {
 		if pciItem.Key == "devName" {
 			devName = pciItem.Value
 		} else if pciItem.Key == "pciSlotName" {
 			pciSlotName = pciItem.Value
+		} else if pciItem.Key == "firmware" {
+			firmware = util.IsTrue(pciItem.Value)
 		}
 	}
 
@@ -5180,6 +5184,7 @@ func (d *qemu) addPCIDevConfig(conf *[]cfg.Section, bus *qemuBus, pciConfig []de
 		},
 		devName:     devName,
 		pciSlotName: pciSlotName,
+		firmware:    firmware,
 	}
 	*conf = append(*conf, qemuPCIPhysical(&pciPhysicalOpts)...)
 
