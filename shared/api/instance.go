@@ -120,7 +120,7 @@ type InstancePost struct {
 	// Example: {"root": {"type": "disk", "pool": "default", "path": "/"}}
 	//
 	// API extension: instance_move_config
-	Devices map[string]map[string]string
+	Devices DevicesMap
 
 	// List of profiles applied to the instance.
 	// Example: ["default"]
@@ -164,7 +164,7 @@ type InstancePut struct {
 
 	// Instance devices (see doc/instances.md)
 	// Example: {"root": {"type": "disk", "pool": "default", "path": "/"}}
-	Devices map[string]map[string]string `json:"devices" yaml:"devices"`
+	Devices DevicesMap `json:"devices" yaml:"devices"`
 
 	// Whether the instance is ephemeral (deleted on shutdown)
 	// Example: false
@@ -215,7 +215,7 @@ type Instance struct {
 
 	// Expanded devices (all profiles and local devices merged)
 	// Example: {"root": {"type": "disk", "pool": "default", "path": "/"}}
-	ExpandedDevices map[string]map[string]string `json:"expanded_devices,omitempty" yaml:"expanded_devices,omitempty"`
+	ExpandedDevices DevicesMap `json:"expanded_devices,omitempty" yaml:"expanded_devices,omitempty"`
 
 	// Instance name
 	// Example: foo

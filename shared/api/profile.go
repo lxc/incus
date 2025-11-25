@@ -34,7 +34,7 @@ type ProfilePut struct {
 
 	// List of devices
 	// Example: {"root": {"type": "disk", "pool": "default", "path": "/"}, "eth0": {"type": "nic", "network": "mybr0", "name": "eth0"}}
-	Devices map[string]map[string]string `json:"devices" yaml:"devices"`
+	Devices DevicesMap `json:"devices" yaml:"devices"`
 }
 
 // Profile represents a profile
