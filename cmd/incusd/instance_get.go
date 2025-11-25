@@ -93,7 +93,7 @@ import (
 //	          description: Status code
 //	          example: 200
 //	        metadata:
-//	          $ref: "#/definitions/Instance"
+//	          $ref: "#/definitions/InstanceFull"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
 //	  "500":
