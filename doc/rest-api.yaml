@@ -689,6 +689,17 @@ definitions:
             gracefully handle numbers and bools.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
+    DevicesMap:
+        additionalProperties:
+            additionalProperties:
+                type: string
+            type: object
+        description: |-
+            DevicesMap type is used to hold incus devices configurations. In contrast to
+            plain map[string]map[string]string it provides unmarshal methods for JSON and
+            YAML, which gracefully handle numbers and bools.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
     Event:
         description: Event represents an event entry (over websocket)
         properties:
@@ -1404,10 +1415,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: List of devices
                 example:
                     eth0:
@@ -1500,10 +1507,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Instance devices (see doc/instances.md)
                 example:
                     root:
@@ -1524,10 +1527,6 @@ definitions:
                 type: object
                 x-go-name: ExpandedConfig
             expanded_devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Expanded devices (all profiles and local devices merged)
                 example:
                     root:
@@ -1787,10 +1786,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Instance devices (see doc/instances.md)
                 example:
                     root:
@@ -1811,10 +1806,6 @@ definitions:
                 type: object
                 x-go-name: ExpandedConfig
             expanded_devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Expanded devices (all profiles and local devices merged)
                 example:
                     root:
@@ -1893,10 +1884,6 @@ definitions:
                     security.nesting: "true"
                 type: object
             Devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Instance devices.
                 example:
                     root:
@@ -1994,10 +1981,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Instance devices (see doc/instances.md)
                 example:
                     root:
@@ -2064,10 +2047,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Instance devices (see doc/instances.md)
                 example:
                     root:
@@ -2088,10 +2067,6 @@ definitions:
                 type: object
                 x-go-name: ExpandedConfig
             expanded_devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Expanded devices (all profiles and local devices merged)
                 example:
                     root:
@@ -2621,10 +2596,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Instance devices (see doc/instances.md)
                 example:
                     root:
@@ -4243,10 +4214,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: List of devices
                 example:
                     eth0:
@@ -4308,10 +4275,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: List of devices
                 example:
                     eth0:
@@ -4342,10 +4305,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: List of devices
                 example:
                     eth0:
