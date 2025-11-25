@@ -151,6 +151,11 @@ func (d *zone) Etag() []any {
 
 // validateName checks name is valid.
 func (d *zone) validateName(name string) error {
+	// Allow root records.
+	if name == "@" {
+		return nil
+	}
+
 	return validate.IsAPIName(name, false)
 }
 

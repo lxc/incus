@@ -11,7 +11,7 @@ var zoneTemplate = template.Must(template.New("zoneTemplate").Parse(`
 {{$.zone}}. 300 IN NS {{$element}}.
 {{- end}}
 {{- range .records}}
-{{.name}}.{{$.zone}}. {{.ttl}} IN {{.type}} {{.value}}
+{{ if ne .name "@" }}{{.name}}.{{ end }}{{$.zone}}. {{.ttl}} IN {{.type}} {{.value}}
 {{- end}}
 {{.zone}}. 3600 IN SOA {{.zone}}. {{.primary}}. {{.serial}} 120 60 86400 30
 `))
