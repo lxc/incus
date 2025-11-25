@@ -349,7 +349,8 @@ func GetStorage() (*api.ResourcesStorage, error) {
 
 					linkTarget, err := filepath.EvalSymlinks(linkPath)
 					if err != nil {
-						return nil, fmt.Errorf("Failed to find %q: %w", linkPath, err)
+						// Skip broken udev symlinks.
+						continue
 					}
 
 					if linkTarget == filepath.Join("/dev", entryName) {
@@ -371,7 +372,8 @@ func GetStorage() (*api.ResourcesStorage, error) {
 
 					linkTarget, err := filepath.EvalSymlinks(linkPath)
 					if err != nil {
-						return nil, fmt.Errorf("Failed to find %q: %w", linkPath, err)
+						// Skip broken udev symlinks.
+						continue
 					}
 
 					if linkTarget == filepath.Join("/dev", entryName) {
