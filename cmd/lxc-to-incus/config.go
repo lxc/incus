@@ -198,8 +198,6 @@ func parseConfig(path string) ([]string, error) {
 				return nil, err
 			}
 
-			defer func() { _ = file.Close() }()
-
 			sc := bufio.NewScanner(file)
 			for sc.Scan() {
 				text := strings.TrimSpace(sc.Text())
@@ -208,6 +206,8 @@ func parseConfig(path string) ([]string, error) {
 					config = append(config, fmt.Sprintf("lxc.mount.entry = %s", text))
 				}
 			}
+
+			_ = file.Close()
 
 			continue
 

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"runtime"
 	"slices"
 	"strconv"
@@ -63,8 +62,7 @@ func (c *cmdMigrate) Command() *cobra.Command {
 
 func (c *cmdMigrate) RunE(cmd *cobra.Command, args []string) error {
 	if (len(c.flagContainers) == 0 && !c.flagAll) || (len(c.flagContainers) > 0 && c.flagAll) {
-		fmt.Fprintln(os.Stderr, "You must either pass container names or --all")
-		os.Exit(1)
+		return errors.New("You must either pass container names or --all")
 	}
 
 	// Connect to the daemon
@@ -587,12 +585,12 @@ func convertStorageConfig(conf []string, devices map[string]map[string]string) e
 		if slices.Contains(strings.Split(parts[3], ","), "optional") {
 			device["optional"] = "true"
 		} else {
-			if strings.HasPrefix(parts[0], "/") {
-				if !util.PathExists(parts[0]) {
-					return fmt.Errorf("Invalid path: %s", parts[0])
-				}
-			} else {
+			if !strings.HasPrefix(parts[0], "/") {
 				continue
+			}
+
+			if !util.PathExists(parts[0]) {
+				return fmt.Errorf("Invalid path: %s", parts[0])
 			}
 		}
 

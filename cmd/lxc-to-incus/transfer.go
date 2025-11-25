@@ -120,12 +120,12 @@ func rsyncSendSetup(path string, rsyncArgs string) (*exec.Cmd, net.Conn, io.Read
 	return cmd, conn, stderr, nil
 }
 
-func protoSendError(ws *websocket.Conn, err error) {
-	migration.ProtoSendControl(ws, err)
+func protoSendError(webSocket *websocket.Conn, err error) {
+	migration.ProtoSendControl(webSocket, err)
 
 	if err != nil {
 		closeMsg := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")
-		_ = ws.WriteMessage(websocket.CloseMessage, closeMsg)
-		_ = ws.Close()
+		_ = webSocket.WriteMessage(websocket.CloseMessage, closeMsg)
+		_ = webSocket.Close()
 	}
 }
