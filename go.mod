@@ -1,6 +1,6 @@
 module github.com/lxc/incus/v6
 
-go 1.24.7
+go 1.24.10
 
 require (
 	github.com/LINBIT/golinstor v0.58.0
