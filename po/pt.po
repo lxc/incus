@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-11-15 10:36-0500\n"
+"POT-Creation-Date: 2025-11-25 12:47-0500\n"
 "PO-Revision-Date: 2025-11-16 20:51+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
-"\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
+">\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -753,15 +753,15 @@ msgstr "<alias> <alvo>"
 msgid "<old alias> <new alias>"
 msgstr "<velho alias> <novo alias>"
 
-#: cmd/incus/remote.go:1148 cmd/incus/remote.go:1214
+#: cmd/incus/remote.go:1210 cmd/incus/remote.go:1276
 msgid "<remote>"
 msgstr "<remoto>"
 
-#: cmd/incus/remote.go:1262
+#: cmd/incus/remote.go:1324
 msgid "<remote> <URL>"
 msgstr "<URL> <remoto>"
 
-#: cmd/incus/remote.go:1067
+#: cmd/incus/remote.go:1129
 msgid "<remote> <new-name>"
 msgstr "<novo-nome> <remoto>"
 
@@ -792,7 +792,7 @@ msgstr "<alvo>"
 msgid "=> Query %d:"
 msgstr "=> Consultar %d:"
 
-#: cmd/incus/remote.go:697
+#: cmd/incus/remote.go:698
 msgid "A client certificate is already present"
 msgstr "Um certificado de cliente já está presente"
 
@@ -828,11 +828,11 @@ msgstr "APLICAÇÃO"
 msgid "ARCHITECTURE"
 msgstr "ARQUITECTURA"
 
-#: cmd/incus/remote.go:935
+#: cmd/incus/remote.go:997
 msgid "AUTH TYPE"
 msgstr "TIPO DE AUTORIZAÇÃO"
 
-#: cmd/incus/remote.go:134
+#: cmd/incus/remote.go:135
 msgid "Accept certificate"
 msgstr "Aceitar certificado"
 
@@ -898,11 +898,11 @@ msgstr "Adiciona membro a grupo"
 msgid "Add new aliases"
 msgstr "Adiciona novos aliases"
 
-#: cmd/incus/remote.go:123
+#: cmd/incus/remote.go:124
 msgid "Add new remote servers"
 msgstr "Adiciona novos servidores remotos"
 
-#: cmd/incus/remote.go:124
+#: cmd/incus/remote.go:125
 msgid ""
 "Add new remote servers\n"
 "\n"
@@ -1051,7 +1051,7 @@ msgstr ""
 msgid "All projects"
 msgstr "Todos os projetos"
 
-#: cmd/incus/remote.go:216
+#: cmd/incus/remote.go:217
 msgid "All server addresses are unavailable"
 msgstr "Todos os endereços do servidor não estão disponíveis"
 
@@ -1135,7 +1135,7 @@ msgstr ""
 "instância\n"
 "assim como recuperar entradas de relatório do passado dela."
 
-#: cmd/incus/remote.go:603
+#: cmd/incus/remote.go:604
 #, c-format
 msgid "Authentication type '%s' not supported by server"
 msgstr "Tipo de autenticação '%s' não suportado pelo servidor"
@@ -1158,7 +1158,7 @@ msgstr "Atualização automática: %s"
 msgid "Automatic (non-interactive) mode"
 msgstr "Modo automático (não interativo)"
 
-#: cmd/incus/remote.go:171
+#: cmd/incus/remote.go:172
 msgid "Available projects:"
 msgstr "Projetos disponíveis:"
 
@@ -1236,7 +1236,7 @@ msgstr "Mau par de chave=valor: %s"
 msgid "Bad property: %s"
 msgstr "Má propriedade: %s"
 
-#: cmd/incus/remote.go:141
+#: cmd/incus/remote.go:142
 msgid "Binary helper for retrieving credentials"
 msgstr "Ajudante binário para recuperar credenciais"
 
@@ -1364,7 +1364,7 @@ msgstr "Incapaz de ler do arquivo de ambiente: %w"
 msgid "Can't read from stdin: %w"
 msgstr "Incapaz de ler de stdin: %w"
 
-#: cmd/incus/remote.go:1192
+#: cmd/incus/remote.go:1254
 msgid "Can't remove the default remote"
 msgstr "Incapaz de remover o remoto predefinido"
 
@@ -1466,7 +1466,7 @@ msgstr "Testemunho de adição de certificado para %s apagado"
 msgid "Certificate description"
 msgstr "Descrição do certificado"
 
-#: cmd/incus/remote.go:259
+#: cmd/incus/remote.go:260
 #, c-format
 msgid ""
 "Certificate fingerprint mismatch between certificate token and server %q"
@@ -1482,7 +1482,7 @@ msgstr ""
 "Não correspondência da impressão digital do certificado entre testemunho de "
 "junção e membro de agrupamento %q"
 
-#: cmd/incus/remote.go:500
+#: cmd/incus/remote.go:501
 #, c-format
 msgid "Certificate fingerprint: %s"
 msgstr "Impressão digital do certificado: %s"
@@ -1506,7 +1506,7 @@ msgstr "Escolher %s:"
 msgid "Client %s certificate add token:"
 msgstr "Certificado e testemunho do cliente %s:"
 
-#: cmd/incus/remote.go:649
+#: cmd/incus/remote.go:650
 msgid "Client certificate now trusted by server:"
 msgstr "Certificado de cliente agora confiado pelo servidor:"
 
@@ -1615,7 +1615,7 @@ msgstr "Ativado o agrupamento"
 #: cmd/incus/network_forward.go:119 cmd/incus/network_integration.go:441
 #: cmd/incus/network_load_balancer.go:127 cmd/incus/network_peer.go:115
 #: cmd/incus/network_zone.go:120 cmd/incus/operation.go:144
-#: cmd/incus/profile.go:760 cmd/incus/project.go:551 cmd/incus/remote.go:919
+#: cmd/incus/profile.go:760 cmd/incus/project.go:551 cmd/incus/remote.go:981
 #: cmd/incus/snapshot.go:347 cmd/incus/storage.go:710
 #: cmd/incus/storage_bucket.go:523 cmd/incus/storage_bucket.go:968
 #: cmd/incus/storage_volume.go:1601 cmd/incus/storage_volume.go:3668
@@ -1834,12 +1834,12 @@ msgstr "Núcleo %d"
 msgid "Cores:"
 msgstr "Núcleos:"
 
-#: cmd/incus/remote.go:536
+#: cmd/incus/remote.go:537
 #, c-format
 msgid "Could not close server cert file %q: %w"
 msgstr "Não pode fechar o ficheiro de certificação do servidor %q: %w"
 
-#: cmd/incus/remote.go:265 cmd/incus/remote.go:520
+#: cmd/incus/remote.go:266 cmd/incus/remote.go:521
 msgid "Could not create server cert dir"
 msgstr "Incapaz de criar o directório de certificado do servidor"
 
@@ -1869,7 +1869,7 @@ msgid "Could not write new remote certificate for remote '%s' with error: %v"
 msgstr ""
 "Incapaz de escrever novo certificado remoto para remoto '%s' com erro: %v"
 
-#: cmd/incus/remote.go:531
+#: cmd/incus/remote.go:532
 #, c-format
 msgid "Could not write server cert file %q: %w"
 msgstr "Incapaz de escrever o ficheiro de certificação do servidor %q: %w"
@@ -2346,10 +2346,10 @@ msgstr "Apaga aviso"
 #: cmd/incus/project.go:532 cmd/incus/project.go:761 cmd/incus/project.go:828
 #: cmd/incus/project.go:916 cmd/incus/project.go:962 cmd/incus/project.go:1025
 #: cmd/incus/project.go:1095 cmd/incus/project.go:1211 cmd/incus/publish.go:35
-#: cmd/incus/query.go:35 cmd/incus/rebuild.go:29 cmd/incus/remote.go:49
-#: cmd/incus/remote.go:124 cmd/incus/remote.go:677 cmd/incus/remote.go:724
-#: cmd/incus/remote.go:789 cmd/incus/remote.go:893 cmd/incus/remote.go:1070
-#: cmd/incus/remote.go:1151 cmd/incus/remote.go:1216 cmd/incus/remote.go:1264
+#: cmd/incus/query.go:35 cmd/incus/rebuild.go:29 cmd/incus/remote.go:50
+#: cmd/incus/remote.go:125 cmd/incus/remote.go:678 cmd/incus/remote.go:725
+#: cmd/incus/remote.go:851 cmd/incus/remote.go:955 cmd/incus/remote.go:1132
+#: cmd/incus/remote.go:1213 cmd/incus/remote.go:1278 cmd/incus/remote.go:1326
 #: cmd/incus/remote_unix.go:38 cmd/incus/rename.go:23 cmd/incus/snapshot.go:33
 #: cmd/incus/snapshot.go:83 cmd/incus/snapshot.go:231 cmd/incus/snapshot.go:325
 #: cmd/incus/snapshot.go:486 cmd/incus/snapshot.go:549
@@ -2785,7 +2785,7 @@ msgstr "Edita configurações de confiança como YAML"
 #: cmd/incus/network_forward.go:155 cmd/incus/network_integration.go:467
 #: cmd/incus/network_load_balancer.go:162 cmd/incus/network_peer.go:148
 #: cmd/incus/network_zone.go:156 cmd/incus/operation.go:176
-#: cmd/incus/profile.go:804 cmd/incus/project.go:593 cmd/incus/remote.go:946
+#: cmd/incus/profile.go:804 cmd/incus/project.go:593 cmd/incus/remote.go:1008
 #: cmd/incus/snapshot.go:381 cmd/incus/storage.go:749
 #: cmd/incus/storage_bucket.go:557 cmd/incus/storage_bucket.go:993
 #: cmd/incus/storage_volume.go:1760 cmd/incus/storage_volume.go:3783
@@ -3283,7 +3283,7 @@ msgstr "Falhou ao iniciar sshfs: %w"
 msgid "Failed to accept incoming connection: %w"
 msgstr "Falhou ao aceitar ligação a chegar: %w"
 
-#: cmd/incus/remote.go:226
+#: cmd/incus/remote.go:227
 msgid "Failed to add remote"
 msgstr "Falhou ao adicionar remoto"
 
@@ -3302,7 +3302,7 @@ msgstr "Falhou ao verificar se o daemon está pronto (tentativa %d): %v"
 msgid "Failed to close export file: %w"
 msgstr "Falhou ao fechar ficheiro de exportação: %w"
 
-#: cmd/incus/remote.go:282
+#: cmd/incus/remote.go:283
 #, c-format
 msgid "Failed to close server cert file %q: %w"
 msgstr "Falhou ao fechar ficheiro de certificado de servidor %q: %w"
@@ -3332,7 +3332,7 @@ msgstr "Falhou ao ligar ao daemon local: %w"
 msgid "Failed to connect to target cluster node %q: %w"
 msgstr "Falhou ao ligar a nó de agrupamento alvo %q: %w"
 
-#: cmd/incus/remote.go:272
+#: cmd/incus/remote.go:273
 #, c-format
 msgid "Failed to create %q: %w"
 msgstr "Falhou ao criar %q: %w"
@@ -3347,7 +3347,7 @@ msgstr "Falhou ao criar alias %s: %w"
 msgid "Failed to create backup: %v"
 msgstr "Falhou ao criar salvaguarda: %v"
 
-#: cmd/incus/remote.go:297
+#: cmd/incus/remote.go:298
 #, c-format
 msgid "Failed to create certificate: %w"
 msgstr "Falhou ao criar certificado: %w"
@@ -3378,7 +3378,7 @@ msgid "Failed to fetch storage volume backup file: %w"
 msgstr ""
 "Falhou ao procurar ficheiro de salvaguarda de volume de armazenamento: %w"
 
-#: cmd/incus/remote.go:304
+#: cmd/incus/remote.go:305
 #, c-format
 msgid "Failed to find project: %w"
 msgstr "Falhou ao encontrar projeto: %w"
@@ -3502,7 +3502,7 @@ msgstr "Falhou ao atualizar estado de membro de agrupamento: %w"
 msgid "Failed to walk path for %s: %s"
 msgstr "Falhou ao andar caminho para %s: %s"
 
-#: cmd/incus/remote.go:277
+#: cmd/incus/remote.go:278
 #, c-format
 msgid "Failed to write server cert file %q: %w"
 msgstr "Falhou ao escrever ficheiro de cerificado de servidor %q: %w"
@@ -3648,7 +3648,7 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:126 cmd/incus/network_peer.go:114
 #: cmd/incus/network_zone.go:118 cmd/incus/network_zone.go:891
 #: cmd/incus/operation.go:142 cmd/incus/profile.go:761 cmd/incus/project.go:553
-#: cmd/incus/project.go:1098 cmd/incus/remote.go:918 cmd/incus/snapshot.go:346
+#: cmd/incus/project.go:1098 cmd/incus/remote.go:980 cmd/incus/snapshot.go:346
 #: cmd/incus/storage.go:712 cmd/incus/storage_bucket.go:521
 #: cmd/incus/storage_bucket.go:966 cmd/incus/storage_volume.go:1628
 #: cmd/incus/storage_volume.go:3681 cmd/incus/warning.go:98
@@ -3667,6 +3667,11 @@ msgstr "Formato (json|pretty|yaml)"
 #: cmd/incus/manpage.go:28
 msgid "Format (man|md|rest|yaml)"
 msgstr "Formato (man|md|rest|yaml)"
+
+#: cmd/incus/remote.go:748
+#, fuzzy
+msgid "Format (pem|pfx)"
+msgstr "Formato (table|compact)"
 
 #: cmd/incus/top.go:65
 msgid "Format (table|compact)"
@@ -3704,7 +3709,7 @@ msgstr "Frequência: %vMhz"
 msgid "Frequency: %vMhz (min: %vMhz, max: %vMhz)"
 msgstr "Frequência: %vMhz (min: %vMhz, max: %vMhz)"
 
-#: cmd/incus/remote.go:938
+#: cmd/incus/remote.go:1000
 msgid "GLOBAL"
 msgstr "GLOBAL"
 
@@ -3716,11 +3721,11 @@ msgstr "GPU:"
 msgid "GPUs:"
 msgstr "GPUs:"
 
-#: cmd/incus/remote.go:788
+#: cmd/incus/remote.go:850
 msgid "Generate a client token derived from the client certificate"
 msgstr "Gera um testemunho de cliente derivado do certificado de cliente"
 
-#: cmd/incus/remote.go:789
+#: cmd/incus/remote.go:851
 msgid ""
 "Generate a client trust token derived from the existing client certificate "
 "and private key.\n"
@@ -3738,12 +3743,12 @@ msgstr ""
 msgid "Generate manpages for all commands"
 msgstr "Gera manuais para todos os comandos"
 
-#: cmd/incus/remote.go:676
+#: cmd/incus/remote.go:677
 msgid "Generate the client certificate"
 msgstr "Gera o certificado de cliente"
 
-#: cmd/incus/remote.go:194 cmd/incus/remote.go:441 cmd/incus/remote.go:702
-#: cmd/incus/remote.go:760 cmd/incus/remote.go:816
+#: cmd/incus/remote.go:195 cmd/incus/remote.go:442 cmd/incus/remote.go:703
+#: cmd/incus/remote.go:774 cmd/incus/remote.go:878
 msgid "Generating a client certificate. This may take a minute..."
 msgstr "A gerar um certificado de cliente. Isto pode demorar um minuto..."
 
@@ -4248,7 +4253,7 @@ msgstr "Endereço IP ou nome DNS inválido"
 msgid "Invalid URL %q: %w"
 msgstr "URL inválido %q: %w"
 
-#: cmd/incus/remote.go:393
+#: cmd/incus/remote.go:394
 #, c-format
 msgid "Invalid URL scheme \"%s\" in \"%s\""
 msgstr "Esquema de URL inválido \"%s\" em \"%s\""
@@ -4271,6 +4276,11 @@ msgstr "Valor booleano inválido: %s"
 
 #: cmd/incus/config_trust.go:568
 msgid "Invalid certificate"
+msgstr "Certificado inválido"
+
+#: cmd/incus/remote.go:764
+#, fuzzy, c-format
+msgid "Invalid certificate format %q"
 msgstr "Certificado inválido"
 
 #: cmd/incus/admin_init.go:163
@@ -4364,7 +4374,7 @@ msgstr "Caminho inválido %s"
 msgid "Invalid peer type"
 msgstr "Tipo de peer inválido"
 
-#: cmd/incus/remote.go:382
+#: cmd/incus/remote.go:383
 #, c-format
 msgid "Invalid protocol: %s"
 msgstr "Protocolo inválido: %s"
@@ -5851,11 +5861,11 @@ msgstr ""
 "    u - Numero de referências (usado por)\n"
 "    U - Utilização de disco atual"
 
-#: cmd/incus/remote.go:892
+#: cmd/incus/remote.go:954
 msgid "List the available remotes"
 msgstr "Lista os remotos disponíveis"
 
-#: cmd/incus/remote.go:893
+#: cmd/incus/remote.go:955
 msgid ""
 "List the available remotes\n"
 "\n"
@@ -6124,7 +6134,7 @@ msgstr "MTU"
 msgid "MTU: %d"
 msgstr "MTU: %d"
 
-#: cmd/incus/remote.go:140
+#: cmd/incus/remote.go:141
 msgid "Maintain remote connection for faster commands"
 msgstr "Mantem ligação remota para comandos mais rápidos"
 
@@ -6338,7 +6348,7 @@ msgstr ""
 "A menos que especificado por um prefixo, todas as operações de volume afetam "
 "volumes \"custom\" (criados pelo utilizador)."
 
-#: cmd/incus/remote.go:48 cmd/incus/remote.go:49
+#: cmd/incus/remote.go:49 cmd/incus/remote.go:50
 msgid "Manage the list of remote servers"
 msgstr "Gerir a lista de servidores remotos"
 
@@ -6350,7 +6360,7 @@ msgstr "Gerir clientes de confiança"
 msgid "Manage warnings"
 msgstr "Gerir avisos"
 
-#: cmd/incus/remote.go:677
+#: cmd/incus/remote.go:678
 msgid "Manually trigger the generation of a client certificate"
 msgstr "Acionar manualmente a geração de um certificado de cliente"
 
@@ -6732,7 +6742,7 @@ msgstr "Deve fornecer nome de instância para: "
 #: cmd/incus/network_address_set.go:165 cmd/incus/network_integration.go:456
 #: cmd/incus/network_peer.go:136 cmd/incus/network_zone.go:142
 #: cmd/incus/network_zone.go:953 cmd/incus/profile.go:786
-#: cmd/incus/project.go:576 cmd/incus/project.go:727 cmd/incus/remote.go:932
+#: cmd/incus/project.go:576 cmd/incus/project.go:727 cmd/incus/remote.go:994
 #: cmd/incus/snapshot.go:370 cmd/incus/storage.go:735
 #: cmd/incus/storage_bucket.go:539 cmd/incus/storage_bucket.go:983
 #: cmd/incus/storage_volume.go:1731 cmd/incus/storage_volume.go:3773
@@ -6767,7 +6777,7 @@ msgstr "NICs:"
 #: cmd/incus/network.go:1213 cmd/incus/operation.go:209
 #: cmd/incus/project.go:614 cmd/incus/project.go:623 cmd/incus/project.go:632
 #: cmd/incus/project.go:641 cmd/incus/project.go:650 cmd/incus/project.go:659
-#: cmd/incus/remote.go:996 cmd/incus/remote.go:1005 cmd/incus/remote.go:1014
+#: cmd/incus/remote.go:1058 cmd/incus/remote.go:1067 cmd/incus/remote.go:1076
 msgid "NO"
 msgstr "NÃO"
 
@@ -6829,7 +6839,7 @@ msgstr "Nome da interface de ponte ou de máquina existente:"
 msgid "Name of the new storage pool"
 msgstr "Nome da nova pool de armazenamento"
 
-#: cmd/incus/remote.go:176
+#: cmd/incus/remote.go:177
 msgid "Name of the project to use for this remote:"
 msgstr "Nome do projeto a usar para este remoto:"
 
@@ -7138,7 +7148,7 @@ msgstr "Apenas volumes \"personalizados\" podem ser exportados"
 msgid "Only \"custom\" volumes can be snapshotted"
 msgstr "Apenas se pode tirar instantâneos a volumes \"personalizados\""
 
-#: cmd/incus/remote.go:369
+#: cmd/incus/remote.go:370
 msgid "Only https URLs are supported for oci and simplestreams"
 msgstr "Apenas URLs https são suportados para oci e simplestreams"
 
@@ -7236,11 +7246,11 @@ msgstr "PROJETO"
 msgid "PROJECTS"
 msgstr "PROJETOS"
 
-#: cmd/incus/remote.go:934
+#: cmd/incus/remote.go:996
 msgid "PROTOCOL"
 msgstr "PROTOCOLO"
 
-#: cmd/incus/image.go:1149 cmd/incus/remote.go:936
+#: cmd/incus/image.go:1149 cmd/incus/remote.go:998
 msgid "PUBLIC"
 msgstr "PÚBLICO"
 
@@ -7256,7 +7266,7 @@ msgstr "Pacotes enviados"
 msgid "Partitions:"
 msgstr "Partições:"
 
-#: cmd/incus/main.go:434
+#: cmd/incus/main.go:434 cmd/incus/remote.go:811
 #, c-format
 msgid "Password for %s: "
 msgstr "Palavra passe para %s : "
@@ -7291,7 +7301,7 @@ msgstr "Executa uma cópia incremental"
 msgid "Please create those missing entries and then hit ENTER:"
 msgstr "Por favor crie as entradas em falta e depois clique em ENTER:"
 
-#: cmd/incus/remote.go:217
+#: cmd/incus/remote.go:218
 msgid "Please provide an alternate server address (empty to abort):"
 msgstr ""
 "Por favor forneça um endereço de servidor alternativo (vazio para abortar):"
@@ -7300,7 +7310,7 @@ msgstr ""
 msgid "Please provide join token:"
 msgstr "Por favor forneça testemunho de adesão:"
 
-#: cmd/incus/remote.go:512
+#: cmd/incus/remote.go:513
 msgid "Please type 'y', 'n' or the fingerprint:"
 msgstr "Por favor digite 's', 'n' ou a impressão digital:"
 
@@ -7375,8 +7385,9 @@ msgstr "Renderização bonita (curto para --format=pretty)"
 msgid "Print help"
 msgstr "Escreve ajuda"
 
-#: cmd/incus/remote.go:742
-msgid "Print the client certificate used by this Incus client"
+#: cmd/incus/remote.go:745
+#, fuzzy
+msgid "Print or retrieve the client certificate used by this Incus client"
 msgstr "Escreve o certificado de cliente utilizado por este cliente Incus"
 
 #: cmd/incus/query.go:44
@@ -7495,7 +7506,7 @@ msgstr "Projeto %s renomeado para %s"
 msgid "Project description"
 msgstr "Descrição do projeto"
 
-#: cmd/incus/remote.go:139
+#: cmd/incus/remote.go:140
 msgid "Project to use for the remote"
 msgstr "Projeto a usar para o remoto"
 
@@ -7521,7 +7532,7 @@ msgstr "O caminho do certificado fornecido não existe: %s"
 msgid "Proxy timeout (exits when no connections)"
 msgstr "Tempo limite do Proxy (termina quando não há ligações)"
 
-#: cmd/incus/remote.go:138
+#: cmd/incus/remote.go:139
 msgid "Public image server"
 msgstr "Servidor de imagem público"
 
@@ -7660,37 +7671,37 @@ msgstr "A refrescar instância: %s"
 msgid "Refreshing the image: %s"
 msgstr "A refrescar a imagem: %s"
 
-#: cmd/incus/remote.go:1108
+#: cmd/incus/remote.go:1170
 #, c-format
 msgid "Remote %s already exists"
 msgstr "Remoto %s já existe"
 
-#: cmd/incus/project.go:1060 cmd/incus/remote.go:1099 cmd/incus/remote.go:1180
-#: cmd/incus/remote.go:1245 cmd/incus/remote.go:1293
+#: cmd/incus/project.go:1060 cmd/incus/remote.go:1161 cmd/incus/remote.go:1242
+#: cmd/incus/remote.go:1307 cmd/incus/remote.go:1355
 #, c-format
 msgid "Remote %s doesn't exist"
 msgstr "Remoto %s não existe"
 
-#: cmd/incus/remote.go:338
+#: cmd/incus/remote.go:339
 #, c-format
 msgid "Remote %s exists as <%s>"
 msgstr "Remoto %s existe como <%s>"
 
-#: cmd/incus/remote.go:1188
+#: cmd/incus/remote.go:1250
 #, c-format
 msgid "Remote %s is global and cannot be removed"
 msgstr "Remoto %s é global e não pode ser removido"
 
-#: cmd/incus/remote.go:1103 cmd/incus/remote.go:1184 cmd/incus/remote.go:1297
+#: cmd/incus/remote.go:1165 cmd/incus/remote.go:1246 cmd/incus/remote.go:1359
 #, c-format
 msgid "Remote %s is static and cannot be modified"
 msgstr "Remoto %s é estático e não pode ser modificado"
 
-#: cmd/incus/remote.go:332
+#: cmd/incus/remote.go:333
 msgid "Remote names may not contain colons"
 msgstr "Nomes remotos podem não conter dois pontos"
 
-#: cmd/incus/remote.go:135
+#: cmd/incus/remote.go:136
 msgid "Remote trust token"
 msgstr "Testemunho de confiança de remoto"
 
@@ -7774,7 +7785,7 @@ msgstr "Remove portos de um balanceador de carga"
 msgid "Remove profiles from instances"
 msgstr "Remove perfis de instâncias"
 
-#: cmd/incus/remote.go:1150 cmd/incus/remote.go:1151
+#: cmd/incus/remote.go:1212 cmd/incus/remote.go:1213
 msgid "Remove remotes"
 msgstr "Remove remotos"
 
@@ -7844,7 +7855,7 @@ msgstr "Renomeia perfis"
 msgid "Rename projects"
 msgstr "Renomeia projetos"
 
-#: cmd/incus/remote.go:1069 cmd/incus/remote.go:1070
+#: cmd/incus/remote.go:1131 cmd/incus/remote.go:1132
 msgid "Rename remotes"
 msgstr "Renomeia remotos"
 
@@ -8023,7 +8034,7 @@ msgstr "ESTADO"
 msgid "STATEFUL"
 msgstr "STATEFUL"
 
-#: cmd/incus/remote.go:937
+#: cmd/incus/remote.go:999
 msgid "STATIC"
 msgstr "ESTÁTICO"
 
@@ -8079,15 +8090,15 @@ msgstr "Série: %s"
 msgid "Serial: %v"
 msgstr "Série: %v"
 
-#: cmd/incus/remote.go:137
+#: cmd/incus/remote.go:138
 msgid "Server authentication type (tls or oidc)"
 msgstr "Tipo de autenticação do servidor (tls ou oidc)"
 
-#: cmd/incus/remote.go:510
+#: cmd/incus/remote.go:511
 msgid "Server certificate NACKed by user"
 msgstr "Certificado de servidor NACKed pelo utilizador"
 
-#: cmd/incus/remote.go:645
+#: cmd/incus/remote.go:646
 msgid "Server doesn't trust us after authentication"
 msgstr "O servidor não confia em nós após a autenticação"
 
@@ -8096,7 +8107,7 @@ msgstr "O servidor não confia em nós após a autenticação"
 msgid "Server isn't part of a cluster"
 msgstr "Servidor não faz parte de um agrupamento"
 
-#: cmd/incus/remote.go:136
+#: cmd/incus/remote.go:137
 msgid "Server protocol (incus, oci or simplestreams)"
 msgstr "Protocolo de servidor (incus, oci ou simplestreams)"
 
@@ -8413,7 +8424,7 @@ msgstr ""
 "Valores suportados para tipo são \"custom\", \"container\" e \"virtual-"
 "machine\"."
 
-#: cmd/incus/remote.go:1263 cmd/incus/remote.go:1264
+#: cmd/incus/remote.go:1325 cmd/incus/remote.go:1326
 msgid "Set the URL for the remote"
 msgstr "Define a URL para o remoto"
 
@@ -8700,7 +8711,7 @@ msgstr ""
 msgid "Show the current project"
 msgstr "Mostra o projeto atual"
 
-#: cmd/incus/remote.go:723 cmd/incus/remote.go:724
+#: cmd/incus/remote.go:724 cmd/incus/remote.go:725
 msgid "Show the default remote"
 msgstr "Mostra o remoto predefinido"
 
@@ -8978,7 +8989,7 @@ msgstr "Swap (pico)"
 msgid "Switch the current project"
 msgstr "Altera o projeto atual"
 
-#: cmd/incus/remote.go:1215 cmd/incus/remote.go:1216
+#: cmd/incus/remote.go:1277 cmd/incus/remote.go:1278
 msgid "Switch the default remote"
 msgstr "Altera o remoto predefinido"
 
@@ -9465,7 +9476,7 @@ msgstr "A transferir instância: %s"
 msgid "Transmit policy"
 msgstr "Política de transmissão"
 
-#: cmd/incus/remote.go:617
+#: cmd/incus/remote.go:618
 #, c-format
 msgid "Trust token for %s: "
 msgstr "Testemunho de confiança para %s: "
@@ -9510,7 +9521,7 @@ msgstr "SEM LIMITE"
 msgid "UPLOAD DATE"
 msgstr "DATA DE ENVIO"
 
-#: cmd/incus/cluster.go:181 cmd/incus/remote.go:933
+#: cmd/incus/cluster.go:181 cmd/incus/remote.go:995
 msgid "URL"
 msgstr "URL"
 
@@ -9554,7 +9565,7 @@ msgstr ""
 msgid "Unable to create a temporary file: %v"
 msgstr "Incapaz de criar um ficheiro temporário: %v"
 
-#: cmd/incus/remote.go:254 cmd/incus/remote.go:288
+#: cmd/incus/remote.go:255 cmd/incus/remote.go:289
 msgid "Unavailable remote server"
 msgstr "Servidor remoto não disponível"
 
@@ -9576,7 +9587,7 @@ msgstr "Tipo de canal desconhecido para cliente %q: %s"
 #: cmd/incus/network_forward.go:161 cmd/incus/network_integration.go:473
 #: cmd/incus/network_load_balancer.go:168 cmd/incus/network_peer.go:154
 #: cmd/incus/network_zone.go:162 cmd/incus/operation.go:182
-#: cmd/incus/profile.go:810 cmd/incus/project.go:599 cmd/incus/remote.go:952
+#: cmd/incus/profile.go:810 cmd/incus/project.go:599 cmd/incus/remote.go:1014
 #: cmd/incus/snapshot.go:387 cmd/incus/storage.go:755
 #: cmd/incus/storage_bucket.go:563 cmd/incus/storage_bucket.go:999
 #: cmd/incus/storage_volume.go:1766 cmd/incus/storage_volume.go:3789
@@ -10108,7 +10119,7 @@ msgstr "Deseja usar agrupamento?"
 #: cmd/incus/network.go:1210 cmd/incus/operation.go:212
 #: cmd/incus/project.go:616 cmd/incus/project.go:625 cmd/incus/project.go:634
 #: cmd/incus/project.go:643 cmd/incus/project.go:652 cmd/incus/project.go:661
-#: cmd/incus/remote.go:998 cmd/incus/remote.go:1007 cmd/incus/remote.go:1016
+#: cmd/incus/remote.go:1060 cmd/incus/remote.go:1069 cmd/incus/remote.go:1078
 msgid "YES"
 msgstr "SIM"
 
@@ -10845,7 +10856,7 @@ msgstr "[<remoto>:][<instância>] <chave>"
 msgid "[<remote>:][<instance>] <key>=<value>..."
 msgstr "[<remoto>:][<instância>] <chave>=<valor>..."
 
-#: cmd/incus/remote.go:122
+#: cmd/incus/remote.go:123
 msgid "[<remote>] <IP|FQDN|URL|token>"
 msgstr "[<remoto>] <IP|FQDN|URL|testemunho>"
 
@@ -10865,7 +10876,7 @@ msgstr "[[<remoto>:]<membro>]"
 msgid "application"
 msgstr "aplicação"
 
-#: cmd/incus/project.go:729 cmd/incus/remote.go:967
+#: cmd/incus/project.go:729 cmd/incus/remote.go:1029
 msgid "current"
 msgstr "atual"
 
@@ -11853,7 +11864,7 @@ msgstr ""
 msgid "info"
 msgstr "informação"
 
-#: cmd/incus/remote.go:509
+#: cmd/incus/remote.go:510
 msgid "n"
 msgstr "n"
 
@@ -11866,7 +11877,7 @@ msgstr "nome"
 msgid "no"
 msgstr "não"
 
-#: cmd/incus/remote.go:501
+#: cmd/incus/remote.go:502
 msgid "ok (y/n/[fingerprint])?"
 msgstr "ok (s/n/[impressão digital])?"
 
@@ -11899,7 +11910,7 @@ msgstr "inacessível"
 msgid "used by"
 msgstr "usado por"
 
-#: cmd/incus/remote.go:511
+#: cmd/incus/remote.go:512
 msgid "y"
 msgstr "s"
 
