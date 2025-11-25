@@ -256,22 +256,26 @@ func (c *cmdMigrate) validate(source source, target target) error {
 	}
 
 	for _, pool := range storagePools {
-		if pool.Driver == "zfs" {
+		switch pool.Driver {
+		case "zfs":
 			_, err = exec.LookPath("zfs")
 			if err != nil {
 				validationErrors = append(validationErrors, fmt.Errorf("Required command %q is missing for storage pool %q", "zfs", pool.Name))
 			}
-		} else if pool.Driver == "btrfs" {
+
+		case "btrfs":
 			_, err = exec.LookPath("btrfs")
 			if err != nil {
 				validationErrors = append(validationErrors, fmt.Errorf("Required command %q is missing for storage pool %q", "btrfs", pool.Name))
 			}
-		} else if pool.Driver == "ceph" || pool.Driver == "cephfs" || pool.Driver == "cephobject" {
+
+		case "ceph", "cephfs", "cephobject":
 			_, err = exec.LookPath("ceph")
 			if err != nil {
 				validationErrors = append(validationErrors, fmt.Errorf("Required command %q is missing for storage pool %q", "ceph", pool.Name))
 			}
-		} else if pool.Driver == "lvm" || pool.Driver == "lvmcluster" {
+
+		case "lvm", "lvmcluster":
 			_, err = exec.LookPath("lvm")
 			if err != nil {
 				validationErrors = append(validationErrors, fmt.Errorf("Required command %q is missing for storage pool %q", "lvm", pool.Name))

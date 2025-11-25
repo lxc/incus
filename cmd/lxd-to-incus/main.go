@@ -104,7 +104,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 
 	err = logFile.Chmod(0o600)
 	if err != nil {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+		_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 		return fmt.Errorf("Failed to set permissions on log file: %w", err)
 	}
 
@@ -125,12 +125,12 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	}
 
 	if source == nil {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+		_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 		return errors.New("No source server could be found")
 	}
 
 	fmt.Printf("==> Detected: %s\n", source.name())
-	_, _ = logFile.WriteString(fmt.Sprintf("Source server: %s\n", source.name()))
+	_, _ = fmt.Fprintf(logFile, "Source server: %s\n", source.name())
 
 	// Iterate through potential targets.
 	fmt.Println("=> Looking for target server")
@@ -145,12 +145,12 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	}
 
 	if target == nil {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+		_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 		return errors.New("No target server could be found")
 	}
 
 	fmt.Printf("==> Detected: %s\n", target.name())
-	_, _ = logFile.WriteString(fmt.Sprintf("Target server: %s\n", target.name()))
+	_, _ = fmt.Fprintf(logFile, "Target server: %s\n", target.name())
 
 	// Connect to the servers.
 	clustered := c.flagClusterMember
@@ -158,14 +158,14 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		fmt.Println("=> Connecting to source server")
 		srcClient, err = source.connect()
 		if err != nil {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return fmt.Errorf("Failed to connect to the source: %w", err)
 		}
 
 		// Look for API incompatibility (bool in /1.0 config).
 		resp, _, err := srcClient.RawQuery("GET", "/1.0", nil, "")
 		if err != nil {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return fmt.Errorf("Failed to get source server info: %w", err)
 		}
 
@@ -177,7 +177,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 
 		err = json.Unmarshal(resp.Metadata, &s)
 		if err != nil {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return fmt.Errorf("Failed to parse source server config: %w", err)
 		}
 
@@ -202,14 +202,14 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 			fmt.Println("Please unset those configuration keys through the `lxc config unset` command and retry `lxd-to-incus`.")
 			fmt.Println("")
 
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: Bad config keys: %v\n", badEntries))
+			_, _ = fmt.Fprintf(logFile, "ERROR: Bad config keys: %v\n", badEntries)
 			return errors.New("Unable to interact with the source server")
 		}
 
 		// Get the source server info.
 		srcServerInfo, _, err := srcClient.GetServer()
 		if err != nil {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return fmt.Errorf("Failed to get source server info: %w", err)
 		}
 
@@ -223,7 +223,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	fmt.Println("=> Connecting to the target server")
 	targetClient, err = target.connect()
 	if err != nil {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+		_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 		return fmt.Errorf("Failed to connect to the target: %w", err)
 	}
 
@@ -231,7 +231,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	if !c.flagClusterMember {
 		err = c.validate(source, target)
 		if err != nil {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return err
 		}
 	}
@@ -239,18 +239,18 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	// Grab the path information.
 	sourcePaths, err := source.paths()
 	if err != nil {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+		_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 		return fmt.Errorf("Failed to get source paths: %w", err)
 	}
 
-	_, _ = logFile.WriteString(fmt.Sprintf("Source server paths: %+v\n", sourcePaths))
+	_, _ = fmt.Fprintf(logFile, "Source server paths: %+v\n", sourcePaths)
 
 	targetPaths, err := target.paths()
 	if err != nil {
 		return fmt.Errorf("Failed to get target paths: %w", err)
 	}
 
-	_, _ = logFile.WriteString(fmt.Sprintf("Target server paths: %+v\n", targetPaths))
+	_, _ = fmt.Fprintf(logFile, "Target server paths: %+v\n", targetPaths)
 
 	// Mangle storage pool sources.
 	rewriteStatements := []string{}
@@ -261,27 +261,27 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		if !clustered {
 			storagePools, err = srcClient.GetStoragePools()
 			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+				_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 				return fmt.Errorf("Couldn't list storage pools: %w", err)
 			}
 		} else {
 			clusterMembers, err := srcClient.GetClusterMembers()
 			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+				_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 				return errors.New("Failed to retrieve the list of cluster members")
 			}
 
 			for _, member := range clusterMembers {
 				poolNames, err := srcClient.UseTarget(member.ServerName).GetStoragePoolNames()
 				if err != nil {
-					_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+					_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 					return fmt.Errorf("Couldn't list storage pools: %w", err)
 				}
 
 				for _, poolName := range poolNames {
 					pool, _, err := srcClient.UseTarget(member.ServerName).GetStoragePool(poolName)
 					if err != nil {
-						_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+						_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 						return fmt.Errorf("Couldn't get storage pool: %w", err)
 					}
 
@@ -333,7 +333,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	if !c.flagClusterMember {
 		srcServerInfo, _, err := srcClient.GetServer()
 		if err != nil {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return fmt.Errorf("Failed to get source server info: %w", err)
 		}
 
@@ -346,7 +346,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 			if !c.flagClusterMember {
 				out, err := subprocess.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external_ids:ovn-remote")
 				if err != nil {
-					_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+					_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 					return fmt.Errorf("Failed to get OVN southbound database address: %w", err)
 				}
 
@@ -354,7 +354,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 
 				commands, err := ovnConvert(ovnNB, ovnSB)
 				if err != nil {
-					_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+					_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 					return fmt.Errorf("Failed to prepare OVN conversion: %v", err)
 				}
 
@@ -362,7 +362,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 
 				err = ovnBackup(ovnNB, ovnSB, "/var/backups/")
 				if err != nil {
-					_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+					_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 					return fmt.Errorf("Failed to backup the OVN database: %v", err)
 				}
 			}
@@ -388,7 +388,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	if !c.flagClusterMember {
 		srcServerInfo, _, err := srcClient.GetServer()
 		if err != nil {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return fmt.Errorf("Failed to get source server info: %w", err)
 		}
 
@@ -466,12 +466,12 @@ DROP TABLE IF EXISTS auth_groups;`)
 	// Log rewrite actions.
 	_, _ = logFile.WriteString("Rewrite SQL statements:\n")
 	for _, entry := range rewriteStatements {
-		_, _ = logFile.WriteString(fmt.Sprintf(" - %s\n", entry))
+		_, _ = fmt.Fprintf(logFile, " - %s\n", entry)
 	}
 
 	_, _ = logFile.WriteString("Rewrite commands:\n")
 	for _, entry := range rewriteCommands {
-		_, _ = logFile.WriteString(fmt.Sprintf(" - %s\n", strings.Join(entry, " ")))
+		_, _ = fmt.Fprintf(logFile, " - %s\n", strings.Join(entry, " "))
 	}
 
 	// Confirm migration.
@@ -484,13 +484,13 @@ Instances will come back online once the migration is complete.`)
 
 			ok, err := c.global.asker.AskBool("Proceed with the migration? [default=no]: ", "no")
 			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+				_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 				return err
 			}
 
 			if !ok {
 				_, _ = logFile.WriteString("User aborted migration\n")
-				os.Exit(1)
+				return errors.New("User aborted migration")
 			}
 		} else {
 			fmt.Println(`
@@ -511,12 +511,12 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 			ok, err := c.global.asker.AskBool("Proceed with the migration? [default=no]: ", "no")
 			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+				_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 				return err
 			}
 
 			if !ok {
-				os.Exit(1)
+				return errors.New("User aborted migration")
 			}
 		}
 	}
@@ -533,23 +533,23 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 		clusterMembers, err := srcClient.GetClusterMembers()
 		if err != nil {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return errors.New("Failed to retrieve the list of cluster members")
 		}
 
 		for _, member := range clusterMembers {
 			fmt.Printf("==> Stopping all workloads on server %q\n", member.ServerName)
-			_, _ = logFile.WriteString(fmt.Sprintf("Stopping instances on server %qn\n", member.ServerName))
+			_, _ = fmt.Fprintf(logFile, "Stopping instances on server %qn\n", member.ServerName)
 
 			op, err := srcClient.UpdateClusterMemberState(member.ServerName, api.ClusterMemberStatePost{Action: "evacuate", Mode: "stop"})
 			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+				_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 				return fmt.Errorf("Failed to stop workloads %q: %w", member.ServerName, err)
 			}
 
 			err = op.Wait()
 			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+				_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 				return fmt.Errorf("Failed to stop workloads %q: %w", member.ServerName, err)
 			}
 		}
@@ -573,7 +573,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 	// Unmount potential mount points.
 	for _, mount := range []string{"devlxd", "shmounts"} {
-		_, _ = logFile.WriteString(fmt.Sprintf("Unmounting %q\n", filepath.Join(targetPaths.daemon, mount)))
+		_, _ = fmt.Fprintf(logFile, "Unmounting %q\n", filepath.Join(targetPaths.daemon, mount))
 		_ = unix.Unmount(filepath.Join(targetPaths.daemon, mount), unix.MNT_DETACH)
 	}
 
@@ -583,19 +583,19 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 	err = os.RemoveAll(targetPaths.logs)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+		_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 		return fmt.Errorf("Failed to remove %q: %w", targetPaths.logs, err)
 	}
 
 	err = os.RemoveAll(targetPaths.cache)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+		_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 		return fmt.Errorf("Failed to remove %q: %w", targetPaths.cache, err)
 	}
 
 	err = os.RemoveAll(targetPaths.daemon)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+		_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 		return fmt.Errorf("Failed to remove %q: %w", targetPaths.daemon, err)
 	}
 
@@ -605,13 +605,13 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 	_, err = subprocess.RunCommand("mv", sourcePaths.logs, targetPaths.logs)
 	if err != nil {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+		_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 		return fmt.Errorf("Failed to move %q to %q: %w", sourcePaths.logs, targetPaths.logs, err)
 	}
 
 	_, err = subprocess.RunCommand("mv", sourcePaths.cache, targetPaths.cache)
 	if err != nil {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+		_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 		return fmt.Errorf("Failed to move %q to %q: %w", sourcePaths.cache, targetPaths.cache, err)
 	}
 
@@ -620,21 +620,21 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 		err = os.MkdirAll(targetPaths.daemon, 0o711)
 		if err != nil {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return fmt.Errorf("Failed to create target directory: %w", err)
 		}
 
 		_, _ = logFile.WriteString("Creating bind-mount of daemon path\n")
 		err = unix.Mount(sourcePaths.daemon, targetPaths.daemon, "none", unix.MS_BIND|unix.MS_REC, "")
 		if err != nil {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return fmt.Errorf("Failed to bind mount %q to %q: %w", sourcePaths.daemon, targetPaths.daemon, err)
 		}
 
 		_, _ = logFile.WriteString("Unmounting former mountpoint\n")
 		err = unix.Unmount(sourcePaths.daemon, unix.MNT_DETACH)
 		if err != nil {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return fmt.Errorf("Failed to unmount source mount %q: %w", sourcePaths.daemon, err)
 		}
 
@@ -648,7 +648,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 		_, err = subprocess.RunCommand("mv", sourcePaths.daemon, targetPaths.daemon)
 		if err != nil {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return fmt.Errorf("Failed to move %q to %q: %w", sourcePaths.daemon, targetPaths.daemon, err)
 		}
 	}
@@ -659,13 +659,13 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 	_, err = subprocess.RunCommand("cp", "-R", filepath.Join(targetPaths.daemon, "database"), filepath.Join(targetPaths.daemon, "database.pre-migrate"))
 	if err != nil {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+		_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 		return fmt.Errorf("Failed to backup the database: %w", err)
 	}
 
 	err = migrateDatabase(filepath.Join(targetPaths.daemon, "database"))
 	if err != nil {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+		_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 		return fmt.Errorf("Failed to migrate database in %q: %w", filepath.Join(targetPaths.daemon, "database"), err)
 	}
 
@@ -676,7 +676,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 		err = os.WriteFile(filepath.Join(targetPaths.daemon, "database", "patch.global.sql"), []byte(strings.Join(rewriteStatements, "\n")+"\n"), 0o600)
 		if err != nil {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return fmt.Errorf("Failed to write database path: %w", err)
 		}
 	}
@@ -687,11 +687,11 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 		failures := 0
 		for _, cmd := range rewriteCommands {
-			_, _ = logFile.WriteString(fmt.Sprintf(" - %+v\n", cmd))
+			_, _ = fmt.Fprintf(logFile, " - %+v\n", cmd)
 
 			_, err := subprocess.RunCommand(cmd[0], cmd[1:]...)
 			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("Failed to run command: %v\n", err))
+				_, _ = fmt.Fprintf(logFile, "Failed to run command: %v\n", err)
 				failures++
 			}
 		}
@@ -709,19 +709,19 @@ Instead this tool will be providing specific commands for each of the servers.`)
 	_, _ = logFile.WriteString("Cleaning up target paths\n")
 
 	for _, dir := range []string{"backups", "images"} {
-		_, _ = logFile.WriteString(fmt.Sprintf("Cleaning up path %q\n", filepath.Join(targetPaths.daemon, dir)))
+		_, _ = fmt.Fprintf(logFile, "Cleaning up path %q\n", filepath.Join(targetPaths.daemon, dir))
 
 		// Remove any potential symlink (ignore errors for real directories).
 		_ = os.Remove(filepath.Join(targetPaths.daemon, dir))
 	}
 
 	for _, dir := range []string{"devices", "devlxd", "security", "shmounts"} {
-		_, _ = logFile.WriteString(fmt.Sprintf("Cleaning up path %q\n", filepath.Join(targetPaths.daemon, dir)))
+		_, _ = fmt.Fprintf(logFile, "Cleaning up path %q\n", filepath.Join(targetPaths.daemon, dir))
 
 		_ = unix.Unmount(filepath.Join(targetPaths.daemon, dir), unix.MNT_DETACH)
 		err = os.RemoveAll(filepath.Join(targetPaths.daemon, dir))
 		if err != nil && !errors.Is(err, fs.ErrNotExist) {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return fmt.Errorf("Failed to delete %q: %w", dir, err)
 		}
 	}
@@ -733,7 +733,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 				continue
 			}
 
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return fmt.Errorf("Failed to read entries in %q: %w", filepath.Join(targetPaths.daemon, dir), err)
 		}
 
@@ -748,22 +748,22 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 			oldTarget, err := os.Readlink(srcPath)
 			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+				_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 				return fmt.Errorf("Failed to resolve symlink %q: %w", srcPath, err)
 			}
 
 			newTarget := strings.Replace(oldTarget, sourcePaths.daemon, targetPaths.daemon, 1)
 			err = os.Remove(srcPath)
 			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+				_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 				return fmt.Errorf("Failed to delete symlink %q: %w", srcPath, err)
 			}
 
-			_, _ = logFile.WriteString(fmt.Sprintf(" - %q to %q\n", newTarget, srcPath))
+			_, _ = fmt.Fprintf(logFile, " - %q to %q\n", newTarget, srcPath)
 
 			err = os.Symlink(newTarget, srcPath)
 			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+				_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 				return fmt.Errorf("Failed to create symlink %q: %w", srcPath, err)
 			}
 		}
@@ -779,7 +779,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 			err := os.RemoveAll(filepath.Join(targetPaths.cache, entry.Name()))
 			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+				_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 				return fmt.Errorf("Failed to clear cache file %q: %w", filepath.Join(targetPaths.cache, entry.Name()), err)
 			}
 		}
@@ -791,7 +791,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 	err = target.start()
 	if err != nil {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+		_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 		return fmt.Errorf("Failed to start the target server: %w", err)
 	}
 
@@ -863,7 +863,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 	targetServerInfo, _, err := targetClient.GetServer()
 	if err != nil {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+		_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 		return fmt.Errorf("Failed to get target server info: %w", err)
 	}
 
@@ -872,17 +872,17 @@ Instead this tool will be providing specific commands for each of the servers.`)
 	if ok && ovnNB != "" {
 		commands, err := ovsConvert()
 		if err != nil {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return fmt.Errorf("Failed to prepare OVS conversion: %v", err)
 		}
 
 		_, _ = logFile.WriteString("Running OVS conversion commands:\n")
 		for _, cmd := range commands {
-			_, _ = logFile.WriteString(fmt.Sprintf(" - %+v\n", cmd))
+			_, _ = fmt.Fprintf(logFile, " - %+v\n", cmd)
 
 			_, err := subprocess.RunCommand(cmd[0], cmd[1:]...)
 			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("Failed to run command: %v\n", err))
+				_, _ = fmt.Fprintf(logFile, "Failed to run command: %v\n", err)
 				fmt.Fprintf(os.Stderr, "Failed to run command: %v\n", err)
 			}
 		}
@@ -895,23 +895,23 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 		clusterMembers, err := targetClient.GetClusterMembers()
 		if err != nil {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return errors.New("Failed to retrieve the list of cluster members")
 		}
 
 		for _, member := range clusterMembers {
 			fmt.Printf("==> Restoring workloads on server %q\n", member.ServerName)
-			_, _ = logFile.WriteString(fmt.Sprintf("Restoring workloads on %q\n", member.ServerName))
+			_, _ = fmt.Fprintf(logFile, "Restoring workloads on %q\n", member.ServerName)
 
 			op, err := targetClient.UpdateClusterMemberState(member.ServerName, api.ClusterMemberStatePost{Action: "restore"})
 			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+				_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 				return fmt.Errorf("Failed to restore %q: %w", member.ServerName, err)
 			}
 
 			err = op.Wait()
 			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+				_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 				return fmt.Errorf("Failed to restore %q: %w", member.ServerName, err)
 			}
 		}
@@ -920,7 +920,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 	// Writing completion stamp file.
 	completeFile, err := os.Create(filepath.Join(targetPaths.daemon, ".migrated-from-lxd"))
 	if err != nil {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+		_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 	}
 
 	defer completeFile.Close()
@@ -929,13 +929,13 @@ Instead this tool will be providing specific commands for each of the servers.`)
 	if !c.flagYes {
 		ok, err := c.global.asker.AskBool("Uninstall the LXD package? [default=no]: ", "no")
 		if err != nil {
-			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 			return err
 		}
 
 		if !ok {
 			_, _ = logFile.WriteString("User decided not ro remove the package\n")
-			os.Exit(0)
+			return nil
 		}
 	}
 
@@ -945,7 +945,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 
 	err = source.purge()
 	if err != nil {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+		_, _ = fmt.Fprintf(logFile, "ERROR: %v\n", err)
 		return fmt.Errorf("Failed to uninstall the source server: %w", err)
 	}
 
