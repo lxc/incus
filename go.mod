@@ -175,4 +175,5 @@ require (
 	google.golang.org/grpc v1.77.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
+	software.sslmate.com/src/go-pkcs12 v0.6.0 // indirect
 )

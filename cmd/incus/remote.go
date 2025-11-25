@@ -20,6 +20,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/spf13/cobra"
+	"software.sslmate.com/src/go-pkcs12"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/i18n"
@@ -733,14 +734,19 @@ func (c *cmdRemoteGetDefault) Command() *cobra.Command {
 type cmdRemoteGetClientCertificate struct {
 	global *cmdGlobal
 	remote *cmdRemote
+
+	flagFormat string
 }
 
 // Command returns a cobra.Command for get-client-certificate.
 func (c *cmdRemoteGetClientCertificate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("get-client-certificate")
-	cmd.Short = i18n.G("Print the client certificate used by this Incus client")
+	cmd.Use = cli.Usage("get-client-certificate [<target>]")
+	cmd.Short = i18n.G("Print or retrieve the client certificate used by this Incus client")
 	cmd.RunE = c.Run
+
+	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "pem", i18n.G("Format (pem|pfx)")+"``")
+
 	return cmd
 }
 
@@ -749,9 +755,17 @@ func (c *cmdRemoteGetClientCertificate) Run(cmd *cobra.Command, args []string) e
 	conf := c.global.conf
 
 	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 0, 0)
+	exit, err := c.global.checkArgs(cmd, args, 0, 1)
 	if exit {
 		return err
+	}
+
+	if !slices.Contains([]string{"pem", "pfx"}, c.flagFormat) {
+		return fmt.Errorf(i18n.G("Invalid certificate format %q"), c.flagFormat)
+	}
+
+	if c.flagFormat == "pfx" && len(args) == 0 {
+		return errors.New("PFX export requires a filename")
 	}
 
 	// Check if we need to generate a new certificate.
@@ -767,12 +781,63 @@ func (c *cmdRemoteGetClientCertificate) Run(cmd *cobra.Command, args []string) e
 	}
 
 	// Read the certificate.
-	tlsClientCert, _, _, err := conf.GetClientCertificate("")
+	tlsClientCert, tlsClientKey, _, err := conf.GetClientCertificate("")
 	if err != nil {
 		return fmt.Errorf("Failed to get certificate: %w", err)
 	}
 
+	if len(args) > 0 {
+		// Create the file.
+		w, err := os.Create(args[0])
+		if err != nil {
+			return err
+		}
+
+		defer func() { _ = w.Close() }()
+
+		switch c.flagFormat {
+		case "pem":
+			_, err = fmt.Fprint(w, tlsClientCert)
+			if err != nil {
+				return err
+			}
+
+		case "pfx":
+			// Restrict the permission as it includes the key.
+			err = w.Chmod(0o600)
+			if err != nil {
+				return err
+			}
+
+			// Get a password.
+			password := c.global.asker.AskPasswordOnce(fmt.Sprintf(i18n.G("Password for %s: "), args[0]))
+			if err != nil {
+				return err
+			}
+
+			// Load the cert and key.
+			cert, err := tls.X509KeyPair([]byte(tlsClientCert), []byte(tlsClientKey))
+			if err != nil {
+				return err
+			}
+
+			// Get the PKCS12.
+			pfx, err := pkcs12.Modern2023.Encode(cert.PrivateKey, cert.Leaf, nil, password)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprint(w, string(pfx))
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
 	fmt.Print(tlsClientCert)
+
 	return nil
 }
 
