@@ -93,6 +93,7 @@ var patches = []patch{
 	{name: "db_json_columns", stage: patchPreDaemonStorage, run: patchConvertJSONColumn},
 	{name: "pool_fix_default_permissions", stage: patchPostDaemonStorage, run: patchDefaultStoragePermissions},
 	{name: "network_ovn_directional_port_groups", stage: patchPostDaemonStorage, run: patchGenericNetwork(patchNetworkOVNPortGroups)},
+	{name: "auth_openfga_volume_files", stage: patchPostNetworks, run: patchGenericAuthorization},
 }
 
 type patchRun func(name string, d *Daemon) error
