@@ -137,3 +137,5 @@ type storage_volume
     define can_manage_backups: [user, group#member] or can_edit
     define can_manage_snapshots: [user, group#member] or can_edit
     define can_view: [user, group#member] or can_edit or viewer from project
+    define can_access_files: [user, group#member] or can_edit
+    define can_connect_sftp: [user, group#member] or can_edit
