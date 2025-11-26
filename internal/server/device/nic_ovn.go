@@ -35,6 +35,7 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/resources"
 	"github.com/lxc/incus/v6/shared/revert"
+	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/validate"
 )
@@ -78,7 +79,7 @@ func (d *nicOVN) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"security.acls"}
+	return []string{"security.acls", "limits.ingress", "limits.egress", "limits.max", "limits.priority"}
 }
 
 // validateConfig checks the supplied config for correctness.
@@ -283,6 +284,39 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		//  managed: no
 		//  shortdesc: The VLAN ID to use when nesting (see also `nested`)
 		"vlan",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=limits.ingress)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)
+		"limits.ingress",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=limits.egress)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)
+		"limits.egress",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=limits.max)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: I/O limit in bit/s for both incoming and outgoing traffic. (same as setting both limits.ingress and limits.egress / mutually exclusive with limits.ingress and limits.egress)
+		"limits.max",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=limits.priority)
+		//
+		// ---
+		//  default: 100
+		//  type: integer
+		//  managed: no
+		//  shortdesc: The priority for outgoing traffic, to be used by the kernel queuing discipline to prioritize network packets
+		"limits.priority",
 	}
 
 	// The NIC's network may be a non-default project, so lookup project and get network's project name.
@@ -486,6 +520,58 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		err = acl.Exists(d.state, networkProjectName, util.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)...)
 		if err != nil {
 			return err
+		}
+	}
+
+	// Avoid setting both ingress/egress and max to avoid confusion or implicit behavior.
+	if d.config["limits.max"] != "" && (d.config["limits.ingress"] != "" || d.config["limits.egress"] != "") {
+		return errors.New("limits.max is mutually exclusive with limits.ingress and limits.egress")
+	}
+
+	if d.config["limits.priority"] != "" {
+		priority, err := strconv.Atoi(d.config["limits.priority"])
+		if err != nil {
+			return errors.New("limits.priority must be an integer")
+		}
+
+		if priority < 0 || priority > 32767 {
+			return errors.New("limits.priority must be between 0 an 32767, inclusive")
+		}
+	}
+
+	if d.config["limits.max"] != "" {
+		limitsMax, err := units.ParseBitSizeString(d.config["limits.max"])
+		if err != nil {
+			return errors.New("limits.max must be an integer")
+		}
+
+		limitsMax /= 1000 // Convert to kbps
+		if limitsMax < 1 || limitsMax > 4294967295 {
+			return errors.New("limits.max must be between 1 an 4294967295 bps, inclusive")
+		}
+	}
+
+	if d.config["limits.ingress"] != "" {
+		ingress, err := units.ParseBitSizeString(d.config["limits.ingress"])
+		if err != nil {
+			return errors.New("limits.ingress must be an integer")
+		}
+
+		ingress /= 1000 // Convert to kbps
+		if ingress < 1 || ingress > 4294967295 {
+			return errors.New("limits.ingress must be between 1 an 4294967295 bps, inclusive")
+		}
+	}
+
+	if d.config["limits.egress"] != "" {
+		egress, err := units.ParseBitSizeString(d.config["limits.egress"])
+		if err != nil {
+			return errors.New("limits.egress must be an integer")
+		}
+
+		egress /= 1000 // Convert to kbps
+		if egress < 1 || egress > 4294967295 {
+			return errors.New("limits.egress must be between 1 an 4294967295 bps, inclusive")
 		}
 	}
 
