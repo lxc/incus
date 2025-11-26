@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/flosch/pongo2/v6"
+	ovnNB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-nb"
 	"github.com/mdlayher/netx/eui64"
 	ovsClient "github.com/ovn-kubernetes/libovsdb/client"
 	ovsdbModel "github.com/ovn-kubernetes/libovsdb/model"
@@ -5123,7 +5124,40 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		n.logger.Debug("Cleared NIC default rule", logger.Ctx{"port": instancePortName})
 	}
 
+	var qosPriority uint64
+	if opts.DeviceConfig["limits.priority"] != "" {
+		qosPriority, err = strconv.ParseUint(opts.DeviceConfig["limits.priority"], 10, 32)
+		if err != nil {
+			return "", nil, fmt.Errorf("Failed to parse limits.priority %q: %w", opts.DeviceConfig["limits.priority"], err)
+		}
+	}
+
+	if opts.DeviceConfig["limits.egress"] != "" {
+		rate, err := strconv.Atoi(opts.DeviceConfig["limits.egress"]) //TODO: We could use units.ParseBitSizeString but then we have to make sure to convert it to KiloBits again
+		if err != nil {
+			return "", nil, fmt.Errorf("Failed converting limits.egress to int: %w", err)
+		}
+		n.logger.Debug(fmt.Sprintf("ovn,rate = %d", rate))
+		rules := []networkOVN.OVNQoSRule{
+			{
+				Direction: ovnNB.QoSDirectionFromLport,
+				Action:    map[string]int{},
+				Bandwidth: map[string]int{
+					"rate": rate,
+				},
+				Match:    fmt.Sprintf("inport == \"%s\"", instancePortName), //maybe missing ->"<- in beginning and end
+				Priority: int(qosPriority),                                  //TODO: Make configurable
+			},
+		}
+		n.logger.Debug("QoS Rule assembled")
+		err = n.ovnnb.UpdateLogicalSwitchQoSRules(context.TODO(), n.getIntSwitchName(), rules...)
+		if err != nil {
+			return "", nil, err
+		}
+	}
+
 	reverter.Success()
+	n.logger.Debug("Reached end of InstanceDevicePortStart function")
 	return instancePortName, dnsIPs, nil
 }
 
@@ -5314,6 +5348,8 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 			return err
 		}
 	}
+
+	//TODO: Remove QoS Rule when instance is stopped
 
 	return nil
 }
