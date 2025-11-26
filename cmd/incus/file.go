@@ -1064,7 +1064,7 @@ func (c *cmdFileMount) Run(cmd *cobra.Command, args []string) error {
 	if c.flagListen == "" && targetPath != "" {
 		// Setup sourcePath with leading / to ensure we reference the instance path from / location.
 		instPath := instSpec[1]
-		if instPath[0] != '/' {
+		if len(instPath) == 0 || instPath[0] != '/' {
 			instPath = "/" + instPath
 		}
 
