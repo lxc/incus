@@ -8,10 +8,10 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-11-25 12:47-0500\n"
-"PO-Revision-Date: 2025-11-16 20:51+0000\n"
+"PO-Revision-Date: 2025-11-27 05:00+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -3669,9 +3669,8 @@ msgid "Format (man|md|rest|yaml)"
 msgstr "Formato (man|md|rest|yaml)"
 
 #: cmd/incus/remote.go:748
-#, fuzzy
 msgid "Format (pem|pfx)"
-msgstr "Formato (table|compact)"
+msgstr "Formato (pem|pfx)"
 
 #: cmd/incus/top.go:65
 msgid "Format (table|compact)"
@@ -4279,9 +4278,9 @@ msgid "Invalid certificate"
 msgstr "Certificado inválido"
 
 #: cmd/incus/remote.go:764
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid certificate format %q"
-msgstr "Certificado inválido"
+msgstr "Formato de certificado inválido %q"
 
 #: cmd/incus/admin_init.go:163
 #, c-format
@@ -7386,9 +7385,9 @@ msgid "Print help"
 msgstr "Escreve ajuda"
 
 #: cmd/incus/remote.go:745
-#, fuzzy
 msgid "Print or retrieve the client certificate used by this Incus client"
-msgstr "Escreve o certificado de cliente utilizado por este cliente Incus"
+msgstr ""
+"Escreve ou recupera o certificado de cliente utilizado por este cliente Incus"
 
 #: cmd/incus/query.go:44
 msgid "Print the raw response"
