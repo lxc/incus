@@ -531,7 +531,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		if err != nil {
 			return errors.New("limits.priority must be an integer")
 		}
-		if priority < 0 || priority <= 32767 {
+		if priority < 0 || priority >= 32767 {
 			return errors.New("limits.priority must be between 0 an 32767, inclusive")
 		}
 	}
