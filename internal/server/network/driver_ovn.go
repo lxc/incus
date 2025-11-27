@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/flosch/pongo2/v6"
-	ovnNB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-nb"
 	"github.com/mdlayher/netx/eui64"
 	ovsClient "github.com/ovn-kubernetes/libovsdb/client"
 	ovsdbModel "github.com/ovn-kubernetes/libovsdb/model"
@@ -38,6 +37,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/network/acl"
 	addressset "github.com/lxc/incus/v6/internal/server/network/address-set"
 	networkOVN "github.com/lxc/incus/v6/internal/server/network/ovn"
+	ovnNB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-nb"
 	ovnSB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-sb"
 	"github.com/lxc/incus/v6/internal/server/network/ovs"
 	"github.com/lxc/incus/v6/internal/server/project"

@@ -147,6 +147,7 @@ type OVNACLRule struct {
 	LogName   string // Log label name (requires Log be true).
 }
 
+// OVNQoSRule represents a QoS rule that can be added to a logical switch.
 type OVNQoSRule struct {
 	Direction string
 	Action    map[string]int // Not settable, but ovn includes it in the db model
@@ -2965,6 +2966,7 @@ func (o *NB) UpdatePortGroupACLRules(ctx context.Context, portGroupName OVNPortG
 	return nil
 }
 
+// AddLogicalSwitchQoSRules applies a set of rules to the specified logical switch port.
 func (o *NB) AddLogicalSwitchQoSRules(ctx context.Context, switchName OVNSwitch, switchPortName OVNSwitchPort, qosRules ...OVNQoSRule) error {
 	var operations []ovsdb.Operation
 
@@ -3023,27 +3025,25 @@ func (o *NB) qosRuleAddOperations(ctx context.Context, entityTable string, entit
 
 		operations = append(operations, createOps...)
 
-		// Add QOS rule to entity.
-		if entityTable == "logical_switch" {
-			ls := ovnNB.LogicalSwitch{
-				Name: entityName,
-			}
-
-			updateOps, err := o.client.Where(&ls).Mutate(&ls, ovsModel.Mutation{
-				Field:   &ls.QOSRules,
-				Mutator: ovsdb.MutateOperationInsert,
-				Value:   []string{qos.UUID},
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			operations = append(operations, updateOps...)
-
-			//Port groups are not supported for QoS
-		} else {
+		if entityTable != "logical_switch" {
 			return nil, fmt.Errorf("Unsupported entity table %q", entityTable)
 		}
+
+		ls := ovnNB.LogicalSwitch{
+			Name: entityName,
+		}
+
+		// Add QOS rule to entity.
+		updateOps, err := o.client.Where(&ls).Mutate(&ls, ovsModel.Mutation{
+			Field:   &ls.QOSRules,
+			Mutator: ovsdb.MutateOperationInsert,
+			Value:   []string{qos.UUID},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		operations = append(operations, updateOps...)
 	}
 
 	return operations, nil
@@ -3071,25 +3071,25 @@ func (o *NB) qosRuleDeleteOperations(ctx context.Context, entityTable string, en
 
 		operations = append(operations, deleteOps...)
 
-		// Remove QOS rule from entity.
-		if entityTable == "logical_switch" {
-			ls := ovnNB.LogicalSwitch{
-				Name: entityName,
-			}
-
-			updateOps, err := o.client.Where(&ls).Mutate(&ls, ovsModel.Mutation{
-				Field:   &ls.QOSRules,
-				Mutator: ovsdb.MutateOperationDelete,
-				Value:   []string{qos.UUID},
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			operations = append(operations, updateOps...)
-		} else {
+		if entityTable != "logical_switch" {
 			return nil, fmt.Errorf("Unsupported entity table %q", entityTable)
 		}
+
+		ls := ovnNB.LogicalSwitch{
+			Name: entityName,
+		}
+
+		// Remove QOS rule from entity.
+		updateOps, err := o.client.Where(&ls).Mutate(&ls, ovsModel.Mutation{
+			Field:   &ls.QOSRules,
+			Mutator: ovsdb.MutateOperationDelete,
+			Value:   []string{qos.UUID},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		operations = append(operations, updateOps...)
 	}
 
 	return operations, nil
