@@ -14,6 +14,10 @@ type StorageBucketBackup struct {
 	// Example: backup0
 	Name string `json:"name" yaml:"name"`
 
+	// When the backup was created
+	// Example: 2021-03-23T16:38:37.753398689-04:00
+	CreatedAt time.Time `json:"created_at" yaml:"created_at"`
+
 	// When the backup expires (gets auto-deleted)
 	// Example: 2021-03-23T17:38:37.753398689-04:00
 	ExpiresAt time.Time `json:"expires_at" yaml:"expires_at"`
