@@ -2444,6 +2444,18 @@ func (o *NB) CleanupLogicalSwitchPort(ctx context.Context, portName OVNSwitchPor
 
 	operations = append(operations, deleteOps...)
 
+	removeQoSRuleUUIDs, err := o.logicalSwitchPortQoSRules(ctx, portName)
+	if err != nil {
+		return err
+	}
+
+	deleteOps, err = o.qosRuleDeleteOperations(ctx, "logical_switch", string(switchName), removeQoSRuleUUIDs)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, deleteOps...)
+
 	// Remove logical switch port.
 	deleteOps, err = o.logicalSwitchPortDeleteOperations(ctx, switchName, portName)
 	if err != nil {
@@ -3001,6 +3013,35 @@ func (o *NB) UpdatePortGroupACLRules(ctx context.Context, portGroupName OVNPortG
 	return nil
 }
 
+func (o *NB) AddLogicalSwitchQoSRules(ctx context.Context, switchName OVNSwitch, switchPortName OVNSwitchPort, qosRules ...OVNQoSRule) error {
+	var operations []ovsdb.Operation
+
+	// Add new rules.
+	externalIDs := map[string]string{
+		ovnExtIDIncusSwitch:     string(switchName),
+		ovnExtIDIncusSwitchPort: string(switchPortName),
+	}
+
+	createOps, err := o.qosRuleAddOperations(ctx, "logical_switch", string(switchName), externalIDs, nil, qosRules...)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, createOps...)
+
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (o *NB) qosRuleAddOperations(ctx context.Context, entityTable string, entityName string, externalIDs map[string]string, matchReplace map[string]string, qosRules ...OVNQoSRule) ([]ovsdb.Operation, error) {
 	operations := []ovsdb.Operation{}
 
@@ -3048,6 +3089,52 @@ func (o *NB) qosRuleAddOperations(ctx context.Context, entityTable string, entit
 			operations = append(operations, updateOps...)
 
 			//Port groups are not supported for QoS
+		} else {
+			return nil, fmt.Errorf("Unsupported entity table %q", entityTable)
+		}
+	}
+
+	return operations, nil
+}
+
+func (o *NB) qosRuleDeleteOperations(ctx context.Context, entityTable string, entityName string, qosRuleUUIDs []string) ([]ovsdb.Operation, error) {
+	var operations []ovsdb.Operation
+
+	for _, qosRuleUUID := range qosRuleUUIDs {
+		// Get the QOS.
+		qos := ovnNB.QoS{
+			UUID: qosRuleUUID,
+		}
+
+		err := o.get(ctx, &qos)
+		if err != nil {
+			return nil, err
+		}
+
+		// Delete the QOS.
+		deleteOps, err := o.client.Where(&qos).Delete()
+		if err != nil {
+			return nil, err
+		}
+
+		operations = append(operations, deleteOps...)
+
+		// Remove QOS rule from entity.
+		if entityTable == "logical_switch" {
+			ls := ovnNB.LogicalSwitch{
+				Name: entityName,
+			}
+
+			updateOps, err := o.client.Where(&ls).Mutate(&ls, ovsModel.Mutation{
+				Field:   &ls.QOSRules,
+				Mutator: ovsdb.MutateOperationDelete,
+				Value:   []string{qos.UUID},
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			operations = append(operations, updateOps...)
 		} else {
 			return nil, fmt.Errorf("Unsupported entity table %q", entityTable)
 		}

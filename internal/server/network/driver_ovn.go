@@ -5147,10 +5147,11 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 				},
 				Match:    fmt.Sprintf("inport == \"%s\"", instancePortName), //maybe missing ->"<- in beginning and end
 				Priority: int(qosPriority),                                  //TODO: Make configurable
+
 			},
 		}
 		n.logger.Debug("QoS Rule assembled")
-		err = n.ovnnb.UpdateLogicalSwitchQoSRules(context.TODO(), n.getIntSwitchName(), rules...)
+		err = n.ovnnb.AddLogicalSwitchQoSRules(context.TODO(), n.getIntSwitchName(), instancePortName, rules...)
 		if err != nil {
 			return "", nil, err
 		}
