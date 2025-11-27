@@ -559,6 +559,46 @@ func (c *ClusterTx) RenameVolumeBackup(ctx context.Context, oldName, newName str
 	return nil
 }
 
+// GetStoragePoolBucketBackups returns a list of bucket backups.
+func (c *ClusterTx) GetStoragePoolBucketBackups(ctx context.Context, projectName string, bucketName string, poolID int64) ([]StoragePoolBucketBackup, error) {
+	q := `
+	SELECT
+		backups.id,
+		backups.storage_bucket_id,
+		backups.name,
+		backups.creation_date,
+		backups.expiry_date
+	FROM storage_buckets_backups AS backups
+	JOIN storage_buckets ON storage_buckets.id=backups.storage_bucket_id
+	JOIN projects ON projects.id=storage_buckets.project_id
+	WHERE projects.name=? AND storage_buckets.name=? AND storage_buckets.storage_pool_id=?
+	ORDER BY backups.id
+	`
+
+	var backups []StoragePoolBucketBackup
+
+	err := query.Scan(ctx, c.tx, q, func(scan func(dest ...any) error) error {
+		var b StoragePoolBucketBackup
+		var expiryTime sql.NullTime
+
+		err := scan(&b.ID, &b.BucketID, &b.Name, &b.CreationDate, &expiryTime)
+		if err != nil {
+			return err
+		}
+
+		b.ExpiryDate = expiryTime.Time // Convert nulls to zero.
+
+		backups = append(backups, b)
+
+		return nil
+	}, projectName, bucketName, poolID)
+	if err != nil {
+		return nil, err
+	}
+
+	return backups, nil
+}
+
 // GetStoragePoolBucketBackupsName returns the names of all backups of the storage bucket with the given name.
 func (c *ClusterTx) GetStoragePoolBucketBackupsName(ctx context.Context, projectName string, bucketName string) ([]string, error) {
 	var result []string
