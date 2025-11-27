@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"sort"
+	"strconv"
 
 	"github.com/gorilla/mux"
 
@@ -181,6 +182,60 @@ var storagePoolBucketKeyCmd = APIEndpoint{
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
+// swagger:operation GET /1.0/storage-pools/{poolName}/buckets?recursion=2 storage storage_pool_buckets_get_recursion2
+//
+//  Get the storage pool bucket details
+//
+//  Returns a list of storage pool buckets with all details (structs).
+//
+//  ---
+//  produces:
+//    - application/json
+//  parameters:
+//    - in: query
+//      name: project
+//      description: Project name
+//      type: string
+//      example: default
+//    - in: query
+//      name: all-projects
+//      description: Retrieve storage pool buckets from all projects
+//      type: boolean
+//      example: true
+//    - in: query
+//      name: filter
+//      description: Collection filter
+//      type: string
+//      example: default
+//  responses:
+//    "200":
+//      description: API endpoints
+//      schema:
+//        type: object
+//        description: Sync response
+//        properties:
+//          type:
+//            type: string
+//            description: Response type
+//            example: sync
+//          status:
+//            type: string
+//            description: Status description
+//            example: Success
+//          status_code:
+//            type: integer
+//            description: Status code
+//            example: 200
+//          metadata:
+//            type: array
+//            description: List of storage pool buckets
+//            items:
+//              $ref: "#/definitions/StorageBucketFull"
+//    "403":
+//      $ref: "#/responses/Forbidden"
+//    "500":
+//      $ref: "#/responses/InternalServerError"
+
 func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
@@ -279,7 +334,14 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 		return bucketA.Name < bucketB.Name
 	})
 
-	if localUtil.IsRecursionRequest(r) {
+	recursionStr := r.FormValue("recursion")
+
+	recursion, err := strconv.Atoi(recursionStr)
+	if err != nil {
+		recursion = 0
+	}
+
+	if recursion > 0 {
 		buckets := make([]*api.StorageBucket, 0, len(filteredDBBuckets))
 		for _, dbBucket := range filteredDBBuckets {
 			u := pool.GetBucketURL(dbBucket.Name)
@@ -288,6 +350,21 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 			}
 
 			buckets = append(buckets, &dbBucket.StorageBucket)
+		}
+
+		if recursion == 2 {
+			bucketsFull := make([]*api.StorageBucketFull, 0, len(buckets))
+
+			for i, bucket := range buckets {
+				fullBucket, err := getBucketFull(r.Context(), s, pool, filteredDBBuckets[i].ID, *bucket)
+				if err != nil {
+					return response.InternalError(err)
+				}
+
+				bucketsFull = append(bucketsFull, fullBucket)
+			}
+
+			return response.SyncResponse(true, bucketsFull)
 		}
 
 		return response.SyncResponse(true, buckets)
@@ -433,52 +510,61 @@ func storagePoolBucketGet(d *Daemon, r *http.Request) response.Response {
 
 	// Prepare the response.
 	if localUtil.IsRecursionRequest(r) {
-		// Set the base object.
-		resp := api.StorageBucketFull{
-			StorageBucket: bucket.StorageBucket,
-			Backups:       []api.StorageBucketBackup{},
-			Keys:          []api.StorageBucketKey{},
-		}
-
-		// Add all backups.
-		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			bucketBackups, err := tx.GetStoragePoolBucketBackups(ctx, bucketProjectName, bucketName, pool.ID())
-			if err != nil {
-				return err
-			}
-
-			for _, entry := range bucketBackups {
-				_, backupName, _ := api.GetParentAndSnapshotName(entry.Name)
-				resp.Backups = append(resp.Backups, *backup.NewBucketBackup(s, bucketProjectName, poolName, bucketName, entry.ID, backupName, entry.CreationDate, entry.ExpiryDate).Render())
-			}
-
-			return nil
-		})
+		bucketFull, err := getBucketFull(r.Context(), s, pool, bucket.ID, bucket.StorageBucket)
 		if err != nil {
-			return response.SmartError(err)
+			return response.InternalError(err)
 		}
 
-		// Add all keys.
-		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			dbBucketKeys, err := tx.GetStoragePoolBucketKeys(ctx, bucket.ID)
-			if err != nil {
-				return fmt.Errorf("Failed loading storage bucket keys: %w", err)
-			}
-
-			for _, dbBucketKey := range dbBucketKeys {
-				resp.Keys = append(resp.Keys, dbBucketKey.StorageBucketKey)
-			}
-
-			return nil
-		})
-		if err != nil {
-			return response.SmartError(err)
-		}
-
-		return response.SyncResponseETag(true, resp, bucket.Etag())
+		return response.SyncResponseETag(true, bucketFull, bucket.Etag())
 	}
 
 	return response.SyncResponseETag(true, bucket.StorageBucket, bucket.Etag())
+}
+
+func getBucketFull(ctx context.Context, s *state.State, pool storagePools.Pool, id int64, bucket api.StorageBucket) (*api.StorageBucketFull, error) {
+	// Set the base object.
+	resp := api.StorageBucketFull{
+		StorageBucket: bucket,
+		Backups:       []api.StorageBucketBackup{},
+		Keys:          []api.StorageBucketKey{},
+	}
+
+	// Add all backups.
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		bucketBackups, err := tx.GetStoragePoolBucketBackups(ctx, bucket.Project, bucket.Name, pool.ID())
+		if err != nil {
+			return err
+		}
+
+		for _, entry := range bucketBackups {
+			_, backupName, _ := api.GetParentAndSnapshotName(entry.Name)
+			resp.Backups = append(resp.Backups, *backup.NewBucketBackup(s, bucket.Project, pool.Name(), bucket.Name, entry.ID, backupName, entry.CreationDate, entry.ExpiryDate).Render())
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Add all keys.
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		dbBucketKeys, err := tx.GetStoragePoolBucketKeys(ctx, id)
+		if err != nil {
+			return fmt.Errorf("Failed loading storage bucket keys: %w", err)
+		}
+
+		for _, dbBucketKey := range dbBucketKeys {
+			resp.Keys = append(resp.Keys, dbBucketKey.StorageBucketKey)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
 }
 
 // swagger:operation POST /1.0/storage-pools/{poolName}/buckets storage storage_pool_bucket_post
