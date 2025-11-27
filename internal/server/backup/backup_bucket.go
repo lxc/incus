@@ -129,6 +129,5 @@ func (b *BucketBackup) Render() *api.StorageBucketBackup {
 	return &api.StorageBucketBackup{
 		Name:                 b.name,
 		ExpiresAt:            b.expiryDate,
-		CompressionAlgorithm: b.compressionAlgorithm,
 	}
 }
