@@ -5365,8 +5365,6 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 		}
 	}
 
-	//TODO: Remove QoS Rule when instance is stopped
-
 	return nil
 }
 
