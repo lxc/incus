@@ -2935,3 +2935,9 @@ This adds `network.hwaddr_pattern` global and per-project configuration keys to 
 This adds `?recursion=1` support to `/1.0/storage-pools/POOL/volumes/VOLUME` and `?recursion=2` support to `/1.0/storage-pools/POOL/volumes`.
 
 As well as a matching `StorageVolumeFull` struct.
+
+## `storage_bucket_full`
+
+This adds `?recursion=1` support to `/1.0/storage-pools/POOL/buckets/VOLUME` and `?recursion=2` support to `/1.0/storage-pools/POOL/buckets`.
+
+As well as a matching `StorageBucketFull` struct.
