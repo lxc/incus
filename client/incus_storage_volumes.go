@@ -192,6 +192,24 @@ func (r *ProtocolIncus) GetStoragePoolVolume(pool string, volType string, name s
 	return &volume, etag, nil
 }
 
+// GetStoragePoolVolumeFull returns a StorageVolumeFull entry for the provided pool and volume name.
+func (r *ProtocolIncus) GetStoragePoolVolumeFull(pool string, volType string, name string) (*api.StorageVolumeFull, string, error) {
+	if !r.HasExtension("storage_volume_full") {
+		return nil, "", errors.New("The server is missing the required \"storage_volume_full\" API extension")
+	}
+
+	volume := api.StorageVolumeFull{}
+
+	// Fetch the raw value
+	path := fmt.Sprintf("/storage-pools/%s/volumes/%s/%s?recursion=1", url.PathEscape(pool), url.PathEscape(volType), url.PathEscape(name))
+	etag, err := r.queryStruct("GET", path, nil, "", &volume)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return &volume, etag, nil
+}
+
 // GetStoragePoolVolumeState returns a StorageVolumeState entry for the provided pool and volume name.
 func (r *ProtocolIncus) GetStoragePoolVolumeState(pool string, volType string, name string) (*api.StorageVolumeState, error) {
 	if !r.HasExtension("storage_volume_state") {

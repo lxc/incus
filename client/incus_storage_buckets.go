@@ -137,6 +137,25 @@ func (r *ProtocolIncus) GetStoragePoolBucket(poolName string, bucketName string)
 	return &bucket, etag, nil
 }
 
+// GetStoragePoolBucketFull returns a full storage bucket entry for the provided pool and bucket name.
+func (r *ProtocolIncus) GetStoragePoolBucketFull(poolName string, bucketName string) (*api.StorageBucketFull, string, error) {
+	err := r.CheckExtension("storage_bucket_full")
+	if err != nil {
+		return nil, "", err
+	}
+
+	bucket := api.StorageBucketFull{}
+
+	// Fetch the raw value.
+	u := api.NewURL().Path("storage-pools", poolName, "buckets", bucketName).WithQuery("recursion", "1")
+	etag, err := r.queryStruct("GET", u.String(), nil, "", &bucket)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return &bucket, etag, nil
+}
+
 // CreateStoragePoolBucket defines a new storage bucket using the provided struct.
 // If the server supports storage_buckets_create_credentials API extension, then this function will return the
 // initial admin credentials. Otherwise it will be nil.
