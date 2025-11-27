@@ -140,6 +140,28 @@ type StorageVolume struct {
 	CreatedAt time.Time `json:"created_at" yaml:"created_at"`
 }
 
+// StorageVolumeFull is a combination of StorageVolume, StorageVolumeBackup, StorageVolumeState and StorageVolumeSnapshot.
+//
+// swagger:model
+//
+// API extension: storage.
+type StorageVolumeFull struct {
+	// API extension: storage.
+	StorageVolume `yaml:",inline"`
+
+	// List of backups.
+	// API extension: storage_volume_state.
+	Backups []StorageVolumeBackup `json:"backups" yaml:"backups"`
+
+	// Current state.
+	// API extension: storage_api_volume_snapshots.
+	State *StorageVolumeState `json:"state" yaml:"state"`
+
+	// List of snapshots.
+	// API extension: custom_volume_backup.
+	Snapshots []StorageVolumeSnapshot `json:"snapshots" yaml:"snapshots"`
+}
+
 // URL returns the URL for the volume.
 func (v *StorageVolume) URL(apiVersion string, poolName string) *URL {
 	u := NewURL()
