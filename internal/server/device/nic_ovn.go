@@ -536,6 +536,26 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		}
 	}
 
+	if d.config["limits.ingress"] != "" {
+		priority, err := strconv.Atoi(d.config["limits.ingress"])
+		if err != nil {
+			return errors.New("limits.ingress must be an integer")
+		}
+		if priority < 1 || priority > 4294967295 {
+			return errors.New("limits.ingress must be between 1 an 32767, inclusive")
+		}
+	}
+
+	if d.config["limits.egress"] != "" {
+		priority, err := strconv.Atoi(d.config["limits.egress"])
+		if err != nil {
+			return errors.New("limits.egress must be an integer")
+		}
+		if priority < 1 || priority > 4294967295 {
+			return errors.New("limits.egress must be between 1 an 32767, inclusive")
+		}
+	}
+
 	return nil
 }
 
