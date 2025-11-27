@@ -192,6 +192,39 @@ func (r *ProtocolIncus) GetStoragePoolVolume(pool string, volType string, name s
 	return &volume, etag, nil
 }
 
+// GetStoragePoolVolumeFull returns the StorageVolume entry for the provided pool and volume name along with snapshot and backup information.
+func (r *ProtocolIncus) GetStoragePoolVolumeFull(pool string, volType string, name string) (*api.StorageVolumeFull, string, error) {
+	volume := api.StorageVolumeFull{}
+
+	// Backward compatible implementation without new extension.
+	vol, _, err := r.GetStoragePoolVolume(pool, volType, name)
+	if err != nil {
+		return nil, "", err
+	}
+
+	state, err := r.GetStoragePoolVolumeState(pool, volType, name)
+	if err != nil {
+		return nil, "", err
+	}
+
+	snaps, err := r.GetStoragePoolVolumeSnapshots(pool, volType, name)
+	if err != nil {
+		return nil, "", err
+	}
+
+	backups, err := r.GetStorageVolumeBackups(pool, name)
+	if err != nil {
+		return nil, "", err
+	}
+
+	volume.StorageVolume = *vol
+	volume.State = state
+	volume.Snapshots = snaps
+	volume.Backups = backups
+
+	return &volume, "", nil
+}
+
 // GetStoragePoolVolumeState returns a StorageVolumeState entry for the provided pool and volume name.
 func (r *ProtocolIncus) GetStoragePoolVolumeState(pool string, volType string, name string) (*api.StorageVolumeState, error) {
 	if !r.HasExtension("storage_volume_state") {
