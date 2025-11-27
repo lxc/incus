@@ -40,7 +40,7 @@ test_storage_volume_snapshots() {
     incus storage volume detach "${storage_pool}" "${storage_volume}" c1
     # This will create a snapshot named 'snap0'
     incus storage volume snapshot create "${storage_pool}" "${storage_volume}"
-    incus storage volume list "${storage_pool}" | grep "${storage_volume}/snap0"
+    incus storage volume snapshot list "${storage_pool}" "${storage_volume}" | grep -q "snap0"
     incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | grep 'name: snap0'
     incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | grep 'expires_at: 0001-01-01T00:00:00Z'
 
@@ -69,10 +69,10 @@ test_storage_volume_snapshots() {
 
     # Test snapshot renaming
     incus storage volume snapshot create "${storage_pool}" "${storage_volume}"
-    incus storage volume list "${storage_pool}" | grep "${storage_volume}/snap1"
+    incus storage volume snapshot list "${storage_pool}" "${storage_volume}" | grep -q "snap1"
     incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap1" | grep 'name: snap1'
     incus storage volume snapshot rename "${storage_pool}" "${storage_volume}" snap1 foo
-    incus storage volume list "${storage_pool}" | grep "${storage_volume}/foo"
+    incus storage volume snapshot list "${storage_pool}" "${storage_volume}" | grep -q "foo"
     incus storage volume snapshot show "${storage_pool}" "${storage_volume}/foo" | grep 'name: foo'
 
     incus storage volume attach "${storage_pool}" "${storage_volume}" c1 /mnt
