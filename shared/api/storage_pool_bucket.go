@@ -34,6 +34,21 @@ type StorageBucketPut struct {
 	Description string `json:"description" yaml:"description"`
 }
 
+// StorageBucketFull is a combination of StorageBucket, StorageBucketBackup and StorageBucketKey.
+//
+// swagger:model
+//
+// API extension: storage_bucket_full.
+type StorageBucketFull struct {
+	StorageBucket `yaml:",inline"`
+
+	// List of backups.
+	Backups []StorageBucketBackup `json:"backups" yaml:"backups"`
+
+	// List of keys.
+	Keys []StorageBucketKey `json:"keys" yaml:"keys"`
+}
+
 // StorageBucket represents the fields of a storage pool bucket
 //
 // swagger:model
