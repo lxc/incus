@@ -2929,3 +2929,9 @@ Implements `DELETE`, `GET`, `HEAD`, `POST` operations on the `/1.0/storage-pools
 ## `network_hwaddr_pattern`
 
 This adds `network.hwaddr_pattern` global and per-project configuration keys to customize MAC address allocation.
+
+## `storage_volume_full`
+
+This adds `?recursion=1` support to `/1.0/storage-pools/POOL/volumes/VOLUME` and `?recursion=2` support to `/1.0/storage-pools/POOL/volumes`.
+
+As well as a matching `StorageVolumeFull` struct.
