@@ -1033,6 +1033,39 @@
 						}
 					},
 					{
+						"limits.egress": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.ingress": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.max": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "I/O limit in bit/s for both incoming and outgoing traffic. (same as setting both limits.ingress and limits.egress / mutually exclusive with limits.ingress and limits.egress)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.priority": {
+							"default": "100",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The priority for outgoing traffic, to be used by the kernel queuing discipline to prioritize network packets",
+							"type": "integer"
+						}
+					},
+					{
 						"mtu": {
 							"default": "MTU of the parent network",
 							"longdesc": "",
