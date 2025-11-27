@@ -500,6 +500,7 @@ var APIExtensions = []string{
 	"file_storage_volume",
 	"network_hwaddr_pattern",
 	"storage_volume_full",
+	"storage_bucket_full",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
