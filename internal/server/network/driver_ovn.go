@@ -5134,33 +5134,46 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		qosPriority = 100
 	}
 
+	var rules []networkOVN.OVNQoSRule
 	if opts.DeviceConfig["limits.egress"] != "" {
-		rate, err := strconv.Atoi(opts.DeviceConfig["limits.egress"]) //TODO: We could use units.ParseBitSizeString but then we have to make sure to convert it to KiloBits again
+		rate, err := strconv.Atoi(opts.DeviceConfig["limits.egress"])
 		if err != nil {
 			return "", nil, fmt.Errorf("Failed converting limits.egress to int: %w", err)
 		}
-		n.logger.Debug(fmt.Sprintf("ovn,rate = %d", rate))
-		rules := []networkOVN.OVNQoSRule{
-			{
-				Direction: ovnNB.QoSDirectionFromLport,
-				Action:    map[string]int{},
-				Bandwidth: map[string]int{
-					"rate": rate,
-				},
-				Match:    fmt.Sprintf("inport == \"%s\"", instancePortName), //maybe missing ->"<- in beginning and end
-				Priority: int(qosPriority),                                  //TODO: Make configurable
-
+		egressRule := networkOVN.OVNQoSRule{
+			Direction: ovnNB.QoSDirectionFromLport,
+			Action:    map[string]int{},
+			Bandwidth: map[string]int{
+				"rate": rate,
 			},
+			Match:    fmt.Sprintf("inport == \"%s\"", instancePortName),
+			Priority: int(qosPriority),
 		}
-		n.logger.Debug("QoS Rule assembled")
-		err = n.ovnnb.AddLogicalSwitchQoSRules(context.TODO(), n.getIntSwitchName(), instancePortName, rules...)
+		rules = append(rules, egressRule)
+	}
+	if opts.DeviceConfig["limits.ingress"] != "" {
+		rate, err := strconv.Atoi(opts.DeviceConfig["limits.ingress"])
 		if err != nil {
-			return "", nil, err
+			return "", nil, fmt.Errorf("Failed converting limits.egress to int: %w", err)
 		}
+		ingressRule := networkOVN.OVNQoSRule{
+			Direction: ovnNB.QoSDirectionToLport,
+			Action:    map[string]int{},
+			Bandwidth: map[string]int{
+				"rate": rate,
+			},
+			Match:    fmt.Sprintf("outport == \"%s\"", instancePortName),
+			Priority: int(qosPriority),
+		}
+		rules = append(rules, ingressRule)
+	}
+
+	err = n.ovnnb.AddLogicalSwitchQoSRules(context.TODO(), n.getIntSwitchName(), instancePortName, rules...)
+	if err != nil {
+		return "", nil, err
 	}
 
 	reverter.Success()
-	n.logger.Debug("Reached end of InstanceDevicePortStart function")
 	return instancePortName, dnsIPs, nil
 }
 

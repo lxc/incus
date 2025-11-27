@@ -1663,54 +1663,6 @@ func (o *NB) UpdateLogicalSwitchACLRules(ctx context.Context, switchName OVNSwit
 	return nil
 }
 
-// TODO: Remove delete and put it in an extra function
-func (o *NB) UpdateLogicalSwitchQoSRules(ctx context.Context, switchName OVNSwitch, qosRules ...OVNQoSRule) error {
-	operations := []ovsdb.Operation{}
-
-	// Get the logical switch
-	ls, err := o.GetLogicalSwitch(ctx, switchName)
-	if err != nil {
-		return err
-	}
-
-	for _, qosUUID := range ls.QOSRules {
-		updateOps, err := o.client.Where(ls).Mutate(ls, ovsModel.Mutation{
-			Field:   &ls.QOSRules,
-			Mutator: ovsdb.MutateOperationDelete,
-			Value:   []string{qosUUID},
-		})
-		if err != nil {
-			return err
-		}
-
-		operations = append(operations, updateOps...)
-	}
-
-	// Add new rules.
-	externalIDs := map[string]string{
-		ovnExtIDIncusSwitch: string(switchName),
-	}
-
-	createOps, err := o.qosRuleAddOperations(ctx, "logical_switch", string(switchName), externalIDs, nil, qosRules...)
-	if err != nil {
-		return err
-	}
-
-	operations = append(operations, createOps...)
-
-	resp, err := o.client.Transact(ctx, operations...)
-	if err != nil {
-		return err
-	}
-
-	_, err = ovsdb.CheckOperationResults(resp, operations)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // logicalSwitchPortQoSRules returns the QoS rule UUIDs belonging to a logical switch port.
 func (o *NB) logicalSwitchPortQoSRules(ctx context.Context, portName OVNSwitchPort) ([]string, error) {
 	var qosRules []ovnNB.QoS
