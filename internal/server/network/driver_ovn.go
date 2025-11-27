@@ -47,6 +47,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
+	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/validate"
 )
@@ -5134,37 +5135,45 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		qosPriority = 100
 	}
 
+	// TODO: implement limits.max config key
 	var rules []networkOVN.OVNQoSRule
 	if opts.DeviceConfig["limits.egress"] != "" {
-		rate, err := strconv.Atoi(opts.DeviceConfig["limits.egress"])
+		rate, err := units.ParseBitSizeString(opts.DeviceConfig["limits.egress"])
 		if err != nil {
 			return "", nil, fmt.Errorf("Failed converting limits.egress to int: %w", err)
 		}
+
+		rate /= 1000
 		egressRule := networkOVN.OVNQoSRule{
 			Direction: ovnNB.QoSDirectionFromLport,
 			Action:    map[string]int{},
 			Bandwidth: map[string]int{
-				"rate": rate,
+				"rate": int(rate),
 			},
 			Match:    fmt.Sprintf("inport == \"%s\"", instancePortName),
 			Priority: int(qosPriority),
 		}
+
 		rules = append(rules, egressRule)
 	}
+
 	if opts.DeviceConfig["limits.ingress"] != "" {
-		rate, err := strconv.Atoi(opts.DeviceConfig["limits.ingress"])
+		rate, err := units.ParseBitSizeString(opts.DeviceConfig["limits.ingress"])
 		if err != nil {
 			return "", nil, fmt.Errorf("Failed converting limits.egress to int: %w", err)
 		}
+
+		rate /= 1000
 		ingressRule := networkOVN.OVNQoSRule{
 			Direction: ovnNB.QoSDirectionToLport,
 			Action:    map[string]int{},
 			Bandwidth: map[string]int{
-				"rate": rate,
+				"rate": int(rate),
 			},
 			Match:    fmt.Sprintf("outport == \"%s\"", instancePortName),
 			Priority: int(qosPriority),
 		}
+
 		rules = append(rules, ingressRule)
 	}
 
