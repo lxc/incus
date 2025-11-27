@@ -17,10 +17,6 @@ type StorageBucketBackup struct {
 	// When the backup expires (gets auto-deleted)
 	// Example: 2021-03-23T17:38:37.753398689-04:00
 	ExpiresAt time.Time `json:"expires_at" yaml:"expires_at"`
-
-	// What compression algorithm to use
-	// Example: gzip
-	CompressionAlgorithm string `json:"compression_algorithm" yaml:"compression_algorithm"`
 }
 
 // StorageBucketBackupsPost represents the fields available for a new storage bucket backup
