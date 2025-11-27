@@ -5130,6 +5130,8 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		if err != nil {
 			return "", nil, fmt.Errorf("Failed to parse limits.priority %q: %w", opts.DeviceConfig["limits.priority"], err)
 		}
+	} else {
+		qosPriority = 100
 	}
 
 	if opts.DeviceConfig["limits.egress"] != "" {
