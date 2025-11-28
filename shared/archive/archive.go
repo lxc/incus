@@ -187,6 +187,11 @@ func Unpack(file string, path string, blockBackend bool, maxMemory int64, tracke
 			allowedCmds = append(allowedCmds, unpacker[0])
 		}
 	} else if strings.HasPrefix(extension, ".squashfs") {
+		// Progress tracking with squashfs doesn't work as it needs to seek the file.
+		if tracker.Handler != nil {
+			tracker.Handler(0, 0)
+		}
+
 		// unsquashfs does not support reading from stdin,
 		// so ProgressTracker is not possible.
 		command = "unsquashfs"
