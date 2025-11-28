@@ -4499,6 +4499,8 @@ definitions:
                 $ref: '#/definitions/ResourcesNetwork'
             pci:
                 $ref: '#/definitions/ResourcesPCI'
+            serial:
+                $ref: '#/definitions/ResourcesSerial'
             storage:
                 $ref: '#/definitions/ResourcesStorage'
             system:
@@ -5334,6 +5336,73 @@ definitions:
                 example: HP Ethernet 1Gb 4-port 331i Adapter
                 type: string
                 x-go-name: ProductName
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    ResourcesSerial:
+        description: ResourcesSerial represents the serial devices available on the system
+        properties:
+            devices:
+                description: List of serial devices
+                items:
+                    $ref: '#/definitions/ResourcesSerialDevice'
+                type: array
+                x-go-name: Devices
+            total:
+                description: Total number of serial devices
+                example: 1
+                format: uint64
+                type: integer
+                x-go-name: Total
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    ResourcesSerialDevice:
+        description: ResourcesSerialDevice represents a serial device
+        properties:
+            device:
+                description: Device number (major:minor)
+                example: "188:0"
+                type: string
+                x-go-name: Device
+            device_id:
+                description: Path to /dev/serial/by-id entry
+                example: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AB0J1234-if00-port0
+                type: string
+                x-go-name: DeviceID
+            device_path:
+                description: Path to /dev/serial/by-path entry
+                example: /dev/serial/by-path/pci-0000:00:14.0-usb-0:2:1.0-port0
+                type: string
+                x-go-name: DevicePath
+            driver:
+                description: kernel driver name (cdc_acm, ftdi_sio, pl2303, cp210x...)
+                example: cdc_acm
+                type: string
+                x-go-name: Driver
+            id:
+                description: Kernel device name (e.g. ttyUSB0, ttyACM0)
+                example: ttyUSB0
+                type: string
+                x-go-name: ID
+            product:
+                description: USB product name
+                example: Arduino Uno
+                type: string
+                x-go-name: Product
+            product_id:
+                description: USB product ID
+                example: "0043"
+                type: string
+                x-go-name: ProductID
+            vendor:
+                description: USB vendor name
+                example: Arduino LLC
+                type: string
+                x-go-name: Vendor
+            vendor_id:
+                description: USB vendor ID
+                example: "2341"
+                type: string
+                x-go-name: VendorID
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     ResourcesStorage:

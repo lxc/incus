@@ -509,6 +509,7 @@ var APIExtensions = []string{
 	"storage_volume_full",
 	"storage_bucket_full",
 	"device_pci_firmware",
+	"resources_serial",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
