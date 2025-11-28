@@ -682,6 +682,27 @@ func bgpAddPrefix(d *deviceCommon, n network.Network, config map[string]string) 
 		}
 	}
 
+	if config["bgp.announce_ip"] != "" {
+		enabled, err := strconv.ParseBool(config["bgp.announce_ip"])
+		if err != nil {
+			return err
+		}
+
+		if enabled {
+			targetIP := "" // TODO need help here
+
+			_, prefixNet, err := net.ParseCIDR(targetIP)
+			if err != nil {
+				return err
+			}
+
+			err = d.state.BGP.AddPrefix(*prefixNet, nexthopV4, bgpOwner)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 

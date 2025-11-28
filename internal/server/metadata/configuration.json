@@ -567,6 +567,15 @@
 							"type": "string"
 						}
 					},
+                    {
+                        "bgp.announce_ip": {
+                            "defaultdesc": "`false`",
+                            "longdesc": "if enabled, the BGP announce every vm or lxc as /32",
+                            "scope": "global",
+                            "shortdesc": "BGP announce /32",
+                            "type": "bool"
+                        }
+                    },
 					{
 						"limits.egress": {
 							"longdesc": "",
