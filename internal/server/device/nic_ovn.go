@@ -539,6 +539,18 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		}
 	}
 
+	if d.config["limits.max"] != "" {
+		limitsMax, err := units.ParseBitSizeString(d.config["limits.max"])
+		if err != nil {
+			return errors.New("limits.max must be an integer")
+		}
+
+		limitsMax /= 1000 // Convert to kbps
+		if limitsMax < 1 || limitsMax > 4294967295 {
+			return errors.New("limits.max must be between 1 an 4294967295 bps, inclusive")
+		}
+	}
+
 	if d.config["limits.ingress"] != "" {
 		ingress, err := units.ParseBitSizeString(d.config["limits.ingress"])
 		if err != nil {
