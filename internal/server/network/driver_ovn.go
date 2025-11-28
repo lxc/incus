@@ -5135,20 +5135,35 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		qosPriority = 100
 	}
 
-	// TODO: implement limits.max config key
-	var rules []networkOVN.OVNQoSRule
-	if opts.DeviceConfig["limits.egress"] != "" {
-		rate, err := units.ParseBitSizeString(opts.DeviceConfig["limits.egress"])
+	egressRate, err := units.ParseBitSizeString(opts.DeviceConfig["limits.egress"])
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed converting limits.egress to int: %w", err)
+	}
+
+	ingressRate, err := units.ParseBitSizeString(opts.DeviceConfig["limits.ingress"])
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed converting limits.ingress to int: %w", err)
+	}
+
+	if opts.DeviceConfig["limits.max"] != "" {
+		maxRate, err := units.ParseBitSizeString(opts.DeviceConfig["limits.max"])
 		if err != nil {
-			return "", nil, fmt.Errorf("Failed converting limits.egress to int: %w", err)
+			return "", nil, fmt.Errorf("Failed converting limits.max to int: %w", err)
 		}
 
-		rate /= 1000
+		// Overwrite the egress and ingress rate limits if the max rate limit is set.
+		ingressRate = maxRate
+		egressRate = maxRate
+	}
+
+	var rules []networkOVN.OVNQoSRule
+	if opts.DeviceConfig["limits.egress"] != "" || opts.DeviceConfig["limits.max"] != "" {
+		egressRate /= 1000
 		egressRule := networkOVN.OVNQoSRule{
 			Direction: ovnNB.QoSDirectionFromLport,
 			Action:    map[string]int{},
 			Bandwidth: map[string]int{
-				"rate": int(rate),
+				"rate": int(egressRate),
 			},
 			Match:    fmt.Sprintf("inport == \"%s\"", instancePortName),
 			Priority: int(qosPriority),
@@ -5157,18 +5172,13 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		rules = append(rules, egressRule)
 	}
 
-	if opts.DeviceConfig["limits.ingress"] != "" {
-		rate, err := units.ParseBitSizeString(opts.DeviceConfig["limits.ingress"])
-		if err != nil {
-			return "", nil, fmt.Errorf("Failed converting limits.egress to int: %w", err)
-		}
-
-		rate /= 1000
+	if opts.DeviceConfig["limits.ingress"] != "" || opts.DeviceConfig["limits.max"] != "" {
+		ingressRate /= 1000
 		ingressRule := networkOVN.OVNQoSRule{
 			Direction: ovnNB.QoSDirectionToLport,
 			Action:    map[string]int{},
 			Bandwidth: map[string]int{
-				"rate": int(rate),
+				"rate": int(ingressRate),
 			},
 			Match:    fmt.Sprintf("outport == \"%s\"", instancePortName),
 			Priority: int(qosPriority),
