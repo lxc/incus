@@ -682,9 +682,13 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 			return err
 		}
 
-		err = FirewallApplyACLRules(d.state, d.logger, d.projectName, aclNet)
-		if err != nil {
-			return err
+		// Only trigger application on related bridged networks that directly use the ACL.
+		networkACLs := util.SplitNTrimSpace(aclNet.Config["security.acls"], ",", -1, true)
+		if slices.Contains(networkACLs, d.info.Name) {
+			err = FirewallApplyACLRules(d.state, d.logger, d.projectName, aclNet)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
