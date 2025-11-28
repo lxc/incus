@@ -37,6 +37,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/network/acl"
 	addressset "github.com/lxc/incus/v6/internal/server/network/address-set"
 	networkOVN "github.com/lxc/incus/v6/internal/server/network/ovn"
+	ovnNB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-nb"
 	ovnSB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-sb"
 	"github.com/lxc/incus/v6/internal/server/network/ovs"
 	"github.com/lxc/incus/v6/internal/server/project"
@@ -46,6 +47,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
+	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/validate"
 )
@@ -5121,6 +5123,73 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		}
 
 		n.logger.Debug("Cleared NIC default rule", logger.Ctx{"port": instancePortName})
+	}
+
+	var qosPriority uint64
+	if opts.DeviceConfig["limits.priority"] != "" {
+		qosPriority, err = strconv.ParseUint(opts.DeviceConfig["limits.priority"], 10, 32)
+		if err != nil {
+			return "", nil, fmt.Errorf("Failed to parse limits.priority %q: %w", opts.DeviceConfig["limits.priority"], err)
+		}
+	} else {
+		qosPriority = 100
+	}
+
+	egressRate, err := units.ParseBitSizeString(opts.DeviceConfig["limits.egress"])
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed converting limits.egress to int: %w", err)
+	}
+
+	ingressRate, err := units.ParseBitSizeString(opts.DeviceConfig["limits.ingress"])
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed converting limits.ingress to int: %w", err)
+	}
+
+	if opts.DeviceConfig["limits.max"] != "" {
+		maxRate, err := units.ParseBitSizeString(opts.DeviceConfig["limits.max"])
+		if err != nil {
+			return "", nil, fmt.Errorf("Failed converting limits.max to int: %w", err)
+		}
+
+		// Overwrite the egress and ingress rate limits if the max rate limit is set.
+		ingressRate = maxRate
+		egressRate = maxRate
+	}
+
+	var rules []networkOVN.OVNQoSRule
+	if opts.DeviceConfig["limits.egress"] != "" || opts.DeviceConfig["limits.max"] != "" {
+		egressRate /= 1000
+		egressRule := networkOVN.OVNQoSRule{
+			Direction: ovnNB.QoSDirectionFromLport,
+			Action:    map[string]int{},
+			Bandwidth: map[string]int{
+				"rate": int(egressRate),
+			},
+			Match:    fmt.Sprintf("inport == \"%s\"", instancePortName),
+			Priority: int(qosPriority),
+		}
+
+		rules = append(rules, egressRule)
+	}
+
+	if opts.DeviceConfig["limits.ingress"] != "" || opts.DeviceConfig["limits.max"] != "" {
+		ingressRate /= 1000
+		ingressRule := networkOVN.OVNQoSRule{
+			Direction: ovnNB.QoSDirectionToLport,
+			Action:    map[string]int{},
+			Bandwidth: map[string]int{
+				"rate": int(ingressRate),
+			},
+			Match:    fmt.Sprintf("outport == \"%s\"", instancePortName),
+			Priority: int(qosPriority),
+		}
+
+		rules = append(rules, ingressRule)
+	}
+
+	err = n.ovnnb.AddLogicalSwitchQoSRules(context.TODO(), n.getIntSwitchName(), instancePortName, rules...)
+	if err != nil {
+		return "", nil, err
 	}
 
 	reverter.Success()

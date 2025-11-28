@@ -920,6 +920,35 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```
 
+```{config:option} limits.egress devices-nic_ovn
+:managed: "no"
+:shortdesc: "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)"
+:type: "string"
+
+```
+
+```{config:option} limits.ingress devices-nic_ovn
+:managed: "no"
+:shortdesc: "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)"
+:type: "string"
+
+```
+
+```{config:option} limits.max devices-nic_ovn
+:managed: "no"
+:shortdesc: "I/O limit in bit/s for both incoming and outgoing traffic. (same as setting both limits.ingress and limits.egress / mutually exclusive with limits.ingress and limits.egress)"
+:type: "string"
+
+```
+
+```{config:option} limits.priority devices-nic_ovn
+:default: "100"
+:managed: "no"
+:shortdesc: "The priority for outgoing traffic, to be used by the kernel queuing discipline to prioritize network packets"
+:type: "integer"
+
+```
+
 ```{config:option} mtu devices-nic_ovn
 :default: "MTU of the parent network"
 :managed: "yes"

@@ -2950,3 +2950,7 @@ When set to `false`, Incus tells QEMU to disable the ROM-BAR (`rombar=0`) for th
 ## `resources_serial`
 
 This adds serial device tracking to the resources API.
+
+## `ovn_nic_limits`
+
+This adds support for `limits.egress`, `limits.ingress`, `limits.max` and `limits.priority` on `ovn` type network devices.
