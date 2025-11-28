@@ -15,7 +15,7 @@ test_tls_restrictions() {
     METRICS_FINGERPRINT="$(incus config trust list --format csv --columns cf | grep -F metrics.local | cut -d, -f2)"
     incus config trust remove "${METRICS_FINGERPRINT}"
 
-    FINGERPRINT="$(incus config trust list --format csv --columns f)"
+    FINGERPRINT="$(incus config trust list --format csv --columns nf | grep -F foo | cut -d, -f2)"
 
     # Validate admin rights with no restrictions
     incus_remote project create localhost:blah
