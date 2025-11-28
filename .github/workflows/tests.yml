@@ -130,62 +130,72 @@ jobs:
       fail-fast: false
       matrix:
         go:
+          - oldstable
           - stable
+          - tip
         suite:
           - cluster
-          - standalone
+          - standalone_core
+          - standalone_container
+          - standalone_network
+          - standalone_storage
         backend:
           - dir
-          - btrfs
-          - lvm
-          - zfs
-          - ceph
-          - linstor
-          - random
         os:
           - ubuntu-24.04
+          - ubuntu-24.04-arm
         include:
-          - go: oldstable
-            suite: cluster
-            backend: dir
-            os: ubuntu-24.04
-          - go: oldstable
-            suite: standalone
-            backend: dir
-            os: ubuntu-24.04
-          - go: tip
-            suite: cluster
-            backend: dir
-            os: ubuntu-24.04
-          - go: tip
-            suite: standalone
-            backend: dir
-            os: ubuntu-24.04
+          # Run standalone storage tests on all storage drivers but only on Ubuntu 24.04 with stable Go
+          - os: ubuntu-24.04
+            backend: btrfs
+            go: stable
+            suite: standalone_storage
+          - os: ubuntu-24.04
+            backend: ceph
+            go: stable
+            suite: standalone_storage
+          - os: ubuntu-24.04
+            backend: linstor
+            go: stable
+            suite: standalone_storage
+          - os: ubuntu-24.04
+            backend: lvm
+            go: stable
+            suite: standalone_storage
+          - os: ubuntu-24.04
+            backend: random
+            go: stable
+            suite: standalone_storage
+          - os: ubuntu-24.04
+            backend: zfs
+            go: stable
+            suite: standalone_storage
 
-          - go: oldstable
+          # Run cluster tests on all storage drivers but only on Ubuntu 24.04 with stable Go
+          - os: ubuntu-24.04
+            backend: btrfs
+            go: stable
             suite: cluster
-            backend: dir
-            os: ubuntu-24.04-arm
-          - go: oldstable
-            suite: standalone
-            backend: dir
-            os: ubuntu-24.04-arm
-          - go: stable
+          - os: ubuntu-24.04
+            backend: ceph
+            go: stable
             suite: cluster
-            backend: dir
-            os: ubuntu-24.04-arm
-          - go: stable
-            suite: standalone
-            backend: dir
-            os: ubuntu-24.04-arm
-          - go: tip
+          - os: ubuntu-24.04
+            backend: linstor
+            go: stable
             suite: cluster
-            backend: dir
-            os: ubuntu-24.04-arm
-          - go: tip
-            suite: standalone
-            backend: dir
-            os: ubuntu-24.04-arm
+          - os: ubuntu-24.04
+            backend: lvm
+            go: stable
+            suite: cluster
+          - os: ubuntu-24.04
+            backend: random
+            go: stable
+            suite: cluster
+          - os: ubuntu-24.04
+            backend: zfs
+            go: stable
+            suite: cluster
     runs-on: ${{ matrix.os }}
 
     steps:
