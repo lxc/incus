@@ -3,6 +3,7 @@ package incus
 import (
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -30,6 +31,7 @@ type ociInfo struct {
 	Digest       string    `json:"Digest"`
 	Created      time.Time `json:"Created"`
 	Architecture string    `json:"Architecture"`
+	Layers       []string  `json:"Layers"`
 	LayersData   []struct {
 		Size int64 `json:"Size"`
 	} `json:"LayersData"`
@@ -417,7 +419,7 @@ func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string
 	}
 
 	info.Alias = name
-	info.Digest = strings.Replace(info.Digest, "sha256:", "", 1)
+	info.Digest = r.computeFingerprint(info.Layers)
 
 	archID, err := osarch.ArchitectureID(info.Architecture)
 	if err != nil {
@@ -477,4 +479,14 @@ func (r *ProtocolOCI) GetImageAliasArchitectures(imageType string, name string) 
 // ExportImage exports (copies) an image to a remote server.
 func (r *ProtocolOCI) ExportImage(_ string, _ api.ImageExportPost) (Operation, error) {
 	return nil, errors.New("Exporting images is not supported with OCI registry")
+}
+
+func (r *ProtocolOCI) computeFingerprint(layers []string) string {
+	h := sha256.New()
+
+	for _, layer := range layers {
+		h.Write([]byte(layer))
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
