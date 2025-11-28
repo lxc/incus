@@ -147,6 +147,9 @@ test_remote_url_with_token() {
 }
 
 test_remote_admin() {
+    # Clear all certificates
+    for fp in $(incus config trust list -fcsv -cf); do incus config trust remove "${fp}"; done
+
     ! incus_remote remote add badpass "${INCUS_ADDR}" --accept-certificate --token badtoken || false
     ! incus_remote list badpass: || false
 
@@ -195,6 +198,9 @@ test_remote_admin() {
 }
 
 test_remote_usage() {
+    # Clear all certificates
+    for fp in $(incus config trust list -fcsv -cf); do incus config trust remove "${fp}"; done
+
     # shellcheck disable=2039,3043
     local INCUS2_DIR INCUS2_ADDR
     INCUS2_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
