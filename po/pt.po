@@ -8,10 +8,10 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-11-28 02:38-0500\n"
-"PO-Revision-Date: 2025-11-27 05:00+0000\n"
+"PO-Revision-Date: 2025-11-29 19:00+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -2119,14 +2119,12 @@ msgid "Delete all warnings"
 msgstr "Apaga todos os avisos"
 
 #: cmd/incus/operation.go:65 cmd/incus/operation.go:66
-#, fuzzy
 msgid "Delete background operations (will attempt to cancel)"
-msgstr "Apaga uma operação nos bastidores (irá tentar cancela-la)"
+msgstr "Apaga operações nos bastidores (irá tentar cancelar)"
 
 #: cmd/incus/cluster_group.go:281 cmd/incus/cluster_group.go:282
-#, fuzzy
 msgid "Delete cluster groups"
-msgstr "Apaga um grupo de agrupamento (cluster)"
+msgstr "Apaga grupos de agrupamento (cluster)"
 
 #: cmd/incus/storage_volume.go:717 cmd/incus/storage_volume.go:718
 msgid "Delete custom storage volumes"
@@ -2222,9 +2220,8 @@ msgid "Delete storage volume snapshots"
 msgstr "Apaga instantâneos de volume de armazenamento"
 
 #: cmd/incus/warning.go:371 cmd/incus/warning.go:372
-#, fuzzy
 msgid "Delete warnings"
-msgstr "Apaga aviso"
+msgstr "Apaga avisos"
 
 #: cmd/incus/action.go:32 cmd/incus/action.go:56 cmd/incus/action.go:81
 #: cmd/incus/action.go:106 cmd/incus/action.go:130 cmd/incus/admin.go:21
@@ -2480,19 +2477,19 @@ msgid "Device: %s"
 msgstr "Dispositivo: %s"
 
 #: cmd/incus/info.go:387
-#, fuzzy, c-format
+#, c-format
 msgid "Device: %v"
-msgstr "Dispositivo: %s"
+msgstr "Dispositivo: %v"
 
 #: cmd/incus/info.go:388
-#, fuzzy, c-format
+#, c-format
 msgid "DeviceID: %v"
-msgstr "Dispositivo: %s"
+msgstr "ID de Dispositivo: %v"
 
 #: cmd/incus/info.go:389
-#, fuzzy, c-format
+#, c-format
 msgid "DevicePath: %v"
-msgstr "Dispositivo: %s"
+msgstr "Caminho de Dispositivo: %v"
 
 #: cmd/incus/create.go:443
 msgid "Didn't get name of new instance from the server"
@@ -4048,9 +4045,9 @@ msgid "ISSUE DATE"
 msgstr "DATA DO PROBLEMA"
 
 #: cmd/incus/info.go:386
-#, fuzzy, c-format
+#, c-format
 msgid "Id: %v"
-msgstr "Usado: %v"
+msgstr "Id: %v"
 
 #: cmd/incus/rebuild.go:34
 msgid "If an instance is running, stop it and then rebuild it"
@@ -6588,9 +6585,8 @@ msgid "Missing network zone record name"
 msgstr "Nome de registro de zona de rede em falta"
 
 #: cmd/incus/operation.go:90
-#, fuzzy
 msgid "Missing operation name"
-msgstr "Nome de aplicação em falta"
+msgstr "Nome de operação em falta"
 
 #: cmd/incus/network_peer.go:298 cmd/incus/network_peer.go:386
 #: cmd/incus/network_peer.go:535 cmd/incus/network_peer.go:621
@@ -8109,14 +8105,12 @@ msgid "Serial Number: %v"
 msgstr "Número de Série: %v"
 
 #: cmd/incus/info.go:620
-#, fuzzy
 msgid "Serial device:"
-msgstr "Dispositivo USB:"
+msgstr "Dispositivo série:"
 
 #: cmd/incus/info.go:623
-#, fuzzy
 msgid "Serial devices:"
-msgstr "Dispositivos USB:"
+msgstr "Dispositivos série:"
 
 #: cmd/incus/info.go:467 cmd/incus/info.go:483
 #, c-format
@@ -10254,9 +10248,8 @@ msgid "[<remote>:]<ACL> <new-name>"
 msgstr "[<remoto>:]<ACL> <novo-nome>"
 
 #: cmd/incus/network_acl.go:834
-#, fuzzy
 msgid "[<remote>:]<ACL> [[<remote>:]<ACL>...]"
-msgstr "[<remoto>:]<imagem> [[<remoto>:]<imagem>...]"
+msgstr "[<remoto>:]<ACL> [[<remoto>:]<ACL>...]"
 
 #: cmd/incus/network_acl.go:396
 msgid "[<remote>:]<ACL> [key=value...]"
@@ -10279,9 +10272,8 @@ msgid "[<remote>:]<Zone> <key>=<value>..."
 msgstr "[<remoto>:]<Zona> <chave>=<valor>..."
 
 #: cmd/incus/network_zone.go:769
-#, fuzzy
 msgid "[<remote>:]<Zone> [[<remote>:]<Zone>...]"
-msgstr "[<remoto>:]<imagem> [[<remoto>:]<imagem>...]"
+msgstr "[<remoto>:]<Zona> [[<remoto>:]<Zona>...]"
 
 #: cmd/incus/network_zone.go:404
 msgid "[<remote>:]<Zone> [key=value...]"
@@ -10308,9 +10300,8 @@ msgid "[<remote>:]<address-set> <new-name>"
 msgstr "[<remoto>:]<conjunto-endereços><novo-nome>"
 
 #: cmd/incus/network_address_set.go:646
-#, fuzzy
 msgid "[<remote>:]<address-set> [[<remote>:]<address-set>...]"
-msgstr "[<remoto>:]<conjunto-endereços><endereço>..."
+msgstr "[<remoto>:]<conjunto-endereços> [[<remoto>:]<conjunto-endereços>...]"
 
 #: cmd/incus/network_address_set.go:247
 msgid "[<remote>:]<address-set> [key=value...]"
@@ -10325,9 +10316,8 @@ msgid "[<remote>:]<alias> <new-name>"
 msgstr "[<remoto>:]<alias> <novo-nome>"
 
 #: cmd/incus/image_alias.go:138
-#, fuzzy
 msgid "[<remote>:]<alias> [[<remote>:]<alias>...]"
-msgstr "[<remoto>:]<imagem> [[<remoto>:]<imagem>...]"
+msgstr "[<remoto>:]<alias> [[<remoto>:]<alias>...]"
 
 #: cmd/incus/config_trust.go:283 cmd/incus/config_trust.go:772
 #: cmd/incus/config_trust.go:894
@@ -10352,9 +10342,8 @@ msgid "[<remote>:]<group> <new-name>"
 msgstr "[<remoto>:]<grupo> <novo-nome>"
 
 #: cmd/incus/cluster_group.go:279
-#, fuzzy
 msgid "[<remote>:]<group> [[<remote>:]<group>...]"
-msgstr "[<remoto>:]<imagem> [[<remoto>:]<imagem>...]"
+msgstr "[<remoto>:]<grupo> [[<remoto>:]<grupo>...]"
 
 #: cmd/incus/image.go:370 cmd/incus/image.go:941 cmd/incus/image.go:1528
 msgid "[<remote>:]<image>"
@@ -10551,9 +10540,8 @@ msgid "[<remote>:]<network integration> <type>"
 msgstr "[<remoto>:]<integração de rede> <tipo>"
 
 #: cmd/incus/network_integration.go:178
-#, fuzzy
 msgid "[<remote>:]<network integration> [[<remote>:]<network integration>...]"
-msgstr "[<remoto>:]<instância> [[<remoto>:]<instância>]"
+msgstr "[<remoto>:]<integração de rede> [[<remoto>:]<integração de rede>...]"
 
 #: cmd/incus/network.go:724 cmd/incus/network.go:945 cmd/incus/network.go:1325
 #: cmd/incus/network.go:1643 cmd/incus/network_forward.go:92
@@ -10670,9 +10658,8 @@ msgid "[<remote>:]<network> <profile> [<device name>] [<interface name>]"
 msgstr "[<remoto>:]<rede> <perfil> [<nome dispositivo>] [<nome interface>]"
 
 #: cmd/incus/network.go:469
-#, fuzzy
 msgid "[<remote>:]<network> [[<remote>:]<network>...]"
-msgstr "[<remoto>:]<imagem> [[<remoto>:]<imagem>...]"
+msgstr "[<remoto>:]<rede> [[<remoto>:]<rede>...]"
 
 #: cmd/incus/network.go:351
 msgid "[<remote>:]<network> [key=value...]"
@@ -10683,9 +10670,8 @@ msgid "[<remote>:]<operation>"
 msgstr "[<remoto>:]<operação>"
 
 #: cmd/incus/operation.go:63
-#, fuzzy
 msgid "[<remote>:]<operation> [[<remote>:]<operation>...]"
-msgstr "[<remoto>:]<imagem> [[<remoto>:]<imagem>...]"
+msgstr "[<remoto>:]<operação> [[<remoto>:]<operação>...]"
 
 #: cmd/incus/storage.go:281 cmd/incus/storage.go:499 cmd/incus/storage.go:965
 #: cmd/incus/storage_bucket.go:496
@@ -10815,9 +10801,8 @@ msgid "[<remote>:]<pool> [<type>/]<volume>[/<snapshot>] <key>"
 msgstr "[<remoto>:]<pool> [<tipo>/]<volume>[/<instantâneo>] <chave>"
 
 #: cmd/incus/storage.go:224
-#, fuzzy
 msgid "[<remote>:]<pool> [[<remote>:]<pool>...]"
-msgstr "[<remoto>:]<perfil> [<remoto>:]<perfil>"
+msgstr "[<remoto>:]<pool> [[<remoto>:]<pool>...]"
 
 #: cmd/incus/storage_volume.go:1856
 msgid "[<remote>:]<pool>/<volume> [<remote>:]<pool>/<volume>"
@@ -10865,9 +10850,8 @@ msgid "[<remote>:]<profile> [<remote>:]<profile>"
 msgstr "[<remoto>:]<perfil> [<remoto>:]<perfil>"
 
 #: cmd/incus/profile.go:458
-#, fuzzy
 msgid "[<remote>:]<profile> [[<remote>:]<profile>...]"
-msgstr "[<remoto>:]<perfil> [<remoto>:]<perfil>"
+msgstr "[<remoto>:]<perfil> [[<remoto>:]<perfil>...]"
 
 #: cmd/incus/project.go:108 cmd/incus/project.go:311 cmd/incus/project.go:956
 #: cmd/incus/project.go:1019 cmd/incus/project.go:1089
@@ -10887,9 +10871,8 @@ msgid "[<remote>:]<project> <new-name>"
 msgstr "[<remoto>:]<projeto> <novo-nome>"
 
 #: cmd/incus/project.go:214
-#, fuzzy
 msgid "[<remote>:]<project> [[<remote>:]<project>...]"
-msgstr "[<remoto>:]<perfil> [<remoto>:]<perfil>"
+msgstr "[<remoto>:]<projecto> [[<remoto>:]<projecto>...]"
 
 #: cmd/incus/copy.go:41
 msgid "[<remote>:]<source>[/<snapshot>] [[<remote>:]<destination>]"
@@ -10900,9 +10883,8 @@ msgid "[<remote>:]<warning-uuid>"
 msgstr "[<remoto>:]<aviso-uuid>"
 
 #: cmd/incus/warning.go:369
-#, fuzzy
 msgid "[<remote>:]<warning-uuid> [[<remote>:]<warning-uuid>...]"
-msgstr "[<remoto>:]<imagem> [[<remoto>:]<imagem>...]"
+msgstr "[<remoto>:]<uuid-de-aviso> [[<remoto>:]<uuid-de-aviso>...]"
 
 #: cmd/incus/network_zone.go:881
 msgid "[<remote>:]<zone>"
