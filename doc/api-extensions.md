@@ -2904,3 +2904,7 @@ As well as a matching `StorageBucketFull` struct.
 
 This extension introduces a new boolean `firmware` option for PCI devices.
 When set to `false`, Incus tells QEMU to disable the ROM-BAR (`rombar=0`) for the device.
+
+## `resources_serial`
+
+This adds serial device tracking to the resources API.
