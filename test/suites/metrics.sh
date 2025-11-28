@@ -53,4 +53,8 @@ test_metrics() {
     curl -k -s -X GET "https://${metrics_addr}/1.0/metrics" | grep "incus_cpu_effective_total" | grep "type=\"container\""
 
     incus delete -f c1 c2
+    incus config unset core.metrics_authentication
+
+    METRICS_FINGERPRINT="$(incus config trust list --format csv --columns cf | grep -F metrics.local | cut -d, -f2)"
+    incus config trust remove "${METRICS_FINGERPRINT}"
 }
