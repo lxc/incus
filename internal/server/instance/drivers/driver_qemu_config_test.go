@@ -940,6 +940,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				dev:         qemuDevOpts{"pci", "qemu_pcie1", "00.0", false},
 				devName:     "physical-pci-name",
 				pciSlotName: "host-slot",
+				firmware:    true,
 			},
 			`# PCI card ("physical-pci-name" device)
 			[device "dev-incus_physical-pci-name"]
@@ -952,6 +953,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				dev:         qemuDevOpts{"ccw", "qemu_pcie2", "00.2", true},
 				devName:     "physical-ccw-name",
 				pciSlotName: "host-slot-ccw",
+				firmware:    true,
 			},
 			`# PCI card ("physical-ccw-name" device)
 			[device "dev-incus_physical-ccw-name"]

@@ -1408,6 +1408,14 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 
 ```
 
+```{config:option} firmware devices-pci
+:default: "true"
+:required: "no"
+:shortdesc: "Whether to expose the device's option ROM to the VM"
+:type: "bool"
+
+```
+
 <!-- config group devices-pci end -->
 <!-- config group devices-proxy start -->
 ```{config:option} bind devices-proxy

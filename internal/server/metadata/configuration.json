@@ -1596,6 +1596,15 @@
 							"shortdesc": "PCI address of the device",
 							"type": "string"
 						}
+					},
+					{
+						"firmware": {
+							"default": "true",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether to expose the device's option ROM to the VM",
+							"type": "bool"
+						}
 					}
 				]
 			},
