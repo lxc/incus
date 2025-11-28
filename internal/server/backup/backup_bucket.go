@@ -127,8 +127,8 @@ func (b *BucketBackup) Rename(newName string) error {
 // Render returns a BucketBackup struct of the backup.
 func (b *BucketBackup) Render() *api.StorageBucketBackup {
 	return &api.StorageBucketBackup{
-		Name:                 b.name,
-		ExpiresAt:            b.expiryDate,
-		CompressionAlgorithm: b.compressionAlgorithm,
+		Name:      b.name,
+		CreatedAt: b.creationDate,
+		ExpiresAt: b.expiryDate,
 	}
 }

@@ -6107,11 +6107,12 @@ definitions:
     StorageBucketBackup:
         description: StorageBucketBackup represents the fields available for a new storage bucket backup
         properties:
-            compression_algorithm:
-                description: What compression algorithm to use
-                example: gzip
+            created_at:
+                description: When the backup was created
+                example: "2021-03-23T16:38:37.753398689-04:00"
+                format: date-time
                 type: string
-                x-go-name: CompressionAlgorithm
+                x-go-name: CreatedAt
             expires_at:
                 description: When the backup expires (gets auto-deleted)
                 example: "2021-03-23T17:38:37.753398689-04:00"
@@ -6154,6 +6155,54 @@ definitions:
                 example: backup0
                 type: string
                 x-go-name: Name
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    StorageBucketFull:
+        properties:
+            backups:
+                description: List of backups.
+                items:
+                    $ref: '#/definitions/StorageBucketBackup'
+                type: array
+                x-go-name: Backups
+            config:
+                description: Storage bucket configuration map
+                example:
+                    size: 50GiB
+                type: object
+                x-go-name: Config
+            description:
+                description: Description of the storage bucket
+                example: My custom bucket
+                type: string
+                x-go-name: Description
+            keys:
+                description: List of keys.
+                items:
+                    $ref: '#/definitions/StorageBucketKey'
+                type: array
+                x-go-name: Keys
+            location:
+                description: What cluster member this record was found on
+                example: server01
+                type: string
+                x-go-name: Location
+            name:
+                description: Bucket name
+                example: foo
+                type: string
+                x-go-name: Name
+            project:
+                description: Project name
+                example: project1
+                type: string
+                x-go-name: Project
+            s3_url:
+                description: Bucket S3 URL
+                example: https://127.0.0.1:8080/foo
+                type: string
+                x-go-name: S3URL
+        title: StorageBucketFull is a combination of StorageBucket, StorageBucketBackup and StorageBucketKey.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     StorageBucketKey:
@@ -6518,6 +6567,81 @@ definitions:
                 example: false
                 type: boolean
                 x-go-name: VolumeOnly
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    StorageVolumeFull:
+        properties:
+            backups:
+                description: List of backups.
+                items:
+                    $ref: '#/definitions/StorageVolumeBackup'
+                type: array
+                x-go-name: Backups
+            config:
+                description: Storage volume configuration map (refer to doc/storage.md)
+                example:
+                    size: 50GiB
+                    zfs.remove_snapshots: "true"
+                type: object
+                x-go-name: Config
+            content_type:
+                description: Volume content type (filesystem or block)
+                example: filesystem
+                type: string
+                x-go-name: ContentType
+            created_at:
+                description: Volume creation timestamp
+                example: "2021-03-23T20:00:00-04:00"
+                format: date-time
+                type: string
+                x-go-name: CreatedAt
+            description:
+                description: Description of the storage volume
+                example: My custom volume
+                type: string
+                x-go-name: Description
+            location:
+                description: What cluster member this record was found on
+                example: server01
+                type: string
+                x-go-name: Location
+            name:
+                description: Volume name
+                example: foo
+                type: string
+                x-go-name: Name
+            project:
+                description: Project containing the volume.
+                example: default
+                type: string
+                x-go-name: Project
+            restore:
+                description: Name of a snapshot to restore
+                example: snap0
+                type: string
+                x-go-name: Restore
+            snapshots:
+                description: List of snapshots.
+                items:
+                    $ref: '#/definitions/StorageVolumeSnapshot'
+                type: array
+                x-go-name: Snapshots
+            state:
+                $ref: '#/definitions/StorageVolumeState'
+            type:
+                description: Volume type
+                example: custom
+                type: string
+                x-go-name: Type
+            used_by:
+                description: List of URLs of objects using this storage volume
+                example:
+                    - /1.0/instances/blah
+                items:
+                    type: string
+                type: array
+                x-go-name: UsedBy
+        title: StorageVolumeFull is a combination of StorageVolume, StorageVolumeBackup, StorageVolumeSnapshot and StorageVolumeState.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     StorageVolumePost:
@@ -15573,6 +15697,46 @@ paths:
             summary: Get the storage pool bucket keys
             tags:
                 - storage
+    /1.0/storage-pools/{poolName}/buckets/{bucketName}?recursion=1:
+        get:
+            description: Gets a specific storage pool bucket with all details (backups and keys).
+            operationId: storage_pool_bucket_get_recursion1
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Storage pool bucket
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                $ref: '#/definitions/StorageBucketFull'
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the full storage pool bucket details
+            tags:
+                - storage
     /1.0/storage-pools/{poolName}/buckets?recursion=1:
         get:
             description: Returns a list of storage pool buckets (structs).
@@ -15624,6 +15788,59 @@ paths:
                 "500":
                     $ref: '#/responses/InternalServerError'
             summary: Get the storage pool buckets
+            tags:
+                - storage
+    /1.0/storage-pools/{poolName}/buckets?recursion=2:
+        get:
+            description: Returns a list of storage pool buckets with all details (structs).
+            operationId: storage_pool_buckets_get_recursion2
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Retrieve storage pool buckets from all projects
+                  example: true
+                  in: query
+                  name: all-projects
+                  type: boolean
+                - description: Collection filter
+                  example: default
+                  in: query
+                  name: filter
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: API endpoints
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                description: List of storage pool buckets
+                                items:
+                                    $ref: '#/definitions/StorageBucketFull'
+                                type: array
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the storage pool bucket details
             tags:
                 - storage
     /1.0/storage-pools/{poolName}/volumes:
@@ -16852,6 +17069,51 @@ paths:
             summary: Get the storage volume state
             tags:
                 - storage
+    /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}?recursion=1:
+        get:
+            description: Gets a specific storage volume with all details (backups, snapshots and state0..
+            operationId: storage_pool_volume_type_get_recursion1
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Cluster member name
+                  example: server01
+                  in: query
+                  name: target
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Storage volume
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                $ref: '#/definitions/StorageVolumeFull'
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the full storage volume details
+            tags:
+                - storage
     /1.0/storage-pools/{poolName}/volumes/{type}?recursion=1:
         get:
             description: Returns a list of storage volumes (structs) (type specific endpoint).
@@ -16898,6 +17160,54 @@ paths:
                 "500":
                     $ref: '#/responses/InternalServerError'
             summary: Get the storage volumes
+            tags:
+                - storage
+    /1.0/storage-pools/{poolName}/volumes/{type}?recursion=2:
+        get:
+            description: Returns a list of storage volumes (structs) including all details (type specific endpoint).
+            operationId: storage_pool_volumes_type_get_recursion2
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Cluster member name
+                  example: server01
+                  in: query
+                  name: target
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: API endpoints
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                description: List of storage volumes
+                                items:
+                                    $ref: '#/definitions/StorageVolumeFull'
+                                type: array
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the storage volumes with all details
             tags:
                 - storage
     /1.0/storage-pools/{poolName}/volumes?recursion=1:

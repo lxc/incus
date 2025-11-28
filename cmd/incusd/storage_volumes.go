@@ -37,6 +37,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/internal/server/state"
 	storagePools "github.com/lxc/incus/v6/internal/server/storage"
+	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/internal/version"
@@ -305,6 +306,55 @@ var storagePoolVolumeTypeFileCmd = APIEndpoint{
 //	    $ref: "#/responses/Forbidden"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
+
+// swagger:operation GET /1.0/storage-pools/{poolName}/volumes/{type}?recursion=2 storage storage_pool_volumes_type_get_recursion2
+//
+//	Get the storage volumes with all details
+//
+//	Returns a list of storage volumes (structs) including all details (type specific endpoint).
+//
+//	---
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    example: default
+//	  - in: query
+//	    name: target
+//	    description: Cluster member name
+//	    type: string
+//	    example: server01
+//	responses:
+//	  "200":
+//	    description: API endpoints
+//	    schema:
+//	      type: object
+//	      description: Sync response
+//	      properties:
+//	        type:
+//	          type: string
+//	          description: Response type
+//	          example: sync
+//	        status:
+//	          type: string
+//	          description: Status description
+//	          example: Success
+//	        status_code:
+//	          type: integer
+//	          description: Status code
+//	          example: 200
+//	        metadata:
+//	          type: array
+//	          description: List of storage volumes
+//	          items:
+//	            $ref: "#/definitions/StorageVolumeFull"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
@@ -473,7 +523,14 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if localUtil.IsRecursionRequest(r) {
+	recursionStr := r.FormValue("recursion")
+
+	recursion, err := strconv.Atoi(recursionStr)
+	if err != nil {
+		recursion = 0
+	}
+
+	if recursion > 0 {
 		volumes := make([]*api.StorageVolume, 0, len(dbVolumes))
 		for _, dbVol := range dbVolumes {
 			vol := &dbVol.StorageVolume
@@ -483,7 +540,11 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 				location = vol.Location
 			}
 
-			volumeName, _, _ := api.GetParentAndSnapshotName(vol.Name)
+			volumeName, snapName, _ := api.GetParentAndSnapshotName(vol.Name)
+			if snapName != "" {
+				continue
+			}
+
 			if !userHasPermission(auth.ObjectStorageVolume(vol.Project, poolName, dbVol.Type, volumeName, location)) {
 				continue
 			}
@@ -501,12 +562,30 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 			volumes = append(volumes, vol)
 		}
 
+		if recursion == 2 {
+			volumesFull := make([]*api.StorageVolumeFull, 0, len(volumes))
+
+			for _, vol := range volumes {
+				fullVol, err := getVolumeFull(r.Context(), s, poolName, *vol)
+				if err != nil {
+					return response.InternalError(err)
+				}
+
+				volumesFull = append(volumesFull, fullVol)
+			}
+
+			return response.SyncResponse(true, volumesFull)
+		}
+
 		return response.SyncResponse(true, volumes)
 	}
 
 	urls := make([]string, 0, len(dbVolumes))
 	for _, dbVol := range dbVolumes {
-		volumeName, _, _ := api.GetParentAndSnapshotName(dbVol.Name)
+		volumeName, snapName, _ := api.GetParentAndSnapshotName(dbVol.Name)
+		if snapName != "" {
+			continue
+		}
 
 		var location string
 		if s.ServerClustered && !pool.Driver().Info().Remote {
@@ -1703,6 +1782,52 @@ func storagePoolVolumeTypePostMove(s *state.State, r *http.Request, poolName str
 //	    $ref: "#/responses/Forbidden"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
+
+// swagger:operation GET /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}?recursion=1 storage storage_pool_volume_type_get_recursion1
+//
+//	Get the full storage volume details
+//
+//	Gets a specific storage volume with all details (backups, snapshots and state0..
+//
+//	---
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    example: default
+//	  - in: query
+//	    name: target
+//	    description: Cluster member name
+//	    type: string
+//	    example: server01
+//	responses:
+//	  "200":
+//	    description: Storage volume
+//	    schema:
+//	      type: object
+//	      description: Sync response
+//	      properties:
+//	        type:
+//	          type: string
+//	          description: Response type
+//	          example: sync
+//	        status:
+//	          type: string
+//	          description: Status description
+//	          example: Success
+//	        status_code:
+//	          type: integer
+//	          description: Status code
+//	          example: 200
+//	        metadata:
+//	          $ref: "#/definitions/StorageVolumeFull"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
@@ -1751,10 +1876,13 @@ func storagePoolVolumeGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	var dbVolume *db.StorageVolume
+	var poolID int64
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
 		// Get the ID of the storage pool the storage volume is supposed to be attached to.
-		poolID, err := tx.GetStoragePoolID(ctx, poolName)
+		poolID, err = tx.GetStoragePoolID(ctx, poolName)
 		if err != nil {
 			return err
 		}
@@ -1773,10 +1901,123 @@ func storagePoolVolumeGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	dbVolume.UsedBy = project.FilterUsedBy(s.Authorizer, r, volumeUsedBy)
-
 	etag := []any{volumeName, dbVolume.Type, dbVolume.Config}
 
+	// Prepare the response.
+	if localUtil.IsRecursionRequest(r) {
+		volFull, err := getVolumeFull(r.Context(), s, poolName, dbVolume.StorageVolume)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		return response.SyncResponseETag(true, volFull, etag)
+	}
+
 	return response.SyncResponseETag(true, dbVolume.StorageVolume, etag)
+}
+
+func getVolumeFull(ctx context.Context, s *state.State, poolName string, vol api.StorageVolume) (*api.StorageVolumeFull, error) {
+	// Convert the volume type name to our internal integer representation.
+	volType, err := storagePools.VolumeTypeNameToDBType(vol.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set the base object.
+	resp := api.StorageVolumeFull{
+		StorageVolume: vol,
+		Backups:       []api.StorageVolumeBackup{},
+	}
+
+	// Get the pool.
+	pool, err := storagePools.LoadByName(s, poolName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add all backups.
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		volumeBackups, err := tx.GetStoragePoolVolumeBackups(ctx, vol.Project, vol.Name, pool.ID())
+		if err != nil {
+			return err
+		}
+
+		for _, entry := range volumeBackups {
+			resp.Backups = append(resp.Backups, *backup.NewVolumeBackup(s, vol.Project, poolName, vol.Name, entry.ID, entry.Name, entry.CreationDate, entry.ExpiryDate, entry.VolumeOnly, entry.OptimizedStorage).Render())
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Add all snapshots.
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		volumeSnapshots, err := tx.GetLocalStoragePoolVolumeSnapshotsWithType(ctx, vol.Project, vol.Name, volType, pool.ID())
+		if err != nil {
+			return err
+		}
+
+		for _, entry := range volumeSnapshots {
+			_, snapName, _ := api.GetParentAndSnapshotName(entry.Name)
+
+			snap := api.StorageVolumeSnapshot{}
+			snap.Config = entry.Config
+			snap.Description = entry.Description
+			snap.Name = snapName
+			snap.CreatedAt = entry.CreationDate
+			if entry.ExpiryDate.Unix() > 0 {
+				snap.ExpiresAt = &entry.ExpiryDate
+			}
+
+			resp.Snapshots = append(resp.Snapshots, snap)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Add the state.
+	var usage *storagePools.VolumeUsage
+
+	if volType == db.StoragePoolVolumeTypeCustom {
+		usage, err = pool.GetCustomVolumeUsage(vol.Project, vol.Name)
+		if err != nil && !errors.Is(err, storageDrivers.ErrNotSupported) {
+			return nil, err
+		}
+	} else {
+		inst, err := instance.LoadByProjectAndName(s, vol.Project, vol.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		usage, err = pool.GetInstanceUsage(inst)
+		if err != nil && !errors.Is(err, storageDrivers.ErrNotSupported) {
+			return nil, err
+		}
+	}
+
+	volState := api.StorageVolumeState{}
+	if usage != nil {
+		volState.Usage = &api.StorageVolumeStateUsage{}
+
+		// Only fill 'used' field if receiving a valid value.
+		if usage.Used >= 0 {
+			volState.Usage.Used = uint64(usage.Used)
+		}
+
+		// Only fill 'total' field if receiving a valid value.
+		if usage.Total >= 0 {
+			volState.Usage.Total = usage.Total
+		}
+	}
+
+	resp.State = &volState
+
+	return &resp, nil
 }
 
 // swagger:operation PUT /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName} storage storage_pool_volume_type_put

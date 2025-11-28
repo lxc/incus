@@ -174,6 +174,88 @@ func (r *ProtocolIncus) GetStoragePoolVolumesWithFilterAllProjects(pool string, 
 	return volumes, nil
 }
 
+// GetStoragePoolVolumesFull returns a list of StorageVolume entries for the provided pool (full struct).
+func (r *ProtocolIncus) GetStoragePoolVolumesFull(pool string) ([]api.StorageVolumeFull, error) {
+	if !r.HasExtension("storage_volume_full") {
+		return nil, errors.New("The server is missing the required \"storage_volume_full\" API extension")
+	}
+
+	volumes := []api.StorageVolumeFull{}
+
+	// Fetch the raw value
+	_, err := r.queryStruct("GET", fmt.Sprintf("/storage-pools/%s/volumes?recursion=2", url.PathEscape(pool)), nil, "", &volumes)
+	if err != nil {
+		return nil, err
+	}
+
+	return volumes, nil
+}
+
+// GetStoragePoolVolumesFullAllProjects returns a list of StorageVolume entries for the provided pool for all projects (full struct).
+func (r *ProtocolIncus) GetStoragePoolVolumesFullAllProjects(pool string) ([]api.StorageVolumeFull, error) {
+	err := r.CheckExtension("storage_volume_full")
+	if err != nil {
+		return nil, err
+	}
+
+	volumes := []api.StorageVolumeFull{}
+
+	uri := api.NewURL().Path("storage-pools", pool, "volumes").
+		WithQuery("recursion", "2").
+		WithQuery("all-projects", "true")
+
+	// Fetch the raw value.
+	_, err = r.queryStruct("GET", uri.String(), nil, "", &volumes)
+	if err != nil {
+		return nil, err
+	}
+
+	return volumes, nil
+}
+
+// GetStoragePoolVolumesFullWithFilter returns a filtered list of StorageVolume entries for the provided pool (full struct).
+func (r *ProtocolIncus) GetStoragePoolVolumesFullWithFilter(pool string, filters []string) ([]api.StorageVolumeFull, error) {
+	if !r.HasExtension("storage_volume_full") {
+		return nil, errors.New("The server is missing the required \"storage_volume_full\" API extension")
+	}
+
+	volumes := []api.StorageVolumeFull{}
+
+	v := url.Values{}
+	v.Set("recursion", "2")
+	v.Set("filter", parseFilters(filters))
+	// Fetch the raw value
+	_, err := r.queryStruct("GET", fmt.Sprintf("/storage-pools/%s/volumes?%s", url.PathEscape(pool), v.Encode()), nil, "", &volumes)
+	if err != nil {
+		return nil, err
+	}
+
+	return volumes, nil
+}
+
+// GetStoragePoolVolumesFullWithFilterAllProjects returns a filtered list of StorageVolume entries for the provided pool for all projects (full struct).
+func (r *ProtocolIncus) GetStoragePoolVolumesFullWithFilterAllProjects(pool string, filters []string) ([]api.StorageVolumeFull, error) {
+	err := r.CheckExtension("storage_volume_full")
+	if err != nil {
+		return nil, err
+	}
+
+	volumes := []api.StorageVolumeFull{}
+
+	uri := api.NewURL().Path("storage-pools", pool, "volumes").
+		WithQuery("recursion", "2").
+		WithQuery("filter", parseFilters(filters)).
+		WithQuery("all-projects", "true")
+
+	// Fetch the raw value.
+	_, err = r.queryStruct("GET", uri.String(), nil, "", &volumes)
+	if err != nil {
+		return nil, err
+	}
+
+	return volumes, nil
+}
+
 // GetStoragePoolVolume returns a StorageVolume entry for the provided pool and volume name.
 func (r *ProtocolIncus) GetStoragePoolVolume(pool string, volType string, name string) (*api.StorageVolume, string, error) {
 	if !r.HasExtension("storage") {
@@ -184,6 +266,24 @@ func (r *ProtocolIncus) GetStoragePoolVolume(pool string, volType string, name s
 
 	// Fetch the raw value
 	path := fmt.Sprintf("/storage-pools/%s/volumes/%s/%s", url.PathEscape(pool), url.PathEscape(volType), url.PathEscape(name))
+	etag, err := r.queryStruct("GET", path, nil, "", &volume)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return &volume, etag, nil
+}
+
+// GetStoragePoolVolumeFull returns a StorageVolumeFull entry for the provided pool and volume name.
+func (r *ProtocolIncus) GetStoragePoolVolumeFull(pool string, volType string, name string) (*api.StorageVolumeFull, string, error) {
+	if !r.HasExtension("storage_volume_full") {
+		return nil, "", errors.New("The server is missing the required \"storage_volume_full\" API extension")
+	}
+
+	volume := api.StorageVolumeFull{}
+
+	// Fetch the raw value
+	path := fmt.Sprintf("/storage-pools/%s/volumes/%s/%s?recursion=1", url.PathEscape(pool), url.PathEscape(volType), url.PathEscape(name))
 	etag, err := r.queryStruct("GET", path, nil, "", &volume)
 	if err != nil {
 		return nil, "", err
