@@ -366,11 +366,11 @@ type cmdWarningDelete struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdWarningDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<warning-uuid>"))
+	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<warning-uuid> [[<remote>:]<warning-uuid>...]"))
 	cmd.Aliases = []string{"rm", "remove"}
-	cmd.Short = i18n.G("Delete warning")
+	cmd.Short = i18n.G("Delete warnings")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete warning`))
+		`Delete warnings`))
 
 	cmd.Flags().BoolVarP(&c.flagAll, "all", "a", false, i18n.G("Delete all warnings")+"``")
 
@@ -382,21 +382,34 @@ func (c *cmdWarningDelete) Command() *cobra.Command {
 // Run runs the actual command logic.
 func (c *cmdWarningDelete) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
+	exit, err := c.global.checkArgs(cmd, args, 1, -1)
 	if exit {
 		return err
 	}
 
 	// Parse remote
-	remoteName, UUID, err := c.global.conf.ParseRemote(args[0])
+	resources, err := c.global.parseServers(args...)
 	if err != nil {
 		return err
 	}
 
-	remoteServer, err := c.global.conf.GetInstanceServer(remoteName)
-	if err != nil {
-		return err
+	for i := range resources {
+		remoteName, UUID, err := c.global.conf.ParseRemote(args[i])
+		if err != nil {
+			return err
+		}
+
+		remoteServer, err := c.global.conf.GetInstanceServer(remoteName)
+		if err != nil {
+			return err
+		}
+
+		// Delete warnings
+		err = remoteServer.DeleteWarning(UUID)
+		if err != nil {
+			return nil
+		}
 	}
 
-	return remoteServer.DeleteWarning(UUID)
+	return nil
 }

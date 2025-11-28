@@ -276,20 +276,16 @@ type cmdClusterGroupDelete struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterGroupDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<group>"))
+	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<group> [[<remote>:]<group>...]"))
 	cmd.Aliases = []string{"rm"}
-	cmd.Short = i18n.G("Delete a cluster group")
+	cmd.Short = i18n.G("Delete cluster groups")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete a cluster group`))
+		`Delete cluster groups`))
 
 	cmd.RunE = c.Run
 
-	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		if len(args) == 0 {
-			return c.global.cmpClusterGroups(toComplete)
-		}
-
-		return nil, cobra.ShellCompDirectiveNoFileComp
+	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return c.global.cmpClusterGroups(toComplete)
 	}
 
 	return cmd
@@ -298,31 +294,31 @@ func (c *cmdClusterGroupDelete) Command() *cobra.Command {
 // Run runs the actual command logic.
 func (c *cmdClusterGroupDelete) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
+	exit, err := c.global.checkArgs(cmd, args, 1, -1)
 	if exit {
 		return err
 	}
 
 	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	resources, err := c.global.parseServers(args...)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
+	for _, resource := range resources {
+		if resource.name == "" {
+			return errors.New(i18n.G("Missing cluster group name"))
+		}
 
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing cluster group name"))
-	}
+		// Delete the cluster group
+		err = resource.server.DeleteClusterGroup(resource.name)
+		if err != nil {
+			return err
+		}
 
-	// Delete the cluster group
-	err = resource.server.DeleteClusterGroup(resource.name)
-	if err != nil {
-		return err
-	}
-
-	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Cluster group %s deleted")+"\n", resource.name)
+		if !c.global.flagQuiet {
+			fmt.Printf(i18n.G("Cluster group %s deleted")+"\n", resource.name)
+		}
 	}
 
 	return nil
