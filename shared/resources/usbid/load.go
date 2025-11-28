@@ -32,6 +32,11 @@ var (
 
 // Load reads the USB database from disk.
 func Load() {
+	// Only load the database once.
+	if Vendors != nil && Classes != nil {
+		return
+	}
+
 	usbidFile := os.Getenv("INCUS_USBIDS_PATH")
 	if usbidFile == "" {
 		usbidFile = "/usr/share/misc/usb.ids"
