@@ -25,6 +25,7 @@ import (
 type instance interface {
 	Project() api.Project
 	Name() string
+	ID() int
 	ExpandedConfig() map[string]string
 	Type() instancetype.Type
 	LogPath() string
@@ -271,6 +272,7 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			"libraryPath":    strings.Split(os.Getenv("LD_LIBRARY_PATH"), ":"),
 			"logPath":        inst.LogPath(),
 			"runPath":        inst.RunPath(),
+			"id":             inst.ID(),
 			"name":           InstanceProfileName(inst),
 			"path":           path,
 			"raw":            rawContent,
