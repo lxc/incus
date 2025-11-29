@@ -1,4 +1,4 @@
 package version
 
 // Version contains the version number.
-var Version = "6.18"
+var Version = "6.19"
