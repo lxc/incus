@@ -72,6 +72,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   {{ .runPath }}/** rwk,
   {{ .path }}/** rwk,
   {{ .devicesPath }}/** rwk,
+  /tmp/incus_screenshot_{{ .id }} rwk,
 
   # Needed for the fork sub-commands
   {{ .exePath }} mr,

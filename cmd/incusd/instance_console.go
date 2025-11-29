@@ -719,9 +719,14 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 
 		var headers map[string]string
 		if consoleLogType == "vga" {
-			screenshotFile, err := os.CreateTemp(v.Path(), "screenshot-*.png")
+			screenshotFile, err := os.Create(fmt.Sprintf("/tmp/incus_screenshot_%d", inst.ID()))
 			if err != nil {
 				return response.SmartError(fmt.Errorf("Couldn't create screenshot file: %w", err))
+			}
+
+			err = screenshotFile.Chmod(0o600)
+			if err != nil {
+				return response.SmartError(err)
 			}
 
 			ent.Cleanup = func() {

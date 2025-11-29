@@ -58,7 +58,9 @@ func SetProgressMetadata(metadata map[string]any, stage, displayPrefix string, p
 		}
 	} else if processed > 0 {
 		metadata[stage+"_progress"] = fmt.Sprintf("%s: %s (%s/s)", displayPrefix, units.GetByteSizeString(processed, 2), units.GetByteSizeString(speed, 2))
-	} else {
+	} else if speed > 0 {
 		metadata[stage+"_progress"] = fmt.Sprintf("%s: %s/s", displayPrefix, units.GetByteSizeString(speed, 2))
+	} else {
+		metadata[stage+"_progress"] = displayPrefix
 	}
 }
