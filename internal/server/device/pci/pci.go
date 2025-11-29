@@ -108,8 +108,14 @@ func DeviceDriverOverride(pciDev Device, driverOverride string) error {
 	reverter := revert.New()
 	defer reverter.Fail()
 
+	// Check if already bound to the target driver.
+	_, err := os.Stat(filepath.Join("/sys/bus/pci/drivers", driverOverride, pciDev.SlotName))
+	if err == nil {
+		return nil
+	}
+
 	// Unbind the device from the host (ignore if not bound).
-	err := DeviceUnbind(pciDev)
+	err = DeviceUnbind(pciDev)
 	if err != nil && errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
