@@ -84,7 +84,7 @@ type InstanceSnapshot struct {
 
 	// Instance devices (see doc/instances.md)
 	// Example: {"root": {"type": "disk", "pool": "default", "path": "/"}}
-	Devices map[string]map[string]string `json:"devices" yaml:"devices"`
+	Devices DevicesMap `json:"devices" yaml:"devices"`
 
 	// Whether the instance is ephemeral (deleted on shutdown)
 	// Example: false
@@ -96,7 +96,7 @@ type InstanceSnapshot struct {
 
 	// Expanded devices (all profiles and local devices merged)
 	// Example: {"root": {"type": "disk", "pool": "default", "path": "/"}}
-	ExpandedDevices map[string]map[string]string `json:"expanded_devices,omitempty" yaml:"expanded_devices,omitempty"`
+	ExpandedDevices DevicesMap `json:"expanded_devices,omitempty" yaml:"expanded_devices,omitempty"`
 
 	// Last start timestamp
 	// Example: 2021-03-23T20:00:00-04:00
