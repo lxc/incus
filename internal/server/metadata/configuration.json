@@ -544,7 +544,7 @@
 						"limits.egress": {
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)",
+							"shortdesc": "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)",
 							"type": "string"
 						}
 					},
@@ -552,7 +552,7 @@
 						"limits.ingress": {
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)",
+							"shortdesc": "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)",
 							"type": "string"
 						}
 					},
@@ -1009,7 +1009,7 @@
 						"limits.egress": {
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)",
+							"shortdesc": "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)",
 							"type": "string"
 						}
 					},
@@ -1017,7 +1017,7 @@
 						"limits.ingress": {
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)",
+							"shortdesc": "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)",
 							"type": "string"
 						}
 					},
@@ -1185,14 +1185,14 @@
 					{
 						"limits.egress": {
 							"longdesc": "",
-							"shortdesc": "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)",
+							"shortdesc": "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)",
 							"type": "string"
 						}
 					},
 					{
 						"limits.ingress": {
 							"longdesc": "",
-							"shortdesc": "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)",
+							"shortdesc": "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)",
 							"type": "string"
 						}
 					},
@@ -1450,14 +1450,14 @@
 					{
 						"limits.egress": {
 							"longdesc": "",
-							"shortdesc": "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)",
+							"shortdesc": "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)",
 							"type": "string"
 						}
 					},
 					{
 						"limits.ingress": {
 							"longdesc": "",
-							"shortdesc": "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)",
+							"shortdesc": "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)",
 							"type": "string"
 						}
 					},
