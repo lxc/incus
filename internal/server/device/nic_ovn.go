@@ -290,7 +290,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		// ---
 		//  type: string
 		//  managed: no
-		//  shortdesc: I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)
+		//  shortdesc: I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)
 		"limits.ingress",
 
 		// gendoc:generate(entity=devices, group=nic_ovn, key=limits.egress)
@@ -298,7 +298,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		// ---
 		//  type: string
 		//  managed: no
-		//  shortdesc: I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)
+		//  shortdesc: I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)
 		"limits.egress",
 
 		// gendoc:generate(entity=devices, group=nic_ovn, key=limits.max)
