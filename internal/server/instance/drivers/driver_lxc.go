@@ -1022,7 +1022,12 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 	// Setup SELinux.
 	if d.state.OS.SELinuxAvailable && d.state.OS.SELinuxContextInstanceLXC != "" {
-		err := lxcSetConfigItem(cc, "lxc.selinux.context", fmt.Sprintf("%s:c%d", d.state.OS.SELinuxContextInstanceLXC, d.id))
+		seContext, err := d.selinuxContext(d.state.OS.SELinuxContextInstanceLXC)
+		if err != nil {
+			return nil, err
+		}
+
+		err = lxcSetConfigItem(cc, "lxc.selinux.context", seContext)
 		if err != nil {
 			return nil, err
 		}
