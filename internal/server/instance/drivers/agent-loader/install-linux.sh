@@ -36,7 +36,10 @@ systemctl daemon-reload
 
 # SELinux handling.
 if getenforce >/dev/null 2>&1 && type semanage >/dev/null 2>&1; then
-    semanage fcontext -a -t bin_t /var/run/incus_agent/incus-agent
+    # Run semanage for both /var/run and /run due to different distro policies
+    for run_path in /var/run /run; do
+        semanage fcontext -a -t bin_t "${run_path}/incus_agent/incus-agent"
+    done
 fi
 
 echo ""
