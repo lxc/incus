@@ -518,14 +518,14 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```{config:option} limits.egress devices-nic_bridged
 :managed: "no"
-:shortdesc: "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)"
+:shortdesc: "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)"
 :type: "string"
 
 ```
 
 ```{config:option} limits.ingress devices-nic_bridged
 :managed: "no"
-:shortdesc: "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)"
+:shortdesc: "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)"
 :type: "string"
 
 ```
@@ -922,14 +922,14 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```{config:option} limits.egress devices-nic_ovn
 :managed: "no"
-:shortdesc: "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)"
+:shortdesc: "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)"
 :type: "string"
 
 ```
 
 ```{config:option} limits.ingress devices-nic_ovn
 :managed: "no"
-:shortdesc: "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)"
+:shortdesc: "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)"
 :type: "string"
 
 ```
@@ -1075,13 +1075,13 @@ With VMs, this option supports mounting file system disk devices and paths withi
 ```
 
 ```{config:option} limits.egress devices-nic_p2p
-:shortdesc: "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)"
+:shortdesc: "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)"
 :type: "string"
 
 ```
 
 ```{config:option} limits.ingress devices-nic_p2p
-:shortdesc: "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)"
+:shortdesc: "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)"
 :type: "string"
 
 ```
@@ -1305,13 +1305,13 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 ```
 
 ```{config:option} limits.egress devices-nic_routed
-:shortdesc: "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}instances-limit-units)"
+:shortdesc: "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)"
 :type: "string"
 
 ```
 
 ```{config:option} limits.ingress devices-nic_routed
-:shortdesc: "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}instances-limit-units)"
+:shortdesc: "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)"
 :type: "string"
 
 ```
