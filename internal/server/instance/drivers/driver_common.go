@@ -1760,6 +1760,10 @@ func (d *common) selinuxContext(baseContext string) (string, error) {
 			continue
 		}
 
+		if c1 > c2 {
+			c1, c2 = c2, c1
+		}
+
 		seContext := baseContext + ":c" + strconv.Itoa(c1) + ",c" + strconv.Itoa(c2)
 		if slices.Contains(seContexts, seContext) {
 			continue
