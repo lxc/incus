@@ -237,5 +237,14 @@ func osExitStatus(err error) (int, error) {
 }
 
 func osSetEnv(post *api.InstanceExecPost, env map[string]string) {
-	env["PATH"] = "C:\\WINDOWS\\system32;C:\\WINDOWS"
+	// SystemRoot is already set by default
+	env["WINDIR"] = "C:\\WINDOWS"
+	env["TMP"] = "C:\\WINDOWS\\Temp"
+	env["TEMP"] = env["TMP"]
+	env["PATH"] = "C:\\WINDOWS\\System32;C:\\WINDOWS;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0"
+
+	// Set the default working directory.
+	if post.Cwd == "" {
+		post.Cwd = "C:\\Windows\\System32"
+	}
 }
