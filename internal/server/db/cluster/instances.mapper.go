@@ -13,7 +13,7 @@ import (
 )
 
 var instanceObjects = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -21,7 +21,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 `)
 
 var instanceObjectsByID = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -30,7 +30,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 `)
 
 var instanceObjectsByProject = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -39,7 +39,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 `)
 
 var instanceObjectsByProjectAndType = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -48,7 +48,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 `)
 
 var instanceObjectsByProjectAndTypeAndNode = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -57,7 +57,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 `)
 
 var instanceObjectsByProjectAndTypeAndNodeAndName = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -66,7 +66,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 `)
 
 var instanceObjectsByProjectAndTypeAndName = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -75,7 +75,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 `)
 
 var instanceObjectsByProjectAndName = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -84,7 +84,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 `)
 
 var instanceObjectsByProjectAndNameAndNode = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -93,7 +93,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 `)
 
 var instanceObjectsByProjectAndNode = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -102,7 +102,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 `)
 
 var instanceObjectsByType = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -111,7 +111,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 `)
 
 var instanceObjectsByTypeAndName = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -120,7 +120,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 `)
 
 var instanceObjectsByTypeAndNameAndNode = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -129,7 +129,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 `)
 
 var instanceObjectsByTypeAndNode = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -138,7 +138,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 `)
 
 var instanceObjectsByNode = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -147,7 +147,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 `)
 
 var instanceObjectsByNodeAndName = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -156,7 +156,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 `)
 
 var instanceObjectsByName = RegisterStmt(`
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances
   JOIN projects ON instances.project_id = projects.id
   JOIN nodes ON instances.node_id = nodes.id
@@ -171,8 +171,8 @@ SELECT instances.id FROM instances
 `)
 
 var instanceCreate = RegisterStmt(`
-INSERT INTO instances (project_id, name, node_id, type, architecture, ephemeral, creation_date, stateful, last_use_date, description, expiry_date)
-  VALUES ((SELECT projects.id FROM projects WHERE projects.name = ?), ?, (SELECT nodes.id FROM nodes WHERE nodes.name = ?), ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO instances (project_id, name, node_id, type, architecture, ephemeral, creation_date, stateful, last_use_date, description)
+  VALUES ((SELECT projects.id FROM projects WHERE projects.name = ?), ?, (SELECT nodes.id FROM nodes WHERE nodes.name = ?), ?, ?, ?, ?, ?, ?, ?)
 `)
 
 var instanceRename = RegisterStmt(`
@@ -185,14 +185,14 @@ DELETE FROM instances WHERE project_id = (SELECT projects.id FROM projects WHERE
 
 var instanceUpdate = RegisterStmt(`
 UPDATE instances
-  SET project_id = (SELECT projects.id FROM projects WHERE projects.name = ?), name = ?, node_id = (SELECT nodes.id FROM nodes WHERE nodes.name = ?), type = ?, architecture = ?, ephemeral = ?, creation_date = ?, stateful = ?, last_use_date = ?, description = ?, expiry_date = ?
+  SET project_id = (SELECT projects.id FROM projects WHERE projects.name = ?), name = ?, node_id = (SELECT nodes.id FROM nodes WHERE nodes.name = ?), type = ?, architecture = ?, ephemeral = ?, creation_date = ?, stateful = ?, last_use_date = ?, description = ?
  WHERE id = ?
 `)
 
 // instanceColumns returns a string of column names to be used with a SELECT statement for the entity.
 // Use this function when building statements to retrieve database entries matching the Instance entity.
 func instanceColumns() string {
-	return "instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date"
+	return "instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')"
 }
 
 // getInstances can be used to run handwritten sql.Stmts to return a slice of objects.
@@ -201,7 +201,7 @@ func getInstances(ctx context.Context, stmt *sql.Stmt, args ...any) ([]Instance,
 
 	dest := func(scan func(dest ...any) error) error {
 		i := Instance{}
-		err := scan(&i.ID, &i.Project, &i.Name, &i.Node, &i.Type, &i.Architecture, &i.Ephemeral, &i.CreationDate, &i.Stateful, &i.LastUseDate, &i.Description, &i.ExpiryDate)
+		err := scan(&i.ID, &i.Project, &i.Name, &i.Node, &i.Type, &i.Architecture, &i.Ephemeral, &i.CreationDate, &i.Stateful, &i.LastUseDate, &i.Description)
 		if err != nil {
 			return err
 		}
@@ -225,7 +225,7 @@ func getInstancesRaw(ctx context.Context, db dbtx, sql string, args ...any) ([]I
 
 	dest := func(scan func(dest ...any) error) error {
 		i := Instance{}
-		err := scan(&i.ID, &i.Project, &i.Name, &i.Node, &i.Type, &i.Architecture, &i.Ephemeral, &i.CreationDate, &i.Stateful, &i.LastUseDate, &i.Description, &i.ExpiryDate)
+		err := scan(&i.ID, &i.Project, &i.Name, &i.Node, &i.Type, &i.Architecture, &i.Ephemeral, &i.CreationDate, &i.Stateful, &i.LastUseDate, &i.Description)
 		if err != nil {
 			return err
 		}
@@ -804,7 +804,7 @@ func CreateInstance(ctx context.Context, db dbtx, object Instance) (_ int64, _er
 		_err = mapErr(_err, "Instance")
 	}()
 
-	args := make([]any, 11)
+	args := make([]any, 10)
 
 	// Populate the statement arguments.
 	args[0] = object.Project
@@ -817,7 +817,6 @@ func CreateInstance(ctx context.Context, db dbtx, object Instance) (_ int64, _er
 	args[7] = object.Stateful
 	args[8] = object.LastUseDate
 	args[9] = object.Description
-	args[10] = object.ExpiryDate
 
 	// Prepared statement to use.
 	stmt, err := Stmt(db, instanceCreate)
@@ -965,7 +964,7 @@ func UpdateInstance(ctx context.Context, db tx, project string, name string, obj
 		return fmt.Errorf("Failed to get \"instanceUpdate\" prepared statement: %w", err)
 	}
 
-	result, err := stmt.Exec(object.Project, object.Name, object.Node, object.Type, object.Architecture, object.Ephemeral, object.CreationDate, object.Stateful, object.LastUseDate, object.Description, object.ExpiryDate, id)
+	result, err := stmt.Exec(object.Project, object.Name, object.Node, object.Type, object.Architecture, object.Ephemeral, object.CreationDate, object.Stateful, object.LastUseDate, object.Description, id)
 	if err != nil {
 		return fmt.Errorf("Update \"instances\" entry failed: %w", err)
 	}
