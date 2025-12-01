@@ -23,6 +23,9 @@ type InstanceSnapshotsPost struct {
 	//
 	// API extension: snapshot_expiry_creation
 	ExpiresAt *time.Time `json:"expires_at" yaml:"expires_at"`
+
+	// Snapshot description
+	Description string `json:"description" yaml:"description"`
 }
 
 // InstanceSnapshotPost represents the fields required to rename/move an instance snapshot.
@@ -56,6 +59,10 @@ type InstanceSnapshotPut struct {
 	// When the snapshot expires (gets auto-deleted)
 	// Example: 2021-03-23T17:38:37.753398689-04:00
 	ExpiresAt time.Time `json:"expires_at" yaml:"expires_at"`
+
+	// Instance description
+	// Example: My description
+	SnapshotDescription string `json:"snapshot_description" yaml:"snapshot_description"`
 }
 
 // InstanceSnapshot represents an instance snapshot.
