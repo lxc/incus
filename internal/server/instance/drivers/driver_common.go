@@ -76,25 +76,26 @@ type common struct {
 	op    *operations.Operation
 	state *state.State
 
-	architecture    int
-	creationDate    time.Time
-	dbType          instancetype.Type
-	description     string
-	ephemeral       bool
-	expandedConfig  map[string]string
-	expandedDevices deviceConfig.Devices
-	expiryDate      time.Time
-	id              int
-	lastUsedDate    time.Time
-	localConfig     map[string]string
-	localDevices    deviceConfig.Devices
-	logger          logger.Logger
-	name            string
-	node            string
-	profiles        []api.Profile
-	project         api.Project
-	isSnapshot      bool
-	stateful        bool
+	architecture    		int
+	creationDate    		time.Time
+	dbType          		instancetype.Type
+	description     		string
+	ephemeral       		bool
+	expandedConfig  		map[string]string
+	expandedDevices 		deviceConfig.Devices
+	id              		int
+	lastUsedDate    		time.Time
+	localConfig     		map[string]string
+	localDevices    		deviceConfig.Devices
+	logger          		logger.Logger
+	name            		string
+	node            		string
+	profiles        		[]api.Profile
+	project         		api.Project
+	stateful        		bool
+	isSnapshot			 		bool
+	snapshotDescription string
+	snapshotExpiryDate  time.Time
 
 	// Cached handles.
 	// Do not use these variables directly, instead use their associated get functions so they
@@ -145,13 +146,13 @@ func (d *common) ExpandedDevices() deviceConfig.Devices {
 }
 
 // ExpiryDate returns when this snapshot expires.
-func (d *common) ExpiryDate() time.Time {
-	if d.isSnapshot {
-		return d.expiryDate
-	}
+func (d *common) SnapshotExpiryDate() time.Time {
+	return d.snapshotExpiryDate
+}
 
-	// Return zero time if the instance is not a snapshot.
-	return time.Time{}
+// Description returns when this snapshot is describe.
+func (d *common) SnapshotDescription() string {
+	return d.snapshotDescription
 }
 
 func (d *common) shouldAutoRestart() bool {
@@ -349,7 +350,11 @@ func (d *common) Snapshots() ([]instance.Instance, error) {
 
 		dbInstances := make([]dbCluster.Instance, len(dbSnapshots))
 		for i, s := range dbSnapshots {
-			dbInstances[i] = s.ToInstance(d.name, d.node, d.dbType, d.architecture)
+			inst, err := s.ToInstance(ctx, tx.Tx(), d.name, d.node, d.dbType, d.architecture)
+			if err != nil {
+				return err
+			}
+			dbInstances[i] = inst
 		}
 
 		snapshotArgs, err = tx.InstancesToInstanceArgs(ctx, false, dbInstances...)
@@ -653,7 +658,6 @@ func (d *common) restartCommon(inst instance.Instance, timeout time.Duration) er
 			Profiles:     inst.Profiles(),
 			Project:      inst.Project().Name,
 			Type:         inst.Type(),
-			Snapshot:     inst.IsSnapshot(),
 		}
 
 		err := inst.Update(args, false)
@@ -796,24 +800,26 @@ func (d *common) runHooks(hooks []func() error) error {
 }
 
 // snapshot handles the common part of the snapshotting process.
-func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time.Time, stateful bool) error {
+func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time.Time, stateful bool, description string) error {
 	reverter := revert.New()
 	defer reverter.Fail()
 
 	// Setup the arguments.
 	args := db.InstanceArgs{
-		Project:      inst.Project().Name,
-		Architecture: inst.Architecture(),
-		Config:       inst.LocalConfig(),
-		Description:  inst.Description(),
-		Type:         inst.Type(),
-		Snapshot:     true,
-		Devices:      inst.LocalDevices(),
-		Ephemeral:    inst.IsEphemeral(),
-		Name:         inst.Name() + internalInstance.SnapshotDelimiter + name,
-		Profiles:     inst.Profiles(),
-		Stateful:     stateful,
-		ExpiryDate:   expiry,
+		Project:      		inst.Project().Name,
+		Architecture: 		inst.Architecture(),
+		Config:       		inst.LocalConfig(),
+		Description:  		inst.Description(),
+		Type:         		inst.Type(),
+		Devices:      		inst.LocalDevices(),
+		Ephemeral:    		inst.IsEphemeral(),
+		Name:         		inst.Name() + internalInstance.SnapshotDelimiter + name,
+		Profiles:     		inst.Profiles(),
+		Stateful:     		stateful,
+		Snapshot:					db.SnapshotArgs{
+			ExpiryDate:			expiry,
+			Description:		description,
+		},
 	}
 
 	// Create the snapshot.
@@ -1669,7 +1675,7 @@ func (d *common) processStartedAt(pid int) (time.Time, error) {
 // ETag returns the instance configuration ETag data for pre-condition validation.
 func (d *common) ETag() []any {
 	if d.IsSnapshot() {
-		return []any{d.expiryDate}
+		return []any{d.snapshotExpiryDate}
 	}
 
 	// Prepare the ETag
