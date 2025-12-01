@@ -986,13 +986,16 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 			Description:  snap.Description,
 			CreationDate: snap.CreatedAt,
 			Type:         instanceType,
-			Snapshot:     true,
 			Devices:      deviceConfig.NewDevices(snap.Devices),
 			Ephemeral:    snap.Ephemeral,
 			LastUsedDate: snap.LastUsedAt,
 			Name:         snapInstName,
 			Profiles:     profiles,
 			Stateful:     snap.Stateful,
+			Snapshot:			db.SnapshotArgs{
+				Description: snap.SnapshotDescription,
+				ExpiryDate: snap.ExpiresAt,
+			},
 		}, nil, true, true)
 		if err != nil {
 			return fmt.Errorf("Failed creating instance snapshot record %q: %w", snap.Name, err)
