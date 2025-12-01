@@ -11,6 +11,13 @@ import (
 	"github.com/lxc/incus/v6/internal/server/db/query"
 )
 
+// SnapshotArgs is a value object holding all db-related details about an instance snapshot.
+type SnapshotArgs struct {
+	Description         string
+	ExpiryDate          time.Time
+}
+
+
 // UpdateInstanceSnapshotConfig inserts/updates/deletes the provided config keys.
 func (c *ClusterTx) UpdateInstanceSnapshotConfig(id int, values map[string]string) error {
 	insertSQL := "INSERT OR REPLACE INTO instances_snapshots_config (instance_snapshot_id, key, value) VALUES"
