@@ -93,7 +93,7 @@ type Instance interface {
 
 	// Snapshots & migration & backups.
 	Restore(source Instance, stateful bool) error
-	Snapshot(name string, expiry time.Time, stateful bool) error
+	Snapshot(name string, expiry time.Time, stateful bool, description string) error
 	Snapshots() ([]Instance, error)
 	Backups() ([]backup.InstanceBackup, error)
 	UpdateBackupFile() error
@@ -147,11 +147,13 @@ type Instance interface {
 	Profiles() []api.Profile
 	InitPID() int
 	State() string
-	ExpiryDate() time.Time
 	FillNetworkDevice(name string, m deviceConfig.Device) (deviceConfig.Device, error)
 
 	ETag() []any
 	MACPattern() string
+
+	SnapshotExpiryDate() time.Time
+	SnapshotDescription() string
 
 	// Paths.
 	Path() string
