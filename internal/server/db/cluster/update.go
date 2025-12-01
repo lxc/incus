@@ -117,28 +117,22 @@ var updates = map[int]schema.Update{
 }
 
 // updateFromV76 makes the following changes to reorganize the snapshot source properties
-// Create two new tables to store snapshot source properties;
+// Create new table to store snapshot source properties;
 // Migrate outdated columns to the new table;
 // Drop outdated columns from instances and instances_snapshots;
 func updateFromV76(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.Exec(`
-CREATE TABLE "instances_snapshots_properties" (
+CREATE TABLE instances_snapshots_property (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     instance_snapshot_id INTEGER NOT NULL,
     description TEXT,
     ephemeral INTEGER NOT NULL DEFAULT 0,
     stateful INTEGER NOT NULL DEFAULT 0,
-    FOREIGN KEY (instance_snapshot_id) REFERENCES instances_snapshots (id) ON DELETE CASCADE
+    FOREIGN KEY (instance_snapshot_id) REFERENCES "instances_snapshots" (id) ON DELETE CASCADE
 );
-CREATE TABLE "storage_volumes_snapshots_properties" (
-    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    storage_volume_snapshot_id INTEGER NOT NULL,
-    description TEXT,
-    FOREIGN KEY (storage_volume_snapshot_id) REFERENCES storage_volumes_snapshots (id) ON DELETE CASCADE
-)
 `)
 	if err != nil {
-		return fmt.Errorf("Failed creating instances_snapshots_properties and storage_volumes_snapshots_properties: %w", err)
+		return fmt.Errorf("Failed creating instances_snapshots_property: %w", err)
 	}
 
 	type instanceProperties struct {
@@ -169,44 +163,10 @@ SELECT a.id, a.description, a.stateful, b.ephemeral FROM instances_snapshots a J
 
 	for _, i := range instancesProperties {
 		_, err = tx.Exec(`
-INSERT INTO instances_snapshots_properties (instance_snapshot_id, description, ephemeral, stateful) VALUES(?,?,?,?);
+INSERT INTO instances_snapshots_property (instance_snapshot_id, description, ephemeral, stateful) VALUES(?,?,?,?);
 `, i.snapshot_id, i.description, i.stateful, i.ephemeral)
 		if err != nil {
 			return fmt.Errorf("Failed to migrate properties to instances_snapshots_properties: %w", err)
-		}
-
-	}
-
-	type volumeProperties struct {
-		snapshot_id int64
-		description string
-	}
-
-	var volumesProperties []volumeProperties
-	rowsS, err := tx.QueryContext(ctx, `
-SELECT id, description FROM storage_volumes_snapshots
-`)
-	if err != nil {
-		return fmt.Errorf("Failed running query: %w", err)
-	}
-
-	defer func() { _ = rowsS.Close() }()
-	for rowsS.Next() {
-		v := volumeProperties{}
-		err := rowsS.Scan(&v.snapshot_id, &v.description)
-		if err != nil {
-			return fmt.Errorf("Failed scanning instances_snapshots row: %w", err)
-		}
-
-		volumesProperties = append(volumesProperties, v)
-	}
-
-	for _, v := range volumesProperties {
-		_, err = tx.Exec(`
-INSERT INTO storage_volumes_snapshots_properties (storage_volume_snapshot_id, description) VALUES(?,?);
-`, v.snapshot_id, v.description)
-		if err != nil {
-			return fmt.Errorf("Failed to migrate properties to storage_volumes_snapshots_properties: %w", err)
 		}
 
 	}
@@ -246,8 +206,6 @@ CREATE INDEX instances_node_id_idx ON instances (node_id);
 		return fmt.Errorf("Failed to drop expiry_date column from instances: %w", err)
 	}
 
-	return nil
-
 	_, err = tx.Exec(`
 CREATE TABLE instances_snapshots_new (
     id INTEGER primary key AUTOINCREMENT NOT NULL,
@@ -257,7 +215,7 @@ CREATE TABLE instances_snapshots_new (
     description TEXT NOT NULL,
     expiry_date DATETIME,
     UNIQUE (instance_id, name),
-    FOREIGN KEY (instance_id) REFERENCES instances (id) ON DELETE CASCADE
+    FOREIGN KEY (instance_id) REFERENCES "instances" (id) ON DELETE CASCADE
 );
 
 INSERT INTO instances_snapshots_new (id, instance_id, name, creation_date, description, expiry_date)
