@@ -582,13 +582,16 @@ func internalRecoverImportInstanceSnapshot(s *state.State, pool storagePools.Poo
 		Description:  snap.Description,
 		CreationDate: snap.CreatedAt,
 		Type:         instanceType,
-		Snapshot:     true,
 		Devices:      deviceConfig.NewDevices(snap.Devices),
 		Ephemeral:    snap.Ephemeral,
 		LastUsedDate: snap.LastUsedAt,
 		Name:         poolVol.Container.Name + internalInstance.SnapshotDelimiter + snap.Name,
 		Profiles:     profiles,
 		Stateful:     snap.Stateful,
+		Snapshot:			db.SnapshotArgs{
+			Description: snap.SnapshotDescription,
+			ExpiryDate:	 snap.ExpiresAt,
+		},
 	}, nil, false, true)
 	if err != nil {
 		return nil, fmt.Errorf("Failed creating instance snapshot record %q: %w", snap.Name, err)
