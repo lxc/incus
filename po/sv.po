@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-11-28 02:38-0500\n"
-"PO-Revision-Date: 2025-12-02 06:02+0000\n"
+"PO-Revision-Date: 2025-12-03 10:00+0000\n"
 "Last-Translator: Daniel Nylander <daniel@danielnylander.se>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
 "Language: sv\n"
@@ -3719,7 +3719,7 @@ msgstr "Importera lagringsbehållare"
 
 #: cmd/incus/storage_volume.go:4344
 msgid "Import type needs to be \"backup\" or \"iso\""
-msgstr "Importtypen måste vara \"backup\" eller \"iso\"."
+msgstr "Importtypen måste vara \"backup\" eller \"iso\""
 
 #: cmd/incus/storage_volume.go:4278
 msgid "Import type, backup or iso (default \"backup\")"
@@ -6404,7 +6404,7 @@ msgstr "Nod %d:\n"
 msgid "None of --storage-pool, --storage-create-device or --storage-create-loop may be used with the 'dir' backend"
 msgstr ""
 "Ingen av --storage-pool, --storage-create-device eller --storage-create-loop "
-"får användas med 'dir'-backend."
+"får användas med 'dir'-backend"
 
 #: cmd/incus/admin_init_interactive.go:635
 msgid "Number of placement groups"
@@ -8111,7 +8111,7 @@ msgstr "Lagring har redan konfigurerats"
 #: cmd/incus/admin_recover.go:120
 #, c-format
 msgid "Storage pool %q is already on recover list"
-msgstr "Lagringspool %q finns redan på återställningslistan."
+msgstr "Lagringspool %q finns redan på återställningslistan"
 
 #: cmd/incus/admin_recover.go:216
 #, c-format
@@ -8204,7 +8204,7 @@ msgstr "Byt standardfjärrkontroll"
 
 #: cmd/incus/file.go:141 cmd/incus/storage_volume.go:2464
 msgid "Symlink target path can only be used for type \"symlink\""
-msgstr "Symlink-målvägen kan endast användas för typen \"symlink\"."
+msgstr "Symlink-målvägen kan endast användas för typen \"symlink\""
 
 #: cmd/incus/info.go:418
 msgid "System:"
@@ -9141,7 +9141,7 @@ msgstr "Om endast instansen ska säkerhetskopieras (utan snapshots)"
 msgid "Whether or not to restore the instance's running state from snapshot (if available)"
 msgstr ""
 "Om instansens körningsstatus ska återställas från en ögonblicksbild (om "
-"tillgänglig) eller inte."
+"tillgänglig) eller inte"
 
 #: cmd/incus/snapshot.go:94
 msgid "Whether or not to snapshot the instance's running state"
