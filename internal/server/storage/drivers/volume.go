@@ -122,6 +122,7 @@ type Volume struct {
 	driver               Driver
 	mountCustomPath      string // Mount the filesystem volume at a custom location.
 	mountFilesystemProbe bool   // Probe filesystem type when mounting volume (when needed).
+	mountFullFilesystem  bool   // Whether the whole volume, including snapshots data, should be mounted. It is used by the VM config filesystem.
 	hasSource            bool   // Whether the volume is created from a source volume.
 	isDeleted            bool   // Whether we're dealing with a hidden volume (kept until all references are gone).
 }
@@ -364,6 +365,79 @@ func (v Volume) MountTask(task func(mountPath string, op *operations.Operation) 
 	return nil
 }
 
+// MountWithSnapshotsTask runs the supplied task after mounting the volume with its snapshots if needed. If the volume was mounted
+// for this then it is unmounted when the task finishes.
+func (v Volume) MountWithSnapshotsTask(task func(mountPath string, op *operations.Operation) error, op *operations.Operation) error {
+	var err error
+
+	if v.IsSnapshot() {
+		return fmt.Errorf("Volume cannot be snapshot")
+	}
+
+	err = v.driver.MountVolume(v, op)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _, _ = v.driver.UnmountVolume(v, false, op) }()
+
+	snapshots, err := v.Snapshots(op)
+	if err != nil {
+		return err
+	}
+
+	unmountSnapshots := func(snapshots []Volume) {
+		for _, s := range snapshots {
+			_, _ = v.driver.UnmountVolumeSnapshot(s, op)
+		}
+	}
+
+	mounted := []Volume{}
+
+	for _, s := range snapshots {
+		err = v.driver.MountVolumeSnapshot(s, op)
+		if err != nil {
+			unmountSnapshots(mounted)
+			return err
+		}
+
+		mounted = append(mounted, s)
+	}
+
+	defer unmountSnapshots(mounted)
+
+	for _, s := range snapshots {
+		snapDiskPath, err := v.driver.GetVolumeDiskPath(s)
+		if err != nil {
+			return err
+		}
+
+		backingPath, err := v.driver.GetQcow2BackingFilePath(s)
+		if err != nil {
+			return err
+		}
+
+		// Check whether the backing path and the LVM volume resolve to the same /dev/dm-X device.
+		target, err := filepath.EvalSymlinks(backingPath)
+		if err != nil {
+			return err
+		}
+
+		if target != snapDiskPath {
+			return fmt.Errorf("/dev symlinks are in an inconsistent state")
+		}
+	}
+
+	taskErr := task(v.MountPath(), op)
+
+	// Return task error if failed.
+	if taskErr != nil {
+		return taskErr
+	}
+
+	return nil
+}
+
 // UnmountTask runs the supplied task after unmounting the volume if needed.
 // If the volume was unmounted for this then it is mounted when the task finishes.
 // keepBlockDev indicates if backing block device should be not be deactivated if volume is unmounted.
@@ -515,6 +589,11 @@ func (v Volume) SetConfigStateSize(size string) {
 // ConfigBlockFilesystem returns the filesystem to use for block volumes. Returns config value "block.filesystem"
 // if defined in volume or pool's volume config, otherwise the DefaultFilesystem.
 func (v Volume) ConfigBlockFilesystem() string {
+	blockType := v.ExpandedConfig("block.type")
+	if blockType != "" && blockType == BlockVolumeTypeQcow2 && v.contentType == ContentTypeFS {
+		return "btrfs"
+	}
+
 	fs := v.ExpandedConfig("block.filesystem")
 	if fs != "" {
 		return fs
@@ -526,6 +605,16 @@ func (v Volume) ConfigBlockFilesystem() string {
 // ConfigBlockMountOptions returns the filesystem mount options to use for block volumes. Returns config value
 // "block.mount_options" if defined in volume or pool's volume config, otherwise defaultFilesystemMountOptions.
 func (v Volume) ConfigBlockMountOptions() string {
+	if v.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 && !v.mountFullFilesystem {
+		parent, snapName, isSnap := api.GetParentAndSnapshotName(v.name)
+		subvol := parent
+		if isSnap {
+			subvol = fmt.Sprintf("%s-%s", parent, snapName)
+		}
+
+		return fmt.Sprintf("subvol=%s", subvol)
+	}
+
 	fs := v.ExpandedConfig("block.mount_options")
 	if fs != "" {
 		return fs
