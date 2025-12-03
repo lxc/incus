@@ -1311,74 +1311,102 @@ func (d *lvm) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) erro
 		mountVol := snapVol
 		mountFlags, mountOptions := linux.ResolveMountOptions(strings.Split(mountVol.ConfigBlockMountOptions(), ","))
 
-		// Regenerate filesystem UUID if needed. This is because some filesystems do not allow mounting
-		// multiple volumes that share the same UUID. As snapshotting a volume will copy its UUID we need
-		// to potentially regenerate the UUID of the snapshot now that we are trying to mount it.
-		// This is done at mount time rather than snapshot time for 2 reasons; firstly snapshots need to be
-		// as fast as possible, and on some filesystems regenerating the UUID is a slow process, secondly
-		// we do not want to modify a snapshot in case it is corrupted for some reason, so at mount time
-		// we take another snapshot of the snapshot, regenerate the temporary snapshot's UUID and then
-		// mount that.
-		regenerateFSUUID := renegerateFilesystemUUIDNeeded(snapVol.ConfigBlockFilesystem())
-		if regenerateFSUUID {
-			// Instantiate a new volume to be the temporary writable snapshot.
-			tmpVolName := fmt.Sprintf("%s%s", snapVol.name, tmpVolSuffix)
-			tmpVol := NewVolume(d, d.name, snapVol.volType, snapVol.contentType, tmpVolName, snapVol.config, snapVol.poolConfig)
+		isQcow2 := snapVol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2
+		if isQcow2 {
+			parentName, _, _ := api.GetParentAndSnapshotName(snapVol.name)
+			mountVol = NewVolume(d, d.name, snapVol.volType, snapVol.contentType, parentName, snapVol.config, snapVol.poolConfig)
 
-			// Create writable snapshot from source snapshot named with a tmpVolSuffix suffix.
-			_, err = d.createLogicalVolumeSnapshot(d.config["lvm.vg_name"], snapVol, tmpVol, false, d.usesThinpool())
+			// Activate volume if needed.
+			_, err = d.activateVolume(mountVol)
 			if err != nil {
-				return fmt.Errorf("Error creating temporary LVM logical volume snapshot: %w", err)
+				return err
 			}
 
-			reverter.Add(func() {
-				_ = d.removeLogicalVolume(d.lvmPath(d.config["lvm.vg_name"], tmpVol.volType, tmpVol.contentType, tmpVol.name))
-			})
+			// Get volume path.
+			volPath := d.lvmPath(d.config["lvm.vg_name"], mountVol.volType, mountVol.contentType, mountVol.name)
 
-			// We are going to mount the temporary volume instead.
-			mountVol = tmpVol
-		}
+			volDevPath, err := d.lvmDevPath(volPath)
+			if err != nil {
+				return err
+			}
 
-		// Activate volume if needed.
-		_, err = d.activateVolume(mountVol)
-		if err != nil {
-			return err
-		}
+			// Finally attempt to mount the volume that needs mounting.
+			err = TryMount(volDevPath, mountPath, mountVol.ConfigBlockFilesystem(), mountFlags|unix.MS_RDONLY, mountOptions)
+			if err != nil {
+				return fmt.Errorf("Failed to mount LVM snapshot volume: %w", err)
+			}
 
-		// Get volume path.
-		volPath := d.lvmPath(d.config["lvm.vg_name"], mountVol.volType, mountVol.contentType, mountVol.name)
+			d.logger.Debug("Mounted logical volume snapshot", logger.Ctx{"dev": volPath, "path": mountPath, "options": mountOptions})
+		} else {
+			// Regenerate filesystem UUID if needed. This is because some filesystems do not allow mounting
+			// multiple volumes that share the same UUID. As snapshotting a volume will copy its UUID we need
+			// to potentially regenerate the UUID of the snapshot now that we are trying to mount it.
+			// This is done at mount time rather than snapshot time for 2 reasons; firstly snapshots need to be
+			// as fast as possible, and on some filesystems regenerating the UUID is a slow process, secondly
+			// we do not want to modify a snapshot in case it is corrupted for some reason, so at mount time
+			// we take another snapshot of the snapshot, regenerate the temporary snapshot's UUID and then
+			// mount that.
+			regenerateFSUUID := renegerateFilesystemUUIDNeeded(snapVol.ConfigBlockFilesystem())
+			if regenerateFSUUID {
+				// Instantiate a new volume to be the temporary writable snapshot.
+				tmpVolName := fmt.Sprintf("%s%s", snapVol.name, tmpVolSuffix)
+				tmpVol := NewVolume(d, d.name, snapVol.volType, snapVol.contentType, tmpVolName, snapVol.config, snapVol.poolConfig)
 
-		volDevPath, err := d.lvmDevPath(volPath)
-		if err != nil {
-			return err
-		}
-
-		if regenerateFSUUID {
-			tmpVolFsType := mountVol.ConfigBlockFilesystem()
-
-			// When mounting XFS filesystems temporarily we can use the nouuid option rather than fully
-			// regenerating the filesystem UUID.
-			if tmpVolFsType == "xfs" {
-				idx := strings.Index(mountOptions, "nouuid")
-				if idx < 0 {
-					mountOptions += ",nouuid"
-				}
-			} else {
-				d.logger.Debug("Regenerating filesystem UUID", logger.Ctx{"dev": volPath, "fs": tmpVolFsType})
-				err = regenerateFilesystemUUID(mountVol.ConfigBlockFilesystem(), volDevPath)
+				// Create writable snapshot from source snapshot named with a tmpVolSuffix suffix.
+				_, err = d.createLogicalVolumeSnapshot(d.config["lvm.vg_name"], snapVol, tmpVol, false, d.usesThinpool())
 				if err != nil {
-					return err
+					return fmt.Errorf("Error creating temporary LVM logical volume snapshot: %w", err)
+				}
+
+				reverter.Add(func() {
+					_ = d.removeLogicalVolume(d.lvmPath(d.config["lvm.vg_name"], tmpVol.volType, tmpVol.contentType, tmpVol.name))
+				})
+
+				// We are going to mount the temporary volume instead.
+				mountVol = tmpVol
+			}
+
+			// Activate volume if needed.
+			_, err = d.activateVolume(mountVol)
+			if err != nil {
+				return err
+			}
+
+			// Get volume path.
+			volPath := d.lvmPath(d.config["lvm.vg_name"], mountVol.volType, mountVol.contentType, mountVol.name)
+
+			volDevPath, err := d.lvmDevPath(volPath)
+			if err != nil {
+				return err
+			}
+
+			if regenerateFSUUID {
+				tmpVolFsType := mountVol.ConfigBlockFilesystem()
+
+				// When mounting XFS filesystems temporarily we can use the nouuid option rather than fully
+				// regenerating the filesystem UUID.
+				if tmpVolFsType == "xfs" {
+					idx := strings.Index(mountOptions, "nouuid")
+					if idx < 0 {
+						mountOptions += ",nouuid"
+					}
+				} else {
+					d.logger.Debug("Regenerating filesystem UUID", logger.Ctx{"dev": volPath, "fs": tmpVolFsType})
+					err = regenerateFilesystemUUID(mountVol.ConfigBlockFilesystem(), volDevPath)
+					if err != nil {
+						return err
+					}
 				}
 			}
-		}
 
-		// Finally attempt to mount the volume that needs mounting.
-		err = TryMount(volDevPath, mountPath, mountVol.ConfigBlockFilesystem(), mountFlags|unix.MS_RDONLY, mountOptions)
-		if err != nil {
-			return fmt.Errorf("Failed to mount LVM snapshot volume: %w", err)
-		}
+			// Finally attempt to mount the volume that needs mounting.
+			err = TryMount(volDevPath, mountPath, mountVol.ConfigBlockFilesystem(), mountFlags|unix.MS_RDONLY, mountOptions)
+			if err != nil {
+				return fmt.Errorf("Failed to mount LVM snapshot volume: %w", err)
+			}
 
-		d.logger.Debug("Mounted logical volume snapshot", logger.Ctx{"dev": volPath, "path": mountPath, "options": mountOptions})
+			d.logger.Debug("Mounted logical volume snapshot", logger.Ctx{"dev": volPath, "path": mountPath, "options": mountOptions})
+		}
 	} else if snapVol.contentType == ContentTypeBlock {
 		// Activate volume if needed.
 		_, err = d.activateVolume(snapVol)
