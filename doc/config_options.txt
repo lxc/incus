@@ -5685,6 +5685,13 @@ This value is required by some providers.
 
 <!-- config group storage_linstor-common end -->
 <!-- config group storage_lvm-common start -->
+```{config:option} block.type storage_lvm-common
+:condition: "block-based volume"
+:default: "same as `volume.block.type`"
+:shortdesc: "Type of the block volume"
+
+```
+
 ```{config:option} lvm.metadata_size storage_lvm-common
 :default: "`0` (auto)"
 :scope: "global"
