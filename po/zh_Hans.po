@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-11-28 02:38-0500\n"
-"PO-Revision-Date: 2025-11-15 12:51+0000\n"
-"Last-Translator: IO01 <pf.man@live.com>\n"
+"PO-Revision-Date: 2025-12-04 20:03+0000\n"
+"Last-Translator: daoge <renmadao@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/incus/cli/zh_Hans/>\n"
 "Language: zh_Hans\n"
@@ -3915,7 +3915,7 @@ msgstr ""
 
 #: cmd/incus/top.go:80
 msgid "INSTANCE NAME"
-msgstr ""
+msgstr "实例名称"
 
 #: cmd/incus/info.go:381
 #, c-format
@@ -3928,11 +3928,11 @@ msgstr "IP 地址"
 
 #: cmd/incus/info.go:799
 msgid "IP addresses"
-msgstr ""
+msgstr "IP地址"
 
 #: cmd/incus/network.go:1013
 msgid "IP addresses:"
-msgstr ""
+msgstr "IP地址："
 
 #: cmd/incus/list.go:505 cmd/incus/network.go:1163
 msgid "IPV4"
@@ -3944,15 +3944,16 @@ msgstr "IPV6"
 
 #: cmd/incus/network.go:1080
 msgid "IPv4 uplink address"
-msgstr ""
+msgstr "IPv4上行地址"
 
 #: cmd/incus/network.go:1084
 msgid "IPv6 uplink address"
-msgstr ""
+msgstr "IPv6上行地址"
 
 #: cmd/incus/config_trust.go:452
+#, fuzzy
 msgid "ISSUE DATE"
-msgstr ""
+msgstr "发行日期"
 
 #: cmd/incus/info.go:386
 #, fuzzy, c-format
@@ -4181,7 +4182,7 @@ msgstr "无效的 URL %q：%w"
 #: cmd/incus/remote.go:394
 #, c-format
 msgid "Invalid URL scheme \"%s\" in \"%s\""
-msgstr ""
+msgstr "无效的URL格式 \"%s\" in \"%s\""
 
 #: cmd/incus/main_aliases.go:147 cmd/incus/main_aliases.go:189
 #, c-format
@@ -4293,7 +4294,7 @@ msgstr "无效的路径 %s"
 
 #: cmd/incus/network_peer.go:370
 msgid "Invalid peer type"
-msgstr ""
+msgstr "节点类型无效"
 
 #: cmd/incus/remote.go:383
 #, c-format
