@@ -1,4 +1,9 @@
 test_incremental_copy() {
+    if [ "${INCUS_BACKEND}" = "linstor" ]; then
+        echo "==> SKIP: Linstor is known to have issues with refresh copies in Github tests"
+        return
+    fi
+
     ensure_import_testimage
     ensure_has_localhost_remote "${INCUS_ADDR}"
 
