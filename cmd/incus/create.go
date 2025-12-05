@@ -288,7 +288,10 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 	}
 
 	req.Config = configMap
-	req.Ephemeral = c.flagEphemeral
+
+	if c.flagEphemeral {
+		req.Ephemeral = c.flagEphemeral
+	}
 
 	if c.flagDescription != "" {
 		req.Description = c.flagDescription
