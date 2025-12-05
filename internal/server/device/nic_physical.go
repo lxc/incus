@@ -147,7 +147,7 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 		//  default: randomly assigned
 		//  managed: no
 		//  shortdesc: The MAC address of the new interface
-		optionalFields = append(optionalFields, "hwaddr")
+		optionalFields = append(optionalFields, "hwaddr", "vlan")
 
 		// Copy certain keys verbatim from the network's settings.
 		for _, field := range optionalFields {
