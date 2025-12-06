@@ -1128,6 +1128,47 @@ func (m *Monitor) NBDBlockExportAdd(deviceNodeName string) error {
 	return nil
 }
 
+// QueryNamedBlockNodes returns block nodes names.
+func (m *Monitor) QueryNamedBlockNodes() ([]string, error) {
+	var resp struct {
+		Return []struct {
+			NodeName string `json:"node-name"`
+		} `json:"return"`
+	}
+
+	err := m.Run("query-named-block-nodes", nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	result := []string{}
+	for _, r := range resp.Return {
+		result = append(result, r.NodeName)
+	}
+
+	return result, nil
+}
+
+// ChangeBackingFile changes backing file name for node.
+func (m *Monitor) ChangeBackingFile(nodeName string, backingFilename string) error {
+	var args struct {
+		Device      string `json:"device"`
+		NodeName    string `json:"image-node-name"`
+		BackingFile string `json:"backing-file"`
+	}
+
+	args.Device = nodeName
+	args.NodeName = nodeName
+	args.BackingFile = backingFilename
+
+	err := m.Run("change-backing-file", args, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // BlockDevSnapshot creates a snapshot of a device using the specified snapshot device.
 func (m *Monitor) BlockDevSnapshot(deviceNodeName string, snapshotNodeName string) error {
 	var args struct {
