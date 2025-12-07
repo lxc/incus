@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-11-28 02:38-0500\n"
-"PO-Revision-Date: 2025-10-21 04:27+0000\n"
-"Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
+"PO-Revision-Date: 2025-12-07 15:00+0000\n"
+"Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.14-dev\n"
+"X-Generator: Weblate 5.15-dev\n"
 
 #: cmd/incus/info.go:453
 msgid "  Chassis:"
@@ -83,7 +83,6 @@ msgstr ""
 "###   zfs.pool_name: default"
 
 #: cmd/incus/storage_volume.go:1023
-#, fuzzy
 msgid ""
 "### This is a YAML representation of a storage volume.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -128,7 +127,6 @@ msgstr ""
 "### Any line starting with a '# will be ignored."
 
 #: cmd/incus/config.go:119
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the configuration.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -279,7 +277,6 @@ msgstr ""
 "configuration keys can be changed."
 
 #: cmd/incus/network_address_set.go:488
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the network address set.\n"
 "### Any line starting with '#' will be ignored.\n"
@@ -349,7 +346,6 @@ msgstr ""
 "### Note that the listen_address and location cannot be changed."
 
 #: cmd/incus/network_integration.go:245
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the network integration.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -362,7 +358,6 @@ msgstr ""
 "### Note that the fingerprint is shown but cannot be changed"
 
 #: cmd/incus/network_load_balancer.go:685
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the network load balancer.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -716,9 +711,8 @@ msgid "--refresh can only be used with instances"
 msgstr "--refresh はインスタンスの場合のみ使えます"
 
 #: cmd/incus/move.go:269
-#, fuzzy
 msgid "--target can only be used with clusters"
-msgstr "--target はインスタンスでは使えません"
+msgstr "--target はクラスターでのみ使えます"
 
 #: cmd/incus/config.go:167 cmd/incus/config.go:440 cmd/incus/config.go:620
 #: cmd/incus/config.go:825 cmd/incus/info.go:651
@@ -754,9 +748,8 @@ msgid "<remote>: <path>"
 msgstr "<remote>: <path>"
 
 #: cmd/incus/storage_volume.go:3099
-#, fuzzy
 msgid "<source path> [<remote>:]<pool> <volume>/<target path>"
-msgstr "[<remote>:]<pool> <volume> [<path>]"
+msgstr "<source path> [<remote>:]<pool> <volume>/<target path>"
 
 #: cmd/incus/file.go:696
 msgid "<source path>... [<remote>:]<instance>/<path>"
@@ -778,9 +771,8 @@ msgid "=> Query %d:"
 msgstr "=> クエリ %d:"
 
 #: cmd/incus/remote.go:698
-#, fuzzy
 msgid "A client certificate is already present"
-msgstr "クライアント証明書がサーバに格納されました:"
+msgstr "クライアント証明書はすでに存在しています"
 
 #: cmd/incus/config_trust.go:123
 msgid "A client name must be provided"
@@ -795,7 +787,6 @@ msgid "ADDRESS"
 msgstr "ADDRESS"
 
 #: cmd/incus/network_address_set.go:167
-#, fuzzy
 msgid "ADDRESSES"
 msgstr "ADDRESS"
 
@@ -858,9 +849,8 @@ msgid "Add a network zone record entry"
 msgstr "ネットワークゾーンレコードのエントリを追加します"
 
 #: cmd/incus/network_address_set.go:701 cmd/incus/network_address_set.go:702
-#, fuzzy
 msgid "Add addresses to a network address set"
-msgstr "ネットワークゾーンレコードにエントリを追加します"
+msgstr "ネットワークアドレスセットにアドレスを追加します"
 
 #: cmd/incus/network_load_balancer.go:924
 msgid "Add backend to a load balancer"
@@ -983,9 +973,9 @@ msgid "Address: %s"
 msgstr "アドレス: %s"
 
 #: cmd/incus/info.go:375
-#, fuzzy, c-format
+#, c-format
 msgid "Address: %v"
-msgstr "アドレス: %s"
+msgstr "アドレス: %v"
 
 #: cmd/incus/storage_bucket.go:196
 #, c-format
@@ -1088,14 +1078,12 @@ msgid "Attach network interfaces to profiles"
 msgstr "プロファイルにネットワークインターフェースを追加します"
 
 #: cmd/incus/storage_volume.go:175 cmd/incus/storage_volume.go:176
-#, fuzzy
 msgid "Attach new custom storage volumes to instances"
-msgstr "新たにストレージボリュームをインスタンスに追加します"
+msgstr "新たにカスタムストレージボリュームをインスタンスに追加します"
 
 #: cmd/incus/storage_volume.go:268 cmd/incus/storage_volume.go:269
-#, fuzzy
 msgid "Attach new custom storage volumes to profiles"
-msgstr "新しいストレージボリュームをプロファイルに追加します"
+msgstr "新しいカスタムストレージボリュームをプロファイルに追加します"
 
 #: cmd/incus/network.go:153
 msgid "Attach new network interfaces to instances"
@@ -1154,9 +1142,8 @@ msgid "BASE IMAGE"
 msgstr "BASE IMAGE"
 
 #: cmd/incus/network_load_balancer.go:928
-#, fuzzy
 msgid "Backend description"
-msgstr "説明"
+msgstr "バックエンドの説明"
 
 #: cmd/incus/network_load_balancer.go:1368
 msgid "Backend health:"
@@ -1168,9 +1155,9 @@ msgid "Backing up instance: %s"
 msgstr "インスタンスのバックアップ中: %s"
 
 #: cmd/incus/storage_bucket.go:1547
-#, fuzzy, c-format
+#, c-format
 msgid "Backing up storage bucket: %s"
-msgstr "ストレージバケット %s のバックアップを行います"
+msgstr "ストレージバケットのバックアップを実行中: %s"
 
 #: cmd/incus/storage_volume.go:4172
 #, c-format
@@ -1241,14 +1228,13 @@ msgid "Bridge:"
 msgstr "ブリッジ:"
 
 #: cmd/incus/storage_bucket.go:111
-#, fuzzy
 msgid "Bucket description"
-msgstr "説明"
+msgstr "バケットの説明"
 
 #: cmd/incus/info.go:367
-#, fuzzy, c-format
+#, c-format
 msgid "Bus Address: %v"
-msgstr "アドレス: %s"
+msgstr "バスアドレス: %v"
 
 #: cmd/incus/info.go:794 cmd/incus/network.go:1023
 msgid "Bytes received"
@@ -1275,9 +1261,8 @@ msgid "COUNT"
 msgstr "COUNT"
 
 #: cmd/incus/top.go:81
-#, fuzzy
 msgid "CPU TIME(s)"
-msgstr "CPU (%s):"
+msgstr "CPU TIME(s)"
 
 #: cmd/incus/list.go:525
 msgid "CPU USAGE"
@@ -1296,9 +1281,8 @@ msgid "CPU:"
 msgstr "CPU:"
 
 #: cmd/incus/info.go:520
-#, fuzzy
 msgid "CPUs:"
-msgstr "GPUs:"
+msgstr "CPUs:"
 
 #: cmd/incus/operation.go:168
 msgid "CREATED"
@@ -1342,9 +1326,9 @@ msgstr ""
 "ディレクトリを pull する場合は --recursive オプションを使用してください"
 
 #: cmd/incus/utils.go:311
-#, fuzzy, c-format
+#, c-format
 msgid "Can't read from environment file: %w"
-msgstr "標準入力から読み込めません: %w"
+msgstr "環境ファイルから読み込めません: %w"
 
 #: cmd/incus/utils.go:276 cmd/incus/utils.go:296
 #, c-format
@@ -1450,9 +1434,8 @@ msgid "Certificate add token for %s deleted"
 msgstr "%s に対する証明書追加トークンが削除されました"
 
 #: cmd/incus/config_trust.go:188
-#, fuzzy
 msgid "Certificate description"
-msgstr "証明書のフィンガープリント: %s"
+msgstr "証明書の説明"
 
 #: cmd/incus/remote.go:260
 #, c-format
@@ -1523,9 +1506,8 @@ msgid "Cluster group %s renamed to %s"
 msgstr "クラスターグループ名 %s を %s に変更しました"
 
 #: cmd/incus/cluster_group.go:198
-#, fuzzy
 msgid "Cluster group description"
-msgstr "クラスターグループ %s を作成しました"
+msgstr "クラスターグループの説明"
 
 #: cmd/incus/cluster.go:1348
 #, c-format
@@ -1642,20 +1624,20 @@ msgid "Compression algorithm to use (none for uncompressed)"
 msgstr "使用する圧縮アルゴリズムを指定します (圧縮しない場合は none)"
 
 #: cmd/incus/storage_volume.go:4099
-#, fuzzy
 msgid ""
 "Compression algorithm to use (none for uncompressed, ignored for ISO storage "
 "volumes)"
-msgstr "使用する圧縮アルゴリズムを指定します (圧縮しない場合は none)"
+msgstr ""
+"使用する圧縮アルゴリズムを指定します (圧縮しない場合は none、ISO "
+"ストレージボリュームの場合は無視されます)"
 
 #: cmd/incus/copy.go:56 cmd/incus/create.go:58 cmd/incus/import.go:38
 msgid "Config key/value to apply to the new instance"
 msgstr "新しいインスタンスに適用するキー/値の設定"
 
 #: cmd/incus/network_integration.go:95
-#, fuzzy
 msgid "Config key/value to apply to the new network integration"
-msgstr "新しいインスタンスに適用するキー/値の設定"
+msgstr "新しいネットワーク統合に適用する設定キーと値"
 
 #: cmd/incus/project.go:119
 msgid "Config key/value to apply to the new project"
@@ -1693,9 +1675,8 @@ msgid "Configure the daemon"
 msgstr "デーモンの設定"
 
 #: cmd/incus/top.go:66
-#, fuzzy
 msgid "Configure the refresh delay in seconds"
-msgstr "更新間隔を秒単位で入力:"
+msgstr "更新間隔を秒単位で設定"
 
 #: cmd/incus/admin_waitready.go:56
 #, c-format
@@ -1725,9 +1706,8 @@ msgid "Copy aliases from source"
 msgstr "ソースからエイリアスをコピーしました"
 
 #: cmd/incus/storage_volume.go:378 cmd/incus/storage_volume.go:379
-#, fuzzy
 msgid "Copy custom storage volumes"
-msgstr "新たにカスタムストレージボリュームをインポートします"
+msgstr "カスタムストレージボリュームをコピーします"
 
 #: cmd/incus/image.go:152
 msgid "Copy images between servers"
@@ -1901,14 +1881,12 @@ msgid "Create any directories necessary"
 msgstr "必要なディレクトリをすべて作成します"
 
 #: cmd/incus/storage_volume.go:2421
-#, fuzzy
 msgid "Create files and directories in custom vollume"
-msgstr "インスタンス内にファイル、もしくはディレクトリーを作成します"
+msgstr "カスタムボリューム内にファイル、もしくはディレクトリーを作成します"
 
 #: cmd/incus/storage_volume.go:2422
-#, fuzzy
 msgid "Create files and directories in custom volume"
-msgstr "インスタンス内にファイル、もしくはディレクトリーを作成します"
+msgstr "カスタムボリューム内にファイル、もしくはディレクトリーを作成します"
 
 #: cmd/incus/file.go:98 cmd/incus/file.go:99
 msgid "Create files and directories in instances"
@@ -1944,9 +1922,8 @@ msgid "Create key for a storage bucket"
 msgstr "ストレージバケットに対する鍵を作成します"
 
 #: cmd/incus/network_integration.go:87 cmd/incus/network_integration.go:88
-#, fuzzy
 msgid "Create network integrations"
-msgstr "新たにネットワークピアリングを作成します"
+msgstr "新たにネットワーク統合を作成します"
 
 #: cmd/incus/storage_bucket.go:102 cmd/incus/storage_bucket.go:103
 msgid "Create new custom storage buckets"
@@ -1965,9 +1942,8 @@ msgid "Create new network ACLs"
 msgstr "新たにネットワーク ACL を作成します"
 
 #: cmd/incus/network_address_set.go:248 cmd/incus/network_address_set.go:249
-#, fuzzy
 msgid "Create new network address sets"
-msgstr "新たにネットワークゾーンを作成します"
+msgstr "新たにネットワークアドレスセットを作成します"
 
 #: cmd/incus/network_forward.go:338 cmd/incus/network_forward.go:339
 msgid "Create new network forwards"
@@ -2080,19 +2056,17 @@ msgid "Daemon still running after %ds timeout"
 msgstr "%d 秒のタイムアウトが経過しましたが、デーモンがまだ実行中です"
 
 #: cmd/incus/info.go:503
-#, fuzzy, c-format
+#, c-format
 msgid "Date: %s"
-msgstr "状態: %s"
+msgstr "日付: %s"
 
 #: cmd/incus/debug.go:23
-#, fuzzy
 msgid "Debug commands"
-msgstr "コマンド:"
+msgstr "デバッグコマンド"
 
 #: cmd/incus/debug.go:24
-#, fuzzy
 msgid "Debug commands for instances"
-msgstr "インスタンス内でコマンドを実行します"
+msgstr "インスタンスのデバッグコマンド"
 
 #: cmd/incus/network.go:1049
 msgid "Default VLAN ID"
@@ -2103,33 +2077,28 @@ msgid "Define a compression algorithm: for backup or none"
 msgstr "圧縮アルゴリズムを指定します: backup or none"
 
 #: cmd/incus/top.go:451
-#, fuzzy
 msgid "Delay:"
-msgstr "Down delay"
+msgstr "更新間隔:"
 
 #: cmd/incus/warning.go:375
 msgid "Delete all warnings"
 msgstr "警告をすべて削除します"
 
 #: cmd/incus/operation.go:65 cmd/incus/operation.go:66
-#, fuzzy
 msgid "Delete background operations (will attempt to cancel)"
 msgstr "バックグラウンドの操作を削除します（キャンセルを試みます）"
 
 #: cmd/incus/cluster_group.go:281 cmd/incus/cluster_group.go:282
-#, fuzzy
 msgid "Delete cluster groups"
 msgstr "クラスターグループを削除します"
 
 #: cmd/incus/storage_volume.go:717 cmd/incus/storage_volume.go:718
-#, fuzzy
 msgid "Delete custom storage volumes"
-msgstr "ストレージボリュームを削除します"
+msgstr "カスタムストレージボリュームを削除します"
 
 #: cmd/incus/storage_volume.go:2620 cmd/incus/storage_volume.go:2621
-#, fuzzy
 msgid "Delete files in custom volume"
-msgstr "インスタンス内のファイルを管理します"
+msgstr "カスタムボリューム内のファイルを削除します"
 
 #: cmd/incus/file.go:293 cmd/incus/file.go:294
 msgid "Delete files in instances"
@@ -2164,18 +2133,16 @@ msgid "Delete network ACLs"
 msgstr "ネットワーク ACL を削除します"
 
 #: cmd/incus/network_address_set.go:648 cmd/incus/network_address_set.go:649
-#, fuzzy
 msgid "Delete network address sets"
-msgstr "ネットワークゾーンを削除します"
+msgstr "ネットワークアドレスセットを削除します"
 
 #: cmd/incus/network_forward.go:850 cmd/incus/network_forward.go:851
 msgid "Delete network forwards"
 msgstr "ネットワークフォワードを削除します"
 
 #: cmd/incus/network_integration.go:180 cmd/incus/network_integration.go:181
-#, fuzzy
 msgid "Delete network integrations"
-msgstr "ネットワークピアリングを削除します"
+msgstr "ネットワーク統合を削除します"
 
 #: cmd/incus/network_load_balancer.go:830
 #: cmd/incus/network_load_balancer.go:831
@@ -2219,7 +2186,6 @@ msgid "Delete storage volume snapshots"
 msgstr "ストレージボリュームのスナップショットを削除します"
 
 #: cmd/incus/warning.go:371 cmd/incus/warning.go:372
-#, fuzzy
 msgid "Delete warnings"
 msgstr "警告を削除します"
 
@@ -2399,14 +2365,12 @@ msgid "Destination cluster member name"
 msgstr "コピー先のクラスターメンバー名"
 
 #: cmd/incus/storage_volume.go:792 cmd/incus/storage_volume.go:793
-#, fuzzy
 msgid "Detach custom storage volumes from instances"
-msgstr "インスタンスからストレージボリュームを取り外します"
+msgstr "インスタンスからカスタムストレージボリュームを取り外します"
 
 #: cmd/incus/storage_volume.go:892 cmd/incus/storage_volume.go:893
-#, fuzzy
 msgid "Detach custom storage volumes from profiles"
-msgstr "プロファイルからストレージボリュームを取り外します"
+msgstr "プロファイルからカスタムストレージボリュームを取り外します"
 
 #: cmd/incus/network.go:527 cmd/incus/network.go:528
 msgid "Detach network interfaces from instances"
@@ -2417,9 +2381,9 @@ msgid "Detach network interfaces from profiles"
 msgstr "プロファイルからネットワークインターフェースを取り外します"
 
 #: cmd/incus/info.go:601 cmd/incus/info.go:613 cmd/incus/info.go:625
-#, fuzzy, c-format
+#, c-format
 msgid "Device %d:"
-msgstr "デバイス: %s"
+msgstr "デバイス %d:"
 
 #: cmd/incus/config_device.go:203
 #, c-format
@@ -2437,9 +2401,9 @@ msgid "Device %s removed from %s"
 msgstr "デバイス %s が %s から削除されました"
 
 #: cmd/incus/info.go:368
-#, fuzzy, c-format
+#, c-format
 msgid "Device Address: %v"
-msgstr "アドレス: %s"
+msgstr "デバイスアドレス: %v"
 
 #: cmd/incus/utils.go:65 cmd/incus/utils.go:89
 #, c-format
@@ -2478,26 +2442,23 @@ msgid "Device: %s"
 msgstr "デバイス: %s"
 
 #: cmd/incus/info.go:387
-#, fuzzy, c-format
+#, c-format
 msgid "Device: %v"
-msgstr "デバイス: %s"
+msgstr "デバイス: %v"
 
 #: cmd/incus/info.go:388
-#, fuzzy, c-format
+#, c-format
 msgid "DeviceID: %v"
-msgstr "デバイス: %s"
+msgstr "デバイスID: %v"
 
 #: cmd/incus/info.go:389
-#, fuzzy, c-format
+#, c-format
 msgid "DevicePath: %v"
-msgstr "デバイス: %s"
+msgstr "デバイスパス: %v"
 
 #: cmd/incus/create.go:443
-#, fuzzy
 msgid "Didn't get name of new instance from the server"
-msgstr ""
-"サーバから変更されたイメージ、インスタンス、スナップショットを取得できません"
-"でした"
+msgstr "サーバから新しいインスタンス名を取得できませんでした"
 
 #: cmd/incus/image.go:708
 msgid "Directory import is not available on this platform"
@@ -2537,9 +2498,8 @@ msgid "Disks:"
 msgstr "ディスク:"
 
 #: cmd/incus/cluster.go:157
-#, fuzzy
 msgid "Display clusters from all projects"
-msgstr "すべてのプロジェクトのインスタンスを表示します"
+msgstr "すべてのプロジェクトのクラスターを表示します"
 
 #: cmd/incus/image.go:1116
 msgid "Display images from all projects"
@@ -2550,26 +2510,22 @@ msgid "Display instances from all projects"
 msgstr "すべてのプロジェクトのインスタンスを表示します"
 
 #: cmd/incus/network_zone.go:119
-#, fuzzy
 msgid "Display network zones from all projects"
-msgstr "すべてのプロジェクトのインスタンスを表示します"
+msgstr "すべてのプロジェクトのネットワークゾーンを表示します"
 
 #: cmd/incus/profile.go:758
-#, fuzzy
 msgid "Display profiles from all projects"
-msgstr "すべてのプロジェクトのイメージを表示します"
+msgstr "すべてのプロジェクトのプロファイルを表示します"
 
 #: cmd/incus/top.go:42
 msgid "Display resource usage info per instance"
 msgstr "インスタンスごとのリソース消費状況を表示する"
 
 #: cmd/incus/storage_bucket.go:522
-#, fuzzy
 msgid "Display storage pool buckets from all projects"
-msgstr "すべてのプロジェクトのインスタンスを表示します"
+msgstr "すべてのプロジェクトのストレージプールバケットを表示します"
 
 #: cmd/incus/top.go:43
-#, fuzzy
 msgid ""
 "Displays CPU usage, memory usage, and disk usage per instance\n"
 "\n"
@@ -2590,30 +2546,23 @@ msgid ""
 "  n - Instance name\n"
 "  u - CPU usage (in seconds)"
 msgstr ""
-"イメージをリスト表示します\n"
+"インスタンスごとの CPU 使用率、メモリ使用量、ディスク使用量を表示します\n"
 "\n"
-"プロパティでフィルタを行う場合はフィルタは <key>=<value> の形になります。\n"
-"あるいはイメージのハッシュ値やイメージのエイリアスの一部を指定することもでき"
-"ます。\n"
+"デフォルトのカラムレイアウト: numD\n"
 "\n"
-"-c オプションは、表もしくは csv 形式で表示する際の、出力するイメージの\n"
-"属性を指定する引数のリスト (カンマ区切りでも OK) を指定します。\n"
+"== カラム ==\n"
+"-c オプションは、表形式または compact 形式で表示する際に出力するインスタンス"
+"属性を制御する引数をカンマ区切りで指定します。\n"
 "\n"
-"デフォルトのカラムレイアウトは lfpdasu です。\n"
+"カラム引数は定義済みの省略形です（下記参照）。\n"
+"連続する省略形間のカンマは任意です。\n"
 "\n"
 "カラムの指定文字:\n"
-"\n"
-"    l - もっとも短いイメージのエイリアス (他の指定されているエイリアスの数も"
-"表示します)\n"
-"    L - イメージのエイリアスすべて (改行区切り)\n"
-"    f - フィンガープリント (短い形式)\n"
-"    F - フィンガープリント (長い形式)\n"
-"    p - イメージがパブリックかどうか\n"
-"    d - 説明\n"
-"    a - アーキテクチャ\n"
-"    s - サイズ\n"
-"    u - アップロード日\n"
-"    t - タイプ"
+"  D - ディスク使用量\n"
+"  e - プロジェクト名\n"
+"  m - メモリー使用量\n"
+"  n - インスタンス名\n"
+"  u - CPU 使用量（秒）"
 
 #: cmd/incus/admin_init_interactive.go:421
 msgid "Do you want to configure a new local storage pool?"
@@ -2644,9 +2593,9 @@ msgid "Down delay"
 msgstr "Down delay"
 
 #: cmd/incus/info.go:382 cmd/incus/info.go:394
-#, fuzzy, c-format
+#, c-format
 msgid "Driver: %v"
-msgstr "ドライバ: %v (%v)"
+msgstr "ドライバー: %v"
 
 #: cmd/incus/info.go:135 cmd/incus/info.go:221
 #, c-format
@@ -2707,9 +2656,8 @@ msgid "Edit files in instances"
 msgstr "インスタンス内のファイルを編集します"
 
 #: cmd/incus/storage_volume.go:2799 cmd/incus/storage_volume.go:2800
-#, fuzzy
 msgid "Edit files in storage volumes"
-msgstr "ストレージボリュームを一覧表示します"
+msgstr "ストレージボリューム内のファイルを編集します"
 
 #: cmd/incus/image.go:371 cmd/incus/image.go:372
 msgid "Edit image properties"
@@ -11565,6 +11513,16 @@ msgid ""
 "incus move <instance>/<old snapshot name> <instance>/<new snapshot name>\n"
 "    Rename a snapshot."
 msgstr ""
+"incus move [<remote>:]<source instance> [<remote>:][<destination instance>] "
+"[--instance-only]\n"
+"    2 つのホスト間でインスタンスを移動します。移動先の名前が異なる場合は"
+"リネームします。\n"
+"\n"
+"incus move <old name> <new name> [--instance-only]\n"
+"    ローカルのインスタンスをリネームします。\n"
+"\n"
+"incus move <instance>/<old snapshot name> <instance>/<new snapshot name>\n"
+"    スナップショットをリネームします。"
 
 #: cmd/incus/network_acl.go:400
 #, fuzzy
