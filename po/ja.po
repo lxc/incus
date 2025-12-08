@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-11-28 02:38-0500\n"
-"PO-Revision-Date: 2025-12-07 15:00+0000\n"
-"Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
+"PO-Revision-Date: 2025-12-08 16:00+0000\n"
+"Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -2680,9 +2680,8 @@ msgid "Edit network ACL configurations as YAML"
 msgstr "ネットワーク ACL をYAMLで編集します"
 
 #: cmd/incus/network_address_set.go:471 cmd/incus/network_address_set.go:472
-#, fuzzy
 msgid "Edit network address set configurations as YAML"
-msgstr "ネットワークピア設定をYAMLで編集します"
+msgstr "ネットワークアドレスセットの設定をYAMLで編集します"
 
 #: cmd/incus/network.go:725 cmd/incus/network.go:726
 msgid "Edit network configurations as YAML"
@@ -2693,9 +2692,8 @@ msgid "Edit network forward configurations as YAML"
 msgstr "ネットワークフォワード設定をYAMLで編集します"
 
 #: cmd/incus/network_integration.go:232 cmd/incus/network_integration.go:233
-#, fuzzy
 msgid "Edit network integration configurations as YAML"
-msgstr "ネットワークピア設定をYAMLで編集します"
+msgstr "ネットワーク統合の設定をYAMLで編集します"
 
 #: cmd/incus/network_load_balancer.go:663
 #: cmd/incus/network_load_balancer.go:664
@@ -2912,7 +2910,6 @@ msgstr ""
 "ローカルまたはグローバルのデータベースに対して SQL クエリーを実行します"
 
 #: cmd/incus/admin_sql.go:31
-#, fuzzy
 msgid ""
 "Execute a SQL query against the local or global database\n"
 "\n"
@@ -2948,8 +2945,8 @@ msgstr ""
 "  ローカルデータベースは、コマンドの対象となるクラスターメンバー特有であり、"
 "（メンバーのネットワークアドレスのような）メンバー固有のデータを含みます。\n"
 "\n"
-"  グローバルデータベースは、クラスター内のすべてのメンバーで共通であり、（プ"
-"ロファイルやコンテナなどのような）クラスター固有のデータを含みます。\n"
+"  グローバルデータベースは、クラスター内のすべてのメンバーで共通であり、（"
+"プロファイルやコンテナなどのような）クラスター固有のデータを含みます。\n"
 "\n"
 "  クラスターに属さないサーバーで実行している場合、同じことが当てはまります。"
 "そのインスタンスは、実際は単独メンバーのクラスターです。\n"
@@ -2962,14 +2959,12 @@ msgstr ""
 "  <query> が特別な値 \".schema\" である場合、コマンドは対象のデータベースの "
 "SQL テキストスキーマを返します。\n"
 "\n"
+"  <query> が特別な値 \".tables\" である場合、コマンドは対象のデータベースの "
+"SQL テキストテーブルを返します。\n"
+"\n"
 "  この内部コマンドは、主にデバッグや障害からの復旧時に役立ちます。開発チーム"
 "は、データの不整合を修正するためのデータベースクエリーとしてホットフィックス"
-"をユーザーに提供する場合があります。\n"
-"\n"
-"  This command targets the global database and works in both local\n"
-"  and cluster mode.\n"
-"  このコマンドは、グローバルデータベースを対象にしており、ローカルモードおよ"
-"びクラスターモードの両方で動作します。"
+"をユーザーに提供する場合があります。"
 
 #: cmd/incus/exec.go:41
 msgid "Execute commands in instances"
@@ -3025,9 +3020,8 @@ msgid "Expiry date or time span for the new snapshot"
 msgstr "新たに取得するスナップショットの有効期限または期間"
 
 #: cmd/incus/debug.go:44
-#, fuzzy
 msgid "Export a virtual machine's memory state"
-msgstr "仮想マシンイメージをコピーします"
+msgstr "仮想マシンのメモリ状態をエクスポートします"
 
 #: cmd/incus/image.go:508
 msgid "Export and download images"
@@ -3044,14 +3038,12 @@ msgstr ""
 "出力先はオプショナルで、デフォルトは現在のディレクトリです。"
 
 #: cmd/incus/storage_volume.go:4092
-#, fuzzy
 msgid "Export custom storage volumes"
 msgstr "カスタムストレージボリュームをエクスポートします"
 
 #: cmd/incus/storage_volume.go:4093
-#, fuzzy
 msgid "Export custom storage volumes."
-msgstr "カスタムストレージボリュームをエクスポートします"
+msgstr "カスタムストレージボリュームをエクスポートします。"
 
 #: cmd/incus/export.go:33
 msgid "Export instance backups"
@@ -3080,16 +3072,16 @@ msgstr ""
 "\t\tデバッグや解析に役立ちます。"
 
 #: cmd/incus/storage_volume.go:4096
-#, fuzzy
 msgid ""
 "Export the volume without its snapshots (ignored for ISO storage volumes)"
 msgstr ""
-"ボリュームをエクスポートします (スナップショットはエクスポートしません)"
+"ボリュームをスナップショットなしでエクスポートします（ISO "
+"ストレージボリュームは無視されます）"
 
 #: cmd/incus/storage_bucket.go:1607
-#, fuzzy, c-format
+#, c-format
 msgid "Exporting backup of storage bucket: %s"
-msgstr "ストレージバケット %s のバックアップをエクスポートします"
+msgstr "ストレージバケットのバックアップをエクスポート中: %s"
 
 #: cmd/incus/export.go:166 cmd/incus/storage_volume.go:4234
 #, c-format
@@ -3143,9 +3135,9 @@ msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr "インスタンスのスナップショットの存在確認に失敗しました \"%s:%s\": %w"
 
 #: cmd/incus/storage_volume.go:3242
-#, fuzzy, c-format
+#, c-format
 msgid "Failed connecting to instance SFTP brrr: %s %w"
-msgstr "インスタンスの SFTP への接続に失敗しました: %w"
+msgstr "インスタンスの SFTP への接続に失敗しました: %s %w"
 
 #: cmd/incus/utils.go:715
 #, c-format
@@ -3308,9 +3300,9 @@ msgid "Failed to create alias %s: %w"
 msgstr "エイリアス %s の作成に失敗しました: %w"
 
 #: cmd/incus/storage_bucket.go:1542
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to create backup: %v"
-msgstr "%q の作成に失敗しました: %w"
+msgstr "バックアップの作成に失敗しました: %v"
 
 #: cmd/incus/remote.go:298
 #, c-format
@@ -3328,14 +3320,14 @@ msgid "Failed to delete original instance after copying it: %w"
 msgstr "移動元のインスタンスをコピーしたあとの削除に失敗しました: %w"
 
 #: cmd/incus/debug.go:88
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to dump instance memory: %w"
-msgstr "クラスタメンバへの接続に失敗しました: %w"
+msgstr "インスタンスのメモリーのダンプに失敗しました: %w"
 
 #: cmd/incus/storage_bucket.go:1621
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to fetch storage bucket backup: %w"
-msgstr "サーバー証明書ファイル %q のクローズに失敗しました: %w"
+msgstr "ストレージバケットのバックアップの取得に失敗しました: %w"
 
 #: cmd/incus/storage_volume.go:4248
 #, c-format
@@ -3373,17 +3365,17 @@ msgid "Failed to parse servers: %w"
 msgstr "サーバーの読み取りに失敗しました: %w"
 
 #: cmd/incus/admin_init_preseed.go:45
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to parse the preseed: %w"
-msgstr "%q の作成に失敗しました: %w"
+msgstr "事前に与える構成ファイルのパースに失敗しました: %w"
 
 #: cmd/incus/admin_init_preseed.go:36
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to read from file: %w"
-msgstr "標準入力から読み込めません: %w"
+msgstr "ファイルから読み込めません: %w"
 
 #: cmd/incus/admin_init_preseed.go:31 cmd/incus/admin_sql.go:99
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to read from stdin: %w"
 msgstr "標準入力から読み込めません: %w"
 
@@ -3398,52 +3390,52 @@ msgid "Failed to remove alias %s: %w"
 msgstr "エイリアス %s の削除に失敗しました: %w"
 
 #: cmd/incus/export.go:197
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to rename export file: %w"
-msgstr "証明書の作成に失敗しました: %w"
+msgstr "エクスポートファイルのリネームに失敗しました: %w"
 
 #: cmd/incus/admin_init_interactive.go:102
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to render the config: %w"
-msgstr "%q の作成に失敗しました: %w"
+msgstr "設定のレンダリングに失敗しました: %w"
 
 #: cmd/incus/admin_sql.go:122
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to request dump: %w"
-msgstr "%q の作成に失敗しました: %w"
+msgstr "ダンプのリクエストに失敗しました: %w"
 
 #: cmd/incus/admin_init_interactive.go:268
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to retrieve cluster information: %w"
-msgstr "証明書の作成に失敗しました: %w"
+msgstr "クラスター情報の取得に失敗しました: %w"
 
 #: cmd/incus/cluster.go:874
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to retrieve current cluster config: %w"
-msgstr "証明書の作成に失敗しました: %w"
+msgstr "現在のクラスター設定の取得に失敗しました: %w"
 
 #: cmd/incus/cluster.go:864
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to retrieve current server config: %w"
-msgstr "サーバー証明書 %q の書き込みに失敗しました: %w"
+msgstr "現在のサーバー設定の取得に失敗しました: %w"
 
 #: cmd/incus/admin_init_dump.go:19 cmd/incus/admin_init_dump.go:50
 #: cmd/incus/admin_init_dump.go:65 cmd/incus/admin_init_dump.go:80
 #: cmd/incus/admin_init_dump.go:94
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to retrieve current server configuration: %w"
-msgstr "サーバー証明書 %q の書き込みに失敗しました: %w"
+msgstr "現在のサーバー設定の取得に失敗しました: %w"
 
 #: cmd/incus/admin_init_dump.go:29
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Failed to retrieve current server network configuration for project %q: %w"
-msgstr "サーバー証明書 %q の書き込みに失敗しました: %w"
+msgstr "プロジェクト %q の現在のサーバーのネットワーク設定の取得に失敗しました: %w"
 
 #: cmd/incus/admin_init_auto.go:132
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to retrieve list of networks: %w"
-msgstr "エイリアス %s の削除に失敗しました: %w"
+msgstr "ネットワークのリストの取得に失敗しました: %w"
 
 #: cmd/incus/admin_init_auto.go:48
 #, fuzzy, c-format
