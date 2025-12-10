@@ -4,24 +4,16 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
-	"slices"
 	"time"
 
 	"github.com/lxc/incus/v6/internal/server/state"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/logger"
-	"github.com/lxc/incus/v6/shared/subprocess"
+	incustls "github.com/lxc/incus/v6/shared/tls"
 	"github.com/lxc/incus/v6/shared/util"
 )
-
-// retries describes the number of retries after which Incus will give up registering a user or
-// issuing a new certificate. The number 5 was chosen because Let's Encrypt has a limit of 5
-// failures per account, per hostname, per hour.
-const retries = 5
 
 // ClusterCertFilename describes the filename of the new certificate which is stored in case it
 // cannot be distributed in a cluster due to offline members. Incus will try to distribute this
@@ -32,12 +24,6 @@ const ClusterCertFilename = "cluster.crt.new"
 type CertKeyPair struct {
 	Certificate []byte `json:"-"`
 	PrivateKey  []byte `json:"-"`
-}
-
-// certificateNeedsUpdate returns true if the domain doesn't match the certificate's DNS names
-// or it's valid for less than 30 days.
-func certificateNeedsUpdate(domain string, cert *x509.Certificate) bool {
-	return !slices.Contains(cert.DNSNames, domain) || time.Now().After(cert.NotAfter.Add(-30*24*time.Hour))
 }
 
 // UpdateCertificate updates the certificate.
@@ -72,7 +58,7 @@ func UpdateCertificate(s *state.State, challengeType string, clustered bool, dom
 			return nil, fmt.Errorf("Failed to parse certificate: %w", err)
 		}
 
-		if !certificateNeedsUpdate(domain, cert) {
+		if !incustls.CertificateNeedsUpdate(domain, cert, 30*24*time.Hour) {
 			return &CertKeyPair{
 				Certificate: clusterCert,
 				PrivateKey:  key,
@@ -95,10 +81,14 @@ func UpdateCertificate(s *state.State, challengeType string, clustered bool, dom
 		return nil, fmt.Errorf("Failed to parse certificate: %w", err)
 	}
 
-	if !force && !certificateNeedsUpdate(domain, cert) {
+	if !force && !incustls.CertificateNeedsUpdate(domain, cert, 30*24*time.Hour) {
 		l.Debug("Skipping certificate renewal as it is still valid for more than 30 days")
 		return nil, nil
 	}
+
+	port := s.GlobalConfig.ACMEHTTP()
+	provider, environment, resolvers := s.GlobalConfig.ACMEDNS()
+	proxy := s.GlobalConfig.ProxyHTTPS()
 
 	tmpDir, err := os.MkdirTemp("", "lego")
 	if err != nil {
@@ -112,70 +102,13 @@ func UpdateCertificate(s *state.State, challengeType string, clustered bool, dom
 		}
 	}()
 
-	env := os.Environ()
-
-	args := []string{
-		"--accept-tos",
-		"--domains", domain,
-		"--email", email,
-		"--path", tmpDir,
-		"--server", caURL,
-	}
-
-	if challengeType == "DNS-01" {
-		provider, environment, resolvers := s.GlobalConfig.ACMEDNS()
-
-		env = append(env, environment...)
-
-		if provider == "" {
-			return nil, errors.New("DNS-01 challenge type requires acme.dns.provider configuration key to be set")
-		}
-
-		args = append(args, "--dns", provider)
-		if len(resolvers) > 0 {
-			for _, resolver := range resolvers {
-				args = append(args, "--dns.resolvers", resolver)
-			}
-		}
-	} else if challengeType == "HTTP-01" {
-		args = append(args, "--http")
-
-		port := s.GlobalConfig.ACMEHTTP()
-		if port != "" {
-			args = append(args, "--http.port", port)
-		}
-	}
-
-	args = append(args, "run")
-
-	proxy := s.GlobalConfig.ProxyHTTPS()
-	if proxy != "" {
-		env = append(env, "https_proxy="+proxy)
-	}
-
-	_, _, err = subprocess.RunCommandSplit(context.TODO(), env, nil, "lego", args...)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to run lego command: %w", err)
-	}
-
-	// Load the generated certificate.
-	certData, err := os.ReadFile(filepath.Join(tmpDir, "certificates", fmt.Sprintf("%s.crt", domain)))
-	if err != nil {
-		return nil, err
-	}
-
-	caData, err := os.ReadFile(filepath.Join(tmpDir, "certificates", fmt.Sprintf("%s.issuer.crt", domain)))
-	if err != nil {
-		return nil, err
-	}
-
-	keyData, err := os.ReadFile(filepath.Join(tmpDir, "certificates", fmt.Sprintf("%s.key", domain)))
+	certBytes, keyBytes, err := incustls.RunACMEChallenge(context.TODO(), tmpDir, caURL, domain, email, challengeType, provider, port, proxy, resolvers, environment)
 	if err != nil {
 		return nil, err
 	}
 
 	return &CertKeyPair{
-		Certificate: append(certData, caData...),
-		PrivateKey:  keyData,
+		Certificate: certBytes,
+		PrivateKey:  keyBytes,
 	}, nil
 }
