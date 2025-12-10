@@ -1614,6 +1614,12 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--dhcp-option-force=option6:dns-server,[%s]", ipAddress.String()))
 		}
 
+		// Disable receiving router advertisements from guests.
+		err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", n.name), "0")
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
+
 		// Allow forwarding.
 		if util.IsTrueOrEmpty(n.config["ipv6.routing"]) {
 			// Get a list of proc entries.
