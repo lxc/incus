@@ -1,4 +1,4 @@
-package acme
+package tls
 
 import (
 	"crypto/x509"
@@ -67,7 +67,7 @@ func Test_certificateNeedsUpdate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			needsUpdate := certificateNeedsUpdate(tt.args.domain, tt.args.cert)
+			needsUpdate := CertificateNeedsUpdate(tt.args.domain, tt.args.cert, 30*24*time.Hour)
 			require.Equal(t, needsUpdate, tt.want)
 		})
 	}
