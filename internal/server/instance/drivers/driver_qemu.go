@@ -3277,17 +3277,7 @@ func (d *qemu) generateConfigShare() error {
 		// Setup script for incus-agent that is executed by Service Control Manager (SCM). Since by
 		// default Windows cannot run a PowerShell script as a service without the help of a third
 		// party, a bat file is used to then execute the PowerShell script doing the job.
-		agentFile, err := incusAgentLoader.ReadFile("agent-loader/incus-agent-setup.bat")
-		if err != nil {
-			return err
-		}
-
-		err = os.WriteFile(filepath.Join(configDrivePath, "incus-agent-setup.bat"), agentFile, 0o500)
-		if err != nil {
-			return err
-		}
-
-		agentFile, err = incusAgentLoader.ReadFile("agent-loader/incus-agent-setup.ps1")
+		agentFile, err := incusAgentLoader.ReadFile("agent-loader/incus-agent-setup.ps1")
 		if err != nil {
 			return err
 		}
