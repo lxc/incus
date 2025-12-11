@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-11-28 02:38-0500\n"
-"PO-Revision-Date: 2025-12-04 20:03+0000\n"
-"Last-Translator: daoge <renmadao@163.com>\n"
+"PO-Revision-Date: 2025-12-11 16:00+0000\n"
+"Last-Translator: yooadmin <yooadmin@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/incus/cli/zh_Hans/>\n"
 "Language: zh_Hans\n"
@@ -2900,7 +2900,6 @@ msgid "Execute a SQL query against the local or global database"
 msgstr "对本地或全局数据库执行 SQL 查询"
 
 #: cmd/incus/admin_sql.go:31
-#, fuzzy
 msgid ""
 "Execute a SQL query against the local or global database\n"
 "\n"
@@ -2933,11 +2932,11 @@ msgid ""
 msgstr ""
 "对本地或全局数据库执行 SQL 查询\n"
 "\n"
-"  本地数据库专门用于您命令所针对的集群成员，并包含成员特定数据（如成员网络地"
-"址）。\n"
+"本地数据库专门用于您命令所针对的集群成员，并包含成员特定数据（如成员网络地址"
+"）。\n"
 "\n"
-"  全局数据库对集群中所有成员通用，并包含集群特定数据（如配置文件、容器"
-"等）。\n"
+"  全局数据库对集群中所有成员通用，并包含集群特定数据（如配置文件、容器等）"
+"。\n"
 "\n"
 "  如果您运行的是非集群服务器也同样适用，因为该实例等同于一个单成员集群。\n"
 "\n"
@@ -4355,7 +4354,7 @@ msgstr "内核版本"
 
 #: cmd/incus/storage_bucket.go:1112
 msgid "Key description"
-msgstr ""
+msgstr "关键描述"
 
 #: cmd/incus/warning.go:221
 msgid "LAST SEEN"
@@ -4363,15 +4362,15 @@ msgstr ""
 
 #: cmd/incus/list.go:515
 msgid "LAST USED AT"
-msgstr ""
+msgstr "上次试用时间"
 
 #: cmd/incus/project.go:1189
 msgid "LIMIT"
-msgstr ""
+msgstr "限制"
 
 #: cmd/incus/network_forward.go:140 cmd/incus/network_load_balancer.go:148
 msgid "LISTEN ADDRESS"
-msgstr ""
+msgstr "监听地址"
 
 #: cmd/incus/list.go:552 cmd/incus/network.go:1376
 #: cmd/incus/network_forward.go:144 cmd/incus/network_load_balancer.go:151
@@ -4397,7 +4396,7 @@ msgstr ""
 #: cmd/incus/create.go:179
 #, c-format
 msgid "Launching %s"
-msgstr ""
+msgstr "启动中 %s"
 
 #: cmd/incus/create.go:177
 msgid "Launching the instance"
@@ -4461,15 +4460,15 @@ msgstr ""
 
 #: cmd/incus/network_address_set.go:99
 msgid "List address sets across all projects"
-msgstr ""
+msgstr "列出所有项目中的地址"
 
 #: cmd/incus/alias.go:112 cmd/incus/alias.go:113
 msgid "List aliases"
-msgstr ""
+msgstr "列出别名"
 
 #: cmd/incus/config_trust.go:615
 msgid "List all active certificate add tokens"
-msgstr ""
+msgstr "列出所有活动证书添加令牌"
 
 #: cmd/incus/config_trust.go:616
 msgid ""
@@ -4495,7 +4494,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:1112
 msgid "List all active cluster member join tokens"
-msgstr ""
+msgstr "列出所有活动群集成员加入令牌"
 
 #: cmd/incus/cluster.go:1113
 msgid ""
@@ -4521,7 +4520,7 @@ msgstr ""
 
 #: cmd/incus/cluster_group.go:462
 msgid "List all the cluster groups"
-msgstr ""
+msgstr "列出所有群集组"
 
 #: cmd/incus/cluster_group.go:463
 msgid ""
@@ -4547,7 +4546,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:134
 msgid "List all the cluster members"
-msgstr ""
+msgstr "列出所有群集成员"
 
 #: cmd/incus/cluster.go:135
 msgid ""
@@ -4573,23 +4572,23 @@ msgstr ""
 
 #: cmd/incus/warning.go:99
 msgid "List all warnings"
-msgstr ""
+msgstr "列出所有警告"
 
 #: cmd/incus/network_acl.go:98
 msgid "List available network ACL"
-msgstr ""
+msgstr "列出可用的网络ACL"
 
 #: cmd/incus/network_acl.go:97
 msgid "List available network ACLS"
-msgstr ""
+msgstr "列出可用的网络ACL"
 
 #: cmd/incus/network_address_set.go:94 cmd/incus/network_address_set.go:95
 msgid "List available network address sets"
-msgstr ""
+msgstr "列出可用的网络地址集"
 
 #: cmd/incus/network_forward.go:94
 msgid "List available network forwards"
-msgstr ""
+msgstr "列出可用的网络转发"
 
 #: cmd/incus/network_forward.go:95
 msgid ""
@@ -4672,7 +4671,7 @@ msgstr ""
 
 #: cmd/incus/network_zone.go:883 cmd/incus/network_zone.go:884
 msgid "List available network zone records"
-msgstr ""
+msgstr "列出可用的网络区域记录"
 
 #: cmd/incus/network_zone.go:96
 msgid ""
@@ -4704,7 +4703,7 @@ msgstr "删除网络区域"
 
 #: cmd/incus/network.go:1106
 msgid "List available networks"
-msgstr ""
+msgstr "列出可用网络"
 
 #: cmd/incus/network.go:1107
 msgid ""
@@ -4737,7 +4736,7 @@ msgstr ""
 
 #: cmd/incus/storage.go:683
 msgid "List available storage pools"
-msgstr ""
+msgstr "列出可用的存储池"
 
 #: cmd/incus/storage.go:684
 #, fuzzy
@@ -5450,7 +5449,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:38 cmd/incus/cluster.go:39
 msgid "Manage cluster members"
-msgstr ""
+msgstr "管理集群节点"
 
 #: cmd/incus/cluster_role.go:24 cmd/incus/cluster_role.go:25
 msgid "Manage cluster roles"
@@ -5504,7 +5503,7 @@ msgstr ""
 #: cmd/incus/admin.go:20 cmd/incus/admin.go:21 cmd/incus/admin_other.go:20
 #: cmd/incus/admin_other.go:21
 msgid "Manage incus daemon"
-msgstr ""
+msgstr "管理 Incus 守护进程"
 
 #: cmd/incus/config.go:33 cmd/incus/config.go:34
 msgid "Manage instance and server configuration options"
@@ -10601,6 +10600,12 @@ msgid ""
 "    Removes the snapshot expiration period of virtual machine volume \"v1\" "
 "in pool \"default\""
 msgstr ""
+"incus存储卷未设置默认foo大小\n"
+"\t删除池“default”中自定义卷“foo”的大小/配额\n"
+"\n"
+"incus存储卷未设置默认虚拟机/v1快照。\n"
+"\n"
+"\t过期删除池“default”中虚拟机卷“v1”的快照过期期限"
 
 #: cmd/incus/storage.go:565
 msgid "info"
@@ -10612,7 +10617,7 @@ msgstr ""
 
 #: cmd/incus/storage.go:566
 msgid "name"
-msgstr ""
+msgstr "名字"
 
 #: cmd/incus/config_trust.go:512 cmd/incus/image.go:991 cmd/incus/image.go:996
 #: cmd/incus/image.go:1209
@@ -10625,24 +10630,24 @@ msgstr ""
 
 #: cmd/incus/config.go:57
 msgid "please use `incus profile`"
-msgstr ""
+msgstr "请使用 incus profile"
 
 #: cmd/incus/storage.go:570
 msgid "space used"
-msgstr ""
+msgstr "使用空间"
 
 #: cmd/incus/utils.go:579
 msgid "sshfs has stopped"
-msgstr ""
+msgstr "sshfs 已停止"
 
 #: cmd/incus/utils.go:538
 #, c-format
 msgid "sshfs mounting %q on %q"
-msgstr ""
+msgstr "sshfs 挂载 %q 在 %q"
 
 #: cmd/incus/storage.go:569
 msgid "total space"
-msgstr ""
+msgstr "总空间"
 
 #: cmd/incus/version.go:50
 msgid "unreachable"
@@ -10650,7 +10655,7 @@ msgstr ""
 
 #: cmd/incus/storage.go:564
 msgid "used by"
-msgstr ""
+msgstr "使用者"
 
 #: cmd/incus/remote.go:512
 msgid "y"
