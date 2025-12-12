@@ -145,6 +145,10 @@ func (s *execWs) Metadata() any {
 }
 
 func (s *execWs) Connect(op *operations.Operation, r *http.Request, w http.ResponseWriter) error {
+	if !state.EnabledFeatures["exec"] {
+		return fmt.Errorf("exec feature disabled by incus-agent.yml")
+	}
+
 	secret := r.FormValue("secret")
 	if secret == "" {
 		return errors.New("missing secret")

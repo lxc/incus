@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 type cmdGlobal struct {
@@ -18,7 +19,20 @@ type cmdGlobal struct {
 	flagLogDebug   bool
 }
 
+type AgentState struct {
+	EnabledFeatures map[string]bool
+}
+
+var state AgentState
+
 func main() {
+	//Loading the Agent-configuration
+	enabled, err := loadAgentConfig()
+	if err != nil {
+		logger.Warn("Failed to load incus-agent.yml, defaulting to all features enabled", logger.Ctx{"err": err.Error()})
+	}
+	state.EnabledFeatures = enabled
+
 	// agent command (main)
 	agentCmd := cmdAgent{}
 	app := agentCmd.Command()
@@ -44,7 +58,7 @@ func main() {
 	app.Version = version.Version
 
 	// Run the main command and handle errors
-	err := app.Execute()
+	err = app.Execute()
 	if err != nil {
 		os.Exit(1)
 	}

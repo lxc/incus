@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/lxc/incus/v6/internal/server/metrics"
@@ -17,6 +18,10 @@ var metricsCmd = APIEndpoint{
 func metricsGet(d *Daemon, r *http.Request) response.Response {
 	if !osMetricsSupported {
 		return response.NotFound(nil)
+	}
+
+	if !state.EnabledFeatures["metrics"] {
+		return response.InternalError(fmt.Errorf("metrics feature disabled by configuration"))
 	}
 
 	out := metrics.Metrics{}
