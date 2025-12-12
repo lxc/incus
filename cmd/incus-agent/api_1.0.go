@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/ports"
@@ -82,7 +83,7 @@ func api10Put(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Try connecting to the host.
-	client, err := getClient(d.serverCID, int(d.serverPort), d.serverCertificate)
+	client, err := getClient(d.serverCID, int(d.serverPort), d.serverCertificate, d.secretsLocation)
 	if err != nil {
 		return response.ErrorResponse(http.StatusInternalServerError, err.Error())
 	}
@@ -167,13 +168,13 @@ func stopDevIncusServer(d *Daemon) error {
 	return nil
 }
 
-func getClient(CID uint32, port int, serverCertificate string) (*http.Client, error) {
-	agentCert, err := os.ReadFile("agent.crt")
+func getClient(CID uint32, port int, serverCertificate string, secretsLocation string) (*http.Client, error) {
+	agentCert, err := os.ReadFile(filepath.Join(secretsLocation, "agent.crt"))
 	if err != nil {
 		return nil, err
 	}
 
-	agentKey, err := os.ReadFile("agent.key")
+	agentKey, err := os.ReadFile(filepath.Join(secretsLocation, "agent.key"))
 	if err != nil {
 		return nil, err
 	}
@@ -193,12 +194,12 @@ func startHTTPServer(d *Daemon, debug bool) error {
 	}
 
 	// Load the expected server certificate.
-	cert, err := localtls.ReadCert("server.crt")
+	cert, err := localtls.ReadCert(filepath.Join(d.secretsLocation, "server.crt"))
 	if err != nil {
 		return fmt.Errorf("Failed to read client certificate: %w", err)
 	}
 
-	tlsConfig, err := serverTLSConfig()
+	tlsConfig, err := serverTLSConfig(d.secretsLocation)
 	if err != nil {
 		return fmt.Errorf("Failed to get TLS config: %w", err)
 	}

@@ -44,7 +44,7 @@ func (m *incusAgentService) Execute(args []string, r <-chan svc.ChangeRequest, c
 
 	changes <- svc.Status{State: svc.StartPending}
 
-	d := newDaemon(m.agentCmd.global.flagLogDebug, m.agentCmd.global.flagLogVerbose)
+	d := newDaemon(m.agentCmd.global.flagLogDebug, m.agentCmd.global.flagLogVerbose, m.agentCmd.global.flagSecretsLocation)
 
 	// Start the server.
 	err := startHTTPServer(d, m.agentCmd.global.flagLogDebug)

@@ -37,32 +37,13 @@ if (!$?) {
     exit 1
 }
 
-$serviceName = "Incus-Agent"
-$serviceDisplayName = "Incus Agent Service"
-$serviceDescription = "Incus Agent Service"
+# Override the scheduled task even if it exists
+$destFolder = "C:\Program Files\Incus-Agent"
+$taskFile = "$destFolder\incus-agent-setup.ps1"
+$taskAction = New-ScheduledTaskAction -Execute "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-ExecutionPolicy Bypass -File `"$taskFile`""
+$taskTrigger = New-ScheduledTaskTrigger -AtStartup
+$taskPrincipal = New-ScheduledTaskPrincipal -UserID "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+Register-ScheduledTask -Action $taskAction -Trigger $taskTrigger -Principal $taskPrincipal -TaskName "Incus Agent Setup" -Description "Every setup required for the Incus agent including copying the files, opening the firewall, etc." -Force
 
-# Hack to run a PowerShell script as a service without a third party tool.
-# The bat file only contains a line to run the actual PowerShell script.
-$serviceCommand = "`"$destFolder\incus-agent-setup.bat`""
-
-if (Get-Service -Name $serviceName -ErrorAction SilentlyContinue) {
-    Write-Host "Service exists. Updating configuration..."
-
-    # Do not Out-Null to see if there is any error doing the following command as it is important.
-    sc.exe config $serviceName binPath= "$serviceCommand" DisplayName= "$serviceDisplayName"
-    sc.exe description $serviceName "$serviceDescription" | Out-Null
-
-    Set-Service -Name $serviceName -StartupType Automatic
-
-    Write-Host "Service '$serviceName' updated successfully."
-}
-else {
-    
-    Write-Host "Service does not exist. Creating new service..."
-
-    New-Service -Name $serviceName -BinaryPathName $serviceCommand -DisplayName $serviceDisplayName -Description $serviceDescription -StartupType Automatic
-
-    Write-Host "Service '$serviceName' created successfully."
-}
-
-Restart-Service $serviceName -Force
+# Start the PowerShell script to simulate start up
+& "$taskFile"
