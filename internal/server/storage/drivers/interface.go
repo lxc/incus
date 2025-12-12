@@ -99,6 +99,7 @@ type Driver interface {
 	CacheVolumeSnapshots(vol Volume) error
 
 	CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) error
+	GetQcow2BackingFilePath(vol Volume) (string, error)
 	DeleteVolumeSnapshot(snapVol Volume, op *operations.Operation) error
 	RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *operations.Operation) error
 	VolumeSnapshots(vol Volume, op *operations.Operation) ([]string, error)

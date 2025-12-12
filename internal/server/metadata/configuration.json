@@ -6453,6 +6453,14 @@
 			"common": {
 				"keys": [
 					{
+						"block.type": {
+							"condition": "block-based volume",
+							"default": "same as `volume.block.type`",
+							"longdesc": "",
+							"shortdesc": "Type of the block volume"
+						}
+					},
+					{
 						"lvm.metadata_size": {
 							"default": "`0` (auto)",
 							"longdesc": "",
