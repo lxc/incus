@@ -366,6 +366,12 @@ func (d *qemu) qmpConnect() (*qmp.Monitor, error) {
 // Callers should check that the instance is running (and therefore mounted) before calling this function,
 // otherwise the qmp.Connect call will fail to use the monitor socket file.
 func (d *qemu) getAgentClient() (*http.Client, error) {
+	// Check that the VM is in a state where the agent may be reachable.
+	status := d.statusCode()
+	if !d.isRunningStatusCode(status) || status == api.Frozen {
+		return nil, errQemuAgentOffline
+	}
+
 	// Only Linux supports VirtIO vsock.
 	if d.GuestOS() != "unknown" {
 		// Get known network details.
@@ -8841,88 +8847,106 @@ func (d *qemu) RenderFull(hostInterfaces []net.Interface) (*api.InstanceFull, an
 
 // renderState returns just state info about the instance.
 func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error) {
-	var err error
+	// Initialize the return struct.
+	status := &api.InstanceState{
+		Processes:  -1,
+		Status:     statusCode.String(),
+		StatusCode: statusCode,
+	}
 
-	status := &api.InstanceState{}
-	pid, _ := d.pid()
+	// If VM is stopped, we're done here.
+	if !d.isRunningStatusCode(statusCode) {
+		return status, nil
+	}
 
-	if d.isRunningStatusCode(statusCode) {
-		if d.agentMetricsEnabled() {
-			// Try and get state info from agent.
-			status, err = d.agentGetState()
-			if err != nil {
-				if !errors.Is(err, errQemuAgentOffline) {
-					d.logger.Warn("Could not get VM state from agent", logger.Ctx{"err": err})
-				}
-
-				// Fallback data if agent is not reachable.
-				status = &api.InstanceState{}
-				status.Processes = -1
-			}
-
-			if len(status.Network) == 0 {
-				status.Network, err = d.getNetworkState()
-				if err != nil {
-					return nil, err
-				}
-			}
-		} else {
-			status.Processes = -1
-
-			status.Network, err = d.getNetworkState()
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		// Populate the CPU time allocation
-		limitsCPU, ok := d.expandedConfig["limits.cpu"]
-		if ok {
-			cpuCount, err := strconv.ParseInt(limitsCPU, 10, 64)
-			if err != nil {
-				status.CPU.AllocatedTime = cpuCount * 1_000_000_000
-			}
-		} else {
-			status.CPU.AllocatedTime = qemudefault.CPUCores * 1_000_000_000
-		}
-
-		// Populate host_name for network devices.
-		for k, m := range d.ExpandedDevices() {
-			// We only care about nics.
-			if m["type"] != "nic" {
-				continue
-			}
-
-			// Get hwaddr from static or volatile config.
-			hwaddr := m["hwaddr"]
-			if hwaddr == "" {
-				hwaddr = d.localConfig[fmt.Sprintf("volatile.%s.hwaddr", k)]
-			}
-
-			// We have to match on hwaddr as device name can be different from the configured device
-			// name when reported from the agent inside the VM (due to the guest OS choosing name).
-			for netName, netStatus := range status.Network {
-				if netStatus.Hwaddr == hwaddr {
-					if netStatus.HostName == "" {
-						netStatus.HostName = d.localConfig[fmt.Sprintf("volatile.%s.host_name", k)]
-						status.Network[netName] = netStatus
-					}
-				}
-			}
-		}
-
-		status.Pid = int64(pid)
-		status.StartedAt, err = d.processStartedAt(d.InitPID())
+	// If possible, get the metrics from the agent.
+	if d.agentMetricsEnabled() {
+		agentStatus, err := d.agentGetState()
 		if err != nil {
-			return status, err
+			if !errors.Is(err, errQemuAgentOffline) {
+				d.logger.Warn("Could not get VM state from agent", logger.Ctx{"err": err})
+			}
+		} else {
+			status = agentStatus
 		}
 	}
 
-	status.Status = statusCode.String()
-	status.StatusCode = statusCode
-	status.Disk, err = d.diskState()
+	// Add the network details if missing.
+	if len(status.Network) == 0 {
+		networkState, err := d.getNetworkState()
+		if err != nil {
+			return nil, err
+		}
+
+		status.Network = networkState
+	}
+
+	// Add the memory details if missing.
+	if status.Memory.Usage <= 0 {
+		monitor, err := d.qmpConnect()
+		if err != nil {
+			d.logger.Warn("Error getting QEMU monitor", logger.Ctx{"err": err})
+		}
+
+		memoryMetrics, err := d.getQemuMemoryMetrics(monitor)
+		if err != nil {
+			d.logger.Warn("Error getting memory metrics", logger.Ctx{"err": err})
+		}
+
+		status.Memory.Total = int64(memoryMetrics.MemTotalBytes)
+		status.Memory.Usage = int64(memoryMetrics.MemTotalBytes - memoryMetrics.MemAvailableBytes)
+	}
+
+	// Populate the disk information.
+	diskState, err := d.diskState()
 	if err != nil && !errors.Is(err, storageDrivers.ErrNotSupported) {
 		d.logger.Warn("Error getting disk usage", logger.Ctx{"err": err})
+	}
+
+	status.Disk = diskState
+
+	// Populate the CPU time allocation.
+	limitsCPU, ok := d.expandedConfig["limits.cpu"]
+	if ok {
+		cpuCount, err := strconv.ParseInt(limitsCPU, 10, 64)
+		if err != nil {
+			status.CPU.AllocatedTime = cpuCount * 1_000_000_000
+		}
+	} else {
+		status.CPU.AllocatedTime = qemudefault.CPUCores * 1_000_000_000
+	}
+
+	// Populate host_name for network devices.
+	for k, m := range d.ExpandedDevices() {
+		// We only care about nics.
+		if m["type"] != "nic" {
+			continue
+		}
+
+		// Get hwaddr from static or volatile config.
+		hwaddr := m["hwaddr"]
+		if hwaddr == "" {
+			hwaddr = d.localConfig[fmt.Sprintf("volatile.%s.hwaddr", k)]
+		}
+
+		// We have to match on hwaddr as device name can be different from the configured device
+		// name when reported from the agent inside the VM (due to the guest OS choosing name).
+		for netName, netStatus := range status.Network {
+			if netStatus.Hwaddr == hwaddr {
+				if netStatus.HostName == "" {
+					netStatus.HostName = d.localConfig[fmt.Sprintf("volatile.%s.host_name", k)]
+					status.Network[netName] = netStatus
+				}
+			}
+		}
+	}
+
+	// Populate the process information.
+	pid, _ := d.pid()
+	status.Pid = int64(pid)
+	status.StartedAt, err = d.processStartedAt(d.InitPID())
+	if err != nil {
+		return status, err
 	}
 
 	return status, nil
