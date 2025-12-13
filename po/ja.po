@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-11-28 02:38-0500\n"
-"PO-Revision-Date: 2025-12-08 16:00+0000\n"
-"Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
+"PO-Revision-Date: 2025-12-14 16:01+0000\n"
+"Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -3438,19 +3438,19 @@ msgid "Failed to retrieve list of networks: %w"
 msgstr "ネットワークのリストの取得に失敗しました: %w"
 
 #: cmd/incus/admin_init_auto.go:48
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to retrieve list of storage pools: %w"
-msgstr "エイリアス %s の削除に失敗しました: %w"
+msgstr "ストレージプールのリストの取得に失敗しました: %w"
 
 #: cmd/incus/admin_init_interactive.go:245
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to setup trust relationship with cluster: %w"
-msgstr "クラスタメンバへの接続に失敗しました: %w"
+msgstr "クラスターとの信頼関係のセットアップに失敗しました: %w"
 
 #: cmd/incus/cluster.go:1586
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to update cluster member state: %w"
-msgstr "クラスタメンバへの接続に失敗しました: %w"
+msgstr "クラスターのメンバー状態の更新に失敗しました: %w"
 
 #: cmd/incus/utils_sftp.go:263
 #, c-format
@@ -3463,23 +3463,23 @@ msgid "Failed to write server cert file %q: %w"
 msgstr "サーバー証明書 %q の書き込みに失敗しました: %w"
 
 #: cmd/incus/admin_recover.go:203
-#, fuzzy, c-format
+#, c-format
 msgid "Failed validation request: %w"
-msgstr "エイリアス %s の削除に失敗しました: %w"
+msgstr "検証リクエストに失敗しました: %w"
 
 #: cmd/incus/info.go:432
-#, fuzzy, c-format
+#, c-format
 msgid "Family: %v"
-msgstr "名前: %v"
+msgstr "ファミリー: %v"
 
 #: cmd/incus/list.go:139
 msgid "Fast mode (same as --columns=nsacPt)"
 msgstr "Fast モード (--columns=nsacPt と同じ)"
 
 #: cmd/incus/export.go:180
-#, fuzzy, c-format
+#, c-format
 msgid "Fetch instance backup file: %w"
-msgstr "インスタンスのバックアップをエクスポートします"
+msgstr "インスタンスのバックアップファイルを取得します: %w"
 
 #: cmd/incus/network.go:1265 cmd/incus/network_acl.go:142
 #: cmd/incus/network_zone.go:211 cmd/incus/operation.go:251
@@ -3504,9 +3504,8 @@ msgid "Force delete the project and everything it contains."
 msgstr "プロジェクトとプロジェクトに含まれるすべてを強制的に削除します。"
 
 #: cmd/incus/file.go:297 cmd/incus/storage_volume.go:2624
-#, fuzzy
 msgid "Force deleting files, directories, and subdirectories"
-msgstr "強制的にファイルまたはディレクトリーを作成します"
+msgstr "強制的にファイル、ディレクトリー、サブディレクトリーを削除します"
 
 #: cmd/incus/cluster.go:1543
 msgid "Force evacuation without user confirmation"
@@ -3533,7 +3532,7 @@ msgid "Force using the local unix socket"
 msgstr "強制的にローカルのUNIXソケットを使います"
 
 #: cmd/incus/cluster.go:742
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Forcefully removing a server from the cluster should only be done as a last\n"
 "resort.\n"
@@ -3555,16 +3554,16 @@ msgid ""
 "\n"
 "Are you really sure you want to force removing %s? (yes/no): "
 msgstr ""
-"クラスタからサーバを強制的に削除するのは最後の手段としてのみ実行してくださ"
-"い。\n"
+"クラスタからサーバを強制的に削除するのは最後の手段としてのみ実行してください"
+"。\n"
 "\n"
 "削除されたサーバはこの操作のあとは機能せず、LXD のフルリセットが必要になりま"
-"す。サーバに存在していた可能性のある残りのインスタンス、イメージ、ストレージ"
-"ボリュームは失われます。\n"
+"す。サーバに存在していた可能性のある残りのインスタンス、イメージ、"
+"ストレージボリュームは失われます。\n"
 "\n"
-"可能なら、適切な手順で削除することをおすすめします。適切な手順で行うには、ク"
-"ラスタから完全にサーバを削除する前に、影響を受けるインスタンス、イメージ、ス"
-"トレージボリュームを他のサーバに移動する必要があります。\n"
+"可能なら、適切な手順で削除することをおすすめします。適切な手順で行うには、"
+"クラスタから完全にサーバを削除する前に、影響を受けるインスタンス、イメージ、"
+"ストレージボリュームを他のサーバに移動する必要があります。\n"
 "\n"
 "--force オプションは、サーバが死んだ場合、サーバの再インストール後、他に復旧"
 "の見込みがまったくない場合にのみ使用してください。\n"
@@ -3579,7 +3578,6 @@ msgstr ""
 "すでにアクティブなセッションがある場合でも、コンソールへの接続を強制します"
 
 #: cmd/incus/network_address_set.go:98
-#, fuzzy
 msgid "Format (csv|json|table|yaml|compact|markdown)"
 msgstr "フォーマット (csv|json|table|yaml|compact|markdown)"
 
@@ -3623,14 +3621,12 @@ msgid "Format (man|md|rest|yaml)"
 msgstr "フォーマット (man|md|rest|yaml)"
 
 #: cmd/incus/remote.go:748
-#, fuzzy
 msgid "Format (pem|pfx)"
-msgstr "フォーマット (csv|json|table|yaml|compact|markdown)"
+msgstr "フォーマット (pem|pfx)"
 
 #: cmd/incus/top.go:65
-#, fuzzy
 msgid "Format (table|compact)"
-msgstr "フォーマット (csv|json|table|yaml|compact|markdown)"
+msgstr "フォーマット (table|compact)"
 
 #: cmd/incus/debug.go:53
 msgid ""
@@ -3677,9 +3673,8 @@ msgid "GPUs:"
 msgstr "GPUs:"
 
 #: cmd/incus/remote.go:853
-#, fuzzy
 msgid "Generate a client token derived from the client certificate"
-msgstr "新たに信頼済みのクライアント証明書を追加します"
+msgstr "クライアント証明書からクライアントトークンを生成します"
 
 #: cmd/incus/remote.go:854
 msgid ""
@@ -3699,9 +3694,8 @@ msgid "Generate manpages for all commands"
 msgstr "すべてのコマンドに対する man ページを作成します"
 
 #: cmd/incus/remote.go:677
-#, fuzzy
 msgid "Generate the client certificate"
-msgstr "新たに信頼済みのクライアント証明書を追加します"
+msgstr "クライアント証明書を生成します"
 
 #: cmd/incus/remote.go:195 cmd/incus/remote.go:442 cmd/incus/remote.go:703
 #: cmd/incus/remote.go:774 cmd/incus/remote.go:881
@@ -3713,14 +3707,12 @@ msgid "Get a summary of resource allocations"
 msgstr "リソース割当の状況を表示します"
 
 #: cmd/incus/network_load_balancer.go:1324
-#, fuzzy
 msgid "Get current load balancer status"
-msgstr "ネットワークロードバランサーの設定を行います"
+msgstr "現在のロードバランサーのステータスを取得します"
 
 #: cmd/incus/network_load_balancer.go:1325
-#, fuzzy
 msgid "Get current load-balacner status"
-msgstr "ネットワークロードバランサーの設定を行います"
+msgstr "現在のロードバランサーのステータスを取得します"
 
 #: cmd/incus/image.go:1598 cmd/incus/image.go:1599
 msgid "Get image properties"
