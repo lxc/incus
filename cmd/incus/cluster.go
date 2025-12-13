@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 
+	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -78,6 +79,10 @@ func (c *cmdCluster) Command() *cobra.Command {
 	// Edit
 	clusterEditCmd := cmdClusterEdit{global: c.global, cluster: c}
 	cmd.AddCommand(clusterEditCmd.Command())
+
+	// Join
+	cmdClusterJoin := cmdClusterJoin{global: c.global, cluster: c}
+	cmd.AddCommand(cmdClusterJoin.Command())
 
 	// Add token
 	cmdClusterAdd := cmdClusterAdd{global: c.global, cluster: c}
@@ -1014,6 +1019,67 @@ func (c *cmdClusterEdit) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		break
+	}
+
+	return nil
+}
+
+// Join.
+type cmdClusterJoin struct {
+	global  *cmdGlobal
+	cluster *cmdCluster
+}
+
+// Command returns a cobra.Command for use with (*cobra.Command).JoinCommand.
+func (c *cmdClusterJoin) Command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.Usage("join", i18n.G("[[<remote>:]<member>]"))
+	cmd.Short = i18n.G("Join an existing server to the cluster")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Join an existing server to the cluster`))
+
+	cmd.RunE = c.Run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpClusterMembers(toComplete)
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+// Run runs the actual command logic.
+func (c *cmdClusterJoin) Run(cmd *cobra.Command, args []string) error {
+	config := NewInitPressed()
+
+	// Connect to the daemon
+	d, err := incus.ConnectIncusUnix("", nil)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to connect to local daemon: %w"), err)
+	}
+
+	server, _, err := d.GetServer()
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to connect to get server info: %w"), err)
+	}
+
+	err = askClustering(c.global.asker, config, server, true)
+	if err != nil {
+		return err
+	}
+
+	err = fillClusterConfig(config)
+	if err != nil {
+		return err
+	}
+
+	if config.Cluster != nil && config.Cluster.ClusterAddress != "" && config.Cluster.ServerAddress != "" {
+		err = updateCluster(d, config)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
