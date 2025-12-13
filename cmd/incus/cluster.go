@@ -2,10 +2,13 @@ package main
 
 import (
 	"bufio"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
 	"maps"
+	"net"
+	"net/http"
 	"os"
 	"reflect"
 	"slices"
@@ -15,11 +18,18 @@ import (
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 
+	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/i18n"
+	"github.com/lxc/incus/v6/internal/ports"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/ask"
 	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/termios"
+	localtls "github.com/lxc/incus/v6/shared/tls"
 	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 type clusterColumn struct {
@@ -78,6 +88,10 @@ func (c *cmdCluster) Command() *cobra.Command {
 	// Edit
 	clusterEditCmd := cmdClusterEdit{global: c.global, cluster: c}
 	cmd.AddCommand(clusterEditCmd.Command())
+
+	// Join
+	cmdClusterJoin := cmdClusterJoin{global: c.global, cluster: c}
+	cmd.AddCommand(cmdClusterJoin.Command())
 
 	// Add token
 	cmdClusterAdd := cmdClusterAdd{global: c.global, cluster: c}
@@ -1019,6 +1033,93 @@ func (c *cmdClusterEdit) Run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// Join.
+type cmdClusterJoin struct {
+	global  *cmdGlobal
+	cluster *cmdCluster
+}
+
+// Command returns a cobra.Command for use with (*cobra.Command).JoinCommand.
+func (c *cmdClusterJoin) Command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.Usage("join", i18n.G("<cluster>: [<member>:]"))
+	cmd.Short = i18n.G("Join an existing server to a cluster")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Join an existing server to a cluster`))
+
+	cmd.RunE = c.Run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpClusterMembers(toComplete)
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+// Run runs the actual command logic.
+func (c *cmdClusterJoin) Run(cmd *cobra.Command, args []string) error {
+	config := NewInitPressed()
+
+	// Quick checks.
+	exit, err := c.global.checkArgs(cmd, args, 1, 2)
+	if exit {
+		return err
+	}
+
+	// Parse the remotes.
+	clusterRemote := args[0]
+	clusterResources, err := c.global.parseServers(clusterRemote)
+	if err != nil {
+		return err
+	}
+
+	cluster := clusterResources[0].server
+
+	serverRemote := ""
+	if len(args) == 2 {
+		serverRemote = args[1]
+	}
+
+	serverResources, err := c.global.parseServers(serverRemote)
+	if err != nil {
+		return err
+	}
+
+	server := serverResources[0].server
+
+	// Validate servers.
+	if !cluster.IsClustered() {
+		return errors.New(i18n.G("Target isn't a cluster"))
+	}
+
+	if server.IsClustered() {
+		return errors.New(i18n.G("Target server is already clustered"))
+	}
+
+	// Ask the interactive questions.
+	err = askClustering(c.global.asker, config, cluster, server, true)
+	if err != nil {
+		return err
+	}
+
+	err = fillClusterConfig(config)
+	if err != nil {
+		return err
+	}
+
+	if config.Cluster != nil && config.Cluster.ClusterAddress != "" && config.Cluster.ServerAddress != "" {
+		err = updateCluster(server, config)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Add.
 type cmdClusterAdd struct {
 	global  *cmdGlobal
@@ -1646,4 +1747,376 @@ func prepareClusterMemberServerFilters(filters []string, i any) []string {
 	}
 
 	return formattedFilters
+}
+
+// NewInitPreseed creates and initializes a new InitPreseed struct with default values.
+func NewInitPressed() *api.InitPreseed {
+	// Initialize config
+	config := api.InitPreseed{}
+	config.Server.Config = map[string]string{}
+	config.Server.Networks = []api.InitNetworksProjectPost{}
+	config.Server.StoragePools = []api.StoragePoolsPost{}
+	config.Server.Profiles = []api.InitProfileProjectPost{
+		{
+			ProfilesPost: api.ProfilesPost{
+				Name: "default",
+				ProfilePut: api.ProfilePut{
+					Config:  map[string]string{},
+					Devices: map[string]map[string]string{},
+				},
+			},
+			Project: api.ProjectDefaultName,
+		},
+	}
+
+	return &config
+}
+
+func askClustering(asker ask.Asker, config *api.InitPreseed, cluster incus.InstanceServer, server incus.InstanceServer, forceJoinExisting bool) error {
+	var err error
+
+	// Setup the cluster seed data.
+	config.Cluster = &api.InitClusterPreseed{}
+	config.Cluster.Enabled = true
+
+	// Get the current server's configuration.
+	serverConfig, _, err := server.GetServer()
+	if err != nil {
+		return err
+	}
+
+	// Shared logic for server name.
+	askForServerName := func() error {
+		config.Cluster.ServerName, err = asker.AskString(fmt.Sprintf(i18n.G("What member name should be used to identify this server in the cluster?")+" [default=%s]: ", serverConfig.Environment.ServerName), serverConfig.Environment.ServerName, nil)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	// Ask for the joining server's listen address.
+	var address string
+	if len(serverConfig.Environment.Addresses) > 0 {
+		address, _, err = net.SplitHostPort(serverConfig.Environment.Addresses[0])
+		if err != nil {
+			return err
+		}
+	} else {
+		address = internalUtil.NetworkInterfaceAddress()
+	}
+
+	validateServerAddress := func(value string) error {
+		address := internalUtil.CanonicalNetworkAddress(value, ports.HTTPSDefaultPort)
+
+		host, _, _ := net.SplitHostPort(address)
+		if slices.Contains([]string{"", "[::]", "0.0.0.0"}, host) {
+			return errors.New(i18n.G("Invalid IP address or DNS name"))
+		}
+
+		return nil
+	}
+
+	serverAddress, err := asker.AskString(fmt.Sprintf(i18n.G("What IP address or DNS name should be used to reach this server?")+" [default=%s]: ", address), address, validateServerAddress)
+	if err != nil {
+		return err
+	}
+
+	serverAddress = internalUtil.CanonicalNetworkAddress(serverAddress, ports.HTTPSDefaultPort)
+	config.Server.Config["core.https_address"] = serverAddress
+
+	// Check if joining a cluster or creating a new one.
+	clusterJoin := false
+	if !forceJoinExisting {
+		clusterJoin, err = asker.AskBool(i18n.G("Are you joining an existing cluster?")+" (yes/no) [default=no]: ", "no")
+		if err != nil {
+			return err
+		}
+	}
+
+	if clusterJoin || forceJoinExisting {
+		// Handle joining an existing cluster.
+		config.Cluster.ServerAddress = serverAddress
+
+		// Check if we're joining a cluster during init time.
+		if cluster == nil {
+			// Root is required to access the certificate files
+			if os.Geteuid() != 0 {
+				return errors.New(i18n.G("Joining an existing cluster requires root privileges"))
+			}
+
+			// Get the join token from the user.
+			var joinToken *api.ClusterMemberJoinToken
+
+			validJoinToken := func(input string) error {
+				j, err := internalUtil.JoinTokenDecode(input)
+				if err != nil {
+					return fmt.Errorf(i18n.G("Invalid join token: %w"), err)
+				}
+
+				joinToken = j // Store valid decoded join token
+				return nil
+			}
+
+			clusterJoinToken, err := asker.AskString(i18n.G("Please provide join token:")+" ", "", validJoinToken)
+			if err != nil {
+				return err
+			}
+
+			// Set server name from the join token.
+			config.Cluster.ServerName = joinToken.ServerName
+
+			// Attempt to find a working cluster member to use for joining by retrieving the
+			// cluster certificate from each address in the join token until we succeed.
+			for _, clusterAddress := range joinToken.Addresses {
+				config.Cluster.ClusterAddress = internalUtil.CanonicalNetworkAddress(clusterAddress, ports.HTTPSDefaultPort)
+
+				// Cluster certificate
+				cert, err := localtls.GetRemoteCertificate(fmt.Sprintf("https://%s", config.Cluster.ClusterAddress), version.UserAgent)
+				if err != nil {
+					fmt.Printf(i18n.G("Error connecting to existing cluster member %q: %v")+"\n", clusterAddress, err)
+					continue
+				}
+
+				certDigest := localtls.CertFingerprint(cert)
+				if joinToken.Fingerprint != certDigest {
+					return fmt.Errorf(i18n.G("Certificate fingerprint mismatch between join token and cluster member %q"), clusterAddress)
+				}
+
+				config.Cluster.ClusterCertificate = string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw}))
+
+				break // We've found a working cluster member.
+			}
+
+			if config.Cluster.ClusterCertificate == "" {
+				return errors.New(i18n.G("Unable to connect to any of the cluster members specified in join token"))
+			}
+
+			// Pass the raw join token.
+			config.Cluster.ClusterToken = clusterJoinToken
+		} else {
+			// Ask for the server name.
+			err = askForServerName()
+			if err != nil {
+				return err
+			}
+
+			// Get a token from the cluster.
+			member := api.ClusterMembersPost{
+				ServerName: config.Cluster.ServerName,
+			}
+
+			op, err := cluster.CreateClusterMember(member)
+			if err != nil {
+				return err
+			}
+
+			opAPI := op.Get()
+			joinToken, err := opAPI.ToClusterJoinToken()
+			if err != nil {
+				return fmt.Errorf(i18n.G("Failed converting token operation to join token: %w"), err)
+			}
+
+			// Get cluster connection info.
+			connectInfo, err := cluster.GetConnectionInfo()
+			if err != nil {
+				return err
+			}
+
+			// Set the token.
+			config.Cluster.ClusterAddress = connectInfo.URL
+			config.Cluster.ClusterCertificate = connectInfo.Certificate
+			config.Cluster.ClusterToken = joinToken.String()
+		}
+
+		// Confirm wiping.
+		clusterWipeMember, err := asker.AskBool(i18n.G("All existing data is lost when joining a cluster, continue?")+" (yes/no) [default=no] ", "no")
+		if err != nil {
+			return err
+		}
+
+		if !clusterWipeMember {
+			return errors.New(i18n.G("User aborted configuration"))
+		}
+
+		// Get a client for the cluster if we weren't provided one.
+		if cluster == nil {
+			// Connect to existing cluster
+			serverCert, err := internalUtil.LoadServerCert(internalUtil.VarPath(""))
+			if err != nil {
+				return err
+			}
+
+			err = setupClusterTrust(serverCert, config.Cluster.ServerName, config.Cluster.ClusterAddress, config.Cluster.ClusterCertificate, config.Cluster.ClusterToken)
+			if err != nil {
+				return fmt.Errorf(i18n.G("Failed to setup trust relationship with cluster: %w"), err)
+			}
+
+			// Now we have setup trust, don't send to server, otherwise it will try and setup trust
+			// again and if using a one-time join token, will fail.
+			config.Cluster.ClusterToken = ""
+
+			// Client parameters to connect to the target cluster member.
+			args := &incus.ConnectionArgs{
+				TLSClientCert: string(serverCert.PublicKey()),
+				TLSClientKey:  string(serverCert.PrivateKey()),
+				TLSServerCert: string(config.Cluster.ClusterCertificate),
+				UserAgent:     version.UserAgent,
+			}
+
+			client, err := incus.ConnectIncus(fmt.Sprintf("https://%s", config.Cluster.ClusterAddress), args)
+			if err != nil {
+				return err
+			}
+
+			cluster = client
+		}
+
+		// Get the list of required member config keys.
+		clusterConfig, _, err := cluster.GetCluster()
+		if err != nil {
+			return fmt.Errorf(i18n.G("Failed to retrieve cluster information: %w"), err)
+		}
+
+		for i, config := range clusterConfig.MemberConfig {
+			question := fmt.Sprintf(i18n.G("Choose %s:")+" ", config.Description)
+
+			// Allow for empty values.
+			configValue, err := asker.AskString(question, "", validate.Optional())
+			if err != nil {
+				return err
+			}
+
+			clusterConfig.MemberConfig[i].Value = configValue
+		}
+
+		config.Cluster.MemberConfig = clusterConfig.MemberConfig
+	} else {
+		// Ask for server name since no token is provided.
+		err = askForServerName()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func setupClusterTrust(serverCert *localtls.CertInfo, serverName string, targetAddress string, targetCert string, targetToken string) error {
+	// Connect to the target cluster node.
+	args := &incus.ConnectionArgs{
+		TLSServerCert: targetCert,
+		UserAgent:     version.UserAgent,
+	}
+
+	target, err := incus.ConnectIncus(fmt.Sprintf("https://%s", targetAddress), args)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to connect to target cluster node %q: %w"), targetAddress, err)
+	}
+
+	cert, err := localtls.GenerateTrustCertificate(serverCert, serverName)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed generating trust certificate: %w"), err)
+	}
+
+	post := api.CertificatesPost{
+		CertificatePut: cert.CertificatePut,
+		TrustToken:     targetToken,
+	}
+
+	err = target.CreateCertificate(post)
+	if err != nil && !api.StatusErrorCheck(err, http.StatusConflict) {
+		return fmt.Errorf(i18n.G("Failed to add server cert to cluster: %w"), err)
+	}
+
+	return nil
+}
+
+func fillClusterConfig(config *api.InitPreseed) error {
+	// Check if the path to the cluster certificate is set
+	// If yes then read cluster certificate from file
+	if config.Cluster != nil && config.Cluster.ClusterCertificatePath != "" {
+		if !util.PathExists(config.Cluster.ClusterCertificatePath) {
+			return fmt.Errorf(i18n.G("Path %s doesn't exist"), config.Cluster.ClusterCertificatePath)
+		}
+
+		content, err := os.ReadFile(config.Cluster.ClusterCertificatePath)
+		if err != nil {
+			return err
+		}
+
+		config.Cluster.ClusterCertificate = string(content)
+	}
+
+	// Check if we got a cluster join token, if so, fill in the config with it.
+	if config.Cluster != nil && config.Cluster.ClusterToken != "" {
+		joinToken, err := internalUtil.JoinTokenDecode(config.Cluster.ClusterToken)
+		if err != nil {
+			return fmt.Errorf(i18n.G("Invalid cluster join token: %w"), err)
+		}
+
+		// Set server name from join token
+		config.Cluster.ServerName = joinToken.ServerName
+
+		// Attempt to find a working cluster member to use for joining by retrieving the
+		// cluster certificate from each address in the join token until we succeed.
+		for _, clusterAddress := range joinToken.Addresses {
+			// Cluster URL
+			config.Cluster.ClusterAddress = internalUtil.CanonicalNetworkAddress(clusterAddress, ports.HTTPSDefaultPort)
+
+			// Cluster certificate
+			cert, err := localtls.GetRemoteCertificate(fmt.Sprintf("https://%s", config.Cluster.ClusterAddress), version.UserAgent)
+			if err != nil {
+				fmt.Printf(i18n.G("Error connecting to existing cluster member %q: %v")+"\n", clusterAddress, err)
+				continue
+			}
+
+			certDigest := localtls.CertFingerprint(cert)
+			if joinToken.Fingerprint != certDigest {
+				return fmt.Errorf(i18n.G("Certificate fingerprint mismatch between join token and cluster member %q"), clusterAddress)
+			}
+
+			config.Cluster.ClusterCertificate = string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw}))
+
+			break // We've found a working cluster member.
+		}
+
+		if config.Cluster.ClusterCertificate == "" {
+			return errors.New(i18n.G("Unable to connect to any of the cluster members specified in join token"))
+		}
+	}
+
+	// If clustering is enabled, and no cluster.https_address network address
+	// was specified, we fallback to core.https_address.
+	if config.Cluster != nil &&
+		config.Server.Config["core.https_address"] != "" &&
+		config.Server.Config["cluster.https_address"] == "" {
+		config.Server.Config["cluster.https_address"] = config.Server.Config["core.https_address"]
+	}
+
+	return nil
+}
+
+func updateCluster(d incus.InstanceServer, config *api.InitPreseed) error {
+	// Detect if the user has chosen to join a cluster using the new
+	// cluster join API format, and use the dedicated API if so.
+	if config.Cluster == nil || config.Cluster.ClusterAddress == "" || config.Cluster.ServerAddress == "" {
+		return nil
+	}
+
+	// Ensure the server and cluster addresses are in canonical form.
+	config.Cluster.ServerAddress = internalUtil.CanonicalNetworkAddress(config.Cluster.ServerAddress, ports.HTTPSDefaultPort)
+	config.Cluster.ClusterAddress = internalUtil.CanonicalNetworkAddress(config.Cluster.ClusterAddress, ports.HTTPSDefaultPort)
+
+	op, err := d.UpdateCluster(config.Cluster.ClusterPut, "")
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to join cluster: %w"), err)
+	}
+
+	err = op.Wait()
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to join cluster: %w"), err)
+	}
+
+	return nil
 }

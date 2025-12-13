@@ -38,7 +38,7 @@ func (c *cmdAdminInit) RunInteractive(_ *cobra.Command, d incus.InstanceServer, 
 	}
 
 	if clustering {
-		err := askClustering(c.global.asker, config, server, false)
+		err := askClustering(c.global.asker, config, nil, d, false)
 		if err != nil {
 			return nil, err
 		}
@@ -94,7 +94,6 @@ func (c *cmdAdminInit) RunInteractive(_ *cobra.Command, d incus.InstanceServer, 
 
 	return config, nil
 }
-
 
 func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceServer) error {
 	var err error
@@ -259,7 +258,6 @@ func (c *cmdAdminInit) askStorage(config *api.InitPreseed, d incus.InstanceServe
 
 	return c.askStoragePool(config, d, server, internalUtil.PoolTypeAny)
 }
-
 
 func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceServer, server *api.Server, poolType internalUtil.PoolType) error {
 	// Figure out the preferred storage driver
