@@ -448,6 +448,8 @@ github.com/opencontainers/runtime-spec v1.3.0 h1:YZupQUdctfhpZy3TM39nN9Ika5CBWT5
 github.com/opencontainers/runtime-spec v1.3.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/umoci v0.6.0 h1:Dsm4beJpglN5y2E2EUSZZcNey4Ml4+nKepvwLQwgIec=
 github.com/opencontainers/umoci v0.6.0/go.mod h1:2DS3cxVN9pRJGYaCK5mnmmwVKV5vd9r6HIYAV0IvdbI=
+github.com/opencontainers/umoci v0.6.1-0.20251213054154-70fc5ee1f4df h1:9hvwN64VeuL1L0Jgp8bxTPmd5IZQoHmeXGWrVqsEhN0=
+github.com/opencontainers/umoci v0.6.1-0.20251213054154-70fc5ee1f4df/go.mod h1:s6d/s4QJAZTF92hEU6ozuHjE0+VRc6kVe1QIWfvL7KY=
 github.com/openfga/go-sdk v0.7.3 h1:BrYmJyIdicVeKzoycCFT0vzf0oz4luWrwoPIJdF6Wgo=
 github.com/openfga/go-sdk v0.7.3/go.mod h1:kiryf3FszAobRaQiBSbCpxBxuSh0SpSMt94ivduaIWc=
 github.com/osrg/gobgp/v3 v3.37.0 h1:+ObuOdvj7G7nxrT0fKFta+EAupdWf/q1WzbXydr8IOY=

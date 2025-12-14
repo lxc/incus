@@ -40,7 +40,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v1.1.2
 	github.com/opencontainers/runtime-spec v1.3.0
-	github.com/opencontainers/umoci v0.6.0
+	github.com/opencontainers/umoci v0.6.1-0.20251213054154-70fc5ee1f4df
 	github.com/openfga/go-sdk v0.7.3
 	github.com/osrg/gobgp/v3 v3.37.0
 	github.com/ovn-kubernetes/libovsdb v0.8.1
