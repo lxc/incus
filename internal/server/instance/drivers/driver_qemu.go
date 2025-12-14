@@ -8871,6 +8871,10 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 		}
 	}
 
+	// Override VM state back to QEMU state.
+	status.Status = statusCode.String()
+	status.StatusCode = statusCode
+
 	// Add the network details if missing.
 	if len(status.Network) == 0 {
 		networkState, err := d.getNetworkState()
