@@ -440,7 +440,7 @@ func rsyncFeatureArgs(features []string) []string {
 }
 
 // AtLeast compares the local version to a minimum version.
-func AtLeast(min string) bool {
+func AtLeast(minimum string) bool {
 	// Parse the current version.
 	out, err := subprocess.RunCommand("rsync", "--version")
 	if err != nil {
@@ -460,7 +460,7 @@ func AtLeast(min string) bool {
 	}
 
 	// Load minimum version.
-	minVer, err := version.NewDottedVersion(min)
+	minVer, err := version.NewDottedVersion(minimum)
 	if err != nil {
 		return false
 	}
