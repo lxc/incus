@@ -117,6 +117,7 @@ Tag                         | Description
 `join=<joinTable.column>`   | Applies a `JOIN` of the form `JOIN <joinTable> ON <table>.<joinTable_id> = <joinTable.id>`.
 `leftjoin=<table.column>`   | Applies a `LEFT JOIN` of the same form as a `JOIN`.
 `joinon=<table>.<column>`   | Overrides the default `JOIN ON` clause with the given table and column, replacing `<table>.<joinTable_id>` above.
+`jointo=<column>`           | Overrides the default target column `id` with the given column, replacing the `id` in `<joinTable.id>` above. This is intended for "loose" foreign keys, not using the ID column. Therefore, this is intended to be used in conjunction with `joinon` and `omit=create,update` to get the expected behavior.
 `primary=yes`               | Assigns column associated with the field to be sufficient for returning a row from the table. Will default to `Name` if unspecified. Fields with this key will be included in the default 'ORDER BY' clause.
 `omit=<Stmt Types>`         | Omits a given field from consideration for the comma separated list of statement types (`create`, `objects-by-Name`, `update`).
 `ignore`                    | Outright ignore the struct field as though it does not exist. `ignore` needs to be the only tag value in order to be recognized.

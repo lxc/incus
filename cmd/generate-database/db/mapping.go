@@ -414,7 +414,7 @@ func (f *Field) OrderBy(mapping *Mapping, primaryTable string) (string, error) {
 
 // JoinClause returns an SQL 'JOIN' clause using the 'join'  and 'joinon' tags, if present.
 func (f *Field) JoinClause(mapping *Mapping, table string) (string, error) {
-	joinTemplate := "\n  JOIN %s ON %s = %s.id"
+	joinTemplate := "\n  JOIN %s ON %s = %s.%s"
 	if f.Config.Get("join") != "" && f.Config.Get("leftjoin") != "" {
 		return "", fmt.Errorf("Cannot join and leftjoin at the same time for field %q of struct %q", f.Name, mapping.Name)
 	}
@@ -448,7 +448,12 @@ func (f *Field) JoinClause(mapping *Mapping, table string) (string, error) {
 		return "", fmt.Errorf("'joinon' tag of field %q of struct %q must be of form '<table>.<column>'", f.Name, mapping.Name)
 	}
 
-	return fmt.Sprintf(joinTemplate, joinTable, joinOn, joinTable), nil
+	joinTo := "id"
+	if f.Config.Get("jointo") != "" {
+		joinTo = f.Config.Get("jointo")
+	}
+
+	return fmt.Sprintf(joinTemplate, joinTable, joinOn, joinTable, joinTo), nil
 }
 
 // InsertColumn returns a column name and parameter value suitable for an 'INSERT', 'UPDATE', or 'DELETE' statement.
