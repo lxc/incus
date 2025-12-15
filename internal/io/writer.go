@@ -5,6 +5,7 @@ import (
 	"io"
 )
 
+// WriteAll copies content of data to specified writer.
 func WriteAll(w io.Writer, data []byte) error {
 	buf := bytes.NewBuffer(data)
 
