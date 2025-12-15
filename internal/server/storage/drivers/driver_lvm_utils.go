@@ -355,6 +355,7 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 	}
 
 	lvFullName := d.lvmFullVolumeName(vol.volType, vol.contentType, vol.name)
+	logCtx := logger.Ctx{"vg_name": vgName, "lv_name": lvFullName, "size": fmt.Sprintf("%db", lvSizeBytes)}
 
 	args := []string{
 		"--name", lvFullName,
@@ -408,6 +409,8 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 		if err != nil {
 			return fmt.Errorf("Error making filesystem on LVM logical volume: %w", err)
 		}
+
+		logCtx["fs"] = vol.ConfigBlockFilesystem()
 	} else if !d.usesThinpool() {
 		// Make sure we get an empty LV.
 		err := linux.ClearBlock(volDevPath, 0)
@@ -430,7 +433,7 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 		}
 	}
 
-	d.logger.Debug("Logical volume created", logger.Ctx{"vg_name": vgName, "lv_name": lvFullName, "size": fmt.Sprintf("%db", lvSizeBytes), "fs": vol.ConfigBlockFilesystem()})
+	d.logger.Debug("Logical volume created", logCtx)
 	return nil
 }
 
