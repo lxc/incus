@@ -209,6 +209,10 @@ func (d *tpm) startContainer() (*deviceConfig.RunConfig, error) {
 }
 
 func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
+	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
+		return nil, errors.New("TPM devices cannot be used when migration.stateful is enabled")
+	}
+
 	tpmDevPath := filepath.Join(d.inst.Path(), fmt.Sprintf("tpm.%s", d.name))
 	socketPath := filepath.Join(tpmDevPath, fmt.Sprintf("swtpm-%s.sock", d.name))
 	runConf := deviceConfig.RunConfig{
