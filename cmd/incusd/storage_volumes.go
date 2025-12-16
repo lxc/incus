@@ -1988,7 +1988,7 @@ func getVolumeFull(ctx context.Context, s *state.State, poolName string, vol api
 		if err != nil && !errors.Is(err, storageDrivers.ErrNotSupported) {
 			return nil, err
 		}
-	} else {
+	} else if volType == db.StoragePoolVolumeTypeContainer || volType == db.StoragePoolVolumeTypeVM {
 		inst, err := instance.LoadByProjectAndName(s, vol.Project, vol.Name)
 		if err != nil {
 			return nil, err
