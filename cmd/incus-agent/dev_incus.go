@@ -40,7 +40,7 @@ type devIncusHandler struct {
 
 func getVsockClient(d *Daemon) (incus.InstanceServer, error) {
 	// Try connecting to the host.
-	client, err := getClient(d.serverCID, int(d.serverPort), d.serverCertificate)
+	client, err := getClient(d.serverCID, int(d.serverPort), d.serverCertificate, d.secretsLocation)
 	if err != nil {
 		return nil, err
 	}

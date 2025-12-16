@@ -10,9 +10,10 @@ import (
 )
 
 type cmdGlobal struct {
-	flagVersion bool
-	flagHelp    bool
-	flagService bool
+	flagVersion         bool
+	flagHelp            bool
+	flagService         bool
+	flagSecretsLocation string
 
 	flagLogVerbose bool
 	flagLogDebug   bool
@@ -35,6 +36,7 @@ func main() {
 	app.PersistentFlags().BoolVarP(&globalCmd.flagHelp, "help", "h", false, "Print help")
 	app.PersistentFlags().BoolVarP(&globalCmd.flagLogVerbose, "verbose", "v", false, "Show all information messages")
 	app.PersistentFlags().BoolVarP(&globalCmd.flagLogDebug, "debug", "d", false, "Show all debug messages")
+	app.PersistentFlags().StringVarP(&globalCmd.flagSecretsLocation, "secrets-location", "s", "", "Secrets location of the certificate and private key")
 	if runtime.GOOS == "windows" {
 		app.PersistentFlags().BoolVar(&globalCmd.flagService, "service", false, "Start as a system service")
 	}

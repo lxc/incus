@@ -41,8 +41,8 @@ func (l *networkListener) Accept() (net.Conn, error) {
 	return tls.Server(c, l.config), nil
 }
 
-func serverTLSConfig() (*tls.Config, error) {
-	certInfo, err := localtls.KeyPairAndCA(".", "agent", localtls.CertServer, false)
+func serverTLSConfig(secretsLocation string) (*tls.Config, error) {
+	certInfo, err := localtls.KeyPairAndCA(secretsLocation, "agent", localtls.CertServer, false)
 	if err != nil {
 		return nil, err
 	}
