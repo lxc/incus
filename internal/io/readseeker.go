@@ -14,10 +14,12 @@ func NewReadSeeker(reader io.Reader, seeker io.Seeker) io.ReadSeeker {
 	return &readSeeker{Reader: reader, Seeker: seeker}
 }
 
+// Read reads data from the reader.
 func (r *readSeeker) Read(p []byte) (n int, err error) {
 	return r.Reader.Read(p)
 }
 
+// Seek seeks to the specified offset.
 func (r *readSeeker) Seek(offset int64, whence int) (int64, error) {
 	return r.Seeker.Seek(offset, whence)
 }
