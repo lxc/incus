@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-11-28 02:38-0500\n"
+"POT-Creation-Date: 2025-12-17 10:09-0500\n"
 "PO-Revision-Date: 2025-10-21 05:20+0000\n"
 "Last-Translator: pesder <j_h_liau@yahoo.com.tw>\n"
 "Language-Team: Chinese (Traditional Han script) <https://hosted.weblate.org/"
@@ -799,7 +799,7 @@ msgstr ""
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr ""
 
-#: cmd/incus/create.go:386 cmd/incus/rebuild.go:133
+#: cmd/incus/create.go:389 cmd/incus/rebuild.go:133
 msgid "Asked for a VM but image is of type container"
 msgstr ""
 
@@ -1124,7 +1124,7 @@ msgstr ""
 msgid "Can't use both --no-expiry and --expiry"
 msgstr ""
 
-#: cmd/incus/create.go:357
+#: cmd/incus/create.go:360
 #, c-format
 msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
@@ -2149,7 +2149,7 @@ msgstr ""
 msgid "DevicePath: %v"
 msgstr ""
 
-#: cmd/incus/create.go:443
+#: cmd/incus/create.go:446
 msgid "Didn't get name of new instance from the server"
 msgstr ""
 
@@ -2817,7 +2817,7 @@ msgstr ""
 msgid "Failed loading network %q: %w"
 msgstr ""
 
-#: cmd/incus/create.go:340
+#: cmd/incus/create.go:343
 #, c-format
 msgid "Failed loading profile %q for device override: %w"
 msgstr ""
@@ -3295,7 +3295,7 @@ msgid "Get current load balancer status"
 msgstr ""
 
 #: cmd/incus/network_load_balancer.go:1325
-msgid "Get current load-balacner status"
+msgid "Get current load-balancer status"
 msgstr ""
 
 #: cmd/incus/image.go:1598 cmd/incus/image.go:1599
@@ -3743,7 +3743,7 @@ msgstr ""
 msgid "Instance name is mandatory"
 msgstr ""
 
-#: cmd/incus/create.go:453
+#: cmd/incus/create.go:456
 #, c-format
 msgid "Instance name is: %s"
 msgstr ""
@@ -6723,7 +6723,7 @@ msgstr ""
 msgid "Retrieve the instance's console log"
 msgstr ""
 
-#: cmd/incus/create.go:400
+#: cmd/incus/create.go:403
 #, c-format
 msgid "Retrieving image: %s"
 msgstr ""
@@ -7820,7 +7820,7 @@ msgid ""
 "restarted"
 msgstr ""
 
-#: cmd/incus/create.go:474
+#: cmd/incus/create.go:477
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
 
@@ -8047,11 +8047,11 @@ msgstr ""
 msgid "Timestamps:"
 msgstr ""
 
-#: cmd/incus/create.go:476
+#: cmd/incus/create.go:479
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr ""
 
-#: cmd/incus/create.go:475
+#: cmd/incus/create.go:478
 msgid "To create a new network, use: incus network create"
 msgstr ""
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-11-28 02:38-0500\n"
+"POT-Creation-Date: 2025-12-17 10:09-0500\n"
 "PO-Revision-Date: 2025-10-21 05:14+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
@@ -1093,7 +1093,7 @@ msgstr ""
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr ""
 
-#: cmd/incus/create.go:386 cmd/incus/rebuild.go:133
+#: cmd/incus/create.go:389 cmd/incus/rebuild.go:133
 msgid "Asked for a VM but image is of type container"
 msgstr ""
 
@@ -1425,7 +1425,7 @@ msgstr ""
 msgid "Can't use both --no-expiry and --expiry"
 msgstr ""
 
-#: cmd/incus/create.go:357
+#: cmd/incus/create.go:360
 #, c-format
 msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
@@ -2495,7 +2495,7 @@ msgstr " Использование диска:"
 msgid "DevicePath: %v"
 msgstr " Использование диска:"
 
-#: cmd/incus/create.go:443
+#: cmd/incus/create.go:446
 msgid "Didn't get name of new instance from the server"
 msgstr ""
 
@@ -3195,7 +3195,7 @@ msgstr "Принять сертификат"
 msgid "Failed loading network %q: %w"
 msgstr "Принять сертификат"
 
-#: cmd/incus/create.go:340
+#: cmd/incus/create.go:343
 #, c-format
 msgid "Failed loading profile %q for device override: %w"
 msgstr ""
@@ -3678,7 +3678,7 @@ msgstr "Копирование образа: %s"
 
 #: cmd/incus/network_load_balancer.go:1325
 #, fuzzy
-msgid "Get current load-balacner status"
+msgid "Get current load-balancer status"
 msgstr "Копирование образа: %s"
 
 #: cmd/incus/image.go:1598 cmd/incus/image.go:1599
@@ -4158,7 +4158,7 @@ msgstr ""
 msgid "Instance name is mandatory"
 msgstr "Имя контейнера является обязательным"
 
-#: cmd/incus/create.go:453
+#: cmd/incus/create.go:456
 #, fuzzy, c-format
 msgid "Instance name is: %s"
 msgstr "Имя контейнера: %s"
@@ -7259,7 +7259,7 @@ msgstr "Псевдонимы:"
 msgid "Retrieve the instance's console log"
 msgstr ""
 
-#: cmd/incus/create.go:400
+#: cmd/incus/create.go:403
 #, c-format
 msgid "Retrieving image: %s"
 msgstr ""
@@ -8413,7 +8413,7 @@ msgid ""
 "restarted"
 msgstr ""
 
-#: cmd/incus/create.go:474
+#: cmd/incus/create.go:477
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
 
@@ -8641,11 +8641,11 @@ msgstr ""
 msgid "Timestamps:"
 msgstr ""
 
-#: cmd/incus/create.go:476
+#: cmd/incus/create.go:479
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr ""
 
-#: cmd/incus/create.go:475
+#: cmd/incus/create.go:478
 msgid "To create a new network, use: incus network create"
 msgstr ""
 
@@ -11512,6 +11512,10 @@ msgstr ""
 #: cmd/incus/image.go:1206 cmd/incus/project.go:237 cmd/incus/snapshot.go:285
 msgid "yes"
 msgstr "да"
+
+#, fuzzy
+#~ msgid "Get current load-balacner status"
+#~ msgstr "Копирование образа: %s"
 
 #, fuzzy
 #~ msgid "[<remote>:]<alias>"

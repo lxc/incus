@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-11-28 02:38-0500\n"
+"POT-Creation-Date: 2025-12-17 10:09-0500\n"
 "PO-Revision-Date: 2025-11-29 19:00+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
-"\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
+">\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1086,7 +1086,7 @@ msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr ""
 "Como nenhum pode ser encontrado, o socket SPICE cru pode ser encontrado em:"
 
-#: cmd/incus/create.go:386 cmd/incus/rebuild.go:133
+#: cmd/incus/create.go:389 cmd/incus/rebuild.go:133
 msgid "Asked for a VM but image is of type container"
 msgstr "Pedido por um VM mas a imagem é de tipo recipiente"
 
@@ -1418,7 +1418,7 @@ msgstr "Não pode usar uma imagem com --empty"
 msgid "Can't use both --no-expiry and --expiry"
 msgstr "Não pode usar ambos --no-expiry e --expiry"
 
-#: cmd/incus/create.go:357
+#: cmd/incus/create.go:360
 #, c-format
 msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
@@ -2491,7 +2491,7 @@ msgstr "ID de Dispositivo: %v"
 msgid "DevicePath: %v"
 msgstr "Caminho de Dispositivo: %v"
 
-#: cmd/incus/create.go:443
+#: cmd/incus/create.go:446
 msgid "Didn't get name of new instance from the server"
 msgstr "Não recebi o nome da nova instância do servidor"
 
@@ -3263,7 +3263,7 @@ msgstr "Falhou ao importar pedido: %w"
 msgid "Failed loading network %q: %w"
 msgstr "Falhou ao carregar rede %q:%w"
 
-#: cmd/incus/create.go:340
+#: cmd/incus/create.go:343
 #, c-format
 msgid "Failed loading profile %q for device override: %w"
 msgstr "Falhou ao carregar perfil %q para sobreposição de dispositivo: %w"
@@ -3775,8 +3775,9 @@ msgid "Get current load balancer status"
 msgstr "Obtém o status do balanceador de carga atual"
 
 #: cmd/incus/network_load_balancer.go:1325
-msgid "Get current load-balacner status"
-msgstr "Obtém estado do balanceador de carga atual"
+#, fuzzy
+msgid "Get current load-balancer status"
+msgstr "Obtém o status do balanceador de carga atual"
 
 #: cmd/incus/image.go:1598 cmd/incus/image.go:1599
 msgid "Get image properties"
@@ -4239,7 +4240,7 @@ msgstr "Instância desligada para cliente %q"
 msgid "Instance name is mandatory"
 msgstr "Nome de instância é obrigatório"
 
-#: cmd/incus/create.go:453
+#: cmd/incus/create.go:456
 #, c-format
 msgid "Instance name is: %s"
 msgstr "Nome da instância é: %s"
@@ -7958,7 +7959,7 @@ msgstr "Resumir instâncias"
 msgid "Retrieve the instance's console log"
 msgstr "Obter o relatório de consola da instância"
 
-#: cmd/incus/create.go:400
+#: cmd/incus/create.go:403
 #, c-format
 msgid "Retrieving image: %s"
 msgstr "A obter imagem: %s"
@@ -9186,7 +9187,7 @@ msgid ""
 msgstr ""
 "A instância está atualmente em execução. Use --force para a parar e reiniciar"
 
-#: cmd/incus/create.go:474
+#: cmd/incus/create.go:477
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
 "A instância que você está a iniciar não tem nenhuma rede anexada a ela."
@@ -9431,11 +9432,11 @@ msgstr "Tempo a esperar para a instância desligar de maneira limpa"
 msgid "Timestamps:"
 msgstr "Marcas temporais:"
 
-#: cmd/incus/create.go:476
+#: cmd/incus/create.go:479
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr "Para anexar uma rede a uma instância, use: incus network attach"
 
-#: cmd/incus/create.go:475
+#: cmd/incus/create.go:478
 msgid "To create a new network, use: incus network create"
 msgstr "Para criar uma nova rede, use: incus network create"
 
@@ -11990,6 +11991,9 @@ msgstr "s"
 #: cmd/incus/image.go:1206 cmd/incus/project.go:237 cmd/incus/snapshot.go:285
 msgid "yes"
 msgstr "sim"
+
+#~ msgid "Get current load-balacner status"
+#~ msgstr "Obtém estado do balanceador de carga atual"
 
 #~ msgid "[<remote>:]<alias>"
 #~ msgstr "[<remoto>:]<alias>"
