@@ -88,7 +88,7 @@ func DefaultParseBool(c Clause) (bool, error) {
 // DefaultParseRegexp converts the value of the clause to regexp.
 func DefaultParseRegexp(c Clause) (*regexp.Regexp, error) {
 	regexpValue := c.Value
-	if !(strings.Contains(regexpValue, "^") || strings.Contains(regexpValue, "$")) {
+	if !strings.Contains(regexpValue, "^") && !strings.Contains(regexpValue, "$") {
 		regexpValue = "^" + regexpValue + "$"
 	}
 
@@ -137,11 +137,11 @@ func (s ClauseSet) match(c Clause, objValue any) (bool, error) {
 	case reflect.Bool:
 		valueBool, err = s.ParseBool(c)
 	case reflect.Slice:
-		if reflect.TypeOf(objValue).Elem().Kind() == reflect.String {
-			valueSlice, err = s.ParseStringSlice(c)
-		} else {
+		if reflect.TypeOf(objValue).Elem().Kind() != reflect.String {
 			return false, fmt.Errorf("Invalid slice type %q for field %q", reflect.TypeOf(objValue).Elem().Kind(), c.Field)
 		}
+
+		valueSlice, err = s.ParseStringSlice(c)
 
 	default:
 		return false, fmt.Errorf("Invalid type %q for field %q", kind.String(), c.Field)
@@ -179,6 +179,7 @@ func (s ClauseSet) match(c Clause, objValue any) (bool, error) {
 					return false
 				}
 
+				//revive:disable-next-line:unchecked-type-assertion
 				for k, v := range objValue.([]string) {
 					if valueSlice[k] != v {
 						return false
@@ -218,6 +219,7 @@ func (s ClauseSet) match(c Clause, objValue any) (bool, error) {
 					return false
 				}
 
+				//revive:disable-next-line:unchecked-type-assertion
 				for k, v := range objValue.([]string) {
 					if valueSlice[k] != v {
 						return false
