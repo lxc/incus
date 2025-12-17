@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-11-28 02:38-0500\n"
+"POT-Creation-Date: 2025-12-17 10:09-0500\n"
 "PO-Revision-Date: 2025-12-11 16:00+0000\n"
 "Last-Translator: yooadmin <yooadmin@163.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -1069,7 +1069,7 @@ msgstr "您确定要 %s 集群成员 %q 吗？（是/否）[默认值=否]： "
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr "由于两者都找不到，原始 SPICE 套接字可在以下位置找到："
 
-#: cmd/incus/create.go:386 cmd/incus/rebuild.go:133
+#: cmd/incus/create.go:389 cmd/incus/rebuild.go:133
 msgid "Asked for a VM but image is of type container"
 msgstr "请求 VM，但映像的类型为容器"
 
@@ -1397,7 +1397,7 @@ msgstr "镜像服务器不能与 --empty 一起使用"
 msgid "Can't use both --no-expiry and --expiry"
 msgstr "不能同时使用 --no-expiry 和 --expiry"
 
-#: cmd/incus/create.go:357
+#: cmd/incus/create.go:360
 #, c-format
 msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
@@ -2453,7 +2453,7 @@ msgstr "设备：%s"
 msgid "DevicePath: %v"
 msgstr "设备：%s"
 
-#: cmd/incus/create.go:443
+#: cmd/incus/create.go:446
 msgid "Didn't get name of new instance from the server"
 msgstr "未从服务器获取新实例的名称"
 
@@ -2932,11 +2932,11 @@ msgid ""
 msgstr ""
 "对本地或全局数据库执行 SQL 查询\n"
 "\n"
-"本地数据库专门用于您命令所针对的集群成员，并包含成员特定数据（如成员网络地址"
-"）。\n"
+"本地数据库专门用于您命令所针对的集群成员，并包含成员特定数据（如成员网络地"
+"址）。\n"
 "\n"
-"  全局数据库对集群中所有成员通用，并包含集群特定数据（如配置文件、容器等）"
-"。\n"
+"  全局数据库对集群中所有成员通用，并包含集群特定数据（如配置文件、容器"
+"等）。\n"
 "\n"
 "  如果您运行的是非集群服务器也同样适用，因为该实例等同于一个单成员集群。\n"
 "\n"
@@ -3186,7 +3186,7 @@ msgstr "导入请求失败：%w"
 msgid "Failed loading network %q: %w"
 msgstr "加载网络 %q 失败：%w"
 
-#: cmd/incus/create.go:340
+#: cmd/incus/create.go:343
 #, c-format
 msgid "Failed loading profile %q for device override: %w"
 msgstr "加载覆盖设备的配置文件 %q 失败：%w"
@@ -3687,7 +3687,8 @@ msgid "Get current load balancer status"
 msgstr "获取当前负载均衡器状态"
 
 #: cmd/incus/network_load_balancer.go:1325
-msgid "Get current load-balacner status"
+#, fuzzy
+msgid "Get current load-balancer status"
 msgstr "获取当前负载均衡器状态"
 
 #: cmd/incus/image.go:1598 cmd/incus/image.go:1599
@@ -4145,7 +4146,7 @@ msgstr "客户端 %q 的实例已断开连接"
 msgid "Instance name is mandatory"
 msgstr "实例名称是必需的"
 
-#: cmd/incus/create.go:453
+#: cmd/incus/create.go:456
 #, c-format
 msgid "Instance name is: %s"
 msgstr "实例名称是：%s"
@@ -7179,7 +7180,7 @@ msgstr ""
 msgid "Retrieve the instance's console log"
 msgstr ""
 
-#: cmd/incus/create.go:400
+#: cmd/incus/create.go:403
 #, c-format
 msgid "Retrieving image: %s"
 msgstr ""
@@ -8280,7 +8281,7 @@ msgid ""
 "restarted"
 msgstr ""
 
-#: cmd/incus/create.go:474
+#: cmd/incus/create.go:477
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
 
@@ -8507,11 +8508,11 @@ msgstr ""
 msgid "Timestamps:"
 msgstr ""
 
-#: cmd/incus/create.go:476
+#: cmd/incus/create.go:479
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr ""
 
-#: cmd/incus/create.go:475
+#: cmd/incus/create.go:478
 msgid "To create a new network, use: incus network create"
 msgstr ""
 
@@ -10666,6 +10667,9 @@ msgstr ""
 #: cmd/incus/image.go:1206 cmd/incus/project.go:237 cmd/incus/snapshot.go:285
 msgid "yes"
 msgstr ""
+
+#~ msgid "Get current load-balacner status"
+#~ msgstr "获取当前负载均衡器状态"
 
 #~ msgid "Invalid arguments"
 #~ msgstr "无效的参数"

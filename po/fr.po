@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-11-28 02:38-0500\n"
+"POT-Creation-Date: 2025-12-17 10:09-0500\n"
 "PO-Revision-Date: 2025-10-21 04:18+0000\n"
 "Last-Translator: Varlorg <varlorg@gmail.com>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -1097,7 +1097,7 @@ msgstr ""
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr "Aucun n'a pu être trouvé, la socket SPICE peut être trouvé à:"
 
-#: cmd/incus/create.go:386 cmd/incus/rebuild.go:133
+#: cmd/incus/create.go:389 cmd/incus/rebuild.go:133
 msgid "Asked for a VM but image is of type container"
 msgstr "Machine virtuelle a été demandé mais l'image est de type conteneur"
 
@@ -1439,7 +1439,7 @@ msgstr "Impossible d'utiliser une image avec --empty"
 msgid "Can't use both --no-expiry and --expiry"
 msgstr ""
 
-#: cmd/incus/create.go:357
+#: cmd/incus/create.go:360
 #, c-format
 msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
@@ -2583,7 +2583,7 @@ msgstr "Serveur distant : %s"
 msgid "DevicePath: %v"
 msgstr "Serveur distant : %s"
 
-#: cmd/incus/create.go:443
+#: cmd/incus/create.go:446
 #, fuzzy
 msgid "Didn't get name of new instance from the server"
 msgstr "pas d'image, conteneur ou instantané affecté sur ce serveur"
@@ -3373,7 +3373,7 @@ msgstr "Échec de la demande d'importation : %w"
 msgid "Failed loading network %q: %w"
 msgstr "Échec du chargement du réseau %q : %w"
 
-#: cmd/incus/create.go:340
+#: cmd/incus/create.go:343
 #, c-format
 msgid "Failed loading profile %q for device override: %w"
 msgstr ""
@@ -3895,7 +3895,7 @@ msgstr "Nom du réseau"
 
 #: cmd/incus/network_load_balancer.go:1325
 #, fuzzy
-msgid "Get current load-balacner status"
+msgid "Get current load-balancer status"
 msgstr "Nom du réseau"
 
 #: cmd/incus/image.go:1598 cmd/incus/image.go:1599
@@ -4410,7 +4410,7 @@ msgstr "Instance déconnectée pour le client %q"
 msgid "Instance name is mandatory"
 msgstr "Le nom du conteneur est obligatoire"
 
-#: cmd/incus/create.go:453
+#: cmd/incus/create.go:456
 #, fuzzy, c-format
 msgid "Instance name is: %s"
 msgstr "Le nom du conteneur est : %s"
@@ -7662,7 +7662,7 @@ msgstr "Création du conteneur"
 msgid "Retrieve the instance's console log"
 msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
 
-#: cmd/incus/create.go:400
+#: cmd/incus/create.go:403
 #, c-format
 msgid "Retrieving image: %s"
 msgstr "Récupération de l'image : %s"
@@ -8861,7 +8861,7 @@ msgstr ""
 "Le conteneur est en cours d'exécution. Utiliser --force pour qu'il soit "
 "arrêté et redémarré."
 
-#: cmd/incus/create.go:474
+#: cmd/incus/create.go:477
 #, fuzzy
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
@@ -9096,12 +9096,12 @@ msgstr "Temps d'attente du conteneur avant de le tuer"
 msgid "Timestamps:"
 msgstr "Horodatage :"
 
-#: cmd/incus/create.go:476
+#: cmd/incus/create.go:479
 #, fuzzy
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr "Pour attacher un réseau à un conteneur, utiliser : lxc network attach"
 
-#: cmd/incus/create.go:475
+#: cmd/incus/create.go:478
 #, fuzzy
 msgid "To create a new network, use: incus network create"
 msgstr "Pour créer un réseau, utiliser : lxc network create"
@@ -12141,6 +12141,10 @@ msgstr "o"
 #: cmd/incus/image.go:1206 cmd/incus/project.go:237 cmd/incus/snapshot.go:285
 msgid "yes"
 msgstr "oui"
+
+#, fuzzy
+#~ msgid "Get current load-balacner status"
+#~ msgstr "Nom du réseau"
 
 #, fuzzy
 #~ msgid "[<remote>:]<alias>"

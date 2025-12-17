@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-11-28 02:38-0500\n"
+"POT-Creation-Date: 2025-12-17 10:09-0500\n"
 "PO-Revision-Date: 2025-12-14 16:01+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -1057,7 +1057,7 @@ msgstr ""
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr "どちらもみつかりませんでした。raw SPICE ソケットはこちらにあります:"
 
-#: cmd/incus/create.go:386 cmd/incus/rebuild.go:133
+#: cmd/incus/create.go:389 cmd/incus/rebuild.go:133
 msgid "Asked for a VM but image is of type container"
 msgstr "VMを要求しましたが、イメージタイプがコンテナです"
 
@@ -1389,7 +1389,7 @@ msgstr "イメージに --empty は使えません"
 msgid "Can't use both --no-expiry and --expiry"
 msgstr "--no-expiry と --expiry は同時に使えません"
 
-#: cmd/incus/create.go:357
+#: cmd/incus/create.go:360
 #, c-format
 msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
@@ -1628,8 +1628,8 @@ msgid ""
 "Compression algorithm to use (none for uncompressed, ignored for ISO storage "
 "volumes)"
 msgstr ""
-"使用する圧縮アルゴリズムを指定します (圧縮しない場合は none、ISO "
-"ストレージボリュームの場合は無視されます)"
+"使用する圧縮アルゴリズムを指定します (圧縮しない場合は none、ISO ストレージボ"
+"リュームの場合は無視されます)"
 
 #: cmd/incus/copy.go:56 cmd/incus/create.go:58 cmd/incus/import.go:38
 msgid "Config key/value to apply to the new instance"
@@ -2456,7 +2456,7 @@ msgstr "デバイスID: %v"
 msgid "DevicePath: %v"
 msgstr "デバイスパス: %v"
 
-#: cmd/incus/create.go:443
+#: cmd/incus/create.go:446
 msgid "Didn't get name of new instance from the server"
 msgstr "サーバから新しいインスタンス名を取得できませんでした"
 
@@ -2945,8 +2945,8 @@ msgstr ""
 "  ローカルデータベースは、コマンドの対象となるクラスターメンバー特有であり、"
 "（メンバーのネットワークアドレスのような）メンバー固有のデータを含みます。\n"
 "\n"
-"  グローバルデータベースは、クラスター内のすべてのメンバーで共通であり、（"
-"プロファイルやコンテナなどのような）クラスター固有のデータを含みます。\n"
+"  グローバルデータベースは、クラスター内のすべてのメンバーで共通であり、（プ"
+"ロファイルやコンテナなどのような）クラスター固有のデータを含みます。\n"
 "\n"
 "  クラスターに属さないサーバーで実行している場合、同じことが当てはまります。"
 "そのインスタンスは、実際は単独メンバーのクラスターです。\n"
@@ -3075,8 +3075,8 @@ msgstr ""
 msgid ""
 "Export the volume without its snapshots (ignored for ISO storage volumes)"
 msgstr ""
-"ボリュームをスナップショットなしでエクスポートします（ISO "
-"ストレージボリュームは無視されます）"
+"ボリュームをスナップショットなしでエクスポートします（ISO ストレージボリュー"
+"ムは無視されます）"
 
 #: cmd/incus/storage_bucket.go:1607
 #, c-format
@@ -3205,7 +3205,7 @@ msgstr "インポート要求が失敗しました: %w"
 msgid "Failed loading network %q: %w"
 msgstr "ネットワーク %q の取得に失敗しました: %w"
 
-#: cmd/incus/create.go:340
+#: cmd/incus/create.go:343
 #, c-format
 msgid "Failed loading profile %q for device override: %w"
 msgstr "デバイス上書きのためのプロファイル %q のロードに失敗しました: %w"
@@ -3430,7 +3430,8 @@ msgstr "現在のサーバー設定の取得に失敗しました: %w"
 #, c-format
 msgid ""
 "Failed to retrieve current server network configuration for project %q: %w"
-msgstr "プロジェクト %q の現在のサーバーのネットワーク設定の取得に失敗しました: %w"
+msgstr ""
+"プロジェクト %q の現在のサーバーのネットワーク設定の取得に失敗しました: %w"
 
 #: cmd/incus/admin_init_auto.go:132
 #, c-format
@@ -3554,16 +3555,16 @@ msgid ""
 "\n"
 "Are you really sure you want to force removing %s? (yes/no): "
 msgstr ""
-"クラスタからサーバを強制的に削除するのは最後の手段としてのみ実行してください"
-"。\n"
+"クラスタからサーバを強制的に削除するのは最後の手段としてのみ実行してくださ"
+"い。\n"
 "\n"
 "削除されたサーバはこの操作のあとは機能せず、LXD のフルリセットが必要になりま"
-"す。サーバに存在していた可能性のある残りのインスタンス、イメージ、"
-"ストレージボリュームは失われます。\n"
+"す。サーバに存在していた可能性のある残りのインスタンス、イメージ、ストレージ"
+"ボリュームは失われます。\n"
 "\n"
-"可能なら、適切な手順で削除することをおすすめします。適切な手順で行うには、"
-"クラスタから完全にサーバを削除する前に、影響を受けるインスタンス、イメージ、"
-"ストレージボリュームを他のサーバに移動する必要があります。\n"
+"可能なら、適切な手順で削除することをおすすめします。適切な手順で行うには、ク"
+"ラスタから完全にサーバを削除する前に、影響を受けるインスタンス、イメージ、ス"
+"トレージボリュームを他のサーバに移動する必要があります。\n"
 "\n"
 "--force オプションは、サーバが死んだ場合、サーバの再インストール後、他に復旧"
 "の見込みがまったくない場合にのみ使用してください。\n"
@@ -3711,7 +3712,8 @@ msgid "Get current load balancer status"
 msgstr "現在のロードバランサーのステータスを取得します"
 
 #: cmd/incus/network_load_balancer.go:1325
-msgid "Get current load-balacner status"
+#, fuzzy
+msgid "Get current load-balancer status"
 msgstr "現在のロードバランサーのステータスを取得します"
 
 #: cmd/incus/image.go:1598 cmd/incus/image.go:1599
@@ -4198,7 +4200,7 @@ msgstr "クライアント %q に対するインスタンスが切断されま�
 msgid "Instance name is mandatory"
 msgstr "インスタンス名を指定する必要があります"
 
-#: cmd/incus/create.go:453
+#: cmd/incus/create.go:456
 #, c-format
 msgid "Instance name is: %s"
 msgstr "インスタンス名: %s"
@@ -8005,7 +8007,7 @@ msgstr "インスタンスを再起動します"
 msgid "Retrieve the instance's console log"
 msgstr "インスタンスのコンソールログを取得します"
 
-#: cmd/incus/create.go:400
+#: cmd/incus/create.go:403
 #, c-format
 msgid "Retrieving image: %s"
 msgstr "イメージの取得中: %s"
@@ -9258,7 +9260,7 @@ msgstr ""
 "インスタンスは現在実行中です。停止して、再起動するために --force を使用してく"
 "ださい"
 
-#: cmd/incus/create.go:474
+#: cmd/incus/create.go:477
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr "起動しようとしたインスタンスに接続されているネットワークがありません。"
 
@@ -9513,14 +9515,14 @@ msgstr "インスタンスがクリーンにシャットダウンするまで待
 msgid "Timestamps:"
 msgstr "タイムスタンプ:"
 
-#: cmd/incus/create.go:476
+#: cmd/incus/create.go:479
 #, fuzzy
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr ""
 "インスタンスにネットワークを接続するには、lxc network attach を使用してくださ"
 "い"
 
-#: cmd/incus/create.go:475
+#: cmd/incus/create.go:478
 #, fuzzy
 msgid "To create a new network, use: incus network create"
 msgstr ""
@@ -11499,8 +11501,8 @@ msgid ""
 msgstr ""
 "incus move [<remote>:]<source instance> [<remote>:][<destination instance>] "
 "[--instance-only]\n"
-"    2 つのホスト間でインスタンスを移動します。移動先の名前が異なる場合は"
-"リネームします。\n"
+"    2 つのホスト間でインスタンスを移動します。移動先の名前が異なる場合はリ"
+"ネームします。\n"
 "\n"
 "incus move <old name> <new name> [--instance-only]\n"
 "    ローカルのインスタンスをリネームします。\n"
@@ -12117,6 +12119,9 @@ msgstr "y"
 #: cmd/incus/image.go:1206 cmd/incus/project.go:237 cmd/incus/snapshot.go:285
 msgid "yes"
 msgstr "yes"
+
+#~ msgid "Get current load-balacner status"
+#~ msgstr "現在のロードバランサーのステータスを取得します"
 
 #~ msgid "[<remote>:]<alias>"
 #~ msgstr "[<remote>:]<alias>"

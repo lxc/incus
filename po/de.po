@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-11-28 02:38-0500\n"
+"POT-Creation-Date: 2025-12-17 10:09-0500\n"
 "PO-Revision-Date: 2025-10-21 03:44+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
@@ -1113,7 +1113,7 @@ msgstr ""
 "Da keines der genannten Programme gefunden werden konnte, finden Sie hier "
 "den SPICE Socket zum manuellen verbinden:"
 
-#: cmd/incus/create.go:386 cmd/incus/rebuild.go:133
+#: cmd/incus/create.go:389 cmd/incus/rebuild.go:133
 #, fuzzy
 msgid "Asked for a VM but image is of type container"
 msgstr ""
@@ -1462,7 +1462,7 @@ msgstr "Kann kein Image mit --empty verwenden"
 msgid "Can't use both --no-expiry and --expiry"
 msgstr ""
 
-#: cmd/incus/create.go:357
+#: cmd/incus/create.go:360
 #, c-format
 msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
@@ -2583,7 +2583,7 @@ msgstr ""
 "Optionen:\n"
 "\n"
 
-#: cmd/incus/create.go:443
+#: cmd/incus/create.go:446
 #, fuzzy
 msgid "Didn't get name of new instance from the server"
 msgstr ""
@@ -3352,7 +3352,7 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed loading network %q: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/create.go:340
+#: cmd/incus/create.go:343
 #, c-format
 msgid "Failed loading profile %q for device override: %w"
 msgstr ""
@@ -3839,7 +3839,7 @@ msgstr "Kein Zertifikat für diese Verbindung"
 
 #: cmd/incus/network_load_balancer.go:1325
 #, fuzzy
-msgid "Get current load-balacner status"
+msgid "Get current load-balancer status"
 msgstr "Kein Zertifikat für diese Verbindung"
 
 #: cmd/incus/image.go:1598 cmd/incus/image.go:1599
@@ -4327,7 +4327,7 @@ msgstr ""
 msgid "Instance name is mandatory"
 msgstr ""
 
-#: cmd/incus/create.go:453
+#: cmd/incus/create.go:456
 #, c-format
 msgid "Instance name is: %s"
 msgstr ""
@@ -7484,7 +7484,7 @@ msgstr "kann nicht zum selben Container Namen kopieren"
 msgid "Retrieve the instance's console log"
 msgstr "Herunterfahren des Containers erzwingen."
 
-#: cmd/incus/create.go:400
+#: cmd/incus/create.go:403
 #, c-format
 msgid "Retrieving image: %s"
 msgstr ""
@@ -8672,7 +8672,7 @@ msgid ""
 "restarted"
 msgstr ""
 
-#: cmd/incus/create.go:474
+#: cmd/incus/create.go:477
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
 
@@ -8905,11 +8905,11 @@ msgstr "Wartezeit bevor der Container gestoppt wird."
 msgid "Timestamps:"
 msgstr "Zeitstempel:\n"
 
-#: cmd/incus/create.go:476
+#: cmd/incus/create.go:479
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr ""
 
-#: cmd/incus/create.go:475
+#: cmd/incus/create.go:478
 msgid "To create a new network, use: incus network create"
 msgstr ""
 
@@ -11990,6 +11990,10 @@ msgstr "j"
 #: cmd/incus/image.go:1206 cmd/incus/project.go:237 cmd/incus/snapshot.go:285
 msgid "yes"
 msgstr "ja"
+
+#, fuzzy
+#~ msgid "Get current load-balacner status"
+#~ msgstr "Kein Zertifikat für diese Verbindung"
 
 #, fuzzy
 #~ msgid "[<remote>:]<alias>"
