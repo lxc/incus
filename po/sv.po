@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-12-17 10:09-0500\n"
+"POT-Creation-Date: 2025-12-18 23:24-0500\n"
 "PO-Revision-Date: 2025-12-07 15:00+0000\n"
 "Last-Translator: Daniel Nylander <daniel@danielnylander.se>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -597,7 +597,7 @@ msgstr ""
 "###\n"
 "### Observera att namnet visas men inte kan ändras"
 
-#: cmd/incus/cluster.go:930
+#: cmd/incus/cluster.go:944
 msgid ""
 "### This is a yaml representation of the cluster member.\n"
 "### Any line starting with a '# will be ignored."
@@ -610,12 +610,12 @@ msgstr ""
 msgid "%d (id: %d, online: %v, NUMA node: %v)"
 msgstr "%d (id: %d, online: %v, NUMA-nod: %v)"
 
-#: cmd/incus/admin_init_interactive.go:669
+#: cmd/incus/admin_init_interactive.go:441
 #, c-format
 msgid "%q is not a block device"
 msgstr "%q är inte en blockenhet"
 
-#: cmd/incus/admin_init_interactive.go:799
+#: cmd/incus/admin_init_interactive.go:571
 #, c-format
 msgid "%q is not an IP address"
 msgstr "%q är inte en IP-adress"
@@ -726,6 +726,11 @@ msgstr "<alias>"
 msgid "<alias> <target>"
 msgstr "<alias> <mål>"
 
+#: cmd/incus/cluster.go:1045
+#, fuzzy
+msgid "<cluster>: [<member>:]"
+msgstr "[[<fjärr>:]<medlem>]"
+
 #: cmd/incus/alias.go:171
 msgid "<old alias> <new alias>"
 msgstr "<gammalt alias> <nytt alias>"
@@ -777,7 +782,7 @@ msgstr "Ett klientcertifikat finns redan"
 msgid "A client name must be provided"
 msgstr "Ett klientnamn måste anges"
 
-#: cmd/incus/cluster.go:1066
+#: cmd/incus/cluster.go:1167
 msgid "A cluster member name must be provided"
 msgstr "Ett klustermedlemsnamn måste anges"
 
@@ -801,7 +806,7 @@ msgstr "ALIASER"
 msgid "APP"
 msgstr "APP"
 
-#: cmd/incus/cluster.go:183 cmd/incus/image.go:1142 cmd/incus/list.go:507
+#: cmd/incus/cluster.go:197 cmd/incus/image.go:1142 cmd/incus/list.go:507
 msgid "ARCHITECTURE"
 msgstr "ARKITEKTUR"
 
@@ -961,11 +966,11 @@ msgstr ""
 "Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när "
 "klar):"
 
-#: cmd/incus/admin_init.go:61
+#: cmd/incus/admin_init.go:53
 msgid "Address to bind to (default: none)"
 msgstr "Adress att binda till (standard: ingen)"
 
-#: cmd/incus/admin_init_interactive.go:805
+#: cmd/incus/admin_init_interactive.go:577
 msgid "Address to bind to (not including port)"
 msgstr "Adress att binda till (exklusive port)"
 
@@ -1018,7 +1023,7 @@ msgstr "Alias finns redan: %s"
 msgid "Aliases:"
 msgstr "Alias:"
 
-#: cmd/incus/admin_init_interactive.go:228
+#: cmd/incus/cluster.go:1933
 msgid "All existing data is lost when joining a cluster, continue?"
 msgstr ""
 "Alla befintliga data går förlorade när du ansluter till ett kluster. Vill du "
@@ -1047,11 +1052,11 @@ msgstr "Arkitektur: %s"
 msgid "Architecture: %v"
 msgstr "Arkitektur: %v"
 
-#: cmd/incus/admin_init_interactive.go:164
+#: cmd/incus/cluster.go:1831
 msgid "Are you joining an existing cluster?"
 msgstr "Ska du gå med i ett befintligt kluster?"
 
-#: cmd/incus/cluster.go:1569
+#: cmd/incus/cluster.go:1670
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
@@ -1126,7 +1131,7 @@ msgstr "Automatisk uppdatering är endast tillgänglig i pull-läge"
 msgid "Auto update: %s"
 msgstr "Automatisk uppdatering: %s"
 
-#: cmd/incus/admin_init.go:56
+#: cmd/incus/admin_init.go:48
 msgid "Automatic (non-interactive) mode"
 msgstr "Automatiskt (icke-interaktivt) läge"
 
@@ -1308,8 +1313,7 @@ msgstr "Cachad: %s"
 msgid "Caches:"
 msgstr "Cacher:"
 
-#: cmd/incus/admin_init_interactive.go:149
-#: cmd/incus/admin_init_interactive.go:830
+#: cmd/incus/admin_init_interactive.go:602
 #, c-format
 msgid "Can't bind address %q: %w"
 msgstr "Kan inte binda adress %q: %w"
@@ -1344,7 +1348,7 @@ msgstr "Kan inte ta bort standardfjärrkontrollen"
 msgid "Can't specify --fast with --columns"
 msgstr "Kan inte ange --fast med --columns"
 
-#: cmd/incus/cluster.go:259 cmd/incus/list.go:410 cmd/incus/profile.go:841
+#: cmd/incus/cluster.go:273 cmd/incus/list.go:410 cmd/incus/profile.go:841
 msgid "Can't specify --project with --all-projects"
 msgstr "Kan inte ange --project med --all-projects"
 
@@ -1366,19 +1370,19 @@ msgstr "Kan inte tillhandahålla uid/gid/mode i rekursivt läge"
 msgid "Can't unset key '%s', it's not currently set"
 msgstr "Kan inte inaktivera nyckeln '%s', den är för närvarande inte aktiverad"
 
-#: cmd/incus/admin_init.go:75
+#: cmd/incus/admin_init.go:67
 msgid "Can't use --auto and --preseed together"
 msgstr "Kan inte använda --auto och --preseed tillsammans"
 
-#: cmd/incus/admin_init.go:97
+#: cmd/incus/admin_init.go:89
 msgid "Can't use --dump with other flags"
 msgstr "Kan inte använda --dump med andra flaggor"
 
-#: cmd/incus/admin_init.go:83
+#: cmd/incus/admin_init.go:75
 msgid "Can't use --minimal and --auto together"
 msgstr "Kan inte använda --minimal och --auto tillsammans"
 
-#: cmd/incus/admin_init.go:79
+#: cmd/incus/admin_init.go:71
 msgid "Can't use --minimal and --preseed together"
 msgstr "Kan inte använda --minimal och --preseed tillsammans"
 
@@ -1445,7 +1449,7 @@ msgstr ""
 "Certifikatets fingeravtryck stämmer inte överens mellan certifikattoken och "
 "servern %q"
 
-#: cmd/incus/admin_init.go:184 cmd/incus/admin_init_interactive.go:212
+#: cmd/incus/cluster.go:1883 cmd/incus/cluster.go:2076
 #, c-format
 msgid ""
 "Certificate fingerprint mismatch between join token and cluster member %q"
@@ -1467,7 +1471,7 @@ msgstr "Chassi"
 msgid "Checking if the daemon is ready (attempt %d)"
 msgstr "Kontrollerar om daemonen är redo (försök %d)"
 
-#: cmd/incus/admin_init_interactive.go:272
+#: cmd/incus/cluster.go:1982
 #, c-format
 msgid "Choose %s:"
 msgstr "Välj %s:"
@@ -1510,7 +1514,7 @@ msgstr "Klustergrupp %s döpt om till %s"
 msgid "Cluster group description"
 msgstr "Beskrivning av klustergruppen"
 
-#: cmd/incus/cluster.go:1348
+#: cmd/incus/cluster.go:1449
 #, c-format
 msgid "Cluster join token for %s:%s deleted"
 msgstr "Klusteranslutningstoken för %s:%s raderad"
@@ -1574,11 +1578,11 @@ msgstr "Klustermedlem %s borttagen från grupp %s"
 msgid "Cluster member name"
 msgstr "Klustermedlemsnamn"
 
-#: cmd/incus/cluster.go:895
+#: cmd/incus/cluster.go:909
 msgid "Clustering enabled"
 msgstr "Klustering aktiverad"
 
-#: cmd/incus/cluster.go:155 cmd/incus/cluster.go:1133
+#: cmd/incus/cluster.go:169 cmd/incus/cluster.go:1234
 #: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:433
 #: cmd/incus/config_trust.go:636 cmd/incus/image.go:1114
 #: cmd/incus/image_alias.go:219 cmd/incus/list.go:137 cmd/incus/network.go:1134
@@ -1653,7 +1657,7 @@ msgstr "Konfigurationsnyckel/värde som ska tillämpas på målinstansen"
 msgid "Config option should be in the format KEY=VALUE"
 msgstr "Konfigurationsflaggan ska ha formatet NYCKEL=VÄRDE"
 
-#: cmd/incus/cluster.go:1000 cmd/incus/cluster_group.go:419
+#: cmd/incus/cluster.go:1014 cmd/incus/cluster_group.go:419
 #: cmd/incus/config.go:278 cmd/incus/config.go:353
 #: cmd/incus/config_metadata.go:158 cmd/incus/config_trust.go:364
 #: cmd/incus/image.go:474 cmd/incus/network.go:829 cmd/incus/network_acl.go:744
@@ -1668,11 +1672,11 @@ msgstr "Konfigurationsflaggan ska ha formatet NYCKEL=VÄRDE"
 msgid "Config parsing error: %s"
 msgstr "Konfigurationsanalysfel: %s"
 
-#: cmd/incus/admin_init.go:89
+#: cmd/incus/admin_init.go:81
 msgid "Configuration flags require --auto"
 msgstr "Konfigurationsflaggor kräver --auto"
 
-#: cmd/incus/admin_init.go:46 cmd/incus/admin_init.go:47
+#: cmd/incus/admin_init.go:38 cmd/incus/admin_init.go:39
 msgid "Configure the daemon"
 msgstr "Konfigurera daemon"
 
@@ -1813,27 +1817,27 @@ msgstr "Kunde inte stänga servercertifikatfilen %q: %w"
 msgid "Could not create server cert dir"
 msgstr "Kunde inte skapa servercertifikatskatalog"
 
-#: cmd/incus/cluster.go:1431
+#: cmd/incus/cluster.go:1532
 #, c-format
 msgid "Could not find certificate file path: %s"
 msgstr "Kunde inte hitta certifikatfilens sökväg: %s"
 
-#: cmd/incus/cluster.go:1435
+#: cmd/incus/cluster.go:1536
 #, c-format
 msgid "Could not find certificate key file path: %s"
 msgstr "Kunde inte hitta certifikatnyckelfilens sökväg: %s"
 
-#: cmd/incus/cluster.go:1440
+#: cmd/incus/cluster.go:1541
 #, c-format
 msgid "Could not read certificate file: %s with error: %v"
 msgstr "Kunde inte läsa certifikatfilen: %s med fel: %v"
 
-#: cmd/incus/cluster.go:1445
+#: cmd/incus/cluster.go:1546
 #, c-format
 msgid "Could not read certificate key file: %s with error: %v"
 msgstr "Det gick inte att läsa certifikatnyckelfilen: %s med fel: %v"
 
-#: cmd/incus/cluster.go:1462
+#: cmd/incus/cluster.go:1563
 #, c-format
 msgid "Could not write new remote certificate for remote '%s' with error: %v"
 msgstr ""
@@ -1848,7 +1852,7 @@ msgstr "Kunde inte skriva servercertifikatfilen %q: %w"
 msgid "Couldn't find a matching entry"
 msgstr "Kunde inte hitta någon matchande post"
 
-#: cmd/incus/admin_init_interactive.go:681
+#: cmd/incus/admin_init_interactive.go:453
 #, c-format
 msgid "Couldn't statfs %s: %w"
 msgstr "Kunde inte statfs %s: %w"
@@ -1857,7 +1861,7 @@ msgstr "Kunde inte statfs %s: %w"
 msgid "Create a cluster group"
 msgstr "Skapa en klustergrupp"
 
-#: cmd/incus/admin_init_interactive.go:614
+#: cmd/incus/admin_init_interactive.go:386
 #, c-format
 msgid "Create a new %s pool?"
 msgstr "Skapa en ny %s pool?"
@@ -2018,7 +2022,7 @@ msgstr "Aktuellt antal VF: %d"
 msgid "DEFAULT TARGET ADDRESS"
 msgstr "STANDARDMÅLADRESS"
 
-#: cmd/incus/cluster.go:185 cmd/incus/cluster_group.go:509
+#: cmd/incus/cluster.go:199 cmd/incus/cluster_group.go:509
 #: cmd/incus/config_trust.go:451 cmd/incus/image.go:1143
 #: cmd/incus/image_alias.go:259 cmd/incus/list.go:510 cmd/incus/network.go:1165
 #: cmd/incus/network_acl.go:178 cmd/incus/network_address_set.go:166
@@ -2193,51 +2197,52 @@ msgstr "Ta bort varningar"
 
 #: cmd/incus/action.go:32 cmd/incus/action.go:56 cmd/incus/action.go:81
 #: cmd/incus/action.go:106 cmd/incus/action.go:130 cmd/incus/admin.go:21
-#: cmd/incus/admin_cluster.go:26 cmd/incus/admin_init.go:47
+#: cmd/incus/admin_cluster.go:26 cmd/incus/admin_init.go:39
 #: cmd/incus/admin_other.go:21 cmd/incus/admin_recover.go:30
 #: cmd/incus/admin_shutdown.go:32 cmd/incus/admin_sql.go:31
 #: cmd/incus/admin_waitready.go:28 cmd/incus/alias.go:24 cmd/incus/alias.go:63
 #: cmd/incus/alias.go:113 cmd/incus/alias.go:174 cmd/incus/alias.go:229
-#: cmd/incus/cluster.go:39 cmd/incus/cluster.go:135 cmd/incus/cluster.go:341
-#: cmd/incus/cluster.go:400 cmd/incus/cluster.go:461 cmd/incus/cluster.go:536
-#: cmd/incus/cluster.go:616 cmd/incus/cluster.go:662 cmd/incus/cluster.go:722
-#: cmd/incus/cluster.go:815 cmd/incus/cluster.go:910 cmd/incus/cluster.go:1033
-#: cmd/incus/cluster.go:1113 cmd/incus/cluster.go:1280
-#: cmd/incus/cluster.go:1370 cmd/incus/cluster.go:1496
-#: cmd/incus/cluster.go:1526 cmd/incus/cluster_group.go:37
-#: cmd/incus/cluster_group.go:103 cmd/incus/cluster_group.go:190
-#: cmd/incus/cluster_group.go:282 cmd/incus/cluster_group.go:338
-#: cmd/incus/cluster_group.go:463 cmd/incus/cluster_group.go:619
-#: cmd/incus/cluster_group.go:704 cmd/incus/cluster_group.go:760
-#: cmd/incus/cluster_group.go:823 cmd/incus/cluster_group.go:900
-#: cmd/incus/cluster_group.go:975 cmd/incus/cluster_group.go:1055
-#: cmd/incus/cluster_role.go:25 cmd/incus/cluster_role.go:53
-#: cmd/incus/cluster_role.go:118 cmd/incus/config.go:34 cmd/incus/config.go:97
-#: cmd/incus/config.go:390 cmd/incus/config.go:527 cmd/incus/config.go:754
-#: cmd/incus/config.go:886 cmd/incus/config_device.go:27
-#: cmd/incus/config_device.go:83 cmd/incus/config_device.go:227
-#: cmd/incus/config_device.go:326 cmd/incus/config_device.go:411
-#: cmd/incus/config_device.go:515 cmd/incus/config_device.go:633
-#: cmd/incus/config_device.go:640 cmd/incus/config_device.go:771
-#: cmd/incus/config_device.go:858 cmd/incus/config_metadata.go:28
-#: cmd/incus/config_metadata.go:57 cmd/incus/config_metadata.go:192
-#: cmd/incus/config_template.go:28 cmd/incus/config_template.go:70
-#: cmd/incus/config_template.go:140 cmd/incus/config_template.go:196
-#: cmd/incus/config_template.go:299 cmd/incus/config_template.go:373
-#: cmd/incus/config_trust.go:37 cmd/incus/config_trust.go:93
-#: cmd/incus/config_trust.go:176 cmd/incus/config_trust.go:285
-#: cmd/incus/config_trust.go:412 cmd/incus/config_trust.go:616
-#: cmd/incus/config_trust.go:775 cmd/incus/config_trust.go:823
-#: cmd/incus/config_trust.go:896 cmd/incus/console.go:42 cmd/incus/copy.go:44
-#: cmd/incus/create.go:47 cmd/incus/debug.go:24 cmd/incus/debug.go:45
-#: cmd/incus/delete.go:34 cmd/incus/exec.go:42 cmd/incus/export.go:34
-#: cmd/incus/file.go:52 cmd/incus/file.go:99 cmd/incus/file.go:294
-#: cmd/incus/file.go:378 cmd/incus/file.go:458 cmd/incus/file.go:698
-#: cmd/incus/file.go:986 cmd/incus/image.go:44 cmd/incus/image.go:153
-#: cmd/incus/image.go:315 cmd/incus/image.go:372 cmd/incus/image.go:509
-#: cmd/incus/image.go:680 cmd/incus/image.go:943 cmd/incus/image.go:1088
-#: cmd/incus/image.go:1444 cmd/incus/image.go:1530 cmd/incus/image.go:1599
-#: cmd/incus/image.go:1666 cmd/incus/image.go:1732 cmd/incus/image_alias.go:32
+#: cmd/incus/cluster.go:49 cmd/incus/cluster.go:149 cmd/incus/cluster.go:355
+#: cmd/incus/cluster.go:414 cmd/incus/cluster.go:475 cmd/incus/cluster.go:550
+#: cmd/incus/cluster.go:630 cmd/incus/cluster.go:676 cmd/incus/cluster.go:736
+#: cmd/incus/cluster.go:829 cmd/incus/cluster.go:924 cmd/incus/cluster.go:1047
+#: cmd/incus/cluster.go:1134 cmd/incus/cluster.go:1214
+#: cmd/incus/cluster.go:1381 cmd/incus/cluster.go:1471
+#: cmd/incus/cluster.go:1597 cmd/incus/cluster.go:1627
+#: cmd/incus/cluster_group.go:37 cmd/incus/cluster_group.go:103
+#: cmd/incus/cluster_group.go:190 cmd/incus/cluster_group.go:282
+#: cmd/incus/cluster_group.go:338 cmd/incus/cluster_group.go:463
+#: cmd/incus/cluster_group.go:619 cmd/incus/cluster_group.go:704
+#: cmd/incus/cluster_group.go:760 cmd/incus/cluster_group.go:823
+#: cmd/incus/cluster_group.go:900 cmd/incus/cluster_group.go:975
+#: cmd/incus/cluster_group.go:1055 cmd/incus/cluster_role.go:25
+#: cmd/incus/cluster_role.go:53 cmd/incus/cluster_role.go:118
+#: cmd/incus/config.go:34 cmd/incus/config.go:97 cmd/incus/config.go:390
+#: cmd/incus/config.go:527 cmd/incus/config.go:754 cmd/incus/config.go:886
+#: cmd/incus/config_device.go:27 cmd/incus/config_device.go:83
+#: cmd/incus/config_device.go:227 cmd/incus/config_device.go:326
+#: cmd/incus/config_device.go:411 cmd/incus/config_device.go:515
+#: cmd/incus/config_device.go:633 cmd/incus/config_device.go:640
+#: cmd/incus/config_device.go:771 cmd/incus/config_device.go:858
+#: cmd/incus/config_metadata.go:28 cmd/incus/config_metadata.go:57
+#: cmd/incus/config_metadata.go:192 cmd/incus/config_template.go:28
+#: cmd/incus/config_template.go:70 cmd/incus/config_template.go:140
+#: cmd/incus/config_template.go:196 cmd/incus/config_template.go:299
+#: cmd/incus/config_template.go:373 cmd/incus/config_trust.go:37
+#: cmd/incus/config_trust.go:93 cmd/incus/config_trust.go:176
+#: cmd/incus/config_trust.go:285 cmd/incus/config_trust.go:412
+#: cmd/incus/config_trust.go:616 cmd/incus/config_trust.go:775
+#: cmd/incus/config_trust.go:823 cmd/incus/config_trust.go:896
+#: cmd/incus/console.go:42 cmd/incus/copy.go:44 cmd/incus/create.go:47
+#: cmd/incus/debug.go:24 cmd/incus/debug.go:45 cmd/incus/delete.go:34
+#: cmd/incus/exec.go:42 cmd/incus/export.go:34 cmd/incus/file.go:52
+#: cmd/incus/file.go:99 cmd/incus/file.go:294 cmd/incus/file.go:378
+#: cmd/incus/file.go:458 cmd/incus/file.go:698 cmd/incus/file.go:986
+#: cmd/incus/image.go:44 cmd/incus/image.go:153 cmd/incus/image.go:315
+#: cmd/incus/image.go:372 cmd/incus/image.go:509 cmd/incus/image.go:680
+#: cmd/incus/image.go:943 cmd/incus/image.go:1088 cmd/incus/image.go:1444
+#: cmd/incus/image.go:1530 cmd/incus/image.go:1599 cmd/incus/image.go:1666
+#: cmd/incus/image.go:1732 cmd/incus/image_alias.go:32
 #: cmd/incus/image_alias.go:72 cmd/incus/image_alias.go:141
 #: cmd/incus/image_alias.go:197 cmd/incus/image_alias.go:387
 #: cmd/incus/import.go:30 cmd/incus/info.go:37 cmd/incus/launch.go:25
@@ -2499,7 +2504,7 @@ msgstr "Disk:"
 msgid "Disks:"
 msgstr "Diskar:"
 
-#: cmd/incus/cluster.go:157
+#: cmd/incus/cluster.go:171
 msgid "Display clusters from all projects"
 msgstr "Visa kluster från alla projekt"
 
@@ -2566,23 +2571,23 @@ msgstr ""
 "  n - Instansnamn\n"
 "  u - CPU-användning (i sekunder)"
 
-#: cmd/incus/admin_init_interactive.go:421
+#: cmd/incus/admin_init_interactive.go:223
 msgid "Do you want to configure a new local storage pool?"
 msgstr "Vill du konfigurera en ny lokal lagringspool?"
 
-#: cmd/incus/admin_init_interactive.go:433
+#: cmd/incus/admin_init_interactive.go:235
 msgid "Do you want to configure a new remote storage pool?"
 msgstr "Vill du konfigurera en ny fjärrlagringspool?"
 
-#: cmd/incus/admin_init_interactive.go:448
+#: cmd/incus/admin_init_interactive.go:250
 msgid "Do you want to configure a new storage pool?"
 msgstr "Vill du konfigurera en ny lagringspool?"
 
-#: cmd/incus/admin_init_interactive.go:747
+#: cmd/incus/admin_init_interactive.go:519
 msgid "Do you want to continue without thin provisioning?"
 msgstr "Vill du fortsätta utan tunn provisionering?"
 
-#: cmd/incus/cluster.go:727
+#: cmd/incus/cluster.go:741
 msgid "Don't require user confirmation for using --force"
 msgstr "Kräv inte användarens bekräftelse för att använda --force"
 
@@ -2604,7 +2609,7 @@ msgstr "Drivrutin: %v"
 msgid "Driver: %v (%v)"
 msgstr "Drivrutin: %v (%v)"
 
-#: cmd/incus/admin_init.go:59
+#: cmd/incus/admin_init.go:51
 msgid "Dump YAML config to stdout"
 msgstr "Skriv ut YAML-konfigurationen till stdout"
 
@@ -2636,7 +2641,7 @@ msgstr "EFEMER"
 msgid "EXISTING: %q (backend=%q, source=%q)"
 msgstr "BEFINTLIG: %q (backend=%q, källa=%q)"
 
-#: cmd/incus/cluster.go:1154 cmd/incus/config_trust.go:653
+#: cmd/incus/cluster.go:1255 cmd/incus/config_trust.go:653
 #: cmd/incus/snapshot.go:372 cmd/incus/storage_volume.go:3775
 msgid "EXPIRES AT"
 msgstr "GÅR UT DEN"
@@ -2649,7 +2654,7 @@ msgstr "UTGÅNGSDATUM"
 msgid "Edit a cluster group"
 msgstr "Redigera en klustergrupp"
 
-#: cmd/incus/cluster.go:909 cmd/incus/cluster.go:910
+#: cmd/incus/cluster.go:923 cmd/incus/cluster.go:924
 msgid "Edit cluster member configurations as YAML"
 msgstr "Redigera klustermedlemmarnas konfigurationer som YAML"
 
@@ -2756,7 +2761,7 @@ msgstr ""
 msgid "Edit trust configurations as YAML"
 msgstr "Redigera förtroendekonfigurationer som YAML"
 
-#: cmd/incus/cluster.go:196 cmd/incus/cluster.go:1162
+#: cmd/incus/cluster.go:210 cmd/incus/cluster.go:1263
 #: cmd/incus/cluster_group.go:517 cmd/incus/config_trust.go:463
 #: cmd/incus/config_trust.go:661 cmd/incus/image.go:1161
 #: cmd/incus/image_alias.go:268 cmd/incus/list.go:562 cmd/incus/network.go:1180
@@ -2774,11 +2779,11 @@ msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
 "Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
 
-#: cmd/incus/cluster.go:814
+#: cmd/incus/cluster.go:828
 msgid "Enable clustering on a single non-clustered server"
 msgstr "Aktivera klustring på en enskild icke-klustrad server"
 
-#: cmd/incus/cluster.go:815
+#: cmd/incus/cluster.go:829
 msgid ""
 "Enable clustering on a single non-clustered server\n"
 "\n"
@@ -2827,7 +2832,7 @@ msgstr "Miljövariabel att ställa in (t.ex. HOME=/home/foo)"
 msgid "Ephemeral instance"
 msgstr "Tillfällig instans"
 
-#: cmd/incus/admin_init.go:178 cmd/incus/admin_init_interactive.go:206
+#: cmd/incus/cluster.go:1877 cmd/incus/cluster.go:2070
 #, c-format
 msgid "Error connecting to existing cluster member %q: %v"
 msgstr "Fel vid anslutning till befintlig klustermedlem %q: %v"
@@ -2847,7 +2852,7 @@ msgstr "Fel vid avkodning av data: %v"
 msgid "Error retrieving aliases: %w"
 msgstr "Fel vid hämtning av alias: %w"
 
-#: cmd/incus/cluster.go:592 cmd/incus/cluster_group.go:1031
+#: cmd/incus/cluster.go:606 cmd/incus/cluster_group.go:1031
 #: cmd/incus/config.go:646 cmd/incus/config.go:678 cmd/incus/network.go:1624
 #: cmd/incus/network_acl.go:568 cmd/incus/network_address_set.go:406
 #: cmd/incus/network_forward.go:620 cmd/incus/network_integration.go:675
@@ -2870,7 +2875,7 @@ msgstr "Fel vid inställning av termstorlek %s"
 msgid "Error unsetting properties: %v"
 msgstr "Fel vid avaktivering av egenskaper: %v"
 
-#: cmd/incus/cluster.go:586 cmd/incus/cluster_group.go:1025
+#: cmd/incus/cluster.go:600 cmd/incus/cluster_group.go:1025
 #: cmd/incus/network.go:1618 cmd/incus/network_acl.go:562
 #: cmd/incus/network_forward.go:614 cmd/incus/network_integration.go:669
 #: cmd/incus/network_load_balancer.go:600 cmd/incus/network_peer.go:648
@@ -2897,11 +2902,11 @@ msgstr "Fel vid exekvering av aliasutvidgning: %s\n"
 msgid "Error: %v\n"
 msgstr "Fel: %v\n"
 
-#: cmd/incus/cluster.go:1495 cmd/incus/cluster.go:1496
+#: cmd/incus/cluster.go:1596 cmd/incus/cluster.go:1597
 msgid "Evacuate cluster member"
 msgstr "Evakuera klustermedlem"
 
-#: cmd/incus/cluster.go:1594
+#: cmd/incus/cluster.go:1695
 #, c-format
 msgid "Evacuating cluster member: %s"
 msgstr "Evakuerar klustermedlem: %s"
@@ -3106,7 +3111,7 @@ msgstr "Exportera säkerhetskopian: %s"
 msgid "Exporting the image: %s"
 msgstr "Exporterar avbilden: %s"
 
-#: cmd/incus/cluster.go:184
+#: cmd/incus/cluster.go:198
 msgid "FAILURE DOMAIN"
 msgstr "FELOMRÅDE"
 
@@ -3173,7 +3178,7 @@ msgstr "Misslyckades med att ansluta till daemon (försök %d): %v"
 msgid "Failed converting token operation to certificate add token: %w"
 msgstr "Konvertering av token till certifikat misslyckades: %w"
 
-#: cmd/incus/cluster.go:1082
+#: cmd/incus/cluster.go:1183 cmd/incus/cluster.go:1917
 #, c-format
 msgid "Failed converting token operation to join token: %w"
 msgstr "Konvertering av token-operation till join-token misslyckades: %w"
@@ -3193,7 +3198,7 @@ msgstr "Misslyckades med att ta bort källvolymen efter kopiering: %w"
 msgid "Failed generating SSH host key: %w"
 msgstr "Det gick inte att skapa SSH-värdnyckel: %w"
 
-#: cmd/incus/admin_init_interactive.go:474
+#: cmd/incus/cluster.go:2019
 #, c-format
 msgid "Failed generating trust certificate: %w"
 msgstr "Det gick inte att generera betrott certifikat: %w"
@@ -3257,7 +3262,7 @@ msgstr "Det gick inte att acceptera inkommande anslutning: %w"
 msgid "Failed to add remote"
 msgstr "Det gick inte att lägga till fjärrkontrollen"
 
-#: cmd/incus/admin_init_interactive.go:484
+#: cmd/incus/cluster.go:2029
 #, c-format
 msgid "Failed to add server cert to cluster: %w"
 msgstr "Det gick inte att lägga till servercertifikatet till klustret: %w"
@@ -3277,7 +3282,7 @@ msgstr "Det gick inte att stänga exportfilen: %w"
 msgid "Failed to close server cert file %q: %w"
 msgstr "Det gick inte att stänga servercertifikatfilen %q: %w"
 
-#: cmd/incus/cluster.go:887 cmd/incus/cluster.go:892
+#: cmd/incus/cluster.go:901 cmd/incus/cluster.go:906
 #, c-format
 msgid "Failed to configure cluster: %w"
 msgstr "Konfigurationen av klustret misslyckades: %w"
@@ -3287,17 +3292,17 @@ msgstr "Konfigurationen av klustret misslyckades: %w"
 msgid "Failed to connect to cluster member: %w"
 msgstr "Det gick inte att ansluta till klustermedlem: %w"
 
-#: cmd/incus/admin_init.go:108
+#: cmd/incus/admin_init.go:100
 #, c-format
 msgid "Failed to connect to get server info: %w"
 msgstr "Det gick inte att ansluta för att hämta serverinformation: %w"
 
-#: cmd/incus/admin_init.go:103
+#: cmd/incus/admin_init.go:95
 #, c-format
 msgid "Failed to connect to local daemon: %w"
 msgstr "Det gick inte att ansluta till lokal daemon: %w"
 
-#: cmd/incus/admin_init_interactive.go:469
+#: cmd/incus/cluster.go:2014
 #, c-format
 msgid "Failed to connect to target cluster node %q: %w"
 msgstr "Det gick inte att ansluta till målklusterknutpunkten %q: %w"
@@ -3353,7 +3358,7 @@ msgstr "Det gick inte att hämta säkerhetskopian av lagringsvolymen: %w"
 msgid "Failed to find project: %w"
 msgstr "Projektet kunde inte hittas: %w"
 
-#: cmd/incus/admin_init.go:214 cmd/incus/admin_init.go:219
+#: cmd/incus/cluster.go:2113 cmd/incus/cluster.go:2118
 #, c-format
 msgid "Failed to join cluster: %w"
 msgstr "Det gick inte att ansluta till klustret: %w"
@@ -3373,7 +3378,7 @@ msgstr "Konfigurationen kunde inte läsas in: %s"
 msgid "Failed to parse dump response: %w"
 msgstr "Det gick inte att analysera dumpningssvaret: %w"
 
-#: cmd/incus/cluster.go:1559
+#: cmd/incus/cluster.go:1660
 #, c-format
 msgid "Failed to parse servers: %w"
 msgstr "Det gick inte att analysera servrarna: %w"
@@ -3408,7 +3413,7 @@ msgstr "Det gick inte att ta bort alias %s: %w"
 msgid "Failed to rename export file: %w"
 msgstr "Det gick inte att byta namn på exportfilen: %w"
 
-#: cmd/incus/admin_init_interactive.go:102
+#: cmd/incus/admin_init_interactive.go:89
 #, c-format
 msgid "Failed to render the config: %w"
 msgstr "Det gick inte att rendera konfigurationen: %w"
@@ -3418,17 +3423,17 @@ msgstr "Det gick inte att rendera konfigurationen: %w"
 msgid "Failed to request dump: %w"
 msgstr "Misslyckades med att begära dump: %w"
 
-#: cmd/incus/admin_init_interactive.go:268
+#: cmd/incus/cluster.go:1978
 #, c-format
 msgid "Failed to retrieve cluster information: %w"
 msgstr "Det gick inte att hämta klusterinformation: %w"
 
-#: cmd/incus/cluster.go:874
+#: cmd/incus/cluster.go:888
 #, c-format
 msgid "Failed to retrieve current cluster config: %w"
 msgstr "Det gick inte att hämta aktuell klusterkonfiguration: %w"
 
-#: cmd/incus/cluster.go:864
+#: cmd/incus/cluster.go:878
 #, c-format
 msgid "Failed to retrieve current server config: %w"
 msgstr "Det gick inte att hämta aktuell serverkonfiguration: %w"
@@ -3458,12 +3463,12 @@ msgstr "Det gick inte att hämta listan över nätverk: %w"
 msgid "Failed to retrieve list of storage pools: %w"
 msgstr "Det gick inte att hämta listan över lagringspooler: %w"
 
-#: cmd/incus/admin_init_interactive.go:245
+#: cmd/incus/cluster.go:1952
 #, c-format
 msgid "Failed to setup trust relationship with cluster: %w"
 msgstr "Det gick inte att upprätta ett förtroendeförhållande med klustret: %w"
 
-#: cmd/incus/cluster.go:1586
+#: cmd/incus/cluster.go:1687
 #, c-format
 msgid "Failed to update cluster member state: %w"
 msgstr "Det gick inte att uppdatera klustermedlemmens status: %w"
@@ -3507,7 +3512,7 @@ msgstr "Filtrering stöds ännu inte"
 msgid "Fingerprint: %s"
 msgstr "Fingeravtryck: %s"
 
-#: cmd/incus/cluster.go:1498
+#: cmd/incus/cluster.go:1599
 msgid "Force a particular evacuation action"
 msgstr "Tvinga fram en viss evakueringsåtgärd"
 
@@ -3523,7 +3528,7 @@ msgstr "Tvinga bort projektet och allt det innehåller."
 msgid "Force deleting files, directories, and subdirectories"
 msgstr "Tvinga borttagning av filer, kataloger och underkataloger"
 
-#: cmd/incus/cluster.go:1543
+#: cmd/incus/cluster.go:1644
 msgid "Force evacuation without user confirmation"
 msgstr "Tvinga evakuering utan användarens bekräftelse"
 
@@ -3531,7 +3536,7 @@ msgstr "Tvinga evakuering utan användarens bekräftelse"
 msgid "Force pseudo-terminal allocation"
 msgstr "Tvinga pseudo-terminalallokering"
 
-#: cmd/incus/cluster.go:726
+#: cmd/incus/cluster.go:740
 msgid "Force removing a member, even if degraded"
 msgstr "Tvinga bort en medlem, även om denne har degraderats"
 
@@ -3547,7 +3552,7 @@ msgstr "Tvinga bort aktiva instanser"
 msgid "Force using the local unix socket"
 msgstr "Tvinga användning av den lokala Unix-socketen"
 
-#: cmd/incus/cluster.go:742
+#: cmd/incus/cluster.go:756
 #, c-format
 msgid ""
 "Forcefully removing a server from the cluster should only be done as a last\n"
@@ -3595,7 +3600,7 @@ msgstr ""
 msgid "Format (csv|json|table|yaml|compact|markdown)"
 msgstr "Format (csv|json|tabell|yaml|kompakt|markdown)"
 
-#: cmd/incus/cluster.go:1132
+#: cmd/incus/cluster.go:1233
 msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
 "disable headers and \",header\" to enable if demanded, e.g. csv,header"
@@ -3604,7 +3609,7 @@ msgstr ""
 "för att inaktivera rubriker och \",header\" för att aktivera dem om så "
 "önskas, t.ex. csv,header"
 
-#: cmd/incus/admin_sql.go:59 cmd/incus/alias.go:115 cmd/incus/cluster.go:156
+#: cmd/incus/admin_sql.go:59 cmd/incus/alias.go:115 cmd/incus/cluster.go:170
 #: cmd/incus/cluster_group.go:484 cmd/incus/config_template.go:301
 #: cmd/incus/config_trust.go:434 cmd/incus/config_trust.go:635
 #: cmd/incus/image.go:1115 cmd/incus/image_alias.go:218 cmd/incus/list.go:138
@@ -3740,7 +3745,7 @@ msgstr "Hämta information om körtid i nätverk"
 msgid "Get the key as a cluster group property"
 msgstr "Hämta nyckeln som en klustergruppsegenskap"
 
-#: cmd/incus/cluster.go:463
+#: cmd/incus/cluster.go:477
 msgid "Get the key as a cluster property"
 msgstr "Hämta nyckeln som en klusteregenskap"
 
@@ -3804,7 +3809,7 @@ msgstr "Hämta nyckeln som en instansegenskap"
 msgid "Get values for cluster group configuration keys"
 msgstr "Hämta värden för konfigurationsnycklar för klustergrupper"
 
-#: cmd/incus/cluster.go:460
+#: cmd/incus/cluster.go:474
 msgid "Get values for cluster member configuration keys"
 msgstr "Hämta värden för konfigurationsnycklar för klustermedlemmar"
 
@@ -4211,7 +4216,7 @@ msgstr "Instanssnapshots kan inte återskapas: %s"
 msgid "Instance type"
 msgstr "Instans typ"
 
-#: cmd/incus/admin_init_interactive.go:137
+#: cmd/incus/cluster.go:1814
 msgid "Invalid IP address or DNS name"
 msgstr "Ogiltig IP-adress eller DNS-namn"
 
@@ -4251,7 +4256,7 @@ msgstr "Ogiltigt certifikat"
 msgid "Invalid certificate format %q"
 msgstr "Ogiltigt certifikatformat %q"
 
-#: cmd/incus/admin_init.go:163
+#: cmd/incus/cluster.go:2055
 #, c-format
 msgid "Invalid cluster join token: %w"
 msgstr "Ogiltig klusteranslutningstoken: %w"
@@ -4299,7 +4304,7 @@ msgstr "Ogiltigt instansnamn: %s"
 msgid "Invalid instance path: %q"
 msgstr "Ogiltig instansväg: %q"
 
-#: cmd/incus/admin_init_interactive.go:183
+#: cmd/incus/cluster.go:1854
 #, c-format
 msgid "Invalid join token: %w"
 msgstr "Ogiltigt anslutningstoken: %w"
@@ -4386,7 +4391,12 @@ msgstr "Ogiltig volym %s"
 msgid "IsSM: %s (%s)"
 msgstr "IsSM: %s (%s)"
 
-#: cmd/incus/admin_init_interactive.go:175
+#: cmd/incus/cluster.go:1046 cmd/incus/cluster.go:1047
+#, fuzzy
+msgid "Join an existing server to a cluster"
+msgstr "Ska du gå med i ett befintligt kluster?"
+
+#: cmd/incus/cluster.go:1845
 msgid "Joining an existing cluster requires root privileges"
 msgstr "För att ansluta sig till ett befintligt kluster krävs root-behörighet"
 
@@ -4556,11 +4566,11 @@ msgstr ""
 "  t - Token\n"
 "  E - Går ut"
 
-#: cmd/incus/cluster.go:1112
+#: cmd/incus/cluster.go:1213
 msgid "List all active cluster member join tokens"
 msgstr "Lista alla aktiva klustermedlemmars anslutningstoken"
 
-#: cmd/incus/cluster.go:1113
+#: cmd/incus/cluster.go:1214
 msgid ""
 "List all active cluster member join tokens\n"
 "\n"
@@ -4642,11 +4652,11 @@ msgstr ""
 "  d - Beskrivning\n"
 "  m - Medlem"
 
-#: cmd/incus/cluster.go:134
+#: cmd/incus/cluster.go:148
 msgid "List all the cluster members"
 msgstr "Lista alla klustermedlemmar"
 
-#: cmd/incus/cluster.go:135
+#: cmd/incus/cluster.go:149
 msgid ""
 "List all the cluster members\n"
 "\n"
@@ -5992,7 +6002,7 @@ msgstr "MINNESANVÄNDNING"
 msgid "MEMORY USAGE%"
 msgstr "MINNESANVÄNDNING %"
 
-#: cmd/incus/cluster.go:187
+#: cmd/incus/cluster.go:201
 msgid "MESSAGE"
 msgstr "MEDDELANDE"
 
@@ -6033,7 +6043,7 @@ msgstr "Hantera och anslut instanser till nätverk"
 msgid "Manage cluster groups"
 msgstr "Hantera klustergrupper"
 
-#: cmd/incus/cluster.go:38 cmd/incus/cluster.go:39
+#: cmd/incus/cluster.go:48 cmd/incus/cluster.go:49
 msgid "Manage cluster members"
 msgstr "Hantera klustermedlemmar"
 
@@ -6257,17 +6267,17 @@ msgstr "Medlem %q har redan rollen %q"
 msgid "Member %q does not have role %q"
 msgstr "Medlem %q har inte rollen %q"
 
-#: cmd/incus/cluster.go:1086
+#: cmd/incus/cluster.go:1187
 #, c-format
 msgid "Member %s join token:"
 msgstr "Medlem %s anslutningstoken:"
 
-#: cmd/incus/cluster.go:798
+#: cmd/incus/cluster.go:812
 #, c-format
 msgid "Member %s removed"
 msgstr "Medlem %s borttagen"
 
-#: cmd/incus/cluster.go:701
+#: cmd/incus/cluster.go:715
 #, c-format
 msgid "Member %s renamed to %s"
 msgstr "Medlem %s döpt om till %s"
@@ -6298,7 +6308,7 @@ msgstr "Fel i migrerings-API: %w"
 msgid "Migration operation failure: %w"
 msgstr "Migreringsfel: %w"
 
-#: cmd/incus/admin_init.go:57
+#: cmd/incus/admin_init.go:49
 msgid "Minimal configuration (non-interactive)"
 msgstr "Minimal konfiguration (icke-interaktiv)"
 
@@ -6309,7 +6319,7 @@ msgstr ""
 "Miniminivå för loggmeddelanden (endast tillgängligt vid användning av pretty "
 "format)"
 
-#: cmd/incus/admin_init_interactive.go:699
+#: cmd/incus/admin_init_interactive.go:471
 msgid "Minimum size is 1GiB"
 msgstr "Minsta storlek är 1GiB"
 
@@ -6331,7 +6341,7 @@ msgstr "Saknat certifikatfingeravtryck"
 msgid "Missing cluster group name"
 msgstr "Saknat klustergruppsnamn"
 
-#: cmd/incus/cluster.go:952 cmd/incus/cluster.go:1565
+#: cmd/incus/cluster.go:966 cmd/incus/cluster.go:1666
 #: cmd/incus/cluster_group.go:147 cmd/incus/cluster_group.go:656
 #: cmd/incus/cluster_group.go:860 cmd/incus/cluster_role.go:84
 #: cmd/incus/cluster_role.go:153
@@ -6612,7 +6622,7 @@ msgstr "Måste köras som root för att importera från katalogen"
 msgid "Must supply instance name for: "
 msgstr "Måste ange instansnamn för: "
 
-#: cmd/incus/cluster.go:180 cmd/incus/cluster.go:1152
+#: cmd/incus/cluster.go:194 cmd/incus/cluster.go:1253
 #: cmd/incus/cluster_group.go:507 cmd/incus/config_trust.go:447
 #: cmd/incus/config_trust.go:651 cmd/incus/list.go:518
 #: cmd/incus/network.go:1160 cmd/incus/network_acl.go:177
@@ -6682,37 +6692,37 @@ msgstr "NVRM-version: %v"
 msgid "Name"
 msgstr "Namn"
 
-#: cmd/incus/admin_init_interactive.go:648
+#: cmd/incus/admin_init_interactive.go:420
 msgid "Name of the CEPHfs volume:"
 msgstr "Namn på CEPHfs-volymen:"
 
-#: cmd/incus/admin_init_interactive.go:629
+#: cmd/incus/admin_init_interactive.go:401
 msgid "Name of the OSD storage pool"
 msgstr "Namn på OSD-lagringspoolen"
 
-#: cmd/incus/admin_init_interactive.go:730
+#: cmd/incus/admin_init_interactive.go:502
 #, c-format
 msgid "Name of the existing %s pool or dataset:"
 msgstr "Namn på befintlig %s pool eller dataset:"
 
-#: cmd/incus/admin_init_interactive.go:623
-#: cmd/incus/admin_init_interactive.go:717
+#: cmd/incus/admin_init_interactive.go:395
+#: cmd/incus/admin_init_interactive.go:489
 msgid "Name of the existing CEPH cluster"
 msgstr "Namn på befintligt CEPH-kluster"
 
-#: cmd/incus/admin_init_interactive.go:642
+#: cmd/incus/admin_init_interactive.go:414
 msgid "Name of the existing CEPHfs cluster"
 msgstr "Namn på befintligt CEPHfs-kluster"
 
-#: cmd/incus/admin_init_interactive.go:723
+#: cmd/incus/admin_init_interactive.go:495
 msgid "Name of the existing OSD storage pool"
 msgstr "Namn på befintlig OSD-lagringspool"
 
-#: cmd/incus/admin_init_interactive.go:315
+#: cmd/incus/admin_init_interactive.go:117
 msgid "Name of the existing bridge or host interface:"
 msgstr "Namn på befintlig brygga eller värdgränssnitt:"
 
-#: cmd/incus/admin_init_interactive.go:522
+#: cmd/incus/admin_init_interactive.go:294
 msgid "Name of the new storage pool"
 msgstr "Namn på den nya lagringspoolen"
 
@@ -6720,7 +6730,7 @@ msgstr "Namn på den nya lagringspoolen"
 msgid "Name of the project to use for this remote:"
 msgstr "Namn på projektet som ska användas för denna fjärrkontroll:"
 
-#: cmd/incus/admin_init_interactive.go:655
+#: cmd/incus/admin_init_interactive.go:427
 msgid "Name of the shared LVM volume group:"
 msgstr "Namn på den delade LVM-volymgruppen:"
 
@@ -6729,7 +6739,7 @@ msgstr "Namn på den delade LVM-volymgruppen:"
 msgid "Name of the storage backend (%s):"
 msgstr "Namn på lagringsbackend (%s):"
 
-#: cmd/incus/admin_init_interactive.go:560
+#: cmd/incus/admin_init_interactive.go:332
 #, c-format
 msgid "Name of the storage backend to use (%s)"
 msgstr "Namn på lagringsbackend som ska användas (%s)"
@@ -6916,7 +6926,7 @@ msgstr "Nya alias att lägga till i avbildningen"
 msgid "New key/value to apply to a specific device"
 msgstr "Ny nyckel/värde som ska tillämpas på en specifik enhet"
 
-#: cmd/incus/admin_init_interactive.go:499
+#: cmd/incus/admin_init_interactive.go:271
 #, c-format
 msgid "No %s storage backends available"
 msgstr "Inga %s lagringsbackends tillgängliga"
@@ -6926,7 +6936,7 @@ msgstr "Inga %s lagringsbackends tillgängliga"
 msgid "No certificate add token for member %s on remote: %s"
 msgstr "Inget certifikat lägg till token för medlem %s på fjärr: %s"
 
-#: cmd/incus/cluster.go:1355
+#: cmd/incus/cluster.go:1456
 #, c-format
 msgid "No cluster join token for member %s on remote: %s"
 msgstr "Ingen klusteranslutningstoken för medlem %s på fjärrplats: %s"
@@ -6955,7 +6965,7 @@ msgstr "Inga matchande portar hittades"
 msgid "No matching rule(s) found"
 msgstr "Inga matchande regler hittades"
 
-#: cmd/incus/admin_init_interactive.go:496
+#: cmd/incus/admin_init_interactive.go:268
 msgid "No storage backends available"
 msgstr "Inga lagringsbackends tillgängliga"
 
@@ -6989,7 +6999,7 @@ msgstr ""
 "Ingen av --storage-pool, --storage-create-device eller --storage-create-loop "
 "får användas med 'dir'-backend"
 
-#: cmd/incus/admin_init_interactive.go:635
+#: cmd/incus/admin_init_interactive.go:407
 msgid "Number of placement groups"
 msgstr "Antal placeringsgrupper"
 
@@ -7150,12 +7160,12 @@ msgstr "Lösenord för %s: "
 msgid "Password rejected for %q"
 msgstr "Lösenordet avvisat för %q"
 
-#: cmd/incus/admin_init.go:148
+#: cmd/incus/cluster.go:2040
 #, c-format
 msgid "Path %s doesn't exist"
 msgstr "Sökvägen %s finns inte"
 
-#: cmd/incus/admin_init_interactive.go:667
+#: cmd/incus/admin_init_interactive.go:439
 msgid "Path to the existing block device:"
 msgstr "Sökväg till befintlig blockenhet:"
 
@@ -7179,7 +7189,7 @@ msgstr "Skapa de saknade posterna och tryck sedan på ENTER:"
 msgid "Please provide an alternate server address (empty to abort):"
 msgstr "Ange en alternativ serveradress (lämna tomt för att avbryta):"
 
-#: cmd/incus/admin_init_interactive.go:190
+#: cmd/incus/cluster.go:1861
 msgid "Please provide join token:"
 msgstr "Ange anslutningstoken:"
 
@@ -7195,11 +7205,11 @@ msgstr "Poolnamnet får inte vara tomt"
 msgid "Port description"
 msgstr "Portbeskrivning"
 
-#: cmd/incus/admin_init_interactive.go:818
+#: cmd/incus/admin_init_interactive.go:590
 msgid "Port to bind to"
 msgstr "Port att ansluta till"
 
-#: cmd/incus/admin_init.go:62
+#: cmd/incus/admin_init.go:54
 #, c-format
 msgid "Port to bind to (default: %d)"
 msgstr "Port att ansluta till (standard: %d)"
@@ -7213,7 +7223,7 @@ msgstr "Porttyp: %s"
 msgid "Ports:"
 msgstr "Portar:"
 
-#: cmd/incus/admin_init.go:58
+#: cmd/incus/admin_init.go:50
 msgid "Pre-seed mode, expects YAML config from stdin"
 msgstr "Pre-seed-läge, förväntar sig YAML-konfiguration från stdin"
 
@@ -7233,7 +7243,7 @@ msgstr "Tryck på CTRL-C för att avsluta"
 msgid "Press ctrl+c to finish"
 msgstr "Tryck på Ctrl+C för att avsluta"
 
-#: cmd/incus/cluster.go:1001 cmd/incus/cluster_group.go:420
+#: cmd/incus/cluster.go:1015 cmd/incus/cluster_group.go:420
 #: cmd/incus/config.go:279 cmd/incus/config.go:354
 #: cmd/incus/config_metadata.go:159 cmd/incus/config_template.go:263
 #: cmd/incus/config_trust.go:365 cmd/incus/image.go:475
@@ -7472,7 +7482,7 @@ msgstr "BEGRÄNSAD"
 msgid "ROLE"
 msgstr "ROLL"
 
-#: cmd/incus/cluster.go:182
+#: cmd/incus/cluster.go:196
 msgid "ROLES"
 msgstr "ROLLER"
 
@@ -7602,7 +7612,7 @@ msgstr ""
 msgid "Remove a cluster member from a cluster group"
 msgstr "Ta bort en klustermedlem från en klustergrupp"
 
-#: cmd/incus/cluster.go:721 cmd/incus/cluster.go:722
+#: cmd/incus/cluster.go:735 cmd/incus/cluster.go:736
 msgid "Remove a member from the cluster"
 msgstr "Ta bort en medlem från klustret"
 
@@ -7684,7 +7694,7 @@ msgstr "Ta bort betrodd klient"
 msgid "Rename a cluster group"
 msgstr "Byt namn på en klustergrupp"
 
-#: cmd/incus/cluster.go:661 cmd/incus/cluster.go:662
+#: cmd/incus/cluster.go:675 cmd/incus/cluster.go:676
 msgid "Rename a cluster member"
 msgstr "Byt namn på en klustermedlem"
 
@@ -7752,7 +7762,7 @@ msgstr "Omdöpt lagringsvolymsögonblick från \"%s\" till \"%s\""
 msgid "Render: %s (%s)"
 msgstr "Rendera: %s (%s)"
 
-#: cmd/incus/cluster.go:1032 cmd/incus/cluster.go:1033
+#: cmd/incus/cluster.go:1133 cmd/incus/cluster.go:1134
 msgid "Request a join token for adding a cluster member"
 msgstr "Begär en anslutningstoken för att lägga till en klustermedlem"
 
@@ -7768,7 +7778,7 @@ msgstr "Resurser:"
 msgid "Restart instances"
 msgstr "Starta om instanser"
 
-#: cmd/incus/cluster.go:1525 cmd/incus/cluster.go:1526
+#: cmd/incus/cluster.go:1626 cmd/incus/cluster.go:1627
 msgid "Restore cluster member"
 msgstr "Återställ klustermedlem"
 
@@ -7790,7 +7800,7 @@ msgstr "Återställ instanssnapshots"
 msgid "Restore storage volume snapshots"
 msgstr "Återställ snapshots av lagringsvolym"
 
-#: cmd/incus/cluster.go:1592
+#: cmd/incus/cluster.go:1693
 #, c-format
 msgid "Restoring cluster member: %s"
 msgstr "Återställer klustermedlem: %s"
@@ -7816,7 +7826,7 @@ msgstr "Hämtar avbildning: %s"
 msgid "Revoke certificate add token"
 msgstr "Återkalla certifikat lägg till token"
 
-#: cmd/incus/cluster.go:1279
+#: cmd/incus/cluster.go:1380
 msgid "Revoke cluster member join token"
 msgstr "Återkalla klustermedlemmens anslutningstoken"
 
@@ -7911,7 +7921,7 @@ msgstr "TILLSTÅNDSFULL"
 msgid "STATIC"
 msgstr "STATISK"
 
-#: cmd/incus/cluster.go:186
+#: cmd/incus/cluster.go:200
 msgid "STATUS"
 msgstr "STATUS"
 
@@ -7983,8 +7993,8 @@ msgstr "Servercertifikat avvisat av användaren"
 msgid "Server doesn't trust us after authentication"
 msgstr "Servern litar inte på oss efter autentisering"
 
-#: cmd/incus/cluster.go:294 cmd/incus/cluster.go:1218 cmd/incus/cluster.go:1317
-#: cmd/incus/cluster.go:1427 cmd/incus/cluster_group.go:573
+#: cmd/incus/cluster.go:308 cmd/incus/cluster.go:1319 cmd/incus/cluster.go:1418
+#: cmd/incus/cluster.go:1528 cmd/incus/cluster_group.go:573
 msgid "Server isn't part of a cluster"
 msgstr "Servern ingår inte i ett kluster"
 
@@ -8006,7 +8016,7 @@ msgstr "Server: %s"
 msgid "Set a cluster group's configuration keys"
 msgstr "Ställ in konfigurationsnycklarna för en klustergrupp"
 
-#: cmd/incus/cluster.go:535
+#: cmd/incus/cluster.go:549
 msgid "Set a cluster member's configuration keys"
 msgstr "Ställ in konfigurationsnycklarna för en klustermedlem"
 
@@ -8335,7 +8345,7 @@ msgstr "Ställ in filens uid vid push"
 msgid "Set the key as a cluster group property"
 msgstr "Ställ in nyckeln som en klustergruppsegenskap"
 
-#: cmd/incus/cluster.go:538
+#: cmd/incus/cluster.go:552
 msgid "Set the key as a cluster property"
 msgstr "Ställ in nyckeln som en klusteregenskap"
 
@@ -8403,11 +8413,11 @@ msgstr "Ställ in nyckeln som en instansegenskap"
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr "Konfigurera SSH SFTP-lyssnare på adress:port istället för att montera"
 
-#: cmd/incus/admin_init.go:64
+#: cmd/incus/admin_init.go:56
 msgid "Setup device based storage using DEVICE"
 msgstr "Konfigurera enhetsbaserad lagring med DEVICE"
 
-#: cmd/incus/admin_init.go:65
+#: cmd/incus/admin_init.go:57
 msgid "Setup loop based storage with SIZE in GiB"
 msgstr "Konfigurera loopbaserad lagring med STORLEK i GiB"
 
@@ -8427,7 +8437,7 @@ msgstr "Visa klustergruppskonfigurationer"
 msgid "Show content of instance file templates"
 msgstr "Visa innehållet i instansfilmallarna"
 
-#: cmd/incus/cluster.go:340 cmd/incus/cluster.go:341
+#: cmd/incus/cluster.go:354 cmd/incus/cluster.go:355
 msgid "Show details of a cluster member"
 msgstr "Visa detaljer om en klustermedlem"
 
@@ -8617,7 +8627,7 @@ msgstr "Visa använt och ledigt utrymme i byte"
 msgid "Show trust configurations"
 msgstr "Visa förtroendekonfigurationer"
 
-#: cmd/incus/cluster.go:399 cmd/incus/cluster.go:400
+#: cmd/incus/cluster.go:413 cmd/incus/cluster.go:414
 msgid "Show useful information about a cluster member"
 msgstr "Visa användbar information om en klustermedlem"
 
@@ -8633,7 +8643,7 @@ msgstr "Visa användbar information om lagringspooler"
 msgid "Show warning"
 msgstr "Visa varning"
 
-#: cmd/incus/admin_init_interactive.go:688
+#: cmd/incus/admin_init_interactive.go:460
 msgid "Size in GiB of the new loop device"
 msgstr "Storlek i GiB för den nya slinganheten"
 
@@ -8742,7 +8752,7 @@ msgstr "Instansstopp misslyckades!"
 msgid "Stopping the instance failed: %s"
 msgstr "Det gick inte att stoppa instansen: %s"
 
-#: cmd/incus/admin_init.go:63
+#: cmd/incus/admin_init.go:55
 msgid "Storage backend to use (btrfs, dir, lvm or zfs, default: dir)"
 msgstr ""
 "Lagringsbackend som ska användas (btrfs, dir, lvm eller zfs, standard: dir)"
@@ -8805,7 +8815,7 @@ msgstr "Beskrivning av lagringspool"
 msgid "Storage pool name"
 msgstr "Lagringspoolens namn"
 
-#: cmd/incus/admin_init.go:66
+#: cmd/incus/admin_init.go:58
 msgid "Storage pool to use or create"
 msgstr "Lagringspool att använda eller skapa"
 
@@ -8836,7 +8846,7 @@ msgstr "Lagringsvolymsögonblicksbild %s raderad från %s"
 msgid "Store the instance state"
 msgstr "Lagra instansens tillstånd"
 
-#: cmd/incus/cluster.go:1467
+#: cmd/incus/cluster.go:1568
 msgid "Successfully updated cluster certificates"
 msgstr "Klustercertifikat uppdaterade framgångsrikt"
 
@@ -8882,7 +8892,7 @@ msgstr "TAGET VID"
 msgid "TARGET"
 msgstr "MÅL"
 
-#: cmd/incus/cluster.go:1153 cmd/incus/config_trust.go:652
+#: cmd/incus/cluster.go:1254 cmd/incus/config_trust.go:652
 msgid "TOKEN"
 msgstr "TOKEN"
 
@@ -8899,6 +8909,11 @@ msgstr "TYP"
 msgid "Taken at"
 msgstr "Taget vid"
 
+#: cmd/incus/cluster.go:1095
+#, fuzzy
+msgid "Target isn't a cluster"
+msgstr "Servern ingår inte i ett kluster"
+
 #: cmd/incus/export.go:83
 #, c-format
 msgid "Target path %q already exists"
@@ -8911,6 +8926,11 @@ msgstr "Målsökvägen och flaggan --listen kan inte användas tillsammans"
 #: cmd/incus/file.go:1040 cmd/incus/storage_volume.go:2759
 msgid "Target path must be a directory"
 msgstr "Målvägen måste vara en katalog"
+
+#: cmd/incus/cluster.go:1099
+#, fuzzy
+msgid "Target server is already clustered"
+msgstr "Denna server är redan klustrad"
 
 #: cmd/incus/admin_shutdown.go:31
 msgid "Tell the daemon to shutdown all instances and exit"
@@ -8936,7 +8956,7 @@ msgstr ""
 "av,\n"
 "  särskilt om en icke-standardiserad timeout har konfigurerats för dem."
 
-#: cmd/incus/admin_init_interactive.go:537
+#: cmd/incus/admin_init_interactive.go:309
 #, c-format
 msgid "The %s storage pool already exists"
 msgstr "Lagringspoolen %s finns redan"
@@ -8945,11 +8965,11 @@ msgstr "Lagringspoolen %s finns redan"
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr "Flaggan --show-log stöds endast för utdatatypen 'console'"
 
-#: cmd/incus/admin_init_interactive.go:753
+#: cmd/incus/admin_init_interactive.go:525
 msgid "The LVM thin provisioning tools couldn't be found on the system"
 msgstr "LVM-verktygen för tunn provisionering kunde inte hittas på systemet"
 
-#: cmd/incus/admin_init_interactive.go:741
+#: cmd/incus/admin_init_interactive.go:513
 msgid ""
 "The LVM thin provisioning tools couldn't be found.\n"
 "LVM can still be used without thin provisioning but this will disable over-"
@@ -9037,7 +9057,7 @@ msgstr ""
 msgid "The key %q does not exist on cluster group %q"
 msgstr "Nyckeln %q finns inte i klustergruppen %q"
 
-#: cmd/incus/cluster.go:516
+#: cmd/incus/cluster.go:530
 #, c-format
 msgid "The key %q does not exist on cluster member %q"
 msgstr "Nyckeln %q finns inte på klustermedlemmen %q"
@@ -9068,7 +9088,7 @@ msgstr "Profil-enheten finns inte"
 msgid "The property %q does not exist on the cluster group %q: %v"
 msgstr "Egenskapen %q finns inte i klustergruppen %q: %v"
 
-#: cmd/incus/cluster.go:507
+#: cmd/incus/cluster.go:521
 #, c-format
 msgid "The property %q does not exist on the cluster member %q: %v"
 msgstr "Egenskapen %q finns inte på klustermedlemmen %q: %v"
@@ -9176,18 +9196,18 @@ msgstr ""
 msgid "The requested backend '%s' isn't supported by init"
 msgstr "Den begärda backenden '%s' stöds inte av init"
 
-#: cmd/incus/admin_init_interactive.go:321
+#: cmd/incus/admin_init_interactive.go:123
 msgid "The requested interface doesn't exist. Please choose another one."
 msgstr "Det begärda gränssnittet finns inte. Välj ett annat."
 
-#: cmd/incus/admin_init_interactive.go:358
+#: cmd/incus/admin_init_interactive.go:160
 #, c-format
 msgid ""
 "The requested network bridge \"%s\" already exists. Please choose another "
 "name."
 msgstr "Den begärda nätverksbryggan \"%s\" finns redan. Välj ett annat namn."
 
-#: cmd/incus/admin_init_interactive.go:533
+#: cmd/incus/admin_init_interactive.go:305
 #, c-format
 msgid ""
 "The requested storage pool \"%s\" already exists. Please choose another name."
@@ -9242,11 +9262,11 @@ msgstr "Det här kommandot stöds inte i Windows"
 msgid "This server currently has the following storage pools:"
 msgstr "Denna server har för närvarande följande lagringspooler:"
 
-#: cmd/incus/cluster.go:878
+#: cmd/incus/cluster.go:892
 msgid "This server is already clustered"
 msgstr "Denna server är redan klustrad"
 
-#: cmd/incus/cluster.go:868
+#: cmd/incus/cluster.go:882
 msgid "This server is not available on the network"
 msgstr "Denna server är inte tillgänglig på nätverket"
 
@@ -9386,7 +9406,7 @@ msgstr "OBEGRÄNSAD"
 msgid "UPLOAD DATE"
 msgstr "UPPLADDNINGSDATUM"
 
-#: cmd/incus/cluster.go:181 cmd/incus/remote.go:998
+#: cmd/incus/cluster.go:195 cmd/incus/remote.go:998
 msgid "URL"
 msgstr "URL"
 
@@ -9419,7 +9439,7 @@ msgstr "UUID"
 msgid "UUID: %v"
 msgstr "UUID: %v"
 
-#: cmd/incus/admin_init.go:193 cmd/incus/admin_init_interactive.go:221
+#: cmd/incus/cluster.go:1892 cmd/incus/cluster.go:2085
 msgid "Unable to connect to any of the cluster members specified in join token"
 msgstr ""
 "Det går inte att ansluta till någon av klustermedlemmarna som anges i "
@@ -9444,7 +9464,7 @@ msgstr "Okänd certifikattyp %q"
 msgid "Unknown channel type for client %q: %s"
 msgstr "Okänd kanaltyp för klient %q: %s"
 
-#: cmd/incus/cluster.go:202 cmd/incus/cluster.go:1168
+#: cmd/incus/cluster.go:216 cmd/incus/cluster.go:1269
 #: cmd/incus/cluster_group.go:523 cmd/incus/config_trust.go:469
 #: cmd/incus/config_trust.go:667 cmd/incus/image.go:1167
 #: cmd/incus/image_alias.go:274 cmd/incus/list.go:580 cmd/incus/network.go:1186
@@ -9485,7 +9505,7 @@ msgstr "Okänd utdatatyp %q"
 msgid "Unset a cluster group's configuration keys"
 msgstr "Avaktivera konfigurationsnycklarna för en klustergrupp"
 
-#: cmd/incus/cluster.go:615
+#: cmd/incus/cluster.go:629
 msgid "Unset a cluster member's configuration keys"
 msgstr "Avaktivera konfigurationsnycklar för en klustermedlem"
 
@@ -9591,7 +9611,7 @@ msgstr ""
 msgid "Unset the key as a cluster group property"
 msgstr "Avmarkera nyckeln som en klustergruppsegenskap"
 
-#: cmd/incus/cluster.go:618
+#: cmd/incus/cluster.go:632
 msgid "Unset the key as a cluster property"
 msgstr "Avaktivera nyckeln som en klusteregenskap"
 
@@ -9664,11 +9684,11 @@ msgstr "Instans typ som inte stöds: %s"
 msgid "Up delay"
 msgstr "Uppfördröjning"
 
-#: cmd/incus/cluster.go:1369
+#: cmd/incus/cluster.go:1470
 msgid "Update cluster certificate"
 msgstr "Uppdatera klustercertifikat"
 
-#: cmd/incus/cluster.go:1371
+#: cmd/incus/cluster.go:1472
 msgid ""
 "Update cluster certificate with PEM certificate and key read from input "
 "files."
@@ -9728,11 +9748,11 @@ msgstr "Använd: %v"
 msgid "User ID to run the command as (default 0)"
 msgstr "Användar-ID för att köra kommandot som (standard 0)"
 
-#: cmd/incus/admin_init_interactive.go:234
+#: cmd/incus/cluster.go:1939
 msgid "User aborted configuration"
 msgstr "Användaren avbröt konfigurationen"
 
-#: cmd/incus/cluster.go:761 cmd/incus/delete.go:55 cmd/incus/project.go:238
+#: cmd/incus/cluster.go:775 cmd/incus/delete.go:55 cmd/incus/project.go:238
 #: cmd/incus/snapshot.go:286
 msgid "User aborted delete operation"
 msgstr "Användaren avbröt raderingsåtgärden"
@@ -9827,7 +9847,7 @@ msgstr ""
 msgid "Wait for the operation to complete"
 msgstr "Vänta tills operationen är klar"
 
-#: cmd/incus/admin_init_interactive.go:770
+#: cmd/incus/admin_init_interactive.go:542
 msgid ""
 "We detected that you are running inside an unprivileged container.\n"
 "This means that unless you manually configured your host otherwise,\n"
@@ -9855,28 +9875,28 @@ msgstr ""
 msgid "Web server running at: %s"
 msgstr "Webbserver körs på: %s"
 
-#: cmd/incus/admin_init_interactive.go:156
+#: cmd/incus/cluster.go:1820
 msgid "What IP address or DNS name should be used to reach this server?"
 msgstr "Vilken IP-adress eller DNS-namn ska användas för att nå denna server?"
 
-#: cmd/incus/admin_init_interactive.go:370
+#: cmd/incus/admin_init_interactive.go:172
 msgid "What IPv4 address should be used?"
 msgstr "Vilken IPv4-adress ska användas?"
 
-#: cmd/incus/admin_init_interactive.go:391
+#: cmd/incus/admin_init_interactive.go:193
 msgid "What IPv6 address should be used?"
 msgstr "Vilken IPv6-adress ska användas?"
 
-#: cmd/incus/admin_init_interactive.go:122
+#: cmd/incus/cluster.go:1790
 msgid "What member name should be used to identify this server in the cluster?"
 msgstr ""
 "Vilket medlemsnamn ska användas för att identifiera denna server i klustret?"
 
-#: cmd/incus/admin_init_interactive.go:351
+#: cmd/incus/admin_init_interactive.go:153
 msgid "What should the new bridge be called?"
 msgstr "Vad ska den nya bron heta?"
 
-#: cmd/incus/admin_init_interactive.go:570
+#: cmd/incus/admin_init_interactive.go:342
 msgid "Where should this storage pool store its data?"
 msgstr "Var ska denna lagringspool lagra sina data?"
 
@@ -9904,15 +9924,15 @@ msgid ""
 msgstr ""
 "Rensa instansens rotdisk och initiera om med en ny image (eller tom volym)."
 
-#: cmd/incus/admin_init_interactive.go:82
+#: cmd/incus/admin_init_interactive.go:69
 msgid "Would you like a YAML \"init\" preseed to be printed?"
 msgstr "Vill du att en YAML \"init\" preseed ska skrivas ut?"
 
-#: cmd/incus/admin_init_interactive.go:845
+#: cmd/incus/admin_init_interactive.go:617
 msgid "Would you like stale cached images to be updated automatically?"
 msgstr "Vill du att gamla cachade avbildningar ska uppdateras automatiskt?"
 
-#: cmd/incus/admin_init_interactive.go:791
+#: cmd/incus/admin_init_interactive.go:563
 msgid "Would you like the server to be available over the network?"
 msgstr "Vill du att servern ska vara tillgänglig via nätverket?"
 
@@ -9920,11 +9940,11 @@ msgstr "Vill du att servern ska vara tillgänglig via nätverket?"
 msgid "Would you like those to be recovered?"
 msgstr "Vill du att de ska återställas?"
 
-#: cmd/incus/admin_init_interactive.go:382
+#: cmd/incus/admin_init_interactive.go:184
 msgid "Would you like to NAT IPv4 traffic on your bridge?"
 msgstr "Vill du NAT IPv4-trafik på din brygga?"
 
-#: cmd/incus/admin_init_interactive.go:403
+#: cmd/incus/admin_init_interactive.go:205
 msgid "Would you like to NAT IPv6 traffic on your bridge?"
 msgstr "Vill du använda NAT för IPv6-trafik på din brygga?"
 
@@ -9932,20 +9952,20 @@ msgstr "Vill du använda NAT för IPv6-trafik på din brygga?"
 msgid "Would you like to continue with scanning for lost volumes?"
 msgstr "Vill du fortsätta söka efter förlorade volymer?"
 
-#: cmd/incus/admin_init_interactive.go:585
+#: cmd/incus/admin_init_interactive.go:357
 #, c-format
 msgid "Would you like to create a new btrfs subvolume under %s?"
 msgstr "Vill du skapa en ny btrfs-undervolym under %s?"
 
-#: cmd/incus/admin_init_interactive.go:301
+#: cmd/incus/admin_init_interactive.go:103
 msgid "Would you like to create a new local network bridge?"
 msgstr "Vill du skapa en ny lokal nätverksbrygga?"
 
-#: cmd/incus/admin_init_interactive.go:601
+#: cmd/incus/admin_init_interactive.go:373
 msgid "Would you like to create a new zfs dataset under rpool/incus?"
 msgstr "Vill du skapa en ny zfs-datauppsättning under rpool/incus?"
 
-#: cmd/incus/admin_init_interactive.go:779
+#: cmd/incus/admin_init_interactive.go:551
 msgid "Would you like to have your containers share their parent's allocation?"
 msgstr "Vill du att dina containrar ska dela sina föräldrars allokering?"
 
@@ -9953,18 +9973,18 @@ msgstr "Vill du att dina containrar ska dela sina föräldrars allokering?"
 msgid "Would you like to recover another storage pool?"
 msgstr "Vill du återställa en annan lagringspool?"
 
-#: cmd/incus/admin_init_interactive.go:308
+#: cmd/incus/admin_init_interactive.go:110
 msgid "Would you like to use an existing bridge or host interface?"
 msgstr "Vill du använda en befintlig brygga eller värdgränssnitt?"
 
-#: cmd/incus/admin_init_interactive.go:661
+#: cmd/incus/admin_init_interactive.go:433
 msgid ""
 "Would you like to use an existing empty block device (e.g. a disk or "
 "partition)?"
 msgstr ""
 "Vill du använda en befintlig tom blockenhet (t.ex. en disk eller partition)?"
 
-#: cmd/incus/admin_init_interactive.go:112
+#: cmd/incus/admin_init_interactive.go:35
 msgid "Would you like to use clustering?"
 msgstr "Vill du använda klustring?"
 
@@ -10011,7 +10031,7 @@ msgstr "[<remote:>]<pool> <volym> <profil> [<enhetsnamn>]"
 msgid "[<remote:>]<pool> <volume> <profile> [<device name>] [<path>]"
 msgstr "[<remote:>]<pool> <volym> <profil> [<enhetsnamn>] [<sökväg>]"
 
-#: cmd/incus/cluster.go:1111 cmd/incus/cluster_group.go:460
+#: cmd/incus/cluster.go:1212 cmd/incus/cluster_group.go:460
 #: cmd/incus/config_trust.go:409 cmd/incus/config_trust.go:614
 #: cmd/incus/monitor.go:33 cmd/incus/network_acl.go:95
 #: cmd/incus/network_address_set.go:92 cmd/incus/network_integration.go:416
@@ -10024,7 +10044,7 @@ msgstr "[<fjärr>:]"
 msgid "[<remote>:] <backup file> [<instance name>]"
 msgstr "[<fjärr>:] <backup file> [<instansnamn>]"
 
-#: cmd/incus/cluster.go:1367
+#: cmd/incus/cluster.go:1468
 msgid "[<remote>:] <cert.crt> <cert.key>"
 msgstr "[<fjärr>:] <cert.crt> <cert.key>"
 
@@ -10032,11 +10052,11 @@ msgstr "[<fjärr>:] <cert.crt> <cert.key>"
 msgid "[<remote>:] <cert>"
 msgstr "[<fjärr>:] <cert>"
 
-#: cmd/incus/cluster.go:813 cmd/incus/config_trust.go:821
+#: cmd/incus/cluster.go:827 cmd/incus/config_trust.go:821
 msgid "[<remote>:] <name>"
 msgstr "[<fjärr>:] <namn>"
 
-#: cmd/incus/cluster.go:132 cmd/incus/image.go:1085 cmd/incus/list.go:50
+#: cmd/incus/cluster.go:146 cmd/incus/image.go:1085 cmd/incus/list.go:50
 #: cmd/incus/network.go:1104 cmd/incus/profile.go:730 cmd/incus/project.go:525
 #: cmd/incus/storage.go:681
 msgid "[<remote>:] [<filter>...]"
@@ -10305,9 +10325,9 @@ msgid "[<remote>:]<instance>[/<snapshot>] [<remote>:] [flags] [key=value...]"
 msgstr ""
 "[<fjärr>:]<instans>[/<ögonblicksbild>] [<fjärr>:] [flaggor] [nyckel=värde...]"
 
-#: cmd/incus/cluster.go:339 cmd/incus/cluster.go:398 cmd/incus/cluster.go:719
-#: cmd/incus/cluster.go:908 cmd/incus/cluster.go:1278 cmd/incus/cluster.go:1494
-#: cmd/incus/cluster.go:1524
+#: cmd/incus/cluster.go:353 cmd/incus/cluster.go:412 cmd/incus/cluster.go:733
+#: cmd/incus/cluster.go:922 cmd/incus/cluster.go:1379 cmd/incus/cluster.go:1595
+#: cmd/incus/cluster.go:1625
 msgid "[<remote>:]<member>"
 msgstr "[<fjärr>:]<medlem>"
 
@@ -10316,15 +10336,15 @@ msgstr "[<fjärr>:]<medlem>"
 msgid "[<remote>:]<member> <group>"
 msgstr "[<fjärr>:]<medlem> <grupp>"
 
-#: cmd/incus/cluster.go:459 cmd/incus/cluster.go:614
+#: cmd/incus/cluster.go:473 cmd/incus/cluster.go:628
 msgid "[<remote>:]<member> <key>"
 msgstr "[<fjärr>:]<medlem> <nyckel>"
 
-#: cmd/incus/cluster.go:534
+#: cmd/incus/cluster.go:548
 msgid "[<remote>:]<member> <key>=<value>..."
 msgstr "[<fjärr>:]<medlem> <nyckel>=<värde>..."
 
-#: cmd/incus/cluster.go:659
+#: cmd/incus/cluster.go:673
 msgid "[<remote>:]<member> <new-name>"
 msgstr "[<fjärr>:]<medlem> <nytt-namn>"
 
@@ -10753,7 +10773,7 @@ msgstr "[<fjärr>]:"
 msgid "[<remote>]:<local|global> <query>"
 msgstr "[<fjärr>]:<local|global> <query>"
 
-#: cmd/incus/cluster.go:1031
+#: cmd/incus/cluster.go:1132
 msgid "[[<remote>:]<member>]"
 msgstr "[[<fjärr>:]<medlem>]"
 
@@ -10814,7 +10834,7 @@ msgstr ""
 "incus alias rename list my-list\n"
 "    Byt namn på befintligt alias \"list\" till \"my-list\"."
 
-#: cmd/incus/cluster.go:912
+#: cmd/incus/cluster.go:926
 msgid ""
 "incus cluster edit <cluster member> < member.yaml\n"
 "    Update a cluster member using the content of member.yaml"
@@ -11703,7 +11723,7 @@ msgstr "används av"
 msgid "y"
 msgstr "j"
 
-#: cmd/incus/cluster.go:760 cmd/incus/config_trust.go:509
+#: cmd/incus/cluster.go:774 cmd/incus/config_trust.go:509
 #: cmd/incus/delete.go:54 cmd/incus/image.go:993 cmd/incus/image.go:998
 #: cmd/incus/image.go:1206 cmd/incus/project.go:237 cmd/incus/snapshot.go:285
 msgid "yes"
