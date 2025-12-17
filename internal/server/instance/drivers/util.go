@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"regexp"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -286,4 +288,69 @@ func getNodeResources(s *state.State, name string, address string) (*api.Resourc
 	}
 
 	return res, nil
+}
+
+type qcow2BlockdevKind int
+
+const (
+	backingBlockdevKind qcow2BlockdevKind = iota
+	rootBlockdevKind
+	overlayBlockdevKind
+)
+
+type qcow2BlockdevInfo struct {
+	name  string
+	kind  qcow2BlockdevKind
+	index int
+}
+
+// classifyQcow2Blockdev classifies a block device as a qcow2 backing, root, or overlay device.
+func classifyQcow2Blockdev(name string, rootDevName string) (*qcow2BlockdevInfo, bool) {
+	reBacking := regexp.MustCompile(fmt.Sprintf(`^%s_backing(\d+)$`, rootDevName))
+	reOverlay := regexp.MustCompile(fmt.Sprintf(`^%s_overlay(\d+)$`, rootDevName))
+
+	if name == rootDevName {
+		return &qcow2BlockdevInfo{name: name, kind: rootBlockdevKind, index: 0}, true
+	}
+
+	m := reBacking.FindStringSubmatch(name)
+	if m != nil {
+		i, _ := strconv.Atoi(m[1])
+		return &qcow2BlockdevInfo{name: name, kind: backingBlockdevKind, index: i}, true
+	}
+
+	m = reOverlay.FindStringSubmatch(name)
+	if m != nil {
+		i, _ := strconv.Atoi(m[1])
+		return &qcow2BlockdevInfo{name: name, kind: overlayBlockdevKind, index: i}, true
+	}
+
+	return nil, false
+}
+
+// filterAndSortQcow2Blockdevs selects qcow2 related block devices and sorts them in the correct order.
+func filterAndSortQcow2Blockdevs(names []string, rootDevName string) []string {
+	items := make([]qcow2BlockdevInfo, 0, len(names))
+
+	for _, n := range names {
+		info, ok := classifyQcow2Blockdev(n, rootDevName)
+		if ok {
+			items = append(items, *info)
+		}
+	}
+
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].kind != items[j].kind {
+			return items[i].kind < items[j].kind
+		}
+
+		return items[i].index < items[j].index
+	})
+
+	result := make([]string, len(items))
+	for i, it := range items {
+		result[i] = it.name
+	}
+
+	return result
 }
