@@ -205,7 +205,14 @@ func ConnectIfVolumeIsRemote(s *state.State, poolName string, projectName string
 	}
 
 	// Connect to remote cluster member.
-	return Connect(node.Address, networkCert, serverCert, r, false)
+	client, err := Connect(node.Address, networkCert, serverCert, r, false)
+	if err != nil {
+		return nil, err
+	}
+
+	client = client.UseProject(projectName)
+
+	return client, nil
 }
 
 // SetupTrust is a convenience around InstanceServer.CreateCertificate that adds the given server certificate to
