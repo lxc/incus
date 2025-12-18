@@ -329,12 +329,12 @@ func (d *lvm) FillVolumeConfig(vol Volume) error {
 
 	// Inherit stripe settings from pool if not set and not using thin pool.
 	if !d.usesThinpool() {
-		if vol.config["lvm.stripes"] == "" {
+		if vol.config["lvm.stripes"] == "" && d.config["volume.lvm.stripes"] != "" {
 			vol.config["lvm.stripes"] = d.config["volume.lvm.stripes"]
 		}
 
-		if vol.config["lvm.stripes.size"] == "" {
-			vol.config["lvm.stripes.size"] = d.config["lvm.stripes.size"]
+		if vol.config["lvm.stripes.size"] == "" && d.config["volume.lvm.stripes.size"] != "" {
+			vol.config["lvm.stripes.size"] = d.config["volume.lvm.stripes.size"]
 		}
 	}
 
