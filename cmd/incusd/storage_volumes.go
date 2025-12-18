@@ -566,6 +566,33 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 			volumesFull := make([]*api.StorageVolumeFull, 0, len(volumes))
 
 			for _, vol := range volumes {
+				if s.ServerClustered && !pool.Driver().Info().Remote && vol.Location != "" && vol.Location != s.ServerName {
+					// Get the remote address.
+					var volNode db.NodeInfo
+
+					err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+						volNode, err = tx.GetNodeByName(ctx, vol.Location)
+						return err
+					})
+					if err != nil {
+						return response.InternalError(fmt.Errorf("Failed getting cluster member info for %q: %w", vol.Location, err))
+					}
+
+					client, err := cluster.Connect(volNode.Address, s.Endpoints.NetworkCert(), s.ServerCert(), r, false)
+					if err != nil {
+						return response.InternalError(err)
+					}
+
+					fullVol, _, err := client.UseTarget(vol.Location).UseProject(vol.Project).GetStoragePoolVolumeFull(poolName, vol.Type, vol.Name)
+					if err != nil {
+						return response.InternalError(err)
+					}
+
+					volumesFull = append(volumesFull, fullVol)
+					continue
+				}
+
+				// Handle local volumes.
 				fullVol, err := getVolumeFull(r.Context(), s, poolName, *vol)
 				if err != nil {
 					return response.InternalError(err)
