@@ -320,10 +320,15 @@ func (d *lvm) FillVolumeConfig(vol Volume) error {
 		}
 	}
 
-	if d.clustered && vol.ContentType() == ContentTypeBlock && vol.Type() == VolumeTypeVM {
+	if d.clustered && vol.IsVMBlock() {
+		// Set default block type to qcow2.
 		if vol.config["block.type"] == "" {
-			// Unchangeable volume property: Set unconditionally.
 			vol.config["block.type"] = BlockVolumeTypeQcow2
+		}
+
+		// If on qcow2, the block filesystem is btrfs.
+		if vol.config["block.type"] == BlockVolumeTypeQcow2 {
+			vol.config["block.filesystem"] = "btrfs"
 		}
 	}
 
