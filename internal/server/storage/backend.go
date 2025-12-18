@@ -2890,7 +2890,7 @@ func (b *backend) MountInstance(inst instance.Instance, op *operations.Operation
 	backingPaths := []string{}
 	if vol.Config()["block.type"] == drivers.BlockVolumeTypeQcow2 {
 		// Get snapshots.
-		volSnaps, err := VolumeDBSnapshotsGet(b, inst.Project().Name, vol.Name(), vol.Type())
+		volSnaps, err := VolumeDBSnapshotsGet(b, inst.Project().Name, inst.Name(), vol.Type())
 		if err != nil {
 			return nil, err
 		}
@@ -2971,7 +2971,7 @@ func (b *backend) UnmountInstance(inst instance.Instance, op *operations.Operati
 
 	if vol.Config()["block.type"] == drivers.BlockVolumeTypeQcow2 {
 		// Get snapshots.
-		volSnaps, err := VolumeDBSnapshotsGet(b, inst.Project().Name, vol.Name(), vol.Type())
+		volSnaps, err := VolumeDBSnapshotsGet(b, inst.Project().Name, inst.Name(), vol.Type())
 		if err != nil {
 			return err
 		}
@@ -3135,7 +3135,8 @@ func (b *backend) CreateInstanceSnapshot(inst instance.Instance, src instance.In
 
 	if srcDBVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
 		// Get the parent volume.
-		parentVol := b.GetVolume(volType, contentType, src.Name(), srcDBVol.Config)
+		volStorageParentName := project.Instance(inst.Project().Name, src.Name())
+		parentVol := b.GetVolume(volType, contentType, volStorageParentName, srcDBVol.Config)
 
 		// parentVol should already be prepared as an overlay by CreateVolumeSnapshot.
 		// vol will be used as the base.
@@ -3202,7 +3203,7 @@ func (b *backend) RenameInstanceSnapshot(inst instance.Instance, newName string,
 	snapVol := b.GetVolume(volType, contentType, volStorageName, srcDBVol.Config)
 
 	if srcDBVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
-		parentVol := b.GetVolume(volType, contentType, parentName, srcDBVol.Config)
+		parentVol := b.GetVolume(volType, contentType, project.Instance(inst.Project().Name, parentName), srcDBVol.Config)
 		err = b.qcow2RenameSnapshot(parentVol, snapVol, newVolName, inst.Type(), inst.Project().Name, op)
 		if err != nil {
 			return err
@@ -3288,7 +3289,7 @@ func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.
 
 	if volExists {
 		if srcDBVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
-			parentVol := b.GetVolume(volType, contentType, parentName, srcDBVol.Config)
+			parentVol := b.GetVolume(volType, contentType, parentStorageName, srcDBVol.Config)
 			err = b.qcow2DeleteSnapshot(parentVol, vol, inst, op)
 			if err != nil {
 				return err
@@ -3397,7 +3398,7 @@ func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.I
 	}
 
 	if srcDBVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
-		snapVol := b.GetVolume(volType, contentType, src.Name(), srcDBVol.Config)
+		snapVol := b.GetVolume(volType, contentType, project.Instance(inst.Project().Name, src.Name()), srcDBVol.Config)
 		err = b.qcow2RestoreSnapshot(vol, snapVol, inst.Type(), inst.Project().Name, op)
 		if err != nil {
 			return err
@@ -7753,7 +7754,8 @@ func (b *backend) qcow2RenameSnapshot(vol drivers.Volume, snapVol drivers.Volume
 	}
 
 	// Get snapshots.
-	volSnaps, err := VolumeDBSnapshotsGet(b, projectName, vol.Name(), vol.Type())
+	_, volName := project.StorageVolumeParts(vol.Name())
+	volSnaps, err := VolumeDBSnapshotsGet(b, projectName, volName, vol.Type())
 	if err != nil {
 		return err
 	}
@@ -7824,15 +7826,14 @@ func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume
 		return nil
 	}
 
-	parentInst, err := instance.LoadByProjectAndName(b.state, inst.Project().Name, vol.Name())
+	_, volName := project.StorageVolumeParts(vol.Name())
+	parentInst, err := instance.LoadByProjectAndName(b.state, inst.Project().Name, volName)
 	if err != nil {
 		return err
 	}
 
-	parentStorageName := project.Instance(inst.Project().Name, vol.Name())
-
 	// Get snapshots.
-	volSnaps, err := VolumeDBSnapshotsGet(b, inst.Project().Name, parentStorageName, vol.Type())
+	volSnaps, err := VolumeDBSnapshotsGet(b, inst.Project().Name, volName, vol.Type())
 	if err != nil {
 		return err
 	}
@@ -7840,7 +7841,7 @@ func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume
 	_, snapName, _ := api.GetParentAndSnapshotName(inst.Name())
 
 	snapIndex := -1
-	childName := parentStorageName
+	childName := vol.Name()
 	backingFilename := ""
 
 	// Find snapshot index to delete and its child if exists.
@@ -7851,6 +7852,9 @@ func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume
 
 			if index+1 < len(volSnaps) {
 				childName = volSnaps[index+1].Name
+				if inst.Project().Name != api.ProjectDefaultName {
+					childName = project.StorageVolume(inst.Project().Name, volSnaps[index+1].Name)
+				}
 			}
 
 			break
@@ -7968,7 +7972,8 @@ func (b *backend) qcow2BackingPaths(vol drivers.Volume, diskPath string, project
 	diskPathSnapshot := map[string]string{}
 
 	// Get snapshots.
-	volSnaps, err := VolumeDBSnapshotsGet(b, projectName, vol.Name(), vol.Type())
+	_, volName := project.StorageVolumeParts(vol.Name())
+	volSnaps, err := VolumeDBSnapshotsGet(b, projectName, volName, vol.Type())
 	if err != nil {
 		return nil, err
 	}
