@@ -1142,9 +1142,16 @@ func (d *lvm) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *mig
 			}
 
 			if volDevPath != "" {
-				_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volPath)
-				if err != nil {
-					return err
+				if vol.ContentType() == ContentTypeBlock && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
+					_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volPath)
+					if err != nil {
+						return err
+					}
+				} else {
+					_, err := subprocess.RunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volPath)
+					if err != nil {
+						return err
+					}
 				}
 			}
 

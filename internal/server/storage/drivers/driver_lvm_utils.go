@@ -516,7 +516,9 @@ func (d *lvm) acquireExclusive(vol Volume) (func(), error) {
 	}
 
 	return func() {
-		_, _ = subprocess.TryRunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
+		if vol.ContentType() == ContentTypeBlock && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
+			_, _ = subprocess.TryRunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
+		}
 	}, nil
 }
 
@@ -898,9 +900,16 @@ func (d *lvm) activateVolume(vol Volume) (bool, error) {
 	defer lvmActivation.Unlock()
 
 	if d.clustered {
-		_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volPath)
-		if err != nil {
-			return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volPath, err)
+		if vol.ContentType() == ContentTypeBlock && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
+			_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volPath)
+			if err != nil {
+				return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volPath, err)
+			}
+		} else {
+			_, err := subprocess.RunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volPath)
+			if err != nil {
+				return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volPath, err)
+			}
 		}
 	} else {
 		_, err := subprocess.RunCommand("lvchange", "--activate", "y", "--ignoreactivationskip", volPath)
