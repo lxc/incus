@@ -9,6 +9,7 @@ import (
 	"math"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"golang.org/x/sys/unix"
@@ -56,6 +57,30 @@ func (d *lvm) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 		}
 
 		reverter.Add(func() { _ = d.DeleteVolume(fsVol, op) })
+	}
+
+	// Format LV as qcow2 (lvmcluster).
+	if vol.ContentType() == ContentTypeBlock && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
+		// Get the device path.
+		devPath, err := d.GetVolumeDiskPath(vol)
+		if err != nil {
+			return err
+		}
+
+		qcow2SizeBytes, err := d.roundedSizeBytesString(vol.ConfigSize())
+		if err != nil {
+			return err
+		}
+
+		err = Qcow2Create(devPath, "", qcow2SizeBytes)
+		if err != nil {
+			return err
+		}
+	} else if vol.ContentType() == ContentTypeFS && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
+		err = Qcow2CreateConfig(vol, op)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
@@ -295,14 +320,26 @@ func (d *lvm) FillVolumeConfig(vol Volume) error {
 		}
 	}
 
+	if d.clustered && vol.IsVMBlock() {
+		// Set default block type to qcow2.
+		if vol.config["block.type"] == "" {
+			vol.config["block.type"] = BlockVolumeTypeQcow2
+		}
+
+		// If on qcow2, the block filesystem is btrfs.
+		if vol.config["block.type"] == BlockVolumeTypeQcow2 {
+			vol.config["block.filesystem"] = "btrfs"
+		}
+	}
+
 	// Inherit stripe settings from pool if not set and not using thin pool.
 	if !d.usesThinpool() {
-		if vol.config["lvm.stripes"] == "" {
+		if vol.config["lvm.stripes"] == "" && d.config["volume.lvm.stripes"] != "" {
 			vol.config["lvm.stripes"] = d.config["volume.lvm.stripes"]
 		}
 
-		if vol.config["lvm.stripes.size"] == "" {
-			vol.config["lvm.stripes.size"] = d.config["lvm.stripes.size"]
+		if vol.config["lvm.stripes.size"] == "" && d.config["volume.lvm.stripes.size"] != "" {
+			vol.config["lvm.stripes.size"] = d.config["volume.lvm.stripes.size"]
 		}
 	}
 
@@ -311,7 +348,7 @@ func (d *lvm) FillVolumeConfig(vol Volume) error {
 
 // commonVolumeRules returns validation rules which are common for pool and volume.
 func (d *lvm) commonVolumeRules() map[string]func(value string) error {
-	return map[string]func(value string) error{
+	rules := map[string]func(value string) error{
 		// gendoc:generate(entity=storage_volume_lvm, group=common, key=block.mount_options)
 		//
 		// ---
@@ -348,6 +385,19 @@ func (d *lvm) commonVolumeRules() map[string]func(value string) error {
 		//  shortdesc: Size of stripes to use (at least 4096 bytes and multiple of 512 bytes)
 		"lvm.stripes.size": validate.Optional(validate.IsSize),
 	}
+
+	if d.clustered {
+		// gendoc:generate(entity=storage_lvm, group=common, key=block.type)
+		//
+		// ---
+		//  type:string
+		//  condition: block-based volume
+		//  default: same as `volume.block.type`
+		//  shortdesc: Type of the block volume
+		rules["block.type"] = validate.Optional(validate.IsOneOf(BlockVolumeTypeRaw, BlockVolumeTypeQcow2))
+	}
+
+	return rules
 }
 
 // ValidateVolume validates the supplied volume config.
@@ -493,6 +543,11 @@ func (d *lvm) UpdateVolume(vol Volume, changedConfig map[string]string) error {
 	_, changed = changedConfig["lvm.stripes.size"]
 	if changed {
 		return errors.New("lvm.stripes.size cannot be changed")
+	}
+
+	_, changed = changedConfig["block.type"]
+	if changed {
+		return errors.New("block.type cannot be changed after creation")
 	}
 
 	return nil
@@ -1092,9 +1147,16 @@ func (d *lvm) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *mig
 			}
 
 			if volDevPath != "" {
-				_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volPath)
-				if err != nil {
-					return err
+				if vol.ContentType() == ContentTypeBlock && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
+					_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volPath)
+					if err != nil {
+						return err
+					}
+				} else {
+					_, err := subprocess.RunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volPath)
+					if err != nil {
+						return err
+					}
 				}
 			}
 
@@ -1131,23 +1193,74 @@ func (d *lvm) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, _ b
 
 // CreateVolumeSnapshot creates a snapshot of a volume.
 func (d *lvm) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) error {
-	// Perform validation
-	if d.isRemote() && snapVol.ContentType() == ContentTypeBlock {
-		return fmt.Errorf("lvmcluster doesn't currently support snapshot creation")
-	}
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	parentName, _, _ := api.GetParentAndSnapshotName(snapVol.name)
 	parentVol := NewVolume(d, d.name, snapVol.volType, snapVol.contentType, parentName, snapVol.config, snapVol.poolConfig)
 	snapPath := snapVol.MountPath()
+
+	if d.isRemote() && snapVol.ContentType() == ContentTypeBlock {
+		if util.IsTrue(snapVol.ExpandedConfig("security.shared")) {
+			return fmt.Errorf(`Snapshots of shared custom storage volumes aren't supported on "lvmcluster"`)
+		}
+
+		if snapVol.ExpandedConfig("block.type") != BlockVolumeTypeQcow2 {
+			return fmt.Errorf(`Snapshots of raw block volumes aren't supported on "lvmcluster"`)
+		}
+
+		parentVolPath := d.lvmPath(d.config["lvm.vg_name"], parentVol.volType, parentVol.contentType, parentName)
+		snapVolPath := d.lvmPath(d.config["lvm.vg_name"], snapVol.volType, snapVol.contentType, snapVol.name)
+
+		releaseParent, err := d.acquireExclusive(parentVol)
+		if err != nil {
+			return err
+		}
+
+		defer releaseParent()
+
+		err = d.renameLogicalVolume(parentVolPath, snapVolPath)
+		if err != nil {
+			return fmt.Errorf("Error temporarily renaming original LVM logical volume: %w", err)
+		}
+
+		reverter.Add(func() {
+			_, _ = d.acquireExclusive(snapVol)
+			_ = d.renameLogicalVolume(snapVolPath, parentVolPath)
+
+			// acquireExclusive is called on the parent volume to obtain a release function
+			// that switches the volume back to shared mode.
+			releaseParent, _ := d.acquireExclusive(parentVol)
+			releaseParent()
+		})
+
+		releaseSnap, err := d.acquireExclusive(snapVol)
+		if err != nil {
+			return err
+		}
+
+		defer releaseSnap()
+
+		err = d.createLogicalVolume(d.config["lvm.vg_name"], d.thinpoolName(), parentVol, d.usesThinpool())
+		if err != nil {
+			return fmt.Errorf("Error creating LVM logical volume: %w", err)
+		}
+
+		reverter.Add(func() {
+			releaseParent, _ := d.acquireExclusive(parentVol)
+			_ = d.removeLogicalVolume(parentVolPath)
+			releaseParent()
+		})
+
+		reverter.Success()
+		return nil
+	}
 
 	// Create the parent directory.
 	err := createParentSnapshotDirIfMissing(d.name, snapVol.volType, parentName)
 	if err != nil {
 		return err
 	}
-
-	reverter := revert.New()
-	defer reverter.Fail()
 
 	// Create snapshot directory.
 	err = snapVol.EnsureMountPath(false)
@@ -1256,74 +1369,102 @@ func (d *lvm) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) erro
 		mountVol := snapVol
 		mountFlags, mountOptions := linux.ResolveMountOptions(strings.Split(mountVol.ConfigBlockMountOptions(), ","))
 
-		// Regenerate filesystem UUID if needed. This is because some filesystems do not allow mounting
-		// multiple volumes that share the same UUID. As snapshotting a volume will copy its UUID we need
-		// to potentially regenerate the UUID of the snapshot now that we are trying to mount it.
-		// This is done at mount time rather than snapshot time for 2 reasons; firstly snapshots need to be
-		// as fast as possible, and on some filesystems regenerating the UUID is a slow process, secondly
-		// we do not want to modify a snapshot in case it is corrupted for some reason, so at mount time
-		// we take another snapshot of the snapshot, regenerate the temporary snapshot's UUID and then
-		// mount that.
-		regenerateFSUUID := renegerateFilesystemUUIDNeeded(snapVol.ConfigBlockFilesystem())
-		if regenerateFSUUID {
-			// Instantiate a new volume to be the temporary writable snapshot.
-			tmpVolName := fmt.Sprintf("%s%s", snapVol.name, tmpVolSuffix)
-			tmpVol := NewVolume(d, d.name, snapVol.volType, snapVol.contentType, tmpVolName, snapVol.config, snapVol.poolConfig)
+		isQcow2 := snapVol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2
+		if isQcow2 {
+			parentName, _, _ := api.GetParentAndSnapshotName(snapVol.name)
+			mountVol = NewVolume(d, d.name, snapVol.volType, snapVol.contentType, parentName, snapVol.config, snapVol.poolConfig)
 
-			// Create writable snapshot from source snapshot named with a tmpVolSuffix suffix.
-			_, err = d.createLogicalVolumeSnapshot(d.config["lvm.vg_name"], snapVol, tmpVol, false, d.usesThinpool())
+			// Activate volume if needed.
+			_, err = d.activateVolume(mountVol)
 			if err != nil {
-				return fmt.Errorf("Error creating temporary LVM logical volume snapshot: %w", err)
+				return err
 			}
 
-			reverter.Add(func() {
-				_ = d.removeLogicalVolume(d.lvmPath(d.config["lvm.vg_name"], tmpVol.volType, tmpVol.contentType, tmpVol.name))
-			})
+			// Get volume path.
+			volPath := d.lvmPath(d.config["lvm.vg_name"], mountVol.volType, mountVol.contentType, mountVol.name)
 
-			// We are going to mount the temporary volume instead.
-			mountVol = tmpVol
-		}
+			volDevPath, err := d.lvmDevPath(volPath)
+			if err != nil {
+				return err
+			}
 
-		// Activate volume if needed.
-		_, err = d.activateVolume(mountVol)
-		if err != nil {
-			return err
-		}
+			// Finally attempt to mount the volume that needs mounting.
+			err = TryMount(volDevPath, mountPath, mountVol.ConfigBlockFilesystem(), mountFlags|unix.MS_RDONLY, mountOptions)
+			if err != nil {
+				return fmt.Errorf("Failed to mount LVM snapshot volume: %w", err)
+			}
 
-		// Get volume path.
-		volPath := d.lvmPath(d.config["lvm.vg_name"], mountVol.volType, mountVol.contentType, mountVol.name)
+			d.logger.Debug("Mounted logical volume snapshot", logger.Ctx{"dev": volPath, "path": mountPath, "options": mountOptions})
+		} else {
+			// Regenerate filesystem UUID if needed. This is because some filesystems do not allow mounting
+			// multiple volumes that share the same UUID. As snapshotting a volume will copy its UUID we need
+			// to potentially regenerate the UUID of the snapshot now that we are trying to mount it.
+			// This is done at mount time rather than snapshot time for 2 reasons; firstly snapshots need to be
+			// as fast as possible, and on some filesystems regenerating the UUID is a slow process, secondly
+			// we do not want to modify a snapshot in case it is corrupted for some reason, so at mount time
+			// we take another snapshot of the snapshot, regenerate the temporary snapshot's UUID and then
+			// mount that.
+			regenerateFSUUID := renegerateFilesystemUUIDNeeded(snapVol.ConfigBlockFilesystem())
+			if regenerateFSUUID {
+				// Instantiate a new volume to be the temporary writable snapshot.
+				tmpVolName := fmt.Sprintf("%s%s", snapVol.name, tmpVolSuffix)
+				tmpVol := NewVolume(d, d.name, snapVol.volType, snapVol.contentType, tmpVolName, snapVol.config, snapVol.poolConfig)
 
-		volDevPath, err := d.lvmDevPath(volPath)
-		if err != nil {
-			return err
-		}
-
-		if regenerateFSUUID {
-			tmpVolFsType := mountVol.ConfigBlockFilesystem()
-
-			// When mounting XFS filesystems temporarily we can use the nouuid option rather than fully
-			// regenerating the filesystem UUID.
-			if tmpVolFsType == "xfs" {
-				idx := strings.Index(mountOptions, "nouuid")
-				if idx < 0 {
-					mountOptions += ",nouuid"
-				}
-			} else {
-				d.logger.Debug("Regenerating filesystem UUID", logger.Ctx{"dev": volPath, "fs": tmpVolFsType})
-				err = regenerateFilesystemUUID(mountVol.ConfigBlockFilesystem(), volDevPath)
+				// Create writable snapshot from source snapshot named with a tmpVolSuffix suffix.
+				_, err = d.createLogicalVolumeSnapshot(d.config["lvm.vg_name"], snapVol, tmpVol, false, d.usesThinpool())
 				if err != nil {
-					return err
+					return fmt.Errorf("Error creating temporary LVM logical volume snapshot: %w", err)
+				}
+
+				reverter.Add(func() {
+					_ = d.removeLogicalVolume(d.lvmPath(d.config["lvm.vg_name"], tmpVol.volType, tmpVol.contentType, tmpVol.name))
+				})
+
+				// We are going to mount the temporary volume instead.
+				mountVol = tmpVol
+			}
+
+			// Activate volume if needed.
+			_, err = d.activateVolume(mountVol)
+			if err != nil {
+				return err
+			}
+
+			// Get volume path.
+			volPath := d.lvmPath(d.config["lvm.vg_name"], mountVol.volType, mountVol.contentType, mountVol.name)
+
+			volDevPath, err := d.lvmDevPath(volPath)
+			if err != nil {
+				return err
+			}
+
+			if regenerateFSUUID {
+				tmpVolFsType := mountVol.ConfigBlockFilesystem()
+
+				// When mounting XFS filesystems temporarily we can use the nouuid option rather than fully
+				// regenerating the filesystem UUID.
+				if tmpVolFsType == "xfs" {
+					idx := strings.Index(mountOptions, "nouuid")
+					if idx < 0 {
+						mountOptions += ",nouuid"
+					}
+				} else {
+					d.logger.Debug("Regenerating filesystem UUID", logger.Ctx{"dev": volPath, "fs": tmpVolFsType})
+					err = regenerateFilesystemUUID(mountVol.ConfigBlockFilesystem(), volDevPath)
+					if err != nil {
+						return err
+					}
 				}
 			}
-		}
 
-		// Finally attempt to mount the volume that needs mounting.
-		err = TryMount(volDevPath, mountPath, mountVol.ConfigBlockFilesystem(), mountFlags|unix.MS_RDONLY, mountOptions)
-		if err != nil {
-			return fmt.Errorf("Failed to mount LVM snapshot volume: %w", err)
-		}
+			// Finally attempt to mount the volume that needs mounting.
+			err = TryMount(volDevPath, mountPath, mountVol.ConfigBlockFilesystem(), mountFlags|unix.MS_RDONLY, mountOptions)
+			if err != nil {
+				return fmt.Errorf("Failed to mount LVM snapshot volume: %w", err)
+			}
 
-		d.logger.Debug("Mounted logical volume snapshot", logger.Ctx{"dev": volPath, "path": mountPath, "options": mountOptions})
+			d.logger.Debug("Mounted logical volume snapshot", logger.Ctx{"dev": volPath, "path": mountPath, "options": mountOptions})
+		}
 	} else if snapVol.contentType == ContentTypeBlock {
 		// Activate volume if needed.
 		_, err = d.activateVolume(snapVol)
@@ -1655,7 +1796,15 @@ func (d *lvm) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *o
 	parentName, _, _ := api.GetParentAndSnapshotName(snapVol.name)
 	newSnapVolName := GetSnapshotVolumeName(parentName, newSnapshotName)
 	newVolPath := d.lvmPath(d.config["lvm.vg_name"], snapVol.volType, snapVol.contentType, newSnapVolName)
-	err := d.renameLogicalVolume(volPath, newVolPath)
+
+	release, err := d.acquireExclusive(snapVol)
+	if err != nil {
+		return err
+	}
+
+	defer release()
+
+	err = d.renameLogicalVolume(volPath, newVolPath)
 	if err != nil {
 		return fmt.Errorf("Error renaming LVM logical volume: %w", err)
 	}
@@ -1665,6 +1814,51 @@ func (d *lvm) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *o
 	err = os.Rename(oldPath, newPath)
 	if err != nil {
 		return fmt.Errorf("Error renaming snapshot mount path from %q to %q: %w", oldPath, newPath, err)
+	}
+
+	return nil
+}
+
+// GetQcow2BackingFilePath generates the backing file path for the specified volume.
+func (d *lvm) GetQcow2BackingFilePath(vol Volume) (string, error) {
+	pathName := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
+	return filepath.Join("/dev", pathName), nil
+}
+
+// Qcow2DeletionCleanup performs post block-commit cleanup of qcow2 snapshot artifacts.
+func (d *lvm) Qcow2DeletionCleanup(snapVol Volume, childName string) error {
+	childVolPath := d.lvmPath(d.config["lvm.vg_name"], snapVol.volType, snapVol.contentType, childName)
+	snapVolPath := d.lvmPath(d.config["lvm.vg_name"], snapVol.volType, snapVol.contentType, snapVol.name)
+	childVol := NewVolume(d, d.name, snapVol.volType, snapVol.contentType, childName, snapVol.config, snapVol.poolConfig)
+
+	// Activate volume if needed.
+	activated, err := d.activateVolume(childVol)
+	if err != nil {
+		return err
+	}
+
+	_ = d.removeLogicalVolume(childVolPath)
+
+	_, err = d.acquireExclusive(snapVol)
+	if err != nil {
+		return err
+	}
+
+	err = d.renameLogicalVolume(snapVolPath, childVolPath)
+	if err != nil {
+		return fmt.Errorf("Error temporarily renaming original LVM logical volume: %w", err)
+	}
+
+	releaseParent, err := d.acquireExclusive(childVol)
+	if err != nil {
+		return err
+	}
+
+	releaseParent()
+
+	// Deactivate volume if was not active before operation.
+	if activated {
+		_, _ = d.deactivateVolume(childVol)
 	}
 
 	return nil

@@ -355,6 +355,7 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 	}
 
 	lvFullName := d.lvmFullVolumeName(vol.volType, vol.contentType, vol.name)
+	logCtx := logger.Ctx{"vg_name": vgName, "lv_name": lvFullName, "size": fmt.Sprintf("%db", lvSizeBytes)}
 
 	args := []string{
 		"--name", lvFullName,
@@ -408,6 +409,8 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 		if err != nil {
 			return fmt.Errorf("Error making filesystem on LVM logical volume: %w", err)
 		}
+
+		logCtx["fs"] = vol.ConfigBlockFilesystem()
 	} else if !d.usesThinpool() {
 		// Make sure we get an empty LV.
 		err := linux.ClearBlock(volDevPath, 0)
@@ -430,7 +433,7 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 		}
 	}
 
-	d.logger.Debug("Logical volume created", logger.Ctx{"vg_name": vgName, "lv_name": lvFullName, "size": fmt.Sprintf("%db", lvSizeBytes), "fs": vol.ConfigBlockFilesystem()})
+	d.logger.Debug("Logical volume created", logCtx)
 	return nil
 }
 
@@ -513,7 +516,9 @@ func (d *lvm) acquireExclusive(vol Volume) (func(), error) {
 	}
 
 	return func() {
-		_, _ = subprocess.TryRunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
+		if vol.ContentType() == ContentTypeBlock && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
+			_, _ = subprocess.TryRunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
+		}
 	}, nil
 }
 
@@ -871,7 +876,7 @@ func (d *lvm) parseLogicalVolumeSnapshot(parent Volume, lvmVolName string) strin
 func (d *lvm) activateVolume(vol Volume) (bool, error) {
 	var volPath string
 
-	if d.usesThinpool() {
+	if d.usesThinpool() || isQcow2Block(vol) {
 		volPath = d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
 	} else {
 		// Use parent for non-thinpool vols as activating the parent volume also activates its snapshots.
@@ -895,9 +900,16 @@ func (d *lvm) activateVolume(vol Volume) (bool, error) {
 	defer lvmActivation.Unlock()
 
 	if d.clustered {
-		_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volPath)
-		if err != nil {
-			return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volPath, err)
+		if vol.ContentType() == ContentTypeBlock && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
+			_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volPath)
+			if err != nil {
+				return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volPath, err)
+			}
+		} else {
+			_, err := subprocess.RunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volPath)
+			if err != nil {
+				return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volPath, err)
+			}
 		}
 	} else {
 		_, err := subprocess.RunCommand("lvchange", "--activate", "y", "--ignoreactivationskip", volPath)
@@ -915,7 +927,7 @@ func (d *lvm) activateVolume(vol Volume) (bool, error) {
 func (d *lvm) deactivateVolume(vol Volume) (bool, error) {
 	var volPath string
 
-	if d.usesThinpool() {
+	if d.usesThinpool() || isQcow2Block(vol) {
 		volPath = d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
 	} else {
 		// Use parent for non-thinpool vols as deactivating the parent volume also activates its snapshots.

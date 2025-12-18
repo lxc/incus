@@ -37,8 +37,9 @@ var (
 )
 
 var (
-	lvmLoaded  bool
-	lvmVersion string
+	lvmLoaded        bool
+	lvmClusterLoaded bool
+	lvmVersion       string
 )
 
 type lvm struct {
@@ -58,7 +59,11 @@ func (d *lvm) load() error {
 	}
 
 	// Done if previously loaded.
-	if lvmLoaded {
+	if !d.clustered && lvmLoaded {
+		return nil
+	}
+
+	if d.clustered && lvmClusterLoaded {
 		return nil
 	}
 
@@ -77,7 +82,7 @@ func (d *lvm) load() error {
 	// Validate the required binaries.
 	tools := []string{"lvm"}
 	if d.clustered {
-		tools = append(tools, []string{"lvmlockctl", "sanlock"}...)
+		tools = append(tools, []string{"lvmlockctl", "sanlock", "btrfs"}...)
 	}
 
 	for _, tool := range tools {
@@ -113,7 +118,12 @@ func (d *lvm) load() error {
 		}
 	}
 
-	lvmLoaded = true
+	if d.clustered {
+		lvmClusterLoaded = true
+	} else {
+		lvmLoaded = true
+	}
+
 	return nil
 }
 
@@ -141,8 +151,10 @@ func (d *lvm) isRemote() bool {
 // Info returns info about the driver and its environment.
 func (d *lvm) Info() Info {
 	name := "lvm"
+	targetFormat := BlockVolumeTypeRaw
 	if d.clustered {
 		name = "lvmcluster"
+		targetFormat = BlockVolumeTypeQcow2
 	}
 
 	return Info{
@@ -163,6 +175,7 @@ func (d *lvm) Info() Info {
 		Buckets:                      !d.isRemote(),
 		Deactivate:                   d.isRemote(),
 		ZeroUnpack:                   !d.usesThinpool(),
+		TargetFormat:                 targetFormat,
 	}
 }
 
@@ -723,6 +736,11 @@ func (d *lvm) Update(changedConfig map[string]string) error {
 	_, changed = changedConfig["volume.lvm.stripes.size"]
 	if changed && d.usesThinpool() {
 		return errors.New("volume.lvm.stripes.size cannot be changed when using thin pool")
+	}
+
+	_, changed = changedConfig["volume.block.type"]
+	if changed {
+		return errors.New("volume.block.type cannot be changed after creation")
 	}
 
 	if changedConfig["lvm.vg_name"] != "" {

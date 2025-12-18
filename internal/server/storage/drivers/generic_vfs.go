@@ -1210,7 +1210,7 @@ func genericRunFiller(d Driver, vol Volume, devPath string, filler *VolumeFiller
 	}
 
 	vol.driver.Logger().Debug("Running filler function", logger.Ctx{"dev": devPath, "path": vol.MountPath()})
-	volSize, err := filler.Fill(vol, devPath, allowUnsafeResize, !d.Info().ZeroUnpack)
+	volSize, err := filler.Fill(vol, devPath, allowUnsafeResize, !d.Info().ZeroUnpack, d.Info().TargetFormat)
 	if err != nil {
 		return err
 	}

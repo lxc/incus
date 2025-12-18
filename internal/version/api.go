@@ -511,6 +511,7 @@ var APIExtensions = []string{
 	"device_pci_firmware",
 	"resources_serial",
 	"ovn_nic_limits",
+	"storage_lvmcluster_qcow2",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

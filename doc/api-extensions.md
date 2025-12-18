@@ -2954,3 +2954,7 @@ This adds serial device tracking to the resources API.
 ## `ovn_nic_limits`
 
 This adds support for `limits.egress`, `limits.ingress`, `limits.max` and `limits.priority` on `ovn` type network devices.
+
+## `storage_lvmcluster_qcow2`
+
+This adds support for running virtual machines from `QCOW2` images. Support is currently limited to `lvmcluster` storage driver.

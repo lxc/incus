@@ -557,3 +557,13 @@ func (d *common) filesystemFreeze(path string) (func() error, error) {
 func (d *common) CacheVolumeSnapshots(vol Volume) error {
 	return nil
 }
+
+// GetQcow2BackingFilePath generates the backing file path for the specified volume.
+func (d *common) GetQcow2BackingFilePath(vol Volume) (string, error) {
+	return "", ErrNotSupported
+}
+
+// Qcow2DeletionCleanup performs post block-commit cleanup of qcow2 snapshot artifacts.
+func (d *common) Qcow2DeletionCleanup(vol Volume, childName string) error {
+	return ErrNotSupported
+}
