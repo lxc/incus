@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-12-17 10:09-0500\n"
-"PO-Revision-Date: 2025-11-29 19:00+0000\n"
+"PO-Revision-Date: 2025-12-18 19:00+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.15.1-dev\n"
 
 #: cmd/incus/info.go:453
 msgid "  Chassis:"
@@ -3775,9 +3775,8 @@ msgid "Get current load balancer status"
 msgstr "Obtém o status do balanceador de carga atual"
 
 #: cmd/incus/network_load_balancer.go:1325
-#, fuzzy
 msgid "Get current load-balancer status"
-msgstr "Obtém o status do balanceador de carga atual"
+msgstr "Obtém o status do balanceador-de-carga atual"
 
 #: cmd/incus/image.go:1598 cmd/incus/image.go:1599
 msgid "Get image properties"
