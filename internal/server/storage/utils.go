@@ -275,10 +275,12 @@ func VolumeDBCreate(pool Pool, projectName string, volumeName string, volumeDesc
 	// Set source indicator.
 	vol.SetHasSource(hasSource)
 
-	// Fill default config.
-	err = pool.Driver().FillVolumeConfig(vol)
-	if err != nil {
-		return err
+	// For new volumes, fill default config.
+	if !snapshot {
+		err = pool.Driver().FillVolumeConfig(vol)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Validate config.
