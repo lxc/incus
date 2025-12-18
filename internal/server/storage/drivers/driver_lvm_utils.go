@@ -900,7 +900,7 @@ func (d *lvm) activateVolume(vol Volume) (bool, error) {
 	defer lvmActivation.Unlock()
 
 	if d.clustered {
-		if vol.ContentType() == ContentTypeBlock && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
+		if vol.Type() == VolumeTypeVM || vol.ContentType() == ContentTypeBlock {
 			_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volPath)
 			if err != nil {
 				return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volPath, err)
