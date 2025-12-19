@@ -5279,7 +5279,7 @@ This value is required by some providers.
 :scope: "global"
 :shortdesc: "API token of the OpenFGA server"
 :type: "string"
-
+This value is required to activate the OpenFGA integration.
 ```
 
 ```{config:option} openfga.api.url server-openfga
