@@ -42,6 +42,10 @@ var execCmd = APIEndpoint{
 }
 
 func execPost(d *Daemon, r *http.Request) response.Response {
+	if d.Features != nil && !d.Features["exec"] {
+		return response.Forbidden(errors.New("Command execution has been disabled by configuration"))
+	}
+
 	post := api.InstanceExecPost{}
 
 	buf, err := io.ReadAll(r.Body)

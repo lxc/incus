@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -17,6 +18,10 @@ var sftpCmd = APIEndpoint{
 }
 
 func sftpHandler(d *Daemon, r *http.Request) response.Response {
+	if d.Features != nil && !d.Features["files"] {
+		return response.Forbidden(errors.New("File transfers are disabled by configuration"))
+	}
+
 	return &sftpServe{d, r}
 }
 

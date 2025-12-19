@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/lxc/incus/v6/internal/server/metrics"
@@ -15,6 +16,10 @@ var metricsCmd = APIEndpoint{
 }
 
 func metricsGet(d *Daemon, r *http.Request) response.Response {
+	if d.Features != nil && !d.Features["metrics"] {
+		return response.Forbidden(errors.New("Guest metrics are disabled by configuration"))
+	}
+
 	if !osMetricsSupported {
 		return response.NotFound(nil)
 	}
