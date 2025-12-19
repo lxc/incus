@@ -435,8 +435,8 @@ func (d *zone) Content() (*strings.Builder, error) {
 			includeV6 := includeNAT || util.IsFalseOrEmpty(netConfig["ipv6.nat"])
 
 			// Check if dealing with a reverse zone.
-			isReverse4 := strings.HasSuffix(d.info.Name, ip4Arpa)
-			isReverse6 := strings.HasSuffix(d.info.Name, ip6Arpa)
+			isReverse4 := strings.HasSuffix(d.info.Name, localUtil.IPv4Arpa)
+			isReverse6 := strings.HasSuffix(d.info.Name, localUtil.IPv6Arpa)
 			isReverse := isReverse4 || isReverse6
 
 			genRecord := func(name string, ip net.IP) map[string]string {
@@ -473,7 +473,7 @@ func (d *zone) Content() (*strings.Builder, error) {
 					}
 
 					// Get the ARPA record.
-					reverseAddr := reverse(ip)
+					reverseAddr := localUtil.ReverseDNS(ip)
 					if reverseAddr == "" {
 						return nil
 					}
