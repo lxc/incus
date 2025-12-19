@@ -17,6 +17,7 @@ import (
 	"github.com/lxc/incus/v6/internal/iprange"
 	ovnNB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-nb"
 	ovnSB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-sb"
+	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -2140,6 +2141,7 @@ func (o *NB) UpdateLogicalSwitchPortDNS(ctx context.Context, switchName OVNSwitc
 			}
 
 			dnsIPsStr.WriteString(dnsIP.String())
+			dnsRecord.Records[strings.TrimSuffix(localUtil.ReverseDNS(dnsIP), ".")] = strings.ToLower(dnsName)
 		}
 
 		dnsRecord.Records[strings.ToLower(dnsName)] = dnsIPsStr.String()
