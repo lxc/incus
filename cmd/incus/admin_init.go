@@ -3,22 +3,16 @@
 package main
 
 import (
-	"encoding/pem"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/ports"
-	internalUtil "github.com/lxc/incus/v6/internal/util"
-	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 	cli "github.com/lxc/incus/v6/shared/cmd"
-	localtls "github.com/lxc/incus/v6/shared/tls"
-	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdAdminInit struct {
@@ -35,8 +29,6 @@ type cmdAdminInit struct {
 	flagStorageDevice   string
 	flagStorageLoopSize int
 	flagStoragePool     string
-
-	hostname string
 }
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
@@ -141,101 +133,19 @@ func (c *cmdAdminInit) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Check if the path to the cluster certificate is set
-	// If yes then read cluster certificate from file
-	if config.Cluster != nil && config.Cluster.ClusterCertificatePath != "" {
-		if !util.PathExists(config.Cluster.ClusterCertificatePath) {
-			return fmt.Errorf(i18n.G("Path %s doesn't exist"), config.Cluster.ClusterCertificatePath)
-		}
+	err = fillClusterConfig(config)
+	if err != nil {
+		return err
+	}
 
-		content, err := os.ReadFile(config.Cluster.ClusterCertificatePath)
+	if config.Cluster != nil && config.Cluster.ClusterAddress != "" && config.Cluster.ServerAddress != "" {
+		err = updateCluster(d, config)
 		if err != nil {
 			return err
-		}
-
-		config.Cluster.ClusterCertificate = string(content)
-	}
-
-	// Check if we got a cluster join token, if so, fill in the config with it.
-	if config.Cluster != nil && config.Cluster.ClusterToken != "" {
-		joinToken, err := internalUtil.JoinTokenDecode(config.Cluster.ClusterToken)
-		if err != nil {
-			return fmt.Errorf(i18n.G("Invalid cluster join token: %w"), err)
-		}
-
-		// Set server name from join token
-		config.Cluster.ServerName = joinToken.ServerName
-
-		// Attempt to find a working cluster member to use for joining by retrieving the
-		// cluster certificate from each address in the join token until we succeed.
-		for _, clusterAddress := range joinToken.Addresses {
-			// Cluster URL
-			config.Cluster.ClusterAddress = internalUtil.CanonicalNetworkAddress(clusterAddress, ports.HTTPSDefaultPort)
-
-			// Cluster certificate
-			cert, err := localtls.GetRemoteCertificate(fmt.Sprintf("https://%s", config.Cluster.ClusterAddress), version.UserAgent)
-			if err != nil {
-				fmt.Printf(i18n.G("Error connecting to existing cluster member %q: %v")+"\n", clusterAddress, err)
-				continue
-			}
-
-			certDigest := localtls.CertFingerprint(cert)
-			if joinToken.Fingerprint != certDigest {
-				return fmt.Errorf(i18n.G("Certificate fingerprint mismatch between join token and cluster member %q"), clusterAddress)
-			}
-
-			config.Cluster.ClusterCertificate = string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw}))
-
-			break // We've found a working cluster member.
-		}
-
-		if config.Cluster.ClusterCertificate == "" {
-			return errors.New(i18n.G("Unable to connect to any of the cluster members specified in join token"))
-		}
-	}
-
-	// If clustering is enabled, and no cluster.https_address network address
-	// was specified, we fallback to core.https_address.
-	if config.Cluster != nil &&
-		config.Server.Config["core.https_address"] != "" &&
-		config.Server.Config["cluster.https_address"] == "" {
-		config.Server.Config["cluster.https_address"] = config.Server.Config["core.https_address"]
-	}
-
-	// Detect if the user has chosen to join a cluster using the new
-	// cluster join API format, and use the dedicated API if so.
-	if config.Cluster != nil && config.Cluster.ClusterAddress != "" && config.Cluster.ServerAddress != "" {
-		// Ensure the server and cluster addresses are in canonical form.
-		config.Cluster.ServerAddress = internalUtil.CanonicalNetworkAddress(config.Cluster.ServerAddress, ports.HTTPSDefaultPort)
-		config.Cluster.ClusterAddress = internalUtil.CanonicalNetworkAddress(config.Cluster.ClusterAddress, ports.HTTPSDefaultPort)
-
-		op, err := d.UpdateCluster(config.Cluster.ClusterPut, "")
-		if err != nil {
-			return fmt.Errorf(i18n.G("Failed to join cluster: %w"), err)
-		}
-
-		err = op.Wait()
-		if err != nil {
-			return fmt.Errorf(i18n.G("Failed to join cluster: %w"), err)
 		}
 
 		return nil
 	}
 
 	return d.ApplyServerPreseed(*config)
-}
-
-func (c *cmdAdminInit) defaultHostname() string {
-	if c.hostname != "" {
-		return c.hostname
-	}
-
-	// Cluster server name
-	hostName, err := os.Hostname()
-	if err != nil {
-		hostName = "incus"
-	}
-
-	c.hostname = hostName
-	return hostName
 }
