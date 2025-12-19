@@ -845,7 +845,7 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 		} else {
 			file, err = os.Open(f)
 			if err != nil {
-				return err
+				return fmt.Errorf(i18n.G("Failed to open source file %q: %v"), f, err)
 			}
 		}
 
