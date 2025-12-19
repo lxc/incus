@@ -129,12 +129,6 @@ Enable IPv4 forwarding
   Incus bridge networks enable this setting normally.
   However, if Incus starts after Docker, then Docker will already have modified the global FORWARD policy.
 
-  ```{warning}
-  Enabling IPv4 forwarding can cause your Docker container ports to be reachable from any machine on your local network.
-  Depending on your environment, this might be undesirable.
-  See [local network container access issue](https://github.com/moby/moby/issues/14041) for more information.
-  ```
-
   To enable IPv4 forwarding before Docker starts, ensure that the following `sysctl` setting is enabled:
 
       net.ipv4.conf.all.forwarding=1
