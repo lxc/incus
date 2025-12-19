@@ -8,9 +8,10 @@ import (
 
 // A Daemon can respond to requests from a shared client.
 type Daemon struct {
-	// Event servers
+	// Event servers.
 	events *events.Server
 
+	// Paths.
 	secretsLocation string
 
 	// ContextID and port of the host socket server.

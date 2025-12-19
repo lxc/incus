@@ -47,8 +47,7 @@ func (c *cmdAgent) Command() *cobra.Command {
 
 func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 	if c.global.flagService {
-		err := runService("Incus-Agent", c)
-		return err
+		return runService("Incus-Agent", c)
 	}
 
 	// Setup logger.
