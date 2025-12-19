@@ -1,4 +1,7 @@
 test_incremental_copy() {
+    # shellcheck disable=2153
+    [ "${INCUS_BACKEND}" = "linstor" ] && echo "==> SKIP: Linstor can't currently handle copies with snapshots" && return
+
     ensure_import_testimage
     ensure_has_localhost_remote "${INCUS_ADDR}"
 

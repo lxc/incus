@@ -1,4 +1,7 @@
 test_snapshots() {
+    # shellcheck disable=2153
+    [ "${INCUS_BACKEND}" = "linstor" ] && echo "==> SKIP: Linstor can't currently handle copies with snapshots" && return
+
     snapshots
 
     if [ "$(storage_backend "$INCUS_DIR")" = "lvm" ]; then
@@ -97,6 +100,7 @@ snapshots() {
 }
 
 test_snap_restore() {
+    [ "${INCUS_BACKEND}" = "linstor" ] && echo "==> SKIP: Linstor can't currently handle copies with snapshots" && return
     snap_restore
 
     if [ "$(storage_backend "$INCUS_DIR")" = "lvm" ]; then
@@ -315,6 +319,9 @@ restore_and_compare_fs() {
 }
 
 test_snap_expiry() {
+    # shellcheck disable=2153
+    [ "${INCUS_BACKEND}" = "linstor" ] && echo "==> SKIP: Linstor can't currently handle copies with snapshots" && return
+
     # shellcheck disable=2039,3043
     local incus_backend
     incus_backend=$(storage_backend "$INCUS_DIR")
@@ -341,6 +348,9 @@ test_snap_expiry() {
 }
 
 test_snap_schedule() {
+    # shellcheck disable=2153
+    [ "${INCUS_BACKEND}" = "linstor" ] && echo "==> SKIP: Linstor can't currently handle copies with snapshots" && return
+
     # shellcheck disable=2039,3043
     local incus_backend
     incus_backend=$(storage_backend "$INCUS_DIR")
