@@ -14,24 +14,24 @@ The permissible values for these options depend on the kernel version and can be
 (`include/uapi/linux/bpf.h` in the kernel tree, `/usr/include/linux/bpf.h` on most distributions if you have the kernel
 sources installed):
 
- Key                               | Kernel `enum`      | Remove prefix
- :--                               |:--                 | :--
- `security.bpffs.delegate_cmds`    | `bpf_cmd`          | `BPF_`
- `security.bpffs.delegate_maps`    | `bpf_map_type`     | `BPF_MAP_TYPE_`
- `security.bpffs.delegate_progs`   | `bpf_prog_type`    | `BPF_PROG_TYPE_`
- `security.bpffs.delegate_attachs` | `bpf_attach_type`  | `BPF_`
+| Key                               | Kernel `enum`      | Remove prefix |
+| :---                              | :---               | :--- |
+| `security.bpffs.delegate_cmds`    | `bpf_cmd`          | `BPF_` |
+| `security.bpffs.delegate_maps`    | `bpf_map_type`     | `BPF_MAP_TYPE_` |
+| `security.bpffs.delegate_progs`   | `bpf_prog_type`    | `BPF_PROG_TYPE_` |
+| `security.bpffs.delegate_attachs` | `bpf_attach_type`  | `BPF_` |
 
 Each of these options takes a comma-separated list of values, additionally the value `any` is supported to delegate all
 possible values of the type.
 
 ## Example
 
- Key                               | Value
- :--                               | :--
- `security.bpffs.delegate_cmds`    | `map_create,obj_get,link_create`
- `security.bpffs.delegate_maps`    | `hash,array,devmap,queue,stack`
- `security.bpffs.delegate_progs`   | `socket_filter,kprobe,cgroup_sysctl`
- `security.bpffs.delegate_attachs` | `any`
+| Key                               | Value |
+| :---                              | :--- |
+| `security.bpffs.delegate_cmds`    | `map_create,obj_get,link_create` |
+| `security.bpffs.delegate_maps`    | `hash,array,devmap,queue,stack` |
+| `security.bpffs.delegate_progs`   | `socket_filter,kprobe,cgroup_sysctl` |
+| `security.bpffs.delegate_attachs` | `any` |
 
 ```bash
 $ mount -t bpf
