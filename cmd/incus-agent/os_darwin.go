@@ -27,7 +27,10 @@ import (
 	"github.com/lxc/incus/v6/shared/subprocess"
 )
 
-var osBaseWorkingDirectory = "/"
+var (
+	osBaseWorkingDirectory = "/"
+	osAgentConfigPath      = "/usr/local/etc/incus-agent.yml"
+)
 
 func parseBytes(b []byte) string {
 	n := bytes.IndexByte(b, 0)

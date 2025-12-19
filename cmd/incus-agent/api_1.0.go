@@ -112,6 +112,10 @@ func api10Put(d *Daemon, r *http.Request) response.Response {
 }
 
 func startDevIncusServer(d *Daemon) error {
+	if d.Features != nil && !d.Features["guestapi"] {
+		return nil
+	}
+
 	if !osGuestAPISupport {
 		return nil
 	}

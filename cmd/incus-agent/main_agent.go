@@ -47,8 +47,7 @@ func (c *cmdAgent) Command() *cobra.Command {
 
 func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 	if c.global.flagService {
-		err := runService("Incus-Agent", c)
-		return err
+		return runService("Incus-Agent", c)
 	}
 
 	// Setup logger.
@@ -121,10 +120,18 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Mount shares from host.
-	c.mountHostShares()
-
 	d := newDaemon(c.global.flagLogDebug, c.global.flagLogVerbose, c.global.flagSecretsLocation)
+
+	// Load the agent configuration.
+	err = loadAgentConfig(d)
+	if err != nil {
+		return err
+	}
+
+	// Mount shares from host.
+	if d.Features == nil || d.Features["mounts"] {
+		c.mountHostShares()
+	}
 
 	// Start the server.
 	err = startHTTPServer(d, c.global.flagLogDebug)

@@ -233,3 +233,35 @@ Apple's Transparency, Consent, Control daemon requires you to allow full disk ac
 This reduces the overall security of the system, by relaxing some of Apple's additional security restrictions.
 This does not in any way bypass UNIX permissions, however, if you are not comfortable with that, you will need to manually run `incus-agent` each time.
 ```
+
+### Configure the Incus Agent
+By default the Incus Agent will have all features enabled.
+
+In some environments, VM owners may want to turn off specific features.
+
+This can be done through a `incus-agent.yml` file which is located at:
+
+- `/etc/incus-agent.yml` on Linux
+- `/usr/local/etc/incus-agent.yml` on MacOS
+- `C:\Program Files\Incus Agent\incus-agent.yml` on Windows
+
+If the file is missing or is empty, all features will be enabled.
+If the file contains a `features` map, then all features will be disabled unless specifically enabled.
+
+The supported features are:
+
+- `guestapi` controls whether the agent exposes the `/dev/incus` API within the guest
+- `exec` controls whether commands can be executed through the agent
+- `files` controls whether the files transfer API is available
+- `mounts` controls whether to setup the file system mounts for shared disk devices
+- `metrics` controls access to detailed OpenMetrics data
+- `state` controls access to basic OS state information (OS version, network interface details, ...)
+
+An example YAML file would be:
+
+```
+features:
+  guestapi: true
+  metrics: true
+  state: true
+```
