@@ -50,6 +50,7 @@ var (
 	osBaseWorkingDirectory = "/"
 	osMetricsSupported     = true
 	osGuestAPISupport      = true
+	osAgentConfigPath      = "/etc/incus-agent.yml"
 )
 
 func runService(name string, agentCmd *cmdAgent) error {
