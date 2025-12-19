@@ -70,7 +70,7 @@ func sftpCreateFile(sftpConn *sftp.Client, targetPath string, args incus.Instanc
 	case "file":
 		file, err := sftpConn.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
 		if err != nil {
-			return fmt.Errorf(i18n.G("Failed to open target file %q: %w"),  targetPath, err)
+			return fmt.Errorf(i18n.G("Failed to open target file %q: %w"), targetPath, err)
 		}
 
 		defer func() { _ = file.Close() }()

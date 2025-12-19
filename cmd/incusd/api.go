@@ -18,10 +18,12 @@ import (
 	clusterRequest "github.com/lxc/incus/v6/internal/server/cluster/request"
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/internal/server/response"
 	storagePools "github.com/lxc/incus/v6/internal/server/storage"
 	"github.com/lxc/incus/v6/internal/server/storage/s3"
+	"github.com/lxc/incus/v6/internal/server/storage/s3/miniod"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
@@ -264,20 +266,26 @@ func storageBucketsServer(d *Daemon) *http.Server {
 				return
 			}
 
-			pool, err := storagePools.LoadByName(s, bucket.PoolName)
-			if err != nil {
-				errResult := s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}
-				errResult.Response(w)
+			// Fast path.
+			minioProc, err := miniod.Get(project.StorageVolume(bucket.Project, bucket.Name))
+			if minioProc == nil || err != nil {
+				// Slow path.
+				logger.Errorf("auth slow")
+				pool, err := storagePools.LoadByName(s, bucket.PoolName)
+				if err != nil {
+					errResult := s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}
+					errResult.Response(w)
 
-				return
-			}
+					return
+				}
 
-			minioProc, err := pool.ActivateBucket(bucket.Project, bucket.Name, nil)
-			if err != nil {
-				errResult := s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}
-				errResult.Response(w)
+				minioProc, err = pool.ActivateBucket(bucket.Project, bucket.Name, nil)
+				if err != nil {
+					errResult := s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}
+					errResult.Response(w)
 
-				return
+					return
+				}
 			}
 
 			u := minioProc.URL()
@@ -344,20 +352,26 @@ func storageBucketsServer(d *Daemon) *http.Server {
 			return
 		}
 
-		pool, err := storagePools.LoadByName(s, bucket.PoolName)
-		if err != nil {
-			errResult := s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}
-			errResult.Response(w)
+		// Fast path.
+		minioProc, err := miniod.Get(project.StorageVolume(bucket.Project, bucket.Name))
+		if minioProc == nil || err != nil {
+			// Slow path.
+			logger.Errorf("anon slow")
+			pool, err := storagePools.LoadByName(s, bucket.PoolName)
+			if err != nil {
+				errResult := s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}
+				errResult.Response(w)
 
-			return
-		}
+				return
+			}
 
-		minioProc, err := pool.ActivateBucket(bucket.Project, bucket.Name, nil)
-		if err != nil {
-			errResult := s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}
-			errResult.Response(w)
+			minioProc, err = pool.ActivateBucket(bucket.Project, bucket.Name, nil)
+			if err != nil {
+				errResult := s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}
+				errResult.Response(w)
 
-			return
+				return
+			}
 		}
 
 		u := minioProc.URL()
