@@ -28,7 +28,7 @@ require (
 	github.com/jochenvg/go-udev v0.0.0-20240801134859-b65ed646224b
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/lxc/go-lxc v0.0.0-20240606200241-27b3d116511f
-	github.com/lxc/incus-os/incus-osd v0.0.0-20251214161835-4ccb835533a9
+	github.com/lxc/incus-os/incus-osd v0.0.0-20251218211512-30e9f64eb91b
 	github.com/mattn/go-colorable v0.1.14
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/mdlayher/arp v0.0.0-20220512170110-6706a2966875
@@ -44,7 +44,7 @@ require (
 	github.com/openfga/go-sdk v0.7.3
 	github.com/osrg/gobgp/v3 v3.37.0
 	github.com/ovn-kubernetes/libovsdb v0.8.1
-	github.com/pierrec/lz4/v4 v4.1.22
+	github.com/pierrec/lz4/v4 v4.1.23
 	github.com/pkg/sftp v1.13.10
 	github.com/pkg/xattr v0.4.12
 	github.com/shirou/gopsutil/v4 v4.25.11
@@ -65,7 +65,7 @@ require (
 	golang.org/x/tools v0.40.0
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4
+	k8s.io/utils v0.0.0-20251218160917-61b37f7a4624
 	software.sslmate.com/src/go-pkcs12 v0.6.0
 )
 
