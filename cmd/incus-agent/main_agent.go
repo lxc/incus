@@ -125,6 +125,12 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 
 	d := newDaemon(c.global.flagLogDebug, c.global.flagLogVerbose, c.global.flagSecretsLocation)
 
+	// Load the agent configuration.
+	err = loadAgentConfig(d)
+	if err != nil {
+		return err
+	}
+
 	// Start the server.
 	err = startHTTPServer(d, c.global.flagLogDebug)
 	if err != nil {
