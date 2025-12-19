@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/lxc/incus/v6/internal/server/response"
@@ -12,15 +13,14 @@ var stateCmd = APIEndpoint{
 	Path: "state",
 
 	Get: APIEndpointAction{Handler: stateGet},
-	Put: APIEndpointAction{Handler: statePut},
 }
 
 func stateGet(d *Daemon, r *http.Request) response.Response {
-	return response.SyncResponse(true, renderState())
-}
+	if d.Features != nil && !d.Features["state"] {
+		return response.Forbidden(errors.New("Guest state reporting is disabled by configuration"))
+	}
 
-func statePut(d *Daemon, r *http.Request) response.Response {
-	return response.NotImplemented(nil)
+	return response.SyncResponse(true, renderState())
 }
 
 func renderState() *api.InstanceState {
