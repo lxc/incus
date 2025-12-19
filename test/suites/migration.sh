@@ -1,4 +1,7 @@
 test_migration() {
+    # shellcheck disable=2153
+    [ "${INCUS_BACKEND}" = "linstor" ] && echo "==> SKIP: Linstor can't currently handle copies with snapshots" && return
+
     # setup a second Incus
     # shellcheck disable=2039,3043
     local INCUS2_DIR INCUS2_ADDR incus_backend

@@ -418,22 +418,7 @@ func (d *linstor) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots 
 		}
 
 		if len(srcSnapshots) > 0 {
-			l.Debug("Snapshots copying required. Falling back to generic copy implementation")
-			// Ensure the mount path for ISO volumes is created when using the generic
-			// copy implementation. This is needed because genericVFSCopyVolume treats
-			// ISO volumes like filesystem volumes when performing the copy. This implies
-			// that the mount path for the volume must exist before the copying starts.
-			if srcVol.contentType == ContentTypeISO {
-				err := srcVol.EnsureMountPath(false)
-				if err != nil {
-					return err
-				}
-
-				rev.Add(func() { _ = os.Remove(vol.MountPath()) })
-			}
-
-			// TODO: support optimized copying with snapshots
-			return genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, false, allowInconsistent, op)
+			return errors.New("Linstor doesn't currently support copying volumes with their snapshots")
 		}
 	}
 

@@ -70,7 +70,7 @@ func sftpCreateFile(sftpConn *sftp.Client, targetPath string, args incus.Instanc
 	case "file":
 		file, err := sftpConn.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
 		if err != nil {
-			return err
+			return fmt.Errorf(i18n.G("Failed to open target file %q: %w"), targetPath, err)
 		}
 
 		defer func() { _ = file.Close() }()
@@ -296,7 +296,7 @@ func sftpRecursivePushFile(sftpConn *sftp.Client, source string, target string, 
 			// File handling
 			f, err := os.Open(p)
 			if err != nil {
-				return err
+				return fmt.Errorf(i18n.G("Failed to open source file %q: %v"), p, err)
 			}
 
 			defer func() { _ = f.Close() }()

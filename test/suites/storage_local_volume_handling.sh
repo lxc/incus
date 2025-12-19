@@ -1,4 +1,7 @@
 test_storage_local_volume_handling() {
+    # shellcheck disable=2153
+    [ "${INCUS_BACKEND}" = "linstor" ] && echo "==> SKIP: Linstor can't currently handle copies with snapshots" && return
+
     ensure_import_testimage
 
     # shellcheck disable=2039,3043

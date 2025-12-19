@@ -1,28 +1,31 @@
-package zone
+package util
 
 import (
 	"net"
 )
 
 // Zone suffixes.
-var (
-	ip4Arpa = ".in-addr.arpa"
-	ip6Arpa = ".ip6.arpa"
+const (
+	// IPv4Arpa represents the IPv4 reverse DNS suffix.
+	IPv4Arpa = ".in-addr.arpa"
+
+	// IPv6Arpa represents the IPv6 reverse DNS suffix.
+	IPv6Arpa = ".ip6.arpa"
 )
 
-// reverse takes an IPv4 or IPv6 address and returns the matching ARPA record.
-func reverse(ip net.IP) (arpa string) {
+// ReverseDNS takes an IPv4 or IPv6 address and returns the matching ARPA record.
+func ReverseDNS(ip net.IP) (arpa string) {
 	if ip == nil {
 		return ""
 	}
 
 	// Deal with IPv4.
 	if ip.To4() != nil {
-		return uitoa(uint(ip[15])) + "." + uitoa(uint(ip[14])) + "." + uitoa(uint(ip[13])) + "." + uitoa(uint(ip[12])) + ip4Arpa + "."
+		return uitoa(uint(ip[15])) + "." + uitoa(uint(ip[14])) + "." + uitoa(uint(ip[13])) + "." + uitoa(uint(ip[12])) + IPv4Arpa + "."
 	}
 
 	// Deal with IPv6.
-	buf := make([]byte, 0, len(ip)*4+len(ip6Arpa))
+	buf := make([]byte, 0, len(ip)*4+len(IPv6Arpa))
 
 	// Add it, in reverse, to the buffer.
 	for i := len(ip) - 1; i >= 0; i-- {
@@ -34,7 +37,7 @@ func reverse(ip net.IP) (arpa string) {
 	}
 
 	// Add the suffix.
-	buf = append(buf, ip6Arpa[1:]+"."...)
+	buf = append(buf, IPv6Arpa[1:]+"."...)
 	return string(buf)
 }
 

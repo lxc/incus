@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2025-12-18 23:24-0500\n"
+        "POT-Creation-Date: 2025-12-19 03:30-0500\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2613,6 +2613,16 @@ msgstr  ""
 #: cmd/incus/main.go:119 cmd/incus/main_aliases.go:225
 #, c-format
 msgid   "Failed to load configuration: %s"
+msgstr  ""
+
+#: cmd/incus/file.go:848 cmd/incus/utils_sftp.go:299
+#, c-format
+msgid   "Failed to open source file %q: %v"
+msgstr  ""
+
+#: cmd/incus/utils_sftp.go:73
+#, c-format
+msgid   "Failed to open target file %q: %w"
 msgstr  ""
 
 #: cmd/incus/admin_sql.go:128
