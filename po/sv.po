@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-12-18 23:24-0500\n"
+"POT-Creation-Date: 2025-12-19 03:30-0500\n"
 "PO-Revision-Date: 2025-12-07 15:00+0000\n"
 "Last-Translator: Daniel Nylander <daniel@danielnylander.se>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -3372,6 +3372,16 @@ msgstr "Misslyckades med att lyssna efter anslutning: %w"
 #, c-format
 msgid "Failed to load configuration: %s"
 msgstr "Konfigurationen kunde inte läsas in: %s"
+
+#: cmd/incus/file.go:848 cmd/incus/utils_sftp.go:299
+#, fuzzy, c-format
+msgid "Failed to open source file %q: %v"
+msgstr "Det gick inte att stänga servercertifikatfilen %q: %w"
+
+#: cmd/incus/utils_sftp.go:73
+#, fuzzy, c-format
+msgid "Failed to open target file %q: %w"
+msgstr "Det gick inte att stänga servercertifikatfilen %q: %w"
 
 #: cmd/incus/admin_sql.go:128
 #, c-format
