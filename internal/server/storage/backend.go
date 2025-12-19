@@ -2702,6 +2702,10 @@ func (b *backend) BackupInstance(inst instance.Instance, tarWriter *instancewrit
 		return err
 	}
 
+	defer func() {
+		_ = b.UpdateInstanceBackupFile(inst, true, nil)
+	}()
+
 	var snapNames []string
 	if snapshots {
 		// Get snapshots in age order, oldest first, and pass names to storage driver.
