@@ -26,8 +26,11 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
-// https://dev.to/cosmic_predator/writing-a-windows-service-in-go-1d1m
-var osBaseWorkingDirectory = "C:\\"
+var (
+	// https://dev.to/cosmic_predator/writing-a-windows-service-in-go-1d1m
+	osBaseWorkingDirectory = "C:\\"
+	osAgentConfigPath      = "C:\\Program Files\\Incus-Agent\\incus-agent.yml"
+)
 
 // Start of Windows service code block
 // Inspired of https://github.com/golang/sys/blob/master/windows/svc/example/service.go
