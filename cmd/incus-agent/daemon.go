@@ -14,6 +14,9 @@ type Daemon struct {
 	// Paths.
 	secretsLocation string
 
+	// Agent config.
+	Features map[string]bool
+
 	// ContextID and port of the host socket server.
 	serverCID         uint32
 	serverPort        uint32
