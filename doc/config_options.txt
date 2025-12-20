@@ -1429,6 +1429,127 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 ```
 
 <!-- config group devices-nic_sriov end -->
+<!-- config group devices-nic_wireguard start -->
+```{config:option} host_name devices-nic_wireguard
+:default: "randomly assigned"
+:shortdesc: "The name of the interface on the host"
+:type: "string"
+
+```
+
+```{config:option} hwaddr devices-nic_wireguard
+:default: "randomly assigned"
+:shortdesc: "The MAC address of the new interface"
+:type: "string"
+
+```
+
+```{config:option} ipv4.gateway devices-nic_wireguard
+:default: "auto"
+:shortdesc: "Whether to add an automatic default IPv4 gateway (can be `auto` or `none`)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.host_tables devices-nic_wireguard
+:default: "254"
+:shortdesc: "Comma-delimited list of routing tables IDs to add IPv4 static routes to"
+:type: "string"
+
+```
+
+```{config:option} ipv4.neighbor_probe devices-nic_wireguard
+:default: "true"
+:shortdesc: "Whether to probe the parent network for IPv4 address availability using ARP"
+:type: "bool"
+
+```
+
+```{config:option} ipv4.routes devices-nic_wireguard
+:shortdesc: "Comma-delimited list of IPv4 static routes to add on host to NIC"
+:type: "string"
+
+```
+
+```{config:option} ipv6.gateway devices-nic_wireguard
+:default: "auto"
+:shortdesc: "Whether to add an automatic default IPv6 gateway (can be `auto` or `none`)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.host_tables devices-nic_wireguard
+:default: "254"
+:shortdesc: "Comma-delimited list of routing tables IDs to add IPv6 static routes to"
+:type: "string"
+
+```
+
+```{config:option} ipv6.neighbor_probe devices-nic_wireguard
+:default: "true"
+:shortdesc: "Whether to probe the parent network for IPv6 address availability using NDP"
+:type: "bool"
+
+```
+
+```{config:option} ipv6.routes devices-nic_wireguard
+:shortdesc: "Comma-delimited list of IPv6 static routes to add on host to NIC"
+:type: "string"
+
+```
+
+```{config:option} limits.egress devices-nic_wireguard
+:shortdesc: "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)"
+:type: "string"
+
+```
+
+```{config:option} limits.ingress devices-nic_wireguard
+:shortdesc: "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)"
+:type: "string"
+
+```
+
+```{config:option} limits.max devices-nic_wireguard
+:shortdesc: "I/O limit in bit/s for both incoming and outgoing traffic (same as setting both limits.ingress and limits.egress)"
+:type: "string"
+
+```
+
+```{config:option} limits.priority devices-nic_wireguard
+:shortdesc: "The priority for outgoing traffic, to be used by the kernel queuing discipline to prioritize network packets"
+:type: "integer"
+
+```
+
+```{config:option} mtu devices-nic_wireguard
+:default: "parent MTU"
+:shortdesc: "The Maximum Transmit Unit (MTU) of the new interface"
+:type: "integer"
+
+```
+
+```{config:option} name devices-nic_wireguard
+:default: "kernel assigned"
+:shortdesc: "The name of the interface inside the instance"
+:type: "string"
+
+```
+
+```{config:option} network devices-nic_wireguard
+:required: "yes"
+:shortdesc: "The managed WireGuard network to link the device to"
+:type: "string"
+
+```
+
+```{config:option} vrf devices-nic_wireguard
+:shortdesc: "The VRF on the host in which the host-side interface and routes are created"
+:type: "string"
+
+```
+
+<!-- config group devices-nic_wireguard end -->
 <!-- config group devices-pci start -->
 ```{config:option} address devices-pci
 :required: "yes"
@@ -4137,6 +4258,83 @@ User keys can be used in search.
 ```
 
 <!-- config group network_sriov-common end -->
+<!-- config group network_wireguard-common start -->
+```{config:option} interface network_wireguard-common
+:condition: "-"
+:defaultdesc: "Network name"
+:shortdesc: "WireGuard interface name"
+:type: "string"
+
+```
+
+```{config:option} ipv4.address network_wireguard-common
+:condition: "-"
+:shortdesc: "Comma-separated list of IPv4 addresses and CIDR for the WireGuard interface (e.g., 10.0.0.1/24)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.address network_wireguard-common
+:condition: "-"
+:shortdesc: "Comma-separated list of IPv6 addresses and CIDR for the WireGuard interface (e.g., 2001:db8::1/64)"
+:type: "string"
+
+```
+
+```{config:option} listen_port network_wireguard-common
+:condition: "-"
+:defaultdesc: "Auto-assigned by WireGuard"
+:shortdesc: "UDP port to listen on. If not specified or set to 0, WireGuard will automatically assign an available port."
+:type: "integer"
+
+```
+
+```{config:option} mtu network_wireguard-common
+:condition: "-"
+:defaultdesc: "`1420`"
+:shortdesc: "The MTU of the WireGuard interface"
+:type: "integer"
+
+```
+
+```{config:option} peers.NAME.public_key network_wireguard-common
+:condition: "-"
+:shortdesc: "Persistent keepalive interval in seconds for peer NAME"
+:type: "integer"
+---
+type: string
+condition: -
+shortdesc: Public key of peer NAME
+gendoc:generate(entity=network_wireguard, group=common, key=peers.NAME.allowed_ips)
+
+---
+type: string
+condition: -
+shortdesc: Allowed IPs for peer NAME (comma-separated CIDR addresses)
+gendoc:generate(entity=network_wireguard, group=common, key=peers.NAME.endpoint)
+
+---
+type: string
+condition: -
+shortdesc: Endpoint address for peer NAME (IP:port or hostname:port)
+gendoc:generate(entity=network_wireguard, group=common, key=peers.NAME.persistent_keepalive)
+
+```
+
+```{config:option} private_key network_wireguard-common
+:condition: "-"
+:shortdesc: "WireGuard private key (base64 encoded). If not provided, one will be generated."
+:type: "string"
+
+```
+
+```{config:option} user.* network_wireguard-common
+:shortdesc: "User-provided free-form key/value pairs"
+:type: "string"
+
+```
+
+<!-- config group network_wireguard-common end -->
 <!-- config group network_zone-common start -->
 ```{config:option} dns.nameservers network_zone-common
 :required: "no"
