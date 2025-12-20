@@ -577,7 +577,7 @@ func (n *wireguard) Update(newNetwork api.NetworkPut, targetNode string, clientT
 	// pending, then don't apply the new settings to the node, just to the database record (ready for the
 	// actual global create request to be initiated).
 	if n.Status() == api.NetworkStatusPending || n.LocalStatus() == api.NetworkStatusPending {
-		return n.common.update(newNetwork, targetNode, clientType)
+		return n.update(newNetwork, targetNode, clientType)
 	}
 
 	reverter := revert.New()
@@ -586,7 +586,7 @@ func (n *wireguard) Update(newNetwork api.NetworkPut, targetNode string, clientT
 	// Define a function which reverts everything.
 	reverter.Add(func() {
 		// Reset changes to all nodes and database.
-		_ = n.common.update(oldNetwork, targetNode, clientType)
+		_ = n.update(oldNetwork, targetNode, clientType)
 	})
 
 	// Check if interface name changed
@@ -601,7 +601,7 @@ func (n *wireguard) Update(newNetwork api.NetworkPut, targetNode string, clientT
 	}
 
 	// Apply changes to all nodes and database.
-	err = n.common.update(newNetwork, targetNode, clientType)
+	err = n.update(newNetwork, targetNode, clientType)
 	if err != nil {
 		return err
 	}
