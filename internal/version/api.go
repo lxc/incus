@@ -225,6 +225,7 @@ var APIExtensions = []string{
 	"backup_override_name",
 	"storage_rsync_compression",
 	"network_type_physical",
+	"network_type_wireguard",
 	"network_ovn_external_subnets",
 	"network_ovn_nat",
 	"network_ovn_external_routes_remove",

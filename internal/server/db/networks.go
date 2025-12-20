@@ -561,11 +561,12 @@ type NetworkType int
 
 // Network types.
 const (
-	NetworkTypeBridge   NetworkType = iota // Network type bridge.
-	NetworkTypeMacvlan                     // Network type macvlan.
-	NetworkTypeSriov                       // Network type sriov.
-	NetworkTypeOVN                         // Network type ovn.
-	NetworkTypePhysical                    // Network type physical.
+	NetworkTypeBridge    NetworkType = iota // Network type bridge.
+	NetworkTypeMacvlan                      // Network type macvlan.
+	NetworkTypeSriov                        // Network type sriov.
+	NetworkTypeOVN                          // Network type ovn.
+	NetworkTypePhysical                     // Network type physical.
+	NetworkTypeWireguard                    // Network type wireguard.
 )
 
 // NetworkNode represents a network node.
@@ -693,6 +694,8 @@ func networkFillType(network *api.Network, netType NetworkType) {
 		network.Type = "ovn"
 	case NetworkTypePhysical:
 		network.Type = "physical"
+	case NetworkTypeWireguard:
+		network.Type = "wireguard"
 	default:
 		network.Type = "" // Unknown
 	}
