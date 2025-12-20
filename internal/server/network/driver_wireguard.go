@@ -190,9 +190,9 @@ func (n *wireguard) Validate(config map[string]string, clientType request.Client
 					}
 					// Validate each CIDR in the comma-separated list
 					ips := util.SplitNTrimSpace(value, ",", -1, true)
-					for _, ip := range ips {
-						if err := validate.IsNetworkAddressCIDR(ip); err != nil {
-							return fmt.Errorf("Peer %q allowed_ips contains invalid CIDR %q: %w", peerName, ip, err)
+					for _, ipStr := range ips {
+						if err := validate.IsNetworkAddressCIDR(ipStr); err != nil {
+							return fmt.Errorf("Peer %q allowed_ips contains invalid CIDR %q: %w", peerName, ipStr, err)
 						}
 					}
 				case "endpoint":
@@ -243,7 +243,7 @@ func (n *wireguard) Delete(clientType request.ClientType) error {
 		return err
 	}
 
-	return n.common.delete(clientType)
+	return n.delete(clientType)
 }
 
 // Rename renames a network.
@@ -251,7 +251,7 @@ func (n *wireguard) Rename(newName string) error {
 	n.logger.Debug("Rename", logger.Ctx{"newName": newName})
 
 	// Rename common steps.
-	err := n.common.rename(newName)
+	err := n.rename(newName)
 	if err != nil {
 		return err
 	}
@@ -362,11 +362,10 @@ func (n *wireguard) setup() error {
 					err = addr.Add()
 					if err != nil {
 						// Check if error is "file exists" (address already assigned)
-						if strings.Contains(err.Error(), "file exists") || strings.Contains(err.Error(), "already assigned") {
-							n.logger.Debug("Address already exists on interface, skipping", logger.Ctx{"address": addrStr, "interface": ifaceName})
-						} else {
+						if !strings.Contains(err.Error(), "file exists") && !strings.Contains(err.Error(), "already assigned") {
 							return fmt.Errorf("Failed to set address %q on %q: %w", addrStr, ifaceName, err)
 						}
+						n.logger.Debug("Address already exists on interface, skipping", logger.Ctx{"address": addrStr, "interface": ifaceName})
 					}
 				}
 			}
@@ -546,7 +545,7 @@ func (n *wireguard) removeAddress(ifaceName string, ipAddress net.IP) error {
 
 	// Find and remove the matching address
 	for _, addr := range addrs {
-		if addr.IPNet.IP.Equal(ipAddress) {
+		if addr.IP.Equal(ipAddress) {
 			err = netlink.AddrDel(link, &addr)
 			if err != nil {
 				// Ignore error if address doesn't exist
@@ -565,7 +564,7 @@ func (n *wireguard) removeAddress(ifaceName string, ipAddress net.IP) error {
 func (n *wireguard) Update(newNetwork api.NetworkPut, targetNode string, clientType request.ClientType) error {
 	n.logger.Debug("Update", logger.Ctx{"clientType": clientType, "newNetwork": newNetwork})
 
-	dbUpdateNeeded, changedKeys, oldNetwork, err := n.common.configChanged(newNetwork)
+	dbUpdateNeeded, changedKeys, oldNetwork, err := n.configChanged(newNetwork)
 	if err != nil {
 		return err
 	}
