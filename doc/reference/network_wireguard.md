@@ -77,4 +77,3 @@ incus launch images:ubuntu/jammy/cloud myinstance --network=wg0
 ```
 
 The instance will automatically receive an IP address from the WireGuard network's address range.
-

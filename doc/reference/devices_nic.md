@@ -441,7 +441,7 @@ Parent interface
      net.ipv6.conf.<parent>.proxy_ndp=1
      ```
 
-#### Device options
+### Device options
 
 NIC devices of type `routed` have the following device options:
 
