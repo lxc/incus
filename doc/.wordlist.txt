@@ -375,4 +375,4 @@ zpool
 zpools
 WireGuard
 OpenVPN
-IPSec
+IPsec
