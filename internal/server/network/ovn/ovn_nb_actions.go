@@ -2216,10 +2216,6 @@ func (o *NB) GetLogicalSwitchPortDNS(ctx context.Context, portName OVNSwitchPort
 		return "", "", nil, nil
 	}
 
-	if len(dnsRecords[0].Records) > 1 {
-		return "", "", nil, errors.New("More than one DNS record found for logical switch port")
-	}
-
 	var ips []net.IP
 	var dnsName string
 
