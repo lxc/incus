@@ -35,6 +35,14 @@ The following configuration options are available for the `wireguard` network ty
     :end-before: <!-- config group network_wireguard-common end -->
 ```
 
+You can also configure peers for the `wireguard` network type. Each peer can have the following configuration options:
+
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group network_wireguard-peers start -->
+    :end-before: <!-- config group network_wireguard-peers end -->
+```
+
 (network-wireguard-features)=
 ## Supported features
 

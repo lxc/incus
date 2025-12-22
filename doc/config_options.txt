@@ -4304,35 +4304,6 @@ User keys can be used in search.
 
 ```
 
-```{config:option} peers.NAME.public_key network_wireguard-common
-:condition: "-"
-:shortdesc: "Public key of peer NAME"
-:type: "string"
-
-```
-
-```{config:option} peers.NAME.allowed_ips network_wireguard-common
-:condition: "-"
-:shortdesc: "Allowed IPs for peer NAME (comma-separated CIDR addresses)"
-:type: "string"
-
-```
-
-```{config:option} peers.NAME.endpoint network_wireguard-common
-:condition: "-"
-:shortdesc: "Endpoint address for peer NAME (IP:port or hostname:port)"
-:type: "string"
-
-```
-
-```{config:option} peers.NAME.persistent_keepalive network_wireguard-common
-:condition: "-"
-:shortdesc: "Persistent keep-alive interval in seconds for peer NAME"
-:type: "integer"
-
-```
-
-
 ```{config:option} user.* network_wireguard-common
 :shortdesc: "User-provided free-form key/value pairs"
 :type: "string"
@@ -4340,6 +4311,36 @@ User keys can be used in search.
 ```
 
 <!-- config group network_wireguard-common end -->
+<!-- config group network_wireguard-peers start -->
+```{config:option} peers.NAME.allowed_ips network_wireguard-peers
+:condition: "-"
+:shortdesc: "Allowed IPs for peer NAME (comma-separated CIDR addresses)"
+:type: "string"
+
+```
+
+```{config:option} peers.NAME.endpoint network_wireguard-peers
+:condition: "-"
+:shortdesc: "Endpoint address for peer NAME (IP:port or hostname:port)"
+:type: "string"
+
+```
+
+```{config:option} peers.NAME.persistent_keepalive network_wireguard-peers
+:condition: "-"
+:shortdesc: "Persistent keep-alive interval in seconds for peer NAME"
+:type: "integer"
+
+```
+
+```{config:option} peers.NAME.public_key network_wireguard-peers
+:condition: "-"
+:shortdesc: "Public key of peer NAME"
+:type: "string"
+
+```
+
+<!-- config group network_wireguard-peers end -->
 <!-- config group network_zone-common start -->
 ```{config:option} dns.nameservers network_zone-common
 :required: "no"

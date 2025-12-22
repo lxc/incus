@@ -104,30 +104,33 @@ func (n *wireguard) Validate(config map[string]string, clientType request.Client
 		// shortdesc: Comma-separated list of IPv6 addresses and CIDR for the WireGuard interface (e.g., 2001:db8::1/64)
 		"ipv6.address": validate.Optional(validate.IsListOf(validate.IsNetworkAddressCIDR)),
 
-		// gendoc:generate(entity=network_wireguard, group=common, key=peers.NAME.public_key)
+		// gendoc:generate(entity=network_wireguard, group=peers, key=peers.NAME.public_key)
 		//
 		// ---
 		// type: string
 		// condition: -
 		// shortdesc: Public key of peer NAME
-		// gendoc:generate(entity=network_wireguard, group=common, key=peers.NAME.allowed_ips)
+
+		// gendoc:generate(entity=network_wireguard,group=peers, key=peers.NAME.allowed_ips)
 		//
 		// ---
 		// type: string
 		// condition: -
 		// shortdesc: Allowed IPs for peer NAME (comma-separated CIDR addresses)
-		// gendoc:generate(entity=network_wireguard, group=common, key=peers.NAME.endpoint)
+
+		// gendoc:generate(entity=network_wireguard, group=peers, key=peers.NAME.endpoint)
 		//
 		// ---
 		// type: string
 		// condition: -
 		// shortdesc: Endpoint address for peer NAME (IP:port or hostname:port)
-		// gendoc:generate(entity=network_wireguard, group=common, key=peers.NAME.persistent_keepalive)
+
+		// gendoc:generate(entity=network_wireguard, group=peers, key=peers.NAME.persistent_keepalive)
 		//
 		// ---
 		// type: integer
 		// condition: -
-		// shortdesc: Persistent keepalive interval in seconds for peer NAME
+		// shortdesc: Persistent keep-alive interval in seconds for peer NAME
 
 		// gendoc:generate(entity=network_wireguard, group=common, key=user.*)
 		//

@@ -4872,14 +4872,6 @@
 						}
 					},
 					{
-						"peers.NAME.public_key": {
-							"condition": "-",
-							"longdesc": "---\ntype: string\ncondition: -\nshortdesc: Public key of peer NAME\ngendoc:generate(entity=network_wireguard, group=common, key=peers.NAME.allowed_ips)\n\n---\ntype: string\ncondition: -\nshortdesc: Allowed IPs for peer NAME (comma-separated CIDR addresses)\ngendoc:generate(entity=network_wireguard, group=common, key=peers.NAME.endpoint)\n\n---\ntype: string\ncondition: -\nshortdesc: Endpoint address for peer NAME (IP:port or hostname:port)\ngendoc:generate(entity=network_wireguard, group=common, key=peers.NAME.persistent_keepalive)\n",
-							"shortdesc": "Persistent keepalive interval in seconds for peer NAME",
-							"type": "integer"
-						}
-					},
-					{
 						"private_key": {
 							"condition": "-",
 							"longdesc": "",
@@ -4891,6 +4883,42 @@
 						"user.*": {
 							"longdesc": "",
 							"shortdesc": "User-provided free-form key/value pairs",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"peers": {
+				"keys": [
+					{
+						"peers.NAME.allowed_ips": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "Allowed IPs for peer NAME (comma-separated CIDR addresses)",
+							"type": "string"
+						}
+					},
+					{
+						"peers.NAME.endpoint": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "Endpoint address for peer NAME (IP:port or hostname:port)",
+							"type": "string"
+						}
+					},
+					{
+						"peers.NAME.persistent_keepalive": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "Persistent keep-alive interval in seconds for peer NAME",
+							"type": "integer"
+						}
+					},
+					{
+						"peers.NAME.public_key": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "Public key of peer NAME",
 							"type": "string"
 						}
 					}
