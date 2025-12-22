@@ -24,8 +24,9 @@ import (
 )
 
 var (
-	tnVersion string
-	tnLoaded  bool
+	tnVersion         string
+	tnLoaded          bool
+	tnHasIscsiRefresh bool
 )
 
 var tnDefaultSettings = map[string]string{
@@ -74,6 +75,9 @@ func (d *truenas) initVersionAndCapabilities() error {
 	if !d.isVersionGE(*ourVer, tnMinVersion) {
 		return fmt.Errorf("TrueNAS driver requires %s v%s or later, but the currently installed version is v%s", tnToolName, tnMinVersion, tnVersion)
 	}
+
+	// iscsi refresh allows rescanning the iscsi bus
+	tnHasIscsiRefresh = d.isVersionGE(*ourVer, "0.7.5")
 
 	return nil
 }

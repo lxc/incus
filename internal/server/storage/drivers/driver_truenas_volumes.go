@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/sys/unix"
@@ -1107,15 +1108,6 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 	}
 
 	if vol.contentType == ContentTypeFS {
-		// Activate volume if needed.
-		activated, volDevPath, err := d.activateVolume(vol)
-		if err != nil {
-			return err
-		}
-
-		if activated {
-			defer func() { _, _ = d.deactivateVolume(vol) }()
-		}
 
 		if vol.volType == VolumeTypeImage {
 			return fmt.Errorf("Image volumes cannot be resized: %w", ErrCannotBeShrunk)
@@ -1123,7 +1115,7 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 
 		fsType := vol.ConfigBlockFilesystem()
 
-		l := d.logger.AddContext(logger.Ctx{"dev": volDevPath, "size": fmt.Sprintf("%db", sizeBytes)})
+		l := d.logger.AddContext(logger.Ctx{"vol": vol, "size": fmt.Sprintf("%db", sizeBytes)})
 
 		if sizeBytes < oldVolSizeBytes {
 			if !filesystemTypeCanBeShrunk(fsType) {
@@ -1132,6 +1124,16 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 
 			if inUse {
 				return ErrInUse // We don't allow online shrinking of filesystem block volumes.
+			}
+
+			// Activate volume if needed.
+			activated, volDevPath, err := d.activateVolume(vol)
+			if err != nil {
+				return err
+			}
+
+			if activated {
+				defer func() { _, _ = d.deactivateVolume(vol) }()
 			}
 
 			// Shrink filesystem first.
@@ -1149,11 +1151,69 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 				return err
 			}
 		} else if sizeBytes > oldVolSizeBytes {
-			// Grow block device first, ignoring any shrink errors, which could happen because we've
-			// already ignored a shrink error when shrinking.
+
+			// Grow FileSystem
+
+			if !tnHasIscsiRefresh {
+				if inUse {
+					return fmt.Errorf("Growing an online TrueNAS filesystem requires iSCSI Refresh support. Please update the TrueNAS tool: %w", ErrInUse)
+				}
+
+				// Deactivate if necessary, so we can re-activate after changing the zvol size, since we can't use refresh
+				_, err = d.deactivateVolume(vol)
+				if err != nil {
+					return err
+				}
+			}
+
+			// Grow block device first, ignoring any shrink errors, which could happen because we've already ignored a shrink error when shrinking.
 			err = d.setVolsize(dataset, sizeBytes, false)
 			if err != nil {
 				return err
+			}
+
+			// Activate volume after resizing the device.
+			activated, volDevPath, err := d.activateVolume(vol)
+			if err != nil {
+				return err
+			}
+
+			if activated {
+				defer func() { _, _ = d.deactivateVolume(vol) }()
+			}
+
+			// Verify the device actually grew.
+			actualSize, err := BlockDiskSizeBytes(volDevPath)
+			if err != nil {
+				return err
+			}
+
+			if tnHasIscsiRefresh && actualSize < sizeBytes {
+				// refresh until it does actually grow
+				for range 20 {
+					// rescan iscsi devices to pickup any size change
+					err = d.refreshIscsiBus()
+					if err != nil {
+						return err
+					}
+
+					// verify the device actually grew.
+					actualSize, err = BlockDiskSizeBytes(volDevPath)
+					if err != nil {
+						return err
+					}
+
+					if actualSize >= sizeBytes {
+						break
+					}
+
+					time.Sleep(100 * time.Millisecond)
+				}
+			}
+
+			// Verify the device actually grew.
+			if actualSize < sizeBytes {
+				return fmt.Errorf("device %s could not be grown", volDevPath)
 			}
 
 			// Grow the filesystem to fill block device.
@@ -1165,6 +1225,9 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 			l.Debug("TrueNAS volume filesystem grown")
 		}
 	} else {
+
+		// Block Volume.
+
 		// Block image volumes cannot be resized because they have a readonly snapshot that doesn't get
 		// updated when the volume's size is changed, and this is what instances are created from.
 		// During initial volume fill allowUnsafeResize is enabled because snapshot hasn't been taken yet.

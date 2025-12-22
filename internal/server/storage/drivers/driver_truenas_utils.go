@@ -540,6 +540,20 @@ func (d *truenas) deactivateIscsiDataset(dataset string) error {
 	return nil
 }
 
+// refreshIscsiBus refreshes the iscsi bus.
+func (d *truenas) refreshIscsiBus() error {
+	if !tnHasIscsiRefresh {
+		return fmt.Errorf("TrueNAS: iSCSI Refresh requires tool version 0.7.5, current version: %s", tnVersion)
+	}
+
+	_, err := d.runTool("share", "iscsi", "refresh")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (d *truenas) deleteSnapshot(snapshot string, recursive bool, options ...string) error {
 	if strings.Count(snapshot, "@") != 1 {
 		return fmt.Errorf("invalid snapshot name: %s", snapshot)
