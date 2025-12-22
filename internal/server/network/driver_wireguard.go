@@ -195,7 +195,8 @@ func (n *wireguard) Validate(config map[string]string, clientType request.Client
 					// Validate each CIDR in the comma-separated list
 					ips := util.SplitNTrimSpace(value, ",", -1, true)
 					for _, ipStr := range ips {
-						if err := validate.IsNetworkAddressCIDR(ipStr); err != nil {
+						err := validate.IsNetworkAddressCIDR(ipStr)
+						if err != nil {
 							return fmt.Errorf("Peer %q allowed_ips contains invalid CIDR %q: %w", peerName, ipStr, err)
 						}
 					}
@@ -214,7 +215,8 @@ func (n *wireguard) Validate(config map[string]string, clientType request.Client
 					}
 				case "persistent_keepalive":
 					if value != "" {
-						if err := validate.IsInt64(value); err != nil {
+						err := validate.IsInt64(value)
+						if err != nil {
 							return fmt.Errorf("Peer %q persistent_keepalive must be an integer: %w", peerName, err)
 						}
 					}
@@ -453,15 +455,18 @@ func (n *wireguard) configureWireGuard(ifaceName string) error {
 		// Build wg set command for peer
 		args := []string{"set", ifaceName, "peer", publicKey}
 
-		if allowedIPs, ok := peerConfig["allowed_ips"]; ok && allowedIPs != "" {
+		allowedIPs, ok := peerConfig["allowed_ips"]
+		if ok && allowedIPs != "" {
 			args = append(args, "allowed-ips", allowedIPs)
 		}
 
-		if endpoint, ok := peerConfig["endpoint"]; ok && endpoint != "" {
+		endpoint, ok := peerConfig["endpoint"]
+		if ok && endpoint != "" {
 			args = append(args, "endpoint", endpoint)
 		}
 
-		if keepalive, ok := peerConfig["persistent_keepalive"]; ok && keepalive != "" {
+		keepalive, ok := peerConfig["persistent_keepalive"]
+		if ok && keepalive != "" {
 			args = append(args, "persistent-keepalive", keepalive)
 		}
 
