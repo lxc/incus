@@ -4297,36 +4297,41 @@ User keys can be used in search.
 
 ```
 
-```{config:option} peers.NAME.public_key network_wireguard-common
-:condition: "-"
-:shortdesc: "Persistent keepalive interval in seconds for peer NAME"
-:type: "integer"
----
-type: string
-condition: -
-shortdesc: Public key of peer NAME
-gendoc:generate(entity=network_wireguard, group=common, key=peers.NAME.allowed_ips)
-
----
-type: string
-condition: -
-shortdesc: Allowed IPs for peer NAME (comma-separated CIDR addresses)
-gendoc:generate(entity=network_wireguard, group=common, key=peers.NAME.endpoint)
-
----
-type: string
-condition: -
-shortdesc: Endpoint address for peer NAME (IP:port or hostname:port)
-gendoc:generate(entity=network_wireguard, group=common, key=peers.NAME.persistent_keepalive)
-
-```
-
 ```{config:option} private_key network_wireguard-common
 :condition: "-"
 :shortdesc: "WireGuard private key (base64 encoded). If not provided, one will be generated."
 :type: "string"
 
 ```
+
+```{config:option} peers.NAME.public_key network_wireguard-common
+:condition: "-"
+:shortdesc: "Public key of peer NAME"
+:type: "string"
+
+```
+
+```{config:option} peers.NAME.allowed_ips network_wireguard-common
+:condition: "-"
+:shortdesc: "Allowed IPs for peer NAME (comma-separated CIDR addresses)"
+:type: "string"
+
+```
+
+```{config:option} peers.NAME.endpoint network_wireguard-common
+:condition: "-"
+:shortdesc: "Endpoint address for peer NAME (IP:port or hostname:port)"
+:type: "string"
+
+```
+
+```{config:option} peers.NAME.persistent_keepalive network_wireguard-common
+:condition: "-"
+:shortdesc: "Persistent keep-alive interval in seconds for peer NAME"
+:type: "integer"
+
+```
+
 
 ```{config:option} user.* network_wireguard-common
 :shortdesc: "User-provided free-form key/value pairs"
