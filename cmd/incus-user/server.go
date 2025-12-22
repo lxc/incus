@@ -200,6 +200,17 @@ func serverSetupUser(uid uint32) error {
 		return fmt.Errorf("Unable to connect to the daemon: %w", err)
 	}
 
+	// Don't reset setup if the user already has a valid certificate and project access.
+	checkCert, err := localtls.ReadCert(filepath.Join(userPath, "client.crt"))
+	if err == nil {
+		// Check if the certificate exists in the trust store.
+		checkFingerprint := localtls.CertFingerprint(checkCert)
+		existingCert, _, err := client.GetCertificate(checkFingerprint)
+		if err == nil && len(existingCert.Projects) > 0 {
+			return nil
+		}
+	}
+
 	_, _, _ = client.GetServer()
 
 	if !slices.Contains(projectNames, projectName) {
