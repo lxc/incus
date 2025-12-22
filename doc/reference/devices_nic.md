@@ -204,6 +204,28 @@ Note that using `none` with either `ipv4.address` or `ipv6.address` needs the ot
 There is currently no way for OVN to disable IP allocation just on IPv4 or IPv6.
 ```
 
+(nic-wireguard)=
+### `nictype`: `wireguard`
+
+```{note}
+You can select this NIC type only through the `network` option (see {ref}`network-wireguard` for information about the managed `wireguard` network).
+```
+
+A `wireguard` NIC uses an existing WireGuard network and creates a routed connection to it.
+WireGuard is a modern, fast, and secure VPN tunnel that uses state-of-the-art cryptography.
+
+WireGuard networks operate at layer 3 (network layer), making them suitable for routing traffic between instances and remote peers.
+
+#### Device options
+
+NIC devices of type `wireguard` have the following device options:
+
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group devices-nic_wireguard start -->
+    :end-before: <!-- config group devices-nic_wireguard end -->
+```
+
 (nic-physical)=
 ### `nictype`: `physical`
 
@@ -296,37 +318,6 @@ You can select this NIC type only through the `nictype` option.
 ```
 
 A `routed` NIC creates a virtual device pair to connect the host to the instance and sets up static routes and proxy ARP/NDP entries to allow the instance to join the network of a designated parent interface.
-
-(nic-wireguard)=
-### `nictype`: `wireguard`
-
-```{note}
-You can select this NIC type only through the `network` option (see {ref}`network-wireguard` for information about the managed `wireguard` network).
-```
-
-A `wireguard` NIC connects an instance to a WireGuard VPN network.
-The instance will automatically receive an IP address from the WireGuard network's address range if not manually specified.
-
-WireGuard operates at layer 3 (network layer), making it suitable for secure VPN connections between instances and remote peers.
-
-#### Device options
-
-NIC devices of type `wireguard` have the following device options:
-
-% Include content from [config_options.txt](../config_options.txt)
-```{include} ../config_options.txt
-    :start-after: <!-- config group devices-nic_wireguard start -->
-    :end-before: <!-- config group devices-nic_wireguard end -->
-```
-
-(nic-routed)=
-### `nictype`: `routed`
-
-```{note}
-You can select this NIC type only through the `nictype` option.
-```
-
-A `routed` NIC creates a virtual device pair to connect the host to the instance and sets up static routes and proxy ARP/NDP entries to allow the instance to join the network of a designated parent interface.
 For containers it uses a virtual Ethernet device pair, and for VMs it uses a TAP device.
 
 This NIC type is similar in operation to `ipvlan`, in that it allows an instance to join an external network without needing to configure a bridge and shares the host's MAC address.
@@ -380,68 +371,6 @@ Parent interface
      ```
 
 #### Device options
-
-NIC devices of type `routed` have the following device options:
-
-% Include content from [config_options.txt](../config_options.txt)
-```{include} ../config_options.txt
-    :start-after: <!-- config group devices-nic_routed start -->
-    :end-before: <!-- config group devices-nic_routed end -->
-```
-
-## `bridged`, `macvlan` or `ipvlan` for connection to physical network
-
-The `bridged`, `macvlan` and `ipvlan` interface types can be used to connect to an existing physical network.
-However, it differs from `ipvlan` because it does not need IPVLAN support in the kernel, and the host and the instance can communicate with each other.
-
-This NIC type respects `netfilter` rules on the host and uses the host's routing table to route packets, which can be useful if the host is connected to multiple networks.
-
-IP addresses, gateways and routes
-: You must manually specify the IP addresses (using `ipv4.address` and/or `ipv6.address`) before the instance is started.
-
-  For containers, the NIC configures the following link-local gateway IPs on the host end and sets them as the default gateways in the container's NIC interface:
-
-      169.254.0.1
-      fe80::1
-
-  For VMs, the gateways must be configured manually or via a mechanism like `cloud-init` (see the {ref}`how to guide <instances-routed-nic-vm>`).
-
-  ```{note}
-  If your container image is configured to perform DHCP on the interface, it will likely remove the automatically added configuration.
-  In this case, you must configure the IP addresses and gateways manually or via a mechanism like `cloud-init`.
-  ```
-
-  The NIC type configures static routes on the host pointing to the instance's `veth` interface for all of the instance's IPs.
-
-Multiple IP addresses
-: Each NIC device can have multiple IP addresses added to it.
-
-  However, it might be preferable to use multiple `routed` NIC interfaces instead.
-  In this case, set the `ipv4.gateway` and `ipv6.gateway` values to `none` on any subsequent interfaces to avoid default gateway conflicts.
-  Also consider specifying a different host-side address for these subsequent interfaces using `ipv4.host_address` and/or `ipv6.host_address`.
-
-Parent interface
-: This NIC can operate with and without a `parent` network interface set.
-
-: With the `parent` network interface set, proxy ARP/NDP entries of the instance's IPs are added to the parent interface, which allows the instance to join the parent interface's network at layer 2.
-: To enable this, the following network configuration must be applied on the host via `sysctl`:
-
-   - When using IPv4 addresses:
-
-     ```
-     net.ipv4.conf.<parent>.forwarding=1
-     ```
-
-   - When using IPv6 addresses:
-
-     ```
-     net.ipv6.conf.all.forwarding=1
-     net.ipv6.conf.<parent>.forwarding=1
-     net.ipv6.conf.all.proxy_ndp=1
-     net.ipv6.conf.<parent>.proxy_ndp=1
-     ```
-
-### Device options
 
 NIC devices of type `routed` have the following device options:
 
