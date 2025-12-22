@@ -1641,6 +1641,7 @@ func GenerateRandomIPFromSubnet(subnet *net.IPNet, excludeIP net.IP) (net.IP, er
 		if randomOffset.Cmp(numIPs) > 0 {
 			randomOffset.SetInt64(1) // Wrap around
 		}
+
 		subnetBig.SetBytes(subnetIP)
 		subnetBig.Add(subnetBig, randomOffset)
 		if subnet.IP.To4() != nil {

@@ -187,6 +187,7 @@ func (n *wireguard) Validate(config map[string]string, clientType request.Client
 					if len(value) != 44 {
 						return fmt.Errorf("Peer %q public_key must be 44 characters (base64 encoded)", peerName)
 					}
+
 				case "allowed_ips":
 					if value == "" {
 						return fmt.Errorf("Peer %q allowed_ips cannot be empty", peerName)
@@ -205,6 +206,7 @@ func (n *wireguard) Validate(config map[string]string, clientType request.Client
 						if len(parts) != 2 {
 							return fmt.Errorf("Peer %q endpoint must be in format IP:port or hostname:port", peerName)
 						}
+
 						port, err := strconv.ParseUint(parts[1], 10, 16)
 						if err != nil || port == 0 || port > 65535 {
 							return fmt.Errorf("Peer %q endpoint port must be a valid port number (1-65535)", peerName)
@@ -361,6 +363,7 @@ func (n *wireguard) setup() error {
 				if err != nil {
 					return fmt.Errorf("Failed to check if address exists on %q: %w", ifaceName, err)
 				}
+
 				if !addressExists {
 					err = addr.Add()
 					if err != nil {
@@ -368,6 +371,7 @@ func (n *wireguard) setup() error {
 						if !strings.Contains(err.Error(), "file exists") && !strings.Contains(err.Error(), "already assigned") {
 							return fmt.Errorf("Failed to set address %q on %q: %w", addrStr, ifaceName, err)
 						}
+
 						n.logger.Debug("Address already exists on interface, skipping", logger.Ctx{"address": addrStr, "interface": ifaceName})
 					}
 				}
@@ -389,6 +393,7 @@ func (n *wireguard) configureWireGuard(ifaceName string) error {
 		if err != nil {
 			return fmt.Errorf("Failed to generate WireGuard private key: %w", err)
 		}
+
 		privateKey = strings.TrimSpace(string(output))
 
 		// Store the generated key in config
@@ -431,6 +436,7 @@ func (n *wireguard) configureWireGuard(ifaceName string) error {
 				if peers[peerName] == nil {
 					peers[peerName] = make(map[string]string)
 				}
+
 				peers[peerName][peerKey] = value
 			}
 		}
@@ -525,6 +531,7 @@ func (n *wireguard) addressExists(ifaceName string, ipAddress net.IP) (bool, err
 		if err != nil {
 			continue
 		}
+
 		if addrIP.Equal(ipAddress) {
 			return true, nil
 		}
