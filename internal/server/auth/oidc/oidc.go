@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/netip"
 	"slices"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
 
+	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
 )
@@ -82,7 +84,7 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	claims, err := o.VerifyAccessToken(ctx, token)
+	claims, err := o.VerifyAccessToken(ctx, r, token)
 	if err != nil {
 		// See if we can refresh the access token.
 		cookie, cookieErr := r.Cookie("oidc_refresh")
@@ -103,7 +105,7 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		}
 
 		// Validate the refreshed token.
-		claims, err = o.VerifyAccessToken(ctx, tokens.AccessToken)
+		claims, err = o.VerifyAccessToken(ctx, r, tokens.AccessToken)
 		if err != nil {
 			return "", &AuthError{err}
 		}
@@ -281,7 +283,7 @@ func (o *Verifier) Callback(w http.ResponseWriter, r *http.Request) {
 }
 
 // VerifyAccessToken is a wrapper around op.VerifyAccessToken which avoids having to deal with Go generics elsewhere. It validates the access token (issuer, signature and expiration).
-func (o *Verifier) VerifyAccessToken(ctx context.Context, token string) (*oidc.AccessTokenClaims, error) {
+func (o *Verifier) VerifyAccessToken(ctx context.Context, r *http.Request, token string) (*oidc.AccessTokenClaims, error) {
 	var err error
 
 	if o.accessTokenVerifier == nil {
@@ -300,6 +302,40 @@ func (o *Verifier) VerifyAccessToken(ctx context.Context, token string) (*oidc.A
 	audience := claims.GetAudience()
 	if o.audience != "" && !slices.Contains(audience, o.audience) {
 		return nil, errors.New("Provided OIDC token doesn't allow the configured audience")
+	}
+
+	// Check if we have a subnet restriction.
+	claim := claims.Claims["incus.allowed_subnets"]
+	subnets, ok := claim.([]any)
+	if claim != nil && ok && len(subnets) > 0 {
+		requestor := request.CreateRequestor(r)
+
+		found := false
+		for _, subnet := range subnets {
+			subnetStr, ok := subnet.(string)
+			if !ok {
+				continue
+			}
+
+			subnetCIDR, err := netip.ParsePrefix(subnetStr)
+			if err != nil {
+				return nil, fmt.Errorf("Bad subnet in incus.allowed_subnets claim %q: %w", subnet, err)
+			}
+
+			clientIP, err := netip.ParseAddr(requestor.Address)
+			if err != nil {
+				return nil, fmt.Errorf("Bad client address %q: %w", requestor.Address, err)
+			}
+
+			if subnetCIDR.Contains(clientIP) {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return nil, errors.New("Client isn't allowed to connect from its current network")
+		}
 	}
 
 	return claims, nil
