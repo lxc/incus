@@ -2958,3 +2958,7 @@ This adds support for `limits.egress`, `limits.ingress`, `limits.max` and `limit
 ## `storage_lvmcluster_qcow2`
 
 This adds support for running virtual machines from `QCOW2` images. Support is currently limited to `lvmcluster` storage driver.
+
+## `oidc_allowed_subnets`
+
+This indicates support by Incus for the custom `incus.allowed_subnets` OIDC claim.
