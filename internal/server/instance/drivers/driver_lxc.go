@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -180,29 +179,28 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operatio
 			state: s,
 			op:    op,
 
-			architecture: args.Architecture,
-			creationDate: args.CreationDate,
-			dbType:       args.Type,
-			description:  args.Description,
-			ephemeral:    args.Ephemeral,
-			expiryDate:   args.ExpiryDate,
-			id:           args.ID,
-			lastUsedDate: args.LastUsedDate,
-			localConfig:  args.Config,
-			localDevices: args.Devices,
-			logger:       logger.AddContext(logger.Ctx{"instanceType": args.Type, "instance": args.Name, "project": args.Project}),
-			name:         args.Name,
-			node:         args.Node,
-			profiles:     args.Profiles,
-			project:      p,
-			isSnapshot:   args.Snapshot,
-			stateful:     args.Stateful,
+			architecture: 				args.Architecture,
+			creationDate: 				args.CreationDate,
+			dbType:       				args.Type,
+			description:  				args.Description,
+			ephemeral:    				args.Ephemeral,
+			id:           				args.ID,
+			lastUsedDate: 				args.LastUsedDate,
+			localConfig:  				args.Config,
+			localDevices: 				args.Devices,
+			logger:       				logger.AddContext(logger.Ctx{"instanceType": args.Type, "instance": args.Name, "project": args.Project}),
+			name:         				args.Name,
+			node:         				args.Node,
+			profiles:     				args.Profiles,
+			project:      				p,
+			stateful:     				args.Stateful,
+			isSnapshot:						args.IsSnapshot(),
 		},
 	}
 
-	// Cleanup the zero values
-	if d.expiryDate.IsZero() {
-		d.expiryDate = time.Time{}
+	if args.IsSnapshot() {
+		d.snapshotDescription = args.Snapshot.Description
+		d.snapshotExpiryDate = args.Snapshot.ExpiryDate
 	}
 
 	if d.creationDate.IsZero() {
@@ -213,7 +211,7 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operatio
 		d.lastUsedDate = time.Time{}
 	}
 
-	if args.Snapshot {
+	if d.isSnapshot {
 		d.logger.Info("Creating instance snapshot", logger.Ctx{"ephemeral": d.ephemeral})
 	} else {
 		d.logger.Info("Creating instance", logger.Ctx{"ephemeral": d.ephemeral})
@@ -226,7 +224,7 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operatio
 	}
 
 	// When not a snapshot, perform full validation.
-	if !args.Snapshot {
+	if !d.isSnapshot {
 		// Validate expanded config (allows mixed instance types for profiles).
 		err = instance.ValidConfig(s.OS, d.expandedConfig, true, instancetype.Any)
 		if err != nil {
@@ -304,7 +302,7 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operatio
 		return nil, nil, err
 	}
 
-	if !d.IsSnapshot() {
+	if !d.isSnapshot {
 		// Add devices to container.
 		cleanup, err := d.devicesAdd(d, false)
 		if err != nil {
@@ -379,29 +377,28 @@ func lxcInstantiate(s *state.State, args db.InstanceArgs, expandedDevices device
 		common: common{
 			state: s,
 
-			architecture: args.Architecture,
-			creationDate: args.CreationDate,
-			dbType:       args.Type,
-			description:  args.Description,
-			ephemeral:    args.Ephemeral,
-			expiryDate:   args.ExpiryDate,
-			id:           args.ID,
-			lastUsedDate: args.LastUsedDate,
-			localConfig:  args.Config,
-			localDevices: args.Devices,
-			logger:       logger.AddContext(logger.Ctx{"instanceType": args.Type, "instance": args.Name, "project": args.Project}),
-			name:         args.Name,
-			node:         args.Node,
-			profiles:     args.Profiles,
-			project:      p,
-			isSnapshot:   args.Snapshot,
-			stateful:     args.Stateful,
+			architecture: 				args.Architecture,
+			creationDate: 				args.CreationDate,
+			dbType:       				args.Type,
+			description:  				args.Description,
+			ephemeral:    				args.Ephemeral,
+			id:           				args.ID,
+			lastUsedDate: 				args.LastUsedDate,
+			localConfig:  				args.Config,
+			localDevices: 				args.Devices,
+			logger:       				logger.AddContext(logger.Ctx{"instanceType": args.Type, "instance": args.Name, "project": args.Project}),
+			name:         				args.Name,
+			node:         				args.Node,
+			profiles:     				args.Profiles,
+			project:      				p,
+			stateful:     				args.Stateful,
+			isSnapshot:						args.IsSnapshot(),
 		},
 	}
 
-	// Cleanup the zero values
-	if d.expiryDate.IsZero() {
-		d.expiryDate = time.Time{}
+	if args.IsSnapshot() {
+		d.snapshotDescription = args.Snapshot.Description
+		d.snapshotExpiryDate = args.Snapshot.ExpiryDate
 	}
 
 	if d.creationDate.IsZero() {
@@ -2702,7 +2699,7 @@ ff02::2 ip6-allrouters
 	}
 
 	if snapName != "" && expiry != nil {
-		err := d.snapshot(snapName, *expiry, false)
+		err := d.snapshot(snapName, *expiry, false, "")
 		if err != nil {
 			return "", nil, fmt.Errorf("Failed taking startup snapshot: %w", err)
 		}
@@ -3808,7 +3805,8 @@ func (d *lxc) Render() (any, any, error) {
 		snapState.Devices = d.localDevices.CloneNative()
 		snapState.Ephemeral = d.ephemeral
 		snapState.Profiles = profileNames
-		snapState.ExpiresAt = d.expiryDate
+		snapState.ExpiresAt = d.snapshotExpiryDate
+		snapState.SnapshotDescription = d.snapshotDescription
 
 		return &snapState, d.ETag(), nil
 	}
@@ -3947,7 +3945,7 @@ func (d *lxc) RenderState(hostInterfaces []net.Interface) (*api.InstanceState, e
 }
 
 // snapshot creates a snapshot of the instance.
-func (d *lxc) snapshot(name string, expiry time.Time, stateful bool) error {
+func (d *lxc) snapshot(name string, expiry time.Time, stateful bool, description string) error {
 	// Check that migration.stateful is set for stateful actions.
 	if stateful && !d.CanLiveMigrate() {
 		return errors.New("Stateful snapshots require that the instance has migration.stateful be set to true")
@@ -4029,12 +4027,12 @@ func (d *lxc) snapshot(name string, expiry time.Time, stateful bool) error {
 	// Wait for any file operations to complete to have a more consistent snapshot.
 	d.stopForkfile(false)
 
-	return d.snapshotCommon(d, name, expiry, stateful)
+	return d.snapshotCommon(d, name, expiry, stateful, description)
 }
 
 // Snapshot takes a new snapshot.
-func (d *lxc) Snapshot(name string, expiry time.Time, stateful bool) error {
-	return d.snapshot(name, expiry, stateful)
+func (d *lxc) Snapshot(name string, expiry time.Time, stateful bool, description string) error {
+	return d.snapshot(name, expiry, stateful, description)
 }
 
 // Restore restores a snapshot.
@@ -4063,7 +4061,10 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool) error {
 				Profiles:     d.Profiles(),
 				Project:      d.Project().Name,
 				Type:         d.Type(),
-				Snapshot:     d.IsSnapshot(),
+				Snapshot:     db.SnapshotArgs{
+					Description:  d.SnapshotDescription(),
+					ExpiryDate:   d.SnapshotExpiryDate(),
+				},
 			}
 
 			err := d.Update(args, false)
@@ -4165,7 +4166,10 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool) error {
 		Profiles:     sourceContainer.Profiles(),
 		Project:      sourceContainer.Project().Name,
 		Type:         sourceContainer.Type(),
-		Snapshot:     sourceContainer.IsSnapshot(),
+		Snapshot:     db.SnapshotArgs{
+			Description:  sourceContainer.SnapshotDescription(),
+			ExpiryDate:   sourceContainer.SnapshotExpiryDate(),
+		},
 	}
 
 	// Don't pass as user-requested as there's no way to fix a bad config.
@@ -4738,8 +4742,6 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 		return err
 	}
 
-	oldExpiryDate := d.expiryDate
-
 	// Define a function which reverts everything.  Defer this function
 	// so that it doesn't need to be explicitly called in every failing
 	// return path.  Track whether or not we want to undo the changes
@@ -4755,7 +4757,6 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 			d.localConfig = oldLocalConfig
 			d.localDevices = oldLocalDevices
 			d.profiles = oldProfiles
-			d.expiryDate = oldExpiryDate
 			d.release()
 			d.cConfig = false
 			_, _ = d.initLXC(true)
@@ -4771,7 +4772,6 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	d.localConfig = args.Config
 	d.localDevices = args.Devices
 	d.profiles = args.Profiles
-	d.expiryDate = args.ExpiryDate
 
 	// Expand the config and refresh the LXC config
 	err = d.expandConfig()
@@ -5299,7 +5299,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Snapshots should update only their descriptions and expiry date.
 		if d.IsSnapshot() {
-			return tx.UpdateInstanceSnapshot(d.id, d.description, d.expiryDate)
+			return tx.UpdateInstanceSnapshot(d.id, d.snapshotDescription, d.snapshotExpiryDate)
 		}
 
 		object, err := cluster.GetInstance(ctx, tx.Tx(), d.project.Name, d.name)
@@ -5310,7 +5310,6 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 		object.Description = d.description
 		object.Architecture = d.architecture
 		object.Ephemeral = d.ephemeral
-		object.ExpiryDate = sql.NullTime{Time: d.expiryDate, Valid: true}
 
 		err = cluster.UpdateInstance(ctx, tx.Tx(), d.project.Name, d.name, *object)
 		if err != nil {
