@@ -160,6 +160,9 @@ To add a remote pointing to an Incus server configured with OIDC authentication,
 You are then prompted to authenticate through your web browser, where you must confirm the device code that Incus uses.
 The Incus client then retrieves and stores the access and refresh tokens and provides those to Incus for all interactions.
 
+Incus supports a custom OIDC claim of `incus.allowed_subnets`, if the claim is set,
+the user will only be allowed if connecting from an IP address that's part of one of the CIDR subnets listed in the claim.
+
 ```{important}
 Any user that authenticates through the configured OIDC Identity Provider gets full access to Incus.
 To restrict user access, you must also configure {ref}`authorization`.
