@@ -870,7 +870,6 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 				Description:  args.Snapshot.Description,
 				ExpiryDate:   sql.NullTime{Time: args.Snapshot.ExpiryDate, Valid: true},
 			}
-	
 			id, err := cluster.CreateInstanceSnapshot(ctx, tx.Tx(), snapshot)
 			if err != nil {
 				return fmt.Errorf("Add snapshot info to the database: %w", err)
@@ -878,9 +877,9 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 
 			properties := cluster.InstanceSnapshotProperty{
 				InstanceSnapshotID: int(id),
-				Ephemeral: args.Ephemeral,
-				Stateful: args.Stateful,
-				Description: args.Description,
+				Ephemeral:          args.Ephemeral,
+				Stateful:           args.Stateful,
+				Description:        args.Description,
 			}
 
 			_, err = cluster.CreateInstanceSnapshotProperty(ctx, tx.Tx(), properties)
