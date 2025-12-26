@@ -13,10 +13,9 @@ import (
 
 // SnapshotArgs is a value object holding all db-related details about an instance snapshot.
 type SnapshotArgs struct {
-	Description         string
-	ExpiryDate          time.Time
+	Description string
+	ExpiryDate  time.Time
 }
-
 
 // UpdateInstanceSnapshotConfig inserts/updates/deletes the provided config keys.
 func (c *ClusterTx) UpdateInstanceSnapshotConfig(id int, values map[string]string) error {

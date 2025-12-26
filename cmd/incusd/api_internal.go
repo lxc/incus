@@ -992,9 +992,9 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 			Name:         snapInstName,
 			Profiles:     profiles,
 			Stateful:     snap.Stateful,
-			Snapshot:			db.SnapshotArgs{
+			Snapshot: db.SnapshotArgs{
 				Description: snap.SnapshotDescription,
-				ExpiryDate: snap.ExpiresAt,
+				ExpiryDate:  snap.ExpiresAt,
 			},
 		}, nil, true, true)
 		if err != nil {
