@@ -64,7 +64,6 @@ type Instance struct {
 	Stateful     bool
 	LastUseDate  sql.NullTime
 	Description  string `db:"coalesce=''"`
-	ExpiryDate   sql.NullTime
 }
 
 // InstanceFilter specifies potential query parameter fields.
