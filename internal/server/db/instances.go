@@ -24,29 +24,29 @@ import (
 // InstanceArgs is a value object holding all db-related details about an instance.
 type InstanceArgs struct {
 	// Don't set manually
-	ID       int
-	Node     string
-	Type     instancetype.Type
+	ID   int
+	Node string
+	Type instancetype.Type
 
 	// Creation only
 	Project      string
 	BaseImage    string
 	CreationDate time.Time
 
-	Architecture        int
-	Config              map[string]string
-	Description         string
-	Devices             deviceConfig.Devices
-	Ephemeral           bool
-	LastUsedDate        time.Time
-	Name                string
-	Profiles            []api.Profile
-	Stateful            bool
-	Snapshot            SnapshotArgs
+	Architecture int
+	Config       map[string]string
+	Description  string
+	Devices      deviceConfig.Devices
+	Ephemeral    bool
+	LastUsedDate time.Time
+	Name         string
+	Profiles     []api.Profile
+	Stateful     bool
+	Snapshot     SnapshotArgs
 }
 
 // IsSnapshot returns whether InstanceArgs is a snapshot or not.
-func (i *InstanceArgs) IsSnapshot() (bool) {
+func (i *InstanceArgs) IsSnapshot() bool {
 	var emptySnapshot SnapshotArgs
 	return i.Snapshot != emptySnapshot
 }
@@ -310,7 +310,7 @@ func (c *ClusterTx) instanceSnapshotFill(ctx context.Context, instanceArgs *map[
 
 	first := true
 	for snapshotID := range instances {
-		if !first {	
+		if !first {
 			q.WriteString(",")
 		}
 
@@ -322,9 +322,9 @@ func (c *ClusterTx) instanceSnapshotFill(ctx context.Context, instanceArgs *map[
 	q.WriteString(`)`)
 
 	return query.Scan(ctx, c.Tx(), q.String(), func(scan func(dest ...any) error) error {
-		var ID  int
+		var ID int
 		var description string
-		var expiryDate  time.Time 
+		var expiryDate time.Time
 
 		err := scan(&ID, &description, &expiryDate)
 		if err != nil {
@@ -335,22 +335,21 @@ func (c *ClusterTx) instanceSnapshotFill(ctx context.Context, instanceArgs *map[
 		if !found {
 			return fmt.Errorf("Failed loading instance config, referenced instance %d not loaded", ID)
 		}
-    
+
 		inst := instances[ID]
 		if inst.IsSnapshot() {
 			return fmt.Errorf("Duplicate snapshot row found for instance ID %d", ID)
-		} else {
-			inst.Snapshot = SnapshotArgs{
-				Description: description,
-				ExpiryDate: expiryDate,
-			}
-			instances[ID] = inst
 		}
 
+		inst.Snapshot = SnapshotArgs{
+			Description: description,
+			ExpiryDate:  expiryDate,
+		}
+
+		instances[ID] = inst
 		return nil
 	})
 }
-
 
 // instanceConfigFill function loads config for all specified instances in a single query and then updates
 // the entries in the instances map.

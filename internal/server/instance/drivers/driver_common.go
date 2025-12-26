@@ -76,24 +76,24 @@ type common struct {
 	op    *operations.Operation
 	state *state.State
 
-	architecture    		int
-	creationDate    		time.Time
-	dbType          		instancetype.Type
-	description     		string
-	ephemeral       		bool
-	expandedConfig  		map[string]string
-	expandedDevices 		deviceConfig.Devices
-	id              		int
-	lastUsedDate    		time.Time
-	localConfig     		map[string]string
-	localDevices    		deviceConfig.Devices
-	logger          		logger.Logger
-	name            		string
-	node            		string
-	profiles        		[]api.Profile
-	project         		api.Project
-	stateful        		bool
-	isSnapshot			 		bool
+	architecture        int
+	creationDate        time.Time
+	dbType              instancetype.Type
+	description         string
+	ephemeral           bool
+	expandedConfig      map[string]string
+	expandedDevices     deviceConfig.Devices
+	id                  int
+	lastUsedDate        time.Time
+	localConfig         map[string]string
+	localDevices        deviceConfig.Devices
+	logger              logger.Logger
+	name                string
+	node                string
+	profiles            []api.Profile
+	project             api.Project
+	stateful            bool
+	isSnapshot          bool
 	snapshotDescription string
 	snapshotExpiryDate  time.Time
 
@@ -150,7 +150,7 @@ func (d *common) SnapshotExpiryDate() time.Time {
 	return d.snapshotExpiryDate
 }
 
-// Description returns when this snapshot is describe.
+// SnapshotDescription returns when this snapshot is describe.
 func (d *common) SnapshotDescription() string {
 	return d.snapshotDescription
 }
@@ -806,19 +806,19 @@ func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time
 
 	// Setup the arguments.
 	args := db.InstanceArgs{
-		Project:      		inst.Project().Name,
-		Architecture: 		inst.Architecture(),
-		Config:       		inst.LocalConfig(),
-		Description:  		inst.Description(),
-		Type:         		inst.Type(),
-		Devices:      		inst.LocalDevices(),
-		Ephemeral:    		inst.IsEphemeral(),
-		Name:         		inst.Name() + internalInstance.SnapshotDelimiter + name,
-		Profiles:     		inst.Profiles(),
-		Stateful:     		stateful,
-		Snapshot:					db.SnapshotArgs{
-			ExpiryDate:			expiry,
-			Description:		description,
+		Project:      inst.Project().Name,
+		Architecture: inst.Architecture(),
+		Config:       inst.LocalConfig(),
+		Description:  inst.Description(),
+		Type:         inst.Type(),
+		Devices:      inst.LocalDevices(),
+		Ephemeral:    inst.IsEphemeral(),
+		Name:         inst.Name() + internalInstance.SnapshotDelimiter + name,
+		Profiles:     inst.Profiles(),
+		Stateful:     stateful,
+		Snapshot: db.SnapshotArgs{
+			ExpiryDate:  expiry,
+			Description: description,
 		},
 	}
 

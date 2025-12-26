@@ -18,7 +18,7 @@ package cluster
 //generate-database:mapper method -i -e instance_snapshot_property Create struct=InstanceSnapshotProperty
 //generate-database:mapper method -i -e instance_snapshot_property DeleteOne-by-InstanceSnapshotID
 
-// InstanceSnapshotProperty is a value object holding db-related details about a instances_snapshots_property
+// InstanceSnapshotProperty is a value object holding db-related details about a instances_snapshots_property.
 type InstanceSnapshotProperty struct {
 	ID                 int
 	InstanceSnapshotID int `db:"primary=yes&column=instance_snapshot_id"`

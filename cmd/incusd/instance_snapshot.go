@@ -507,9 +507,9 @@ func snapshotPut(s *state.State, r *http.Request, snapInst instance.Instance) re
 				Profiles:     snapInst.Profiles(),
 				Project:      snapInst.Project().Name,
 				Type:         snapInst.Type(),
-				Snapshot:    	db.SnapshotArgs{
-					Description:	snapInst.SnapshotDescription(),
-					ExpiryDate:		snapInst.SnapshotExpiryDate(),
+				Snapshot: db.SnapshotArgs{
+					Description: snapInst.SnapshotDescription(),
+					ExpiryDate:  snapInst.SnapshotExpiryDate(),
 				},
 			}
 

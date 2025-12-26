@@ -117,9 +117,9 @@ var updates = map[int]schema.Update{
 }
 
 // updateFromV76 makes the following changes to reorganize the snapshot source properties
-// Create new table to store snapshot source properties;
-// Migrate outdated columns to the new table;
-// Drop outdated columns from instances and instances_snapshots;
+// Create new table to store snapshot source properties
+// Migrate outdated columns to the new table
+// Drop outdated columns from instances and instances_snapshots.
 func updateFromV76(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.Exec(`
 CREATE TABLE instances_snapshots_property (
@@ -136,7 +136,7 @@ CREATE TABLE instances_snapshots_property (
 	}
 
 	type instanceProperties struct {
-		snapshot_id int64
+		snapshotID  int64
 		description string
 		stateful    int64
 		ephemeral   int64
@@ -153,7 +153,7 @@ SELECT a.id, a.description, a.stateful, b.ephemeral FROM instances_snapshots a J
 	defer func() { _ = rowsI.Close() }()
 	for rowsI.Next() {
 		i := instanceProperties{}
-		err := rowsI.Scan(&i.snapshot_id, &i.description, &i.stateful, &i.ephemeral)
+		err := rowsI.Scan(&i.snapshotID, &i.description, &i.stateful, &i.ephemeral)
 		if err != nil {
 			return fmt.Errorf("Failed scanning instances_snapshots row: %w", err)
 		}
@@ -164,11 +164,10 @@ SELECT a.id, a.description, a.stateful, b.ephemeral FROM instances_snapshots a J
 	for _, i := range instancesProperties {
 		_, err = tx.Exec(`
 INSERT INTO instances_snapshots_property (instance_snapshot_id, description, ephemeral, stateful) VALUES(?,?,?,?);
-`, i.snapshot_id, i.description, i.stateful, i.ephemeral)
+`, i.snapshotID, i.description, i.stateful, i.ephemeral)
 		if err != nil {
 			return fmt.Errorf("Failed to migrate properties to instances_snapshots_properties: %w", err)
 		}
-
 	}
 
 	_, err = tx.Exec(`
