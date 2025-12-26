@@ -1754,7 +1754,7 @@ If set to `true` will attempt up to 10 restarts over a 1 minute period upon unex
 :liveupdate: "no"
 :shortdesc: "Whether to always start the instance when the daemon starts"
 :type: "bool"
-If set to `false`, restore the last state.
+If unset or set to `last-state`, restores the last state.
 ```
 
 ```{config:option} boot.autostart.delay instance-boot

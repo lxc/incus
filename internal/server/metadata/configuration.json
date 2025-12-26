@@ -2007,7 +2007,7 @@
 					{
 						"boot.autostart": {
 							"liveupdate": "no",
-							"longdesc": "If set to `false`, restore the last state.",
+							"longdesc": "If unset or set to `last-state`, restores the last state.",
 							"shortdesc": "Whether to always start the instance when the daemon starts",
 							"type": "bool"
 						}
