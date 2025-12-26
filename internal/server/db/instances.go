@@ -891,6 +891,7 @@ func (c *ClusterTx) GetInstanceSnapshotsWithName(ctx context.Context, project st
 		if err != nil {
 			return nil, err
 		}
+
 		instances[i] = inst
 	}
 
