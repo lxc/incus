@@ -354,6 +354,7 @@ func (d *common) Snapshots() ([]instance.Instance, error) {
 			if err != nil {
 				return err
 			}
+
 			dbInstances[i] = inst
 		}
 
