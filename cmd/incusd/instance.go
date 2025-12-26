@@ -646,10 +646,12 @@ func pruneExpiredAndAutoCreateInstanceSnapshotsTask(d *Daemon) (task.Func, task.
 
 						parents[parentInstanceKey] = parent
 					}
+
 					inst, err := snapshot.ToInstance(ctx, tx.Tx(), parent.Name, parent.Node, parent.Type, parent.Architecture)
 					if err != nil {
 						return fmt.Errorf("Failed to parse snapshot %q to instance %q: %w", snapshot.Name, snapshot.Instance, err)
 					}
+
 					expiredSnapshots = append(expiredSnapshots, inst)
 				}
 
