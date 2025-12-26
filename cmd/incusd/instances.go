@@ -204,7 +204,7 @@ func instanceShouldAutoStart(inst instance.Instance) bool {
 	autoStart := config["boot.autostart"]
 	lastState := config["volatile.last_state.power"]
 
-	return util.IsTrue(autoStart) || (autoStart == "" && lastState == instance.PowerStateRunning)
+	return util.IsTrue(autoStart) || ((autoStart == "" || autoStart == "last-state") && lastState == instance.PowerStateRunning)
 }
 
 func instancesStart(s *state.State, instances []instance.Instance) {
