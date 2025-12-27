@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-12-19 03:30-0500\n"
-"PO-Revision-Date: 2025-12-27 03:19+0000\n"
+"PO-Revision-Date: 2025-12-28 13:00+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
 "\n"
@@ -3418,14 +3418,14 @@ msgid "Failed to load configuration: %s"
 msgstr "Falhou ao carregar configuração: %s"
 
 #: cmd/incus/file.go:848 cmd/incus/utils_sftp.go:299
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open source file %q: %v"
-msgstr "Falhou ao fechar ficheiro de certificado de servidor %q: %w"
+msgstr "Falhou ao abrir ficheiro fonte %q: %v"
 
 #: cmd/incus/utils_sftp.go:73
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open target file %q: %w"
-msgstr "Falhou ao fechar ficheiro de certificado de servidor %q: %w"
+msgstr "Falhou ao abrir ficheiro alvo %q: %w"
 
 #: cmd/incus/admin_sql.go:128
 #, c-format
