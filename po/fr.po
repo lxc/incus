@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-12-19 03:30-0500\n"
-"PO-Revision-Date: 2025-12-27 03:16+0000\n"
-"Last-Translator: montag451 <montag451@laposte.net>\n"
+"PO-Revision-Date: 2025-12-27 03:17+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -1233,8 +1233,8 @@ msgstr "Sauvegardes:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Mauvais appareil remplacez la syntaxe, syntaxe attendue <appareil>,"
-"<clé>=<valeur>: %s"
+"Mauvais appareil remplacez la syntaxe, syntaxe attendue <appareil>,<clé>"
+"=<valeur>: %s"
 
 #: cmd/incus/network.go:432 cmd/incus/network_acl.go:473
 #: cmd/incus/network_address_set.go:316 cmd/incus/network_forward.go:399
@@ -5336,8 +5336,8 @@ msgstr ""
 "Colonnes en mode rapide : nsacPt\n"
 "\n"
 "Exemple :\n"
-"    lxc list -c n,volatile.base_image:\\BASE "
-"IMAGE\\:0,s46,volatile.eth0.hwaddr:MAC"
+"    lxc list -c n,volatile.base_image:\\BASE IMAGE\\"
+":0,s46,volatile.eth0.hwaddr:MAC"
 
 #: cmd/incus/network_acl.go:102
 #, fuzzy
@@ -7873,8 +7873,7 @@ msgstr "Certificat serveur rejeté par l'utilisateur"
 #: cmd/incus/remote.go:646
 #, fuzzy
 msgid "Server doesn't trust us after authentication"
-msgstr ""
-"Le serveur ne nous fait pas confiance après l'ajout de notre certificat"
+msgstr "Le serveur ne nous fait pas confiance après l'ajout de notre certificat"
 
 #: cmd/incus/cluster.go:308 cmd/incus/cluster.go:1319 cmd/incus/cluster.go:1418
 #: cmd/incus/cluster.go:1528 cmd/incus/cluster_group.go:573
@@ -8898,8 +8897,7 @@ msgstr ""
 #: cmd/incus/create.go:477
 #, fuzzy
 msgid "The instance you are starting doesn't have any network attached to it."
-msgstr ""
-"Le conteneur que vous démarrez n'est attaché à aucune interface réseau."
+msgstr "Le conteneur que vous démarrez n'est attaché à aucune interface réseau."
 
 #: cmd/incus/config.go:658
 msgid "The is no config key to set on an instance snapshot."
