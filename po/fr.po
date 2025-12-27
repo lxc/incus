@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-12-19 03:30-0500\n"
 "PO-Revision-Date: 2025-12-27 03:17+0000\n"
-"Last-Translator: Steeve Droz <steeve.droz+weblate@protonmail.ch>\n"
+"Last-Translator: smCloudInTheSky <sylvain.maret@hotmail.fr>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -1102,8 +1102,7 @@ msgstr "Rejoingez-vous un cluster existant ?"
 #: cmd/incus/cluster.go:1670
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
-msgstr ""
-"Êtes-vous sûr de %s le membre du cluster %q ? (oui/non) [défaut=non] : "
+msgstr "Êtes-vous sûr de %s le membre du cluster %q ? (oui/non) [défaut=non] : "
 
 #: cmd/incus/console.go:414
 msgid "As neither could be found, the raw SPICE socket can be found at:"
