@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-12-19 03:30-0500\n"
-"PO-Revision-Date: 2025-10-21 04:18+0000\n"
-"Last-Translator: Varlorg <varlorg@gmail.com>\n"
+"PO-Revision-Date: 2025-12-27 03:16+0000\n"
+"Last-Translator: montag451 <montag451@laposte.net>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.14-dev\n"
+"X-Generator: Weblate 5.15.1\n"
 
 #: cmd/incus/info.go:453
 msgid "  Chassis:"
@@ -3308,8 +3308,8 @@ msgstr "Échec de la vérification de l'existence de l'instance \"%s:%s\" : %w
 #, c-format
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr ""
-"Échec de la vérification de l'existence de l'instantané d'instance \"%s:"
-"%s\" : %w"
+"Échec de la vérification de l'existence de l'instantané d'instance \"%s:%s\" "
+": %w"
 
 #: cmd/incus/storage_volume.go:3242
 #, fuzzy, c-format
@@ -3458,8 +3458,7 @@ msgstr "Échec de la connexion au membre du cluster : %w"
 #: cmd/incus/admin_init.go:100
 #, c-format
 msgid "Failed to connect to get server info: %w"
-msgstr ""
-"Échec de la connexion pour obtenir des informations sur le serveur : %w"
+msgstr "Échec de la connexion pour obtenir des informations sur le serveur : %w"
 
 #: cmd/incus/admin_init.go:95
 #, c-format
@@ -4227,8 +4226,7 @@ msgstr ""
 
 #: cmd/incus/image.go:686 cmd/incus/publish.go:44
 msgid "If the image alias already exists, delete and create a new one"
-msgstr ""
-"Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
+msgstr "Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
 
 #: cmd/incus/snapshot.go:97 cmd/incus/storage_volume.go:3424
 msgid "If the snapshot name already exists, delete and create a new one"
