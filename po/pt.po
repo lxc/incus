@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-12-19 03:30-0500\n"
-"PO-Revision-Date: 2025-12-18 19:00+0000\n"
+"PO-Revision-Date: 2025-12-27 03:19+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.15.1-dev\n"
+"X-Generator: Weblate 5.15.1\n"
 
 #: cmd/incus/info.go:453
 msgid "  Chassis:"
@@ -750,9 +750,8 @@ msgid "<alias> <target>"
 msgstr "<alias> <alvo>"
 
 #: cmd/incus/cluster.go:1045
-#, fuzzy
 msgid "<cluster>: [<member>:]"
-msgstr "[[<remoto>:]<membro>]"
+msgstr "<cluster>: [<membro>:]"
 
 #: cmd/incus/alias.go:171
 msgid "<old alias> <new alias>"
@@ -1212,8 +1211,8 @@ msgstr "Salvaguardas:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Má sintaxe de sobreposição de dispositivo, esperando <dispositivo>,"
-"<chave>=<valor>: %s"
+"Má sintaxe de sobreposição de dispositivo, esperando <dispositivo>,<chave>"
+"=<valor>: %s"
 
 #: cmd/incus/network.go:432 cmd/incus/network_acl.go:473
 #: cmd/incus/network_address_set.go:316 cmd/incus/network_forward.go:399
@@ -2596,8 +2595,8 @@ msgstr ""
 "quais atributos da instância a exibir quando mostra em tabela ou em formato\n"
 "compactado.\n"
 "\n"
-"Os argumentos de coluna são pré-definidos de caracteres curtos (veja "
-"abaixo).\n"
+"Os argumentos de coluna são pré-definidos de caracteres curtos (veja abaixo)"
+".\n"
 "As vírgulas entre os caracteres curtos consecutivos são opcionais.\n"
 "\n"
 "Coluna de caracteres curtos:\n"
@@ -3710,8 +3709,8 @@ msgstr "Formato (table|compact)"
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr ""
-"Formato de despejo de memória (ex. elf, win-dmp, kdump-zlib, kdump-raw-"
-"zlib, ...)"
+"Formato de despejo de memória (ex. elf, win-dmp, kdump-zlib, kdump-raw-zlib, "
+"...)"
 
 #: cmd/incus/network.go:1048
 msgid "Forward delay"
@@ -4454,9 +4453,8 @@ msgid "IsSM: %s (%s)"
 msgstr "IsSM: %s (%s)"
 
 #: cmd/incus/cluster.go:1046 cmd/incus/cluster.go:1047
-#, fuzzy
 msgid "Join an existing server to a cluster"
-msgstr "Está a juntar-se a um agrupamento existente?"
+msgstr "Juntar um servidor existente a um agrupamento"
 
 #: cmd/incus/cluster.go:1845
 msgid "Joining an existing cluster requires root privileges"
@@ -5141,8 +5139,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5195,8 +5193,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5312,8 +5310,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5455,8 +5453,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5486,8 +5484,8 @@ msgstr ""
 "  f - Impressão digital de Imagem Base (curta)\n"
 "  F - Impressão digital de Imagem Base (longa)\n"
 "\n"
-"Colunas personalizadas são definidas com \"[config:|devices:]key[:name]"
-"[:maxWidth]\":\n"
+"Colunas personalizadas são definidas com "
+"\"[config:|devices:]key[:name][:maxWidth]\":\n"
 "  KEY: A cave (estendida) de configuração ou dispositivos a mostrar. Se "
 "[config:|devices:] for omitido então predefine para a chave de "
 "configuração.\n"
@@ -5538,8 +5536,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5588,8 +5586,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5745,8 +5743,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5793,8 +5791,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5940,8 +5938,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -6071,8 +6069,7 @@ msgstr "Localização: %s"
 
 #: cmd/incus/monitor.go:83
 msgid "Log level filtering can only be used with pretty formatting"
-msgstr ""
-"Filtragem de nível de relatório só pode ser usada com formatação bonita"
+msgstr "Filtragem de nível de relatório só pode ser usada com formatação bonita"
 
 #: cmd/incus/info.go:940
 msgid "Log:"
@@ -7091,8 +7088,7 @@ msgstr "Nenhum %s backend de armazenamento disponível"
 #: cmd/incus/config_trust.go:881
 #, c-format
 msgid "No certificate add token for member %s on remote: %s"
-msgstr ""
-"Nenhum testemunho de adição de certificado para membro %s em remoto: %s"
+msgstr "Nenhum testemunho de adição de certificado para membro %s em remoto: %s"
 
 #: cmd/incus/cluster.go:1456
 #, c-format
@@ -8835,8 +8831,7 @@ msgstr "Instantâneo de volumes de armazenamento"
 
 #: cmd/incus/storage_volume.go:2140
 msgid "Snapshots are read-only and can't have their configuration changed"
-msgstr ""
-"Os instantâneos são só leitura e não se pode alterar a sua configuração"
+msgstr "Os instantâneos são só leitura e não se pode alterar a sua configuração"
 
 #: cmd/incus/info.go:824 cmd/incus/storage_volume.go:1496
 msgid "Snapshots:"
@@ -9080,9 +9075,8 @@ msgid "Taken at"
 msgstr "Tomado em"
 
 #: cmd/incus/cluster.go:1095
-#, fuzzy
 msgid "Target isn't a cluster"
-msgstr "Servidor não faz parte de um agrupamento"
+msgstr "Alvo não é um agrupamento"
 
 #: cmd/incus/export.go:83
 #, c-format
@@ -9098,9 +9092,8 @@ msgid "Target path must be a directory"
 msgstr "O caminho alvo tem de ser um diretório"
 
 #: cmd/incus/cluster.go:1099
-#, fuzzy
 msgid "Target server is already clustered"
-msgstr "Este servidor já está agrupado"
+msgstr "Servidor alvo já está agrupado"
 
 #: cmd/incus/admin_shutdown.go:31
 msgid "Tell the daemon to shutdown all instances and exit"
@@ -9218,8 +9211,7 @@ msgstr ""
 
 #: cmd/incus/create.go:477
 msgid "The instance you are starting doesn't have any network attached to it."
-msgstr ""
-"A instância que você está a iniciar não tem nenhuma rede anexada a ela."
+msgstr "A instância que você está a iniciar não tem nenhuma rede anexada a ela."
 
 #: cmd/incus/config.go:658
 msgid "The is no config key to set on an instance snapshot."
@@ -9680,8 +9672,7 @@ msgstr "Tipo de saída desconhecido %q"
 
 #: cmd/incus/cluster_group.go:1054
 msgid "Unset a cluster group's configuration keys"
-msgstr ""
-"Retira definições das chaves de configuração de um grupo de agrupamento"
+msgstr "Retira definições das chaves de configuração de um grupo de agrupamento"
 
 #: cmd/incus/cluster.go:629
 msgid "Unset a cluster member's configuration keys"
@@ -10062,8 +10053,7 @@ msgstr "Servidor Web a correr em: %s"
 
 #: cmd/incus/cluster.go:1820
 msgid "What IP address or DNS name should be used to reach this server?"
-msgstr ""
-"Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
+msgstr "Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
 
 #: cmd/incus/admin_init_interactive.go:172
 msgid "What IPv4 address should be used?"
@@ -10613,8 +10603,8 @@ msgid ""
 "[<remote>:]<network> <listen_address> <backend_name> <target_address> "
 "[<target_port(s)>]"
 msgstr ""
-"[<remoto>:]<rede> <endereço_escuta> <nome_backend> <endereço_alvo> "
-"[<porto(s)_alvo>]"
+"[<remoto>:]<rede> <endereço_escuta> <nome_backend> <endereço_alvo> [<porto(s)"
+"_alvo>]"
 
 #: cmd/incus/network_forward.go:447 cmd/incus/network_forward.go:644
 #: cmd/incus/network_load_balancer.go:450
@@ -10765,8 +10755,7 @@ msgstr "[<remoto>:]<pool> <volume> <instância> [<nome dispositivo>]"
 
 #: cmd/incus/storage_volume.go:174
 msgid "[<remote>:]<pool> <volume> <instance> [<device name>] [<path>]"
-msgstr ""
-"[<remoto>:]<pool> <volume> <instância> [<nome dispositivo>] [<caminho>]"
+msgstr "[<remoto>:]<pool> <volume> <instância> [<nome dispositivo>] [<caminho>]"
 
 #: cmd/incus/storage_volume.go:3831
 msgid "[<remote>:]<pool> <volume> <old snapshot> <new snapshot>"
@@ -10802,8 +10791,7 @@ msgstr "[<remoto>:]<pool> <volume>/<caminho> <caminho alvo>"
 
 #: cmd/incus/storage_volume.go:2420
 msgid "[<remote>:]<pool> <volume>/<path> [<symlink target path>]"
-msgstr ""
-"[<remoto>:]<pool> <volume>/<caminho> [<caminho alvo de link simbólico>]"
+msgstr "[<remoto>:]<pool> <volume>/<caminho> [<caminho alvo de link simbólico>]"
 
 #: cmd/incus/storage_volume.go:4002
 msgid "[<remote>:]<pool> <volume>/<snapshot>"

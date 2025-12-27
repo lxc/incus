@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-12-19 03:30-0500\n"
-"PO-Revision-Date: 2025-10-21 04:18+0000\n"
+"PO-Revision-Date: 2025-12-27 03:17+0000\n"
 "Last-Translator: Varlorg <varlorg@gmail.com>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.14-dev\n"
+"X-Generator: Weblate 5.15.1\n"
 
 #: cmd/incus/info.go:453
 msgid "  Chassis:"
@@ -1102,8 +1102,7 @@ msgstr "Rejoingez-vous un cluster existant ?"
 #: cmd/incus/cluster.go:1670
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
-msgstr ""
-"Êtes-vous sûr de %s le membre du cluster %q ? (oui/non) [défaut=non] : "
+msgstr "Êtes-vous sûr de %s le membre du cluster %q ? (oui/non) [défaut=non] : "
 
 #: cmd/incus/console.go:414
 msgid "As neither could be found, the raw SPICE socket can be found at:"
@@ -1233,8 +1232,8 @@ msgstr "Sauvegardes:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Mauvais appareil remplacez la syntaxe, syntaxe attendue <appareil>,"
-"<clé>=<valeur>: %s"
+"Mauvais appareil remplacez la syntaxe, syntaxe attendue <appareil>,<clé>"
+"=<valeur>: %s"
 
 #: cmd/incus/network.go:432 cmd/incus/network_acl.go:473
 #: cmd/incus/network_address_set.go:316 cmd/incus/network_forward.go:399
@@ -3308,8 +3307,8 @@ msgstr "Échec de la vérification de l'existence de l'instance \"%s:%s\" : %w
 #, c-format
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr ""
-"Échec de la vérification de l'existence de l'instantané d'instance \"%s:"
-"%s\" : %w"
+"Échec de la vérification de l'existence de l'instantané d'instance \"%s:%s\" "
+": %w"
 
 #: cmd/incus/storage_volume.go:3242
 #, fuzzy, c-format
@@ -3458,8 +3457,7 @@ msgstr "Échec de la connexion au membre du cluster : %w"
 #: cmd/incus/admin_init.go:100
 #, c-format
 msgid "Failed to connect to get server info: %w"
-msgstr ""
-"Échec de la connexion pour obtenir des informations sur le serveur : %w"
+msgstr "Échec de la connexion pour obtenir des informations sur le serveur : %w"
 
 #: cmd/incus/admin_init.go:95
 #, c-format
@@ -4227,8 +4225,7 @@ msgstr ""
 
 #: cmd/incus/image.go:686 cmd/incus/publish.go:44
 msgid "If the image alias already exists, delete and create a new one"
-msgstr ""
-"Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
+msgstr "Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
 
 #: cmd/incus/snapshot.go:97 cmd/incus/storage_volume.go:3424
 msgid "If the snapshot name already exists, delete and create a new one"
@@ -5338,8 +5335,8 @@ msgstr ""
 "Colonnes en mode rapide : nsacPt\n"
 "\n"
 "Exemple :\n"
-"    lxc list -c n,volatile.base_image:\\BASE "
-"IMAGE\\:0,s46,volatile.eth0.hwaddr:MAC"
+"    lxc list -c n,volatile.base_image:\\BASE IMAGE\\"
+":0,s46,volatile.eth0.hwaddr:MAC"
 
 #: cmd/incus/network_acl.go:102
 #, fuzzy
@@ -7875,8 +7872,7 @@ msgstr "Certificat serveur rejeté par l'utilisateur"
 #: cmd/incus/remote.go:646
 #, fuzzy
 msgid "Server doesn't trust us after authentication"
-msgstr ""
-"Le serveur ne nous fait pas confiance après l'ajout de notre certificat"
+msgstr "Le serveur ne nous fait pas confiance après l'ajout de notre certificat"
 
 #: cmd/incus/cluster.go:308 cmd/incus/cluster.go:1319 cmd/incus/cluster.go:1418
 #: cmd/incus/cluster.go:1528 cmd/incus/cluster_group.go:573
@@ -8900,8 +8896,7 @@ msgstr ""
 #: cmd/incus/create.go:477
 #, fuzzy
 msgid "The instance you are starting doesn't have any network attached to it."
-msgstr ""
-"Le conteneur que vous démarrez n'est attaché à aucune interface réseau."
+msgstr "Le conteneur que vous démarrez n'est attaché à aucune interface réseau."
 
 #: cmd/incus/config.go:658
 msgid "The is no config key to set on an instance snapshot."

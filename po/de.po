@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-12-19 03:30-0500\n"
-"PO-Revision-Date: 2025-10-21 03:44+0000\n"
+"PO-Revision-Date: 2025-12-27 03:16+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.14-dev\n"
+"X-Generator: Weblate 5.15.1\n"
 
 #: cmd/incus/info.go:453
 msgid "  Chassis:"
@@ -1252,8 +1252,8 @@ msgstr "Sicherungen:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Ungültige Gerätüberschreibungs-Syntax, erwartet wird <Gerät>,"
-"<Schlüssel>=<Wert>: %s"
+"Ungültige Gerätüberschreibungs-Syntax, erwartet wird <Gerät>,<Schlüssel>"
+"=<Wert>: %s"
 
 #: cmd/incus/network.go:432 cmd/incus/network_acl.go:473
 #: cmd/incus/network_address_set.go:316 cmd/incus/network_forward.go:399
@@ -1440,8 +1440,7 @@ msgstr "Kann uid/gid/mode im rekursiven Modus nicht bereitstellen"
 #: cmd/incus/config.go:686
 #, c-format
 msgid "Can't unset key '%s', it's not currently set"
-msgstr ""
-"Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
+msgstr "Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
 
 #: cmd/incus/admin_init.go:67
 msgid "Can't use --auto and --preseed together"
@@ -1459,8 +1458,7 @@ msgstr "Die Option --minimal und --auto können nicht zusammen genutzt werden"
 
 #: cmd/incus/admin_init.go:71
 msgid "Can't use --minimal and --preseed together"
-msgstr ""
-"Die Option --minimal und --preseed können nicht zusammen genutzt werden"
+msgstr "Die Option --minimal und --preseed können nicht zusammen genutzt werden"
 
 #: cmd/incus/rebuild.go:163
 msgid "Can't use an image with --empty"
@@ -1487,8 +1485,7 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:431
 msgid "Cannot set --target when source server is not clustered"
-msgstr ""
-"\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
+msgstr "\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
 
 #: cmd/incus/storage_volume.go:452
 msgid "Cannot set --volume-only when copying a snapshot"
@@ -3084,8 +3081,8 @@ msgstr ""
 "Mitglieds). \n"
 "\n"
 "  Die globale Datenbank teilen sich alle Mitglieder eines Clusters \n"
-"  und sie enthält Cluster-spezifische Daten (z.b. Profile, Container, "
-"usw.). \n"
+"  und sie enthält Cluster-spezifische Daten (z.b. Profile, Container, usw.). "
+"\n"
 "\n"
 "  Wenn Sie einen Server ohne Cluster betreiben, gilt dasgleiche, \n"
 "  denn der Server ist dann praktisch ein Cluster mit nur einem Mitglied. \n"
@@ -6199,8 +6196,7 @@ msgstr ""
 
 #: cmd/incus/file.go:513
 msgid "More than one file to download, but target is not a directory"
-msgstr ""
-"Mehr als eine Datei herunterzuladen, aber das Ziel ist kein Verzeichnis"
+msgstr "Mehr als eine Datei herunterzuladen, aber das Ziel ist kein Verzeichnis"
 
 #: cmd/incus/storage_volume.go:2699 cmd/incus/storage_volume.go:2700
 #, fuzzy

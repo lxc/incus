@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-12-19 03:30-0500\n"
-"PO-Revision-Date: 2025-12-07 15:00+0000\n"
-"Last-Translator: Daniel Nylander <daniel@danielnylander.se>\n"
+"PO-Revision-Date: 2025-12-27 03:13+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.15.1\n"
 
 #: cmd/incus/info.go:453
 msgid "  Chassis:"
@@ -963,8 +963,8 @@ msgstr "Lägg till regler i en ACL"
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
-"Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när "
-"klar):"
+"Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när klar)"
+":"
 
 #: cmd/incus/admin_init.go:53
 msgid "Address to bind to (default: none)"
@@ -1184,8 +1184,8 @@ msgstr "Säkerhetskopior:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,"
-"<nyckel>=<värde>: %s"
+"Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,<nyckel>"
+"=<värde>: %s"
 
 #: cmd/incus/network.go:432 cmd/incus/network_acl.go:473
 #: cmd/incus/network_address_set.go:316 cmd/incus/network_forward.go:399
@@ -1917,8 +1917,8 @@ msgid ""
 "running state, including process memory state, TCP connections, ..."
 msgstr ""
 "Skapa instanssnapshots När --stateful används, försök att kontrollera "
-"instansens körningsstatus, inklusive processminnesstatus, TCP-"
-"anslutningar, ..."
+"instansens körningsstatus, inklusive processminnesstatus, TCP-anslutningar, "
+"..."
 
 #: cmd/incus/create.go:46 cmd/incus/create.go:47
 msgid "Create instances from images"
@@ -2776,8 +2776,7 @@ msgstr "Redigera förtroendekonfigurationer som YAML"
 #: cmd/incus/top.go:92 cmd/incus/warning.go:245
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
-msgstr ""
-"Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
+msgstr "Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
 
 #: cmd/incus/cluster.go:828
 msgid "Enable clustering on a single non-clustered server"
@@ -5379,8 +5378,8 @@ msgstr ""
 "  f - Fingeravtryck för basavbildning (kort)\n"
 "  F - Fingeravtryck för basavbildning (långt)\n"
 "\n"
-"Anpassade kolumner definieras med \"[config:|devices:]key[:name][:maxWidth]"
-"\":\n"
+"Anpassade kolumner definieras med "
+"\"[config:|devices:]key[:name][:maxWidth]\":\n"
 "  KEY: Den (utökade) konfigurations- eller enhetsnyckeln som ska visas. Om "
 "[config:|devices:] utelämnas är standardvärdet konfigurationsnyckeln.\n"
 "  NAME: Namn som ska visas i kolumnrubriken.\n"
@@ -9076,8 +9075,8 @@ msgstr "Nyckeln %q finns inte på klustermedlemmen %q"
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:%q' instead."
 msgstr ""
-"Den lokala avbildningen '%q' kunde inte hittas, försöker istället med '%q:"
-"%q'."
+"Den lokala avbildningen '%q' kunde inte hittas, försöker istället med "
+"'%q:%q'."
 
 #: cmd/incus/utils.go:441
 #, c-format
@@ -9869,8 +9868,8 @@ msgid ""
 "they otherwise would."
 msgstr ""
 "Vi har upptäckt att du kör i en container utan privilegier.\n"
-"Det innebär att om du inte manuellt har konfigurerat din värd på annat "
-"sätt, \n"
+"Det innebär att om du inte manuellt har konfigurerat din värd på annat sätt, "
+"\n"
 "kommer du inte att ha tillräckligt med uid och gid att tilldela dina "
 "containrar.\n"
 "\n"
@@ -9924,8 +9923,7 @@ msgstr ""
 
 #: cmd/incus/snapshot.go:94
 msgid "Whether or not to snapshot the instance's running state"
-msgstr ""
-"Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
+msgstr "Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
 
 #: cmd/incus/rebuild.go:29
 msgid ""
@@ -10429,8 +10427,8 @@ msgid ""
 "[<remote>:]<network> <listen_address> <backend_name> <target_address> "
 "[<target_port(s)>]"
 msgstr ""
-"[<fjärr>:]<nätverk> <lyssningsadress> <backend_name> <måladress> "
-"[<målport(ar)>]"
+"[<fjärr>:]<nätverk> <lyssningsadress> <backend_name> <måladress> [<målport"
+"(ar)>]"
 
 #: cmd/incus/network_forward.go:447 cmd/incus/network_forward.go:644
 #: cmd/incus/network_load_balancer.go:450
@@ -10990,8 +10988,8 @@ msgid ""
 "incus exec c1 -- ls -lh /\n"
 "\tRun the \"ls -lh /\" command in instance \"c1\""
 msgstr ""
-"incus exec c1 bash Kör kommandot \"bash\" i instansen \"c1\" incus exec c1 "
-"-- ls -lh / Kör kommandot \"ls -lh /\" i instansen \"c1\""
+"incus exec c1 bash Kör kommandot \"bash\" i instansen \"c1\" incus exec "
+"c1 -- ls -lh / Kör kommandot \"ls -lh /\" i instansen \"c1\""
 
 #: cmd/incus/export.go:36
 msgid ""
