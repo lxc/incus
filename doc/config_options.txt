@@ -5675,6 +5675,14 @@ This value is required by some providers.
 
 ```
 
+```{config:option} source storage_linstor-common
+:default: "`incus`"
+:scope: "global"
+:shortdesc: "LINSTOR storage pool name. Alias for `linstor.resource_group.name`. Use either either one or the other or make sure they have the same value."
+:type: "string"
+
+```
+
 ```{config:option} volatile.pool.pristine storage_linstor-common
 :default: "`true`"
 :scope: "global"

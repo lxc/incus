@@ -6438,6 +6438,15 @@
 						}
 					},
 					{
+						"source": {
+							"default": "`incus`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "LINSTOR storage pool name. Alias for `linstor.resource_group.name`. Use either either one or the other or make sure they have the same value.",
+							"type": "string"
+						}
+					},
+					{
 						"volatile.pool.pristine": {
 							"default": "`true`",
 							"longdesc": "",

@@ -149,6 +149,15 @@ func (d *linstor) Validate(config map[string]string) error {
 		//  default: `true`
 		//  shortdesc: Whether to allow LINSTOR to automatically create diskless resources to act as quorum tiebreakers if needed (applied to the resource group)
 		DrbdAutoAddQuorumTiebreakerConfigKey: validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=storage_linstor, group=common, key=source)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: `incus`
+		//  shortdesc: LINSTOR storage pool name. Alias for `linstor.resource_group.name`. Use either either one or the other or make sure they have the same value.
+		"source": validate.IsAny,
 	}
 
 	return d.validatePool(config, rules, d.commonVolumeRules())
