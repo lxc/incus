@@ -1180,6 +1180,13 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```
 
+```{config:option} vlan.tagged devices-nic_physical
+:managed: "no"
+:shortdesc: "Comma-delimited list of VLAN IDs or VLAN ranges to join for tagged traffic"
+:type: "integer"
+
+```
+
 <!-- config group devices-nic_physical end -->
 <!-- config group devices-nic_routed start -->
 ```{config:option} gvrp devices-nic_routed
@@ -4009,6 +4016,13 @@ User keys can be used in search.
 ```{config:option} vlan network_physical-common
 :condition: "-"
 :shortdesc: "The VLAN ID to attach to"
+:type: "integer"
+
+```
+
+```{config:option} vlan.tagged network_physical-common
+:condition: "Parent must be an existing bridge"
+:shortdesc: "Comma-delimited list of VLAN IDs or VLAN ranges to join for tagged traffic"
 :type: "integer"
 
 ```
