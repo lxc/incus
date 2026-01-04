@@ -57,6 +57,28 @@ func (n *physical) Validate(config map[string]string, clientType request.ClientT
 		// shortdesc: The VLAN ID to attach to
 		"vlan": validate.Optional(validate.IsNetworkVLAN),
 
+		// gendoc:generate(entity=network_physical, group=common, key=vlan.tagged)
+		//
+		// ---
+		// type: integer
+		// condition: Parent must be an existing bridge
+		// shortdesc: Comma-delimited list of VLAN IDs or VLAN ranges to join for tagged traffic
+		"vlan.tagged": func(value string) error {
+			if value == "" {
+				return nil
+			}
+
+			// Check that none of the supplied VLAN IDs are the same as the untagged VLAN ID.
+			for _, vlanID := range util.SplitNTrimSpace(value, ",", -1, true) {
+				_, _, err := validate.ParseNetworkVLANRange(vlanID)
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		},
+
 		// gendoc:generate(entity=network_physical, group=common, key=gvrp)
 		//
 		// ---
