@@ -211,7 +211,7 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 		bridgedConfig["network"] = ""
 
 		// Instantiate the new device.
-		bridged, err := load(d.inst, d.state, d.inst.Project().Name, d.inst.Name(), bridgedConfig, d.volatileGet, d.volatileSet)
+		bridged, err := load(d.inst, d.state, d.inst.Project().Name, d.name, bridgedConfig, d.volatileGet, d.volatileSet)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to initialize bridged device: %w", err)
 		}
@@ -422,7 +422,7 @@ func (d *nicPhysical) Stop() (*deviceConfig.RunConfig, error) {
 		bridgedConfig["network"] = ""
 
 		// Instantiate the new device.
-		bridged, err := load(d.inst, d.state, d.inst.Project().Name, d.inst.Name(), bridgedConfig, d.volatileGet, d.volatileSet)
+		bridged, err := load(d.inst, d.state, d.inst.Project().Name, d.name, bridgedConfig, d.volatileGet, d.volatileSet)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to initialize bridged device: %w", err)
 		}
