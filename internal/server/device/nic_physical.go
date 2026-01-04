@@ -94,7 +94,14 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 		//  type: integer
 		//  managed: no
 		//  shortdesc: The VLAN ID to attach to
-		optionalFields = append(optionalFields, "hwaddr", "vlan")
+
+		// gendoc:generate(entity=devices, group=nic_physical, key=vlan.tagged)
+		//
+		// ---
+		//  type: integer
+		//  managed: no
+		//  shortdesc: Comma-delimited list of VLAN IDs or VLAN ranges to join for tagged traffic
+		optionalFields = append(optionalFields, "hwaddr", "vlan", "vlan.tagged")
 	}
 
 	// gendoc:generate(entity=devices, group=nic_physical, key=network)
@@ -106,7 +113,7 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 	if d.config["network"] != "" {
 		requiredFields = append(requiredFields, "network")
 
-		bannedKeys := []string{"nictype", "parent", "mtu", "vlan", "gvrp"}
+		bannedKeys := []string{"nictype", "parent", "mtu", "vlan", "vlan.tagged", "gvrp"}
 		for _, bannedKey := range bannedKeys {
 			if d.config[bannedKey] != "" {
 				return fmt.Errorf("Cannot use %q property in conjunction with %q property", bannedKey, "network")
@@ -147,7 +154,7 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 		//  default: randomly assigned
 		//  managed: no
 		//  shortdesc: The MAC address of the new interface
-		optionalFields = append(optionalFields, "hwaddr", "vlan")
+		optionalFields = append(optionalFields, "hwaddr", "vlan", "vlan.tagged")
 
 		// Copy certain keys verbatim from the network's settings.
 		for _, field := range optionalFields {
@@ -204,7 +211,7 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 		bridgedConfig["network"] = ""
 
 		// Instantiate the new device.
-		bridged, err := load(d.inst, d.state, d.inst.Project().Name, d.inst.Name(), bridgedConfig, d.volatileGet, d.volatileSet)
+		bridged, err := load(d.inst, d.state, d.inst.Project().Name, d.name, bridgedConfig, d.volatileGet, d.volatileSet)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to initialize bridged device: %w", err)
 		}
@@ -415,7 +422,7 @@ func (d *nicPhysical) Stop() (*deviceConfig.RunConfig, error) {
 		bridgedConfig["network"] = ""
 
 		// Instantiate the new device.
-		bridged, err := load(d.inst, d.state, d.inst.Project().Name, d.inst.Name(), bridgedConfig, d.volatileGet, d.volatileSet)
+		bridged, err := load(d.inst, d.state, d.inst.Project().Name, d.name, bridgedConfig, d.volatileGet, d.volatileSet)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to initialize bridged device: %w", err)
 		}

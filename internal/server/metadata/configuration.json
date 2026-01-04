@@ -1331,6 +1331,14 @@
 							"shortdesc": "The VLAN ID to attach to",
 							"type": "integer"
 						}
+					},
+					{
+						"vlan.tagged": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Comma-delimited list of VLAN IDs or VLAN ranges to join for tagged traffic",
+							"type": "integer"
+						}
 					}
 				]
 			},
@@ -4527,6 +4535,14 @@
 							"condition": "-",
 							"longdesc": "",
 							"shortdesc": "The VLAN ID to attach to",
+							"type": "integer"
+						}
+					},
+					{
+						"vlan.tagged": {
+							"condition": "Parent must be an existing bridge",
+							"longdesc": "",
+							"shortdesc": "Comma-delimited list of VLAN IDs or VLAN ranges to join for tagged traffic",
 							"type": "integer"
 						}
 					}
