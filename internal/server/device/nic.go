@@ -22,6 +22,7 @@ func nicValidationRules(requiredFields []string, optionalFields []string, instCo
 		"network":                              validate.IsAny,
 		"mtu":                                  validate.Optional(validate.IsNetworkMTU),
 		"vlan":                                 validate.IsNetworkVLAN,
+		"vlan.tagged":                          validate.IsAny,
 		"gvrp":                                 validate.Optional(validate.IsBool),
 		"hwaddr":                               validate.IsNetworkMAC,
 		"host_name":                            validate.IsAny,
