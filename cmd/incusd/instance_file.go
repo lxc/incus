@@ -26,6 +26,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 func instanceFileHandler(d *Daemon, r *http.Request) response.Response {
@@ -331,6 +332,12 @@ func instanceFilePost(s *state.State, inst instance.Instance, path string, r *ht
 //	    description: Project name
 //	    type: string
 //	    example: default
+//	  - in: header
+//	    name: X-Incus-force
+//	    description: Perform recursive deletion
+//	    schema:
+//	      type: boolean
+//	    example: true
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -342,7 +349,7 @@ func instanceFilePost(s *state.State, inst instance.Instance, path string, r *ht
 //	    $ref: "#/responses/NotFound"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func instanceFileDelete(s *state.State, inst instance.Instance, path string, _ *http.Request) response.Response {
+func instanceFileDelete(s *state.State, inst instance.Instance, path string, r *http.Request) response.Response {
 	// Get a SFTP client.
 	client, err := inst.FileSFTP()
 	if err != nil {
@@ -351,7 +358,7 @@ func instanceFileDelete(s *state.State, inst instance.Instance, path string, _ *
 
 	defer func() { _ = client.Close() }()
 
-	return fileSFTPDelete(client, path, func() {
+	return fileSFTPDelete(client, path, r, func() {
 		s.Events.SendLifecycle(inst.Project().Name, lifecycle.InstanceFileDeleted.Event(inst, logger.Ctx{"path": path}))
 	})
 }
@@ -626,11 +633,19 @@ func fileSFTPPost(client *sftp.Client, path string, r *http.Request, onSuccess f
 	}
 }
 
-func fileSFTPDelete(client *sftp.Client, path string, onSuccess func()) response.Response {
-	// Delete the file.
-	err := client.Remove(path)
-	if err != nil {
-		return response.SmartError(err)
+func fileSFTPDelete(client *sftp.Client, path string, r *http.Request, onSuccess func()) response.Response {
+	if util.IsFalseOrEmpty(r.Header.Get("X-Incus-force")) {
+		// Delete the file.
+		err := client.Remove(path)
+		if err != nil {
+			return response.SmartError(err)
+		}
+	} else {
+		// Delete the tree.
+		err := client.RemoveAll(path)
+		if err != nil {
+			return response.SmartError(err)
+		}
 	}
 
 	onSuccess()
