@@ -9854,6 +9854,12 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Perform recursive deletion
+                  example: true
+                  in: header
+                  name: X-Incus-force
+                  schema:
+                    type: boolean
             produces:
                 - application/json
             responses:
@@ -16545,6 +16551,12 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Perform recursive deletion
+                  example: true
+                  in: header
+                  name: X-Incus-force
+                  schema:
+                    type: boolean
             produces:
                 - application/json
             responses:

@@ -348,6 +348,12 @@ func storageVolumeFilePost(s *state.State, vol storageDrivers.Volume, volumeProj
 //	    description: Project name
 //	    type: string
 //	    example: default
+//	  - in: header
+//	    name: X-Incus-force
+//	    description: Perform recursive deletion
+//	    schema:
+//	      type: boolean
+//	    example: true
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -359,7 +365,7 @@ func storageVolumeFilePost(s *state.State, vol storageDrivers.Volume, volumeProj
 //	    $ref: "#/responses/NotFound"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func storageVolumeFileDelete(s *state.State, vol storageDrivers.Volume, volumeProjectName string, path string, _ *http.Request) response.Response {
+func storageVolumeFileDelete(s *state.State, vol storageDrivers.Volume, volumeProjectName string, path string, r *http.Request) response.Response {
 	client, err := vol.FileSFTP(s)
 	if err != nil {
 		return response.SmartError(err)
@@ -367,7 +373,7 @@ func storageVolumeFileDelete(s *state.State, vol storageDrivers.Volume, volumePr
 
 	defer func() { _ = client.Close() }()
 
-	return fileSFTPDelete(client, path, func() {
+	return fileSFTPDelete(client, path, r, func() {
 		s.Events.SendLifecycle(volumeProjectName, lifecycle.StorageVolumeFileDeleted.Event(vol, string(vol.Type()), volumeProjectName, nil, logger.Ctx{"path": path}))
 	})
 }
