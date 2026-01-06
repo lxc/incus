@@ -14,6 +14,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/db/cluster"
@@ -197,6 +199,25 @@ func (slice instanceAutostartList) Swap(i, j int) {
 
 var instancesStartMu sync.Mutex
 
+// bulkStartInstances splits instances into those that can be started in parallel
+// and those that must be started sequentially.
+func bulkStartInstances(instances []instance.Instance) ([]instance.Instance, []instance.Instance) {
+	var bulkStart, rest []instance.Instance
+	for _, inst := range instances {
+		config := inst.ExpandedConfig()
+		autoStartDelay := config["boot.autostart.delay"]
+		autoStartPriority := config["boot.autostart.priority"]
+
+		if autoStartDelay == "" && autoStartPriority == "" {
+			bulkStart = append(bulkStart, inst)
+		} else {
+			rest = append(rest, inst)
+		}
+	}
+
+	return bulkStart, rest
+}
+
 // instanceShouldAutoStart returns whether the instance should be auto-started.
 // Returns true if boot.autostart is enabled or boot.autostart is not set and instance was previously running.
 func instanceShouldAutoStart(inst instance.Instance) bool {
@@ -205,6 +226,85 @@ func instanceShouldAutoStart(inst instance.Instance) bool {
 	lastState := config["volatile.last_state.power"]
 
 	return util.IsTrue(autoStart) || ((autoStart == "" || autoStart == "last-state") && lastState == instance.PowerStateRunning)
+}
+
+// instanceStart starts a single instance.
+func instanceStart(s *state.State, inst instance.Instance) error {
+	// Let's make up to 3 attempts to start instances.
+	maxAttempts := 3
+
+	if !instanceShouldAutoStart(inst) {
+		return nil
+	}
+
+	// If already running, we're done.
+	if inst.IsRunning() {
+		return nil
+	}
+
+	// Get the instance config.
+	config := inst.ExpandedConfig()
+	autoStartDelay := config["boot.autostart.delay"]
+	shutdownAction := config["boot.host_shutdown_action"]
+
+	instLogger := logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
+
+	// Try to start the instance.
+	attempt := 0
+	for {
+		attempt++
+
+		var err error
+		if shutdownAction == "stateful-stop" {
+			// Attempt to restore state.
+			err = inst.Start(true)
+		} else {
+			// Normal startup.
+			err = inst.Start(false)
+		}
+
+		if err != nil {
+			if api.StatusErrorCheck(err, http.StatusServiceUnavailable) {
+				break // Don't log or retry instances that are not ready to start yet.
+			}
+
+			instLogger.Warn("Failed auto start instance attempt", logger.Ctx{"attempt": attempt, "maxAttempts": maxAttempts, "err": err})
+
+			if attempt >= maxAttempts {
+				warnErr := s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+					// If unable to start after 3 tries, record a warning.
+					return tx.UpsertWarningLocalNode(ctx, inst.Project().Name, cluster.TypeInstance, inst.ID(), warningtype.InstanceAutostartFailure, fmt.Sprintf("%v", err))
+				})
+				if warnErr != nil {
+					instLogger.Warn("Failed to create instance autostart failure warning", logger.Ctx{"err": warnErr})
+				}
+
+				instLogger.Error("Failed to auto start instance", logger.Ctx{"err": err})
+
+				break
+			}
+
+			time.Sleep(5 * time.Second)
+
+			continue
+		}
+
+		// Resolve any previous warning.
+		warnErr := warnings.ResolveWarningsByLocalNodeAndProjectAndTypeAndEntity(s.DB.Cluster, inst.Project().Name, warningtype.InstanceAutostartFailure, cluster.TypeInstance, inst.ID())
+		if warnErr != nil {
+			instLogger.Warn("Failed to resolve instance autostart failure warning", logger.Ctx{"err": warnErr})
+		}
+
+		// Wait the auto-start delay if set.
+		autoStartDelayInt, err := strconv.Atoi(autoStartDelay)
+		if err == nil {
+			time.Sleep(time.Duration(autoStartDelayInt) * time.Second)
+		}
+
+		break
+	}
+
+	return nil
 }
 
 func instancesStart(s *state.State, instances []instance.Instance) {
@@ -217,84 +317,30 @@ func instancesStart(s *state.State, instances []instance.Instance) {
 	instancesStartMu.Lock()
 	defer instancesStartMu.Unlock()
 
+	bulkInstances, sequentialInstances := bulkStartInstances(instances)
+
+	// Limit the number of concurrent tasks.
+	numParallel := max(runtime.NumCPU()/4, 1)
+
+	group := new(errgroup.Group)
+	group.SetLimit(numParallel)
+
+	// Start instances that support bulk startup.
+	for _, inst := range bulkInstances {
+		i := inst
+		group.Go(func() error {
+			_ = instanceStart(s, i)
+			return nil
+		})
+	}
+
+	_ = group.Wait()
+
 	// Sort based on instance boot priority.
-	sort.Sort(instanceAutostartList(instances))
+	sort.Sort(instanceAutostartList(sequentialInstances))
 
-	// Let's make up to 3 attempts to start instances.
-	maxAttempts := 3
-
-	// Start the instances
-	for _, inst := range instances {
-		if !instanceShouldAutoStart(inst) {
-			continue
-		}
-
-		// If already running, we're done.
-		if inst.IsRunning() {
-			continue
-		}
-
-		// Get the instance config.
-		config := inst.ExpandedConfig()
-		autoStartDelay := config["boot.autostart.delay"]
-		shutdownAction := config["boot.host_shutdown_action"]
-
-		instLogger := logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
-
-		// Try to start the instance.
-		attempt := 0
-		for {
-			attempt++
-
-			var err error
-			if shutdownAction == "stateful-stop" {
-				// Attempt to restore state.
-				err = inst.Start(true)
-			} else {
-				// Normal startup.
-				err = inst.Start(false)
-			}
-
-			if err != nil {
-				if api.StatusErrorCheck(err, http.StatusServiceUnavailable) {
-					break // Don't log or retry instances that are not ready to start yet.
-				}
-
-				instLogger.Warn("Failed auto start instance attempt", logger.Ctx{"attempt": attempt, "maxAttempts": maxAttempts, "err": err})
-
-				if attempt >= maxAttempts {
-					warnErr := s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
-						// If unable to start after 3 tries, record a warning.
-						return tx.UpsertWarningLocalNode(ctx, inst.Project().Name, cluster.TypeInstance, inst.ID(), warningtype.InstanceAutostartFailure, fmt.Sprintf("%v", err))
-					})
-					if warnErr != nil {
-						instLogger.Warn("Failed to create instance autostart failure warning", logger.Ctx{"err": warnErr})
-					}
-
-					instLogger.Error("Failed to auto start instance", logger.Ctx{"err": err})
-
-					break
-				}
-
-				time.Sleep(5 * time.Second)
-
-				continue
-			}
-
-			// Resolve any previous warning.
-			warnErr := warnings.ResolveWarningsByLocalNodeAndProjectAndTypeAndEntity(s.DB.Cluster, inst.Project().Name, warningtype.InstanceAutostartFailure, cluster.TypeInstance, inst.ID())
-			if warnErr != nil {
-				instLogger.Warn("Failed to resolve instance autostart failure warning", logger.Ctx{"err": warnErr})
-			}
-
-			// Wait the auto-start delay if set.
-			autoStartDelayInt, err := strconv.Atoi(autoStartDelay)
-			if err == nil {
-				time.Sleep(time.Duration(autoStartDelayInt) * time.Second)
-			}
-
-			break
-		}
+	for _, inst := range sequentialInstances {
+		_ = instanceStart(s, inst)
 	}
 }
 
