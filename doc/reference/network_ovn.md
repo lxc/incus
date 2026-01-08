@@ -45,6 +45,12 @@ The following configuration options are available for the `ovn` network type:
     :end-before: <!-- config group network_ovn-common end -->
 ```
 
+```{note}
+The `bridge.external_interfaces` option supports an extended format allowing the creation of missing VLAN interfaces.
+The extended format is `<interfaceName>/<parentInterfaceName>/<vlanId>`.
+When the external interface is added to the list with the extended format, the system will automatically create the interface upon the network's creation and subsequently delete it when the network is terminated. The system verifies that the `<interfaceName>` does not already exist. If the interface name is in use with a different parent or VLAN ID, or if the creation of the interface is unsuccessful, the system will revert with an error message.
+```
+
 (network-ovn-features)=
 ## Supported features
 
