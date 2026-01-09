@@ -1336,14 +1336,14 @@ func (m *Monitor) BlockJobComplete(deviceNodeName string) error {
 }
 
 // UpdateBlockSize updates the size of a disk.
-func (m *Monitor) UpdateBlockSize(id string) error {
+func (m *Monitor) UpdateBlockSize(id string, size int64) error {
 	var args struct {
 		NodeName string `json:"node-name"`
 		Size     int64  `json:"size"`
 	}
 
 	args.NodeName = id
-	args.Size = 1
+	args.Size = size
 
 	err := m.Run("block_resize", args, nil)
 	if err != nil {
