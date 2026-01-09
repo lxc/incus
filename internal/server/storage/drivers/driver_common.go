@@ -518,7 +518,7 @@ func (d *common) DeleteBucketKey(bucket Volume, keyName string, op *operations.O
 func (d *common) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) (int64, error) {
 	// QEMU requires image files to be in traditional storage block boundaries.
 	// We use 8k here to ensure our images are compatible with all of our backend drivers.
-	return roundAbove(MinBlockBoundary, sizeBytes), nil
+	return RoundAbove(MinBlockBoundary, sizeBytes), nil
 }
 
 func (d *common) isBlockBacked(vol Volume) bool {

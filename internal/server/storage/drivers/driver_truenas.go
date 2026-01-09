@@ -608,5 +608,5 @@ func (d *truenas) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) (int64,
 		minBlockSize = tnDefaultVolblockSize // 16KiB
 	}
 
-	return roundAbove(minBlockSize, sizeBytes), nil
+	return RoundAbove(minBlockSize, sizeBytes), nil
 }
