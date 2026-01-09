@@ -2832,6 +2832,13 @@ func (b *backend) SetInstanceQuota(inst instance.Instance, size string, vmStateS
 		}
 	}
 
+	if drivers.IsQcow2Block(vol) {
+		err = b.qcow2Resize(inst, vol, size, op)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -7959,6 +7966,54 @@ func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume
 
 	// Performs post operation cleanup, including renaming and removing volumes.
 	err = b.driver.Qcow2DeletionCleanup(snapVol, childName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// qcow2Resize resizes a QCOW2 volume.
+func (b *backend) qcow2Resize(inst instance.Instance, vol drivers.Volume, size string, op *operations.Operation) error {
+	// Return if this is not a qcow2 image.
+	if !drivers.IsQcow2Block(vol) {
+		return nil
+	}
+
+	// For a running instance, the QMP command is used.
+	if inst.IsRunning() {
+		return nil
+	}
+
+	volDiskPath, err := b.driver.GetVolumeDiskPath(vol)
+	if err != nil {
+		return err
+	}
+
+	imgInfo, err := drivers.Qcow2Info(volDiskPath)
+	if err != nil {
+		return err
+	}
+
+	sizeBytes, err := units.ParseByteSizeString(size)
+	if err != nil {
+		return err
+	}
+
+	if sizeBytes <= 0 {
+		return nil
+	}
+
+	const minSizeBytes = 512
+
+	// Round the size to closest minSizeBytes bytes.
+	sizeBytes = drivers.RoundAbove(minSizeBytes, sizeBytes)
+
+	if sizeBytes <= int64(imgInfo.VirtualSize) {
+		return fmt.Errorf("Qcow2 volume cannot be shrunk")
+	}
+
+	err = drivers.Qcow2Resize(volDiskPath, sizeBytes)
 	if err != nil {
 		return err
 	}

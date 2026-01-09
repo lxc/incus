@@ -60,7 +60,7 @@ func (d *lvm) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 	}
 
 	// Format LV as qcow2 (lvmcluster).
-	if vol.ContentType() == ContentTypeBlock && vol.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 {
+	if IsQcow2Block(vol) {
 		// Get the device path.
 		devPath, err := d.GetVolumeDiskPath(vol)
 		if err != nil {
@@ -116,6 +116,18 @@ func (d *lvm) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 			err = genericRunFiller(d, vol, devPath, filler, allowUnsafeResize)
 			if err != nil {
 				return err
+			}
+
+			if IsQcow2Block(vol) {
+				qcow2SizeBytes, err := d.roundedSizeBytesString(vol.ConfigSize())
+				if err != nil {
+					return err
+				}
+
+				err = Qcow2Resize(devPath, qcow2SizeBytes)
+				if err != nil {
+					return err
+				}
 			}
 
 			// Move the GPT alt header to end of disk if needed.
