@@ -966,5 +966,5 @@ func (d *lvm) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) (int64, err
 		return -1, err
 	}
 
-	return roundAbove(vgExtentSize, sizeBytes), nil
+	return RoundAbove(vgExtentSize, sizeBytes), nil
 }

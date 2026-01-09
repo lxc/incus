@@ -903,5 +903,5 @@ func (d *zfs) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) (int64, err
 		minBlockSize = 16 * 1024
 	}
 
-	return roundAbove(minBlockSize, sizeBytes), nil
+	return RoundAbove(minBlockSize, sizeBytes), nil
 }
