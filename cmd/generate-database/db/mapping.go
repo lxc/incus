@@ -65,13 +65,19 @@ func (m *Mapping) NaturalKey() []*Field {
 
 // Identifier returns the field that uniquely identifies this entity.
 func (m *Mapping) Identifier() *Field {
+	var fallback *Field
+
 	for _, field := range m.NaturalKey() {
-		if field.Name == "Name" || field.Name == "Fingerprint" {
+		if field.Config.Get("primary") != "" {
 			return field
+		}
+
+		if field.Name == "Name" || field.Name == "Fingerprint" {
+			fallback = field
 		}
 	}
 
-	return nil
+	return fallback
 }
 
 // TableName determines the table associated to the struct.
