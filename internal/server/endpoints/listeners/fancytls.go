@@ -6,7 +6,7 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/armon/go-proxyproto"
+	"github.com/pires/go-proxyproto"
 
 	"github.com/lxc/incus/v6/internal/server/util"
 	localtls "github.com/lxc/incus/v6/shared/tls"
@@ -44,7 +44,7 @@ func (l *FancyTLSListener) Accept() (net.Conn, error) {
 	defer l.mu.RUnlock()
 	config := l.config
 	if isProxy(c.RemoteAddr().String(), l.trustedProxy) {
-		c = proxyproto.NewConn(c, 0)
+		c = proxyproto.NewConn(c)
 	}
 
 	return tls.Server(c, config), nil
