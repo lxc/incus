@@ -876,7 +876,7 @@ func (d *lvm) parseLogicalVolumeSnapshot(parent Volume, lvmVolName string) strin
 func (d *lvm) activateVolume(vol Volume) (bool, error) {
 	var volPath string
 
-	if d.usesThinpool() || isQcow2Block(vol) {
+	if d.usesThinpool() || IsQcow2Block(vol) {
 		volPath = d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
 	} else {
 		// Use parent for non-thinpool vols as activating the parent volume also activates its snapshots.
@@ -927,7 +927,7 @@ func (d *lvm) activateVolume(vol Volume) (bool, error) {
 func (d *lvm) deactivateVolume(vol Volume) (bool, error) {
 	var volPath string
 
-	if d.usesThinpool() || isQcow2Block(vol) {
+	if d.usesThinpool() || IsQcow2Block(vol) {
 		volPath = d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
 	} else {
 		// Use parent for non-thinpool vols as deactivating the parent volume also activates its snapshots.

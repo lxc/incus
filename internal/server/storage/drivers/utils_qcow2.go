@@ -56,6 +56,22 @@ func Qcow2Create(path string, backingPath string, size int64) error {
 	return nil
 }
 
+// Qcow2Resize resizes a qcow2-formatted image.
+func Qcow2Resize(path string, newSize int64) error {
+	args := []string{
+		"resize",
+		path,
+		fmt.Sprintf("%db", newSize),
+	}
+
+	_, err := subprocess.RunCommand("qemu-img", args...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Qcow2Rebase changes the backing file of a qcow2 image.
 func Qcow2Rebase(path string, backingPath string) error {
 	_, err := subprocess.RunCommand("qemu-img", "rebase", "-u", "-b", backingPath, "-F", "qcow2", path)
@@ -283,7 +299,7 @@ func Qcow2DeleteConfigSnapshot(vol Volume, snapVol Volume, op *operations.Operat
 	return nil
 }
 
-// isQcow2Block checks whether a volume is a QCOW2 block device.
-func isQcow2Block(vol Volume) bool {
+// IsQcow2Block checks whether a volume is a QCOW2 block device.
+func IsQcow2Block(vol Volume) bool {
 	return vol.Config()["block.type"] == BlockVolumeTypeQcow2 && vol.ContentType() == ContentTypeBlock
 }
