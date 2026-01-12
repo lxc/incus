@@ -6,7 +6,6 @@ require (
 	github.com/LINBIT/golinstor v0.59.0
 	github.com/adhocore/gronx v1.19.6
 	github.com/apex/log v1.9.0
-	github.com/armon/go-proxyproto v0.1.0
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/checkpoint-restore/go-criu/v6 v6.3.0
 	github.com/cowsql/go-cowsql v1.22.0
@@ -45,6 +44,7 @@ require (
 	github.com/osrg/gobgp/v3 v3.37.0
 	github.com/ovn-kubernetes/libovsdb v0.8.1
 	github.com/pierrec/lz4/v4 v4.1.23
+	github.com/pires/go-proxyproto v0.8.1
 	github.com/pkg/sftp v1.13.10
 	github.com/pkg/xattr v0.4.12
 	github.com/shirou/gopsutil/v4 v4.25.11
@@ -65,6 +65,7 @@ require (
 	golang.org/x/tools v0.40.0
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/utils v0.0.0-20251218160917-61b37f7a4624
 	software.sslmate.com/src/go-pkcs12 v0.6.0
 )
@@ -174,6 +175,5 @@ require (
 	golang.org/x/time v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251213004720-97cd9d5aeac2 // indirect
 	google.golang.org/grpc v1.77.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
 )
