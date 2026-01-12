@@ -242,11 +242,38 @@ func osExitStatus(err error) (int, error) {
 func osSetEnv(post *api.InstanceExecPost, env map[string]string) {
 	// SystemRoot is already set by default
 	env["SystemDrive"] = "C:"
+
+	// Program Files directories
+	env["ProgramFiles"] = fmt.Sprintf("%s\\Program Files", env["SystemDrive"])
+	env["ProgramFiles(x86)"] = fmt.Sprintf("%s (x86)", env["ProgramFiles"])
+	env["ProgramW6432"] = fmt.Sprintf("%s", env["ProgramFiles"])
+	env["CommonProgramFiles"] = fmt.Sprintf("%s\\Common Files", env["ProgramFiles"])
+	env["CommonProgramFiles(x86)"] = fmt.Sprintf("%s (x86)\\Common Files", env["ProgramFiles"])
+	env["CommonProgramW6432"] = fmt.Sprintf("%s\\Common Files", env["ProgramFiles"])
+
+	// Windows directories
 	env["WINDIR"] = fmt.Sprintf("%s\\WINDOWS", env["SystemDrive"])
-	system32 := fmt.Sprintf("%s\\System32", env["WINDIR"])
 	env["TMP"] = fmt.Sprintf("%s\\Temp", env["WINDIR"])
 	env["TEMP"] = env["TMP"]
+
+	// System32 directories
+	system32 := fmt.Sprintf("%s\\System32", env["WINDIR"])
+	env["ComSpec"] = fmt.Sprintf("%s\\cmd.exe", system32)
+	env["DriverData"] = fmt.Sprintf("%s\\Drivers\\DriverData", system32)
+
+	// User profile directories
+	env["USERPROFILE"] = fmt.Sprintf("%s\\config\\systemprofile", system32)
+	env["LOCALAPPDATA"] = fmt.Sprintf("%s\\AppData\\Local", env["USERPROFILE"])
+	env["APPDATA"] = fmt.Sprintf("%s\\AppData\\Roaming", env["USERPROFILE"])
+
+	// Miscellaneous
+	env["COMPUTERNAME"] = ""
 	env["PATH"] = fmt.Sprintf("%s;%s;%s\\WindowsPowerShell\\v1.0", system32, env["WINDIR"], system32)
+	env["PATHEXT"] = "COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL"
+
+	env["ProgramData"] = fmt.Sprintf("%s\\ProgramData", env["SystemDrive"])
+	env["ALLUSERSPROFILE"] = env["ProgramData"]
+	env["PUBLIC"] = fmt.Sprintf("%s\\Users\\Public", env["SystemDrive"])
 
 	// Set the default working directory.
 	if post.Cwd == "" {
