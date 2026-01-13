@@ -64,3 +64,21 @@ func TestExtractTrailingNumber(t *testing.T) {
 		t.Errorf("unexpected error message: got %q, want %q", err.Error(), expectedErr)
 	}
 }
+
+// Test hashName.
+func TestHashName(t *testing.T) {
+	value := hashName("test", 5)
+	assert.Equal(t, "test", value)
+
+	value = hashName("test1", 5)
+	assert.Equal(t, "test1", value)
+
+	value = hashName("test12", 5)
+	assert.Equal(t, "qY7Fx", value)
+
+	value = hashName("test12345", 11)
+	assert.Equal(t, "test12345", value)
+
+	value = hashName("test12345678", 11)
+	assert.Equal(t, "9fvG_oTDZTF", value)
+}
