@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
@@ -116,6 +115,15 @@ const qemuBlockDevIDPrefix = "incus_"
 
 // qemuMigrationNBDExportName is the name of the disk device export by the migration NBD server.
 const qemuMigrationNBDExportName = "incus_root"
+
+// qemuMountTagMaxLength defines the maximum number of characters allowed for the mount tag added to the QEMU configuration.
+const qemuMountTagMaxLength = 30
+
+// qemuMountTag9pMaxLength defines the maximum number of characters allowed for the mount tag added to the QEMU configuration when using 9p.
+const qemuMountTag9pMaxLength = 25
+
+// qemuMountTagPrefix is the prefix used for QEMU mount tags for directory shares.
+const qemuMountTagPrefix = "incus_"
 
 // qemuSparseUSBPorts is the amount of sparse USB ports for VMs.
 // 4 are reserved, and the other 4 can be used for any USB device.
@@ -2613,7 +2621,7 @@ func (d *qemu) deviceAttachBlockDevice(deviceName string, configCopy map[string]
 func (d *qemu) deviceDetachPath(deviceName string, rawConfig deviceConfig.Device) error {
 	escapedDeviceName := linux.PathNameEncode(deviceName)
 	deviceID := fmt.Sprintf("%s%s", qemuDeviceIDPrefix, escapedDeviceName)
-	mountTag := fmt.Sprintf("incus_%s", deviceName)
+	mountTag := d.mountTagName(deviceName, qemuMountTagMaxLength)
 
 	// Check if the agent is running.
 	monitor, err := d.qmpConnect()
@@ -4367,7 +4375,7 @@ func (d *qemu) addRootDriveConfig(qemuDev map[string]any, mountInfo *storagePool
 
 // driveDirConfig9p generates the qemu config required for adding a supplementary drive directory share using 9p.
 func (d *qemu) driveDirConfig9p(qemuDev map[string]any, busName string, agentMounts *[]instancetype.VMAgentMount, driveConf deviceConfig.MountEntryItem) []cfg.Section {
-	mountTag := "incus_" + driveConf.DevName
+	mountTag := d.mountTagName(driveConf.DevName, qemuMountTag9pMaxLength)
 
 	agentMount := instancetype.VMAgentMount{
 		Source: mountTag,
@@ -4412,7 +4420,7 @@ func (d *qemu) driveDirConfig9p(qemuDev map[string]any, busName string, agentMou
 func (d *qemu) addDriveDirConfigVirtiofs(qemuDev map[string]any, agentMounts *[]instancetype.VMAgentMount, driveConf deviceConfig.MountEntryItem) (monitorHook, error) {
 	escapedDeviceName := linux.PathNameEncode(driveConf.DevName)
 	deviceID := qemuDeviceIDPrefix + escapedDeviceName
-	mountTag := "incus_" + driveConf.DevName
+	mountTag := d.mountTagName(driveConf.DevName, qemuMountTagMaxLength)
 
 	if agentMounts != nil {
 		agentMount := instancetype.VMAgentMount{
@@ -10061,19 +10069,14 @@ func (d *qemu) deviceDetachUSB(usbDev deviceConfig.USBDeviceItem) error {
 
 // Block node names may only be up to 31 characters long, so use a hash if longer.
 func (d *qemu) blockNodeName(name string) string {
-	if len(name) > 25 {
-		// If the name is too long, hash it as SHA-256 (32 bytes).
-		// Then encode the SHA-256 binary hash as Base64 Raw URL format and trim down to 25 chars.
-		// Raw URL avoids the use of "+" character and the padding "=" character which QEMU doesn't allow.
-		hash256 := sha256.New()
-		hash256.Write([]byte(name))
-		binaryHash := hash256.Sum(nil)
-		name = base64.RawURLEncoding.EncodeToString(binaryHash)
-		name = name[0:25]
-	}
-
 	// Apply the prefix.
-	return fmt.Sprintf("%s%s", qemuBlockDevIDPrefix, name)
+	return fmt.Sprintf("%s%s", qemuBlockDevIDPrefix, hashName(name, 25))
+}
+
+// Mount tag names may only be up to 31 or 36 characters long, so use a hash if longer.
+func (d *qemu) mountTagName(name string, maxLength int) string {
+	// Apply the prefix.
+	return fmt.Sprintf("%s%s", qemuMountTagPrefix, hashName(name, maxLength))
 }
 
 func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {
