@@ -563,7 +563,7 @@ func (m *Method) getMany(buf *file.Buffer) error {
 
 		buf.L("result := make([]%s, len(objects))", refMapping.ImportType())
 		buf.L("for i, object := range objects {")
-		buf.L("%s, err := Get%s(ctx, db, %sFilter{ID: &object.%sID})", lex.Minuscule(ref), lex.Plural(ref), ref, ref)
+		buf.L("%s, err := Get%s(ctx, db, %s{ID: &object.%sID})", lex.Minuscule(ref), lex.Plural(ref), refMapping.ImportFilterType(), ref)
 
 		m.ifErrNotNil(buf, true, "nil", "err")
 		buf.L("result[i] = %s[0]", lex.Minuscule(ref))
@@ -1160,12 +1160,12 @@ func (m *Method) update(buf *file.Buffer) error {
 		buf.L("err := Delete%s%s(ctx, db, %sID)", m.config["struct"], lex.Plural(ref), lex.Minuscule(m.config["struct"]))
 		m.ifErrNotNil(buf, true, "err")
 		buf.L("// Get new entry IDs.")
-		buf.L("%s := make([]%s, 0, len(%s%s))", refSlice, mapping.Name, lex.Minuscule(ref), lex.Plural(refMapping.Identifier().Name))
+		buf.L("%s := make([]%s, 0, len(%s%s))", refSlice, mapping.ImportType(), lex.Minuscule(ref), lex.Plural(refMapping.Identifier().Name))
 		buf.L("for _, entry := range %s%s {", lex.Minuscule(ref), lex.Plural(refMapping.Identifier().Name))
 		buf.L("refID, err := Get%sID(ctx, db, entry)", ref)
 		m.ifErrNotNil(buf, true, "err")
 		fields := fmt.Sprintf("%sID: %sID, %sID: int(refID)", m.config["struct"], lex.Minuscule(m.config["struct"]), ref)
-		buf.L("%s = append(%s, %s{%s})", refSlice, refSlice, mapping.Name, fields)
+		buf.L("%s = append(%s, %s{%s})", refSlice, refSlice, mapping.ImportType(), fields)
 		buf.L("}")
 		buf.N()
 		buf.L("err = Create%s%s(ctx, db, %s)", m.config["struct"], lex.Plural(ref), refSlice)
