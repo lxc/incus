@@ -884,6 +884,11 @@ func (d *disk) PreStartCheck() error {
 
 // Start is run when the device is added to the instance.
 func (d *disk) Start() (*deviceConfig.RunConfig, error) {
+	// Ignore detached disks.
+	if !util.IsTrueOrEmpty(d.config["attached"]) {
+		return nil, nil
+	}
+
 	var runConfig *deviceConfig.RunConfig
 
 	err := d.validateEnvironment()
@@ -1223,11 +1228,6 @@ func (d *disk) setBus(entry *deviceConfig.MountEntryItem) error {
 
 // startVM starts the disk device for a virtual machine instance.
 func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
-	// Ignore detached disks.
-	if !util.IsTrueOrEmpty(d.config["attached"]) {
-		return nil, nil
-	}
-
 	runConf := deviceConfig.RunConfig{}
 
 	reverter := revert.New()
