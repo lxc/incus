@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2025-12-19 03:30-0500\n"
-"PO-Revision-Date: 2025-12-27 03:20+0000\n"
-"Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
+"PO-Revision-Date: 2026-01-17 14:01+0000\n"
+"Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.15.1\n"
+"X-Generator: Weblate 5.15.2\n"
 
 #: cmd/incus/info.go:453
 msgid "  Chassis:"
@@ -727,9 +727,8 @@ msgid "<alias> <target>"
 msgstr "<alias> <target>"
 
 #: cmd/incus/cluster.go:1045
-#, fuzzy
 msgid "<cluster>: [<member>:]"
-msgstr "[<remote>:]<cluster member>"
+msgstr "<cluster>: [<member>:]"
 
 #: cmd/incus/alias.go:171
 msgid "<old alias> <new alias>"
@@ -3352,14 +3351,14 @@ msgid "Failed to load configuration: %s"
 msgstr "設定のロードに失敗しました: %s"
 
 #: cmd/incus/file.go:848 cmd/incus/utils_sftp.go:299
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open source file %q: %v"
-msgstr "サーバー証明書ファイル %q のクローズに失敗しました: %w"
+msgstr "ソース側ファイルのオープンに失敗しました %q: %v"
 
 #: cmd/incus/utils_sftp.go:73
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open target file %q: %w"
-msgstr "サーバー証明書ファイル %q のクローズに失敗しました: %w"
+msgstr "ターゲットファイルのオープンに失敗しました %q: %w"
 
 #: cmd/incus/admin_sql.go:128
 #, c-format
@@ -3717,7 +3716,6 @@ msgid "Get current load balancer status"
 msgstr "現在のロードバランサーのステータスを取得します"
 
 #: cmd/incus/network_load_balancer.go:1325
-#, fuzzy
 msgid "Get current load-balancer status"
 msgstr "現在のロードバランサーのステータスを取得します"
 
@@ -3730,52 +3728,44 @@ msgid "Get runtime information on networks"
 msgstr "ネットワークのランタイム情報を取得します"
 
 #: cmd/incus/cluster_group.go:902
-#, fuzzy
 msgid "Get the key as a cluster group property"
-msgstr "クラスターグループを作成します"
+msgstr "クラスターグループのプロパティからキーに対する値を取得"
 
 #: cmd/incus/cluster.go:477
-#, fuzzy
 msgid "Get the key as a cluster property"
-msgstr "クラスターグループを作成します"
+msgstr "クラスターのプロパティからキーに対する値を取得"
 
 #: cmd/incus/network_acl.go:323
 msgid "Get the key as a network ACL property"
 msgstr "key をネットワーク ACL プロパティとして取得します"
 
 #: cmd/incus/network_forward.go:451
-#, fuzzy
 msgid "Get the key as a network forward property"
-msgstr "ネットワークフォワードのポートを管理します"
+msgstr "ネットワークフォワードのプロパティからキーに対する値を取得"
 
 #: cmd/incus/network_integration.go:359
-#, fuzzy
 msgid "Get the key as a network integration property"
-msgstr "ネットワークピアの設定を行います"
+msgstr "ネットワーク統合のプロパティからキーに対する値を取得"
 
 #: cmd/incus/network_load_balancer.go:455
-#, fuzzy
 msgid "Get the key as a network load balancer property"
-msgstr "ネットワークロードバランサーのポートを管理します"
+msgstr "ネットワークロードバランサーのプロパティからキーに対する値を取得"
 
 #: cmd/incus/network_peer.go:492
-#, fuzzy
 msgid "Get the key as a network peer property"
-msgstr "ネットワークピアの設定を行います"
+msgstr "ネットワークピアのプロパティからキーに対する値を取得"
 
 #: cmd/incus/network.go:868
 msgid "Get the key as a network property"
 msgstr "key をネットワークプロパティとして取得します"
 
 #: cmd/incus/network_zone.go:332
-#, fuzzy
 msgid "Get the key as a network zone property"
-msgstr "新たにネットワークゾーンレコードを作成します"
+msgstr "ネットワークゾーンのプロパティからキーに対する値を取得"
 
 #: cmd/incus/network_zone.go:1037
-#, fuzzy
 msgid "Get the key as a network zone record property"
-msgstr "ネットワークゾーンレコードエントリを削除します"
+msgstr "ネットワークゾーンレコードのプロパティからキーに対する値を取得"
 
 #: cmd/incus/profile.go:660
 msgid "Get the key as a profile property"
@@ -3786,19 +3776,16 @@ msgid "Get the key as a project property"
 msgstr "key をプロジェクトプロパティとして取得します"
 
 #: cmd/incus/storage_bucket.go:417
-#, fuzzy
 msgid "Get the key as a storage bucket property"
-msgstr "ストレージバケットに対する鍵を作成します"
+msgstr "ストレージバケットのプロパティからキーに対する値を取得"
 
 #: cmd/incus/storage.go:421
-#, fuzzy
 msgid "Get the key as a storage property"
-msgstr "ストレージバケットに対する鍵を作成します"
+msgstr "ストレージのプロパティからキーに対する値を取得"
 
 #: cmd/incus/storage_volume.go:1233
-#, fuzzy
 msgid "Get the key as a storage volume property"
-msgstr "新しいストレージボリュームをプロファイルに追加します"
+msgstr "ストレージボリュームのプロパティからキーに対する値を取得"
 
 #: cmd/incus/config.go:394
 msgid "Get the key as an instance property"
