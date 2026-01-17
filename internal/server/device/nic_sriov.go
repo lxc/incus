@@ -4,13 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 
 	"github.com/lxc/incus/v6/internal/linux"
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
+	pcidev "github.com/lxc/incus/v6/internal/server/device/pci"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/network"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/resources"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -105,6 +109,30 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader) error {
 		//  managed: no
 		//  shortdesc: Boot priority for VMs (higher value boots first)
 		"boot.priority",
+
+		// gendoc:generate(entity=devices, group=nic_sriov, key=vendorid)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: The vendor ID of the parent host device
+		"vendorid",
+
+		// gendoc:generate(entity=devices, group=nic_sriov, key=productid)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: The product ID of the parent host device
+		"productid",
+
+		// gendoc:generate(entity=devices, group=nic_sriov, key=pci)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: The PCI address of the parent host device
+		"pci",
 	}
 
 	// Check that if network property is set that conflicting keys are not present.
@@ -147,7 +175,7 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader) error {
 				d.config[inheritKey] = netConfig[inheritKey]
 			}
 		}
-	} else {
+	} else if d.isParentRequired() {
 		// If no network property supplied, then parent property is required.
 		requiredFields = append(requiredFields, "parent")
 	}
@@ -155,6 +183,24 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader) error {
 	err := d.config.Validate(nicValidationRules(requiredFields, optionalFields, instConf))
 	if err != nil {
 		return err
+	}
+
+	if d.config["parent"] != "" {
+		for _, field := range []string{"pci", "productid", "vendorid"} {
+			if d.config[field] != "" {
+				return fmt.Errorf(`Cannot use %q when "parent" is set`, field)
+			}
+		}
+	}
+
+	if d.config["pci"] != "" {
+		for _, field := range []string{"parent", "productid", "vendorid"} {
+			if d.config[field] != "" {
+				return fmt.Errorf(`Cannot use %q when "pci" is set`, field)
+			}
+		}
+
+		d.config["pci"] = pcidev.NormaliseAddress(d.config["pci"])
 	}
 
 	return nil
@@ -185,7 +231,7 @@ func (d *nicSRIOV) validateEnvironment() error {
 		return errors.New("Requires name property to start")
 	}
 
-	if !network.InterfaceExists(d.config["parent"]) {
+	if d.isParentRequired() && !network.InterfaceExists(d.config["parent"]) {
 		return fmt.Errorf("Parent device %q doesn't exist", d.config["parent"])
 	}
 
@@ -209,16 +255,26 @@ func (d *nicSRIOV) Start() (*deviceConfig.RunConfig, error) {
 		}
 	}
 
+	parent := d.config["parent"]
+
+	// Try to find parent if not set.
+	if parent == "" {
+		parent, err = d.findParent()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// Find free VF exclusively.
 	network.SRIOVVirtualFunctionMutex.Lock()
-	vfDev, vfID, err := network.SRIOVFindFreeVirtualFunction(d.state, d.config["parent"])
+	vfDev, vfID, err := network.SRIOVFindFreeVirtualFunction(d.state, parent)
 	if err != nil {
 		network.SRIOVVirtualFunctionMutex.Unlock()
 		return nil, err
 	}
 
 	// Claim the SR-IOV virtual function (VF) on the parent (PF) and get the PCI information.
-	vfPCIDev, pciIOMMUGroup, err := networkSRIOVSetupVF(d.deviceCommon, d.config["parent"], vfDev, vfID, saveData)
+	vfPCIDev, pciIOMMUGroup, err := networkSRIOVSetupVF(d.deviceCommon, parent, vfDev, vfID, saveData)
 	if err != nil {
 		network.SRIOVVirtualFunctionMutex.Unlock()
 		return nil, err
@@ -310,4 +366,141 @@ func (d *nicSRIOV) postStop() error {
 	network.SRIOVVirtualFunctionMutex.Unlock()
 
 	return nil
+}
+
+// findParent selects the best NIC based on vendorid, productid or PCI address,
+// considering NUMA nodes.
+func (d *nicSRIOV) findParent() (string, error) {
+	// List all the NICs.
+	interfaces, err := resources.GetNetwork()
+	if err != nil {
+		return "", err
+	}
+
+	numaNodeSet, numaNodeSetFallback, err := getNumaNodeSet(d.inst.ExpandedConfig())
+	if err != nil {
+		return "", err
+	}
+
+	parent := ""
+	vfFreeRatio := 0.0
+	cardNUMA := -1
+
+	for _, nic := range interfaces.Cards {
+		// Skip any cards that are not selected.
+		if !nicSelected(d.Config(), nic) {
+			continue
+		}
+
+		// Skip any card without SR-IOV.
+		if nic.SRIOV == nil {
+			d.logger.Debug("Skip card without SR-IOV", logger.Ctx{"pci": nic.PCIAddress})
+			continue
+		}
+
+		// Find available VFs.
+		currentVfFreeRatio := 0.0
+		currentParent := ""
+
+		network.SRIOVVirtualFunctionMutex.Lock()
+		for _, port := range nic.Ports {
+			freeVf, totalVf, err := network.SRIOVCountFreeVirtualFunctions(d.state, port.ID)
+			if err != nil {
+				network.SRIOVVirtualFunctionMutex.Unlock()
+				return "", err
+			}
+
+			tmpRatio := float64(freeVf) / float64(totalVf)
+			if tmpRatio > currentVfFreeRatio {
+				currentVfFreeRatio = tmpRatio
+				currentParent = port.ID
+			}
+		}
+
+		network.SRIOVVirtualFunctionMutex.Unlock()
+
+		// Skip if no available VFs.
+		if currentVfFreeRatio == 0 {
+			d.logger.Debug("No available VFs on card", logger.Ctx{"pci": nic.PCIAddress})
+			continue
+		}
+
+		// Handle NUMA.
+		if numaNodeSet != nil {
+			// Switch to current card if it matches our main NUMA node and existing card doesn't.
+			if !slices.Contains(numaNodeSet, int64(cardNUMA)) && slices.Contains(numaNodeSet, int64(nic.NUMANode)) {
+				parent = currentParent
+				vfFreeRatio = currentVfFreeRatio
+				cardNUMA = int(nic.NUMANode)
+
+				continue
+			}
+
+			// Skip current card if we already have a card matching our main NUMA node and this card doesn't.
+			if slices.Contains(numaNodeSet, int64(cardNUMA)) && !slices.Contains(numaNodeSet, int64(nic.NUMANode)) {
+				continue
+			}
+
+			// Switch to current card if it matches a fallback NUMA node and existing card doesn't.
+			if !slices.Contains(numaNodeSetFallback, int64(cardNUMA)) && slices.Contains(numaNodeSetFallback, int64(nic.NUMANode)) {
+				parent = currentParent
+				vfFreeRatio = currentVfFreeRatio
+				cardNUMA = int(nic.NUMANode)
+
+				continue
+			}
+
+			// Skip current card if we already have a card matching a fallback NUMA node and this card isn't on the main or fallback node.
+			if slices.Contains(numaNodeSetFallback, int64(cardNUMA)) && !slices.Contains(numaNodeSetFallback, int64(nic.NUMANode)) && !slices.Contains(numaNodeSet, int64(nic.NUMANode)) {
+				continue
+			}
+		}
+
+		// Prioritize less busy cards.
+		if parent == "" || currentVfFreeRatio > vfFreeRatio {
+			parent = currentParent
+			vfFreeRatio = currentVfFreeRatio
+			cardNUMA = int(nic.NUMANode)
+
+			d.logger.Debug("Selected NIC", logger.Ctx{"PCI": nic.PCIAddress, "parent": parent})
+
+			continue
+		}
+	}
+
+	// Check if any NIC was found to match.
+	if parent == "" {
+		return "", errors.New("Couldn't find a matching NIC")
+	}
+
+	return parent, nil
+}
+
+// isParentRequired checks whether the parent config option is required.
+func (d *nicSRIOV) isParentRequired() bool {
+	if d.config["pci"] == "" && d.config["vendorid"] == "" && d.config["productid"] == "" {
+		return true
+	}
+
+	return false
+}
+
+// Check if the device matches the given NIC.
+// It matches based on vendorid, productid or pci setting of the device.
+func nicSelected(device deviceConfig.Device, nic api.ResourcesNetworkCard) bool {
+	if device["pci"] != "" && nic.PCIAddress == device["pci"] {
+		return true
+	}
+
+	if device["vendorid"] != "" && device["productid"] != "" {
+		if nic.VendorID == device["vendorid"] && nic.ProductID == device["productid"] {
+			return true
+		}
+	} else if device["vendorid"] != "" {
+		if nic.VendorID == device["vendorid"] {
+			return true
+		}
+	}
+
+	return false
 }
