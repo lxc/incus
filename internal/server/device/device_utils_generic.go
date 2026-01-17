@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
+	"github.com/lxc/incus/v6/shared/resources"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -60,4 +62,75 @@ func checkAttachedRunningProcesses(devicePath string) ([]string, error) {
 	}
 
 	return processes, nil
+}
+
+// getNumaNodeSet returns two slices:
+// 1) the NUMA nodes parsed from the configuration,
+// 2) the fallback NUMA nodes.
+func getNumaNodeSet(config map[string]string) ([]int64, []int64, error) {
+	// If NUMA restricted, build up a list of nodes.
+	var numaNodeSet []int64
+	var numaNodeSetFallback []int64
+
+	numaNodes := config["limits.cpu.nodes"]
+	if numaNodes != "" {
+		if numaNodes == "balanced" {
+			numaNodes = config["volatile.cpu.nodes"]
+		}
+
+		// Parse the NUMA restriction.
+		numaNodeSet, err := resources.ParseNumaNodeSet(numaNodes)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// List all the CPUs.
+		cpus, err := resources.GetCPU()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Get list of socket IDs from the list of NUMA nodes.
+		numaSockets := make([]uint64, 0, len(cpus.Sockets))
+
+		for _, cpuSocket := range cpus.Sockets {
+			if slices.Contains(numaSockets, cpuSocket.Socket) {
+				continue
+			}
+
+			for _, cpuCore := range cpuSocket.Cores {
+				found := false
+				for _, cpuThread := range cpuCore.Threads {
+					if slices.Contains(numaNodeSet, int64(cpuThread.NUMANode)) {
+						numaSockets = append(numaSockets, cpuSocket.Socket)
+						found = true
+						break
+					}
+				}
+
+				if found {
+					break
+				}
+			}
+		}
+
+		// Get the list of NUMA nodes from the socket list.
+		numaNodeSetFallback = []int64{}
+
+		for _, cpuSocket := range cpus.Sockets {
+			if !slices.Contains(numaSockets, cpuSocket.Socket) {
+				continue
+			}
+
+			for _, cpuCore := range cpuSocket.Cores {
+				for _, cpuThread := range cpuCore.Threads {
+					if !slices.Contains(numaNodeSetFallback, int64(cpuThread.NUMANode)) {
+						numaNodeSetFallback = append(numaNodeSetFallback, int64(cpuThread.NUMANode))
+					}
+				}
+			}
+		}
+	}
+
+	return numaNodeSet, numaNodeSetFallback, nil
 }
