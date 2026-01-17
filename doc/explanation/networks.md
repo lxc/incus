@@ -80,6 +80,16 @@ Incus supports the following network types:
   This means that you can create your own OVN network as a non-admin user, even in a restricted project.
   ```
 
+{ref}`network-wireguard`
+: % Include content from [../reference/network_wireguard.md](../reference/network_wireguard.md)
+  ```{include} ../reference/network_wireguard.md
+      :start-after: <!-- Include start wireguard intro -->
+      :end-before: <!-- Include end wireguard intro -->
+  ```
+
+  In Incus context, the `wireguard` network type creates a WireGuard VPN interface that instances can connect to.
+  WireGuard operates at layer 3 (network layer), making it suitable for secure VPN connections.
+
 ### External networks
 
 % Include content from [../reference/network_external.md](../reference/network_external.md)

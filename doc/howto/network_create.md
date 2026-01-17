@@ -29,6 +29,9 @@ The following network types are available:
 * - `physical`
   - {ref}`network-physical`
   - {ref}`network-physical-options`
+* - `wireguard`
+  - {ref}`network-wireguard`
+  - {ref}`network-wireguard-options`
 
 ```
 

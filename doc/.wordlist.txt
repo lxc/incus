@@ -373,3 +373,7 @@ Zettabyte
 ZFS
 zpool
 zpools
+WireGuard
+OpenVPN
+IPsec
+wireguard
