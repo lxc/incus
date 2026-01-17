@@ -870,7 +870,7 @@ func (d *disk) PreStartCheck() error {
 
 	// Custom volume disks that are not required don't need to be checked as if the pool is
 	// not available we should still start the instance.
-	if d.config["path"] != "/" && util.IsFalse(d.config["required"]) {
+	if d.config["path"] != "/" && !d.isRequired(d.config) {
 		return nil
 	}
 
