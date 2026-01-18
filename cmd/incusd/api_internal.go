@@ -395,6 +395,9 @@ func internalContainerOnStart(d *Daemon, r *http.Request) response.Response {
 }
 
 func internalContainerOnStopNS(d *Daemon, r *http.Request) response.Response {
+	// Wait until daemon is fully started.
+	<-d.waitReady.Done()
+
 	s := d.State()
 
 	inst, err := internalContainerHookLoadFromReference(s, r)
@@ -425,6 +428,9 @@ func internalContainerOnStopNS(d *Daemon, r *http.Request) response.Response {
 }
 
 func internalContainerOnStop(d *Daemon, r *http.Request) response.Response {
+	// Wait until daemon is fully started.
+	<-d.waitReady.Done()
+
 	s := d.State()
 
 	inst, err := internalContainerHookLoadFromReference(s, r)
@@ -452,6 +458,9 @@ func internalContainerOnStop(d *Daemon, r *http.Request) response.Response {
 }
 
 func internalVirtualMachineOnResize(d *Daemon, r *http.Request) response.Response {
+	// Wait until daemon is fully started.
+	<-d.waitReady.Done()
+
 	s := d.State()
 
 	// Get the instance ID.
