@@ -1420,11 +1420,32 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 
 ```
 
+```{config:option} pci devices-nic_sriov
+:required: "no"
+:shortdesc: "The PCI address of the parent host device"
+:type: "string"
+
+```
+
+```{config:option} productid devices-nic_sriov
+:required: "no"
+:shortdesc: "The product ID of the parent host device"
+:type: "string"
+
+```
+
 ```{config:option} security.mac_filtering devices-nic_sriov
 :default: "false"
 :managed: "no"
 :shortdesc: "Prevent the instance from spoofing another instance's MAC address"
 :type: "bool"
+
+```
+
+```{config:option} vendorid devices-nic_sriov
+:required: "no"
+:shortdesc: "The vendor ID of the parent host device"
+:type: "string"
 
 ```
 
