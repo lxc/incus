@@ -161,6 +161,53 @@ func (d *disk) isRequired(devConfig deviceConfig.Device) bool {
 	return false
 }
 
+// isAvailable checks whether the source is currently available.
+func (d *disk) isAvailable() bool {
+	if d.config["pool"] == "" {
+		// We only check managed volumes.
+		return true
+	}
+
+	if d.config["path"] == "/" {
+		// Root disks are always considered available.
+		return true
+	}
+
+	// Load the pool if missing.
+	var err error
+	d.pool, err = storagePools.LoadByName(d.state, d.config["pool"])
+	if err != nil {
+		// If we can't load the pool, the volume isn't available.
+		return false
+	}
+
+	// We need instance data for further checks.
+	if d.inst == nil {
+		return true
+	}
+
+	// Check if the volume exists.
+	storageProjectName, err := project.StorageVolumeProject(d.state.DB.Cluster, d.inst.Project().Name, db.StoragePoolVolumeTypeCustom)
+	if err != nil {
+		return false
+	}
+
+	// Parse the volume name and path.
+	volName, _ := internalInstance.SplitVolumeSource(d.config["source"])
+
+	// GetStoragePoolVolume returns a volume with an empty Location field for remote drivers.
+	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_, err = tx.GetStoragePoolVolume(ctx, d.pool.ID(), storageProjectName, db.StoragePoolVolumeTypeCustom, volName, true)
+		return err
+	})
+	if err != nil {
+		return false
+	}
+
+	// We managed to get the entry from the database, consider it available.
+	return true
+}
+
 // sourceIsLocalPath returns true if the source supplied should be considered a local path on the host.
 // It returns false if the disk source is empty, a VM cloud-init config drive, or a remote ceph/cephfs path.
 func (d *disk) sourceIsLocalPath(source string) bool {
@@ -520,7 +567,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		var dbVolume *db.StorageVolume
 		var storageProjectName string
 
-		if d.inst != nil && !d.inst.IsSnapshot() && d.config["source"] != "" && d.config["path"] != "/" {
+		if d.inst != nil && !d.inst.IsSnapshot() && d.config["source"] != "" && d.config["path"] != "/" && (d.isRequired(d.config) || d.isAvailable()) {
 			d.pool, err = storagePools.LoadByName(d.state, d.config["pool"])
 			if err != nil {
 				return fmt.Errorf("Failed to get storage pool %q: %w", d.config["pool"], err)
@@ -593,7 +640,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 			}
 
 			// Custom volume validation.
-			if d.config["source"] != "" && d.config["path"] != "/" {
+			if d.config["source"] != "" && d.config["path"] != "/" && (d.isRequired(d.config) || d.isAvailable()) {
 				if storageProjectName == "" {
 					// Derive the effective storage project name from the instance config's project.
 					storageProjectName, err = project.StorageVolumeProject(d.state.DB.Cluster, instConf.Project().Name, db.StoragePoolVolumeTypeCustom)
@@ -870,7 +917,7 @@ func (d *disk) PreStartCheck() error {
 
 	// Custom volume disks that are not required don't need to be checked as if the pool is
 	// not available we should still start the instance.
-	if d.config["path"] != "/" && util.IsFalse(d.config["required"]) {
+	if d.config["path"] != "/" && !d.isRequired(d.config) {
 		return nil
 	}
 
@@ -884,6 +931,16 @@ func (d *disk) PreStartCheck() error {
 
 // Start is run when the device is added to the instance.
 func (d *disk) Start() (*deviceConfig.RunConfig, error) {
+	// Ignore detached disks.
+	if !util.IsTrueOrEmpty(d.config["attached"]) {
+		return nil, nil
+	}
+
+	// Ignore missing disks.
+	if !d.isRequired(d.config) && !d.isAvailable() {
+		return nil, nil
+	}
+
 	var runConfig *deviceConfig.RunConfig
 
 	err := d.validateEnvironment()
@@ -1223,11 +1280,6 @@ func (d *disk) setBus(entry *deviceConfig.MountEntryItem) error {
 
 // startVM starts the disk device for a virtual machine instance.
 func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
-	// Ignore detached disks.
-	if !util.IsTrueOrEmpty(d.config["attached"]) {
-		return nil, nil
-	}
-
 	runConf := deviceConfig.RunConfig{}
 
 	reverter := revert.New()
@@ -2392,6 +2444,11 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 
 // Stop is run when the device is removed from the instance.
 func (d *disk) Stop() (*deviceConfig.RunConfig, error) {
+	// Ignore missing disks.
+	if !d.isRequired(d.config) && !d.isAvailable() {
+		return nil, nil
+	}
+
 	if d.inst.Type() == instancetype.VM {
 		return d.stopVM()
 	}
