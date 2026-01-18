@@ -323,15 +323,23 @@ func (s *consoleWs) doConsole() error {
 		close(consoleDisconnectCh)
 	}
 
-	// Get the console and control websockets.
-	s.connsLock.Lock()
-	consoleConn := s.conns[0]
-	ctrlConn := s.conns[-1]
-	s.connsLock.Unlock()
 
+	// Once this function ends ensure that any connected websockets are closed.
 	defer func() {
-		_ = consoleConn.Close()
-		_ = ctrlConn.Close()
+		s.connsLock.Lock()
+
+		consoleConn := s.conns[0]
+		ctrlConn := s.conns[-1]
+
+		if consoleConn != nil {
+			_ = consoleConn.Close()
+		}
+
+		if ctrlConn != nil {
+			_ = ctrlConn.Close()
+		}
+
+		s.connsLock.Unlock()
 	}()
 
 	// Write a reset escape sequence to the console to cancel any ongoing reads to the handle
