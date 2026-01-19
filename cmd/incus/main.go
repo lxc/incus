@@ -299,6 +299,10 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	debugCmd := cmdDebug{global: &globalCmd}
 	app.AddCommand(debugCmd.Command())
 
+	// wait sub-command
+	waitCmd := cmdWait{global: &globalCmd}
+	app.AddCommand(waitCmd.Command())
+
 	// Get help command
 	app.InitDefaultHelpCmd()
 	var help *cobra.Command
