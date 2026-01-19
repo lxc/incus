@@ -637,6 +637,16 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 			}
 		}
 
+		if nodeValues["storage.logs_volume"] != "" && nodeValues["storage.logs_volume"] != newNodeConfig.StorageLogsVolume() {
+			err := daemonStorageValidate(s, nodeValues["storage.logs_volume"])
+			if err == nil {
+				err = storageVolumeLogsValidate(s)
+			}
+			if err != nil {
+				return fmt.Errorf("Failed validation of %q: %w", "storage.logs_volume", err)
+			}
+		}
+
 		if patch {
 			nodeChanged, err = newNodeConfig.Patch(nodeValues)
 		} else {
@@ -946,6 +956,14 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 	value, ok = nodeChanged["storage.images_volume"]
 	if ok {
 		err := daemonStorageMove(s, "images", value)
+		if err != nil {
+			return err
+		}
+	}
+
+	value, ok = nodeChanged["storage.logs_volume"]
+	if ok {
+		err := daemonStorageMove(s, "logs", value)
 		if err != nil {
 			return err
 		}
