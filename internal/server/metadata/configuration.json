@@ -1610,12 +1610,36 @@
 						}
 					},
 					{
+						"pci": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The PCI address of the parent host device",
+							"type": "string"
+						}
+					},
+					{
+						"productid": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The product ID of the parent host device",
+							"type": "string"
+						}
+					},
+					{
 						"security.mac_filtering": {
 							"default": "false",
 							"longdesc": "",
 							"managed": "no",
 							"shortdesc": "Prevent the instance from spoofing another instance's MAC address",
 							"type": "bool"
+						}
+					},
+					{
+						"vendorid": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The vendor ID of the parent host device",
+							"type": "string"
 						}
 					},
 					{
