@@ -514,6 +514,7 @@ var APIExtensions = []string{
 	"storage_lvmcluster_qcow2",
 	"oidc_allowed_subnets",
 	"file_delete_force",
+	"nic_sriov_select_ext",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

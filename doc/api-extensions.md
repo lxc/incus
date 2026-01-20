@@ -2966,3 +2966,7 @@ This indicates support by Incus for the custom `incus.allowed_subnets` OIDC clai
 ## `file_delete_force`
 
 This adds a new `X-Incus-force` HTTP header that when set to `true` allows for recursive deletion of instance or custom volume files.
+
+## `nic_sriov_select_ext`
+
+Adds support for selecting an SR-IOV network interface by vendor ID, product ID, or PCI address.
