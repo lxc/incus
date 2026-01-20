@@ -3448,7 +3448,7 @@ func (n *bridge) UsesDNSMasq() bool {
 	}
 
 	// Start dnsmassq if IPv6 is used (needed for SLAAC or DHCPv6).
-	if !util.IsNoneOrEmpty(n.config["ipv6.address"]) {
+	if !util.IsNoneOrEmpty(n.config["ipv6.address"]) && (util.IsTrueOrEmpty(n.config["ipv6.dhcp"]) || util.IsTrueOrEmpty(n.config["ipv6.routing"])) {
 		ipAddress, _, err := net.ParseCIDR(n.config["ipv6.address"])
 		if err != nil {
 			return true
