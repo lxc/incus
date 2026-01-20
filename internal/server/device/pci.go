@@ -101,6 +101,7 @@ func (d *pci) Start() (*deviceConfig.RunConfig, error) {
 	runConf.PCIDevice = append(runConf.PCIDevice,
 		[]deviceConfig.RunConfigItem{
 			{Key: "devName", Value: d.name},
+			{Key: "firmware", Value: d.config["firmware"]},
 			{Key: "pciSlotName", Value: saveData["last_state.pci.slot.name"]},
 			{Key: "pciIOMMUGroup", Value: fmt.Sprintf("%d", pciIOMMUGroup)},
 		}...)
