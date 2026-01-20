@@ -5264,7 +5264,7 @@ func (d *qemu) addPCIDevConfig(conf *[]cfg.Section, bus *qemuBus, pciConfig []de
 		} else if pciItem.Key == "pciSlotName" {
 			pciSlotName = pciItem.Value
 		} else if pciItem.Key == "firmware" {
-			firmware = util.IsTrue(pciItem.Value)
+			firmware = util.IsTrueOrEmpty(pciItem.Value)
 		}
 	}
 
