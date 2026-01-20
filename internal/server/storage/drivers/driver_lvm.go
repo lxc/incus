@@ -130,7 +130,7 @@ func (d *lvm) load() error {
 func (d *lvm) init(s *state.State, name string, config map[string]string, log logger.Logger, volIDFunc func(volType VolumeType, volName string) (int64, error), commonRules *Validators) {
 	d.common.init(s, name, config, log, volIDFunc, commonRules)
 
-	if d.clustered && d.config != nil {
+	if d.config != nil {
 		_, exists := d.config["lvm.vg_name"]
 		if !exists {
 			sourceType := d.getSourceType()
