@@ -137,6 +137,15 @@ func (d *nicMACVLAN) validateConfig(instConf instance.ConfigReader) error {
 		//  required: no
 		//  shortdesc: Whether the NIC is plugged in or not
 		"attached",
+
+		// gendoc:generate(entity=devices, group=nic_macvlan, key=connected)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the NIC is connected to the host network (VM only)
+		"connected",
 	}
 
 	// Check that if network proeperty is set that conflicting keys are not present.
@@ -182,6 +191,10 @@ func (d *nicMACVLAN) validateConfig(instConf instance.ConfigReader) error {
 	} else {
 		// If no network property supplied, then parent property is required.
 		requiredFields = append(requiredFields, "parent")
+	}
+
+	if instConf.Type() != instancetype.VM && d.config["connected"] != "" {
+		return errors.New("The \"connected\" option is only supported on virtual machines for macvlan NICs")
 	}
 
 	err := d.config.Validate(nicValidationRules(requiredFields, optionalFields, instConf))
@@ -353,6 +366,7 @@ func (d *nicMACVLAN) Start() (*deviceConfig.RunConfig, error) {
 		{Key: "flags", Value: "up"},
 		{Key: "link", Value: saveData["host_name"]},
 		{Key: "hwaddr", Value: d.config["hwaddr"]},
+		{Key: "connected", Value: d.config["connected"]},
 	}
 
 	if d.config["io.bus"] == "usb" {
@@ -421,6 +435,26 @@ func (d *nicMACVLAN) postStop() error {
 
 	if len(errs) > 0 {
 		return fmt.Errorf("%v", errs)
+	}
+
+	return nil
+}
+
+// UpdatableFields returns a list of fields that can be updated without triggering a device remove & add.
+func (d *nicMACVLAN) UpdatableFields(oldDevice Type) []string {
+	// Check old and new device types match.
+	_, match := oldDevice.(*nicMACVLAN)
+	if !match {
+		return []string{}
+	}
+
+	return []string{"connected"}
+}
+
+// Update applies configuration changes to a started device.
+func (d *nicMACVLAN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
+	if isRunning {
+		return d.setNICLink()
 	}
 
 	return nil

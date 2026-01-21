@@ -94,6 +94,15 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 		//  required: no
 		//  shortdesc: Whether the NIC is plugged in or not
 		"attached",
+
+		// gendoc:generate(entity=devices, group=nic_physical, key=connected)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the NIC is connected to the host network (VM only)
+		"connected",
 	}
 
 	if instConf.Type() == instancetype.Container || instConf.Type() == instancetype.Any {
@@ -175,6 +184,10 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 	} else {
 		// If no network property supplied, then parent property is required.
 		requiredFields = append(requiredFields, "parent")
+	}
+
+	if instConf.Type() != instancetype.VM && d.config["connected"] != "" {
+		return errors.New("The \"connected\" option is only supported on virtual machines for physical NICs")
 	}
 
 	err := d.config.Validate(nicValidationRules(requiredFields, optionalFields, instConf))
@@ -346,6 +359,7 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 		{Key: "name", Value: d.config["name"]},
 		{Key: "flags", Value: "up"},
 		{Key: "link", Value: saveData["host_name"]},
+		{Key: "connected", Value: d.config["connected"]},
 	}
 
 	if d.inst.Type() == instancetype.VM {
@@ -549,4 +563,24 @@ func IsPhysicalNICWithBridge(s *state.State, deviceProjectName string, d deviceC
 	}
 
 	return false
+}
+
+// UpdatableFields returns a list of fields that can be updated without triggering a device remove & add.
+func (d *nicPhysical) UpdatableFields(oldDevice Type) []string {
+	// Check old and new device types match.
+	_, match := oldDevice.(*nicPhysical)
+	if !match {
+		return []string{}
+	}
+
+	return []string{"connected"}
+}
+
+// Update applies configuration changes to a started device.
+func (d *nicPhysical) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
+	if isRunning {
+		return d.setNICLink()
+	}
+
+	return nil
 }

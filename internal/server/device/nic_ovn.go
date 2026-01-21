@@ -79,7 +79,7 @@ func (d *nicOVN) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"security.acls", "limits.ingress", "limits.egress", "limits.max", "limits.priority"}
+	return []string{"security.acls", "limits.ingress", "limits.egress", "limits.max", "limits.priority", "connected"}
 }
 
 // validateConfig checks the supplied config for correctness.
@@ -326,6 +326,15 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		//  required: no
 		//  shortdesc: Whether the NIC is plugged in or not
 		"attached",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=connected)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the NIC is connected to the host network (container support requires setting `acceleration` to `none`)
+		"connected",
 	}
 
 	// The NIC's network may be a non-default project, so lookup project and get network's project name.
@@ -582,6 +591,11 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		if egress < 1 || egress > 4294967295 {
 			return errors.New("limits.egress must be between 1 an 4294967295 bps, inclusive")
 		}
+	}
+
+	// The connected option can only be handled properly on containers if acceleration is set to none.
+	if d.config["connected"] != "" && !d.canSetLink(instConf) {
+		return errors.New("The \"connected\" option requires setting acceleration=none on containers for OVN NICs")
 	}
 
 	return nil
@@ -1001,6 +1015,10 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 			{Key: "link", Value: peerName},
 		}
 
+		if d.canSetLink(nil) {
+			runConf.NetworkInterface = append(runConf.NetworkInterface, deviceConfig.RunConfigItem{Key: "connected", Value: d.config["connected"]})
+		}
+
 		instType := d.inst.Type()
 		if instType == instancetype.VM {
 			if d.config["acceleration"] == "sriov" {
@@ -1154,6 +1172,10 @@ func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 	err = bgpAddPrefix(&d.deviceCommon, d.network, d.config)
 	if err != nil {
 		return err
+	}
+
+	if isRunning && d.canSetLink(nil) {
+		return d.setNICLink()
 	}
 
 	return nil
@@ -1547,4 +1569,16 @@ func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort) (r
 	reverter.Success()
 
 	return cleanup, err
+}
+
+// canSetLink determines whether the device supports setting a link state.
+func (d *nicOVN) canSetLink(instConf instance.ConfigReader) bool {
+	var instType instancetype.Type
+	if instConf != nil {
+		instType = instConf.Type()
+	} else {
+		instType = d.inst.Type()
+	}
+
+	return instType == instancetype.VM || slices.Contains([]string{"", "none"}, d.config["acceleration"])
 }

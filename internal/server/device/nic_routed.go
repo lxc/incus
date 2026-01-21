@@ -44,7 +44,7 @@ func (d *nicRouted) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.priority"}
+	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.priority", "connected"}
 }
 
 // validateConfig checks the supplied config for correctness.
@@ -252,6 +252,15 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		//  required: no
 		//  shortdesc: Whether the NIC is plugged in or not
 		"attached",
+
+		// gendoc:generate(entity=devices, group=nic_routed, key=connected)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the NIC is connected to the host network
+		"connected",
 	}
 
 	rules := nicValidationRules(requiredFields, optionalFields, instConf)
@@ -774,6 +783,7 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 		{Key: "flags", Value: "up"},
 		{Key: "link", Value: peerName},
 		{Key: "hwaddr", Value: d.config["hwaddr"]},
+		{Key: "connected", Value: d.config["connected"]},
 	}
 
 	if d.config["io.bus"] == "usb" {
@@ -870,6 +880,8 @@ func (d *nicRouted) Update(oldDevices deviceConfig.Devices, isRunning bool) erro
 		if err != nil {
 			return err
 		}
+
+		return d.setNICLink()
 	}
 
 	return nil
