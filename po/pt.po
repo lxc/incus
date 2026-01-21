@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-01-20 21:57-0500\n"
-"PO-Revision-Date: 2025-12-28 13:00+0000\n"
+"PO-Revision-Date: 2026-01-22 09:25+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.15.1\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: cmd/incus/info.go:453
 msgid "  Chassis:"
@@ -6408,7 +6408,7 @@ msgstr "Número máximo de VFs: %d"
 
 #: cmd/incus/wait.go:43
 msgid "Maximum wait time"
-msgstr ""
+msgstr "Tempo de espera máximo"
 
 #: cmd/incus/info.go:179
 msgid "Mdev profiles:"
@@ -7360,9 +7360,8 @@ msgid "Please type 'y', 'n' or the fingerprint:"
 msgstr "Por favor digite 's', 'n' ou a impressão digital:"
 
 #: cmd/incus/wait.go:42
-#, fuzzy
 msgid "Polling interval (in seconds)"
-msgstr "Utilização da CPU (em segundos)"
+msgstr "Intervalo de polling (em segundos)"
 
 #: cmd/incus/admin_recover.go:115
 msgid "Pool name cannot be empty"
@@ -10014,7 +10013,7 @@ msgstr "WWN: %s"
 
 #: cmd/incus/wait.go:26
 msgid "Wait for an instance to satisfy a condition"
-msgstr ""
+msgstr "Espera por uma instância para satisfazer uma condição"
 
 #: cmd/incus/wait.go:27
 msgid ""
@@ -10028,6 +10027,15 @@ msgid ""
 "  ipv6             Wait for a globally routable IPv6 address\n"
 "  status=STATUS    Wait for the instance status to become STATUS"
 msgstr ""
+"Espera por uma instância para satisfazer uma condição\n"
+"\n"
+"cCondições Suportadas:\n"
+"\n"
+"  agent            Espera que o agente VM esteja a correr\n"
+"  ip               Espera por qualquer endereço IP roteável globalmente\n"
+"  ipv4            Espera por qualquer endereço IPv4 roteável globalmente\n"
+"  ipv6            Espera por qualquer endereço IPv6 roteável globalmente\n"
+"  status=STATUS    Espera que o estado de instância se torne STATUS"
 
 #: cmd/incus/admin_waitready.go:27
 msgid "Wait for the daemon to be ready to process requests"
@@ -10437,9 +10445,8 @@ msgid "[<remote>:]<instance>"
 msgstr "[<remoto>:]<instância>"
 
 #: cmd/incus/wait.go:25
-#, fuzzy
 msgid "[<remote>:]<instance> <condition>"
-msgstr "[<remoto>:]<instância> <instância>"
+msgstr "[<remoto>:]<instância> <condição>"
 
 #: cmd/incus/config_device.go:221 cmd/incus/config_device.go:852
 msgid "[<remote>:]<instance> <device> <key>"
@@ -11993,6 +12000,8 @@ msgid ""
 "incus wait v1 agent\n"
 "\tWait for VM instance v1 to have a functional agent."
 msgstr ""
+"incus wait v1 agent\n"
+"\tEspera por instância VM v1 que tenha um agente funcional."
 
 #: cmd/incus/storage.go:565
 msgid "info"
