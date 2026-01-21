@@ -108,6 +108,15 @@ func (d *nicIPVLAN) validateConfig(instConf instance.ConfigReader) error {
 		//  default: false
 		//  shortdesc: Register VLAN using GARP VLAN Registration Protocol
 		"gvrp",
+
+		// gendoc:generate(entity=devices, group=nic_ipvlan, key=attached)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the NIC is plugged in or not
+		"attached",
 	}
 
 	rules := nicValidationRules(requiredFields, optionalFields, instConf)
@@ -301,6 +310,11 @@ func (d *nicIPVLAN) validateEnvironment() error {
 
 // Start is run when the instance is starting up (IPVLAN doesn't support hot plugging).
 func (d *nicIPVLAN) Start() (*deviceConfig.RunConfig, error) {
+	// Ignore detached NICs.
+	if !util.IsTrueOrEmpty(d.config["attached"]) {
+		return nil, nil
+	}
+
 	err := d.validateEnvironment()
 	if err != nil {
 		return nil, err

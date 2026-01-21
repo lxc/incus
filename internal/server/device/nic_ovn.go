@@ -317,6 +317,15 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		//  managed: no
 		//  shortdesc: The priority for outgoing traffic, to be used by the kernel queuing discipline to prioritize network packets
 		"limits.priority",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=attached)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the NIC is plugged in or not
+		"attached",
 	}
 
 	// The NIC's network may be a non-default project, so lookup project and get network's project name.
@@ -693,6 +702,11 @@ func (d *nicOVN) init(inst instance.Instance, s *state.State, name string, conf 
 
 // Start is run when the device is added to a running instance or instance is starting up.
 func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
+	// Ignore detached NICs.
+	if !util.IsTrueOrEmpty(d.config["attached"]) {
+		return nil, nil
+	}
+
 	err := d.validateEnvironment()
 	if err != nil {
 		return nil, err

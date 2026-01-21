@@ -243,6 +243,15 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		//  default: `virtio`
 		//  shortdesc: Override the bus for the device (can be `virtio` or `usb`) (VM only)
 		"io.bus",
+
+		// gendoc:generate(entity=devices, group=nic_routed, key=attached)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the NIC is plugged in or not
+		"attached",
 	}
 
 	rules := nicValidationRules(requiredFields, optionalFields, instConf)
@@ -467,6 +476,11 @@ func (d *nicRouted) checkIPAvailability(parent string) error {
 
 // Start is run when the instance is starting up (Routed mode doesn't support hot plugging).
 func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
+	// Ignore detached NICs.
+	if !util.IsTrueOrEmpty(d.config["attached"]) {
+		return nil, nil
+	}
+
 	err := d.validateEnvironment()
 	if err != nil {
 		return nil, err
