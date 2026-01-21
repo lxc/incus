@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-12-19 03:30-0500\n"
+"POT-Creation-Date: 2026-01-20 21:57-0500\n"
 "PO-Revision-Date: 2025-12-27 03:20+0000\n"
 "Last-Translator: meipeter <meipeter114514@outlook.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -275,8 +275,8 @@ msgstr ""
 "### config:\n"
 "###  user.foo: bah\n"
 "###\n"
-"### 注意，只能修改入口规则（ingress）、出口规则（egress）、描述（description"
-"）、配置键。"
+"### 注意，只能修改入口规则（ingress）、出口规则（egress）、描述"
+"（description）、配置键。"
 
 #: cmd/incus/network_address_set.go:488
 msgid ""
@@ -449,8 +449,8 @@ msgstr ""
 "### target_network: mynet\n"
 "### status: Pending\n"
 "###\n"
-"### 注意，名称（name）、目标项目（target_project）、目标网络（target_network"
-"）、状态（status）字段不能更改。"
+"### 注意，名称（name）、目标项目（target_project）、目标网络"
+"（target_network）、状态（status）字段不能更改。"
 
 #: cmd/incus/network_zone.go:1379
 msgid ""
@@ -2355,9 +2355,9 @@ msgstr "删除警告"
 #: cmd/incus/storage_volume.go:3670 cmd/incus/storage_volume.go:3833
 #: cmd/incus/storage_volume.go:3922 cmd/incus/storage_volume.go:4004
 #: cmd/incus/storage_volume.go:4093 cmd/incus/storage_volume.go:4269
-#: cmd/incus/top.go:43 cmd/incus/version.go:23 cmd/incus/warning.go:32
-#: cmd/incus/warning.go:76 cmd/incus/warning.go:273 cmd/incus/warning.go:316
-#: cmd/incus/warning.go:372 cmd/incus/webui.go:19
+#: cmd/incus/top.go:43 cmd/incus/version.go:23 cmd/incus/wait.go:27
+#: cmd/incus/warning.go:32 cmd/incus/warning.go:76 cmd/incus/warning.go:273
+#: cmd/incus/warning.go:316 cmd/incus/warning.go:372 cmd/incus/webui.go:19
 msgid "Description"
 msgstr "描述"
 
@@ -2798,7 +2798,8 @@ msgstr ""
 msgid ""
 "Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
 "for disk):"
-msgstr "输入排序类型（“a”表示字母顺序，“c”表示CPU，“m”表示内存，“d”表示磁盘）："
+msgstr ""
+"输入排序类型（“a”表示字母顺序，“c”表示CPU，“m”表示内存，“d”表示磁盘）："
 
 #: cmd/incus/top.go:275
 msgid "Enter new delay in seconds:"
@@ -2876,12 +2877,12 @@ msgstr "取消设置属性时出错：%v"
 msgid "Error updating template file: %s"
 msgstr "更新模板文件时出错：%s"
 
-#: cmd/incus/main.go:366
+#: cmd/incus/main.go:370
 #, c-format
 msgid "Error while executing alias expansion: %s\n"
 msgstr "执行别名扩展时出错：%s\n"
 
-#: cmd/incus/main.go:369
+#: cmd/incus/main.go:373
 #, c-format
 msgid "Error: %v\n"
 msgstr "错误：%v\n"
@@ -2936,11 +2937,11 @@ msgid ""
 msgstr ""
 "对本地或全局数据库执行 SQL 查询\n"
 "\n"
-"本地数据库专门用于您命令所针对的集群成员，并包含成员特定数据（如成员网络地址"
-"）。\n"
+"本地数据库专门用于您命令所针对的集群成员，并包含成员特定数据（如成员网络地"
+"址）。\n"
 "\n"
-"  全局数据库对集群中所有成员通用，并包含集群特定数据（如配置文件、容器等）"
-"。\n"
+"  全局数据库对集群中所有成员通用，并包含集群特定数据（如配置文件、容器"
+"等）。\n"
 "\n"
 "  如果您运行的是非集群服务器也同样适用，因为该实例等同于一个单成员集群。\n"
 "\n"
@@ -2975,8 +2976,8 @@ msgstr ""
 "在实例中执行命令\n"
 "\n"
 "该命令直接使用 exec 执行，因此不存在 shell 模式（变量、文件重定向等）。\n"
-"如果需要 shell 环境，您需要执行 shell 可执行文件，并将 shell 命令作为参数传递"
-"，例如：\n"
+"如果需要 shell 环境，您需要执行 shell 可执行文件，并将 shell 命令作为参数传"
+"递，例如：\n"
 "\n"
 "  incus exec <instance> -- sh -c \"cd /tmp && pwd\"\n"
 "默认为非交互式模式，如果标准输入和输出都是终端，则选择交互式模式（不考虑 "
@@ -3986,7 +3987,7 @@ msgstr "如果镜像别名已存在，删除并创建新的"
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr "如果快照名称已存在，删除并创建新的"
 
-#: cmd/incus/main.go:473
+#: cmd/incus/main.go:477
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -4297,7 +4298,7 @@ msgid ""
 "Invalid name in '%s', empty string is only allowed when defining maxWidth"
 msgstr "无效的称位于'%s'中，仅定义最大宽度时允许空字符串"
 
-#: cmd/incus/main.go:569 cmd/incus/storage.go:145
+#: cmd/incus/main.go:573 cmd/incus/storage.go:145
 msgid "Invalid number of arguments"
 msgstr "无效的参数数量"
 
@@ -5660,6 +5661,10 @@ msgstr ""
 msgid "Maximum number of VFs: %d"
 msgstr ""
 
+#: cmd/incus/wait.go:43
+msgid "Maximum wait time"
+msgstr ""
+
 #: cmd/incus/info.go:179
 msgid "Mdev profiles:"
 msgstr ""
@@ -6538,7 +6543,7 @@ msgstr ""
 msgid "Partitions:"
 msgstr ""
 
-#: cmd/incus/main.go:434 cmd/incus/remote.go:813
+#: cmd/incus/main.go:438 cmd/incus/remote.go:813
 #, c-format
 msgid "Password for %s: "
 msgstr ""
@@ -6584,6 +6589,11 @@ msgstr ""
 #: cmd/incus/remote.go:513
 msgid "Please type 'y', 'n' or the fingerprint:"
 msgstr ""
+
+#: cmd/incus/wait.go:42
+#, fuzzy
+msgid "Polling interval (in seconds)"
+msgstr "CPU 占用（秒）"
 
 #: cmd/incus/admin_recover.go:115
 msgid "Pool name cannot be empty"
@@ -7777,7 +7787,7 @@ msgstr ""
 msgid "Show instance snapshot configuration"
 msgstr ""
 
-#: cmd/incus/main.go:313 cmd/incus/main.go:314
+#: cmd/incus/main.go:317 cmd/incus/main.go:318
 msgid "Show less common commands"
 msgstr ""
 
@@ -8498,7 +8508,7 @@ msgstr ""
 msgid "There is no \"image name\".  Did you want an alias?"
 msgstr ""
 
-#: cmd/incus/main.go:357
+#: cmd/incus/main.go:361
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
 "As your platform can't run native Linux instances, you must connect to a "
@@ -8548,7 +8558,7 @@ msgstr ""
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
-#: cmd/incus/main.go:481
+#: cmd/incus/main.go:485
 #, c-format
 msgid ""
 "To start your first container, try: incus launch images:%s\n"
@@ -9060,6 +9070,23 @@ msgstr ""
 msgid "WWN: %s"
 msgstr ""
 
+#: cmd/incus/wait.go:26
+msgid "Wait for an instance to satisfy a condition"
+msgstr ""
+
+#: cmd/incus/wait.go:27
+msgid ""
+"Wait for an instance to satisfy a condition\n"
+"\n"
+"Supported cConditions:\n"
+"\n"
+"  agent            Wait for the VM agent to be running\n"
+"  ip               Wait for any globally routable IP address\n"
+"  ipv4             Wait for a globally routable IPv4 address\n"
+"  ipv6             Wait for a globally routable IPv6 address\n"
+"  status=STATUS    Wait for the instance status to become STATUS"
+msgstr ""
+
 #: cmd/incus/admin_waitready.go:27
 msgid "Wait for the daemon to be ready to process requests"
 msgstr ""
@@ -9440,6 +9467,11 @@ msgstr ""
 #: cmd/incus/snapshot.go:322
 msgid "[<remote>:]<instance>"
 msgstr ""
+
+#: cmd/incus/wait.go:25
+#, fuzzy
+msgid "[<remote>:]<instance> <condition>"
+msgstr "<远程>: <路径>"
 
 #: cmd/incus/config_device.go:221 cmd/incus/config_device.go:852
 msgid "[<remote>:]<instance> <device> <key>"
@@ -10636,6 +10668,12 @@ msgstr ""
 "\n"
 "\t过期删除池“default”中虚拟机卷“v1”的快照过期期限"
 
+#: cmd/incus/wait.go:37
+msgid ""
+"incus wait v1 agent\n"
+"\tWait for VM instance v1 to have a functional agent."
+msgstr ""
+
 #: cmd/incus/storage.go:565
 msgid "info"
 msgstr ""
@@ -10732,10 +10770,6 @@ msgstr ""
 
 #, fuzzy
 #~ msgid "[<remote>:]<application>"
-#~ msgstr "<远程>: <路径>"
-
-#, fuzzy
-#~ msgid "[<remote>:]<section>"
 #~ msgstr "<远程>: <路径>"
 
 #, fuzzy
