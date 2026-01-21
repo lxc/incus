@@ -10070,13 +10070,13 @@ func (d *qemu) deviceDetachUSB(usbDev deviceConfig.USBDeviceItem) error {
 // Block node names may only be up to 31 characters long, so use a hash if longer.
 func (d *qemu) blockNodeName(name string) string {
 	// Apply the prefix.
-	return fmt.Sprintf("%s%s", qemuBlockDevIDPrefix, hashName(name, 25))
+	return fmt.Sprintf("%s%s", qemuBlockDevIDPrefix, hashValue(name, 25))
 }
 
 // Mount tag names may only be up to 31 or 36 characters long, so use a hash if longer.
 func (d *qemu) mountTagName(name string, maxLength int) string {
 	// Apply the prefix.
-	return fmt.Sprintf("%s%s", qemuMountTagPrefix, hashName(name, maxLength))
+	return fmt.Sprintf("%s%s", qemuMountTagPrefix, hashValue(name, maxLength))
 }
 
 func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {
