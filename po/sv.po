@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2025-12-19 03:30-0500\n"
+"POT-Creation-Date: 2026-01-20 21:57-0500\n"
 "PO-Revision-Date: 2026-01-10 12:01+0000\n"
 "Last-Translator: Daniel Nylander <daniel@danielnylander.se>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -963,8 +963,8 @@ msgstr "Lägg till regler i en ACL"
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
-"Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när klar)"
-":"
+"Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när "
+"klar):"
 
 #: cmd/incus/admin_init.go:53
 msgid "Address to bind to (default: none)"
@@ -1184,8 +1184,8 @@ msgstr "Säkerhetskopior:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,<nyckel>"
-"=<värde>: %s"
+"Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,"
+"<nyckel>=<värde>: %s"
 
 #: cmd/incus/network.go:432 cmd/incus/network_acl.go:473
 #: cmd/incus/network_address_set.go:316 cmd/incus/network_forward.go:399
@@ -1917,8 +1917,8 @@ msgid ""
 "running state, including process memory state, TCP connections, ..."
 msgstr ""
 "Skapa instanssnapshots När --stateful används, försök att kontrollera "
-"instansens körningsstatus, inklusive processminnesstatus, TCP-anslutningar, "
-"..."
+"instansens körningsstatus, inklusive processminnesstatus, TCP-"
+"anslutningar, ..."
 
 #: cmd/incus/create.go:46 cmd/incus/create.go:47
 msgid "Create instances from images"
@@ -2356,9 +2356,9 @@ msgstr "Ta bort varningar"
 #: cmd/incus/storage_volume.go:3670 cmd/incus/storage_volume.go:3833
 #: cmd/incus/storage_volume.go:3922 cmd/incus/storage_volume.go:4004
 #: cmd/incus/storage_volume.go:4093 cmd/incus/storage_volume.go:4269
-#: cmd/incus/top.go:43 cmd/incus/version.go:23 cmd/incus/warning.go:32
-#: cmd/incus/warning.go:76 cmd/incus/warning.go:273 cmd/incus/warning.go:316
-#: cmd/incus/warning.go:372 cmd/incus/webui.go:19
+#: cmd/incus/top.go:43 cmd/incus/version.go:23 cmd/incus/wait.go:27
+#: cmd/incus/warning.go:32 cmd/incus/warning.go:76 cmd/incus/warning.go:273
+#: cmd/incus/warning.go:316 cmd/incus/warning.go:372 cmd/incus/webui.go:19
 msgid "Description"
 msgstr "Beskrivning"
 
@@ -2776,7 +2776,8 @@ msgstr "Redigera förtroendekonfigurationer som YAML"
 #: cmd/incus/top.go:92 cmd/incus/warning.go:245
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
-msgstr "Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
+msgstr ""
+"Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
 
 #: cmd/incus/cluster.go:828
 msgid "Enable clustering on a single non-clustered server"
@@ -2891,12 +2892,12 @@ msgstr "Fel vid borttagning av egenskap: %v"
 msgid "Error updating template file: %s"
 msgstr "Fel vid uppdatering av mallfil: %s"
 
-#: cmd/incus/main.go:366
+#: cmd/incus/main.go:370
 #, c-format
 msgid "Error while executing alias expansion: %s\n"
 msgstr "Fel vid exekvering av aliasutvidgning: %s\n"
 
-#: cmd/incus/main.go:369
+#: cmd/incus/main.go:373
 #, c-format
 msgid "Error: %v\n"
 msgstr "Fel: %v\n"
@@ -4022,7 +4023,7 @@ msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 "Om namnet på ögonblicksbilden redan finns, ta bort det och skapa ett nytt"
 
-#: cmd/incus/main.go:473
+#: cmd/incus/main.go:477
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -4342,7 +4343,7 @@ msgid ""
 msgstr ""
 "Ogiltigt namn i '%s', tom sträng är endast tillåten när maxWidth definieras"
 
-#: cmd/incus/main.go:569 cmd/incus/storage.go:145
+#: cmd/incus/main.go:573 cmd/incus/storage.go:145
 msgid "Invalid number of arguments"
 msgstr "Ogiltigt antal argument"
 
@@ -5378,8 +5379,8 @@ msgstr ""
 "  f - Fingeravtryck för basavbildning (kort)\n"
 "  F - Fingeravtryck för basavbildning (långt)\n"
 "\n"
-"Anpassade kolumner definieras med "
-"\"[config:|devices:]key[:name][:maxWidth]\":\n"
+"Anpassade kolumner definieras med \"[config:|devices:]key[:name][:maxWidth]"
+"\":\n"
 "  KEY: Den (utökade) konfigurations- eller enhetsnyckeln som ska visas. Om "
 "[config:|devices:] utelämnas är standardvärdet konfigurationsnyckeln.\n"
 "  NAME: Namn som ska visas i kolumnrubriken.\n"
@@ -6261,6 +6262,10 @@ msgstr "Manuell aktivering av generering av ett klientcertifikat"
 #, c-format
 msgid "Maximum number of VFs: %d"
 msgstr "Maximalt antal VF:er: %d"
+
+#: cmd/incus/wait.go:43
+msgid "Maximum wait time"
+msgstr ""
 
 #: cmd/incus/info.go:179
 msgid "Mdev profiles:"
@@ -7159,7 +7164,7 @@ msgstr "Skickade paket"
 msgid "Partitions:"
 msgstr "Partitioner:"
 
-#: cmd/incus/main.go:434 cmd/incus/remote.go:813
+#: cmd/incus/main.go:438 cmd/incus/remote.go:813
 #, c-format
 msgid "Password for %s: "
 msgstr "Lösenord för %s: "
@@ -7205,6 +7210,11 @@ msgstr "Ange anslutningstoken:"
 #: cmd/incus/remote.go:513
 msgid "Please type 'y', 'n' or the fingerprint:"
 msgstr "Skriv 'y', 'n' eller fingeravtrycket:"
+
+#: cmd/incus/wait.go:42
+#, fuzzy
+msgid "Polling interval (in seconds)"
+msgstr "CPU-användning (i sekunder)"
 
 #: cmd/incus/admin_recover.go:115
 msgid "Pool name cannot be empty"
@@ -8482,7 +8492,7 @@ msgstr "Visa instans- eller serverinformation"
 msgid "Show instance snapshot configuration"
 msgstr "Visa konfiguration för instansöversikt"
 
-#: cmd/incus/main.go:313 cmd/incus/main.go:314
+#: cmd/incus/main.go:317 cmd/incus/main.go:318
 msgid "Show less common commands"
 msgstr "Visa mindre vanliga kommandon"
 
@@ -9077,8 +9087,8 @@ msgstr "Nyckeln %q finns inte på klustermedlemmen %q"
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:%q' instead."
 msgstr ""
-"Den lokala avbildningen '%q' kunde inte hittas, försöker istället med "
-"'%q:%q'."
+"Den lokala avbildningen '%q' kunde inte hittas, försöker istället med '%q:"
+"%q'."
 
 #: cmd/incus/utils.go:441
 #, c-format
@@ -9249,7 +9259,7 @@ msgstr "Den typ som ska skapas (fil, symlänk eller katalog)"
 msgid "There is no \"image name\".  Did you want an alias?"
 msgstr "Det finns inget \"avbildningsnamn\".  Ville du ha ett alias?"
 
-#: cmd/incus/main.go:357
+#: cmd/incus/main.go:361
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
 "As your platform can't run native Linux instances, you must connect to a "
@@ -9306,7 +9316,7 @@ msgstr "För att skapa ett nytt nätverk, använd: incus network create"
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr "För att koppla bort från konsolen, tryck på: <ctrl>+a q"
 
-#: cmd/incus/main.go:481
+#: cmd/incus/main.go:485
 #, c-format
 msgid ""
 "To start your first container, try: incus launch images:%s\n"
@@ -9834,6 +9844,23 @@ msgstr "Volymbeskrivning"
 msgid "WWN: %s"
 msgstr "WWN: %s"
 
+#: cmd/incus/wait.go:26
+msgid "Wait for an instance to satisfy a condition"
+msgstr ""
+
+#: cmd/incus/wait.go:27
+msgid ""
+"Wait for an instance to satisfy a condition\n"
+"\n"
+"Supported cConditions:\n"
+"\n"
+"  agent            Wait for the VM agent to be running\n"
+"  ip               Wait for any globally routable IP address\n"
+"  ipv4             Wait for a globally routable IPv4 address\n"
+"  ipv6             Wait for a globally routable IPv6 address\n"
+"  status=STATUS    Wait for the instance status to become STATUS"
+msgstr ""
+
 #: cmd/incus/admin_waitready.go:27
 msgid "Wait for the daemon to be ready to process requests"
 msgstr "Vänta tills daemonen är redo att bearbeta förfrågningar"
@@ -9870,8 +9897,8 @@ msgid ""
 "they otherwise would."
 msgstr ""
 "Vi har upptäckt att du kör i en container utan privilegier.\n"
-"Det innebär att om du inte manuellt har konfigurerat din värd på annat sätt, "
-"\n"
+"Det innebär att om du inte manuellt har konfigurerat din värd på annat "
+"sätt, \n"
 "kommer du inte att ha tillräckligt med uid och gid att tilldela dina "
 "containrar.\n"
 "\n"
@@ -9925,7 +9952,8 @@ msgstr ""
 
 #: cmd/incus/snapshot.go:94
 msgid "Whether or not to snapshot the instance's running state"
-msgstr "Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
+msgstr ""
+"Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
 
 #: cmd/incus/rebuild.go:29
 msgid ""
@@ -10234,6 +10262,11 @@ msgstr "[<fjärr>:]<avbildning> [[<fjärr>:]<avbildning>...]"
 msgid "[<remote>:]<instance>"
 msgstr "[<fjärr>:]<instans>"
 
+#: cmd/incus/wait.go:25
+#, fuzzy
+msgid "[<remote>:]<instance> <condition>"
+msgstr "[<fjärr>:]<instans> <instans>"
+
 #: cmd/incus/config_device.go:221 cmd/incus/config_device.go:852
 msgid "[<remote>:]<instance> <device> <key>"
 msgstr "[<fjärr>:]<instans> <enhet> <nyckel>"
@@ -10429,8 +10462,8 @@ msgid ""
 "[<remote>:]<network> <listen_address> <backend_name> <target_address> "
 "[<target_port(s)>]"
 msgstr ""
-"[<fjärr>:]<nätverk> <lyssningsadress> <backend_name> <måladress> [<målport"
-"(ar)>]"
+"[<fjärr>:]<nätverk> <lyssningsadress> <backend_name> <måladress> "
+"[<målport(ar)>]"
 
 #: cmd/incus/network_forward.go:447 cmd/incus/network_forward.go:644
 #: cmd/incus/network_load_balancer.go:450
@@ -11697,6 +11730,12 @@ msgstr ""
 "den anpassade volymen \"foo\" i poolen \"default\" incus storage volume "
 "unset default virtual-machine/v1 snapshots.expiry Tar bort utgångsperioden "
 "för snapshots för den virtuella maskinvolymen \"v1\" i poolen \"default\""
+
+#: cmd/incus/wait.go:37
+msgid ""
+"incus wait v1 agent\n"
+"\tWait for VM instance v1 to have a functional agent."
+msgstr ""
 
 #: cmd/incus/storage.go:565
 msgid "info"
