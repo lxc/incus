@@ -118,3 +118,14 @@ func (d *deviceCommon) generateHostName(prefix string, hwaddr string) (string, e
 	// Handle instances.nic.host_name random mode or where no MAC address supplied.
 	return network.RandomDevName(prefix), nil
 }
+
+// setNICLink sets the link status (connected/disconnected) for the given NIC.
+func (d *deviceCommon) setNICLink() error {
+	runConf := deviceConfig.RunConfig{}
+	runConf.NetworkInterface = []deviceConfig.RunConfigItem{
+		{Key: "devName", Value: d.name},
+		{Key: "connected", Value: d.config["connected"]},
+	}
+
+	return d.inst.DeviceEventHandler(&runConf)
+}

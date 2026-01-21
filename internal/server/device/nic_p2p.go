@@ -134,6 +134,15 @@ func (d *nicP2P) validateConfig(instConf instance.ConfigReader) error {
 		//  required: no
 		//  shortdesc: Whether the NIC is plugged in or not
 		"attached",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=connected)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the NIC is connected to the host network
+		"connected",
 	}
 
 	err := d.config.Validate(nicValidationRules([]string{}, optionalFields, instConf))
@@ -161,7 +170,7 @@ func (d *nicP2P) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.priority", "ipv4.routes", "ipv6.routes"}
+	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.priority", "ipv4.routes", "ipv6.routes", "connected"}
 }
 
 // Start is run when the device is added to a running instance or instance is starting up.
@@ -246,6 +255,7 @@ func (d *nicP2P) Start() (*deviceConfig.RunConfig, error) {
 		{Key: "flags", Value: "up"},
 		{Key: "link", Value: peerName},
 		{Key: "hwaddr", Value: d.config["hwaddr"]},
+		{Key: "connected", Value: d.config["connected"]},
 	}
 
 	if d.config["io.bus"] == "usb" {
@@ -298,7 +308,7 @@ func (d *nicP2P) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		return err
 	}
 
-	return nil
+	return d.setNICLink()
 }
 
 // Stop is run when the device is removed from the instance.
