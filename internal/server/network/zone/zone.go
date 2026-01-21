@@ -571,15 +571,18 @@ func (d *zone) Content() (*strings.Builder, error) {
 		nameservers = append(nameservers, entry)
 	}
 
-	primary := "hostmaster." + d.info.Name
+	primary := d.info.Name
 	if len(nameservers) > 0 {
 		primary = nameservers[0]
 	}
+
+	contact := "hostmaster." + primary
 
 	// Template the zone file.
 	sb := &strings.Builder{}
 	err = zoneTemplate.Execute(sb, map[string]any{
 		"primary":     primary,
+		"contact":     contact,
 		"nameservers": nameservers,
 		"zone":        d.info.Name,
 		"serial":      time.Now().Unix(),
@@ -605,15 +608,18 @@ func (d *zone) SOA() (*strings.Builder, error) {
 		nameservers = append(nameservers, entry)
 	}
 
-	primary := "hostmaster." + d.info.Name
+	primary := d.info.Name
 	if len(nameservers) > 0 {
 		primary = nameservers[0]
 	}
+
+	contact := "hostmaster." + primary
 
 	// Template the zone file.
 	sb := &strings.Builder{}
 	err := zoneTemplate.Execute(sb, map[string]any{
 		"primary":     primary,
+		"contact":     contact,
 		"nameservers": nameservers,
 		"zone":        d.info.Name,
 		"serial":      time.Now().Unix(),
