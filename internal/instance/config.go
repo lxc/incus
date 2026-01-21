@@ -1485,7 +1485,13 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 	//  liveupdate: yes
 	//  shortdesc: Free-form environment key/value
 	if strings.HasPrefix(key, "environment.") {
-		return validate.IsAny, nil
+		return func(val string) error {
+			if strings.Contains(val, "\n") {
+				return errors.New("Environment variables cannot contain line breaks")
+			}
+
+			return nil
+		}, nil
 	}
 
 	// gendoc:generate(entity=instance, group=miscellaneous, key=user.*)
