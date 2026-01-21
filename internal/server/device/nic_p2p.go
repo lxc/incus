@@ -125,6 +125,15 @@ func (d *nicP2P) validateConfig(instConf instance.ConfigReader) error {
 		//  default: `virtio`
 		//  shortdesc: Override the bus for the device (can be `virtio` or `usb`) (VM only)
 		"io.bus",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=attached)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the NIC is plugged in or not
+		"attached",
 	}
 
 	err := d.config.Validate(nicValidationRules([]string{}, optionalFields, instConf))
@@ -157,6 +166,11 @@ func (d *nicP2P) UpdatableFields(oldDevice Type) []string {
 
 // Start is run when the device is added to a running instance or instance is starting up.
 func (d *nicP2P) Start() (*deviceConfig.RunConfig, error) {
+	// Ignore detached NICs.
+	if !util.IsTrueOrEmpty(d.config["attached"]) {
+		return nil, nil
+	}
+
 	err := d.validateEnvironment()
 	if err != nil {
 		return nil, err

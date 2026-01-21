@@ -85,6 +85,15 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 		//  managed: no
 		//  shortdesc: The Maximum Transmit Unit (MTU) of the new interface
 		"mtu",
+
+		// gendoc:generate(entity=devices, group=nic_physical, key=attached)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the NIC is plugged in or not
+		"attached",
 	}
 
 	if instConf.Type() == instancetype.Container || instConf.Type() == instancetype.Any {
@@ -196,6 +205,11 @@ func (d *nicPhysical) validateEnvironment() error {
 
 // Start is run when the device is added to a running instance or instance is starting up.
 func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
+	// Ignore detached NICs.
+	if !util.IsTrueOrEmpty(d.config["attached"]) {
+		return nil, nil
+	}
+
 	err := d.validateEnvironment()
 	if err != nil {
 		return nil, err
@@ -443,7 +457,7 @@ func (d *nicPhysical) Stop() (*deviceConfig.RunConfig, error) {
 			DeviceName:     fmt.Sprintf("%s-%s-%s", d.name, v["last_state.usb.bus"], v["last_state.usb.device"]),
 			HostDevicePath: fmt.Sprintf("/dev/bus/usb/%s/%s", v["last_state.usb.bus"], v["last_state.usb.device"]),
 		})
-	} else {
+	} else if util.IsTrueOrEmpty(d.config["attached"]) {
 		// Handle all other NICs.
 		runConf.NetworkInterface = []deviceConfig.RunConfigItem{
 			{Key: "link", Value: v["host_name"]},

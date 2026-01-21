@@ -611,12 +611,12 @@ func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, 
 
 // networkClearHostVethLimits clears any network rate limits to the veth device specified in the config.
 func networkClearHostVethLimits(d *deviceCommon) error {
-	err := d.state.Firewall.InstanceClearNetPrio(d.inst.Project().Name, d.inst.Name(), d.config["host_name"])
-	if err != nil {
-		return err
+	// Detached NICs cannot be cleaned up this way.
+	if !util.IsTrueOrEmpty(d.config["attached"]) {
+		return nil
 	}
 
-	return nil
+	return d.state.Firewall.InstanceClearNetPrio(d.inst.Project().Name, d.inst.Name(), d.config["host_name"])
 }
 
 // networkValidGateway validates the gateway value.
