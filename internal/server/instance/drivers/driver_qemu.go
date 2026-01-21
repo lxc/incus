@@ -4766,7 +4766,15 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 
 	qemuDev["id"] = fmt.Sprintf("%s%s", qemuDeviceIDPrefix, escapedDeviceName)
 	qemuDev["drive"] = blockDev["node-name"].(string)
-	qemuDev["serial"] = fmt.Sprintf("%s%s", qemuBlockDevIDPrefix, escapedDeviceName)
+
+	// Max serial length is 36 characters: prefix + 30 chars.
+	// For nvme and virtio-blk, the maximum serial length is 20 characters: prefix + 14 chars.
+	serialMaxLength := 30
+	if slices.Contains([]string{"nvme", "virtio-blk"}, bus) {
+		serialMaxLength = 14
+	}
+
+	qemuDev["serial"] = fmt.Sprintf("%s%s", qemuBlockDevIDPrefix, hashValue(escapedDeviceName, serialMaxLength))
 
 	if wwn != "" {
 		wwnID, err := strconv.ParseUint(strings.TrimPrefix(wwn, "0x"), 16, 64)
