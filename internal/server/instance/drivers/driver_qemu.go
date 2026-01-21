@@ -4766,7 +4766,15 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 
 	qemuDev["id"] = fmt.Sprintf("%s%s", qemuDeviceIDPrefix, escapedDeviceName)
 	qemuDev["drive"] = blockDev["node-name"].(string)
-	qemuDev["serial"] = fmt.Sprintf("%s%s", qemuBlockDevIDPrefix, escapedDeviceName)
+
+	// Max serial length is 36 characters: prefix + 30 chars.
+	// For nvme and virtio-blk, the maximum serial length is 20 characters: prefix + 14 chars.
+	serialMaxLength := 30
+	if slices.Contains([]string{"nvme", "virtio-blk"}, bus) {
+		serialMaxLength = 14
+	}
+
+	qemuDev["serial"] = fmt.Sprintf("%s%s", qemuBlockDevIDPrefix, hashValue(escapedDeviceName, serialMaxLength))
 
 	if wwn != "" {
 		wwnID, err := strconv.ParseUint(strings.TrimPrefix(wwn, "0x"), 16, 64)
@@ -10070,13 +10078,13 @@ func (d *qemu) deviceDetachUSB(usbDev deviceConfig.USBDeviceItem) error {
 // Block node names may only be up to 31 characters long, so use a hash if longer.
 func (d *qemu) blockNodeName(name string) string {
 	// Apply the prefix.
-	return fmt.Sprintf("%s%s", qemuBlockDevIDPrefix, hashName(name, 25))
+	return fmt.Sprintf("%s%s", qemuBlockDevIDPrefix, hashValue(name, 25))
 }
 
 // Mount tag names may only be up to 31 or 36 characters long, so use a hash if longer.
 func (d *qemu) mountTagName(name string, maxLength int) string {
 	// Apply the prefix.
-	return fmt.Sprintf("%s%s", qemuMountTagPrefix, hashName(name, maxLength))
+	return fmt.Sprintf("%s%s", qemuMountTagPrefix, hashValue(name, maxLength))
 }
 
 func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {
