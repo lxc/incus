@@ -97,11 +97,9 @@ func LinkByName(name string) (LinkInfo, error) {
 
 	if link.Attrs().ParentIndex != 0 {
 		parentLink, err := netlink.LinkByIndex(link.Attrs().ParentIndex)
-		if err != nil {
-			return LinkInfo{}, err
+		if err == nil {
+			parent = parentLink.Attrs().Name
 		}
-
-		parent = parentLink.Attrs().Name
 	}
 
 	if link.Attrs().MasterIndex != 0 {
