@@ -1021,13 +1021,16 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 		instType := d.inst.Type()
 		if instType == instancetype.VM {
+			runConf.NetworkInterface = append(runConf.NetworkInterface,
+				[]deviceConfig.RunConfigItem{
+					{Key: "devName", Value: d.name},
+					{Key: "mtu", Value: fmt.Sprintf("%d", mtu)},
+				}...)
 			if d.config["acceleration"] == "sriov" {
 				runConf.NetworkInterface = append(runConf.NetworkInterface,
 					[]deviceConfig.RunConfigItem{
-						{Key: "devName", Value: d.name},
 						{Key: "pciSlotName", Value: vfPCIDev.SlotName},
 						{Key: "pciIOMMUGroup", Value: fmt.Sprintf("%d", pciIOMMUGroup)},
-						{Key: "mtu", Value: fmt.Sprintf("%d", mtu)},
 					}...)
 			} else if d.config["acceleration"] == "vdpa" {
 				if vDPADevice == nil {
@@ -1036,20 +1039,16 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 				runConf.NetworkInterface = append(runConf.NetworkInterface,
 					[]deviceConfig.RunConfigItem{
-						{Key: "devName", Value: d.name},
 						{Key: "pciSlotName", Value: vfPCIDev.SlotName},
 						{Key: "pciIOMMUGroup", Value: fmt.Sprintf("%d", pciIOMMUGroup)},
 						{Key: "maxVQP", Value: fmt.Sprintf("%d", vDPADevice.MaxVQs/2)},
 						{Key: "vDPADevName", Value: vDPADevice.Name},
 						{Key: "vhostVDPAPath", Value: vDPADevice.VhostVDPA.Path},
-						{Key: "mtu", Value: fmt.Sprintf("%d", mtu)},
 					}...)
 			} else {
 				runConf.NetworkInterface = append(runConf.NetworkInterface,
 					[]deviceConfig.RunConfigItem{
-						{Key: "devName", Value: d.name},
 						{Key: "hwaddr", Value: d.config["hwaddr"]},
-						{Key: "mtu", Value: fmt.Sprintf("%d", mtu)},
 					}...)
 			}
 		} else if instType == instancetype.Container {
