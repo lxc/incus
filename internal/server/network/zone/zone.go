@@ -173,6 +173,14 @@ func (d *zone) validateConfig(info *api.NetworkZonePut) error {
 	//  shortdesc: Comma-separated list of DNS server FQDNs (for NS records)
 	rules["dns.nameservers"] = validate.IsListOf(validate.IsAny)
 
+	// gendoc:generate(entity=network_zone, group=common, key=dns.contact)
+	//
+	// ---
+	//  type: string
+	//  required: no
+	//  shortdesc: Admin contact email for DNS server
+	rules["dns.contact"] = validate.Optional(validate.IsAny)
+
 	// gendoc:generate(entity=network_zone, group=common, key=network.nat)
 	//
 	// ---
@@ -571,15 +579,22 @@ func (d *zone) Content() (*strings.Builder, error) {
 		nameservers = append(nameservers, entry)
 	}
 
-	primary := "hostmaster." + d.info.Name
+	primary := d.info.Name
 	if len(nameservers) > 0 {
 		primary = nameservers[0]
+	}
+
+	contact := "hostmaster." + primary
+	if len(d.info.Config["dns.contact"]) > 0 {
+		contact = d.info.Config["dns.contact"]
+		contact = strings.TrimSuffix(strings.TrimSpace(contact), ".")
 	}
 
 	// Template the zone file.
 	sb := &strings.Builder{}
 	err = zoneTemplate.Execute(sb, map[string]any{
 		"primary":     primary,
+		"contact":     contact,
 		"nameservers": nameservers,
 		"zone":        d.info.Name,
 		"serial":      time.Now().Unix(),
@@ -605,15 +620,22 @@ func (d *zone) SOA() (*strings.Builder, error) {
 		nameservers = append(nameservers, entry)
 	}
 
-	primary := "hostmaster." + d.info.Name
+	primary := d.info.Name
 	if len(nameservers) > 0 {
 		primary = nameservers[0]
+	}
+
+	contact := "hostmaster." + primary
+	if len(d.info.Config["dns.contact"]) > 0 {
+		contact = d.info.Config["dns.contact"]
+		contact = strings.TrimSuffix(strings.TrimSpace(contact), ".")
 	}
 
 	// Template the zone file.
 	sb := &strings.Builder{}
 	err := zoneTemplate.Execute(sb, map[string]any{
 		"primary":     primary,
+		"contact":     contact,
 		"nameservers": nameservers,
 		"zone":        d.info.Name,
 		"serial":      time.Now().Unix(),

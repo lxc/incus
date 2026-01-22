@@ -4173,6 +4173,13 @@ User keys can be used in search.
 
 <!-- config group network_sriov-common end -->
 <!-- config group network_zone-common start -->
+```{config:option} dns.contact network_zone-common
+:required: "no"
+:shortdesc: "Admin contact email for DNS server"
+:type: "string"
+
+```
+
 ```{config:option} dns.nameservers network_zone-common
 :required: "no"
 :shortdesc: "Comma-separated list of DNS server FQDNs (for NS records)"
