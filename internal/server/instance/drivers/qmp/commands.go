@@ -867,7 +867,7 @@ func (m *Monitor) RemoveDevice(deviceID string) error {
 }
 
 // AddNIC adds a NIC device.
-func (m *Monitor) AddNIC(netDev map[string]any, device map[string]any) error {
+func (m *Monitor) AddNIC(netDev map[string]any, device map[string]any, connected bool) error {
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -892,6 +892,16 @@ func (m *Monitor) AddNIC(netDev map[string]any, device map[string]any) error {
 	err := m.AddDevice(device)
 	if err != nil {
 		return fmt.Errorf("Failed adding NIC device: %w", err)
+	}
+
+	id, ok := device["id"].(string)
+	if !ok {
+		return errors.New("NIC device must have an id")
+	}
+
+	err = m.SetNICLink(id, connected)
+	if err != nil {
+		return fmt.Errorf("Failed setting NIC device link status: %w", err)
 	}
 
 	reverter.Success()
@@ -1561,4 +1571,16 @@ func (m *Monitor) DumpGuestMemory(path string, format string) error {
 	}
 
 	return m.Run("dump-guest-memory", args, &queryResp)
+}
+
+// SetNICLink sets the link status of the given device.
+func (m *Monitor) SetNICLink(id string, connected bool) error {
+	var args struct {
+		Name string `json:"name"`
+		Up   bool   `json:"up"`
+	}
+
+	args.Name = id
+	args.Up = connected
+	return m.Run("set_link", args, nil)
 }

@@ -4875,6 +4875,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 	defer reverter.Fail()
 
 	var devName, nicName, devHwaddr, pciSlotName, pciIOMMUGroup, vDPADevName, vhostVDPAPath, maxVQP string
+	var connected bool
 	for _, nicItem := range nicConfig {
 		if nicItem.Key == "devName" {
 			devName = nicItem.Value
@@ -4892,6 +4893,8 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 			vhostVDPAPath = nicItem.Value
 		} else if nicItem.Key == "maxVQP" {
 			maxVQP = nicItem.Value
+		} else if nicItem.Key == "connected" {
+			connected = util.IsTrueOrEmpty(nicItem.Value)
 		}
 	}
 
@@ -5008,7 +5011,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 			qemuDev["netdev"] = qemuNetDev["id"].(string)
 			qemuDev["mac"] = devHwaddr
 
-			err = m.AddNIC(qemuNetDev, qemuDev)
+			err = m.AddNIC(qemuNetDev, qemuDev, connected)
 			if err != nil {
 				return fmt.Errorf("Failed setting up device %q: %w", devName, err)
 			}
@@ -5117,7 +5120,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 			qemuDev["iommu_platform"] = true
 			qemuDev["disable-legacy"] = true
 
-			err = m.AddNIC(qemuNetDev, qemuDev)
+			err = m.AddNIC(qemuNetDev, qemuDev, connected)
 			if err != nil {
 				return fmt.Errorf("Failed setting up device %q: %w", devName, err)
 			}
@@ -5150,7 +5153,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 		}
 
 		monHook = func(m *qmp.Monitor) error {
-			err := m.AddNIC(nil, qemuDev)
+			err := m.AddNIC(nil, qemuDev, connected)
 			if err != nil {
 				return fmt.Errorf("Failed setting up device %q: %w", devName, err)
 			}
@@ -9108,6 +9111,34 @@ func (d *qemu) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 			if err != nil {
 				return fmt.Errorf("Failed updating disk size %q: %w", mount.DevName, err)
 			}
+		}
+	}
+
+	// Handle NIC reconfiguration.
+	var devName string
+	var connected bool
+	for _, dev := range runConf.NetworkInterface {
+		switch dev.Key {
+		case "devName":
+			devName = dev.Value
+		case "connected":
+			connected = util.IsTrueOrEmpty(dev.Value)
+		}
+	}
+
+	if devName != "" {
+		// Get the QMP monitor.
+		m, err := d.qmpConnect()
+		if err != nil {
+			return err
+		}
+
+		// Figure out the QEMU device ID.
+		devID := fmt.Sprintf("%s%s", qemuDeviceIDPrefix, linux.PathNameEncode(devName))
+
+		err = m.SetNICLink(devID, connected)
+		if err != nil {
+			return fmt.Errorf("Failed setting NIC device link status: %w", err)
 		}
 	}
 
