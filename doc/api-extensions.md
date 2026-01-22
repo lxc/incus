@@ -2974,3 +2974,10 @@ Adds support for selecting an SR-IOV network interface by vendor ID, product ID,
 ## `network_zones_dns_contact`
 
 Adds a `dns.contact` configuration key to network zones.
+
+## `nic_attached_connected`
+
+This introduces two new properties for NICs:
+
+* `attached`, behaving like the `attached` key for disk and USB devices;
+* `connected`, setting the up/down link state for the NIC (when supported).
