@@ -709,6 +709,30 @@ test_container_devices_nic_bridged() {
     ! incus start foo2 || false
     incus delete -f foo foo2
 
+    # Test attached and connected keys.
+    incus launch testimage foo
+    incus config device add foo eth0 nic nictype=bridged name=eth0 parent=${brName}
+    incus exec foo ip link set eth0 up
+    [ "$(incus file pull foo/sys/class/net/eth0/operstate -)" = "up" ]
+    incus config device set foo eth0 connected=false
+    incus exec foo ip link set eth0 up
+    [ "$(incus file pull foo/sys/class/net/eth0/operstate -)" = "down" ]
+    incus config device set foo eth0 attached=false
+    ! incus file pull foo/sys/class/net/eth0/operstate - || false
+    incus config device set foo eth0 connected=true
+    ! incus file pull foo/sys/class/net/eth0/operstate - || false
+    incus config device set foo eth0 attached=true
+    incus exec foo ip link set eth0 up
+    [ "$(incus file pull foo/sys/class/net/eth0/operstate -)" = "up" ]
+    incus config device set foo eth0 connected=false
+    incus exec foo ip link set eth0 up
+    [ "$(incus file pull foo/sys/class/net/eth0/operstate -)" = "down" ]
+    # Check that it survives a reboot.
+    incus restart foo
+    incus exec foo ip link set eth0 up
+    [ "$(incus file pull foo/sys/class/net/eth0/operstate -)" = "down" ]
+    incus delete -f foo
+
     # Check we haven't left any NICS lying around.
     endNicCount=$(find /sys/class/net | wc -l)
     if [ "$startNicCount" != "$endNicCount" ]; then

@@ -154,7 +154,17 @@ test_container_devices_nic_sriov() {
         false
     fi
 
+    # Test attached key.
+    incus config device add "${ctName}" eth0 nic network="${ctName}" name=eth0
+    incus exec "${ctName}" ip link set eth0 up
+    [ "$(incus file pull "${ctName}/sys/class/net/eth0/operstate" -)" = "up" ]
+    incus config device set "${ctName}" eth0 attached=false
+    ! incus file pull "${ctName}/sys/class/net/eth0/operstate" - || false
+    incus config device set "${ctName}" eth0 attached=true
+    incus exec "${ctName}" ip link set eth0 up
+    [ "$(incus file pull "${ctName}/sys/class/net/eth0/operstate" -)" = "up" ]
     incus config device remove "${ctName}" eth0
+
     incus network delete "${ctName}net"
 
     incus delete -f "${ctName}"
