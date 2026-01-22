@@ -485,11 +485,29 @@
 			"nic_bridged": {
 				"keys": [
 					{
+						"attached": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether the NIC is plugged in or not",
+							"type": "bool"
+						}
+					},
+					{
 						"boot.priority": {
 							"longdesc": "",
 							"managed": "no",
 							"shortdesc": "Boot priority for VMs (higher value boots first)",
 							"type": "integer"
+						}
+					},
+					{
+						"connected": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether the NIC is connected to the host network",
+							"type": "bool"
 						}
 					},
 					{
@@ -742,6 +760,15 @@
 			"nic_ipvlan": {
 				"keys": [
 					{
+						"attached": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether the NIC is plugged in or not",
+							"type": "bool"
+						}
+					},
+					{
 						"gvrp": {
 							"default": "false",
 							"longdesc": "",
@@ -844,11 +871,29 @@
 			"nic_macvlan": {
 				"keys": [
 					{
+						"attached": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether the NIC is plugged in or not",
+							"type": "bool"
+						}
+					},
+					{
 						"boot.priority": {
 							"longdesc": "",
 							"managed": "no",
 							"shortdesc": "Boot priority for VMs (higher value boots first)",
 							"type": "integer"
+						}
+					},
+					{
+						"connected": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether the NIC is connected to the host network (VM only)",
+							"type": "bool"
 						}
 					},
 					{
@@ -943,11 +988,29 @@
 						}
 					},
 					{
+						"attached": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether the NIC is plugged in or not",
+							"type": "bool"
+						}
+					},
+					{
 						"boot.priority": {
 							"longdesc": "",
 							"managed": "no",
 							"shortdesc": "Boot priority for VMs (higher value boots first)",
 							"type": "integer"
+						}
+					},
+					{
+						"connected": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether the NIC is connected to the host network (container support requires setting `acceleration` to `none`)",
+							"type": "bool"
 						}
 					},
 					{
@@ -1165,10 +1228,28 @@
 			"nic_p2p": {
 				"keys": [
 					{
-						"boot.priotiry": {
+						"attached": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether the NIC is plugged in or not",
+							"type": "bool"
+						}
+					},
+					{
+						"boot.priority": {
 							"longdesc": "",
 							"shortdesc": "Boot priority for VMs (higher value boots first)",
 							"type": "integer"
+						}
+					},
+					{
+						"connected": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether the NIC is connected to the host network",
+							"type": "bool"
 						}
 					},
 					{
@@ -1265,11 +1346,29 @@
 			"nic_physical": {
 				"keys": [
 					{
+						"attached": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether the NIC is plugged in or not",
+							"type": "bool"
+						}
+					},
+					{
 						"boot.priority": {
 							"longdesc": "",
 							"managed": "no",
 							"shortdesc": "Boot priority for VMs (higher value boots first)",
 							"type": "integer"
+						}
+					},
+					{
+						"connected": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether the NIC is connected to the host network (VM only)",
+							"type": "bool"
 						}
 					},
 					{
@@ -1344,6 +1443,24 @@
 			},
 			"nic_routed": {
 				"keys": [
+					{
+						"attached": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether the NIC is plugged in or not",
+							"type": "bool"
+						}
+					},
+					{
+						"connected": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether the NIC is connected to the host network",
+							"type": "bool"
+						}
+					},
 					{
 						"gvrp": {
 							"default": "false",
@@ -1559,11 +1676,29 @@
 			"nic_sriov": {
 				"keys": [
 					{
+						"attached": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether the NIC is plugged in or not",
+							"type": "bool"
+						}
+					},
+					{
 						"boot.priority": {
 							"longdesc": "",
 							"managed": "no",
 							"shortdesc": "Boot priority for VMs (higher value boots first)",
 							"type": "integer"
+						}
+					},
+					{
+						"connected": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether the NIC is connected to the host network (VM only)",
+							"type": "bool"
 						}
 					},
 					{
