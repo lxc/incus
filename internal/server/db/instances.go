@@ -42,13 +42,8 @@ type InstanceArgs struct {
 	Name         string
 	Profiles     []api.Profile
 	Stateful     bool
+	IsSnapshot   bool
 	Snapshot     SnapshotArgs
-}
-
-// IsSnapshot returns whether InstanceArgs is a snapshot or not.
-func (i *InstanceArgs) IsSnapshot() bool {
-	var emptySnapshot SnapshotArgs
-	return i.Snapshot != emptySnapshot
 }
 
 // GetInstanceNames returns the names of all containers the given project.
@@ -337,7 +332,7 @@ func (c *ClusterTx) instanceSnapshotFill(ctx context.Context, instanceArgs *map[
 		}
 
 		inst := instances[ID]
-		if inst.IsSnapshot() {
+		if inst.IsSnapshot {
 			return fmt.Errorf("Duplicate snapshot row found for instance ID %d", ID)
 		}
 
