@@ -4640,6 +4640,14 @@
 			"common": {
 				"keys": [
 					{
+						"dns.contact": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Admin contact email for DNS server",
+							"type": "string"
+						}
+					},
+					{
 						"dns.nameservers": {
 							"longdesc": "",
 							"required": "no",
