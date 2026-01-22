@@ -323,7 +323,6 @@ func (s *consoleWs) doConsole() error {
 		close(consoleDisconnectCh)
 	}
 
-
 	// Once this function ends ensure that any connected websockets are closed.
 	defer func() {
 		s.connsLock.Lock()

@@ -7199,6 +7199,32 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 		containerMeta["privileged"] = "false"
 	}
 
+	// Setup security check.
+	rootfsPath, err := os.OpenFile(d.RootfsPath(), unix.O_PATH, 0)
+	if err != nil {
+		return fmt.Errorf("Failed to open instance rootfs path: %w", err)
+	}
+
+	defer func() { _ = rootfsPath.Close() }()
+
+	checkBeneath := func(targetPath string) error {
+		fd, err := unix.Openat2(int(rootfsPath.Fd()), targetPath, &unix.OpenHow{
+			Flags:   unix.O_PATH | unix.O_CLOEXEC,
+			Resolve: unix.RESOLVE_BENEATH | unix.RESOLVE_NO_MAGICLINKS,
+		})
+		if err != nil {
+			if errors.Is(err, unix.EXDEV) {
+				return errors.New("Template is attempting access to path outside of container")
+			}
+
+			return nil
+		}
+
+		_ = unix.Close(fd)
+
+		return nil
+	}
+
 	// Go through the templates
 	for tplPath, tpl := range metadata.Templates {
 		err = func(tplPath string, tpl *api.ImageMetadataTemplate) error {
@@ -7211,8 +7237,38 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 				return nil
 			}
 
+			// Perform some security checks.
+			relPath := strings.TrimLeft(tplPath, "/")
+
+			err = checkBeneath(relPath)
+			if err != nil {
+				return err
+			}
+
+			if filepath.Base(tpl.Template) != tpl.Template {
+				return errors.New("Template path is attempting to read outside of template directory")
+			}
+
+			tplDirStat, err := os.Lstat(d.TemplatesPath())
+			if err != nil {
+				return fmt.Errorf("Couldn't access template directory: %w", err)
+			}
+
+			if !tplDirStat.IsDir() {
+				return errors.New("Template directory isn't a regular directory")
+			}
+
+			tplFileStat, err := os.Lstat(filepath.Join(d.TemplatesPath(), tpl.Template))
+			if err != nil {
+				return fmt.Errorf("Couldn't access template file: %w", err)
+			}
+
+			if tplFileStat.Mode()&os.ModeSymlink == os.ModeSymlink {
+				return errors.New("Template file is a symlink")
+			}
+
 			// Open the file to template, create if needed
-			fullpath := filepath.Join(d.RootfsPath(), strings.TrimLeft(tplPath, "/"))
+			fullpath := filepath.Join(d.RootfsPath(), relPath)
 			if util.PathExists(fullpath) {
 				if tpl.CreateOnly {
 					return nil
