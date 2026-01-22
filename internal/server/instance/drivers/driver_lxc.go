@@ -4813,6 +4813,12 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 			return []string{} // Couldn't create Device, so this cannot be an update.
 		}
 
+		// Detached devices need to be fully recreated on update so that the update logic doesn't
+		// try to access non-existing LXC devices.
+		if !util.IsTrueOrEmpty(oldDevice["attached"]) {
+			return []string{}
+		}
+
 		return newDevType.UpdatableFields(oldDevType)
 	})
 
