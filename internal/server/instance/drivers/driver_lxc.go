@@ -195,11 +195,11 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operatio
 			profiles:     args.Profiles,
 			project:      p,
 			stateful:     args.Stateful,
-			isSnapshot:   args.IsSnapshot(),
+			isSnapshot:   args.IsSnapshot,
 		},
 	}
 
-	if args.IsSnapshot() {
+	if args.IsSnapshot {
 		d.snapshotDescription = args.Snapshot.Description
 		d.snapshotExpiryDate = args.Snapshot.ExpiryDate
 	}
@@ -393,11 +393,11 @@ func lxcInstantiate(s *state.State, args db.InstanceArgs, expandedDevices device
 			profiles:     args.Profiles,
 			project:      p,
 			stateful:     args.Stateful,
-			isSnapshot:   args.IsSnapshot(),
+			isSnapshot:   args.IsSnapshot,
 		},
 	}
 
-	if args.IsSnapshot() {
+	if args.IsSnapshot {
 		d.snapshotDescription = args.Snapshot.Description
 		d.snapshotExpiryDate = args.Snapshot.ExpiryDate
 	}

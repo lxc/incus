@@ -716,6 +716,9 @@ func ValidName(instanceName string, isSnapshot bool) error {
 // step fails.
 func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operation, clearLogDir bool, checkArchitecture bool) (Instance, *operationlock.InstanceOperation, revert.Hook, error) {
 	reverter := revert.New()
+	defer reverter.Fail()
+
+	//Check instance type requested is supported by this machine.
 	err := s.InstanceTypes[args.Type]
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("Instance type %q is not supported on this server: %w", args.Type, err)
@@ -759,12 +762,12 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 		args.Architecture = s.OS.Architectures[0]
 	}
 
-	err = ValidName(args.Name, args.IsSnapshot())
+	err = ValidName(args.Name, args.IsSnapshot)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	if !args.IsSnapshot() {
+	if !args.IsSnapshot {
 		// Generate a cloud-init instance-id if not provided.
 		//
 		// This is generated here rather than in startCommon as only new
@@ -854,7 +857,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 			return err
 		}
 
-		if args.IsSnapshot() {
+		if args.IsSnapshot {
 			parts := strings.SplitN(args.Name, instance.SnapshotDelimiter, 2)
 			instanceName := parts[0]
 			snapshotName := parts[1]
@@ -929,7 +932,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 			Name:         args.Name,
 			Node:         s.ServerName,
 			Type:         args.Type,
-			Snapshot:     args.IsSnapshot(),
+			Snapshot:     args.IsSnapshot,
 			Architecture: args.Architecture,
 			Ephemeral:    args.Ephemeral,
 			CreationDate: args.CreationDate,

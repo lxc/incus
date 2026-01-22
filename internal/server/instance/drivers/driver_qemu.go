@@ -170,11 +170,11 @@ func qemuInstantiate(s *state.State, args db.InstanceArgs, expandedDevices devic
 			profiles:     args.Profiles,
 			project:      p,
 			stateful:     args.Stateful,
-			isSnapshot:   args.IsSnapshot(),
+			isSnapshot:   args.IsSnapshot,
 		},
 	}
 
-	if args.IsSnapshot() {
+	if args.IsSnapshot {
 		d.snapshotDescription = args.Snapshot.Description
 		d.snapshotExpiryDate = args.Snapshot.ExpiryDate
 	}
@@ -228,11 +228,11 @@ func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operati
 			profiles:     args.Profiles,
 			project:      p,
 			stateful:     args.Stateful,
-			isSnapshot:   args.IsSnapshot(),
+			isSnapshot:   args.IsSnapshot,
 		},
 	}
 
-	if args.IsSnapshot() {
+	if args.IsSnapshot {
 		d.snapshotDescription = args.Snapshot.Description
 		d.snapshotExpiryDate = args.Snapshot.ExpiryDate
 	}
