@@ -111,7 +111,7 @@ func (d *nicP2P) validateConfig(instConf instance.ConfigReader) error {
 		//  shortdesc: Comma-delimited list of IPv6 static routes to add on host to NIC
 		"ipv6.routes",
 
-		// gendoc:generate(entity=devices, group=nic_p2p, key=boot.priotiry)
+		// gendoc:generate(entity=devices, group=nic_p2p, key=boot.priority)
 		//
 		// ---
 		//  type: integer
