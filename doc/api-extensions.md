@@ -2970,3 +2970,7 @@ This adds a new `X-Incus-force` HTTP header that when set to `true` allows for r
 ## `nic_sriov_select_ext`
 
 Adds support for selecting an SR-IOV network interface by vendor ID, product ID, or PCI address.
+
+## `network_zones_dns_contact`
+
+Adds a `dns.contact` configuration key to network zones.

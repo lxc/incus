@@ -515,6 +515,7 @@ var APIExtensions = []string{
 	"oidc_allowed_subnets",
 	"file_delete_force",
 	"nic_sriov_select_ext",
+	"network_zones_dns_contact",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
