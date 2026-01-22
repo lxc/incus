@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/lxc/incus/v6/internal/server/db"
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
@@ -20,7 +19,6 @@ import (
 	"github.com/lxc/incus/v6/internal/server/ip"
 	"github.com/lxc/incus/v6/internal/server/state"
 	"github.com/lxc/incus/v6/shared/api"
-	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/subprocess"
 	"github.com/lxc/incus/v6/shared/util"
 )
@@ -109,7 +107,6 @@ func SRIOVFindFreeVirtualFunction(s *state.State, parentDev string) (string, int
 	}
 
 	sriovNumVFsFile := fmt.Sprintf("/sys/class/net/%s/device/sriov_numvfs", parentDev)
-	sriovTotalVFsFile := fmt.Sprintf("/sys/class/net/%s/device/sriov_totalvfs", parentDev)
 
 	// Verify that this is indeed a SR-IOV enabled device.
 	if !util.PathExists(sriovNumVFsFile) {
@@ -138,17 +135,6 @@ func SRIOVFindFreeVirtualFunction(s *state.State, parentDev string) (string, int
 		return "", -1, err
 	}
 
-	// Get number of possible VFs.
-	sriovTotalVFsBuf, err := os.ReadFile(sriovTotalVFsFile)
-	if err != nil {
-		return "", -1, err
-	}
-
-	sriovTotalVFs, err := strconv.Atoi(strings.TrimSpace(string(sriovTotalVFsBuf)))
-	if err != nil {
-		return "", -1, err
-	}
-
 	// Ensure parent is up (needed for Intel at least).
 	link := &ip.Link{Name: parentDev}
 	err = link.SetUp()
@@ -162,33 +148,12 @@ func SRIOVFindFreeVirtualFunction(s *state.State, parentDev string) (string, int
 		return "", -1, err
 	}
 
-	// Found a free VF.
-	if nicName != "" {
-		return nicName, vfID, nil
-	} else if sriovNumVFs < sriovTotalVFs {
-		logger.Debugf("Attempting to grow available VFs from %d to %d on device %q", sriovNumVFs, sriovTotalVFs, parentDev)
-
-		// Bump the number of VFs to the maximum if not there yet.
-		err = os.WriteFile(sriovNumVFsFile, fmt.Appendf(nil, "%d", sriovTotalVFs), 0o644)
-		if err != nil {
-			return "", -1, fmt.Errorf("Failed growing available VFs from %d to %d on device %q: %w", sriovNumVFs, sriovTotalVFs, parentDev, err)
-		}
-
-		time.Sleep(time.Second) // Allow time for new VFs to appear.
-
-		// Use next free VF index starting from the first newly created VF.
-		vfID, nicName, err = sriovGetFreeVFInterface(reservedDevices, parentDev, sriovTotalVFs, sriovNumVFs, pfDevID, pfDevPort)
-		if err != nil {
-			return "", -1, err
-		}
-
-		// Found a free VF.
-		if nicName != "" {
-			return nicName, vfID, nil
-		}
+	if nicName == "" {
+		return "", -1, fmt.Errorf("All virtual functions on parent device %q are already in use", parentDev)
 	}
 
-	return "", -1, fmt.Errorf("All virtual functions on parent device %q are already in use", parentDev)
+	// Found a free VF.
+	return nicName, vfID, nil
 }
 
 // sriovGetFreeVFInterface checks the system for a free VF interface that belongs to the same device and port as
