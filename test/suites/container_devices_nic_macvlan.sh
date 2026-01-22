@@ -115,6 +115,18 @@ test_container_devices_nic_macvlan() {
     incus exec "${ctName}" -- ping -c2 -W5 "192.0.2.2${ipRand}"
     incus exec "${ctName}" -- ping6 -c2 -W5 "2001:db8::2${ipRand}"
     incus config device remove "${ctName}" eth0
+
+    # Test attached key.
+    incus config device add "${ctName}" eth0 nic network="${ctName}net" name=eth0
+    incus exec "${ctName}" ip link set eth0 up
+    [ "$(incus file pull "${ctName}/sys/class/net/eth0/operstate" -)" = "up" ]
+    incus config device set "${ctName}" eth0 attached=false
+    ! incus file pull "${ctName}/sys/class/net/eth0/operstate" - || false
+    incus config device set "${ctName}" eth0 attached=true
+    incus exec "${ctName}" ip link set eth0 up
+    [ "$(incus file pull "${ctName}/sys/class/net/eth0/operstate" -)" = "up" ]
+    incus config device remove "${ctName}" eth0
+
     incus network delete "${ctName}net"
 
     # Check we haven't left any NICS lying around.

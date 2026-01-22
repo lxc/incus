@@ -267,6 +267,31 @@ test_container_devices_nic_routed() {
         false
     fi
 
+    incus config device remove "${ctName}" eth0
+    incus start "${ctName}"
+
+    # Test attached and connected keys.
+    incus config device add "${ctName}" eth0 nic network="${ctName}" name=eth0
+    incus exec "${ctName}" ip link set eth0 up
+    [ "$(incus file pull "${ctName}/sys/class/net/eth0/operstate" -)" = "up" ]
+    incus config device set "${ctName}" eth0 connected=false
+    incus exec "${ctName}" ip link set eth0 up
+    [ "$(incus file pull "${ctName}/sys/class/net/eth0/operstate" -)" = "down" ]
+    incus config device set "${ctName}" eth0 attached=false
+    ! incus file pull "${ctName}/sys/class/net/eth0/operstate" - || false
+    incus config device set "${ctName}" eth0 connected=true
+    ! incus file pull "${ctName}/sys/class/net/eth0/operstate" - || false
+    incus config device set "${ctName}" eth0 attached=true
+    incus exec "${ctName}" ip link set eth0 up
+    [ "$(incus file pull "${ctName}/sys/class/net/eth0/operstate" -)" = "up" ]
+    incus config device set "${ctName}" eth0 connected=false
+    incus exec "${ctName}" ip link set eth0 up
+    [ "$(incus file pull "${ctName}/sys/class/net/eth0/operstate" -)" = "down" ]
+    # Check that it survives a reboot.
+    incus restart "${ctName}"
+    incus exec "${ctName}" ip link set eth0 up
+    [ "$(incus file pull "${ctName}/sys/class/net/eth0/operstate" -)" = "down" ]
+
     # Cleanup routed checks
     incus delete "${ctName}" -f
     incus delete "${ctName}2" -f
