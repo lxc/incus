@@ -333,7 +333,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		//  type: bool
 		//  default: `true`
 		//  required: no
-		//  shortdesc: Whether the NIC is connected to the host network (container support requires setting `acceleration` to `none`)
+		//  shortdesc: Whether the NIC is connected to the host network (requires `acceleration` set to `none`)
 		"connected",
 	}
 
@@ -593,9 +593,9 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		}
 	}
 
-	// The connected option can only be handled properly on containers if acceleration is set to none.
-	if d.config["connected"] != "" && !d.canSetLink(instConf) {
-		return errors.New("The \"connected\" option requires setting acceleration=none on containers for OVN NICs")
+	// The connected option can only be handled properly if acceleration is set to none.
+	if d.config["connected"] != "" && !d.canSetLink() {
+		return errors.New("The \"connected\" option requires setting acceleration=none for OVN NICs")
 	}
 
 	return nil
@@ -1015,7 +1015,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 			{Key: "link", Value: peerName},
 		}
 
-		if d.canSetLink(nil) {
+		if d.canSetLink() {
 			runConf.NetworkInterface = append(runConf.NetworkInterface, deviceConfig.RunConfigItem{Key: "connected", Value: d.config["connected"]})
 		}
 
@@ -1173,7 +1173,7 @@ func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		return err
 	}
 
-	if isRunning && d.canSetLink(nil) {
+	if isRunning && d.canSetLink() {
 		return d.setNICLink()
 	}
 
@@ -1571,13 +1571,6 @@ func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort) (r
 }
 
 // canSetLink determines whether the device supports setting a link state.
-func (d *nicOVN) canSetLink(instConf instance.ConfigReader) bool {
-	var instType instancetype.Type
-	if instConf != nil {
-		instType = instConf.Type()
-	} else {
-		instType = d.inst.Type()
-	}
-
-	return instType == instancetype.VM || slices.Contains([]string{"", "none"}, d.config["acceleration"])
+func (d *nicOVN) canSetLink() bool {
+	return slices.Contains([]string{"", "none"}, d.config["acceleration"])
 }
