@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-01-20 21:57-0500\n"
-"PO-Revision-Date: 2025-12-27 03:17+0000\n"
-"Last-Translator: Varlorg <varlorg@gmail.com>\n"
+"PO-Revision-Date: 2026-01-23 18:37+0000\n"
+"Last-Translator: Benjamin Somers <benjamin.somers@telecom-bretagne.eu>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.15.1\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: cmd/incus/info.go:453
 msgid "  Chassis:"
@@ -732,9 +732,8 @@ msgid "--refresh can only be used with instances"
 msgstr "--refresh ne peut être utilisé qu'avec des instances"
 
 #: cmd/incus/move.go:269
-#, fuzzy
 msgid "--target can only be used with clusters"
-msgstr "--target ne peut pas être utilisé qu'avec des clusters"
+msgstr "--target ne peut être utilisé que sur un cluster"
 
 #: cmd/incus/config.go:167 cmd/incus/config.go:440 cmd/incus/config.go:620
 #: cmd/incus/config.go:825 cmd/incus/info.go:651
@@ -750,16 +749,8 @@ msgid "<alias> <target>"
 msgstr "<alias> <cible>"
 
 #: cmd/incus/cluster.go:1045
-#, fuzzy
 msgid "<cluster>: [<member>:]"
-msgstr ""
-"Supprimer des conteneurs ou des instantanés.\n"
-"\n"
-"lxc delete [<remote>:]<container>[/<snapshot>] [<remote>:][<container>[/"
-"<snapshot>]...]\n"
-"\n"
-"Détruit les conteneurs ou les instantanés ainsi que toute donnée associée "
-"(configuration, instantanés, …)."
+msgstr "<cluster>: [<membre>:]"
 
 #: cmd/incus/alias.go:171
 msgid "<old alias> <new alias>"
@@ -782,16 +773,9 @@ msgid "<remote>: <path>"
 msgstr "<serveur_distant>: <chemin>"
 
 #: cmd/incus/storage_volume.go:3099
-#, fuzzy
 msgid "<source path> [<remote>:]<pool> <volume>/<target path>"
 msgstr ""
-"Supprimer des conteneurs ou des instantanés.\n"
-"\n"
-"lxc delete [<remote>:]<container>[/<snapshot>] [<remote>:][<container>[/"
-"<snapshot>]...]\n"
-"\n"
-"Détruit les conteneurs ou les instantanés ainsi que toute donnée associée "
-"(configuration, instantanés, …)."
+"<chemin source> [<serveur distant>:]<pool> <volume>/<chemin destination>"
 
 #: cmd/incus/file.go:696
 msgid "<source path>... [<remote>:]<instance>/<path>"
@@ -830,9 +814,8 @@ msgid "ADDRESS"
 msgstr "ADRESSE"
 
 #: cmd/incus/network_address_set.go:167
-#, fuzzy
 msgid "ADDRESSES"
-msgstr "ADRESSE"
+msgstr "ADRESSES"
 
 #: cmd/incus/alias.go:154 cmd/incus/image.go:1147 cmd/incus/image_alias.go:256
 msgid "ALIAS"
@@ -844,7 +827,7 @@ msgstr "ALIAS"
 
 #: cmd/incus/list.go:833
 msgid "APP"
-msgstr ""
+msgstr "APP"
 
 #: cmd/incus/cluster.go:197 cmd/incus/image.go:1142 cmd/incus/list.go:507
 msgid "ARCHITECTURE"
@@ -1040,7 +1023,7 @@ msgstr "Clef d'accès secrète administrateur : %s"
 #: cmd/incus/alias.go:88 cmd/incus/alias.go:205
 #, c-format
 msgid "Alias %s already exists"
-msgstr "L'alias %s existe déjà"
+msgstr "L’alias %s existe déjà"
 
 #: cmd/incus/alias.go:199 cmd/incus/alias.go:254
 #, c-format
@@ -1060,7 +1043,7 @@ msgstr "Alias : %s"
 #: cmd/incus/publish.go:259
 #, c-format
 msgid "Aliases already exists: %s"
-msgstr "L'alias %s existe déjà"
+msgstr "Les alias suivants existent déjà : %s"
 
 #: cmd/incus/image.go:1041
 msgid "Aliases:"
@@ -1211,9 +1194,9 @@ msgid "Backing up instance: %s"
 msgstr "Sauvegarder l'instance : %s"
 
 #: cmd/incus/storage_bucket.go:1547
-#, fuzzy, c-format
+#, c-format
 msgid "Backing up storage bucket: %s"
-msgstr "Sauvegarder le bucket de stockage : %s"
+msgstr "Sauvegarde du bucket de stockage : %s"
 
 #: cmd/incus/storage_volume.go:4172
 #, c-format
@@ -1284,9 +1267,8 @@ msgid "Bridge:"
 msgstr "Pont:"
 
 #: cmd/incus/storage_bucket.go:111
-#, fuzzy
 msgid "Bucket description"
-msgstr "Description"
+msgstr "Description du bucket"
 
 #: cmd/incus/info.go:367
 #, c-format
@@ -1318,9 +1300,8 @@ msgid "COUNT"
 msgstr "NOMBRE"
 
 #: cmd/incus/top.go:81
-#, fuzzy
 msgid "CPU TIME(s)"
-msgstr "TEMPS CPU(s)"
+msgstr "TEMPS CPU (s)"
 
 #: cmd/incus/list.go:525
 msgid "CPU USAGE"
@@ -1448,7 +1429,7 @@ msgstr "Impossible d'utiliser une image avec --empty"
 
 #: cmd/incus/snapshot.go:124 cmd/incus/storage_volume.go:3456
 msgid "Can't use both --no-expiry and --expiry"
-msgstr ""
+msgstr "Impossible d’utiliser à la fois --no-expiry et --expiry"
 
 #: cmd/incus/create.go:360
 #, c-format
@@ -1496,9 +1477,8 @@ msgid "Certificate add token for %s deleted"
 msgstr "Jeton d'ajout du certificat pour %s supprimé"
 
 #: cmd/incus/config_trust.go:188
-#, fuzzy
 msgid "Certificate description"
-msgstr "Empreinte du certificat : %s"
+msgstr "Description du certificat"
 
 #: cmd/incus/remote.go:260
 #, c-format
@@ -1569,9 +1549,8 @@ msgid "Cluster group %s renamed to %s"
 msgstr "Groupe de serveurs %s renommée en %s"
 
 #: cmd/incus/cluster_group.go:198
-#, fuzzy
 msgid "Cluster group description"
-msgstr "Groupe de serveurs %s créé"
+msgstr "Description du groupe de serveurs"
 
 #: cmd/incus/cluster.go:1449
 #, c-format
@@ -1690,20 +1669,21 @@ msgid "Compression algorithm to use (none for uncompressed)"
 msgstr "Algorithme de compression à utiliser (`none` pour ne pas compresser)"
 
 #: cmd/incus/storage_volume.go:4099
-#, fuzzy
 msgid ""
 "Compression algorithm to use (none for uncompressed, ignored for ISO storage "
 "volumes)"
-msgstr "Algorithme de compression à utiliser (`none` pour ne pas compresser)"
+msgstr ""
+"Algorithme de compression à utiliser (`none` pour ne pas compresser, ignoré "
+"pour les volumes de stockage ISO)"
 
 #: cmd/incus/copy.go:56 cmd/incus/create.go:58 cmd/incus/import.go:38
 msgid "Config key/value to apply to the new instance"
 msgstr "Configuration clé/valeur à associer à la nouvelle instance"
 
 #: cmd/incus/network_integration.go:95
-#, fuzzy
 msgid "Config key/value to apply to the new network integration"
-msgstr "Configuration clé/valeur à associer à la nouvelle intégration réseau"
+msgstr ""
+"Clef/valeur de configuration à appliquer à la nouvelle intégration réseau"
 
 #: cmd/incus/project.go:119
 msgid "Config key/value to apply to the new project"
@@ -1942,9 +1922,8 @@ msgid "Create an empty instance"
 msgstr "Créer une instance vide"
 
 #: cmd/incus/launch.go:24 cmd/incus/launch.go:25
-#, fuzzy
 msgid "Create and start instances from images"
-msgstr "Créer et démarrer des instances à partir d'images"
+msgstr "Créer et démarrer des instances à partir d’images"
 
 #: cmd/incus/file.go:108 cmd/incus/file.go:467 cmd/incus/file.go:708
 #: cmd/incus/storage_volume.go:2431 cmd/incus/storage_volume.go:2891
@@ -1953,14 +1932,12 @@ msgid "Create any directories necessary"
 msgstr "Créer tous les répertoires nécessaires"
 
 #: cmd/incus/storage_volume.go:2421
-#, fuzzy
 msgid "Create files and directories in custom vollume"
-msgstr "Créer des fichiers et répertoires dans les instances"
+msgstr "Crée des fichiers et répertoires dans un volume personnalisé"
 
 #: cmd/incus/storage_volume.go:2422
-#, fuzzy
 msgid "Create files and directories in custom volume"
-msgstr "Créer des fichiers et répertoires dans les instances"
+msgstr "Crée des fichiers et répertoires dans un volume personnalisé"
 
 #: cmd/incus/file.go:98 cmd/incus/file.go:99
 #, fuzzy
@@ -2030,9 +2007,8 @@ msgid "Create new custom storage volumes"
 msgstr "Copie de l'image : %s"
 
 #: cmd/incus/config_template.go:69 cmd/incus/config_template.go:70
-#, fuzzy
 msgid "Create new instance file templates"
-msgstr "L'arrêt du conteneur a échoué !"
+msgstr "Créer un nouveau modèle de fichier d’instance"
 
 #: cmd/incus/network_acl.go:398 cmd/incus/network_acl.go:399
 msgid "Create new network ACLs"
@@ -2090,9 +2066,8 @@ msgid "Create storage pools"
 msgstr "Copie de l'image : %s"
 
 #: cmd/incus/copy.go:66 cmd/incus/create.go:67
-#, fuzzy
 msgid "Create the instance with no profiles applied"
-msgstr "L'arrêt du conteneur a échoué !"
+msgstr "Créer l’instance sans y appliquer de profil"
 
 #: cmd/incus/image.go:1019 cmd/incus/info.go:690
 #: cmd/incus/storage_volume.go:1486
@@ -2189,7 +2164,7 @@ msgstr "Définir un algorithme de compression : pour image ou aucun"
 
 #: cmd/incus/top.go:451
 msgid "Delay:"
-msgstr ""
+msgstr "Rafraîchissement :"
 
 #: cmd/incus/warning.go:375
 #, fuzzy
@@ -2232,9 +2207,8 @@ msgid "Delete images"
 msgstr "Récupération de l'image : %s"
 
 #: cmd/incus/config_template.go:139 cmd/incus/config_template.go:140
-#, fuzzy
 msgid "Delete instance file templates"
-msgstr "L'arrêt du conteneur a échoué !"
+msgstr "Supprimer un modèle de fichier d’instance"
 
 #: cmd/incus/snapshot.go:230 cmd/incus/snapshot.go:231
 #, fuzzy
@@ -2742,11 +2716,15 @@ msgid ""
 "During incremental copy, exclude source snapshots earlier than latest target "
 "snapshot"
 msgstr ""
+"Lors d’une copie incrémentale, exclure les instantanés sources plus vieux "
+"que le dernier instantané cible"
 
 #: cmd/incus/storage_volume.go:388
 msgid ""
 "During refresh, exclude source snapshots earlier than latest target snapshot"
 msgstr ""
+"Lors d’un rafraîchissement, exclure les instantanés sources plus vieux que "
+"le dernier instantané cible"
 
 #: cmd/incus/network_zone.go:951
 msgid "ENTRIES"
@@ -2795,14 +2773,12 @@ msgid "Edit image properties"
 msgstr "Modifier les propriétés de l'image"
 
 #: cmd/incus/config_template.go:195 cmd/incus/config_template.go:196
-#, fuzzy
 msgid "Edit instance file templates"
-msgstr "L'arrêt du conteneur a échoué !"
+msgstr "Éditer un modèle de fichier d’instance"
 
 #: cmd/incus/config_metadata.go:56 cmd/incus/config_metadata.go:57
-#, fuzzy
 msgid "Edit instance metadata files"
-msgstr "L'arrêt du conteneur a échoué !"
+msgstr "Éditer les métadonnées d’une instance"
 
 #: cmd/incus/config.go:96 cmd/incus/config.go:97
 #, fuzzy
@@ -2953,7 +2929,7 @@ msgstr ""
 
 #: cmd/incus/top.go:275
 msgid "Enter new delay in seconds:"
-msgstr ""
+msgstr "Entrez la nouvelle fréquence de rafraîchissement :"
 
 #: cmd/incus/network_zone.go:1573
 msgid "Entry TTL"
@@ -3184,7 +3160,7 @@ msgstr "N'expire jamais"
 
 #: cmd/incus/snapshot.go:95 cmd/incus/storage_volume.go:3422
 msgid "Expiry date or time span for the new snapshot"
-msgstr ""
+msgstr "Date d'expiration ou durée de validité du nouvel instantané"
 
 #: cmd/incus/debug.go:44
 #, fuzzy
@@ -3784,6 +3760,7 @@ msgid ""
 "Forces a connection to the console, even if there is already an active "
 "session"
 msgstr ""
+"Force une connexion à la console, même si une session active existe déjà"
 
 #: cmd/incus/network_address_set.go:98
 #, fuzzy
@@ -3831,9 +3808,8 @@ msgid "Format (pem|pfx)"
 msgstr "Format (csv|json|table|yaml|compact|markdown)"
 
 #: cmd/incus/top.go:65
-#, fuzzy
 msgid "Format (table|compact)"
-msgstr "Format (csv|json|table|yaml|compact|markdown)"
+msgstr "Format (table|compact)"
 
 #: cmd/incus/debug.go:53
 msgid ""
@@ -4122,9 +4098,8 @@ msgid "Host interface"
 msgstr "L'arrêt du conteneur a échoué !"
 
 #: cmd/incus/info.go:708
-#, fuzzy
 msgid "Hostname"
-msgstr "L'arrêt du conteneur a échoué !"
+msgstr "Nom d’hôte"
 
 #: cmd/incus/info.go:531 cmd/incus/info.go:542
 msgid "Hugepages:\n"
@@ -4176,7 +4151,7 @@ msgstr "NOM DE L'INSTANCE"
 #: cmd/incus/info.go:381
 #, c-format
 msgid "IOMMU group: %v"
-msgstr ""
+msgstr "Groupe IOMMU : %v"
 
 #: cmd/incus/network.go:1374
 msgid "IP ADDRESS"
@@ -4264,7 +4239,7 @@ msgstr "Ignorer l'état du conteneur (seulement pour start)"
 
 #: cmd/incus/image_alias.go:75
 msgid "Image alias description"
-msgstr ""
+msgstr "Description de l’alias"
 
 #: cmd/incus/image.go:1510
 msgid "Image already up to date."
@@ -4875,11 +4850,11 @@ msgstr "Alias :"
 
 #: cmd/incus/network_acl.go:98
 msgid "List available network ACL"
-msgstr ""
+msgstr "Liste les ACL réseau disponibles"
 
 #: cmd/incus/network_acl.go:97
 msgid "List available network ACLS"
-msgstr ""
+msgstr "Liste les ACL réseau disponibles"
 
 #: cmd/incus/network_address_set.go:94 cmd/incus/network_address_set.go:95
 #, fuzzy
@@ -4944,7 +4919,7 @@ msgstr ""
 
 #: cmd/incus/network_peer.go:90
 msgid "List available network peers"
-msgstr ""
+msgstr "Liste les pairs réseau disponibles"
 
 #: cmd/incus/network_peer.go:91
 msgid ""
@@ -5005,7 +4980,7 @@ msgstr "Nom du réseau"
 
 #: cmd/incus/network.go:1106
 msgid "List available networks"
-msgstr ""
+msgstr "Liste les réseaux disponibles"
 
 #: cmd/incus/network.go:1107
 msgid ""
@@ -5038,7 +5013,7 @@ msgstr ""
 
 #: cmd/incus/storage.go:683
 msgid "List available storage pools"
-msgstr ""
+msgstr "Liste les pools de stockage disponibles"
 
 #: cmd/incus/storage.go:684
 msgid ""
@@ -5067,7 +5042,7 @@ msgstr ""
 
 #: cmd/incus/operation.go:122
 msgid "List background operations"
-msgstr ""
+msgstr "Liste les opérations en arrière-plan"
 
 #: cmd/incus/operation.go:123
 msgid ""
@@ -5097,7 +5072,7 @@ msgstr ""
 
 #: cmd/incus/image_alias.go:196
 msgid "List image aliases"
-msgstr ""
+msgstr "Liste les alias d’images"
 
 #: cmd/incus/image_alias.go:197
 msgid ""
@@ -5125,7 +5100,7 @@ msgstr ""
 
 #: cmd/incus/image.go:1087
 msgid "List images"
-msgstr ""
+msgstr "Liste les images"
 
 #: cmd/incus/image.go:1088
 msgid ""
@@ -5161,9 +5136,8 @@ msgid "List instance devices"
 msgstr "Création du conteneur"
 
 #: cmd/incus/config_template.go:298 cmd/incus/config_template.go:299
-#, fuzzy
 msgid "List instance file templates"
-msgstr "L'arrêt du conteneur a échoué !"
+msgstr "Lister les modèles de fichiers d’une instance"
 
 #: cmd/incus/snapshot.go:324
 #, fuzzy
@@ -5194,9 +5168,8 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/list.go:52
-#, fuzzy
 msgid "List instances"
-msgstr "L'arrêt du conteneur a échoué !"
+msgstr "Lister les instances"
 
 #: cmd/incus/list.go:53
 #, fuzzy, c-format
@@ -5409,7 +5382,7 @@ msgstr "Forcer le conteneur à s'arrêter"
 
 #: cmd/incus/config_trust.go:100 cmd/incus/config_trust.go:185
 msgid "List of projects to restrict the certificate to"
-msgstr ""
+msgstr "Liste des projets auxquels restreindre le certificat"
 
 #: cmd/incus/operation.go:147
 #, fuzzy
@@ -5878,14 +5851,12 @@ msgid "Manage instance and server configuration options"
 msgstr "Clé de configuration invalide"
 
 #: cmd/incus/config_template.go:27 cmd/incus/config_template.go:28
-#, fuzzy
 msgid "Manage instance file templates"
-msgstr "L'arrêt du conteneur a échoué !"
+msgstr "Gérer les modèles de fichiers d’une instance"
 
 #: cmd/incus/config_metadata.go:27 cmd/incus/config_metadata.go:28
-#, fuzzy
 msgid "Manage instance metadata files"
-msgstr "L'arrêt du conteneur a échoué !"
+msgstr "Gérer les métadonnées d’une instance"
 
 #: cmd/incus/snapshot.go:32 cmd/incus/snapshot.go:33
 #, fuzzy
@@ -6077,11 +6048,11 @@ msgstr "Mémoire (pointe)"
 
 #: cmd/incus/info.go:762
 msgid "Memory usage:"
-msgstr "Mémoire utilisée :"
+msgstr "Utilisation mémoire :"
 
 #: cmd/incus/info.go:529
 msgid "Memory:"
-msgstr "Mémoire utilisée :"
+msgstr "Mémoire :"
 
 #: cmd/incus/move.go:340
 #, fuzzy, c-format
@@ -6876,9 +6847,8 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/webui.go:18 cmd/incus/webui.go:19
-#, fuzzy
 msgid "Open the web interface"
-msgstr "L'arrêt du conteneur a échoué !"
+msgstr "Ouvrir l’interface web"
 
 #: cmd/incus/info.go:704
 #, fuzzy
@@ -7027,9 +6997,8 @@ msgid "Please type 'y', 'n' or the fingerprint:"
 msgstr "Veuillez entrer 'o', 'n' ou l'empreinte :"
 
 #: cmd/incus/wait.go:42
-#, fuzzy
 msgid "Polling interval (in seconds)"
-msgstr "CPU utilisé (en secondes)"
+msgstr "Fréquence de vérification (en secondes)"
 
 #: cmd/incus/admin_recover.go:115
 msgid "Pool name cannot be empty"
@@ -7344,9 +7313,8 @@ msgid "Rebuild as an empty instance"
 msgstr "Création du conteneur"
 
 #: cmd/incus/rebuild.go:28
-#, fuzzy
 msgid "Rebuild instances"
-msgstr "L'arrêt du conteneur a échoué !"
+msgstr "Reconstruire une instance"
 
 #: cmd/incus/network_zone.go:1123
 #, fuzzy
