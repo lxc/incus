@@ -316,6 +316,24 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 		//  managed: no
 		//  shortdesc: Override the bus for the device (can be `virtio` or `usb`) (VM only)
 		"io.bus",
+
+		// gendoc:generate(entity=devices, group=nic_bridged, key=attached)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the NIC is plugged in or not
+		"attached",
+
+		// gendoc:generate(entity=devices, group=nic_bridged, key=connected)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the NIC is connected to the host network
+		"connected",
 	}
 
 	// checkWithManagedNetwork validates the device's settings against the managed network.
@@ -693,7 +711,7 @@ func (d *nicBridged) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.priority", "ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external", "ipv4.address", "ipv6.address", "security.mac_filtering", "security.ipv4_filtering", "security.ipv6_filtering", "security.acls", "security.acls.default.egress.action", "security.acls.default.egress.logged", "security.acls.default.ingress.action", "security.acls.default.ingress.logged"}
+	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.priority", "ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external", "ipv4.address", "ipv6.address", "security.mac_filtering", "security.ipv4_filtering", "security.ipv6_filtering", "security.acls", "security.acls.default.egress.action", "security.acls.default.egress.logged", "security.acls.default.ingress.action", "security.acls.default.ingress.logged", "connected"}
 }
 
 // Add is run when a device is added to a non-snapshot instance whether or not the instance is running.
@@ -726,6 +744,11 @@ func (d *nicBridged) PreStartCheck() error {
 
 // Start is run when the device is added to a running instance or instance is starting up.
 func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
+	// Ignore detached NICs.
+	if !util.IsTrueOrEmpty(d.config["attached"]) {
+		return nil, nil
+	}
+
 	err := d.validateEnvironment()
 	if err != nil {
 		return nil, err
@@ -916,6 +939,7 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 		{Key: "flags", Value: "up"},
 		{Key: "link", Value: peerName},
 		{Key: "hwaddr", Value: d.config["hwaddr"]},
+		{Key: "connected", Value: d.config["connected"]},
 	}
 
 	if d.config["io.bus"] == "usb" {
@@ -1047,6 +1071,13 @@ func (d *nicBridged) Update(oldDevices deviceConfig.Devices, isRunning bool) err
 	err = bgpAddPrefix(&d.deviceCommon, d.network, d.config)
 	if err != nil {
 		return err
+	}
+
+	if isRunning {
+		err = d.setNICLink()
+		if err != nil {
+			return err
+		}
 	}
 
 	reverter.Success()

@@ -443,10 +443,26 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 <!-- config group devices-infiniband end -->
 <!-- config group devices-nic_bridged start -->
+```{config:option} attached devices-nic_bridged
+:default: "`true`"
+:required: "no"
+:shortdesc: "Whether the NIC is plugged in or not"
+:type: "bool"
+
+```
+
 ```{config:option} boot.priority devices-nic_bridged
 :managed: "no"
 :shortdesc: "Boot priority for VMs (higher value boots first)"
 :type: "integer"
+
+```
+
+```{config:option} connected devices-nic_bridged
+:default: "`true`"
+:required: "no"
+:shortdesc: "Whether the NIC is connected to the host network"
+:type: "bool"
 
 ```
 
@@ -668,6 +684,14 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 <!-- config group devices-nic_bridged end -->
 <!-- config group devices-nic_ipvlan start -->
+```{config:option} attached devices-nic_ipvlan
+:default: "`true`"
+:required: "no"
+:shortdesc: "Whether the NIC is plugged in or not"
+:type: "bool"
+
+```
+
 ```{config:option} gvrp devices-nic_ipvlan
 :default: "false"
 :shortdesc: "Register VLAN using GARP VLAN Registration Protocol"
@@ -755,10 +779,26 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 <!-- config group devices-nic_ipvlan end -->
 <!-- config group devices-nic_macvlan start -->
+```{config:option} attached devices-nic_macvlan
+:default: "`true`"
+:required: "no"
+:shortdesc: "Whether the NIC is plugged in or not"
+:type: "bool"
+
+```
+
 ```{config:option} boot.priority devices-nic_macvlan
 :managed: "no"
 :shortdesc: "Boot priority for VMs (higher value boots first)"
 :type: "integer"
+
+```
+
+```{config:option} connected devices-nic_macvlan
+:default: "`true`"
+:required: "no"
+:shortdesc: "Whether the NIC is connected to the host network (VM only)"
+:type: "bool"
 
 ```
 
@@ -841,10 +881,26 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```
 
+```{config:option} attached devices-nic_ovn
+:default: "`true`"
+:required: "no"
+:shortdesc: "Whether the NIC is plugged in or not"
+:type: "bool"
+
+```
+
 ```{config:option} boot.priority devices-nic_ovn
 :managed: "no"
 :shortdesc: "Boot priority for VMs (higher value boots first)"
 :type: "integer"
+
+```
+
+```{config:option} connected devices-nic_ovn
+:default: "`true`"
+:required: "no"
+:shortdesc: "Whether the NIC is connected to the host network (container support requires setting `acceleration` to `none`)"
+:type: "bool"
 
 ```
 
@@ -1035,9 +1091,25 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 <!-- config group devices-nic_ovn end -->
 <!-- config group devices-nic_p2p start -->
-```{config:option} boot.priotiry devices-nic_p2p
+```{config:option} attached devices-nic_p2p
+:default: "`true`"
+:required: "no"
+:shortdesc: "Whether the NIC is plugged in or not"
+:type: "bool"
+
+```
+
+```{config:option} boot.priority devices-nic_p2p
 :shortdesc: "Boot priority for VMs (higher value boots first)"
 :type: "integer"
+
+```
+
+```{config:option} connected devices-nic_p2p
+:default: "`true`"
+:required: "no"
+:shortdesc: "Whether the NIC is connected to the host network"
+:type: "bool"
 
 ```
 
@@ -1120,10 +1192,26 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 <!-- config group devices-nic_p2p end -->
 <!-- config group devices-nic_physical start -->
+```{config:option} attached devices-nic_physical
+:default: "`true`"
+:required: "no"
+:shortdesc: "Whether the NIC is plugged in or not"
+:type: "bool"
+
+```
+
 ```{config:option} boot.priority devices-nic_physical
 :managed: "no"
 :shortdesc: "Boot priority for VMs (higher value boots first)"
 :type: "integer"
+
+```
+
+```{config:option} connected devices-nic_physical
+:default: "`true`"
+:required: "no"
+:shortdesc: "Whether the NIC is connected to the host network (VM only)"
+:type: "bool"
 
 ```
 
@@ -1189,6 +1277,22 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 <!-- config group devices-nic_physical end -->
 <!-- config group devices-nic_routed start -->
+```{config:option} attached devices-nic_routed
+:default: "`true`"
+:required: "no"
+:shortdesc: "Whether the NIC is plugged in or not"
+:type: "bool"
+
+```
+
+```{config:option} connected devices-nic_routed
+:default: "`true`"
+:required: "no"
+:shortdesc: "Whether the NIC is connected to the host network"
+:type: "bool"
+
+```
+
 ```{config:option} gvrp devices-nic_routed
 :default: "false"
 :shortdesc: "Register VLAN using GARP VLAN Registration Protocol"
@@ -1375,10 +1479,26 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 
 <!-- config group devices-nic_routed end -->
 <!-- config group devices-nic_sriov start -->
+```{config:option} attached devices-nic_sriov
+:default: "`true`"
+:required: "no"
+:shortdesc: "Whether the NIC is plugged in or not"
+:type: "bool"
+
+```
+
 ```{config:option} boot.priority devices-nic_sriov
 :managed: "no"
 :shortdesc: "Boot priority for VMs (higher value boots first)"
 :type: "integer"
+
+```
+
+```{config:option} connected devices-nic_sriov
+:default: "`true`"
+:required: "no"
+:shortdesc: "Whether the NIC is connected to the host network (VM only)"
+:type: "bool"
 
 ```
 

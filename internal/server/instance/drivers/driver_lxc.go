@@ -60,6 +60,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/instance/operationlock"
+	"github.com/lxc/incus/v6/internal/server/ip"
 	"github.com/lxc/incus/v6/internal/server/lifecycle"
 	"github.com/lxc/incus/v6/internal/server/locking"
 	"github.com/lxc/incus/v6/internal/server/metrics"
@@ -1493,7 +1494,7 @@ func (d *lxc) deviceStart(dev device.Device, instanceRunning bool) (*deviceConfi
 
 			// Attach network interface if requested.
 			if len(runConf.NetworkInterface) > 0 {
-				err = d.deviceAttachNIC(configCopy, runConf.NetworkInterface)
+				err = d.deviceAttachNIC(dev.Name(), configCopy, runConf.NetworkInterface)
 				if err != nil {
 					return nil, err
 				}
@@ -1570,16 +1571,18 @@ func (d *lxc) deviceAddCgroupRules(cgroups []deviceConfig.RunConfigItem) error {
 }
 
 // deviceAttachNIC live attaches a NIC device to a container.
-func (d *lxc) deviceAttachNIC(configCopy map[string]string, netIF []deviceConfig.RunConfigItem) error {
-	devName := ""
+func (d *lxc) deviceAttachNIC(devName string, configCopy map[string]string, netIF []deviceConfig.RunConfigItem) error {
+	ctDevName := ""
+	connected := true
 	for _, dev := range netIF {
 		if dev.Key == "link" {
-			devName = dev.Value
-			break
+			ctDevName = dev.Value
+		} else if dev.Key == "connected" {
+			connected = util.IsTrueOrEmpty(dev.Value)
 		}
 	}
 
-	if devName == "" {
+	if ctDevName == "" {
 		return errors.New("Device didn't provide a link property to use")
 	}
 
@@ -1590,12 +1593,12 @@ func (d *lxc) deviceAttachNIC(configCopy map[string]string, netIF []deviceConfig
 	}
 
 	// Add the interface to the container.
-	err = cc.AttachInterface(devName, configCopy["name"])
+	err = cc.AttachInterface(ctDevName, configCopy["name"])
 	if err != nil {
-		return fmt.Errorf("Failed to attach interface: %s to %s: %w", devName, configCopy["name"], err)
+		return fmt.Errorf("Failed to attach interface: %s to %s: %w", ctDevName, configCopy["name"], err)
 	}
 
-	return nil
+	return d.setNICLink(devName, connected, true)
 }
 
 // deviceStop loads a new device and calls its Stop() function.
@@ -1812,6 +1815,25 @@ func (d *lxc) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 	// Add cgroup rules if requested.
 	if len(runConf.CGroups) > 0 {
 		err := d.deviceAddCgroupRules(runConf.CGroups)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Handle NIC reconfiguration.
+	var devName string
+	var connected bool
+	for _, dev := range runConf.NetworkInterface {
+		switch dev.Key {
+		case "devName":
+			devName = dev.Value
+		case "connected":
+			connected = util.IsTrueOrEmpty(dev.Value)
+		}
+	}
+
+	if devName != "" {
+		err := d.setNICLink(devName, connected, false)
 		if err != nil {
 			return err
 		}
@@ -2302,6 +2324,15 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			}
 
 			for _, nicItem := range runConf.NetworkInterface {
+				// The connected state is not a LXC configuration key; we defer its handling to a post hook.
+				if nicItem.Key == "connected" {
+					runConf.PostHooks = append(runConf.PostHooks, func() error {
+						return d.setNICLink(dev.Name(), util.IsTrueOrEmpty(nicItem.Value), true)
+					})
+
+					continue
+				}
+
 				err = lxcSetConfigItem(cc, fmt.Sprintf("%s.%d.%s", networkKeyPrefix, nicID, nicItem.Key), nicItem.Value)
 				if err != nil {
 					return "", nil, fmt.Errorf("Failed to setup device network interface %q: %w", dev.Name(), err)
@@ -4811,6 +4842,12 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 		newDevType, err := device.LoadByType(d.state, d.Project().Name, newDevice)
 		if err != nil {
 			return []string{} // Couldn't create Device, so this cannot be an update.
+		}
+
+		// Detached devices need to be fully recreated on update so that the update logic doesn't
+		// try to access non-existing LXC devices.
+		if !util.IsTrueOrEmpty(oldDevice["attached"]) {
+			return []string{}
 		}
 
 		return newDevType.UpdatableFields(oldDevType)
@@ -9450,5 +9487,32 @@ func (d *lxc) CreateQcow2Snapshot(snapName string, backingFilename string) error
 
 // DeleteQcow2Snapshot deletes a qcow2 snapshot for a running instance. Not supported by containers.
 func (d *lxc) DeleteQcow2Snapshot(snapshotIndex int, backingFilename string) error {
+	return nil
+}
+
+// setNICLink sets the link status of the given device.
+func (d *lxc) setNICLink(devName string, connected bool, assumeUp bool) error {
+	// This check is added so that devices that cannot handle link states do not fail to initialize.
+	if connected && assumeUp {
+		return nil
+	}
+
+	link, err := ip.LinkByName(d.localConfig["volatile."+devName+".host_name"])
+	if err != nil {
+		return fmt.Errorf("Failed to find interface %s: %w", devName, err)
+	}
+
+	if connected {
+		err = link.SetUp()
+		if err != nil {
+			return fmt.Errorf("Failed to bring %s up: %w", devName, err)
+		}
+	} else {
+		err = link.SetDown()
+		if err != nil {
+			return fmt.Errorf("Failed to bring %s down: %w", devName, err)
+		}
+	}
+
 	return nil
 }

@@ -128,6 +128,24 @@ func (d *nicMACVLAN) validateConfig(instConf instance.ConfigReader) error {
 		//  managed: no
 		//  shortdesc: Override the bus for the device (can be `virtio` or `usb`) (VM only)
 		"io.bus",
+
+		// gendoc:generate(entity=devices, group=nic_macvlan, key=attached)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the NIC is plugged in or not
+		"attached",
+
+		// gendoc:generate(entity=devices, group=nic_macvlan, key=connected)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Whether the NIC is connected to the host network (VM only)
+		"connected",
 	}
 
 	// Check that if network proeperty is set that conflicting keys are not present.
@@ -175,6 +193,10 @@ func (d *nicMACVLAN) validateConfig(instConf instance.ConfigReader) error {
 		requiredFields = append(requiredFields, "parent")
 	}
 
+	if instConf.Type() != instancetype.VM && d.config["connected"] != "" {
+		return errors.New("The \"connected\" option is only supported on virtual machines for macvlan NICs")
+	}
+
 	err := d.config.Validate(nicValidationRules(requiredFields, optionalFields, instConf))
 	if err != nil {
 		return err
@@ -213,6 +235,11 @@ func (d *nicMACVLAN) validateEnvironment() error {
 
 // Start is run when the device is added to a running instance or instance is starting up.
 func (d *nicMACVLAN) Start() (*deviceConfig.RunConfig, error) {
+	// Ignore detached NICs.
+	if !util.IsTrueOrEmpty(d.config["attached"]) {
+		return nil, nil
+	}
+
 	err := d.validateEnvironment()
 	if err != nil {
 		return nil, err
@@ -339,6 +366,7 @@ func (d *nicMACVLAN) Start() (*deviceConfig.RunConfig, error) {
 		{Key: "flags", Value: "up"},
 		{Key: "link", Value: saveData["host_name"]},
 		{Key: "hwaddr", Value: d.config["hwaddr"]},
+		{Key: "connected", Value: d.config["connected"]},
 	}
 
 	if d.config["io.bus"] == "usb" {
@@ -363,9 +391,12 @@ func (d *nicMACVLAN) Stop() (*deviceConfig.RunConfig, error) {
 	v := d.volatileGet()
 	runConf := deviceConfig.RunConfig{
 		PostHooks: []func() error{d.postStop},
-		NetworkInterface: []deviceConfig.RunConfigItem{
+	}
+
+	if util.IsTrueOrEmpty(d.config["attached"]) {
+		runConf.NetworkInterface = []deviceConfig.RunConfigItem{
 			{Key: "link", Value: v["host_name"]},
-		},
+		}
 	}
 
 	return &runConf, nil
@@ -404,6 +435,26 @@ func (d *nicMACVLAN) postStop() error {
 
 	if len(errs) > 0 {
 		return fmt.Errorf("%v", errs)
+	}
+
+	return nil
+}
+
+// UpdatableFields returns a list of fields that can be updated without triggering a device remove & add.
+func (d *nicMACVLAN) UpdatableFields(oldDevice Type) []string {
+	// Check old and new device types match.
+	_, match := oldDevice.(*nicMACVLAN)
+	if !match {
+		return []string{}
+	}
+
+	return []string{"connected"}
+}
+
+// Update applies configuration changes to a started device.
+func (d *nicMACVLAN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
+	if isRunning {
+		return d.setNICLink()
 	}
 
 	return nil

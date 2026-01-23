@@ -60,6 +60,8 @@ func nicValidationRules(requiredFields []string, optionalFields []string, instCo
 		"vendorid":                             validate.Optional(validate.IsDeviceID),
 		"productid":                            validate.Optional(validate.IsDeviceID),
 		"pci":                                  validate.IsPCIAddress,
+		"attached":                             validate.Optional(validate.IsBool),
+		"connected":                            validate.Optional(validate.IsBool),
 	}
 
 	validators := map[string]func(value string) error{}
