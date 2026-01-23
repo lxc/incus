@@ -899,7 +899,7 @@ With VMs, this option supports mounting file system disk devices and paths withi
 ```{config:option} connected devices-nic_ovn
 :default: "`true`"
 :required: "no"
-:shortdesc: "Whether the NIC is connected to the host network (container support requires setting `acceleration` to `none`)"
+:shortdesc: "Whether the NIC is connected to the host network (requires `acceleration` set to `none`)"
 :type: "bool"
 
 ```
@@ -1491,14 +1491,6 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 :managed: "no"
 :shortdesc: "Boot priority for VMs (higher value boots first)"
 :type: "integer"
-
-```
-
-```{config:option} connected devices-nic_sriov
-:default: "`true`"
-:required: "no"
-:shortdesc: "Whether the NIC is connected to the host network (VM only)"
-:type: "bool"
 
 ```
 

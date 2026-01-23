@@ -1009,7 +1009,7 @@
 							"default": "`true`",
 							"longdesc": "",
 							"required": "no",
-							"shortdesc": "Whether the NIC is connected to the host network (container support requires setting `acceleration` to `none`)",
+							"shortdesc": "Whether the NIC is connected to the host network (requires `acceleration` set to `none`)",
 							"type": "bool"
 						}
 					},
@@ -1690,15 +1690,6 @@
 							"managed": "no",
 							"shortdesc": "Boot priority for VMs (higher value boots first)",
 							"type": "integer"
-						}
-					},
-					{
-						"connected": {
-							"default": "`true`",
-							"longdesc": "",
-							"required": "no",
-							"shortdesc": "Whether the NIC is connected to the host network (VM only)",
-							"type": "bool"
 						}
 					},
 					{
