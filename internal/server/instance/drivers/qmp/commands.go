@@ -899,9 +899,12 @@ func (m *Monitor) AddNIC(netDev map[string]any, device map[string]any, connected
 		return errors.New("NIC device must have an id")
 	}
 
-	err = m.SetNICLink(id, connected)
-	if err != nil {
-		return fmt.Errorf("Failed setting NIC device link status: %w", err)
+	// Set link down if asked to.
+	if !connected {
+		err = m.SetNICLink(id, connected)
+		if err != nil {
+			return fmt.Errorf("Failed setting NIC device link status: %w", err)
+		}
 	}
 
 	reverter.Success()
