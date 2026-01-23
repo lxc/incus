@@ -5816,7 +5816,14 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	d.logger.Debug("Migration send starting")
 	defer d.logger.Debug("Migration send stopped")
 
+	// Check for an existing operation.
+
 	// Setup a new operation.
+	op := operationlock.Get(d.Project().Name, d.Name())
+	if op != nil && op.ActionMatch(operationlock.ActionMigrate) {
+		return errors.New("The instance is already being migrated")
+	}
+
 	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionMigrate, nil, false, true)
 	if err != nil {
 		return err
