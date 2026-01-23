@@ -387,5 +387,5 @@ func autoRebalanceClusterTask(d *Daemon) (task.Func, task.Schedule) {
 		}
 	}
 
-	return f, task.Every(time.Minute)
+	return f, task.Every(time.Minute, task.SkipFirst)
 }
