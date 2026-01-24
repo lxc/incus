@@ -7900,7 +7900,7 @@ msgstr  ""
 #: cmd/incus/wait.go:27
 msgid   "Wait for an instance to satisfy a condition\n"
         "\n"
-        "Supported cConditions:\n"
+        "Supported Conditions:\n"
         "\n"
         "  agent            Wait for the VM agent to be running\n"
         "  ip               Wait for any globally routable IP address\n"
