@@ -27,7 +27,7 @@ func (c *cmdWait) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Wait for an instance to satisfy a condition
 
-Supported cConditions:
+Supported Conditions:
 
   agent            Wait for the VM agent to be running
   ip               Wait for any globally routable IP address
