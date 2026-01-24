@@ -351,6 +351,13 @@ func (d *zfs) Create() error {
 				if err != nil {
 					return err
 				}
+
+				if d.state.OS.IncusOS != nil {
+					err := d.setDatasetProperties(d.config["zfs.pool_name"], "incusos:use=incus")
+					if err != nil {
+						return err
+					}
+				}
 			}
 		} else {
 			// Ensure that the pool is available.
