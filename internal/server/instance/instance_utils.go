@@ -718,7 +718,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	//Check instance type requested is supported by this machine.
+	// Check instance type requested is supported by this machine.
 	err := s.InstanceTypes[args.Type]
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("Instance type %q is not supported on this server: %w", args.Type, err)
