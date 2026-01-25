@@ -588,6 +588,7 @@ func internalRecoverImportInstanceSnapshot(s *state.State, pool storagePools.Poo
 		Name:         poolVol.Container.Name + internalInstance.SnapshotDelimiter + snap.Name,
 		Profiles:     profiles,
 		Stateful:     snap.Stateful,
+		IsSnapshot:   true,
 		Snapshot: db.SnapshotArgs{
 			Description: snap.SnapshotDescription,
 			ExpiryDate:  snap.ExpiresAt,
