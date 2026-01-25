@@ -5800,6 +5800,7 @@ func (d *qemu) Restore(source instance.Instance, stateful bool) error {
 				Profiles:     d.Profiles(),
 				Project:      d.Project().Name,
 				Type:         d.Type(),
+				IsSnapshot:   d.IsSnapshot(),
 				Snapshot: db.SnapshotArgs{
 					Description: d.SnapshotDescription(),
 					ExpiryDate:  d.SnapshotExpiryDate(),
@@ -5868,6 +5869,7 @@ func (d *qemu) Restore(source instance.Instance, stateful bool) error {
 		Profiles:     source.Profiles(),
 		Project:      source.Project().Name,
 		Type:         source.Type(),
+		IsSnapshot:   source.IsSnapshot(),
 		Snapshot: db.SnapshotArgs{
 			Description: source.SnapshotDescription(),
 			ExpiryDate:  source.SnapshotExpiryDate(),
