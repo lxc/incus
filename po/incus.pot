@@ -7,7 +7,11 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
+<<<<<<< HEAD
         "POT-Creation-Date: 2026-02-04 16:37+0100\n"
+=======
+        "POT-Creation-Date: 2026-01-25 13:38+0000\n"
+>>>>>>> e44bde905 (i18n: update translation)
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
