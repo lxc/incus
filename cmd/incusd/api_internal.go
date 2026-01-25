@@ -992,6 +992,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 			Name:         snapInstName,
 			Profiles:     profiles,
 			Stateful:     snap.Stateful,
+			IsSnapshot:   true,
 			Snapshot: db.SnapshotArgs{
 				Description: snap.SnapshotDescription,
 				ExpiryDate:  snap.ExpiresAt,

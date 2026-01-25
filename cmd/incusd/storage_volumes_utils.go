@@ -45,6 +45,7 @@ func storagePoolVolumeUpdateUsers(ctx context.Context, s *state.State, projectNa
 			Profiles:     inst.Profiles(),
 			Project:      inst.Project().Name,
 			Type:         inst.Type(),
+			IsSnapshot:   inst.IsSnapshot(),
 		}
 
 		err = inst.Update(args, false)

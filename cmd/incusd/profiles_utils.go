@@ -241,6 +241,7 @@ func doProfileUpdateInstance(ctx context.Context, s *state.State, args db.Instan
 		Profiles:     profiles, // Supply with new profile config.
 		Project:      inst.Project().Name,
 		Type:         inst.Type(),
+		IsSnapshot:   inst.IsSnapshot(),
 	}, true)
 }
 
