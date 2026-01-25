@@ -4092,6 +4092,7 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool) error {
 				Profiles:     d.Profiles(),
 				Project:      d.Project().Name,
 				Type:         d.Type(),
+				IsSnapshot:   d.IsSnapshot(),
 				Snapshot: db.SnapshotArgs{
 					Description: d.SnapshotDescription(),
 					ExpiryDate:  d.SnapshotExpiryDate(),
@@ -4197,6 +4198,7 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool) error {
 		Profiles:     sourceContainer.Profiles(),
 		Project:      sourceContainer.Project().Name,
 		Type:         sourceContainer.Type(),
+		IsSnapshot:   sourceContainer.IsSnapshot(),
 		Snapshot: db.SnapshotArgs{
 			Description: sourceContainer.SnapshotDescription(),
 			ExpiryDate:  sourceContainer.SnapshotExpiryDate(),

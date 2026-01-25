@@ -1257,6 +1257,7 @@ func SnapshotProtobufToInstanceArgs(s *state.State, inst Instance, snap *migrati
 		Profiles:     profiles,
 		Stateful:     snap.GetStateful(),
 		Project:      inst.Project().Name,
+		IsSnapshot:   true,
 	}
 
 	if snap.GetCreationDate() != 0 {

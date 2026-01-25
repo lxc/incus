@@ -332,10 +332,6 @@ func (c *ClusterTx) instanceSnapshotFill(ctx context.Context, instanceArgs *map[
 		}
 
 		inst := instances[ID]
-		if inst.IsSnapshot {
-			return fmt.Errorf("Duplicate snapshot row found for instance ID %d", ID)
-		}
-
 		inst.Snapshot = SnapshotArgs{
 			Description: description,
 			ExpiryDate:  expiryDate,
@@ -659,6 +655,7 @@ func (c *ClusterTx) InstancesToInstanceArgs(ctx context.Context, fillProfiles bo
 			Stateful:     instance.Stateful,
 			LastUsedDate: instance.LastUseDate.Time,
 			Description:  instance.Description,
+			IsSnapshot:   instance.Snapshot,
 		}
 
 		instanceArgs[instance.ID] = args
