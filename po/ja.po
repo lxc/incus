@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-01-20 21:57-0500\n"
-"PO-Revision-Date: 2026-01-17 14:01+0000\n"
+"PO-Revision-Date: 2026-01-25 17:06+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.15.2\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: cmd/incus/info.go:453
 msgid "  Chassis:"
@@ -6405,7 +6405,7 @@ msgstr "VF の最大数: %d"
 
 #: cmd/incus/wait.go:43
 msgid "Maximum wait time"
-msgstr ""
+msgstr "待機する最大時間"
 
 #: cmd/incus/info.go:179
 msgid "Mdev profiles:"
@@ -10109,7 +10109,7 @@ msgstr "WWN: %s"
 
 #: cmd/incus/wait.go:26
 msgid "Wait for an instance to satisfy a condition"
-msgstr ""
+msgstr "インスタンスが条件を満たすまで待機する"
 
 #: cmd/incus/wait.go:27
 msgid ""
@@ -10123,6 +10123,18 @@ msgid ""
 "  ipv6             Wait for a globally routable IPv6 address\n"
 "  status=STATUS    Wait for the instance status to become STATUS"
 msgstr ""
+"インスタンスが条件を満たすまで待機します\n"
+"\n"
+"サポートされる条件:\n"
+"\n"
+"  agent            VM のエージェントが実行されるまで待機します\n"
+"  ip               グローバルにルーティング可能な IP アドレスが割り当たるまで"
+"待機します\n"
+"  ipv4             グローバルにルーティング可能な IPv4 アドレスが割り当たるま"
+"で待機します\n"
+"  ipv6             グローバルにルーティング可能な IPv6 アドレスが割り当たるま"
+"で待機します\n"
+"  status=STATUS    インスタンスのステータスが STATUS になるまで待機します"
 
 #: cmd/incus/admin_waitready.go:27
 msgid "Wait for the daemon to be ready to process requests"
@@ -12112,6 +12124,8 @@ msgid ""
 "incus wait v1 agent\n"
 "\tWait for VM instance v1 to have a functional agent."
 msgstr ""
+"incus wait v1 agent\n"
+"\tVM インスタンスである v1 でエージェントが機能するまで待機します"
 
 #: cmd/incus/storage.go:565
 msgid "info"
