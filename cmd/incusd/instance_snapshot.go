@@ -475,8 +475,7 @@ func snapshotPut(s *state.State, r *http.Request, snapInst instance.Instance) re
 
 	var do func(op *operations.Operation) error
 
-	_, err = rj.GetString("expires_at")
-	if err != nil {
+	if rj.IsEmpty() {
 		// Skip updating the snapshot since the requested key wasn't provided
 		do = func(op *operations.Operation) error {
 			return nil
@@ -509,8 +508,8 @@ func snapshotPut(s *state.State, r *http.Request, snapInst instance.Instance) re
 				Type:         snapInst.Type(),
 				IsSnapshot:   true,
 				Snapshot: db.SnapshotArgs{
-					Description: snapInst.SnapshotDescription(),
-					ExpiryDate:  snapInst.SnapshotExpiryDate(),
+					Description: configRaw.SnapshotDescription,
+					ExpiryDate:  configRaw.ExpiresAt,
 				},
 			}
 
