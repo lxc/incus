@@ -781,7 +781,7 @@ func (c *cmdRemoteGetClientCertificate) Run(cmd *cobra.Command, args []string) e
 	}
 
 	// Read the certificate.
-	tlsClientCert, tlsClientKey, _, err := conf.GetClientCertificate("")
+	tlsClientCert, tlsClientKey, _, err := conf.GetClientCertificate(conf.DefaultRemote)
 	if err != nil {
 		return fmt.Errorf("Failed to get certificate: %w", err)
 	}
