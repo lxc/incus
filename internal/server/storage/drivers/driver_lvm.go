@@ -67,18 +67,6 @@ func (d *lvm) load() error {
 		return nil
 	}
 
-	// Handle IncusOS services.
-	if d.state.OS.IncusOS != nil {
-		ok, err := d.state.OS.IncusOS.IsServiceEnabled("lvm")
-		if err != nil {
-			return err
-		}
-
-		if !ok {
-			return errors.New("IncusOS service \"lvm\" isn't currently enabled")
-		}
-	}
-
 	// Validate the required binaries.
 	tools := []string{"lvm"}
 	if d.clustered {
@@ -209,6 +197,18 @@ func (d *lvm) Create() error {
 	var usingLoopFile bool
 
 	sourceType := d.getSourceType()
+
+	// Require the LVM service when on IncusOS.
+	if d.state.OS.IncusOS != nil {
+		ok, err := d.state.OS.IncusOS.IsServiceEnabled("lvm")
+		if err != nil {
+			return err
+		}
+
+		if !ok {
+			return errors.New("IncusOS service \"lvm\" isn't currently enabled")
+		}
+	}
 
 	if sourceType == lvmSourceTypeDefault {
 		usingLoopFile = true
