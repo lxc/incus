@@ -1194,3 +1194,18 @@ func (c *ClusterTx) GetInstancesCount(ctx context.Context, projectName string, l
 
 	return count, nil
 }
+
+// GetRunningInstancesCount returns the number of running instances on a given node.
+func (c *ClusterTx) GetRunningInstancesCount(ctx context.Context) (int, error) {
+	nodeID := c.GetNodeID()
+
+	tables := `instances
+    JOIN nodes ON instances.node_id = nodes.id
+    JOIN instances_config ON instances.id = instances_config.instance_id`
+
+	where := `nodes.id = ? 
+    AND instances_config.key = 'volatile.last_state.power'
+    AND instances_config.value = 'RUNNING'`
+
+	return query.Count(ctx, c.tx, tables, where, nodeID)
+}
