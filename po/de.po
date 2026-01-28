@@ -7,7 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
+<<<<<<< HEAD
 "POT-Creation-Date: 2026-02-04 16:37+0100\n"
+=======
+"POT-Creation-Date: 2026-01-20 21:57-0500\n"
+>>>>>>> 5bf8946e4 (i18n: fix unsolved rebase)
 "PO-Revision-Date: 2025-12-27 03:16+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"

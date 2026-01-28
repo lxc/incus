@@ -11395,17 +11395,9 @@ msgid ""
 "incus profile create p1 < config.yaml\n"
 "    Create a profile named p1 with configuration from config.yaml"
 msgstr ""
-<<<<<<< HEAD
-"incus profile create p1\n"
-"    Skapa en profil med namnet p1\n"
-"\n"
-"incus profile create p1 < config.yaml\n"
-"    Skapa en profil med namnet p1 med konfigurationen från config.yaml"
-=======
 "incus profil skapa p1 Skapa en profil med namnet p1 incus profil skapa p1 < "
 "config.yaml Skapa en profil med namnet p1 med konfigurationen från config."
 "yaml"
->>>>>>> dc795d7c6 (i18n: update message translation)
 
 #: cmd/incus/config_device.go:95
 msgid ""
