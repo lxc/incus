@@ -58,10 +58,11 @@ func (s *OS) initSELinux() []cluster.Warning {
 	s.SELinuxContextDaemon = strings.TrimRight(strings.TrimSpace(string(content)), "\x00")
 
 	// Handle the various SELinux policy variants here.
-	if s.SELinuxContextDaemon == "system_u:system_r:container_runtime_t:s0" {
+	switch s.SELinuxContextDaemon {
+	case "system_u:system_r:container_runtime_t:s0":
 		logger.Debugf("Detected Fedora-style SELinux setup")
 		s.SELinuxContextInstanceLXC = "system_u:system_r:spc_t:s0"
-	} else if s.SELinuxContextDaemon == "system_u:system_r:incusd_t:s0" {
+	case "system_u:system_r:incusd_t:s0":
 		logger.Debugf("Detected SELinux refpolicy setup")
 		s.SELinuxContextInstanceLXC = "system_u:system_r:container_init_t:s0"
 	}
