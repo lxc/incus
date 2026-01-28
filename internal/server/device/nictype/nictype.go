@@ -50,6 +50,8 @@ func NICType(s *state.State, deviceProjectName string, d deviceConfig.Device) (s
 				nicType = "ovn"
 			case "physical":
 				nicType = "physical"
+			case "wireguard":
+				nicType = "wireguard"
 			default:
 				return "", fmt.Errorf("Unrecognised NIC network type for network %q", d["network"])
 			}
