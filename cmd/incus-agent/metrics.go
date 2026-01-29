@@ -7,6 +7,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/metrics"
 	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/shirou/gopsutil/v4/host"
 )
 
 var metricsCmd = APIEndpoint{
@@ -55,6 +56,7 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	out.ProcessesTotal = uint64(osGetProcessesState())
+	out.HostUptimeSeconds = uint64(osGetUptime())
 
 	cpuStats, err := osGetCPUMetrics(d)
 	if err != nil {
@@ -87,4 +89,12 @@ func getNetworkMetrics(d *Daemon) ([]metrics.NetworkMetrics, error) {
 	}
 
 	return out, nil
+}
+
+func osGetUptime() int64 {
+	uptime, err := host.Uptime()
+	if err != nil {
+		return -1
+	}
+	return int64(uptime)
 }
