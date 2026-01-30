@@ -1225,8 +1225,13 @@ func CalculateVolumeSnapshotSize(projectName string, pool Pool, contentType driv
 		fullSnapVolName = project.Instance(projectName, snapVolumeName)
 	}
 
-	snapVol := pool.GetVolume(volumeType, contentType, fullSnapVolName, nil)
-	err := snapVol.MountTask(func(mountPath string, op *operations.Operation) error {
+	dbSnapVol, err := VolumeDBGet(pool, projectName, snapVolumeName, volumeType)
+	if err != nil {
+		return 0, err
+	}
+
+	snapVol := pool.GetVolume(volumeType, contentType, fullSnapVolName, dbSnapVol.Config)
+	err = snapVol.MountTask(func(mountPath string, op *operations.Operation) error {
 		poolBackend, ok := pool.(*backend)
 		if !ok {
 			return errors.New("Pool is not a backend")
