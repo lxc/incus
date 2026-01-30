@@ -998,6 +998,13 @@ func (r *ProtocolIncus) UpdateInstance(name string, instance api.InstancePut, ET
 		return nil, err
 	}
 
+	if instance.DiskOnly {
+		err = r.CheckExtension("instance_snapshot_disk_only_restore")
+		if err != nil {
+			return nil, errors.New("The server is missing the required \"instance_snapshot_disk_only_restore\" API extension")
+		}
+	}
+
 	// Send the request
 	op, _, err := r.queryOperation("PUT", fmt.Sprintf("%s/%s", path, url.PathEscape(name)), instance, ETag)
 	if err != nil {
