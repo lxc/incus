@@ -2987,3 +2987,7 @@ This introduces two new properties for NICs:
 This introduces a new property for SR-IOV NICs:
 
 * `security.trusted` allows setting the `trusted` flag for the virtual function if the parent NIC supports it.
+
+## `instance_snapshot_disk_only_restore`
+
+This adds support for only restoring the disk of a snapshotted instance.
