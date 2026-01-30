@@ -518,6 +518,7 @@ var APIExtensions = []string{
 	"network_zones_dns_contact",
 	"nic_attached_connected",
 	"nic_sriov_security_trusted",
+	"instance_snapshot_disk_only_restore",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
