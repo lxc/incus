@@ -4069,7 +4069,7 @@ func (d *lxc) Snapshot(name string, expiry time.Time, stateful bool) error {
 }
 
 // Restore restores a snapshot.
-func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool) error {
+func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool, diskOnly bool) error {
 	var ctxMap logger.Ctx
 
 	op, err := operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionRestore, false, false)
@@ -4186,17 +4186,34 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool) error {
 		return err
 	}
 
-	// Restore the configuration.
-	args := db.InstanceArgs{
-		Architecture: sourceContainer.Architecture(),
-		Config:       sourceContainer.LocalConfig(),
-		Description:  sourceContainer.Description(),
-		Devices:      sourceContainer.LocalDevices(),
-		Ephemeral:    sourceContainer.IsEphemeral(),
-		Profiles:     sourceContainer.Profiles(),
-		Project:      sourceContainer.Project().Name,
-		Type:         sourceContainer.Type(),
-		Snapshot:     sourceContainer.IsSnapshot(),
+	args := db.InstanceArgs{}
+	if !diskOnly {
+		// Restore the configuration.
+		args = db.InstanceArgs{
+			Architecture: sourceContainer.Architecture(),
+			Config:       sourceContainer.LocalConfig(),
+			Description:  sourceContainer.Description(),
+			Devices:      sourceContainer.LocalDevices(),
+			Ephemeral:    sourceContainer.IsEphemeral(),
+			Profiles:     sourceContainer.Profiles(),
+			Project:      sourceContainer.Project().Name,
+			Type:         sourceContainer.Type(),
+			Snapshot:     sourceContainer.IsSnapshot(),
+		}
+	} else {
+		args = db.InstanceArgs{
+			Architecture: d.Architecture(),
+			Config:       d.LocalConfig(),
+			Description:  d.Description(),
+			Devices:      d.LocalDevices(),
+			Ephemeral:    d.IsEphemeral(),
+			Profiles:     d.Profiles(),
+			Project:      d.Project().Name,
+			Type:         d.Type(),
+			Snapshot:     d.IsSnapshot(),
+		}
+
+		args.Config["volatile.uuid.generation"] = sourceContainer.LocalConfig()["volatile.uuid.generation"]
 	}
 
 	// Don't pass as user-requested as there's no way to fix a bad config.
