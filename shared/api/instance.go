@@ -178,6 +178,10 @@ type InstancePut struct {
 	// Example: snap0
 	Restore string `json:"restore,omitempty" yaml:"restore,omitempty"`
 
+	// Whether only the instances disk should be restored
+	// Example: false
+	DiskOnly bool `json:"disk_only,omitempty" yaml:"disk_only,omitempty"`
+
 	// Whether the instance currently has saved state on disk
 	// Example: false
 	Stateful bool `json:"stateful" yaml:"stateful"`
