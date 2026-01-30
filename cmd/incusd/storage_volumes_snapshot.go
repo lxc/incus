@@ -206,7 +206,7 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 		pattern = "snap%d"
 	}
 
-	pattern, err = internalUtil.RenderTemplate(pattern, pongo2.Context{
+	renderedPattern, err := internalUtil.RenderTemplate(pattern, pongo2.Context{
 		"creation_date": time.Now(),
 	})
 	if err != nil {
@@ -214,16 +214,18 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 	}
 
 	// Get a snapshot name.
-	if req.Name == "" && strings.Count(pattern, "%d") == 1 {
+	if req.Name == "" && strings.Count(renderedPattern, "%d") == 1 {
 		var i int
 
 		_ = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			i = tx.GetNextStorageVolumeSnapshotIndex(ctx, poolName, volumeName, volumeType, pattern)
+			i = tx.GetNextStorageVolumeSnapshotIndex(ctx, poolName, volumeName, volumeType, renderedPattern)
 
 			return nil
 		})
 
-		req.Name = fmt.Sprintf(pattern, i)
+		req.Name = fmt.Sprintf(renderedPattern, i)
+	} else if req.Name == "" && renderedPattern != pattern {
+		req.Name = renderedPattern
 	} else if req.Name != "" {
 		// Make sure the snapshot doesn't already exist.
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
