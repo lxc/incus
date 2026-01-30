@@ -1515,6 +1515,11 @@ definitions:
                         type: disk
                 type: object
                 x-go-name: Devices
+            disk_only:
+                description: Whether only the instances disk should be restored
+                example: false
+                type: boolean
+                x-go-name: DiskOnly
             ephemeral:
                 description: Whether the instance is ephemeral (deleted on shutdown)
                 example: false
@@ -1794,6 +1799,11 @@ definitions:
                         type: disk
                 type: object
                 x-go-name: Devices
+            disk_only:
+                description: Whether only the instances disk should be restored
+                example: false
+                type: boolean
+                x-go-name: DiskOnly
             ephemeral:
                 description: Whether the instance is ephemeral (deleted on shutdown)
                 example: false
@@ -1989,6 +1999,11 @@ definitions:
                         type: disk
                 type: object
                 x-go-name: Devices
+            disk_only:
+                description: Whether only the instances disk should be restored
+                example: false
+                type: boolean
+                x-go-name: DiskOnly
             ephemeral:
                 description: Whether the instance is ephemeral (deleted on shutdown)
                 example: false
@@ -2604,6 +2619,11 @@ definitions:
                         type: disk
                 type: object
                 x-go-name: Devices
+            disk_only:
+                description: Whether only the instances disk should be restored
+                example: false
+                type: boolean
+                x-go-name: DiskOnly
             ephemeral:
                 description: Whether the instance is ephemeral (deleted on shutdown)
                 example: false
