@@ -1086,10 +1086,20 @@ func (d *lvm) RenameVolume(vol Volume, newVolName string, op *operations.Operati
 			snapVolPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, snapVolName)
 			newSnapVolName := GetSnapshotVolumeName(newVolName, snapName)
 			newSnapVolPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, newSnapVolName)
+
+			snapVol, err := vol.NewSnapshot(snapName)
+			if err != nil {
+				return err
+			}
+
+			releaseSnap, _ := d.acquireExclusive(snapVol)
+
 			err = d.renameLogicalVolume(snapVolPath, newSnapVolPath)
 			if err != nil {
 				return err
 			}
+
+			releaseSnap()
 
 			reverter.Add(func() { _ = d.renameLogicalVolume(newSnapVolPath, snapVolPath) })
 		}

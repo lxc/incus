@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/operations"
@@ -195,6 +196,45 @@ func Qcow2CreateConfig(vol Volume, op *operations.Operation) error {
 		_, err := subprocess.RunCommand("btrfs", "subvolume", "create", volPath)
 		if err != nil {
 			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Qcow2RenameConfig renames the btrfs config filesystem associated with the QCOW2 block volume.
+func Qcow2RenameConfig(vol Volume, newName string, op *operations.Operation) error {
+	err := Qcow2MountConfigTask(vol, op, func(mountPath string) error {
+		_, volName := project.StorageVolumeParts(vol.Name())
+		entries, err := os.ReadDir(mountPath)
+		if err != nil {
+			return err
+		}
+
+		// Iterate through all entries (directories) and rename them.
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				continue
+			}
+
+			oldName := entry.Name()
+
+			if oldName == volName || strings.HasPrefix(oldName, volName) {
+				newName := newName + strings.TrimPrefix(oldName, volName)
+
+				oldPath := filepath.Join(mountPath, oldName)
+				newPath := filepath.Join(mountPath, newName)
+
+				err := os.Rename(oldPath, newPath)
+				if err != nil {
+					return fmt.Errorf("Failed to rename %q to %q: %w", oldPath, newPath, err)
+				}
+			}
 		}
 
 		return nil
