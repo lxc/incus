@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-01-20 21:57-0500\n"
-"PO-Revision-Date: 2026-01-29 17:01+0000\n"
+"PO-Revision-Date: 2026-01-30 16:56+0000\n"
 "Last-Translator: Benjamin Somers <benjamin.somers@imt-atlantique.fr>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
@@ -1249,7 +1249,7 @@ msgstr "Ce paramètre n’est pas de la forme <clef>=<valeur> : %s"
 
 #: cmd/incus/remote.go:142
 msgid "Binary helper for retrieving credentials"
-msgstr ""
+msgstr "Outil à utiliser pour récupérer les identifiants"
 
 #: cmd/incus/network.go:1032
 msgid "Bond:"
@@ -1476,7 +1476,7 @@ msgstr "Cartes : %s (%s)"
 #: cmd/incus/config_trust.go:874
 #, c-format
 msgid "Certificate add token for %s deleted"
-msgstr "Jeton d'ajout du certificat pour %s supprimé"
+msgstr "Jeton d’ajout de certificat pour « %s » supprimé"
 
 #: cmd/incus/config_trust.go:188
 msgid "Certificate description"
@@ -2642,7 +2642,7 @@ msgstr "Ne pas afficher les informations sur l'état d'avancement"
 
 #: cmd/incus/network.go:1036
 msgid "Down delay"
-msgstr ""
+msgstr "Délai de désactivation"
 
 #: cmd/incus/info.go:382 cmd/incus/info.go:394
 #, c-format
@@ -3736,7 +3736,7 @@ msgstr "Format de l’export mémoire (elf, win-dmp, kdump-zlib, kdump-raw-zlib�
 
 #: cmd/incus/network.go:1048
 msgid "Forward delay"
-msgstr ""
+msgstr "Délai de changement d’état"
 
 #: cmd/incus/main_aliases.go:151
 #, c-format
@@ -4630,6 +4630,21 @@ msgid ""
 "  t - Type\n"
 "  L - Location of the DHCP Lease (e.g. its cluster member)"
 msgstr ""
+"Lister les baux DHCP\n"
+"\n"
+"Disposition des colonnes par défaut : hmitL\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs de bail DHCP afficher lorsque "
+"l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – h : nom d’hôte\n"
+" – m : adresse MAC\n"
+" – i : adresse IP\n"
+" – t : type\n"
+" – L : localisation du bail DHCP (membre du cluster)"
 
 #: cmd/incus/network_address_set.go:99
 #, fuzzy
@@ -4665,6 +4680,19 @@ msgid ""
 "  t - Token\n"
 "  E - Expires At"
 msgstr ""
+"Lister tous les jetons d’ajout de certificat actifs\n"
+"\n"
+"Disposition des colonnes par défaut : ntE\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs de jeton afficher lorsque "
+"l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – n : nom\n"
+" – t : jeton\n"
+" – E : date d’expiration"
 
 #: cmd/incus/cluster.go:1213
 msgid "List all active cluster member join tokens"
@@ -4691,6 +4719,19 @@ msgid ""
 "  t - Token\n"
 "  E - Expires At"
 msgstr ""
+"Lister tous les jetons d’association actifs des membres du cluster\n"
+"\n"
+"Disposition des colonnes par défaut : nte\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs de jeton afficher lorsque "
+"l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – n : nom\n"
+" – t : jeton\n"
+" – E : date d’expiration"
 
 #: cmd/incus/cluster_group.go:462
 msgid "List all the cluster groups"
@@ -4717,6 +4758,19 @@ msgid ""
 "  d - Description\n"
 "  m - Member"
 msgstr ""
+"Lister tous les groupes de serveurs\n"
+"\n"
+"Disposition des colonnes par défaut : ndm\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs de groupe de serveurs afficher "
+"lorsque l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – n : nom\n"
+" – d : description\n"
+" – m : membre"
 
 #: cmd/incus/cluster.go:148
 msgid "List all the cluster members"
@@ -4743,6 +4797,23 @@ msgid ""
 "    s - Status\n"
 "    m - Message"
 msgstr ""
+"Lister tous les membres du cluster\n"
+"\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs de membre afficher lorsque "
+"l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Disposition des colonnes par défaut : nurafdsm\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+"– n : nom\n"
+" – u : URL\n"
+" – r : rôles\n"
+" – a : architecture\n"
+" – f : domaine de défaillance\n"
+" – d : description\n"
+" – s : état\n"
+" – m : message"
 
 #: cmd/incus/warning.go:99
 msgid "List all warnings"
@@ -4762,7 +4833,7 @@ msgstr "Lister les ensembles d’adresses réseau disponibles"
 
 #: cmd/incus/network_forward.go:94
 msgid "List available network forwards"
-msgstr ""
+msgstr "Lister les redirections réseau disponibles"
 
 #: cmd/incus/network_forward.go:95
 msgid ""
@@ -4787,6 +4858,21 @@ msgid ""
 "p - Port\n"
 "L - Location of the network zone (e.g. its cluster member)"
 msgstr ""
+"Lister les redirections réseau disponibles\n"
+"\n"
+"Disposition des colonnes par défaut : ldDp\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs de redirection réseau afficher "
+"lorsque l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – l : adresse d’écoute\n"
+" – d : description\n"
+" – D : adresse cible par défaut\n"
+" – p : port\n"
+" – L : localisation de la redirection réseau (membre du cluster)"
 
 #: cmd/incus/network_load_balancer.go:103
 msgid "List available network load balancers"
@@ -4814,6 +4900,20 @@ msgid ""
 "  p - Ports\n"
 "  L - Location of the operation (e.g. its cluster member)"
 msgstr ""
+"Lister les équilibreurs de charge réseau disponibles\n"
+"\n"
+"Disposition des colonnes par défaut : ldp\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs d’équilibreur de charge afficher "
+"lorsque l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – l : adresse d’écoute\n"
+" – d : description\n"
+" – p : ports\n"
+" – L : localisation de l’équilibreur de charge (membre du cluster)"
 
 #: cmd/incus/network_peer.go:90
 msgid "List available network peers"
@@ -4842,6 +4942,21 @@ msgid ""
 "  t - Type\n"
 "  s - State"
 msgstr ""
+"Lister les pairs réseau disponibles\n"
+"\n"
+"Disposition des colonnes par défaut : ndpts\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs de bail DHCP afficher lorsque "
+"l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – n : nom\n"
+" – d : description\n"
+" – p : pair\n"
+" – t : type\n"
+" – s : état"
 
 #: cmd/incus/network_zone.go:883 cmd/incus/network_zone.go:884
 msgid "List available network zone records"
@@ -4869,6 +4984,20 @@ msgid ""
 "  n - Name\n"
 "  u - Used by"
 msgstr ""
+"Lister les zones réseau disponibles\n"
+"\n"
+"Disposition des colonnes par défaut : nDSdus\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs de bail DHCP afficher lorsque "
+"l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – d : description\n"
+" – e : nom du projet\n"
+" – n : nom de la zone\n"
+" – u : références"
 
 #: cmd/incus/network_zone.go:95
 msgid "List available network zones"
@@ -4906,6 +5035,36 @@ msgid ""
 "t - Interface type\n"
 "u - Used by (count)"
 msgstr ""
+"Lister les réseaux disponibles\n"
+"\n"
+"Disposition des colonnes par défaut : ntm46dus\n"
+"\n"
+"Les filtres peuvent être de la forme <clef>=<valeur> pour du filtrage de "
+"propriétés, ou encore une partie du nom des réseaux cherchés.\n"
+"Lorsque plusieurs filtres sont indiqués, ils sont combinés de telle sorte "
+"que le filtre final sélectionnera les instances satisfaisant chacune des "
+"conditions.\n"
+"\n"
+"Exemples :\n"
+" – « foo » liste tous les réseaux dont le nom commence par « foo »\n"
+" – « name=foo » liste tous les réseaux dont le nom est exactement « foo »\n"
+" – « type=bridge » liste tous les réseaux de type bridge\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs de réseau afficher lorsque "
+"l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – 4 : adresse IPv4\n"
+" – 6 : adresse IPv6\n"
+" – d : description\n"
+" – e : nom du projet\n"
+" – m : si le réseau est géré par Incus\n"
+" – n : nom de l’interface réseau\n"
+" – s : état\n"
+" – t : type d’interface\n"
+" – u : nombre de références"
 
 #: cmd/incus/storage.go:683
 msgid "List available storage pools"
@@ -4935,6 +5094,22 @@ msgid ""
 "  u - used by\n"
 "  s - state"
 msgstr ""
+"Liste les pools de stockage disponibles\n"
+"\n"
+"Disposition des colonnes par défaut : nDdus\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs de pool de stockage afficher "
+"lorsque l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – n : nom\n"
+" – D : driver\n"
+" – d : description\n"
+" – S : source\n"
+" – u : références\n"
+" – s : état"
 
 #: cmd/incus/operation.go:122
 msgid "List background operations"
@@ -4965,6 +5140,23 @@ msgid ""
 "  C - Created\n"
 "  L - Location of the operation (e.g. its cluster member)"
 msgstr ""
+"Lister les opérations en arrière-plan\n"
+"\n"
+"Disposition des colonnes par défaut : itdscCL\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs d’opération afficher lorsque "
+"l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – i : identifiant\n"
+" – t : type\n"
+" – d : description\n"
+" – s : état\n"
+" – c : si l’opération est annulable\n"
+" – C : date de création\n"
+" – L : localisation de l’opération (membre du cluster)"
 
 #: cmd/incus/image_alias.go:196
 msgid "List image aliases"
@@ -4993,6 +5185,23 @@ msgid ""
 "  t - Type\n"
 "  d - Description"
 msgstr ""
+"Lister les alias des images\n"
+"\n"
+"Disposition des colonnes par défaut : aftd\n"
+"\n"
+"Les filtres permettent de chercher tout ou partie des empreintes et des noms "
+"des instances.\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs d’alias afficher lorsque "
+"l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – a : alias\n"
+" – f : empreinte\n"
+" – t : type\n"
+" – d : description"
 
 #: cmd/incus/image.go:1087
 msgid "List images"
@@ -5025,6 +5234,31 @@ msgid ""
 "    u - Upload date\n"
 "    t - Type"
 msgstr ""
+"Lister les images\n"
+"\n"
+"Disposition des colonnes par défaut : lfpdasu\n"
+"\n"
+"Les filtres peuvent être de la forme <clef>=<valeur> pour du filtrage de "
+"propriétés, ou encore une partie de l’empreinte ou d’un alias des images "
+"cherchées.\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs d’image afficher lorsque "
+"l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – l : alias le plus court (et potentiel nombre d’autres alias)\n"
+" – L : liste des alias (un par ligne)\n"
+" – f : empreinte (raccourcie)\n"
+" – F : empreinte (complète)\n"
+" – p : si l’image est publique\n"
+" – d : description\n"
+" – e : projet\n"
+" – a : architecture\n"
+" – s : taille\n"
+" – u : date de téléversement\n"
+" – t : type"
 
 #: cmd/incus/config_device.go:325 cmd/incus/config_device.go:326
 #, fuzzy
@@ -5062,6 +5296,20 @@ msgid ""
 "  E - Expires At\n"
 "  s - Stateful"
 msgstr ""
+"Lister les instantanés d’une instance\n"
+"\n"
+"Disposition des colonnes par défaut : nTEs\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs d’instantané afficher lorsque "
+"l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – n : nom\n"
+" – T : date de prise\n"
+" – E : date d’expiration\n"
+" – s : si l’instantané porte l’état dynamique de l’instance"
 
 #: cmd/incus/list.go:52
 msgid "List instances"
@@ -5263,6 +5511,21 @@ msgid ""
 "  n - NAT\n"
 "  m - Mac Address"
 msgstr ""
+"Lister les allocations réseau utilisées\n"
+"\n"
+"Disposition des colonnes par défaut : uatnm\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs d’allocation réseau afficher "
+"lorsque l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – u : références\n"
+" – a : adresse\n"
+" – t : type\n"
+" – n : NAT\n"
+" – m : adresse MAC"
 
 #: cmd/incus/network_integration.go:418
 msgid "List network integrations"
@@ -5290,6 +5553,20 @@ msgid ""
 "\tt - Type\n"
 "\tu - Used by"
 msgstr ""
+"Lister les intégrations réseau\n"
+"\n"
+"Disposition des colonnes par défaut : ndtu\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs d’intégration réseau afficher "
+"lorsque l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – n : nom\n"
+" – d : description\n"
+" – t : type\n"
+" – u : références"
 
 #: cmd/incus/network.go:1136
 #, fuzzy
@@ -5424,6 +5701,19 @@ msgid ""
 "  d - Description\n"
 "  r - Role"
 msgstr ""
+"Lister les entrées d’un bucket de stockage\n"
+"\n"
+"Disposition des colonnes par défaut : ndr\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs d’entrée de bucket afficher "
+"lorsque l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – n : nom\n"
+" – d : description\n"
+" – r : rôle"
 
 #: cmd/incus/storage_bucket.go:498
 #, fuzzy
@@ -5452,6 +5742,20 @@ msgid ""
 "  d - Description\n"
 "  L - Location of the storage bucket (e.g. its cluster member)"
 msgstr ""
+"Lister les entrées buckets de stockage\n"
+"\n"
+"Disposition des colonnes par défaut : ndL\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs de bucket afficher lorsque "
+"l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – e : nom du projet\n"
+" – n : nom\n"
+" – d : description\n"
+" – L : localisation du bucket de stockage (membre du cluster)"
 
 #: cmd/incus/storage_volume.go:3663 cmd/incus/storage_volume.go:3664
 msgid "List storage volume snapshots"
@@ -5470,6 +5774,17 @@ msgid ""
 "\t\tT - Taken at\n"
 "\t\tE - Expiry"
 msgstr ""
+"Lister les instantanés d’un volume de stockage\n"
+"\n"
+"== Colonnes ==\n"
+"L’option -c prend une liste d’arguments séparés par des virgules "
+"(optionnelles) contrôlant quels attributs d’instantané afficher lorsque "
+"l’affichage est demandé dans un format tabulaire.\n"
+"\n"
+"Les arguments valides pour cette option sont les caractères suivants :\n"
+" – n : nom\n"
+" – t : date de prise\n"
+" – E : date d’expiration"
 
 #: cmd/incus/storage_volume.go:1598
 msgid "List storage volumes"
@@ -6665,19 +6980,19 @@ msgstr ""
 
 #: cmd/incus/network_load_balancer.go:1077
 msgid "No matching backend found"
-msgstr ""
+msgstr "Aucun backend correspondant n’a été trouvé"
 
 #: cmd/incus/network_forward.go:1132 cmd/incus/network_load_balancer.go:1298
 msgid "No matching port(s) found"
-msgstr ""
+msgstr "Aucun port correspondant n’a été trouvé"
 
 #: cmd/incus/network_acl.go:1165
 msgid "No matching rule(s) found"
-msgstr ""
+msgstr "Aucune règle correspondante n’a été trouvée"
 
 #: cmd/incus/admin_init_interactive.go:268
 msgid "No storage backends available"
-msgstr ""
+msgstr "Aucun backend de stockage n’est disponible"
 
 #: cmd/incus/storage_volume.go:437 cmd/incus/storage_volume.go:1909
 msgid "No storage pool for source volume specified"
@@ -6694,22 +7009,24 @@ msgstr ""
 #: cmd/incus/config_device.go:148 cmd/incus/config_device.go:468
 #, c-format
 msgid "No value found in %q"
-msgstr ""
+msgstr "Ce champ doit être de la forme <clef>=<valeur> : %q"
 
 #: cmd/incus/info.go:540
 #, c-format
 msgid "Node %d:\n"
-msgstr ""
+msgstr "Nœud %d :\n"
 
 #: cmd/incus/admin_init_auto.go:32
 msgid ""
 "None of --storage-pool, --storage-create-device or --storage-create-loop may "
 "be used with the 'dir' backend"
 msgstr ""
+"Aucune des options --storage-pool, --storage-create-device, ou --storage-"
+"create-loop ne peut être utilisée avec le backend « dir »"
 
 #: cmd/incus/admin_init_interactive.go:407
 msgid "Number of placement groups"
-msgstr ""
+msgstr "Nombre de groupes de placement"
 
 #: cmd/incus/info.go:705
 msgid "OS"
@@ -6726,6 +7043,7 @@ msgstr "OVN :"
 #: cmd/incus/network_address_set.go:809
 msgid "One or more provided address isn't currently in the set"
 msgstr ""
+"Une ou plusieurs des adresses fournies n’est pas dans l’ensemble d’adresses"
 
 #: cmd/incus/storage_volume.go:237 cmd/incus/storage_volume.go:330
 msgid "Only \"custom\" volumes can be attached to instances"
@@ -6761,6 +7079,8 @@ msgstr "Seuls les réseaux gérés par Incus peuvent être modifiés"
 msgid ""
 "Only one of --storage-create-device or --storage-create-loop can be specified"
 msgstr ""
+"Seule l’une des options --storage-create-device et --storage-create-loop "
+"peut être spécifiée"
 
 #: cmd/incus/webui.go:18 cmd/incus/webui.go:19
 msgid "Open the web interface"
@@ -6978,7 +7298,7 @@ msgstr ""
 
 #: cmd/incus/monitor.go:51
 msgid "Pretty rendering (short for --format=pretty)"
-msgstr ""
+msgstr "Affichage stylisé (raccourci pour --format=pretty)"
 
 #: cmd/incus/main.go:126
 msgid "Print help"
@@ -7166,7 +7486,7 @@ msgstr "Création du conteneur"
 #: cmd/incus/utils_sftp.go:190
 #, c-format
 msgid "Pulling %s from %s: %%s"
-msgstr ""
+msgstr "Récupération de « %s » depuis « %s » : %%s"
 
 #: cmd/incus/storage_volume.go:3100 cmd/incus/storage_volume.go:3101
 #, fuzzy
@@ -7182,7 +7502,7 @@ msgstr "Création du conteneur"
 #: cmd/incus/utils_sftp.go:310
 #, c-format
 msgid "Pushing %s to %s: %%s"
-msgstr ""
+msgstr "Envoi de « %s » à « %s » : %%s"
 
 #: cmd/incus/query.go:90
 msgid "Query path must start with /"
@@ -7199,7 +7519,7 @@ msgstr "SOURCE"
 
 #: cmd/incus/config_trust.go:454
 msgid "RESTRICTED"
-msgstr ""
+msgstr "RESTREINT"
 
 #: cmd/incus/storage_bucket.go:985
 msgid "ROLE"
@@ -7322,6 +7642,8 @@ msgid ""
 "Remove %s and everything it contains (instances, images, volumes, "
 "networks, ...) (yes/no): "
 msgstr ""
+"Supprimer %s et tout ce qu’il contient (instances, images, volumes, réseaux"
+"…) (oui/non) : "
 
 #: cmd/incus/cluster_group.go:619
 msgid "Remove a cluster member from a cluster group"
@@ -7488,7 +7810,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:1133 cmd/incus/cluster.go:1134
 msgid "Request a join token for adding a cluster member"
-msgstr ""
+msgstr "Demander un jeton d’association pour ajouter un membre au cluster"
 
 #: cmd/incus/delete.go:39 cmd/incus/snapshot.go:234
 msgid "Require user confirmation"
@@ -7534,7 +7856,7 @@ msgstr "Restauration du membre « %s » du cluster"
 
 #: cmd/incus/config_trust.go:99 cmd/incus/config_trust.go:184
 msgid "Restrict the certificate to one or more projects"
-msgstr ""
+msgstr "Restreindre le certificat à un ou plusieurs projets"
 
 #: cmd/incus/action.go:80 cmd/incus/action.go:81
 #, fuzzy
@@ -7561,12 +7883,12 @@ msgstr "Révoquer un jeton d’association au cluster"
 
 #: cmd/incus/storage_bucket.go:1109
 msgid "Role (admin or read-only)"
-msgstr ""
+msgstr "Rôle (« admin » ou « read-only »)"
 
 #: cmd/incus/admin_sql.go:162
 #, c-format
 msgid "Rows affected: %d"
-msgstr ""
+msgstr "Lignes modifiées : %d"
 
 #: cmd/incus/network_acl.go:912
 #, fuzzy
@@ -7596,7 +7918,7 @@ msgstr "Rendre l'image publique"
 
 #: cmd/incus/warning.go:223
 msgid "SEVERITY"
-msgstr ""
+msgstr "GRAVITÉ"
 
 #: cmd/incus/image.go:1150
 msgid "SIZE"
@@ -7617,17 +7939,17 @@ msgstr "SOURCE"
 
 #: cmd/incus/info.go:166 cmd/incus/info.go:275
 msgid "SR-IOV information:"
-msgstr ""
+msgstr "Information SR-IOV :"
 
 #: cmd/incus/utils.go:641
 #, c-format
 msgid "SSH SFTP listening on %v"
-msgstr ""
+msgstr "Le SFTP SSH écoute sur %v"
 
 #: cmd/incus/utils.go:658
 #, c-format
 msgid "SSH client connected %q"
-msgstr ""
+msgstr "Client SSH %q connecté"
 
 #: cmd/incus/utils.go:659
 #, c-format
@@ -7674,7 +7996,7 @@ msgstr "VOLUMES DE STOCKAGE"
 
 #: cmd/incus/network.go:1047
 msgid "STP"
-msgstr ""
+msgstr "STP"
 
 #: cmd/incus/admin_recover.go:183
 msgid "Scanning for unknown volumes..."
@@ -7682,7 +8004,7 @@ msgstr ""
 
 #: cmd/incus/storage_bucket.go:1111
 msgid "Secret key (auto-generated if empty)"
-msgstr ""
+msgstr "Clef secrète (auto-générée si vide)"
 
 #: cmd/incus/storage_bucket.go:1195
 #, c-format
@@ -7691,12 +8013,12 @@ msgstr "Clef secrète : %s"
 
 #: cmd/incus/query.go:34 cmd/incus/query.go:35
 msgid "Send a raw query to the server"
-msgstr ""
+msgstr "Envoyer une requête brute au serveur"
 
 #: cmd/incus/info.go:370
-#, fuzzy, c-format
+#, c-format
 msgid "Serial Number: %v"
-msgstr "Marque : %v"
+msgstr "Numéro de série : %v"
 
 #: cmd/incus/info.go:620
 msgid "Serial device:"
@@ -7707,38 +8029,35 @@ msgid "Serial devices:"
 msgstr "Périphériques série :"
 
 #: cmd/incus/info.go:467 cmd/incus/info.go:483
-#, fuzzy, c-format
+#, c-format
 msgid "Serial: %s"
-msgstr "Serveur distant : %s"
+msgstr "Numéro de série : %s"
 
 #: cmd/incus/info.go:444
-#, fuzzy, c-format
+#, c-format
 msgid "Serial: %v"
-msgstr "Marque : %v"
+msgstr "Numéro de série : %v"
 
 #: cmd/incus/remote.go:138
 msgid "Server authentication type (tls or oidc)"
-msgstr ""
+msgstr "Type d’authentification du serveur (« tls » ou « oidc »)"
 
 #: cmd/incus/remote.go:511
 msgid "Server certificate NACKed by user"
 msgstr "Certificat serveur rejeté par l'utilisateur"
 
 #: cmd/incus/remote.go:646
-#, fuzzy
 msgid "Server doesn't trust us after authentication"
-msgstr ""
-"Le serveur ne nous fait pas confiance après l'ajout de notre certificat"
+msgstr "Le serveur ne nous fait pas confiance après authentification"
 
 #: cmd/incus/cluster.go:308 cmd/incus/cluster.go:1319 cmd/incus/cluster.go:1418
 #: cmd/incus/cluster.go:1528 cmd/incus/cluster_group.go:573
 msgid "Server isn't part of a cluster"
-msgstr ""
+msgstr "Le serveur ne fait pas partie d’un cluster"
 
 #: cmd/incus/remote.go:137
-#, fuzzy
 msgid "Server protocol (incus, oci or simplestreams)"
-msgstr "Protocole du serveur (lxd ou simplestreams)"
+msgstr "Protocole du serveur (« incus », « oci » ou « simplestreams »)"
 
 #: cmd/incus/version.go:60
 #, c-format
@@ -7746,9 +8065,9 @@ msgid "Server version: %s\n"
 msgstr "Version du serveur : %s\n"
 
 #: cmd/incus/image.go:1055
-#, fuzzy, c-format
+#, c-format
 msgid "Server: %s"
-msgstr "Serveur distant : %s"
+msgstr "Serveur : %s"
 
 #: cmd/incus/cluster_group.go:974
 msgid "Set a cluster group's configuration keys"
@@ -8409,9 +8728,8 @@ msgid "State: %s"
 msgstr "État : %s"
 
 #: cmd/incus/info.go:858
-#, fuzzy
 msgid "Stateful"
-msgstr "à suivi d'état"
+msgstr "Porte un état"
 
 #: cmd/incus/info.go:662
 #, c-format
@@ -8423,9 +8741,8 @@ msgid "Stop instances"
 msgstr "Arrêter des instances"
 
 #: cmd/incus/publish.go:41
-#, fuzzy
 msgid "Stop the instance if currently running"
-msgstr "Arrêter le conteneur s'il est en cours d'exécution"
+msgstr "Arrêter l’instance si elle est en cours d’exécution"
 
 #: cmd/incus/publish.go:158
 msgid "Stopping instance failed!"
@@ -8439,6 +8756,8 @@ msgstr "L'arrêt de l'instance a échoué : %s"
 #: cmd/incus/admin_init.go:55
 msgid "Storage backend to use (btrfs, dir, lvm or zfs, default: dir)"
 msgstr ""
+"Backend de stockage à utiliser (« btrfs », « dir », « lvm », ou « zfs » ; "
+"par défaut, « dir »)"
 
 #: cmd/incus/storage_bucket.go:193
 #, c-format
@@ -8462,7 +8781,7 @@ msgstr "L’entrée %q du bucket de stockage a été supprimée"
 
 #: cmd/incus/admin_init_auto.go:52
 msgid "Storage has already been configured"
-msgstr ""
+msgstr "Le stockage a déjà été configuré"
 
 #: cmd/incus/admin_recover.go:120
 #, c-format
@@ -8527,9 +8846,8 @@ msgid "Storage volume snapshot %s deleted from %s"
 msgstr "L’instantané %s du volume de stockage %s a été supprimé"
 
 #: cmd/incus/action.go:160
-#, fuzzy
 msgid "Store the instance state"
-msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
+msgstr "Stocker l’état de l’instance"
 
 #: cmd/incus/cluster.go:1568
 msgid "Successfully updated cluster certificates"
@@ -8638,10 +8956,13 @@ msgstr "Le pool de stockage %s existe déjà"
 #: cmd/incus/console.go:141
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr ""
+"Le drapeau --show-log n’est supporté que pour les sorties de type « console »"
 
 #: cmd/incus/admin_init_interactive.go:525
 msgid "The LVM thin provisioning tools couldn't be found on the system"
 msgstr ""
+"Les outils d’allocation dynamique LVM n’ont pas pu être trouvés sur ce "
+"système"
 
 #: cmd/incus/admin_init_interactive.go:513
 msgid ""
@@ -8678,15 +8999,15 @@ msgstr "Le périphérique existe déjà"
 
 #: cmd/incus/network_acl.go:1046 cmd/incus/network_acl.go:1188
 msgid "The direction argument must be one of: ingress, egress"
-msgstr ""
+msgstr "La direction doit être soit « ingress » soit « egress »"
 
 #: cmd/incus/admin_recover.go:214
 msgid "The following unknown storage pools have been found:"
-msgstr ""
+msgstr "Les pools de stockage inconnus suivants ont été trouvés :"
 
 #: cmd/incus/admin_recover.go:221
 msgid "The following unknown volumes have been found:"
-msgstr ""
+msgstr "Les volumes inconnus suivants ont été trouvés :"
 
 #: cmd/incus/delete.go:112
 msgid "The instance is currently running, stop it first or pass --force"
@@ -8732,7 +9053,7 @@ msgstr "L'image locale '%s' n'a pas été trouvée, essayer '%s:' à la place."
 
 #: cmd/incus/top.go:173
 msgid "The minimum refresh rate is 10s"
-msgstr ""
+msgstr "La fréquence de rafraîchissement minimum est de 10 secondes"
 
 #: cmd/incus/config_device.go:461
 #, fuzzy
@@ -8839,6 +9160,7 @@ msgstr "La propriété avec la balise %q n’existe pas"
 #: cmd/incus/admin_recover.go:165
 msgid "The recovery process will be scanning the following storage pools:"
 msgstr ""
+"Le processus de récupération va scanner les pools de stockage suivants :"
 
 #: cmd/incus/admin_init_auto.go:27
 #, c-format
@@ -8851,7 +9173,7 @@ msgstr ""
 #: cmd/incus/admin_init_auto.go:23
 #, c-format
 msgid "The requested backend '%s' isn't supported by init"
-msgstr ""
+msgstr "Le backend « %s » demandé n’est pas supporté par Incus"
 
 #: cmd/incus/admin_init_interactive.go:123
 msgid "The requested interface doesn't exist. Please choose another one."
@@ -9016,9 +9338,9 @@ msgid "Transferring image: %s"
 msgstr "Transfert de l'image : %s"
 
 #: cmd/incus/copy.go:359 cmd/incus/move.go:345
-#, fuzzy, c-format
+#, c-format
 msgid "Transferring instance: %s"
-msgstr "Transfert de l'image : %s"
+msgstr "Transfert de l’instance : %s"
 
 #: cmd/incus/network.go:1034
 msgid "Transmit policy"
@@ -9047,6 +9369,8 @@ msgid ""
 "Type of connection to establish: 'console' for serial console, 'vga' for "
 "SPICE graphical output"
 msgstr ""
+"Type de connexion à établir (« console » pour une console série ou « vga » "
+"pour une console graphique SPICE)"
 
 #: cmd/incus/network_peer.go:347
 msgid "Type of peer (local or remote)"
@@ -9415,7 +9739,7 @@ msgstr "Utilisé : %v"
 
 #: cmd/incus/exec.go:65
 msgid "User ID to run the command as (default 0)"
-msgstr ""
+msgstr "UID avec lequel lancer la commande (par défaut, 0)"
 
 #: cmd/incus/cluster.go:1939
 msgid "User aborted configuration"
@@ -10526,18 +10850,25 @@ msgid ""
 "incus alias remove my-list\n"
 "    Remove the \"my-list\" alias."
 msgstr ""
+"incus alias remove my-list\n"
+"    Supprime l’alias « my-list »."
 
 #: cmd/incus/alias.go:176
 msgid ""
 "incus alias rename list my-list\n"
 "    Rename existing alias \"list\" to \"my-list\"."
 msgstr ""
+"incus alias rename list my-list\n"
+"    Renomme l’alias « list » en « my-list »."
 
 #: cmd/incus/cluster.go:926
 msgid ""
 "incus cluster edit <cluster member> < member.yaml\n"
 "    Update a cluster member using the content of member.yaml"
 msgstr ""
+"incus cluster edit <membre> < member.yaml\n"
+"    Met à jour le membre d’un cluster en utilisant le contenu du fichier "
+"member.yaml"
 
 #: cmd/incus/cluster_group.go:105
 msgid ""
@@ -10555,6 +10886,10 @@ msgid ""
 "incus cluster group create g1 < config.yaml\n"
 "\tCreate a cluster group with configuration from config.yaml"
 msgstr ""
+"incus cluster group create g1\n"
+"\n"
+"incus cluster group create g1 < config.yaml\n"
+"\tCréer un groupe de serveurs en lisant la configuration depuis config.yaml"
 
 #: cmd/incus/config_device.go:87
 msgid ""
@@ -10895,6 +11230,12 @@ msgid ""
 "incus profile create p1 < config.yaml\n"
 "    Create a profile named p1 with configuration from config.yaml"
 msgstr ""
+"incus profile create p1\n"
+"    Créer un profil nommé « p1 »\n"
+"\n"
+"incus profile create p1 < config.yaml\n"
+"    Créer un profil nommé « p1 » en lisant la configuration depuis "
+"config.yaml"
 
 #: cmd/incus/config_device.go:95
 msgid ""
