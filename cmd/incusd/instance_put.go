@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/db/cluster"
@@ -184,10 +183,14 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 		opType = operationtype.InstanceUpdate
 	} else {
 		// Snapshot Restore
+		if configRaw.DiskOnly && configRaw.Stateful {
+			return response.BadRequest(errors.New("Cannot use option diskonly and stateful together on snapshot restore"))
+		}
+
 		do = func(op *operations.Operation) error {
 			defer unlock()
 
-			return instanceSnapRestore(s, projectName, name, configRaw.Restore, configRaw.Stateful, op)
+			return instanceSnapRestore(s, projectName, name, configRaw.Restore, configRaw.Stateful, configRaw.DiskOnly, op)
 		}
 
 		opType = operationtype.SnapshotRestore
@@ -205,7 +208,7 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 	return operations.OperationResponse(op)
 }
 
-func instanceSnapRestore(s *state.State, projectName string, name string, snap string, stateful bool, op *operations.Operation) error {
+func instanceSnapRestore(s *state.State, projectName string, name string, snap string, stateful bool, diskOnly bool, op *operations.Operation) error {
 	// normalize snapshot name
 	if !internalInstance.IsSnapshot(snap) {
 		snap = name + internalInstance.SnapshotDelimiter + snap
@@ -227,12 +230,13 @@ func instanceSnapRestore(s *state.State, projectName string, name string, snap s
 			return err
 		}
 	}
+
 	source.SetOperation(op)
 
 	// Generate a new `volatile.uuid.generation` to differentiate this instance restored from a snapshot from the original instance.
 	source.LocalConfig()["volatile.uuid.generation"] = uuid.New().String()
 
-	err = inst.Restore(source, stateful)
+	err = inst.Restore(source, stateful, diskOnly)
 	if err != nil {
 		return err
 	}
