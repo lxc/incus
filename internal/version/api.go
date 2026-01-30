@@ -519,6 +519,7 @@ var APIExtensions = []string{
 	"nic_attached_connected",
 	"nic_sriov_security_trusted",
 	"direct_backup",
+	"instance_snapshot_disk_only_restore",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
