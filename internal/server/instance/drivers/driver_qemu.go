@@ -8281,7 +8281,8 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			architectureName, _ := osarch.ArchitectureName(d.Architecture())
 			apiInstSnap := &api.InstanceSnapshot{
 				InstanceSnapshotPut: api.InstanceSnapshotPut{
-					ExpiresAt: time.Time{},
+					ExpiresAt:           d.SnapshotExpiryDate(),
+					SnapshotDescription: d.SnapshotDescription(),
 				},
 				Architecture: architectureName,
 				CreatedAt:    d.CreationDate(),

@@ -9,11 +9,12 @@
 package migration
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -345,6 +346,7 @@ type Snapshot struct {
 	CreationDate  *int64                 `protobuf:"varint,8,opt,name=creation_date,json=creationDate" json:"creation_date,omitempty"`
 	LastUsedDate  *int64                 `protobuf:"varint,9,opt,name=last_used_date,json=lastUsedDate" json:"last_used_date,omitempty"`
 	ExpiryDate    *int64                 `protobuf:"varint,10,opt,name=expiry_date,json=expiryDate" json:"expiry_date,omitempty"`
+	Description   *string                `protobuf:"bytes,11,opt,name=description,json=description" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -447,6 +449,13 @@ func (x *Snapshot) GetExpiryDate() int64 {
 		return *x.ExpiryDate
 	}
 	return 0
+}
+
+func (x *Snapshot) GetDescription() string {
+	if x != nil && x.Description != nil {
+		return *x.Description
+	}
+	return ""
 }
 
 type RsyncFeatures struct {

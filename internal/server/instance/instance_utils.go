@@ -975,12 +975,6 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 		dbInst = *dbRow
 
 		if dbInst.ID < 1 {
-			return fmt.Errorf("Fetch created instance from the database: %w", err)
-		}
-
-		dbInst = *dbRow
-
-		if dbInst.ID < 1 {
 			return fmt.Errorf("Unexpected instance database ID %d: %w", dbInst.ID, err)
 		}
 
@@ -1210,6 +1204,7 @@ func SnapshotToProtobuf(snap *api.InstanceSnapshot) *migration.Snapshot {
 		CreationDate: &creationDate,
 		LastUsedDate: &lastUsedDate,
 		ExpiryDate:   &expiryDate,
+		Description:  &snap.SnapshotDescription,
 	}
 }
 
@@ -1258,6 +1253,10 @@ func SnapshotProtobufToInstanceArgs(s *state.State, inst Instance, snap *migrati
 		Stateful:     snap.GetStateful(),
 		Project:      inst.Project().Name,
 		IsSnapshot:   true,
+		Snapshot: db.SnapshotArgs{
+			Description: snap.GetDescription(),
+			ExpiryDate:  time.Time{},
+		},
 	}
 
 	if snap.GetCreationDate() != 0 {
@@ -1266,6 +1265,10 @@ func SnapshotProtobufToInstanceArgs(s *state.State, inst Instance, snap *migrati
 
 	if snap.GetLastUsedDate() != 0 {
 		args.LastUsedDate = time.Unix(snap.GetLastUsedDate(), 0)
+	}
+
+	if snap.GetExpiryDate() != 0 {
+		args.Snapshot.ExpiryDate = time.Unix(snap.GetExpiryDate(), 0)
 	}
 
 	return &args, nil
