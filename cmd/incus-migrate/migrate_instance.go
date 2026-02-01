@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"os/exec"
 	"slices"
 	"strings"
 
@@ -45,6 +47,18 @@ func NewInstanceMigration(ctx context.Context, server incus.InstanceServer, aske
 // gatherInfo collects information from the user about the instance to be created.
 func (m *InstanceMigration) gatherInfo() error {
 	var err error
+
+	// Quick checks.
+	if m.migrationType == MigrationTypeContainer {
+		if os.Geteuid() != 0 {
+			return errors.New("This tool must be run as root for container migrations")
+		}
+
+		_, err := exec.LookPath("rsync")
+		if err != nil {
+			return errors.New("Unable to find required command \"rsync\"")
+		}
+	}
 
 	m.instanceArgs = api.InstancesPost{
 		Source: api.InstanceSource{
@@ -104,7 +118,7 @@ func (m *InstanceMigration) gatherInfo() error {
 	var question string
 	// Provide source path
 	if m.migrationType == MigrationTypeVM || m.migrationType == MigrationTypeVolumeBlock {
-		question = "Please provide the path to a disk, partition, or qcow2/raw/vmdk image file: "
+		question = "Please provide the path or URL to a disk, partition, or qcow2/raw/vmdk image file: "
 	} else {
 		question = "Please provide the path to a root filesystem: "
 	}
