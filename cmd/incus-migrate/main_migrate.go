@@ -48,50 +48,50 @@ type Migration struct {
 }
 
 func (m *Migration) runMigration(migrationHandler func(path string) error) error {
-	m.mounts = append(m.mounts, m.sourcePath)
-
-	// Get and sort the mounts
-	sort.Strings(m.mounts)
-
-	// Create the mount namespace and ensure we're not moved around
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
-	// Unshare a new mntns so our mounts don't leak
-	err := unix.Unshare(unix.CLONE_NEWNS)
-	if err != nil {
-		return fmt.Errorf("Failed to unshare mount namespace: %w", err)
-	}
-
-	// Prevent mount propagation back to initial namespace
-	err = unix.Mount("", "/", "", unix.MS_REC|unix.MS_PRIVATE, "")
-	if err != nil {
-		return fmt.Errorf("Failed to disable mount propagation: %w", err)
-	}
-
 	// Create the temporary directory to be used for the mounts
 	path, err := os.MkdirTemp("", "incus-migrate_mount_")
 	if err != nil {
 		return err
 	}
 
-	// Automatically clean-up the temporary path on exit
-	defer func(path string) {
-		// Unmount the path if it's a mountpoint.
-		_ = unix.Unmount(path, unix.MNT_DETACH)
-		_ = unix.Unmount(filepath.Join(path, "root.img"), unix.MNT_DETACH)
-
-		// Cleanup VM image files.
-		_ = os.Remove(filepath.Join(path, "converted-raw-image.img"))
-		_ = os.Remove(filepath.Join(path, "root.img"))
-
-		// Remove the directory itself.
-		_ = os.Remove(path)
-	}(path)
-
 	var fullPath string
 
 	if m.migrationType == MigrationTypeContainer || m.migrationType == MigrationTypeVolumeFilesystem {
+		m.mounts = append(m.mounts, m.sourcePath)
+
+		// Get and sort the mounts.
+		sort.Strings(m.mounts)
+
+		// Ensure we're not moved around.
+		runtime.LockOSThread()
+		defer runtime.UnlockOSThread()
+
+		// Unshare a new mntns so our mounts don't leak.
+		err := unix.Unshare(unix.CLONE_NEWNS)
+		if err != nil {
+			return fmt.Errorf("Failed to unshare mount namespace: %w", err)
+		}
+
+		// Prevent mount propagation back to initial namespace
+		err = unix.Mount("", "/", "", unix.MS_REC|unix.MS_PRIVATE, "")
+		if err != nil {
+			return fmt.Errorf("Failed to disable mount propagation: %w", err)
+		}
+
+		// Automatically clean-up the temporary path on exit
+		defer func(path string) {
+			// Unmount the path if it's a mountpoint.
+			_ = unix.Unmount(path, unix.MNT_DETACH)
+			_ = unix.Unmount(filepath.Join(path, "root.img"), unix.MNT_DETACH)
+
+			// Cleanup VM image files.
+			_ = os.Remove(filepath.Join(path, "converted-raw-image.img"))
+			_ = os.Remove(filepath.Join(path, "root.img"))
+
+			// Remove the directory itself.
+			_ = os.Remove(path)
+		}(path)
+
 		// Create the rootfs directory
 		fullPath = fmt.Sprintf("%s/rootfs", path)
 
@@ -149,25 +149,12 @@ func (m *Migration) runMigration(migrationHandler func(path string) error) error
 			m.sourcePath = destImg
 		}
 
+		err = os.Symlink(m.sourcePath, filepath.Join(path, "root.img"))
+		if err != nil {
+			return err
+		}
+
 		fullPath = path
-		target := filepath.Join(path, "root.img")
-
-		err = os.WriteFile(target, nil, 0o644)
-		if err != nil {
-			return fmt.Errorf("Failed to create %q: %w", target, err)
-		}
-
-		// Mount the path
-		err = unix.Mount(m.sourcePath, target, "none", unix.MS_BIND, "")
-		if err != nil {
-			return fmt.Errorf("Failed to mount %s: %w", m.sourcePath, err)
-		}
-
-		// Make it read-only
-		err = unix.Mount("", target, "none", unix.MS_BIND|unix.MS_RDONLY|unix.MS_REMOUNT, "")
-		if err != nil {
-			return fmt.Errorf("Failed to make %s read-only: %w", m.sourcePath, err)
-		}
 	}
 
 	return migrationHandler(fullPath)
@@ -451,16 +438,6 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 }
 
 func (c *cmdMigrate) run(_ *cobra.Command, _ []string) error {
-	// Quick checks.
-	if os.Geteuid() != 0 {
-		return errors.New("This tool must be run as root")
-	}
-
-	_, err := exec.LookPath("rsync")
-	if err != nil {
-		return errors.New("Unable to find required command \"rsync\"")
-	}
-
 	// Server
 	server, clientFingerprint, err := c.askServer()
 	if err != nil {

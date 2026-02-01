@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"os/exec"
 	"slices"
 	"strings"
 
@@ -45,6 +47,18 @@ func NewInstanceMigration(ctx context.Context, server incus.InstanceServer, aske
 // gatherInfo collects information from the user about the instance to be created.
 func (m *InstanceMigration) gatherInfo() error {
 	var err error
+
+	// Quick checks.
+	if m.migrationType == MigrationTypeContainer {
+		if os.Geteuid() != 0 {
+			return errors.New("This tool must be run as root for container migrations")
+		}
+
+		_, err := exec.LookPath("rsync")
+		if err != nil {
+			return errors.New("Unable to find required command \"rsync\"")
+		}
+	}
 
 	m.instanceArgs = api.InstancesPost{
 		Source: api.InstanceSource{
