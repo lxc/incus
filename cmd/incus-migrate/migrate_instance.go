@@ -118,7 +118,7 @@ func (m *InstanceMigration) gatherInfo() error {
 	var question string
 	// Provide source path
 	if m.migrationType == MigrationTypeVM || m.migrationType == MigrationTypeVolumeBlock {
-		question = "Please provide the path to a disk, partition, or qcow2/raw/vmdk image file: "
+		question = "Please provide the path or URL to a disk, partition, or qcow2/raw/vmdk image file: "
 	} else {
 		question = "Please provide the path to a root filesystem: "
 	}

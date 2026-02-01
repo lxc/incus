@@ -5,6 +5,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -214,12 +217,24 @@ func (m *Migration) askTarget() error {
 func (m *Migration) askSourcePath(question string) error {
 	var err error
 
+	var isURL bool
 	m.sourcePath, err = m.asker.AskString(question, "", func(s string) error {
+		// Allow URLs.
+		isURL = false
+
+		_, err := url.Parse(s)
+		if err == nil {
+			isURL = true
+
+			return nil
+		}
+
+		// Check if a valid path.
 		if !util.PathExists(s) {
 			return errors.New("Path does not exist")
 		}
 
-		_, err := os.Stat(s)
+		_, err = os.Stat(s)
 		if err != nil {
 			return err
 		}
@@ -228,6 +243,43 @@ func (m *Migration) askSourcePath(question string) error {
 	})
 	if err != nil {
 		return err
+	}
+
+	// If a URL, download it.
+	if isURL {
+		// Create a temporary file.
+		f, err := os.CreateTemp("", "")
+		if err != nil {
+			return err
+		}
+
+		defer func() { _ = f.Close() }()
+
+		// Download the target.
+		resp, err := http.Get(m.sourcePath)
+		if err != nil {
+			return err
+		}
+
+		defer resp.Body.Close()
+
+		fmt.Printf("Downloading %q\n", m.sourcePath)
+
+		for {
+			// Read 4MB at a time.
+			_, err = io.CopyN(f, resp.Body, 4*1024*1024)
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+
+				_ = os.Remove(f.Name())
+
+				return err
+			}
+		}
+
+		m.sourcePath = f.Name()
 	}
 
 	return nil
