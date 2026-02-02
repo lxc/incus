@@ -10,8 +10,16 @@ trap "rm -rf .tmp/" EXIT
 ## Preprocessing
 
 for fn in $(find doc/ -name '*.md'); do
-    mkdir -p $(dirname ".tmp/$fn");
-    sed -E "s/(\(.+\)=)/\1\n/" $fn > .tmp/$fn;
+    mkdir -p "$(dirname ".tmp/$fn")";
+    sed -n -E '/^\([^)]+\)=$/{
+  N
+  /\n$/ { P; D }
+  s/\n/\n\n/
+  P
+  D
+}
+p' "$fn" > ".tmp/$fn"
+
 done
 
 rm -rf .tmp/doc/reference/manpages/
