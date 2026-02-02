@@ -210,7 +210,9 @@ linkcheck_ignore = [
     'https://web.libera.chat/#lxc',
     'http://localhost:8001',
     'https://www.schlachter.tech/solutions/pongo2-template-engine/',
+    r'https://gitlab.alpinelinux.org/.*',
     r'https://developer.hashicorp.com/.*',
+    r'https://docutils.sourceforge.io/.*',
     r'/incus/docs/main/api/.*',
     r'/api/.*'
 ]

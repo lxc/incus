@@ -372,7 +372,7 @@ func BlockDiskSizeBytes(blockDiskPath string) (int64, error) {
 	}
 
 	// Block device is assumed to be a raw file.
-	fi, err := os.Lstat(blockDiskPath)
+	fi, err := os.Stat(blockDiskPath)
 	if err != nil {
 		return -1, err
 	}
