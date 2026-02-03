@@ -298,8 +298,9 @@ func MetricSetFromAPI(metrics *Metrics, labels map[string]string) (*MetricSet, e
 	// Procs stats
 	set.AddSamples(ProcsTotal, Sample{Value: float64(metrics.ProcessesTotal)})
 
-	// Uptime
-	set.AddSamples(HostUptimeSeconds, Sample{Value: float64(metrics.HostUptimeSeconds)})
+	// NodeBootTimeSeconds & NodeTimeSeconds
+	set.AddSamples(NodeBootTimeSeconds, Sample{Value: float64(metrics.NodeBootTimeSeconds)})
+	set.AddSamples(NodeTimeSeconds, Sample{Value: float64(metrics.NodeTimeSeconds)})
 
 	return set, nil
 }

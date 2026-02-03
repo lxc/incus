@@ -145,8 +145,10 @@ const (
 	GoOtherSysBytes
 	// GoNextGCBytes represents the number of heap bytes when next garbage collection will take place.
 	GoNextGCBytes
-	// HostUptimeSeconds represents the host uptime in seconds.
-	HostUptimeSeconds
+	// NodeBootTimeSeconds represents Unix time when the instance booted
+	NodeBootTimeSeconds
+	// NodeTimeSeconds represents current Unix time on the instance
+	NodeTimeSeconds
 )
 
 // MetricNames associates a metric type to its name.
@@ -215,7 +217,8 @@ var MetricNames = map[MetricType]string{
 	ProcsTotal:                  "incus_procs_total",
 	UptimeSeconds:               "incus_uptime_seconds",
 	WarningsTotal:               "incus_warnings_total",
-	HostUptimeSeconds:           "incus_host_uptime_seconds",
+	NodeBootTimeSeconds:         "incus_node_boot_time_seconds",
+	NodeTimeSeconds:             "incus_node_time_seconds",
 }
 
 // MetricHeaders represents the metric headers which contain help messages as specified by OpenMetrics.

@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/lxc/incus/v6/internal/server/metrics"
 	"github.com/lxc/incus/v6/internal/server/response"
@@ -56,7 +57,8 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	out.ProcessesTotal = uint64(osGetProcessesState())
-	out.HostUptimeSeconds = uint64(osGetUptime())
+	out.NodeBootTimeSeconds = uint64(osGetBootTime())
+	out.NodeTimeSeconds = uint64(time.Now().Unix())
 
 	cpuStats, err := osGetCPUMetrics(d)
 	if err != nil {
@@ -91,10 +93,10 @@ func getNetworkMetrics(d *Daemon) ([]metrics.NetworkMetrics, error) {
 	return out, nil
 }
 
-func osGetUptime() int64 {
-	uptime, err := host.Uptime()
+func osGetBootTime() int64 {
+	bootTime, err := host.BootTime()
 	if err != nil {
 		return -1
 	}
-	return int64(uptime)
+	return int64(bootTime)
 }
