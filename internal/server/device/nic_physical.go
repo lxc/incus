@@ -35,6 +35,16 @@ func (d *nicPhysical) CanHotPlug() bool {
 	return true
 }
 
+// CanMigrate returns whether the device can be migrated to any other cluster member.
+func (d *nicPhysical) CanMigrate() bool {
+	// If we're looking at a managed physical NIC, assume it's migratable.
+	if d.config["network"] != "" {
+		return true
+	}
+
+	return false
+}
+
 // validateConfig checks the supplied config for correctness.
 func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 	if !instanceSupported(instConf.Type(), instancetype.Container, instancetype.VM) {
