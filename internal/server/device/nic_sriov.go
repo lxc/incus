@@ -102,6 +102,15 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader) error {
 		//  shortdesc: Prevent the instance from spoofing another instance's MAC address
 		"security.mac_filtering",
 
+		// gendoc:generate(entity=devices, group=nic_sriov, key=security.trusted)
+		//
+		// ---
+		//  type: bool
+		//  default: false, if supported by parent device
+		//  managed: no
+		//  shortdesc: Allows the instance to configure the NIC in ways that may negatively impact security.
+		"security.trusted",
+
 		// gendoc:generate(entity=devices, group=nic_sriov, key=boot.priority)
 		//
 		// ---
@@ -367,6 +376,7 @@ func (d *nicSRIOV) postStop() error {
 			"last_state.vf.hwaddr":     "",
 			"last_state.vf.vlan":       "",
 			"last_state.vf.spoofcheck": "",
+			"last_state.vf.trusted":    "",
 			"last_state.pci.driver":    "",
 		})
 	}()

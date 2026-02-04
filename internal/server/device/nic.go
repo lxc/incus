@@ -31,6 +31,7 @@ func nicValidationRules(requiredFields []string, optionalFields []string, instCo
 		"limits.max":                           validate.IsAny,
 		"limits.priority":                      validate.Optional(validate.IsUint32),
 		"security.mac_filtering":               validate.IsAny,
+		"security.trusted":                     validate.Optional(validate.IsBool),
 		"security.ipv4_filtering":              validate.IsAny,
 		"security.ipv6_filtering":              validate.IsAny,
 		"security.port_isolation":              validate.Optional(validate.IsBool),
