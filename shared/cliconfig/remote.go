@@ -215,7 +215,7 @@ func (c *Config) GetImageServer(name string) (incus.ImageServer, error) {
 
 			err = subprocess.RunCommandWithFds(
 				context.TODO(),
-				strings.NewReader(fmt.Sprintf("%s://%s", u.Scheme, u.Host)),
+				strings.NewReader(u.Host),
 				&stdout,
 				remote.CredHelper,
 				"get")
