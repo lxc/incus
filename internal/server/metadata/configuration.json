@@ -1761,6 +1761,15 @@
 						}
 					},
 					{
+						"security.trusted": {
+							"default": "false, if supported by parent device",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Allows the instance to configure the NIC in ways that may negatively impact security.",
+							"type": "bool"
+						}
+					},
+					{
 						"vendorid": {
 							"longdesc": "",
 							"required": "no",
@@ -3274,6 +3283,13 @@
 						"volatile.\u003cname\u003e.last_state.vf.spoofcheck": {
 							"longdesc": "The original spoof check setting used when moving a VF into an instance.",
 							"shortdesc": "SR-IOV virtual function original spoof check setting",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.vf.trusted": {
+							"longdesc": "The original trusted setting used when moving a VF into an instance.",
+							"shortdesc": "SR-IOV virtual function original trusted setting",
 							"type": "string"
 						}
 					},
