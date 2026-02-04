@@ -258,7 +258,7 @@ func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts eva
 	return nil
 }
 
-func restoreClusterMember(d *Daemon, r *http.Request) response.Response {
+func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) response.Response {
 	s := d.State()
 
 	originName, err := url.PathUnescape(mux.Vars(r)["name"])
@@ -266,41 +266,43 @@ func restoreClusterMember(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	// List the instances.
-	var dbInstances []dbCluster.Instance
-	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		dbInstances, err = dbCluster.GetInstances(ctx, tx.Tx())
-		if err != nil {
-			return fmt.Errorf("Failed to get instances: %w", err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return response.SmartError(err)
-	}
-
+	// Handle instances.
 	instances := make([]instance.Instance, 0)
 	localInstances := make([]instance.Instance, 0)
 
-	for _, dbInst := range dbInstances {
-		inst, err := instance.LoadByProjectAndName(s, dbInst.Project, dbInst.Name)
+	if !skipInstances {
+		var dbInstances []dbCluster.Instance
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			dbInstances, err = dbCluster.GetInstances(ctx, tx.Tx())
+			if err != nil {
+				return fmt.Errorf("Failed to get instances: %w", err)
+			}
+
+			return nil
+		})
 		if err != nil {
-			return response.SmartError(fmt.Errorf("Failed to load instance: %w", err))
+			return response.SmartError(err)
 		}
 
-		if dbInst.Node == originName {
-			localInstances = append(localInstances, inst)
-			continue
-		}
+		for _, dbInst := range dbInstances {
+			inst, err := instance.LoadByProjectAndName(s, dbInst.Project, dbInst.Name)
+			if err != nil {
+				return response.SmartError(fmt.Errorf("Failed to load instance: %w", err))
+			}
 
-		// Only consider instances where volatile.evacuate.origin is set to the node which needs to be restored.
-		val, ok := inst.LocalConfig()["volatile.evacuate.origin"]
-		if !ok || val != originName {
-			continue
-		}
+			if dbInst.Node == originName {
+				localInstances = append(localInstances, inst)
+				continue
+			}
 
-		instances = append(instances, inst)
+			// Only consider instances where volatile.evacuate.origin is set to the node which needs to be restored.
+			val, ok := inst.LocalConfig()["volatile.evacuate.origin"]
+			if !ok || val != originName {
+				continue
+			}
+
+			instances = append(instances, inst)
+		}
 	}
 
 	run := func(op *operations.Operation) error {
