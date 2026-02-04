@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-01-20 21:57-0500\n"
+"POT-Creation-Date: 2026-02-04 16:37+0100\n"
 "PO-Revision-Date: 2026-01-25 17:06+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -1020,7 +1020,7 @@ msgstr "エイリアスは既に存在します: %s"
 msgid "Aliases:"
 msgstr "エイリアス:"
 
-#: cmd/incus/cluster.go:1933
+#: cmd/incus/cluster.go:1935
 msgid "All existing data is lost when joining a cluster, continue?"
 msgstr "クラスターに join すると、すべてのデータが削除されます。続けますか?"
 
@@ -1047,11 +1047,11 @@ msgstr "アーキテクチャ: %s"
 msgid "Architecture: %v"
 msgstr "アーキテクチャ: %v"
 
-#: cmd/incus/cluster.go:1831
+#: cmd/incus/cluster.go:1833
 msgid "Are you joining an existing cluster?"
 msgstr "既存のクラスターに join しますか?"
 
-#: cmd/incus/cluster.go:1670
+#: cmd/incus/cluster.go:1672
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
@@ -1447,7 +1447,7 @@ msgid ""
 msgstr ""
 "証明書のフィンガープリントが証明書トークンとサーバの間で一致しません %q"
 
-#: cmd/incus/cluster.go:1883 cmd/incus/cluster.go:2076
+#: cmd/incus/cluster.go:1885 cmd/incus/cluster.go:2078
 #, c-format
 msgid ""
 "Certificate fingerprint mismatch between join token and cluster member %q"
@@ -1469,7 +1469,7 @@ msgstr "Chassis"
 msgid "Checking if the daemon is ready (attempt %d)"
 msgstr "デーモンが準備できていることを確認しています (試行 %d)"
 
-#: cmd/incus/cluster.go:1982
+#: cmd/incus/cluster.go:1984
 #, c-format
 msgid "Choose %s:"
 msgstr "選択してください %s"
@@ -2825,7 +2825,7 @@ msgstr "環境変数を設定します (例: HOME=/home/foo)"
 msgid "Ephemeral instance"
 msgstr "Ephemeral インスタンス"
 
-#: cmd/incus/cluster.go:1877 cmd/incus/cluster.go:2070
+#: cmd/incus/cluster.go:1879 cmd/incus/cluster.go:2072
 #, c-format
 msgid "Error connecting to existing cluster member %q: %v"
 msgstr "既存のクラスターメンバー %q への接続でエラーが発生しました: %v"
@@ -2899,7 +2899,7 @@ msgstr "エラー: %v\n"
 msgid "Evacuate cluster member"
 msgstr "クラスターのメンバーを待避させます"
 
-#: cmd/incus/cluster.go:1695
+#: cmd/incus/cluster.go:1697
 #, c-format
 msgid "Evacuating cluster member: %s"
 msgstr "クラスターメンバーを待避させています: %s"
@@ -3164,7 +3164,7 @@ msgstr "デーモンへの接続に失敗しました（試行回数 %d）: %v"
 msgid "Failed converting token operation to certificate add token: %w"
 msgstr "証明書追加トークンのトークン変換操作に失敗しました: %w"
 
-#: cmd/incus/cluster.go:1183 cmd/incus/cluster.go:1917
+#: cmd/incus/cluster.go:1183 cmd/incus/cluster.go:1919
 #, c-format
 msgid "Failed converting token operation to join token: %w"
 msgstr "join トークンのトークン変換操作に失敗しました: %w"
@@ -3184,7 +3184,7 @@ msgstr "コピー後のソースボリュームの削除に失敗しました: %
 msgid "Failed generating SSH host key: %w"
 msgstr "SSH ホスト鍵の生成に失敗しました: %w"
 
-#: cmd/incus/cluster.go:2019
+#: cmd/incus/cluster.go:2021
 #, c-format
 msgid "Failed generating trust certificate: %w"
 msgstr "証明書の作成に失敗しました: %w"
@@ -3248,7 +3248,7 @@ msgstr "受信接続の受け入れに失敗しました: %w"
 msgid "Failed to add remote"
 msgstr "リモートの追加に失敗しました"
 
-#: cmd/incus/cluster.go:2029
+#: cmd/incus/cluster.go:2031
 #, c-format
 msgid "Failed to add server cert to cluster: %w"
 msgstr "サーバー証明書のクラスターへの追加に失敗しました: %w"
@@ -3288,7 +3288,7 @@ msgstr "サーバー情報の取得のための接続に失敗しました: %w"
 msgid "Failed to connect to local daemon: %w"
 msgstr "ローカルデーモンへの接続に失敗しました: %w"
 
-#: cmd/incus/cluster.go:2014
+#: cmd/incus/cluster.go:2016
 #, c-format
 msgid "Failed to connect to target cluster node %q: %w"
 msgstr "ターゲットのクラスターノード %q への接続に失敗しました: %w"
@@ -3343,7 +3343,7 @@ msgstr "ストレージボリュームのバックアップファイルの取得
 msgid "Failed to find project: %w"
 msgstr "プロジェクトが見つけられませんでした: %w"
 
-#: cmd/incus/cluster.go:2113 cmd/incus/cluster.go:2118
+#: cmd/incus/cluster.go:2115 cmd/incus/cluster.go:2120
 #, c-format
 msgid "Failed to join cluster: %w"
 msgstr "クラスターへの join に失敗しました: %w"
@@ -3373,7 +3373,7 @@ msgstr "ターゲットファイルのオープンに失敗しました %q: %w"
 msgid "Failed to parse dump response: %w"
 msgstr "ダンプレスポンスの読み取りに失敗しました: %w"
 
-#: cmd/incus/cluster.go:1660
+#: cmd/incus/cluster.go:1662
 #, c-format
 msgid "Failed to parse servers: %w"
 msgstr "サーバーの読み取りに失敗しました: %w"
@@ -3418,7 +3418,7 @@ msgstr "設定のレンダリングに失敗しました: %w"
 msgid "Failed to request dump: %w"
 msgstr "ダンプのリクエストに失敗しました: %w"
 
-#: cmd/incus/cluster.go:1978
+#: cmd/incus/cluster.go:1980
 #, c-format
 msgid "Failed to retrieve cluster information: %w"
 msgstr "クラスター情報の取得に失敗しました: %w"
@@ -3457,12 +3457,12 @@ msgstr "ネットワークのリストの取得に失敗しました: %w"
 msgid "Failed to retrieve list of storage pools: %w"
 msgstr "ストレージプールのリストの取得に失敗しました: %w"
 
-#: cmd/incus/cluster.go:1952
+#: cmd/incus/cluster.go:1954
 #, c-format
 msgid "Failed to setup trust relationship with cluster: %w"
 msgstr "クラスターとの信頼関係のセットアップに失敗しました: %w"
 
-#: cmd/incus/cluster.go:1687
+#: cmd/incus/cluster.go:1689
 #, c-format
 msgid "Failed to update cluster member state: %w"
 msgstr "クラスターのメンバー状態の更新に失敗しました: %w"
@@ -3510,6 +3510,11 @@ msgstr "証明書のフィンガープリント: %s"
 msgid "Force a particular evacuation action"
 msgstr "特定の待避アクションを強制します"
 
+#: cmd/incus/cluster.go:1629
+#, fuzzy
+msgid "Force a particular restoration action"
+msgstr "特定の待避アクションを強制します"
+
 #: cmd/incus/file.go:109 cmd/incus/storage_volume.go:2432
 msgid "Force creating files or directories"
 msgstr "強制的にファイルまたはディレクトリーを作成します"
@@ -3522,7 +3527,7 @@ msgstr "プロジェクトとプロジェクトに含まれるすべてを強制
 msgid "Force deleting files, directories, and subdirectories"
 msgstr "強制的にファイル、ディレクトリー、サブディレクトリーを削除します"
 
-#: cmd/incus/cluster.go:1644
+#: cmd/incus/cluster.go:1646
 msgid "Force evacuation without user confirmation"
 msgstr "ユーザーの確認なしで強制的に待避させます"
 
@@ -4225,7 +4230,7 @@ msgstr "インスタンス名: %s"
 msgid "Instance type"
 msgstr "インスタンスタイプ"
 
-#: cmd/incus/cluster.go:1814
+#: cmd/incus/cluster.go:1816
 #, fuzzy
 msgid "Invalid IP address or DNS name"
 msgstr "不正なスナップショット名"
@@ -4266,7 +4271,7 @@ msgstr "不正な証明書です"
 msgid "Invalid certificate format %q"
 msgstr "不正な証明書です"
 
-#: cmd/incus/cluster.go:2055
+#: cmd/incus/cluster.go:2057
 #, fuzzy, c-format
 msgid "Invalid cluster join token: %w"
 msgstr "メンバ %s の join トークン:"
@@ -4316,7 +4321,7 @@ msgstr "不正なインスタンス名: %s"
 msgid "Invalid instance path: %q"
 msgstr "不正なインスタンスのパス: %q"
 
-#: cmd/incus/cluster.go:1854
+#: cmd/incus/cluster.go:1856
 #, fuzzy, c-format
 msgid "Invalid join token: %w"
 msgstr "メンバ %s の join トークン:"
@@ -4411,7 +4416,7 @@ msgstr "IsSM: %s (%s)"
 msgid "Join an existing server to a cluster"
 msgstr "既存のクラスターに join しますか?"
 
-#: cmd/incus/cluster.go:1845
+#: cmd/incus/cluster.go:1847
 msgid "Joining an existing cluster requires root privileges"
 msgstr "既存のクラスターに加わるには root 権限が必要です"
 
@@ -6493,7 +6498,7 @@ msgstr "証明書のフィンガープリントがありません"
 msgid "Missing cluster group name"
 msgstr "クラスターグループ名がありません"
 
-#: cmd/incus/cluster.go:966 cmd/incus/cluster.go:1666
+#: cmd/incus/cluster.go:966 cmd/incus/cluster.go:1668
 #: cmd/incus/cluster_group.go:147 cmd/incus/cluster_group.go:656
 #: cmd/incus/cluster_group.go:860 cmd/incus/cluster_role.go:84
 #: cmd/incus/cluster_role.go:153
@@ -7344,7 +7349,7 @@ msgstr "%s のパスワード: "
 msgid "Password rejected for %q"
 msgstr "%q のパスワードが拒否されました"
 
-#: cmd/incus/cluster.go:2040
+#: cmd/incus/cluster.go:2042
 #, fuzzy, c-format
 msgid "Path %s doesn't exist"
 msgstr "エイリアス %s は存在しません"
@@ -7374,7 +7379,7 @@ msgstr "不足しているエントリーを作成してから ENTER を押し�
 msgid "Please provide an alternate server address (empty to abort):"
 msgstr "別のサーバアドレスを指定してください（空の場合は中止）:"
 
-#: cmd/incus/cluster.go:1861
+#: cmd/incus/cluster.go:1863
 msgid "Please provide join token:"
 msgstr "join トークンを入力してください:"
 
@@ -8005,7 +8010,7 @@ msgstr "スナップショットからインスタンスをリストアします
 msgid "Restore storage volume snapshots"
 msgstr "スナップショットからストレージボリュームをリストアします"
 
-#: cmd/incus/cluster.go:1693
+#: cmd/incus/cluster.go:1695
 #, c-format
 msgid "Restoring cluster member: %s"
 msgstr "クラスターメンバーをリストアしています: %s"
@@ -9706,7 +9711,7 @@ msgstr "UUID"
 msgid "UUID: %v"
 msgstr "UUID: %v"
 
-#: cmd/incus/cluster.go:1892 cmd/incus/cluster.go:2085
+#: cmd/incus/cluster.go:1894 cmd/incus/cluster.go:2087
 #, fuzzy
 msgid "Unable to connect to any of the cluster members specified in join token"
 msgstr "クラスタメンバへの接続に失敗しました"
@@ -10030,7 +10035,7 @@ msgstr "使用済: %v"
 msgid "User ID to run the command as (default 0)"
 msgstr "コマンドを実行する際のユーザ ID (UID) (デフォルト 0)"
 
-#: cmd/incus/cluster.go:1939
+#: cmd/incus/cluster.go:1941
 #, fuzzy
 msgid "User aborted configuration"
 msgstr "ユーザが削除操作を中断しました"
@@ -10184,7 +10189,7 @@ msgstr ""
 msgid "Web server running at: %s"
 msgstr "Web サーバーの実行 URL: %s"
 
-#: cmd/incus/cluster.go:1820
+#: cmd/incus/cluster.go:1822
 msgid "What IP address or DNS name should be used to reach this server?"
 msgstr ""
 "このサーバーにアクセスするためには、どの IP アドレス、または DNS 名を使用する"
@@ -10198,7 +10203,7 @@ msgstr "どの IPv4 アドレスを使いますか?"
 msgid "What IPv6 address should be used?"
 msgstr "どの IPv6 アドレスを使いますか?"
 
-#: cmd/incus/cluster.go:1790
+#: cmd/incus/cluster.go:1792
 msgid "What member name should be used to identify this server in the cluster?"
 msgstr "クラスター内のこのサーバーを識別するのに使うメンバー名は何ですか?"
 

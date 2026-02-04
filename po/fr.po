@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-01-20 21:57-0500\n"
+"POT-Creation-Date: 2026-02-04 16:37+0100\n"
 "PO-Revision-Date: 2026-01-30 16:56+0000\n"
 "Last-Translator: Benjamin Somers <benjamin.somers@imt-atlantique.fr>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -791,8 +791,8 @@ msgstr "<chemin source>… [<serveur distant>:]<instance>/<chemin>"
 msgid ""
 "<tarball>|<directory>|<URL> [<rootfs tarball>] [<remote>:] [key=value...]"
 msgstr ""
-"<tarball>|<dossier>|<URL> [<tarball du rootfs>] [<serveur distant>:] [<clef>"
-"=<valeur>…]"
+"<tarball>|<dossier>|<URL> [<tarball du rootfs>] [<serveur distant>:] "
+"[<clef>=<valeur>…]"
 
 #: cmd/incus/manpage.go:23
 msgid "<target>"
@@ -994,8 +994,8 @@ msgstr "Ajoutez des règles à une liste de contrôle d'accès (ACL)"
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
-"Propriété de configuration du pool de stockage supplémentaire (<clef>"
-"=<valuer>, rien lorsque terminé) :"
+"Propriété de configuration du pool de stockage supplémentaire "
+"(<clef>=<valuer>, rien lorsque terminé) :"
 
 #: cmd/incus/admin_init.go:53
 msgid "Address to bind to (default: none)"
@@ -1054,7 +1054,7 @@ msgstr "Les alias suivants existent déjà : %s"
 msgid "Aliases:"
 msgstr "Alias :"
 
-#: cmd/incus/cluster.go:1933
+#: cmd/incus/cluster.go:1935
 msgid "All existing data is lost when joining a cluster, continue?"
 msgstr ""
 "Toutes les données seront perdues après avoir rejoint le cluster, voulez-"
@@ -1083,11 +1083,11 @@ msgstr "Architecture : %s"
 msgid "Architecture: %v"
 msgstr "Architecture : %v"
 
-#: cmd/incus/cluster.go:1831
+#: cmd/incus/cluster.go:1833
 msgid "Are you joining an existing cluster?"
 msgstr "Rejoingez-vous un cluster existant ?"
 
-#: cmd/incus/cluster.go:1670
+#: cmd/incus/cluster.go:1672
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
@@ -1218,8 +1218,8 @@ msgstr "Sauvegardes :"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Impossible de traiter ce remplacement, la syntaxe attendue est <appareil>"
-",<clef>=<valeur> : %s"
+"Impossible de traiter ce remplacement, la syntaxe attendue est <appareil>,"
+"<clef>=<valeur> : %s"
 
 #: cmd/incus/network.go:432 cmd/incus/network_acl.go:473
 #: cmd/incus/network_address_set.go:316 cmd/incus/network_forward.go:399
@@ -1489,7 +1489,7 @@ msgid ""
 msgstr ""
 "Incompatibilité d'empreinte de certificat entre le jeton et le serveur %q"
 
-#: cmd/incus/cluster.go:1883 cmd/incus/cluster.go:2076
+#: cmd/incus/cluster.go:1885 cmd/incus/cluster.go:2078
 #, c-format
 msgid ""
 "Certificate fingerprint mismatch between join token and cluster member %q"
@@ -1511,7 +1511,7 @@ msgstr "Châssis"
 msgid "Checking if the daemon is ready (attempt %d)"
 msgstr "Test si le démon est prêt (tentative %d)"
 
-#: cmd/incus/cluster.go:1982
+#: cmd/incus/cluster.go:1984
 #, c-format
 msgid "Choose %s:"
 msgstr "Choisir %s:"
@@ -2859,8 +2859,8 @@ msgid ""
 "Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
 "for disk):"
 msgstr ""
-"Entrez le type de tri souhaité (« a » pour alphabétique, « c » pour CPU, « m "
-"» pour mémoire, ou « d » pour disque) :"
+"Entrez le type de tri souhaité (« a » pour alphabétique, « c » pour CPU, "
+"« m » pour mémoire, ou « d » pour disque) :"
 
 #: cmd/incus/top.go:275
 msgid "Enter new delay in seconds:"
@@ -2878,7 +2878,7 @@ msgstr "Variable d'environnement (de la forme HOME=/home/foo) à positionner"
 msgid "Ephemeral instance"
 msgstr "Instance éphémère"
 
-#: cmd/incus/cluster.go:1877 cmd/incus/cluster.go:2070
+#: cmd/incus/cluster.go:1879 cmd/incus/cluster.go:2072
 #, c-format
 msgid "Error connecting to existing cluster member %q: %v"
 msgstr "Erreur de connexion à un membre existant du cluster %q : %v"
@@ -2952,7 +2952,7 @@ msgstr "Erreur : %v\n"
 msgid "Evacuate cluster member"
 msgstr "Évacuer un membre du cluster"
 
-#: cmd/incus/cluster.go:1695
+#: cmd/incus/cluster.go:1697
 #, c-format
 msgid "Evacuating cluster member: %s"
 msgstr "Évacuation du membre du cluster : %s"
@@ -3236,7 +3236,7 @@ msgstr ""
 "Échec de la conversion de l'opération de jeton en jeton d'ajout de "
 "certificat : %w"
 
-#: cmd/incus/cluster.go:1183 cmd/incus/cluster.go:1917
+#: cmd/incus/cluster.go:1183 cmd/incus/cluster.go:1919
 #, c-format
 msgid "Failed converting token operation to join token: %w"
 msgstr ""
@@ -3257,7 +3257,7 @@ msgstr "Échec de la suppression du volume source après la copie : %w"
 msgid "Failed generating SSH host key: %w"
 msgstr "Échec de la génération de la clef d’hôte SSH : %w"
 
-#: cmd/incus/cluster.go:2019
+#: cmd/incus/cluster.go:2021
 #, c-format
 msgid "Failed generating trust certificate: %w"
 msgstr "Échec de la génération du certificat de confiance : %w"
@@ -3322,7 +3322,7 @@ msgstr "Échec de l'acceptation de la connexion entrante : %w"
 msgid "Failed to add remote"
 msgstr "Échec de l'ajout d'un serveur distant"
 
-#: cmd/incus/cluster.go:2029
+#: cmd/incus/cluster.go:2031
 #, c-format
 msgid "Failed to add server cert to cluster: %w"
 msgstr "Échec de l'ajout d'un certificat de serveur au cluster : %w"
@@ -3363,7 +3363,7 @@ msgstr ""
 msgid "Failed to connect to local daemon: %w"
 msgstr "Échec de la connexion au démon local : %w"
 
-#: cmd/incus/cluster.go:2014
+#: cmd/incus/cluster.go:2016
 #, c-format
 msgid "Failed to connect to target cluster node %q: %w"
 msgstr "Échec de la connexion au nœud de cluster cible %q : %w"
@@ -3420,7 +3420,7 @@ msgstr ""
 msgid "Failed to find project: %w"
 msgstr "Échec de la recherche du projet : %w"
 
-#: cmd/incus/cluster.go:2113 cmd/incus/cluster.go:2118
+#: cmd/incus/cluster.go:2115 cmd/incus/cluster.go:2120
 #, c-format
 msgid "Failed to join cluster: %w"
 msgstr "Échec de l'adhésion au cluster : %w"
@@ -3450,7 +3450,7 @@ msgstr "Échec de la fermeture du fichier de certificat du serveur %q : %w"
 msgid "Failed to parse dump response: %w"
 msgstr "Échec de l'analyse de la réponse du dump : %w"
 
-#: cmd/incus/cluster.go:1660
+#: cmd/incus/cluster.go:1662
 #, c-format
 msgid "Failed to parse servers: %w"
 msgstr "Échec de l'analyse des serveurs : %w"
@@ -3495,7 +3495,7 @@ msgstr "Échec du rendu de la configuration : %w"
 msgid "Failed to request dump: %w"
 msgstr "Échec de la demande de dump : %w"
 
-#: cmd/incus/cluster.go:1978
+#: cmd/incus/cluster.go:1980
 #, c-format
 msgid "Failed to retrieve cluster information: %w"
 msgstr "Échec de la récupération des informations sur le cluster : %w"
@@ -3535,13 +3535,13 @@ msgstr "Échec de la récupération de la liste des réseaux : %w"
 msgid "Failed to retrieve list of storage pools: %w"
 msgstr "Échec de la récupération de la liste des pools de stockage : %w"
 
-#: cmd/incus/cluster.go:1952
+#: cmd/incus/cluster.go:1954
 #, c-format
 msgid "Failed to setup trust relationship with cluster: %w"
 msgstr ""
 "Échec de l'établissement d'une relation de confiance avec le cluster : %w"
 
-#: cmd/incus/cluster.go:1687
+#: cmd/incus/cluster.go:1689
 #, c-format
 msgid "Failed to update cluster member state: %w"
 msgstr "Échec de la mise à jour de l'état du membre du cluster : %w"
@@ -3591,6 +3591,11 @@ msgstr "Empreinte : %s"
 msgid "Force a particular evacuation action"
 msgstr "Forcer une action d'évacuation particulière"
 
+#: cmd/incus/cluster.go:1629
+#, fuzzy
+msgid "Force a particular restoration action"
+msgstr "Forcer une action d'évacuation particulière"
+
 #: cmd/incus/file.go:109 cmd/incus/storage_volume.go:2432
 msgid "Force creating files or directories"
 msgstr "Forcer la création de fichiers ou de répertoires"
@@ -3604,7 +3609,7 @@ msgstr "Supprimer de force le projet et toutes les données qu’il contient."
 msgid "Force deleting files, directories, and subdirectories"
 msgstr "Forcer la création de fichiers ou de répertoires"
 
-#: cmd/incus/cluster.go:1644
+#: cmd/incus/cluster.go:1646
 #, fuzzy
 msgid "Force evacuation without user confirmation"
 msgstr "Requérir une confirmation de l'utilisateur"
@@ -3904,7 +3909,8 @@ msgstr "Obtenir la clé en tant que propriété d'instance"
 
 #: cmd/incus/cluster_group.go:899
 msgid "Get values for cluster group configuration keys"
-msgstr "Récupérer la valeur d’une clef de configuration d’un groupe de serveurs"
+msgstr ""
+"Récupérer la valeur d’une clef de configuration d’un groupe de serveurs"
 
 #: cmd/incus/cluster.go:474
 msgid "Get values for cluster member configuration keys"
@@ -3972,7 +3978,8 @@ msgstr "Clé de configuration invalide"
 
 #: cmd/incus/storage_bucket.go:413 cmd/incus/storage_bucket.go:414
 msgid "Get values for storage bucket configuration keys"
-msgstr "Récupérer la valeur d’une clef de configuration d’un bucket de stockage"
+msgstr ""
+"Récupérer la valeur d’une clef de configuration d’un bucket de stockage"
 
 #: cmd/incus/storage.go:416 cmd/incus/storage.go:417
 msgid "Get values for storage pool configuration keys"
@@ -3999,8 +4006,8 @@ msgstr ""
 "Si le type n’est pas spécifié, Incus considère le type « custom ».\n"
 "Les types reconnus sont « custom », « container » et « virtual-machine ».\n"
 "\n"
-"Pour un instantané, préciser son nom (le type doit être explicitement défini)"
-"."
+"Pour un instantané, préciser son nom (le type doit être explicitement "
+"défini)."
 
 #: cmd/incus/storage_volume.go:460
 #, c-format
@@ -4342,7 +4349,7 @@ msgstr "Le nom du conteneur est : %s"
 msgid "Instance type"
 msgstr "Type d'instance"
 
-#: cmd/incus/cluster.go:1814
+#: cmd/incus/cluster.go:1816
 #, fuzzy
 msgid "Invalid IP address or DNS name"
 msgstr "Le nom du conteneur est : %s"
@@ -4383,7 +4390,7 @@ msgstr "Certificat invalide"
 msgid "Invalid certificate format %q"
 msgstr "Format de certificat invalide %q"
 
-#: cmd/incus/cluster.go:2055
+#: cmd/incus/cluster.go:2057
 #, c-format
 msgid "Invalid cluster join token: %w"
 msgstr "Jeton d’association au cluster invalide : %w"
@@ -4433,7 +4440,7 @@ msgstr "Nom d’instance invalide : %s"
 msgid "Invalid instance path: %q"
 msgstr "Chemin d’instance invalide : %q"
 
-#: cmd/incus/cluster.go:1854
+#: cmd/incus/cluster.go:1856
 #, c-format
 msgid "Invalid join token: %w"
 msgstr "Jeton d’association invalide : %w"
@@ -4529,7 +4536,7 @@ msgstr "IsSM : %s (%s)"
 msgid "Join an existing server to a cluster"
 msgstr "Inclure un serveur existant dans un cluster"
 
-#: cmd/incus/cluster.go:1845
+#: cmd/incus/cluster.go:1847
 msgid "Joining an existing cluster requires root privileges"
 msgstr "Rejoindre un cluster existant nécessite d'être root"
 
@@ -5425,8 +5432,8 @@ msgstr ""
 "configuration (par exemple, « volatile.eth0.hwaddr=10:66:6a:.* »).\n"
 "\n"
 "Exemples :\n"
-" – « user.blah=abc » listera toutes les instances dont la propriété libre «"
-" blah » est égale à « abc »,\n"
+" – « user.blah=abc » listera toutes les instances dont la propriété libre "
+"« blah » est égale à « abc »,\n"
 " – « u.blah=abc » aura le même effet,\n"
 " – « security.privileged=true » listera toutes les instances privilégiées,\n"
 " – « s.privileged=true » aura le même effet,\n"
@@ -5471,8 +5478,8 @@ msgstr ""
 "À ces colonnes s’ajoutent des colonnes personnalisées qui peuvent être "
 "définies avec « [config:|devices:]<clef>[:<nom>][:<largeur maximale>] » :\n"
 " – <clef> représente le nom de la clef de configuration de l’instance "
-"(config) ou des périphériques (devices) à afficher (si « config: » et «"
-" devices: » sont omis, « config: » est choisi par défaut),\n"
+"(config) ou des périphériques (devices) à afficher (si « config: » et "
+"« devices: » sont omis, « config: » est choisi par défaut),\n"
 " – <nom> représente le nom de la colonne à afficher (par défaut, le nom de "
 "la clef),\n"
 " – <largeur maximale> est la largeur maximale de la colonne (les résultats "
@@ -6330,8 +6337,8 @@ msgstr "Configuration minimale (non-interactif)"
 msgid ""
 "Minimum level for log messages (only available when using pretty format)"
 msgstr ""
-"Verbosité minimale des journaux (uniquement disponible avec le format «"
-" pretty »)"
+"Verbosité minimale des journaux (uniquement disponible avec le format "
+"« pretty »)"
 
 #: cmd/incus/admin_init_interactive.go:471
 msgid "Minimum size is 1GiB"
@@ -6355,7 +6362,7 @@ msgstr "Empreinte du certificat manquante"
 msgid "Missing cluster group name"
 msgstr "Nom du groupe du cluster manquant"
 
-#: cmd/incus/cluster.go:966 cmd/incus/cluster.go:1666
+#: cmd/incus/cluster.go:966 cmd/incus/cluster.go:1668
 #: cmd/incus/cluster_group.go:147 cmd/incus/cluster_group.go:656
 #: cmd/incus/cluster_group.go:860 cmd/incus/cluster_role.go:84
 #: cmd/incus/cluster_role.go:153
@@ -7188,7 +7195,7 @@ msgstr "Mot de passe administrateur pour %s : "
 msgid "Password rejected for %q"
 msgstr "Mot de passe rejeté pour %q"
 
-#: cmd/incus/cluster.go:2040
+#: cmd/incus/cluster.go:2042
 #, c-format
 msgid "Path %s doesn't exist"
 msgstr "Le chemin %s n’existe pas"
@@ -7219,7 +7226,7 @@ msgstr ""
 "Veuillez fournir une adresse alternative pour le serveur (ou rien pour "
 "annuler) :"
 
-#: cmd/incus/cluster.go:1861
+#: cmd/incus/cluster.go:1863
 msgid "Please provide join token:"
 msgstr "Veuillez fournir le jeton d’association :"
 
@@ -7574,7 +7581,8 @@ msgstr "Pousser ou récupérer des fichiers récursivement"
 
 #: cmd/incus/storage_volume.go:387
 msgid "Refresh and update the existing storage volume copies"
-msgstr "Rafraîchir et mettre à jour les copies du volume de stockage existantes"
+msgstr ""
+"Rafraîchir et mettre à jour les copies du volume de stockage existantes"
 
 #: cmd/incus/image.go:1443 cmd/incus/image.go:1444
 #, fuzzy
@@ -7642,8 +7650,8 @@ msgid ""
 "Remove %s and everything it contains (instances, images, volumes, "
 "networks, ...) (yes/no): "
 msgstr ""
-"Supprimer %s et tout ce qu’il contient (instances, images, volumes, réseaux"
-"…) (oui/non) : "
+"Supprimer %s et tout ce qu’il contient (instances, images, volumes, "
+"réseaux…) (oui/non) : "
 
 #: cmd/incus/cluster_group.go:619
 msgid "Remove a cluster member from a cluster group"
@@ -7849,7 +7857,7 @@ msgstr "Forcer le conteneur à s'arrêter"
 msgid "Restore storage volume snapshots"
 msgstr "Restaurer un instantané de volume de stockage"
 
-#: cmd/incus/cluster.go:1693
+#: cmd/incus/cluster.go:1695
 #, c-format
 msgid "Restoring cluster member: %s"
 msgstr "Restauration du membre « %s » du cluster"
@@ -8221,7 +8229,8 @@ msgstr ""
 
 #: cmd/incus/network_zone.go:1220 cmd/incus/network_zone.go:1221
 msgid "Set network zone record configuration keys"
-msgstr "Définir des clefs de configuration sur un enregistrement de zone réseau"
+msgstr ""
+"Définir des clefs de configuration sur un enregistrement de zone réseau"
 
 #: cmd/incus/profile.go:1075
 #, fuzzy
@@ -9012,8 +9021,8 @@ msgstr "Les volumes inconnus suivants ont été trouvés :"
 #: cmd/incus/delete.go:112
 msgid "The instance is currently running, stop it first or pass --force"
 msgstr ""
-"L’instance est en cours d'exécution, veuillez d’abord l’arrêter ou "
-"indiquer --force"
+"L’instance est en cours d'exécution, veuillez d’abord l’arrêter ou indiquer "
+"--force"
 
 #: cmd/incus/publish.go:127
 msgid ""
@@ -9078,7 +9087,8 @@ msgstr "La propriété %q n’existe pas sur l’instance %q : %v"
 #: cmd/incus/config.go:452
 #, c-format
 msgid "The property %q does not exist on the instance snapshot %s/%s: %v"
-msgstr "La propriété %q n’existe pas sur l’instantané d’instance « %s/%s » : %v"
+msgstr ""
+"La propriété %q n’existe pas sur l’instantané d’instance « %s/%s » : %v"
 
 #: cmd/incus/network_load_balancer.go:494
 #, c-format
@@ -9424,7 +9434,7 @@ msgstr "UUID"
 msgid "UUID: %v"
 msgstr "UUID : %v"
 
-#: cmd/incus/cluster.go:1892 cmd/incus/cluster.go:2085
+#: cmd/incus/cluster.go:1894 cmd/incus/cluster.go:2087
 msgid "Unable to connect to any of the cluster members specified in join token"
 msgstr ""
 "Impossible de se connecter au moindre membre du cluster spécifié dans le "
@@ -9741,7 +9751,7 @@ msgstr "Utilisé : %v"
 msgid "User ID to run the command as (default 0)"
 msgstr "UID avec lequel lancer la commande (par défaut, 0)"
 
-#: cmd/incus/cluster.go:1939
+#: cmd/incus/cluster.go:1941
 msgid "User aborted configuration"
 msgstr "L’opération a été annulée par l’utilisateur"
 
@@ -9876,7 +9886,7 @@ msgstr ""
 msgid "Web server running at: %s"
 msgstr "Le serveur web est disponible sur : %s"
 
-#: cmd/incus/cluster.go:1820
+#: cmd/incus/cluster.go:1822
 msgid "What IP address or DNS name should be used to reach this server?"
 msgstr ""
 
@@ -9888,7 +9898,7 @@ msgstr "Quelle adresse IPv4 utiliser ?"
 msgid "What IPv6 address should be used?"
 msgstr "Quelle adresse IPv6 utiliser ?"
 
-#: cmd/incus/cluster.go:1790
+#: cmd/incus/cluster.go:1792
 msgid "What member name should be used to identify this server in the cluster?"
 msgstr ""
 "Quel nom de membre utiliser pour identifier ce serveur au sein du cluster ?"
@@ -10248,7 +10258,8 @@ msgstr "[<serveur distant>:]<instance> <périphérique> <clef>=<valeur>…"
 
 #: cmd/incus/config_device.go:86
 msgid "[<remote>:]<instance> <device> <type> [key=value...]"
-msgstr "[<serveur distant>:]<instance> <périphérique> <type> [<clef>=<valeur>…]"
+msgstr ""
+"[<serveur distant>:]<instance> <périphérique> <type> [<clef>=<valeur>…]"
 
 #: cmd/incus/config_device.go:409
 msgid "[<remote>:]<instance> <device> [key=value...]"
@@ -10664,13 +10675,14 @@ msgstr "[<serveur distant>:]<pool> [[<serveur distant>:]<pool>…]"
 
 #: cmd/incus/storage_volume.go:1856
 msgid "[<remote>:]<pool>/<volume> [<remote>:]<pool>/<volume>"
-msgstr "[<serveur distant>:]<pool>/<volume> [<serveur distant>:]<pool>/<volume>"
+msgstr ""
+"[<serveur distant>:]<pool>/<volume> [<serveur distant>:]<pool>/<volume>"
 
 #: cmd/incus/storage_volume.go:376
 msgid "[<remote>:]<pool>/<volume>[/<snapshot>] [<remote>:]<pool>/<volume>"
 msgstr ""
-"[<serveur distant>:]<pool>/<volume>[/<instantané>] [<serveur distant>"
-":]<pool>/<volume>"
+"[<serveur distant>:]<pool>/<volume>[/<instantané>] [<serveur "
+"distant>:]<pool>/<volume>"
 
 #: cmd/incus/config_device.go:331 cmd/incus/config_device.go:767
 #: cmd/incus/profile.go:368 cmd/incus/profile.go:515 cmd/incus/profile.go:1163
@@ -10737,8 +10749,8 @@ msgstr "[<serveur distant>:]<projet> [[<serveur distant>:]<projet>…]"
 #: cmd/incus/copy.go:41
 msgid "[<remote>:]<source>[/<snapshot>] [[<remote>:]<destination>]"
 msgstr ""
-"[<serveur distant>:]<source>[/<instantané>] [[<serveur distant>"
-":]<destination>]"
+"[<serveur distant>:]<source>[/<instantané>] [[<serveur "
+"distant>:]<destination>]"
 
 #: cmd/incus/warning.go:270 cmd/incus/warning.go:314
 msgid "[<remote>:]<warning-uuid>"
@@ -11099,8 +11111,8 @@ msgid ""
 "incus move <instance>/<old snapshot name> <instance>/<new snapshot name>\n"
 "    Rename a snapshot."
 msgstr ""
-"incus move [<serveur distant>:]<instance source> [<serveur distant>"
-":][<instance cible>] [--instance-only]\n"
+"incus move [<serveur distant>:]<instance source> [<serveur distant>:]"
+"[<instance cible>] [--instance-only]\n"
 "    Déplacer une instance entre deux hôtes, avec renommage si le nom de "
 "destination est différent.\n"
 "\n"

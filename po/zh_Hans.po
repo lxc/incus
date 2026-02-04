@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-01-20 21:57-0500\n"
+"POT-Creation-Date: 2026-02-04 16:37+0100\n"
 "PO-Revision-Date: 2025-12-27 03:20+0000\n"
 "Last-Translator: meipeter <meipeter114514@outlook.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -1034,7 +1034,7 @@ msgstr "别名已存在：%s"
 msgid "Aliases:"
 msgstr "别名："
 
-#: cmd/incus/cluster.go:1933
+#: cmd/incus/cluster.go:1935
 msgid "All existing data is lost when joining a cluster, continue?"
 msgstr "加入集群会丢失所有现有数据，是否继续？"
 
@@ -1061,11 +1061,11 @@ msgstr "架构：%s"
 msgid "Architecture: %v"
 msgstr "架构：%v"
 
-#: cmd/incus/cluster.go:1831
+#: cmd/incus/cluster.go:1833
 msgid "Are you joining an existing cluster?"
 msgstr "您是否正在加入现有集群？"
 
-#: cmd/incus/cluster.go:1670
+#: cmd/incus/cluster.go:1672
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr "您确定要 %s 集群成员 %q 吗？（是/否）[默认值=否]： "
@@ -1450,7 +1450,7 @@ msgid ""
 "Certificate fingerprint mismatch between certificate token and server %q"
 msgstr "证书令牌和服务器 %q 之间的证书指纹不匹配"
 
-#: cmd/incus/cluster.go:1883 cmd/incus/cluster.go:2076
+#: cmd/incus/cluster.go:1885 cmd/incus/cluster.go:2078
 #, c-format
 msgid ""
 "Certificate fingerprint mismatch between join token and cluster member %q"
@@ -1470,7 +1470,7 @@ msgstr "逻辑机箱（Chassis）"
 msgid "Checking if the daemon is ready (attempt %d)"
 msgstr "正在检查守护进程是否已就绪（第 %d 次尝试）"
 
-#: cmd/incus/cluster.go:1982
+#: cmd/incus/cluster.go:1984
 #, c-format
 msgid "Choose %s:"
 msgstr "选择 %s："
@@ -2817,7 +2817,7 @@ msgstr "要设置的环境变量（例如 HOME=/HOME/foo）"
 msgid "Ephemeral instance"
 msgstr "临时实例"
 
-#: cmd/incus/cluster.go:1877 cmd/incus/cluster.go:2070
+#: cmd/incus/cluster.go:1879 cmd/incus/cluster.go:2072
 #, c-format
 msgid "Error connecting to existing cluster member %q: %v"
 msgstr "连接到现有集群成员 %q 时出错：%v"
@@ -2891,7 +2891,7 @@ msgstr "错误：%v\n"
 msgid "Evacuate cluster member"
 msgstr "解散集群成员"
 
-#: cmd/incus/cluster.go:1695
+#: cmd/incus/cluster.go:1697
 #, c-format
 msgid "Evacuating cluster member: %s"
 msgstr "正在解散集群成员：%s"
@@ -3146,7 +3146,7 @@ msgstr "连接到守护进程失败（第 %d 次尝试）：%v"
 msgid "Failed converting token operation to certificate add token: %w"
 msgstr "将令牌操作转换为证书添加令牌失败：%w"
 
-#: cmd/incus/cluster.go:1183 cmd/incus/cluster.go:1917
+#: cmd/incus/cluster.go:1183 cmd/incus/cluster.go:1919
 #, c-format
 msgid "Failed converting token operation to join token: %w"
 msgstr "将令牌操作转换为加入令牌失败：%w"
@@ -3166,7 +3166,7 @@ msgstr "复制后删除源卷失败：%w"
 msgid "Failed generating SSH host key: %w"
 msgstr "生成 SSH 主机密钥失败：%w"
 
-#: cmd/incus/cluster.go:2019
+#: cmd/incus/cluster.go:2021
 #, c-format
 msgid "Failed generating trust certificate: %w"
 msgstr "生成信任证书失败：%w"
@@ -3230,7 +3230,7 @@ msgstr "接受传入连接失败：%w"
 msgid "Failed to add remote"
 msgstr "添加远程服务器失败"
 
-#: cmd/incus/cluster.go:2029
+#: cmd/incus/cluster.go:2031
 #, c-format
 msgid "Failed to add server cert to cluster: %w"
 msgstr "无法将服务器证书添加到集群：%w"
@@ -3270,7 +3270,7 @@ msgstr "无法连接以获取服务器信息：%w"
 msgid "Failed to connect to local daemon: %w"
 msgstr "无法连接到本地守护进程：%w"
 
-#: cmd/incus/cluster.go:2014
+#: cmd/incus/cluster.go:2016
 #, c-format
 msgid "Failed to connect to target cluster node %q: %w"
 msgstr "无法连接到目标集群节点 %q：%w"
@@ -3325,7 +3325,7 @@ msgstr "获取存储卷备份文件失败：%w"
 msgid "Failed to find project: %w"
 msgstr "找不到项目：%w"
 
-#: cmd/incus/cluster.go:2113 cmd/incus/cluster.go:2118
+#: cmd/incus/cluster.go:2115 cmd/incus/cluster.go:2120
 #, c-format
 msgid "Failed to join cluster: %w"
 msgstr "加入集群失败：%w"
@@ -3355,7 +3355,7 @@ msgstr "关闭服务器证书文件 %q 失败：%w"
 msgid "Failed to parse dump response: %w"
 msgstr "解析转储响应失败：%w"
 
-#: cmd/incus/cluster.go:1660
+#: cmd/incus/cluster.go:1662
 #, c-format
 msgid "Failed to parse servers: %w"
 msgstr "解析服务器失败：%w"
@@ -3400,7 +3400,7 @@ msgstr "呈现配置失败：%w"
 msgid "Failed to request dump: %w"
 msgstr "请求转储失败：%w"
 
-#: cmd/incus/cluster.go:1978
+#: cmd/incus/cluster.go:1980
 #, c-format
 msgid "Failed to retrieve cluster information: %w"
 msgstr "检索集群信息失败：%w"
@@ -3438,12 +3438,12 @@ msgstr "检索网络列表失败：%w"
 msgid "Failed to retrieve list of storage pools: %w"
 msgstr "检索存储池列表失败：%w"
 
-#: cmd/incus/cluster.go:1952
+#: cmd/incus/cluster.go:1954
 #, c-format
 msgid "Failed to setup trust relationship with cluster: %w"
 msgstr "无法与集群建立信任关系：%w"
 
-#: cmd/incus/cluster.go:1687
+#: cmd/incus/cluster.go:1689
 #, c-format
 msgid "Failed to update cluster member state: %w"
 msgstr "更新群集成员状态失败：%w"
@@ -3491,6 +3491,11 @@ msgstr "指纹：%s"
 msgid "Force a particular evacuation action"
 msgstr "强制采取特定的解散操作"
 
+#: cmd/incus/cluster.go:1629
+#, fuzzy
+msgid "Force a particular restoration action"
+msgstr "强制采取特定的解散操作"
+
 #: cmd/incus/file.go:109 cmd/incus/storage_volume.go:2432
 msgid "Force creating files or directories"
 msgstr "强制创建文件或目录"
@@ -3503,7 +3508,7 @@ msgstr "强制删除项目及其包含的所有内容。"
 msgid "Force deleting files, directories, and subdirectories"
 msgstr "强制删除文件、目录和子目录"
 
-#: cmd/incus/cluster.go:1644
+#: cmd/incus/cluster.go:1646
 msgid "Force evacuation without user confirmation"
 msgstr "未经用户确认的强制解散"
 
@@ -4184,7 +4189,7 @@ msgstr "无法重建实例快照：%s"
 msgid "Instance type"
 msgstr "实例类型"
 
-#: cmd/incus/cluster.go:1814
+#: cmd/incus/cluster.go:1816
 msgid "Invalid IP address or DNS name"
 msgstr "无效的 IP 地址或 DNS 名称"
 
@@ -4224,7 +4229,7 @@ msgstr "无效的证书"
 msgid "Invalid certificate format %q"
 msgstr "无效的证书"
 
-#: cmd/incus/cluster.go:2055
+#: cmd/incus/cluster.go:2057
 #, c-format
 msgid "Invalid cluster join token: %w"
 msgstr "无效的集群加入令牌：%w"
@@ -4272,7 +4277,7 @@ msgstr "无效的实例名称：%s"
 msgid "Invalid instance path: %q"
 msgstr "无效的实例路径：%q"
 
-#: cmd/incus/cluster.go:1854
+#: cmd/incus/cluster.go:1856
 #, c-format
 msgid "Invalid join token: %w"
 msgstr "无效的加入令牌：%w"
@@ -4361,7 +4366,7 @@ msgstr ""
 msgid "Join an existing server to a cluster"
 msgstr "您是否正在加入现有集群？"
 
-#: cmd/incus/cluster.go:1845
+#: cmd/incus/cluster.go:1847
 msgid "Joining an existing cluster requires root privileges"
 msgstr "加入现有集群需要 root 权限"
 
@@ -5751,7 +5756,7 @@ msgstr ""
 msgid "Missing cluster group name"
 msgstr ""
 
-#: cmd/incus/cluster.go:966 cmd/incus/cluster.go:1666
+#: cmd/incus/cluster.go:966 cmd/incus/cluster.go:1668
 #: cmd/incus/cluster_group.go:147 cmd/incus/cluster_group.go:656
 #: cmd/incus/cluster_group.go:860 cmd/incus/cluster_role.go:84
 #: cmd/incus/cluster_role.go:153
@@ -6553,7 +6558,7 @@ msgstr ""
 msgid "Password rejected for %q"
 msgstr ""
 
-#: cmd/incus/cluster.go:2040
+#: cmd/incus/cluster.go:2042
 #, c-format
 msgid "Path %s doesn't exist"
 msgstr ""
@@ -6582,7 +6587,7 @@ msgstr ""
 msgid "Please provide an alternate server address (empty to abort):"
 msgstr ""
 
-#: cmd/incus/cluster.go:1861
+#: cmd/incus/cluster.go:1863
 msgid "Please provide join token:"
 msgstr ""
 
@@ -7192,7 +7197,7 @@ msgstr ""
 msgid "Restore storage volume snapshots"
 msgstr ""
 
-#: cmd/incus/cluster.go:1693
+#: cmd/incus/cluster.go:1695
 #, c-format
 msgid "Restoring cluster member: %s"
 msgstr ""
@@ -8697,7 +8702,7 @@ msgstr ""
 msgid "UUID: %v"
 msgstr ""
 
-#: cmd/incus/cluster.go:1892 cmd/incus/cluster.go:2085
+#: cmd/incus/cluster.go:1894 cmd/incus/cluster.go:2087
 msgid "Unable to connect to any of the cluster members specified in join token"
 msgstr ""
 
@@ -8995,7 +9000,7 @@ msgstr ""
 msgid "User ID to run the command as (default 0)"
 msgstr ""
 
-#: cmd/incus/cluster.go:1939
+#: cmd/incus/cluster.go:1941
 msgid "User aborted configuration"
 msgstr ""
 
@@ -9122,7 +9127,7 @@ msgstr ""
 msgid "Web server running at: %s"
 msgstr ""
 
-#: cmd/incus/cluster.go:1820
+#: cmd/incus/cluster.go:1822
 msgid "What IP address or DNS name should be used to reach this server?"
 msgstr ""
 
@@ -9134,7 +9139,7 @@ msgstr ""
 msgid "What IPv6 address should be used?"
 msgstr ""
 
-#: cmd/incus/cluster.go:1790
+#: cmd/incus/cluster.go:1792
 msgid "What member name should be used to identify this server in the cluster?"
 msgstr ""
 
