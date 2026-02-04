@@ -2181,9 +2181,8 @@
 					},
 					{
 						"boot.autostart.priority": {
-							"defaultdesc": "0",
 							"liveupdate": "no",
-							"longdesc": "The instance with the highest value is started first.",
+							"longdesc": "The instance with the highest value is started first.\nInstances without a priority set will be started (with some parallelism) ahead of\ninstances with a priority set.",
 							"shortdesc": "What order to start the instances in",
 							"type": "integer"
 						}
