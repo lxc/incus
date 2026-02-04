@@ -1554,6 +1554,14 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 
 ```
 
+```{config:option} security.trusted devices-nic_sriov
+:default: "false, if supported by parent device"
+:managed: "no"
+:shortdesc: "Allows the instance to configure the NIC in ways that may negatively impact security."
+:type: "bool"
+
+```
+
 ```{config:option} vendorid devices-nic_sriov
 :required: "no"
 :shortdesc: "The vendor ID of the parent host device"
@@ -2940,6 +2948,12 @@ The parent host device used when allocating a VF into an instance.
 :shortdesc: "SR-IOV virtual function original spoof check setting"
 :type: "string"
 The original spoof check setting used when moving a VF into an instance.
+```
+
+```{config:option} volatile.<name>.last_state.vf.trusted instance-volatile
+:shortdesc: "SR-IOV virtual function original trusted setting"
+:type: "string"
+The original trusted setting used when moving a VF into an instance.
 ```
 
 ```{config:option} volatile.<name>.last_state.vf.vlan instance-volatile
