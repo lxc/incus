@@ -3031,7 +3031,11 @@ func clusterNodeStatePost(d *Daemon, r *http.Request) response.Response {
 
 		return operations.OperationResponse(op)
 	} else if req.Action == "restore" {
-		return restoreClusterMember(d, r)
+		if req.Mode != "" && req.Mode != "skip" {
+			return response.BadRequest(fmt.Errorf("Invalid restore mode %q", req.Mode))
+		}
+
+		return restoreClusterMember(d, r, req.Mode == "skip")
 	}
 
 	return response.BadRequest(fmt.Errorf("Unknown action %q", req.Action))
