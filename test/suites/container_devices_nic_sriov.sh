@@ -47,6 +47,13 @@ test_container_devices_nic_sriov() {
         false
     fi
 
+    # Check trusted has been disabled (the default if NIC supports it).
+    vfID=$(incus config get "${ctName}" volatile.eth0.last_state.vf.id)
+    if ip link show "${parent}" | grep "vf ${vfID}" | grep "trust on"; then
+        echo "trusted is still enabled"
+        false
+    fi
+
     incus config device set "${ctName}" eth0 vlan 1234
 
     # Check custom vlan has been enabled.
@@ -121,6 +128,48 @@ test_container_devices_nic_sriov() {
     vfID=$(incus config get "${ctName}" volatile.eth1.last_state.vf.id)
     if ! ip link show "${parent}" | grep "vf ${vfID}" | grep "spoof checking on"; then
         echo "spoof checking is still disabled"
+        false
+    fi
+
+    incus stop -f "${ctName}"
+
+    # Remove 2nd device whilst stopped.
+    incus config device remove "${ctName}" eth1
+
+    incus start "${ctName}"
+
+    incus config device set "${ctName}" eth0 security.trusted true
+
+    # Check trusted property has been enabled
+    vfID=$(incus config get "${ctName}" volatile.eth0.last_state.vf.id)
+    if ! ip link show "${parent}" | grep "vf ${vfID}" | grep "trust on"; then
+        echo "trusted is still disabled"
+        false
+    fi
+
+    incus stop -f "${ctName}"
+
+    # Disable trusted and try fresh boot.
+    incus config device set "${ctName}" eth0 security.trusted false
+    incus start "${ctName}"
+
+    # Check trusted has been disabled (the default).
+    vfID=$(incus config get "${ctName}" volatile.eth0.last_state.vf.id)
+    if ! ip link show "${parent}" | grep "vf ${vfID}" | grep "trust off"; then
+        echo "trusted is still enabled"
+        false
+    fi
+
+    # Hot plug fresh device.
+    incus config device add "${ctName}" eth1 nic \
+        nictype=sriov \
+        parent="${parent}" \
+        security.trusted=true
+
+    # Check trusted has been enabled.
+    vfID=$(incus config get "${ctName}" volatile.eth1.last_state.vf.id)
+    if ! ip link show "${parent}" | grep "vf ${vfID}" | grep "trust on"; then
+        echo "trusted is still disabled"
         false
     fi
 
