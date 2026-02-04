@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-01-20 21:57-0500\n"
+"POT-Creation-Date: 2026-02-04 16:37+0100\n"
 "PO-Revision-Date: 2026-01-10 12:01+0000\n"
 "Last-Translator: Daniel Nylander <daniel@danielnylander.se>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -1023,7 +1023,7 @@ msgstr "Alias finns redan: %s"
 msgid "Aliases:"
 msgstr "Alias:"
 
-#: cmd/incus/cluster.go:1933
+#: cmd/incus/cluster.go:1935
 msgid "All existing data is lost when joining a cluster, continue?"
 msgstr ""
 "Alla befintliga data går förlorade när du ansluter till ett kluster. Vill du "
@@ -1052,11 +1052,11 @@ msgstr "Arkitektur: %s"
 msgid "Architecture: %v"
 msgstr "Arkitektur: %v"
 
-#: cmd/incus/cluster.go:1831
+#: cmd/incus/cluster.go:1833
 msgid "Are you joining an existing cluster?"
 msgstr "Ska du gå med i ett befintligt kluster?"
 
-#: cmd/incus/cluster.go:1670
+#: cmd/incus/cluster.go:1672
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
@@ -1449,7 +1449,7 @@ msgstr ""
 "Certifikatets fingeravtryck stämmer inte överens mellan certifikattoken och "
 "servern %q"
 
-#: cmd/incus/cluster.go:1883 cmd/incus/cluster.go:2076
+#: cmd/incus/cluster.go:1885 cmd/incus/cluster.go:2078
 #, c-format
 msgid ""
 "Certificate fingerprint mismatch between join token and cluster member %q"
@@ -1471,7 +1471,7 @@ msgstr "Chassi"
 msgid "Checking if the daemon is ready (attempt %d)"
 msgstr "Kontrollerar om daemonen är redo (försök %d)"
 
-#: cmd/incus/cluster.go:1982
+#: cmd/incus/cluster.go:1984
 #, c-format
 msgid "Choose %s:"
 msgstr "Välj %s:"
@@ -2832,7 +2832,7 @@ msgstr "Miljövariabel att ställa in (t.ex. HOME=/home/foo)"
 msgid "Ephemeral instance"
 msgstr "Tillfällig instans"
 
-#: cmd/incus/cluster.go:1877 cmd/incus/cluster.go:2070
+#: cmd/incus/cluster.go:1879 cmd/incus/cluster.go:2072
 #, c-format
 msgid "Error connecting to existing cluster member %q: %v"
 msgstr "Fel vid anslutning till befintlig klustermedlem %q: %v"
@@ -2906,7 +2906,7 @@ msgstr "Fel: %v\n"
 msgid "Evacuate cluster member"
 msgstr "Evakuera klustermedlem"
 
-#: cmd/incus/cluster.go:1695
+#: cmd/incus/cluster.go:1697
 #, c-format
 msgid "Evacuating cluster member: %s"
 msgstr "Evakuerar klustermedlem: %s"
@@ -3178,7 +3178,7 @@ msgstr "Misslyckades med att ansluta till daemon (försök %d): %v"
 msgid "Failed converting token operation to certificate add token: %w"
 msgstr "Konvertering av token till certifikat misslyckades: %w"
 
-#: cmd/incus/cluster.go:1183 cmd/incus/cluster.go:1917
+#: cmd/incus/cluster.go:1183 cmd/incus/cluster.go:1919
 #, c-format
 msgid "Failed converting token operation to join token: %w"
 msgstr "Konvertering av token-operation till join-token misslyckades: %w"
@@ -3198,7 +3198,7 @@ msgstr "Misslyckades med att ta bort källvolymen efter kopiering: %w"
 msgid "Failed generating SSH host key: %w"
 msgstr "Det gick inte att skapa SSH-värdnyckel: %w"
 
-#: cmd/incus/cluster.go:2019
+#: cmd/incus/cluster.go:2021
 #, c-format
 msgid "Failed generating trust certificate: %w"
 msgstr "Det gick inte att generera betrott certifikat: %w"
@@ -3262,7 +3262,7 @@ msgstr "Det gick inte att acceptera inkommande anslutning: %w"
 msgid "Failed to add remote"
 msgstr "Det gick inte att lägga till fjärrkontrollen"
 
-#: cmd/incus/cluster.go:2029
+#: cmd/incus/cluster.go:2031
 #, c-format
 msgid "Failed to add server cert to cluster: %w"
 msgstr "Det gick inte att lägga till servercertifikatet till klustret: %w"
@@ -3302,7 +3302,7 @@ msgstr "Det gick inte att ansluta för att hämta serverinformation: %w"
 msgid "Failed to connect to local daemon: %w"
 msgstr "Det gick inte att ansluta till lokal daemon: %w"
 
-#: cmd/incus/cluster.go:2014
+#: cmd/incus/cluster.go:2016
 #, c-format
 msgid "Failed to connect to target cluster node %q: %w"
 msgstr "Det gick inte att ansluta till målklusterknutpunkten %q: %w"
@@ -3358,7 +3358,7 @@ msgstr "Det gick inte att hämta säkerhetskopian av lagringsvolymen: %w"
 msgid "Failed to find project: %w"
 msgstr "Projektet kunde inte hittas: %w"
 
-#: cmd/incus/cluster.go:2113 cmd/incus/cluster.go:2118
+#: cmd/incus/cluster.go:2115 cmd/incus/cluster.go:2120
 #, c-format
 msgid "Failed to join cluster: %w"
 msgstr "Det gick inte att ansluta till klustret: %w"
@@ -3388,7 +3388,7 @@ msgstr "Det gick inte att stänga servercertifikatfilen %q: %w"
 msgid "Failed to parse dump response: %w"
 msgstr "Det gick inte att analysera dumpningssvaret: %w"
 
-#: cmd/incus/cluster.go:1660
+#: cmd/incus/cluster.go:1662
 #, c-format
 msgid "Failed to parse servers: %w"
 msgstr "Det gick inte att analysera servrarna: %w"
@@ -3433,7 +3433,7 @@ msgstr "Det gick inte att rendera konfigurationen: %w"
 msgid "Failed to request dump: %w"
 msgstr "Misslyckades med att begära dump: %w"
 
-#: cmd/incus/cluster.go:1978
+#: cmd/incus/cluster.go:1980
 #, c-format
 msgid "Failed to retrieve cluster information: %w"
 msgstr "Det gick inte att hämta klusterinformation: %w"
@@ -3473,12 +3473,12 @@ msgstr "Det gick inte att hämta listan över nätverk: %w"
 msgid "Failed to retrieve list of storage pools: %w"
 msgstr "Det gick inte att hämta listan över lagringspooler: %w"
 
-#: cmd/incus/cluster.go:1952
+#: cmd/incus/cluster.go:1954
 #, c-format
 msgid "Failed to setup trust relationship with cluster: %w"
 msgstr "Det gick inte att upprätta ett förtroendeförhållande med klustret: %w"
 
-#: cmd/incus/cluster.go:1687
+#: cmd/incus/cluster.go:1689
 #, c-format
 msgid "Failed to update cluster member state: %w"
 msgstr "Det gick inte att uppdatera klustermedlemmens status: %w"
@@ -3526,6 +3526,11 @@ msgstr "Fingeravtryck: %s"
 msgid "Force a particular evacuation action"
 msgstr "Tvinga fram en viss evakueringsåtgärd"
 
+#: cmd/incus/cluster.go:1629
+#, fuzzy
+msgid "Force a particular restoration action"
+msgstr "Tvinga fram en viss evakueringsåtgärd"
+
 #: cmd/incus/file.go:109 cmd/incus/storage_volume.go:2432
 msgid "Force creating files or directories"
 msgstr "Tvinga skapande av filer eller kataloger"
@@ -3538,7 +3543,7 @@ msgstr "Tvinga bort projektet och allt det innehåller."
 msgid "Force deleting files, directories, and subdirectories"
 msgstr "Tvinga borttagning av filer, kataloger och underkataloger"
 
-#: cmd/incus/cluster.go:1644
+#: cmd/incus/cluster.go:1646
 msgid "Force evacuation without user confirmation"
 msgstr "Tvinga evakuering utan användarens bekräftelse"
 
@@ -4226,7 +4231,7 @@ msgstr "Instanssnapshots kan inte återskapas: %s"
 msgid "Instance type"
 msgstr "Instans typ"
 
-#: cmd/incus/cluster.go:1814
+#: cmd/incus/cluster.go:1816
 msgid "Invalid IP address or DNS name"
 msgstr "Ogiltig IP-adress eller DNS-namn"
 
@@ -4266,7 +4271,7 @@ msgstr "Ogiltigt certifikat"
 msgid "Invalid certificate format %q"
 msgstr "Ogiltigt certifikatformat %q"
 
-#: cmd/incus/cluster.go:2055
+#: cmd/incus/cluster.go:2057
 #, c-format
 msgid "Invalid cluster join token: %w"
 msgstr "Ogiltig klusteranslutningstoken: %w"
@@ -4314,7 +4319,7 @@ msgstr "Ogiltigt instansnamn: %s"
 msgid "Invalid instance path: %q"
 msgstr "Ogiltig instansväg: %q"
 
-#: cmd/incus/cluster.go:1854
+#: cmd/incus/cluster.go:1856
 #, c-format
 msgid "Invalid join token: %w"
 msgstr "Ogiltigt anslutningstoken: %w"
@@ -4406,7 +4411,7 @@ msgstr "IsSM: %s (%s)"
 msgid "Join an existing server to a cluster"
 msgstr "Ska du gå med i ett befintligt kluster?"
 
-#: cmd/incus/cluster.go:1845
+#: cmd/incus/cluster.go:1847
 msgid "Joining an existing cluster requires root privileges"
 msgstr "För att ansluta sig till ett befintligt kluster krävs root-behörighet"
 
@@ -6355,7 +6360,7 @@ msgstr "Saknat certifikatfingeravtryck"
 msgid "Missing cluster group name"
 msgstr "Saknat klustergruppsnamn"
 
-#: cmd/incus/cluster.go:966 cmd/incus/cluster.go:1666
+#: cmd/incus/cluster.go:966 cmd/incus/cluster.go:1668
 #: cmd/incus/cluster_group.go:147 cmd/incus/cluster_group.go:656
 #: cmd/incus/cluster_group.go:860 cmd/incus/cluster_role.go:84
 #: cmd/incus/cluster_role.go:153
@@ -7174,7 +7179,7 @@ msgstr "Lösenord för %s: "
 msgid "Password rejected for %q"
 msgstr "Lösenordet avvisat för %q"
 
-#: cmd/incus/cluster.go:2040
+#: cmd/incus/cluster.go:2042
 #, c-format
 msgid "Path %s doesn't exist"
 msgstr "Sökvägen %s finns inte"
@@ -7203,7 +7208,7 @@ msgstr "Skapa de saknade posterna och tryck sedan på ENTER:"
 msgid "Please provide an alternate server address (empty to abort):"
 msgstr "Ange en alternativ serveradress (lämna tomt för att avbryta):"
 
-#: cmd/incus/cluster.go:1861
+#: cmd/incus/cluster.go:1863
 msgid "Please provide join token:"
 msgstr "Ange anslutningstoken:"
 
@@ -7819,7 +7824,7 @@ msgstr "Återställ instanssnapshots"
 msgid "Restore storage volume snapshots"
 msgstr "Återställ snapshots av lagringsvolym"
 
-#: cmd/incus/cluster.go:1693
+#: cmd/incus/cluster.go:1695
 #, c-format
 msgid "Restoring cluster member: %s"
 msgstr "Återställer klustermedlem: %s"
@@ -9460,7 +9465,7 @@ msgstr "UUID"
 msgid "UUID: %v"
 msgstr "UUID: %v"
 
-#: cmd/incus/cluster.go:1892 cmd/incus/cluster.go:2085
+#: cmd/incus/cluster.go:1894 cmd/incus/cluster.go:2087
 msgid "Unable to connect to any of the cluster members specified in join token"
 msgstr ""
 "Det går inte att ansluta till någon av klustermedlemmarna som anges i "
@@ -9769,7 +9774,7 @@ msgstr "Använd: %v"
 msgid "User ID to run the command as (default 0)"
 msgstr "Användar-ID för att köra kommandot som (standard 0)"
 
-#: cmd/incus/cluster.go:1939
+#: cmd/incus/cluster.go:1941
 msgid "User aborted configuration"
 msgstr "Användaren avbröt konfigurationen"
 
@@ -9913,7 +9918,7 @@ msgstr ""
 msgid "Web server running at: %s"
 msgstr "Webbserver körs på: %s"
 
-#: cmd/incus/cluster.go:1820
+#: cmd/incus/cluster.go:1822
 msgid "What IP address or DNS name should be used to reach this server?"
 msgstr "Vilken IP-adress eller DNS-namn ska användas för att nå denna server?"
 
@@ -9925,7 +9930,7 @@ msgstr "Vilken IPv4-adress ska användas?"
 msgid "What IPv6 address should be used?"
 msgstr "Vilken IPv6-adress ska användas?"
 
-#: cmd/incus/cluster.go:1790
+#: cmd/incus/cluster.go:1792
 msgid "What member name should be used to identify this server in the cluster?"
 msgstr ""
 "Vilket medlemsnamn ska användas för att identifiera denna server i klustret?"

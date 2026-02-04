@@ -211,6 +211,10 @@ func (d *lvm) Create() error {
 	}
 
 	if sourceType == lvmSourceTypeDefault {
+		if d.clustered {
+			return errors.New("lvmcluster requires a shared physical device or a pre-existing shared VG to be used as source")
+		}
+
 		usingLoopFile = true
 		defaultSource := loopFilePath(d.name)
 

@@ -1906,11 +1906,12 @@ The number of seconds to wait after the instance started before starting the nex
 ```
 
 ```{config:option} boot.autostart.priority instance-boot
-:defaultdesc: "0"
 :liveupdate: "no"
 :shortdesc: "What order to start the instances in"
 :type: "integer"
 The instance with the highest value is started first.
+Instances without a priority set will be started (with some parallelism) ahead of
+instances with a priority set.
 ```
 
 ```{config:option} boot.host_shutdown_action instance-boot

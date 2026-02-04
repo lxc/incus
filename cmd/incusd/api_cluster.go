@@ -1366,21 +1366,76 @@ func clusterNodesPost(d *Daemon, r *http.Request) response.Response {
 	// retrieving remote operations.
 	onlineNodeAddresses := make([]any, 0)
 
+	// Get cluster database state.
+	leaderAddress, err := s.Cluster.LeaderAddress()
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	var raftNodes []db.RaftNode
+	err = s.DB.Node.Transaction(r.Context(), func(ctx context.Context, tx *db.NodeTx) error {
+		raftNodes, err = tx.GetRaftNodes(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed loading RAFT nodes: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Get global cluster state.
+		failureDomains, err := tx.GetFailureDomainsNames(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed loading failure domains names: %w", err)
+		}
+
+		memberFailureDomains, err := tx.GetNodesFailureDomains(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed loading member failure domains: %w", err)
+		}
+
+		maxVersion, err := tx.GetNodeMaxVersion(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed getting max member version: %w", err)
+		}
+
 		// Get the nodes.
 		members, err := tx.GetNodes(ctx)
 		if err != nil {
 			return fmt.Errorf("Failed getting cluster members: %w", err)
 		}
 
+		args := db.NodeInfoArgs{
+			LeaderAddress:        leaderAddress,
+			FailureDomains:       failureDomains,
+			MemberFailureDomains: memberFailureDomains,
+			OfflineThreshold:     s.GlobalConfig.OfflineThreshold(),
+			MaxMemberVersion:     maxVersion,
+			RaftNodes:            raftNodes,
+		}
+
 		// Filter to online members.
 		for _, member := range members {
+			memberInfo, err := member.ToAPI(ctx, tx, args)
+			if err != nil {
+				return err
+			}
+
 			// Verify if a node with the same name already exists in the cluster.
 			if member.Name == req.ServerName {
 				return fmt.Errorf("The cluster already has a member with name: %s", req.ServerName)
 			}
 
+			// Skip servers that are offline.
 			if member.State == db.ClusterMemberStateEvacuated || member.IsOffline(s.GlobalConfig.OfflineThreshold()) {
+				continue
+			}
+
+			// Only include servers that have a one of the database roles.
+			if !slices.Contains(memberInfo.Roles, "database") && !slices.Contains(memberInfo.Roles, "database-standby") {
 				continue
 			}
 
@@ -3031,7 +3086,11 @@ func clusterNodeStatePost(d *Daemon, r *http.Request) response.Response {
 
 		return operations.OperationResponse(op)
 	} else if req.Action == "restore" {
-		return restoreClusterMember(d, r)
+		if req.Mode != "" && req.Mode != "skip" {
+			return response.BadRequest(fmt.Errorf("Invalid restore mode %q", req.Mode))
+		}
+
+		return restoreClusterMember(d, r, req.Mode == "skip")
 	}
 
 	return response.BadRequest(fmt.Errorf("Unknown action %q", req.Action))

@@ -1626,6 +1626,8 @@ func (c *cmdClusterRestore) Command() *cobra.Command {
 	cmd.Short = i18n.G("Restore cluster member")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Restore cluster member`))
 
+	cmd.Flags().StringVar(&c.action.flagAction, "action", "", i18n.G(`Force a particular restoration action`)+"``")
+
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return c.global.cmpClusterMembers(toComplete)
