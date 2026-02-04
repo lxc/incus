@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-01-20 21:57-0500\n"
+"POT-Creation-Date: 2026-02-04 16:37+0100\n"
 "PO-Revision-Date: 2025-12-27 03:16+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
@@ -1075,7 +1075,7 @@ msgstr "entfernte Instanz %s existiert bereits"
 msgid "Aliases:"
 msgstr "Aliase:"
 
-#: cmd/incus/cluster.go:1933
+#: cmd/incus/cluster.go:1935
 msgid "All existing data is lost when joining a cluster, continue?"
 msgstr ""
 "Alle existierenden Dateien sind verloren, wenn sie dem Cluster beitreten, "
@@ -1105,11 +1105,11 @@ msgstr "Architektur: %s"
 msgid "Architecture: %v"
 msgstr "Architektur: %v"
 
-#: cmd/incus/cluster.go:1831
+#: cmd/incus/cluster.go:1833
 msgid "Are you joining an existing cluster?"
 msgstr "Soll der Server einem bestehenden Cluster beitreten?"
 
-#: cmd/incus/cluster.go:1670
+#: cmd/incus/cluster.go:1672
 #, fuzzy, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
@@ -1529,7 +1529,7 @@ msgid ""
 "Certificate fingerprint mismatch between certificate token and server %q"
 msgstr ""
 
-#: cmd/incus/cluster.go:1883 cmd/incus/cluster.go:2076
+#: cmd/incus/cluster.go:1885 cmd/incus/cluster.go:2078
 #, c-format
 msgid ""
 "Certificate fingerprint mismatch between join token and cluster member %q"
@@ -1549,7 +1549,7 @@ msgstr ""
 msgid "Checking if the daemon is ready (attempt %d)"
 msgstr ""
 
-#: cmd/incus/cluster.go:1982
+#: cmd/incus/cluster.go:1984
 #, c-format
 msgid "Choose %s:"
 msgstr ""
@@ -2956,7 +2956,7 @@ msgstr ""
 msgid "Ephemeral instance"
 msgstr "Kurzlebiger Container"
 
-#: cmd/incus/cluster.go:1877 cmd/incus/cluster.go:2070
+#: cmd/incus/cluster.go:1879 cmd/incus/cluster.go:2072
 #, c-format
 msgid "Error connecting to existing cluster member %q: %v"
 msgstr "Fehler beim Verbinden mit bestehendem Clustermitglied %q: %v"
@@ -3031,7 +3031,7 @@ msgstr "Fehler: %v\n"
 msgid "Evacuate cluster member"
 msgstr "Evakuieren eines Clustermitglieds"
 
-#: cmd/incus/cluster.go:1695
+#: cmd/incus/cluster.go:1697
 #, fuzzy, c-format
 msgid "Evacuating cluster member: %s"
 msgstr "Evakuieren der Clustermitglieder: %s"
@@ -3316,7 +3316,7 @@ msgstr "kann nicht zum selben Container Namen kopieren"
 msgid "Failed converting token operation to certificate add token: %w"
 msgstr ""
 
-#: cmd/incus/cluster.go:1183 cmd/incus/cluster.go:1917
+#: cmd/incus/cluster.go:1183 cmd/incus/cluster.go:1919
 #, fuzzy, c-format
 msgid "Failed converting token operation to join token: %w"
 msgstr "kann nicht zum selben Container Namen kopieren"
@@ -3336,7 +3336,7 @@ msgstr "Kein Zertifikat für diese Verbindung"
 msgid "Failed generating SSH host key: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/cluster.go:2019
+#: cmd/incus/cluster.go:2021
 #, fuzzy, c-format
 msgid "Failed generating trust certificate: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -3400,7 +3400,7 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed to add remote"
 msgstr ""
 
-#: cmd/incus/cluster.go:2029
+#: cmd/incus/cluster.go:2031
 #, fuzzy, c-format
 msgid "Failed to add server cert to cluster: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -3440,7 +3440,7 @@ msgstr "kann nicht zum selben Container Namen kopieren"
 msgid "Failed to connect to local daemon: %w"
 msgstr "kann nicht zum selben Container Namen kopieren"
 
-#: cmd/incus/cluster.go:2014
+#: cmd/incus/cluster.go:2016
 #, fuzzy, c-format
 msgid "Failed to connect to target cluster node %q: %w"
 msgstr "kann nicht zum selben Container Namen kopieren"
@@ -3495,7 +3495,7 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed to find project: %w"
 msgstr ""
 
-#: cmd/incus/cluster.go:2113 cmd/incus/cluster.go:2118
+#: cmd/incus/cluster.go:2115 cmd/incus/cluster.go:2120
 #, fuzzy, c-format
 msgid "Failed to join cluster: %w"
 msgstr "kann nicht zum selben Container Namen kopieren"
@@ -3525,7 +3525,7 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed to parse dump response: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/cluster.go:1660
+#: cmd/incus/cluster.go:1662
 #, fuzzy, c-format
 msgid "Failed to parse servers: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -3570,7 +3570,7 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed to request dump: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/cluster.go:1978
+#: cmd/incus/cluster.go:1980
 #, fuzzy, c-format
 msgid "Failed to retrieve cluster information: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -3608,12 +3608,12 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed to retrieve list of storage pools: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/cluster.go:1952
+#: cmd/incus/cluster.go:1954
 #, fuzzy, c-format
 msgid "Failed to setup trust relationship with cluster: %w"
 msgstr "kann nicht zum selben Container Namen kopieren"
 
-#: cmd/incus/cluster.go:1687
+#: cmd/incus/cluster.go:1689
 #, fuzzy, c-format
 msgid "Failed to update cluster member state: %w"
 msgstr "kann nicht zum selben Container Namen kopieren"
@@ -3664,6 +3664,10 @@ msgstr "Fingerabdruck: %s\n"
 msgid "Force a particular evacuation action"
 msgstr ""
 
+#: cmd/incus/cluster.go:1629
+msgid "Force a particular restoration action"
+msgstr ""
+
 #: cmd/incus/file.go:109 cmd/incus/storage_volume.go:2432
 msgid "Force creating files or directories"
 msgstr ""
@@ -3676,7 +3680,7 @@ msgstr ""
 msgid "Force deleting files, directories, and subdirectories"
 msgstr ""
 
-#: cmd/incus/cluster.go:1644
+#: cmd/incus/cluster.go:1646
 msgid "Force evacuation without user confirmation"
 msgstr ""
 
@@ -4369,7 +4373,7 @@ msgstr ""
 msgid "Instance type"
 msgstr ""
 
-#: cmd/incus/cluster.go:1814
+#: cmd/incus/cluster.go:1816
 #, fuzzy
 msgid "Invalid IP address or DNS name"
 msgstr "Ungültige Quelle %s"
@@ -4411,7 +4415,7 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Invalid certificate format %q"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/cluster.go:2055
+#: cmd/incus/cluster.go:2057
 #, fuzzy, c-format
 msgid "Invalid cluster join token: %w"
 msgstr "Profil %s wurde auf %s angewandt\n"
@@ -4460,7 +4464,7 @@ msgstr "Ungültige Quelle %s"
 msgid "Invalid instance path: %q"
 msgstr "Ungültige Quelle %s"
 
-#: cmd/incus/cluster.go:1854
+#: cmd/incus/cluster.go:1856
 #, fuzzy, c-format
 msgid "Invalid join token: %w"
 msgstr "Profil %s wurde auf %s angewandt\n"
@@ -4558,7 +4562,7 @@ msgstr ""
 msgid "Join an existing server to a cluster"
 msgstr "Soll der Server einem bestehenden Cluster beitreten?"
 
-#: cmd/incus/cluster.go:1845
+#: cmd/incus/cluster.go:1847
 msgid "Joining an existing cluster requires root privileges"
 msgstr ""
 
@@ -5982,7 +5986,7 @@ msgstr "Fingerabdruck des Zertifikats: % x\n"
 msgid "Missing cluster group name"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
 
-#: cmd/incus/cluster.go:966 cmd/incus/cluster.go:1666
+#: cmd/incus/cluster.go:966 cmd/incus/cluster.go:1668
 #: cmd/incus/cluster_group.go:147 cmd/incus/cluster_group.go:656
 #: cmd/incus/cluster_group.go:860 cmd/incus/cluster_role.go:84
 #: cmd/incus/cluster_role.go:153
@@ -6824,7 +6828,7 @@ msgstr "Administrator Passwort für %s: "
 msgid "Password rejected for %q"
 msgstr "Administrator Passwort für %s: "
 
-#: cmd/incus/cluster.go:2040
+#: cmd/incus/cluster.go:2042
 #, fuzzy, c-format
 msgid "Path %s doesn't exist"
 msgstr "entfernte Instanz %s existiert nicht"
@@ -6856,7 +6860,7 @@ msgstr ""
 msgid "Please provide an alternate server address (empty to abort):"
 msgstr "Alternatives config Verzeichnis."
 
-#: cmd/incus/cluster.go:1861
+#: cmd/incus/cluster.go:1863
 #, fuzzy
 msgid "Please provide join token:"
 msgstr "Profil %s wurde auf %s angewandt\n"
@@ -7498,7 +7502,7 @@ msgstr "Herunterfahren des Containers erzwingen."
 msgid "Restore storage volume snapshots"
 msgstr "Herunterfahren des Containers erzwingen."
 
-#: cmd/incus/cluster.go:1693
+#: cmd/incus/cluster.go:1695
 #, fuzzy, c-format
 msgid "Restoring cluster member: %s"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
@@ -9101,7 +9105,7 @@ msgstr ""
 msgid "UUID: %v"
 msgstr ""
 
-#: cmd/incus/cluster.go:1892 cmd/incus/cluster.go:2085
+#: cmd/incus/cluster.go:1894 cmd/incus/cluster.go:2087
 #, fuzzy
 msgid "Unable to connect to any of the cluster members specified in join token"
 msgstr "kann nicht zum selben Container Namen kopieren"
@@ -9433,7 +9437,7 @@ msgstr ""
 msgid "User ID to run the command as (default 0)"
 msgstr ""
 
-#: cmd/incus/cluster.go:1939
+#: cmd/incus/cluster.go:1941
 #, fuzzy
 msgid "User aborted configuration"
 msgstr "Profil %s erstellt\n"
@@ -9566,7 +9570,7 @@ msgstr ""
 msgid "Web server running at: %s"
 msgstr ""
 
-#: cmd/incus/cluster.go:1820
+#: cmd/incus/cluster.go:1822
 msgid "What IP address or DNS name should be used to reach this server?"
 msgstr ""
 
@@ -9578,7 +9582,7 @@ msgstr ""
 msgid "What IPv6 address should be used?"
 msgstr ""
 
-#: cmd/incus/cluster.go:1790
+#: cmd/incus/cluster.go:1792
 msgid "What member name should be used to identify this server in the cluster?"
 msgstr ""
 
