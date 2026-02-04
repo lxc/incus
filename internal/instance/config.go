@@ -56,9 +56,10 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 
 	// gendoc:generate(entity=instance, group=boot, key=boot.autostart.priority)
 	// The instance with the highest value is started first.
+	// Instances without a priority set will be started (with some parallelism) ahead of
+	// instances with a priority set.
 	// ---
 	//  type: integer
-	//  defaultdesc: 0
 	//  liveupdate: no
 	//  shortdesc: What order to start the instances in
 	"boot.autostart.priority": validate.Optional(validate.IsInt64),
