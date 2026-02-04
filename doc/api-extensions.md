@@ -2981,3 +2981,9 @@ This introduces two new properties for NICs:
 
 * `attached`, behaving like the `attached` key for disk and USB devices;
 * `connected`, setting the up/down link state for the NIC (when supported).
+
+## `nic_sriov_security_trusted`
+
+This introduces a new property for SR-IOV NICs:
+
+* `security.trusted` allows setting the `trusted` flag for the virtual function if the parent NIC supports it.
