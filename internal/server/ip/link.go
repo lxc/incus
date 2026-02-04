@@ -295,12 +295,32 @@ func (l *Link) SetVfSpoofchk(vf string, on bool) error {
 	}, vfInt, on)
 }
 
+// SetVfTrusted turns trusted on or off for the specified VF.
+func (l *Link) SetVfTrusted(vf string, on bool) error {
+	vfInt, err := strconv.Atoi(vf)
+	if err != nil {
+		return err
+	}
+
+	return netlink.LinkSetVfTrust(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	}, vfInt, on)
+}
+
 // VirtFuncInfo holds information about vf.
 type VirtFuncInfo struct {
 	VF         int
 	Address    net.HardwareAddr
 	VLAN       int
 	SpoofCheck bool
+	// The value is an uint32 because drivers may not support this property.
+	// In that case, the kernel assigns -1 to this value, which we can check
+	// for by comparing with ^uint32(0), as these are the same bits as the
+	// two's complement representation of -1.
+	// https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/net/core/rtnetlink.c?h=linux-6.18.y#n1513
+	Trusted uint32
 }
 
 // GetVFInfo returns info about virtual function.
@@ -317,6 +337,7 @@ func (l *Link) GetVFInfo(vfID int) (VirtFuncInfo, error) {
 				Address:    vf.Mac,
 				VLAN:       vf.Vlan,
 				SpoofCheck: vf.Spoofchk,
+				Trusted:    vf.Trust,
 			}, nil
 		}
 	}
