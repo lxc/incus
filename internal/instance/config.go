@@ -1469,6 +1469,15 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 			return validate.IsAny, nil
 		}
 
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.vf.trusted)
+		// The original trusted setting used when moving a VF into an instance.
+		// ---
+		//  type: string
+		//  shortdesc: SR-IOV virtual function original trusted setting
+		if strings.HasSuffix(key, ".last_state.vf.trusted") {
+			return validate.IsAny, nil
+		}
+
 		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.vf.vlan)
 		// The original VLAN used when moving a VF into an instance.
 		// ---
