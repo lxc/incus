@@ -355,6 +355,7 @@ type InstanceServer interface {
 	CreateStoragePoolBucketBackup(poolName string, bucketName string, backup api.StorageBucketBackupsPost) (op Operation, err error)
 	DeleteStoragePoolBucketBackup(pool string, bucketName string, name string) (op Operation, err error)
 	GetStoragePoolBucketBackupFile(pool string, bucketName string, name string, req *BackupFileRequest) (resp *BackupFileResponse, err error)
+	CreateStoragePoolBucketBackupStream(pool string, bucketName string, backup api.StorageBucketBackupsPost, req *BackupFileRequest) (err error)
 	CreateStoragePoolBucketFromBackup(pool string, args StoragePoolBucketBackupArgs) (op Operation, err error)
 
 	// Storage volume functions ("storage" API extension)

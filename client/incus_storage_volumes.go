@@ -1,6 +1,7 @@
 package incus
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1093,6 +1094,70 @@ func (r *ProtocolIncus) GetStorageVolumeBackupFile(pool string, volName string, 
 	resp.Size = size
 
 	return &resp, nil
+}
+
+// CreateStorageVolumeBackupStream requests that Incus creates and returns new direct backup for
+// the storage volume.
+func (r *ProtocolIncus) CreateStorageVolumeBackupStream(pool string, volName string, backup api.StorageVolumeBackupsPost, req *BackupFileRequest) error {
+	if !r.HasExtension("direct_backup") {
+		return errors.New("The server is missing the required \"direct_backup\" API extension")
+	}
+
+	// Build the URL
+	uri := fmt.Sprintf("%s/1.0/storage-pools/%s/volumes/custom/%s/backups", r.httpBaseURL.String(), url.PathEscape(pool), url.PathEscape(volName))
+	if r.project != "" {
+		uri += fmt.Sprintf("?project=%s", url.QueryEscape(r.project))
+	}
+
+	// Encode the backup data
+	buf := bytes.Buffer{}
+	err := json.NewEncoder(&buf).Encode(backup)
+	if err != nil {
+		return err
+	}
+
+	// Prepare the download request
+	request, err := http.NewRequest("POST", uri, bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		return err
+	}
+
+	request.Header.Set("Accept", "application/octet-stream")
+	if r.httpUserAgent != "" {
+		request.Header.Set("User-Agent", r.httpUserAgent)
+	}
+
+	// Start the request
+	response, doneCh, err := cancel.CancelableDownload(req.Canceler, r.DoHTTP, request)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = response.Body.Close() }()
+	defer close(doneCh)
+
+	if response.StatusCode != http.StatusOK {
+		_, _, err = incusParseResponse(response)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Handle the data
+	body := response.Body
+	if req.ProgressHandler != nil {
+		body = &ioprogress.ProgressReader{
+			ReadCloser: response.Body,
+			Tracker: &ioprogress.ProgressTracker{
+				Handler: func(received int64, speed int64) {
+					req.ProgressHandler(ioprogress.ProgressData{Text: fmt.Sprintf("%s (%s/s)", units.GetByteSizeString(received, 2), units.GetByteSizeString(speed, 2))})
+				},
+			},
+		}
+	}
+
+	_, err = io.Copy(req.BackupFile, body)
+	return err
 }
 
 // CreateStoragePoolVolumeFromMigration defines a new storage volume.
