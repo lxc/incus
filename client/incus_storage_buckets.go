@@ -1,6 +1,8 @@
 package incus
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -503,6 +505,70 @@ func (r *ProtocolIncus) GetStoragePoolBucketBackupFile(pool string, bucketName s
 	resp.Size = size
 
 	return &resp, nil
+}
+
+// CreateStoragePoolBucketBackupStream requests that Incus creates and returns new direct backup
+// for the storage bucket.
+func (r *ProtocolIncus) CreateStoragePoolBucketBackupStream(poolName string, bucketName string, backup api.StorageBucketBackupsPost, req *BackupFileRequest) error {
+	if !r.HasExtension("direct_backup") {
+		return errors.New("The server is missing the required \"direct_backup\" API extension")
+	}
+
+	// Build the URL
+	uri := fmt.Sprintf("%s/1.0/storage-pools/%s/buckets/%s/backups", r.httpBaseURL.String(), url.PathEscape(poolName), url.PathEscape(bucketName))
+	if r.project != "" {
+		uri += fmt.Sprintf("?project=%s", url.QueryEscape(r.project))
+	}
+
+	// Encode the backup data
+	buf := bytes.Buffer{}
+	err := json.NewEncoder(&buf).Encode(backup)
+	if err != nil {
+		return err
+	}
+
+	// Prepare the download request
+	request, err := http.NewRequest("POST", uri, bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		return err
+	}
+
+	request.Header.Set("Accept", "application/octet-stream")
+	if r.httpUserAgent != "" {
+		request.Header.Set("User-Agent", r.httpUserAgent)
+	}
+
+	// Start the request
+	response, doneCh, err := cancel.CancelableDownload(req.Canceler, r.DoHTTP, request)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = response.Body.Close() }()
+	defer close(doneCh)
+
+	if response.StatusCode != http.StatusOK {
+		_, _, err = incusParseResponse(response)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Handle the data
+	body := response.Body
+	if req.ProgressHandler != nil {
+		body = &ioprogress.ProgressReader{
+			ReadCloser: response.Body,
+			Tracker: &ioprogress.ProgressTracker{
+				Handler: func(received int64, speed int64) {
+					req.ProgressHandler(ioprogress.ProgressData{Text: fmt.Sprintf("%s (%s/s)", units.GetByteSizeString(received, 2), units.GetByteSizeString(speed, 2))})
+				},
+			},
+		}
+	}
+
+	_, err = io.Copy(req.BackupFile, body)
+	return err
 }
 
 // CreateStoragePoolBucketFromBackup creates a new storage bucket from a backup.
