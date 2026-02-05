@@ -685,7 +685,7 @@ func pruneExpiredStorageVolumeBackups(ctx context.Context, s *state.State) error
 	return nil
 }
 
-func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, projectName string, poolName string, bucketName string) error {
+func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, projectName string, poolName string, bucketName string, writer *io.PipeWriter) error {
 	l := logger.AddContext(logger.Ctx{"project": projectName, "storage_bucket": bucketName, "name": args.Name})
 	l.Debug("Bucket backup started")
 	defer l.Debug("Bucket backup finished")
@@ -698,31 +698,36 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 		return fmt.Errorf("Failed loading storage pool %q: %w", poolName, err)
 	}
 
-	// Create the database entry
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.CreateStoragePoolBucketBackup(ctx, args)
-	})
-	if err != nil {
-		if errors.Is(err, db.ErrAlreadyDefined) {
-			return fmt.Errorf("Backup %q already exists", args.Name)
+	var backupRow db.StoragePoolBucketBackup
+
+	if args.Name == "" {
+		backupRow = args
+	} else {
+		// Create the database entry
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.CreateStoragePoolBucketBackup(ctx, args)
+		})
+		if err != nil {
+			if errors.Is(err, db.ErrAlreadyDefined) {
+				return fmt.Errorf("Backup %q already exists", args.Name)
+			}
+
+			return fmt.Errorf("Failed creating backup record: %w", err)
 		}
 
-		return fmt.Errorf("Failed creating backup record: %w", err)
-	}
-
-	reverter.Add(func() {
-		_ = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.DeleteStoragePoolBucketBackup(ctx, args.Name)
+		reverter.Add(func() {
+			_ = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.DeleteStoragePoolBucketBackup(ctx, args.Name)
+			})
 		})
-	})
 
-	var backupRow db.StoragePoolBucketBackup
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		backupRow, err = tx.GetStoragePoolBucketBackup(ctx, projectName, poolName, args.Name)
-		return err
-	})
-	if err != nil {
-		return fmt.Errorf("Failed getting backup record: %w", err)
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			backupRow, err = tx.GetStoragePoolBucketBackup(ctx, projectName, poolName, args.Name)
+			return err
+		})
+		if err != nil {
+			return fmt.Errorf("Failed getting backup record: %w", err)
+		}
 	}
 
 	// Detect compression method
@@ -736,28 +741,35 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 		compress = s.GlobalConfig.BackupsCompressionAlgorithm()
 	}
 
-	// Create the target path if needed.
-	backupsPath := internalUtil.VarPath("backups", "buckets", pool.Name(), project.StorageBucket(projectName, bucketName))
-	if !util.PathExists(backupsPath) {
-		err := os.MkdirAll(backupsPath, 0o700)
-		if err != nil {
-			return err
+	// Setup the tarball writer.
+	var tarFileWriter io.WriteCloser
+
+	if writer == nil {
+		// Create the target path if needed.
+		backupsPath := internalUtil.VarPath("backups", "buckets", pool.Name(), project.StorageBucket(projectName, bucketName))
+		if !util.PathExists(backupsPath) {
+			err := os.MkdirAll(backupsPath, 0o700)
+			if err != nil {
+				return err
+			}
+
+			reverter.Add(func() { _ = os.Remove(backupsPath) })
 		}
 
-		reverter.Add(func() { _ = os.Remove(backupsPath) })
-	}
+		target := internalUtil.VarPath("backups", "buckets", pool.Name(), project.StorageBucket(projectName, backupRow.Name))
 
-	target := internalUtil.VarPath("backups", "buckets", pool.Name(), project.StorageBucket(projectName, backupRow.Name))
+		l.Debug("Opening backup tarball for writing", logger.Ctx{"path": target})
+		tarFileWriter, err = os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0o600)
+		if err != nil {
+			return fmt.Errorf("Error opening backup tarball for writing %q: %w", target, err)
+		}
 
-	// Setup the tarball writer.
-	l.Debug("Opening backup tarball for writing", logger.Ctx{"path": target})
-	tarFileWriter, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0o600)
-	if err != nil {
-		return fmt.Errorf("Error opening backup tarball for writing %q: %w", target, err)
+		reverter.Add(func() { _ = os.Remove(target) })
+	} else {
+		tarFileWriter = writer
 	}
 
 	defer func() { _ = tarFileWriter.Close() }()
-	reverter.Add(func() { _ = os.Remove(target) })
 
 	// Create the tarball.
 	tarPipeReader, tarPipeWriter := io.Pipe()
