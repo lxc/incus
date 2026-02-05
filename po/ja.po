@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-02-04 16:37+0100\n"
+"POT-Creation-Date: 2026-02-07 23:47-0500\n"
 "PO-Revision-Date: 2026-01-25 17:06+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -2322,8 +2322,8 @@ msgstr "警告を削除します"
 #: cmd/incus/remote.go:1216 cmd/incus/remote.go:1281 cmd/incus/remote.go:1329
 #: cmd/incus/remote_unix.go:38 cmd/incus/rename.go:23 cmd/incus/snapshot.go:33
 #: cmd/incus/snapshot.go:83 cmd/incus/snapshot.go:231 cmd/incus/snapshot.go:325
-#: cmd/incus/snapshot.go:486 cmd/incus/snapshot.go:549
-#: cmd/incus/snapshot.go:628 cmd/incus/storage.go:41 cmd/incus/storage.go:108
+#: cmd/incus/snapshot.go:486 cmd/incus/snapshot.go:550
+#: cmd/incus/snapshot.go:632 cmd/incus/storage.go:41 cmd/incus/storage.go:108
 #: cmd/incus/storage.go:227 cmd/incus/storage.go:283 cmd/incus/storage.go:417
 #: cmd/incus/storage.go:501 cmd/incus/storage.go:684 cmd/incus/storage.go:863
 #: cmd/incus/storage.go:967 cmd/incus/storage.go:1063
@@ -7990,18 +7990,19 @@ msgstr "インスタンスを再起動します"
 msgid "Restore cluster member"
 msgstr "クラスターメンバーをリストアします"
 
-#: cmd/incus/snapshot.go:549
+#: cmd/incus/snapshot.go:550
 #, fuzzy
 msgid ""
 "Restore instance from snapshots\n"
 "\n"
-"If --stateful is passed, then the running state will be restored too."
+"If --stateful is passed, then the running state will be restored too.\n"
+"If --diskonly is passed, then only the disk will be restored."
 msgstr ""
 "スナップショットからインスタンスをリストアします\n"
 "\n"
 "--stateful オプションを指定すると、インスタンスの実行状態もリストアします。"
 
-#: cmd/incus/snapshot.go:548
+#: cmd/incus/snapshot.go:549
 #, fuzzy
 msgid "Restore instance snapshots"
 msgstr "スナップショットからインスタンスをリストアします"
@@ -8704,7 +8705,7 @@ msgstr "インスタンスもしくはサーバの設定を表示します"
 msgid "Show instance or server information"
 msgstr "インスタンスもしくはサーバの情報を表示します"
 
-#: cmd/incus/snapshot.go:627 cmd/incus/snapshot.go:628
+#: cmd/incus/snapshot.go:631 cmd/incus/snapshot.go:632
 #, fuzzy
 msgid "Show instance snapshot configuration"
 msgstr "インスタンスもしくはサーバの設定を表示します"
@@ -10220,7 +10221,12 @@ msgstr "デバイスはすでに存在します"
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr "スナップショットを含めずにインスタンスのみをバックアップするかどうか"
 
-#: cmd/incus/snapshot.go:557
+#: cmd/incus/snapshot.go:560
+#, fuzzy
+msgid "Whether or not to restore the instance's disk only"
+msgstr "インスタンスの稼動状態のスナップショットを取得するかどうか"
+
+#: cmd/incus/snapshot.go:559
 msgid ""
 "Whether or not to restore the instance's running state from snapshot (if "
 "available)"
@@ -10607,12 +10613,12 @@ msgstr "[<remote>:]<instance> <profile>"
 msgid "[<remote>:]<instance> <profiles>"
 msgstr "[<remote>:]<instance> <profiles>"
 
-#: cmd/incus/snapshot.go:228 cmd/incus/snapshot.go:547
+#: cmd/incus/snapshot.go:228 cmd/incus/snapshot.go:548
 #, fuzzy
 msgid "[<remote>:]<instance> <snapshot name>"
 msgstr "[<remote>:]<instance> [<snapshot name>]"
 
-#: cmd/incus/snapshot.go:626
+#: cmd/incus/snapshot.go:630
 msgid "[<remote>:]<instance> <snapshot>"
 msgstr "[<remote>:]<instance> <snapshot>"
 
@@ -11847,7 +11853,7 @@ msgstr ""
 "lxc init ubuntu:22.04 u1 < config.yaml\n"
 "    config.yaml の設定を使ってインスタンスを作成します"
 
-#: cmd/incus/snapshot.go:553
+#: cmd/incus/snapshot.go:555
 #, fuzzy
 msgid ""
 "incus snapshot restore u1 snap0\n"

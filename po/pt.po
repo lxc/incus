@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-02-04 16:37+0100\n"
+"POT-Creation-Date: 2026-02-07 23:47-0500\n"
 "PO-Revision-Date: 2026-02-06 00:05+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
-"\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
+">\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -2356,8 +2356,8 @@ msgstr "Apaga avisos"
 #: cmd/incus/remote.go:1216 cmd/incus/remote.go:1281 cmd/incus/remote.go:1329
 #: cmd/incus/remote_unix.go:38 cmd/incus/rename.go:23 cmd/incus/snapshot.go:33
 #: cmd/incus/snapshot.go:83 cmd/incus/snapshot.go:231 cmd/incus/snapshot.go:325
-#: cmd/incus/snapshot.go:486 cmd/incus/snapshot.go:549
-#: cmd/incus/snapshot.go:628 cmd/incus/storage.go:41 cmd/incus/storage.go:108
+#: cmd/incus/snapshot.go:486 cmd/incus/snapshot.go:550
+#: cmd/incus/snapshot.go:632 cmd/incus/storage.go:41 cmd/incus/storage.go:108
 #: cmd/incus/storage.go:227 cmd/incus/storage.go:283 cmd/incus/storage.go:417
 #: cmd/incus/storage.go:501 cmd/incus/storage.go:684 cmd/incus/storage.go:863
 #: cmd/incus/storage.go:967 cmd/incus/storage.go:1063
@@ -7953,17 +7953,19 @@ msgstr "Reinicia instâncias"
 msgid "Restore cluster member"
 msgstr "Restaura membro do agrupamento"
 
-#: cmd/incus/snapshot.go:549
+#: cmd/incus/snapshot.go:550
+#, fuzzy
 msgid ""
 "Restore instance from snapshots\n"
 "\n"
-"If --stateful is passed, then the running state will be restored too."
+"If --stateful is passed, then the running state will be restored too.\n"
+"If --diskonly is passed, then only the disk will be restored."
 msgstr ""
 "Restaura instância de instantâneos\n"
 "\n"
 "Se --stateful for passado, então o estado em execução será também restaurado."
 
-#: cmd/incus/snapshot.go:548
+#: cmd/incus/snapshot.go:549
 msgid "Restore instance snapshots"
 msgstr "Restaura instantâneos de instância"
 
@@ -8642,7 +8644,7 @@ msgstr "Mostra configurações de instância ou servidor"
 msgid "Show instance or server information"
 msgstr "Mostra informações de instância ou servidor"
 
-#: cmd/incus/snapshot.go:627 cmd/incus/snapshot.go:628
+#: cmd/incus/snapshot.go:631 cmd/incus/snapshot.go:632
 msgid "Show instance snapshot configuration"
 msgstr "Mostra configuração de instantâneo de instância"
 
@@ -10126,7 +10128,12 @@ msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr ""
 "Se é ou não para apenas fazer salvaguarda da instância (sem os instantâneos)"
 
-#: cmd/incus/snapshot.go:557
+#: cmd/incus/snapshot.go:560
+#, fuzzy
+msgid "Whether or not to restore the instance's disk only"
+msgstr "Se deve-se ou não tirar instantâneo ao estado de execução da instância"
+
+#: cmd/incus/snapshot.go:559
 msgid ""
 "Whether or not to restore the instance's running state from snapshot (if "
 "available)"
@@ -10489,11 +10496,11 @@ msgstr "[<remoto>:]<instância> <perfil>"
 msgid "[<remote>:]<instance> <profiles>"
 msgstr "[<remoto>:]<instância> <perfis>"
 
-#: cmd/incus/snapshot.go:228 cmd/incus/snapshot.go:547
+#: cmd/incus/snapshot.go:228 cmd/incus/snapshot.go:548
 msgid "[<remote>:]<instance> <snapshot name>"
 msgstr "[<remoto>:]<instância> <nome de instantâneo>"
 
-#: cmd/incus/snapshot.go:626
+#: cmd/incus/snapshot.go:630
 msgid "[<remote>:]<instance> <snapshot>"
 msgstr "[<remoto>:]<instância> <instantâneo>"
 
@@ -11693,7 +11700,7 @@ msgstr ""
 "\tCria um instantâneo de \"u1\" chamado \"snap0\" com a configuração de "
 "\"config.yaml\"."
 
-#: cmd/incus/snapshot.go:553
+#: cmd/incus/snapshot.go:555
 msgid ""
 "incus snapshot restore u1 snap0\n"
 "    Restore instance u1 to snapshot snap0"

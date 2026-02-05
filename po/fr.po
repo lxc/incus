@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-02-04 16:37+0100\n"
+"POT-Creation-Date: 2026-02-07 23:47-0500\n"
 "PO-Revision-Date: 2026-01-30 16:56+0000\n"
 "Last-Translator: Benjamin Somers <benjamin.somers@imt-atlantique.fr>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -2370,8 +2370,8 @@ msgstr "Supprimer des avertissements"
 #: cmd/incus/remote.go:1216 cmd/incus/remote.go:1281 cmd/incus/remote.go:1329
 #: cmd/incus/remote_unix.go:38 cmd/incus/rename.go:23 cmd/incus/snapshot.go:33
 #: cmd/incus/snapshot.go:83 cmd/incus/snapshot.go:231 cmd/incus/snapshot.go:325
-#: cmd/incus/snapshot.go:486 cmd/incus/snapshot.go:549
-#: cmd/incus/snapshot.go:628 cmd/incus/storage.go:41 cmd/incus/storage.go:108
+#: cmd/incus/snapshot.go:486 cmd/incus/snapshot.go:550
+#: cmd/incus/snapshot.go:632 cmd/incus/storage.go:41 cmd/incus/storage.go:108
 #: cmd/incus/storage.go:227 cmd/incus/storage.go:283 cmd/incus/storage.go:417
 #: cmd/incus/storage.go:501 cmd/incus/storage.go:684 cmd/incus/storage.go:863
 #: cmd/incus/storage.go:967 cmd/incus/storage.go:1063
@@ -7837,18 +7837,20 @@ msgstr "Création du conteneur"
 msgid "Restore cluster member"
 msgstr "Restaurer un membre du cluster"
 
-#: cmd/incus/snapshot.go:549
+#: cmd/incus/snapshot.go:550
+#, fuzzy
 msgid ""
 "Restore instance from snapshots\n"
 "\n"
-"If --stateful is passed, then the running state will be restored too."
+"If --stateful is passed, then the running state will be restored too.\n"
+"If --diskonly is passed, then only the disk will be restored."
 msgstr ""
 "Restaurer une instance depuis un instantané\n"
 "\n"
 "Si --stateful est donné, l’état courant de l’instance sera également "
 "restauré."
 
-#: cmd/incus/snapshot.go:548
+#: cmd/incus/snapshot.go:549
 #, fuzzy
 msgid "Restore instance snapshots"
 msgstr "Forcer le conteneur à s'arrêter"
@@ -8477,7 +8479,7 @@ msgstr "Afficher la configuration étendue"
 msgid "Show instance or server information"
 msgstr "Afficher des informations supplémentaires"
 
-#: cmd/incus/snapshot.go:627 cmd/incus/snapshot.go:628
+#: cmd/incus/snapshot.go:631 cmd/incus/snapshot.go:632
 #, fuzzy
 msgid "Show instance snapshot configuration"
 msgstr "Afficher la configuration étendue"
@@ -9916,7 +9918,12 @@ msgstr "Où ce pool de stockage doit-il enregistrer ses données ?"
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr "Réaliser ou pas l'instantané de l'état de fonctionnement du conteneur"
 
-#: cmd/incus/snapshot.go:557
+#: cmd/incus/snapshot.go:560
+#, fuzzy
+msgid "Whether or not to restore the instance's disk only"
+msgstr "Réaliser ou pas l'instantané de l'état de fonctionnement du conteneur"
+
+#: cmd/incus/snapshot.go:559
 #, fuzzy
 msgid ""
 "Whether or not to restore the instance's running state from snapshot (if "
@@ -10285,11 +10292,11 @@ msgstr "[<serveur distant>:]<instance> <profil>"
 msgid "[<remote>:]<instance> <profiles>"
 msgstr "[<serveur distant>:]<instance> <profil>…"
 
-#: cmd/incus/snapshot.go:228 cmd/incus/snapshot.go:547
+#: cmd/incus/snapshot.go:228 cmd/incus/snapshot.go:548
 msgid "[<remote>:]<instance> <snapshot name>"
 msgstr "[<serveur distant>:]<instance> <instantané>"
 
-#: cmd/incus/snapshot.go:626
+#: cmd/incus/snapshot.go:630
 msgid "[<remote>:]<instance> <snapshot>"
 msgstr "[<serveur distant>:]<instance> <instantané>"
 
@@ -11297,7 +11304,7 @@ msgid ""
 "\"config.yaml\"."
 msgstr ""
 
-#: cmd/incus/snapshot.go:553
+#: cmd/incus/snapshot.go:555
 msgid ""
 "incus snapshot restore u1 snap0\n"
 "    Restore instance u1 to snapshot snap0"
