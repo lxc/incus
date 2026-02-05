@@ -36,7 +36,7 @@ import (
 )
 
 // Create a new backup.
-func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.Instance, op *operations.Operation) error {
+func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.Instance, op *operations.Operation, writer *io.PipeWriter) error {
 	l := logger.AddContext(logger.Ctx{"project": sourceInst.Project().Name, "instance": sourceInst.Name(), "name": args.Name})
 	l.Debug("Instance backup started")
 	defer l.Debug("Instance backup finished")
@@ -55,28 +55,34 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 		args.OptimizedStorage = false
 	}
 
-	// Create the database entry.
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.CreateInstanceBackup(ctx, args)
-	})
-	if err != nil {
-		if errors.Is(err, db.ErrAlreadyDefined) {
-			return fmt.Errorf("Backup %q already exists", args.Name)
+	var b *backup.InstanceBackup
+
+	if args.Name == "" {
+		b = backup.NewInstanceBackup(s, sourceInst, 0, "", args.CreationDate, args.ExpiryDate, args.InstanceOnly, args.OptimizedStorage)
+	} else {
+		// Create the database entry.
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.CreateInstanceBackup(ctx, args)
+		})
+		if err != nil {
+			if errors.Is(err, db.ErrAlreadyDefined) {
+				return fmt.Errorf("Backup %q already exists", args.Name)
+			}
+
+			return fmt.Errorf("Insert backup info into database: %w", err)
 		}
 
-		return fmt.Errorf("Insert backup info into database: %w", err)
-	}
-
-	reverter.Add(func() {
-		_ = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.DeleteInstanceBackup(ctx, args.Name)
+		reverter.Add(func() {
+			_ = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.DeleteInstanceBackup(ctx, args.Name)
+			})
 		})
-	})
 
-	// Get the backup struct.
-	b, err := instance.BackupLoadByName(s, sourceInst.Project().Name, args.Name)
-	if err != nil {
-		return fmt.Errorf("Load backup object: %w", err)
+		// Get the backup struct.
+		b, err = instance.BackupLoadByName(s, sourceInst.Project().Name, args.Name)
+		if err != nil {
+			return fmt.Errorf("Load backup object: %w", err)
+		}
 	}
 
 	// Detect compression method.
@@ -107,28 +113,35 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 		}
 	}
 
-	// Create the target path if needed.
-	backupsPath := internalUtil.VarPath("backups", "instances", project.Instance(sourceInst.Project().Name, sourceInst.Name()))
-	if !util.PathExists(backupsPath) {
-		err := os.MkdirAll(backupsPath, 0o700)
-		if err != nil {
-			return err
+	// Setup the tarball writer.
+	var tarFileWriter io.WriteCloser
+
+	if writer == nil {
+		// Create the target path if needed.
+		backupsPath := internalUtil.VarPath("backups", "instances", project.Instance(sourceInst.Project().Name, sourceInst.Name()))
+		if !util.PathExists(backupsPath) {
+			err := os.MkdirAll(backupsPath, 0o700)
+			if err != nil {
+				return err
+			}
+
+			reverter.Add(func() { _ = os.Remove(backupsPath) })
 		}
 
-		reverter.Add(func() { _ = os.Remove(backupsPath) })
-	}
+		target := internalUtil.VarPath("backups", "instances", project.Instance(sourceInst.Project().Name, b.Name()))
 
-	target := internalUtil.VarPath("backups", "instances", project.Instance(sourceInst.Project().Name, b.Name()))
+		l.Debug("Opening backup tarball for writing", logger.Ctx{"path": target})
+		tarFileWriter, err = os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0o600)
+		if err != nil {
+			return fmt.Errorf("Error opening backup tarball for writing %q: %w", target, err)
+		}
 
-	// Setup the tarball writer.
-	l.Debug("Opening backup tarball for writing", logger.Ctx{"path": target})
-	tarFileWriter, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0o600)
-	if err != nil {
-		return fmt.Errorf("Error opening backup tarball for writing %q: %w", target, err)
+		reverter.Add(func() { _ = os.Remove(target) })
+	} else {
+		tarFileWriter = writer
 	}
 
 	defer func() { _ = tarFileWriter.Close() }()
-	reverter.Add(func() { _ = os.Remove(target) })
 
 	// Get IDMap to unshift container as the tarball is created.
 	var idmapSet *idmap.Set
