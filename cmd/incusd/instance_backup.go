@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -14,6 +15,7 @@ import (
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/jmap"
+	internalBackup "github.com/lxc/incus/v6/internal/server/backup"
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/db/operationtype"
 	"github.com/lxc/incus/v6/internal/server/instance"
@@ -182,11 +184,15 @@ func instanceBackupsGet(d *Daemon, r *http.Request) response.Response {
 //
 //	Creates a new backup.
 //
+//	If the `Accept` header is set to `application/octet-stream`, this directly streams the backup
+//	tarball to the client without any intermediate operation.
+//
 //	---
 //	consumes:
 //	  - application/json
 //	produces:
 //	  - application/json
+//	  - application/octet-stream
 //	parameters:
 //	  - in: query
 //	    name: project
@@ -269,82 +275,108 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	if req.Name == "" {
-		// come up with a name.
-		backups, err := inst.Backups()
-		if err != nil {
-			return response.BadRequest(err)
-		}
+	direct := r.Header.Get("Accept") == "application/octet-stream"
 
-		base := name + internalInstance.SnapshotDelimiter + "backup"
-		length := len(base)
-		max := 0
-
-		for _, backup := range backups {
-			// Ignore backups not containing base.
-			if !strings.HasPrefix(backup.Name(), base) {
-				continue
-			}
-
-			substr := backup.Name()[length:]
-			var num int
-			count, err := fmt.Sscanf(substr, "%d", &num)
-			if err != nil || count != 1 {
-				continue
-			}
-
-			if num >= max {
-				max = num + 1
-			}
-		}
-
-		req.Name = fmt.Sprintf("backup%d", max)
+	if direct && req.Target != nil {
+		return response.BadRequest(errors.New("application/octet-stream is not a valid content type when a target is defined"))
 	}
 
-	// Validate the name.
-	if strings.Contains(req.Name, "/") {
-		return response.BadRequest(errors.New("Backup names may not contain slashes"))
-	}
+	var reader *io.PipeReader
+	var writer *io.PipeWriter
+	var fullName string
 
-	fullName := name + internalInstance.SnapshotDelimiter + req.Name
-	instanceOnly := req.InstanceOnly
+	if direct || req.Target != nil {
+		if req.Name != "" {
+			if direct {
+				return response.BadRequest(errors.New("No backup name can be set when requesting a direct backup with Accept: application/octet-stream"))
+			}
+
+			return response.BadRequest(errors.New("No backup name can be set when setting a backup target"))
+		}
+
+		reader, writer = io.Pipe()
+	} else {
+		if req.Name == "" {
+			// come up with a name.
+			backups, err := inst.Backups()
+			if err != nil {
+				return response.BadRequest(err)
+			}
+
+			base := name + internalInstance.SnapshotDelimiter + "backup"
+			length := len(base)
+			backupID := 0
+
+			for _, backup := range backups {
+				// Ignore backups not containing base.
+				if !strings.HasPrefix(backup.Name(), base) {
+					continue
+				}
+
+				substr := backup.Name()[length:]
+				var num int
+				count, err := fmt.Sscanf(substr, "%d", &num)
+				if err != nil || count != 1 {
+					continue
+				}
+
+				if num >= backupID {
+					backupID = num + 1
+				}
+			}
+
+			req.Name = fmt.Sprintf("backup%d", backupID)
+		}
+
+		// Validate the name.
+		if strings.Contains(req.Name, "/") {
+			return response.BadRequest(errors.New("Backup names may not contain slashes"))
+		}
+
+		fullName = name + internalInstance.SnapshotDelimiter + req.Name
+	}
 
 	backup := func(op *operations.Operation) error {
 		args := db.InstanceBackup{
 			Name:                 fullName,
 			InstanceID:           inst.ID(),
 			CreationDate:         time.Now(),
-			ExpiryDate:           req.ExpiresAt,
-			InstanceOnly:         instanceOnly,
+			InstanceOnly:         req.InstanceOnly,
 			OptimizedStorage:     req.OptimizedStorage,
 			CompressionAlgorithm: req.CompressionAlgorithm,
 		}
 
-		// Create the backup.
-		err := backupCreate(s, args, inst, op)
-		if err != nil {
-			return err
+		if !direct && req.Target == nil {
+			args.ExpiryDate = req.ExpiresAt
 		}
 
-		// Upload it if requested.
+		uploadRes := make(chan error)
+
+		// Start the upload in the background if requested.
 		if req.Target != nil {
-			// Load the backup.
-			entry, err := instance.BackupLoadByName(s, projectName, fullName)
-			if err != nil {
-				return err
+			go func(resCh chan<- error) {
+				resCh <- internalBackup.Upload(reader, req.Target)
+			}(uploadRes)
+		}
+
+		// Create the backup.
+		err := backupCreate(s, args, inst, op, writer)
+		if err != nil {
+			// If we receive a pipe closed error, we first check for an explicit error returned by the
+			// reader.
+			if errors.Is(err, io.ErrClosedPipe) {
+				select {
+				case readerErr := <-uploadRes:
+					err = readerErr
+				default:
+				}
 			}
 
-			// Upload it.
-			err = entry.Upload(req.Target)
-			if err != nil {
-				return err
-			}
-
-			// Delete the backup on successful upload.
-			err = entry.Delete()
-			if err != nil {
-				return err
-			}
+			// In order to actually fail piped exports, we use a dirty trick where we close the reader.
+			// This doesn't provide a clean error message in the case of direct backups, but it is a
+			// convenient tradeoff ensuring that the client reports an error.
+			_ = reader.Close()
+			return err
 		}
 
 		return nil
@@ -352,12 +384,23 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 
 	resources := map[string][]api.URL{}
 	resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", name)}
-	resources["backups"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", name, "backups", req.Name)}
+	if !direct && req.Target == nil {
+		resources["backups"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", name, "backups", req.Name)}
+	}
 
 	op, err := operations.OperationCreate(s, projectName, operations.OperationClassTask,
 		operationtype.BackupCreate, resources, nil, backup, nil, nil, r)
 	if err != nil {
 		return response.InternalError(err)
+	}
+
+	if direct {
+		err = op.Start()
+		if err != nil {
+			return response.InternalError(err)
+		}
+
+		return response.PipeResponse(r, reader)
 	}
 
 	return operations.OperationResponse(op)
