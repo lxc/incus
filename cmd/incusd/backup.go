@@ -396,7 +396,7 @@ func pruneExpiredInstanceBackups(ctx context.Context, s *state.State) error {
 	return nil
 }
 
-func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, projectName string, poolName string, volumeName string) error {
+func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, projectName string, poolName string, volumeName string, writer *io.PipeWriter) error {
 	l := logger.AddContext(logger.Ctx{"project": projectName, "storage_volume": volumeName, "name": args.Name})
 	l.Debug("Volume backup started")
 	defer l.Debug("Volume backup finished")
@@ -431,32 +431,36 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 		args.OptimizedStorage = false
 	}
 
-	// Create the database entry.
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.CreateStoragePoolVolumeBackup(ctx, args)
-	})
-	if err != nil {
-		if errors.Is(err, db.ErrAlreadyDefined) {
-			return fmt.Errorf("Backup %q already exists", args.Name)
-		}
-
-		return fmt.Errorf("Failed creating backup record: %w", err)
-	}
-
-	reverter.Add(func() {
-		_ = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.DeleteStoragePoolVolumeBackup(ctx, args.Name)
-		})
-	})
-
 	var backupRow db.StoragePoolVolumeBackup
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		backupRow, err = tx.GetStoragePoolVolumeBackup(ctx, projectName, poolName, args.Name)
-		return err
-	})
-	if err != nil {
-		return fmt.Errorf("Failed getting backup record: %w", err)
+	if args.Name == "" {
+		backupRow = args
+	} else {
+		// Create the database entry.
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.CreateStoragePoolVolumeBackup(ctx, args)
+		})
+		if err != nil {
+			if errors.Is(err, db.ErrAlreadyDefined) {
+				return fmt.Errorf("Backup %q already exists", args.Name)
+			}
+
+			return fmt.Errorf("Failed creating backup record: %w", err)
+		}
+
+		reverter.Add(func() {
+			_ = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.DeleteStoragePoolVolumeBackup(ctx, args.Name)
+			})
+		})
+
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			backupRow, err = tx.GetStoragePoolVolumeBackup(ctx, projectName, poolName, args.Name)
+			return err
+		})
+		if err != nil {
+			return fmt.Errorf("Failed getting backup record: %w", err)
+		}
 	}
 
 	// Detect compression method.
@@ -470,28 +474,35 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 		compress = s.GlobalConfig.BackupsCompressionAlgorithm()
 	}
 
-	// Create the target path if needed.
-	backupsPath := internalUtil.VarPath("backups", "custom", pool.Name(), project.StorageVolume(projectName, volumeName))
-	if !util.PathExists(backupsPath) {
-		err := os.MkdirAll(backupsPath, 0o700)
-		if err != nil {
-			return err
+	// Setup the writer.
+	var fileWriter io.WriteCloser
+
+	if writer == nil {
+		// Create the target path if needed.
+		backupsPath := internalUtil.VarPath("backups", "custom", pool.Name(), project.StorageVolume(projectName, volumeName))
+		if !util.PathExists(backupsPath) {
+			err := os.MkdirAll(backupsPath, 0o700)
+			if err != nil {
+				return err
+			}
+
+			reverter.Add(func() { _ = os.Remove(backupsPath) })
 		}
 
-		reverter.Add(func() { _ = os.Remove(backupsPath) })
-	}
+		target := internalUtil.VarPath("backups", "custom", pool.Name(), project.StorageVolume(projectName, backupRow.Name))
 
-	target := internalUtil.VarPath("backups", "custom", pool.Name(), project.StorageVolume(projectName, backupRow.Name))
+		l.Debug("Opening backup file for writing", logger.Ctx{"path": target})
+		fileWriter, err = os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0o600)
+		if err != nil {
+			return fmt.Errorf("Error opening backup file for writing %q: %w", target, err)
+		}
 
-	// Setup the writer.
-	l.Debug("Opening backup file for writing", logger.Ctx{"path": target})
-	fileWriter, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0o600)
-	if err != nil {
-		return fmt.Errorf("Error opening backup file for writing %q: %w", target, err)
+		reverter.Add(func() { _ = os.Remove(target) })
+	} else {
+		fileWriter = writer
 	}
 
 	defer func() { _ = fileWriter.Close() }()
-	reverter.Add(func() { _ = os.Remove(target) })
 
 	// If dealing with an ISO volume, we want to return it unaltered.
 	if contentType == drivers.ContentTypeISO {
