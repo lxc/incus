@@ -151,6 +151,7 @@ type InstanceServer interface {
 	RenameInstanceBackup(instanceName string, name string, backup api.InstanceBackupPost) (op Operation, err error)
 	DeleteInstanceBackup(instanceName string, name string) (op Operation, err error)
 	GetInstanceBackupFile(instanceName string, name string, req *BackupFileRequest) (resp *BackupFileResponse, err error)
+	CreateInstanceBackupStream(instanceName string, backup api.InstanceBackupsPost, req *BackupFileRequest) (err error)
 	CreateInstanceFromBackup(args InstanceBackupArgs) (op Operation, err error)
 
 	GetInstanceState(name string) (state *api.InstanceState, ETag string, err error)
