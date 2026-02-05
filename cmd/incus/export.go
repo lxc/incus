@@ -98,56 +98,70 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 		CompressionAlgorithm: c.flagCompressionAlgorithm,
 	}
 
-	op, err := d.CreateInstanceBackup(name, req)
-	if err != nil {
-		return fmt.Errorf(i18n.G("Create instance backup: %w"), err)
-	}
+	var getter func(backupReq *incus.BackupFileRequest) error
 
-	// Watch the background operation
-	progress := cli.ProgressRenderer{
-		Format: i18n.G("Backing up instance: %s"),
-		Quiet:  c.global.flagQuiet,
-	}
-
-	_, err = op.AddHandler(progress.UpdateOp)
-	if err != nil {
-		progress.Done("")
-		return err
-	}
-
-	// Wait until backup is done
-	err = cli.CancelableWait(op, &progress)
-	if err != nil {
-		progress.Done("")
-		return err
-	}
-
-	progress.Done("")
-
-	err = op.Wait()
-	if err != nil {
-		return err
-	}
-
-	// Get name of backup
-	uStr := op.Get().Resources["backups"][0]
-	u, err := url.Parse(uStr)
-	if err != nil {
-		return fmt.Errorf(i18n.G("Invalid URL %q: %w"), uStr, err)
-	}
-
-	backupName, err := url.PathUnescape(path.Base(u.EscapedPath()))
-	if err != nil {
-		return fmt.Errorf(i18n.G("Invalid backup name segment in path %q: %w"), u.EscapedPath(), err)
-	}
-
-	defer func() {
-		// Delete backup after we're done
-		op, err = d.DeleteInstanceBackup(name, backupName)
-		if err == nil {
-			_ = op.Wait()
+	if d.HasExtension("direct_backup") {
+		getter = func(backupReq *incus.BackupFileRequest) error {
+			return d.CreateInstanceBackupStream(name, req, backupReq)
 		}
-	}()
+	} else {
+		// Send the request
+		op, err := d.CreateInstanceBackup(name, req)
+		if err != nil {
+			return fmt.Errorf(i18n.G("Create instance backup: %w"), err)
+		}
+
+		// Watch the background operation
+		progress := cli.ProgressRenderer{
+			Format: i18n.G("Backing up instance: %s"),
+			Quiet:  c.global.flagQuiet,
+		}
+
+		_, err = op.AddHandler(progress.UpdateOp)
+		if err != nil {
+			progress.Done("")
+			return err
+		}
+
+		// Wait until backup is done
+		err = cli.CancelableWait(op, &progress)
+		if err != nil {
+			progress.Done("")
+			return err
+		}
+
+		progress.Done("")
+
+		err = op.Wait()
+		if err != nil {
+			return err
+		}
+
+		// Get name of backup
+		uStr := op.Get().Resources["backups"][0]
+		u, err := url.Parse(uStr)
+		if err != nil {
+			return fmt.Errorf(i18n.G("Invalid URL %q: %w"), uStr, err)
+		}
+
+		backupName, err := url.PathUnescape(path.Base(u.EscapedPath()))
+		if err != nil {
+			return fmt.Errorf(i18n.G("Invalid backup name segment in path %q: %w"), u.EscapedPath(), err)
+		}
+
+		defer func() {
+			// Delete backup after we're done
+			op, err = d.DeleteInstanceBackup(name, backupName)
+			if err == nil {
+				_ = op.Wait()
+			}
+		}()
+
+		getter = func(backupReq *incus.BackupFileRequest) error {
+			_, err := d.GetInstanceBackupFile(name, backupName, backupReq)
+			return err
+		}
+	}
 
 	var target *os.File
 	if targetName == "-" {
@@ -162,7 +176,7 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Prepare the download request
-	progress = cli.ProgressRenderer{
+	progress := cli.ProgressRenderer{
 		Format: i18n.G("Exporting the backup: %s"),
 		Quiet:  c.global.flagQuiet,
 	}
@@ -173,7 +187,7 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Export tarball
-	_, err = d.GetInstanceBackupFile(name, backupName, &backupFileRequest)
+	err = getter(&backupFileRequest)
 	if err != nil {
 		_ = os.Remove(targetName)
 		progress.Done("")
