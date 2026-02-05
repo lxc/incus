@@ -2981,3 +2981,7 @@ This introduces two new properties for NICs:
 
 * `attached`, behaving like the `attached` key for disk and USB devices;
 * `connected`, setting the up/down link state for the NIC (when supported).
+
+## `instance_snapshot_disk_only_restore`
+
+This adds support for only restoring the disk of a snapshotted instance.

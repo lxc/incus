@@ -5775,7 +5775,7 @@ func (d *qemu) Snapshot(name string, expiry time.Time, stateful bool) error {
 }
 
 // Restore restores an instance snapshot.
-func (d *qemu) Restore(source instance.Instance, stateful bool) error {
+func (d *qemu) Restore(source instance.Instance, stateful bool, diskOnly bool) error {
 	op, err := operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionRestore, false, false)
 	if err != nil {
 		return fmt.Errorf("Failed to create instance restore operation: %w", err)
@@ -5857,17 +5857,34 @@ func (d *qemu) Restore(source instance.Instance, stateful bool) error {
 		return err
 	}
 
-	// Restore the configuration.
-	args := db.InstanceArgs{
-		Architecture: source.Architecture(),
-		Config:       source.LocalConfig(),
-		Description:  source.Description(),
-		Devices:      source.LocalDevices(),
-		Ephemeral:    source.IsEphemeral(),
-		Profiles:     source.Profiles(),
-		Project:      source.Project().Name,
-		Type:         source.Type(),
-		Snapshot:     source.IsSnapshot(),
+	args := db.InstanceArgs{}
+	if !diskOnly {
+		// Restore the configuration.
+		args = db.InstanceArgs{
+			Architecture: source.Architecture(),
+			Config:       source.LocalConfig(),
+			Description:  source.Description(),
+			Devices:      source.LocalDevices(),
+			Ephemeral:    source.IsEphemeral(),
+			Profiles:     source.Profiles(),
+			Project:      source.Project().Name,
+			Type:         source.Type(),
+			Snapshot:     source.IsSnapshot(),
+		}
+	} else {
+		args = db.InstanceArgs{
+			Architecture: d.Architecture(),
+			Config:       d.LocalConfig(),
+			Description:  d.Description(),
+			Devices:      d.LocalDevices(),
+			Ephemeral:    d.IsEphemeral(),
+			Profiles:     d.Profiles(),
+			Project:      d.Project().Name,
+			Type:         d.Type(),
+			Snapshot:     d.IsSnapshot(),
+		}
+
+		args.Config["volatile.uuid.generation"] = source.LocalConfig()["volatile.uuid.generation"]
 	}
 
 	// Don't pass as user-requested as there's no way to fix a bad config.
