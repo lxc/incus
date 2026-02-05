@@ -7653,7 +7653,7 @@ func (b *backend) qcow2Rename(vol drivers.Volume, newVolName string, inst instan
 		return err
 	}
 
-	err = vol.MountWithSnapshotsTask(func(parentMountPath string, parentOp *operations.Operation) error {
+	err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, parentOp *operations.Operation) error {
 		backingPath := ""
 		// Update the metadata of the snapshot which points to a renamed volume.
 		for _, snap := range volSnaps {
@@ -7741,7 +7741,7 @@ func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume
 		return err
 	}
 
-	err = vol.MountWithSnapshotsTask(func(parentMountPath string, parentOp *operations.Operation) error {
+	err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, parentOp *operations.Operation) error {
 		parentDiskPath, err := b.driver.GetVolumeDiskPath(vol)
 		if err != nil {
 			return err
@@ -7797,7 +7797,7 @@ func (b *backend) qcow2RestoreSnapshot(vol drivers.Volume, snapVol drivers.Volum
 		return err
 	}
 
-	err = vol.MountWithSnapshotsTask(func(mountPath string, op *operations.Operation) error {
+	err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, op *operations.Operation) error {
 		parentDiskPath, err := b.driver.GetVolumeDiskPath(vol)
 		if err != nil {
 			return err
@@ -7862,7 +7862,7 @@ func (b *backend) qcow2RenameSnapshot(vol drivers.Volume, snapVol drivers.Volume
 	}
 
 	// Update the metadata of the parent if it points to a renamed volume.
-	err = vol.MountWithSnapshotsTask(func(mountPath string, op *operations.Operation) error {
+	err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, op *operations.Operation) error {
 		parentDiskPath, err := b.driver.GetVolumeDiskPath(vol)
 		if err != nil {
 			return err
@@ -7998,7 +7998,7 @@ func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume
 		}
 
 		// Check if the main volume is the parent of the snapshot to be deleted.
-		err = vol.MountWithSnapshotsTask(func(mountPath string, op *operations.Operation) error {
+		err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, op *operations.Operation) error {
 			parentDiskPath, err := b.driver.GetVolumeDiskPath(vol)
 			if err != nil {
 				return err
@@ -8141,7 +8141,7 @@ func (b *backend) qcow2BackingPaths(vol drivers.Volume, diskPath string, project
 	b.logger.Debug("Disk path snapshots map:", logger.Ctx{"diskPathSnapshots": diskPathSnapshot})
 
 	var chainPaths []string
-	err = vol.MountWithSnapshotsTask(func(mountPath string, op *operations.Operation) error {
+	err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, op *operations.Operation) error {
 		chainPaths, err = drivers.Qcow2BackingChain(diskPath)
 		if err != nil {
 			return nil
@@ -8272,9 +8272,9 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, conn io
 		}
 
 		// Send snapshot to target (ensure local snapshot volume is mounted if needed).
-		err = vol.MountWithSnapshotsTask(func(mountPath string, op *operations.Operation) error {
+		err = vol.MountWithSnapshotsTask(func(parentMountPath string, snapshotMountPaths map[string]string, op *operations.Operation) error {
 			if vol.ContentType() != drivers.ContentTypeBlock || vol.Type() != drivers.VolumeTypeCustom {
-				err := sendFSVol(snapshot, conn, mountPath)
+				err := sendFSVol(snapshot, conn, snapshotMountPaths[snapshot.Name()])
 				if err != nil {
 					return err
 				}
@@ -8295,9 +8295,9 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, conn io
 	}
 
 	// Send volume to target (ensure local volume is mounted if needed).
-	return vol.MountWithSnapshotsTask(func(mountPath string, op *operations.Operation) error {
+	return vol.MountWithSnapshotsTask(func(parentMountPath string, _ map[string]string, op *operations.Operation) error {
 		if !drivers.IsContentBlock(vol.ContentType()) || vol.Type() != drivers.VolumeTypeCustom {
-			err := sendFSVol(vol, conn, mountPath)
+			err := sendFSVol(vol, conn, parentMountPath)
 			if err != nil {
 				return err
 			}
@@ -8421,12 +8421,12 @@ func (b *backend) qcow2CreateVolumeFromMigration(src instance.Instance, vol driv
 		}
 
 		// Ensure the volume is mounted.
-		err = vol.MountWithSnapshotsTask(func(mountPath string, op *operations.Operation) error {
+		err = vol.MountWithSnapshotsTask(func(parentMountPath string, snapshotMountPaths map[string]string, op *operations.Operation) error {
 			var err error
 
 			// Setup paths to the main volume. We will receive each snapshot to these paths and then create
 			// a snapshot of the main volume for each one.
-			path := internalUtil.AddSlash(mountPath)
+			path := internalUtil.AddSlash(parentMountPath)
 			pathBlock := ""
 
 			if vol.IsVMBlock() || (drivers.IsContentBlock(vol.ContentType()) && vol.Type() == drivers.VolumeTypeCustom) {
@@ -8473,12 +8473,12 @@ func (b *backend) qcow2CreateVolumeFromMigration(src instance.Instance, vol driv
 		}
 	}
 
-	err := vol.MountWithSnapshotsTask(func(mountPath string, op *operations.Operation) error {
+	err := vol.MountWithSnapshotsTask(func(parentMountPath string, snapshotMountPaths map[string]string, op *operations.Operation) error {
 		var err error
 
 		// Setup paths to the main volume. We will receive each snapshot to these paths and then create
 		// a snapshot of the main volume for each one.
-		path := internalUtil.AddSlash(mountPath)
+		path := internalUtil.AddSlash(parentMountPath)
 		pathBlock := ""
 
 		if vol.IsVMBlock() || (drivers.IsContentBlock(vol.ContentType()) && vol.Type() == drivers.VolumeTypeCustom) {
