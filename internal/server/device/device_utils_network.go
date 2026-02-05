@@ -982,6 +982,8 @@ func networkPCIBindWaitInterface(pciDev pcidev.Device, ifName string) error {
 // It configures the MAC address and MTU, then brings the interface up.
 func networkSRIOVSetupContainerVFNIC(hostName string, macPattern string, config map[string]string) error {
 	// Set the MAC address.
+	// Some drivers (e.g., iavf) may still be initializing after the interface appears,
+	// so retry with a timeout if we get a temporary error.
 	if config["hwaddr"] != "" {
 		hwaddr, err := net.ParseMAC(config["hwaddr"])
 		if err != nil {
@@ -989,9 +991,22 @@ func networkSRIOVSetupContainerVFNIC(hostName string, macPattern string, config 
 		}
 
 		link := &ip.Link{Name: hostName}
-		err = link.SetAddress(hwaddr)
-		if err != nil {
-			return fmt.Errorf("Failed setting MAC address %q on %q: %w", config["hwaddr"], hostName, err)
+
+		waitDuration := time.Second * 5
+		waitUntil := time.Now().Add(waitDuration)
+
+		for {
+			err = link.SetAddress(hwaddr)
+			if err == nil {
+				break
+			}
+
+			// Check if error is temporary (EAGAIN/EBUSY).
+			if time.Now().After(waitUntil) {
+				return fmt.Errorf("Failed setting MAC address %q on %q: %w", config["hwaddr"], hostName, err)
+			}
+
+			time.Sleep(time.Millisecond * 50)
 		}
 	}
 
