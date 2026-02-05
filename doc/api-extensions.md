@@ -2981,3 +2981,7 @@ This introduces two new properties for NICs:
 
 * `attached`, behaving like the `attached` key for disk and USB devices;
 * `connected`, setting the up/down link state for the NIC (when supported).
+
+## `direct_backup`
+
+This allows to perform backups of instances, custom storage volumes and storage buckets without disk buffering when the `Accept` header is set to `application/octet-stream` in the respective POST API endpoints. Doing so, said POST endpoints return the data stream instead of creating a backup entry in the database.
