@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -14,7 +16,7 @@ import (
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/jmap"
 	"github.com/lxc/incus/v6/internal/server/auth"
-	"github.com/lxc/incus/v6/internal/server/backup"
+	internalBackup "github.com/lxc/incus/v6/internal/server/backup"
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/db/operationtype"
 	"github.com/lxc/incus/v6/internal/server/lifecycle"
@@ -222,10 +224,10 @@ func storagePoolVolumeTypeCustomBackupsGet(d *Daemon, r *http.Request) response.
 		return response.SmartError(err)
 	}
 
-	backups := make([]*backup.VolumeBackup, len(volumeBackups))
+	backups := make([]*internalBackup.VolumeBackup, len(volumeBackups))
 
 	for i, b := range volumeBackups {
-		backups[i] = backup.NewVolumeBackup(s, projectName, poolName, volumeName, b.ID, b.Name, b.CreationDate, b.ExpiryDate, b.VolumeOnly, b.OptimizedStorage)
+		backups[i] = internalBackup.NewVolumeBackup(s, projectName, poolName, volumeName, b.ID, b.Name, b.CreationDate, b.ExpiryDate, b.VolumeOnly, b.OptimizedStorage)
 	}
 
 	resultString := []string{}
@@ -254,11 +256,15 @@ func storagePoolVolumeTypeCustomBackupsGet(d *Daemon, r *http.Request) response.
 //
 //	Creates a new storage volume backup.
 //
+//	If the `Accept` header is set to `application/octet-stream`, this directly streams the backup
+//	tarball to the client without any intermediate operation.
+//
 //	---
 //	consumes:
 //	  - application/json
 //	produces:
 //	  - application/json
+//	  - application/octet-stream
 //	parameters:
 //	  - in: query
 //	    name: project
@@ -387,88 +393,114 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 		return response.BadRequest(err)
 	}
 
-	if req.Name == "" {
-		var backups []string
+	direct := r.Header.Get("Accept") == "application/octet-stream"
 
-		// come up with a name.
-		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			backups, err = tx.GetStoragePoolVolumeBackupsNames(ctx, projectName, volumeName, poolID)
-			return err
-		})
+	if direct && req.Target != nil {
+		return response.BadRequest(errors.New("application/octet-stream is not a valid content type when a target is defined"))
+	}
+
+	var reader *io.PipeReader
+	var writer *io.PipeWriter
+	var fullName string
+
+	if direct || req.Target != nil {
+		if req.Name != "" {
+			if direct {
+				return response.BadRequest(errors.New("No backup name can be set when requesting a direct backup with Accept: application/octet-stream"))
+			}
+
+			return response.BadRequest(errors.New("No backup name can be set when setting a backup target"))
+		}
+
+		reader, writer = io.Pipe()
+	} else {
+		if req.Name == "" {
+			var backups []string
+
+			// come up with a name.
+			err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				backups, err = tx.GetStoragePoolVolumeBackupsNames(ctx, projectName, volumeName, poolID)
+				return err
+			})
+			if err != nil {
+				return response.BadRequest(err)
+			}
+
+			base := volumeName + internalInstance.SnapshotDelimiter + "backup"
+			length := len(base)
+			backupID := 0
+
+			for _, backup := range backups {
+				// Ignore backups not containing base.
+				if !strings.HasPrefix(backup, base) {
+					continue
+				}
+
+				substr := backup[length:]
+				var num int
+				count, err := fmt.Sscanf(substr, "%d", &num)
+				if err != nil || count != 1 {
+					continue
+				}
+
+				if num >= backupID {
+					backupID = num + 1
+				}
+			}
+
+			req.Name = fmt.Sprintf("backup%d", backupID)
+		}
+
+		// Quick checks.
+		err = validate.IsAPIName(req.Name, false)
 		if err != nil {
-			return response.BadRequest(err)
+			return response.BadRequest(fmt.Errorf("Invalid storage volume backup name: %w", err))
 		}
 
-		base := volumeName + internalInstance.SnapshotDelimiter + "backup"
-		length := len(base)
-		max := 0
-
-		for _, backup := range backups {
-			// Ignore backups not containing base.
-			if !strings.HasPrefix(backup, base) {
-				continue
-			}
-
-			substr := backup[length:]
-			var num int
-			count, err := fmt.Sscanf(substr, "%d", &num)
-			if err != nil || count != 1 {
-				continue
-			}
-
-			if num >= max {
-				max = num + 1
-			}
-		}
-
-		req.Name = fmt.Sprintf("backup%d", max)
+		fullName = volumeName + internalInstance.SnapshotDelimiter + req.Name
 	}
-
-	// Quick checks.
-	err = validate.IsAPIName(req.Name, false)
-	if err != nil {
-		return response.BadRequest(fmt.Errorf("Invalid storage volume backup name: %w", err))
-	}
-
-	fullName := volumeName + internalInstance.SnapshotDelimiter + req.Name
-	volumeOnly := req.VolumeOnly
 
 	backup := func(op *operations.Operation) error {
 		args := db.StoragePoolVolumeBackup{
 			Name:                 fullName,
 			VolumeID:             dbVolume.ID,
 			CreationDate:         time.Now(),
-			ExpiryDate:           req.ExpiresAt,
-			VolumeOnly:           volumeOnly,
+			VolumeOnly:           req.VolumeOnly,
 			OptimizedStorage:     req.OptimizedStorage,
 			CompressionAlgorithm: req.CompressionAlgorithm,
 		}
 
-		// Create the backup.
-		err := volumeBackupCreate(s, args, projectName, poolName, volumeName)
-		if err != nil {
-			return err
+		if !direct && req.Target == nil {
+			args.ExpiryDate = req.ExpiresAt
 		}
 
-		// Upload it if requested.
+		uploadRes := make(chan error)
+
+		// Start the upload in the background if requested.
 		if req.Target != nil {
-			// Load the backup.
-			entry, err := storagePoolVolumeBackupLoadByName(r.Context(), s, projectName, poolName, volumeName)
-			if err != nil {
-				return err
+			go func(resCh chan<- error) {
+				resCh <- internalBackup.Upload(reader, req.Target)
+			}(uploadRes)
+		}
+
+		// Create the backup.
+		err := volumeBackupCreate(s, args, projectName, poolName, volumeName, writer)
+		if err != nil {
+			// If we receive a pipe closed error, we first check for an explicit error returned by the
+			// reader.
+			if errors.Is(err, io.ErrClosedPipe) {
+				select {
+				case readerErr := <-uploadRes:
+					err = readerErr
+				default:
+				}
 			}
 
-			// Upload it.
-			err = entry.Upload(req.Target)
-			if err != nil {
-				return err
-			}
-
-			// Delete the backup on successful upload.
-			err = entry.Delete()
-			if err != nil {
-				return err
-			}
+			// In order to actually fail piped exports, we use a dirty trick where we close the reader.
+			// This doesn't provide a clean error message in the case of direct backups, but it is a
+			// convenient tradeoff ensuring that the client reports an error.
+			_ = reader.Close()
+			return err
 		}
 
 		s.Events.SendLifecycle(projectName, lifecycle.StorageVolumeBackupCreated.Event(poolName, volumeTypeName, args.Name, projectName, op.Requestor(), logger.Ctx{"type": volumeTypeName}))
@@ -478,11 +510,22 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 
 	resources := map[string][]api.URL{}
 	resources["storage_volumes"] = []api.URL{*api.NewURL().Path(version.APIVersion, "storage-pools", poolName, "volumes", volumeTypeName, volumeName)}
-	resources["backups"] = []api.URL{*api.NewURL().Path(version.APIVersion, "storage-pools", poolName, "volumes", volumeTypeName, volumeName, "backups", req.Name)}
+	if !direct && req.Target == nil {
+		resources["backups"] = []api.URL{*api.NewURL().Path(version.APIVersion, "storage-pools", poolName, "volumes", volumeTypeName, volumeName, "backups", req.Name)}
+	}
 
 	op, err := operations.OperationCreate(s, request.ProjectParam(r), operations.OperationClassTask, operationtype.CustomVolumeBackupCreate, resources, nil, backup, nil, nil, r)
 	if err != nil {
 		return response.InternalError(err)
+	}
+
+	if direct {
+		err = op.Start()
+		if err != nil {
+			return response.InternalError(err)
+		}
+
+		return response.PipeResponse(r, reader)
 	}
 
 	return operations.OperationResponse(op)
