@@ -988,8 +988,18 @@ func networkSRIOVSetupContainerVFNIC(hostName string, macPattern string, config 
 			return fmt.Errorf("Failed parsing MAC address %q: %w", config["hwaddr"], err)
 		}
 
+		// Retry a few times as some vendors take a little while to initialize.
 		link := &ip.Link{Name: hostName}
-		err = link.SetAddress(hwaddr)
+
+		for range 10 {
+			err = link.SetAddress(hwaddr)
+			if err == nil {
+				break
+			}
+
+			time.Sleep(500 * time.Millisecond)
+		}
+
 		if err != nil {
 			return fmt.Errorf("Failed setting MAC address %q on %q: %w", config["hwaddr"], hostName, err)
 		}
