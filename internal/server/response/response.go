@@ -697,3 +697,31 @@ func (r *sftpResponse) Render(w http.ResponseWriter) error {
 
 	return nil
 }
+
+type pipeResponse struct {
+	req    *http.Request
+	reader *io.PipeReader
+}
+
+// PipeResponse returns a new pipe response.
+func PipeResponse(r *http.Request, reader *io.PipeReader) Response {
+	return &pipeResponse{r, reader}
+}
+
+// Code returns the HTTP code.
+func (r *pipeResponse) Code() int {
+	return http.StatusOK
+}
+
+// Render writes the response.
+func (r *pipeResponse) Render(w http.ResponseWriter) error {
+	defer func() { _ = r.reader.Close() }()
+	w.Header().Set("Content-Type", "application/octet-stream")
+	_, err := io.Copy(w, r.reader)
+	return err
+}
+
+// String returns a quick description of the response.
+func (r *pipeResponse) String() string {
+	return "pipe handler"
+}
