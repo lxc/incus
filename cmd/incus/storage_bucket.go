@@ -1537,56 +1537,69 @@ func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
 		CompressionAlgorithm: c.flagCompressionAlgorithm,
 	}
 
-	op, err := s.CreateStoragePoolBucketBackup(pool.name, bucketName, req)
-	if err != nil {
-		return fmt.Errorf(i18n.G("Failed to create backup: %v"), err)
-	}
+	var getter func(backupReq *incus.BackupFileRequest) error
 
-	// Watch the background operation
-	progress := cli.ProgressRenderer{
-		Format: i18n.G("Backing up storage bucket: %s"),
-		Quiet:  c.global.flagQuiet,
-	}
-
-	_, err = op.AddHandler(progress.UpdateOp)
-	if err != nil {
-		progress.Done("")
-		return err
-	}
-
-	// Wait until backup is done
-	err = cli.CancelableWait(op, &progress)
-	if err != nil {
-		progress.Done("")
-		return err
-	}
-
-	progress.Done("")
-
-	err = op.Wait()
-	if err != nil {
-		return err
-	}
-
-	// Get name of backup
-	utStr := op.Get().Resources["backups"][0]
-	u, err := url.Parse(utStr)
-	if err != nil {
-		return fmt.Errorf(i18n.G("Invalid URL %q: %w"), utStr, err)
-	}
-
-	backupName, err := url.PathUnescape(path.Base(u.EscapedPath()))
-	if err != nil {
-		return fmt.Errorf(i18n.G("Invalid backup name segment in path %q: %w"), u.EscapedPath(), err)
-	}
-
-	defer func() {
-		// Delete backup after we're done
-		op, err := s.DeleteStoragePoolBucketBackup(pool.name, bucketName, backupName)
-		if err == nil {
-			_ = op.Wait()
+	if s.HasExtension("direct_backup") {
+		getter = func(backupReq *incus.BackupFileRequest) error {
+			return s.CreateStoragePoolBucketBackupStream(pool.name, bucketName, req, backupReq)
 		}
-	}()
+	} else {
+		op, err := s.CreateStoragePoolBucketBackup(pool.name, bucketName, req)
+		if err != nil {
+			return fmt.Errorf(i18n.G("Failed to create backup: %v"), err)
+		}
+
+		// Watch the background operation
+		progress := cli.ProgressRenderer{
+			Format: i18n.G("Backing up storage bucket: %s"),
+			Quiet:  c.global.flagQuiet,
+		}
+
+		_, err = op.AddHandler(progress.UpdateOp)
+		if err != nil {
+			progress.Done("")
+			return err
+		}
+
+		// Wait until backup is done
+		err = cli.CancelableWait(op, &progress)
+		if err != nil {
+			progress.Done("")
+			return err
+		}
+
+		progress.Done("")
+
+		err = op.Wait()
+		if err != nil {
+			return err
+		}
+
+		// Get name of backup
+		utStr := op.Get().Resources["backups"][0]
+		u, err := url.Parse(utStr)
+		if err != nil {
+			return fmt.Errorf(i18n.G("Invalid URL %q: %w"), utStr, err)
+		}
+
+		backupName, err := url.PathUnescape(path.Base(u.EscapedPath()))
+		if err != nil {
+			return fmt.Errorf(i18n.G("Invalid backup name segment in path %q: %w"), u.EscapedPath(), err)
+		}
+
+		defer func() {
+			// Delete backup after we're done
+			op, err := s.DeleteStoragePoolBucketBackup(pool.name, bucketName, backupName)
+			if err == nil {
+				_ = op.Wait()
+			}
+		}()
+
+		getter = func(backupReq *incus.BackupFileRequest) error {
+			_, err := s.GetStoragePoolBucketBackupFile(pool.name, bucketName, backupName, backupReq)
+			return err
+		}
+	}
 
 	var targetName string
 	if len(args) > 2 {
@@ -1603,7 +1616,7 @@ func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
 	defer func() { _ = target.Close() }()
 
 	// Prepare the download request
-	progress = cli.ProgressRenderer{
+	progress := cli.ProgressRenderer{
 		Format: i18n.G("Exporting backup of storage bucket: %s"),
 		Quiet:  c.global.flagForceLocal,
 	}
@@ -1614,7 +1627,7 @@ func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Export tarball
-	_, err = s.GetStoragePoolBucketBackupFile(pool.name, bucketName, backupName, &backupFileRequest)
+	err = getter(&backupFileRequest)
 	if err != nil {
 		_ = os.Remove(targetName)
 		progress.Done("")
