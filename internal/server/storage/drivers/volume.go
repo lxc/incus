@@ -368,7 +368,7 @@ func (v Volume) MountTask(task func(mountPath string, op *operations.Operation) 
 
 // MountWithSnapshotsTask runs the supplied task after mounting the volume with its snapshots if needed. If the volume was mounted
 // for this then it is unmounted when the task finishes.
-func (v Volume) MountWithSnapshotsTask(task func(mountPath string, op *operations.Operation) error, op *operations.Operation) error {
+func (v Volume) MountWithSnapshotsTask(task func(parentMountPath string, snapshotMountPaths map[string]string, op *operations.Operation) error, op *operations.Operation) error {
 	var err error
 
 	if v.IsSnapshot() {
@@ -407,6 +407,7 @@ func (v Volume) MountWithSnapshotsTask(task func(mountPath string, op *operation
 
 	defer unmountSnapshots(mounted)
 
+	snapshotMountPaths := map[string]string{}
 	for _, s := range snapshots {
 		snapDiskPath, err := v.driver.GetVolumeDiskPath(s)
 		if err != nil {
@@ -427,9 +428,11 @@ func (v Volume) MountWithSnapshotsTask(task func(mountPath string, op *operation
 		if target != snapDiskPath {
 			return fmt.Errorf("/dev symlinks are in an inconsistent state")
 		}
+
+		snapshotMountPaths[s.Name()] = s.MountPath()
 	}
 
-	taskErr := task(v.MountPath(), op)
+	taskErr := task(v.MountPath(), snapshotMountPaths, op)
 
 	// Return task error if failed.
 	if taskErr != nil {
