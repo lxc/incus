@@ -80,6 +80,13 @@ func (d *lvm) load() error {
 		}
 	}
 
+	if d.clustered {
+		err := linux.LoadModule("nbd")
+		if err != nil {
+			return fmt.Errorf("Error loading nbd module: %w", err)
+		}
+	}
+
 	// Detect and record the version.
 	if lvmVersion == "" {
 		output, err := subprocess.RunCommand("lvm", "version")
