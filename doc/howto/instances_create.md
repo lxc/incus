@@ -181,6 +181,10 @@ Alternatively, it is possible to get the agent files through a virtual CD-ROM dr
 
     incus config device add INSTANCE-NAME agent disk source=agent:config
 
+```{note}
+The agent CD-ROM drive must remain attached to the VM as it is accessed on every boot to refresh the agent and to get the needed credentials to interact with Incus.
+```
+
 #### On Linux
 
 To install the agent on a Linux system with `9p`, you'll need to get access to the virtual machine and run the following commands:
