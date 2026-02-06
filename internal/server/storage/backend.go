@@ -29,6 +29,7 @@ import (
 	internalIO "github.com/lxc/incus/v6/internal/io"
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/migration"
+	"github.com/lxc/incus/v6/internal/rsync"
 	"github.com/lxc/incus/v6/internal/server/backup"
 	backupConfig "github.com/lxc/incus/v6/internal/server/backup/config"
 	"github.com/lxc/incus/v6/internal/server/cluster/request"
@@ -2027,8 +2028,8 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 	// Create new volume database records when the storage pool is changed or
 	// when it is not a remote cluster move.
 	if !isRemoteClusterMove || args.StoragePool != "" {
-		if vol.ExpandedConfig("block.type") == drivers.BlockVolumeTypeQcow2 {
-			return errors.New("Qcow2 instance migration is not supported")
+		if args.Live && vol.ExpandedConfig("block.type") == drivers.BlockVolumeTypeQcow2 {
+			return errors.New("Live qcow2 instance migration is not supported")
 		}
 
 		for i, snapshot := range args.Snapshots {
@@ -2142,9 +2143,16 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 		}
 	}
 
-	err = b.driver.CreateVolumeFromMigration(vol, conn, args, &preFiller, op)
-	if err != nil {
-		return err
+	if b.driver.Info().TargetFormat == drivers.BlockVolumeTypeQcow2 {
+		err = b.qcow2CreateVolumeFromMigration(inst, vol, conn, args, &preFiller, op)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = b.driver.CreateVolumeFromMigration(vol, conn, args, &preFiller, op)
+		if err != nil {
+			return err
+		}
 	}
 
 	if !isRemoteClusterMove {
@@ -2221,6 +2229,20 @@ func (b *backend) RenameInstance(inst instance.Instance, newName string, op *ope
 		})
 	}
 
+	volStorageName := project.Instance(inst.Project().Name, inst.Name())
+	newVolStorageName := project.Instance(inst.Project().Name, newName)
+	contentType := InstanceContentType(inst)
+
+	vol := b.GetVolume(volType, contentType, volStorageName, volume.Config)
+
+	// Perform qcow2 renaming before renaming database volumes.
+	if volume.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+		err = b.qcow2Rename(vol, newName, inst, inst.Project().Name, op)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Rename each snapshot DB record to have the new parent volume prefix.
 	for _, srcSnapshot := range snapshots {
 		_, snapName, _ := api.GetParentAndSnapshotName(srcSnapshot)
@@ -2255,11 +2277,6 @@ func (b *backend) RenameInstance(inst instance.Instance, newName string, op *ope
 	})
 
 	// Rename the volume and its snapshots on the storage device.
-	volStorageName := project.Instance(inst.Project().Name, inst.Name())
-	newVolStorageName := project.Instance(inst.Project().Name, newName)
-	contentType := InstanceContentType(inst)
-
-	vol := b.GetVolume(volType, contentType, volStorageName, volume.Config)
 
 	err = b.driver.RenameVolume(vol, newVolStorageName, op)
 	if err != nil {
@@ -2546,8 +2563,8 @@ func (b *backend) MigrateInstance(inst instance.Instance, conn io.ReadWriteClose
 		return err
 	}
 
-	if args.StorageMove && vol.ExpandedConfig("block.type") == drivers.BlockVolumeTypeQcow2 {
-		return errors.New("Qcow2 instance migration is not supported")
+	if inst.IsRunning() && args.StorageMove && vol.ExpandedConfig("block.type") == drivers.BlockVolumeTypeQcow2 {
+		return errors.New("Live qcow2 instance migration is not supported")
 	}
 
 	args.Name = inst.Name() // Override args.Name to ensure instance volume is sent.
@@ -2587,9 +2604,16 @@ func (b *backend) MigrateInstance(inst instance.Instance, conn io.ReadWriteClose
 		_ = linux.SyncFS(inst.RootfsPath())
 	}
 
-	err = b.driver.MigrateVolume(vol, conn, args, op)
-	if err != nil {
-		return err
+	if dbVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+		err = b.qcow2MigrateVolume(b.state, vol, conn, args, op)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = b.driver.MigrateVolume(vol, conn, args, op)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -3408,7 +3432,7 @@ func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.I
 		})
 	}
 
-	if srcDBVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+	if dbVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
 		snapVol := b.GetVolume(volType, contentType, project.Instance(inst.Project().Name, src.Name()), srcDBVol.Config)
 		err = b.qcow2RestoreSnapshot(vol, snapVol, inst.Type(), inst.Project().Name, op)
 		if err != nil {
@@ -7620,6 +7644,72 @@ func (b *backend) getFirstAdminStorageBucketPoolKey(projectName string, bucketNa
 	return bucketKey, nil
 }
 
+// qcow2Rename renames the QCOW2 volume.
+func (b *backend) qcow2Rename(vol drivers.Volume, newVolName string, inst instance.Instance, projectName string, op *operations.Operation) error {
+	// Get snapshots.
+	_, volName := project.StorageVolumeParts(vol.Name())
+	volSnaps, err := VolumeDBSnapshotsGet(b, projectName, volName, vol.Type())
+	if err != nil {
+		return err
+	}
+
+	err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, parentOp *operations.Operation) error {
+		backingPath := ""
+		// Update the metadata of the snapshot which points to a renamed volume.
+		for _, snap := range volSnaps {
+			currentSnapVol := b.GetVolume(vol.Type(), vol.ContentType(), project.Instance(projectName, snap.Name), nil)
+			currentSnapVolDiskPath, err := b.driver.GetVolumeDiskPath(currentSnapVol)
+			if err != nil {
+				return err
+			}
+
+			if backingPath != "" {
+				err = drivers.Qcow2Rebase(currentSnapVolDiskPath, backingPath)
+				if err != nil {
+					return err
+				}
+			}
+
+			_, snapName, _ := api.GetParentAndSnapshotName(snap.Name)
+			newSnapVolName := drivers.GetSnapshotVolumeName(newVolName, snapName)
+			newSnapVol := b.GetVolume(vol.Type(), vol.ContentType(), project.Instance(projectName, newSnapVolName), nil)
+
+			backingPath, err = b.driver.GetQcow2BackingFilePath(newSnapVol)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Update the metadata of the main volume if needed.
+		parentDiskPath, err := b.driver.GetVolumeDiskPath(vol)
+		if err != nil {
+			return err
+		}
+
+		if backingPath != "" {
+			err = drivers.Qcow2Rebase(parentDiskPath, backingPath)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}, op)
+	if err != nil {
+		return err
+	}
+
+	if inst.Type() == instancetype.VM {
+		fsVol := vol.NewVMBlockFilesystemVolume()
+		err := drivers.Qcow2RenameConfig(fsVol, newVolName, op)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // qcow2CreateSnapshot creates the QCOW2 volume snapshot.
 func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume, src instance.Instance, op *operations.Operation) error {
 	// Return if this is not a qcow2 image.
@@ -7651,7 +7741,7 @@ func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume
 		return err
 	}
 
-	err = vol.MountWithSnapshotsTask(func(parentMountPath string, parentOp *operations.Operation) error {
+	err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, parentOp *operations.Operation) error {
 		parentDiskPath, err := b.driver.GetVolumeDiskPath(vol)
 		if err != nil {
 			return err
@@ -7707,7 +7797,7 @@ func (b *backend) qcow2RestoreSnapshot(vol drivers.Volume, snapVol drivers.Volum
 		return err
 	}
 
-	err = vol.MountWithSnapshotsTask(func(mountPath string, op *operations.Operation) error {
+	err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, op *operations.Operation) error {
 		parentDiskPath, err := b.driver.GetVolumeDiskPath(vol)
 		if err != nil {
 			return err
@@ -7772,7 +7862,7 @@ func (b *backend) qcow2RenameSnapshot(vol drivers.Volume, snapVol drivers.Volume
 	}
 
 	// Update the metadata of the parent if it points to a renamed volume.
-	err = vol.MountWithSnapshotsTask(func(mountPath string, op *operations.Operation) error {
+	err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, op *operations.Operation) error {
 		parentDiskPath, err := b.driver.GetVolumeDiskPath(vol)
 		if err != nil {
 			return err
@@ -7908,7 +7998,7 @@ func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume
 		}
 
 		// Check if the main volume is the parent of the snapshot to be deleted.
-		err = vol.MountWithSnapshotsTask(func(mountPath string, op *operations.Operation) error {
+		err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, op *operations.Operation) error {
 			parentDiskPath, err := b.driver.GetVolumeDiskPath(vol)
 			if err != nil {
 				return err
@@ -8051,7 +8141,7 @@ func (b *backend) qcow2BackingPaths(vol drivers.Volume, diskPath string, project
 	b.logger.Debug("Disk path snapshots map:", logger.Ctx{"diskPathSnapshots": diskPathSnapshot})
 
 	var chainPaths []string
-	err = vol.MountWithSnapshotsTask(func(mountPath string, op *operations.Operation) error {
+	err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, op *operations.Operation) error {
 		chainPaths, err = drivers.Qcow2BackingChain(diskPath)
 		if err != nil {
 			return nil
@@ -8077,4 +8167,365 @@ func (b *backend) qcow2BackingPaths(vol drivers.Volume, diskPath string, project
 	}
 
 	return backingPaths, nil
+}
+
+// qcow2MigrateVolume migrates QCOW2 volume.
+func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
+	l := b.logger.AddContext(logger.Ctx{"volName": vol.Name()})
+	l.Debug("qcow2MigrateVolume started")
+	defer l.Debug("qcow2MigrateVolume finished")
+
+	bwlimit := b.driver.Config()["rsync.bwlimit"]
+	var rsyncArgs []string
+
+	// For VM volumes, exclude the generic root disk image file from being transferred via rsync, as it will
+	// be transferred later using a different method.
+	if vol.IsVMBlock() {
+		if volSrcArgs.MigrationType.FSType != migration.MigrationFSType_BLOCK_AND_RSYNC {
+			return drivers.ErrNotSupported
+		}
+
+		rsyncArgs = []string{"--exclude", "root.img"}
+	} else if vol.ContentType() == drivers.ContentTypeBlock && volSrcArgs.MigrationType.FSType != migration.MigrationFSType_BLOCK_AND_RSYNC || vol.ContentType() == drivers.ContentTypeFS && volSrcArgs.MigrationType.FSType != migration.MigrationFSType_RSYNC {
+		return drivers.ErrNotSupported
+	}
+
+	// Define function to send a filesystem volume.
+	sendFSVol := func(vol drivers.Volume, conn io.ReadWriteCloser, mountPath string) error {
+		var wrapper *ioprogress.ProgressTracker
+		if volSrcArgs.TrackProgress {
+			wrapper = localMigration.ProgressTracker(op, "fs_progress", vol.Name())
+		}
+
+		path := internalUtil.AddSlash(mountPath)
+
+		b.logger.Debug("Sending filesystem volume", logger.Ctx{"volName": vol.Name(), "path": path, "bwlimit": bwlimit, "rsyncArgs": rsyncArgs})
+		err := rsync.Send(vol.Name(), path, conn, wrapper, volSrcArgs.MigrationType.Features, bwlimit, s.OS.ExecPath, rsyncArgs...)
+
+		status, _ := linux.ExitStatus(err)
+		if volSrcArgs.AllowInconsistent && status == 24 {
+			return nil
+		}
+
+		return err
+	}
+
+	// Define function to send a block volume.
+	sendBlockVol := func(vol drivers.Volume, conn io.ReadWriteCloser) error {
+		// Close when done to indicate to target side we are finished sending this volume.
+		defer func() { _ = conn.Close() }()
+
+		var wrapper *ioprogress.ProgressTracker
+		if volSrcArgs.TrackProgress {
+			wrapper = localMigration.ProgressTracker(op, "block_progress", vol.Name())
+		}
+
+		path, err := b.driver.GetVolumeDiskPath(vol)
+		if err != nil {
+			return fmt.Errorf("Error getting VM block volume disk path: %w", err)
+		}
+
+		nbdPath, err := drivers.ConnectQemuNbd(path, "")
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			_ = drivers.DisconnectQemuNbd(nbdPath)
+		}()
+
+		from, err := os.Open(nbdPath)
+		if err != nil {
+			return fmt.Errorf("Error opening file for reading %q: %w", nbdPath, err)
+		}
+
+		defer func() { _ = from.Close() }()
+
+		// Setup progress tracker.
+		fromPipe := io.ReadCloser(from)
+		if wrapper != nil {
+			fromPipe = &ioprogress.ProgressReader{
+				ReadCloser: fromPipe,
+				Tracker:    wrapper,
+			}
+		}
+
+		b.logger.Debug("Sending block volume", logger.Ctx{"volName": vol.Name(), "path": path})
+		_, err = io.Copy(conn, fromPipe)
+		if err != nil {
+			return fmt.Errorf("Error copying %q to migration connection: %w", path, err)
+		}
+
+		err = from.Close()
+		if err != nil {
+			return fmt.Errorf("Failed to close file %q: %w", path, err)
+		}
+
+		return nil
+	}
+
+	// Send all snapshots to target.
+	for _, snapName := range volSrcArgs.Snapshots {
+		snapshot, err := vol.NewSnapshot(snapName)
+		if err != nil {
+			return err
+		}
+
+		// Send snapshot to target (ensure local snapshot volume is mounted if needed).
+		err = vol.MountWithSnapshotsTask(func(parentMountPath string, snapshotMountPaths map[string]string, op *operations.Operation) error {
+			if vol.ContentType() != drivers.ContentTypeBlock || vol.Type() != drivers.VolumeTypeCustom {
+				err := sendFSVol(snapshot, conn, snapshotMountPaths[snapshot.Name()])
+				if err != nil {
+					return err
+				}
+			}
+
+			if vol.IsVMBlock() || (vol.ContentType() == drivers.ContentTypeBlock && vol.Type() == drivers.VolumeTypeCustom) {
+				err = sendBlockVol(snapshot, conn)
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		}, op)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Send volume to target (ensure local volume is mounted if needed).
+	return vol.MountWithSnapshotsTask(func(parentMountPath string, _ map[string]string, op *operations.Operation) error {
+		if !drivers.IsContentBlock(vol.ContentType()) || vol.Type() != drivers.VolumeTypeCustom {
+			err := sendFSVol(vol, conn, parentMountPath)
+			if err != nil {
+				return err
+			}
+		}
+
+		if vol.IsVMBlock() || (drivers.IsContentBlock(vol.ContentType()) && vol.Type() == drivers.VolumeTypeCustom) {
+			err := sendBlockVol(vol, conn)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}, op)
+}
+
+// qcow2CreateVolumeFromMigration creates a QCOW2 volume from a migration.
+func (b *backend) qcow2CreateVolumeFromMigration(src instance.Instance, vol drivers.Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *drivers.VolumeFiller, op *operations.Operation) error {
+	l := b.logger.AddContext(nil)
+	l.Debug("qcow2CreateVolumeFromMigration started")
+	defer l.Debug("qcow2CreateVolumeFromMigration finished")
+
+	// Check migration transport type matches volume type.
+	if drivers.IsContentBlock(vol.ContentType()) {
+		if volTargetArgs.MigrationType.FSType != migration.MigrationFSType_BLOCK_AND_RSYNC {
+			return drivers.ErrNotSupported
+		}
+	} else if volTargetArgs.MigrationType.FSType != migration.MigrationFSType_RSYNC {
+		return drivers.ErrNotSupported
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Create the main volume if not refreshing.
+	if !volTargetArgs.Refresh {
+		err := b.driver.CreateVolume(vol, preFiller, op)
+		if err != nil {
+			return err
+		}
+
+		reverter.Add(func() { _ = b.driver.DeleteVolume(vol, op) })
+	}
+
+	recvFSVol := func(volName string, conn io.ReadWriteCloser, path string) error {
+		var wrapper *ioprogress.ProgressTracker
+		if volTargetArgs.TrackProgress {
+			wrapper = localMigration.ProgressTracker(op, "fs_progress", volName)
+		}
+
+		b.logger.Debug("Receiving filesystem volume started", logger.Ctx{"volName": volName, "path": path, "features": volTargetArgs.MigrationType.Features})
+		defer b.logger.Debug("Receiving filesystem volume stopped", logger.Ctx{"volName": volName, "path": path})
+
+		return rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features)
+	}
+
+	recvBlockVol := func(volName string, conn io.ReadWriteCloser, path string) error {
+		var wrapper *ioprogress.ProgressTracker
+		if volTargetArgs.TrackProgress {
+			wrapper = localMigration.ProgressTracker(op, "block_progress", volName)
+		}
+
+		nbdPath, err := drivers.ConnectQemuNbd(path, "unmap")
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			_ = drivers.DisconnectQemuNbd(nbdPath)
+		}()
+
+		// Reset the disk.
+		err = linux.ClearBlock(nbdPath, 0)
+		if err != nil {
+			return err
+		}
+
+		to, err := os.OpenFile(nbdPath, os.O_WRONLY|os.O_TRUNC, 0)
+		if err != nil {
+			return fmt.Errorf("Error opening file for writing %q: %w", path, err)
+		}
+
+		defer func() { _ = to.Close() }()
+
+		// Setup progress tracker.
+		fromPipe := io.ReadCloser(conn)
+		if wrapper != nil {
+			fromPipe = &ioprogress.ProgressReader{
+				ReadCloser: fromPipe,
+				Tracker:    wrapper,
+			}
+		}
+
+		b.logger.Debug("Receiving block volume started", logger.Ctx{"volName": volName, "path": path})
+		defer b.logger.Debug("Receiving block volume stopped", logger.Ctx{"volName": volName, "path": path})
+
+		toPipe := io.Writer(to)
+		if !b.driver.Info().ZeroUnpack {
+			toPipe = drivers.NewSparseFileWrapper(to)
+		}
+
+		for {
+			_, err = io.CopyN(toPipe, fromPipe, 4*1024*1024)
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					break
+				}
+
+				return fmt.Errorf("Error copying from migration connection to %q: %w", path, err)
+			}
+		}
+
+		return to.Close()
+	}
+
+	// Snapshots are sent first by the sender, so create these first.
+	for _, snapshot := range volTargetArgs.Snapshots {
+		snapVol, err := vol.NewSnapshot(snapshot.GetName())
+		if err != nil {
+			return err
+		}
+
+		// Ensure the volume is mounted.
+		err = vol.MountWithSnapshotsTask(func(parentMountPath string, snapshotMountPaths map[string]string, op *operations.Operation) error {
+			var err error
+
+			// Setup paths to the main volume. We will receive each snapshot to these paths and then create
+			// a snapshot of the main volume for each one.
+			path := internalUtil.AddSlash(parentMountPath)
+			pathBlock := ""
+
+			if vol.IsVMBlock() || (drivers.IsContentBlock(vol.ContentType()) && vol.Type() == drivers.VolumeTypeCustom) {
+				pathBlock, err = b.driver.GetVolumeDiskPath(vol)
+				if err != nil {
+					return fmt.Errorf("Error getting VM block volume disk path: %w", err)
+				}
+			}
+
+			if snapVol.ContentType() != drivers.ContentTypeBlock || snapVol.Type() != drivers.VolumeTypeCustom { // Receive the filesystem snapshot first (as it is sent first).
+				err = recvFSVol(snapVol.Name(), conn, path)
+				if err != nil {
+					return err
+				}
+			}
+
+			// Receive the block snapshot next (if needed).
+			if vol.IsVMBlock() || (vol.ContentType() == drivers.ContentTypeBlock && vol.Type() == drivers.VolumeTypeCustom) {
+				err = recvBlockVol(snapVol.Name(), conn, pathBlock)
+				if err != nil {
+					return err
+				}
+			}
+
+			// Create the snapshot itself.
+			err = b.driver.CreateVolumeSnapshot(snapVol, op)
+			if err != nil {
+				return err
+			}
+
+			err = b.qcow2CreateSnapshot(vol, snapVol, src, op)
+			if err != nil {
+				return err
+			}
+
+			// Setup the revert.
+			reverter.Add(func() {
+				_ = b.driver.DeleteVolumeSnapshot(snapVol, op)
+			})
+			return nil
+		}, op)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := vol.MountWithSnapshotsTask(func(parentMountPath string, snapshotMountPaths map[string]string, op *operations.Operation) error {
+		var err error
+
+		// Setup paths to the main volume. We will receive each snapshot to these paths and then create
+		// a snapshot of the main volume for each one.
+		path := internalUtil.AddSlash(parentMountPath)
+		pathBlock := ""
+
+		if vol.IsVMBlock() || (drivers.IsContentBlock(vol.ContentType()) && vol.Type() == drivers.VolumeTypeCustom) {
+			pathBlock, err = b.driver.GetVolumeDiskPath(vol)
+			if err != nil {
+				return fmt.Errorf("Error getting VM block volume disk path: %w", err)
+			}
+		}
+
+		if !drivers.IsContentBlock(vol.ContentType()) || vol.Type() != drivers.VolumeTypeCustom {
+			// Receive main volume.
+			err = recvFSVol(vol.Name(), conn, path)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Receive the final main volume sync if needed.
+		if volTargetArgs.Live && (!drivers.IsContentBlock(vol.ContentType()) || vol.Type() != drivers.VolumeTypeCustom) {
+			b.logger.Debug("Starting main volume final sync", logger.Ctx{"volName": vol.Name(), "path": path})
+			err = recvFSVol(vol.Name(), conn, path)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Run EnsureMountPath after mounting and syncing to ensure the mounted directory has the
+		// correct permissions set.
+		err = vol.EnsureMountPath(false)
+		if err != nil {
+			return err
+		}
+
+		// Receive the block volume next (if needed).
+		if vol.IsVMBlock() || (drivers.IsContentBlock(vol.ContentType()) && vol.Type() == drivers.VolumeTypeCustom) {
+			err = recvBlockVol(vol.Name(), conn, pathBlock)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}, op)
+	if err != nil {
+		return err
+	}
+
+	reverter.Success()
+	return nil
 }

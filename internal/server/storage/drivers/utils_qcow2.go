@@ -7,6 +7,8 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/operations"
@@ -206,6 +208,45 @@ func Qcow2CreateConfig(vol Volume, op *operations.Operation) error {
 	return nil
 }
 
+// Qcow2RenameConfig renames the btrfs config filesystem associated with the QCOW2 block volume.
+func Qcow2RenameConfig(vol Volume, newName string, op *operations.Operation) error {
+	err := Qcow2MountConfigTask(vol, op, func(mountPath string) error {
+		_, volName := project.StorageVolumeParts(vol.Name())
+		entries, err := os.ReadDir(mountPath)
+		if err != nil {
+			return err
+		}
+
+		// Iterate through all entries (directories) and rename them.
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				continue
+			}
+
+			oldName := entry.Name()
+
+			if oldName == volName || strings.HasPrefix(oldName, volName) {
+				newName := newName + strings.TrimPrefix(oldName, volName)
+
+				oldPath := filepath.Join(mountPath, oldName)
+				newPath := filepath.Join(mountPath, newName)
+
+				err := os.Rename(oldPath, newPath)
+				if err != nil {
+					return fmt.Errorf("Failed to rename %q to %q: %w", oldPath, newPath, err)
+				}
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Qcow2CreateConfigSnapshot creates the btrfs snapshot of the config filesystem associated with the QCOW2 block volume.
 func Qcow2CreateConfigSnapshot(vol Volume, snapVol Volume, op *operations.Operation) error {
 	err := Qcow2MountConfigTask(vol, op, func(mountPath string) error {
@@ -302,4 +343,70 @@ func Qcow2DeleteConfigSnapshot(vol Volume, snapVol Volume, op *operations.Operat
 // IsQcow2Block checks whether a volume is a QCOW2 block device.
 func IsQcow2Block(vol Volume) bool {
 	return vol.Config()["block.type"] == BlockVolumeTypeQcow2 && vol.ContentType() == ContentTypeBlock
+}
+
+// getFreeNbd returns the first free NBD device.
+func getFreeNbd() (string, error) {
+	nbdIndex := 0
+	for {
+		nbdPath := fmt.Sprintf("/sys/class/block/nbd%d", nbdIndex)
+		_, err := os.Stat(nbdPath)
+		if err != nil {
+			return "", fmt.Errorf("No free nbd device found")
+		}
+
+		data, err := os.ReadFile(fmt.Sprintf("%s/size", nbdPath))
+		if err != nil {
+			return "", err
+		}
+
+		size, err := strconv.ParseUint(strings.TrimSpace(string(data)), 10, 64)
+		if err != nil {
+			return "", err
+		}
+
+		if size == 0 {
+			return fmt.Sprintf("/dev/nbd%d", nbdIndex), nil
+		}
+
+		nbdIndex += 1
+	}
+}
+
+// ConnectQemuNbd exports a QCOW2 volume using the NBD protocol via qemu-nbd.
+func ConnectQemuNbd(devPath string, detectZeroes string) (string, error) {
+	nbdPath, err := getFreeNbd()
+	if err != nil {
+		return "", err
+	}
+
+	args := []string{"--format=qcow2"}
+
+	if detectZeroes != "" {
+		if detectZeroes == "unmap" {
+			args = append(args, "--discard=unmap")
+		}
+
+		args = append(args, fmt.Sprintf("--detect-zeroes=%s", detectZeroes))
+	}
+
+	args = append(args, fmt.Sprintf("--connect=%s", nbdPath))
+	args = append(args, devPath)
+
+	_, err = subprocess.RunCommand("qemu-nbd", args...)
+	if err != nil {
+		return "", err
+	}
+
+	return nbdPath, nil
+}
+
+// DisconnectQemuNbd disconnects the NBD device at nbdPath.
+func DisconnectQemuNbd(nbdPath string) error {
+	_, err := subprocess.RunCommand("qemu-nbd", "--disconnect", nbdPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
