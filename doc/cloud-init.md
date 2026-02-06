@@ -57,7 +57,7 @@ For more information about the configuration options, see the [`cloud-init` inst
 
 ### Vendor data and user data
 
-Both `vendor-data` and `user-data` are used to provide {ref}`cloud configuration data <explanation/format:cloud config data>` to `cloud-init`.
+Both `vendor-data` and `user-data` are used to provide cloud configuration data to `cloud-init`.
 
 The main idea is that `vendor-data` is used for the general default configuration, while `user-data` is used for instance-specific configuration.
 This means that you should specify `vendor-data` in a profile and `user-data` in the instance configuration.
@@ -66,7 +66,7 @@ Incus does not enforce this method, but allows using both `vendor-data` and `use
 If both `vendor-data` and `user-data` are supplied for an instance, `cloud-init` merges the two configurations.
 However, if you use the same keys in both configurations, merging might not be possible.
 In this case, configure how `cloud-init` should merge the provided data.
-See {ref}`cloud-init:merging_user_data` for instructions.
+See the {ref}`cloud-init documentation <cloud-init:merging_user_data>` for instructions.
 
 ## How to configure `cloud-init`
 
