@@ -9485,7 +9485,11 @@ paths:
         post:
             consumes:
                 - application/json
-            description: Creates a new backup.
+            description: |-
+                Creates a new backup.
+
+                If the `Accept` header is set to `application/octet-stream`, this directly streams the backup
+                tarball to the client without any intermediate operation.
             operationId: instance_backups_post
             parameters:
                 - description: Project name
@@ -9500,6 +9504,7 @@ paths:
                     $ref: '#/definitions/InstanceBackupsPost'
             produces:
                 - application/json
+                - application/octet-stream
             responses:
                 "202":
                     $ref: '#/responses/Operation'
@@ -15350,7 +15355,11 @@ paths:
         post:
             consumes:
                 - application/json
-            description: Creates a new storage bucket backup.
+            description: |-
+                Creates a new storage bucket backup.
+
+                If the `Accept` header is set to `application/octet-stream`, this directly streams the backup
+                tarball to the client without any intermediate operation.
             operationId: storage_pool_buckets_backups_post
             parameters:
                 - description: Project name
@@ -15371,6 +15380,7 @@ paths:
                     $ref: '#/definitions/StorageBucketBackupsPost'
             produces:
                 - application/json
+                - application/octet-stream
             responses:
                 "202":
                     $ref: '#/responses/Operation'
@@ -16317,7 +16327,11 @@ paths:
         post:
             consumes:
                 - application/json
-            description: Creates a new storage volume backup.
+            description: |-
+                Creates a new storage volume backup.
+
+                If the `Accept` header is set to `application/octet-stream`, this directly streams the backup
+                tarball to the client without any intermediate operation.
             operationId: storage_pool_volumes_type_backups_post
             parameters:
                 - description: Project name
@@ -16338,6 +16352,7 @@ paths:
                     $ref: '#/definitions/StorageVolumeBackupsPost'
             produces:
                 - application/json
+                - application/octet-stream
             responses:
                 "202":
                     $ref: '#/responses/Operation'
