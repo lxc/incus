@@ -1219,8 +1219,24 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 					return fmt.Errorf("Failed to get link info for external interface %q", entry)
 				}
 
-				if linkInfo.Kind != "vlan" || linkInfo.Parent != ifParent || linkInfo.VlanID != vlanID || (linkInfo.Master != "" && linkInfo.Master != n.name) {
-					return fmt.Errorf("External interface %q already in use", entry)
+				if n.config["bridge.driver"] != "openvswitch" {
+					if linkInfo.Kind != "vlan" || linkInfo.Parent != ifParent || linkInfo.VlanID != vlanID || (linkInfo.Master != "" && linkInfo.Master != n.name) {
+						return fmt.Errorf("External interface %q already in use", entry)
+					}
+				} else {
+					vswitch, err := n.state.OVS()
+					if err != nil {
+						return err
+					}
+
+					ports, err := vswitch.GetBridgePorts(context.TODO(), n.name)
+					if err != nil {
+						return err
+					}
+
+					if linkInfo.Kind != "vlan" || linkInfo.Parent != ifParent || linkInfo.VlanID != vlanID || (linkInfo.Master != "" && !slices.Contains(ports, entry)) {
+						return fmt.Errorf("External interface %q already in use", entry)
+					}
 				}
 			}
 
