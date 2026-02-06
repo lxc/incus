@@ -663,7 +663,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		}
 
 		// Update our TLS configuration using the returned cluster certificate.
-		err = internalUtil.WriteCert(s.OS.VarDir, "cluster", []byte(req.ClusterCertificate), info.PrivateKey, nil)
+		err = internalUtil.WriteCert(s.OS.VarDir, "cluster", info.PublicKey, info.PrivateKey, nil)
 		if err != nil {
 			return fmt.Errorf("Failed to save cluster certificate: %w", err)
 		}
@@ -2392,6 +2392,7 @@ func internalClusterPostAccept(d *Daemon, r *http.Request) response.Response {
 
 	accepted := internalClusterPostAcceptResponse{
 		RaftNodes:  make([]internalRaftNode, len(nodes)),
+		PublicKey:  s.Endpoints.NetworkPublicKey(),
 		PrivateKey: s.Endpoints.NetworkPrivateKey(),
 	}
 
@@ -2418,6 +2419,7 @@ type internalClusterPostAcceptRequest struct {
 // A Response for the /internal/cluster/accept endpoint.
 type internalClusterPostAcceptResponse struct {
 	RaftNodes  []internalRaftNode `json:"raft_nodes" yaml:"raft_nodes"`
+	PublicKey  []byte             `json:"public_key" yaml:"public_key"`
 	PrivateKey []byte             `json:"private_key" yaml:"private_key"`
 }
 
