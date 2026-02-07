@@ -3,6 +3,7 @@
 package cluster
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
@@ -39,7 +40,6 @@ type InstanceSnapshot struct {
 	Instance     string `db:"primary=yes&join=instances.name"`
 	Name         string `db:"primary=yes"`
 	CreationDate time.Time
-	Stateful     bool
 	Description  string `db:"coalesce=''"`
 	ExpiryDate   sql.NullTime
 }
@@ -53,7 +53,12 @@ type InstanceSnapshotFilter struct {
 }
 
 // ToInstance converts an instance snapshot to a database Instance, filling in extra fields from the parent instance.
-func (s *InstanceSnapshot) ToInstance(parentName string, parentNode string, parentType instancetype.Type, parentArch int) Instance {
+func (s *InstanceSnapshot) ToInstance(ctx context.Context, tx *sql.Tx, parentName string, parentNode string, parentType instancetype.Type, parentArch int) (Instance, error) {
+	p, err := GetInstanceSnapshotProperty(ctx, tx, s.ID)
+	if err != nil {
+		return Instance{}, err
+	}
+
 	return Instance{
 		ID:           s.ID,
 		Project:      s.Project,
@@ -62,11 +67,10 @@ func (s *InstanceSnapshot) ToInstance(parentName string, parentNode string, pare
 		Type:         parentType,
 		Snapshot:     true,
 		Architecture: parentArch,
-		Ephemeral:    false,
+		Ephemeral:    p.Ephemeral,
 		CreationDate: s.CreationDate,
-		Stateful:     s.Stateful,
+		Stateful:     p.Stateful,
 		LastUseDate:  sql.NullTime{},
-		Description:  s.Description,
-		ExpiryDate:   s.ExpiryDate,
-	}
+		Description:  p.Description,
+	}, nil
 }
