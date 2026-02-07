@@ -48,7 +48,8 @@ message Snapshot {
 	required bool			stateful		= 7;
 	optional int64			creation_date	= 8;
 	optional int64			last_used_date	= 9;
-	optional int64 			expiry_date = 10;
+	optional int64 			expiry_date     = 10;
+	optional string         description     = 11;
 }
 
 message rsyncFeatures {
