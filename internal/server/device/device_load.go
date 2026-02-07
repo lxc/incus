@@ -38,6 +38,8 @@ func newByType(state *state.State, projectName string, conf deviceConfig.Device)
 			dev = &nicBridged{}
 		case "routed":
 			dev = &nicRouted{}
+		case "wireguard":
+			dev = &nicWireguard{}
 		case "macvlan":
 			dev = &nicMACVLAN{}
 		case "sriov":

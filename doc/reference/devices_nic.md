@@ -53,6 +53,7 @@ The following NICs can be added using the `nictype` or `network` options:
 The following NICs can be added using only the `network` option:
 
 - [`ovn`](nic-ovn): Uses an existing OVN network and creates a virtual device pair to connect the instance to it.
+- [`wireguard`](nic-wireguard): Uses an existing WireGuard network and creates a routed connection to it.
 
 The following NICs can be added using only the `nictype` option:
 
@@ -201,6 +202,28 @@ NIC devices of type `ovn` have the following device options:
 ```{note}
 Note that using `none` with either `ipv4.address` or `ipv6.address` needs the other protocol to also be disabled.
 There is currently no way for OVN to disable IP allocation just on IPv4 or IPv6.
+```
+
+(nic-wireguard)=
+### `nictype`: `wireguard`
+
+```{note}
+You can select this NIC type only through the `network` option (see {ref}`network-wireguard` for information about the managed `wireguard` network).
+```
+
+A `wireguard` NIC uses an existing WireGuard network and creates a routed connection to it.
+WireGuard is a modern, fast, and secure VPN tunnel that uses state-of-the-art cryptography.
+
+WireGuard networks operate at layer 3 (network layer), making them suitable for routing traffic between instances and remote peers.
+
+#### Device options
+
+NIC devices of type `wireguard` have the following device options:
+
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group devices-nic_wireguard start -->
+    :end-before: <!-- config group devices-nic_wireguard end -->
 ```
 
 (nic-physical)=
