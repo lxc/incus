@@ -22,6 +22,7 @@ import (
 func daemonStorageVolumesUnmount(s *state.State) error {
 	var storageBackups string
 	var storageImages string
+	var storageLogs string
 
 	err := s.DB.Node.Transaction(context.Background(), func(ctx context.Context, tx *db.NodeTx) error {
 		nodeConfig, err := node.ConfigLoad(ctx, tx)
@@ -31,6 +32,7 @@ func daemonStorageVolumesUnmount(s *state.State) error {
 
 		storageBackups = nodeConfig.StorageBackupsVolume()
 		storageImages = nodeConfig.StorageImagesVolume()
+		storageLogs = nodeConfig.StorageLogsVolume()
 
 		return nil
 	})
@@ -73,12 +75,21 @@ func daemonStorageVolumesUnmount(s *state.State) error {
 		}
 	}
 
+	if storageLogs != "" {
+		err := unmount("logs", storageLogs)
+		if err != nil {
+			return fmt.Errorf("Failed to unmount logs storage: %w", err)
+		}
+	}
+
 	return nil
 }
 
 func daemonStorageMount(s *state.State) error {
 	var storageBackups string
 	var storageImages string
+	var storageLogs string
+
 	err := s.DB.Node.Transaction(context.Background(), func(ctx context.Context, tx *db.NodeTx) error {
 		nodeConfig, err := node.ConfigLoad(ctx, tx)
 		if err != nil {
@@ -87,6 +98,7 @@ func daemonStorageMount(s *state.State) error {
 
 		storageBackups = nodeConfig.StorageBackupsVolume()
 		storageImages = nodeConfig.StorageImagesVolume()
+		storageLogs = nodeConfig.StorageLogsVolume()
 
 		return nil
 	})
@@ -138,6 +150,13 @@ func daemonStorageMount(s *state.State) error {
 		}
 	}
 
+	if storageLogs != "" {
+		err := mount("logs", storageLogs)
+		if err != nil {
+			return fmt.Errorf("Failed to mount logs storage: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -151,6 +170,21 @@ func daemonStorageSplitVolume(volume string) (string, string, error) {
 	volumeName := fields[1]
 
 	return poolName, volumeName, nil
+}
+
+func storageVolumeLogsValidate(s *state.State) error {
+	return s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+		runningInstances, err := tx.GetRunningInstancesCount(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed retrieving number of running instance: %w", err)
+		}
+
+		if runningInstances > 0 {
+			return fmt.Errorf("`storage.logs_volume` cannot be changed if there are running instances")
+		}
+
+		return nil
+	})
 }
 
 func daemonStorageValidate(s *state.State, target string) error {
@@ -241,7 +275,14 @@ func daemonStorageValidate(s *state.State, target string) error {
 }
 
 func daemonStorageMove(s *state.State, storageType string, target string) error {
-	destPath := internalUtil.VarPath(storageType)
+	isLogs := storageType == "logs"
+	var destPath string
+	if isLogs && s.LocalConfig.StorageLogsVolume() == "" {
+		// We keep the default location if the Storage Logs Volume is not set
+		destPath = internalUtil.LogPath()
+	} else {
+		destPath = internalUtil.VarPath(storageType)
+	}
 
 	// Track down the current storage.
 	var sourcePool string
@@ -279,6 +320,35 @@ func daemonStorageMove(s *state.State, storageType string, target string) error 
 		return nil
 	}
 
+	// We should not move all data away from /var/log/incus and move it into the volume as that would interfere
+	// with /var/log/incus/incusd.log which is created prior to us setting up volume mounts
+	moveInstanceDirs := func(source string, target string) error {
+		entries, err := os.ReadDir(source)
+		if err != nil {
+			return err
+		}
+
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				continue
+			}
+
+			src := filepath.Join(source, entry.Name())
+			dst := filepath.Join(target, entry.Name())
+			_, err := rsync.LocalCopy(src, dst, "", false)
+			if err != nil {
+				return err
+			}
+
+			err = os.RemoveAll(src)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
 	// Deal with unsetting.
 	if target == "" {
 		// Things already look correct.
@@ -293,15 +363,23 @@ func daemonStorageMove(s *state.State, storageType string, target string) error 
 		}
 
 		// Re-create as a directory.
+		// In the context of Logs, we ensure system log dir exists and move instance dirs back there
 		err = os.MkdirAll(destPath, 0o700)
 		if err != nil {
 			return fmt.Errorf("Failed to create directory %q: %w", destPath, err)
 		}
 
-		// Move the data across.
-		err = moveContent(sourcePath, destPath)
-		if err != nil {
-			return fmt.Errorf("Failed to move data over to directory %q: %w", destPath, err)
+		if isLogs {
+			err = moveInstanceDirs(sourcePath, destPath)
+			if err != nil {
+				return fmt.Errorf("Failed to move instance logs back to %q: %w", destPath, err)
+			}
+		} else {
+			// Move the data across.
+			err = moveContent(sourcePath, destPath)
+			if err != nil {
+				return fmt.Errorf("Failed to move data over to directory %q: %w", destPath, err)
+			}
 		}
 
 		pool, err := storagePools.LoadByName(s, sourcePool)
@@ -366,7 +444,11 @@ func daemonStorageMove(s *state.State, storageType string, target string) error 
 		}
 
 		// Move the data across.
-		err = moveContent(sourcePath, destPath)
+		if isLogs {
+			err = moveInstanceDirs(sourcePath, destPath)
+		} else {
+			err = moveContent(sourcePath, destPath)
+		}
 		if err != nil {
 			return fmt.Errorf("Failed to move data over to directory %q: %w", destPath, err)
 		}
@@ -401,7 +483,11 @@ func daemonStorageMove(s *state.State, storageType string, target string) error 
 	}
 
 	// Move the data across.
-	err = moveContent(sourcePath, destPath)
+	if isLogs {
+		err = moveInstanceDirs(sourcePath, destPath)
+	} else {
+		err = moveContent(sourcePath, destPath)
+	}
 	if err != nil {
 		return fmt.Errorf("Failed to move data over to directory %q: %w", destPath, err)
 	}
