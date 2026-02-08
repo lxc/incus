@@ -7,11 +7,11 @@ import (
 
 // InstanceRawWriter provides an InstanceWriter implementation that copies the contents of a file to another.
 type InstanceRawWriter struct {
-	rawWriter *os.File
+	rawWriter io.WriteCloser
 }
 
 // NewInstanceRawWriter returns an InstanceRawWriter for the provided target file.
-func NewInstanceRawWriter(writer *os.File) *InstanceRawWriter {
+func NewInstanceRawWriter(writer io.WriteCloser) *InstanceRawWriter {
 	return &InstanceRawWriter{rawWriter: writer}
 }
 

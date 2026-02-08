@@ -151,6 +151,7 @@ type InstanceServer interface {
 	RenameInstanceBackup(instanceName string, name string, backup api.InstanceBackupPost) (op Operation, err error)
 	DeleteInstanceBackup(instanceName string, name string) (op Operation, err error)
 	GetInstanceBackupFile(instanceName string, name string, req *BackupFileRequest) (resp *BackupFileResponse, err error)
+	CreateInstanceBackupStream(instanceName string, backup api.InstanceBackupsPost, req *BackupFileRequest) (err error)
 	CreateInstanceFromBackup(args InstanceBackupArgs) (op Operation, err error)
 
 	GetInstanceState(name string) (state *api.InstanceState, ETag string, err error)
@@ -354,6 +355,7 @@ type InstanceServer interface {
 	CreateStoragePoolBucketBackup(poolName string, bucketName string, backup api.StorageBucketBackupsPost) (op Operation, err error)
 	DeleteStoragePoolBucketBackup(pool string, bucketName string, name string) (op Operation, err error)
 	GetStoragePoolBucketBackupFile(pool string, bucketName string, name string, req *BackupFileRequest) (resp *BackupFileResponse, err error)
+	CreateStoragePoolBucketBackupStream(pool string, bucketName string, backup api.StorageBucketBackupsPost, req *BackupFileRequest) (err error)
 	CreateStoragePoolBucketFromBackup(pool string, args StoragePoolBucketBackupArgs) (op Operation, err error)
 
 	// Storage volume functions ("storage" API extension)
@@ -395,6 +397,7 @@ type InstanceServer interface {
 	RenameStorageVolumeBackup(pool string, volName string, name string, backup api.StorageVolumeBackupPost) (op Operation, err error)
 	DeleteStorageVolumeBackup(pool string, volName string, name string) (op Operation, err error)
 	GetStorageVolumeBackupFile(pool string, volName string, name string, req *BackupFileRequest) (resp *BackupFileResponse, err error)
+	CreateStorageVolumeBackupStream(pool string, volName string, backup api.StorageVolumeBackupsPost, req *BackupFileRequest) (err error)
 	CreateStoragePoolVolumeFromBackup(pool string, args StorageVolumeBackupArgs) (op Operation, err error)
 
 	// Storage volume ISO import function ("custom_volume_iso" API extension)
