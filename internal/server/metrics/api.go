@@ -2,13 +2,15 @@ package metrics
 
 // Metrics represents instance metrics.
 type Metrics struct {
-	CPU            []CPUMetrics        `json:"cpu_seconds_total" yaml:"cpu_seconds_total"`
-	CPUs           int                 `json:"cpus" yaml:"cpus"`
-	Disk           []DiskMetrics       `json:"disk" yaml:"disk"`
-	Filesystem     []FilesystemMetrics `json:"filesystem" yaml:"filesystem"`
-	Memory         MemoryMetrics       `json:"memory" yaml:"memory"`
-	Network        []NetworkMetrics    `json:"network" yaml:"network"`
-	ProcessesTotal uint64              `json:"procs_total" yaml:"procs_total"`
+	CPU             []CPUMetrics        `json:"cpu_seconds_total" yaml:"cpu_seconds_total"`
+	CPUs            int                 `json:"cpus" yaml:"cpus"`
+	Disk            []DiskMetrics       `json:"disk" yaml:"disk"`
+	Filesystem      []FilesystemMetrics `json:"filesystem" yaml:"filesystem"`
+	Memory          MemoryMetrics       `json:"memory" yaml:"memory"`
+	Network         []NetworkMetrics    `json:"network" yaml:"network"`
+	ProcessesTotal  uint64              `json:"procs_total" yaml:"procs_total"`
+	BootTimeSeconds uint64              `json:"boot_time_seconds" yaml:"boot_time_seconds"`
+	TimeSeconds     uint64              `json:"time_seconds" yaml:"time_seconds"`
 }
 
 // CPUMetrics represents CPU metrics for an instance.

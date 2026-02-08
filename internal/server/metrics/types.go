@@ -17,8 +17,10 @@ type MetricSet struct {
 type MetricType int
 
 const (
+	// BootTimeSeconds represents Unix time when the instance booted.
+	BootTimeSeconds MetricType = iota
 	// CPUSecondsTotal represents the total CPU seconds used.
-	CPUSecondsTotal MetricType = iota
+	CPUSecondsTotal
 	// CPUs represents the total number of effective CPUs.
 	CPUs
 	// DiskReadBytesTotal represents the read bytes for a disk.
@@ -93,6 +95,8 @@ const (
 	NetworkTransmitPacketsTotal
 	// ProcsTotal represents the number of running processes.
 	ProcsTotal
+	// TimeSeconds represents current Unix time on the instance.
+	TimeSeconds
 	// OperationsTotal represents the number of running operations.
 	OperationsTotal
 	// WarningsTotal represents the number of active warnings.
@@ -149,6 +153,7 @@ const (
 
 // MetricNames associates a metric type to its name.
 var MetricNames = map[MetricType]string{
+	BootTimeSeconds:             "incus_boot_time_seconds",
 	CPUSecondsTotal:             "incus_cpu_seconds_total",
 	CPUs:                        "incus_cpu_effective_total",
 	DiskReadBytesTotal:          "incus_disk_read_bytes_total",
@@ -211,12 +216,14 @@ var MetricNames = map[MetricType]string{
 	NetworkTransmitPacketsTotal: "incus_network_transmit_packets_total",
 	OperationsTotal:             "incus_operations_total",
 	ProcsTotal:                  "incus_procs_total",
+	TimeSeconds:                 "incus_time_seconds",
 	UptimeSeconds:               "incus_uptime_seconds",
 	WarningsTotal:               "incus_warnings_total",
 }
 
 // MetricHeaders represents the metric headers which contain help messages as specified by OpenMetrics.
 var MetricHeaders = map[MetricType]string{
+	BootTimeSeconds:             "# HELP incus_boot_time_seconds The unix epoch at the time of the instance start.",
 	CPUSecondsTotal:             "# HELP incus_cpu_seconds_total The total number of CPU time used in seconds.",
 	CPUs:                        "# HELP incus_cpu_effective_total The total number of effective CPUs.",
 	DiskReadBytesTotal:          "# HELP incus_disk_read_bytes_total The total number of bytes read.",
@@ -279,6 +286,7 @@ var MetricHeaders = map[MetricType]string{
 	NetworkTransmitPacketsTotal: "# HELP incus_network_transmit_packets_total The amount of transmitted packets on a given interface.",
 	OperationsTotal:             "# HELP incus_operations_total The number of running operations",
 	ProcsTotal:                  "# HELP incus_procs_total The number of running processes.",
+	TimeSeconds:                 "# HELP incus_time_seconds The current unix epoch.",
 	UptimeSeconds:               "# HELP incus_uptime_seconds The daemon uptime in seconds.",
 	WarningsTotal:               "# HELP incus_warnings_total The number of active warnings.",
 }

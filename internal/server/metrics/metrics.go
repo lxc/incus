@@ -298,5 +298,9 @@ func MetricSetFromAPI(metrics *Metrics, labels map[string]string) (*MetricSet, e
 	// Procs stats
 	set.AddSamples(ProcsTotal, Sample{Value: float64(metrics.ProcessesTotal)})
 
+	// BootTimeSeconds & TimeSeconds
+	set.AddSamples(BootTimeSeconds, Sample{Value: float64(metrics.BootTimeSeconds)})
+	set.AddSamples(TimeSeconds, Sample{Value: float64(metrics.TimeSeconds)})
+
 	return set, nil
 }
