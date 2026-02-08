@@ -13,6 +13,8 @@ The following instance metrics are provided:
 
 * - Metric
   - Description
+* - `incus_boot_time_seconds`
+  - Unix timestamp when the guest was booted
 * - `incus_cpu_effective_total`
   - Total number of effective CPUs
 * - `incus_cpu_seconds_total{cpu="<cpu>", mode="<mode>"}`
@@ -89,6 +91,8 @@ The following instance metrics are provided:
   - Amount of transmitted packets on a given interface
 * - `incus_procs_total`
   - Number of running processes
+* - `incus_time_seconds`
+  - Current time from guest in seconds since epoch
 ```
 
 ## Internal metrics
