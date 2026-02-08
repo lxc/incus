@@ -4893,7 +4893,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 				if len(driveConf.BackingPath) > 0 {
 					backingBlockDev, err := d.qcow2BlockDev(m, nodeName, aioMode, directCache, noFlushCache, permissions, readonly, driveConf.BackingPath, 0)
 					if err != nil {
-						return nil
+						return err
 					}
 
 					blockDev["backing"] = backingBlockDev
