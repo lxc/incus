@@ -89,6 +89,10 @@ The following instance metrics are provided:
   - Amount of transmitted packets on a given interface
 * - `incus_procs_total`
   - Number of running processes
+* - `node_boot_time_seconds`
+  - Unix timestamp when the guest was booted
+* - `node_time_seconds`
+  - Current time from guest in seconds since epoch
 ```
 
 ## Internal metrics

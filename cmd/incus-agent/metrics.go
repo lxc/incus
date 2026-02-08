@@ -5,10 +5,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/shirou/gopsutil/v4/host"
+
 	"github.com/lxc/incus/v6/internal/server/metrics"
 	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/shared/logger"
-	"github.com/shirou/gopsutil/v4/host"
 )
 
 var metricsCmd = APIEndpoint{
