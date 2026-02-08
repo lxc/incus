@@ -3721,14 +3721,16 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 	// total of 256 devices, but this assumes 32 chassis * 8 function. By using VFs for the internal fixed
 	// devices we avoid consuming a chassis for each one. See also the qemuPCIDeviceIDStart constant.
 	devBus, devAddr, multi := bus.allocate(busFunctionGroupGeneric)
-	balloonOpts := qemuDevOpts{
-		busName:       bus.name,
-		devBus:        devBus,
-		devAddr:       devAddr,
-		multifunction: multi,
-	}
+	if !util.IsFalse(d.expandedConfig["limits.memory.balloon"]) {
+		balloonOpts := qemuDevOpts{
+			busName:       bus.name,
+			devBus:        devBus,
+			devAddr:       devAddr,
+			multifunction: multi,
+		}
 
-	conf = append(conf, qemuBalloon(&balloonOpts)...)
+		conf = append(conf, qemuBalloon(&balloonOpts)...)
+	}
 
 	devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
 	rngOpts := qemuDevOpts{
@@ -6719,6 +6721,30 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 
 	baseSizeMB := baseSizeBytes / 1024 / 1024
 
+	if baseSizeMB < newSizeMB {
+		// Memory increase: use hotplug (doesn't require balloon device).
+		if util.IsFalse(d.expandedConfig["limits.memory.hotplug"]) {
+			return fmt.Errorf("Memory hotplug feature is disabled")
+		}
+
+		// When balloon is available, use the effective (balloon) size for delta calculation.
+		// Otherwise fall back to base memory size.
+		curSizeBytes := baseSizeBytes
+		if !util.IsFalse(d.expandedConfig["limits.memory.balloon"]) {
+			curSizeBytes, err = monitor.GetMemoryBalloonSizeBytes()
+			if err != nil {
+				return err
+			}
+		}
+
+		return d.hotplugMemory(monitor, newSizeBytes-curSizeBytes)
+	}
+
+	// Memory decrease: requires balloon device.
+	if util.IsFalse(d.expandedConfig["limits.memory.balloon"]) {
+		return errors.New("Cannot decrease memory when balloon device is disabled")
+	}
+
 	curSizeBytes, err := monitor.GetMemoryBalloonSizeBytes()
 	if err != nil {
 		return err
@@ -6728,12 +6754,6 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 
 	if curSizeMB == newSizeMB {
 		return nil
-	} else if baseSizeMB < newSizeMB {
-		if util.IsFalse(d.expandedConfig["limits.memory.hotplug"]) {
-			return fmt.Errorf("Memory hotplug feature is disabled")
-		}
-
-		return d.hotplugMemory(monitor, newSizeBytes-curSizeBytes)
 	}
 
 	// Set effective memory size.

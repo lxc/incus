@@ -1061,6 +1061,18 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  shortdesc: Whether to back the instance using huge pages
 	"limits.memory.hugepages": validate.Optional(validate.IsBool),
 
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.memory.balloon)
+	// Set this option to `false` to disable the memory balloon device.
+	// This can help with guests (such as FreeBSD) that don't handle ballooning well.
+	// Note that this also disables live memory reduction for the VM.
+	// ---
+	//  type: bool
+	//  defaultdesc: `true`
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: Whether to enable the memory balloon device
+	"limits.memory.balloon": validate.Optional(validate.IsBool),
+
 	// Caller is responsible for full validation of any raw.* value.
 
 	// gendoc:generate(entity=instance, group=raw, key=raw.qemu)

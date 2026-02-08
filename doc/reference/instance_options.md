@@ -105,6 +105,9 @@ When that happens, re-applying the lower value will trigger another attempt.
 As each attempt will cause the effective memory available to the guest to be reduced,
 it should eventually succeed and lead to the guest having the desired memory limit applied.
 
+If the memory balloon device causes issues with a guest OS (for example, FreeBSD), it can be disabled by setting {config:option}`instance-resource-limits:limits.memory.balloon` to `false`.
+Note that this also disables live memory reduction for the VM.
+
 ### CPU limits
 
 You have different options to limit CPU usage:

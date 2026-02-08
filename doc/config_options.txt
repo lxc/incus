@@ -2393,6 +2393,17 @@ Various suffixes are supported.
 See {ref}`instances-limit-units` for details.
 ```
 
+```{config:option} limits.memory.balloon instance-resource-limits
+:condition: "virtual machine"
+:defaultdesc: "`true`"
+:liveupdate: "no"
+:shortdesc: "Whether to enable the memory balloon device"
+:type: "bool"
+Set this option to `false` to disable the memory balloon device.
+This can help with guests (such as FreeBSD) that don't handle ballooning well.
+Note that this also disables live memory reduction for the VM.
+```
+
 ```{config:option} limits.memory.enforce instance-resource-limits
 :condition: "container"
 :defaultdesc: "`hard`"

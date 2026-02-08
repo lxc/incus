@@ -2682,6 +2682,16 @@
 						}
 					},
 					{
+						"limits.memory.balloon": {
+							"condition": "virtual machine",
+							"defaultdesc": "`true`",
+							"liveupdate": "no",
+							"longdesc": "Set this option to `false` to disable the memory balloon device.\nThis can help with guests (such as FreeBSD) that don't handle ballooning well.\nNote that this also disables live memory reduction for the VM.",
+							"shortdesc": "Whether to enable the memory balloon device",
+							"type": "bool"
+						}
+					},
+					{
 						"limits.memory.enforce": {
 							"condition": "container",
 							"defaultdesc": "`hard`",
