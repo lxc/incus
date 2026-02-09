@@ -5576,18 +5576,74 @@ func (n *ovn) uplinkHasIngressRoutedAnycastIPv6(uplink *api.Network) bool {
 // handleDependencyChange applies changes from uplink network if specific watched keys have changed.
 func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]string, changedKeys []string) error {
 	// Detect changes that need to be applied to the network.
-	for _, k := range []string{"dns.nameservers", "ipv4.gateway", "ipv6.gateway", "ipv4.gateway.hwaddr", "ipv6.gateway.hwaddr"} {
-		if slices.Contains(changedKeys, k) {
-			n.logger.Debug("Applying changes from uplink network", logger.Ctx{"uplink": uplinkName})
+	uplinkKeys := []string{"ipv4.ovn.ranges", "ipv6.ovn.ranges"}
+	uplinkNetwork := n.config["network"]
 
-			// Re-setup logical network in order to apply uplink changes.
-			err := n.setup(true)
+	for _, k := range uplinkKeys {
+		if !slices.Contains(changedKeys, k) {
+			continue
+		}
+
+		// Clear any IP that's now invalid.
+		ipv4Ranges, _ := parseIPRanges(uplinkConfig["ipv4.ovn.ranges"])
+		routerExtPortIPv4 := net.ParseIP(n.config[ovnVolatileUplinkIPv4])
+		if !ipInPointerRanges(routerExtPortIPv4, ipv4Ranges) {
+			n.config[ovnVolatileUplinkIPv4] = ""
+		}
+
+		ipv6Ranges, _ := parseIPRanges(uplinkConfig["ipv6.ovn.ranges"])
+		routerExtPortIPv6 := net.ParseIP(n.config[ovnVolatileUplinkIPv6])
+		if !ipInPointerRanges(routerExtPortIPv6, ipv6Ranges) {
+			n.config[ovnVolatileUplinkIPv6] = ""
+		}
+
+		// Save the configuration change.
+		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			err := tx.UpdateNetwork(ctx, n.project, n.name, n.description, n.config)
 			if err != nil {
-				return err
+				return fmt.Errorf("Failed saving updated network config: %w", err)
 			}
 
-			break // Only run setup once per notification (all changes will be applied).
+			return nil
+		})
+		if err != nil {
+			return err
 		}
+
+		// Disconnect from the existing uplink.
+		n.config["network"] = "none"
+
+		err = n.setup(true)
+		if err != nil {
+			return err
+		}
+
+		// And re-attach to it.
+		n.config["network"] = uplinkNetwork
+
+		err = n.setup(true)
+		if err != nil {
+			return err
+		}
+
+		break // Only run setup once per notification (all changes will be applied).
+	}
+
+	watchedKeys := []string{"dns.nameservers", "ipv4.gateway", "ipv6.gateway", "ipv4.gateway.hwaddr", "ipv6.gateway.hwaddr"}
+	for _, k := range append(watchedKeys, uplinkKeys...) {
+		if !slices.Contains(changedKeys, k) {
+			continue
+		}
+
+		n.logger.Debug("Applying changes from uplink network", logger.Ctx{"uplink": uplinkName})
+
+		// Re-setup logical network in order to apply uplink changes.
+		err := n.setup(true)
+		if err != nil {
+			return err
+		}
+
+		break // Only run setup once per notification (all changes will be applied).
 	}
 
 	// Add or remove the instance NIC l2proxy DNAT_AND_SNAT rules if uplink's ovn.ingress_mode has changed.
