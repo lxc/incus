@@ -9296,6 +9296,11 @@ func (d *lxc) getFSStats() (*metrics.MetricSet, error) {
 				realDev = dev["source"]
 			}
 		} else {
+			// Skip special disks.
+			if device.IsSpecialDisk(dev["source"]) {
+				continue
+			}
+
 			source := dev["source"]
 
 			statfs, err = linux.StatVFS(source)

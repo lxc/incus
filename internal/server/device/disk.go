@@ -74,6 +74,11 @@ const DiskIOUring = "io_uring"
 // DiskLoopBacked is used to indicate disk is backed onto a loop device.
 const DiskLoopBacked = "loop"
 
+// IsSpecialDisk checks whether the provided source is a special disk.
+func IsSpecialDisk(source string) bool {
+	return slices.Contains([]string{diskSourceCloudInit, diskSourceAgent, diskSourceTmpfs, diskSourceTmpfsOverlay}, source)
+}
+
 type diskBlockLimit struct {
 	readBps   int64
 	readIops  int64
@@ -118,7 +123,7 @@ func (d *disk) CanMigrate() bool {
 	}
 
 	// Virtual disks are migratable.
-	if slices.Contains([]string{diskSourceCloudInit, diskSourceAgent, diskSourceTmpfs, diskSourceTmpfsOverlay}, d.config["source"]) {
+	if IsSpecialDisk(d.config["source"]) {
 		return true
 	}
 
