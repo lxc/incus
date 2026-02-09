@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-02-04 16:37+0100\n"
+"POT-Creation-Date: 2026-02-07 23:47-0500\n"
 "PO-Revision-Date: 2025-12-27 03:16+0000\n"
 "Last-Translator: Paulo Coghi <paulo@coghi.com.br>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
@@ -2368,8 +2368,8 @@ msgstr "Apagar nomes alternativos da imagem"
 #: cmd/incus/remote.go:1216 cmd/incus/remote.go:1281 cmd/incus/remote.go:1329
 #: cmd/incus/remote_unix.go:38 cmd/incus/rename.go:23 cmd/incus/snapshot.go:33
 #: cmd/incus/snapshot.go:83 cmd/incus/snapshot.go:231 cmd/incus/snapshot.go:325
-#: cmd/incus/snapshot.go:486 cmd/incus/snapshot.go:549
-#: cmd/incus/snapshot.go:628 cmd/incus/storage.go:41 cmd/incus/storage.go:108
+#: cmd/incus/snapshot.go:486 cmd/incus/snapshot.go:550
+#: cmd/incus/snapshot.go:632 cmd/incus/storage.go:41 cmd/incus/storage.go:108
 #: cmd/incus/storage.go:227 cmd/incus/storage.go:283 cmd/incus/storage.go:417
 #: cmd/incus/storage.go:501 cmd/incus/storage.go:684 cmd/incus/storage.go:863
 #: cmd/incus/storage.go:967 cmd/incus/storage.go:1063
@@ -7262,19 +7262,20 @@ msgstr "Editar arquivos no container"
 msgid "Restore cluster member"
 msgstr "Nome de membro do cluster"
 
-#: cmd/incus/snapshot.go:549
+#: cmd/incus/snapshot.go:550
 #, fuzzy
 msgid ""
 "Restore instance from snapshots\n"
 "\n"
-"If --stateful is passed, then the running state will be restored too."
+"If --stateful is passed, then the running state will be restored too.\n"
+"If --diskonly is passed, then only the disk will be restored."
 msgstr ""
 "Criar image do container\n"
 "\n"
 "Quando --stateful é usado, o LXD tenta criar um checkpoint do estado atual \n"
 "do container, incluindo estado de memória dos processos, conexões TCP, ..."
 
-#: cmd/incus/snapshot.go:548
+#: cmd/incus/snapshot.go:549
 #, fuzzy
 msgid "Restore instance snapshots"
 msgstr "Apagar nomes alternativos da imagem"
@@ -7911,7 +7912,7 @@ msgstr "Editar configurações do container ou do servidor como YAML"
 msgid "Show instance or server information"
 msgstr "Editar configurações do container ou do servidor como YAML"
 
-#: cmd/incus/snapshot.go:627 cmd/incus/snapshot.go:628
+#: cmd/incus/snapshot.go:631 cmd/incus/snapshot.go:632
 #, fuzzy
 msgid "Show instance snapshot configuration"
 msgstr "Editar configurações do container ou do servidor como YAML"
@@ -9340,7 +9341,11 @@ msgstr "Alias %s já existe"
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr ""
 
-#: cmd/incus/snapshot.go:557
+#: cmd/incus/snapshot.go:560
+msgid "Whether or not to restore the instance's disk only"
+msgstr ""
+
+#: cmd/incus/snapshot.go:559
 msgid ""
 "Whether or not to restore the instance's running state from snapshot (if "
 "available)"
@@ -9733,12 +9738,12 @@ msgstr ""
 msgid "[<remote>:]<instance> <profiles>"
 msgstr ""
 
-#: cmd/incus/snapshot.go:228 cmd/incus/snapshot.go:547
+#: cmd/incus/snapshot.go:228 cmd/incus/snapshot.go:548
 #, fuzzy
 msgid "[<remote>:]<instance> <snapshot name>"
 msgstr "Apagar nomes alternativos da imagem"
 
-#: cmd/incus/snapshot.go:626
+#: cmd/incus/snapshot.go:630
 #, fuzzy
 msgid "[<remote>:]<instance> <snapshot>"
 msgstr "Apagar nomes alternativos da imagem"
@@ -10759,7 +10764,7 @@ msgid ""
 "\"config.yaml\"."
 msgstr ""
 
-#: cmd/incus/snapshot.go:553
+#: cmd/incus/snapshot.go:555
 msgid ""
 "incus snapshot restore u1 snap0\n"
 "    Restore instance u1 to snapshot snap0"

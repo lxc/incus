@@ -2991,3 +2991,7 @@ This introduces a new property for SR-IOV NICs:
 ## `direct_backup`
 
 This allows to perform backups of instances, custom storage volumes and storage buckets without disk buffering when the `Accept` header is set to `application/octet-stream` in the respective POST API endpoints. Doing so, said POST endpoints return the data stream instead of creating a backup entry in the database.
+
+## `instance_snapshot_disk_only_restore`
+
+This adds support for only restoring the disk of a snapshotted instance.

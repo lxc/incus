@@ -539,6 +539,7 @@ type cmdSnapshotRestore struct {
 	snapshot *cmdSnapshot
 
 	flagStateful bool
+	flagDiskOnly bool
 }
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
@@ -549,12 +550,14 @@ func (c *cmdSnapshotRestore) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Restore instance from snapshots
 
-If --stateful is passed, then the running state will be restored too.`))
+If --stateful is passed, then the running state will be restored too.
+If --diskonly is passed, then only the disk will be restored.`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus snapshot restore u1 snap0
     Restore instance u1 to snapshot snap0`))
 
 	cmd.Flags().BoolVar(&c.flagStateful, "stateful", false, i18n.G("Whether or not to restore the instance's running state from snapshot (if available)"))
+	cmd.Flags().BoolVar(&c.flagDiskOnly, "diskonly", false, i18n.G("Whether or not to restore the instance's disk only"))
 
 	cmd.RunE = c.Run
 
@@ -603,6 +606,7 @@ func (c *cmdSnapshotRestore) Run(cmd *cobra.Command, args []string) error {
 	req := api.InstancePut{
 		Restore:  snapname,
 		Stateful: c.flagStateful,
+		DiskOnly: c.flagDiskOnly,
 	}
 
 	// Restore the snapshot

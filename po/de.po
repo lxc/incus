@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-02-04 16:37+0100\n"
+"POT-Creation-Date: 2026-02-07 23:47-0500\n"
 "PO-Revision-Date: 2025-12-27 03:16+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
@@ -2433,8 +2433,8 @@ msgstr "Aliasse:\n"
 #: cmd/incus/remote.go:1216 cmd/incus/remote.go:1281 cmd/incus/remote.go:1329
 #: cmd/incus/remote_unix.go:38 cmd/incus/rename.go:23 cmd/incus/snapshot.go:33
 #: cmd/incus/snapshot.go:83 cmd/incus/snapshot.go:231 cmd/incus/snapshot.go:325
-#: cmd/incus/snapshot.go:486 cmd/incus/snapshot.go:549
-#: cmd/incus/snapshot.go:628 cmd/incus/storage.go:41 cmd/incus/storage.go:108
+#: cmd/incus/snapshot.go:486 cmd/incus/snapshot.go:550
+#: cmd/incus/snapshot.go:632 cmd/incus/storage.go:41 cmd/incus/storage.go:108
 #: cmd/incus/storage.go:227 cmd/incus/storage.go:283 cmd/incus/storage.go:417
 #: cmd/incus/storage.go:501 cmd/incus/storage.go:684 cmd/incus/storage.go:863
 #: cmd/incus/storage.go:967 cmd/incus/storage.go:1063
@@ -7485,14 +7485,15 @@ msgstr "kann nicht zum selben Container Namen kopieren"
 msgid "Restore cluster member"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
 
-#: cmd/incus/snapshot.go:549
+#: cmd/incus/snapshot.go:550
 msgid ""
 "Restore instance from snapshots\n"
 "\n"
-"If --stateful is passed, then the running state will be restored too."
+"If --stateful is passed, then the running state will be restored too.\n"
+"If --diskonly is passed, then only the disk will be restored."
 msgstr ""
 
-#: cmd/incus/snapshot.go:548
+#: cmd/incus/snapshot.go:549
 #, fuzzy
 msgid "Restore instance snapshots"
 msgstr "Herunterfahren des Containers erzwingen."
@@ -8147,7 +8148,7 @@ msgstr "Profil %s erstellt\n"
 msgid "Show instance or server information"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/snapshot.go:627 cmd/incus/snapshot.go:628
+#: cmd/incus/snapshot.go:631 cmd/incus/snapshot.go:632
 #, fuzzy
 msgid "Show instance snapshot configuration"
 msgstr "Profil %s erstellt\n"
@@ -9600,7 +9601,12 @@ msgstr "entfernte Instanz %s existiert bereits"
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr "Zustand des laufenden Containers sichern oder nicht"
 
-#: cmd/incus/snapshot.go:557
+#: cmd/incus/snapshot.go:560
+#, fuzzy
+msgid "Whether or not to restore the instance's disk only"
+msgstr "Zustand des laufenden Containers sichern oder nicht"
+
+#: cmd/incus/snapshot.go:559
 #, fuzzy
 msgid ""
 "Whether or not to restore the instance's running state from snapshot (if "
@@ -10206,7 +10212,7 @@ msgstr ""
 "Entfernt einen Container (oder Sicherungspunkt) und alle dazugehörigen\n"
 "Daten (Konfiguration, Sicherungspunkte, ...).\n"
 
-#: cmd/incus/snapshot.go:228 cmd/incus/snapshot.go:547
+#: cmd/incus/snapshot.go:228 cmd/incus/snapshot.go:548
 #, fuzzy
 msgid "[<remote>:]<instance> <snapshot name>"
 msgstr ""
@@ -10215,7 +10221,7 @@ msgstr ""
 "Entfernt einen Container (oder Sicherungspunkt) und alle dazugehörigen\n"
 "Daten (Konfiguration, Sicherungspunkte, ...).\n"
 
-#: cmd/incus/snapshot.go:626
+#: cmd/incus/snapshot.go:630
 #, fuzzy
 msgid "[<remote>:]<instance> <snapshot>"
 msgstr ""
@@ -11733,7 +11739,7 @@ msgstr ""
 "\tErstellt einen snapshot \"snap0\" von der Instanz \"u1\" mit der "
 "Konfigurationsdatei \"config.yaml\"."
 
-#: cmd/incus/snapshot.go:553
+#: cmd/incus/snapshot.go:555
 #, fuzzy
 msgid ""
 "incus snapshot restore u1 snap0\n"

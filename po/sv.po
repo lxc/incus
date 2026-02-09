@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-02-04 16:37+0100\n"
+"POT-Creation-Date: 2026-02-07 23:47-0500\n"
 "PO-Revision-Date: 2026-01-10 12:01+0000\n"
 "Last-Translator: Daniel Nylander <daniel@danielnylander.se>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -2325,8 +2325,8 @@ msgstr "Ta bort varningar"
 #: cmd/incus/remote.go:1216 cmd/incus/remote.go:1281 cmd/incus/remote.go:1329
 #: cmd/incus/remote_unix.go:38 cmd/incus/rename.go:23 cmd/incus/snapshot.go:33
 #: cmd/incus/snapshot.go:83 cmd/incus/snapshot.go:231 cmd/incus/snapshot.go:325
-#: cmd/incus/snapshot.go:486 cmd/incus/snapshot.go:549
-#: cmd/incus/snapshot.go:628 cmd/incus/storage.go:41 cmd/incus/storage.go:108
+#: cmd/incus/snapshot.go:486 cmd/incus/snapshot.go:550
+#: cmd/incus/snapshot.go:632 cmd/incus/storage.go:41 cmd/incus/storage.go:108
 #: cmd/incus/storage.go:227 cmd/incus/storage.go:283 cmd/incus/storage.go:417
 #: cmd/incus/storage.go:501 cmd/incus/storage.go:684 cmd/incus/storage.go:863
 #: cmd/incus/storage.go:967 cmd/incus/storage.go:1063
@@ -7806,17 +7806,19 @@ msgstr "Starta om instanser"
 msgid "Restore cluster member"
 msgstr "Återställ klustermedlem"
 
-#: cmd/incus/snapshot.go:549
+#: cmd/incus/snapshot.go:550
+#, fuzzy
 msgid ""
 "Restore instance from snapshots\n"
 "\n"
-"If --stateful is passed, then the running state will be restored too."
+"If --stateful is passed, then the running state will be restored too.\n"
+"If --diskonly is passed, then only the disk will be restored."
 msgstr ""
 "Återställ instans från ögonblicksbilder\n"
 "\n"
 "Om --stateful anges kommer även körningsstatusen att återställas."
 
-#: cmd/incus/snapshot.go:548
+#: cmd/incus/snapshot.go:549
 msgid "Restore instance snapshots"
 msgstr "Återställ instanssnapshots"
 
@@ -8493,7 +8495,7 @@ msgstr "Visa instans- eller serverkonfigurationer"
 msgid "Show instance or server information"
 msgstr "Visa instans- eller serverinformation"
 
-#: cmd/incus/snapshot.go:627 cmd/incus/snapshot.go:628
+#: cmd/incus/snapshot.go:631 cmd/incus/snapshot.go:632
 msgid "Show instance snapshot configuration"
 msgstr "Visa konfiguration för instansöversikt"
 
@@ -9947,7 +9949,13 @@ msgstr "Var ska denna lagringspool lagra sina data?"
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr "Om endast instansen ska säkerhetskopieras (utan snapshots)"
 
-#: cmd/incus/snapshot.go:557
+#: cmd/incus/snapshot.go:560
+#, fuzzy
+msgid "Whether or not to restore the instance's disk only"
+msgstr ""
+"Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
+
+#: cmd/incus/snapshot.go:559
 msgid ""
 "Whether or not to restore the instance's running state from snapshot (if "
 "available)"
@@ -10308,11 +10316,11 @@ msgstr "[<fjärr>:]<instans> <profil>"
 msgid "[<remote>:]<instance> <profiles>"
 msgstr "[<fjärr>:]<instans> <profiles>"
 
-#: cmd/incus/snapshot.go:228 cmd/incus/snapshot.go:547
+#: cmd/incus/snapshot.go:228 cmd/incus/snapshot.go:548
 msgid "[<remote>:]<instance> <snapshot name>"
 msgstr "[<fjärr>:]<instans> <snapshot name>"
 
-#: cmd/incus/snapshot.go:626
+#: cmd/incus/snapshot.go:630
 msgid "[<remote>:]<instance> <snapshot>"
 msgstr "[<fjärr>:]<instans> <ögonblicksbild>"
 
@@ -11468,7 +11476,7 @@ msgstr ""
 "\"snap0\". incus snapshot create u1 snap0 < config.yaml Skapa en snapshot av "
 "\"u1\" med namnet \"snap0\" med konfigurationen från \"config.yaml\"."
 
-#: cmd/incus/snapshot.go:553
+#: cmd/incus/snapshot.go:555
 msgid ""
 "incus snapshot restore u1 snap0\n"
 "    Restore instance u1 to snapshot snap0"
