@@ -2143,7 +2143,7 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 		}
 	}
 
-	if b.driver.Info().TargetFormat == drivers.BlockVolumeTypeQcow2 {
+	if b.driver.Info().TargetFormat == drivers.BlockVolumeTypeQcow2 && (!b.driver.Info().Remote || args.ClusterMoveSourceName == "" || args.StoragePool != "") {
 		err = b.qcow2CreateVolumeFromMigration(inst, vol, conn, args, &preFiller, op)
 		if err != nil {
 			return err
@@ -2604,7 +2604,7 @@ func (b *backend) MigrateInstance(inst instance.Instance, conn io.ReadWriteClose
 		_ = linux.SyncFS(inst.RootfsPath())
 	}
 
-	if dbVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+	if dbVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 && (!b.driver.Info().Remote || !args.ClusterMove || args.StorageMove) {
 		err = b.qcow2MigrateVolume(b.state, vol, conn, args, op)
 		if err != nil {
 			return err
