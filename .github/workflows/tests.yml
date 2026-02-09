@@ -380,7 +380,7 @@ jobs:
           done
 
           # Repurpose the ephemeral disk for ceph OSD.
-          sudo microceph disk add --wipe "/dev/scratch"
+          sudo microceph disk add --wipe "$(readlink -f /dev/scratch)"
           sudo rm -rf /etc/ceph
           sudo ln -s /var/snap/microceph/current/conf/ /etc/ceph
           sudo microceph enable rgw
