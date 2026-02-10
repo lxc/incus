@@ -504,7 +504,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Cross-server instance migration.
-	ws, err := newMigrationSource(inst, req.Live, req.InstanceOnly, req.AllowInconsistent, "", "", req.Target)
+	ws, err := newMigrationSource(s, inst, req.Live, req.InstanceOnly, req.AllowInconsistent, "", "", req.Target)
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -868,7 +868,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		}
 
 		// Setup a new migration source.
-		sourceMigration, err := newMigrationSource(inst, req.Live, false, req.AllowInconsistent, inst.Name(), req.Pool, nil)
+		sourceMigration, err := newMigrationSource(s, inst, req.Live, false, req.AllowInconsistent, inst.Name(), req.Pool, nil)
 		if err != nil {
 			return fmt.Errorf("Failed setting up instance migration on source: %w", err)
 		}
