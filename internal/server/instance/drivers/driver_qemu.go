@@ -3054,6 +3054,10 @@ func (d *qemu) spicePath() string {
 	return filepath.Join(d.RunPath(), "qemu.spice")
 }
 
+func (d *qemu) migrateSockPath() string {
+	return filepath.Join(d.RunPath(), "migrate.sock")
+}
+
 func (d *qemu) spiceCmdlineConfig() string {
 	return fmt.Sprintf("unix=on,disable-ticketing=on,addr=%s", d.spicePath())
 }
@@ -8317,7 +8321,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			MigrationType:         respTypes[0],
 			Refresh:               args.Refresh, // Indicate to receiver volume should exist.
 			TrackProgress:         true,         // Use a progress tracker on receiver to get in-cluster progress information.
-			Live:                  args.Live,
+			Live:                  false,
 			VolumeSize:            offerHeader.GetVolumeSize(), // Block size setting override.
 			VolumeOnly:            !args.Snapshots,
 			ClusterMoveSourceName: args.ClusterMoveSourceName,
@@ -10714,6 +10718,54 @@ func (d *qemu) DeleteQcow2Snapshot(snapshotIndex int, backingFilename string) er
 	}
 
 	return nil
+}
+
+// ExportQcow2Disk exports a qcow2 disk by exposing it through a QEMU NBD server.
+func (d *qemu) ExportQcow2Disk() (func(), string, error) {
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		return nil, "", err
+	}
+
+	socketPath := d.migrateSockPath()
+
+	addr, err := net.ResolveUnixAddr("unix", socketPath)
+	if err != nil {
+		return nil, "", err
+	}
+
+	migrationSock, err := net.ListenUnix("unix", addr)
+	if err != nil {
+		return nil, "", fmt.Errorf("Error connecting to migration socket %q: %w", socketPath, err)
+	}
+
+	migrationFile, err := migrationSock.File()
+	if err != nil {
+		return nil, "", fmt.Errorf("Error opening migration socket %q: %w", socketPath, err)
+	}
+
+	err = monitor.SendFile(socketPath, migrationFile)
+	if err != nil {
+		return nil, "", fmt.Errorf("Failed to send migration file descriptor: %w", err)
+	}
+
+	err = monitor.NBDUnixServerStart(socketPath)
+	if err != nil {
+		return nil, "", fmt.Errorf("Failed starting NBD server: %w", err)
+	}
+
+	// Currently only exporting root disk is supported.
+	exportDiskPath := fmt.Sprintf("nbd+unix:///%s?socket=%s", qemuMigrationNBDExportName, socketPath)
+
+	err = monitor.NBDBlockExportAdd(qemuMigrationNBDExportName, false)
+	if err != nil {
+		return nil, "", fmt.Errorf("Failed adding disk to NBD server: %w", err)
+	}
+
+	return func() {
+		_ = monitor.NBDServerStop()
+		_ = migrationSock.Close()
+	}, exportDiskPath, nil
 }
 
 func (d *qemu) isQCOW2(devPath string) (bool, error) {
