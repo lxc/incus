@@ -5903,6 +5903,14 @@
 							"shortdesc": "LINSTOR satellite node name override",
 							"type": "string"
 						}
+					},
+					{
+						"storage.logs_volume": {
+							"longdesc": "Specify the volume using the syntax `POOL/VOLUME`.",
+							"scope": "local",
+							"shortdesc": "Volume to use to store instance log directories",
+							"type": "string"
+						}
 					}
 				]
 			},
