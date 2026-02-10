@@ -116,6 +116,11 @@ func (c *Config) StorageImagesVolume() string {
 	return c.m.GetString("storage.images_volume")
 }
 
+// StorageLogsVolume returns the name of the pool/volume to use for storing instance log directories.
+func (c *Config) StorageLogsVolume() string {
+	return c.m.GetString("storage.logs_volume")
+}
+
 // SyslogSocket returns true if the syslog socket is enabled, otherwise false.
 func (c *Config) SyslogSocket() bool {
 	return c.m.GetBool("core.syslog_socket")
@@ -256,7 +261,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: OVS socket path
 	"network.ovs.connection": {Default: "unix:/run/openvswitch/db.sock"},
 
-	// Storage volumes to store backups/images on
+	// Storage volumes to store backups/images/logs on
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=storage.backups_volume)
 	// Specify the volume using the syntax `POOL/VOLUME`.
@@ -272,4 +277,12 @@ var ConfigSchema = config.Schema{
 	//  scope: local
 	//  shortdesc: Volume to use to store the image tarballs
 	"storage.images_volume": {},
+
+	// gendoc:generate(entity=server, group=miscellaneous, key=storage.logs_volume)
+	// Specify the volume using the syntax `POOL/VOLUME`.
+	// ---
+	//  type: string
+	//  scope: local
+	//  shortdesc: Volume to use to store instance log directories
+	"storage.logs_volume": {},
 }
