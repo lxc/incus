@@ -171,6 +171,7 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 				Ephemeral:    configRaw.Ephemeral,
 				Profiles:     apiProfiles,
 				Project:      projectName,
+				IsSnapshot:   false,
 			}
 
 			err = inst.Update(args, true)
