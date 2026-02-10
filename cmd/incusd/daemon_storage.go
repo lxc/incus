@@ -10,6 +10,8 @@ import (
 
 	"github.com/lxc/incus/v6/internal/rsync"
 	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/node"
 	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/state"
@@ -173,7 +175,7 @@ func daemonStorageSplitVolume(volume string) (string, string, error) {
 	return poolName, volumeName, nil
 }
 
-func daemonStorageValidate(s *state.State, volType string, target string) error {
+func daemonStorageValidate(s *state.State, storageType string, target string) error {
 	// Check syntax.
 	if target == "" {
 		return nil
@@ -217,6 +219,20 @@ func daemonStorageValidate(s *state.State, volType string, target string) error 
 
 	if len(snapshots) != 0 {
 		return errors.New("Storage volumes for use by Incus itself cannot have snapshots")
+	}
+
+	// If logs, ensure no running instances.
+	if storageType == "logs" {
+		localInstances, err := instance.LoadNodeAll(s, instancetype.Any)
+		if err != nil {
+			return fmt.Errorf("Failed loading local instance list: %w", err)
+		}
+
+		for _, inst := range localInstances {
+			if inst.IsRunning() {
+				return fmt.Errorf("`storage.logs_volume` cannot be changed if there are running instances")
+			}
+		}
 	}
 
 	pool, err := storagePools.LoadByName(s, poolName)
