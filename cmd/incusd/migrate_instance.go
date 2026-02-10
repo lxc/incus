@@ -15,12 +15,21 @@ import (
 	"github.com/lxc/incus/v6/internal/server/instance/operationlock"
 	"github.com/lxc/incus/v6/internal/server/migration"
 	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/internal/server/project"
+	"github.com/lxc/incus/v6/internal/server/state"
+	storagePools "github.com/lxc/incus/v6/internal/server/storage"
+	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
-func newMigrationSource(inst instance.Instance, stateful bool, instanceOnly bool, allowInconsistent bool, clusterMoveSourceName string, storagePool string, pushTarget *api.InstancePostTarget) (*migrationSourceWs, error) {
+func newMigrationSource(s *state.State, inst instance.Instance, stateful bool, instanceOnly bool, allowInconsistent bool, clusterMoveSourceName string, storagePool string, pushTarget *api.InstancePostTarget) (*migrationSourceWs, error) {
+	err := ensureMigratable(s, inst, storagePool)
+	if err != nil {
+		return nil, err
+	}
+
 	ret := migrationSourceWs{
 		migrationFields: migrationFields{
 			instance:          inst,
@@ -290,6 +299,59 @@ func (c *migrationSink) do(instOp *operationlock.InstanceOperation) error {
 		errMsg := fmt.Errorf("Failed migration on target: %w", err)
 		c.sendControl(errMsg)
 		return errMsg
+	}
+
+	return nil
+}
+
+func ensureMigratable(s *state.State, inst instance.Instance, newPoolName string) error {
+	if inst.Type() != instancetype.VM {
+		return nil
+	}
+
+	if !inst.IsRunning() {
+		return nil
+	}
+
+	snapshots, err := inst.Snapshots()
+	if err != nil {
+		return err
+	}
+
+	if len(snapshots) == 0 {
+		return nil
+	}
+
+	instancePool, err := storagePools.LoadByInstance(s, inst)
+	if err != nil {
+		return err
+	}
+
+	if newPoolName != "" && instancePool.Name() != newPoolName {
+		newPool, err := storagePools.LoadByName(s, newPoolName)
+		if err != nil {
+			return err
+		}
+
+		volType, err := storagePools.InstanceTypeToVolumeType(inst.Type())
+		if err != nil {
+			return err
+		}
+
+		dbVol, err := storagePools.VolumeDBGet(instancePool, inst.Project().Name, inst.Name(), volType)
+		if err != nil {
+			return err
+		}
+
+		vol := instancePool.GetVolume(volType, storageDrivers.ContentTypeBlock, project.StorageVolume(inst.Project().Name, inst.Name()), dbVol.Config)
+
+		if newPool.Driver().Info().TargetFormat == storageDrivers.BlockVolumeTypeQcow2 {
+			return fmt.Errorf("Live qcow2 instance migration with snapshots is not supported")
+		}
+
+		if vol.ExpandedConfig("block.type") == storageDrivers.BlockVolumeTypeQcow2 {
+			return fmt.Errorf("Live qcow2 instance migration with snapshots is not supported")
+		}
 	}
 
 	return nil

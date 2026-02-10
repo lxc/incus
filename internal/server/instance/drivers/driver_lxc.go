@@ -9519,6 +9519,11 @@ func (d *lxc) DeleteQcow2Snapshot(snapshotIndex int, backingFilename string) err
 	return nil
 }
 
+// ExportQcow2Disk exports a qcow2 disk. Not supported by containers.
+func (d *lxc) ExportQcow2Disk() (func(), string, error) {
+	return nil, "", nil
+}
+
 // setNICLink sets the link status of the given device.
 func (d *lxc) setNICLink(devName string, connected bool, assumeUp bool) error {
 	// This check is added so that devices that cannot handle link states do not fail to initialize.
