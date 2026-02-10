@@ -1109,6 +1109,30 @@ func (m *Monitor) NBDServerStart() (net.Conn, error) {
 	return conn, nil
 }
 
+// NBDUnixServerStart starts an internal NBD server listening on the specified Unix socket.
+func (m *Monitor) NBDUnixServerStart(path string) error {
+	var args struct {
+		Addr struct {
+			Data struct {
+				Str string `json:"str"`
+			} `json:"data"`
+			Type string `json:"type"`
+		} `json:"addr"`
+		MaxConnections int `json:"max-connections"`
+	}
+
+	args.Addr.Type = "fd"
+	args.Addr.Data.Str = path
+	args.MaxConnections = 1
+
+	err := m.Run("nbd-server-start", args, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // NBDServerStop stops the internal NBD server.
 func (m *Monitor) NBDServerStop() error {
 	err := m.Run("nbd-server-stop", nil, nil)
