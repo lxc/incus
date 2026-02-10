@@ -1,16 +1,16 @@
 (import-machines-to-instances)=
 # How to import physical or virtual machines to Incus instances
 
-Incus provides a tool (`incus-migrate`) to create an Incus instance based on an existing disk or image.
+Incus provides a tool (`incus-migrate`) to create an Incus instance or volume based on an existing disk or image.
 
 You can run the tool on any Linux machine.
-It connects to an Incus server and creates a blank instance, which you can configure during or after the migration.
-The tool then copies the data from the disk or image that you provide to the instance.
+It connects to a local or remote Incus server and creates a blank instance or volume, which you can configure during or after the migration.
+The tool then copies the data from the disk or image that you provide.
 
-`incus-migrate` can import images in `raw`, `qcow2`, and `vmdk` file formats.
+`incus-migrate` can import images in `raw`, `qcow2`, `ova` and `vmdk` file formats. It can also directly download an image from a provided URL.
 
 ```{note}
-If you want to configure your new instance during the migration process, set up the entities that you want your instance to use before starting the migration process.
+If you want to configure a new instance during the migration process, set up the entities that you want your instance to use before starting the migration process.
 
 By default, the new instance will use the entities specified in the `default` profile.
 You can specify a different profile (or a profile list) to customize the configuration.
@@ -20,7 +20,7 @@ You can also override {ref}`instance-options`, the {ref}`storage pool <storage-p
 Alternatively, you can update the instance configuration after the migration is complete.
 ```
 
-The tool can create both containers and virtual machines:
+When working with instances, the tool can create both containers and virtual machines:
 
 * When creating a container, you must provide a disk or partition that contains the root file system for the container.
   For example, this could be the `/` root disk of the machine or container where you are running the tool.
@@ -101,22 +101,16 @@ Complete the following steps to migrate an existing machine to an Incus instance
 
    ```{terminal}
    :input: sudo ./bin.linux.incus-migrate
+   The local Incus server is the target [default=yes]:
 
-   Please provide Incus server URL: https://192.0.2.7:8443
-   Certificate fingerprint: xxxxxxxxxxxxxxxxx
-   ok (y/n)? y
+   What would you like to create?
+   1) Container
+   2) Virtual Machine
+   3) Virtual Machine (from .ova)
+   4) Custom Volume
 
-   1) Use a certificate token
-   2) Use an existing TLS authentication certificate
-   3) Generate a temporary TLS authentication certificate
-   Please pick an authentication mechanism above: 1
-   Please provide the certificate token: xxxxxxxxxxxxxxxx
+   Please enter the number of your choice: 1
 
-   Remote Incus server:
-     Hostname: bar
-     Version: 5.4
-
-   Would you like to create a container (1) or virtual-machine (2)?: 1
    Name of the new instance: foo
    Please provide the path to a root filesystem: /
    Do you want to add additional filesystem mounts? [default=no]:
@@ -205,22 +199,15 @@ Complete the following steps to migrate an existing machine to an Incus instance
 
    ```{terminal}
    :input: sudo ./bin.linux.incus-migrate
+   The local Incus server is the target [default=yes]:
 
-   Please provide Incus server URL: https://192.0.2.7:8443
-   Certificate fingerprint: xxxxxxxxxxxxxxxxx
-   ok (y/n)? y
+   What would you like to create?
+   1) Container
+   2) Virtual Machine
+   3) Virtual Machine (from .ova)
+   4) Custom Volume
 
-   1) Use a certificate token
-   2) Use an existing TLS authentication certificate
-   3) Generate a temporary TLS authentication certificate
-   Please pick an authentication mechanism above: 1
-   Please provide the certificate token: xxxxxxxxxxxxxxxx
-
-   Remote Incus server:
-     Hostname: bar
-     Version: 5.4
-
-   Would you like to create a container (1) or virtual-machine (2)?: 2
+   Please enter the number of your choice: 2
    Name of the new instance: foo
    Please provide the path to a root filesystem: ./virtual-machine.img
    Does the VM support UEFI Secure Boot? [default=no]: no
