@@ -1120,7 +1120,7 @@ func (m *Monitor) NBDServerStop() error {
 }
 
 // NBDBlockExportAdd exports a writable device via the NBD server.
-func (m *Monitor) NBDBlockExportAdd(deviceNodeName string) error {
+func (m *Monitor) NBDBlockExportAdd(deviceNodeName string, writable bool) error {
 	var args struct {
 		ID       string `json:"id"`
 		Type     string `json:"type"`
@@ -1131,7 +1131,7 @@ func (m *Monitor) NBDBlockExportAdd(deviceNodeName string) error {
 	args.ID = deviceNodeName
 	args.Type = "nbd"
 	args.NodeName = deviceNodeName
-	args.Writable = true
+	args.Writable = writable
 
 	err := m.Run("block-export-add", args, nil)
 	if err != nil {

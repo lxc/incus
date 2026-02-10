@@ -974,7 +974,7 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 				_ = monitor.NBDServerStop()
 			}()
 
-			err = monitor.NBDBlockExportAdd(qemuMigrationNBDExportName)
+			err = monitor.NBDBlockExportAdd(qemuMigrationNBDExportName, true)
 			if err != nil {
 				return fmt.Errorf("Failed adding root disk to NBD server: %w", err)
 			}
