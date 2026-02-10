@@ -2186,6 +2186,10 @@ func (r *ProtocolIncus) UpdateInstanceSnapshot(instanceName string, name string,
 		return nil, errors.New("The server is missing the required \"snapshot_expiry\" API extension")
 	}
 
+	if !r.HasExtension("snapshot_description") {
+		return nil, errors.New("The server is missing the required \"snapshot_description\" API extension")
+	}
+
 	// Send the request
 	op, _, err := r.queryOperation("PUT", fmt.Sprintf("%s/%s/snapshots/%s", path, url.PathEscape(instanceName), url.PathEscape(name)), instance, ETag)
 	if err != nil {
