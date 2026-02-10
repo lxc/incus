@@ -2987,3 +2987,7 @@ This introduces two new properties for NICs:
 This introduces a new property for SR-IOV NICs:
 
 * `security.trusted` allows setting the `trusted` flag for the virtual function if the parent NIC supports it.
+
+## `snapshot_description`
+
+This adds a `description` field to instance snapshot.
