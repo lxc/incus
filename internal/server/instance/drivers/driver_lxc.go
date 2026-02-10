@@ -5338,15 +5338,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Snapshots should update only their descriptions and expiry date.
 		if d.IsSnapshot() {
-			if args.Snapshot.Description != "" {
-				d.snapshotDescription = args.Snapshot.Description
-			}
-
-			if !args.Snapshot.ExpiryDate.IsZero() {
-				d.snapshotExpiryDate = args.Snapshot.ExpiryDate
-			}
-
-			return tx.UpdateInstanceSnapshot(d.id, d.snapshotDescription, d.snapshotExpiryDate)
+			return tx.UpdateInstanceSnapshot(d.id, args.Snapshot.Description, args.Snapshot.ExpiryDate)
 		}
 
 		object, err := cluster.GetInstance(ctx, tx.Tx(), d.project.Name, d.name)
