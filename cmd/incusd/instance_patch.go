@@ -226,6 +226,7 @@ func instancePatch(d *Daemon, r *http.Request) response.Response {
 		Ephemeral:    req.Ephemeral,
 		Profiles:     apiProfiles,
 		Project:      projectName,
+		IsSnapshot:   false,
 	}
 
 	err = c.Update(args, true)
