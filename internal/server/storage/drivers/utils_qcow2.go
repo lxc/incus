@@ -374,13 +374,13 @@ func getFreeNbd() (string, error) {
 }
 
 // ConnectQemuNbd exports a QCOW2 volume using the NBD protocol via qemu-nbd.
-func ConnectQemuNbd(devPath string, detectZeroes string) (string, error) {
+func ConnectQemuNbd(devPath string, format string, detectZeroes string, readOnly bool) (string, error) {
 	nbdPath, err := getFreeNbd()
 	if err != nil {
 		return "", err
 	}
 
-	args := []string{"--format=qcow2"}
+	args := []string{fmt.Sprintf("--connect=%s", nbdPath)}
 
 	if detectZeroes != "" {
 		if detectZeroes == "unmap" {
@@ -390,7 +390,14 @@ func ConnectQemuNbd(devPath string, detectZeroes string) (string, error) {
 		args = append(args, fmt.Sprintf("--detect-zeroes=%s", detectZeroes))
 	}
 
-	args = append(args, fmt.Sprintf("--connect=%s", nbdPath))
+	if format != "" {
+		args = append(args, fmt.Sprintf("--format=%s", format))
+	}
+
+	if readOnly {
+		args = append(args, "--read-only")
+	}
+
 	args = append(args, devPath)
 
 	_, err = subprocess.RunCommand("qemu-nbd", args...)

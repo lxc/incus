@@ -2028,10 +2028,6 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 	// Create new volume database records when the storage pool is changed or
 	// when it is not a remote cluster move.
 	if !isRemoteClusterMove || args.StoragePool != "" {
-		if args.Live && vol.ExpandedConfig("block.type") == drivers.BlockVolumeTypeQcow2 {
-			return errors.New("Live qcow2 instance migration is not supported")
-		}
-
 		for i, snapshot := range args.Snapshots {
 			snapName := snapshot.GetName()
 			newSnapshotName := drivers.GetSnapshotVolumeName(inst.Name(), snapName)
@@ -2563,10 +2559,6 @@ func (b *backend) MigrateInstance(inst instance.Instance, conn io.ReadWriteClose
 		return err
 	}
 
-	if inst.IsRunning() && args.StorageMove && vol.ExpandedConfig("block.type") == drivers.BlockVolumeTypeQcow2 {
-		return errors.New("Live qcow2 instance migration is not supported")
-	}
-
 	args.Name = inst.Name() // Override args.Name to ensure instance volume is sent.
 
 	// Send migration index header frame with volume info and wait for receipt if not doing final sync.
@@ -2605,7 +2597,7 @@ func (b *backend) MigrateInstance(inst instance.Instance, conn io.ReadWriteClose
 	}
 
 	if dbVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 && (!b.driver.Info().Remote || !args.ClusterMove || args.StorageMove) {
-		err = b.qcow2MigrateVolume(b.state, vol, conn, args, op)
+		err = b.qcow2MigrateVolume(b.state, inst, vol, conn, args, op)
 		if err != nil {
 			return err
 		}
@@ -8170,7 +8162,7 @@ func (b *backend) qcow2BackingPaths(vol drivers.Volume, diskPath string, project
 }
 
 // qcow2MigrateVolume migrates QCOW2 volume.
-func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
+func (b *backend) qcow2MigrateVolume(s *state.State, inst instance.Instance, vol drivers.Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"volName": vol.Name()})
 	l.Debug("qcow2MigrateVolume started")
 	defer l.Debug("qcow2MigrateVolume finished")
@@ -8220,19 +8212,37 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, conn io
 			wrapper = localMigration.ProgressTracker(op, "block_progress", vol.Name())
 		}
 
-		path, err := b.driver.GetVolumeDiskPath(vol)
-		if err != nil {
-			return fmt.Errorf("Error getting VM block volume disk path: %w", err)
-		}
+		var nbdPath string
+		if inst.IsRunning() {
+			cleanupExport, path, err := inst.ExportQcow2Disk()
+			if err != nil {
+				return err
+			}
 
-		nbdPath, err := drivers.ConnectQemuNbd(path, "")
-		if err != nil {
-			return err
-		}
+			nbdPath, err = drivers.ConnectQemuNbd(path, "", "", true)
+			if err != nil {
+				return err
+			}
 
-		defer func() {
-			_ = drivers.DisconnectQemuNbd(nbdPath)
-		}()
+			defer func() {
+				_ = drivers.DisconnectQemuNbd(nbdPath)
+				cleanupExport()
+			}()
+		} else {
+			path, err := b.driver.GetVolumeDiskPath(vol)
+			if err != nil {
+				return fmt.Errorf("Error getting VM block volume disk path: %w", err)
+			}
+
+			nbdPath, err = drivers.ConnectQemuNbd(path, "qcow2", "", true)
+			if err != nil {
+				return err
+			}
+
+			defer func() {
+				_ = drivers.DisconnectQemuNbd(nbdPath)
+			}()
+		}
 
 		from, err := os.Open(nbdPath)
 		if err != nil {
@@ -8250,15 +8260,15 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, conn io
 			}
 		}
 
-		b.logger.Debug("Sending block volume", logger.Ctx{"volName": vol.Name(), "path": path})
+		b.logger.Debug("Sending block volume", logger.Ctx{"volName": vol.Name(), "path": nbdPath})
 		_, err = io.Copy(conn, fromPipe)
 		if err != nil {
-			return fmt.Errorf("Error copying %q to migration connection: %w", path, err)
+			return fmt.Errorf("Error copying %q to migration connection: %w", nbdPath, err)
 		}
 
 		err = from.Close()
 		if err != nil {
-			return fmt.Errorf("Failed to close file %q: %w", path, err)
+			return fmt.Errorf("Failed to close file %q: %w", nbdPath, err)
 		}
 
 		return nil
@@ -8360,7 +8370,7 @@ func (b *backend) qcow2CreateVolumeFromMigration(src instance.Instance, vol driv
 			wrapper = localMigration.ProgressTracker(op, "block_progress", volName)
 		}
 
-		nbdPath, err := drivers.ConnectQemuNbd(path, "unmap")
+		nbdPath, err := drivers.ConnectQemuNbd(path, "qcow2", "unmap", false)
 		if err != nil {
 			return err
 		}
