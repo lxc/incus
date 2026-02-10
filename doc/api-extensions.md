@@ -3051,3 +3051,7 @@ Exporting and importing an instance also includes dependent volumes.
 ## `metrics_project_resources`
 
 This adds project-level metrics to the `/1.0/metrics` endpoint including resource counts, configured limits, and current usage per project.
+
+## `snapshot_description`
+
+This adds a `description` field to instance snapshot.
