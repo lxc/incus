@@ -8507,7 +8507,7 @@ func (b *backend) qcow2CreateVolumeFromMigration(src instance.Instance, vol driv
 		}
 
 		// Receive the final main volume sync if needed.
-		if volTargetArgs.Live && (!drivers.IsContentBlock(vol.ContentType()) || vol.Type() != drivers.VolumeTypeCustom) {
+		if volTargetArgs.Live && (!drivers.IsContentBlock(vol.ContentType()) || (vol.Type() != drivers.VolumeTypeCustom && vol.Type() != drivers.VolumeTypeVM)) {
 			b.logger.Debug("Starting main volume final sync", logger.Ctx{"volName": vol.Name(), "path": path})
 			err = recvFSVol(vol.Name(), conn, path)
 			if err != nil {

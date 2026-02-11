@@ -461,7 +461,7 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 		}
 
 		// Receive the final main volume sync if needed.
-		if volTargetArgs.Live && (!IsContentBlock(vol.contentType) || vol.volType != VolumeTypeCustom) {
+		if volTargetArgs.Live && (!IsContentBlock(vol.contentType) || (vol.volType != VolumeTypeCustom && vol.volType != VolumeTypeVM)) {
 			d.Logger().Debug("Starting main volume final sync", logger.Ctx{"volName": vol.name, "path": path})
 			err = recvFSVol(vol.name, conn, path)
 			if err != nil {

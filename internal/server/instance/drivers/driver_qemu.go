@@ -8321,7 +8321,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			MigrationType:         respTypes[0],
 			Refresh:               args.Refresh, // Indicate to receiver volume should exist.
 			TrackProgress:         true,         // Use a progress tracker on receiver to get in-cluster progress information.
-			Live:                  false,
+			Live:                  args.Live,
 			VolumeSize:            offerHeader.GetVolumeSize(), // Block size setting override.
 			VolumeOnly:            !args.Snapshots,
 			ClusterMoveSourceName: args.ClusterMoveSourceName,
