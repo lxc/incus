@@ -83,7 +83,6 @@ type common struct {
 	ephemeral           bool
 	expandedConfig      map[string]string
 	expandedDevices     deviceConfig.Devices
-	expiryDate          time.Time
 	id                  int
 	lastUsedDate        time.Time
 	localConfig         map[string]string
