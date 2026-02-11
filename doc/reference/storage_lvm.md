@@ -61,10 +61,6 @@ To use this with Incus, you must:
    - Snapshots for shared custom storage volumes are not supported.
    - Snapshots of raw block volumes are not supported.
    - Only VM block volumes support the `QCOW2` format.
-
-   Migration between different storage pools for `QCOW2` volumes is supported
-   only when the instance is stopped. Live migration between pools is supported
-   only for instances without snapshots.
 ```
 
 ## Configuration options

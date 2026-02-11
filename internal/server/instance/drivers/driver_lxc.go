@@ -9519,8 +9519,8 @@ func (d *lxc) DeleteQcow2Snapshot(snapshotIndex int, backingFilename string) err
 	return nil
 }
 
-// ExportQcow2Disk exports a qcow2 disk. Not supported by containers.
-func (d *lxc) ExportQcow2Disk() (func(), string, error) {
+// ExportQcow2Block exports a qcow2 block device. Not supported by containers.
+func (d *lxc) ExportQcow2Block(diskIndex int) (func(), string, error) {
 	return nil, "", nil
 }
 
