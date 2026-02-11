@@ -117,7 +117,6 @@ CREATE TABLE "instances" (
     last_use_date DATETIME,
     description TEXT NOT NULL,
     project_id INTEGER NOT NULL,
-    expiry_date DATETIME,
     UNIQUE (project_id, name),
     FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE,
     FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE
@@ -180,7 +179,6 @@ CREATE TABLE "instances_snapshots" (
     instance_id INTEGER NOT NULL,
     name TEXT NOT NULL,
     creation_date DATETIME NOT NULL DEFAULT 0,
-    stateful INTEGER NOT NULL DEFAULT 0,
     description TEXT NOT NULL,
     expiry_date DATETIME,
     UNIQUE (instance_id, name),
@@ -209,6 +207,14 @@ CREATE TABLE "instances_snapshots_devices_config" (
     value TEXT NOT NULL,
     FOREIGN KEY (instance_snapshot_device_id) REFERENCES "instances_snapshots_devices" (id) ON DELETE CASCADE,
     UNIQUE (instance_snapshot_device_id, key)
+);
+CREATE TABLE instances_snapshots_property (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    instance_snapshot_id INTEGER NOT NULL,
+    description TEXT,
+    ephemeral INTEGER NOT NULL DEFAULT 0,
+    stateful INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (instance_snapshot_id) REFERENCES "instances_snapshots" (id) ON DELETE CASCADE
 );
 CREATE TABLE "networks" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -674,5 +680,5 @@ CREATE TABLE "warnings" (
 );
 CREATE UNIQUE INDEX warnings_unique_node_id_project_id_entity_type_code_entity_id_type_code ON warnings(IFNULL(node_id, -1), IFNULL(project_id, -1), entity_type_code, entity_id, type_code);
 
-INSERT INTO schema (version, updated_at) VALUES (76, strftime("%s"))
+INSERT INTO schema (version, updated_at) VALUES (77, strftime("%s"))
 `
